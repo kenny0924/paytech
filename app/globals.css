@@ -157,6 +157,26 @@ h1 { margin: 12px 0 14px; font-size: clamp(42px, 6vw, 72px); line-height: .98; l
 .system-contracts span { display: block; margin: 3px 0; font: 600 9px var(--font-geist-mono); color: #435067; }
 .empty-state { padding: 32px; border: 1px dashed #bcc6d2; border-radius: 12px; text-align: center; color: var(--muted); font-size: 12px; }
 
+.entry-boundary { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 20px; align-items: center; margin-bottom: 12px; padding: 16px 18px; border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; background: var(--accent-soft); }
+.entry-boundary strong { font-size: 12px; }
+.entry-boundary p { margin: 0; color: #53627a; font-size: 11px; }
+.entry-app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.entry-app-card { display: flex; flex-direction: column; min-height: 390px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.entry-app-card header { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.entry-app-number { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; color: var(--accent); background: var(--accent-soft); font: 700 9px var(--font-geist-mono); }
+.entry-app-card header small { display: block; color: var(--muted); font: 700 8px var(--font-geist-mono); letter-spacing: .06em; }
+.entry-app-card h3 { margin: 3px 0 0; font-size: 14px; }
+.entry-app-purpose { min-height: 42px; margin: 14px 0; color: var(--muted); font-size: 11px; }
+.entry-app-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.entry-app-detail > div { padding: 12px; border-radius: 9px; background: var(--surface-soft); }
+.entry-app-detail strong { font-size: 10px; }
+.entry-app-detail ul { margin: 8px 0 0; padding-left: 16px; color: #536075; font-size: 9px; }
+.entry-app-detail li + li { margin-top: 5px; }
+.entry-app-connections { margin-top: auto; padding-top: 14px; }
+.entry-app-connections small { display: block; margin-bottom: 7px; color: var(--muted); font-size: 8px; letter-spacing: .08em; }
+.entry-app-connections > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.entry-app-connections span { padding: 4px 6px; border-radius: 5px; color: #435067; background: #f3f5f8; font: 600 8px var(--font-geist-mono); }
+
 .taxonomy-flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
 .taxonomy-stage { position: relative; }
 .taxonomy-stage > b { position: absolute; right: -18px; top: 45%; color: var(--accent); }
@@ -225,6 +245,7 @@ footer strong { color: var(--foreground); } footer a { margin-left: auto; text-d
   .taxonomy-stage > b { display: none; }
   .finance-components { grid-template-columns: repeat(2, 1fr); }
   .question-grid { grid-template-columns: 1fr 1fr; }
+  .entry-app-detail { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 560px) {
@@ -232,7 +253,7 @@ footer strong { color: var(--foreground); } footer a { margin-left: auto; text-d
   .scope-grid article { border-right: 0; border-bottom: 1px solid var(--line); }
   .scope-grid article:last-child { border-bottom: 0; }
   h1 { font-size: 42px; }
-  .architecture-grid, .domain-map, .domain-group > div, .taxonomy-flow, .principle-grid, .money-rules, .question-grid, .system-contracts { grid-template-columns: 1fr; }
+  .architecture-grid, .domain-map, .domain-group > div, .taxonomy-flow, .principle-grid, .money-rules, .question-grid, .system-contracts, .entry-app-grid, .entry-boundary { grid-template-columns: 1fr; }
   .entry-row { grid-template-columns: 1fr; }
   .filter-bar { position: static; display: grid; grid-template-columns: 1fr 1fr; }
   .filter-bar button, .filter-bar > span { margin: 0; }
@@ -254,7 +275,7 @@ footer strong { color: var(--foreground); } footer a { margin-left: auto; text-d
   .document { width: 100%; padding: 0; }
   .hero { box-shadow: none; break-after: page; }
   .section { padding-top: 28px; break-before: page; }
-  .architecture-card, .domain-group, .actor-card, .system-card, .question-grid article, .decision-list article { break-inside: avoid; }
+  .architecture-card, .domain-group, .actor-card, .system-card, .entry-app-card, .question-grid article, .decision-list article { break-inside: avoid; }
   .system-card > .system-body { display: block !important; }
   .use-case-table thead { display: table-header-group; }
   .use-case-table tr { break-inside: avoid; }

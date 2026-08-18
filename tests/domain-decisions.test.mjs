@@ -76,3 +76,25 @@ test("payment executes only Commerce-approved refund requests", async () => {
 
   assert.match(content, /必须引用 Commerce refundRequestId/);
 });
+
+test("entry applications remain outside the six core systems", async () => {
+  const content = await renderPage();
+
+  assert.equal(content.match(/class="entry-app-card"/g)?.length, 7);
+  assert.equal(content.match(/class="system-card"/g)?.length, 6);
+  assert.match(content, /Client Console/);
+  assert.match(content, /Partner Console/);
+  assert.match(content, /Operations Console/);
+  assert.match(content, /Provider Callback Endpoint/);
+});
+
+test("Partner Console is read-only for transactions and can request only share payouts", async () => {
+  const content = await renderPage();
+
+  assert.match(content, /提交主体信息与开户材料/);
+  assert.match(content, /查询关联主体、MID 和脱敏交易明细/);
+  assert.match(content, /提交 Partner 出款申请/);
+  assert.match(content, /仅限已形成的 Partner 可用分润余额/);
+  assert.match(content, /禁止操作订单、支付、退款、路由和账本/);
+  assert.match(content, /平台自有主体不创建 Partner 关系/);
+});

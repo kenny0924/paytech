@@ -35,7 +35,8 @@ export function CoarseArchitectureDiagram() {
   return (
     <div className="coarse-architecture">
       <div className="entry-row">
-        <span>Hosted Checkout</span><span>Client API</span><span>Operations Portal</span>
+        <span>Hosted Checkout</span><span>Client Console</span><span>Partner Console</span>
+        <span>Client API / Gateway</span><span>Operations Console</span><span>Provider Endpoint</span>
       </div>
       <div className="down-arrow">↓</div>
       <div className="architecture-grid">

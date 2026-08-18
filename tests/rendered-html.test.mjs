@@ -30,6 +30,7 @@ test("the page exposes all primary section ids", async () => {
     "end-to-end",
     "use-cases",
     "systems",
+    "entry-applications",
     "payment-model",
     "finance-model",
     "decisions",

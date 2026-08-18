@@ -16,6 +16,7 @@ test("requirements catalog contains every stable section", () => {
     "end-to-end",
     "use-cases",
     "systems",
+    "entry-applications",
     "payment-model",
     "finance-model",
     "decisions",
@@ -23,6 +24,27 @@ test("requirements catalog contains every stable section", () => {
   ]) {
     assert.match(source, new RegExp(`id:\\s*[\"']${id}[\"']`));
   }
+});
+
+test("requirements catalog defines the approved entry applications", () => {
+  assert.match(source, /export const ENTRY_APPLICATIONS/);
+  for (const code of [
+    "HOSTED_CHECKOUT",
+    "CLIENT_CONSOLE",
+    "PARTNER_CONSOLE",
+    "CLIENT_API",
+    "OPERATIONS_CONSOLE",
+    "PROVIDER_ENDPOINT",
+    "CONSUMER_SERVICE",
+  ]) {
+    assert.match(source, new RegExp(`code:\\s*["']${code}["']`));
+  }
+});
+
+test("core systems expose the interfaces required by Partner Console", () => {
+  assert.match(source, /iuc\("CCT-I08", "提交 Partner 主体资料"/);
+  assert.match(source, /iuc\("PAY-I09", "查询 Partner 授权的 MID"/);
+  assert.match(source, /iuc\("FIN-I11", "提交 Partner 出款申请"/);
 });
 
 test("requirements catalog contains all business systems", () => {

@@ -11,6 +11,7 @@ import {
   PaymentTaxonomyDiagram,
 } from "./architecture-diagrams";
 import { StatusBadge } from "./status-badge";
+import { EntryApplicationCatalog } from "./entry-application-catalog";
 import { GlobalUseCases, UseCaseCatalog } from "./use-case-catalog";
 
 function SectionHeading({
@@ -164,8 +165,13 @@ export function RequirementsSite() {
           <UseCaseCatalog />
         </section>
 
+        <section className="section" id="entry-applications">
+          <SectionHeading index="07" title="入口应用与管控台" description="入口应用服务不同用户和外部系统，但不计入六个核心系统，也不拥有核心业务事实。" sectionId="entry-applications" onCopy={copyLink} />
+          <EntryApplicationCatalog />
+        </section>
+
         <section className="section" id="payment-model">
-          <SectionHeading index="07" title="支付渠道模型" description="避免把 Provider、MID、支付方式和 Scheme 混成一个无法解释的渠道字段。" sectionId="payment-model" onCopy={copyLink} />
+          <SectionHeading index="08" title="支付渠道模型" description="避免把 Provider、MID、支付方式和 Scheme 混成一个无法解释的渠道字段。" sectionId="payment-model" onCopy={copyLink} />
           <PaymentTaxonomyDiagram />
           <div className="boundary-box">
             <div><strong>路由资格</strong><span>Operating Entity + MCC + 币种 + 地区 + 支付方式 + 订单快照 + 业务政策 + 风险 + 限额</span></div>
@@ -174,7 +180,7 @@ export function RequirementsSite() {
         </section>
 
         <section className="section" id="finance-model">
-          <SectionHeading index="08" title="计算、账本与结算" description="计费与分润负责计算，复式账本负责记账，对账负责确认实际成本。" sectionId="finance-model" onCopy={copyLink} />
+          <SectionHeading index="09" title="计算、账本与结算" description="计费与分润负责计算，复式账本负责记账，对账负责确认实际成本。" sectionId="finance-model" onCopy={copyLink} />
           <FinanceFlowDiagram />
           <div className="money-rules">
             <article><small>CLIENT PRICING</small><strong>百分比 + 固定金额</strong><p>合同费率按版本和交易时间生效。</p></article>
@@ -187,7 +193,7 @@ export function RequirementsSite() {
         </section>
 
         <section className="section" id="decisions">
-          <SectionHeading index="09" title="已确认决策" description="这些内容已在讨论中确认，后续设计以此为当前基线。" sectionId="decisions" onCopy={copyLink} />
+          <SectionHeading index="10" title="已确认决策" description="这些内容已在讨论中确认，后续设计以此为当前基线。" sectionId="decisions" onCopy={copyLink} />
           <div className="decision-list">
             {DECISIONS.map((decision, index) => (
               <article key={decision}><span>{String(index + 1).padStart(2, "0")}</span><p>{decision}</p><StatusBadge status="confirmed" /></article>
@@ -196,7 +202,7 @@ export function RequirementsSite() {
         </section>
 
         <section className="section" id="open-questions">
-          <SectionHeading index="10" title="后续待讨论" description="不阻碍当前需求文档，但需要在详细业务或技术设计阶段继续确定。" sectionId="open-questions" onCopy={copyLink} />
+          <SectionHeading index="11" title="后续待讨论" description="不阻碍当前需求文档，但需要在详细业务或技术设计阶段继续确定。" sectionId="open-questions" onCopy={copyLink} />
           <div className="question-grid">
             {OPEN_QUESTIONS.map((question, index) => (
               <article key={question}><span>Q{String(index + 1).padStart(2, "0")}</span><p>{question}</p><StatusBadge status="open" /></article>
