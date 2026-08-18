@@ -53,11 +53,11 @@ export function CoarseArchitectureDiagram() {
 }
 
 const domainGroups = [
-  { service: "Client & Distribution", domains: ["Client Account", "Onboarding", "Distribution Contract", "Offering Catalog", "Operating Entity", "Acceptance Policy"] },
-  { service: "Commerce", domains: ["Checkout Session", "Consumer", "Order", "Fulfillment", "Refund", "Customer Care"] },
+  { service: "Client & Distribution", domains: ["Client Account", "Onboarding", "Distribution Contract", "Business Profile", "Operating Entity", "Acceptance Policy"] },
+  { service: "Commerce", domains: ["Checkout Session", "Order Snapshot", "Consumer", "Order", "Fulfillment", "Refund", "Customer Care"] },
   { service: "Payment Orchestration", domains: ["Provider Registry", "Merchant Account", "Payment Routing", "Payment Execution", "Provider Callback", "Payment Reconciliation"] },
-  { service: "Risk & Compliance", domains: ["Client Risk", "Offering Risk", "Transaction Risk", "Risk Decision", "Case Management", "Dispute"] },
-  { service: "Finance", domains: ["Accounting Ledger", "Pricing", "Revenue Share", "Balance & Reserve", "Settlement", "Profitability", "Tax", "Finance Reconciliation"] },
+  { service: "Risk & Compliance", domains: ["Client Risk", "Business Policy", "Transaction Risk", "Risk Decision", "Case Management", "Dispute"] },
+  { service: "Finance", domains: ["Fee Calculation", "Revenue Share", "Accounting Instruction", "Legal Entity Ledger", "Balance & Reserve", "Settlement", "Profitability", "Tax", "Finance Reconciliation"] },
   { service: "Platform", domains: ["IAM", "Client Webhook", "Notification", "Configuration", "Audit", "File & Evidence"] },
 ];
 
@@ -123,7 +123,7 @@ export function FinanceFlowDiagram() {
         <strong>Gross Payment</strong>
         <span>USD · 最小货币单位整数</span>
       </div>
-      <div className="finance-connector">↓ 交易事实进入不可变复式账本</div>
+      <div className="finance-connector">↓ 交易事实先计算，再生成记账指令；账本不决定分润公式</div>
       <div className="finance-components">
         {FINANCE_COMPONENTS.map((component, index) => (
           <div key={component}><span>{String(index + 1).padStart(2, "0")}</span><strong>{component}</strong></div>

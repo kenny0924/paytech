@@ -160,7 +160,7 @@ export function RequirementsSite() {
         </section>
 
         <section className="section systems-section" id="systems">
-          <SectionHeading index="06" title="系统职责与 Use Case" description="13 组业务与支撑系统，明确事实来源、用例、输入和发布事件。" sectionId="systems" onCopy={copyLink} />
+          <SectionHeading index="06" title="系统职责与 Use Case" description="14 组业务与支撑系统，明确事实来源、用例、输入和发布事件。" sectionId="systems" onCopy={copyLink} />
           <UseCaseCatalog />
         </section>
 
@@ -168,18 +168,21 @@ export function RequirementsSite() {
           <SectionHeading index="07" title="支付渠道模型" description="避免把 Provider、MID、支付方式和 Scheme 混成一个无法解释的渠道字段。" sectionId="payment-model" onCopy={copyLink} />
           <PaymentTaxonomyDiagram />
           <div className="boundary-box">
-            <div><strong>路由资格</strong><span>Operating Entity + MCC + 币种 + 地区 + 支付方式 + Offering + 风险 + 限额</span></div>
+            <div><strong>路由资格</strong><span>Operating Entity + MCC + 币种 + 地区 + 支付方式 + 订单快照 + 业务政策 + 风险 + 限额</span></div>
             <p>路由器只能在全部条件匹配的 MID 中排序；成功率或成本不能覆盖法律与渠道合同边界。</p>
           </div>
         </section>
 
         <section className="section" id="finance-model">
-          <SectionHeading index="08" title="账本、费用与结算" description="面向 Client 的简单报价与内部完整成本、分润和利润核算相互分离。" sectionId="finance-model" onCopy={copyLink} />
+          <SectionHeading index="08" title="计算、账本与结算" description="计费与分润负责计算，复式账本负责记账，对账负责确认实际成本。" sectionId="finance-model" onCopy={copyLink} />
           <FinanceFlowDiagram />
           <div className="money-rules">
             <article><small>CLIENT PRICING</small><strong>百分比 + 固定金额</strong><p>合同费率按版本和交易时间生效。</p></article>
             <article><small>PARTNER SHARE</small><strong>每个合作方独立配置</strong><p>可按 GMV、平台收入或净收入计算。</p></article>
             <article><small>MONEY MODEL</small><strong>整数最小货币单位</strong><p>保存 ISO 4217 币种，禁止浮点金额。</p></article>
+            <article><small>LEGAL ENTITY BOOK</small><strong>主体与币种独立账簿</strong><p>跨主体通过应收、应付往来科目处理。</p></article>
+            <article><small>COST FINALIZATION</small><strong>预计成本 → 实际成本</strong><p>渠道清算和银行对账确认差异并追加调整分录。</p></article>
+            <article><small>PROFIT MODEL</small><strong>收入减成本</strong><p>利润通过平台收入减实际成本得到，不直接记利润账户。</p></article>
           </div>
         </section>
 
