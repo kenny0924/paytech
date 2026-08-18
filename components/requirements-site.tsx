@@ -140,7 +140,7 @@ export function RequirementsSite() {
         </section>
 
         <section className="section" id="domain-map">
-          <SectionHeading index="03" title="细化领域地图" description="领域可以足够细，部署边界仍可保持粗粒度；技术拆分留到后续讨论。" sectionId="domain-map" onCopy={copyLink} />
+          <SectionHeading index="03" title="六系统内部功能域" description="六个系统是边界；细粒度领域作为系统内部职责，不再等同于独立系统。" sectionId="domain-map" onCopy={copyLink} />
           <DomainMapDiagram />
         </section>
 
@@ -160,7 +160,7 @@ export function RequirementsSite() {
         </section>
 
         <section className="section systems-section" id="systems">
-          <SectionHeading index="06" title="系统职责与 Use Case" description="14 组业务与支撑系统，明确事实来源、用例、输入和发布事件。" sectionId="systems" onCopy={copyLink} />
+          <SectionHeading index="06" title="六系统功能拆分与 Use Case" description="明确每个系统的边界、独立用例、接口用例、同步依赖、MQ 通知和不负责事项。" sectionId="systems" onCopy={copyLink} />
           <UseCaseCatalog />
         </section>
 

@@ -34,3 +34,45 @@ test("finance renders calculation separately from double-entry posting", async (
   assert.match(content, /收入减成本/);
   assert.match(content, /成本差异生成新的 Accounting Instruction/);
 });
+
+test("system catalog renders six functional systems instead of deployment-level fragments", async () => {
+  const content = await renderPage();
+
+  assert.equal(content.match(/class="system-card"/g)?.length, 6);
+  for (const system of [
+    "Client &amp; Contract System",
+    "Commerce System",
+    "Payment Orchestration System",
+    "Risk &amp; Compliance System",
+    "Finance System",
+    "Platform Support System",
+  ]) {
+    assert.match(content, new RegExp(system));
+  }
+  for (const section of ["独立用例", "接口用例", "MQ 通知", "不负责"]) {
+    assert.match(content, new RegExp(section));
+  }
+  assert.doesNotMatch(content, /14 组业务与支撑系统/);
+});
+
+test("system catalog distinguishes synchronous interfaces from MQ notifications", async () => {
+  const content = await renderPage();
+
+  assert.match(content, /同步命令和查询通过系统接口/);
+  assert.match(content, /MQ 仅用于内部回调和业务事实通知/);
+  assert.match(content, /订阅 MQ/);
+  assert.doesNotMatch(content, /ReserveHoldRequested|ReserveReleaseRequested/);
+});
+
+test("system boundaries prohibit cross-database access and keep entry apps stateless", async () => {
+  const content = await renderPage();
+
+  assert.match(content, /禁止跨库查询和写入/);
+  assert.match(content, /入口应用不拥有核心业务数据/);
+});
+
+test("payment executes only Commerce-approved refund requests", async () => {
+  const content = await renderPage();
+
+  assert.match(content, /必须引用 Commerce refundRequestId/);
+});

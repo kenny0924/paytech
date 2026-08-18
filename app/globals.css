@@ -150,7 +150,8 @@ h1 { margin: 12px 0 14px; font-size: clamp(42px, 6vw, 72px); line-height: .98; l
 .truth-label { color: var(--teal); font-size: 9px; font-weight: 720; }
 .system-body { padding: 0 12px 12px; border-top: 1px solid #edf0f3; }
 .system-body .table-wrap { margin-top: 12px; }
-.system-contracts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.system-subheading { margin: 16px 2px 0; font-size: 11px; }
+.system-contracts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-top: 12px; }
 .system-contracts > div { padding: 10px; border-radius: 9px; background: var(--surface-soft); }
 .system-contracts small { display: block; margin-bottom: 7px; color: var(--muted); font-size: 8px; letter-spacing: .08em; }
 .system-contracts span { display: block; margin: 3px 0; font: 600 9px var(--font-geist-mono); color: #435067; }

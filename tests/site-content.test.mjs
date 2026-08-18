@@ -26,20 +26,15 @@ test("requirements catalog contains every stable section", () => {
 });
 
 test("requirements catalog contains all business systems", () => {
+  assert.doesNotMatch(source, /export const DOMAIN_DEFINITIONS/);
+  assert.doesNotMatch(source, /Payment Orchestration：支付和退款事实/);
+  assert.doesNotMatch(source, /其他五个系统：已发生的业务 MQ 通知/);
   for (const code of [
-    "CLIENT",
-    "COMPLIANCE",
-    "CONTRACT",
-    "CHECKOUT",
-    "ORDER",
+    "CLIENT_CONTRACT",
+    "COMMERCE",
     "PAYMENT",
-    "CHANNEL",
-    "ROUTING",
-    "RISK",
-    "ECONOMICS",
-    "LEDGER",
-    "RECONCILIATION",
-    "SETTLEMENT",
+    "RISK_COMPLIANCE",
+    "FINANCE",
     "PLATFORM",
   ]) {
     assert.match(source, new RegExp(`code:\\s*[\"']${code}[\"']`));
@@ -48,21 +43,17 @@ test("requirements catalog contains all business systems", () => {
 
 test("every system exposes use cases", () => {
   for (const prefix of [
-    "CLI-",
-    "CMP-",
-    "CON-",
-    "CHK-",
-    "ORD-",
+    "CCT-",
+    "COM-",
     "PAY-",
-    "CHN-",
-    "RTE-",
-    "RSK-",
-    "ECO-",
-    "LED-",
-    "REC-",
-    "SET-",
+    "RCO-",
+    "FIN-",
     "PLT-",
   ]) {
     assert.match(source, new RegExp(prefix.replace("-", "\\-")));
   }
+});
+
+test("Commerce exposes fulfillment evidence required by Risk", () => {
+  assert.match(source, /iuc\("COM-I08", "查询履约证据"/);
 });

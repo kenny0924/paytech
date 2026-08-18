@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ACTORS, GLOBAL_USE_CASES, SYSTEMS, type UseCase } from "../content/requirements";
+import {
+  ACTORS,
+  FUNCTIONAL_SYSTEMS,
+  GLOBAL_USE_CASES,
+  type InterfaceUseCase,
+  type UseCase,
+} from "../content/requirements";
 import { StatusBadge } from "./status-badge";
 
 function actorNames(useCase: UseCase) {
@@ -26,6 +32,22 @@ function UseCaseRows({ useCases }: { useCases: UseCase[] }) {
   );
 }
 
+function InterfaceUseCaseRows({ useCases }: { useCases: InterfaceUseCase[] }) {
+  return (
+    <tbody>
+      {useCases.map((useCase) => (
+        <tr key={useCase.id}>
+          <td className="uc-code">{useCase.id}</td>
+          <td><strong>{useCase.title}</strong></td>
+          <td>{useCase.consumers.join(" · ")}</td>
+          <td>{useCase.result}</td>
+          <td><StatusBadge status={useCase.status} /></td>
+        </tr>
+      ))}
+    </tbody>
+  );
+}
+
 export function GlobalUseCases() {
   return (
     <div className="table-wrap">
@@ -42,14 +64,17 @@ export function UseCaseCatalog() {
   const [system, setSystem] = useState("all");
 
   const visibleSystems = useMemo(() => {
-    return SYSTEMS
+    return FUNCTIONAL_SYSTEMS
       .filter((item) => system === "all" || item.code === system)
       .map((item) => ({
         ...item,
         useCases: item.useCases.filter((useCase) => actor === "all" || useCase.actorIds.includes(actor)),
       }))
-      .filter((item) => item.useCases.length > 0);
+      .filter((item) => actor === "all" || item.useCases.length > 0);
   }, [actor, system]);
+
+  const independentUseCaseCount = visibleSystems.reduce((sum, item) => sum + item.useCases.length, 0);
+  const interfaceUseCaseCount = visibleSystems.reduce((sum, item) => sum + item.interfaceUseCases.length, 0);
 
   return (
     <div className="catalog">
@@ -63,11 +88,11 @@ export function UseCaseCatalog() {
         <label>系统
           <select value={system} onChange={(event) => setSystem(event.target.value)}>
             <option value="all">全部系统</option>
-            {SYSTEMS.map((item) => <option value={item.code} key={item.code}>{item.name}</option>)}
+            {FUNCTIONAL_SYSTEMS.map((item) => <option value={item.code} key={item.code}>{item.name}</option>)}
           </select>
         </label>
         <button type="button" onClick={() => { setActor("all"); setSystem("all"); }}>清除筛选</button>
-        <span>{visibleSystems.reduce((sum, item) => sum + item.useCases.length, 0)} Use Cases</span>
+        <span>{independentUseCaseCount} 独立用例 · {interfaceUseCaseCount} 接口用例</span>
       </div>
 
       {visibleSystems.length === 0 ? (
@@ -75,21 +100,31 @@ export function UseCaseCatalog() {
       ) : visibleSystems.map((item, index) => (
         <details className="system-card" key={item.code} open={index < 2}>
           <summary>
-            <span className="system-number">{String(SYSTEMS.findIndex((systemItem) => systemItem.code === item.code) + 1).padStart(2, "0")}</span>
+            <span className="system-number">{String(FUNCTIONAL_SYSTEMS.findIndex((systemItem) => systemItem.code === item.code) + 1).padStart(2, "0")}</span>
             <div><h3>{item.name}</h3><p>{item.responsibility}</p></div>
             <span className="truth-label">SoT · {item.sourceOfTruth}</span>
           </summary>
           <div className="system-body">
+            <h4 className="system-subheading">独立用例</h4>
             <div className="table-wrap">
               <table className="use-case-table">
                 <thead><tr><th>ID</th><th>Use Case</th><th>Actor</th><th>成功结果</th><th>状态</th></tr></thead>
                 <UseCaseRows useCases={item.useCases} />
               </table>
             </div>
+            <h4 className="system-subheading">接口用例</h4>
+            <div className="table-wrap">
+              <table className="use-case-table">
+                <thead><tr><th>ID</th><th>Interface Use Case</th><th>调用方</th><th>成功结果</th><th>状态</th></tr></thead>
+                <InterfaceUseCaseRows useCases={item.interfaceUseCases} />
+              </table>
+            </div>
             <div className="system-contracts">
-              <div><small>PROVIDES</small>{item.provides.map((value) => <span key={value}>{value}</span>)}</div>
-              <div><small>CONSUMES</small>{item.consumes.map((value) => <span key={value}>{value}</span>)}</div>
-              <div><small>PUBLISHES</small>{item.publishes.map((value) => <span key={value}>{value}</span>)}</div>
+              <div><small>内部功能域</small>{item.internalDomains.map((value) => <span key={value}>{value}</span>)}</div>
+              <div><small>同步接口依赖</small>{item.dependsOn.map((value) => <span key={value}>{value}</span>)}</div>
+              <div><small>订阅 MQ</small>{item.subscribes.map((value) => <span key={value}>{value}</span>)}</div>
+              <div><small>发布 MQ 通知</small>{item.publishes.map((value) => <span key={value}>{value}</span>)}</div>
+              <div><small>不负责</small>{item.exclusions.map((value) => <span key={value}>{value}</span>)}</div>
             </div>
           </div>
         </details>

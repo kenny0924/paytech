@@ -53,12 +53,12 @@ export function CoarseArchitectureDiagram() {
 }
 
 const domainGroups = [
-  { service: "Client & Distribution", domains: ["Client Account", "Onboarding", "Distribution Contract", "Business Profile", "Operating Entity", "Acceptance Policy"] },
+  { service: "Client & Contract", domains: ["Client Account", "Operating Entity", "Local Partner", "Agreement", "Commercial Terms"] },
   { service: "Commerce", domains: ["Checkout Session", "Order Snapshot", "Consumer", "Order", "Fulfillment", "Refund", "Customer Care"] },
   { service: "Payment Orchestration", domains: ["Provider Registry", "Merchant Account", "Payment Routing", "Payment Execution", "Provider Callback", "Payment Reconciliation"] },
   { service: "Risk & Compliance", domains: ["Client Risk", "Business Policy", "Transaction Risk", "Risk Decision", "Case Management", "Dispute"] },
   { service: "Finance", domains: ["Fee Calculation", "Revenue Share", "Accounting Instruction", "Legal Entity Ledger", "Balance & Reserve", "Settlement", "Profitability", "Tax", "Finance Reconciliation"] },
-  { service: "Platform", domains: ["IAM", "Client Webhook", "Notification", "Configuration", "Audit", "File & Evidence"] },
+  { service: "Platform Support", domains: ["IAM", "API Key", "Client Webhook", "Notification", "Configuration", "Audit", "File & Evidence"] },
 ];
 
 export function DomainMapDiagram() {
