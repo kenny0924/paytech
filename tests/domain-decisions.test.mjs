@@ -98,3 +98,15 @@ test("Partner Console is read-only for transactions and can request only share p
   assert.match(content, /禁止操作订单、支付、退款、路由和账本/);
   assert.match(content, /平台自有主体不创建 Partner 关系/);
 });
+
+test("top-level tabs separate architecture from global and system use cases", async () => {
+  const content = await renderPage();
+
+  assert.match(content, /role="tablist"/);
+  assert.match(content, /data-content-tab="architecture"/);
+  assert.match(content, /data-content-tab="use-cases"/);
+  assert.match(content, /data-view-panel="architecture"/);
+  assert.match(content, /data-view-panel="use-cases"/);
+  assert.match(content, /U01[\s\S]*全局用例/);
+  assert.match(content, /U02[\s\S]*系统用例/);
+});

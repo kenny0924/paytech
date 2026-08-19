@@ -59,6 +59,25 @@ export function GlobalUseCases() {
   );
 }
 
+export function UseCaseViewOverview() {
+  const independentUseCaseCount = FUNCTIONAL_SYSTEMS.reduce((sum, system) => sum + system.useCases.length, 0);
+  const interfaceUseCaseCount = FUNCTIONAL_SYSTEMS.reduce((sum, system) => sum + system.interfaceUseCases.length, 0);
+
+  return (
+    <header className="use-case-view-hero">
+      <div className="eyebrow">USE CASE CATALOG</div>
+      <h1>Global &amp; System Use Cases</h1>
+      <p>先从跨系统业务目标理解完整链路，再进入六个系统查看独立用例、接口用例和协作边界。</p>
+      <div className="use-case-view-stats" aria-label="用例目录统计">
+        <article><small>GLOBAL</small><strong>{GLOBAL_USE_CASES.length}</strong><span>全局用例</span></article>
+        <article><small>SYSTEMS</small><strong>{FUNCTIONAL_SYSTEMS.length}</strong><span>核心系统</span></article>
+        <article><small>INDEPENDENT</small><strong>{independentUseCaseCount}</strong><span>独立用例</span></article>
+        <article><small>INTERFACE</small><strong>{interfaceUseCaseCount}</strong><span>接口用例</span></article>
+      </div>
+    </header>
+  );
+}
+
 export function UseCaseCatalog() {
   const [actor, setActor] = useState("all");
   const [system, setSystem] = useState("all");

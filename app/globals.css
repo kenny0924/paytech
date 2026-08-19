@@ -72,6 +72,21 @@ h1 { margin: 12px 0 14px; font-size: clamp(42px, 6vw, 72px); line-height: .98; l
 .copy-link { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; background: var(--surface); color: var(--muted); font-size: 11px; cursor: pointer; }
 .copy-link:hover { border-color: #aeb9c7; color: var(--accent); }
 .mobile-toc { display: none; }
+.primary-tabs { position: sticky; top: 10px; z-index: 12; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 18px; padding: 5px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); box-shadow: 0 10px 28px rgba(20,31,52,.08); }
+.primary-tabs button { min-height: 58px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 0; border-radius: 10px; color: var(--muted); background: transparent; cursor: pointer; }
+.primary-tabs button:hover { color: var(--foreground); background: #f7f9fc; }
+.primary-tabs button[aria-selected="true"] { color: white; background: #172033; box-shadow: 0 7px 18px rgba(17,24,39,.18); }
+.primary-tabs span { font-size: 14px; font-weight: 760; }
+.primary-tabs small { font-size: 9px; opacity: .72; }
+.use-case-view-hero { scroll-margin-top: 96px; padding: 42px; border: 1px solid var(--line); border-radius: 22px; background: radial-gradient(circle at 88% 12%, rgba(31,94,255,.14), transparent 32%), var(--surface); }
+.use-case-view-hero h1 { margin: 10px 0 12px; font-size: clamp(34px, 5vw, 58px); }
+.use-case-view-hero > p { max-width: 720px; margin: 0; color: var(--muted); font-size: 14px; }
+.use-case-view-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 28px; }
+.use-case-view-stats article { padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.76); }
+.use-case-view-stats small, .use-case-view-stats strong, .use-case-view-stats span { display: block; }
+.use-case-view-stats small { color: var(--muted); font: 700 8px var(--font-geist-mono); letter-spacing: .08em; }
+.use-case-view-stats strong { margin: 6px 0 2px; color: var(--accent); font-size: 24px; line-height: 1; }
+.use-case-view-stats span { color: var(--muted); font-size: 9px; }
 .actor-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .actor-card { min-height: 178px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
 .actor-initial { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; background: var(--surface-soft); color: var(--accent); font-size: 11px; font-weight: 800; }
@@ -246,6 +261,7 @@ footer strong { color: var(--foreground); } footer a { margin-left: auto; text-d
   .finance-components { grid-template-columns: repeat(2, 1fr); }
   .question-grid { grid-template-columns: 1fr 1fr; }
   .entry-app-detail { grid-template-columns: 1fr; }
+  .use-case-view-stats { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 560px) {
@@ -253,6 +269,9 @@ footer strong { color: var(--foreground); } footer a { margin-left: auto; text-d
   .scope-grid article { border-right: 0; border-bottom: 1px solid var(--line); }
   .scope-grid article:last-child { border-bottom: 0; }
   h1 { font-size: 42px; }
+  .primary-tabs button { min-height: 52px; flex-direction: column; gap: 1px; }
+  .primary-tabs small { font-size: 8px; }
+  .use-case-view-hero { padding: 30px 22px; }
   .architecture-grid, .domain-map, .domain-group > div, .taxonomy-flow, .principle-grid, .money-rules, .question-grid, .system-contracts, .entry-app-grid, .entry-boundary { grid-template-columns: 1fr; }
   .entry-row { grid-template-columns: 1fr; }
   .filter-bar { position: static; display: grid; grid-template-columns: 1fr 1fr; }
@@ -271,7 +290,7 @@ footer strong { color: var(--foreground); } footer a { margin-left: auto; text-d
   :root { --background: white; }
   body { background: white; font-size: 10pt; }
   .site-shell { display: block; }
-  .sidebar, .mobile-toc, .copy-link, .filter-bar, .toast, .copy-fallback, footer { display: none !important; }
+  .sidebar, .mobile-toc, .primary-tabs, .copy-link, .filter-bar, .toast, .copy-fallback, footer { display: none !important; }
   .document { width: 100%; padding: 0; }
   .hero { box-shadow: none; break-after: page; }
   .section { padding-top: 28px; break-before: page; }
@@ -281,4 +300,5 @@ footer strong { color: var(--foreground); } footer a { margin-left: auto; text-d
   .use-case-table tr { break-inside: avoid; }
   .table-wrap { overflow: visible; }
   .use-case-table { min-width: 0; font-size: 8pt; }
+  [data-view-panel][hidden] { display: block !important; }
 }

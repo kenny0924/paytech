@@ -1,9 +1,10 @@
 export type Status = "confirmed" | "proposed" | "mvp" | "later" | "open";
+export type ContentView = "architecture" | "use-cases";
 
 export interface NavigationItem {
   id: string;
   label: string;
-  group?: string;
+  group: ContentView;
 }
 
 export interface Actor {
@@ -55,18 +56,18 @@ export interface EntryApplicationDefinition {
 }
 
 export const NAV_ITEMS: NavigationItem[] = [
-  { id: "overview", label: "项目概览" },
-  { id: "business-model", label: "业务模型" },
-  { id: "architecture", label: "原始架构图" },
-  { id: "domain-map", label: "细化领域地图" },
-  { id: "end-to-end", label: "端到端流程" },
-  { id: "use-cases", label: "平台级 Use Case" },
-  { id: "systems", label: "系统职责与 Use Case" },
-  { id: "entry-applications", label: "入口应用" },
-  { id: "payment-model", label: "支付模型" },
-  { id: "finance-model", label: "财务模型" },
-  { id: "decisions", label: "已确认决策" },
-  { id: "open-questions", label: "待讨论事项" },
+  { id: "overview", label: "项目概览", group: "architecture" },
+  { id: "business-model", label: "业务模型", group: "architecture" },
+  { id: "architecture", label: "原始架构图", group: "architecture" },
+  { id: "domain-map", label: "细化领域地图", group: "architecture" },
+  { id: "end-to-end", label: "端到端流程", group: "architecture" },
+  { id: "entry-applications", label: "入口应用", group: "architecture" },
+  { id: "payment-model", label: "支付模型", group: "architecture" },
+  { id: "finance-model", label: "财务模型", group: "architecture" },
+  { id: "decisions", label: "已确认决策", group: "architecture" },
+  { id: "open-questions", label: "待讨论事项", group: "architecture" },
+  { id: "use-cases", label: "全局用例", group: "use-cases" },
+  { id: "systems", label: "系统用例", group: "use-cases" },
 ];
 
 export const ACTORS: Actor[] = [

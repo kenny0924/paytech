@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ACTORS, DECISIONS, NAV_ITEMS, OPEN_QUESTIONS } from "../content/requirements";
+import { useEffect, useMemo, useState } from "react";
+import { ACTORS, DECISIONS, NAV_ITEMS, OPEN_QUESTIONS, type ContentView, type NavigationItem } from "../content/requirements";
+import { navigationForView, resolveContentView } from "../lib/content-navigation.mjs";
 import {
   BusinessModelDiagram,
   CoarseArchitectureDiagram,
@@ -12,7 +13,7 @@ import {
 } from "./architecture-diagrams";
 import { StatusBadge } from "./status-badge";
 import { EntryApplicationCatalog } from "./entry-application-catalog";
-import { GlobalUseCases, UseCaseCatalog } from "./use-case-catalog";
+import { GlobalUseCases, UseCaseCatalog, UseCaseViewOverview } from "./use-case-catalog";
 
 function SectionHeading({
   index,
@@ -41,12 +42,28 @@ function SectionHeading({
 }
 
 export function RequirementsSite() {
+  const [activeView, setActiveView] = useState<ContentView>("architecture");
   const [activeSection, setActiveSection] = useState("overview");
   const [copied, setCopied] = useState("");
   const [fallbackUrl, setFallbackUrl] = useState("");
+  const visibleNavItems = useMemo<NavigationItem[]>(() => navigationForView(NAV_ITEMS, activeView), [activeView]);
 
   useEffect(() => {
-    const sections = NAV_ITEMS
+    const syncViewFromHash = () => {
+      const view = resolveContentView(window.location.hash, NAV_ITEMS) as ContentView;
+      setActiveView(view);
+      const sectionId = window.location.hash.replace(/^#/, "");
+      if (NAV_ITEMS.some((item) => item.id === sectionId)) setActiveSection(sectionId);
+      window.requestAnimationFrame(() => document.getElementById(sectionId)?.scrollIntoView());
+    };
+
+    syncViewFromHash();
+    window.addEventListener("hashchange", syncViewFromHash);
+    return () => window.removeEventListener("hashchange", syncViewFromHash);
+  }, []);
+
+  useEffect(() => {
+    const sections = visibleNavItems
       .map((item) => document.getElementById(item.id))
       .filter((element): element is HTMLElement => Boolean(element));
     const observer = new IntersectionObserver(
@@ -60,7 +77,15 @@ export function RequirementsSite() {
     );
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
-  }, []);
+  }, [visibleNavItems]);
+
+  function switchContentView(view: ContentView) {
+    const sectionId = view === "architecture" ? "overview" : "use-cases";
+    setActiveView(view);
+    setActiveSection(sectionId);
+    window.history.replaceState(null, "", `#${sectionId}`);
+    window.requestAnimationFrame(() => document.getElementById(sectionId)?.scrollIntoView());
+  }
 
   async function copyLink(id: string) {
     const url = `${window.location.origin}${window.location.pathname}#${id}`;
@@ -83,7 +108,7 @@ export function RequirementsSite() {
           <span>MoR Blueprint</span>
         </a>
         <nav>
-          {NAV_ITEMS.map((item) => (
+          {visibleNavItems.map((item) => (
             <a key={item.id} href={`#${item.id}`} aria-current={activeSection === item.id ? "location" : undefined}>
               {item.label}
             </a>
@@ -98,8 +123,33 @@ export function RequirementsSite() {
       <main className="document">
         <details className="mobile-toc">
           <summary>浏览文档目录</summary>
-          <nav>{NAV_ITEMS.map((item) => <a key={item.id} href={`#${item.id}`}>{item.label}</a>)}</nav>
+          <nav>{visibleNavItems.map((item) => <a key={item.id} href={`#${item.id}`}>{item.label}</a>)}</nav>
         </details>
+
+        <div className="primary-tabs" role="tablist" aria-label="一级内容导航">
+          <button
+            type="button"
+            role="tab"
+            data-content-tab="architecture"
+            aria-selected={activeView === "architecture"}
+            aria-controls="architecture-panel"
+            onClick={() => switchContentView("architecture")}
+          >
+            <span>架构</span><small>业务模型 · 六系统 · 入口应用</small>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            data-content-tab="use-cases"
+            aria-selected={activeView === "use-cases"}
+            aria-controls="use-cases-panel"
+            onClick={() => switchContentView("use-cases")}
+          >
+            <span>用例</span><small>全局用例 · 系统用例</small>
+          </button>
+        </div>
+
+        <div id="architecture-panel" role="tabpanel" data-view-panel="architecture" hidden={activeView !== "architecture"}>
 
         <header className="hero" id="overview">
           <div className="eyebrow">MERCHANT OF RECORD · REQUIREMENTS</div>
@@ -155,23 +205,13 @@ export function RequirementsSite() {
           </div>
         </section>
 
-        <section className="section" id="use-cases">
-          <SectionHeading index="05" title="平台级 Use Case" description="跨越多个领域的核心业务目标，以及每条链路需要交付的成功结果。" sectionId="use-cases" onCopy={copyLink} />
-          <GlobalUseCases />
-        </section>
-
-        <section className="section systems-section" id="systems">
-          <SectionHeading index="06" title="六系统功能拆分与 Use Case" description="明确每个系统的边界、独立用例、接口用例、同步依赖、MQ 通知和不负责事项。" sectionId="systems" onCopy={copyLink} />
-          <UseCaseCatalog />
-        </section>
-
         <section className="section" id="entry-applications">
-          <SectionHeading index="07" title="入口应用与管控台" description="入口应用服务不同用户和外部系统，但不计入六个核心系统，也不拥有核心业务事实。" sectionId="entry-applications" onCopy={copyLink} />
+          <SectionHeading index="05" title="入口应用与管控台" description="入口应用服务不同用户和外部系统，但不计入六个核心系统，也不拥有核心业务事实。" sectionId="entry-applications" onCopy={copyLink} />
           <EntryApplicationCatalog />
         </section>
 
         <section className="section" id="payment-model">
-          <SectionHeading index="08" title="支付渠道模型" description="避免把 Provider、MID、支付方式和 Scheme 混成一个无法解释的渠道字段。" sectionId="payment-model" onCopy={copyLink} />
+          <SectionHeading index="06" title="支付渠道模型" description="避免把 Provider、MID、支付方式和 Scheme 混成一个无法解释的渠道字段。" sectionId="payment-model" onCopy={copyLink} />
           <PaymentTaxonomyDiagram />
           <div className="boundary-box">
             <div><strong>路由资格</strong><span>Operating Entity + MCC + 币种 + 地区 + 支付方式 + 订单快照 + 业务政策 + 风险 + 限额</span></div>
@@ -180,7 +220,7 @@ export function RequirementsSite() {
         </section>
 
         <section className="section" id="finance-model">
-          <SectionHeading index="09" title="计算、账本与结算" description="计费与分润负责计算，复式账本负责记账，对账负责确认实际成本。" sectionId="finance-model" onCopy={copyLink} />
+          <SectionHeading index="07" title="计算、账本与结算" description="计费与分润负责计算，复式账本负责记账，对账负责确认实际成本。" sectionId="finance-model" onCopy={copyLink} />
           <FinanceFlowDiagram />
           <div className="money-rules">
             <article><small>CLIENT PRICING</small><strong>百分比 + 固定金额</strong><p>合同费率按版本和交易时间生效。</p></article>
@@ -193,7 +233,7 @@ export function RequirementsSite() {
         </section>
 
         <section className="section" id="decisions">
-          <SectionHeading index="10" title="已确认决策" description="这些内容已在讨论中确认，后续设计以此为当前基线。" sectionId="decisions" onCopy={copyLink} />
+          <SectionHeading index="08" title="已确认决策" description="这些内容已在讨论中确认，后续设计以此为当前基线。" sectionId="decisions" onCopy={copyLink} />
           <div className="decision-list">
             {DECISIONS.map((decision, index) => (
               <article key={decision}><span>{String(index + 1).padStart(2, "0")}</span><p>{decision}</p><StatusBadge status="confirmed" /></article>
@@ -202,18 +242,33 @@ export function RequirementsSite() {
         </section>
 
         <section className="section" id="open-questions">
-          <SectionHeading index="11" title="后续待讨论" description="不阻碍当前需求文档，但需要在详细业务或技术设计阶段继续确定。" sectionId="open-questions" onCopy={copyLink} />
+          <SectionHeading index="09" title="后续待讨论" description="不阻碍当前需求文档，但需要在详细业务或技术设计阶段继续确定。" sectionId="open-questions" onCopy={copyLink} />
           <div className="question-grid">
             {OPEN_QUESTIONS.map((question, index) => (
               <article key={question}><span>Q{String(index + 1).padStart(2, "0")}</span><p>{question}</p><StatusBadge status="open" /></article>
             ))}
           </div>
         </section>
+        </div>
+
+        <div id="use-cases-panel" role="tabpanel" data-view-panel="use-cases" hidden={activeView !== "use-cases"}>
+          <UseCaseViewOverview />
+
+          <section className="section" id="use-cases">
+            <SectionHeading index="U01" title="全局用例" description="从业务参与者的目标出发，描述跨越多个系统的完整成功结果。" sectionId="use-cases" onCopy={copyLink} />
+            <GlobalUseCases />
+          </section>
+
+          <section className="section systems-section" id="systems">
+            <SectionHeading index="U02" title="系统用例" description="按六个核心系统查看独立用例、接口用例、同步依赖、MQ 通知和明确边界。" sectionId="systems" onCopy={copyLink} />
+            <UseCaseCatalog />
+          </section>
+        </div>
 
         <footer>
           <strong>MoR Platform Blueprint</strong>
           <span>Requirements v0.1 · 2026-08-18</span>
-          <a href="#overview">返回顶部 ↑</a>
+          <a href={activeView === "architecture" ? "#overview" : "#use-cases"}>返回本页顶部 ↑</a>
         </footer>
 
         {copied ? <div className="toast" role="status">章节链接已复制</div> : null}
