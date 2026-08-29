@@ -1,0 +1,18 @@
+---
+description: Formats changed Java code with the repository Eclipse P3C profile
+globs: **/*.java
+alwaysApply: false
+---
+
+# Java Formatting
+
+When creating or modifying Java source:
+
+- Treat the repository-root `eclipse-codestyle.xml` as the authoritative formatter configuration.
+- Use its `P3C-CodeStyle` profile; do not substitute IDE defaults or approximate the style manually.
+- Format every Java file changed by the current task before running the final build and tests.
+- Limit formatting to Java files touched by the current task; do not mass-reformat unrelated code.
+- Preserve behavior while formatting and review the resulting diff for accidental semantic changes.
+- If the available formatter cannot load this profile, report the limitation instead of silently using another style.
+
+The profile uses four-space indentation, spaces instead of tabs, and a 120-column line width.

@@ -1,0 +1,52 @@
+import { TABLES as IDENTITY_ACCESS_TABLES } from "./manifests/01-identity-access.mjs";
+import { TABLES as FILE_DOCUMENT_TABLES } from "./manifests/02-file-document.mjs";
+import { TABLES as NOTIFICATION_TABLES } from "./manifests/03-notification.mjs";
+import { TABLES as WEBHOOK_TABLES } from "./manifests/04-webhook.mjs";
+import { TABLES as AUDIT_SECURITY_TABLES } from "./manifests/05-audit-security.mjs";
+import { TABLES as GATEWAY_TABLES } from "./manifests/06-gateway.mjs";
+import { TABLES as TECHNICAL_CONFIG_TABLES } from "./manifests/07-technical-config.mjs";
+import { TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
+
+export const TABLE_GROUPS = Object.freeze({
+  identity_access: IDENTITY_ACCESS_TABLES,
+  file_document: FILE_DOCUMENT_TABLES,
+  notification: NOTIFICATION_TABLES,
+  webhook: WEBHOOK_TABLES,
+  audit_security: AUDIT_SECURITY_TABLES,
+  gateway: GATEWAY_TABLES,
+  technical_config: TECHNICAL_CONFIG_TABLES,
+  reliability: RELIABILITY_TABLES,
+});
+
+export const TABLES = Object.freeze(Object.values(TABLE_GROUPS).flat());
+export const RELATIONS = Object.freeze(TABLES.flatMap((table) => table.relations));
+
+const expectedGroupSizes = Object.freeze({
+  identity_access: 16,
+  file_document: 19,
+  notification: 14,
+  webhook: 11,
+  audit_security: 9,
+  gateway: 13,
+  technical_config: 8,
+  reliability: 2,
+});
+
+for (const [groupKey, expectedSize] of Object.entries(expectedGroupSizes)) {
+  const actualSize = TABLE_GROUPS[groupKey].length;
+  if (actualSize !== expectedSize) {
+    throw new Error(`Platform Support 图组 ${groupKey} 必须有 ${expectedSize} 张表，当前为 ${actualSize}`);
+  }
+}
+
+if (TABLES.length !== 92) {
+  throw new Error(`Platform Support 必须有 92 张表，当前为 ${TABLES.length}`);
+}
+
+if (new Set(TABLES.map((table) => table.defKey)).size !== TABLES.length) {
+  throw new Error("Platform Support 逻辑表名重复");
+}
+
+if (new Set(TABLES.map((table) => table.physicalKey)).size !== TABLES.length) {
+  throw new Error("Platform Support 物理表名重复");
+}

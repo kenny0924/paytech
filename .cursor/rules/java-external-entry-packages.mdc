@@ -1,0 +1,17 @@
+---
+description: Places externally triggered Java entry adapters under the ext package
+globs: **/*.java
+alwaysApply: false
+---
+
+# 外部触发入口包规范
+
+- 外部机制触发内部服务工作时，入站适配器统一放在与 `service` 平级的 `ext` 包下。
+- 标准子包为 `ext/job`、`ext/dubbo`、`ext/rest`：
+  - `job` 放 XXL-Job 等外部调度入口；
+  - `dubbo` 只放已批准的既有或迁移期 Dubbo Provider 入口；
+  - `rest` 放 REST Controller 和 HTTP 入站适配器。
+- 其他入站协议只有存在真实用例时才增加对应的 `ext/<protocol>` 子包，不创建空目录。
+- `ext` 只做协议解析、入口校验、上下文转换和服务委托，不承载业务规则、事务编排或持久化逻辑。
+- 出站 HTTP、Provider 或第三方 SDK 适配器放在独立的 `integration` 边界，不混入 `ext`。
+- `ext/dubbo` 只定义包位置，不授权 Code-MoR 新增 Dubbo；内部同步调用仍使用 `@HttpExchange`。

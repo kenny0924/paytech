@@ -1,0 +1,15 @@
+---
+description: Enforces Code-MoR physical database object naming
+alwaysApply: true
+---
+
+# Database Object Naming
+
+When designing or changing PDManer models, DDL, migrations, DO/Mapper mappings, or database tests:
+
+- Every physical table name must be lowercase `snake_case` and start with `t_`, for example `t_party`.
+- Every unique index name must start with `uk_`.
+- Every non-unique index name must start with `idx_`.
+- Chinese PDManer `defName` values remain business-readable and do not receive technical prefixes.
+- Architecture prose and logical catalogs may omit `t_`; PDManer `defKey`, DDL, migrations, and mappings must use the physical table name.
+- Reject `ix_` for new or regenerated ordinary indexes.

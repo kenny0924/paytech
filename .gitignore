@@ -1,41 +1,125 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# OS and editor files
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+*~
+
+# Local agent scratch state
+/.superpowers/
 
 # dependencies
-/node_modules
-/.npm-cache
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+/requirements-site/node_modules/
+/requirements-site/.npm-cache/
+/requirements-site/.cache/
+/requirements-site/.pnpm-store/
+/requirements-site/.pnp
+/requirements-site/.pnp.*
+/requirements-site/.yarn/*
+!/requirements-site/.yarn/patches
+!/requirements-site/.yarn/plugins
+!/requirements-site/.yarn/releases
+!/requirements-site/.yarn/versions
 
 # testing
-/coverage
+/requirements-site/coverage/
+/requirements-site/.nyc_output/
+/requirements-site/test-results/
+/requirements-site/playwright-report/
+/requirements-site/blob-report/
+
+# Java build output
+target/
+*.class
+.factorypath
+.apt_generated/
+.apt_generated_tests/
+.sts4-cache/
+dependency-reduced-pom.xml
+.flattened-pom.xml
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
 
 # next.js
-/.next/
-/.vinext/
-/out/
+/requirements-site/.next/
+/requirements-site/.vinext/
+/requirements-site/.vite/
+/requirements-site/out/
+/requirements-site/.turbo/
+/requirements-site/next-env.d.ts
+/requirements-site/.eslintcache
+/requirements-site/.stylelintcache
+*.tsbuildinfo
 
-# misc
-.DS_Store
+# certificates and local credentials
 *.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+/settings.xml
+/local_settings.xml
+/.m2/
+/.m3/
 
 # debug
+*.log
+*.log.*
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
+hs_err_pid*
+replay_pid*
+*.hprof
+*.jfr
+*.pid
+*.pid.lock
 
-# env files (can opt-in for committing if needed)
-.env*
+# local environment files
+.env
+.env.local
+.env.*.local
+/requirements-site/.env*
+!/requirements-site/.env.example
+!/requirements-site/.env.*.example
+/requirements-site/.dev.vars*
+!/requirements-site/.dev.vars.example
 
-# vercel
-.vercel
+# deployment caches
+.vercel/
 
-/dist/
-/.wrangler/
+/requirements-site/dist/
+/requirements-site/.wrangler/
 /outputs/
 /work/
+
+# PDManer local backups
+.back_*/
+.back_*.pdma.json
+
+# Independently versioned repositories
+/paytech-build/
+/paytech-foundation/
+/client-contract-service/
+/commerce-service/
+/payment-orchestration-service/
+/risk-compliance-service/
+/finance-service/
+/platform-support-service/
+/api-gateway/
+/business-portal-bff/
+/business-portal-web/
+/checkout-web/

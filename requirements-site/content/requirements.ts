@@ -1,0 +1,573 @@
+export type Status = "confirmed" | "proposed" | "mvp" | "later" | "open";
+export type ContentView = "architecture" | "use-cases";
+
+export interface NavigationItem {
+  id: string;
+  label: string;
+  group: ContentView;
+}
+
+export interface Actor {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface UseCase {
+  id: string;
+  title: string;
+  actorIds: string[];
+  result: string;
+  status: Status;
+}
+
+export interface InterfaceUseCase {
+  id: string;
+  title: string;
+  consumers: string[];
+  result: string;
+  status: Status;
+}
+
+export interface FunctionalSystemDefinition {
+  code: string;
+  name: string;
+  responsibility: string;
+  sourceOfTruth: string;
+  internalDomains: string[];
+  useCases: UseCase[];
+  interfaceUseCases: InterfaceUseCase[];
+  dependsOn: string[];
+  subscribes: string[];
+  publishes: string[];
+  exclusions: string[];
+}
+
+export interface EntryApplicationDefinition {
+  code: string;
+  name: string;
+  audience: string;
+  purpose: string;
+  kind: "human" | "machine" | "infrastructure";
+  status: Status;
+  capabilities: string[];
+  restrictions: string[];
+  connectsTo: string[];
+}
+
+export const NAV_ITEMS: NavigationItem[] = [
+  { id: "overview", label: "项目概览", group: "architecture" },
+  { id: "business-model", label: "业务模型", group: "architecture" },
+  { id: "architecture", label: "原始架构图", group: "architecture" },
+  { id: "domain-map", label: "细化领域地图", group: "architecture" },
+  { id: "end-to-end", label: "端到端流程", group: "architecture" },
+  { id: "entry-applications", label: "入口应用", group: "architecture" },
+  { id: "payment-model", label: "支付模型", group: "architecture" },
+  { id: "finance-model", label: "财务模型", group: "architecture" },
+  { id: "decisions", label: "已确认决策", group: "architecture" },
+  { id: "open-questions", label: "待讨论事项", group: "architecture" },
+  { id: "use-cases", label: "全局用例", group: "use-cases" },
+  { id: "systems", label: "系统用例", group: "use-cases" },
+];
+
+export const ACTORS: Actor[] = [
+  { id: "client", name: "Client", description: "通过平台发行商品、创建 Checkout、发起退款、形成应付余额并提交 Payout 的个人或机构。" },
+  { id: "consumer", name: "Consumer", description: "在托管 Checkout 中付款并接受 Operating Entity 条款的最终消费者。" },
+  { id: "operations", name: "Operations", description: "执行客户、业务准入、渠道、退款和 Manual Payout 运营。" },
+  { id: "compliance", name: "Compliance", description: "负责 KYC/KYB、制裁筛查、复审和合规处置。" },
+  { id: "finance", name: "Finance", description: "处理计费分润、账本、成本对账、保证金账户门禁和人工付款。" },
+  { id: "partner", name: "Local Partner", description: "提交当地主体资料并按照独立合作协议获得分润的合作方。" },
+  { id: "acquirer", name: "Acquirer", description: "Network International、Geidea 等收单或网关服务方。" },
+  { id: "client-system", name: "Client System", description: "通过 API 和 Webhook 创建交易、接收通知并按需提交争议证据的客户后端。" },
+];
+
+export const GLOBAL_USE_CASES: UseCase[] = [
+  { id: "E2E-01", title: "客户入驻并获得交易准备度", actorIds: ["client", "compliance", "operations", "finance"], result: "Client Application 经 after-commit Risk 尽调与多 Root BCR CAS 审批后形成当前业务事实；可在入驻页面录入 Beneficiary Account，但 Gateway 直接路由 Finance、原值进入 Vault，它不属于 CCT 且不构成交易准备度", status: "mvp" },
+  { id: "E2E-02", title: "创建并完成一次 Checkout", actorIds: ["client-system", "consumer", "acquirer"], result: "下单时通过 CCT-I13 实时准备度门禁并冻结唯一 Operating Entity 与不可变 Order Context；Payment 前服务端实时验证三种不可变 Acceptance 及其 Network Evidence，并以内部最小契约把稳定 Consumer Token、批准的网络原值和派生维度传给 Risk", status: "mvp" },
+  { id: "E2E-03", title: "处理全额或部分退款", actorIds: ["client", "operations", "acquirer"], result: "渠道退款、订单更新、追加退款账务与 Webhook 完成", status: "mvp" },
+  { id: "E2E-04", title: "处理拒付", actorIds: ["acquirer", "client", "operations"], result: "案件开立即进入 EVIDENCE_REQUIRED，向 Client 发起早于 Provider 截止时间的按需 RFI；Client 沉默时案件保持待处置，绝不自动认损。Outcome 只追加版本：PROVIDER_ACTION 可形成 Version 1 WON/LOST，CLIENT_DISPOSITION 与 OPERATIONS_DISPOSITION 只可形成 Version 1 LOST，Version 2+ 只允许 OPERATIONS_CORRECTION；结果状态的 trigger_id=decision_source_id，责任决定严格区分规则授权与人工授权", status: "mvp" },
+  { id: "E2E-05", title: "计算多方费用与分润", actorIds: ["finance", "partner"], result: "以同一 Commerce Order Context 为锚，按精确 Client Pricing、Partner Share 与 Platform Service Charge Scope 校验；Partner 来源把平台法律 Party 映射为 Finance Entity，并以一条服务费 Component 在 Partner OE 与平台账簿分别生成平衡 Journal", status: "mvp" },
+  { id: "E2E-06", title: "Client 或 Local Partner 手工出款", actorIds: ["finance", "operations", "client", "partner"], result: "Owner 对单一 Operating Entity、币种的 AVAILABLE 余额提交 Manual Payout；固定双人审批、预建 Execution、人工银行提交和完整 CONFIRMED 借记对账后才 PAID；UNKNOWN 持续占用 Owner LOCKED 与 BANK_CASH，禁止重试或取消", status: "mvp" },
+  { id: "E2E-07", title: "计算 Local Partner 分润", actorIds: ["finance", "partner"], result: "按精确 Partner Share Scope、Agreement Association 与 CCT As-Of 校验并冻结组件参数；Partner Share 先进入 PENDING，与 Client 共用 balance_available_time，成熟时先抵扣 PARTNER_RECOVERY_RECEIVABLE/NONE，净额才进入 AVAILABLE", status: "mvp" },
+  { id: "E2E-08", title: "Provider 最终批次与银行 Credit/Debit 对账", actorIds: ["finance", "acquirer"], result: "权威最终 Settlement/Remittance Batch 完成交易层闭合后，将 PROVIDER_UNSETTLED_RECEIVABLE/PAYABLE 转为 PROVIDER_SETTLEMENT_RECEIVABLE/PAYABLE；CONFIRMED 银行 Match 再进入 BANK_CASH，重大差异经固定双人审批追加调整并保留原始证据", status: "mvp" },
+  { id: "E2E-09", title: "生成多主体复式账务", actorIds: ["finance"], result: "各主体和币种独立复式记账，并以试算平衡、固定双人审批完成期间关账或受控重开", status: "mvp" },
+  { id: "E2E-10", title: "按合同成熟形成 Client 与 Local Partner 可用应付余额", actorIds: ["finance", "compliance", "client", "partner"], result: "PaymentSucceeded 冻结共同 balance_available_time；PAYABLE_BALANCE_MATURED 将 Client Principal 与可选 Partner Share 从 PENDING 转为 AVAILABLE，Partner 先净额抵扣 Recovery；未决退款、渠道 T+2 与实际 Payout 门禁都不改写或阻断成熟时间", status: "mvp" },
+  { id: "E2E-11", title: "处理 Payout 后退款、拒付与追偿", actorIds: ["finance", "client", "operations"], result: "RefundSucceeded 只冲减当前 Pending/Available，不动用 Client Security Deposit，不足以 Journal 形成 Client Recovery Receivable；Finance 对 DisputeLost/DisputeOutcomeCorrected 只在 outcome=LOST、principal_bearer=CLIENT、security_deposit_use_allowed=1 三项同时成立时使用 CLIENT_SECURITY_DEPOSIT/NONE，剩余进入 CLIENT_RECOVERY_RECEIVABLE/NONE，且不得从原因、来源或规则推导许可；未来交易抵扣与人工收款也只追加 Journal", status: "mvp" },
+  { id: "E2E-12", title: "履行消费者合同、税务与凭证责任", actorIds: ["consumer", "finance", "operations"], result: "锁定消费者法律与税费事实，生成可追溯凭证，并以不可变 Tax Return、税款资金承诺和银行借记对账完成申报付款", status: "mvp" },
+  { id: "E2E-13", title: "取消或撤销支付", actorIds: ["client-system", "operations", "acquirer"], result: "未产生成功渠道结果时严格 Cancel；授权成功但未 Capture 时执行 Void；SALE 或全额 Capture 后复用标准 Refund（全额），三条路径不共享模糊状态或新增 Reversal 表", status: "mvp" },
+];
+
+const uc = (id: string, title: string, actors: string[], result: string, status: Status = "mvp"): UseCase => ({ id, title, actorIds: actors, result, status });
+
+const iuc = (id: string, title: string, consumers: string[], result: string, status: Status = "mvp"): InterfaceUseCase => ({ id, title, consumers, result, status });
+
+export const FUNCTIONAL_SYSTEMS: FunctionalSystemDefinition[] = [
+  {
+    code: "CLIENT_CONTRACT",
+    name: "Client & Contract System",
+    responsibility: "管理 Party 与业务角色、Client/Operating Entity Application、主体关系和分配、商业协议、三类 Consumer Legal、版本化费率条款，并基于当前事实实时校验交易准备度。",
+    sourceOfTruth: "Party / Role / Application / Relationship / Assignment / Agreement / Consumer Legal / Commercial Terms",
+    internalDomains: ["Party & Profile", "Client", "Client Application", "Operating Entity", "Local Partner", "Entity Assignment", "Agreement", "Consumer Legal", "Commercial Terms"],
+    useCases: [
+      uc("CCT-01", "注册个人或机构 Client", ["client"], "同一事务创建 PENDING Client 与 ONBOARDING Client Application，目标资料进入提交审核链路"),
+      uc("CCT-02", "维护 Client 资料与业务状态", ["client", "operations"], "通过 PROFILE_CHANGE Client Application 冻结 Base/Target Profile，资料与状态变化按 BCR Revision 审计"),
+      uc("CCT-03", "暂停、恢复或终止 Client", ["operations"], "实时影响新交易资格"),
+      uc("CCT-04", "维护 Operating Entity", ["operations"], "申请创建时建立稳定 PENDING Role，批准后激活，拒绝或撤回时保留 PENDING 供重提"),
+      uc("CCT-05", "维护 Local Partner", ["operations"], "建立合作方主档"),
+      uc("CCT-06", "建立参与方关系", ["operations"], "关联 Client、Operating Entity 与 Local Partner"),
+      uc("CCT-07", "创建和管理 Client 协议", ["client", "operations"], "协议完成签署、状态变更、替换和终止；内容变化始终创建新的 Agreement ID。AgreementReplaced 携带 old_agreement_id + new_agreement_id；AgreementStatusChanged 携带同一 agreement_id + from_status/to_status，状态变化不伪装成内容替换"),
+      uc("CCT-08", "创建和管理 Partner 协议", ["partner", "operations"], "合作公司分润协议完成签署、状态变更、替换和终止；内容变化始终创建新的 Agreement ID。AgreementReplaced 携带 old_agreement_id + new_agreement_id；AgreementStatusChanged 携带同一 agreement_id + from_status/to_status，状态变化不伪装成内容替换"),
+      uc("CCT-09", "配置商业费率及生效期", ["finance", "operations"], "Client Pricing、Partner Share 与 Platform Service Charge 保持独立业务语义，物理共用 Commercial Term 四层模型并结构化保存完整组件；服务费必须来自受控 Calculation Base、百分比/固定金额和上下限，不得按残差倒算"),
+      uc("CCT-10", "接收和审核 Operating Entity 入驻申请", ["client", "partner", "operations"], "以稳定 PENDING Operating Entity 和冻结材料包审核 PLATFORM、CLIENT、PARTNER 三类来源，提交后由 LOCAL_HANDLER 幂等创建 Risk Case"),
+      uc("CCT-11", "维护 Client 业务资料与运营资格", ["client", "operations"], "Client Business Profile 可以维护多组已批准的 industry_code + mcc_code 组合；状态、分类、分配、协议和条款继续结构化维护，交易准备度在查询或下单时实时计算，不创建 Eligibility Evaluation、维度结果或 Source Fact"),
+      uc("CCT-12", "管理消费者法律条款", ["operations", "compliance"], "统一物理模型分别管理 Consumer Terms、Refund Policy、Privacy Notice；内容变化创建新的 Legal Document ID，并显式返回三份独立文档证明"),
+      uc("CCT-13", "自动分配交易 Operating Entity", ["operations"], "模型只保留 Source Relation、Affiliation、Assignment Rule 和 Assignment 四层；平台按 Client 与准确 country/currency/industry_code/mcc_code 匹配 ACTIVE Rule，规则目标主体必须同时具备有效 Affiliation 和唯一有效 Source Relation，再按最小 priority_no 生成唯一 ACTIVE Assignment；由 CCT 状态变更 Processor 在同一本地事务内同步重算，查询、定时任务和人工操作不生成分配；无候选或冲突均 Fail-Closed，Client 不可指定"),
+      uc("CCT-14", "Organization Client 申请自有或关联 Operating Entity 用于 MID 开户", ["client", "operations"], "以稳定 PENDING Operating Entity 审核自身 Party，或依据冻结申请材料与匹配的 Risk Qualification Decision 审核两个 Party 的关联；批准后形成统一 Entity Source Relation"),
+    ],
+    interfaceUseCases: [
+      iuc("CCT-I01", "查询 Client 基本信息", ["Commerce", "Risk & Compliance", "Finance"], "返回权威 Client 主档"),
+      iuc("CCT-I02", "检查 Client 交易状态", ["Commerce", "Payment Orchestration"], "返回是否允许创建新交易"),
+      iuc("CCT-I03", "查询可用 Operating Entity", ["Commerce", "Payment Orchestration"], "返回具备商业关系的候选主体"),
+      iuc("CCT-I04", "查询交易适用协议", ["Commerce", "Finance"], "返回交易时点 Client Agreement 的 client_agreement_id + client_agreement_operating_entity_id；仅 PARTNER 来源另返回 partner_agreement_id + partner_agreement_operating_entity_id"),
+      iuc("CCT-I05", "解析 Client 费率条款", ["Commerce", "Finance"], "返回唯一 Client Pricing Plan/Version/Scope、Version 与 Scope 结构字段及每个 Fee Component 的完整计算参数，不返回中间 Hash"),
+      iuc("CCT-I06", "解析 Partner 分润条款", ["Commerce", "Finance"], "返回可选 Local Partner 关系、唯一 Partner Share Plan/Version/Scope 与每个 Share Component 的完整计算参数，计算基数固定为 ACTUAL_CLIENT_FEE"),
+      iuc("CCT-I07", "查询主体与合作方关系", ["Payment Orchestration", "Finance"], "返回权威参与方关系"),
+      iuc("CCT-I08", "提交 Operating Entity 入驻申请", ["Client Console", "Partner Console", "Operations Console"], "本地事务创建/复用 PENDING Operating Entity、冻结 PLATFORM/CLIENT/PARTNER 材料包并登记 LOCAL_HANDLER；提交事务不调用 Risk"),
+      iuc("CCT-I09", "查询 Operating Entity 申请及开户进度", ["Client Console", "Partner Console", "Operations Console"], "按授权范围返回 Application、稳定 Operating Entity，以及 due_diligence_case_id/qualification_decision_id/qualification_decision_version/role_type/role_id/qualification_type 完整 Tuple 和 MID 开户状态"),
+      iuc("CCT-I10", "诊断 Client 交易准备度", ["Client Console", "Operations Console"], "请求必须携带 client_id、country、currency、industry_code、mcc_code；每次调用实时检查 CCT 当前事实，并同步查询 Platform Integration Readiness 与 Payment Routing Coverage；响应仅包含 status=READY | NOT_READY | RESTRICTED、checked_at，且仅在非 READY 时返回 reason_code；这是非持久化诊断，不是交易证明，不返回 Eligibility ID、Version、Hash 或对象"),
+      iuc("CCT-I11", "解析交易主体分配", ["Commerce"], "只读返回交易时点唯一 ACTIVE Assignment 的 assignment_id、rule_id、affiliation_id、entity_source_relation_id、source_type、operating_entity_id 与准确 Scope；不在查询时创建分配，也不再返回 Assignment Version、Assignment Scope Hash、Affiliation Revision 或 Source Relation Revision"),
+      iuc("CCT-I12", "解析消费者法律条款与卖方披露", ["Commerce"], "分别返回 consumer_terms_document_id + consumer_terms_file_id + consumer_terms_content_hash、refund_policy_document_id + refund_policy_file_id + refund_policy_content_hash、privacy_notice_document_id + privacy_notice_file_id + privacy_notice_content_hash，以及 seller_disclosure_id、OE/Country/Locale、public_legal_name/public_registration_number/public_tax_registration_number（可空）/public_address_text/public_support_email/public_support_phone；支持邮箱必填，税务登记号与支持电话可空"),
+      iuc("CCT-I13", "原子解析交易上下文", ["Commerce"], "按 client_id、country、currency、准确 industry_code + mcc_code 和唯一 context_as_of_time 每次调用实时校验 CCT 当前业务事实，并同步查询 Platform Integration Readiness 与 Payment Routing Coverage；任一前置条件不满足、冲突或依赖失败均 Fail-Closed，且不返回部分结果。成功返回完整 V5 Bundle：Profile/Classification Proof、唯一 ACTIVE Assignment、client_agreement_id + client_agreement_operating_entity_id、PARTNER 来源的 partner_agreement_id + partner_agreement_operating_entity_id、三份 Consumer Legal 的 Document/File/Hash 与完整 Seller Disclosure；Seller 的 public_tax_registration_number 可空，但 V5 Canonical JSON 必须保留该属性，缺值编码 JSON null、不得省略。同时返回 Client Pricing，以及 PARTNER 来源时属于同一 Partner Agreement 的 Partner Share、Platform Service Charge 和唯一 PLATFORM_SIGNATORY 的 platformServicePartyId；非 PARTNER 来源两个平台服务属性显式为 JSON null。三套 Term 都返回 Plan/Version/Scope 稳定 ID、Version/Scope 结构字段和逐组件完整计算参数，不返回中间 Hash。Commerce 只冻结 Assignment/Agreement Association/命中 Scope、platform_service_party_id、Legal/Seller 展示值和 V5 Hash。V5 使用 domain=CODE-MOR:CCT:COMMERCIAL_CONTEXT:5；零个或多个 Platform Signatory、缺失或并列 Service Charge Scope 均 Fail-Closed"),
+      iuc("CCT-I14", "查询不可变商业条款 Scope", ["Finance"], "按 term_scope_id、agreement_operating_entity_id 与 context_as_of_time 精确读取长期保留的历史 Scope 闭包；返回 owner_type/owner_id、agreement_id/operating_entity_id、所属 Plan/Version、完整 Scope 与稳定排序的全部 Component。读取 PLATFORM_SERVICE_CHARGE 时还返回同一 Partner Agreement 唯一 PLATFORM_SIGNATORY 的 platform_service_party_id；其他 Term 为空。CCT 校验完整父链、Association、Owner/OE 与 As-Of，不重新解析当前 ACTIVE 或重选 Priority；Finance 必须把 Party 与 Commerce 冻结值逐值比对，再映射本地 ACTIVE Finance Entity。该接口不接收、重算或验证整包 V5 commercial_context_hash；关系不一致、签约方不唯一或对象损坏永久 Fail-Closed，暂时网络错误由消息重投处理"),
+    ],
+    dependsOn: ["Risk & Compliance：身份与业务准入结论", "Payment Orchestration：同步查询当前 Routing Coverage", "Platform Support：同步查询当前 Integration Readiness，并使用 IAM、文件和审计能力"],
+    subscribes: ["RoleQualificationApproved", "RoleQualificationRejected", "RoleQualificationExpired", "RoleQualificationRevoked", "ComplianceRestricted"],
+    publishes: ["ClientCreated", "ClientSuspended", "AgreementActivated", "AgreementStatusChanged", "AgreementReplaced", "OperatingEntityChanged"],
+    exclusions: ["不作出 KYC/KYB 结论", "不执行交易风控", "不选择 MID", "不计算费用或写账"],
+  },
+  {
+    code: "COMMERCE",
+    name: "Commerce System",
+    responsibility: "管理消费者交易合同、Checkout、不可变订单上下文、消费者上下文与网络证据、订单取消/支付撤销编排和退款业务申请。",
+    sourceOfTruth: "Checkout Session / Consumer Context / Checkout Network Evidence / Consumer Contract & Acceptance / Order / Refund Request",
+    internalDomains: ["Checkout Session", "Consumer Contract & Acceptance", "Order Context", "Order", "Refund Request", "Consumer Context", "Checkout Network Evidence", "Command Reliability"],
+    useCases: [
+      uc("COM-01", "下单时传入商品与金额", ["client-system"], "Client Business Profile 可以维护多组已批准的 industry_code + mcc_code 组合；每笔 Order 必须且只能提交一组 industry_code + mcc_code。Create Order 必须提交 Client 命名空间内永久唯一的 client_order_id，并直接提交 industry_code + mcc_code，不提交 classification_id；Client 不能选择 Operating Entity、Provider 或 MID。新的 Order 必须使用新的 client_order_id"),
+      uc("COM-02", "执行下单幂等校验", ["client-system"], "(client_id, client_order_id) 永久唯一；同一命令重试必须复用原 Idempotency-Key 和 command_idempotency.operation_context_time。以新 Idempotency-Key 复用已有 client_order_id 时不创建第二个 Order，只返回明确冲突或已有 orderNo；请求等价性由命令幂等记录处理，不在 Order 上保存 Hash"),
+      uc("COM-03", "保存不可变订单上下文", ["client-system"], "CCT 成功解析并冻结 Operating Entity、Risk ALLOW 且 Finance 税务成功后，才在一个本地事务创建 Order Root、唯一不可变 Order Context、Legal 与 Item：Order Context 保存 assignment_id、Agreement Association、Client Pricing/可选 Partner Share Scope；PARTNER 来源还必须成组冻结 platform_service_charge_scope_id + platform_service_party_id，非 PARTNER 来源二者为空。上下文保存 V5 commercial_context_hash，但不保存 Finance Entity ID、服务费金额、Term Component 或会计状态；同一命令恢复必须复用唯一 commercial_context_time"),
+      uc("COM-04", "创建和管理 Checkout Session", ["client-system", "consumer"], "Order 持久化成功后才创建可支付 Session"),
+      uc("COM-05", "过期或取消未付款 Checkout", ["client-system", "consumer", "operations"], "外部 Cancel 只使用 client_order_id，不暴露内部 order_id；Commerce 解析后才在内部使用 order_id。Cancel 只适用于没有成功 Authorization、Capture 或 Sale，且没有已提交或 UNKNOWN Provider Action 的订单。Commerce 必须用确定性子幂等键调用 PAY-I12，待 Payment 确认 Intent 已安全终止，再将 Order 与 Checkout Session 置为 CANCELLED 并记录结构化 status_reason_code；已提交或 UNKNOWN 结果先 Query，发现成功渠道结果时返回 REVERSAL_REQUIRED。Cancel 不会静默升级为 Reversal；收到 OperatingEntityChanged 且 operating_entity_status=CLOSED 时同样阻止新 Attempt、等待权威收敛且不自动创建替代 Order"),
+      uc("COM-06", "接收支付结果并更新订单", ["client-system"], "订单支付状态与 Payment 事实一致"),
+      uc("COM-07", "统一撤销支付", ["operations"], "Commerce 接收业务 Reversal 命令并由 Payment 在权威锁/CAS 内判断：授权成功但未 Capture 时执行 Void；SALE 或全额 Capture 后返回 REFUND_REQUIRED，Commerce 新建全额 Refund Request，在本地 Order Refund Position 原子预占后直接调用 PAY-I04，不由 Finance 预先审批或预占；Capture 提交中或 UNKNOWN 返回 PENDING。V1 的部分 Capture 返回 PARTIAL_CAPTURE_REVERSAL_NOT_SUPPORTED"),
+      uc("COM-09", "校验并创建退款申请", ["client", "operations"], "按 refund_amount 创建退款请求；CLIENT 发起时 client_refund_id 必填且在 Client 命名空间内唯一，OPERATIONS 发起时该字段为空并使用 Command Idempotency Key。Commerce 只在 Order Refund Position 本地预占可退金额，退款状态严格使用 PENDING、PROCESSING、SUCCEEDED、FAILED、CANCELLED"),
+      uc("COM-10", "锁定消费者条款与卖方披露", ["consumer"], "保存不可变 Consumer Contract，以及 CONSUMER_TERMS、REFUND_POLICY、PRIVACY_NOTICE 三种不可变 Acceptance；每条 Acceptance 与同 Order/Session 且 evidence_scene=LEGAL_ACCEPTANCE 的 Network Evidence 在同一本地事务插入，不维护 Acceptance Summary、完成状态机或集合 Hash"),
+      uc("COM-11", "触发消费者收据或贷项通知生成", ["consumer"], "OrderPaid 或 RefundSucceeded 后可靠发布最小生成来源事实；Platform Support 保存 Receipt/Credit Note 状态、版本、文件及更正关系，Finance 保存 Fiscal Fact，Commerce 不维护消费者文档投影"),
+      uc("COM-12", "维护消费者分析上下文", ["consumer"], "每个 Order 至多维护一条可受控纠正的 Consumer Context Current Root；consumer_reference 是 Client 命名空间内非 PII、不透明且结构化校验的引用，禁止提交 Email、Phone、证件号等个人原值。Email 必填、Phone 可空并分别取得稳定 Vault Value Token；consumer_profile_vault_token 只保护姓名与完整账单地址，绝不重复包含 Email/Phone。Commerce 保存三个用途清晰的 Token 与 Email Domain、电话国家、国家化截断账单地域等批准派生维度，不保存 Consumer Blind Index、Key Version 或 Masked Value"),
+      uc("COM-13", "采集 Checkout 网络证据", ["consumer"], "可信入口按 CHECKOUT_OPEN、CONSUMER_CONTEXT_SUBMIT、LEGAL_ACCEPTANCE、PAYMENT_START 场景保存不可变 Network Evidence；Commerce 直接保存 client_ip_address、user_agent、trusted_proxy_chain 及批准的 Geo、ASN、网络/代理与浏览器/OS/设备类型派生维度，不调用 Vault、不生成 Blind Index/Key Version，也不建立 device identifier。原值与维度均按受限数据实施最小访问、审计、Retention 和禁止外部泄露"),
+    ],
+    interfaceUseCases: [
+      iuc("COM-I01", "创建 Checkout", ["Client System", "入口应用"], "请求必须携带 Client 命名空间内永久唯一的 clientOrderId 和一组 industry_code + mcc_code，拒绝 classification_id、Operating Entity、Provider 或 MID 选择字段；返回 checkoutUrl、平台公开 orderNo、clientOrderId 和过期时间；不暴露内部 Snowflake ID"),
+      iuc("COM-I02", "查询 Checkout", ["Client System", "入口应用"], "返回统一会话状态"),
+      iuc("COM-I03", "查询订单聚合视图", ["Client System", "Client Console", "入口应用"], "返回订单、支付与退款请求状态；不暴露独立退款下游投影"),
+      iuc("COM-I04", "查询不可变订单上下文", ["Payment Orchestration", "Risk & Compliance", "Finance"], "按 order_id 返回唯一不可变 Order Context：order_id/order_context_id/commercial_context_time、client_id/operating_entity_id/entity_source_type/可空 local_partner_id、国家/币种/industry_code/mcc_code、assignment_id、Agreement Association、金额与税务引用、Client Pricing/可选 Partner Share Scope，以及 PARTNER 来源的 platform_service_charge_scope_id + platform_service_party_id 和 V5 commercial_context_hash；不返回 finance_entity_id、Term Component、服务费金额或会计状态。Finance 先与 PaymentSucceeded 的 order_id/order_context_id/assignment_id、Operating Entity、金额/币种和 industry_code/mcc_code 逐字段交叉校验，再用精确 Scope + Agreement Association + As-Of 调 CCT-I14，逐值验证 Platform Service Party 并映射本地 ACTIVE Finance Entity；不得回读当前 CCT 改写历史"),
+      iuc("COM-I05", "取消未支付订单", ["Client System", "Hosted Checkout", "Client Console", "Operations Console"], "外部请求按 client_order_id、Order Expected Version 与 Command Idempotency Key 发起严格 Cancel，不暴露内部 order_id；Commerce 解析后才内部使用 order_id，并以确定性子幂等键调用 PAY-I12。只有 Payment 确认没有成功 Authorization/Capture/Sale 且不存在已提交或 UNKNOWN 渠道结果并完成 Intent 终止后，才将 Order/Session 更新为 CANCELLED、保存 status_reason_code 并发布 OrderCancelled。PENDING（reason_code=PAYMENT_IN_PROGRESS）保持订单开放，REVERSAL_REQUIRED 原样返回，Cancel 不会静默升级为 Reversal"),
+      iuc("COM-I06", "创建退款申请", ["Client System", "Client Console", "Operations Console"], "CLIENT 发起时按必填 client_refund_id 幂等创建，OPERATIONS 发起时 client_refund_id 为空并按 Command Idempotency Key 幂等创建；校验 refund_amount 并原子增加 Order Refund Position 的 reserved_amount；成功返回 refund_request_id 与可空 channel_refund_id 的稳定引用，不保存 Finance 退款预占引用"),
+      iuc("COM-I07", "查询可退款金额", ["Client System", "Client Console", "Operations Console"], "返回当前最大可退金额"),
+      iuc("COM-I08", "撤销支付", ["Operations Console"], "按 Order Expected Version 与 Command Idempotency Key 调用 PAY-I13 原子解析：USE_CANCEL 时以确定性子幂等键调用 PAY-I12；VOID_ACCEPTED 时等待 Void 权威结果后关闭 Order/Session；REFUND_REQUIRED 时按 Payment 返回的 captured_amount 新建 OPERATIONS Refund Request，在本地 Order Refund Position 原子预占后直接调用 PAY-I04；PENDING 时等待 Query 收敛；PARTIAL_CAPTURE_REVERSAL_NOT_SUPPORTED 进入人工处置"),
+      iuc("COM-I09", "查询消费者凭证来源事实", ["Platform Support"], "按业务引用返回生成 Receipt 或 Credit Note 所需的最小 Order/Refund/Legal 来源事实；不返回文档状态、文档版本、文件或更正关系，后者由 Platform Support 自己持久化"),
+      iuc("COM-I10", "验证 Payment Attempt 准备状态", ["Payment Orchestration"], "按 order_id + order_context_id 精确定位不可变交易上下文并由服务端实时判定：Order/Order Context/Checkout Session/Consumer Contract 必须同属一个 Order，Order 与 Session 当前可创建 Attempt 且未过期，同一 Contract 必须恰有 CONSUMER_TERMS、REFUND_POLICY、PRIVACY_NOTICE 三种不可变 Acceptance，且每条绑定的 Network Evidence 均属于同 Order、同 Session 并为 LEGAL_ACCEPTANCE。成功返回 consumer_contract_id、consumer_terms_acceptance_id、refund_policy_acceptance_id、privacy_notice_acceptance_id、acceptance_completed_at=max(accepted_at)、Order Version 与 Expires At；Payment 冻结三个显式 Acceptance ID，前端布尔值不能绕过，也不接受另一份聚合完成状态"),
+      iuc("COM-I11", "提交或纠正消费者上下文", ["Hosted Checkout"], "校验 consumer_reference 为 Client 命名空间内的非 PII、不透明引用，拒绝 Email、Phone、证件号等个人原值；Email/Phone 分别通过批准的稳定 Value Tokenization 取得 consumer_email_vault_token/consumer_phone_vault_token，姓名与完整账单地址单独 Protect/Bind 为 consumer_profile_vault_token，且 Profile Payload 禁止重复 Email/Phone。业务库以 Expected version 原子切换 Token 与批准派生维度，不保存 Consumer Blind Index/Key Version/Masked Value。Vault 调用使用 command_idempotency + operation slot 稳定键，终止时遵循共享 Token 引用与 Retention 策略。外部响应只返回 consumer_context_id、业务 version 与幂等成功结果，绝不返回任何 Vault Token 或派生风险字段"),
+      iuc("COM-I12", "采集 Checkout 网络证据", ["Hosted Checkout", "API Gateway"], "按 checkout_session_id + request_id + evidence_scene 幂等采集可信入口事实；Commerce 内部直接持久化不可变 network_evidence_id、client_ip_address、user_agent、trusted_proxy_chain 及批准的 Geo/ASN、network/proxy/vpn/tor/hosting、浏览器/OS/设备类型维度，不调用 Vault、不保存 Blind Index/Key Version/device identifier。外部响应仅在确有后续关联需求时返回 network_evidence_id 与幂等成功结果，不返回网络原值或内部派生风险字段；LEGAL_ACCEPTANCE Evidence 必须与 Acceptance 同一本地事务绑定"),
+      iuc("COM-I13", "查询 Payment Attempt 受限风险输入", ["Payment Orchestration"], "按 Order 与 Checkout Session 通过内部同步最小契约返回最新 Consumer Context、最新 PAYMENT_START Network Evidence及策略允许的同 Session LEGAL_ACCEPTANCE Evidence：包含非 PII consumer_reference、consumer_email_vault_token、可空 consumer_phone_vault_token、批准的 Email Domain/电话国家/账单地域维度，以及 client_ip_address、user_agent、trusted_proxy_chain 与批准的网络/设备类型维度；不返回姓名、完整账单地址或 consumer_profile_vault_token。Stable Token 和网络原值不得进入外部 API、普通日志、MQ 或通用审计 JSON，接收方仅可按获批实时风控 Purpose 使用并接受访问、审计和 Retention 控制"),
+    ],
+    dependsOn: ["Client & Contract：客户、主体和协议资格", "Risk & Compliance：Checkout 资格", "Payment Orchestration：支付和渠道退款执行", "Finance：交易税费与退款成功后的财政凭证事实", "Platform Support：合同、消费者文档文件及通用 Webhook 配置/投递"],
+    subscribes: ["ClientSuspended", "ComplianceRestricted", "OperatingEntityChanged", "PaymentAttemptStarted", "PaymentAttemptFailed", "PaymentAttemptUnknown", "PaymentSucceeded", "PaymentIntentTerminated", "RefundSucceeded", "RefundFailed", "RefundCancelled"],
+    publishes: ["OrderCreated", "CheckoutCreated", "CheckoutExpired", "OrderCancelled", "OrderPaid", "ConsumerContractLocked", "RefundRequestCreated", "RefundStatusChanged", "ConsumerDocumentRequested"],
+    exclusions: ["不执行渠道支付", "不选择 MID", "不拥有支付最终状态", "不维护账本或结算余额"],
+  },
+  {
+    code: "PAYMENT",
+    name: "Payment Orchestration System",
+    responsibility: "管理 Provider、Provider Account、MID、支付路由以及支付和渠道退款的完整执行生命周期。",
+    sourceOfTruth: "Provider / Provider Account / MID / Routing Decision / Payment / Channel Refund",
+    internalDomains: ["Provider Registry", "Provider Account", "MID Capability", "MID Health State", "Routing Coverage", "Payment Routing", "Payment Intent", "Payment Attempt", "Channel Refund"],
+    useCases: [
+      uc("PAY-01", "登记 Provider 与渠道 Adapter", ["operations"], "建立 NI、Geidea 等渠道能力"),
+      uc("PAY-02", "登记 Provider Account、MID 及其 Operating Entity", ["operations"], "Provider Account 承担技术认证账户，MID 绑定唯一法律主体与一个当前执行账户"),
+      uc("PAY-03", "配置 MID 静态能力", ["operations"], "以固定 Scope 的有类型 Key-Value 维护 MCC、币种、地区、支付方式、动作、3DS 与金额能力；MCC 继续约束 MID 能力，industry_code 不替代 MCC"),
+      uc("PAY-04", "配置、模拟和解释路由规则", ["operations"], "只在合格候选 MID 中排序"),
+      uc("PAY-05", "创建幂等 Payment Intent", ["client-system"], "一项业务支付只有一个逻辑意图"),
+      uc("PAY-06", "执行授权、扣款和消费者动作", ["consumer", "acquirer"], "完成渠道支付动作，并以通用 Payment Customer Action 表达 3DS、Redirect、SDK、App Switch 或二维码交互；AUTHORIZE 成功只表现为 Attempt=AUTHORIZED，可经查询读取，不发布 PaymentAuthorized MQ 事件；PaymentSucceeded 仅在 SALE 成功或完成全额 Capture 时产生。统一状态流转只覆盖 PAYMENT_INTENT、PAYMENT_ATTEMPT、PAYMENT_ACTION、CHANNEL_REFUND、DUPLICATE_PAYMENT_CASE；Callback/Item/Exception 与 Dispute 自有 Event 不重复写入通用状态流转"),
+      uc("PAY-07", "接收并处理渠道回调", ["acquirer"], "验签、去重和统一状态映射；仅将通过 Schema、卡数据与 Secret 检测的受控原始信封加密留档"),
+      uc("PAY-08", "主动查询不确定支付", ["operations", "acquirer"], "解决 TIMEOUT 或 UNKNOWN"),
+      uc("PAY-09", "执行授权 Void 或渠道退款", ["operations", "acquirer"], "Void 必须精确引用原 Authorization Provider Transaction Ref，且只允许 AUTHORIZE 成功、captured_amount=0、没有 Capture/Sale 已提交或 UNKNOWN 的全额授权释放；Void 不要求 Commerce Refund Request，也不产生 Finance 账务事实。渠道退款必须引用 Commerce refundRequestId 与 refund_amount；Commerce 和 Payment 分别用自身 Refund Position 管理可退额度。UNKNOWN 只保留在 Payment 本地且不对外发布；RefundSucceeded 通知 Commerce 与 Finance，RefundFailed/RefundCancelled 只通知 Commerce"),
+      uc("PAY-10", "执行受控失败切换", ["acquirer"], "仅在业务和渠道允许时尝试下一候选", "later"),
+      uc("PAY-11", "保存渠道原始交互", ["acquirer"], "仅保存通过 Schema、卡数据与 Secret 检测的受控加密原始信封，用于审计、调查和对账；意外 PAN/SAD/Secret 拒绝持久化并触发安全事件"),
+      uc("PAY-12", "监测 MID 动态健康度", ["operations"], "保存当前短窗口聚合，为路由提供动态可用性信号；不作为 PAY-I11 静态覆盖依据"),
+      uc("PAY-13", "管理 MID 生命周期", ["operations"], "激活、暂停或关闭后同步更新路由资格并发布状态事实"),
+      uc("PAY-14", "处置重复渠道结果", ["operations", "acquirer"], "同一 Intent 下第二个不同的 SALE 或完成资金的 CAPTURE 成功事实，且拥有不同 Action 与 Transaction Ref，才进入独立 Duplicate Payment Case；重复 Callback、同一外部交易号重放、QUERY 确认原 Action、正常 AUTHORIZE→CAPTURE 都不是重复支付。首笔 successful_attempt_id 不改写，后到 Attempt 进入 CONFLICTED，并对重复 Ref 执行补偿退款；重复 Authorization 且未 Capture 时只对精确原授权执行受控 VOID"),
+    ],
+    interfaceUseCases: [
+      iuc("PAY-I01", "创建支付意图", ["Commerce"], "按 order_id、order_context_id、冻结的 industry_code/mcc_code、assignment_id、Client/OE、金额币种和到期时间幂等创建唯一 Intent，并返回 ID 与版本；Payment 在 Intent 冻结 assignment_id 与全部显式订单事实。PaymentSucceeded 必须原样携带 order_id/order_context_id/assignment_id、payment_intent_id/payment_attempt_id、Operating Entity、金额/币种、industry_code/mcc_code、实际支付方式、成功 Action 的 provider_id/provider_account_id/mid_id，以及 provider_transaction_ref_id/reference_type/external_transaction_id；路由使用同一组合且 MID 必须匹配 MCC 能力"),
+      iuc("PAY-I02", "发起支付", ["Hosted Checkout"], "创建 Attempt 前调用 COM-I10 实时验证并冻结 consumer_terms_acceptance_id、refund_policy_acceptance_id、privacy_notice_acceptance_id、acceptance_completed_at、Order Version 与 Expires At；再通过 COM-I13 取得最新假名化受限风险输入。从 Payment Method Catalog 选择精确 payment_method_code 并冻结到 Attempt；支付工具只有稳定 Provider 引用时才保存单表 Instrument。Attempt 创建及首次 AUTHORIZE/SALE/CAPTURE Provider 提交前同步查询 CCT 的 Client/Operating Entity 当前状态和 Risk 的 Compliance 当前限制，不订阅 ClientSuspended 或 ComplianceRestricted 预热事件。检查通过结果不持久化为独立 Gate；明确阻断、缺失、超时或技术失败均 Fail-Closed，以 Attempt/Action FAILED、failure_stage/status_reason_code 和状态流转收口且不创建 Provider Interaction。只在风控和限额 ALLOW 后以 Payment Customer Action 统一表达 REDIRECT、THREE_DS_CHALLENGE、SDK、APP_SWITCH、QR_CODE；只持久化非敏感稳定 provider_reference，不持久化 Redirect URL、Client Secret、SDK Token、QR Payload 或 bearer-like 参数"),
+      iuc("PAY-I03", "查询支付与渠道引用", ["Commerce", "Finance", "Operations Console"], "返回统一支付/尝试/退款状态，以及授权范围内冻结的 Provider、Provider Account、MID、支付与退款 Transaction Reference 和来源版本"),
+      iuc("PAY-I04", "执行渠道退款", ["Commerce"], "按 commerce_refund_request_id、order_id、refund_amount 和 currency 幂等处理；Payment 按 Order 唯一解析 Intent 与 Payment Refund Position，锁定 Position 后在同一本地事务以 CAS 原子增加 reserved_amount 并创建唯一 Channel Refund，始终满足 reserved_amount + refunded_amount <= original_amount。Intent 与成功 Attempt 由 Payment Refund Position 唯一追溯，Channel Refund 不复制这些字段，也不保存没有复算消费者的 Binding Hash。Payment Refund Position 冻结 original_provider_transaction_ref_id，新 REFUND Action 以 target_provider_transaction_ref_id 指向原 Ref，成功后的 REFUND Transaction Ref 再以 original_provider_transaction_ref_id 指回原 Ref，从原 Action 恢复冻结 Provider/Provider Account/MID。UNKNOWN 只保留在 Payment 本地并继续占用 Position，不对外发布；RefundSucceeded 消费 Position 且同时通知 Commerce 与 Finance，RefundFailed/RefundCancelled 释放 Position 且只通知 Commerce"),
+      iuc("PAY-I05", "查询渠道退款", ["Commerce", "Operations Console"], "返回最终或处理中状态"),
+      iuc("PAY-I06", "查询可用支付方式", ["Hosted Checkout", "Commerce"], "返回当前交易可展示方式"),
+      iuc("PAY-I07", "模拟并解释路由", ["Operations Console"], "返回候选、排序和淘汰原因"),
+      iuc("PAY-I08", "接收 Provider Webhook", ["Provider"], "可靠接收外部渠道通知"),
+      iuc("PAY-I09", "查询 Partner 授权的 MID", ["Partner Console"], "按 Partner 与主体关系返回只读 MID 列表"),
+      iuc("PAY-I10", "查询 Partner 授权的支付交易", ["Partner Console"], "返回脱敏且不可操作的逐笔交易明细"),
+      iuc("PAY-I11", "查询 Client 路由覆盖", ["Client & Contract", "Commerce", "Operations Console"], "实时静态配置覆盖诊断，返回 READY | NOT_READY | RESTRICTED、checked_at、reason_code 和候选解释；只评估当前静态 Policy、Provider Account、MID Capability 与状态，不持久化 Fact/Version/Scope Hash，不把瞬时健康当静态覆盖（包括 t_mid_health_state 的当前动态结论），不发布 RoutingCoverageChanged"),
+      iuc("PAY-I12", "终止支付意图", ["Commerce"], "按期望版本锁定 Intent。没有 Attempt 时直接终止；Provider 提交前的活动 Attempt 可原子结束为 FAILED(CANCELLED_BEFORE_PROVIDER_SUBMIT) 后终止；已提交、REQUIRES_ACTION 或 UNKNOWN 时返回 PENDING（reason_code=PAYMENT_IN_PROGRESS）并 Query，发现成功 Authorization/Capture/Sale 时返回 REVERSAL_REQUIRED，不能假定未支付"),
+      iuc("PAY-I13", "解析并执行支付撤销", ["Commerce"], "只供 Commerce 内部调用；调用方不提交 payment_attempt_id 或 target_provider_txn_ref_id。Payment 锁定 Intent、Attempt、Action 与 Provider Transaction Ref，并以 Expected Version/CAS 原子判断：没有成功渠道结果返回 USE_CANCEL；授权成功但未 Capture 时冻结 target_provider_txn_ref_id、阻止后续 Capture 并创建全额 VOID Action，返回 VOID_ACCEPTED；SALE 或全额 Capture 后返回 REFUND_REQUIRED 与原成功 Attempt/captured_amount，由 Commerce 新建标准全额 Refund Request；Capture 提交中或 UNKNOWN 返回 PENDING；部分 Capture 返回 PARTIAL_CAPTURE_REVERSAL_NOT_SUPPORTED。Reversal 不成为 payment_action.action_type，也不创建 Reversal 表"),
+    ],
+    dependsOn: ["Commerce：不可变订单上下文和退款业务请求", "Client & Contract：主体关系", "Risk & Compliance：交易风险决定", "Platform Support：Provider 交互 Payload 与争议文件引用"],
+    subscribes: ["OperatingEntityChanged"],
+    publishes: ["PaymentAttemptStarted", "PaymentAttemptFailed", "PaymentAttemptUnknown", "PaymentSucceeded", "PaymentIntentTerminated", "DuplicatePaymentDetected", "DuplicatePaymentRemediated", "RefundSucceeded", "RefundFailed", "RefundCancelled", "DisputeNoticeReceived", "DisputeSubmissionStatusChanged", "ProviderDisputeOutcomeReceived", "RouteSelected", "ChannelHealthChanged", "MidActivated", "MidSuspended", "MidClosed"],
+    exclusions: ["不拥有订单", "不批准退款资格", "不作出 KYC 决定", "不确认实际渠道成本或客户余额", "不接收或保存 PAN、CVV/CVC、完整磁道数据或 PIN/PIN Block；卡片录入和 Tokenization 由 Provider Hosted Fields/SDK 完成"],
+  },
+  {
+    code: "RISK_COMPLIANCE",
+    name: "Risk & Compliance System",
+    responsibility: "管理角色化尽调与合规资格、版本化决策能力、实时交易风险、限额、结算限制和争议案件。",
+    sourceOfTruth: "Due Diligence Case / Compliance Decision / Decision Bundle / Risk Assessment / Limit / Dispute",
+    internalDomains: ["KYC/KYB/PDD", "Business Policy", "Checkout Eligibility", "Risk Feature", "Decision Bundle", "Shadow & Replay", "Transaction Risk", "Limit", "Settlement Restriction", "Case Management", "Dispute"],
+    useCases: [
+      uc("RCO-01", "创建和审核 KYC/KYB 申请", ["client", "compliance"], "形成可审计身份审核决定"),
+      uc("RCO-02", "执行制裁、PEP 和负面信息筛查", ["compliance"], "生成命中、风险等级和处置"),
+      uc("RCO-03", "执行持续复审", ["compliance"], "更新有效期和持续风险状态"),
+      uc("RCO-04", "配置业务分类白名单", ["operations", "compliance"], "行业和材料要求完全配置化"),
+      uc("RCO-05", "配置 Client、主体、MID 和交易限额", ["operations"], "限额策略版本化"),
+      uc("RCO-06", "执行 Checkout 资格检查", ["client-system"], "无资格交易在付款前被阻止"),
+      uc("RCO-07", "执行实时交易风险评估", ["consumer"], "返回 ALLOW、REVIEW 或 DENY"),
+      uc("RCO-08", "处理人工复核案件", ["operations"], "记录 REVIEW 分析与复核结果，但不恢复或重新放行原 Payment Attempt"),
+      uc("RCO-09", "登记和管理拒付", ["operations", "acquirer"], "收到已验证 Provider Notice 后创建 dispute_case 并直接进入 EVIDENCE_REQUIRED；记录 Client 截止时间与更晚的 Provider 截止时间，发布 DisputeEvidenceRequested。Client 未响应时案件保持 EVIDENCE_REQUIRED，不自动认损。Outcome 以 decision_source_type + decision_source_id + source_version 幂等追加：PROVIDER_ACTION 可形成 Version 1 WON/LOST，CLIENT_DISPOSITION 与 OPERATIONS_DISPOSITION 只可形成 Version 1 LOST，Version 2+ 只允许 OPERATIONS_CORRECTION；首次结果和每次更正的 trigger_id=decision_source_id。Liability 的规则路径必须同时保存 decision_evaluation_id + action_effect_id 且 decided_by 为空，人工路径二者同时为空且 decided_by 非空，禁止混合授权"),
+      uc("RCO-10", "按需收集并提交拒付证据", ["client", "operations"], "复用 dispute_case、dispute_state_change、dispute_evidence_package、dispute_evidence_ref 与 dispute_submission_request 形成可追踪材料包和提交请求，不新增通用 RFI 表"),
+      uc("RCO-11", "管理结算限制与最低保证金要求", ["compliance", "operations"], "给出可审计的出款限制，以及 RESERVE_REQUIREMENT 的最终最低保证金金额、币种和有效期；Risk 不指挥 Finance 冻结、释放或移动余额"),
+      uc("RCO-12", "版本化发布风险决策能力", ["operations", "compliance"], "以工程注册的 Feature/Action Handler、类型安全 AST 和版本化 Release 冻结决策配置及 implementation_version/implementation_hash；八类静态校验通过后执行 Shadow，绑定同一通过 Run 的两名不同 Reviewer 审批后原子发布。运营和规则作者只能编排白名单能力，不能提交或执行 SQL、Script、任意类名、URL 或运行时表达式；新增 Handler 必须经过工程实现、自动测试、部署注册和版本发布"),
+      uc("RCO-13", "执行旁路、回放与差异分析", ["operations", "compliance"], "按历史输入执行 Shadow/Replay，只保存 Evaluation、Feature/Rule/Predicate Trace、SIMULATED Effect 和差异；不得创建或执行真实 Action，不得产生 Restriction、List Entry、Limit Reservation/Movement 或业务事件，质量门禁通过后才能进入审核"),
+    ],
+    interfaceUseCases: [
+      iuc("RCO-I01", "查询 Client 合规状态", ["Client & Contract", "Commerce"], "返回当前 KYC/KYB 资格"),
+      iuc("RCO-I02", "检查业务是否允许交易", ["Commerce", "Payment Orchestration"], "基于配置化政策返回准入结果"),
+      iuc("RCO-I03", "执行 Checkout 资格检查", ["Commerce"], "在正式 Order 与 Order Context 落库前接收不可变 OrderPreparationContext：预分配 Order/Item ID、主体与来源 Tuple、国家/Locale、industry_code/mcc_code、税前 merchandise_amount/discount_amount/net_amount 与币种、V5 CCT Hash、Agreement Association/Term Scope 和 Partner 来源的平台服务 Scope/Party、Legal/Seller 及请求当时确实存在的最小 Consumer/Device 输入；Create Order 发生在消费者交互之前，不得要求尚不存在的 Consumer Context 或 Network Evidence。此时 Finance Tax Snapshot、tax_amount、最终 total_amount 与 order_context_id 尚未生成，禁止作为 Checkout 输入。Risk 对该 Context 计算并冻结 input_hash 与自身输入/决定，不保存或回查 CCT Eligibility 对象，也不依赖 Commerce 聚合 Hash。返回 ALLOW/REVIEW/DENY 或 FAILED/TIMED_OUT，除 ALLOW 外均 Fail-Closed"),
+      iuc("RCO-I04", "执行实时交易风险评估", ["Payment Orchestration"], "从 Payment Intent 冻结的 Order Context 显式事实读取 industry_code/mcc_code，并通过内部同步最小契约接收最新 Consumer Context、最新 PAYMENT_START Network Evidence，以及策略允许的同 Session LEGAL_ACCEPTANCE Evidence。输入包含非 PII consumer_reference、稳定 consumer_email_vault_token/可空 consumer_phone_vault_token、批准的联系/账单派生维度，以及 client_ip_address、user_agent、trusted_proxy_chain 和批准的 Geo/ASN/network/proxy/vpn/tor/hosting/浏览器/OS/设备类型维度；不包含 consumer_profile_vault_token、Consumer Blind Index/Key Version 或 device identifier。Risk 固化自己的不可变 Assessment Input/Feature/Fact且不回查 Commerce 数据库；Token 与网络原值不得进入外部 API、普通日志、MQ 或通用审计 JSON，并受 Purpose、访问、审计和 Retention 控制。返回结构化 Evaluation 结果：SUCCEEDED 携带 proposed_decision 与 business_decision，二者不同时必须给出调整原因；FAILED/TIMED_OUT 不携带业务决定、不执行默认放行，也不形成 REAL 或 SIMULATED Action Effect。仅 PAYMENT 决策点的 ALLOW 配置类型化 RESERVE_LIMIT_GROUP 系统义务；该义务以 0..N 条 Decision Point Limit Binding 冻结准确 Limit Version 与取值来源，并在正式评估中原子执行后返回限额 Reservation Group；零 Binding 仍返回没有 Reservation 明细的空 Group，并且不生成 Action Intent/Effect。命中规则或 Action 型系统义务产生的 Intent 必须归属于本次 Evaluation 的准确 Point Version，Action Effect 使用数据库可重算的 RISK_ACTION_EFFECT_V1 规范化身份"),
+      iuc("RCO-I06", "查询风险决定", ["Commerce", "Operations Console"], "返回决策和审计轨迹"),
+      iuc("RCO-I07", "提交拒付证据", ["Client System", "Operations Console"], "仅在 EVIDENCE_REQUIRED 且 Client 截止时间内向既有 dispute_evidence_package 追加证据引用；Operations 冻结 Package Version/Hash 后创建 dispute_submission_request。无响应不改变责任结论，案件继续等待明确处置或已验证 Provider 结果；不创建通用 RFI 记录"),
+      iuc("RCO-I08", "查询争议案件", ["Client System", "Finance"], "返回案件状态和最终结果"),
+      iuc("RCO-I09", "检查 Manual Payout 资格与限制", ["Finance"], "四个业务检查点依次为 PAYOUT_CREATION、PAYOUT_FINAL_APPROVAL、PAYOUT_EXECUTION_CREATION、PAYOUT_EXTERNAL_SUBMISSION。请求冻结 checkpoint_type、role_type/role_id、operating_entity_id、gross_amount=owner_debit_amount=cash_required_amount、currency、bank_country、source_fact_type/id/version 与 input_hash；gross_amount 不得取 requested_amount 或 beneficiary_amount，bank_country 取 Beneficiary Account。创建检查点使用预分配 PAYOUT/PAYOUT_EXECUTION ID 与 Version 1；审批和提交检查点的 source_fact_version 是命令观察并锁定的变更前 expected version，不能指向未来状态。返回 assessment_id、evaluation_id、decision、reason_codes[]、matched_controls[]、required_amount、required_currency、control_set_hash；MIN_SECURITY_DEPOSIT / RESERVE_REQUIREMENT 只提供最终最低保证金金额。Assessment/Evaluation 不可变 1:1，同一幂等命令重放复用原 pair，不同检查点和新 Retry 使用新 pair。Client 返回最低保证金金额与币种，Local Partner 两者为 NULL；非 ALLOW、技术失败、Scope/1:1/Hash 不一致或证据不可长期重取均 Fail-Closed。Risk 不返回 Finance eligibility_hash，也不新增通用结果根或版本"),
+      iuc("RCO-I10", "查询风险评估解释", ["Operations Console"], "返回主决策、旁路结果、特征版本、规则命中与差异"),
+    ],
+    dependsOn: ["Client & Contract：客户和协议主档", "Commerce：不可变 Order Context、稳定 Consumer Token 与 Network Evidence 最小输入", "Payment Orchestration：支付尝试与 Provider 争议事实", "Platform Support：DisputeEvidenceRequested 通知、文件和审计"],
+    subscribes: ["ClientCreated", "ClientSuspended", "PaymentAttemptFailed", "PaymentAttemptUnknown", "PaymentSucceeded", "RefundSucceeded", "DisputeNoticeReceived", "DisputeSubmissionStatusChanged", "ProviderDisputeOutcomeReceived"],
+    publishes: ["RoleQualificationApproved", "RoleQualificationRejected", "RoleQualificationExpired", "RoleQualificationRevoked", "ComplianceRestricted", "CheckoutRiskAssessed", "PaymentRiskAssessed", "SettlementRestricted", "SettlementReleased", "DisputeOpened", "DisputeEvidenceRequested", "DisputeWon", "DisputeLost", "DisputeOutcomeCorrected"],
+    exclusions: ["不维护 Client 主档", "不执行支付", "不直接冻结账务余额", "不计算或确认财务损失"],
+  },
+  {
+    code: "FINANCE",
+    name: "Finance System",
+    responsibility: "管理交易经济计算、多国税务事实与申报付款、复式账本、共同余额成熟、Beneficiary Account、Manual Payout、Payout Execution、Provider 三阶段清算、银行对账与重大差异处置，以及期间关账和重开。",
+    sourceOfTruth: "Finance Entity / Transaction Economics / Tax & Fiscal Record / Tax Return & Tax Payment / Journal / Balance / Beneficiary Account / Manual Payout / Payout Execution / Provider Settlement & Reconciliation / Trial Balance & Period Close",
+    internalDomains: ["Finance Entity", "Fee & Revenue Share", "Provider Cost", "Tax & Fiscal Record", "Tax Return & Tax Payment", "Accounting Instruction", "Ledger & Account Balance", "Contract Maturity", "Beneficiary Account", "Manual Payout", "Payout Execution & Reconciliation", "Provider Settlement & Reconciliation", "Reconciliation & Resolution", "Trial Balance & Period Close"],
+    useCases: [
+      uc("FIN-01", "加载交易时点费率版本", ["finance"], "从不可变 Order Context 加载精确 Client Pricing、Partner Share 与 Platform Service Charge Scope；Partner 来源校验 Platform Service Party 并唯一映射本地 ACTIVE Finance Entity"),
+      uc("FIN-02", "计算 Client 应付和合同收入", ["finance"], "按明确百分比、固定金额与受控 Calculation Base 计算；平台服务费不得用其他费用和成本的残差倒算"),
+      uc("FIN-03", "计算 Local Partner 分润", ["finance", "partner"], "形成独立 Partner 应付"),
+      uc("FIN-04", "计算预计渠道成本", ["finance"], "根据 MID、支付方式和渠道费率估算"),
+      uc("FIN-05", "确认实际渠道成本及差异", ["finance", "acquirer"], "保留预计和实际成本，成本差异生成新的 Accounting Instruction"),
+      uc("FIN-06", "计算预计和实际利润", ["finance"], "按各 Ledger Book 已确认收入和成本查询主体利润；Partner OE 不承载平台利润，gross/net 收入列报由合同与 principal/agent 会计政策决定"),
+      uc("FIN-07", "生成 Accounting Instruction", ["finance"], "一条已计算 PLATFORM_SERVICE_CHARGE Component 分别生成 Partner OE 与 Platform Finance Entity 两条单 Book 平衡指令；Accounting Rule 不重新计算费用"),
+      uc("FIN-08", "执行不可变复式记账", ["finance"], "Payment 与真实重复扣款的 Provider 毛额进入 PROVIDER_UNSETTLED_RECEIVABLE，预计 Provider Cost 独立记 PROVIDER_FEE_EXPENSE / PROVIDER_FEE_ACCRUAL，不得以费用直接冲减毛额应收；Partner OE 记服务费费用/应付，Platform Finance Entity 记应收/收入，两条 Journal 各自平衡并在同一 Finance 本地事务原子提交"),
+      uc("FIN-09", "管理 Client/Local Partner 应付、保证金与追偿账户", ["finance", "operations"], "Client 与 Local Partner 均区分 PENDING、AVAILABLE、LOCKED；Client 使用负债类 CLIENT_SECURITY_DEPOSIT/NONE 与资产类 CLIENT_RECOVERY_RECEIVABLE/NONE，Partner 使用 PARTNER_RECOVERY_RECEIVABLE/NONE 且不得携带 Client 保证金字段；全部收取、使用、退回、抵扣和人工收款只追加 Journal，不建立 Reserve、Restricted Fund 或 Recovery 工作流表，产品侧可把追偿应收展示为 Negative"),
+      uc("FIN-10", "处理退款、拒付、重复扣款和人工调整", ["finance"], "退款沿 parent_economics_id + Component Link 按原合同组件封顶冲回，并在涉及服务费时分别冲回 Partner/Platform 两本账；部分退款禁止使用整条 Entry 的技术 REVERSAL；退款、真实重复扣款补偿和明确允许入账的争议负向事实形成 PROVIDER_UNSETTLED_PAYABLE"),
+      uc("FIN-11", "执行 Provider 最终批次交易层对账", ["finance", "acquirer"], "只接受权威最终 Settlement/Remittance Batch，Preliminary Report 不触发阶段二。使用 Finance 已冻结的 Provider refs 匹配 Open/Debit Item，不在线查询 Payment；FEE/ADJUSTMENT 必须由 Cost Confirm/Allocation 或已批异常闭合，全部 Item 回放必须等于 Header，VALIDATED 单独不代表交易对账完整。完整闭合后聚合 Journal 才将 PROVIDER_UNSETTLED_RECEIVABLE/PAYABLE 转为 PROVIDER_SETTLEMENT_RECEIVABLE/PAYABLE"),
+      uc("FIN-12", "执行 Provider、Payout 与 Tax 银行层对账", ["finance"], "三类直接目标依次是 provider_batch_id + PROVIDER_SETTLEMENT、payout_execution_id + PAYOUT、tax_payment_id + TAX；Payout 使用 PAYOUT_DEBIT，组成仅允许 BENEFICIARY_TRANSFER、BANK_FEE 或 COMBINED。CONFIRMED Match 和任何改变现金的 Recon Adjustment Journal 均在过账前按 Account ID 升序锁定 BANK_CASH；外部 Debit 是已发生事实，即使容量不足也不得拒绝，先更新 Journal/Account，后续新承诺读取新余额并 Fail-Closed"),
+      uc("FIN-13", "创建 Client/Local Partner 手工 Payout 并锁定余额", ["finance", "client", "partner"], "Owner 只能在单一 Operating Entity、币种下选择同 Owner/币种且 VERIFIED 的 Beneficiary，从 AVAILABLE 主动申请并先做 PAYOUT_CREATION RCO-I09 与本地门禁，再创建 PENDING_APPROVAL。ADDED_ON_TOP 时 requested 100 + fee 2 得 beneficiary_amount=100、owner_debit_amount=102、cash_required_amount=102；DEDUCTED_FROM_PAYOUT 时 requested 100 - fee 2 得 beneficiary_amount=98、owner_debit_amount=100、cash_required_amount=100；恒有 beneficiary_amount + fee_amount = owner_debit_amount = cash_required_amount，内扣必须 requested_amount > fee_amount。按 Account ID 锁 AVAILABLE/LOCKED，以 PAYOUT_LOCK:<payout_id> 追加 Journal 并创建 Payout；request_hash 固定覆盖 Owner/OE/currency、Beneficiary content_hash、全部金额、fee_mode 与 AVAILABLE/LOCKED Account 坐标，(owner_type, owner_id, request_key) 同 Hash 重放返回原 Payout，异 Hash 冲突"),
+      uc("FIN-14", "审批、执行并确认手工 Payout", ["finance", "operations"], "固定 Maker/Checker；Final Finance Approval、Execution Create、External Submit 分别调用新的 RCO-I09。四个 checkpoint 的 Finance 本地门禁相互独立，每次都使用本次 required_amount 重验 Client Deposit/Recovery 或 Partner Recovery，较早结果不能跳过下一点。Payout 只冻结最终审批的完整结果并参与一次性 approval_hash；每个 Execution 行只保存当前/最新成功结果，外部提交结果成为当前完整快照，Execution-create pair 仍由 Risk 不可变保存。Finance eligibility_hash 是完整 RCO-I09 返回 + Owner/OE/currency/Payout owner_debit_amount Scope 的 Canonical Hash，只作本地完整性与幂等证据，不能替代 Risk input_hash/control_set_hash 或下一检查点。先创建 CREATED Execution 并立即占用 BANK_CASH，再允许人工提交；UNKNOWN 保留占用且阻断重试/取消，只有权威未扣款才 FAILED；仅完整 CONFIRMED PAYOUT_DEBIT 可原子写 PAYOUT_PAID、Execution RECONCILED 与 Payout PAID"),
+      uc("FIN-15", "受理 Client/Local Partner 主动 Payout 申请", ["client", "partner", "operations"], "请求直接创建 FIN-13 的 PENDING_APPROVAL Payout Root 并锁定 Owner 余额，不建立中间 Request Root"),
+      uc("FIN-16", "维护并审核受益人账户", ["client", "partner", "finance"], "Finance-owned 单表 t_beneficiary_account：DRAFT 可修改，经不同 Maker/Checker 审核后只有 VERIFIED 可用于新 Payout；提交时冻结银行/Vault 身份与 content_hash，冻结字段变化必须创建新 ID"),
+      uc("FIN-17", "计算交易税费与财政事实", ["finance"], "按交易时点规则生成税费快照，并在支付、退款后形成可追溯财政记录"),
+      uc("FIN-18", "执行 Client/Partner 共同应付余额成熟", ["finance", "client", "partner"], "PaymentSucceeded 后 Client 与 Partner 都先进入 PENDING，并冻结同一 Client Agreement-OE T+N 得到 balance_available_time；到期以 PAYABLE_BALANCE_MATURED:<economics_id> 在同一 Economics 事务和 Journal 中将 Client Principal 与可选 Partner Share 成熟，Partner 先净额抵扣 PARTNER_RECOVERY_RECEIVABLE/NONE，剩余才进入 AVAILABLE。未决退款不阻断成熟，Provider 到账、银行对账和实际 Payout 门禁不改变成熟时刻"),
+      uc("FIN-19", "锁定和释放 Payout 余额", ["finance", "operations"], "创建 Payout 时写 PAYOUT_LOCK；审批拒绝、无 Execution 的 PENDING_APPROVAL 主动撤回或合法取消才 exactly-once 写 PAYOUT_RELEASE。Execution FAILED 只释放 BANK_CASH 容量，Owner 余额继续 LOCKED；UNKNOWN 继续占用两者"),
+      uc("FIN-20", "处理 Payout 后追偿", ["finance", "operations"], "RefundSucceeded 只依次冲减当前 Client PENDING、AVAILABLE，不动用 CLIENT_SECURITY_DEPOSIT；Payout 已锁定、已支付或余额不足部分以 Journal 记入 CLIENT_RECOVERY_RECEIVABLE/NONE。DisputeLost 与 DisputeOutcomeCorrected 必须携带 outcome_id、outcome_version、outcome、principal_bearer 和 security_deposit_use_allowed；只有 outcome=LOST、principal_bearer=CLIENT、security_deposit_use_allowed=1 同时成立时，Finance 才先减少 CLIENT_SECURITY_DEPOSIT/NONE，剩余损失记入 CLIENT_RECOVERY_RECEIVABLE/NONE，且不得从原因码、来源类型或规则命中推导许可。非零 PARTNER_RECOVERY_RECEIVABLE/NONE 阻断新 Payout，未来 Partner Share 在共同成熟事务先抵扣；未来交易抵扣和人工收款均追加 Journal"),
+      uc("FIN-21", "执行 Tax Return 与 Tax Payment 闭环", ["finance", "operations"], "从不可变 Fiscal Record 汇总 Tax Liability Summary，创建不可变 Tax Return Version 并经固定 Maker-Checker 双人审批后申报；创建 Tax Payment 时锁定精确 Tax Return、TAX_PAYABLE/NONE Account 和 BANK_CASH t_account 行，以 tax_payable_account_id 直接绑定应付税账户，并以 active_slot 保证同一 Return 最多一个 CREATED/SUBMITTED/PROCESSING/BANK_ACCEPTED/UNKNOWN 的活动付款。全部非 FAILED Payment 加本次金额不得超过批准应付额；同时以同一 tax_payable_account_id 的 net_balance 减去该账户全部既有活动 Tax Payment.amount，校验本次金额，保证不同 Return 共用账户时合计不超额；available_cash = BANK_CASH.net_balance - active_payout_cash - active_tax_cash，其中 active Payout 只统计 CREATED/SUBMITTED/UNKNOWN Execution。UNKNOWN 不释放 active_slot 或现金承诺；只有锁定同一 TAX_PAYABLE/BANK_CASH t_account 的权威未扣款证据才能置 FAILED、释放 active_slot 且保留 Ledger Tax Payable，替代执行必须使用新的 payment_no 与 execution_key。只有锁定同一 BANK_CASH t_account 的银行借记完整对账后才写 Dr TAX_PAYABLE / Cr BANK_CASH Journal 并进入 RECONCILED；当前 Return 全部应付完成后才 CLOSED"),
+      uc("FIN-22", "执行试算平衡、期间关账与重开", ["finance", "operations"], "枚举期间全部适用 OE/Finance Entity Ledger Book，逐 Book 独立完成完整性、对账、Trial、异常清理和 Profit Carry Forward，冻结 Final Trial、最终 as_of_sequence 与 CLOSING/REOPENING Instruction；平台利润只在平台 Book 结转。全部 Book FINALIZED 后生成 close_hash，并由不同 Maker 与 Checker 固定双人审批；重开创建新的 REOPEN 流程，不覆盖原证据"),
+      uc("FIN-23", "受控取消 Payout", ["finance", "operations"], "Payout 取消：PENDING_APPROVAL 且无 Execution 可由申请人直接撤回；APPROVED、ON_HOLD、RETRY_REQUIRED 必须提交 PAYOUT_CANCEL，并由不同 Maker/Checker 审批同一 Content Hash。全部 Execution 必须 ABORTED 或权威 FAILED，且无 active slot、UNKNOWN、可能扣款、部分借记或未决 Match，才允许 exactly-once PAYOUT_RELEASE 将 LOCKED 回转 AVAILABLE；不维护或释放通用 Funding、Allocation 或 Position"),
+      uc("FIN-24", "处置重大对账差异", ["finance", "operations"], "重大对账差异通过不同 Maker 与 Checker 审批 Recon Resolution；ROUNDING_ADJUSTMENT 仅处理确定性舍入，任何金额变化必须生成新的 Accounting Instruction 与 Journal，并保留原 Exception 和来源证据。旧 FAILED Payout Execution 或 FAILED Tax Payment 的迟到 Debit 必须锁原 BANK_CASH，以 LATE_DEBIT:<bank_item_id> 幂等暂记 Dr RECON_SUSPENSE_ASSET / Cr BANK_CASH 后打开 LATE_DEBIT Exception；旧 FAILED 不得改成普通成功，新 Execution/替代付款的现金承诺不得释放，最终处置只重分类暂记资产"),
+    ],
+    interfaceUseCases: [
+      iuc("FIN-I01", "查询 Client 余额", ["Client System", "Client Console"], "返回分类余额及币种"),
+      iuc("FIN-I02", "查询 Partner 余额", ["Operations Console", "Partner Console"], "返回合作方应付余额"),
+      iuc("FIN-I03", "查询交易费用明细", ["Commerce", "Operations Console"], "解释冻结 industry_code/mcc_code 对应的税费、分润、收入和成本；Transaction Economics 及其 Component 不得被当前 Profile 或当前商业条款改写"),
+      iuc("FIN-I04", "查询交易利润", ["Operations Console"], "按 Ledger Book 主体分别返回预计与实际利润及收入列报口径；不得把 Client Fee - Partner Share - Provider Cost 机械视为平台法定利润"),
+      iuc("FIN-I05", "查询账本流水", ["Client Console", "Operations Console"], "按账户、主体和币种追溯"),
+      iuc("FIN-I07", "创建或审批 Payout", ["Operations Console"], "创建并固定双人审批 Manual Payout，不生成周期候选"),
+      iuc("FIN-I08", "查询 Payout", ["Client Console", "Partner Console", "Operations Console"], "返回权限范围内的 Payout 状态和明细"),
+      iuc("FIN-I09", "登记 Payout Execution、人工银行提交与证据", ["Operations Console"], "预建顺序 Execution、关联 file_id/file_content_hash 与银行引用；回执或 BANK_ACCEPTED 不等于 PAID，只有银行借记完整对账才确认"),
+      iuc("FIN-I10", "查询对账差异", ["Operations Console"], "返回 Provider 两层对账、Payout/Tax Bank Match、Recon Exception 与待处理项目"),
+      iuc("FIN-I11", "提交 Partner 出款申请", ["Partner Console"], "基于 Partner AVAILABLE 余额直接创建 PENDING_APPROVAL Payout Root 并锁定余额"),
+      iuc("FIN-I12", "查询 Partner Payout", ["Partner Console", "Operations Console"], "返回审批、Execution、证据与银行对账状态"),
+      iuc("FIN-I13", "提交 Client Payout", ["Client Console"], "基于 Client AVAILABLE 余额直接创建 PENDING_APPROVAL Payout Root 并锁定余额"),
+      iuc("FIN-I14", "查询 Client Payout", ["Client Console", "Operations Console"], "返回审批、Execution、证据与银行对账状态"),
+      iuc("FIN-I15", "维护受益人账户", ["Client Console", "Partner Console", "Operations Console"], "提交并查询权限范围内的 Beneficiary Account 及审核状态"),
+      iuc("FIN-I16", "查询余额成熟与 Payout 资格", ["Client Console", "Partner Console", "Operations Console"], "解释 Client/Partner PENDING、AVAILABLE、LOCKED、balance_available_time、Client Deposit/Recovery、Partner Recovery、Risk required_amount 与当前 Payout 门禁；Pending、Available、Locked、保证金和 Negative 均可解释"),
+      iuc("FIN-I17", "计算 Checkout 税费", ["Commerce"], "按预分配 Order/Item ID 和冻结交易输入幂等生成不可变 Tax Snapshot；calculation_hash 使用 CODE-MOR:FINANCE:TAX_CALCULATION:1 覆盖输出 Header、稳定排序的全部 Tax Evidence 与 Tax Line，并以行内 Registration/Jurisdiction/Rule Version/Rate/Treatment ID 绑定不可变来源。返回 tax_snapshot_id、calculation_hash、total_collected_tax、total_reverse_charge_tax、currency 及每个 source_order_item_id 的 collected line_tax_amount。无唯一规则、完整证据或金额/币种映射时 Fail-Closed，禁止默认、当前或零税率"),
+      iuc("FIN-I18", "查询财政凭证事实", ["Commerce", "Platform Support", "Operations Console"], "返回收据、发票或红字凭证所需的权威财务数据"),
+      iuc("FIN-I19", "查询追偿账户与来源流水", ["Client Console", "Operations Console", "Risk & Compliance"], "返回 CLIENT_RECOVERY_RECEIVABLE/NONE Account 当前余额、产品侧 Negative 展示，以及按 Journal source_type/source_id 追溯的形成、未来交易抵扣和人工收款历史；不返回 Recovery Case、Application 或计划状态"),
+      iuc("FIN-I20", "导入银行流水", ["Operations Console", "Bank Adapter"], "幂等导入 Credit/Debit Statement 与受控原始文件并触发对账"),
+      iuc("FIN-I22", "查询不可变 Tax Snapshot", ["Commerce", "Platform Support", "Operations Console"], "按 tax_snapshot_id 与 expected_calculation_hash 精确读取原 Tax Snapshot、Tax Evidence、Tax Line 及其 Registration、Jurisdiction、Rule/Rate/Treatment 与责任模式，并按 CODE-MOR:FINANCE:TAX_CALCULATION:1 从 Header/Evidence/Line 重算后比较 Hash；不得重新执行税务决策或改用当前税务规则，ID/Hash、集合排序、Item 映射或金额汇总不一致，对象缺失或读取失败均 Fail-Closed"),
+    ],
+    dependsOn: ["Client & Contract：费率、分润及主体关系", "Commerce：订单与消费者合同事实", "Payment Orchestration：支付终态与 MID 事实", "Risk & Compliance：争议结果、结算限制和 RESERVE_REQUIREMENT 最终最低保证金金额", "Platform Support：文件、通知和审计"],
+    subscribes: ["PaymentSucceeded", "DuplicatePaymentDetected", "DuplicatePaymentRemediated", "RefundSucceeded", "DisputeLost", "DisputeOutcomeCorrected", "ClientSuspended", "ComplianceRestricted", "SettlementRestricted", "SettlementReleased"],
+    publishes: ["EconomicsCalculated", "TaxCalculated", "FiscalRecordCreated", "LedgerPosted", "BalanceChanged", "PayableBalanceMatured", "ClientRecoveryReceivableCreated", "ActualChannelCostConfirmed", "ReconciliationMismatchDetected", "PayoutCreated", "PayoutPaid", "PayoutRetryRequired"],
+    exclusions: ["不维护商业协议", "不执行渠道支付", "不作出风险判断", "不恢复已删除的余额分桶、通用可用性规则、Reserve/Restricted Fund/Recovery 工作流或结算明细域", "第一版不自动发起银行付款"],
+  },
+  {
+    code: "PLATFORM",
+    name: "Platform Support System",
+    responsibility: "向其他五个系统提供外部身份绑定与授权、API Credential、业务 Email OTP、通知、文件、消费者凭证、Webhook、审计、Gateway 保护配置和技术运维能力，并接收 Vault 敏感访问审计，但不保存 Vault 受保护值或拥有核心业务事实。",
+    sourceOfTruth: "Identity Binding / Authorization / API Credential / Delivery / Consumer Document / File / Audit / Technical Configuration / Reliable Technical Execution",
+    internalDomains: ["IAM Binding", "Authorization", "API Credential", "Business Email OTP", "Client Webhook", "Notification & Email", "Consumer Document", "File & Evidence", "Audit & Security", "Sensitive Access Audit", "Gateway Guard", "Technical Configuration", "Reliable Technical Execution"],
+    useCases: [
+      uc("PLT-01", "管理外部 IdP 身份绑定、角色和权限", ["client", "operations"], "平台不保存密码、MFA Secret 或登录 Session，资源访问受到角色控制"),
+      uc("PLT-02", "管理 Client API Key", ["client", "operations"], "完成创建、轮换和撤销"),
+      uc("PLT-03", "管理 Client Webhook 地址", ["client"], "验证并启用回调终点"),
+      uc("PLT-04", "订阅并转换业务 MQ 通知", ["client-system"], "收到 DisputeEvidenceRequested 等业务事实后，按 Client 与 Event Type 选择当前 ACTIVE Webhook Subscription，校验其 VERIFIED Endpoint Version 并冻结到 Platform Webhook Event/Delivery，再向 Client 投递带 Client 截止时间的 RFI 通知；Platform 只负责通知与文件能力，不拥有争议状态或通用 RFI 记录"),
+      uc("PLT-05", "签名、投递、重试和回放 Webhook", ["client-system"], "可靠通知客户系统"),
+      uc("PLT-06", "发送邮件及其他通知", ["consumer", "client"], "消息状态可追踪"),
+      uc("PLT-07", "保存文件和证据", ["compliance", "finance"], "文件加密且权限隔离"),
+      uc("PLT-08", "记录操作和敏感访问审计", ["operations", "compliance"], "形成包含 Vault Purpose、Reason、Actor、Resource 与结果的不可抵赖轨迹，不复制被访问的敏感值"),
+      uc("PLT-09", "管理通用配置生命周期", ["operations"], "支持草稿、审批、生效和回滚"),
+      uc("PLT-10", "生成并投递消费者收据、发票或贷项通知", ["consumer", "finance"], "基于 Commerce 最小业务来源事实与 Finance Fiscal Fact 幂等生成不可篡改文件，永久保存文档状态、版本、文件、投递轨迹及 Credit Note 对原 Receipt 的更正引用；Commerce 不保存该 Current Projection"),
+      uc("PLT-11", "发送和验证业务 Email OTP", ["consumer", "client"], "仅支持邮箱所有权、消费者联系或低风险业务验证，不代替登录 MFA、管理员提升或财务审批"),
+      uc("PLT-12", "发布 Gateway 保护策略", ["operations"], "版本化发布限流、并发、请求大小、超时和 IP 规则，Gateway 保留 Last-Known-Good"),
+      uc("PLT-13", "未来留存与 Legal Hold 治理占位", ["operations", "compliance"], "待法规、司法辖区和业务场景明确后再设计统一治理；MVP 不发布 RetentionPolicyChanged、LegalHoldPlaced 或 LegalHoldReleased，不自动归档、匿名化或销毁，现有数据默认保留并禁止临时脚本任意删除", "later"),
+    ],
+    interfaceUseCases: [
+      iuc("PLT-I01", "执行身份认证", ["入口应用", "全部业务系统"], "返回可信身份上下文"),
+      iuc("PLT-I02", "执行权限校验", ["入口应用", "全部业务系统"], "返回资源操作授权结果"),
+      iuc("PLT-I03", "校验 API Key", ["API Gateway", "全部业务系统"], "返回 Client 身份和权限"),
+      iuc("PLT-I04", "保存和读取文件", ["Client & Contract", "Commerce", "Payment Orchestration", "Risk & Compliance", "Finance"], "返回受控 fileId、内容 Hash 与扫描状态"),
+      iuc("PLT-I05", "写入审计记录", ["全部业务系统", "Vault"], "保存操作主体、对象、Purpose、Reason 和上下文，不接收敏感明文"),
+      iuc("PLT-I06", "查询审计记录", ["Operations Console"], "返回权限过滤后的审计轨迹"),
+      iuc("PLT-I07", "管理 Webhook 订阅", ["Client Console"], "配置事件订阅关系"),
+      iuc("PLT-I08", "查询 Webhook 投递状态", ["Client Console", "Operations Console"], "返回尝试和最终结果"),
+      iuc("PLT-I09", "请求发送通知", ["全部业务系统"], "创建可追踪通知任务"),
+      iuc("PLT-I10", "生成消费者交易凭证", ["Commerce", "Finance"], "只在 ConsumerDocumentRequested 与 FiscalRecordCreated 的 Generation Key Version、Key、Scope Hash、Business Ref 和来源 Hash 一致且双输入齐备后生成，并返回受控文档引用"),
+      iuc("PLT-I11", "创建和验证业务 Email OTP", ["入口应用", "全部业务系统"], "按 Subject、Purpose 和 Context 单次验证并执行防滥用限制"),
+      iuc("PLT-I12", "读取 Gateway 已批准发布", ["API Gateway"], "按环境和集群返回完整、可校验的不可变 Release"),
+      iuc("PLT-I13", "查询 Client Integration Readiness", ["Client & Contract", "Client Console", "Operations Console"], "按 Client 与当前冻结 Requirement Config 实时返回技术接入状态、checked_at 和未就绪原因；Platform 继续拥有该事实，CCT 仅同步查询，不保存副本"),
+      iuc("PLT-I14", "查询消费者交易凭证", ["Hosted Checkout", "Consumer Service Portal", "Client Console", "Operations Console"], "按授权范围返回 Receipt、Invoice、Credit Note 的当前状态、不可变版本、文件引用和更正关系；业务来源可按需通过 COM-I09 与 FIN-I18 校验，禁止回写 Commerce 文档投影"),
+    ],
+    dependsOn: [],
+    subscribes: ["其他五个系统发布的业务事实通知", "DisputeEvidenceRequested", "ConsumerDocumentRequested", "FiscalRecordCreated", "VaultSensitiveAccessRecorded"],
+    publishes: ["WebhookDelivered", "WebhookFailed", "NotificationSent", "ConsumerDocumentGenerated", "FileStored", "ConfigurationActivated", "ClientIntegrationReadinessChanged"],
+    exclusions: ["不保存密码、MFA Secret、登录 Session 或 IdP Token", "不保存 Vault 受保护值或提供 Reveal API", "不集中承载业务幂等、compensation_event 或领域状态历史", "不作出业务准入或风险决定", "不修改订单或支付", "不计算费用", "不维护账本和余额"],
+  },
+];
+
+export const ENTRY_APPLICATIONS: EntryApplicationDefinition[] = [
+  {
+    code: "API_GATEWAY",
+    name: "API Gateway",
+    audience: "全部外部调用方",
+    purpose: "平台统一的外部流量入口，负责安全接入、基础认证、限流和路由。",
+    kind: "infrastructure",
+    status: "mvp",
+    capabilities: ["提供统一 HTTPS 域名和版本化路由", "执行 API Key、Token 与基础访问策略校验", "执行限流、IP 策略、请求大小和基础防护", "生成 requestId / traceId 并记录访问日志"],
+    restrictions: ["不拥有业务数据，也不编排跨系统业务流程", "不替代核心系统的资源级授权", "内部服务调用不强制绕行外部 Gateway"],
+    connectsTo: ["Client API", "Hosted Checkout", "Console BFF", "Provider Callback Endpoint"],
+  },
+  {
+    code: "HOSTED_CHECKOUT",
+    name: "Hosted Checkout",
+    audience: "Consumer",
+    purpose: "消费者完成付款并查看当前支付结果的托管页面。",
+    kind: "human",
+    status: "mvp",
+    capabilities: ["展示订单、金额、币种、税费和独立 Seller Disclosure 中的合同卖方", "分别展示 Consumer Terms、Refund Policy、Privacy Notice 并保存逐内容接受证据", "选择支付方式并完成 3DS 或渠道跳转", "在没有成功渠道结果时取消未支付订单", "展示支付处理中、成功、失败和取消状态", "通过 Platform Support 安全查看或下载收据与发票"],
+    restrictions: ["不以 successUrl 确认最终支付成功", "不拥有订单或支付事实", "卡片录入只使用 Provider Hosted Fields/SDK，PAN、CVV/CVC、完整磁道数据与 PIN 数据不得进入 Code-MoR 后端或 Vault"],
+    connectsTo: ["Commerce", "Payment Orchestration", "Risk & Compliance", "Platform Support"],
+  },
+  {
+    code: "CLIENT_CONSOLE",
+    name: "Client Console",
+    audience: "Client",
+    purpose: "Client 查询交易、管理接入并提交退款或 Payout 的管控台。",
+    kind: "human",
+    status: "mvp",
+    capabilities: ["提交入驻资料并查看交易资格维度", "Organization Client 申请使用自身或经平台审核关联的 Operating Entity 进行 MID 开户", "维护 Beneficiary Account 并查看审核状态", "查询订单、支付、退款和争议历史", "取消未产生成功渠道结果的订单", "发起全额或部分退款", "查看 Pending、Available、Locked、保证金和 Negative 余额", "查询 Payout 并下载付款凭证", "提交 Client Payout", "管理 API Key、Webhook 和团队权限"],
+    restrictions: ["只能访问当前 Client 的授权数据", "不能在交易请求中指定 Operating Entity、Provider 或 MID", "不直接修改支付状态或账本分录"],
+    connectsTo: ["Client & Contract", "Commerce", "Risk & Compliance", "Finance", "Platform Support"],
+  },
+  {
+    code: "PARTNER_CONSOLE",
+    name: "Partner Console",
+    audience: "Local Partner",
+    purpose: "合作方提交主体资料，并查询其授权主体、MID、交易和分润。",
+    kind: "human",
+    status: "mvp",
+    capabilities: ["提交主体信息与开户材料", "查看主体审核和 MID 开户进度", "查询关联主体、MID 和脱敏交易明细", "维护 Beneficiary Account", "查询余额成熟与 Payout", "提交 Partner Payout"],
+    restrictions: ["仅限已形成的 Partner 可用分润余额（AVAILABLE），PARTNER_RECOVERY_RECEIVABLE/NONE 非零时禁止新 Payout", "禁止操作订单、支付、退款、路由和账本", "不能在交易请求中指定 Operating Entity、Provider 或 MID", "不能启停 MID 或修改渠道凭证"],
+    connectsTo: ["Client & Contract", "Risk & Compliance", "Payment Orchestration", "Finance", "Platform Support"],
+  },
+  {
+    code: "CLIENT_API",
+    name: "Client API",
+    audience: "Client System",
+    purpose: "面向客户后端提供稳定外部协议，并把业务请求转发给对应核心系统。",
+    kind: "machine",
+    status: "mvp",
+    capabilities: ["提供版本化 Client API 协议", "创建 Checkout、取消未支付订单并查询订单和支付", "创建退款申请并查询退款", "查询 Payout 与 Webhook 状态"],
+    restrictions: ["不拥有任何核心业务事实", "不承担 Gateway 的安全接入和限流职责", "业务幂等仍由对应核心系统保证"],
+    connectsTo: ["Client & Contract", "Commerce", "Payment Orchestration", "Risk & Compliance", "Finance", "Platform Support"],
+  },
+  {
+    code: "OPERATIONS_CONSOLE",
+    name: "Operations Console",
+    audience: "Operations / Compliance / Finance",
+    purpose: "平台内部统一处理客户、主体、MID、风险、支付和财务运营。",
+    kind: "human",
+    status: "mvp",
+    capabilities: ["审核主体资料并推进 Provider 开户", "管理 MID、路由和渠道配置", "取消未支付订单并按权威支付状态执行统一 Reversal", "处理退款、拒付和异常交易", "执行对账、保证金账户核对、Beneficiary 审核、Payout 双签、Execution 人工提交与凭证回填", "查询操作与敏感访问审计"],
+    restrictions: ["按岗位和资源执行最小权限控制", "高风险财务操作需要双人审批"],
+    connectsTo: ["全部六个核心系统"],
+  },
+  {
+    code: "PROVIDER_ENDPOINT",
+    name: "Provider Callback Endpoint",
+    audience: "Provider / Acquirer",
+    purpose: "可靠接收渠道回调、拒付通知和清算数据的机器入口。",
+    kind: "machine",
+    status: "mvp",
+    capabilities: ["接收支付与退款结果回调", "接收拒付和渠道状态通知", "导入清算文件或调用清算 API", "触发不确定交易主动查询"],
+    restrictions: ["所有通知必须验签、去重；仅将通过 Schema、卡数据与 Secret 检测的受控原始信封加密留档，意外 PAN/SAD/Secret 不得持久化或进入日志并触发安全事件", "外部状态必须映射为内部统一事实"],
+    connectsTo: ["Payment Orchestration", "Risk & Compliance", "Finance", "Platform Support"],
+  },
+  {
+    code: "CONSUMER_SERVICE",
+    name: "Consumer Service Portal",
+    audience: "Consumer",
+    purpose: "消费者自助查询订单、收据和退款进度的售后入口。",
+    kind: "human",
+    status: "later",
+    capabilities: ["安全查询订单和付款记录", "下载收据或发票", "查看退款进度", "提交售后联系请求"],
+    restrictions: ["第一版不开放消费者自助退款", "查询必须通过强校验防止订单枚举"],
+    connectsTo: ["Commerce", "Payment Orchestration", "Finance", "Platform Support"],
+  },
+];
+
+export const COARSE_ARCHITECTURE = [
+  { name: "Client & Contract", items: ["Client", "Client Application", "Real-time Readiness Check", "Agreement", "Business Profile", "Operating Entity", "Consumer Legal"] },
+  { name: "Commerce", items: ["Checkout Session", "Consumer Context", "Checkout Network Evidence", "Consumer Contract & Acceptance", "Order Context", "Order", "Refund"] },
+  { name: "Payment Orchestration", items: ["Provider Registry", "Provider Account / MID", "Routing Coverage", "Routing", "Execution", "Callback", "UNKNOWN Resolution / Provider Interaction Recovery"] },
+  { name: "Risk & Compliance", items: ["Client Risk", "Business Policy", "Transaction Risk", "Decision", "Case", "Dispute"] },
+  { name: "Finance", items: ["Fee Calculation", "Tax", "Revenue Share", "Provider Cost & Settlement", "Accounting Instruction", "Ledger & Balance", "Contract Maturity", "Beneficiary Account", "Security Deposit & Recovery Gate", "Manual Payout", "Payout Execution & Reconciliation"] },
+  { name: "Platform Support", items: ["IAM Binding", "API Credential & Email OTP", "Client Webhook", "Notification", "Consumer Document", "Gateway Guard", "Technical Configuration", "Reliable Technical Execution", "Audit", "File & Evidence"] },
+];
+
+export const DECISIONS = [
+  "一个阿联酋 Operating Entity 先运行，数据模型预留多主体。",
+  "Client 可以是中国个人，不在核心模型中强调具体行业或作者身份。",
+  "采用平台托管跳转式 Checkout。",
+  "第一版只开放 USD，一次性支付，金额模型原生支持多币种。",
+  "接入多个 Provider/MID，但路由不得突破其获批能力。",
+  "Client 和内部运营均可发起全额或部分退款。",
+  "第一版采用 Manual Payout：系统计算、固定双人审批、预建 Payout Execution、人工提交银行指令并保存凭证，只有完整 CONFIRMED 银行借记对账后才确认 Paid。",
+  "Client 收费为百分比加固定金额；Local Partner 分润与 Platform Service Charge 分别独立配置。服务费必须来自明确合同 Component 和受控 Calculation Base，不得按交易残差倒算。",
+  "行业仅通过配置白名单与政策管理，不在代码中 Hard Code。",
+  "Client Business Profile 可以维护多组已批准的 industry_code + mcc_code 组合；每笔 Order 必须且只能提交一组，Create Order 直接提交 industry_code + mcc_code，不提交 classification_id。",
+  "CCT-I13 按准确行业与 MCC 组合验证 Client Profile，返回 Profile Proof 和 Classification Proof；Order、Payment、Risk 与 Finance 从不可变 Order Context 的显式事实继承同一组合，历史事实不得被当前 Profile、行业目录或 MCC 配置改写。",
+  "Client 不能选择 Operating Entity、Provider 或 MID；CCT 以获批组合冻结 Operating Entity，Payment 仅在该主体下按 MCC 能力选择 MID，industry_code 不替代 MCC。",
+  "第一版不创建 Offering；Client System 下单时传入商品、金额和币种，Commerce 将金额与分类保存在 Order 主表，并用一条不可变 Order Context 保存交易时点跨系统引用。",
+  "计费与分润负责计算，复式账本只执行平衡记账，两者职责分离。",
+  "每个 OE 或 Finance Entity 与币种使用独立账簿。Partner 来源交易可产生 Partner OE 与 Platform Finance Entity 两条各自平衡的 Journal，但一条 Journal 永不跨 Book；V1 不预建通用跨主体净额、资金转移或 Intercompany Transfer 模型。",
+  "渠道成本区分预计成本与实际成本，差异通过新记账指令和调整分录确认。",
+  "平台利润只由 Platform Finance Entity 账簿中依法确认的收入与成本形成，不直接记入交易利润账户，也不机械等于 Client Fee - Partner Share - Provider Cost；gross/net 列报由合同及 principal/agent 会计政策决定。",
+  "Finance 以人工维护的 t_finance_entity 将唯一 CCT Platform Signatory Party 映射为内部财务主体；Commerce、Payment、Risk 和外部 API 不接触 finance_entity_id。Finance Entity 可在没有 MID 或 Operating Entity 的情况下独立建账。",
+  "六个业务系统各自拥有独立数据库，禁止跨库查询和写入；跨系统数据只能通过接口获得。",
+  "同步命令和查询通过系统接口；MQ 仅用于内部回调和业务事实通知。",
+  "内部同步服务调用采用 HTTP；Java 调用方依赖服务方的轻量 *-api 契约 JAR，通过 Spring @HttpExchange 接口调用，并由 Nacos 与 Spring Cloud LoadBalancer 完成服务发现和实例选择，不新增 Dubbo 或 OpenFeign 契约。",
+  "API Gateway 是独立入口基础设施；Client API 与 Gateway 职责分离，二者均不计入六个核心系统。",
+  "Gateway 只负责外部接入、基础认证、限流和路由，不拥有业务数据或编排跨系统流程；内部服务调用不强制绕行 Gateway。",
+  "Hosted Checkout、Client Console、Partner Console、Operations Console、Client API 和 Provider Callback Endpoint 是入口应用，入口应用不拥有核心业务数据。",
+  "Operating Entity 来源统一使用 PLATFORM、CLIENT、PARTNER：平台自有、Organization Client 自身或经平台审核关联、Local Partner 提供；每类来源都可对应多个 Operating Entity，所有主体均由系统统一管理。",
+  "平台自有 Operating Entity 不创建虚假 Partner 或 Client 来源关系；Organization Client 可申请使用自身或经平台审核关联的 Operating Entity，并在主体审核后进入 MID 开户流程。CLIENT 来源只记录 SAME_PARTY 或 VERIFIED_ASSOCIATION 审核结论；当前不结构化保存多公司多层持股路径，也不计算间接持股比例。",
+  "Client 和 Local Partner 均不可在交易请求中指定 Operating Entity 或 MID；主体申请权不等于交易路由选择权。",
+  "CCT 按 Client、国家、币种和业务范围在 Order 打开前解析并冻结唯一 Operating Entity；无合格主体、路由覆盖不足或依赖失败时 Fail-Closed 且不创建 Order。Payment 对每个 Attempt 只在同一 Operating Entity 下选择 MID；临时 Provider/MID 不可用时保留同一 Order 与 Intent，重试通过新 Attempt 在同一 Operating Entity 下更换 MID，但不得切换 Operating Entity。",
+  "OperatingEntityChanged 复用 CCT 现有事件，最小携带 operating_entity_id、operating_entity_status、reason_code、source_version 和 occurred_time。本轮只有 CLOSED 表示永久不可用：Payment 阻止新 Attempt，等待无活动或 UNKNOWN Attempt 后终止唯一 Intent；Commerce 随后取消仍开放的 Order 与 Checkout Session。不自动创建替代 Order，也不跨 Operating Entity 重试；Client 若仍需交易，必须用新的 client_order_id 发起新的 CreateOrder。SUSPENDED 的在途处置不在本轮扩展。",
+  "client_order_id 是 Client 命名空间内永久唯一的业务订单号；新的 Order 必须使用新值。同一命令重试复用原 idempotency_key；同一 Client 使用新 key 重复已有 client_order_id 时不创建第二个 Order，只返回明确冲突或已有 orderNo，不使用 Order 上的请求 Hash 猜测请求等价。",
+  "一个 Order 只有一个 Checkout Session 和一个 Payment Intent；Intent 可有多次顺序 Attempt，但最多一笔成功且同一时刻最多一个非终态 Attempt。",
+  "Payment Attempt 的 REVIEW 与 DENY 均不调用 Provider；REVIEW 继续保留内部复核和策略分析记录，但不会恢复原 Attempt。",
+  "Payment 仅订阅 OperatingEntityChanged；Client、Operating Entity 与 Compliance 的当前资格在 Attempt 创建及首次 AUTHORIZE/SALE/CAPTURE 资金 Action 提交前同步查询 CCT/Risk，不通过 ClientSuspended 或 ComplianceRestricted MQ 预热。PaymentAttemptUnknown 必须携带完整追踪 payload：order/order_context/intent/attempt/action、版本、Provider ID + Provider Account ID + MID ID + Payment Action ID、金额币种、reason/event time。",
+  "当前退款仅按金额；Client 发起不需要审批。Commerce 仅保留 t_order_refund_position 与 t_refund_request 两张退款表，并只拥有 Order Refund Position 与 Refund Request：CLIENT 发起时 client_refund_id 必填且在 Client 命名空间内唯一，OPERATIONS 发起时该字段为空并使用 Command Idempotency Key；使用 refund_amount 原子预占本地可退额度，只保存可空且唯一的 Payment channel_refund_id。Commerce 本地预占后直接调用 PAY-I04；Payment 锁定自身 Payment Refund Position，以 CAS 原子增加 reserved_amount 并创建 Channel Refund。UNKNOWN 只保留在 Payment 本地，Commerce Refund Request 保持 PROCESSING 且不保存 UNKNOWN 投影。Payment 权威成功立即消费 Commerce 本地额度，权威失败或取消立即释放；Finance 只消费 RefundSucceeded 记账，不参与渠道退款前置预占，FAILED/CANCELLED 不通知 Finance。",
+  "Cancel、Void 与 Reversal 必须严格区分：Cancel 只关闭没有成功 Authorization/Capture/Sale 且没有已提交或 UNKNOWN 渠道结果的订单，不会静默升级为 Reversal；授权成功但未 Capture 的 Reversal 由 Payment 对精确原 Authorization 执行全额 Void；SALE 或全额 Capture 后的 Reversal 由 Commerce 复用标准 Refund 并创建全额 Refund Request。Reversal 不是 payment_action 类型，也没有专用表；部分 Capture 自动 Reversal 在 V1 返回 PARTIAL_CAPTURE_REVERSAL_NOT_SUPPORTED。",
+  "风险决策只允许工程注册的 Feature/Action Handler、类型安全 AST、版本化 Release、Shadow 旁路和历史 Replay；禁止运营或规则作者提交或执行 SQL/Script、任意类名、URL 或运行时表达式，新增 Handler 必须经过工程实现、自动测试、部署注册和版本发布。",
+  "Client 交易准备度不持久化 Eligibility Evaluation：CCT-I10 仅按 client_id、国家、币种、industry_code、mcc_code 返回实时诊断；CCT-I13 每次下单同步校验当前事实和外部准备度，任一失败均 Fail-Closed。V5 对 Partner 来源同时返回 Partner Share、Platform Service Charge 及唯一 Platform Signatory Party，非 Partner 来源平台服务属性为 null。",
+  "Client & Contract 的 BCR 按 Record Type 白名单启用，不为所有业务表自动建立变更历史；只有需要审计、追责或历史留档的 Root 与选定业务记录写 BCR。冻结子表和追加式领域证据依靠结构化业务版本保存历史，技术表不接入；Root current_version 是聚合 CAS 令牌，Child current_version 只表示最近审计版本，不是独立 CAS Token。",
+  "Commerce 的权威物理基线为 14 张表、223 个字段、20 个唯一索引、11 个访问索引、14 条本库关系和 4 个 Diagram Group；唯一 Order Context 新增 platform_service_charge_scope_id 与 platform_service_party_id，只冻结 CCT 外部稳定 ID，不保存 Finance Entity、服务费金额或会计状态。",
+  "Commerce 不定义 Order Snapshot Schema 或聚合 Hash。CCT V5 commercial_context_hash 与 Finance Tax Snapshot calculation_hash 仍分别由其事实所有者生成和验证，Order Context 仅保存来源证据引用。",
+  "CCT-I14 只按 Scope ID、Agreement-Operating Entity Association 与 CCT As-Of 校验一个不可变 Commercial Term Scope 闭包；对 Client Agreement-OE 同时返回 T+N 工作日、日历、时区、Cutoff 与 FOLLOWING 成熟规则，读取 PLATFORM_SERVICE_CHARGE 时额外返回该 Partner Agreement 唯一 Platform Signatory Party。V5 Hash 是 CCT-I13 原整包响应摘要，不是单 Scope 查询参数或内容 Hash。",
+  "Finance 处理 PaymentSucceeded 时先交叉校验 Payment、COM-I04 和 CCT-I14，并冻结 payment_succeeded_time 与按 Client Agreement-OE 成熟规则计算的共同 balance_available_time；Client Principal 与可选 Partner Share 都先进入 PENDING。Partner 来源必须把 platform_service_party_id 唯一映射 ACTIVE Finance Entity，计算一条 PLATFORM_SERVICE_CHARGE Component，并在同一 Finance 本地事务生成 Partner OE 费用/应付 Journal 与 Platform FE 应收/收入 Journal；两条各自平衡，任一失败全部回滚。",
+  "Commerce 不保存 Acceptance Summary。COM-I10 每次在服务端实时校验同一 Contract 恰有 CONSUMER_TERMS、REFUND_POLICY、PRIVACY_NOTICE 三种不可变 Acceptance，且各自 Network Evidence 与 Contract 的 Order/Checkout Session 一致并为 LEGAL_ACCEPTANCE；成功返回三个显式 Acceptance ID、acceptance_completed_at、Order Version 与 Expires At，Payment Attempt 冻结三个 ID，不使用 Summary ID/Version 或集合 Hash。",
+  "Consumer Context 使用单轨稳定 Vault Token：consumer_reference 是 Client 命名空间内非 PII、不透明引用，禁止提交 Email、Phone、证件号等个人原值；Email 与可空 Phone 各有稳定 Value Token，既用于等值/频次关联也用于授权 Reveal；consumer_profile_vault_token 只含姓名和完整账单地址，不重复 Email/Phone。相同字段规范化值返回同一 Token，Vault Key 轮换不改变 Token，共享 Token 仅在所有引用和 Retention/Legal Hold 条件允许后销毁。Commerce→Payment→Risk 仅通过内部同步最小契约传稳定 Token 与批准派生字段；Token 不进入外部 API、普通日志、MQ 或通用审计 JSON。",
+  "Checkout Network Evidence 不加密：Commerce 保存 client_ip_address、user_agent、trusted_proxy_chain 及批准的 Geo/ASN/network/proxy/vpn/tor/hosting/浏览器/OS/设备类型维度，不调用 Vault、不保存 Blind Index/Key Version 或 device identifier。Payment/Risk 可通过内部同步最小契约接收批准的原值与维度用于实时风控；这些受限数据仍需最小访问、审计、Retention，并禁止进入外部 API、普通日志、MQ 或通用审计 JSON。",
+  "拒付采用按需 RFI 而非通用 RFI 模型：Risk 复用 dispute_case/state_change/evidence_package/evidence_ref/submission_request，开案进入 EVIDENCE_REQUIRED 并发布 DisputeEvidenceRequested；Client 截止时间早于 Provider 截止时间。Client 未响应时案件保持 EVIDENCE_REQUIRED，绝不自动认损。Outcome 以 decision_source_type + decision_source_id + source_version 幂等追加：PROVIDER_ACTION 可形成 Version 1 WON/LOST，CLIENT_DISPOSITION 与 OPERATIONS_DISPOSITION 只可形成 Version 1 LOST，Version 2+ 只允许 OPERATIONS_CORRECTION；首次结果和每次更正的 trigger_id=decision_source_id。Liability 授权严格 XOR：规则路径同时保存 decision_evaluation_id + action_effect_id 且 decided_by 为空，人工路径二者同时为空且 decided_by 非空。开案不触发 Finance 冻结或追偿；DisputeLost 与 DisputeOutcomeCorrected 显式携带 outcome_id/outcome_version、outcome、principal_bearer、security_deposit_use_allowed，DisputeWon 不产生 Finance 动作。",
+  "通用 Retention 与 Legal Hold 自动化在 MVP 延期：各系统不订阅或发布 RetentionPolicyChanged、LegalHoldPlaced、LegalHoldReleased，不自动归档、匿名化或销毁；待法规与司法辖区要求明确后重新设计。",
+  "Beneficiary Account 由 Finance-owned 单表管理；DRAFT 可改，提交后冻结银行/Vault 身份和 content_hash，经不同 Maker/Checker 审核为 VERIFIED 后才可用于新 Payout，冻结字段变化必须创建新 ID。周期、最低金额和费用承担属于 Payout 请求，不属于 Beneficiary。",
+  "PaymentSucceeded 冻结 payment_succeeded_time 及 Client Agreement-OE 的 T+N 工作日、日历、时区、Cutoff、FOLLOWING 所得共同 balance_available_time；Client Principal 和可选 Partner Share 都先进入 PENDING，到期以 Journal 转为 AVAILABLE，Partner 先抵扣 Recovery。Provider 实际 T+2、银行匹配与对账不阻断合同成熟，平台承担流动性缺口；保证金、追偿和实际 Payout 门禁不得改写成熟时间。",
+  "未决退款不在 Finance 预占余额，也不阻断 Pending 按合同到期转为 Available。初次成熟键为 PAYABLE_BALANCE_MATURED:<economics_id>；同一 Economics 事务重算 Client Principal、可选 Partner Share、已成功 Component Link 退款和此前已成熟金额，正数才从 PENDING 转为 AVAILABLE，Partner Share 先净额抵扣 PARTNER_RECOVERY_RECEIVABLE/NONE。无论成熟或 RefundSucceeded 谁先提交，后者都在同一锁序内重算，同一金额不会重复转移或冲减。",
+  "Risk 仍拥有 MIN_SECURITY_DEPOSIT / RESERVE_REQUIREMENT，但只向 Finance 返回最终最低保证金 required_amount 与 required_currency。Manual Payout 固定执行 Payout create、final Finance approval、Execution create、external submit 四个新鲜 RCO-I09 检查点；每次 Scope 冻结 role、OE、gross=owner_debit、currency、bank_country、source fact tuple 与 input_hash，source_fact_version 是命令锁定的变更前 expected version。同一幂等命令重放复用 Assessment/Evaluation pair，不同检查点和新 Retry 必须新 pair。每次本地锁内都要求 Client 的 CLIENT_RECOVERY_RECEIVABLE/NONE 余额为 0 且 CLIENT_SECURITY_DEPOSIT/NONE 覆盖 required_amount，Local Partner 的 PARTNER_RECOVERY_RECEIVABLE/NONE 余额为 0 且不携带 Client 保证金字段；非 ALLOW、技术失败或 Scope/1:1/Hash 不一致均 Fail-Closed。Finance 以 PAYOUT_LOCK 将 AVAILABLE 转 LOCKED，Payout 冻结最终审批结果，Execution 只保存当前/最新成功结果；eligibility_hash 不能替代下一检查点。CREATED Execution 立即占用 cash_required_amount；available_cash = bank_cash_account.net_balance - active_payout_cash - active_tax_cash，active Payout 只统计 CREATED/SUBMITTED/UNKNOWN。UNKNOWN 保留 Owner LOCKED 与 BANK_CASH 并阻断 Retry/取消；权威 FAILED 后新 Execution 使用连续 attempt_no、新 execution_key，并重新产生 Execution create 与 external submit 两对新 pair；仅完整 CONFIRMED PAYOUT_DEBIT 可 PAID，安全撤回或取消才以 PAYOUT_RELEASE exactly-once 释放。",
+  "Provider 资金严格经过三阶段：业务事实形成 PROVIDER_UNSETTLED_RECEIVABLE/PAYABLE；权威最终 Settlement/Remittance Batch 的全部交易行、Header、Provider Fee Accrual 完整闭合后，聚合 Journal 转为 PROVIDER_SETTLEMENT_RECEIVABLE/PAYABLE；只有直接绑定 provider_batch_id 的 CONFIRMED Bank Match 才进入 BANK_CASH。Preliminary 或 VALIDATED 单独不足，Finance 使用本地冻结的 Provider refs 而不在线查询 Payment。",
+  "Finance 不建立 Reserve Case、Restricted Fund、Restricted Fund Move、Recovery Case 或 Recovery Application。预存保证金是负债类 CLIENT_SECURITY_DEPOSIT/NONE Account，追偿应收是资产类 CLIENT_RECOVERY_RECEIVABLE/NONE Account；保证金收取、退回、明确允许的争议损失使用，以及追偿形成、未来交易抵扣和人工收款全部由带 source_type/source_id 的不可变 Journal 表达。RefundSucceeded 只依次冲减当前 Client PENDING、AVAILABLE，明确不动用 Client Security Deposit；Finance 消费 DisputeLost/DisputeOutcomeCorrected 时，只有 outcome=LOST、principal_bearer=CLIENT、security_deposit_use_allowed=1 三项同时成立才先减少保证金负债，剩余形成追偿应收，且不得从原因、来源或规则推导许可。ClientRecoveryReceivableCreated 仅携带 Account ID、Client/OE、来源、金额币种与 Journal ID，不携带 Case ID。",
+  "会计账本遵守复式记账与试算平衡，科目覆盖资产、负债、权益、收入和费用；Client、Operating Entity、币种及资金用途不得被错误混池。",
+  "平台/OE 银行账户属于现金资产，Client/Partner Beneficiary Account 只是外部收款目的地；同一 Beneficiary 可被同 Owner 的多个 Operating Entity Payout 引用，但每笔 Payout 必须按 Owner、Operating Entity 和币种隔离。",
+  "Platform Support 对接外部 IdP，不保存密码和登录会话；业务 Email OTP 不得用于登录 MFA、财务双签或管理员提权。",
+  "Platform Support V1 物理模型固定为 92 表、1,076 字段、167 个唯一索引、116 个访问索引、145 条本库关系、19 条 1:1 关系和 8 个 Diagram Groups，并冻结 28 条复合外键与 67 条 CHECK 契约。可靠技术执行只保留本系统 compensation_event 与 command_idempotency，不预建通用 Job 编排、字典、Notification Preference、重复资源授权或文件访问授权/事件表；新增结构必须由明确写入方、读取方、状态机、幂等键或审计消费者证明。",
+  "MVP 不建设通用 Inbox/Outbox；每个有异步发布或恢复任务的服务在本库事务内登记 compensation_event，提交后由本地 Dispatcher 执行，XXL-Job 负责兜底扫描/分片，数据库 Claim/Lease 防止多实例并发。成功记录可删除，失败记录保留告警；MQ 消费幂等落在接收方业务表或投影的事件键、Payload Hash、来源版本和状态条件上。",
+  "Vault 是内部安全基础设施而不是第七个核心业务系统：它是通用敏感值存储与密码学服务，只集中保存各业务模型明确分类并注册 Schema 的可恢复非卡敏感值，不创建 Consumer、Customer、Order 或 Network Evidence 业务表，也不拥有字段的业务含义。CCT Party V1 只有 Email、Phone 使用标量 Vault Token，姓名、生日、法律标识和地址由 CCT 结构化保存；登录密码不进入 CCT 或 Vault，由外部 IdP/IAM 只保存不可逆校验值。Token、Blind Index/Key Version、Masked Value、Vault Record Version 与 Metadata Hash 必须分别由真实消费者证明其 Reveal/Retire、等值查询、普通展示、元数据并发、跨系统完整性或轮换同步需求，禁止默认套用固定字段套餐。除已批准的 Commerce Consumer Email/Phone 稳定 Value Token 外，跨系统长期 Token 仍使用接收方专属 Record/Token；稳定 Value Token 可在 Commerce→Payment→Risk 的同步最小契约内复用，但不得出现在外部 API、普通日志、MQ 或通用审计 JSON。",
+  "Vault 只允许 mTLS/Workload Identity 的内部 HTTP 调用，并按 Purpose、Reason、Resource 和最小字段授权 Reveal，向 Platform Support 发送不含敏感值的追加式访问审计；Gateway、BFF、浏览器和外部 Client 不直接访问 Vault。",
+  "PAN、CVV/CVC、完整磁道数据和 PIN/PIN Block 不进入 Code-MoR 服务、数据库、事件、日志、文件或 Vault；卡片由 Provider Hosted Fields/SDK Tokenization，Payment 只保存 Provider Token、Scheme、BIN、Last4、Issuer Country 和 Provider Fingerprint，卡片有效期由 Provider Token 管理，这些最小卡片元数据仍需分类、脱敏、授权和留存控制。Provider/API Credential 与私钥保存在云 Secrets Manager/KMS，大文件保存在加密对象存储。该边界只能缩小 CDE/评估范围，不等于自动符合 PCI；适用 SAQ/ROC、责任矩阵与控制有效性仍需按真实数据流由收单方或 QSA 确认。",
+  "Commerce 锁定消费者条款与卖方披露并可靠发布文档生成来源事实，Finance 形成税费与不可变财政事实；Platform Support 在双方 Generation Key Version、Key、Business Ref 和来源 Hash 一致时生成并投递 Receipt、Invoice 或 Credit Note，并独占文档状态、版本、文件与更正关系，Commerce 不保存消费者文档投影。",
+  "Java 技术基线固定为 JDK 25 LTS、Maven Wrapper 3.9.16、Spring Boot 4.0.8、Spring Cloud 2025.1.3、Spring Cloud Alibaba 2025.1.0.0 和 Nacos 3.1.x；核心服务/BFF/Vault 默认 Spring MVC，Gateway 使用 Spring Cloud Gateway WebFlux。统一 paytech-dependencies BOM 管理依赖版本，paytech-parent 管理 Java、插件和测试规则。",
+  "本机 Maven 复用现有 Nexus 3.81.1：依赖与插件统一从 maven-public 解析，Snapshot 发布到 maven-snapshots，Release 发布到 maven-releases；Settings 和凭据只保存在开发者本机且不得提交。该决定不确认生产制品库、Release 权限模型或 CI/CD 发布流程。",
+  "数据与中间件基线为 MySQL 8.4 LTS + MyBatis 4.0.1，数据库实现获批后使用 Flyway；RabbitMQ 4.2 是唯一业务 MQ，topic_* 映射 Topic Exchange、cg_* 映射 Consumer Queue，消息使用版本化 UTF-8 JSON；Redis 8.2 早期单机，普通客户端使用 Lettuce，锁与可过期信号量使用 Redisson 4.6.1。",
+  "本地开发采用 Java 服务原生运行、MySQL/Nacos/RabbitMQ/独立 Redis 容器化、XXL-Job 与 OpenTelemetry/Prometheus/Loki/Tempo/Grafana 按需 Profile 启动的混合拓扑；`base` Compose Profile 已完成本机烟测并关闭，三个持久卷保留，现有 Nexus 位于 mor-local 之外并只供 Maven 使用。该状态不授权创建业务 Java 模块、Migration、业务表或生产基础设施。",
+];
+
+export const OPEN_QUESTIONS = [
+  "各销售国家的税务规则、税务服务商和本地化发票格式。",
+  "自动 Payout 及跨境付款供应商。",
+  "订阅、周期扣款和账期变更。",
+  "Gateway 认证、云厂商最终选择、生产基础设施拓扑与部署交付方案。",
+  "后续需求缺口：现有 CCT-I08/I09 只覆盖 Operating Entity Application；Client Application 提交/查询已由 CCT-01/CCT-02 和 E2E-01 表达，但尚未分配独立 Interface Use Case ID，不在本轮发明新 ID。",
+];
+
+export const TRANSACTION_FLOW = [
+  "Client 注册",
+  "KYC/KYB 与业务准入",
+  "协议与费率生效；按需审核 Beneficiary Account",
+  "确认主体、MID 与交易资格",
+  "下单并提交商品 / 金额",
+  "锁定卖方、税费、条款与订单上下文",
+  "创建可支付 Checkout",
+  "消费者付款",
+  "计费分润 / 复式记账",
+  "渠道对账 / 成本确认",
+  "Client/Partner Pending 共同成熟为 Available",
+  "锁定余额并执行 Manual Payout",
+  "Payout 后退款 / 拒付追偿",
+];
+
+export const FINANCE_COMPONENTS = [
+  "支付 / 退款 / 拒付事实",
+  "合同与费率版本快照",
+  "税费 / 计费与分润计算",
+  "Accounting Instruction",
+  "复式账本与余额",
+  "Provider 三阶段清算与银行对账",
+  "共同余额成熟与 Deposit/Recovery 门禁",
+  "Beneficiary Account / Manual Payout / Execution",
+  "保证金与追偿 Account",
+];
