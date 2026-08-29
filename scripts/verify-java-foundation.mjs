@@ -22,6 +22,94 @@ const requiredFiles = [
   join(buildRoot, 'paytech-dependencies', 'pom.xml'),
   join(buildRoot, 'paytech-parent', 'pom.xml'),
   join(foundationRoot, 'pom.xml'),
+  join(
+    foundationRoot,
+    'paytech-caffeine-starter',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'caffeine',
+    'api',
+    'CaffeineCacheConstants.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-caffeine-starter',
+    'src',
+    'main',
+    'resources',
+    'META-INF',
+    'spring',
+    'org.springframework.boot.autoconfigure.AutoConfiguration.imports',
+  ),
+  join(
+    foundationRoot,
+    'paytech-caffeine-starter',
+    'src',
+    'test',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'caffeine',
+    'auto',
+    'autoconfigure',
+    'CaffeineCacheAutoConfigurationAutoTest.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'redis',
+    'api',
+    'RedisCacheDefinition.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'redis',
+    'core',
+    'autoconfigure',
+    'RedisCacheAutoConfiguration.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'main',
+    'resources',
+    'META-INF',
+    'spring',
+    'org.springframework.boot.autoconfigure.AutoConfiguration.imports',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'test',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'redis',
+    'auto',
+    'integration',
+    'RedisStarterIntegrationAutoTest.java',
+  ),
   wrapper,
 ];
 
@@ -104,6 +192,8 @@ if (errors.length === 0) {
     'paytech-common-core/pom.xml',
     'paytech-snowflake-id/pom.xml',
     'paytech-mvc-web-starter/pom.xml',
+    'paytech-caffeine-starter/pom.xml',
+    'paytech-redis-starter/pom.xml',
     'paytech-compensation-event/pom.xml',
     'paytech-xxl-job-starter/pom.xml',
   ];
@@ -115,7 +205,12 @@ if (errors.length === 0) {
     }
   }
 
-  for (const artifactId of ['paytech-compensation-event', 'paytech-xxl-job-starter']) {
+  for (const artifactId of [
+    'paytech-caffeine-starter',
+    'paytech-compensation-event',
+    'paytech-redis-starter',
+    'paytech-xxl-job-starter',
+  ]) {
     const dependencies = managedDependencies.filter(
       (block) => tagValue(block, 'groupId') === 'com.paytech'
         && tagValue(block, 'artifactId') === artifactId,
@@ -133,6 +228,23 @@ if (errors.length === 0) {
   if (xxlJobVersion !== '3.4.2' || xxlJobDependencies.length !== 1
       || tagValue(xxlJobDependencies[0], 'version') !== '${xxl-job.version}') {
     errors.push('xxl-job-core is missing approved 3.4.2 version governance');
+  }
+
+  const redissonVersion = tagValue(dependencyBom, 'redisson.version');
+  const redissonDependencies = managedDependencies.filter(
+    (block) => tagValue(block, 'groupId') === 'org.redisson'
+      && tagValue(block, 'artifactId') === 'redisson',
+  );
+  const retiredRedissonStarter = managedDependencies.some(
+    (block) => tagValue(block, 'groupId') === 'org.redisson'
+      && tagValue(block, 'artifactId') === 'redisson-spring-boot-starter',
+  );
+  if (redissonVersion !== '4.6.1' || redissonDependencies.length !== 1
+      || tagValue(redissonDependencies[0], 'version') !== '${redisson.version}') {
+    errors.push('Redisson Core is missing approved 4.6.1 version governance');
+  }
+  if (retiredRedissonStarter) {
+    errors.push('redisson-spring-boot-starter must not be managed because it can replace Lettuce');
   }
 
   const expectedGroupId = '<groupId>com.paytech</groupId>';
@@ -164,6 +276,8 @@ if (errors.length === 0) {
     [join(foundationRoot, 'paytech-common-core', 'pom.xml'), 'paytech-common-core'],
     [join(foundationRoot, 'paytech-snowflake-id', 'pom.xml'), 'paytech-snowflake-id'],
     [join(foundationRoot, 'paytech-mvc-web-starter', 'pom.xml'), 'paytech-mvc-web-starter'],
+    [join(foundationRoot, 'paytech-caffeine-starter', 'pom.xml'), 'paytech-caffeine-starter'],
+    [join(foundationRoot, 'paytech-redis-starter', 'pom.xml'), 'paytech-redis-starter'],
     [join(foundationRoot, 'paytech-compensation-event', 'pom.xml'), 'paytech-compensation-event'],
     [join(foundationRoot, 'paytech-xxl-job-starter', 'pom.xml'), 'paytech-xxl-job-starter'],
   ];
@@ -299,6 +413,348 @@ if (errors.length === 0) {
   );
   if (existsSync(retiredCompensationXxlJobHandler)) {
     errors.push('external XXL-Job scan handler must not remain under core/execution');
+  }
+
+  const caffeineStarterPom = readFileSync(
+    join(foundationRoot, 'paytech-caffeine-starter', 'pom.xml'),
+    'utf8',
+  );
+  const caffeineStarterDependencies = dependencyBlocks(caffeineStarterPom);
+  for (const [groupId, artifactId] of [
+    ['com.paytech', 'paytech-common-core'],
+    ['com.github.ben-manes.caffeine', 'caffeine'],
+    ['org.springframework.boot', 'spring-boot-starter-cache'],
+  ]) {
+    const hasDependency = caffeineStarterDependencies.some(
+      (block) => tagValue(block, 'groupId') === groupId
+        && tagValue(block, 'artifactId') === artifactId,
+    );
+    if (!hasDependency) {
+      errors.push(`paytech-caffeine-starter dependency is missing: ${groupId}:${artifactId}`);
+    }
+  }
+  const caffeineSourceRoot = join(foundationRoot, 'paytech-caffeine-starter', 'src');
+  const caffeineProperties = readFileSync(
+    join(
+      caffeineSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'caffeine',
+      'core',
+      'autoconfigure',
+      'CaffeineCacheProperties.java',
+    ),
+    'utf8',
+  );
+  if (!caffeineProperties.includes('@ConfigurationProperties(prefix = "caffeine")')
+      || !caffeineProperties.includes('maximumSize = 10_000')
+      || !caffeineProperties.includes('Duration.ofMinutes(10)')
+      || !caffeineProperties.includes('Duration.ofMillis(1)')) {
+    errors.push('paytech-caffeine-starter does not enforce safe bounded defaults');
+  }
+  const caffeineCacheConstants = readFileSync(
+    join(
+      caffeineSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'caffeine',
+      'api',
+      'CaffeineCacheConstants.java',
+    ),
+    'utf8',
+  );
+  if (!caffeineCacheConstants.includes(
+    'public static final String CACHE_MANAGER_BEAN_NAME = "caffeineCacheManager";',
+  )) {
+    errors.push('paytech-caffeine-starter does not expose its CacheManager Bean name as a public constant');
+  }
+  const caffeineAutoConfiguration = readFileSync(
+    join(
+      caffeineSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'caffeine',
+      'core',
+      'autoconfigure',
+      'CaffeineCacheAutoConfiguration.java',
+    ),
+    'utf8',
+  );
+  if (!caffeineAutoConfiguration.includes('@EnableCaching')
+      || !caffeineAutoConfiguration.includes('@Bean(name = CaffeineCacheConstants.CACHE_MANAGER_BEAN_NAME)')
+      || !caffeineAutoConfiguration.includes(
+        '@ConditionalOnMissingBean(name = CaffeineCacheConstants.CACHE_MANAGER_BEAN_NAME)',
+      )
+      || caffeineAutoConfiguration.includes('@Bean(name = {"cacheManager", "caffeineCacheManager"})')
+      || !caffeineAutoConfiguration.includes('.maximumSize(properties.getMaximumSize())')
+      || !caffeineAutoConfiguration.includes('.expireAfterWrite(properties.getExpireAfterWrite())')
+      || !caffeineAutoConfiguration.includes('.recordStats()')
+      || !caffeineAutoConfiguration.includes('setAllowNullValues(false)')) {
+    errors.push('paytech-caffeine-starter auto configuration is missing required cache boundaries');
+  }
+  const caffeineAutoTest = readFileSync(
+    join(
+      caffeineSourceRoot,
+      'test',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'caffeine',
+      'auto',
+      'autoconfigure',
+      'CaffeineCacheAutoConfigurationAutoTest.java',
+    ),
+    'utf8',
+  );
+  if (!caffeineAutoTest.includes('@Cacheable(cacheNames = "order-cache", sync = true)')
+      || !caffeineAutoTest.includes('getCache("unknown-cache")).isNull()')
+      || !caffeineAutoTest.includes('doesNotHaveBean("cacheManager")')
+      || !caffeineAutoTest.includes('test_caffeineCacheManagerCoexistsWithHostDefaultCacheManager')
+      || !caffeineAutoTest.includes('nativeCache.stats().hitCount()')
+      || caffeineAutoTest.includes('Testcontainers')) {
+    errors.push('paytech-caffeine-starter auto test does not verify its real local-cache behavior');
+  }
+
+  const redisStarterPom = readFileSync(
+    join(foundationRoot, 'paytech-redis-starter', 'pom.xml'),
+    'utf8',
+  );
+  const redisStarterDependencies = dependencyBlocks(redisStarterPom);
+  for (const [groupId, artifactId] of [
+    ['com.paytech', 'paytech-common-core'],
+    ['org.redisson', 'redisson'],
+    ['org.springframework.boot', 'spring-boot-starter-data-redis'],
+    ['tools.jackson.core', 'jackson-databind'],
+  ]) {
+    const hasDependency = redisStarterDependencies.some(
+      (block) => tagValue(block, 'groupId') === groupId
+        && tagValue(block, 'artifactId') === artifactId,
+    );
+    if (!hasDependency) {
+      errors.push(`paytech-redis-starter dependency is missing: ${groupId}:${artifactId}`);
+    }
+  }
+  const forbiddenRedisDependencies = redisStarterDependencies.filter(
+    (block) => tagValue(block, 'groupId') === 'org.redisson'
+      && /redisson-spring-(?:boot-starter|data-\d+)/u.test(tagValue(block, 'artifactId') ?? ''),
+  );
+  if (forbiddenRedisDependencies.length > 0) {
+    errors.push('paytech-redis-starter must use Redisson Core without a Redisson connection factory');
+  }
+
+  const redisStarterSourceRoot = join(foundationRoot, 'paytech-redis-starter', 'src');
+  for (const sourceFile of collectNamespaceFiles(redisStarterSourceRoot)) {
+    const content = readFileSync(sourceFile, 'utf8');
+    if (/RedissonConnectionFactory|redisson-spring-boot-starter/u.test(content)) {
+      errors.push(`paytech-redis-starter can replace the Lettuce connection factory: ${sourceFile}`);
+    }
+  }
+  const redisNamespaceProperties = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'core',
+      'autoconfigure',
+      'RedisNamespaceProperties.java',
+    ),
+    'utf8',
+  );
+  if (!redisNamespaceProperties.includes('@ConfigurationProperties(prefix = "redis")')
+      || !redisNamespaceProperties.includes('spring.application.name')) {
+    errors.push('paytech-redis-starter does not resolve the default service key prefix from spring.application.name');
+  }
+  const redisKeyNamespaceAutoConfiguration = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'core',
+      'autoconfigure',
+      'RedisKeyNamespaceAutoConfiguration.java',
+    ),
+    'utf8',
+  );
+  if (!redisKeyNamespaceAutoConfiguration.includes('@Bean(name = {"stringRedisTemplate", "redisTemplate"})')) {
+    errors.push('paytech-redis-starter can expose the default JDK-serialized RedisTemplate');
+  }
+  const namespacedStringRedisTemplate = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'core',
+      'template',
+      'NamespacedStringRedisTemplate.java',
+    ),
+    'utf8',
+  );
+  if (!namespacedStringRedisTemplate.includes('setKeySerializer(new RedisKeyPrefixSerializer(keyPrefix))')
+      || !namespacedStringRedisTemplate.includes('Cursor<String> scan(ScanOptions options)')) {
+    errors.push('paytech-redis-starter does not namespace StringRedisTemplate key serialization and scans');
+  }
+  const redisJsonTemplate = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'api',
+      'RedisJsonTemplate.java',
+    ),
+    'utf8',
+  );
+  if (!redisJsonTemplate.includes('Class<T> valueType')
+      || !redisJsonTemplate.includes('TypeReference<T> valueType')
+      || !redisJsonTemplate.includes('writeValueAsString(value)')
+      || !redisJsonTemplate.includes('RedisJsonObjectMapperFactory.create()')
+      || redisJsonTemplate.includes('enableDefaultTyping')
+      || redisJsonTemplate.includes('RedisSerializer.json()')) {
+    errors.push('paytech-redis-starter JSON template is not explicitly typed plain JSON');
+  }
+  const redisCacheDefinition = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'api',
+      'RedisCacheDefinition.java',
+    ),
+    'utf8',
+  );
+  if (!redisCacheDefinition.includes(
+    'record RedisCacheDefinition<T>(String cacheName, Class<T> valueType, Duration ttl)',
+  )) {
+    errors.push('paytech-redis-starter does not expose an explicitly typed cache definition API');
+  }
+  const redisCacheAutoConfiguration = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'core',
+      'autoconfigure',
+      'RedisCacheAutoConfiguration.java',
+    ),
+    'utf8',
+  );
+  if (!redisCacheAutoConfiguration.includes('@EnableCaching')
+      || !redisCacheAutoConfiguration.includes('@Bean(name = {"cacheManager", "redisCacheManager"})')
+      || !redisCacheAutoConfiguration.includes('@Primary')
+      || !redisCacheAutoConfiguration.includes('ObjectProvider<RedisCacheDefinition<?>>')) {
+    errors.push('paytech-redis-starter does not expose Redis as the typed default CacheManager');
+  }
+  const redisCacheManagerFactory = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'core',
+      'cache',
+      'RedisCacheManagerFactory.java',
+    ),
+    'utf8',
+  );
+  if (!redisCacheManagerFactory.includes('new TypedRedisJsonSerializer(')
+      || !redisCacheManagerFactory.includes('BatchStrategies.scan(1_000)')
+      || !redisCacheManagerFactory.includes('.disableCreateOnMissingCache()')
+      || !redisCacheManagerFactory.includes('.transactionAware()')
+      || !redisCacheManagerFactory.includes('.enableStatistics()')
+      || redisCacheManagerFactory.includes('RedisSerializer.java(')
+      || redisCacheManagerFactory.includes('RedisSerializer.json()')) {
+    errors.push('paytech-redis-starter typed CacheManager boundaries are incomplete');
+  }
+  const typedRedisSerializerTest = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'test',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'auto',
+      'serialization',
+      'TypedRedisJsonSerializerAutoTest.java',
+    ),
+    'utf8',
+  );
+  if (!typedRedisSerializerTest.includes('serializesPlainJsonAndRestoresDeclaredType')
+      || !typedRedisSerializerTest.includes('rejectsNullValueExplicitly')
+      || !typedRedisSerializerTest.includes('.doesNotContain("@class", "_type"')) {
+    errors.push('paytech-redis-starter typed JSON serializer test is incomplete');
+  }
+  const redisIntegrationTest = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'test',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'auto',
+      'integration',
+      'RedisStarterIntegrationAutoTest.java',
+    ),
+    'utf8',
+  );
+  if (!redisIntegrationTest.includes('redis:8.2.1-alpine')) {
+    errors.push('paytech-redis-starter auto test does not pin the approved Redis 8.2.1 image');
+  }
+  if (redisIntegrationTest.includes('127.0.0.1:16379')
+      || redisIntegrationTest.includes('disabledWithoutDocker = true')) {
+    errors.push('paytech-redis-starter auto test can use or silently skip required Redis infrastructure');
+  }
+  if (!redisIntegrationTest.includes('verifyMultiKeyAndScan')
+      || !redisIntegrationTest.includes('verifyHashFieldIsNotPrefixed')
+      || !redisIntegrationTest.includes('verifyJsonValue')
+      || !redisIntegrationTest.includes('verifyMixedSpringCaches')
+      || !redisIntegrationTest.includes('@Cacheable(cacheNames = "redis-payment-cache"')
+      || !redisIntegrationTest.includes(
+        'cacheManager = CaffeineCacheConstants.CACHE_MANAGER_BEAN_NAME, sync = true',
+      )
+      || !redisIntegrationTest.includes('getExpire(physicalRedisKey, MILLISECONDS)')
+      || !redisIntegrationTest.includes('doesNotContain("@class", "_type"')
+      || !redisIntegrationTest.includes('KEY_PREFIX + ":" + lockName')) {
+    errors.push('paytech-redis-starter auto test does not verify JSON and unified Lettuce/Redisson namespaces');
   }
 
   const expectedPackageRoot = join(
