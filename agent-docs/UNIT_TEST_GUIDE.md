@@ -23,8 +23,8 @@
 一个 `auto` 测试只有同时满足以下条件，才算内部闭环：
 
 1. 不连接任何真实业务环境或人工维护的共享测试环境。
-2. 不依赖真实 Nacos、配置中心、其他微服务、Provider、共享数据库、共享 Redis 或共享 MQ。
-3. 所有依赖由测试进程或 Testcontainers 自动创建、配置和销毁。
+2. 不依赖真实 Nacos、配置中心、其他微服务、Provider、共享数据库、共享 Redis 或共享 MQ；第 7.6 节批准的 Operations Gateway 专用 Compose Redis 是唯一当前例外。
+3. 所有依赖由测试进程或 Testcontainers 自动创建、配置和销毁；第 7.6 节例外由仓库 Compose 固定版本并由测试执行运行级 Namespace 初始化/清理，而不销毁共享容器。
 4. 当前测试所覆盖的 Controller、Processor、Domain Service、Repository、Mapper 和 Integration Client 使用真实生产实现。
 5. 外部系统通过真实 HTTP/MQ 协议连接有状态 Simulator，不通过 `when(...).thenReturn(...)` 等方法级 Stub 改写运行时行为。
 6. 未准备业务数据、未识别的请求或未消费的预期调用必须快速失败并输出上下文。
@@ -206,6 +206,19 @@ Domain Service → RepositoryImpl → Mapper → Testcontainers Database
 - Testcontainers 负责启动、动态连接信息和销毁，不要求人工维护 Mock 环境。
 - 容器镜像必须固定经过批准的版本，不使用漂移的 `latest`。
 - 并行执行前必须证明数据库、Redis Key、Topic/Consumer Group 和清理逻辑互不干扰。
+
+### 7.6 Operations Gateway Redis 的 Compose 例外
+
+Operations Gateway 的 Reactive Lua Rate Limit/Concurrency 自动测试不使用 Testcontainers，明确复用仓库 `local-environment/compose.yaml` 的专用 `mor-local` Redis。这是用户批准的窄例外，不得推广到数据库、MQ、其他服务 Redis 或真实业务环境：
+
+- 只连接 `127.0.0.1:16379` 的 Redis 8.2.1，密码从未提交的 `MOR_REDIS_PASSWORD` 注入；禁止连接宿主机 `6379` 或其他项目实例；
+- Compose Redis 必须在测试开始前健康；缺失、版本/鉴权错误时快速失败并给出启动提示，不降级到内存实现、方法 Stub 或其他 Redis；
+- 每次 Maven 测试运行生成不可预测且唯一的 Gateway Namespace，所有 Route/Dimension Key 都位于该 Namespace；
+- Setup/Teardown 只用 `SCAN` + 精确前缀删除本次运行 Key，禁止 `KEYS *`、`FLUSHDB`、选择未保留的逻辑库或删除其他运行的 Key；
+- 并行测试必须使用不同 Namespace。Redis 不可用场景通过连接未监听的 Loopback 端口验证 Fail-Closed，不暂停或停止共享 Compose 服务；
+- CI 必须先以同一仓库 Compose 定义启动该 Redis，再运行默认 `auto`；不能因为 CI 环境缺少它而跳过 Redis Guard 测试。
+
+本例外不改变真实生产链、Simulator、无方法级 Stub 和可重复断言要求。Gateway 测试仍从随机 HTTP 端口启动真实 WebFlux 应用，并使用有状态 BFF/JWKS Simulator。
 
 ## 8. 外部系统 Simulator
 
@@ -391,7 +404,7 @@ TestBase
 
 - 关闭 Nacos、外部配置中心、定时任务和非本测试需要的真实 Consumer；
 - 不包含真实环境 URL、用户名、密码或 Token；
-- 由测试动态注入数据库、Redis、MQ 和 Simulator 地址；
+- 由测试动态注入数据库、Redis、MQ 和 Simulator 地址；Operations Gateway Redis 可以按第 7.6 节注入固定 Loopback Compose 地址与运行级 Namespace；
 - 在启动时拒绝未由测试基础设施注册的外部 Endpoint。
 
 ## 13. 数据和状态隔离
@@ -489,7 +502,7 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 - 使用 `when(...).thenReturn(...)`、`doThrow(...).when(...)` 等方法级行为 Stub 拼装业务流程；
 - 用 `@MockBean`、`@MockitoBean` 或 Spy 替换生产链路后声称服务闭环通过；
 - 自动测试连接真实微服务、Provider、Nacos、配置中心或共享基础设施；
-- 依赖人工启动的固定端口 MySQL、Redis、MQ 或 Mock Server；
+- 依赖人工启动的固定端口 MySQL、Redis、MQ 或 Mock Server；第 7.6 节批准的 Operations Gateway 专用 Compose Redis 除外；
 - 测试配置写入个人地址、共享账号、真实密码或 Token；
 - 所有测试默认使用固定端口的 `@SpringBootTest`；
 - 测试依赖固定方法顺序或共享实例状态；

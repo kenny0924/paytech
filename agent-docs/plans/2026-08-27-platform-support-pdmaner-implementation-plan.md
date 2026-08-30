@@ -1,5 +1,7 @@
 # Platform Support PDManer Implementation Plan
 
+> **2026-08-29 后续语义替代：** 本记录继续证明冻结 92 表模型的生成过程，但其外部 IdP-only、无本地登录 Session、动态 Gateway Route/Upstream 和容量 Guard 跨维度覆盖语义已被 [Platform Support 内部运营认证需求](./2026-08-29-platform-support-operations-authentication-requirements.md) 取代。受影响结构不得据此实施；新的物理模型、Migration 和 Platform 代码需要另行批准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 将已确认的 Platform Support 92 表平衡模型落成可重复生成、可独立自动校验并可在 PDManer 4.9.3 中人工评审的第六套 V1 物理模型。

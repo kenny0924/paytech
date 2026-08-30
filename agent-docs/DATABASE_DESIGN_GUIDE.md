@@ -149,7 +149,7 @@ Platform Support 的评审入口包括[逻辑/物理基线](./database/PLATFORM_
 - Vault 只托管已分类、已注册 Schema 的敏感原值，不拥有字段的业务含义。业务表保存 Token 时，必须从字段名和注释看出它引用什么值、使用哪个 Data Type Schema、如何绑定资源以及允许怎样展示或检索。
 - 结构化敏感 Field Set 也必须在 Vault Data Type Catalog 明确列出字段、类型、格式、Normalization、Mask Policy 和 Schema Version；禁止“整个对象加密后丢进 Vault，但没有任何地方说明对象结构”。
 - 如果字段按当前业务分类允许本地保存，应直接使用结构化列，并继续执行授权、日志、留存和 Legal Hold 控制；“不进 Vault”不等于“公开数据”。
-- CCT Party V1 是当前示例：Email、Phone 使用 `EMAIL_ADDRESS_V1`、`PHONE_E164_V1` 标量 Vault Token；姓名、日期、法律标识和地址结构化落 CCT；登录密码不进入业务库或 Vault，由外部 IdP/IAM 保存不可逆校验值。该示例不能推导为银行账户、税号、KYC/KYB 或其他系统字段自动不敏感，各系统必须独立分类。
+- CCT Party V1 是当前示例：Email、Phone 使用 `EMAIL_ADDRESS_V1`、`PHONE_E164_V1` 标量 Vault Token；姓名、日期、法律标识和地址结构化落 CCT；登录密码不进入 CCT、Vault、事件或日志。内部 Operations 账号的不可逆密码校验值由 Platform Support 自有认证域保存，Client、Partner、Consumer 的认证提供方仍待设计。该示例不能推导为银行账户、税号、KYC/KYB 或其他系统字段自动不敏感，各系统必须独立分类。
 
 ### 7.2 复杂机制必须有当前需求证据
 

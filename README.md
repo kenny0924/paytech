@@ -77,13 +77,13 @@ npm --prefix requirements-site run test:content
 - `risk-compliance-service/` — Risk & Compliance System project root; contains the fifth authorized PDManer physical-design artifact but no Java implementation.
 - `finance-service/` — Finance System project root; contains the fourth authorized PDManer physical-design artifact but no Java implementation.
 - `platform-support-service/` — Platform Support System project root; contains the sixth authorized PDManer physical-design artifact but no Java implementation.
-- `api-gateway/` — API Gateway project root, outside the six core systems.
-- `business-portal-bff/` — stateless backend project root for Client and Partner consoles.
+- `api-gateway/` — API Gateway project root, outside the six core systems; its Operations first slice is the only currently authorized Java implementation scope.
+- `business-portal-bff/` — retired empty historical placeholder; do not implement Client/Partner Console capabilities under this name.
 - `checkout-web/` — frontend project root for Hosted Checkout and Consumer Service Portal.
-- `business-portal-web/` — frontend project root for Client and Partner consoles.
+- `business-portal-web/` — retired empty historical placeholder; do not implement Client/Partner Console capabilities under this name.
 
-The existing project roots have no Java or application implementation modules. Apart from the six generated PDManer physical-design artifacts, internal modules and source structures such as `*-api`, `*-web`, `*-test`, and `src/` have not been created. The separately secured Operations BFF/frontend and internal Vault service are approved logical components, but their project roots remain intentionally absent until an explicit scaffolding request.
+The target console names are `operations-console-*` for internal personnel, `client-console-*` for Client, and `partner-console-*` for Local Partner; `checkout-*` remains the Consumer channel. These console roots and the internal Vault service remain absent until explicitly requested. Apart from the six generated PDManer artifacts, no business-service implementation exists; the current implementation authorization is limited to `api-gateway` and does not authorize Platform Support or Console code.
 
 ## Planned platform direction
 
-The confirmed implementation direction is Java 25 microservices using the shared `paytech-dependencies` BOM and `paytech-parent`, Spring Boot 4.0.8, Spring Cloud 2025.1.3, Nacos, RabbitMQ, MySQL, Redis and DDD-style layering. Internal synchronous contracts use lightweight `*-api` modules with `@HttpExchange`. Each state-owning service embeds the `paytech-compensation-event` library; Vault is a separate internal-only security service. See `agent-docs/TECHNOLOGY_STACK.md` and `agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md`. Concrete service contracts, Gateway authentication and production deployment remain to be designed.
+The confirmed implementation direction is Java 25 microservices using the shared `paytech-dependencies` BOM and `paytech-parent`, Spring Boot 4.0.8, Spring Cloud 2025.1.3, Nacos, RabbitMQ, MySQL, Redis and DDD-style layering. Internal synchronous contracts use lightweight `*-api` modules with `@HttpExchange`. Each state-owning service embeds the `paytech-compensation-event` library; Vault is a separate internal-only security service. See `agent-docs/TECHNOLOGY_STACK.md` and `agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md`. Operations Gateway authentication is fixed by `agent-docs/plans/2026-08-29-operations-api-gateway-design.md`; other channel authentication, concrete business-service contracts and production deployment remain to be designed.

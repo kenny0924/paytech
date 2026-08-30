@@ -158,7 +158,7 @@ Client & Contract 的当前 36 表模型已经批准删除白名单内普通业�
 
 ### 4.4 数据分类与 Vault
 
-- 只有被所属业务模型明确分类并由事实拥有系统校验业务 Payload Schema 的可恢复非卡敏感值才集中保存在 Vault；Vault 只校验通用 Data Type/Purpose/Classification/大小/安全策略，不拥有 Consumer、Customer、Order 等业务表、字段或派生维度。CCT Party V1 仅 Email、Phone 使用标量 Vault Token，姓名、生日、法律标识和地址在 CCT 结构化保存；登录密码由外部 IdP/IAM 保存不可逆校验值，不进入 CCT 或 Vault。其他系统仍按专项文档保护已批准字段。
+- 只有被所属业务模型明确分类并由事实拥有系统校验业务 Payload Schema 的可恢复非卡敏感值才集中保存在 Vault；Vault 只校验通用 Data Type/Purpose/Classification/大小/安全策略，不拥有 Consumer、Customer、Order 等业务表、字段或派生维度。CCT Party V1 仅 Email、Phone 使用标量 Vault Token，姓名、生日、法律标识和地址在 CCT 结构化保存；登录密码不进入 CCT 或 Vault。内部 Operations 账号只由 Platform Support 保存不可逆校验值；Client、Partner、Consumer 的认证提供方仍待设计。其他系统仍按专项文档保护已批准字段。
 - 业务系统持有 Vault 值时必须保存 `*_vault_token`；`*_blind_index + *_blind_index_key_version` 只有等值查询消费者存在时保存，`*_masked_value` 只有展示消费者存在时保存，`vault_record_version/vault_metadata_hash` 只有真实消费者存在时保存。不得机械落完整套餐。Commerce Consumer 是明确例外：Email/Phone 各保存一个稳定 Value Token，既用于等值/频次关联也用于授权 Reveal；`consumer_profile_vault_token` 只含姓名和完整账单地址且不得重复 Email/Phone，Consumer Blind Index/Key Version/Masked Value 全部删除。
 - Blind Index 使用按 Tenant、字段和 Purpose 隔离并带版本的 HMAC，不能用普通 SHA 对邮箱、电话、证件号或银行账号做可枚举 Hash，也不能跨字段或跨用途关联。跨系统传递时必须由 Vault 按明确获批的发送方→接收方 Analytics/Assessment Purpose 生成，或由同一 Purpose 授权明确覆盖两端；不得复用发送方本库查询 Purpose 的 Index，接收方也不得跨 Purpose 再利用。每个 Index 必须保存同前缀的 `*_blind_index_key_version`；若完整名超过 32 字符，可使用注释明确的 `*_blind_key_ver`。多个 Index 不得共用一个含义不清的通用版本字段。Blind Index 与地域/网络/设备等可关联派生维度仍是假名化或准标识数据，不是匿名数据，必须最小授权、访问审计、禁止任意导出并纳入 Retention/删除治理。
 - 业务库可以保存经过分类批准、不能还原原值且确实参与业务规则的派生事实，例如国家代码、证件类型、验证状态、风险结论和脱敏展示；“集中存储”不要求每次查询都 Reveal，也不允许借派生字段重新拼出原始敏感值。

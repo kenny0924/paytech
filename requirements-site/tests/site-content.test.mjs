@@ -762,14 +762,29 @@ test("requirements route on-demand dispute RFI notification through Platform Sup
   assert.match(platform04, /只负责通知与文件.*不拥有争议状态.*通用 RFI/u);
 });
 
-test("Platform Support requirements freeze the balanced 92-table physical boundary", () => {
-  assert.match(source, /Platform Support V1 物理模型固定为 92 表、1,076 字段、167 个唯一索引、116 个访问索引、145 条本库关系、19 条 1:1 关系和 8 个 Diagram Groups/u);
+test("Platform Support requirements preserve the 92-table snapshot and supersede affected auth and Guard semantics", () => {
+  assert.match(source, /Platform Support V1 物理模型冻结为 92 表、1,076 字段、167 个唯一索引、116 个访问索引、145 条本库关系、19 条 1:1 关系和 8 个 Diagram Groups/u);
   assert.match(source, /冻结 28 条复合外键与 67 条 CHECK 契约/u);
+  assert.match(source, /Operations 自有认证、Refresh Session、签名密钥元数据和静态 Gateway Route\/跨维度容量 Guard 上已成为历史/u);
+  assert.match(source, /相关实现必须先获批新的物理模型修订/u);
   assert.match(source, /Reliable Technical Execution/u);
   assert.match(source, /只保留本系统 compensation_event 与 command_idempotency/u);
   assert.doesNotMatch(source, /Technical Job/u);
   assert.match(platformDatabaseSource, /92 (?:张)?表.*1,076 (?:个)?字段.*167 个唯一索引.*116 个访问索引.*145 条本库关系.*19 条 1:1 关系.*8 个 Diagram Groups/su);
   assert.match(platformDatabaseSource, /28 条.*复合外键契约.*67 条.*CHECK 契约/su);
+});
+
+test("Operations authentication stays behind its BFF and Gateway validates only the short-lived access token", () => {
+  const platform01 = source.match(/uc\("PLT-01"[^\n]+/u)?.[0] ?? "";
+  const platformI01 = source.match(/iuc\("PLT-I01"[^\n]+/u)?.[0] ?? "";
+  const gateway = source.match(/code: "API_GATEWAY"[\s\S]+?\n  \},/u)?.[0] ?? "";
+
+  assert.match(platform01, /内部 Operations 账号.*不可逆密码校验值.*15 分钟.*RS256.*可撤销 Refresh Session/u);
+  assert.match(platform01, /operations-console-web.*API Gateway.*operations-console-bff.*Platform 内部接口/u);
+  assert.match(platformI01, /仅供 operations-console-bff.*登录、Refresh、Logout/u);
+  assert.match(gateway, /Operations 首期验证 Platform 签发的最小 RS256 Access JWT/u);
+  assert.match(gateway, /不处理账号密码登录、Refresh、Logout 业务或 Token 签发/u);
+  assert.match(gateway, /Operations 浏览器只转发到 operations-console-bff/u);
 });
 
 test("Platform persists the Commerce Order Context reference before FiscalRecordCreated arrives", () => {

@@ -11,7 +11,7 @@
 - 在当前 Apple Silicon Mac 上快速调试单个服务和一条跨服务业务链；
 - 基础设施版本可重复、可隔离，不污染或复用开发者现有容器数据；
 - Java 服务保留 IDE 断点、热重启和低成本重建体验；
-- 不要求日常同时运行十个 Java Deployable 和完整可观测栈；
+- 不要求日常同时运行十一个 Java Deployable（六个核心服务、API Gateway、三个 Console BFF 和 Vault）和完整可观测栈；
 - 自动测试通常由 Testcontainers 管理自己的依赖；Operations Gateway Redis 测试按已批准例外复用仓库专用 Compose Redis，并通过运行级 Namespace 隔离，不使用 Testcontainers。
 
 ## 2. 当前电脑实测基线
@@ -316,7 +316,7 @@ xxl_job
 6. 调试跨服务 Trace、Metrics 或 Logs 时再启动 `observability`；
 7. 停止时先退出 Java 服务，再执行 `docker compose down`，保留数据卷。
 
-不要把“本地全绿”建立在所有十个 Deployable 必须同时常驻的前提上。
+不要把“本地全绿”建立在所有十一个 Deployable（六个核心服务、API Gateway、三个 Console BFF 和 Vault）必须同时常驻的前提上；当前仍只按需启动已经实现且属于当前业务链的应用，未创建的核心服务、Console BFF 和 Vault 不因此获得实现授权。
 
 ## 14. 健康检查与验证
 

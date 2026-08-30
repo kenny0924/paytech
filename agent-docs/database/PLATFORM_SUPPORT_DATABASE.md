@@ -1,8 +1,10 @@
 # Platform Support 数据库设计规范
 
-最后更新：2026-08-27
+最后更新：2026-08-29
 
 状态：V1 逻辑模型已按 92 表平衡方案收敛；PDManer 已确定性生成并通过自动验证，PDManer 4.9.3 应用内人工评审待完成；当前不包含 Migration、Java 实现或数据库环境。
+
+> **2026-08-29 后续语义替代：** [Platform Support 内部运营认证需求](../plans/2026-08-29-platform-support-operations-authentication-requirements.md) 已批准 Platform Support 自主管理内部 Operations 账号、不可逆密码校验值、Refresh Session 和 RS256 Token 签发，并把 Gateway Route/Upstream 固定为部署 Bootstrap、Rate/Concurrency 改为跨计数维度累计。本文及当前 92 表模型中的外部 IdP-only、无登录 Session、动态 Route Release 和容量规则跨维度覆盖描述只保留为冻结 V1 历史，不得据此实现。其他领域仍以当前 92 表资产为权威；认证/Guard 物理修订必须另行批准，当前不得修改 PDManer、Manifest、Migration 或 Platform 代码。
 
 ## 1. 文档定位
 

@@ -1,8 +1,10 @@
 # Platform Support 现实场景与逐表字段映射
 
-最后更新：2026-08-27
+最后更新：2026-08-29
 
 状态：与 92 表 Platform Support V1 PDManer 基线同步；自动场景覆盖已建立，PDManer 4.9.3 应用内人工检查待完成
+
+> **历史场景警告：** 本文的外部 IdP 登录和动态 Gateway Route/Release 场景仍用于解释冻结 92 表 V1 数据，但其未来实现语义已被 [Platform Support 内部运营认证需求](../../plans/2026-08-29-platform-support-operations-authentication-requirements.md) 取代。内部 Operations 改为 Platform 自有账号/密码校验值与 Refresh Session；首期 Gateway 使用静态 Route/Upstream 和跨维度累计容量 Guard。完成新的物理模型设计前，不得把相关示例实现为 Platform 代码或 Migration。
 
 ## 1. 固定参与方与编号
 

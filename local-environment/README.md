@@ -49,6 +49,19 @@ Base-profile endpoints:
 | Nacos Client gRPC | `127.0.0.1:9848` |
 | Nacos 3 Console | `http://127.0.0.1:18088` |
 
+## API Gateway Redis tests
+
+The Operations Gateway test module deliberately reuses this project's Redis instead of Testcontainers. Before running Gateway tests, confirm `mor-local-redis-1` is healthy and export the same private password without printing it:
+
+```bash
+docker compose --env-file .env.local --profile base ps redis
+set -a
+source .env.local
+set +a
+```
+
+Gateway tests must connect only to `127.0.0.1:16379`. Each Maven run uses a unique key namespace and deletes only that namespace with `SCAN`; tests must never run `KEYS *`, `FLUSHDB`, stop the Compose Redis, or use the unrelated host Redis on `6379`. Redis-unavailable tests point to an unused loopback port rather than disrupting this shared local container.
+
 ## XXL-Job scheduler profile
 
 The scheduler profile adds only XXL-Job Admin `3.4.2`; it reuses this project's isolated MySQL and never reads a

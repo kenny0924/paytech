@@ -101,7 +101,7 @@ Client & Contract 的 Party Identity 首期只注册两个 Vault Data Type：`EM
 | 支付卡有效期 | 由 Provider Token 和 Provider 侧支付工具生命周期管理 |
 | Provider Card Token 的 Detokenization 能力 | 由 Provider 管理；Payment 只保存 Provider Token 及批准的最小卡片描述元数据，后者仍按内部分类保护 |
 | Provider/API/Webhook Secret、私钥、证书私钥、数据库密码 | Secrets Manager/KMS；业务库只保存 `secret_ref` |
-| 用户登录密码或可恢复密码 | 由外部 IdP/IAM 负责认证；只保存批准的不可逆自适应密码校验值，不进入业务库、事件、日志、文件或 Vault |
+| 用户登录密码或可恢复密码 | 不进入 Vault、事件、日志或文件；内部 Operations 账号仅由 Platform Support 自有认证域保存批准的不可逆自适应校验值，Client/Partner/Consumer 的认证提供方仍待设计；任何可恢复密码均禁止保存 |
 | KMS 根密钥、KEK、HMAC Key 或明文 DEK | KMS/HSM；Vault 数据库只保存 Key Ref、Version 和 Wrapped DEK |
 | KYC/KYB 文件、付款证据、合同文件和其他文件正文 | 加密对象存储；业务库保存 Platform `file_id + content_hash` |
 | Order、Payment、Refund、Risk Decision、Journal、Balance、Settlement 等业务事实 | 对应核心系统数据库 |

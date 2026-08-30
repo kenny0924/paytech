@@ -1,8 +1,8 @@
 # Code-MoR Entry Application Architecture
 
-Last updated: 2026-08-28
+Last updated: 2026-08-29
 
-Status: current architecture baseline for subsequent design sessions. Existing first-release roots remain empty; Operations projects and the internal Vault are approved logical MVP components but are not yet created.
+Status: current architecture baseline for subsequent design sessions. Console project naming and the Operations Gateway first slice are approved logical components; only API Gateway implementation is currently authorized.
 
 ## 1. Purpose
 
@@ -35,8 +35,9 @@ api-gateway/
 ### Entry-layer backend project roots
 
 ```text
-business-portal-bff/     # Client Console and Partner Console
-operations-bff/          # Internal Operations Console; MVP logical target, not yet implemented
+operations-console-bff/  # Internal Operations personnel
+client-console-bff/      # Client
+partner-console-bff/     # Local Partner
 ```
 
 ### Supporting technical service roots
@@ -50,29 +51,33 @@ Vault is not a seventh core business system. It owns encrypted value records, cr
 ### Frontend project roots
 
 ```text
-checkout-web/            # Hosted Checkout and Consumer Service Portal
-business-portal-web/     # Client Console and Partner Console
-operations-console-web/ # Internal Operations Console; MVP logical target, not yet implemented
+checkout-web/            # Consumer Hosted Checkout and Service Portal
+operations-console-web/ # Internal Operations personnel
+client-console-web/      # Client
+partner-console-web/     # Local Partner
 ```
 
-`business-portal-bff/`, `checkout-web/`, and `business-portal-web/` currently exist as empty project roots. Operations and Vault projects are not yet created. None of these planned roots currently authorizes scaffolding implementation.
+`checkout-web/` and the historical empty placeholders `business-portal-web/` / `business-portal-bff/` currently exist. The `business-portal-*` names are retired as target architecture; do not add implementation under them. The three `*-console-*` frontend/BFF roots and Vault are not yet created. This naming decision does not authorize their scaffolding.
 
 Do not create `client-api-service` or `provider-callback-service`. Client API is a logical external API surface routed to the owning core systems. Provider callbacks belong to Payment Orchestration.
 
-The current first-release logical backend target is six core services, one API Gateway, one Business Portal BFF, one separately secured Operations BFF and one internal Vault: ten Java deployable types. The Operations channel is required by MVP refund, dispute, reconciliation and settlement flows; Vault is required when the first recoverable sensitive field is implemented. Neither has been scaffolded in this repository. Frontend applications and the embedded `compensation-event` JAR are not deployable services.
+The current logical backend target is six core services, one API Gateway, three separately secured Console BFFs and one internal Vault: eleven Java deployable types. This is a target boundary, not a mandate to run or scaffold every deployable now. The Operations channel is required by MVP onboarding, refund, dispute, reconciliation and settlement flows; only its Gateway first slice is currently authorized. Frontend applications and the embedded `compensation-event` JAR are not deployable services.
 
 ## 3. What BFF means
 
 **BFF** means **Backend for Frontend**. It is a small, stateless backend designed around the needs of a particular frontend rather than around ownership of a business domain.
 
-For Code-MoR, `business-portal-bff` sits between API Gateway and the six core systems:
+For Code-MoR, each authenticated Console has its own BFF between API Gateway and the authorized core-system interfaces:
 
 ```text
-business-portal-web
+<audience>-console-web
   -> API Gateway
-    -> business-portal-bff
-      -> Client & Contract / Commerce / Payment / Risk / Finance / Platform Support
+    -> <audience>-console-bff
+      -> Platform Support identity/authorization where applicable
+      -> authorized Client & Contract / Commerce / Payment / Risk / Finance / Platform Support interfaces
 ```
+
+`<audience>` is exactly `operations`, `client`, or `partner`. The BFFs may share libraries later, but they do not share a public deployable or security boundary by default.
 
 The BFF may:
 
@@ -144,25 +149,31 @@ Suggested route family:
 
 Commerce is the external owner of the Checkout flow. The browser must not call Risk, Finance, Client & Contract or Vault directly. Commerce owns the single cancel command; Gateway/Checkout Web do not call Payment to void an authorization or Finance to reverse funds. Card entry and tokenization use the selected Provider SDK or Hosted Fields so PAN, CVV/CVC, full track data and PIN data do not enter a Code-MoR backend or Vault. Payment receives only the Provider token and approved card descriptors.
 
-### Client Console and Partner Console
+### Client Console
 
-Both experiences share `business-portal-web` and access only `business-portal-bff` from the browser:
+The Client experience uses its own projects:
 
 ```text
-business-portal-web
+client-console-web
   -> API Gateway
-    -> business-portal-bff
+    -> client-console-bff
       -> authorized core-system interfaces
 ```
 
-Suggested route families:
+Its route families and authentication scheme remain a separate design. This document does not reuse Operations JWT decisions for Client users.
+
+### Partner Console
+
+The Local Partner experience also uses a separate boundary:
 
 ```text
-/portal/v1/client/**
-/portal/v1/partner/**
+partner-console-web
+  -> API Gateway
+    -> partner-console-bff
+      -> authorized read-only transaction views and partner-owned capabilities
 ```
 
-The frontend may share code and deployment, but Client and Partner permissions remain distinct. Backend resource authorization is mandatory; hiding a frontend control is not authorization.
+Partner transaction access remains read-only. It cannot operate orders, payments, refunds, routing, MIDs or ledger records. Client/Partner source code may later share packages, but their deployables, identities and permissions remain distinct; hiding a frontend control is never authorization.
 
 ### Operations Console
 
@@ -171,11 +182,14 @@ The high-privilege internal console uses a separate BFF:
 ```text
 operations-console-web
   -> API Gateway
-    -> operations-bff
+    -> operations-console-bff
+      -> Platform Support internal authentication/authorization interfaces
       -> authorized core-system interfaces
 ```
 
-Do not share the external Business Portal BFF with Operations. Operations has broader permissions, maker-checker controls, and sensitive audit requirements. Both Operations projects are MVP logical components but remain unimplemented until an explicit scaffolding request.
+The only current public Operations routes are the three exact authentication paths defined by the [Operations API Gateway first-slice design](./plans/2026-08-29-operations-api-gateway-design.md). Gateway removes `/api/operations` and forwards only to `operations-console-bff`; it never routes Operations browser requests directly to Platform Support or a core system. Platform Support owns internal Operations accounts and Token issuance, while Gateway validates the Access JWT and the BFF performs current Role/Permission/Resource authorization.
+
+Do not share Client or Partner BFFs with Operations. Operations has broader permissions, maker-checker controls and sensitive audit requirements. The Operations frontend/BFF remain unimplemented until explicitly authorized; Gateway tests use protocol-level Simulators.
 
 ## 5. Portal command and query ownership
 
@@ -251,8 +265,9 @@ The `compensation-event` component has no network endpoint. It runs inside each 
 
 | Backend | Browser access through Gateway | Machine access through Gateway | Exposure decision |
 |---|---|---|---|
-| Business Portal BFF | Client and Partner consoles | No | Exposed |
-| Operations BFF | Operations console | No | MVP; separately exposed with high-privilege controls |
+| Client Console BFF | Client Console only | No | Planned; separately exposed after its auth design |
+| Partner Console BFF | Partner Console only | No | Planned; separately exposed after its auth design |
+| Operations Console BFF | Operations Console only | No | First-slice auth routes exposed with high-privilege controls |
 | Commerce | Scoped Checkout endpoints | Client System | Exposed |
 | Payment Orchestration | No general browser API | Provider callbacks; narrowly scoped Client API if required | Restricted exposure |
 | Finance | Browser uses BFF | Client System | Exposed for machine API |
@@ -267,20 +282,20 @@ The fact that a service is reachable through Gateway does not make every interfa
 
 - A Java service does not require a dedicated physical server. Multiple service containers may share the same runtime nodes.
 - Frontend projects may be built as static assets or use a lightweight frontend runtime; they are not Java services.
-- `business-portal-bff` is stateless and initially needs no business database. Scale it horizontally only when traffic requires it.
+- Console BFFs are stateless and initially need no business database. Scale each independently only when traffic requires it.
 - MQ consumers belonging to a core system remain in that system's deployable initially; do not create separate worker services without a scaling or isolation reason.
 - Each state-owning service embeds the hardened `compensation-event` library and stores its events in its own database. Transaction `afterCommit` performs the normal wake-up; XXL-Job provides per-service fallback scanning or sharding, while database Claim/Lease protects multi-instance execution. Do not create a central compensation worker or database.
 - Vault is a separately secured internal deployable and datastore because its threat boundary, KMS permissions and sensitive-access controls differ from the six business systems. It is called through an internal Spring `@HttpExchange` contract with mTLS/workload identity and is never routed through the external Gateway.
 - A future Maven module named `*-api` is a lightweight internal HTTP-contract JAR containing `@HttpExchange` interfaces and transport DTOs; it is not a separately running process. The Spring Boot `*-web` module is normally the deployable unit.
 - Internal callers use Spring HTTP Service Clients with Spring Cloud LoadBalancer and Nacos discovery. They do not route service-to-service calls through Gateway and must not introduce new Dubbo or OpenFeign contracts.
-- API Gateway uses Spring Cloud Gateway Server WebFlux. Request-rate limiting uses the built-in Redis-backed Token Bucket; concurrency limiting uses a Redisson lease/expiry-aware semaphore. Gateway authentication remains a separate pending design.
+- API Gateway uses Spring Cloud Gateway Server WebFlux. For the Operations first slice it validates the Platform Support Operations Access JWT and uses non-blocking Spring Data Redis Reactive + Lettuce Lua scripts for atomic multi-dimension Token Bucket and lease-based concurrency controls. It does not depend on `paytech-redis-starter`, Redisson or a blocking Redis template.
 - Confirmed framework, middleware and local-machine decisions are in `TECHNOLOGY_STACK.md` and `LOCAL_DEVELOPMENT_ENVIRONMENT.md`. The local hybrid topology is a development arrangement, not a production deployment topology.
 - Split an entry adapter into another service only for demonstrated security isolation, independent scaling, failure isolation, or release-cadence needs.
 
 ## 9. Current build order
 
 1. Keep the six core project roots and API Gateway project root.
-2. Keep the empty `checkout-web`, `business-portal-web`, and `business-portal-bff` project roots; scaffold their internal structure only after explicit approval.
+2. Keep `checkout-web` untouched. Treat empty `business-portal-web` and `business-portal-bff` as retired historical placeholders; do not implement under them or delete them without a separate cleanup decision.
 3. Do not create standalone Client API or Provider Callback projects.
-4. Defer `operations-console-web` and `operations-bff` until internal operations design begins.
+4. Implement only the approved `api-gateway` Operations first slice. Defer `operations-console-web`, `operations-console-bff`, `client-console-*` and `partner-console-*` scaffolding until explicitly requested.
 5. Do not scaffold `vault-service` until implementation is explicitly requested; when it is created, follow `VAULT_SERVICE_ARCHITECTURE.md` and keep the Code-PMX Vault repository as a reference rather than copying its current security assumptions unchanged.

@@ -1,8 +1,10 @@
 # Platform Support 92 表平衡物理模型设计
 
-最后更新：2026-08-27
+最后更新：2026-08-29
 
 状态：已实现并完成独立安全审查修正；最终 PDManer 确定性模型为 92 表、1,076 字段、167 个唯一索引、116 个访问索引、145 条本库关系、19 条 1:1 关系和 8 个 Diagram Groups，另冻结 28 条复合外键与 67 条 CHECK 契约
+
+> **后续决策：** [2026-08-29 Platform Support 内部运营认证需求](./2026-08-29-platform-support-operations-authentication-requirements.md) 已取代本设计中外部 IdP-only 和 Platform 动态管理 Gateway Route/Upstream 的未来实现语义，并把 Rate/Concurrency 改为按独立计数维度累计。本文继续记录 92 表冻结 V1 的形成过程；受影响结构未经新的物理模型授权不得实施，当前不修改生成模型或精确计数。
 
 ## 1. 目标与阶段边界
 

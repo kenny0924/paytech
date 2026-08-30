@@ -86,6 +86,34 @@ test("E2E-05, E2E-07, and E2E-09 list only participants used by their messages",
   }
 });
 
+test("all Console browser calls traverse their audience-specific BFF", async () => {
+  const sequenceCatalog = await loadSequenceCatalog();
+  const expectedBffByConsole = {
+    client_console: "client_console_bff",
+    partner_console: "partner_console_bff",
+    operations_console: "operations_console_bff",
+  };
+
+  assert.ok(sequenceCatalog, "global use case sequence catalog must exist");
+  for (const [useCaseId, sequence] of Object.entries(sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES)) {
+    for (const [index, message] of sequence.messages.entries()) {
+      const expectedBff = expectedBffByConsole[message.from];
+      if (!expectedBff || message.to !== "api_gateway") {
+        continue;
+      }
+
+      const gatewayHop = sequence.messages[index + 1];
+      const bffHop = sequence.messages[index + 2];
+      assert.deepEqual(
+        { from: gatewayHop?.from, to: gatewayHop?.to },
+        { from: "api_gateway", to: expectedBff },
+        `${useCaseId} must route ${message.from} through ${expectedBff}`,
+      );
+      assert.equal(bffHop?.from, expectedBff, `${useCaseId} must leave Gateway through ${expectedBff}`);
+    }
+  }
+});
+
 test("clicking a global use case opens, switches, and closes its sequence", async () => {
   const selectionBehavior = await loadSelectionBehavior();
 
