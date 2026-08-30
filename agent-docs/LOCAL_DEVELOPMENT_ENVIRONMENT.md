@@ -1,8 +1,8 @@
 # Code-MoR 本地开发环境方案
 
-最后更新：2026-08-29
+最后更新：2026-08-30
 
-状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和五个公共基础 JAR；当前电脑已有 Nexus 已接入 Maven，构建治理 POM 与公共 JAR Snapshot 已发布。`base` Profile 已在当前 Mac 完成首次启动与运行验收，现已关闭容器并保留三个持久卷；未创建业务 Java 服务、Flyway Migration、业务表、调度或可观测运行环境。
+状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和七个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；六个核心业务服务的 Java 模块、Console BFF/前端、Flyway Migration、业务表、调度和外部可观测运行环境仍未创建。
 
 ## 1. 目标
 
@@ -12,7 +12,7 @@
 - 基础设施版本可重复、可隔离，不污染或复用开发者现有容器数据；
 - Java 服务保留 IDE 断点、热重启和低成本重建体验；
 - 不要求日常同时运行十个 Java Deployable 和完整可观测栈；
-- 自动测试仍由 Testcontainers 管理自己的依赖，不把本地共享环境当测试前置条件。
+- 自动测试通常由 Testcontainers 管理自己的依赖；Operations Gateway Redis 测试按已批准例外复用仓库专用 Compose Redis，并通过运行级 Namespace 隔离，不使用 Testcontainers。
 
 ## 2. 当前电脑实测基线
 
@@ -234,7 +234,8 @@ Vault 本地开发需要的 KMS、Secrets Manager 和 Object Storage 模拟器�
 
 | Deployable | 本地端口 |
 |---|---:|
-| API Gateway | 18080 |
+| API Gateway Application | 18080 |
+| API Gateway Management | 19080 |
 | Client & Contract | 18101 |
 | Commerce | 18102 |
 | Payment Orchestration | 18103 |
@@ -242,8 +243,7 @@ Vault 本地开发需要的 KMS、Secrets Manager 和 Object Storage 模拟器�
 | Finance | 18105 |
 | Platform Support | 18106 |
 | Vault | 18107 |
-| Business Portal BFF | 18201 |
-| Operations BFF | 18202 |
+| Operations / Client / Partner Console BFF | 未分配；项目创建时分别确定，不复用一个 Business Portal BFF |
 
 服务在 Nacos 中按稳定 `spring.application.name` 注册。端口只用于本机调试，不成为跨环境契约。
 
@@ -295,10 +295,14 @@ xxl_job
 ## 12. Redis 本地约定
 
 - Code-MoR 使用自己的 Redis 8.2.1 容器和 Volume，宿主机端口 `16379`。
-- Key 使用 `mor:{service}:{capability}:...` Namespace；每个能力必须定义 TTL。
+- Key 使用 `{service}:{capability}:...` Namespace；Redis Starter 为 `RedisJsonTemplate`、`StringRedisTemplate` 与 Redisson 统一把 `{service}` 默认解析为 `spring.application.name`，服务可用 `redis.key-prefix` 显式覆盖。业务对象缓存优先使用不含 Java 类型信息的普通 JSON；字符串与计数器使用 `StringRedisTemplate`。新增 Key 不使用 `mor` 技术前缀，每个能力必须定义 TTL。
 - Gateway Rate Limiter 与各服务 Key 进一步使用独立前缀，禁止 `KEYS *` 作为运行逻辑。
+- Operations Gateway 不使用 Redis Starter、`StringRedisTemplate` 或 Redisson；它通过 Spring Data Redis Reactive + Lettuce Lua 实现 Rate Token Bucket 和 Concurrency ZSET Lease。
+- Gateway Redis 自动测试连接 `127.0.0.1:16379` 的 `mor-local` Compose Redis，密码从 `.env.local` 对应的 `MOR_REDIS_PASSWORD` 环境注入；不引入 Testcontainers，不连接 `6379`。
+- 每次 Gateway 测试运行生成唯一 Key Namespace，Setup/Teardown 只用 `SCAN` 删除本次已知前缀，禁止 `KEYS *`、`FLUSHDB` 或停止共享 Compose Redis。Redis 不可用用例连接未监听的 Loopback 端口，不影响其他本地进程。
 - 本地密码来自 `.env.local`；应用日志不得输出完整连接串或密码。
 - 现有宿主机 `6379` Redis 不参与 Code-MoR 开发、测试或故障演练。
+- Gateway 的 Redis 启动前置、不回显密码的注入方式、完整验证命令和 HMAC 轮换步骤以 [`api-gateway/README.md`](../api-gateway/README.md) 为唯一运行手册，本文不复制密钥或大段命令。
 
 ## 13. 日常启动顺序
 
@@ -335,15 +339,17 @@ Java 服务至少验证：
 - 内部 `@HttpExchange` 调用经过 Nacos + LoadBalancer，不经过外部 Gateway；
 - RabbitMQ 发布等待 Confirm，消费者提交本地事务后 Manual Ack；
 - 日志含 Request/Trace ID，且没有密码、Token 或敏感明文。
+- API Gateway Application 监听 `18080`，Management 只在 `19080` 暴露 `health` / `info` / `prometheus`；Liveness 只含 `livenessState`，Readiness 只含 `readinessState`、`gatewayBootstrap` 和短超时 `gatewayRedis`，不把 Operations BFF 或 JWKS 可用性纳入就绪门禁。
 
 ## 15. 自动测试与本地共享环境的边界
 
-`auto` 测试不得连接本文的 MySQL、Redis、RabbitMQ、Nacos 或其他共享运行时容器。Maven 可以通过 Nexus 解析构建依赖，但测试执行中的生产链不得把 Nexus 当作应用运行依赖：
+除本节明确的 Operations Gateway Redis 例外外，`auto` 测试不得连接本文的 MySQL、Redis、RabbitMQ、Nacos 或其他共享运行时容器。Maven 可以通过 Nexus 解析构建依赖，但测试执行中的生产链不得把 Nexus 当作应用运行依赖：
 
-- 数据库、Redis 和 RabbitMQ 由 Testcontainers 按测试需要启动；
+- 数据库、RabbitMQ 和非 Gateway Redis 由 Testcontainers 按测试需要启动；
+- Operations Gateway 是当前唯一例外：它只连接仓库 Compose 管理的 `127.0.0.1:16379` Redis，只接受 `MOR_REDIS_PASSWORD`，测试自身不启动 Docker/Testcontainers，并使用唯一运行 Namespace 与 `SCAN` 限定清理；
 - Nacos 在 `auto` 中关闭；内部服务/Provider 通过有状态 Simulator 提供真实 HTTP/MQ 协议；
 - 测试使用随机映射端口和独立数据库/Key/Queue Namespace；
-- 本地 Compose 只用于人工开发和 `manual` 联调。
+- 除上述 Gateway Redis 例外外，本地 Compose 只用于人工开发和 `manual` 联调。Gateway 的默认 `auto` 仍从真实随机端口 WebFlux 入口运行，并通过真实协议连接 HTTPS JWKS 和有状态 Operations BFF Simulator。
 
 详细规则见 [UNIT_TEST_GUIDE.md](./UNIT_TEST_GUIDE.md)。
 
@@ -354,7 +360,7 @@ Java 服务至少验证：
 - 清理现有 Docker Images、Containers、Volumes 或 Build Cache；
 - 修改 Docker Desktop 全局资源设置；
 - 修改个人 `.zshrc`、IDE 全局配置或系统默认 JDK；
-- 创建六个核心业务服务、Gateway/BFF、Flyway Migration 或业务表；
+- 创建六个核心业务服务的 Java 模块、Console BFF/前端、Flyway Migration 或业务表；Operations 首期 Gateway 已实现，不在本条禁止范围内；
 - 创建 `scheduler`、`observability`、Vault 模拟依赖等后续 Compose Profile；
 - 创建/发布云资源、CI/CD 或生产部署。
 

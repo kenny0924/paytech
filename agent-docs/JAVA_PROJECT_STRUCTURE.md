@@ -1,6 +1,6 @@
 # Java 项目结构规范
 
-最后更新：2026-08-29
+最后更新：2026-08-30
 
 ## 1. 使用范围
 
@@ -12,11 +12,11 @@
 - 集成 Vault、`compensation-event` 或 XXL-Job 异步恢复任务；
 - 调整包结构、依赖方向、事务边界或部署单元。
 
-本文定义未来六个核心 Java 服务及内部 Vault 的默认工程形态。`api-gateway` 和 `business-portal-bff` 的业务边界仍以 `APPLICATION_ARCHITECTURE.md` 为准；若它们不需要完整领域分层，不得为了形式一致强行创建空层。涉及可靠异步事件或敏感数据时，还必须分别读取 `COMPENSATION_EVENT_GUIDE.md` 和 `VAULT_SERVICE_ARCHITECTURE.md`。
+本文定义未来六个核心 Java 服务及内部 Vault 的默认工程形态。`api-gateway`、`operations-console-bff`、`client-console-bff` 和 `partner-console-bff` 的业务边界仍以 `APPLICATION_ARCHITECTURE.md` 为准；若它们不需要完整领域分层，不得为了形式一致强行创建空层。Gateway 首期还必须遵守 `plans/2026-08-29-operations-api-gateway-design.md`，只创建 `api-gateway-web` 和 `api-gateway-test`，不创建空 `*-api`。涉及可靠异步事件或敏感数据时，还必须分别读取 `COMPENSATION_EVENT_GUIDE.md` 和 `VAULT_SERVICE_ARCHITECTURE.md`。
 
 Java、Spring、Maven BOM/Parent、MySQL、RabbitMQ、Redis、Nacos、Gateway 和可观测性版本统一以 [TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md) 为准。本机运行方式以 [LOCAL_DEVELOPMENT_ENVIRONMENT.md](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 为准。
 
-本阶段仍禁止主动为任何服务创建脚手架。只有用户明确要求开始实现具体 Java 项目时，才能应用本文创建目录或代码。
+Operations 首期 `api-gateway` 已按批准边界实现；除该现有项目的后续授权任务外，本阶段仍禁止主动为六个核心服务、Console BFF/前端或 Vault 创建脚手架。只有用户明确要求开始实现具体 Java 项目时，才能应用本文创建目录或代码。
 
 ## 2. 参考项目结论
 
@@ -69,7 +69,7 @@ Code-MoR 继承模块隔离思想，但将 Dubbo `facade-service` 改为 Spring 
 | 父工程 | 聚合模块、统一版本、插件和依赖管理 | `pom`，不运行 |
 | `api` | 内部 HTTP 契约：`@HttpExchange` 接口、传输 DTO 和契约枚举 | 可发布 JAR，不运行 |
 | `web` | Spring Boot 入口、业务实现、持久化和适配器 | 唯一业务部署单元 |
-| `test` | `auto/manual` 测试、测试数据 DSL、Testcontainers 和外部系统 Simulator | 不发布、不部署 |
+| `test` | `auto/manual` 测试、测试数据 DSL、所需 Testcontainers 和外部系统 Simulator | 不发布、不部署 |
 
 默认依赖方向：
 
@@ -82,7 +82,7 @@ test ───────→ web ───────→ api
 - `api` 不得依赖 `web` 或 `test`。
 - `web` 依赖自己的 `api`，由 HTTP Controller 实现契约接口。
 - `test` 可以依赖 `web` 以运行集成测试，但生产模块不得依赖 `test`。
-- `auto` 必须从真实本服务入口完成内部闭环；数据库、Redis 和 MQ 由测试按需自动启动，外部 HTTP/MQ 通过有状态 Simulator 和真实协议交互。
+- `auto` 必须从真实本服务入口完成内部闭环；数据库、Redis 和 MQ 原则上由测试按需自动启动，外部 HTTP/MQ 通过有状态 Simulator 和真实协议交互。Operations Gateway 的仓库 Compose Redis 例外以本节 3.2 和 `UNIT_TEST_GUIDE.md` 为准。
 - 测试不得使用 `when(...).thenReturn(...)`、`@MockBean`、`@MockitoBean` 等方法级行为 Stub 替换生产链路；详细边界以 `UNIT_TEST_GUIDE.md` 为准。
 - `manual` 必须由独立 Maven Profile 显式运行，不能进入默认 `mvn test` 和 CI。
 - 其他内部 Java 服务只依赖提供方的 `api`，并在自己的外部集成适配器中使用它。
@@ -107,7 +107,35 @@ paytech-build/
 - 本机开发的 `1.0.0-SNAPSHOT` 先发布到 Nexus `maven-snapshots`，服务统一通过 `maven-public` 解析；服务不得直接配置 Hosted 仓库 URL。
 - 发布地址和认证来自开发者 Maven Settings，POM 只保留与 Settings 一致的 `maven-releases` / `maven-snapshots` 仓库 ID 和 `${nexus.url}`，不得保存凭据。
 
-公共能力按边界拆分为 `paytech-common-core`、`paytech-mvc-web-starter`、`paytech-snowflake-id`、`paytech-xxl-job-starter` 和 `paytech-compensation-event`。不得把跨领域 DTO、业务枚举、Repository、Mapper 或第三方 Provider 模型放入公共 JAR。详细职责见 `TECHNOLOGY_STACK.md`。
+公共能力按边界拆分为 `paytech-common-core`、`paytech-mvc-web-starter`、`paytech-snowflake-id`、`paytech-caffeine-starter`、`paytech-redis-starter`、`paytech-xxl-job-starter` 和 `paytech-compensation-event`。Redis Starter 暴露同一实例的 `cacheManager`/`redisCacheManager` 并以 `@Primary` 作为 Spring Cache 默认 Manager；每个 Redis Cache 由宿主声明 `RedisCacheDefinition<T>(cacheName, concreteValueType, ttl)`，未声明名称不动态创建。Caffeine 只注册 `caffeineCacheManager`，仅用于可回源的有界进程内加速；同时使用两者时，Caffeine 方法必须在 Spring Cache 注解显式选择该 Manager，且两边使用不同 Cache Name。两者不是 L1/L2，也不使用 `spring.cache.type` 切换；不需要 Caffeine 的宿主不要引入对应 Starter。不得让任何 Cache 承担权威事实、幂等、锁、跨实例一致性、Vault Reveal、凭据或敏感明文，也不得把跨领域 DTO、业务枚举、Repository、Mapper 或第三方 Provider 模型放入公共 JAR。详细职责见 `TECHNOLOGY_STACK.md`。
+
+### 3.2 已实现的 API Gateway 工程边界
+
+Operations 首期 Gateway 的实际仓库结构是：
+
+```text
+api-gateway/
+├── pom.xml                              # 聚合、统一版本和继承式 Enforcer
+├── api-gateway-web/                    # 唯一可运行的 Reactive Gateway 模块
+├── api-gateway-test/                   # auto、Simulator、架构/E2E 与覆盖率证据
+├── scripts/
+│   ├── verify-gateway-boundaries.mjs
+│   └── verify-jacoco.mjs
+└── README.md                            # 本地前置、启动、验证与 HMAC 轮换手册
+```
+
+该项目没有 `api-gateway-api` 或其他空 `*-api` 模块，也不套用核心服务的 Domain/Repository/Mapper 分层。生产/测试依赖方向只是：
+
+```text
+api-gateway-test ────→ api-gateway-web
+```
+
+- `api-gateway-web` 使用 Spring Cloud Gateway Server WebFlux 5.0.3、OAuth2 Resource Server JWT、Spring Data Redis Reactive/Lettuce Lua、Actuator 和 Micrometer；它负责入口、Access JWT 与 Channel/Actor 校验、受信上下文、Guard、路由、请求 ID、结构化访问日志和健康/指标，不处理账号密码登录、页面聚合或业务编排。
+- 公共面只包含 `POST /api/operations/auth/v1/login`、`POST /api/operations/auth/v1/refresh` 和 `POST /api/operations/auth/v1/logout` 三条精确路由，剥离 `/api/operations` 后向唯一 Operations BFF 边界分别转发 `/auth/v1/login`、`/auth/v1/refresh` 和 `/auth/v1/logout`；未匹配 Operations API 在 Gateway 本地返回错误，不转发给 Simulator/未来 BFF。Operations BFF、Platform Support 认证代码和前端不属于本实现。
+- 生产模块禁止 MVC/Servlet、Foundation Redis/Caffeine/MVC Starter、Redisson、Nacos Client、Testcontainers、Mockito、Platform/core Client、Redis Template（包括 Reactive Template）/阻塞 Connection、手工 Reactor Blocking/Subscription 和应用自有动态 Route Repository。路由只来自三条编译时 Catalog 定义，Discovery Locator、Redis Route Repository、Retry 和原始 Path Metric Tag 均显式关闭。
+- `api-gateway-test` 以 Compile Scope 依赖 `web`，从真实随机端口 Gateway 入口经过完整生产链，并通过真实协议连接 HTTPS JWKS 和有状态 Operations BFF Simulator。它不引入 Mockito/Testcontainers；Redis 使用唯一已批准例外，只连接已运行的 `127.0.0.1:16379` 仓库 Compose Redis，只接受 `MOR_REDIS_PASSWORD`，每次运行使用唯一 Namespace 并只以 `SCAN` 清理；测试不启动 Docker/Testcontainers，不连接开发者 `6379` Redis。
+- 默认 `auto` 包含架构和真实 HTTP E2E 验收。`./mvnw clean verify` 之后还必须独立运行两个 Node 门禁；JaCoCo 对未舍入 Instruction/Branch 同时要求 `>= 90%`，只排除精确的 `ApiGatewayApplication`，并校验新鲜度与编译类一致性。
+- `api-gateway-web` 产出普通 JAR 和可执行 `-exec.jar`；`api-gateway-test` 跳过 install/deploy 且不产出可部署 JAR。Application/Management 默认端口分别为 `18080`/`19080`，健康组成与运行命令见 [`api-gateway/README.md`](../api-gateway/README.md)。
 
 ## 4. API 模块与内部 HTTP 契约
 

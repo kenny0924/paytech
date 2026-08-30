@@ -1,8 +1,8 @@
 # Code-MoR 技术栈基线
 
-最后更新：2026-08-29
+最后更新：2026-08-30
 
-状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、五个公共 JAR 与本地 `base` Compose Profile 配置已经初始化，构建治理 POM 和公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus；`base` Profile 已完成本机烟测并关闭，业务服务、Migration、业务表、后续运行环境和生产基础设施仍未授权创建。
+状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、七个公共 JAR 源码与本地 `base` Compose Profile 配置已经初始化；既有构建治理 POM 和五个公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus，新增 `paytech-caffeine-starter`、`paytech-redis-starter` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus；`base` Profile 已完成本机烟测并按需启停。Operations 首期 API Gateway 已在独立 Maven 仓库实现并通过构建、架构、验收与覆盖率门禁；六个核心业务服务的 Java 模块、Console BFF/前端、Migration、业务表、后续运行环境和生产基础设施仍未授权创建。
 
 ## 1. 使用范围
 
@@ -39,7 +39,8 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | 注册/配置客户端 | Nacos Client | 3.1.1 | 由 Spring Cloud Alibaba BOM 管理，不由服务单独指定 |
 | 注册/配置服务端 | Nacos Server | 3.1.2 | 暂不进入刚发布的 3.2 系列 |
 | 同步 Web 栈 | Spring MVC | Spring Boot 管理 | 六个核心服务、BFF 和 Vault 默认使用 MVC |
-| Gateway Web 栈 | Spring Cloud Gateway Server WebFlux | Spring Cloud 管理 | Gateway 是 WebFlux 例外，不强行改成 MVC |
+| Gateway Web 栈 | Spring Cloud Gateway Server WebFlux | 5.0.3；Spring Cloud 2025.1.3 线 | Gateway 是 WebFlux 例外，不强行改成 MVC |
+| Gateway 资源服务器 | Spring Security OAuth2 Resource Server JWT | Spring Boot 4.0.8 BOM 管理 | Gateway 只验证 Access JWT 和 Channel/Actor 上下文，不实现账号密码登录 |
 | 内部同步调用 | Spring HTTP Service Client | Spring Framework 管理 | `@HttpExchange` + `RestClient` + LoadBalancer + Nacos；不新增 Dubbo/OpenFeign |
 | 数据访问 | MyBatis Spring Boot Starter | 4.0.1 | 与 Spring Boot 4.0 线对齐；Mapper XML 为默认复杂 SQL 载体 |
 | 数据库 | MySQL LTS | 8.4；本地固定 8.4.11 | 早期允许一个实例承载多数据库，但每系统独立数据库和账号 |
@@ -47,15 +48,16 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | MQ | RabbitMQ | 4.2；本地固定 4.2.9 | 对齐 Amazon MQ RabbitMQ 4.2；自建生产前重新选择当时受支持系列 |
 | MQ 序列化 | JSON UTF-8 | 统一事件信封 | 禁止 Java 原生序列化；事件契约必须版本化 |
 | Redis Server | Redis Open Source Extended | 8.2；本地固定 8.2.1 | 早期单机；不是业务权威数据源 |
-| 通用 Redis 客户端 | Spring Data Redis + Lettuce | Spring Boot BOM 管理 | 普通 Key/Value、缓存、Reactive Redis 和 Gateway 限流 |
+| 进程内缓存 | Caffeine | 3.2.4；Spring Boot 4.0.8 BOM 管理 | 只加速可安全回源的数据；与 Redis CacheManager 按方法显式选用，不组成 L1/L2 |
+| 通用 Redis 客户端 | Spring Data Redis + Lettuce | Spring Boot BOM 管理 | Redis Starter 默认提供 Spring Cache、JSON 对象访问和字符串原子操作；Gateway 单独使用 Reactive Redis/Lua |
 | 分布式协调客户端 | Redisson Community | 4.6.1 | 仅用于锁、可过期信号量等明确协调能力 |
 | 补偿调度 | XXL-Job | 3.4.2 | 只唤醒/分片服务内扫描；数据库 Claim/Lease 才是最终互斥边界 |
-| Gateway 限流 | Spring Cloud Gateway `RedisRateLimiter` | Spring Cloud 管理 | Token Bucket；并发限制使用 Redisson 可过期信号量 |
+| Gateway 限流与并发 | Spring Data Redis Reactive + Lettuce Lua | Spring Boot BOM 管理 | Operations 首期用原子多维 Token Bucket 与 ZSET Lease；不使用阻塞客户端、Redisson 或 Foundation Redis Starter |
 | 可观测性 API | Actuator + Micrometer Observation | Spring Boot BOM 管理 | 业务代码只依赖 Micrometer/SLF4J 等中立 API |
 | 自动采集 | OpenTelemetry Java Agent + OTLP | 创建运行环境时固定补丁版本 | 默认通过 Java Agent 自动采集，不在业务代码绑定后端 SDK |
 | 遥测管道 | OpenTelemetry Collector | 创建运行环境时固定镜像版本 | 统一接收和转发 Metrics/Logs/Traces |
 | 本地可观测后端 | Prometheus + Loki + Tempo + Grafana + Alertmanager | 创建 Compose 时固定镜像版本 | 按需 Profile 启动，不作为默认开发前置条件 |
-| Java 测试 | JUnit 5 + Testcontainers | BOM 管理 | 默认 `auto` 内部闭环；不连接共享本地或真实业务环境 |
+| Java 测试 | JUnit 5 + Testcontainers；Gateway Redis 使用 Compose 例外 | BOM 管理 | 默认 `auto` 内部闭环；Operations Gateway Redis 测试复用专用 `mor-local` Compose Redis 并做运行级 Namespace 隔离 |
 
 OpenTelemetry、Prometheus、Loki、Tempo、Grafana 和 Alertmanager 的产品组合已经确认。它们发布频繁，实际创建 Compose 时固定经过同一次兼容验证的明确补丁版本和镜像摘要，而不是在架构文档中永久冻结一个很快失效的补丁号。
 
@@ -116,10 +118,17 @@ paytech-build/
 - Maven 依赖与插件统一通过 `maven-public` Group 解析，`mirrorOf=*` 防止构建绕过本机代理；Snapshot 发布到 `maven-snapshots`，Release 发布到 `maven-releases`。
 - 本机使用开发者指定的 `/Users/kenny/Desktop/Workspace/Settings/3-Maven/settings/local_settings.xml`，并由 `~/.m2/settings.xml` 引用。该文件包含本机凭据，权限必须为 `600`，不得复制到仓库、日志或文档。
 - POM 的 `distributionManagement` 只引用仓库 ID 和 `${nexus.url}`；地址与凭据由 Maven Settings 注入，服务 POM 不硬编码账号或密码。
-- 当前 `com.paytech` 下的 `paytech-dependencies`、`paytech-parent`、`paytech-build`、`paytech-foundation`、`paytech-common-core`、`paytech-snowflake-id`、`paytech-mvc-web-starter`、`paytech-xxl-job-starter` 和 `paytech-compensation-event` 已发布 `1.0.0-SNAPSHOT`。旧 `mor-*` Snapshot 暂时保留，不作为新服务依赖。
+- 当前 `com.paytech` 下的 `paytech-dependencies`、`paytech-parent`、`paytech-build`、`paytech-foundation`、`paytech-common-core`、`paytech-snowflake-id`、`paytech-mvc-web-starter`、`paytech-xxl-job-starter` 和 `paytech-compensation-event` 已发布 `1.0.0-SNAPSHOT`。Caffeine/Redis Starters 对应的最新 `paytech-dependencies` 增量、`paytech-caffeine-starter` 和 `paytech-redis-starter` 仅完成本机安装、源码与测试，尚未发布到 Nexus。旧 `mor-*` Snapshot 暂时保留，不作为新服务依赖。
 - 生产制品库、发布权限模型、Release 不可变策略和 CI/CD 发布流程仍需单独设计；本机配置不直接复制到生产。
 
 公司名称确定为 PayTech，统一 Maven 坐标前缀使用 `com.paytech`，公共基础包使用 `com.paytech.foundation`。未来各业务服务在此公司级前缀下按系统边界选择基础包名，不复用历史 `com.payplus` 私有坐标。Code-MoR 仍是产品/项目名称；公司级 Maven artifactId 使用 `paytech-*`，既有本地运行资源和数据库继续使用 `mor-*` / `mor_*`，不把 `Mor` / `mor-` 前缀带入新增 Java 类名、Bean 名、配置前缀、日志、指标或错误 Code。
+
+### 5.4 API Gateway 构建与覆盖率门禁
+
+- `api-gateway` 是独立 Maven 仓库，聚合父工程下只有 `api-gateway-web` 与 `api-gateway-test`，不创建空 `*-api` 模块。根 POM 的 Maven Enforcer 在 `validate` 阶段由两个子模块继承，并对传递依赖执行 Gateway 专用禁止清单。
+- 完整验证顺序是 `./mvnw clean verify`、`node scripts/verify-gateway-boundaries.mjs`、`node scripts/verify-jacoco.mjs`；后两个是独立失败关门的源码/配置边界与覆盖率校验，不由 Maven 命令隐式代替。
+- JaCoCo 按未舍入数值同时要求 Instruction 和 Branch Coverage `>= 90%`，只排除精确的 `ApiGatewayApplication`，并校验报告新鲜度与已编译类集合一致性。架构测试和真实随机端口 E2E 验收与默认 `auto` 组一起运行。
+- `api-gateway-web` 同时产出普通依赖 JAR 和可执行 `-exec.jar`；`api-gateway-test` 跳过 install/deploy 且不产出可部署 JAR。本地 Redis 前置、秘密注入、命令与轮换细节见 [`api-gateway/README.md`](../api-gateway/README.md)。
 
 ## 6. 公共基础 JAR
 
@@ -130,11 +139,13 @@ paytech-foundation/
 ├── paytech-common-core/
 ├── paytech-mvc-web-starter/
 ├── paytech-snowflake-id/
+├── paytech-caffeine-starter/
+├── paytech-redis-starter/
 ├── paytech-xxl-job-starter/
 └── paytech-compensation-event/
 ```
 
-五个 Foundation 模块均已实现。依赖方向固定为 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；通用 XXL-Job Starter 不得反向引用补偿能力。
+七个 Foundation 模块均已实现。依赖方向固定为 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
 
 ### 6.1 `paytech-common-core`
 
@@ -157,13 +168,37 @@ paytech-foundation/
 - 检测到超过容忍阈值的时钟回拨时失败关闭，不静默产生可能重复的 ID；
 - 业务代码依赖 ID 接口，不直接创建静态 Snowflake 单例。
 
-### 6.4 `paytech-xxl-job-starter`
+### 6.4 `paytech-caffeine-starter`
+
+- 使用 Spring Cache + Caffeine 3.2.4 提供进程内缓存，版本由 Spring Boot 4.0.8 BOM 管理；
+- 每个 Cache 默认最多 10,000 条、写入 10 分钟后过期、拒绝 `null` 并开启 Statistics；容量和 TTL 必须保持有界；
+- 生产服务应显式配置固定 `caffeine.cache-names` 白名单，Cache Name 不得拼接 Client、Order、Token 或其他动态/敏感值；
+- 只缓存可从权威数据源安全回源的加速数据，不保存业务权威事实、幂等、锁、跨实例一致性状态、Vault Reveal、凭据或敏感明文；淘汰、到期和实例重启必须不改变业务正确性；
+- Starter 只注册名为 `caffeineCacheManager` 的 Manager；同时引入 Redis Starter 时，使用 Caffeine 的 `@Cacheable`、`@CachePut`、`@CacheEvict` 和 `@Caching` 方法必须显式指定 `cacheManager = "caffeineCacheManager"`；
+- Caffeine 与 Redis 是按方法选择的两个独立 Manager，不是自动串联的 L1/L2 Cache；两边必须使用不同 Cache Name，不能期待任一 Manager 自动回源到另一 Manager；
+- 当前设计不使用 `spring.cache.type` 切换 Manager。不需要进程内缓存的宿主不要引入 Caffeine Starter；只有宿主自己注册同名 `caffeineCacheManager` 时该 Bean 才退让。
+
+### 6.5 `paytech-redis-starter`
+
+- 通过 Spring Boot 标准 `spring.data.redis.*` 配置和 Spring Data Redis 提供 Lettuce 普通访问；对象缓存优先注入 `RedisJsonTemplate`，字符串、计数器和其他 Redis 原生命令使用 `StringRedisTemplate`；
+- 同一 `RedisCacheManager` 实例以 `cacheManager` 和 `redisCacheManager` 两个 Bean Name 暴露，并标记为 `@Primary`；引入 Redis Starter 后，未显式指定 Manager 的 Spring Cache 注解默认使用 Redis；
+- 每个 Redis Cache 必须由宿主服务注册一个 `RedisCacheDefinition<T>(cacheName, concreteValueType, ttl)`；Cache Name 使用固定小写 kebab-case，值类型必须是可实例化的具体类型，TTL 不短于 1 毫秒，未声明的 Cache 不得动态创建；
+- Redis Cache 使用普通 Jackson 3 JSON，不写 Java 类元数据或 JDK 序列化内容；物理 Key 固定为 `{service-prefix}:cache:{cache-name}::{key}`，其中服务前缀遵守统一 Redis Namespace 规则；
+- `RedisJsonTemplate` 保存不含 Java 类名的普通 UTF-8 JSON，读取时显式传入 `Class<T>` 或 `TypeReference<T>`，实现 `CodeEnum` 的枚举使用稳定 `code` 而非 `name()`；为支持滚动升级，新增未知字段可忽略，其他不兼容变更必须升级 Key 版本；每次写入必须显式提供至少 1 毫秒的 TTL；默认不创建使用 JDK 序列化的通用 `RedisTemplate<Object, Object>`；
+- 通过 `redis.coordination.enabled=true` 按需创建只用于锁、可过期信号量等协调能力的 `RedissonClient`；
+- 直接依赖 Redisson Core，不引入 `redisson-spring-boot-starter`，不得注册 `RedissonConnectionFactory` 或替换 Lettuce；
+- Redisson 复用同一套地址、数据库、凭据、超时和 SSL 配置，强制显式配置连接/命令超时与有界线程/连接池；`RedisJsonTemplate`、Redisson 与 `StringRedisTemplate` 共用服务级 Key 前缀，默认取 `spring.application.name`，特殊场景可通过 `redis.key-prefix` 统一覆盖；
+- Namespace 只作用于顶层 Key，不改写 Hash field、Value 或 Channel；业务代码不得通过通用 `RedisTemplate<Object, Object>`、原始连接、回调、Lua 硬编码 Key 或 Redisson 全库命令绕过隔离，跨 Key `SORT BY/GET` 失败关闭；Namespace 是默认防误用约定，生产权限隔离仍由独立凭据、ACL 或实例承担；
+- 当前已确认部署边界为 Redis 单机模式；Sentinel、Cluster 和 Master/Replica 在获得设计与真实测试前失败关闭；
+- 不提供通用 JSON Repository、Java 类型元数据序列化、Java 原生序列化、默认 TTL、Redis 业务权威状态或补偿 Claim；业务 Repository 负责具体 Key、结构版本、TTL、容量与失败语义。
+
+### 6.6 `paytech-xxl-job-starter`
 
 - 提供与具体业务能力无关的 XXL-Job Executor 配置、参数校验和生命周期接入；
 - 可以被其他本地调度能力独立使用，不依赖补偿 API、Mapper、数据库或 Handler；
 - 不决定补偿扫描参数、事件类型或 Claim/Lease 语义。
 
-### 6.5 `paytech-compensation-event`
+### 6.7 `paytech-compensation-event`
 
 - 封装每服务本地 `compensation_event`、事务提交后调度、Claim/Lease、重试、Handler 注册和 XXL-Job 兜底扫描适配；
 - 主动依赖 `paytech-xxl-job-starter`，并由本模块自己持有和注册补偿扫描 Handler；
@@ -172,8 +207,11 @@ paytech-foundation/
 
 ## 7. Spring Web 与内部调用
 
-- 六个核心服务、Business Portal BFF、Operations BFF 和 Vault 默认使用 Spring MVC。
-- API Gateway 使用 Spring Cloud Gateway Server WebFlux，因为其过滤链和 Redis Rate Limiter 基于 Reactive 模型。
+- 六个核心服务、`operations-console-bff`、`client-console-bff`、`partner-console-bff` 和 Vault 默认使用 Spring MVC。
+- API Gateway 使用 Spring Cloud Gateway Server WebFlux；Operations 首期的 JWT、路由、限流和并发 Filter 保持端到端 Reactive。
+- 当前 Gateway 公网面只存在 `POST /api/operations/auth/v1/login`、`POST /api/operations/auth/v1/refresh` 和 `POST /api/operations/auth/v1/logout` 三条精确路由，向 Operations BFF 转发时只剥离 `/api/operations`，下游分别接收 `/auth/v1/login`、`/auth/v1/refresh` 和 `/auth/v1/logout`。
+- Gateway 验证 Access JWT 和 Operations Channel/Actor 上下文，不处理账号密码登录；本切片唯一下游边界是 Operations BFF，不直连 Platform Support 或核心系统。Operations BFF 与 Platform Support 认证代码仍未实现，自动测试使用有状态协议 Simulator。
+- 未匹配的 Operations API 由 Gateway 本地拒绝，不转发到下游；运行时路由只来自编译时 Catalog，不启用 Discovery Locator、Redis/动态 Route Repository 或通配 `/api/operations/**`。
 - 内部同步接口由提供方 `*-api` JAR 提供 `@HttpExchange` 契约，调用方通过本地 `*Client` 适配器隔离传输 DTO。
 - MVC 服务默认使用 `RestClient`；确有流式或 Reactive 边界时才使用 `WebClient`。
 - Nacos 负责服务发现，Spring Cloud LoadBalancer 负责实例选择；服务间调用不得绕行外部 Gateway。
@@ -256,22 +294,25 @@ RabbitMQ 是 MVP 唯一业务 MQ，不再并行评估 RocketMQ。
 
 | 参数 | 默认值 |
 |---|---:|
-| Core Pool Size | 10 |
-| Maximum Pool Size | 20 |
-| Queue Capacity | 500 |
-| Keep Alive | 60 秒 |
+| Coordinator Core Size | 10 |
+| Coordinator Maximum Size | 20 |
+| Coordinator Queue Capacity | 80 |
+| Coordinator Keep Alive | 60 秒 |
+| Handler Maximum Concurrency | 20 |
 | 单次扫描批次 | 100 |
 | Rejection Policy | `AbortPolicy`，上层捕获后保留为可扫描状态并产生指标 |
 
-这些参数通过 Nacos 外部配置，可按服务和事件类型覆盖。每类事件的超时、最大次数、退避、告警阈值和人工恢复 SLA 尚未统一，必须在实现具体 Handler 时确定。
+以上参数均有代码默认值，`instance-id` 默认取 `spring.application.name`；宿主通常不需要增加补偿配置，容量评估后才选择性覆盖。每类事件的超时、最大次数和退避由 Handler 的 `CompensationExecutionPolicy` 定义，告警阈值和人工恢复 SLA 仍由宿主确定。
 
 ## 12. Redis 与 Gateway
 
-- Redis 早期使用单机部署；本地和测试都使用独立实例或容器，不复用开发者已有 Redis 数据。
-- 普通同步/Reactive Redis 操作使用 Spring Data Redis + Lettuce。
-- Redisson 用于明确的分布式锁、可过期信号量等协调能力，不替代全部 Redis 客户端。
-- Gateway 请求速率限制使用 Spring Cloud Gateway `RequestRateLimiter` + `RedisRateLimiter` Token Bucket。
-- Gateway 并发限制使用 Redisson `RPermitExpirableSemaphore` 一类具有租约/过期语义的信号量，不使用无法表达并发配额的普通锁。
+- Redis 早期使用单机部署，不复用开发者已有的宿主机 Redis。Operations Gateway 自动测试是明确例外：复用仓库专用 `mor-local` Compose Redis，使用运行级唯一 Namespace 和受限清理，不使用 Testcontainers。
+- 普通同步/Reactive Redis 操作使用 Spring Data Redis + Lettuce；非 Gateway 服务需要锁、可过期信号量等明确协调能力时可按 `paytech-redis-starter` 约束使用 Redisson。
+- Operations Gateway 不依赖 `paytech-redis-starter`，不创建 Blocking/Reactive Redis Template、阻塞连接或 Redisson Client，只使用 `ReactiveRedisConnectionFactory` 和 Reactive Lua 执行。
+- Gateway Rate Limit 使用原子 Lua Token Bucket；一次请求的 Route/IP/Subject 等适用维度全量通过后才统一扣减。
+- Gateway Concurrency 使用 Lua + ZSET Expiring Lease；Acquire 全维度原子成功或失败，Reactor 的成功、错误和取消路径都释放 Lease，进程故障由 TTL 恢复容量。
+- 同一维度按 `EMERGENCY > CREDENTIAL > CLIENT > ROUTE > GLOBAL` 选最高层规则，不同维度累计生效。Redis 故障失败关闭，限流/并发拒绝返回 `429 + Retry-After`。
+- IP、Subject 等 Redis Guard 身份 Key 使用可轮换的版本化 HMAC，只保留 Current 和可选 Previous 身份；Access Log 使用独立 HMAC 材料，不与 Redis Key 身份共用。
 - 其他服务使用 Redis 暂不需要额外架构审批，但必须定义 Key Namespace、TTL、容量、失败语义和自动测试。
 - Redis 不存放账务余额、支付状态、补偿 Claim、不可丢失幂等事实或其他权威业务状态。资金和状态并发仍使用 MySQL 行锁/CAS/唯一约束。
 
@@ -292,6 +333,8 @@ Java Service
 - 日志、Trace、Metric Label 禁止携带敏感明文、完整 Vault Token、Blind Index、Secret 或无界高基数字段。
 - 业务指标通过 Micrometer 定义，不直接依赖 Prometheus/Grafana SDK。
 - 本地可观测环境按需启动；自动测试不依赖共享 Collector 或共享监控后端。
+- API Gateway 默认在 `18080` 提供 Application Listener，在独立 `19080` 管理端口只暴露 `health`、`info` 和 `prometheus`。Liveness 只包含 `livenessState`；Readiness 精确包含 `readinessState`、`gatewayBootstrap` 和短超时 `gatewayRedis`，不调用 Operations BFF 或 JWKS。
+- Gateway Access Log 是结构化、有界、HMAC 假名化的终态日志，每个请求终态精确记录一次；原始 Path、IP、Subject、Token、Cookie 和其他请求原文不进入日志或无界 Metric Tag。Gateway Request/Guard/JWKS 指标只使用稳定低基数维度。
 
 ## 14. 云厂商边界
 
@@ -309,7 +352,7 @@ AWS SDK 只能出现在外部集成适配器，不进入 Domain 或 Processor。
 
 以下内容没有因为技术栈确认而自动获批：
 
-- Gateway 的具体认证、Token、Session 和授权上下文方案；
+- Client、Partner、Consumer 和机器入口的 Gateway 认证、Token、Session 和授权上下文方案；Operations 首期已由 `plans/2026-08-29-operations-api-gateway-design.md` 固定；
 - 云厂商最终选择与生产部署拓扑；
 - Kubernetes/ECS、CI/CD、生产制品库、凭据治理和发布流程；
 - 每个业务服务的具体基础包名和业务契约；
