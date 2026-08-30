@@ -1,5 +1,10 @@
 # Operations API Gateway First Slice Implementation Plan
 
+> Superseded in part on 2026-08-30: do not execute this plan's routing, trusted Header/Cookie, request-body, JWKS or
+> Guard tasks. Those areas are governed by
+> `docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md` and its forthcoming implementation plan.
+> This file remains an implementation-history record for the original first slice.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the first deployable `api-gateway` slice that exposes exactly three Operations authentication routes, validates Operations access JWTs, enforces non-blocking Redis rate/concurrency protection, and forwards only to `operations-console-bff`.
