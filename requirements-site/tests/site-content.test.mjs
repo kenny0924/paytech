@@ -774,6 +774,25 @@ test("Platform Support requirements preserve the 92-table snapshot and supersede
   assert.match(platformDatabaseSource, /28 条.*复合外键契约.*67 条.*CHECK 契约/su);
 });
 
+test("Operations Gateway guard profiles stay static and outside Platform runtime control", () => {
+  const platform = source.match(
+    /code: "PLATFORM"[\s\S]+?\n {2}\},\n\];/u,
+  )?.[0] ?? "";
+  const gatewayDecision = source.match(
+    /"Gateway 只负责外部接入[^\n]+/u,
+  )?.[0] ?? "";
+
+  assert.notEqual(platform, "");
+  assert.doesNotMatch(platform, /PLT-12|PLT-I12|Gateway Guard/u);
+  assert.doesNotMatch(
+    source,
+    /Guard Release|Last-Known-Good|EMERGENCY > CREDENTIAL > CLIENT > ROUTE > GLOBAL/u,
+  );
+  assert.match(gatewayDecision, /静态 Route Catalog.*静态 Guard Profile/u);
+  assert.match(gatewayDecision, /Platform Support 不发布或修改.*运行时限流状态/u);
+  assert.match(gatewayDecision, /未来.*新的设计审批/u);
+});
+
 test("Operations authentication stays behind its BFF and Gateway validates only the short-lived access token", () => {
   const platform01 = source.match(/uc\("PLT-01"[^\n]+/u)?.[0] ?? "";
   const platformI01 = source.match(/iuc\("PLT-I01"[^\n]+/u)?.[0] ?? "";

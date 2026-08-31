@@ -328,7 +328,7 @@ export const FUNCTIONAL_SYSTEMS: FunctionalSystemDefinition[] = [
     name: "Platform Support System",
     responsibility: "仅为内部 Operations 账号提供自主管理的认证与授权，并向其他五个系统提供 API Credential、业务 Email OTP、通知、文件、消费者凭证、Webhook、审计和技术运维能力；Client、Partner、Consumer 的认证边界仍待后续设计。Platform 接收 Vault 敏感访问审计，但不保存 Vault 受保护值或拥有核心业务事实。",
     sourceOfTruth: "Operations Account Authentication / Authorization / API Credential / Delivery / Consumer Document / File / Audit / Technical Configuration / Reliable Technical Execution",
-    internalDomains: ["Operations IAM", "Authorization", "API Credential", "Business Email OTP", "Client Webhook", "Notification & Email", "Consumer Document", "File & Evidence", "Audit & Security", "Sensitive Access Audit", "Gateway Guard", "Technical Configuration", "Reliable Technical Execution"],
+    internalDomains: ["Operations IAM", "Authorization", "API Credential", "Business Email OTP", "Client Webhook", "Notification & Email", "Consumer Document", "File & Evidence", "Audit & Security", "Sensitive Access Audit", "Technical Configuration", "Reliable Technical Execution"],
     useCases: [
       uc("PLT-01", "管理内部 Operations 账号、认证和权限", ["operations"], "Platform 仅自主管理内部 Operations 账号及不可逆密码校验值，签发最长 15 分钟的 RS256 Access JWT，并管理可撤销 Refresh Session；唯一公网链路为 operations-console-web → API Gateway → operations-console-bff → Platform 内部接口。Gateway 只校验最小 JWT，不执行登录或权限校验；BFF 不保存密码、Session 或签发 Token。Client、Partner、Consumer 认证仍待设计；业务 Email OTP 不得作为登录或 MFA。"),
       uc("PLT-02", "管理 Client API Key", ["client", "operations"], "完成创建、轮换和撤销"),
@@ -341,7 +341,6 @@ export const FUNCTIONAL_SYSTEMS: FunctionalSystemDefinition[] = [
       uc("PLT-09", "管理通用配置生命周期", ["operations"], "支持草稿、审批、生效和回滚"),
       uc("PLT-10", "生成并投递消费者收据、发票或贷项通知", ["consumer", "finance"], "基于 Commerce 最小业务来源事实与 Finance Fiscal Fact 幂等生成不可篡改文件，永久保存文档状态、版本、文件、投递轨迹及 Credit Note 对原 Receipt 的更正引用；Commerce 不保存该 Current Projection"),
       uc("PLT-11", "发送和验证业务 Email OTP", ["consumer", "client"], "仅支持邮箱所有权、消费者联系或低风险业务验证，不代替登录 MFA、管理员提升或财务审批"),
-      uc("PLT-12", "发布 Gateway 保护策略", ["operations"], "首版采用静态路由和上游 Bootstrap 配置，本用例延期；未来仅可版本化发布限流、并发、请求大小、超时和 IP 保护规则，不能创建、修改或发布路径、HTTP Method、Route 或 Upstream。Gateway 保留 Last-Known-Good；Rate Limit 与 Concurrency 在同一计数维度只取 EMERGENCY > CREDENTIAL > CLIENT > ROUTE > GLOBAL 的最高 Tier，不同计数维度必须累计执行。", "later"),
       uc("PLT-13", "未来留存与 Legal Hold 治理占位", ["operations", "compliance"], "待法规、司法辖区和业务场景明确后再设计统一治理；MVP 不发布 RetentionPolicyChanged、LegalHoldPlaced 或 LegalHoldReleased，不自动归档、匿名化或销毁，现有数据默认保留并禁止临时脚本任意删除", "later"),
     ],
     interfaceUseCases: [
@@ -356,7 +355,6 @@ export const FUNCTIONAL_SYSTEMS: FunctionalSystemDefinition[] = [
       iuc("PLT-I09", "请求发送通知", ["全部业务系统"], "创建可追踪通知任务"),
       iuc("PLT-I10", "生成消费者交易凭证", ["Commerce", "Finance"], "只在 ConsumerDocumentRequested 与 FiscalRecordCreated 的 Generation Key Version、Key、Scope Hash、Business Ref 和来源 Hash 一致且双输入齐备后生成，并返回受控文档引用"),
       iuc("PLT-I11", "创建和验证业务 Email OTP", ["入口应用", "全部业务系统"], "按 Subject、Purpose 和 Context 单次验证并执行防滥用限制"),
-      iuc("PLT-I12", "读取 Gateway 已批准保护策略", ["API Gateway"], "后续只按环境、集群和预置 Route Code 返回完整、可校验的不可变保护策略 Release；Operations 首期不调用本接口，Route/Path/Method/Upstream 永远不由本接口发布"),
       iuc("PLT-I13", "查询 Client Integration Readiness", ["Client & Contract", "Client Console", "Operations Console"], "按 Client 与当前冻结 Requirement Config 实时返回技术接入状态、checked_at 和未就绪原因；Platform 继续拥有该事实，CCT 仅同步查询，不保存副本"),
       iuc("PLT-I14", "查询消费者交易凭证", ["Hosted Checkout", "Consumer Service Portal", "Client Console", "Operations Console"], "按授权范围返回 Receipt、Invoice、Credit Note 的当前状态、不可变版本、文件引用和更正关系；业务来源可按需通过 COM-I09 与 FIN-I18 校验，禁止回写 Commerce 文档投影"),
     ],
@@ -464,7 +462,7 @@ export const COARSE_ARCHITECTURE = [
   { name: "Payment Orchestration", items: ["Provider Registry", "Provider Account / MID", "Routing Coverage", "Routing", "Execution", "Callback", "UNKNOWN Resolution / Provider Interaction Recovery"] },
   { name: "Risk & Compliance", items: ["Client Risk", "Business Policy", "Transaction Risk", "Decision", "Case", "Dispute"] },
   { name: "Finance", items: ["Fee Calculation", "Tax", "Revenue Share", "Provider Cost & Settlement", "Accounting Instruction", "Ledger & Balance", "Contract Maturity", "Beneficiary Account", "Security Deposit & Recovery Gate", "Manual Payout", "Payout Execution & Reconciliation"] },
-  { name: "Platform Support", items: ["IAM Binding", "API Credential & Email OTP", "Client Webhook", "Notification", "Consumer Document", "Gateway Guard", "Technical Configuration", "Reliable Technical Execution", "Audit", "File & Evidence"] },
+  { name: "Platform Support", items: ["IAM Binding", "API Credential & Email OTP", "Client Webhook", "Notification", "Consumer Document", "Technical Configuration", "Reliable Technical Execution", "Audit", "File & Evidence"] },
 ];
 
 export const DECISIONS = [
@@ -490,7 +488,7 @@ export const DECISIONS = [
   "同步命令和查询通过系统接口；MQ 仅用于内部回调和业务事实通知。",
   "内部同步服务调用采用 HTTP；Java 调用方依赖服务方的轻量 *-api 契约 JAR，通过 Spring @HttpExchange 接口调用，并由 Nacos 与 Spring Cloud LoadBalancer 完成服务发现和实例选择，不新增 Dubbo 或 OpenFeign 契约。",
   "API Gateway 是独立入口基础设施；Client API 与 Gateway 职责分离，二者均不计入六个核心系统。",
-  "Gateway 只负责外部接入、静态路由、最小 JWT 验签和限流，不拥有业务数据或编排跨系统流程；Gateway 不处理登录或资源权限校验。首版 Route/Upstream 由部署 Bootstrap 静态配置，未来 Gateway Guard Release 只能引用既有 Route 并发布保护规则，不能创建、修改或发布路径、HTTP Method、Route 或 Upstream；内部服务调用不强制绕行 Gateway。",
+  "Gateway 只负责外部接入、静态路由、最小 JWT 验签和限流，不拥有业务数据或编排跨系统流程；Gateway 不处理登录或资源权限校验。Operations 使用编译时静态 Route Catalog 和静态 Guard Profile，Platform Support 不发布或修改 Route、Guard Profile 或运行时限流状态；未来若需要动态 Gateway 控制面，必须先获得新的设计审批；内部服务调用不强制绕行 Gateway。",
   "Hosted Checkout、Client Console、Partner Console、Operations Console、Client API 和 Provider Callback Endpoint 是入口应用，入口应用不拥有核心业务数据。",
   "Operating Entity 来源统一使用 PLATFORM、CLIENT、PARTNER：平台自有、Organization Client 自身或经平台审核关联、Local Partner 提供；每类来源都可对应多个 Operating Entity，所有主体均由系统统一管理。",
   "平台自有 Operating Entity 不创建虚假 Partner 或 Client 来源关系；Organization Client 可申请使用自身或经平台审核关联的 Operating Entity，并在主体审核后进入 MID 开户流程。CLIENT 来源只记录 SAME_PARTY 或 VERIFIED_ASSOCIATION 审核结论；当前不结构化保存多公司多层持股路径，也不计算间接持股比例。",
