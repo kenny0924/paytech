@@ -777,7 +777,7 @@ test("Platform Support requirements preserve the 92-table snapshot and supersede
 test("Operations authentication stays behind its BFF and Gateway validates only the short-lived access token", () => {
   const platform01 = source.match(/uc\("PLT-01"[^\n]+/u)?.[0] ?? "";
   const platformI01 = source.match(/iuc\("PLT-I01"[^\n]+/u)?.[0] ?? "";
-  const gateway = source.match(/code: "API_GATEWAY"[\s\S]+?\n  \},/u)?.[0] ?? "";
+  const gateway = source.match(/code: "API_GATEWAY"[\s\S]+?\n {2}\},/u)?.[0] ?? "";
 
   assert.match(platform01, /内部 Operations 账号.*不可逆密码校验值.*15 分钟.*RS256.*可撤销 Refresh Session/u);
   assert.match(platform01, /operations-console-web.*API Gateway.*operations-console-bff.*Platform 内部接口/u);
