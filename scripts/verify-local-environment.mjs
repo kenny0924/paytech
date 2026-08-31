@@ -93,15 +93,18 @@ function parseEnvironmentTemplate(content) {
 }
 
 function section(markdown, heading) {
+  const normalizedMarkdown = markdown
+    .replace(/<!--[\s\S]*?-->/gu, '')
+    .replace(/```[\s\S]*?```/gu, '');
   const headingMarker = `## ${heading}\n`;
-  const start = markdown.indexOf(headingMarker);
+  const start = normalizedMarkdown.indexOf(headingMarker);
   if (start < 0) {
     errors.push(`Gateway design is missing section: ${heading}`);
     return '';
   }
   const contentStart = start + headingMarker.length;
-  const end = markdown.indexOf('\n## ', contentStart);
-  return markdown.slice(contentStart, end < 0 ? undefined : end);
+  const end = normalizedMarkdown.indexOf('\n## ', contentStart);
+  return normalizedMarkdown.slice(contentStart, end < 0 ? undefined : end);
 }
 
 function tableRows(markdown, expectedHeader) {
@@ -128,13 +131,36 @@ function requireExactTable(name, markdown, header, expectedRows) {
   }
 }
 
-function requireSectionStatements(name, markdown, statements) {
-  for (const statement of statements) {
-    if (!markdown.includes(statement)) {
-      errors.push(`Gateway design ${name} is missing a required statement`);
+function verificationContractItems(markdown) {
+  const marker = '### Verification contract\n';
+  const start = markdown.indexOf(marker);
+  if (start < 0) {
+    return null;
+  }
+  const lines = markdown.slice(start + marker.length).split('\n');
+  const items = [];
+  for (const line of (lines[0] === '' ? lines.slice(1) : lines)) {
+    if (line === '') {
+      break;
     }
+    const match = line.match(/^- (.+)$/u);
+    if (!match) {
+      return null;
+    }
+    items.push(match[1]);
+  }
+  return items;
+}
+
+function requireExactVerificationContract(name, markdown, expectedItems) {
+  const items = verificationContractItems(markdown);
+  if (items === null || JSON.stringify(items) !== JSON.stringify(expectedItems)) {
+    errors.push(`Gateway design ${name} verification contract drifted`);
   }
 }
+
+const environmentTemplate = readFileSync(exampleEnvironment, 'utf8');
+const environmentDeclarations = parseEnvironmentTemplate(environmentTemplate);
 const composeResult = spawnSync(
   'docker',
   [
@@ -223,6 +249,10 @@ if (composeResult.status !== 0) {
   if (JSON.stringify(Object.keys(redisEnvironment).sort())
       !== JSON.stringify([redisPasswordEnvironmentVariable, 'TZ'].sort())) {
     errors.push('Redis Compose environment keys drifted');
+  }
+  if (redisEnvironment[redisPasswordEnvironmentVariable]
+      !== environmentDeclarations.get(redisPasswordEnvironmentVariable)) {
+    errors.push('Redis Compose password value must come from the environment example declaration');
   }
   const escapedRedisPasswordVariable = `$\${${redisPasswordEnvironmentVariable}}`;
   const expectedRedisCommand = [
@@ -441,8 +471,6 @@ for (const file of runtimeNamespaceFiles) {
     errors.push(`retired local runtime namespace remains: ${file}`);
   }
 }
-const environmentTemplate = readFileSync(exampleEnvironment, 'utf8');
-const environmentDeclarations = parseEnvironmentTemplate(environmentTemplate);
 if (JSON.stringify([...environmentDeclarations.keys()])
     !== JSON.stringify([...expectedEnvironmentVariables.keys()])) {
   errors.push('environment example declaration inventory drifted');
@@ -530,15 +558,18 @@ for (const document of activeGatewayContract) {
 const gatewayDesign = readFileSync(gatewayDesignFile, 'utf8');
 const routingSection = section(gatewayDesign, '1. Boundary and routing');
 requireExactTable('route contract', routingSection,
-  ['Route', 'External contract', 'Explicit BFF path', 'Access and refresh-cookie input'], [
-    ['Login', '`/api/operations/auth/v1/login`', '`/auth/v1/login`', 'anonymous; no refresh cookie'],
-    ['Refresh', '`/api/operations/auth/v1/refresh`', '`/auth/v1/refresh`', 'anonymous; exactly one refresh cookie'],
-    ['Logout', '`/api/operations/auth/v1/logout`', '`/auth/v1/logout`', 'JWT; exactly one refresh cookie'],
+  ['Route', 'Method', 'External contract', 'Explicit BFF path', 'Access and refresh-cookie input'], [
+    ['Login', '`POST`', '`/api/operations/auth/v1/login`', '`/auth/v1/login`', 'anonymous; no refresh cookie'],
+    ['Refresh', '`POST`', '`/api/operations/auth/v1/refresh`', '`/auth/v1/refresh`', 'anonymous; exactly one refresh cookie'],
+    ['Logout', '`POST`', '`/api/operations/auth/v1/logout`', '`/auth/v1/logout`', 'JWT; exactly one refresh cookie'],
   ]);
-requireSectionStatements('routing', routingSection, [
+requireExactVerificationContract('routing', routingSection, [
+  'Gateway validates the JWT and enforces only edge protocol and trusted request context.',
+  'Operations BFF and Platform Support retain current authorization; core services retain business authorization.',
+  'The Catalog contains exactly three routes, each with Method `POST`.',
   'Matching is exact `HttpMethod + rawPath`, requires an empty query, and each Catalog item owns its downstream path.',
   'There is no wildcard route or prefix-stripping rule.',
-  'no `GET` route or default future Guard profile exists now.',
+  'No current `GET` route or default future Guard profile exists.',
 ]);
 
 const protocolSection = section(gatewayDesign, '2. Browser and trusted-header contract');
@@ -565,31 +596,43 @@ requireExactTable('route header allowlist', protocolSection,
     ['Refresh', '`Content-Type`, `X-CSRF-Token`', '`Origin`, `Content-Type`, `X-CSRF-Token`, one refresh cookie', '`X-Request-Id`'],
     ['Logout', '`Authorization`, `Content-Type`, `X-CSRF-Token`', '`Origin`, `Content-Type`, `X-CSRF-Token`, one refresh cookie', '`X-Request-Id` and four `X-Gateway-*` identity headers'],
   ]);
-requireSectionStatements('browser protocol', protocolSection, [
+requireExactVerificationContract('browser protocol', protocolSection, [
+  'Public/trusted names are `X-Request-Id`, `X-Gateway-Actor-Subject`, `X-Gateway-Session-Id`, `X-Gateway-Actor-Type`, `X-Gateway-Channel`, and `__Secure-operations-refresh`.',
   'Ingress removes names by case-insensitive whole-name equality only.',
+  'Upstream reconstruction starts empty and copies only the exact route allowlist.',
+  'The raw `Authorization` value is not a BFF external value.',
+  'Every BFF request receives Gateway-generated `X-Request-Id`; authenticated Logout also receives four `X-Gateway-*` identity headers.',
   'The refresh cookie is `Secure`, `HttpOnly`, `SameSite=Strict`, path `/api/operations/auth/v1`, and has no `Domain`.',
   'Browser Fetch uses credentials `include`; CORS allows an exact Origin and `Access-Control-Allow-Credentials: true`.',
 ]);
 
 const guardSection = section(gatewayDesign, '3. Guard and body limits');
-requireSectionStatements('Guard/body', guardSection, [
+requireExactVerificationContract('Guard/body', guardSection, [
+  'Every route has a static Guard profile.',
   'Rate limiting occurs before immediate Concurrency acquisition; there is no wait or queue.',
   'A later Concurrency rejection, JWT rejection, body rejection or downstream failure does not refund an already-consumed Rate token.',
   'Every acquired lease releases on success, error or cancellation.',
-  'Guard uses the `v2` namespace, Redis server time plus a monotonic positive policy revision, and only the current Guard HMAC key.',
+  'Guard uses the `guard:v2` namespace, Redis server time plus a monotonic positive policy revision, and only the current Guard HMAC key.',
+  'Guard HMAC and access-log HMAC remain separate.',
+  'A controlled current-key rollout keeps Route scope shared and allows only a bounded temporary IP/Subject capacity increase.',
+  'No second Guard key or dual state is configured or read.',
   'All current routes have a `16 KiB` actual body cap and a `5 s` total aggregation deadline.',
   'Validated bytes replay to BFF with exact `Content-Length` and no `Transfer-Encoding`; BFF sees no body before validation.',
   'Pooled buffers are released and temporary arrays are best-effort cleared on complete, error and cancellation.',
+  'Timeout is `408`; oversize is `413`.',
 ]);
 
 const transportSection = section(gatewayDesign, '4. JWT/JWKS and transport envelope');
-requireSectionStatements('JWKS/transport', transportSection, [
+requireExactVerificationContract('JWKS/transport', transportSection, [
   'Gateway accepts only `RS256`, with `kid` matching `^[A-Za-z0-9._:-]{1,128}$`; invalid input causes no JWKS call.',
   'Refresh uses one global in-flight operation and one global five-second cooldown, never per-`kid` state.',
+  'Known cached keys remain usable.',
   'A definitive unknown after success is `401`; a required failed/cooldown refresh is `503`.',
   'JWKS uses constrained HTTPS with no userinfo, query, fragment or redirect; connect is `2 s`, response `3 s`, body `64 KiB`, at most 16 valid RSA-2048 keys, and cache age five minutes.',
   'Production/default ingress is `PUBLIC_TLS`, limited to TLS 1.3/1.2 and the approved seven suites, with HTTP/2 disabled.',
+  'Test-only cleartext binds numeric `127.0.0.1`.',
   'Request line is `8 KiB`, aggregate headers `32 KiB`, parsed Authorization and Cookie are each `8 KiB`, Origin and each CORS control header are `2 KiB`, header/read-idle deadline is `5 s`, connection cap is 1000, backlog is 512, and keepalive requests are capped at 1000.',
+  'Parsed oversize headers return `431 GATEWAY_REQUEST_HEADER_FIELDS_TOO_LARGE`; a decoder-level rejection may close before an exchange exists.',
   'BFF transport uses a fixed pool of 1000, acquire/connect timeouts of `2 s`, a complete-chain timeout of `10 s`, no redirects and no Reactor retry.',
   'Finite type-based classification maps BFF TLS/protocol/invalid response to `502`, connect/pool/DNS to `503`, and complete timeout to `504`, without exception details.',
 ]);
