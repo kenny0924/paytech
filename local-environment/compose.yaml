@@ -42,18 +42,18 @@ services:
     image: redis:8.2.1-alpine
     restart: "no"
     environment:
-      MOR_REDIS_PASSWORD: ${MOR_REDIS_PASSWORD:?set MOR_REDIS_PASSWORD}
+      PAYTECH_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?set PAYTECH_REDIS_PASSWORD}
       TZ: UTC
     command:
       - /bin/sh
       - -c
-      - exec redis-server --appendonly yes --appendfsync everysec --requirepass "$${MOR_REDIS_PASSWORD}"
+      - exec redis-server --appendonly yes --appendfsync everysec --requirepass "$${PAYTECH_REDIS_PASSWORD}"
     ports:
       - "127.0.0.1:16379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
-      test: [CMD-SHELL, 'redis-cli --no-auth-warning -a "$${MOR_REDIS_PASSWORD}" ping | grep PONG']
+      test: [CMD-SHELL, 'redis-cli --no-auth-warning -a "$${PAYTECH_REDIS_PASSWORD}" ping | grep PONG']
       interval: 10s
       timeout: 5s
       retries: 12

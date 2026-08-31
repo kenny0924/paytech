@@ -27,8 +27,29 @@ const xxlJobSchemaVersionFile = join(
   'init',
   '04-xxl-job-schema-version.sql',
 );
+const redisPasswordEnvironmentVariable = 'PAYTECH_REDIS_PASSWORD';
+const retiredRedisPasswordEnvironmentVariable = ['MOR', 'REDIS', 'PASSWORD'].join('_');
+const activeGatewayContractFiles = [
+  'agent-docs/TECHNOLOGY_STACK.md',
+  'agent-docs/JAVA_PROJECT_STRUCTURE.md',
+  'agent-docs/UNIT_TEST_GUIDE.md',
+  'agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md',
+  'agent-docs/plans/2026-08-29-operations-api-gateway-design.md',
+  'agent-docs/plans/2026-08-29-platform-support-operations-authentication-requirements.md',
+];
+const gatewayDesignFile = join(
+  repositoryRoot,
+  'agent-docs',
+  'plans',
+  '2026-08-29-operations-api-gateway-design.md',
+);
+const legacyGatewayHeaderPrefix = ['X', 'MoR'].join('-');
+const legacyRefreshCookieName = ['__Secure', 'mor', 'operations', 'refresh'].join('-');
+const guardTierName = ['Guard', 'Tier'].join('');
+const forwardedWildcardName = ['X', 'Forwarded', '*'].join('-');
 
 const errors = [];
+const composeDefinition = readFileSync(composeFile, 'utf8');
 const composeResult = spawnSync(
   'docker',
   [
@@ -110,6 +131,32 @@ if (composeResult.status !== 0) {
   const nacosHealthcheck = modelServices.nacos?.healthcheck?.test ?? [];
   if (!nacosHealthcheck.join(' ').includes(nacosReadinessUrl)) {
     errors.push(`Nacos health check must use the v3 server readiness API: ${nacosHealthcheck.join(' ')}`);
+  }
+
+  const redis = modelServices.redis;
+  const redisEnvironment = redis?.environment ?? {};
+  const redisCommand = (redis?.command ?? []).join(' ');
+  const redisHealthcheck = (redis?.healthcheck?.test ?? []).join(' ');
+  if (!Object.hasOwn(redisEnvironment, redisPasswordEnvironmentVariable)) {
+    errors.push(`Redis must receive ${redisPasswordEnvironmentVariable}`);
+  }
+  if (Object.hasOwn(redisEnvironment, retiredRedisPasswordEnvironmentVariable)) {
+    errors.push('Redis still receives the retired Redis password variable');
+  }
+  if (redisCommand.includes(retiredRedisPasswordEnvironmentVariable)
+      || redisHealthcheck.includes(retiredRedisPasswordEnvironmentVariable)) {
+    errors.push('resolved Redis command or health check still uses the retired password variable');
+  }
+  const redisDefinition = composeDefinition.split('  rabbitmq:', 1)[0]
+    .split('  redis:', 2)[1] ?? '';
+  const redisPasswordUseCount = redisDefinition.match(
+    new RegExp(redisPasswordEnvironmentVariable, 'gu'),
+  )?.length ?? 0;
+  if (redisPasswordUseCount !== 5) {
+    errors.push('Redis environment, command and health check must each use the new password variable');
+  }
+  if (redisDefinition.includes(retiredRedisPasswordEnvironmentVariable)) {
+    errors.push('Redis Compose definition still uses the retired password variable');
   }
 
   const expectedVolumes = [
@@ -306,7 +353,7 @@ for (const file of runtimeNamespaceFiles) {
 const environmentTemplate = readFileSync(exampleEnvironment, 'utf8');
 for (const variableName of [
   'MOR_MYSQL_ROOT_PASSWORD',
-  'MOR_REDIS_PASSWORD',
+  redisPasswordEnvironmentVariable,
   'MOR_RABBITMQ_USER',
   'MOR_RABBITMQ_PASSWORD',
   'MOR_RABBITMQ_VHOST',
@@ -318,6 +365,9 @@ for (const variableName of [
   if (!environmentTemplate.includes(`${variableName}=`)) {
     errors.push(`missing MOR environment variable: ${variableName}`);
   }
+}
+if (environmentTemplate.includes(`${retiredRedisPasswordEnvironmentVariable}=`)) {
+  errors.push('environment example still declares the retired Redis password variable');
 }
 for (const variableName of ['MOR_XXL_JOB_ACCESS_TOKEN', 'MOR_XXL_JOB_LOGIN_TOKEN_KEY']) {
   const value = environmentTemplate.match(new RegExp(`^${variableName}=(.+)$`, 'mu'))?.[1];
@@ -369,6 +419,55 @@ if (!xxlJobSchemaVersion.includes('CREATE TABLE IF NOT EXISTS `xxl_job_schema_ve
 }
 if (!xxlJobSchemaVersion.includes("'3.4.2', 'c2bbb46c9a3af8e2a69246728a452c606240b80e'")) {
   errors.push('XXL-Job local schema version marker has drifted');
+}
+
+const activeGatewayContract = activeGatewayContractFiles.map((file) => ({
+  file,
+  content: readFileSync(join(repositoryRoot, file), 'utf8'),
+}));
+for (const document of activeGatewayContract) {
+  if (!document.content.includes('2026-08-30-operations-gateway-hardening-design.md')) {
+    errors.push(`active Gateway contract does not reference the hardening authority: ${document.file}`);
+  }
+  if (document.content.includes(legacyGatewayHeaderPrefix)
+      || document.content.includes(legacyRefreshCookieName)) {
+    errors.push(`active Gateway contract retains legacy wire vocabulary: ${document.file}`);
+  }
+  if (document.content.includes(guardTierName)
+      || document.content.includes(forwardedWildcardName)
+      || /strip(?:Prefix| Prefix)/iu.test(document.content)
+      || /previous.{0,40}HMAC|HMAC.{0,40}previous|dual.{0,40}HMAC|HMAC.{0,40}dual/iu.test(document.content)) {
+    errors.push(`active Gateway contract retains a superseded Guard or forwarding model: ${document.file}`);
+  }
+}
+
+const gatewayDesign = readFileSync(gatewayDesignFile, 'utf8');
+for (const requiredFact of [
+  'exact `HttpMethod + rawPath`',
+  'no wildcard route or prefix-stripping rule',
+  'X-Gateway-Actor-Subject',
+  'X-Gateway-Session-Id',
+  'X-Gateway-Actor-Type',
+  'X-Gateway-Channel',
+  '__Secure-operations-refresh',
+  'X-Forwarded-Ssl',
+  'X-Real-IP',
+  'SameSite=Strict',
+  'credentials `include`',
+  'Redis server time plus a monotonic positive policy revision',
+  'only the current Guard HMAC key',
+  '16 KiB',
+  '`5 s` total aggregation deadline',
+  'RS256',
+  '^[A-Za-z0-9._:-]{1,128}$',
+  'one global in-flight operation',
+  'PUBLIC_TLS',
+  'TLS 1.3/1.2',
+  'fixed pool of 1000',
+]) {
+  if (!gatewayDesign.includes(requiredFact)) {
+    errors.push(`Gateway hardening contract is missing required fact: ${requiredFact}`);
+  }
 }
 
 if (errors.length > 0) {

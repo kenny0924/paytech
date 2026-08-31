@@ -298,11 +298,11 @@ xxl_job
 - Key 使用 `{service}:{capability}:...` Namespace；Redis Starter 为 `RedisJsonTemplate`、`StringRedisTemplate` 与 Redisson 统一把 `{service}` 默认解析为 `spring.application.name`，服务可用 `redis.key-prefix` 显式覆盖。业务对象缓存优先使用不含 Java 类型信息的普通 JSON；字符串与计数器使用 `StringRedisTemplate`。新增 Key 不使用 `mor` 技术前缀，每个能力必须定义 TTL。
 - Gateway Rate Limiter 与各服务 Key 进一步使用独立前缀，禁止 `KEYS *` 作为运行逻辑。
 - Operations Gateway 不使用 Redis Starter、`StringRedisTemplate` 或 Redisson；它通过 Spring Data Redis Reactive + Lettuce Lua 实现 Rate Token Bucket 和 Concurrency ZSET Lease。
-- Gateway Redis 自动测试连接 `127.0.0.1:16379` 的 `mor-local` Compose Redis，密码从 `.env.local` 对应的 `MOR_REDIS_PASSWORD` 环境注入；不引入 Testcontainers，不连接 `6379`。
+- Gateway Redis 自动测试连接 `127.0.0.1:16379` 的 `mor-local` Compose Redis，密码从 `.env.local` 对应的 `PAYTECH_REDIS_PASSWORD` 环境注入；不引入 Testcontainers，不连接 `6379`。将来重建 Compose 前，开发者手动把现有 Redis Secret 值复制到该新键；自动化不得读取或改写 `.env.local`。
 - 每次 Gateway 测试运行生成唯一 Key Namespace，Setup/Teardown 只用 `SCAN` 删除本次已知前缀，禁止 `KEYS *`、`FLUSHDB` 或停止共享 Compose Redis。Redis 不可用用例连接未监听的 Loopback 端口，不影响其他本地进程。
 - 本地密码来自 `.env.local`；应用日志不得输出完整连接串或密码。
 - 现有宿主机 `6379` Redis 不参与 Code-MoR 开发、测试或故障演练。
-- Gateway 的 Redis 启动前置、不回显密码的注入方式、完整验证命令和 HMAC 轮换步骤以 [`api-gateway/README.md`](../api-gateway/README.md) 为唯一运行手册，本文不复制密钥或大段命令。
+- Gateway 的 Redis 启动前置、不回显密码的注入方式、完整验证命令和 HMAC 轮换步骤以 [`api-gateway/README.md`](../api-gateway/README.md) 为唯一运行手册；最终 Gateway 约束见 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)，本文不复制密钥或大段命令。
 
 ## 13. 日常启动顺序
 
@@ -346,7 +346,7 @@ Java 服务至少验证：
 除本节明确的 Operations Gateway Redis 例外外，`auto` 测试不得连接本文的 MySQL、Redis、RabbitMQ、Nacos 或其他共享运行时容器。Maven 可以通过 Nexus 解析构建依赖，但测试执行中的生产链不得把 Nexus 当作应用运行依赖：
 
 - 数据库、RabbitMQ 和非 Gateway Redis 由 Testcontainers 按测试需要启动；
-- Operations Gateway 是当前唯一例外：它只连接仓库 Compose 管理的 `127.0.0.1:16379` Redis，只接受 `MOR_REDIS_PASSWORD`，测试自身不启动 Docker/Testcontainers，并使用唯一运行 Namespace 与 `SCAN` 限定清理；
+- Operations Gateway 是当前唯一例外：它只连接仓库 Compose 管理的 `127.0.0.1:16379` Redis，只接受 `PAYTECH_REDIS_PASSWORD`，测试自身不启动 Docker/Testcontainers，并使用唯一运行 Namespace 与 `SCAN` 限定清理；
 - Nacos 在 `auto` 中关闭；内部服务/Provider 通过有状态 Simulator 提供真实 HTTP/MQ 协议；
 - 测试使用随机映射端口和独立数据库/Key/Queue Namespace；
 - 除上述 Gateway Redis 例外外，本地 Compose 只用于人工开发和 `manual` 联调。Gateway 的默认 `auto` 仍从真实随机端口 WebFlux 入口运行，并通过真实协议连接 HTTPS JWKS 和有状态 Operations BFF Simulator。

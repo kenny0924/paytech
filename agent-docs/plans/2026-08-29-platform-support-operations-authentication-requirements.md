@@ -2,7 +2,7 @@
 
 最后更新：2026-08-29
 
-状态：已确认的需求与语义替代记录；只为 Gateway 首期提供边界依据。本文不授权 Platform Support Java、Migration、数据库、PDManer、Secrets/KMS、BFF、前端或部署实现。
+状态：已确认的需求与语义替代记录；只为 Gateway 首期提供边界依据。Gateway 入口、协议、Guard、JWKS 与传输细节以 [`2026-08-30-operations-gateway-hardening-design.md`](../../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为最终权威。本文不授权 Platform Support Java、Migration、数据库、PDManer、Secrets/KMS、BFF、前端或部署实现。
 
 ## 1. 决策
 
@@ -56,7 +56,7 @@ Platform Support 不暴露浏览器或公网 Login/Refresh/Logout Endpoint。Gat
 
 Operations BFF 对三个认证动作提供外部页面友好的接口：
 
-- Login：固定 `channel=OPERATIONS` 调用 Platform Support，返回 Access Token；将 Refresh Token 写入名为 `__Secure-mor-operations-refresh` 的 Cookie，属性固定为 `Secure; HttpOnly; SameSite=Strict; Path=/api/operations/auth/v1`，不设置 `Domain`，`Max-Age` 不超过 Session 剩余绝对期限。
+- Login：固定 `channel=OPERATIONS` 调用 Platform Support，返回 Access Token；将 Refresh Token 写入名为 `__Secure-operations-refresh` 的 Cookie，属性固定为 `Secure; HttpOnly; SameSite=Strict; Path=/api/operations/auth/v1`，不设置 `Domain`，`Max-Age` 不超过 Session 剩余绝对期限。Console 与 Gateway 必须 schemefully same-site，浏览器 Fetch 使用 `credentials: include`，Gateway 只允许精确 Origin 并返回 `Access-Control-Allow-Credentials: true`。
 - Refresh：校验精确 Origin/CSRF 约束，从该 HttpOnly Cookie 取 Refresh Token 调用 Platform Support，完成 Cookie 单次轮换并返回新 Access Token；Gateway CORS 对精确 Origin 启用 Credentials。
 - Logout：使用 Gateway 传入的可信 Subject/Session 上下文和 Refresh Cookie 调用 Platform Support 撤销 Session，并用相同 Name/Path/SameSite/Secure 属性及 `Max-Age=0` 清除 Cookie。
 
@@ -91,7 +91,7 @@ Operations BFF 在调用页面查询或命令前，使用 Platform Support 当�
 
 旧模型对其他 Platform Support 领域仍是当前冻结 V1 设计资产。未来实现 Operations 认证前必须单独批准物理模型修订，决定本地账号与现有 User/Identity 的关系，重新生成并验证 PDManer 精确计数，并同步 Database 文档、Scenario、Migration、DO/Mapper/Repository 和自动化测试。不得把现有必填 IdP 字段简单改成可空字段来绕过该设计。
 
-Gateway Guard 的未来 Platform 配置只能引用部署中预先存在的 Route Code，并叠加不超过硬上限的保护策略；不能发布 Route/Path/Method/Upstream。Rate/Concurrency 按独立计数维度累计生效，Redis 保存运行计数/Lease，Platform MySQL 不保存运行时限流状态。
+Gateway Guard 是部署中的静态每路由 Profile；未来 Platform Support 不能发布或修改 Route/Path/Method/Upstream、Guard Profile 或运行时限流状态。Gateway 先消耗 Rate Token、再立即 Acquire Concurrency Lease，不等待、不排队；Redis 保存运行计数/Lease，Platform MySQL 不保存运行时限流状态。
 
 ## 8. 最小未来数据需求（非表设计）
 

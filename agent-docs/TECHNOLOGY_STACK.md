@@ -6,7 +6,7 @@
 
 ## 1. 使用范围
 
-当任务涉及 Java 版本、Spring 版本、Maven 依赖管理、数据库、Migration、MQ、Redis、Gateway、配置中心、补偿调度、可观测性或本地运行环境时，必须先读取本文。具体工程分层、可靠事件、测试和本地搭建仍分别以以下文档为准：
+当任务涉及 Java 版本、Spring 版本、Maven 依赖管理、数据库、Migration、MQ、Redis、Gateway、配置中心、补偿调度、可观测性或本地运行环境时，必须先读取本文。具体工程分层、可靠事件、测试和本地搭建仍分别以以下文档为准。Operations Gateway 的路由、协议、Guard、JWKS 与传输最终契约以 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准：
 
 - [JAVA_PROJECT_STRUCTURE.md](./JAVA_PROJECT_STRUCTURE.md)
 - [COMPENSATION_EVENT_GUIDE.md](./COMPENSATION_EVENT_GUIDE.md)
@@ -209,7 +209,7 @@ paytech-foundation/
 
 - 六个核心服务、`operations-console-bff`、`client-console-bff`、`partner-console-bff` 和 Vault 默认使用 Spring MVC。
 - API Gateway 使用 Spring Cloud Gateway Server WebFlux；Operations 首期的 JWT、路由、限流和并发 Filter 保持端到端 Reactive。
-- 当前 Gateway 公网面只存在 `POST /api/operations/auth/v1/login`、`POST /api/operations/auth/v1/refresh` 和 `POST /api/operations/auth/v1/logout` 三条精确路由，向 Operations BFF 转发时只剥离 `/api/operations`，下游分别接收 `/auth/v1/login`、`/auth/v1/refresh` 和 `/auth/v1/logout`。
+- 当前 Gateway 公网面是静态、method-aware Catalog：只存在 `POST /api/operations/auth/v1/login`、`POST /api/operations/auth/v1/refresh` 和 `POST /api/operations/auth/v1/logout`。匹配精确 `HttpMethod + rawPath` 且要求空 Query；每条路由显式指定 Operations BFF 下游路径 `/auth/v1/login`、`/auth/v1/refresh` 或 `/auth/v1/logout`，没有通配路由或前缀剥离规则。
 - Gateway 验证 Access JWT 和 Operations Channel/Actor 上下文，不处理账号密码登录；本切片唯一下游边界是 Operations BFF，不直连 Platform Support 或核心系统。Operations BFF 与 Platform Support 认证代码仍未实现，自动测试使用有状态协议 Simulator。
 - 未匹配的 Operations API 由 Gateway 本地拒绝，不转发到下游；运行时路由只来自编译时 Catalog，不启用 Discovery Locator、Redis/动态 Route Repository 或通配 `/api/operations/**`。
 - 内部同步接口由提供方 `*-api` JAR 提供 `@HttpExchange` 契约，调用方通过本地 `*Client` 适配器隔离传输 DTO。
@@ -311,8 +311,7 @@ RabbitMQ 是 MVP 唯一业务 MQ，不再并行评估 RocketMQ。
 - Operations Gateway 不依赖 `paytech-redis-starter`，不创建 Blocking/Reactive Redis Template、阻塞连接或 Redisson Client，只使用 `ReactiveRedisConnectionFactory` 和 Reactive Lua 执行。
 - Gateway Rate Limit 使用原子 Lua Token Bucket；一次请求的 Route/IP/Subject 等适用维度全量通过后才统一扣减。
 - Gateway Concurrency 使用 Lua + ZSET Expiring Lease；Acquire 全维度原子成功或失败，Reactor 的成功、错误和取消路径都释放 Lease，进程故障由 TTL 恢复容量。
-- 同一维度按 `EMERGENCY > CREDENTIAL > CLIENT > ROUTE > GLOBAL` 选最高层规则，不同维度累计生效。Redis 故障失败关闭，限流/并发拒绝返回 `429 + Retry-After`。
-- IP、Subject 等 Redis Guard 身份 Key 使用可轮换的版本化 HMAC，只保留 Current 和可选 Previous 身份；Access Log 使用独立 HMAC 材料，不与 Redis Key 身份共用。
+- Guard 为静态的每路由 Profile：先 Rate Limit，再立即 Acquire Concurrency Lease，不等待、不排队；后续 Concurrency、JWT、Body 或下游拒绝不退还已消费的 Rate Token，所有已获 Lease 在成功、错误和取消时释放。Redis 采用 `guard:v2`、服务器时间和单调正 Policy Revision；Guard 只读取当前 HMAC Key，Access Log HMAC 独立。受控换钥期间共享 Route Scope 保持不变，IP/Subject Scope 可有有界的暂时容量增加。
 - 其他服务使用 Redis 暂不需要额外架构审批，但必须定义 Key Namespace、TTL、容量、失败语义和自动测试。
 - Redis 不存放账务余额、支付状态、补偿 Claim、不可丢失幂等事实或其他权威业务状态。资金和状态并发仍使用 MySQL 行锁/CAS/唯一约束。
 

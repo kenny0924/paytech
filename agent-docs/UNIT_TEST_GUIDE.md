@@ -211,7 +211,9 @@ Domain Service → RepositoryImpl → Mapper → Testcontainers Database
 
 Operations Gateway 的 Reactive Lua Rate Limit/Concurrency 自动测试不使用 Testcontainers，明确复用仓库 `local-environment/compose.yaml` 的专用 `mor-local` Redis。这是用户批准的窄例外，不得推广到数据库、MQ、其他服务 Redis 或真实业务环境：
 
-- 只连接 `127.0.0.1:16379` 的 Redis 8.2.1，密码从未提交的 `MOR_REDIS_PASSWORD` 注入；禁止连接宿主机 `6379` 或其他项目实例；
+Gateway 的最终测试边界还必须遵守 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)。
+
+- 只连接 `127.0.0.1:16379` 的 Redis 8.2.1，密码从未提交的 `PAYTECH_REDIS_PASSWORD` 注入；禁止连接宿主机 `6379` 或其他项目实例；
 - Compose Redis 必须在测试开始前健康；缺失、版本/鉴权错误时快速失败并给出启动提示，不降级到内存实现、方法 Stub 或其他 Redis；
 - 每次 Maven 测试运行生成不可预测且唯一的 Gateway Namespace，所有 Route/Dimension Key 都位于该 Namespace；
 - Setup/Teardown 只用 `SCAN` + 精确前缀删除本次运行 Key，禁止 `KEYS *`、`FLUSHDB`、选择未保留的逻辑库或删除其他运行的 Key；
