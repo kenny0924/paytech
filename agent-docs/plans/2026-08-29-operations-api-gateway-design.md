@@ -22,7 +22,34 @@ Matching is exact `HttpMethod + rawPath`, requires an empty query, and each Cata
 
 The public/trusted names are `X-Request-Id`, `X-Gateway-Actor-Subject`, `X-Gateway-Session-Id`, `X-Gateway-Actor-Type`, `X-Gateway-Channel`, and `__Secure-operations-refresh`.
 
-Ingress removes names by case-insensitive whole-name equality only: the five Gateway identity names, `Forwarded`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Port`, `X-Forwarded-Proto`, `X-Forwarded-Prefix`, `X-Forwarded-Ssl`, `X-Forwarded-Server`, and `X-Real-IP`. It does not use a forwarding-header wildcard. Upstream construction begins empty and then applies each route's exact allowlist. Login forwards `Origin` and `Content-Type`; Refresh also forwards `X-CSRF-Token` and one refresh cookie; Logout forwards that same set and not raw `Authorization`. Every BFF request receives Gateway-generated `X-Request-Id`; authenticated Logout also receives the four `X-Gateway-*` identity headers.
+Ingress removes names by case-insensitive whole-name equality only. Its complete finite removal list is:
+
+| Removed trusted name |
+| --- |
+| `X-Request-Id` |
+| `X-Gateway-Actor-Subject` |
+| `X-Gateway-Session-Id` |
+| `X-Gateway-Actor-Type` |
+| `X-Gateway-Channel` |
+| `Forwarded` |
+| `X-Forwarded-For` |
+| `X-Forwarded-Host` |
+| `X-Forwarded-Port` |
+| `X-Forwarded-Proto` |
+| `X-Forwarded-Prefix` |
+| `X-Forwarded-Ssl` |
+| `X-Forwarded-Server` |
+| `X-Real-IP` |
+
+It does not use a forwarding-header wildcard. Upstream construction begins empty and then applies this exact route allowlist:
+
+| Route | Browser request headers | BFF external values | Trusted BFF values |
+| --- | --- | --- | --- |
+| Login | `Content-Type` | `Origin`, `Content-Type` | `X-Request-Id` |
+| Refresh | `Content-Type`, `X-CSRF-Token` | `Origin`, `Content-Type`, `X-CSRF-Token`, one refresh cookie | `X-Request-Id` |
+| Logout | `Authorization`, `Content-Type`, `X-CSRF-Token` | `Origin`, `Content-Type`, `X-CSRF-Token`, one refresh cookie | `X-Request-Id` and four `X-Gateway-*` identity headers |
+
+The raw `Authorization` value is not a BFF external value. Every BFF request receives Gateway-generated `X-Request-Id`; authenticated Logout also receives the four `X-Gateway-*` identity headers.
 
 The refresh cookie is `Secure`, `HttpOnly`, `SameSite=Strict`, path `/api/operations/auth/v1`, and has no `Domain`. Console and Gateway are schemefully same-site. Browser Fetch uses credentials `include`; CORS allows an exact Origin and `Access-Control-Allow-Credentials: true`.
 

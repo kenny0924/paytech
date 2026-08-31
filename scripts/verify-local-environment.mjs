@@ -29,6 +29,28 @@ const xxlJobSchemaVersionFile = join(
 );
 const redisPasswordEnvironmentVariable = 'PAYTECH_REDIS_PASSWORD';
 const retiredRedisPasswordEnvironmentVariable = ['MOR', 'REDIS', 'PASSWORD'].join('_');
+const expectedEnvironmentVariables = new Map([
+  ['MOR_MYSQL_ROOT_PASSWORD', 'local-root-change-me-2026'],
+  ['MOR_CCT_DB_PASSWORD', 'local-cct-change-me-2026'],
+  ['MOR_COMMERCE_DB_PASSWORD', 'local-commerce-change-me-2026'],
+  ['MOR_PAYMENT_DB_PASSWORD', 'local-payment-change-me-2026'],
+  ['MOR_RISK_DB_PASSWORD', 'local-risk-change-me-2026'],
+  ['MOR_FINANCE_DB_PASSWORD', 'local-finance-change-me-2026'],
+  ['MOR_PLATFORM_DB_PASSWORD', 'local-platform-change-me-2026'],
+  ['MOR_VAULT_DB_PASSWORD', 'local-vault-change-me-2026'],
+  ['MOR_NACOS_DB_PASSWORD', 'local-nacos-db-change-me-2026'],
+  ['MOR_XXL_JOB_DB_PASSWORD', 'local-xxl-job-change-me-2026'],
+  ['PAYTECH_FOUNDATION_TEST_DB_PASSWORD', 'local-foundation-test-change-me-2026'],
+  [redisPasswordEnvironmentVariable, 'local-redis-change-me-2026'],
+  ['MOR_RABBITMQ_USER', 'mor_local'],
+  ['MOR_RABBITMQ_PASSWORD', 'local-rabbit-change-me-2026'],
+  ['MOR_RABBITMQ_VHOST', '/mor-local'],
+  ['MOR_NACOS_AUTH_TOKEN', 'TW9STG9jYWxBdXRoVG9rZW5DaGFuZ2VNZTIwMjYhISEh'],
+  ['MOR_NACOS_AUTH_IDENTITY_KEY', 'mor-local-server'],
+  ['MOR_NACOS_AUTH_IDENTITY_VALUE', 'local-identity-change-me-2026'],
+  ['MOR_XXL_JOB_ACCESS_TOKEN', 'local-xxl-job-access-token-change-me-2026'],
+  ['MOR_XXL_JOB_LOGIN_TOKEN_KEY', 'local-xxl-job-login-token-key-change-me-2026'],
+]);
 const activeGatewayContractFiles = [
   'agent-docs/TECHNOLOGY_STACK.md',
   'agent-docs/JAVA_PROJECT_STRUCTURE.md',
@@ -49,7 +71,70 @@ const guardTierName = ['Guard', 'Tier'].join('');
 const forwardedWildcardName = ['X', 'Forwarded', '*'].join('-');
 
 const errors = [];
-const composeDefinition = readFileSync(composeFile, 'utf8');
+
+function parseEnvironmentTemplate(content) {
+  const declarations = new Map();
+  for (const line of content.split(/\r?\n/u)) {
+    if (!line || line.startsWith('#')) {
+      continue;
+    }
+    const match = line.match(/^([A-Z][A-Z0-9_]*)=(.*)$/u);
+    if (!match) {
+      errors.push('environment example contains an invalid declaration');
+      continue;
+    }
+    if (declarations.has(match[1])) {
+      errors.push(`environment example declares ${match[1]} more than once`);
+      continue;
+    }
+    declarations.set(match[1], match[2]);
+  }
+  return declarations;
+}
+
+function section(markdown, heading) {
+  const headingMarker = `## ${heading}\n`;
+  const start = markdown.indexOf(headingMarker);
+  if (start < 0) {
+    errors.push(`Gateway design is missing section: ${heading}`);
+    return '';
+  }
+  const contentStart = start + headingMarker.length;
+  const end = markdown.indexOf('\n## ', contentStart);
+  return markdown.slice(contentStart, end < 0 ? undefined : end);
+}
+
+function tableRows(markdown, expectedHeader) {
+  const header = `| ${expectedHeader.join(' | ')} |`;
+  const lines = markdown.split('\n');
+  const headerIndex = lines.indexOf(header);
+  if (headerIndex < 0 || !/^\|(?:\s*:?-+:?\s*\|)+$/u.test(lines[headerIndex + 1] ?? '')) {
+    return null;
+  }
+  const rows = [];
+  for (const line of lines.slice(headerIndex + 2)) {
+    if (!line.startsWith('|')) {
+      break;
+    }
+    rows.push(line.split('|').slice(1, -1).map((cell) => cell.trim()));
+  }
+  return rows;
+}
+
+function requireExactTable(name, markdown, header, expectedRows) {
+  const rows = tableRows(markdown, header);
+  if (rows === null || JSON.stringify(rows) !== JSON.stringify(expectedRows)) {
+    errors.push(`Gateway design ${name} table drifted`);
+  }
+}
+
+function requireSectionStatements(name, markdown, statements) {
+  for (const statement of statements) {
+    if (!markdown.includes(statement)) {
+      errors.push(`Gateway design ${name} is missing a required statement`);
+    }
+  }
+}
 const composeResult = spawnSync(
   'docker',
   [
@@ -135,28 +220,25 @@ if (composeResult.status !== 0) {
 
   const redis = modelServices.redis;
   const redisEnvironment = redis?.environment ?? {};
-  const redisCommand = (redis?.command ?? []).join(' ');
-  const redisHealthcheck = (redis?.healthcheck?.test ?? []).join(' ');
-  if (!Object.hasOwn(redisEnvironment, redisPasswordEnvironmentVariable)) {
-    errors.push(`Redis must receive ${redisPasswordEnvironmentVariable}`);
+  if (JSON.stringify(Object.keys(redisEnvironment).sort())
+      !== JSON.stringify([redisPasswordEnvironmentVariable, 'TZ'].sort())) {
+    errors.push('Redis Compose environment keys drifted');
   }
-  if (Object.hasOwn(redisEnvironment, retiredRedisPasswordEnvironmentVariable)) {
-    errors.push('Redis still receives the retired Redis password variable');
+  const escapedRedisPasswordVariable = `$\${${redisPasswordEnvironmentVariable}}`;
+  const expectedRedisCommand = [
+    '/bin/sh',
+    '-c',
+    `exec redis-server --appendonly yes --appendfsync everysec --requirepass "${escapedRedisPasswordVariable}"`,
+  ];
+  const expectedRedisHealthcheck = [
+    'CMD-SHELL',
+    `redis-cli --no-auth-warning -a "${escapedRedisPasswordVariable}" ping | grep PONG`,
+  ];
+  if (JSON.stringify(redis?.command) !== JSON.stringify(expectedRedisCommand)) {
+    errors.push('resolved Redis command must use only the new password variable');
   }
-  if (redisCommand.includes(retiredRedisPasswordEnvironmentVariable)
-      || redisHealthcheck.includes(retiredRedisPasswordEnvironmentVariable)) {
-    errors.push('resolved Redis command or health check still uses the retired password variable');
-  }
-  const redisDefinition = composeDefinition.split('  rabbitmq:', 1)[0]
-    .split('  redis:', 2)[1] ?? '';
-  const redisPasswordUseCount = redisDefinition.match(
-    new RegExp(redisPasswordEnvironmentVariable, 'gu'),
-  )?.length ?? 0;
-  if (redisPasswordUseCount !== 5) {
-    errors.push('Redis environment, command and health check must each use the new password variable');
-  }
-  if (redisDefinition.includes(retiredRedisPasswordEnvironmentVariable)) {
-    errors.push('Redis Compose definition still uses the retired password variable');
+  if (JSON.stringify(redis?.healthcheck?.test) !== JSON.stringify(expectedRedisHealthcheck)) {
+    errors.push('resolved Redis health check must use only the new password variable');
   }
 
   const expectedVolumes = [
@@ -167,6 +249,15 @@ if (composeResult.status !== 0) {
   const actualVolumes = Object.values(model.volumes ?? {}).map((volume) => volume.name).sort();
   if (JSON.stringify(actualVolumes) !== JSON.stringify(expectedVolumes.sort())) {
     errors.push(`unexpected named volumes: ${actualVolumes.join(', ')}`);
+  }
+  if (model.networks?.mor?.name !== 'mor-local-network') {
+    errors.push('Compose mor network drifted');
+  }
+  for (const service of Object.values(modelServices)) {
+    if (JSON.stringify(Object.keys(service.networks ?? {}).sort()) !== JSON.stringify(['mor'])) {
+      errors.push('base service network membership drifted');
+      break;
+    }
   }
 }
 
@@ -351,22 +442,17 @@ for (const file of runtimeNamespaceFiles) {
   }
 }
 const environmentTemplate = readFileSync(exampleEnvironment, 'utf8');
-for (const variableName of [
-  'MOR_MYSQL_ROOT_PASSWORD',
-  redisPasswordEnvironmentVariable,
-  'MOR_RABBITMQ_USER',
-  'MOR_RABBITMQ_PASSWORD',
-  'MOR_RABBITMQ_VHOST',
-  'MOR_NACOS_AUTH_TOKEN',
-  'MOR_XXL_JOB_ACCESS_TOKEN',
-  'MOR_XXL_JOB_LOGIN_TOKEN_KEY',
-  'PAYTECH_FOUNDATION_TEST_DB_PASSWORD',
-]) {
-  if (!environmentTemplate.includes(`${variableName}=`)) {
-    errors.push(`missing MOR environment variable: ${variableName}`);
+const environmentDeclarations = parseEnvironmentTemplate(environmentTemplate);
+if (JSON.stringify([...environmentDeclarations.keys()])
+    !== JSON.stringify([...expectedEnvironmentVariables.keys()])) {
+  errors.push('environment example declaration inventory drifted');
+}
+for (const [name, expectedValue] of expectedEnvironmentVariables) {
+  if (environmentDeclarations.get(name) !== expectedValue) {
+    errors.push(`environment example declaration drifted: ${name}`);
   }
 }
-if (environmentTemplate.includes(`${retiredRedisPasswordEnvironmentVariable}=`)) {
+if (environmentDeclarations.has(retiredRedisPasswordEnvironmentVariable)) {
   errors.push('environment example still declares the retired Redis password variable');
 }
 for (const variableName of ['MOR_XXL_JOB_ACCESS_TOKEN', 'MOR_XXL_JOB_LOGIN_TOKEN_KEY']) {
@@ -442,33 +528,71 @@ for (const document of activeGatewayContract) {
 }
 
 const gatewayDesign = readFileSync(gatewayDesignFile, 'utf8');
-for (const requiredFact of [
-  'exact `HttpMethod + rawPath`',
-  'no wildcard route or prefix-stripping rule',
-  'X-Gateway-Actor-Subject',
-  'X-Gateway-Session-Id',
-  'X-Gateway-Actor-Type',
-  'X-Gateway-Channel',
-  '__Secure-operations-refresh',
-  'X-Forwarded-Ssl',
-  'X-Real-IP',
-  'SameSite=Strict',
-  'credentials `include`',
-  'Redis server time plus a monotonic positive policy revision',
-  'only the current Guard HMAC key',
-  '16 KiB',
-  '`5 s` total aggregation deadline',
-  'RS256',
-  '^[A-Za-z0-9._:-]{1,128}$',
-  'one global in-flight operation',
-  'PUBLIC_TLS',
-  'TLS 1.3/1.2',
-  'fixed pool of 1000',
-]) {
-  if (!gatewayDesign.includes(requiredFact)) {
-    errors.push(`Gateway hardening contract is missing required fact: ${requiredFact}`);
-  }
-}
+const routingSection = section(gatewayDesign, '1. Boundary and routing');
+requireExactTable('route contract', routingSection,
+  ['Route', 'External contract', 'Explicit BFF path', 'Access and refresh-cookie input'], [
+    ['Login', '`/api/operations/auth/v1/login`', '`/auth/v1/login`', 'anonymous; no refresh cookie'],
+    ['Refresh', '`/api/operations/auth/v1/refresh`', '`/auth/v1/refresh`', 'anonymous; exactly one refresh cookie'],
+    ['Logout', '`/api/operations/auth/v1/logout`', '`/auth/v1/logout`', 'JWT; exactly one refresh cookie'],
+  ]);
+requireSectionStatements('routing', routingSection, [
+  'Matching is exact `HttpMethod + rawPath`, requires an empty query, and each Catalog item owns its downstream path.',
+  'There is no wildcard route or prefix-stripping rule.',
+  'no `GET` route or default future Guard profile exists now.',
+]);
+
+const protocolSection = section(gatewayDesign, '2. Browser and trusted-header contract');
+requireExactTable('trusted-header removal', protocolSection,
+  ['Removed trusted name'], [
+    ['`X-Request-Id`'],
+    ['`X-Gateway-Actor-Subject`'],
+    ['`X-Gateway-Session-Id`'],
+    ['`X-Gateway-Actor-Type`'],
+    ['`X-Gateway-Channel`'],
+    ['`Forwarded`'],
+    ['`X-Forwarded-For`'],
+    ['`X-Forwarded-Host`'],
+    ['`X-Forwarded-Port`'],
+    ['`X-Forwarded-Proto`'],
+    ['`X-Forwarded-Prefix`'],
+    ['`X-Forwarded-Ssl`'],
+    ['`X-Forwarded-Server`'],
+    ['`X-Real-IP`'],
+  ]);
+requireExactTable('route header allowlist', protocolSection,
+  ['Route', 'Browser request headers', 'BFF external values', 'Trusted BFF values'], [
+    ['Login', '`Content-Type`', '`Origin`, `Content-Type`', '`X-Request-Id`'],
+    ['Refresh', '`Content-Type`, `X-CSRF-Token`', '`Origin`, `Content-Type`, `X-CSRF-Token`, one refresh cookie', '`X-Request-Id`'],
+    ['Logout', '`Authorization`, `Content-Type`, `X-CSRF-Token`', '`Origin`, `Content-Type`, `X-CSRF-Token`, one refresh cookie', '`X-Request-Id` and four `X-Gateway-*` identity headers'],
+  ]);
+requireSectionStatements('browser protocol', protocolSection, [
+  'Ingress removes names by case-insensitive whole-name equality only.',
+  'The refresh cookie is `Secure`, `HttpOnly`, `SameSite=Strict`, path `/api/operations/auth/v1`, and has no `Domain`.',
+  'Browser Fetch uses credentials `include`; CORS allows an exact Origin and `Access-Control-Allow-Credentials: true`.',
+]);
+
+const guardSection = section(gatewayDesign, '3. Guard and body limits');
+requireSectionStatements('Guard/body', guardSection, [
+  'Rate limiting occurs before immediate Concurrency acquisition; there is no wait or queue.',
+  'A later Concurrency rejection, JWT rejection, body rejection or downstream failure does not refund an already-consumed Rate token.',
+  'Every acquired lease releases on success, error or cancellation.',
+  'Guard uses the `v2` namespace, Redis server time plus a monotonic positive policy revision, and only the current Guard HMAC key.',
+  'All current routes have a `16 KiB` actual body cap and a `5 s` total aggregation deadline.',
+  'Validated bytes replay to BFF with exact `Content-Length` and no `Transfer-Encoding`; BFF sees no body before validation.',
+  'Pooled buffers are released and temporary arrays are best-effort cleared on complete, error and cancellation.',
+]);
+
+const transportSection = section(gatewayDesign, '4. JWT/JWKS and transport envelope');
+requireSectionStatements('JWKS/transport', transportSection, [
+  'Gateway accepts only `RS256`, with `kid` matching `^[A-Za-z0-9._:-]{1,128}$`; invalid input causes no JWKS call.',
+  'Refresh uses one global in-flight operation and one global five-second cooldown, never per-`kid` state.',
+  'A definitive unknown after success is `401`; a required failed/cooldown refresh is `503`.',
+  'JWKS uses constrained HTTPS with no userinfo, query, fragment or redirect; connect is `2 s`, response `3 s`, body `64 KiB`, at most 16 valid RSA-2048 keys, and cache age five minutes.',
+  'Production/default ingress is `PUBLIC_TLS`, limited to TLS 1.3/1.2 and the approved seven suites, with HTTP/2 disabled.',
+  'Request line is `8 KiB`, aggregate headers `32 KiB`, parsed Authorization and Cookie are each `8 KiB`, Origin and each CORS control header are `2 KiB`, header/read-idle deadline is `5 s`, connection cap is 1000, backlog is 512, and keepalive requests are capped at 1000.',
+  'BFF transport uses a fixed pool of 1000, acquire/connect timeouts of `2 s`, a complete-chain timeout of `10 s`, no redirects and no Reactor retry.',
+  'Finite type-based classification maps BFF TLS/protocol/invalid response to `502`, connect/pool/DNS to `503`, and complete timeout to `504`, without exception details.',
+]);
 
 if (errors.length > 0) {
   process.stderr.write(`${errors.join('\n')}\n`);
