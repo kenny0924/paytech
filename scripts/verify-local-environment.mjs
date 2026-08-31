@@ -92,10 +92,39 @@ function parseEnvironmentTemplate(content) {
   return declarations;
 }
 
+function withoutFencedCodeBlocks(markdown) {
+  const lines = markdown.split('\n');
+  const retainedLines = [];
+  let openFence;
+
+  for (const line of lines) {
+    if (openFence) {
+      const closingFence = new RegExp(
+        `^ {0,3}${openFence.marker}{${openFence.length},}[\\t ]*$`,
+        'u',
+      );
+      if (closingFence.test(line)) {
+        openFence = undefined;
+      }
+      continue;
+    }
+
+    const openingMatch = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/u);
+    if (openingMatch) {
+      const [fence, info] = openingMatch.slice(1);
+      if (fence[0] !== '`' || !info.includes('`')) {
+        openFence = { marker: fence[0], length: fence.length };
+        continue;
+      }
+    }
+    retainedLines.push(line);
+  }
+  return retainedLines.join('\n');
+}
+
 function section(markdown, heading) {
-  const normalizedMarkdown = markdown
-    .replace(/<!--[\s\S]*?-->/gu, '')
-    .replace(/```[\s\S]*?```/gu, '');
+  const normalizedMarkdown = withoutFencedCodeBlocks(markdown)
+    .replace(/<!--[\s\S]*?-->/gu, '');
   const headingMarker = `## ${heading}\n`;
   const start = normalizedMarkdown.indexOf(headingMarker);
   if (start < 0) {
