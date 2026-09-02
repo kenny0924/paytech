@@ -361,8 +361,10 @@ Hash 字段或全局锁表。
 - 同一 Header 同时承担两个用途时保存两行；
 - 禁止前缀、通配、正则、Hop-by-hop Header、Gateway 保留 Header 和身份 Header；
 - Gateway 生成的 Request ID、Route Code、Actor、Session、Tenant 和 Credential Header 不由数据库开放或改名；
-- Gateway 消费的 `Forwarded`、全部 `X-Forwarded-` 前缀 Header 与 `X-Real-IP` 在转发前作为代理 Header 删除，不得由数据库允许
-  转发或改名；
+- Gateway 按大小写不敏感的完整名称消费并删除当前有限代理 Header 清单：`Forwarded`、`X-Forwarded-For`、
+  `X-Forwarded-Host`、`X-Forwarded-Port`、`X-Forwarded-Prefix`、`X-Forwarded-Proto`、
+  `X-Forwarded-Server`、`X-Forwarded-Ssl` 与 `X-Real-IP`；这些 Header 在转发前删除，不得由数据库允许转发、
+  改名或扩展为前缀匹配；
 - 子行随 Route 聚合整体替换，不保存普通版本或状态。
 
 ### 6.5 `t_gateway_route_query_param`

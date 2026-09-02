@@ -1054,7 +1054,12 @@ test("all public HTTP APIs use the Platform control plane while runtime safety r
   assert.match(source, /公网 TLS.*Nginx.*覆盖.*X-Real-IP.*Gateway.*Guard.*访问日志/u);
   assert.match(source, /Gateway、BFF、Platform Support、Vault.*核心 Java 服务.*私有 HTTP.*不持有 X\.509/u);
   assert.doesNotMatch(gatewayControlPlaneDesignSource, /Forwarded Chain/u);
+  assert.doesNotMatch(gatewayControlPlaneDesignSource, /全部\s*`X-Forwarded-`\s*前缀/u);
   assert.match(gatewayControlPlaneDesignSource, /转发前.*代理 Header.*删除/u);
+  assert.match(
+    gatewayControlPlaneDesignSource,
+    /X-Forwarded-For.*X-Forwarded-Host.*X-Forwarded-Port.*X-Forwarded-Prefix.*X-Forwarded-Proto.*X-Forwarded-Server.*X-Forwarded-Ssl/su,
+  );
   assert.doesNotMatch(source, /当前 Platform Support 模型.*不发布或修改.*Route|未来变化必须先获得新的设计审批/u);
 });
 

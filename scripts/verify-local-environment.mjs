@@ -71,6 +71,7 @@ const legacyRefreshCookieName = ['__Secure', 'mor', 'operations', 'refresh'].joi
 const guardTierName = ['Guard', 'Tier'].join('');
 const forwardedWildcardName = ['X', 'Forwarded', '*'].join('-');
 const forwardedChainName = ['Forwarded', 'Chain'].join(' ');
+const forwardedPrefixModel = ['全部 `X', 'Forwarded', '` 前缀'].join('-');
 const currentTransportAuthority = '2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md';
 const retiredApplicationTransportMarkers = [
   'PUBLIC_TLS',
@@ -592,6 +593,7 @@ for (const document of activeGatewayContract) {
   if (document.content.includes(guardTierName)
       || document.content.includes(forwardedWildcardName)
       || document.content.includes(forwardedChainName)
+      || document.content.includes(forwardedPrefixModel)
       || /strip(?:Prefix| Prefix)/iu.test(document.content)
       || /previous.{0,40}HMAC|HMAC.{0,40}previous|dual.{0,40}HMAC|HMAC.{0,40}dual/iu.test(document.content)) {
     errors.push(`active Gateway contract retains a superseded Guard or forwarding model: ${document.file}`);
