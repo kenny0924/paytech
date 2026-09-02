@@ -532,6 +532,7 @@ Expected: the full Gateway test suite, coverage and boundary checks pass without
 - Modify: `agent-docs/VAULT_SERVICE_ARCHITECTURE.md`
 - Modify: current Platform/Gateway specs and implementation records that claim application TLS/mTLS is current
 - Modify: `requirements-site/content/requirements.ts` only where current requirements still mandate Platform/Vault application mTLS
+- Modify: `scripts/verify-local-environment.mjs` where its current-architecture assertions still require `PUBLIC_TLS`
 
 **Interfaces:**
 - Consumes: committed Foundation, Platform Support and Gateway runtime facts from Tasks 1-4.
