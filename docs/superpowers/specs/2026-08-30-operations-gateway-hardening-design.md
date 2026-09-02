@@ -1,6 +1,8 @@
 # Operations Gateway Hardening and Guard Simplification Design
 
-> **2026-09-01 dynamic-control-plane successor:** The [unified public API control-plane design](./2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) now owns public Target/Route/Guard current configuration. This design remains authoritative for the deployed static Operations Gateway before dynamic Snapshot cutover and for its unaffected TLS/JWT/Header/Cookie/Redis/transport hardening; the static Catalog is a pre-cutover runtime fact only.
+> **2026-09-01 dynamic-control-plane successor:** The [unified public API control-plane design](./2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) now owns public Target/Route/Guard current configuration. This design remains authoritative for the deployed static Operations Gateway before dynamic Snapshot cutover and for its unaffected JWT/JWKS validation, Header/Cookie, Redis, Guard, timeout, error and observability hardening; the static Catalog is a pre-cutover runtime fact only.
+>
+> **2026-09-02 transport successor:** The [MVC logging and internal-HTTP design](./2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes this record's direct-public-listener TLS, HTTPS JWKS/BFF, Socket-IP and proxy-trust assumptions only. Public TLS now terminates at Nginx, which overwrites one `X-Real-IP`; Gateway and internal dependencies use private HTTP without X.509 application certificates. Historical tasks, test evidence and all non-transport hardening below are intentionally preserved.
 
 Date: 2026-08-30
 

@@ -7,6 +7,11 @@
 >
 > 路径说明：为保持已有链接稳定，本文继续沿用最初 Operations-only 草案的文件路径。本文内容已经将该草案扩展并
 > 取代为统一公共 API 控制面，不再只描述 Operations。
+>
+> 传输取代说明：本文的公共控制面、六类 Channel、Route/Target/Guard、权限与 Scope 绑定继续有效；应用 TLS、
+> Workload Identity 和 JWKS HTTPS 等传输描述已由
+> [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](./2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md)
+> 取代。公网 TLS 在 Nginx 终止；Java 应用使用部署网络限制的私有 HTTP，不持有 X.509 应用证书。
 
 ## 1. 权威关系与生效边界
 
@@ -37,8 +42,8 @@ Resource、Permission 和 API Scope 绑定契约。
 
 以下现有权威继续有效：
 
-- Operations Gateway hardening 对 TLS、Header、Cookie、JWT、JWKS、Redis Lua、Lease、Timeout、错误分类和访问日志
-  的安全硬边界；
+- Operations Gateway hardening 对 Header、Cookie、JWT/JWKS 校验、Redis Lua、Lease、Timeout、错误分类和访问日志
+  的非传输安全硬边界；应用传输和 Client IP 信任来源以上述 2026-09-02 后继设计为准；
 - Platform 统一人工认证设计中的全局 Account、Realm、三个人工 Channel、Session、Tenant IAM、Google OIDC 和
   Password 规则；
 - Platform 57 表精简设计中的当前 IAM、API Credential/Scope、Audit/Security 和可靠执行边界；
@@ -104,11 +109,13 @@ Core System -> Platform PLT-Ixx internal API
 Gateway -> Platform Snapshot / PLT-I03 internal API
 ```
 
-这些调用使用内部服务身份、Spring HTTP Service Client、Spring Cloud LoadBalancer 和 Nacos 服务发现，直接调用
-内部 Endpoint。它们不穿过公共 Gateway、不创建 `t_gateway_route`、不消耗公共 Guard Bucket。
+这些调用使用部署网络限制的私有 HTTP、Spring HTTP Service Client、Spring Cloud LoadBalancer 和 Nacos 服务发现，
+直接调用内部 Endpoint。Java 服务不持有 X.509 应用证书；它们不穿过公共 Gateway、不创建 `t_gateway_route`、
+不消耗公共 Guard Bucket。
 
-Gateway -> Platform Snapshot 与 PLT-I03 是受信任内部控制链路，不是公网 Route；Snapshot Endpoint 的地址和初始
-信任根来自 Gateway 部署配置，不能由待拉取 Snapshot 自举。
+Gateway -> Platform Snapshot 与 PLT-I03 是部署私网中的内部控制链路，不是公网 Route；Snapshot Endpoint 的地址和
+私网可达边界来自 Gateway 部署配置，不能由待拉取 Snapshot 自举。Platform 当前不使用 Spring Security、调用方
+Header、X.509 或 mTLS 对该链路做应用认证。
 
 ## 4. Channel、Security Profile 与 Authorization Mode
 
@@ -152,8 +159,8 @@ PUBLIC
 Profile Code 只是安全实现选择器。Platform 不保存或下发 JWT Algorithm、Issuer、Audience、JWKS Trust、Cookie
 名称、Provider 签名脚本、Secret、KMS Key、Redis TTL 或可信 Header 名称。
 
-`PUBLIC` 表示 Gateway 不要求 Access JWT 或 API Credential，但并不跳过 TLS、Path、Header、Query、Body、Guard、
-Target 和目标服务输入校验。Operations/Client/Partner 的 Login、Registration、OIDC Callback、Refresh 等需要匿名
+`PUBLIC` 表示 Gateway 不要求 Access JWT 或 API Credential，但并不跳过 Nginx 公网 TLS、可信 Client IP、Path、
+Header、Query、Body、Guard、Target 和目标服务输入校验。Operations/Client/Partner 的 Login、Registration、OIDC Callback、Refresh 等需要匿名
 进入的认证 Route 可使用 `PUBLIC`，其精确 Cookie 名称、CORS Origin 和 Channel 协议仍由 Gateway 静态实现。
 
 ### 4.3 Authorization Mode
@@ -594,7 +601,7 @@ GET /platform-support/gateway-config/v1/public-snapshot
 
 调用方仅为 Gateway 后台刷新任务。Endpoint：
 
-- 使用 Gateway Workload Identity；
+- 只在部署限制的 Gateway/Platform 私有 HTTP 网络中可达，不使用应用证书或 Caller Header 认证；
 - 不在公共 Route Catalog 中注册；
 - 不经任一 BFF；
 - 不接受浏览器 Access Token 或 API Credential；
@@ -689,7 +696,7 @@ Snapshot Body 不返回 `generatedAt` 或 `contentHash`：两者都不是 Gatewa
 |---|---|
 | 完整当前 Snapshot 存在 | `200` + 完整 typed Body |
 | 调用方额外发送 `If-None-Match` | 不作为契约参数处理，仍返回 `200` + 完整 typed Body |
-| Gateway Workload Identity 无效 | `401` 或 `403` |
+| 非部署私网来源访问 | 由网络边界阻断，不形成 PLT-I20 应用响应 |
 | 请求契约非法 | `400` |
 | 数据库尚未初始化 Target Catalog，或当前数据无法形成完整有效 Snapshot | `503`，不得返回部分列表 |
 | Platform 暂时不可用 | 连接失败或 `5xx`；Gateway 保留 Last Valid |
@@ -861,14 +868,15 @@ HUMAN_PERMISSION API 请求仍必须调用 PLT-I02。
 
 以下事实不能由数据库放宽或改名：
 
-- TLS Protocol/Cipher、证书、可信代理和外部 Listener；
+- Nginx 的公网 TLS Protocol/Cipher、证书、只向 Gateway 私网转发以及单值 `X-Real-IP` 覆盖契约；
+- Gateway 私有 HTTP Listener、只接受 Nginx 私网流量、可信 Client IP 单次解析和转发前代理 Header 删除；
 - JWT Algorithm、Issuer、Audience、JWKS Trust、Key Refresh 和 Claim Matrix；
 - 三个 Console 的精确 CORS Origin；
 - Refresh Cookie 名称、Secure、HttpOnly、SameSite、Domain 和 Path；
 - Provider Callback 签名算法、Secret 和防重放实现；
 - Gateway 保留 Header、Hop-by-hop Header、身份 Header 和 Forwarded Chain；
 - Transport、Request Line、Header Count/Size、Body、Timeout、Rate 和 Concurrency 绝对上限；
-- Snapshot Endpoint、Platform Workload Identity 和刷新间隔；
+- Snapshot Endpoint 的私网边界和刷新间隔；
 - Approved Target Registry；
 - Redis Guard Lua、Lease Duration、State TTL、Failure-Closed 和 Ambiguous Outcome 恢复。
 
@@ -967,7 +975,7 @@ Break-glass 不是日常发布方式，不伪造应用 Actor，也不增加 Roll
 | Rate/Concurrency 拒绝 | Gateway `429` |
 | Redis 不可用 | Gateway `503`，Fail-Closed |
 | Nacos 无可用目标实例 | Gateway `503` |
-| 目标 TLS/协议/无效响应 | Gateway `502` |
+| 目标内部 HTTP 协议/无效响应 | Gateway `502` |
 | 目标完整响应超时 | Gateway `504` |
 | Checkout/Provider/Core 资源授权拒绝 | 由目标适配器返回稳定业务/授权错误 |
 
@@ -1013,7 +1021,7 @@ Platform 至少审计：
 ### 17.2 Gateway 后续任务
 
 - 用动态 Snapshot 替换运行时静态 Route Catalog；
-- 保留现有 hardening 的 TLS/JWT/JWKS/Header/Cookie/Guard/Timeout/Access Log 语义；
+- 保留现有 hardening 的 JWT/JWKS 校验、Header/Cookie/Guard/Timeout/Access Log 语义，并采用 2026-09-02 设计的 Nginx TLS、可信 `X-Real-IP` 和私有 HTTP 传输；
 - 实现 Approved Target Registry；
 - 实现 Snapshot Refresher、Validator、Compiler 和 Atomic Reference；
 - 将 Route/Header/Query/Cookie/Body/Timeout/Guard 读取切换到捕获的不可变 Route；

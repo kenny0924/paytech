@@ -40,19 +40,21 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 ## 4. 异常与枚举
 
 - 新代码只按失败语义区分两类基础异常：`FailException` 表示结果明确、不可重试；`ErrorException` 表示未知或系统错误，可进入具备幂等、次数上限和退避的重试路径。
-- 默认通过不同的 `CodeMessageEnum` 向上述两类异常传递错误语义，不为每个错误新建异常子类；只有调用方确实需要独立捕获或处理行为时才增加专用异常。
+- 默认通过不同的 `CodeMessageEnum` 向上述两类异常传递错误语义，不为每个错误新建异常子类；只有调用方确实需要独立捕获或处理行为时才增加专用异常。`ServiceUnavailableException` 是唯一已批准的窄化公共子类：它仍属于 `ErrorException`，只在调用方契约明确要求以安全默认消息返回 HTTP `503` 时使用，不代表自动重试策略。
 - `BusinessException` 和 `BizCheckFailException` 只用于兼容已有代码；`JAVA_PROJECT_STRUCTURE.md` 中仍以 `BizCheckFailException` 展示的旧示例不适用于新增实现。
 - 所有内部业务枚举都实现 `CodeEnum`；只有带可安全外显默认消息的错误枚举实现继承 `CodeEnum` 的 `CodeMessageEnum`。
 - 数据库、HTTP、MQ、日志和业务比较使用 `getCode()`，禁止依赖 `name()`、`ordinal()` 或枚举声明顺序。Code 发布后不可修改，Java 枚举常量名可以安全重构。
 - 对外发布的 `*-api` DTO 和 MQ 契约以 `String` 承载枚举 Code，不使用 Java enum 字段。提供方在边界内从 `CodeEnum#getCode()` 转换，消费方在自己的边界显式解析和校验；未知 Code 必须进入可观察、Fail-Closed 的兼容性处理，不能依赖反序列化异常、`null` 或兜底枚举静默放行。
 - 错误 Code 使用一眼可读、稳定的英文大写语义，例如 `COMPENSATION_EVENT_CONFLICT`，不使用 `PAYTECH-COMMON-400001` 一类公司前缀加数字流水号。
 - 面向开发者和运营的异常消息使用中文，并包含必要的实体标识、当前状态和操作上下文；不得包含凭据、敏感明文或完整 Payload。
+- Spring MVC 服务引入 `paytech-mvc-web-starter` 后统一使用其 `GlobalExceptionHandler`；服务不得重复创建本地 `@RestControllerAdvice`、私有 Problem/Error Body 或同义状态映射。业务错误 Code 仍由服务自己的 `CodeMessageEnum` 提供，Foundation 不依赖业务系统。
+- 同一 Starter 自动记录每个 MVC 请求的一条完整 Request Body、Response Body 与耗时 `INFO` 日志；服务不得再增加重复 Body 日志 Filter。当前明确不脱敏、不截断、不记录 Header/Cookie，也不提供开关；新增流式、SSE、文件或二进制接口前必须重新评估全量缓存与日志边界。
 
 ## 5. 事务与代码可读性
 
 - 业务和 Foundation 事务统一使用 `TransactionTemplate` 显式表达边界、传播行为和返回值，不使用 `@Transactional`。
 - 一个方法只承担一个明确职责，原则上不超过 30 行；优先卫语句和早期返回，嵌套不超过三层。
-- 不为单一实现预建 `Abstract*`、空接口或通用上下文。至少两个真实用例共享稳定流程、字段和不变量后才提取抽象；请求 ID、认证、mTLS 和追踪等协议上下文优先留在 Web/Security 基础设施，不机械复制到每个 Processor 请求。
+- 不为单一实现预建 `Abstract*`、空接口或通用上下文。至少两个真实用例共享稳定流程、字段和不变量后才提取抽象；请求 ID、认证、网络信任和追踪等协议上下文优先留在 Web/Security 基础设施，不机械复制到每个 Processor 请求。
 - 注释和 JavaDoc 默认使用中文，协议固定词、标准名称和无法准确翻译的专有名词可以保留英文。注释解释约束、原因和边界，不复述代码字面行为。
 - 不运行仓库级批量格式化，也不为了格式重写无关代码；保持改动聚焦，最终格式由项目既定工具或用户 IDE 处理。
 - 不保留空实现、占位测试或 `TODO by Codex`；发现该标记时直接完成对应实现，确实受业务决策阻塞时说明具体缺口。

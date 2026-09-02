@@ -32,7 +32,7 @@ platform-support-service/
 api-gateway/
 ```
 
-`platform-support-service/` contains the tested Maven/application foundation described by the [Platform Support application-foundation design](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md), plus a manually maintained SQL/MyBatis 21-table Phase A projection, mTLS workload boundary and PLT-I20 full-Snapshot provider. The [manual-infrastructure simplification](../docs/superpowers/specs/2026-09-02-manual-infrastructure-and-platform-runtime-simplification.md) supersedes its earlier Flyway/Testcontainers/runtime-seed mechanism. The other five core backend roots still contain database design artifacts without Java application modules. This implementation does not imply that remaining Platform capabilities are available.
+`platform-support-service/` contains the tested Maven/application foundation described by the [Platform Support application-foundation design](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md), plus a manually maintained SQL/MyBatis 21-table Phase A projection and private-HTTP PLT-I20 full-Snapshot provider. The [manual-infrastructure simplification](../docs/superpowers/specs/2026-09-02-manual-infrastructure-and-platform-runtime-simplification.md) supersedes its earlier Flyway/Testcontainers/runtime-seed mechanism, while the [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes its application mTLS transport. Platform now has no Spring Security/X.509/mTLS or local exception handler and reuses the Foundation MVC boundary. The other five core backend roots still contain database design artifacts without Java application modules. This implementation does not imply that remaining Platform capabilities are available.
 
 ### Entry-layer backend project roots
 
@@ -125,7 +125,7 @@ The BFF is different from API Gateway:
 - **BFF** understands frontend response shapes and authorized query composition. It does not own business decisions.
 - **Core systems** own business rules, state transitions, data, and cross-system domain workflows.
 
-内部服务之间的同步 HTTP 调用、MQ、XXL-Job 与 Vault 调用绕过 Gateway，使用服务发现、工作负载身份和各自的内部契约，不进入公共 Route Catalog。Platform 已实现手工 Schema/初始化 DML 和 PLT-I20 全量 Snapshot Provider；Gateway 动态消费与运行态切换尚未实现。已部署 Gateway 在切换前继续使用静态 Operations Catalog，不能据此把静态目录解释为新的长期控制面。
+公网 TLS 由 Nginx 终止；Nginx 覆盖一个 `X-Real-IP` 后仅通过私网访问 Gateway。Gateway 只解析该值一次供 Guard 和 Access Log 共用，并在转发 BFF 前删除代理 Header。Gateway、BFF、Platform Support、Vault 与核心 Java 服务通过私有 HTTP 通信且不持有 X.509 应用证书。内部服务同步 HTTP、MQ、XXL-Job 与 Vault 调用绕过 Gateway，使用服务发现、部署网络限制和各自的内部契约，不进入公共 Route Catalog。Platform 已实现手工 Schema/初始化 DML 和 PLT-I20 全量 Snapshot Provider；Gateway 动态消费与运行态切换尚未实现。已部署 Gateway 在切换前继续使用静态 Operations Catalog，不能据此把静态目录解释为新的长期控制面。
 
 ## 4. Browser-facing access model
 
@@ -256,7 +256,8 @@ Vault has no browser or external machine route:
 ```text
 Core System
   -> internal Spring HTTP Service Client
-    -> mTLS / Workload Identity
+    -> deployment-restricted private HTTP
+      -> required X-Caller-Service + static Allowlist (current weak V1 trust)
       -> Vault internal API
         -> Vault database + KMS
 ```
@@ -289,7 +290,7 @@ The fact that a service is reachable through Gateway does not make every interfa
 - Console BFFs are stateless and initially need no business database. Scale each independently only when traffic requires it.
 - MQ consumers belonging to a core system remain in that system's deployable initially; do not create separate worker services without a scaling or isolation reason.
 - Each state-owning service embeds the hardened `compensation-event` library and stores its events in its own database. Transaction `afterCommit` performs the normal wake-up; XXL-Job provides per-service fallback scanning or sharding, while database Claim/Lease protects multi-instance execution. Do not create a central compensation worker or database.
-- Vault is a separately secured internal deployable and datastore because its threat boundary, KMS permissions and sensitive-access controls differ from the six business systems. It is called through an internal Spring `@HttpExchange` contract with mTLS/workload identity and is never routed through the external Gateway.
+- Vault is a separately secured internal deployable and datastore because its threat boundary, KMS permissions and sensitive-access controls differ from the six business systems. It is called through a deployment-restricted private HTTP Spring `@HttpExchange` contract and is never routed through the external Gateway. Current V1 has no application certificate or strong workload identity: its required but spoofable `X-Caller-Service` plus static Allowlist prevents only accidental misuse.
 - A future Maven module named `*-api` is a lightweight internal HTTP-contract JAR containing `@HttpExchange` interfaces and transport DTOs; it is not a separately running process. The Spring Boot `*-web` module is normally the deployable unit.
 - Internal callers use Spring HTTP Service Clients with Spring Cloud LoadBalancer and Nacos discovery. They do not route service-to-service calls through Gateway and must not introduce new Dubbo or OpenFeign contracts.
 - API Gateway uses Spring Cloud Gateway Server WebFlux. For the Operations first slice it validates the Platform Support Operations Access JWT and uses non-blocking Spring Data Redis Reactive + Lettuce Lua scripts for atomic multi-dimension Token Bucket and lease-based concurrency controls. It does not depend on `paytech-redis-starter`, Redisson or a blocking Redis template.

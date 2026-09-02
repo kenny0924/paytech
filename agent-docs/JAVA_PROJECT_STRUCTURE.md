@@ -16,7 +16,7 @@
 
 Java、Spring、Maven BOM/Parent、MySQL、RabbitMQ、Redis、Nacos、Gateway 和可观测性版本统一以 [TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md) 为准。本机运行方式以 [LOCAL_DEVELOPMENT_ENVIRONMENT.md](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 为准。
 
-Operations 首期 `api-gateway` 已按批准边界实现；其最终路由、协议、Guard、JWKS 与传输约束以 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准。Platform Support 已按用户明确授权初始化非业务应用基础，边界见第 3.3 节。除此之外，本阶段仍禁止主动为核心服务业务能力、Console BFF/前端或 Vault 创建脚手架；只有用户明确要求开始实现具体 Java 项目或垂直切片时，才能应用本文创建目录或代码。
+Operations 首期 `api-gateway` 已按批准边界实现；其路由、协议、Guard 与 JWT/JWKS 校验约束继续以 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准，应用传输和 Client IP 信任来源以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准。Platform Support 已按用户明确授权初始化非业务应用基础，边界见第 3.3 节。除此之外，本阶段仍禁止主动为核心服务业务能力、Console BFF/前端或 Vault 创建脚手架；只有用户明确要求开始实现具体 Java 项目或垂直切片时，才能应用本文创建目录或代码。
 
 ## 2. 参考项目结论
 
@@ -107,7 +107,7 @@ paytech-build/
 - 本机开发的 `1.0.0-SNAPSHOT` 先发布到 Nexus `maven-snapshots`，服务统一通过 `maven-public` 解析；服务不得直接配置 Hosted 仓库 URL。
 - 发布地址和认证来自开发者 Maven Settings，POM 只保留与 Settings 一致的 `maven-releases` / `maven-snapshots` 仓库 ID 和 `${nexus.url}`，不得保存凭据。
 
-公共能力按边界拆分为 `paytech-common-core`、`paytech-mvc-web-starter`、`paytech-snowflake-id`、`paytech-caffeine-starter`、`paytech-redis-starter`、`paytech-xxl-job-starter` 和 `paytech-compensation-event`。Redis Starter 暴露同一实例的 `cacheManager`/`redisCacheManager` 并以 `@Primary` 作为 Spring Cache 默认 Manager；每个 Redis Cache 由宿主声明 `RedisCacheDefinition<T>(cacheName, concreteValueType, ttl)`，未声明名称不动态创建。Caffeine 只注册 `caffeineCacheManager`，仅用于可回源的有界进程内加速；同时使用两者时，Caffeine 方法必须在 Spring Cache 注解显式选择该 Manager，且两边使用不同 Cache Name。两者不是 L1/L2，也不使用 `spring.cache.type` 切换；不需要 Caffeine 的宿主不要引入对应 Starter。不得让任何 Cache 承担权威事实、幂等、锁、跨实例一致性、Vault Reveal、凭据或敏感明文，也不得把跨领域 DTO、业务枚举、Repository、Mapper 或第三方 Provider 模型放入公共 JAR。详细职责见 `TECHNOLOGY_STACK.md`。
+公共能力按边界拆分为 `paytech-common-core`、`paytech-mvc-web-starter`、`paytech-snowflake-id`、`paytech-caffeine-starter`、`paytech-redis-starter`、`paytech-xxl-job-starter` 和 `paytech-compensation-event`。`paytech-mvc-web-starter` 自动提供一个完整 Request/Response/耗时 INFO 终态日志和共享 `GlobalExceptionHandler`；MVC 服务不得复制本地日志 Filter、异常 Advice 或错误响应模型。Redis Starter 暴露同一实例的 `cacheManager`/`redisCacheManager` 并以 `@Primary` 作为 Spring Cache 默认 Manager；每个 Redis Cache 由宿主声明 `RedisCacheDefinition<T>(cacheName, concreteValueType, ttl)`，未声明名称不动态创建。Caffeine 只注册 `caffeineCacheManager`，仅用于可回源的有界进程内加速；同时使用两者时，Caffeine 方法必须在 Spring Cache 注解显式选择该 Manager，且两边使用不同 Cache Name。两者不是 L1/L2，也不使用 `spring.cache.type` 切换；不需要 Caffeine 的宿主不要引入对应 Starter。不得让任何 Cache 承担权威事实、幂等、锁、跨实例一致性、Vault Reveal、凭据或敏感明文，也不得把跨领域 DTO、业务枚举、Repository、Mapper 或第三方 Provider 模型放入公共 JAR。详细职责见 `TECHNOLOGY_STACK.md`。
 
 ### 3.2 已实现的 API Gateway 工程边界
 
@@ -133,7 +133,7 @@ api-gateway-test ────→ api-gateway-web
 - `api-gateway-web` 使用 Spring Cloud Gateway Server WebFlux 5.0.3、OAuth2 Resource Server JWT、Spring Data Redis Reactive/Lettuce Lua、Actuator 和 Micrometer；它负责入口、Access JWT 与 Channel/Actor 校验、受信上下文、Guard、路由、请求 ID、结构化访问日志和健康/指标，不处理账号密码登录、页面聚合或业务编排。
 - 公共面只包含 `POST /api/operations/auth/v1/login`、`POST /api/operations/auth/v1/refresh` 和 `POST /api/operations/auth/v1/logout` 三条静态精确路由。Catalog 以 `HttpMethod + rawPath` 和空 Query 匹配，并为每条路由显式指定唯一 Operations BFF 路径 `/auth/v1/login`、`/auth/v1/refresh` 或 `/auth/v1/logout`；没有通配或前缀改写。未匹配 Operations API 在 Gateway 本地返回错误，不转发给 Simulator/未来 BFF。Operations BFF、Platform Support 认证代码和前端不属于本实现。
 - 生产模块禁止 MVC/Servlet、Foundation Redis/Caffeine/MVC Starter、Redisson、Nacos Client、Testcontainers、Mockito、Platform/core Client、Redis Template（包括 Reactive Template）/阻塞 Connection、手工 Reactor Blocking/Subscription 和应用自有动态 Route Repository。路由只来自三条编译时 Catalog 定义，Discovery Locator、Redis Route Repository、Retry 和原始 Path Metric Tag 均显式关闭。
-- `api-gateway-test` 以 Compile Scope 依赖 `web`，从真实随机端口 Gateway 入口经过完整生产链，并通过真实协议连接 HTTPS JWKS 和有状态 Operations BFF Simulator。它不引入 Mockito/Testcontainers；Redis 只连接已运行的 `127.0.0.1:16379` 仓库 Compose Redis，只接受 `PAYTECH_REDIS_PASSWORD`，每次运行使用唯一 Namespace 并只以 `SCAN` 清理；测试不启动 Docker/Testcontainers，不连接开发者 `6379` Redis。
+- `api-gateway-test` 以 Compile Scope 依赖 `web`，从真实随机端口私有 HTTP Gateway 入口经过完整生产链，并通过真实内部 HTTP 连接 JWKS 和有状态 Operations BFF Simulator；测试默认携带 Nginx 会覆盖的单值合法 `X-Real-IP`。它不引入 Mockito/Testcontainers；Redis 只连接已运行的 `127.0.0.1:16379` 仓库 Compose Redis，只接受 `PAYTECH_REDIS_PASSWORD`，每次运行使用唯一 Namespace 并只以 `SCAN` 清理；测试不启动 Docker/Testcontainers，不连接开发者 `6379` Redis。
 - 默认 `auto` 包含架构和真实 HTTP E2E 验收。`./mvnw clean verify` 之后还必须独立运行两个 Node 门禁；JaCoCo 对未舍入 Instruction/Branch 同时要求 `>= 90%`，只排除精确的 `ApiGatewayApplication`，并校验新鲜度与编译类一致性。
 - `api-gateway-web` 产出普通 JAR 和可执行 `-exec.jar`；`api-gateway-test` 跳过 install/deploy 且不产出可部署 JAR。Application/Management 默认端口分别为 `18080`/`19080`，健康组成与运行命令见 [`api-gateway/README.md`](../api-gateway/README.md)。
 
@@ -145,8 +145,8 @@ Platform Support 当前实际仓库结构是：
 platform-support-service/
 ├── pom.xml
 ├── platform-support-api/               # PLT-I20 @HttpExchange 与不可变 typed DTO
-├── platform-support-web/               # MVC、MyBatis、mTLS 与 Snapshot Provider
-├── platform-support-test/              # MySQL、HTTP、mTLS、架构与覆盖率 auto 门禁
+├── platform-support-web/               # MVC、MyBatis、共享 Foundation 边界与 Snapshot Provider
+├── platform-support-test/              # MySQL、HTTP、架构与覆盖率 auto 门禁
 ├── docs/database/                       # 已批准的完整 PDManer 设计输入
 └── README.md
 ```
@@ -158,9 +158,9 @@ platform-support-test ────→ platform-support-web ────→ platf
 ```
 
 - `platform-support-api` 当前只发布有真实 Gateway 消费者的 PLT-I20 `@HttpExchange` 查询和不可变 DTO；成功调用每次返回完整 typed Snapshot，不使用 ETag/304。
-- `platform-support-web` 实现 Spring MVC/Actuator、Phase A MyBatis 21-table 投影、mTLS Workload 授权和 Snapshot 读取/校验/组装；Schema 与初始数据由 `docs/database/sql` 下两份手工 SQL 维护，应用启动不执行 SQL。
-- `platform-support-test` 通过仓库 `local-environment` MySQL、真实随机端口 HTTP/mTLS 和少量领域场景验证完整生产链，不使用 Mockito 或 Testcontainers。
-- Reactor Enforcer 允许该切片所需的 JDBC/MySQL/MyBatis/Security，仍禁止 Flyway、Testcontainers、Nacos、Redis、MQ、XXL-Job、Gateway、Compensation Event 与 Mockito。
+- `platform-support-web` 实现 Spring MVC/Actuator、Phase A MyBatis 21-table 投影和 Snapshot 读取/校验/组装；它通过私有 HTTP 暴露 PLT-I20/Actuator，不包含 Spring Security、X.509/mTLS、应用证书或本地异常处理器，并复用 Foundation 的日志与全局错误边界。Schema 与初始数据由 `docs/database/sql` 下两份手工 SQL 维护，应用启动不执行 SQL。
+- `platform-support-test` 通过仓库 `local-environment` MySQL、真实随机端口 HTTP 和少量领域场景验证完整生产链，不使用 Mockito 或 Testcontainers。
+- Reactor Enforcer 允许该切片所需的 JDBC/MySQL/MyBatis，禁止 Spring Security、Flyway、Testcontainers、Nacos、Redis、MQ、XXL-Job、Gateway、Compensation Event 与 Mockito。
 - Web 默认监听 `18106`，Actuator 使用同一 Listener；测试模块跳过 install/deploy，Web 同时产出普通 JAR 和可执行 `-exec.jar`。
 - 当前切片不实现认证/Tenant IAM 命令、API/Route/Guard 管理、限流运行态、Gateway Snapshot 消费、补偿事件或部署配置。任何此类能力都必须作为获批垂直切片按 TDD 增量加入。
 - 详细设计、实施步骤和运行方式分别见[基础设计](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md)、[实施计划](../docs/superpowers/plans/2026-09-01-platform-support-application-foundation.md)和 [`platform-support-service/README.md`](../platform-support-service/README.md)。
@@ -250,7 +250,7 @@ Controller 不包含业务判断、事务、Repository 调用或跨系统编排�
 
 - 调用方不重复定义远程 HTTP DTO，也不重新声明 URL。
 - 远程 DTO 只停留在 integration/infrastructure 边界；转换为调用方自己的领域对象后再进入领域逻辑。
-- `@HttpExchange` 本身只定义 HTTP 契约。Nacos 负责服务发现，Spring Cloud LoadBalancer 负责实例选择，底层 `RestClient` 或 `WebClient` 负责发送请求。
+- `@HttpExchange` 本身只定义 HTTP 契约。Nacos 负责服务发现，Spring Cloud LoadBalancer 负责实例选择，底层 `RestClient` 或 `WebClient` 通过部署网络限制的私有 HTTP 发送请求；Java 服务不持有 X.509 应用证书。
 - 超时、统一错误映射、追踪和熔断在调用方基础配置或适配器中处理；命令请求不得在缺少幂等保障时自动重试。
 - 内部服务调用不经过 API Gateway。
 
@@ -357,7 +357,7 @@ Domain Service → Repository interface → RepositoryImpl → Mapper → 本系
 - 实现层负责超时、错误映射、脱敏日志和外部状态转换。
 - 外部原始状态先转换为本系统统一语义，再进入领域逻辑。
 - 不把外部响应对象穿透到领域层。
-- Vault 作为内部 HTTP 集成放在同一边界：本地端口方法必须显式表达 `purpose` 和最小字段集合，适配器携带 mTLS/Workload Identity、Reason 与业务资源上下文。Reveal 结果不得写数据库、缓存、事件或日志；业务库只持久化 Token、版本、元数据 Hash、必要 Blind Index、同前缀 Blind Index Key Version 和 Masked Value。
+- Vault 作为内部 HTTP 集成放在同一边界：本地端口方法必须显式表达 `purpose` 和最小字段集合，适配器通过部署网络限制的私有 HTTP 携带当前 V1 必需但可伪造的 `X-Caller-Service`、Reason 与业务资源上下文，并接受静态 Allowlist 只能防止误用而不能认证调用方的限制。Reveal 结果不得写数据库、缓存、事件或日志；业务库只持久化 Token、版本、元数据 Hash、必要 Blind Index、同前缀 Blind Index Key Version 和 Masked Value。
 
 ### 5.6 MQ 与业务事件
 

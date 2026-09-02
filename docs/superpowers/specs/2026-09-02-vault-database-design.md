@@ -11,6 +11,10 @@ sections of `agent-docs/VAULT_SERVICE_ARCHITECTURE.md`. That older document rema
 unchanged system boundary, non-card-data classification, prohibited card data, KMS/Secrets separation and the rule
 that Vault never owns business meaning.
 
+Application transport follows the later `2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`:
+Vault uses deployment-restricted private HTTP, owns no X.509 application certificate and remains unreachable through
+Gateway/BFF/browser/external Client paths. This transport supersession does not strengthen the weak V1 caller model.
+
 ## 1. Purpose
 
 Build the smallest Vault database that supports the current demonstrated consumers:
@@ -45,7 +49,7 @@ business-specific tables.
 - Binding, Bind, Confirm, Copy, Retire, Destroy, Query, Batch, Manage or Rewrap APIs;
 - Tenant, Owner Resource, Field, Consumer or business aggregate ownership inside Vault;
 - mTLS, Workload Identity or a database-backed service credential in this V1;
-- application-level request/response encryption envelopes in addition to HTTPS;
+- application-level request/response encryption envelopes or application transport certificates;
 - Blind Index APIs, masked values, metadata hash, record version, key-version tables or algorithm tables;
 - Inbox/Outbox, `compensation_event`, Platform Audit relay, audit hash chains or WORM/archive workflows;
 - automatic retention, Legal Hold, anonymization, archive or destruction;
@@ -54,14 +58,16 @@ business-specific tables.
 
 ## 3. Trust and access boundary
 
-Vault is reachable only through internal service networking over HTTPS. No Gateway, BFF, browser, external Client or
-business service may access the Vault database directly.
+Vault is reachable only through deployment-restricted private service networking over HTTP and owns no X.509
+application certificate. No Gateway, BFF, browser, external Client or business service may access the Vault database
+directly.
 
 V1 temporarily obtains `caller_service` from the required `X-Caller-Service` header and evaluates a static
 `caller_service + action + data_type + purpose` allowlist. This is best-effort prevention of accidental misuse, not
 strong service authentication, because an internal caller can spoof the header. The accepted V1 trust assumption is:
-any internal service allowed for a Data Type and Purpose may Reveal any Token it obtains. mTLS or another strong
-workload identity can be designed later without changing the three-table model.
+any internal service allowed for a Data Type and Purpose may Reveal any Token it obtains. A future strong workload
+identity can be designed later without changing the three-table model; the current private network and Caller Header
+must not be described as application authentication.
 
 The allowlist is deployment configuration, not a database table. Missing policy denies the request. Policy failure,
 KMS failure, integrity failure or local audit persistence failure must never return plaintext.

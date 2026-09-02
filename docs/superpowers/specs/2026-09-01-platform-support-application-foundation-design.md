@@ -5,8 +5,11 @@ Date: 2026-09-01
 Status: Approved and implemented foundation scope. The user explicitly authorized a foundation-only first milestone; the implementation remains uncommitted and does not expand the business authorization.
 
 > Historical scope note (2026-09-02): this document records the original foundation milestone. The later authorized
-> Phase A runtime now adds Flyway/MyBatis persistence, deterministic initialization, mTLS and the PLT-I20 full-Snapshot
-> provider. Statements below that describe “no database/API” are acceptance facts for this earlier milestone, not the
+> Phase A runtime now adds manually maintained SQL/MyBatis persistence and the PLT-I20 full-Snapshot provider.
+> Application TLS/mTLS, Spring Security and local exception handling were subsequently removed by the
+> [MVC/internal-HTTP design](./2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md): current PLT-I20 and
+> Actuator use private HTTP, Platform owns no X.509 certificate, and the Foundation Starter owns the shared error boundary.
+> Statements below that describe “no database/API” or the original transport are acceptance facts for this earlier milestone, not the
 > current service status; use [`platform-support-service/README.md`](../../../platform-support-service/README.md) and the
 > [dynamic public-control-plane design](./2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)
 > for the current boundary.

@@ -754,7 +754,7 @@ Risk 业务通过率以 PRIMARY decision_evaluation 及对应 Checkout/Transacti
 - Feature 应尽量输出 Boolean、Number 或 Code，不复制输入敏感原值。任何需要恢复的新增 Feature Value 都必须先证明 Reveal/Retire 消费者并完成 Vault 专项设计。
 - Platform 保存文件正文；DD/Dispute 只保存 File ID、Content Hash 与本库案件或证据包关联，文件替换产生新 File ID，不在 Risk 复制 Document Version。
 - PAN、CVV/CVC、完整磁道、PIN/PIN Block 和卡有效期禁止进入 Risk、文件、日志、事件或 Vault。
-- Vault Reveal 必须由 Risk 服务端在资源授权后通过 mTLS/Workload Identity 发起，携带 Purpose、Reason 和 Case/Assessment 引用；明文不得持久缓存。
+- Vault Reveal 必须由 Risk 服务端在资源授权后通过部署网络限制的私有 HTTP 发起，携带当前 V1 必需但可伪造的 `X-Caller-Service`、Purpose、Reason 和 Case/Assessment 引用，并接受静态 Allowlist 不构成强认证的限制；明文不得持久缓存。
 
 ### 10.2 MVP 留存口径
 

@@ -192,8 +192,10 @@ Domain Service → RepositoryImpl → Mapper → local MySQL
 
 业务服务的 `auto` 不连接共享 Vault 环境，而是通过真实 HTTP 调用有状态 Vault Simulator：
 
+当前 V1 的 API/数据范围以 [`2026-09-02-vault-database-design.md`](../docs/superpowers/specs/2026-09-02-vault-database-design.md) 为准；下列超出 Protect/Reveal 三表 V1 的 Binding、Blind Index、Copy、Rewrap、Retire/Destroy 与复杂生命周期条目只是未来相应能力被批准后的测试模板，不是当前实现要求。当前传输使用部署网络限制的私有 HTTP，不配置应用证书；Simulator 必须保留必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 只能防止误用的弱信任事实。
+
 - Simulator 生成随机 opaque token，并记录 Tenant、Purpose、版本、元数据 Hash、Blind Index 与授权上下文；不得把它简化成按方法名返回固定 DTO。
-- 覆盖 Protect、Reveal、Bind、Derive Blind Index、Read Record Blind Indexes、CopyForBinding、Rewrap、Retire/Destroy 的当前服务实际调用，验证 Purpose/Reason/Resource、mTLS 身份模拟、最小字段返回、Derive 限流/异常枚举检测、Copy 来源与目标授权，以及所有高权限操作的审计和失败关闭。
+- 对已批准的当前服务实际调用覆盖真实私有 HTTP、Purpose/Reason/Resource、必需 `X-Caller-Service`、静态 Allowlist、最小字段返回、审计与失败关闭；不得模拟 mTLS 或把 Caller Header 当作强认证。未来只有相应能力获批后才加入 Bind、Derive Blind Index、Read Record Blind Indexes、CopyForBinding、Rewrap、Retire/Destroy 的专项验证。
 - Checker 分层验证：业务数据库只按模型保存完整 Token Tuple；只有明确批准且通过 `CopyForBinding` 生成接收方专属 Token 的事件才可携带该 Token Tuple；日志、错误信息、Trace、Metric 与普通事件不得出现完整 Token、完整 Blind Index、Reveal 明文或 Vault 内部密文。
 - 覆盖 Vault 超时、不可用、Token 不存在、版本冲突、权限拒绝、Legal Hold 和相同 Blind Index 业务冲突等相关场景。
 - PAN、CVV/CVC、完整磁道数据、PIN/PIN Block 和卡有效期不属于 Vault Simulator 或 Fixture 的合法输入；必须覆盖拒绝持久化、日志零泄漏与 Security Event。Payment 集成测试只使用 Provider Token 与批准的卡片描述字段。
@@ -208,7 +210,7 @@ Domain Service → RepositoryImpl → Mapper → local MySQL
 
 ### 7.6 本地共享服务规则
 
-Operations Gateway 与所有后续服务统一复用仓库 `local-environment`。Gateway 的最终测试边界还必须遵守 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)：
+Operations Gateway 与所有后续服务统一复用仓库 `local-environment`。Gateway 的路由、JWT、Guard、Redis 与协议测试边界继续遵守 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)，传输与可信 Client IP 测试以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准：
 
 - 只连接 `127.0.0.1:16379` 的 Redis 8.2.1，密码从未提交的 `PAYTECH_REDIS_PASSWORD` 注入；禁止连接宿主机 `6379` 或其他项目实例；
 - Compose Redis 必须在测试开始前健康；缺失、版本/鉴权错误时快速失败并给出启动提示，不降级到内存实现、方法 Stub 或其他 Redis；
@@ -218,7 +220,7 @@ Operations Gateway 与所有后续服务统一复用仓库 `local-environment`�
 - MySQL 使用 `127.0.0.1:13306`，RabbitMQ 使用仓库固定 Loopback 端口；每个服务仅使用自己的数据库账号和业务 Namespace；
 - CI 或开发者必须先用同一仓库 Compose 定义启动所需服务并手工应用 SQL，再运行默认 `auto`；不能因为环境缺少依赖而静默跳过测试。
 
-本规则不改变真实生产链、Simulator、无方法级 Stub 和可重复断言要求。Gateway 测试仍从随机 HTTP 端口启动真实 WebFlux 应用，并使用有状态 BFF/JWKS Simulator。
+本规则不改变真实生产链、Simulator、无方法级 Stub 和可重复断言要求。Gateway 测试仍从随机私有 HTTP 端口启动真实 WebFlux 应用，并使用有状态内部 HTTP BFF/JWKS Simulator；默认请求模拟 Nginx 覆盖一个合法 `X-Real-IP`，缺失、重复、逗号链或非法值必须 Fail-Closed，且 BFF 不能收到任何已消费代理 Header。
 
 ## 8. 外部系统 Simulator
 

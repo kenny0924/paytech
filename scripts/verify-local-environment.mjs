@@ -69,6 +69,14 @@ const legacyGatewayHeaderPrefix = ['X', 'MoR'].join('-');
 const legacyRefreshCookieName = ['__Secure', 'mor', 'operations', 'refresh'].join('-');
 const guardTierName = ['Guard', 'Tier'].join('');
 const forwardedWildcardName = ['X', 'Forwarded', '*'].join('-');
+const currentTransportAuthority = '2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md';
+const retiredApplicationTransportMarkers = [
+  'PUBLIC_TLS',
+  'GATEWAY_TLS_',
+  'JWKS_TRUST_ANCHOR',
+  'server.ssl',
+  'client-auth',
+];
 
 const errors = [];
 
@@ -572,6 +580,9 @@ for (const document of activeGatewayContract) {
   if (!document.content.includes('2026-08-30-operations-gateway-hardening-design.md')) {
     errors.push(`active Gateway contract does not reference the hardening authority: ${document.file}`);
   }
+  if (!document.content.includes(currentTransportAuthority)) {
+    errors.push(`active Gateway contract does not reference the current transport authority: ${document.file}`);
+  }
   if (document.content.includes(legacyGatewayHeaderPrefix)
       || document.content.includes(legacyRefreshCookieName)) {
     errors.push(`active Gateway contract retains legacy wire vocabulary: ${document.file}`);
@@ -581,6 +592,9 @@ for (const document of activeGatewayContract) {
       || /strip(?:Prefix| Prefix)/iu.test(document.content)
       || /previous.{0,40}HMAC|HMAC.{0,40}previous|dual.{0,40}HMAC|HMAC.{0,40}dual/iu.test(document.content)) {
     errors.push(`active Gateway contract retains a superseded Guard or forwarding model: ${document.file}`);
+  }
+  if (retiredApplicationTransportMarkers.some((marker) => document.content.includes(marker))) {
+    errors.push(`active Gateway contract retains a retired application transport marker: ${document.file}`);
   }
 }
 
@@ -633,6 +647,8 @@ requireExactVerificationContract('browser protocol', protocolSection, [
   'Every BFF request receives Gateway-generated `X-Request-Id`; authenticated Logout also receives four `X-Gateway-*` identity headers.',
   'The refresh cookie is `Secure`, `HttpOnly`, `SameSite=Strict`, path `/api/operations/auth/v1`, and has no `Domain`.',
   'Browser Fetch uses credentials `include`; CORS allows an exact Origin and `Access-Control-Allow-Credentials: true`.',
+  'Nginx overwrites exactly one numeric IPv4/IPv6 `X-Real-IP`; Gateway parses it once for Guard and Access Log, rejects missing/repeated/comma-separated/malformed values, and never falls back to Socket IP.',
+  'Gateway removes all consumed proxy headers before BFF forwarding and is reachable only from the private Nginx network.',
 ]);
 
 const guardSection = section(gatewayDesign, '3. Guard and body limits');
@@ -642,7 +658,7 @@ requireExactVerificationContract('Guard/body', guardSection, [
   'A later Concurrency rejection, JWT rejection, body rejection or downstream failure does not refund an already-consumed Rate token.',
   'Every acquired lease releases on success, error or cancellation.',
   'Guard uses the `guard:v3` namespace and Redis server time.',
-  'Client-IP keys use the raw canonical socket IP; authenticated-Subject keys use the exact validated JWT `sub`.',
+  'Client-IP keys use the canonical Nginx `X-Real-IP` from the shared trusted request context; authenticated-Subject keys use the exact validated JWT `sub`.',
   'Redis Guard has no HMAC configuration; Access Log IP and Subject values remain independently HMAC-pseudonymized.',
   'Rate Hashes contain exactly `t/lr/rr`; Concurrency metadata contains exactly `hw/l`.',
   'No policy revision or rolling state migration is configured or executed.',
@@ -658,13 +674,13 @@ requireExactVerificationContract('JWKS/transport', transportSection, [
   'Refresh uses one global in-flight operation and one global five-second cooldown, never per-`kid` state.',
   'Known cached keys remain usable.',
   'A definitive unknown after success is `401`; a required failed/cooldown refresh is `503`.',
-  'JWKS uses constrained HTTPS with no userinfo, query, fragment or redirect; connect is `2 s`, response `3 s`, body `64 KiB`, at most 16 valid RSA-2048 keys, and cache age five minutes.',
-  'Production/default ingress is `PUBLIC_TLS`, limited to TLS 1.3/1.2 and the approved seven suites, with HTTP/2 disabled.',
-  'Test-only cleartext binds numeric `127.0.0.1`.',
+  'JWKS uses constrained internal HTTP with no userinfo, query, fragment or redirect; connect is `2 s`, response `3 s`, body `64 KiB`, at most 16 valid RSA-2048 keys, and cache age five minutes; no application certificate or TLS Trust Anchor is loaded.',
+  'Production/default ingress is private HTTP, reachable only from the Nginx private network, and Gateway owns no X.509 certificate; public Console HTTPS terminates at Nginx.',
+  'Local/test HTTP binds numeric `127.0.0.1`.',
   'Request line is `8 KiB`, aggregate headers `32 KiB`, parsed Authorization and Cookie are each `8 KiB`, Origin and each CORS control header are `2 KiB`, header/read-idle deadline is `5 s`, connection cap is 1000, backlog is 512, and keepalive requests are capped at 1000.',
   'Parsed oversize headers return `431 GATEWAY_REQUEST_HEADER_FIELDS_TOO_LARGE`; a decoder-level rejection may close before an exchange exists.',
-  'BFF transport uses a fixed pool of 1000, acquire/connect timeouts of `2 s`, a complete-chain timeout of `10 s`, no redirects and no Reactor retry.',
-  'Finite type-based classification maps BFF TLS/protocol/invalid response to `502`, connect/pool/DNS to `503`, and complete timeout to `504`, without exception details.',
+  'BFF transport uses internal HTTP with a fixed pool of 1000, acquire/connect timeouts of `2 s`, a complete-chain timeout of `10 s`, no redirects and no Reactor retry.',
+  'Finite type-based classification maps BFF protocol/invalid response to `502`, connect/pool/DNS to `503`, and complete timeout to `504`, without exception details.',
 ]);
 
 if (errors.length > 0) {

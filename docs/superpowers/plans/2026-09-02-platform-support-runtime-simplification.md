@@ -1,5 +1,7 @@
 # Platform Support Runtime Simplification Implementation Plan
 
+> **2026-09-02 transport successor:** This completed plan remains historical authority for manual SQL, local MySQL, the PLT-I20 chain and its test results. The later [MVC/internal-HTTP design](../specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes only its mTLS/application-security and local-handler clauses: current PLT-I20/Actuator use private HTTP without Spring Security/X.509, and Foundation supplies the shared error boundary. Historical task text below is intentionally unchanged.
+
 > **For agentic workers:** Implement task-by-task with test-first red/green checks. Do not introduce an additional framework or abstraction layer.
 
 **Goal:** Replace Flyway/Testcontainers and the Java runtime seed framework with manually maintained SQL and a smaller full-chain Platform Snapshot implementation.

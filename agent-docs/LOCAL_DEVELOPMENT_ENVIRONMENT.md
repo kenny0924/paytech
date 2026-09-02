@@ -2,7 +2,9 @@
 
 最后更新：2026-09-02
 
-状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和七个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A 手工 SQL/MyBatis 21-table 投影、mTLS 边界和 PLT-I20 全量 Snapshot Provider。其他五个核心服务 Java 模块、Platform 剩余业务能力、Console BFF/前端、调度和外部可观测运行环境仍未创建。
+状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和七个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A 手工 SQL/MyBatis 21-table 投影和私有 HTTP PLT-I20 全量 Snapshot Provider。其他五个核心服务 Java 模块、Platform 剩余业务能力、Console BFF/前端、调度和外部可观测运行环境仍未创建。
+
+当前传输基线以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准：Nginx 终止公网 TLS 并覆盖一个 `X-Real-IP`；Gateway 只接受 Nginx 私网流量，解析该值一次供 Guard/访问日志使用，并在转发 BFF 前删除代理 Header；Gateway、BFF、Platform Support、Vault 与核心 Java 服务通过私有 HTTP 通信且不持有 X.509 应用证书。
 
 ## 1. 目标
 
@@ -256,7 +258,7 @@ cd platform-support-service
 ./mvnw clean verify
 ```
 
-实际启动可执行 JAR 前必须提供 Platform 专属 MySQL、TLS Server Keypair 和受信客户端证书配置。应用不读取 Bootstrap Secret，也不执行建表、Schema 变更或初始化 DML。当前 `health`、`liveness`、`readiness`、`info` 和 `prometheus` 与应用共用 `18106` TLS Listener，Readiness 检查当前 Snapshot 能否从数据库完整构造。完整变量、手工 SQL、mTLS 和 PLT-I20 边界以 [`platform-support-service/README.md`](../platform-support-service/README.md) 为准。
+实际启动可执行 JAR 前只需提供 Platform 专属 MySQL 配置；应用不读取 Bootstrap Secret，也不执行建表、Schema 变更或初始化 DML。PLT-I20、`health`、`liveness`、`readiness`、`info` 和 `prometheus` 共用 `18106` 私有 HTTP Listener，Readiness 检查当前 Snapshot 能否从数据库完整构造。应用不包含 Spring Security、X.509/mTLS、证书配置或本地异常处理器；完整变量、手工 SQL 和 PLT-I20 边界以 [`platform-support-service/README.md`](../platform-support-service/README.md) 为准。
 
 ## 9. 本地 MySQL 多数据库方案
 
@@ -352,8 +354,9 @@ Java 服务至少验证：
 - 内部 `@HttpExchange` 调用经过 Nacos + LoadBalancer，不经过外部 Gateway；
 - RabbitMQ 发布等待 Confirm，消费者提交本地事务后 Manual Ack；
 - 日志含 Request/Trace ID，且没有密码、Token 或敏感明文。
-- API Gateway Application 监听 `18080`，Management 只在 `19080` 暴露 `health` / `info` / `prometheus`；Liveness 只含 `livenessState`，Readiness 只含 `readinessState`、`gatewayBootstrap` 和短超时 `gatewayRedis`，不把 Operations BFF 或 JWKS 可用性纳入就绪门禁。
-- Platform Support Phase A 监听 `18106` TLS Listener；Liveness 只反映进程状态，Readiness 要求当前 Gateway Snapshot 能从手工初始化的数据库完整构造，健康详情不对外披露。
+- Nginx 终止公网 TLS、覆盖一个单值合法 `X-Real-IP`，并且只有 Nginx 私网可到达 API Gateway；Gateway 从该值构造唯一可信 Client IP 上下文供 Guard 和 Access Log 共用，转发 BFF 前删除 `Forwarded`、逐项列举的 X-Forwarded 系列 Header 与 `X-Real-IP`。
+- API Gateway Application 以私有 HTTP 监听 `18080`，Management 只在 `19080` 暴露 `health` / `info` / `prometheus`；Liveness 只含 `livenessState`，Readiness 只含 `readinessState`、`gatewayBootstrap` 和短超时 `gatewayRedis`，不把 Operations BFF 或 JWKS 可用性纳入就绪门禁。Gateway 到 BFF 与 JWKS 同样使用内部 HTTP，不加载应用证书或 Trust Anchor。
+- Platform Support Phase A 以私有 HTTP 监听 `18106`；Liveness 只反映进程状态，Readiness 要求当前 Gateway Snapshot 能从手工初始化的数据库完整构造，健康详情不对外披露。
 
 ## 15. 自动测试与本地共享环境的边界
 
@@ -363,7 +366,7 @@ Java 服务至少验证：
 - MySQL 固定连接 `127.0.0.1:13306`，每个服务只使用自己的账号和数据库，DDL/DML 由开发者手工执行；
 - Redis 固定连接 `127.0.0.1:16379`，每次运行使用唯一 Namespace，并仅以 `SCAN` 清理本次前缀；
 - RabbitMQ 使用 `/mor-local` 和测试专属 Queue/Binding 名称；Nacos 在 `auto` 中关闭；
-- Platform Support 从真实随机端口 MVC/mTLS 入口经过 Processor、Service、Repository、Mapper 到本地 MySQL，不使用 Mockito 或 Testcontainers；
+- Platform Support 从真实随机端口 MVC/HTTP 入口经过 Processor、Service、Repository、Mapper 到本地 MySQL，不使用 Mockito 或 Testcontainers；
 - 内部服务/Provider 仍通过有状态 Simulator 提供真实 HTTP/MQ 协议，不要求同时启动全部业务服务。
 
 详细规则见 [UNIT_TEST_GUIDE.md](./UNIT_TEST_GUIDE.md)。

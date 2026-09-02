@@ -2,6 +2,8 @@
 
 > **2026-09-01 dynamic-control-plane successor:** The [unified public API control-plane design](../specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) now owns public Target/Route/Guard current configuration. This plan remains implementation history for the deployed static Operations Gateway before dynamic Snapshot cutover; its static Catalog constraints remain pre-cutover runtime evidence, not the target control-plane ownership model.
 
+> **2026-09-02 transport successor:** The [MVC logging and internal-HTTP design](../specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes this plan's application TLS, HTTPS JWKS/BFF, Socket-IP and certificate tasks only. Their commands and results remain historical evidence; current Gateway/BFF/JWKS traffic is private HTTP, public TLS terminates at Nginx and Gateway trusts only Nginx's overwritten single `X-Real-IP`. Non-transport routing, JWT, Guard, Redis, Header/Cookie and response contracts remain governed by their later authorities.
+
 > Superseded in part on 2026-08-30: do not execute this plan's routing, trusted Header/Cookie, request-body, JWKS or
 > Guard tasks. Those areas are governed by
 > `docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md` and its forthcoming implementation plan.

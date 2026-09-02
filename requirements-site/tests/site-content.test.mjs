@@ -1040,7 +1040,8 @@ test("all public HTTP APIs use the Platform control plane while runtime safety r
   assert.match(source, /Approved Target Registry.*target_service_code.*channel.*discovery_service_name.*双重校验/u);
   assert.match(source, /全局 Guard 参数.*可信 tenant_id.*Redis.*Tenant 隔离/u);
   assert.match(source, /动态 Snapshot.*尚未切换.*静态 Operations Catalog.*部署前运行时事实/u);
-  assert.match(source, /TLS.*JWT.*JWKS.*Header.*Cookie.*Redis.*Timeout.*Gateway 静态安全边界/u);
+  assert.match(source, /公网 TLS.*Nginx.*覆盖.*X-Real-IP.*Gateway.*Guard.*访问日志/u);
+  assert.match(source, /Gateway、BFF、Platform Support、Vault.*核心 Java 服务.*私有 HTTP.*不持有 X\.509/u);
   assert.doesNotMatch(source, /当前 Platform Support 模型.*不发布或修改.*Route|未来变化必须先获得新的设计审批/u);
 });
 
@@ -1142,7 +1143,9 @@ test("Vault remains non-core and excludes payment card data", () => {
   assert.match(source, /登录密码不进入 CCT 或 Vault/);
   assert.match(source, /Token、Blind Index\/Key Version、Masked Value、Vault Record Version 与 Metadata Hash.*真实消费者/u);
   assert.match(source, /Vault.*通用.*不创建 Consumer、Customer、Order 或 Network Evidence 业务表/u);
+  assert.match(source, /Vault.*私有网络.*内部 HTTP.*X-Caller-Service.*可伪造.*静态 Allowlist/su);
   assert.match(source, /Gateway、BFF、浏览器和外部 Client 不直接访问 Vault/);
+  assert.doesNotMatch(source, /Vault 只允许 mTLS\/Workload Identity/u);
   assert.match(source, /PAN、CVV\/CVC、完整磁道数据和 PIN\/PIN Block 不进入 Code-MoR/);
   assert.match(source, /Provider Token、Scheme、BIN、Last4、Issuer Country 和 Provider Fingerprint/);
   assert.match(source, /这些最小卡片元数据仍需分类、脱敏、授权和留存控制/);

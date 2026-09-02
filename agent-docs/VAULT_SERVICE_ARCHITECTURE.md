@@ -5,7 +5,7 @@
 
 > **当前 V1 权威与取代范围：** [Vault Minimal Database Design](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[VAULT_PHYSICAL_DECISIONS.md](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和生成的 [vault.pdma.json](../vault-service/docs/database/vault.pdma.json)共同管理当前 API、调用者识别假设、Token、密码学持久化、Protect 幂等、三表拓扑和本地访问审计。本文此前要求的 Binding/Bind/Confirm/Copy、强制 mTLS/Workload Identity、广泛 API 与复杂 Record 生命周期、18 表拓扑、Replay Capsule/轮换任务等复杂幂等以及 Platform Audit/WORM 审计均在被新设计取代处仅为历史，不能作为当前 V1 实现要求。当前模型精确为 3 表 / 30 字段 / 3 个非主键唯一索引 / 4 个访问索引 / 2 条本库 `n:1` 关系 / 0 条一对一关系 / 1 个 `vault_core` Diagram Group。
 >
-> 当前 V1 接受普通内部 HTTPS、必需的 `X-Caller-Service` Header 与静态 `caller_service + action + data_type + purpose` Allowlist 作为 MVP 信任假设。该 Header 可被内部调用方伪造，只能 best-effort 防止误用，不是 mTLS、Workload Identity 或其他强服务认证；当前三表模型也没有 Binding。`vault-service` 仅包含数据库设计资产，没有 Java/Maven、手工 DDL/DML、物理数据库、KMS 集成、运行时认证或部署实现。自动模型门禁已通过，但 PDManer 4.9.3 应用内人工评审仍待完成。
+> 当前 V1 使用部署网络限制的私有 HTTP，不持有 X.509 应用证书，并接受必需的 `X-Caller-Service` Header 与静态 `caller_service + action + data_type + purpose` Allowlist 作为 MVP 信任假设。该 Header 可被内部调用方伪造，只能 best-effort 防止误用，不是 mTLS、Workload Identity 或其他强服务认证；当前三表模型也没有 Binding。公网 TLS、可信 Client IP 与 Java 服务私有 HTTP 的统一边界以 [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准。`vault-service` 仅包含数据库设计资产，没有 Java/Maven、手工 DDL/DML、物理数据库、KMS 集成、运行时认证或部署实现。自动模型门禁已通过，但 PDManer 4.9.3 应用内人工评审仍待完成。
 >
 > 本文继续生效的部分是：Vault 只保护获批的可恢复非卡敏感值、永不拥有业务含义、内部专用且不经 Gateway/BFF/浏览器暴露、禁止任何服务直读 Vault 数据库、PAN/CVV/CVC/完整磁道/卡有效期/PIN/PIN Block 排除、KMS/Secrets/对象存储/Provider Tokenization 职责分离，以及其他不与当前三表设计冲突的安全边界。
 
@@ -152,7 +152,7 @@ vault-service/
 - Vault 数据库独立于六大业务库，禁止跨库事务、跨库查询、共享表和跨库外键；
 - 只有在用户批准物理设计后，才能从 `agent-docs/templates/pdmaner/template.pdma.json` 派生 Vault PDManer 模型。
 
-Vault 的入口仍只允许内部网络且不得经 Gateway/BFF/浏览器访问。先前“mTLS 和 Workload Identity 是强制条件”的结论已被当前 V1 取代：V1 采用普通内部 HTTPS、必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 作为已接受的 MVP 信任假设，不构成强身份认证；mTLS 或其他强 Workload Identity 留待未来独立设计。
+Vault 的入口仍只允许部署限制的私有网络且不得经 Gateway/BFF/浏览器访问。先前“mTLS 和 Workload Identity 是强制条件”以及“应用使用内部 HTTPS”的结论均已被当前 V1 传输设计取代：V1 使用普通内部 HTTP、不持有应用证书，并以必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 作为已接受的 MVP 信任假设，不构成强身份认证；mTLS 或其他强 Workload Identity 留待未来独立设计。下方历史章节中的 HTTPS/mTLS/证书描述作为历史证据保留，不得解释为当前要求。
 
 ## 5. 历史/未来目标：业务数据库保存形态
 

@@ -66,7 +66,7 @@ flowchart LR
 - 同步命令/查询使用轻量 `*-api` 契约与 Spring `@HttpExchange`；业务事实和内部回调使用 MQ。
 - 接收方只保存必要的外部业务 ID、来源系统、来源事实版本、事件 ID 和交易时点显式事实或来源证据。
 - Gateway、BFF 和入口应用不拥有六大系统的业务事实，也不能建立影子业务库。
-- Vault 是独立安全基础设施而不是第七个核心系统。任何服务都不得读取 Vault 数据库；只能通过内部 mTLS/Workload Identity HTTP 契约按 Purpose 保护、读取或处置值。Token 不能替代本系统业务事实或跨库外键。
+- Vault 是独立安全基础设施而不是第七个核心系统。任何服务都不得读取 Vault 数据库；只能通过部署网络限制的私有 HTTP 契约按 Purpose 保护或读取值，不经过 Gateway/BFF。当前 V1 不持有应用证书，并以必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 防止误用，不构成强服务认证。Token 不能替代本系统业务事实或跨库外键。
 
 ## 4. 全局物理约定
 
@@ -171,7 +171,7 @@ Client & Contract 的当前 37 表模型已经批准删除白名单内普通业�
 - Provider/API Credential、Webhook Signing Secret、IdP Token 和私钥放云 Secrets Manager/KMS，业务库只保存引用；不得把这类运行凭据当作 Vault 业务记录。
 - 文件正文和大体积原始 Payload 放 Platform 管理的加密对象存储；数据库保存稳定 `file_id`、`content_hash`、分类、大小和保留策略。
 - JSON 只用于不可变协议快照、经批准的通用行级审计快照、受版本控制的扩展输入或不参与核心查询的原始信封；需同时保存 Schema Version 和 Payload Hash，可使用专用结构列或上述受控 `_meta`，且不得包含敏感明文或 Vault 内部密文。
-- Vault Token 是不透明标识。默认 Record Token 首次创建时随机；批准的 Commerce Consumer Email/Phone 使用稳定 Value Tokenization，同字段相同规范化值返回同一 Token，密钥轮换不改变 Token。稳定 Token 可在 Commerce→Payment→Risk 内部同步最小契约中传递，禁止进入外部 API、普通日志、MQ 或 BCR。Reveal 必须由服务端使用 mTLS/Workload Identity 发起并携带 Purpose/Reason/Resource；共享 Token 仅在所有引用解除且 Retention/Legal Hold 允许后销毁。
+- Vault Token 是不透明标识。默认 Record Token 首次创建时随机；批准的 Commerce Consumer Email/Phone 使用稳定 Value Tokenization，同字段相同规范化值返回同一 Token，密钥轮换不改变 Token。稳定 Token 可在 Commerce→Payment→Risk 内部同步最小契约中传递，禁止进入外部 API、普通日志、MQ 或 BCR。Reveal 必须由服务端经部署网络限制的私有 HTTP 发起并携带 Purpose/Reason/Resource；当前 V1 的 `X-Caller-Service` 与静态 Allowlist 只能 best-effort 防止误用，不是应用认证。共享 Token 仅在所有引用解除且 Retention/Legal Hold 允许后销毁。
 - Vault Binding 有且只有两种受控模式。默认 `PENDING_AFTER_COMMIT` 把 Protect 返回的新引用与 `VAULT_BIND_REFERENCE` 在本地事务中先作为 Pending 保存；afterCommit 只唤醒统一 Dispatcher，由其 Claim 后幂等 Bind。首次创建在 Bind 成功前不可对外使用；替换时旧 Current Reference 保持有效，只有新 Bind 成功并以 Expected Version 原子切换后才登记旧 Token Retire。
 - `SYNCHRONOUS_PRE_BIND` 仅限专项设计明确批准的场景。Commerce Consumer Profile 使用稳定命令恢复边界；Email/Phone 使用稳定 Value Tokenization。Checkout Network Evidence 不再调用 Vault，因此不是 Vault pre-bind 例外。
 - 两种引用绑定模式都禁止 Bind/Retire 抢跑；除批准的稳定 Value Token 外禁止 Token 复用。CAS 冲突产生的未采用 Profile Token 必须受控退役。
