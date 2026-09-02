@@ -49,6 +49,7 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - 面向开发者和运营的异常消息使用中文，并包含必要的实体标识、当前状态和操作上下文；不得包含凭据、敏感明文或完整 Payload。
 - Spring MVC 服务引入 `paytech-mvc-web-starter` 后统一使用其 `GlobalExceptionHandler`；服务不得重复创建本地 `@RestControllerAdvice`、私有 Problem/Error Body 或同义状态映射。业务错误 Code 仍由服务自己的 `CodeMessageEnum` 提供，Foundation 不依赖业务系统。
 - 同一 Starter 自动记录每个 MVC 请求的一条完整 Request Body、Response Body 与耗时 `INFO` 日志；服务不得再增加重复 Body 日志 Filter。当前明确不脱敏、不截断、不记录 Header/Cookie，也不提供开关；新增流式、SSE、文件或二进制接口前必须重新评估全量缓存与日志边界。
+- 上述完整 Body 行为只适用于没有更窄专项安全契约禁止日志的接口。专项文档优先：例如 Vault 禁止 Token、敏感明文和完整 Payload 进入普通日志，因此在专门日志边界获批前不得直接引入该 Starter；不得通过服务本地 Filter 绕过公共边界。
 
 ## 5. 事务与代码可读性
 

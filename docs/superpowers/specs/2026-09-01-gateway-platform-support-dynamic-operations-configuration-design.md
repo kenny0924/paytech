@@ -42,8 +42,9 @@ Resource、Permission 和 API Scope 绑定契约。
 
 以下现有权威继续有效：
 
-- Operations Gateway hardening 对 Header、Cookie、JWT/JWKS 校验、Redis Lua、Lease、Timeout、错误分类和访问日志
-  的非传输安全硬边界；应用传输和 Client IP 信任来源以上述 2026-09-02 后继设计为准；
+- [Operations Gateway hardening](./2026-08-30-operations-gateway-hardening-design.md) 对 Header、Cookie、
+  JWT/JWKS 校验、Redis Lua、Lease、Timeout、错误分类和访问日志的非传输安全硬边界；应用传输和 Client IP
+  信任来源以上述 2026-09-02 后继设计为准；
 - Platform 统一人工认证设计中的全局 Account、Realm、三个人工 Channel、Session、Tenant IAM、Google OIDC 和
   Password 规则；
 - Platform 57 表精简设计中的当前 IAM、API Credential/Scope、Audit/Security 和可靠执行边界；
@@ -359,8 +360,9 @@ Hash 字段或全局锁表。
 - `uk_gateway_route_header(route_id, header_name, header_use)`；
 - 同一 Header 同时承担两个用途时保存两行；
 - 禁止前缀、通配、正则、Hop-by-hop Header、Gateway 保留 Header 和身份 Header；
-- Gateway 生成的 Request ID、Route Code、Actor、Session、Tenant、Credential 和 Forwarded Chain Header 不由
-  数据库开放或改名；
+- Gateway 生成的 Request ID、Route Code、Actor、Session、Tenant 和 Credential Header 不由数据库开放或改名；
+- Gateway 消费的 `Forwarded`、全部 `X-Forwarded-` 前缀 Header 与 `X-Real-IP` 在转发前作为代理 Header 删除，不得由数据库允许
+  转发或改名；
 - 子行随 Route 聚合整体替换，不保存普通版本或状态。
 
 ### 6.5 `t_gateway_route_query_param`
@@ -874,7 +876,7 @@ HUMAN_PERMISSION API 请求仍必须调用 PLT-I02。
 - 三个 Console 的精确 CORS Origin；
 - Refresh Cookie 名称、Secure、HttpOnly、SameSite、Domain 和 Path；
 - Provider Callback 签名算法、Secret 和防重放实现；
-- Gateway 保留 Header、Hop-by-hop Header、身份 Header 和 Forwarded Chain；
+- Gateway 保留 Header、Hop-by-hop Header、身份 Header，以及转发前删除全部已消费代理 Header 的规则；
 - Transport、Request Line、Header Count/Size、Body、Timeout、Rate 和 Concurrency 绝对上限；
 - Snapshot Endpoint 的私网边界和刷新间隔；
 - Approved Target Registry；

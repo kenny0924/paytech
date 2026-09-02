@@ -58,6 +58,7 @@ const activeGatewayContractFiles = [
   'agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md',
   'agent-docs/plans/2026-08-29-operations-api-gateway-design.md',
   'agent-docs/plans/2026-08-29-platform-support-operations-authentication-requirements.md',
+  'docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md',
 ];
 const gatewayDesignFile = join(
   repositoryRoot,
@@ -69,6 +70,7 @@ const legacyGatewayHeaderPrefix = ['X', 'MoR'].join('-');
 const legacyRefreshCookieName = ['__Secure', 'mor', 'operations', 'refresh'].join('-');
 const guardTierName = ['Guard', 'Tier'].join('');
 const forwardedWildcardName = ['X', 'Forwarded', '*'].join('-');
+const forwardedChainName = ['Forwarded', 'Chain'].join(' ');
 const currentTransportAuthority = '2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md';
 const retiredApplicationTransportMarkers = [
   'PUBLIC_TLS',
@@ -589,6 +591,7 @@ for (const document of activeGatewayContract) {
   }
   if (document.content.includes(guardTierName)
       || document.content.includes(forwardedWildcardName)
+      || document.content.includes(forwardedChainName)
       || /strip(?:Prefix| Prefix)/iu.test(document.content)
       || /previous.{0,40}HMAC|HMAC.{0,40}previous|dual.{0,40}HMAC|HMAC.{0,40}dual/iu.test(document.content)) {
     errors.push(`active Gateway contract retains a superseded Guard or forwarding model: ${document.file}`);

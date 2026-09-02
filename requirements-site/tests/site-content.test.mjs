@@ -118,6 +118,17 @@ const applicationArchitectureSource = readFileSync(
   new URL("../../agent-docs/APPLICATION_ARCHITECTURE.md", import.meta.url),
   "utf8",
 );
+const technologyStackSource = readFileSync(
+  new URL("../../agent-docs/TECHNOLOGY_STACK.md", import.meta.url),
+  "utf8",
+);
+const gatewayControlPlaneDesignSource = readFileSync(
+  new URL(
+    "../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const platformSimplificationImplementationSource = readFileSync(
   new URL(
     "../../agent-docs/plans/2026-09-01-platform-support-database-simplification-implementation-plan.md",
@@ -1042,6 +1053,8 @@ test("all public HTTP APIs use the Platform control plane while runtime safety r
   assert.match(source, /动态 Snapshot.*尚未切换.*静态 Operations Catalog.*部署前运行时事实/u);
   assert.match(source, /公网 TLS.*Nginx.*覆盖.*X-Real-IP.*Gateway.*Guard.*访问日志/u);
   assert.match(source, /Gateway、BFF、Platform Support、Vault.*核心 Java 服务.*私有 HTTP.*不持有 X\.509/u);
+  assert.doesNotMatch(gatewayControlPlaneDesignSource, /Forwarded Chain/u);
+  assert.match(gatewayControlPlaneDesignSource, /转发前.*代理 Header.*删除/u);
   assert.doesNotMatch(source, /当前 Platform Support 模型.*不发布或修改.*Route|未来变化必须先获得新的设计审批/u);
 });
 
@@ -1151,6 +1164,7 @@ test("Vault remains non-core and excludes payment card data", () => {
   assert.match(source, /这些最小卡片元数据仍需分类、脱敏、授权和留存控制/);
   assert.match(source, /Commerce Consumer Email\/Phone 稳定 Value Token.*Commerce→Payment→Risk/su);
   assert.match(source, /不等于自动符合 PCI/);
+  assert.match(technologyStackSource, /完整 Body 日志.*不覆盖.*Vault.*普通日志/su);
 });
 
 test("Finance stores only authoritative dispute-loss source versions", () => {
