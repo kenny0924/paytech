@@ -2,13 +2,13 @@
 
 最后更新：2026-08-26
 
-状态：V1 权威逻辑与物理字段基线已确认，固定为 14 张表。用户已授权本轮 Commerce PDManer 设计资产；该授权不包含 Migration、Java 实现、物理数据库或运行环境。
+状态：V1 权威逻辑与物理字段基线已确认，固定为 14 张表。用户已授权本轮 Commerce PDManer 设计资产；该授权不包含手工数据库 SQL、Java 实现、物理数据库或运行环境。
 
 ## 1. 文档目的与实施边界
 
 本文定义 Commerce System 的事实所有权、14 表结构、字段语义、状态机、关系、并发与跨系统契约，是 Commerce PDManer 设计资产的权威输入。现实示例见 [Commerce 现实场景](./scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md)，订单边界见 [Commerce 订单上下文精简设计](../plans/2026-08-24-commerce-order-context-simplification-design.md)，消费者、网络证据与非履约边界见 [Commerce 隐私与履约精简设计](../plans/2026-08-24-commerce-privacy-fulfillment-simplification-design.md)，文档/审计精简及取消撤销语义见 [Commerce 文档投影、审计与取消撤销精简设计](../plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md)。
 
-本轮只授权 PDManer 设计资产。后续 Migration、DO/Mapper/Repository、Java 服务、物理数据库、Nacos 配置和运行环境均须另行授权。
+本轮只授权 PDManer 设计资产。后续 Schema DDL/初始化 DML、DataObject/Mapper/Repository、Java 服务、物理数据库、Nacos 配置和运行环境均须另行授权。
 
 ## 2. 系统边界
 
@@ -20,7 +20,7 @@ Commerce 不建设主动履约域。支付成功后的 Order 保持 `PAID`；退
 
 ## 3. 全局物理规则
 
-- PDManer、DDL、Migration 和 Mapper 使用 `t_<logical_table_name>` 小写物理名；唯一索引 `uk_`，访问索引 `idx_`。
+- PDManer、Schema DDL、数据变更 SQL 和 Mapper 使用 `t_<logical_table_name>` 小写物理名；唯一索引 `uk_`，访问索引 `idx_`。
 - 主键为服务侧 Snowflake `BIGINT`；瞬时时间 UTC `DATETIME(6)`；金额 `DECIMAL(24,8)`、费率 `DECIMAL(18,10)`，金额绑定 ISO 4217 `CHAR(3)`。
 - 可变 Current 行有 `version BIGINT NOT NULL`，使用 Expected Version/CAS；`compensation_event` 仅有技术 `lock_version`；不可变事实没有乐观锁。
 - 可变行有 `create_time + update_time`，创建后不可变行仅有 `create_time`；业务发生时间使用专用字段。
@@ -155,4 +155,4 @@ Refund: PENDING -> PROCESSING -> SUCCEEDED | FAILED | CANCELLED
 
 `PROCESSING` 同时覆盖 Payment 内部的 CREATED、PROCESSING 与 UNKNOWN；Commerce 不复制 Payment 的 `UNKNOWN` 状态。Refund `FAILED` 表示 Payment/Provider 权威确认无法完成，Refund `CANCELLED` 只表示 Provider Action 提交前的受控主动取消；二者都不可复活。Order Cancel 仅在 Payment 已确认没有成功 Authorization/Capture/Sale 且没有未知渠道结果时完成；授权成功必须使用 Reversal，未 Capture 走 Void，已全额 Capture 走 Refund。PAN、CVV/CVC、完整磁道、PIN/PIN Block、Vault 密文和 Secrets Manager 凭据不得进入模型。MVP 默认保留业务/技术数据，不实现自动 Retention、Legal Hold、归档、匿名化或销毁。模型必须精确保持 14 表、223 字段、20 UK、11 IDX、14 本库关系、4 Diagram Groups、7 Version 表、6 不可变表和 0 个 Commerce BCR 类型；PDManer 4.9.3 人工检查仍是兼容门禁。
 
-本文件不授权 Migration、Java 模块、DO/Mapper/Repository、物理数据库或运行环境。
+本文件不授权手工数据库 SQL、Java 模块、DataObject/Mapper/Repository、物理数据库或运行环境。

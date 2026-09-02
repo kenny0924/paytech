@@ -1,6 +1,6 @@
 # Java 单元测试与自动化测试规范
 
-最后更新：2026-08-28
+最后更新：2026-09-02
 
 ## 1. 使用范围
 
@@ -18,13 +18,13 @@
 
 ## 2. 核心原则：测试必须内部闭环
 
-`auto` 的目标不是在运行期间替换某个 Java 方法的返回值，而是让请求经过本服务的真实生产链路，并由测试管理的基础设施或有状态外部系统 Simulator 完成依赖响应。
+`auto` 的目标不是在运行期间替换某个 Java 方法的返回值，而是让请求经过本服务的真实生产链路，并由仓库维护的本地基础设施或有状态外部系统 Simulator 完成依赖响应。
 
 一个 `auto` 测试只有同时满足以下条件，才算内部闭环：
 
-1. 不连接任何真实业务环境或人工维护的共享测试环境。
-2. 不依赖真实 Nacos、配置中心、其他微服务、Provider、共享数据库、共享 Redis 或共享 MQ；第 7.6 节批准的 Operations Gateway 专用 Compose Redis 是唯一当前例外。
-3. 所有依赖由测试进程或 Testcontainers 自动创建、配置和销毁；第 7.6 节例外由仓库 Compose 固定版本并由测试执行运行级 Namespace 初始化/清理，而不销毁共享容器。
+1. 不连接任何真实业务环境、线上中间件或团队外共享测试环境。
+2. 数据库、Redis 与 RabbitMQ 只复用仓库 `local-environment` 中固定版本的 Loopback 服务；测试不启动、不停止、不重建容器。
+3. DDL 与初始化 DML 由开发者按文档手工应用。测试只准备和清理自己拥有的数据，不创建或变更 Schema、不执行初始化 DML、不销毁共享状态。
 4. 当前测试所覆盖的 Controller、Processor、Domain Service、Repository、Mapper 和 Integration Client 使用真实生产实现。
 5. 外部系统通过真实 HTTP/MQ 协议连接有状态 Simulator，不通过 `when(...).thenReturn(...)` 等方法级 Stub 改写运行时行为。
 6. 未准备业务数据、未识别的请求或未消费的预期调用必须快速失败并输出上下文。
@@ -55,7 +55,7 @@ TestBase
 参考项目仍存在以下不能照搬的闭环缺口：
 
 - 启动配置仍可能访问配置中心；
-- 数据库和 Redis 依赖人工启动的固定本地实例及固定凭据；
+- 固定凭据、真实环境地址和自动访问配置中心仍不能照搬；Code-MoR 本地凭据只放在未提交的 `.env.local`；
 - 多个 Mock Facade 直接返回共享 `response` 字段，未准备时可能返回 `null`；
 - 部分 Mocker 和内部 Map 没有在每个测试前完整重置；
 - Mock 未统一记录请求，无法验证调用参数、次数和幂等键；
@@ -96,7 +96,6 @@ Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景
     └── resources/
         ├── application-auto.yml
         ├── application-manual.yml
-        ├── db/migration/
         └── fixtures/
 ```
 
@@ -113,9 +112,9 @@ Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景
 
 | 类型 | 目标 | 运行边界 |
 |---|---|---|
-| 纯单元测试 | 值对象、聚合行为、状态机、规则、计算和转换 | JUnit 5；不启动 Spring、容器或 Mock 框架 |
+| 纯单元测试 | 值对象、聚合行为、状态机、规则、计算和转换 | JUnit 5；不启动 Spring 或 Mock 框架 |
 | 组件测试 | 不涉及协议和持久化的领域协作 | 直接装配小范围真实对象；测试数据通过明确的 Fake/内存实现提供 |
-| Repository 测试 | SQL、映射、唯一约束、分页、事务和乐观锁 | 真实 Repository/Mapper + Testcontainers 数据库 |
+| Repository 测试 | SQL、映射、唯一约束、分页、事务和乐观锁 | 真实 Repository/Mapper + 仓库本地数据库 |
 | 服务级自动测试 | 从公开入口验证本服务完整用例 | 真实本服务链路 + 测试基础设施 + 外部 Simulator |
 | 契约测试 | HTTP/Event 路径、字段、序列化和兼容性 | 真实契约序列化与协议交互 |
 
@@ -148,31 +147,31 @@ Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景
 
 ### 7.1 数据库
 
-Repository 和服务级 `auto` 使用与生产一致类型的数据库容器：
+Repository 和服务级 `auto` 使用仓库 `local-environment` 中与生产一致类型的 MySQL：
 
 ```text
-Domain Service → RepositoryImpl → Mapper → Testcontainers Database
+Domain Service → RepositoryImpl → Mapper → local MySQL
 ```
 
-- 由测试自动启动并使用随机映射端口；开发者不得手工准备数据库。
-- 使用正式 migration/DDL 建表，不维护一份行为不同的简化结构。
+- 开发者先按 `LOCAL_DEVELOPMENT_ENVIRONMENT.md` 启动 MySQL，并手工应用服务的当前 Schema DDL 与唯一初始化 DML。
+- 测试不得自动建表、升级结构或执行初始化 DML；缺失依赖或表结构时必须快速失败并给出准备命令。
 - 默认不使用 H2 替代 MySQL/PostgreSQL，以免掩盖 SQL 方言、索引、锁和事务差异。
 - Repository 测试覆盖唯一约束、空结果、映射、分页、事务回滚、乐观锁和旧状态更新失败。
-- 容器可以按测试套件共享以降低启动成本，但每个测试的数据必须隔离并清理。
-- Code-MoR 使用 MySQL 8.4 LTS；测试容器必须与当前批准的 MySQL 8.4 基线一致，不使用 H2 或其他方言替代。
+- 每个测试使用唯一业务键或显式拥有的 Fixture，并在结束后按外键顺序恢复；禁止清空整个共享 Schema。
+- Code-MoR 使用 MySQL 8.4 LTS，本地镜像固定为当前批准补丁版本，不使用 H2 或其他方言替代。
 
 ### 7.2 Redis
 
-生产链路涉及缓存、TTL、幂等键、分布式锁、原子操作、Lua 或序列化时，使用真实 Redis 容器：
+生产链路涉及缓存、TTL、幂等键、分布式锁、原子操作、Lua 或序列化时，使用仓库本地 Redis：
 
 ```text
-生产 Redis Client → Testcontainers Redis
+生产 Redis Client → local Redis
 ```
 
 - 不通过方法 Stub 返回缓存命中或未命中。
 - Mocker 写入真实测试 Redis，Checker 验证 Key、Value、TTL 和锁释放。
 - 普通 Redis 能力通过真实 Lettuce/Spring Data Redis 链路验证；Redisson 锁或信号量场景还必须覆盖租约/过期、竞争、释放和客户端中断。
-- 当前用例完全不使用 Redis 时，不为了形式一致启动容器。
+- 当前用例完全不使用 Redis 时，不为了形式一致访问 Redis。
 
 ### 7.3 MQ
 
@@ -200,27 +199,26 @@ Domain Service → RepositoryImpl → Mapper → Testcontainers Database
 - PAN、CVV/CVC、完整磁道数据、PIN/PIN Block 和卡有效期不属于 Vault Simulator 或 Fixture 的合法输入；必须覆盖拒绝持久化、日志零泄漏与 Security Event。Payment 集成测试只使用 Provider Token 与批准的卡片描述字段。
 - Vault 服务自身的 `auto` 使用真实测试数据库与隔离的 KMS Simulator/测试密钥，验证 AAD、密钥轮换、密文篡改、审计事件和销毁不可恢复性。
 
-### 7.5 容器生命周期
+### 7.5 本地中间件生命周期
 
-- 完整服务级 `auto` 的本地前置条件是 JDK、Maven 和 Docker/兼容容器运行环境。
-- Testcontainers 负责启动、动态连接信息和销毁，不要求人工维护 Mock 环境。
-- 容器镜像必须固定经过批准的版本，不使用漂移的 `latest`。
-- 并行执行前必须证明数据库、Redis Key、Topic/Consumer Group 和清理逻辑互不干扰。
+- 完整服务级 `auto` 的本地前置条件是 JDK、Maven、Docker/兼容运行环境，以及已由开发者启动并准备好的 `local-environment`。
+- Maven/JUnit 不调用 Docker API，不创建、不停止、不重建容器；镜像使用仓库 Compose 固定版本，不使用 `latest`。
+- MySQL 密码、Redis 密码和 RabbitMQ 凭据来自未提交的 `.env.local` 或进程环境，测试与日志不得输出值。
+- 并行执行前必须证明数据库业务键、Redis Key、Topic/Consumer Group 和清理逻辑互不干扰。
 
-### 7.6 Operations Gateway Redis 的 Compose 例外
+### 7.6 本地共享服务规则
 
-Operations Gateway 的 Reactive Lua Rate Limit/Concurrency 自动测试不使用 Testcontainers，明确复用仓库 `local-environment/compose.yaml` 的专用 `mor-local` Redis。这是用户批准的窄例外，不得推广到数据库、MQ、其他服务 Redis 或真实业务环境：
-
-Gateway 的最终测试边界还必须遵守 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)。
+Operations Gateway 与所有后续服务统一复用仓库 `local-environment`。Gateway 的最终测试边界还必须遵守 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)：
 
 - 只连接 `127.0.0.1:16379` 的 Redis 8.2.1，密码从未提交的 `PAYTECH_REDIS_PASSWORD` 注入；禁止连接宿主机 `6379` 或其他项目实例；
 - Compose Redis 必须在测试开始前健康；缺失、版本/鉴权错误时快速失败并给出启动提示，不降级到内存实现、方法 Stub 或其他 Redis；
 - 每次 Maven 测试运行生成不可预测且唯一的 Gateway Namespace，所有 Route/Dimension Key 都位于该 Namespace；
 - Setup/Teardown 只用 `SCAN` + 精确前缀删除本次运行 Key，禁止 `KEYS *`、`FLUSHDB`、选择未保留的逻辑库或删除其他运行的 Key；
 - 并行测试必须使用不同 Namespace。Redis 不可用场景通过连接未监听的 Loopback 端口验证 Fail-Closed，不暂停或停止共享 Compose 服务；
-- CI 必须先以同一仓库 Compose 定义启动该 Redis，再运行默认 `auto`；不能因为 CI 环境缺少它而跳过 Redis Guard 测试。
+- MySQL 使用 `127.0.0.1:13306`，RabbitMQ 使用仓库固定 Loopback 端口；每个服务仅使用自己的数据库账号和业务 Namespace；
+- CI 或开发者必须先用同一仓库 Compose 定义启动所需服务并手工应用 SQL，再运行默认 `auto`；不能因为环境缺少依赖而静默跳过测试。
 
-本例外不改变真实生产链、Simulator、无方法级 Stub 和可重复断言要求。Gateway 测试仍从随机 HTTP 端口启动真实 WebFlux 应用，并使用有状态 BFF/JWKS Simulator。
+本规则不改变真实生产链、Simulator、无方法级 Stub 和可重复断言要求。Gateway 测试仍从随机 HTTP 端口启动真实 WebFlux 应用，并使用有状态 BFF/JWKS Simulator。
 
 ## 8. 外部系统 Simulator
 
@@ -397,7 +395,7 @@ TestBase
 - 纯单元测试通常不继承 Spring 基类。
 - `TestBase` 只提供无状态常量、固定时间和确定性 ID 工具。
 - `ServiceAutoTestBase` 管理 Spring、随机端口、测试基础设施、Simulator 和统一重置。
-- `RepositoryAutoTestBase` 只启动数据库和 MyBatis。
+- `RepositoryAutoTestBase` 只连接本地数据库并装配 MyBatis。
 - `MessagingAutoTestBase` 管理 Broker、测试 Producer/Consumer 和消息清理。
 - `@BeforeEach` 清理当前测试涉及的数据、缓存、消息、Simulator 状态和 Request Journal。
 - 不使用 `@Order`、`PER_CLASS` 或共享可变字段修复测试依赖。
@@ -405,19 +403,19 @@ TestBase
 `application-auto.yml` 必须：
 
 - 关闭 Nacos、外部配置中心、定时任务和非本测试需要的真实 Consumer；
-- 不包含真实环境 URL、用户名、密码或 Token；
-- 由测试动态注入数据库、Redis、MQ 和 Simulator 地址；Operations Gateway Redis 可以按第 7.6 节注入固定 Loopback Compose 地址与运行级 Namespace；
+- 只允许仓库本地 Loopback URL，不包含用户名、密码或 Token；凭据由进程环境注入；
+- 数据库、Redis、MQ 使用第 7.6 节固定的本地地址；Simulator 仍由测试动态注入地址；
 - 在启动时拒绝未由测试基础设施注册的外部 Endpoint。
 
 ## 13. 数据和状态隔离
 
 - TestMapper 提供按聚合 ID 清理、批量清理和只读测试查询。
-- 清理顺序遵守外键，数据库 migration 与生产保持一致。
+- 清理顺序遵守外键，数据库手工 DDL 与生产映射保持一致。
 - Redis 使用独立前缀/数据库并清理相关 Key。
 - MQ 使用测试专属 VHost 或唯一 Exchange/Queue Namespace；生产命名规则映射为测试唯一名，并清理消息、Binding 和消费状态。
 - Simulator Scenario Store 与 Request Journal 每个测试重置。
 - 固定 `Clock`、ID Generator 和随机源在每个测试恢复默认测试状态。
-- 如果并行测试共享容器，必须使用唯一业务键、schema、前缀或消息命名空间，禁止互相清理数据。
+- 并行测试共享本地中间件时，必须使用唯一业务键、前缀或消息命名空间，禁止互相清理数据。
 
 ## 14. 标准测试流程
 

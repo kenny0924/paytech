@@ -2,7 +2,7 @@
 
 最后更新：2026-08-25
 
-状态：29 表逻辑模型及对应 PDManer 工件已同步并通过自动契约验证；PDManer 4.9.3 应用内检查仍待人工完成。本文件不创建 Migration、Java 模块、数据库实例或运行环境。
+状态：29 表逻辑模型及对应 PDManer 工件已同步并通过自动契约验证；PDManer 4.9.3 应用内检查仍待人工完成。本文件不创建手工数据库 SQL、Java 模块、数据库实例或运行环境。
 
 ## 1. 目的、边界与统一约定
 
@@ -189,4 +189,4 @@ Provider 争议的不可变事件流。字段：provider_dispute_event_id、prov
 
 当前 PDManer 工件按本模型确定性生成为 29 表、373 字段、41 个唯一索引、44 个访问索引、63 条本库关系、7 条 1:1 关系和 7 个 Diagram Groups，并已通过同基线自动契约验证。PDManer 4.9.3 应用内打开、关系图和规范检查仍是不可替代的人工门禁。
 
-本次授权只覆盖 PDManer 设计资产，不授权 Migration、DDL 落库、DO/Mapper/Repository、Testcontainers 数据库测试、Java 模块、物理数据库或运行环境。进入数据库实现阶段后，必须在新的明确授权下保持 PDManer、版本化 Migration、映射代码和自动测试同步。
+本次授权只覆盖 PDManer 设计资产，不授权 Schema DDL/初始化 DML 落库、DataObject/Mapper/Repository、本地数据库自动测试、Java 模块、物理数据库或运行环境。进入数据库实现阶段后，必须在新的明确授权下保持 PDManer、手工 SQL、映射代码和自动测试同步。

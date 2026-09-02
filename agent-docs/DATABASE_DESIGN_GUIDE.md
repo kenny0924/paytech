@@ -10,7 +10,7 @@
 
 - 新建或修改 PDManer `*.pdma.json` 模型；
 - 设计表、字段、主键、索引、唯一约束或表关系；
-- 新增或修改 DDL、migration SQL；
+- 新增或修改手工 DDL、初始化 DML；
 - 修改 DataObject、MyBatis Mapper、Repository 或与数据库结构有关的测试；DataObject 由包名表达持久化职责，类型名不追加 `DO` 后缀；
 - 数据库正向生成、反向解析或模型与数据库差异比较。
 
@@ -94,7 +94,7 @@ Risk & Compliance 导航：[V1 逻辑模型](./database/RISK_COMPLIANCE_DATABASE
 
 Platform Support 导航：[统一人工认证设计（认证权威）](../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md)、[57 表数据库精简设计（未受影响领域前序）](../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[57 表实施记录](./plans/2026-09-01-platform-support-database-simplification-implementation-plan.md)、[统一公共 API 动态控制面设计](../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)、[公共控制面 PDManer 实施计划](../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md)、[V1 逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景与逐表字段映射](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md) 和 [PDManer 模型（当前 63 表、822 字段）](../platform-support-service/docs/database/platform-support.pdma.json)。早期 Operations-only、平衡型和已取代物理记录只保留历史价值；自动验证已通过，PDManer 4.9.3 应用内检查仍是人工门禁。
 
-Vault 导航：[批准的 V1 三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[物理建模决策](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和 [PDManer 模型](../vault-service/docs/database/vault.pdma.json)。当前精确为 3 表、30 字段、3 个非主键唯一索引、4 个访问索引、2 条本库 `n:1` 关系、0 条 1:1 关系和 1 个 `vault_core` Diagram Group，自动验证已通过，PDManer 4.9.3 应用内人工检查仍待完成。`VAULT_SERVICE_ARCHITECTURE.md` 中强制 Binding、mTLS/Workload Identity、广泛 API/生命周期、18 表拓扑、复杂幂等和 Platform Audit 部分在被当前设计取代处仅为历史。当前 V1 只接受普通内部 HTTPS、必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 作为 MVP 信任假设，不构成强认证；没有 Java、Migration、物理数据库、KMS 集成/运行时认证或部署实现。
+Vault 导航：[批准的 V1 三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[物理建模决策](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和 [PDManer 模型](../vault-service/docs/database/vault.pdma.json)。当前精确为 3 表、30 字段、3 个非主键唯一索引、4 个访问索引、2 条本库 `n:1` 关系、0 条 1:1 关系和 1 个 `vault_core` Diagram Group，自动验证已通过，PDManer 4.9.3 应用内人工检查仍待完成。`VAULT_SERVICE_ARCHITECTURE.md` 中强制 Binding、mTLS/Workload Identity、广泛 API/生命周期、18 表拓扑、复杂幂等和 Platform Audit 部分在被当前设计取代处仅为历史。当前 V1 只接受普通内部 HTTPS、必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 作为 MVP 信任假设，不构成强认证；没有 Java、手工 DDL/DML、物理数据库、KMS 集成/运行时认证或部署实现。
 
 Platform Support 当前不使用以 `_ver` 结尾的物理表名。可编辑配置默认采用带 `revision_no` 的单表 Revision；只有 Document Version、Webhook Endpoint Revision 和 Webhook Signing Secret 具有必须独立保留的历史身份。其 `*_hash` 字段必须属于当前 36 字段精确 Allowlist，并能指出实际完整性、防重、冲突检测或安全消费者。公共 API 控制面只允许 `t_gateway_target`、`t_gateway_route`、`t_gateway_route_header`、`t_gateway_route_query_param`、Route-owned `t_gateway_guard_rule` 和 `t_console_resource` 六张当前配置表；不得恢复旧 Gateway Policy/Binding/Selector/Version/Release/Snapshot/Ack/Tenant Override、通用技术配置或持久化 Integration Readiness。
 
@@ -111,22 +111,22 @@ Finance's current 84-table Manual Payout boundary uses shared `balance_available
 | 工件 | 职责 |
 |---|---|
 | PDManer `*.pdma.json` | 表、字段、关系、索引、注释和物理模型的设计来源 |
-| Migration SQL | 可执行、不可重写的数据库演进历史 |
+| 当前 Schema DDL + 初始化 DML | 经人工审查和执行的当前完整结构与初始数据；应用启动不得自动执行 |
 | DataObject/Mapper/Repository | 生产代码中的持久化映射与访问抽象；DataObject 类型使用业务实体名，不加 `DO` 后缀 |
-| Repository/auto 测试 | 在真实测试数据库上验证 migration、SQL、约束和映射 |
+| Repository/auto 测试 | 在仓库本地 MySQL 上验证 SQL、约束和映射 |
 
-PDManer 模型不能替代 migration，migration 也不能替代设计模型。一次结构变更必须同步更新：
+PDManer 模型不能替代可执行 SQL，SQL 也不能替代设计模型。一次结构变更必须同步更新：
 
 ```text
 业务状态和所有权设计
   → PDManer 模型
     → PDManer 模型检查
-      → 新增版本化 migration
+      → 更新当前 Schema DDL / 初始化 DML
         → DataObject / Mapper / Repository
           → Repository 与服务级 auto 测试
 ```
 
-当前 Client & Contract、Commerce、Payment Orchestration、Finance、Risk & Compliance 与 Platform Support 六套授权均只覆盖从冻结逻辑设计到 PDManer 物理设计；Finance 的评审入口包括[逻辑模型](./database/FINANCE_DATABASE.md)、[现实场景](./database/scenarios/FINANCE_REAL_WORLD_SCENARIOS.md)、[退款 Funding 移除实施记录](./plans/2026-08-27-finance-refund-funding-removal-implementation-plan.md)、[通用 Funding 模块删除设计](./plans/2026-08-27-finance-funding-module-removal-design.md)、[通用 Funding 模块删除实施记录](./plans/2026-08-27-finance-funding-module-removal-implementation-plan.md)、[保证金 Account 精简实施记录](./plans/2026-08-27-finance-security-deposit-account-simplification-implementation-plan.md) + [Provider 对账精简实施计划](./plans/2026-08-28-finance-provider-reconciliation-simplification-implementation-plan.md) + [Provider 三阶段账户实施计划](./plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md) + [手工出款精简设计](./plans/2026-08-28-finance-manual-payout-simplification-design.md) + [手工出款精简实施计划](./plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)、[平衡型物理模型设计（历史）](./plans/2026-08-25-finance-balanced-physical-model-design.md)、[实施计划](./plans/2026-08-25-finance-pdmaner-implementation-plan.md)、[物理建模决策](../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md)与[生成模型](../finance-service/docs/database/finance.pdma.json)；Risk 的评审入口包括[逻辑模型](./database/RISK_COMPLIANCE_DATABASE.md)、[现实场景](./database/scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md)、[Limit 7 表平衡精简设计](./plans/2026-08-28-risk-limit-balanced-simplification-design.md)、[Limit 平衡精简实施计划](./plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md)、[Decision Engine 19/8 平衡精简计划](./plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) + [Dispute 平衡优化设计](./plans/2026-08-28-risk-dispute-balanced-optimization-design.md) + [Dispute 平衡优化实施计划](./plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md)、[DD 19 表精简计划](./plans/2026-08-27-risk-dd-simplification-implementation-plan.md)、[物理建模决策](../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)与[生成模型](../risk-compliance-service/docs/database/risk-compliance.pdma.json)。从 versioned migration 开始的步骤属于后续门禁，必须再次获得明确授权；本轮同样未授权 Java 实现、物理数据库或运行环境。
+当前 Client & Contract、Commerce、Payment Orchestration、Finance、Risk & Compliance 与 Platform Support 六套授权均只覆盖从冻结逻辑设计到 PDManer 物理设计；Finance 的评审入口包括[逻辑模型](./database/FINANCE_DATABASE.md)、[现实场景](./database/scenarios/FINANCE_REAL_WORLD_SCENARIOS.md)、[退款 Funding 移除实施记录](./plans/2026-08-27-finance-refund-funding-removal-implementation-plan.md)、[通用 Funding 模块删除设计](./plans/2026-08-27-finance-funding-module-removal-design.md)、[通用 Funding 模块删除实施记录](./plans/2026-08-27-finance-funding-module-removal-implementation-plan.md)、[保证金 Account 精简实施记录](./plans/2026-08-27-finance-security-deposit-account-simplification-implementation-plan.md) + [Provider 对账精简实施计划](./plans/2026-08-28-finance-provider-reconciliation-simplification-implementation-plan.md) + [Provider 三阶段账户实施计划](./plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md) + [手工出款精简设计](./plans/2026-08-28-finance-manual-payout-simplification-design.md) + [手工出款精简实施计划](./plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)、[平衡型物理模型设计（历史）](./plans/2026-08-25-finance-balanced-physical-model-design.md)、[实施计划](./plans/2026-08-25-finance-pdmaner-implementation-plan.md)、[物理建模决策](../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md)与[生成模型](../finance-service/docs/database/finance.pdma.json)；Risk 的评审入口包括[逻辑模型](./database/RISK_COMPLIANCE_DATABASE.md)、[现实场景](./database/scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md)、[Limit 7 表平衡精简设计](./plans/2026-08-28-risk-limit-balanced-simplification-design.md)、[Limit 平衡精简实施计划](./plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md)、[Decision Engine 19/8 平衡精简计划](./plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) + [Dispute 平衡优化设计](./plans/2026-08-28-risk-dispute-balanced-optimization-design.md) + [Dispute 平衡优化实施计划](./plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md)、[DD 19 表精简计划](./plans/2026-08-27-risk-dd-simplification-implementation-plan.md)、[物理建模决策](../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)与[生成模型](../risk-compliance-service/docs/database/risk-compliance.pdma.json)。从手工 DDL/DML 开始的步骤属于后续门禁，必须再次获得明确授权；本轮同样未授权 Java 实现、物理数据库或运行环境。
 
 Platform Support 的评审入口包括[57 表数据库精简设计（未受影响领域前序）](../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[57 表实施记录](./plans/2026-09-01-platform-support-database-simplification-implementation-plan.md)、[统一公共 API 动态控制面设计](../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)、[公共控制面 PDManer 实施计划](../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md)、[逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md)与[生成模型](../platform-support-service/docs/database/platform-support.pdma.json)。
 
@@ -203,7 +203,7 @@ Vault 的评审入口是[批准的 V1 三表设计](../docs/superpowers/specs/20
 - Java 属性使用 `lowerCamelCase`，通过 Mapper 显式映射到数据库字段；
 - 名称必须表达业务语义，禁止 `data`、`info1`、`ext1` 等含糊命名。
 
-中文显示名和说明用于设计审阅，不增加 `t_` 等技术前缀；物理表名和字段名始终使用英文。架构说明与逻辑 Catalog 可继续用不带 `t_` 的领域名称，但 PDManer `defKey`、DDL、Migration、DataObject/Mapper 映射和数据库测试必须使用带 `t_` 的物理表名。项目术语以 `PROJECT_CONTEXT.md` 为准，不能重新引入 Merchant 作为 Client 的同义词。
+中文显示名和说明用于设计审阅，不增加 `t_` 等技术前缀；物理表名和字段名始终使用英文。架构说明与逻辑 Catalog 可继续用不带 `t_` 的领域名称，但 PDManer `defKey`、Schema DDL、DataObject/Mapper 映射和数据库测试必须使用带 `t_` 的物理表名。项目术语以 `PROJECT_CONTEXT.md` 为准，不能重新引入 Merchant 作为 Client 的同义词。
 
 ## 9. 默认字段和主键
 
@@ -305,10 +305,10 @@ Client & Contract 已批准把白名单内聚合根对应的 `business_change_re
 2. 从当前项目模型修改实体、字段、关系、索引和注释。
 3. 运行 PDManer 模型检查，解决所有失败项并评估警告。
 4. 导出或比较 MySQL DDL，人工审查删除、默认值、非空、锁表和数据回填风险。
-5. 新增 versioned migration；已经执行过的 migration 不得重写。
+5. 更新一份当前完整 Schema DDL；如初始数据受影响，同步更新该服务唯一的初始化 DML，并记录人工执行与回滚顺序。
 6. 同步更新 DataObject、Mapper XML/接口、Repository 和转换逻辑；DataObject 类型名不得追加 `DO` 后缀。
-7. 使用 `UNIT_TEST_GUIDE.md` 规定的真实 Testcontainers 数据库验证 migration 和完整链路。
-8. 检查 PDManer、migration、Java 映射和测试结果一致后才可声明完成。
+7. 使用 `UNIT_TEST_GUIDE.md` 规定的仓库本地 MySQL 验证 SQL 和完整链路。
+8. 检查 PDManer、手工 DDL/DML、Java 映射和测试结果一致后才可声明完成。
 
 ## 14. Agent 操作规则
 
@@ -343,6 +343,6 @@ Vault 的三表设计也已通过独立 Oracle 和确定性再生成门禁：3 �
 - [ ] 闭合枚举列出全部允许值，开放代码说明权威来源，Boolean/Slot 说明完整状态矩阵。
 - [ ] 金额、币种、状态、时间、精度和并发字段符合业务要求。
 - [ ] 若采用通用行级变更历史，已明确 Record Type/Root 白名单、Child 映射与排除项；结构化业务表仍为权威来源，聚合版本/父子归属/指针与唯一约束完整，`snapshot_json` 通过 Schema/白名单/Hash 校验且不含敏感、Vault 或纯技术字段，明细只含 `create_time` 并且追加后不可变。
-- [ ] PDManer 模型、migration SQL、DataObject/Mapper/Repository 已同步，且 DataObject 类型名没有 `DO` 后缀。
+- [ ] PDManer 模型、手工 Schema/DML SQL、DataObject/Mapper/Repository 已同步，且 DataObject 类型名没有 `DO` 后缀。
 - [ ] Repository 和服务级 `auto` 使用真实测试数据库验证通过。
-- [ ] 破坏性 migration 有明确的数据迁移、兼容和回滚设计。
+- [ ] 破坏性 DDL/数据变更 SQL 有明确的数据迁移、兼容和回滚设计。

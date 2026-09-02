@@ -553,8 +553,8 @@ export const DECISIONS = [
   "Commerce 锁定消费者条款与卖方披露并可靠发布文档生成来源事实，Finance 形成税费与不可变财政事实；Platform Support 在双方 Generation Key Version、Key、Business Ref 和来源 Hash 一致时生成并投递 Receipt、Invoice 或 Credit Note，并独占文档状态、版本、文件与更正关系，Commerce 不保存消费者文档投影。",
   "Java 技术基线固定为 JDK 25 LTS、Maven Wrapper 3.9.16、Spring Boot 4.0.8、Spring Cloud 2025.1.3、Spring Cloud Alibaba 2025.1.0.0 和 Nacos 3.1.x；核心服务/BFF/Vault 默认 Spring MVC，Gateway 使用 Spring Cloud Gateway WebFlux。统一 paytech-dependencies BOM 管理依赖版本，paytech-parent 管理 Java、插件和测试规则。",
   "本机 Maven 复用现有 Nexus 3.81.1：依赖与插件统一从 maven-public 解析，Snapshot 发布到 maven-snapshots，Release 发布到 maven-releases；Settings 和凭据只保存在开发者本机且不得提交。该决定不确认生产制品库、Release 权限模型或 CI/CD 发布流程。",
-  "数据与中间件基线为 MySQL 8.4 LTS + MyBatis 4.0.1，数据库实现获批后使用 Flyway；RabbitMQ 4.2 是唯一业务 MQ，topic_* 映射 Topic Exchange、cg_* 映射 Consumer Queue，消息使用版本化 UTF-8 JSON；Redis 8.2 早期单机，普通客户端使用 Lettuce，锁与可过期信号量使用 Redisson 4.6.1。",
-  "本地开发采用 Java 服务原生运行、MySQL/Nacos/RabbitMQ/独立 Redis 容器化、XXL-Job 与 OpenTelemetry/Prometheus/Loki/Tempo/Grafana 按需 Profile 启动的混合拓扑；`base` Compose Profile 已完成本机烟测并关闭，三个持久卷保留，现有 Nexus 位于 mor-local 之外并只供 Maven 使用。该状态不授权创建业务 Java 模块、Migration、业务表或生产基础设施。",
+  "数据与中间件基线为 MySQL 8.4 LTS + MyBatis 4.0.1；数据库结构使用人工审查并执行的一份当前 Schema DDL，每个服务的必要初始数据集中在一份 DML，Java 应用不使用 Flyway/Liquibase 且启动时不建表、不迁移、不灌数。RabbitMQ 4.2 是唯一业务 MQ，topic_* 映射 Topic Exchange、cg_* 映射 Consumer Queue，消息使用版本化 UTF-8 JSON；Redis 8.2 早期单机，普通客户端使用 Lettuce，锁与可过期信号量使用 Redisson 4.6.1。",
+  "本地开发和自动测试采用 Java 服务原生运行、仓库 local-environment 管理 MySQL/Nacos/RabbitMQ/独立 Redis、XXL-Job 与 OpenTelemetry/Prometheus/Loki/Tempo/Grafana 按需 Profile 启动的混合拓扑；不使用 Testcontainers，测试不启动或停止中间件，缺少本地依赖时快速失败。现有 Nexus 位于 mor-local 之外并只供 Maven 使用。该状态不授权创建尚未批准的业务 Java 模块、业务表或生产基础设施。",
 ];
 
 export const OPEN_QUESTIONS = [

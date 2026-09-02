@@ -6,7 +6,7 @@
 
 > **当前权威：** 本文受 [Platform Support 57 表精简设计](../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 与 [统一公共 API 动态控制面设计](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 约束。57 表阶段仍是所有未受影响领域的直接前序；当前生成模型增加六张最小公共控制面表后为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、7 个 Diagram Groups、31 条复合 FK、85 条 CHECK，以及恰好 36 个以 `_hash` 结尾的字段。早期 92/97 表和旧 Gateway Policy/Release 结构只保留为历史。
 
-> **实施边界：** 当前只批准逻辑文档、Manifest、Policy、自动测试和 `platform-support.pdma.json`。它不授权 Migration、Java 模块、物理数据库、真实连接、Secrets/KMS/Vault、Redis、MQ、BFF、Gateway 或部署实现。
+> **实施边界：** 完整 63 表当前只批准逻辑文档、Manifest、Policy、自动测试和 `platform-support.pdma.json`。除独立批准的 Phase A 21 表手工 SQL/PLT-I20 切片外，它不授权其余数据库 SQL、Java 模块、物理数据库、真实连接、Secrets/KMS/Vault、Redis、MQ、BFF、Gateway 或部署实现。
 
 ## 1. 系统定位
 
@@ -281,6 +281,6 @@ Platform 可发布 `WebhookDelivered`、`WebhookFailed`、`NotificationSent`、`
 
 ## 15. 验证与人工门禁
 
-自动门禁必须证明：63 表分组 `18 + 12 + 9 + 8 + 8 + 6 + 2`、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、36 Hash Allowlist、31 复合 FK、85 条具名 CHECK sidecar 契约、六张且仅六张公共控制面表、无 Gateway `*_ver`/Release/Snapshot/Tenant Override/新 Hash、无通用 Config/持久化 Readiness、无 `_ver` 物理表、无 Platform `client_id`，以及场景对每表恰有一条满足 NN/CHECK/复合身份的有效字段映射。当前 Model SHA-256 为 `04b9825f6763aec30dbc3ecf0ae398edb3051c835fa9bf1d3f5ef0ee9ac42262`，Structural Projection SHA-256 为 `b3583c1ffad8139ed026967d3299ed952577d5c2fdb90bdbdf3ce955de5efdf5`，CHECK Policy SHA-256 为 `4a97e82f3b462ec40755c734d068d55fd4b6b721836b380c0e789c3bf20447fb`。PDManer 4.9.3 JSON 没有可移植 CHECK 节点；完整名称、表达式与表绑定冻结在 `scripts/pdmaner/platform-support/model-policy.mjs`，独立 Oracle 冻结其摘要，未来 Migration 必须逐项映射为真实数据库 CHECK。
+自动门禁必须证明：63 表分组 `18 + 12 + 9 + 8 + 8 + 6 + 2`、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、36 Hash Allowlist、31 复合 FK、85 条具名 CHECK sidecar 契约、六张且仅六张公共控制面表、无 Gateway `*_ver`/Release/Snapshot/Tenant Override/新 Hash、无通用 Config/持久化 Readiness、无 `_ver` 物理表、无 Platform `client_id`，以及场景对每表恰有一条满足 NN/CHECK/复合身份的有效字段映射。当前 Model SHA-256 为 `04b9825f6763aec30dbc3ecf0ae398edb3051c835fa9bf1d3f5ef0ee9ac42262`，Structural Projection SHA-256 为 `b3583c1ffad8139ed026967d3299ed952577d5c2fdb90bdbdf3ce955de5efdf5`，CHECK Policy SHA-256 为 `4a97e82f3b462ec40755c734d068d55fd4b6b721836b380c0e789c3bf20447fb`。PDManer 4.9.3 JSON 没有可移植 CHECK 节点；完整名称、表达式与表绑定冻结在 `scripts/pdmaner/platform-support/model-policy.mjs`，独立 Oracle 冻结其摘要，未来手工 Schema DDL 必须逐项映射为真实数据库 CHECK。
 
-PDManer 4.9.3 仍须人工打开并检查七个 Diagram、关系方向、中文显示名和索引，并运行 Validate；同时人工复核 sidecar CHECK 名称/表达式/表绑定及未来 Migration 映射。人工门禁完成前，不得声称物理模型已在应用内签署，也不得据此创建 Migration 或运行数据库。
+PDManer 4.9.3 仍须人工打开并检查七个 Diagram、关系方向、中文显示名和索引，并运行 Validate；同时人工复核 sidecar CHECK 名称/表达式/表绑定及未来手工 Schema DDL 映射。人工门禁完成前，不得声称物理模型已在应用内签署，也不得据此创建数据库 SQL 或运行数据库。

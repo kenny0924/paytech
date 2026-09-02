@@ -917,7 +917,7 @@ test("Platform Support CHECK policy freezes critical single-row invariants", asy
   const checkLikeKeys = objectKeysDeep(model).filter((key) => /check/iu.test(key));
   assert.deepEqual(checkLikeKeys, [], `PDManer 模型不得伪造 CHECK 节点：${checkLikeKeys.join(", ")}`);
   assert.match(decisions, /PDManer 4\.9\.3.*(?:没有|不提供).*可移植 CHECK 节点[\s\S]*model-policy\.mjs/u);
-  assert.match(decisions, /人工[\s\S]*sidecar[\s\S]*Migration/u);
+  assert.match(decisions, /人工[\s\S]*sidecar[\s\S]*DDL/u);
   assert.doesNotMatch(decisions, /PDManer 4\.9\.3[^。\n]*CHECK 可读性/u);
 });
 

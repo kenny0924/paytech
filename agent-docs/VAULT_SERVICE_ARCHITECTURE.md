@@ -5,7 +5,7 @@
 
 > **当前 V1 权威与取代范围：** [Vault Minimal Database Design](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[VAULT_PHYSICAL_DECISIONS.md](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和生成的 [vault.pdma.json](../vault-service/docs/database/vault.pdma.json)共同管理当前 API、调用者识别假设、Token、密码学持久化、Protect 幂等、三表拓扑和本地访问审计。本文此前要求的 Binding/Bind/Confirm/Copy、强制 mTLS/Workload Identity、广泛 API 与复杂 Record 生命周期、18 表拓扑、Replay Capsule/轮换任务等复杂幂等以及 Platform Audit/WORM 审计均在被新设计取代处仅为历史，不能作为当前 V1 实现要求。当前模型精确为 3 表 / 30 字段 / 3 个非主键唯一索引 / 4 个访问索引 / 2 条本库 `n:1` 关系 / 0 条一对一关系 / 1 个 `vault_core` Diagram Group。
 >
-> 当前 V1 接受普通内部 HTTPS、必需的 `X-Caller-Service` Header 与静态 `caller_service + action + data_type + purpose` Allowlist 作为 MVP 信任假设。该 Header 可被内部调用方伪造，只能 best-effort 防止误用，不是 mTLS、Workload Identity 或其他强服务认证；当前三表模型也没有 Binding。`vault-service` 仅包含数据库设计资产，没有 Java/Maven、Flyway Migration、物理数据库、KMS 集成、运行时认证或部署实现。自动模型门禁已通过，但 PDManer 4.9.3 应用内人工评审仍待完成。
+> 当前 V1 接受普通内部 HTTPS、必需的 `X-Caller-Service` Header 与静态 `caller_service + action + data_type + purpose` Allowlist 作为 MVP 信任假设。该 Header 可被内部调用方伪造，只能 best-effort 防止误用，不是 mTLS、Workload Identity 或其他强服务认证；当前三表模型也没有 Binding。`vault-service` 仅包含数据库设计资产，没有 Java/Maven、手工 DDL/DML、物理数据库、KMS 集成、运行时认证或部署实现。自动模型门禁已通过，但 PDManer 4.9.3 应用内人工评审仍待完成。
 >
 > 本文继续生效的部分是：Vault 只保护获批的可恢复非卡敏感值、永不拥有业务含义、内部专用且不经 Gateway/BFF/浏览器暴露、禁止任何服务直读 Vault 数据库、PAN/CVV/CVC/完整磁道/卡有效期/PIN/PIN Block 排除、KMS/Secrets/对象存储/Provider Tokenization 职责分离，以及其他不与当前三表设计冲突的安全边界。
 
@@ -15,7 +15,7 @@
 
 - 把非卡类敏感字段从业务库密文迁移为 Vault Token；
 - 创建或修改 `vault-service`、`vault-api` 或 Vault Client；
-- 设计 Vault 的 PDManer 模型、Migration、DataObject、Mapper 或 Repository；
+- 设计 Vault 的 PDManer 模型、手工 DDL/DML、DataObject、Mapper 或 Repository；
 - 新增敏感数据 Protect、Reveal、Bind、Owner Confirm、Retire、Rewrap 或 Blind Index 查询；
 - 调整敏感数据授权、解密审计、MVP 默认保留或密钥轮换；
 - 判断某类数据应进入 Vault、Secrets Manager、对象存储还是 Provider Tokenization。
@@ -24,7 +24,7 @@
 
 - [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md)：六大核心系统和业务事实边界；
 - [JAVA_PROJECT_STRUCTURE.md](./JAVA_PROJECT_STRUCTURE.md)：`*-api`、`*-web`、HTTP Client 和 DDD 分层；
-- [DATABASE_DESIGN_GUIDE.md](./DATABASE_DESIGN_GUIDE.md)：PDManer、Migration、ID、时间、索引和数据库安全；
+- [DATABASE_DESIGN_GUIDE.md](./DATABASE_DESIGN_GUIDE.md)：PDManer、手工 SQL、ID、时间、索引和数据库安全；
 - [database/README.md](./database/README.md)：六库隔离和跨系统引用规则；
 - [database/PLATFORM_SUPPORT_DATABASE.md](./database/PLATFORM_SUPPORT_DATABASE.md)：Platform IAM/审计事实背景；当前 Vault V1 不依赖其 Workload Policy 投影或集中 Audit Relay。
 
@@ -844,5 +844,5 @@ Consumer Card Data
 - [ ] Reveal 失败路径不会把明文写入日志、异常、Trace、Metric、缓存或响应重试记录。
 - [ ] Protect/Bind/Confirm/Reconcile/Reveal/Metadata/Derive/ReadIndexes/Copy/Retire/Rewrap 的本地 Access Audit 与 Platform Audit 补送均可幂等重放。
 - [ ] Orphan Recovery、Retire 和 Rewrap 状态均有并发条件更新，且不存在隐式 Destroy 路径。
-- [ ] Vault PDManer 模型、Migration、DataObject/Mapper/Repository 和 Testcontainers 测试将在同一批准变更中保持一致，DataObject 类型名不追加 `DO` 后缀。
+- [ ] Vault PDManer 模型、手工 DDL/DML、DataObject/Mapper/Repository 和本地 MySQL 测试将在同一批准变更中保持一致，DataObject 类型名不追加 `DO` 后缀。
 - [ ] 参考 Code-PMX 代码仅作思想参考，没有复制旧 Token、Hash、Dubbo、授权或密钥实现。

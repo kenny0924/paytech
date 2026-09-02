@@ -2,7 +2,7 @@
 
 最后更新：2026-09-02
 
-状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和七个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A Flyway/MyBatis 21-table 投影、确定性初始化、mTLS 边界和 PLT-I20 全量 Snapshot Provider。其他五个核心服务 Java 模块、Platform 剩余业务能力、Console BFF/前端、调度和外部可观测运行环境仍未创建。
+状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和七个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A 手工 SQL/MyBatis 21-table 投影、mTLS 边界和 PLT-I20 全量 Snapshot Provider。其他五个核心服务 Java 模块、Platform 剩余业务能力、Console BFF/前端、调度和外部可观测运行环境仍未创建。
 
 ## 1. 目标
 
@@ -12,7 +12,7 @@
 - 基础设施版本可重复、可隔离，不污染或复用开发者现有容器数据；
 - Java 服务保留 IDE 断点、热重启和低成本重建体验；
 - 不要求日常同时运行十一个 Java Deployable（六个核心服务、API Gateway、三个 Console BFF 和 Vault）和完整可观测栈；
-- 自动测试通常由 Testcontainers 管理自己的依赖；Operations Gateway Redis 测试按已批准例外复用仓库专用 Compose Redis，并通过运行级 Namespace 隔离，不使用 Testcontainers。
+- 自动测试统一复用仓库 `local-environment` 中的 MySQL、Redis 与 RabbitMQ；测试不使用 Testcontainers，也不负责启动、停止或重建中间件。
 
 ## 2. 当前电脑实测基线
 
@@ -249,14 +249,14 @@ Vault 本地开发需要的 KMS、Secrets Manager 和 Object Storage 模拟器�
 
 ### 8.3 当前 Platform Support Phase A
 
-Platform Support 的完整自动门禁使用独立 Testcontainers MySQL，因此无需先启动共享 `base` Profile：
+Platform Support 的自动门禁使用 `base` Profile 中的本地 MySQL。首次运行或 SQL 变化后，先按 [`platform-support-service/README.md`](../platform-support-service/README.md) 手工应用 Schema 与初始化 DML，再执行：
 
 ```bash
 cd platform-support-service
 ./mvnw clean verify
 ```
 
-实际启动可执行 JAR 前必须提供 Platform 专属 MySQL、Bootstrap Secret、TLS Server Keypair 和受信客户端证书配置；不得使用仓库默认值伪造 Secret。当前 `health`、`liveness`、`readiness`、`info` 和 `prometheus` 与应用共用 `18106` TLS Listener，Readiness 同时检查 Migration、确定性 Seed 与当前 Snapshot。完整变量、mTLS 和 PLT-I20 边界以 [`platform-support-service/README.md`](../platform-support-service/README.md) 为准。
+实际启动可执行 JAR 前必须提供 Platform 专属 MySQL、TLS Server Keypair 和受信客户端证书配置。应用不读取 Bootstrap Secret，也不执行建表、Schema 变更或初始化 DML。当前 `health`、`liveness`、`readiness`、`info` 和 `prometheus` 与应用共用 `18106` TLS Listener，Readiness 检查当前 Snapshot 能否从数据库完整构造。完整变量、手工 SQL、mTLS 和 PLT-I20 边界以 [`platform-support-service/README.md`](../platform-support-service/README.md) 为准。
 
 ## 9. 本地 MySQL 多数据库方案
 
@@ -280,8 +280,8 @@ xxl_job
 - Nacos 和 XXL-Job 使用独立技术账号；
 - 服务账号没有 `SUPER`、`FILE`、跨数据库授权或创建其他用户权限；
 - 禁止跨数据库外键、视图、查询、触发器和事务；
-- 当前 `base` Compose Profile 初始化只创建数据库、账号、授权和 Nacos 自身要求的技术表；`xxl_job` 保持空库，直到后续 `scheduler` Profile 获准并实现；
-- 七个业务/Vault 数据库保持空库，直到对应 Java 数据库实现获得明确授权并由 Flyway 创建表。
+- 当前 `base` Compose Profile 初始化只创建数据库、账号、授权和中间件自身要求的技术表；
+- 业务/Vault Schema 与初始化数据只能由开发者或部署人员按各服务 README 手工执行审核过的 SQL，Java 应用与测试不得自动创建。
 
 ## 10. Nacos 本地约定
 
@@ -291,7 +291,7 @@ xxl_job
 - 服务 Data ID：`{spring.application.name}.yaml`。
 - Spring Boot 只保留连接 Nacos 所需的最小本地引导配置，并通过 `spring.config.import` 导入配置；不使用 `bootstrap.yml`。
 - 密码、Token、证书和真实云凭据不进入 Nacos。
-- `auto` 测试关闭 Nacos，通过测试动态配置连接 Simulator/Testcontainers。
+- `auto` 测试关闭 Nacos，通过测试动态配置连接 Simulator；需要的 MySQL/Redis/RabbitMQ 直接使用仓库本地服务。
 
 ## 11. RabbitMQ 本地约定
 
@@ -309,7 +309,7 @@ xxl_job
 - Key 使用 `{service}:{capability}:...` Namespace；Redis Starter 为 `RedisJsonTemplate`、`StringRedisTemplate` 与 Redisson 统一把 `{service}` 默认解析为 `spring.application.name`，服务可用 `redis.key-prefix` 显式覆盖。业务对象缓存优先使用不含 Java 类型信息的普通 JSON；字符串与计数器使用 `StringRedisTemplate`。新增 Key 不使用 `mor` 技术前缀，每个能力必须定义 TTL。
 - Gateway Rate Limiter 与各服务 Key 进一步使用独立前缀，禁止 `KEYS *` 作为运行逻辑。
 - Operations Gateway 不使用 Redis Starter、`StringRedisTemplate` 或 Redisson；它通过 Spring Data Redis Reactive + Lettuce Lua 实现 Rate Token Bucket 和 Concurrency ZSET Lease。
-- Gateway Redis 自动测试连接 `127.0.0.1:16379` 的 `mor-local` Compose Redis，密码从 `.env.local` 对应的 `PAYTECH_REDIS_PASSWORD` 环境注入；不引入 Testcontainers，不连接 `6379`。将来重建 Compose 前，开发者手动把现有 Redis Secret 值复制到该新键；自动化不得读取或改写 `.env.local`。
+- 所有 Redis 自动测试连接 `127.0.0.1:16379` 的 `mor-local` Compose Redis，密码从 `.env.local` 对应的 `PAYTECH_REDIS_PASSWORD` 环境注入；不引入 Testcontainers，不连接 `6379`。自动化不得读取、输出或改写 `.env.local`。
 - 每次 Gateway 测试运行生成唯一 Key Namespace，Setup/Teardown 只用 `SCAN` 删除本次已知前缀，禁止 `KEYS *`、`FLUSHDB` 或停止共享 Compose Redis。Redis 不可用用例连接未监听的 Loopback 端口，不影响其他本地进程。
 - 本地密码来自 `.env.local`；应用日志不得输出完整连接串或密码。
 - 现有宿主机 `6379` Redis 不参与 Code-MoR 开发、测试或故障演练。
@@ -327,7 +327,7 @@ xxl_job
 6. 调试跨服务 Trace、Metrics 或 Logs 时再启动 `observability`；
 7. 停止时先退出 Java 服务，再执行 `docker compose down`，保留数据卷。
 
-只检查 Platform Support Phase A 时无需先启动 `base`；其 `auto` 测试使用独立 Testcontainers MySQL，不访问任何共享运行时。
+只检查 Platform Support Phase A 时至少启动 `base` 中的 MySQL，并确认 `mor_platform` 已手工应用当前两份 SQL；无需启动未被当前测试使用的其他 Java 服务。
 
 不要把“本地全绿”建立在所有十一个 Deployable（六个核心服务、API Gateway、三个 Console BFF 和 Vault）必须同时常驻的前提上；当前仍只按需启动已经实现且属于当前业务链的应用，未创建的核心服务、Console BFF 和 Vault 不因此获得实现授权。
 
@@ -353,18 +353,18 @@ Java 服务至少验证：
 - RabbitMQ 发布等待 Confirm，消费者提交本地事务后 Manual Ack；
 - 日志含 Request/Trace ID，且没有密码、Token 或敏感明文。
 - API Gateway Application 监听 `18080`，Management 只在 `19080` 暴露 `health` / `info` / `prometheus`；Liveness 只含 `livenessState`，Readiness 只含 `readinessState`、`gatewayBootstrap` 和短超时 `gatewayRedis`，不把 Operations BFF 或 JWKS 可用性纳入就绪门禁。
-- Platform Support Phase A 监听 `18106` TLS Listener；Liveness 只反映进程状态，Readiness 要求 Migration、确定性 Seed 与当前 Gateway Snapshot 均有效，健康详情不对外披露。
+- Platform Support Phase A 监听 `18106` TLS Listener；Liveness 只反映进程状态，Readiness 要求当前 Gateway Snapshot 能从手工初始化的数据库完整构造，健康详情不对外披露。
 
 ## 15. 自动测试与本地共享环境的边界
 
-除本节明确的 Operations Gateway Redis 例外外，`auto` 测试不得连接本文的 MySQL、Redis、RabbitMQ、Nacos 或其他共享运行时容器。Maven 可以通过 Nexus 解析构建依赖，但测试执行中的生产链不得把 Nexus 当作应用运行依赖：
+`auto` 与 `manual` 都复用本文的仓库本地中间件，但不得连接真实业务环境：
 
-- 数据库、RabbitMQ 和非 Gateway Redis 由 Testcontainers 按测试需要启动；
-- Operations Gateway 是当前唯一例外：它只连接仓库 Compose 管理的 `127.0.0.1:16379` Redis，只接受 `PAYTECH_REDIS_PASSWORD`，测试自身不启动 Docker/Testcontainers，并使用唯一运行 Namespace 与 `SCAN` 限定清理；
-- Nacos 在 `auto` 中关闭；内部服务/Provider 通过有状态 Simulator 提供真实 HTTP/MQ 协议；
-- 测试使用随机映射端口和独立数据库/Key/Queue Namespace；
-- Platform Support Phase A 的 `auto` 测试从真实随机端口 MVC/mTLS 入口执行，使用独立 Testcontainers MySQL，不使用 Mockito 或本文的共享基础设施；
-- 除上述 Gateway Redis 例外外，本地 Compose 只用于人工开发和 `manual` 联调。Gateway 的默认 `auto` 仍从真实随机端口 WebFlux 入口运行，并通过真实协议连接 HTTPS JWKS 和有状态 Operations BFF Simulator。
+- 测试自身不调用 Docker API，不启动、不停止、不重建容器；缺少依赖时快速失败并指向本文件；
+- MySQL 固定连接 `127.0.0.1:13306`，每个服务只使用自己的账号和数据库，DDL/DML 由开发者手工执行；
+- Redis 固定连接 `127.0.0.1:16379`，每次运行使用唯一 Namespace，并仅以 `SCAN` 清理本次前缀；
+- RabbitMQ 使用 `/mor-local` 和测试专属 Queue/Binding 名称；Nacos 在 `auto` 中关闭；
+- Platform Support 从真实随机端口 MVC/mTLS 入口经过 Processor、Service、Repository、Mapper 到本地 MySQL，不使用 Mockito 或 Testcontainers；
+- 内部服务/Provider 仍通过有状态 Simulator 提供真实 HTTP/MQ 协议，不要求同时启动全部业务服务。
 
 详细规则见 [UNIT_TEST_GUIDE.md](./UNIT_TEST_GUIDE.md)。
 
@@ -375,7 +375,7 @@ Java 服务至少验证：
 - 清理现有 Docker Images、Containers、Volumes 或 Build Cache；
 - 修改 Docker Desktop 全局资源设置；
 - 修改个人 `.zshrc`、IDE 全局配置或系统默认 JDK；
-- 创建六个核心业务服务的 Java 模块、Console BFF/前端、Flyway Migration 或业务表；Operations 首期 Gateway 已实现，不在本条禁止范围内；
+- 创建尚未授权的核心业务服务 Java 模块、Console BFF/前端或业务表；Operations Gateway 与 Platform Phase A 已实现，不在本条禁止范围内；
 - 创建 `scheduler`、`observability`、Vault 模拟依赖等后续 Compose Profile；
 - 创建/发布云资源、CI/CD 或生产部署。
 

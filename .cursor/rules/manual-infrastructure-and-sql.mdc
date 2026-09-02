@@ -1,0 +1,15 @@
+---
+description: Require manually maintained SQL and repository-owned local middleware
+alwaysApply: true
+---
+
+# Manual SQL and Local Infrastructure
+
+- Do not add Flyway, Liquibase, Testcontainers, embedded databases or application-startup schema creation.
+- Keep each service's current DDL in a reviewed plain SQL file that an operator applies manually.
+- Keep all required initial DML for one service in one reviewed SQL file; do not rebuild seed data through Java object graphs.
+- Java startup may validate connectivity but must not create, migrate, repair or seed business data.
+- Tests reuse the repository-owned services from `local-environment`; they do not start or stop containers.
+- A missing local dependency must fail fast and print the exact setup command or documentation path.
+- Tests may clean only rows and namespaces they own. Never drop a shared schema, flush a shared database or destroy Docker volumes.
+- Keep production SQL, Mapper mappings, DataObjects and full-chain tests synchronized in the same change.

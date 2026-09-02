@@ -71,7 +71,7 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 
 ## 7. 测试代码习惯
 
-- 测试基础设施、`auto/manual` 边界、Testcontainers 和 Simulator 规则以 `UNIT_TEST_GUIDE.md` 为准；自动测试不得连接 Nacos、配置中心或真实业务环境。
+- 测试基础设施、`auto/manual` 边界、本地中间件和 Simulator 规则以 `UNIT_TEST_GUIDE.md` 为准；测试复用仓库 `local-environment`，不得连接 Nacos、配置中心或任何真实业务环境。
 - 同一模块、同一测试切片共享一个最小 `TestApplication`，不要让每个测试类重复声明启动应用；不同切片也不要被迫继承一个启动全部能力的巨型基类。
 - 数据库准备、清理和只读断言集中到注解式 `TestMapper` 或测试 Repository，测试方法和 Mocker 中不要散落大量 `JdbcTemplate` SQL。
 - Builder 只构建合法数据，Mocker 只准备状态，Checker/Probe 只观察和断言；不要使用 Mockito 行为 Stub 替换真实生产链路。

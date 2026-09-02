@@ -1,7 +1,7 @@
 # Client & Contract 数据库设计规范
 
 最后更新：2026-08-30
-状态：37 表、423 字段、57 个唯一索引、44 个访问索引、64 条本库关系、7 条 1:1 关系与 6 个 Diagram Groups 已由生成模型确认。Client Pricing、Partner Share 与 Platform Service Charge 在保留三类业务语义的前提下共用 4 张 Commercial Term 表；BCR 改为19类审计对象白名单，不再覆盖所有结构化业务行；持久化 Eligibility Evaluation 与通用 Retention 投影已从 MVP 删除，交易资格改为使用点实时校验。PDManer 4.9.3 应用内检查仍是待执行人工兼容性门禁；当前不包含 Migration、Java 实现或数据库环境。
+状态：37 表、423 字段、57 个唯一索引、44 个访问索引、64 条本库关系、7 条 1:1 关系与 6 个 Diagram Groups 已由生成模型确认。Client Pricing、Partner Share 与 Platform Service Charge 在保留三类业务语义的前提下共用 4 张 Commercial Term 表；BCR 改为19类审计对象白名单，不再覆盖所有结构化业务行；持久化 Eligibility Evaluation 与通用 Retention 投影已从 MVP 删除，交易资格改为使用点实时校验。PDManer 4.9.3 应用内检查仍是待执行人工兼容性门禁；当前不包含手工数据库 SQL、Java 实现或数据库环境。
 
 设计与物理导航：[现实场景与逐表字段映射](./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md) · [实时交易资格与 Retention 延期设计](../plans/2026-08-23-cct-realtime-eligibility-retention-deferral-design.md) · [Commercial Term 合并与 Hash 精简设计](../plans/2026-08-23-cct-commercial-term-consolidation-design.md) · [经营主体自动分配精简设计](../plans/2026-08-22-cct-assignment-simplification-design.md) · [通用行级变更历史设计](../plans/2026-08-20-cct-row-history-design.md) · [当前物理建模决策](../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) · [PDManer 模型](../../client-contract-service/docs/database/client-contract.pdma.json)
 

@@ -661,7 +661,7 @@ test("shared entry documents expose the current Platform public-control-plane au
   assert.match(applicationArchitectureSource, /内部服务.*绕过 Gateway/su);
   assert.match(
     applicationArchitectureSource,
-    /Platform 已实现 Migration.*PLT-I20 全量 Snapshot Provider.*Gateway 动态消费.*尚未实现.*静态 Operations Catalog/su,
+    /Platform 已实现手工 Schema\/初始化 DML.*PLT-I20 全量 Snapshot Provider.*Gateway 动态消费.*尚未实现.*静态 Operations Catalog/su,
   );
 });
 
@@ -826,7 +826,7 @@ test("Commerce design and navigation expose the current privacy and Fulfillment-
   assert.match(projectContextSource, /commerce-privacy-fulfillment-simplification-design\.md/u);
   assert.match(
     projectContextSource,
-    /Commerce.*未授权.*Migration.*Java.*运行环境/su,
+    /Commerce.*未授权.*手工数据库 SQL.*Java.*运行环境/su,
   );
 });
 
