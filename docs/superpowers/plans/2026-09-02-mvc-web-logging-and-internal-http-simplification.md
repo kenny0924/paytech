@@ -208,7 +208,8 @@ public final class HttpRequestResponseLoggingFilter extends OncePerRequestFilter
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
-        ContentCachingRequestWrapper cachedRequest = new ContentCachingRequestWrapper(request);
+        ContentCachingRequestWrapper cachedRequest =
+            new ContentCachingRequestWrapper(request, Integer.MAX_VALUE);
         ContentCachingResponseWrapper cachedResponse = new ContentCachingResponseWrapper(response);
         long startedAt = System.nanoTime();
         try {
