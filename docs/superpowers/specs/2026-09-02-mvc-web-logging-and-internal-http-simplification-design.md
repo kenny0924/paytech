@@ -1,7 +1,7 @@
 # MVC Web 日志、统一异常与内部 HTTP 精简设计
 
 日期：2026-09-02
-状态：设计已完成，待用户复核后进入实施计划
+状态：已批准，进入实施
 
 ## 1. 决策摘要
 
@@ -40,8 +40,8 @@ Platform Support 当前同时使用：
 ```text
 External Client
   -> HTTPS
-    -> Nginx                       # 公网证书、TLS 终止
-      -> API Gateway              # 公网认证、Guard、路由
+    -> Nginx                       # 公网证书、TLS 终止、覆盖 X-Real-IP
+      -> Private HTTP API Gateway # 公网认证、Guard、路由
         -> Internal HTTP BFF/Core Service
 
 Internal Java Service
@@ -52,12 +52,18 @@ Internal Java Service
 固定规则：
 
 - Nginx 负责所有对公网证书和 TLS 终止；
+- Nginx 必须覆盖写入单值 `X-Real-IP=$remote_addr`，不得沿用外部请求提供的同名值或代理链；
+- 只有 Nginx 所在私有网络可以连接 API Gateway Listener，Gateway 不直接暴露公网端口；
 - API Gateway 继续负责公网 JWT、API Credential、Guard 和可信边缘协议；
-- Java 服务不配置 Server Certificate、Client Certificate、Trust Store、X.509 或 mTLS；
+- API Gateway 与其他 Java 服务均不配置 Server Certificate、Client Certificate、Trust Store、X.509 或 mTLS；
 - 服务间同步调用继续使用 `@HttpExchange`、服务发现和私有网络 HTTP，不经过公共 Gateway；
 - 内部端口必须由部署网络、Security Group、Network Policy 或等价基础设施限制为非公网可达；
 - 不把 `X-Caller-Service`、`X-Forwarded-Client-Cert` 或其他调用方可写 Header 当作认证；
 - 去除传输证书不改变用户认证、Tenant 授权、API Scope、资源所有权和业务权限检查；这些仍由拥有相应事实的 Gateway、BFF、Platform 或核心系统执行。
+
+Gateway 不启用 Spring/Reactor Netty 的通用 `Forwarded` 或 `X-Forwarded-*` 解析。最外层可信请求 Filter 只接受 Nginx 覆盖的一个合法 IPv4/IPv6 `X-Real-IP`，把解析后的 `InetAddress` 写入 Gateway 请求上下文，然后与其他保留代理 Header 一并从转发请求中删除。缺失、重复、逗号链或非法 IP 均 Fail-Closed，不再退回 Nginx 的 Socket IP。
+
+Ingress Guard、认证后 Guard 与 Access Log 必须从同一个可信请求上下文读取 Client IP。这样 Route/IP 限流、并发控制和访问日志摘要不会因 Nginx 反向代理而退化为所有用户共享一个 Nginx IP，也不会出现不同组件各自解释代理 Header 的分歧。
 
 本轮不新增通用内部安全 Starter。未来只有出现多个真实服务共享稳定的工作负载身份机制时，才评估独立的 `paytech-internal-security-starter`；不得把服务身份、固定路径或业务能力塞进 MVC Starter。
 
@@ -190,22 +196,35 @@ Health、Liveness、Readiness 和 PLT-I20 在测试及本地环境使用普通 H
 
 最终运行 Requirements 构建/测试/Lint、相关文档精确扫描和 `git diff --check`。
 
+### 7.4 API Gateway
+
+先修改边界测试，再修改生产实现：
+
+- Production Listener 使用普通内网 HTTP，`application.yml` 不再包含证书、私钥或 `PUBLIC_TLS`；
+- Gateway 到 Operations BFF 与 Platform JWKS 仅使用内部 HTTP，JWKS 不再加载 TLS Trust Anchor；
+- Nginx 写入的单值 IPv4/IPv6 `X-Real-IP` 被解析一次，并供两阶段 Guard 与 Access Log 共用；
+- 外部伪造的 `Forwarded`、`X-Forwarded-*` 和已消费的 `X-Real-IP` 均不会进入 BFF；
+- 缺失、重复、逗号链和非法 `X-Real-IP` 请求 Fail-Closed；
+- Test Runtime 默认模拟可信 Nginx Header，既有路由、JWT、Guard、Redis、CORS、Body、响应与可观察性门禁保持通过；
+- `./mvnw clean verify` 和 Gateway Boundary 脚本通过。
+
 ## 8. 多仓实施与合并顺序
 
-三个 Git 仓库分别提交：
+四个 Git 仓库分别提交：
 
 1. `paytech-foundation`：公共异常与 MVC 日志；
 2. `platform-support-service`：升级本地 Foundation Snapshot 后删除 mTLS，并验证 PLT-I20；
-3. Code-MoR 根仓：架构、技术栈、开发规范和导航同步。
+3. `api-gateway`：删除应用 Listener/JWKS TLS，改用内部 HTTP，并消费 Nginx 的可信 Client IP；
+4. Code-MoR 根仓：架构、技术栈、开发规范和导航同步。
 
-`paytech-foundation` 与 `platform-support-service` 主目录当前存在其他未提交改动，实施必须使用各自独立 worktree。不得覆盖 Compensation Event 或 Gateway Compiler 测试的现有改动。Foundation 目标模块通过后先安装新的 `1.0.0-SNAPSHOT` 到本机 Maven 缓存，再验证 Platform；是否发布 Nexus 由现有 Snapshot 发布流程决定，不因本任务自动外发。
+`paytech-foundation`、`platform-support-service` 与 `api-gateway` 主目录当前存在其他未提交改动，实施必须使用各自独立 worktree。不得覆盖 Compensation Event、Gateway Compiler 或现有 Gateway Guard 的未提交改动。Foundation 目标模块通过后先安装新的 `1.0.0-SNAPSHOT` 到本机 Maven 缓存，再验证 Platform；是否发布 Nexus 由现有 Snapshot 发布流程决定，不因本任务自动外发。
 
 ## 9. 非目标
 
 本轮不实现：
 
 - 日志脱敏、截断、采样、异步输出或日志保留策略；
-- Nginx 配置、证书申请、证书轮换或生产部署资源；
+- Nginx 配置文件、证书申请、证书轮换或生产部署资源；仓库文档只冻结其覆盖 `X-Real-IP` 的契约；
 - Service Mesh、应用 mTLS、X.509、HMAC 服务令牌或调用方 Header 认证；
 - Platform 人工认证、Tenant IAM 命令、管理 API 或 Gateway Snapshot 消费；
 - 新的 Foundation Security Starter；
@@ -216,5 +235,5 @@ Health、Liveness、Readiness 和 PLT-I20 在测试及本地环境使用普通 H
 - 所有 MVC 服务只需引入 `paytech-mvc-web-starter` 即可获得统一 Request/Response/耗时日志和全局错误响应；
 - Platform 不再包含或依赖应用级证书、X.509、mTLS 或 Spring Security；
 - PLT-I20 使用内网 HTTP，并保持完整 Snapshot 与稳定 `503` 业务语义；
-- 公网 TLS 终止明确归属 Nginx，Gateway 与业务授权职责不变；
-- Foundation、Platform 和根仓门禁全部通过，且不覆盖现有无关改动。
+- 公网 TLS 终止明确归属 Nginx，Gateway 使用内网 HTTP，并以 Nginx 覆盖写入的 Client IP 执行 Guard 和访问日志；
+- Foundation、Platform、Gateway 和根仓门禁全部通过，且不覆盖现有无关改动。
