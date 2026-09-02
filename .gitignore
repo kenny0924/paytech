@@ -119,6 +119,7 @@ replay_pid*
 /risk-compliance-service/
 /finance-service/
 /platform-support-service/
+/vault-service/
 /api-gateway/
 /business-portal-bff/
 /business-portal-web/
