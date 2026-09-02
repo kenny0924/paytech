@@ -103,12 +103,12 @@ const approvedSensitiveFields = Object.freeze({
   wrapped_dek: "t_vault_record",
   kms_key_ref: "t_vault_record",
 });
-const expectedCheckContracts = Object.freeze([
-  "ck_vault_record_mode",
-  "ck_vault_record_fingerprint",
-  "ck_vault_access_action",
-  "ck_vault_access_outcome",
-]);
+const EXPECTED_CHECK_CONTRACTS = Object.freeze({
+  ck_vault_record_mode: "token_mode IN ('REFERENCE','STABLE')",
+  ck_vault_record_fingerprint: "(token_mode='STABLE' AND value_fingerprint IS NOT NULL) OR (token_mode='REFERENCE' AND value_fingerprint IS NULL)",
+  ck_vault_access_action: "action IN ('PROTECT','REVEAL')",
+  ck_vault_access_outcome: "outcome IN ('SUCCESS','DENIED','FAILED')",
+});
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -275,6 +275,10 @@ test("approved Vault field manifest independently freezes the exact three-table 
   assert.equal(parseApprovedRelations().length, 2);
 });
 
+test("shared PDManer template retains the approved byte-for-byte digest", () => {
+  assert.equal(sha256(readFileSync(paths.template)), expectedTemplateDigest);
+});
+
 test("Vault PDManer contract has every planned design artifact", () => {
   const missingArtifacts = requiredArtifacts
     .filter((artifactPath) => !existsSync(artifactPath))
@@ -373,14 +377,41 @@ artifactTest("model excludes unsafe fields and confines approved cryptographic f
   }
 });
 
-artifactTest("model is credential-free, has one diagram, and uses deterministic UUID v5 IDs", () => {
-  const templateBytes = readFileSync(paths.template);
-  assert.equal(sha256(templateBytes), expectedTemplateDigest);
+artifactTest("model is credential-free, has the exact vault_core diagram, and uses deterministic UUID v5 IDs", () => {
   const model = readModel();
   assert.deepEqual(model.dbConn, []);
   assert.deepEqual(model.dbConns, []);
   assert.equal(model.profile.default.dbConn, "");
-  assert.equal(model.diagrams.length, 1);
+  assert.equal(model.diagrams.length, 1, "Vault 只能有一个 Diagram Group");
+
+  const diagram = model.diagrams[0];
+  assert.equal(diagram.defKey, "vault_core");
+  const entitiesById = new Map(model.entities.map((entity) => [entity.id, entity]));
+  const tableCellsById = new Map(diagram.canvasData.cells
+    .filter((cell) => cell.shape === "table")
+    .map((cell) => [cell.id, cell]));
+  assert.deepEqual(
+    [...tableCellsById.values()].map((cell) => entitiesById.get(cell.originKey).defKey),
+    ["t_vault_record", "t_vault_protect_request", "t_vault_access_event"],
+  );
+  const correlationIds = model.entities.flatMap((entity) => entity.correlations.map((relation) => relation.id));
+  const relationCells = diagram.canvasData.cells.filter((cell) => cell.shape === "erdRelation");
+  assert.deepEqual(relationCells.map((cell) => cell.originKey), correlationIds);
+  assert.deepEqual(
+    relationCells.map((cell) => {
+      const child = tableCellsById.get(cell.source.cell);
+      const parent = tableCellsById.get(cell.target.cell);
+      return [
+        cell.relation,
+        logicalTableKey(entitiesById.get(child.originKey).defKey),
+        logicalTableKey(entitiesById.get(parent.originKey).defKey),
+      ].join("|");
+    }),
+    [
+      "n:1|vault_protect_request|vault_record",
+      "n:1|vault_access_event|vault_record",
+    ],
+  );
 
   const ids = generatedIds(model);
   assert.ok(ids.every((id) => idPattern.test(id)), "所有生成 ID 必须是稳定 SHA-256 UUID v5");
@@ -402,9 +433,13 @@ artifactTest("generator produces the checked-in model byte-for-byte and --check 
   assert.match(result.stdout, /Vault model is up to date/u);
 });
 
-artifactTest("physical decisions cover all four named CHECK sidecar contracts", () => {
+artifactTest("CHECK policy and physical decisions freeze all four exact sidecar contracts", async () => {
+  const policy = await import(`${pathToFileURL(paths.policy).href}?contract=${Date.now()}`);
+  assert.deepEqual(policy.CHECK_CONTRACTS, EXPECTED_CHECK_CONTRACTS);
+
   const source = readFileSync(paths.decisions, "utf8");
-  for (const checkContract of expectedCheckContracts) {
+  for (const [checkContract, expression] of Object.entries(EXPECTED_CHECK_CONTRACTS)) {
     assert.match(source, new RegExp(`\\b${checkContract}\\b`, "u"));
+    assert.ok(source.includes(expression), `${checkContract} 缺少准确表达式`);
   }
 });
