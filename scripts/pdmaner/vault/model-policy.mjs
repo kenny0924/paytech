@@ -1,5 +1,3 @@
-import { TABLES } from "./manifest.mjs";
-
 export const CHECK_CONTRACTS = Object.freeze({
   ck_vault_record_mode: "token_mode IN ('REFERENCE','STABLE')",
   ck_vault_record_fingerprint: "(token_mode='STABLE' AND value_fingerprint IS NOT NULL) OR (token_mode='REFERENCE' AND value_fingerprint IS NULL)",
@@ -26,12 +24,71 @@ export const DIAGRAM_GROUPS = Object.freeze([
   }),
 ]);
 
-export const ALLOWED_TABLE_KEYS = Object.freeze(TABLES.map((tableSpec) => tableSpec.defKey));
+export const ALLOWED_TABLE_KEYS = Object.freeze([
+  "vault_record",
+  "vault_protect_request",
+  "vault_access_event",
+]);
 
-export const ALLOWED_FIELDS_BY_TABLE = Object.freeze(Object.fromEntries(TABLES.map((tableSpec) => [
-  tableSpec.defKey,
-  Object.freeze(tableSpec.fields.map((fieldSpec) => fieldSpec.defKey)),
-])));
+export const ALLOWED_FIELDS_BY_TABLE = Object.freeze({
+  vault_record: Object.freeze([
+    "record_id",
+    "token",
+    "data_type",
+    "token_mode",
+    "value_fingerprint",
+    "ciphertext",
+    "encryption_nonce",
+    "wrapped_dek",
+    "kms_key_ref",
+    "create_time",
+    "update_time",
+  ]),
+  vault_protect_request: Object.freeze([
+    "protect_request_id",
+    "caller_service",
+    "idempotency_key",
+    "request_hash",
+    "record_id",
+    "create_time",
+    "update_time",
+  ]),
+  vault_access_event: Object.freeze([
+    "access_event_id",
+    "request_id",
+    "trace_id",
+    "caller_service",
+    "action",
+    "data_type",
+    "purpose",
+    "record_id",
+    "outcome",
+    "result_code",
+    "policy_version",
+    "create_time",
+  ]),
+});
+
+export const ALLOWED_INDEX_SIGNATURES = Object.freeze({
+  vault_record: Object.freeze([
+    "UK|uk_vault_record_token|token",
+    "UK|uk_vault_record_stable|data_type,value_fingerprint",
+  ]),
+  vault_protect_request: Object.freeze([
+    "UK|uk_vault_protect_request|caller_service,idempotency_key",
+    "IDX|idx_vault_protect_record|record_id",
+  ]),
+  vault_access_event: Object.freeze([
+    "IDX|idx_vault_access_record|record_id,create_time",
+    "IDX|idx_vault_access_caller|caller_service,create_time",
+    "IDX|idx_vault_access_request|request_id",
+  ]),
+});
+
+export const ALLOWED_RELATION_SIGNATURES = Object.freeze([
+  "n:1|vault_protect_request.record_id|vault_record.record_id",
+  "n:1|vault_access_event.record_id|vault_record.record_id",
+]);
 
 export const FORBIDDEN_TABLE_KEYS = Object.freeze([
   "vault_binding",

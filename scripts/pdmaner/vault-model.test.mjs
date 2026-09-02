@@ -19,14 +19,18 @@ const paths = Object.freeze({
   template: path.join(workspaceRoot, "agent-docs/templates/pdmaner/template.pdma.json"),
 });
 
-const requiredArtifacts = Object.freeze([
+const task2Artifacts = Object.freeze([
   paths.manifest,
   paths.policy,
   paths.generator,
   paths.model,
+]);
+const requiredArtifacts = Object.freeze([
+  ...task2Artifacts,
   paths.decisions,
 ]);
-const artifactsReady = requiredArtifacts.every(existsSync);
+const task2ArtifactsReady = task2Artifacts.every(existsSync);
+const physicalDecisionsReady = existsSync(paths.decisions);
 const expectedTemplateDigest =
   "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 const idPattern =
@@ -259,8 +263,12 @@ function generatedIds(model) {
   ];
 }
 
-function artifactTest(name, fn) {
-  test(name, { skip: !artifactsReady }, fn);
+function task2ArtifactTest(name, fn) {
+  test(name, { skip: !task2ArtifactsReady }, fn);
+}
+
+function physicalDecisionsTest(name, fn) {
+  test(name, { skip: !physicalDecisionsReady }, fn);
 }
 
 test("approved Vault field manifest independently freezes the exact three-table candidate", () => {
@@ -290,7 +298,7 @@ test("Vault PDManer contract has every planned design artifact", () => {
   );
 });
 
-artifactTest("model has the exact ordered three-table, 30-field contract", () => {
+task2ArtifactTest("model has the exact ordered three-table, 30-field contract", () => {
   const model = readModel();
   const approvedTables = parseApprovedFieldManifest();
   assert.deepEqual(model.entities.map((entity) => entity.defKey), expectedTableOrder);
@@ -320,7 +328,7 @@ artifactTest("model has the exact ordered three-table, 30-field contract", () =>
   });
 });
 
-artifactTest("model freezes the exact three UK and four IDX field orders", () => {
+task2ArtifactTest("model freezes the exact three UK and four IDX field orders", () => {
   const expectedIndexes = parseApprovedIndexes();
   for (const entity of readModel().entities) {
     const fields = fieldById(entity);
@@ -333,7 +341,7 @@ artifactTest("model freezes the exact three UK and four IDX field orders", () =>
   }
 });
 
-artifactTest("model has exactly two local indexed Record relationships", () => {
+task2ArtifactTest("model has exactly two local indexed Record relationships", () => {
   const model = readModel();
   assert.deepEqual(relationSignatures(model).sort(), expectedRelationSignatures().sort());
   const entitiesById = new Map(model.entities.map((entity) => [entity.id, entity]));
@@ -354,7 +362,7 @@ artifactTest("model has exactly two local indexed Record relationships", () => {
   }
 });
 
-artifactTest("model excludes unsafe fields and confines approved cryptographic fields", () => {
+task2ArtifactTest("model excludes unsafe fields and confines approved cryptographic fields", () => {
   for (const entity of readModel().entities) {
     for (const field of entity.fields) {
       assert.doesNotMatch(field.defKey, forbiddenFieldPattern, `${entity.defKey}.${field.defKey}`);
@@ -377,7 +385,7 @@ artifactTest("model excludes unsafe fields and confines approved cryptographic f
   }
 });
 
-artifactTest("model is credential-free, has the exact vault_core diagram, and uses deterministic UUID v5 IDs", () => {
+task2ArtifactTest("model is credential-free, has the exact vault_core diagram, and uses deterministic UUID v5 IDs", () => {
   const model = readModel();
   assert.deepEqual(model.dbConn, []);
   assert.deepEqual(model.dbConns, []);
@@ -418,7 +426,7 @@ artifactTest("model is credential-free, has the exact vault_core diagram, and us
   assert.equal(new Set(ids).size, ids.length, "所有生成 ID 必须唯一");
 });
 
-artifactTest("generator produces the checked-in model byte-for-byte and --check detects no drift", async () => {
+task2ArtifactTest("generator produces the checked-in model byte-for-byte and --check detects no drift", async () => {
   const generator = await import(`${pathToFileURL(paths.generator).href}?contract=${Date.now()}`);
   const first = generator.serializeVaultModel(generator.generateVaultModel());
   const second = generator.serializeVaultModel(generator.generateVaultModel());
@@ -433,10 +441,32 @@ artifactTest("generator produces the checked-in model byte-for-byte and --check 
   assert.match(result.stdout, /Vault model is up to date/u);
 });
 
-artifactTest("CHECK policy and physical decisions freeze all four exact sidecar contracts", async () => {
+task2ArtifactTest("production policy freezes exact table, field, index, relation, and CHECK contracts", async () => {
   const policy = await import(`${pathToFileURL(paths.policy).href}?contract=${Date.now()}`);
+  const approvedTables = parseApprovedFieldManifest();
+  assert.deepEqual(
+    policy.ALLOWED_TABLE_KEYS,
+    approvedTables.map((table) => logicalTableKey(table.defKey)),
+  );
+  assert.deepEqual(
+    policy.ALLOWED_FIELDS_BY_TABLE,
+    Object.fromEntries(approvedTables.map((table) => [
+      logicalTableKey(table.defKey),
+      table.fields.map((field) => field.defKey),
+    ])),
+  );
+  assert.deepEqual(
+    policy.ALLOWED_INDEX_SIGNATURES,
+    Object.fromEntries([...parseApprovedIndexes()].map(([tableKey, indexes]) => [
+      logicalTableKey(tableKey),
+      indexes.map((index) => `${index.unique ? "UK" : "IDX"}|${index.defKey}|${index.fields.join(",")}`),
+    ])),
+  );
+  assert.deepEqual(policy.ALLOWED_RELATION_SIGNATURES, expectedRelationSignatures());
   assert.deepEqual(policy.CHECK_CONTRACTS, EXPECTED_CHECK_CONTRACTS);
+});
 
+physicalDecisionsTest("physical decisions freeze all four exact CHECK sidecar contracts", () => {
   const source = readFileSync(paths.decisions, "utf8");
   for (const [checkContract, expression] of Object.entries(EXPECTED_CHECK_CONTRACTS)) {
     assert.match(source, new RegExp(`\\b${checkContract}\\b`, "u"));

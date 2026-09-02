@@ -11,6 +11,8 @@ import { fileURLToPath } from "node:url";
 import { EXPECTED_MODEL_TOTALS, RELATIONS, TABLES } from "./manifest.mjs";
 import {
   ALLOWED_FIELDS_BY_TABLE,
+  ALLOWED_INDEX_SIGNATURES,
+  ALLOWED_RELATION_SIGNATURES,
   ALLOWED_TABLE_KEYS,
   APPROVED_SENSITIVE_FIELDS,
   ASCII_BINARY_FIELDS,
@@ -70,6 +72,14 @@ function logicalTableKey(physicalKey) {
 
 function relationStableKey(relation) {
   return `${relation.childTable}/${relation.childField}/${relation.parentTable}/${relation.parentField}`;
+}
+
+function relationSignature(relation) {
+  return `${relation.cardinality}|${relation.childTable}.${relation.childField}|${relation.parentTable}.${relation.parentField}`;
+}
+
+function indexSignature(indexSpec) {
+  return `${indexSpec.unique ? "UK" : "IDX"}|${indexSpec.defKey}|${indexSpec.fields.join(",")}`;
 }
 
 function relationId(relation) {
@@ -349,6 +359,7 @@ export function validateVaultManifest() {
   for (const tableSpec of TABLES) {
     invariant(tableSpec.physicalKey.length <= 32, `物理表名超过 32 字符：${tableSpec.physicalKey}`);
     invariant(JSON.stringify(tableSpec.fields.map((fieldSpec) => fieldSpec.defKey)) === JSON.stringify(ALLOWED_FIELDS_BY_TABLE[tableSpec.defKey]), `表字段偏离批准白名单：${tableSpec.defKey}`);
+    invariant(JSON.stringify(tableSpec.indexes.map(indexSignature)) === JSON.stringify(ALLOWED_INDEX_SIGNATURES[tableSpec.defKey]), `表索引偏离批准白名单：${tableSpec.defKey}`);
     invariant(tableSpec.fields.filter((fieldSpec) => fieldSpec.primaryKey).length === 1, `表必须恰有一个主键：${tableSpec.defKey}`);
     invariant(tableSpec.fields[0].primaryKey && tableSpec.fields[0].type === "BIGINT", `首字段必须是 Snowflake BIGINT 主键：${tableSpec.defKey}`);
     const expectedAudit = tableSpec.audit === "immutable" ? ["create_time"] : ["create_time", "update_time"];
@@ -379,6 +390,7 @@ export function validateVaultManifest() {
   invariant(indexes.filter((indexSpec) => indexSpec.unique).length === EXPECTED_MODEL_TOTALS.uniqueIndexes, "唯一索引总数错误");
   invariant(indexes.filter((indexSpec) => !indexSpec.unique).length === EXPECTED_MODEL_TOTALS.accessIndexes, "访问索引总数错误");
   invariant(RELATIONS.length === EXPECTED_MODEL_TOTALS.relations, "本库关系总数错误");
+  invariant(JSON.stringify(RELATIONS.map(relationSignature)) === JSON.stringify(ALLOWED_RELATION_SIGNATURES), "本库关系偏离批准白名单");
   for (const relation of RELATIONS) {
     const child = tablesByLogicalKey.get(relation.childTable);
     const parent = tablesByLogicalKey.get(relation.parentTable);
