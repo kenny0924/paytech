@@ -32,7 +32,7 @@ platform-support-service/
 api-gateway/
 ```
 
-`platform-support-service/` contains the tested Maven/application foundation described by the [Platform Support application-foundation design](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md), plus a Flyway/MyBatis 21-table Phase A projection, deterministic initialization, mTLS workload boundary and PLT-I20 full-Snapshot provider. The other five core backend roots still contain database design artifacts without Java application modules. This implementation does not imply that remaining Platform capabilities are available.
+`platform-support-service/` contains the tested Maven/application foundation described by the [Platform Support application-foundation design](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md), plus a manually maintained SQL/MyBatis 21-table Phase A projection, mTLS workload boundary and PLT-I20 full-Snapshot provider. The [manual-infrastructure simplification](../docs/superpowers/specs/2026-09-02-manual-infrastructure-and-platform-runtime-simplification.md) supersedes its earlier Flyway/Testcontainers/runtime-seed mechanism. The other five core backend roots still contain database design artifacts without Java application modules. This implementation does not imply that remaining Platform capabilities are available.
 
 ### Entry-layer backend project roots
 
@@ -125,7 +125,7 @@ The BFF is different from API Gateway:
 - **BFF** understands frontend response shapes and authorized query composition. It does not own business decisions.
 - **Core systems** own business rules, state transitions, data, and cross-system domain workflows.
 
-内部服务之间的同步 HTTP 调用、MQ、XXL-Job 与 Vault 调用绕过 Gateway，使用服务发现、工作负载身份和各自的内部契约，不进入公共 Route Catalog。Platform 已实现 Migration、初始化和 PLT-I20 全量 Snapshot Provider；Gateway 动态消费与运行态切换尚未实现。已部署 Gateway 在切换前继续使用静态 Operations Catalog，不能据此把静态目录解释为新的长期控制面。
+内部服务之间的同步 HTTP 调用、MQ、XXL-Job 与 Vault 调用绕过 Gateway，使用服务发现、工作负载身份和各自的内部契约，不进入公共 Route Catalog。Platform 已实现手工 Schema/初始化 DML 和 PLT-I20 全量 Snapshot Provider；Gateway 动态消费与运行态切换尚未实现。已部署 Gateway 在切换前继续使用静态 Operations Catalog，不能据此把静态目录解释为新的长期控制面。
 
 ## 4. Browser-facing access model
 

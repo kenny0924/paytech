@@ -1,7 +1,7 @@
 # Vault Service 架构与数据保护规范
 
 最后更新：2026-08-24
-状态：已确认的技术基础设施架构基线；本文不授权创建 Java 脚手架、PDManer 物理模型、Migration 或运行环境
+状态：已确认的技术基础设施架构基线；本文不授权创建 Java 脚手架、PDManer 物理模型、手工 DDL/DML 或运行环境
 
 ## 1. 文档目的
 
@@ -9,7 +9,7 @@
 
 - 把非卡类敏感字段从业务库密文迁移为 Vault Token；
 - 创建或修改 `vault-service`、`vault-api` 或 Vault Client；
-- 设计 Vault 的 PDManer 模型、Migration、DataObject、Mapper 或 Repository；
+- 设计 Vault 的 PDManer 模型、手工 DDL/DML、DataObject、Mapper 或 Repository；
 - 新增敏感数据 Protect、Reveal、Bind、Owner Confirm、Retire、Rewrap 或 Blind Index 查询；
 - 调整敏感数据授权、解密审计、MVP 默认保留或密钥轮换；
 - 判断某类数据应进入 Vault、Secrets Manager、对象存储还是 Provider Tokenization。
@@ -18,7 +18,7 @@
 
 - [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md)：六大核心系统和业务事实边界；
 - [JAVA_PROJECT_STRUCTURE.md](./JAVA_PROJECT_STRUCTURE.md)：`*-api`、`*-web`、HTTP Client 和 DDD 分层；
-- [DATABASE_DESIGN_GUIDE.md](./DATABASE_DESIGN_GUIDE.md)：PDManer、Migration、ID、时间、索引和数据库安全；
+- [DATABASE_DESIGN_GUIDE.md](./DATABASE_DESIGN_GUIDE.md)：PDManer、手工 SQL、ID、时间、索引和数据库安全；
 - [database/README.md](./database/README.md)：六库隔离和跨系统引用规则；
 - [database/PLATFORM_SUPPORT_DATABASE.md](./database/PLATFORM_SUPPORT_DATABASE.md)：IAM 和集中审计事实；中央 Retention/Legal Hold 自动化在 MVP 延期。
 
@@ -832,5 +832,5 @@ Consumer Card Data
 - [ ] Reveal 失败路径不会把明文写入日志、异常、Trace、Metric、缓存或响应重试记录。
 - [ ] Protect/Bind/Confirm/Reconcile/Reveal/Metadata/Derive/ReadIndexes/Copy/Retire/Rewrap 的本地 Access Audit 与 Platform Audit 补送均可幂等重放。
 - [ ] Orphan Recovery、Retire 和 Rewrap 状态均有并发条件更新，且不存在隐式 Destroy 路径。
-- [ ] Vault PDManer 模型、Migration、DataObject/Mapper/Repository 和 Testcontainers 测试将在同一批准变更中保持一致，DataObject 类型名不追加 `DO` 后缀。
+- [ ] Vault PDManer 模型、手工 DDL/DML、DataObject/Mapper/Repository 和本地 MySQL 测试将在同一批准变更中保持一致，DataObject 类型名不追加 `DO` 后缀。
 - [ ] 参考 Code-PMX 代码仅作思想参考，没有复制旧 Token、Hash、Dubbo、授权或密钥实现。

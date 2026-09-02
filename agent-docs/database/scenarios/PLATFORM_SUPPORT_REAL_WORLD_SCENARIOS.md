@@ -4,7 +4,7 @@
 
 状态：与当前 63 表生成模型同步；自动场景覆盖已建立，PDManer 4.9.3 应用内人工检查待完成
 
-> **当前权威：** 本文对应 [Platform Support 数据库精简设计](../../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[统一公共 API 动态控制面设计](../../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 和 [当前生成模型](../../../platform-support-service/docs/database/platform-support.pdma.json)：63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、7 个 Diagram Groups、31 条复合 FK、85 条具名 CHECK sidecar 契约，以及恰好 36 个 `_hash` 字段。它不授权 Migration、Java、运行环境、Gateway 动态 Snapshot 切换或部署。
+> **当前权威：** 本文对应 [Platform Support 数据库精简设计](../../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[统一公共 API 动态控制面设计](../../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 和 [当前生成模型](../../../platform-support-service/docs/database/platform-support.pdma.json)：63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、7 个 Diagram Groups、31 条复合 FK、85 条具名 CHECK sidecar 契约，以及恰好 36 个 `_hash` 字段。除独立批准的 Phase A 21 表手工 SQL/PLT-I20 切片外，它不授权其余数据库 SQL、Java、运行环境、Gateway 动态 Snapshot 切换或部署。
 
 下表每条代表性记录均隐含合法且非空的 `create_time`；可变记录还隐含 `update_time`。为避免逐行重复，仅显式列出业务字段。
 
@@ -165,4 +165,4 @@ Audit append 在 Chain 行上串行分配序号；`previous_event_hash` 必须�
 - 不保存 Password 明文、Google authorization code、Access/Refresh/ID Token、OIDC client secret、KMS private key、Webhook signing secret 值、PAN 或 CVV。
 - Email/URL/消息正文等可恢复敏感值使用 Vault Token；只有明确的等值查询、完整性、幂等或安全消费者才保留 Hash。
 - Readiness Evaluation、Gateway Snapshot/Release、Redis 限流状态与部署级 Google 元数据不进入 Platform MySQL；当前六张公共控制面表只保存全局当前配置。
-- 当前完整 63 表仍以设计模型为权威；已批准的 Phase A 仅实现其中 21 表的 Migration、DataObject/Mapper/Repository、确定性初始化与 PLT-I20 查询。其余表的运行实现及真实生产数据处理仍需独立批准，DataObject 类型不得追加 `DO` 后缀。
+- 当前完整 63 表仍以设计模型为权威；已批准的 Phase A 仅实现其中 21 表的手工 Schema/初始化 DML、DataObject/Mapper/Repository 与 PLT-I20 查询。其余表的运行实现及真实生产数据处理仍需独立批准，DataObject 类型不得追加 `DO` 后缀。

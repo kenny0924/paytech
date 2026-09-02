@@ -13,7 +13,7 @@
 - Current、业务 Version、Active Slot、BCR、CAS、As-Of、删除或恢复；
 - CCT-I10/CCT-I13、Commerce Order/Order Context 或测试场景数据构造。
 
-本文是当前模型的场景化解释，不是第二份数据库 Catalog。字段、枚举、索引和约束发生冲突时，以 [Client & Contract 数据库设计](../CLIENT_CONTRACT_DATABASE.md)、[物理建模决策](../../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) 和 PDManer 模型为准。本文不授权 Java、Migration、物理数据库或运行环境。
+本文是当前模型的场景化解释，不是第二份数据库 Catalog。字段、枚举、索引和约束发生冲突时，以 [Client & Contract 数据库设计](../CLIENT_CONTRACT_DATABASE.md)、[物理建模决策](../../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) 和 PDManer 模型为准。本文不授权 Java、手工数据库 SQL、物理数据库或运行环境。
 
 示例约定：
 

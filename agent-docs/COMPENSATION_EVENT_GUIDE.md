@@ -78,7 +78,7 @@ sequenceDiagram
 
 ## 3. `compensation_event` 最小模型
 
-每个使用补偿能力的服务只在自己的数据库中创建 `t_compensation_event`。Foundation JAR 不自动建表，宿主必须通过自己的 PDManer 模型和版本化 Migration 管理它。最小字段为：
+每个使用补偿能力的服务只在自己的数据库中创建 `t_compensation_event`。Foundation JAR 不自动建表，宿主必须通过自己的 PDManer 模型和人工执行的当前 Schema DDL 管理它。最小字段为：
 
 | 字段 | 语义 |
 |---|---|
@@ -104,7 +104,7 @@ sequenceDiagram
 - `payload_json` 必须为空或有效 JSON Object，最大 4 KiB UTF-8；禁止敏感明文、凭据、卡数据、Token、大文件和可从本服务数据库恢复的上下文。
 - `PROCESSING` 必须同时具有未过期的 `lock_owner`、`lock_until`；其他状态不得保留活动 Lease。
 - 到达最大重试次数后进入 `FAILED`，保留记录并告警。人工重开必须记录操作人、原因和工单引用，并回到 `ERROR` 等待重新 Claim。
-- 表中不定义 `CHECK CONSTRAINT`；状态、非负次数、正锁版本和 Lease 组合由 Foundation 代码、Migration 默认值及开发者共识共同保证。
+- 表中不定义 `CHECK CONSTRAINT`；状态、非负次数、正锁版本和 Lease 组合由 Foundation 代码、Schema DDL 默认值及开发者共识共同保证。
 
 Handler 返回确定成功后删除该记录。唯一索引只在记录存在期间防止重复登记，不提供永久去重；业务需要长期幂等时，必须依赖本领域权威状态或不可变历史。由于 Handler 可从权威表重建数据，人工补偿通常只需插入 `id + event_key + event_type + sub_event_type`，其余运行字段使用安全默认值。
 
@@ -167,7 +167,7 @@ MQ Listener 在本系统事务中完成事件校验和业务更新，事务提�
 - 未预期异常只保存 JAR 生成的固定通用摘要，不持久化异常原文、堆栈或 Payload。
 - `CompensationHandlerResult.safeSummary` 是 Handler 与宿主的安全契约：Handler 必须只返回经过业务审查、无 PII/凭据/业务密文的摘要。JAR 会再执行长度限制、控制字符清理以及常见 Secret/Bearer/Token/长数字的尽力脱敏，但该规则不能识别任意领域 PII，不能替代每个 Handler 的契约测试。
 - JAR 只在宿主提供 `CompensationRecoveryAuditRecorder` 时暴露人工重开服务，并校验 `eventId`、`lock_version`、`actor`、`reason` 和 `ticket` 的基本格式；它信任宿主传入的已认证 `actor`。
-- 宿主负责人工恢复的身份认证、授权、双人复核或工单规则、FAILED 查询/API/运营界面、审计表 Migration 与保留策略、告警确认和处置记录。JAR 的状态迁移与审计回调不能代替这些运营控制。
+- 宿主负责人工恢复的身份认证、授权、双人复核或工单规则、FAILED 查询/API/运营界面、审计表 DDL/数据变更 SQL 与保留策略、告警确认和处置记录。JAR 的状态迁移与审计回调不能代替这些运营控制。
 
 ## 7. Vault 与敏感数据边界
 

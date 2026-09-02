@@ -2,11 +2,11 @@
 
 最后更新：2026-09-02
 
-状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、七个公共 JAR 源码与本地 `base` Compose Profile 配置已经初始化；既有构建治理 POM 和五个公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus，新增 `paytech-caffeine-starter`、`paytech-redis-starter` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus；`base` Profile 已完成本机烟测并按需启停。Operations 首期 API Gateway 已在独立 Maven 仓库实现并通过构建、架构、验收与覆盖率门禁。Platform Support 已验证 `api`/`web`/`test` Spring MVC Reactor，并实现 Phase A Flyway/MyBatis 21-table 投影、确定性初始化、mTLS 和 PLT-I20 全量 Snapshot Provider；其余五个核心服务 Java 模块、Platform 剩余业务实现、Console BFF/前端、后续运行环境和生产基础设施仍未授权创建。
+状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、七个公共 JAR 源码与本地 `base` Compose Profile 配置已经初始化；既有构建治理 POM 和五个公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus，新增 `paytech-caffeine-starter`、`paytech-redis-starter` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus；`base` Profile 已完成本机烟测并按需启停。Operations 首期 API Gateway 已在独立 Maven 仓库实现并通过构建、架构、验收与覆盖率门禁。Platform Support 已验证 `api`/`web`/`test` Spring MVC Reactor，并实现 Phase A 手工 SQL/MyBatis 21-table 投影、mTLS 和 PLT-I20 全量 Snapshot Provider；其余五个核心服务 Java 模块、Platform 剩余业务实现、Console BFF/前端、后续运行环境和生产基础设施仍未授权创建。
 
 ## 1. 使用范围
 
-当任务涉及 Java 版本、Spring 版本、Maven 依赖管理、数据库、Migration、MQ、Redis、Gateway、配置中心、补偿调度、可观测性或本地运行环境时，必须先读取本文。具体工程分层、可靠事件、测试和本地搭建仍分别以以下文档为准。Operations Gateway 的路由、协议、Guard、JWKS 与传输最终契约以 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准：
+当任务涉及 Java 版本、Spring 版本、Maven 依赖管理、数据库、手工 SQL、MQ、Redis、Gateway、配置中心、补偿调度、可观测性或本地运行环境时，必须先读取本文。具体工程分层、可靠事件、测试和本地搭建仍分别以以下文档为准。Operations Gateway 的路由、协议、Guard、JWKS 与传输最终契约以 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准：
 
 - [JAVA_PROJECT_STRUCTURE.md](./JAVA_PROJECT_STRUCTURE.md)
 - [COMPENSATION_EVENT_GUIDE.md](./COMPENSATION_EVENT_GUIDE.md)
@@ -44,7 +44,7 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | 内部同步调用 | Spring HTTP Service Client | Spring Framework 管理 | `@HttpExchange` + `RestClient` + LoadBalancer + Nacos；不新增 Dubbo/OpenFeign |
 | 数据访问 | MyBatis Spring Boot Starter | 4.0.1 | 与 Spring Boot 4.0 线对齐；Mapper XML 为默认复杂 SQL 载体 |
 | 数据库 | MySQL LTS | 8.4；本地固定 8.4.11 | 早期允许一个实例承载多数据库，但每系统独立数据库和账号 |
-| Schema 演进 | Flyway | Spring Boot BOM 管理 | 数据库实现获批后启用；PDManer 是设计源，Migration 是可执行历史 |
+| Schema 演进 | 人工审查并执行的 SQL | 每服务一份当前 DDL + 一份初始化 DML | PDManer 是设计源；应用启动不建表、不迁移、不灌初始数据 |
 | MQ | RabbitMQ | 4.2；本地固定 4.2.9 | 对齐 Amazon MQ RabbitMQ 4.2；自建生产前重新选择当时受支持系列 |
 | MQ 序列化 | JSON UTF-8 | 统一事件信封 | 禁止 Java 原生序列化；事件契约必须版本化 |
 | Redis Server | Redis Open Source Extended | 8.2；本地固定 8.2.1 | 早期单机；不是业务权威数据源 |
@@ -57,7 +57,7 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | 自动采集 | OpenTelemetry Java Agent + OTLP | 创建运行环境时固定补丁版本 | 默认通过 Java Agent 自动采集，不在业务代码绑定后端 SDK |
 | 遥测管道 | OpenTelemetry Collector | 创建运行环境时固定镜像版本 | 统一接收和转发 Metrics/Logs/Traces |
 | 本地可观测后端 | Prometheus + Loki + Tempo + Grafana + Alertmanager | 创建 Compose 时固定镜像版本 | 按需 Profile 启动，不作为默认开发前置条件 |
-| Java 测试 | JUnit 5 + Testcontainers；Gateway Redis 使用 Compose 例外 | BOM 管理 | 默认 `auto` 内部闭环；Operations Gateway Redis 测试复用专用 `mor-local` Compose Redis 并做运行级 Namespace 隔离 |
+| Java 测试 | JUnit 5 + 仓库 `local-environment` | BOM 管理 | 默认 `auto` 经过真实生产链；MySQL/Redis/RabbitMQ 均复用本地固定版本服务并做受限清理 |
 
 OpenTelemetry、Prometheus、Loki、Tempo、Grafana 和 Alertmanager 的产品组合已经确认。它们发布频繁，实际创建 Compose 时固定经过同一次兼容验证的明确补丁版本和镜像摘要，而不是在架构文档中永久冻结一个很快失效的补丁号。
 
@@ -98,7 +98,7 @@ paytech-build/
 - 导入 `spring-cloud-dependencies:2025.1.3`；
 - 导入 `spring-cloud-alibaba-dependencies:2025.1.0.0`；
 - 管理 MyBatis Starter 4.0.1、Redisson 4.6.1、XXL-Job 3.4.2 及其他未被上游 BOM 管理的依赖；
-- 管理 Testcontainers 等测试 BOM，但不把测试依赖带入生产模块。
+- 管理 JUnit、JaCoCo 等测试依赖，但不引入 Testcontainers 或嵌入式中间件。
 
 `paytech-parent` 负责：
 
@@ -133,7 +133,7 @@ paytech-build/
 ### 5.5 Platform Support Phase A 运行切片
 
 - `platform-support-service` 继承 `paytech-parent:1.0.0-SNAPSHOT`，使用 Maven 3.9.16 Wrapper，聚合 `platform-support-api`、`platform-support-web` 和 `platform-support-test`。
-- `api` 发布 PLT-I20 `@HttpExchange` 与不可变 typed DTO；DTO 枚举语义使用稳定 `String` Code。`web` 使用 Spring MVC、Actuator/Prometheus、JDBC、Flyway、MyBatis、MySQL Driver、Spring Security、Snowflake ID 与 Bouncy Castle 实现 Phase A；`test` 使用 JUnit 5、Testcontainers MySQL 和真实随机端口 HTTP/mTLS，不使用 Mockito 或共享业务基础设施。
+- `api` 发布 PLT-I20 `@HttpExchange` 与不可变 typed DTO；DTO 枚举语义使用稳定 `String` Code。`web` 使用 Spring MVC、Actuator/Prometheus、JDBC、MyBatis、MySQL Driver 与 Spring Security 实现 Phase A；Schema 与初始数据由两份手工 SQL 维护。`test` 使用 JUnit 5、本地 MySQL 和真实随机端口 HTTP/mTLS，不使用 Mockito。
 - 默认端口为 `18106`。Health、Liveness、Readiness、Info 与 Prometheus 使用同一应用 Listener；Endpoint Discovery、JMX 和健康详情披露关闭。
 - Reactor Enforcer 继续禁止该切片未使用的 Nacos、Redis、RabbitMQ、XXL-Job、Compensation Event、Spring Cloud Gateway 与 Mockito；数据库和 mTLS 所需依赖由自动门禁精确锁定。
 - PLT-I20 每次在只读 Repeatable Read 边界捕获当前配置，事务外完整校验并返回全量 typed Snapshot；不实现 ETag、`If-None-Match`、`304` 或持久化 Snapshot。
@@ -235,7 +235,7 @@ paytech-foundation/
 - 数据库密码、RabbitMQ/Redis 密码、KMS/Secrets Manager 凭据、证书和 Token 不存入 Nacos；Nacos 只保存 Secret Reference 或非敏感参数。
 - Nacos 不成为业务事实、幂等状态、锁或业务 Feature 数据库。
 
-## 9. MySQL、MyBatis 与 Migration
+## 9. MySQL、MyBatis 与手工 SQL
 
 ### 9.1 部署边界
 
@@ -247,17 +247,17 @@ paytech-foundation/
 - 备份、恢复演练、容量和性能可以按共享实例管理，但数据所有权不能因此合并；
 - Vault 在处理真实敏感数据前重新评估独立实例和更严格网络/审计边界。
 
-### 9.2 Flyway 的作用
+### 9.2 手工 SQL 的作用
 
-Flyway 保存数据库从空库演进到当前版本的可执行、可审计历史：
+数据库结构由人工审查、人工执行的普通 SQL 管理：
 
 - PDManer 继续作为物理设计源；
-- 版本化 Migration 负责创建和演进真实数据库；
-- 每个服务数据库拥有自己的 `flyway_schema_history`；
-- 已应用 Migration 不得重写，修正必须创建新版本；
-- 一旦数据库实现获批，PDManer、Migration、DataObject/Mapper/Repository 和 Testcontainers 测试必须在同一变更中保持一致；DataObject 类型使用业务实体名，不加 `DO` 后缀。
+- 每个服务保留一份反映当前完整结构的 Schema DDL；
+- 每个服务所有必要初始数据集中在一份 DML，禁止用 Java Seed 对象图重建；
+- SQL 变更必须在评审记录中说明执行顺序、影响与回滚方式，应用不得自动执行；
+- 一旦数据库实现获批，PDManer、DDL/DML、DataObject/Mapper/Repository 和本地 MySQL 测试必须在同一变更中保持一致；DataObject 类型使用业务实体名，不加 `DO` 后缀。
 
-除已批准并实现的 Platform Support Phase A 21-table Migration 外，其余核心业务数据库实现仍停留在 PDManer 设计阶段，不创建 `V1__initial_schema.sql` 或业务表。本地 Compose 初始化脚本只为未来启动准备相互隔离的空数据库和最小账号，并包含 Nacos 自身所需的技术表。
+Platform Support Phase A 已实现 21-table 手工 Schema 与初始化 DML。其余核心业务数据库实现仍停留在 PDManer 设计阶段；本地 Compose 初始化脚本只准备相互隔离的数据库、最小账号以及中间件自身所需技术表。
 
 ## 10. RabbitMQ 基线
 
@@ -315,7 +315,7 @@ RabbitMQ 是 MVP 唯一业务 MQ，不再并行评估 RocketMQ。
 
 ## 12. Redis 与 Gateway
 
-- Redis 早期使用单机部署，不复用开发者已有的宿主机 Redis。Operations Gateway 自动测试是明确例外：复用仓库专用 `mor-local` Compose Redis，使用运行级唯一 Namespace 和受限清理，不使用 Testcontainers。
+- Redis 早期使用单机部署。开发和测试统一复用仓库专用 `mor-local` Compose Redis，使用运行级唯一 Namespace 和受限清理，不使用 Testcontainers。
 - 普通同步/Reactive Redis 操作使用 Spring Data Redis + Lettuce；非 Gateway 服务需要锁、可过期信号量等明确协调能力时可按 `paytech-redis-starter` 约束使用 Redisson。
 - Operations Gateway 不依赖 `paytech-redis-starter`，不创建 Blocking/Reactive Redis Template、阻塞连接或 Redisson Client，只使用 `ReactiveRedisConnectionFactory` 和 Reactive Lua 执行。
 - Gateway Rate Limit 使用原子 Lua Token Bucket；一次请求的 Route/IP/Subject 等适用维度全量通过后才统一扣减。

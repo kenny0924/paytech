@@ -59,7 +59,7 @@ Code-MoR 继承模块隔离思想，但将 Dubbo `facade-service` 改为 Spring 
         │   ├── auto/                    # 默认执行的内部闭环测试
         │   ├── manual/                  # 显式 profile 才能运行的人工联调
         │   └── test/                    # Builder/Mocker/Simulator/Checker 等基础设施
-        └── resources/                   # auto/manual 配置、migration 和 fixture
+        └── resources/                   # auto/manual 配置和 fixture
 ```
 
 模块职责：
@@ -69,7 +69,7 @@ Code-MoR 继承模块隔离思想，但将 Dubbo `facade-service` 改为 Spring 
 | 父工程 | 聚合模块、统一版本、插件和依赖管理 | `pom`，不运行 |
 | `api` | 内部 HTTP 契约：`@HttpExchange` 接口、传输 DTO 和契约枚举 | 可发布 JAR，不运行 |
 | `web` | Spring Boot 入口、业务实现、持久化和适配器 | 唯一业务部署单元 |
-| `test` | `auto/manual` 测试、测试数据 DSL、所需 Testcontainers 和外部系统 Simulator | 不发布、不部署 |
+| `test` | `auto/manual` 测试、测试数据 DSL、本地中间件连接和外部系统 Simulator | 不发布、不部署 |
 
 默认依赖方向：
 
@@ -133,7 +133,7 @@ api-gateway-test ────→ api-gateway-web
 - `api-gateway-web` 使用 Spring Cloud Gateway Server WebFlux 5.0.3、OAuth2 Resource Server JWT、Spring Data Redis Reactive/Lettuce Lua、Actuator 和 Micrometer；它负责入口、Access JWT 与 Channel/Actor 校验、受信上下文、Guard、路由、请求 ID、结构化访问日志和健康/指标，不处理账号密码登录、页面聚合或业务编排。
 - 公共面只包含 `POST /api/operations/auth/v1/login`、`POST /api/operations/auth/v1/refresh` 和 `POST /api/operations/auth/v1/logout` 三条静态精确路由。Catalog 以 `HttpMethod + rawPath` 和空 Query 匹配，并为每条路由显式指定唯一 Operations BFF 路径 `/auth/v1/login`、`/auth/v1/refresh` 或 `/auth/v1/logout`；没有通配或前缀改写。未匹配 Operations API 在 Gateway 本地返回错误，不转发给 Simulator/未来 BFF。Operations BFF、Platform Support 认证代码和前端不属于本实现。
 - 生产模块禁止 MVC/Servlet、Foundation Redis/Caffeine/MVC Starter、Redisson、Nacos Client、Testcontainers、Mockito、Platform/core Client、Redis Template（包括 Reactive Template）/阻塞 Connection、手工 Reactor Blocking/Subscription 和应用自有动态 Route Repository。路由只来自三条编译时 Catalog 定义，Discovery Locator、Redis Route Repository、Retry 和原始 Path Metric Tag 均显式关闭。
-- `api-gateway-test` 以 Compile Scope 依赖 `web`，从真实随机端口 Gateway 入口经过完整生产链，并通过真实协议连接 HTTPS JWKS 和有状态 Operations BFF Simulator。它不引入 Mockito/Testcontainers；Redis 使用唯一已批准例外，只连接已运行的 `127.0.0.1:16379` 仓库 Compose Redis，只接受 `PAYTECH_REDIS_PASSWORD`，每次运行使用唯一 Namespace 并只以 `SCAN` 清理；测试不启动 Docker/Testcontainers，不连接开发者 `6379` Redis。
+- `api-gateway-test` 以 Compile Scope 依赖 `web`，从真实随机端口 Gateway 入口经过完整生产链，并通过真实协议连接 HTTPS JWKS 和有状态 Operations BFF Simulator。它不引入 Mockito/Testcontainers；Redis 只连接已运行的 `127.0.0.1:16379` 仓库 Compose Redis，只接受 `PAYTECH_REDIS_PASSWORD`，每次运行使用唯一 Namespace 并只以 `SCAN` 清理；测试不启动 Docker/Testcontainers，不连接开发者 `6379` Redis。
 - 默认 `auto` 包含架构和真实 HTTP E2E 验收。`./mvnw clean verify` 之后还必须独立运行两个 Node 门禁；JaCoCo 对未舍入 Instruction/Branch 同时要求 `>= 90%`，只排除精确的 `ApiGatewayApplication`，并校验新鲜度与编译类一致性。
 - `api-gateway-web` 产出普通 JAR 和可执行 `-exec.jar`；`api-gateway-test` 跳过 install/deploy 且不产出可部署 JAR。Application/Management 默认端口分别为 `18080`/`19080`，健康组成与运行命令见 [`api-gateway/README.md`](../api-gateway/README.md)。
 
@@ -145,7 +145,7 @@ Platform Support 当前实际仓库结构是：
 platform-support-service/
 ├── pom.xml
 ├── platform-support-api/               # PLT-I20 @HttpExchange 与不可变 typed DTO
-├── platform-support-web/               # MVC、Flyway/MyBatis、初始化与 Snapshot Provider
+├── platform-support-web/               # MVC、MyBatis、mTLS 与 Snapshot Provider
 ├── platform-support-test/              # MySQL、HTTP、mTLS、架构与覆盖率 auto 门禁
 ├── docs/database/                       # 已批准的完整 PDManer 设计输入
 └── README.md
@@ -158,9 +158,9 @@ platform-support-test ────→ platform-support-web ────→ platf
 ```
 
 - `platform-support-api` 当前只发布有真实 Gateway 消费者的 PLT-I20 `@HttpExchange` 查询和不可变 DTO；成功调用每次返回完整 typed Snapshot，不使用 ETag/304。
-- `platform-support-web` 实现 Spring MVC/Actuator、Phase A Flyway/MyBatis 21-table 投影、确定性 Seed、mTLS Workload 授权和 Snapshot 读取/校验/组装；它不实现 Gateway 运行时消费。
-- `platform-support-test` 通过 Testcontainers MySQL、真实随机端口 HTTP/mTLS、生产配置与架构测试验证完整生产链，不使用 Mockito、共享数据库、Redis、MQ 或 Nacos。
-- Reactor Enforcer 允许该切片所需的 JDBC/MySQL/Flyway/MyBatis/Security，仍禁止 Nacos、Redis、MQ、XXL-Job、Gateway、Compensation Event 与 Mockito。
+- `platform-support-web` 实现 Spring MVC/Actuator、Phase A MyBatis 21-table 投影、mTLS Workload 授权和 Snapshot 读取/校验/组装；Schema 与初始数据由 `docs/database/sql` 下两份手工 SQL 维护，应用启动不执行 SQL。
+- `platform-support-test` 通过仓库 `local-environment` MySQL、真实随机端口 HTTP/mTLS 和少量领域场景验证完整生产链，不使用 Mockito 或 Testcontainers。
+- Reactor Enforcer 允许该切片所需的 JDBC/MySQL/MyBatis/Security，仍禁止 Flyway、Testcontainers、Nacos、Redis、MQ、XXL-Job、Gateway、Compensation Event 与 Mockito。
 - Web 默认监听 `18106`，Actuator 使用同一 Listener；测试模块跳过 install/deploy，Web 同时产出普通 JAR 和可执行 `-exec.jar`。
 - 当前切片不实现认证/Tenant IAM 命令、API/Route/Guard 管理、限流运行态、Gateway Snapshot 消费、补偿事件或部署配置。任何此类能力都必须作为获批垂直切片按 TDD 增量加入。
 - 详细设计、实施步骤和运行方式分别见[基础设计](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md)、[实施计划](../docs/superpowers/plans/2026-09-01-platform-support-application-foundation.md)和 [`platform-support-service/README.md`](../platform-support-service/README.md)。
@@ -346,7 +346,7 @@ Domain Service → Repository interface → RepositoryImpl → Mapper → 本系
 - 每个核心系统只能访问自己的数据库，禁止跨库查询、跨库写入或共享表。
 - 更新状态时携带期望旧状态或版本号；更新行数不为预期值时抛出包含上下文的异常。
 - `dataobject` 中的数据库映射对象直接使用业务实体名，不追加 `DO` 后缀，也不得作为公共接口对象返回。
-- 表、字段、索引、migration 与 DataObject/Mapper 的设计必须和项目 PDManer 模型同步；详细规则见 `DATABASE_DESIGN_GUIDE.md`。
+- 表、字段、索引、手工 DDL/DML 与 DataObject/Mapper 的设计必须和项目 PDManer 模型同步；详细规则见 `DATABASE_DESIGN_GUIDE.md`。
 
 ### 5.5 外部集成
 
@@ -442,7 +442,7 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] Processor 未依赖 HTTP 类型，也没有为单一实现创建空泛的抽象基类或公共上下文。
 - [ ] Domain Service 与 Repository 使用业务语言命名。
 - [ ] 只访问本系统数据库。
-- [ ] DataObject 类型名没有 `DO` 后缀；数据库结构已使用项目统一 PDManer 模板设计，并与 migration、DataObject、Mapper 和 Repository 保持一致。
+- [ ] DataObject 类型名没有 `DO` 后缀；数据库结构已使用项目统一 PDManer 模板设计，并与手工 DDL/DML、DataObject、Mapper 和 Repository 保持一致。
 - [ ] 事务覆盖本地原子操作，事件在提交后可靠发布。
 - [ ] 状态更新校验旧状态/版本并处理并发冲突。
 - [ ] 异常信息包含必要业务上下文。
