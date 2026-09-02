@@ -314,7 +314,7 @@ assertNull(production.getProperty("server.ssl.enabled"));
 assertNull(production.getProperty("server.ssl.client-auth"));
 ```
 
-Add Maven Enforcer bans for `org.springframework.boot:spring-boot-starter-security` and `org.springframework.security:*`, plus filesystem assertions that no `integration/security`, `InternalWorkloadSecurityConfiguration`, local HTTP handler or TLS resources remain.
+Add Maven Enforcer bans for `org.springframework.boot:spring-boot-starter-security` and `org.springframework.security:*`. Verify removal of `integration/security`, `InternalWorkloadSecurityConfiguration`, the local HTTP handler and TLS resources through the reviewed Git diff and final exact scan; do not add source-text or file-existence change-detector tests.
 
 - [ ] **Step 3: Verify the Platform tests are red**
 
@@ -611,4 +611,3 @@ git diff HEAD^ --name-status
 ```
 
 Do not cherry-pick into a dirty main checkout. Report any overlapping dirty files—especially Gateway Guard files—and provide the isolated commit SHA for later semantic integration.
-
