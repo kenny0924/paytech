@@ -33,7 +33,7 @@
 - Consumes: the approved spec and shared PDManer template.
 - Produces: an independent executable oracle for exact table, field, index, relation, CHECK and forbidden-field contracts.
 
-- [ ] **Step 1: Declare the exact test-owned field and index manifests**
+- [x] **Step 1: Declare the exact test-owned field and index manifests**
 
 Require the three tables and all 30 fields with exact MySQL type, length, nullability and primary-key metadata. Require:
 
@@ -43,7 +43,7 @@ t_vault_protect_request: uk_vault_protect_request(caller_service,idempotency_key
 t_vault_access_event: idx_vault_access_record(record_id,create_time), idx_vault_access_caller(caller_service,create_time), idx_vault_access_request(request_id)
 ```
 
-- [ ] **Step 2: Assert the exact relationships and safety exclusions**
+- [x] **Step 2: Assert the exact relationships and safety exclusions**
 
 Require both `record_id -> t_vault_record.record_id` `n:1` relationships. Reject fields matching:
 
@@ -53,12 +53,12 @@ environment|tenant|binding|resource|plaintext|raw_value|masked|blind_index|key_v
 
 Allow the specifically approved `value_fingerprint`, `request_hash`, `ciphertext`, `encryption_nonce`, `wrapped_dek` and `kms_key_ref` fields only in their approved tables.
 
-- [ ] **Step 3: Assert deterministic generation and documentation alignment**
+- [x] **Step 3: Assert deterministic generation and documentation alignment**
 
 Require empty connection metadata, one Diagram Group, deterministic IDs, template digest
 `51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540`, byte-for-byte `--check`, and physical-decision coverage of the four named CHECK contracts.
 
-- [ ] **Step 4: Run the focused test and capture RED**
+- [x] **Step 4: Run the focused test and capture RED**
 
 Run:
 
@@ -83,26 +83,26 @@ Expected: FAIL because the Vault generator, manifest, policy, project model and 
 - Consumes: Task 1 exact contract and `agent-docs/templates/pdmaner/template.pdma.json`.
 - Produces: deterministic `TABLES`, `RELATIONS`, `CHECK_CONTRACTS`, `DIAGRAM_GROUPS`, model generation, structural projection and `--check` APIs.
 
-- [ ] **Step 1: Establish the independent repository boundary**
+- [x] **Step 1: Establish the independent repository boundary**
 
 Add `/vault-service/` beside the other independently versioned repositories in the root `.gitignore`. Initialize
 `vault-service` on branch `main` and add the same OS/IDE, Java output, runtime, local-secret and PDManer-backup ignores
 used by the existing database-design service repositories. This must happen before generation so the generated model
 is never accidentally tracked by the workspace repository.
 
-- [ ] **Step 2: Define a narrow schema DSL**
+- [x] **Step 2: Define a narrow schema DSL**
 
 Provide validated constructors for field, primary key, unique/access index, relationship and table. Enforce lower
 `snake_case`, 32-character names, exactly one Snowflake `BIGINT` primary key, exact nullability, explicit Chinese
 names/descriptions and immutable-versus-mutable audit timestamps.
 
-- [ ] **Step 3: Declare the three-table production manifest**
+- [x] **Step 3: Declare the three-table production manifest**
 
 Encode every field and index from spec section 8. Use `ascii/ascii_bin` for `token`, `data_type`, `token_mode`,
 `caller_service`, `idempotency_key`, `action`, `purpose`, `outcome`, `result_code` and `policy_version`. Declare the two
 local Record relationships and ensure relation fields have left-prefix indexes.
 
-- [ ] **Step 4: Declare sidecar policy contracts**
+- [x] **Step 4: Declare sidecar policy contracts**
 
 Export these exact named CHECK contracts:
 
@@ -115,13 +115,13 @@ ck_vault_access_outcome
 
 Also declare the one `vault_core` Diagram Group and the forbidden-table/field allowlists used by production validation.
 
-- [ ] **Step 5: Implement deterministic template derivation**
+- [x] **Step 5: Implement deterministic template derivation**
 
 Clone the approved template, set model name `Code-MoR Vault Database V1`, clear `dbConn`, `dbConns` and
 `profile.default.dbConn`, normalize BIGINT/Date/Binary Java/MyBatis mappings, enforce naming rules, build entities,
 indexes, correlations and one diagram, then serialize with two-space indentation and one trailing newline.
 
-- [ ] **Step 6: Generate the model**
+- [x] **Step 6: Generate the model**
 
 Run:
 
@@ -141,13 +141,13 @@ Expected: write `vault-service/docs/database/vault.pdma.json` and report the exa
 - Consumes: generated model totals/digests and the approved spec.
 - Produces: an independently versioned Vault database-design project with a reviewable physical baseline.
 
-- [ ] **Step 1: Write the physical decisions**
+- [x] **Step 1: Write the physical decisions**
 
 Document exact totals and SHA-256 digests, template derivation, field types, binary collations, indexes, relationships,
 CHECK sidecars, Protect/Stable concurrency, encryption/AAD, audit failure behavior, explicit exclusions and the pending
 PDManer 4.9.3 in-app review.
 
-- [ ] **Step 2: Run focused validation**
+- [x] **Step 2: Run focused validation**
 
 Run:
 
@@ -173,18 +173,18 @@ Expected: all commands pass and the check command reports no model drift.
 - Consumes: Tasks 2–3 generated totals and current authority boundary.
 - Produces: consistent navigation stating that Vault has a three-table generated design while Java/runtime work remains unimplemented.
 
-- [ ] **Step 1: Add a precise supersession notice**
+- [x] **Step 1: Add a precise supersession notice**
 
 Point all Vault/database routing to the approved spec and generated physical decisions. State that the previous Binding,
 mTLS, complex lifecycle and broad audit design is historical for current V1; preserve unchanged PCI/non-card and
 business-ownership boundaries.
 
-- [ ] **Step 2: Update repository layout and current phase**
+- [x] **Step 2: Update repository layout and current phase**
 
 List `vault-service` as an independent database-design project. Record actual model totals and explicitly state that it
 contains no Java, Migration, database, KMS, authentication or deployment implementation.
 
-- [ ] **Step 3: Run final verification**
+- [x] **Step 3: Run final verification**
 
 Run:
 
@@ -198,3 +198,14 @@ git diff --check
 
 Expected: focused Vault validation, the full PDManer suite, requirements tests, deterministic generation and whitespace
 validation all pass. Report PDManer 4.9.3 in-app manual review as pending.
+
+## Completion Evidence
+
+- Completed: 2026-09-02.
+- Parent generator/oracle history through `c67eadf` and independent `vault-service` commit `4e7bc4a` freeze the generated 3-table / 30-field / 3-non-PK-unique-index / 4-access-index / 2-local-`n:1` / 0-one-to-one / 1-`vault_core` model.
+- `node --test scripts/pdmaner/vault-model.test.mjs`: PASS, 11 tests / 0 failures.
+- `node --test scripts/pdmaner/*.test.mjs`: PASS, 488 tests / 0 failures. Node emitted the pre-existing experimental SQLite warning.
+- `node scripts/pdmaner/vault/generate-vault-model.mjs --check`: PASS, model current with exact approved totals.
+- `npm --prefix requirements-site test`: PASS, build succeeded and 123 tests / 0 failures. Vinext emitted its existing dynamic-route classification notice.
+- `git diff --check`: PASS.
+- PDManer 4.9.3 in-app review remains pending; no Vault Java/Maven, Flyway Migration, physical database, KMS integration, runtime authentication or deployment implementation exists.

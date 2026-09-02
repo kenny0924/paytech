@@ -1,11 +1,17 @@
 # Vault Service 架构与数据保护规范
 
-最后更新：2026-08-24
-状态：已确认的技术基础设施架构基线；本文不授权创建 Java 脚手架、PDManer 物理模型、Migration 或运行环境
+最后更新：2026-09-02
+状态：未被当前 V1 取代的安全边界仍有效；其余内容是历史架构记录
+
+> **当前 V1 权威与取代范围：** [Vault Minimal Database Design](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[VAULT_PHYSICAL_DECISIONS.md](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和生成的 [vault.pdma.json](../vault-service/docs/database/vault.pdma.json)共同管理当前 API、调用者识别假设、Token、密码学持久化、Protect 幂等、三表拓扑和本地访问审计。本文此前要求的 Binding/Bind/Confirm/Copy、强制 mTLS/Workload Identity、广泛 API 与复杂 Record 生命周期、18 表拓扑、Replay Capsule/轮换任务等复杂幂等以及 Platform Audit/WORM 审计均在被新设计取代处仅为历史，不能作为当前 V1 实现要求。当前模型精确为 3 表 / 30 字段 / 3 个非主键唯一索引 / 4 个访问索引 / 2 条本库 `n:1` 关系 / 0 条一对一关系 / 1 个 `vault_core` Diagram Group。
+>
+> 当前 V1 接受普通内部 HTTPS、必需的 `X-Caller-Service` Header 与静态 `caller_service + action + data_type + purpose` Allowlist 作为 MVP 信任假设。该 Header 可被内部调用方伪造，只能 best-effort 防止误用，不是 mTLS、Workload Identity 或其他强服务认证；当前三表模型也没有 Binding。`vault-service` 仅包含数据库设计资产，没有 Java/Maven、Flyway Migration、物理数据库、KMS 集成、运行时认证或部署实现。自动模型门禁已通过，但 PDManer 4.9.3 应用内人工评审仍待完成。
+>
+> 本文继续生效的部分是：Vault 只保护获批的可恢复非卡敏感值、永不拥有业务含义、内部专用且不经 Gateway/BFF/浏览器暴露、禁止任何服务直读 Vault 数据库、PAN/CVV/CVC/完整磁道/卡有效期/PIN/PIN Block 排除、KMS/Secrets/对象存储/Provider Tokenization 职责分离，以及其他不与当前三表设计冲突的安全边界。
 
 ## 1. 文档目的
 
-本文定义 Code-MoR 集中式 Vault Service 的职责边界、调用协议、数据模型、安全控制、密钥生命周期、可靠任务和六大核心系统接入方式。后续涉及以下任务时必须先读取本文：
+本文保存 Code-MoR 集中式 Vault Service 的长期职责边界、安全控制和历史设计背景。涉及当前 API、Trust、Token、数据模型、幂等或审计时必须先读取上方当前 V1 权威，并只把本文未被取代的安全边界作为约束。后续涉及以下任务时必须先读取本文：
 
 - 把非卡类敏感字段从业务库密文迁移为 Vault Token；
 - 创建或修改 `vault-service`、`vault-api` 或 Vault Client；
@@ -20,7 +26,7 @@
 - [JAVA_PROJECT_STRUCTURE.md](./JAVA_PROJECT_STRUCTURE.md)：`*-api`、`*-web`、HTTP Client 和 DDD 分层；
 - [DATABASE_DESIGN_GUIDE.md](./DATABASE_DESIGN_GUIDE.md)：PDManer、Migration、ID、时间、索引和数据库安全；
 - [database/README.md](./database/README.md)：六库隔离和跨系统引用规则；
-- [database/PLATFORM_SUPPORT_DATABASE.md](./database/PLATFORM_SUPPORT_DATABASE.md)：IAM 和集中审计事实；中央 Retention/Legal Hold 自动化在 MVP 延期。
+- [database/PLATFORM_SUPPORT_DATABASE.md](./database/PLATFORM_SUPPORT_DATABASE.md)：Platform IAM/审计事实背景；当前 Vault V1 不依赖其 Workload Policy 投影或集中 Audit Relay。
 
 ## 2. 架构定位
 
@@ -30,8 +36,8 @@ Vault Service 是独立部署、独立数据库的安全基础设施，不是第
 
 - 业务系统决定为什么收集数据、数据属于哪个业务资源、业务留存依据和谁有业务访问权；
 - 业务系统定义并校验原始 Payload 的业务 Schema，拥有字段语义、规范化输入选择和 Geo/ASN/网络/设备等派生维度；Vault 只校验通用 Data Type、Purpose、Classification、大小和安全策略并保护不透明 Payload；
-- Vault 决定如何加密、令牌化、生成 Blind Index、脱敏、轮换密钥、执行解密控制和证明敏感访问；
-- Platform Support 拥有 Workload/User 授权主档和集中 Audit；中央 Retention Policy 与 Legal Hold 发布在 MVP 延期；
+- Vault 按当前 V1 决定如何执行信封加密、`REFERENCE/STABLE` 令牌化、静态 Purpose 策略、Protect 幂等和本地访问审计；Blind Index、脱敏、复杂轮换与其他扩展留待未来独立批准；
+- 当前 V1 不依赖 Platform Support Workload/User 授权投影或集中 Audit；旧方案中的对应职责和事件补送是历史目标；中央 Retention Policy 与 Legal Hold 同样未进入 V1；
 - KMS/HSM 拥有根密钥和密码学密钥生命周期；Secrets Manager 拥有系统 Secret；
 - 加密对象存储拥有文件正文和大体积原始材料；
 - Provider Tokenization 拥有支付卡数据和卡 Token 的生成、使用与还原能力。
@@ -45,16 +51,16 @@ flowchart LR
     FIN["Finance"]
     SUP["Platform Support"]
 
-    CCT -->|"Token + 已证明需要的元数据"| V["Vault Service\n非卡类敏感数据托管"]
-    COM -->|"Email/Phone Stable Value Token + Profile Payload"| V
-    RISK -->|"Token + 已证明需要的元数据"| V
-    FIN -->|"Token + 已证明需要的元数据"| V
-    SUP -->|"Token + 已证明需要的元数据"| V
+    CCT -->|"Protect/Reveal + Token"| V["Vault Service\n非卡类敏感数据托管"]
+    COM -->|"Stable/Reference Protect + Token"| V
+    RISK -->|"Protect/Reveal + Token"| V
+    FIN -->|"Protect/Reveal + Token"| V
+    SUP -->|"Protect/Reveal + Token"| V
     PAY -.->|"原则上不托管卡数据"| V
 
     V --> KMS["KMS / HSM\nKEK、HMAC Key、Token Lookup Key"]
-    V --> AUDIT["Platform Support Audit\n追加式敏感访问轨迹"]
-    SUP -->|"授权策略"| V
+    V -.-> AUDIT["Platform Support Audit\n历史未来目标，V1 不补送"]
+    SUP -.->|"历史未来授权投影，V1 不依赖"| V
     PAY --> PSP["Provider Hosted Fields / Tokenization"]
     SUP --> OBJ["加密对象存储"]
     SUP --> SM["Secrets Manager"]
@@ -86,9 +92,9 @@ Vault 只接受注册在受控 Data Type Catalog 中的非卡类敏感数据。�
 | 银行与收款信息 | IBAN、普通银行账号、受益人姓名和受益人受限信息 | `RESTRICTED_FINANCIAL` |
 | KYC/KYB 结构化数据 | 版本化尽调快照、结构化检查输入、受限 Feature Value 和 Screening 明细 | `RESTRICTED_COMPLIANCE` |
 
-KYC/KYB 与其他结构化业务 Payload 必须先由事实拥有系统按已发布的业务 Schema Version、字段白名单和大小上限校验。Vault 只登记通用 Data Type/Owner/Field/Purpose/Classification、允许的内容形态与大小边界，不拥有 Payload 内部的 Consumer、Order、Case 等业务字段；不接受无业务 Schema 证明的任意 JSON、二进制文件或可执行脚本。
+KYC/KYB 与其他结构化业务 Payload 必须先由事实拥有系统按已发布的业务 Schema Version、字段白名单和大小上限校验。当前 Vault V1 只识别通用 `data_type` 与静态 Caller/Action/Purpose Policy，不登记 Tenant、Owner Resource 或 Field 事实，也不拥有 Payload 内部的 Consumer、Order、Case 等业务字段；不接受无业务 Schema 证明的任意 JSON、二进制文件或可执行脚本。
 
-Client & Contract 的 Party Identity 首期只注册两个 Vault Data Type：`EMAIL_ADDRESS_V1` 与 `PHONE_E164_V1`。两者都是单一标量 Schema：前者按批准的 Email 规范化与脱敏规则处理，后者按 E.164 规范化与脱敏规则处理；禁止把整份 Party/Profile、姓名、生日、法律标识或地址包装成不透明 Payload。其他系统是否使用 Vault 仍按各自数据分类和 Data Type Catalog 独立审批，不能从 CCT 的简化规则反推。
+Client & Contract 的 Party Identity 首期只注册两个 Vault Data Type：`EMAIL_ADDRESS_V1` 与 `PHONE_E164_V1`。两者都是单一标量 Schema；调用方按批准的 Email/E.164 规则产生 Canonical Bytes，Vault 只对准确字节执行 `REFERENCE/STABLE` 语义，不负责业务规范化或脱敏。禁止把整份 Party/Profile、姓名、生日、法律标识或地址包装成不透明 Payload。其他系统是否使用 Vault 仍按各自数据分类和 Data Type Catalog 独立审批，不能从 CCT 的简化规则反推。
 
 ### 3.2 明确禁止进入 Vault 的数据
 
@@ -102,12 +108,12 @@ Client & Contract 的 Party Identity 首期只注册两个 Vault Data Type：`EM
 | Provider Card Token 的 Detokenization 能力 | 由 Provider 管理；Payment 只保存 Provider Token 及批准的最小卡片描述元数据，后者仍按内部分类保护 |
 | Provider/API/Webhook Secret、私钥、证书私钥、数据库密码 | Secrets Manager/KMS；业务库只保存 `secret_ref` |
 | 用户登录密码或可恢复密码 | 不进入 Vault、事件、日志或文件；内部 Operations 账号仅由 Platform Support 自有认证域保存批准的不可逆自适应校验值，Client/Partner/Consumer 的认证提供方仍待设计；任何可恢复密码均禁止保存 |
-| KMS 根密钥、KEK、HMAC Key 或明文 DEK | KMS/HSM；Vault 数据库只保存 Key Ref、Version 和 Wrapped DEK |
+| KMS 根密钥、KEK、HMAC Key 或明文 DEK | KMS/HSM；当前 Vault 数据库只保存非敏感 `kms_key_ref` 和 Wrapped DEK，不保存 Key Version 表/字段 |
 | KYC/KYB 文件、付款证据、合同文件和其他文件正文 | 加密对象存储；业务库保存 Platform `file_id + content_hash` |
 | Order、Payment、Refund、Risk Decision、Journal、Balance、Settlement 等业务事实 | 对应核心系统数据库 |
 | 任意未注册字符串、无边界 Payload 或大型原始报文 | 先完成分类和 Schema 注册；不能用 Vault 逃避业务建模 |
 
-Vault 必须在服务端按 `data_type_code + owner_system + field_code` 白名单校验请求，并校验 Purpose、Classification、大小与禁止数据安全策略。仅靠调用方声明“这不是卡数据”不构成控制；对注册为单一标量的通用类型可执行格式、长度和 Luhn 等拒绝性检测，但不得借此拥有业务聚合 Schema 或派生业务维度。无法确定类别时拒绝 Protect，而不是落入通用字符串类型。
+Vault 当前 V1 必须按 `caller_service + action + data_type + purpose` 静态 Allowlist、32 KiB 上限和禁止数据安全策略校验请求；它不接收或持久化 Owner/Field/Resource/Tenant 授权事实。仅靠调用方声明“这不是卡数据”不构成控制；可按注册 Data Type 执行格式、长度和疑似卡数据拒绝性检测，但不得借此拥有业务聚合 Schema、业务规范化或派生业务维度。无法确定类别时拒绝 Protect，而不是落入通用字符串类型。
 
 ### 3.3 托管不改变业务事实所有权
 
@@ -119,11 +125,11 @@ Vault Token 只是敏感值的安全引用。例如：
 - Risk 仍拥有 Due Diligence Case 和 Assessment，Vault 只保存受限快照或 Feature Value；
 - Platform Support 仍拥有 Notification、Audit 和 File Metadata，Vault 只保存其中允许集中托管的非 Secret 敏感字段。
 
-一个 Token 不得因为出现在另一个系统请求中就自动获得 Reveal 权限，完整 Token 永远不得进入外部 API、普通日志、MQ 或 BCR。默认跨系统长期持有仍使用 `CopyForBinding` 创建接收方专属 Record/Token。唯一已批准的复用例外是 Commerce Consumer Email/Phone 稳定 Value Token：可在 Commerce→Payment→Risk 内部同步最小契约中传递，Payment 只透传不持久化，Risk 仅按批准 Assessment Purpose 使用；各系统仍需独立通过 Workload/Resource/Purpose 授权，持有 Token 本身不授权 Reveal。
+完整 Token 永远不得进入外部 API、普通日志、MQ 或 BCR。当前 V1 没有 Binding 或 `CopyForBinding`；`REFERENCE/STABLE` Token 只是数据库定位符，不是设计上的授权凭据。唯一已批准的跨系统传递是 Commerce Consumer Email/Phone 稳定 Value Token，可在 Commerce→Payment→Risk 内部同步最小契约中传递，Payment 只透传不持久化。必须明确记录当前限制：任一能进入内部网络且通过静态 `X-Caller-Service + action + data_type + purpose` Allowlist 的调用方，只要取得 Token 就可 Reveal；Header 可伪造，因此这只是已接受的 MVP Trust Assumption，不是资源级 Binding 或强服务认证。
 
-## 4. 部署和 Java 工程边界
+## 4. 历史目标：部署和 Java 工程边界
 
-批准实施后，Vault 的推荐工程结构为：
+以下工程结构是先前架构目标，不是当前 V1 已实现或已授权范围；当前仅存在独立 `vault-service` 数据库设计项目：
 
 ```text
 vault-service/
@@ -146,9 +152,9 @@ vault-service/
 - Vault 数据库独立于六大业务库，禁止跨库事务、跨库查询、共享表和跨库外键；
 - 只有在用户批准物理设计后，才能从 `agent-docs/templates/pdmaner/template.pdma.json` 派生 Vault PDManer 模型。
 
-Vault 的入口只绑定内部网络。mTLS 和 Workload Identity 是强制条件；Nacos 服务名、来源 IP、Gateway Header 或请求体中的 `callerSystem` 都不能代替服务身份认证。
+Vault 的入口仍只允许内部网络且不得经 Gateway/BFF/浏览器访问。先前“mTLS 和 Workload Identity 是强制条件”的结论已被当前 V1 取代：V1 采用普通内部 HTTPS、必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 作为已接受的 MVP 信任假设，不构成强身份认证；mTLS 或其他强 Workload Identity 留待未来独立设计。
 
-## 5. 业务数据库保存形态
+## 5. 历史/未来目标：业务数据库保存形态
 
 业务数据库不再保存 Vault 托管字段的 `*_ciphertext` 或加密密钥引用。保存形态由事实拥有系统的真实消费者决定：
 
@@ -197,11 +203,13 @@ vault_metadata_hash                 # 仅存在跨系统校验或内容承诺消
 - 同一 Value Record 可有多个获批 Reference Binding。解除一个引用只 Retire 该 Binding，不得影响其他引用；仅在全部引用解除且适用 Retention、Legal Hold、备份和审计策略允许时，未来的受控销毁流程才可销毁共享 Token/密文；MVP 仍不提供 Destroy；
 - Commerce、Payment、Risk 不能从 Token 推导原值。Reveal 仍逐 Workload、Resource、Field、Purpose、Reason 授权并审计；Payment 常规风险透传不获得 Reveal 权限。
 
-## 6. 内部 HTTP 契约
+## 6. 历史目标：内部 HTTP 契约
+
+本节广泛接口、应用层信封、mTLS、Binding 和授权上下文是历史方案。当前 V1 仅保留批准设计中的同步 Protect/Reveal；确切 Header、请求、响应、失败语义和信任限制以上方当前 V1 设计为准。
 
 ### 6.1 公共安全上下文
 
-所有接口都使用 mTLS 建立调用服务身份，并携带：
+历史方案要求所有接口使用 mTLS 建立调用服务身份，并携带：
 
 - `request_id`、`trace_id`；
 - `idempotency_key`，适用于有状态命令；
@@ -266,7 +274,7 @@ DATA_SHARING
 
 为降低代理、日志和诊断组件误采集风险，`vault-client-starter` 实现双向应用层信封：所有含明文、Token 或 Blind Index 的请求使用 Vault 当前短期传输公钥加密；Protect、CopyForBinding、Reveal、Metadata 与 Blind Index 等会返回 Token、可选元数据或受控值的请求，同时携带调用方本次请求生成的临时响应公钥，Vault 使用该公钥加密响应。也可以使用经批准、与 mTLS 会话和请求绑定的双向会话密钥协议。两种方式都必须把 Workload Identity、Request ID、Purpose、Resource、Schema Version、请求 Hash 和响应公钥指纹绑定到签名/AAD；mTLS 仍然必须存在，应用层信封不能替代传输层认证。
 
-## 7. 核心数据流程
+## 7. 历史目标：核心数据流程
 
 ### 7.1 默认：Protect 后绑定（Pending-afterCommit）
 
@@ -406,11 +414,11 @@ UNBOUND
 
 已批准 pre-bind 的 Record 已处于 `ACTIVE`，但在 Owner Confirm 前仍禁止普通 Reveal。超过版本化 Confirmation Deadline 后，Vault 只把它登记为 `REFERENCE_RECONCILE` 候选并请求原 Owner 证明准确 Resource/Field 是否持有该 Binding；证明存在则补 Confirm，证明命令已确定终止且不存在引用才受控 Retire，UNKNOWN/超时则保留、限制 Reveal并告警。该流程不自动 Destroy，也不绕过 Legal Hold、访问审计或默认保留。
 
-## 8. Vault 逻辑数据模型
+## 8. 历史目标：18 表 Vault 逻辑数据模型
 
-以下是 Vault 自有数据库的书面逻辑基线，不是可执行 DDL。
+以下是已被当前三表设计取代的书面逻辑基线，不是当前可执行 DDL 或实现要求。
 
-当前共 18 张逻辑表；`vault_crypto_job / vault_crypto_job_item` 按两张表计数。MVP 不预建 Retention、Legal Hold 或 Destruction 表。
+历史方案共 18 张逻辑表；`vault_crypto_job / vault_crypto_job_item` 按两张表计数。当前 V1 只保留 `t_vault_record`、`t_vault_protect_request` 和 `t_vault_access_event`。
 
 ### 8.1 核心记录和密码学材料
 
@@ -463,7 +471,7 @@ erDiagram
 
 Vault 内部关系可以使用本库外键；`resource_id`、`tenant_scope_id`、`actor_id` 等跨系统引用绝不能建立物理外键。
 
-## 9. 状态机
+## 9. 历史目标：状态机
 
 ### 9.1 Vault Record
 
@@ -499,7 +507,7 @@ CREATED -> VALIDATED -> ACTIVE -> SUPERSEDED -> SANITIZED
 - `SUPERSEDED` 的 Wrapped DEK 在回滚保护窗口结束后清除，元数据和审计保留；
 - 所有 Record 完成 Rewrap 前，不得禁用仍被引用的 KMS Key Version。
 
-## 10. 密码学设计
+## 10. 历史密码学设计（冲突处以当前 V1 为准）
 
 ### 10.1 Token
 
@@ -598,7 +606,7 @@ Rotation、Item、Owner Ack 和 Cutover 都必须产生不含原值/完整 Index
 - Metadata Hash 不覆盖随机 Token、Ciphertext、Nonce、Wrapped DEK、KMS Key Version、当前状态或更新时间，因此 Rewrap 不影响业务内容 Hash；
 - Metadata 发生语义变化时递增 `vault_record_version`，业务系统必须以补偿任务同步新 Tuple 后再停用旧版本查询。
 
-## 11. 密钥生命周期
+## 11. 历史目标：密钥生命周期
 
 KMS/HSM 是密钥事实源，Vault 数据库只保存引用和非敏感状态投影。密钥用途必须分离：
 
@@ -633,7 +641,7 @@ Idempotency Replay Key 采用 `ACTIVE -> DECRYPT_ONLY -> RETIRED`：新 Capsule 
 
 Key 管理、Rewrap、禁用/Retire 和失败回滚都必须产生 Vault Access/Security Event，并补送到 Platform Support Audit。
 
-## 12. 授权和审计
+## 12. 历史目标：授权和审计
 
 ### 12.1 双层授权
 
@@ -680,7 +688,7 @@ Vault 在保存 Access Event 的同一事务写入唯一 `compensation_event`，
 
 `VaultSensitiveAccessRecorded` 的最小 Payload 只包含 `access_event_id`、Action、Owner System、Tenant/Resource 类型与稳定 ID、Data Classification、Purpose/Reason、Ticket Hash、Policy/Record Version、Result、Request/Trace ID、Metadata Hash 摘要和 Occurred Time。事件不得包含敏感值、完整 Token、Blind Index、Masked Value、Ciphertext 或 KMS Material。
 
-## 13. MVP 默认保留与处置延期
+## 13. 历史生命周期细化：默认保留与处置延期
 
 - Vault Record 在 MVP 默认保留，不自动归档、匿名化或销毁；不接收中央 Retention Policy 或 Legal Hold 投影，也不创建 Destruction Job/Item。
 - Retire 对 REFERENCE Record 解绑唯一业务 Binding；对 STABLE_VALUE 只解绑指定业务引用，其他 ACTIVE Binding 不受影响。只有最后一个引用解除时 Record 才可进入 `RETIRED`；Ciphertext、Metadata、Token Digest、Access Event 和状态历史继续保留。
@@ -689,7 +697,7 @@ Vault 在保存 Access Event 的同一事务写入唯一 `compensation_event`，
 - 备份继续加密、限制访问并执行受控恢复演练；恢复后必须保持 `RETIRED/ORPHANED` 状态和 Reveal 禁止语义，不能把非活动 Record 恢复为 ACTIVE。
 - 在承载真实受监管生产数据前，必须依据适用司法辖区完成 Retention、Legal Hold、备份副本、密码学擦除、物理删除、证明与异常恢复的端到端专项设计，并通过法律与合规评审。该未来设计不得由当前 `expires_time`、自由 Job 参数或运维脚本提前代替。
 
-## 14. 可靠任务与 XXL-Job
+## 14. 历史目标：可靠任务与 XXL-Job
 
 Vault MVP 不建设通用 Inbox/Outbox。自身可靠后台任务统一使用 `compensation_event + XXL-Job`，命令重试使用 `command_idempotency`：
 
@@ -715,9 +723,9 @@ Vault MVP 不建设通用 Inbox/Outbox。自身可靠后台任务统一使用 `c
 
 默认 Pending-afterCommit 的调用方 Bind/Retire 由调用方数据库中的 `compensation_event` 保证，而不是写入 Vault 的任务表或依赖分布式事务。已批准 pre-bind 改由稳定 `command_idempotency` 重放同一 Token/Binding，并在 Commit 后可靠补送 Owner Confirm；终止和长期未确认引用仍必须进入调用方 Retire 或 Vault `REFERENCE_RECONCILE` 闭环。
 
-## 15. 高可用、超时与降级
+## 15. 历史目标：高可用、超时与降级
 
-Vault 是敏感数据控制面和部分业务链路的数据面，推荐至少跨两个故障域运行多个无状态实例，数据库和 KMS 使用同区域高可用能力，并建立加密备份、受控恢复演练和容量告警。
+以下部署拓扑和运行规则是历史目标；当前 V1 未授权或实现部署、物理数据库、KMS 集成或运行时认证。
 
 固定运行规则：
 
@@ -732,7 +740,7 @@ Vault 是敏感数据控制面和部分业务链路的数据面，推荐至少�
 - 普通页面优先使用业务库中的 Masked Value，因此 Vault 短暂不可用不应阻塞纯列表展示；需要新 Protect 或完整 Reveal 的操作明确失败，不回退到本地明文存储；
 - Circuit Breaker 只能快速失败，不能绕过授权、返回旧明文或调用非批准的备用数据源。
 
-## 16. 六大核心系统接入映射
+## 16. 历史接入映射（未冲突的数据分类继续有效）
 
 | 系统 | 进入 Vault 的数据 | 业务库保留内容 | 特殊规则 |
 |---|---|---|---|
@@ -774,7 +782,7 @@ Consumer Card Data
 - 排除 PAN 和 Sensitive Authentication Data 只能缩小 CDE 与评估范围，不等于 Code-MoR 或 Vault 自动符合 PCI；
 - 实际适用的 SAQ 或 ROC、Code-MoR 与 Provider/云服务商之间的责任矩阵、网络分段和控制有效性，必须结合真实数据流由 QSA/收单方独立确认。不能仅凭文档名称、Token 化描述或“不保存 PAN”宣称合规。
 
-## 18. Code-PMX 参考项目的使用方式
+## 18. 历史实现参考：Code-PMX
 
 `/Users/kenny/Desktop/Workspace/Code-PMX/vault-service` 只作为实现经验参考，不允许原样复制到 Code-MoR。
 
@@ -796,7 +804,9 @@ Consumer Card Data
 - 删除本地明文 Key、测试凭据、环境 Secret 和对旧内部基础包的隐式依赖；
 - 测试必须覆盖真实 HTTP、数据库、KMS Simulator、并发状态转换、重复请求、授权失败、篡改、轮换、Retire 和 Orphan 保留，不使用方法级 Stub 绕过生产链路。
 
-## 19. 全局不变量
+## 19. 历史全局不变量与保留边界
+
+本节只有不与顶部当前 V1 权威冲突的非卡/PCI、业务所有权、内部专用、禁止直读数据库和密钥职责分离等安全边界继续有效。Binding、mTLS/Workload Identity、Token Digest/Replay Capsule、广泛生命周期/接口、复杂幂等、Platform Audit 与可靠任务条目均为历史要求。
 
 1. Vault 是安全基础设施，不是第七个核心业务系统。
 2. Vault 只托管非卡类敏感值，不拥有业务聚合或业务决定。
@@ -819,7 +829,9 @@ Consumer Card Data
 19. Vault MVP 自身不建设通用 Inbox/Outbox，可靠任务使用 `compensation_event + XXL-Job`，命令使用 `command_idempotency`，Handler 和消费方仍按业务唯一键与 Payload Hash 幂等。
 20. Vault 不跨库查询，不经 Gateway 对外暴露，不信任请求体自报身份，也不缓存敏感明文。
 
-## 20. 实施前检查清单
+## 20. 历史实施前检查清单
+
+本清单对应旧架构，不能用于宣称当前 V1 已实现。当前实现前门禁以批准的三表设计为准；现阶段只有已自动验证的 PDManer 设计资产，人工应用内评审仍待完成。
 
 - [ ] 已确认字段属于允许的非卡类 Data Type，而不是 PAN、Secret、文件正文或业务事实。
 - [ ] 已确认业务事实所有者、Tenant、Resource、Field、Purpose 和 MVP 默认保留口径。

@@ -14,7 +14,7 @@
 - 修改 DataObject、MyBatis Mapper、Repository 或与数据库结构有关的测试；DataObject 由包名表达持久化职责，类型名不追加 `DO` 后缀；
 - 数据库正向生成、反向解析或模型与数据库差异比较。
 
-不持有数据库的 Gateway、BFF、前端和无状态应用不得为了形式一致创建空 PDManer 模型。Vault 虽不是第七个核心业务系统，但拥有独立安全数据库，因此未来开始实现时同样必须从本模板派生模型，并额外遵守 `VAULT_SERVICE_ARCHITECTURE.md`。
+不持有数据库的 Gateway、BFF、前端和无状态应用不得为了形式一致创建空 PDManer 模型。Vault 虽不是第七个核心业务系统，但拥有独立安全数据库；其当前模型已从本模板派生，必须遵守[批准的 V1 三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[物理建模决策](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和 `VAULT_SERVICE_ARCHITECTURE.md` 中未被取代的非卡/PCI、业务所有权、内部专用与禁止直读数据库等安全边界。
 
 ## 2. 项目模板
 
@@ -76,6 +76,12 @@ risk-compliance-service/docs/database/risk-compliance.pdma.json
 platform-support-service/docs/database/platform-support.pdma.json
 ```
 
+六大核心系统之外，独立 Vault 数据库设计项目使用：
+
+```text
+vault-service/docs/database/vault.pdma.json
+```
+
 Client & Contract 导航：[V1 逻辑模型](./database/CLIENT_CONTRACT_DATABASE.md)、[现实场景与逐表字段映射](./database/scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md)、[实时交易资格与 Retention 延期设计](./plans/2026-08-23-cct-realtime-eligibility-retention-deferral-design.md)、[实施计划](./plans/2026-08-23-cct-realtime-eligibility-retention-deferral-implementation-plan.md)、[物理建模决策](../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) 和 [PDManer 模型](../client-contract-service/docs/database/client-contract.pdma.json)。
 
 Commerce 导航：[V1 逻辑模型](./database/COMMERCE_DATABASE.md)、[现实场景与逐表字段映射](./database/scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md)、[文档投影、审计与取消撤销精简设计（当前）](./plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md)、[隐私与 Fulfillment 移除设计（前序）](./plans/2026-08-24-commerce-privacy-fulfillment-simplification-design.md)、[Order Context 精简设计](./plans/2026-08-24-commerce-order-context-simplification-design.md)、[消费者分析与网络证据设计（前序）](./plans/2026-08-24-commerce-consumer-analytics-evidence-design.md)、[物理建模决策（当前）](../commerce-service/docs/database/COMMERCE_PHYSICAL_DECISIONS.md) 和 [PDManer 模型（当前 14 表、223 字段，已通过自动验证）](../commerce-service/docs/database/commerce.pdma.json)。
@@ -87,6 +93,8 @@ Finance 导航：[V1 逻辑模型](./database/FINANCE_DATABASE.md)、[现实场�
 Risk & Compliance 导航：[V1 逻辑模型](./database/RISK_COMPLIANCE_DATABASE.md)、[现实场景与逐表字段映射](./database/scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)、[Limit 7 表平衡精简设计](./plans/2026-08-28-risk-limit-balanced-simplification-design.md)、[Limit 平衡精简实施计划](./plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md)、[Decision Engine 19/8 平衡精简计划](./plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) + [Dispute 平衡优化设计](./plans/2026-08-28-risk-dispute-balanced-optimization-design.md) + [Dispute 平衡优化实施计划](./plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md)、[DD 19 表精简计划](./plans/2026-08-27-risk-dd-simplification-implementation-plan.md)、[首版 PDManer 历史记录](./plans/2026-08-26-risk-compliance-pdmaner-implementation-plan.md) 和 [PDManer 模型（当前 71 表、865 字段）](../risk-compliance-service/docs/database/risk-compliance.pdma.json)。Risk 自动验证已通过，PDManer 4.9.3 应用内检查仍是人工门禁。
 
 Platform Support 导航：[统一人工认证设计（认证权威）](../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md)、[57 表数据库精简设计（未受影响领域前序）](../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[57 表实施记录](./plans/2026-09-01-platform-support-database-simplification-implementation-plan.md)、[统一公共 API 动态控制面设计](../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)、[公共控制面 PDManer 实施计划](../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md)、[V1 逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景与逐表字段映射](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md) 和 [PDManer 模型（当前 63 表、822 字段）](../platform-support-service/docs/database/platform-support.pdma.json)。早期 Operations-only、平衡型和已取代物理记录只保留历史价值；自动验证已通过，PDManer 4.9.3 应用内检查仍是人工门禁。
+
+Vault 导航：[批准的 V1 三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[物理建模决策](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和 [PDManer 模型](../vault-service/docs/database/vault.pdma.json)。当前精确为 3 表、30 字段、3 个非主键唯一索引、4 个访问索引、2 条本库 `n:1` 关系、0 条 1:1 关系和 1 个 `vault_core` Diagram Group，自动验证已通过，PDManer 4.9.3 应用内人工检查仍待完成。`VAULT_SERVICE_ARCHITECTURE.md` 中强制 Binding、mTLS/Workload Identity、广泛 API/生命周期、18 表拓扑、复杂幂等和 Platform Audit 部分在被当前设计取代处仅为历史。当前 V1 只接受普通内部 HTTPS、必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 作为 MVP 信任假设，不构成强认证；没有 Java、Migration、物理数据库、KMS 集成/运行时认证或部署实现。
 
 Platform Support 当前不使用以 `_ver` 结尾的物理表名。可编辑配置默认采用带 `revision_no` 的单表 Revision；只有 Document Version、Webhook Endpoint Revision 和 Webhook Signing Secret 具有必须独立保留的历史身份。其 `*_hash` 字段必须属于当前 36 字段精确 Allowlist，并能指出实际完整性、防重、冲突检测或安全消费者。公共 API 控制面只允许 `t_gateway_target`、`t_gateway_route`、`t_gateway_route_header`、`t_gateway_route_query_param`、Route-owned `t_gateway_guard_rule` 和 `t_console_resource` 六张当前配置表；不得恢复旧 Gateway Policy/Binding/Selector/Version/Release/Snapshot/Ack/Tenant Override、通用技术配置或持久化 Integration Readiness。
 
@@ -122,6 +130,8 @@ PDManer 模型不能替代 migration，migration 也不能替代设计模型。�
 
 Platform Support 的评审入口包括[57 表数据库精简设计（未受影响领域前序）](../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[57 表实施记录](./plans/2026-09-01-platform-support-database-simplification-implementation-plan.md)、[统一公共 API 动态控制面设计](../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)、[公共控制面 PDManer 实施计划](../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md)、[逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md)与[生成模型](../platform-support-service/docs/database/platform-support.pdma.json)。
 
+Vault 的评审入口是[批准的 V1 三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[物理建模决策](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)与[生成模型](../vault-service/docs/database/vault.pdma.json)。该授权同样只到 PDManer 物理设计；Java、Migration、物理数据库、KMS 集成、运行时认证和部署均未实现。
+
 禁止只修改线上数据库、只修改 SQL、只修改 Java 字段或从数据库反向覆盖模型后不审查差异。
 
 ## 6. 数据库所有权
@@ -150,7 +160,7 @@ Platform Support 的评审入口包括[57 表数据库精简设计（未受影�
 ### 7.1 业务结构优先，安全引用不能代替数据模型
 
 - 业务所有者数据库必须显式定义当前业务需要理解、校验、查询或展示的字段。不得用一个 Vault Token、文件引用、无 Schema JSON 或 `extension` 字段代替尚未设计的数据结构。
-- Vault 只托管已分类、已注册 Schema 的敏感原值，不拥有字段的业务含义。业务表保存 Token 时，必须从字段名和注释看出它引用什么值、使用哪个 Data Type Schema、如何绑定资源以及允许怎样展示或检索。
+- Vault 只托管已分类、已注册 Data Type 的敏感原值，不拥有字段的业务含义。业务表保存 Token 时，必须从字段名和注释看出它引用什么值、使用哪个 Data Type、由哪个业务字段持有以及允许怎样使用；当前 V1 没有 Vault Resource Binding。
 - 结构化敏感 Field Set 也必须在 Vault Data Type Catalog 明确列出字段、类型、格式、Normalization、Mask Policy 和 Schema Version；禁止“整个对象加密后丢进 Vault，但没有任何地方说明对象结构”。
 - 如果字段按当前业务分类允许本地保存，应直接使用结构化列，并继续执行授权、日志、留存和 Legal Hold 控制；“不进 Vault”不等于“公开数据”。
 - CCT Party V1 是当前示例：Email、Phone 使用 `EMAIL_ADDRESS_V1`、`PHONE_E164_V1` 标量 Vault Token；姓名、日期、法律标识和地址结构化落 CCT；登录密码不进入 CCT、Vault、事件或日志。Platform 自有认证域保存全局 Account 的不可逆 Password verifier；Client/Partner Account 不等同于 CCT Party、Signatory 或法律主体，Consumer authentication 仍不在本设计范围。该示例不能推导为银行账户、税号、KYC/KYB 或其他系统字段自动不敏感，各系统必须独立分类。
@@ -255,10 +265,10 @@ Client & Contract 已批准把白名单内聚合根对应的 `business_change_re
 - 有效期统一使用半开区间 `[effective_from, effective_to)`，`effective_to IS NULL` 表示没有预定结束时间。
 - 大文本、二进制和 JSON 字段必须有真实使用场景、大小边界和查询策略，不能作为逃避字段建模的容器。
 - 先按业务系统、字段和使用场景完成数据分类，再决定结构化本地存储、Vault Token、不可逆 Hash/HMAC、Secrets Manager/KMS、对象存储或禁止采集；不得看到个人或财务字段就机械套用同一种存储方式。
-- 已明确为可恢复非卡敏感值且完成业务 Payload Schema 审批的字段由中央 Vault 保存；事实拥有系统定义并校验业务 Schema 与派生维度，Vault 只执行通用 Data Type/Purpose/Classification/大小/安全策略。业务模型必须标记数据分类、Purpose、Reveal 边界和留存要求，并保存必需 `*_vault_token`；`*_blind_index + *_blind_index_key_version` 仅在等值查询消费者存在时保存，`*_masked_value` 仅在展示消费者存在时保存，`vault_record_version` 与 `vault_metadata_hash` 仅在元数据并发/同步、跨系统校验或内容承诺消费者存在时保存。不得机械落完整套餐，也不得同时保存明文、本地密文或密钥。
-- 同一行存在多个 Token 且确实保存 Record Version/Metadata Hash 时，使用一致的字段前缀或拆分 `*_vault_ref` 子表，不能让一组通用版本/Hash 同时代表多个值。已有专项模型已经证明完整 Tuple 消费者的现行约束继续保留，不因其他系统精简而删除。
-- Vault Reference Binding 默认使用 `PENDING_AFTER_COMMIT`：Protect 后在业务本地事务保存 Pending Reference 与 `VAULT_BIND_REFERENCE` 补偿任务，提交后由统一 Dispatcher Claim 并幂等 Bind；Bind 成功前不得把新引用作为 Current 或允许 Reveal。该模式仍是未获专项批准场景的强制默认值。
-- `SYNCHRONOUS_PRE_BIND` 只能作为专项模型明确批准的例外并满足稳定 Resource/命令恢复/Owner Confirm/孤儿治理。Commerce Consumer Profile 是批准场景；Consumer Email/Phone 使用 Stable Value Tokenization。Checkout Network Evidence 不进入 Vault，不能作为 pre-bind 场景。
+- 已明确为可恢复非卡敏感值且完成业务 Payload Schema 审批的字段由中央 Vault 保存；事实拥有系统定义并校验业务 Schema、Canonical Bytes 与派生维度，Vault V1 只执行通用 Data Type/Token Mode/Purpose/大小/安全策略。业务模型必须标记数据分类、Purpose、Reveal 边界和留存要求，并保存必需 `*_vault_token`；当前 Vault V1 不返回 Blind Index/Key Version、Masked Value、Record Version 或 Metadata Hash，任何未来增加都需新的 Vault API/模型批准。不得同时保存明文、本地密文或密钥。
+- 已有业务模型中的多个 Token 必须继续使用语义明确的字段前缀；不能让一组通用元数据模糊代表多个值。历史设计中完整 Token/Version/Metadata Hash 或 Blind Index Tuple 不代表当前 Vault V1 已提供对应运行能力，后续实现必须先重新对齐三表 API 权威。
+- 当前 Vault V1 不建立 Reference Binding，也没有 Bind、Confirm、Copy 或 pre-bind API。Protect 在 Vault 单一本地事务中写入 Record、成功请求映射和访问事件后直接返回 Token；业务系统按自身获批模型保存 Token。此前 `PENDING_AFTER_COMMIT`、`VAULT_BIND_REFERENCE`、`SYNCHRONOUS_PRE_BIND`、Owner Confirm 和孤儿治理属于被[当前三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)取代的历史方案，不是 V1 强制默认值。
+- Current V1 uses ordinary internal HTTPS, a required `X-Caller-Service` header and a static `caller_service + action + data_type + purpose` allowlist. This accepted MVP trust assumption prevents only accidental misuse: the Header is spoofable and is not mTLS, Workload Identity or other strong service authentication. Checkout Network Evidence still does not enter Vault.
 - PAN、CVV/CVC、完整磁道数据和 PIN/PIN Block 不进入 Code-MoR 数据库或 Vault；Payment 只保存 Provider Token 与获准的卡片描述字段。Provider/API Credential 和私钥只保存 Secrets Manager/KMS 引用，大文件只保存 Platform `file_id + content_hash`。
 
 数据域只是可复用的类型起点。具体字段仍需检查长度、精度、非空、默认值和业务语义，不能因为选择了数据域就跳过评审。
@@ -267,10 +277,10 @@ Client & Contract 已批准把白名单内聚合根对应的 `business_change_re
 
 - 主键、业务唯一键和幂等键必须分别建模，不能用普通索引代替唯一约束。
 - 跨系统文件引用统一使用 Platform Support 返回的 `file_id + content_hash`；业务用途由独立的 purpose/type 字段表达，不用 `file_ref`、`content_ref` 或任意外部 URL 代替稳定 ID。
-- 每个存在异步发布或本地恢复任务的服务使用本库 `compensation_event`，与业务变化在同一事务登记；至少保存稳定 `event_key`、来源类型/ID/版本、事件类型、`schema_version`、不可变非敏感 Payload、`payload_hash`、执行状态、次数、下次执行时间、Claim Lease 与乐观锁版本，并以 `(source_type, source_id, source_version, event_type)` 保证同一事实只登记一次。成功记录允许删除，失败记录保留并告警；完整约束见 `COMPENSATION_EVENT_GUIDE.md`。
-- HTTP/内部命令幂等键使用非空 `caller_scope + operation_type + idempotency_key`；同键不同 `request_hash` 必须拒绝，不能只用可能跨调用方碰撞的裸 `caller_id`。
+- 每个存在异步发布或本地恢复任务的服务使用本库 `compensation_event`，与业务变化在同一事务登记；至少保存稳定 `event_key`、来源类型/ID/版本、事件类型、`schema_version`、不可变非敏感 Payload、`payload_hash`、执行状态、次数、下次执行时间、Claim Lease 与乐观锁版本，并以 `(source_type, source_id, source_version, event_type)` 保证同一事实只登记一次。成功记录允许删除，失败记录保留并告警；完整约束见 `COMPENSATION_EVENT_GUIDE.md`。当前 Vault V1 没有异步发布/恢复任务，也不建立 `compensation_event`。
+- HTTP/内部命令幂等键通常使用非空 `caller_scope + operation_type + idempotency_key`；同键不同 `request_hash` 必须拒绝，不能只用可能跨调用方碰撞的裸 `caller_id`。当前 Vault V1 Protect 是明确例外：唯一命名空间精确为 `(caller_service,idempotency_key)`，`request_hash` 覆盖 Caller、Data Type、Token Mode、Canonical Value Bytes 与 Purpose，且表中不保存 `operation_type`。
 - “同一 Scope 仅一条活动记录”使用规范化的非空 Scope Key/Hash 与 nullable `active_slot` 建立联合唯一约束：活动记录的 slot 固定为非空值，终态记录置空以保留多条历史。业务 Scope 的组成列不得直接以 `NULL` 充当通配符后依赖联合唯一约束拦截冲突；`NULL` 只允许用于这个明确设计的终态 slot。
-- 可检索非卡敏感标识必须保存 opaque Token；只有真实等值查询消费者存在时才保存按 Tenant/字段/Purpose 隔离的 HMAC Blind Index 及其同前缀 Key Version。跨系统使用必须由 Vault 按获批的发送方→接收方 Purpose 生成或明确授权同一 Purpose 覆盖两端，不能复用发送方本库查询 Index，接收方也不得跨 Purpose 使用。Masked Value、Vault Record Version 与 Metadata Hash 分别需要展示、元数据并发/同步、跨系统校验或内容承诺消费者，不与 Blind Index 机械绑定。标准 Key Version 名为 `<field>_blind_index_key_version`，超过 32 字符时可缩写为注释明确的 `<field>_blind_key_ver`；多个 Index 不得共用通用版本字段，不得使用普通 SHA。Blind Index 与不能直接还原原值的地域/网络/设备等派生维度仍是可关联假名化或准标识数据，必须最小授权、访问审计、禁止任意导出并纳入 Retention/删除治理。业务库不得缓存 Reveal 明文或 Vault 密文；不可检索 Secret 只保存 Secrets Manager/KMS 引用。
+- 可检索非卡敏感标识必须保存 opaque Token。当前 Vault V1 不提供 Blind Index、Masked Value、Record Version、Metadata Hash、Binding 或跨接收方复制能力；只有未来新的批准设计证明真实等值查询、展示、元数据并发/同步、跨系统校验或内容承诺消费者后，才可引入对应结构。V1 `STABLE` 模式仅按 `data_type + canonical value bytes` 通过服务端 Keyed HMAC 指纹在同一部署内收敛 Token；调用方拥有业务规范化。Token 和不可逆派生维度仍按可关联假名化或准标识数据治理，必须最小授权、访问审计、禁止任意导出并纳入未来 Retention/删除专项设计。业务库不得缓存 Reveal 明文或 Vault 密文；不可检索 Secret 只保存 Secrets Manager/KMS 引用。
 - 业务变更历史必须保存不可变触发来源、原因和聚合版本。领域专项表可使用 `trigger_type + trigger_id + reason_code + aggregate_version` 结构化列；经批准的通用行级历史可把等价元数据保存到受控 `snapshot_json._meta`。`actor_id/create_by` 只表示操作者，不能替代 Command、Event 或系统任务来源；使用行快照的通用模式时，可通过比较相邻版本获得 `from_status/to_status`，不强制额外建立这两个物理列。
 - 索引应由真实查询、排序和并发更新路径驱动，不为每个字段机械建索引。
 - 联合索引字段顺序必须对应主要访问路径，并记录设计理由。
@@ -315,13 +325,15 @@ CCT 37 表、Commerce 14 表、Payment 29 表、Finance 84 表、Risk 71 表与 
 
 Platform Support 的 57 表[数据库精简设计](../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)与[实施记录](./plans/2026-09-01-platform-support-database-simplification-implementation-plan.md)是未受公共控制面影响领域的前序基线；当前完整验证入口还包括[统一公共 API 动态控制面设计](../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)、[公共控制面 PDManer 实施计划](../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md)、[逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md)、[生成模型](../platform-support-service/docs/database/platform-support.pdma.json)及对应的 Manifest/Oracle 自动门禁。当前生成事实为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、7 个 Diagram Groups、31 条复合 FK、85 条具名 CHECK sidecar 契约和恰好 36 个 `*_hash` 字段。
 
+Vault 的三表设计也已通过独立 Oracle 和确定性再生成门禁：3 表、30 字段、3 个非主键唯一索引、4 个访问索引、2 条本库 `n:1` 关系、0 条 1:1 关系和 1 个 `vault_core` Diagram Group。其 PDManer 4.9.3 应用内检查仍待人工执行，且没有 Java、Migration、物理数据库、KMS 集成/运行时认证或部署实现。
+
 - [ ] 模型由项目内 PDManer 模板派生，文件可被 PDManer 4.9.3 或兼容版本打开。
 - [ ] JSON 语法有效，内部 ID、数据域、基础类型和关系引用完整。
 - [ ] 模型中没有 `PARTNER_ID`、Merchant 等错误术语或参考项目遗留域。
 - [ ] 模型中没有真实数据库连接和凭据。
 - [ ] 表和字段属于当前项目，没有跨库物理关系。
 - [ ] 异步事实与恢复任务使用本地 `compensation_event`，没有通用 Inbox/Outbox 或中央补偿表；消费幂等约束落在本地业务事实或投影。
-- [ ] 字段已先按所属系统和使用场景完成数据分类；可恢复非卡敏感值由事实拥有系统校验业务 Payload Schema，业务库保存必需 Vault Token，并只在有真实消费者时保存 Blind Index/Key Version、Masked Value、Record Version 或 Metadata Hash；已有专项设计证明需要的完整 Tuple 未被破坏。Vault Binding 默认使用 Pending-afterCommit；若采用已批准的同步 pre-bind，已验证预分配 Resource ID、稳定命令恢复、同 Token/Binding 幂等重放、提交前不可见、Owner Confirm、孤儿 Reconcile/Retire 和禁止自动 Destroy。本地不可逆派生字段也有明确授权与日志；MVP 默认保留、不自动销毁，真实受监管生产数据前完成 Retention/Legal Hold 专项设计与评审；卡数据、密码、Secret、私钥和大文件遵守各自边界。
+- [ ] 字段已先按所属系统和使用场景完成数据分类；可恢复非卡敏感值由事实拥有系统校验业务 Payload Schema，业务库保存必需 Vault Token。当前 Vault V1 不增加 Binding/Bind/Copy、Blind Index/Key Version、Masked Value、Record Version 或 Metadata Hash；`REFERENCE`/`STABLE` 与 Protect 请求幂等遵守三表设计。V1 默认保留、不自动销毁，真实受监管生产数据前完成 Retention/Legal Hold、共享 Stable Token 引用和受控销毁专项设计与评审；卡数据、密码、Secret、私钥和大文件遵守各自边界。
 - [ ] 表、字段、索引和约束具有明确业务含义及注释。
 - [ ] 所有物理表使用 `t_`，唯一索引使用 `uk_`，普通索引使用 `idx_`；中文显示名和逻辑 Catalog 未被技术前缀污染。
 - [ ] 每张新增表和关键字段能对应具体写入、查询、约束或审计场景；无法说明删除影响的结构已删除或推迟。
