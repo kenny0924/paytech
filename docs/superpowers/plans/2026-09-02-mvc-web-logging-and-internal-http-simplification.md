@@ -523,6 +523,7 @@ Expected: the full Gateway test suite, coverage and boundary checks pass without
 - Modify: `README.md`
 - Modify: `agent-docs/README.md`
 - Modify: `agent-docs/PROJECT_CONTEXT.md`
+- Modify: `agent-docs/DEVELOPMENT_CONVENTIONS.md`
 - Modify: `agent-docs/TECHNOLOGY_STACK.md`
 - Modify: `agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md`
 - Modify: `agent-docs/APPLICATION_ARCHITECTURE.md`
@@ -535,6 +536,7 @@ Expected: the full Gateway test suite, coverage and boundary checks pass without
 **Interfaces:**
 - Consumes: committed Foundation, Platform Support and Gateway runtime facts from Tasks 1-4.
 - Produces: one current architecture rule: public TLS at Nginx, trusted Client IP at Gateway, private HTTP between Java services.
+- Produces: one project-wide MVC rule: services reuse the Starter logging/global-error boundary and use the dedicated unavailable subtype only when HTTP status `503` is part of the caller contract.
 
 - [ ] **Step 1: Add documentation regression assertions or exact scans**
 
@@ -556,6 +558,11 @@ Nginx terminates public TLS and overwrites one X-Real-IP. API Gateway consumes t
 ```
 
 Do not replace whole shared files; edit only the affected paragraphs.
+
+In `DEVELOPMENT_CONVENTIONS.md`, preserve the two base failure categories while documenting
+`ServiceUnavailableException` as the narrow shared `ErrorException` subtype for an explicit safe `503` transport
+contract. MVC services must consume the Starter's global exception and Request/Response logging boundary rather than
+adding local `@RestControllerAdvice` or duplicate logging Filters.
 
 - [ ] **Step 3: Run root verification**
 
