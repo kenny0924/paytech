@@ -1,0 +1,17 @@
+---
+description: Enforces Code-MoR Java service contract and layering defaults
+globs: **/*.java
+alwaysApply: false
+---
+
+# Java 服务边界默认规则
+
+- 先读取 `agent-docs/DEVELOPMENT_CONVENTIONS.md` 和 `agent-docs/JAVA_PROJECT_STRUCTURE.md`；它们是完整权威。
+- `dataobject` 包中的数据库映射类型使用业务实体名，不加 `DO` 后缀，不跨 Repository 边界暴露。
+- 纯依赖赋值使用 `final` 字段和 Lombok `@AllArgsConstructor`；构造器有校验、复制、派生或资源配置逻辑时显式编写。
+- API DTO 和 MQ 契约使用 `String` 枚举 Code；内部业务枚举实现 `CodeEnum`，错误枚举按需实现 `CodeMessageEnum`。
+- 内部 `@HttpExchange` API 是 Method、Path、Header 和 DTO 的唯一契约；Controller 实现接口，不重复声明 MVC Mapping。
+- 应用 `context-path` 表达系统边界，API Path 表达业务能力；不要机械添加 `/internal`。
+- Processor 使用应用语义的请求和结果，不依赖 HTTP 类型；协议上下文由 Web/Security 基础设施处理。
+- 不为单个实现预建抽象基类。至少两个真实用例共享稳定流程与上下文后再提取。
+- 有界内部查询默认完整返回 typed DTO；没有负载证据和批准契约时不增加 ETag、`304` 或内容 Hash。

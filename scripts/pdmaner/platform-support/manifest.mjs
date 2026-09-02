@@ -3,8 +3,7 @@ import { TABLES as FILE_DOCUMENT_TABLES } from "./manifests/02-file-document.mjs
 import { TABLES as NOTIFICATION_TABLES } from "./manifests/03-notification.mjs";
 import { TABLES as WEBHOOK_TABLES } from "./manifests/04-webhook.mjs";
 import { TABLES as AUDIT_SECURITY_TABLES } from "./manifests/05-audit-security.mjs";
-import { TABLES as GATEWAY_TABLES } from "./manifests/06-gateway.mjs";
-import { TABLES as TECHNICAL_CONFIG_TABLES } from "./manifests/07-technical-config.mjs";
+import { TABLES as GATEWAY_CONTROL_TABLES } from "./manifests/06-gateway.mjs";
 import { TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
 
 export const TABLE_GROUPS = Object.freeze({
@@ -13,8 +12,7 @@ export const TABLE_GROUPS = Object.freeze({
   notification: NOTIFICATION_TABLES,
   webhook: WEBHOOK_TABLES,
   audit_security: AUDIT_SECURITY_TABLES,
-  gateway: GATEWAY_TABLES,
-  technical_config: TECHNICAL_CONFIG_TABLES,
+  gateway_control: GATEWAY_CONTROL_TABLES,
   reliability: RELIABILITY_TABLES,
 });
 
@@ -22,15 +20,17 @@ export const TABLES = Object.freeze(Object.values(TABLE_GROUPS).flat());
 export const RELATIONS = Object.freeze(TABLES.flatMap((table) => table.relations));
 
 const expectedGroupSizes = Object.freeze({
-  identity_access: 16,
-  file_document: 19,
-  notification: 14,
-  webhook: 11,
-  audit_security: 9,
-  gateway: 13,
-  technical_config: 8,
+  identity_access: 18,
+  file_document: 12,
+  notification: 9,
+  webhook: 8,
+  audit_security: 8,
+  gateway_control: 6,
   reliability: 2,
 });
+
+export const EXPECTED_TABLE_TOTAL = Object.values(expectedGroupSizes)
+  .reduce((total, size) => total + size, 0);
 
 for (const [groupKey, expectedSize] of Object.entries(expectedGroupSizes)) {
   const actualSize = TABLE_GROUPS[groupKey].length;
@@ -39,8 +39,8 @@ for (const [groupKey, expectedSize] of Object.entries(expectedGroupSizes)) {
   }
 }
 
-if (TABLES.length !== 92) {
-  throw new Error(`Platform Support 必须有 92 张表，当前为 ${TABLES.length}`);
+if (TABLES.length !== EXPECTED_TABLE_TOTAL) {
+  throw new Error(`Platform Support 必须有 ${EXPECTED_TABLE_TOTAL} 张表，当前为 ${TABLES.length}`);
 }
 
 if (new Set(TABLES.map((table) => table.defKey)).size !== TABLES.length) {

@@ -15,6 +15,7 @@ const expectedUseCaseIds = [
   "E2E-11",
   "E2E-12",
   "E2E-13",
+  "E2E-14",
 ];
 
 async function loadSequenceCatalog() {
@@ -110,6 +111,36 @@ test("all Console browser calls traverse their audience-specific BFF", async () 
         `${useCaseId} must route ${message.from} through ${expectedBff}`,
       );
       assert.equal(bffHop?.from, expectedBff, `${useCaseId} must leave Gateway through ${expectedBff}`);
+    }
+  }
+});
+
+test("Console responses never shortcut from a core system directly to Gateway", async () => {
+  const sequenceCatalog = await loadSequenceCatalog();
+  const consoleBffs = new Set([
+    "client_console_bff",
+    "partner_console_bff",
+    "operations_console_bff",
+  ]);
+
+  assert.ok(sequenceCatalog, "global use case sequence catalog must exist");
+  for (const [useCaseId, sequence] of Object.entries(sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES)) {
+    for (const [index, message] of sequence.messages.entries()) {
+      if (message.to !== "api_gateway") {
+        continue;
+      }
+      const senderType = sequenceCatalog.SEQUENCE_PARTICIPANTS[message.from]?.type;
+      if (senderType !== "core") {
+        continue;
+      }
+      const hasBffRequestToSender = sequence.messages
+        .slice(0, index)
+        .some((candidate) => consoleBffs.has(candidate.from) && candidate.to === message.from);
+      assert.equal(
+        hasBffRequestToSender,
+        false,
+        `${useCaseId} must return a Console response through its BFF before Gateway`,
+      );
     }
   }
 });
@@ -507,7 +538,16 @@ test("E2E-01 exposes a non-persisted CCT-I10 readiness diagnostic", async () => 
   assert.match(labels, /非持久化诊断.*不是交易证明/u);
   assert.match(labels, /Integration Readiness/u);
   assert.match(labels, /Routing Coverage/u);
-  assert.doesNotMatch(labels, /追加不可变 Eligibility Evaluation|ClientEligibilityChanged/u);
+  assert.match(labels, /当前 ACTIVE Tenant.*API Credential.*Scope.*Endpoint Revision.*Subscription/u);
+  assert.match(labels, /同步派生.*Fail-Closed/u);
+  const platformReadiness = messages.find(
+    (message) => message.from === "platform" && message.to === "client_contract"
+      && /READY \| NOT_READY \| RESTRICTED/u.test(message.label),
+  );
+  assert.ok(platformReadiness, "E2E-01 must expose the exact Platform readiness response");
+  assert.match(platformReadiness.label, /技术依赖失败.*不返回业务状态/u);
+  assert.doesNotMatch(platformReadiness.label, /UNKNOWN/u);
+  assert.doesNotMatch(labels, /冻结 Requirement Config|Readiness Evaluation|追加不可变 Eligibility Evaluation|ClientEligibilityChanged/u);
 });
 
 test("E2E-01 scopes Risk Case idempotency by typed Application namespace and role", async () => {
@@ -534,6 +574,204 @@ test("E2E-01 scopes Risk Case idempotency by typed Application namespace and rol
   assert.doesNotMatch(createCase.label, /按 application_id \+ submission_content_hash 幂等创建/u);
   assert.ok(returnCase, "E2E-01 must return the main Role Case by the same typed identity");
   assert.match(returnCase.label, /主 Role.*Typed.*身份/u);
+});
+
+test("E2E-01 authenticates a CUSTOMER Account and provisions its Client Tenant before readiness", async () => {
+  const sequenceCatalog = await loadSequenceCatalog();
+  const messages = sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES["E2E-01"].messages;
+  const labels = messages.map((message) => message.label);
+  const authenticationIndex = labels.findIndex((label) => /CUSTOMER.*Email\/Password.*Google/u.test(label));
+  const accountContextIndex = labels.findIndex((label) => /Account Context/u.test(label));
+  const draftApplicationIndex = labels.findIndex((label) => /CCT-I15 START_OR_RESUME.*DRAFT.*requested_by_account_id/u.test(label));
+  const provisionIndex = labels.findIndex((label) => /PLT-I17.*tenant_type=CLIENT.*owner_ref_id.*requested_by_account_id.*source_version.*payload_hash/u.test(label));
+  const uploadIndex = labels.findIndex((label) => /PLT-I04.*Account Context.*PENDING.*TENANT_ONBOARDING_OWNER.*tenant_id/u.test(label));
+  const finalSubmitIndex = labels.findIndex((label) => /CCT-I15 SUBMIT.*冻结.*File ID.*Risk/u.test(label));
+  const riskIndex = labels.findIndex((label) => /CCT_CLIENT_APPLICATION.*RCO-I11/u.test(label));
+  const activationIndex = labels.findIndex((label) => /激活 Client Tenant.*撤销 TENANT_ONBOARDING_OWNER.*授予 TENANT_OWNER/u.test(label));
+  const tenantSelectionIndex = labels.findIndex((label) => /PLT-I16.*选择.*Client Tenant Member/u.test(label));
+  const sessionRotationIndex = labels.findIndex((label) => /新建固定 Client Tenant Session.*撤销.*旧 Refresh Family/u.test(label));
+  const cookieReplacementIndex = labels.findIndex((label) => /替换 __Secure-client-refresh.*Path=\/api\/client\/auth\/v1/u.test(label));
+  const tenantContextIndex = labels.findIndex((label) => /Client Tenant Context Token.*不复用旧 Session/u.test(label));
+  const beneficiaryIndex = labels.findIndex((label) => /可选提交 Beneficiary Account/u.test(label));
+  const integrationConfigIndex = labels.findIndex((label) => /配置 API Credential、Webhook/u.test(label));
+  const readinessIndex = labels.findIndex((label) => /CCT-I10.*实时诊断/u.test(label));
+
+  for (const [name, index] of Object.entries({
+    authenticationIndex,
+    accountContextIndex,
+    draftApplicationIndex,
+    provisionIndex,
+    uploadIndex,
+    finalSubmitIndex,
+    riskIndex,
+    activationIndex,
+    tenantSelectionIndex,
+    sessionRotationIndex,
+    cookieReplacementIndex,
+    tenantContextIndex,
+    beneficiaryIndex,
+    integrationConfigIndex,
+    readinessIndex,
+  })) {
+    assert.ok(index >= 0, `E2E-01 must include ${name}`);
+  }
+  assert.ok(authenticationIndex < accountContextIndex);
+  assert.ok(accountContextIndex < draftApplicationIndex);
+  assert.ok(draftApplicationIndex < provisionIndex);
+  assert.ok(provisionIndex < uploadIndex);
+  assert.ok(uploadIndex < finalSubmitIndex);
+  assert.ok(finalSubmitIndex < riskIndex);
+  assert.ok(riskIndex < activationIndex);
+  assert.ok(activationIndex < tenantSelectionIndex);
+  assert.ok(tenantSelectionIndex < sessionRotationIndex);
+  assert.ok(sessionRotationIndex < tenantContextIndex);
+  assert.ok(tenantContextIndex < cookieReplacementIndex);
+  assert.ok(tenantContextIndex < beneficiaryIndex);
+  assert.ok(tenantContextIndex < integrationConfigIndex);
+  assert.ok(riskIndex < readinessIndex);
+
+  const provision = messages[provisionIndex].label;
+  assert.match(provision, /同版本同 Hash.*幂等.*同版本异 Hash.*冲突.*旧版本.*拒绝/u);
+  assert.doesNotMatch(provision, /owner_type|owner_id|sourceVersion/u);
+  assert.match(labels.join("\n"), /PENDING.*不签发普通 Tenant Context Token/u);
+});
+
+test("E2E-02 carries the trusted Client owner tuple from PLT-I03", async () => {
+  const sequenceCatalog = await loadSequenceCatalog();
+  const messages = sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES["E2E-02"].messages;
+  const credentialValidation = messages.find(
+    (message) => message.from === "api_gateway" && message.to === "platform" && /PLT-I03/u.test(message.label),
+  );
+  const clientApiRoute = messages.find(
+    (message) => message.from === "api_gateway" && message.to === "client_api",
+  );
+
+  assert.ok(credentialValidation);
+  assert.match(
+    credentialValidation.label,
+    /tenant_id.*tenant_type=CLIENT.*owner_ref_id=client_id.*credential_id.*ACTIVE Scope/u,
+  );
+  assert.match(credentialValidation.label, /Access Tenant/u);
+  assert.ok(clientApiRoute);
+  assert.match(clientApiRoute.label, /trusted.*tenant_id.*owner_ref_id=client_id.*credential_id.*Scope/iu);
+});
+
+for (const [sequenceId, requiredScope] of [
+  ["E2E-12", "checkouts.write"],
+  ["E2E-13", "orders.cancel"],
+]) {
+  test(`${sequenceId} validates the exact Client API scope before routing`, async () => {
+    const sequenceCatalog = await loadSequenceCatalog();
+    const messages = sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES[sequenceId].messages;
+    const validationIndex = messages.findIndex((message) => (
+      message.from === "api_gateway" && message.to === "platform" && /PLT-I03/u.test(message.label)
+    ));
+    const resultIndex = messages.findIndex((message) => (
+      message.from === "platform" && message.to === "api_gateway" && /tenant_type=CLIENT/u.test(message.label)
+    ));
+    const routeIndex = messages.findIndex((message) => (
+      message.from === "api_gateway" && message.to === "client_api"
+    ));
+
+    assert.ok(validationIndex >= 0, `${sequenceId} 缺少 Gateway -> Platform PLT-I03`);
+    assert.match(messages[validationIndex].label, /PHC verifier/u);
+    assert.match(messages[validationIndex].label, new RegExp(requiredScope.replace(".", "\\."), "u"));
+    assert.ok(resultIndex > validationIndex, `${sequenceId} 缺少 PLT-I03 可信结果`);
+    assert.match(
+      messages[resultIndex].label,
+      /trusted tenant_id.*tenant_type=CLIENT.*owner_ref_id.*credential_id.*exact effective ACTIVE scopes.*Fail-Closed/iu,
+    );
+    assert.match(messages[resultIndex].label, new RegExp(requiredScope.replace(".", "\\."), "u"));
+    assert.ok(routeIndex > resultIndex, `${sequenceId} 不得在 PLT-I03 结果前路由 Client API`);
+    assert.match(
+      messages[routeIndex].label,
+      /trusted tenant_id.*tenant_type=CLIENT.*owner_ref_id.*credential_id.*Scope/iu,
+    );
+  });
+}
+
+test("E2E-14 onboards a Local Partner through the typed application and one Tenant token", async () => {
+  const sequenceCatalog = await loadSequenceCatalog();
+  const sequence = sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES["E2E-14"];
+
+  assert.ok(sequence, "E2E-14 must exist");
+  assert.deepEqual(sequence.participants, [
+    "partner",
+    "partner_console",
+    "api_gateway",
+    "partner_console_bff",
+    "platform",
+    "client_contract",
+    "risk",
+  ]);
+
+  const messageLabels = sequence.messages.map((message) => message.label);
+  const labels = messageLabels.join("\n");
+  assert.match(labels, /全局 CUSTOMER Account.*Email\/Password.*Google/u);
+  const draftIndex = messageLabels.findIndex((label) => /CCT-I15 START_OR_RESUME.*DRAFT Partner Application.*requested_by_account_id/u.test(label));
+  const provisionIndex = messageLabels.findIndex((label) => /PLT-I17.*tenant_type=PARTNER.*owner_ref_id.*requested_by_account_id.*source_version.*payload_hash/u.test(label));
+  const pendingIndex = messageLabels.findIndex((label) => /PENDING Partner Tenant.*不签发普通 Tenant Context Token/u.test(label));
+  const uploadIndex = messageLabels.findIndex((label) => /PLT-I04.*Account Context.*PENDING.*TENANT_ONBOARDING_OWNER.*tenant_id/u.test(label));
+  const submitIndex = messageLabels.findIndex((label) => /CCT-I15 SUBMIT.*File ID.*Risk/u.test(label));
+  const riskIndex = messageLabels.findIndex((label) => /CCT_LOCAL_PARTNER_APPLICATION.*LOCAL_PARTNER.*PARTNER_DUE_DILIGENCE/u.test(label));
+  const activationIndex = messageLabels.findIndex((label) => /激活 Partner Tenant.*撤销 TENANT_ONBOARDING_OWNER.*授予 TENANT_OWNER/u.test(label));
+  const selectionIndex = messageLabels.findIndex((label) => /PLT-I16 选择单一 Partner Tenant Member/u.test(label));
+  const sessionIndex = messageLabels.findIndex((label) => /新建固定 Partner Tenant Session.*撤销.*旧 Refresh Family/u.test(label));
+  const tokenIndex = messageLabels.findIndex((label) => /Partner Tenant Context Token.*不复用旧 Session/u.test(label));
+  const cookieIndex = messageLabels.findIndex((label) => /替换 __Secure-partner-refresh.*Path=\/api\/partner\/auth\/v1/u.test(label));
+
+  for (const [name, index] of Object.entries({
+    draftIndex, provisionIndex, pendingIndex, uploadIndex, submitIndex, riskIndex,
+    activationIndex, selectionIndex, sessionIndex, tokenIndex, cookieIndex,
+  })) {
+    assert.ok(index >= 0, `E2E-14 must include ${name}`);
+  }
+  assert.ok(draftIndex < provisionIndex);
+  assert.ok(provisionIndex < pendingIndex);
+  assert.ok(pendingIndex < uploadIndex);
+  assert.ok(uploadIndex < submitIndex);
+  assert.ok(submitIndex < riskIndex);
+  assert.ok(riskIndex < activationIndex);
+  assert.ok(activationIndex < selectionIndex);
+  assert.ok(selectionIndex < sessionIndex);
+  assert.ok(sessionIndex < tokenIndex);
+  assert.ok(tokenIndex < cookieIndex);
+
+  assert.match(messageLabels[provisionIndex], /同版本同 Hash.*幂等.*同版本异 Hash.*冲突.*旧版本.*拒绝/u);
+  assert.match(labels, /CCT_LOCAL_PARTNER_APPLICATION.*LOCAL_PARTNER.*PARTNER_DUE_DILIGENCE/u);
+  assert.match(labels, /RELATED_PERSON.*RELATED_PERSON_KYC/u);
+  assert.match(labels, /CCT.*APPROVED.*Local Partner.*ACTIVE/u);
+  assert.match(labels, /source_version.*owner_status=ACTIVE/u);
+});
+
+test("E2E-14 keeps the RCO-I11 Case response separate from the qualification decision lifecycle", async () => {
+  const sequenceCatalog = await loadSequenceCatalog();
+  const messages = sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES["E2E-14"].messages;
+  const caseResponseIndex = messages.findIndex(
+    (message) => message.from === "risk"
+      && message.to === "client_contract"
+      && message.kind === "sync"
+      && /主 Role Case identity/u.test(message.label),
+  );
+  const decisionEventIndex = messages.findIndex(
+    (message) => message.from === "risk"
+      && message.to === "client_contract"
+      && message.kind === "async"
+      && /RoleQualificationApproved.*qualification_decision_id.*qualification_decision_version/u.test(message.label),
+  );
+  const cctApprovalIndex = messages.findIndex(
+    (message) => message.from === "client_contract"
+      && message.to === "client_contract"
+      && /Application=APPROVED.*Local Partner=ACTIVE/u.test(message.label),
+  );
+
+  assert.ok(caseResponseIndex >= 0, "RCO-I11 must return the main Role Case identity synchronously");
+  assert.doesNotMatch(
+    messages[caseResponseIndex].label,
+    /Qualification Decision|qualification_decision|decision_version|APPROVED|REJECTED/u,
+  );
+  assert.ok(decisionEventIndex > caseResponseIndex, "Risk decision must arrive after RCO-I11");
+  assert.ok(cctApprovalIndex > decisionEventIndex, "CCT approval must consume the later Risk decision");
 });
 
 test("E2E-03 inherits parent commercial proof into REFUND transaction economics", async () => {

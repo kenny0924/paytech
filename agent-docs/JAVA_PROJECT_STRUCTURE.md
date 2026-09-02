@@ -1,6 +1,6 @@
 # Java 项目结构规范
 
-最后更新：2026-08-30
+最后更新：2026-09-02
 
 ## 1. 使用范围
 
@@ -16,7 +16,7 @@
 
 Java、Spring、Maven BOM/Parent、MySQL、RabbitMQ、Redis、Nacos、Gateway 和可观测性版本统一以 [TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md) 为准。本机运行方式以 [LOCAL_DEVELOPMENT_ENVIRONMENT.md](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 为准。
 
-Operations 首期 `api-gateway` 已按批准边界实现；其最终路由、协议、Guard、JWKS 与传输约束以 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准。除该现有项目的后续授权任务外，本阶段仍禁止主动为六个核心服务、Console BFF/前端或 Vault 创建脚手架。只有用户明确要求开始实现具体 Java 项目时，才能应用本文创建目录或代码。
+Operations 首期 `api-gateway` 已按批准边界实现；其最终路由、协议、Guard、JWKS 与传输约束以 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准。Platform Support 已按用户明确授权初始化非业务应用基础，边界见第 3.3 节。除此之外，本阶段仍禁止主动为核心服务业务能力、Console BFF/前端或 Vault 创建脚手架；只有用户明确要求开始实现具体 Java 项目或垂直切片时，才能应用本文创建目录或代码。
 
 ## 2. 参考项目结论
 
@@ -121,7 +121,7 @@ api-gateway/
 ├── scripts/
 │   ├── verify-gateway-boundaries.mjs
 │   └── verify-jacoco.mjs
-└── README.md                            # 本地前置、启动、验证与 HMAC 轮换手册
+└── README.md                            # 本地前置、启动、验证、Guard 状态与 Access Log HMAC 手册
 ```
 
 该项目没有 `api-gateway-api` 或其他空 `*-api` 模块，也不套用核心服务的 Domain/Repository/Mapper 分层。生产/测试依赖方向只是：
@@ -136,6 +136,34 @@ api-gateway-test ────→ api-gateway-web
 - `api-gateway-test` 以 Compile Scope 依赖 `web`，从真实随机端口 Gateway 入口经过完整生产链，并通过真实协议连接 HTTPS JWKS 和有状态 Operations BFF Simulator。它不引入 Mockito/Testcontainers；Redis 使用唯一已批准例外，只连接已运行的 `127.0.0.1:16379` 仓库 Compose Redis，只接受 `PAYTECH_REDIS_PASSWORD`，每次运行使用唯一 Namespace 并只以 `SCAN` 清理；测试不启动 Docker/Testcontainers，不连接开发者 `6379` Redis。
 - 默认 `auto` 包含架构和真实 HTTP E2E 验收。`./mvnw clean verify` 之后还必须独立运行两个 Node 门禁；JaCoCo 对未舍入 Instruction/Branch 同时要求 `>= 90%`，只排除精确的 `ApiGatewayApplication`，并校验新鲜度与编译类一致性。
 - `api-gateway-web` 产出普通 JAR 和可执行 `-exec.jar`；`api-gateway-test` 跳过 install/deploy 且不产出可部署 JAR。Application/Management 默认端口分别为 `18080`/`19080`，健康组成与运行命令见 [`api-gateway/README.md`](../api-gateway/README.md)。
+
+### 3.3 Platform Support Phase A 运行切片
+
+Platform Support 当前实际仓库结构是：
+
+```text
+platform-support-service/
+├── pom.xml
+├── platform-support-api/               # PLT-I20 @HttpExchange 与不可变 typed DTO
+├── platform-support-web/               # MVC、Flyway/MyBatis、初始化与 Snapshot Provider
+├── platform-support-test/              # MySQL、HTTP、mTLS、架构与覆盖率 auto 门禁
+├── docs/database/                       # 已批准的完整 PDManer 设计输入
+└── README.md
+```
+
+当前生产/测试依赖方向严格为：
+
+```text
+platform-support-test ────→ platform-support-web ────→ platform-support-api
+```
+
+- `platform-support-api` 当前只发布有真实 Gateway 消费者的 PLT-I20 `@HttpExchange` 查询和不可变 DTO；成功调用每次返回完整 typed Snapshot，不使用 ETag/304。
+- `platform-support-web` 实现 Spring MVC/Actuator、Phase A Flyway/MyBatis 21-table 投影、确定性 Seed、mTLS Workload 授权和 Snapshot 读取/校验/组装；它不实现 Gateway 运行时消费。
+- `platform-support-test` 通过 Testcontainers MySQL、真实随机端口 HTTP/mTLS、生产配置与架构测试验证完整生产链，不使用 Mockito、共享数据库、Redis、MQ 或 Nacos。
+- Reactor Enforcer 允许该切片所需的 JDBC/MySQL/Flyway/MyBatis/Security，仍禁止 Nacos、Redis、MQ、XXL-Job、Gateway、Compensation Event 与 Mockito。
+- Web 默认监听 `18106`，Actuator 使用同一 Listener；测试模块跳过 install/deploy，Web 同时产出普通 JAR 和可执行 `-exec.jar`。
+- 当前切片不实现认证/Tenant IAM 命令、API/Route/Guard 管理、限流运行态、Gateway Snapshot 消费、补偿事件或部署配置。任何此类能力都必须作为获批垂直切片按 TDD 增量加入。
+- 详细设计、实施步骤和运行方式分别见[基础设计](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md)、[实施计划](../docs/superpowers/plans/2026-09-01-platform-support-application-foundation.md)和 [`platform-support-service/README.md`](../platform-support-service/README.md)。
 
 ## 4. API 模块与内部 HTTP 契约
 
@@ -161,16 +189,17 @@ api/
 - 内部同步接口使用 Spring `@HttpExchange`，具体方法使用 `@GetExchange`、`@PostExchange` 等明确 HTTP 注解。
 - API 按业务能力拆分，例如 `ClientEligibilityQueryApi`、`AgreementCommandApi`；禁止创建包含所有接口的巨型 `ClientContractApi`。
 - 接口方法使用业务语言命名，并通过 JavaDoc 说明参数、结果、幂等和主要错误语义。
-- 请求、响应和模型是 HTTP 传输契约，不暴露 Mapper DO、Repository 类型、内部聚合或第三方 SDK 类型。MQ 事件契约不因复用 DTO 而混入 HTTP API。
-- 契约枚举必须有稳定编码；不要依赖 Java 枚举序号。
+- 请求、响应和模型是 HTTP 传输契约，不暴露数据库映射对象、Repository 类型、内部聚合或第三方 SDK 类型。MQ 事件契约不因复用 DTO 而混入 HTTP API。
+- API DTO 使用 `String` 承载稳定枚举 Code，不声明 Java enum 字段；内部枚举实现 `CodeEnum`，边界转换必须使用 `getCode()`，消费方显式校验未知 Code。
 - 契约变更先判断兼容性。新增可选字段优先，删除、改名或改变语义必须明确版本策略。
+- 有界的内部同步查询默认直接返回完整 typed DTO。没有真实负载指标和已批准的兼容契约时，不预先增加 ETag、`If-None-Match`、`304`、Canonical Body Hash 或其他 HTTP 缓存协议。
 - `api` 模块保持轻量，只引入 HTTP 契约、序列化和校验所需依赖；不引入数据库、Spring Boot 应用启动器、服务发现配置或业务实现。
 - 不在 `api` 模块放通用工具、Repository、Mapper、领域服务、HTTP 客户端配置或异常堆栈实现。
 
 典型接口：
 
 ```java
-@HttpExchange(url = "/internal/v1/clients", accept = MediaType.APPLICATION_JSON_VALUE)
+@HttpExchange(url = "/clients/v1", accept = MediaType.APPLICATION_JSON_VALUE)
 public interface ClientEligibilityQueryApi {
 
     /**
@@ -202,6 +231,8 @@ public class ClientEligibilityController implements ClientEligibilityQueryApi {
 ```
 
 Controller 不包含业务判断、事务、Repository 调用或跨系统编排。
+
+`@HttpExchange` 接口是内部 HTTP Method、Path、Header 和 DTO 签名的唯一来源。Controller 必须直接实现该接口，不得再次声明等价的 `@RequestMapping`、`@GetMapping` 或 `@PostMapping`；这些 MVC 注解只用于没有共享 Java API 契约的服务端入口。应用配置的 `context-path` 表达系统边界，接口注解只表达能力内路径，最终地址统一为 `{context-path}/{capability-path}`，不为每个服务机械增加 `/internal` 前缀。
 
 ### 4.2 调用方使用方式
 
@@ -258,7 +289,7 @@ Controller 不包含业务判断、事务、Repository 调用或跨系统编排�
     ├── common/                      # 本服务共享类型
     ├── constant/                    # 稳定常量
     └── dal/
-        ├── dataobject/              # 数据库 DO
+        ├── dataobject/              # 数据库映射对象（类型名不加 DO 后缀）
         ├── mapper/                  # MyBatis Mapper
         └── configuration/           # 数据访问配置
 ```
@@ -286,8 +317,10 @@ validate request
 
 - 默认事务边界位于 Processor。
 - Processor 只能调用 Domain Service 或明确的应用端口，不得直接调用 Repository、Mapper 或外部 SDK。
+- Processor 的请求和结果使用应用语义，不依赖 `ResponseEntity`、HTTP Header、Servlet 或客户端代理类型；协议参数在 Controller/Web 基础设施完成解析和转换。
 - 一个命令只由一个核心系统拥有。BFF 和 Gateway 不承担该命令的业务编排。
 - 方法使用卫语句，嵌套不超过三层，单个方法原则上不超过 30 行。
+- 不为单个 Processor 创建抽象基类。只有至少两个真实 Processor 共享稳定模板流程和上下文字段时才提取 `Abstract*Processor` 或公共请求上下文。
 
 参考 `transaction` 的 `AbstractProcessor` 同时注入了 Repository；这是参考项目现状，不是 Code-MoR 允许的依赖方式。
 
@@ -312,8 +345,8 @@ Domain Service → Repository interface → RepositoryImpl → Mapper → 本系
 - Mapper 只表达本系统数据库操作。
 - 每个核心系统只能访问自己的数据库，禁止跨库查询、跨库写入或共享表。
 - 更新状态时携带期望旧状态或版本号；更新行数不为预期值时抛出包含上下文的异常。
-- DO 不得作为公共接口对象返回。
-- 表、字段、索引、migration 与 DO/Mapper 的设计必须和项目 PDManer 模型同步；详细规则见 `DATABASE_DESIGN_GUIDE.md`。
+- `dataobject` 中的数据库映射对象直接使用业务实体名，不追加 `DO` 后缀，也不得作为公共接口对象返回。
+- 表、字段、索引、migration 与 DataObject/Mapper 的设计必须和项目 PDManer 模型同步；详细规则见 `DATABASE_DESIGN_GUIDE.md`。
 
 ### 5.5 外部集成
 
@@ -358,14 +391,14 @@ ext/* 入站适配器
 - Repository 调用 Domain Service；
 - Domain Service 依赖入站协议对象；
 - BFF、Gateway 或入口应用拥有核心业务事实；
-- 为复用方便让两个服务共享数据库或可变 DO。
+- 为复用方便让两个服务共享数据库或可变数据库映射对象。
 
 ## 7. Spring 与代码风格
 
 - 六个核心服务、BFF 和 Vault 默认使用 Spring MVC；API Gateway 使用 Spring Cloud Gateway Server WebFlux，不为了统一形式改成 MVC。
 - MVC 服务的内部同步 HTTP 调用默认使用 `RestClient`；只有真实 Reactive/Streaming 边界才使用 `WebClient`。
 - 默认不全局启用虚拟线程；必须先验证连接池、Listener、第三方 SDK、MDC 和背压行为。
-- 优先构造器注入，使用 `final` 字段和 Lombok `@AllArgsConstructor`；禁止新增字段注入。
+- 优先构造器注入并使用 `final` 字段；纯字段赋值构造器使用 Lombok `@AllArgsConstructor`，包含校验、防御性复制、派生对象创建或资源配置的构造器保留显式实现；禁止新增字段注入。
 - Service 使用 `@Service`，Repository 实现使用 `@Repository`，无更精确语义的组件才使用 `@Component`。
 - 数据类可使用 Lombok `@Data`，但领域对象应谨慎暴露无约束 setter。
 - 接口、公共类型和关键业务方法写清晰 JavaDoc。
@@ -400,14 +433,16 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] 业务事实属于当前系统，而不是其他五个核心系统。
 - [ ] 公共契约和内部实现没有混在同一模块。
 - [ ] `*-api` 只包含轻量 HTTP 契约，没有业务实现或持久化依赖。
-- [ ] Controller 实现 `@HttpExchange` API 并仅委托 Processor。
+- [ ] API DTO 的枚举语义使用 `String code`，内部枚举实现 `CodeEnum`，错误枚举按需实现 `CodeMessageEnum`。
+- [ ] Controller 实现 `@HttpExchange` API、没有重复 MVC Mapping，并仅委托 Processor。
 - [ ] 外部触发入口位于与 `service` 平级的 `ext/job`、`ext/dubbo`、`ext/rest` 或实际协议子包，且没有承载业务逻辑。
 - [ ] 调用方通过本地 `*Client` 适配器隔离远程 API DTO，没有让远程 DTO进入领域层。
 - [ ] 未新增 Dubbo 或 OpenFeign 契约，内部调用未绕行 Gateway。
 - [ ] Processor 未直接调用 Repository、Mapper 或第三方 SDK。
+- [ ] Processor 未依赖 HTTP 类型，也没有为单一实现创建空泛的抽象基类或公共上下文。
 - [ ] Domain Service 与 Repository 使用业务语言命名。
 - [ ] 只访问本系统数据库。
-- [ ] 数据库结构已使用项目统一 PDManer 模板设计，并与 migration、DO、Mapper 和 Repository 保持一致。
+- [ ] DataObject 类型名没有 `DO` 后缀；数据库结构已使用项目统一 PDManer 模板设计，并与 migration、DataObject、Mapper 和 Repository 保持一致。
 - [ ] 事务覆盖本地原子操作，事件在提交后可靠发布。
 - [ ] 状态更新校验旧状态/版本并处理并发冲突。
 - [ ] 异常信息包含必要业务上下文。

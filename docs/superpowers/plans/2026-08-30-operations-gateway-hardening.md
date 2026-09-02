@@ -1,5 +1,9 @@
 # Operations Gateway Hardening Implementation Plan
 
+> **2026-09-01 dynamic-control-plane successor:** The [unified public API control-plane design](../specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) now owns public Target/Route/Guard current configuration. This plan remains implementation history for the deployed static Operations Gateway before dynamic Snapshot cutover and continues to own unaffected security-hardening evidence; the static Catalog is a pre-cutover runtime fact only.
+
+> **Guard 部分已于 2026-08-31 被替代：** 不再执行本文中的 Redis Identity HMAC、`guard:v2`、Policy Revision、状态迁移或旧 Redis Hash Schema 任务。当前批准契约使用原始 Canonical IP / 已验证 JWT 的准确 `sub` 作为 Redis Key 身份、`guard:v3`、无 Policy Revision 或滚动迁移、Rate 字段 `t/lr/rr` 与 Concurrency Metadata `hw/l`；Access Log HMAC 保留。本文其余任务正文仅作为既有实施历史。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Harden the public Operations Gateway while retaining only Login, Refresh and Logout, making the route model method-aware, enforcing exact protocol boundaries, and preserving a simpler but correct Redis Rate/Concurrency Guard.
@@ -100,6 +104,14 @@
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsJwtValidationAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsCorsAndBodyLimitAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/acceptance/OperationsGatewayAcceptanceAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/OperationsRoutingAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsJwksAvailabilityAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/OperationsGuardFlowAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/architecture/GatewayArchitectureAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayAccessLogAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayMetricsAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayErrorContractAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/probe/GatewayBoundaryTestConfiguration.java`
 
 - [ ] Add failing tests for the new six wire names, case-insensitive exact removal of the enumerated reserved names, survival of near matches such as `X-Gateway-Actor-Subject-Extra` at ingress, and final BFF absence of every non-allowlisted header.
 - [ ] Add route-specific CORS and forwarding tests: Login has no Authorization/CSRF/Cookie; Refresh forwards CSRF plus one refresh Cookie; Logout forwards CSRF/Cookie plus trusted identity headers; raw Bearer is never forwarded.
@@ -131,13 +143,23 @@
 
 - Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/OperationsRefreshCookiePolicy.java`
 - Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/OperationsResponseContractGlobalFilter.java`
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/InvalidUpstreamResponseException.java`
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/RefreshCookieResponsePolicy.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/OperationsRouteDefinition.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/OperationsRouteCatalog.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayGlobalFilterOrder.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/TrustedTerminalResponseHeaders.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayErrorWriter.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayErrorCode.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayExceptionWebHandler.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewayOutcome.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/TrustedRequestBoundaryAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayErrorContractAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/acceptance/OperationsGatewayAcceptanceAutoTest.java`
+- Create: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsResponseContractAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/OperationsRouteDefinitionContractAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/bff/BffScenarioStore.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/bff/OperationsBffSimulator.java`
 
 - [ ] Add failing response-matrix tests for Login/Refresh/Logout Cookie Max-Age, zero/positive values, duplicate/foreign Cookie, Domain, wrong Path, missing Secure/HttpOnly/SameSite, invalid opaque values and empty values. Every invalid upstream contract must return a local 502 before response commitment.
 - [ ] Add failing tests that every auth success/error owns `Cache-Control: no-store`, `Pragma: no-cache`, a single deduplicated `Vary: Origin`, exact CORS response names and only `X-Request-Id, Retry-After` exposure.
@@ -159,18 +181,30 @@
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/GuardProfile.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/RateLimitRule.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/ConcurrencyRule.java`
-- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/GuardRule.java`
+- Delete: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/GuardRule.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/GuardDimension.java`
 - Delete: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/GuardTier.java`
 - Delete: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/GuardPolicyResolver.java`
 - Delete or replace: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/BootstrapGuardPolicy.java`
 - Delete or replace: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/ResolvedGuardPolicy.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/OperationsGuardGlobalFilter.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/RateLimitCommand.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/RateLimitCommandFactory.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/RedisReactiveRateLimiter.java`
+- Modify: `api-gateway/api-gateway-web/src/main/resources/com/paytech/gateway/guard/ratelimit/token-bucket.lua`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ConcurrencyCommand.java`
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ConcurrencyKeys.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ConcurrencyCommandFactory.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/GatewayHmacProperties.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/VersionedHmacDigester.java`
 - Modify: `api-gateway/api-gateway-web/src/main/resources/application.yml`
 - Replace: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/GuardPolicyResolutionAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/VersionedHmacDigesterAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/configuration/GatewayBootstrapPropertiesAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/architecture/GatewayArchitectureAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/OperationsGuardFlowAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/RedisConcurrencyLeaseAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/RedisTokenBucketAutoTest.java`
 
 - [ ] Replace precedence/resolver tests with failing catalog-profile tests for the exact approved Login, Refresh and Logout rate/concurrency values and an explicit no-subject profile for Login/Refresh.
 - [ ] Add failing tests that Redis HMAC accepts exactly one current version/material, access-log material remains separate, and no `previous` property or dual digest is available.
@@ -188,7 +222,8 @@
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/RateLimitCommandFactory.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/RedisReactiveRateLimiter.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/redis/RedisGuardKeyFactory.java`
-- Modify: `api-gateway/api-gateway-web/src/main/resources/com/paytech/gateway/guard/token-bucket.lua`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/redis/GuardRedisProperties.java`
+- Modify: `api-gateway/api-gateway-web/src/main/resources/com/paytech/gateway/guard/ratelimit/token-bucket.lua`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/RedisTokenBucketAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/RedisRateLimitFailureAutoTest.java`
 
@@ -217,10 +252,11 @@
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ConcurrencyLease.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/RedisReactiveConcurrencyLimiter.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/redis/RedisGuardKeyFactory.java`
-- Modify: `api-gateway/api-gateway-web/src/main/resources/com/paytech/gateway/guard/concurrency-acquire.lua`
-- Modify: `api-gateway/api-gateway-web/src/main/resources/com/paytech/gateway/guard/concurrency-release.lua`
+- Modify: `api-gateway/api-gateway-web/src/main/resources/com/paytech/gateway/guard/concurrency/concurrency-acquire.lua`
+- Modify: `api-gateway/api-gateway-web/src/main/resources/com/paytech/gateway/guard/concurrency/concurrency-release.lua`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/RedisConcurrencyLeaseAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/RedisGuardUnavailableAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/OperationsGuardFlowAutoTest.java`
 
 - [ ] Add failing real-Redis tests for companion metadata Hashes, non-empty ZSET without metadata, clock rollback/high-water behavior, higher/lower/equal revision handling, all-dimension atomic acquire, idempotent release and finite crash-recovery TTL.
 - [ ] Add the key policy-reduction test: with `count > reducedLimit`, `Retry-After` is based on the `(count - limit + 1)`-th expiry, capped by lease duration—not the first expiry. Add a test proving rejected acquire does not refresh either key TTL.
@@ -233,6 +269,10 @@
 
 **Files:**
 
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/OperationsIngressGuardWebFilter.java`
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/OperationsGuardAdmission.java`
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/OperationsGuardTimingInvariant.java`
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/OperationsBffTimeoutGlobalFilter.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/OperationsGuardGlobalFilter.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/RateLimitCommandFactory.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ConcurrencyCommandFactory.java`
@@ -241,6 +281,7 @@
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewayMetrics.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/OperationsGuardFlowAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayMetricsAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/configuration/GatewayBootstrapPropertiesAutoTest.java`
 
 - [ ] Add failing end-to-end tests proving ingress Route/IP Guard runs before JWT, JWKS, body and BFF; Logout Subject Guard runs only after successful authentication; Login/Refresh never create subject keys.
 - [ ] Add failing tests proving a passed rate decision followed by a full concurrency bucket returns immediate `429 GATEWAY_CONCURRENCY_LIMITED` with integer `Retry-After`, never queues, does not refund the rate token and calls neither body nor BFF.
@@ -254,16 +295,24 @@
 
 **Files:**
 
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/ReplayableRequestBodyOwner.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/RequestBodyLimitGlobalFilter.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayExchangeAttributes.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/UpstreamRequestGlobalFilter.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayErrorCode.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewayOutcome.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsCorsAndBodyLimitAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/OperationsGuardFlowAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/probe/GatewayBoundaryTestConfiguration.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/bff/OperationsBffSimulator.java`
+- Create: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/bff/BffTransportProbe.java`
+- Create: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/ReplayableRequestBodyOwnerAutoTest.java`
 
 - [ ] Add failing tests for missing/false/chunked Content-Length, exact 16 KiB acceptance, 16 KiB + 1 rejection, an aggregate five-second receive deadline that does not reset per chunk, cancellation, no BFF bytes before validation, and release of ingress/subject leases.
 - [ ] Add a package-visible lifecycle probe or narrow buffer owner abstraction to prove the temporary byte array is best-effort zeroed after complete/error/cancel without exposing or logging the body.
 - [ ] Run RED with `OperationsCorsAndBodyLimitAutoTest,OperationsGuardFlowAutoTest`.
 - [ ] Rename `forwardCachedBody` to `forwardWithReplayableBody`. Join at `limit + 1`, copy then release the pooled buffer, decorate a replayable body, set exact Content-Length, remove Transfer-Encoding and zero the array in terminal cleanup.
+- [ ] Carry the validated actual body length through a trusted exchange attribute so upstream Header reconstruction preserves only that exact Content-Length and never trusts the caller's Content-Length or Transfer-Encoding.
 - [ ] Apply one `timeout(route.bodyReceiveTimeout())` to the entire aggregation publisher. Map it to `408 GATEWAY_REQUEST_TIMEOUT`; retain `413 GATEWAY_PAYLOAD_TOO_LARGE` for actual bytes over limit.
 - [ ] Ensure filter ordering is after ingress Guard and authenticated Subject Guard but before upstream reconstruction/BFF routing.
 - [ ] Run GREEN and commit with message `fix: bound Operations request body lifetime`.
@@ -272,16 +321,22 @@
 
 **Files:**
 
-- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/OperationsJwtValidator.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/ReactiveJwksProvider.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/OperationsSecurityProperties.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewayMetrics.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsJwksAvailabilityAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsJwtValidationAutoTest.java`
-- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/JwksHttpsSimulator.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/architecture/GatewayArchitectureAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayMetricsAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayAccessLogAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsResponseContractAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/OperationsGuardFlowAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/jwks/JwksSimulator.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/jwks/JwksScenarioStore.java`
 
 - [ ] Add failing tests that non-RS256 and `kid` outside `^[A-Za-z0-9._:-]{1,128}$` return 401 with zero JWKS calls.
 - [ ] Add sequential and concurrent unknown-kid tests proving one shared in-flight refresh and one global five-second cooldown: successful refresh + still missing => 401; failed refresh and cooldown misses => 503; cached known keys keep working.
+- [ ] Add cancellation and exact-boundary tests proving one request cannot cancel or clear the shared refresh, the cooldown suppresses until but not at `retryAt`, and success/failure metrics count actual refreshes rather than joiners.
 - [ ] Add failing URI/HTTP tests for HTTPS + host + path only, no redirects, two-second connect, three-second response, 64 KiB body, at most 16 valid RSA signing keys and RSA-2048 minimum.
 - [ ] Run RED with `OperationsJwksAvailabilityAutoTest,OperationsJwtValidationAutoTest`.
 - [ ] Replace per-kid structures with one immutable cached key map, one atomically shared in-flight `Mono`, and one cooldown result. Do not retain requested kids or tag metrics by kid.
@@ -293,19 +348,31 @@
 
 - Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/transport/GatewayTransportProperties.java`
 - Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/transport/GatewayNettyServerConfiguration.java`
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/transport/GatewayNettyClientConfiguration.java`
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/transport/GatewayHeaderDeadlineHandlers.java`
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayRequestHeaderLimitsWebFilter.java`
+- Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayUpstreamFailureClassifier.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/OperationsBffTimeoutGlobalFilter.java`
 - Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayExceptionWebHandler.java`
 - Create: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayUpstreamProtocolException.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayErrorCode.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayGlobalFilterOrder.java`
+- Modify: `api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewayOutcome.java`
 - Modify: `api-gateway/api-gateway-web/src/main/resources/application.yml`
+- Modify: `api-gateway/api-gateway-test/src/test/resources/application-auto.yml`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/configuration/GatewayBootstrapPropertiesAutoTest.java`
 - Create: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/transport/GatewayTransportAutoTest.java`
 - Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayErrorContractAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayAccessLogAutoTest.java`
+- Modify: `api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayMetricsAutoTest.java`
 
 - [ ] Add failing startup/unit-integration tests for the exact TLS protocols/suites, 8 KiB request line, 32 KiB aggregate headers, five-second header/read-idle deadlines, 1,000 connections, backlog 512 and 1,000 keep-alive requests. Test loopback HTTP through the same decoder/admission configuration.
 - [ ] Add failing request tests for Authorization/Cookie aggregate 8 KiB and Origin/each CORS control header 2 KiB. Oversized parsed headers return `431 GATEWAY_REQUEST_HEADER_FIELDS_TOO_LARGE` locally without Redis/JWT/BFF; pre-decoder rejection may close the transport without a JSON body.
+- [ ] Add slow raw-header, keep-alive and pipelining tests proving one non-resetting five-second total Header deadline starts at the first byte, Header read-idle is bounded, body bytes do not start a new Header deadline, and the next request is independently timed.
 - [ ] Add failure-classification tests: BFF TLS/protocol/invalid response => 502; connect/pool acquisition/DNS => 503; complete response budget => 504. Cause walking must use only an explicit finite type set and never expose exception messages.
 - [ ] Run RED with `GatewayTransportAutoTest,GatewayBootstrapPropertiesAutoTest,GatewayErrorContractAutoTest`.
 - [ ] Configure Reactor Netty server limits before `ServerWebExchange` creation and validate production TLS configuration at startup. Keep certificate/key values as deployment-secret inputs and forbid public cleartext in production.
-- [ ] Configure BFF pool acquisition at two seconds and the whole BFF chain at ten seconds including connect/pool wait; disable redirects and retries.
+- [ ] Configure a fixed BFF pool with two-second acquisition, two-second connect and the whole BFF chain at ten seconds including pool/connect; explicitly disable redirects and Reactor Netty retry.
 - [ ] Run GREEN and commit with message `fix: bound Gateway transport resources`.
 
 ## Task 11: Rename the Gateway Redis secret and synchronize documentation

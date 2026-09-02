@@ -110,27 +110,11 @@ export const TABLES = Object.freeze([
       id("file_id", "完整性文件"),
       hash("content_hash", "完整性文件内容哈希"),
     ],
-    indexes: [uk("uk_audit_integrity", "chain_id", "sequence_to"), uk("uk_audit_integrity_file", "file_id")],
-    relations: [rel("chain_id", "audit_chain", "chain_id"), rel("file_id", "file_object", "file_id", "1:1")],
-  }),
-  defineTable({
-    key: "audit_archive_batch",
-    name: "审计归档批次",
-    comment: "不可变保存审计链 WORM 副本的区间摘要和完整性验证状态",
-    audit: "immutable",
-    fields: [
-      pk("archive_batch_id", "审计归档批次标识", "审计归档批次的稳定业务标识"),
-      str("archive_no", "审计归档编号", "NN", 64),
-      id("chain_id", "审计链"),
-      int("range_from", "归档起始序号"),
-      int("range_to", "归档结束序号"),
-      hash("start_event_hash", "归档起始事件哈希"),
-      hash("end_event_hash", "归档结束事件哈希"),
-      id("file_id", "审计归档文件"),
-      hash("content_hash", "审计归档内容哈希"),
-      code("verification_status", "归档验证状态", "NN", ["PENDING", "VERIFIED", "FAILED"]),
+    indexes: [
+      uk("uk_audit_integrity", "chain_id", "sequence_to"),
+      uk("uk_audit_integrity_file", "file_id"),
+      ix("idx_audit_integrity_content", "file_id", "content_hash"),
     ],
-    indexes: [uk("uk_audit_archive", "archive_no"), uk("uk_audit_archive_file", "file_id"), ix("idx_audit_archive_chain", "chain_id", "range_from", "range_to")],
     relations: [rel("chain_id", "audit_chain", "chain_id"), rel("file_id", "file_object", "file_id", "1:1")],
   }),
   defineTable({
@@ -169,7 +153,7 @@ export const TABLES = Object.freeze([
       int("version", "安全告警并发版本"),
     ],
     indexes: [uk("uk_security_alert", "alert_no"), ix("idx_security_alert_queue", "status", "severity", "create_time")],
-    relations: [rel("owner_id", "user_identity", "user_id")],
+    relations: [rel("owner_id", "user_account", "account_id")],
   }),
   defineTable({
     key: "security_alert_event",
@@ -199,6 +183,6 @@ export const TABLES = Object.freeze([
       time("occurred_time", "处置发生时间"),
     ],
     indexes: [uk("uk_alert_action", "alert_id", "action_no")],
-    relations: [rel("alert_id", "security_alert", "alert_id"), rel("actor_id", "user_identity", "user_id")],
+    relations: [rel("alert_id", "security_alert", "alert_id"), rel("actor_id", "user_account", "account_id")],
   }),
 ]);

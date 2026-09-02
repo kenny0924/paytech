@@ -1,5 +1,7 @@
 # Operations API Gateway First Slice Implementation Plan
 
+> **2026-09-01 dynamic-control-plane successor:** The [unified public API control-plane design](../specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) now owns public Target/Route/Guard current configuration. This plan remains implementation history for the deployed static Operations Gateway before dynamic Snapshot cutover; its static Catalog constraints remain pre-cutover runtime evidence, not the target control-plane ownership model.
+
 > Superseded in part on 2026-08-30: do not execute this plan's routing, trusted Header/Cookie, request-body, JWKS or
 > Guard tasks. Those areas are governed by
 > `docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md` and its forthcoming implementation plan.

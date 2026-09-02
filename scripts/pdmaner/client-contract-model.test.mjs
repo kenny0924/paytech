@@ -40,7 +40,7 @@ const generatorSource = readFileSync(generatorPath, "utf8");
 const expectedTemplateDigest =
   "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 const pendingStructuralProjectionDigest = "PENDING_APPROVED_36_DIGEST";
-const expectedStructuralProjectionDigest = "772c18963e58a4410843a4034a21b8deb88f5145cf8afcec78ad2408f1f54555";
+const expectedStructuralProjectionDigest = "83cb4d442e937599ddb99d64090a039cafbb332807619507af27ea0197b8e7a4";
 
 const leanAssignmentTables = Object.freeze([
   "entity_source_relation",
@@ -135,10 +135,14 @@ const expectedTables = [
   "consumer_legal_document", "entity_assignment_rule",
   "entity_source_relation", "individual_profile", "local_partner",
   "operating_entity", "operating_entity_application", "organization_profile",
+  "partner_application",
   "party", "party_address", "party_contact",
   "party_identity_key", "party_profile", "party_profile_identifier",
   "party_relation", "seller_disclosure",
 ].sort();
+const expectedFinalTableManifestCount = 37;
+const expectedFinalFieldManifestCount = 423;
+const expectedRelationSignatureCount = 64;
 
 const expectedTableDisplayNames = Object.freeze({
   agreement: "合同",
@@ -168,6 +172,7 @@ const expectedTableDisplayNames = Object.freeze({
   local_partner: "本地合作伙伴角色",
   operating_entity: "经营主体角色",
   operating_entity_application: "经营主体入驻申请",
+  partner_application: "本地合作伙伴入驻申请",
   organization_profile: "机构资料版本",
   party: "法律主体主档",
   party_address: "主体地址版本",
@@ -198,12 +203,12 @@ const expectedDiagramGroups = Object.freeze({
     primaryTables: Object.freeze([
       "client", "local_partner", "operating_entity", "client_business_profile",
       "client_business_classification", "client_application",
-      "operating_entity_application", "application_document",
+      "partner_application", "operating_entity_application", "application_document",
     ]),
     tables: Object.freeze([
       "client", "local_partner", "operating_entity", "client_business_profile",
       "client_business_classification", "client_application",
-      "operating_entity_application", "application_document", "party",
+      "partner_application", "operating_entity_application", "application_document", "party",
       "party_profile", "entity_source_relation",
     ]),
   }),
@@ -286,6 +291,7 @@ const expectedPrimaryKeys = Object.freeze({
   local_partner: "local_partner_id",
   operating_entity: "operating_entity_id",
   operating_entity_application: "application_id",
+  partner_application: "application_id",
   organization_profile: "profile_id",
   party: "party_id",
   party_address: "address_id",
@@ -299,9 +305,11 @@ const expectedPrimaryKeys = Object.freeze({
 
 const changedTableUniqueKeys = Object.freeze({
   client_application: ["application_no", "client_id,active_slot"],
+  partner_application: ["application_no", "local_partner_id,active_slot"],
   operating_entity_application: ["application_no", "operating_entity_id,active_slot"],
   application_document: [
     "client_application_id,subject_party_id,requirement_code,document_type,file_id",
+    "partner_application_id,subject_party_id,requirement_code,document_type,file_id",
     "operating_entity_application_id,subject_party_id,requirement_code,document_type,file_id",
   ],
   agreement_signatory: ["agreement_id,party_id,signatory_role"],
@@ -379,6 +387,7 @@ const expectedRelationSignatures = Object.freeze([
   "agreement_operating_entity.agreement_id->agreement.agreement_id|n:1",
   "agreement_operating_entity.operating_entity_id->operating_entity.operating_entity_id|n:1",
   "application_document.client_application_id->client_application.application_id|n:1",
+  "application_document.partner_application_id->partner_application.application_id|n:1",
   "application_document.operating_entity_application_id->operating_entity_application.application_id|n:1",
   "application_document.subject_party_id->party.party_id|n:1",
   "business_change_record.parent_history_id->business_change_record.history_id|n:1",
@@ -419,6 +428,8 @@ const expectedRelationSignatures = Object.freeze([
   "operating_entity_application.party_profile_id->party_profile.profile_id|n:1",
   "operating_entity_application.source_client_id->client.client_id|n:1",
   "operating_entity_application.source_partner_id->local_partner.local_partner_id|n:1",
+  "partner_application.local_partner_id->local_partner.local_partner_id|n:1",
+  "partner_application.target_party_profile_id->party_profile.profile_id|n:1",
   "organization_profile.profile_id->party_profile.profile_id|1:1",
   "party_address.profile_id->party_profile.profile_id|n:1",
   "party_contact.profile_id->party_profile.profile_id|n:1",
@@ -442,11 +453,15 @@ const forbiddenExternalRelationFields = new Set([
   "business_change_version.create_by",
   "client_application.due_diligence_case_id",
   "client_application.qualification_decision_id",
+  "client_application.requested_by_account_id",
   "compensation_event.event_key",
   "compensation_event.source_id",
   "consumer_legal_document_version.content_file_id",
   "operating_entity_application.due_diligence_case_id",
   "operating_entity_application.qualification_decision_id",
+  "partner_application.due_diligence_case_id",
+  "partner_application.qualification_decision_id",
+  "partner_application.requested_by_account_id",
   "party_contact.contact_vault_token",
   "seller_disclosure_version.approval_trigger_id",
   "seller_disclosure_version.approved_by",
@@ -522,6 +537,7 @@ const expectedFields = Object.freeze({
   ],
   client_application: [
     "application_id", "application_no", "application_type", "client_id",
+    "requested_by_account_id",
     "base_party_profile_id", "target_party_profile_id",
     "base_business_profile_id", "target_business_profile_id", "status",
     "active_slot", "due_diligence_case_id", "qualification_decision_id",
@@ -530,7 +546,7 @@ const expectedFields = Object.freeze({
     "update_time",
   ],
   application_document: [
-    "document_id", "client_application_id", "operating_entity_application_id",
+    "document_id", "client_application_id", "partner_application_id", "operating_entity_application_id",
     "subject_party_id", "requirement_code", "document_type", "file_id",
     "content_hash", "create_time", "update_time",
   ],
@@ -542,6 +558,14 @@ const expectedFields = Object.freeze({
     "submitted_time", "submission_hash_schema_version", "submission_content_hash",
     "approved_source_relation_id", "create_time", "update_time",
   ],
+  partner_application: [
+    "application_id", "application_no", "local_partner_id",
+    "target_party_profile_id", "requested_by_account_id", "status",
+    "active_slot", "due_diligence_case_id", "qualification_decision_id",
+    "qualification_decision_version", "qualification_type", "submitted_time",
+    "submission_hash_schema_version", "submission_content_hash", "create_by",
+    "create_time", "update_time",
+  ],
 });
 
 const expectedFinalFields = Object.freeze({
@@ -550,11 +574,11 @@ const expectedFinalFields = Object.freeze({
   agreement_document_ref: expectedFields.agreement_document_ref,
   agreement_operating_entity: expectedFields.agreement_operating_entity,
   agreement_signatory: expectedFields.agreement_signatory,
-  application_document: ["document_id", "client_application_id", "operating_entity_application_id", "subject_party_id", "requirement_code", "document_type", "file_id", "content_hash", "create_time", "update_time"],
+  application_document: ["document_id", "client_application_id", "partner_application_id", "operating_entity_application_id", "subject_party_id", "requirement_code", "document_type", "file_id", "content_hash", "create_time", "update_time"],
   business_change_record: ["history_id", "record_type", "record_id", "aggregate_root_type", "aggregate_root_id", "parent_history_id", "current_version", "create_time", "update_time"],
   business_change_version: ["change_version_id", "history_id", "version_no", "operation_type", "snapshot_json", "create_by", "create_time"],
   client: ["client_id", "client_no", "party_id", "status", "activation_time", "suspension_time", "termination_time", "create_time", "update_time"],
-  client_application: ["application_id", "application_no", "application_type", "client_id", "base_party_profile_id", "target_party_profile_id", "base_business_profile_id", "target_business_profile_id", "status", "active_slot", "due_diligence_case_id", "qualification_decision_id", "qualification_decision_version", "qualification_type", "submitted_time", "submission_hash_schema_version", "submission_content_hash", "create_time", "update_time"],
+  client_application: ["application_id", "application_no", "application_type", "client_id", "requested_by_account_id", "base_party_profile_id", "target_party_profile_id", "base_business_profile_id", "target_business_profile_id", "status", "active_slot", "due_diligence_case_id", "qualification_decision_id", "qualification_decision_version", "qualification_type", "submitted_time", "submission_hash_schema_version", "submission_content_hash", "create_time", "update_time"],
   client_business_classification: ["classification_id", "business_profile_id", "industry_code", "mcc_code", "primary_slot", "create_time", "update_time"],
   client_business_profile: ["business_profile_id", "client_id", "version_no", "status", "active_slot", "business_model_code", "website_url", "expected_volume", "expected_ticket", "currency", "effective_from", "effective_to", "hash_schema_version", "content_hash", "create_time", "update_time"],
   client_entity_affiliation: leanAssignmentFields.client_entity_affiliation,
@@ -572,6 +596,7 @@ const expectedFinalFields = Object.freeze({
   local_partner: ["local_partner_id", "partner_no", "party_id", "status", "activation_time", "termination_time", "create_time", "update_time"],
   operating_entity: ["operating_entity_id", "entity_no", "party_id", "operating_country", "status", "create_time", "update_time"],
   operating_entity_application: ["application_id", "application_no", "operating_entity_id", "party_profile_id", "source_type", "source_client_id", "source_partner_id", "client_source_basis", "status", "active_slot", "due_diligence_case_id", "qualification_decision_id", "qualification_decision_version", "qualification_type", "submitted_time", "submission_hash_schema_version", "submission_content_hash", "approved_source_relation_id", "create_time", "update_time"],
+  partner_application: ["application_id", "application_no", "local_partner_id", "target_party_profile_id", "requested_by_account_id", "status", "active_slot", "due_diligence_case_id", "qualification_decision_id", "qualification_decision_version", "qualification_type", "submitted_time", "submission_hash_schema_version", "submission_content_hash", "create_by", "create_time", "update_time"],
   organization_profile: ["profile_id", "legal_name", "trade_name", "incorporation_country", "organization_type", "incorporation_date", "create_time", "update_time"],
   party: ["party_id", "party_no", "party_type", "create_time", "update_time"],
   party_address: ["address_id", "profile_id", "address_type", "address_line1", "address_line2", "city", "state_or_province", "postal_code", "country_code", "create_time", "update_time"],
@@ -603,6 +628,7 @@ const legacyExpectedNullableFieldPaths = Object.freeze([
   "agreement_version.effective_to",
   "agreement_version.supersedes_version_id",
   "application_document.client_application_id",
+  "application_document.partner_application_id",
   "application_document.operating_entity_application_id",
   "business_change_record.parent_history_id",
   "client.activation_time",
@@ -615,6 +641,7 @@ const legacyExpectedNullableFieldPaths = Object.freeze([
   "client_application.qualification_decision_id",
   "client_application.qualification_decision_version",
   "client_application.submitted_time",
+  "client_application.requested_by_account_id",
   "client_business_classification.primary_slot",
   "client_business_profile.active_slot",
   "client_business_profile.effective_to",
@@ -660,6 +687,11 @@ const legacyExpectedNullableFieldPaths = Object.freeze([
   "operating_entity_application.source_client_id",
   "operating_entity_application.source_partner_id",
   "operating_entity_application.submitted_time",
+  "partner_application.active_slot",
+  "partner_application.due_diligence_case_id",
+  "partner_application.qualification_decision_id",
+  "partner_application.qualification_decision_version",
+  "partner_application.submitted_time",
   "organization_profile.trade_name",
   "party_address.address_line2",
   "party_address.postal_code",
@@ -724,6 +756,7 @@ const expectedBcrRecordTypes = Object.freeze([
   "CLIENT_BUSINESS_PROFILE",
   "COMMERCIAL_TERM_VERSION",
   "CLIENT_APPLICATION",
+  "PARTNER_APPLICATION",
   "OPERATING_ENTITY_APPLICATION",
   "PARTY_RELATION",
   "CLIENT_ENTITY_AFFILIATION",
@@ -742,6 +775,7 @@ const expectedBcrRootTypes = Object.freeze([
   "LOCAL_PARTNER",
   "OPERATING_ENTITY",
   "CLIENT_APPLICATION",
+  "PARTNER_APPLICATION",
   "OPERATING_ENTITY_APPLICATION",
   "PARTY_RELATION",
   "CLIENT_ENTITY_AFFILIATION",
@@ -784,6 +818,8 @@ const expectedClosedEnumValues = Object.freeze({
   "client_application.application_type": ["ONBOARDING", "PROFILE_CHANGE"],
   "client_application.status": applicationStatuses,
   "client_application.qualification_type": ["INDIVIDUAL_KYC", "ORGANIZATION_KYB"],
+  "partner_application.status": applicationStatuses,
+  "partner_application.qualification_type": ["PARTNER_DUE_DILIGENCE"],
   "operating_entity_application.source_type": ["PLATFORM", "CLIENT", "PARTNER"],
   "operating_entity_application.client_source_basis": ["SAME_PARTY", "VERIFIED_ASSOCIATION"],
   "operating_entity_application.status": applicationStatuses,
@@ -889,6 +925,7 @@ const expectedConditionalValueRules = Object.freeze({
   "client_business_profile.active_slot": "状态为 ACTIVE 时为 1，其他状态为 NULL",
   "client_business_classification.primary_slot": "值为 1 时表示一组主要经营分类，其他情况为 NULL",
   "client_application.active_slot": "状态为 DRAFT、SUBMITTED 或 UNDER_REVIEW 时为 1，终态为 NULL",
+  "partner_application.active_slot": "状态为 DRAFT、SUBMITTED 或 UNDER_REVIEW 时为 1，终态为 NULL",
   "operating_entity_application.active_slot": "状态为 DRAFT、SUBMITTED 或 UNDER_REVIEW 时为 1，终态为 NULL",
   "client_entity_affiliation.active_slot": "状态为 ACTIVE 时为 1，其他状态为 NULL",
   "client_entity_assignment.active_slot": "状态为 ACTIVE 时为 1，其他状态为 NULL",
@@ -905,7 +942,7 @@ const versionContracts = Object.freeze({
 });
 
 const applicationDocumentXor =
-  "(client_application_id IS NOT NULL) <> (operating_entity_application_id IS NOT NULL)";
+  "(client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1";
 const clientApplicationProfileMatrix =
   "CHECK ((application_type='ONBOARDING' AND base_party_profile_id IS NULL AND base_business_profile_id IS NULL AND target_party_profile_id IS NOT NULL AND target_business_profile_id IS NOT NULL) OR (application_type='PROFILE_CHANGE' AND base_party_profile_id IS NOT NULL AND base_business_profile_id IS NOT NULL AND target_party_profile_id IS NOT NULL AND target_business_profile_id IS NOT NULL AND (target_party_profile_id<>base_party_profile_id OR target_business_profile_id<>base_business_profile_id)))";
 const operatingEntityApprovalSourceMatrix =
@@ -1057,6 +1094,7 @@ const expectedBaseTypeOverrides = Object.freeze({
   "entity_assignment_rule.active_slot": tinyIntBaseTypeOverride,
   "entity_source_relation.active_source_slot": tinyIntBaseTypeOverride,
   "operating_entity_application.active_slot": tinyIntBaseTypeOverride,
+  "partner_application.active_slot": tinyIntBaseTypeOverride,
   "party_profile.active_slot": tinyIntBaseTypeOverride,
   "party_relation.active_slot": tinyIntBaseTypeOverride,
 });
@@ -1137,6 +1175,7 @@ const expectedHashFields = Object.freeze({
   "party_relation.content_hash": [true, "hash_schema_version", "输入为关系两端、关系类型、持股比例与业务有效期。"],
   "client_business_profile.content_hash": [true, "hash_schema_version", "输入为封存 Business Profile 与按 industry_code、mcc_code 稳定排序的完整经营分类集合和 primary_slot。"],
   "client_application.submission_content_hash": [true, "submission_hash_schema_version", "输入遵循 CODE-MOR:CCT:CLIENT_APPLICATION_SUBMISSION:1，使用 UTF-8 RFC 8785/JCS 后的 SHA-256 小写 64 位 Hex。"],
+  "partner_application.submission_content_hash": [true, "submission_hash_schema_version", "输入遵循 CODE-MOR:CCT:PARTNER_APPLICATION_SUBMISSION:1，使用 UTF-8 RFC 8785/JCS 后的 SHA-256 小写 64 位 Hex。"],
   "application_document.content_hash": [true, null, "输入为 Platform File 返回的文件正文 SHA-256，与 file_id 成组冻结。"],
   "operating_entity_application.submission_content_hash": [true, "submission_hash_schema_version", "输入遵循 CODE-MOR:CCT:OPERATING_ENTITY_APPLICATION_SUBMISSION:2，使用 UTF-8 RFC 8785/JCS 后的 SHA-256 小写 64 位 Hex。"],
   "agreement_document_ref.content_hash": [true, null, "输入为 Platform Support 返回的合同文件 SHA-256，与 file_id 成组冻结。"],
@@ -1548,9 +1587,22 @@ function expectedFinalFieldPaths() {
 
 function assertFinalFieldManifestConsistency() {
   assert.deepEqual(Object.keys(expectedFinalFields).sort(), expectedTables);
-  assert.equal(Object.keys(expectedFinalFields).length, 36, "final field manifest table count drift");
+  assert.equal(
+    expectedTables.length,
+    expectedFinalTableManifestCount,
+    "exact final table manifest count drift",
+  );
+  assert.equal(
+    Object.keys(expectedFinalFields).length,
+    expectedFinalTableManifestCount,
+    "exact final field-map table count drift",
+  );
   const fieldPaths = expectedFinalFieldPaths();
-  assert.equal(fieldPaths.length, 404, "final 36-table field count drift");
+  assert.equal(
+    fieldPaths.length,
+    expectedFinalFieldManifestCount,
+    "exact final field manifest count drift",
+  );
   assert.equal(new Set(fieldPaths).size, fieldPaths.length, "duplicate final field path");
   for (const [tableKey, fieldKeys] of Object.entries(expectedFinalFields)) {
     assert.equal(new Set(fieldKeys).size, fieldKeys.length, `duplicate final field: ${tableKey}`);
@@ -1591,7 +1643,7 @@ function assertTargetModelFieldCatalog(model, context) {
   assert.deepEqual(
     model.entities.map((entity) => logicalTableKey(entity.defKey)).sort(),
     expectedTables,
-    `${context} requires the approved 36-table catalog`,
+    `${context} requires the approved 37-table catalog`,
   );
   const entities = entityMap(model);
   for (const tableKey of expectedTables) {
@@ -1673,7 +1725,7 @@ function assertNullabilityContract(model) {
 function assertApplicationDocumentContract(model) {
   const document = requireEntity(entityMap(model), "application_document");
   const fields = fieldMap(document);
-  for (const parentKey of ["client_application_id", "operating_entity_application_id"]) {
+  for (const parentKey of ["client_application_id", "partner_application_id", "operating_entity_application_id"]) {
     assert.equal(fields.get(parentKey)?.notNull, false, `nullable XOR parent required: ${parentKey}`);
   }
   for (const fieldKey of [
@@ -1684,13 +1736,14 @@ function assertApplicationDocumentContract(model) {
   }
   assertExactExpression(document.comment, applicationDocumentXor, "Application Document parent XOR");
   assert.equal(
-    document.comment.includes("client_application_id 与 operating_entity_application_id 两个 Parent FK 均为本库 RESTRICT。"),
+    document.comment.includes("client_application_id、partner_application_id 与 operating_entity_application_id 三个 Parent FK 均为本库 RESTRICT。"),
     true,
     "Application Document parent FK delete rule",
   );
   assert.deepEqual(relationSignatures(model, document), [
     "client_application_id->client_application.application_id",
     "operating_entity_application_id->operating_entity_application.application_id",
+    "partner_application_id->partner_application.application_id",
     "subject_party_id->party.party_id",
   ]);
 }
@@ -1741,7 +1794,13 @@ function assertApplicationBaseContract(application) {
 
 function assertClientApplicationContract(model) {
   const application = requireEntity(entityMap(model), "client_application");
+  const fields = fieldMap(application);
   assertApplicationBaseContract(application);
+  assert.deepEqual(
+    [fields.get("requested_by_account_id")?.type, fields.get("requested_by_account_id")?.notNull],
+    ["BIGINT", false],
+    "client_application.requested_by_account_id external reference contract",
+  );
   assertClosedValues(application, "application_type", ["ONBOARDING", "PROFILE_CHANGE"]);
   assertClosedValues(application, "qualification_type", ["INDIVIDUAL_KYC", "ORGANIZATION_KYB"]);
   assertExactExpression(
@@ -1751,6 +1810,7 @@ function assertClientApplicationContract(model) {
   );
   assertCommentClauses(application.comment, [
     "Client 状态归属：ONBOARDING 仅允许绑定 PENDING Client；PROFILE_CHANGE 仅允许绑定 ACTIVE Client。",
+    "ONBOARDING 必须携带 requested_by_account_id；该字段是 Platform CUSTOMER Account 的外部稳定引用，不建立跨库物理外键。",
     "Profile 归属：Base/Target Party Profile 必须属于 Client 对应 Party，Base/Target Business Profile 必须属于同一 client_id。",
     "PROFILE_CHANGE 提交时 Base Party/Business Profile 必须分别等于当时 ACTIVE Profile；与 Base 不同的 Target 必须在同一提交事务封存为 FROZEN。",
     "qualification_type 在提交时由 Client Party Type 推导：INDIVIDUAL 为 INDIVIDUAL_KYC、ORGANIZATION 为 ORGANIZATION_KYB；不得由调用方输入，提交后冻结且不可修改。",
@@ -1759,6 +1819,30 @@ function assertClientApplicationContract(model) {
     "qualification_decision_id 与 qualification_decision_version 必须成组为空或成组非空。",
     "APPROVED/REJECTED 前 due_diligence_case_id、qualification_decision_id、qualification_decision_version、qualification_type、role_type、role_id 必须匹配同一次 Risk 决策；WITHDRAWN 不要求 Decision。",
   ], "Client Application contract");
+}
+
+function assertPartnerApplicationContract(model) {
+  const application = requireEntity(entityMap(model), "partner_application");
+  const fields = fieldMap(application);
+  assertApplicationBaseContract(application);
+  assertClosedValues(application, "qualification_type", ["PARTNER_DUE_DILIGENCE"]);
+  for (const fieldKey of ["local_partner_id", "target_party_profile_id", "requested_by_account_id"]) {
+    assert.deepEqual(
+      [fields.get(fieldKey)?.type, fields.get(fieldKey)?.notNull],
+      ["BIGINT", true],
+      `partner_application.${fieldKey} required reference contract`,
+    );
+  }
+  assertCommentClauses(application.comment, [
+    "Risk Tuple 固定映射：role_type=LOCAL_PARTNER、role_id=local_partner_id、qualification_type=PARTNER_DUE_DILIGENCE。",
+    "requested_by_account_id 是 Platform CUSTOMER Account 的外部稳定引用，不建立跨库物理外键。",
+    "due_diligence_case_id、qualification_decision_id 与 qualification_decision_version 是 Risk & Compliance 外部稳定引用，不建立跨库物理外键。",
+    "qualification_type 固定由系统写入 PARTNER_DUE_DILIGENCE，不接受调用方输入。",
+  ], "Partner Application contract");
+  assert.deepEqual(relationSignatures(model, application), [
+    "local_partner_id->local_partner.local_partner_id",
+    "target_party_profile_id->party_profile.profile_id",
+  ]);
 }
 
 function assertOperatingEntityApplicationContract(model) {
@@ -2119,7 +2203,11 @@ function assertFieldTypeMappingContract(model) {
     fieldPath,
     expectedPhysicalFieldSpec(fieldPath),
   ]));
-  assert.equal(expectedPhysicalSpecs.size, 404, "complete physical field manifest must be closed");
+  assert.equal(
+    expectedPhysicalSpecs.size,
+    expectedFinalFieldManifestCount,
+    "exact physical field-spec manifest count drift",
+  );
   assert.deepEqual(
     [...expectedPhysicalSpecs]
       .filter(([, spec]) => spec.type === "VARCHAR" && spec.len !== 64)
@@ -2376,7 +2464,11 @@ function assertTableSpecificFieldSemantics(model) {
 }
 
 function assertRelationContract(model) {
-  assert.equal(expectedRelationSignatures.length, 61, "local relation count drift");
+  assert.equal(
+    expectedRelationSignatures.length,
+    expectedRelationSignatureCount,
+    "exact local relation signature manifest count drift",
+  );
   assert.equal(
     new Set(expectedRelationSignatures).size,
     expectedRelationSignatures.length,
@@ -2535,14 +2627,14 @@ function applicationDocumentSemanticFixture() {
     }
     field.notNull = notNull;
   };
-  for (const fieldKey of ["client_application_id", "operating_entity_application_id"]) {
+  for (const fieldKey of ["client_application_id", "partner_application_id", "operating_entity_application_id"]) {
     ensureField(fieldKey, false);
   }
   for (const fieldKey of [
     "document_id", "subject_party_id", "requirement_code", "document_type",
     "file_id", "content_hash", "create_time", "update_time",
   ]) ensureField(fieldKey, true);
-  document.comment = `父申请 CHECK ${applicationDocumentXor}；client_application_id 与 operating_entity_application_id 两个 Parent FK 均为本库 RESTRICT。`;
+  document.comment = `父申请 CHECK ${applicationDocumentXor}；client_application_id、partner_application_id 与 operating_entity_application_id 三个 Parent FK 均为本库 RESTRICT。`;
   return model;
 }
 
@@ -2645,6 +2737,7 @@ function applicationBusinessContractFixture() {
       field("client_application", "application_type", {
         comment: "申请类型。允许值：ONBOARDING、PROFILE_CHANGE。",
       }),
+      field("client_application", "requested_by_account_id", { type: "BIGINT", notNull: false }),
       ...commonFields("client_application", ["INDIVIDUAL_KYC", "ORGANIZATION_KYB"]),
     ],
     indexes: [],
@@ -2653,6 +2746,7 @@ function applicationBusinessContractFixture() {
       ...commonComment,
       clientApplicationProfileMatrix,
       "Client 状态归属：ONBOARDING 仅允许绑定 PENDING Client；PROFILE_CHANGE 仅允许绑定 ACTIVE Client。",
+      "ONBOARDING 必须携带 requested_by_account_id；该字段是 Platform CUSTOMER Account 的外部稳定引用，不建立跨库物理外键。",
       "Profile 归属：Base/Target Party Profile 必须属于 Client 对应 Party，Base/Target Business Profile 必须属于同一 client_id。",
       "PROFILE_CHANGE 提交时 Base Party/Business Profile 必须分别等于当时 ACTIVE Profile；与 Base 不同的 Target 必须在同一提交事务封存为 FROZEN。",
       "qualification_type 在提交时由 Client Party Type 推导：INDIVIDUAL 为 INDIVIDUAL_KYC、ORGANIZATION 为 ORGANIZATION_KYB；不得由调用方输入，提交后冻结且不可修改。",
@@ -3338,10 +3432,10 @@ test("removes persisted Eligibility and deferred Retention tables from every str
   }
 });
 
-test("requires the approved 36-table Client & Contract catalog", () => {
+test("requires the approved Partner Application Client & Contract catalog", () => {
   const model = readModel();
   const entities = entityMap(model);
-  assert.equal(model.entities.length, 36);
+  assert.equal(model.entities.length, expectedTables.length);
   assert.deepEqual([...entities.keys()].sort(), expectedTables);
   for (const removed of [
     "client_onboarding", "client_profile_change", "client_onboarding_doc",
@@ -3377,34 +3471,39 @@ test("uses the approved physical table and index prefixes", () => {
   }
 });
 
-test("locks the approved 36-table physical-model totals", () => {
+test("keeps Partner Application create_by as the mutable CCT command actor", () => {
+  const partnerApplication = requireEntity(entityMap(readModel()), "partner_application");
+  const createBy = fieldMap(partnerApplication).get("create_by");
+  const requestedBy = fieldMap(partnerApplication).get("requested_by_account_id");
+
+  assert.equal(
+    createBy?.comment,
+    "记录该可变生命周期申请行的 CCT 录入或命令 Actor 标识；不同于 requested_by_account_id，后者仅是外部 Platform CUSTOMER Account 申请人且不证明法律主体或签约资格。",
+  );
+  assert.equal(
+    requestedBy?.comment,
+    "发起申请的 Platform CUSTOMER Account 外部稳定标识；Partner Application 必填，不建立跨库物理外键。",
+  );
+});
+
+test("locks the generated Partner Application physical totals", () => {
   const model = readModel();
-  const fields = model.entities.flatMap((entity) => entity.fields);
   const indexes = model.entities.flatMap((entity) => entity.indexes);
-  const cells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells);
 
   assert.deepEqual({
     tables: model.entities.length,
-    fields: fields.length,
-    required: fields.filter((field) => field.notNull).length,
-    nullable: fields.filter((field) => !field.notNull).length,
+    fields: model.entities.flatMap((entity) => entity.fields).length,
     uniqueIndexes: indexes.filter((index) => index.unique).length,
     accessIndexes: indexes.filter((index) => !index.unique).length,
     relations: model.entities.flatMap((entity) => entity.correlations).length,
-    tableCells: cells.filter((cell) => cell.shape === "table").length,
-    relationCells: cells.filter((cell) => cell.shape === "erdRelation").length,
-    hashFields: fields.filter((field) => field.defKey.endsWith("_hash")).length,
+    diagramGroups: model.diagrams.length,
   }, {
-    tables: 36,
-    fields: 404,
-    required: 319,
-    nullable: 85,
-    uniqueIndexes: 54,
-    accessIndexes: 43,
-    relations: 61,
-    tableCells: 51,
-    relationCells: 61,
-    hashFields: 11,
+    tables: 37,
+    fields: 423,
+    uniqueIndexes: 57,
+    accessIndexes: 44,
+    relations: 64,
+    diagramGroups: 6,
   });
 });
 
@@ -3412,7 +3511,7 @@ test("rejects removed Agreement/Legal tables and fields without overreaching int
   assertAgreementLegalSimplificationContract(readModel());
 });
 
-test("uses the exact unique Chinese display-name manifest for all 36 tables", () => {
+test("uses the exact unique Chinese display-name manifest for all 37 tables", () => {
   assertMetadataContract(readModel());
 });
 
@@ -3440,12 +3539,12 @@ test("keeps the approved unique-key contracts", () => {
   }
   assert.equal(
     model.entities.flatMap((entity) => entity.indexes).filter((index) => index.unique).length,
-    54,
+    57,
     "unique-index count drift",
   );
   assert.equal(
     model.entities.flatMap((entity) => entity.indexes).filter((index) => !index.unique).length,
-    43,
+    44,
     "access-index count drift",
   );
 });
@@ -3553,6 +3652,7 @@ test("generated model contains no exact legacy industry/MCC structure", () => {
 test("models exact Application state, Risk tuple, submission hash and parent XOR contracts", () => {
   const model = readModel();
   assertClientApplicationContract(model);
+  assertPartnerApplicationContract(model);
   assertOperatingEntityApplicationContract(model);
   assertApplicationDocumentContract(model);
 });
@@ -3616,7 +3716,7 @@ test("locks the complete approved Hash allowlist, CHAR(64), nullability and inpu
       .filter((field) => field.defKey.endsWith("_hash"))
       .map((field) => `${logicalTableKey(entity.defKey)}.${field.defKey}`),
   ).sort();
-  assert.equal(actualHashFields.length, 11, "hash-field count drift");
+  assert.equal(actualHashFields.length, 12, "hash-field count drift");
   assert.deepEqual(actualHashFields, Object.keys(expectedHashFields).sort(), "Hash field allowlist drift");
   for (const [qualifiedField, [notNull, schemaField, inputClause]] of Object.entries(expectedHashFields)) {
     const [tableKey, fieldKey] = qualifiedField.split(".");
@@ -3777,7 +3877,7 @@ test("preserves the nine focused Party Identity tables and their immutable field
   }
 });
 
-test("maps every physical field to the independent literal 36-table manifest", () => {
+test("maps every physical field to the independent literal 37-table manifest", () => {
   const model = readModel();
   assertTargetModelFieldCatalog(model, "complete physical field evaluator");
 });
@@ -3914,7 +4014,7 @@ test("semantic evaluator rejects a weakened Application Document XOR", () => {
   const model = applicationDocumentSemanticFixture();
   assertApplicationDocumentContract(model);
   const document = entityMap(model).get("application_document");
-  document.comment = document.comment.replace("<>", "=");
+  document.comment = document.comment.replace("= 1", "= 2");
   assert.throws(
     () => assertApplicationDocumentContract(model),
     /missing exact expression for Application Document parent XOR/u,

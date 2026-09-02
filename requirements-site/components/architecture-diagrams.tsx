@@ -44,6 +44,9 @@ export function CoarseArchitectureDiagram() {
         <span>Hosted Checkout</span><span>Client Console</span><span>Partner Console</span>
         <span>Client API</span><span>Operations Console</span><span>Provider Endpoint</span>
       </div>
+      <div className="entry-row">
+        <span>Client Console BFF</span><span>Partner Console BFF</span><span>Operations Console BFF</span>
+      </div>
       <div className="down-arrow">↓</div>
       <div className="architecture-grid">
         {COARSE_ARCHITECTURE.map((group, index) => (
@@ -56,19 +59,19 @@ export function CoarseArchitectureDiagram() {
         ))}
       </div>
       <p className="diagram-caption">
-        Supporting infrastructure（不计入六个核心系统）：Vault 集中保护非卡敏感值；每个服务内嵌 compensation-event，并由 XXL-Job 兜底唤醒本地可靠任务。
+        浏览器经 API Gateway 进入各自 Channel BFF。Platform 是统一认证与 Tenant IAM 权威；CCT 是 Client/Local Partner/Application 业务权威，Risk 是角色资格权威。Supporting infrastructure（不计入六个核心系统）：Vault 集中保护非卡敏感值；每个服务内嵌 compensation-event，并由 XXL-Job 兜底唤醒本地可靠任务。
       </p>
     </div>
   );
 }
 
 const domainGroups = [
-  { service: "Client & Contract", domains: ["Client Account", "Business Profile", "Real-time Readiness Check", "Operating Entity", "Local Partner", "Agreement", "Commercial Terms"] },
+  { service: "Client & Contract", domains: ["Client", "Client / Partner Application", "Business Profile", "Real-time Readiness Check", "Operating Entity", "Local Partner", "Agreement", "Commercial Terms"] },
   { service: "Commerce", domains: ["Checkout Session", "Consumer Contract", "Order Context", "Consumer", "Order", "Refund", "Customer Care"] },
   { service: "Payment Orchestration", domains: ["Provider Registry", "Provider Account / MID", "Payment Routing", "Payment Execution", "Provider Callback", "Payment Reconciliation"] },
-  { service: "Risk & Compliance", domains: ["Client Risk", "Business Policy", "Transaction Risk", "Risk Decision", "Settlement Restriction", "Case Management", "Dispute"] },
+  { service: "Risk & Compliance", domains: ["Role Qualification", "Client / Partner Risk", "Business Policy", "Transaction Risk", "Risk Decision", "Settlement Restriction", "Case Management", "Dispute"] },
   { service: "Finance", domains: ["Fee Calculation", "Tax & Fiscal Record", "Revenue Share", "Provider Cost & Settlement", "Accounting Instruction", "Legal Entity Ledger", "Account Balance", "Contract Maturity", "Beneficiary Account", "Security Deposit & Recovery Gate", "Manual Payout", "Payout Execution & Reconciliation"] },
-  { service: "Platform Support", domains: ["IAM", "API Key", "Client Webhook", "Notification", "Consumer Document", "Configuration", "Audit", "File & Evidence"] },
+  { service: "Platform Support", domains: ["Account & Credential", "Authentication Challenge", "Session", "Google Identity", "Tenant IAM", "Authorization", "API Credential", "Business Email OTP", "Client Webhook", "Notification", "Consumer Document", "Audit", "File & Evidence"] },
 ];
 
 export function DomainMapDiagram() {

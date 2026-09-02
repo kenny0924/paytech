@@ -1,8 +1,8 @@
 # Risk & Compliance 现实场景与逐表字段映射
 
-最后更新：2026-08-29
+最后更新：2026-08-30
 
-状态：与 71 表 Risk & Compliance V1 PDManer 基线同步；Settlement Eligibility、Dispute 平衡优化与 Manual Payout 四检查点已于 2026-08-29 同 Finance、requirements 和共享入口对齐并通过自动场景门禁；PDManer 4.9.3 应用内人工检查待完成
+状态：与 71 表 Risk & Compliance V1 PDManer 基线同步；Settlement Eligibility、Dispute、Manual Payout 四检查点与 CCT Local Partner Application Typed Namespace 已通过自动场景门禁；PDManer 4.9.3 应用内人工检查待完成
 
 当前 Manual Payout 契约以 [四检查点对齐实施记录](../../plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) 为准。
 
@@ -15,6 +15,8 @@
 | Organization Party / UBO Party | `100001` / `100002` |
 | Client / Operating Entity | `200001` / `210001` |
 | CCT Application | `810001`，Submission Version `3` |
+| Local Partner / Related Person Party | `730300000000000001` / `730100000000000009` |
+| CCT Local Partner Application | `730320000000000001` |
 | Order / Order Item / Order Context | `410001` / `410011` / `410021` |
 | Payment Intent / Attempt | `510001` / `510011` |
 | Provider / MID | `610001` / `610011` |
@@ -30,6 +32,8 @@
 
 Client `200001` 提交 Application `810001`。Risk 选择已审核的 Organization KYB Program Version `110011`，建立 Organization Case `120001`；Required UBO `100002` 具有独立 KYC Case `120002`，Organization Case 通过 Dependency 明确引用 UBO 的有效决定。自动规则只给 recommendation，Reviewer 最终形成 Qualification Decision `130001`，CCT 接收 `RoleQualificationApproved`。
 
+Local Partner Application `730320000000000001` 的 Handler 携带 `application_id`、`role_type`、`role_id`、`qualification_type`、`submission_content_hash`。Risk 创建主 Tuple `source_namespace=CCT_LOCAL_PARTNER_APPLICATION, source_application_id=730320000000000001, role_type=LOCAL_PARTNER, role_id=730300000000000001, qualification_type=PARTNER_DUE_DILIGENCE` 和关联人子 Tuple `source_namespace=CCT_LOCAL_PARTNER_APPLICATION, source_application_id=730320000000000001, role_type=RELATED_PERSON, role_id=730100000000000009, qualification_type=RELATED_PERSON_KYC`；CCT 只接收 Local Partner 主 Case/Decision，Risk 管理关联人 KYC 子 Case 及其依赖。
+
 ### 2.1 尽调与资格 19 表
 
 | 物理表 | 示例行与生命周期 |
@@ -39,7 +43,7 @@ Client `200001` 提交 Application `810001`。Risk 选择已审核的 Organizati
 | `t_dd_program_requirement` | `program_requirement_id=110021, requirement_code=TRADE_LICENSE, document_type=BUSINESS_LICENSE, required_flag=1`；Version 冻结后只读。 |
 | `t_dd_program_check` | `program_check_id=110031, check_code=REGISTRY_ACTIVE, check_type=COMPANY_REGISTRY, required_flag=1`。 |
 | `t_dd_program_screening` | `program_screening_id=110041, subject_role=UBO, screening_type=SANCTIONS, required_flag=1`。 |
-| `t_due_diligence_case` | Organization `case_id=120001, case_no=DD-2026-0001, role_type=CLIENT, role_id=200001, qualification_type=ORGANIZATION_KYB, case_origin=APPLICATION, source_namespace=CCT_CLIENT_APPLICATION, source_application_id=810001, source_submission_version=3, source_submission_hash=sha256:submission-v3, status=APPROVED, active_slot=NULL, version=6`；Case Type 由 Qualification 推导，不重复存列。由同一申请派生的 UBO KYC Case `120002` 使用 `role_type=RELATED_PERSON, role_id=100002, qualification_type=RELATED_PERSON_KYC, case_origin=APPLICATION, source_namespace=CCT_CLIENT_APPLICATION, source_application_id=810001, source_submission_version=3, source_submission_hash=sha256:submission-v3`，其中 Role ID 就是 CCT Party ID；同一 Party 同时是 UBO/Director/Signatory 时复用该 KYC Case，由多条不同 Dependency Type 指向它。即使另一个 OE Application 也使用数值 ID `810001` 且涉及 Party `100002`，其子 Case 使用 `source_namespace=CCT_OPERATING_ENTITY_APPLICATION`，不会串案。2027 到期周期创建 `case_id=120101, case_origin=CONTINUOUS_REVIEW, source_namespace=RISK_COMPLIANCE, scheduled_review_time=2027-08-26T10:00Z, source_application_id=NULL, source_submission_version=NULL, source_submission_hash=NULL`；进行中状态按 Role+Qualification 占用 active_slot=1，终态必须置空。 |
+| `t_due_diligence_case` | Organization `case_id=120001, case_no=DD-2026-0001, role_type=CLIENT, role_id=200001, qualification_type=ORGANIZATION_KYB, case_origin=APPLICATION, source_namespace=CCT_CLIENT_APPLICATION, source_application_id=810001, source_submission_version=3, source_submission_hash=sha256:submission-v3, status=APPROVED, active_slot=NULL, version=6`；Case Type 由 Qualification 推导，不重复存列。由同一申请派生的 UBO KYC Case `120002` 使用 `role_type=RELATED_PERSON, role_id=100002, qualification_type=RELATED_PERSON_KYC, case_origin=APPLICATION, source_namespace=CCT_CLIENT_APPLICATION, source_application_id=810001, source_submission_version=3, source_submission_hash=sha256:submission-v3`，其中 Role ID 就是 CCT Party ID；同一 Party 同时是 UBO/Director/Signatory 时复用该 KYC Case，由多条不同 Dependency Type 指向它。Partner 主 Case `120003` 使用 `source_namespace=CCT_LOCAL_PARTNER_APPLICATION, source_application_id=730320000000000001, role_type=LOCAL_PARTNER, role_id=730300000000000001, qualification_type=PARTNER_DUE_DILIGENCE`；关联人子 Case `120004` 使用相同 Namespace/Application 和 `role_type=RELATED_PERSON, role_id=730100000000000009, qualification_type=RELATED_PERSON_KYC`。2027 到期周期创建 `case_id=120101, case_origin=CONTINUOUS_REVIEW, source_namespace=RISK_COMPLIANCE, scheduled_review_time=2027-08-26T10:00Z, source_application_id=NULL, source_submission_version=NULL, source_submission_hash=NULL`；进行中状态按 Role+Qualification 占用 active_slot=1，终态必须置空。 |
 | `t_dd_case_subject` | PRIMARY `case_subject_id=120011, case_id=120001, party_id=100001, subject_role=PRIMARY, primary_slot=1, source_profile_id=810101, source_profile_version_no=4`；UBO 行 `120012` 冻结 Party `100002` 的 Profile 坐标，以及 `source_relation_version_id=820001, source_relation_version_no=2, ownership_percentage=60.0000000000`。 |
 | `t_dd_case_dependency` | `dependency_id=120021, parent_case_id=120001, child_case_id=120002, dependency_type=UBO_KYC, accepted_decision_id=130002, version=2`；创建时决定为空，子 Case 形成有效决定后以 CAS 单向接受；禁止自依赖和环。 |
 | `t_dd_party_snapshot` | `snapshot_id=120031, case_subject_id=120011, schema_version=1, source_content_hash=sha256:profile-v4, snapshot_vault_token=vt_dd_120031, captured_time=2026-08-26T09:55Z`；Token 支持授权 Reveal，来源 Hash 支持案件输入核验，不保存无消费者的 Vault Record Version/Metadata Hash。 |
@@ -54,7 +58,7 @@ Client `200001` 提交 Application `810001`。Risk 选择已审核的 Organizati
 | `t_role_qualification` | `qualification_id=130011, role_type=CLIENT, role_id=200001, current_decision_id=130001, status=APPROVED, review_frequency_code=ANNUAL, next_review_time=2027-08-26T10:00Z, review_status=ACTIVE, version=1`；是跨 Case 当前投影和复审调度，不代替决定历史。 |
 | `t_qualification_state_change` | `change_id=130021, qualification_id=130011, to_status=APPROVED, decision_id=130001, aggregate_version=1`，与投影和可靠事件同事务。 |
 
-若 UBO 决定缺失、失效或不属于 Dependency 指向的 Party，Organization Qualification 必须失败关闭；不能用 Organization 自身检查替代 UBO KYC。`source_namespace + source_application_id + role_type + role_id + qualification_type` 完整来源身份相同的重放先命中 Case：Submission Hash 相同返回既有 Case，Hash 不同直接冲突；同一 Application 下不同 Role/Party/Qualification 的主子 Case 互不冲突，两类 CCT Application 即使数值 ID 和关联 Party 相同也由 Namespace 隔离。周期调度器以 `qualification_id=130011, version=1, next_review_time=2027-08-26T10:00Z` 做条件更新，在同一本地事务创建 Case `120101` 并推进下一复审时间；重复执行由 Review Cycle 唯一键返回同一 Case，不建立 Plan/Run 记录。
+若 UBO 决定缺失、失效或不属于 Dependency 指向的 Party，Organization Qualification 必须失败关闭；不能用 Organization 自身检查替代 UBO KYC。`source_namespace + source_application_id + role_type + role_id + qualification_type` 完整来源身份相同的重放先命中 Case：Submission Hash 相同返回既有 Case，Hash 不同直接冲突；同一 Application 下不同 Role/Party/Qualification 的主子 Case 互不冲突。相同数值 Application ID `730320000000000001` 在 `CCT_CLIENT_APPLICATION`、`CCT_OPERATING_ENTITY_APPLICATION`、`CCT_LOCAL_PARTNER_APPLICATION` 三个 Namespace 中彼此隔离；Local Partner Namespace 只接受 LOCAL_PARTNER 或 RELATED_PERSON Role，拒绝 CLIENT 和 OPERATING_ENTITY。周期调度器以 `qualification_id=130011, version=1, next_review_time=2027-08-26T10:00Z` 做条件更新，在同一本地事务创建 Case `120101` 并推进下一复审时间；重复执行由 Review Cycle 唯一键返回同一 Case，不建立 Plan/Run 记录。
 
 ## 3. SCN-RISK-02：自由规则、候选 Release 与 SHADOW 旁路
 

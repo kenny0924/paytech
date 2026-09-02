@@ -1,10 +1,12 @@
-# Platform Support 92 表平衡物理模型设计
+# Platform Support 92 表平衡物理模型设计（历史记录）
+
+> **2026-09-01 再次替代：** 本文后续 92/97 表、Version/State Change、旧 Gateway 与通用技术配置内容仅用于历史追溯。[57 表精简设计](../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md) 是未受影响领域的直接前序；[统一公共 API 动态控制面设计](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 与其 [PDManer 实施计划](../../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md) 定义当前六表后继。当前模型为 63 表 / 822 字段 / 123 个唯一索引 / 99 个访问索引 / 107 条关系 / 5 条 1:1 / 7 图组 / 31 条复合 FK / 85 条 CHECK / 36 个 `_hash` 字段。后文只用于追溯历史阶段，不得作为当前实现依据。
 
 最后更新：2026-08-29
 
-状态：已实现并完成独立安全审查修正；最终 PDManer 确定性模型为 92 表、1,076 字段、167 个唯一索引、116 个访问索引、145 条本库关系、19 条 1:1 关系和 8 个 Diagram Groups，另冻结 28 条复合外键与 67 条 CHECK 契约
+状态：**历史/已被替代。** 本文保留 92 表阶段的设计过程；当前认证与 Gateway 边界以 [2026-08-30 统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 和 [97 表模型](../../platform-support-service/docs/database/platform-support.pdma.json) 为准：1,183 字段、175 个唯一索引、126 个访问索引、157 条关系、19 条 1:1、8 图组、31 条复合 FK、92 条 CHECK。
 
-> **后续决策：** [2026-08-29 Platform Support 内部运营认证需求](./2026-08-29-platform-support-operations-authentication-requirements.md) 已取代本设计中外部 IdP-only 和 Platform 动态管理 Gateway Route/Upstream 的未来实现语义，并把 Rate/Concurrency 改为按独立计数维度累计。本文继续记录 92 表冻结 V1 的形成过程；受影响结构未经新的物理模型授权不得实施，当前不修改生成模型或精确计数。
+> **历史读取规则：** 后文所有 92 表、外部 IdP-only、动态 Gateway Route/Upstream、Route Release Item 与旧 Guard 语义仅说明当时选择。2026-08-30 的已生成模型已经完成该物理修订；不要据此恢复删除表或当前语义。
 
 ## 1. 目标与阶段边界
 

@@ -198,6 +198,17 @@ test("system catalog renders six functional systems instead of deployment-level 
   assert.doesNotMatch(content, /14 组业务与支撑系统/);
 });
 
+test("rendered Platform catalog uses the generated public control plane and Tenant-owned credentials", async () => {
+  const content = await renderPage();
+
+  assert.match(content, /63 (?:张)?表、822 (?:个)?字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1 关系和 7 个 Diagram Group/u);
+  assert.match(content, /所有外部 HTTP API.*Platform.*公共 Route Catalog.*内部服务调用.*绕过 Gateway/su);
+  assert.match(content, /OPERATIONS.*CLIENT.*PARTNER.*CHECKOUT.*CLIENT_API.*PROVIDER_CALLBACK/su);
+  assert.match(content, /Tenant.*API Credential.*PHC verifier.*ACTIVE Scope/su);
+  assert.match(content, /Integration Readiness.*一致查询快照.*同步派生/su);
+  assert.doesNotMatch(content, /管理通用配置生命周期|Technical Configuration|ConfigurationActivated|ClientIntegrationReadinessChanged/u);
+});
+
 test("system catalog distinguishes synchronous interfaces from MQ notifications", async () => {
   const content = await renderPage();
 
@@ -303,6 +314,19 @@ test("Partner Console is read-only for transactions and can request only share p
   assert.match(content, /平台自有 Operating Entity 不创建虚假 Partner 或 Client 来源关系/);
 });
 
+test("rendered consoles expose unified CUSTOMER authentication without extending it to Consumers", async () => {
+  const content = await renderPage();
+
+  assert.match(content, /Operations.*Email\/Password only.*admin.*唯一非 Email Bootstrap/su);
+  assert.match(content, /CUSTOMER.*Email\/Password.*Google OIDC/su);
+  assert.match(content, /一个 CUSTOMER Account.*CLIENT.*PARTNER Tenant/su);
+  assert.match(content, /一个 Access Token.*零个或一个 Tenant Member/su);
+  assert.match(content, /业务 Email OTP.*Authentication Challenge.*独立/su);
+  assert.match(content, /Consumer 认证.*明确排除/u);
+  assert.match(content, /Client Console.*Email 注册.*Google Login.*Invitation.*Tenant 选择/su);
+  assert.match(content, /Partner Console.*Email 注册.*Google Login.*Invitation.*Tenant 选择/su);
+});
+
 test("Operating Entity sources and the two-stage routing boundary are explicit", async () => {
   const content = await renderPage();
 
@@ -397,6 +421,6 @@ test("top-level tabs separate architecture from global and system use cases", as
 test("every global use case can reveal its system call sequence", async () => {
   const content = await renderPage();
 
-  assert.equal(content.match(/aria-label="查看 E2E-\d{2} 时序图"/g)?.length, 13);
+  assert.equal(content.match(/aria-label="查看 E2E-\d{2} 时序图"/g)?.length, 14);
   assert.match(content, /点击任意全局用例查看系统调用时序图/);
 });

@@ -1,8 +1,8 @@
 # Code-MoR 技术栈基线
 
-最后更新：2026-08-30
+最后更新：2026-09-02
 
-状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、七个公共 JAR 源码与本地 `base` Compose Profile 配置已经初始化；既有构建治理 POM 和五个公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus，新增 `paytech-caffeine-starter`、`paytech-redis-starter` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus；`base` Profile 已完成本机烟测并按需启停。Operations 首期 API Gateway 已在独立 Maven 仓库实现并通过构建、架构、验收与覆盖率门禁；六个核心业务服务的 Java 模块、Console BFF/前端、Migration、业务表、后续运行环境和生产基础设施仍未授权创建。
+状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、七个公共 JAR 源码与本地 `base` Compose Profile 配置已经初始化；既有构建治理 POM 和五个公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus，新增 `paytech-caffeine-starter`、`paytech-redis-starter` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus；`base` Profile 已完成本机烟测并按需启停。Operations 首期 API Gateway 已在独立 Maven 仓库实现并通过构建、架构、验收与覆盖率门禁。Platform Support 已验证 `api`/`web`/`test` Spring MVC Reactor，并实现 Phase A Flyway/MyBatis 21-table 投影、确定性初始化、mTLS 和 PLT-I20 全量 Snapshot Provider；其余五个核心服务 Java 模块、Platform 剩余业务实现、Console BFF/前端、后续运行环境和生产基础设施仍未授权创建。
 
 ## 1. 使用范围
 
@@ -130,6 +130,15 @@ paytech-build/
 - JaCoCo 按未舍入数值同时要求 Instruction 和 Branch Coverage `>= 90%`，只排除精确的 `ApiGatewayApplication`，并校验报告新鲜度与已编译类集合一致性。架构测试和真实随机端口 E2E 验收与默认 `auto` 组一起运行。
 - `api-gateway-web` 同时产出普通依赖 JAR 和可执行 `-exec.jar`；`api-gateway-test` 跳过 install/deploy 且不产出可部署 JAR。本地 Redis 前置、秘密注入、命令与轮换细节见 [`api-gateway/README.md`](../api-gateway/README.md)。
 
+### 5.5 Platform Support Phase A 运行切片
+
+- `platform-support-service` 继承 `paytech-parent:1.0.0-SNAPSHOT`，使用 Maven 3.9.16 Wrapper，聚合 `platform-support-api`、`platform-support-web` 和 `platform-support-test`。
+- `api` 发布 PLT-I20 `@HttpExchange` 与不可变 typed DTO；DTO 枚举语义使用稳定 `String` Code。`web` 使用 Spring MVC、Actuator/Prometheus、JDBC、Flyway、MyBatis、MySQL Driver、Spring Security、Snowflake ID 与 Bouncy Castle 实现 Phase A；`test` 使用 JUnit 5、Testcontainers MySQL 和真实随机端口 HTTP/mTLS，不使用 Mockito 或共享业务基础设施。
+- 默认端口为 `18106`。Health、Liveness、Readiness、Info 与 Prometheus 使用同一应用 Listener；Endpoint Discovery、JMX 和健康详情披露关闭。
+- Reactor Enforcer 继续禁止该切片未使用的 Nacos、Redis、RabbitMQ、XXL-Job、Compensation Event、Spring Cloud Gateway 与 Mockito；数据库和 mTLS 所需依赖由自动门禁精确锁定。
+- PLT-I20 每次在只读 Repeatable Read 边界捕获当前配置，事务外完整校验并返回全量 typed Snapshot；不实现 ETag、`If-None-Match`、`304` 或持久化 Snapshot。
+- `./mvnw clean verify` 产出普通 Web JAR 与可执行 `-exec.jar`；完整运行边界见 [`platform-support-service/README.md`](../platform-support-service/README.md)。
+
 ## 6. 公共基础 JAR
 
 公共能力拆分为小而稳定的 JAR，禁止形成包含领域 DTO、业务枚举和所有工具类的巨型 `common.jar`：
@@ -210,7 +219,7 @@ paytech-foundation/
 - 六个核心服务、`operations-console-bff`、`client-console-bff`、`partner-console-bff` 和 Vault 默认使用 Spring MVC。
 - API Gateway 使用 Spring Cloud Gateway Server WebFlux；Operations 首期的 JWT、路由、限流和并发 Filter 保持端到端 Reactive。
 - 当前 Gateway 公网面是静态、method-aware Catalog：只存在 `POST /api/operations/auth/v1/login`、`POST /api/operations/auth/v1/refresh` 和 `POST /api/operations/auth/v1/logout`。匹配精确 `HttpMethod + rawPath` 且要求空 Query；每条路由显式指定 Operations BFF 下游路径 `/auth/v1/login`、`/auth/v1/refresh` 或 `/auth/v1/logout`，没有通配路由或前缀剥离规则。
-- Gateway 验证 Access JWT 和 Operations Channel/Actor 上下文，不处理账号密码登录；本切片唯一下游边界是 Operations BFF，不直连 Platform Support 或核心系统。Operations BFF 与 Platform Support 认证代码仍未实现，自动测试使用有状态协议 Simulator。
+- Gateway 验证 Access JWT 和 Operations Channel/Actor 上下文，不处理账号密码登录；本切片唯一下游边界是 Operations BFF，不直连 Platform Support 或核心系统。Operations BFF 与 Platform Support 认证代码仍未实现；Platform Phase A 只提供尚未被 Gateway 消费的 PLT-I20 Snapshot，Gateway 自动测试继续使用有状态协议 Simulator。
 - 未匹配的 Operations API 由 Gateway 本地拒绝，不转发到下游；运行时路由只来自编译时 Catalog，不启用 Discovery Locator、Redis/动态 Route Repository 或通配 `/api/operations/**`。
 - 内部同步接口由提供方 `*-api` JAR 提供 `@HttpExchange` 契约，调用方通过本地 `*Client` 适配器隔离传输 DTO。
 - MVC 服务默认使用 `RestClient`；确有流式或 Reactive 边界时才使用 `WebClient`。
@@ -246,9 +255,9 @@ Flyway 保存数据库从空库演进到当前版本的可执行、可审计历�
 - 版本化 Migration 负责创建和演进真实数据库；
 - 每个服务数据库拥有自己的 `flyway_schema_history`；
 - 已应用 Migration 不得重写，修正必须创建新版本；
-- 一旦数据库实现获批，PDManer、Migration、DO/Mapper/Repository 和 Testcontainers 测试必须在同一变更中保持一致。
+- 一旦数据库实现获批，PDManer、Migration、DataObject/Mapper/Repository 和 Testcontainers 测试必须在同一变更中保持一致；DataObject 类型使用业务实体名，不加 `DO` 后缀。
 
-业务数据库实现仍停留在已批准的 PDManer 设计阶段，不创建 `V1__initial_schema.sql` 或业务表。本地 Compose 初始化脚本只为未来启动准备相互隔离的空数据库和最小账号，并包含 Nacos 自身所需的技术表。
+除已批准并实现的 Platform Support Phase A 21-table Migration 外，其余核心业务数据库实现仍停留在 PDManer 设计阶段，不创建 `V1__initial_schema.sql` 或业务表。本地 Compose 初始化脚本只为未来启动准备相互隔离的空数据库和最小账号，并包含 Nacos 自身所需的技术表。
 
 ## 10. RabbitMQ 基线
 
@@ -311,7 +320,7 @@ RabbitMQ 是 MVP 唯一业务 MQ，不再并行评估 RocketMQ。
 - Operations Gateway 不依赖 `paytech-redis-starter`，不创建 Blocking/Reactive Redis Template、阻塞连接或 Redisson Client，只使用 `ReactiveRedisConnectionFactory` 和 Reactive Lua 执行。
 - Gateway Rate Limit 使用原子 Lua Token Bucket；一次请求的 Route/IP/Subject 等适用维度全量通过后才统一扣减。
 - Gateway Concurrency 使用 Lua + ZSET Expiring Lease；Acquire 全维度原子成功或失败，Reactor 的成功、错误和取消路径都释放 Lease，进程故障由 TTL 恢复容量。
-- Guard 为静态的每路由 Profile：先 Rate Limit，再立即 Acquire Concurrency Lease，不等待、不排队；后续 Concurrency、JWT、Body 或下游拒绝不退还已消费的 Rate Token，所有已获 Lease 在成功、错误和取消时释放。Redis 采用 `guard:v2`、服务器时间和单调正 Policy Revision；Guard 只读取当前 HMAC Key，Access Log HMAC 独立。受控换钥期间共享 Route Scope 保持不变，IP/Subject Scope 可有有界的暂时容量增加。
+- Guard 为静态的每路由 Profile：先 Rate Limit，再立即 Acquire Concurrency Lease，不等待、不排队；后续 Concurrency、JWT、Body 或下游拒绝不退还已消费的 Rate Token，所有已获 Lease 在成功、错误和取消时释放。Redis 采用 `guard:v3` 和服务器时间；Client IP Key 使用原始 Canonical Socket IP，Subject Key 使用已验证 JWT 的准确 `sub`，Guard 不再配置 HMAC。Rate Hash 只含 `t/lr/rr`，Concurrency Metadata 只含 `hw/l`，不保存 Policy Revision，也不执行滚动状态迁移。Access Log 继续使用独立 HMAC 做 IP/Subject 假名化。
 - 其他服务使用 Redis 暂不需要额外架构审批，但必须定义 Key Namespace、TTL、容量、失败语义和自动测试。
 - Redis 不存放账务余额、支付状态、补偿 Claim、不可丢失幂等事实或其他权威业务状态。资金和状态并发仍使用 MySQL 行锁/CAS/唯一约束。
 

@@ -1,8 +1,8 @@
 # Code-MoR 本地开发环境方案
 
-最后更新：2026-08-30
+最后更新：2026-09-02
 
-状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和七个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；六个核心业务服务的 Java 模块、Console BFF/前端、Flyway Migration、业务表、调度和外部可观测运行环境仍未创建。
+状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和七个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A Flyway/MyBatis 21-table 投影、确定性初始化、mTLS 边界和 PLT-I20 全量 Snapshot Provider。其他五个核心服务 Java 模块、Platform 剩余业务能力、Console BFF/前端、调度和外部可观测运行环境仍未创建。
 
 ## 1. 目标
 
@@ -247,6 +247,17 @@ Vault 本地开发需要的 KMS、Secrets Manager 和 Object Storage 模拟器�
 
 服务在 Nacos 中按稳定 `spring.application.name` 注册。端口只用于本机调试，不成为跨环境契约。
 
+### 8.3 当前 Platform Support Phase A
+
+Platform Support 的完整自动门禁使用独立 Testcontainers MySQL，因此无需先启动共享 `base` Profile：
+
+```bash
+cd platform-support-service
+./mvnw clean verify
+```
+
+实际启动可执行 JAR 前必须提供 Platform 专属 MySQL、Bootstrap Secret、TLS Server Keypair 和受信客户端证书配置；不得使用仓库默认值伪造 Secret。当前 `health`、`liveness`、`readiness`、`info` 和 `prometheus` 与应用共用 `18106` TLS Listener，Readiness 同时检查 Migration、确定性 Seed 与当前 Snapshot。完整变量、mTLS 和 PLT-I20 边界以 [`platform-support-service/README.md`](../platform-support-service/README.md) 为准。
+
 ## 9. 本地 MySQL 多数据库方案
 
 一个 MySQL 容器承载以下独立数据库：
@@ -302,7 +313,7 @@ xxl_job
 - 每次 Gateway 测试运行生成唯一 Key Namespace，Setup/Teardown 只用 `SCAN` 删除本次已知前缀，禁止 `KEYS *`、`FLUSHDB` 或停止共享 Compose Redis。Redis 不可用用例连接未监听的 Loopback 端口，不影响其他本地进程。
 - 本地密码来自 `.env.local`；应用日志不得输出完整连接串或密码。
 - 现有宿主机 `6379` Redis 不参与 Code-MoR 开发、测试或故障演练。
-- Gateway 的 Redis 启动前置、不回显密码的注入方式、完整验证命令和 HMAC 轮换步骤以 [`api-gateway/README.md`](../api-gateway/README.md) 为唯一运行手册；最终 Gateway 约束见 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)，本文不复制密钥或大段命令。
+- Gateway 的 Redis 启动前置、不回显密码的注入方式、Guard 状态约束、Access Log HMAC 配置与完整验证命令以 [`api-gateway/README.md`](../api-gateway/README.md) 为唯一运行手册；最终 Gateway 约束见 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)，本文不复制密钥或大段命令。
 
 ## 13. 日常启动顺序
 
@@ -315,6 +326,8 @@ xxl_job
 5. 调试补偿扫描时再启动 `scheduler`；
 6. 调试跨服务 Trace、Metrics 或 Logs 时再启动 `observability`；
 7. 停止时先退出 Java 服务，再执行 `docker compose down`，保留数据卷。
+
+只检查 Platform Support Phase A 时无需先启动 `base`；其 `auto` 测试使用独立 Testcontainers MySQL，不访问任何共享运行时。
 
 不要把“本地全绿”建立在所有十一个 Deployable（六个核心服务、API Gateway、三个 Console BFF 和 Vault）必须同时常驻的前提上；当前仍只按需启动已经实现且属于当前业务链的应用，未创建的核心服务、Console BFF 和 Vault 不因此获得实现授权。
 
@@ -340,6 +353,7 @@ Java 服务至少验证：
 - RabbitMQ 发布等待 Confirm，消费者提交本地事务后 Manual Ack；
 - 日志含 Request/Trace ID，且没有密码、Token 或敏感明文。
 - API Gateway Application 监听 `18080`，Management 只在 `19080` 暴露 `health` / `info` / `prometheus`；Liveness 只含 `livenessState`，Readiness 只含 `readinessState`、`gatewayBootstrap` 和短超时 `gatewayRedis`，不把 Operations BFF 或 JWKS 可用性纳入就绪门禁。
+- Platform Support Phase A 监听 `18106` TLS Listener；Liveness 只反映进程状态，Readiness 要求 Migration、确定性 Seed 与当前 Gateway Snapshot 均有效，健康详情不对外披露。
 
 ## 15. 自动测试与本地共享环境的边界
 
@@ -349,6 +363,7 @@ Java 服务至少验证：
 - Operations Gateway 是当前唯一例外：它只连接仓库 Compose 管理的 `127.0.0.1:16379` Redis，只接受 `PAYTECH_REDIS_PASSWORD`，测试自身不启动 Docker/Testcontainers，并使用唯一运行 Namespace 与 `SCAN` 限定清理；
 - Nacos 在 `auto` 中关闭；内部服务/Provider 通过有状态 Simulator 提供真实 HTTP/MQ 协议；
 - 测试使用随机映射端口和独立数据库/Key/Queue Namespace；
+- Platform Support Phase A 的 `auto` 测试从真实随机端口 MVC/mTLS 入口执行，使用独立 Testcontainers MySQL，不使用 Mockito 或本文的共享基础设施；
 - 除上述 Gateway Redis 例外外，本地 Compose 只用于人工开发和 `manual` 联调。Gateway 的默认 `auto` 仍从真实随机端口 WebFlux 入口运行，并通过真实协议连接 HTTPS JWKS 和有状态 Operations BFF Simulator。
 
 详细规则见 [UNIT_TEST_GUIDE.md](./UNIT_TEST_GUIDE.md)。

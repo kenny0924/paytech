@@ -1,8 +1,10 @@
 # Operations Gateway Hardening and Guard Simplification Design
 
+> **2026-09-01 dynamic-control-plane successor:** The [unified public API control-plane design](./2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) now owns public Target/Route/Guard current configuration. This design remains authoritative for the deployed static Operations Gateway before dynamic Snapshot cutover and for its unaffected TLS/JWT/Header/Cookie/Redis/transport hardening; the static Catalog is a pre-cutover runtime fact only.
+
 Date: 2026-08-30
 
-Status: Approved design; implementation has not started
+Status: Implemented and verified on 2026-08-31
 
 Supersedes the affected routing, trusted-header, request-body, JWKS and Guard sections of
 `agent-docs/plans/2026-08-29-operations-api-gateway-design.md` and the corresponding implementation tasks in
@@ -28,7 +30,7 @@ exist. It retains the distributed mechanisms that directly protect Gateway and B
 - Match protected Header names by case-insensitive whole-name equality; never use prefix or wildcard matching.
 - Protect JWT/JWKS work and slow request bodies before they can consume unbounded Gateway resources.
 - Preserve non-blocking, fleet-wide Redis Rate Limit and Concurrency protection.
-- Correct Redis clock rollback, policy reduction and Concurrency `Retry-After` behavior.
+- Correct Redis clock rollback, exact state-schema and Concurrency `Retry-After` behavior.
 - Prove every security boundary through the existing real Gateway, Redis and protocol Simulator test style.
 
 ## 3. Non-goals
@@ -255,8 +257,8 @@ The implementation retains:
 - Redis-backed atomic Token Bucket decisions;
 - Route, Client IP and authenticated Subject dimensions;
 - Redis ZSET Concurrency Leases;
-- HMAC-SHA-256 identities so Redis does not contain raw IP or Subject values;
-- separate HMAC material and Purpose for Redis identities and access-log identities;
+- raw canonical socket IP and exact validated JWT `sub` values as Redis identity-key components;
+- HMAC-SHA-256 pseudonymization for access-log IP and Subject values only;
 - fail-closed Redis behavior;
 - one Redis `TIME` value per Lua decision.
 
@@ -264,14 +266,15 @@ The implementation removes:
 
 - `GuardTier` and the `GLOBAL/ROUTE/CLIENT/CREDENTIAL/EMERGENCY` precedence model;
 - the generic policy resolver and unused dynamic policy-release scaffolding;
-- Current/Previous Redis HMAC pair expansion and dual-state convergence;
-- rotation-only command grouping and Lua branches.
+- all Redis identity HMAC configuration, digest expansion and rotation branches;
+- stored policy revisions, active Rate-policy metadata and state-migration branches.
 
-There is one current Redis HMAC version. Rotating it creates new IP/Subject keys and may grant each affected identity
-one additional Rate Burst and one additional IP/Subject Concurrency capacity while a rolling deployment contains old
-and new instances. Shared Route keys do not change, so the fleet-wide Route ceiling and Route Concurrency Bulkhead
-remain effective throughout rotation. The operational runbook must rotate during a controlled window and remove old
-instances promptly. This bounded trade-off is accepted in place of permanent dual-version algorithmic complexity.
+Redis Guard has no HMAC key or Redis-key rotation workflow. Every instance derives the same identity key from the raw
+canonical socket IP or exact validated JWT `sub`; these Redis values are sensitive operational state and must not be
+copied to logs or metrics. Access logs continue to use their own HMAC key and Purpose, and rotating that key changes
+only log pseudonyms, never Guard capacity. An identity component is limited to 512 UTF-8 bytes and rejects blank,
+control-character or invalid-Unicode input, bounding raw Key growth without transforming the accepted value. Guard
+state has no policy revision or rolling migration contract.
 
 The Guard has two phases:
 
@@ -332,48 +335,42 @@ Metrics record bounded refresh success, failure and suppressed-refresh counts wi
 
 ### 12.1 Token Bucket
 
-Rate state keeps integer Microtokens and integer refill remainder. The Lua script stores a positive monotonic policy
-revision, active capacity, refill amount and refill period with the state. The hardening release uses a new `guard:v2`
-Redis namespace so an old `guard:v1` script never encounters the expanded Hash schema. The old namespace expires by
-its existing TTL and is not bulk-deleted.
+Rate state uses the `guard:v3` Redis namespace and keeps exactly three short Hash fields: `t` for current integer
+Microtokens, `lr` for last-refill milliseconds and `rr` for the integer refill remainder. It stores no policy revision,
+capacity, refill amount or refill period. Scripts never read or migrate earlier-version state; earlier namespaces expire
+under their existing TTLs.
 
 For each request the script:
 
 1. reads Redis `TIME` once;
 2. validates every key and argument before mutation;
 3. uses `effectiveNow = max(redisNow, lastRefillMillis)` so persisted time never moves backward;
-4. detects policy revision and metadata changes;
-5. when a higher revision arrives, clamps Tokens to the new capacity, clears incompatible remainder and continues
-   under the new policy rather than returning 503;
-6. when an older instance presents a lower revision, evaluates using the newer policy already stored in Redis;
-7. fails closed when the same revision presents different parameters;
-8. evaluates every applicable Bucket before deducting any Token;
-9. deducts from all Buckets only when all allow;
-10. otherwise persists refill/migration state without a deduction and returns the maximum recovery time;
-11. computes and applies a finite TTL from the effective stored policy.
+4. evaluates every applicable Bucket before deducting any Token;
+5. deducts from all Buckets only when all allow;
+6. otherwise persists only the updated `t/lr/rr` refill state without a deduction and returns the maximum recovery
+   time;
+7. computes and applies a finite TTL from the current compile-time static profile.
 
-This prevents clock rollback from granting a refill interval twice and prevents an older v2 instance from restoring a
-superseded Rate policy during a rolling release. The initial `guard:v1` to `guard:v2` change is a drain-and-cutover
-migration rather than a mixed-version rollout because separate namespaces would duplicate both Rate and Concurrency
-capacity. Old v1 keys expire naturally after cutover. Subsequent v2 policy revisions converge through the stored
-monotonic revision.
+This prevents clock rollback from granting a refill interval twice without adding policy-version state. A policy or
+schema change requires a separately reviewed namespace change; the v3 script performs no in-place or rolling state
+migration.
 
 ### 12.2 Concurrency
 
-Every Concurrency ZSET has a companion metadata Hash in the same Lua decision. It stores a logical-time high-water
-mark, positive monotonic policy revision and active limit. Both keys share the 60-second TTL. A non-empty ZSET without
-valid metadata fails closed; the script never guesses time or policy from incomplete state.
+Every Concurrency ZSET has a companion metadata Hash in the same Lua decision. It stores exactly `hw`, the logical-time
+high-water mark, and `l`, the active limit. Both keys share the 60-second TTL. A non-empty ZSET without valid metadata,
+or metadata whose `l` differs from the current static profile, fails closed; the script never guesses or migrates
+incomplete or mismatched state.
 
 Acquire reads Redis `TIME` once and uses `effectiveNow = max(redisNow, storedHighWaterMillis)`. It persists the new
 high-water mark before using it for expiry cleanup and new Lease scores, so clock rollback cannot create a Lease that
-expires early when Redis time recovers. If a higher policy revision arrives, the active limit moves to that revision;
-an older instance presenting a lower revision must use the stored newer limit, and equal revisions with different
-limits fail closed.
+expires early when Redis time recovers. No policy revision is accepted or persisted, and limit changes are not migrated
+inside the script.
 
 Acquire then uses one Lease ID for every dimension in the phase, removes expired members, checks all dimensions, and
-writes only when all allow. If existing members exceed a newly reduced limit, `Retry-After` uses the
-`count - limit + 1`-th expiry rather than the earliest expiry. The reported wait is capped to the configured Lease
-window. A rejected Acquire does not extend ZSET or metadata TTL beyond the last successful Acquire, so continued
+writes only when all allow. When a dimension is full, `Retry-After` uses the `count - limit + 1`-th expiry rather than
+assuming the earliest expiry always frees capacity. The reported wait is capped to the configured Lease window. A
+rejected Acquire does not extend ZSET or metadata TTL beyond the last successful Acquire, so continued
 traffic cannot pin a rollback high-water state forever; a prolonged rollback remains fail-closed until release or
 finite TTL recovery rather than releasing work early.
 
@@ -438,8 +435,10 @@ Implementation follows test-first changes and the existing no-Mock production-ch
 - invalid algorithm and invalid/long `kid` cause zero JWKS calls;
 - cached valid keys continue working while unknown-kid refresh is suppressed;
 - Redis time rollback cannot duplicate refill;
-- rate-policy reduction migrates state without 503 or excess capacity;
-- concurrency-policy reduction reports the actual time to an available slot;
+- Redis identity keys contain the raw canonical IP or exact JWT `sub`, while access logs retain HMAC pseudonyms;
+- `guard:v3` Rate Hashes contain exactly `t/lr/rr`, with no policy revision or migration metadata;
+- `guard:v3` Concurrency metadata contains exactly `hw/l`, and a limit mismatch fails closed without migration;
+- saturated Concurrency dimensions report the actual time to an available slot;
 - Redis failure remains fail-closed;
 - upstream connect, pool, TLS, protocol and timeout failures map to the declared stable outcomes;
 - access logs and metrics remain low-cardinality and contain none of the protected values.
@@ -467,7 +466,8 @@ Acceptance requires all of the following:
 2. future GET does not require a framework redesign, but no GET API is exposed now;
 3. unknown API traffic and spoofed trusted context never reach the BFF;
 4. body and JWT/JWKS work are covered by the ingress distributed Bulkhead and Rate ceiling;
-5. Rate and Concurrency algorithms satisfy rollback and policy-reduction tests;
+5. Rate and Concurrency algorithms satisfy rollback and exact `guard:v3` state-schema tests without policy revision or
+   rolling migration;
 6. Gateway production code and positive protocol fixtures have no legacy protocol or environment identifiers;
 7. all Gateway automatic tests and repository gates pass without Testcontainers;
 8. no Platform Support, BFF, frontend or business-service production code is added.

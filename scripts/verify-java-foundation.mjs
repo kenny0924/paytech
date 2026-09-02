@@ -340,6 +340,62 @@ if (errors.length === 0) {
     }
   }
 
+  const compensationProperties = readFileSync(
+    join(
+      compensationSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'compensation',
+      'core',
+      'autoconfigure',
+      'CompensationEventProperties.java',
+    ),
+    'utf8',
+  );
+  if (!compensationProperties.includes('private int scannerBatchSize = 100;')
+      || !compensationProperties.includes('private int coreSize = 10;')
+      || !compensationProperties.includes('private int maximumSize = 20;')
+      || !compensationProperties.includes('private int queueCapacity = 80;')
+      || !compensationProperties.includes('Duration.ofSeconds(60)')
+      || !compensationProperties.includes('private int maximumConcurrency = 20;')
+      || !compensationProperties.includes('ignoreUnknownFields = false')
+      || compensationProperties.includes('class Pool {')
+      || compensationProperties.includes('getPool()')) {
+    errors.push('paytech-compensation-event executor defaults or independent configuration groups have drifted');
+  }
+  const compensationAutoConfiguration = readFileSync(
+    join(
+      compensationSourceRoot,
+      'main',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'compensation',
+      'core',
+      'autoconfigure',
+      'CompensationEventAutoConfiguration.java',
+    ),
+    'utf8',
+  );
+  if (!compensationAutoConfiguration.includes(
+    'COORDINATOR_EXECUTOR_BEAN = "compensationCoordinatorExecutor"',
+  )
+      || !compensationAutoConfiguration.includes(
+        'HANDLER_EXECUTOR_BEAN = "compensationHandlerExecutor"',
+      )
+      || !compensationAutoConfiguration.includes('properties.getCoordinator()')
+      || !compensationAutoConfiguration.includes('properties.getHandler().getMaximumConcurrency()')
+      || !compensationAutoConfiguration.includes('environment.getProperty("spring.application.name")')
+      || !compensationAutoConfiguration.includes('namedDaemonThreadFactory("compensation-coordinator-")')
+      || compensationAutoConfiguration.includes('compensationWorkerExecutor')
+      || compensationAutoConfiguration.includes('namedDaemonThreadFactory("compensation-worker-")')) {
+    errors.push('paytech-compensation-event coordinator and Handler executors are not independently named');
+  }
+
   const xxlJobStarterPom = readFileSync(
     join(foundationRoot, 'paytech-xxl-job-starter', 'pom.xml'),
     'utf8',

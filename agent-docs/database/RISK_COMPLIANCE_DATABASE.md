@@ -1,8 +1,8 @@
 # Risk & Compliance 数据库设计规范
 
-最后更新：2026-08-29
+最后更新：2026-08-30
 
-状态：V1 逻辑模型、现实场景、71 表 PDManer 与 Manual Payout 四检查点契约已于 2026-08-29 同 Finance、requirements 和共享入口对齐，并通过自动门禁；PDManer 4.9.3 应用内人工 Review 待完成。当前不包含 Migration、Java 实现或数据库环境。
+状态：V1 逻辑模型、现实场景、71 表 PDManer、Manual Payout 四检查点与 CCT Local Partner Application Typed Namespace 已对齐并通过自动门禁；PDManer 4.9.3 应用内人工 Review 待完成。当前不包含 Migration、Java 实现或数据库环境。
 
 当前配套资产：[现实场景](./scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md) · [物理建模决策](../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md) · [PDManer 模型](../../risk-compliance-service/docs/database/risk-compliance.pdma.json) · [Dispute 平衡优化设计](../plans/2026-08-28-risk-dispute-balanced-optimization-design.md) · [Dispute 平衡优化实施计划](../plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md) · [Settlement Eligibility 平衡精简设计](../plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-design.md) · [Settlement Eligibility 实施计划](../plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-implementation-plan.md) · [Manual Payout 四检查点对齐实施记录](../plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) · [Limit 平衡精简设计](../plans/2026-08-28-risk-limit-balanced-simplification-design.md) · [Limit 平衡精简实施计划](../plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md) · [Decision Engine 平衡精简实施计划](../plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) · [DD 精简实施计划](../plans/2026-08-27-risk-dd-simplification-implementation-plan.md) · [首版物理建模历史记录](../plans/2026-08-26-risk-compliance-pdmaner-implementation-plan.md)。当前物理基线精确为 71 表、865 字段、106 个唯一索引、74 个访问索引、111 条本库关系、9 条 1:1 关系、8 个 Diagram Groups 和 83 条 CHECK 契约。
 
@@ -103,11 +103,20 @@ RELATED_PERSON_KYC
 - 同一 Party 的资料、文件引用和仍有效的基础检查可以复用，但每个业务角色必须形成独立资格决定。
 - 自动规则结果只是 recommendation；qualification_decision 才是权威资格事实。人工覆盖必须保存 override_reason_code。
 
-CCT Client/Operating Entity Application 提交事务绝不能同步调用 Risk。CCT 先冻结 Application/Profile/Document、计算 submission_content_hash、推进本地状态并登记 LOCAL_HANDLER；Client Application Handler 固定携带 `source_namespace=CCT_CLIENT_APPLICATION`，Operating Entity Application Handler 固定携带 `CCT_OPERATING_ENTITY_APPLICATION`，并同时传入 Application ID、完整 Role/Qualification Tuple 和 Submission Hash。Risk 以 `source_namespace + source_application_id + role_type + role_id + qualification_type` 唯一定位既有 Case，再比较 Submission Hash：完整来源身份相同且 Hash 相同返回同一 `case_id`，Hash 不同必须冲突。同一 Organization Application 可以用相同 Submission 坐标派生一个 CLIENT/ORGANIZATION_KYB 主 Case 和多个不同 Party 的 RELATED_PERSON/RELATED_PERSON_KYC 子 Case；CCT 只回填其主 Role Case，关联人 Case 是 Risk 的内部依赖闭包。两类 CCT Application 即使数值 ID 相同且涉及同一关联 Party，也由 Typed Source Namespace 隔离。
+CCT Client/Operating Entity/Local Partner Application 提交事务绝不能同步调用 Risk。CCT 先冻结 Application/Profile/Document、计算 `submission_content_hash`、推进本地状态并登记 LOCAL_HANDLER；三个 Handler 分别固定 `source_namespace=CCT_CLIENT_APPLICATION`、`CCT_OPERATING_ENTITY_APPLICATION`、`CCT_LOCAL_PARTNER_APPLICATION`，并携带 `application_id`、`role_type`、`role_id`、`qualification_type`、`submission_content_hash`。Risk 以 `source_namespace + source_application_id + role_type + role_id + qualification_type` 唯一定位既有 Case，再比较 Submission Hash：完整来源身份相同且 Hash 相同返回同一 `case_id`，Hash 不同必须冲突。同一 Application 可以用相同 Submission 坐标派生一个主 Case 和多个不同 Party 的 RELATED_PERSON/RELATED_PERSON_KYC 子 Case；CCT 只接收 Local Partner 主 Case/Decision，Risk 管理关联人 KYC 子 Case 及其依赖。三个 CCT Application Namespace 即使数值 ID 相同且涉及同一关联 Party，也不会串案。
 
 Program、Case、Decision 与 Current Qualification 必须使用同一 Qualification Type 词表。创建 Case 时还必须验证 `dd_program.qualification_type = due_diligence_case.qualification_type`；不能让 Client Case 引用 Operating Entity Program。
 
-Due Diligence Case 自身必须显式冻结 `case_origin` 和 `source_namespace`，不能把业务来源只藏在 command_idempotency 中。APPLICATION 的 Namespace 必须是 `CCT_CLIENT_APPLICATION/CCT_OPERATING_ENTITY_APPLICATION`，并携带 Application ID、Submission Version 和 Submission Hash；Client Namespace 只允许 CLIENT/RELATED_PERSON Case，Operating Entity Namespace 只允许 OPERATING_ENTITY/RELATED_PERSON Case。命中包含 Typed Namespace 与 Role/Qualification 的完整来源唯一键后，以 Hash 区分幂等重试与冲突提交。CONTINUOUS_REVIEW 与 MANUAL 固定为 `source_namespace=RISK_COMPLIANCE`，Application ID、Submission Version/Hash 均为空，避免伪造不存在的外部提交坐标；只有 CONTINUOUS_REVIEW 携带 scheduled_review_time。
+Due Diligence Case 自身必须显式冻结 `case_origin` 和 `source_namespace`，不能把业务来源只藏在 command_idempotency 中。APPLICATION 必须携带 Application ID、Submission Version 和 Submission Hash，并遵循以下闭合 Namespace/Role 矩阵：
+
+| Namespace | 主 Role / Qualification | 允许的关联人 Role / Qualification |
+|---|---|---|
+| `CCT_CLIENT_APPLICATION` | `CLIENT + INDIVIDUAL_KYC/ORGANIZATION_KYB` | `RELATED_PERSON + RELATED_PERSON_KYC` |
+| `CCT_OPERATING_ENTITY_APPLICATION` | `OPERATING_ENTITY + ENTITY_UNDERWRITING` | `RELATED_PERSON + RELATED_PERSON_KYC` |
+| `CCT_LOCAL_PARTNER_APPLICATION` | `LOCAL_PARTNER + PARTNER_DUE_DILIGENCE` | `RELATED_PERSON + RELATED_PERSON_KYC` |
+| `RISK_COMPLIANCE` | Continuous Review / Manual 自有来源 | 按既有 Role/Qualification 矩阵 |
+
+Local Partner Namespace 不允许 `CLIENT` 或 `OPERATING_ENTITY` Role。命中包含 Typed Namespace 与 Role/Qualification 的完整来源唯一键后，以 Hash 区分幂等重放与冲突提交。CONTINUOUS_REVIEW 与 MANUAL 固定为 `source_namespace=RISK_COMPLIANCE`，Application ID、Submission Version/Hash 均为空，避免伪造不存在的外部提交坐标；只有 CONTINUOUS_REVIEW 携带 scheduled_review_time。
 
 Program Version 可配置 review_frequency_code；Role Qualification 保存当前 review_frequency_code、next_review_time 和 review_status。调度器只扫描到期的 ACTIVE 投影，并在同一本地事务中以 qualification version + next_review_time 做 CAS、创建 case_origin=CONTINUOUS_REVIEW 的新 Case、推进下一次复审时间。Role + Qualification Type + Scheduled Review Time 唯一键与 CAS 共同防止重复周期；不再建立独立 Review Plan/Run。
 
@@ -278,7 +287,7 @@ Finance 必须冻结完整 RCO-I09 返回，包括两个坐标、排序后的 Re
 | dd_program_requirement | 程序材料模板 | program_requirement_id, program_version_id, requirement_code, document_type, required_flag；同版本 Requirement Code 唯一；文件类型只在模板保存一次 |
 | dd_program_check | 程序结构化检查模板 | program_check_id, program_version_id, check_code, check_type, required_flag, validity_days；同版本 Check Code 唯一；有效天数若有值必须为正 |
 | dd_program_screening | 程序筛查模板 | program_screening_id, program_version_id, subject_role, screening_type, required_flag；组合唯一；不预置独立复筛间隔，持续复审由 Role Qualification 调度 |
-| due_diligence_case | 角色尽调案件根 | case_id, case_no, role_type, role_id, qualification_type, dd_program_version_id, case_origin, scheduled_review_time, source_namespace, source_application_id, source_submission_version, source_submission_hash, status, active_slot, submitted_time, decision_time, version；Case Type 由 Qualification 推导而不重复保存；case_no 唯一；APPLICATION 按 Typed Source Namespace + Application + Role + Role ID + Qualification 唯一，允许同一申请派生主 Case 与关联人子 Case，并隔离两类 CCT Application 的数值 ID；状态与提交/决定时间严格成矩阵；进行中 Slot 按 Role+Qualification 唯一；同 Role/Qualification/Scheduled Time 最多一个持续复审 Case |
+| due_diligence_case | 角色尽调案件根 | case_id, case_no, role_type, role_id, qualification_type, dd_program_version_id, case_origin, scheduled_review_time, source_namespace, source_application_id, source_submission_version, source_submission_hash, status, active_slot, submitted_time, decision_time, version；Case Type 由 Qualification 推导而不重复保存；case_no 唯一；APPLICATION 按 Typed Source Namespace + Application + Role + Role ID + Qualification 唯一，允许同一申请派生主 Case 与关联人子 Case，并隔离三个 CCT Application Namespace 的数值 ID；状态与提交/决定时间严格成矩阵；进行中 Slot 按 Role+Qualification 唯一；同 Role/Qualification/Scheduled Time 最多一个持续复审 Case |
 | dd_case_subject | 案件主体与关系快照 | case_subject_id, case_id, party_id, subject_role, primary_slot, source_profile_id, source_profile_version_no, source_relation_version_id, source_relation_version_no, ownership_percentage, required_flag；case+party+role 唯一；每 Case 最多一个 PRIMARY；关联主体冻结 CCT Party Relation Version ID/Version No；持股百分比只适用于 UBO 且范围为 (0,100] |
 | dd_case_dependency | Organization Case 对关联人 KYC Case 的依赖 | dependency_id, parent_case_id, child_case_id, dependency_type, required_flag, accepted_decision_id, version；不得自依赖或成环；接受子 Case 决定时以 Version CAS 从空值单向写入，决定必须属于该子 Case |
 | dd_party_snapshot | 案件时点 Party/Profile 不可变快照 | snapshot_id, case_subject_id, schema_version, source_content_hash, snapshot_vault_token, captured_time；case_subject_id 唯一；仅保留有 Reveal/审计消费者的稳定 Vault Token，不机械复制 Vault Record Version/Metadata Hash |

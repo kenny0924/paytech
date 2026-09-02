@@ -10,6 +10,24 @@ function readOptionalSource(relativePath) {
   }
 }
 
+function extractSystemBlock(systemCode, nextSystemCode) {
+  const start = source.indexOf(`code: "${systemCode}"`);
+  const end = nextSystemCode
+    ? source.indexOf(`code: "${nextSystemCode}"`, start)
+    : source.indexOf("\n];", start);
+  assert.ok(start >= 0, `${systemCode} system block must exist`);
+  assert.ok(end > start, `${systemCode} system block must have a valid boundary`);
+  return source.slice(start, end);
+}
+
+function extractCatalogLine(systemBlock, factory, id) {
+  const line = systemBlock
+    .split("\n")
+    .find((candidate) => candidate.includes(`${factory}("${id}"`));
+  assert.ok(line, `${id} must exist in its owning system block`);
+  return line;
+}
+
 const source = readFileSync(
   new URL("../content/requirements.ts", import.meta.url),
   "utf8",
@@ -94,6 +112,17 @@ const rootAgentsSource = readFileSync(
 );
 const rootReadmeSource = readFileSync(
   new URL("../../README.md", import.meta.url),
+  "utf8",
+);
+const applicationArchitectureSource = readFileSync(
+  new URL("../../agent-docs/APPLICATION_ARCHITECTURE.md", import.meta.url),
+  "utf8",
+);
+const platformSimplificationImplementationSource = readFileSync(
+  new URL(
+    "../../agent-docs/plans/2026-09-01-platform-support-database-simplification-implementation-plan.md",
+    import.meta.url,
+  ),
   "utf8",
 );
 const architectureDiagramSource = readFileSync(
@@ -597,6 +626,95 @@ test("shared entry documents expose the current Commerce, Payment, Finance, and 
   }
 });
 
+test("shared entry documents expose the current Platform public-control-plane authority", () => {
+  const sharedEntrySources = [
+    rootAgentsSource,
+    rootReadmeSource,
+    agentReadmeSource,
+    projectContextSource,
+    databaseDesignGuideSource,
+    databaseOverviewSource,
+  ];
+
+  for (const entrySource of sharedEntrySources) {
+    assert.match(
+      entrySource,
+      /Platform(?: Support)?[\s\S]*63 (?:张)?表(?:、|,| and | \/ )822 (?:个)?字段|Platform(?: Support)?[\s\S]*63 tables(?: and|,| \/ ) 822 fields|Platform(?: Support)?[\s\S]*63 \/ 822/u,
+    );
+    assert.match(
+      entrySource,
+      /2026-09-01-gateway-platform-support-dynamic-operations-configuration-design\.md/u,
+    );
+    assert.match(
+      entrySource,
+      /2026-09-01-platform-public-api-control-plane-pdmaner\.md/u,
+    );
+  }
+
+  for (const entrySource of [databaseDesignGuideSource, databaseOverviewSource]) {
+    assert.match(entrySource, /31 (?:条 )?(?:复合外键|复合 FK|composite FKs?)/u);
+    assert.match(entrySource, /85 (?:条 )?(?:CHECK|named CHECK)/u);
+    assert.match(entrySource, /36 (?:个 )?(?:`\*_hash`|exact `\*_hash`)/u);
+  }
+
+  assert.match(applicationArchitectureSource, /所有外部 HTTP API.*Platform.*公共 Route Catalog/su);
+  assert.match(applicationArchitectureSource, /内部服务.*绕过 Gateway/su);
+  assert.match(
+    applicationArchitectureSource,
+    /Platform 已实现 Migration.*PLT-I20 全量 Snapshot Provider.*Gateway 动态消费.*尚未实现.*静态 Operations Catalog/su,
+  );
+});
+
+test("Project context owns exactly the current public control plane without runtime limiter state", () => {
+  assert.match(
+    projectContextSource,
+    /Platform Support[\s\S]*owns exactly six public-control-plane current-configuration tables[\s\S]*does not own Gateway runtime limiter state, database Snapshot, Release, Ack, Tenant Override, or generic technical configuration/iu,
+  );
+  assert.doesNotMatch(
+    projectContextSource,
+    /current database owns no Gateway Route\/Guard\/runtime limiter state/iu,
+  );
+});
+
+test("Application architecture exposes Client Manual Payout without a settlement alias", () => {
+  assert.match(applicationArchitectureSource, /Client balance, statement, and Manual Payout request/u);
+  assert.match(applicationArchitectureSource, /`\/api\/v1\/payouts\/\*\*`[\s\S]*Finance/u);
+  assert.doesNotMatch(applicationArchitectureSource, /Client balance, statement, and settlement request/u);
+  assert.doesNotMatch(applicationArchitectureSource, /`\/api\/v1\/settlements\/\*\*`/u);
+});
+
+test("Platform predecessor implementation record declares shared-gate completion", () => {
+  assert.match(
+    platformSimplificationImplementationSource,
+    /63 表统一公共 API 控制面后继模型[\s\S]*最终共享文档与总门禁已完成/u,
+  );
+  assert.doesNotMatch(
+    platformSimplificationImplementationSource,
+    /最终共享文档与总门禁进行中/u,
+  );
+});
+
+test("active Platform navigation treats the 57-table stage as a predecessor", () => {
+  const agentNavigation = agentReadmeSource.slice(0, agentReadmeSource.indexOf("## 规范来源与优先级"));
+  const databaseChecklist = extractMarkdownSection(databaseDesignGuideSource, "## 15. 验证清单");
+
+  for (const navigation of [agentNavigation, databaseChecklist]) {
+    assert.match(navigation, /Platform(?: Support)?[\s\S]*63 (?:张)?表[、,\s/]*822 (?:个)?字段/u);
+    assert.match(navigation, /31 (?:条\s*)?(?:复合外键|复合 FK|composite FKs?)/u);
+    assert.match(navigation, /85 (?:条\s*)?(?:CHECK|具名 CHECK|named CHECK)/u);
+    assert.match(navigation, /36 (?:个 )?`?\*_hash`?/u);
+    assert.match(navigation, /2026-09-01-gateway-platform-support-dynamic-operations-configuration-design\.md/u);
+    assert.match(navigation, /2026-09-01-platform-public-api-control-plane-pdmaner\.md/u);
+    assert.match(navigation, /57 表[\s\S]{0,600}(?:前序|历史|未受影响)/u);
+  }
+
+  assert.doesNotMatch(
+    agentNavigation,
+    /57 表(?:(?!前序|历史|未受影响)[^。\n])*(?:管理当前 Platform 物理边界|当前 Platform 物理边界)/u,
+  );
+  assert.doesNotMatch(databaseChecklist, /Platform Support 57 表 PDManer-only 阶段/u);
+});
+
 test("the architecture diagram keeps dispute recovery on the explicit Risk authority", () => {
   assert.doesNotMatch(
     architectureDiagramSource,
@@ -757,40 +875,173 @@ test("requirements route on-demand dispute RFI notification through Platform Sup
   assert.match(risk09, /EVIDENCE_REQUIRED.*DisputeEvidenceRequested/u);
   assert.match(
     platform04,
-    /收到 DisputeEvidenceRequested.*当前 ACTIVE.*Subscription.*VERIFIED.*Endpoint Version.*冻结/u,
+    /收到 DisputeEvidenceRequested.*当前 ACTIVE.*Subscription.*VERIFIED.*Endpoint Revision.*冻结/u,
   );
   assert.match(platform04, /只负责通知与文件.*不拥有争议状态.*通用 RFI/u);
 });
 
-test("Platform Support requirements preserve the 92-table snapshot and supersede affected auth and Guard semantics", () => {
-  assert.match(source, /Platform Support V1 物理模型冻结为 92 表、1,076 字段、167 个唯一索引、116 个访问索引、145 条本库关系、19 条 1:1 关系和 8 个 Diagram Groups/u);
-  assert.match(source, /冻结 28 条复合外键与 67 条 CHECK 契约/u);
-  assert.match(source, /Operations 自有认证、Refresh Session、签名密钥元数据和静态 Gateway Route\/跨维度容量 Guard 上已成为历史/u);
-  assert.match(source, /相关实现必须先获批新的物理模型修订/u);
+test("Platform Support requirements expose the generated 63-table public-control-plane snapshot", () => {
+  assert.match(source, /Platform Support 当前物理模型为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1 关系和 7 个 Diagram Groups/u);
+  assert.match(source, /31 条复合外键、85 条 CHECK 契约与 36 个 `\*_hash` 字段/u);
+  assert.match(source, /Client & Contract 当前物理模型为 37 表、423 字段、57 个唯一索引、44 个访问索引、64 条本库关系、7 条 1:1 关系和 6 个 Diagram Groups/u);
+  assert.match(source, /Risk & Compliance 当前物理模型保持 71 表、865 字段、106 个唯一索引、74 个访问索引、111 条本库关系、9 条 1:1 关系和 8 个 Diagram Groups，并冻结 83 条 CHECK 契约/u);
   assert.match(source, /Reliable Technical Execution/u);
   assert.match(source, /只保留本系统 compensation_event 与 command_idempotency/u);
-  assert.doesNotMatch(source, /Technical Job/u);
-  assert.match(platformDatabaseSource, /92 (?:张)?表.*1,076 (?:个)?字段.*167 个唯一索引.*116 个访问索引.*145 条本库关系.*19 条 1:1 关系.*8 个 Diagram Groups/su);
-  assert.match(platformDatabaseSource, /28 条.*复合外键契约.*67 条.*CHECK 契约/su);
+  assert.doesNotMatch(source, /Technical Job|Technical Configuration/u);
+  assert.match(platformDatabaseSource, /63 (?:张)?表.*822 (?:个)?字段.*123 个唯一索引.*99 个访问索引.*107 条本库关系.*5 条 1:1.*7 个 Diagram Groups/su);
+  assert.match(platformDatabaseSource, /31 条.*复合 FK.*85 条.*CHECK.*36 个.*_hash/su);
 });
 
-test("Operations Gateway guard profiles stay static and outside Platform runtime control", () => {
+test("Platform Support catalog uses Tenant credentials and derives readiness without persistence", () => {
+  const platform = extractSystemBlock("PLATFORM");
+  const platform02 = extractCatalogLine(platform, "uc", "PLT-02");
+  const platform16 = extractCatalogLine(platform, "uc", "PLT-16");
+  const platformI03 = extractCatalogLine(platform, "iuc", "PLT-I03");
+  const platformI13 = extractCatalogLine(platform, "iuc", "PLT-I13");
+  const platformI19 = extractCatalogLine(platform, "iuc", "PLT-I19");
+  const platformI20 = extractCatalogLine(platform, "iuc", "PLT-I20");
+
+  assert.doesNotMatch(platform, /uc\("PLT-09"|Technical Configuration/u);
+  assert.match(platform02, /\["client", "operations"\].*ACTIVE CLIENT Tenant/u);
+  assert.doesNotMatch(platform02, /"partner"/u);
+  assert.match(platformI03, /Tenant.*Credential.*ACTIVE Scope/u);
+  assert.match(platformI03, /PHC verifier.*tenant_id.*tenant_type.*owner_ref_id.*credential_id/u);
+  assert.match(platformI03, /owner_ref_id.*Access Tenant/u);
+  assert.match(platformI03, /ACTIVE CLIENT Tenant.*同一 Credential/u);
+  assert.match(platformI03, /调用方.*不得覆盖.*owner_ref_id|禁止调用方覆盖.*owner_ref_id/u);
+  assert.match(platformI03, /不得.*Key Prefix.*推断/u);
+  assert.match(platformI13, /同一一致查询快照/u);
+  assert.match(platformI13, /Tenant.*API Credential.*Scope.*Endpoint Revision.*Subscription/u);
+  assert.match(platformI13, /\["Client & Contract", "Client Console", "Operations Console"\]/u);
+  assert.match(platformI13, /READY \| NOT_READY \| RESTRICTED.*checked_at.*reason_code/u);
+  assert.deepEqual(
+    [...new Set(platformI13.match(/(?<![A-Z_])(?:READY|NOT_READY|RESTRICTED|UNKNOWN)(?![A-Z_])/gu) ?? [])].sort(),
+    ["NOT_READY", "READY", "RESTRICTED"],
+  );
+  assert.match(platformI13, /技术失败.*接口错误.*不携带 status/u);
+  assert.doesNotMatch(platformI13, /Partner Console|UNKNOWN/u);
+  assert.match(platformI13, /同步派生.*Fail-Closed/u);
+  assert.match(platformI13, /不保存.*Evaluation.*Version.*Hash/u);
+  assert.doesNotMatch(platformI13, /Requirement Config|Platform 继续拥有该事实/u);
+  assert.doesNotMatch(platform, /ConfigurationActivated|ClientIntegrationReadinessChanged/u);
+  assert.match(platform16, /所有外部 HTTP API.*六类.*Route.*Target.*Guard/u);
+  assert.match(platformI19, /permission_id.*required_scope_code.*互斥.*Approved Target Registry/u);
+  assert.match(platformI20, /每次读取完整全局不可变 Snapshot.*不使用 ETag.*304/u);
+  assert.match(platformI20, /完整校验.*原子切换.*Fail-Closed/u);
+  assert.match(platform, /不拥有 Redis 运行时 Bucket、Counter、Lease 或 TTL/u);
+  assert.doesNotMatch(platform, /不拥有当前 Gateway Route、Guard Profile/u);
+});
+
+test("unified authentication catalog keeps Account, Tenant, onboarding, and Risk ownership distinct", () => {
+  const cct = extractSystemBlock("CLIENT_CONTRACT", "COMMERCE");
+  const risk = extractSystemBlock("RISK_COMPLIANCE", "FINANCE");
+  const platform = extractSystemBlock("PLATFORM");
+
+  assert.match(extractCatalogLine(platform, "uc", "PLT-14"), /管理 CUSTOMER 全局账号与 Google 绑定/u);
+  assert.match(extractCatalogLine(platform, "uc", "PLT-15"), /管理 Tenant Member、Role 与 Invitation/u);
+  const platformI02 = extractCatalogLine(platform, "iuc", "PLT-I02");
+  assert.match(platformI02, /Operations Console BFF.*Client Console BFF.*Partner Console BFF.*内部业务服务/u);
+  assert.match(platformI02, /Gateway 可信上下文/u);
+  assert.match(platformI02, /不得?把 JWT Claim 当作资源授权事实/u);
+  assert.match(extractCatalogLine(platform, "iuc", "PLT-I15"), /CUSTOMER 注册、Email 验证、Password\/Google 登录、Refresh、Logout/u);
+  assert.match(extractCatalogLine(platform, "iuc", "PLT-I16"), /Account 或单一 Tenant Member 上下文.*Audience Token/u);
+  const platformI04 = extractCatalogLine(platform, "iuc", "PLT-I04");
+  const platformI17 = extractCatalogLine(platform, "iuc", "PLT-I17");
+  assert.match(platformI04, /Client Console BFF/u);
+  assert.match(platformI04, /Account Context.*requested_by_account_id.*PENDING.*TENANT_ONBOARDING_OWNER/u);
+  assert.match(platformI17, /CCT Access Tenant Provision\/Status 版本化投影/u);
+  assert.match(
+    platformI17,
+    /tenant_type.*owner_ref_id.*requested_by_account_id.*source_version.*payload_hash/u,
+  );
+  assert.match(platformI17, /同版本同 Hash.*幂等.*同版本异 Hash.*冲突.*旧版本.*拒绝/u);
+  assert.doesNotMatch(platformI17, /owner_type|owner_id|sourceVersion/u);
+  assert.match(extractCatalogLine(platform, "iuc", "PLT-I18"), /创建、撤销和接受 Tenant Invitation/u);
+  const cctI15 = extractCatalogLine(cct, "iuc", "CCT-I15");
+  assert.match(cctI15, /START_OR_RESUME.*DRAFT.*requested_by_account_id.*Platform/u);
+  assert.match(cctI15, /SUBMIT.*File ID.*Risk/u);
+  assert.match(extractCatalogLine(cct, "iuc", "CCT-I16"), /requested_by_account_id.*本人 Client\/Partner Application 进度/u);
+  assert.match(extractCatalogLine(risk, "iuc", "RCO-I11"), /Typed Namespace\/Application\/Role\/Qualification\/Submission Hash.*主 Role Case/u);
+
+  assert.match(extractCatalogLine(cct, "uc", "CCT-01"), /Account.*先存在.*PENDING Client.*Application/u);
+  assert.match(extractCatalogLine(cct, "uc", "CCT-05"), /Account.*先存在.*PENDING Local Partner.*Application/u);
+  assert.doesNotMatch(source, /Client、Partner、Consumer.*待.*设计|不为 Client、Partner.*认证|外部 IdP.*唯一/u);
+});
+
+test("unified authentication and public gateway decisions preserve exact channels, profiles, cookies, and guards", () => {
+  const gateway = source.match(/code: "API_GATEWAY"[\s\S]+?\n {2}\},/u)?.[0] ?? "";
+
+  assert.match(gateway, /Client、Partner 与 Operations.*Platform.*Audience.*RS256 Access JWT/u);
+  assert.doesNotMatch(gateway, /其他渠道凭据方案仍待设计/u);
+  assert.match(source, /Operations = Email\/Password only；admin 是唯一非 Email Bootstrap/u);
+  assert.match(source, /CUSTOMER = Email\/Password \+ Google OIDC/u);
+  assert.match(source, /一个 CUSTOMER Account 可同时加入 CLIENT 与 PARTNER Tenant/u);
+  assert.match(source, /一个 Access Token 绑定零个或一个 Tenant Member/u);
+  assert.match(source, /业务 Email OTP 与 Authentication Challenge 是独立能力/u);
+  assert.match(source, /Authorization Code \+ PKCE \+ state \+ nonce/u);
+  assert.match(source, /相同 Email.*绝不自动绑定 Google/u);
+  assert.match(source, /__Secure-operations-refresh.*Path=\/api\/operations\/auth\/v1/u);
+  assert.match(source, /__Secure-client-refresh.*Path=\/api\/client\/auth\/v1/u);
+  assert.match(source, /__Secure-partner-refresh.*Path=\/api\/partner\/auth\/v1/u);
+  assert.match(source, /Route Channel.*OPERATIONS、CLIENT、PARTNER、CHECKOUT、CLIENT_API、PROVIDER_CALLBACK/u);
+  assert.match(source, /Security Profile.*OPERATIONS_JWT、CLIENT_JWT、PARTNER_JWT、CLIENT_API_CREDENTIAL、CHECKOUT_SESSION、PROVIDER_CALLBACK、PUBLIC/u);
+  assert.match(source, /SHARED_ROUTE、CLIENT_IP、AUTHENTICATED_PRINCIPAL、TENANT/u);
+  assert.match(source, /TENANT.*PLT-I03.*可信 tenant_id.*Redis/u);
+  assert.doesNotMatch(source, /Gateway 数据库不拥有 Route|Platform.*不拥有.*Route.*Path.*Method.*Upstream/u);
+});
+
+test("matching Google Email requires existing Password reauthentication before explicit linking", () => {
+  const platform = extractSystemBlock("PLATFORM");
+  const decisions = source.slice(
+    source.indexOf("export const DECISIONS"),
+    source.indexOf("export const OPEN_QUESTIONS"),
+  );
+
+  assert.match(extractCatalogLine(platform, "uc", "PLT-14"), /已验证且匹配的 Google Email.*现有 Password.*重新认证成功.*显式绑定/u);
+  assert.match(extractCatalogLine(platform, "iuc", "PLT-I15"), /已验证且匹配的 Google Email.*现有 Password.*重新认证成功.*显式绑定/u);
+  assert.match(decisions, /已验证且匹配的 Google Email.*现有 Password.*重新认证成功.*显式绑定/u);
+});
+
+test("Audience tokens omit aggregate Tenant IAM and Email claims", () => {
+  const platform = extractSystemBlock("PLATFORM");
+  const decisions = source.slice(
+    source.indexOf("export const DECISIONS"),
+    source.indexOf("export const OPEN_QUESTIONS"),
+  );
+
+  assert.match(extractCatalogLine(platform, "iuc", "PLT-I16"), /不得.*全部 Tenants、Roles、Permissions 或 Email/u);
+  assert.match(decisions, /不得.*全部 Tenants、Roles、Permissions 或 Email/u);
+});
+
+test("console diagrams route browsers through channel BFFs and retain domain ownership", () => {
+  assert.match(architectureDiagramSource, /Client Console BFF.*Partner Console BFF.*Operations Console BFF/su);
+  assert.match(architectureDiagramSource, /Platform.*认证.*Tenant IAM.*权威/su);
+  assert.match(architectureDiagramSource, /CCT.*Client\/Local Partner\/Application.*Risk.*资格/su);
+  assert.doesNotMatch(architectureDiagramSource, /"Configuration"/u);
+
+  const clientConsole = source.match(/code: "CLIENT_CONSOLE"[\s\S]+?\n {2}\},/u)?.[0] ?? "";
+  const partnerConsole = source.match(/code: "PARTNER_CONSOLE"[\s\S]+?\n {2}\},/u)?.[0] ?? "";
+  const operationsConsole = source.match(/code: "OPERATIONS_CONSOLE"[\s\S]+?\n {2}\},/u)?.[0] ?? "";
+  assert.match(clientConsole, /Email 注册.*Google Login.*Invitation.*Tenant 选择/u);
+  assert.match(partnerConsole, /Email 注册.*Google Login.*Invitation.*Tenant 选择/u);
+  assert.match(operationsConsole, /Email\/Password only/u);
+  assert.doesNotMatch(operationsConsole, /Google Login/u);
+});
+
+test("all public HTTP APIs use the Platform control plane while runtime safety remains Gateway-owned", () => {
   const platform = source.match(
     /code: "PLATFORM"[\s\S]+?\n {2}\},\n\];/u,
   )?.[0] ?? "";
-  const gatewayDecision = source.match(
-    /"Gateway 只负责外部接入[^\n]+/u,
-  )?.[0] ?? "";
 
   assert.notEqual(platform, "");
-  assert.doesNotMatch(platform, /PLT-12|PLT-I12|Gateway Guard/u);
-  assert.doesNotMatch(
-    source,
-    /Guard Release|Last-Known-Good|EMERGENCY > CREDENTIAL > CLIENT > ROUTE > GLOBAL/u,
-  );
-  assert.match(gatewayDecision, /静态 Route Catalog.*静态 Guard Profile/u);
-  assert.match(gatewayDecision, /Platform Support 不发布或修改.*运行时限流状态/u);
-  assert.match(gatewayDecision, /未来.*新的设计审批/u);
+  assert.match(source, /所有外部 HTTP API.*统一进入 Platform.*公共 Route Catalog.*内部服务调用.*绕过 Gateway/u);
+  assert.match(source, /恰好六张当前配置表.*Target.*Route.*Header.*Query.*Guard.*Console Resource/u);
+  assert.match(source, /不增加 Gateway `\*_ver`、Release、Snapshot、Ack 或 Tenant Guard Override/u);
+  assert.match(source, /Approved Target Registry.*target_service_code.*channel.*discovery_service_name.*双重校验/u);
+  assert.match(source, /全局 Guard 参数.*可信 tenant_id.*Redis.*Tenant 隔离/u);
+  assert.match(source, /动态 Snapshot.*尚未切换.*静态 Operations Catalog.*部署前运行时事实/u);
+  assert.match(source, /TLS.*JWT.*JWKS.*Header.*Cookie.*Redis.*Timeout.*Gateway 静态安全边界/u);
+  assert.doesNotMatch(source, /当前 Platform Support 模型.*不发布或修改.*Route|未来变化必须先获得新的设计审批/u);
 });
 
 test("Operations authentication stays behind its BFF and Gateway validates only the short-lived access token", () => {
@@ -801,16 +1052,18 @@ test("Operations authentication stays behind its BFF and Gateway validates only 
   assert.match(platform01, /内部 Operations 账号.*不可逆密码校验值.*15 分钟.*RS256.*可撤销 Refresh Session/u);
   assert.match(platform01, /operations-console-web.*API Gateway.*operations-console-bff.*Platform 内部接口/u);
   assert.match(platformI01, /仅供 operations-console-bff.*登录、Refresh、Logout/u);
-  assert.match(gateway, /Operations 首期验证 Platform 签发的最小 RS256 Access JWT/u);
+  assert.match(gateway, /Operations.*Platform 签发的对应 Audience 最小 RS256 Access JWT/u);
   assert.match(gateway, /不处理账号密码登录、Refresh、Logout 业务或 Token 签发/u);
   assert.match(gateway, /Operations 浏览器只转发到 operations-console-bff/u);
 });
 
 test("Platform persists the Commerce Order Context reference before FiscalRecordCreated arrives", () => {
-  assert.match(platformDatabaseSource, /order_id.*commerce_order_context_id.*consumer_terms_file_id.*consumer_terms_content_hash.*refund_policy_file_id.*refund_policy_content_hash.*privacy_notice_file_id.*privacy_notice_content_hash/s);
-  assert.match(platformDatabaseSource, /Commerce 事件槽不存在.*全空.*commerce_request_event_key.*全非空/s);
-  assert.match(platformDatabaseSource, /首次 Commerce 到达.*原子冻结.*不匹配.*CONFLICT/s);
-  assert.match(platformDatabaseSource, /WAITING_FISCAL.*WAITING_REQUEST.*source_set_hash.*冻结.*渲染/s);
+  assert.match(platformDatabaseSource, /order_id.*commerce_order_context_id.*consumer_terms_file_id.*refund_policy_file_id.*privacy_notice_file_id/s);
+  assert.match(platformDatabaseSource, /file_id \+ content_hash.*核对.*不复制三份 Content Hash/su);
+  assert.match(platformDatabaseSource, /Event Key.*Version.*Payload Hash/su);
+  assert.match(platformDatabaseSource, /同来源键\/版本、不同 Payload Hash.*CONFLICT/u);
+  assert.match(platformDatabaseSource, /双输入齐备后推进 `READY_TO_RENDER`/u);
+  assert.doesNotMatch(platformDatabaseSource, /source_set_hash|consumer_terms_content_hash|refund_policy_content_hash|privacy_notice_content_hash/u);
 });
 
 test("Commerce uses Client business references and explicit Order Context facts without an aggregate snapshot hash", () => {

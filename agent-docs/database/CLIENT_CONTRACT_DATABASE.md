@@ -1,7 +1,7 @@
 # Client & Contract 数据库设计规范
 
-最后更新：2026-08-23
-状态：36 表逻辑与物理目标已确认；权威 Catalog 现为 36 表、404 字段、54 个唯一索引、43 个访问索引和 61 条本库关系。Client Pricing、Partner Share 与 Platform Service Charge 在保留三类业务语义的前提下共用 4 张 Commercial Term 表；BCR 改为18类审计对象白名单，不再覆盖所有结构化业务行；持久化 Eligibility Evaluation 与通用 Retention 投影已从 MVP 删除，交易资格改为使用点实时校验。PDManer 4.9.3 应用内检查仍是待执行人工兼容性门禁；当前不包含 Migration、Java 实现或数据库环境。
+最后更新：2026-08-30
+状态：37 表、423 字段、57 个唯一索引、44 个访问索引、64 条本库关系、7 条 1:1 关系与 6 个 Diagram Groups 已由生成模型确认。Client Pricing、Partner Share 与 Platform Service Charge 在保留三类业务语义的前提下共用 4 张 Commercial Term 表；BCR 改为19类审计对象白名单，不再覆盖所有结构化业务行；持久化 Eligibility Evaluation 与通用 Retention 投影已从 MVP 删除，交易资格改为使用点实时校验。PDManer 4.9.3 应用内检查仍是待执行人工兼容性门禁；当前不包含 Migration、Java 实现或数据库环境。
 
 设计与物理导航：[现实场景与逐表字段映射](./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md) · [实时交易资格与 Retention 延期设计](../plans/2026-08-23-cct-realtime-eligibility-retention-deferral-design.md) · [Commercial Term 合并与 Hash 精简设计](../plans/2026-08-23-cct-commercial-term-consolidation-design.md) · [经营主体自动分配精简设计](../plans/2026-08-22-cct-assignment-simplification-design.md) · [通用行级变更历史设计](../plans/2026-08-20-cct-row-history-design.md) · [当前物理建模决策](../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) · [PDManer 模型](../../client-contract-service/docs/database/client-contract.pdma.json)
 
@@ -9,7 +9,7 @@
 
 Client & Contract（CCT）唯一拥有 Party 与资料、Client/Local Partner/Operating Entity 角色、入驻申请、主体来源与分配、Agreement、Consumer Legal、Client Pricing、Partner Share 与 Platform Service Charge，并在交易使用点编排实时资格校验。Risk 拥有 KYC/KYB/Underwriting Case 与 Decision，Platform Support 拥有文件正文和集成就绪事实，Commerce 拥有 Order/Checkout/Consumer Acceptance，Payment 拥有 Provider/MID/路由覆盖/支付，Finance 拥有结算资料、计算结果和账本。CCT 不保存跨系统资格事实副本或 Evaluation，不建跨库外键。
 
-当前目标精确为 36 张表，分组为 `9+8+4+5+2+4+2+2`。表数不是独立设计目标；该目录保留已确认的业务事实、并发、审计与可靠执行能力，并删除持久化 Eligibility、通用 Retention、重复生命周期、Current Pointer、无当前产品用例的 Agreement/Legal Root/Version/Binding/Hash、Assignment Policy/Version/Binding、Pricing/Share 重复物理结构、多层权属路径及无独立消费者的中间 Hash。
+当前目标精确为 37 张表，分组为 `9+9+4+5+2+4+2+2`。表数不是独立设计目标；该目录保留已确认的业务事实、并发、审计与可靠执行能力，并删除持久化 Eligibility、通用 Retention、重复生命周期、Current Pointer、无当前产品用例的 Agreement/Legal Root/Version/Binding/Hash、Assignment Policy/Version/Binding、Pricing/Share 重复物理结构、多层权属路径及无独立消费者的中间 Hash。
 
 ## 2. 统一物理与事务规则
 
@@ -30,13 +30,13 @@ Client & Contract（CCT）唯一拥有 Party 与资料、Client/Local Partner/Op
 
 ### 2.3 Hash 规范与封存边界
 
-- Client Application Submission 与 Operating Entity Application Submission 两个 Domain 使用 UTF-8 RFC 8785/JCS 后的 SHA-256 小写 64 字符十六进制文本。`BIGINT` 编码为无前导零十进制字符串；Decimal 使用去无意义尾零、禁止指数的十进制字符串，零固定为 `"0"`；固定属性为空时使用 JSON `null` 而不省略。属性、算法或 Domain 变化必须增加 `hash_schema_version`，不得覆盖重算旧版本。
-- 当前仓库阶段由 Node 固定 Fixture 验证上述两个 Domain。未来 Java 实现必须复用同一批 Fixture；本阶段不创建 Java 工程。
+- Client Application、Partner Application 与 Operating Entity Application Submission 三个 Domain 使用 UTF-8 RFC 8785/JCS 后的 SHA-256 小写 64 字符十六进制文本；Partner Domain 固定为 `CODE-MOR:CCT:PARTNER_APPLICATION_SUBMISSION:1`。`BIGINT` 编码为无前导零十进制字符串；Decimal 使用去无意义尾零、禁止指数的十进制字符串，零固定为 `"0"`；固定属性为空时使用 JSON `null` 而不省略。属性、算法或 Domain 变化必须增加 `hash_schema_version`，不得覆盖重算旧版本。
+- 当前仓库阶段由 Node 固定 Fixture 验证已覆盖的 Application Submission Domain。未来 Java 实现必须复用同一批 Fixture；本阶段不创建 Java 工程。
 - Party Profile 与 Business Profile 在封存点锁定父子集合并重算父 Hash。Business Profile 的 Canonical 输入形状为 Hash Schema V2：按 `industry_code,mcc_code` 的 UTF-8 字节序稳定排序完整 `client_business_classification` 集合，每项分别包含 `industry_code`、`mcc_code`、`primary_slot`，并与 Profile 头字段一同 Hash；既有 Profile 保持其原 `hash_schema_version` 与 `content_hash`，不得因输入形状升级而重算。Commercial Term 的 Version、Scope 与 Component 以结构化不可变行保存，不再维护中间 Hash；合同文件仍保留文件字节级 `content_hash`，但不恢复合同业务聚合 Hash。
 - Assignment 领域的 `client_entity_affiliation`、`entity_assignment_rule`、`client_entity_assignment` 均结构化保存准确 `industry_code,mcc_code`，不保存 `scope_hash/content_hash/hash_schema_version`，也不允许 `*`。`commercial_term_scope` 继续支持批准的 `*`；其 `operating_entity_id IS NULL` 表示该 Agreement 覆盖的全部经营主体，Partner Share 的 `payment_method` 固定为 `*`。禁止先拼接为自由字符串；Business Classification、CCT-I13 输入、Proof 以及 Commerce Order/Order Context 始终使用准确代码。
 - CCT-I13 逐组件输出完整结构化字段并计算整包 `commercial_context_hash`；Commerce 只冻结实际命中的 Scope ID，Finance 在经济计算时按精确 Scope ID 读取，并在 Transaction Economics Component 逐值冻结命中 Version/Scope/Component ID、参数与结果。Finance 的 Transaction Economics Header 不复制整包 Hash 或规则 Scope。只保留具有独立消费者的文件 Hash、Profile Hash、Relation Hash 与 CCT/Commerce 审计使用的整包 `commercial_context_hash`；Commercial Term 内部 Version/Scope/Component Hash 不再保存。
 
-## 3. 精确 36 表 Catalog
+## 3. 精确 37 表 Catalog
 
 以下表名是用于领域讨论和关系图的逻辑 Key；生成的 PDManer `defKey` 统一映射为 `t_<逻辑表名>`，例如 `party -> t_party`。中文表名不添加技术前缀。每一行均为完整且有序的物理字段清单，不省略或引用其他行的字段与约束，也没有隐含审计字段。所有业务唯一键均显式命名；“无额外 `uk_*`”表示除主键外没有业务唯一键，普通物理索引统一使用 `idx_*`。
 
@@ -54,7 +54,7 @@ Client & Contract（CCT）唯一拥有 Party 与资料、Client/Local Partner/Op
 | `party_contact` | Profile 联系方式 Vault 引用 | `contact_id`, `profile_id`, `contact_type`, `contact_vault_token`, `contact_masked_value`, `vault_record_version`, `vault_metadata_hash`, `create_time`, `update_time` | `uk_profile_contact_type(profile_id,contact_type)`；`contact_type IN (EMAIL,PHONE)`；四元组来自同一 Vault Metadata Version，Email/Phone 分别使用 `EMAIL_ADDRESS_V1/PHONE_E164_V1` |
 | `party_relation` | Party 关系不可变版本 | `relation_version_id`, `organization_party_id`, `related_party_id`, `relation_type`, `version_no`, `ownership_percentage`, `effective_from`, `effective_to`, `status`, `active_slot`, `hash_schema_version`, `content_hash`, `create_time`, `update_time` | `uk_party_rel_ver(organization_party_id,related_party_id,relation_type,version_no)`、`uk_party_rel_active(organization_party_id,related_party_id,relation_type,active_slot)`；`DRAFT/ACTIVE/ENDED`，仅 ACTIVE slot=1；无环且直接持股合计不超过 100% |
 
-### 3.2 角色与入驻：8 张
+### 3.2 角色与入驻：9 张
 
 | 表 | 用途 | 完整有序字段 | 命名唯一键与关键约束 |
 |---|---|---|---|
@@ -63,9 +63,10 @@ Client & Contract（CCT）唯一拥有 Party 与资料、Client/Local Partner/Op
 | `operating_entity` | 法律卖方与 MID 持有人角色根 | `operating_entity_id`, `entity_no`, `party_id`, `operating_country`, `status`, `create_time`, `update_time` | `uk_entity_no(entity_no)`、`uk_entity_party(party_id)`；状态精确为 `PENDING/ACTIVE/SUSPENDED/CLOSED`，CLOSED 不重开；来源只由 `entity_source_relation` 表达 |
 | `client_business_profile` | Client 业务资料版本 | `business_profile_id`, `client_id`, `version_no`, `status`, `active_slot`, `business_model_code`, `website_url`, `expected_volume`, `expected_ticket`, `currency`, `effective_from`, `effective_to`, `hash_schema_version`, `content_hash`, `create_time`, `update_time` | `uk_client_biz_prof_ver(client_id,version_no)`、`uk_client_biz_prof_active(client_id,active_slot)`；状态 `DRAFT/FROZEN/ACTIVE/SUPERSEDED`，仅 ACTIVE slot=1，内容封存后不可改 |
 | `client_business_classification` | 客户经营分类：Business Profile 已批准的行业与 MCC 组合 | `classification_id`, `business_profile_id`, `industry_code`, `mcc_code`, `primary_slot`, `create_time`, `update_time` | `uk_biz_class_pair(business_profile_id,industry_code,mcc_code)`、`uk_biz_class_primary(business_profile_id,primary_slot)`；一个 Business Profile 1:N 拥有分类行，同一组合不得重复，Primary 为 1、其他为 NULL；`industry_code` 为平台开放行业目录代码，`mcc_code` 必须为保留前导零的四位数字字符串并存在于批准 MCC 目录；不允许 `*`，无子行 Canonical Hash |
-| `client_application` | Client 入驻或资料变更申请 | `application_id`, `application_no`, `application_type`, `client_id`, `base_party_profile_id`, `target_party_profile_id`, `base_business_profile_id`, `target_business_profile_id`, `status`, `active_slot`, `due_diligence_case_id`, `qualification_decision_id`, `qualification_decision_version`, `qualification_type`, `submitted_time`, `submission_hash_schema_version`, `submission_content_hash`, `create_time`, `update_time` | `uk_client_app_no(application_no)`、`uk_client_app_active(client_id,active_slot)`；类型 `ONBOARDING/PROFILE_CHANGE`；状态精确为 `DRAFT/SUBMITTED/UNDER_REVIEW/APPROVED/REJECTED/WITHDRAWN`，前三态 slot=1；Decision ID/Version 成组为空或非空 |
+| `client_application` | Client 入驻或资料变更申请 | `application_id`, `application_no`, `application_type`, `client_id`, `requested_by_account_id`, `base_party_profile_id`, `target_party_profile_id`, `base_business_profile_id`, `target_business_profile_id`, `status`, `active_slot`, `due_diligence_case_id`, `qualification_decision_id`, `qualification_decision_version`, `qualification_type`, `submitted_time`, `submission_hash_schema_version`, `submission_content_hash`, `create_time`, `update_time` | `uk_client_app_no(application_no)`、`uk_client_app_active(client_id,active_slot)`；类型 `ONBOARDING/PROFILE_CHANGE`；状态精确为 `DRAFT/SUBMITTED/UNDER_REVIEW/APPROVED/REJECTED/WITHDRAWN`，前三态 slot=1；`requested_by_account_id` 一般可空但 ONBOARDING 必填，是 Platform CUSTOMER Account 的外部稳定引用且不建跨库 FK；Decision ID/Version 成组为空或非空 |
+| `partner_application` | Local Partner 入驻申请 | `application_id`, `application_no`, `local_partner_id`, `target_party_profile_id`, `requested_by_account_id`, `status`, `active_slot`, `due_diligence_case_id`, `qualification_decision_id`, `qualification_decision_version`, `qualification_type`, `submitted_time`, `submission_hash_schema_version`, `submission_content_hash`, `create_by`, `create_time`, `update_time` | `uk_partner_app_no(application_no)`、`uk_partner_app_active(local_partner_id,active_slot)`；状态精确为 `DRAFT/SUBMITTED/UNDER_REVIEW/APPROVED/REJECTED/WITHDRAWN`，前三态 slot=1；`qualification_type=PARTNER_DUE_DILIGENCE`；创建申请的同一事务创建或复用一个 PENDING Local Partner、Organization Party 和 Target Party Profile，只有 APPROVED 激活 Role，REJECTED/WITHDRAWN 重提复用该 PENDING Role；Risk Decision ID/Version 成组为空或非空，APPROVED 必须具备 Case 与 Decision Tuple，WITHDRAWN 可无 Decision |
 | `operating_entity_application` | Operating Entity 入驻申请 | `application_id`, `application_no`, `operating_entity_id`, `party_profile_id`, `source_type`, `source_client_id`, `source_partner_id`, `client_source_basis`, `status`, `active_slot`, `due_diligence_case_id`, `qualification_decision_id`, `qualification_decision_version`, `qualification_type`, `submitted_time`, `submission_hash_schema_version`, `submission_content_hash`, `approved_source_relation_id`, `create_time`, `update_time` | `uk_oe_app_no(application_no)`、`uk_oe_app_active(operating_entity_id,active_slot)`；申请状态/Slot 与 Client Application 相同；`operating_entity_id` 非空稳定，`qualification_type=ENTITY_UNDERWRITING`；仅 APPROVED 的 `approved_source_relation_id` 非空 |
-| `application_document` | 两类申请共享的材料引用 | `document_id`, `client_application_id`, `operating_entity_application_id`, `subject_party_id`, `requirement_code`, `document_type`, `file_id`, `content_hash`, `create_time`, `update_time` | `uk_app_doc_client(client_application_id,subject_party_id,requirement_code,document_type,file_id)`、`uk_app_doc_entity(operating_entity_application_id,subject_party_id,requirement_code,document_type,file_id)`；两父 FK 满足 `(client_application_id IS NOT NULL) <> (operating_entity_application_id IS NOT NULL)`，均 RESTRICT；`subject_party_id -> party` 为真实 FK |
+| `application_document` | 三类申请共享的材料引用 | `document_id`, `client_application_id`, `partner_application_id`, `operating_entity_application_id`, `subject_party_id`, `requirement_code`, `document_type`, `file_id`, `content_hash`, `create_time`, `update_time` | `uk_app_doc_client(client_application_id,subject_party_id,requirement_code,document_type,file_id)`、`uk_app_doc_partner(partner_application_id,subject_party_id,requirement_code,document_type,file_id)`、`uk_app_doc_entity(operating_entity_application_id,subject_party_id,requirement_code,document_type,file_id)`；三个 Parent FK 均可空但满足 `(client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1`，且均为本库 RESTRICT；`subject_party_id -> party` 为真实 FK |
 
 ### 3.3 来源与主体分配：4 张
 
@@ -128,7 +129,7 @@ Client Application 的 Risk Tuple 固定为 `role_type=CLIENT, role_id=client_id
 
 首次创建 OE Application 时，同一事务为目标 Party 创建唯一 `PENDING` Operating Entity，并把稳定非空 `operating_entity_id` 写入申请。拒绝/撤回后的重提复用该 PENDING Role；明确放弃才由 Operations 关闭。申请不重复保存 Organization Party、经营国家或批准后的第二个 OE ID；这些事实分别从 `operating_entity.party_id/operating_country/operating_entity_id` 获得。Risk Tuple 固定为 `role_type=OPERATING_ENTITY, role_id=operating_entity_id, qualification_type=ENTITY_UNDERWRITING`。
 
-`application_document` 的两个可空父列都是真实 RESTRICT FK，满足 exactly-one-parent XOR；`subject_party_id` 也是真实 Party FK，必须是主 Party 或审查涉及的 UBO/Director/Control 图节点。DRAFT 替换材料必须删除旧行、新增新行，并在 Application 聚合同一修订中写 DELETE/CREATE History；父申请提交后材料不可变。
+`application_document` 的 `client_application_id`、`partner_application_id` 与 `operating_entity_application_id` 三个可空父列都是真实 CCT 本库 `RESTRICT` FK，满足 exactly-one-parent XOR；`subject_party_id` 也是真实 Party FK，必须是主 Party 或审查涉及的 UBO/Director/Control 图节点。DRAFT 替换材料必须删除旧行、新增新行；该行替换由所属 Application Root 的同一本地事务与 CAS 保护，不创建 `application_document` 子级 `business_change_record`/`business_change_version` History，Application Document 保持 BCR-excluded。父申请提交后材料不可变。
 
 ### 4.3 Submission Hash 与 after-commit Risk
 
@@ -200,7 +201,11 @@ Source 对象始终保留全部固定属性并按 XOR 填字符串或 JSON `null
 
 Client Fee、Partner Share 与 Platform Service Charge Component 只作为 CCT-I13 V5 Bundle 的结构化 `component` 字段对象进入 `commercial_context_hash`。对象属性顺序固定为 `termComponentId/componentCode/componentType/triggerCode/calculationBase/rate/fixedAmount/currency/minAmount/maxAmount`；所有可空属性显式为 JSON `null`，Decimal 使用无指数规范字符串，组件按 `componentCode/termComponentId` 稳定排序。`termScopeId` 已由父 Scope 对象表达，不在 Component 中重复；不得生成 Component Canonical Hash、父 Content Hash 或独立 Domain Tag。
 
-提交事务只冻结 Profile/Document/Source/Risk 输入 Tuple、写 Submission Hash、推进各 Root BCR、将申请置为 SUBMITTED，并登记唯一 `LOCAL_HANDLER`；禁止同步调用 Risk。提交后 Client/OE Handler 的 `source_namespace` 分别固定为 `CCT_CLIENT_APPLICATION` 与 `CCT_OPERATING_ENTITY_APPLICATION`，并携带 `application_id + role_type + role_id + qualification_type + submission_content_hash`。Risk 以 Typed Source Namespace、Application ID 和完整 Role/Qualification Tuple 唯一定位本申请的主 Case，再用 Hash 区分同内容幂等与异内容冲突。第二个 CCT 本地事务校验 Hash 未变，只回填主 Role Case 并推进 UNDER_REVIEW；Organization Application 派生的关联人 KYC Case 由 Risk 内部管理。超时或响应丢失继续以相同完整身份重试；同身份返回不同 Case ID 必须拒绝并告警。
+CCT-I15 `START_OR_RESUME` 与 `SUBMIT` 是两个独立幂等命令。前者在 Account Context 创建或复用 PENDING Client/Local Partner 与 DRAFT Application，冻结 `requested_by_account_id`，推进申请 Root BCR，并只登记 Platform `ProvisionAccessTenant` 的 `LOCAL_HANDLER`；该事务不调用 Platform 或 Risk，也不接受尚未归属 Tenant 的 File ID。Platform Provision 后，Client/Partner BFF 才能以 Account Context 调用 PLT-I04；Platform 唯一解析 PENDING Tenant、ACTIVE Member 与 `TENANT_ONBOARDING_OWNER` 后保存文件，CCT 只接收返回的受控 File ID。
+
+`SUBMIT` 事务校验并冻结全部 File ID、Profile/Document/Source/Risk 输入 Tuple 与 Submission Hash，推进各 Root BCR、将申请置为 SUBMITTED，并只登记 Risk `LOCAL_HANDLER`；禁止同步调用 Risk。提交后 Client/Partner/OE Handler 的 `source_namespace` 分别固定为 `CCT_CLIENT_APPLICATION`、`CCT_LOCAL_PARTNER_APPLICATION` 与 `CCT_OPERATING_ENTITY_APPLICATION`，并携带 `application_id + role_type + role_id + qualification_type + submission_content_hash`。Partner 主 Tuple 固定为 `LOCAL_PARTNER + local_partner_id + PARTNER_DUE_DILIGENCE`。Risk 以 Typed Source Namespace、Application ID 和完整 Role/Qualification Tuple 唯一定位本申请的主 Case，再用 Hash 区分同内容幂等与异内容冲突。第二个 CCT 本地事务校验 Hash 未变，只回填主 Role Case 并推进 UNDER_REVIEW；Organization Application 派生的关联人 KYC Case 由 Risk 内部管理。超时或响应丢失继续以相同完整身份重试；同身份返回不同 Case ID 必须拒绝并告警。
+
+Platform 必须先完成 CUSTOMER Account 验证，CCT 才接收 Client 或 Partner ONBOARDING；`requested_by_account_id` 仅是该 Account 的稳定外部引用，既不是 Party，也不是 Signatory，不能授予任何法律身份或签约资格。CCT→Platform Provision 命令精确携带 `operation_type=PROVISION_ACCESS_TENANT`、`tenant_type=CLIENT|PARTNER`、`owner_ref_id`、`requested_by_account_id`、单调 `source_version` 和 64 位小写十六进制 `payload_hash`。完整命令 Tuple 为 `tenant_type + owner_ref_id + requested_by_account_id + source_version + payload_hash`；同版本同 Hash 必须返回原 Tenant/Member，同版本异 Hash 必须 `CONFLICT`，旧版本必须拒绝。首次 Provision after-commit 创建 PENDING Access Tenant、OWNER Member 与 `TENANT_ONBOARDING_OWNER`；CCT APPROVED 且 Role ACTIVE 的后续状态投影才激活 Tenant、撤销 Onboarding Role 并授予 Tenant Owner。Status 先于 Provision 到达时仅可重试，不能创建缺少 `requested_by_account_id` 的 Tenant。
 
 ## 5. Agreement、Consumer Legal、实时交易资格与 Wire 契约
 
@@ -279,6 +284,7 @@ PARTY_PROFILE
 CLIENT_BUSINESS_PROFILE
 COMMERCIAL_TERM_VERSION
 CLIENT_APPLICATION
+PARTNER_APPLICATION
 OPERATING_ENTITY_APPLICATION
 PARTY_RELATION
 CLIENT_ENTITY_AFFILIATION
@@ -297,12 +303,12 @@ COMMERCIAL_TERM_PLAN
 |---|---|
 | `PARTY`、`CLIENT`、`LOCAL_PARTNER`、`OPERATING_ENTITY` | 追踪法律主体与角色主档、启用、暂停、终止或关闭等关键变化 |
 | `PARTY_PROFILE`、`CLIENT_BUSINESS_PROFILE` | 追踪资料版本头从 Draft、冻结到激活/替换的生命周期及封存 Hash；具体明细仍由结构化 Profile Version 保留 |
-| `CLIENT_APPLICATION`、`OPERATING_ENTITY_APPLICATION` | 追踪申请提交、Risk Case/Decision 引用和审批结果，支持审核责任追溯 |
+| `CLIENT_APPLICATION`、`PARTNER_APPLICATION`、`OPERATING_ENTITY_APPLICATION` | 追踪申请提交、Risk Case/Decision 引用和审批结果，支持审核责任追溯；Partner Application 创建时与 PENDING Local Partner、Organization Party、Target Party Profile、Root BCR/Version 和补偿事件同一事务落库 |
 | `PARTY_RELATION`、`CLIENT_ENTITY_AFFILIATION`、`ENTITY_ASSIGNMENT_RULE`、`CLIENT_ENTITY_ASSIGNMENT`、`ENTITY_SOURCE_RELATION` | 追踪主体关系、使用授权、自动规则、分配结果和来源认定的建立或结束 |
 | `AGREEMENT`、`CONSUMER_LEGAL_DOCUMENT`、`SELLER_DISCLOSURE` | 追踪 Draft、审批、签署/发布、激活、终止及有效期收窄；已冻结内容仍由结构化法律事实保存 |
 | `COMMERCIAL_TERM_PLAN`、`COMMERCIAL_TERM_VERSION` | 追踪方案主档及条款版本头的 Draft、审批、激活和替换；Scope/Component 由冻结结构化 Version 保存 |
 
-可作为 `aggregate_root_type` 的闭合白名单为：`PARTY`、`CLIENT`、`LOCAL_PARTNER`、`OPERATING_ENTITY`、`CLIENT_APPLICATION`、`OPERATING_ENTITY_APPLICATION`、`PARTY_RELATION`、`CLIENT_ENTITY_AFFILIATION`、`ENTITY_ASSIGNMENT_RULE`、`CLIENT_ENTITY_ASSIGNMENT`、`ENTITY_SOURCE_RELATION`、`AGREEMENT`、`CONSUMER_LEGAL_DOCUMENT`、`SELLER_DISCLOSURE`、`COMMERCIAL_TERM_PLAN`。三个受审计 Child 的固定归属为：`PARTY_PROFILE -> PARTY`、`CLIENT_BUSINESS_PROFILE -> CLIENT`、`COMMERCIAL_TERM_VERSION -> COMMERCIAL_TERM_PLAN`；其余白名单类型都是自身 Root。Root/Parent Tuple 创建后不可改变。
+可作为 `aggregate_root_type` 的闭合白名单为：`PARTY`、`CLIENT`、`LOCAL_PARTNER`、`OPERATING_ENTITY`、`CLIENT_APPLICATION`、`PARTNER_APPLICATION`、`OPERATING_ENTITY_APPLICATION`、`PARTY_RELATION`、`CLIENT_ENTITY_AFFILIATION`、`ENTITY_ASSIGNMENT_RULE`、`CLIENT_ENTITY_ASSIGNMENT`、`ENTITY_SOURCE_RELATION`、`AGREEMENT`、`CONSUMER_LEGAL_DOCUMENT`、`SELLER_DISCLOSURE`、`COMMERCIAL_TERM_PLAN`。三个受审计 Child 的固定归属为：`PARTY_PROFILE -> PARTY`、`CLIENT_BUSINESS_PROFILE -> CLIENT`、`COMMERCIAL_TERM_VERSION -> COMMERCIAL_TERM_PLAN`；其余白名单类型都是自身 Root。Root/Parent Tuple 创建后不可改变。
 
 下列14张业务表明确不重复写 BCR：`individual_profile`、`organization_profile`、`party_identity_key`、`party_profile_identifier`、`party_address`、`party_contact`、`client_business_classification`、`application_document`、`agreement_signatory`、`agreement_document_ref`、`agreement_acceptance`、`agreement_operating_entity`、`commercial_term_scope`、`commercial_term_component`。这些表只在 Draft 内编辑并随所属业务版本冻结，或者本身已是追加式领域证据；已冻结结构化行与稳定外键就是其业务历史。`business_change_record`、`business_change_version`、`compensation_event`、`command_idempotency` 四张技术表也不得自审计。
 
@@ -312,7 +318,7 @@ COMMERCIAL_TERM_PLAN
 
 多 Root 命令按 `(aggregate_root_type,aggregate_root_id)` 确定顺序锁定/CAS。每个 Root 独立计算下一版本、写自己的 Root 及白名单内 Changed Child History，并以自己的下一版本作为相关 Event `source_version`；共同 `_meta.triggerId` 只用于关联。任一 Root CAS、校验、结构化更新、应写 History 或 Event 登记失败，整个本地事务回滚。
 
-`snapshot_json` 固定为按 `record_type` 登记的 `_meta + data` 字段白名单，不序列化 DO，不含敏感原值、完整 Vault Token、Blind Index、密文、Secret、卡数据、文件正文或 Slot/Lease/锁/重试等技术字段。Integrity 输入使用 `CODE-MOR:CCT:BUSINESS_CHANGE_SNAPSHOT:1`、UTF-8 RFC 8785/JCS 与同一无损数字/时间编码规则。BCR 只能还原上述18类对象组成的审计视图，不能单独还原完整业务聚合，更不能替代日常结构化查询。
+`snapshot_json` 固定为按 `record_type` 登记的 `_meta + data` 字段白名单，不序列化 DO，不含敏感原值、完整 Vault Token、Blind Index、密文、Secret、卡数据、文件正文或 Slot/Lease/锁/重试等技术字段。Integrity 输入使用 `CODE-MOR:CCT:BUSINESS_CHANGE_SNAPSHOT:1`、UTF-8 RFC 8785/JCS 与同一无损数字/时间编码规则。BCR 只能还原上述19类对象组成的审计视图，不能单独还原完整业务聚合，更不能替代日常结构化查询。
 
 `compensation_event` 与业务/History 同事务登记，事务提交后只由 afterCommit 唤醒 Dispatcher；XXL-Job 是本服务兜底。`LOCAL_HANDLER` 外部调用必须传稳定 `event_key` 幂等键；未知结果进入领域查询/人工恢复，不盲目重放。Claim/Lease 使用 `lock_version`，但业务 `source_version` 名称与语义不变。成功记录可删除，FAILED 保留告警；消费者在业务 Fact/Projection 中以 Event Key、Payload Hash、Source Version 和状态机幂等，不创建通用 Inbox。
 
@@ -332,8 +338,10 @@ erDiagram
     CLIENT ||--o{ CLIENT_BUSINESS_PROFILE : has_versions
     CLIENT_BUSINESS_PROFILE ||--o{ CLIENT_BUSINESS_CLASSIFICATION : has_classifications
     CLIENT ||--o{ CLIENT_APPLICATION : applies
+    LOCAL_PARTNER ||--o{ PARTNER_APPLICATION : applies
     OPERATING_ENTITY ||--o{ OPERATING_ENTITY_APPLICATION : applies
     CLIENT_APPLICATION o|--o{ APPLICATION_DOCUMENT : documents
+    PARTNER_APPLICATION o|--o{ APPLICATION_DOCUMENT : documents
     OPERATING_ENTITY_APPLICATION o|--o{ APPLICATION_DOCUMENT : documents
     PARTY ||--o{ APPLICATION_DOCUMENT : subject
     CLIENT ||--o{ CLIENT_ENTITY_AFFILIATION : may_use
@@ -369,7 +377,7 @@ erDiagram
     BUSINESS_CHANGE_RECORD o|--o{ BUSINESS_CHANGE_RECORD : parent
 ```
 
-图仅使用当前 36 表名称。跨系统 ID、BCR 多态 Record Tuple 与 `compensation_event.source_type/source_id` 不建立伪造物理 FK。
+图仅使用当前 37 表名称。`requested_by_account_id`、Risk Case/Decision 坐标、其他跨系统 ID、BCR 多态 Record Tuple 与 `compensation_event.source_type/source_id` 不建立伪造物理 FK。
 
 ## 9. 状态、不变量与数据保留
 
@@ -381,7 +389,7 @@ erDiagram
 
 ## 10. 历史说明与明确禁止
 
-77、68、66、57、55、48 与 44 仅是先前重构阶段的历史表数，不是当前目标；当前目标始终是本文件的 36 表、404 字段 Catalog。历史名称或旧字段只能在实施/设计历史中作为“已删除或替换”证据出现，不得用于当前关系、状态、接口或生成目标。
+77、68、66、57、55、48 与 44 仅是先前重构阶段的历史表数，不是当前目标；当前目标始终是本文件的 37 表、423 字段 Catalog。历史名称或旧字段只能在实施/设计历史中作为“已删除或替换”证据出现，不得用于当前关系、状态、接口或生成目标。
 
 - 禁止把来源扩展为 `DIRECT`；平台自有 OE 使用 `PLATFORM`。
 - 禁止恢复 Agreement/Consumer Legal/Seller Disclosure 的 Root/Version、Current Pointer、Active Slot、Client Override、Agreement 交易 Scope、业务 Content/Scope Hash、Hash Schema Version、Binding Revision 或 Seller Content Hash；也禁止恢复普通业务 `version`、Assignment Policy/Version/Binding、Assignment Root/Version、Assignment 中间 Hash、`source_owner_key`、任何 `current_version_id`、申请/合同材料的文档版本列、Primary/Fallback 双标记、`entity_source_ownership_path`、`entity_source_path_edge` 或 `ownership_path_id`。GLOBAL/Wildcard/Manual Assignment 与多公司多层持股能力必须在出现明确用例后重新设计并审批。

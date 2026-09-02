@@ -1,6 +1,6 @@
 # 开发约定与编码习惯
 
-最后更新：2026-08-29
+最后更新：2026-09-02
 
 ## 1. 使用范围与优先级
 
@@ -16,6 +16,7 @@
 - Java 基础包使用 `com.paytech...`。
 - 公司级 Maven Artifact 和模块目录统一使用 `paytech-*`；`Code-MoR` 产品名以及既有 `mor-local`、`mor_*` 本地运行资源名称不因此改名。新增 Java 类名、包名、Bean 名、配置前缀、日志/指标、错误 Code、Topic/Group 和业务标识不得带 `Mor` / `mor-` 技术前缀；协议兼容确实无法避免时必须写明原因。
 - 类、方法和字段使用完整、专业的业务名称；避免 `getData`、`handle2`、`CommonUtil` 等含义模糊的命名。
+- 数据库映射对象直接使用业务实体名，由 `dataobject` 包表达其持久化职责；类型名不得追加 `DO` 后缀。跨层转换通过 Repository 完成，不能因为类型名精简而把数据库对象暴露到 API 或领域层。
 - Spring 配置前缀直接从能力开始，例如 `compensation.*`、`xxl.job.*`，不增加无意义的 `paytech` 中间层。
 - Topic 使用小写 `topic_{source_system}_{business_subject}`，Consumer Group/Queue 使用小写 `cg_{consumer_system}_{consumer_subject}`；消息统一使用 UTF-8 JSON。
 
@@ -28,7 +29,7 @@
 - 外部机制触发内部服务工作时，入站适配器统一放在与 `service` 平级的 `ext` 包下：XXL-Job 等调度入口放 `ext/job`，既有或迁移期 Dubbo Provider 放 `ext/dubbo`，REST Controller 放 `ext/rest`。其他协议只有存在真实入口时才新增 `ext/<protocol>`，不得创建空包。
 - `ext` 只负责协议解析、入口校验、上下文转换和委托 `service`，不承载业务规则、事务编排或持久化逻辑；出站 HTTP、Provider 和第三方 SDK 适配器放独立 `integration` 边界。`ext/dubbo` 只定义兼容代码的位置，不改变当前禁止新增 Dubbo/OpenFeign 的技术边界。
 - `ext/rest` 中的 Controller/API 只做协议适配，`service` 中的 Processor 编排用例，Domain Service 承载规则，Repository 屏蔽持久化，Mapper 表达 SQL；不得跨层走捷径。
-- 优先构造器注入和 `final` 字段。相同逻辑组内的注入字段按依赖类型名称字符数由短到长排列，长度相同再按字典序；构造器参数保持相同顺序。
+- 优先构造器注入和 `final` 字段。构造器只把全部参数赋给字段时使用 Lombok `@AllArgsConstructor`；构造器包含参数校验、防御性复制、派生对象创建或资源配置时保留显式实现。相同逻辑组内的注入字段按依赖类型名称字符数由短到长排列，长度相同再按字典序；显式构造器参数保持相同顺序。
 
 ```java
 private final Clock clock;
@@ -41,8 +42,9 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - 新代码只按失败语义区分两类基础异常：`FailException` 表示结果明确、不可重试；`ErrorException` 表示未知或系统错误，可进入具备幂等、次数上限和退避的重试路径。
 - 默认通过不同的 `CodeMessageEnum` 向上述两类异常传递错误语义，不为每个错误新建异常子类；只有调用方确实需要独立捕获或处理行为时才增加专用异常。
 - `BusinessException` 和 `BizCheckFailException` 只用于兼容已有代码；`JAVA_PROJECT_STRUCTURE.md` 中仍以 `BizCheckFailException` 展示的旧示例不适用于新增实现。
-- 所有项目枚举都实现 `CodeEnum`；带默认消息的错误枚举实现继承 `CodeEnum` 的 `CodeMessageEnum`。
+- 所有内部业务枚举都实现 `CodeEnum`；只有带可安全外显默认消息的错误枚举实现继承 `CodeEnum` 的 `CodeMessageEnum`。
 - 数据库、HTTP、MQ、日志和业务比较使用 `getCode()`，禁止依赖 `name()`、`ordinal()` 或枚举声明顺序。Code 发布后不可修改，Java 枚举常量名可以安全重构。
+- 对外发布的 `*-api` DTO 和 MQ 契约以 `String` 承载枚举 Code，不使用 Java enum 字段。提供方在边界内从 `CodeEnum#getCode()` 转换，消费方在自己的边界显式解析和校验；未知 Code 必须进入可观察、Fail-Closed 的兼容性处理，不能依赖反序列化异常、`null` 或兜底枚举静默放行。
 - 错误 Code 使用一眼可读、稳定的英文大写语义，例如 `COMPENSATION_EVENT_CONFLICT`，不使用 `PAYTECH-COMMON-400001` 一类公司前缀加数字流水号。
 - 面向开发者和运营的异常消息使用中文，并包含必要的实体标识、当前状态和操作上下文；不得包含凭据、敏感明文或完整 Payload。
 
@@ -50,6 +52,7 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 
 - 业务和 Foundation 事务统一使用 `TransactionTemplate` 显式表达边界、传播行为和返回值，不使用 `@Transactional`。
 - 一个方法只承担一个明确职责，原则上不超过 30 行；优先卫语句和早期返回，嵌套不超过三层。
+- 不为单一实现预建 `Abstract*`、空接口或通用上下文。至少两个真实用例共享稳定流程、字段和不变量后才提取抽象；请求 ID、认证、mTLS 和追踪等协议上下文优先留在 Web/Security 基础设施，不机械复制到每个 Processor 请求。
 - 注释和 JavaDoc 默认使用中文，协议固定词、标准名称和无法准确翻译的专有名词可以保留英文。注释解释约束、原因和边界，不复述代码字面行为。
 - 不运行仓库级批量格式化，也不为了格式重写无关代码；保持改动聚焦，最终格式由项目既定工具或用户 IDE 处理。
 - 不保留空实现、占位测试或 `TODO by Codex`；发现该标记时直接完成对应实现，确实受业务决策阻塞时说明具体缺口。

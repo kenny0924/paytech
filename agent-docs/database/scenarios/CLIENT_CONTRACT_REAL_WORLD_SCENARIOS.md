@@ -1,7 +1,7 @@
 # Client & Contract 现实场景与数据库映射
 
-最后更新：2026-08-24  
-适用基线：Client & Contract 当前 36 表、404 字段、54 个唯一索引、43 个访问索引、61 条本库关系和 6 个关系图组
+最后更新：2026-08-30
+适用基线：Client & Contract 当前 37 表、423 字段、57 个唯一索引、44 个访问索引、64 条本库关系和 6 个关系图组
 
 ## 1. 文档用途与读取规则
 
@@ -148,6 +148,8 @@ Nova 地址或名称变化时创建 Profile V2：V1 进入 `SUPERSEDED`、`activ
 
 ### 4.1 角色主档
 
+Platform 先完成 CUSTOMER Account 验证，才允许该 Account 提交 CCT Client 或 Local Partner ONBOARDING。`requested_by_account_id` 仅是 Platform Account 稳定外部引用：不是 CCT Party、不是 Agreement Signatory，且不赋予法律身份或签约资格。
+
 | 表 | 关键字段与示例值 | 现实含义 |
 |---|---|---|
 | `t_client` | `t_client.client_id=730200000000000001`、`t_client.client_no=CLI-NOVA-001`、`t_client.party_id=730100000000000001`、`t_client.status=ACTIVE`、`t_client.activation_time=2026-09-10T10:00:00.000000Z`、`t_client.suspension_time=NULL`、`t_client.termination_time=NULL` | Nova Party 获得 Client 角色 |
@@ -196,6 +198,7 @@ Nova 首次入驻申请：
 | `t_client_application.application_no` | `CAP-NOVA-ONBOARD-001` |
 | `t_client_application.application_type` | `ONBOARDING` |
 | `t_client_application.client_id` | `730200000000000001` |
+| `t_client_application.requested_by_account_id` | `220301` |
 | `t_client_application.base_party_profile_id` | `NULL` |
 | `t_client_application.target_party_profile_id` | `730110000000000001` |
 | `t_client_application.base_business_profile_id` | `NULL` |
@@ -209,6 +212,25 @@ Nova 首次入驻申请：
 | `t_client_application.submitted_time` | `2026-09-03T09:00:00.000000Z` |
 | `t_client_application.submission_hash_schema_version` | `1` |
 | `t_client_application.submission_content_hash` | `5555555555555555555555555555555555555555555555555555555555555555` |
+
+Gulf 的 Local Partner 首次入驻先由 `START_OR_RESUME` 在同一 CCT 本地事务创建稳定的 PENDING Role、DRAFT Application、申请 Root BCR/Version 和 `ProvisionAccessTenant` 的 `LOCAL_HANDLER`；此时 `requested_by_account_id` 只表示已验证的 Platform Account，不替代 Gulf Party 或任何合同 Signatory。Platform Provision 完成后才允许把受控 File ID 写入 DRAFT Application；`SUBMIT` 再冻结材料快照、Submission Hash 并登记 Risk Handler。
+
+| 表.字段 | Gulf Partner Application 示例值 |
+|---|---|
+| `t_partner_application.application_id` | `730320000000000001` |
+| `t_partner_application.application_no` | `PAP-GULF-ONBOARD-001` |
+| `t_partner_application.local_partner_id` | `730300000000000001` |
+| `t_partner_application.target_party_profile_id` | `730110000000000003` |
+| `t_partner_application.requested_by_account_id` | `220301` |
+| `t_partner_application.status` | `APPROVED` |
+| `t_partner_application.active_slot` | `NULL` |
+| `t_partner_application.due_diligence_case_id` | `830100000000000003` |
+| `t_partner_application.qualification_decision_id` | `830200000000000003` |
+| `t_partner_application.qualification_decision_version` | `1` |
+| `t_partner_application.qualification_type` | `PARTNER_DUE_DILIGENCE` |
+| `t_partner_application.submitted_time` | `2026-09-03T10:00:00.000000Z` |
+| `t_partner_application.submission_hash_schema_version` | `1` |
+| `t_partner_application.submission_content_hash` | `9999999999999999999999999999999999999999999999999999999999999999` |
 
 三个 OE 来源申请的关键 Tuple：
 
@@ -237,28 +259,43 @@ Nova 首次入驻申请：
 | `t_operating_entity_application.submission_content_hash` | `6666666666666666666666666666666666666666666666666666666666666666` |
 | `t_operating_entity_application.approved_source_relation_id` | `730430000000000002` |
 
-申请材料由同一张表承载，但父级必须二选一：
+申请材料由同一张表承载，但 Client、Partner、OE 三个父级必须恰好一个非空：
 
-| 表.字段 | Nova Client Application 材料 | Desert OE Application 材料 |
-|---|---|---|
-| `t_application_document.document_id` | `730221000000000001` | `730221000000000002` |
-| `t_application_document.client_application_id` | `730220000000000001` | `NULL` |
-| `t_application_document.operating_entity_application_id` | `NULL` | `730420000000000002` |
-| `t_application_document.subject_party_id` | `730100000000000001` | `730100000000000005` |
-| `t_application_document.requirement_code` | `LEGAL_ENTITY_REGISTRATION` | `ENTITY_REGISTRATION` |
-| `t_application_document.document_type` | `INCORPORATION_CERTIFICATE` | `TRADE_LICENSE` |
-| `t_application_document.file_id` | `930100000000000001` | `930100000000000002` |
-| `t_application_document.content_hash` | `7777777777777777777777777777777777777777777777777777777777777777` | `8888888888888888888888888888888888888888888888888888888888888888` |
+| 表.字段 | Nova Client Application 材料 | Gulf Partner Application 材料 | Desert OE Application 材料 |
+|---|---|---|---|
+| `t_application_document.document_id` | `730221000000000001` | `730221000000000003` | `730221000000000002` |
+| `t_application_document.client_application_id` | `730220000000000001` | `NULL` | `NULL` |
+| `t_application_document.partner_application_id` | `NULL` | `730320000000000001` | `NULL` |
+| `t_application_document.operating_entity_application_id` | `NULL` | `NULL` | `730420000000000002` |
+| `t_application_document.subject_party_id` | `730100000000000001` | `730100000000000003` | `730100000000000005` |
+| `t_application_document.requirement_code` | `LEGAL_ENTITY_REGISTRATION` | `PARTNER_REGISTRATION` | `ENTITY_REGISTRATION` |
+| `t_application_document.document_type` | `INCORPORATION_CERTIFICATE` | `TRADE_LICENSE` | `TRADE_LICENSE` |
+| `t_application_document.file_id` | `930100000000000001` | `930100000000000003` | `930100000000000002` |
+| `t_application_document.content_hash` | `7777777777777777777777777777777777777777777777777777777777777777` | `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` | `8888888888888888888888888888888888888888888888888888888888888888` |
 
 这里的 `requirement_code` 来自 Risk 冻结材料要求目录，`document_type` 来自申请材料类型目录；表中的代码只是现实示例，不构成 CCT 闭合枚举。
 
 ### 4.4 流程闭环
 
-1. DRAFT 阶段可替换材料，但必须删除旧行、新建新 `document_id`。
-2. SUBMITTED 事务冻结 Profile、Business Profile、Source Tuple 和材料集合，计算 Submission Hash，推进 Application Root BCR，并写唯一 `LOCAL_HANDLER`。
-3. 提交后 Client/OE Handler 的 `source_namespace` 分别固定为 `CCT_CLIENT_APPLICATION` 与 `CCT_OPERATING_ENTITY_APPLICATION`，并携带 `application_id + role_type + role_id + qualification_type + submission_content_hash`；Risk 用 Typed Source Namespace、Application ID 和完整 Role/Qualification Tuple 定位主 Case，并以 Submission Hash 区分幂等重放与冲突提交。CCT 不在事务内同步调用 Risk，也不回填由 Organization Application 派生的关联人 KYC 子 Case。
-4. Risk 返回 Case 后，第二个本地事务校验 Hash 未变，再进入 `UNDER_REVIEW`。
-5. APPROVED 时回填 Decision Tuple，激活角色/Profile；OE Application 同时创建准确 Source Relation。
+1. 已验证的 Platform CUSTOMER Account 先调用 CCT-I15 `START_OR_RESUME`；同一事务创建或复用 PENDING Local Partner、DRAFT `t_partner_application`、其 Root `PARTNER_APPLICATION` BCR/Version，并登记 `ProvisionAccessTenant` 的 `LOCAL_HANDLER` `t_compensation_event`。该事务不调用 Platform 或 Risk，也不接受尚未归属 Tenant 的 File ID。
+2. after-commit 向 Platform 发送 PENDING Tenant/OWNER Member/Onboarding Role 的命令：
+
+   ```json
+   {
+     "operation_type": "PROVISION_ACCESS_TENANT",
+     "tenant_type": "PARTNER",
+     "owner_ref_id": "730300000000000001",
+     "requested_by_account_id": "220301",
+     "source_version": 1,
+     "payload_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+   }
+   ```
+
+   命令身份为 `PARTNER:730300000000000001:220301:1`，完整 Tuple 为 `tenant_type + owner_ref_id + requested_by_account_id + source_version + payload_hash`。同版本同 Hash 返回原 Tenant/Member；同版本异 Hash 为 `CONFLICT`；旧版本拒绝。Status 投影若先于 Provision 到达只能重试，不能创建缺少 `requested_by_account_id` 的 Tenant。
+3. Provision 成功后，Platform 创建 PENDING Access Tenant、OWNER Member 和 `TENANT_ONBOARDING_OWNER`，但不签发普通 Tenant Context Token。Partner Console BFF 调用 PLT-I04，以 Account Context 唯一解析该 Account 在 PENDING Tenant 下的 ACTIVE Member 与 `TENANT_ONBOARDING_OWNER`，Platform 用解析出的 `tenant_id` 保存文件；调用方不能指定 Tenant。
+4. Partner 确认材料后调用 CCT-I15 `SUBMIT`。CCT 同一本地事务校验全部 File ID、冻结 Application Document/Profile/材料快照与 Submission Hash、推进 BCR，并登记 `RiskDueDiligence` 的 `LOCAL_HANDLER`；after-commit 才向 Risk 提交 `CCT_LOCAL_PARTNER_APPLICATION + application_id + LOCAL_PARTNER + local_partner_id + PARTNER_DUE_DILIGENCE + submission_content_hash`。Risk 用完整 Tuple 定位主 Case，关联人 KYC 子 Case 不回填到 CCT 单值列。
+5. Risk 返回 Case 后，第二个本地事务校验 Hash 未变，再进入 `UNDER_REVIEW`。APPROVED 回填 Decision Tuple 并激活 Local Partner Role；同一 `tenant_type` + `owner_ref_id` Owner tuple 的状态投影只接受严格单调递增 `source_version`，把 Platform 转为 active Tenant ownership，撤销 Onboarding Role 并授予 Tenant Owner。
+6. Gulf 的 REJECTED 重提继续使用 `t_local_partner.local_partner_id=730300000000000001` 的 PENDING Role，绝不创建第二个 Local Partner；新申请取得新的 Application ID，并重新走上述 Provision/Status 幂等边界。
 
 当前查询直接读结构化 Application 和其材料。历史追责读 Application BCR；已冻结材料不重复写 BCR。PROFILE_CHANGE 创建新 Application，旧 APPROVED 申请不能被覆盖或复活。
 
@@ -723,7 +760,7 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
 
 事务提交后 afterCommit 只唤醒 Dispatcher；Claim/Lease/`lock_version` 负责多实例互斥，XXL-Job 兜底扫描。重试复用同一个 Event Key、Payload 和 Hash。成功记录可以删除，所以 Compensation Event 不是永久业务历史；FAILED 保留告警并走受控人工恢复。
 
-## 11. 36 表场景覆盖矩阵
+## 11. 37 表场景覆盖矩阵
 
 | 分组 | 表 | 场景中的职责 | 历史方式 |
 |---|---|---|---|
@@ -742,8 +779,9 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
 | Onboarding | `t_client_business_profile` | Nova 经营资料版本头 | 业务 Version + BCR Child |
 | Onboarding | `t_client_business_classification` | `DIGITAL_SERVICES/5734` | 随 Business Profile 冻结 |
 | Onboarding | `t_client_application` | Nova 入驻申请 | Current 生命周期 + BCR Root |
+| Onboarding | `t_partner_application` | Gulf 前 Tenant 入驻申请 | Current 生命周期 + BCR Root |
 | Onboarding | `t_operating_entity_application` | 三类来源 OE 审核 | Current 生命周期 + BCR Root |
-| Onboarding | `t_application_document` | Client/OE 申请材料 | 冻结文件证据，不重复 BCR |
+| Onboarding | `t_application_document` | Client/Partner/OE 申请材料 | 冻结文件证据，不重复 BCR |
 | Assignment | `t_client_entity_affiliation` | Client 使用 OE 的批准关系 | 有效期事实 + BCR Root |
 | Assignment | `t_entity_assignment_rule` | 准确 Scope 候选和 Priority | 有效期事实 + BCR Root |
 | Assignment | `t_client_entity_assignment` | 已验证分配结果 | 稳定交易事实 + BCR Root |
@@ -796,11 +834,11 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
   "schema": "CODE-MOR:CCT:REAL_WORLD_SCENARIOS:1",
   "storyId": "NOVA_GULF_UAE_2026",
   "modelTotals": {
-    "tables": 36,
-    "fields": 404,
-    "uniqueIndexes": 54,
-    "accessIndexes": 43,
-    "relations": 61,
+    "tables": 37,
+    "fields": 423,
+    "uniqueIndexes": 57,
+    "accessIndexes": 44,
+    "relations": 64,
     "diagramGroups": 6
   },
   "scenarios": [
@@ -814,8 +852,8 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
     {
       "id": "roles-and-onboarding",
       "sectionHeading": "## 4. 场景二：Client、Local Partner 与 Operating Entity 入驻",
-      "tables": ["t_client", "t_local_partner", "t_operating_entity", "t_client_business_profile", "t_client_business_classification", "t_client_application", "t_operating_entity_application", "t_application_document"],
-      "fieldRefs": ["t_client.client_id", "t_client.status", "t_local_partner.local_partner_id", "t_local_partner.status", "t_operating_entity.operating_entity_id", "t_operating_entity.status", "t_client_business_profile.business_profile_id", "t_client_business_profile.content_hash", "t_client_business_classification.classification_id", "t_client_business_classification.mcc_code", "t_client_application.application_id", "t_client_application.submission_content_hash", "t_operating_entity_application.application_id", "t_operating_entity_application.approved_source_relation_id", "t_application_document.document_id", "t_application_document.file_id"],
+      "tables": ["t_client", "t_local_partner", "t_operating_entity", "t_client_business_profile", "t_client_business_classification", "t_client_application", "t_partner_application", "t_operating_entity_application", "t_application_document"],
+      "fieldRefs": ["t_client.client_id", "t_client.status", "t_local_partner.local_partner_id", "t_local_partner.status", "t_operating_entity.operating_entity_id", "t_operating_entity.status", "t_client_business_profile.business_profile_id", "t_client_business_profile.content_hash", "t_client_business_classification.classification_id", "t_client_business_classification.mcc_code", "t_client_application.application_id", "t_client_application.requested_by_account_id", "t_client_application.submission_content_hash", "t_partner_application.application_id", "t_partner_application.local_partner_id", "t_partner_application.requested_by_account_id", "t_partner_application.qualification_type", "t_partner_application.submission_content_hash", "t_operating_entity_application.application_id", "t_operating_entity_application.approved_source_relation_id", "t_application_document.document_id", "t_application_document.partner_application_id", "t_application_document.file_id"],
       "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
     },
     {
@@ -861,6 +899,43 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
       "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
     }
   ],
+  "partnerApplicationLifecycle": {
+    "scenarioId": "roles-and-onboarding",
+    "table": "t_partner_application",
+    "qualificationType": "PARTNER_DUE_DILIGENCE",
+    "statuses": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
+    "requestedByAccountReference": "PLATFORM_ACCOUNT_EXTERNAL_NO_FK",
+    "riskCoordinatesReference": "RISK_EXTERNAL_NO_FK",
+    "applicationDocumentParent": "partner_application_id",
+    "startOrResumeTransaction": {
+      "atomicWrites": ["PENDING_LOCAL_PARTNER", "DRAFT_PARTNER_APPLICATION", "BCR_ROOT_AND_VERSION", "COMPENSATION_EVENT:ProvisionAccessTenant"],
+      "compensationEventExecutionType": "LOCAL_HANDLER",
+      "compensationEventDispatch": "AFTER_COMMIT"
+    },
+    "submitTransaction": {
+      "atomicWrites": ["SUBMITTED_PARTNER_APPLICATION", "APPLICATION_DOCUMENT_FILE_IDS", "SUBMISSION_SNAPSHOT_AND_HASH", "BCR_ROOT_AND_VERSION", "COMPENSATION_EVENT:RiskDueDiligence"],
+      "compensationEventExecutionType": "LOCAL_HANDLER",
+      "compensationEventDispatch": "AFTER_COMMIT"
+    },
+    "platformProvisionCommand": {
+      "operation_type": "PROVISION_ACCESS_TENANT",
+      "tenant_type": "PARTNER",
+      "owner_ref_id": "730300000000000001",
+      "requested_by_account_id": "220301",
+      "source_version": 1,
+      "payload_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "idempotency": {
+      "sameKeySameHash": "RETURN_EXISTING_RESULT",
+      "sameKeyDifferentHash": "CONFLICT"
+    },
+    "statusUpdateBeforeProvision": {
+      "outcome": "RETRYABLE",
+      "tenantCreation": "FORBIDDEN_WITHOUT_REQUESTED_BY_ACCOUNT_ID"
+    },
+    "eventOrder": ["PLATFORM_ACCOUNT_VERIFIED", "CCT_DRAFT_PARTNER_APPLICATION_AND_BCR_COMMITTED", "PROVISION_ACCESS_TENANT_AFTER_COMMIT", "ONBOARDING_FILES_UPLOADED_TO_RESOLVED_PENDING_TENANT", "CCT_SUBMITTED_SNAPSHOT_AND_BCR_COMMITTED", "RISK_DUE_DILIGENCE_SUBMISSION_AFTER_COMMIT", "RISK_QUALIFICATION_DECISION", "CCT_APPROVED_STATUS_PROJECTION"],
+    "rejectedResubmission": "REUSE_PENDING_LOCAL_PARTNER"
+  },
   "enumAssertions": {
     "party.party_type": ["INDIVIDUAL", "ORGANIZATION"],
     "party_profile.profile_status": ["DRAFT", "FROZEN", "ACTIVE", "SUPERSEDED"],
@@ -874,6 +949,8 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
     "client_application.application_type": ["ONBOARDING", "PROFILE_CHANGE"],
     "client_application.status": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
     "client_application.qualification_type": ["INDIVIDUAL_KYC", "ORGANIZATION_KYB"],
+    "partner_application.status": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
+    "partner_application.qualification_type": ["PARTNER_DUE_DILIGENCE"],
     "operating_entity_application.source_type": ["PLATFORM", "CLIENT", "PARTNER"],
     "operating_entity_application.client_source_basis": ["SAME_PARTY", "VERIFIED_ASSOCIATION"],
     "operating_entity_application.status": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
@@ -890,8 +967,8 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
     "commercial_term_version.status": ["DRAFT", "APPROVED", "SCHEDULED", "ACTIVE", "SUPERSEDED", "EXPIRED"],
     "commercial_term_version.rounding_mode": ["HALF_UP"],
     "commercial_term_component.component_type": ["PERCENTAGE", "FIXED"],
-    "business_change_record.record_type": ["PARTY", "CLIENT", "LOCAL_PARTNER", "OPERATING_ENTITY", "PARTY_PROFILE", "CLIENT_BUSINESS_PROFILE", "COMMERCIAL_TERM_VERSION", "CLIENT_APPLICATION", "OPERATING_ENTITY_APPLICATION", "PARTY_RELATION", "CLIENT_ENTITY_AFFILIATION", "ENTITY_ASSIGNMENT_RULE", "CLIENT_ENTITY_ASSIGNMENT", "ENTITY_SOURCE_RELATION", "AGREEMENT", "CONSUMER_LEGAL_DOCUMENT", "SELLER_DISCLOSURE", "COMMERCIAL_TERM_PLAN"],
-    "business_change_record.aggregate_root_type": ["PARTY", "CLIENT", "LOCAL_PARTNER", "OPERATING_ENTITY", "CLIENT_APPLICATION", "OPERATING_ENTITY_APPLICATION", "PARTY_RELATION", "CLIENT_ENTITY_AFFILIATION", "ENTITY_ASSIGNMENT_RULE", "CLIENT_ENTITY_ASSIGNMENT", "ENTITY_SOURCE_RELATION", "AGREEMENT", "CONSUMER_LEGAL_DOCUMENT", "SELLER_DISCLOSURE", "COMMERCIAL_TERM_PLAN"],
+    "business_change_record.record_type": ["PARTY", "CLIENT", "LOCAL_PARTNER", "OPERATING_ENTITY", "PARTY_PROFILE", "CLIENT_BUSINESS_PROFILE", "COMMERCIAL_TERM_VERSION", "CLIENT_APPLICATION", "PARTNER_APPLICATION", "OPERATING_ENTITY_APPLICATION", "PARTY_RELATION", "CLIENT_ENTITY_AFFILIATION", "ENTITY_ASSIGNMENT_RULE", "CLIENT_ENTITY_ASSIGNMENT", "ENTITY_SOURCE_RELATION", "AGREEMENT", "CONSUMER_LEGAL_DOCUMENT", "SELLER_DISCLOSURE", "COMMERCIAL_TERM_PLAN"],
+    "business_change_record.aggregate_root_type": ["PARTY", "CLIENT", "LOCAL_PARTNER", "OPERATING_ENTITY", "CLIENT_APPLICATION", "PARTNER_APPLICATION", "OPERATING_ENTITY_APPLICATION", "PARTY_RELATION", "CLIENT_ENTITY_AFFILIATION", "ENTITY_ASSIGNMENT_RULE", "CLIENT_ENTITY_ASSIGNMENT", "ENTITY_SOURCE_RELATION", "AGREEMENT", "CONSUMER_LEGAL_DOCUMENT", "SELLER_DISCLOSURE", "COMMERCIAL_TERM_PLAN"],
     "business_change_version.operation_type": ["CREATE", "UPDATE", "DELETE"],
     "compensation_event.execution_type": ["MQ_PUBLISH", "LOCAL_HANDLER"],
     "compensation_event.execute_status": ["INIT", "PROCESSING", "ERROR", "FAILED"],

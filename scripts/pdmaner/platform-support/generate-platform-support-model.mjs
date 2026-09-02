@@ -8,7 +8,7 @@ import {
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { RELATIONS, TABLES } from "./manifest.mjs";
+import { EXPECTED_TABLE_TOTAL, RELATIONS, TABLES } from "./manifest.mjs";
 import {
   CHECK_BINDINGS,
   CHECK_CONTRACTS,
@@ -28,6 +28,17 @@ const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506
 const MYSQL_MAPPING_ID = "29D1CE08-4C35-4D2D-AAA9-23D93305B52E";
 const JAVA_MAPPING_ID = "797A1496-D649-4261-89B4-544132EC3F36";
 const MYBATIS_MAPPING_ID = "895CFD1D-4273-4D32-A2C4-CAC70200AB5B";
+const SAFE_SECRET_FIELD_NAMES = new Set([
+  "password_credential_id",
+  "password_verifier_phc",
+  "password_changed_time",
+  "last_password_failure_time",
+  "consecutive_password_failures",
+  "password_status",
+  "password_algorithm_code",
+  "public_jwk_canonical_json",
+]);
+const FORBIDDEN_SECRET_FIELD_PATTERN = /(?:^|_)password(?:_|$)|(?:^|_)(?:reset|verification|session|oidc|access|refresh|id)_(?:token|secret)(?:_|$)|(?:^|_)(?:authorization_code|client_secret|private|symmetric_jwk)(?:_|$)|(?:^|_)(?:pan|cvv|cvc|track_data|pin_block|card_expiry|card_number|jdbc_url|ciphertext|encrypted_value|dek)(?:_|$)/iu;
 
 const tablesByLogicalKey = new Map(TABLES.map((table) => [table.defKey, table]));
 const tablesByPhysicalKey = new Map(TABLES.map((table) => [`t_${table.physicalKey}`, table]));
@@ -42,6 +53,10 @@ function clone(value) {
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+export function isForbiddenSecretField(fieldKey) {
+  return !SAFE_SECRET_FIELD_NAMES.has(fieldKey) && FORBIDDEN_SECRET_FIELD_PATTERN.test(fieldKey);
 }
 
 function stableUuid(key) {
@@ -159,11 +174,19 @@ function normalizeTemplate(template) {
     indexPrefixRule.programCode = "return data.index.unique ? data.index.defKey.indexOf('uk_')===0 : data.index.defKey.indexOf('idx_')===0;";
   }
   const immutableTables = TABLES.filter((table) => table.audit === "immutable").map((table) => physicalTableKey(table.defKey));
+  const customAuditTables = TABLES.filter((table) => table.audit === "custom").map((table) => physicalTableKey(table.defKey));
   const auditRule = namingRules.get("0B2F0BD2-3B84-4AB1-BA29-9DE9620AF608");
   if (auditRule) {
-    auditRule.defName = "可变表使用双审计时间，不可变事实只保留创建时间";
-    auditRule.programCode = `let actual=data.entity.fields.map(field=>field.defKey); let immutable=${JSON.stringify(immutableTables)}.includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));`;
+    auditRule.defName = "可变表使用双审计时间，不可变事实只保留创建时间，显式聚合子表不重复审计";
+    auditRule.programCode = `let actual=data.entity.fields.map(field=>field.defKey); let immutable=${JSON.stringify(immutableTables)}.includes(data.entity.defKey); let custom=${JSON.stringify(customAuditTables)}.includes(data.entity.defKey); return custom ? !actual.includes('create_time') && !actual.includes('update_time') : actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));`;
   }
+  const mysqlDdlTemplate = model.profile.codeTemplates.find((template) => template.type === "dbDDL");
+  const typeLengthTemplate = "{{=field.type}}{{?field.len>0}}{{='('}}{{=field.len}}{{?field.scale>0}}{{=','}}{{=field.scale}}{{?}}{{=')'}}{{?}}";
+  invariant(mysqlDdlTemplate?.createTable.includes(typeLengthTemplate), "MySQL DDL 模板缺少受控字段类型片段");
+  mysqlDdlTemplate.createTable = mysqlDdlTemplate.createTable.replace(
+    typeLengthTemplate,
+    `${typeLengthTemplate}{{? field.extProps && field.extProps.characterSet }} CHARACTER SET {{=field.extProps.characterSet}} COLLATE {{=field.extProps.collation}}{{?}}`,
+  );
   const reservedRule = namingRules.get("BEC54F19-52D5-4882-BCE1-4439785F8001");
   if (reservedRule) reservedRule.programCode = reservedRule.programCode.replace(",status,", ",");
   const timeRule = namingRules.get("D330BCC3-DBAB-4677-8C5A-A301003A5878");
@@ -248,7 +271,10 @@ function buildEntities(model) {
         hideInGraph: false,
         refDict: "",
         baseType: mapping.baseType,
-        extProps: {},
+        extProps: manifestField.characterSet ? {
+          characterSet: manifestField.characterSet,
+          collation: manifestField.collation,
+        } : {},
         domain: mapping.domain,
         id: stableUuid(`field/${table.defKey}/${manifestField.defKey}`),
       };
@@ -380,9 +406,11 @@ function isCodeLike(field) {
 }
 
 function validateManifest() {
-  invariant(TABLES.length === 92, `Platform Support 必须有 92 张表，当前为 ${TABLES.length}`);
+  invariant(TABLES.length === EXPECTED_TABLE_TOTAL,
+    `Platform Support 必须有 ${EXPECTED_TABLE_TOTAL} 张表，当前为 ${TABLES.length}`);
   const primaryTables = DIAGRAM_GROUPS.flatMap((group) => group.primary);
-  invariant(primaryTables.length === 92 && new Set(primaryTables).size === 92, "每张表必须恰好属于一个主图组");
+  invariant(primaryTables.length === EXPECTED_TABLE_TOTAL && new Set(primaryTables).size === EXPECTED_TABLE_TOTAL,
+    "每张表必须恰好属于一个主图组");
   invariant(JSON.stringify([...primaryTables].sort()) === JSON.stringify(TABLES.map((table) => table.defKey).sort()), "图组主表集合与生产 Manifest 不一致");
   const tableByKey = new Map(TABLES.map((table) => [table.defKey, table]));
   for (const table of TABLES) {
@@ -391,9 +419,30 @@ function validateManifest() {
     for (const field of table.fields) {
       invariant(!(field.closedValues && field.openSource), `字段同时声明闭合/开放值：${table.defKey}.${field.defKey}`);
       if (isCodeLike(field)) invariant(field.closedValues || field.openSource, `代码/类型/状态字段未声明取值契约：${table.defKey}.${field.defKey}`);
-      invariant(!/(?:^|_)(?:pan|cvv|cvc|track_data|pin_block|card_expiry|password|private_key|jdbc_url|ciphertext|encrypted_value|dek)(?:_|$)/iu.test(field.defKey), `禁止的敏感/连接字段：${table.defKey}.${field.defKey}`);
+      invariant(!isForbiddenSecretField(field.defKey), `禁止的敏感/连接字段：${table.defKey}.${field.defKey}`);
+    }
+    if (table.audit === "custom") {
+      invariant(!table.fields.some((field) => ["create_time", "update_time"].includes(field.defKey)),
+        `显式无审计聚合子表不得包含审计字段：${table.defKey}`);
     }
   }
+  const gatewayRoute = tableByKey.get("gateway_route");
+  for (const fieldKey of ["http_method", "external_path_template", "downstream_path_template"]) {
+    const field = gatewayRoute?.fields.find((item) => item.defKey === fieldKey);
+    invariant(field?.characterSet === "ascii" && field?.collation === "ascii_bin",
+      `Gateway Method/Path 必须使用 ascii/ascii_bin：gateway_route.${fieldKey}`);
+  }
+  const gatewayRouteHeader = tableByKey.get("gateway_route_header");
+  const gatewayHeaderName = gatewayRouteHeader?.fields.find((item) => item.defKey === "header_name");
+  invariant(gatewayHeaderName?.characterSet === "ascii" && gatewayHeaderName?.collation === "ascii_general_ci",
+    "Gateway Header Name 必须使用 ascii/ascii_general_ci，阻止大小写变体绕过唯一键");
+  const routePathIndex = gatewayRoute?.indexes.find((index) => index.defKey === "uk_gateway_route_path");
+  const routePathIndexBytes = routePathIndex?.fields.reduce((total, fieldKey) => {
+    const field = gatewayRoute.fields.find((item) => item.defKey === fieldKey);
+    return total + Number(field.len);
+  }, 0);
+  invariant(routePathIndexBytes <= 3072,
+    `uk_gateway_route_path 最大 ${routePathIndexBytes} bytes，超过 InnoDB 3072-byte 上限`);
   for (const tuple of FILE_REFERENCE_TUPLES) {
     const table = tableByKey.get(tuple.table);
     const fileId = table?.fields.find((field) => field.defKey === tuple.id);
@@ -494,6 +543,7 @@ export function structuralProjection(model) {
           id: field.id, defKey: field.defKey, defName: field.defName, comment: field.comment,
           type: field.type, len: field.len, scale: field.scale, primaryKey: field.primaryKey,
           notNull: field.notNull, autoIncrement: field.autoIncrement, baseType: field.baseType, domain: field.domain,
+          extProps: field.extProps,
         })),
         indexes: entity.indexes.map((index) => ({
           id: index.id, defKey: index.defKey, unique: index.unique,

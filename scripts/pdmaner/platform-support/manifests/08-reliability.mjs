@@ -53,7 +53,6 @@ export const TABLES = Object.freeze([
       str("idempotency_key", "幂等键", "NN", 128),
       hash("request_hash", "幂等请求哈希"),
       str("response_ref", "幂等响应引用", "N", 255),
-      hash("response_hash", "幂等响应哈希", "N"),
       code("status", "幂等执行状态", "NN", ["PROCESSING", "SUCCEEDED", "FAILED"]),
       time("expire_time", "幂等记录到期时间"),
     ],

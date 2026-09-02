@@ -25,6 +25,55 @@ const requiredFlowSteps = [
   "change_or_failure",
   "history_or_wire",
 ];
+const partnerApplicationLifecycle = Object.freeze({
+  scenarioId: "roles-and-onboarding",
+  table: "t_partner_application",
+  qualificationType: "PARTNER_DUE_DILIGENCE",
+  statuses: ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
+  requestedByAccountReference: "PLATFORM_ACCOUNT_EXTERNAL_NO_FK",
+  riskCoordinatesReference: "RISK_EXTERNAL_NO_FK",
+  applicationDocumentParent: "partner_application_id",
+  startOrResumeTransaction: {
+    atomicWrites: [
+      "PENDING_LOCAL_PARTNER",
+      "DRAFT_PARTNER_APPLICATION",
+      "BCR_ROOT_AND_VERSION",
+      "COMPENSATION_EVENT:ProvisionAccessTenant",
+    ],
+    compensationEventExecutionType: "LOCAL_HANDLER",
+    compensationEventDispatch: "AFTER_COMMIT",
+  },
+  submitTransaction: {
+    atomicWrites: [
+      "SUBMITTED_PARTNER_APPLICATION",
+      "APPLICATION_DOCUMENT_FILE_IDS",
+      "SUBMISSION_SNAPSHOT_AND_HASH",
+      "BCR_ROOT_AND_VERSION",
+      "COMPENSATION_EVENT:RiskDueDiligence",
+    ],
+    compensationEventExecutionType: "LOCAL_HANDLER",
+    compensationEventDispatch: "AFTER_COMMIT",
+  },
+  idempotency: {
+    sameKeySameHash: "RETURN_EXISTING_RESULT",
+    sameKeyDifferentHash: "CONFLICT",
+  },
+  statusUpdateBeforeProvision: {
+    outcome: "RETRYABLE",
+    tenantCreation: "FORBIDDEN_WITHOUT_REQUESTED_BY_ACCOUNT_ID",
+  },
+  eventOrder: [
+    "PLATFORM_ACCOUNT_VERIFIED",
+    "CCT_DRAFT_PARTNER_APPLICATION_AND_BCR_COMMITTED",
+    "PROVISION_ACCESS_TENANT_AFTER_COMMIT",
+    "ONBOARDING_FILES_UPLOADED_TO_RESOLVED_PENDING_TENANT",
+    "CCT_SUBMITTED_SNAPSHOT_AND_BCR_COMMITTED",
+    "RISK_DUE_DILIGENCE_SUBMISSION_AFTER_COMMIT",
+    "RISK_QUALIFICATION_DECISION",
+    "CCT_APPROVED_STATUS_PROJECTION",
+  ],
+  rejectedResubmission: "REUSE_PENDING_LOCAL_PARTNER",
+});
 
 function readModel() {
   return JSON.parse(readFileSync(modelPath, "utf8"));
@@ -50,6 +99,14 @@ function scenarioBody(document) {
   const markerIndex = document.indexOf("<!-- CCT_SCENARIO_MANIFEST_START -->");
   assert.notEqual(markerIndex, -1, "现实场景文档缺少 Manifest 起始标记");
   return document.slice(0, markerIndex);
+}
+
+function readPartnerProvisionCommand(document) {
+  const match = document.match(
+    /after-commit 向 Platform 发送 PENDING Tenant\/OWNER Member\/Onboarding Role 的命令：\s*```json\s*([\s\S]*?)\s*```/u,
+  );
+  assert.ok(match, "Gulf 场景缺少 after-commit Platform Provision JSON 命令");
+  return JSON.parse(match[1]);
 }
 
 function modelTotals(model) {
@@ -86,17 +143,18 @@ test("现实场景 Manifest 覆盖当前全部物理表并只引用存在的字�
   assert.equal(manifest.schema, expectedSchema);
   assert.equal(manifest.storyId, expectedStoryId);
   const approvedTotals = {
-    tables: 36,
-    fields: 404,
-    uniqueIndexes: 54,
-    accessIndexes: 43,
-    relations: 61,
+    tables: 37,
+    fields: 423,
+    uniqueIndexes: 57,
+    accessIndexes: 44,
+    relations: 64,
     diagramGroups: 6,
   };
   assert.deepEqual(modelTotals(model), approvedTotals);
   assert.deepEqual(manifest.modelTotals, approvedTotals);
 
   const referencedTables = new Set();
+  const referencedTableCounts = new Map();
   const referencedFields = new Map();
   for (const scenario of manifest.scenarios) {
     assert.equal(typeof scenario.sectionHeading, "string", `${scenario.id} 缺少正文章节定位`);
@@ -119,6 +177,7 @@ test("现实场景 Manifest 覆盖当前全部物理表并只引用存在的字�
         `${scenario.id} 正文未解释 ${tableKey}`,
       );
       referencedTables.add(tableKey);
+      referencedTableCounts.set(tableKey, (referencedTableCounts.get(tableKey) ?? 0) + 1);
     }
     for (const fieldPath of scenario.fieldRefs) {
       const match = fieldPath.match(/^(t_[a-z0-9_]+)\.([a-z0-9_]+)$/u);
@@ -141,9 +200,14 @@ test("现实场景 Manifest 覆盖当前全部物理表并只引用存在的字�
   assert.deepEqual(
     [...referencedTables].sort(),
     [...entities.keys()].sort(),
-    "现实场景必须覆盖当前全部 36 张物理表",
+    "现实场景必须覆盖当前全部 37 张物理表",
   );
   for (const tableKey of entities.keys()) {
+    assert.equal(
+      referencedTableCounts.get(tableKey),
+      1,
+      `${tableKey} 必须且只能映射到一个现实场景`,
+    );
     assert.ok(referencedFields.has(tableKey), `${tableKey} 没有任何关键字段示例`);
     assert.ok(
       body.includes("`" + tableKey + "`") || body.includes("`" + tableKey + "."),
@@ -168,6 +232,67 @@ test("现实场景枚举表与当前闭合枚举目录完全一致", () => {
     normalizedEnums(manifest.enumAssertions),
     normalizedEnums(CLOSED_ENUM_VALUES),
   );
+});
+
+test("现实场景 Manifest 固定 Partner Application 的前租户生命周期与本地事件边界", () => {
+  const manifest = readScenarioManifest(readScenarioDocument());
+  const scenario = manifest.scenarios.find(({ id }) => id === partnerApplicationLifecycle.scenarioId);
+  assert.ok(scenario, "Partner Application 必须映射到入驻场景");
+  assert.equal(scenario.tables.includes(partnerApplicationLifecycle.table), true);
+  for (const fieldPath of [
+    "t_client_application.requested_by_account_id",
+    "t_partner_application.application_id",
+    "t_partner_application.local_partner_id",
+    "t_partner_application.requested_by_account_id",
+    "t_partner_application.qualification_type",
+    "t_partner_application.submission_content_hash",
+    "t_application_document.partner_application_id",
+  ]) assert.equal(scenario.fieldRefs.includes(fieldPath), true, `Partner Application 场景字段缺失：${fieldPath}`);
+
+  const { platformProvisionCommand, ...lifecycle } = manifest.partnerApplicationLifecycle;
+  assert.deepEqual(lifecycle, partnerApplicationLifecycle);
+  assert.ok(platformProvisionCommand, "Partner Application 生命周期必须声明 Platform Provision 命令");
+});
+
+test("现实场景独立校验 Gulf Platform Provision 命令、幂等和乱序边界", () => {
+  const document = readScenarioDocument();
+  const manifest = readScenarioManifest(document);
+  const payload = readPartnerProvisionCommand(document);
+
+  assert.deepEqual(
+    Object.keys(payload).sort(),
+    [
+      "operation_type",
+      "tenant_type",
+      "owner_ref_id",
+      "requested_by_account_id",
+      "source_version",
+      "payload_hash",
+    ].sort(),
+  );
+  assert.equal(payload.operation_type, "PROVISION_ACCESS_TENANT");
+  assert.equal(payload.tenant_type, "PARTNER");
+  assert.equal(payload.owner_ref_id, "730300000000000001");
+  assert.equal(payload.requested_by_account_id, "220301");
+  assert.equal(payload.source_version, 1);
+  assert.equal(typeof payload.owner_ref_id, "string");
+  assert.equal(typeof payload.requested_by_account_id, "string");
+  assert.equal(typeof payload.source_version, "number");
+  assert.match(payload.payload_hash, /^[a-f0-9]{64}$/u);
+  assert.deepEqual(manifest.partnerApplicationLifecycle.platformProvisionCommand, payload);
+
+  const identity = `${payload.tenant_type}:${payload.owner_ref_id}:${payload.requested_by_account_id}:${payload.source_version}`;
+  assert.equal(identity, "PARTNER:730300000000000001:220301:1");
+  assert.equal(document.includes(`命令身份为 \`${identity}\``), true);
+  assert.match(document, /同版本同 Hash 返回原 Tenant\/Member；同版本异 Hash 为 `CONFLICT`；旧版本拒绝/u);
+  assert.match(document, /同一 `tenant_type` \+ `owner_ref_id` Owner tuple 的状态投影只接受严格单调递增 `source_version`/u);
+  assert.match(document, /Status 投影若先于 Provision 到达只能重试，不能创建缺少 `requested_by_account_id` 的 Tenant/u);
+  assert.match(document, /START_OR_RESUME.*DRAFT.*ProvisionAccessTenant/u);
+  assert.match(document, /PLT-I04.*Account Context.*PENDING.*TENANT_ONBOARDING_OWNER/u);
+  assert.match(document, /SUBMIT.*File ID.*RiskDueDiligence/u);
+  assert.match(document, /after-commit 向 Platform 发送 PENDING Tenant\/OWNER Member\/Onboarding Role 的命令/u);
+  assert.deepEqual(manifest.partnerApplicationLifecycle.startOrResumeTransaction, partnerApplicationLifecycle.startOrResumeTransaction);
+  assert.deepEqual(manifest.partnerApplicationLifecycle.submitTransaction, partnerApplicationLifecycle.submitTransaction);
 });
 
 test("现实场景文档从 Agent、数据库和 CCT 当前导航均可到达", () => {

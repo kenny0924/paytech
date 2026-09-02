@@ -102,9 +102,9 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "a067ea4a4663b7974140029809d265661088fa546f6fc929df7b247ebc3fb41c";
-export const EXPECTED_STRUCTURAL_DIGEST = "3c30e37cc104324830c853f55577f0259df192fe4d350641d4a624217657d2cf";
-export const EXPECTED_CHECK_POLICY_DIGEST = "0dcbabe97dd005282539024356e86c2a5c588097f4955aaae9143150867d9e01";
+export const EXPECTED_MODEL_DIGEST = "445ed5828d0b7951f0755978676c102bfade023306a0ca311184bf259a4551e6";
+export const EXPECTED_STRUCTURAL_DIGEST = "e8ad25426adcf5037fc334706c0342e2b5c3bb47d83f44d554098cda3b756d2c";
+export const EXPECTED_CHECK_POLICY_DIGEST = "b2a09dc39dab618af8e4d2400d898c185e1ee4789a7b31a6ec4137c91e82a25b";
 
 export const EXPECTED_TOTALS = Object.freeze({
   tables: 71,
@@ -452,7 +452,7 @@ export const REQUIRED_DD_CHECK_CONTRACTS = Object.freeze({
     tables: Object.freeze(["due_diligence_case"]),
   }),
   ck_dd_case_origin: Object.freeze({
-    expression: "(case_origin='APPLICATION' AND ((source_namespace='CCT_CLIENT_APPLICATION' AND role_type IN ('CLIENT','RELATED_PERSON')) OR (source_namespace='CCT_OPERATING_ENTITY_APPLICATION' AND role_type IN ('OPERATING_ENTITY','RELATED_PERSON'))) AND source_application_id IS NOT NULL AND source_submission_version IS NOT NULL AND source_submission_version>0 AND source_submission_hash IS NOT NULL AND scheduled_review_time IS NULL) OR (case_origin='CONTINUOUS_REVIEW' AND source_namespace='RISK_COMPLIANCE' AND source_application_id IS NULL AND source_submission_version IS NULL AND source_submission_hash IS NULL AND scheduled_review_time IS NOT NULL) OR (case_origin='MANUAL' AND source_namespace='RISK_COMPLIANCE' AND source_application_id IS NULL AND source_submission_version IS NULL AND source_submission_hash IS NULL AND scheduled_review_time IS NULL)",
+    expression: "(case_origin='APPLICATION' AND ((source_namespace='CCT_CLIENT_APPLICATION' AND role_type IN ('CLIENT','RELATED_PERSON')) OR (source_namespace='CCT_OPERATING_ENTITY_APPLICATION' AND role_type IN ('OPERATING_ENTITY','RELATED_PERSON')) OR (source_namespace='CCT_LOCAL_PARTNER_APPLICATION' AND role_type IN ('LOCAL_PARTNER','RELATED_PERSON'))) AND source_application_id IS NOT NULL AND source_submission_version IS NOT NULL AND source_submission_version>0 AND source_submission_hash IS NOT NULL AND scheduled_review_time IS NULL) OR (case_origin='CONTINUOUS_REVIEW' AND source_namespace='RISK_COMPLIANCE' AND source_application_id IS NULL AND source_submission_version IS NULL AND source_submission_hash IS NULL AND scheduled_review_time IS NOT NULL) OR (case_origin='MANUAL' AND source_namespace='RISK_COMPLIANCE' AND source_application_id IS NULL AND source_submission_version IS NULL AND source_submission_hash IS NULL AND scheduled_review_time IS NULL)",
     tables: Object.freeze(["due_diligence_case"]),
   }),
   ck_dd_subject_relation: Object.freeze({
@@ -534,7 +534,7 @@ export const REQUIRED_DD_ENUMS = Object.freeze({
   t_dd_program: Object.freeze({ qualification_type: Object.freeze(["INDIVIDUAL_KYC", "ORGANIZATION_KYB", "PARTNER_DUE_DILIGENCE", "ENTITY_UNDERWRITING", "RELATED_PERSON_KYC"]) }),
   t_due_diligence_case: Object.freeze({
     qualification_type: Object.freeze(["INDIVIDUAL_KYC", "ORGANIZATION_KYB", "PARTNER_DUE_DILIGENCE", "ENTITY_UNDERWRITING", "RELATED_PERSON_KYC"]),
-    source_namespace: Object.freeze(["CCT_CLIENT_APPLICATION", "CCT_OPERATING_ENTITY_APPLICATION", "RISK_COMPLIANCE"]),
+    source_namespace: Object.freeze(["CCT_CLIENT_APPLICATION", "CCT_OPERATING_ENTITY_APPLICATION", "CCT_LOCAL_PARTNER_APPLICATION", "RISK_COMPLIANCE"]),
   }),
   t_screening_hit: Object.freeze({ status: Object.freeze(["OPEN", "RESOLVED"]) }),
   t_qualification_decision: Object.freeze({ qualification_type: Object.freeze(["INDIVIDUAL_KYC", "ORGANIZATION_KYB", "PARTNER_DUE_DILIGENCE", "ENTITY_UNDERWRITING", "RELATED_PERSON_KYC"]) }),
@@ -546,7 +546,7 @@ export const REQUIRED_DD_COMMENT_FRAGMENTS = Object.freeze({
     content_hash: Object.freeze(["Canonical Schema", "材料、检查和筛查模板"]),
   }),
   t_due_diligence_case: Object.freeze({
-    source_namespace: Object.freeze(["CCT Client Application", "CCT Operating Entity Application"]),
+    source_namespace: Object.freeze(["CCT Client Application", "CCT Operating Entity Application", "CCT Local Partner Application"]),
     source_submission_version: Object.freeze(["仅 APPLICATION", "CCT Application Submission"]),
   }),
   t_dd_case_subject: Object.freeze({

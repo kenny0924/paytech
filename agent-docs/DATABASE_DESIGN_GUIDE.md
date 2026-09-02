@@ -1,6 +1,8 @@
 # PDManer 数据库设计规范
 
-最后更新：2026-08-26
+最后更新：2026-09-02
+
+> **2026-09-01 current snapshot:** generated evidence is CCT `37/423/57/44/64/7/6` and Platform `63/822/123/99/107/5/7`, plus Platform 31 composite FKs, 85 named CHECK sidecar contracts and exactly 36 `*_hash` fields. Earlier Platform physical snapshots are historical; Commerce, Payment, Finance and Risk figures remain current.
 
 ## 1. 使用范围
 
@@ -9,7 +11,7 @@
 - 新建或修改 PDManer `*.pdma.json` 模型；
 - 设计表、字段、主键、索引、唯一约束或表关系；
 - 新增或修改 DDL、migration SQL；
-- 修改 DO、MyBatis Mapper、Repository 或与数据库结构有关的测试；
+- 修改 DataObject、MyBatis Mapper、Repository 或与数据库结构有关的测试；DataObject 由包名表达持久化职责，类型名不追加 `DO` 后缀；
 - 数据库正向生成、反向解析或模型与数据库差异比较。
 
 不持有数据库的 Gateway、BFF、前端和无状态应用不得为了形式一致创建空 PDManer 模型。Vault 虽不是第七个核心业务系统，但拥有独立安全数据库，因此未来开始实现时同样必须从本模板派生模型，并额外遵守 `VAULT_SERVICE_ARCHITECTURE.md`。
@@ -84,9 +86,11 @@ Finance 导航：[V1 逻辑模型](./database/FINANCE_DATABASE.md)、[现实场�
 
 Risk & Compliance 导航：[V1 逻辑模型](./database/RISK_COMPLIANCE_DATABASE.md)、[现实场景与逐表字段映射](./database/scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)、[Limit 7 表平衡精简设计](./plans/2026-08-28-risk-limit-balanced-simplification-design.md)、[Limit 平衡精简实施计划](./plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md)、[Decision Engine 19/8 平衡精简计划](./plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) + [Dispute 平衡优化设计](./plans/2026-08-28-risk-dispute-balanced-optimization-design.md) + [Dispute 平衡优化实施计划](./plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md)、[DD 19 表精简计划](./plans/2026-08-27-risk-dd-simplification-implementation-plan.md)、[首版 PDManer 历史记录](./plans/2026-08-26-risk-compliance-pdmaner-implementation-plan.md) 和 [PDManer 模型（当前 71 表、865 字段）](../risk-compliance-service/docs/database/risk-compliance.pdma.json)。Risk 自动验证已通过，PDManer 4.9.3 应用内检查仍是人工门禁。
 
-Platform Support 导航：[V1 逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景与逐表字段映射](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[平衡型物理模型设计](./plans/2026-08-27-platform-support-balanced-physical-model-design.md)、[PDManer 实施记录](./plans/2026-08-27-platform-support-pdmaner-implementation-plan.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md) 和 [PDManer 模型（当前 92 表、1,076 字段）](../platform-support-service/docs/database/platform-support.pdma.json)。Platform Support 自动验证已通过，PDManer 4.9.3 应用内检查仍是人工门禁。
+Platform Support 导航：[统一人工认证设计（认证权威）](../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md)、[57 表数据库精简设计（未受影响领域前序）](../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[57 表实施记录](./plans/2026-09-01-platform-support-database-simplification-implementation-plan.md)、[统一公共 API 动态控制面设计](../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)、[公共控制面 PDManer 实施计划](../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md)、[V1 逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景与逐表字段映射](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md) 和 [PDManer 模型（当前 63 表、822 字段）](../platform-support-service/docs/database/platform-support.pdma.json)。早期 Operations-only、平衡型和已取代物理记录只保留历史价值；自动验证已通过，PDManer 4.9.3 应用内检查仍是人工门禁。
 
-六套书面逻辑模型均已确认。CCT 为 36 表、404 字段、54 个唯一索引、43 个访问索引和 61 条本库关系。Commerce 当前为 14 表、223 字段、20 个唯一索引、11 个访问索引、14 条本库关系和 4 个 Diagram Groups，精确包含 7 张 Version 表、6 张 immutable evidence 表且不保存通用 BCR；当前 Order Context 额外冻结 Platform Service Charge Scope ID 与 Platform Service Party ID，但不保存 Finance Entity、服务费金额或会计状态。Commerce 使用稳定 Email/Phone Value Token、只含姓名/账单地址的 Profile Token，并直接保存受限 Network Evidence 原值，无 Consumer/Network Blind Index；Refund 仅保留 Order Refund Position 与 Refund Request，不复制 Finance/Payment 状态或事件元数据；消费者文档状态、版本、文件和更正关系归 Platform Support。Payment 当前为 29 表、373 字段、41 个唯一索引、44 个访问索引、63 条本库关系和 7 个 Diagram Groups；Payment Method、可选单表 Instrument、通用 Customer Action 与 Channel Refund 去冗余遵循当前 Payment Execution 精简设计，首次 Provider 提交前实时检查采用 Fail-Closed，但不建立独立 Gate 持久化表。Finance 是第四套已授权、已生成且已通过自动验证的物理设计，当前快照为 84 表、1,100 字段、145 个唯一索引、155 个访问索引、160 条本库关系、22 条 1:1 关系和 6 个 Diagram Groups；Tax/Fiscal 主图精简为 23 表，Finance Entity 为手工维护的平台法律主体映射，Partner 来源服务费在 Partner OE 与平台 Finance Entity 两本账分别形成平衡 Journal。退款额度由 Commerce 与 Payment 各自控制，Finance 只在 `RefundSucceeded` 后入账；未决退款不阻断合同成熟。通用 Funding 四表及 Reserve/Recovery 工作流五表已经删除。预存保证金和追偿统一使用 `t_account` + Journal；Manual Payout 的四个检查点实时校验对应 Client/Local Partner 的 Recovery/Deposit 门禁；Payout Execution 与 Tax Payment 通过同一 `BANK_CASH` Account 行锁，分别以 `active_payout_cash` 与 `active_tax_cash` 控制现金容量。Risk & Compliance 是第五套已授权、已生成且已通过自动验证的物理设计，当前快照为 71 表、865 字段、106 个唯一索引、74 个访问索引、111 条本库关系、9 条 1:1 关系、8 个 Diagram Groups 和 83 个 CHECK 约束，其中 Due Diligence 为 19 表、Limit 为 7 表。Platform Support 是第六套已授权、已生成且已通过自动验证的物理设计，当前快照为 92 表、1,076 字段、167 个唯一索引、116 个访问索引、145 条本库关系、19 条 1:1 关系和 8 个 Diagram Groups，并冻结 28 条复合外键与 67 条 CHECK 契约。六套物理模型均已授权、生成并通过自动验证。
+Platform Support 当前不使用以 `_ver` 结尾的物理表名。可编辑配置默认采用带 `revision_no` 的单表 Revision；只有 Document Version、Webhook Endpoint Revision 和 Webhook Signing Secret 具有必须独立保留的历史身份。其 `*_hash` 字段必须属于当前 36 字段精确 Allowlist，并能指出实际完整性、防重、冲突检测或安全消费者。公共 API 控制面只允许 `t_gateway_target`、`t_gateway_route`、`t_gateway_route_header`、`t_gateway_route_query_param`、Route-owned `t_gateway_guard_rule` 和 `t_console_resource` 六张当前配置表；不得恢复旧 Gateway Policy/Binding/Selector/Version/Release/Snapshot/Ack/Tenant Override、通用技术配置或持久化 Integration Readiness。
+
+六套书面逻辑模型均已确认。CCT 为 37 表、423 字段、57 个唯一索引、44 个访问索引、64 条本库关系、7 条 1:1 关系和 6 个 Diagram Groups。Commerce 当前为 14 表、223 字段、20 个唯一索引、11 个访问索引、14 条本库关系和 4 个 Diagram Groups，精确包含 7 张 Version 表、6 张 immutable evidence 表且不保存通用 BCR；当前 Order Context 额外冻结 Platform Service Charge Scope ID 与 Platform Service Party ID，但不保存 Finance Entity、服务费金额或会计状态。Commerce 使用稳定 Email/Phone Value Token、只含姓名/账单地址的 Profile Token，并直接保存受限 Network Evidence 原值，无 Consumer/Network Blind Index；Refund 仅保留 Order Refund Position 与 Refund Request，不复制 Finance/Payment 状态或事件元数据；消费者文档状态、版本、文件和更正关系归 Platform Support。Payment 当前为 29 表、373 字段、41 个唯一索引、44 个访问索引、63 条本库关系和 7 个 Diagram Groups；Payment Method、可选单表 Instrument、通用 Customer Action 与 Channel Refund 去冗余遵循当前 Payment Execution 精简设计，首次 Provider 提交前实时检查采用 Fail-Closed，但不建立独立 Gate 持久化表。Finance 是第四套已授权、已生成且已通过自动验证的物理设计，当前快照为 84 表、1,100 字段、145 个唯一索引、155 个访问索引、160 条本库关系、22 条 1:1 关系和 6 个 Diagram Groups；Tax/Fiscal 主图精简为 23 表，Finance Entity 为手工维护的平台法律主体映射，Partner 来源服务费在 Partner OE 与平台 Finance Entity 两本账分别形成平衡 Journal。退款额度由 Commerce 与 Payment 各自控制，Finance 只在 `RefundSucceeded` 后入账；未决退款不阻断合同成熟。通用 Funding 四表及 Reserve/Recovery 工作流五表已经删除。预存保证金和追偿统一使用 `t_account` + Journal；Manual Payout 的四个检查点实时校验对应 Client/Local Partner 的 Recovery/Deposit 门禁；Payout Execution 与 Tax Payment 通过同一 `BANK_CASH` Account 行锁，分别以 `active_payout_cash` 与 `active_tax_cash` 控制现金容量。Risk & Compliance 是第五套已授权、已生成且已通过自动验证的物理设计，当前快照为 71 表、865 字段、106 个唯一索引、74 个访问索引、111 条本库关系、9 条 1:1 关系、8 个 Diagram Groups 和 83 个 CHECK 约束，其中 Due Diligence 为 19 表、Limit 为 7 表。Platform Support 是第六套已授权、已生成且已通过自动验证的物理设计，当前快照为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1 关系和 7 个 Diagram Groups，并冻结 31 条复合外键、85 条 CHECK 契约与恰好 36 个 `*_hash` 字段。六套物理模型均已授权、生成并通过自动验证。
 
 一个部署服务默认只有一个数据库模型。只有存在已批准的独立物理数据库且生命周期确实不同，才能拆成多个模型。
 
@@ -100,7 +104,7 @@ Finance's current 84-table Manual Payout boundary uses shared `balance_available
 |---|---|
 | PDManer `*.pdma.json` | 表、字段、关系、索引、注释和物理模型的设计来源 |
 | Migration SQL | 可执行、不可重写的数据库演进历史 |
-| DO/Mapper/Repository | 生产代码中的持久化映射与访问抽象 |
+| DataObject/Mapper/Repository | 生产代码中的持久化映射与访问抽象；DataObject 类型使用业务实体名，不加 `DO` 后缀 |
 | Repository/auto 测试 | 在真实测试数据库上验证 migration、SQL、约束和映射 |
 
 PDManer 模型不能替代 migration，migration 也不能替代设计模型。一次结构变更必须同步更新：
@@ -110,13 +114,13 @@ PDManer 模型不能替代 migration，migration 也不能替代设计模型。�
   → PDManer 模型
     → PDManer 模型检查
       → 新增版本化 migration
-        → DO / Mapper / Repository
+        → DataObject / Mapper / Repository
           → Repository 与服务级 auto 测试
 ```
 
 当前 Client & Contract、Commerce、Payment Orchestration、Finance、Risk & Compliance 与 Platform Support 六套授权均只覆盖从冻结逻辑设计到 PDManer 物理设计；Finance 的评审入口包括[逻辑模型](./database/FINANCE_DATABASE.md)、[现实场景](./database/scenarios/FINANCE_REAL_WORLD_SCENARIOS.md)、[退款 Funding 移除实施记录](./plans/2026-08-27-finance-refund-funding-removal-implementation-plan.md)、[通用 Funding 模块删除设计](./plans/2026-08-27-finance-funding-module-removal-design.md)、[通用 Funding 模块删除实施记录](./plans/2026-08-27-finance-funding-module-removal-implementation-plan.md)、[保证金 Account 精简实施记录](./plans/2026-08-27-finance-security-deposit-account-simplification-implementation-plan.md) + [Provider 对账精简实施计划](./plans/2026-08-28-finance-provider-reconciliation-simplification-implementation-plan.md) + [Provider 三阶段账户实施计划](./plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md) + [手工出款精简设计](./plans/2026-08-28-finance-manual-payout-simplification-design.md) + [手工出款精简实施计划](./plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)、[平衡型物理模型设计（历史）](./plans/2026-08-25-finance-balanced-physical-model-design.md)、[实施计划](./plans/2026-08-25-finance-pdmaner-implementation-plan.md)、[物理建模决策](../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md)与[生成模型](../finance-service/docs/database/finance.pdma.json)；Risk 的评审入口包括[逻辑模型](./database/RISK_COMPLIANCE_DATABASE.md)、[现实场景](./database/scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md)、[Limit 7 表平衡精简设计](./plans/2026-08-28-risk-limit-balanced-simplification-design.md)、[Limit 平衡精简实施计划](./plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md)、[Decision Engine 19/8 平衡精简计划](./plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) + [Dispute 平衡优化设计](./plans/2026-08-28-risk-dispute-balanced-optimization-design.md) + [Dispute 平衡优化实施计划](./plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md)、[DD 19 表精简计划](./plans/2026-08-27-risk-dd-simplification-implementation-plan.md)、[物理建模决策](../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)与[生成模型](../risk-compliance-service/docs/database/risk-compliance.pdma.json)。从 versioned migration 开始的步骤属于后续门禁，必须再次获得明确授权；本轮同样未授权 Java 实现、物理数据库或运行环境。
 
-Platform Support 的评审入口包括[逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[平衡型物理模型设计](./plans/2026-08-27-platform-support-balanced-physical-model-design.md)、[PDManer 实施记录](./plans/2026-08-27-platform-support-pdmaner-implementation-plan.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md)与[生成模型](../platform-support-service/docs/database/platform-support.pdma.json)。
+Platform Support 的评审入口包括[57 表数据库精简设计（未受影响领域前序）](../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[57 表实施记录](./plans/2026-09-01-platform-support-database-simplification-implementation-plan.md)、[统一公共 API 动态控制面设计](../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)、[公共控制面 PDManer 实施计划](../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md)、[逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md)与[生成模型](../platform-support-service/docs/database/platform-support.pdma.json)。
 
 禁止只修改线上数据库、只修改 SQL、只修改 Java 字段或从数据库反向覆盖模型后不审查差异。
 
@@ -149,7 +153,7 @@ Platform Support 的评审入口包括[逻辑/物理基线](./database/PLATFORM_
 - Vault 只托管已分类、已注册 Schema 的敏感原值，不拥有字段的业务含义。业务表保存 Token 时，必须从字段名和注释看出它引用什么值、使用哪个 Data Type Schema、如何绑定资源以及允许怎样展示或检索。
 - 结构化敏感 Field Set 也必须在 Vault Data Type Catalog 明确列出字段、类型、格式、Normalization、Mask Policy 和 Schema Version；禁止“整个对象加密后丢进 Vault，但没有任何地方说明对象结构”。
 - 如果字段按当前业务分类允许本地保存，应直接使用结构化列，并继续执行授权、日志、留存和 Legal Hold 控制；“不进 Vault”不等于“公开数据”。
-- CCT Party V1 是当前示例：Email、Phone 使用 `EMAIL_ADDRESS_V1`、`PHONE_E164_V1` 标量 Vault Token；姓名、日期、法律标识和地址结构化落 CCT；登录密码不进入 CCT、Vault、事件或日志。内部 Operations 账号的不可逆密码校验值由 Platform Support 自有认证域保存，Client、Partner、Consumer 的认证提供方仍待设计。该示例不能推导为银行账户、税号、KYC/KYB 或其他系统字段自动不敏感，各系统必须独立分类。
+- CCT Party V1 是当前示例：Email、Phone 使用 `EMAIL_ADDRESS_V1`、`PHONE_E164_V1` 标量 Vault Token；姓名、日期、法律标识和地址结构化落 CCT；登录密码不进入 CCT、Vault、事件或日志。Platform 自有认证域保存全局 Account 的不可逆 Password verifier；Client/Partner Account 不等同于 CCT Party、Signatory 或法律主体，Consumer authentication 仍不在本设计范围。该示例不能推导为银行账户、税号、KYC/KYB 或其他系统字段自动不敏感，各系统必须独立分类。
 
 ### 7.2 复杂机制必须有当前需求证据
 
@@ -189,7 +193,7 @@ Platform Support 的评审入口包括[逻辑/物理基线](./database/PLATFORM_
 - Java 属性使用 `lowerCamelCase`，通过 Mapper 显式映射到数据库字段；
 - 名称必须表达业务语义，禁止 `data`、`info1`、`ext1` 等含糊命名。
 
-中文显示名和说明用于设计审阅，不增加 `t_` 等技术前缀；物理表名和字段名始终使用英文。架构说明与逻辑 Catalog 可继续用不带 `t_` 的领域名称，但 PDManer `defKey`、DDL、Migration、DO/Mapper 映射和数据库测试必须使用带 `t_` 的物理表名。项目术语以 `PROJECT_CONTEXT.md` 为准，不能重新引入 Merchant 作为 Client 的同义词。
+中文显示名和说明用于设计审阅，不增加 `t_` 等技术前缀；物理表名和字段名始终使用英文。架构说明与逻辑 Catalog 可继续用不带 `t_` 的领域名称，但 PDManer `defKey`、DDL、Migration、DataObject/Mapper 映射和数据库测试必须使用带 `t_` 的物理表名。项目术语以 `PROJECT_CONTEXT.md` 为准，不能重新引入 Merchant 作为 Client 的同义词。
 
 ## 9. 默认字段和主键
 
@@ -228,7 +232,7 @@ update_time
 - `(record_type,record_id)` 和 `(history_id,version_no)` 分别唯一，并为 `(aggregate_root_type,aggregate_root_id)` 和 `parent_history_id` 建立查询路径；父记录必须属于同一聚合。业务行身份、聚合归属和父子关系创建后不可覆盖。
 - `version_no` 是聚合根版本，允许受审计 Child 跳号，不再使用第二个行内版本或依赖时间分组。任何聚合内写命令必须使 Root 的并发版本原子递增一次；Root 与白名单内实际发生需留档变化的记录写最终快照，并更新对应 `current_version`。白名单外 Child 不创建 BCR，也不为了形式完整写重复快照。系统专项设计可明确收敛 CAS Token，但不得把该例外静默推广到其他系统。
 - `snapshot_json` 使用按 `record_type` 受控的 `_meta + data` Schema。`_meta` 至少含非空 `schemaVersion/triggerType/triggerId/reasonCode/integrityAlgorithm/integrityHash`；Integrity Hash 输入包含服务与 Schema 版本化 Domain Tag、记录/聚合/父级 Tuple、明细结构化字段以及排除 Hash 自身后的 `_meta + data`，统一使用 UTF-8 RFC 8785/JCS。每个采用该模式的服务必须冻结精确输入对象属性名与层级；`BIGINT` 编码为十进制字符串，`DECIMAL` 使用去无意义尾零且无指数的十进制字符串，时间使用六位微秒 UTC 字符串；禁止把 Snowflake ID 写为可能超过 IEEE-754 安全范围的 JSON Number。`create_by` 是操作者，不替代 Command、Event 或 System Run Trigger；系统变更使用非空正式 System Actor。
-- `data` 只保存白名单化的业务行审计视图，不得使用拦截器或反射直接序列化 DO。严禁复制敏感原值、完整 Vault Token、Blind Index、密文、Secret、卡数据、文件正文以及创建/更新时间、乐观锁、Active Slot、Lease、重试计数等纯技术字段。敏感业务值只允许记录经分类批准的 Masked Value、Metadata Hash、Record Version 或稳定“已变更”标记。
+- `data` 只保存白名单化的业务行审计视图，不得使用拦截器或反射直接序列化 DataObject。严禁复制敏感原值、完整 Vault Token、Blind Index、密文、Secret、卡数据、文件正文以及创建/更新时间、乐观锁、Active Slot、Lease、重试计数等纯技术字段。敏感业务值只允许记录经分类批准的 Masked Value、Metadata Hash、Record Version 或稳定“已变更”标记。
 - 业务更改、聚合版本、最终行快照、主记录指针和相关 `compensation_event` 必须在同一本地事务中提交。一次业务操作对同一行的多次 SQL 变化在 Repository 聚合入口收敛为一条最终快照。
 - 删除父业务行时，必须在同一聚合版本为全部仍存活且已经接入 BCR 的后代追加 `DELETE`；按版本还原时只重建白名单覆盖的审计视图，忽略没有目标版本快照或最新操作为 `DELETE` 的记录，不能把它描述为完整业务聚合恢复。
 - 创建后完全不可变的 History、Acceptance、Decision、Ledger/Journal 和其他领域证据表不重复写入通用历史。结构化 Version 的冻结明细不重复写 BCR；若其版本头仍有 Draft、审批、激活或替换等可变生命周期，只有系统专项白名单明确要求时才审计该头记录。现有专项状态历史保持合法，只有系统专项设计明确迁移时才替换；同一生命周期不并行维护两个权威历史。
@@ -238,7 +242,7 @@ update_time
 
 Client & Contract 已批准把白名单内聚合根对应的 `business_change_record.current_version` 同时作为审计版本和唯一普通聚合 CAS Token，结构化业务 Root 不再机械保存第二个 `version`。CCT 外部命令携带 `expected_change_version`，Root BCR 以条件更新推进到 `next_version`；白名单内发生需留档变化的 Child 追加该 Root Version 的最终快照并更新版本指针，但 Child `current_version` 不是独立 CAS Token。白名单外 Child 只受 Root CAS 和自身结构化约束保护，不创建 BCR。多 Root 命令按 `(aggregate_root_type,aggregate_root_id)` 确定顺序锁定/CAS，每个 Root 独立拥有下一版本、History 与 Event `source_version`，共同 `trigger_id` 只做关联，任一冲突回滚整个本地事务。
 
-该例外严格限定于 CCT 已批准的当前 36 表设计，不改变 Commerce、Payment Orchestration、Risk & Compliance、Finance 与 Platform Support 五套模型的并发策略；其他系统仍按自身专项文档决定是否保存结构化 Root `version`。CCT 只在 `compensation_event` 上保留独立技术 `lock_version`；`version_no/source_version/vault_record_version/hash_schema_version/schema_version` 继续保持各自业务或协议语义。
+该例外严格限定于 CCT 已批准的当前 37 表设计，不改变 Commerce、Payment Orchestration、Risk & Compliance、Finance 与 Platform Support 五套模型的并发策略；其他系统仍按自身专项文档决定是否保存结构化 Root `version`。CCT 只在 `compensation_event` 上保留独立技术 `lock_version`；`version_no/source_version/vault_record_version/hash_schema_version/schema_version` 继续保持各自业务或协议语义。
 
 ## 10. 类型与业务约束
 
@@ -292,7 +296,7 @@ Client & Contract 已批准把白名单内聚合根对应的 `business_change_re
 3. 运行 PDManer 模型检查，解决所有失败项并评估警告。
 4. 导出或比较 MySQL DDL，人工审查删除、默认值、非空、锁表和数据回填风险。
 5. 新增 versioned migration；已经执行过的 migration 不得重写。
-6. 同步更新 DO、Mapper XML/接口、Repository 和转换逻辑。
+6. 同步更新 DataObject、Mapper XML/接口、Repository 和转换逻辑；DataObject 类型名不得追加 `DO` 后缀。
 7. 使用 `UNIT_TEST_GUIDE.md` 规定的真实 Testcontainers 数据库验证 migration 和完整链路。
 8. 检查 PDManer、migration、Java 映射和测试结果一致后才可声明完成。
 
@@ -307,9 +311,9 @@ Client & Contract 已批准把白名单内聚合根对应的 `business_change_re
 
 ## 15. 验证清单
 
-CCT 36 表、Commerce 14 表、Payment 29 表、Finance 84 表、Risk 71 表与 Platform Support 92 表 PDManer-only 阶段的生成器和模型自动项均已通过。Finance 的完整评审入口为[逻辑模型](./database/FINANCE_DATABASE.md)、[现实场景](./database/scenarios/FINANCE_REAL_WORLD_SCENARIOS.md)、[交易经济与会计规则精简计划](./plans/2026-08-26-finance-transaction-economics-accounting-rule-simplification-implementation-plan.md)、[Account Balance 合同成熟精简实施计划](./plans/2026-08-27-finance-account-balance-contract-maturity-simplification-implementation-plan.md)、[退款 Funding 移除实施记录](./plans/2026-08-27-finance-refund-funding-removal-implementation-plan.md)、[通用 Funding 模块删除设计](./plans/2026-08-27-finance-funding-module-removal-design.md)、[通用 Funding 模块删除实施记录](./plans/2026-08-27-finance-funding-module-removal-implementation-plan.md)、[保证金 Account 精简实施记录](./plans/2026-08-27-finance-security-deposit-account-simplification-implementation-plan.md) + [Provider 对账精简实施计划](./plans/2026-08-28-finance-provider-reconciliation-simplification-implementation-plan.md) + [Provider 三阶段账户实施计划](./plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md) + [手工出款精简设计](./plans/2026-08-28-finance-manual-payout-simplification-design.md) + [手工出款精简实施计划](./plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)、[统一账户模型设计（Funding 部分已替代）](./plans/2026-08-26-finance-unified-account-model-design.md)、[Account Balance 合并计划（Funding 部分已替代）](./plans/2026-08-26-finance-account-balance-merge-implementation-plan.md)、[统一账户实施记录](./plans/2026-08-26-finance-unified-account-model-implementation-plan.md)、[Finance Entity 双账簿设计](./plans/2026-08-26-finance-entity-dual-ledger-design.md)、[Finance Entity 双账簿实施记录（Funding 部分已替代）](./plans/2026-08-26-finance-entity-dual-ledger-implementation-plan.md)、[Tax/Fiscal 23 表精简实施记录](./plans/2026-08-27-finance-tax-fiscal-23-table-simplification-implementation-plan.md)、[物理建模决策](../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md)与[生成模型](../finance-service/docs/database/finance.pdma.json)。Risk 的完整评审入口为[逻辑模型](./database/RISK_COMPLIANCE_DATABASE.md)、[现实场景](./database/scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md)、[Limit 7 表平衡精简设计](./plans/2026-08-28-risk-limit-balanced-simplification-design.md)、[Limit 平衡精简实施计划](./plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md)、[Decision Engine 19/8 平衡精简计划](./plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) + [Dispute 平衡优化设计](./plans/2026-08-28-risk-dispute-balanced-optimization-design.md) + [Dispute 平衡优化实施计划](./plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md)、[DD 19 表精简计划](./plans/2026-08-27-risk-dd-simplification-implementation-plan.md)、[物理建模决策](../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)与[生成模型](../risk-compliance-service/docs/database/risk-compliance.pdma.json)。六套模型的 PDManer 4.9.3 应用内检查仍待人工执行。
+CCT 37 表、Commerce 14 表、Payment 29 表、Finance 84 表、Risk 71 表与 Platform Support 63 表 PDManer-only 阶段的生成器和模型自动项均已通过。Finance 的完整评审入口为[逻辑模型](./database/FINANCE_DATABASE.md)、[现实场景](./database/scenarios/FINANCE_REAL_WORLD_SCENARIOS.md)、[交易经济与会计规则精简计划](./plans/2026-08-26-finance-transaction-economics-accounting-rule-simplification-implementation-plan.md)、[Account Balance 合同成熟精简实施计划](./plans/2026-08-27-finance-account-balance-contract-maturity-simplification-implementation-plan.md)、[退款 Funding 移除实施记录](./plans/2026-08-27-finance-refund-funding-removal-implementation-plan.md)、[通用 Funding 模块删除设计](./plans/2026-08-27-finance-funding-module-removal-design.md)、[通用 Funding 模块删除实施记录](./plans/2026-08-27-finance-funding-module-removal-implementation-plan.md)、[保证金 Account 精简实施记录](./plans/2026-08-27-finance-security-deposit-account-simplification-implementation-plan.md) + [Provider 对账精简实施计划](./plans/2026-08-28-finance-provider-reconciliation-simplification-implementation-plan.md) + [Provider 三阶段账户实施计划](./plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md) + [手工出款精简设计](./plans/2026-08-28-finance-manual-payout-simplification-design.md) + [手工出款精简实施计划](./plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)、[统一账户模型设计（Funding 部分已替代）](./plans/2026-08-26-finance-unified-account-model-design.md)、[Account Balance 合并计划（Funding 部分已替代）](./plans/2026-08-26-finance-account-balance-merge-implementation-plan.md)、[统一账户实施记录](./plans/2026-08-26-finance-unified-account-model-implementation-plan.md)、[Finance Entity 双账簿设计](./plans/2026-08-26-finance-entity-dual-ledger-design.md)、[Finance Entity 双账簿实施记录（Funding 部分已替代）](./plans/2026-08-26-finance-entity-dual-ledger-implementation-plan.md)、[Tax/Fiscal 23 表精简实施记录](./plans/2026-08-27-finance-tax-fiscal-23-table-simplification-implementation-plan.md)、[物理建模决策](../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md)与[生成模型](../finance-service/docs/database/finance.pdma.json)。Risk 的完整评审入口为[逻辑模型](./database/RISK_COMPLIANCE_DATABASE.md)、[现实场景](./database/scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md)、[Limit 7 表平衡精简设计](./plans/2026-08-28-risk-limit-balanced-simplification-design.md)、[Limit 平衡精简实施计划](./plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md)、[Decision Engine 19/8 平衡精简计划](./plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) + [Dispute 平衡优化设计](./plans/2026-08-28-risk-dispute-balanced-optimization-design.md) + [Dispute 平衡优化实施计划](./plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md)、[DD 19 表精简计划](./plans/2026-08-27-risk-dd-simplification-implementation-plan.md)、[物理建模决策](../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)与[生成模型](../risk-compliance-service/docs/database/risk-compliance.pdma.json)。六套模型的 PDManer 4.9.3 应用内检查仍待人工执行。
 
-Platform Support 的完整验证入口为[逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md)、[生成模型](../platform-support-service/docs/database/platform-support.pdma.json)及对应的 Manifest/Oracle 自动门禁。
+Platform Support 的 57 表[数据库精简设计](../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)与[实施记录](./plans/2026-09-01-platform-support-database-simplification-implementation-plan.md)是未受公共控制面影响领域的前序基线；当前完整验证入口还包括[统一公共 API 动态控制面设计](../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)、[公共控制面 PDManer 实施计划](../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md)、[逻辑/物理基线](./database/PLATFORM_SUPPORT_DATABASE.md)、[现实场景](./database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md)、[物理建模决策](../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md)、[生成模型](../platform-support-service/docs/database/platform-support.pdma.json)及对应的 Manifest/Oracle 自动门禁。当前生成事实为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、7 个 Diagram Groups、31 条复合 FK、85 条具名 CHECK sidecar 契约和恰好 36 个 `*_hash` 字段。
 
 - [ ] 模型由项目内 PDManer 模板派生，文件可被 PDManer 4.9.3 或兼容版本打开。
 - [ ] JSON 语法有效，内部 ID、数据域、基础类型和关系引用完整。
@@ -327,6 +331,6 @@ Platform Support 的完整验证入口为[逻辑/物理基线](./database/PLATFO
 - [ ] 闭合枚举列出全部允许值，开放代码说明权威来源，Boolean/Slot 说明完整状态矩阵。
 - [ ] 金额、币种、状态、时间、精度和并发字段符合业务要求。
 - [ ] 若采用通用行级变更历史，已明确 Record Type/Root 白名单、Child 映射与排除项；结构化业务表仍为权威来源，聚合版本/父子归属/指针与唯一约束完整，`snapshot_json` 通过 Schema/白名单/Hash 校验且不含敏感、Vault 或纯技术字段，明细只含 `create_time` 并且追加后不可变。
-- [ ] PDManer 模型、migration SQL、DO/Mapper/Repository 已同步。
+- [ ] PDManer 模型、migration SQL、DataObject/Mapper/Repository 已同步，且 DataObject 类型名没有 `DO` 后缀。
 - [ ] Repository 和服务级 `auto` 使用真实测试数据库验证通过。
 - [ ] 破坏性 migration 有明确的数据迁移、兼容和回滚设计。

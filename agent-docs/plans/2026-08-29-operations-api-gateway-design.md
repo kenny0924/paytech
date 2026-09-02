@@ -1,5 +1,7 @@
 # Operations API Gateway design
 
+> **2026-09-01 dynamic-control-plane successor:** The [unified public API control-plane design](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) now owns public Target/Route/Guard current configuration. This document remains the implementation authority for the deployed static Operations Gateway before dynamic Snapshot cutover and for its unaffected security hardening; statements that the Catalog is permanently code-owned are pre-cutover history only.
+
 Last updated: 2026-08-31
 
 Status: the initial Gateway boundary remains approved. The routing, trusted-header, request-body, JWKS, Guard and transport portions are superseded by the approved [`2026-08-30-operations-gateway-hardening-design.md`](../../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md). This document records the compatible final contract; the hardening design is authoritative if wording differs. It does not authorize BFF, Platform Support, frontend, deployment or infrastructure work.
@@ -76,7 +78,7 @@ The refresh cookie is `Secure`, `HttpOnly`, `SameSite=Strict`, path `/api/operat
 
 Every route has a static Guard profile. Rate limiting occurs before immediate Concurrency acquisition; there is no wait or queue. A later Concurrency rejection, JWT rejection, body rejection or downstream failure does not refund an already-consumed Rate token. Every acquired lease releases on success, error or cancellation.
 
-Guard uses the `guard:v2` namespace, Redis server time plus a monotonic positive policy revision, and only the current Guard HMAC key. Guard HMAC and access-log HMAC remain separate. During a controlled current-key rollout Route scope stays shared; IP/Subject scope may receive a bounded temporary capacity increase. No second Guard key or dual state is configured or read.
+Guard uses the `guard:v3` namespace and Redis server time. Client-IP keys contain the raw canonical socket IP, and authenticated-Subject keys contain the exact validated JWT `sub`; Redis Guard has no HMAC key. Raw identity components are capped at 512 UTF-8 bytes and reject blank, control-character or invalid-Unicode input without transforming accepted values. Rate Hashes contain exactly `t/lr/rr`, while Concurrency metadata contains exactly `hw/l`. No policy revision or rolling state migration is configured or executed. Access logs continue to HMAC-pseudonymize IP and Subject with independent access-log material.
 
 All current routes have a `16 KiB` actual body cap and a `5 s` total aggregation deadline. Validated bytes replay to BFF with exact `Content-Length` and no `Transfer-Encoding`; BFF sees no body before validation. Pooled buffers are released and temporary arrays are best-effort cleared on complete, error and cancellation. Timeout is `408`; oversize is `413`.
 
@@ -86,10 +88,11 @@ All current routes have a `16 KiB` actual body cap and a `5 s` total aggregation
 - Rate limiting occurs before immediate Concurrency acquisition; there is no wait or queue.
 - A later Concurrency rejection, JWT rejection, body rejection or downstream failure does not refund an already-consumed Rate token.
 - Every acquired lease releases on success, error or cancellation.
-- Guard uses the `guard:v2` namespace, Redis server time plus a monotonic positive policy revision, and only the current Guard HMAC key.
-- Guard HMAC and access-log HMAC remain separate.
-- A controlled current-key rollout keeps Route scope shared and allows only a bounded temporary IP/Subject capacity increase.
-- No second Guard key or dual state is configured or read.
+- Guard uses the `guard:v3` namespace and Redis server time.
+- Client-IP keys use the raw canonical socket IP; authenticated-Subject keys use the exact validated JWT `sub`.
+- Redis Guard has no HMAC configuration; Access Log IP and Subject values remain independently HMAC-pseudonymized.
+- Rate Hashes contain exactly `t/lr/rr`; Concurrency metadata contains exactly `hw/l`.
+- No policy revision or rolling state migration is configured or executed.
 - All current routes have a `16 KiB` actual body cap and a `5 s` total aggregation deadline.
 - Validated bytes replay to BFF with exact `Content-Length` and no `Transfer-Encoding`; BFF sees no body before validation.
 - Pooled buffers are released and temporary arrays are best-effort cleared on complete, error and cancellation.

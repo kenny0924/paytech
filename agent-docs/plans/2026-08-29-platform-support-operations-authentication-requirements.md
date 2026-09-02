@@ -1,8 +1,12 @@
 # Platform Support 内部运营认证需求
 
+> **2026-09-01 当前读取规则：** 本文仍只记录 Operations-only 历史阶段。统一 Account/Tenant/Google 认证以 [统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 为准；Gateway 的 TLS、JWT、Header、Cookie、Redis 和传输安全以 [Operations Gateway hardening 设计](../../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准；57 表精简阶段是未受影响领域的直接前序，[统一公共 API 动态控制面设计](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 与其 [PDManer 实施计划](../../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md) 定义当前六表后继。当前模型为 63 表 / 822 字段 / 123 唯一索引 / 99 访问索引 / 107 关系 / 5 个 1:1 / 7 图组 / 31 复合 FK / 85 CHECK / 36 个 `_hash` 字段。
+
 最后更新：2026-08-29
 
-状态：已确认的需求与语义替代记录；只为 Gateway 首期提供边界依据。Gateway 入口、协议、Guard、JWKS 与传输细节以 [`2026-08-30-operations-gateway-hardening-design.md`](../../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为最终权威。本文不授权 Platform Support Java、Migration、数据库、PDManer、Secrets/KMS、BFF、前端或部署实现。
+状态：**历史/已被替代。** 本文记录 Operations-only 的阶段性需求；[2026-08-30 统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md)、[Operations Gateway hardening 设计](../../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 和当前 [63 表模型](../../platform-support-service/docs/database/platform-support.pdma.json) 已取代其认证与 Gateway 语义。本文本身不授权业务 API、Migration、物理数据库、Secrets/KMS、BFF、前端或部署实现。
+
+> **历史读取规则：** 后文的 Operations-only 范围、92 表数字与“未来物理修订”均是当时决策记录，不能作为当前导航或实现依据。当前模型为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条关系、5 条 1:1、7 图组、31 条复合 FK、85 条 CHECK 和 36 个 `_hash` 字段；Business Email OTP 仍独立且不得复用为认证。
 
 ## 1. 决策
 
@@ -56,7 +60,7 @@ Platform Support 不暴露浏览器或公网 Login/Refresh/Logout Endpoint。Gat
 
 Operations BFF 对三个认证动作提供外部页面友好的接口：
 
-- Login：固定 `channel=OPERATIONS` 调用 Platform Support，返回 Access Token；将 Refresh Token 写入名为 `__Secure-operations-refresh` 的 Cookie，属性固定为 `Secure; HttpOnly; SameSite=Strict; Path=/api/operations/auth/v1`，不设置 `Domain`，`Max-Age` 不超过 Session 剩余绝对期限。Console 与 Gateway 必须 schemefully same-site，浏览器 Fetch 使用 `credentials: include`，Gateway 只允许精确 Origin 并返回 `Access-Control-Allow-Credentials: true`。
+- Login：固定 `channel=OPERATIONS` 调用 Platform Support，返回 Access Token；将 Refresh Token 写入名为 `__Secure-operations-refresh` 的 Cookie，属性固定为 `Secure; HttpOnly; SameSite=Strict; Path=/api/operations/auth/v1`，不设置 `Domain`，`Max-Age` 不超过 Session 剩余绝对期限。
 - Refresh：校验精确 Origin/CSRF 约束，从该 HttpOnly Cookie 取 Refresh Token 调用 Platform Support，完成 Cookie 单次轮换并返回新 Access Token；Gateway CORS 对精确 Origin 启用 Credentials。
 - Logout：使用 Gateway 传入的可信 Subject/Session 上下文和 Refresh Cookie 调用 Platform Support 撤销 Session，并用相同 Name/Path/SameSite/Secure 属性及 `Max-Age=0` 清除 Cookie。
 
@@ -78,9 +82,9 @@ Operations BFF 在调用页面查询或命令前，使用 Platform Support 当�
 - Login/Refresh 同时受 Gateway 网络级限流和 Platform 账号级失败控制；两者不能互相替代。
 - 首期公网可访问只是部署阶段选择。未来 VPN/零信任接入是额外防线，不改变认证与授权职责。
 
-## 7. 对现有 92 表模型的影响
+## 7. 对历史 92 表模型的影响
 
-当前 Platform Support `92 表 / 1,076 字段 / 167 唯一索引 / 116 访问索引 / 145 本库关系 / 19 个 1:1 / 8 个 Diagram Groups` 的冻结模型按“外部 IdP 登录、Platform 只做 Subject Mapping”设计，缺少本地 Operations Account、Password Verifier、Refresh Session 和 Signing Key Metadata，不能直接实现本文。
+2026-08-29 当时的 Platform Support `92 表 / 1,076 字段 / 167 唯一索引 / 116 访问索引 / 145 本库关系 / 19 个 1:1 / 8 个 Diagram Groups` 冻结模型按“外部 IdP 登录、Platform 只做 Subject Mapping”设计，缺少本地 Operations Account、Password Verifier、Refresh Session 和 Signing Key Metadata，不能直接实现本文。
 
 本文只在未来实现语义上取代该模型中的以下内容：
 
@@ -91,7 +95,7 @@ Operations BFF 在调用页面查询或命令前，使用 Platform Support 当�
 
 旧模型对其他 Platform Support 领域仍是当前冻结 V1 设计资产。未来实现 Operations 认证前必须单独批准物理模型修订，决定本地账号与现有 User/Identity 的关系，重新生成并验证 PDManer 精确计数，并同步 Database 文档、Scenario、Migration、DO/Mapper/Repository 和自动化测试。不得把现有必填 IdP 字段简单改成可空字段来绕过该设计。
 
-Gateway Guard 是部署中的静态每路由 Profile；未来 Platform Support 不能发布或修改 Route/Path/Method/Upstream、Guard Profile 或运行时限流状态。Gateway 先消耗 Rate Token、再立即 Acquire Concurrency Lease，不等待、不排队；Redis 保存运行计数/Lease，Platform MySQL 不保存运行时限流状态。
+Gateway Guard 的未来 Platform 配置只能引用部署中预先存在的 Route Code，并叠加不超过硬上限的保护策略；不能发布 Route/Path/Method/Upstream。Rate/Concurrency 按独立计数维度累计生效，Redis 保存运行计数/Lease，Platform MySQL 不保存运行时限流状态。
 
 ## 8. 最小未来数据需求（非表设计）
 

@@ -20,6 +20,7 @@ export const TABLE_DISPLAY_NAMES = Object.freeze({
   client_business_profile: "客户业务资料版本",
   client_business_classification: "客户经营分类",
   client_application: "客户申请",
+  partner_application: "本地合作伙伴入驻申请",
   operating_entity_application: "经营主体入驻申请",
   application_document: "申请材料",
   client_entity_affiliation: "客户经营主体适用关系",
@@ -69,6 +70,8 @@ export const FIELD_METADATA = Object.freeze({
   application_id: metadata("申请标识", "业务申请记录的内部唯一标识"),
   application_no: metadata("申请编号", "供业务查询与人工操作使用的唯一申请编号"),
   application_type: metadata("申请类型", "区分首次入驻与资料变更申请的闭合业务类型"),
+  partner_application_id: metadata("Local Partner 申请标识", "材料所属 Local Partner Application 的本库标识；三个申请父标识恰好一个非空"),
+  requested_by_account_id: metadata("申请发起 Account 标识", "发起申请的 Platform CUSTOMER Account 外部稳定标识，不证明法律主体或签约资格"),
   approved_source_relation_id: metadata("批准来源关系标识", "申请批准后创建或激活的 Operating Entity 来源关系标识"),
   assignment_id: metadata("主体分配标识", "已经验证并生效的 Client Operating Entity 自动分配事实标识"),
   base_business_profile_id: metadata("基准业务资料标识", "资料变更提交时冻结的 Client 当前有效业务资料版本标识"),
@@ -80,7 +83,7 @@ export const FIELD_METADATA = Object.freeze({
   caller_scope: metadata("调用方作用域", "隔离幂等键命名空间的稳定调用方作用域"),
   change_version_id: metadata("变更快照标识", "不可变业务行审计快照的内部唯一标识"),
   classification_id: metadata("经营分类标识", "经营分类行的内部唯一标识"),
-  client_application_id: metadata("Client 申请标识", "材料所属 Client Application 的本库标识；与经营主体申请父标识恰好一个非空"),
+  client_application_id: metadata("Client 申请标识", "材料所属 Client Application 的本库标识；三个申请父标识恰好一个非空"),
   client_id: metadata("Client 标识", "平台 Client 角色的内部唯一标识"),
   client_no: metadata("Client 编号", "供外部接口与业务查询使用的唯一 Client 编号"),
   client_source_basis: metadata("Client 来源依据", "Organization Client 提供 Operating Entity 时采用的法律关系依据"),
@@ -153,7 +156,7 @@ export const FIELD_METADATA = Object.freeze({
   next_execute_at: metadata("下次执行时间", "补偿任务下一次允许被 Claim 的 UTC 微秒精度时刻"),
   operating_country: metadata("经营国家", "Operating Entity 开展业务的 ISO 3166-1 alpha-2 国家代码"),
   operating_entity_id: metadata("Operating Entity 标识", "合同卖方及 Provider MID 法律持有人的内部唯一标识"),
-  operating_entity_application_id: metadata("经营主体申请标识", "材料所属 Operating Entity Application 的本库标识；与 Client 申请父标识恰好一个非空"),
+  operating_entity_application_id: metadata("经营主体申请标识", "材料所属 Operating Entity Application 的本库标识；三个申请父标识恰好一个非空"),
   operation_type: metadata("操作类型", "命令幂等隔离或业务变更快照使用的稳定操作代码"),
   organization_party_id: metadata("机构 Party 标识", "Party Relation 中被持有、控制或任职的机构 Party 标识"),
   organization_type: metadata("机构类型", "按司法辖区和法律形态分类的受控机构类型代码"),
@@ -292,9 +295,11 @@ export const FIELD_DESCRIPTION_OVERRIDES = Object.freeze({
   "entity_source_relation.source_type":
     "该 Operating Entity 来源关系对应的来源主体类型",
   "application_document.client_application_id":
-    "Client Application 父标识；与 operating_entity_application_id 恰好一个非空，使用本库 RESTRICT 外键",
+    "Client Application 父标识；与 partner_application_id、operating_entity_application_id 三个父标识恰好一个非空，使用本库 RESTRICT 外键",
+  "application_document.partner_application_id":
+    "Local Partner Application 父标识；与 client_application_id、operating_entity_application_id 三个父标识恰好一个非空，使用本库 RESTRICT 外键",
   "application_document.operating_entity_application_id":
-    "Operating Entity Application 父标识；与 client_application_id 恰好一个非空，使用本库 RESTRICT 外键",
+    "Operating Entity Application 父标识；与 client_application_id、partner_application_id 三个父标识恰好一个非空，使用本库 RESTRICT 外键",
   "application_document.file_id":
     "Platform File 的逻辑引用，与 content_hash 成组冻结，不建立跨库物理外键",
   "application_document.subject_party_id":
@@ -337,6 +342,8 @@ export const FIELD_DESCRIPTION_OVERRIDES = Object.freeze({
     "Client Pricing 使用受控计算基数目录；Partner Share 固定为 ACTUAL_CLIENT_FEE",
   "client_application.base_party_profile_id":
     "PROFILE_CHANGE 的基准 Party Profile；ONBOARDING 必须为空，提交时必须等于 Client 当时的 ACTIVE Profile",
+  "client_application.requested_by_account_id":
+    "发起申请的 Platform CUSTOMER Account 外部稳定标识；一般可空，但 ONBOARDING 必填，不建立跨库物理外键",
   "client_application.active_slot":
     "同一 Client 的进行中申请稀疏唯一槽位；DRAFT、SUBMITTED、UNDER_REVIEW 占用，终态释放，不表示 ACTIVE 业务状态",
   "client_application.target_party_profile_id":
@@ -347,6 +354,24 @@ export const FIELD_DESCRIPTION_OVERRIDES = Object.freeze({
     "申请目标 Client Business Profile；两类申请均必填，与 Base 不同时提交事务必须将其封存为 FROZEN",
   "client_application.due_diligence_case_id":
     "Risk & Compliance 尽调 Case 的逻辑引用，不建立跨库物理外键",
+  "partner_application.local_partner_id":
+    "申请创建时同一 CCT 事务创建或复用的 PENDING Local Partner 角色标识；REJECTED/WITHDRAWN 重提继续复用，APPROVED 后才激活",
+  "partner_application.target_party_profile_id":
+    "申请创建时同一 CCT 事务创建或复用的 Organization Target Party Profile 标识",
+  "partner_application.requested_by_account_id":
+    "发起申请的 Platform CUSTOMER Account 外部稳定标识；Partner Application 必填，不建立跨库物理外键",
+  "partner_application.create_by":
+    "记录该可变生命周期申请行的 CCT 录入或命令 Actor 标识；不同于 requested_by_account_id，后者仅是外部 Platform CUSTOMER Account 申请人且不证明法律主体或签约资格",
+  "partner_application.active_slot":
+    "同一 Local Partner 的进行中申请稀疏唯一槽位；DRAFT、SUBMITTED、UNDER_REVIEW 占用，终态释放，不表示 ACTIVE 业务状态",
+  "partner_application.due_diligence_case_id":
+    "Risk & Compliance 尽调 Case 的逻辑引用；APPROVED 必填，不建立跨库物理外键",
+  "partner_application.qualification_decision_id":
+    "Risk & Compliance 资格决定的逻辑引用，与 qualification_decision_version 成组为空或成组非空；APPROVED 必填，不建立跨库物理外键",
+  "partner_application.qualification_type":
+    "系统固定为 PARTNER_DUE_DILIGENCE，不接受调用方选择，并在申请提交时冻结",
+  "partner_application.submission_content_hash":
+    "输入遵循 CODE-MOR:CCT:PARTNER_APPLICATION_SUBMISSION:1，使用 UTF-8 RFC 8785/JCS 后的 SHA-256 小写 64 位 Hex",
   "operating_entity_application.due_diligence_case_id":
     "Risk & Compliance 尽调 Case 的逻辑引用，不建立跨库物理外键",
   "operating_entity_application.active_slot":
@@ -429,6 +454,7 @@ export const BCR_RECORD_TYPES = Object.freeze([
   "CLIENT_BUSINESS_PROFILE",
   "COMMERCIAL_TERM_VERSION",
   "CLIENT_APPLICATION",
+  "PARTNER_APPLICATION",
   "OPERATING_ENTITY_APPLICATION",
   "PARTY_RELATION",
   "CLIENT_ENTITY_AFFILIATION",
@@ -447,6 +473,7 @@ export const BCR_ROOT_TYPES = Object.freeze([
   "LOCAL_PARTNER",
   "OPERATING_ENTITY",
   "CLIENT_APPLICATION",
+  "PARTNER_APPLICATION",
   "OPERATING_ENTITY_APPLICATION",
   "PARTY_RELATION",
   "CLIENT_ENTITY_AFFILIATION",
@@ -489,6 +516,8 @@ export const CLOSED_ENUM_VALUES = Object.freeze({
   "client_application.application_type": ["ONBOARDING", "PROFILE_CHANGE"],
   "client_application.status": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
   "client_application.qualification_type": ["INDIVIDUAL_KYC", "ORGANIZATION_KYB"],
+  "partner_application.status": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
+  "partner_application.qualification_type": ["PARTNER_DUE_DILIGENCE"],
   "operating_entity_application.source_type": ["PLATFORM", "CLIENT", "PARTNER"],
   "operating_entity_application.client_source_basis": ["SAME_PARTY", "VERIFIED_ASSOCIATION"],
   "operating_entity_application.status": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
@@ -524,6 +553,7 @@ export const CONDITIONAL_VALUE_RULES = Object.freeze({
   "client_business_profile.active_slot": "状态为 ACTIVE 时为 1，其他状态为 NULL",
   "client_business_classification.primary_slot": "值为 1 时表示一组主要经营分类，其他情况为 NULL",
   "client_application.active_slot": "状态为 DRAFT、SUBMITTED 或 UNDER_REVIEW 时为 1，终态为 NULL",
+  "partner_application.active_slot": "状态为 DRAFT、SUBMITTED 或 UNDER_REVIEW 时为 1，终态为 NULL",
   "operating_entity_application.active_slot": "状态为 DRAFT、SUBMITTED 或 UNDER_REVIEW 时为 1，终态为 NULL",
   "client_entity_affiliation.active_slot": "状态为 ACTIVE 时为 1，其他状态为 NULL",
   "client_entity_assignment.active_slot": "状态为 ACTIVE 时为 1，其他状态为 NULL",

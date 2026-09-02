@@ -383,6 +383,87 @@ test("Risk due diligence Application identity scopes idempotency by typed source
   assert.notEqual(sourceKey(relatedPerson), sourceKey(operatingEntityRelatedPerson));
 });
 
+test("Risk Local Partner Application namespace accepts only the approved main and related-person tuples", async () => {
+  const model = readModel();
+  const entity = model.entities.find(({ defKey }) => defKey === "t_due_diligence_case");
+  const namespaceField = entity.fields.find(({ defKey }) => defKey === "source_namespace");
+  const namespaceValues = new Set(
+    namespaceField.comment.match(/允许值：([^。]+)。/u)?.[1].split("、") ?? [],
+  );
+  const { CHECK_CONTRACTS } = await import("./risk/model-policy.mjs");
+  const applicationRoles = new Map(
+    [...CHECK_CONTRACTS.ck_dd_case_origin.matchAll(
+      /\(source_namespace='([^']+)' AND role_type IN \(([^)]+)\)\)/gu,
+    )].map((match) => [
+      match[1],
+      new Set([...match[2].matchAll(/'([^']+)'/gu)].map((role) => role[1])),
+    ]),
+  );
+  const qualificationsByRole = new Map([
+    ["CLIENT", new Set(["INDIVIDUAL_KYC", "ORGANIZATION_KYB"])],
+    ["LOCAL_PARTNER", new Set(["PARTNER_DUE_DILIGENCE"])],
+    ["OPERATING_ENTITY", new Set(["ENTITY_UNDERWRITING"])],
+    ["RELATED_PERSON", new Set(["RELATED_PERSON_KYC"])],
+  ]);
+  const sourceKey = ({ sourceNamespace, sourceApplicationId, roleType, roleId, qualificationType }) =>
+    `${sourceNamespace}:${sourceApplicationId}:${roleType}:${roleId}:${qualificationType}`;
+  const applicationTupleAccepted = (tuple) => (
+    namespaceValues.has(tuple.sourceNamespace)
+    && tuple.sourceApplicationId > 0n
+    && tuple.roleId > 0n
+    && applicationRoles.get(tuple.sourceNamespace)?.has(tuple.roleType) === true
+    && qualificationsByRole.get(tuple.roleType)?.has(tuple.qualificationType) === true
+  );
+  const assertApplicationTupleAccepted = (tuple) => {
+    assert.equal(applicationTupleAccepted(tuple), true, `应接受 Application Case Tuple：${sourceKey(tuple)}`);
+  };
+  const assertApplicationTupleRejected = (tuple) => {
+    assert.equal(applicationTupleAccepted(tuple), false, `应拒绝 Application Case Tuple：${sourceKey(tuple)}`);
+  };
+
+  const partnerMain = {
+    sourceNamespace: "CCT_LOCAL_PARTNER_APPLICATION",
+    sourceApplicationId: 730320000000000001n,
+    roleType: "LOCAL_PARTNER",
+    roleId: 730300000000000001n,
+    qualificationType: "PARTNER_DUE_DILIGENCE",
+  };
+  const relatedPerson = {
+    sourceNamespace: "CCT_LOCAL_PARTNER_APPLICATION",
+    sourceApplicationId: 730320000000000001n,
+    roleType: "RELATED_PERSON",
+    roleId: 730100000000000009n,
+    qualificationType: "RELATED_PERSON_KYC",
+  };
+
+  assertApplicationTupleAccepted(partnerMain);
+  assertApplicationTupleAccepted(relatedPerson);
+  assertApplicationTupleRejected({
+    ...partnerMain,
+    roleType: "CLIENT",
+    roleId: 730200000000000001n,
+    qualificationType: "ORGANIZATION_KYB",
+  });
+  assertApplicationTupleRejected({
+    ...partnerMain,
+    roleType: "OPERATING_ENTITY",
+    roleId: 730310000000000001n,
+    qualificationType: "ENTITY_UNDERWRITING",
+  });
+
+  const sameRelatedPersonAcrossNamespaces = [
+    "CCT_CLIENT_APPLICATION",
+    "CCT_OPERATING_ENTITY_APPLICATION",
+    "CCT_LOCAL_PARTNER_APPLICATION",
+  ].map((sourceNamespace) => ({ ...relatedPerson, sourceNamespace }));
+  for (const tuple of sameRelatedPersonAcrossNamespaces) assertApplicationTupleAccepted(tuple);
+  assert.equal(
+    new Set(sameRelatedPersonAcrossNamespaces.map(sourceKey)).size,
+    sameRelatedPersonAcrossNamespaces.length,
+    "相同 Application、Role、Party 和 Qualification 必须由三个 CCT Typed Namespace 隔离",
+  );
+});
+
 test("Risk due diligence reuses one related-person child Case across dependency roles", () => {
   const model = readModel();
   const entity = model.entities.find(({ defKey }) => defKey === "t_dd_case_dependency");

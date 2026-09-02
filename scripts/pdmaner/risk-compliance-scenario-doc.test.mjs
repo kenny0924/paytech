@@ -165,20 +165,59 @@ test("Risk current documents expose the final Settlement Control topology and ge
   assert.equal(physicalManifest.checkContracts, 83);
   assert.equal(
     physicalManifest.modelSha256,
-    "a067ea4a4663b7974140029809d265661088fa546f6fc929df7b247ebc3fb41c",
+    "445ed5828d0b7951f0755978676c102bfade023306a0ca311184bf259a4551e6",
   );
   assert.equal(
     physicalManifest.structuralProjectionSha256,
-    "3c30e37cc104324830c853f55577f0259df192fe4d350641d4a624217657d2cf",
+    "e8ad25426adcf5037fc334706c0342e2b5c3bb47d83f44d554098cda3b756d2c",
   );
   assert.equal(
     physicalManifest.checkPolicySha256,
-    "0dcbabe97dd005282539024356e86c2a5c588097f4955aaae9143150867d9e01",
+    "b2a09dc39dab618af8e4d2400d898c185e1ee4789a7b31a6ec4137c91e82a25b",
   );
   assert.match(
     logicalDatabase,
     /71 表、865 字段、106 个唯一索引、74 个访问索引、111 条本库关系、9 条 1:1 关系、8 个 Diagram Groups 和 83 条 CHECK 契约/u,
   );
+});
+
+test("Risk documents freeze the Local Partner Application namespace, role isolation and child ownership", () => {
+  const scenario = readFileSync(scenarioPath, "utf8");
+  const logicalDatabase = readFileSync(logicalDatabasePath, "utf8");
+  const physicalDecisions = readFileSync(physicalDecisionsPath, "utf8");
+
+  for (const [documentName, document] of [
+    ["逻辑数据库", logicalDatabase],
+    ["物理决策", physicalDecisions],
+  ]) {
+    const namespaceRow = document.match(/^\| `?CCT_LOCAL_PARTNER_APPLICATION`? \|[^\n]+$/mu)?.[0] ?? "";
+    assert.match(namespaceRow, /LOCAL_PARTNER[^\n]*PARTNER_DUE_DILIGENCE/u, `${documentName} 缺少 Local Partner 主 Tuple`);
+    assert.match(namespaceRow, /RELATED_PERSON[^\n]*RELATED_PERSON_KYC/u, `${documentName} 缺少关联人子 Tuple`);
+    assert.doesNotMatch(namespaceRow, /(?:^|[^A-Z_])CLIENT(?:[^A-Z_]|$)|OPERATING_ENTITY/u, `${documentName} 错误允许 Client/OE Role`);
+  }
+
+  assert.match(
+    scenario,
+    /source_namespace=CCT_LOCAL_PARTNER_APPLICATION, source_application_id=730320000000000001, role_type=LOCAL_PARTNER, role_id=730300000000000001, qualification_type=PARTNER_DUE_DILIGENCE/u,
+  );
+  assert.match(
+    scenario,
+    /source_namespace=CCT_LOCAL_PARTNER_APPLICATION, source_application_id=730320000000000001, role_type=RELATED_PERSON, role_id=730100000000000009, qualification_type=RELATED_PERSON_KYC/u,
+  );
+  for (const namespace of [
+    "CCT_CLIENT_APPLICATION",
+    "CCT_OPERATING_ENTITY_APPLICATION",
+    "CCT_LOCAL_PARTNER_APPLICATION",
+  ]) {
+    assert.match(scenario, new RegExp(`730320000000000001[^。\\n]*${namespace}|${namespace}[^。\\n]*730320000000000001`, "u"));
+  }
+
+  const ownershipContract = `${logicalDatabase}\n${scenario}\n${physicalDecisions}`;
+  assert.match(
+    ownershipContract,
+    /CCT 只(?:接收|回填)[^。]*Local Partner 主 Case\/Decision[^。]*Risk[^。]*(?:关联人 KYC 子 Case|子 Case)[^。]*(?:依赖|管理)/u,
+  );
+  assert.match(ownershipContract, /application_id[^。]*role_type[^。]*role_id[^。]*qualification_type[^。]*submission_content_hash/u);
 });
 
 test("Dispute documentation freezes the balanced seven-table aggregate and correction contracts", () => {

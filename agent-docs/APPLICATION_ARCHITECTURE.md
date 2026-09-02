@@ -1,8 +1,8 @@
 # Code-MoR Entry Application Architecture
 
-Last updated: 2026-08-29
+Last updated: 2026-09-02
 
-Status: current architecture baseline for subsequent design sessions. Console project naming and the Operations Gateway first slice are approved logical components; only API Gateway implementation is currently authorized.
+Status: current architecture baseline for subsequent design sessions. The Platform Support database model for the unified public API control plane is approved and generated; its `api`/`web`/`test` Java reactor now implements the Phase A persistence/initialization slice and PLT-I20 full typed Snapshot provider. Console/BFF modules, authentication/Tenant IAM commands, control-plane management APIs and the dynamic Gateway Snapshot cutover remain unimplemented; the existing Operations Gateway first slice remains the deployed Gateway runtime implementation.
 
 ## 1. Purpose
 
@@ -31,6 +31,8 @@ finance-service/
 platform-support-service/
 api-gateway/
 ```
+
+`platform-support-service/` contains the tested Maven/application foundation described by the [Platform Support application-foundation design](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md), plus a Flyway/MyBatis 21-table Phase A projection, deterministic initialization, mTLS workload boundary and PLT-I20 full-Snapshot provider. The other five core backend roots still contain database design artifacts without Java application modules. This implementation does not imply that remaining Platform capabilities are available.
 
 ### Entry-layer backend project roots
 
@@ -61,7 +63,7 @@ partner-console-web/     # Local Partner
 
 Do not create `client-api-service` or `provider-callback-service`. Client API is a logical external API surface routed to the owning core systems. Provider callbacks belong to Payment Orchestration.
 
-The current logical backend target is six core services, one API Gateway, three separately secured Console BFFs and one internal Vault: eleven Java deployable types. This is a target boundary, not a mandate to run or scaffold every deployable now. The Operations channel is required by MVP onboarding, refund, dispute, reconciliation and settlement flows; only its Gateway first slice is currently authorized. Frontend applications and the embedded `compensation-event` JAR are not deployable services.
+The current logical backend target is six core services, one API Gateway, three separately secured Console BFFs and one internal Vault: eleven Java deployable types. This is a target boundary, not a mandate to run or scaffold every deployable now. The Operations channel is required by MVP onboarding, refund, dispute, reconciliation and settlement flows; current Java implementation is limited to its Gateway slice and Platform Support Phase A. Frontend applications and the embedded `compensation-event` JAR are not deployable services.
 
 ## 3. What BFF means
 
@@ -77,7 +79,7 @@ For Code-MoR, each authenticated Console has its own BFF between API Gateway and
       -> authorized Client & Contract / Commerce / Payment / Risk / Finance / Platform Support interfaces
 ```
 
-`<audience>` is exactly `operations`, `client`, or `partner`. The BFFs may share libraries later, but they do not share a public deployable or security boundary by default.
+`<audience>` is exactly `operations`, `client`, or `partner`. Platform owns the global Account, Realm exactly `{OPERATIONS, CUSTOMER}`, and Channel exactly `{OPERATIONS, CLIENT, PARTNER}`. Operations uses OPERATIONS Realm/Channel; Client and Partner use CUSTOMER Realm with their respective CLIENT or PARTNER Channel. Tenant Member authorizes an Account within one Platform Tenant. CCT creates Client/Partner Applications before the Tenant projection exists, and Risk owns the typed source namespace for the qualification Case. The BFFs may share libraries later, but they do not share a public deployable or security boundary by default.
 
 The BFF may:
 
@@ -119,9 +121,11 @@ Cancel and Reversal remain separate Commerce commands. `COM-I05 Cancel` calls Pa
 
 The BFF is different from API Gateway:
 
-- **Gateway** handles external ingress, basic authentication, rate limiting, routing, request IDs, and access logs. It does not understand page use cases.
+- **Gateway** handles external ingress, minimal channel identity validation, Route Scope enforcement, rate limiting, routing, request IDs, and access logs. 所有外部 HTTP API 都由 Platform Support 的公共 Route Catalog 统一维护，覆盖 `OPERATIONS`, `CLIENT`, `PARTNER`, `CHECKOUT`, `CLIENT_API` and `PROVIDER_CALLBACK`. Gateway validates and compiles the global immutable Platform Snapshot, while retaining ownership of the Target Registry, security profiles, protocol limits and Redis runtime state. It does not evaluate `PLT-I02`, resource ownership or page use cases.
 - **BFF** understands frontend response shapes and authorized query composition. It does not own business decisions.
 - **Core systems** own business rules, state transitions, data, and cross-system domain workflows.
+
+内部服务之间的同步 HTTP 调用、MQ、XXL-Job 与 Vault 调用绕过 Gateway，使用服务发现、工作负载身份和各自的内部契约，不进入公共 Route Catalog。Platform 已实现 Migration、初始化和 PLT-I20 全量 Snapshot Provider；Gateway 动态消费与运行态切换尚未实现。已部署 Gateway 在切换前继续使用静态 Operations Catalog，不能据此把静态目录解释为新的长期控制面。
 
 ## 4. Browser-facing access model
 
@@ -160,7 +164,7 @@ client-console-web
       -> authorized core-system interfaces
 ```
 
-Its route families and authentication scheme remain a separate design. This document does not reuse Operations JWT decisions for Client users.
+Its route families use the channel-specific Customer Realm contract from the [unified human-authentication design](../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md). Client and Partner use separate audiences, BFFs and cookies; Operations remains Password-only. Gateway validates only the minimal Claim matrix, while Platform evaluates current membership/IAM and each core system verifies resource ownership.
 
 ### Partner Console
 
@@ -187,7 +191,7 @@ operations-console-web
       -> authorized core-system interfaces
 ```
 
-The only current public Operations routes are the three exact authentication paths defined by the [Operations API Gateway first-slice design](./plans/2026-08-29-operations-api-gateway-design.md). Gateway removes `/api/operations` and forwards only to `operations-console-bff`; it never routes Operations browser requests directly to Platform Support or a core system. Platform Support owns internal Operations accounts and Token issuance, while Gateway validates the Access JWT and the BFF performs current Role/Permission/Resource authorization.
+The only currently deployed public Operations routes are the three exact authentication paths retained by the [Operations Gateway hardening design](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md); unaffected parts of the [2026-08-29 first-slice design](./plans/2026-08-29-operations-api-gateway-design.md) remain in force until dynamic Snapshot cutover. Gateway removes `/api/operations` and forwards only to `operations-console-bff`; it never routes Operations browser requests directly to Platform Support or a core system. Platform Support owns internal Operations accounts and Token issuance, while Gateway validates the Access JWT and the BFF performs current Role/Permission/Resource authorization. Any later Operations route uses the same Platform-owned public Route Catalog and `OPERATIONS` channel rather than another static control-plane design.
 
 Do not share Client or Partner BFFs with Operations. Operations has broader permissions, maker-checker controls and sensitive audit requirements. The Operations frontend/BFF remain unimplemented until explicitly authorized; Gateway tests use protocol-level Simulators.
 
@@ -200,7 +204,7 @@ Do not share Client or Partner BFFs with Operations. Operations has broader perm
 | Client order and transaction history | Commerce, with authorized Payment/Finance query enrichment |
 | Client order cancellation; full or partial refund | Commerce command only |
 | Operations payment Reversal | Commerce `COM-I08` command only; Payment branch selection is internal |
-| Client balance, statement, and settlement request | Finance |
+| Client balance, statement, and Manual Payout request | Finance |
 | Partner entity submission | Client & Contract |
 | Partner entity and MID query | Client & Contract plus read-only Payment query |
 | Partner transaction query | Read-only Commerce/Payment views |
@@ -213,7 +217,7 @@ Partner access remains read-only for transactions. It cannot operate orders, pay
 
 ### Client API
 
-Client API is the collective name for stable external contracts, not an independent Java service. Gateway routes each request to the owning core system:
+Client API is the collective name for stable external contracts, not an independent Java service. Every Client API route is maintained in Platform Support with channel `CLIENT_API`, authentication profile `CLIENT_API_CREDENTIAL`, authorization mode `API_SCOPE` and an explicit `required_scope_code`. After validating the global immutable Snapshot and credential scope, Gateway routes the request to the owning core system, which retains resource-level authorization:
 
 | External route family | Owning backend |
 |---|---|
@@ -221,11 +225,11 @@ Client API is the collective name for stable external contracts, not an independ
 | `/api/v1/orders/**` | Commerce |
 | `/api/v1/refunds/**` | Commerce |
 | `/api/v1/balances/**` | Finance |
-| `/api/v1/settlements/**` | Finance |
+| `/api/v1/payouts/**` | Finance |
 | `/api/v1/webhooks/**` | Platform Support |
 | `/api/v1/client-profile/**` | Client & Contract, if externally required |
 
-Gateway performs edge controls only. External-contract versioning and resource-level authorization remain the responsibility of the owning system's external HTTP adapter.
+Gateway performs edge controls only. A Client API credential belongs to a Tenant, but the trusted Tenant ID contributes only to the runtime rate/concurrency key; it does not select a tenant-specific Route or Guard configuration. External-contract versioning and resource-level authorization remain the responsibility of the owning system's external HTTP adapter.
 
 ### Provider callbacks
 
@@ -265,8 +269,8 @@ The `compensation-event` component has no network endpoint. It runs inside each 
 
 | Backend | Browser access through Gateway | Machine access through Gateway | Exposure decision |
 |---|---|---|---|
-| Client Console BFF | Client Console only | No | Planned; separately exposed after its auth design |
-| Partner Console BFF | Partner Console only | No | Planned; separately exposed after its auth design |
+| Client Console BFF | Client Console only | No | Planned; unified auth boundary is designed, runtime implementation remains unauthorized |
+| Partner Console BFF | Partner Console only | No | Planned; unified auth boundary is designed, runtime implementation remains unauthorized |
 | Operations Console BFF | Operations Console only | No | First-slice auth routes exposed with high-privilege controls |
 | Commerce | Scoped Checkout endpoints | Client System | Exposed |
 | Payment Orchestration | No general browser API | Provider callbacks; narrowly scoped Client API if required | Restricted exposure |
