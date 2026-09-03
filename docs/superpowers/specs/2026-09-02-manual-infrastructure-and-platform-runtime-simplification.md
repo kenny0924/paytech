@@ -3,6 +3,8 @@
 Status: approved by the user on 2026-09-02.
 
 > **Transport successor:** This record remains authoritative for manual SQL, local infrastructure, the PLT-I20 data chain and its non-transport test evidence. The later [MVC/internal-HTTP design](./2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes only its Platform mTLS/application-security and local HTTP-handler assumptions: PLT-I20 and Actuator now use private HTTP without Spring Security/X.509, and the Foundation Starter supplies the shared `GlobalExceptionHandler`.
+>
+> **Error-semantics successor (2026-09-03):** PLT-I20 no longer catches and translates Snapshot query failures into a service-specific `503`. Invalid or unavailable current configuration now reaches the shared global exception boundary as an unhandled system exception and returns `500 INTERNAL_ERROR`.
 
 ## Decision
 
@@ -38,7 +40,7 @@ The following runtime seed framework is removed because initialization is now op
 - seed readiness state and seed-specific metrics;
 - the Platform-specific wrapper around the Foundation `IdGenerator`.
 
-Spring Boot readiness is used for process lifecycle. A small Gateway Snapshot health indicator may query the same production Service and report unavailable when the manually initialized catalog is missing or invalid. The private-HTTP Snapshot endpoint continues to fail closed with its stable `503` contract through the shared Foundation error boundary.
+Spring Boot readiness is used for process lifecycle. A small Gateway Snapshot health indicator may query the same production Service and report unavailable when the manually initialized catalog is missing or invalid. The private-HTTP Snapshot endpoint continues to fail closed through the shared Foundation error boundary with `500 INTERNAL_ERROR`.
 
 ## Test boundary
 

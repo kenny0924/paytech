@@ -12,6 +12,10 @@
 > Workload Identity 和 JWKS HTTPS 等传输描述已由
 > [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](./2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md)
 > 取代。公网 TLS 在 Nginx 终止；Java 应用使用部署网络限制的私有 HTTP，不持有 X.509 应用证书。
+>
+> 错误语义取代说明：用户于 2026-09-03 决定 PLT-I20 不再捕获并转换 Snapshot 查询异常。当前配置或数据库
+> 无法形成完整 Snapshot 时，由共享全局异常处理器返回 `500 INTERNAL_ERROR`；Gateway 对任意 `5xx` 继续保留
+> Last Valid，因此消费端的 Fail-Closed 行为不变。
 
 ## 1. 权威关系与生效边界
 
@@ -702,7 +706,7 @@ Snapshot Body 不返回 `generatedAt` 或 `contentHash`：两者都不是 Gatewa
 | 调用方额外发送 `If-None-Match` | 不作为契约参数处理，仍返回 `200` + 完整 typed Body |
 | 非部署私网来源访问 | 由网络边界阻断，不形成 PLT-I20 应用响应 |
 | 请求契约非法 | `400` |
-| 数据库尚未初始化 Target Catalog，或当前数据无法形成完整有效 Snapshot | `503`，不得返回部分列表 |
+| 数据库尚未初始化 Target Catalog，或当前数据无法形成完整有效 Snapshot | `500 INTERNAL_ERROR`，不得返回部分列表 |
 | Platform 暂时不可用 | 连接失败或 `5xx`；Gateway 保留 Last Valid |
 
 受控初始化已经存在至少一条 Approved Target 行后，`routes=[]` 是合法完整 Snapshot。它用于停用全部公网 Route：
@@ -957,7 +961,7 @@ Break-glass 不是日常发布方式，不伪造应用 Actor，也不增加 Roll
 | 新 Snapshot 任意一项非法 | 拒绝整份新 Snapshot，保留 Last Valid |
 | Approved Target Registry 不匹配 | 拒绝整份新 Snapshot |
 | Snapshot Body 超限或 Schema 未知 | 拒绝整份新 Snapshot |
-| Platform 当前数据无法形成完整 Catalog | Snapshot API `503`，不返回部分列表 |
+| Platform 当前数据无法形成完整 Catalog | Snapshot API `500 INTERNAL_ERROR`，不返回部分列表 |
 | 已初始化 Catalog 的当前有效 Route 为空 | 返回合法空 Snapshot；Gateway 切换后全部请求 `404` |
 | 管理写入候选冲突 | 整个事务回滚并返回 `409`/`400` |
 
@@ -1054,7 +1058,7 @@ Platform 至少审计：
 - Route 子集合整体替换与事务回滚；
 - 串行并发新增等价变量 Path 时只有一个成功；
 - Idempotency 同 Key 同载荷重放与异载荷冲突；
-- Snapshot 稳定顺序、完整 typed DTO、200/503，并确认不存在 ETag/304 分支；
+- Snapshot 稳定顺序、完整 typed DTO、`200`/`500 INTERNAL_ERROR`，并确认不存在 ETag/304 分支；
 - Invalid DML 状态不能返回部分 Snapshot；
 - PLT-I02、PLT-I03、Navigation 和管理权限 Fail-Closed；
 - Audit Event 与配置同事务。

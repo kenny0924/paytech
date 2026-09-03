@@ -1,5 +1,7 @@
 # MVC Web Logging and Internal HTTP Simplification Implementation Plan
 
+> **2026-09-03 Platform successor:** The PLT-I20-specific `PlatformErrorCode`/`ServiceUnavailableException`/`503` steps below are retained as implementation history. Current Platform code propagates Snapshot query failures to the shared global handler and returns `500 INTERNAL_ERROR`. The Foundation's general `ServiceUnavailableException -> 503` contract remains available to other explicit unavailable cases.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Centralize Spring MVC request/response logging and HTTP exception mapping, remove application-level TLS/X.509 from Platform Support and API Gateway, and preserve the real Client IP supplied by the trusted Nginx edge.

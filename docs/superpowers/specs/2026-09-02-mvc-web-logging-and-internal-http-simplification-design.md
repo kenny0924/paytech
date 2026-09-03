@@ -3,6 +3,10 @@
 日期：2026-09-02
 状态：已批准，进入实施
 
+> 2026-09-03 后继决定：PLT-I20 不再把 Snapshot 查询异常转换为专属 `503`。Processor 直接传播异常，由本文定义的
+> 全局兜底映射返回 `500 INTERNAL_ERROR`。本文关于其他服务显式抛出 `ServiceUnavailableException` 时返回 `503` 的
+> 通用 Foundation 能力继续有效。
+
 ## 1. 决策摘要
 
 本设计同时收敛三个基础设施边界：
@@ -139,9 +143,9 @@ Foundation 不导入任何 Platform、Payment、Finance 或其他业务系统错
 4. 其他 `ErrorException` -> `500 Internal Server Error`；
 5. 未处理 `Exception` -> `500 Internal Server Error`。
 
-`ServiceUnavailableException` 和其他系统异常只向客户端返回其 `CodeMessageEnum` 的安全默认消息，不外显底层异常消息、SQL、类名或堆栈。服务仍可传入自己的 `PlatformErrorCode` 等 `CodeMessageEnum`。
+`ServiceUnavailableException` 和其他系统异常只向客户端返回其 `CodeMessageEnum` 的安全默认消息，不外显底层异常消息、SQL、类名或堆栈。业务服务仍可传入自己的 `CodeMessageEnum`。
 
-Platform 的 `QueryGatewaySnapshotProcessor` 改为抛出携带 `PLATFORM_GATEWAY_SNAPSHOT_UNAVAILABLE` 的 `ServiceUnavailableException`。删除 `PlatformHttpExceptionHandler` 和 `PlatformProblem`，PLT-I20 的状态仍为 `503`，Body 改为统一公共结构。
+Platform 的 `QueryGatewaySnapshotProcessor` 不捕获或重新分类 Snapshot 查询异常。删除 `PlatformHttpExceptionHandler`、`PlatformProblem` 和仅供该转换使用的 `PlatformErrorCode`；PLT-I20 的未知系统异常由 `GlobalExceptionHandler` 返回 `500 INTERNAL_ERROR` 和统一公共 Body。
 
 ## 6. Platform Support 精简
 
@@ -161,7 +165,7 @@ PLT-I20 保持：
 - `{context-path}/gateway-config/v1/public-snapshot` 路径；
 - 每次全量返回 typed Snapshot；
 - HTTP -> Controller -> Processor -> Domain Service -> Repository -> Mapper -> 本地 MySQL 完整链路；
-- 配置无效或数据库不可用时 Fail-Closed，并返回统一 `503`；
+- 配置无效或数据库不可用时 Fail-Closed，并返回统一 `500 INTERNAL_ERROR`；
 - 不增加 ETag、缓存、持久化 Snapshot 或 Gateway 动态消费逻辑。
 
 Health、Liveness、Readiness 和 PLT-I20 在测试及本地环境使用普通 HTTP。公网调用仍无法绕过 Nginx/Gateway 和部署网络边界直接访问服务端口。
@@ -187,7 +191,7 @@ Health、Liveness、Readiness 和 PLT-I20 在测试及本地环境使用普通 H
 
 - 真实随机端口 HTTP 可以读取完整 Snapshot；
 - 配置变更在下一次查询可见；
-- 无效目录返回统一 `503`，并包含 `requestId` 和 `timestamp`；
+- 无效目录返回统一 `500 INTERNAL_ERROR`，并包含 `requestId` 和 `timestamp`；
 - Health/Liveness/Readiness 不需要客户端证书；
 - 架构门禁确认 Spring Security、X.509 类、SSL 配置和测试证书均不存在；
 - 完整 HTTP/MyBatis/MySQL 链保持通过；
@@ -237,6 +241,6 @@ Health、Liveness、Readiness 和 PLT-I20 在测试及本地环境使用普通 H
 
 - 所有 MVC 服务只需引入 `paytech-mvc-web-starter` 即可获得统一 Request/Response/耗时日志和全局错误响应；
 - Platform 不再包含或依赖应用级证书、X.509、mTLS 或 Spring Security；
-- PLT-I20 使用内网 HTTP，并保持完整 Snapshot 与稳定 `503` 业务语义；
+- PLT-I20 使用内网 HTTP，并保持完整 Snapshot 与统一 `500 INTERNAL_ERROR` 失败语义；
 - 公网 TLS 终止明确归属 Nginx，Gateway 使用内网 HTTP，并以 Nginx 覆盖写入的 Client IP 执行 Guard 和访问日志；
 - Foundation、Platform、Gateway 和根仓门禁全部通过，且不覆盖现有无关改动。
