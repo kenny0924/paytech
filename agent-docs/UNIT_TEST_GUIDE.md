@@ -1,6 +1,6 @@
 # Java 单元测试与自动化测试规范
 
-最后更新：2026-09-02
+最后更新：2026-09-03
 
 ## 1. 使用范围
 
@@ -25,7 +25,7 @@
 1. 不连接任何真实业务环境、线上中间件或团队外共享测试环境。
 2. 数据库、Redis 与 RabbitMQ 只复用仓库 `local-environment` 中固定版本的 Loopback 服务；测试不启动、不停止、不重建容器。
 3. DDL 与初始化 DML 由开发者按文档手工应用。测试只准备和清理自己拥有的数据，不创建或变更 Schema、不执行初始化 DML、不销毁共享状态。
-4. 当前测试所覆盖的 Controller、Processor、Domain Service、Repository、Mapper 和 Integration Client 使用真实生产实现。
+4. 当前测试所覆盖的 Controller、按需存在的 Processor、Domain Service、Repository、Mapper 和 Integration Client 使用真实生产实现。
 5. 外部系统通过真实 HTTP/MQ 协议连接有状态 Simulator，不通过 `when(...).thenReturn(...)` 等方法级 Stub 改写运行时行为。
 6. 未准备业务数据、未识别的请求或未消费的预期调用必须快速失败并输出上下文。
 7. 调用后同时验证接口结果、本地权威数据、`compensation_event`/消息、外部请求以及不应发生的副作用。
@@ -533,7 +533,7 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 
 - [ ] 测试选择了最小充分层级，但没有绕过需要验证的真实链路。
 - [ ] 纯单元测试没有启动 Spring、容器或行为 Stub 框架。
-- [ ] 服务级测试经过真实 Controller/Listener、Processor、Domain Service 和 Integration/Repository 实现。
+- [ ] 服务级测试经过真实 Controller/Listener、实际存在的 Processor、Domain Service 和 Integration/Repository 实现。
 - [ ] 数据库、Redis 和 MQ 在相关场景中由测试自动启动并使用真实客户端连接。
 - [ ] 外部 HTTP/MQ 通过有状态 Simulator 和真实协议完成，没有方法级 Stub。
 - [ ] Builder 只构建数据，Mocker 只准备状态，Checker/Probe 只观察和断言。

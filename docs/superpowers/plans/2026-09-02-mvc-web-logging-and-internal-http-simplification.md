@@ -1,6 +1,6 @@
 # MVC Web Logging and Internal HTTP Simplification Implementation Plan
 
-> **2026-09-03 Platform successor:** The PLT-I20-specific `PlatformErrorCode`/`ServiceUnavailableException`/`503` steps below are retained as implementation history. Current Platform code propagates Snapshot query failures to the shared global handler and returns `500 INTERNAL_ERROR`. The Foundation's general `ServiceUnavailableException -> 503` contract remains available to other explicit unavailable cases.
+> **2026-09-03 Platform successor:** The PLT-I20-specific `PlatformErrorCode`/`ServiceUnavailableException`/`503` steps below are retained as implementation history. Current Platform code removes the one-line `QueryGatewaySnapshotProcessor`; Controller and Health Indicator call `GatewaySnapshotService`, which owns the consistent read transaction. Snapshot failures propagate to the shared global handler and return `500 INTERNAL_ERROR`. The Foundation's general `ServiceUnavailableException -> 503` contract remains available to other explicit unavailable cases.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

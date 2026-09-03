@@ -3,9 +3,9 @@
 日期：2026-09-02
 状态：已批准，进入实施
 
-> 2026-09-03 后继决定：PLT-I20 不再把 Snapshot 查询异常转换为专属 `503`。Processor 直接传播异常，由本文定义的
-> 全局兜底映射返回 `500 INTERNAL_ERROR`。本文关于其他服务显式抛出 `ServiceUnavailableException` 时返回 `503` 的
-> 通用 Foundation 能力继续有效。
+> 2026-09-03 后继决定：PLT-I20 不再把 Snapshot 查询异常转换为专属 `503`，也不再保留仅做转发的 Processor。
+> Controller 和 Health Indicator 直接调用持有一致性读事务的 Domain Service；异常由本文定义的全局兜底映射返回
+> `500 INTERNAL_ERROR`。本文关于其他服务显式抛出 `ServiceUnavailableException` 时返回 `503` 的通用 Foundation 能力继续有效。
 
 ## 1. 决策摘要
 
@@ -145,7 +145,7 @@ Foundation 不导入任何 Platform、Payment、Finance 或其他业务系统错
 
 `ServiceUnavailableException` 和其他系统异常只向客户端返回其 `CodeMessageEnum` 的安全默认消息，不外显底层异常消息、SQL、类名或堆栈。业务服务仍可传入自己的 `CodeMessageEnum`。
 
-Platform 的 `QueryGatewaySnapshotProcessor` 不捕获或重新分类 Snapshot 查询异常。删除 `PlatformHttpExceptionHandler`、`PlatformProblem` 和仅供该转换使用的 `PlatformErrorCode`；PLT-I20 的未知系统异常由 `GlobalExceptionHandler` 返回 `500 INTERNAL_ERROR` 和统一公共 Body。
+Platform 不捕获或重新分类 Snapshot 查询异常。简单查询不再保留仅做转发的 `QueryGatewaySnapshotProcessor`；Controller 和 Health Indicator 直接调用一个 `GatewaySnapshotService`，一致性读事务由该 Service 持有。删除 `PlatformHttpExceptionHandler`、`PlatformProblem` 和仅供该转换使用的 `PlatformErrorCode`；PLT-I20 的未知系统异常由 `GlobalExceptionHandler` 返回 `500 INTERNAL_ERROR` 和统一公共 Body。
 
 ## 6. Platform Support 精简
 
@@ -164,7 +164,7 @@ PLT-I20 保持：
 
 - `{context-path}/gateway-config/v1/public-snapshot` 路径；
 - 每次全量返回 typed Snapshot；
-- HTTP -> Controller -> Processor -> Domain Service -> Repository -> Mapper -> 本地 MySQL 完整链路；
+- HTTP -> Controller -> Domain Service（持有一致性读事务）-> Repository -> Mapper -> 本地 MySQL 完整链路；
 - 配置无效或数据库不可用时 Fail-Closed，并返回统一 `500 INTERNAL_ERROR`；
 - 不增加 ETag、缓存、持久化 Snapshot 或 Gateway 动态消费逻辑。
 

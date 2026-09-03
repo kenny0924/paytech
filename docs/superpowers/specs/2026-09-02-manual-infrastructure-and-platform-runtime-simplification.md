@@ -5,6 +5,8 @@ Status: approved by the user on 2026-09-02.
 > **Transport successor:** This record remains authoritative for manual SQL, local infrastructure, the PLT-I20 data chain and its non-transport test evidence. The later [MVC/internal-HTTP design](./2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes only its Platform mTLS/application-security and local HTTP-handler assumptions: PLT-I20 and Actuator now use private HTTP without Spring Security/X.509, and the Foundation Starter supplies the shared `GlobalExceptionHandler`.
 >
 > **Error-semantics successor (2026-09-03):** PLT-I20 no longer catches and translates Snapshot query failures into a service-specific `503`. Invalid or unavailable current configuration now reaches the shared global exception boundary as an unhandled system exception and returns `500 INTERNAL_ERROR`.
+>
+> **Layering successor (2026-09-03):** The one-line `QueryGatewaySnapshotProcessor` has been removed under the current simple-use-case rule. The Controller and health indicator now call one `GatewaySnapshotService` directly; that Service owns the consistent read transaction. The older Processor references in implementation history are no longer current.
 
 ## Decision
 
@@ -24,9 +26,9 @@ Historical plans may still describe Flyway/Testcontainers decisions that were va
 Platform Support keeps the PLT-I20 chain:
 
 ```text
-GatewaySnapshotController
-  -> QueryGatewaySnapshotProcessor
+GatewaySnapshotController / GatewaySnapshotHealthIndicator
   -> GatewaySnapshotService
+     (consistent read TransactionTemplate)
   -> GatewayConfigurationRepository
   -> GatewayConfigurationMapper
   -> local MySQL

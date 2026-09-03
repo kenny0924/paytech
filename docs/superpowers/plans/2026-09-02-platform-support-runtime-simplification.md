@@ -3,6 +3,8 @@
 > **2026-09-02 transport successor:** This completed plan remains historical authority for manual SQL, local MySQL, the PLT-I20 chain and its test results. The later [MVC/internal-HTTP design](../specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes only its mTLS/application-security and local-handler clauses: current PLT-I20/Actuator use private HTTP without Spring Security/X.509, and Foundation supplies the shared error boundary. Historical task text below is intentionally unchanged.
 >
 > **2026-09-03 error-semantics successor:** PLT-I20 now propagates Snapshot query failures to the shared global handler as `500 INTERNAL_ERROR`; the stable `503` wording in the historical task text below is no longer current.
+>
+> **2026-09-03 layering successor:** The one-line `QueryGatewaySnapshotProcessor` is removed. Current PLT-I20 uses Controller/Health Indicator -> `GatewaySnapshotService` (consistent read transaction) -> Repository -> Mapper; Processor references below remain implementation history.
 
 > **For agentic workers:** Implement task-by-task with test-first red/green checks. Do not introduce an additional framework or abstraction layer.
 

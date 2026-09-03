@@ -1,6 +1,6 @@
 # Java 项目结构规范
 
-最后更新：2026-09-02
+最后更新：2026-09-03
 
 ## 1. 使用范围
 
@@ -215,22 +215,22 @@ public interface ClientEligibilityQueryApi {
 
 ### 4.1 提供方使用方式
 
-`*-web` 依赖自己的 `*-api`，位于 `ext/rest` 的 Controller 只做 HTTP 协议适配并委托 `service` 中的 Processor：
+`*-web` 依赖自己的 `*-api`。位于 `ext/rest` 的 Controller 只做 HTTP 协议适配；符合简单用例规则时可直接委托一个 Domain Service，否则委托 `service` 中的 Processor：
 
 ```java
 @RestController
 @AllArgsConstructor
 public class ClientEligibilityController implements ClientEligibilityQueryApi {
-    private final QueryClientEligibilityProcessor queryClientEligibilityProcessor;
+    private final ClientEligibilityService clientEligibilityService;
 
     @Override
     public ClientEligibilityResponse getEligibility(String clientId) {
-        return queryClientEligibilityProcessor.process(clientId);
+        return clientEligibilityService.getEligibility(clientId);
     }
 }
 ```
 
-Controller 不包含业务判断、事务、Repository 调用或跨系统编排。
+上例仅适用于方法少于 10 条有效可执行语句、只调用一个 Domain Service，并且没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排的简单用例。空行、注释、花括号和格式换行不计入语句数；任一条件不满足时都必须使用 Processor。Controller 不包含事务、Repository/Mapper/SDK 调用或跨系统编排。
 
 `@HttpExchange` 接口是内部 HTTP Method、Path、Header 和 DTO 签名的唯一来源。Controller 必须直接实现该接口，不得再次声明等价的 `@RequestMapping`、`@GetMapping` 或 `@PostMapping`；这些 MVC 注解只用于没有共享 Java API 契约的服务端入口。应用配置的 `context-path` 表达系统边界，接口注解只表达能力内路径，最终地址统一为 `{context-path}/{capability-path}`，不为每个服务机械增加 `/internal` 前缀。
 
@@ -275,7 +275,7 @@ Controller 不包含业务判断、事务、Repository 调用或跨系统编排�
 │   ├── rest/                        # Controller 与 REST 入站适配器
 │   └── mq/                          # 仅存在真实 MQ 入站能力时创建
 ├── service/
-│   └── processor/                   # 用例编排、校验、事务边界
+│   └── processor/                   # 按需创建：复杂用例编排、校验、事务边界
 ├── integration/
 │   ├── *Client.java                 # 出站端口
 │   └── impl/                        # Provider/RPC/HTTP 适配实现
@@ -296,17 +296,17 @@ Controller 不包含业务判断、事务、Repository 调用或跨系统编排�
 
 目录代表职责，不代表必须创建。没有对应能力时不要创建空目录。
 
-`ext` 和 `service` 必须保持平级。外部机制触发本服务工作时，入口适配器按协议放入 `ext/<protocol>`，只完成协议解析、入口校验、调用上下文转换和服务委托；内部用例编排留在 `service`。`ext/job`、`ext/dubbo`、`ext/rest` 是当前标准目录，MQ Listener 在存在实际消费能力时使用 `ext/mq`。出站调用不属于外部触发入口，统一放在平级 `integration` 包。
+`ext` 和 `service` 必须保持平级。外部机制触发本服务工作时，入口适配器按协议放入 `ext/<protocol>`，只完成协议解析、入口校验、调用上下文转换和服务委托；需要编排的内部用例留在 `service`。`ext/job`、`ext/dubbo`、`ext/rest` 是当前标准目录，MQ Listener 在存在实际消费能力时使用 `ext/mq`。出站调用不属于外部触发入口，统一放在平级 `integration` 包。
 
 `ext/dubbo` 只规定已有或迁移期兼容入口的包位置，不授权新项目引入 Dubbo。Code-MoR 内部同步服务调用仍使用轻量 `*-api` 与 Spring `@HttpExchange`，新项目不得新增 Dubbo 或 OpenFeign 契约。
 
 ### 5.1 HTTP 入站适配器
 
-`ext/rest` 中的 Controller 实现 `*-api` 中按能力拆分的 `@HttpExchange` 接口，并委托一个明确的 Processor。统一参数校验、错误响应、请求 ID 和鉴权上下文由 HTTP 基础设施处理，Controller 不复制业务规则。
+`ext/rest` 中的 Controller 实现 `*-api` 中按能力拆分的 `@HttpExchange` 接口。符合下节简单用例规则时直接委托一个 Domain Service，否则委托一个明确的 Processor。统一参数校验、错误响应、请求 ID 和鉴权上下文由 HTTP 基础设施处理，Controller 不复制业务规则。
 
-### 5.2 Processor
+### 5.2 Processor（按需）
 
-`service/processor` 中的 Processor 负责一个用例的参数校验和业务流程编排：
+`service/processor` 中的 Processor 负责需要独立应用层的参数校验和业务流程编排，不是每个入口都必须创建的转发类：
 
 ```text
 validate request
@@ -315,7 +315,9 @@ validate request
   → 填充 response
 ```
 
-- 默认事务边界位于 Processor。
+- Controller 方法少于 10 条有效可执行语句，且只委托一个 Domain Service、没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排时，可以省略 Processor。空行、注释、花括号和格式换行不计入语句数，不能通过调整格式规避边界。
+- 任一条件不满足时，无论物理代码行数多少都必须使用 Processor。
+- 复杂用例的默认事务边界位于 Processor；省略 Processor 的简单一致性读由 Domain Service 持有只读 `TransactionTemplate`。Controller 不持有事务边界。
 - Processor 只能调用 Domain Service 或明确的应用端口，不得直接调用 Repository、Mapper 或外部 SDK。
 - Processor 的请求和结果使用应用语义，不依赖 `ResponseEntity`、HTTP Header、Servlet 或客户端代理类型；协议参数在 Controller/Web 基础设施完成解析和转换。
 - 一个命令只由一个核心系统拥有。BFF 和 Gateway 不承担该命令的业务编排。
@@ -376,6 +378,14 @@ Domain Service → Repository interface → RepositoryImpl → Mapper → 本系
 允许的主路径：
 
 ```text
+简单用例：
+ext/* 入站适配器
+  → 一个 Domain Service / Domain
+    → Repository interface / Integration port
+      → RepositoryImpl / IntegrationImpl
+        → Mapper / 外部系统
+
+复杂用例：
 ext/* 入站适配器
   → Processor
     → Domain Service / Domain
@@ -434,12 +444,13 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] 公共契约和内部实现没有混在同一模块。
 - [ ] `*-api` 只包含轻量 HTTP 契约，没有业务实现或持久化依赖。
 - [ ] API DTO 的枚举语义使用 `String code`，内部枚举实现 `CodeEnum`，错误枚举按需实现 `CodeMessageEnum`。
-- [ ] Controller 实现 `@HttpExchange` API、没有重复 MVC Mapping，并仅委托 Processor。
+- [ ] Controller 实现 `@HttpExchange` API、没有重复 MVC Mapping；简单用例只委托一个 Domain Service，其他用例委托 Processor。
 - [ ] 外部触发入口位于与 `service` 平级的 `ext/job`、`ext/dubbo`、`ext/rest` 或实际协议子包，且没有承载业务逻辑。
 - [ ] 调用方通过本地 `*Client` 适配器隔离远程 API DTO，没有让远程 DTO进入领域层。
 - [ ] 未新增 Dubbo 或 OpenFeign 契约，内部调用未绕行 Gateway。
-- [ ] Processor 未直接调用 Repository、Mapper 或第三方 SDK。
-- [ ] Processor 未依赖 HTTP 类型，也没有为单一实现创建空泛的抽象基类或公共上下文。
+- [ ] 未创建仅做一行转发的 Processor；省略 Processor 时满足少于 10 条有效语句及全部简单用例条件，且 Controller 没有持有事务或访问 Repository、Mapper、SDK。
+- [ ] 实际存在的 Processor 未直接调用 Repository、Mapper 或第三方 SDK。
+- [ ] 实际存在的 Processor 未依赖 HTTP 类型，也没有为单一实现创建空泛的抽象基类或公共上下文。
 - [ ] Domain Service 与 Repository 使用业务语言命名。
 - [ ] 只访问本系统数据库。
 - [ ] DataObject 类型名没有 `DO` 后缀；数据库结构已使用项目统一 PDManer 模板设计，并与手工 DDL/DML、DataObject、Mapper 和 Repository 保持一致。
