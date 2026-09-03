@@ -20,8 +20,9 @@ For a new AI or developer session, read these files in order:
 10. `agent-docs/COMPENSATION_EVENT_GUIDE.md` — per-service reliable asynchronous execution, XXL-Job recovery and message idempotency.
 11. `docs/superpowers/specs/2026-09-02-vault-database-design.md` — current Vault V1 API, trust, token, topology, cryptographic persistence, idempotency and local-audit authority; read it with `vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md` and use `agent-docs/VAULT_SERVICE_ARCHITECTURE.md` only for the unchanged non-card/PCI and business-ownership safety boundaries.
 12. `docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md` — current Nginx TLS, trusted Client IP, private Java-service HTTP, Foundation MVC logging and shared error boundary.
-13. `requirements-site/content/requirements.ts` — canonical detailed requirements catalog.
-14. `requirements-site/content/global-use-case-sequences.mjs` — canonical global sequence catalog.
+13. `docs/superpowers/specs/2026-09-03-foundation-mybatis-type-handlers-design.md` — shared UTC `Instant`, internal `CodeEnum` persistence and DataObject documentation boundary.
+14. `requirements-site/content/requirements.ts` — canonical detailed requirements catalog.
+15. `requirements-site/content/global-use-case-sequences.mjs` — canonical global sequence catalog.
 
 ## Current phase
 

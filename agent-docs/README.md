@@ -10,6 +10,8 @@
 
 > **当前传输与 MVC 基线：** [MVC Web 日志、统一异常与内部 HTTP 精简设计](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md)规定公网 TLS 在 Nginx 终止，Nginx 覆盖一个 `X-Real-IP`，Gateway 只从私有 Nginx 网络接入、解析一次该地址供 Guard/访问日志使用并在转发 BFF 前删除代理 Header；Gateway、BFF、Platform、Vault 与核心 Java 服务之间使用私网 HTTP，不持有 X.509 证书。MVC 服务由 `paytech-mvc-web-starter` 自动获得完整 Request/Response/耗时 `INFO` 日志和统一 `GlobalExceptionHandler`，不得逐服务重复实现。
 
+> **当前 MyBatis 基线：** [Foundation MyBatis TypeHandler 设计](../docs/superpowers/specs/2026-09-03-foundation-mybatis-type-handlers-design.md)规定 `paytech-mybatis-support` 统一提供 UTC `Instant` 和内部 `CodeEnum` 映射。DataObject 使用强类型枚举并显式注册 Handler，未知数据库 Code Fail-Closed；外部 API/MQ DTO 继续使用字符串 Code，每个 DataObject 字段必须有说明约束的中文 JavaDoc。
+
 ## 必读顺序
 
 任何架构、业务设计或实现任务先读取：

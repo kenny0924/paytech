@@ -2,7 +2,7 @@
 
 最后更新：2026-09-02
 
-状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、七个公共 JAR 源码与本地 `base` Compose Profile 配置已经初始化；既有构建治理 POM 和五个公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus，新增 `paytech-caffeine-starter`、`paytech-redis-starter` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus；`base` Profile 已完成本机烟测并按需启停。Operations 首期 API Gateway 已在独立 Maven 仓库实现并通过构建、架构、验收与覆盖率门禁。Platform Support 已验证 `api`/`web`/`test` Spring MVC Reactor，并实现 Phase A 手工 SQL/MyBatis 21-table 投影和私有 HTTP PLT-I20 全量 Snapshot Provider；其余五个核心服务 Java 模块、Platform 剩余业务实现、Console BFF/前端、后续运行环境和生产基础设施仍未授权创建。
+状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、八个公共 JAR 源码与本地 `base` Compose Profile 配置已经初始化；既有构建治理 POM 和五个公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus，新增 `paytech-caffeine-starter`、`paytech-redis-starter`、`paytech-mybatis-support` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus；`base` Profile 已完成本机烟测并按需启停。Operations 首期 API Gateway 已在独立 Maven 仓库实现并通过构建、架构、验收与覆盖率门禁。Platform Support 已验证 `api`/`web`/`test` Spring MVC Reactor，并实现 Phase A 手工 SQL/MyBatis 21-table 投影和私有 HTTP PLT-I20 全量 Snapshot Provider；其余五个核心服务 Java 模块、Platform 剩余业务实现、Console BFF/前端、后续运行环境和生产基础设施仍未授权创建。
 
 ## 1. 使用范围
 
@@ -43,6 +43,7 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | Gateway 资源服务器 | Spring Security OAuth2 Resource Server JWT | Spring Boot 4.0.8 BOM 管理 | Gateway 只验证 Access JWT 和 Channel/Actor 上下文，不实现账号密码登录 |
 | 内部同步调用 | Spring HTTP Service Client | Spring Framework 管理 | `@HttpExchange` + `RestClient` + LoadBalancer + Nacos；使用部署网络限制的私有 HTTP，不新增 Dubbo/OpenFeign 或应用证书 |
 | 数据访问 | MyBatis Spring Boot Starter | 4.0.1 | 与 Spring Boot 4.0 线对齐；Mapper XML 为默认复杂 SQL 载体 |
+| MyBatis Core | MyBatis | 3.5.19 | 由统一 BOM 管理；公共 TypeHandler 位于无 Spring 自动配置的 `paytech-mybatis-support` |
 | 数据库 | MySQL LTS | 8.4；本地固定 8.4.11 | 早期允许一个实例承载多数据库，但每系统独立数据库和账号 |
 | Schema 演进 | 人工审查并执行的 SQL | 每服务一份当前 DDL + 一份初始化 DML | PDManer 是设计源；应用启动不建表、不迁移、不灌初始数据 |
 | MQ | RabbitMQ | 4.2；本地固定 4.2.9 | 对齐 Amazon MQ RabbitMQ 4.2；自建生产前重新选择当时受支持系列 |
@@ -97,7 +98,7 @@ paytech-build/
 - 导入 `spring-boot-dependencies:4.0.8`；
 - 导入 `spring-cloud-dependencies:2025.1.3`；
 - 导入 `spring-cloud-alibaba-dependencies:2025.1.0.0`；
-- 管理 MyBatis Starter 4.0.1、Redisson 4.6.1、XXL-Job 3.4.2 及其他未被上游 BOM 管理的依赖；
+- 管理 MyBatis Core 3.5.19、MyBatis Starter 4.0.1、Redisson 4.6.1、XXL-Job 3.4.2 及其他未被上游 BOM 管理的依赖；
 - 管理 JUnit、JaCoCo 等测试依赖，但不引入 Testcontainers 或嵌入式中间件。
 
 `paytech-parent` 负责：
@@ -118,7 +119,7 @@ paytech-build/
 - Maven 依赖与插件统一通过 `maven-public` Group 解析，`mirrorOf=*` 防止构建绕过本机代理；Snapshot 发布到 `maven-snapshots`，Release 发布到 `maven-releases`。
 - 本机使用开发者指定的 `/Users/kenny/Desktop/Workspace/Settings/3-Maven/settings/local_settings.xml`，并由 `~/.m2/settings.xml` 引用。该文件包含本机凭据，权限必须为 `600`，不得复制到仓库、日志或文档。
 - POM 的 `distributionManagement` 只引用仓库 ID 和 `${nexus.url}`；地址与凭据由 Maven Settings 注入，服务 POM 不硬编码账号或密码。
-- 当前 `com.paytech` 下的 `paytech-dependencies`、`paytech-parent`、`paytech-build`、`paytech-foundation`、`paytech-common-core`、`paytech-snowflake-id`、`paytech-mvc-web-starter`、`paytech-xxl-job-starter` 和 `paytech-compensation-event` 已发布 `1.0.0-SNAPSHOT`。Caffeine/Redis Starters 对应的最新 `paytech-dependencies` 增量、`paytech-caffeine-starter` 和 `paytech-redis-starter` 仅完成本机安装、源码与测试，尚未发布到 Nexus。旧 `mor-*` Snapshot 暂时保留，不作为新服务依赖。
+- 当前 `com.paytech` 下的 `paytech-dependencies`、`paytech-parent`、`paytech-build`、`paytech-foundation`、`paytech-common-core`、`paytech-snowflake-id`、`paytech-mvc-web-starter`、`paytech-xxl-job-starter` 和 `paytech-compensation-event` 已发布 `1.0.0-SNAPSHOT`。最新 BOM 增量、`paytech-caffeine-starter`、`paytech-redis-starter` 和 `paytech-mybatis-support` 仅完成本机安装、源码与测试，尚未发布到 Nexus。旧 `mor-*` Snapshot 暂时保留，不作为新服务依赖。
 - 生产制品库、发布权限模型、Release 不可变策略和 CI/CD 发布流程仍需单独设计；本机配置不直接复制到生产。
 
 公司名称确定为 PayTech，统一 Maven 坐标前缀使用 `com.paytech`，公共基础包使用 `com.paytech.foundation`。未来各业务服务在此公司级前缀下按系统边界选择基础包名，不复用历史 `com.payplus` 私有坐标。Code-MoR 仍是产品/项目名称；公司级 Maven artifactId 使用 `paytech-*`，既有本地运行资源和数据库继续使用 `mor-*` / `mor_*`，不把 `Mor` / `mor-` 前缀带入新增 Java 类名、Bean 名、配置前缀、日志、指标或错误 Code。
@@ -146,6 +147,7 @@ paytech-build/
 ```text
 paytech-foundation/
 ├── paytech-common-core/
+├── paytech-mybatis-support/
 ├── paytech-mvc-web-starter/
 ├── paytech-snowflake-id/
 ├── paytech-caffeine-starter/
@@ -154,7 +156,7 @@ paytech-foundation/
 └── paytech-compensation-event/
 ```
 
-七个 Foundation 模块均已实现。依赖方向固定为 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
+八个 Foundation 模块均已实现。依赖方向固定为 `paytech-compensation-event -> paytech-mybatis-support -> paytech-common-core` 和 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；公共 MyBatis 模块不依赖 Spring 或业务枚举，通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
 
 ### 6.1 `paytech-common-core`
 
@@ -162,7 +164,14 @@ paytech-foundation/
 - 不依赖 Spring MVC、数据库、MQ、Redis 或某个业务服务；
 - 不依赖或复制 Code-PMX/PayPlus 私有公共包。
 
-### 6.2 `paytech-mvc-web-starter`
+### 6.2 `paytech-mybatis-support`
+
+- 提供 MySQL `DATETIME(6)` 与 UTC `Instant` 的显式转换，以及实现 `CodeEnum` 的内部 DataObject 枚举映射；
+- 每个业务枚举由宿主 MyBatis 配置显式注册，不扫描业务包、不替换全局默认枚举 Handler；
+- 未知持久化 Code 失败关闭；外部 API/MQ DTO 继续使用字符串 Code；
+- 只依赖 `paytech-common-core` 与 MyBatis Core，不依赖 Spring、数据库 Driver 或业务模块。
+
+### 6.3 `paytech-mvc-web-starter`
 
 - 自动提供一个完整 Request/Response/耗时的 INFO 终态日志，以及一个共享 `GlobalExceptionHandler`；MVC 服务不得重复实现本地日志 Filter 或 `@RestControllerAdvice`；
 - 提供统一异常转换、参数校验错误、错误响应和 Request ID/MDC；当前已批准的完整 Body 日志不做脱敏、截断、采样，也不记录 Header/Cookie，后续如需改变必须独立设计；
@@ -171,7 +180,7 @@ paytech-foundation/
 - 不向外返回堆栈、SQL、内部类名、数据库键或敏感值；
 - 外部 API 与内部 API 可以有不同错误映射，但共享稳定错误编码和关联 ID。
 
-### 6.3 `paytech-snowflake-id`
+### 6.4 `paytech-snowflake-id`
 
 - 封装 Snowflake ID 接口、实现、时钟和节点参数校验；
 - 本地单节点固定使用明确的 Region/Worker，例如 `0/0`，禁止随机碰撞式分配；
@@ -179,7 +188,7 @@ paytech-foundation/
 - 检测到超过容忍阈值的时钟回拨时失败关闭，不静默产生可能重复的 ID；
 - 业务代码依赖 ID 接口，不直接创建静态 Snowflake 单例。
 
-### 6.4 `paytech-caffeine-starter`
+### 6.5 `paytech-caffeine-starter`
 
 - 使用 Spring Cache + Caffeine 3.2.4 提供进程内缓存，版本由 Spring Boot 4.0.8 BOM 管理；
 - 每个 Cache 默认最多 10,000 条、写入 10 分钟后过期、拒绝 `null` 并开启 Statistics；容量和 TTL 必须保持有界；
@@ -189,7 +198,7 @@ paytech-foundation/
 - Caffeine 与 Redis 是按方法选择的两个独立 Manager，不是自动串联的 L1/L2 Cache；两边必须使用不同 Cache Name，不能期待任一 Manager 自动回源到另一 Manager；
 - 当前设计不使用 `spring.cache.type` 切换 Manager。不需要进程内缓存的宿主不要引入 Caffeine Starter；只有宿主自己注册同名 `caffeineCacheManager` 时该 Bean 才退让。
 
-### 6.5 `paytech-redis-starter`
+### 6.6 `paytech-redis-starter`
 
 - 通过 Spring Boot 标准 `spring.data.redis.*` 配置和 Spring Data Redis 提供 Lettuce 普通访问；对象缓存优先注入 `RedisJsonTemplate`，字符串、计数器和其他 Redis 原生命令使用 `StringRedisTemplate`；
 - 同一 `RedisCacheManager` 实例以 `cacheManager` 和 `redisCacheManager` 两个 Bean Name 暴露，并标记为 `@Primary`；引入 Redis Starter 后，未显式指定 Manager 的 Spring Cache 注解默认使用 Redis；
@@ -203,13 +212,13 @@ paytech-foundation/
 - 当前已确认部署边界为 Redis 单机模式；Sentinel、Cluster 和 Master/Replica 在获得设计与真实测试前失败关闭；
 - 不提供通用 JSON Repository、Java 类型元数据序列化、Java 原生序列化、默认 TTL、Redis 业务权威状态或补偿 Claim；业务 Repository 负责具体 Key、结构版本、TTL、容量与失败语义。
 
-### 6.6 `paytech-xxl-job-starter`
+### 6.7 `paytech-xxl-job-starter`
 
 - 提供与具体业务能力无关的 XXL-Job Executor 配置、参数校验和生命周期接入；
 - 可以被其他本地调度能力独立使用，不依赖补偿 API、Mapper、数据库或 Handler；
 - 不决定补偿扫描参数、事件类型或 Claim/Lease 语义。
 
-### 6.7 `paytech-compensation-event`
+### 6.8 `paytech-compensation-event`
 
 - 封装每服务本地 `compensation_event`、事务提交后调度、Claim/Lease、重试、Handler 注册和 XXL-Job 兜底扫描适配；
 - 主动依赖 `paytech-xxl-job-starter`，并由本模块自己持有和注册补偿扫描 Handler；

@@ -1,8 +1,8 @@
 # Code-MoR 本地开发环境方案
 
-最后更新：2026-09-02
+最后更新：2026-09-03
 
-状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和七个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A 手工 SQL/MyBatis 21-table 投影和私有 HTTP PLT-I20 全量 Snapshot Provider。其他五个核心服务 Java 模块、Platform 剩余业务能力、Console BFF/前端、调度和外部可观测运行环境仍未创建。
+状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和八个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters、`paytech-mybatis-support` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A 手工 SQL/MyBatis 21-table 投影和私有 HTTP PLT-I20 全量 Snapshot Provider。其他五个核心服务 Java 模块、Platform 剩余业务能力、Console BFF/前端、调度和外部可观测运行环境仍未创建。
 
 当前传输基线以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准：Nginx 终止公网 TLS 并覆盖一个 `X-Real-IP`；Gateway 只接受 Nginx 私网流量，解析该值一次供 Guard/访问日志使用，并在转发 BFF 前删除代理 Header；Gateway、BFF、Platform Support、Vault 与核心 Java 服务通过私有 HTTP 通信且不持有 X.509 应用证书。
 

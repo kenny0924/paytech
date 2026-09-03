@@ -1,6 +1,6 @@
 # 开发约定与编码习惯
 
-最后更新：2026-09-02
+最后更新：2026-09-03
 
 ## 1. 使用范围与优先级
 
@@ -17,6 +17,7 @@
 - 公司级 Maven Artifact 和模块目录统一使用 `paytech-*`；`Code-MoR` 产品名以及既有 `mor-local`、`mor_*` 本地运行资源名称不因此改名。新增 Java 类名、包名、Bean 名、配置前缀、日志/指标、错误 Code、Topic/Group 和业务标识不得带 `Mor` / `mor-` 技术前缀；协议兼容确实无法避免时必须写明原因。
 - 类、方法和字段使用完整、专业的业务名称；避免 `getData`、`handle2`、`CommonUtil` 等含义模糊的命名。
 - 数据库映射对象直接使用业务实体名，由 `dataobject` 包表达其持久化职责；类型名不得追加 `DO` 后缀。跨层转换通过 Repository 完成，不能因为类型名精简而把数据库对象暴露到 API 或领域层。
+- DataObject 的每个字段都要有中文 JavaDoc，说明业务含义、单位、可空条件或关键约束；不得只把字段名翻译一遍。Record Component 同样遵守此规则。
 - Spring 配置前缀直接从能力开始，例如 `compensation.*`、`xxl.job.*`，不增加无意义的 `paytech` 中间层。
 - Topic 使用小写 `topic_{source_system}_{business_subject}`，Consumer Group/Queue 使用小写 `cg_{consumer_system}_{consumer_subject}`；消息统一使用 UTF-8 JSON。
 
@@ -44,6 +45,7 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - `BusinessException` 和 `BizCheckFailException` 只用于兼容已有代码；`JAVA_PROJECT_STRUCTURE.md` 中仍以 `BizCheckFailException` 展示的旧示例不适用于新增实现。
 - 所有内部业务枚举都实现 `CodeEnum`；只有带可安全外显默认消息的错误枚举实现继承 `CodeEnum` 的 `CodeMessageEnum`。
 - 数据库、HTTP、MQ、日志和业务比较使用 `getCode()`，禁止依赖 `name()`、`ordinal()` 或枚举声明顺序。Code 发布后不可修改，Java 枚举常量名可以安全重构。
+- 内部 DataObject 的闭合枚举列直接使用实现 `CodeEnum` 的 Java 枚举，并通过 `paytech-mybatis-support` 的 `CodeEnumTypeHandler` 为每个枚举类型显式注册；不启用全局扫描或默认枚举替换。未知数据库 Code 必须使当前读取 Fail-Closed，不能映射为 `null`。MySQL `DATETIME(6)` 到 `Instant` 统一使用同模块的 UTC `InstantTypeHandler`，服务不得复制同义 Handler。
 - 对外发布的 `*-api` DTO 和 MQ 契约以 `String` 承载枚举 Code，不使用 Java enum 字段。提供方在边界内从 `CodeEnum#getCode()` 转换，消费方在自己的边界显式解析和校验；未知 Code 必须进入可观察、Fail-Closed 的兼容性处理，不能依赖反序列化异常、`null` 或兜底枚举静默放行。
 - 错误 Code 使用一眼可读、稳定的英文大写语义，例如 `COMPENSATION_EVENT_CONFLICT`，不使用 `PAYTECH-COMMON-400001` 一类公司前缀加数字流水号。
 - 面向开发者和运营的异常消息使用中文，并包含必要的实体标识、当前状态和操作上下文；不得包含凭据、敏感明文或完整 Payload。
