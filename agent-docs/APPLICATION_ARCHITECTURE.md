@@ -1,8 +1,8 @@
 # Code-MoR Entry Application Architecture
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
-Status: current architecture baseline for subsequent design sessions. The Platform Support database model for the unified public API control plane is approved and generated; its `api`/`web`/`test` Java reactor now implements the Phase A persistence/initialization slice and PLT-I20 full typed Snapshot provider. Console/BFF modules, authentication/Tenant IAM commands, control-plane management APIs and the dynamic Gateway Snapshot cutover remain unimplemented; the existing Operations Gateway first slice remains the deployed Gateway runtime implementation.
+Status: current architecture baseline for subsequent design sessions. The Platform Support database model for the unified public API control plane is approved and generated; its `api`/`web`/`test` Java reactor now implements the Phase A persistence/initialization slice, PLT-I20 full typed Snapshot provider, Operations-only PLT-I22 JWKS provider and Nacos Discovery registration. Console/BFF modules, login/token-signing and other authentication/Tenant IAM commands, CUSTOMER JWKS, control-plane management APIs and the dynamic Gateway Snapshot/JWKS cutover remain unimplemented; the existing Operations Gateway first slice remains the deployed Gateway runtime implementation.
 
 ## 1. Purpose
 
@@ -32,7 +32,7 @@ platform-support-service/
 api-gateway/
 ```
 
-`platform-support-service/` contains the tested Maven/application foundation described by the [Platform Support application-foundation design](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md), plus a manually maintained SQL/MyBatis 21-table Phase A projection and private-HTTP PLT-I20 full-Snapshot provider. The [manual-infrastructure simplification](../docs/superpowers/specs/2026-09-02-manual-infrastructure-and-platform-runtime-simplification.md) supersedes its earlier Flyway/Testcontainers/runtime-seed mechanism, while the [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes its application mTLS transport. Platform now has no Spring Security/X.509/mTLS or local exception handler and reuses the Foundation MVC boundary. The other five core backend roots still contain database design artifacts without Java application modules. This implementation does not imply that remaining Platform capabilities are available.
+`platform-support-service/` contains the tested Maven/application foundation described by the [Platform Support application-foundation design](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md), plus a manually maintained SQL/MyBatis 21-table Phase A projection, private-HTTP PLT-I20 full-Snapshot provider, Operations PLT-I22 JWKS provider and Nacos Discovery registration. The [manual-infrastructure simplification](../docs/superpowers/specs/2026-09-02-manual-infrastructure-and-platform-runtime-simplification.md) supersedes its earlier Flyway/Testcontainers/runtime-seed mechanism, while the [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes its application mTLS transport. Platform now has no Spring Security/X.509/mTLS or local exception handler and reuses the Foundation MVC boundary. PLT-I22 publishes only Operations public verification keys; it does not implement login or private-key signing. The other five core backend roots still contain database design artifacts without Java application modules. This implementation does not imply that remaining Platform capabilities are available.
 
 ### Entry-layer backend project roots
 
@@ -63,7 +63,7 @@ partner-console-web/     # Local Partner
 
 Do not create `client-api-service` or `provider-callback-service`. Client API is a logical external API surface routed to the owning core systems. Provider callbacks belong to Payment Orchestration.
 
-The current logical backend target is six core services, one API Gateway, three separately secured Console BFFs and one internal Vault: eleven Java deployable types. This is a target boundary, not a mandate to run or scaffold every deployable now. The Operations channel is required by MVP onboarding, refund, dispute, reconciliation and settlement flows; current Java implementation is limited to its Gateway slice and Platform Support Phase A. Frontend applications and the embedded `compensation-event` JAR are not deployable services.
+The current logical backend target is six core services, one API Gateway, three separately secured Console BFFs and one internal Vault: eleven Java deployable types. This is a target boundary, not a mandate to run or scaffold every deployable now. The Operations channel is required by MVP onboarding, refund, dispute, reconciliation and settlement flows; current Java implementation is limited to its Gateway slice and Platform Support Phase A plus Operations JWKS query. Frontend applications and the embedded `compensation-event` JAR are not deployable services.
 
 ## 3. What BFF means
 
@@ -79,7 +79,7 @@ For Code-MoR, each authenticated Console has its own BFF between API Gateway and
       -> authorized Client & Contract / Commerce / Payment / Risk / Finance / Platform Support interfaces
 ```
 
-`<audience>` is exactly `operations`, `client`, or `partner`. Platform owns the global Account, Realm exactly `{OPERATIONS, CUSTOMER}`, and Channel exactly `{OPERATIONS, CLIENT, PARTNER}`. Operations uses OPERATIONS Realm/Channel; Client and Partner use CUSTOMER Realm with their respective CLIENT or PARTNER Channel. Tenant Member authorizes an Account within one Platform Tenant. CCT creates Client/Partner Applications before the Tenant projection exists, and Risk owns the typed source namespace for the qualification Case. The BFFs may share libraries later, but they do not share a public deployable or security boundary by default.
+`<audience>` in the project-name template is exactly `operations`, `client`, or `partner`; it is not the JWT `aud` claim. JWT Audience is respectively `operations-console`、`client-console` or `partner-console`. Platform owns the global Account, Realm exactly `{OPERATIONS, CUSTOMER}`, and Channel exactly `{OPERATIONS, CLIENT, PARTNER}`. Operations uses OPERATIONS Realm/Channel; Client and Partner use CUSTOMER Realm with their respective CLIENT or PARTNER Channel. Tenant Member authorizes an Account within one Platform Tenant. CCT creates Client/Partner Applications before the Tenant projection exists, and Risk owns the typed source namespace for the qualification Case. The BFFs may share libraries later, but they do not share a public deployable or security boundary by default.
 
 The BFF may:
 
@@ -125,7 +125,7 @@ The BFF is different from API Gateway:
 - **BFF** understands frontend response shapes and authorized query composition. It does not own business decisions.
 - **Core systems** own business rules, state transitions, data, and cross-system domain workflows.
 
-公网 TLS 由 Nginx 终止；Nginx 覆盖一个 `X-Real-IP` 后仅通过私网访问 Gateway。Gateway 只解析该值一次供 Guard 和 Access Log 共用，并在转发 BFF 前删除代理 Header。Gateway、BFF、Platform Support、Vault 与核心 Java 服务通过私有 HTTP 通信且不持有 X.509 应用证书。内部服务同步 HTTP、MQ、XXL-Job 与 Vault 调用绕过 Gateway，使用服务发现、部署网络限制和各自的内部契约，不进入公共 Route Catalog。Platform 已实现手工 Schema/初始化 DML 和 PLT-I20 全量 Snapshot Provider；Gateway 动态消费与运行态切换尚未实现。已部署 Gateway 在切换前继续使用静态 Operations Catalog，不能据此把静态目录解释为新的长期控制面。
+公网 TLS 由 Nginx 终止；Nginx 覆盖一个 `X-Real-IP` 后仅通过私网访问 Gateway。Gateway 只解析该值一次供 Guard 和 Access Log 共用，并在转发 BFF 前删除代理 Header。Gateway、BFF、Platform Support、Vault 与核心 Java 服务通过私有 HTTP 通信且不持有 X.509 应用证书。内部服务同步 HTTP、MQ、XXL-Job 与 Vault 调用绕过 Gateway，使用服务发现、部署网络限制和各自的内部契约，不进入公共 Route Catalog。Platform 已实现手工 Schema/初始化 DML、PLT-I20 全量 Snapshot Provider、Operations PLT-I22 JWKS Provider 与 Nacos Discovery 注册；Gateway 动态消费与运行态切换尚未实现。已部署 Gateway 在切换前继续使用静态 Operations Catalog 和测试 JWKS Simulator，不能据此把静态目录解释为新的长期控制面。
 
 ## 4. Browser-facing access model
 

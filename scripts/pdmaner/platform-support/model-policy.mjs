@@ -120,8 +120,8 @@ export const CHECK_CONTRACTS = Object.freeze({
   ck_refresh_generation_slot: "(status='ISSUED' AND active_slot=1 AND consumed_time IS NULL) OR (status IN ('CONSUMED','REVOKED','EXPIRED') AND active_slot IS NULL)",
   ck_refresh_generation_versions: "generation_no>0 AND hmac_key_version>0",
   ck_refresh_generation_times: "issued_time<expires_time",
-  ck_signing_key_slot: "(status='ACTIVE' AND active_slot=1) OR (status IN ('PREPARED','RETIRING','RETIRED') AND active_slot IS NULL)",
-  ck_signing_key_version: "algorithm='RS256' AND public_jwk_schema_version>0",
+  ck_jwt_signing_key_slot: "(status='ACTIVE' AND active_slot=1) OR (status IN ('PREPARED','RETIRING','RETIRED') AND active_slot IS NULL)",
+  ck_jwt_signing_key_version: "algorithm='RS256' AND public_jwk_schema_version>0",
   ck_tenant_source_tuple: "(tenant_type='INTERNAL' AND source_version IS NULL AND source_payload_hash IS NULL) OR (tenant_type IN ('CLIENT','PARTNER') AND source_version>0 AND source_payload_hash IS NOT NULL)",
   ck_tenant_invitation_email: "invited_email_vault_token IS NOT NULL AND invited_email_masked IS NOT NULL",
   ck_tenant_invitation_slot: "(status='PENDING' AND active_slot=1 AND accepted_account_id IS NULL AND accepted_member_id IS NULL AND accepted_time IS NULL) OR (status='ACCEPTED' AND active_slot IS NULL AND accepted_account_id IS NOT NULL AND accepted_member_id IS NOT NULL AND accepted_time IS NOT NULL) OR (status IN ('EXPIRED','REVOKED','SUPERSEDED') AND active_slot IS NULL AND accepted_account_id IS NULL AND accepted_member_id IS NULL AND accepted_time IS NULL)",
@@ -186,7 +186,7 @@ export const CHECK_CONTRACTS = Object.freeze({
 });
 
 export const CHECK_BINDINGS = Object.freeze({
-  ck_positive_version: Object.freeze(["user_account", "password_credential", "federated_identity", "authentication_challenge", "auth_session", "refresh_token_generation", "signing_key_metadata", "tenant_invitation", "access_tenant", "tenant_member", "role", "permission", "tenant_member_role", "role_permission", "api_credential", "api_credential_scope", "email_otp_challenge", "file_upload", "file_scan_policy", "file_scan_requirement", "file_object", "document_template", "document_template_translation", "consumer_document", "document_version", "document_access_grant", "notification_provider", "notification_request", "notification_delivery", "notification_route", "notification_suppression", "notification_template", "notification_template_translation", "webhook_endpoint", "webhook_endpoint_revision", "webhook_signing_secret", "webhook_subscription", "webhook_delivery", "audit_chain", "security_alert"]),
+  ck_positive_version: Object.freeze(["user_account", "password_credential", "federated_identity", "authentication_challenge", "auth_session", "refresh_token_generation", "jwt_signing_key", "tenant_invitation", "access_tenant", "tenant_member", "role", "permission", "tenant_member_role", "role_permission", "api_credential", "api_credential_scope", "email_otp_challenge", "file_upload", "file_scan_policy", "file_scan_requirement", "file_object", "document_template", "document_template_translation", "consumer_document", "document_version", "document_access_grant", "notification_provider", "notification_request", "notification_delivery", "notification_route", "notification_suppression", "notification_template", "notification_template_translation", "webhook_endpoint", "webhook_endpoint_revision", "webhook_signing_secret", "webhook_subscription", "webhook_delivery", "audit_chain", "security_alert"]),
   ck_user_account_shape: Object.freeze(["user_account"]),
   ck_user_account_credential: Object.freeze(["user_account"]),
   ck_password_argon2: Object.freeze(["password_credential"]),
@@ -208,8 +208,8 @@ export const CHECK_BINDINGS = Object.freeze({
   ck_refresh_generation_slot: Object.freeze(["refresh_token_generation"]),
   ck_refresh_generation_versions: Object.freeze(["refresh_token_generation"]),
   ck_refresh_generation_times: Object.freeze(["refresh_token_generation"]),
-  ck_signing_key_slot: Object.freeze(["signing_key_metadata"]),
-  ck_signing_key_version: Object.freeze(["signing_key_metadata"]),
+  ck_jwt_signing_key_slot: Object.freeze(["jwt_signing_key"]),
+  ck_jwt_signing_key_version: Object.freeze(["jwt_signing_key"]),
   ck_tenant_source_tuple: Object.freeze(["access_tenant"]),
   ck_tenant_invitation_email: Object.freeze(["tenant_invitation"]),
   ck_tenant_invitation_slot: Object.freeze(["tenant_invitation"]),

@@ -236,7 +236,7 @@ credential_id, tenant_id, key_prefix, key_verifier_phc, expires_time,
 status, rotated_from_id, version, create_time, update_time
 ```
 
-Retain `api_credential_scope` rows as the only authorization source. Remove `signing_key_metadata.public_jwk_hash`, all
+Retain `api_credential_scope` rows as the only authorization source. Remove `jwt_signing_key.public_jwk_hash`, all
 Readiness Hashes, and `email_otp_challenge.active_scope_hash`. Replace the OTP active uniqueness with the explicit
 Tenant/Subject/Purpose/Context tuple plus `active_slot`. Keep Authentication Challenge `active_scope_hash`, keyed HMAC
 fields, OTP Subject/Context/IP/Device hashes, and source projection hash exactly as allowed by the Spec.

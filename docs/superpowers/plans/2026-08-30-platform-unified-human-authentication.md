@@ -234,7 +234,7 @@ In `APPROVED_TABLE_GROUPS.identity_access`, remove `t_idp_connection` and `t_use
   "t_authentication_challenge",
   "t_auth_session",
   "t_refresh_token_generation",
-  "t_signing_key_metadata",
+  "t_jwt_signing_key",
   "t_tenant_invitation",
 ]
 ```
@@ -254,7 +254,7 @@ const AUTH_REQUIRED_FIELDS = {
   t_authentication_challenge: ["challenge_id", "challenge_no", "realm", "purpose", "account_id", "tenant_invitation_id", "email_vault_token", "email_masked", "active_scope_hash", "secret_hmac", "hmac_key_version", "expires_time", "max_attempts", "used_attempts", "status", "active_slot", "consumed_time", "supersedes_challenge_id", "version"],
   t_auth_session: ["session_id", "account_id", "realm", "channel", "context_type", "tenant_id", "tenant_member_id", "authentication_method", "account_auth_epoch", "credential_version_snapshot", "issued_time", "last_reauthenticated_time", "last_activity_time", "idle_expire_time", "absolute_expire_time", "current_generation_no", "status", "revocation_reason", "revoked_time", "version"],
   t_refresh_token_generation: ["refresh_generation_id", "session_id", "generation_no", "token_lookup_id", "token_secret_hmac", "hmac_key_version", "issued_time", "expires_time", "status", "active_slot", "consumed_time", "replaced_by_generation_id", "version"],
-  t_signing_key_metadata: ["signing_key_id", "realm", "kid", "algorithm", "kms_key_ref", "public_jwk_schema_version", "public_jwk_canonical_json", "public_jwk_hash", "status", "active_slot", "not_before", "signing_end_time", "verification_end_time", "version"],
+  t_jwt_signing_key: ["signing_key_id", "realm", "kid", "algorithm", "kms_key_ref", "public_jwk_schema_version", "public_jwk_canonical_json", "status", "active_slot", "not_before", "signing_end_time", "verification_end_time", "version"],
   t_tenant_invitation: ["invitation_id", "invitation_no", "tenant_id", "invited_email_vault_token", "invited_email_masked", "member_type", "initial_role_id", "invited_by_member_id", "expires_time", "status", "active_slot", "accepted_account_id", "accepted_member_id", "accepted_time", "version"],
 };
 ```
@@ -268,7 +268,7 @@ Add focused assertions equivalent to:
 ```js
 test("unified human auth replaces IdP-only identity mapping", () => {
   const names = new Set(model.entities.map(({ defKey }) => defKey));
-  for (const table of ["t_user_account", "t_password_credential", "t_oidc_provider", "t_federated_identity", "t_authentication_challenge", "t_auth_session", "t_refresh_token_generation", "t_signing_key_metadata", "t_tenant_invitation"]) {
+  for (const table of ["t_user_account", "t_password_credential", "t_oidc_provider", "t_federated_identity", "t_authentication_challenge", "t_auth_session", "t_refresh_token_generation", "t_jwt_signing_key", "t_tenant_invitation"]) {
     assert.ok(names.has(table), `missing ${table}`);
   }
   for (const table of ["t_idp_connection", "t_user_identity", "t_gateway_route", "t_gateway_route_ver"]) {
@@ -392,8 +392,8 @@ uk_auth_challenge_active(active_scope_hash,active_slot)
 uk_refresh_lookup(token_lookup_id)
 uk_refresh_session_gen(session_id,generation_no)
 uk_refresh_active(session_id,active_slot)
-uk_signing_realm_kid(realm,kid)
-uk_signing_active(realm,active_slot)
+uk_jwt_signing_realm_kid(realm,kid)
+uk_jwt_signing_active(realm,active_slot)
 uk_tenant_invitation_no(invitation_no)
 uk_tenant_invite_active(tenant_id,invited_email_vault_token,active_slot)
 ```
@@ -480,7 +480,7 @@ ck_refresh_generation_slot:
   (status='ISSUED' AND active_slot=1 AND consumed_time IS NULL)
   OR (status IN ('CONSUMED','REVOKED','EXPIRED') AND active_slot IS NULL)
 
-ck_signing_key_slot:
+ck_jwt_signing_key_slot:
   (status='ACTIVE' AND active_slot=1)
   OR (status IN ('PREPARED','RETIRING','RETIRED') AND active_slot IS NULL)
 

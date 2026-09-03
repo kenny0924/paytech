@@ -269,11 +269,11 @@ export const TABLES = Object.freeze([
     ],
   }),
   defineTable({
-    key: "signing_key_metadata",
-    name: "签名密钥元数据",
-    comment: "保存 Realm 隔离的 RS256 KMS 公钥元数据和轮换状态；Canonical JSON 仅允许有界版本化 RSA 公钥 JWK",
+    key: "jwt_signing_key",
+    name: "JWT 签名密钥",
+    comment: "保存 Realm 隔离的 RS256 JWT 签名密钥公开材料、KMS 引用和轮换状态；Canonical JSON 仅允许有界版本化 RSA 公钥 JWK",
     fields: [
-      pk("signing_key_id", "签名密钥标识", "签名密钥元数据的稳定业务标识"),
+      pk("signing_key_id", "签名密钥标识", "JWT 签名密钥的稳定业务标识"),
       code("realm", "认证域", "NN", ["OPERATIONS", "CUSTOMER"]),
       str("kid", "签名密钥公开标识", "NN", 128),
       code("algorithm", "签名算法", "NN", ["RS256"]),
@@ -288,9 +288,9 @@ export const TABLES = Object.freeze([
       int("version", "签名密钥并发版本"),
     ],
     indexes: [
-      uk("uk_signing_realm_kid", "realm", "kid"),
-      uk("uk_signing_active", "realm", "active_slot"),
-      ix("idx_signing_verify_end", "status", "verification_end_time"),
+      uk("uk_jwt_signing_realm_kid", "realm", "kid"),
+      uk("uk_jwt_signing_active", "realm", "active_slot"),
+      ix("idx_jwt_signing_verify_end", "status", "verification_end_time"),
     ],
   }),
   defineTable({

@@ -380,7 +380,10 @@ Origin、Credentials 和 CSRF；Platform 负责 Refresh Secret 与 Session 状�
 
 - OPERATIONS 与 CUSTOMER 使用不同 HTTPS issuer、KMS Key Ring 和 JWKS；算法固定 RS256，Header 必须有 ACTIVE
   kid。
-- 有效期最长 15 分钟，audience 精确为当前 Channel。
+- 当前 Operations 本地 issuer 固定为 `https://platform-support.local.test`，生产 issuer 必须由环境提供 HTTPS
+  标识；未来 CUSTOMER issuer 必须与 Operations 不同。issuer 是 Token 身份标识，不要求内部 JWKS 传输使用 TLS。
+- 有效期最长 15 分钟，Audience 必须按当前 Channel 精确映射：`OPERATIONS -> operations-console`、
+  `CLIENT -> client-console`、`PARTNER -> partner-console`，不得把 Channel Code 本身当作 Audience。
 - 必需 Claims：iss、sub、aud、token_use=ACCESS、sid、jti、realm、channel、actor_type、context_type、iat、nbf、
   exp。
 - Tenant Context 额外包含 tenant_id、tenant_type、tenant_member_id；Account Context 不得包含这些 Claims。
@@ -388,14 +391,21 @@ Origin、Credentials 和 CSRF；Platform 负责 Refresh Secret 与 Session 状�
 - Gateway 只校验签名、时效、issuer、audience、realm/channel/actor_type 和最小 Claim 矩阵；当前 Account/Member/
   Tenant/Role/Permission 仍由 BFF 调 Platform 授权接口并由领域系统复核资源。
 
-### 11.5 t_signing_key_metadata
+### 11.5 t_jwt_signing_key
 
 关键字段为 signing_key_id、realm、kid、algorithm=RS256、kms_key_ref、public_jwk_schema_version、
-public_jwk_canonical_json、public_jwk_hash、status、not_before、signing_end_time、verification_end_time、version。
+public_jwk_canonical_json、status、not_before、signing_end_time、verification_end_time、version；没有可推导且无消费方的
+`public_jwk_hash`。
 
-uk_signing_realm_kid(realm,kid) 保证 Realm 内唯一。状态只允许
+uk_jwt_signing_realm_kid(realm,kid) 保证 Realm 内唯一。状态只允许
 PREPARED -> ACTIVE -> RETIRING -> RETIRED；每个 Realm 同时最多一个 ACTIVE 签名 Key。旧 Key 在所有已签 Access
 Token 的最长生命周期结束前保留在 JWKS；数据库只保存公钥和非秘密 KMS 引用，永不保存私钥材料。
+
+当前 PLT-I22 通过私有 HTTP `GET /platform-support/authentication/v1/realms/OPERATIONS/jwks` 发布 Operations
+完整公钥集合，不使用 ETag 或应用证书。响应只允许唯一 ACTIVE 与仍有效 RETIRING Key，最多 16 把/64 KiB；每把
+必须是 RS256、RSA-2048+、`use=sig`、`key_ops=[verify]`、合法稳定 `kid` 和规范无填充 Base64URLUInt `n/e`，
+任何未知/私钥字段或生命周期不一致都 Fail-Closed。Client 与 Partner 未来共用 CUSTOMER JWKS/Key Ring，但继续使用
+不同 Audience/Channel；本期不发布 CUSTOMER endpoint。
 
 ## 12. Tenant、Member、Role 与 Invitation
 

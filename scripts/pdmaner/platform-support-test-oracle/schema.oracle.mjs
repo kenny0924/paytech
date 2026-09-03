@@ -2,7 +2,7 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
   identity_access: Object.freeze([
     "t_user_account", "t_password_credential", "t_federated_identity", "t_access_tenant",
     "t_tenant_member", "t_tenant_invitation", "t_authentication_challenge", "t_auth_session",
-    "t_refresh_token_generation", "t_signing_key_metadata", "t_role", "t_permission",
+    "t_refresh_token_generation", "t_jwt_signing_key", "t_role", "t_permission",
     "t_tenant_member_role", "t_role_permission", "t_api_credential", "t_api_credential_scope",
     "t_email_otp_challenge", "t_email_otp_attempt",
   ]),
@@ -322,7 +322,7 @@ export const REQUIRED_FIELDS = Object.freeze({
   t_authentication_challenge: Object.freeze(["realm", "purpose", "active_scope_hash", "secret_hmac", "hmac_key_version", "status", "active_slot", "version"]),
   t_auth_session: Object.freeze(["account_id", "realm", "channel", "tenant_id", "tenant_member_id", "authentication_method", "status", "version"]),
   t_refresh_token_generation: Object.freeze(["session_id", "generation_no", "token_lookup_id", "token_secret_hmac", "hmac_key_version", "status", "active_slot", "version"]),
-  t_signing_key_metadata: Object.freeze(["realm", "kid", "algorithm", "kms_key_ref", "public_jwk_canonical_json", "status", "active_slot", "version"]),
+  t_jwt_signing_key: Object.freeze(["realm", "kid", "algorithm", "kms_key_ref", "public_jwk_canonical_json", "status", "active_slot", "version"]),
   t_tenant_member_role: Object.freeze(["tenant_member_role_id", "tenant_member_id", "tenant_id", "role_id", "role_scope_key", "status", "version"]),
   t_api_credential: Object.freeze(["tenant_id", "key_prefix", "key_verifier_phc", "expires_time", "status", "rotated_from_id", "version"]),
   t_email_otp_challenge: Object.freeze(["tenant_scope_key", "subject_ref_hash", "context_ref_hash", "email_vault_token", "email_blind_index", "code_hmac", "active_slot", "version"]),
@@ -353,7 +353,7 @@ export const FORBIDDEN_FIELDS_BY_TABLE = Object.freeze({
   t_user_account: Object.freeze(["email_blind_index", "email_vault_record_version", "email_vault_metadata_hash"]),
   t_federated_identity: Object.freeze(["oidc_provider_id"]),
   t_access_tenant: Object.freeze(["owner_ref_type", "client_id"]),
-  t_signing_key_metadata: Object.freeze(["public_jwk_hash"]),
+  t_jwt_signing_key: Object.freeze(["public_jwk_hash"]),
   t_api_credential: Object.freeze(["client_id", "key_hash", "scope_hash"]),
   t_email_otp_challenge: Object.freeze(["active_scope_hash", "vault_record_version", "vault_metadata_hash"]),
   t_file_object: Object.freeze(["scan_policy_ver_id", "scan_policy_hash"]),
@@ -425,7 +425,7 @@ export function isForbiddenSecretField(fieldName) {
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 export const EXPECTED_CHECK_COUNT = 85;
-export const EXPECTED_CHECK_POLICY_DIGEST = "4a97e82f3b462ec40755c734d068d55fd4b6b721836b380c0e789c3bf20447fb";
+export const EXPECTED_CHECK_POLICY_DIGEST = "6260b6db67d05e37a3361c32507363271bee61bd4ad9144358c5bc8a1e6a6f3d";
 
 export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
   ck_federated_provider: Object.freeze({
@@ -544,5 +544,5 @@ export const EXPECTED_TOTALS = Object.freeze({
   diagramGroups: 7,
 });
 
-export const EXPECTED_MODEL_DIGEST = "04b9825f6763aec30dbc3ecf0ae398edb3051c835fa9bf1d3f5ef0ee9ac42262";
-export const EXPECTED_STRUCTURAL_DIGEST = "b3583c1ffad8139ed026967d3299ed952577d5c2fdb90bdbdf3ce955de5efdf5";
+export const EXPECTED_MODEL_DIGEST = "d07cfbe2153490c79e17715b8e43ae4e1b6c6ea1436fe8a3a6e063ddaee455bb";
+export const EXPECTED_STRUCTURAL_DIGEST = "18b9c0ea482073457ed5084d0eddc77e51508d6964d34679905667f8a80e4722";

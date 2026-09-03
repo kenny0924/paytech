@@ -2,7 +2,7 @@
 
 最后更新：2026-09-03
 
-状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和八个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters、`paytech-mybatis-support` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A 手工 SQL/MyBatis 21-table 投影和私有 HTTP PLT-I20 全量 Snapshot Provider。其他五个核心服务 Java 模块、Platform 剩余业务能力、Console BFF/前端、调度和外部可观测运行环境仍未创建。
+状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和八个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters、`paytech-mybatis-support` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A 手工 SQL/MyBatis 21-table 投影、私有 HTTP PLT-I20 全量 Snapshot Provider、Operations PLT-I22 JWKS Provider 与 Nacos Discovery 注册。其他五个核心服务 Java 模块、Platform 剩余业务能力、Console BFF/前端、调度和外部可观测运行环境仍未创建。
 
 当前传输基线以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准：Nginx 终止公网 TLS 并覆盖一个 `X-Real-IP`；Gateway 只接受 Nginx 私网流量，解析该值一次供 Guard/访问日志使用，并在转发 BFF 前删除代理 Header；Gateway、BFF、Platform Support、Vault 与核心 Java 服务通过私有 HTTP 通信且不持有 X.509 应用证书。
 
@@ -249,7 +249,7 @@ Vault 本地开发需要的 KMS、Secrets Manager 和 Object Storage 模拟器�
 
 服务在 Nacos 中按稳定 `spring.application.name` 注册。端口只用于本机调试，不成为跨环境契约。
 
-### 8.3 当前 Platform Support Phase A
+### 8.3 当前 Platform Support 运行切片
 
 Platform Support 的自动门禁使用 `base` Profile 中的本地 MySQL。首次运行或 SQL 变化后，先按 [`platform-support-service/README.md`](../platform-support-service/README.md) 手工应用 Schema 与初始化 DML，再执行：
 
@@ -258,7 +258,7 @@ cd platform-support-service
 ./mvnw clean verify
 ```
 
-实际启动可执行 JAR 前只需提供 Platform 专属 MySQL 配置；应用不读取 Bootstrap Secret，也不执行建表、Schema 变更或初始化 DML。PLT-I20、`health`、`liveness`、`readiness`、`info` 和 `prometheus` 共用 `18106` 私有 HTTP Listener，Readiness 检查当前 Snapshot 能否从数据库完整构造。应用不包含 Spring Security、X.509/mTLS、证书配置或本地异常处理器；完整变量、手工 SQL 和 PLT-I20 边界以 [`platform-support-service/README.md`](../platform-support-service/README.md) 为准。
+实际启动可执行 JAR 前提供 Platform 专属 MySQL 配置和可达的 Nacos Discovery 地址；应用不读取 Bootstrap Secret，也不执行建表、Schema 变更或初始化 DML。PLT-I20、Operations PLT-I22、`health`、`liveness`、`readiness`、`info` 和 `prometheus` 共用 `18106` 私有 HTTP Listener，Readiness 检查当前 Snapshot 能否从数据库完整构造。应用注册名固定为 `platform-support-service`，不导入 Nacos Config；它不包含 Spring Security、X.509/mTLS、证书配置或本地异常处理器。完整变量、手工 SQL 和接口边界以 [`platform-support-service/README.md`](../platform-support-service/README.md) 为准。
 
 ## 9. 本地 MySQL 多数据库方案
 
@@ -329,7 +329,7 @@ xxl_job
 6. 调试跨服务 Trace、Metrics 或 Logs 时再启动 `observability`；
 7. 停止时先退出 Java 服务，再执行 `docker compose down`，保留数据卷。
 
-只检查 Platform Support Phase A 时至少启动 `base` 中的 MySQL，并确认 `mor_platform` 已手工应用当前两份 SQL；无需启动未被当前测试使用的其他 Java 服务。
+只检查 Platform Support 当前自动门禁时至少启动 `base` 中的 MySQL，并确认 `mor_platform` 已手工应用当前两份 SQL；测试 Profile 会关闭 Nacos Discovery，无需启动未被当前测试使用的其他 Java 服务。
 
 不要把“本地全绿”建立在所有十一个 Deployable（六个核心服务、API Gateway、三个 Console BFF 和 Vault）必须同时常驻的前提上；当前仍只按需启动已经实现且属于当前业务链的应用，未创建的核心服务、Console BFF 和 Vault 不因此获得实现授权。
 
@@ -356,7 +356,7 @@ Java 服务至少验证：
 - 日志含 Request/Trace ID，且没有密码、Token 或敏感明文。
 - Nginx 终止公网 TLS、覆盖一个单值合法 `X-Real-IP`，并且只有 Nginx 私网可到达 API Gateway；Gateway 从该值构造唯一可信 Client IP 上下文供 Guard 和 Access Log 共用，转发 BFF 前删除 `Forwarded`、逐项列举的 X-Forwarded 系列 Header 与 `X-Real-IP`。
 - API Gateway Application 以私有 HTTP 监听 `18080`，Management 只在 `19080` 暴露 `health` / `info` / `prometheus`；Liveness 只含 `livenessState`，Readiness 只含 `readinessState`、`gatewayBootstrap` 和短超时 `gatewayRedis`，不把 Operations BFF 或 JWKS 可用性纳入就绪门禁。Gateway 到 BFF 与 JWKS 同样使用内部 HTTP，不加载应用证书或 Trust Anchor。
-- Platform Support Phase A 以私有 HTTP 监听 `18106`；Liveness 只反映进程状态，Readiness 要求当前 Gateway Snapshot 能从手工初始化的数据库完整构造，健康详情不对外披露。
+- Platform Support 以私有 HTTP 监听 `18106` 并注册到 Nacos；Liveness 只反映进程状态，Readiness 要求当前 Gateway Snapshot 能从手工初始化的数据库完整构造，健康详情不对外披露。Operations PLT-I22 从同库读取 JWKS，但不加入 Gateway 的就绪门禁。
 
 ## 15. 自动测试与本地共享环境的边界
 
@@ -378,7 +378,7 @@ Java 服务至少验证：
 - 清理现有 Docker Images、Containers、Volumes 或 Build Cache；
 - 修改 Docker Desktop 全局资源设置；
 - 修改个人 `.zshrc`、IDE 全局配置或系统默认 JDK；
-- 创建尚未授权的核心业务服务 Java 模块、Console BFF/前端或业务表；Operations Gateway 与 Platform Phase A 已实现，不在本条禁止范围内；
+- 创建尚未授权的核心业务服务 Java 模块、Console BFF/前端或业务表；Operations Gateway 与 Platform 当前已列明的 Phase A/PLT-I20/Operations PLT-I22 切片不在本条禁止范围内；
 - 创建 `scheduler`、`observability`、Vault 模拟依赖等后续 Compose Profile；
 - 创建/发布云资源、CI/CD 或生产部署。
 

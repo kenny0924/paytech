@@ -310,7 +310,7 @@ test("Platform Support unified human authentication keeps deployment IdP configu
   for (const table of [
     "t_user_account", "t_password_credential", "t_federated_identity",
     "t_authentication_challenge", "t_auth_session", "t_refresh_token_generation",
-    "t_signing_key_metadata", "t_tenant_invitation",
+    "t_jwt_signing_key", "t_tenant_invitation",
   ]) {
     assert.ok(names.has(table), `missing ${table}`);
   }
@@ -351,7 +351,7 @@ test("Platform Support Identity group uses global accounts and tenant-owned cred
   assert.deepEqual(TABLES.map((table) => table.defKey), [
     "user_account", "password_credential", "federated_identity", "access_tenant",
     "tenant_member", "tenant_invitation", "authentication_challenge", "auth_session",
-    "refresh_token_generation", "signing_key_metadata", "role", "permission",
+    "refresh_token_generation", "jwt_signing_key", "role", "permission",
     "tenant_member_role", "role_permission", "api_credential", "api_credential_scope",
     "email_otp_challenge", "email_otp_attempt",
   ]);
@@ -370,7 +370,7 @@ test("Platform Support Identity group uses global accounts and tenant-owned cred
   for (const removedField of ["client_id", "scope_hash", "key_hash"]) {
     assert.equal(fieldsOf("api_credential").includes(removedField), false);
   }
-  assert.equal(fieldsOf("signing_key_metadata").includes("public_jwk_hash"), false);
+  assert.equal(fieldsOf("jwt_signing_key").includes("public_jwk_hash"), false);
   assert.equal(fieldsOf("email_otp_challenge").includes("active_scope_hash"), false);
   assert.deepEqual(
     tableByKey.get("email_otp_challenge").indexes

@@ -139,15 +139,15 @@ api-gateway-test ────→ api-gateway-web
 - 默认 `auto` 包含架构和真实 HTTP E2E 验收。`./mvnw clean verify` 之后还必须独立运行两个 Node 门禁；JaCoCo 对未舍入 Instruction/Branch 同时要求 `>= 90%`，只排除精确的 `ApiGatewayApplication`，并校验新鲜度与编译类一致性。
 - `api-gateway-web` 产出普通 JAR 和可执行 `-exec.jar`；`api-gateway-test` 跳过 install/deploy 且不产出可部署 JAR。Application/Management 默认端口分别为 `18080`/`19080`，健康组成与运行命令见 [`api-gateway/README.md`](../api-gateway/README.md)。
 
-### 3.3 Platform Support Phase A 运行切片
+### 3.3 Platform Support 当前运行切片
 
 Platform Support 当前实际仓库结构是：
 
 ```text
 platform-support-service/
 ├── pom.xml
-├── platform-support-api/               # PLT-I20 @HttpExchange 与不可变 typed DTO
-├── platform-support-web/               # MVC、MyBatis、共享 Foundation 边界与 Snapshot Provider
+├── platform-support-api/               # PLT-I20/PLT-I22 @HttpExchange 与不可变 typed DTO
+├── platform-support-web/               # MVC、MyBatis、Nacos Discovery、Snapshot/JWKS Provider
 ├── platform-support-test/              # MySQL、HTTP、架构与覆盖率 auto 门禁
 ├── docs/database/                       # 已批准的完整 PDManer 设计输入
 └── README.md
@@ -159,12 +159,12 @@ platform-support-service/
 platform-support-test ────→ platform-support-web ────→ platform-support-api
 ```
 
-- `platform-support-api` 当前只发布有真实 Gateway 消费者的 PLT-I20 `@HttpExchange` 查询和不可变 DTO；成功调用每次返回完整 typed Snapshot，不使用 ETag/304。
-- `platform-support-web` 实现 Spring MVC/Actuator、Phase A MyBatis 21-table 投影和 Snapshot 读取/校验/组装；它通过私有 HTTP 暴露 PLT-I20/Actuator，不包含 Spring Security、X.509/mTLS、应用证书或本地异常处理器，并复用 Foundation 的日志与全局错误边界。Schema 与初始数据由 `docs/database/sql` 下两份手工 SQL 维护，应用启动不执行 SQL。
+- `platform-support-api` 当前发布有真实 Gateway 消费者的 PLT-I20 与 Operations-only PLT-I22 `@HttpExchange` 查询和不可变 DTO；成功调用分别返回完整 typed Snapshot 与完整有效 public JWKS，不使用 ETag/304。接口 DTO 的枚举语义使用 `String` Code，不暴露 Java Enum。
+- `platform-support-web` 实现 Spring MVC/Actuator、Phase A MyBatis 21-table 投影、Snapshot/JWKS 读取校验组装和 Nacos Discovery 注册；它通过私有 HTTP 暴露 PLT-I20、PLT-I22 与 Actuator，不包含 Spring Security、X.509/mTLS、应用证书或本地异常处理器，并复用 Foundation 的日志与全局错误边界。Schema 与初始数据由 `docs/database/sql` 下两份手工 SQL 维护，应用启动不执行 SQL。
 - `platform-support-test` 通过仓库 `local-environment` MySQL、真实随机端口 HTTP 和少量领域场景验证完整生产链，不使用 Mockito 或 Testcontainers。
-- Reactor Enforcer 允许该切片所需的 JDBC/MySQL/MyBatis，禁止 Spring Security、Flyway、Testcontainers、Nacos、Redis、MQ、XXL-Job、Gateway、Compensation Event 与 Mockito。
+- Reactor Enforcer 允许该切片所需的 JDBC/MySQL/MyBatis、Nacos Discovery 及其精确的 Crypto 工具依赖，禁止 Nacos Config、其余 Spring Security、Flyway、Testcontainers、Redis、MQ、XXL-Job、Gateway、Compensation Event 与 Mockito。
 - Web 默认监听 `18106`，Actuator 使用同一 Listener；测试模块跳过 install/deploy，Web 同时产出普通 JAR 和可执行 `-exec.jar`。
-- 当前切片不实现认证/Tenant IAM 命令、API/Route/Guard 管理、限流运行态、Gateway Snapshot 消费、补偿事件或部署配置。任何此类能力都必须作为获批垂直切片按 TDD 增量加入。
+- 当前切片不实现登录/Token 签发或其他认证/Tenant IAM 命令、CUSTOMER JWKS、API/Route/Guard 管理、限流运行态、Gateway Snapshot/JWKS 消费、补偿事件、Nacos Config 或部署自动化。任何此类能力都必须作为获批垂直切片按 TDD 增量加入。
 - 详细设计、实施步骤和运行方式分别见[基础设计](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md)、[实施计划](../docs/superpowers/plans/2026-09-01-platform-support-application-foundation.md)和 [`platform-support-service/README.md`](../platform-support-service/README.md)。
 
 ## 4. API 模块与内部 HTTP 契约

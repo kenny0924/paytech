@@ -17,7 +17,7 @@ Platform 是全局人工 Account、Realm exactly `{OPERATIONS, CUSTOMER}`、Chan
 
 ## 精确变表清单
 
-Platform 从 92 表到 97 表：新增 9 表：`t_user_account`、`t_password_credential`、`t_oidc_provider`、`t_federated_identity`、`t_authentication_challenge`、`t_auth_session`、`t_refresh_token_generation`、`t_signing_key_metadata`、`t_tenant_invitation`；删除 4 表：`t_idp_connection`、`t_user_identity`、`t_gateway_route`、`t_gateway_route_ver`。以下 15 张既有表发生实质变更：
+Platform 从 92 表到 97 表：新增 9 表：`t_user_account`、`t_password_credential`、`t_oidc_provider`、`t_federated_identity`、`t_authentication_challenge`、`t_auth_session`、`t_refresh_token_generation`、当前名为 `t_jwt_signing_key` 的签名密钥表、`t_tenant_invitation`；删除 4 表：`t_idp_connection`、`t_user_identity`、`t_gateway_route`、`t_gateway_route_ver`。以下 15 张既有表发生实质变更：
 
 - `t_access_tenant`：新增 `owner_ref_type`；以 `owner_status`、可空 `source_version`、可空 `source_payload_hash` 和 `security_status` 取代单一 `status`，分离 CCT 业务状态与 Platform 安全状态。
 - `t_tenant_member`：`user_id` 改为 `account_id` 并改指向 `t_user_account.account_id`；成员类型移除 `SERVICE`，状态移除 `INVITED`，`invited_by` 明确为 Member 引用，并相应替换唯一/访问索引。

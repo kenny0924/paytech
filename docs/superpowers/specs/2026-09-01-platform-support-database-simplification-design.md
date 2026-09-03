@@ -92,7 +92,7 @@ substitute for structured columns, or as an unverifiable digest of data that is 
 7. `t_authentication_challenge`
 8. `t_auth_session`
 9. `t_refresh_token_generation`
-10. `t_signing_key_metadata`
+10. `t_jwt_signing_key`
 11. `t_role`
 12. `t_permission`
 13. `t_tenant_member_role`

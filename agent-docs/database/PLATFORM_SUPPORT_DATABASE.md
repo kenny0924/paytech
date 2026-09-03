@@ -6,7 +6,7 @@
 
 > **当前权威：** 本文受 [Platform Support 57 表精简设计](../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 与 [统一公共 API 动态控制面设计](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 约束。57 表阶段仍是所有未受影响领域的直接前序；当前生成模型增加六张最小公共控制面表后为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、7 个 Diagram Groups、31 条复合 FK、85 条 CHECK，以及恰好 36 个以 `_hash` 结尾的字段。早期 92/97 表和旧 Gateway Policy/Release 结构只保留为历史。
 
-> **实施边界：** 完整 63 表当前只批准逻辑文档、Manifest、Policy、自动测试和 `platform-support.pdma.json`。除独立批准的 Phase A 21 表手工 SQL/PLT-I20 切片外，它不授权其余数据库 SQL、Java 模块、物理数据库、真实连接、Secrets/KMS/Vault、Redis、MQ、BFF、Gateway 或部署实现。
+> **实施边界：** 完整 63 表当前只批准逻辑文档、Manifest、Policy、自动测试和 `platform-support.pdma.json`。除独立批准的 Phase A 21 表手工 SQL/PLT-I20、Operations PLT-I22 JWKS 与 Nacos Discovery 切片外，它不授权其余数据库 SQL、Java 模块、登录/Token 签发、CUSTOMER JWKS、KMS 私钥操作、Secrets/Vault、Redis、MQ、BFF、Gateway 消费或部署实现。
 
 ## 1. 系统定位
 
@@ -45,7 +45,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 
 | Diagram Group | 表数 | 精确物理表 |
 | --- | ---: | --- |
-| 身份、授权与接入 | 18 | `t_user_account`、`t_password_credential`、`t_federated_identity`、`t_access_tenant`、`t_tenant_member`、`t_tenant_invitation`、`t_authentication_challenge`、`t_auth_session`、`t_refresh_token_generation`、`t_signing_key_metadata`、`t_role`、`t_permission`、`t_tenant_member_role`、`t_role_permission`、`t_api_credential`、`t_api_credential_scope`、`t_email_otp_challenge`、`t_email_otp_attempt` |
+| 身份、授权与接入 | 18 | `t_user_account`、`t_password_credential`、`t_federated_identity`、`t_access_tenant`、`t_tenant_member`、`t_tenant_invitation`、`t_authentication_challenge`、`t_auth_session`、`t_refresh_token_generation`、`t_jwt_signing_key`、`t_role`、`t_permission`、`t_tenant_member_role`、`t_role_permission`、`t_api_credential`、`t_api_credential_scope`、`t_email_otp_challenge`、`t_email_otp_attempt` |
 | 文件与消费者文档 | 12 | `t_file_upload`、`t_file_scan_policy`、`t_file_scan_requirement`、`t_file_object`、`t_file_owner_ref`、`t_file_scan_result`、`t_document_template`、`t_document_template_translation`、`t_consumer_document`、`t_document_version`、`t_document_delivery`、`t_document_access_grant` |
 | 通知与 Email | 9 | `t_notification_provider`、`t_notification_request`、`t_notification_delivery`、`t_notification_attempt`、`t_notification_route`、`t_notification_provider_callback`、`t_notification_suppression`、`t_notification_template`、`t_notify_template_translation` |
 | Client Webhook | 8 | `t_webhook_endpoint`、`t_webhook_endpoint_revision`、`t_webhook_endpoint_verification`、`t_webhook_signing_secret`、`t_webhook_subscription`、`t_webhook_event`、`t_webhook_delivery`、`t_webhook_attempt` |
@@ -125,7 +125,7 @@ PHC verifier、HMAC、Blind Index、Secret Fingerprint 与 KMS Signature Ref 使
 - Account Context 不带 Tenant Claims；Tenant Context 必须同时带 Tenant、Member、Channel，且 Channel 与 Tenant Type 一致。Session 的 `(account_id, realm)` 必须命中同一 Account，Tenant Context 的 `(tenant_member_id, tenant_id, account_id)` 必须命中同一 Member；因此不能把 Account A 的 Session 绑定到 Account B 的 Tenant Member。一个 Access Token 只绑定零个或一个当前 Tenant Member。
 - Tenant Switch 不修改原 Session：PLT-I16 新建固定 Tenant Context Session，撤销当前 Channel 旧 Refresh Family，签发不复用旧 Session 的 Audience Token，并由 BFF 替换对应 `__Secure-*-refresh` Cookie。
 - Refresh Token 每次轮换为新 Generation。旧 Generation 已消费后再次提交且 HMAC 正确，必须把整个 Session Family 置为 `COMPROMISED` 并撤销当前 Generation。
-- Signing Key 按 Realm/KID 管理 RS256 生命周期；数据库只保存 KMS Ref、Canonical Public RSA JWK 和验证窗口，不保存私钥或重复 JWK Hash。
+- `t_jwt_signing_key` 按 Realm/KID 管理 RS256 生命周期；数据库只保存 KMS Ref、Canonical Public RSA JWK 和验证窗口，不保存私钥或重复 JWK Hash。`OPERATIONS` 与 `CUSTOMER` 使用独立 Key Ring；Client/Partner 共用 `CUSTOMER` Key Ring，但 Token 仍以 `client-console/CLIENT` 与 `partner-console/PARTNER` 区分 Audience/Channel。
 
 ### 5.3 Tenant 与授权
 
@@ -261,6 +261,7 @@ Snapshot 只投影 ACTIVE Target 及其 ACTIVE Route/子项；DISABLED Target �
 | PLT-I13 | 仅为 CLIENT Tenant 从当前 Tenant/API Credential/Scope/Webhook 状态同步派生 `READY | NOT_READY | RESTRICTED + checked_at + 非 READY reason_code`；技术失败返回接口错误且不携带 `status`，不保存 Evaluation/Version/Hash |
 | PLT-I17 | 以 `tenant_type + owner_ref_id + requested_by_account_id + source_version + payload_hash` 幂等创建/推进 Access Tenant；同版本异 Hash 冲突、旧版本拒绝，ACTIVE 时撤销 Onboarding Role 并授予 Tenant Owner |
 | Gateway Config / Console Navigation | 内部管理能力维护六表当前配置；Snapshot API 一致读取、完整校验并每次返回全量 typed DTO，不使用 HTTP 条件缓存；Navigation 按 Channel + 当前 Permission 返回 MENU/BUTTON，均不是公网 Route |
+| PLT-I22 | Gateway 通过私网 HTTP 按 Realm 读取完整 JWKS；当前只实现 `OPERATIONS`，返回唯一 ACTIVE 与仍在验签窗口内的 RETIRING RSA 公钥并严格校验大小、数量、生命周期及 public-only JWK。未来 `CUSTOMER` 端点由 Client/Partner 共用 Key Ring，但两类 Token 的 Audience/Channel 仍严格分离 |
 
 Platform 可发布 `WebhookDelivered`、`WebhookFailed`、`NotificationSent`、`ConsumerDocumentGenerated` 和 `FileStored`。Gateway 配置采用拉取完整 Snapshot，不发布配置激活事件；Readiness 仍在使用点同步读取当前状态。
 
@@ -281,6 +282,6 @@ Platform 可发布 `WebhookDelivered`、`WebhookFailed`、`NotificationSent`、`
 
 ## 15. 验证与人工门禁
 
-自动门禁必须证明：63 表分组 `18 + 12 + 9 + 8 + 8 + 6 + 2`、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、36 Hash Allowlist、31 复合 FK、85 条具名 CHECK sidecar 契约、六张且仅六张公共控制面表、无 Gateway `*_ver`/Release/Snapshot/Tenant Override/新 Hash、无通用 Config/持久化 Readiness、无 `_ver` 物理表、无 Platform `client_id`，以及场景对每表恰有一条满足 NN/CHECK/复合身份的有效字段映射。当前 Model SHA-256 为 `04b9825f6763aec30dbc3ecf0ae398edb3051c835fa9bf1d3f5ef0ee9ac42262`，Structural Projection SHA-256 为 `b3583c1ffad8139ed026967d3299ed952577d5c2fdb90bdbdf3ce955de5efdf5`，CHECK Policy SHA-256 为 `4a97e82f3b462ec40755c734d068d55fd4b6b721836b380c0e789c3bf20447fb`。PDManer 4.9.3 JSON 没有可移植 CHECK 节点；完整名称、表达式与表绑定冻结在 `scripts/pdmaner/platform-support/model-policy.mjs`，独立 Oracle 冻结其摘要，未来手工 Schema DDL 必须逐项映射为真实数据库 CHECK。
+自动门禁必须证明：63 表分组 `18 + 12 + 9 + 8 + 8 + 6 + 2`、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、36 Hash Allowlist、31 复合 FK、85 条具名 CHECK sidecar 契约、六张且仅六张公共控制面表、无 Gateway `*_ver`/Release/Snapshot/Tenant Override/新 Hash、无通用 Config/持久化 Readiness、无 `_ver` 物理表、无 Platform `client_id`，以及场景对每表恰有一条满足 NN/CHECK/复合身份的有效字段映射。当前 Model SHA-256 为 `d07cfbe2153490c79e17715b8e43ae4e1b6c6ea1436fe8a3a6e063ddaee455bb`，Structural Projection SHA-256 为 `18b9c0ea482073457ed5084d0eddc77e51508d6964d34679905667f8a80e4722`，CHECK Policy SHA-256 为 `6260b6db67d05e37a3361c32507363271bee61bd4ad9144358c5bc8a1e6a6f3d`。PDManer 4.9.3 JSON 没有可移植 CHECK 节点；完整名称、表达式与表绑定冻结在 `scripts/pdmaner/platform-support/model-policy.mjs`，独立 Oracle 冻结其摘要，未来手工 Schema DDL 必须逐项映射为真实数据库 CHECK。
 
 PDManer 4.9.3 仍须人工打开并检查七个 Diagram、关系方向、中文显示名和索引，并运行 Validate；同时人工复核 sidecar CHECK 名称/表达式/表绑定及未来手工 Schema DDL 映射。人工门禁完成前，不得声称物理模型已在应用内签署，也不得据此创建数据库 SQL 或运行数据库。

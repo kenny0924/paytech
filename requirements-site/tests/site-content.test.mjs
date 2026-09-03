@@ -911,6 +911,7 @@ test("Platform Support catalog uses Tenant credentials and derives readiness wit
   const platformI13 = extractCatalogLine(platform, "iuc", "PLT-I13");
   const platformI19 = extractCatalogLine(platform, "iuc", "PLT-I19");
   const platformI20 = extractCatalogLine(platform, "iuc", "PLT-I20");
+  const platformI22 = extractCatalogLine(platform, "iuc", "PLT-I22");
 
   assert.doesNotMatch(platform, /uc\("PLT-09"|Technical Configuration/u);
   assert.match(platform02, /\["client", "operations"\].*ACTIVE CLIENT Tenant/u);
@@ -939,6 +940,8 @@ test("Platform Support catalog uses Tenant credentials and derives readiness wit
   assert.match(platformI19, /permission_id.*required_scope_code.*互斥.*Approved Target Registry/u);
   assert.match(platformI20, /每次读取完整全局不可变 Snapshot.*不使用 ETag.*304/u);
   assert.match(platformI20, /完整校验.*原子切换.*Fail-Closed/u);
+  assert.match(platformI22, /OPERATIONS.*ACTIVE.*RETIRING.*RS256.*RSA-2048\+.*Fail-Closed/u);
+  assert.match(platformI22, /operations-console.*CUSTOMER.*Client\/Partner.*client-console\/CLIENT.*partner-console\/PARTNER/u);
   assert.match(platform, /不拥有 Redis 运行时 Bucket、Counter、Lease 或 TTL/u);
   assert.doesNotMatch(platform, /不拥有当前 Gateway Route、Guard Profile/u);
 });
