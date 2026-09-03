@@ -29,9 +29,9 @@ The existing compensation-event status mapping becomes a second real consumer of
 
 ### Platform persistence boundary
 
-Platform Gateway DataObjects use internal typed enums for every closed persisted domain: route channel, configuration status, HTTP method, security profile, authorization mode, request/response cookie mode, header use, guard rule type, and guard dimension. The existing Platform configuration explicitly registers each enum with `CodeEnumTypeHandler` and registers the shared `InstantTypeHandler`.
+Platform Gateway DataObjects use typed enums for every closed persisted domain: route channel, configuration status, HTTP method, security profile, authorization mode, request/response cookie mode, header use, guard rule type, and guard dimension. Contract-visible Code definitions live in `platform-support-api` under `api/enums`; internal-only configuration status and header-use definitions live in `platform-support-web` under `domain/enums`. The Web module reuses API definitions instead of duplicating the same Code catalog. The existing Platform configuration explicitly registers each enum with `CodeEnumTypeHandler` and registers the shared `InstantTypeHandler`.
 
-Repository projections convert typed values back through `getCode()`. The public `platform-support-api` request/response models remain `String`-coded, so adding future enum values does not create JSON deserialization coupling for consumers. Existing compiler validation remains as a defensive contract boundary.
+Repository projections convert typed values back through `getCode()`. The public `platform-support-api` request/response fields remain `String`-coded; the API enum package publishes stable Code definitions but is never used as a JSON DTO field type. Adding future enum values therefore does not create enum-deserialization coupling for consumers. Existing compiler validation remains as a defensive contract boundary.
 
 ### DataObject documentation
 

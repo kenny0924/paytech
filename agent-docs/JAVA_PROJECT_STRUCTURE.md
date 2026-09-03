@@ -192,7 +192,8 @@ api/
 - API 按业务能力拆分，例如 `ClientEligibilityQueryApi`、`AgreementCommandApi`；禁止创建包含所有接口的巨型 `ClientContractApi`。
 - 接口方法使用业务语言命名，并通过 JavaDoc 说明参数、结果、幂等和主要错误语义。
 - 请求、响应和模型是 HTTP 传输契约，不暴露数据库映射对象、Repository 类型、内部聚合或第三方 SDK 类型。MQ 事件契约不因复用 DTO 而混入 HTTP API。
-- API DTO 使用 `String` 承载稳定枚举 Code，不声明 Java enum 字段；内部枚举实现 `CodeEnum`，边界转换必须使用 `getCode()`，消费方显式校验未知 Code。
+- 对外发布且调用方需要理解的稳定 Code 枚举定义统一放在 `api/enums` 并实现 `CodeEnum`；提供方 Web 直接复用，不在领域包复制同义枚举。
+- API DTO 字段仍使用 `String` 承载稳定枚举 Code，不声明 Java enum 字段；`api/enums` 是 Code 目录而不是 JSON 字段类型。仅服务内部使用的枚举放在 Web 的 `domain/enums`，边界转换使用 `getCode()`，消费方显式校验未知 Code。
 - 契约变更先判断兼容性。新增可选字段优先，删除、改名或改变语义必须明确版本策略。
 - 有界的内部同步查询默认直接返回完整 typed DTO。没有真实负载指标和已批准的兼容契约时，不预先增加 ETag、`If-None-Match`、`304`、Canonical Body Hash 或其他 HTTP 缓存协议。
 - `api` 模块保持轻量，只引入 HTTP 契约、序列化和校验所需依赖；不引入数据库、Spring Boot 应用启动器、服务发现配置或业务实现。
@@ -286,6 +287,7 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 │   ├── *Client.java                 # 出站端口
 │   └── impl/                        # Provider/RPC/HTTP 适配实现
 ├── domain/                          # 聚合、值对象和纯领域模型
+│   └── enums/                       # 仅服务内部使用的业务/持久化枚举
 ├── domainservice/
 │   ├── service/                     # 领域服务接口及 impl
 │   ├── repository/                  # 领域仓储接口及 impl
@@ -450,7 +452,7 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] 业务事实属于当前系统，而不是其他五个核心系统。
 - [ ] 公共契约和内部实现没有混在同一模块。
 - [ ] `*-api` 只包含轻量 HTTP 契约，没有业务实现或持久化依赖。
-- [ ] API DTO 的枚举语义使用 `String code`，内部枚举实现 `CodeEnum`，错误枚举按需实现 `CodeMessageEnum`。
+- [ ] API DTO 的枚举语义使用 `String code`；对外 Code 枚举定义位于 `*-api/api/enums`，内部枚举位于 `*-web/domain/enums`，均实现 `CodeEnum`，错误枚举按需实现 `CodeMessageEnum`，且没有复制同义 Code 目录。
 - [ ] Controller 实现 `@HttpExchange` API、没有重复 MVC Mapping；简单用例只委托一个 Domain Service，其他用例委托 Processor。
 - [ ] 外部触发入口位于与 `service` 平级的 `ext/job`、`ext/dubbo`、`ext/rest` 或实际协议子包，且没有承载业务逻辑。
 - [ ] 调用方通过本地 `*Client` 适配器隔离远程 API DTO，没有让远程 DTO进入领域层。

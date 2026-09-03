@@ -43,10 +43,10 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - 新代码只按失败语义区分两类基础异常：`FailException` 表示结果明确、不可重试；`ErrorException` 表示未知或系统错误，可进入具备幂等、次数上限和退避的重试路径。
 - 默认通过不同的 `CodeMessageEnum` 向上述两类异常传递错误语义，不为每个错误新建异常子类；只有调用方确实需要独立捕获或处理行为时才增加专用异常。`ServiceUnavailableException` 是唯一已批准的窄化公共子类：它仍属于 `ErrorException`，只在调用方契约明确要求以安全默认消息返回 HTTP `503` 时使用，不代表自动重试策略。
 - `BusinessException` 和 `BizCheckFailException` 只用于兼容已有代码；新增实现不得继续使用。
-- 所有内部业务枚举都实现 `CodeEnum`；只有带可安全外显默认消息的错误枚举实现继承 `CodeEnum` 的 `CodeMessageEnum`。
+- 所有业务枚举都实现 `CodeEnum`；只有带可安全外显默认消息的错误枚举实现继承 `CodeEnum` 的 `CodeMessageEnum`。对外发布、调用方需要理解的稳定 Code 枚举定义放在提供方 `*-api` 的 `api/enums`；仅服务内部使用的业务或持久化枚举放在 `*-web` 的 `domain/enums`。提供方 Web 直接复用自己的 API 枚举，不在领域包复制同一组 Code。
 - 数据库、HTTP、MQ、日志和业务比较使用 `getCode()`，禁止依赖 `name()`、`ordinal()` 或枚举声明顺序。Code 发布后不可修改，Java 枚举常量名可以安全重构。
-- 内部 DataObject 的闭合枚举列直接使用实现 `CodeEnum` 的 Java 枚举，并通过 `paytech-mybatis-support` 的 `CodeEnumTypeHandler` 为每个枚举类型显式注册；不启用全局扫描或默认枚举替换。未知数据库 Code 必须使当前读取 Fail-Closed，不能映射为 `null`。MySQL `DATETIME(6)` 到 `Instant` 统一使用同模块的 UTC `InstantTypeHandler`，服务不得复制同义 Handler。
-- 对外发布的 `*-api` DTO 和 MQ 契约以 `String` 承载枚举 Code，不使用 Java enum 字段。提供方在边界内从 `CodeEnum#getCode()` 转换，消费方在自己的边界显式解析和校验；未知 Code 必须进入可观察、Fail-Closed 的兼容性处理，不能依赖反序列化异常、`null` 或兜底枚举静默放行。
+- DataObject 的闭合枚举列直接使用实现 `CodeEnum` 的 Java 枚举：契约已发布的 Code 复用本服务 `*-api` 枚举，内部 Code 使用 `domain/enums` 枚举。通过 `paytech-mybatis-support` 的 `CodeEnumTypeHandler` 为每个枚举类型显式注册；不启用全局扫描或默认枚举替换。未知数据库 Code 必须使当前读取 Fail-Closed，不能映射为 `null`。MySQL `DATETIME(6)` 到 `Instant` 统一使用同模块的 UTC `InstantTypeHandler`，服务不得复制同义 Handler。
+- 对外发布的 `*-api` DTO 和 MQ 契约字段仍以 `String` 承载枚举 Code，不使用 Java enum 作为序列化字段类型；`api/enums` 只发布稳定 Code 定义，不改变传输兼容策略。提供方在边界内从 `CodeEnum#getCode()` 转换，消费方显式解析和校验；未知 Code 必须进入可观察、Fail-Closed 的兼容性处理，不能依赖反序列化异常、`null` 或兜底枚举静默放行。
 - 错误 Code 使用一眼可读、稳定的英文大写语义，例如 `COMPENSATION_EVENT_CONFLICT`，不使用 `PAYTECH-COMMON-400001` 一类公司前缀加数字流水号。
 - 面向开发者和运营的异常消息使用中文，并包含必要的实体标识、当前状态和操作上下文；不得包含凭据、敏感明文或完整 Payload。
 - Spring MVC 服务引入 `paytech-mvc-web-starter` 后统一使用其 `GlobalExceptionHandler`；服务不得重复创建本地 `@RestControllerAdvice`、私有 Problem/Error Body 或同义状态映射。业务错误 Code 仍由服务自己的 `CodeMessageEnum` 提供，Foundation 不依赖业务系统。

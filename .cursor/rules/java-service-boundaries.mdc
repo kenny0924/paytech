@@ -10,7 +10,7 @@ alwaysApply: false
 - `dataobject` 包中的数据库映射类型使用业务实体名，不加 `DO` 后缀，不跨 Repository 边界暴露；每个字段写说明约束而非复述字段名的中文 JavaDoc。
 - 闭合 DataObject 枚举列显式注册 Foundation `CodeEnumTypeHandler`，MySQL `DATETIME(6)` 到 `Instant` 使用 Foundation `InstantTypeHandler`；服务不得复制同义 Handler。
 - 纯依赖赋值使用 `final` 字段和 Lombok `@AllArgsConstructor`；构造器有校验、复制、派生或资源配置逻辑时显式编写。
-- API DTO 和 MQ 契约使用 `String` 枚举 Code；内部业务枚举实现 `CodeEnum`，错误枚举按需实现 `CodeMessageEnum`。
+- API DTO 和 MQ 契约字段使用 `String` 枚举 Code；对外 Code 枚举定义放在 `*-api/api/enums`，内部枚举放在 `*-web/domain/enums`，均实现 `CodeEnum`。提供方 Web 复用 API 枚举，不复制同义目录；错误枚举按需实现 `CodeMessageEnum`。
 - 内部 `@HttpExchange` API 是 Method、Path、Header 和 DTO 的唯一契约；Controller 实现接口，不重复声明 MVC Mapping。
 - 应用 `context-path` 表达系统边界，API Path 表达业务能力；不要机械添加 `/internal`。
 - Processor 是按需的编排层：Controller 方法少于 10 条有效可执行语句、只委托一个 Domain Service，且没有业务判断、多步骤编排、写事务、幂等、补偿或跨系统协调时可直接调用该 Service；任一条件不满足则保留 Processor。
