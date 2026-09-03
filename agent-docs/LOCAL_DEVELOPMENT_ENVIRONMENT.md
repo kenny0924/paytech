@@ -366,7 +366,7 @@ Java 服务至少验证：
 - MySQL 固定连接 `127.0.0.1:13306`，每个服务只使用自己的账号和数据库，DDL/DML 由开发者手工执行；
 - Redis 固定连接 `127.0.0.1:16379`，每次运行使用唯一 Namespace，并仅以 `SCAN` 清理本次前缀；
 - RabbitMQ 使用 `/mor-local` 和测试专属 Queue/Binding 名称；Nacos 在 `auto` 中关闭；
-- Platform Support 从真实随机端口 MVC/HTTP 入口经过 Processor、Service、Repository、Mapper 到本地 MySQL，不使用 Mockito 或 Testcontainers；
+- Platform Support 从真实随机端口 MVC/HTTP 入口经过 Controller、Domain Service、Repository、Mapper 到本地 MySQL；简单查询不强制增加 Processor，也不使用 Mockito 或 Testcontainers；
 - 内部服务/Provider 仍通过有状态 Simulator 提供真实 HTTP/MQ 协议，不要求同时启动全部业务服务。
 
 详细规则见 [UNIT_TEST_GUIDE.md](./UNIT_TEST_GUIDE.md)。

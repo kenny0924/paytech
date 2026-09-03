@@ -7,7 +7,8 @@ alwaysApply: false
 # Java 服务边界默认规则
 
 - 先读取 `agent-docs/DEVELOPMENT_CONVENTIONS.md` 和 `agent-docs/JAVA_PROJECT_STRUCTURE.md`；它们是完整权威。
-- `dataobject` 包中的数据库映射类型使用业务实体名，不加 `DO` 后缀，不跨 Repository 边界暴露。
+- `dataobject` 包中的数据库映射类型使用业务实体名，不加 `DO` 后缀，不跨 Repository 边界暴露；每个字段写说明约束而非复述字段名的中文 JavaDoc。
+- 闭合 DataObject 枚举列显式注册 Foundation `CodeEnumTypeHandler`，MySQL `DATETIME(6)` 到 `Instant` 使用 Foundation `InstantTypeHandler`；服务不得复制同义 Handler。
 - 纯依赖赋值使用 `final` 字段和 Lombok `@AllArgsConstructor`；构造器有校验、复制、派生或资源配置逻辑时显式编写。
 - API DTO 和 MQ 契约使用 `String` 枚举 Code；内部业务枚举实现 `CodeEnum`，错误枚举按需实现 `CodeMessageEnum`。
 - 内部 `@HttpExchange` API 是 Method、Path、Header 和 DTO 的唯一契约；Controller 实现接口，不重复声明 MVC Mapping。
@@ -17,3 +18,6 @@ alwaysApply: false
 - Processor 使用应用语义的请求和结果，不依赖 HTTP 类型；协议上下文由 Web/Security 基础设施处理。
 - 不为单个实现预建抽象基类。至少两个真实用例共享稳定流程与上下文后再提取。
 - 有界内部查询默认完整返回 typed DTO；没有负载证据和批准契约时不增加 ETag、`304` 或内容 Hash。
+- `2xx` 返回接口的正常 typed DTO，`4xx/5xx` 使用 Foundation 的直接错误体；不要给所有成功响应增加通用包装。
+- 未预期异常直接交给共享 `GlobalExceptionHandler` 处理为 `500`；宽泛 `catch` 只允许承担恢复、清理/异步状态更新或明确的协议转换，并保留原始 Cause。
+- 从当前用例需要的最小类和配置开始；不要创建一行代理、空层或猜测性扩展点。共享技术能力只有在天然跨服务或已有至少两个稳定消费者时才进入职责单一的 Foundation JAR。

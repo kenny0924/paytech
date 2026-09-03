@@ -82,7 +82,7 @@ test ───────→ web ───────→ api
 - `api` 不得依赖 `web` 或 `test`。
 - `web` 依赖自己的 `api`，由 HTTP Controller 实现契约接口。
 - `test` 可以依赖 `web` 以运行集成测试，但生产模块不得依赖 `test`。
-- `auto` 必须从真实本服务入口完成内部闭环；数据库、Redis 和 MQ 原则上由测试按需自动启动，外部 HTTP/MQ 通过有状态 Simulator 和真实协议交互。Operations Gateway 的仓库 Compose Redis 例外以本节 3.2 和 `UNIT_TEST_GUIDE.md` 为准。
+- `auto` 必须从真实本服务入口完成内部闭环；数据库、Redis 和 MQ 复用开发者已启动的仓库 `local-environment`，测试不得创建、停止或重建容器。外部 HTTP/MQ 通过有状态 Simulator 和真实协议交互；完整边界以 `UNIT_TEST_GUIDE.md` 为准。
 - 测试不得使用 `when(...).thenReturn(...)`、`@MockBean`、`@MockitoBean` 等方法级行为 Stub 替换生产链路；详细边界以 `UNIT_TEST_GUIDE.md` 为准。
 - `manual` 必须由独立 Maven Profile 显式运行，不能进入默认 `mvn test` 和 CI。
 - 其他内部 Java 服务只依赖提供方的 `api`，并在自己的外部集成适配器中使用它。
@@ -108,6 +108,8 @@ paytech-build/
 - 发布地址和认证来自开发者 Maven Settings，POM 只保留与 Settings 一致的 `maven-releases` / `maven-snapshots` 仓库 ID 和 `${nexus.url}`，不得保存凭据。
 
 公共能力按边界拆分为 `paytech-common-core`、`paytech-mvc-web-starter`、`paytech-snowflake-id`、`paytech-caffeine-starter`、`paytech-redis-starter`、`paytech-xxl-job-starter` 和 `paytech-compensation-event`。`paytech-mvc-web-starter` 自动提供一个完整 Request/Response/耗时 INFO 终态日志和共享 `GlobalExceptionHandler`；MVC 服务不得复制本地日志 Filter、异常 Advice 或错误响应模型。Redis Starter 暴露同一实例的 `cacheManager`/`redisCacheManager` 并以 `@Primary` 作为 Spring Cache 默认 Manager；每个 Redis Cache 由宿主声明 `RedisCacheDefinition<T>(cacheName, concreteValueType, ttl)`，未声明名称不动态创建。Caffeine 只注册 `caffeineCacheManager`，仅用于可回源的有界进程内加速；同时使用两者时，Caffeine 方法必须在 Spring Cache 注解显式选择该 Manager，且两边使用不同 Cache Name。两者不是 L1/L2，也不使用 `spring.cache.type` 切换；不需要 Caffeine 的宿主不要引入对应 Starter。不得让任何 Cache 承担权威事实、幂等、锁、跨实例一致性、Vault Reveal、凭据或敏感明文，也不得把跨领域 DTO、业务枚举、Repository、Mapper 或第三方 Provider 模型放入公共 JAR。详细职责见 `TECHNOLOGY_STACK.md`。
+
+公共能力按最小证据提取：天然属于跨服务基础设施，或至少两个真实服务已经共享同一稳定契约时，才新增职责单一的 Foundation JAR。单个服务的实现先保留在本服务，不为未来复用预建带系统名前缀的包装类、空模块、空层或总揽式 `common`；新增本地技术基础设施前先检查现有 Foundation 是否已经拥有该职责。
 
 ### 3.2 已实现的 API Gateway 工程边界
 
@@ -234,6 +236,10 @@ public class ClientEligibilityController implements ClientEligibilityQueryApi {
 
 `@HttpExchange` 接口是内部 HTTP Method、Path、Header 和 DTO 签名的唯一来源。Controller 必须直接实现该接口，不得再次声明等价的 `@RequestMapping`、`@GetMapping` 或 `@PostMapping`；这些 MVC 注解只用于没有共享 Java API 契约的服务端入口。应用配置的 `context-path` 表达系统边界，接口注解只表达能力内路径，最终地址统一为 `{context-path}/{capability-path}`，不为每个服务机械增加 `/internal` 前缀。
 
+HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的正常 typed DTO，`4xx/5xx` 返回 `paytech-mvc-web-starter` 的统一直接错误体，至少包含 `code`、`message`、`requestId` 和 UTC `timestamp`。Controller 不为成功响应增加通用包装层，也不复制服务本地错误响应类型。
+
+未预期的运行时异常直接向上传播，由共享 `GlobalExceptionHandler` 映射为 `500`。Controller、Processor 和 Domain Service 不使用宽泛 `catch (RuntimeException/Exception)` 只做重复日志、同义包装或统一改成 `503`；只有当前层能恢复、必须释放资源/更新异步状态，或承担明确不同的外部协议契约时才捕获，并把原始异常保留为 Cause。
+
 ### 4.2 调用方使用方式
 
 调用方依赖提供方发布的 `*-api` JAR，通过 Spring HTTP Service Client 创建接口代理：
@@ -332,7 +338,7 @@ Domain Service 承载业务规则和跨聚合协调：
 
 - 接口按业务能力命名，例如 `findTransactionReadyClient`；
 - 实现依赖 Repository 和出站端口，不依赖 HTTP Controller 或 Processor；
-- 业务异常使用 `BizCheckFailException`，中文消息包含实体标识、当前状态和操作上下文；
+- 结果明确、不可重试的业务拒绝使用 `FailException` 并传入本服务 `CodeMessageEnum`；中文消息包含实体标识、当前状态和操作上下文；
 - 状态转换必须校验旧状态，防止静默覆盖并发更新。
 
 ### 5.4 Repository 与 Mapper
@@ -415,6 +421,7 @@ ext/* 入站适配器
 - 常量和枚举使用业务语义名称，不使用 `getData`、`handle`、`process2` 等模糊名称。
 - 金额使用整数最小货币单位或项目批准的 Money 类型，并显式携带 ISO 4217 币种；禁止浮点金额。
 - 时间、时区、ID 和序列生成由基础能力统一提供，不在业务代码中散落静态随机实现。
+- 先实现当前获批用例需要的最小类和配置；不要用一行代理、空抽象或未来扩展点代替清晰的直接调用。只有实际复杂度达到第 5.2 节门槛时才增加 Processor 或应用层抽象。
 
 ## 8. 资源目录
 
@@ -457,6 +464,8 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] 事务覆盖本地原子操作，事件在提交后可靠发布。
 - [ ] 状态更新校验旧状态/版本并处理并发冲突。
 - [ ] 异常信息包含必要业务上下文。
+- [ ] 未预期异常交给共享全局处理器；局部 `catch` 具有实际恢复、清理、异步状态或协议转换职责，并保留原始 Cause。
 - [ ] 没有为尚未批准的技术方案创建占位基础设施。
+- [ ] 没有一行代理、空层或猜测性公共类；新增 Foundation 能力已有跨服务复用证据且职责单一。
 - [ ] 已按 `UNIT_TEST_GUIDE.md` 补充适当层级的测试。
-- [ ] 新增出站依赖具有可自动启动的测试基础设施或有状态 Simulator，未通过方法级 Stub 绕过真实适配器。
+- [ ] 新增出站依赖使用已启动的仓库 `local-environment` 或有状态 Simulator，未通过方法级 Stub 绕过真实适配器。

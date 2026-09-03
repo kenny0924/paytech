@@ -120,6 +120,8 @@ Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景
 
 纯单元测试只用于天然不需要外部协作的对象。如果一个用例只有依赖 Repository、HTTP、Redis 或 MQ 才能成立，应把它放入相应的闭环测试，不使用 Mockito 把依赖返回值拼成一条看似成功的链路。
 
+测试数量服从业务风险，而不是生产类或方法数量。优先用少量业务级用例覆盖一条公开入口到数据库/外部协议的完整链路，并在这些用例中验证关键分支、状态和副作用；不要为了覆盖率给每个 Controller、Processor、Service 或 Repository 方法机械创建孤立测试。只有纯算法、状态机、值对象或转换器的聚焦单元测试能明显缩小故障定位范围时，才额外补充。
+
 ## 6. 服务级 auto 标准链路
 
 服务级 `auto` 是本规范的核心形态：
@@ -127,7 +129,7 @@ Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景
 ```text
 真实测试客户端
   → 随机端口 HTTP Controller / 真实消息入口
-    → Processor
+    → [按需存在的 Processor]
       → Domain Service / Domain
         → RepositoryImpl → Mapper → 测试数据库
         → Redis Client → 测试 Redis
@@ -139,7 +141,7 @@ Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景
 
 - 入站 HTTP 测试默认使用随机端口，覆盖请求反序列化、校验、Controller 和错误响应。
 - 不需要验证 HTTP 协议的领域规则测试直接调用领域对象，不强制启动 Web Server。
-- 当前服务内部不使用替代实现；测试应覆盖与生产一致的依赖方向。
+- 当前服务内部不使用替代实现；测试应覆盖与生产一致的依赖方向，没有 Processor 的简单用例直接经过 Controller → Domain Service。
 - 服务发现不是业务链路的一部分。`auto` 禁用 Nacos 和配置中心，通过测试动态配置把服务名或客户端地址解析到 Simulator。
 - 不经过 Gateway 验证内部服务调用。
 
@@ -240,7 +242,7 @@ Simulator 是一个通过真实协议提供服务的简化外部系统，而不�
 
 Simulator 必须：
 
-- 运行在测试进程的随机端口或测试管理的容器中；
+- HTTP Simulator 运行在测试进程的随机 Loopback 端口；MQ Simulator 通过仓库本地 Broker 的测试专属 Namespace 交互。不得为 Simulator 引入或启动测试容器；
 - 使用与生产客户端相同的 HTTP/MQ 契约；
 - 根据收到的请求和已经准备的业务场景数据计算结果；
 - 校验关键字段，不接受与场景无关的请求；
@@ -276,8 +278,8 @@ Provider Simulator 按已批准的第三方协议提供 HTTP Endpoint，并维�
 |---|---|
 | 业务拒绝、无数据、状态不允许 | 准备 Simulator 业务状态，由其规则生成响应 |
 | HTTP 500 或协议错误 | Simulator 的显式故障场景 |
-| 延迟、超时、断连 | Toxiproxy 或等价的测试管理网络代理 |
-| MQ/Redis 不可用 | 暂停或停止对应测试容器 |
+| 延迟、超时、断连 | Simulator 延迟/提前关闭连接，或测试进程内的协议代理 |
+| MQ/Redis 不可用 | 为当前测试注入未监听的 Loopback 端口、无效凭据或不存在的测试 VHost；不得停止共享 `local-environment` |
 | 非法 JSON/缺失字段 | 专门的协议异常场景 |
 
 故障注入不得通过修改被测 Spring Bean 的方法返回值实现，并且必须在测试结束后恢复。
@@ -503,8 +505,9 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 
 - 使用 `when(...).thenReturn(...)`、`doThrow(...).when(...)` 等方法级行为 Stub 拼装业务流程；
 - 用 `@MockBean`、`@MockitoBean` 或 Spy 替换生产链路后声称服务闭环通过；
-- 自动测试连接真实微服务、Provider、Nacos、配置中心或共享基础设施；
-- 依赖人工启动的固定端口 MySQL、Redis、MQ 或 Mock Server；第 7.6 节批准的 Operations Gateway 专用 Compose Redis 除外；
+- 自动测试连接真实微服务、Provider、Nacos、配置中心，或仓库 Loopback `local-environment` 之外的团队共享基础设施；
+- 在测试内启动、停止或重建 MySQL、Redis、RabbitMQ 容器，或绕过第 7.6 节固定的仓库 `local-environment` 连接其他实例；
+- 让 HTTP Simulator 依赖人工维护的固定端口；它必须由测试进程在随机 Loopback 端口启动；
 - 测试配置写入个人地址、共享账号、真实密码或 Token；
 - 所有测试默认使用固定端口的 `@SpringBootTest`；
 - 测试依赖固定方法顺序或共享实例状态；
@@ -519,7 +522,7 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 
 新增任何 HTTP Client、Provider Adapter、Redis 能力或 MQ Producer/Consumer 时，必须同步具备：
 
-- 可由 `auto` 启动的真实测试基础设施或有状态 Simulator；
+- 已由开发者启动的仓库 `local-environment` 真实基础设施，或由测试进程启动的有状态 Simulator；
 - 对应 Scenario Builder/Mocker；
 - Request/Message Probe 与 Checker；
 - 成功、业务失败和相关技术故障场景；
@@ -533,9 +536,10 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 
 - [ ] 测试选择了最小充分层级，但没有绕过需要验证的真实链路。
 - [ ] 纯单元测试没有启动 Spring、容器或行为 Stub 框架。
-- [ ] 服务级测试经过真实 Controller/Listener、实际存在的 Processor、Domain Service 和 Integration/Repository 实现。
-- [ ] 数据库、Redis 和 MQ 在相关场景中由测试自动启动并使用真实客户端连接。
+- [ ] 服务级测试经过真实 Controller/Listener、按需存在的 Processor、Domain Service 和 Integration/Repository 实现。
+- [ ] 数据库、Redis 和 MQ 在相关场景中复用已启动的仓库 `local-environment`，测试没有创建、停止或重建容器。
 - [ ] 外部 HTTP/MQ 通过有状态 Simulator 和真实协议完成，没有方法级 Stub。
+- [ ] 测试围绕业务能力和完整链路组织，没有为了覆盖率给每个内部方法机械创建孤立测试。
 - [ ] Builder 只构建数据，Mocker 只准备状态，Checker/Probe 只观察和断言。
 - [ ] 未准备场景、意外请求和多余调用都会显式失败。
 - [ ] 响应、本地数据、缓存、事件和外部调用按风险完成联合断言。
