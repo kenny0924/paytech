@@ -12,7 +12,7 @@
 
 ## Execution Record — 2026-09-04
 
-五个实现任务已在独立 CCT 仓库的 `codex/client-contract-application-foundation` 分支完成；最终独立整分支审查通过，无 Critical / Important / Minor 问题，尚未合并回本地 `main`。以下步骤保留为原始执行计划，以本记录为实施状态。
+五个实现任务已完成，最终独立整分支审查通过，无 Critical / Important / Minor 问题。经用户确认，2026-09-04 已将 `codex/client-contract-application-foundation` 快进合并回独立 CCT 仓库的本地 `main`（`a251cd0`）；合并后重新执行 `./mvnw clean verify`，3 个测试全部通过，两个受保护数据库文件校验不变。本次隔离工作树和已合并功能分支已清理，提交完整保留在 main；其他工作树未处理。以下步骤保留为原始执行计划，以本记录为实施状态。
 
 | Task | Commit | 结果 |
 |---|---|---|

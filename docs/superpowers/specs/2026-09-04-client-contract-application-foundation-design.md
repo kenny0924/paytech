@@ -2,7 +2,7 @@
 
 Date: 2026-09-04
 
-Status: implemented, verified and independently reviewed in isolated branch `codex/client-contract-application-foundation` at `a251cd0`; local main integration pending
+Status: implemented, independently reviewed and fast-forward merged to local `main` at `a251cd0` on 2026-09-04; post-merge clean verification passed
 
 ## 1. Purpose
 
