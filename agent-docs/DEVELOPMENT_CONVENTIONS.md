@@ -1,6 +1,6 @@
 # 开发约定与编码习惯
 
-最后更新：2026-09-03
+最后更新：2026-09-04
 
 ## 1. 使用范围与优先级
 
@@ -28,8 +28,8 @@
 - 数据访问抽象统一命名为 `*Repository`，使用 `interface + *RepositoryImpl`；不要新增 `*Store` 表达同一职责。它在 Foundation 中位于 `persistence/repository`，在业务服务中位于专项工程规范指定的位置。
 - Foundation 的 `core` 只放不直接参与业务分层、但属于组件核心机制的内部能力，例如 `error`、`observability`、`serialization`、`transaction` 和 `autoconfigure`；业务服务的 `core/dal` 按 `JAVA_PROJECT_STRUCTURE.md` 使用，两者都不能成为杂物目录。
 - 外部机制触发内部服务工作时，入站适配器统一放在与 `service` 平级的 `ext` 包下：XXL-Job 等调度入口放 `ext/job`，既有或迁移期 Dubbo Provider 放 `ext/dubbo`，REST Controller 放 `ext/rest`。其他协议只有存在真实入口时才新增 `ext/<protocol>`，不得创建空包。
-- `ext` 只负责协议解析、入口校验、上下文转换和委托 `service`，不承载业务规则、事务编排或持久化逻辑；出站 HTTP、Provider 和第三方 SDK 适配器放独立 `integration` 边界。`ext/dubbo` 只定义兼容代码的位置，不改变当前禁止新增 Dubbo/OpenFeign 的技术边界。
-- `ext/rest` 中的 Controller/API 只做协议适配；简单用例可以直接委托一个 Domain Service，复杂用例由 `service` 中的 Processor 编排。Domain Service 承载规则，Repository 屏蔽持久化，Mapper 表达 SQL；不得跨层走捷径。
+- `ext` 只负责协议解析、入口校验、上下文转换和委托 `service`（BFF 简单转发可直接委托本地 Client Port），不承载业务规则、事务编排或持久化逻辑；出站 HTTP、Provider 和第三方 SDK 适配器放独立 `integration` 边界。`ext/dubbo` 只定义兼容代码的位置，不改变当前禁止新增 Dubbo/OpenFeign 的技术边界。
+- `ext/rest` 中的 Controller/API 只做协议适配；简单用例可以直接委托一个 Domain Service，BFF 简单转发可以直接委托一个本地 Client Port，复杂用例由 `service` 中的 Processor 编排。Domain Service 承载规则，Repository 屏蔽持久化，Mapper 表达 SQL；不得跨层走捷径。
 - 优先构造器注入和 `final` 字段。构造器只把全部参数赋给字段时使用 Lombok `@AllArgsConstructor`；构造器包含参数校验、防御性复制、派生对象创建或资源配置时保留显式实现。相同逻辑组内的注入字段按依赖类型名称字符数由短到长排列，长度相同再按字典序；显式构造器参数保持相同顺序。
 
 ```java
@@ -38,27 +38,36 @@ private final EventRepository eventRepository;
 private final RecoveryAuditRecorder recoveryAuditRecorder;
 ```
 
+### BFF 聚合层职责
+
+- 所有 `*-bff` 都是面向前端的聚合层，负责页面所需的多接口、跨服务授权查询组合、字段裁剪转换和展示模型组装；不得为了页面便利把这些职责全部下沉到核心服务。
+- 聚合流程放在 BFF 的 `service` / Processor 中，由本地 Client Port 获取各核心服务的授权结果；Controller 保持协议适配，`integration` 保持单个远端契约适配。有实际查询编排或响应组装职责时保留相应应用层，不能因“精简层级”而删除；简单转发仍不创建空代理层。
+- 核心服务提供可复用的领域能力，拥有业务事实、领域规则、授权决策和业务事务。BFF 保持无状态，执行入口授权并保留各上游的资源授权约束，不自行替代核心服务的业务判断，也不编排跨系统写事务。
+- 例如交易详情页的订单、支付和账务视图由 BFF 查询并组装；退款命令交给归属核心服务执行，BFF 不自行协调支付和账务变更。
+
 ## 4. 异常与枚举
 
-- 新代码只按失败语义区分两类基础异常：`FailException` 表示结果明确、不可重试；`ErrorException` 表示未知或系统错误，可进入具备幂等、次数上限和退避的重试路径。
-- 默认通过不同的 `CodeMessageEnum` 向上述两类异常传递错误语义，不为每个错误新建异常子类；只有调用方确实需要独立捕获或处理行为时才增加专用异常。`ServiceUnavailableException` 是唯一已批准的窄化公共子类：它仍属于 `ErrorException`，只在调用方契约明确要求以安全默认消息返回 HTTP `503` 时使用，不代表自动重试策略。
-- `BusinessException` 和 `BizCheckFailException` 只用于兼容已有代码；新增实现不得继续使用。
+- 默认复用少数公共异常：业务检查使用 `BizCheckFailException(message)`（400），参数错误使用 `InvalidParameterException(message)`（400），版本或并发命令冲突使用 `ConcurrentRequestException(message)`（409），系统异常使用 `ErrorException`（500），依赖不可用使用 `ServiceUnavailableException`（503）。不为每条业务拒绝创建异常类或错误码。
+- 普通业务规则只需公共 `BUSINESS_CHECK_FAILED` 加具体中文消息，例如 `throw new BizCheckFailException("不能停用当前登录账号");`。只有前端或其他调用方确实有区别处理的契约时才定义专有 `CodeMessageEnum`，并写明消费者及处理行为；不同提示文字不构成新增错误码的理由。
+- `FailException` 继续作为结果明确的失败基类；`BizCheckFailException` 是新增普通业务检查的首选，`BusinessException` 仅保留兼容。`ErrorException` 表示系统或结果未知的失败，是否重试必须由具备幂等、次数上限和退避的调用契约决定；异常类型不授权自动重试。
 - 所有业务枚举都实现 `CodeEnum`；只有带可安全外显默认消息的错误枚举实现继承 `CodeEnum` 的 `CodeMessageEnum`。对外发布、调用方需要理解的稳定 Code 枚举定义放在提供方 `*-api` 的 `api/enums`；仅服务内部使用的业务或持久化枚举放在 `*-web` 的 `domain/enums`。提供方 Web 直接复用自己的 API 枚举，不在领域包复制同一组 Code。
 - 数据库、HTTP、MQ、日志和业务比较使用 `getCode()`，禁止依赖 `name()`、`ordinal()` 或枚举声明顺序。Code 发布后不可修改，Java 枚举常量名可以安全重构。
 - DataObject 的闭合枚举列直接使用实现 `CodeEnum` 的 Java 枚举：契约已发布的 Code 复用本服务 `*-api` 枚举，内部 Code 使用 `domain/enums` 枚举。通过 `paytech-mybatis-support` 的 `CodeEnumTypeHandler` 为每个枚举类型显式注册；不启用全局扫描或默认枚举替换。未知数据库 Code 必须使当前读取 Fail-Closed，不能映射为 `null`。MySQL `DATETIME(6)` 到 `Instant` 统一使用同模块的 UTC `InstantTypeHandler`，服务不得复制同义 Handler。
 - 对外发布的 `*-api` DTO 和 MQ 契约字段仍以 `String` 承载枚举 Code，不使用 Java enum 作为序列化字段类型；`api/enums` 只发布稳定 Code 定义，不改变传输兼容策略。提供方在边界内从 `CodeEnum#getCode()` 转换，消费方显式解析和校验；未知 Code 必须进入可观察、Fail-Closed 的兼容性处理，不能依赖反序列化异常、`null` 或兜底枚举静默放行。
 - 错误 Code 使用一眼可读、稳定的英文大写语义，例如 `COMPENSATION_EVENT_CONFLICT`，不使用 `PAYTECH-COMMON-400001` 一类公司前缀加数字流水号。
-- 面向开发者和运营的异常消息使用中文，并包含必要的实体标识、当前状态和操作上下文；不得包含凭据、敏感明文或完整 Payload。
-- Spring MVC 服务引入 `paytech-mvc-web-starter` 后统一使用其 `GlobalExceptionHandler`；服务不得重复创建本地 `@RestControllerAdvice`、私有 Problem/Error Body 或同义状态映射。业务错误 Code 仍由服务自己的 `CodeMessageEnum` 提供，Foundation 不依赖业务系统。
+- 业务、参数与并发异常的 `message` 是可直接展示的中文提示，说明必要业务上下文，不包含凭据、敏感明文、SQL 或完整 Payload；系统异常只对外返回公共安全消息，不返回内部 Cause/message。BFF 与前端须保留约定公共业务消息，不统一替换成模糊的“操作失败”。
+- Spring MVC 服务引入 `paytech-mvc-web-starter` 后统一使用其 `GlobalExceptionHandler`；服务不得重复创建本地 `@RestControllerAdvice`、私有 Problem/Error Body 或同义状态映射。公共错误类别归 Foundation；确有消费契约的业务错误码才由服务发布，Foundation 不依赖业务系统。
+- `ApiErrorStatusResolver` 仅用于 401/403/415 等明确外部契约的状态扩展；公共并发冲突 409、上游无效响应 502 与依赖不可用 503 由共享处理器映射。`FailException` 扩展只接受 4xx，`ErrorException` 只接受 5xx，其他结果回退默认。不得借此创建逐业务提示的错误目录，也不得把系统失败改成业务拒绝。
+- 调用内部共享错误契约的同步 `@HttpExchange` API 时，复用 `paytech-http-client-support` 的 `HttpServiceClientFactory` 统一转换网络、HTTP 状态、错误体和解码异常，并保留原始 Cause。接口代理由配置层注册单例 Bean，业务适配器直接注入调用，不重复编写 `execute/invoke` 或逐请求 catch 包装。特殊错误码只在工厂配置中显式注册；只有真正不同的业务转换、恢复或审计职责才在业务层捕获。该公共处理不安装全局 AOP、不自动重试，也不套用到第三方不同的错误协议。
 - HTTP 状态是调用结果的第一判断依据：`2xx` 返回当前接口的正常 typed DTO，`4xx/5xx` 返回 Foundation 统一的直接错误体 `code`、`message`、`requestId`、`timestamp`；不得为了“统一外壳”包装全部成功响应。
 - 未预期的运行时异常直接向上传播，由共享 `GlobalExceptionHandler` 记录并映射为 `500`。不得用宽泛 `catch (RuntimeException/Exception)` 只做重复日志、换一个同义异常或把所有失败改成 `503`；只有当前层能够恢复、必须释放资源/回写异步状态，或确实承担不同的外部协议错误契约时才捕获，并保留原始 Cause。
-- 同一 Starter 自动记录每个 MVC 请求的一条完整 Request Body、Response Body 与耗时 `INFO` 日志；服务不得再增加重复 Body 日志 Filter。当前明确不脱敏、不截断、不记录 Header/Cookie，也不提供开关；新增流式、SSE、文件或二进制接口前必须重新评估全量缓存与日志边界。
-- 上述完整 Body 行为只适用于没有更窄专项安全契约禁止日志的接口。专项文档优先：例如 Vault 禁止 Token、敏感明文和完整 Payload 进入普通日志，因此在专门日志边界获批前不得直接引入该 Starter；不得通过服务本地 Filter 绕过公共边界。
+- 同一 Starter 自动记录每个 MVC 请求的一条终态 `INFO` 日志；服务不得再增加重复 Body 日志 Filter。普通端点保留完整 Request/Response Body 与耗时，不脱敏、不截断、不记录 Header/Cookie。2026-09-04 Operations 首版增加共享 `web.logging.metadata-only-path-prefixes`（默认空）：敏感前缀在缓存前分流，仅保留安全元数据，不读取/缓存/记录 Body 或 Query；未知编码路径保守处理。新增流式、SSE、文件或二进制接口前仍须重新评估全量缓存与日志边界。
+- 上述完整 Body 行为只适用于没有更窄专项安全契约禁止日志的接口。专项文档优先：例如认证和 Vault 禁止 Token、敏感明文和完整 Payload 进入普通日志，必须完整配置并验证上述共享 metadata-only 边界；不得通过服务本地 Filter 绕过公共边界。
 
 ## 5. 事务与代码可读性
 
 - 业务和 Foundation 事务统一使用 `TransactionTemplate` 显式表达边界、传播行为和返回值，不使用 `@Transactional`。
-- Processor 是按需的用例编排层。Controller 方法少于 10 条有效可执行语句，且只委托一个 Domain Service、没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排时，可以不创建 Processor；空行、注释、花括号和格式换行不计入语句数，不能通过改写格式规避该边界。
+- Processor 是按需的用例编排层。Controller 方法少于 10 条有效可执行语句，且只委托一个 Domain Service（BFF 简单转发可为一个本地 Client Port）、没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排时，可以不创建 Processor；空行、注释、花括号和格式换行不计入语句数，不能通过改写格式规避该边界。
 - 任一上述条件不满足时都必须使用 Processor，不因物理代码行数少而例外。Controller 始终不得直接访问 Repository、Mapper 或第三方 SDK，也不得持有 `TransactionTemplate`；没有 Processor 的简单一致性读可由 Domain Service 持有只读事务。
 - 一个方法只承担一个明确职责，原则上不超过 30 行；优先卫语句和早期返回，嵌套不超过三层。
 - 不为单一实现预建 `Abstract*`、空接口或通用上下文。至少两个真实用例共享稳定流程、字段和不变量后才提取抽象；请求 ID、认证、网络信任和追踪等协议上下文优先留在 Web/Security 基础设施，不机械复制到每个 Processor 请求。

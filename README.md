@@ -1,6 +1,11 @@
 # Code-MoR
 
-Code-MoR is a local, interactive requirements and architecture blueprint for a lightweight Merchant of Record platform. It documents the business model, system boundaries, entry applications, functional/interface use cases, and end-to-end sequence diagrams, and now also contains the approved Operations API Gateway implementation, the Platform Support Phase A plus Operations JWKS runtime slices and the independent Vault database-design project.
+> **2026-09-04 test Docker 部署：** 独立 [`test-environment`](./test-environment/README.md) 已运行 Operations 前端、BFF、Gateway、Platform 与 MySQL/Redis/RabbitMQ/Nacos；用户明确要求 test 使用 HTTP，入口为 `http://localhost:28080`，无需证书。22 表 Schema、13 条 Route 目录及测试 Bootstrap/公钥已显式初始化，真实登录、Bootstrap/改密、权限菜单、人员/角色/审计查询、Refresh 与退出已验证。HTTP test 模式仅允许显式开关 + 单独 test Profile + localhost Origin；HTTP 与默认 HTTPS 均采用 JSON Access/Refresh 双 Token，前端仅存标签页内存，不使用 Cookie、Web Locks 或 BroadcastChannel，刷新页面需重新登录。Vault/KMS 仍使用明确隔离的 test 适配器。此增量更新下文此前未部署/未联调的历史状态，不表示生产上线。
+
+> **2026-09-04 Operations 当前增量：** [第一版实施记录](./agent-docs/plans/2026-09-04-operations-console-first-slice.md) 更新本页此前“BFF 仅基础 / Console 前端和认证未实现”的状态：独立 React/TypeScript/Vite/Ant Design 前端与 BFF 浏览器适配已增加；Platform 增加显式启用的 Operations 认证/IAM/人员/审计代码和 22 表手工 SQL 投影；Gateway 已有动态 Snapshot，并扩展可信 Context 和四个 BFF 下游根。Vault 按用户要求暂用隔离开发 Mock + TODO，生产 Vault/KMS、手工 Bootstrap/Key 初始化、真实 MySQL/Redis 联调和部署仍需各自前置。下文旧基础阶段的实现范围描述在被本记录更新处仅保留历史意义，架构所有权与手工基础设施规则不变。
+
+
+Code-MoR is a local, interactive requirements and architecture blueprint for a lightweight Merchant of Record platform. It documents the business model, system boundaries, entry applications, functional/interface use cases, and end-to-end sequence diagrams, and now also contains the approved Operations API Gateway implementation, the Platform Support Phase A plus Operations JWKS runtime slices, the Operations Console BFF application foundation and the independent Vault database-design project.
 
 This repository is not yet a production-ready Java microservice platform.
 
@@ -25,6 +30,8 @@ For a new AI or developer session, read these files in order:
 15. `requirements-site/content/global-use-case-sequences.mjs` — canonical global sequence catalog.
 
 ## Current phase
+
+The independently versioned [`operations-console-bff`](./operations-console-bff/README.md) now contains only its application foundation: `paytech-operations-console-bff-web` and `paytech-operations-console-bff-test`, Spring MVC with the shared Foundation HTTP boundary, Actuator/Prometheus and Nacos Discovery. It defaults to private HTTP at `127.0.0.1:18201` with same-listener management and no Servlet context path. The discovery name `operations-console-bff` matches the current Gateway Approved Target; runtime registration must use the same Nacos namespace as Gateway. No business API, login, IAM, database, Redis, MQ or frontend is implemented by this initialization. Authentication integration must first satisfy the authentication-specific prohibition on credential/token body logging.
 
 > **2026-09-01 current generated authority:** CCT is 37 tables / 423 fields / 57 unique indexes / 44 access indexes / 64 local relations / 7 one-to-one relations / 6 Diagram Groups. Platform Support is 63 / 822 / 123 / 99 / 107 / 5 / 7, plus 31 composite-FK, 85 named CHECK sidecar contracts and 36 exact `*_hash` contracts. Commerce, Payment, Finance and Risk retain their current figures below.
 
@@ -77,7 +84,7 @@ npm --prefix requirements-site run test:content
 
 ## Repository layout
 
-`paytech-build`、`paytech-foundation`、六个核心服务、Gateway、BFF 和两个前端目录分别是独立 Git 仓库；它们保留在同一工作区中，Code-MoR 根仓库只管理跨系统需求、架构、联合验证和本地开发环境。
+`paytech-build`、`paytech-foundation`、六个核心服务、Gateway、BFF 和各前端目录分别是独立 Git 仓库；它们保留在同一工作区中，Code-MoR 根仓库只管理跨系统需求、架构、联合验证和本地开发环境。
 
 - `agent-docs/` — project context, architecture, six-system logical database specifications, Vault/event-compensation boundaries and engineering documents used by developers and AI agents, including the shared PDManer template.
 - `requirements-site/` — local requirements website and canonical detailed content.
@@ -90,13 +97,15 @@ npm --prefix requirements-site run test:content
 - `finance-service/` — Finance System project root; contains the fourth authorized PDManer physical-design artifact but no Java implementation.
 - `platform-support-service/` — Platform Support System project root; contains the sixth authorized PDManer model and the tested Phase A persistence/initialization, PLT-I20 full-Snapshot provider, Operations PLT-I22 JWKS provider and Nacos Discovery registration.
 - `vault-service/` — independently versioned supporting-infrastructure database-design project; contains the generated three-table Vault PDManer model and physical decisions, with no Java, hand-maintained DDL/DML, physical database, KMS/runtime authentication or deployment implementation.
-- `api-gateway/` — API Gateway project root, outside the six core systems; its Operations first slice is the only currently authorized Java implementation scope.
+- `api-gateway/` — API Gateway project root, outside the six core systems.
+- `operations-console-web/` — independent React/TypeScript Operations frontend; local preview on `18301`, real auth through Nginx/Gateway (explicit localhost HTTP in `mor-test`, HTTPS by default).
+- `operations-console-bff/` — independently versioned Operations application foundation with Web/test modules, Foundation MVC, Actuator/Prometheus and Nacos Discovery; no business API or authentication implementation.
 - `business-portal-bff/` — retired empty historical placeholder; do not implement Client/Partner Console capabilities under this name.
 - `checkout-web/` — frontend project root for Hosted Checkout and Consumer Service Portal.
 - `business-portal-web/` — retired empty historical placeholder; do not implement Client/Partner Console capabilities under this name.
 
-The target console names are `operations-console-*` for internal personnel, `client-console-*` for Client, and `partner-console-*` for Local Partner; `checkout-*` remains the Consumer channel. These console roots remain absent until explicitly requested. The Vault database-design root now exists, but no Vault Java/runtime implementation exists. Apart from the six core-system models and the supporting Vault model, the implemented Java scopes are the API Gateway Operations slice and Platform Support Phase A plus Operations JWKS query; no Console code is implemented.
+The target console names are `operations-console-*` for internal personnel, `client-console-*` for Client, and `partner-console-*` for Local Partner; `checkout-*` remains the Consumer channel. The Operations BFF foundation is initialized; Operations frontend and Client/Partner Console roots remain unimplemented. The Vault database-design root now exists, but no Vault Java/runtime implementation exists. Apart from the six core-system models and the supporting Vault model, the implemented Java scopes include the API Gateway Operations slice, Platform Support Phase A plus Operations JWKS query and the Operations BFF application foundation; Console business capabilities remain unimplemented.
 
 ## Planned platform direction
 
-The confirmed implementation direction is Java 25 microservices using the shared `paytech-dependencies` BOM and `paytech-parent`, Spring Boot 4.0.8, Spring Cloud 2025.1.3, Nacos, RabbitMQ, MySQL, Redis and DDD-style layering. Internal synchronous contracts use lightweight `*-api` modules with `@HttpExchange` over private HTTP. Each state-owning service embeds the `paytech-compensation-event` library; Vault is a separate internal-only security service. See `agent-docs/TECHNOLOGY_STACK.md` and `agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md`. Unified Client/Partner/Operations human authentication is designed by the 2026-08-30 authority above; Gateway hardening continues to own JWT/JWKS/Header/Cookie/Redis/timeout behavior, while the 2026-09-02 transport design moves public TLS to Nginx and Platform's generated control-plane model owns current Route/Guard configuration. Platform provides PLT-I20 as a complete typed private-HTTP Snapshot query and PLT-I22 for the Operations public verification-key set; Gateway consumes PLT-I22 through Nacos. Login/token signing, CUSTOMER JWKS, management behavior, Gateway dynamic Snapshot consumption, BFF/Console implementation and production deployment still require their own implementation slices.
+The confirmed implementation direction is Java 25 microservices using the shared `paytech-dependencies` BOM and `paytech-parent`, Spring Boot 4.0.8, Spring Cloud 2025.1.3, Nacos, RabbitMQ, MySQL, Redis and DDD-style layering. Internal synchronous contracts use lightweight `*-api` modules with `@HttpExchange` over private HTTP. Each state-owning service embeds the `paytech-compensation-event` library; Vault is a separate internal-only security service. See `agent-docs/TECHNOLOGY_STACK.md` and `agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md`. Unified Client/Partner/Operations human authentication is designed by the 2026-08-30 authority above; Gateway hardening continues to own JWT/JWKS/Header/Cookie/Redis/timeout behavior, while the 2026-09-02 transport design moves public TLS to Nginx and Platform's generated control-plane model owns current Route/Guard configuration. Platform provides PLT-I20 as a complete typed private-HTTP Snapshot query and PLT-I22 for the Operations public verification-key set; Gateway consumes PLT-I22 through Nacos. Login/token signing, CUSTOMER JWKS, management behavior, Gateway dynamic Snapshot consumption, BFF business capabilities, Console frontends and production deployment still require their own implementation slices.

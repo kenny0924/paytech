@@ -1,0 +1,150 @@
+x-java: &java
+  profiles: [applications]
+  restart: unless-stopped
+  read_only: true
+  tmpfs: ["/tmp:size=128m,mode=1777"]
+  mem_limit: 768m
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  stop_grace_period: 30s
+
+x-discovery: &discovery
+  SPRING_PROFILES_ACTIVE: test
+  NACOS_SERVER_ADDR: nacos:8848
+  NACOS_NAMESPACE: mor-test
+  SPRING_CLOUD_NACOS_DISCOVERY_USERNAME: mor-test-services
+  SPRING_CLOUD_NACOS_DISCOVERY_PASSWORD: ${MOR_NACOS_SERVICE_PASSWORD:?prepare test secrets}
+  SPRING_CLOUD_NACOS_DISCOVERY_GROUP: DEFAULT_GROUP
+  TZ: UTC
+
+services:
+  platform-support-service:
+    <<: *java
+    image: mor-test/platform-support-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: platform-support-service.jar }
+    env_file: [./private/platform.env]
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.21
+      PLATFORM_SUPPORT_DB_URL: jdbc:mysql://mysql:3306/mor_platform?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      PLATFORM_SUPPORT_DB_USERNAME: platform_app
+      PLATFORM_SUPPORT_DB_PASSWORD: ${MOR_PLATFORM_DB_PASSWORD:?prepare test secrets}
+      OPERATIONS_AUTHENTICATION_ENABLED: "true"
+      OPERATIONS_AUTHENTICATION_WORKER_ID: "20"
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, curl, -fsS, http://127.0.0.1:18106/platform-support/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.21 }
+
+  operations-console-bff:
+    <<: *java
+    image: mor-test/operations-console-bff:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: operations-console-bff.jar }
+    environment:
+      <<: *discovery
+      OPERATIONS_BFF_BIND_ADDRESS: 172.30.73.22
+      OPERATIONS_CONSOLE_ORIGIN: http://localhost:28080
+      OPERATIONS_TEST_HTTP_ENABLED: "true"
+    depends_on:
+      platform-support-service: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, curl, -fsS, http://172.30.73.22:18201/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      backend: { ipv4_address: 172.30.73.22 }
+
+  api-gateway:
+    <<: *java
+    image: mor-test/api-gateway:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: api-gateway.jar }
+    environment:
+      <<: *discovery
+      GATEWAY_BIND_ADDRESS: 172.30.72.3
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.23
+      MANAGEMENT_SERVER_ADDRESS: 127.0.0.1
+      OPERATIONS_CONSOLE_ORIGIN: http://localhost:28080
+      OPERATIONS_TEST_HTTP_ENABLED: "true"
+      OPERATIONS_JWT_ISSUER: https://platform-support.local.test
+      OPERATIONS_JWT_AUDIENCE: operations-console
+      OPERATIONS_GUARD_REDIS_NAMESPACE: test:api-gateway
+      OPERATIONS_ACCESS_LOG_HMAC_VERSION: test-access-log-v1
+      OPERATIONS_ACCESS_LOG_HMAC_MATERIAL: ${OPERATIONS_ACCESS_LOG_HMAC_MATERIAL:?prepare test secrets}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SPRING_DATA_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+    depends_on:
+      redis: { condition: service_healthy }
+      platform-support-service: { condition: service_healthy }
+      operations-console-bff: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, curl, -fsS, http://127.0.0.1:19080/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      ingress: { ipv4_address: 172.30.72.3 }
+      backend: { ipv4_address: 172.30.73.23 }
+
+  operations-console-web:
+    profiles: [applications]
+    image: mor-test/operations-console-web:development
+    build: ../operations-console-web
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64m
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/healthz]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    networks: [web]
+
+  nginx:
+    profiles: [applications]
+    image: nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
+    user: nginx
+    entrypoint: [nginx, -g, "daemon off;"]
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64m
+    ports: ["127.0.0.1:28080:8080"]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      api-gateway: { condition: service_healthy }
+      operations-console-web: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/healthz]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    networks:
+      web: {}
+      ingress: { ipv4_address: 172.30.72.2 }

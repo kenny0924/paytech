@@ -1,5 +1,8 @@
 # Platform 统一人工身份认证与租户授权设计
 
+> **2026-09-04 Operations 后继决定：** 用户要求精简 BFF 转发层并改用 JSON Refresh，详见 [当前实施记录](../../../agent-docs/plans/2026-09-04-operations-console-first-slice.md)。仅 Operations 的 Refresh/Logout 改为 JSON `{refreshToken}`、登录/刷新 JSON 返回两 Token；不使用 Cookie/CSRF Header。前端两 Token 只存内存，刷新页面需登录。本文 Operations Cookie 传输及对应跨标签页 Cookie 协调已被替代，其他 Channel、Platform Session/轮换/授权规则不变。
+
+
 日期：2026-08-30
 
 状态：已逐项确认的认证设计并已反映在当前生成模型；Java、Migration 与认证运行态仍未实施

@@ -121,6 +121,8 @@ replay_pid*
 /platform-support-service/
 /vault-service/
 /api-gateway/
+/operations-console-bff/
+/operations-console-web/
 /business-portal-bff/
 /business-portal-web/
 /checkout-web/

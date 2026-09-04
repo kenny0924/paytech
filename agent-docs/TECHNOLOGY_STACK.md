@@ -1,8 +1,11 @@
 # Code-MoR 技术栈基线
 
-最后更新：2026-09-03
+> **2026-09-04 Operations 当前增量：** [第一版实施记录](./plans/2026-09-04-operations-console-first-slice.md) 更新本页此前“BFF 仅基础 / Console 前端和认证未实现”的状态：独立 React/TypeScript/Vite/Ant Design 前端与 BFF 浏览器适配已增加；Platform 增加显式启用的 Operations 认证/IAM/人员/审计代码和 22 表手工 SQL 投影；Gateway 已有动态 Snapshot，并扩展可信 Context 和四个 BFF 下游根。Vault 按用户要求暂用隔离开发 Mock + TODO，生产 Vault/KMS、手工 Bootstrap/Key 初始化、真实 MySQL/Redis 联调和部署仍需各自前置。下文旧基础阶段的实现范围描述在被本记录更新处仅保留历史意义，架构所有权与手工基础设施规则不变。
 
-状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、八个公共 JAR 源码与本地 `base` Compose Profile 配置已经初始化；既有构建治理 POM 和五个公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus，新增 `paytech-caffeine-starter`、`paytech-redis-starter`、`paytech-mybatis-support` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus；`base` Profile 已完成本机烟测并按需启停。Operations 首期 API Gateway 已在独立 Maven 仓库实现并通过构建、架构、验收与覆盖率门禁。Platform Support 已验证 `api`/`web`/`test` Spring MVC Reactor，并实现 Phase A 手工 SQL/MyBatis 21-table 投影、私有 HTTP PLT-I20 全量 Snapshot Provider、Operations PLT-I22 JWKS Provider 与 Nacos Discovery 注册；其余五个核心服务 Java 模块、Platform 剩余业务实现、Console BFF/前端、后续运行环境和生产基础设施仍未授权创建。
+
+最后更新：2026-09-04
+
+状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、八个公共 JAR 源码与本地 `base` Compose Profile 配置已经初始化；既有构建治理 POM 和五个公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus，新增 `paytech-caffeine-starter`、`paytech-redis-starter`、`paytech-mybatis-support` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus；`base` Profile 已完成本机烟测并按需启停。Operations 首期 API Gateway 已在独立 Maven 仓库实现并通过构建、架构、验收与覆盖率门禁。Platform Support 已验证 `api`/`web`/`test` Spring MVC Reactor，并实现 Phase A 手工 SQL/MyBatis 21-table 投影、私有 HTTP PLT-I20 全量 Snapshot Provider、Operations PLT-I22 JWKS Provider 与 Nacos Discovery 注册；Operations Console BFF 本次只初始化应用基础，见第 5.6 节；其余五个核心服务 Java 模块、Platform 剩余业务实现、BFF 业务能力、其他 Console BFF/前端、后续运行环境和生产基础设施仍未实现。
 
 ## 1. 使用范围
 
@@ -140,6 +143,13 @@ paytech-build/
 - PLT-I20 每次在只读 Repeatable Read 边界捕获当前配置，事务外完整校验并返回全量 typed Snapshot；PLT-I22 每次读取并严格校验 Operations Realm 的 public-only ACTIVE/有效 RETIRING RSA Key Set。二者都不实现 ETag、`If-None-Match` 或 `304`。
 - `./mvnw clean verify` 产出普通 Web JAR 与可执行 `-exec.jar`；完整运行边界见 [`platform-support-service/README.md`](../platform-support-service/README.md)。
 
+### 5.6 Operations Console BFF 应用基础
+
+- 独立仓库 `operations-console-bff` 继承 `com.paytech:paytech-parent:1.0.0-SNAPSHOT`，父 Artifact 为 `paytech-operations-console-bff`，仅聚合 `paytech-operations-console-bff-web` 和 `paytech-operations-console-bff-test`；沿用 Java 25、Maven Wrapper 3.9.16 与 Spring Boot 4.0.8，不新建空 `*-api`。
+- Web 只使用 `paytech-mvc-web-starter`、`spring-boot-starter-webmvc`、Actuator、Prometheus Registry 和 Nacos Discovery。Foundation Starter 提供日志、Request ID 与统一异常处理；没有业务 API、登录/IAM、数据库、Redis、MQ、Nacos Config 或前端。
+- 默认私网 HTTP 地址为 `127.0.0.1:18201`，没有 Servlet context path，Actuator 共用同一 Listener。注册名固定为 `operations-console-bff`，与当前 Gateway Approved Target 一致；Nacos 默认 `127.0.0.1:8848` / `mor-local`，运行时必须与 Gateway 使用同一 Namespace。
+- `auto` 使用随机端口并关闭 Nacos Discovery；Web 输出普通 JAR 和 `-exec.jar`，测试模块不发布、不部署。当前初始化不接入认证流量；增加认证端点前必须满足专项禁止凭据/Token Body 日志的要求。具体命令和运行边界见 [`operations-console-bff/README.md`](../operations-console-bff/README.md)。
+
 ## 6. 公共基础 JAR
 
 公共能力拆分为小而稳定的 JAR，禁止形成包含领域 DTO、业务枚举和所有工具类的巨型 `common.jar`：
@@ -230,7 +240,7 @@ paytech-foundation/
 - 六个核心服务、`operations-console-bff`、`client-console-bff`、`partner-console-bff` 和 Vault 默认使用 Spring MVC。
 - API Gateway 使用 Spring Cloud Gateway Server WebFlux；Operations 首期的 JWT、路由、限流和并发 Filter 保持端到端 Reactive。
 - 当前 Gateway 公网面是静态、method-aware Catalog：只存在 `POST /api/operations/auth/v1/login`、`POST /api/operations/auth/v1/refresh` 和 `POST /api/operations/auth/v1/logout`。匹配精确 `HttpMethod + rawPath` 且要求空 Query；每条路由显式指定 Operations BFF 下游路径 `/auth/v1/login`、`/auth/v1/refresh` 或 `/auth/v1/logout`，没有通配路由或前缀剥离规则。
-- Gateway 验证 Access JWT 和 Operations Channel/Actor 上下文，不处理账号密码登录；业务路由的唯一下游边界仍是 Operations BFF，不直连 Platform Support 或核心系统。Operations BFF 与 Platform 登录/Token 签发代码仍未实现；Platform 已提供尚未被 Gateway 消费的 PLT-I20 Snapshot 和 Operations PLT-I22 JWKS，Gateway 自动测试在完成对接前继续使用有状态协议 Simulator。
+- Gateway 验证 Access JWT 和 Operations Channel/Actor 上下文，不处理账号密码登录；业务路由的唯一下游边界仍是 Operations BFF，不直连 Platform Support 或核心系统。Operations BFF 已初始化应用基础，但它与 Platform 的登录/Token 签发代码仍未实现；Platform 已提供尚未被 Gateway 消费的 PLT-I20 Snapshot 和 Operations PLT-I22 JWKS，Gateway 自动测试在完成对接前继续使用有状态协议 Simulator。
 - 未匹配的 Operations API 由 Gateway 本地拒绝，不转发到下游；运行时路由只来自编译时 Catalog，不启用 Discovery Locator、Redis/动态 Route Repository 或通配 `/api/operations/**`。
 - 内部同步接口由提供方 `*-api` JAR 提供 `@HttpExchange` 契约，调用方通过本地 `*Client` 适配器隔离传输 DTO。
 - MVC 服务默认使用 `RestClient`；确有流式或 Reactive 边界时才使用 `WebClient`。

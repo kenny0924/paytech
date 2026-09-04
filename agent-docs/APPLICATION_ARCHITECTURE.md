@@ -1,8 +1,16 @@
 # Code-MoR Entry Application Architecture
 
-Last updated: 2026-09-03
+> **2026-09-04 Operations 浏览器契约更新：** 按用户要求，Operations 使用 JSON 传递 Refresh Token，登录/刷新返回 Access/Refresh 两 Token，前端只存内存且不发送 Cookie。BFF 删除重复转发 Processor，统一 HTTP 入站边界负责 PLT-I02，Controller 委托本地 Client Port。详见 [第一版实施记录中的后续决定](./plans/2026-09-04-operations-console-first-slice.md)；Client/Partner 的 Cookie 设计和业务所有权不变。
 
-Status: current architecture baseline for subsequent design sessions. The Platform Support database model for the unified public API control plane is approved and generated; its `api`/`web`/`test` Java reactor now implements the Phase A persistence/initialization slice, PLT-I20 full typed Snapshot provider, Operations-only PLT-I22 JWKS provider and Nacos Discovery registration. Console/BFF modules, login/token-signing and other authentication/Tenant IAM commands, CUSTOMER JWKS, control-plane management APIs and the dynamic Gateway Snapshot/JWKS cutover remain unimplemented; the existing Operations Gateway first slice remains the deployed Gateway runtime implementation.
+
+> **2026-09-04 Operations 当前增量：** [第一版实施记录](./plans/2026-09-04-operations-console-first-slice.md) 更新本页此前“BFF 仅基础 / Console 前端和认证未实现”的状态：独立 React/TypeScript/Vite/Ant Design 前端与 BFF 浏览器适配已增加；Platform 增加显式启用的 Operations 认证/IAM/人员/审计代码和 22 表手工 SQL 投影；Gateway 已有动态 Snapshot，并扩展可信 Context 和四个 BFF 下游根。Vault 按用户要求暂用隔离开发 Mock + TODO，生产 Vault/KMS、手工 Bootstrap/Key 初始化、真实 MySQL/Redis 联调和部署仍需各自前置。下文旧基础阶段的实现范围描述在被本记录更新处仅保留历史意义，架构所有权与手工基础设施规则不变。
+
+
+Last updated: 2026-09-04
+
+Status: current architecture baseline for subsequent design sessions. The Platform Support database model for the unified public API control plane is approved and generated; its `api`/`web`/`test` Java reactor now implements the Phase A persistence/initialization slice, PLT-I20 full typed Snapshot provider, Operations-only PLT-I22 JWKS provider and Nacos Discovery registration. Operations BFF business capabilities, Console frontends, Client/Partner BFFs, login/token-signing and other authentication/Tenant IAM commands, CUSTOMER JWKS, control-plane management APIs and the dynamic Gateway Snapshot/JWKS cutover remain unimplemented; the existing Operations Gateway first slice remains the deployed Gateway runtime implementation.
+
+The [`operations-console-bff`](../operations-console-bff/README.md) application foundation is now initialized as an independent Web/test Maven repository. It adds Spring MVC, shared Foundation HTTP behavior, Actuator/Prometheus and Nacos Discovery only; no business endpoint or authentication/authorization implementation is present.
 
 ## 1. Purpose
 
@@ -37,7 +45,7 @@ api-gateway/
 ### Entry-layer backend project roots
 
 ```text
-operations-console-bff/  # Internal Operations personnel
+operations-console-bff/  # Internal Operations personnel; application foundation initialized
 client-console-bff/      # Client
 partner-console-bff/     # Local Partner
 ```
@@ -59,15 +67,15 @@ client-console-web/      # Client
 partner-console-web/     # Local Partner
 ```
 
-`checkout-web/` and the historical empty placeholders `business-portal-web/` / `business-portal-bff/` currently exist. The `business-portal-*` names are retired as target architecture; do not add implementation under them. The three `*-console-*` frontend/BFF roots and Vault are not yet created. This naming decision does not authorize their scaffolding.
+`checkout-web/` and the historical empty placeholders `business-portal-web/` / `business-portal-bff/` currently exist. The `business-portal-*` names are retired as target architecture; do not add implementation under them. The Operations BFF application foundation now exists. The Operations frontend and Client/Partner frontend/BFF roots remain unimplemented. The Vault root contains database-design artifacts only. None of these naming decisions authorizes additional runtime capabilities.
 
 Do not create `client-api-service` or `provider-callback-service`. Client API is a logical external API surface routed to the owning core systems. Provider callbacks belong to Payment Orchestration.
 
-The current logical backend target is six core services, one API Gateway, three separately secured Console BFFs and one internal Vault: eleven Java deployable types. This is a target boundary, not a mandate to run or scaffold every deployable now. The Operations channel is required by MVP onboarding, refund, dispute, reconciliation and settlement flows; current Java implementation is limited to its Gateway slice and Platform Support Phase A plus Operations JWKS query. Frontend applications and the embedded `compensation-event` JAR are not deployable services.
+The current logical backend target is six core services, one API Gateway, three separately secured Console BFFs and one internal Vault: eleven Java deployable types. This is a target boundary, not a mandate to run or scaffold every deployable now. The Operations channel is required by MVP onboarding, refund, dispute, reconciliation and settlement flows; current Java implementation includes its Gateway slice, Platform Support Phase A plus Operations JWKS query and the Operations BFF application foundation. Frontend applications and the embedded `compensation-event` JAR are not deployable services.
 
 ## 3. What BFF means
 
-**BFF** means **Backend for Frontend**. It is a small, stateless backend designed around the needs of a particular frontend rather than around ownership of a business domain.
+**BFF** means **Backend for Frontend**. Every `*-bff` is a stateless frontend aggregation layer. It owns the query composition and response assembly needed by its frontend, while core systems own their business domains. Page-specific assembly must stay in the BFF rather than being pushed into core services for frontend convenience.
 
 For Code-MoR, each authenticated Console has its own BFF between API Gateway and the authorized core-system interfaces:
 
@@ -81,13 +89,15 @@ For Code-MoR, each authenticated Console has its own BFF between API Gateway and
 
 `<audience>` in the project-name template is exactly `operations`, `client`, or `partner`; it is not the JWT `aud` claim. JWT Audience is respectively `operations-console`、`client-console` or `partner-console`. Platform owns the global Account, Realm exactly `{OPERATIONS, CUSTOMER}`, and Channel exactly `{OPERATIONS, CLIENT, PARTNER}`. Operations uses OPERATIONS Realm/Channel; Client and Partner use CUSTOMER Realm with their respective CLIENT or PARTNER Channel. Tenant Member authorizes an Account within one Platform Tenant. CCT creates Client/Partner Applications before the Tenant projection exists, and Risk owns the typed source namespace for the qualification Case. The BFFs may share libraries later, but they do not share a public deployable or security boundary by default.
 
-The BFF may:
+The BFF is responsible for:
 
 - receive authenticated Client, Partner, user, and permission context from the edge;
 - aggregate read-only data from multiple core-system interfaces for one page;
 - transform domain responses into page-oriented response objects;
 - forward a command to the one core system that owns that command;
 - normalize presentation-level errors and pagination without changing business meaning.
+
+Actual multi-interface query composition and page response assembly belong in the BFF's application/Processor layer, using local Client Ports to access authorized core interfaces. Controllers retain protocol adaptation and integration adapters retain individual remote-contract adaptation. The rule that removes empty forwarding Processors does not remove a layer with real aggregation responsibilities; simple forwarding still needs no empty orchestration layer. Core APIs should expose reusable domain capabilities without taking ownership of a particular Console's page model.
 
 The BFF must not:
 
@@ -100,7 +110,7 @@ The BFF must not:
 
 This prohibition is literal for cancel, void and reversal: neither BFF may call Payment and Finance as steps of one browser/API command. The BFF forwards the single owning Commerce command; Commerce owns the command lifecycle and internally invokes the authorized domain flow.
 
-Example query aggregation is allowed:
+Example of query aggregation owned by the BFF:
 
 ```text
 Transaction detail page
@@ -108,7 +118,7 @@ Transaction detail page
   -> BFF combines their authorized views into one page response
 ```
 
-Business orchestration is not allowed in the BFF:
+Cross-system business transaction orchestration remains with the owning core system:
 
 ```text
 Refund command
@@ -117,12 +127,12 @@ Refund command
   -> Payment executes the provider refund
 ```
 
-Cancel and Reversal remain separate Commerce commands. `COM-I05 Cancel` calls Payment `PAY-I12` only to prove that no successful Authorization/Capture/Sale or unresolved Provider result exists and to terminate the Intent; it never creates a VOID or Refund and never silently upgrades itself. Operations may separately send `COM-I08 Reversal`; Commerce calls `PAY-I13`, and Payment atomically resolves the authoritative branch under lock. An uncaptured successful Authorization creates a precise-target VOID, while SALE/full Capture returns `REFUND_REQUIRED` so Commerce can create the normal Refund Request and continue through the Commerce Order Refund Position and Payment Channel Refund chain. Finance consumes only `RefundSucceeded` after Provider success. Gateway and BFF never coordinate Payment and Finance, and an unsolicited post-capture reversal or a reversal of a successful refund is an internal exception workflow, not an entry-layer command.
+Cancel and Reversal remain separate Commerce commands. `COM-I05 Cancel` calls Payment `PAY-I12` only to prove that no successful Authorization/Capture/Sale or unresolved Provider result exists and to terminate the Intent; it never creates a VOID or Refund and never silently upgrades itself. Operations may separately send `COM-I08 Reversal`; Commerce calls `PAY-I13`, and Payment atomically resolves the authoritative branch under lock. An uncaptured successful Authorization creates a precise-target VOID, while SALE/full Capture returns `REFUND_REQUIRED` so Commerce can create the normal Refund Request and continue through the Commerce Order Refund Position and Payment Channel Refund chain. Finance consumes only `RefundSucceeded` after Provider success. Gateway and BFF never coordinate Payment and Finance business mutations, and an unsolicited post-capture reversal or a reversal of a successful refund is an internal exception workflow, not an entry-layer command.
 
 The BFF is different from API Gateway:
 
 - **Gateway** handles external ingress, minimal channel identity validation, Route Scope enforcement, rate limiting, routing, request IDs, and access logs. 所有外部 HTTP API 都由 Platform Support 的公共 Route Catalog 统一维护，覆盖 `OPERATIONS`, `CLIENT`, `PARTNER`, `CHECKOUT`, `CLIENT_API` and `PROVIDER_CALLBACK`. Gateway validates and compiles the global immutable Platform Snapshot, while retaining ownership of the Target Registry, security profiles, protocol limits and Redis runtime state. It does not evaluate `PLT-I02`, resource ownership or page use cases.
-- **BFF** understands frontend response shapes and authorized query composition. It does not own business decisions.
+- **BFF** owns frontend response shapes, authorized query composition and page model assembly. It applies entry authorization and preserves upstream resource authorization; domain decisions remain with core systems.
 - **Core systems** own business rules, state transitions, data, and cross-system domain workflows.
 
 公网 TLS 由 Nginx 终止；Nginx 覆盖一个 `X-Real-IP` 后仅通过私网访问 Gateway。Gateway 只解析该值一次供 Guard 和 Access Log 共用，并在转发 BFF 前删除代理 Header。Gateway、BFF、Platform Support、Vault 与核心 Java 服务通过私有 HTTP 通信且不持有 X.509 应用证书。内部服务同步 HTTP、MQ、XXL-Job 与 Vault 调用绕过 Gateway，使用服务发现、部署网络限制和各自的内部契约，不进入公共 Route Catalog。Platform 已实现手工 Schema/初始化 DML、PLT-I20 全量 Snapshot Provider、Operations PLT-I22 JWKS Provider 与 Nacos Discovery 注册；Gateway 动态消费与运行态切换尚未实现。已部署 Gateway 在切换前继续使用静态 Operations Catalog 和测试 JWKS Simulator，不能据此把静态目录解释为新的长期控制面。
@@ -191,9 +201,9 @@ operations-console-web
       -> authorized core-system interfaces
 ```
 
-The only currently deployed public Operations routes are the three exact authentication paths retained by the [Operations Gateway hardening design](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md); unaffected parts of the [2026-08-29 first-slice design](./plans/2026-08-29-operations-api-gateway-design.md) remain in force until dynamic Snapshot cutover. Gateway removes `/api/operations` and forwards only to `operations-console-bff`; it never routes Operations browser requests directly to Platform Support or a core system. Platform Support owns internal Operations accounts and Token issuance, while Gateway validates the Access JWT and the BFF performs current Role/Permission/Resource authorization. Any later Operations route uses the same Platform-owned public Route Catalog and `OPERATIONS` channel rather than another static control-plane design.
+The only currently deployed public Operations routes are the three exact authentication paths retained by the [Operations Gateway hardening design](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md); unaffected parts of the [2026-08-29 first-slice design](./plans/2026-08-29-operations-api-gateway-design.md) remain in force until dynamic Snapshot cutover. Gateway removes `/api/operations` and forwards only to `operations-console-bff`; it never routes Operations browser requests directly to Platform Support or a core system. Platform Support owns internal Operations accounts and Token issuance, while Gateway validates the Access JWT and the BFF is responsible for current Role/Permission/Resource authorization when that capability is implemented. Any later Operations route uses the same Platform-owned public Route Catalog and `OPERATIONS` channel rather than another static control-plane design.
 
-Do not share Client or Partner BFFs with Operations. Operations has broader permissions, maker-checker controls and sensitive audit requirements. The Operations frontend/BFF remain unimplemented until explicitly authorized; Gateway tests use protocol-level Simulators.
+Do not share Client or Partner BFFs with Operations. Operations has broader permissions, maker-checker controls and sensitive audit requirements. The Operations BFF now has only its application foundation; its business APIs, login, IAM and current Role/Permission/Resource checks remain unimplemented, as does the frontend. The new application name is exactly `operations-console-bff`, matching Gateway's current Approved Target and `lb://operations-console-bff` routing identity. It has no Servlet context path, so a later approved `/auth/v1/*` implementation can match the downstream contract directly. Gateway and BFF must use the same Nacos namespace. This initialization does not make the authentication routes operational. Before adding them, the narrower authentication prohibition on logging credentials and token bodies must be satisfied; do not add a duplicate service-local logging Filter.
 
 ## 5. Portal command and query ownership
 
@@ -272,7 +282,7 @@ The `compensation-event` component has no network endpoint. It runs inside each 
 |---|---|---|---|
 | Client Console BFF | Client Console only | No | Planned; unified auth boundary is designed, runtime implementation remains unauthorized |
 | Partner Console BFF | Partner Console only | No | Planned; unified auth boundary is designed, runtime implementation remains unauthorized |
-| Operations Console BFF | Operations Console only | No | First-slice auth routes exposed with high-privilege controls |
+| Operations Console BFF | Operations Console only | No | Application foundation initialized; authentication and business endpoints remain unimplemented |
 | Commerce | Scoped Checkout endpoints | Client System | Exposed |
 | Payment Orchestration | No general browser API | Provider callbacks; narrowly scoped Client API if required | Restricted exposure |
 | Finance | Browser uses BFF | Client System | Exposed for machine API |
@@ -302,5 +312,5 @@ The fact that a service is reachable through Gateway does not make every interfa
 1. Keep the six core project roots and API Gateway project root.
 2. Keep `checkout-web` untouched. Treat empty `business-portal-web` and `business-portal-bff` as retired historical placeholders; do not implement under them or delete them without a separate cleanup decision.
 3. Do not create standalone Client API or Provider Callback projects.
-4. Implement only the approved `api-gateway` Operations first slice. Defer `operations-console-web`, `operations-console-bff`, `client-console-*` and `partner-console-*` scaffolding until explicitly requested.
+4. Keep the Operations BFF implementation limited to the initialized Web/test application foundation. Defer its business/authentication capabilities, `operations-console-web`, `client-console-*` and `partner-console-*` implementation until explicitly requested.
 5. Do not scaffold `vault-service` until implementation is explicitly requested; when it is created, follow `VAULT_SERVICE_ARCHITECTURE.md` and keep the Code-PMX Vault repository as a reference rather than copying its current security assumptions unchanged.

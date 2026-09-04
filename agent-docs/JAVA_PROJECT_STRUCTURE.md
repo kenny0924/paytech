@@ -1,6 +1,9 @@
 # Java 项目结构规范
 
-最后更新：2026-09-03
+> **2026-09-04 Operations 当前增量：** [第一版实施记录](./plans/2026-09-04-operations-console-first-slice.md) 更新本页此前“BFF 仅基础 / Console 前端和认证未实现”的状态：独立 React/TypeScript/Vite/Ant Design 前端与 BFF 浏览器适配已增加；Platform 增加显式启用的 Operations 认证/IAM/人员/审计代码和 22 表手工 SQL 投影；Gateway 已有动态 Snapshot，并扩展可信 Context 和四个 BFF 下游根。Vault 按用户要求暂用隔离开发 Mock + TODO，生产 Vault/KMS、手工 Bootstrap/Key 初始化、真实 MySQL/Redis 联调和部署仍需各自前置。下文旧基础阶段的实现范围描述在被本记录更新处仅保留历史意义，架构所有权与手工基础设施规则不变。
+
+
+最后更新：2026-09-04
 
 ## 1. 使用范围
 
@@ -16,7 +19,7 @@
 
 Java、Spring、Maven BOM/Parent、MySQL、RabbitMQ、Redis、Nacos、Gateway 和可观测性版本统一以 [TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md) 为准。本机运行方式以 [LOCAL_DEVELOPMENT_ENVIRONMENT.md](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 为准。
 
-Operations 首期 `api-gateway` 已按批准边界实现；其路由、协议、Guard 与 JWT/JWKS 校验约束继续以 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准，应用传输和 Client IP 信任来源以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准。Platform Support 已按用户明确授权初始化非业务应用基础，边界见第 3.3 节。除此之外，本阶段仍禁止主动为核心服务业务能力、Console BFF/前端或 Vault 创建脚手架；只有用户明确要求开始实现具体 Java 项目或垂直切片时，才能应用本文创建目录或代码。
+Operations 首期 `api-gateway` 已按批准边界实现；其路由、协议、Guard 与 JWT/JWKS 校验约束继续以 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准，应用传输和 Client IP 信任来源以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准。Platform Support 的当前运行切片见第 3.3 节；Operations Console BFF 已按本次明确授权初始化最小应用基础，边界见第 3.4 节。除此之外，本阶段仍禁止主动为核心服务业务能力、其他 Console BFF/前端或 Vault 创建脚手架；只有用户明确要求开始实现具体 Java 项目或垂直切片时，才能应用本文创建目录或代码。
 
 ## 2. 参考项目结论
 
@@ -167,6 +170,20 @@ platform-support-test ────→ platform-support-web ────→ platf
 - 当前切片不实现登录/Token 签发或其他认证/Tenant IAM 命令、CUSTOMER JWKS、API/Route/Guard 管理、限流运行态、Gateway Snapshot/JWKS 消费、补偿事件、Nacos Config 或部署自动化。任何此类能力都必须作为获批垂直切片按 TDD 增量加入。
 - 详细设计、实施步骤和运行方式分别见[基础设计](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md)、[实施计划](../docs/superpowers/plans/2026-09-01-platform-support-application-foundation.md)和 [`platform-support-service/README.md`](../platform-support-service/README.md)。
 
+### 3.4 Operations Console BFF 应用基础
+
+```text
+operations-console-bff/
+├── pom.xml                              # paytech-operations-console-bff，继承 paytech-parent
+├── paytech-operations-console-bff-web/   # 唯一可部署 Spring MVC 应用
+└── paytech-operations-console-bff-test/  # 随机端口、关闭 Nacos 的 auto 测试
+```
+
+- 根目录保留架构名称 `operations-console-bff`，新增 Maven Artifact 和模块目录使用 `paytech-*`；基础包为 `com.paytech.operations.console.bff`，启动类为 `OperationsConsoleBffApplication`。依赖方向只有 `test → web`，当前没有真实共享契约，不创建 `*-api`、空 Controller/Processor/领域层或未来客户端。
+- Web 使用 Foundation MVC Starter、Spring Boot MVC、Actuator/Prometheus 和 Nacos Discovery；复用 Foundation 的 Request ID、日志与统一异常处理，不复制本地 Filter、Advice 或错误体。没有业务 API、登录/IAM、数据库、Redis、MQ 和前端。
+- `spring.application.name=operations-console-bff` 与当前 Gateway Approved Target 一致；默认监听 `127.0.0.1:18201`，不配置 Servlet context path，管理端点复用同一 Listener。Nacos 默认 `127.0.0.1:8848` / `mor-local`，部署时 Namespace 必须与 Gateway 一致；`auto` 明确关闭发现并使用随机端口。
+- Web 同时产出普通 JAR 和 `-exec.jar`，测试模块跳过 install/deploy。应用基础不代表认证和业务授权可用；新增认证端点前必须落实专项禁止凭据/Token Body 日志的边界，不能用重复服务本地 Filter 绕过。运行说明见 [`operations-console-bff/README.md`](../operations-console-bff/README.md)。
+
 ## 4. API 模块与内部 HTTP 契约
 
 推荐结构：
@@ -218,6 +235,8 @@ public interface ClientEligibilityQueryApi {
 
 ### 4.1 提供方使用方式
 
+以下 Domain Service 与 Processor 规则适用于核心服务。`*-bff` 的职责是前端查询聚合和展示模型组装：简单转发可由 Controller 直接委托一个本地 Client Port，无需补空 Domain Service；真实多接口查询与页面组装由 BFF 的 `service` / Processor 编排，再通过 Client Port 访问上游，不下沉到核心服务。Controller 仍只做协议适配。
+
 `*-web` 依赖自己的 `*-api`。位于 `ext/rest` 的 Controller 只做 HTTP 协议适配；符合简单用例规则时可直接委托一个 Domain Service，否则委托 `service` 中的 Processor：
 
 ```java
@@ -257,6 +276,7 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 
 - 调用方不重复定义远程 HTTP DTO，也不重新声明 URL。
 - 远程 DTO 只停留在 integration/infrastructure 边界；转换为调用方自己的领域对象后再进入领域逻辑。
+- 内部共享错误协议的 HTTP 代理由配置层通过 Foundation `HttpServiceClientFactory` 创建并注册为单例 Bean，业务 Client 直接注入调用。公共异常转换只作用于这些显式创建的代理；业务类不重复包装 HTTP 状态、网络与错误体处理，特殊恢复或业务转换仍由拥有该语义的层负责。
 - `@HttpExchange` 本身只定义 HTTP 契约。Nacos 负责服务发现，Spring Cloud LoadBalancer 负责实例选择，底层 `RestClient` 或 `WebClient` 通过部署网络限制的私有 HTTP 发送请求；Java 服务不持有 X.509 应用证书。
 - 超时、统一错误映射、追踪和熔断在调用方基础配置或适配器中处理；命令请求不得在缺少幂等保障时自动重试。
 - 内部服务调用不经过 API Gateway。

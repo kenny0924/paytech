@@ -1,0 +1,148 @@
+name: mor-test
+
+services:
+  mysql:
+    profiles: [base]
+    image: mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+    restart: "no"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MOR_MYSQL_ROOT_PASSWORD:?copy .env.example to .env.test and set MOR_MYSQL_ROOT_PASSWORD}
+      TZ: UTC
+      MOR_CCT_DB_PASSWORD: ${MOR_CCT_DB_PASSWORD:?set MOR_CCT_DB_PASSWORD}
+      MOR_COMMERCE_DB_PASSWORD: ${MOR_COMMERCE_DB_PASSWORD:?set MOR_COMMERCE_DB_PASSWORD}
+      MOR_PAYMENT_DB_PASSWORD: ${MOR_PAYMENT_DB_PASSWORD:?set MOR_PAYMENT_DB_PASSWORD}
+      MOR_RISK_DB_PASSWORD: ${MOR_RISK_DB_PASSWORD:?set MOR_RISK_DB_PASSWORD}
+      MOR_FINANCE_DB_PASSWORD: ${MOR_FINANCE_DB_PASSWORD:?set MOR_FINANCE_DB_PASSWORD}
+      MOR_PLATFORM_DB_PASSWORD: ${MOR_PLATFORM_DB_PASSWORD:?set MOR_PLATFORM_DB_PASSWORD}
+      MOR_VAULT_DB_PASSWORD: ${MOR_VAULT_DB_PASSWORD:?set MOR_VAULT_DB_PASSWORD}
+      MOR_NACOS_DB_PASSWORD: ${MOR_NACOS_DB_PASSWORD:?set MOR_NACOS_DB_PASSWORD}
+      MOR_XXL_JOB_DB_PASSWORD: ${MOR_XXL_JOB_DB_PASSWORD:?set MOR_XXL_JOB_DB_PASSWORD}
+      PAYTECH_FOUNDATION_TEST_DB_PASSWORD: ${PAYTECH_FOUNDATION_TEST_DB_PASSWORD:?set PAYTECH_FOUNDATION_TEST_DB_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+00:00
+      - --max-connections=200
+    ports:
+      - "127.0.0.1:23306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../local-environment/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [CMD-SHELL, 'mysqladmin ping -h 127.0.0.1 -uroot -p"$${MYSQL_ROOT_PASSWORD}" --silent']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    mem_limit: 1536m
+    networks: [backend]
+
+  redis:
+    profiles: [base]
+    image: redis:8.2.1-alpine@sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232
+    restart: "no"
+    environment:
+      PAYTECH_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?set PAYTECH_REDIS_PASSWORD}
+      TZ: UTC
+    command:
+      - /bin/sh
+      - -c
+      - exec redis-server --appendonly yes --appendfsync everysec --requirepass "$${PAYTECH_REDIS_PASSWORD}"
+    ports:
+      - "127.0.0.1:26379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [CMD-SHELL, 'redis-cli --no-auth-warning -a "$${PAYTECH_REDIS_PASSWORD}" ping | grep PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    mem_limit: 256m
+    networks: [backend]
+
+  rabbitmq:
+    profiles: [base]
+    image: rabbitmq:4.2.9-management@sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031
+    restart: "no"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${MOR_RABBITMQ_USER:?set MOR_RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${MOR_RABBITMQ_PASSWORD:?set MOR_RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${MOR_RABBITMQ_VHOST:-/mor-test}
+      TZ: UTC
+    ports:
+      - "127.0.0.1:25672:5672"
+      - "127.0.0.1:25673:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 768m
+    networks: [backend]
+
+  nacos:
+    profiles: [base]
+    image: mor-test/nacos:3.1.2
+    build: ./nacos
+    restart: "no"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MODE: standalone
+      PREFER_HOST_MODE: hostname
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_DB_NAME: nacos_config
+      MYSQL_SERVICE_USER: nacos
+      MYSQL_SERVICE_PASSWORD: ${MOR_NACOS_DB_PASSWORD:?set MOR_NACOS_DB_PASSWORD}
+      MYSQL_SERVICE_DB_PARAM: characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      NACOS_AUTH_ENABLE: "true"
+      NACOS_AUTH_TOKEN: ${MOR_NACOS_AUTH_TOKEN:?set MOR_NACOS_AUTH_TOKEN}
+      NACOS_AUTH_IDENTITY_KEY: ${MOR_NACOS_AUTH_IDENTITY_KEY:?set MOR_NACOS_AUTH_IDENTITY_KEY}
+      NACOS_AUTH_IDENTITY_VALUE: ${MOR_NACOS_AUTH_IDENTITY_VALUE:?set MOR_NACOS_AUTH_IDENTITY_VALUE}
+      NACOS_CONSOLE_PORT: 8080
+      JVM_XMS: 256m
+      JVM_XMX: 768m
+      JVM_XMN: 128m
+      TZ: UTC
+    ports:
+      - "127.0.0.1:28088:8080"
+      - "127.0.0.1:18848:8848"
+      - "127.0.0.1:19848:9848"
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:8848/nacos/v3/admin/core/state/readiness']
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 60s
+    mem_limit: 1024m
+    networks: [backend]
+
+networks:
+  backend:
+    name: mor-test-backend
+    ipam:
+      config:
+        - subnet: 172.30.73.0/24
+  ingress:
+    name: mor-test-ingress
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.30.72.0/29
+  web:
+    name: mor-test-web
+
+volumes:
+  mysql-data:
+    name: mor-test-mysql-data
+  redis-data:
+    name: mor-test-redis-data
+  rabbitmq-data:
+    name: mor-test-rabbitmq-data

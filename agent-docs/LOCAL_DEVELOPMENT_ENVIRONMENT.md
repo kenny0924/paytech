@@ -1,8 +1,10 @@
 # Code-MoR 本地开发环境方案
 
-最后更新：2026-09-03
+最后更新：2026-09-04
 
-状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和八个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters、`paytech-mybatis-support` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A 手工 SQL/MyBatis 21-table 投影、私有 HTTP PLT-I20 全量 Snapshot Provider、Operations PLT-I22 JWKS Provider 与 Nacos Discovery 注册。其他五个核心服务 Java 模块、Platform 剩余业务能力、Console BFF/前端、调度和外部可观测运行环境仍未创建。
+> **独立 test 部署增量：** 用户于 2026-09-04 授权创建与 local 并行的 Docker test 环境并部署 Operations 前后端，并明确 test 不需要 HTTPS。现已新增 [`test-environment`](../test-environment/README.md)，Compose Project 为 `mor-test`；基础设施沿用本地版本并使用独立端口、网络、数据卷和随机凭据，加入 Platform、BFF、Gateway、前端及 HTTP Nginx。入口 `http://localhost:28080`，无需证书；HTTP test 模式要求显式开关、单独 test Profile 和 localhost Origin。Operations 后续按用户要求改为 JSON Refresh，不读写 Cookie，精确 Origin/JSON/JWT/IAM 校验保持。9 容器健康、真实登录/Bootstrap/改密/IAM 查询/审计/Refresh/退出已验收。22 表/13 Route 目录、测试 Bootstrap 与真实测试签名公钥在新 test 库显式初始化，未改变 local 数据和秘密。Platform 可明确启用 `test` Mock，仍拒绝生产 Profile；不是 Java 启动 Seed 或生产部署。本文其余混合开发与 local 自动测试约束不变。
+
+状态：已确认并完成第一阶段初始化。本工作区已创建 `base` Docker Compose Profile 配置、独立仓库 Maven Wrapper、统一构建项目和八个公共基础 JAR 源码模块；当前电脑已有 Nexus 已接入 Maven，既有构建治理 POM 与五个公共 JAR Snapshot 已发布，新增 Caffeine/Redis Starters、`paytech-mybatis-support` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus。`base` Profile 已在当前 Mac 完成首次启动与运行验收，容器按需启停并保留三个持久卷。Operations 首期 API Gateway 已作为独立 Maven 仓库实现并通过构建门禁；Platform Support 已实现 Phase A 手工 SQL/MyBatis 21-table 投影、私有 HTTP PLT-I20 全量 Snapshot Provider、Operations PLT-I22 JWKS Provider 与 Nacos Discovery 注册。Operations Console BFF 本次初始化应用基础，默认端口见第 8 节；其他五个核心服务 Java 模块、Platform 剩余业务能力、BFF 业务能力、其他 Console BFF/前端、调度和外部可观测运行环境仍未创建。
 
 当前传输基线以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准：Nginx 终止公网 TLS 并覆盖一个 `X-Real-IP`；Gateway 只接受 Nginx 私网流量，解析该值一次供 Guard/访问日志使用，并在转发 BFF 前删除代理 Header；Gateway、BFF、Platform Support、Vault 与核心 Java 服务通过私有 HTTP 通信且不持有 X.509 应用证书。
 
@@ -245,7 +247,8 @@ Vault 本地开发需要的 KMS、Secrets Manager 和 Object Storage 模拟器�
 | Finance | 18105 |
 | Platform Support | 18106 |
 | Vault | 18107 |
-| Operations / Client / Partner Console BFF | 未分配；项目创建时分别确定，不复用一个 Business Portal BFF |
+| Operations Console BFF（Application 与 Management） | 18201 |
+| Client / Partner Console BFF | 未分配；项目创建时分别确定，不复用一个 Business Portal BFF |
 
 服务在 Nacos 中按稳定 `spring.application.name` 注册。端口只用于本机调试，不成为跨环境契约。
 
@@ -259,6 +262,18 @@ cd platform-support-service
 ```
 
 实际启动可执行 JAR 前提供 Platform 专属 MySQL 配置和可达的 Nacos Discovery 地址；应用不读取 Bootstrap Secret，也不执行建表、Schema 变更或初始化 DML。PLT-I20、Operations PLT-I22、`health`、`liveness`、`readiness`、`info` 和 `prometheus` 共用 `18106` 私有 HTTP Listener，Readiness 检查当前 Snapshot 能否从数据库完整构造。应用注册名固定为 `platform-support-service`，不导入 Nacos Config；它不包含 Spring Security、X.509/mTLS、证书配置或本地异常处理器。完整变量、手工 SQL 和接口边界以 [`platform-support-service/README.md`](../platform-support-service/README.md) 为准。
+
+### 8.4 当前 Operations Console 前端与 BFF
+
+[`operations-console-bff`](../operations-console-bff/README.md) 默认通过私有 HTTP 监听 `127.0.0.1:18201`，没有 Servlet context path；`health`、Liveness、Readiness、`info` 和 `prometheus` 复用应用 Listener。绑定到其他地址需要显式运行配置与部署网络约束，不配置应用 TLS 或证书。
+
+应用注册名固定为 `operations-console-bff`，匹配当前 Gateway Approved Target。Nacos Discovery 默认地址为 `127.0.0.1:8848`、Namespace 为 `mor-local`；可通过 `NACOS_SERVER_ADDR` / `NACOS_NAMESPACE` 调整，实际运行时必须与 Gateway 使用同一 Namespace。认证、菜单、人员与审计接口已经添加，但可用性还取决于 Platform 的显式认证配置、手工 SQL 与签名密钥前置。
+
+BFF 本身没有数据库、Redis 或 RabbitMQ，生产调用通过 Nacos/LoadBalancer 到 Platform；默认 `auto` 使用随机端口及真实 HTTP 协议 Simulator、关闭 Nacos，不要求本地中间件。四个业务前缀已经配置 Foundation metadata-only 日志。
+
+`operations-console-web` 的 Vite 预览绑定 `127.0.0.1:18301`；默认真实认证从 `https://operations-console.local.test` 等配置 Origin 通过 Nginx 进入。单独 `mor-test` 按用户明确要求使用 `http://localhost:28080`，配置约束见 test 运行手册；Vite 预览不会自动启用这一模式。HTTP 与默认 HTTPS 均使用 JSON Access/Refresh 双 Token，前端仅存标签页内存，不使用 Cookie、Web Locks 或 BroadcastChannel，刷新页面需重新登录。
+
+本轮已部署独立 `mor-test` Docker 环境，并在新 test 库显式应用 22 表 Schema、13 条 Route 目录及测试 Bootstrap/公钥初始化；真实登录、IAM 查询、Refresh 与退出链路已验收。初始化不由 Java 启动执行，普通重启不重建 Bootstrap。Platform 的 Vault Mock 和本地签名只允许显式开发/测试配置；具体边界、命令和测试结果见[首版实施记录](./plans/2026-09-04-operations-console-first-slice.md)及各仓 README。
 
 ## 9. 本地 MySQL 多数据库方案
 
@@ -331,7 +346,7 @@ xxl_job
 
 只检查 Platform Support 当前自动门禁时至少启动 `base` 中的 MySQL，并确认 `mor_platform` 已手工应用当前两份 SQL；测试 Profile 会关闭 Nacos Discovery，无需启动未被当前测试使用的其他 Java 服务。
 
-不要把“本地全绿”建立在所有十一个 Deployable（六个核心服务、API Gateway、三个 Console BFF 和 Vault）必须同时常驻的前提上；当前仍只按需启动已经实现且属于当前业务链的应用，未创建的核心服务、Console BFF 和 Vault 不因此获得实现授权。
+不要把“本地全绿”建立在所有十一个 Deployable（六个核心服务、API Gateway、三个 Console BFF 和 Vault）必须同时常驻的前提上；当前仍只按需启动已经实现且属于当前业务链的应用，未创建的核心服务、其他 Console BFF 和 Vault 不因此获得实现授权，已初始化 Operations BFF 也不因此获得业务能力授权。
 
 ## 14. 健康检查与验证
 
@@ -378,7 +393,7 @@ Java 服务至少验证：
 - 清理现有 Docker Images、Containers、Volumes 或 Build Cache；
 - 修改 Docker Desktop 全局资源设置；
 - 修改个人 `.zshrc`、IDE 全局配置或系统默认 JDK；
-- 创建尚未授权的核心业务服务 Java 模块、Console BFF/前端或业务表；Operations Gateway 与 Platform 当前已列明的 Phase A/PLT-I20/Operations PLT-I22 切片不在本条禁止范围内；
+- 创建尚未授权的核心业务服务 Java 模块、Console BFF/前端或业务表；Operations Gateway、Platform 当前已列明的 Phase A/PLT-I20/Operations PLT-I22 切片与 Operations BFF 应用基础不在本条禁止范围内；
 - 创建 `scheduler`、`observability`、Vault 模拟依赖等后续 Compose Profile；
 - 创建/发布云资源、CI/CD 或生产部署。
 
