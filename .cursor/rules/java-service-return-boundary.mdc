@@ -1,0 +1,20 @@
+---
+description: Enforce the return-type boundary between Java Service and API layers
+globs: "**/src/main/java/**/*.java"
+alwaysApply: false
+---
+
+# Java Service Return Boundary
+
+- Service 和 Domain Service 只能返回数据库对象或本服务自定义的领域对象。
+- Service 绝对不能返回 `*-api` 模块的 Request/Response DTO，也不能在实现中组装 API DTO。
+- Controller、Facade 或其他入站适配器负责把 Service 结果转换成 API 响应对象。
+- Repository 负责数据库对象与领域对象之间必要的持久化转换；不得为了省略转换而让 API DTO 穿透 Service。
+
+```java
+// Bad: Service depends on transport response
+ClientBalanceResponseBody queryBalance(...);
+
+// Good: Service returns its own domain result
+ClientBalance queryBalance(...);
+```
