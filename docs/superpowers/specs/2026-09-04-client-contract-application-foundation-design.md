@@ -2,7 +2,7 @@
 
 Date: 2026-09-04
 
-Status: approved in chat; implementation not started
+Status: implemented, verified and independently reviewed in isolated branch `codex/client-contract-application-foundation` at `a251cd0`; local main integration pending
 
 ## 1. Purpose
 
