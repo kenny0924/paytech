@@ -1,6 +1,6 @@
 # Java 单元测试与自动化测试规范
 
-最后更新：2026-09-03
+最后更新：2026-09-05
 
 ## 1. 使用范围
 
@@ -55,7 +55,7 @@ TestBase
 参考项目仍存在以下不能照搬的闭环缺口：
 
 - 启动配置仍可能访问配置中心；
-- 固定凭据、真实环境地址和自动访问配置中心仍不能照搬；Code-MoR 本地凭据只放在未提交的 `.env.local`；
+- 真实环境凭据和自动访问配置中心仍不能照搬；仓库隔离、仅监听 Loopback、无生产权限且可随时重建的本地测试账号可以使用版本化固定凭据，以支持 Maven/IDE 直接运行，其他凭据仍不得进入版本库；
 - 多个 Mock Facade 直接返回共享 `response` 字段，未准备时可能返回 `null`；
 - 部分 Mocker 和内部 Map 没有在每个测试前完整重置；
 - Mock 未统一记录请求，无法验证调用参数、次数和幂等键；
@@ -207,7 +207,7 @@ Domain Service → RepositoryImpl → Mapper → local MySQL
 
 - 完整服务级 `auto` 的本地前置条件是 JDK、Maven、Docker/兼容运行环境，以及已由开发者启动并准备好的 `local-environment`。
 - Maven/JUnit 不调用 Docker API，不创建、不停止、不重建容器；镜像使用仓库 Compose 固定版本，不使用 `latest`。
-- MySQL 密码、Redis 密码和 RabbitMQ 凭据来自未提交的 `.env.local` 或进程环境，测试与日志不得输出值。
+- 隔离、Loopback-only 且可随时重建的本地测试账号可以使用仓库统一维护的固定密码；测试配置、`local-environment` 初始化值和说明文档必须保持一致，并允许环境变量显式覆盖。生产、共享测试、第三方及任何真实环境凭据仍来自未提交的 `.env.local` 或安全配置，测试与日志不得输出这些值。
 - 并行执行前必须证明数据库业务键、Redis Key、Topic/Consumer Group 和清理逻辑互不干扰。
 
 ### 7.6 本地共享服务规则
@@ -407,7 +407,7 @@ TestBase
 `application-auto.yml` 必须：
 
 - 关闭 Nacos、外部配置中心、定时任务和非本测试需要的真实 Consumer；
-- 只允许仓库本地 Loopback URL，不包含用户名、密码或 Token；凭据由进程环境注入；
+- 只允许仓库本地 Loopback URL。仅对仓库隔离、无生产权限且可随时重建的本地测试账号，允许配置固定用户名和密码以支持 Maven/IDE 直接运行，并保留环境变量覆盖入口；生产、共享测试、第三方、Vault、Token、密钥及任何真实环境凭据必须由安全配置注入；
 - 数据库、Redis、MQ 使用第 7.6 节固定的本地地址；Simulator 仍由测试动态注入地址；
 - 在启动时拒绝未由测试基础设施注册的外部 Endpoint。
 
@@ -508,7 +508,7 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 - 自动测试连接真实微服务、Provider、Nacos、配置中心，或仓库 Loopback `local-environment` 之外的团队共享基础设施；
 - 在测试内启动、停止或重建 MySQL、Redis、RabbitMQ 容器，或绕过第 7.6 节固定的仓库 `local-environment` 连接其他实例；
 - 让 HTTP Simulator 依赖人工维护的固定端口；它必须由测试进程在随机 Loopback 端口启动；
-- 测试配置写入个人地址、共享账号、真实密码或 Token；
+- 测试配置写入个人地址、共享账号、生产/第三方/真实环境密码或 Token；隔离的 Loopback-only 本地测试账号固定凭据不在此列；
 - 所有测试默认使用固定端口的 `@SpringBootTest`；
 - 测试依赖固定方法顺序或共享实例状态；
 - Builder 访问基础设施或隐式改变 Simulator；
@@ -544,6 +544,6 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 - [ ] 未准备场景、意外请求和多余调用都会显式失败。
 - [ ] 响应、本地数据、缓存、事件和外部调用按风险完成联合断言。
 - [ ] 每个测试独立、可重复并且不依赖顺序。
-- [ ] 没有真实凭据、环境地址、固定端口、固定睡眠或人工观察式断言。
+- [ ] 没有生产、共享测试、第三方或真实环境凭据；固定本地测试凭据仅属于隔离的 Loopback-only 可重建账号，并与初始化配置一致。
 - [ ] 默认 Maven 测试只运行 `auto`，`manual` 需要显式 Profile。
 - [ ] 已运行相关 Maven 测试并记录实际结果。

@@ -10,6 +10,7 @@ alwaysApply: false
 - 优先用少量业务级场景验证公开入口到数据库/外部协议的完整生产链，不给每个内部类或方法机械创建孤立测试。
 - HTTP 链路经过真实 Controller、按需存在的 Processor、Domain Service、Repository/Mapper 和本地数据库；没有 Processor 的简单用例直接走 Controller → Domain Service。
 - 数据库、Redis、RabbitMQ 只复用开发者已启动的仓库 `local-environment`；测试不得使用 Flyway、Liquibase、Testcontainers，或创建、停止、重建容器。
+- 隔离、仅监听 Loopback、无生产权限且可随时重建的本地测试账号可以在 `application-auto.yml` 使用仓库统一固定凭据，使 Maven/IDE 测试直接运行；必须与 `local-environment` 初始化值一致并保留环境变量覆盖。生产、共享测试、第三方、Vault、Token、密钥和真实环境凭据仍禁止进入版本库。
 - 外部 HTTP/MQ 使用真实协议和有状态 Simulator；不得用 Mockito、`@MockBean`、Spy 或方法级 Stub 替换生产链。
 - 同一测试切片共享一个最小 `TestApplication` 与配置，不为每个测试类重复创建启动配置，也不继承启动全部能力的巨大基类。
 - 纯算法、状态机、值对象或转换器在能明显缩小故障定位范围时使用聚焦单元测试；覆盖率目标高于 90%，但关键分支、持久化和副作用断言优先。
