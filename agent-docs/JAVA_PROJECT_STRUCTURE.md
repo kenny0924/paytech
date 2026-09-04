@@ -190,15 +190,10 @@ operations-console-bff/
 
 ```text
 api/
-├── internal/
+├── <capability>/
 │   ├── *CommandApi.java
-│   └── *QueryApi.java
-├── request/
-│   └── *Request.java
-├── response/
-│   └── *Response.java
-├── model/
-│   └── *Info.java
+│   ├── *QueryApi.java
+│   └── *Models.java        # public record *RequestBody / *ResponseBody 及相关嵌套模型
 └── enums/
     └── *Status.java
 ```
@@ -207,8 +202,11 @@ api/
 
 - 内部同步接口使用 Spring `@HttpExchange`，具体方法使用 `@GetExchange`、`@PostExchange` 等明确 HTTP 注解。
 - API 按业务能力拆分，例如 `ClientEligibilityQueryApi`、`AgreementCommandApi`；禁止创建包含所有接口的巨型 `ClientContractApi`。
+- `*Api` 只声明 HTTP 方法与协议注解；请求、响应及相关嵌套模型按业务能力组织到独立 `*Models` 容器，不直接定义在 API 接口中。容器使用 `public final` 与私有构造器，传输对象使用 `public record`，保留 `*RequestBody` / `*ResponseBody` 后缀及字段校验。模型仍属于提供方的 `*-api` 模块，BFF 自己的页面模型留在 BFF。
 - 接口方法使用业务语言命名，并通过 JavaDoc 说明参数、结果、幂等和主要错误语义。
 - 请求、响应和模型是 HTTP 传输契约，不暴露数据库映射对象、Repository 类型、内部聚合或第三方 SDK 类型。MQ 事件契约不因复用 DTO 而混入 HTTP API。
+- 公开 HTTP 与发布的内部 `*-api` 顶层请求 DTO 使用 `*RequestBody`，顶层响应 DTO 使用 `*ResponseBody`。GET 查询 DTO 同样使用 `*RequestBody`，但命名不改变既有 Query/Path 传参，不要求 GET 携带 Body 或增加 `@RequestBody`。
+- 嵌套业务模型及内部领域、应用层对象不强制该后缀，不为统一命名添加同义包装。新增和调整 HTTP DTO 时统一遵循规则；已发布 Java 类型重命名时同步更新提供方和调用方。详细规则以 `DEVELOPMENT_CONVENTIONS.md` 第 2 节为准。
 - 对外发布且调用方需要理解的稳定 Code 枚举定义统一放在 `api/enums` 并实现 `CodeEnum`；提供方 Web 直接复用，不在领域包复制同义枚举。
 - API DTO 字段仍使用 `String` 承载稳定枚举 Code，不声明 Java enum 字段；`api/enums` 是 Code 目录而不是 JSON 字段类型。仅服务内部使用的枚举放在 Web 的 `domain/enums`，边界转换使用 `getCode()`，消费方显式校验未知 Code。
 - 契约变更先判断兼容性。新增可选字段优先，删除、改名或改变语义必须明确版本策略。
@@ -229,7 +227,7 @@ public interface ClientEligibilityQueryApi {
      * @return 交易资格及不可交易原因
      */
     @GetExchange("/{clientId}/eligibility")
-    ClientEligibilityResponse getEligibility(@PathVariable String clientId);
+    ClientEligibilityResponseBody getEligibility(@PathVariable String clientId);
 }
 ```
 
@@ -246,7 +244,7 @@ public class ClientEligibilityController implements ClientEligibilityQueryApi {
     private final ClientEligibilityService clientEligibilityService;
 
     @Override
-    public ClientEligibilityResponse getEligibility(String clientId) {
+    public ClientEligibilityResponseBody getEligibility(String clientId) {
         return clientEligibilityService.getEligibility(clientId);
     }
 }
@@ -473,6 +471,7 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] 公共契约和内部实现没有混在同一模块。
 - [ ] `*-api` 只包含轻量 HTTP 契约，没有业务实现或持久化依赖。
 - [ ] API DTO 的枚举语义使用 `String code`；对外 Code 枚举定义位于 `*-api/api/enums`，内部枚举位于 `*-web/domain/enums`，均实现 `CodeEnum`，错误枚举按需实现 `CodeMessageEnum`，且没有复制同义 Code 目录。
+- [ ] HTTP DTO 按业务能力放入独立 `*Models`，API 接口不内嵌 DTO；顶层类型使用 `*RequestBody` / `*ResponseBody`，GET 参数位置保持，嵌套模型和内部领域对象不机械追加后缀。
 - [ ] Controller 实现 `@HttpExchange` API、没有重复 MVC Mapping；简单用例只委托一个 Domain Service，其他用例委托 Processor。
 - [ ] 外部触发入口位于与 `service` 平级的 `ext/job`、`ext/dubbo`、`ext/rest` 或实际协议子包，且没有承载业务逻辑。
 - [ ] 调用方通过本地 `*Client` 适配器隔离远程 API DTO，没有让远程 DTO进入领域层。

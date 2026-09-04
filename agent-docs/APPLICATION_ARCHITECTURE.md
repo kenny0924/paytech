@@ -1,6 +1,6 @@
 # Code-MoR Entry Application Architecture
 
-> **2026-09-04 Operations 浏览器契约更新：** 按用户要求，Operations 使用 JSON 传递 Refresh Token，登录/刷新返回 Access/Refresh 两 Token，前端只存内存且不发送 Cookie。BFF 删除重复转发 Processor，统一 HTTP 入站边界负责 PLT-I02，Controller 委托本地 Client Port。详见 [第一版实施记录中的后续决定](./plans/2026-09-04-operations-console-first-slice.md)；Client/Partner 的 Cookie 设计和业务所有权不变。
+> **2026-09-04 Operations 浏览器契约更新：** 按用户最新要求，Operations 使用 JSON 传递 Refresh Token，登录/刷新返回 Access/Refresh 两 Token；前端通过当前标签页的 sessionStorage 保存两 Token 及绝对过期时刻，在模块启动时恢复，整页刷新不再要求重新登录。该决定覆盖此前仅内存限制；不使用 localStorage 或 Cookie，不缓存密码、Account 上下文或权限。有效 Access 继续用于 Authorization，临近到期或 GET 首次 401 时可 JSON Refresh；轮换一起更新两 Token，退出、改密完成、Refresh 401、刷新后的 GET 唯一一次重试仍 401 或会话到期时清理。临时 429/503/网络故障保留会话并提供恢复重试。BFF 统一 HTTP 入站边界仍负责 PLT-I02，Controller 委托本地 Client Port；Client/Partner 契约及业务所有权不变。详见 [第一版实施记录中的后续决定](./plans/2026-09-04-operations-console-first-slice.md)，本次前端 32 项测试与生产构建通过，已部署 mor-test，真实浏览器连续两次整页刷新保持登录、退出后刷新保持登录页；无后端或数据库改动。
 
 
 > **2026-09-04 Operations 当前增量：** [第一版实施记录](./plans/2026-09-04-operations-console-first-slice.md) 更新本页此前“BFF 仅基础 / Console 前端和认证未实现”的状态：独立 React/TypeScript/Vite/Ant Design 前端与 BFF 浏览器适配已增加；Platform 增加显式启用的 Operations 认证/IAM/人员/审计代码和 22 表手工 SQL 投影；Gateway 已有动态 Snapshot，并扩展可信 Context 和四个 BFF 下游根。Vault 按用户要求暂用隔离开发 Mock + TODO，生产 Vault/KMS、手工 Bootstrap/Key 初始化、真实 MySQL/Redis 联调和部署仍需各自前置。下文旧基础阶段的实现范围描述在被本记录更新处仅保留历史意义，架构所有权与手工基础设施规则不变。

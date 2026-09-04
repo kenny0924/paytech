@@ -271,7 +271,7 @@ cd platform-support-service
 
 BFF 本身没有数据库、Redis 或 RabbitMQ，生产调用通过 Nacos/LoadBalancer 到 Platform；默认 `auto` 使用随机端口及真实 HTTP 协议 Simulator、关闭 Nacos，不要求本地中间件。四个业务前缀已经配置 Foundation metadata-only 日志。
 
-`operations-console-web` 的 Vite 预览绑定 `127.0.0.1:18301`；默认真实认证从 `https://operations-console.local.test` 等配置 Origin 通过 Nginx 进入。单独 `mor-test` 按用户明确要求使用 `http://localhost:28080`，配置约束见 test 运行手册；Vite 预览不会自动启用这一模式。HTTP 与默认 HTTPS 均使用 JSON Access/Refresh 双 Token，前端仅存标签页内存，不使用 Cookie、Web Locks 或 BroadcastChannel，刷新页面需重新登录。
+`operations-console-web` 的 Vite 预览绑定 `127.0.0.1:18301`；默认真实认证从 `https://operations-console.local.test` 等配置 Origin 通过 Nginx 进入。单独 `mor-test` 按用户明确要求使用 `http://localhost:28080`，配置约束见 test 运行手册；Vite 预览不会自动启用这一模式。HTTP 与默认 HTTPS 均使用 JSON Access/Refresh 双 Token。最新决定改用当前标签页 sessionStorage 保存两 Token 及绝对过期时刻，模块启动时恢复，覆盖此前仅内存/刷新需登录的限制；不使用 localStorage、Cookie、Web Locks 或 BroadcastChannel，不缓存密码或权限。存储遵循浏览器 page session 生命周期，复制/恢复标签页的行为由浏览器决定，应用不主动跨标签页共享 Token；恢复增量的验证与部署状态见 test 运行手册。
 
 本轮已部署独立 `mor-test` Docker 环境，并在新 test 库显式应用 22 表 Schema、13 条 Route 目录及测试 Bootstrap/公钥初始化；真实登录、IAM 查询、Refresh 与退出链路已验收。初始化不由 Java 启动执行，普通重启不重建 Bootstrap。Platform 的 Vault Mock 和本地签名只允许显式开发/测试配置；具体边界、命令和测试结果见[首版实施记录](./plans/2026-09-04-operations-console-first-slice.md)及各仓 README。
 

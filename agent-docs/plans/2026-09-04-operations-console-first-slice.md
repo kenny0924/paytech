@@ -2,7 +2,104 @@
 
 日期：2026-09-04。用户确认从登录、权限菜单、内部人员管理与审计开始，并明确“Vault 现在还在写，代码中先 Mock TODO 一下”。这份授权允许本次实现与隔离开发适配器；不代表生产基础设施、密钥供应商、手工数据库变更或部署已经完成。
 
-## 同日后续决定：公共 HTTP 客户端异常处理（当前）
+## 同日代码提交
+
+菜单层级、刷新恢复、公共分页及 HTTP DTO / Models 整理已按用户要求分别提交：
+
+- `paytech-foundation`：`37cf854`（`main`）
+- `platform-support-service`：`f200748`（`main`）
+- `operations-console-bff`：`83e34a3`（`codex/operations-bff-foundation`）
+- `operations-console-web`：`8cd8fe0`（`codex/operations-console-first-slice`）
+
+本次为本地 Git 提交，未推送或重新部署。下文保留各功能增量的实际验证与部署边界。
+
+## 同日后续调整：HTTP Models 与 API 分离
+
+用户要求将 API 接口内嵌的 DTO 提取到按业务分组的独立 `*Models`。
+Platform 的认证、授权、导航和人员管理模型分别放入 `AuthenticationModels`、`AuthorizationModels`、
+`NavigationModels`、`ManagementModels`，仍属于 `platform-support-api` 模块及各自业务包。
+容器使用 `public final` 与私有构造器，DTO 使用 `public record`，保留已统一的 Body 后缀、字段校验和敏感输出约束。
+三个 Operations API 只声明 HTTP 方法契约；提供方实现、BFF 适配器和测试同步引用新的模型位置。
+BFF 的本地 `service/model/*Models` 继续承担页面模型边界，JSON、HTTP 与业务行为保持不变。
+API 干净构建后重新安装本机 Maven 缓存，BFF `clean verify` 155 项、Platform 18 项聚焦测试通过；
+已有命名测试同步约束 API 接口不再声明内嵌类型。Platform 数据库全量 auto 仍缺本机 local 凭据，未执行。
+本次结构调整已提交，未重新部署。
+
+## 同日后续修正：现有 Operations HTTP DTO 命名
+
+前次只改公共分页类型与规范，遗漏现有 Operations 接口 DTO。本次将 BFF 的认证、会话、导航、人员接口，
+以及 Platform 对应的认证、授权、人员 HTTP 契约及其全部调用处统一为 `*RequestBody` / `*ResponseBody`。
+例如登录现在接收 `LoginRequestBody`、返回 `TokenGrantResponseBody`，刷新接收 `RefreshRequestBody`；
+会话和导航分别返回 `SessionContextResponseBody`、`NavigationResponseBody`。
+人员创建返回 `AccountResponseBody`，人员分页复用同一类型作为元素；内部 `OperatorContext`、领域会话对象及
+仅作嵌套的角色、菜单资源、审计条目继续保留业务名称。
+
+改动保持 JSON 字段、HTTP 方法、状态码、参数位置、校验、敏感对象的 REDACTED 输出及业务处理不变。
+`OperationsHttpBodyNamingAutoTest` 检查两个 BFF Controller 与三个 Platform Operations API 的实际 HTTP 方法，
+约束请求 Body 类型及非 void 顶层响应的后缀。Platform API 已重新编译安装，本次 BFF `clean verify` 155 项、
+Platform 18 项聚焦测试通过。前端的 Token、会话、导航响应和分页查询类型同步新名称，
+40 项测试及 TypeScript/Vite 生产构建通过。Platform 数据库全量 auto 仍缺本机 local 凭据，未执行。
+本次命名调整已提交、未重新部署；下文的 mor-test 部署记录对应此前功能增量。
+
+## 同日后续决定：公共分页复用（当前）
+
+分页请求与响应统一复用 Foundation `paytech-common-core` 的 `com.paytech.foundation.web.paging`。
+按用户后续命名要求，公共分页请求使用 `PagingRequestBody`；公开 HTTP 与发布的内部 `*-api` 顶层 DTO
+采用 `*RequestBody` / `*ResponseBody`，嵌套业务模型和内部领域对象不强制后缀。
+GET 查询 DTO 的名称不改变 HTTP 传参，分页仍使用 page/size Query 参数。
+请求类改名后重新执行干净构建：Foundation Common 36 项、BFF 150 项、Platform 18 项聚焦测试通过；
+JAR 中仅保留新分页类型名称。本次命名调整未重新部署，以下部署记录对应前一轮分页实现。
+`PagingRequestBody.of(page, size)` 只为缺失参数补 page=1、size=10；显式页码必须在 1 到 100000 之间，
+每页条数仅允许 10、20、50、100 或 200。非法值使用公共 `INVALID_REQUEST`，偏移量由 `offset()` 统一计算。
+
+`PagingResponseBody<T>` 保持 `{items, page, size, total}`，total 为 long，只用于分页列表，不包装其他成功响应。
+BFF 使用 `map(...)` 转换元素并保留全部分页元数据；核心服务在相同授权范围和查询条件下执行数据库
+`LIMIT/OFFSET` 与 `COUNT`，采用稳定排序，不先查全量再在内存截取。
+
+人员、角色与审计列表统一接入分页。角色列表由原数组改为分页对象，Platform API、BFF 与前端必须同步发布。
+前端复用 `usePaging` 管理页码、条数和加载状态；人员管理中的角色选项按每批 200 条加载后续页，避免只显示第一页。
+角色 Route `operations-role-list` 通过手工增量
+[`2026-09-04-operations-paging.sql`](../../test-environment/sql/2026-09-04-operations-paging.sql) 增加 page/size
+查询参数白名单；只在实际新增时推进 Route 版本，不改变 13 条 Route、权限或 Guard，不重跑初始化与 Bootstrap。
+
+本轮前端 40 项、Foundation 82 项、BFF 150 项、Platform 18 项聚焦测试通过。Platform、BFF 与前端三个应用镜像
+已重建并部署到 mor-test，均为 healthy。分页 SQL 首次新增 2 条白名单，角色 Route 版本从 1 推进到 2；
+重复执行新增 0 条、版本变化 0 次。
+
+Python smoke 已通过真实 HTTP/MySQL 链路：三个列表接口默认 page=1、size=10，五档 size 均可用；角色第二页为空
+但保留 total，审计第二页与第一页无重叠，size=11 被拒绝；原登录、Refresh 和 Logout 流程继续通过。
+
+真实浏览器确认三个列表默认每页 10 条且下拉提供五档选项，角色页可切换到 200；审计下一页显示 10 条，
+切换每页 20 条后显示 20 条且上一页按钮禁用，确认已回到第一页。人员管理的角色选项完整显示 2 项，
+未执行人员或角色授权写操作。本机 local 数据库自动测试凭据仍未提供，Platform 数据库全量 auto 未运行；
+上述 test 环境烟测不替代该自动测试门禁。
+
+## 同日后续决定：整页刷新恢复登录（当前）
+
+用户明确要求修复浏览器整页刷新后丢失登录的问题。本决定覆盖此前 Operations JSON Refresh 阶段的“Token
+仅存模块内存、整页刷新需重新登录”限制；JSON 双 Token、单飞轮换、Platform Session 与服务端授权规则保持。
+
+当前标签页通过 `sessionStorage` 保存 Access/Refresh Token 及对应绝对过期时刻，模块启动时恢复内存状态。
+有效 Access 仍正常随 Authorization 发送；临近或超过 Access 有效期时发 JSON Refresh，页面恢复本身不强制
+轮换。每次成功轮换将两种 Token 与期限作为同一记录一起更新；不使用 localStorage、Cookie 或跨标签页广播，
+不缓存密码、Account 上下文、角色或权限，也不把 Token 放入 URL、日志或 console。
+
+sessionStorage 的生命周期由浏览器 page session 决定；opener 复制标签页或恢复关闭标签时可能复制或恢复存储。
+应用不主动跨标签页共享 Token，不保证所有新标签都必须登录，也不承诺关闭标签必然永久删除存储。
+
+退出、改密完成、Refresh 返回 401、刷新后的 GET 唯一一次重试仍返回 401、Refresh/会话到期或恢复记录无效时，清除当前会话的内存和
+sessionStorage。会话版本保护继续丢弃迟到响应，旧请求不得清除或恢复后来建立的会话。恢复时遇到临时
+429、503 或网络故障，保留凭据并提供恢复页与显式重试，不假装用户已退出；写命令不自动重放。
+
+恢复凭据只用于重新请求当前身份和导航，不恢复缓存权限，不绕过 Gateway JWT、BFF PLT-I02 或 Platform
+实时会话校验。此增量只调整前端保存与恢复逻辑，不要求数据库、路由或 Bootstrap 变更。
+
+本增量 `npm test` 32/32 通过，包含最终 GET 重试 401 清理存储和迟到 401 不清新登录；生产构建通过。
+前端镜像已重建，mor-test `operations-console-web` 为 running/healthy。真实浏览器在
+`http://localhost:28080/roles` 登录后连续整页刷新两次，均保持角色页并显示 2 个角色；退出后刷新仍为登录页。
+临时验证页已关闭；此次没有后端或数据库改动。
+
+## 同日后续决定：公共 HTTP 客户端异常处理
 
 用户要求异常处理公共化，只有特殊转换保留业务侧。新增 focused `paytech-http-client-support`，通过 Spring HTTP 代理扩展统一处理公共业务错误、网络故障、HTTP 状态、错误体解析、解码失败、重定向和空 DTO。BFF 配置只注册三个既有 Operations 特殊码及三个单例 API Bean；`PlatformOperationsClientImpl` 删除 `query/command/invoke` 与状态/错误体解析，只保留 DTO 转换、授权结果及字段契约校验。共享 MVC 仍唯一生成外部错误体，公共 `UPSTREAM_INVALID_RESPONSE` 固定 502。没有扩大到 Gateway 的响应式协议或 Platform 的事务审计/认证恢复捕获。
 
@@ -20,7 +117,7 @@ BFF 对公共业务、参数、并发的 4xx 错误保留安全消息，前端�
 
 用户再次审查后要求移除没有实际编排职责的 `OperationsManagementProcessor`，并把 Refresh Token 改为普通请求。当前实现删除管理/认证两个重复转发 Processor、Refresh Cookie Helper 和仅用于隐藏 Refresh 的响应转换。BFF 在统一 MVC 入站拦截器执行 Origin/JSON、可信 Header 与 PLT-I02，只豁免精确 POST Login/Refresh；Controller 直接委托本地 Client Port，ArgumentResolver 只读取已授权的请求级上下文。参数非法可先经过一次授权，但不调用业务接口。
 
-Operations 登录/刷新 JSON 返回 Access/Refresh Token；Refresh 和 Logout 均从 JSON `{refreshToken}` 取值，Logout 仍需 Access JWT。Gateway 目录使用现有 `request_cookie_mode=DROP`、`response_cookie_mode=NONE`，不传 Cookie、不接受 Set-Cookie；不新增 Cookie 模式或表。Operations 不再要求 CSRF Header，仍检查精确 Origin 和 JSON。前端使用 `credentials: omit`，两 Token 只保存在内存，页面刷新和新标签页需重新登录；保留单飞刷新及会话版本竞态保护，移除共享 Cookie 的跨标签页锁/广播。Platform HMAC、轮换事务、重用撤销、期限与身份授权规则不变。
+Operations 登录/刷新 JSON 返回 Access/Refresh Token；Refresh 和 Logout 均从 JSON `{refreshToken}` 取值，Logout 仍需 Access JWT。Gateway 目录使用现有 `request_cookie_mode=DROP`、`response_cookie_mode=NONE`，不传 Cookie、不接受 Set-Cookie；不新增 Cookie 模式或表。Operations 不再要求 CSRF Header，仍检查精确 Origin 和 JSON。前端使用 `credentials: omit`；本阶段当时采用两 Token 仅存内存、页面刷新后重新登录，现已被本文顶部的 sessionStorage 恢复决定覆盖。单飞刷新及会话版本竞态保护继续有效，不恢复共享 Cookie 的跨标签页锁/广播。Platform HMAC、轮换事务、重用撤销、期限与身份授权规则不变。
 
 本轮验证：BFF JDK 25 `clean verify` 131 项全通过，前端 15 项协议/竞态测试及生产构建通过；Gateway 14 个相关测试类的 331 项和 Platform 目录编译器 17 项通过。Gateway 测试修正了本地 Simple Discovery 总开关、旧静态目录期望与 Cookie 指标断言，不改变生产行为。已更新 mor-test 的 BFF/前端和手工路由增量，真实 JSON 登录、授权查询、Refresh 轮换、退出及撤销后 Refresh 401 烟测通过；无 Cookie 响应。Gateway/Platform 沿用现有运行代码。
 

@@ -16,6 +16,10 @@
 - Java 基础包使用 `com.paytech...`。
 - 公司级 Maven Artifact 和模块目录统一使用 `paytech-*`；`Code-MoR` 产品名以及既有 `mor-local`、`mor_*` 本地运行资源名称不因此改名。新增 Java 类名、包名、Bean 名、配置前缀、日志/指标、错误 Code、Topic/Group 和业务标识不得带 `Mor` / `mor-` 技术前缀；协议兼容确实无法避免时必须写明原因。
 - 类、方法和字段使用完整、专业的业务名称；避免 `getData`、`handle2`、`CommonUtil` 等含义模糊的命名。
+- 公开 HTTP 接口及已发布内部 `*-api` 契约中，直接表示完整请求或响应的顶层 DTO 分别命名为 `*RequestBody`、`*ResponseBody`。GET 查询 DTO 也使用 `*RequestBody`，但仍按接口声明通过 Query/Path 等参数传递；名称不要求增加 HTTP Body 或 `@RequestBody`。
+- 仅作为字段嵌套的业务模型、内部领域对象和应用层命令/结果不强制上述后缀，继续按各自业务语义命名。不要为了命名规则创建一层同义包装，或给所有成功响应添加通用外壳。
+- 新增和调整 HTTP DTO 时统一遵循该命名规则。重命名已发布 Java 契约时同步调整提供方与调用方，单纯类型命名变化不改变 JSON 字段、HTTP 方法或参数位置。
+- 同一业务能力的 HTTP 请求、响应及相关嵌套模型集中放在独立的 `*Models` 类型中，例如 `AuthenticationModels`、`NavigationModels`；使用 `public final` 容器、私有构造器和 `public record`。`*Api` 接口只声明 HTTP 方法契约，不在接口内定义 DTO。核心服务的传输模型仍发布在自己的轻量 `*-api` 模块，BFF 的本地页面模型由 BFF 自己维护和组装。
 - 数据库映射对象直接使用业务实体名，由 `dataobject` 包表达其持久化职责；类型名不得追加 `DO` 后缀。跨层转换通过 Repository 完成，不能因为类型名精简而把数据库对象暴露到 API 或领域层。
 - DataObject 的每个字段都要有中文 JavaDoc，说明业务含义、单位、可空条件或关键约束；不得只把字段名翻译一遍。Record Component 同样遵守此规则。
 - Spring 配置前缀直接从能力开始，例如 `compensation.*`、`xxl.job.*`，不增加无意义的 `paytech` 中间层。
@@ -44,6 +48,14 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - 聚合流程放在 BFF 的 `service` / Processor 中，由本地 Client Port 获取各核心服务的授权结果；Controller 保持协议适配，`integration` 保持单个远端契约适配。有实际查询编排或响应组装职责时保留相应应用层，不能因“精简层级”而删除；简单转发仍不创建空代理层。
 - 核心服务提供可复用的领域能力，拥有业务事实、领域规则、授权决策和业务事务。BFF 保持无状态，执行入口授权并保留各上游的资源授权约束，不自行替代核心服务的业务判断，也不编排跨系统写事务。
 - 例如交易详情页的订单、支付和账务视图由 BFF 查询并组装；退款命令交给归属核心服务执行，BFF 不自行协调支付和账务变更。
+
+### 公共分页复用
+
+- 分页查询复用 `paytech-common-core` 的 `com.paytech.foundation.web.paging.PagingRequestBody` 与 `PagingResponseBody<T>`，不在服务内新建同义分页请求、响应或范围校验工具。
+- `PagingRequestBody.of(page, size)` 只为缺失参数补默认 page=1、size=10；显式 page 限 1 到 100000，size 仅允许 10、20、50、100、200。非法值通过 `InvalidParameterException` 返回公共 `INVALID_REQUEST`，不静默取整或截断；数据库偏移使用已校验请求的 `offset()`。
+- 分页响应保持 `{items, page, size, total}`，total 使用 long；它只承载分页列表，不作为所有成功响应的通用外壳。BFF 元素转换复用 `map(...)`，保留页码、条数和总数，不从当前页 items 数量推导总数。
+- 核心服务在同一授权范围及相同筛选条件下执行数据库 `LIMIT/OFFSET` 和 `COUNT`，分页排序必须稳定；不通过查询全部数据后内存截取实现常规列表分页。BFF 不持有数据库分页事实，也不绕过上游授权。
+- 前端列表复用统一分页状态与加载逻辑；改变条数时回到第一页。数组改为分页对象属于响应契约变更，提供方 API、BFF 与前端同步发布，并同步维护 Gateway Route 的 page/size 查询参数白名单；目录增量仍由操作员手工审阅和执行。
 
 ## 4. 异常与枚举
 

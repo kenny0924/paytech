@@ -60,6 +60,13 @@ def checkpoint(name):
     path.chmod(0o600)
 
 
+def check_page(body, page=1, size=10):
+    assert set(body) == {"items", "page", "size", "total"}, "Unexpected paging response contract."
+    assert body["page"] == page and body["size"] == size
+    assert isinstance(body["items"], list) and len(body["items"]) <= size
+    assert isinstance(body["total"], int) and body["total"] >= len(body["items"])
+
+
 def complete_bootstrap(browser, material):
     if not (ROOT / "private/administrator-created").exists():
         if not (ROOT / "private/bootstrap-password-changed").exists():
@@ -97,21 +104,51 @@ def main():
     assert context["tenantId"] and context["memberId"]
     navigation = browser.request("GET", "/authorization/v1/navigation")
     expected_resources = {
-        "OPERATIONS_ACCOUNTS": "内部人员",
-        "OPERATIONS_AUDIT": "审计事件",
+        "OPERATIONS_SYSTEM": "系统管理",
+        "OPERATIONS_ACCOUNTS": "人员管理",
+        "OPERATIONS_ROLES": "角色管理",
+        "OPERATIONS_AUDIT": "审计日志",
         "OPERATIONS_ACCOUNT_CREATE": "创建人员",
         "OPERATIONS_ACCOUNT_DISABLE": "禁用人员",
         "OPERATIONS_ACCOUNT_ASSIGN_ROLES": "分配角色",
     }
     assert {r["resourceCode"]: r["displayName"] for r in navigation["resources"]} == expected_resources, \
         "Operations navigation labels do not match the UTF-8 catalog."
-    accounts = browser.request("GET", "/iam/v1/accounts?page=1&size=20")
+    resources = {r["resourceCode"]: r for r in navigation["resources"]}
+    system = resources["OPERATIONS_SYSTEM"]
+    assert system["resourceType"] == "MENU" and system["parentResourceId"] is None
+    assert system["frontendRoute"] is None and system["componentKey"] is None
+    for code, route, order in [("OPERATIONS_ACCOUNTS", "/accounts", 10),
+                               ("OPERATIONS_ROLES", "/roles", 20),
+                               ("OPERATIONS_AUDIT", "/audit", 30)]:
+        resource = resources[code]
+        assert resource["resourceType"] == "MENU" and resource["parentResourceId"] == system["resourceId"]
+        assert resource["frontendRoute"] == route and resource["componentKey"] == code
+        assert resource["sortOrder"] == order
+    for resource in resources.values():
+        if resource["resourceType"] == "BUTTON":
+            assert resource["parentResourceId"] == resources["OPERATIONS_ACCOUNTS"]["resourceId"]
+    accounts = browser.request("GET", "/iam/v1/accounts")
     roles = browser.request("GET", "/iam/v1/roles")
-    audit = browser.request("GET", "/audit/v1/events?page=1&size=20")
-    assert accounts["total"] >= 1 and len(roles) == 2 and audit["total"] > 0
+    audit = browser.request("GET", "/audit/v1/events")
+    for page in (accounts, roles, audit):
+        check_page(page)
+    assert accounts["total"] >= 1 and roles["total"] == 2 and audit["total"] > 0
     expected_roles = {"PLATFORM_ADMIN": "平台管理员", "OPERATIONS_VIEWER": "运营只读人员"}
-    assert {r["roleCode"]: r["roleName"] for r in roles} == expected_roles, \
+    assert {r["roleCode"]: r["roleName"] for r in roles["items"]} == expected_roles, \
         "Operations role labels do not match the UTF-8 catalog."
+    for path in ("/iam/v1/accounts", "/iam/v1/roles", "/audit/v1/events"):
+        for size in (20, 50, 100, 200):
+            check_page(browser.request("GET", f"{path}?page=1&size={size}"), size=size)
+    second_roles = browser.request("GET", "/iam/v1/roles?page=2&size=10")
+    check_page(second_roles, page=2)
+    assert second_roles["items"] == [] and second_roles["total"] == roles["total"]
+    second_audit = browser.request("GET", "/audit/v1/events?page=2&size=10")
+    check_page(second_audit, page=2)
+    assert {row["auditEventId"] for row in audit["items"]}.isdisjoint(
+        row["auditEventId"] for row in second_audit["items"])
+    invalid_size = browser.request("GET", "/iam/v1/roles?size=11", status=400)
+    assert invalid_size["code"] == "INVALID_REQUEST" and invalid_size["message"]
     invalid_page = browser.request("GET", "/iam/v1/accounts?page=0&size=20", status=400)
     assert invalid_page["code"] == "INVALID_REQUEST" and invalid_page["message"]
     same_password = browser.request("POST", "/auth/v1/password", {
@@ -135,7 +172,7 @@ def main():
     access_file.write_text(f"# Code-MoR test 环境\n\n入口：{ORIGIN}\n\n账号：{material['administratorEmail']}\n\n"
                           f"密码：{material['administratorPassword']}\n\n仅用于本机 mor-test；禁止复用到生产。\n")
     access_file.chmod(0o600)
-    print("PASS: JSON Token login, authorized queries, UTF-8 navigation/role labels, parameter/business messages, Refresh rotation, logout and revoked Refresh rejection; no cookies.")
+    print("PASS: JSON Token login, common paging defaults/sizes/database slices, two-level system navigation and role labels, parameter/business messages, Refresh rotation, logout and revoked Refresh rejection; no cookies.")
     print("Test login details saved to test-environment/private/access.md (0600); no tokens persisted.")
 
 

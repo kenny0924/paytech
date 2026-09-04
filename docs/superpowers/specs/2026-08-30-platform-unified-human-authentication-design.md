@@ -1,6 +1,6 @@
 # Platform 统一人工身份认证与租户授权设计
 
-> **2026-09-04 Operations 后继决定：** 用户要求精简 BFF 转发层并改用 JSON Refresh，详见 [当前实施记录](../../../agent-docs/plans/2026-09-04-operations-console-first-slice.md)。仅 Operations 的 Refresh/Logout 改为 JSON `{refreshToken}`、登录/刷新 JSON 返回两 Token；不使用 Cookie/CSRF Header。前端两 Token 只存内存，刷新页面需登录。本文 Operations Cookie 传输及对应跨标签页 Cookie 协调已被替代，其他 Channel、Platform Session/轮换/授权规则不变。
+> **2026-09-04 Operations 后继决定：** 用户要求精简 BFF 转发层并改用 JSON Refresh，随后要求修复整页刷新丢登录，详见 [当前实施记录](../../../agent-docs/plans/2026-09-04-operations-console-first-slice.md)。仅 Operations 的 Refresh/Logout 改为 JSON `{refreshToken}`、登录/刷新 JSON 返回两 Token；不使用 Cookie/CSRF Header。最新决定以当前标签页 sessionStorage 保存两 Token 及绝对过期时刻，启动时恢复，覆盖此前仅内存限制；不使用 localStorage，不缓存密码或权限。有效 Access 继续用于请求，临近到期或 GET 首次 401 时可 Refresh；退出、改密完成、Refresh 401、刷新后的 GET 唯一一次重试仍 401 或会话到期时清理，临时 429/503/网络失败提供恢复重试。sessionStorage 遵循浏览器 page session 生命周期，复制/恢复标签页可能复制/恢复内容，应用不主动跨标签页共享 Token。本文 Operations Cookie 传输及对应跨标签页 Cookie 协调已被替代，其他 Channel、Platform Session/轮换/授权规则不变；本次恢复能力的验证与部署结果见实施记录。
 
 
 日期：2026-08-30
