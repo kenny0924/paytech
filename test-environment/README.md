@@ -83,6 +83,12 @@ Bootstrap 离线工具只生成 Argon2id PHC 和真实公钥 SQL，不连接数�
 
 同日进一步将出站异常处理集中到 `paytech-http-client-support`，测试构建脚本已安装该模块。BFF 经共享客户端处理网络、HTTP 状态与错误体，业务方法直接调用注入的 API；143 项公共模块及 134 项 BFF 回归通过，更新 BFF 后上述烟测再次通过。
 
+## 中文目录编码修复
+
+2026-09-04 修复初始化 MySQL 客户端默认 `latin1` 导致的菜单、按钮及角色名称乱码。`scripts/initialize.py` 现在明确使用 `--default-character-set=utf8mb4`，SQL 文件读写使用 UTF-8；Platform 初始化 DML 同时声明 `SET NAMES utf8mb4`。
+
+现有 test 数据已显式应用 [`sql/2026-09-04-operations-catalog-utf8.sql`](sql/2026-09-04-operations-catalog-utf8.sql)：仅修复 2 个角色名和 5 个资源名称，按固定 ID、业务 Code 和确切乱码字节匹配，版本各推进一次；重复执行验证为 0 行变更。无需重跑 Schema、初始 DML 或 Bootstrap，也无需重建应用。`scripts/smoke.py` 已增加所有 7 个中文名称的 HTTP 响应断言，修复后完整烟测通过。已打开的页面刷新并重新登录后加载新名称。
+
 ## 运行边界
 
 - Namespace、Container、Network、Volume 均独立。`mor-test-ingress` 只连接边缘 Nginx 和 Gateway；Gateway Application Listener 只绑定 `172.30.72.3`。另一侧通过独立 Backend Network 连接 Nacos、Redis、BFF、Platform。Frontend 只连接 Web Network。

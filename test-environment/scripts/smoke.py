@@ -96,11 +96,22 @@ def main():
     context = browser.request("GET", "/auth/v1/context")
     assert context["tenantId"] and context["memberId"]
     navigation = browser.request("GET", "/authorization/v1/navigation")
-    assert {"OPERATIONS_ACCOUNTS", "OPERATIONS_AUDIT"}.issubset({r["resourceCode"] for r in navigation["resources"]})
+    expected_resources = {
+        "OPERATIONS_ACCOUNTS": "内部人员",
+        "OPERATIONS_AUDIT": "审计事件",
+        "OPERATIONS_ACCOUNT_CREATE": "创建人员",
+        "OPERATIONS_ACCOUNT_DISABLE": "禁用人员",
+        "OPERATIONS_ACCOUNT_ASSIGN_ROLES": "分配角色",
+    }
+    assert {r["resourceCode"]: r["displayName"] for r in navigation["resources"]} == expected_resources, \
+        "Operations navigation labels do not match the UTF-8 catalog."
     accounts = browser.request("GET", "/iam/v1/accounts?page=1&size=20")
     roles = browser.request("GET", "/iam/v1/roles")
     audit = browser.request("GET", "/audit/v1/events?page=1&size=20")
     assert accounts["total"] >= 1 and len(roles) == 2 and audit["total"] > 0
+    expected_roles = {"PLATFORM_ADMIN": "平台管理员", "OPERATIONS_VIEWER": "运营只读人员"}
+    assert {r["roleCode"]: r["roleName"] for r in roles} == expected_roles, \
+        "Operations role labels do not match the UTF-8 catalog."
     invalid_page = browser.request("GET", "/iam/v1/accounts?page=0&size=20", status=400)
     assert invalid_page["code"] == "INVALID_REQUEST" and invalid_page["message"]
     same_password = browser.request("POST", "/auth/v1/password", {
@@ -124,7 +135,7 @@ def main():
     access_file.write_text(f"# Code-MoR test 环境\n\n入口：{ORIGIN}\n\n账号：{material['administratorEmail']}\n\n"
                           f"密码：{material['administratorPassword']}\n\n仅用于本机 mor-test；禁止复用到生产。\n")
     access_file.chmod(0o600)
-    print("PASS: JSON Token login, authorized queries, parameter/business messages, Refresh rotation, logout and revoked Refresh rejection; no cookies.")
+    print("PASS: JSON Token login, authorized queries, UTF-8 navigation/role labels, parameter/business messages, Refresh rotation, logout and revoked Refresh rejection; no cookies.")
     print("Test login details saved to test-environment/private/access.md (0600); no tokens persisted.")
 
 

@@ -21,8 +21,8 @@ def environment():
 def mysql(sql, database="mor_platform"):
     result = subprocess.run([str(ROOT / "compose.sh"), "exec", "-T", "mysql", "sh", "-c",
                              'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysql --protocol=socket -uroot '
-                             '--batch --skip-column-names "$1"', "mysql", database],
-                            input=sql, text=True, capture_output=True)
+                             '--default-character-set=utf8mb4 --batch --skip-column-names "$1"', "mysql", database],
+                            input=sql, encoding="utf-8", capture_output=True)
     if result.returncode:
         raise SystemExit("Test SQL failed; no retry or destructive recovery was performed. Inspect the reviewed SQL and test database.")
     return result.stdout.strip()
@@ -36,15 +36,15 @@ def apply_platform_sql():
     sql_dir = ROOT.parent / "platform-support-service/docs/database/sql"
     tables = count("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='mor_platform';")
     if tables == 0:
-        mysql((sql_dir / "platform-support-schema.sql").read_text())
-        mysql((sql_dir / "platform-support-initial-data.sql").read_text())
+        mysql((sql_dir / "platform-support-schema.sql").read_text(encoding="utf-8"))
+        mysql((sql_dir / "platform-support-initial-data.sql").read_text(encoding="utf-8"))
         print("Applied reviewed Platform schema and initial catalog to the new mor-test database.")
     elif tables != 22 or count("SELECT COUNT(*) FROM t_gateway_route;") != 13:
         raise SystemExit("Unexpected/partial test schema or catalog; manual review required, nothing replaced.")
     accounts = count("SELECT COUNT(*) FROM t_user_account;")
     keys = count("SELECT COUNT(*) FROM t_jwt_signing_key;")
     if accounts == 0 and keys == 0:
-        mysql((ROOT / "private/bootstrap.sql").read_text())
+        mysql((ROOT / "private/bootstrap.sql").read_text(encoding="utf-8"))
         print("Initialized the test-only Bootstrap verifier and matching real public signing key.")
     elif accounts == 0 or keys == 0:
         raise SystemExit("Partial authentication initialization; refusing to recreate/reset Bootstrap or keys.")
