@@ -66,7 +66,7 @@ python3 test-environment/scripts/smoke.py --complete-bootstrap
 
 `prepare.py` 生成独立随机密码、RSA 3072 签名密钥和独立 HMAC 密钥，不生成 TLS 证书；文件权限 `0600`，私密目录 `0700`。既有材料会保留；材料不完整时停止，不静默轮换。依赖 Java Crypto JAR 使用仓库既有版本，非标准 Maven 缓存可显式设置 `MAVEN_LOCAL_REPOSITORY`。
 
-基础设施 MySQL 初始化只复用 `../local-environment/mysql/init` 中的数据库/账号及 Nacos/XXL-Job 技术表。业务 SQL 由 `initialize.py --apply-platform-sql` 明确执行到本项目 `mor-test-mysql-1`，不挂进数据库 init 目录、不由 Java 启动执行。已有 22 表/13 Route 目录与账号/Key 会保留；异常或部分初始化会停止，不能用删除 Volume 或恢复 Bootstrap 绕过。Nacos 初始化途中失败时先检查已完成步骤，再显式恢复，不重置已有凭据。
+基础设施 MySQL 初始化只复用 `../local-environment/mysql/init` 中的数据库/账号及 Nacos/XXL-Job 技术表。业务 SQL 由 `initialize.py --apply-platform-sql` 明确执行到本项目 `mor-test-mysql-1`，不挂进数据库 init 目录、不由 Java 启动执行。已有 22 表及已知 13/17/18/19/20 Route 目录与账号/Key 会保留；异常或部分初始化会停止，不能用删除 Volume 或恢复 Bootstrap 绕过。Nacos 初始化途中失败时先检查已完成步骤，再显式恢复，不重置已有凭据。
 
 Bootstrap 离线工具只生成 Argon2id PHC 和真实公钥 SQL，不连接数据库；私钥、HMAC Key、明文密码不进入 SQL。`smoke.py --complete-bootstrap` 通过 Nginx → Gateway → BFF → Platform 完成改密/首管理员流程并保存检查点；网络结果不明时先查当前状态，勿手工删除检查点盲目重放。
 
@@ -183,3 +183,116 @@ HTTP 增量的 BFF 84 项测试、Gateway 73 项无 Redis 聚焦测试通过，�
 2026-09-04 JSON Refresh 后续验收：BFF/前端镜像已更新并健康，13 条现有 Operations Route 已采用 DROP/NONE 且移除 CSRF Header；Gateway/Platform 继续运行原实例。`scripts/smoke.py` 已通过 JSON 登录、Context、菜单、人员、角色、审计、Refresh 轮换、Logout 与撤销后的 Refresh 401，所有响应均无 Set-Cookie。BFF 131 项回归及前端 15 项测试/生产构建通过。
 
 Gateway 本轮 14 个相关测试类共 331 项、Platform 目录编译器 17 项通过，无失败或跳过。Gateway 完整测试源码编译成功；这是本轮相关范围验证，不宣称整个 Gateway reactor 全量测试。
+
+
+## Operations 自定义角色配置（2026-09-04）
+
+本轮为 Operations 内部角色增加创建、编辑和权限树配置。Platform 保存角色与授权事实，BFF 聚合页面权限树，
+前端按当前资源显示创建/编辑操作；系统角色保持只读。目录从 13 条 Route / 7 个资源变为 17 条 Route / 9 个资源，
+新增 `OPERATIONS_ROLE_MANAGE` 只授予现有平台管理员。旧只读角色不获得管理能力。
+
+既有 test 只应用一次 [`sql/2026-09-04-operations-role-management.sql`](sql/2026-09-04-operations-role-management.sql)。
+先确认四条新 Route 和新 Permission 均不存在，再通过 `scripts/initialize.py` 的 `mysql` 辅助函数显式执行该文件。
+文件使用一个事务，没有忽略冲突或覆盖现有行；已应用后不要重复执行。全量初始化 DML 同步维护于 Platform 仓库，
+`initialize.py` 识别旧 13 条和新 17 条目录但不会自动升级旧库。
+
+仅重新构建 Platform、Operations BFF、Operations 前端并按服务名重建容器；Gateway 自动读取更新后的目录。
+不执行全量初始化、Bootstrap 或密钥生成，不重建其他应用。角色详情/保存仍使用普通 JSON 与 Authorization。
+
+显式验收脚本 [`scripts/roles_smoke.py`](scripts/roles_smoke.py) 经公开 HTTP 入口创建合成角色和人员，
+验证权限配置、幂等/版本冲突、系统角色保护、只读人员访问、同一 JWT 的即时撤权与重新授权及审计。
+结束时停用合成人员、清空合成角色权限并注销验收会话；不删除业务或审计数据。
+
+本次已完成增量应用和三个镜像更新，10 个 test 容器均健康。`roles_smoke.py` 和既有 `smoke.py` 全部通过；
+受限管理员无法超范围创建角色、给自己授予平台管理员或读取高权限角色配置。另行只读核验确认重复创建只产生一次
+成功审计，6 次成功修改的完整前后属性、各属性 SHA-256 与 Attribute Root Hash 全部匹配。
+合成人员已停用，合成角色权限已清空；页面及静态资源与新构建匹配。
+Platform 47 项纯测试、BFF 182 项测试、前端 58 项测试及生产构建通过。
+本地数据库 auto 套件仍缺少外部凭据，未执行也未指向 test。
+
+
+## 操作权限与树联动修复（2026-09-04）
+
+现已部署独立的创建人员、禁用人员、分配角色、创建角色、编辑角色权限。原来同级联动是因为多个操作共用MANAGE；
+现在五个按钮与相应API使用五个实际Permission ID。选择父级选全部下级，单选子级保留必要祖先，部分选择显示半选，
+取消子级不影响兄弟；重新打开旧角色不会扩张权限。
+
+一次性增量 [`sql/2026-09-04-operations-action-permissions.sql`](sql/2026-09-04-operations-action-permissions.sql)
+已应用：迁移前验证旧授权全部位于Operations范围、新Permission和保留Grant ID段不存在；迁移后逐角色对比，
+确认旧MANAGE等价展开为原来的实际操作范围，未增加主体或权限能力。旧权限变INACTIVE、旧grant撤销、Role版本推进，
+7条Route与5个按钮同步重绑。当前17条Route、9个资源、9个ACTIVE Permission；历史旧Permission行保留用于审计解释。
+
+三个应用镜像已更新，10个容器均健康，入口HTML与静态资源和新构建匹配。显式
+[`scripts/action_permissions_smoke.py`](scripts/action_permissions_smoke.py) 已通过真实HTTP：依次只授予五种单独权限，
+每种对应操作实际成功且四种兄弟操作被拒绝；菜单按钮仅显示被授予动作，原JWT不变。create-only创建重放成功，
+update-only详情与编辑成功且创建选项拒绝。验收合成人员已停用，角色权限已清空。
+
+前端62项、BFF189项、Platform47项纯测试及最终7项目录聚焦回归通过（7项属于47项中的重复验证）。
+9个Platform真实HTTP/MySQL自动用例已编译，但仍因本地测试凭据缺失未执行；与mor-test真实HTTP验收分开记录。
+隔离headless浏览器验证用户报告的单选/全选、取消、保存重开及移动端抽屉通过，临时fixture与浏览器已清理。
+
+
+2026-09-04 系统角色查看：仅重建/更新 Operations 前端，在系统内置角色行增加“查看”入口，详情为只读，
+隐藏保存与操作原因。继续复用原有详情接口和授权，不变更数据库/后端。62项前端测试与构建通过，
+真实HTTP读取两个系统角色正常（管理员9项权限、只读角色4项权限），验收会话已注销。
+
+## 角色删除与关联员工数（2026-09-04）
+
+本轮已更新 Platform、Operations BFF 和前端三个镜像，并显式执行一次
+[`sql/2026-09-04-operations-role-delete.sql`](sql/2026-09-04-operations-role-delete.sql)。
+执行前确认保留 ID 均未占用；当前目录为18条Route、10个Console Resource、10个ACTIVE Permission。
+独立 `OPERATIONS_ROLE_DELETE` 只初始授予系统管理员，其角色版本推进一次；只读角色及已有自定义角色未补授删除权限。
+Gateway 动态加载新增 DELETE Route，无新增公开计数接口。未重放 Schema/初始化/Bootstrap，也未重启其他服务。
+
+列表由 BFF 聚合角色分页与一次批量计数，显示去重关联员工数（含停用账号）。系统角色、有员工关联的自定义角色不可删除；
+调整关联后才可删除。删除使用当前角色版本、原因和幂等键，后端同事务逻辑删除、撤权并记录完整前后审计。
+
+[`scripts/role_deletion_smoke.py`](scripts/role_deletion_smoke.py) 已通过真实HTTP/MySQL链路，覆盖：
+零关联→分配1人→停用仍1人→转移关联归零、独立删除权限、系统与关联角色保护、过期版本、成功删除、
+同键同体重放204、异体同键409、新键重复删除400、已删除角色不可分配，以及仅1条成功删除审计和完整前后属性。
+合成角色通过DELETE清理，合成员工停用并转到只读角色，验证会话已退出；历史记录保留。
+既有 `scripts/smoke.py` 的登录、导航、三类分页、业务/参数错误、Refresh和退出回归通过。
+
+前端64项测试与生产构建、实际App/headless交互通过；BFF214项 `clean verify` 通过；Platform48项纯测试通过。
+11个Platform真实HTTP/MySQL自动用例只完成编译，仍因本地DB凭据缺失未运行，未指向test，未声明完整JaCoCo门禁通过。
+10个test容器均为running/healthy，`/roles`及角色/入口静态模块与已验证构建逐字一致。
+
+## 员工删除（2026-09-04）
+
+已更新Platform、Operations BFF与前端三个镜像，并显式应用一次
+[`sql/2026-09-04-operations-account-delete.sql`](sql/2026-09-04-operations-account-delete.sql)。
+执行前确认新增权限和保留ID未占用；当前目录19条Route、11个Console Resource、11个ACTIVE Permission。
+新增独立 `OPERATIONS_ACCOUNT_DELETE`，默认仅授予系统管理员，不自动扩张只读角色或自定义角色权限。
+Gateway动态加载路由，未重放初始化/Bootstrap或重启其他应用。
+
+人员删除沿用Account CLOSED终态，保留历史与Email唯一性；删除后从列表及总数移除，撤销成员、角色、密码和会话。
+确认需原因、账号/成员双版本及幂等键；禁止删除自己和最后一个当前有效管理员，管理员统计限定固定INTERNAL Tenant。
+人员与角色删除共用确认弹窗，保留各自业务请求和权限边界。
+
+[`scripts/account_deletion_smoke.py`](scripts/account_deletion_smoke.py) 已通过真实HTTP/MySQL验收：独立权限、本人保护、
+双版本冲突、启用/停用员工删除、幂等、旧登录凭据与会话失效、角色人数变化、分页排除CLOSED、终态拒绝再授权、
+历史邮箱唯一性和只一条完整删除审计。验收仅删除本次创建的3名合成员工和2个合成角色，管理员已退出。
+现有 `scripts/smoke.py` 的登录、菜单、分页、错误响应、Refresh与退出回归通过。
+
+前端67项测试及生产构建、headless交互，BFF232项 `clean verify`，Platform49项纯测试通过。
+13个Platform真实HTTP/MySQL自动用例仅编译，本地DB凭据缺失，未运行或指向test，不声明完整覆盖率门禁通过。
+10个容器均running/healthy，`/accounts`、`/roles`和两个页面/入口JS与本次构建逐字一致。
+
+## 员工启用（2026-09-04）
+
+已更新Platform、Operations BFF与前端三个镜像，手工应用一次
+[`sql/2026-09-04-operations-account-enable.sql`](sql/2026-09-04-operations-account-enable.sql)。
+执行前确认保留ID未占用；目录现为20条Route、12个Console Resource、12个ACTIVE Permission。
+独立 `OPERATIONS_ACCOUNT_ENABLE` 默认仅授予系统管理员，Gateway动态读取新目录；未重放初始化、Bootstrap或重启其他服务。
+
+仅DISABLED普通员工可启用，需原因、版本和幂等键。固定INTERNAL成员和密码必须有效，目标已有角色不得超出操作者
+授权上限；不恢复CLOSED、Bootstrap或暂停/撤销的Member。保留密码、角色、强制改密及安全锁定，旧会话不恢复，需重新登录。
+前端复用停用抽屉，等待时防重复/关闭，503保留输入并允许同键手动重试，409提示刷新最新版本。
+
+[`scripts/account_enablement_smoke.py`](scripts/account_enablement_smoke.py) 已通过真实HTTP/MySQL链路：独立权限与超范围拒绝、
+停用→启用→原密码重新登录、旧Token拒绝、版本/幂等、角色和凭据保持、CLOSED/Bootstrap拒绝及完整单次成功审计。
+仅变更和删除本次创建的3名合成员工与2个合成角色，实际管理员已退出。既有 `scripts/smoke.py` 回归通过。
+
+前端71项测试、生产构建与实际App/headless验证，BFF245项 `clean verify`，Platform50项纯/目录测试通过。
+15个Platform真实HTTP/MySQL自动用例仅编译，本地测试DB凭据缺失，未运行或指向test，不声明完整覆盖率门禁通过。
+10个容器均running/healthy，`/accounts`及Accounts/Audit/入口JS与本次构建逐字一致，入口 `index-CCLDKR7s.js`。

@@ -16,12 +16,13 @@ class Browser:
         self.access = None
         self.refresh_token = None
 
-    def request(self, method, path, body=None, authenticated=True, status=200):
+    def request(self, method, path, body=None, authenticated=True, status=200, extra_headers=None):
         headers = {"Accept": "application/json"}
         if method != "GET":
             headers.update({"Origin": ORIGIN, "Content-Type": "application/json"})
         if authenticated and self.access:
             headers["Authorization"] = "Bearer " + self.access
+        headers.update(extra_headers or {})
         connection = http.client.HTTPConnection("localhost", 28080, timeout=20)
         connection.request(method, "/api/operations" + path,
                            json.dumps(body or {}) if method != "GET" else None, headers)
@@ -111,6 +112,11 @@ def main():
         "OPERATIONS_ACCOUNT_CREATE": "创建人员",
         "OPERATIONS_ACCOUNT_DISABLE": "禁用人员",
         "OPERATIONS_ACCOUNT_ASSIGN_ROLES": "分配角色",
+        "OPERATIONS_ACCOUNT_DELETE": "删除人员",
+        "OPERATIONS_ACCOUNT_ENABLE": "启用人员",
+        "OPERATIONS_ROLE_CREATE": "创建角色",
+        "OPERATIONS_ROLE_EDIT": "编辑角色",
+        "OPERATIONS_ROLE_DELETE": "删除角色",
     }
     assert {r["resourceCode"]: r["displayName"] for r in navigation["resources"]} == expected_resources, \
         "Operations navigation labels do not match the UTF-8 catalog."
@@ -127,22 +133,26 @@ def main():
         assert resource["sortOrder"] == order
     for resource in resources.values():
         if resource["resourceType"] == "BUTTON":
-            assert resource["parentResourceId"] == resources["OPERATIONS_ACCOUNTS"]["resourceId"]
+            parent = "OPERATIONS_ROLES" if resource["resourceCode"].startswith("OPERATIONS_ROLE_") else "OPERATIONS_ACCOUNTS"
+            assert resource["parentResourceId"] == resources[parent]["resourceId"]
     accounts = browser.request("GET", "/iam/v1/accounts")
     roles = browser.request("GET", "/iam/v1/roles")
+    assert all(isinstance(role["employeeCount"], int) and role["employeeCount"] >= 0
+               and role["version"] > 0 for role in roles["items"])
     audit = browser.request("GET", "/audit/v1/events")
     for page in (accounts, roles, audit):
         check_page(page)
-    assert accounts["total"] >= 1 and roles["total"] == 2 and audit["total"] > 0
+    assert accounts["total"] >= 1 and roles["total"] >= 2 and audit["total"] > 0
     expected_roles = {"PLATFORM_ADMIN": "平台管理员", "OPERATIONS_VIEWER": "运营只读人员"}
-    assert {r["roleCode"]: r["roleName"] for r in roles["items"]} == expected_roles, \
+    assert expected_roles.items() <= {r["roleCode"]: r["roleName"] for r in roles["items"]}.items(), \
         "Operations role labels do not match the UTF-8 catalog."
     for path in ("/iam/v1/accounts", "/iam/v1/roles", "/audit/v1/events"):
         for size in (20, 50, 100, 200):
             check_page(browser.request("GET", f"{path}?page=1&size={size}"), size=size)
     second_roles = browser.request("GET", "/iam/v1/roles?page=2&size=10")
     check_page(second_roles, page=2)
-    assert second_roles["items"] == [] and second_roles["total"] == roles["total"]
+    assert second_roles["total"] == roles["total"]
+    assert {r["roleId"] for r in roles["items"]}.isdisjoint(r["roleId"] for r in second_roles["items"])
     second_audit = browser.request("GET", "/audit/v1/events?page=2&size=10")
     check_page(second_audit, page=2)
     assert {row["auditEventId"] for row in audit["items"]}.isdisjoint(

@@ -39,7 +39,7 @@ def apply_platform_sql():
         mysql((sql_dir / "platform-support-schema.sql").read_text(encoding="utf-8"))
         mysql((sql_dir / "platform-support-initial-data.sql").read_text(encoding="utf-8"))
         print("Applied reviewed Platform schema and initial catalog to the new mor-test database.")
-    elif tables != 22 or count("SELECT COUNT(*) FROM t_gateway_route;") != 13:
+    elif tables != 22 or count("SELECT COUNT(*) FROM t_gateway_route;") not in (13, 17, 18, 19, 20):
         raise SystemExit("Unexpected/partial test schema or catalog; manual review required, nothing replaced.")
     accounts = count("SELECT COUNT(*) FROM t_user_account;")
     keys = count("SELECT COUNT(*) FROM t_jwt_signing_key;")
