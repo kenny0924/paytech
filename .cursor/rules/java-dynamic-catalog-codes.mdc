@@ -1,0 +1,22 @@
+---
+description: Distinguish dynamic database catalog codes from closed Java enums
+globs: "**/src/main/java/**/*.java"
+alwaysApply: false
+---
+
+# Dynamic Catalog Code Boundary
+
+- 数据库中由配置或主数据动态维护的目录型 Code 是开放集合，不得定义为 Java Enum，也不得注册封闭枚举 TypeHandler。
+- 目录型 Code 使用 `String` 或经过校验的开放值对象传递，数据库新增合法值不能导致旧代码反序列化失败。
+- 只有状态、方向、类型等由代码控制且取值封闭的概念才使用 Enum。
+- 当前业务必须依赖的稳定目录项可以集中定义在职责明确的 `*Codes` 常量类中；禁止散落魔法字符串，也禁止用一个不完整枚举冒充完整目录。
+- 不为筛选目录项编写长串 `if` / `switch` / `||` 穷举；优先使用强类型组合 Key、Map 或由数据驱动的映射。
+
+```java
+// Bad: database catalog can grow independently
+enum AccountCode { CLIENT_PAYABLE, PARTNER_PAYABLE }
+
+// Good: open catalog value plus named required codes
+String accountCode;
+StandardAccountCodes.CLIENT_PAYABLE;
+```

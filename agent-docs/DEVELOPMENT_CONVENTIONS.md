@@ -73,6 +73,7 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - 每个枚举常量单独声明，相邻枚举项之间保留一行空行，不将多项挤在同一行；若下一项带 JavaDoc 或注解，空行放在上一项与下一项的 JavaDoc/注解之前。API、内部领域及测试枚举均遵循此排版，不改变 Code 值或声明顺序。
 - 数据库、HTTP、MQ、日志和业务比较使用 `getCode()`，禁止依赖 `name()`、`ordinal()` 或枚举声明顺序。Code 发布后不可修改，Java 枚举常量名可以安全重构。
 - DataObject 的闭合枚举列直接使用实现 `CodeEnum` 的 Java 枚举：契约已发布的 Code 复用本服务 `*-api` 枚举，内部 Code 使用 `domain/enums` 枚举。通过 `paytech-mybatis-support` 的 `CodeEnumTypeHandler` 为每个枚举类型显式注册；不启用全局扫描或默认枚举替换。未知数据库 Code 必须使当前读取 Fail-Closed，不能映射为 `null`。MySQL `DATETIME(6)` 到 `Instant` 统一使用同模块的 UTC `InstantTypeHandler`，服务不得复制同义 Handler。
+- 数据库中由配置或主数据动态维护的目录型 Code 属于开放集合，不得建成 Java 枚举或注册封闭枚举 TypeHandler；使用 `String` 或经过校验的开放值对象承载，使数据库新增合法目录项不会令旧代码反序列化失败。只有由代码控制、取值真正封闭的状态、方向和类型才使用枚举。业务必须依赖的稳定目录项可集中定义在职责明确的 `*Codes` 常量类中，禁止散落魔法字符串，也禁止用不完整枚举冒充完整目录或用长串条件穷举筛选。
 - 对外发布的 `*-api` DTO 和 MQ 契约字段仍以 `String` 承载枚举 Code，不使用 Java enum 作为序列化字段类型；`api/enums` 只发布稳定 Code 定义，不改变传输兼容策略。提供方在边界内从 `CodeEnum#getCode()` 转换，消费方显式解析和校验；未知 Code 必须进入可观察、Fail-Closed 的兼容性处理，不能依赖反序列化异常、`null` 或兜底枚举静默放行。
 - 错误 Code 使用一眼可读、稳定的英文大写语义，例如 `COMPENSATION_EVENT_CONFLICT`，不使用 `PAYTECH-COMMON-400001` 一类公司前缀加数字流水号。
 - 业务、参数与并发异常的 `message` 是可直接展示的中文提示，说明必要业务上下文，不包含凭据、敏感明文、SQL 或完整 Payload；系统异常只对外返回公共安全消息，不返回内部 Cause/message。BFF 与前端须保留约定公共业务消息，不统一替换成模糊的“操作失败”。
