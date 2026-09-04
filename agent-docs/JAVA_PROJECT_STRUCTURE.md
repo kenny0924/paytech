@@ -3,7 +3,7 @@
 > **2026-09-04 Operations 当前增量：** [第一版实施记录](./plans/2026-09-04-operations-console-first-slice.md) 更新本页此前“BFF 仅基础 / Console 前端和认证未实现”的状态：独立 React/TypeScript/Vite/Ant Design 前端与 BFF 浏览器适配已增加；Platform 增加显式启用的 Operations 认证/IAM/人员/审计代码和 22 表手工 SQL 投影；Gateway 已有动态 Snapshot，并扩展可信 Context 和四个 BFF 下游根。Vault 按用户要求暂用隔离开发 Mock + TODO，生产 Vault/KMS、手工 Bootstrap/Key 初始化、真实 MySQL/Redis 联调和部署仍需各自前置。下文旧基础阶段的实现范围描述在被本记录更新处仅保留历史意义，架构所有权与手工基础设施规则不变。
 
 
-最后更新：2026-09-04
+最后更新：2026-09-05
 
 ## 1. 使用范围
 
@@ -183,6 +183,97 @@ operations-console-bff/
 - Web 使用 Foundation MVC Starter、Spring Boot MVC、Actuator/Prometheus 和 Nacos Discovery；复用 Foundation 的 Request ID、日志与统一异常处理，不复制本地 Filter、Advice 或错误体。没有业务 API、登录/IAM、数据库、Redis、MQ 和前端。
 - `spring.application.name=operations-console-bff` 与当前 Gateway Approved Target 一致；默认监听 `127.0.0.1:18201`，不配置 Servlet context path，管理端点复用同一 Listener。Nacos 默认 `127.0.0.1:8848` / `mor-local`，部署时 Namespace 必须与 Gateway 一致；`auto` 明确关闭发现并使用随机端口。
 - Web 同时产出普通 JAR 和 `-exec.jar`，测试模块跳过 install/deploy。应用基础不代表认证和业务授权可用；新增认证端点前必须落实专项禁止凭据/Token Body 日志的边界，不能用重复服务本地 Filter 绕过。运行说明见 [`operations-console-bff/README.md`](../operations-console-bff/README.md)。
+
+### 3.5 复杂核心服务的业务能力模块
+
+当一个核心服务包含多个稳定业务能力，且单个 `web` 模块已经难以清楚表达表归属、依赖和职责时，可以在 `api`、`web`、`test` 之外增加少量业务能力 JAR。它们只是同一服务内部的编译期边界，不是微服务、部署单元或独立数据库。
+
+```text
+<service>-service/
+├── pom.xml
+├── <service>-api/             # 对外 HTTP 契约
+├── <service>-<capability-a>/  # 业务能力及其表访问
+├── <service>-<capability-b>/
+├── <service>-<capability-c>/
+├── <service>-web/             # 唯一启动、协议入口和跨模块编排
+└── <service>-test/            # 完整链路和模块边界测试
+```
+
+“模块”在此专指 Maven JAR；“分层”是模块内部的 `domain`、Domain Service、Repository、Mapper 等代码组织；“微服务”则是独立进程和独立数据库。三者不能混用。增加业务模块不授权增加进程、服务发现、远程调用、独立事务管理器、独立数据库或分布式事务。
+
+#### 是否需要拆业务模块
+
+只有同时满足以下条件才增加业务能力模块：
+
+1. 它对应当前已经存在或已经批准的完整业务能力，而不是一个技术名词、单张表或未来设想。
+2. 能列出该模块唯一负责的业务规则、聚合和数据库表。
+3. 能定义少量稳定的业务能力接口，让调用方不需要知道表结构和持久化步骤。
+4. 拆分后依赖保持单向，不需要循环依赖、共享 Repository 或共享 DataObject 才能完成业务。
+
+初始通常控制在 3–5 个业务能力模块。不得按 Controller、Processor、Service、Repository 等技术层横向拆 Maven 模块，也不得为每张表、每个接口、每个状态机或每个将来可能拆出的服务建立模块。没有真实代码和消费者时不创建空模块、空包或占位接口。
+
+#### 表和持久化归属
+
+- 每张业务表必须有且只有一个业务模块作为持久化 Owner，并在系统专项设计或模块 README 中记录归属。
+- 只有 Owner 模块可以定义该表的 DataObject、Mapper、Repository 和写入规则。其他模块不得直接读取或写入该表。
+- 禁止通过注入其他模块的 Repository/Mapper、复制 SQL/映射、跨模块 JOIN、数据库 View、存储过程或直接 `JdbcTemplate` 绕过表归属。
+- 同一个物理数据库和本库外键不代表表可以被任意模块访问。数据库关系表达数据完整性，模块接口表达代码访问权限。
+- 跨模块需要的数据由 Owner 模块通过业务查询/命令接口提供。接口返回所属模块定义的领域结果；不得暴露 Mapper、Repository、DataObject 或任意 CRUD 能力。
+- 服务级技术表，例如本服务唯一的 `compensation_event` 或命令幂等表，由 `web`/服务级基础设施统一负责；不得复制到每个业务模块。
+
+#### 允许和禁止的依赖
+
+默认生产依赖为：
+
+```text
+                         ┌──→ capability-a
+external caller → api ← web ─→ capability-b
+                         └──→ capability-c
+
+test ───────────────────────→ web
+```
+
+- `web` 是组合根，可以依赖自己的 `api` 和各业务能力模块。
+- `test` 依赖 `web`；生产模块不得依赖 `test`。
+- 业务能力模块不得依赖 `web`、`test` 或其他模块的实现包。
+- 跨模块简单协作可以依赖对方专门公开的业务能力接口；若这会形成双向或循环 Maven 依赖，改由 `web` Processor 同时调用两个模块，而不是抽出一个模糊的 `common` 或直接访问 Repository。
+- A 模块需要 B 模块的数据时，正确做法是调用 B 的业务能力接口，或由 `web` Processor 先调用 B 再把明确的领域输入交给 A。A 绝对不能调用 B 的 Repository、Mapper、DataObject 或表；所谓“只调用原子 Repository”仍然是越权访问。
+- `api` 只保存对外传输契约，不用于解决业务模块循环依赖，也不存放内部领域对象、DataObject、Repository 或公共业务实现。
+
+这里的“可以调用 B 的业务能力接口”不等于“可以依赖 B 的任意 Service”。允许的是 B 明确作为模块边界发布的窄接口；禁止依赖 `*ServiceImpl`、内部 Domain Service、Spring 内部 Bean 或持久化接口。若 A 和 B 互相需要对方，说明协作属于更高层用例或模块边界划错，优先交给 `web` Processor 编排，不创建 A↔B 循环依赖。
+
+```text
+正确：PayoutProcessor → AccountingBalanceCommand（锁定余额）
+                    └→ TreasuryPayoutCommand（创建出款）
+
+错误：TreasuryService → AccountingRepository → t_account
+错误：AccountingService ↔ TreasuryServiceImpl
+错误：把 AccountRow 放进 <service>-api/common 供所有模块直接使用
+```
+
+#### 跨模块用例和事务
+
+复杂用例由 `web` 中的 Processor 编排。Processor 调用模块公开的业务能力接口，不调用 Mapper/Repository，不实现模块内部业务规则。
+
+同一进程、同一数据库内需要强一致的跨模块写操作，仍使用一个本地 `TransactionTemplate`：
+
+```text
+Web Processor
+  └─ TransactionTemplate
+       ├─ capability-a business command
+       ├─ capability-b business command
+       └─ service-level compensation registration
+```
+
+参与该用例的模块方法加入调用方已有事务，不得自行 `REQUIRES_NEW`、提前提交或切换线程。事务边界属于完整用例，而不是某一张表；模块归属限制表访问者，但不妨碍多个模块的合法业务接口参与同一个本地事务。
+
+不得为了“以后可能拆微服务”把当前本地原子事务改成 Compensation Event。Compensation Event 只用于事务提交后的异步副作用、外部系统调用恢复，或模块未来真正成为独立服务和独立数据库之后的最终一致性流程。真正拆服务时必须重新设计远程契约、幂等、事件顺序、失败恢复和数据迁移，不能声称 Maven 模块拆分已经自动解决这些问题。
+
+#### 模块接口检查
+
+一个模块公开接口必须表达业务动作或业务查询，例如“锁定可出款余额”“创建税额快照”，不得暴露 `updateStatus`、`saveAny`、`queryTable` 等通用数据库操作。Service/Domain Service 使用 `interface + impl`；对外返回本模块领域对象，不能返回 API Request/Response。DataObject 只允许留在持久化边界，即使通用 Service 规则允许在模块内部返回数据库对象，也不得把它作为跨模块合同。
+
+每次新增或调整业务模块时必须同步验证：模块清单、表唯一归属、Maven 依赖图、跨模块接口、跨模块用例事务范围，以及至少一个阻止越权 Repository/Mapper/SQL 访问和循环依赖的架构测试。
 
 ## 4. API 模块与内部 HTTP 契约
 

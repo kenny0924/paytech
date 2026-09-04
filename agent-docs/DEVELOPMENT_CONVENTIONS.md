@@ -27,6 +27,9 @@
 
 ## 3. 包结构与依赖方向
 
+- 复杂核心服务可以按 `JAVA_PROJECT_STRUCTURE.md` 增加少量业务能力 Maven JAR，但模块不是微服务：仍只有一个 `web` 启动进程、一个数据库和一个事务管理器。初始通常控制在 3–5 个模块；没有当前完整业务能力、明确表归属和真实消费者时不拆模块。
+- 每张业务表只能由一个业务模块拥有。其他模块不得访问其 Repository、Mapper、DataObject 或表，不得用跨模块 JOIN、复制 SQL、View、存储过程或 `JdbcTemplate` 绕过；需要数据时调用 Owner 模块的业务能力接口，或由 `web` Processor 编排。所谓“只调用对方的原子 Repository”同样禁止。
+- `web` 作为组合根依赖各业务模块并编排跨模块用例；业务模块不依赖 `web`，也不形成循环实现依赖。同库强一致写操作使用一个本地事务，不能为了未来拆服务改成 Compensation Event；补偿只处理提交后异步/外部副作用，或真正拆成独立服务后的最终一致性。
 - Foundation JAR 中的 `api` 表示允许宿主直接依赖的稳定入口、模型或扩展点，不代表 HTTP API；内部实现不得因为 `public` 修饰符就放入 `api`。
 - Foundation 组件（当前主要是 `compensation-event`）使用 `model`、`service`、`persistence` 分层，`persistence` 下再分 `repository` 和 `mapper`；业务服务继续遵守 `JAVA_PROJECT_STRUCTURE.md` 的 `domain` / `domainservice` / `core/dal` 结构，不套用 Foundation 包布局。
 - 数据访问抽象统一命名为 `*Repository`，使用 `interface + *RepositoryImpl`；不要新增 `*Store` 表达同一职责。它在 Foundation 中位于 `persistence/repository`，在业务服务中位于专项工程规范指定的位置。

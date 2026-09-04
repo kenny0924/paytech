@@ -1,0 +1,18 @@
+---
+description: Enforces business capability Maven module ownership and collaboration boundaries
+globs: "**/pom.xml,**/src/main/**/*.java,**/src/main/resources/**/*Mapper.xml"
+alwaysApply: false
+---
+
+# Java 业务模块边界
+
+- 先读取 `agent-docs/JAVA_PROJECT_STRUCTURE.md` 的“复杂核心服务的业务能力模块”；它是完整权威。
+- 业务模块是同一 Spring Boot 服务中的 Maven JAR，不是微服务。默认保持一个 `web` 启动进程、一个数据库和一个事务管理器；不得因内部模块化增加远程调用或分布式事务。
+- 只按当前完整业务能力拆分，初始通常 3–5 个模块。禁止按技术层、单表、单接口、单状态机或未来设想创建模块和占位代码。
+- 每张业务表只有一个 Owner 模块。非 Owner 禁止访问或注入其 Repository、Mapper、DataObject 和表，也禁止复制 SQL、跨模块 JOIN、View、存储过程或 `JdbcTemplate` 绕过。
+- A 需要 B 的数据或动作时，只能调用 B 的业务能力接口，或由 `web` Processor 分别调用 A/B；禁止所谓“只调用 B 的原子 Repository”。
+- `web` 依赖 `api` 和业务模块并作为组合根；业务模块不依赖 `web`、`test` 或其他模块的实现，不形成循环依赖。不要用 `api` 或模糊 `common` 容纳内部共享实现来消除循环。
+- 跨模块接口表达业务动作/查询并返回领域结果，不开放通用 CRUD，不暴露 DataObject、Repository、Mapper、ServiceImpl 或 API Request/Response。
+- 同库强一致跨模块写由 `web` Processor 使用一个本地 `TransactionTemplate` 编排；参与模块加入现有事务，不使用 `REQUIRES_NEW`、提前提交或线程切换。
+- Compensation Event 只处理提交后异步/外部副作用，或真正拆成独立服务后的最终一致性；不得替代当前同库本地事务。
+- 新增模块必须列明职责、表归属、公开接口、跨模块用例和事务边界，并用架构测试阻止越权数据访问与循环依赖。
