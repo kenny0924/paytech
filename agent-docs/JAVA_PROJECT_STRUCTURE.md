@@ -371,6 +371,7 @@ Domain Service → Repository interface → RepositoryImpl → Mapper → 本系
 
 - Repository 不包含跨系统业务规则。
 - Mapper 只表达本系统数据库操作。
+- 生产 SQL 只写在资源目录的 `*Mapper.xml`，接口保留方法签名和参数绑定；禁止 SQL 注解及 `*Provider` 注解。测试源码中的 TestMapper 可保留注解 SQL，具体边界见 [DEVELOPMENT_CONVENTIONS.md](./DEVELOPMENT_CONVENTIONS.md) 的“MyBatis SQL 存放规则”。
 - 每个核心系统只能访问自己的数据库，禁止跨库查询、跨库写入或共享表。
 - 更新状态时携带期望旧状态或版本号；更新行数不为预期值时抛出包含上下文的异常。
 - `dataobject` 中的数据库映射对象直接使用业务实体名，不追加 `DO` 后缀，也不得作为公共接口对象返回。

@@ -1,8 +1,10 @@
 # PDManer 数据库设计规范
 
-最后更新：2026-09-02
+最后更新：2026-09-04
 
 > **2026-09-01 current snapshot:** generated evidence is CCT `37/423/57/44/64/7/6` and Platform `63/822/123/99/107/5/7`, plus Platform 31 composite FKs, 85 named CHECK sidecar contracts and exactly 36 `*_hash` fields. Earlier Platform physical snapshots are historical; Commerce, Payment, Finance and Risk figures remain current.
+
+> **2026-09-04 建表准则更新：** 数据库不创建 `CHECK` 或 `FOREIGN KEY`，相应业务约束由代码实现；主键、唯一索引和 `NOT NULL` 保留。此规则取代旧文档中要求或允许将业务校验、关联关系落实为物理 CHECK/外键的表述。现有模型关系、sidecar 契约和统计仍是设计/历史工件，不代表已完成约束移除；本次只更新手册，不修改现有模型、DDL 或运行数据库。建表与 PDManer 的同步规则见第 5.1 节，代码约束责任见第 11 节。
 
 ## 1. 使用范围
 
@@ -134,6 +136,14 @@ Vault 的评审入口是[批准的 V1 三表设计](../docs/superpowers/specs/20
 
 禁止只修改线上数据库、只修改 SQL、只修改 Java 字段或从数据库反向覆盖模型后不审查差异。
 
+### 5.1 建库与 PDManer 一致性
+
+- 创建或变更已获授权范围内的数据库表时，以当前批准的 PDManer 模型为设计源。表名、字段名与顺序、类型、长度/精度、可空性、默认值、主键和索引，以及模型中已明确的字符集、排序规则与存储引擎均须逐项核对；不得因为 Java 暂未使用而擅自省略已建表的字段。
+- 模型中的关联线和业务校验说明仍用于表达关系与不变量，但不导出为物理 `FOREIGN KEY` / `CHECK`；这是明确的执行边界，不是允许模型与 DDL 任意漂移。主键、唯一索引、普通索引和 `NOT NULL` 继续按模型创建。
+- 表和字段的 SQL `COMMENT` 必须完整保留模型中的对应注释，包括中文说明、枚举允许值、单位、可空条件和关键业务语义；不得自行简写、翻译、截断或漏掉。SQL 必要的引号、换行转义不能改变解析后的注释文本；模型缺少说明时先补齐并审查模型，再同步 DDL。
+- 手工维护的当前 Schema DDL 必须与模型同步评审。实际执行后，在已授权的目标库通过 `SHOW CREATE TABLE` / `information_schema` 对照结构和注释；只证明 Java 能启动或字段类型相同，不能宣称数据库与模型一致。
+- 发现差异时先确认模型与批准变更的权威版本，不从实际数据库反向覆盖设计，也不在 SQL 中维护另一套独立定义。本文不授权自动执行建库、迁移或修改已有数据库。
+
 ## 6. 数据库所有权
 
 - 每个核心系统只设计和访问自己的数据库。
@@ -231,7 +241,7 @@ update_time
 
 ### 9.1 服务本地通用行级变更历史（可选）
 
-当系统专项设计明确采用通用审计模式时，可在本服务数据库建立 `business_change_record` 与 `business_change_version`。BCR 必须按明确的 Record Type 白名单启用，不得默认覆盖本库全部业务表。只有已确认需要审计、追责或历史留档的可变业务对象，以及被专项设计选中的审计 Child 才接入；当前业务值、索引、唯一约束、外键和状态机仍以结构化业务表为权威来源。该模式是业务变更历史，不是通用 Inbox/Outbox、中央审计库或 Event Sourcing 存储。
+当系统专项设计明确采用通用审计模式时，可在本服务数据库建立 `business_change_record` 与 `business_change_version`。BCR 必须按明确的 Record Type 白名单启用，不得默认覆盖本库全部业务表。只有已确认需要审计、追责或历史留档的可变业务对象，以及被专项设计选中的审计 Child 才接入；当前业务值、索引、唯一约束、关联身份和状态机仍以结构化业务表为权威来源，关联完整性由代码保证，不创建物理外键。该模式是业务变更历史，不是通用 Inbox/Outbox、中央审计库或 Event Sourcing 存储。
 
 变更主表至少保存业务行类型/ID、聚合根类型/ID、同聚合父历史 ID、当前版本以及 `create_time/update_time`；版本明细保存明细 ID、主历史 ID、`version_no`、操作类型、`snapshot_json`、`create_by` 和 `create_time`。明细创建后不得修改，因此它明确例外于默认字段规则，不建立 `update_time`。
 
@@ -275,6 +285,9 @@ Client & Contract 已批准把白名单内聚合根对应的 `business_change_re
 
 ## 11. 索引、约束与关系
 
+- 业务约束由应用代码实现，建表/变更 SQL 不创建 `CHECK` 或 `FOREIGN KEY`，也不通过省略 `CONSTRAINT` 关键字或使用级联规则绕过。主键、唯一索引、普通索引及 `NOT NULL` 保留，按 PDManer 定义创建；“不加 constraint”不表示删除这些基础定义。
+- 枚举范围、字段组合、关联实体存在性、同租户归属、状态转换及删除/失效后的引用处理，由所属业务代码显式校验。并发场景结合本地事务、行锁或 CAS/条件更新，并验证影响行数；不能把无锁的“先查询再写入”当作一致性保证。主键和唯一索引继续提供底层防重，代码须处理其冲突。
+- 测试通过真实业务入口验证上述拒绝、回滚及并发场景，不能仅验证数据库 CHECK/外键报错。手工 DML 同样需要审查业务不变量；后续若移除已有物理约束，必须先补齐代码保护与测试，再单独审查、手工执行变更，不由此次手册更新自动删除。
 - 主键、业务唯一键和幂等键必须分别建模，不能用普通索引代替唯一约束。
 - 跨系统文件引用统一使用 Platform Support 返回的 `file_id + content_hash`；业务用途由独立的 purpose/type 字段表达，不用 `file_ref`、`content_ref` 或任意外部 URL 代替稳定 ID。
 - 每个存在异步发布或本地恢复任务的服务使用本库 `compensation_event`，与业务变化在同一事务登记；至少保存稳定 `event_key`、来源类型/ID/版本、事件类型、`schema_version`、不可变非敏感 Payload、`payload_hash`、执行状态、次数、下次执行时间、Claim Lease 与乐观锁版本，并以 `(source_type, source_id, source_version, event_type)` 保证同一事实只登记一次。成功记录允许删除，失败记录保留并告警；完整约束见 `COMPENSATION_EVENT_GUIDE.md`。当前 Vault V1 没有异步发布/恢复任务，也不建立 `compensation_event`。
@@ -285,7 +298,7 @@ Client & Contract 已批准把白名单内聚合根对应的 `business_change_re
 - 索引应由真实查询、排序和并发更新路径驱动，不为每个字段机械建索引。
 - 联合索引字段顺序必须对应主要访问路径，并记录设计理由。
 - 状态转换更新应携带版本或期望旧状态，并验证影响行数。
-- 当前数据库内的强一致关系可以使用外键，但必须评估写入顺序、删除策略和迁移成本。
+- 当前数据库内的关系仅在模型和结构化关联字段中表达，不创建物理外键；写入顺序、关联完整性和删除策略由本服务代码与本地事务保证。
 - 跨系统 ID 绝不能建立物理外键。
 - Finance 的账务事实采用追加/补偿方式，不把历史分录设计为可覆盖记录。
 
@@ -332,6 +345,7 @@ Vault 的三表设计也已通过独立 Oracle 和确定性再生成门禁：3 �
 - [ ] 模型中没有 `PARTNER_ID`、Merchant 等错误术语或参考项目遗留域。
 - [ ] 模型中没有真实数据库连接和凭据。
 - [ ] 表和字段属于当前项目，没有跨库物理关系。
+- [ ] 新建/变更 SQL 未创建 CHECK 或 FOREIGN KEY；主键、唯一索引及 NOT NULL 保持模型定义，业务代码与测试承担关联、租户、字段组合及状态校验。
 - [ ] 异步事实与恢复任务使用本地 `compensation_event`，没有通用 Inbox/Outbox 或中央补偿表；消费幂等约束落在本地业务事实或投影。
 - [ ] 字段已先按所属系统和使用场景完成数据分类；可恢复非卡敏感值由事实拥有系统校验业务 Payload Schema，业务库保存必需 Vault Token。当前 Vault V1 不增加 Binding/Bind/Copy、Blind Index/Key Version、Masked Value、Record Version 或 Metadata Hash；`REFERENCE`/`STABLE` 与 Protect 请求幂等遵守三表设计。V1 默认保留、不自动销毁，真实受监管生产数据前完成 Retention/Legal Hold、共享 Stable Token 引用和受控销毁专项设计与评审；卡数据、密码、Secret、私钥和大文件遵守各自边界。
 - [ ] 表、字段、索引和约束具有明确业务含义及注释。
@@ -344,5 +358,6 @@ Vault 的三表设计也已通过独立 Oracle 和确定性再生成门禁：3 �
 - [ ] 金额、币种、状态、时间、精度和并发字段符合业务要求。
 - [ ] 若采用通用行级变更历史，已明确 Record Type/Root 白名单、Child 映射与排除项；结构化业务表仍为权威来源，聚合版本/父子归属/指针与唯一约束完整，`snapshot_json` 通过 Schema/白名单/Hash 校验且不含敏感、Vault 或纯技术字段，明细只含 `create_time` 并且追加后不可变。
 - [ ] PDManer 模型、手工 Schema/DML SQL、DataObject/Mapper/Repository 已同步，且 DataObject 类型名没有 `DO` 后缀。
+- [ ] 已建表的字段、类型、默认值、索引及表/字段注释与当前 PDManer 模型逐项一致；完成建库执行时已有实际数据库对照证据，没有遗漏或简写 `COMMENT`。
 - [ ] Repository 和服务级 `auto` 使用真实测试数据库验证通过。
 - [ ] 破坏性 DDL/数据变更 SQL 有明确的数据迁移、兼容和回滚设计。

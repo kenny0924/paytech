@@ -57,12 +57,19 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - 核心服务在同一授权范围及相同筛选条件下执行数据库 `LIMIT/OFFSET` 和 `COUNT`，分页排序必须稳定；不通过查询全部数据后内存截取实现常规列表分页。BFF 不持有数据库分页事实，也不绕过上游授权。
 - 前端列表复用统一分页状态与加载逻辑；改变条数时回到第一页。数组改为分页对象属于响应契约变更，提供方 API、BFF 与前端同步发布，并同步维护 Gateway Route 的 page/size 查询参数白名单；目录增量仍由操作员手工审阅和执行。
 
+### MyBatis SQL 存放规则
+
+- 生产业务 SQL 统一写入 `src/main/resources` 下、由 `mybatis.mapper-locations` 加载的 `*Mapper.xml`。Java Mapper 只保留方法签名和必要的 `@Param` 等绑定注解，不使用 `@Select`、`@Insert`、`@Update`、`@Delete` 或对应 `*Provider` 注解承载 SQL，也不把 SQL 拼接转移到 Repository/Service。
+- SQL 片段、动态条件、批量 `foreach`、结果映射及语句级缓存/主键配置在 XML 中维护。迁移时保持参数类型、TypeHandler、查询范围、排序、分页、行锁和条件更新语义；加锁查询已有的 `flushCache` / `useCache` 设置不得遗漏。
+- 只有测试源码（`src/test/java`）中的 `TestMapper` 等数据准备、清理和断言工具允许使用注解 SQL；测试仍须调用真实生产 Mapper，不得复制业务 SQL 来代替生产链路验证。手工 Schema DDL 和初始化 DML 继续按数据库规范保存在独立 SQL 文件中，不放入 Mapper 或应用启动逻辑。
+
 ## 4. 异常与枚举
 
 - 默认复用少数公共异常：业务检查使用 `BizCheckFailException(message)`（400），参数错误使用 `InvalidParameterException(message)`（400），版本或并发命令冲突使用 `ConcurrentRequestException(message)`（409），系统异常使用 `ErrorException`（500），依赖不可用使用 `ServiceUnavailableException`（503）。不为每条业务拒绝创建异常类或错误码。
 - 普通业务规则只需公共 `BUSINESS_CHECK_FAILED` 加具体中文消息，例如 `throw new BizCheckFailException("不能停用当前登录账号");`。只有前端或其他调用方确实有区别处理的契约时才定义专有 `CodeMessageEnum`，并写明消费者及处理行为；不同提示文字不构成新增错误码的理由。
 - `FailException` 继续作为结果明确的失败基类；`BizCheckFailException` 是新增普通业务检查的首选，`BusinessException` 仅保留兼容。`ErrorException` 表示系统或结果未知的失败，是否重试必须由具备幂等、次数上限和退避的调用契约决定；异常类型不授权自动重试。
 - 所有业务枚举都实现 `CodeEnum`；只有带可安全外显默认消息的错误枚举实现继承 `CodeEnum` 的 `CodeMessageEnum`。对外发布、调用方需要理解的稳定 Code 枚举定义放在提供方 `*-api` 的 `api/enums`；仅服务内部使用的业务或持久化枚举放在 `*-web` 的 `domain/enums`。提供方 Web 直接复用自己的 API 枚举，不在领域包复制同一组 Code。
+- 每个枚举常量单独声明，相邻枚举项之间保留一行空行，不将多项挤在同一行；若下一项带 JavaDoc 或注解，空行放在上一项与下一项的 JavaDoc/注解之前。API、内部领域及测试枚举均遵循此排版，不改变 Code 值或声明顺序。
 - 数据库、HTTP、MQ、日志和业务比较使用 `getCode()`，禁止依赖 `name()`、`ordinal()` 或枚举声明顺序。Code 发布后不可修改，Java 枚举常量名可以安全重构。
 - DataObject 的闭合枚举列直接使用实现 `CodeEnum` 的 Java 枚举：契约已发布的 Code 复用本服务 `*-api` 枚举，内部 Code 使用 `domain/enums` 枚举。通过 `paytech-mybatis-support` 的 `CodeEnumTypeHandler` 为每个枚举类型显式注册；不启用全局扫描或默认枚举替换。未知数据库 Code 必须使当前读取 Fail-Closed，不能映射为 `null`。MySQL `DATETIME(6)` 到 `Instant` 统一使用同模块的 UTC `InstantTypeHandler`，服务不得复制同义 Handler。
 - 对外发布的 `*-api` DTO 和 MQ 契约字段仍以 `String` 承载枚举 Code，不使用 Java enum 作为序列化字段类型；`api/enums` 只发布稳定 Code 定义，不改变传输兼容策略。提供方在边界内从 `CodeEnum#getCode()` 转换，消费方显式解析和校验；未知 Code 必须进入可观察、Fail-Closed 的兼容性处理，不能依赖反序列化异常、`null` 或兜底枚举静默放行。

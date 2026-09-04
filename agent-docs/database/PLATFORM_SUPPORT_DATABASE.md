@@ -1,6 +1,8 @@
 # Platform Support 数据库设计规范
 
-最后更新：2026-09-01
+最后更新：2026-09-04
+
+> **2026-09-04 物理实施规则：** 依照 [数据库设计手册](../DATABASE_DESIGN_GUIDE.md)，SQL 不创建 CHECK 或 FOREIGN KEY，保留主键、唯一索引与 NOT NULL。本文及模型中的 FK/复合 FK/CHECK 均表示逻辑关联与业务不变量，不再要求物理约束。已实现的 22 表、273 字段与 PDManer 的结构及完整中文注释一致；其余 41 表不提前落库。当前认证、租户授权、Snapshot/JWKS 和审计通过代码、完整 Tuple 查询、本地事务、锁及 CAS 保证一致性。
 
 状态：**V1 已确认并已生成；PDManer 4.9.3 应用内人工评审待完成**
 
@@ -39,7 +41,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 - Vault Value Token、KMS/Secrets Manager Key Ref、对象存储 Object Ref；
 - BFF/Gateway Request、Actor、Session 与 Trace 标识。
 
-跨系统引用不建立物理 FK。Platform 内部 Tenant/Owner 一致性必须使用本库单列或复合 FK、唯一键和事务锁证明。
+所有引用均不建立物理 FK。Platform 内部 Tenant/Owner 一致性通过完整关联 Tuple 查询、唯一键、本地事务和锁证明，不能仅凭外部传入的 ID 授权。
 
 ## 3. 精确 63 表拓扑
 
@@ -282,6 +284,6 @@ Platform 可发布 `WebhookDelivered`、`WebhookFailed`、`NotificationSent`、`
 
 ## 15. 验证与人工门禁
 
-自动门禁必须证明：63 表分组 `18 + 12 + 9 + 8 + 8 + 6 + 2`、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、36 Hash Allowlist、31 复合 FK、85 条具名 CHECK sidecar 契约、六张且仅六张公共控制面表、无 Gateway `*_ver`/Release/Snapshot/Tenant Override/新 Hash、无通用 Config/持久化 Readiness、无 `_ver` 物理表、无 Platform `client_id`，以及场景对每表恰有一条满足 NN/CHECK/复合身份的有效字段映射。当前 Model SHA-256 为 `d07cfbe2153490c79e17715b8e43ae4e1b6c6ea1436fe8a3a6e063ddaee455bb`，Structural Projection SHA-256 为 `18b9c0ea482073457ed5084d0eddc77e51508d6964d34679905667f8a80e4722`，CHECK Policy SHA-256 为 `6260b6db67d05e37a3361c32507363271bee61bd4ad9144358c5bc8a1e6a6f3d`。PDManer 4.9.3 JSON 没有可移植 CHECK 节点；完整名称、表达式与表绑定冻结在 `scripts/pdmaner/platform-support/model-policy.mjs`，独立 Oracle 冻结其摘要，未来手工 Schema DDL 必须逐项映射为真实数据库 CHECK。
+自动门禁必须证明：63 表分组 `18 + 12 + 9 + 8 + 8 + 6 + 2`、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、36 Hash Allowlist、31 复合 FK、85 条具名 CHECK sidecar 契约、六张且仅六张公共控制面表、无 Gateway `*_ver`/Release/Snapshot/Tenant Override/新 Hash、无通用 Config/持久化 Readiness、无 `_ver` 物理表、无 Platform `client_id`，以及场景对每表恰有一条满足 NN/CHECK/复合身份的有效字段映射。当前 Model SHA-256 为 `d07cfbe2153490c79e17715b8e43ae4e1b6c6ea1436fe8a3a6e063ddaee455bb`，Structural Projection SHA-256 为 `18b9c0ea482073457ed5084d0eddc77e51508d6964d34679905667f8a80e4722`，CHECK Policy SHA-256 为 `6260b6db67d05e37a3361c32507363271bee61bd4ad9144358c5bc8a1e6a6f3d`。PDManer 4.9.3 JSON 没有可移植 CHECK 节点；完整名称、表达式与表绑定冻结在 `scripts/pdmaner/platform-support/model-policy.mjs`，独立 Oracle 冻结其摘要，这些表达式作为代码与场景测试的不变量依据，不生成物理数据库 CHECK。
 
-PDManer 4.9.3 仍须人工打开并检查七个 Diagram、关系方向、中文显示名和索引，并运行 Validate；同时人工复核 sidecar CHECK 名称/表达式/表绑定及未来手工 Schema DDL 映射。人工门禁完成前，不得声称物理模型已在应用内签署，也不得据此创建数据库 SQL 或运行数据库。
+PDManer 4.9.3 仍须人工打开并检查七个 Diagram、关系方向、中文显示名和索引，并运行 Validate；sidecar 作为代码与场景测试的业务不变量清单，不映射为物理 CHECK。未批准的表不得据此落库；已批准的 22 表切片遵循独立手工 SQL 实施边界。
