@@ -636,7 +636,7 @@ test("E2E-01 authenticates a CUSTOMER Account and provisions its Client Tenant b
   assert.match(labels.join("\n"), /PENDING.*不签发普通 Tenant Context Token/u);
 });
 
-test("E2E-02 carries the trusted Client owner tuple from PLT-I03", async () => {
+test("E2E-02 keeps the PLT-I03 tuple inside Gateway and forwards only minimal Client identity", async () => {
   const sequenceCatalog = await loadSequenceCatalog();
   const messages = sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES["E2E-02"].messages;
   const credentialValidation = messages.find(
@@ -653,7 +653,11 @@ test("E2E-02 carries the trusted Client owner tuple from PLT-I03", async () => {
   );
   assert.match(credentialValidation.label, /Access Tenant/u);
   assert.ok(clientApiRoute);
-  assert.match(clientApiRoute.label, /trusted.*tenant_id.*owner_ref_id=client_id.*credential_id.*Scope/iu);
+  assert.match(
+    clientApiRoute.label,
+    /精确要求 checkouts\.write.*X-Request-Id.*X-Gateway-Client-Id.*X-Gateway-Credential-Id/iu,
+  );
+  assert.match(clientApiRoute.label, /不下传.*Authorization.*Tenant.*Scope.*Route.*Channel/iu);
 });
 
 for (const [sequenceId, requiredScope] of [
@@ -675,17 +679,18 @@ for (const [sequenceId, requiredScope] of [
 
     assert.ok(validationIndex >= 0, `${sequenceId} 缺少 Gateway -> Platform PLT-I03`);
     assert.match(messages[validationIndex].label, /PHC verifier/u);
-    assert.match(messages[validationIndex].label, new RegExp(requiredScope.replace(".", "\\."), "u"));
+    assert.match(messages[validationIndex].label, /不提交.*Tenant.*Client.*required Scope/u);
+    assert.doesNotMatch(messages[validationIndex].label, new RegExp(requiredScope.replace(".", "\\."), "u"));
     assert.ok(resultIndex > validationIndex, `${sequenceId} 缺少 PLT-I03 可信结果`);
     assert.match(
       messages[resultIndex].label,
-      /trusted tenant_id.*tenant_type=CLIENT.*owner_ref_id.*credential_id.*exact effective ACTIVE scopes.*Fail-Closed/iu,
+      /trusted tenant_id.*tenant_type=CLIENT.*owner_ref_id.*credential_id.*effective ACTIVE scopes.*401.*503/iu,
     );
-    assert.match(messages[resultIndex].label, new RegExp(requiredScope.replace(".", "\\."), "u"));
     assert.ok(routeIndex > resultIndex, `${sequenceId} 不得在 PLT-I03 结果前路由 Client API`);
+    assert.match(messages[routeIndex].label, new RegExp(requiredScope.replace(".", "\\."), "u"));
     assert.match(
       messages[routeIndex].label,
-      /trusted tenant_id.*tenant_type=CLIENT.*owner_ref_id.*credential_id.*Scope/iu,
+      /X-Request-Id.*X-Gateway-Client-Id.*X-Gateway-Credential-Id.*不下传.*Authorization.*Tenant.*Scope.*Route.*Channel/iu,
     );
   });
 }
@@ -890,8 +895,9 @@ test("Payment sequences preserve the frozen unknown, refund, and cancellation co
   assert.match(refundLabels, /Payment Refund Position.*CAS.*reserved_amount.*Channel Refund/u);
   assert.doesNotMatch(refundLabels, /refund_funding_reservation_id|Funding Reservation|FIN-I21|SOURCE_COVER|REFUND_CAP/u);
 
-  assert.match(reversalLabels, /COM-I05 Cancel（client_order_id、Expected Version、Command Idempotency Key）/u);
-  assert.doesNotMatch(reversalLabels, /COM-I05 Cancel（order_id/u);
+  assert.match(reversalLabels, /COM-I05 Cancel：POST \/api\/v1\/orders\/\{orderNo\}\/cancel/u);
+  assert.match(reversalLabels, /Idempotency-Key，无 Body、无外部 Expected Version/u);
+  assert.doesNotMatch(reversalLabels, /COM-I05 Cancel（(?:client_order_id|order_id)、Expected Version/u);
   assert.match(reversalLabels, /PAY-I12[\s\S]*确定性子幂等键/u);
   assert.match(reversalLabels, /USE_CANCEL[\s\S]*确定性子幂等键[\s\S]*PAY-I12/u);
   const commerceReserveIndex = reversalFlow.findIndex((message) => /Commerce Refund Request.*Order Refund Position/u.test(message.label));
@@ -1017,7 +1023,7 @@ test("E2E-02 keeps the Operating Entity frozen across retries and requires a new
     .map((message) => message.label)
     .join("\n");
 
-  assert.match(labels, /Client 命名空间.*client_order_id/u);
+  assert.match(labels, /Client 命名空间.*clientOrderId/u);
   assert.match(labels, /无合格 Operating Entity|路由覆盖.*依赖失败/u);
   assert.match(labels, /不创建 Order/u);
   assert.match(labels, /临时 Provider\/MID 不可用.*保留同一 Order/u);
@@ -1025,7 +1031,7 @@ test("E2E-02 keeps the Operating Entity frozen across retries and requires a new
   assert.match(labels, /OperatingEntityChanged.*永久不可用/u);
   assert.match(labels, /阻止新 Attempt.*活动或 UNKNOWN Attempt/u);
   assert.match(labels, /终止唯一 Payment Intent[\s\S]*取消仍开放的未支付 Order 与 Checkout Session/u);
-  assert.match(labels, /新的 client_order_id/u);
+  assert.match(labels, /新的 clientOrderId.*POST \/api\/v1\/checkouts/u);
   assert.match(labels, /不自动创建替代 Order.*不跨 Operating Entity 重试/u);
   assert.doesNotMatch(labels, /order_snapshot_id|snapshot_schema_version|snapshot_hash/u);
 });

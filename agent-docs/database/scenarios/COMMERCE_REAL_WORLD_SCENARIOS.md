@@ -1,8 +1,15 @@
 # Commerce 现实场景与逐表字段映射
 
-最后更新：2026-08-26
+最后更新：2026-09-05
 
-状态：与 [Commerce 14 表权威模型](../COMMERCE_DATABASE.md) 和生成 PDManer 模型同步；它是字段、关系、状态和场景文档测试的现实门禁。
+状态：与 [Commerce 15 表逻辑目标](../COMMERCE_DATABASE.md) 及 [Commerce Client API V1](../../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 同步；当前生成 PDManer 仍为 14 表 / 223 字段，本文件新增的目标场景尚未实施，实际状态只读 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md)。
+
+> **2026-09-05 横切迁移提示：** 本文的逐表记录继续精确描述当前生成模型及当时的消费者假设，不单独拥有
+> Vault 或 `compensation_event` 契约。其中与当前三表 Protect/Reveal、补偿三字段身份和 4 KiB 可选 Payload
+> 不一致的旧字段属于 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md) 中 VAULT-01 / COMP-01
+> 的待迁移现状；完成 [Vault 消费者对齐](../../../docs/superpowers/plans/2026-09-05-vault-consumer-model-alignment.md)
+> 和 [补偿六模型对齐](../../../docs/superpowers/plans/2026-09-05-compensation-event-six-model-alignment.md) 前，
+> 不得把这些场景字段复制到新增模型、SQL、DataObject 或代码。
 
 ## 1. 场景范围
 
@@ -21,6 +28,8 @@ Commerce 不建设主动履约。Chargeback 后由 Risk 将 Dispute Case 置为 
 - Payment Intent 与 Attempt 使用不同来源版本命名空间；Payment Refund UNKNOWN 在 Commerce 映射为 `PROCESSING`，本地退款额度不释放；
 - CLIENT 发起时 client_refund_id 必填；OPERATIONS 发起时为空，改用命令幂等键恢复重试；
 - Payment 权威成功同时驱动 Commerce 本地额度消费和 Finance 独立记账；失败/取消只驱动 Commerce 释放，UNKNOWN 只保留在 Payment 本地；
+- PaymentSucceeded 只把 Order Funds Availability 置为 PENDING；Finance 的 EconomicsCalculated 冻结计划成熟时间，PayableBalanceMatured 才把本 Order 的 Client matured amount 置为 AVAILABLE 或 FULLY_OFFSET；
+- Hosted Checkout Public Token 是大小写敏感的 34 字符明文唯一值，并与冻结的 HTTPS Public Origin 组合；Command Idempotency 以版本化 Hash/Request Snapshot/Response Snapshot 支持 Root 建立前恢复；
 - Commerce V1 不保存通用 BCR；需要保留的法律接受、网络证据和订单冻结上下文继续使用专项结构化事实。
 
 ## 2. 稳定身份、Hash 与时间
@@ -57,6 +66,7 @@ Commerce 不建设主动履约。Chargeback 后由 Risk 将 Dispute Case 置为 
 | `2026-08-23T08:06:00.000000Z` | Privacy Notice Acceptance 与 LEGAL_ACCEPTANCE 网络证据同事务插入，三类齐全 |
 | `2026-08-23T08:07:00.000000Z` | Attempt 1 开始并明确失败 |
 | `2026-08-23T08:08:00.000000Z` | Attempt 2 成功，Order=PAID，Session=COMPLETED，Refund Base 从 0 建立为 105.00 |
+| `2026-08-23T08:08:02.000000Z` | Finance `EconomicsCalculated` 被 Commerce 幂等应用，Funds=`PENDING`，冻结 `finance_economics_id=740000000000000501` 与 `scheduled_at=2026-08-26T08:00:00.000000Z` |
 | `2026-08-23T09:00:00.000000Z` | Client 创建 USD 20 Refund Request=`PENDING`，本地 Position=`105/20/0` |
 | `2026-08-23T09:01:00.000000Z` | Channel Refund=UNKNOWN，Commerce Request=`PROCESSING`，Position 保持 `105/20/0` |
 | `2026-08-23T09:03:00.000000Z` | Payment Refund=SUCCEEDED，Commerce 同事务得到 Request=`SUCCEEDED`、Position=`105/0/20` |
@@ -68,6 +78,7 @@ Commerce 不建设主动履约。Chargeback 后由 Risk 将 Dispute Case 置为 
 | `2026-08-24T10:00:00.000000Z` | 未发起渠道支付的 Order A 被 Client Cancel，Payment 确认 Intent 终止后 Order/Session=CANCELLED |
 | `2026-08-24T10:10:00.000000Z` | Order B 授权成功但未 Capture，Operations Reversal 由 Payment 原子解析为 Void |
 | `2026-08-24T10:20:00.000000Z` | Order C 已全额 Capture，Operations Reversal 由 Payment 返回 REFUND_REQUIRED，Commerce 创建全额 Refund Request |
+| `2026-08-26T08:00:00.000000Z` | Finance `PayableBalanceMatured` 权威返回本 Order `client_matured_amount=80.00 USD`；Commerce Funds=`AVAILABLE`、`available_at=scheduled_at`，并冻结 `order.funds_available` Webhook 快照；该金额由 Finance 给出，Commerce 不自行重算 |
 
 ## 3. CCT Bundle、Consumer 与网络证据
 
@@ -118,7 +129,7 @@ Commerce 直接保存完整客户端 IP、完整 User-Agent 与可信代理链�
 
 三条 Network Evidence 与 Acceptance 各自在同一本地事务插入。COM-I10 校验 Contract/Order/Session 归属、未到期可支付状态、三类型恰好齐全和每条同 Order/同 Session 的 `LEGAL_ACCEPTANCE` Evidence，返回三个显式 ID 与 `acceptance_completed_at=2026-08-23T08:06:00.000000Z`；不维护 Acceptance Summary。
 
-## 4. 14 表逐表映射
+## 4. 15 表目标逐表映射
 
 | 逻辑表 | 本场景示例 | 写入/更新/冻结语义 |
 |---|---|---|
@@ -127,15 +138,16 @@ Commerce 直接保存完整客户端 IP、完整 User-Agent 与可信代理链�
 | `order_legal` | `order_legal_id=...003`，两条 Association、三份 Legal File/Hash 与 Seller Disclosure | 与 Context 同事务插入并冻结 |
 | `order_item` | `order_item_id=...004`，`LIC-ANNUAL-01`，Total `105.00 USD` | 直接归属 Order，不可变 |
 | `order_payment_projection` | Intent `...101=SUCCEEDED`，成功 Attempt `...112`，Captured `105.00 USD` | Attempt 1 失败后 Attempt 2 成功；迟到事件不回退 |
+| `order_funds_availability_projection` | `finance_economics_id=...501`，`AVAILABLE 80.00 USD`，`scheduled_at=available_at=2026-08-26T08:00:00Z` | Order 创建时 `NOT_APPLICABLE`；PaymentSucceeded 后 `PENDING`；两个 Finance 事件分别按 binary Event Key/Version/Hash 幂等推进，最终态不回退；金额是本 Order 成熟金额，不是当前 Client 余额 |
 | `order_refund_position` | Order 创建时 Base/Reserved/Refunded=`0/0/0 USD`；PaymentSucceeded 建立 Base=`105`；最终=`105/0/20` | 与 Order 同事务初始化；成功支付只建立 Base 一次；退款创建、成功、失败/取消分别以 CAS 预占、消费、释放 |
-| `checkout_session` | `checkout_session_id=...011`，最终 `COMPLETED` | PREPARING、OPEN、PAYMENT_PROCESSING、COMPLETED 条件推进 |
+| `checkout_session` | `checkout_session_id=...011`，34 字符大小写敏感 `public_token`，`public_origin=https://checkout.code-mor.com`，最终 `COMPLETED` | PREPARING、OPEN、PAYMENT_PROCESSING、COMPLETED 条件推进；Token 明文 ASCII binary 唯一保存，不保留 Hash，Origin 在 Session 生命周期冻结 |
 | `consumer_context` | `consumer_reference=nova-consumer-opaque-1001`，Email/Phone/Profile 三 Token，Billing=`AE/DU/Dubai/NULL`，v2 | Token/派生维度 CAS 更新；Profile 不复制 Email/Phone；不存 Blind Index/Masked/Composite Token |
 | `consumer_contract` | Contract `...013`，Rendered Hash=`H_RENDERED_CONTRACT`，`en-AE` | 插入即冻结 |
 | `checkout_network_evidence` | `...025`，`LEGAL_ACCEPTANCE`，直接保存 IP/UA/Proxy Chain 与解析维度 | 每个可信请求一行，不存 Vault Token/Blind Index/Key Version/device identifier；插入后不更新 |
 | `consumer_acceptance` | `...015/016/017` 对应三条合同类型和 Evidence | 与 Legal Evidence 同事务插入，Contract+Type 唯一 |
 | `refund_request` | Client `...030`=`SUCCEEDED` USD 20，`client_refund_id=NOVA-REFUND-20-001`；Operations `...040`=`FAILED` USD 10，`client_refund_id=NULL` | 唯一 Commerce 退款状态；UNKNOWN 映射 PROCESSING；成功同时通知 Commerce 与 Finance，失败/取消只通知 Commerce |
-| `command_idempotency` | Create Order、三条 Acceptance、Client 退款、Cancel 和 Operations Reversal 命令；退款键 `ops-refund-810000000000000001-10-v1` | 同 Caller/Operation/Key 同 Hash 重放；新 Key 重用 client_order_id 或 Client 重用 client_refund_id 均不能创建重复业务事实 |
-| `compensation_event` | `OrderCancelled`、退款状态和消费者文档生成请求等可靠 MQ/本地恢复任务，采用 `lock_version` | 业务事务登记、afterCommit 执行；不保存消费者文档 Current Projection，也无履约事件 |
+| `command_idempotency` | Create Checkout、三条 Acceptance、Client 退款、Cancel 和 Operations Reversal 命令；Client Refund 键与业务 `client_refund_id` 分离 | 同 Caller/Operation/Key 同版本 Hash 重放；Create Checkout/Refund 用受控 Request Snapshot 在 Root 前恢复，稳定创建回执用版本化 Response Snapshot；新 Key 重用 client_order_id 固定冲突，相同内容 client_refund_id 返回原 Refund |
+| `compensation_event` | `OrderCancelled`、消费者文档请求和八种 `ClientWebhookRequested` 等可靠 MQ/本地恢复任务 | 业务事务登记、afterCommit 执行；Webhook 的不超过 4 KiB Canonical Envelope 是不可从 Current Root 重建的已批准窄例外，不保存 Endpoint/Secret/Checkout Token/PII |
 
 Finance 保留完整 Tax Snapshot；Commerce 只校验 `H_FINANCE_TAX`、总额和逐 Item 税额。暂时网络失败不 ACK `PaymentSucceeded` 并等待重投；永久关系错误进入 DLQ。
 
@@ -227,7 +239,7 @@ Captured Reversal 完成后，Order 仍保持 `PAID`，Refund Position 变为 `5
 
 ## 7. 文档、审计与敏感数据边界
 
-Commerce 14 表不保存 Webhook 配置 ID、URL 或 Secret，也不保存 Consumer Document Current Projection 或通用 BCR。Receipt 与 Credit Note 的状态、文件和更正关系由 Platform Support 保存，Finance 保存不可变 Fiscal Fact；Commerce 只通过 `t_compensation_event` 可靠发布最小来源事实。Consumer Token、网络原值和派生维度不得进入普通日志、MQ 文档事件或普通业务页面。场景中没有任何 PAN、CVV/CVC、完整磁道、PIN/PIN Block、卡有效期、主动履约表或主动履约事件。
+Commerce 15 表目标不保存 Webhook 配置 ID、URL 或 Secret，也不保存 Consumer Document Current Projection 或通用 BCR。Receipt 与 Credit Note 的状态、文件和更正关系由 Platform Support 保存，Finance 保存不可变 Fiscal Fact；Commerce 只通过 `t_compensation_event` 可靠发布最小来源事实。Consumer Token、网络原值和派生维度不得进入普通日志、MQ 文档事件或普通业务页面；Hosted Checkout Public Token 的第一方 URI Access Log 是单独确认的窄取舍，不能扩大到 Client API Response Body 日志或其他受限值。场景中没有任何 PAN、CVV/CVC、完整磁道、PIN/PIN Block、卡有效期、主动履约表或主动履约事件。当前生成模型仍为 14 表，必须完成独立 PDManer/SQL/Java 切片后才可称为实现该目标。
 
 ## 8. 最终可观察结果
 
@@ -235,5 +247,6 @@ Commerce 14 表不保存 Webhook 配置 ID、URL 或 Secret，也不保存 Consu
 - Consumer Contract 与三条 Acceptance 永久定位原法律内容；Readiness 显式返回 `...015/016/017`。
 - Consumer Context 使用非 PII 引用和三枚职责清晰的稳定 Token；Network Evidence 直接保存完整 IP/UA/可信代理链，不使用 Vault/Blind Index/Key Version。
 - Refund Position 最终为 `105.00/0.00/20.00`；成功退款触发 Platform Support 生成 Credit Note，失败退款由 Payment 权威失败事件立即释放 Commerce 本地额度，Finance 独立收口。
+- Funds Availability 最终为 `AVAILABLE 80.00 USD`，表示 Finance 已把该 Order 的成熟金额进入 Client 可用余额；它不代表 Client 查询时的账户余额，也不因后来 Refund/Payout 回退。
 - Order A 通过 Cancel 关单；Order B 的授权通过 Void 释放；Order C 的 Captured Reversal 复用全额 Refund，三条路径没有新增业务表。
 - Chargeback RFI/举证由 Risk 承接，Commerce 没有主动履约域。

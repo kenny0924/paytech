@@ -98,6 +98,20 @@ const commerceDocumentAuditCancelDesignSource = readFileSync(
   ),
   "utf8",
 );
+const commerceClientApiDesignSource = readFileSync(
+  new URL(
+    "../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const commerceClientApiDecisionSource = readFileSync(
+  new URL(
+    "../../agent-docs/decisions/2026-09-05-commerce-client-api-v1.md",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const agentReadmeSource = readFileSync(
   new URL("../../agent-docs/README.md", import.meta.url),
   "utf8",
@@ -106,8 +120,56 @@ const projectContextSource = readFileSync(
   new URL("../../agent-docs/PROJECT_CONTEXT.md", import.meta.url),
   "utf8",
 );
+const currentImplementationSource = readFileSync(
+  new URL("../../agent-docs/CURRENT_IMPLEMENTATION.md", import.meta.url),
+  "utf8",
+);
+const documentGovernanceSource = readFileSync(
+  new URL("../../agent-docs/DOCUMENT_GOVERNANCE.md", import.meta.url),
+  "utf8",
+);
+const developmentConventionsSource = readFileSync(
+  new URL("../../agent-docs/DEVELOPMENT_CONVENTIONS.md", import.meta.url),
+  "utf8",
+);
+const javaProjectStructureSource = readFileSync(
+  new URL("../../agent-docs/JAVA_PROJECT_STRUCTURE.md", import.meta.url),
+  "utf8",
+);
 const rootAgentsSource = readFileSync(
   new URL("../../AGENTS.md", import.meta.url),
+  "utf8",
+);
+const javaServiceBoundariesRuleSource = readFileSync(
+  new URL("../../.cursor/rules/java-service-boundaries.mdc", import.meta.url),
+  "utf8",
+);
+const superpowersWorkflowRuleSource = readOptionalSource(
+  "../../.cursor/rules/superpowers-workflow.mdc",
+);
+const superpowersServicePolicyDecisionSource = readFileSync(
+  new URL(
+    "../../agent-docs/decisions/2026-09-05-superpowers-and-service-interface-policy.md",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const businessModuleCollaborationDecisionSource = readFileSync(
+  new URL(
+    "../../agent-docs/decisions/2026-09-05-business-module-collaboration-policy.md",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const financeModularCodeDesignSource = readFileSync(
+  new URL(
+    "../../agent-docs/plans/2026-09-04-finance-modular-code-design.md",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const javaBusinessModuleBoundariesRuleSource = readFileSync(
+  new URL("../../.cursor/rules/java-business-module-boundaries.mdc", import.meta.url),
   "utf8",
 );
 const rootReadmeSource = readFileSync(
@@ -156,11 +218,25 @@ const expectedCommerceTables = [
   "consumer_contract",
   "order_item",
   "order_legal",
+  "order_funds_availability_projection",
   "order_payment_projection",
   "order_refund_position",
   "order_context",
   "refund_request",
 ].sort();
+
+const expectedCommerceClientApiRoutes = [
+  ["POST", "/api/v1/checkouts", "checkouts.write"],
+  ["GET", "/api/v1/orders/{orderNo}/checkout", "orders.read"],
+  ["GET", "/api/v1/orders/{orderNo}", "orders.read"],
+  ["GET", "/api/v1/orders", "orders.read"],
+  ["POST", "/api/v1/orders/{orderNo}/cancel", "orders.cancel"],
+  ["GET", "/api/v1/orders/{orderNo}/refundable-amount", "refunds.read"],
+  ["POST", "/api/v1/orders/{orderNo}/refunds", "refunds.write"],
+  ["GET", "/api/v1/refunds/{refundRequestNo}", "refunds.read"],
+  ["GET", "/api/v1/refunds", "refunds.read"],
+  ["GET", "/api/v1/orders/{orderNo}/refunds", "refunds.read"],
+];
 
 const removedCommerceTables = [
   "acceptance_state_change",
@@ -210,6 +286,37 @@ function extractCommerceTableHeadings(markdown) {
     .sort();
 }
 
+function calculateCheckoutTokenChecksum(core) {
+  const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  let numericValue = 0n;
+  for (const character of core) {
+    numericValue = (numericValue * 62n) + BigInt(alphabet.indexOf(character));
+  }
+  const bytes = new Uint8Array(20);
+  for (let index = bytes.length - 1; index >= 0; index -= 1) {
+    bytes[index] = Number(numericValue & 0xffn);
+    numericValue >>= 8n;
+  }
+  assert.equal(numericValue, 0n, "KSUID core must decode to exactly 20 bytes");
+
+  let checksum = 0xffff;
+  for (const byte of bytes) {
+    checksum ^= byte << 8;
+    for (let bit = 0; bit < 8; bit += 1) {
+      checksum = checksum & 0x8000
+        ? ((checksum << 1) ^ 0x1021) & 0xffff
+        : (checksum << 1) & 0xffff;
+    }
+  }
+
+  let encoded = "";
+  do {
+    encoded = alphabet[checksum % 62] + encoded;
+    checksum = Math.floor(checksum / 62);
+  } while (checksum > 0);
+  return encoded.padStart(3, "0");
+}
+
 test("requirements catalog contains every stable section", () => {
   for (const id of [
     "overview",
@@ -243,6 +350,136 @@ test("requirements catalog defines the approved entry applications", () => {
   ]) {
     assert.match(source, new RegExp(`code:\\s*["']${code}["']`));
   }
+});
+
+test("Commerce Client API V1 freezes exactly ten Hosted Checkout routes and five scopes", () => {
+  const routeRows = [...commerceClientApiDesignSource.matchAll(
+    /^\| `client-api-commerce-[^`]+` \| (GET|POST) \| `([^`]+)` \| `[^`]+` \| `([^`]+)` \|/gmu,
+  )].map((match) => [match[1], match[2], match[3]]);
+  const scopes = [...new Set(routeRows.map(([, , scope]) => scope))].sort();
+  const clientApiBlock = source.slice(
+    source.indexOf('code: "CLIENT_API"'),
+    source.indexOf('code: "OPERATIONS_CONSOLE"'),
+  );
+
+  assert.deepEqual(routeRows, expectedCommerceClientApiRoutes);
+  assert.deepEqual(scopes, [
+    "checkouts.write",
+    "orders.cancel",
+    "orders.read",
+    "refunds.read",
+    "refunds.write",
+  ]);
+  assert.match(clientApiBlock, /面向 Client Server/u);
+  assert.match(clientApiBlock, /connectsTo: \["Commerce"\]/u);
+  assert.match(clientApiBlock, /不提供 DirectPay、Payout、Webhook 管理或无过滤全量列表/u);
+  assert.match(commerceClientApiDecisionSource, /固定接口为：[\s\S]*10\..*GET \/api\/v1\/orders\/\{orderNo\}\/refunds/u);
+});
+
+test("Commerce Client API V1 keeps POST idempotency and RFC 9457 error ownership explicit", () => {
+  for (const contractSource of [source, commerceClientApiDecisionSource]) {
+    assert.match(contractSource, /所有 POST.*Idempotency-Key/su);
+    assert.match(contractSource, /Client \+ operation \+ key/u);
+    assert.match(contractSource, /IDEMPOTENCY_KEY_REUSED/u);
+    assert.match(contractSource, /application\/problem\+json/u);
+    assert.match(contractSource, /不复制.*status.*requestId|不在 Body 复制 Request ID/su);
+  }
+  assert.match(commerceClientApiDesignSource, /每个 POST.*Idempotency-Key/u);
+  assert.match(commerceClientApiDesignSource, /caller_scope = CLIENT:<trustedClientId>/u);
+  assert.match(commerceClientApiDesignSource, /operation_type = CREATE_CHECKOUT \| CANCEL_ORDER \| CREATE_REFUND/u);
+  assert.match(commerceClientApiDesignSource, /idempotency_key = exact case-sensitive header value/u);
+  assert.match(commerceClientApiDesignSource, /IDEMPOTENCY_KEY_REUSED/u);
+  assert.match(commerceClientApiDesignSource, /application\/problem\+json/u);
+  assert.match(commerceClientApiDesignSource, /`status` 不出现在 Body.*`requestId` 也不复制进 Body/su);
+  assert.match(commerceClientApiDesignSource, /Gateway 只转发 Header，零自动重试、零响应缓存/u);
+});
+
+test("every concrete Checkout token example satisfies the frozen CRC16 Base62 format", () => {
+  const tokens = [...new Set(commerceClientApiDesignSource.match(/chk_[0-9A-Za-z]{30}/gu) ?? [])];
+
+  assert.ok(tokens.length >= 2, "the design must retain both a wire example and a fixed vector");
+  for (const token of tokens) {
+    const core = token.slice(4, 31);
+    const checksum = token.slice(31);
+    assert.equal(token.length, 34);
+    assert.equal(checksum, calculateCheckoutTokenChecksum(core), `${token} has an invalid checksum`);
+  }
+});
+
+test("Commerce Client API V1 freezes the minimal Checkout request, decimal model, expiry, and business-key replay matrix", () => {
+  const requestSection = commerceClientApiDesignSource.slice(
+    commerceClientApiDesignSource.indexOf("### 5.1 请求"),
+    commerceClientApiDesignSource.indexOf("### 5.2 不接受的字段"),
+  );
+  const requestJson = requestSection.match(/```json\n([\s\S]*?)\n```/u)?.[1];
+  assert.ok(requestJson, "Create Checkout must have a JSON request example");
+  const request = JSON.parse(requestJson);
+
+  assert.deepEqual(Object.keys(request).sort(), [
+    "clientOrderId",
+    "consumerCountryCode",
+    "currency",
+    "expiresAt",
+    "items",
+  ]);
+  assert.equal(typeof request.items[0].quantity, "string");
+  assert.equal(typeof request.items[0].unitAmount, "string");
+  assert.equal(typeof request.items[0].discountAmount, "string");
+  assert.match(commerceClientApiDesignSource, /Java 使用 `BigDecimal`，金额持久化使用 `DECIMAL\(24,8\)`/u);
+  assert.match(commerceClientApiDesignSource, /locale`，固定使用 `en-US`/u);
+  assert.match(commerceClientApiDesignSource, /`industryCode`、`mccCode`、`classificationId`/u);
+  assert.match(commerceClientApiDesignSource, /request\.expiresAt \?\? operationContextTime \+ 30 minutes/u);
+  assert.match(commerceClientApiDesignSource, /operationContextTime \+ 5 minutes[\s\S]*operationContextTime \+ 24 hours/u);
+  assert.match(commerceClientApiDesignSource, /新 Key、已有相同业务 ID[\s\S]*CLIENT_ORDER_ID_ALREADY_EXISTS[\s\S]*相同不可变内容返回已有 201/u);
+  assert.match(commerceClientApiDesignSource, /新 Key、业务 ID 但内容不同[\s\S]*CLIENT_REFUND_ID_CONFLICT/u);
+});
+
+test("Commerce Client API V1 separates Order lifecycle from Finance-owned funds availability", () => {
+  assert.match(commerceClientApiDesignSource, /4 prefix \+ 27 KSUID \+ 3 checksum = 34 characters/u);
+  assert.match(commerceClientApiDesignSource, /0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/u);
+  assert.match(commerceClientApiDesignSource, /public_token CHAR\(34\)[\s\S]*COLLATE ascii_bin[\s\S]*NOT NULL/u);
+  assert.match(commerceClientApiDesignSource, /删除 `public_token_hash`.*不增加 Token Hash、HMAC Key Version、Vault Token、KMS Ref/su);
+  assert.match(commerceClientApiDesignSource, /CREATED \| OPEN \| PAID \| CANCELLED \| EXPIRED/u);
+  assert.match(commerceClientApiDesignSource, /OrderStatus 不增加 `SETTLED`/u);
+  assert.match(commerceClientApiDesignSource, /Order created[\s\S]*NOT_APPLICABLE[\s\S]*PaymentSucceeded[\s\S]*PENDING[\s\S]*EconomicsCalculated[\s\S]*PayableBalanceMatured[\s\S]*AVAILABLE[\s\S]*FULLY_OFFSET/u);
+  assert.match(commerceClientApiDesignSource, /`FULLY_OFFSET` 没有资金进入 AVAILABLE，因此 V1 不发送 `order\.funds_available`/u);
+});
+
+test("Commerce Client API V1 freezes a minimal RFC 9457 Problem and exactly eight safe Webhook events", () => {
+  const problemSection = commerceClientApiDesignSource.slice(
+    commerceClientApiDesignSource.indexOf("## 12. RFC 9457 错误合同"),
+    commerceClientApiDesignSource.indexOf("## 13. Client Webhook"),
+  );
+  const problemJson = problemSection.match(/```json\n([\s\S]*?)\n```/u)?.[1];
+  assert.ok(problemJson, "RFC 9457 must have a JSON example");
+  const problem = JSON.parse(problemJson);
+  assert.deepEqual(Object.keys(problem).sort(), ["code", "detail", "errors", "title", "type"]);
+  assert.ok(!Object.hasOwn(problem, "status"));
+  assert.ok(!Object.hasOwn(problem, "requestId"));
+
+  const eventCatalogSection = commerceClientApiDesignSource.slice(
+    commerceClientApiDesignSource.indexOf("### 13.1 事件目录"),
+    commerceClientApiDesignSource.indexOf("### 13.2 Envelope"),
+  );
+  const eventCatalog = eventCatalogSection.match(/```text\n([\s\S]*?)\n```/u)?.[1]
+    .trim()
+    .split("\n");
+  assert.deepEqual(eventCatalog, [
+    "order.paid",
+    "order.cancelled",
+    "order.expired",
+    "order.funds_available",
+    "refund.created",
+    "refund.succeeded",
+    "refund.failed",
+    "refund.cancelled",
+  ]);
+  assert.match(commerceClientApiDesignSource, /Platform Support.*Endpoint.*Subscription.*Secret.*Delivery.*Retry.*Replay/su);
+  assert.match(commerceClientApiDesignSource, /同一 Client 的全部 Webhook 事件命名空间内永久唯一/u);
+  assert.match(commerceClientApiDesignSource, /同一值不得跨 Event Type、Schema Version 或来源资源复用/u);
+  assert.match(commerceClientApiDesignSource, /at-least-once[\s\S]*重复[\s\S]*乱序/u);
+  assert.match(commerceClientApiDesignSource, /V1 每个 Attempt 只使用一个 ACTIVE Secret/u);
+  assert.match(commerceClientApiDesignSource, /版本跳跃或不确定时 GET 最新状态/u);
 });
 
 test("core systems expose the interfaces required by Partner Console", () => {
@@ -587,11 +824,11 @@ test("Commerce delegates consumer-document persistence to Platform Support", () 
   assert.match(commerceDatabaseSource, /Commerce 不保存 Consumer Document Current Projection/u);
 });
 
-test("Commerce authority freezes the exact 14-table audit and document simplification baseline", () => {
+test("Commerce authority freezes the 15-table Client API target while preserving the current 14-table snapshot", () => {
   const tableHeadings = extractCommerceTableHeadings(commerceDatabaseSource);
 
   assert.deepEqual(tableHeadings, expectedCommerceTables);
-  assert.equal(tableHeadings.length, 14);
+  assert.equal(tableHeadings.length, 15);
   for (const tableName of removedCommerceTables) {
     assert.ok(
       !tableHeadings.includes(tableName),
@@ -601,85 +838,62 @@ test("Commerce authority freezes the exact 14-table audit and document simplific
 
   assert.match(commercePrivacySimplificationDesignSource, /固化 2026-08-24 已确认/u);
   assert.match(commerceDocumentAuditCancelDesignSource, /14 张表.*223 个字段.*20 个唯一索引.*11 个普通索引.*14 条本库关系.*4 个 Diagram Group/su);
+  assert.match(commerceDatabaseSource, /V1 权威逻辑目标已确认，固定为 15 张表/u);
+  assert.match(commerceDatabaseSource, /当前已生成资产仍为 14 张表 \/ 223 字段/u);
   assert.match(
-    projectContextSource,
-    /14 (?:张表|tables).*223 (?:个)?字段|14 tables, 223 fields/u,
+    currentImplementationSource,
+    /\| Commerce \| 14 \| 223 \| 20 \| 11 \| 14 \| — \| 4 \|/u,
   );
-  assert.match(projectContextSource, /20 (?:个)?(?:唯一索引|unique indexes).*11 (?:个)?(?:访问索引|access indexes)/u);
-  assert.match(projectContextSource, /14 (?:条)?(?:本库关系|local relations).*4 (?:个)?(?:Diagram Groups?|diagram groups?)/u);
-  assert.doesNotMatch(projectContextSource, /Commerce.*32 张/u);
+  assert.match(projectContextSource, /当前实现、验证与部署见.*CURRENT_IMPLEMENTATION\.md/su);
 });
 
-test("shared entry documents expose the current Commerce, Payment, Finance, and Risk snapshots", () => {
+test("the current implementation ledger owns core model snapshots while entry documents route to it", () => {
   const sharedEntrySources = [
     rootAgentsSource,
     rootReadmeSource,
     agentReadmeSource,
     projectContextSource,
-    databaseDesignGuideSource,
-    databaseOverviewSource,
   ];
 
   for (const entrySource of sharedEntrySources) {
-    assert.match(entrySource, /14 (?:张)?表(?:、|,| and | \/ )223 (?:个)?字段|14 tables(?: and|,| \/) 223 fields/u);
-    assert.match(entrySource, /29 (?:张)?表(?:、|,| and | \/ )373 (?:个)?字段|29 tables(?: and|,| \/) 373 fields|29 \/ 373/u);
-    assert.match(entrySource, /84 (?:张)?表(?:、|,| and | \/ )1,100 (?:个)?字段|84 tables(?: and|,| \/) 1,100 fields|84 \/ 1,100/u);
-    assert.match(entrySource, /71 (?:张)?表(?:、|,| and | \/ )865 (?:个)?字段|71 tables(?: and|,| \/) 865 fields|71 \/ 865/u);
-    assert.match(entrySource, /2026-08-28-risk-limit-balanced-simplification-design\.md/u);
-    assert.match(entrySource, /2026-08-28-risk-limit-balanced-simplification-implementation-plan\.md/u);
-    assert.match(entrySource, /2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan\.md/u);
-    assert.match(entrySource, /2026-08-28-risk-dispute-balanced-optimization-design\.md/u);
-    assert.match(entrySource, /2026-08-28-risk-dispute-balanced-optimization-implementation-plan\.md/u);
+    assert.match(entrySource, /CURRENT_IMPLEMENTATION\.md/u);
+    assert.match(entrySource, /DOCUMENT_GOVERNANCE\.md/u);
   }
-  for (const entrySource of [rootAgentsSource, rootReadmeSource, agentReadmeSource, projectContextSource, databaseDesignGuideSource, databaseOverviewSource]) {
-    assert.match(entrySource, /Finance[\s\S]*145 (?:个)?(?:唯一索引|unique indexes)[\s\S]*155 (?:个)?(?:访问索引|access indexes)[\s\S]*160 (?:条)?(?:本库关系|local relations)[\s\S]*22 (?:条 )?(?:1:1 关系|one-to-one relations)[\s\S]*6 (?:个 )?Diagram Groups?/u);
-    assert.match(entrySource, /Risk[\s\S]*106 (?:个)?(?:唯一索引|unique indexes)[\s\S]*74 (?:个)?(?:访问索引|access indexes)[\s\S]*111 (?:条)?(?:本库关系|local relations)[\s\S]*9 (?:条 )?(?:1:1 关系|one-to-one relations)[\s\S]*8 (?:个 )?Diagram Groups?[\s\S]*83 (?:个 )?CHECK/u);
-  }
+
+  assert.match(currentImplementationSource, /\| Commerce \| 14 \| 223 \| 20 \| 11 \| 14 \| — \| 4 \|/u);
+  assert.match(currentImplementationSource, /\| Payment Orchestration \| 29 \| 373 \| 41 \| 44 \| 63 \| — \| 7 \|/u);
+  assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,100 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
+  assert.match(currentImplementationSource, /\| Risk & Compliance \| 71 \| 865 \| 106 \| 74 \| 111 \| 9 \| 8 \|/u);
+  assert.match(documentGovernanceSource, /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据/u);
+  assert.match(documentGovernanceSource, /被取代时增加状态与窄范围后继链接，不重写历史/u);
 });
 
-test("shared entry documents expose the current Platform public-control-plane authority", () => {
-  const sharedEntrySources = [
-    rootAgentsSource,
-    rootReadmeSource,
-    agentReadmeSource,
-    projectContextSource,
-    databaseDesignGuideSource,
-    databaseOverviewSource,
-  ];
-
-  for (const entrySource of sharedEntrySources) {
-    assert.match(
-      entrySource,
-      /Platform(?: Support)?[\s\S]*63 (?:张)?表(?:、|,| and | \/ )822 (?:个)?字段|Platform(?: Support)?[\s\S]*63 tables(?: and|,| \/ ) 822 fields|Platform(?: Support)?[\s\S]*63 \/ 822/u,
-    );
-    assert.match(
-      entrySource,
-      /2026-09-01-gateway-platform-support-dynamic-operations-configuration-design\.md/u,
-    );
-    assert.match(
-      entrySource,
-      /2026-09-01-platform-public-api-control-plane-pdmaner\.md/u,
-    );
-  }
-
-  for (const entrySource of [databaseDesignGuideSource, databaseOverviewSource]) {
-    assert.match(entrySource, /31 (?:条 )?(?:复合外键|复合 FK|composite FKs?)/u);
-    assert.match(entrySource, /85 (?:条 )?(?:CHECK|named CHECK)/u);
-    assert.match(entrySource, /36 (?:个 )?(?:`\*_hash`|exact `\*_hash`)/u);
-  }
+test("the current ledger owns the Platform snapshot and governance routes control-plane authority", () => {
+  assert.match(
+    currentImplementationSource,
+    /\| Platform Support \| 63 \| 822 \| 123 \| 99 \| 107 \| 5 \| 7 \|/u,
+  );
+  assert.match(
+    documentGovernanceSource,
+    /入口应用、Gateway、BFF、前端和部署边界[\s\S]*APPLICATION_ARCHITECTURE\.md/u,
+  );
+  assert.match(
+    documentGovernanceSource,
+    /六系统业务数据事实和状态机[\s\S]*database\/README\.md[\s\S]*当前专项决定和 PDManer/u,
+  );
 
   assert.match(applicationArchitectureSource, /所有外部 HTTP API.*Platform.*公共 Route Catalog/su);
   assert.match(applicationArchitectureSource, /内部服务.*绕过 Gateway/su);
   assert.match(
-    applicationArchitectureSource,
-    /Platform 已实现手工 Schema\/初始化 DML.*PLT-I20 全量 Snapshot Provider.*Gateway 动态消费.*尚未实现.*静态 Operations Catalog/su,
+    currentImplementationSource,
+    /API Gateway[\s\S]*动态 Snapshot 消费已经实现[\s\S]*Target\/Route\/Console 管理命令[\s\S]*仍是独立事项/u,
   );
 });
 
 test("Project context owns exactly the current public control plane without runtime limiter state", () => {
   assert.match(
     projectContextSource,
-    /Platform Support[\s\S]*owns exactly six public-control-plane current-configuration tables[\s\S]*does not own Gateway runtime limiter state, database Snapshot, Release, Ack, Tenant Override, or generic technical configuration/iu,
+    /Platform Support.*六张公共控制面当前配置表.*Target、Route、Header、Query Parameter、Guard Rule 和 Console Resource.*不拥有 Gateway 运行限流状态、数据库 Snapshot、Release、Ack、Tenant Override 或通用技术配置/su,
   );
   assert.doesNotMatch(
     projectContextSource,
@@ -705,25 +919,16 @@ test("Platform predecessor implementation record declares shared-gate completion
   );
 });
 
-test("active Platform navigation treats the 57-table stage as a predecessor", () => {
-  const agentNavigation = agentReadmeSource.slice(0, agentReadmeSource.indexOf("## 规范来源与优先级"));
-  const databaseChecklist = extractMarkdownSection(databaseDesignGuideSource, "## 15. 验证清单");
-
-  for (const navigation of [agentNavigation, databaseChecklist]) {
-    assert.match(navigation, /Platform(?: Support)?[\s\S]*63 (?:张)?表[、,\s/]*822 (?:个)?字段/u);
-    assert.match(navigation, /31 (?:条\s*)?(?:复合外键|复合 FK|composite FKs?)/u);
-    assert.match(navigation, /85 (?:条\s*)?(?:CHECK|具名 CHECK|named CHECK)/u);
-    assert.match(navigation, /36 (?:个 )?`?\*_hash`?/u);
-    assert.match(navigation, /2026-09-01-gateway-platform-support-dynamic-operations-configuration-design\.md/u);
-    assert.match(navigation, /2026-09-01-platform-public-api-control-plane-pdmaner\.md/u);
-    assert.match(navigation, /57 表[\s\S]{0,600}(?:前序|历史|未受影响)/u);
-  }
-
-  assert.doesNotMatch(
-    agentNavigation,
-    /57 表(?:(?!前序|历史|未受影响)[^。\n])*(?:管理当前 Platform 物理边界|当前 Platform 物理边界)/u,
+test("document governance keeps superseded Platform stages historical", () => {
+  assert.match(
+    documentGovernanceSource,
+    /某项专项决策可以窄范围取代主题 Owner 的一部分[\s\S]*Superseded sections/u,
   );
-  assert.doesNotMatch(databaseChecklist, /Platform Support 57 表 PDManer-only 阶段/u);
+  assert.match(
+    documentGovernanceSource,
+    /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据[\s\S]*被取代时增加状态与窄范围后继链接，不重写历史/u,
+  );
+  assert.match(agentReadmeSource, /DOCUMENT_GOVERNANCE\.md/u);
 });
 
 test("the architecture diagram keeps dispute recovery on the explicit Risk authority", () => {
@@ -738,17 +943,20 @@ test("the architecture diagram keeps dispute recovery on the explicit Risk autho
 });
 
 test("shared authority does not narrow corrected dispute outcomes back to DisputeLost only", () => {
-  for (const entrySource of [rootAgentsSource, projectContextSource]) {
-    assert.match(
-      entrySource,
-      /DisputeLost\/DisputeOutcomeCorrected[\s\S]*outcome=LOST[\s\S]*principal_bearer=CLIENT[\s\S]*security_deposit_use_allowed=1/u,
-    );
-    assert.doesNotMatch(entrySource, /only an explicitly allowed `DisputeLost` may/u);
-  }
+  assert.match(
+    documentGovernanceSource,
+    /项目背景、六系统职责和术语[\s\S]*PROJECT_CONTEXT\.md/u,
+  );
+  assert.match(
+    projectContextSource,
+    /DisputeLost\/DisputeOutcomeCorrected[\s\S]*outcome=LOST[\s\S]*principal_bearer=CLIENT[\s\S]*security_deposit_use_allowed=1/u,
+  );
+  assert.doesNotMatch(projectContextSource, /only an explicitly allowed `DisputeLost` may/u);
 });
 
 test("Commerce and Payment reserve refunds locally while Finance posts success only", () => {
-  assert.match(source, /14 张表、223 个字段、20 个唯一索引、11 个访问索引、14 条本库关系和 4 个 Diagram Group/u);
+  assert.match(source, /Commerce 已确认逻辑目标为 15 张表/u);
+  assert.match(source, /当前已生成模型仍是 14 张表、223 个字段/u);
   assert.match(source, /仅保留 t_order_refund_position 与 t_refund_request/u);
   assert.match(source, /client_refund_id.*refund_amount.*channel_refund_id/su);
   assert.doesNotMatch(source, /refund_funding_reservation_id|FIN-I21|SOURCE_COVER|REFUND_CAP|RefundUnknown/u);
@@ -830,15 +1038,14 @@ test("Commerce design and navigation expose the current privacy and Fulfillment-
   );
   assert.match(
     databaseOverviewSource,
-    /Commerce.*14 (?:张表|表).*COMMERCE_REAL_WORLD_SCENARIOS\.md.*commerce-document-audit-cancel-reversal-design\.md/su,
+    /Commerce.*COMMERCE_DATABASE\.md.*COMMERCE_REAL_WORLD_SCENARIOS\.md.*commerce-document-audit-cancel-reversal-design\.md/su,
   );
-  assert.match(projectContextSource, /Commerce.*14 (?:张表|tables).*223 (?:个)?字段|Commerce.*14 tables, 223 fields/su);
-  assert.match(projectContextSource, /commerce-document-audit-cancel-reversal-design\.md/u);
-  assert.match(projectContextSource, /commerce-privacy-fulfillment-simplification-design\.md/u);
   assert.match(
-    projectContextSource,
-    /Commerce.*未授权.*手工数据库 SQL.*Java.*运行环境/su,
+    documentGovernanceSource,
+    /六系统业务数据事实和状态机[\s\S]*database\/README\.md[\s\S]*当前专项决定和 PDManer/u,
   );
+  assert.match(projectContextSource, /更窄的业务不变量由.*database\/README\.md.*专项决策拥有/su);
+  assert.match(currentImplementationSource, /\| Commerce \| 14 \| 223 \| 20 \| 11 \| 14 \| — \| 4 \|/u);
 });
 
 test("agent guidance routes consumer evidence work and preserves its non-negotiable boundaries", () => {
@@ -856,9 +1063,10 @@ test("agent guidance routes consumer evidence work and preserves its non-negotia
   assert.match(rootAgentsSource, /DisputeEvidenceRequested.*Client deadline.*Provider deadline/su);
 });
 
-test("Commerce real-world scenario maps exactly the 14 approved tables", () => {
+test("Commerce real-world scenario maps exactly the 15 approved target tables", () => {
   assert.match(commerceScenarioSource, /NOVA_COMMERCE_UAE_2026/u);
-  assert.match(commerceScenarioSource, /14 表逐表映射/u);
+  assert.match(commerceScenarioSource, /15 表目标逐表映射/u);
+  assert.match(commerceScenarioSource, /当前生成 PDManer 仍为 14 表 \/ 223 字段.*目标场景尚未实施/su);
   for (const tableName of expectedCommerceTables) {
     assert.match(
       commerceScenarioSource,
@@ -1053,7 +1261,8 @@ test("all public HTTP APIs use the Platform control plane while runtime safety r
   assert.match(source, /不增加 Gateway `\*_ver`、Release、Snapshot、Ack 或 Tenant Guard Override/u);
   assert.match(source, /Approved Target Registry.*target_service_code.*channel.*discovery_service_name.*双重校验/u);
   assert.match(source, /全局 Guard 参数.*可信 tenant_id.*Redis.*Tenant 隔离/u);
-  assert.match(source, /动态 Snapshot.*尚未切换.*静态 Operations Catalog.*部署前运行时事实/u);
+  assert.doesNotMatch(source, /动态 Snapshot.*尚未切换.*静态 Operations Catalog.*部署前运行时事实/u);
+  assert.match(currentImplementationSource, /API Gateway.*动态 Snapshot 消费已经实现/su);
   assert.match(source, /公网 TLS.*Nginx.*覆盖.*X-Real-IP.*Gateway.*Guard.*访问日志/u);
   assert.match(source, /Gateway、BFF、Platform Support、Vault.*核心 Java 服务.*私有 HTTP.*不持有 X\.509/u);
   assert.doesNotMatch(gatewayControlPlaneDesignSource, /Forwarded Chain/u);
@@ -1095,7 +1304,7 @@ test("Commerce uses Client business references and explicit Order Context facts 
   const commerceI04 = source.match(/iuc\("COM-I04"[^\n]+/u)?.[0] ?? "";
   const commerceI10 = source.match(/iuc\("COM-I10"[^\n]+/u)?.[0] ?? "";
 
-  assert.match(commerce01, /Client 命名空间.*client_order_id.*新的 Order.*新的 client_order_id/u);
+  assert.match(commerce01, /Client 命名空间.*clientOrderId.*新的 Order.*新的 clientOrderId/u);
   assert.match(commerce02, /\(client_id, client_order_id\).*Idempotency-Key/u);
   assert.match(commerceI01, /clientOrderId/u);
   assert.match(commerceI04, /order_id.*order_context_id/u);
@@ -1206,12 +1415,136 @@ test("historical Finance designs preserve their superseded 98-table stage", () =
   assert.match(financeUnifiedAccountDesignSource, /RESERVED.*CLIENT_RESTRICTED_FUNDS.*历史.*保证金 Account.*替代/su);
   assert.match(financeUnifiedAccountDesignSource, /entity_type.*entity_id.*currency.*ledger_book_id.*推导/su);
   assert.doesNotMatch(financeUnifiedAccountDesignSource, /LOCAL_PARTNER[^\n]*PENDING|PARTNER_PAYABLE_PENDING/u);
-  assert.match(projectContextSource, /Finance[\s\S]*84 tables[\s\S]*1,100 fields/u);
-  assert.match(projectContextSource, /Intermediate design and implementation records preserve historical stages and must not be treated as the current table structure/u);
-  assert.match(rootAgentsSource, /Intermediate Finance design and implementation records preserve historical stages and must not be treated as the current table structure/u);
+  assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,100 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
+  assert.match(
+    documentGovernanceSource,
+    /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据[\s\S]*被取代时增加状态与窄范围后继链接，不重写历史/u,
+  );
 });
 
 test("Platform never turns Client silence into a dispute loss", () => {
   assert.doesNotMatch(platformDatabaseSource, /Client 未响应后的认损由 Risk 决定/u);
   assert.match(platformDatabaseSource, /Client 未响应.*EVIDENCE_REQUIRED.*不得自动认损.*显式授权.*Provider.*LOST.*Risk.*DisputeLost/su);
+});
+
+test("Superpowers workflow follows the approved phase-based policy", () => {
+  for (const workflowSource of [rootAgentsSource, developmentConventionsSource]) {
+    assert.match(
+      workflowSource,
+      /设计阶段[\s\S]{0,160}brainstorming[\s\S]{0,160}writing-plans/u,
+    );
+    assert.match(
+      workflowSource,
+      /代码阶段[\s\S]{0,240}(?:TDD|test-driven-development)[\s\S]{0,240}(?:并行|parallel)[\s\S]{0,240}(?:调试|debugging)[\s\S]{0,240}(?:验证|verification)/u,
+    );
+    assert.match(
+      workflowSource,
+      /subagent-driven-development[\s\S]{0,80}executing-plans[\s\S]{0,80}选择一种/u,
+    );
+  }
+  assert.match(
+    superpowersWorkflowRuleSource,
+    /设计阶段[\s\S]{0,160}(?:brainstorming|writing-plans)[\s\S]*代码阶段/u,
+  );
+  assert.match(
+    superpowersWorkflowRuleSource,
+    /subagent-driven-development[\s\S]{0,80}executing-plans[\s\S]{0,80}选择一种/u,
+  );
+  assert.match(
+    rootAgentsSource,
+    /Worktree[\s\S]{0,160}只在[\s\S]{0,160}用户明确要求[\s\S]{0,160}不授权/u,
+  );
+  assert.match(
+    documentGovernanceSource,
+    /Agent\/Superpowers 工作流[\s\S]{0,160}AGENTS\.md[\s\S]{0,160}唯一现行权威/u,
+  );
+  assert.match(superpowersServicePolicyDecisionSource, /Decision status: Confirmed/u);
+  assert.doesNotMatch(
+    developmentConventionsSource,
+    /除非用户在当前请求中明确要求，否则不要使用 Superpowers/u,
+  );
+  assert.doesNotMatch(
+    rootAgentsSource,
+    /用户请求 Superpowers-assisted planning/u,
+  );
+});
+
+test("Service interface policy requires interface plus Impl without a single-implementation exception", () => {
+  for (const policySource of [
+    developmentConventionsSource,
+    javaProjectStructureSource,
+    rootAgentsSource,
+    javaServiceBoundariesRuleSource,
+  ]) {
+    assert.match(policySource, /业务 Service[\s\S]{0,80}interface \+ \*Impl/u);
+    assert.match(policySource, /Domain Service[\s\S]{0,80}interface \+ \*Impl/u);
+    assert.match(policySource, /没有业务职责的空 Service/u);
+    assert.match(policySource, /Processor、Controller[\s\S]{0,40}具体类/u);
+    assert.match(policySource, /Repository[\s\S]{0,40}interface \+ \*RepositoryImpl/u);
+    assert.doesNotMatch(
+      policySource,
+      /(?:只有一个实现|单实现)[\s\S]{0,80}(?:可以|允许|可直接)[\s\S]{0,40}(?:直接使用具体类|省略接口)/u,
+    );
+  }
+  for (const boundarySource of [
+    superpowersServicePolicyDecisionSource,
+    developmentConventionsSource,
+    javaProjectStructureSource,
+  ]) {
+    assert.match(
+      boundarySource,
+      /DataObject[\s\S]{0,160}(?:Owner|所属业务能力)[\s\S]{0,80}JAR/u,
+    );
+    assert.match(
+      boundarySource,
+      /DataObject[\s\S]{0,280}(?:跨 Maven 模块|其他 Maven 模块|其他模块)[\s\S]{0,120}(?:不得|不能)/u,
+    );
+  }
+  assert.match(currentImplementationSource, /\| JAVA-02 \|[\s\S]{0,240}尚未完成全量形态审计与迁移/u);
+});
+
+test("business module collaboration policy defines the default and narrow exception", () => {
+  assert.match(businessModuleCollaborationDecisionSource, /Decision status: Confirmed/u);
+  assert.match(
+    javaProjectStructureSource,
+    /业务能力模块默认不建立彼此的直接 Maven 依赖/u,
+  );
+  assert.match(
+    javaProjectStructureSource,
+    /稳定、可复用[\s\S]{0,180}Owner[\s\S]{0,180}单向[\s\S]{0,120}无环/u,
+  );
+  assert.match(
+    javaProjectStructureSource,
+    /循环 Maven 依赖[\s\S]{0,160}`web` Processor/u,
+  );
+  assert.match(
+    developmentConventionsSource,
+    /调用方只依赖 Owner 发布的接口[\s\S]{0,160}不得依赖 `\*Impl`/u,
+  );
+  assert.match(
+    javaBusinessModuleBoundariesRuleSource,
+    /DataObject[\s\S]{0,160}Owner[\s\S]{0,80}JAR/u,
+  );
+});
+
+test("Finance module design projects the shared collaboration policy", () => {
+  for (const moduleName of [
+    "paytech-finance-api",
+    "paytech-finance-accounting",
+    "paytech-finance-treasury",
+    "paytech-finance-tax",
+    "paytech-finance-web",
+    "paytech-finance-test",
+  ]) {
+    assert.match(financeModularCodeDesignSource, new RegExp(moduleName, "u"));
+  }
+  assert.match(financeModularCodeDesignSource, /默认不建立直接 Maven 依赖/u);
+  assert.match(
+    financeModularCodeDesignSource,
+    /稳定、可复用[\s\S]{0,200}单向依赖[\s\S]{0,240}Owner[\s\S]{0,160}Domain \/ Application/u,
+  );
+  assert.doesNotMatch(financeModularCodeDesignSource, /三个业务模块不相互依赖/u);
+  assert.doesNotMatch(financeModularCodeDesignSource, /保留当前本库外键/u);
+  assert.match(agentReadmeSource, /2026-09-04-finance-modular-code-design\.md/u);
+  assert.match(currentImplementationSource, /\| JAVA-03 \|/u);
 });

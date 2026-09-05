@@ -60,7 +60,8 @@ test("checkout renders the immutable order context as the MVP sales model", asyn
 
   assert.match(content, /下单时传入商品与金额/);
   assert.match(content, /不可变订单上下文/);
-  assert.match(content, /Order 持久化成功后才创建可支付 Session/);
+  assert.match(content, /Order、不可变 Context 与唯一 Checkout Session=PREPARING 在同一本地事务创建/);
+  assert.match(content, /Payment Intent 确认可用后才以 CAS 把 Session 置为 OPEN/);
   assert.equal(content.match(/Offering/g)?.length, 1);
   assert.match(content, /第一版不创建 Offering/);
 });
@@ -82,7 +83,8 @@ test("rendered requirements expose complete V5 input and reference-style Commerc
   assert.match(content, /FIN-I22[\s\S]*expected_calculation_hash[\s\S]*Tax Line[\s\S]*Registration/);
   assert.match(content, /CODE-MOR:FINANCE:TAX_CALCULATION:1/);
   assert.match(content, /OrderPreparationContext[\s\S]*不依赖 Commerce 聚合 Hash/);
-  assert.match(content, /14 张表、223 个字段、20 个唯一索引、11 个访问索引、14 条本库关系和 4 个 Diagram Group/);
+  assert.match(content, /Commerce 已确认逻辑目标为 15 张表/);
+  assert.match(content, /当前已生成模型仍是 14 张表、223 个字段/);
   assert.match(content, /Partner OE[\s\S]*Platform Finance Entity[\s\S]*两条各自平衡的 Journal/);
   assert.doesNotMatch(content, /Commercial Term 头\/组件结构化快照/);
   assert.doesNotMatch(content, /agreement_scope_binding_(?:id|version|hash)/);
@@ -339,12 +341,14 @@ test("Operating Entity sources and the two-stage routing boundary are explicit",
   assert.match(content, /重试.*同一 Operating Entity.*更换 MID/);
 });
 
-test("checkout freezes one approved Client industry and MCC pair without Client routing selection", async () => {
+test("checkout resolves the single Primary Classification server-side without Client routing selection", async () => {
   const content = await renderPage();
 
   assert.match(content, /Client Business Profile 可以维护多组已批准的 industry_code \+ mcc_code 组合/);
-  assert.match(content, /每笔 Order 必须且只能提交一组 industry_code \+ mcc_code/);
-  assert.match(content, /Create Order 直接提交 industry_code \+ mcc_code，不提交 classification_id/);
+  assert.match(content, /任一交易时点最多有一组有效 Primary Classification/);
+  assert.match(content, /CCT-I13.*服务端解析该时点唯一有效 Primary Classification/su);
+  assert.match(content, /Commerce 不提交、选择或回退分类/);
+  assert.match(content, /不接收 locale、industryCode\/mccCode\/classificationId/);
   assert.match(content, /Client 不能选择 Operating Entity、Provider 或 MID/);
 });
 

@@ -1,18 +1,20 @@
 # Commerce 数据库设计规范
 
-最后更新：2026-08-26
+最后更新：2026-09-05
 
-状态：V1 权威逻辑与物理字段基线已确认，固定为 14 张表。用户已授权本轮 Commerce PDManer 设计资产；该授权不包含手工数据库 SQL、Java 实现、物理数据库或运行环境。
+状态：V1 权威逻辑目标已确认，固定为 15 张表。当前已生成资产仍为 14 张表 / 223 字段；本次只同步已确认设计，不授权修改 PDManer、手工数据库 SQL、Java 实现、物理数据库或运行环境。
+
+> **2026-09-05 跨主题对齐：** 本文拥有 Commerce 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。[Commerce Client API Hosted Checkout V1](../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 已取代旧 Token Hash、Client 提交行业/MCC、外部 Cancel Expected Version 和固定 14 表目标；当前生成模型与其他横切差异按 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 迁移。新增实现必须遵循 [文档治理路由](../DOCUMENT_GOVERNANCE.md)。
 
 ## 1. 文档目的与实施边界
 
-本文定义 Commerce System 的事实所有权、14 表结构、字段语义、状态机、关系、并发与跨系统契约，是 Commerce PDManer 设计资产的权威输入。现实示例见 [Commerce 现实场景](./scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md)，订单边界见 [Commerce 订单上下文精简设计](../plans/2026-08-24-commerce-order-context-simplification-design.md)，消费者、网络证据与非履约边界见 [Commerce 隐私与履约精简设计](../plans/2026-08-24-commerce-privacy-fulfillment-simplification-design.md)，文档/审计精简及取消撤销语义见 [Commerce 文档投影、审计与取消撤销精简设计](../plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md)。
+本文定义 Commerce System 的事实所有权、15 表目标结构、字段语义、状态机、关系、并发与跨系统契约，是 Commerce PDManer 设计资产的权威输入。现实示例见 [Commerce 现实场景](./scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md)，Client Server 外部合同见 [Commerce Client API Hosted Checkout V1](../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md)，订单边界见 [Commerce 订单上下文精简设计](../plans/2026-08-24-commerce-order-context-simplification-design.md)，消费者、网络证据与非履约边界见 [Commerce 隐私与履约精简设计](../plans/2026-08-24-commerce-privacy-fulfillment-simplification-design.md)，文档/审计精简及取消撤销语义见 [Commerce 文档投影、审计与取消撤销精简设计](../plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md)。
 
-本轮只授权 PDManer 设计资产。后续 Schema DDL/初始化 DML、DataObject/Mapper/Repository、Java 服务、物理数据库、Nacos 配置和运行环境均须另行授权。
+本次只同步已确认逻辑设计。PDManer/生成器、Schema DDL/初始化 DML、DataObject/Mapper/Repository、Java 服务、物理数据库、Nacos 配置和运行环境均须在后续实施切片中完成并验证。
 
 ## 2. 系统边界
 
-Commerce 拥有 Order 身份/生命周期、每 Order 一个不可变 Order Context、Hosted Checkout Session、当前 Consumer Context、不可变 Consumer Contract/Acceptance/Checkout Network Evidence、订单级退款意图和位置、命令幂等与本地可靠执行记录。
+Commerce 拥有 Order 身份/生命周期、每 Order 一个不可变 Order Context、Hosted Checkout Session、当前 Consumer Context、不可变 Consumer Contract/Acceptance/Checkout Network Evidence、订单级退款意图和位置、Order Funds Availability 本地投影、命令幂等与本地可靠执行记录。
 
 Commerce 不拥有 Client/Operating Entity/Agreement/Commercial Term 主档，Payment Intent/Attempt/Provider/MID，Risk 决策与 Dispute Case，Finance 税务/账本/结算，Consumer Document 状态/版本/文件/更正关系，Webhook 配置与投递，文件正文，或 Vault 原始值。跨系统引用按具体消费者保留必要的稳定业务 ID、版本/Hash 或交易时点，不建立跨库外键；Refund Request 只保留 Payment `channel_refund_id` 这一稳定下游业务 ID，不投影 Payment Refund 的状态与来源元数据，也不建立 Finance 退款资金预留引用。Receipt 与 Credit Note 由 Platform Support 持久化，Finance 保留 Fiscal Fact；Commerce 只可靠发布生成所需的最小来源事实。
 
@@ -26,7 +28,7 @@ Commerce 不建设主动履约域。支付成功后的 Order 保持 `PAID`；退
 - 可变行有 `create_time + update_time`，创建后不可变行仅有 `create_time`；业务发生时间使用专用字段。
 - 业务变更和所需 `compensation_event` 在同一本地事务提交；MQ Ack 只能发生在提交后。Commerce V1 不保存通用 JSON 变更历史，法律接受、网络证据和冻结上下文由专项结构化表保留。
 
-## 4. 精确 14 表目录
+## 4. 精确 15 表目标目录
 
 | 分组 | 逻辑表 | 物理表 | 基数与职责 |
 |---|---|---|---|
@@ -35,8 +37,9 @@ Commerce 不建设主动履约域。支付成功后的 Order 保持 `PAID`；退
 | Order Context | `order_legal` | `t_order_legal` | 每 Context 一行；Agreement、三份 Consumer Legal 与 Seller Disclosure |
 | Order | `order_item` | `t_order_item` | 每 Order 多行；商品/服务和逐行金额 |
 | Payment View | `order_payment_projection` | `t_order_payment_projection` | Intent 和当前/最近 Attempt Current View |
+| Funds View | `order_funds_availability_projection` | `t_order_funds_availability_projection` | 每 Order 一行；Finance 驱动的本次 Order 资金成熟投影；精确名称是默认 32 字符建议的窄例外，仍低于 MySQL 64 字符硬上限 |
 | Refund Position | `order_refund_position` | `t_order_refund_position` | 每 Order 一行；可退金额并发位置 |
-| Checkout | `checkout_session` | `t_checkout_session` | 每 Order 一行；访问 Token Hash 与会话状态 |
+| Checkout | `checkout_session` | `t_checkout_session` | 每 Order 一行；大小写敏感明文 Public Token 与会话状态 |
 | Consumer | `consumer_context` | `t_consumer_context` | 每 Order 至多一行；Consumer 引用、稳定 Token、联系/账单派生维度 |
 | Consumer Legal | `consumer_contract` | `t_consumer_contract` | 每 Order 至多一行；不可变合同呈现证据 |
 | Network Evidence | `checkout_network_evidence` | `t_checkout_network_evidence` | 每可信 Checkout 请求一行；直接网络证据与解析维度 |
@@ -55,7 +58,9 @@ Commerce 不建设主动履约域。支付成功后的 Order 保持 `PAID`；退
 
 CreateOrder 必须原样冻结 CCT-I13 V5 的条件元组：PARTNER 来源时，`commerce_order.local_partner_id`、`order_context.partner_share_scope_id`、`order_context.platform_service_charge_scope_id`、`order_context.platform_service_party_id` 四项成组非空；非 PARTNER 来源四项成组为空。任一缺项、额外值或多义 `PLATFORM_SIGNATORY` 都失败关闭，不允许 Commerce 猜测平台主体或费率。
 
-`checkout_session` 是每 Order 唯一 Hosted Checkout Session，公开 Token 只存 Hash。Payment Intent/Attempt Current View 只用于 Commerce 读取；Attempt `UNKNOWN` 保持 Active，迟到事件不能回退新 Attempt 或唯一成功事实。临时 Provider/MID 短缺可在同一 Operating Entity 下重试；OE CLOSED 后阻止新 Attempt，待活动/UNKNOWN Attempt 收敛，Client 若需再次付款必须以新的 `client_order_id` 创建新订单，不自动替换、不跨 OE 重试。
+`checkout_session` 是每 Order 唯一 Hosted Checkout Session。公开 Token 固定为大小写敏感的 34 字符 `chk_ + 27-char KSUID Core + 3-char Base62 CRC16`，以 `public_token CHAR(34) CHARACTER SET ascii COLLATE ascii_bin` 明文保存，并由 `uk_checkout_public_token(public_token)` 唯一约束；不再保存 `public_token_hash`。同一行冻结服务端 allowlist 选择的 `public_origin VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin`；它是无尾随斜线、无 Path/Query/Fragment 的 HTTPS Origin，Checkout URL 始终由该 Origin 与 Public Token 组合，配置迁移不得改写尚未过期的 Session。CRC 只作格式校验，存在性、Order/Session 关系、状态与 `expires_at` 才决定能力是否有效。Payment Intent/Attempt Current View 只用于 Commerce 读取；Attempt `UNKNOWN` 保持 Active，迟到事件不能回退新 Attempt 或唯一成功事实。临时 Provider/MID 短缺可在同一 Operating Entity 下重试；OE CLOSED 后阻止新 Attempt，待活动/UNKNOWN Attempt 收敛，Client 若需再次付款必须以新的 `client_order_id` 创建新订单，不自动替换、不跨 OE 重试。
+
+`t_order_funds_availability_projection` 与 Order 一对一，状态固定为 `NOT_APPLICABLE`、`PENDING`、`AVAILABLE`、`FULLY_OFFSET`。Order 创建时为 `NOT_APPLICABLE`，`as_of=commerce_order.create_time`；唯一 PaymentSucceeded 后为 `PENDING`；Finance `EconomicsCalculated` 冻结 `finance_economics_id + balance_available_time`，只有 `PayableBalanceMatured` 能写入最终 `client_matured_amount` 和成熟时刻并转为 `AVAILABLE (>0)` 或 `FULLY_OFFSET (=0)`。Economics 与 Maturity 分别保存独立 Event Key、Source Version 和 Payload Hash，重复同内容幂等、同版本冲突失败关闭；在本地尚未应用匹配 PaymentSucceeded 时 Finance 事件保持可重试且不 Ack。`economics_event_key`、`maturity_event_key` 和统一 `compensation_event.event_key` 均使用 ASCII binary collation；两个 Payload Hash 固定为小写十六进制 ASCII binary 值，避免默认大小写不敏感排序规则改变事件身份。Commerce 不按本机时钟宣布成熟，最终状态也不因后来 Refund、Payout 或当前余额变化回退。该金额表示本 Order 已进入 Client 可用余额的金额，不是 Client 当前账户余额。
 
 `t_order_refund_position` 与 Order 一对一，在创建 Order 的同一本地事务中初始化：`refundable_base_amount=0`、`reserved_amount=0`、`refunded_amount=0`，`currency=commerce_order.currency`。唯一成功的 `PaymentSucceeded` 只允许把 `refundable_base_amount` 从零建立为实际捕获金额一次；重复事件必须幂等，冲突金额必须失败关闭。创建 Refund Request 时以 Expected Version/CAS 在同一本地事务增加 `reserved_amount`，并始终满足 `reserved_amount + refunded_amount <= refundable_base_amount`。
 
@@ -78,6 +83,22 @@ CreateOrder 必须原样冻结 CCT-I13 V5 的条件元组：PARTNER 来源时，
 | `create_time` / `update_time` | 本地创建与最后更新时间 |
 
 `client_refund_id` 是 Client 退款业务幂等标识，不是传输命令幂等键；CLIENT 在同一 Client 下重用该值只定位同一退款，相同标识携带不同 Order、金额或币种时按结构化字段比较并冲突失败，不依赖 Request Hash 猜测等价。OPERATIONS 不伪造 Client 标识，`client_refund_id` 固定为空，使用 `t_command_idempotency` 的命令键完成重试幂等。`channel_refund_id` 是可空且唯一的稳定 Payment 引用：Payment 尚未创建渠道退款时为空，填入后不承载下游状态。
+
+`t_command_idempotency` 的唯一作用域为 `caller_scope + operation_type + idempotency_key`；Client API 的 `caller_scope=CLIENT:<client_id>`，Credential 轮换不改变命名空间。`caller_scope`、`idempotency_key`、`resource_no` 和 `response_location` 都使用 ASCII binary collation，`idempotency_key` 目标长度为 `VARCHAR(255)`。目标恢复字段固定为：
+
+| 字段 | 目标语义 |
+|---|---|
+| `request_hash` / `request_hash_version` | RFC 8785 规范语义对象的 SHA-256 小写十六进制值及算法版本；旧记录永远按自身版本比较 |
+| `request_snapshot_schema_version` / `request_snapshot_json` | Create Checkout/Create Refund 在 Root 建立前可恢复的已验证语义快照；最多 16 KiB；Cancel 两列为空 |
+| `operation_context_time` | 首次 Claim 的业务时点；默认 `expires_at` 和所有恢复调用复用该值 |
+| `recovery_stage` / `process_status` | 每操作固定阶段；状态只允许 `PROCESSING`、`SUCCEEDED`、`FAILED` |
+| `resource_type` / `resource_id` / `resource_no` | 预分配或已存在的稳定业务资源；公开编号大小写敏感 |
+| `response_code` / `response_http_status` | 稳定业务 Code 与 HTTP 状态；暂态结果为空 |
+| `response_snapshot_schema_version` / `response_location` / `response_body_json` | 稳定回执版本、可空相对 Location 和最多 4 KiB 的受控 JSON；暂态结果为空 |
+
+Create Checkout、Cancel 和 Create Refund 在 Claim 时冻结请求 Hash、首次 `operation_context_time`、恢复阶段和稳定资源；Create Checkout/Refund 同时冻结各自 Request Snapshot。Create Checkout 的 Snapshot 保留 Client 是否显式提供 `expiresAt` 以及最终有效值；Create Refund 的 Snapshot 保留 Order、Client Refund ID、金额和原因。稳定创建结果冻结上表 Response 字段，使同 Key 重放不依赖后来可变状态或当前公共域名配置。Checkout 创建回执包含 Public Token URL，因此只供原命令恢复，不进入普通 Response Body 日志、MQ/Webhook 或通用审计 Payload。技术暂态和未决结果不得封存为永久失败。
+
+Recovery Stage 固定为：Create Checkout=`CLAIMED | AUTHORITIES_RESOLVED | ORDER_COMMITTED | PAYMENT_INTENT_CONFIRMED | COMPLETED`；Cancel=`CLAIMED | PAYMENT_PENDING | COMPLETED`；Create Refund=`CLAIMED | REFUND_COMMITTED | PAYMENT_REFUND_BOUND | COMPLETED`。`FAILED` 只保存稳定业务失败；依赖超时、网络未知和仍在处理的 Payment 保持 `PROCESSING`。
 
 Refund Request 创建后为 `PENDING`，本地退款额度已预占；Commerce 本地预占成功后直接调用 PAY-I04，Payment 以自身 Refund Position CAS 创建 Channel Refund，Commerce 获得 `channel_refund_id` 后进入 `PROCESSING`。Payment Refund=UNKNOWN 只保留在 Payment 本地，Commerce Request 保持 PROCESSING、本地退款额度继续预占。Payment Refund=SUCCEEDED 同时通知 Commerce 与 Finance：Commerce 同事务消费本地退款额度并将 Request 置为 SUCCEEDED，即 `reserved_amount` 减少、`refunded_amount` 等额增加并写入 `completed_at`；Finance 独立按成功事实记账。Payment Refund=FAILED/CANCELLED 只通知 Commerce，Commerce 同事务释放本地退款额度并进入对应终态，即 `reserved_amount` 等额减少并写入 `status_reason_code + completed_at`。
 
@@ -105,7 +126,7 @@ Consumer Contract 1:N Acceptance。`uk_consumer_acceptance(consumer_contract_id,
 
 Commerce V1 不保存 `business_change_record/business_change_version`。结构化 `version` 只服务当前业务行 CAS，不代表历史版本；Order Context/Legal/Item、Consumer Contract、Network Evidence 和 Acceptance 本身就是冻结或追加式事实。若未来出现明确的监管审计或历史还原需求，应针对具体聚合重新评估，不得默认恢复通用 JSON BCR。
 
-订单取消同事务登记 `OrderCancelled`；支付成功、退款成功等文档来源事实通过 `compensation_event` 在业务提交后可靠发布。Platform Support 对文档生成、版本和更正幂等负责，Finance 对 Fiscal Fact 负责；Commerce 不消费双方事件建立三方 Current Projection。
+订单取消同事务登记 `OrderCancelled`；支付成功、退款成功等文档来源事实通过 `compensation_event` 在业务提交后可靠发布。面向 Client 的八种 Webhook 业务结果也在状态变更事务中冻结稳定公开 Event ID、Source Version/Hash 和不超过 4 KiB 的受控 Canonical Envelope；Event ID 在同一 Client 全部 Webhook 事件中永久唯一，不得跨 Type/Schema/来源资源复用。统一可靠记录使用 `event_type=CLIENT_WEBHOOK_REQUESTED` 和具体公开 Event Type 作为 `sub_event_type`，Platform 明确幂等接收后才完成本地任务，恢复不从后来可变 Root 重建旧 Payload。这是统一 Compensation Event 通常回源重建规则的已批准窄例外，不把 `compensation_event` 变成通用业务事件仓库。公开 Event ID 映射 Platform `source_event_key`，不映射 Platform 内部 BIGINT `event_id`；Platform 先按 Tenant + Source System + Source Event Key 串行检查现有事件，并使用现有 Type/Schema/Source Version/Hash 字段校验冲突，任一不同都 Fail-Closed。Platform Support 对 Endpoint、Subscription、Secret、Delivery、Retry/Replay、文档生成、版本和更正幂等负责，Finance 对 Fiscal Fact 负责；Commerce 不建立 Platform Delivery 投影。
 
 Commerce 通过内部 HTTP 契约与 CCT、Risk、Finance、Payment 交互，不读其他数据库。Commerce 仅保存实际采用的 Risk `ALLOW` Assessment ID；Risk 独占 Case、Decision、RFI、Evidence Package/Reference 和 Submission Request。Chargeback 后 Risk 进入 `EVIDENCE_REQUIRED` 并发布 `DisputeEvidenceRequested`；Commerce 不增加履约表、接口、事件或场景行来伪造举证。
 
@@ -134,6 +155,7 @@ erDiagram
     consumer_contract ||--o{ consumer_acceptance : accepts
     checkout_network_evidence ||--o{ consumer_acceptance : proves
     commerce_order ||--o| order_payment_projection : projects
+    commerce_order ||--|| order_funds_availability_projection : matures
     commerce_order ||--|| order_refund_position : controls
     commerce_order ||--o{ refund_request : receives
 ```
@@ -151,8 +173,11 @@ Checkout Session: PREPARING -> OPEN -> PAYMENT_PROCESSING -> COMPLETED
 
 Refund: PENDING -> PROCESSING -> SUCCEEDED | FAILED | CANCELLED
         PENDING -> FAILED | CANCELLED
+
+Funds Availability: NOT_APPLICABLE -> PENDING -> AVAILABLE
+                                      PENDING -> FULLY_OFFSET
 ```
 
-`PROCESSING` 同时覆盖 Payment 内部的 CREATED、PROCESSING 与 UNKNOWN；Commerce 不复制 Payment 的 `UNKNOWN` 状态。Refund `FAILED` 表示 Payment/Provider 权威确认无法完成，Refund `CANCELLED` 只表示 Provider Action 提交前的受控主动取消；二者都不可复活。Order Cancel 仅在 Payment 已确认没有成功 Authorization/Capture/Sale 且没有未知渠道结果时完成；授权成功必须使用 Reversal，未 Capture 走 Void，已全额 Capture 走 Refund。PAN、CVV/CVC、完整磁道、PIN/PIN Block、Vault 密文和 Secrets Manager 凭据不得进入模型。MVP 默认保留业务/技术数据，不实现自动 Retention、Legal Hold、归档、匿名化或销毁。模型必须精确保持 14 表、223 字段、20 UK、11 IDX、14 本库关系、4 Diagram Groups、7 Version 表、6 不可变表和 0 个 Commerce BCR 类型；PDManer 4.9.3 人工检查仍是兼容门禁。
+`PROCESSING` 同时覆盖 Payment 内部的 CREATED、PROCESSING 与 UNKNOWN；Commerce 不复制 Payment 的 `UNKNOWN` 状态。Refund `FAILED` 表示 Payment/Provider 权威确认无法完成，Refund `CANCELLED` 只表示 Provider Action 提交前的受控主动取消；二者都不可复活。Order Cancel 仅在 Payment 已确认没有成功 Authorization/Capture/Sale 且没有未知渠道结果时完成；授权成功必须使用 Reversal，未 Capture 走 Void，已全额 Capture 走 Refund。PAN、CVV/CVC、完整磁道、PIN/PIN Block、Vault 密文和 Secrets Manager 凭据不得进入模型。MVP 默认保留业务/技术数据，不实现自动 Retention、Legal Hold、归档、匿名化或销毁。目标模型固定 15 表；字段、索引、关系和 Diagram 的最终统计只能在生成器、独立 Oracle、PDManer 工件与场景测试同步完成后写入当前状态台账。当前 14 表 / 223 字段生成快照仍是实现事实，不得用设计文字伪装成已迁移；PDManer 4.9.3 人工检查仍是兼容门禁。
 
 本文件不授权手工数据库 SQL、Java 模块、DataObject/Mapper/Repository、物理数据库或运行环境。

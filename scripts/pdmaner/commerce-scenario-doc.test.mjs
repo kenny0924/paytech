@@ -18,7 +18,7 @@ const scenarioPath = path.join(
 );
 const artifactsReady = existsSync(modelPath) && existsSync(decisionsPath);
 
-const expectedLogicalTables = Object.freeze([
+const expectedGeneratedLogicalTables = Object.freeze([
   "commerce_order",
   "order_context",
   "order_legal",
@@ -33,6 +33,12 @@ const expectedLogicalTables = Object.freeze([
   "refund_request",
   "command_idempotency",
   "compensation_event",
+]);
+
+const expectedTargetLogicalTables = Object.freeze([
+  ...expectedGeneratedLogicalTables.slice(0, 5),
+  "order_funds_availability_projection",
+  ...expectedGeneratedLogicalTables.slice(5),
 ]);
 
 const removedTables = Object.freeze([
@@ -67,9 +73,9 @@ function readScenario() {
 }
 
 function scenarioTableRows(source) {
-  const start = source.indexOf("## 4. 14 表逐表映射");
+  const start = source.indexOf("## 4. 15 表目标逐表映射");
   const end = source.indexOf("### 4.1 两笔 Refund Request 完整行", start);
-  assert.ok(start >= 0 && end > start, "现实场景缺少 14 表逐表映射章节");
+  assert.ok(start >= 0 && end > start, "现实场景缺少 15 表目标逐表映射章节");
   return source
     .slice(start, end)
     .split(/\r?\n/u)
@@ -104,22 +110,30 @@ test("Commerce real-world scenario has a generated model and physical decisions"
   assert.deepEqual(missing, [], `Commerce 场景契约缺少产物：${missing.join(", ")}`);
 });
 
-test("NOVA scenario provides one concrete mapping row for every approved table", () => {
+test("NOVA scenario provides one concrete mapping row for every approved target table", () => {
   const source = readScenario();
   assert.match(source, /场景 ID：`NOVA_COMMERCE_UAE_2026`/u);
   const rows = scenarioTableRows(source);
-  assert.deepEqual(rows.map((row) => row.table), expectedLogicalTables);
-  assert.equal(new Set(rows.map((row) => row.table)).size, 14);
+  assert.deepEqual(rows.map((row) => row.table), expectedTargetLogicalTables);
+  assert.equal(new Set(rows.map((row) => row.table)).size, 15);
   for (const row of rows) {
     assert.equal(row.cells.length, 2, `${row.table} 必须同时说明示例和写入/更新/冻结语义`);
     assert.ok(row.cells.every((cell) => cell.length > 3), `${row.table} 的场景说明过于空泛`);
   }
 });
 
-artifactTest("scenario table coverage matches the generated 223-field model", () => {
+artifactTest("scenario distinguishes the 15-table target from the generated 14-table model", () => {
   const model = JSON.parse(readFileSync(modelPath, "utf8"));
   const scenarioTables = scenarioTableRows(readScenario()).map((row) => `t_${row.table}`);
-  assert.deepEqual(scenarioTables, model.entities.map((entity) => entity.defKey));
+  const generatedTables = model.entities.map((entity) => entity.defKey);
+  assert.deepEqual(
+    scenarioTables.filter((table) => table !== "t_order_funds_availability_projection"),
+    generatedTables,
+  );
+  assert.deepEqual(
+    scenarioTables.filter((table) => !generatedTables.includes(table)),
+    ["t_order_funds_availability_projection"],
+  );
   assert.deepEqual(modelTotals(model), {
     tables: 14,
     fields: 223,
@@ -245,7 +259,8 @@ artifactTest("removed fulfillment and obsolete Vault/Blind fields stay out of th
   }
 
   const source = readScenario();
-  assert.match(source, /Commerce 14 表不保存 Webhook 配置 ID、URL 或 Secret/u);
+  assert.match(source, /Commerce 15 表目标不保存 Webhook 配置 ID、URL 或 Secret/u);
+  assert.match(source, /当前生成模型仍为 14 表.*独立 PDManer\/SQL\/Java 切片后才可称为实现/u);
   assert.match(source, /直接保存完整客户端 IP、完整 User-Agent 与可信代理链/u);
   assert.match(source, /不保存 Vault Token、Blind Index 或 Key Version/u);
 });
