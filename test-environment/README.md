@@ -66,7 +66,7 @@ python3 test-environment/scripts/smoke.py --complete-bootstrap
 
 `prepare.py` 生成独立随机密码、RSA 3072 签名密钥和独立 HMAC 密钥，不生成 TLS 证书；文件权限 `0600`，私密目录 `0700`。既有材料会保留；材料不完整时停止，不静默轮换。依赖 Java Crypto JAR 使用仓库既有版本，非标准 Maven 缓存可显式设置 `MAVEN_LOCAL_REPOSITORY`。
 
-基础设施 MySQL 初始化只复用 `../local-environment/mysql/init` 中的数据库/账号及 Nacos/XXL-Job 技术表。业务 SQL 由 `initialize.py --apply-platform-sql` 明确执行到本项目 `mor-test-mysql-1`，不挂进数据库 init 目录、不由 Java 启动执行。已有 22 表及已知 13/17/18/19/20 Route 目录与账号/Key 会保留；异常或部分初始化会停止，不能用删除 Volume 或恢复 Bootstrap 绕过。Nacos 初始化途中失败时先检查已完成步骤，再显式恢复，不重置已有凭据。
+基础设施 MySQL 初始化只复用 `../local-environment/mysql/init` 中的数据库/账号及 Nacos/XXL-Job 技术表。业务 SQL 由 `initialize.py --apply-platform-sql` 明确执行到本项目 `mor-test-mysql-1`，不挂进数据库 init 目录、不由 Java 启动执行。当前环境已经通过独立增量推进到 27 条 Route，不再运行首次初始化参数；异常或部分初始化会停止，不能用删除 Volume 或恢复 Bootstrap 绕过。Nacos 初始化途中失败时先检查已完成步骤，再显式恢复，不重置已有凭据。
 
 Bootstrap 离线工具只生成 Argon2id PHC 和真实公钥 SQL，不连接数据库；私钥、HMAC Key、明文密码不进入 SQL。`smoke.py --complete-bootstrap` 通过 Nginx → Gateway → BFF → Platform 完成改密/首管理员流程并保存检查点；网络结果不明时先查当前状态，勿手工删除检查点盲目重放。
 
@@ -296,3 +296,130 @@ Gateway动态加载路由，未重放初始化/Bootstrap或重启其他应用。
 前端71项测试、生产构建与实际App/headless验证，BFF245项 `clean verify`，Platform50项纯/目录测试通过。
 15个Platform真实HTTP/MySQL自动用例仅编译，本地测试DB凭据缺失，未运行或指向test，不声明完整覆盖率门禁通过。
 10个容器均running/healthy，`/accounts`及Accounts/Audit/入口JS与本次构建逐字一致，入口 `index-CCLDKR7s.js`。
+
+## 审计筛选与详情（2026-09-04）
+
+已更新 Platform、BFF 与前端三个镜像，并一次性应用
+[`sql/2026-09-04-operations-audit-details.sql`](sql/2026-09-04-operations-audit-details.sql)。
+目录现为 21 条 Route、12 个 Console Resource、12 个 ACTIVE Permission；详情复用 `OPERATIONS_AUDIT_READ`，
+列表增加时间、操作者、动作、结果和 Request ID 筛选。保留公共分页及原 Guard，不新增角色授权或审计表。
+
+Platform 按同一筛选查询列表及总数，按属性分类返回安全值；BFF 组装历史前后对比，保留重复值、隐藏值和缺失历史。
+时间查询包含起点、不包含终点，边界向上取整到 MySQL 微秒刻度，避免驱动舍入导致漏查。前端支持条件查询/重置、
+详情抽屉、失败重试与 Request ID 复制，不因切屏刷新。
+
+[`scripts/audit_smoke.py`](scripts/audit_smoke.py) 已通过真实 HTTP/MySQL 链路验证筛选、分页、纳秒/微秒边界、
+详情前后值、历史记录、公共错误与权限拒绝；合成人员和角色已删除、管理员已退出，审计历史保留。
+既有 `scripts/smoke.py` 登录、导航、三类分页、Refresh 与退出回归通过。
+
+Platform 59 项纯测试、BFF 270 项、前端 76 项测试及生产构建通过；桌面/窄屏交互检查通过。
+19 个 Platform HTTP/MySQL 自动场景仅编译，本地专用 DB 凭据缺失，未执行或改指向 test。
+10 个容器健康，仅三个应用容器更新；`/audit` 及页面/入口静态文件与构建逐字一致，入口 `index-C2bST4fN.js`。
+完整契约及验证记录见[实施记录](../agent-docs/plans/2026-09-04-operations-audit-query-details.md)。
+
+## 公共日期组件（2026-09-04）
+
+仅更新 Operations 前端镜像，将审计筛选的原生日期框替换为公共 `DatePicker`：中文日历、24 小时时分秒、
+手动输入/清空，窄屏上下排列；组件也支持独立使用的仅日期模式。Enter 只确认日期，不触发表单隐式查询；
+本地时间转 UTC、单端条件及起点包含/终点不包含的查询规则保持不变。
+
+76 项前端测试与生产构建通过；隔离浏览器验证日期/时间选择、手输、Enter、清空/重置、错误区间、UTC 参数、
+独立中文日期模式及 390px 弹层。`/audit` 与 8 个静态资源和构建逐字一致，入口 `index-CdhstRa9.js`。
+10 个 test 容器健康，仅前端容器更新；无 SQL 或后端变更。
+
+## 公共时间范围组件（2026-09-04）
+
+仅更新 Operations 前端镜像。审计页使用公共 `TimeRangePicker` 替代独立起止框，提供“今天 / 最近 3 天 /
+最近 7 天 / 自定义”；初始和重置均不默认选择范围。快捷项在点击查询时按浏览器本地自然日计算，包含今天；
+Custom 展开双端日期时间，要求完整且结束晚于开始。选择与编辑本身不请求，切换快捷项清除旧自定义值。
+
+78 项前端测试与生产构建通过。独立浏览器在 Asia/Dubai 验证三种快捷范围的精确 UTC 边界、自定义双端及倒序校验、
+Enter 键、重置、390px 两列快捷项和纵向自定义框；无页面或弹层溢出、无未捕获异常。`/audit` 与 8 个静态资源
+和构建逐字一致，入口 `index-XH4weB_J.js`。10 个 test 容器健康，仅前端容器更新；无 SQL 或后端变更。
+
+## 时间范围下拉组件（2026-09-05）
+
+仅更新 Operations 前端镜像。公共 `TimeRangePicker` 折叠为单个范围输入框；展开后桌面端左侧显示今天、最近 3 天、
+最近 7 天和自定义快捷项，右侧显示中文日期及 24 小时时分秒面板。移动端快捷项置于日历上方，390×500 短屏弹层
+固定在视口安全边距内并支持垂直滚动。自定义范围须明确确认；取消、Escape、点击外部、清空及重置不会提交草稿。
+选择仍只更新表单，点击查询后才发送条件；快捷边界在提交时冻结，后续刷新与控件显示保持一致。
+范围框在宽屏中缩为普通筛选项的一列并统一为 34px 高；1024px 等中等宽度跨两列保证完整时间，390px 占满单列。
+
+79 项前端测试和生产构建通过。隔离浏览器验证三组 Asia/Dubai 自然日到 UTC 边界、自定义秒值、确认/取消、
+清空/重置、月份前后导航、390×844 与 390×500 布局，未出现横向溢出或页面异常。`/audit` 与 9 个构建文件
+逐字一致，入口为 `/assets/index-DJtOmMm4.js`。最终浏览器回归同时覆盖 1024、1440、2048 和 390px 的紧凑布局。10 个 test 容器健康，仅 `operations-console-web` 实例更新；
+Platform、BFF、Gateway、Vault、基础设施、权限目录和数据库均未改变。
+
+## API 路由管理（2026-09-05 已部署）
+
+本轮 Operations Gateway 控制面对应的手工增量为
+[`sql/2026-09-05-operations-gateway-control-plane.sql`](sql/2026-09-05-operations-gateway-control-plane.sql)。该文件新增
+6 条公开 Route、3 个 Console Resource 和 2 个 ACTIVE Permission。该文件已使用 MySQL batch 模式显式应用一次；
+当前目录为 27 条 Route、15 个 Console Resource、14 个 ACTIVE Permission。
+
+该 SQL 仍不进入 Compose、应用启动或 `initialize.py` 的自动流程。此次只定向更新 Platform、Gateway、Operations BFF
+和前端；没有重放全量初始化或 Bootstrap，也没有重建 MySQL、Redis、RabbitMQ、Nacos、Nginx 或 Vault。
+
+Platform 首次启动暴露出 test Compose 未注入 Redis 容器地址的问题：资源锁启用后 Redisson 使用了本机默认
+`127.0.0.1:16379`。Compose 现为 Platform 显式注入 `redis:6379` 和 test 密码，并等待 Redis healthy；
+[`scripts/test_platform_redis_deployment.py`](scripts/test_platform_redis_deployment.py) 保留该部署配置门禁。
+
+部署后 10 个容器均 healthy，Gateway 连续成功加载 1 个 Target / 27 条 Route，Snapshot 失败计数为 0。
+[`scripts/smoke.py`](scripts/smoke.py) 已覆盖登录、15 项导航、Target/Route 列表、筛选和详情；
+[`scripts/gateway_control_plane_smoke.py`](scripts/gateway_control_plane_smoke.py) 通过公开 HTTP 验证未认证拒绝、Route
+停用、幂等重放、旧版本冲突、Snapshot 移除以及恢复。验收 Route 最终为 ACTIVE；Break-glass SQL 未执行。
+
+### Break-glass 恢复（仅管理链路误停用）
+
+独立恢复资产为
+[`sql/2026-09-05-operations-gateway-control-plane-break-glass.sql`](sql/2026-09-05-operations-gateway-control-plane-break-glass.sql)。
+它只用于 `operations-console-bff` Target 或六条 `operations-gateway-*` 管理 Route 被误停用，且普通 Operations
+页面已无法恢复的事故场景。该文件不得自动执行，不进入 Compose、`initialize.py`、应用启动、自动测试或日常发布；
+本轮没有在任何数据库执行它。
+
+执行前必须完成以下事项：
+
+1. 建立事故/变更工单，取得当班 Platform Owner、Security 与 DBA 所要求的审批，并记录恢复范围；
+2. 确认数据库语句审计已启用，使用短时、个人可归属的 Break-glass 数据库账号，禁止使用应用账号、共享 root
+   或把应用凭据复制给操作员；
+3. 只读保存目标、六条 Route、两个 Permission 及当前 Platform Snapshot 的事前证据，核对脚本校验和与已审阅版本；
+4. 从仓库根目录使用 Oracle `mysql` 的 batch mode 执行，禁止 `--force`，也不得在交互式会话中用 `SOURCE`
+   运行。连接信息从获批的短时凭据来源提供，工单号必须作为审核过的字面量写入 `--init-command`，不得拼接未校验的
+   Shell 输入：
+
+   ```bash
+   mysql --batch --host='<approved-host>' --port='<approved-port>' \
+     --user='<personal-break-glass-user>' --password \
+     --init-command="SET @break_glass_ticket_ref = 'INC-2026-000001';" \
+     < test-environment/sql/2026-09-05-operations-gateway-control-plane-break-glass.sql
+   ```
+
+   必须以客户端退出码 `0` 和 Procedure 返回的成功结果共同判定执行成功；任何非零退出码都视为失败并立即停止。
+   Oracle `mysql 8.0.42` 已用“初始化会话变量 → 查询不存在表 → 后续哨兵语句”验证此 batch 调用：返回码为 `1`，
+   后续语句未执行。该账号还需按已审批时窗具备脚本创建、调用和删除临时恢复 Procedure 所需的最小权限。
+
+脚本以本次事务专用的 `SERIALIZABLE` 隔离启动，确保即使调用会话默认使用 `READ COMMITTED`，Header、Query 和
+Guard 的范围锁仍会阻止六条 Route 子项并发插入。随后锁定并断言稳定 Target ID/Code/Service/Channel、两个 ACTIVE Permission、六条 Route 的 ID、Method、上下游
+Path、Target、Profile、授权模式、Permission、Cookie、Body/Timeout，以及完整 Header、Query 和 Guard 配置。任一身份
+缺失、被占用或配置漂移都会 `SIGNAL` 并回滚。更新 Root 后、提交前，脚本还会按
+`GatewayConfigurationCompiler` 的相同规则检查全目录所有有效 Route：只有 Route 与 Target 同时为 `ACTIVE` 才参与，
+并按 HTTP Method、Path Segment 数、大小写敏感的 Variable 名数量和逐段固定值判断模板重叠；任何冲突都会回滚，
+避免提交一份 Gateway 必然拒绝的 Snapshot。此时不得删改异常数据后盲目重跑。恢复只把 `DISABLED` Root 改为
+`ACTIVE`，逐行执行 `version + 1` 并更新 UTC 时间；原本已为 `ACTIVE` 的行不推进版本。它不新增 Route、权限、应用
+Audit Event 或 Rollback 表。
+
+`updated_by` 按 `PRESERVE_APPLICATION_UPDATED_BY` 约定保留原值，因为该列只表示最后一次真实应用命令的 Account。
+脚本不会写管理员 ID、应用 Actor、`0` 或负数伪 Actor。此次异常操作的真实归属由 Break-glass 数据库账号审计与
+必填审批工单共同承担。成功时临时 Procedure 会被删除；校验失败时 Procedure 可能保留以保存原始失败现场，需在
+完成数据库审计取证后由 DBA 显式删除，且不得调用其绕过新的审批。
+
+执行后必须保存脚本末尾验证查询与数据库审计记录，并完成运行态恢复验证：
+
+1. 数据库中唯一 `operations-console-bff` Target 和六条精确管理 Route 均为 `ACTIVE`，只有执行前为
+   `DISABLED` 的行版本增加一次；
+2. 通过 Platform 私有只读 `GET /platform-support/gateway-config/v1/public-snapshot` 确认 Snapshot 包含该 Target
+   与六条完整 Route，且没有新增或修改其他配置；
+3. 等待 Gateway 正常轮询，确认其私有 Snapshot 指标出现晚于本次恢复的成功加载时间、连续失败归零，Target/Route
+   数量与 Platform 一致；不得重启后依赖静态 Route 或人工写 Gateway 缓存；
+4. 从公开 HTTP 入口以获授权账号验证 Target/Route 列表和详情，再由正常 Operations 命令处理后续配置并生成应用
+   Audit Event。Break-glass 只恢复可管理性，不代替正常配置发布或审计链路。

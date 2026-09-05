@@ -117,6 +117,9 @@ def main():
         "OPERATIONS_ROLE_CREATE": "创建角色",
         "OPERATIONS_ROLE_EDIT": "编辑角色",
         "OPERATIONS_ROLE_DELETE": "删除角色",
+        "OPERATIONS_PLATFORM_CONFIGURATION": "平台配置",
+        "OPERATIONS_GATEWAY_CONFIGURATION": "API 路由管理",
+        "OPERATIONS_GATEWAY_CONFIGURATION_MANAGE": "管理配置",
     }
     assert {r["resourceCode"]: r["displayName"] for r in navigation["resources"]} == expected_resources, \
         "Operations navigation labels do not match the UTF-8 catalog."
@@ -131,9 +134,21 @@ def main():
         assert resource["resourceType"] == "MENU" and resource["parentResourceId"] == system["resourceId"]
         assert resource["frontendRoute"] == route and resource["componentKey"] == code
         assert resource["sortOrder"] == order
+    platform_configuration = resources["OPERATIONS_PLATFORM_CONFIGURATION"]
+    gateway_configuration = resources["OPERATIONS_GATEWAY_CONFIGURATION"]
+    assert platform_configuration["resourceType"] == "MENU" and platform_configuration["parentResourceId"] is None
+    assert gateway_configuration["resourceType"] == "MENU"
+    assert gateway_configuration["parentResourceId"] == platform_configuration["resourceId"]
+    assert gateway_configuration["frontendRoute"] == "/gateway-configuration"
+    assert gateway_configuration["componentKey"] == "OPERATIONS_GATEWAY_CONFIGURATION"
     for resource in resources.values():
         if resource["resourceType"] == "BUTTON":
-            parent = "OPERATIONS_ROLES" if resource["resourceCode"].startswith("OPERATIONS_ROLE_") else "OPERATIONS_ACCOUNTS"
+            if resource["resourceCode"] == "OPERATIONS_GATEWAY_CONFIGURATION_MANAGE":
+                parent = "OPERATIONS_GATEWAY_CONFIGURATION"
+            elif resource["resourceCode"].startswith("OPERATIONS_ROLE_"):
+                parent = "OPERATIONS_ROLES"
+            else:
+                parent = "OPERATIONS_ACCOUNTS"
             assert resource["parentResourceId"] == resources[parent]["resourceId"]
     accounts = browser.request("GET", "/iam/v1/accounts")
     roles = browser.request("GET", "/iam/v1/roles")
@@ -146,6 +161,34 @@ def main():
     expected_roles = {"PLATFORM_ADMIN": "平台管理员", "OPERATIONS_VIEWER": "运营只读人员"}
     assert expected_roles.items() <= {r["roleCode"]: r["roleName"] for r in roles["items"]}.items(), \
         "Operations role labels do not match the UTF-8 catalog."
+    targets = browser.request("GET", "/gateway-admin/v1/target-services")
+    routes = browser.request("GET", "/gateway-admin/v1/routes?page=1&size=200")
+    check_page(targets)
+    check_page(routes, size=200)
+    assert targets["total"] == 1 and routes["total"] == 27
+    target = targets["items"][0]
+    assert target["targetServiceCode"] == "operations-console-bff" and target["status"] == "ACTIVE"
+    target_detail = browser.request("GET", "/gateway-admin/v1/target-services/operations-console-bff")
+    assert target_detail["targetServiceCode"] == target["targetServiceCode"]
+    expected_gateway_routes = {
+        "operations-gateway-target-list",
+        "operations-gateway-target-detail",
+        "operations-gateway-target-status",
+        "operations-gateway-route-list",
+        "operations-gateway-route-detail",
+        "operations-gateway-route-status",
+    }
+    gateway_routes = {route["routeCode"]: route for route in routes["items"]}
+    assert expected_gateway_routes <= gateway_routes.keys()
+    assert all(gateway_routes[code]["status"] == "ACTIVE" for code in expected_gateway_routes)
+    route_detail = browser.request("GET", "/gateway-admin/v1/routes/operations-gateway-route-list")
+    assert route_detail["targetServiceCode"] == "operations-console-bff"
+    filtered_routes = browser.request(
+        "GET", "/gateway-admin/v1/routes?routeCode=operations-gateway-route-list&channel=OPERATIONS"
+        "&status=ACTIVE&targetServiceCode=operations-console-bff"
+    )
+    check_page(filtered_routes)
+    assert filtered_routes["total"] == 1 and filtered_routes["items"][0]["routeCode"] == route_detail["routeCode"]
     for path in ("/iam/v1/accounts", "/iam/v1/roles", "/audit/v1/events"):
         for size in (20, 50, 100, 200):
             check_page(browser.request("GET", f"{path}?page=1&size={size}"), size=size)
@@ -182,7 +225,9 @@ def main():
     access_file.write_text(f"# Code-MoR test 环境\n\n入口：{ORIGIN}\n\n账号：{material['administratorEmail']}\n\n"
                           f"密码：{material['administratorPassword']}\n\n仅用于本机 mor-test；禁止复用到生产。\n")
     access_file.chmod(0o600)
-    print("PASS: JSON Token login, common paging defaults/sizes/database slices, two-level system navigation and role labels, parameter/business messages, Refresh rotation, logout and revoked Refresh rejection; no cookies.")
+    print("PASS: JSON Token login, common paging defaults/sizes/database slices, navigation and role labels, "
+          "Gateway control-plane reads, parameter/business messages, Refresh rotation, logout and revoked Refresh "
+          "rejection; no cookies.")
     print("Test login details saved to test-environment/private/access.md (0600); no tokens persisted.")
 
 

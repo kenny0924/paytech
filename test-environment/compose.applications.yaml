@@ -33,11 +33,15 @@ services:
       PLATFORM_SUPPORT_DB_URL: jdbc:mysql://mysql:3306/mor_platform?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
       PLATFORM_SUPPORT_DB_USERNAME: platform_app
       PLATFORM_SUPPORT_DB_PASSWORD: ${MOR_PLATFORM_DB_PASSWORD:?prepare test secrets}
+      PLATFORM_SUPPORT_REDIS_HOST: redis
+      PLATFORM_SUPPORT_REDIS_PORT: "6379"
+      PLATFORM_SUPPORT_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
       OPERATIONS_AUTHENTICATION_ENABLED: "true"
       OPERATIONS_AUTHENTICATION_WORKER_ID: "20"
     depends_on:
       mysql: { condition: service_healthy }
       nacos: { condition: service_healthy }
+      redis: { condition: service_healthy }
     healthcheck:
       test: [CMD, curl, -fsS, http://127.0.0.1:18106/platform-support/actuator/health/readiness]
       interval: 10s
