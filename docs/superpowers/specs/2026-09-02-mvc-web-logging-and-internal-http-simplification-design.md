@@ -7,6 +7,12 @@
 > Controller 和 Health Indicator 直接调用持有一致性读事务的 Domain Service；异常由本文定义的全局兜底映射返回
 > `500 INTERNAL_ERROR`。本文关于其他服务显式抛出 `ServiceUnavailableException` 时返回 `503` 的通用 Foundation 能力继续有效。
 
+> 2026-09-05 Client API 后继：[Client API Gateway 设计](./2026-09-05-client-api-gateway-design.md)保留本文的 Nginx TLS、
+> 单值 `X-Real-IP` 和私网 Gateway 边界，并要求 Channel-aware Gateway 部署前每个公网入口覆盖自己的固定
+> `X-Entry-Channel`；Client API 专用域名写入 `CLIENT_API`，且采用“合法外部 `X-Request-Id` 保留、否则
+> Nginx/Gateway 兜底”的窄协议。这些值都不是调用方身份或业务幂等依据；Operations 外部、JWT、CORS、
+> 下游 Header 与 Request ID 合同不变。
+
 ## 1. 决策摘要
 
 本设计同时收敛三个基础设施边界：

@@ -1,8 +1,15 @@
 # Payment Orchestration 现实场景与逐表字段映射
 
-最后更新：2026-08-25
+最后更新：2026-09-05
 
 本 Showcase 使用一组固定 ID，展示同一笔 NI 卡支付从配置、3DS、UNKNOWN 查询恢复、退款、迟到重复成功补偿、批量 Callback 到争议举证的真实行。金额均为 USD，时间均为 UTC。它是 [Payment 逻辑模型](../PAYMENT_ORCHESTRATION_DATABASE.md) 的逐表场景契约，不是生产数据或 Provider 报文样本。
+
+> **2026-09-05 横切迁移提示：** 本文的逐表记录继续精确描述当前生成模型及当时的消费者假设，不单独拥有
+> Vault 或 `compensation_event` 契约。其中与当前三表 Protect/Reveal、补偿三字段身份和 4 KiB 可选 Payload
+> 不一致的旧字段属于 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md) 中 VAULT-01 / COMP-01
+> 的待迁移现状；完成 [Vault 消费者对齐](../../../docs/superpowers/plans/2026-09-05-vault-consumer-model-alignment.md)
+> 和 [补偿六模型对齐](../../../docs/superpowers/plans/2026-09-05-compensation-event-six-model-alignment.md) 前，
+> 不得把这些场景字段复制到新增模型、SQL、DataObject 或代码。
 
 ## 1. 固定身份、配置和时间线
 

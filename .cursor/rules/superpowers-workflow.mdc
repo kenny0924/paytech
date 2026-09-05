@@ -1,0 +1,12 @@
+---
+description: Applies the approved phase-based Superpowers workflow
+alwaysApply: true
+---
+
+# Superpowers 分阶段工作流
+
+- 根 `AGENTS.md` 的 `Change discipline` 是 Agent/Superpowers 工作流的唯一现行权威；`agent-docs/decisions/2026-09-05-superpowers-and-service-interface-policy.md` 记录确认理由与取代范围，`agent-docs/DEVELOPMENT_CONVENTIONS.md` 和本文件只做开发侧薄投影。
+- 设计阶段默认使用适用的 Superpowers：新增功能、行为或架构探索先使用 `brainstorming`，已批准的多步骤设计使用 `writing-plans`。纯问答、状态读取和无需设计的机械操作不为形式调用。
+- 代码阶段按真实触发使用实现 skill：功能、修复或重构使用 `test-driven-development`；两个以上独立子任务使用 `dispatching-parallel-agents`；批准计划的执行按任务结构在 `subagent-driven-development` 与 `executing-plans` 中选择一种。
+- 遇到 bug、测试失败或异常行为时使用 `systematic-debugging`；声明完成前使用 `verification-before-completion`。不得机械串行调用全部 skill。
+- Worktree、分支收尾和代码评审类 skill 只在确有隔离、集成或评审需要，或用户明确要求时使用；skill 不授权自行创建分支、提交、推送或 PR。

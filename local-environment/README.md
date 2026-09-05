@@ -131,8 +131,9 @@ The first MySQL initialization creates empty schemas and one scoped account per 
 - `paytech_foundation_test` / `foundation_test` (local Java test schema)
 
 Only `nacos_config` and `xxl_job` receive infrastructure-owned tables during environment initialization. `xxl_job`
-contains eight upstream Admin tables plus one local schema-version marker. The seven business/Vault schemas remain empty
-until their separate implementations are authorized. `paytech_foundation_test` is isolated from those databases;
-`application-mock.yaml` may recreate test-only tables there without connecting to Nacos.
+contains eight upstream Admin tables plus one local schema-version marker. Business/Vault/Foundation application tables
+are never created or rebuilt by Compose, Java startup, Maven or JUnit. Apply each reviewed test Schema/DML manually to
+its scoped database before running the owning test suite; tests may clean only rows and namespaces they own. A missing
+table must fail fast with the documented preparation command, not trigger `application-mock.yaml` or `spring.sql.init`.
 
 After the first start, sign in to the loopback-only Nacos console and replace any bootstrap administrator password before keeping the environment running. Do not copy that password into `.env.example`, Nacos configuration data, or Git.

@@ -2,7 +2,16 @@
 
 Date: 2026-08-28
 
-Status: Approved for implementation
+Status: Historical — originally approved for implementation; superseded in the contract areas listed below
+
+> **Historical / superseded on 2026-09-05:** This file preserves the rationale and implementation context of the
+> original compensation-event design. The current contract is
+> [`COMPENSATION_EVENT_GUIDE.md`](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md), and the remaining six-model
+> migration is governed by the
+> [2026-09-05 alignment plan](../plans/2026-09-05-compensation-event-six-model-alignment.md). Do not implement or
+> restore this file's `execution_type`, source ID/version, Schema version, Canonical Envelope, Payload Hash, 64 KiB
+> Payload or Testcontainers requirements. The unchanged transaction, after-commit, Claim/Lease, at-least-once and
+> bounded-execution reasoning remains historical input only where it agrees with the current guide.
 
 ## 1. Purpose
 

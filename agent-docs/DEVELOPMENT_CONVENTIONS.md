@@ -20,7 +20,7 @@
 - 仅作为字段嵌套的业务模型、内部领域对象和应用层命令/结果不强制上述后缀，继续按各自业务语义命名。不要为了命名规则创建一层同义包装，或给所有成功响应添加通用外壳。
 - 新增和调整 HTTP DTO 时统一遵循该命名规则。重命名已发布 Java 契约时同步调整提供方与调用方，单纯类型命名变化不改变 JSON 字段、HTTP 方法或参数位置。
 - 同一业务能力的 HTTP 请求、响应及相关嵌套模型集中放在独立的 `*Models` 类型中，例如 `AuthenticationModels`、`NavigationModels`；使用 `public final` 容器、私有构造器和 `public record`。`*Api` 接口只声明 HTTP 方法契约，不在接口内定义 DTO。核心服务的传输模型仍发布在自己的轻量 `*-api` 模块，BFF 的本地页面模型由 BFF 自己维护和组装。
-- 数据库映射对象直接使用业务实体名，由 `dataobject` 包表达其持久化职责；类型名不得追加 `DO` 后缀。跨层转换通过 Repository 完成，不能因为类型名精简而把数据库对象暴露到 API 或领域层。
+- 数据库映射对象直接使用业务实体名，由 `dataobject` 包表达其持久化职责；类型名不得追加 `DO` 后缀。DataObject 以所属业务能力 Maven JAR 为可见性边界：该 JAR 内的 Repository、Service、Domain Service 和必要内部应用代码可以使用自己的 DataObject，但 Controller/HTTP API 不得把它直接作为传输对象，其他 Maven 模块也不得导入、接收或返回它。
 - DataObject 的每个字段都要有中文 JavaDoc，说明业务含义、单位、可空条件或关键约束；不得只把字段名翻译一遍。Record Component 同样遵守此规则。
 - Spring 配置前缀直接从能力开始，例如 `compensation.*`、`xxl.job.*`，不增加无意义的 `paytech` 中间层。
 - Topic 使用小写 `topic_{source_system}_{business_subject}`，Consumer Group/Queue 使用小写 `cg_{consumer_system}_{consumer_subject}`；消息统一使用 UTF-8 JSON。
@@ -28,8 +28,9 @@
 ## 3. 包结构与依赖方向
 
 - 复杂核心服务可以按 `JAVA_PROJECT_STRUCTURE.md` 增加少量业务能力 Maven JAR，但模块不是微服务：仍只有一个 `web` 启动进程、一个数据库和一个事务管理器。初始通常控制在 3–5 个模块；没有当前完整业务能力、明确表归属和真实消费者时不拆模块。
-- 每张业务表只能由一个业务模块拥有。其他模块不得访问其 Repository、Mapper、DataObject 或表，不得用跨模块 JOIN、复制 SQL、View、存储过程或 `JdbcTemplate` 绕过；需要数据时调用 Owner 模块的业务能力接口，或由 `web` Processor 编排。所谓“只调用对方的原子 Repository”同样禁止。
-- `web` 作为组合根依赖各业务模块并编排跨模块用例；业务模块不依赖 `web`，也不形成循环实现依赖。同库强一致写操作使用一个本地事务，不能为了未来拆服务改成 Compensation Event；补偿只处理提交后异步/外部副作用，或真正拆成独立服务后的最终一致性。
+- 每张业务表只能由一个业务模块拥有。其他模块不得访问其 Repository、Mapper、DataObject 或表，不得用跨模块 JOIN、复制 SQL、View、存储过程或 `JdbcTemplate` 绕过；需要数据时调用 Owner 模块明确发布的业务能力接口，或由 `web` Processor 编排。该跨模块接口使用 Owner 定义的 Domain / Application Command / Result，不使用 DataObject 或通用 CRUD 模型。所谓“只调用对方的原子 Repository”同样禁止。
+- 业务能力模块默认不建立彼此的直接 Maven 依赖。只有稳定、可复用的 Owner 业务能力同时满足窄业务接口、Domain/Application 模型、非跨模块用例编排、长期单向和无环条件时，调用方才可以单向依赖 Owner；调用方只依赖 Owner 发布的接口，不得依赖 `*Impl` 或未发布的内部 Domain Service。完整判断规则见 `JAVA_PROJECT_STRUCTURE.md`。
+- `web` 作为组合根依赖各业务模块，并编排不满足上述单向门禁的跨模块用例、循环风险和跨 Owner 写事务；业务模块不依赖 `web`。同库强一致写操作使用一个本地事务，不能为了未来拆服务改成 Compensation Event；补偿只处理提交后异步/外部副作用，或真正拆成独立服务后的最终一致性。
 - Foundation JAR 中的 `api` 表示允许宿主直接依赖的稳定入口、模型或扩展点，不代表 HTTP API；内部实现不得因为 `public` 修饰符就放入 `api`。
 - Foundation 组件（当前主要是 `compensation-event`）使用 `model`、`service`、`persistence` 分层，`persistence` 下再分 `repository` 和 `mapper`；业务服务继续遵守 `JAVA_PROJECT_STRUCTURE.md` 的 `domain` / `domainservice` / `core/dal` 结构，不套用 Foundation 包布局。
 - 数据访问抽象统一命名为 `*Repository`，使用 `interface + *RepositoryImpl`；不要新增 `*Store` 表达同一职责。它在 Foundation 中位于 `persistence/repository`，在业务服务中位于专项工程规范指定的位置。
@@ -37,7 +38,8 @@
 - 外部机制触发内部服务工作时，入站适配器统一放在与 `service` 平级的 `ext` 包下：XXL-Job 等调度入口放 `ext/job`，既有或迁移期 Dubbo Provider 放 `ext/dubbo`，REST Controller 放 `ext/rest`。其他协议只有存在真实入口时才新增 `ext/<protocol>`，不得创建空包。
 - `ext` 只负责协议解析、入口校验、上下文转换和委托 `service`（BFF 简单转发可直接委托本地 Client Port），不承载业务规则、事务编排或持久化逻辑；出站 HTTP、Provider 和第三方 SDK 适配器放独立 `integration` 边界。`ext/dubbo` 只定义兼容代码的位置，不改变当前禁止新增 Dubbo/OpenFeign 的技术边界。
 - `ext/rest` 中的 Controller/API 只做协议适配；简单用例可以直接委托一个 Domain Service，BFF 简单转发可以直接委托一个本地 Client Port，复杂用例由 `service` 中的 Processor 编排。Domain Service 承载规则，Repository 屏蔽持久化，Mapper 表达 SQL；不得跨层走捷径。
-- Service 和 Domain Service 只能返回数据库对象或本服务自定义的领域对象，绝对不能返回 `*-api` 模块的 Request/Response DTO。Controller、Facade 或其他入站适配器负责把 Service 结果转换为 API 响应；不得为了少写转换代码让传输对象穿透业务层。
+- Service 和 Domain Service 的模块内方法可以返回本模块 DataObject 或本模块定义的 Domain/Application 对象；是否转换取决于是否需要保护领域不变量、聚合多表或隔离持久化变化，不为形式对称机械复制同义对象。作为跨 Maven 模块合同发布的业务能力接口必须使用 Owner 定义的 Domain / Application Command / Result，不能暴露 DataObject、Repository/Mapper 类型或 `*-api` Request/Response DTO。Controller、Facade 或其他入站适配器负责完成 HTTP 传输对象转换。
+- 所有业务 Service 必须使用 `interface + *Impl`；所有 Domain Service 必须使用 `interface + *Impl`。接口按业务能力命名，实现使用同名接口加 `Impl`，只有实现类标注 `@Service`。该规则不要求创建没有业务职责的空 Service；先判断是否需要 Service，一旦创建就不得以模块内单实现为由省略接口。调用方只依赖接口，不依赖 `*Impl`；Processor、Controller 仍使用具体类，Repository 保持 `interface + *RepositoryImpl`。
 - 优先构造器注入和 `final` 字段。构造器只把全部参数赋给字段时使用 Lombok `@AllArgsConstructor`；构造器包含参数校验、防御性复制、派生对象创建或资源配置时保留显式实现。相同逻辑组内的注入字段按依赖类型名称字符数由短到长排列，长度相同再按字典序；显式构造器参数保持相同顺序。
 
 ```java
@@ -97,7 +99,7 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - Processor 是按需的用例编排层。Controller 方法少于 10 条有效可执行语句，且只委托一个 Domain Service（BFF 简单转发可为一个本地 Client Port）、没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排时，可以不创建 Processor；空行、注释、花括号和格式换行不计入语句数，不能通过改写格式规避该边界。
 - 任一上述条件不满足时都必须使用 Processor，不因物理代码行数少而例外。Controller 始终不得直接访问 Repository、Mapper 或第三方 SDK，也不得持有 `TransactionTemplate`；确实通过上述必要性门禁的简单一致性读可由 Domain Service 持有只读事务。
 - 一个方法只承担一个明确职责，原则上不超过 30 行；优先卫语句和早期返回，嵌套不超过三层。
-- 不为单一实现预建 `Abstract*`、空接口或通用上下文。至少两个真实用例共享稳定流程、字段和不变量后才提取抽象；请求 ID、认证、网络信任和追踪等协议上下文优先留在 Web/Security 基础设施，不机械复制到每个 Processor 请求。
+- 不为不存在的职责预建 `Abstract*`、空接口或通用上下文。业务 Service 和 Domain Service 的 `interface + *Impl` 是已确认的类型形态，不等于必须创建一个没有业务职责的 Service；至少两个真实用例共享稳定流程、字段和不变量后才提取抽象基类。请求 ID、认证、网络信任和追踪等协议上下文优先留在 Web/Security 基础设施，不机械复制到每个 Processor 请求。
 - 从获批用例所需的最小类、模块和配置开始，不预建一行转发类、空层、未来开关或带系统名前缀的同义基础设施。新增服务内通用技术能力前先检查 Foundation；能力天然跨服务，或至少两个真实消费者共享稳定契约时，才提取为职责单一的小型 Foundation JAR。业务 DTO、业务枚举、Repository、Mapper 和第三方模型仍留在所属服务。
 - 注释和 JavaDoc 默认使用中文，协议固定词、标准名称和无法准确翻译的专有名词可以保留英文。注释解释约束、原因和边界，不复述代码字面行为。
 - 不运行仓库级批量格式化，也不为了格式重写无关代码；保持改动聚焦，最终格式由项目既定工具或用户 IDE 处理。
@@ -144,4 +146,7 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - `paytech-dependencies` 统一管理依赖版本，`paytech-parent` 统一管理 Java、插件和测试规则；子模块只声明实际使用的依赖，不重复写版本。
 - 公共代码拆为边界清晰的小型 Foundation JAR，不创建聚合式 `common.jar`，也不把业务 DTO、Repository 或第三方模型塞入公共包。
 - 多任务并行时先检查工作区和路径所有权；共享文件必须有 single-writer，基于最新版逐段增量修改，禁止整文件覆盖或回滚其他任务改动。
-- 除非用户在当前请求中明确要求，否则不要使用 Superpowers 系列 skill。选择更直接、足够完成任务的工具和验证路径。
+- 下列 Superpowers 规则是根 `AGENTS.md` 中 `Change discipline` 的开发侧薄投影；发生漂移时修复投影，不把本文解释成第二个工作流 Owner。
+- 设计阶段默认使用适用的 Superpowers：新增功能、行为或架构探索先使用 `brainstorming`；已批准的多步骤设计使用 `writing-plans`。纯问答、只读状态检查和无需设计判断的机械操作不为形式调用。
+- 代码阶段按真实触发使用 TDD、并行代理、计划执行、系统化调试和完成前验证，不机械串行调用全部 skill：功能、修复或重构使用 `test-driven-development`；两个以上独立子任务使用 `dispatching-parallel-agents`；已有批准计划且适合拆分时，在 `subagent-driven-development` 与 `executing-plans` 中选择一种；出现 bug、测试失败或异常行为时使用 `systematic-debugging`；声明完成前使用 `verification-before-completion`。
+- `using-git-worktrees`、`finishing-a-development-branch`、`requesting-code-review` 和 `receiving-code-review` 只在任务确实需要隔离、集成或独立评审，或者用户明确要求时使用；skill 本身不授权创建分支、提交、推送或 PR。完整决定见 [`decisions/2026-09-05-superpowers-and-service-interface-policy.md`](./decisions/2026-09-05-superpowers-and-service-interface-policy.md)。

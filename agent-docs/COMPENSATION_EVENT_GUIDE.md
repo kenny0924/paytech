@@ -1,6 +1,8 @@
 # 本地补偿任务规范
 
-最后更新：2026-08-29
+最后更新：2026-09-05
+
+状态：Confirmed current contract。六库旧模型的传播进度见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)；本文规则更新不代表 PDManer、SQL 或运行数据库已经迁移。
 
 ## 1. 使用范围与当前决策
 
@@ -101,10 +103,10 @@ sequenceDiagram
 - `event_key` 最长 128 个 Java 字符，`event_type` 与 `sub_event_type` 最长 64 个 Java 字符；均去除首尾空白、拒绝控制字符并使用大小写敏感 collation。
 - 同一 `event_type` 在整个应用中只能注册一个 Handler；缺失或重复 Handler 必须在启动或登记时失败。
 - 默认不使用 `payload_json` 保存 Handler 上下文。Handler 应使用 `event_key + sub_event_type` 查询本服务权威表，只做一件事；只有数据确实从未落库时才允许保存最小参数。
-- `payload_json` 必须为空或有效 JSON Object，最大 4 KiB UTF-8；禁止敏感明文、凭据、卡数据、Token、大文件和可从本服务数据库恢复的上下文。
+- `payload_json` 必须为空或有效 JSON Object，最大 4 KiB UTF-8；禁止敏感明文、凭据、卡数据、任何 Vault Token、大文件和可从本服务数据库恢复的上下文。
 - `PROCESSING` 必须同时具有未过期的 `lock_owner`、`lock_until`；其他状态不得保留活动 Lease。
 - 到达最大重试次数后进入 `FAILED`，保留记录并告警。人工重开必须记录操作人、原因和工单引用，并回到 `ERROR` 等待重新 Claim。
-- 表中不定义 `CHECK CONSTRAINT`；状态、非负次数、正锁版本和 Lease 组合由 Foundation 代码、Schema DDL 默认值及开发者共识共同保证。
+- 表中不定义 `CHECK CONSTRAINT`；状态、非负次数、正锁版本和 Lease 组合由 Foundation 写入口校验、条件更新/CAS、安全 Schema 默认值及仓库自有 `local-environment` 真实 MySQL 反例测试共同保证。
 
 Handler 返回确定成功后删除该记录。唯一索引只在记录存在期间防止重复登记，不提供永久去重；业务需要长期幂等时，必须依赖本领域权威状态或不可变历史。由于 Handler 可从权威表重建数据，人工补偿通常只需插入 `id + event_key + event_type + sub_event_type`，其余运行字段使用安全默认值。
 
@@ -171,7 +173,7 @@ MQ Listener 在本系统事务中完成事件校验和业务更新，事务提�
 
 ## 7. Vault 与敏感数据边界
 
-`compensation_event` 不存敏感明文或业务密文。跨系统需要敏感字段时默认通过事实拥有方受控接口取得已批准的非敏感派生事实；只有存在普通展示消费者时才取得 Masked Value。确需长期交付 Token 时，必须先由 Vault `CopyForBinding` 创建接收方专属 Record/Token，不能传播或复用来源系统 Token；Record Version 与 Metadata Hash 仍需分别证明元数据并发/同步、跨系统校验或内容承诺消费者。Vault 自身的异步审计发送、重加密或销毁任务也使用自己的 `compensation_event`，不建立中央消息表。
+`compensation_event` 和业务 MQ 事件都不存敏感明文、业务密文或任何 Vault Token。跨系统需要敏感信息时，通过事实拥有方的受控同步接口取得已批准的业务结果或非敏感派生事实。当前 Vault V1 没有 Copy/Binding、Masked Value、Record Version、Metadata Hash、异步审计发送、重加密或销毁任务，也不创建 `compensation_event`；只有未来获批的窄 V2 设计可以增加相应能力，不能从本指南反向推导 Vault API。
 
 Vault 详细边界见 [VAULT_SERVICE_ARCHITECTURE.md](./VAULT_SERVICE_ARCHITECTURE.md)。
 

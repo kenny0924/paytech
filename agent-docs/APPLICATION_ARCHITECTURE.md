@@ -1,16 +1,8 @@
 # Code-MoR Entry Application Architecture
 
-> **2026-09-04 Operations 浏览器契约更新：** 按用户最新要求，Operations 使用 JSON 传递 Refresh Token，登录/刷新返回 Access/Refresh 两 Token；前端通过当前标签页的 sessionStorage 保存两 Token 及绝对过期时刻，在模块启动时恢复，整页刷新不再要求重新登录。该决定覆盖此前仅内存限制；不使用 localStorage 或 Cookie，不缓存密码、Account 上下文或权限。有效 Access 继续用于 Authorization，临近到期或 GET 首次 401 时可 JSON Refresh；轮换一起更新两 Token，退出、改密完成、Refresh 401、刷新后的 GET 唯一一次重试仍 401 或会话到期时清理。临时 429/503/网络故障保留会话并提供恢复重试。BFF 统一 HTTP 入站边界仍负责 PLT-I02，Controller 委托本地 Client Port；Client/Partner 契约及业务所有权不变。详见 [第一版实施记录中的后续决定](./plans/2026-09-04-operations-console-first-slice.md)，本次前端 32 项测试与生产构建通过，已部署 mor-test，真实浏览器连续两次整页刷新保持登录、退出后刷新保持登录页；无后端或数据库改动。
+Last updated: 2026-09-05
 
-
-> **2026-09-04 Operations 当前增量：** [第一版实施记录](./plans/2026-09-04-operations-console-first-slice.md) 更新本页此前“BFF 仅基础 / Console 前端和认证未实现”的状态：独立 React/TypeScript/Vite/Ant Design 前端与 BFF 浏览器适配已增加；Platform 增加显式启用的 Operations 认证/IAM/人员/审计代码和 22 表手工 SQL 投影；Gateway 已有动态 Snapshot，并扩展可信 Context 和四个 BFF 下游根。Vault 按用户要求暂用隔离开发 Mock + TODO，生产 Vault/KMS、手工 Bootstrap/Key 初始化、真实 MySQL/Redis 联调和部署仍需各自前置。下文旧基础阶段的实现范围描述在被本记录更新处仅保留历史意义，架构所有权与手工基础设施规则不变。
-
-
-Last updated: 2026-09-04
-
-Status: current architecture baseline for subsequent design sessions. The Platform Support database model for the unified public API control plane is approved and generated; its `api`/`web`/`test` Java reactor now implements the Phase A persistence/initialization slice, PLT-I20 full typed Snapshot provider, Operations-only PLT-I22 JWKS provider and Nacos Discovery registration. Operations BFF business capabilities, Console frontends, Client/Partner BFFs, login/token-signing and other authentication/Tenant IAM commands, CUSTOMER JWKS, control-plane management APIs and the dynamic Gateway Snapshot/JWKS cutover remain unimplemented; the existing Operations Gateway first slice remains the deployed Gateway runtime implementation.
-
-The [`operations-console-bff`](../operations-console-bff/README.md) application foundation is now initialized as an independent Web/test Maven repository. It adds Spring MVC, shared Foundation HTTP behavior, Actuator/Prometheus and Nacos Discovery only; no business endpoint or authentication/authorization implementation is present.
+Status: confirmed application and deployment-boundary architecture. Current implementation, verification and environment rollout are maintained only in [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md); this document does not preserve component status snapshots.
 
 ## 1. Purpose
 
@@ -28,7 +20,7 @@ These concepts are not one-to-one. Several entry applications may share one fron
 
 ## 2. Backend and frontend project baseline
 
-### Existing core backend project roots
+### Core backend project roots
 
 ```text
 client-contract-service/
@@ -40,12 +32,12 @@ platform-support-service/
 api-gateway/
 ```
 
-`platform-support-service/` contains the tested Maven/application foundation described by the [Platform Support application-foundation design](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md), plus a manually maintained SQL/MyBatis 21-table Phase A projection, private-HTTP PLT-I20 full-Snapshot provider, Operations PLT-I22 JWKS provider and Nacos Discovery registration. The [manual-infrastructure simplification](../docs/superpowers/specs/2026-09-02-manual-infrastructure-and-platform-runtime-simplification.md) supersedes its earlier Flyway/Testcontainers/runtime-seed mechanism, while the [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes its application mTLS transport. Platform now has no Spring Security/X.509/mTLS or local exception handler and reuses the Foundation MVC boundary. PLT-I22 publishes only Operations public verification keys; it does not implement login or private-key signing. The other five core backend roots still contain database design artifacts without Java application modules. This implementation does not imply that remaining Platform capabilities are available.
+Each core backend root owns one business-system boundary and database. Its current code, SQL and verification status is intentionally not repeated here; use the current status ledger and the repository README. The [manual-infrastructure simplification](../docs/superpowers/specs/2026-09-02-manual-infrastructure-and-platform-runtime-simplification.md) supersedes earlier Flyway/Testcontainers/runtime-seed mechanisms, while the [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes application mTLS transport.
 
 ### Entry-layer backend project roots
 
 ```text
-operations-console-bff/  # Internal Operations personnel; application foundation initialized
+operations-console-bff/  # Internal Operations personnel
 client-console-bff/      # Client
 partner-console-bff/     # Local Partner
 ```
@@ -53,7 +45,7 @@ partner-console-bff/     # Local Partner
 ### Supporting technical service roots
 
 ```text
-vault-service/           # Central non-card sensitive-data protection; approved logical target, not yet created
+vault-service/           # Central non-card sensitive-data protection; Go Server + Java Client
 ```
 
 Vault is not a seventh core business system. It owns encrypted value records, cryptographic metadata and sensitive-access evidence, while the calling core system remains the source of truth for the Party, Order, Payment, Bank Account or other business fact represented by the value.
@@ -67,11 +59,11 @@ client-console-web/      # Client
 partner-console-web/     # Local Partner
 ```
 
-`checkout-web/` and the historical empty placeholders `business-portal-web/` / `business-portal-bff/` currently exist. The `business-portal-*` names are retired as target architecture; do not add implementation under them. The Operations BFF application foundation now exists. The Operations frontend and Client/Partner frontend/BFF roots remain unimplemented. The Vault root contains database-design artifacts only. None of these naming decisions authorizes additional runtime capabilities.
+`business-portal-web/` / `business-portal-bff/` are retired names; do not add implementation under them. Project-root existence and implementation state are tracked separately in the status ledger. None of these naming decisions authorizes additional runtime capabilities.
 
 Do not create `client-api-service` or `provider-callback-service`. Client API is a logical external API surface routed to the owning core systems. Provider callbacks belong to Payment Orchestration.
 
-The current logical backend target is six core services, one API Gateway, three separately secured Console BFFs and one internal Vault: eleven Java deployable types. This is a target boundary, not a mandate to run or scaffold every deployable now. The Operations channel is required by MVP onboarding, refund, dispute, reconciliation and settlement flows; current Java implementation includes its Gateway slice, Platform Support Phase A plus Operations JWKS query and the Operations BFF application foundation. Frontend applications and the embedded `compensation-event` JAR are not deployable services.
+The logical backend target is six core Java services, one Java API Gateway, three separately secured Java Console BFFs and one internal Go Vault: eleven deployable types. This is a target boundary, not a mandate to run or scaffold every deployable. Frontend applications and the embedded `compensation-event` JAR are not backend deployable services.
 
 ## 3. What BFF means
 
@@ -135,7 +127,7 @@ The BFF is different from API Gateway:
 - **BFF** owns frontend response shapes, authorized query composition and page model assembly. It applies entry authorization and preserves upstream resource authorization; domain decisions remain with core systems.
 - **Core systems** own business rules, state transitions, data, and cross-system domain workflows.
 
-公网 TLS 由 Nginx 终止；Nginx 覆盖一个 `X-Real-IP` 后仅通过私网访问 Gateway。Gateway 只解析该值一次供 Guard 和 Access Log 共用，并在转发 BFF 前删除代理 Header。Gateway、BFF、Platform Support、Vault 与核心 Java 服务通过私有 HTTP 通信且不持有 X.509 应用证书。内部服务同步 HTTP、MQ、XXL-Job 与 Vault 调用绕过 Gateway，使用服务发现、部署网络限制和各自的内部契约，不进入公共 Route Catalog。Platform 已实现手工 Schema/初始化 DML、PLT-I20 全量 Snapshot Provider、Operations PLT-I22 JWKS Provider 与 Nacos Discovery 注册；Gateway 动态消费与运行态切换尚未实现。已部署 Gateway 在切换前继续使用静态 Operations Catalog 和测试 JWKS Simulator，不能据此把静态目录解释为新的长期控制面。
+公网 TLS 由 Nginx 终止；Nginx 覆盖一个 `X-Real-IP` 后仅通过私网访问 Gateway。Gateway 只解析该值一次供 Guard 和 Access Log 共用，并在转发 BFF 前删除代理 Header。Gateway、BFF、Platform Support、Vault 与核心 Java 服务通过私有 HTTP 通信且不持有 X.509 应用证书。内部服务同步 HTTP、MQ、XXL-Job 与 Vault 调用绕过 Gateway，使用服务发现、部署网络限制和各自的内部契约，不进入公共 Route Catalog。Gateway 必须消费经全局校验的不可变动态 Snapshot；各环境是否已经切换、是否暂时保留静态 Catalog，只由当前状态台账和环境运行手册记录。
 
 ## 4. Browser-facing access model
 
@@ -201,9 +193,9 @@ operations-console-web
       -> authorized core-system interfaces
 ```
 
-The only currently deployed public Operations routes are the three exact authentication paths retained by the [Operations Gateway hardening design](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md); unaffected parts of the [2026-08-29 first-slice design](./plans/2026-08-29-operations-api-gateway-design.md) remain in force until dynamic Snapshot cutover. Gateway removes `/api/operations` and forwards only to `operations-console-bff`; it never routes Operations browser requests directly to Platform Support or a core system. Platform Support owns internal Operations accounts and Token issuance, while Gateway validates the Access JWT and the BFF is responsible for current Role/Permission/Resource authorization when that capability is implemented. Any later Operations route uses the same Platform-owned public Route Catalog and `OPERATIONS` channel rather than another static control-plane design.
+All public Operations routes belong to the Platform-owned Route Catalog and `OPERATIONS` channel. Gateway removes the public prefix and forwards only to `operations-console-bff`; it never routes an Operations browser request directly to Platform Support or a core system. Platform owns internal Operations accounts and Token issuance, Gateway validates the Access JWT, and the BFF performs PLT-I02/current Role-Permission-Resource authorization before adapting protected requests. Exact deployed Routes remain an environment status fact.
 
-Do not share Client or Partner BFFs with Operations. Operations has broader permissions, maker-checker controls and sensitive audit requirements. The Operations BFF now has only its application foundation; its business APIs, login, IAM and current Role/Permission/Resource checks remain unimplemented, as does the frontend. The new application name is exactly `operations-console-bff`, matching Gateway's current Approved Target and `lb://operations-console-bff` routing identity. It has no Servlet context path, so a later approved `/auth/v1/*` implementation can match the downstream contract directly. Gateway and BFF must use the same Nacos namespace. This initialization does not make the authentication routes operational. Before adding them, the narrower authentication prohibition on logging credentials and token bodies must be satisfied; do not add a duplicate service-local logging Filter.
+Do not share Client or Partner BFFs with Operations. Operations has broader permissions, maker-checker controls and sensitive audit requirements. The application name is exactly `operations-console-bff`, matching the Approved Target and `lb://operations-console-bff` identity; it has no Servlet context path, and Gateway/BFF use the same Nacos Namespace. Authentication and personnel-sensitive paths use the shared metadata-only logging boundary; never add a duplicate service-local logging Filter. Current endpoint coverage is recorded outside this architecture document.
 
 ## 5. Portal command and query ownership
 
@@ -229,7 +221,9 @@ Partner access remains read-only for transactions. It cannot operate orders, pay
 
 Client API is the collective name for stable external contracts, not an independent Java service. Every Client API route is maintained in Platform Support with channel `CLIENT_API`, authentication profile `CLIENT_API_CREDENTIAL`, authorization mode `API_SCOPE` and an explicit `required_scope_code`. After validating the global immutable Snapshot and credential scope, Gateway routes the request to the owning core system, which retains resource-level authorization:
 
-| External route family | Owning backend |
+The first confirmed product slice is the Commerce-owned Hosted Checkout V1. Its exact ten-route Manifest, five Scopes, Wire schema, Commerce idempotency and activation gates are owned by the [Commerce Client API V1 design](../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md); the family table below remains only future routing context and must not be treated as permission to expose Finance, Platform or DirectPay APIs.
+
+| Illustrative external route family (not a frozen Route Manifest) | Owning backend |
 |---|---|
 | `/api/v1/checkouts/**` | Commerce |
 | `/api/v1/orders/**` | Commerce |
@@ -240,6 +234,8 @@ Client API is the collective name for stable external contracts, not an independ
 | `/api/v1/client-profile/**` | Client & Contract, if externally required |
 
 Gateway performs edge controls only. A Client API credential belongs to a Tenant, but the trusted Tenant ID contributes only to the runtime rate/concurrency key; it does not select a tenant-specific Route or Guard configuration. External-contract versioning and resource-level authorization remain the responsibility of the owning system's external HTTP adapter.
+
+The dedicated Client API domain determines the trusted `CLIENT_API` channel at Nginx; callers do not submit Channel, Client ID, Tenant ID, Credential ID, Scope or Gateway context. Gateway validates the opaque Credential through PLT-I03, uses the returned Tenant ID only for its Tenant Guard, and forwards only `X-Request-Id`, `X-Gateway-Client-Id` and `X-Gateway-Credential-Id` as trusted Client API identity headers. Route lookup is keyed by trusted Channel + Method + Path, so identical paths may exist in another Channel while overlaps remain forbidden within one Channel. The complete edge contract is the [Client API Gateway design](../docs/superpowers/specs/2026-09-05-client-api-gateway-design.md); the current Commerce business contract is the [Hosted Checkout V1 design](../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md).
 
 ### Provider callbacks
 
@@ -272,7 +268,7 @@ Core System
         -> Vault database + KMS
 ```
 
-The caller sends a Purpose, Reason, business resource reference and minimum requested field set. Vault returns an opaque Token or a purpose-scoped minimum Reveal response and emits a sensitive-access audit fact to Platform Support. Gateway and BFF cannot proxy a generic Reveal endpoint. A user-facing screen must call its owning core system, which performs resource authorization and requests only the fields required for that use case.
+Vault V1 accepts only the approved Protect/Reveal contract: the private caller supplies required request headers and a Purpose-bound request body, Protect returns an opaque Token and Reveal returns the protected Value. V1 records sensitive access in its own database; it does not accept Reason/Resource/minimum-field selection and does not publish audit facts to Platform. Gateway and BFF cannot proxy a generic Reveal endpoint. A user-facing screen calls its owning core system, which performs resource authorization before invoking Vault for the approved Purpose.
 
 The `compensation-event` component has no network endpoint. It runs inside each state-owning service and accesses only that service's local table; XXL-Job wakes the registered service Handler rather than reading the table centrally.
 
@@ -280,9 +276,9 @@ The `compensation-event` component has no network endpoint. It runs inside each 
 
 | Backend | Browser access through Gateway | Machine access through Gateway | Exposure decision |
 |---|---|---|---|
-| Client Console BFF | Client Console only | No | Planned; unified auth boundary is designed, runtime implementation remains unauthorized |
-| Partner Console BFF | Partner Console only | No | Planned; unified auth boundary is designed, runtime implementation remains unauthorized |
-| Operations Console BFF | Operations Console only | No | Application foundation initialized; authentication and business endpoints remain unimplemented |
+| Client Console BFF | Client Console only | No | Stateless Client-channel adapter; availability belongs in the status ledger |
+| Partner Console BFF | Partner Console only | No | Stateless Partner-channel adapter; availability belongs in the status ledger |
+| Operations Console BFF | Operations Console only | No | Stateless Operations-channel adapter; availability belongs in the status ledger |
 | Commerce | Scoped Checkout endpoints | Client System | Exposed |
 | Payment Orchestration | No general browser API | Provider callbacks; narrowly scoped Client API if required | Restricted exposure |
 | Finance | Browser uses BFF | Client System | Exposed for machine API |
@@ -300,17 +296,17 @@ The fact that a service is reachable through Gateway does not make every interfa
 - Console BFFs are stateless and initially need no business database. Scale each independently only when traffic requires it.
 - MQ consumers belonging to a core system remain in that system's deployable initially; do not create separate worker services without a scaling or isolation reason.
 - Each state-owning service embeds the hardened `compensation-event` library and stores its events in its own database. Transaction `afterCommit` performs the normal wake-up; XXL-Job provides per-service fallback scanning or sharding, while database Claim/Lease protects multi-instance execution. Do not create a central compensation worker or database.
-- Vault is a separately secured internal deployable and datastore because its threat boundary, KMS permissions and sensitive-access controls differ from the six business systems. It is called through a deployment-restricted private HTTP Spring `@HttpExchange` contract and is never routed through the external Gateway. Current V1 has no application certificate or strong workload identity: its required but spoofable `X-Caller-Service` plus static Allowlist prevents only accidental misuse.
+- Vault is a separately secured internal Go deployable and datastore because its threat boundary, KMS permissions and sensitive-access controls differ from the six business systems. Java consumers call it through the published `@HttpExchange` client over deployment-restricted private HTTP; it is never routed through the external Gateway. Current V1 has no application certificate or strong workload identity: its required but spoofable `X-Caller-Service` plus static Allowlist prevents only accidental misuse.
 - A future Maven module named `*-api` is a lightweight internal HTTP-contract JAR containing `@HttpExchange` interfaces and transport DTOs; it is not a separately running process. The Spring Boot `*-web` module is normally the deployable unit.
 - Internal callers use Spring HTTP Service Clients with Spring Cloud LoadBalancer and Nacos discovery. They do not route service-to-service calls through Gateway and must not introduce new Dubbo or OpenFeign contracts.
-- API Gateway uses Spring Cloud Gateway Server WebFlux. For the Operations first slice it validates the Platform Support Operations Access JWT and uses non-blocking Spring Data Redis Reactive + Lettuce Lua scripts for atomic multi-dimension Token Bucket and lease-based concurrency controls. It does not depend on `paytech-redis-starter`, Redisson or a blocking Redis template.
+- API Gateway uses Spring Cloud Gateway Server WebFlux. Its reactive filter chain uses non-blocking Spring Data Redis Reactive + Lettuce Lua for approved rate/concurrency controls and does not depend on `paytech-redis-starter`, Redisson or a blocking Redis template; exact implemented profiles belong in the status ledger.
 - Confirmed framework, middleware and local-machine decisions are in `TECHNOLOGY_STACK.md` and `LOCAL_DEVELOPMENT_ENVIRONMENT.md`. The local hybrid topology is a development arrangement, not a production deployment topology.
 - Split an entry adapter into another service only for demonstrated security isolation, independent scaling, failure isolation, or release-cadence needs.
 
-## 9. Current build order
+## 9. Change sequencing
 
-1. Keep the six core project roots and API Gateway project root.
-2. Keep `checkout-web` untouched. Treat empty `business-portal-web` and `business-portal-bff` as retired historical placeholders; do not implement under them or delete them without a separate cleanup decision.
-3. Do not create standalone Client API or Provider Callback projects.
-4. Keep the Operations BFF implementation limited to the initialized Web/test application foundation. Defer its business/authentication capabilities, `operations-console-web`, `client-console-*` and `partner-console-*` implementation until explicitly requested.
-5. Do not scaffold `vault-service` until implementation is explicitly requested; when it is created, follow `VAULT_SERVICE_ARCHITECTURE.md` and keep the Code-PMX Vault repository as a reference rather than copying its current security assumptions unchanged.
+1. Preserve the six core project roots, API Gateway, three channel-specific BFF boundaries and approved frontend names; do not revive retired `business-portal-*` names.
+2. Do not create standalone Client API or Provider Callback services: route those logical entry surfaces to the owning core systems.
+3. Add or split a deployable only after a demonstrated security, scaling, failure-isolation or release-cadence need and an approved architecture change.
+4. Before changing `vault-service`, read the Vault V1 Spec, OpenAPI, physical decisions and current status; do not restore historical Binding/lifecycle APIs without a new approved consumer design.
+5. Determine what already exists, is verified or is deployed only from [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) and the affected repository README.

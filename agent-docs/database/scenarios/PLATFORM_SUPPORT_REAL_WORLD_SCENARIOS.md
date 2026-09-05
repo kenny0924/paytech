@@ -1,10 +1,17 @@
 # Platform Support 现实场景与逐表字段映射
 
-最后更新：2026-09-01
+最后更新：2026-09-05
 
 状态：与当前 63 表生成模型同步；自动场景覆盖已建立，PDManer 4.9.3 应用内人工检查待完成
 
 > **当前权威：** 本文对应 [Platform Support 数据库精简设计](../../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[统一公共 API 动态控制面设计](../../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 和 [当前生成模型](../../../platform-support-service/docs/database/platform-support.pdma.json)：63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、7 个 Diagram Groups、31 条复合 FK、85 条具名 CHECK sidecar 契约，以及恰好 36 个 `_hash` 字段。除独立批准的 Phase A 21 表手工 SQL/PLT-I20 切片外，它不授权其余数据库 SQL、Java、运行环境、Gateway 动态 Snapshot 切换或部署。
+
+> **2026-09-05 横切迁移提示：** 本文的逐表记录继续精确描述当前生成模型及当时的消费者假设，不单独拥有
+> Vault 或 `compensation_event` 契约。其中与当前三表 Protect/Reveal、补偿三字段身份和 4 KiB 可选 Payload
+> 不一致的旧字段属于 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md) 中 VAULT-01 / COMP-01
+> 的待迁移现状；完成 [Vault 消费者对齐](../../../docs/superpowers/plans/2026-09-05-vault-consumer-model-alignment.md)
+> 和 [补偿六模型对齐](../../../docs/superpowers/plans/2026-09-05-compensation-event-six-model-alignment.md) 前，
+> 不得把这些场景字段复制到新增模型、SQL、DataObject 或代码。
 
 下表每条代表性记录均隐含合法且非空的 `create_time`；可变记录还隐含 `update_time`。为避免逐行重复，仅显式列出业务字段。
 
@@ -128,6 +135,8 @@ Audit append 在 Chain 行上串行分配序号；`previous_event_hash` 必须�
 ## 7. SCN-PLT-07：六类公共入口、权限/Scope、全局 Guard 与 Target Kill Switch
 
 所有外部 HTTP API 都进入一个 Platform 当前 Route Catalog；内部服务间 HTTP、MQ、XXL-Job、Vault 与数据库调用继续绕过 Gateway。下面是设计模型的代表性当前数据，不表示动态 Gateway Runtime 已完成切换。
+
+> 2026-09-05 Client API 注记：本场景中的 Client API Target、Path、Scope 和 `X-Idempotency-Key` 只用于演示控制面数据形态，不是首条业务 Route 的生效合同，也不取代当前外部命令 Header `Idempotency-Key`。真实值必须由 Owner 接口/安全评审后的受控 Route Manifest 冻结，并遵循 [Client API Gateway 合同决策](../../decisions/2026-09-05-client-api-gateway-contract.md)。
 
 ### 7.1 公共 API 控制面 6 表
 

@@ -1,5 +1,18 @@
 # Platform Support 统一公共 API 动态控制面设计
 
+> 2026-09-05 审计专项后继：[Controller 尽力审计决策](../../../agent-docs/decisions/2026-09-05-platform-controller-best-effort-audit.md)
+> 仅取代本文中既有 Operations Target/Route HTTP 状态命令的“配置与 Audit Event 同事务”约束。
+> 配置事务、CAS、幂等、全局校验及尚未实现的管理命令范围不变；新审计方案的实施状态见当前实现台账。
+
+> 2026-09-05 Client API 后继：[Client API Gateway 合同决策](../../../agent-docs/decisions/2026-09-05-client-api-gateway-contract.md)
+> 及其[完整设计](./2026-09-05-client-api-gateway-design.md)将 Route lookup/冲突域改为
+> `(trusted channel, method, path)`，并取代本文的 Client API Request ID、下游可信 Header 与精确失败码描述。
+> Route Key 及其所需的固定私有 Nginx→Gateway Channel 标记是共享迁移；Client API 的认证、外部 Request ID
+> 和最小下游 Header 语义只适用于 `CLIENT_API`，Operations 的外部、JWT、CORS、下游 Header 和 Request ID 合同不变。
+
+> 本文第 13–16 行及其他实现、验证、运行或部署现在时只保存 2026-09-01 的历史快照，不是当前状态权威；
+> 当前事实只读 `agent-docs/CURRENT_IMPLEMENTATION.md`。
+
 > 状态：用户已于 2026-09-01 完成方案审阅并批准设计；Platform PDManer 后继模型已按
 > [实施计划](../plans/2026-09-01-platform-public-api-control-plane-pdmaner.md) 生成并通过专项自动门禁。Platform Phase A
 > Migration、受控初始化和 PLT-I20 全量 Snapshot 查询已经实现；Target/Route/Console 管理 API、Gateway 动态
@@ -515,7 +528,7 @@ Client/Partner BFF、浏览器、API Credential、Checkout 和 Provider Callback
 Expected Row Version。该要求同样适用于 Target Status 和 Console Resource，不只适用于 Route。
 
 以下 Path 均为 `platform-support-api` 的能力内路径，实际服务地址由 Platform Support 的
-`/platform-support` Context Path 统一形成 `{context-path}/{capability-path}`；不额外增加 `/internal` 命名空间。
+`/platform-support` Context Path 统一形成 `{context-path}/{capability-path}`；调用范围由网络和 Gateway Catalog 边界表达，不增加额外路径命名空间。
 
 ### 7.2 Target API
 

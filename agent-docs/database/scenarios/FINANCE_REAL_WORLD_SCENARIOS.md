@@ -4,6 +4,13 @@
 >
 > 固定背景：USD、Client 40001、Local Partner 41001、Operating Entity 50001、Platform Finance Entity 100003。所有本库引用均在本节有目标记录；跨系统 ID 只保存冻结引用。
 
+> **2026-09-05 横切迁移提示：** 本文的逐表记录继续精确描述当前生成模型及当时的消费者假设，不单独拥有
+> Vault 或 `compensation_event` 契约。其中与当前三表 Protect/Reveal、补偿三字段身份和 4 KiB 可选 Payload
+> 不一致的旧字段属于 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md) 中 VAULT-01 / COMP-01
+> 的待迁移现状；完成 [Vault 消费者对齐](../../../docs/superpowers/plans/2026-09-05-vault-consumer-model-alignment.md)
+> 和 [补偿六模型对齐](../../../docs/superpowers/plans/2026-09-05-compensation-event-six-model-alignment.md) 前，
+> 不得把这些场景字段复制到新增模型、SQL、DataObject 或代码。
+
 ## 1. 场景目录
 
 1. 支付成功与入账

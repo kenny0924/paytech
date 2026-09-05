@@ -1,5 +1,9 @@
 # Platform Public API Control Plane PDManer Implementation Plan
 
+> 2026-09-05 Client API 后继：[Client API Gateway 合同决策](../../../agent-docs/decisions/2026-09-05-client-api-gateway-contract.md)
+> 仅把本文 Step 2 的 Route 唯一键从跨 Channel 全局 `(http_method, external_path_template)` 改为
+> `(channel, http_method, external_path_template)`。本文保存的历史生成与验证证据不因此改写；实际迁移状态只读当前实现台账。
+
 > **Completion status — 2026-09-01:** implementation, independent review and shared-workspace semantic integration are complete. The generated Platform Support successor is `63 tables / 822 fields / 123 unique indexes / 99 access indexes / 107 local relations / 5 one-to-one relations / 7 Diagram Groups`, with 31 composite-FK contracts, 85 named CHECK contracts and exactly 36 `*_hash` fields. Final automated evidence is six generators `--check`, full PDManer/scenario 477/477, requirements build/test 123/123, requirements lint, Markdown 107 files/822 relative links, and `git diff --check`, all passing. Only the PDManer 4.9.3 in-app manual visual/compatibility review remains pending; Java, Migration and Gateway dynamic-runtime cutover remain outside this plan.
 >
 > **Audit-template note:** the 39 unchecked checkboxes below are preserved as the historical implementation procedure and review checklist. Their unchecked rendering does not describe current execution status and must not be mechanically rewritten after completion; the completion evidence above and the generated artifacts are the current status authority.

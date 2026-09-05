@@ -1,5 +1,9 @@
 # Platform Operations 资源级锁重构
 
+> 2026-09-05 窄范围后继：[Controller 尽力审计决策](../decisions/2026-09-05-platform-controller-best-effort-audit.md)
+> 取代下文“授权拒绝因审计需要可写事务”的目标理由。账号/Session/Tenant 业务保护与审计链内部原子性仍保留；
+> 下文实现和验证记录为原变更的历史证据，不代表新审计方案已实施。
+
 日期：2026-09-04。状态：已语义合并到主工作区，并完成真实本地 MySQL/Redis 全链路与覆盖率门禁；尚未部署。
 
 ## 已确认原则

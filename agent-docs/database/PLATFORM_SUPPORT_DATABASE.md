@@ -2,9 +2,13 @@
 
 最后更新：2026-09-04
 
+> **2026-09-05 操作审计专项决定：** 既有 Operations HTTP 操作改为 Controller 注解声明、业务现场采集、独立事务尽力写入，允许丢失且审计故障不改变业务结果。具体范围与前序取代关系见[审计决策](../decisions/2026-09-05-platform-controller-best-effort-audit.md)。审计自身的链/事件/属性原子性和业务身份/幂等保护继续有效；这不是全 Platform 审计降级、模型迁移或已实施声明。
+
 > **2026-09-04 物理实施规则：** 依照 [数据库设计手册](../DATABASE_DESIGN_GUIDE.md)，SQL 不创建 CHECK 或 FOREIGN KEY，保留主键、唯一索引与 NOT NULL。本文及模型中的 FK/复合 FK/CHECK 均表示逻辑关联与业务不变量，不再要求物理约束。已实现的 22 表、273 字段与 PDManer 的结构及完整中文注释一致；其余 41 表不提前落库。当前认证、租户授权、Snapshot/JWKS 和审计通过代码、完整 Tuple 查询、本地事务、锁及 CAS 保证一致性。
 
 状态：**V1 已确认并已生成；PDManer 4.9.3 应用内人工评审待完成**
+
+> **2026-09-05 跨主题对齐：** 本文拥有 Platform 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。当前生成模型中的旧横切字段是 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 记录的迁移债务；新增实现必须遵循 [文档治理路由](../DOCUMENT_GOVERNANCE.md)，不得复制旧契约。
 
 > **当前权威：** 本文受 [Platform Support 57 表精简设计](../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 与 [统一公共 API 动态控制面设计](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 约束。57 表阶段仍是所有未受影响领域的直接前序；当前生成模型增加六张最小公共控制面表后为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、7 个 Diagram Groups、31 条复合 FK、85 条 CHECK，以及恰好 36 个以 `_hash` 结尾的字段。早期 92/97 表和旧 Gateway Policy/Release 结构只保留为历史。
 

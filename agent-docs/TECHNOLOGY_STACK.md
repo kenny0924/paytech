@@ -1,11 +1,8 @@
 # Code-MoR 技术栈基线
 
-> **2026-09-04 Operations 当前增量：** [第一版实施记录](./plans/2026-09-04-operations-console-first-slice.md) 更新本页此前“BFF 仅基础 / Console 前端和认证未实现”的状态：独立 React/TypeScript/Vite/Ant Design 前端与 BFF 浏览器适配已增加；Platform 增加显式启用的 Operations 认证/IAM/人员/审计代码和 22 表手工 SQL 投影；Gateway 已有动态 Snapshot，并扩展可信 Context 和四个 BFF 下游根。Vault 按用户要求暂用隔离开发 Mock + TODO，生产 Vault/KMS、手工 Bootstrap/Key 初始化、真实 MySQL/Redis 联调和部署仍需各自前置。下文旧基础阶段的实现范围描述在被本记录更新处仅保留历史意义，架构所有权与手工基础设施规则不变。
+最后更新：2026-09-05
 
-
-最后更新：2026-09-04
-
-状态：已确认的 Java、中间件和工程治理基线。基础 Maven 构建、八个公共 JAR 源码与本地 `base` Compose Profile 配置已经初始化；既有构建治理 POM 和五个公共 JAR 的 `1.0.0-SNAPSHOT` 已发布到本机 Nexus，新增 `paytech-caffeine-starter`、`paytech-redis-starter`、`paytech-mybatis-support` 及对应 BOM 增量已在本机实现、测试并安装到本机 Maven 缓存但尚未发布到 Nexus；`base` Profile 已完成本机烟测并按需启停。Operations 首期 API Gateway 已在独立 Maven 仓库实现并通过构建、架构、验收与覆盖率门禁。Platform Support 已验证 `api`/`web`/`test` Spring MVC Reactor，并实现 Phase A 手工 SQL/MyBatis 21-table 投影、私有 HTTP PLT-I20 全量 Snapshot Provider、Operations PLT-I22 JWKS Provider 与 Nacos Discovery 注册；Operations Console BFF 本次只初始化应用基础，见第 5.6 节；其余五个核心服务 Java 模块、Platform 剩余业务实现、BFF 业务能力、其他 Console BFF/前端、后续运行环境和生产基础设施仍未实现。
+状态：Confirmed technology baseline。本文只定义产品、版本与技术边界；当前组件的实现、验证和部署状态统一见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
 ## 1. 使用范围
 
@@ -41,7 +38,8 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | Nacos 集成 | Spring Cloud Alibaba | 2025.1.0.0 | 使用官方 Spring Boot 4.0/Spring Cloud 2025.1 兼容线 |
 | 注册/配置客户端 | Nacos Client | 3.1.1 | 由 Spring Cloud Alibaba BOM 管理，不由服务单独指定 |
 | 注册/配置服务端 | Nacos Server | 3.1.2 | 暂不进入刚发布的 3.2 系列 |
-| 同步 Web 栈 | Spring MVC | Spring Boot 管理 | 六个核心服务、BFF 和 Vault 默认使用 MVC |
+| Java 同步 Web 栈 | Spring MVC | Spring Boot 管理 | 六个核心 Java 服务与 BFF 默认使用 MVC |
+| Vault V1 Runtime | Go Server + Java `@HttpExchange` Client | Go 1.27.1；Java 25 | Go Server 是正式 V1 实现；当前只支持三表 Protect/Reveal，Java Client 供内部服务调用 |
 | Gateway Web 栈 | Spring Cloud Gateway Server WebFlux | 5.0.3；Spring Cloud 2025.1.3 线 | Gateway 是 WebFlux 例外，不强行改成 MVC |
 | Gateway 资源服务器 | Spring Security OAuth2 Resource Server JWT | Spring Boot 4.0.8 BOM 管理 | Gateway 只验证 Access JWT 和 Channel/Actor 上下文，不实现账号密码登录 |
 | 内部同步调用 | Spring HTTP Service Client | Spring Framework 管理 | `@HttpExchange` + `RestClient` + LoadBalancer + Nacos；使用部署网络限制的私有 HTTP，不新增 Dubbo/OpenFeign 或应用证书 |
@@ -85,7 +83,7 @@ BOM（Bill of Materials）是 `packaging=pom` 的版本清单。它只在 `depen
 
 ### 5.2 统一构建项目
 
-统一构建项目已经按以下结构初始化：
+统一构建项目采用以下结构：
 
 ```text
 paytech-build/
@@ -116,39 +114,20 @@ paytech-build/
 
 服务父工程继承 `paytech-parent`，不在每个服务中重复导入多个上游 BOM。无法继承统一 Parent 的独立消费者可以只导入 `paytech-dependencies`，但必须自行承担插件管理。
 
-### 5.3 本机 Nexus
+### 5.3 本机制品库边界
 
-- 复用当前电脑已有的 Nexus 3.81.1，地址为 `http://127.0.0.1:18081`；它位于 `mor-local` Compose 之外，不由本仓库创建、重启、删除或管理数据卷。
-- Maven 依赖与插件统一通过 `maven-public` Group 解析，`mirrorOf=*` 防止构建绕过本机代理；Snapshot 发布到 `maven-snapshots`，Release 发布到 `maven-releases`。
-- 本机使用开发者指定的 `/Users/kenny/Desktop/Workspace/Settings/3-Maven/settings/local_settings.xml`，并由 `~/.m2/settings.xml` 引用。该文件包含本机凭据，权限必须为 `600`，不得复制到仓库、日志或文档。
-- POM 的 `distributionManagement` 只引用仓库 ID 和 `${nexus.url}`；地址与凭据由 Maven Settings 注入，服务 POM 不硬编码账号或密码。
-- 当前 `com.paytech` 下的 `paytech-dependencies`、`paytech-parent`、`paytech-build`、`paytech-foundation`、`paytech-common-core`、`paytech-snowflake-id`、`paytech-mvc-web-starter`、`paytech-xxl-job-starter` 和 `paytech-compensation-event` 已发布 `1.0.0-SNAPSHOT`。最新 BOM 增量、`paytech-caffeine-starter`、`paytech-redis-starter` 和 `paytech-mybatis-support` 仅完成本机安装、源码与测试，尚未发布到 Nexus。旧 `mor-*` Snapshot 暂时保留，不作为新服务依赖。
-- 生产制品库、发布权限模型、Release 不可变策略和 CI/CD 发布流程仍需单独设计；本机配置不直接复制到生产。
+- 本地 Maven 制品库基线使用 Nexus Repository Community 3.81.1；实际容器、Loopback 地址、Maven Settings、凭据边界和已知宿主绑定缺口只在 [`LOCAL_DEVELOPMENT_ENVIRONMENT.md`](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 维护。
+- Maven 依赖与插件通过 `maven-public` Group 解析；Snapshot/Release 发布使用与开发者 Settings 一致的仓库 ID。POM 只引用仓库 ID 和 `${nexus.url}`，不得保存地址凭据或直接依赖 Hosted 仓库。
+- Foundation 制品的本机安装、Nexus 发布和验证状态由 `paytech-foundation/README.md` 与 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 记录。新增服务只依赖获准的 `paytech-*` 坐标，不恢复旧 `mor-*` Java 制品依赖。
+- 生产制品库、发布权限、Release 不可变策略和 CI/CD 需独立设计；本机配置不得直接复制到生产。
 
 公司名称确定为 PayTech，统一 Maven 坐标前缀使用 `com.paytech`，公共基础包使用 `com.paytech.foundation`。未来各业务服务在此公司级前缀下按系统边界选择基础包名，不复用历史 `com.payplus` 私有坐标。Code-MoR 仍是产品/项目名称；公司级 Maven artifactId 使用 `paytech-*`，既有本地运行资源和数据库继续使用 `mor-*` / `mor_*`，不把 `Mor` / `mor-` 前缀带入新增 Java 类名、Bean 名、配置前缀、日志、指标或错误 Code。
 
-### 5.4 API Gateway 构建与覆盖率门禁
+### 5.4 组件专用构建门禁
 
-- `api-gateway` 是独立 Maven 仓库，聚合父工程下只有 `api-gateway-web` 与 `api-gateway-test`，不创建空 `*-api` 模块。根 POM 的 Maven Enforcer 在 `validate` 阶段由两个子模块继承，并对传递依赖执行 Gateway 专用禁止清单。
-- 完整验证顺序是 `./mvnw clean verify`、`node scripts/verify-gateway-boundaries.mjs`、`node scripts/verify-jacoco.mjs`；后两个是独立失败关门的源码/配置边界与覆盖率校验，不由 Maven 命令隐式代替。
-- JaCoCo 按未舍入数值同时要求 Instruction 和 Branch Coverage `>= 90%`，只排除精确的 `ApiGatewayApplication`，并校验报告新鲜度与已编译类集合一致性。架构测试和真实随机端口 E2E 验收与默认 `auto` 组一起运行。
-- `api-gateway-web` 同时产出普通依赖 JAR 和可执行 `-exec.jar`；`api-gateway-test` 跳过 install/deploy 且不产出可部署 JAR。本地 Redis 前置、秘密注入、命令与轮换细节见 [`api-gateway/README.md`](../api-gateway/README.md)。
-
-### 5.5 Platform Support 当前运行切片
-
-- `platform-support-service` 继承 `paytech-parent:1.0.0-SNAPSHOT`，使用 Maven 3.9.16 Wrapper，聚合 `platform-support-api`、`platform-support-web` 和 `platform-support-test`。
-- `api` 发布 PLT-I20/PLT-I22 `@HttpExchange` 与不可变 typed DTO；DTO 枚举语义使用稳定 `String` Code。`web` 使用 Spring MVC、Actuator/Prometheus、JDBC、MyBatis、MySQL Driver 与 Nacos Discovery 实现当前切片；Schema 与初始数据由两份手工 SQL 维护。`test` 使用 JUnit 5、本地 MySQL 和真实随机端口 HTTP，不使用 Mockito。
-- 默认端口为 `18106`。PLT-I20、Operations PLT-I22、Health、Liveness、Readiness、Info 与 Prometheus 使用同一私有 HTTP Listener；Endpoint Discovery、JMX 和健康详情披露关闭。Platform 不包含 Spring Security、X.509/mTLS、应用证书或本地异常处理器，错误响应复用 Foundation Starter。
-- Reactor Enforcer 允许 Nacos Discovery 及其精确的 `spring-security-crypto` 工具依赖，但继续禁止 Nacos Config、其余 Spring Security、Redis、RabbitMQ、XXL-Job、Compensation Event、Spring Cloud Gateway 与 Mockito；数据库和当前 HTTP 切片所需依赖由自动门禁精确锁定。
-- PLT-I20 每次在只读 Repeatable Read 边界捕获当前配置，事务外完整校验并返回全量 typed Snapshot；PLT-I22 每次读取并严格校验 Operations Realm 的 public-only ACTIVE/有效 RETIRING RSA Key Set。二者都不实现 ETag、`If-None-Match` 或 `304`。
-- `./mvnw clean verify` 产出普通 Web JAR 与可执行 `-exec.jar`；完整运行边界见 [`platform-support-service/README.md`](../platform-support-service/README.md)。
-
-### 5.6 Operations Console BFF 应用基础
-
-- 独立仓库 `operations-console-bff` 继承 `com.paytech:paytech-parent:1.0.0-SNAPSHOT`，父 Artifact 为 `paytech-operations-console-bff`，仅聚合 `paytech-operations-console-bff-web` 和 `paytech-operations-console-bff-test`；沿用 Java 25、Maven Wrapper 3.9.16 与 Spring Boot 4.0.8，不新建空 `*-api`。
-- Web 只使用 `paytech-mvc-web-starter`、`spring-boot-starter-webmvc`、Actuator、Prometheus Registry 和 Nacos Discovery。Foundation Starter 提供日志、Request ID 与统一异常处理；没有业务 API、登录/IAM、数据库、Redis、MQ、Nacos Config 或前端。
-- 默认私网 HTTP 地址为 `127.0.0.1:18201`，没有 Servlet context path，Actuator 共用同一 Listener。注册名固定为 `operations-console-bff`，与当前 Gateway Approved Target 一致；Nacos 默认 `127.0.0.1:8848` / `mor-local`，运行时必须与 Gateway 使用同一 Namespace。
-- `auto` 使用随机端口并关闭 Nacos Discovery；Web 输出普通 JAR 和 `-exec.jar`，测试模块不发布、不部署。当前初始化不接入认证流量；增加认证端点前必须满足专项禁止凭据/Token Body 日志的要求。具体命令和运行边界见 [`operations-console-bff/README.md`](../operations-console-bff/README.md)。
+- API Gateway 是 WebFlux 例外，默认只含 `web + test`，不创建空 `*-api`；它仍继承统一 Java/Maven/覆盖率基线，但反应式依赖禁止清单和独立 Node 门禁由 [`api-gateway/README.md`](../api-gateway/README.md) 维护。
+- 核心服务和 BFF 的模块、依赖方向与打包规则由 [`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) 拥有；具体端点、端口、依赖白名单、构建命令和产物只写在组件 README。
+- 测试分组、真实协议链路、覆盖率及本地基础设施边界由 [`UNIT_TEST_GUIDE.md`](./UNIT_TEST_GUIDE.md) 拥有。任何组件实现或验证状态只进入 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 和仓库证据。
 
 ## 6. 公共基础 JAR
 
@@ -157,6 +136,7 @@ paytech-build/
 ```text
 paytech-foundation/
 ├── paytech-common-core/
+├── paytech-http-client-support/
 ├── paytech-mybatis-support/
 ├── paytech-mvc-web-starter/
 ├── paytech-snowflake-id/
@@ -166,7 +146,7 @@ paytech-foundation/
 └── paytech-compensation-event/
 ```
 
-八个 Foundation 模块均已实现。依赖方向固定为 `paytech-compensation-event -> paytech-mybatis-support -> paytech-common-core` 和 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；公共 MyBatis 模块不依赖 Spring 或业务枚举，通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
+九个 Foundation 模块的当前状态见状态台账。依赖方向固定为 `paytech-compensation-event -> paytech-mybatis-support -> paytech-common-core` 和 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；`paytech-http-client-support` 依赖 Common Core 与 Spring HTTP 能力但不自动发现业务接口。公共 MyBatis 模块不依赖 Spring 或业务枚举，通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
 
 ### 6.1 `paytech-common-core`
 
@@ -174,14 +154,20 @@ paytech-foundation/
 - 不依赖 Spring MVC、数据库、MQ、Redis 或某个业务服务；
 - 不依赖或复制 Code-PMX/PayPlus 私有公共包。
 
-### 6.2 `paytech-mybatis-support`
+### 6.2 `paytech-http-client-support`
+
+- 为同步 `@HttpExchange` Client 提供统一网络、HTTP 状态、共享错误体和解码异常转换；
+- 由宿主配置显式创建具体接口代理，不扫描业务包、不自动重试、不安装业务 AOP；
+- 只依赖 Common Core 与必要 Spring HTTP 能力，不依赖某个业务服务、数据库或 MVC Server Starter。
+
+### 6.3 `paytech-mybatis-support`
 
 - 提供 MySQL `DATETIME(6)` 与 UTC `Instant` 的显式转换，以及实现 `CodeEnum` 的内部 DataObject 枚举映射；
 - 每个业务枚举由宿主 MyBatis 配置显式注册，不扫描业务包、不替换全局默认枚举 Handler；
 - 未知持久化 Code 失败关闭；外部 API/MQ DTO 继续使用字符串 Code；
 - 只依赖 `paytech-common-core` 与 MyBatis Core，不依赖 Spring、数据库 Driver 或业务模块。
 
-### 6.3 `paytech-mvc-web-starter`
+### 6.4 `paytech-mvc-web-starter`
 
 - 自动提供一个完整 Request/Response/耗时的 INFO 终态日志，以及一个共享 `GlobalExceptionHandler`；MVC 服务不得重复实现本地日志 Filter 或 `@RestControllerAdvice`；
 - 提供统一异常转换、参数校验错误、错误响应和 Request ID/MDC；当前已批准的完整 Body 日志不做脱敏、截断、采样，也不记录 Header/Cookie，后续如需改变必须独立设计；
@@ -190,7 +176,7 @@ paytech-foundation/
 - 不向外返回堆栈、SQL、内部类名、数据库键或敏感值；
 - 外部 API 与内部 API 可以有不同错误映射，但共享稳定错误编码和关联 ID。
 
-### 6.4 `paytech-snowflake-id`
+### 6.5 `paytech-snowflake-id`
 
 - 封装 Snowflake ID 接口、实现、时钟和节点参数校验；
 - 本地单节点固定使用明确的 Region/Worker，例如 `0/0`，禁止随机碰撞式分配；
@@ -198,7 +184,7 @@ paytech-foundation/
 - 检测到超过容忍阈值的时钟回拨时失败关闭，不静默产生可能重复的 ID；
 - 业务代码依赖 ID 接口，不直接创建静态 Snowflake 单例。
 
-### 6.5 `paytech-caffeine-starter`
+### 6.6 `paytech-caffeine-starter`
 
 - 使用 Spring Cache + Caffeine 3.2.4 提供进程内缓存，版本由 Spring Boot 4.0.8 BOM 管理；
 - 每个 Cache 默认最多 10,000 条、写入 10 分钟后过期、拒绝 `null` 并开启 Statistics；容量和 TTL 必须保持有界；
@@ -208,7 +194,7 @@ paytech-foundation/
 - Caffeine 与 Redis 是按方法选择的两个独立 Manager，不是自动串联的 L1/L2 Cache；两边必须使用不同 Cache Name，不能期待任一 Manager 自动回源到另一 Manager；
 - 当前设计不使用 `spring.cache.type` 切换 Manager。不需要进程内缓存的宿主不要引入 Caffeine Starter；只有宿主自己注册同名 `caffeineCacheManager` 时该 Bean 才退让。
 
-### 6.6 `paytech-redis-starter`
+### 6.7 `paytech-redis-starter`
 
 - 通过 Spring Boot 标准 `spring.data.redis.*` 配置和 Spring Data Redis 提供 Lettuce 普通访问；对象缓存优先注入 `RedisJsonTemplate`，字符串、计数器和其他 Redis 原生命令使用 `StringRedisTemplate`；
 - 同一 `RedisCacheManager` 实例以 `cacheManager` 和 `redisCacheManager` 两个 Bean Name 暴露，并标记为 `@Primary`；引入 Redis Starter 后，未显式指定 Manager 的 Spring Cache 注解默认使用 Redis；
@@ -222,13 +208,13 @@ paytech-foundation/
 - 当前已确认部署边界为 Redis 单机模式；Sentinel、Cluster 和 Master/Replica 在获得设计与真实测试前失败关闭；
 - 不提供通用 JSON Repository、Java 类型元数据序列化、Java 原生序列化、默认 TTL、Redis 业务权威状态或补偿 Claim；业务 Repository 负责具体 Key、结构版本、TTL、容量与失败语义。
 
-### 6.7 `paytech-xxl-job-starter`
+### 6.8 `paytech-xxl-job-starter`
 
 - 提供与具体业务能力无关的 XXL-Job Executor 配置、参数校验和生命周期接入；
 - 可以被其他本地调度能力独立使用，不依赖补偿 API、Mapper、数据库或 Handler；
 - 不决定补偿扫描参数、事件类型或 Claim/Lease 语义。
 
-### 6.8 `paytech-compensation-event`
+### 6.9 `paytech-compensation-event`
 
 - 封装每服务本地 `compensation_event`、事务提交后调度、Claim/Lease、重试、Handler 注册和 XXL-Job 兜底扫描适配；
 - 主动依赖 `paytech-xxl-job-starter`，并由本模块自己持有和注册补偿扫描 Handler；
@@ -237,11 +223,10 @@ paytech-foundation/
 
 ## 7. Spring Web 与内部调用
 
-- 六个核心服务、`operations-console-bff`、`client-console-bff`、`partner-console-bff` 和 Vault 默认使用 Spring MVC。
+- 六个核心 Java 服务、`operations-console-bff`、`client-console-bff` 和 `partner-console-bff` 默认使用 Spring MVC；Vault V1 Server 使用 Go，Java 调用方通过发布的 `@HttpExchange` Client 访问。
 - API Gateway 使用 Spring Cloud Gateway Server WebFlux；Operations 首期的 JWT、路由、限流和并发 Filter 保持端到端 Reactive。
-- 当前 Gateway 公网面是静态、method-aware Catalog：只存在 `POST /api/operations/auth/v1/login`、`POST /api/operations/auth/v1/refresh` 和 `POST /api/operations/auth/v1/logout`。匹配精确 `HttpMethod + rawPath` 且要求空 Query；每条路由显式指定 Operations BFF 下游路径 `/auth/v1/login`、`/auth/v1/refresh` 或 `/auth/v1/logout`，没有通配路由或前缀剥离规则。
-- Gateway 验证 Access JWT 和 Operations Channel/Actor 上下文，不处理账号密码登录；业务路由的唯一下游边界仍是 Operations BFF，不直连 Platform Support 或核心系统。Operations BFF 已初始化应用基础，但它与 Platform 的登录/Token 签发代码仍未实现；Platform 已提供尚未被 Gateway 消费的 PLT-I20 Snapshot 和 Operations PLT-I22 JWKS，Gateway 自动测试在完成对接前继续使用有状态协议 Simulator。
-- 未匹配的 Operations API 由 Gateway 本地拒绝，不转发到下游；运行时路由只来自编译时 Catalog，不启用 Discovery Locator、Redis/动态 Route Repository 或通配 `/api/operations/**`。
+- Gateway 验证 Access JWT 和 Channel/Actor 上下文，不处理账号密码登录，也不执行 PLT-I02 或核心资源授权。它消费 Platform 的全量不可变 Snapshot，同时保留 Approved Target Registry、预编译安全实现和绝对安全上限；当前 Route 数量与环境 rollout 见状态台账和 Gateway README。
+- 未匹配的 API 由 Gateway 本地拒绝，不转发到下游；不启用 Discovery Locator、通配外部 Route 或由 Redis 直接充当配置权威。
 - 内部同步接口由提供方 `*-api` JAR 提供 `@HttpExchange` 契约，调用方通过本地 `*Client` 适配器隔离传输 DTO。
 - MVC 服务默认使用 `RestClient`；确有流式或 Reactive 边界时才使用 `WebClient`。
 - Nacos 负责服务发现，Spring Cloud LoadBalancer 负责实例选择；服务间调用不得绕行外部 Gateway。
@@ -278,7 +263,7 @@ paytech-foundation/
 - SQL 变更必须在评审记录中说明执行顺序、影响与回滚方式，应用不得自动执行；
 - 一旦数据库实现获批，PDManer、DDL/DML、DataObject/Mapper/Repository 和本地 MySQL 测试必须在同一变更中保持一致；DataObject 类型使用业务实体名，不加 `DO` 后缀。
 
-Platform Support Phase A 已实现 21-table 手工 Schema 与初始化 DML。其余核心业务数据库实现仍停留在 PDManer 设计阶段；本地 Compose 初始化脚本只准备相互隔离的数据库、最小账号以及中间件自身所需技术表。
+具体哪些服务已具备手工 Schema/DML、物理数据库或 Java 映射只由 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 和组件 README 记录。本地 Compose 初始化脚本只准备相互隔离的数据库、最小账号以及中间件自身所需技术表，不代表业务 Schema 已创建。
 
 ## 10. RabbitMQ 基线
 

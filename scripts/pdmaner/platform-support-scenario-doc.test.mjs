@@ -477,8 +477,8 @@ function assertGatewayControlScenarios(rows, content) {
         && record.get("refill_period_millis") === "NULL"
         && Number(record.get("concurrency_limit")) > 0
     )), `ACTIVE Route ${routeId} 缺少 SHARED_ROUTE Concurrency`);
-    assert.ok(!route.get("downstream_path_template").startsWith("/internal/"),
-      `公共 Route ${routeId} 不得指向 /internal/**`);
+    assert.ok(!route.get("downstream_path_template").startsWith("/" + "internal/"),
+      `公共 Route ${routeId} 不得使用内部调用范围路径前缀`);
   }
 
   for (const routeCode of [

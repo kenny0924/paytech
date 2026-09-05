@@ -4,6 +4,8 @@
 
 状态：V1 逻辑模型、现实场景、71 表 PDManer、Manual Payout 四检查点与 CCT Local Partner Application Typed Namespace 已对齐并通过自动门禁；PDManer 4.9.3 应用内人工 Review 待完成。当前不包含手工数据库 SQL、Java 实现或数据库环境。
 
+> **2026-09-05 跨主题对齐：** 本文拥有 Risk 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。当前生成模型中的旧横切字段是 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 记录的迁移债务；新增实现必须遵循 [文档治理路由](../DOCUMENT_GOVERNANCE.md)，不得复制旧契约。
+
 当前配套资产：[现实场景](./scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md) · [物理建模决策](../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md) · [PDManer 模型](../../risk-compliance-service/docs/database/risk-compliance.pdma.json) · [Dispute 平衡优化设计](../plans/2026-08-28-risk-dispute-balanced-optimization-design.md) · [Dispute 平衡优化实施计划](../plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md) · [Settlement Eligibility 平衡精简设计](../plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-design.md) · [Settlement Eligibility 实施计划](../plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-implementation-plan.md) · [Manual Payout 四检查点对齐实施记录](../plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) · [Limit 平衡精简设计](../plans/2026-08-28-risk-limit-balanced-simplification-design.md) · [Limit 平衡精简实施计划](../plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md) · [Decision Engine 平衡精简实施计划](../plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) · [DD 精简实施计划](../plans/2026-08-27-risk-dd-simplification-implementation-plan.md) · [首版物理建模历史记录](../plans/2026-08-26-risk-compliance-pdmaner-implementation-plan.md)。当前物理基线精确为 71 表、865 字段、106 个唯一索引、74 个访问索引、111 条本库关系、9 条 1:1 关系、8 个 Diagram Groups 和 83 条 CHECK 契约。
 
 ## 1. 目标与边界

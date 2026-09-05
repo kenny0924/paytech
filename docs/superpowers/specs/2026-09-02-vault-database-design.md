@@ -74,9 +74,14 @@ KMS failure, integrity failure or local audit persistence failure must never ret
 
 ## 4. API boundary
 
+2026-09-04 approved URL simplification: use `/vault` as the system prefix and ordinary slash-separated capability
+paths. Former paths and colon action notation have no alias or redirect and return `404`. This changes only the HTTP
+path contract, not private-network access, DTOs, idempotency, encryption or tables.
+Client and Server must be updated together.
+
 ### 4.1 Protect
 
-`POST /internal/v1/vault/records:protect`
+`POST /vault/v1/records/protect`
 
 Required request context:
 
@@ -105,7 +110,7 @@ The key does not determine Stable equality and does not need to match keys used 
 
 ### 4.2 Reveal
 
-`POST /internal/v1/vault/records:reveal`
+`POST /vault/v1/records/reveal`
 
 Request body:
 

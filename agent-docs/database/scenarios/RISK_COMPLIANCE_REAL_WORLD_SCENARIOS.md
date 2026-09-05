@@ -1,8 +1,15 @@
 # Risk & Compliance 现实场景与逐表字段映射
 
-最后更新：2026-08-30
+最后更新：2026-09-05
 
 状态：与 71 表 Risk & Compliance V1 PDManer 基线同步；Settlement Eligibility、Dispute、Manual Payout 四检查点与 CCT Local Partner Application Typed Namespace 已通过自动场景门禁；PDManer 4.9.3 应用内人工检查待完成
+
+> **2026-09-05 横切迁移提示：** 本文的逐表记录继续精确描述当前生成模型及当时的消费者假设，不单独拥有
+> Vault 或 `compensation_event` 契约。其中与当前三表 Protect/Reveal、补偿三字段身份和 4 KiB 可选 Payload
+> 不一致的旧字段属于 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md) 中 VAULT-01 / COMP-01
+> 的待迁移现状；完成 [Vault 消费者对齐](../../../docs/superpowers/plans/2026-09-05-vault-consumer-model-alignment.md)
+> 和 [补偿六模型对齐](../../../docs/superpowers/plans/2026-09-05-compensation-event-six-model-alignment.md) 前，
+> 不得把这些场景字段复制到新增模型、SQL、DataObject 或代码。
 
 当前 Manual Payout 契约以 [四检查点对齐实施记录](../../plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) 为准。
 

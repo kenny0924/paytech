@@ -1,5 +1,13 @@
 # MoR Compensation Event Implementation Plan
 
+> **Historical / superseded on 2026-09-05:** This is the execution record for the original contract, not a current
+> runnable plan. Use [`COMPENSATION_EVENT_GUIDE.md`](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md) for the current
+> Foundation contract and the
+> [six-model alignment plan](./2026-09-05-compensation-event-six-model-alignment.md) for pending migration work.
+> Checkboxes, file paths and commands below that use Testcontainers, automatic test Schema creation,
+> `execution_type`, source ID/version, Schema version, Canonical Envelope, Payload Hash or a 64 KiB Payload are
+> intentionally preserved as history and must not be executed or copied into new work.
+
 > **Execution note:** This plan has no agent-skill dependency. Checkboxes remain as the original verification and
 > publication gates; they are not retroactively marked complete without current command evidence.
 

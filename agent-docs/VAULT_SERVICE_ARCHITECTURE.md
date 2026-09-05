@@ -1,11 +1,16 @@
 # Vault Service 架构与数据保护规范
 
-最后更新：2026-09-02
+最后更新：2026-09-05
 状态：未被当前 V1 取代的安全边界仍有效；其余内容是历史架构记录
+
+> **2026-09-04 URL 精简：** 当前业务路径仅为 `POST /vault/v1/records/protect` 和
+> `POST /vault/v1/records/reveal`，以 [OpenAPI](../vault-service/api/openapi/v1.yaml) 为准；
+> 不保留旧路径或冒号路径的别名/重定向。下方历史接口清单不是当前可调用路由，
+> 移除路径前缀不改变内部专用、私网访问和静态 Allowlist 边界。
 
 > **当前 V1 权威与取代范围：** [Vault Minimal Database Design](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[VAULT_PHYSICAL_DECISIONS.md](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和生成的 [vault.pdma.json](../vault-service/docs/database/vault.pdma.json)共同管理当前 API、调用者识别假设、Token、密码学持久化、Protect 幂等、三表拓扑和本地访问审计。本文此前要求的 Binding/Bind/Confirm/Copy、强制 mTLS/Workload Identity、广泛 API 与复杂 Record 生命周期、18 表拓扑、Replay Capsule/轮换任务等复杂幂等以及 Platform Audit/WORM 审计均在被新设计取代处仅为历史，不能作为当前 V1 实现要求。当前模型精确为 3 表 / 30 字段 / 3 个非主键唯一索引 / 4 个访问索引 / 2 条本库 `n:1` 关系 / 0 条一对一关系 / 1 个 `vault_core` Diagram Group。
 >
-> 当前 V1 使用部署网络限制的私有 HTTP，不持有 X.509 应用证书，并接受必需的 `X-Caller-Service` Header 与静态 `caller_service + action + data_type + purpose` Allowlist 作为 MVP 信任假设。该 Header 可被内部调用方伪造，只能 best-effort 防止误用，不是 mTLS、Workload Identity 或其他强服务认证；当前三表模型也没有 Binding。公网 TLS、可信 Client IP 与 Java 服务私有 HTTP 的统一边界以 [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准。`vault-service` 仅包含数据库设计资产，没有 Java/Maven、手工 DDL/DML、物理数据库、KMS 集成、运行时认证或部署实现。自动模型门禁已通过，但 PDManer 4.9.3 应用内人工评审仍待完成。
+> 当前 V1 使用部署网络限制的私有 HTTP，不持有 X.509 应用证书，并接受必需的 `X-Caller-Service` Header 与静态 `caller_service + action + data_type + purpose` Allowlist 作为 MVP 信任假设。该 Header 可被内部调用方伪造，只能 best-effort 防止误用，不是 mTLS、Workload Identity 或其他强服务认证；当前三表模型也没有 Binding。公网 TLS、可信 Client IP 与 Java 服务私有 HTTP 的统一边界以 [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准。独立 `vault-service` 中的 Go Server 与 Java Client 是正式 V1 实现，结论见 [2026-09-05 决策](./decisions/2026-09-05-document-governance-and-conflict-resolution.md)，协议以 [OpenAPI](../vault-service/api/openapi/v1.yaml) 为准。当前 local/test 成熟度不证明生产 KMS、强服务身份、真实业务接入、部署或合规完成；精确状态只在 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 维护。
 >
 > 本文继续生效的部分是：Vault 只保护获批的可恢复非卡敏感值、永不拥有业务含义、内部专用且不经 Gateway/BFF/浏览器暴露、禁止任何服务直读 Vault 数据库、PAN/CVV/CVC/完整磁道/卡有效期/PIN/PIN Block 排除、KMS/Secrets/对象存储/Provider Tokenization 职责分离，以及其他不与当前三表设计冲突的安全边界。
 
@@ -14,9 +19,9 @@
 本文保存 Code-MoR 集中式 Vault Service 的长期职责边界、安全控制和历史设计背景。涉及当前 API、Trust、Token、数据模型、幂等或审计时必须先读取上方当前 V1 权威，并只把本文未被取代的安全边界作为约束。后续涉及以下任务时必须先读取本文：
 
 - 把非卡类敏感字段从业务库密文迁移为 Vault Token；
-- 创建或修改 `vault-service`、`vault-api` 或 Vault Client；
+- 创建或修改 `vault-service` Go Server、OpenAPI 或 Java Client；
 - 设计 Vault 的 PDManer 模型、手工 DDL/DML、DataObject、Mapper 或 Repository；
-- 新增敏感数据 Protect、Reveal、Bind、Owner Confirm、Retire、Rewrap 或 Blind Index 查询；
+- 新增或修改 Protect/Reveal，或评估 Bind、Copy、Retire、Rewrap、Blind Index 等 V1 之外的能力；
 - 调整敏感数据授权、解密审计、MVP 默认保留或密钥轮换；
 - 判断某类数据应进入 Vault、Secrets Manager、对象存储还是 Provider Tokenization。
 
@@ -127,32 +132,32 @@ Vault Token 只是敏感值的安全引用。例如：
 
 完整 Token 永远不得进入外部 API、普通日志、MQ 或 BCR。当前 V1 没有 Binding 或 `CopyForBinding`；`REFERENCE/STABLE` Token 只是数据库定位符，不是设计上的授权凭据。唯一已批准的跨系统传递是 Commerce Consumer Email/Phone 稳定 Value Token，可在 Commerce→Payment→Risk 内部同步最小契约中传递，Payment 只透传不持久化。必须明确记录当前限制：任一能进入内部网络且通过静态 `X-Caller-Service + action + data_type + purpose` Allowlist 的调用方，只要取得 Token 就可 Reveal；Header 可伪造，因此这只是已接受的 MVP Trust Assumption，不是资源级 Binding 或强服务认证。
 
-## 4. 历史目标：部署和 Java 工程边界
+## 4. 当前部署和工程边界
 
-以下工程结构是先前架构目标，不是当前 V1 已实现或已授权范围；当前仅存在独立 `vault-service` 数据库设计项目：
+Vault V1 采用 Go Server + Java Client，避免把安全服务实现强行套入 Java 业务服务分层：
 
 ```text
 vault-service/
-├── pom.xml
-├── docs/
-│   └── database/
-│       └── vault-service.pdma.json
-├── vault-api/                 # 内部 @HttpExchange 契约和传输 DTO
-├── vault-client-starter/      # 代理配置、请求/响应信封、脱敏和安全拦截器
-├── vault-web/                 # 唯一部署单元
-└── vault-test/                # auto/manual 与安全链路测试
+├── api/openapi/v1.yaml        # 唯一 HTTP 契约
+├── cmd/vault-server/          # Go 部署入口
+├── internal/                  # Go 应用、领域、HTTP、策略、持久化和集成实现
+├── paytech-vault-client/      # Java Client JAR
+├── vault-test/                # Java 跨语言/生命周期验证
+├── docs/database/             # PDManer、手工 Schema 与物理决策
+├── go.mod
+└── pom.xml                    # Java Client/Test 聚合构建
 ```
 
 固定规则：
 
-- `vault-api` 是轻量 JAR，不运行，不依赖数据库、KMS SDK 或业务实现；
-- `vault-client-starter` 依赖 `vault-api`，封装 Spring HTTP Service Client、mTLS、Workload Identity、超时、错误映射和日志脱敏；
-- `vault-web` 采用 Controller → Processor → Domain Service → Repository/Integration Port 的依赖方向；
-- Vault 内部同步接口使用 Spring `@HttpExchange`，通过 Nacos 和 Spring Cloud LoadBalancer 发现实例，不使用 Dubbo、OpenFeign 或 API Gateway；
+- OpenAPI 是 Go Server 和 Java Client 的共同协议权威；两端不能维护不同的手写契约；
+- Go Server 拥有 V1 Protect/Reveal、Allowlist、密码学、三表持久化和本地审计；业务 Java 服务只依赖轻量 Java Client，不导入 Vault 持久化模型；
+- Java Client 封装私有 HTTP、超时、错误映射和日志安全，不提供 V1 中不存在的 Binding/Copy/Metadata API；
+- Vault 通过私有网络/Nacos 供内部服务调用，不经 Dubbo、OpenFeign、API Gateway、BFF 或浏览器；
 - Vault 数据库独立于六大业务库，禁止跨库事务、跨库查询、共享表和跨库外键；
-- 只有在用户批准物理设计后，才能从 `agent-docs/templates/pdmaner/template.pdma.json` 派生 Vault PDManer 模型。
+- Schema 只由评审后的手工 SQL 管理；应用和测试不得自动建表、迁移或 Seed。
 
-Vault 的入口仍只允许部署限制的私有网络且不得经 Gateway/BFF/浏览器访问。先前“mTLS 和 Workload Identity 是强制条件”以及“应用使用内部 HTTPS”的结论均已被当前 V1 传输设计取代：V1 使用普通内部 HTTP、不持有应用证书，并以必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 作为已接受的 MVP 信任假设，不构成强身份认证；mTLS 或其他强 Workload Identity 留待未来独立设计。下方历史章节中的 HTTPS/mTLS/证书描述作为历史证据保留，不得解释为当前要求。
+Vault 的入口只允许部署限制的私有网络。V1 使用普通内部 HTTP、不持有应用证书，并以必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 作为已接受的 MVP 信任假设，不构成强身份认证；mTLS 或其他强 Workload Identity 留待未来独立设计。下方历史章节中的 HTTPS/mTLS/证书描述作为历史证据保留，不得解释为当前要求。
 
 ## 5. 历史/未来目标：业务数据库保存形态
 
@@ -189,7 +194,7 @@ vault_metadata_hash                 # 仅存在跨系统校验或内容承诺消
 5. Token 与所选元数据由业务系统建立适合自身语义的约束；Vault 不替业务系统拥有身份唯一性、业务 Payload Schema 或派生维度。
 6. Masked Value 只支持无需解密的列表和详情展示。完整值必须经过 Reveal，不能从日志、缓存或其他投影恢复；不需要检索的字段不创建 Blind Index，防止扩大可关联面。
 7. 已有系统若在专项文档中证明了完整 Token/Version/Metadata Hash、Blind Index/Key Version 或 Masked Value 的并发、同步、校验、承诺或展示消费者，继续保持该现行约束；本规则只禁止无消费者的机械套餐化删除或新增。
-8. 业务事件不发送完整 Token。默认长期跨系统 Token 使用 `CopyForBinding`；批准的 Consumer Email/Phone 稳定 Token 只允许经 Commerce→Payment→Risk 内部同步最小契约传递，不进入 MQ、外部 API、普通日志或 BCR。
+8. 业务事件不发送完整 Token。历史方案曾要求长期跨系统 Token 使用 `CopyForBinding`，当前 V1 已明确不支持；现行唯一例外是批准的 Consumer Email/Phone 稳定 Token 只允许经 Commerce→Payment→Risk 内部同步最小契约传递，不进入 MQ、外部 API、普通日志或 BCR。
 
 ### 5.1 批准的 Commerce Consumer Stable Value Tokenization
 
@@ -243,17 +248,17 @@ DATA_SHARING
 
 | 能力 | 建议路径 | 主要语义 |
 |---|---|---|
-| Protect | `POST /internal/v1/vault/records:protect` | 校验通用 Data Type/Purpose/Classification/大小/安全策略并创建 `UNBOUND` Record；通用标量可按 Catalog 规范化，业务系统已校验的不透明 Payload 不由 Vault 解析业务 Schema 或派生维度 |
-| Protect Stable Value | `POST /internal/v1/vault/values:tokenize` | 仅限批准的 Consumer Email/Phone；按注册规范化和 Value Identity 查找/创建稳定 Opaque Token，并为准确 Owner Resource 建立或复用 Reference Binding；相同字段规范化值返回同 Token |
-| BindReference | `POST /internal/v1/vault/records:bind-reference` | Token 位于加密请求体；默认在业务本地事务成功后确认唯一资源 Binding；已批准 pre-bind 模式可先同步 Bind，但必须等待 Owner Confirm 后才允许普通 Reveal |
-| ConfirmReference | `POST /internal/v1/vault/records:confirm-reference` | 仅用于已批准 pre-bind；业务本地提交成功后幂等确认准确 Owner Resource 已持有该 Binding，不改变 Intended Binding |
-| Reveal | `POST /internal/v1/vault/records:reveal` | Token 位于加密请求体；按 Workload、Tenant、资源、字段、Purpose 和 Reason 授权后返回受保护明文信封 |
-| Metadata | `POST /internal/v1/vault/records:metadata` | Token 位于加密请求体；返回状态和调用方明确请求且已获批准的可选 Version、Masked Value、Blind Index/Key Version 或 Metadata Hash，不返回密文或明文 |
-| Derive Blind Index | `POST /internal/v1/vault/blind-index:derive` | 对受控查询输入生成当前及轮换窗口内的 Blind Index，不创建 Vault Record |
-| Read Record Blind Indexes | `POST /internal/v1/vault/records:blind-indexes` | Vault 根据加密请求体中的 Token 解密现有 Record，在 `INDEX_MAINTENANCE` Purpose 下返回当前/上一轮换窗口的 Index 与 Key Version，不返回明文 |
-| CopyForBinding | `POST /internal/v1/vault/records:copy-for-binding` | 经来源所有者批准，在 Vault 内复制值并创建新 Record/Token 与接收方 Intended Binding；不复用来源 Token、不返回明文 |
-| Rewrap | `POST /internal/v1/vault/crypto-jobs:rewrap` | 创建受控异步 Key Rewrap Job；不改变业务值、Token 或 Metadata Hash |
-| Retire | `POST /internal/v1/vault/records:retire` | Token 位于加密请求体；业务引用被替换或终止后逻辑解绑并禁止普通 Reveal，密文与审计继续保留 |
+| Protect | 已废弃历史接口 | 校验通用 Data Type/Purpose/Classification/大小/安全策略并创建 `UNBOUND` Record；通用标量可按 Catalog 规范化，业务系统已校验的不透明 Payload 不由 Vault 解析业务 Schema 或派生维度 |
+| Protect Stable Value | 已废弃历史接口 | 仅限批准的 Consumer Email/Phone；按注册规范化和 Value Identity 查找/创建稳定 Opaque Token，并为准确 Owner Resource 建立或复用 Reference Binding；相同字段规范化值返回同 Token |
+| BindReference | 已废弃历史接口 | Token 位于加密请求体；默认在业务本地事务成功后确认唯一资源 Binding；已批准 pre-bind 模式可先同步 Bind，但必须等待 Owner Confirm 后才允许普通 Reveal |
+| ConfirmReference | 已废弃历史接口 | 仅用于已批准 pre-bind；业务本地提交成功后幂等确认准确 Owner Resource 已持有该 Binding，不改变 Intended Binding |
+| Reveal | 已废弃历史接口 | Token 位于加密请求体；按 Workload、Tenant、资源、字段、Purpose 和 Reason 授权后返回受保护明文信封 |
+| Metadata | 已废弃历史接口 | Token 位于加密请求体；返回状态和调用方明确请求且已获批准的可选 Version、Masked Value、Blind Index/Key Version 或 Metadata Hash，不返回密文或明文 |
+| Derive Blind Index | 已废弃历史接口 | 对受控查询输入生成当前及轮换窗口内的 Blind Index，不创建 Vault Record |
+| Read Record Blind Indexes | 已废弃历史接口 | Vault 根据加密请求体中的 Token 解密现有 Record，在 `INDEX_MAINTENANCE` Purpose 下返回当前/上一轮换窗口的 Index 与 Key Version，不返回明文 |
+| CopyForBinding | 已废弃历史接口 | 经来源所有者批准，在 Vault 内复制值并创建新 Record/Token 与接收方 Intended Binding；不复用来源 Token、不返回明文 |
+| Rewrap | 已废弃历史接口 | 创建受控异步 Key Rewrap Job；不改变业务值、Token 或 Metadata Hash |
+| Retire | 已废弃历史接口 | Token 位于加密请求体；业务引用被替换或终止后逻辑解绑并禁止普通 Reveal，密文与审计继续保留 |
 
 接口细则：
 

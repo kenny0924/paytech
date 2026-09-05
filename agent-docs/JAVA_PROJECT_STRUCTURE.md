@@ -1,8 +1,5 @@
 # Java 项目结构规范
 
-> **2026-09-04 Operations 当前增量：** [第一版实施记录](./plans/2026-09-04-operations-console-first-slice.md) 更新本页此前“BFF 仅基础 / Console 前端和认证未实现”的状态：独立 React/TypeScript/Vite/Ant Design 前端与 BFF 浏览器适配已增加；Platform 增加显式启用的 Operations 认证/IAM/人员/审计代码和 22 表手工 SQL 投影；Gateway 已有动态 Snapshot，并扩展可信 Context 和四个 BFF 下游根。Vault 按用户要求暂用隔离开发 Mock + TODO，生产 Vault/KMS、手工 Bootstrap/Key 初始化、真实 MySQL/Redis 联调和部署仍需各自前置。下文旧基础阶段的实现范围描述在被本记录更新处仅保留历史意义，架构所有权与手工基础设施规则不变。
-
-
 最后更新：2026-09-05
 
 ## 1. 使用范围
@@ -15,11 +12,11 @@
 - 集成 Vault、`compensation-event` 或 XXL-Job 异步恢复任务；
 - 调整包结构、依赖方向、事务边界或部署单元。
 
-本文定义未来六个核心 Java 服务及内部 Vault 的默认工程形态。`api-gateway`、`operations-console-bff`、`client-console-bff` 和 `partner-console-bff` 的业务边界仍以 `APPLICATION_ARCHITECTURE.md` 为准；若它们不需要完整领域分层，不得为了形式一致强行创建空层。Gateway 首期还必须遵守 `plans/2026-08-29-operations-api-gateway-design.md`，只创建 `api-gateway-web` 和 `api-gateway-test`，不创建空 `*-api`。涉及可靠异步事件或敏感数据时，还必须分别读取 `COMPENSATION_EVENT_GUIDE.md` 和 `VAULT_SERVICE_ARCHITECTURE.md`。
+本文定义六个核心 Java 服务的默认工程形态，并说明 Gateway/BFF 的窄工程例外。`api-gateway`、`operations-console-bff`、`client-console-bff` 和 `partner-console-bff` 的业务边界仍以 `APPLICATION_ARCHITECTURE.md` 为准；若它们不需要完整领域分层，不得为了形式一致强行创建空层。涉及可靠异步事件或敏感数据时，还必须分别读取 `COMPENSATION_EVENT_GUIDE.md` 和 `VAULT_SERVICE_ARCHITECTURE.md`。Vault V1 Server 使用 Go，不套用本文的 Java 服务结构；Java 侧只发布内部调用 Client。
 
 Java、Spring、Maven BOM/Parent、MySQL、RabbitMQ、Redis、Nacos、Gateway 和可观测性版本统一以 [TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md) 为准。本机运行方式以 [LOCAL_DEVELOPMENT_ENVIRONMENT.md](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 为准。
 
-Operations 首期 `api-gateway` 已按批准边界实现；其路由、协议、Guard 与 JWT/JWKS 校验约束继续以 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 为准，应用传输和 Client IP 信任来源以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准。Platform Support 的当前运行切片见第 3.3 节；Operations Console BFF 已按本次明确授权初始化最小应用基础，边界见第 3.4 节。除此之外，本阶段仍禁止主动为核心服务业务能力、其他 Console BFF/前端或 Vault 创建脚手架；只有用户明确要求开始实现具体 Java 项目或垂直切片时，才能应用本文创建目录或代码。
+组件当前实现范围统一见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)，不在本结构规范中复制某日的切片状态。创建新的核心业务能力、Console BFF/前端或其他垂直切片仍需明确任务授权；Vault V1 已采用独立 Go Server + Java Client，不按本文的 Java 业务服务模板重新创建。
 
 ## 2. 参考项目结论
 
@@ -103,88 +100,30 @@ paytech-build/
 └── paytech-parent/           # packaging=pom；统一插件和构建规则
 ```
 
-- `paytech-dependencies` 导入 Spring Boot 4.0.8、Spring Cloud 2025.1.3 和 Spring Cloud Alibaba 2025.1.0.0 BOM，并管理 MyBatis、Redisson、XXL-Job 等未被上游统一管理的版本。
-- `paytech-parent` 导入上述 BOM，固定 Java 25、UTF-8、Compiler、Surefire、Failsafe、JaCoCo、Enforcer 和 Spring Boot Maven Plugin 等规则。
+- `paytech-dependencies` 导入已批准的 Spring Boot、Spring Cloud 和 Spring Cloud Alibaba BOM，并管理未被上游统一管理的依赖版本；准确版本只在 `TECHNOLOGY_STACK.md` 维护。
+- `paytech-parent` 导入上述 BOM，统一 Java、编码、Compiler、Surefire、Failsafe、JaCoCo、Enforcer 和 Spring Boot Maven Plugin 等构建规则；准确版本只在 `TECHNOLOGY_STACK.md` 维护。
 - 每个服务父工程继承 `paytech-parent`；服务子模块只声明实际使用的依赖，不重复声明版本。
 - BOM 只提供 `dependencyManagement`，不会自动引入 Starter 或公共 JAR。
-- 本机开发的 `1.0.0-SNAPSHOT` 先发布到 Nexus `maven-snapshots`，服务统一通过 `maven-public` 解析；服务不得直接配置 Hosted 仓库 URL。
-- 发布地址和认证来自开发者 Maven Settings，POM 只保留与 Settings 一致的 `maven-releases` / `maven-snapshots` 仓库 ID 和 `${nexus.url}`，不得保存凭据。
+- 共享制品通过批准的 Nexus Snapshot/Release 仓库发布，并从聚合仓库解析；准确的本机发布、可用性和验证状态见 `LOCAL_DEVELOPMENT_ENVIRONMENT.md` 与 `CURRENT_IMPLEMENTATION.md`。服务不得直接配置 Hosted 仓库 URL。
+- 发布地址和认证来自开发者 Maven Settings；POM 只保留与 Settings 一致的仓库 ID 和属性占位符，不得保存凭据。
 
-公共能力按边界拆分为 `paytech-common-core`、`paytech-mvc-web-starter`、`paytech-snowflake-id`、`paytech-caffeine-starter`、`paytech-redis-starter`、`paytech-xxl-job-starter` 和 `paytech-compensation-event`。`paytech-mvc-web-starter` 自动提供一个完整 Request/Response/耗时 INFO 终态日志和共享 `GlobalExceptionHandler`；MVC 服务不得复制本地日志 Filter、异常 Advice 或错误响应模型。Redis Starter 暴露同一实例的 `cacheManager`/`redisCacheManager` 并以 `@Primary` 作为 Spring Cache 默认 Manager；每个 Redis Cache 由宿主声明 `RedisCacheDefinition<T>(cacheName, concreteValueType, ttl)`，未声明名称不动态创建。Caffeine 只注册 `caffeineCacheManager`，仅用于可回源的有界进程内加速；同时使用两者时，Caffeine 方法必须在 Spring Cache 注解显式选择该 Manager，且两边使用不同 Cache Name。两者不是 L1/L2，也不使用 `spring.cache.type` 切换；不需要 Caffeine 的宿主不要引入对应 Starter。不得让任何 Cache 承担权威事实、幂等、锁、跨实例一致性、Vault Reveal、凭据或敏感明文，也不得把跨领域 DTO、业务枚举、Repository、Mapper 或第三方 Provider 模型放入公共 JAR。详细职责见 `TECHNOLOGY_STACK.md`。
+Foundation JAR 的完整清单、依赖边界和准确版本只在 `TECHNOLOGY_STACK.md` 维护，本文不复制第二份清单。MVC 服务不得复制 Foundation 已拥有的本地日志 Filter、异常 Advice 或错误响应模型。Redis 与 Caffeine 的 Manager、Cache Name、类型和 TTL 必须按技术栈定义显式声明；不得让 Cache 承担权威事实、幂等、锁、跨实例一致性、Vault Reveal、凭据或敏感明文，也不得把跨领域 DTO、业务枚举、Repository、Mapper 或第三方 Provider 模型放入公共 JAR。
 
 公共能力按最小证据提取：天然属于跨服务基础设施，或至少两个真实服务已经共享同一稳定契约时，才新增职责单一的 Foundation JAR。单个服务的实现先保留在本服务，不为未来复用预建带系统名前缀的包装类、空模块、空层或总揽式 `common`；新增本地技术基础设施前先检查现有 Foundation 是否已经拥有该职责。
 
-### 3.2 已实现的 API Gateway 工程边界
+### 3.2 API Gateway 工程例外
 
-Operations 首期 Gateway 的实际仓库结构是：
+API Gateway 是基于 Spring Cloud Gateway WebFlux 的入口适配器，不套用核心服务的 `api → web` DDD 分层。默认只有可运行 `api-gateway-web` 与不可部署的 `api-gateway-test`；只有出现真实可复用 Java 合同时才增加 API JAR。Gateway 不拥有业务数据库、核心授权、页面聚合或业务编排，也不得依赖 MVC、阻塞 Redis 客户端或核心业务持久化模型。
 
-```text
-api-gateway/
-├── pom.xml                              # 聚合、统一版本和继承式 Enforcer
-├── api-gateway-web/                    # 唯一可运行的 Reactive Gateway 模块
-├── api-gateway-test/                   # auto、Simulator、架构/E2E 与覆盖率证据
-├── scripts/
-│   ├── verify-gateway-boundaries.mjs
-│   └── verify-jacoco.mjs
-└── README.md                            # 本地前置、启动、验证、Guard 状态与 Access Log HMAC 手册
-```
+动态 Route/Guard Snapshot、Approved Target Registry、可信协议和绝对安全上限由 Gateway 专项架构拥有；具体仓库结构、端点、端口、依赖、验证与部署状态只见 [`api-gateway/README.md`](../api-gateway/README.md) 和 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
-该项目没有 `api-gateway-api` 或其他空 `*-api` 模块，也不套用核心服务的 Domain/Repository/Mapper 分层。生产/测试依赖方向只是：
+### 3.3 BFF 工程例外
 
-```text
-api-gateway-test ────→ api-gateway-web
-```
+BFF 通常只需要 `web + test`：它是无数据库、无签名密钥的页面聚合与 Channel 适配部署单元。简单转发可由入站适配器直接委托本地 typed Client Port；真实的跨 API 授权查询组合、响应塑形和展示模型组装进入 BFF Processor。BFF 不拥有核心事实，也不编排跨系统业务事务。
 
-- `api-gateway-web` 使用 Spring Cloud Gateway Server WebFlux 5.0.3、OAuth2 Resource Server JWT、Spring Data Redis Reactive/Lettuce Lua、Actuator 和 Micrometer；它负责入口、Access JWT 与 Channel/Actor 校验、受信上下文、Guard、路由、请求 ID、结构化访问日志和健康/指标，不处理账号密码登录、页面聚合或业务编排。
-- 公共面只包含 `POST /api/operations/auth/v1/login`、`POST /api/operations/auth/v1/refresh` 和 `POST /api/operations/auth/v1/logout` 三条静态精确路由。Catalog 以 `HttpMethod + rawPath` 和空 Query 匹配，并为每条路由显式指定唯一 Operations BFF 路径 `/auth/v1/login`、`/auth/v1/refresh` 或 `/auth/v1/logout`；没有通配或前缀改写。未匹配 Operations API 在 Gateway 本地返回错误，不转发给 Simulator/未来 BFF。Operations BFF、Platform Support 认证代码和前端不属于本实现。
-- 生产模块禁止 MVC/Servlet、Foundation Redis/Caffeine/MVC Starter、Redisson、Nacos Client、Testcontainers、Mockito、Platform/core Client、Redis Template（包括 Reactive Template）/阻塞 Connection、手工 Reactor Blocking/Subscription 和应用自有动态 Route Repository。路由只来自三条编译时 Catalog 定义，Discovery Locator、Redis Route Repository、Retry 和原始 Path Metric Tag 均显式关闭。
-- `api-gateway-test` 以 Compile Scope 依赖 `web`，从真实随机端口私有 HTTP Gateway 入口经过完整生产链，并通过真实内部 HTTP 连接 JWKS 和有状态 Operations BFF Simulator；测试默认携带 Nginx 会覆盖的单值合法 `X-Real-IP`。它不引入 Mockito/Testcontainers；Redis 只连接已运行的 `127.0.0.1:16379` 仓库 Compose Redis，只接受 `PAYTECH_REDIS_PASSWORD`，每次运行使用唯一 Namespace 并只以 `SCAN` 清理；测试不启动 Docker/Testcontainers，不连接开发者 `6379` Redis。
-- 默认 `auto` 包含架构和真实 HTTP E2E 验收。`./mvnw clean verify` 之后还必须独立运行两个 Node 门禁；JaCoCo 对未舍入 Instruction/Branch 同时要求 `>= 90%`，只排除精确的 `ApiGatewayApplication`，并校验新鲜度与编译类一致性。
-- `api-gateway-web` 产出普通 JAR 和可执行 `-exec.jar`；`api-gateway-test` 跳过 install/deploy 且不产出可部署 JAR。Application/Management 默认端口分别为 `18080`/`19080`，健康组成与运行命令见 [`api-gateway/README.md`](../api-gateway/README.md)。
+没有真实共享 Java 消费者时不创建 `*-api`，没有业务职责时不创建空 Processor/Domain/Repository。各 BFF 当前模块、端点、端口、依赖和验证状态只在自己的 README 与 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 维护。
 
-### 3.3 Platform Support 当前运行切片
-
-Platform Support 当前实际仓库结构是：
-
-```text
-platform-support-service/
-├── pom.xml
-├── platform-support-api/               # PLT-I20/PLT-I22 @HttpExchange 与不可变 typed DTO
-├── platform-support-web/               # MVC、MyBatis、Nacos Discovery、Snapshot/JWKS Provider
-├── platform-support-test/              # MySQL、HTTP、架构与覆盖率 auto 门禁
-├── docs/database/                       # 已批准的完整 PDManer 设计输入
-└── README.md
-```
-
-当前生产/测试依赖方向严格为：
-
-```text
-platform-support-test ────→ platform-support-web ────→ platform-support-api
-```
-
-- `platform-support-api` 当前发布有真实 Gateway 消费者的 PLT-I20 与 Operations-only PLT-I22 `@HttpExchange` 查询和不可变 DTO；成功调用分别返回完整 typed Snapshot 与完整有效 public JWKS，不使用 ETag/304。接口 DTO 的枚举语义使用 `String` Code，不暴露 Java Enum。
-- `platform-support-web` 实现 Spring MVC/Actuator、Phase A MyBatis 21-table 投影、Snapshot/JWKS 读取校验组装和 Nacos Discovery 注册；它通过私有 HTTP 暴露 PLT-I20、PLT-I22 与 Actuator，不包含 Spring Security、X.509/mTLS、应用证书或本地异常处理器，并复用 Foundation 的日志与全局错误边界。Schema 与初始数据由 `docs/database/sql` 下两份手工 SQL 维护，应用启动不执行 SQL。
-- `platform-support-test` 通过仓库 `local-environment` MySQL、真实随机端口 HTTP 和少量领域场景验证完整生产链，不使用 Mockito 或 Testcontainers。
-- Reactor Enforcer 允许该切片所需的 JDBC/MySQL/MyBatis、Nacos Discovery 及其精确的 Crypto 工具依赖，禁止 Nacos Config、其余 Spring Security、Flyway、Testcontainers、Redis、MQ、XXL-Job、Gateway、Compensation Event 与 Mockito。
-- Web 默认监听 `18106`，Actuator 使用同一 Listener；测试模块跳过 install/deploy，Web 同时产出普通 JAR 和可执行 `-exec.jar`。
-- 当前切片不实现登录/Token 签发或其他认证/Tenant IAM 命令、CUSTOMER JWKS、API/Route/Guard 管理、限流运行态、Gateway Snapshot/JWKS 消费、补偿事件、Nacos Config 或部署自动化。任何此类能力都必须作为获批垂直切片按 TDD 增量加入。
-- 详细设计、实施步骤和运行方式分别见[基础设计](../docs/superpowers/specs/2026-09-01-platform-support-application-foundation-design.md)、[实施计划](../docs/superpowers/plans/2026-09-01-platform-support-application-foundation.md)和 [`platform-support-service/README.md`](../platform-support-service/README.md)。
-
-### 3.4 Operations Console BFF 应用基础
-
-```text
-operations-console-bff/
-├── pom.xml                              # paytech-operations-console-bff，继承 paytech-parent
-├── paytech-operations-console-bff-web/   # 唯一可部署 Spring MVC 应用
-└── paytech-operations-console-bff-test/  # 随机端口、关闭 Nacos 的 auto 测试
-```
-
-- 根目录保留架构名称 `operations-console-bff`，新增 Maven Artifact 和模块目录使用 `paytech-*`；基础包为 `com.paytech.operations.console.bff`，启动类为 `OperationsConsoleBffApplication`。依赖方向只有 `test → web`，当前没有真实共享契约，不创建 `*-api`、空 Controller/Processor/领域层或未来客户端。
-- Web 使用 Foundation MVC Starter、Spring Boot MVC、Actuator/Prometheus 和 Nacos Discovery；复用 Foundation 的 Request ID、日志与统一异常处理，不复制本地 Filter、Advice 或错误体。没有业务 API、登录/IAM、数据库、Redis、MQ 和前端。
-- `spring.application.name=operations-console-bff` 与当前 Gateway Approved Target 一致；默认监听 `127.0.0.1:18201`，不配置 Servlet context path，管理端点复用同一 Listener。Nacos 默认 `127.0.0.1:8848` / `mor-local`，部署时 Namespace 必须与 Gateway 一致；`auto` 明确关闭发现并使用随机端口。
-- Web 同时产出普通 JAR 和 `-exec.jar`，测试模块跳过 install/deploy。应用基础不代表认证和业务授权可用；新增认证端点前必须落实专项禁止凭据/Token Body 日志的边界，不能用重复服务本地 Filter 绕过。运行说明见 [`operations-console-bff/README.md`](../operations-console-bff/README.md)。
-
-### 3.5 复杂核心服务的业务能力模块
+### 3.4 复杂核心服务的业务能力模块
 
 当一个核心服务包含多个稳定业务能力，且单个 `web` 模块已经难以清楚表达表归属、依赖和职责时，可以在 `api`、`web`、`test` 之外增加少量业务能力 JAR。它们只是同一服务内部的编译期边界，不是微服务、部署单元或独立数据库。
 
@@ -208,7 +147,7 @@ operations-console-bff/
 1. 它对应当前已经存在或已经批准的完整业务能力，而不是一个技术名词、单张表或未来设想。
 2. 能列出该模块唯一负责的业务规则、聚合和数据库表。
 3. 能定义少量稳定的业务能力接口，让调用方不需要知道表结构和持久化步骤。
-4. 拆分后依赖保持单向，不需要循环依赖、共享 Repository 或共享 DataObject 才能完成业务。
+4. 拆分后即使默认没有业务模块互依也能完成职责；若确有获准依赖，该依赖必须单向无环，且不需要共享 Repository 或 DataObject。
 
 初始通常控制在 3–5 个业务能力模块。不得按 Controller、Processor、Service、Repository 等技术层横向拆 Maven 模块，也不得为每张表、每个接口、每个状态机或每个将来可能拆出的服务建立模块。没有真实代码和消费者时不创建空模块、空包或占位接口。
 
@@ -217,7 +156,7 @@ operations-console-bff/
 - 每张业务表必须有且只有一个业务模块作为持久化 Owner，并在系统专项设计或模块 README 中记录归属。
 - 只有 Owner 模块可以定义该表的 DataObject、Mapper、Repository 和写入规则。其他模块不得直接读取或写入该表。
 - 禁止通过注入其他模块的 Repository/Mapper、复制 SQL/映射、跨模块 JOIN、数据库 View、存储过程或直接 `JdbcTemplate` 绕过表归属。
-- 同一个物理数据库和本库外键不代表表可以被任意模块访问。数据库关系表达数据完整性，模块接口表达代码访问权限。
+- 同一个物理数据库和本库逻辑关系不代表表可以被任意模块访问。关系字段及其应用校验表达数据完整性，模块接口表达代码访问权限；不得用物理外键替代任一边界。
 - 跨模块需要的数据由 Owner 模块通过业务查询/命令接口提供。接口返回所属模块定义的领域结果；不得暴露 Mapper、Repository、DataObject 或任意 CRUD 能力。
 - 服务级技术表，例如本服务唯一的 `compensation_event` 或命令幂等表，由 `web`/服务级基础设施统一负责；不得复制到每个业务模块。
 
@@ -236,11 +175,12 @@ test ───────────────────────→ we
 - `web` 是组合根，可以依赖自己的 `api` 和各业务能力模块。
 - `test` 依赖 `web`；生产模块不得依赖 `test`。
 - 业务能力模块不得依赖 `web`、`test` 或其他模块的实现包。
-- 跨模块简单协作可以依赖对方专门公开的业务能力接口；若这会形成双向或循环 Maven 依赖，改由 `web` Processor 同时调用两个模块，而不是抽出一个模糊的 `common` 或直接访问 Repository。
-- A 模块需要 B 模块的数据时，正确做法是调用 B 的业务能力接口，或由 `web` Processor 先调用 B 再把明确的领域输入交给 A。A 绝对不能调用 B 的 Repository、Mapper、DataObject 或表；所谓“只调用原子 Repository”仍然是越权访问。
+- 业务能力模块默认不建立彼此的直接 Maven 依赖。只有被调用能力已经稳定、可复用，Owner 明确发布窄业务接口及 Domain / Application Command / Result，调用不承担跨模块用例编排，且依赖能够长期保持单向、无直接或间接环时，调用方才可以单向依赖 Owner 模块。
+- 获准的调用方只依赖 Owner 发布的业务 Service 或 Domain Service 接口和上述业务模型，不得依赖 `*Impl`、未发布的内部 Domain Service、Spring 内部 Bean 或持久化接口。任一条件不满足时，由 `web` Processor 分别调用相关模块。
+- A 模块需要 B 模块的数据时，只有满足上述稳定单向门禁才能调用 B 发布的业务能力接口；否则由 `web` Processor 先调用 B，再把明确的领域输入交给 A。A 绝对不能调用 B 的 Repository、Mapper、DataObject 或表；所谓“只调用原子 Repository”仍然是越权访问。
 - `api` 只保存对外传输契约，不用于解决业务模块循环依赖，也不存放内部领域对象、DataObject、Repository 或公共业务实现。
 
-这里的“可以调用 B 的业务能力接口”不等于“可以依赖 B 的任意 Service”。允许的是 B 明确作为模块边界发布的窄接口；禁止依赖 `*ServiceImpl`、内部 Domain Service、Spring 内部 Bean 或持久化接口。若 A 和 B 互相需要对方，说明协作属于更高层用例或模块边界划错，优先交给 `web` Processor 编排，不创建 A↔B 循环依赖。
+这里的“可以调用 B 的业务能力接口”不等于“可以依赖 B 的任意 Service”。允许的是 B 明确作为模块边界发布的窄接口；若新依赖会形成循环 Maven 依赖，或 A 和 B 互相需要对方，说明协作属于更高层用例或模块边界划错，必须交给 `web` Processor 编排。
 
 ```text
 正确：PayoutProcessor → AccountingBalanceCommand（锁定余额）
@@ -271,9 +211,11 @@ Web Processor
 
 #### 模块接口检查
 
-一个模块公开接口必须表达业务动作或业务查询，例如“锁定可出款余额”“创建税额快照”，不得暴露 `updateStatus`、`saveAny`、`queryTable` 等通用数据库操作。Service/Domain Service 使用 `interface + impl`；对外返回本模块领域对象，不能返回 API Request/Response。DataObject 只允许留在持久化边界，即使通用 Service 规则允许在模块内部返回数据库对象，也不得把它作为跨模块合同。
+一个模块公开接口必须表达业务动作或业务查询，例如“锁定可出款余额”“创建税额快照”，不得暴露 `updateStatus`、`saveAny`、`queryTable` 等通用数据库操作。所有业务 Service 必须使用 `interface + *Impl`；所有 Domain Service 必须使用 `interface + *Impl`，不因只在 Owner 模块内部使用或只有一个实现而例外。跨模块接口的参数和结果使用 Owner 定义的 Domain / Application Command / Result，不能返回 API Request/Response 或 DataObject。
 
-每次新增或调整业务模块时必须同步验证：模块清单、表唯一归属、Maven 依赖图、跨模块接口、跨模块用例事务范围，以及至少一个阻止越权 Repository/Mapper/SQL 访问和循环依赖的架构测试。
+DataObject 的可见性边界是其 Owner 业务能力 Maven JAR，而不是 Repository 类本身。Owner JAR 内的 Repository、Service、Domain Service 和必要内部应用代码可以使用或返回自己的 DataObject；Accounting 等其他模块不得使用 Tax 等 Owner 模块的 DataObject，只能调用其公开业务能力。Controller/HTTP API 也不得把 DataObject 直接作为传输对象。需要保护领域不变量、聚合多表、隔离持久化变化或跨模块发布时，在 Owner 边界转换为 Domain/Application 对象；没有这些价值时不强制在同一 JAR 内复制同义对象。
+
+每次新增或调整业务模块时必须同步验证：模块清单、表唯一归属、获准的单向依赖、Maven 依赖图、跨模块接口、跨模块用例事务范围，以及至少一个阻止越权 `*Impl`、未发布 Domain Service、DataObject、Repository、Mapper、SQL 访问和循环依赖的架构测试。完整决定见 [`decisions/2026-09-05-business-module-collaboration-policy.md`](./decisions/2026-09-05-business-module-collaboration-policy.md)。
 
 ## 4. API 模块与内部 HTTP 契约
 
@@ -343,7 +285,7 @@ public class ClientEligibilityController implements ClientEligibilityQueryApi {
 
 上例仅适用于方法少于 10 条有效可执行语句、只调用一个 Domain Service，并且没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排的简单用例。空行、注释、花括号和格式换行不计入语句数；任一条件不满足时都必须使用 Processor。Controller 不包含事务、Repository/Mapper/SDK 调用或跨系统编排。
 
-`@HttpExchange` 接口是内部 HTTP Method、Path、Header 和 DTO 签名的唯一来源。Controller 必须直接实现该接口，不得再次声明等价的 `@RequestMapping`、`@GetMapping` 或 `@PostMapping`；这些 MVC 注解只用于没有共享 Java API 契约的服务端入口。应用配置的 `context-path` 表达系统边界，接口注解只表达能力内路径，最终地址统一为 `{context-path}/{capability-path}`，不为每个服务机械增加 `/internal` 前缀。
+`@HttpExchange` 接口是内部 HTTP Method、Path、Header 和 DTO 签名的唯一来源。Controller 必须直接实现该接口，不得再次声明等价的 `@RequestMapping`、`@GetMapping` 或 `@PostMapping`；这些 MVC 注解只用于没有共享 Java API 契约的服务端入口。应用配置的 `context-path` 表达系统边界，接口注解只表达能力内路径，最终地址统一为 `{context-path}/{capability-path}`。接口是否属于内部调用由私有网络、服务发现和 Gateway Catalog 边界决定，不在能力路径中增加调用范围标记。
 
 HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的正常 typed DTO，`4xx/5xx` 返回 `paytech-mvc-web-starter` 的统一直接错误体，至少包含 `code`、`message`、`requestId` 和 UTC `timestamp`。Controller 不为成功响应增加通用包装层，也不复制服务本地错误响应类型。
 
@@ -447,9 +389,10 @@ validate request
 
 Domain Service 承载业务规则和跨聚合协调：
 
-- 接口按业务能力命名，例如 `findTransactionReadyClient`；
+- 所有业务 Service 必须使用 `interface + *Impl`；所有 Domain Service 必须使用 `interface + *Impl`。接口按业务能力命名，实现使用相同名称加 `Impl`，调用方依赖接口，只有实现类标注 `@Service`；
+- 该规则不要求创建没有业务职责的空 Service；一旦职责需要 Service，就不因模块内单实现而省略接口。Processor、Controller 保持具体类，Repository 保持 `interface + *RepositoryImpl`；
 - 实现依赖 Repository 和出站端口，不依赖 HTTP Controller 或 Processor；
-- 结果明确、不可重试的业务拒绝使用 `FailException` 并传入本服务 `CodeMessageEnum`；中文消息包含实体标识、当前状态和操作上下文；
+- 普通业务检查优先使用 `BizCheckFailException` 和包含必要上下文的中文消息；只有调用方确实需要按 Code 区别处理时才使用本服务 `CodeMessageEnum` 与对应 `FailException`；
 - 状态转换必须校验旧状态，防止静默覆盖并发更新。
 
 ### 5.4 Repository 与 Mapper
@@ -465,7 +408,7 @@ Domain Service → Repository interface → RepositoryImpl → Mapper → 本系
 - 生产 SQL 只写在资源目录的 `*Mapper.xml`，接口保留方法签名和参数绑定；禁止 SQL 注解及 `*Provider` 注解。测试源码中的 TestMapper 可保留注解 SQL，具体边界见 [DEVELOPMENT_CONVENTIONS.md](./DEVELOPMENT_CONVENTIONS.md) 的“MyBatis SQL 存放规则”。
 - 每个核心系统只能访问自己的数据库，禁止跨库查询、跨库写入或共享表。
 - 更新状态时携带期望旧状态或版本号；更新行数不为预期值时抛出包含上下文的异常。
-- `dataobject` 中的数据库映射对象直接使用业务实体名，不追加 `DO` 后缀，也不得作为公共接口对象返回。
+- `dataobject` 中的数据库映射对象直接使用业务实体名，不追加 `DO` 后缀。它可以在 Owner 业务 JAR 内部使用，但不得作为 HTTP API 或跨 Maven 模块业务接口对象返回。
 - 表、字段、索引、手工 DDL/DML 与 DataObject/Mapper 的设计必须和项目 PDManer 模型同步；详细规则见 `DATABASE_DESIGN_GUIDE.md`。
 
 ### 5.5 外部集成
@@ -477,16 +420,16 @@ Domain Service → Repository interface → RepositoryImpl → Mapper → 本系
 - 实现层负责超时、错误映射、脱敏日志和外部状态转换。
 - 外部原始状态先转换为本系统统一语义，再进入领域逻辑。
 - 不把外部响应对象穿透到领域层。
-- Vault 作为内部 HTTP 集成放在同一边界：本地端口方法必须显式表达 `purpose` 和最小字段集合，适配器通过部署网络限制的私有 HTTP 携带当前 V1 必需但可伪造的 `X-Caller-Service`、Reason 与业务资源上下文，并接受静态 Allowlist 只能防止误用而不能认证调用方的限制。Reveal 结果不得写数据库、缓存、事件或日志；业务库只持久化 Token、版本、元数据 Hash、必要 Blind Index、同前缀 Blind Index Key Version 和 Masked Value。
+- Vault 作为内部 HTTP 集成放在同一边界：本地端口方法显式表达当前 V1 的 `purpose`、Protect 数据类型/Token 模式或 Reveal Token；适配器通过部署网络限制的私有 HTTP 携带 OpenAPI 要求的 `X-Caller-Service`、幂等/请求 Header，并接受静态 Allowlist 只能防止误用而不能认证调用方的限制。V1 不接受 Reason、Resource 或字段选择，也不返回 Binding、Blind Index、Masked Value、Record Version 或 Metadata Hash。Reveal 结果不得写数据库、缓存、事件或日志；业务库只持久化获批的 opaque Token 和自身权威派生事实。
 
 ### 5.6 MQ 与业务事件
 
 - 存在真实 MQ 入站能力时，`ext/mq` 负责验签/反序列化之后的事件接收、幂等入口和调用领域能力。
 - 业务状态、状态历史和 `compensation_event` 在 Processor 本地事务内原子提交；MQ 发布只能由事务提交后的执行器完成，不得出现数据库回滚但消息已发送。
 - 正常路径通过 `afterCommit` 唤醒本地 Dispatcher；XXL-Job 只做兜底扫描、分片或串行隔离，数据库 Claim/Lease/Version 仍是多实例互斥边界。
-- 发布重试复用相同 `event_key`、来源版本、Schema、Payload 和 Hash。Broker Confirm 后成功记录允许删除；失败达到上限必须保留、告警并支持带 Actor/Reason/Ticket 的人工重开。
+- 本地 `compensation_event` 重试复用相同 `event_key + event_type + sub_event_type`，Handler 从本库权威事实重建业务事件；它不保存来源版本、Schema、Canonical Envelope 或 Payload Hash。业务 MQ 信封是否包含领域来源版本、Schema 和 Payload Hash 由该业务事件契约独立决定。Broker Confirm 后本地成功记录允许删除；失败达到上限必须保留、告警并支持带 Actor/Reason/Ticket 的人工重开。
 - MVP 不建立通用 Inbox/Outbox。消费者在本地业务事务中用业务唯一键、`source_event_key`、Payload Hash、来源版本条件更新和状态机支持重复、延迟和乱序消息，并在事务提交后 Ack。
-- 事件 Payload 不得包含敏感明文或 Vault 内部密文，只能携带必要业务字段、`file_id + content_hash`、必要 Masked Value，或由 Vault `CopyForBinding` 为准确接收系统/资源新建的接收方专属 Token Tuple；不得传播来源系统自己的 Token。
+- 事件 Payload 不得包含敏感明文、Vault 内部密文或完整 Vault Token，只能携带批准的必要业务字段、`file_id + content_hash` 和事实拥有方产生的必要非敏感派生事实。当前 V1 没有跨接收方 Copy 能力；需要敏感数据的消费者通过事实拥有方受控同步接口取得批准结果。
 - Finance 的账务事实不可变；更正使用补偿事实和追加分录。
 
 完整的表结构、执行状态、并发和测试要求见 `COMPENSATION_EVENT_GUIDE.md`。
@@ -523,11 +466,11 @@ ext/* 入站适配器
 
 ## 7. Spring 与代码风格
 
-- 六个核心服务、BFF 和 Vault 默认使用 Spring MVC；API Gateway 使用 Spring Cloud Gateway Server WebFlux，不为了统一形式改成 MVC。
+- 六个核心 Java 服务和 BFF 默认使用 Spring MVC；Vault V1 Server 使用 Go，Java 调用方使用发布的 `@HttpExchange` Client；API Gateway 使用 Spring Cloud Gateway Server WebFlux，不为了统一形式改成 MVC。
 - MVC 服务的内部同步 HTTP 调用默认使用 `RestClient`；只有真实 Reactive/Streaming 边界才使用 `WebClient`。
 - 默认不全局启用虚拟线程；必须先验证连接池、Listener、第三方 SDK、MDC 和背压行为。
 - 优先构造器注入并使用 `final` 字段；纯字段赋值构造器使用 Lombok `@AllArgsConstructor`，包含校验、防御性复制、派生对象创建或资源配置的构造器保留显式实现；禁止新增字段注入。
-- Service 使用 `@Service`，Repository 实现使用 `@Repository`，无更精确语义的组件才使用 `@Component`。
+- Service 实现类使用 `@Service`，Service 接口不标注 Spring 组件注解；Repository 实现使用 `@Repository`，无更精确语义的组件才使用 `@Component`。
 - 数据类可使用 Lombok `@Data`，但领域对象应谨慎暴露无约束 setter。
 - 接口、公共类型和关键业务方法写清晰 JavaDoc。
 - 常量和枚举使用业务语义名称，不使用 `getData`、`handle`、`process2` 等模糊名称。
@@ -573,7 +516,9 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] 实际存在的 Processor 未依赖 HTTP 类型，也没有为单一实现创建空泛的抽象基类或公共上下文。
 - [ ] Domain Service 与 Repository 使用业务语言命名。
 - [ ] 只访问本系统数据库。
-- [ ] DataObject 类型名没有 `DO` 后缀；数据库结构已使用项目统一 PDManer 模板设计，并与手工 DDL/DML、DataObject、Mapper 和 Repository 保持一致。
+- [ ] DataObject 类型名没有 `DO` 后缀；仅在 Owner 业务 JAR 内使用，HTTP API 和跨 Maven 模块业务接口使用 Domain/Application Command/Result；数据库结构已与 PDManer、手工 DDL/DML、Mapper 和 Repository 保持一致。
+- [ ] 多业务模块默认没有直接 Maven 依赖；每一项直接依赖都已证明是稳定、可复用的 Owner 窄业务接口及 Domain/Application 模型，并保持长期单向、无环且不承担跨模块用例编排。
+- [ ] 循环风险、多 Owner 命令或跨 Owner 写事务由 `web` Processor 使用一个本地 `TransactionTemplate` 编排，模块没有依赖对方的 `*Impl` 或持久化对象。
 - [ ] 事务覆盖本地原子操作，事件在提交后可靠发布。
 - [ ] 状态更新校验旧状态/版本并处理并发冲突。
 - [ ] 异常信息包含必要业务上下文。

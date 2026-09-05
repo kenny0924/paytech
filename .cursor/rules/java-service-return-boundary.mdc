@@ -6,10 +6,11 @@ alwaysApply: false
 
 # Java Service Return Boundary
 
-- Service 和 Domain Service 只能返回数据库对象或本服务自定义的领域对象。
-- Service 绝对不能返回 `*-api` 模块的 Request/Response DTO，也不能在实现中组装 API DTO。
+- DataObject 以所属业务能力 Maven JAR 为可见性边界；该 JAR 内的 Service/Domain Service 可以使用或返回自己的 DataObject。
+- 跨 Maven 模块发布的业务能力接口只能使用 Owner 定义的 Domain / Application Command / Result，不能暴露 DataObject、Repository、Mapper 或通用 CRUD 类型。
+- Service 不能返回 `*-api` 模块的 Request/Response DTO，也不能在实现中组装 HTTP API DTO。
 - Controller、Facade 或其他入站适配器负责把 Service 结果转换成 API 响应对象。
-- Repository 负责数据库对象与领域对象之间必要的持久化转换；不得为了省略转换而让 API DTO 穿透 Service。
+- 需要保护不变量、聚合多表、隔离持久化变化或跨模块发布时，在 Owner 边界转换为 Domain/Application 对象；同一 JAR 内没有这些价值时不机械复制同义对象。
 
 ```java
 // Bad: Service depends on transport response
@@ -17,4 +18,7 @@ ClientBalanceResponseBody queryBalance(...);
 
 // Good: Service returns its own domain result
 ClientBalance queryBalance(...);
+
+// Good inside the owning JAR only: internal persistence-oriented service
+AccountRecord findAccountRecord(...);
 ```

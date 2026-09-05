@@ -2,6 +2,8 @@
 
 最后更新：2026-09-05
 
+状态：Confirmed current testing rules。Foundation 与业务服务使用同一基础设施边界，没有 Testcontainers 或自动重建 test-only Schema 的例外；现有偏差和迁移状态见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
+
 ## 1. 使用范围
 
 当任务涉及 Java 生产逻辑或以下任一测试能力时，Agent 必须完整读取本文：
@@ -194,14 +196,14 @@ Domain Service → RepositoryImpl → Mapper → local MySQL
 
 业务服务的 `auto` 不连接共享 Vault 环境，而是通过真实 HTTP 调用有状态 Vault Simulator：
 
-当前 V1 的 API/数据范围以 [`2026-09-02-vault-database-design.md`](../docs/superpowers/specs/2026-09-02-vault-database-design.md) 为准；下列超出 Protect/Reveal 三表 V1 的 Binding、Blind Index、Copy、Rewrap、Retire/Destroy 与复杂生命周期条目只是未来相应能力被批准后的测试模板，不是当前实现要求。当前传输使用部署网络限制的私有 HTTP，不配置应用证书；Simulator 必须保留必需但可伪造的 `X-Caller-Service` 与静态 Allowlist 只能防止误用的弱信任事实。
+当前 V1 的 API/数据范围以 [`2026-09-02-vault-database-design.md`](../docs/superpowers/specs/2026-09-02-vault-database-design.md) 和 [`vault-service/api/openapi/v1.yaml`](../vault-service/api/openapi/v1.yaml) 为准：只有 Protect/Reveal 与三表模型。当前传输使用部署网络限制的私有 HTTP，不配置应用证书；Simulator 保留必需但可伪造的 `X-Caller-Service` 与静态 Allowlist只能防止误用的弱信任事实。
 
-- Simulator 生成随机 opaque token，并记录 Tenant、Purpose、版本、元数据 Hash、Blind Index 与授权上下文；不得把它简化成按方法名返回固定 DTO。
-- 对已批准的当前服务实际调用覆盖真实私有 HTTP、Purpose/Reason/Resource、必需 `X-Caller-Service`、静态 Allowlist、最小字段返回、审计与失败关闭；不得模拟 mTLS 或把 Caller Header 当作强认证。未来只有相应能力获批后才加入 Bind、Derive Blind Index、Read Record Blind Indexes、CopyForBinding、Rewrap、Retire/Destroy 的专项验证。
-- Checker 分层验证：业务数据库只按模型保存完整 Token Tuple；只有明确批准且通过 `CopyForBinding` 生成接收方专属 Token 的事件才可携带该 Token Tuple；日志、错误信息、Trace、Metric 与普通事件不得出现完整 Token、完整 Blind Index、Reveal 明文或 Vault 内部密文。
-- 覆盖 Vault 超时、不可用、Token 不存在、版本冲突、权限拒绝、Legal Hold 和相同 Blind Index 业务冲突等相关场景。
+- Simulator 按 `dataType + tokenMode + canonical value + purpose` 处理 Protect，生成或收敛 opaque Token，并按 `token + purpose` 处理 Reveal；同时记录 Caller、幂等键、Request ID、请求和本地审计观察结果。不得把它简化成按方法名返回固定 DTO，也不得虚构 Tenant、Binding、Blind Index、Masked Value、Record Version 或 Metadata Hash。
+- 当前服务调用覆盖真实私有 HTTP、OpenAPI 定义的 Headers/Body、静态 Allowlist、Protect 幂等冲突、Reveal、本地审计和失败关闭；不得模拟 mTLS 或把 Caller Header 当作强认证。Binding/Copy/Blind Index/Masked/Metadata/Retire/Destroy 只有未来相应 V2 能力获批后才增加测试。
+- Checker 验证业务数据库只保存该消费者已批准的 opaque Token 和自身权威派生事实；日志、错误信息、Trace、Metric、普通 MQ/BCR 与 `compensation_event` 不得出现完整 Token、Reveal 明文或 Vault 内部密文。
+- 覆盖 Vault 超时、不可用、Token 不存在、Caller/Purpose/Data Type 未授权、同幂等键不同请求以及密文或 AAD 篡改等当前 V1 场景。
 - PAN、CVV/CVC、完整磁道数据、PIN/PIN Block 和卡有效期不属于 Vault Simulator 或 Fixture 的合法输入；必须覆盖拒绝持久化、日志零泄漏与 Security Event。Payment 集成测试只使用 Provider Token 与批准的卡片描述字段。
-- Vault 服务自身的 `auto` 使用真实测试数据库与隔离的 KMS Simulator/测试密钥，验证 AAD、密钥轮换、密文篡改、审计事件和销毁不可恢复性。
+- Vault 服务自身的 `auto` 使用手工准备的真实本地测试数据库与每个 Fixture 隔离的 LOCAL AES 根密钥，验证 Protect/Reveal、AAD、密文篡改、幂等、策略和本地审计。生产 KMS、轮换和销毁不是 V1 已验证能力。
 
 ### 7.5 本地中间件生命周期
 
@@ -402,7 +404,7 @@ TestBase
 - `RepositoryAutoTestBase` 只连接本地数据库并装配 MyBatis。
 - `MessagingAutoTestBase` 管理 Broker、测试 Producer/Consumer 和消息清理。
 - `@BeforeEach` 清理当前测试涉及的数据、缓存、消息、Simulator 状态和 Request Journal。
-- 不使用 `@Order`、`PER_CLASS` 或共享可变字段修复测试依赖。
+- 不使用 `@Order`、`PER_CLASS` 或共享可变字段修复测试间依赖。只有真实类级资源必须由非静态生命周期方法管理、每个测试仍在 `@BeforeEach` 完整重置业务状态且测试可随机独立运行时，才可带原因使用 `PER_CLASS`；优先使用无共享业务状态的静态 Extension/Fixture，冗余注解应删除。
 
 `application-auto.yml` 必须：
 

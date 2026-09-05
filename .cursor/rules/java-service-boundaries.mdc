@@ -7,16 +7,16 @@ alwaysApply: false
 # Java 服务边界默认规则
 
 - 先读取 `agent-docs/DEVELOPMENT_CONVENTIONS.md` 和 `agent-docs/JAVA_PROJECT_STRUCTURE.md`；它们是完整权威。
-- `dataobject` 包中的数据库映射类型使用业务实体名，不加 `DO` 后缀，不跨 Repository 边界暴露；每个字段写说明约束而非复述字段名的中文 JavaDoc。
+- `dataobject` 包中的数据库映射类型使用业务实体名，不加 `DO` 后缀；它可在 Owner 业务 JAR 内部使用，但不得进入 HTTP API 或跨 Maven 模块合同。跨模块业务接口使用 Owner 定义的 Domain/Application Command/Result。每个字段写说明约束而非复述字段名的中文 JavaDoc。
 - 闭合 DataObject 枚举列显式注册 Foundation `CodeEnumTypeHandler`，MySQL `DATETIME(6)` 到 `Instant` 使用 Foundation `InstantTypeHandler`；服务不得复制同义 Handler。
 - 纯依赖赋值使用 `final` 字段和 Lombok `@AllArgsConstructor`；构造器有校验、复制、派生或资源配置逻辑时显式编写。
 - API DTO 和 MQ 契约字段使用 `String` 枚举 Code；对外 Code 枚举定义放在 `*-api/api/enums`，内部枚举放在 `*-web/domain/enums`，均实现 `CodeEnum`。提供方 Web 复用 API 枚举，不复制同义目录；错误枚举按需实现 `CodeMessageEnum`。
 - 内部 `@HttpExchange` API 是 Method、Path、Header 和 DTO 的唯一契约；Controller 实现接口，不重复声明 MVC Mapping。
 - 应用 `context-path` 表达系统边界，API Path 表达业务能力；不要机械添加 `/internal`。
-- Processor 是按需的编排层：Controller 方法少于 10 条有效可执行语句、只委托一个 Domain Service，且没有业务判断、多步骤编排、写事务、幂等、补偿或跨系统协调时可直接调用该 Service；任一条件不满足则保留 Processor。
+- Processor 是按需的编排层：Controller 方法少于 10 条有效可执行语句、只委托一个 Domain Service（BFF 简单转发可为一个本地 Client Port），且没有业务判断、多步骤编排、写事务、幂等、补偿或跨系统协调时可直接委托；任一条件不满足则保留 Processor。
 - Controller 不得直接调用 Repository、Mapper、第三方 SDK 或持有事务；省略 Processor 的简单一致性读可由 Domain Service 持有只读事务。
 - Processor 使用应用语义的请求和结果，不依赖 HTTP 类型；协议上下文由 Web/Security 基础设施处理。
-- 不为单个实现预建抽象基类。至少两个真实用例共享稳定流程与上下文后再提取。
+- 所有业务 Service 必须使用 `interface + *Impl`；所有 Domain Service 必须使用 `interface + *Impl`，只有实现类标注 `@Service`，调用方依赖接口。该规则不要求创建没有业务职责的空 Service；Processor、Controller 保持具体类，Repository 保持 `interface + *RepositoryImpl`。不为单个 Processor 预建抽象基类。
 - 有界内部查询默认完整返回 typed DTO；没有负载证据和批准契约时不增加 ETag、`304` 或内容 Hash。
 - `2xx` 返回接口的正常 typed DTO，`4xx/5xx` 使用 Foundation 的直接错误体；不要给所有成功响应增加通用包装。
 - 未预期异常直接交给共享 `GlobalExceptionHandler` 处理为 `500`；宽泛 `catch` 只允许承担恢复、清理/异步状态更新或明确的协议转换，并保留原始 Cause。
