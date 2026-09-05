@@ -10,6 +10,8 @@
 
 **Spec:** [已确认正式设计](../specs/2026-09-05-platform-controller-best-effort-audit-design.md)，精确取代范围见[审计决策](../../../agent-docs/decisions/2026-09-05-platform-controller-best-effort-audit.md)。执行前完整阅读两者及本计划。
 
+> **后续收敛（2026-09-05）：** 本计划保留首次实施时的步骤和接口示例作为历史证据。用户后续确认以业务代码低侵入为目标，Task 4 中把 `capture`、`observeTransaction` 和多个 `append*` 暴露给业务的最终接口已由现行 Spec 第 3.1、5 节取代：Processor 不再感知审计生命周期，统一事务执行器自动观察；业务 Service 只提交审计本地的类型化事实。后续维护不得从本计划历史示例恢复旧接口。
+
 ## Global Constraints
 
 - Controller 注解仅放实现方法，不进入 `platform-support-api`；不新增公共审计 JAR、HTTP 契约、表、模型字段或 Schema 迁移。

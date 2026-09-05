@@ -32,7 +32,8 @@
 |---|---|---|
 | Controller 实现方法上的 `@Audit` | 声明动作、资源类型及成功/拒绝采集策略 | 事务、查库、全量序列化请求 |
 | 审计切面与调用级上下文 | 建立/结束一次审计作用域；收集安全请求元数据；合并业务事实与真实事务结果 | 授权判断、重放业务、推测前后快照 |
-| 类型化审计采集入口 | 在业务已取得事实的位置冻结资源 ID、拒绝原因、before/after、重放标记 | 审计 SQL、网络调用、后台重查业务状态 |
+| Operations 事务执行器 | 复用固定事务画像，并在真实事务回调内自动登记审计完成通知 | 审计事实构造、Redis 资源锁、异常转换 |
+| 类型化审计采集入口 | 在业务已取得事实的位置冻结资源 ID、拒绝原因、before/after、重放标记 | 生命周期控制、事务观察、审计 SQL、网络调用、后台重查业务状态 |
 | 有界分发器 | 非阻塞接收冻结事件；限制内存与执行并发；统计拒绝/失败 | 持久化、自动重试、请求线程回退 |
 | 审计写入 Service 与 Repository | 使用专用连接和独立事务追加现有审计链及事件 | 业务资格校验、锁业务 Tenant、改变业务结果 |
 
@@ -55,6 +56,8 @@
 请求 ID 使用现有 `RequestIdFilter` 属性。操作者以身份/授权逻辑验证后的事实为准，不能将任意 Header 或请求参数直接视为已认证身份；身份未确定的失败沿用安全 UNKNOWN 表达。Controller 切面不能自行恢复密码、Token 或完整认证请求来补齐身份。
 
 简单成功动作在现有业务成功位置提供稳定 ID 和结果；复杂动作继续提供类型化快照。共同的动作、资源类型和请求元数据从本次上下文取得，避免在每个 Processor 重复包装审计异常。业务拒绝的细分原因必须在被公共 HTTP 错误码折叠前冻结。
+
+业务可见的审计 Service 只提供 `identify(Supplier<Identity>)`、`target(Supplier<Target>)`、`record(Supplier<? extends OperationsAuditFact>)` 和 `suppressReplay()` 四个语义入口。Supplier 在审计隔离边界内立即求值；无 Controller 作用域时不求值，也不会被保存到异步队列。业务接口不暴露 `capture`、`observeTransaction`、通用属性拼装或 DataObject 参数；Processor 不持有审计 Service/Context。这样把生命周期和投影样板移出业务代码，同时保留只有业务现场才知道的精确事实。
 
 ### 3.2 上下文生命周期
 
@@ -81,7 +84,7 @@
 
 ## 5. 业务结果与事务结果
 
-审计状态至少区分“业务用例结果”和“所属业务事务完成情况”，不能只看方法返回、异常类型或 HTTP 状态。所属事务的完成通过现有显式 `TransactionTemplate` 边界与 Spring 事务完成通知观察，不引入 `@Transactional`。
+审计状态至少区分“业务用例结果”和“所属业务事务完成情况”，不能只看方法返回、异常类型或 HTTP 状态。统一 Operations 事务执行器封装现有显式 `TransactionTemplate` 画像，并在每个真实事务回调激活后通过 Spring 完成通知观察结果；Processor 只选择 `write`、`query` 或 Gateway 串行化写画像，不直接调用审计生命周期 API，也不引入 `@Transactional`。
 
 | 事实 | 审计行为 | 业务行为 |
 |---|---|---|
