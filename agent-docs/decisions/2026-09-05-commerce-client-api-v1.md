@@ -5,6 +5,7 @@
 - Deployment status: Not deployed
 - Decision date: 2026-09-05
 - Scope: 面向 Client Server 的 Commerce 外部 M2M API；V1 只覆盖 Hosted Checkout、Order、Cancel 与 Refund
+- Partially superseded: D1 和第 3 节中“不为外部调用创建 API JAR”的部分由 [`2026-09-05-commerce-client-api-contract-module.md`](./2026-09-05-commerce-client-api-contract-module.md) 取代；单服务、单部署单元和 OpenAPI 公开权威等其余决定继续有效
 - Supersedes:
   - `requirements-site/content/requirements.ts` 中 COM-01、COM-I01 要求 Client 在 Create Checkout 请求中提交 `industry_code + mcc_code` 的部分；后继由 CCT-I13 在首次命令时点解析 Client 唯一 Primary Classification
   - `requirements-site/content/requirements.ts` 中 COM-I05 以及 `requirements-site/content/global-use-case-sequences.mjs` E2E-13 要求 Client API Cancel 提交 Order Expected Version 和仅以 `client_order_id` 定位的部分；后继外部路径使用 `orderNo`，不接收 Expected Version，Commerce 内部仍使用锁/CAS

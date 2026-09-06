@@ -4,7 +4,7 @@
 - Written spec review: Completed (2026-09-05)
 - Decision date: 2026-09-05
 - Current implementation, verification and deployment: see [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md)
-- Superseded sections: the fixed 14-table target and the assumption that an API JAR belongs to the immediate steady structure are superseded by [Commerce Client API Hosted Checkout V1](./2026-09-05-commerce-client-api-v1-design.md); the package-first modular-monolith decision remains current
+- Superseded sections: the fixed 14-table target was superseded by [Commerce Client API Hosted Checkout V1](./2026-09-05-commerce-client-api-v1-design.md); the later decision to add the non-running external Owner contract JAR supersedes the `web + test`-only Maven shape through [Commerce Client API Java Contract Module](./2026-09-05-commerce-client-api-contract-module-design.md); the package-first modular-monolith decision remains current
 
 本文记录 Commerce Java 工程的 Maven 边界、包级业务归属、协作方式和实施门禁。它不授权或代表 Java、SQL、物理数据库、PDManer、部署或生产能力已经实施；当前实现、验证与部署状态只以 [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 和未来的 Commerce 仓库 README 为准。
 

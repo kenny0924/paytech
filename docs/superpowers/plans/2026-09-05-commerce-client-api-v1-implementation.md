@@ -10,6 +10,8 @@
 
 **Spec:** [`docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md`](../specs/2026-09-05-commerce-client-api-v1-design.md)
 
+**Partially superseded:** 固定 `web + test` 两模块、禁止外部 Java 契约模块以及把 Client API DTO 创建在 Web 的步骤，已由 [`2026-09-05-commerce-client-api-contract-module-design.md`](../specs/2026-09-05-commerce-client-api-contract-module-design.md) 取代。先执行后继专项计划，再重定基线；不得机械执行本计划中冲突的旧步骤。
+
 ## Global Constraints
 
 - 本文件是后续实施计划，不是本轮实施授权。执行前必须由用户明确要求开始编码/建模；不得因计划存在而声明 OpenAPI、15 表、Java、SQL、Gateway、Hosted Checkout 页面或部署已完成。
