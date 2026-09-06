@@ -148,6 +148,60 @@ const requiredFiles = [
     'paytech',
     'foundation',
     'redis',
+    'api',
+    'ResourceLock.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'redis',
+    'api',
+    'ResourceLocks.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'redis',
+    'core',
+    'autoconfigure',
+    'RedisResourceLockAutoConfiguration.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'redis',
+    'core',
+    'coordination',
+    'FoundationRedissonClientDescriptor.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'redis',
     'core',
     'autoconfigure',
     'RedisCacheAutoConfiguration.java',
@@ -175,6 +229,48 @@ const requiredFiles = [
     'auto',
     'integration',
     'RedisStarterIntegrationAutoTest.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'test',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'redis',
+    'auto',
+    'integration',
+    'ResourceLockRedisIntegrationAutoTest.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'test',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'redis',
+    'test',
+    'infrastructure',
+    'RedisLocalEnvironmentPrecondition.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-redis-starter',
+    'src',
+    'test',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'redis',
+    'test',
+    'infrastructure',
+    'RedisTestNamespace.java',
   ),
   wrapper,
 ];
@@ -711,6 +807,9 @@ if (errors.length === 0) {
     if (/RedissonConnectionFactory|redisson-spring-boot-starter/u.test(content)) {
       errors.push(`paytech-redis-starter can replace the Lettuce connection factory: ${sourceFile}`);
     }
+    if (/org\.testcontainers|GenericContainer|DockerClientFactory/u.test(content)) {
+      errors.push(`paytech-redis-starter test can create external Redis infrastructure: ${sourceFile}`);
+    }
   }
   const redisNamespaceProperties = readFileSync(
     join(
@@ -889,12 +988,53 @@ if (errors.length === 0) {
     ),
     'utf8',
   );
-  if (!redisIntegrationTest.includes('redis:8.2.1-alpine')) {
-    errors.push('paytech-redis-starter auto test does not pin the approved Redis 8.2.1 image');
+  const redisLocalEnvironmentPrecondition = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'test',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'test',
+      'infrastructure',
+      'RedisLocalEnvironmentPrecondition.java',
+    ),
+    'utf8',
+  );
+  if (!redisLocalEnvironmentPrecondition.includes('HOST = "127.0.0.1"')
+      || !redisLocalEnvironmentPrecondition.includes('PORT = 16_379')
+      || !redisLocalEnvironmentPrecondition.includes('EXPECTED_VERSION = "8.2.1"')
+      || !redisLocalEnvironmentPrecondition.includes('System.getenv("PAYTECH_REDIS_PASSWORD")')
+      || !redisLocalEnvironmentPrecondition.includes('PAYTECH_REDIS_PASSWORD is missing')
+      || !redisLocalEnvironmentPrecondition.includes('Redis version must be ')) {
+    errors.push('paytech-redis-starter auto test does not fail fast against the approved local Redis 8.2.1');
   }
-  if (redisIntegrationTest.includes('127.0.0.1:16379')
-      || redisIntegrationTest.includes('disabledWithoutDocker = true')) {
-    errors.push('paytech-redis-starter auto test can use or silently skip required Redis infrastructure');
+  if (!redisIntegrationTest.includes('RedisLocalEnvironmentPrecondition.requirePasswordAndVerify()')
+      || !redisIntegrationTest.includes('spring.data.redis.host=" + RedisLocalEnvironmentPrecondition.HOST')
+      || !redisIntegrationTest.includes('spring.data.redis.port=" + RedisLocalEnvironmentPrecondition.PORT')) {
+    errors.push('paytech-redis-starter auto test does not reuse the repository-owned local Redis precondition');
+  }
+  const redisTestNamespace = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'test',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'test',
+      'infrastructure',
+      'RedisTestNamespace.java',
+    ),
+    'utf8',
+  );
+  if (!redisTestNamespace.includes('UUID.randomUUID()')
+      || !redisTestNamespace.includes('.match(value + ":*")')
+      || !redisTestNamespace.includes('raw.delete(List.copyOf(batch))')) {
+    errors.push('paytech-redis-starter auto test does not isolate and SCAN-clean its Redis namespace');
   }
   if (!redisIntegrationTest.includes('verifyMultiKeyAndScan')
       || !redisIntegrationTest.includes('verifyHashFieldIsNotPrefixed')
@@ -906,8 +1046,37 @@ if (errors.length === 0) {
       )
       || !redisIntegrationTest.includes('getExpire(physicalRedisKey, MILLISECONDS)')
       || !redisIntegrationTest.includes('doesNotContain("@class", "_type"')
-      || !redisIntegrationTest.includes('KEY_PREFIX + ":" + lockName')) {
+      || !redisIntegrationTest.includes('NAMESPACE.physical(lockName)')) {
     errors.push('paytech-redis-starter auto test does not verify JSON and unified Lettuce/Redisson namespaces');
+  }
+  const resourceLockIntegrationTest = readFileSync(
+    join(
+      redisStarterSourceRoot,
+      'test',
+      'java',
+      'com',
+      'paytech',
+      'foundation',
+      'redis',
+      'auto',
+      'integration',
+      'ResourceLockRedisIntegrationAutoTest.java',
+    ),
+    'utf8',
+  );
+  for (const scenario of [
+    'appliesTheRealProxyAndPreservesBusinessFailure',
+    'serializesTheSameKeyAndAllowsDifferentKeys',
+    'coordinatesTwoIndependentApplicationContextsAndTwoJvms',
+    'sortsMultipleDeclarationsDeduplicatesAliasesAndReleasesPartialAcquisition',
+    'appliesOneTotalWaitBudgetAcrossRealRedisLocks',
+    'doesNotReleaseTheSecondOwnerAfterTheFirstLeaseExpires',
+    'restoresInterruptAndFailsClosedForUnavailableOrUnauthorizedRedis',
+    'realRedisReleaseFailureDoesNotReplaceBusinessSuccessOrFailure',
+  ]) {
+    if (!resourceLockIntegrationTest.includes(scenario)) {
+      errors.push(`paytech-redis-starter ResourceLock integration scenario is missing: ${scenario}`);
+    }
   }
 
   const expectedPackageRoot = join(

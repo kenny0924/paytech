@@ -4,6 +4,8 @@
 > 取代下文“授权拒绝因审计需要可写事务”的目标理由。账号/Session/Tenant 业务保护与审计链内部原子性仍保留；
 > 下文实现和验证记录为原变更的历史证据，不代表新审计方案已实施。
 
+> 2026-09-05 公共机制后继：[Redis-first Foundation 资源锁决策](../decisions/2026-09-05-redis-first-resource-lock.md)与[完整设计](../../docs/superpowers/specs/2026-09-05-foundation-resource-lock-design.md)批准标准 `@ResourceLock`，因此下文“执行与失败边界”中的“不修改公共锁实现”只描述本轮历史实施范围，不再构成永久禁止公共能力的规范。后继机制不改变本文已确认的具体资源 Key、500ms Wait、30s Lease、并发/不可用失败语义和数据库最终保护；实际迁移、验证与部署状态只读 [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md)。
+
 日期：2026-09-04。状态：已语义合并到主工作区，并完成真实本地 MySQL/Redis 全链路与覆盖率门禁；尚未部署。
 
 ## 已确认原则

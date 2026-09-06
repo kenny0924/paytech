@@ -112,9 +112,11 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - 修改同一资源的不同业务入口必须共用资源锁命名，不能各自按接口/动作命名而互相绕过。租户成员锁不等同于全局账号锁；当前仅有一个固定租户的切片可使用经说明的唯一账号映射，扩展多租户前重新评估。
 - 低并发、允许等待时可以适度扩大 Redis 锁范围以简化实现，但必须评估并发量、最长持锁时间、外部调用、竞争和失败影响；“性能要求低”不自动授权租户级/系统级大锁。跨资源规则只增加其确实需要的局部协调，例如最后一个管理员保护，不能据此扩大所有普通操作的锁。
 - 普通查询不默认加排他锁或 Redis 锁；多次读取需要一致时使用明确的一致性查询/事务快照。授权检查与写入之间的竞态必须独立评估，不能直接删除原保护。
-- Redis 锁复用 Foundation `paytech-redis-starter` / Redisson。明确服务 Namespace、资源 Key、有限等待和 Lease、获取失败/中断/不可用处理；Key 不包含邮箱、Token 或敏感明文，不新建锁表、通用锁框架或重复客户端。
-- 优先在数据库事务之前获取 Redis 锁，在提交或回滚之后释放；只释放自己持有的锁，多锁按固定顺序获取。Redis 获取失败不执行业务，也不在部分请求上静默切到数据库锁形成两套互斥域。
-- Redis Lease 到期、进程暂停、连接中断与释放失败都必须评估；锁不是永久所有权凭证，续租或提交前所有权检查也不等价于数据库原子性。关键关联、权限上限、资金与跨行不变量仍需可靠的数据库条件更新/唯一索引/局部事务锁等保障；捕获异常只承担明确恢复、资源清理或协议转换职责，保留 Cause。
+- 已判定需要跨实例排他协调的同步 MVC 用例，默认 Redis-first，并复用 Foundation `paytech-redis-starter` 的标准 `@ResourceLock(prefix, key)`；不得在业务服务新建同义注解、Aspect、执行器、锁表或重复 Redisson Client。只有标准注解无法表达且已有批准契约的协调原语才直接使用 Redisson。API、配置和失败合同见 [`TECHNOLOGY_STACK.md` 第 6.7 节](./TECHNOLOGY_STACK.md#67-paytech-redis-starter)、[资源锁决策](./decisions/2026-09-05-redis-first-resource-lock.md)和[完整设计](../docs/superpowers/specs/2026-09-05-foundation-resource-lock-design.md)。
+- 固定全局资源可省略 `@ResourceLock.key`；动态 Key 只写受限 `#param` 或一层 `#param.field`，不写完整 SpEL、方法调用、拼接、索引或多层导航。一层 accessor 必须是纯、快速且不访问外部状态的值读取。资源标识必须在进入用例前已经形成稳定的 `String`、整数或 `UUID`；Key 不包含邮箱、Token、Secret、敏感明文或自由文本。敏感登录标识不能直接进入 Key，普通 SHA-256 也不自动使低熵值安全；确需派生资源标识时必须另行批准带密钥的不可逆映射和轮换边界。
+- 注解只放在非 `final` Spring Bean 的公开、非 `static`、非 `final` Processor 具体实现方法，并包住该方法内部完整的 `TransactionTemplate`；不得只标接口，也不得放在 Controller、Repository、Mapper、私有方法或依赖同类自调用触发。一个用例的全部资源必须在该入口一次声明，不通过另一个带锁 Bean、方法引用或嵌套代理拼装锁集合。所有资源 Key 在数据库事务开始前一次性解析并获取，提交或回滚后逆序释放；多锁先规范化、去重，再按完整逻辑 Key 的稳定 ASCII 字典序在一个总 Wait 预算内获取，不能依赖注解声明顺序。
+- 使用 `@ResourceLock` 的目标必须是启动期可预测、非懒加载的 singleton Bean；override 必须在具体方法完整复写所有祖先锁声明，只有没有 override 的具体父类方法可以沿用声明。应用必须显式配置服务级有限 Wait/Lease，并在启动期校验协调开关、Foundation Redisson 来源、所有 scope 下唯一且验证后冻结的客户端对象身份、Namespace/Wait/Lease、FactoryBean/Bean 生命周期、实际代理与固定 Advisor/执行链身份和顺序、其他 Advisor 未复用或另建锁 Interceptor、JDK 接口暴露、方法可代理性、参数元数据、表达式、属性读取和声明类型；配置或静态绑定无效时失败启动，不能把错误延迟到首个请求。`Future`、`CompletionStage`、`Callable`/`Runnable`、JDK 函数式或迭代遍历接口、Java `Stream/BaseStream`、Reactive Streams、Java `Flow`、Kotlin Flow、Kotlin suspend 等延迟执行入口不支持持锁。竞争失败或中断不执行业务，中断状态必须恢复；Redis 不可用失败关闭；释放失败或失去 Owner 不得掩盖业务异常，也不得强制解锁或静默切换到另一互斥域。
+- Redis Lease 到期、进程暂停、连接中断与释放失败都必须评估；锁不是永久所有权凭证，续租或提交前所有权检查也不等价于数据库原子性。Redis-first 不等于 Redis-only：Expected State/Version CAS、唯一索引、幂等、本地事务，以及关键关联、权限上限、资金与跨行不变量确实需要的数据库行/哨兵保护仍是最终防线；捕获异常只承担明确恢复、资源清理或协议转换职责，保留 Cause。
 - 不把数据库事务和悲观锁混为一谈：去掉显式锁不表示取消事务，`UPDATE` 本身仍会获取行锁。幂等与旧版本冲突也不能只交给有 TTL 的 Redis Key。
 - 验证至少覆盖相关的同资源竞争、不同资源并行、事务失败后释放、Lease 过期/中断、依赖不可用，以及跨资源不变量。使用真实仓库本地 MySQL/Redis，不用方法 Stub 证明分布式协调。
 

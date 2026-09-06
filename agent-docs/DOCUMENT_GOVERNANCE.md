@@ -43,6 +43,8 @@ Code-MoR 不再用“所有文档排成一条绝对优先级”的方式解决�
 | Vault V1 | [Vault V1 Spec](../docs/superpowers/specs/2026-09-02-vault-database-design.md) 拥有安全、信任与行为语义；[`OpenAPI`](../vault-service/api/openapi/v1.yaml) 拥有 HTTP Wire Contract；[`VAULT_PHYSICAL_DECISIONS.md`](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)、PDManer 与评审后 Schema SQL 拥有持久化结构 | [`VAULT_SERVICE_ARCHITECTURE.md`](./VAULT_SERVICE_ARCHITECTURE.md) 只保留未被 V1 取代的安全背景；三类权威漂移时不得互相猜测，按各自子主题修复并记录冲突 |
 | 业务需求和全局时序 | `requirements-site/content/requirements.ts` 与 `requirements-site/content/global-use-case-sequences.mjs` | 派生站点不得反向成为事实源 |
 
+Foundation 资源锁按既有主题分治，不新增重叠 Owner：[`TECHNOLOGY_STACK.md`](./TECHNOLOGY_STACK.md) 拥有公共能力、依赖、配置与失败边界，[`DEVELOPMENT_CONVENTIONS.md` 第 5.1 节](./DEVELOPMENT_CONVENTIONS.md#51-锁与并发控制)拥有是否加锁、实际资源、Redis-first 与数据库最终保护的选择规则，[`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) 拥有公共包、代理入口和 Processor/事务位置，[`UNIT_TEST_GUIDE.md`](./UNIT_TEST_GUIDE.md) 拥有验证门禁，[`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 独占实现、验证、迁移和部署状态。[资源锁决策](./decisions/2026-09-05-redis-first-resource-lock.md)与[完整设计](../docs/superpowers/specs/2026-09-05-foundation-resource-lock-design.md)冻结跨 Owner 的准确窄合同；各 Owner 只维护自己子主题的稳定投影。
+
 某项专项决策可以窄范围取代主题 Owner 的一部分，但必须声明 `Superseded sections` 或准确作用域；未命中的其余部分继续有效。
 
 ## 3. 文档类型与允许内容
@@ -102,3 +104,5 @@ Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实�
 同日确认的 Superpowers 分阶段工作流与业务 Service/Domain Service 强制 `interface + *Impl` 见 [`decisions/2026-09-05-superpowers-and-service-interface-policy.md`](./decisions/2026-09-05-superpowers-and-service-interface-policy.md)。该决策只取代旧的 Agent 工作流指令和 Service 单实现例外；DataObject Owner-JAR 边界及其他既有决定继续有效。
 
 同日确认的业务模块默认无直接依赖、稳定能力单向例外、Owner 合同边界与 `web` Processor 编排规则见 [`decisions/2026-09-05-business-module-collaboration-policy.md`](./decisions/2026-09-05-business-module-collaboration-policy.md)。[`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) 仍是这类 Java 模块协作语义的唯一现行权威，系统模块设计只做具体映射。
+
+同日确认的 Redis-first Foundation 资源锁合同见 [`decisions/2026-09-05-redis-first-resource-lock.md`](./decisions/2026-09-05-redis-first-resource-lock.md)和[完整设计](../docs/superpowers/specs/2026-09-05-foundation-resource-lock-design.md)。它只在标准同步排他资源协调范围内取代“不得新增通用锁框架”的旧表述，批准的是 Foundation `@ResourceLock` 唯一公共能力，不授权业务服务复制本地注解、Aspect、执行器或客户端；是否需要协调、资源 Key 和数据库最终保护仍由业务不变量决定。Platform 2026-09-04 锁重构文档保留为具体资源选择与历史验证证据，不拥有该公共能力的当前合同。

@@ -175,6 +175,9 @@ Domain Service → RepositoryImpl → Mapper → local MySQL
 - 不通过方法 Stub 返回缓存命中或未命中。
 - Mocker 写入真实测试 Redis，Checker 验证 Key、Value、TTL 和锁释放。
 - 普通 Redis 能力通过真实 Lettuce/Spring Data Redis 链路验证；Redisson 锁或信号量场景还必须覆盖租约/过期、竞争、释放和客户端中断。
+- Foundation `@ResourceLock` 的纯表达式编译、类型规则、Key 规范化/去重/排序可以做不启动 Spring 的聚焦单元测试；合法与非法 Annotation 绑定、代理可达性、Parameter Metadata、协调开关、Namespace 和服务级 Wait/Lease 必须用应用上下文测试证明启动期接受或 Fail-Fast，不能只测首个请求的运行时失败。
+- `@ResourceLock` 的协调测试复用真实本地 Redis，至少覆盖同 Key 竞争、不同 Key 并行、重复 Key 去重、多锁稳定顺序、部分获取失败后的逆序清理、总等待预算、Lease 到期、持有者安全释放、线程中断、Redis 不可用和释放异常。等待使用有上限的条件检查，不使用固定 `Thread.sleep`；日志、指标和失败信息不得包含完整动态 Key 或敏感值。
+- 每个迁移服务必须从真实公开入口经过 Controller/Listener、Spring Proxy、带 Annotation 的 Processor、内部 `TransactionTemplate`、Domain Service 与本地数据库，证明锁在事务前获取、提交/回滚后释放。还必须模拟 Lease 已失效但旧请求继续运行的重叠窗口，验证 Expected State/Version CAS、唯一索引或必要数据库局部保护仍能守住业务不变量。
 - 当前用例完全不使用 Redis 时，不为了形式一致访问 Redis。
 
 ### 7.3 MQ
@@ -470,6 +473,8 @@ void test_normalFlow() {
 - 相同幂等键重复请求；
 - 相同幂等键但业务参数不同；
 - 并发状态更新或乐观锁冲突；
+- 使用资源锁时，同一资源竞争、不同资源并行、多资源反向声明仍按确定顺序，以及部分取锁失败不进入业务方法；
+- Redis Lease 失效或协调客户端故障时，数据库最终保护仍阻止旧请求破坏状态、权限上限、资金或跨行不变量；
 - 外部业务失败、处理中、协议错误、超时、断连和未知结果；
 - MQ 重复、乱序和延迟；
 - 事务回滚后数据库、Redis、`compensation_event` 和 MQ 的一致性；
@@ -532,6 +537,8 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 - 每个测试后的完整状态重置；
 - 不访问真实环境的动态测试配置。
 
+新增或修改 Foundation `@ResourceLock` 还必须具备受限表达式与 Key 安全测试、启动 Fail-Fast/代理架构测试、真实 Redis 多实例竞争与故障语义、锁在 `TransactionTemplate` 外层的链路证据，以及 Lease 重叠下数据库最终保护的服务级测试。仅证明“拿到过 Redis 锁”不构成完成。
+
 如果一个新功能只能连接真实环境才能验证，则不能视为测试完成。
 
 ## 20. 完成检查清单
@@ -545,6 +552,7 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 - [ ] Builder 只构建数据，Mocker 只准备状态，Checker/Probe 只观察和断言。
 - [ ] 未准备场景、意外请求和多余调用都会显式失败。
 - [ ] 响应、本地数据、缓存、事件和外部调用按风险完成联合断言。
+- [ ] 资源锁变更覆盖启动校验、同/异资源并发、多锁顺序、Wait/Lease、Redis 故障、事务外层和数据库最终保护，且没有用 Stub 或固定睡眠替代真实链路。
 - [ ] 每个测试独立、可重复并且不依赖顺序。
 - [ ] 没有生产、共享测试、第三方或真实环境凭据；固定本地测试凭据仅属于隔离的 Loopback-only 可重建账号，并与初始化配置一致。
 - [ ] 默认 Maven 测试只运行 `auto`，`manual` 需要显式 Profile。

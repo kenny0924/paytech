@@ -201,8 +201,12 @@ paytech-foundation/
 - 每个 Redis Cache 必须由宿主服务注册一个 `RedisCacheDefinition<T>(cacheName, concreteValueType, ttl)`；Cache Name 使用固定小写 kebab-case，值类型必须是可实例化的具体类型，TTL 不短于 1 毫秒，未声明的 Cache 不得动态创建；
 - Redis Cache 使用普通 Jackson 3 JSON，不写 Java 类元数据或 JDK 序列化内容；物理 Key 固定为 `{service-prefix}:cache:{cache-name}::{key}`，其中服务前缀遵守统一 Redis Namespace 规则；
 - `RedisJsonTemplate` 保存不含 Java 类名的普通 UTF-8 JSON，读取时显式传入 `Class<T>` 或 `TypeReference<T>`，实现 `CodeEnum` 的枚举使用稳定 `code` 而非 `name()`；为支持滚动升级，新增未知字段可忽略，其他不兼容变更必须升级 Key 版本；每次写入必须显式提供至少 1 毫秒的 TTL；默认不创建使用 JDK 序列化的通用 `RedisTemplate<Object, Object>`；
-- 通过 `redis.coordination.enabled=true` 按需创建只用于锁、可过期信号量等协调能力的 `RedissonClient`；
-- 直接依赖 Redisson Core，不引入 `redisson-spring-boot-starter`，不得注册 `RedissonConnectionFactory` 或替换 Lettuce；
+- 通过 `redis.coordination.enabled=true` 按需创建只用于锁、可过期信号量等协调能力的 `RedissonClient`。同步 MVC 服务的标准排他资源协调由 Foundation `paytech-redis-starter` 的公共 `@ResourceLock(prefix, key)` 提供；注解与可重复容器属于 Starter 的 `api`，Advisor、Key 解析、启动校验和自动配置属于 Starter 内部实现。业务服务不得复制注解、Advisor、执行器或第二套客户端；使用该注解时必须使用 Foundation 根据 Spring Data Redis 配置创建并登记来源的唯一单机 `RedissonClient`，宿主自定义或替换客户端失败启动。原始 Redisson 只保留给标准注解无法表达且另有批准契约的协调原语；
+- `@ResourceLock.key` 可以为空以表达由 `prefix` 唯一确定的固定资源；动态 Key 只接受 `#param` 或一层 `#param.field`，完整语法为 `#[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)?`。字段只按 record component 或无参 JavaBean getter 读取，不执行完整 SpEL、方法调用、Bean/类型引用、运算、拼接、索引或多层导航。可求值类型只允许 `String`、整数 primitive/wrapper 或 `UUID`；运行值必须经过有界、安全 ASCII 校验，不得把邮箱、Token、Secret、敏感明文或自由文本放入物理 Key；
+- `prefix` 是固定的小写 kebab-case 段，可用 `:` 分隔，但不得重复包含当前服务 Namespace；Foundation 只在最终逻辑 Key 前添加一次服务 Namespace。一个方法可声明多个资源锁；必须在接触 Redis 前解析全部 Key、规范化并去重，再按完整逻辑 Key 的稳定 ASCII 字典序、在一个总 Wait 预算内获取，任一失败时逆序释放已取得的锁，正常完成时同样逆序释放。注解声明顺序不构成协议；
+- 等待与 Lease 只允许通过服务级 `redis.coordination.resource-lock.wait-time` 和 `redis.coordination.resource-lock.lease-time` 配置，值必须显式、有限且有效，不在注解上逐方法覆盖。使用 `@ResourceLock` 的目标必须是启动期可预测、非 lazy 的 singleton；应用在启动期必须校验协调开关、Foundation Redisson 来源、Namespace/Wait/Lease 配置、具体实现方法的完整 Annotation 集合、FactoryBean/Bean 生命周期、目标类与方法可代理性、JDK 代理接口暴露、实际 Foundation Advisor/内部执行链身份与顺序、同步返回类型、表达式静态绑定、参数元数据、属性可读性和声明类型；任一不满足即失败启动或在不可提前发现的迟创建 Bean 初始化时 Fail-Closed，不能进入业务方法。`Future`、`CompletionStage`、`Callable`/`Runnable`、JDK 函数式或迭代遍历接口、Java `Stream/BaseStream`、Reactive Streams、Java `Flow`、Kotlin Flow 和 Kotlin suspend 均不属于同步返回；
+- 锁 Advisor 包住公开、可代理的 Processor 用例方法，并位于其整个 `TransactionTemplate` 外层：先解析并获取全部 Redis 锁，再开启数据库事务，提交或回滚后才逆序释放；一个入口一次声明完整资源集合，不以嵌套带锁调用或方法引用拼装锁。若进入 Interceptor 时已经存在活动数据库事务，必须在解析 Key 和访问 Redis 前失败。竞争超时或中断映射公共并发错误且中断必须恢复；Redis 不可用失败关闭为公共服务不可用错误并保留 Cause；业务异常原样传播；释放失败或 Lease 到期失去 Owner 只记录固定低基数诊断且不得覆盖主异常，也不得 `forceUnlock`；
+- 直接依赖 Redisson Core，不引入 `redisson-spring-boot-starter`，不得注册 `RedissonConnectionFactory` 或替换 Lettuce。`@ResourceLock` 只提供 Redis-first 跨实例协调，不提供 fencing，也不取代事务、幂等、Expected State/Version CAS、唯一索引或业务不变量确实需要的数据库行/哨兵保护；完整合同见[资源锁决策](./decisions/2026-09-05-redis-first-resource-lock.md)和[设计](../docs/superpowers/specs/2026-09-05-foundation-resource-lock-design.md)；
 - Redisson 复用同一套地址、数据库、凭据、超时和 SSL 配置，强制显式配置连接/命令超时与有界线程/连接池；`RedisJsonTemplate`、Redisson 与 `StringRedisTemplate` 共用服务级 Key 前缀，默认取 `spring.application.name`，特殊场景可通过 `redis.key-prefix` 统一覆盖；
 - Namespace 只作用于顶层 Key，不改写 Hash field、Value 或 Channel；业务代码不得通过通用 `RedisTemplate<Object, Object>`、原始连接、回调、Lua 硬编码 Key 或 Redisson 全库命令绕过隔离，跨 Key `SORT BY/GET` 失败关闭；Namespace 是默认防误用约定，生产权限隔离仍由独立凭据、ACL 或实例承担；
 - 当前已确认部署边界为 Redis 单机模式；Sentinel、Cluster 和 Master/Replica 在获得设计与真实测试前失败关闭；
@@ -322,13 +326,13 @@ RabbitMQ 是 MVP 唯一业务 MQ，不再并行评估 RocketMQ。
 ## 12. Redis 与 Gateway
 
 - Redis 早期使用单机部署。开发和测试统一复用仓库专用 `mor-local` Compose Redis，使用运行级唯一 Namespace 和受限清理，不使用 Testcontainers。
-- 普通同步/Reactive Redis 操作使用 Spring Data Redis + Lettuce；非 Gateway 服务需要锁、可过期信号量等明确协调能力时可按 `paytech-redis-starter` 约束使用 Redisson。
+- 普通同步/Reactive Redis 操作使用 Spring Data Redis + Lettuce；非 Gateway 同步 MVC 服务需要排他资源锁时优先使用 `paytech-redis-starter` 的标准 `@ResourceLock`，其他 Redisson 协调原语必须有标准注解无法表达的明确理由并遵守第 6.7 节。
 - Operations Gateway 不依赖 `paytech-redis-starter`，不创建 Blocking/Reactive Redis Template、阻塞连接或 Redisson Client，只使用 `ReactiveRedisConnectionFactory` 和 Reactive Lua 执行。
 - Gateway Rate Limit 使用原子 Lua Token Bucket；一次请求的 Route/IP/Subject 等适用维度全量通过后才统一扣减。
 - Gateway Concurrency 使用 Lua + ZSET Expiring Lease；Acquire 全维度原子成功或失败，Reactor 的成功、错误和取消路径都释放 Lease，进程故障由 TTL 恢复容量。
 - Guard 为静态的每路由 Profile：先 Rate Limit，再立即 Acquire Concurrency Lease，不等待、不排队；后续 Concurrency、JWT、Body 或下游拒绝不退还已消费的 Rate Token，所有已获 Lease 在成功、错误和取消时释放。Redis 采用 `guard:v3` 和服务器时间；Client IP Key 使用 Nginx 覆盖写入且由 Gateway 只解析一次的单值合法 `X-Real-IP`，Subject Key 使用已验证 JWT 的准确 `sub`，Guard 不再配置 HMAC。Rate Hash 只含 `t/lr/rr`，Concurrency Metadata 只含 `hw/l`，不保存 Policy Revision，也不执行滚动状态迁移。Access Log 从同一可信 IP 上下文生成独立 HMAC 假名值，已消费的代理 Header 在转发 BFF 前删除。
-- 其他服务使用 Redis 暂不需要额外架构审批，但必须定义 Key Namespace、TTL、容量、失败语义和自动测试。
-- Redis 不存放账务余额、支付状态、补偿 Claim、不可丢失幂等事实或其他权威业务状态。资金和状态并发仍使用 MySQL 行锁/CAS/唯一约束。
+- 其他服务使用 Redis 暂不需要额外架构审批，但必须定义 Key Namespace、TTL 或资源锁 Wait/Lease、容量、失败语义和自动测试。
+- Redis 不存放账务余额、支付状态、补偿 Claim、不可丢失幂等事实或其他权威业务状态。Redis-first 只决定跨实例协调的首选机制；资金、状态、权限上限和跨行不变量仍按需要使用 MySQL 条件更新/CAS、唯一索引、行锁或经批准的局部数据库保护作为最终防线。
 
 ## 13. 可观测性
 

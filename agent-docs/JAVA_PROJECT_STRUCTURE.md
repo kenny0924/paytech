@@ -109,6 +109,8 @@ paytech-build/
 
 Foundation JAR 的完整清单、依赖边界和准确版本只在 `TECHNOLOGY_STACK.md` 维护，本文不复制第二份清单。MVC 服务不得复制 Foundation 已拥有的本地日志 Filter、异常 Advice 或错误响应模型。Redis 与 Caffeine 的 Manager、Cache Name、类型和 TTL 必须按技术栈定义显式声明；不得让 Cache 承担权威事实、幂等、锁、跨实例一致性、Vault Reveal、凭据或敏感明文，也不得把跨领域 DTO、业务枚举、Repository、Mapper 或第三方 Provider 模型放入公共 JAR。
 
+Foundation 资源锁的 `@ResourceLock` 与 Repeatable 容器属于 `paytech-redis-starter` 的公共包 `com.paytech.foundation.redis.api`；Aspect、受限表达式解析、Key 规范化、启动校验和自动配置均为 Starter 内部实现，不进入业务 `*-api`。业务模块只依赖 Starter 的窄公共注解，不复制本地包装或向跨模块业务契约暴露 Foundation 内部类型。完整能力合同由 [`TECHNOLOGY_STACK.md` 第 6.7 节](./TECHNOLOGY_STACK.md#67-paytech-redis-starter)、[资源锁决策](./decisions/2026-09-05-redis-first-resource-lock.md)和[完整设计](../docs/superpowers/specs/2026-09-05-foundation-resource-lock-design.md)拥有。
+
 公共能力按最小证据提取：天然属于跨服务基础设施，或至少两个真实服务已经共享同一稳定契约时，才新增职责单一的 Foundation JAR。单个服务的实现先保留在本服务，不为未来复用预建带系统名前缀的包装类、空模块、空层或总揽式 `common`；新增本地技术基础设施前先检查现有 Foundation 是否已经拥有该职责。
 
 ### 3.2 API Gateway 工程例外
@@ -377,6 +379,7 @@ validate request
 - Controller 方法少于 10 条有效可执行语句，且只委托一个 Domain Service、没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排时，可以省略 Processor。空行、注释、花括号和格式换行不计入语句数，不能通过调整格式规避边界。
 - 任一条件不满足时，无论物理代码行数多少都必须使用 Processor。
 - 复杂用例的默认事务边界位于 Processor；省略 Processor 的简单一致性读由 Domain Service 持有只读 `TransactionTemplate`。Controller 不持有事务边界。
+- 需要 Foundation 资源锁的写用例把 `@ResourceLock` 标在启动期可发现、非懒加载 singleton、非 `final` Spring Bean 的公开、非 `static`、非 `final` Processor 具体实现方法，而不是只标接口；override 必须在具体方法重复声明。锁 Aspect 必须包住该方法内部完整的 `TransactionTemplate`，确保全部 Redis 锁先获得、数据库事务后开始，提交或回滚后才逆序释放。Controller、Domain Service、Repository、Mapper、private/final 方法、同类自调用、直接 `new` 的对象、scoped/lazy Bean、异步返回方法和已有外层事务的调用点都不是支持入口；多个资源必须在该用例入口一次声明完整，不能靠嵌套代理调用拼装锁集合。启动门禁同时验证实际代理包含适用的 Resource Lock Advisor，且其顺序位于适用事务 Advisor 外层。
 - Processor 只能调用 Domain Service 或明确的应用端口，不得直接调用 Repository、Mapper 或外部 SDK。
 - Processor 的请求和结果使用应用语义，不依赖 `ResponseEntity`、HTTP Header、Servlet 或客户端代理类型；协议参数在 Controller/Web 基础设施完成解析和转换。
 - 一个命令只由一个核心系统拥有。BFF 和 Gateway 不承担该命令的业务编排。
@@ -520,6 +523,8 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] 多业务模块默认没有直接 Maven 依赖；每一项直接依赖都已证明是稳定、可复用的 Owner 窄业务接口及 Domain/Application 模型，并保持长期单向、无环且不承担跨模块用例编排。
 - [ ] 循环风险、多 Owner 命令或跨 Owner 写事务由 `web` Processor 使用一个本地 `TransactionTemplate` 编排，模块没有依赖对方的 `*Impl` 或持久化对象。
 - [ ] 事务覆盖本地原子操作，事件在提交后可靠发布。
+- [ ] 需要跨实例排他协调时，`@ResourceLock` 位于非 `final` Spring Bean 的公开 Processor 具体实现方法并由 Proxy 可达，包住完整 `TransactionTemplate`；所有资源在进入数据库事务前已知并按确定顺序获取，没有在接口、Controller、Repository、Mapper、private/static/final 方法或同类自调用上依赖 AOP。
+- [ ] Redis-first 协调没有取代幂等、Expected State/Version CAS、唯一索引或业务不变量需要的数据库最终保护；资源锁声明、配置和代理入口通过启动校验与架构测试。
 - [ ] 状态更新校验旧状态/版本并处理并发冲突。
 - [ ] 异常信息包含必要业务上下文。
 - [ ] 未预期异常交给共享全局处理器；局部 `catch` 具有实际恢复、清理、异步状态或协议转换职责，并保留原始 Cause。
