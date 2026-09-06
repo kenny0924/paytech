@@ -320,11 +320,13 @@ Vault Go Server 使用同一 JSON 成员、媒体类型、Request ID 和时间�
 
 同一 Producer 版本只输出新格式，不按 `Accept` 回退旧格式。处于迁移窗口的 Consumer 必须容忍新旧 Producer，以支持单仓库回滚。
 
+[窄范围后继决策](../../../agent-docs/decisions/2026-09-06-remove-unused-api-error-response-dto.md)确认：旧 `ApiErrorResponse` Java record 不是 Legacy Reader 的运行时合同，也不承担兼容解析。确认工作区生产代码无引用、测试 fixture 已与共享 DTO 解耦后，可以独立删除该 record；这不代表 Legacy 协议已经下线，也不放宽下述 Reader 删除门禁。
+
 ### Phase 4：移除 Legacy
 
 当已部署的所有 Producer 都已切换、所有 Consumer 都有新格式验证证据后：
 
-- 删除旧 `ApiErrorResponse` Wire 类型和旧 Decoder；
+- 删除旧 Decoder；
 - 删除旧顶层 `message` 分支和兼容测试；
 - 静态扫描不再发现业务应用生产旧四字段 Body；
 - 更新 `CURRENT_IMPLEMENTATION.md`，但只记录实际完成、验证和部署的范围。

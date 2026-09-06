@@ -1147,7 +1147,7 @@ Cancel Processor 在事务外调用 PAY-I12，在确定 `TERMINATED` 后才以�
 4. 六库 COMP-01 完成或执行时已有一个统一可用的 Foundation Compensation Event 合同；
 5. Platform 接收 `ClientWebhookRequested` 的 typed/event schema，并按现有单一 `signing_secret_id` 闭合 Event/Delivery/Attempt 合同；
 6. Gateway Client API 通用前置按其独立计划达到 integration-ready。
-7. Foundation MVC 提供经批准的 Client API RFC 9457 输出策略；Commerce 不得用本地 `@RestControllerAdvice` 或本地 Problem 类型绕开共享 `GlobalExceptionHandler`。现有 `ApiErrorResponse(code,message,requestId,timestamp)` 在该前置完成前不能用于本外部协议。
+7. Foundation MVC 提供经批准的 Client API RFC 9457 输出策略；Commerce 不得用本地 `@RestControllerAdvice` 或本地 Problem 类型绕开共享 `GlobalExceptionHandler`。旧四字段 `{code,message,requestId,timestamp}` 错误体不能用于本外部协议。
 
 不得在 Commerce 复制其他 Owner 的 wire DTO、手写未批准 URI、直读其他数据库或用临时匿名/静态旁路代替这些合同。
 
