@@ -2,14 +2,9 @@
 
 最后更新：2026-09-05
 
-状态：与 71 表 Risk & Compliance V1 PDManer 基线同步；Settlement Eligibility、Dispute、Manual Payout 四检查点与 CCT Local Partner Application Typed Namespace 已通过自动场景门禁；PDManer 4.9.3 应用内人工检查待完成
+状态：与 71 表 Risk & Compliance V1 PDManer 基线同步；Risk 15 列 Compensation Event、Vault V1 消费者边界、零物理 CHECK/FK、规则版本审计字段、Settlement Eligibility、Dispute、Manual Payout 四检查点与 CCT Local Partner Application Typed Namespace 已通过自动场景门禁；PDManer 4.9.3 应用内人工检查待完成
 
-> **2026-09-05 横切迁移提示：** 本文的逐表记录继续精确描述当前生成模型及当时的消费者假设，不单独拥有
-> Vault 或 `compensation_event` 契约。其中与当前三表 Protect/Reveal、补偿三字段身份和 4 KiB 可选 Payload
-> 不一致的旧字段属于 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md) 中 VAULT-01 / COMP-01
-> 的待迁移现状；完成 [Vault 消费者对齐](../../../docs/superpowers/plans/2026-09-05-vault-consumer-model-alignment.md)
-> 和 [补偿六模型对齐](../../../docs/superpowers/plans/2026-09-05-compensation-event-six-model-alignment.md) 前，
-> 不得把这些场景字段复制到新增模型、SQL、DataObject 或代码。
+> **2026-09-05 横切迁移提示：** 本文的 Risk 逐表记录已投影当前三表 Protect/Reveal、补偿三字段身份与 4 KiB 可选 Payload，并把关系 Sidecar 保持为应用不变量。这里只能证明 Risk 模型局部对齐；六库 COMP-01 与全局 DB-01 仍按 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md) 的全局证据维护，其中 DB-01 继续受 Vault 物理 Schema 阻塞。
 
 当前 Manual Payout 契约以 [四检查点对齐实施记录](../../plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) 为准。
 
@@ -83,7 +78,7 @@ Checkout Decision Point 使用受控 Context Field、工程注册 Feature/Action
 | `t_decision_point_obligation` | Checkout 的 Action 型义务为 `obligation_id=210051, trigger_decision=ALLOW, obligation_type=ACTION, action_version_id=240031, sequence_no=1, failure_policy=FAIL_CLOSED`，会以 `obligation_id` 进入 Intent；Payment 的义务为 `obligation_id=210052, obligation_type=RESERVE_LIMIT_GROUP, action_version_id=NULL`，由 0..N 条 Limit Binding 配置且不生成 Action Intent；四个 Manual Payout Point Version 各恰一条 `trigger_decision=ALLOW, obligation_type=CHECK_SETTLEMENT_ELIGIBILITY, action_version_id=NULL, failure_policy=FAIL_CLOSED`，且不得有 Limit Binding。运营不能删除这些系统义务。 |
 | `t_feature_version` | Feature Version 吸收目录身份：`feature_version_id=220011, feature_code=IP_RISK_LEVEL, feature_name=IP Risk Level, business_category=NETWORK, version_no=2, result_value_type=STRING, handler_code=NETWORK_RISK_V2, implementation_version=2.4.1, implementation_hash=sha256:handler, status=ACTIVE`；只允许工程注册 Handler，禁止任意 SQL/Script。 |
 | `t_feature_dependency` | `dependency_id=220021, feature_version_id=220011, dependency_feature_version_id=220012, sequence_no=1, required_flag=1`；发布时验证无环。 |
-| `t_rule_set_version` | Rule Set Version 吸收稳定身份：`rule_set_version_id=230011, decision_point_id=210001, rule_set_code=CHECKOUT_NETWORK, rule_set_name=Checkout Network Rules, version_no=4, status=FROZEN, content_hash=sha256:rules`；冻结后不可修改，也不跨 Decision Point 复用。 |
+| `t_rule_set_version` | Rule Set Version 吸收稳定身份：`rule_set_version_id=230011, decision_point_id=210001, rule_set_code=CHECKOUT_NETWORK, rule_set_name=Checkout Network Rules, version_no=4, status=FROZEN, content_hash=sha256:rules, created_by=900001, change_reason=Block anonymous high-risk checkout, frozen_by=900002, frozen_time=2026-08-26T09:58:00.000000Z`；创建人和非敏感变更原因必填，冻结后不可修改，也不跨 Decision Point 复用。 |
 | `t_risk_rule` | `rule_id=230021, rule_code=DENY_HIGH_RISK_IP, priority_no=10, enabled_flag=1, reason_code=NETWORK_HIGH_RISK`。 |
 | `t_rule_node` | Root `node_id=230031, node_type=GROUP, group_operator=AND`；Child `230032` 为 `PREDICATE/EQ`，同级 Sequence 唯一。 |
 | `t_rule_operand` | Predicate Left `operand_id=230041, operand_role=LEFT, value_sequence=1, source_type=FEATURE, feature_version_id=220011, value_type=STRING`；Right LITERAL `operand_id=230042, operand_role=RIGHT, value_sequence=1, source_type=LITERAL, value_type=STRING, string_value=HIGH`。LITERAL 直接用多行 `value_sequence` 和五个 typed columns 表达；IN/NOT_IN 使用连续 `1..n`，BETWEEN 固定 `[1,2]`，每行仅一个类型值非空。 |
@@ -204,8 +199,26 @@ Risk 拥有 Outcome/Liability，Payment 拥有 Provider 交互。只有权威 `D
 
 | 物理表 | 示例行与生命周期 |
 |---|---|
-| `t_compensation_event` | Qualification、Limit、Settlement Control、Dispute 等业务事务分别写最小事件。例：`id=900001, event_key=risk-dispute-opened-720001-v1, event_type=DisputeOpened, execution_type=MQ_PUBLISH, source_type=DISPUTE_CASE, source_id=720001, source_version=1, execute_status=INIT, execute_count=0, lock_version=1`。Control 创建、释放和过期按版本发布完整 `SettlementControlChanged`。Claim 后进入 PROCESSING 并成对写 Lock Owner/Until；成功后删除。 |
+| `t_compensation_event` | Qualification、Settlement Control、Dispute 等业务事务分别写最小任务。例：`id=900001, event_key=risk:dispute-change:720021, event_type=PUBLISH_DISPUTE_EVENT, sub_event_type=DisputeOpened, payload_json=NULL, execute_status=INIT, execute_count=0, next_execute_at=2026-08-26T10:00:00.000000Z, lock_owner=NULL, lock_until=NULL, last_error_code=NULL, last_error_summary=NULL, lock_version=1`。Claim 后进入 PROCESSING 并成对写 Lock Owner/Until；成功后删除。 |
 | `t_command_idempotency` | `idempotency_id=900011, caller_scope=PAYMENT, operation_type=ASSESS_TRANSACTION, idempotency_key=PAY-510011-RISK, request_hash=sha256:req, response_ref=assessment:330010/evaluation:310010, status=SUCCEEDED`；同键同 Hash 返回原坐标和冻结结果，同键不同 Hash 冲突。 |
+
+最小登记可以省略运行字段，由 Schema 安全默认值补齐：`execute_status DEFAULT 'INIT'`、`execute_count DEFAULT 0`、`next_execute_at DEFAULT CURRENT_TIMESTAMP(6)`、`create_time DEFAULT CURRENT_TIMESTAMP(6)`、`update_time DEFAULT CURRENT_TIMESTAMP(6)`，而 `lock_version DEFAULT 1`。扫描分别使用 `idx_comp_event_ready(execute_status,next_execute_at,id)` 与 `idx_comp_event_lease(execute_status,lock_until,id)`；末尾 `id` 使相同时间值的 Claim 顺序稳定且可继续分页。
+
+Risk 补偿事件重建清单按事实族冻结如下；每一行的权威事实同时承担永久幂等，MQ 信封只从列出的本库事实重建：
+
+| event_type | sub_event_type | event_key 构造 | 权威事实 / MQ 信封来源 / 永久幂等 |
+|---|---|---|---|
+| `PUBLISH_ROLE_QUALIFICATION_EVENT` | `RoleQualificationApproved/Rejected/Expired/Revoked` | `risk:qualification-change:{changeId}` | `t_qualification_state_change + t_role_qualification + t_qualification_decision`；`change_id` 永久唯一 |
+| `PUBLISH_COMPLIANCE_RESTRICTION_EVENT` | `ComplianceRestricted` | `risk:restriction:{restrictionId}` | `t_risk_restriction`；`restriction_id` 永久唯一；若后来状态会覆盖事件时点字段，只把无法回源的最小非敏感字段放入 4 KiB Payload |
+| `PUBLISH_CHECKOUT_RISK_ASSESSMENT_EVENT` | `CheckoutRiskAssessed` | `risk:checkout-assessment:{snapshotId}` | `t_checkout_input_snapshot + t_decision_evaluation`；`snapshot_id` |
+| `PUBLISH_PAYMENT_RISK_ASSESSMENT_EVENT` | `PaymentRiskAssessed` | `risk:payment-assessment:{assessmentId}` | `t_transaction_risk_assessment + t_decision_evaluation`；`assessment_id` |
+| `PUBLISH_SETTLEMENT_CONTROL_EVENT` | `SettlementControlChanged` | `risk:settlement-control-change:{changeId}` | `t_settle_control_state_change + t_settlement_control + t_settlement_control_scope`；`change_id` |
+| `PUBLISH_DISPUTE_EVENT` | `DisputeOpened/DisputeEvidenceRequested/DisputeWon/DisputeLost/DisputeOutcomeCorrected` | `risk:dispute-change:{changeId}` | `t_dispute_state_change` 联合 Case/Request/Outcome/Liability；`change_id + sub_event_type` |
+| `EXECUTE_RISK_ACTION_EFFECT` | `APPLY_ASYNC_ACTION_EFFECT` | `t_action_effect.idempotency_key` | `t_action_effect + t_decision_evaluation + t_action_version`；`uk_action_effect_key` |
+
+`payload_json` 默认为空，只允许无法从上述权威事实恢复的最小非敏感 JSON Object，最大 4 KiB；不保存 Vault Token、网络/消费者原值、Source Version、Schema、Canonical Envelope 或 Payload Hash。`CR_SETTLEMENT_CONTROL_EVENT` 用 State Change `change_id` 重算事件键，`CR_SIMULATED_EFFECT_COMPENSATION_EVENT` 用 Action Effect `idempotency_key` 连接本地任务，不再依赖已删除的 Source 字段。
+
+三个 Risk-owned Recoverable Token 是 `t_dd_party_snapshot.snapshot_vault_token`、`t_dd_check.result_vault_token`、`t_screening_hit.name_vault_token`；四个 Commerce Stable Correlation Token 是 Checkout/Transaction 快照各自的 Email/Phone Token，后四者不授予 Risk Reveal。`t_dd_party_snapshot.snapshot_vault_token` 是已批准的案件时点受保护快照，存在合规复核 Reveal 消费者，保持 NOT NULL。七列均保留 `VARCHAR(128)` 协议缓冲；规则配置不调用 Vault。Risk 物理 DDL 目标为零 CHECK、零 FOREIGN KEY，关系和复合关系 Sidecar 继续由 Owner 事务与测试执行；全局 DB-01 未完成且仍受 Vault 物理 Schema 阻塞。
 
 补偿载荷不包含消费者/网络原值、Vault Reveal 值、文件正文、Provider 原文、Secret 或卡数据。XXL-Job 只做丢失唤醒后的兜底扫描；业务唯一键、来源版本和状态机负责消费者幂等。
 

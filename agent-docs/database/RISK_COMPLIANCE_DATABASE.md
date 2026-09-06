@@ -2,11 +2,11 @@
 
 最后更新：2026-08-30
 
-状态：V1 逻辑模型、现实场景、71 表 PDManer、Manual Payout 四检查点与 CCT Local Partner Application Typed Namespace 已对齐并通过自动门禁；PDManer 4.9.3 应用内人工 Review 待完成。当前不包含手工数据库 SQL、Java 实现或数据库环境。
+状态：V1 逻辑模型、现实场景、71 表 PDManer、Manual Payout 四检查点与 CCT Local Partner Application Typed Namespace 已对齐并通过自动门禁；PDManer 4.9.3 应用内人工 Review 待完成。本文拥有 Risk 数据库业务事实，不维护手工 SQL、Java 实现、物理数据库验证或部署的活态状态；这些事实只见[当前实现台账](../CURRENT_IMPLEMENTATION.md)。
 
-> **2026-09-05 跨主题对齐：** 本文拥有 Risk 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。当前生成模型中的旧横切字段是 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 记录的迁移债务；新增实现必须遵循 [文档治理路由](../DOCUMENT_GOVERNANCE.md)，不得复制旧契约。
+> **2026-09-05 跨主题对齐：** 本文拥有 Risk 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。Risk 模型已投影当前 Vault V1、统一 15 列补偿表与零物理 CHECK/FK；六库 COMP-01 和全局 DB-01 的状态仍只由 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 按全局证据维护。
 
-当前配套资产：[现实场景](./scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md) · [物理建模决策](../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md) · [PDManer 模型](../../risk-compliance-service/docs/database/risk-compliance.pdma.json) · [Dispute 平衡优化设计](../plans/2026-08-28-risk-dispute-balanced-optimization-design.md) · [Dispute 平衡优化实施计划](../plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md) · [Settlement Eligibility 平衡精简设计](../plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-design.md) · [Settlement Eligibility 实施计划](../plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-implementation-plan.md) · [Manual Payout 四检查点对齐实施记录](../plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) · [Limit 平衡精简设计](../plans/2026-08-28-risk-limit-balanced-simplification-design.md) · [Limit 平衡精简实施计划](../plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md) · [Decision Engine 平衡精简实施计划](../plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) · [DD 精简实施计划](../plans/2026-08-27-risk-dd-simplification-implementation-plan.md) · [首版物理建模历史记录](../plans/2026-08-26-risk-compliance-pdmaner-implementation-plan.md)。当前物理基线精确为 71 表、865 字段、106 个唯一索引、74 个访问索引、111 条本库关系、9 条 1:1 关系、8 个 Diagram Groups 和 83 条 CHECK 契约。
+当前配套资产：[现实场景](./scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md) · [物理建模决策](../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md) · [PDManer 模型](../../risk-compliance-service/docs/database/risk-compliance.pdma.json) · [Dispute 平衡优化设计](../plans/2026-08-28-risk-dispute-balanced-optimization-design.md) · [Dispute 平衡优化实施计划](../plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md) · [Settlement Eligibility 平衡精简设计](../plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-design.md) · [Settlement Eligibility 实施计划](../plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-implementation-plan.md) · [Manual Payout 四检查点对齐实施记录](../plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) · [Limit 平衡精简设计](../plans/2026-08-28-risk-limit-balanced-simplification-design.md) 和 [实施计划](../plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md) · [Decision Engine 平衡精简实施计划](../plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) · [DD 精简实施计划](../plans/2026-08-27-risk-dd-simplification-implementation-plan.md) · [首版物理建模历史记录](../plans/2026-08-26-risk-compliance-pdmaner-implementation-plan.md)。当前物理基线精确为 71 表、862 字段、105 个唯一索引、75 个访问索引、111 条本库逻辑关系、9 条 1:1 关系、8 个 Diagram Groups 和 82 条应用 CHECK Sidecar 契约；Risk 物理 DDL 目标为零 CHECK、零 FOREIGN KEY。
 
 ## 1. 目标与边界
 
@@ -318,7 +318,7 @@ Role Type 固定为 CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON�
 | decision_point_obligation | 工程绑定的类型化系统义务 | obligation_id, point_version_id, trigger_decision, obligation_type, action_version_id, sequence_no, failure_policy, enabled_flag；ACTION 必须有 Action Version；RESERVE_LIMIT_GROUP 与 CHECK_SETTLEMENT_ELIGIBILITY 必须无 Action，前者由 0..N Binding 直接形成占用组，后者不得有 Limit Binding；四个固定 Manual Payout Point Version 各恰一条启用、ALLOW 触发且 FAIL_CLOSED 的 Eligibility 义务 |
 | feature_version | Feature 目录身份与不可变执行版本 | feature_version_id, feature_code, feature_name, business_category, version_no, result_value_type, handler_code, implementation_version, implementation_hash, timeout_ms, status；feature_code+version_no 唯一；只允许工程注册 Handler，不允许 SQL/Script |
 | feature_dependency | Feature Version 的显式依赖 | dependency_id, feature_version_id, dependency_feature_version_id, sequence_no, required_flag；依赖组合与 sequence 分别唯一；不得自依赖或成环 |
-| rule_set_version | Decision Point 内可冻结的规则集身份与版本 | rule_set_version_id, decision_point_id, rule_set_code, rule_set_name, version_no, status, content_hash, frozen_by, frozen_time；point+code+version 唯一；FROZEN 后不可修改且不得跨 Point 复用 |
+| rule_set_version | Decision Point 内可冻结的规则集身份与版本 | rule_set_version_id, decision_point_id, rule_set_code, rule_set_name, version_no, status, content_hash, created_by, change_reason, frozen_by, frozen_time；point+code+version 唯一；created_by 与 1..500 字符非敏感 change_reason 在创建时必填，FROZEN 后不可修改且不得跨 Point 复用 |
 | risk_rule | Rule Set Version 内规则 | rule_id, rule_set_version_id, rule_code, rule_name, priority_no, enabled_flag, reason_code；version+code、version+priority 分别唯一 |
 | rule_node | Condition AST 节点 | node_id, rule_id, parent_node_id, node_type, group_operator, comparison_operator, sequence_no；GROUP/PREDICATE 结构合法，同级 sequence 唯一，无环 |
 | rule_operand | Predicate 来源与多行类型化值 | operand_id, node_id, operand_role, value_sequence, source_type, feature_version_id, input_field_id, value_type, string_value, number_value, boolean_value, datetime_value, duration_value；node+role+sequence 唯一；来源 FEATURE/CONTEXT/LITERAL 三选一；Literal 每行仅一个类型值非空，IN/NOT_IN 使用连续 1..n，BETWEEN 固定两行 [1,2] |
@@ -382,7 +382,7 @@ velocity_event_subject 是明确的事件—主体关联，不是任意属性 EA
 
 1. PRIMARY 候选 ALLOW 时解析准确 RESERVE_LIMIT_GROUP Obligation 的 0..N 条 Binding；非空时按 limit_version_id + subject_key + currency_scope_key + window_start 的稳定顺序锁定全部 Position。
 2. 检查 committed + reserved + requested 不超过阈值；金额型 Binding 必须有 NUMBER 来源，COUNT 型不得伪造金额来源。
-3. Assessment 正式决定与 Group 总是同事务提交；每条 Binding 的不可变 Reservation、RESERVE Movement、Position 以及本地可靠事件也在该事务提交。零 Binding 只创建空 Group，不创建伪 Reservation。
+3. Assessment 正式决定与 Group 总是同事务提交；每条 Binding 的不可变 Reservation、RESERVE Movement 与 Position 在该事务提交。零 Binding 只创建空 Group，不创建伪 Reservation；没有批准的外部副作用时不机械登记补偿任务。
 4. 任一 Limit 失败则全部回滚，正式 business_decision 为 DENY/LIMIT_EXCEEDED。
 5. SHADOW/REPLAY 不创建 Group，不占 Position。
 6. Group 是唯一当前状态权威，Reservation 不复制状态；每次状态迁移追加 limit_group_state_change。
@@ -427,10 +427,12 @@ Outcome Version 1 只允许三种权威入口：已验证 Provider Action 可给
 
 | 逻辑表 | 用途 | 关键字段与约束 |
 |---|---|---|
-| compensation_event | MQ 发布和本地可恢复动作 | id, event_key, event_type, execution_type, source_type, source_id, source_version, schema_version, payload_json, payload_hash, execute_status, execute_count, next_execute_at, lock_owner, lock_until, last_error_code, last_error_summary, lock_version, create_time, update_time；event_key、业务来源组合分别唯一 |
+| compensation_event | MQ 发布和本地可恢复动作 | id, event_key, event_type, sub_event_type, payload_json, execute_status, execute_count, next_execute_at, lock_owner, lock_until, last_error_code, last_error_summary, lock_version, create_time, update_time；(event_key,event_type,sub_event_type) 唯一；payload_json 可空且最大 4 KiB；execute_status DEFAULT 'INIT'，execute_count DEFAULT 0，next_execute_at/create_time/update_time DEFAULT CURRENT_TIMESTAMP(6)，lock_version DEFAULT 1；idx_comp_event_ready(execute_status,next_execute_at,id) 与 idx_comp_event_lease(execute_status,lock_until,id) 用 id 稳定同时间批次顺序 |
 | command_idempotency | Assessment、Case、Settlement Control 等命令幂等 | idempotency_id, caller_scope, operation_type, idempotency_key, request_hash, response_ref, status, expire_time；caller+operation+key 唯一；同键同 Hash 返回原 Assessment/Evaluation 或释放结果，同键不同请求冲突 |
 
 MVP 不建立独立 Inbox/Outbox。领域事务原子写入业务状态、History 和 compensation_event；afterCommit 唤醒，XXL-Job 只做兜底扫描。MQ 使用 at-least-once，消费者在目标领域表幂等。
+
+Risk 补偿事件重建清单冻结在 `scripts/pdmaner/risk/model-policy.mjs`：Qualification、Compliance Restriction、Checkout/Payment Assessment、Settlement Control、Dispute 和异步 Action Effect 各自使用应用唯一 `event_type` 与业务 `sub_event_type`；`event_key` 分别由对应不可变 State Change/Assessment ID、Restriction ID 或 Action Effect `idempotency_key` 构造。Handler 从清单列出的 Risk 权威表重建 MQ 信封或本地动作，永久幂等落在对应历史/事实唯一身份。只有会被后来状态变化覆盖且确实无法回源的 Restriction 事件时点字段可进入最小非敏感 `payload_json`；其余不把 Source Version、Schema、Envelope、Payload Hash、Vault Token 或可恢复上下文复制到补偿表。
 
 ## 5. 核心关系图
 
@@ -749,11 +751,12 @@ Risk 业务通过率以 PRIMARY decision_evaluation 及对应 Checkout/Transacti
 
 - KYC/KYB/PDD/Underwriting Snapshot、证件、地址、DOB、Screening Hit 和关联人关系属于 RESTRICTED_COMPLIANCE。
 - Assessment 的稳定 Consumer Token、Network Evidence 原值与派生维度至少属于 CONFIDENTIAL_RISK。
-- Risk 对 Commerce 已创建的稳定 Email/Phone Token 只保存获批引用，不在同步 Assessment 路径重新 Protect 原值，也不要求异步 Bind 完成后才开始评估。
-- Risk 自己创建的 DD Snapshot、Check Result 和 Screening Hit Name 只有在 Data Type Catalog 分别批准 `RISK_DD_PARTY_SNAPSHOT_V1`、`RISK_DD_CHECK_RESULT_V1`、`RISK_SCREENING_HIT_NAME_V1` 后才能 Protect；资源绑定分别落到 Case Subject、Check、Hit，Reveal 只允许 `COMPLIANCE_REVIEW` Purpose。没有恢复消费者时对应可空 Token 不写值；旧 Token 的 Retire 必须晚于新引用成功切换。
+- 四个 Commerce Stable Correlation Token 是 Checkout/Transaction 两类输入快照中的 Email/Phone Token；Risk 只按批准 Purpose 保存和关联，不拥有原值、不调用 Protect，也不因此取得 Reveal 权限。
+- 三个 Risk-owned Recoverable Token 是 `dd_party_snapshot.snapshot_vault_token`、`dd_check.result_vault_token` 和 `screening_hit.name_vault_token`。当前 Vault V1 只使用 Protect/Reveal：Risk 以批准的 Data Type 与调用方上下文 Protect，授权合规人员在 `COMPLIANCE_REVIEW` Purpose 下 Reveal。`dd_party_snapshot.snapshot_vault_token` 对应批准的案件时点可恢复受保护快照，存在明确案件复核/审计 Reveal 消费者，因此保持 `NOT NULL`；另外两个按是否保存可恢复结果维持现有可空性。
+- 七个 Token 物理列保持 `VARCHAR(128)` 作为协议演进缓冲，不按当前 43 字符 V1 Wire 收紧。Rule Configuration 切片只编排已注册的 Context Field/Feature/Action，规则配置不调用 Vault，也不保存 Token、敏感原值或任意 Vault 业务 Resource 参数。
 - Consumer 等值/频次匹配直接使用稳定 Email/Phone Token；不另存 Consumer Blind Index/Key Version。
 - Network Risk 使用 Assessment 冻结的受限原值和批准派生维度，不建立 device identifier。
-- Feature 应尽量输出 Boolean、Number 或 Code，不复制输入敏感原值。任何需要恢复的新增 Feature Value 都必须先证明 Reveal/Retire 消费者并完成 Vault 专项设计。
+- Feature 应尽量输出 Boolean、Number 或 Code，不复制输入敏感原值。任何需要恢复的新增 Feature Value 都必须先证明 Reveal 消费者并完成 Vault 专项设计。
 - Platform 保存文件正文；DD/Dispute 只保存 File ID、Content Hash 与本库案件或证据包关联，文件替换产生新 File ID，不在 Risk 复制 Document Version。
 - PAN、CVV/CVC、完整磁道、PIN/PIN Block 和卡有效期禁止进入 Risk、文件、日志、事件或 Vault。
 - Vault Reveal 必须由 Risk 服务端在资源授权后通过部署网络限制的私有 HTTP 发起，携带当前 V1 必需但可伪造的 `X-Caller-Service`、Purpose、Reason 和 Case/Assessment 引用，并接受静态 Allowlist 不构成强认证的限制；明文不得持久缓存。

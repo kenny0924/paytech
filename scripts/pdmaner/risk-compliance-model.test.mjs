@@ -9,6 +9,8 @@ import {
   APPROVED_DIAGRAMS,
   APPROVED_TABLE_GROUPS,
   APPROVED_TABLES,
+  COMPENSATION_EVENT_TARGET,
+  COMPENSATION_EVENT_RECONSTRUCTION_TARGET,
   EXPECTED_GROUP_SIZES,
   EXPECTED_CHECK_COUNT,
   EXPECTED_CHECK_POLICY_DIGEST,
@@ -21,6 +23,7 @@ import {
   FORBIDDEN_TABLES,
   REMOVED_DD_FIELDS,
   REQUIRED_COMPOSITE_FK_CONTRACTS,
+  REQUIRED_COMMERCE_STABLE_CORRELATION_TOKENS,
   REQUIRED_DD_CHECK_CONTRACTS,
   REQUIRED_DD_COMMENT_FRAGMENTS,
   REQUIRED_DD_ENUMS,
@@ -30,6 +33,8 @@ import {
   REQUIRED_DD_RELATIONS,
   REQUIRED_DD_VAULT_TOKEN_REFERENCES,
   REQUIRED_FIELDS,
+  REQUIRED_RISK_OWNED_RECOVERABLE_TOKENS,
+  RULE_SET_VERSION_AUDIT_TARGET,
 } from "./risk-compliance-test-oracle/schema.oracle.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
@@ -256,6 +261,111 @@ test("Risk model freezes the critical due diligence, rule, action, limit and dis
   for (const tuple of FILE_REFERENCE_TUPLES) {
     const fields = new Set(entities.get(tuple.table).fields.map((field) => field.defKey));
     assert.ok(fields.has(tuple.id) && fields.has(tuple.hash), `文件引用必须成对：${tuple.table}`);
+  }
+});
+
+test("Risk compensation event uses the exact Foundation 15-column identity and lease contract", async () => {
+  const model = readModel();
+  const entity = model.entities.find(({ defKey }) => defKey === "t_compensation_event");
+  const fields = new Map(entity.fields.map((field) => [field.defKey, field]));
+  const fieldsById = new Map(entity.fields.map((field) => [field.id, field.defKey]));
+  const indexes = Object.fromEntries(entity.indexes.map((index) => [
+    index.defKey,
+    index.fields.map((entry) => fieldsById.get(entry.fieldDefKey)),
+  ]));
+
+  assert.deepEqual(entity.fields.map((field) => field.defKey), COMPENSATION_EVENT_TARGET.fields);
+  for (const fieldName of COMPENSATION_EVENT_TARGET.legacyFields) {
+    assert.ok(!fields.has(fieldName), `旧 Compensation Event 字段仍存在：${fieldName}`);
+  }
+  for (const [fieldName, shape] of Object.entries(COMPENSATION_EVENT_TARGET.fieldShapes)) {
+    const actual = fields.get(fieldName);
+    assert.ok(actual, `Compensation Event 缺少字段：${fieldName}`);
+    assert.deepEqual(
+      Object.fromEntries(Object.keys(shape).map((key) => [key, actual[key]])),
+      shape,
+      `Compensation Event 字段形状漂移：${fieldName}`,
+    );
+  }
+  assert.deepEqual(indexes, COMPENSATION_EVENT_TARGET.indexes);
+
+  const {
+    CHECK_BINDINGS,
+    CHECK_CONTRACTS,
+    COMPENSATION_EVENT_RECONSTRUCTION_INVENTORY,
+  } = await import("./risk/model-policy.mjs");
+  assert.ok(!Object.hasOwn(CHECK_CONTRACTS, "ck_compensation_counters"));
+  assert.ok(!Object.hasOwn(CHECK_BINDINGS, "ck_compensation_counters"));
+  assert.deepEqual(
+    Object.fromEntries(COMPENSATION_EVENT_RECONSTRUCTION_INVENTORY.map((fact) => [
+      fact.eventType,
+      fact.subEventTypes,
+    ])),
+    COMPENSATION_EVENT_RECONSTRUCTION_TARGET,
+  );
+  for (const fact of COMPENSATION_EVENT_RECONSTRUCTION_INVENTORY) {
+    assert.ok(fact.eventKeyFormat && fact.eventKeySource);
+    assert.ok(fact.authorityTables.length > 0);
+    assert.ok(Array.isArray(fact.envelopeSources));
+    assert.ok(fact.permanentIdempotency);
+    assert.equal(fact.payloadPolicy, "NULL_OR_MINIMAL_NON_SENSITIVE_JSON_OBJECT");
+  }
+});
+
+test("Risk token policy separates owned Reveal references from Commerce correlation-only tokens", async () => {
+  const model = readModel();
+  const entities = new Map(model.entities.map((entity) => [entity.defKey.slice(2), entity]));
+  const {
+    COMMERCE_STABLE_CORRELATION_TOKEN_REFERENCES,
+    RISK_OWNED_RECOVERABLE_TOKEN_REFERENCES,
+    VAULT_TOKEN_REFERENCES,
+  } = await import("./risk/model-policy.mjs");
+
+  assert.deepEqual(RISK_OWNED_RECOVERABLE_TOKEN_REFERENCES, REQUIRED_RISK_OWNED_RECOVERABLE_TOKENS);
+  assert.deepEqual(VAULT_TOKEN_REFERENCES, REQUIRED_RISK_OWNED_RECOVERABLE_TOKENS);
+  assert.deepEqual(COMMERCE_STABLE_CORRELATION_TOKEN_REFERENCES, REQUIRED_COMMERCE_STABLE_CORRELATION_TOKENS);
+  for (const reference of [...REQUIRED_RISK_OWNED_RECOVERABLE_TOKENS, ...REQUIRED_COMMERCE_STABLE_CORRELATION_TOKENS]) {
+    const field = entities.get(reference.table)?.fields.find(({ defKey }) => defKey === reference.token);
+    assert.ok(field, `Token 字段缺失：${reference.table}.${reference.token}`);
+    assert.deepEqual({ type: field.type, len: field.len }, { type: "VARCHAR", len: 128 });
+  }
+  const owned = new Set(REQUIRED_RISK_OWNED_RECOVERABLE_TOKENS.map(({ table, token }) => `${table}.${token}`));
+  for (const { table, token } of REQUIRED_COMMERCE_STABLE_CORRELATION_TOKENS) {
+    assert.ok(!owned.has(`${table}.${token}`), "Commerce Stable Correlation Token 不得登记为 Risk Reveal 授权");
+  }
+  assert.equal(entities.get("dd_party_snapshot").fields.find(({ defKey }) => defKey === "snapshot_vault_token").notNull, true);
+});
+
+test("Risk Rule Set Version freezes creator and safe change reason in exact order", () => {
+  const model = readModel();
+  const entity = model.entities.find(({ defKey }) => defKey === "t_rule_set_version");
+  const fields = new Map(entity.fields.map((field) => [field.defKey, field]));
+  assert.deepEqual(entity.fields.map((field) => field.defKey), RULE_SET_VERSION_AUDIT_TARGET.orderedFields);
+  for (const [fieldName, shape] of Object.entries(RULE_SET_VERSION_AUDIT_TARGET.fieldShapes)) {
+    const actual = fields.get(fieldName);
+    assert.ok(actual, `Rule Set Version 缺少审计字段：${fieldName}`);
+    assert.deepEqual(
+      Object.fromEntries(Object.keys(shape).map((key) => [key, actual[key]])),
+      shape,
+      `Rule Set Version 审计字段形状漂移：${fieldName}`,
+    );
+  }
+});
+
+test("Risk PDManer keeps logical relation sidecars but defines no physical CHECK or FOREIGN KEY", () => {
+  const model = readModel();
+  const logicalRelations = model.entities.flatMap((entity) => entity.correlations);
+  const compositeSidecars = model.entities.flatMap((entity) => entity.properties?.compositeForeignKeys ?? []);
+  assert.ok(logicalRelations.length > 0);
+  assert.deepEqual(
+    compositeSidecars.toSorted((left, right) => left.name.localeCompare(right.name)),
+    REQUIRED_COMPOSITE_FK_CONTRACTS.toSorted((left, right) => left.name.localeCompare(right.name)),
+  );
+  for (const entity of model.entities) {
+    for (const forbiddenKey of ["checks", "checkConstraints", "foreignKeys", "foreignKeyConstraints"]) {
+      assert.ok(!Object.hasOwn(entity, forbiddenKey), `Risk 物理模型不得定义 ${forbiddenKey}：${entity.defKey}`);
+      assert.ok(!Object.hasOwn(entity.properties ?? {}, forbiddenKey), `Risk 物理模型 properties 不得定义 ${forbiddenKey}：${entity.defKey}`);
+    }
   }
 });
 

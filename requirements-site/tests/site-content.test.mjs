@@ -863,7 +863,7 @@ test("the current implementation ledger owns core model snapshots while entry do
   assert.match(currentImplementationSource, /\| Commerce \| 14 \| 223 \| 20 \| 11 \| 14 \| — \| 4 \|/u);
   assert.match(currentImplementationSource, /\| Payment Orchestration \| 29 \| 373 \| 41 \| 44 \| 63 \| — \| 7 \|/u);
   assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,100 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
-  assert.match(currentImplementationSource, /\| Risk & Compliance \| 71 \| 865 \| 106 \| 74 \| 111 \| 9 \| 8 \|/u);
+  assert.match(currentImplementationSource, /\| Risk & Compliance \| 71 \| 862 \| 105 \| 75 \| 111 \| 9 \| 8 \|/u);
   assert.match(documentGovernanceSource, /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据/u);
   assert.match(documentGovernanceSource, /被取代时增加状态与窄范围后继链接，不重写历史/u);
 });
@@ -1103,7 +1103,7 @@ test("Platform Support requirements expose the generated 63-table public-control
   assert.match(source, /Platform Support 当前物理模型为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1 关系和 7 个 Diagram Groups/u);
   assert.match(source, /31 条复合外键、85 条 CHECK 契约与 36 个 `\*_hash` 字段/u);
   assert.match(source, /Client & Contract 当前物理模型为 37 表、423 字段、57 个唯一索引、44 个访问索引、64 条本库关系、7 条 1:1 关系和 6 个 Diagram Groups/u);
-  assert.match(source, /Risk & Compliance 当前物理模型保持 71 表、865 字段、106 个唯一索引、74 个访问索引、111 条本库关系、9 条 1:1 关系和 8 个 Diagram Groups，并冻结 83 条 CHECK 契约/u);
+  assert.match(source, /Risk & Compliance 当前物理模型为 71 表、862 字段、105 个唯一索引、75 个访问索引、111 条本库关系、9 条 1:1 关系和 8 个 Diagram Groups，并冻结 82 条应用 CHECK Sidecar 契约/u);
   assert.match(source, /Reliable Technical Execution/u);
   assert.match(source, /只保留本系统 compensation_event 与 command_idempotency/u);
   assert.doesNotMatch(source, /Technical Job|Technical Configuration/u);
@@ -1356,6 +1356,21 @@ test("RCO-I04 separates successful decisions from technical outcomes and typed L
   assert.match(riskI04, /零 Binding.*空 Group/su);
   assert.match(riskI04, /不生成 Action Intent\/Effect/u);
   assert.match(riskI04, /准确 Point Version.*数据库可重算/u);
+});
+
+test("RCO-I12 closes the private Rule Set authoring and TEST Candidate validation slice", () => {
+  const riskBlock = extractSystemBlock("RISK_COMPLIANCE", "FINANCE");
+  const riskI12 = extractCatalogLine(riskBlock, "iuc", "RCO-I12");
+
+  assert.match(riskI12, /内部[^。]*Risk-owned[^。]*CHECKOUT_PREPARE/u);
+  assert.match(riskI12, /Authoring Context[^。]*9 个/u);
+  assert.match(riskI12, /DRAFT[^。]*created_by[^。]*change_reason/u);
+  assert.match(riskI12, /Freeze[^。]*原子冻结 Rule Set 与 Companion Point Version/u);
+  assert.match(riskI12, /TEST Candidate[^。]*已冻结 CHECKOUT_PREPARE Rule Set/u);
+  assert.match(riskI12, /8 项静态校验/u);
+  assert.match(riskI12, /VALIDATING[^。]*零检查[^。]*同键恢复/u);
+  assert.match(riskI12, /部分检查[^。]*Fail-Closed/u);
+  assert.match(riskI12, /不执行 Shadow[^。]*不执行运行期评估/u);
 });
 
 test("MVP reliability uses local compensation events and business idempotency", () => {

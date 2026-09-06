@@ -9,7 +9,16 @@ import { CHECK_BINDINGS, CHECK_CONTRACTS, CROSS_ROW_CONTRACTS } from "./risk/mod
 import * as MODEL_POLICY from "./risk/model-policy.mjs";
 import { canonicalizeSettlementActionParameterIdentity } from "./risk/settlement-control-canonicalizer.mjs";
 import {
+  canonicalizeRiskCreateRuleSetVersionCommand,
+  canonicalizeRiskCreateTestReleaseCommand,
+  canonicalizeRiskDecisionPointVersion,
+  canonicalizeRiskDecisionRelease,
+  canonicalizeRiskFreezeRuleSetVersionCommand,
+  canonicalizeRiskRuleSetVersion,
+  canonicalizeRiskValidateTestReleaseCommand,
   executeCrossRowContractRegistry,
+  materializeDecisionStaticChecks,
+  summarizeDecisionStaticViolations,
   validateDecisionRelease,
   validateReleaseTransition,
   validateSettlementAssessmentDomainContractMetadata,
@@ -20,6 +29,14 @@ const modelPath = path.join(
   workspaceRoot,
   "risk-compliance-service/docs/database/risk-compliance.pdma.json",
 );
+const decisionGoldenVectorPath = path.join(
+  workspaceRoot,
+  "risk-compliance-service/risk-test/src/test/resources/fixtures/risk-decision-v1-golden-vectors.json",
+);
+
+function readDecisionGoldenVectors() {
+  return JSON.parse(readFileSync(decisionGoldenVectorPath, "utf8"));
+}
 
 function readModel() {
   return JSON.parse(readFileSync(modelPath, "utf8"));
@@ -217,9 +234,9 @@ function emptyCrossRowRows() {
       { intent_id: "314003", evaluation_id: "310003", source_type: "RULE", rule_action_id: "242001", action_version_id: "240011", resolved_target_type: "CONSUMER", resolved_target_key: "consumer-C-9003", intent_sequence: 1, merged_effect_id: "315003", status: "MERGED" },
     ],
     action_effect: [
-      { effect_id: "315001", evaluation_id: "310001", action_version_id: "240011", effect_mode: "REAL", target_type: "CONSUMER", target_key: "consumer-C-9001", merge_policy: "MAX" },
-      { effect_id: "315002", evaluation_id: "310002", action_version_id: "240011", effect_mode: "SIMULATED", target_type: "CONSUMER", target_key: "consumer-C-9002", merge_policy: "MAX" },
-      { effect_id: "315003", evaluation_id: "310003", action_version_id: "240011", effect_mode: "SIMULATED", target_type: "CONSUMER", target_key: "consumer-C-9003", merge_policy: "MAX" },
+      { effect_id: "315001", evaluation_id: "310001", action_version_id: "240011", effect_mode: "REAL", target_type: "CONSUMER", target_key: "consumer-C-9001", merge_policy: "MAX", idempotency_key: "risk-action-effect:v1:315001" },
+      { effect_id: "315002", evaluation_id: "310002", action_version_id: "240011", effect_mode: "SIMULATED", target_type: "CONSUMER", target_key: "consumer-C-9002", merge_policy: "MAX", idempotency_key: "risk-action-effect:v1:315002" },
+      { effect_id: "315003", evaluation_id: "310003", action_version_id: "240011", effect_mode: "SIMULATED", target_type: "CONSUMER", target_key: "consumer-C-9003", merge_policy: "MAX", idempotency_key: "risk-action-effect:v1:315003" },
     ],
     checkout_input_snapshot: [],
     transaction_risk_assessment: [
@@ -470,7 +487,7 @@ function addValidSettlementRuntimeFacts(rows) {
     effect_id: "315101", evaluation_id: "310101", action_version_id: "240101",
     effect_mode: "REAL", target_type: "SETTLEMENT_CONTROL", target_key: targetKey,
     merge_policy: "FIRST", effect_status: "APPLIED", execution_type: "LOCAL_SYNC",
-    execution_status: "SUCCEEDED",
+    execution_status: "SUCCEEDED", idempotency_key: "risk-action-effect:v1:315101",
   });
   rows.settlement_risk_assessment.push({
     assessment_id: "321101", evaluation_id: "310101",
@@ -500,8 +517,8 @@ function addValidSettlementRuntimeFacts(rows) {
     },
   );
   rows.compensation_event.push(
-    { id: "370101", event_type: "SettlementControlChanged", source_type: "SETTLEMENT_CONTROL", source_id: "360101", source_version: 1 },
-    { id: "370102", event_type: "SettlementControlChanged", source_type: "SETTLEMENT_CONTROL", source_id: "360101", source_version: 2 },
+    { id: "370101", event_key: "risk:settlement-control-change:362101", event_type: "PUBLISH_SETTLEMENT_CONTROL_EVENT", sub_event_type: "SettlementControlChanged" },
+    { id: "370102", event_key: "risk:settlement-control-change:362102", event_type: "PUBLISH_SETTLEMENT_CONTROL_EVENT", sub_event_type: "SettlementControlChanged" },
   );
   return rows;
 }
@@ -1223,9 +1240,12 @@ test("Risk staged Policy leaves Task 5 cross-row contracts for simulated Effects
         code: "CR_SIMULATED_EFFECT_COMPENSATION_EVENT",
         joins: [
           { from: { table: "decision_evaluation", field: "evaluation_id" }, to: { table: "action_effect", field: "evaluation_id" } },
-          { from: { table: "action_effect", field: "effect_id" }, to: { table: "compensation_event", field: "source_id" } },
+          { from: { table: "action_effect", field: "idempotency_key" }, to: { table: "compensation_event", field: "event_key" } },
         ],
-        targetPredicates: [{ field: "source_type", operator: "EQUALS", value: "ACTION_EFFECT" }],
+        targetPredicates: [
+          { field: "event_type", operator: "EQUALS", value: "EXECUTE_RISK_ACTION_EFFECT" },
+          { field: "sub_event_type", operator: "EQUALS", value: "APPLY_ASYNC_ACTION_EFFECT" },
+        ],
       },
       {
         code: "CR_SIMULATED_EFFECT_VELOCITY_EVENT",
@@ -2066,22 +2086,19 @@ test("Settlement Control aggregate freezes every history event currency and Asse
       rows.settlement_control[0].version = 3;
     }],
     ["missing per-version event", "CR_SETTLEMENT_CONTROL_EVENT", (rows) => {
-      rows.compensation_event = rows.compensation_event.filter((row) => row.source_version !== 2);
+      rows.compensation_event = rows.compensation_event.filter((row) => row.event_key !== "risk:settlement-control-change:362102");
     }],
     ["duplicate per-version event", "CR_SETTLEMENT_CONTROL_EVENT", (rows) => rows.compensation_event.push({
       ...rows.compensation_event[1], id: "370103",
     })],
-    ["event source id", "CR_SETTLEMENT_CONTROL_EVENT", (rows) => {
-      rows.compensation_event[0].source_id = "360102";
-    }],
-    ["event source version", "CR_SETTLEMENT_CONTROL_EVENT", (rows) => {
-      rows.compensation_event[0].source_version = 3;
-    }],
-    ["event source type", "CR_SETTLEMENT_CONTROL_EVENT", (rows) => {
-      rows.compensation_event[0].source_type = "ACTION_EFFECT";
+    ["event key", "CR_SETTLEMENT_CONTROL_EVENT", (rows) => {
+      rows.compensation_event[0].event_key = "risk:settlement-control-change:999999";
     }],
     ["event type", "CR_SETTLEMENT_CONTROL_EVENT", (rows) => {
       rows.compensation_event[0].event_type = "WrongEvent";
+    }],
+    ["event sub type", "CR_SETTLEMENT_CONTROL_EVENT", (rows) => {
+      rows.compensation_event[0].sub_event_type = "WrongEvent";
     }],
     ["null Scope currency", "CR_SETTLEMENT_CONTROL_CURRENCY", (rows) => {
       rows.settlement_control_scope[0].currency = null;
@@ -2370,7 +2387,12 @@ test("Task 5 executes both cross-row contract types from registry metadata", () 
         decided_by: null,
       }),
     )],
-    ["CR_SIMULATED_EFFECT_COMPENSATION_EVENT", (rows) => rows.compensation_event.push({ id: "1", source_type: "ACTION_EFFECT", source_id: "315002" })],
+    ["CR_SIMULATED_EFFECT_COMPENSATION_EVENT", (rows) => rows.compensation_event.push({
+      id: "1",
+      event_key: rows.action_effect.find(({ effect_id }) => effect_id === "315002").idempotency_key,
+      event_type: "EXECUTE_RISK_ACTION_EFFECT",
+      sub_event_type: "APPLY_ASYNC_ACTION_EFFECT",
+    })],
     ["CR_SIMULATED_EFFECT_VELOCITY_EVENT", (rows) => rows.velocity_event.push({ velocity_event_id: "1", source_type: "CHECKOUT_EVALUATION", source_id: "310002" })],
   ];
   for (const [errorCode, mutate] of pathCases) {
@@ -2380,7 +2402,12 @@ test("Task 5 executes both cross-row contract types from registry metadata", () 
   }
 
   const discriminatorMismatch = buildValidDecisionFixture();
-  discriminatorMismatch.crossRowRows.compensation_event.push({ id: "1", source_type: "COMMAND", source_id: "315002" });
+  discriminatorMismatch.crossRowRows.compensation_event.push({
+    id: "1",
+    event_key: discriminatorMismatch.crossRowRows.action_effect.find(({ effect_id }) => effect_id === "315002").idempotency_key,
+    event_type: "PUBLISH_SETTLEMENT_CONTROL_EVENT",
+    sub_event_type: "SettlementControlChanged",
+  });
   discriminatorMismatch.crossRowRows.velocity_event.push({ velocity_event_id: "1", source_type: "COMMAND", source_id: "310002" });
   assert.deepEqual(validateDecisionRelease(discriminatorMismatch), []);
 
@@ -3349,22 +3376,22 @@ test("Task 5 fix round 4 constrains audit times to MySQL DATETIME(6)", () => {
   }
 });
 
-test("Task 5 fix round 4 validates cross-row foreign-key types through both APIs", () => {
+test("Task 5 fix round 4 validates cross-row event-key types through both APIs", () => {
   const directRows = emptyCrossRowRows();
   directRows.compensation_event.push({
-    id: "360001", source_id: 315002, source_type: "ACTION_EFFECT",
+    id: "360001", event_key: 315002, event_type: "EXECUTE_RISK_ACTION_EFFECT", sub_event_type: "APPLY_ASYNC_ACTION_EFFECT",
   });
   assertRejectedBy(
     executeCrossRowContractRegistry(directRows, CROSS_ROW_CONTRACTS, "260002"),
     "REFERENCE_INTEGRITY",
-    "REFERENCE_ID_NOT_STRING",
+    "REFERENCE_FIELD_TYPE_INVALID",
   );
 
   const wrapped = buildValidDecisionFixture();
   wrapped.crossRowRows.compensation_event.push({
-    id: "360001", source_id: 315002, source_type: "ACTION_EFFECT",
+    id: "360001", event_key: 315002, event_type: "EXECUTE_RISK_ACTION_EFFECT", sub_event_type: "APPLY_ASYNC_ACTION_EFFECT",
   });
-  assertRejectedBy(validateDecisionRelease(wrapped), "REFERENCE_INTEGRITY", "REFERENCE_ID_NOT_STRING");
+  assertRejectedBy(validateDecisionRelease(wrapped), "REFERENCE_INTEGRITY", "REFERENCE_FIELD_TYPE_INVALID");
 });
 
 test("Task 5 fix round 4 rejects terminal Actions used as Obligations", () => {
@@ -3458,7 +3485,6 @@ test("Task 5 fix round 5 validates every supplied Manifest hash without coercion
   for (const [table, row, field] of [
     ["decision_evaluation", { evaluation_id: "310101", input_snapshot_hash: [hashOf("1")] }, "input_snapshot_hash"],
     ["action_effect", { effect_id: "315101", effect_hash: { value: hashOf("2") } }, "effect_hash"],
-    ["compensation_event", { id: "360101", payload_hash: hashOf("A") }, "payload_hash"],
   ]) {
     const errors = executeCrossRowContractRegistry({ [table]: [row] }, {}, "260002");
     assertRejectedBy(errors, "REFERENCE_INTEGRITY", "REFERENCE_HASH_INVALID");
@@ -3924,6 +3950,78 @@ test("Task 5 fix round 5 freezes canonical Operand and Action Parameter Literal 
     "ACTION_PARAMETERS",
     "ACTION_PARAMETER_LITERAL_INVALID",
   );
+});
+
+test("Task 5B consumes all seven schema-bound golden projections byte-for-byte", () => {
+  const vectors = readDecisionGoldenVectors();
+  const canonicalizers = new Map([
+    ["RISK_RULE_SET_VERSION_V1", canonicalizeRiskRuleSetVersion],
+    ["RISK_DECISION_POINT_VERSION_V1", canonicalizeRiskDecisionPointVersion],
+    ["RISK_DECISION_RELEASE_V1", canonicalizeRiskDecisionRelease],
+    ["RISK_CREATE_RULE_SET_VERSION_COMMAND_V1", canonicalizeRiskCreateRuleSetVersionCommand],
+    ["RISK_FREEZE_RULE_SET_VERSION_COMMAND_V1", canonicalizeRiskFreezeRuleSetVersionCommand],
+    ["RISK_CREATE_TEST_RELEASE_COMMAND_V1", canonicalizeRiskCreateTestReleaseCommand],
+    ["RISK_VALIDATE_TEST_RELEASE_COMMAND_V1", canonicalizeRiskValidateTestReleaseCommand],
+  ]);
+
+  assert.equal(vectors.canonicalProjections.length, 7);
+  for (const vector of vectors.canonicalProjections) {
+    const canonicalize = canonicalizers.get(vector.schema);
+    assert.ok(canonicalize, `missing JavaScript canonicalizer for ${vector.schema}`);
+    assert.deepEqual(canonicalize(vector.input), vector.expected, vector.id);
+  }
+});
+
+test("Task 5B canonicalizes semantic arrival permutations and per-role operand sequences", () => {
+  const vectors = readDecisionGoldenVectors();
+  const create = vectors.canonicalProjections.find((vector) => vector.id === "create-rule-set-primary");
+  const release = vectors.canonicalProjections.find((vector) => vector.id === "decision-release-primary");
+  const semantic = vectors.discriminators.find((vector) => vector.id === "semantic-array-permutation");
+
+  assert.equal(canonicalizeRiskCreateRuleSetVersionCommand(create.input).sha256, semantic.expectedSameHash);
+  for (const equivalent of semantic.equivalentInputs) {
+    assert.deepEqual(canonicalizeRiskCreateRuleSetVersionCommand(equivalent), semantic.expectedSame);
+  }
+  assert.deepEqual(canonicalizeRiskCreateRuleSetVersionCommand(semantic.changedInput), semantic.expectedChanged);
+
+  const reversedArrival = structuredClone(create.input);
+  reversedArrival.rules.reverse();
+  for (const rule of reversedArrival.rules) {
+    rule.conditionNodes.reverse();
+    for (const node of rule.conditionNodes) node.operands.reverse();
+  }
+  assert.deepEqual(canonicalizeRiskCreateRuleSetVersionCommand(reversedArrival), create.expected);
+
+  const releaseResult = canonicalizeRiskDecisionRelease(release.input);
+  const paired = release.input.operands.filter((operand) => operand.nodeId === "2");
+  assert.deepEqual(paired.map((operand) => [operand.operandRole, operand.valueSequence]), [["LEFT", 1], ["RIGHT", 1]]);
+  assert.deepEqual(releaseResult, release.expected);
+});
+
+test("Task 5B uses formal non-null/UTF-8/numeric violation ordering and fixed eight checks", () => {
+  const vectors = readDecisionGoldenVectors();
+  const order = vectors.discriminators.find((vector) => vector.id === "violation-order-null-dot-underscore-id");
+  const checks = vectors.discriminators.find((vector) => vector.id === "eight-static-check-order");
+
+  assert.deepEqual(summarizeDecisionStaticViolations(order.violations), order.expected);
+  assert.deepEqual(materializeDecisionStaticChecks(checks.inputChecks), checks.expected.results);
+});
+
+test("Task 5B preserves negative non-zero DECIMAL values while rejecting every negative zero", () => {
+  const vectors = readDecisionGoldenVectors();
+  const create = structuredClone(
+    vectors.canonicalProjections.find((vector) => vector.id === "create-rule-set-primary").input,
+  );
+  const literal = create.rules.flatMap((rule) => rule.conditionNodes)
+    .flatMap((node) => node.operands)
+    .find((operand) => operand.valueType === "NUMBER" && operand.sourceType === "LITERAL");
+
+  literal.literalValue = "-0.1";
+  assert.match(canonicalizeRiskCreateRuleSetVersionCommand(create).canonicalJson, /"-0\.10000000"/);
+  for (const negativeZero of ["-0", "-0.0", "-0.00000000"]) {
+    literal.literalValue = negativeZero;
+    assert.throws(() => canonicalizeRiskCreateRuleSetVersionCommand(create), /DECIMAL\(24,8\)/);
+  }
 });
 
 test("Task 5 fix round 5 enforces physical length on opaque VARCHAR identifiers", () => {

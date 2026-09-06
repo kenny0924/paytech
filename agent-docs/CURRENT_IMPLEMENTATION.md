@@ -1,6 +1,6 @@
 # Code-MoR 当前实现状态
 
-最后核对：2026-09-05
+最后核对：2026-09-06
 
 状态：Current status ledger。本页只汇总实现、验证、部署和已决定待迁移事项；架构与业务规则仍由 [`DOCUMENT_GOVERNANCE.md`](./DOCUMENT_GOVERNANCE.md) 路由的主题 Owner 定义。
 
@@ -26,7 +26,7 @@
 | Commerce | 14 表模型已生成；`commerce-service` 的 parent + Client API + Web + Test 已存在；Client API JAR 含三接口、十操作、records 与九个 known-code catalogs | Commerce `clean verify` 67/67 通过；公共 OpenAPI 与 Java projection drift/purity tests 本地通过 | 未声明 | 无 Controller、业务实现、数据库/SQL 迁移、Gateway 激活、Checkout 页面、端到端验证、部署或生产可用性；15 表目标仍未实现 |
 | Payment | 29 表模型已生成 | 自动模型门禁通过 | 未声明 | 完整 Java 服务、物理数据库和生产部署未证明 |
 | Finance | 84 表模型已生成；仓库 README 记录首个余额查询 Java 切片 | 自动模型门禁通过 | 未声明 | 完整服务未证明；手工缴税异常分支待专项模型闭合 |
-| Risk & Compliance | 71 表模型已生成；仓库 README 记录首个 Java 切片 | 自动模型门禁通过 | 未声明 | 完整服务和生产部署未证明 |
+| Risk & Compliance | 71 表 PDManer 模型、完整 Schema DDL、唯一初始化 DML、两个 typed API（共九路由）以及 Rule Set/TEST Candidate/Static Validation/Idempotency 的领域、持久化和 Web 编排已在当前工作区实现 | 2026-09-06：模型/Schema 门禁 188/188、需求站点 134/134、JDK 25 `clean verify` 148/148；经用户授权，仅对应用前为空的仓库自有本地 `mor_risk` 手工应用完整 Schema 与唯一 DML。物理核对为 71 表 / 862 字段 / 71 主键 / 105 唯一二级索引 / 75 访问索引 / 0 FK / 0 CHECK / 0 自增 / 0 空表或字段注释，固定目录为 1 个 Decision Point 与 3 个 Action Version；真实 Loopback HTTP/MySQL、并发幂等、五条 GET 一致性快照、历史 Action 退役重放、敏感变更原因拒绝及 Validate A/读快照/纯校验/B Recovery 均由上述测试覆盖，测试后只剩固定目录行 | 未部署；本机 `mor_risk` 只是仓库自有本地验证库 | PDManer 4.9.3 应用内人工 Review、部署仍未完成；UI/BFF/Gateway/Auth/PLT-I02、Shadow、审批、激活及运行期评估不在本期范围。全局 COMP-01、DB-01 与 Vault V1 仍未完成，不能标记为完成 |
 | `mor-local` | 仓库提供 MySQL、Redis、RabbitMQ、Nacos 等本地依赖的手工环境 | 当前本机运行状态应按 [`LOCAL_DEVELOPMENT_ENVIRONMENT.md`](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 的命令即时核对 | 仅本机开发环境 | 自动测试只能复用该环境，不得自行拉起替代容器或连接真实业务环境 |
 | `mor-test` | 独立 Docker 测试拓扑含 10 个容器、27 条 Route、15 个 Console Resource、14 个 ACTIVE Permission，浏览器入口为 `http://localhost:28080` | 已记录真实登录/IAM/审计/Refresh/Logout、Gateway 控制面启停/幂等/版本冲突/Snapshot 恢复与 Vault 合成 smoke | 本机独立测试环境；Gateway 控制面 V1 已部署且 10 个容器健康 | 不是 Maven `auto`、覆盖率或生产证据；生产部署仍未声明 |
 
@@ -40,7 +40,7 @@
 | Commerce | 14 | 223 | 20 | 11 | 14 | — | 4 |
 | Payment Orchestration | 29 | 373 | 41 | 44 | 63 | — | 7 |
 | Finance | 84 | 1,100 | 145 | 155 | 160 | 22 | 6 |
-| Risk & Compliance | 71 | 865 | 106 | 74 | 111 | 9 | 8 |
+| Risk & Compliance | 71 | 862 | 105 | 75 | 111 | 9 | 8 |
 | Platform Support | 63 | 822 | 123 | 99 | 107 | 5 | 7 |
 
 这些数字表示当前生成资产内部一致；六套模型仍保留 PDManer 4.9.3 应用内人工检查门禁，也不能证明物理数据库已经创建。Platform 的 22 表是当前手工 SQL 投影，不改变 63 表逻辑模型统计。
@@ -59,6 +59,7 @@
 | DB-01 | 新建表不使用物理 CHECK/FK，Sidecar 仅表达应用不变量/逻辑关系 | 多份旧物理决策与 Vault DDL 仍有现在时或实际约束 | 应用保护与反例测试齐备后，审核并手工执行逐库约束迁移；物理核验通过 |
 | FIN-01 | Tax Payment 事前承诺门禁与已发生银行扣款的事后事实登记分离 | 专项核对已确认：现有 `Bank Item + Reconciliation Exception` 可保存并追踪已发生扣款，但当前模型不能无损地把“没有前置 Tax Payment 的真实扣款”闭合到 Return/Payable | 正常流、无前置记录真实扣款、重复、金额/归属不匹配和解决流程均有模型与测试 |
 | RUN-01 | Gateway 本地 Nacos 默认 Namespace 与 `mor-local` 一致 | Gateway 当前默认/示例仍为 `public` | 失败断言、配置修正和相关 Gateway 门禁通过 |
+| RISK-OPERATIONS-RULE-CONFIG-01 | `CHECKOUT_PREPARE` 配置后端的完整工作区实现已存在：71 表 DDL、唯一 DML、九路由 typed API、不可变 DRAFT/Freeze、TEST Candidate、八项静态检查与持久幂等/两写事务恢复 | 授权后的仓库自有本地 `mor_risk` Schema/DML 应用、物理结构核对和真实 MySQL HTTP/持久化/并发，以及 Validate A/读快照/事务外纯校验/B Recovery 已通过；人工 PDManer Review 与部署仍未完成。模型/Schema 188/188 与需求站点 134/134 是独立门禁；COMP-01、DB-01、Vault V1 全局 Gate 继续开放 | 本地切片完成不等于部署或生产可用。共享或生产使用前仍须完成 PDManer 4.9.3 人工 Review、环境配置、Operations UI/BFF/Gateway/Auth/PLT-I02、Shadow/审批/激活/运行期评估及部署验收；不得用本项关闭 COMP-01、DB-01 或 Vault V1 |
 | COMMERCE-CLIENT-API-01 | Commerce Hosted Checkout V1 的非运行 Java Owner ingress contract module 已实现：公共 OpenAPI、三接口、十操作、records、九个 known-code catalogs 与 projection/purity tests；它不实现业务 HTTP | [业务决策](./decisions/2026-09-05-commerce-client-api-v1.md)与[设计](../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md)仍拥有业务/公共 wire 语义；[契约模块决策](./decisions/2026-09-05-commerce-client-api-contract-module.md)、[设计](../docs/superpowers/specs/2026-09-05-commerce-client-api-contract-module-design.md)和[实施计划](../docs/superpowers/plans/2026-09-05-commerce-client-api-contract-module-implementation.md)只拥有非运行模块及投影规则。仍是 14 表 / 223 字段，无业务 Controller、SQL、Platform Webhook、CCT/Risk/Payment/Finance typed 合同、Foundation RFC 9457 策略、Gateway/Nginx 或 `checkout-web` | 所有外部 Owner 前置完成；15 表 PDManer/SQL/映射与本地 MySQL auto 一致；十条 OpenAPI/HTTP、幂等恢复、Token 固定向量、Funds 事件、Webhook、日志和跨 Client 反例通过；Gateway/Platform/Nginx 与 CHECKOUT 页面完成端到端激活后才可声明可用 |
 | GATEWAY-CLIENT-API-01 | Client API 使用专用域名推导的 Channel、PLT-I03 opaque Credential、Credential/Tenant Guard、exact Route Scope、外部可生成的 Request ID 与最小三 Header 下游合同 | [合同已确认](./decisions/2026-09-05-client-api-gateway-contract.md)，[设计](../docs/superpowers/specs/2026-09-05-client-api-gateway-design.md)和 [Gateway-only 计划](../docs/superpowers/plans/2026-09-05-client-api-gateway-implementation.md)已形成；Gateway 仍是 Operations-only 运行链，Platform 未发布 PLT-I03 Java/HTTP 契约与 Credential SQL，Platform Route Key 仍跨 Channel 冲突，Nginx/Owner Adapter/生产 Target 均未就绪 | Gateway auto 通过并只标记 integration-ready；Platform、Owner 和 Nginx 前置全部完成后，以 `DISABLED` Target/Route 准备并静态核对。首条 Route 切为 `ACTIVE` 后，逐实例确认刷新成功且 CLIENT_API Target/Route Count `0 -> 1`，再用未分发的测试 Credential smoke；失败先撤销测试 Credential，再禁用 Target/Route 并等待每实例 Count 回到 0。只有成功收敛和 smoke 后才声明可用；后续同 Count 变更须先提供 Snapshot Revision/Fingerprint |
 | AUDIT-01 | Platform 既有 Operations HTTP 审计由 Controller 注解声明，提交结果确认后独立事务尽力写入；允许丢失，审计故障不改变业务结果 | [正式设计](../docs/superpowers/specs/2026-09-05-platform-controller-best-effort-audit-design.md)与[实施计划](../docs/superpowers/plans/2026-09-05-platform-controller-best-effort-audit.md)已实现：29 个方法精确覆盖、业务保护迁移、有界异步隔离、同库独立事务及真实故障回归均通过本地门禁；本次把业务审计接口收敛为 `identify/target/record/suppressReplay`，Processor 由唯一事务执行器自动桥接事务终态并新增递归字节码门禁；首次实现与低侵入收敛已分别提交本地 `main`（`5ce9ad0`、`8b42a64`），均尚未推送或部署，网络未知提交、强制终止和物理基础设施故障不在已验证范围 | 当前实现与验证证据见第 7 节；上线前另行完成环境配置、容量评估和部署回归，不把尽力写入描述为零丢失或物理零影响 |
@@ -78,6 +79,10 @@
 - 决策：[`decisions/2026-09-05-platform-controller-best-effort-audit.md`](./decisions/2026-09-05-platform-controller-best-effort-audit.md)
 - 已确认设计：[`docs/superpowers/specs/2026-09-05-platform-controller-best-effort-audit-design.md`](../docs/superpowers/specs/2026-09-05-platform-controller-best-effort-audit-design.md)
 - 执行计划：[`docs/superpowers/plans/2026-09-05-platform-controller-best-effort-audit.md`](../docs/superpowers/plans/2026-09-05-platform-controller-best-effort-audit.md)
+
+- 决策：[`decisions/2026-09-05-risk-operations-rule-configuration-backend.md`](./decisions/2026-09-05-risk-operations-rule-configuration-backend.md)
+- 已确认设计：[`docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md`](../docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md)
+- 执行计划：[`docs/superpowers/plans/2026-09-05-risk-operations-rule-configuration-backend-implementation.md`](../docs/superpowers/plans/2026-09-05-risk-operations-rule-configuration-backend-implementation.md)
 
 - 决策：[`decisions/2026-09-05-document-governance-and-conflict-resolution.md`](./decisions/2026-09-05-document-governance-and-conflict-resolution.md)
 - 决策：[`decisions/2026-09-05-superpowers-and-service-interface-policy.md`](./decisions/2026-09-05-superpowers-and-service-interface-policy.md)

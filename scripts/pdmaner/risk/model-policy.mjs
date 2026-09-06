@@ -25,10 +25,123 @@ export const FILE_REFERENCE_TUPLES = Object.freeze([
   Object.freeze({ table: "dispute_evidence_ref", id: "file_id", hash: "content_hash" }),
 ]);
 
-export const VAULT_TOKEN_REFERENCES = Object.freeze([
+export const RISK_OWNED_RECOVERABLE_TOKEN_REFERENCES = Object.freeze([
   Object.freeze({ table: "dd_party_snapshot", token: "snapshot_vault_token" }),
   Object.freeze({ table: "dd_check", token: "result_vault_token" }),
   Object.freeze({ table: "screening_hit", token: "name_vault_token" }),
+]);
+
+// Risk authorizes Reveal only for the three owned recoverable values above. These
+// Commerce-origin tokens are stable equality/frequency correlation inputs and
+// must never be promoted into the Risk Reveal authorization registry.
+export const COMMERCE_STABLE_CORRELATION_TOKEN_REFERENCES = Object.freeze([
+  Object.freeze({ table: "checkout_input_snapshot", token: "consumer_email_vault_token" }),
+  Object.freeze({ table: "checkout_input_snapshot", token: "consumer_phone_vault_token" }),
+  Object.freeze({ table: "transaction_risk_assessment", token: "consumer_email_vault_token" }),
+  Object.freeze({ table: "transaction_risk_assessment", token: "consumer_phone_vault_token" }),
+]);
+
+// Backward-compatible policy name: this registry deliberately contains only
+// Risk-owned recoverable values and is the sole Reveal-authorized set.
+export const VAULT_TOKEN_REFERENCES = RISK_OWNED_RECOVERABLE_TOKEN_REFERENCES;
+
+const compensationFact = ({
+  eventType,
+  subEventTypes,
+  eventKeyFormat,
+  eventKeySource,
+  authorityTables,
+  envelopeSources,
+  permanentIdempotency,
+}) => deepFreeze({
+  eventType,
+  subEventTypes,
+  eventKeyFormat,
+  eventKeySource,
+  authorityTables,
+  envelopeSources,
+  permanentIdempotency,
+  payloadPolicy: "NULL_OR_MINIMAL_NON_SENSITIVE_JSON_OBJECT",
+});
+
+// Risk 补偿事件重建清单：成功任务删除后，业务历史/事实仍永久保存事件身份与
+// 重建坐标；payload_json 不复制可从这些权威表恢复的上下文。
+export const COMPENSATION_EVENT_RECONSTRUCTION_INVENTORY = Object.freeze([
+  compensationFact({
+    eventType: "PUBLISH_ROLE_QUALIFICATION_EVENT",
+    subEventTypes: [
+      "RoleQualificationApproved", "RoleQualificationRejected",
+      "RoleQualificationExpired", "RoleQualificationRevoked",
+    ],
+    eventKeyFormat: "risk:qualification-change:{changeId}",
+    eventKeySource: "qualification_state_change.change_id",
+    authorityTables: ["role_qualification", "qualification_state_change", "qualification_decision"],
+    envelopeSources: ["role_qualification", "qualification_state_change", "qualification_decision"],
+    permanentIdempotency: "qualification_state_change.change_id",
+  }),
+  compensationFact({
+    eventType: "PUBLISH_COMPLIANCE_RESTRICTION_EVENT",
+    subEventTypes: ["ComplianceRestricted"],
+    eventKeyFormat: "risk:restriction:{restrictionId}",
+    eventKeySource: "risk_restriction.restriction_id",
+    authorityTables: ["risk_restriction"],
+    envelopeSources: ["risk_restriction", "compensation_event.payload_json:MINIMAL_EVENT_TIME_FIELDS_IF_REQUIRED"],
+    permanentIdempotency: "risk_restriction.restriction_id",
+  }),
+  compensationFact({
+    eventType: "PUBLISH_CHECKOUT_RISK_ASSESSMENT_EVENT",
+    subEventTypes: ["CheckoutRiskAssessed"],
+    eventKeyFormat: "risk:checkout-assessment:{snapshotId}",
+    eventKeySource: "checkout_input_snapshot.snapshot_id",
+    authorityTables: ["checkout_input_snapshot", "decision_evaluation"],
+    envelopeSources: ["checkout_input_snapshot", "decision_evaluation"],
+    permanentIdempotency: "checkout_input_snapshot.snapshot_id",
+  }),
+  compensationFact({
+    eventType: "PUBLISH_PAYMENT_RISK_ASSESSMENT_EVENT",
+    subEventTypes: ["PaymentRiskAssessed"],
+    eventKeyFormat: "risk:payment-assessment:{assessmentId}",
+    eventKeySource: "transaction_risk_assessment.assessment_id",
+    authorityTables: ["transaction_risk_assessment", "decision_evaluation"],
+    envelopeSources: ["transaction_risk_assessment", "decision_evaluation"],
+    permanentIdempotency: "transaction_risk_assessment.assessment_id",
+  }),
+  compensationFact({
+    eventType: "PUBLISH_SETTLEMENT_CONTROL_EVENT",
+    subEventTypes: ["SettlementControlChanged"],
+    eventKeyFormat: "risk:settlement-control-change:{changeId}",
+    eventKeySource: "settlement_control_state_change.change_id",
+    authorityTables: ["settlement_control", "settlement_control_scope", "settlement_control_state_change"],
+    envelopeSources: ["settlement_control", "settlement_control_scope", "settlement_control_state_change"],
+    permanentIdempotency: "settlement_control_state_change.change_id",
+  }),
+  compensationFact({
+    eventType: "PUBLISH_DISPUTE_EVENT",
+    subEventTypes: [
+      "DisputeOpened", "DisputeEvidenceRequested", "DisputeWon",
+      "DisputeLost", "DisputeOutcomeCorrected",
+    ],
+    eventKeyFormat: "risk:dispute-change:{changeId}",
+    eventKeySource: "dispute_state_change.change_id",
+    authorityTables: [
+      "dispute_case", "dispute_state_change", "dispute_submission_request",
+      "dispute_outcome", "dispute_liability_decision",
+    ],
+    envelopeSources: [
+      "dispute_case", "dispute_state_change", "dispute_submission_request",
+      "dispute_outcome", "dispute_liability_decision",
+    ],
+    permanentIdempotency: "dispute_state_change.change_id + sub_event_type",
+  }),
+  compensationFact({
+    eventType: "EXECUTE_RISK_ACTION_EFFECT",
+    subEventTypes: ["APPLY_ASYNC_ACTION_EFFECT"],
+    eventKeyFormat: "{actionEffectIdempotencyKey}",
+    eventKeySource: "action_effect.idempotency_key",
+    authorityTables: ["action_effect", "decision_evaluation", "action_version"],
+    envelopeSources: [],
+    permanentIdempotency: "action_effect.uk_action_effect_key(idempotency_key)",
+  }),
 ]);
 
 function compositeFk(name, childTable, childFields, parentTable, parentFields) {
@@ -36,7 +149,7 @@ function compositeFk(name, childTable, childFields, parentTable, parentFields) {
 }
 
 // PDManer 只绘制既有单字段逻辑边；这些精确列组随生成实体持久化，
-// 供未来 Migration/Testcontainers 建立可执行的同案复合外键。
+// 仅作为 Owner 写入口、真实本地事务、CAS/唯一索引和测试共同执行的应用不变量。
 export const COMPOSITE_FK_CONTRACTS = Object.freeze([
   compositeFk(
     "fk_dispute_req_package_case",
@@ -61,8 +174,8 @@ export const COMPOSITE_FK_CONTRACTS = Object.freeze([
   ),
 ]);
 
-// 连续版本、链尾和恰好一条 Liability 无法由便携单行 CHECK 完整表达。
-// 该注册表是未来 Risk 聚合 Processor 与 Testcontainers 的准确写入契约。
+// 连续版本、链尾和恰好一条 Liability 无法由单行物理约束完整表达。
+// 该注册表是 Risk 聚合 Processor 与仓库自有 local-environment 测试的准确写入契约。
 export const DISPUTE_AGGREGATE_CONTRACT = deepFreeze({
   rootTable: "dispute_case",
   rootKey: "dispute_case_id",
@@ -318,27 +431,26 @@ export const SETTLEMENT_CONTROL_CROSS_ROW_CONTRACTS = deepFreeze({
         to: { alias: "stateChange", table: "settlement_control_state_change", field: "control_id" },
         required: true,
       },
-      {
-        from: { alias: "stateChange", fields: ["control_id", "aggregate_version"] },
-        to: { alias: "event", table: "compensation_event", fields: ["source_id", "source_version"] },
-        required: false,
-      },
     ],
     versionHistory: {
       alias: "stateChange", table: "settlement_control_state_change",
       ownerField: "control_id", versionField: "aggregate_version",
       firstVersion: 1, lastVersion: { alias: "control", field: "version" }, contiguous: true,
     },
-    rowPredicates: [
-      { endpoint: { alias: "event", field: "source_type" }, operator: "EQUALS", value: "SETTLEMENT_CONTROL" },
-      { endpoint: { alias: "event", field: "event_type" }, operator: "EQUALS", value: "SettlementControlChanged" },
-    ],
+    eventIdentity: {
+      table: "compensation_event",
+      eventType: "PUBLISH_SETTLEMENT_CONTROL_EVENT",
+      subEventType: "SettlementControlChanged",
+      eventKeyFormat: "risk:settlement-control-change:{changeId}",
+      eventKeyComponent: { alias: "stateChange", field: "change_id", encoding: "CANONICAL_DECIMAL_STRING" },
+    },
     cardinalityAssertions: [{
-      context: { alias: "stateChange", keys: ["control_id", "aggregate_version"] },
-      child: { alias: "event", foreignKeys: ["source_id", "source_version"] },
+      context: { alias: "stateChange", key: "change_id" },
+      child: { alias: "event", table: "compensation_event", identityFields: ["event_key", "event_type", "sub_event_type"] },
+      formattedIdentity: "risk:settlement-control-change:{changeId}",
       predicates: [
-        { endpoint: { alias: "event", field: "source_type" }, operator: "EQUALS", value: "SETTLEMENT_CONTROL" },
-        { endpoint: { alias: "event", field: "event_type" }, operator: "EQUALS", value: "SettlementControlChanged" },
+        { endpoint: { alias: "event", field: "event_type" }, operator: "EQUALS", value: "PUBLISH_SETTLEMENT_CONTROL_EVENT" },
+        { endpoint: { alias: "event", field: "sub_event_type" }, operator: "EQUALS", value: "SettlementControlChanged" },
       ],
       exactly: 1,
     }],
@@ -501,7 +613,6 @@ export const CHECK_CONTRACTS = Object.freeze({
   ck_dispute_outcome_source: "(decision_source_type='PROVIDER_ACTION' AND outcome_version=1 AND supersedes_outcome_id IS NULL AND provider_dispute_action_id IS NOT NULL AND decision_source_id=provider_dispute_action_id) OR (decision_source_type IN ('CLIENT_DISPOSITION','OPERATIONS_DISPOSITION') AND outcome_version=1 AND outcome='LOST' AND supersedes_outcome_id IS NULL AND provider_dispute_action_id IS NULL) OR (decision_source_type='OPERATIONS_CORRECTION' AND outcome_version>1 AND supersedes_outcome_id IS NOT NULL)",
   ck_liability_recommendation: "recommended_principal_bearer IS NULL OR recommended_principal_bearer=principal_bearer OR override_reason_code IS NOT NULL",
   ck_liability_security_deposit: "security_deposit_use_allowed IN (0,1) AND ((decision_evaluation_id IS NOT NULL AND action_effect_id IS NOT NULL AND decided_by IS NULL) OR (decision_evaluation_id IS NULL AND action_effect_id IS NULL AND decided_by IS NOT NULL)) AND (security_deposit_use_allowed=0 OR principal_bearer='CLIENT')",
-  ck_compensation_counters: "source_version>0 AND schema_version>0 AND execute_count>=0 AND lock_version>0",
   ck_compensation_lease: "(execute_status='PROCESSING' AND lock_owner IS NOT NULL AND lock_until IS NOT NULL) OR (execute_status IN ('INIT','ERROR','FAILED') AND lock_owner IS NULL AND lock_until IS NULL)",
 });
 
@@ -587,7 +698,6 @@ export const CHECK_BINDINGS = Object.freeze({
   ck_dispute_outcome_source: Object.freeze(["dispute_outcome"]),
   ck_liability_recommendation: Object.freeze(["dispute_liability_decision"]),
   ck_liability_security_deposit: Object.freeze(["dispute_liability_decision"]),
-  ck_compensation_counters: Object.freeze(["compensation_event"]),
   ck_compensation_lease: Object.freeze(["compensation_event"]),
 });
 
@@ -924,10 +1034,11 @@ export const CROSS_ROW_CONTRACTS = Object.freeze({
         code: "CR_SIMULATED_EFFECT_COMPENSATION_EVENT",
         joins: Object.freeze([
           Object.freeze({ from: Object.freeze({ table: "decision_evaluation", field: "evaluation_id" }), to: Object.freeze({ table: "action_effect", field: "evaluation_id" }) }),
-          Object.freeze({ from: Object.freeze({ table: "action_effect", field: "effect_id" }), to: Object.freeze({ table: "compensation_event", field: "source_id" }) }),
+          Object.freeze({ from: Object.freeze({ table: "action_effect", field: "idempotency_key" }), to: Object.freeze({ table: "compensation_event", field: "event_key" }) }),
         ]),
         targetPredicates: Object.freeze([
-          Object.freeze({ field: "source_type", operator: "EQUALS", value: "ACTION_EFFECT" }),
+          Object.freeze({ field: "event_type", operator: "EQUALS", value: "EXECUTE_RISK_ACTION_EFFECT" }),
+          Object.freeze({ field: "sub_event_type", operator: "EQUALS", value: "APPLY_ASYNC_ACTION_EFFECT" }),
         ]),
       }),
       Object.freeze({

@@ -80,12 +80,50 @@ const DISPUTE_DECISION_SOURCE_TYPES = Object.freeze([
 
 const FINAL_RISK_TOTALS = Object.freeze({
   tables: 71,
-  fields: 865,
-  uniqueIndexes: 106,
-  accessIndexes: 74,
+  fields: 862,
+  uniqueIndexes: 105,
+  accessIndexes: 75,
   relations: 111,
   oneToOneRelations: 9,
   diagramGroups: 8,
+});
+
+test("Risk current documents freeze the 15-column compensation reconstruction and token boundaries", () => {
+  const scenario = readFileSync(scenarioPath, "utf8");
+  const logicalDatabase = readFileSync(logicalDatabasePath, "utf8");
+  const physicalDecisions = readFileSync(physicalDecisionsPath, "utf8");
+  const currentContract = `${scenario}\n${logicalDatabase}\n${physicalDecisions}`;
+
+  assert.match(currentContract, /event_key[^。]*event_type[^。]*sub_event_type/u);
+  for (const defaultContract of [
+    "execute_status DEFAULT 'INIT'",
+    "execute_count DEFAULT 0",
+    "next_execute_at DEFAULT CURRENT_TIMESTAMP(6)",
+    "create_time DEFAULT CURRENT_TIMESTAMP(6)",
+    "update_time DEFAULT CURRENT_TIMESTAMP(6)",
+  ]) {
+    assert.ok(currentContract.includes(defaultContract), `补偿事件文档缺少默认值：${defaultContract}`);
+  }
+  assert.ok(
+    currentContract.includes("idx_comp_event_ready(execute_status,next_execute_at,id)"),
+    "补偿事件文档缺少带 id 稳定排序的 Ready 索引",
+  );
+  assert.ok(
+    currentContract.includes("idx_comp_event_lease(execute_status,lock_until,id)"),
+    "补偿事件文档缺少带 id 稳定排序的 Lease 索引",
+  );
+  assert.match(currentContract, /Risk 补偿事件重建清单/u);
+  for (const legacyField of ["execution_type", "source_type", "source_id", "source_version", "schema_version", "payload_hash"]) {
+    const reliability = section(logicalDatabase, "### 4.8 本地可靠执行", "## 5. 核心关系图");
+    assert.doesNotMatch(reliability, new RegExp(`\\b${legacyField}\\b`, "u"));
+  }
+  assert.match(currentContract, /三个 Risk-owned Recoverable Token/u);
+  assert.match(currentContract, /四个 Commerce Stable Correlation Token/u);
+  assert.match(currentContract, /dd_party_snapshot\.snapshot_vault_token[^。]*NOT NULL/u);
+  assert.match(currentContract, /dd_party_snapshot\.snapshot_vault_token[^。]*Reveal/u);
+  assert.match(currentContract, /规则配置[^。]*不调用 Vault/u);
+  assert.match(currentContract, /Risk 物理 DDL[^。]*零 CHECK[^。]*零 FOREIGN KEY/u);
+  assert.match(currentContract, /全局 DB-01[^。]*未完成/u);
 });
 
 function tableExampleInventory(document) {
@@ -162,22 +200,22 @@ test("Risk current documents expose the final Settlement Control topology and ge
   assert.ok(manifestBlock, "物理决策缺少 Risk manifest block");
   const physicalManifest = JSON.parse(manifestBlock);
   assert.deepEqual(physicalManifest.modelTotals, FINAL_RISK_TOTALS);
-  assert.equal(physicalManifest.checkContracts, 83);
+  assert.equal(physicalManifest.checkContracts, 82);
   assert.equal(
     physicalManifest.modelSha256,
-    "445ed5828d0b7951f0755978676c102bfade023306a0ca311184bf259a4551e6",
+    "68b232ffa2f12423b00497db6682ffd71274f5b8b2d1f4c61d78e9a2db4ad3cf",
   );
   assert.equal(
     physicalManifest.structuralProjectionSha256,
-    "e8ad25426adcf5037fc334706c0342e2b5c3bb47d83f44d554098cda3b756d2c",
+    "be58d091f5ffe87fce6c3fa67ad079845896475124ad7c866196e48a9d7992d9",
   );
   assert.equal(
     physicalManifest.checkPolicySha256,
-    "b2a09dc39dab618af8e4d2400d898c185e1ee4789a7b31a6ec4137c91e82a25b",
+    "a1cc6af3ecf7dab474ee6a85f1f5c95caf1f08612834df9c128c19cef746ab11",
   );
   assert.match(
     logicalDatabase,
-    /71 表、865 字段、106 个唯一索引、74 个访问索引、111 条本库关系、9 条 1:1 关系、8 个 Diagram Groups 和 83 条 CHECK 契约/u,
+    /71 表、862 字段、105 个唯一索引、75 个访问索引、111 条本库逻辑关系、9 条 1:1 关系、8 个 Diagram Groups 和 82 条应用 CHECK Sidecar 契约/u,
   );
 });
 

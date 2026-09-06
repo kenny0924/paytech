@@ -12,9 +12,12 @@ import { RELATIONS, TABLES } from "./manifest.mjs";
 import {
   CHECK_BINDINGS,
   CHECK_CONTRACTS,
+  COMMERCE_STABLE_CORRELATION_TOKEN_REFERENCES,
   COMPOSITE_FK_CONTRACTS,
+  COMPENSATION_EVENT_RECONSTRUCTION_INVENTORY,
   DIAGRAM_GROUPS,
   FILE_REFERENCE_TUPLES,
+  RISK_OWNED_RECOVERABLE_TOKEN_REFERENCES,
   VAULT_TOKEN_REFERENCES,
 } from "./model-policy.mjs";
 
@@ -160,6 +163,13 @@ function normalizeTemplate(template) {
     timeRule.defName = "业务时刻字段使用 DATETIME(6)";
     timeRule.programCode = "let key=(data.field.defKey||'').toLowerCase(); let type=(data.field.type||data.field.dbType||'').toUpperCase(); if(key.endsWith('_time')||key.endsWith('_at')||key.endsWith('_from')||key.endsWith('_to')||key.endsWith('_until')){return type==='DATETIME' && parseInt(data.field.len)===6;} return true;";
   }
+  const mysqlDdlTemplate = model.profile.codeTemplates.find((templateSpec) => templateSpec.type === "dbDDL");
+  const typeLengthTemplate = "{{=field.type}}{{?field.len>0}}{{='('}}{{=field.len}}{{?field.scale>0}}{{=','}}{{=field.scale}}{{?}}{{=')'}}{{?}}";
+  invariant(mysqlDdlTemplate?.createTable.includes(typeLengthTemplate), "MySQL DDL 模板缺少受控字段类型片段");
+  mysqlDdlTemplate.createTable = mysqlDdlTemplate.createTable.replace(
+    typeLengthTemplate,
+    `${typeLengthTemplate}{{? field.extProps && field.extProps.characterSet }} CHARACTER SET {{=field.extProps.characterSet}} COLLATE {{=field.extProps.collation}}{{?}}`,
+  );
   return model;
 }
 
@@ -236,7 +246,9 @@ function buildEntities(model) {
         hideInGraph: false,
         refDict: "",
         baseType: mapping.baseType,
-        extProps: {},
+        extProps: manifestField.characterSet
+          ? { characterSet: manifestField.characterSet, collation: manifestField.collation }
+          : {},
         domain: mapping.domain,
         id: stableUuid(`field/${table.defKey}/${manifestField.defKey}`),
       };
@@ -389,12 +401,61 @@ function validateManifest() {
   }
   for (const reference of VAULT_TOKEN_REFERENCES) {
     const table = tableByKey.get(reference.table);
-    invariant(table?.fields.some((field) => field.defKey === reference.token), `Vault Token 引用不存在：${reference.table}.${reference.token}`);
+    const token = table?.fields.find((field) => field.defKey === reference.token);
+    invariant(token?.type === "VARCHAR" && token.len === 128, `Risk-owned Recoverable Token 必须保留 VARCHAR(128) 协议缓冲：${reference.table}.${reference.token}`);
+  }
+  invariant(
+    tableByKey.get("dd_party_snapshot").fields.find((field) => field.defKey === "snapshot_vault_token")?.notNull,
+    "DD Party Snapshot 是已批准可恢复快照，snapshot_vault_token 必须保持 NOT NULL",
+  );
+  invariant(
+    JSON.stringify(VAULT_TOKEN_REFERENCES) === JSON.stringify(RISK_OWNED_RECOVERABLE_TOKEN_REFERENCES),
+    "Risk Reveal 授权表只能包含 Risk-owned Recoverable Token",
+  );
+  const revealKeys = new Set(VAULT_TOKEN_REFERENCES.map(({ table, token }) => `${table}.${token}`));
+  for (const reference of COMMERCE_STABLE_CORRELATION_TOKEN_REFERENCES) {
+    const table = tableByKey.get(reference.table);
+    const token = table?.fields.find((field) => field.defKey === reference.token);
+    invariant(token?.type === "VARCHAR" && token.len === 128, `Commerce Stable Correlation Token 必须保留 VARCHAR(128) 协议缓冲：${reference.table}.${reference.token}`);
+    invariant(!revealKeys.has(`${reference.table}.${reference.token}`), `Commerce Stable Correlation Token 不得授权 Risk Reveal：${reference.table}.${reference.token}`);
   }
   invariant(!tableByKey.has("velocity_bucket"), "不得预建 t_velocity_bucket");
   const compensation = tableByKey.get("compensation_event");
-  invariant(compensation.fields.some((field) => field.defKey === "lock_version"), "Compensation Event 必须使用 lock_version");
-  invariant(!compensation.fields.some((field) => field.defKey === "version"), "Compensation Event 不得使用含混的 version");
+  const compensationFields = compensation.fields.map((field) => field.defKey);
+  invariant(JSON.stringify(compensationFields) === JSON.stringify([
+    "id", "event_key", "event_type", "sub_event_type", "payload_json",
+    "execute_status", "execute_count", "next_execute_at", "lock_owner", "lock_until",
+    "last_error_code", "last_error_summary", "lock_version", "create_time", "update_time",
+  ]), "Compensation Event 必须使用精确 15 列合同");
+  const payload = compensation.fields.find((field) => field.defKey === "payload_json");
+  invariant(payload.type === "VARCHAR" && payload.len === 4096 && !payload.notNull, "Compensation Event Payload 必须是可空 VARCHAR(4096)");
+  const lockOwner = compensation.fields.find((field) => field.defKey === "lock_owner");
+  invariant(lockOwner.type === "VARCHAR" && lockOwner.len === 64, "Compensation Event lock_owner 必须是 VARCHAR(64)");
+  const lockVersion = compensation.fields.find((field) => field.defKey === "lock_version");
+  invariant(lockVersion.type === "BIGINT" && lockVersion.defaultValue === "1", "Compensation Event lock_version 必须是 BIGINT DEFAULT 1");
+  const compensationDefaults = Object.freeze({
+    execute_status: "'INIT'",
+    execute_count: "0",
+    next_execute_at: "CURRENT_TIMESTAMP(6)",
+    create_time: "CURRENT_TIMESTAMP(6)",
+    update_time: "CURRENT_TIMESTAMP(6)",
+  });
+  for (const [fieldName, expectedDefault] of Object.entries(compensationDefaults)) {
+    const actualField = compensation.fields.find((field) => field.defKey === fieldName);
+    invariant(actualField?.defaultValue === expectedDefault, `Compensation Event ${fieldName} 默认值必须是 ${expectedDefault}`);
+  }
+  invariant(JSON.stringify(compensation.indexes.map(({ defKey, fields }) => [defKey, fields])) === JSON.stringify([
+    ["uk_comp_event_identity", ["event_key", "event_type", "sub_event_type"]],
+    ["idx_comp_event_ready", ["execute_status", "next_execute_at", "id"]],
+    ["idx_comp_event_lease", ["execute_status", "lock_until", "id"]],
+  ]), "Compensation Event 索引合同漂移");
+  invariant(COMPENSATION_EVENT_RECONSTRUCTION_INVENTORY.length > 0, "Risk 补偿事件重建清单不得为空");
+  for (const fact of COMPENSATION_EVENT_RECONSTRUCTION_INVENTORY) {
+    invariant(fact.eventType && fact.subEventTypes.length > 0, "Risk 补偿事件重建清单缺少 Handler 身份");
+    invariant(fact.eventKeyFormat && fact.eventKeySource, `Risk 补偿事件重建清单缺少 event_key 构造：${fact.eventType}`);
+    invariant(fact.authorityTables.length > 0 && fact.permanentIdempotency, `Risk 补偿事件重建清单缺少权威事实或永久幂等：${fact.eventType}`);
+    for (const authorityTable of fact.authorityTables) invariant(tableByKey.has(authorityTable), `Risk 补偿事件重建清单引用未知表：${fact.eventType}.${authorityTable}`);
+  }
   invariant(Object.keys(CHECK_CONTRACTS).length >= 30, "Risk 物理 CHECK 契约不完整");
   invariant(JSON.stringify(Object.keys(CHECK_CONTRACTS).sort()) === JSON.stringify(Object.keys(CHECK_BINDINGS).sort()), "每条 CHECK 契约必须有且只有一个绑定清单");
   for (const [checkName, boundTables] of Object.entries(CHECK_BINDINGS)) {

@@ -193,6 +193,8 @@ export const TABLES = Object.freeze([
       int("version_no", "版本号"),
       code("status", "规则集版本状态", "NN", ["DRAFT", "FROZEN", "RETIRED"]),
       hash("content_hash", "规则集内容哈希"),
+      field("created_by", "BIGINT", "NN", "规则集创建人", "创建该不可变规则集版本的调用方声明 Actor Correlation；接入认证 Operations BFF 前不代表已验证人工身份"),
+      field("change_reason", "VARCHAR(500)", "NN", "规则集变更原因", "创建该规则集版本的 1–500 字符可展示中英文非敏感变更原因；禁止密钥、凭据、个人数据或完整 Payload"),
       id("frozen_by", "冻结操作人", "N"),
       time("frozen_time", "冻结时间", "N"),
     ],

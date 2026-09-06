@@ -102,15 +102,15 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "445ed5828d0b7951f0755978676c102bfade023306a0ca311184bf259a4551e6";
-export const EXPECTED_STRUCTURAL_DIGEST = "e8ad25426adcf5037fc334706c0342e2b5c3bb47d83f44d554098cda3b756d2c";
-export const EXPECTED_CHECK_POLICY_DIGEST = "b2a09dc39dab618af8e4d2400d898c185e1ee4789a7b31a6ec4137c91e82a25b";
+export const EXPECTED_MODEL_DIGEST = "68b232ffa2f12423b00497db6682ffd71274f5b8b2d1f4c61d78e9a2db4ad3cf";
+export const EXPECTED_STRUCTURAL_DIGEST = "be58d091f5ffe87fce6c3fa67ad079845896475124ad7c866196e48a9d7992d9";
+export const EXPECTED_CHECK_POLICY_DIGEST = "a1cc6af3ecf7dab474ee6a85f1f5c95caf1f08612834df9c128c19cef746ab11";
 
 export const EXPECTED_TOTALS = Object.freeze({
   tables: 71,
-  fields: 865,
-  uniqueIndexes: 106,
-  accessIndexes: 74,
+  fields: 862,
+  uniqueIndexes: 105,
+  accessIndexes: 75,
   relations: 111,
   oneToOneRelations: 9,
   diagramGroups: 8,
@@ -127,7 +127,83 @@ export const EXPECTED_GROUP_SIZES = Object.freeze({
   reliability: 2,
 });
 
-export const EXPECTED_CHECK_COUNT = 83;
+export const EXPECTED_CHECK_COUNT = 82;
+
+export const COMPENSATION_EVENT_TARGET = Object.freeze({
+  fields: Object.freeze([
+    "id", "event_key", "event_type", "sub_event_type", "payload_json",
+    "execute_status", "execute_count", "next_execute_at", "lock_owner", "lock_until",
+    "last_error_code", "last_error_summary", "lock_version", "create_time", "update_time",
+  ]),
+  legacyFields: Object.freeze([
+    "execution_type", "source_type", "source_id", "source_version", "schema_version", "payload_hash",
+  ]),
+  fieldShapes: Object.freeze({
+    event_key: Object.freeze({ type: "VARCHAR", len: 128, notNull: true }),
+    event_type: Object.freeze({ type: "VARCHAR", len: 64, notNull: true }),
+    sub_event_type: Object.freeze({ type: "VARCHAR", len: 64, notNull: true }),
+    payload_json: Object.freeze({ type: "VARCHAR", len: 4096, notNull: false }),
+    execute_status: Object.freeze({ type: "VARCHAR", len: 64, notNull: true, defaultValue: "'INIT'" }),
+    execute_count: Object.freeze({ type: "INT", len: "", notNull: true, defaultValue: "0" }),
+    next_execute_at: Object.freeze({ type: "DATETIME", len: 6, notNull: true, defaultValue: "CURRENT_TIMESTAMP(6)" }),
+    lock_owner: Object.freeze({ type: "VARCHAR", len: 64, notNull: false }),
+    lock_version: Object.freeze({ type: "BIGINT", len: "", notNull: true, defaultValue: "1" }),
+    create_time: Object.freeze({ type: "DATETIME", len: 6, notNull: true, defaultValue: "CURRENT_TIMESTAMP(6)" }),
+    update_time: Object.freeze({ type: "DATETIME", len: 6, notNull: true, defaultValue: "CURRENT_TIMESTAMP(6)" }),
+  }),
+  indexes: Object.freeze({
+    uk_comp_event_identity: Object.freeze(["event_key", "event_type", "sub_event_type"]),
+    idx_comp_event_ready: Object.freeze(["execute_status", "next_execute_at", "id"]),
+    idx_comp_event_lease: Object.freeze(["execute_status", "lock_until", "id"]),
+  }),
+});
+
+export const COMPENSATION_EVENT_RECONSTRUCTION_TARGET = Object.freeze({
+  PUBLISH_ROLE_QUALIFICATION_EVENT: Object.freeze([
+    "RoleQualificationApproved", "RoleQualificationRejected",
+    "RoleQualificationExpired", "RoleQualificationRevoked",
+  ]),
+  PUBLISH_COMPLIANCE_RESTRICTION_EVENT: Object.freeze(["ComplianceRestricted"]),
+  PUBLISH_CHECKOUT_RISK_ASSESSMENT_EVENT: Object.freeze(["CheckoutRiskAssessed"]),
+  PUBLISH_PAYMENT_RISK_ASSESSMENT_EVENT: Object.freeze(["PaymentRiskAssessed"]),
+  PUBLISH_SETTLEMENT_CONTROL_EVENT: Object.freeze(["SettlementControlChanged"]),
+  PUBLISH_DISPUTE_EVENT: Object.freeze([
+    "DisputeOpened", "DisputeEvidenceRequested", "DisputeWon",
+    "DisputeLost", "DisputeOutcomeCorrected",
+  ]),
+  EXECUTE_RISK_ACTION_EFFECT: Object.freeze(["APPLY_ASYNC_ACTION_EFFECT"]),
+});
+
+export const RULE_SET_VERSION_AUDIT_TARGET = Object.freeze({
+  orderedFields: Object.freeze([
+    "rule_set_version_id", "decision_point_id", "rule_set_code", "rule_set_name", "version_no",
+    "status", "content_hash", "created_by", "change_reason", "frozen_by", "frozen_time",
+    "create_time", "update_time",
+  ]),
+  fieldShapes: Object.freeze({
+    created_by: Object.freeze({
+      type: "BIGINT", len: "", notNull: true,
+      comment: "创建该不可变规则集版本的调用方声明 Actor Correlation；接入认证 Operations BFF 前不代表已验证人工身份。",
+    }),
+    change_reason: Object.freeze({
+      type: "VARCHAR", len: 500, notNull: true,
+      comment: "创建该规则集版本的 1–500 字符可展示中英文非敏感变更原因；禁止密钥、凭据、个人数据或完整 Payload。",
+    }),
+  }),
+});
+
+export const REQUIRED_RISK_OWNED_RECOVERABLE_TOKENS = Object.freeze([
+  Object.freeze({ table: "dd_party_snapshot", token: "snapshot_vault_token" }),
+  Object.freeze({ table: "dd_check", token: "result_vault_token" }),
+  Object.freeze({ table: "screening_hit", token: "name_vault_token" }),
+]);
+
+export const REQUIRED_COMMERCE_STABLE_CORRELATION_TOKENS = Object.freeze([
+  Object.freeze({ table: "checkout_input_snapshot", token: "consumer_email_vault_token" }),
+  Object.freeze({ table: "checkout_input_snapshot", token: "consumer_phone_vault_token" }),
+  Object.freeze({ table: "transaction_risk_assessment", token: "consumer_email_vault_token" }),
+  Object.freeze({ table: "transaction_risk_assessment", token: "consumer_phone_vault_token" }),
+]);
 
 export const REQUIRED_COMPOSITE_FK_CONTRACTS = Object.freeze([
   Object.freeze({
@@ -366,9 +442,9 @@ export const REQUIRED_FIELDS = Object.freeze({
     "security_deposit_use_allowed",
   ]),
   t_compensation_event: Object.freeze([
-    "id", "event_key", "event_type", "execution_type", "source_type", "source_id", "source_version",
-    "schema_version", "payload_json", "payload_hash", "execute_status", "execute_count",
-    "next_execute_at", "lock_owner", "lock_until", "lock_version",
+    "id", "event_key", "event_type", "sub_event_type", "payload_json", "execute_status",
+    "execute_count", "next_execute_at", "lock_owner", "lock_until", "last_error_code",
+    "last_error_summary", "lock_version", "create_time", "update_time",
   ]),
   t_command_idempotency: Object.freeze([
     "idempotency_id", "caller_scope", "operation_type", "idempotency_key",

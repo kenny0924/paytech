@@ -292,6 +292,538 @@ function transitionRows(fixture, key) {
   return uniqueRowsById(rowsOf(fixture, key), TRANSITION_COLLECTION_IDS[key]);
 }
 
+const RISK_DECISION_SCHEMAS = Object.freeze({
+  RULE_SET: "RISK_RULE_SET_VERSION_V1",
+  POINT: "RISK_DECISION_POINT_VERSION_V1",
+  RELEASE: "RISK_DECISION_RELEASE_V1",
+  CREATE_RULE_SET: "RISK_CREATE_RULE_SET_VERSION_COMMAND_V1",
+  FREEZE_RULE_SET: "RISK_FREEZE_RULE_SET_VERSION_COMMAND_V1",
+  CREATE_TEST_RELEASE: "RISK_CREATE_TEST_RELEASE_COMMAND_V1",
+  VALIDATE_TEST_RELEASE: "RISK_VALIDATE_TEST_RELEASE_COMMAND_V1",
+});
+
+function decisionInvalid(message) {
+  throw new TypeError(message);
+}
+
+function decisionObject(value, path) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) decisionInvalid(`${path} must be an object`);
+  return value;
+}
+
+function decisionArray(value, path) {
+  if (!Array.isArray(value)) decisionInvalid(`${path} must be an array`);
+  return value;
+}
+
+function decisionField(value, field, path) {
+  if (!Object.hasOwn(value, field)) decisionInvalid(`${path}.${field} is required`);
+  return value[field];
+}
+
+function normalizeDecisionString(value, path) {
+  if (typeof value !== "string") decisionInvalid(`${path} must be a string`);
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const next = value.charCodeAt(index + 1);
+      if (!(next >= 0xdc00 && next <= 0xdfff)) decisionInvalid(`${path} contains an unpaired surrogate`);
+      index += 1;
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      decisionInvalid(`${path} contains an unpaired surrogate`);
+    }
+  }
+  return value.normalize("NFC");
+}
+
+function compareUnsignedUtf8(left, right) {
+  return Buffer.compare(
+    Buffer.from(normalizeDecisionString(left, "sort.left"), "utf8"),
+    Buffer.from(normalizeDecisionString(right, "sort.right"), "utf8"),
+  );
+}
+
+function compareNullable(left, right, comparator) {
+  if (left === null && right === null) return 0;
+  if (left === null) return 1;
+  if (right === null) return -1;
+  return comparator(left, right);
+}
+
+function canonicalPositiveId(value, path) {
+  if (typeof value !== "string" || !POSITIVE_DECIMAL_ID_PATTERN.test(value)
+    || value.length > 19 || BigInt(value) > SIGNED_BIGINT_MAX) {
+    decisionInvalid(`${path} must be a positive signed-BIGINT string`);
+  }
+  return value;
+}
+
+function canonicalNonnegativeInteger(value, path) {
+  if (!Number.isSafeInteger(value) || value < 0) decisionInvalid(`${path} must be a nonnegative integer`);
+  return value;
+}
+
+function normalizeDecisionDecimal(value, path) {
+  if (typeof value !== "string"
+    || !/^-?(?:0|[1-9][0-9]{0,15})(?:\.[0-9]{1,8})?$/.test(value)) {
+    decisionInvalid(`${path} must be a canonical DECIMAL(24,8) string`);
+  }
+  const negative = value.startsWith("-");
+  const unsigned = negative ? value.slice(1) : value;
+  if (negative && /^0(?:\.0+)?$/.test(unsigned)) {
+    decisionInvalid(`${path} must be a canonical DECIMAL(24,8) string`);
+  }
+  const [integer, fraction = ""] = unsigned.split(".");
+  const result = `${integer}.${fraction.padEnd(8, "0")}`;
+  return negative ? `-${result}` : result;
+}
+
+function normalizeDecisionDatetime(value, path) {
+  const normalized = normalizeDecisionString(value, path);
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{6})Z$/.exec(normalized);
+  if (!match || Number(match[1]) < 1000) decisionInvalid(`${path} must be a UTC microsecond timestamp`);
+  const [, year, month, day, hour, minute, second] = match.map(Number);
+  const instant = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  if (instant.getUTCFullYear() !== year || instant.getUTCMonth() !== month - 1
+    || instant.getUTCDate() !== day || instant.getUTCHours() !== hour
+    || instant.getUTCMinutes() !== minute || instant.getUTCSeconds() !== second) {
+    decisionInvalid(`${path} must be a real UTC microsecond timestamp`);
+  }
+  return normalized;
+}
+
+function normalizeDecisionDuration(value, path) {
+  if (typeof value !== "string" || !NONNEGATIVE_DECIMAL_PATTERN.test(value)
+    || BigInt(value) > SIGNED_BIGINT_MAX) {
+    decisionInvalid(`${path} must be a nonnegative signed-BIGINT duration string`);
+  }
+  return value;
+}
+
+function writeDecisionJcs(value, path = "$") {
+  if (value === null) return "null";
+  if (typeof value === "boolean") return String(value);
+  if (typeof value === "number") {
+    canonicalNonnegativeInteger(value, path);
+    return String(value);
+  }
+  if (typeof value === "string") return JSON.stringify(normalizeDecisionString(value, path));
+  if (Array.isArray(value)) return `[${value.map((entry, index) => writeDecisionJcs(entry, `${path}[${index}]`)).join(",")}]`;
+  decisionObject(value, path);
+  const normalized = Object.keys(value).map((key) => ({
+    key,
+    normalizedKey: normalizeDecisionString(key, `${path}.key`),
+  })).sort((left, right) => left.normalizedKey < right.normalizedKey ? -1 : left.normalizedKey > right.normalizedKey ? 1 : 0);
+  for (let index = 1; index < normalized.length; index += 1) {
+    if (normalized[index - 1].normalizedKey === normalized[index].normalizedKey) {
+      decisionInvalid(`${path} has duplicate NFC property names`);
+    }
+  }
+  return `{${normalized.map(({ key, normalizedKey }) => (
+    `${JSON.stringify(normalizedKey)}:${writeDecisionJcs(value[key], `${path}.${normalizedKey}`)}`
+  )).join(",")}}`;
+}
+
+function decisionCanonicalResult(projection) {
+  const canonicalJson = writeDecisionJcs(projection);
+  const bytes = Buffer.from(canonicalJson, "utf8");
+  return Object.freeze({
+    canonicalJson,
+    canonicalUtf8Hex: bytes.toString("hex"),
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+  });
+}
+
+function requireDecisionSchema(value, schema) {
+  decisionObject(value, schema);
+  if (decisionField(value, "schema", schema) !== schema) decisionInvalid(`schema must be ${schema}`);
+}
+
+function decisionLiteral(value, valueType, path) {
+  if (value === null) return null;
+  if (valueType === "BOOLEAN") {
+    if (typeof value !== "boolean") decisionInvalid(`${path} must be boolean`);
+    return value;
+  }
+  if (typeof value !== "string") decisionInvalid(`${path} must be a string`);
+  if (valueType === "NUMBER") return normalizeDecisionDecimal(value, path);
+  if (valueType === "DATETIME") return normalizeDecisionDatetime(value, path);
+  if (valueType === "DURATION") return normalizeDecisionDuration(value, path);
+  return normalizeDecisionString(value, path);
+}
+
+function projectDecisionOperand(value, path) {
+  const operand = decisionObject(value, path);
+  const valueType = decisionField(operand, "valueType", path);
+  return {
+    operandRole: decisionField(operand, "operandRole", path),
+    valueSequence: canonicalNonnegativeInteger(decisionField(operand, "valueSequence", path), `${path}.valueSequence`),
+    sourceType: decisionField(operand, "sourceType", path),
+    fieldCode: decisionField(operand, "fieldCode", path),
+    valueType,
+    literalValue: decisionLiteral(decisionField(operand, "literalValue", path), valueType, `${path}.literalValue`),
+  };
+}
+
+function projectDecisionCondition(value, path) {
+  const condition = decisionObject(value, path);
+  if (condition.nodeType === "GROUP") {
+    return {
+      nodeType: "GROUP",
+      groupOperator: decisionField(condition, "groupOperator", path),
+      children: decisionArray(decisionField(condition, "children", path), `${path}.children`)
+        .map((child, index) => projectDecisionCondition(child, `${path}.children[${index}]`)),
+    };
+  }
+  const operands = decisionArray(decisionField(condition, "operands", path), `${path}.operands`)
+    .map((operand, index) => projectDecisionOperand(operand, `${path}.operands[${index}]`))
+    .sort((left, right) => (left.operandRole === right.operandRole ? 0 : left.operandRole === "LEFT" ? -1 : 1)
+      || left.valueSequence - right.valueSequence
+      || compareUnsignedUtf8(writeDecisionJcs(left), writeDecisionJcs(right)));
+  return {
+    nodeType: "PREDICATE",
+    comparisonOperator: decisionField(condition, "comparisonOperator", path),
+    operands,
+  };
+}
+
+function projectDecisionAction(value, path, full) {
+  const action = decisionObject(value, path);
+  const projected = {
+    actionCode: decisionField(action, "actionCode", path),
+    actionVersionNo: canonicalNonnegativeInteger(decisionField(action, "actionVersionNo", path), `${path}.actionVersionNo`),
+  };
+  if (!full) return projected;
+  return {
+    ...projected,
+    handlerCode: decisionField(action, "handlerCode", path),
+    implementationVersion: decisionField(action, "implementationVersion", path),
+    implementationHash: decisionField(action, "implementationHash", path),
+    actionCategory: decisionField(action, "actionCategory", path),
+    terminalFlag: decisionField(action, "terminalFlag", path),
+    decisionCode: decisionField(action, "decisionCode", path),
+    mergePolicy: decisionField(action, "mergePolicy", path),
+    shadowSupportedFlag: decisionField(action, "shadowSupportedFlag", path),
+  };
+}
+
+function projectDecisionRule(value, path, fullAction, condition) {
+  const rule = decisionObject(value, path);
+  return {
+    ruleCode: decisionField(rule, "ruleCode", path),
+    ruleName: normalizeDecisionString(decisionField(rule, "ruleName", path), `${path}.ruleName`).trim(),
+    priorityNo: canonicalNonnegativeInteger(decisionField(rule, "priorityNo", path), `${path}.priorityNo`),
+    enabledFlag: decisionField(rule, "enabledFlag", path),
+    reasonCode: decisionField(rule, "reasonCode", path),
+    condition,
+    action: projectDecisionAction(decisionField(rule, "action", path), `${path}.action`, fullAction),
+  };
+}
+
+function sortDecisionRules(rules) {
+  return rules.sort((left, right) => left.priorityNo - right.priorityNo
+    || compareUnsignedUtf8(left.ruleCode, right.ruleCode));
+}
+
+function projectCommandCondition(nodes, path) {
+  const rows = decisionArray(nodes, path).map((node, index) => ({
+    ...decisionObject(node, `${path}[${index}]`),
+    __path: `${path}[${index}]`,
+  }));
+  const byKey = new Map();
+  for (const node of rows) {
+    const key = normalizeDecisionString(decisionField(node, "nodeKey", node.__path), `${node.__path}.nodeKey`);
+    if (byKey.has(key)) decisionInvalid(`${path} contains duplicate nodeKey`);
+    byKey.set(key, node);
+  }
+  const roots = rows.filter((node) => decisionField(node, "parentNodeKey", node.__path) === null);
+  if (roots.length !== 1) decisionInvalid(`${path} must contain one root`);
+  const visiting = new Set();
+  const visited = new Set();
+  const visit = (node) => {
+    const key = node.nodeKey;
+    if (visiting.has(key)) decisionInvalid(`${path} contains a cycle`);
+    visiting.add(key);
+    visited.add(key);
+    if (node.nodeType === "GROUP") {
+      const children = rows.filter((candidate) => candidate.parentNodeKey === key)
+        .sort((left, right) => left.sequenceNo - right.sequenceNo || compareUnsignedUtf8(left.nodeKey, right.nodeKey));
+      const projected = {
+        nodeType: "GROUP",
+        groupOperator: decisionField(node, "groupOperator", node.__path),
+        children: children.map(visit),
+      };
+      visiting.delete(key);
+      return projected;
+    }
+    const projected = projectDecisionCondition({
+      nodeType: "PREDICATE",
+      comparisonOperator: decisionField(node, "comparisonOperator", node.__path),
+      operands: decisionField(node, "operands", node.__path),
+    }, node.__path);
+    visiting.delete(key);
+    return projected;
+  };
+  const result = visit(roots[0]);
+  if (visited.size !== rows.length) decisionInvalid(`${path} contains unreachable nodes`);
+  return result;
+}
+
+function projectRuleSet(value, schema, fullAction) {
+  requireDecisionSchema(value, schema);
+  const rules = decisionArray(decisionField(value, "rules", schema), `${schema}.rules`).map((rule, index) => {
+    const path = `${schema}.rules[${index}]`;
+    return projectDecisionRule(
+      rule,
+      path,
+      fullAction,
+      projectDecisionCondition(decisionField(rule, "condition", path), `${path}.condition`),
+    );
+  });
+  return {
+    schema,
+    pointCode: decisionField(value, "pointCode", schema),
+    ruleSetCode: decisionField(value, "ruleSetCode", schema),
+    ruleSetName: normalizeDecisionString(decisionField(value, "ruleSetName", schema), `${schema}.ruleSetName`).trim(),
+    versionNo: canonicalNonnegativeInteger(decisionField(value, "versionNo", schema), `${schema}.versionNo`),
+    rules: sortDecisionRules(rules),
+  };
+}
+
+export function canonicalizeRiskRuleSetVersion(value) {
+  return decisionCanonicalResult(projectRuleSet(value, RISK_DECISION_SCHEMAS.RULE_SET, true));
+}
+
+export function canonicalizeRiskDecisionPointVersion(value) {
+  const schema = RISK_DECISION_SCHEMAS.POINT;
+  requireDecisionSchema(value, schema);
+  const inputFields = decisionArray(decisionField(value, "inputFields", schema), `${schema}.inputFields`)
+    .map((field, index) => {
+      const path = `${schema}.inputFields[${index}]`;
+      return Object.fromEntries([
+        "fieldCode", "valueType", "requiredFlag", "dataClassification", "ruleReferenceFlag", "actionParameterFlag",
+      ].map((key) => [key, decisionField(decisionObject(field, path), key, path)]));
+    }).sort((left, right) => compareUnsignedUtf8(left.fieldCode, right.fieldCode));
+  const ruleSets = decisionArray(decisionField(value, "ruleSets", schema), `${schema}.ruleSets`)
+    .map((binding, index) => {
+      const path = `${schema}.ruleSets[${index}]`;
+      return Object.fromEntries([
+        "sequenceNo", "ruleSetCode", "ruleSetVersionNo", "ruleSetContentHash",
+      ].map((key) => [key, decisionField(decisionObject(binding, path), key, path)]));
+    }).sort((left, right) => left.sequenceNo - right.sequenceNo || compareUnsignedUtf8(left.ruleSetCode, right.ruleSetCode));
+  const empty = (key) => {
+    const rows = decisionArray(decisionField(value, key, schema), `${schema}.${key}`);
+    if (rows.length !== 0) decisionInvalid(`${schema}.${key} must be empty in V1`);
+    return [];
+  };
+  return decisionCanonicalResult({
+    schema,
+    pointCode: decisionField(value, "pointCode", schema),
+    businessDomain: decisionField(value, "businessDomain", schema),
+    pointVersionNo: decisionField(value, "pointVersionNo", schema),
+    inputContractCode: decisionField(value, "inputContractCode", schema),
+    inputContractVersion: decisionField(value, "inputContractVersion", schema),
+    outputContractCode: decisionField(value, "outputContractCode", schema),
+    defaultDecision: decisionField(value, "defaultDecision", schema),
+    evaluationStrategy: decisionField(value, "evaluationStrategy", schema),
+    failureStrategy: decisionField(value, "failureStrategy", schema),
+    timeoutMillis: decisionField(value, "timeoutMillis", schema),
+    inputFields,
+    ruleSets,
+    features: empty("features"),
+    obligations: empty("obligations"),
+    limitBindings: empty("limitBindings"),
+  });
+}
+
+const RELEASE_PROJECTION_FIELDS = Object.freeze({
+  inputFields: ["inputFieldId", "pointVersionId", "fieldCode", "valueType", "requiredFlag", "dataClassification", "ruleReferenceFlag", "actionParameterFlag"],
+  ruleSetBindings: ["bindingId", "pointVersionId", "ruleSetVersionId", "sequenceNo"],
+  ruleSetVersions: ["ruleSetVersionId", "decisionPointId", "ruleSetCode", "versionNo", "contentHash"],
+  rules: ["ruleId", "ruleSetVersionId", "ruleCode", "priorityNo", "enabledFlag", "reasonCode"],
+  nodes: ["nodeId", "ruleId", "parentNodeId", "nodeType", "groupOperator", "comparisonOperator", "sequenceNo"],
+  operands: ["operandId", "nodeId", "operandRole", "valueSequence", "sourceType", "featureVersionId", "inputFieldId", "valueType", "stringValue", "numberValue", "booleanValue", "datetimeValue", "durationValue"],
+  actionVersions: ["actionVersionId", "actionCode", "actionCategory", "versionNo", "handlerCode", "implementationVersion", "implementationHash", "terminalFlag", "decisionCode", "mergePolicy", "shadowSupportedFlag"],
+  ruleActions: ["ruleActionId", "ruleId", "actionVersionId", "sequenceNo"],
+});
+const RELEASE_PROJECTION_IDS = Object.freeze({
+  inputFields: "inputFieldId",
+  ruleSetBindings: "bindingId",
+  ruleSetVersions: "ruleSetVersionId",
+  rules: "ruleId",
+  nodes: "nodeId",
+  operands: "operandId",
+  actionVersions: "actionVersionId",
+  ruleActions: "ruleActionId",
+});
+
+function projectReleaseRows(value, key, schema) {
+  const fields = RELEASE_PROJECTION_FIELDS[key];
+  return decisionArray(decisionField(value, key, schema), `${schema}.${key}`).map((row, index) => {
+    const path = `${schema}.${key}[${index}]`;
+    const source = decisionObject(row, path);
+    const projected = Object.fromEntries(fields.map((field) => [field, decisionField(source, field, path)]));
+    canonicalPositiveId(projected[RELEASE_PROJECTION_IDS[key]], `${path}.${RELEASE_PROJECTION_IDS[key]}`);
+    if (key === "operands") {
+      if (projected.numberValue !== null) projected.numberValue = normalizeDecisionDecimal(projected.numberValue, `${path}.numberValue`);
+      if (projected.datetimeValue !== null) projected.datetimeValue = normalizeDecisionDatetime(projected.datetimeValue, `${path}.datetimeValue`);
+      if (projected.durationValue !== null) projected.durationValue = normalizeDecisionDuration(projected.durationValue, `${path}.durationValue`);
+    }
+    return projected;
+  }).sort((left, right) => {
+    const id = RELEASE_PROJECTION_IDS[key];
+    const leftId = BigInt(left[id]);
+    const rightId = BigInt(right[id]);
+    return leftId < rightId ? -1 : leftId > rightId ? 1
+      : compareUnsignedUtf8(writeDecisionJcs(left), writeDecisionJcs(right));
+  });
+}
+
+export function canonicalizeRiskDecisionRelease(value) {
+  const schema = RISK_DECISION_SCHEMAS.RELEASE;
+  requireDecisionSchema(value, schema);
+  const point = decisionObject(decisionField(value, "decisionPoint", schema), `${schema}.decisionPoint`);
+  const pointVersion = decisionObject(decisionField(value, "pointVersion", schema), `${schema}.pointVersion`);
+  const exact = (source, fields, path) => Object.fromEntries(fields.map((field) => [field, decisionField(source, field, path)]));
+  const projection = {
+    schema,
+    releaseId: decisionField(value, "releaseId", schema),
+    releaseNo: decisionField(value, "releaseNo", schema),
+    decisionPointId: decisionField(value, "decisionPointId", schema),
+    pointVersionId: decisionField(value, "pointVersionId", schema),
+    environmentCode: decisionField(value, "environmentCode", schema),
+    decisionPoint: exact(point, ["decisionPointId", "pointCode", "businessDomain"], `${schema}.decisionPoint`),
+    pointVersion: exact(pointVersion, ["decisionPointId", "pointCode", "pointVersionId", "pointVersionNo", "inputContractCode", "inputContractVersion", "outputContractCode", "defaultDecision", "evaluationStrategy", "failureStrategy", "timeoutMillis", "contentHash"], `${schema}.pointVersion`),
+  };
+  for (const key of Object.keys(RELEASE_PROJECTION_FIELDS)) projection[key] = projectReleaseRows(value, key, schema);
+  for (const key of ["features", "featureDependencies", "actionParameterDefinitions", "ruleActionParameters", "obligations", "limitBindings"]) {
+    const rows = decisionArray(decisionField(value, key, schema), `${schema}.${key}`);
+    if (rows.length !== 0) decisionInvalid(`${schema}.${key} must be empty in V1`);
+    projection[key] = [];
+  }
+  return decisionCanonicalResult(projection);
+}
+
+export function canonicalizeRiskCreateRuleSetVersionCommand(value) {
+  const schema = RISK_DECISION_SCHEMAS.CREATE_RULE_SET;
+  requireDecisionSchema(value, schema);
+  const rules = decisionArray(decisionField(value, "rules", schema), `${schema}.rules`).map((rule, index) => {
+    const path = `${schema}.rules[${index}]`;
+    return projectDecisionRule(
+      rule,
+      path,
+      false,
+      projectCommandCondition(decisionField(rule, "conditionNodes", path), `${path}.conditionNodes`),
+    );
+  });
+  return decisionCanonicalResult({
+    schema,
+    pointCode: decisionField(value, "pointCode", schema),
+    ruleSetCode: decisionField(value, "ruleSetCode", schema),
+    ruleSetName: normalizeDecisionString(decisionField(value, "ruleSetName", schema), `${schema}.ruleSetName`).trim(),
+    baseRuleSetVersionId: decisionField(value, "baseRuleSetVersionId", schema),
+    baseContentHash: decisionField(value, "baseContentHash", schema),
+    changeReason: normalizeDecisionString(decisionField(value, "changeReason", schema), `${schema}.changeReason`).trim(),
+    rules: sortDecisionRules(rules),
+  });
+}
+
+function canonicalizeSimpleDecisionCommand(value, schema, fields) {
+  requireDecisionSchema(value, schema);
+  return decisionCanonicalResult({
+    schema,
+    ...Object.fromEntries(fields.map((field) => [field, decisionField(value, field, schema)])),
+  });
+}
+
+export function canonicalizeRiskFreezeRuleSetVersionCommand(value) {
+  return canonicalizeSimpleDecisionCommand(value, RISK_DECISION_SCHEMAS.FREEZE_RULE_SET,
+    ["ruleSetVersionId", "expectedContentHash"]);
+}
+
+export function canonicalizeRiskCreateTestReleaseCommand(value) {
+  return canonicalizeSimpleDecisionCommand(value, RISK_DECISION_SCHEMAS.CREATE_TEST_RELEASE,
+    ["ruleSetVersionId", "expectedRuleSetContentHash"]);
+}
+
+export function canonicalizeRiskValidateTestReleaseCommand(value) {
+  return canonicalizeSimpleDecisionCommand(value, RISK_DECISION_SCHEMAS.VALIDATE_TEST_RELEASE,
+    ["releaseId", "expectedVersion"]);
+}
+
+function normalizeDecisionViolation(value, path) {
+  const violation = decisionObject(value, path);
+  const normalized = {};
+  for (const field of ["errorCode", "path", "ruleCode", "nodeId", "actionCode"]) {
+    const fieldValue = decisionField(violation, field, path);
+    if (fieldValue === null) normalized[field] = null;
+    else if (field === "nodeId") normalized[field] = canonicalPositiveId(fieldValue, `${path}.${field}`);
+    else normalized[field] = normalizeDecisionString(fieldValue, `${path}.${field}`);
+  }
+  return normalized;
+}
+
+function compareDecisionViolations(left, right) {
+  for (const field of ["errorCode", "path", "ruleCode"]) {
+    const compared = compareNullable(left[field], right[field], compareUnsignedUtf8);
+    if (compared !== 0) return compared;
+  }
+  const nodeCompared = compareNullable(left.nodeId, right.nodeId, (a, b) => {
+    const leftId = BigInt(a);
+    const rightId = BigInt(b);
+    return leftId < rightId ? -1 : leftId > rightId ? 1 : 0;
+  });
+  if (nodeCompared !== 0) return nodeCompared;
+  return compareNullable(left.actionCode, right.actionCode, compareUnsignedUtf8);
+}
+
+export function summarizeDecisionStaticViolations(values) {
+  const unique = new Map();
+  decisionArray(values, "violations").forEach((value, index) => {
+    const normalized = normalizeDecisionViolation(value, `violations[${index}]`);
+    unique.set(writeDecisionJcs([
+      normalized.errorCode, normalized.path, normalized.ruleCode, normalized.nodeId, normalized.actionCode,
+    ]), normalized);
+  });
+  const sortedUnique = [...unique.values()].sort(compareDecisionViolations);
+  if (sortedUnique.length === 0) decisionInvalid("violations must not be empty");
+  const first = sortedUnique[0];
+  return Object.freeze({
+    uniqueCount: sortedUnique.length,
+    first,
+    summary: `first=${first.errorCode}@${first.path ?? "-"}; violation_count=${sortedUnique.length}`,
+    sortedUnique,
+  });
+}
+
+export function materializeDecisionStaticChecks(inputChecks) {
+  const checks = new Map();
+  decisionArray(inputChecks, "inputChecks").forEach((input, index) => {
+    const path = `inputChecks[${index}]`;
+    const check = decisionObject(input, path);
+    const checkCode = decisionField(check, "checkCode", path);
+    if (!DECISION_RELEASE_CHECK_CODES.includes(checkCode) || checks.has(checkCode)) {
+      decisionInvalid(`${path}.checkCode must be unique and closed`);
+    }
+    checks.set(checkCode, decisionArray(decisionField(check, "violations", path), `${path}.violations`));
+  });
+  return DECISION_RELEASE_CHECK_CODES.map((checkCode) => {
+    if (!checks.has(checkCode)) decisionInvalid(`inputChecks is missing ${checkCode}`);
+    const violations = checks.get(checkCode);
+    if (violations.length === 0) {
+      return { checkCode, checkStatus: "PASSED", severity: "INFO", errorCode: null, errorSummary: null };
+    }
+    const summary = summarizeDecisionStaticViolations(violations);
+    return {
+      checkCode,
+      checkStatus: "FAILED",
+      severity: "ERROR",
+      errorCode: summary.first.errorCode,
+      errorSummary: summary.summary,
+    };
+  });
+}
+
 function createCollector(releaseId) {
   const errors = [];
   const add = (checkCode, errorCode, location = {}) => {
@@ -310,23 +842,44 @@ function createCollector(releaseId) {
 }
 
 function stableErrors(errors) {
-  const keys = new Set();
-  const unique = [];
+  const unique = new Map();
   for (const error of errors) {
-    const key = JSON.stringify(error);
-    if (keys.has(key)) continue;
-    keys.add(key);
-    unique.push(error);
+    const normalized = {
+      ...error,
+      error_code: normalizeDecisionString(error.error_code, "error.error_code"),
+    };
+    if (error.path !== undefined) normalized.path = normalizeDecisionString(error.path, "error.path");
+    if (error.rule_code !== undefined) normalized.rule_code = normalizeDecisionString(error.rule_code, "error.rule_code");
+    if (error.node_id !== undefined) normalized.node_id = canonicalPositiveId(error.node_id, "error.node_id");
+    if (error.action_code !== undefined) normalized.action_code = normalizeDecisionString(error.action_code, "error.action_code");
+    const key = writeDecisionJcs([
+      normalized.check_code,
+      normalized.release_id,
+      normalized.error_code,
+      normalized.path ?? null,
+      normalized.rule_code ?? null,
+      normalized.node_id ?? null,
+      normalized.action_code ?? null,
+    ]);
+    unique.set(key, normalized);
   }
-  return unique.sort((left, right) => {
+  return [...unique.values()].sort((left, right) => {
     const leftRank = CHECK_ORDER.get(left.check_code) ?? Number.MAX_SAFE_INTEGER;
     const rightRank = CHECK_ORDER.get(right.check_code) ?? Number.MAX_SAFE_INTEGER;
     if (leftRank !== rightRank) return leftRank - rightRank;
-    for (const field of ["release_id", "rule_code", "node_id", "action_code", "error_code", "path"]) {
-      const compared = String(left[field] ?? "").localeCompare(String(right[field] ?? ""));
+    const releaseCompared = compareUnsignedUtf8(left.release_id, right.release_id);
+    if (releaseCompared !== 0) return releaseCompared;
+    for (const field of ["error_code", "path", "rule_code"]) {
+      const compared = compareNullable(left[field] ?? null, right[field] ?? null, compareUnsignedUtf8);
       if (compared !== 0) return compared;
     }
-    return 0;
+    const nodeCompared = compareNullable(left.node_id ?? null, right.node_id ?? null, (a, b) => {
+      const leftId = BigInt(a);
+      const rightId = BigInt(b);
+      return leftId < rightId ? -1 : leftId > rightId ? 1 : 0;
+    });
+    if (nodeCompared !== 0) return nodeCompared;
+    return compareNullable(left.action_code ?? null, right.action_code ?? null, compareUnsignedUtf8);
   });
 }
 
@@ -2644,7 +3197,7 @@ function validateSettlementControlEvents(rowsByTable, add) {
   const contract = SETTLEMENT_CONTROL_CROSS_ROW_CONTRACTS.CR_SETTLEMENT_CONTROL_EVENT;
   const controls = settlementRows(rowsByTable, contract.root.table);
   const changes = settlementRows(rowsByTable, contract.versionHistory.table);
-  const events = settlementRows(rowsByTable, contract.joins[1].to.table);
+  const events = settlementRows(rowsByTable, contract.eventIdentity.table);
   for (const control of controls) {
     const history = changes.filter((change) => change[contract.versionHistory.ownerField] === control.control_id);
     const versions = history.map((change) => change[contract.versionHistory.versionField])
@@ -2652,11 +3205,14 @@ function validateSettlementControlEvents(rowsByTable, add) {
     let valid = Number.isInteger(control[contract.root.version])
       && versions.length === control[contract.root.version]
       && versions.every((version, index) => version === index + contract.versionHistory.firstVersion);
-    for (const version of versions) {
-      const matches = events.filter((event) => event.source_id === control.control_id
-        && event.source_version === version
-        && event.source_type === "SETTLEMENT_CONTROL"
-        && event.event_type === "SettlementControlChanged");
+    for (const change of history) {
+      const eventKey = contract.eventIdentity.eventKeyFormat.replace(
+        "{changeId}",
+        String(change[contract.eventIdentity.eventKeyComponent.field]),
+      );
+      const matches = events.filter((event) => event.event_key === eventKey
+        && event.event_type === contract.eventIdentity.eventType
+        && event.sub_event_type === contract.eventIdentity.subEventType);
       if (matches.length !== 1) valid = false;
     }
     if (!valid) add("REFERENCE_INTEGRITY", contract.code, {

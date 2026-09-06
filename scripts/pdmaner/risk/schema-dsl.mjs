@@ -20,7 +20,14 @@ export function field(
   nullability,
   defName,
   description,
-  { values = null, source = null, primaryKey = false, defaultValue = "" } = {},
+  {
+    values = null,
+    source = null,
+    primaryKey = false,
+    defaultValue = "",
+    characterSet = null,
+    collation = null,
+  } = {},
 ) {
   invariant(/^[a-z][a-z0-9_]*$/u.test(defKey), `非法字段名：${defKey}`);
   invariant(defKey.length <= 32, `字段名超过 32 字符：${defKey}`);
@@ -29,9 +36,16 @@ export function field(
   invariant(/[\u3400-\u9fff]/u.test(description), `字段缺少中文说明：${defKey}`);
   invariant(!(values && source), `字段不能同时是闭合枚举和开放代码：${defKey}`);
   invariant(!values || values.length > 0, `闭合枚举不能为空：${defKey}`);
+  invariant(Boolean(characterSet) === Boolean(collation), `字符集与排序规则必须成对声明：${defKey}`);
+  invariant(
+    !characterSet || (characterSet === "ascii" && collation === "ascii_bin"),
+    `Risk 精确字符串只允许 ascii/ascii_bin：${defKey}`,
+  );
+  const parsedType = parseType(typeToken);
+  invariant(!characterSet || parsedType.type === "VARCHAR", `仅 VARCHAR 字段可声明精确字符串规则：${defKey}`);
   return Object.freeze({
     defKey,
-    ...parseType(typeToken),
+    ...parsedType,
     notNull: nullability === "NN",
     primaryKey,
     defName,
@@ -39,6 +53,8 @@ export function field(
     closedValues: values ? Object.freeze([...values]) : null,
     openSource: source,
     defaultValue,
+    characterSet,
+    collation,
   });
 }
 
