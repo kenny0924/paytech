@@ -13,6 +13,10 @@
 > Nginx/Gateway 兜底”的窄协议。这些值都不是调用方身份或业务幂等依据；Operations 外部、JWT、CORS、
 > 下游 Header 与 Request ID 合同不变。
 
+> 2026-09-06 后继决定：本文第 5 节的旧 `{code,message,requestId,timestamp}` Wire Shape 已由
+> [全系统 RFC 9457 Problem Details 设计](./2026-09-06-system-wide-rfc-9457-problem-details-design.md)取代。
+> `paytech-mvc-web-starter` 继续是 MVC 全局异常出口，本文的日志、Nginx TLS、可信 Client IP 和内部 HTTP 网络边界不变。
+
 ## 1. 决策摘要
 
 本设计同时收敛三个基础设施边界：

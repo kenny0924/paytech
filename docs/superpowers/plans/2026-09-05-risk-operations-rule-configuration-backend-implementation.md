@@ -10,6 +10,9 @@
 
 **Spec:** [`docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md`](../specs/2026-09-05-risk-operations-rule-configuration-backend-design.md)
 
+**Error-contract supersession:** 本计划中原 Foundation 四字段错误响应步骤由
+[`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](../specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md) 取代；Risk 业务 Code/Status 与其余历史实施证据不变。
+
 ## Global Constraints
 
 - 用户已经明确授权开始实现；本计划是执行入口，不是部署、建分支、提交、推送或修改共享数据库的授权。开始、每个跨仓库阶段和结束时分别检查根工作区及 `risk-compliance-service` 的 `git status --short`。
@@ -23,7 +26,7 @@
 - Java/JUnit 不执行 DDL/DML。本计划可以生成并验证 SQL 文件，但只有用户另行明确授权后才能人工应用到本地数据库；在此之前，数据库行为测试的未运行状态必须如实记录。
 - 两个管理 Base Path 必须配置 metadata-only 日志。规则 AST、Literal、Change Reason、请求/响应 Body 不得进入普通日志；错误摘要不含 Literal、个人数据、Token 或 Payload。
 - 所有行为修改按 TDD：先创建并实际运行最小 RED，再写最小生产实现，再运行聚焦回归。任何已有失败和本次引入失败分开记录。
-- API 成功固定 HTTP 200 和 `application/json`；错误继续使用 Foundation `code/message/requestId/timestamp`，只新增一个 Risk 404 Code。所有外部 BIGINT ID 用正十进制 String，所有时间用 UTC 微秒文本。
+- API 成功固定 HTTP 200 和 `application/json`；错误使用系统级 Code-MoR Problem Profile，只新增一个 Risk 404 Code。所有外部 BIGINT ID 用正十进制 String，所有时间用 UTC 微秒文本。
 - 规则、Point Version、Release 和四种 Command Request Hash 使用各自版本化 Schema、RFC 8785/JCS、NFC、SHA-256 小写十六进制。不存在批准的共享 JCS 库时，只能先实现一个受共享黄金向量约束的 Risk 内部纯实现，并把未来上移 Foundation 记录为显式后续事项，不能用 Jackson Map 排序或手拼 JSON 冒充 JCS。
 
 ---

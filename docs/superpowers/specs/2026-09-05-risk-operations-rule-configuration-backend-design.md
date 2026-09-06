@@ -7,6 +7,7 @@
 - Decision date: 2026-09-05
 - Implementation, verification and deployment: see [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md)
 - Scope: Risk-owned `CHECKOUT_PREPARE` Rule Set authoring, freeze, TEST Candidate and eight static checks
+- Error-contract supersession: 第 11 节的错误 Body 形状由 [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](./2026-09-06-system-wide-rfc-9457-problem-details-design.md) 取代；Risk 业务 Code/Status 映射继续由本文拥有
 
 > 实现、物理数据库、验证、人工 Review 与部署的当前状态及精确证据只以
 > [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 为准。本设计不维护第二份
@@ -870,14 +871,16 @@ DataObject 留在上述 Owner JAR，类名不加 `DO`，每个字段使用中文
 
 ## 11. 错误合同
 
-本 API 复用 `paytech-mvc-web-starter` 的当前共享错误体：
+本 API 复用 `paytech-mvc-web-starter` 的统一 Code-MoR Problem：
 
 ```json
 {
+  "type": "about:blank",
+  "title": "Conflict",
+  "detail": "规则集已产生新版本，请刷新后重试",
   "code": "CONCURRENT_REQUEST",
-  "message": "规则集已产生新版本，请刷新后重试",
   "requestId": "request-id",
-  "timestamp": "2026-09-05T00:00:00Z"
+  "timestamp": "2026-09-06T10:20:30.123456Z"
 }
 ```
 
@@ -896,7 +899,7 @@ DataObject 留在上述 Owner JAR，类名不加 `DO`，每个字段使用中文
 `ApiErrorStatusResolver` 映射 404。其余情况使用公共异常，不为每个校验原因创建异常类。
 
 Candidate 静态检查失败是已完成的业务结果，返回 `200 + status=REJECTED + checks[8]`，不返回 4xx/5xx。
-本设计不声称当前 Foundation 错误已是 RFC 9457 Problem Details。
+错误 Wire Contract、Request ID、时间戳、`HEAD` 与可选字段错误规则由系统级 Problem Profile 统一拥有，Risk 不创建本地 Writer 或错误 DTO。
 
 ## 12. 审计、日志和安全
 

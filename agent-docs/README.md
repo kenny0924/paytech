@@ -23,6 +23,7 @@
 | 任务类型 | 必须读取 | 适用范围 |
 |---|---|---|
 | 编写或重构 Java、配置或测试代码；调整命名、注释、异常、枚举、事务、依赖声明顺序、公共包或 Foundation 实现习惯 | [DEVELOPMENT_CONVENTIONS.md](./DEVELOPMENT_CONVENTIONS.md) + 对应专项文档 | 项目级稳定编码习惯；不替代业务事实、技术选型和专项测试/补偿规则 |
+| 创建、修改或解析第一方 HTTP 4xx/5xx；调整 RFC 9457-based Problem Body、Request ID、错误时间、字段错误、MVC/Gateway/BFF/Vault 错误出口或内部 HTTP Client | [全系统 Problem Profile 决策](./decisions/2026-09-06-system-wide-rfc-9457-problem-details.md) + [完整设计](../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md) + [DEVELOPMENT_CONVENTIONS.md](./DEVELOPMENT_CONVENTIONS.md)；测试另读 [UNIT_TEST_GUIDE.md](./UNIT_TEST_GUIDE.md) | 所有第一方 JSON HTTP API 的唯一错误 Wire Contract；业务系统仍只拥有自己的业务 Code/Status，实现状态只读当前状态台账 |
 | 选择锁粒度、Redis 协调或数据库并发保护 | [DEVELOPMENT_CONVENTIONS.md §5.1](./DEVELOPMENT_CONVENTIONS.md#51-锁与并发控制)；Platform 另读[资源锁重构记录](./plans/2026-09-04-platform-resource-lock-refactoring.md) | 锁实际资源；事务、幂等和跨资源不变量独立评估，不默认租户大锁 |
 | Java/Spring/Maven 版本、BOM/Parent、MySQL、RabbitMQ、Redis、Nacos、Gateway 限流、可观测性或云产品映射 | [TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md) | 已确认的技术产品、版本与使用边界 |
 | 当前 Mac 的 JDK/Maven、Docker、端口、资源、数据库、Nacos、RabbitMQ、Redis、XXL-Job 或可观测环境搭建 | [LOCAL_DEVELOPMENT_ENVIRONMENT.md](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) + [TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md) | 已确认的混合本地拓扑与安全隔离规则 |

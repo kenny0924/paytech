@@ -8,6 +8,7 @@
 - Decision record: [`2026-09-05-commerce-client-api-contract-module.md`](../../../agent-docs/decisions/2026-09-05-commerce-client-api-contract-module.md)
 - Public Wire authority: [`commerce-service/api/openapi/client-v1.yaml`](../../../commerce-service/api/openapi/client-v1.yaml)
 - Scope: Hosted Checkout V1 的非运行 Java Owner 入站契约模块
+- Error-contract supersession: 本文原 Problem 字段投影由 [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](./2026-09-06-system-wide-rfc-9457-problem-details-design.md) 取代；当前 OpenAPI 投影和 Foundation Writer 继承验证已迁移，契约模块继续不创建 Problem DTO
 
 本文定义 `paytech-commerce-client-api` 的 Maven 边界、Java 包、十条接口投影、DTO、兼容性、依赖和验证方式。它不实现 Controller、业务处理、数据库、跨系统调用、Gateway Route 或部署。
 
@@ -379,15 +380,24 @@ Java 方法只声明正常 typed 返回。4xx/5xx 继续由共享 Foundation Cli
 
 ```json
 {
-  "type": "...",
-  "title": "...",
-  "detail": "...",
-  "code": "...",
-  "errors": []
+  "type": "about:blank",
+  "title": "Unprocessable Content",
+  "detail": "One or more request fields are invalid.",
+  "code": "VALIDATION_ERROR",
+  "requestId": "req_01K4ABCDEF0123456789",
+  "timestamp": "2026-09-06T10:20:30.123456Z",
+  "errors": [
+    {
+      "field": "items[0].unitAmount",
+      "message": "The amount must be a non-negative decimal string."
+    }
+  ]
 }
 ```
 
-`errors` 可选；Body 不含 `status`、`requestId` 或 `timestamp`。本模块不创建 `Problem` Java DTO、不定义异常 Advice，也不绕过尚未完成的 Foundation Gate。
+`type/title/detail/code/requestId/timestamp` 必填，`errors` 仅在存在可安全投影的请求 Body 字段错误时作为非空数组出现，
+每项只含 `field/message`；Body 不含 `status`、`instance` 或顶层 `message`，响应 `X-Request-Id` 与 Body 完全一致。
+本模块不创建 `Problem` Java DTO、不定义异常 Advice，也不绕过 Foundation 唯一 Writer。
 
 ## 9. Web 实现边界
 

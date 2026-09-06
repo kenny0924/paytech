@@ -22,6 +22,72 @@ const requiredFiles = [
   join(buildRoot, 'paytech-dependencies', 'pom.xml'),
   join(buildRoot, 'paytech-parent', 'pom.xml'),
   join(foundationRoot, 'pom.xml'),
+  join(foundationRoot, 'paytech-http-problem', 'pom.xml'),
+  join(
+    foundationRoot,
+    'paytech-http-problem',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'httpproblem',
+    'api',
+    'ApiProblemResponse.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-http-problem',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'httpproblem',
+    'api',
+    'ProblemFieldError.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-http-problem',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'httpproblem',
+    'api',
+    'ApiProblemProfile.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-http-problem',
+    'src',
+    'test',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'httpproblem',
+    'auto',
+    'ApiProblemResponseJsonAutoTest.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-http-problem',
+    'src',
+    'test',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'httpproblem',
+    'auto',
+    'ApiProblemProfileAutoTest.java',
+  ),
   join(
     foundationRoot,
     'paytech-caffeine-starter',
@@ -190,6 +256,7 @@ if (errors.length === 0) {
 
   const modulePoms = [
     'paytech-common-core/pom.xml',
+    'paytech-http-problem/pom.xml',
     'paytech-snowflake-id/pom.xml',
     'paytech-mvc-web-starter/pom.xml',
     'paytech-caffeine-starter/pom.xml',
@@ -208,6 +275,7 @@ if (errors.length === 0) {
   for (const artifactId of [
     'paytech-caffeine-starter',
     'paytech-compensation-event',
+    'paytech-http-problem',
     'paytech-redis-starter',
     'paytech-xxl-job-starter',
   ]) {
@@ -274,6 +342,7 @@ if (errors.length === 0) {
     [join(buildRoot, 'paytech-parent', 'pom.xml'), 'paytech-parent'],
     [join(foundationRoot, 'pom.xml'), 'paytech-foundation'],
     [join(foundationRoot, 'paytech-common-core', 'pom.xml'), 'paytech-common-core'],
+    [join(foundationRoot, 'paytech-http-problem', 'pom.xml'), 'paytech-http-problem'],
     [join(foundationRoot, 'paytech-snowflake-id', 'pom.xml'), 'paytech-snowflake-id'],
     [join(foundationRoot, 'paytech-mvc-web-starter', 'pom.xml'), 'paytech-mvc-web-starter'],
     [join(foundationRoot, 'paytech-caffeine-starter', 'pom.xml'), 'paytech-caffeine-starter'],
@@ -285,6 +354,34 @@ if (errors.length === 0) {
     const model = readFileSync(modelFile, 'utf8');
     if (!model.includes(`<artifactId>${artifactId}</artifactId>`)) {
       errors.push(`expected Maven artifactId is missing (${artifactId}): ${modelFile}`);
+    }
+  }
+
+  const httpProblemPom = readFileSync(
+    join(foundationRoot, 'paytech-http-problem', 'pom.xml'),
+    'utf8',
+  );
+  const httpProblemDependencies = dependencyBlocks(httpProblemPom);
+  const httpProblemProductionDependencies = httpProblemDependencies.filter(
+    (block) => tagValue(block, 'scope') !== 'test',
+  );
+  const allowedHttpProblemProductionDependency = 'com.fasterxml.jackson.core:jackson-annotations';
+  const hasOnlyAllowedHttpProblemProductionDependency = httpProblemProductionDependencies.length === 1
+    && `${tagValue(httpProblemProductionDependencies[0], 'groupId')}:${tagValue(
+      httpProblemProductionDependencies[0],
+      'artifactId',
+    )}` === allowedHttpProblemProductionDependency;
+  if (!hasOnlyAllowedHttpProblemProductionDependency) {
+    errors.push(
+      'paytech-http-problem production dependencies must contain only '
+        + `${allowedHttpProblemProductionDependency}`,
+    );
+  }
+  const httpProblemSourceRoot = join(foundationRoot, 'paytech-http-problem', 'src', 'main');
+  for (const sourceFile of collectNamespaceFiles(httpProblemSourceRoot)) {
+    const content = readFileSync(sourceFile, 'utf8');
+    if (/org\.springframework|jakarta\.servlet|javax\.servlet/u.test(content)) {
+      errors.push(`paytech-http-problem production source has a framework dependency: ${sourceFile}`);
     }
   }
 

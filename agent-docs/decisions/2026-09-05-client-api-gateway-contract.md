@@ -5,6 +5,7 @@
 - Deployment status: Not deployed
 - Decision date: 2026-09-05
 - Scope: `CLIENT_API` 外部入口；Route 冲突键加入 Channel 及支撑它的固定私有入口标记是共享迁移
+- Error-contract supersession: D8 中 Problem Body 不含 Request ID 的部分由 [`2026-09-06-system-wide-rfc-9457-problem-details.md`](./2026-09-06-system-wide-rfc-9457-problem-details.md) 取代；Gateway Code/Status、Owner 校验/透传及其他入口安全边界继续有效
 - Supersedes:
   - `docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md` 第 2.1、6.3、9.2、9.4、10、12.2、13、15.2、17.2、18.2 节及第 19 节结论 2 中，与跨 Channel 全局 Method + Path 冲突、Client API Request ID、Client API 下游可信 Header 和失败码冲突的部分
   - `docs/superpowers/specs/2026-09-03-api-gateway-platform-support-requirements.md` 中无 Channel 的 Route lookup/冲突域与 Client API 旧下游上下文描述

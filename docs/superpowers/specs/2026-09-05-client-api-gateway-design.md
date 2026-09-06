@@ -4,6 +4,10 @@
 文档性质：已确认设计；实现、验证与部署状态只读 `agent-docs/CURRENT_IMPLEMENTATION.md`
 范围：只定义 `CLIENT_API` 公网入口；Route Key 与固定私有入口 Channel 标记的共享迁移同时适用于全部公网 Channel
 
+> 2026-09-06 后继决定：本文第 12 节中 Problem Body 不含 `requestId` 的部分由
+> [全系统 RFC 9457 Problem Details 设计](./2026-09-06-system-wide-rfc-9457-problem-details-design.md)取代；
+> Gateway 的 Client API Code/Status、Owner 校验/透传和其他安全边界继续有效。
+
 ## 1. 权威关系
 
 本设计细化 [Client API Gateway 合同决策](../../../agent-docs/decisions/2026-09-05-client-api-gateway-contract.md)，是 Client API 入口认证、可信上下文、Guard、路由、Request ID、失败和观察语义的当前权威。

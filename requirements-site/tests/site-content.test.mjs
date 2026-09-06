@@ -112,6 +112,13 @@ const commerceClientApiDecisionSource = readFileSync(
   ),
   "utf8",
 );
+const systemWideProblemDesignSource = readFileSync(
+  new URL(
+    "../../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const agentReadmeSource = readFileSync(
   new URL("../../agent-docs/README.md", import.meta.url),
   "utf8",
@@ -376,21 +383,21 @@ test("Commerce Client API V1 freezes exactly ten Hosted Checkout routes and five
   assert.match(commerceClientApiDecisionSource, /固定接口为：[\s\S]*10\..*GET \/api\/v1\/orders\/\{orderNo\}\/refunds/u);
 });
 
-test("Commerce Client API V1 keeps POST idempotency and RFC 9457 error ownership explicit", () => {
+test("Commerce Client API V1 keeps POST idempotency and delegates Problem ownership explicitly", () => {
   for (const contractSource of [source, commerceClientApiDecisionSource]) {
     assert.match(contractSource, /所有 POST.*Idempotency-Key/su);
     assert.match(contractSource, /Client \+ operation \+ key/u);
     assert.match(contractSource, /IDEMPOTENCY_KEY_REUSED/u);
-    assert.match(contractSource, /application\/problem\+json/u);
-    assert.match(contractSource, /不复制.*status.*requestId|不在 Body 复制 Request ID/su);
   }
   assert.match(commerceClientApiDesignSource, /每个 POST.*Idempotency-Key/u);
   assert.match(commerceClientApiDesignSource, /caller_scope = CLIENT:<trustedClientId>/u);
   assert.match(commerceClientApiDesignSource, /operation_type = CREATE_CHECKOUT \| CANCEL_ORDER \| CREATE_REFUND/u);
   assert.match(commerceClientApiDesignSource, /idempotency_key = exact case-sensitive header value/u);
   assert.match(commerceClientApiDesignSource, /IDEMPOTENCY_KEY_REUSED/u);
-  assert.match(commerceClientApiDesignSource, /application\/problem\+json/u);
-  assert.match(commerceClientApiDesignSource, /`status` 不出现在 Body.*`requestId` 也不复制进 Body/su);
+  assert.match(commerceClientApiDecisionSource, /Error-contract supersession:.*2026-09-06-system-wide-rfc-9457-problem-details\.md/su);
+  assert.match(commerceClientApiDesignSource, /Error-contract supersession:.*2026-09-06-system-wide-rfc-9457-problem-details-design\.md/su);
+  assert.match(systemWideProblemDesignSource, /application\/problem\+json/u);
+  assert.match(systemWideProblemDesignSource, /Producer 当前不输出 `status` 或 `instance`/u);
   assert.match(commerceClientApiDesignSource, /Gateway 只转发 Header，零自动重试、零响应缓存/u);
 });
 
@@ -445,17 +452,60 @@ test("Commerce Client API V1 separates Order lifecycle from Finance-owned funds 
   assert.match(commerceClientApiDesignSource, /`FULLY_OFFSET` 没有资金进入 AVAILABLE，因此 V1 不发送 `order\.funds_available`/u);
 });
 
-test("Commerce Client API V1 freezes a minimal RFC 9457 Problem and exactly eight safe Webhook events", () => {
-  const problemSection = commerceClientApiDesignSource.slice(
-    commerceClientApiDesignSource.indexOf("## 12. RFC 9457 错误合同"),
-    commerceClientApiDesignSource.indexOf("## 13. Client Webhook"),
+test("the system-wide authority freezes the Problem Profile and Commerce keeps exactly eight safe Webhook events", () => {
+  const canonicalProblemClauses = source.split("\n")
+    .filter((line) => line.includes("RFC 9457-based Code-MoR Problem Profile"));
+  assert.equal(canonicalProblemClauses.length, 2);
+  for (const clause of canonicalProblemClauses) {
+    assert.match(clause, /Body 必填 type\/title\/detail\/code\/requestId\/timestamp/u);
+    assert.match(clause, /type 固定 about:blank/u);
+    assert.match(clause, /Body 不复制 (?:HTTP )?status/u);
+    assert.match(clause, /可选.*(?:errors|字段错误)/u);
+    assert.match(clause, /field\/message/u);
+    assert.match(clause, /X-Request-Id.*Body.*完全一致/u);
+    assert.match(clause, /HEAD/u);
+  }
+
+  const problemSection = systemWideProblemDesignSource.slice(
+    systemWideProblemDesignSource.indexOf("### 3.2 Body"),
+    systemWideProblemDesignSource.indexOf("### 3.3 字段路径"),
   );
+  const requiredMemberSection = problemSection.slice(
+    problemSection.indexOf("必填成员："),
+    problemSection.indexOf("可选成员："),
+  );
+  const optionalMemberSection = problemSection.slice(
+    problemSection.indexOf("可选成员："),
+    problemSection.indexOf("Producer 当前"),
+  );
+  const tableMembers = (section) => [...section.matchAll(/^\| `([^`]+)` \|/gmu)]
+    .map((match) => match[1]);
+  assert.deepEqual(tableMembers(requiredMemberSection), [
+    "type",
+    "title",
+    "detail",
+    "code",
+    "requestId",
+    "timestamp",
+  ]);
+  assert.deepEqual(tableMembers(optionalMemberSection), ["errors"]);
   const problemJson = problemSection.match(/```json\n([\s\S]*?)\n```/u)?.[1];
-  assert.ok(problemJson, "RFC 9457 must have a JSON example");
+  assert.ok(problemJson, "the current system-wide Problem authority must have a JSON example");
   const problem = JSON.parse(problemJson);
-  assert.deepEqual(Object.keys(problem).sort(), ["code", "detail", "errors", "title", "type"]);
+  assert.deepEqual(Object.keys(problem).sort(), [
+    "code",
+    "detail",
+    "errors",
+    "requestId",
+    "timestamp",
+    "title",
+    "type",
+  ]);
+  assert.equal(problem.type, "about:blank");
+  assert.deepEqual(Object.keys(problem.errors[0]).sort(), ["field", "message"]);
   assert.ok(!Object.hasOwn(problem, "status"));
-  assert.ok(!Object.hasOwn(problem, "requestId"));
+  assert.ok(!Object.hasOwn(problem, "instance"));
+  assert.ok(!Object.hasOwn(problem, "message"));
 
   const eventCatalogSection = commerceClientApiDesignSource.slice(
     commerceClientApiDesignSource.indexOf("### 13.1 事件目录"),

@@ -1,6 +1,6 @@
 # Code-MoR 文档治理
 
-最后更新：2026-09-05
+最后更新：2026-09-06
 
 状态：Confirmed。本文定义文档权威、状态和维护方式，不定义业务事实。
 
@@ -30,6 +30,7 @@ Code-MoR 不再用“所有文档排成一条绝对优先级”的方式解决�
 | 项目背景、六系统职责和术语 | [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) | 专项文档只补充本领域事实 |
 | 编码、命名、异常、事务和通用依赖习惯 | [`DEVELOPMENT_CONVENTIONS.md`](./DEVELOPMENT_CONVENTIONS.md) | Cursor rule 仅薄投影 |
 | Java 模块、分层、包、HTTP API 和跨模块边界 | [`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) | 系统模块设计只记录本系统映射 |
+| 第一方 HTTP 4xx/5xx Problem Details、Request ID、错误时间、字段错误及 Gateway/BFF/内部 Client/Vault 传播 | [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md) 是完整合同；[决策记录](./decisions/2026-09-06-system-wide-rfc-9457-problem-details.md)冻结取代范围 | `DEVELOPMENT_CONVENTIONS.md` 与 `JAVA_PROJECT_STRUCTURE.md` 只投影 Java 开发规则；业务系统只拥有自己的 Code/Status；实现和迁移状态只写 `CURRENT_IMPLEMENTATION.md` |
 | Commerce 非运行 Client API Owner ingress 契约模块及 Java/OpenAPI 投影规则 | [契约模块决策](./decisions/2026-09-05-commerce-client-api-contract-module.md)、[设计](../docs/superpowers/specs/2026-09-05-commerce-client-api-contract-module-design.md)与[实施计划](../docs/superpowers/plans/2026-09-05-commerce-client-api-contract-module-implementation.md) | 仅拥有非运行 Java 模块、投影规则与实施顺序；原 Commerce Client API 决策/设计继续拥有其余业务和公共 wire 语义 |
 | 技术产品、版本和允许/禁止能力 | [`TECHNOLOGY_STACK.md`](./TECHNOLOGY_STACK.md) | README 记录实际启用值 |
 | 入口应用、Gateway、BFF、前端和部署边界 | [`APPLICATION_ARCHITECTURE.md`](./APPLICATION_ARCHITECTURE.md) | 组件 README 记录运行方式 |

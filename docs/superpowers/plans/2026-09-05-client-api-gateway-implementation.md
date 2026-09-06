@@ -1,5 +1,7 @@
 # Client API Gateway Implementation Plan
 
+> **2026-09-06 error-contract supersession:** 本计划中要求 Problem Body 不含 `requestId/timestamp`、字段错误含二级 Code 或仅 Header 携带 Request ID 的步骤，已由[全系统 RFC 9457 Problem Details 设计](../specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md)取代。执行 Gateway 错误任务前必须先使用后继系统迁移计划重定基线；其他 Gateway 认证、Route、Guard 和可信上下文步骤不变。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在不改变 Operations 认证合同、不创建独立 Client API 服务的前提下，使 API Gateway 能按可信 Channel 路由并通过 PLT-I03 认证 Client API Credential、执行 Credential/Tenant Guard 和 exact Scope、向真实 Owner Adapter 转发最小可信身份。

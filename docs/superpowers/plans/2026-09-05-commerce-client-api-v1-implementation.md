@@ -1,5 +1,7 @@
 # Commerce Client API Hosted Checkout V1 Implementation Plan
 
+> **2026-09-06 error-contract supersession:** 本计划中要求 Problem Body 不含 `requestId/timestamp`、字段错误含二级 Code 或仅 Header 携带 Request ID 的步骤，已由[全系统 RFC 9457 Problem Details 设计](../specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md)取代。执行 Commerce RFC 9457/OpenAPI/Controller 错误任务前必须先使用后继系统迁移计划重定基线；其他 Commerce 业务语义不变。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在现有 `commerce-service/paytech-commerce-web` 内实现面向 Client Server 的 Hosted Checkout V1 十条外部 API，并闭合公开 Token、命令幂等、Order Funds Availability、Cancel、Refund、RFC 9457 与 Client Webhook 的持久化和恢复语义。

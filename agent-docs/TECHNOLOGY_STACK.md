@@ -172,9 +172,9 @@ paytech-foundation/
 - 自动提供一个完整 Request/Response/耗时的 INFO 终态日志，以及一个共享 `GlobalExceptionHandler`；MVC 服务不得重复实现本地日志 Filter 或 `@RestControllerAdvice`；
 - 提供统一异常转换、参数校验错误、错误响应和 Request ID/MDC；当前已批准的完整 Body 日志不做脱敏、截断、采样，也不记录 Header/Cookie，后续如需改变必须独立设计；
 - 完整 Body 日志不覆盖更窄专项安全文档的禁日志规则；Vault 明确禁止 Token、敏感明文和完整 Payload 进入普通日志，在专门日志边界获批前不得直接引入该 Starter，也不得以本地重复 Filter 绕开；
-- 默认错误响应至少包含稳定 `code`、可读 `message`、`requestId` 和 UTC `timestamp`；
+- 除 `HEAD` 的无 Body 语义及无法进入第一方错误 Writer 的 pre-application 边缘失败外，目标错误响应统一使用 RFC 9457-based Code-MoR Problem Profile 和 `application/problem+json`，必填 `type/title/detail/code/requestId/timestamp`，请求 Body 字段错误可附 `errors[{field,message}]`，Body 不复制 `status`；当前 `type=about:blank`、业务细分由应用扩展 `code` 承担，完整合同、边缘例外和消费者优先迁移状态分别见[全系统设计](../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md)与当前状态台账；
 - 不向外返回堆栈、SQL、内部类名、数据库键或敏感值；
-- 外部 API 与内部 API 可以有不同错误映射，但共享稳定错误编码和关联 ID。
+- 外部 API 与内部 API 可以有不同业务 Code/Status 映射，但共享同一个 Problem Wire Shape、关联 ID 和错误时间合同。
 
 ### 6.5 `paytech-snowflake-id`
 

@@ -287,7 +287,7 @@ public class ClientEligibilityController implements ClientEligibilityQueryApi {
 
 `@HttpExchange` 接口是内部 HTTP Method、Path、Header 和 DTO 签名的唯一来源。Controller 必须直接实现该接口，不得再次声明等价的 `@RequestMapping`、`@GetMapping` 或 `@PostMapping`；这些 MVC 注解只用于没有共享 Java API 契约的服务端入口。应用配置的 `context-path` 表达系统边界，接口注解只表达能力内路径，最终地址统一为 `{context-path}/{capability-path}`。接口是否属于内部调用由私有网络、服务发现和 Gateway Catalog 边界决定，不在能力路径中增加调用范围标记。
 
-HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的正常 typed DTO，`4xx/5xx` 返回 `paytech-mvc-web-starter` 的统一直接错误体，至少包含 `code`、`message`、`requestId` 和 UTC `timestamp`。Controller 不为成功响应增加通用包装层，也不复制服务本地错误响应类型。
+HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的正常 typed DTO；除 `HEAD` 外，`4xx/5xx` 返回 `paytech-mvc-web-starter` 的统一 RFC 9457-based Code-MoR Problem，必填 `type`、`title`、`detail`、`code`、`requestId` 和 UTC 六位小数 `timestamp`，请求 Body 字段错误可附 `errors[{field,message}]`；Body 不复制 `status`，响应 `X-Request-Id` 必须与 Body 一致。`HEAD` 错误只返回状态和必要 Header，不生成 Body。当前 `type=about:blank` 只承担通用问题标识，业务细分使用应用扩展 `code`。Controller 不为成功响应增加通用包装层，也不复制服务本地错误响应类型。完整 Wire 与迁移规则见[全系统 Problem Profile 设计](../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md)。
 
 未预期的运行时异常直接向上传播，由共享 `GlobalExceptionHandler` 映射为 `500`。Controller、Processor 和 Domain Service 不使用宽泛 `catch (RuntimeException/Exception)` 只做重复日志、同义包装或统一改成 `503`；只有当前层能恢复、必须释放资源/更新异步状态，或承担明确不同的外部协议契约时才捕获，并把原始异常保留为 Cause。
 
