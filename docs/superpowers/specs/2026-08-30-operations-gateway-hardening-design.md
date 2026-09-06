@@ -3,6 +3,8 @@
 > **2026-09-01 dynamic-control-plane successor:** The [unified public API control-plane design](./2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) now owns public Target/Route/Guard current configuration. This design remains authoritative for the deployed static Operations Gateway before dynamic Snapshot cutover and for its unaffected JWT/JWKS validation, Header/Cookie, Redis, Guard, timeout, error and observability hardening; the static Catalog is a pre-cutover runtime fact only.
 >
 > **2026-09-02 transport successor:** The [MVC logging and internal-HTTP design](./2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes this record's direct-public-listener TLS, HTTPS JWKS/BFF, Socket-IP and proxy-trust assumptions only. Public TLS now terminates at Nginx, which overwrites one `X-Real-IP`; Gateway and internal dependencies use private HTTP without X.509 application certificates. Historical tasks, test evidence and all non-transport hardening below are intentionally preserved.
+>
+> **2026-09-06 Risk Operations successor:** The [Risk Operations rule-configuration Console integration design](./2026-09-06-risk-operations-rule-configuration-console-integration-design.md) supersedes only this record's statement that the request replay buffer has a global 16 KiB maximum. The buffer remains request-scoped and bounded by the compiled Route policy; the configurable absolute ceiling is now 65,536 bytes, while the three Auth routes described here retain their existing 16 KiB limits.
 
 Date: 2026-08-30
 
@@ -158,9 +160,10 @@ The existing `forwardCachedBody` behavior therefore remains conceptually necessa
 6. set the exact `Content-Length` and remove `Transfer-Encoding`;
 7. best-effort overwrite the temporary byte array after downstream termination.
 
-This is not Redis, Caffeine or persistent caching. It is a maximum 16 KiB request-scoped replay buffer. Production code
-and logs never record the body. Full aggregation is preferred to streaming counting because streaming can discover an
-oversized request only after part of a password-bearing body has already reached the BFF.
+This is not Redis, Caffeine or persistent caching. It is a request-scoped replay buffer bounded by the compiled Route
+policy and the current 65,536-byte configurable absolute ceiling. Production code and logs never record the body. Full
+aggregation is preferred to streaming counting because streaming can discover an oversized request only after part of a
+password-bearing body has already reached the BFF.
 
 All three current Auth routes retain a 16 KiB maximum and gain a five-second total body receive deadline. The deadline
 includes all chunks rather than resetting after every chunk. Expiry cancels aggregation, releases every acquired

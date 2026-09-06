@@ -1413,12 +1413,19 @@ test("RCO-I12 closes the private Rule Set authoring and TEST Candidate validatio
   const riskI12 = extractCatalogLine(riskBlock, "iuc", "RCO-I12");
 
   assert.match(riskI12, /内部[^。]*Risk-owned[^。]*CHECKOUT_PREPARE/u);
+  assert.match(riskI12, /Operations Console → API Gateway → Operations Console BFF → Platform PLT-I02 → Risk 私有 API/u);
+  assert.match(riskI12, /结构化规则构建器[^。]*不向运营人员暴露 JSON、AST、Node Key 或 Sequence/u);
+  assert.match(riskI12, /BFF[^。]*严格校验完整 Risk 上游[^。]*浏览器[^。]*不返回 handlerCode\/implementationVersion\/implementationHash/u);
   assert.match(riskI12, /Authoring Context[^。]*9 个/u);
+  assert.match(riskI12, /65,536 UTF-8 Bytes[^。]*16,384 Bytes/u);
   assert.match(riskI12, /DRAFT[^。]*created_by[^。]*change_reason/u);
   assert.match(riskI12, /Freeze[^。]*原子冻结 Rule Set 与 Companion Point Version/u);
   assert.match(riskI12, /TEST Candidate[^。]*已冻结 CHECKOUT_PREPARE Rule Set/u);
   assert.match(riskI12, /8 项静态校验/u);
+  assert.match(riskI12, /HTTP 200 \+ REJECTED/u);
   assert.match(riskI12, /VALIDATING[^。]*零检查[^。]*同键恢复/u);
+  assert.match(riskI12, /risk-validate-v1-\{releaseId\}-\{expectedVersion\}/u);
+  assert.match(riskI12, /BFF[^。]*Idempotency-Key[^。]*精确校验[^。]*不一致[^。]*Risk 零调用/u);
   assert.match(riskI12, /部分检查[^。]*Fail-Closed/u);
   assert.match(riskI12, /不执行 Shadow[^。]*不执行运行期评估/u);
 });

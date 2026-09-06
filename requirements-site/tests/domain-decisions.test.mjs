@@ -425,6 +425,6 @@ test("top-level tabs separate architecture from global and system use cases", as
 test("every global use case can reveal its system call sequence", async () => {
   const content = await renderPage();
 
-  assert.equal(content.match(/aria-label="查看 E2E-\d{2} 时序图"/g)?.length, 14);
+  assert.equal(content.match(/aria-label="查看 E2E-\d{2} 时序图"/g)?.length, 15);
   assert.match(content, /点击任意全局用例查看系统调用时序图/);
 });

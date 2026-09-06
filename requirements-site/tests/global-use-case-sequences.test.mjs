@@ -16,6 +16,7 @@ const expectedUseCaseIds = [
   "E2E-12",
   "E2E-13",
   "E2E-14",
+  "E2E-15",
 ];
 
 async function loadSequenceCatalog() {
@@ -143,6 +144,32 @@ test("Console responses never shortcut from a core system directly to Gateway", 
       );
     }
   }
+});
+
+test("E2E-15 keeps Operations rule authoring behind Gateway, BFF authorization, and TEST-only validation", async () => {
+  const sequenceCatalog = await loadSequenceCatalog();
+
+  assert.ok(sequenceCatalog, "global use case sequence catalog must exist");
+  const sequence = sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES["E2E-15"];
+  const labels = sequence.messages.map((message) => message.label).join("\n");
+
+  assert.deepEqual(sequence.participants, [
+    "operations",
+    "operations_console",
+    "api_gateway",
+    "operations_console_bff",
+    "platform",
+    "risk",
+  ]);
+  assert.match(labels, /结构化|规则、条件组、字段、运算符、值/u);
+  assert.match(labels, /65,536 UTF-8 Bytes/u);
+  assert.match(labels, /16,384 Bytes/u);
+  assert.match(labels, /PLT-I02/u);
+  assert.match(labels, /risk-validate-v1-\{releaseId\}-\{expectedVersion\}/u);
+  assert.match(labels, /HTTP 200 \+ REJECTED\/version=3/u);
+  assert.match(labels, /waitingForShadow=true/u);
+  assert.match(labels, /其他 Actor 不能接管/u);
+  assert.doesNotMatch(labels, /执行 Shadow|激活 PRODUCTION/u);
 });
 
 test("clicking a global use case opens, switches, and closes its sequence", async () => {

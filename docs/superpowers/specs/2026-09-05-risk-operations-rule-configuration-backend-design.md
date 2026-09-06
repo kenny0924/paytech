@@ -9,6 +9,11 @@
 - Scope: Risk-owned `CHECKOUT_PREPARE` Rule Set authoring, freeze, TEST Candidate and eight static checks
 - Error-contract supersession: 第 11 节的错误 Body 形状由 [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](./2026-09-06-system-wide-rfc-9457-problem-details-design.md) 取代；Risk 业务 Code/Status 映射继续由本文拥有
 
+> 2026-09-06 Console 集成后继：[决策记录](../../../agent-docs/decisions/2026-09-06-risk-operations-rule-configuration-console-integration.md)
+> 与[完整设计](./2026-09-06-risk-operations-rule-configuration-console-integration-design.md)批准 Operations
+> Web/BFF/Platform/Gateway 接入，并只取代本文第 6.3 节未来 1 MiB Body Limit 建议；后端业务合同和本切片
+> 历史实现范围不变。
+
 > 实现、物理数据库、验证、人工 Review 与部署的当前状态及精确证据只以
 > [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 为准。本设计不维护第二份
 > 活态快照；本地实现或验证不构成共享环境、生产部署或端到端能力声明。UI/BFF/Gateway/Auth、Shadow、
@@ -429,8 +434,8 @@ API 使用快照内局部 `nodeKey/parentNodeKey`。它们只用于一次请求�
 
 本书面规格建议首期工程防护上限固定为每个快照最多 200 条 Rule、2000 个 Node、10000 个 Operand、
 AST 深度 12，以及每个 `IN/NOT_IN` 最多 100 个 Literal。任一结构超限都在写事务前返回
-`400 INVALID_REQUEST`。未来 Gateway/BFF Route 的 `body_limit_bytes` 建议固定 1 MiB 并以 413 拒绝，
-但该入口控制不属于本后端切片，也不在这里用本地 Filter 伪造。
+`400 INVALID_REQUEST`。后继 Console 集成设计已将 Gateway/BFF 保存 Route 的 `body_limit_bytes` 固定为
+65,536 UTF-8 Bytes 并以 413 拒绝；该入口控制仍不属于本后端切片，也不在这里用本地 Filter 伪造。
 
 ### 6.4 Create Rule Set 精确请求合同
 
@@ -793,8 +798,10 @@ Validator 必须共享能区分 Node ID `2/10`、Null、下划线和点号 Path 
 才可按长期状态图执行 `VALIDATING -> SHADOWING`。
 
 同键恢复是本次已确认的后端首期取舍：若调用方永久丢失 Key，旧 Candidate 可能保持不可激活但可查询的
-`VALIDATING + zero checks`，调用方仍可基于同一冻结 Rule Set 创建新 Candidate。未来 BFF/Web 接入前必须
-证明命令 Key 可持久恢复，或另行批准接管/取消协议；在此之前该写能力不得部署到共享或生产环境。
+`VALIDATING + zero checks`，调用方仍可基于同一冻结 Rule Set 创建新 Candidate。后继 Operations Console
+集成设计已批准由 Web 按 `risk-validate-v1-{releaseId}-{expectedVersion}` 确定性重建原 Key，并结合原
+`DRAFT -> VALIDATING` State Change Actor 判断是否展示恢复动作；BFF 必须根据 Path 与 Body 独立重建并
+精确校验该 Key，不一致时不得调用 Risk。该接入尚未实现和验证前，本写能力仍不得部署到共享或生产环境。
 
 ## 10. 数据库和持久化范围
 
@@ -1022,10 +1029,10 @@ API 和真实 MySQL 链路必须覆盖：
    Validate 停留 `VALIDATING`、Hash Schema 和 `rule_set_version` 两个审计字段的作用域；未命中的长期
    Decision Engine/Shadow 规则继续有效。
 2. 在 `requirements-site/content/requirements.ts` 新增 RCO-I12：“管理决策规则集与 TEST Candidate”。
-   它是现有 RCO-12 的 Risk 私有后端子切片；目标调用方是经未来 BFF 接入的 Operations Console，
-   不代表当前已有浏览器/BFF/权限链，也不包含 Shadow、双审或激活。
-3. 暂不修改全局用例时序，因为本期没有已批准的浏览器/BFF 交互步骤；未来 Operations 集成设计再新增
-   相应 Sequence，不能用当前实现状态反向改变目标需求。
+   它是现有 RCO-12 的 Risk 私有后端子切片，不包含 Shadow、双审或激活。后继 Operations Console 集成
+   设计现已批准浏览器/BFF/权限链目标合同；实现和部署状态仍只能由 `CURRENT_IMPLEMENTATION.md` 声明。
+3. 本后端切片当时没有已批准的浏览器/BFF 交互步骤，因此未修改全局用例时序。后继 Operations Console
+   集成设计现已新增对应 Sequence；该目标态序列不证明相关组件已实现或部署。
 4. 数据库语义改动同步 Risk 数据库权威、现实场景、物理决策、Manifest、Policy、PDManer 和文档路由，
    并明确九个字段只是规则引用投影；RCO-I03 完整运行输入不被收窄。
 5. 设计和实施计划不写入“已实现”。只在相应实现/验证真正完成后更新
