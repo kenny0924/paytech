@@ -1,6 +1,6 @@
 # Code-MoR 技术栈基线
 
-最后更新：2026-09-05
+最后更新：2026-09-07
 
 状态：Confirmed technology baseline。本文只定义产品、版本与技术边界；当前组件的实现、验证和部署状态统一见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
@@ -45,6 +45,7 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | 内部同步调用 | Spring HTTP Service Client | Spring Framework 管理 | `@HttpExchange` + `RestClient` + LoadBalancer + Nacos；使用部署网络限制的私有 HTTP，不新增 Dubbo/OpenFeign 或应用证书 |
 | 数据访问 | MyBatis Spring Boot Starter | 4.0.1 | 与 Spring Boot 4.0 线对齐；Mapper XML 为默认复杂 SQL 载体 |
 | MyBatis Core | MyBatis | 3.5.19 | 由统一 BOM 管理；公共 TypeHandler 位于无 Spring 自动配置的 `paytech-mybatis-support` |
+| JSON 规范化 | RFC 8785 + Code-MoR JSON Object Profile | `io.github.erdtman:java-json-canonicalization:1.1` | BOM 固定；Foundation 严格前置验证并只对受限 Object/Number Profile 背书，第三方类型不进公共 API，升级必须通过逐字节门禁 |
 | 数据库 | MySQL LTS | 8.4；本地固定 8.4.11 | 早期允许一个实例承载多数据库，但每系统独立数据库和账号 |
 | Schema 演进 | 人工审查并执行的 SQL | 每服务一份当前 DDL + 一份初始化 DML | PDManer 是设计源；应用启动不建表、不迁移、不灌初始数据 |
 | MQ | RabbitMQ | 4.2；本地固定 4.2.9 | 对齐 Amazon MQ RabbitMQ 4.2；自建生产前重新选择当时受支持系列 |
@@ -99,7 +100,7 @@ paytech-build/
 - 导入 `spring-boot-dependencies:4.0.8`；
 - 导入 `spring-cloud-dependencies:2025.1.3`；
 - 导入 `spring-cloud-alibaba-dependencies:2025.1.0.0`；
-- 管理 MyBatis Core 3.5.19、MyBatis Starter 4.0.1、Redisson 4.6.1、XXL-Job 3.4.2 及其他未被上游 BOM 管理的依赖；
+- 管理 MyBatis Core 3.5.19、MyBatis Starter 4.0.1、Redisson 4.6.1、XXL-Job 3.4.2、`java-json-canonicalization` 1.1 及其他未被上游 BOM 管理的依赖；
 - 管理 JUnit、JaCoCo 等测试依赖，但不引入 Testcontainers 或嵌入式中间件。
 
 `paytech-parent` 负责：
@@ -136,7 +137,9 @@ paytech-build/
 ```text
 paytech-foundation/
 ├── paytech-common-core/
+├── paytech-http-problem/
 ├── paytech-http-client-support/
+├── paytech-json-canonicalization/
 ├── paytech-mybatis-support/
 ├── paytech-mvc-web-starter/
 ├── paytech-snowflake-id/
@@ -146,7 +149,7 @@ paytech-foundation/
 └── paytech-compensation-event/
 ```
 
-九个 Foundation 模块的当前状态见状态台账。依赖方向固定为 `paytech-compensation-event -> paytech-mybatis-support -> paytech-common-core` 和 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；`paytech-http-client-support` 依赖 Common Core 与 Spring HTTP 能力但不自动发现业务接口。公共 MyBatis 模块不依赖 Spring 或业务枚举，通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
+已确认的 Foundation 基线共十一个模块；各模块当前是否已实现、验证、发布或部署只见状态台账。依赖方向固定为 `paytech-compensation-event -> paytech-mybatis-support -> paytech-common-core` 和 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；`paytech-http-client-support` 依赖 Common Core、HTTP Problem 与 Spring HTTP 能力但不自动发现业务接口，MVC Starter 依赖 HTTP Problem 实现统一错误输出。`paytech-json-canonicalization` 不依赖 Common Core 或 Spring，只由真实规范 bytes 消费者显式引入，不得经 Common Core、Starter、Compensation Event 或 API 契约传递给非消费者。公共 MyBatis 模块不依赖 Spring 或业务枚举，通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
 
 ### 6.1 `paytech-common-core`
 
@@ -224,6 +227,21 @@ paytech-foundation/
 - 主动依赖 `paytech-xxl-job-starter`，并由本模块自己持有和注册补偿扫描 Handler；
 - 不部署中央 Worker，不拥有跨服务数据库；
 - 详细行为必须遵守 [COMPENSATION_EVENT_GUIDE.md](./COMPENSATION_EVENT_GUIDE.md)。
+
+### 6.10 `paytech-http-problem`
+
+- 提供与 MVC/Servlet 无关的 Code-MoR RFC 9457 Problem record、Request ID 与 UTC 时间格式化契约；
+- 不拥有业务 Code/Status，不写 HTTP 响应，不引入 MVC Starter 或业务模块；
+- 完整 Wire Contract 见[全系统 Problem Profile 决策](./decisions/2026-09-06-system-wide-rfc-9457-problem-details.md)和[设计](../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md)。
+
+### 6.11 `paytech-json-canonicalization`
+
+- 使用 Jackson Core 严格验证 UTF-8 JSON Object，并通过受限适配器产生与 RFC 8785 逐字节一致的 Canonical UTF-8 bytes；
+- V1 Number 只接受 `0..9007199254740991` 的规范非负十进制整数；Money、Decimal、64-bit ID 和时间由业务 Owner 编码为 String；
+- 不接收 POJO/Map/JsonNode 或原始 HTTP DTO，不执行业务归一化或 Array 排序，不计算 SHA-256/HMAC，不拥有 Hash Schema、存储或重放语义；
+- 只依赖 Jackson Core 与 BOM 固定的 `io.github.erdtman:java-json-canonicalization`；不依赖 Common Core、Spring、Servlet、MVC、MyBatis、JDBC、Redis、MQ 或业务 artifact；
+- 只有真实生成规范 bytes 的消费者才直接引入；不得经 Common Core、Starter 或 API 契约传递给非消费服务；
+- 完整 API、Object/Number Profile、安全上限、向量、失败与升级合同见[Object Profile 决策](./decisions/2026-09-07-foundation-rfc-8785-json-object-profile.md)和[设计](../docs/superpowers/specs/2026-09-07-foundation-rfc-8785-json-canonicalization-design.md)。
 
 ## 7. Spring Web 与内部调用
 

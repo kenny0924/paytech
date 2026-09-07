@@ -9,6 +9,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDirectory, '..');
@@ -16,12 +17,79 @@ const buildRoot = join(repositoryRoot, 'paytech-build');
 const foundationRoot = join(repositoryRoot, 'paytech-foundation');
 const wrapper = join(foundationRoot, 'mvnw');
 const mavenSettings = process.env.PAYTECH_MAVEN_SETTINGS;
+const selfTestOnly = process.argv.includes('--self-test');
 
 const requiredFiles = [
   join(buildRoot, 'pom.xml'),
   join(buildRoot, 'paytech-dependencies', 'pom.xml'),
   join(buildRoot, 'paytech-parent', 'pom.xml'),
   join(foundationRoot, 'pom.xml'),
+  join(foundationRoot, 'paytech-json-canonicalization', 'pom.xml'),
+  join(
+    foundationRoot,
+    'paytech-json-canonicalization',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'jsoncanonicalization',
+    'api',
+    'Rfc8785JsonCanonicalizer.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-json-canonicalization',
+    'src',
+    'main',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'jsoncanonicalization',
+    'api',
+    'JsonCanonicalizationException.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-json-canonicalization',
+    'src',
+    'test',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'jsoncanonicalization',
+    'auto',
+    'Rfc8785JsonCanonicalizerAutoTest.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-json-canonicalization',
+    'src',
+    'test',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'jsoncanonicalization',
+    'auto',
+    'Rfc8785JsonCanonicalizerBoundaryAutoTest.java',
+  ),
+  join(
+    foundationRoot,
+    'paytech-json-canonicalization',
+    'src',
+    'test',
+    'java',
+    'com',
+    'paytech',
+    'foundation',
+    'jsoncanonicalization',
+    'auto',
+    'JsonCanonicalizationContractAutoTest.java',
+  ),
   join(foundationRoot, 'paytech-http-problem', 'pom.xml'),
   join(
     foundationRoot,
@@ -278,14 +346,91 @@ const requiredFiles = [
 const errors = [];
 
 function tagValue(xml, tagName) {
-  const match = xml.match(new RegExp(`<${tagName}>([^<]+)</${tagName}>`, 'u'));
-  return match?.[1]?.trim();
+  const escapedTag = tagName.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const match = xml.replace(/<!--[\s\S]*?-->/gu, '').match(new RegExp(
+    `<${escapedTag}[ \\t\\r\\n]*(?:>([^<]*)</${escapedTag}[ \\t\\r\\n]*>|/>)`, 'u',
+  ));
+  return match ? (match[1] ?? '').trim() : undefined;
 }
 
 function dependencyBlocks(xml) {
-  return [...xml.matchAll(/<dependency>([\s\S]*?)<\/dependency>/gu)].map(
+  const liveXml = xml.replace(/<!--[\s\S]*?-->/gu, '');
+  return [...liveXml.matchAll(/<dependency[ \t\r\n]*>([\s\S]*?)<\/dependency[ \t\r\n]*>/gu)].map(
     (match) => match[1],
   );
+}
+
+function checkedDependencyBlocks(xml, context) {
+  // This is a deliberately narrow POM profile, not an XML parser. Unsupported
+  // representations must fail closed instead of looking like absent coordinates.
+  const liveXml = xml.replace(/<!--[\s\S]*?-->/gu, '');
+  const blocks = dependencyBlocks(liveXml);
+  const delimiters = [...liveXml.matchAll(/<\/?dependency(?=[ \t\r\n/>]|$)[^>]*>?/gu)];
+  const validDelimiters = delimiters.length === blocks.length * 2
+    && delimiters.every((match, index) => (index % 2 === 0
+      ? /^<dependency[ \t\r\n]*>$/u : /^<\/dependency[ \t\r\n]*>$/u).test(match[0]));
+  if (!validDelimiters) errors.push(`unsupported dependency syntax/coordinate: ${context}`);
+
+  const whitespace = '[ \\t\\r\\n]*';
+  const coordinateText = '[A-Za-z0-9_.-]+';
+  const excludedCoordinate = (name) => `<${name}${whitespace}>${whitespace}`
+    + `${coordinateText}${whitespace}</${name}${whitespace}>`;
+  const exclusion = `<exclusion${whitespace}>${whitespace}`
+    + `${excludedCoordinate('groupId')}${whitespace}${excludedCoordinate('artifactId')}`
+    + `${whitespace}</exclusion${whitespace}>${whitespace}`;
+  const exclusions = new RegExp(
+    `<exclusions${whitespace}>${whitespace}(?:${exclusion})*</exclusions${whitespace}>`, 'gu',
+  );
+  const allowedFields = new Set([
+    'groupId', 'artifactId', 'version', 'type', 'classifier', 'scope', 'systemPath', 'optional',
+  ]);
+  const dependencies = [];
+  for (const block of blocks) {
+    const fields = [];
+    const residue = block.replace(exclusions, '').replace(
+      /<([A-Za-z][A-Za-z0-9]*)[ \t\r\n]*(?:>([^<>&]*)<\/\1[ \t\r\n]*>|\/>)/gu,
+      (element, name, value) => {
+        fields.push([name, (value ?? '').trim()]);
+        return '';
+      },
+    );
+    const uniqueFields = new Set(fields.map(([name]) => name));
+    const validCoordinates = ['groupId', 'artifactId'].every((name) => {
+      const matches = fields.filter(([field]) => field === name);
+      return matches.length === 1 && /^[A-Za-z0-9_.-]+$/u.test(matches[0][1]);
+    });
+    if (residue.trim() !== '' || uniqueFields.size !== fields.length
+        || fields.some(([name]) => !allowedFields.has(name)) || !validCoordinates) {
+      errors.push(`unsupported dependency syntax/coordinate: ${context}`);
+    }
+    // Preserve direct-field provenance: consumers must never re-read descendants
+    // from the raw block after its exclusions have been removed for validation.
+    dependencies.push({ ...Object.fromEntries(fields), hasLocalVersion: hasLiveDependencyVersion(block) });
+  }
+  return dependencies;
+}
+
+function hasLiveDependencyVersion(block) {
+  return /<version(?=[ \t\r\n/>])/u.test(block.replace(/<!--[\s\S]*?-->/gu, ''));
+}
+
+function javaImports(source, context) {
+  // Scan comments and literals together so comment markers inside a literal (or
+  // quotes inside a comment) cannot change how subsequent imports are recognized.
+  const code = source.replace(
+    /\/\/[^\r\n]*|\/\*[\s\S]*?\*\/|"""(?:\\[\s\S]|(?!""")[^\\])*"""|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'/gu,
+    (literal) => literal.replace(/[^\r\n]/gu, ' '),
+  );
+  const imports = [];
+  for (const match of code.matchAll(/(?<![\p{ID_Continue}$])import\s+(?:static\s+)?([^;]+);/gu)) {
+    const target = match[1].trim();
+    if (!/^(?:[A-Za-z_$][A-Za-z0-9_$]*[ \t\r\n\f]*\.[ \t\r\n\f]*)+(?:[A-Za-z_$][A-Za-z0-9_$]*|\*)$/u.test(target)) {
+      errors.push(`unsupported import target syntax: ${context}`);
+      continue;
+    }
+    imports.push(target.replace(/[ \t\r\n\f]+/gu, ''));
+  }
+  return imports;
 }
 
 function collectNamespaceFiles(directory) {
@@ -314,7 +459,7 @@ for (const file of requiredFiles) {
   }
 }
 
-if (errors.length === 0) {
+if (errors.length === 0 && !selfTestOnly) {
   const dependencyBom = readFileSync(
     join(buildRoot, 'paytech-dependencies', 'pom.xml'),
     'utf8',
@@ -331,18 +476,17 @@ if (errors.length === 0) {
     ],
   ];
 
-  const managedDependencies = dependencyBlocks(dependencyBom);
+  const managedDependencies = checkedDependencyBlocks(dependencyBom, 'paytech-dependencies/pom.xml');
   for (const [groupId, artifactId, versionProperty, approvedVersion] of approvedImports) {
     const matchingImports = managedDependencies.filter(
-      (block) => tagValue(block, 'groupId') === groupId
-        && tagValue(block, 'artifactId') === artifactId,
+      (dependency) => dependency.groupId === groupId && dependency.artifactId === artifactId,
     );
     const declaredVersion = tagValue(dependencyBom, versionProperty);
     const importBlock = matchingImports[0];
     const validImport = matchingImports.length === 1
-      && tagValue(importBlock, 'version') === `\${${versionProperty}}`
-      && tagValue(importBlock, 'type') === 'pom'
-      && tagValue(importBlock, 'scope') === 'import';
+      && importBlock.version === `\${${versionProperty}}`
+      && importBlock.type === 'pom'
+      && importBlock.scope === 'import';
     if (declaredVersion !== approvedVersion || !validImport) {
       errors.push(
         `approved BOM import is missing or has drifted: ${groupId}:${artifactId}:${approvedVersion}`,
@@ -353,6 +497,9 @@ if (errors.length === 0) {
   const modulePoms = [
     'paytech-common-core/pom.xml',
     'paytech-http-problem/pom.xml',
+    'paytech-json-canonicalization/pom.xml',
+    'paytech-http-client-support/pom.xml',
+    'paytech-mybatis-support/pom.xml',
     'paytech-snowflake-id/pom.xml',
     'paytech-mvc-web-starter/pom.xml',
     'paytech-caffeine-starter/pom.xml',
@@ -363,8 +510,12 @@ if (errors.length === 0) {
   const foundationModel = readFileSync(join(foundationRoot, 'pom.xml'), 'utf8');
   for (const relativePom of modulePoms) {
     const moduleName = relativePom.replace('/pom.xml', '');
-    if (!foundationModel.includes(`<module>${moduleName}</module>`)) {
-      errors.push(`foundation reactor module is missing: ${moduleName}`);
+    const moduleDeclaration = `<module>${moduleName}</module>`;
+    const declarationCount = foundationModel.split(moduleDeclaration).length - 1;
+    if (declarationCount !== 1) {
+      errors.push(
+        `foundation reactor module must be declared exactly once (${moduleName}); found ${declarationCount}`,
+      );
     }
   }
 
@@ -372,39 +523,70 @@ if (errors.length === 0) {
     'paytech-caffeine-starter',
     'paytech-compensation-event',
     'paytech-http-problem',
+    'paytech-json-canonicalization',
     'paytech-redis-starter',
     'paytech-xxl-job-starter',
   ]) {
     const dependencies = managedDependencies.filter(
-      (block) => tagValue(block, 'groupId') === 'com.paytech'
-        && tagValue(block, 'artifactId') === artifactId,
+      (dependency) => dependency.groupId === 'com.paytech' && dependency.artifactId === artifactId,
     );
-    if (dependencies.length !== 1 || tagValue(dependencies[0], 'version') !== '${paytech.version}') {
+    if (dependencies.length !== 1 || dependencies[0].version !== '${paytech.version}') {
       errors.push(`${artifactId} is missing from paytech-dependencies version governance`);
     }
   }
 
+  const liveDependencyBom = dependencyBom.replace(/<!--[\s\S]*?-->/gu, '');
+  // Count every exact-name start before accepting the one supported value form;
+  // attributes, self-closing or unfinished openings must not disappear here.
+  const javaJsonCanonicalizationVersionOpenings = [
+    ...liveDependencyBom.matchAll(
+      /<java-json-canonicalization\.version(?=[ \t\r\n/>]|$)/gu,
+    ),
+  ];
+  const javaJsonCanonicalizationVersionElements = [
+    ...liveDependencyBom.matchAll(
+      /<java-json-canonicalization\.version[ \t\r\n]*>([^<]*)<\/java-json-canonicalization\.version[ \t\r\n]*>/gu,
+    ),
+  ];
+  const javaJsonCanonicalizationVersion = javaJsonCanonicalizationVersionElements.length === 1
+    ? javaJsonCanonicalizationVersionElements[0][1].trim()
+    : undefined;
+  const javaJsonCanonicalizationDependencies = managedDependencies.filter(
+    (dependency) => dependency.groupId === 'io.github.erdtman'
+      && dependency.artifactId === 'java-json-canonicalization',
+  );
+  if (javaJsonCanonicalizationVersionOpenings.length !== 1
+      || javaJsonCanonicalizationVersionElements.length !== 1
+      || javaJsonCanonicalizationVersion !== '1.1'
+      || javaJsonCanonicalizationDependencies.length !== 1
+      || javaJsonCanonicalizationDependencies[0].version
+        !== '${java-json-canonicalization.version}') {
+    errors.push(
+      'java-json-canonicalization approved-version drift: expected exactly one '
+        + 'io.github.erdtman:java-json-canonicalization:${java-json-canonicalization.version} '
+        + 'managed dependency with property value 1.1',
+    );
+  }
+
   const xxlJobVersion = tagValue(dependencyBom, 'xxl-job.version');
   const xxlJobDependencies = managedDependencies.filter(
-    (block) => tagValue(block, 'groupId') === 'com.xuxueli'
-      && tagValue(block, 'artifactId') === 'xxl-job-core',
+    (dependency) => dependency.groupId === 'com.xuxueli' && dependency.artifactId === 'xxl-job-core',
   );
   if (xxlJobVersion !== '3.4.2' || xxlJobDependencies.length !== 1
-      || tagValue(xxlJobDependencies[0], 'version') !== '${xxl-job.version}') {
+      || xxlJobDependencies[0].version !== '${xxl-job.version}') {
     errors.push('xxl-job-core is missing approved 3.4.2 version governance');
   }
 
   const redissonVersion = tagValue(dependencyBom, 'redisson.version');
   const redissonDependencies = managedDependencies.filter(
-    (block) => tagValue(block, 'groupId') === 'org.redisson'
-      && tagValue(block, 'artifactId') === 'redisson',
+    (dependency) => dependency.groupId === 'org.redisson' && dependency.artifactId === 'redisson',
   );
   const retiredRedissonStarter = managedDependencies.some(
-    (block) => tagValue(block, 'groupId') === 'org.redisson'
-      && tagValue(block, 'artifactId') === 'redisson-spring-boot-starter',
+    (dependency) => dependency.groupId === 'org.redisson'
+      && dependency.artifactId === 'redisson-spring-boot-starter',
   );
   if (redissonVersion !== '4.6.1' || redissonDependencies.length !== 1
-      || tagValue(redissonDependencies[0], 'version') !== '${redisson.version}') {
+      || redissonDependencies[0].version !== '${redisson.version}') {
     errors.push('Redisson Core is missing approved 4.6.1 version governance');
   }
   if (retiredRedissonStarter) {
@@ -437,6 +619,10 @@ if (errors.length === 0) {
     [join(buildRoot, 'paytech-dependencies', 'pom.xml'), 'paytech-dependencies'],
     [join(buildRoot, 'paytech-parent', 'pom.xml'), 'paytech-parent'],
     [join(foundationRoot, 'pom.xml'), 'paytech-foundation'],
+    [
+      join(foundationRoot, 'paytech-json-canonicalization', 'pom.xml'),
+      'paytech-json-canonicalization',
+    ],
     [join(foundationRoot, 'paytech-common-core', 'pom.xml'), 'paytech-common-core'],
     [join(foundationRoot, 'paytech-http-problem', 'pom.xml'), 'paytech-http-problem'],
     [join(foundationRoot, 'paytech-snowflake-id', 'pom.xml'), 'paytech-snowflake-id'],
@@ -450,6 +636,103 @@ if (errors.length === 0) {
     const model = readFileSync(modelFile, 'utf8');
     if (!model.includes(`<artifactId>${artifactId}</artifactId>`)) {
       errors.push(`expected Maven artifactId is missing (${artifactId}): ${modelFile}`);
+    }
+  }
+
+  const jsonCanonicalizationPom = readFileSync(
+    join(foundationRoot, 'paytech-json-canonicalization', 'pom.xml'),
+    'utf8',
+  );
+  const jsonCanonicalizationDependencies = checkedDependencyBlocks(
+    jsonCanonicalizationPom, 'paytech-json-canonicalization/pom.xml',
+  );
+  const jsonCanonicalizationProductionDependencies = jsonCanonicalizationDependencies.filter(
+    (dependency) => dependency.scope !== 'test',
+  );
+  const expectedJsonCanonicalizationProductionDependencies = [
+    'io.github.erdtman:java-json-canonicalization',
+    'tools.jackson.core:jackson-core',
+  ];
+  const actualJsonCanonicalizationProductionDependencies =
+    jsonCanonicalizationProductionDependencies
+      .map((dependency) => `${dependency.groupId}:${dependency.artifactId}`)
+      .sort();
+  if (actualJsonCanonicalizationProductionDependencies.length
+        !== expectedJsonCanonicalizationProductionDependencies.length
+      || actualJsonCanonicalizationProductionDependencies.some(
+        (coordinate, index) => coordinate
+          !== expectedJsonCanonicalizationProductionDependencies[index],
+      )) {
+    errors.push(
+      'paytech-json-canonicalization production dependencies must equal exactly: '
+        + expectedJsonCanonicalizationProductionDependencies.join(', '),
+    );
+  }
+  for (const dependency of jsonCanonicalizationProductionDependencies) {
+    if (dependency.hasLocalVersion) {
+      errors.push(
+        'paytech-json-canonicalization production dependency must omit its local version: '
+          + `${dependency.groupId}:${dependency.artifactId}`,
+      );
+    }
+  }
+
+  const jsonCanonicalizationSourceRoot = join(
+    foundationRoot,
+    'paytech-json-canonicalization',
+    'src',
+    'main',
+  );
+  for (const sourceFile of collectNamespaceFiles(jsonCanonicalizationSourceRoot)) {
+    if (!sourceFile.endsWith('.java')) {
+      continue;
+    }
+    const content = readFileSync(sourceFile, 'utf8');
+    // Intentionally reject all raw Unicode-escape spellings, even ineligible ones,
+    // and Java-ignorable characters before masking. This source profile avoids a
+    // partial implementation of Java's pre-lexical Unicode translation rules.
+    if (/\\u+[0-9A-Fa-f]{4}/u.test(content)
+        || /[\u0000-\u0008\u000e-\u001b\u007f-\u009f\p{Cf}]/u.test(content)) {
+      errors.push(`unsupported Unicode source syntax: ${sourceFile}`);
+      continue;
+    }
+    for (const importedType of javaImports(content, sourceFile)) {
+      const isAllowedJdkImport = importedType.startsWith('java.')
+        && !importedType.startsWith('java.sql.');
+      const isAllowedModuleImport = importedType.startsWith(
+        'com.paytech.foundation.jsoncanonicalization.',
+      );
+      const isAllowedPrivateLibraryImport = importedType.startsWith('tools.jackson.core.')
+        || importedType.startsWith('org.erdtman.jcs.');
+      if (!isAllowedJdkImport && !isAllowedModuleImport && !isAllowedPrivateLibraryImport) {
+        errors.push(
+          `paytech-json-canonicalization production source import is outside the approved allowlist (${importedType}): ${sourceFile}`,
+        );
+      }
+    }
+  }
+
+  for (const moduleName of [
+    'paytech-common-core',
+    'paytech-http-problem',
+    'paytech-http-client-support',
+    'paytech-mybatis-support',
+    'paytech-snowflake-id',
+    'paytech-mvc-web-starter',
+    'paytech-caffeine-starter',
+    'paytech-redis-starter',
+    'paytech-compensation-event',
+    'paytech-xxl-job-starter',
+  ]) {
+    const modulePom = readFileSync(join(foundationRoot, moduleName, 'pom.xml'), 'utf8');
+    const declaresJsonCanonicalization = checkedDependencyBlocks(modulePom, `${moduleName}/pom.xml`).some(
+      (dependency) => dependency.groupId === 'com.paytech'
+        && dependency.artifactId === 'paytech-json-canonicalization',
+    );
+    if (declaresJsonCanonicalization) {
+      errors.push(
+        `high-fan-out Foundation module must not declare paytech-json-canonicalization: ${moduleName}`,
+      );
     }
   }
 
@@ -1095,8 +1378,8 @@ if (errors.length === 0) {
 
   for (const relativePom of modulePoms) {
     const modulePom = readFileSync(join(foundationRoot, relativePom), 'utf8');
-    const dependencies = modulePom.match(/<dependencies>[\s\S]*?<\/dependencies>/g) ?? [];
-    if (dependencies.some((section) => /<version>/.test(section))) {
+    const dependencies = dependencyBlocks(modulePom);
+    if (dependencies.some(hasLiveDependencyVersion)) {
       errors.push(`managed dependency version declared in child module: ${relativePom}`);
     }
   }
@@ -1162,9 +1445,224 @@ if (errors.length === 0) {
   rmSync(effectiveDirectory, { recursive: true, force: true });
 }
 
+// Exercise the real static gates with in-memory file substitutions. No fixture POM or
+// Java source is written, and the unchanged Maven subprocess runs only once normally.
+function verifyStaticGateRegressions() {
+  const verifierSource = readFileSync(fileURLToPath(import.meta.url), 'utf8');
+  const start = verifierSource.indexOf('const errors = [];');
+  const end = verifierSource.indexOf('  const effectiveDirectory =');
+  if (start < 0 || end <= start) {
+    throw new Error('Cannot locate verifier static section for regression checks');
+  }
+  const staticScript = `${verifierSource.slice(start, end)}\n}\nerrors;`;
+  const childPom = join(foundationRoot, 'paytech-json-canonicalization', 'pom.xml');
+  const corePom = join(foundationRoot, 'paytech-common-core', 'pom.xml');
+  const bomPom = join(buildRoot, 'paytech-dependencies', 'pom.xml');
+  const javaSource = join(foundationRoot, 'paytech-json-canonicalization', 'src', 'main',
+    'java', 'com', 'paytech', 'foundation', 'jsoncanonicalization', 'api',
+    'Rfc8785JsonCanonicalizer.java');
+  const spring = '<dependency ><groupId>org.springframework</groupId>'
+    + '<artifactId>spring-context</artifactId></dependency >';
+  const optIn = '<dependency ><groupId>com.paytech</groupId>'
+    + '<artifactId>paytech-json-canonicalization</artifactId></dependency >';
+  const property = '<java-json-canonicalization.version>1.1</java-json-canonicalization.version>';
+  const purityError = 'production dependencies must equal exactly';
+  const versionError = 'production dependency must omit its local version';
+  const optInError = 'high-fan-out Foundation module must not declare';
+  const importError = 'production source import is outside the approved allowlist';
+  const bomError = 'java-json-canonicalization approved-version drift';
+  const dependencySyntaxError = 'unsupported dependency syntax/coordinate';
+  const unicodeError = 'unsupported Unicode source syntax';
+  const appendDependency = (addition) => (xml) => xml.replace(
+    '</dependencies>', `${addition}</dependencies>`,
+  );
+  const cases = [
+    ['canonical-positive', childPom, (xml) => xml, null],
+    ['xml-extra-whitespace-dependency', childPom, appendDependency(spring), purityError],
+    ['xml-extra-canonical-dependency', childPom,
+      appendDependency(spring.replaceAll('dependency >', 'dependency>')), purityError],
+    ['xml-whitespace-local-version', childPom, (xml) => xml.replace(
+      '<artifactId>java-json-canonicalization</artifactId>',
+      '<artifactId>java-json-canonicalization</artifactId><version >1.1</version >',
+    ), versionError],
+    ['xml-whitespace-opt-in', corePom, appendDependency(optIn), optInError],
+    ['xml-all-tag-whitespace-positive', childPom, (xml) => xml.replace(
+      /<dependencies>[\s\S]*?<\/dependencies>/u,
+      (section) => section.replace(/<(\/?)(dependency|groupId|artifactId|scope)>/gu,
+        '<$1$2 \t\r\n>'),
+    ), null],
+    ['xml-commented-dependency-positive', childPom,
+      appendDependency(`<!-- ${spring} -->`), null],
+    ['xml-commented-canonical-dependency-positive', childPom,
+      appendDependency(`<!-- ${spring.replaceAll('dependency >', 'dependency>')} -->`), null],
+    ['xml-commented-version-positive', childPom, (xml) => xml.replace(
+      '<artifactId>java-json-canonicalization</artifactId>',
+      '<artifactId>java-json-canonicalization</artifactId><!-- <version >1.2</version > -->',
+    ), null],
+    ['xml-commented-opt-in-positive', corePom,
+      appendDependency(`<!-- ${optIn} -->`), null],
+    ['xml-commented-canonical-version-positive', childPom, (xml) => xml.replace(
+      '<artifactId>java-json-canonicalization</artifactId>',
+      '<artifactId>java-json-canonicalization</artifactId><!-- <version>1.2</version> -->',
+    ), null],
+  ];
+  for (const [name, value] of [
+    ['cdata', '<version ><![CDATA[1.1]]></version >'],
+    ['namespace-attribute', '<version xmlns="http://maven.apache.org/POM/4.0.0">1.1</version>'],
+  ]) {
+    cases.push([`xml-local-version-${name}`, childPom, (xml) => xml.replace(
+      '<artifactId>java-json-canonicalization</artifactId>',
+      `<artifactId>java-json-canonicalization</artifactId>${value}`,
+    ), versionError]);
+  }
+  for (const [name, coordinate] of [
+    ['cdata', '<![CDATA[paytech-json-canonicalization]]>'],
+    ['entity', 'paytech-json-canonicalizatio&#110;'],
+  ]) {
+    cases.push([`xml-opt-in-${name}`, corePom, appendDependency(
+      `<dependency><groupId>com.paytech</groupId><artifactId>${coordinate}</artifactId></dependency>`,
+    ), dependencySyntaxError]);
+  }
+  for (const [name, dependency] of [
+    ['coordinate-attribute', '<dependency><groupId>com.paytech</groupId><artifactId xmlns="http://maven.apache.org/POM/4.0.0">paytech-json-canonicalization</artifactId></dependency>'],
+    ['duplicate-coordinate', '<dependency><groupId>com.paytech</groupId><artifactId>safe</artifactId><artifactId>paytech-json-canonicalization</artifactId></dependency>'],
+    ['missing-coordinate', '<dependency><groupId>com.paytech</groupId></dependency>'],
+    ['opening-attribute', '<dependency unsupported="true"><groupId>com.paytech</groupId><artifactId>paytech-json-canonicalization</artifactId></dependency>'],
+    ['unclosed-dependency', '<dependency><groupId>com.paytech</groupId><artifactId>paytech-json-canonicalization</artifactId>'],
+  ]) {
+    cases.push([`xml-${name}`, corePom, appendDependency(dependency), dependencySyntaxError]);
+  }
+  const exclusion = (groupId, artifactId) => '<exclusions><exclusion>'
+    + `<groupId>${groupId}</groupId><artifactId>${artifactId}</artifactId>`
+    + '</exclusion></exclusions>';
+  const harmlessExclusion = exclusion('org.example', 'safe');
+  for (const [placement, body] of [
+    ['leading', `${harmlessExclusion}<groupId>com.paytech</groupId><artifactId>paytech-json-canonicalization</artifactId>`],
+    ['interleaved', `<groupId>com.paytech</groupId>${harmlessExclusion}<artifactId>paytech-json-canonicalization</artifactId>`],
+    ['trailing', `<groupId>com.paytech</groupId><artifactId>paytech-json-canonicalization</artifactId>${harmlessExclusion}`],
+  ]) {
+    cases.push([`xml-direct-opt-in-${placement}-exclusions`, corePom,
+      appendDependency(`<dependency>${body}</dependency>`), optInError]);
+  }
+  cases.push(['xml-exclusion-only-opt-in-positive', corePom, (xml) => xml.replace(
+    '<groupId>tools.jackson.core</groupId>',
+    `${exclusion('com.paytech', 'paytech-json-canonicalization')}<groupId>tools.jackson.core</groupId>`,
+  ), null]);
+  for (const [placement, body] of [
+    ['leading', `${exclusion('io.github.erdtman', 'java-json-canonicalization')}<groupId>org.springframework</groupId><artifactId>spring-context</artifactId>`],
+    ['interleaved', `<groupId>org.springframework</groupId>${exclusion('io.github.erdtman', 'java-json-canonicalization')}<artifactId>spring-context</artifactId>`],
+  ]) {
+    cases.push([`xml-direct-spring-${placement}-exclusions`, childPom, (xml) => xml.replace(
+      /<dependency>\s*<groupId>io\.github\.erdtman<\/groupId>\s*<artifactId>java-json-canonicalization<\/artifactId>\s*<\/dependency>/u,
+      `<dependency>${body}</dependency>`,
+    ), purityError]);
+  }
+  cases.push(['bom-direct-jcs-leading-exclusions-positive', bomPom, (xml) => xml.replace(
+    '<groupId>io.github.erdtman</groupId>',
+    `${harmlessExclusion}<groupId>io.github.erdtman</groupId>`,
+  ), null]);
+  for (const [name, replacement, expected] of [
+    ['sole-whitespace', property.replaceAll('version>', 'version >'), null],
+    ['commented-example', `${property}<!-- ${property.replace('1.1', '1.2')} -->`, null],
+    ['duplicate-equal', property + property, bomError],
+    ['duplicate-conflicting', property + property.replace('1.1', '1.2'), bomError],
+    ['duplicate-whitespace', property + property.replaceAll('version>', 'version >'), bomError],
+    ['duplicate-self-closing', `${property}<java-json-canonicalization.version />`, bomError],
+    ['sole-wrong-version', property.replace('1.1', '1.2'), bomError],
+    ['duplicate-attributed-equal', property + property.replace('<java-json-canonicalization.version>',
+      '<java-json-canonicalization.version xmlns="http://maven.apache.org/POM/4.0.0">'), bomError],
+    ['duplicate-attributed-conflicting', property + property.replace('1.1', '1.2').replace('<java-json-canonicalization.version>',
+      '<java-json-canonicalization.version xmlns="http://maven.apache.org/POM/4.0.0">'), bomError],
+    ['sole-attributed', property.replace('<java-json-canonicalization.version>',
+      '<java-json-canonicalization.version xmlns="http://maven.apache.org/POM/4.0.0">'), bomError],
+    ['duplicate-attributed-self-closing', property
+      + '<java-json-canonicalization.version xmlns="http://maven.apache.org/POM/4.0.0"/>', bomError],
+    ['duplicate-unclosed-opening', property + '<java-json-canonicalization.version', bomError],
+    ['duplicate-unclosed-attributed-opening', property
+      + '<java-json-canonicalization.version xmlns="http://maven.apache.org/POM/4.0.0"', bomError],
+    ['commented-attributed-positive', property + '<!-- ' + property.replace('1.1', '1.2').replace('<java-json-canonicalization.version>',
+      '<java-json-canonicalization.version xmlns="http://maven.apache.org/POM/4.0.0">') + ' -->', null],
+  ]) {
+    cases.push([`bom-${name}`, bomPom, (xml) => xml.replace(property, replacement), expected]);
+  }
+  for (const [name, prefix, expected] of [
+    ['second-on-line', 'import java.io.IOException; import javax.sql.DataSource;', importError],
+    ['comment-leading', '/* JDBC */ import javax.sql.DataSource;', importError],
+    ['static-second-on-line', 'import java.io.IOException; import static java.sql.DriverManager.getConnection;', importError],
+    ['static-leading', 'import static java.sql.DriverManager.getConnection;', importError],
+    ['rocketmq', 'import org.apache.rocketmq.client.producer.DefaultMQProducer;', importError],
+    ['activemq', 'import org.apache.activemq.ActiveMQConnectionFactory;', importError],
+    ['mysql', 'import com.mysql.cj.jdbc.MysqlDataSource;', importError],
+    ['mybatis-plus', 'import com.baomidou.mybatisplus.core.mapper.BaseMapper;', importError],
+    ['jdk-jdbc', 'import java.sql.Connection;', importError],
+    ['allowed-jdk', 'import java.util.List; import static java.util.Collections.emptyList;', null],
+    ['allowed-module', 'import com.paytech.foundation.jsoncanonicalization.api.JsonCanonicalizationException;', null],
+    ['allowed-libraries', 'import tools.jackson.core.JsonFactory; import org.erdtman.jcs.JsonCanonicalizer;', null],
+    ['fake-line-comment', '// import javax.sql.DataSource;', null],
+    ['fake-block-comment', '/*\nimport javax.sql.DataSource;\n*/', null],
+    ['fake-string', 'class Example { String value = "import javax.sql.DataSource;"; }', null],
+    ['fake-text-block', 'class Example { String value = """\nimport javax.sql.DataSource;\n"""; }', null],
+    ['escaped-quote-and-char', String.raw`class Example { char quote = '\''; String value = "\" import javax.sql.DataSource;"; }`, null],
+  ]) {
+    cases.push([`import-${name}`, javaSource, (content) => `${prefix}\n${content}`, expected]);
+  }
+  for (const [name, snippet] of [
+    ['escaped-keyword', String.raw`\u0069mport javax.sql.DataSource;`],
+    ['escaped-sql-segment', String.raw`import java.sq\u006c.Connection;`],
+    ['escaped-comment-newline', String.raw`// comment\u000aimport javax.sql.DataSource;`],
+    ['escaped-static-import', String.raw`\u0069mport static java.sql.DriverManager.getConnection;`],
+    ['raw-ignorable', 'import java.sq\u200cl.Connection;'],
+    ['escaped-literal-quotes', String.raw`class Example { String text = \u0022 import javax.sql.DataSource;\u0022; }`],
+    ['multiple-u-keyword', String.raw`\uuuu0069mport javax.sql.DataSource;`],
+    ['ineligible-double-backslash', String.raw`// Example: \\u0069mport javax.sql.DataSource;`],
+    ['raw-ignorable-control', 'import java.sq\u0001l.Connection;'],
+  ]) {
+    cases.push([`source-${name}`, javaSource, (content) => content.replace(
+      'package com.paytech.foundation.jsoncanonicalization.api;',
+      `package com.paytech.foundation.jsoncanonicalization.api;\n${snippet}\n`,
+    ), unicodeError]);
+  }
+  cases.push(['import-non-ascii-target', javaSource, (content) => content.replace(
+    'package com.paytech.foundation.jsoncanonicalization.api;',
+    'package com.paytech.foundation.jsoncanonicalization.api;\nimport java.example.Éclair;\n',
+  ), 'unsupported import target syntax']);
+  cases.push(['import-unqualified-target', javaSource, (content) => content.replace(
+    'package com.paytech.foundation.jsoncanonicalization.api;',
+    'package com.paytech.foundation.jsoncanonicalization.api;\nimport java;\n',
+  ), 'unsupported import target syntax']);
+  cases.push(['source-ordinary-utf8-positive', javaSource, (content) => `${content}\n`
+    + 'class Utf8Example { String value = "中文 café 😀"; String block = """\n普通文本\n"""; }\n'
+    + '// 普通 UTF-8 comment\n', null]);
+  const fileCache = new Map();
+  for (const [name, target, mutate, expectedError] of cases) {
+    const actualErrors = runInNewContext(staticScript, {
+      existsSync, readdirSync, join, repositoryRoot, buildRoot, foundationRoot,
+      requiredFiles, selfTestOnly: false,
+      readFileSync(file, encoding) {
+        const key = `${file}:${encoding ?? 'buffer'}`;
+        if (!fileCache.has(key)) fileCache.set(key, readFileSync(file, encoding));
+        const content = fileCache.get(key);
+        return file === target && typeof content === 'string' ? mutate(content) : content;
+      },
+    }, { timeout: 5_000 });
+    const passed = expectedError === null ? actualErrors.length === 0
+      : actualErrors.some((error) => error.includes(expectedError))
+        && (expectedError !== unicodeError || !actualErrors.some((error) => error.includes(importError)));
+    if (!passed) {
+      errors.push(`static regression ${name}: expected ${expectedError ?? 'no errors'}; got ${JSON.stringify(actualErrors)}`);
+    }
+    if (selfTestOnly) process.stdout.write(`${passed ? 'PASS' : 'FAIL'} ${name}\n`);
+  }
+}
+
+verifyStaticGateRegressions();
+
 if (errors.length > 0) {
   process.stderr.write(`${errors.join('\n')}\n`);
   process.exit(1);
 }
 
-process.stdout.write('Java foundation structure and effective Maven model verified.\n');
+process.stdout.write(selfTestOnly ? 'Java foundation static regression checks verified.\n' :
+  'Java foundation structure and effective Maven model verified; '
+    + 'JCS 1.1, eleven modules, exact production dependencies, and opt-in boundary verified.\n',
+);
