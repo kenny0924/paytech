@@ -5,16 +5,21 @@ import test from 'node:test';
 const service = new URL('../../platform-support-service/', import.meta.url);
 const model = JSON.parse(readFileSync(new URL('docs/database/platform-support.pdma.json', service)));
 const sql = readFileSync(new URL('docs/database/sql/platform-support-schema.sql', service), 'utf8');
+const apiCredentialChangeSql = readFileSync(
+  new URL('docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql', service),
+  'utf8',
+);
 const tables = [...sql.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
 const expectedTables = [
   'user_account', 'password_credential', 'access_tenant', 'tenant_member', 'role', 'permission',
   'tenant_member_role', 'role_permission', 'auth_session', 'refresh_token_generation', 'jwt_signing_key',
+  'api_credential', 'api_credential_scope',
   'gateway_target', 'gateway_route', 'gateway_route_header', 'gateway_route_query_param', 'gateway_guard_rule',
   'audit_chain', 'audit_event', 'audit_event_attr', 'security_event', 'command_idempotency', 'console_resource',
 ].map(name => `t_${name}`);
 const quote = value => `'${value.replaceAll("'", "''")}'`;
 
-test('only the 22 implemented tables exist, without physical CHECK or foreign keys', () => {
+test('only the 24 implemented tables exist, without physical CHECK or foreign keys', () => {
   assert.deepEqual(tables.map(table => table[1]).sort(), expectedTables.toSorted());
   assert.doesNotMatch(sql.replace(/^--.*$/gm, ''), /\bCHECK\s*\(|\bFOREIGN\s+KEY\b/i);
 });
@@ -60,4 +65,23 @@ test('existing path/header collations and manual-only initialization are retaine
   }
   assert.match(sql, /`header_name` VARCHAR\(255\) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL/);
   assert.doesNotMatch(sql, /\b(?:DROP TABLE|TRUNCATE|INSERT INTO|AUTO_INCREMENT)\b/i);
+});
+
+test('API Credential review SQL exactly matches the approved current-schema definitions', () => {
+  const expectedNames = ['t_api_credential', 't_api_credential_scope'];
+  const changeTables = [
+    ...apiCredentialChangeSql.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g),
+  ];
+  assert.deepEqual(changeTables.map(table => table[1]), expectedNames);
+
+  for (const changeTable of changeTables) {
+    const schemaTable = tables.find(table => table[1] === changeTable[1]);
+    assert.ok(schemaTable, changeTable[1]);
+    assert.equal(changeTable[2], schemaTable[2], `${changeTable[1]} body`);
+    assert.equal(changeTable[3], schemaTable[3], `${changeTable[1]} options and full table comment`);
+  }
+
+  const executableSql = apiCredentialChangeSql.replace(/^--.*$/gm, '');
+  assert.doesNotMatch(executableSql, /\bCHECK\s*\(|\bFOREIGN\s+KEY\b/i);
+  assert.doesNotMatch(executableSql, /\b(?:DROP|TRUNCATE|INSERT INTO|AUTO_INCREMENT)\b/i);
 });
