@@ -83,8 +83,8 @@ test("rendered requirements expose complete V5 input and reference-style Commerc
   assert.match(content, /FIN-I22[\s\S]*expected_calculation_hash[\s\S]*Tax Line[\s\S]*Registration/);
   assert.match(content, /CODE-MOR:FINANCE:TAX_CALCULATION:1/);
   assert.match(content, /OrderPreparationContext[\s\S]*不依赖 Commerce 聚合 Hash/);
-  assert.match(content, /Commerce 已确认逻辑目标为 15 张表/);
-  assert.match(content, /当前已生成模型仍是 14 张表、223 个字段/);
+  assert.match(content, /Commerce 逻辑模型固定为 15 张表/);
+  assert.match(content, /生成模型、人工 Schema、Java、物理数据库、验证与部署的当前状态只按 CURRENT_IMPLEMENTATION 台账声明/);
   assert.match(content, /Partner OE[\s\S]*Platform Finance Entity[\s\S]*两条各自平衡的 Journal/);
   assert.doesNotMatch(content, /Commercial Term 头\/组件结构化快照/);
   assert.doesNotMatch(content, /agreement_scope_binding_(?:id|version|hash)/);

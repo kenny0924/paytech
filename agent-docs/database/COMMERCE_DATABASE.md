@@ -2,7 +2,7 @@
 
 最后更新：2026-09-05
 
-状态：V1 权威逻辑目标已确认，固定为 15 张表。当前已生成资产仍为 14 张表 / 223 字段；本次只同步已确认设计，不授权修改 PDManer、手工数据库 SQL、Java 实现、物理数据库或运行环境。
+状态：V1 权威逻辑目标已确认。当前已生成模型与人工 Schema 为 15 表 / 246 字段 / 24 个非主键唯一索引 / 12 个访问索引 / 15 条本库关系 / 4 个 Diagram Group；SQL 尚未应用，本状态不代表 Java、物理数据库或运行环境已完成。
 
 > **2026-09-05 跨主题对齐：** 本文拥有 Commerce 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。[Commerce Client API Hosted Checkout V1](../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 已取代旧 Token Hash、Client 提交行业/MCC、外部 Cancel Expected Version 和固定 14 表目标；当前生成模型与其他横切差异按 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 迁移。新增实现必须遵循 [文档治理路由](../DOCUMENT_GOVERNANCE.md)。
 
@@ -10,7 +10,7 @@
 
 本文定义 Commerce System 的事实所有权、15 表目标结构、字段语义、状态机、关系、并发与跨系统契约，是 Commerce PDManer 设计资产的权威输入。现实示例见 [Commerce 现实场景](./scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md)，Client Server 外部合同见 [Commerce Client API Hosted Checkout V1](../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md)，订单边界见 [Commerce 订单上下文精简设计](../plans/2026-08-24-commerce-order-context-simplification-design.md)，消费者、网络证据与非履约边界见 [Commerce 隐私与履约精简设计](../plans/2026-08-24-commerce-privacy-fulfillment-simplification-design.md)，文档/审计精简及取消撤销语义见 [Commerce 文档投影、审计与取消撤销精简设计](../plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md)。
 
-本次只同步已确认逻辑设计。PDManer/生成器、Schema DDL/初始化 DML、DataObject/Mapper/Repository、Java 服务、物理数据库、Nacos 配置和运行环境均须在后续实施切片中完成并验证。
+本次已同步逻辑设计、PDManer/生成器与人工 Schema DDL/初始化 DML。DataObject/Mapper/Repository、Java 服务、物理数据库、Nacos 配置和运行环境仍须在各自实施切片中完成并验证；人工 Schema SQL 未获授权应用。
 
 ## 2. 系统边界
 
@@ -26,7 +26,7 @@ Commerce 不建设主动履约域。支付成功后的 Order 保持 `PAID`；退
 - 主键为服务侧 Snowflake `BIGINT`；瞬时时间 UTC `DATETIME(6)`；金额 `DECIMAL(24,8)`、费率 `DECIMAL(18,10)`，金额绑定 ISO 4217 `CHAR(3)`。
 - 可变 Current 行有 `version BIGINT NOT NULL`，使用 Expected Version/CAS；`compensation_event` 仅有技术 `lock_version`；不可变事实没有乐观锁。
 - 可变行有 `create_time + update_time`，创建后不可变行仅有 `create_time`；业务发生时间使用专用字段。
-- 业务变更和所需 `compensation_event` 在同一本地事务提交；MQ Ack 只能发生在提交后。Commerce V1 不保存通用 JSON 变更历史，法律接受、网络证据和冻结上下文由专项结构化表保留。
+- 业务变更和所需 `compensation_event` 在同一本地事务提交；MQ Ack 只能发生在提交后。JSON 仅用于 `command_idempotency` 的受控请求/响应恢复快照和 `compensation_event.payload_json`；Commerce V1 不保存通用 JSON 变更历史，法律接受、网络证据和冻结上下文由专项结构化表保留。
 
 ## 4. 精确 15 表目标目录
 
@@ -112,7 +112,7 @@ Refund Request 创建后为 `PENDING`，本地退款额度已预占；Commerce �
 - 同一规范化 Email/Phone 在平台内部同字段作用域返回稳定 Token，分别兼具受控关联与授权 Reveal，Vault 内部密钥轮换不得改变业务 Token。
 - `consumer_profile_vault_token` 只保护姓名和完整账单地址，不能重复包含 Email/Phone。
 - 不保存 Consumer Blind Index、Key Version、Masked Value、旧 Composite Token、Vault Record Version 或 Metadata Hash；Token 不得进入外部响应、普通日志、MQ 或通用审计 JSON。
-- 修改使用命令派生稳定 Token/Binding 身份和 Expected Version CAS；终止命令只 Retire 未被业务行引用的 Binding。
+- 当前 Vault V1 仅提供 Protect/Reveal，没有 Binding 或 Retire。Commerce 命令恢复复用首次 Protect 后已保存的稳定 Token；引用替换、解除或销毁能力不在 V1 范围，若出现真实消费者必须先批准窄 V2 设计。
 
 ### 5.3 Network Evidence 与 Acceptance
 
@@ -178,6 +178,6 @@ Funds Availability: NOT_APPLICABLE -> PENDING -> AVAILABLE
                                       PENDING -> FULLY_OFFSET
 ```
 
-`PROCESSING` 同时覆盖 Payment 内部的 CREATED、PROCESSING 与 UNKNOWN；Commerce 不复制 Payment 的 `UNKNOWN` 状态。Refund `FAILED` 表示 Payment/Provider 权威确认无法完成，Refund `CANCELLED` 只表示 Provider Action 提交前的受控主动取消；二者都不可复活。Order Cancel 仅在 Payment 已确认没有成功 Authorization/Capture/Sale 且没有未知渠道结果时完成；授权成功必须使用 Reversal，未 Capture 走 Void，已全额 Capture 走 Refund。PAN、CVV/CVC、完整磁道、PIN/PIN Block、Vault 密文和 Secrets Manager 凭据不得进入模型。MVP 默认保留业务/技术数据，不实现自动 Retention、Legal Hold、归档、匿名化或销毁。目标模型固定 15 表；字段、索引、关系和 Diagram 的最终统计只能在生成器、独立 Oracle、PDManer 工件与场景测试同步完成后写入当前状态台账。当前 14 表 / 223 字段生成快照仍是实现事实，不得用设计文字伪装成已迁移；PDManer 4.9.3 人工检查仍是兼容门禁。
+`PROCESSING` 同时覆盖 Payment 内部的 CREATED、PROCESSING 与 UNKNOWN；Commerce 不复制 Payment 的 `UNKNOWN` 状态。Refund `FAILED` 表示 Payment/Provider 权威确认无法完成，Refund `CANCELLED` 只表示 Provider Action 提交前的受控主动取消；二者都不可复活。Order Cancel 仅在 Payment 已确认没有成功 Authorization/Capture/Sale 且没有未知渠道结果时完成；授权成功必须使用 Reversal，未 Capture 走 Void，已全额 Capture 走 Refund。PAN、CVV/CVC、完整磁道、PIN/PIN Block、Vault 密文和 Secrets Manager 凭据不得进入模型。MVP 默认保留业务/技术数据，不实现自动 Retention、Legal Hold、归档、匿名化或销毁。当前生成模型为 15 表 / 246 字段 / 24 个非主键唯一索引 / 12 个访问索引 / 15 条本库关系 / 4 个 Diagram Group；PDManer 4.9.3 人工检查仍是兼容门禁，SQL 尚未应用，Java 与部署状态只读当前状态台账。
 
 本文件不授权手工数据库 SQL、Java 模块、DataObject/Mapper/Repository、物理数据库或运行环境。

@@ -139,7 +139,7 @@ com.paytech.commerce.ext.rest.external.clientapi.v1
 | Refund | `t_order_refund_position`、`t_refund_request` |
 | Web 服务级可靠性 | `t_command_idempotency`、`t_compensation_event` |
 
-计数为 `6 + 5 + 2 + 2 = 15`。当前生成的 14 表 / 223 字段模型仍是实现事实；在 PDManer、生成器、手工 SQL、Java 映射和测试同步完成前，不得把目标计数写成已经实现。
+计数为 `6 + 5 + 2 + 2 = 15`。当前生成资产、人工 Schema、Java、物理数据库、验证与部署进度只由 `CURRENT_IMPLEMENTATION.md` 声明，不能从本目标设计推断。
 
 ## 3. 通用 HTTP 合同
 
@@ -147,7 +147,7 @@ com.paytech.commerce.ext.rest.external.clientapi.v1
 
 - 公共路径以 `/api/v1` 开始；服务私网 Controller 路径以 `/external/client-api/v1` 开始，应用 Context Path 保持 `/commerce`。
 - 成功 Body 使用 `application/json`；错误 Body 使用 `application/problem+json`。
-- 所有响应由 Gateway 重建 `X-Request-Id`、`Cache-Control: no-store` 和 `Pragma: no-cache`。
+- 公共响应由 Gateway 重建 `X-Request-Id`、`Cache-Control: no-store` 和 `Pragma: no-cache`；Commerce 私网 Client API Adapter 对自身路径也固定 no-store/no-cache，避免绕过公共入口的本地验证产生可缓存回执。
 - Client API 不启用 CORS，不把 API Key 放入 Cookie，不提供浏览器 Preflight 旁路。
 - `POST` 接受 `Content-Type: application/json`；所有接口可接受 `Accept: application/json, application/problem+json`。
 
@@ -517,7 +517,7 @@ idempotency_key = exact case-sensitive header value
 
 Gateway 只转发 Header，零自动重试、零响应缓存。Credential 轮换不改变 `caller_scope`。
 
-目标 `t_command_idempotency.idempotency_key` 为 `VARCHAR(255)`，与外部上限一致；当前 14 表模型中的 128 长度是待实施差异。该表另保存 `request_hash_version`、`request_snapshot_schema_version`、可空 `request_snapshot_json`、公开 `resource_no`、HTTP/业务响应字段和 Response Snapshot Schema Version。Create Checkout 与 Create Refund 在 Root 尚未建立时都必须保存已验证的受控 Request Snapshot；Cancel 无 Body，只需冻结 Operation 与 `orderNo`，`request_snapshot_json` 可空。稳定结果除业务 `response_code` 外冻结 HTTP 状态、相对 Location 与最多 4 KiB 的受控创建回执 JSON；暂态结果不封存为最终响应。Checkout 创建回执包含 Public Token URL，因此只能用于原命令恢复，不得复用为 MQ/Webhook 或通用审计 Payload。
+`t_command_idempotency.idempotency_key` 固定为 `VARCHAR(255)`，与外部上限一致。该表另保存 `request_hash_version`、`request_snapshot_schema_version`、可空 `request_snapshot_json`、公开 `resource_no`、HTTP/业务响应字段和 Response Snapshot Schema Version。Create Checkout 与 Create Refund 在 Root 尚未建立时都必须保存已验证的受控 Request Snapshot；Cancel 无 Body，只需冻结 Operation 与 `orderNo`，`request_snapshot_json` 可空。稳定结果除业务 `response_code` 外冻结 HTTP 状态、相对 Location 与最多 4 KiB 的受控创建回执 JSON；暂态结果不封存为最终响应。Checkout 创建回执包含 Public Token URL，因此只能用于原命令恢复，不得复用为 MQ/Webhook 或通用审计 Payload。
 
 ### 7.2 语义请求 Hash
 
@@ -926,21 +926,22 @@ Cache-Control: no-store
 
 ```json
 {
-  "type": "https://api.code-mor.com/problems/validation-error",
-  "title": "Request validation failed",
+  "type": "about:blank",
+  "title": "Unprocessable Content",
   "detail": "One or more request fields are invalid.",
   "code": "VALIDATION_ERROR",
+  "requestId": "req_01K4...",
+  "timestamp": "2026-09-05T10:20:30.123456Z",
   "errors": [
     {
       "field": "items[0].unitAmount",
-      "code": "INVALID_MONEY",
       "message": "The amount must be a non-negative decimal string."
     }
   ]
 }
 ```
 
-`status` 不出现在 Body；RFC 9457 将其定义为可选，HTTP 状态行已经是唯一传输权威。`requestId` 也不复制进 Body，Client 从响应 Header 读取。`detail/message` 仅供人阅读，程序只依赖 HTTP 状态和稳定 `code`。
+`status` 不出现在 Body；RFC 9457 将其定义为可选，HTTP 状态行已经是唯一传输权威。`requestId` 与响应 Header 完全相同；`timestamp` 是当前错误生成时刻。`detail/message` 仅供人阅读，程序只依赖 HTTP 状态和稳定顶层 `code`；`errors[]` 只用于请求 Body 字段校验且不再包含第二层错误码。
 
 稳定映射：
 
@@ -953,7 +954,7 @@ Cache-Control: no-store
 | 408 | `REQUEST_TIMEOUT` |
 | 409 | `IDEMPOTENCY_KEY_REUSED`、`IDEMPOTENCY_REQUEST_IN_PROGRESS`、`CLIENT_ORDER_ID_ALREADY_EXISTS`、`CLIENT_REFUND_ID_CONFLICT`、`REVERSAL_REQUIRED`、`ORDER_NOT_CANCELLABLE` |
 | 413 | `REQUEST_TOO_LARGE` |
-| 422 | `VALIDATION_ERROR`、`CLIENT_CONFIGURATION_NOT_READY`、`REFUND_AMOUNT_EXCEEDS_REFUNDABLE` |
+| 422 | `VALIDATION_ERROR`、`CLIENT_CONFIGURATION_NOT_READY`、`CHECKOUT_NOT_ELIGIBLE`、`REFUND_AMOUNT_EXCEEDS_REFUNDABLE` |
 | 429 | `RATE_LIMIT_EXCEEDED` |
 | 431 | `REQUEST_HEADERS_TOO_LARGE` |
 | 502 | `UPSTREAM_PROTOCOL_ERROR` |
@@ -961,6 +962,8 @@ Cache-Control: no-store
 | 504 | `DEPENDENCY_TIMEOUT` |
 
 错误 Client 访问其他 Client 的 `orderNo` / `refundRequestNo` 与真实不存在使用相同 404、相同对外 detail，不泄露资源存在性。内部异常、SQL、类名、依赖 URI、Credential、Token 和 Provider 原始错误不得进入 Problem Body。
+
+`IDEMPOTENCY_REQUEST_IN_PROGRESS`（409）与 `CHECKOUT_CREATION_IN_PROGRESS`（503）固定携带 `Retry-After: 3`；其他业务错误不因共享 Writer 获得该 Header。`Retry-After` 只在 HTTP Header，不复制到 Problem Body。
 
 ## 13. Client Webhook
 
@@ -1139,7 +1142,7 @@ Cancel Processor 在事务外调用 PAY-I12，在确定 `TERMINATED` 后才以�
 
 ### 16.1 Commerce 编码前置
 
-以下合同缺失时，相应纵向步骤保持未实现：
+以下合同缺失时，真实 Owner Adapter、公共 Route 激活和端到端可用性保持未实现：
 
 1. CCT-I13 发布服务端解析唯一 Primary Classification 的 typed 合同；
 2. Payment 发布 PAY-I01、PAY-I03、PAY-I04、PAY-I12 真实 typed HTTP 合同和状态映射；
@@ -1149,7 +1152,9 @@ Cancel Processor 在事务外调用 PAY-I12，在确定 `TERMINATED` 后才以�
 6. Gateway Client API 通用前置按其独立计划达到 integration-ready。
 7. Foundation MVC 提供经批准的 Client API RFC 9457 输出策略；Commerce 不得用本地 `@RestControllerAdvice` 或本地 Problem 类型绕开共享 `GlobalExceptionHandler`。旧四字段 `{code,message,requestId,timestamp}` 错误体不能用于本外部协议。
 
-不得在 Commerce 复制其他 Owner 的 wire DTO、手写未批准 URI、直读其他数据库或用临时匿名/静态旁路代替这些合同。
+2026-09-07 已批准一个窄的本地首片例外：先实现 Create/Get Checkout，由 Commerce 定义 CCT、Risk、Finance、Payment 最小 `*Client` 应用端口并提供确定性 Local Mock。Mock 只有在显式 `commerce.integrations.mode=local-mock` 且 Active Profile 包含 `local`、`auto` 或 `test` 时才可装配；默认 `disabled` 调用失败关闭，非本地 Profile 误启 Mock 必须启动失败。此例外只验证本地编排、幂等、恢复和 HTTP 合同，不是 Owner wire 合同、生产降级或真实集成；替换点只保留一条明确 TODO。Risk `DENY` 返回稳定 `422 CHECKOUT_NOT_ELIGIBLE`，两种处理中错误按第 12 节返回受控 `Retry-After`。
+
+本地首片不创建或激活 Gateway Target/Route、Nginx Location、`checkout-web` 或 Consumer `/c/{token}` 页面。它可以返回并冻结合同形式的 Checkout URL，但在页面与公共链路就绪前不得称为可访问或端到端可用。除上述例外外，不得在 Commerce 复制其他 Owner 的 wire DTO、手写未批准 URI、直读其他数据库或用临时匿名/静态旁路代替这些合同。
 
 ### 16.2 数据库实施完整性
 

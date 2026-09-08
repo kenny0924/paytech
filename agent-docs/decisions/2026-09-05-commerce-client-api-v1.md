@@ -1,18 +1,19 @@
 # Commerce Client API Hosted Checkout V1 决策
 
 - Decision status: Confirmed
-- Implementation status: Not started
+- Implementation status: See [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md)
 - Deployment status: Not deployed
 - Decision date: 2026-09-05
 - Scope: 面向 Client Server 的 Commerce 外部 M2M API；V1 只覆盖 Hosted Checkout、Order、Cancel 与 Refund
 - Partially superseded: D1 和第 3 节中“不为外部调用创建 API JAR”的部分由 [`2026-09-05-commerce-client-api-contract-module.md`](./2026-09-05-commerce-client-api-contract-module.md) 取代；单服务、单部署单元和 OpenAPI 公开权威等其余决定继续有效
 - Error-contract supersession: D3、D10 中 Body 不含 Request ID 的部分由 [`2026-09-06-system-wide-rfc-9457-problem-details.md`](./2026-09-06-system-wide-rfc-9457-problem-details.md) 取代；Commerce 业务 Code/Status 继续由本文拥有
+- First-slice amendment: 2026-09-07 确认先实现 Create/Get Checkout，并以仅限 `local|auto|test` 的确定性 Owner Local Mock 代替尚未发布的跨系统 HTTP 合同；默认/生产失败关闭，且不激活 Gateway、Nginx 或 Checkout 页面
 - Supersedes:
   - `requirements-site/content/requirements.ts` 中 COM-01、COM-I01 要求 Client 在 Create Checkout 请求中提交 `industry_code + mcc_code` 的部分；后继由 CCT-I13 在首次命令时点解析 Client 唯一 Primary Classification
   - `requirements-site/content/requirements.ts` 中 COM-I05 以及 `requirements-site/content/global-use-case-sequences.mjs` E2E-13 要求 Client API Cancel 提交 Order Expected Version 和仅以 `client_order_id` 定位的部分；后继外部路径使用 `orderNo`，不接收 Expected Version，Commerce 内部仍使用锁/CAS
   - `requirements-site/content/requirements.ts` 中 COM-I06 向外返回内部 `refund_request_id` / `channel_refund_id` 的部分；后继只返回公开 `refundRequestNo`，不暴露 Channel Refund ID
   - `agent-docs/database/COMMERCE_DATABASE.md` 中 Checkout 只保存 `public_token_hash`、目标模型固定 14 表的部分；后继 Checkout 明文保存大小写敏感 Public Token，并增加一张 Order-owned Funds Availability Projection，目标为 15 表
-  - `docs/superpowers/specs/2026-09-05-commerce-modular-code-design.md` 中目标状态固定 14 表的部分；当前已生成模型仍保持 14 表，直到独立数据库实施切片完成
+  - `docs/superpowers/specs/2026-09-05-commerce-modular-code-design.md` 中目标状态固定 14 表的部分；当前模型、SQL、Java 和数据库状态只读 `CURRENT_IMPLEMENTATION.md`
   - `agent-docs/decisions/2026-09-05-client-api-gateway-contract.md` D8、`docs/superpowers/specs/2026-09-05-client-api-gateway-design.md` 第 11 节和对应 Gateway 实施计划中无条件删除 `Location` 的部分；后继允许经 Gateway 严格校验的同源绝对路径式 `Location` 用于 `201 Created`
   - `agent-docs/COMPENSATION_EVENT_GUIDE.md` 与 `docs/superpowers/plans/2026-09-05-compensation-event-six-model-alignment.md` 中“可靠任务 Payload 通常从当前 Owner Root 重建”的部分；只对本决策八种 Webhook 的不可变事件时公开快照允许不超过 4 KiB 的 Canonical Envelope，其他 Compensation Event 规则不变
 
@@ -53,7 +54,7 @@ Commerce Client API 的调用者是 Client 自己的服务端，不是 Consumer 
 - 外部只使用 `Authorization: Bearer <client-api-key>`；Gateway 通过 PLT-I03 认证并注入可信 Client ID。
 - Gateway 执行 Route Scope，Commerce 始终按可信 Client ID 校验资源归属；错误 Client 访问与真实不存在统一返回 404。
 - Scope 固定为 `checkouts.write`、`orders.read`、`orders.cancel`、`refunds.read`、`refunds.write`。
-- Client API 不启用浏览器 CORS，响应固定 `Cache-Control: no-store`；Request ID 只在 `X-Request-Id` Header 中传播。
+- Client API 不启用浏览器 CORS，响应固定 `Cache-Control: no-store`；成功响应的 Request ID 只在 `X-Request-Id` Header 中传播，错误响应同时在 RFC 9457 Problem Body 的 `requestId` 字段中返回相同值。
 
 ### D4. 标识与金额
 
@@ -107,8 +108,9 @@ Commerce Client API 的调用者是 Client 自己的服务端，不是 Consumer 
 ### D10. 错误合同
 
 - Owner 和 Gateway 产生的 Client API 4xx/5xx 都使用 RFC 9457 `application/problem+json`。
-- Body 使用 `type`、`title`、`detail` 和扩展 `code`，字段错误可增加 `errors`；不复制 HTTP `status`，不在 Body 复制 Request ID。
-- HTTP 状态是传输状态唯一权威；`X-Request-Id` 是诊断关联唯一位置。
+- Body 必填 `type=about:blank`、标准状态 `title`、安全 `detail`、顶层 `code`、`requestId` 和 UTC 六位小数 `timestamp`；字段错误可增加仅含 `field/message` 的 `errors`。Body 不复制 HTTP `status`，Header 与 Body Request ID 必须相同。
+- HTTP 状态是传输状态唯一权威；调用方按 HTTP 状态和顶层 `code` 分支。
+- `IDEMPOTENCY_REQUEST_IN_PROGRESS`（409）和 `CHECKOUT_CREATION_IN_PROGRESS`（503）固定返回 `Retry-After: 3`；该值只在响应 Header，不进入 Problem Body。
 
 ### D11. Webhook
 
@@ -118,6 +120,14 @@ Commerce Client API 的调用者是 Client 自己的服务端，不是 Consumer 
 - Delivery 为 at-least-once，可能重复和乱序；Retry/Replay 保持相同 Event ID/Body，每次投递重新生成签名时间。
 - Platform 先按 Tenant + Source System + Source Event Key 串行检查；同 Event ID 的 Type、Schema、Source Version 或任一 Payload Hash 不同都 Fail-Closed，不能利用现有复合唯一键插入第二条公开事件。
 - `Code-MoR-Signature` 使用 `t=<unix-seconds>,v1=<hex-hmac>`，签名内容为 `timestamp + "." + rawBody` 的 HMAC-SHA256，默认容忍五分钟时钟偏差。V1 Sender 每个 Attempt 冻结并使用一个 ACTIVE Secret、发送一个 `v1`；Parser 接受多个 `v1` 作为前向兼容，不提前引入 Platform 双签字段或宽限状态。
+
+### D12. 首个本地 Checkout 实施切片
+
+- 首片只实现 `POST /checkouts` 与 `GET /orders/{orderNo}/checkout` 的 Commerce 私网 Controller；其余八个 V1 操作、Webhook、Hosted Checkout 页面和公共 Route 保持未实现。
+- CCT、Risk、Finance、Payment 各由 Commerce 定义一个最小 `*Client` 应用端口；在真实 Owner `@HttpExchange` 合同发布前，可提供确定性 `LocalMock*Client`，但只能在 Active Profile 包含 `local`、`auto` 或 `test` 且显式选择 `local-mock` 时装配。默认模式为 `disabled`，调用稳定返回依赖不可用，非本地 Profile 误启 Mock 必须启动失败。
+- Local Mock 只证明本地编排和恢复合同，不得复制 Owner wire DTO、手写未来 URI、冒充真实跨系统集成或作为生产降级。真实 Owner 合同替换点只保留一条明确 TODO。
+- Risk Local Mock 的 `DENY` 收敛为 `422 CHECKOUT_NOT_ELIGIBLE`；暂态结果保持命令可恢复，不封存为永久失败。
+- 该切片不授权创建或启用 Gateway Target/Route、Nginx Location、`checkout-web` 或对 Consumer 可达的 `/c/{token}`。本地 `201` 中的 Checkout URL 只验证冻结合同，不能据此宣称端到端可用。
 
 ## 3. 明确不做
 
@@ -131,5 +141,6 @@ Commerce Client API 的调用者是 Client 自己的服务端，不是 Consumer 
 
 - 完整 Wire、状态、幂等、Token、数据投影、流程和 Route Manifest 由 [`2026-09-05-commerce-client-api-v1-design.md`](../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 持有。
 - Commerce 实施顺序与验证由 [`2026-09-05-commerce-client-api-v1-implementation.md`](../../docs/superpowers/plans/2026-09-05-commerce-client-api-v1-implementation.md) 持有。
+- 首个 Create/Get Checkout 本地切片按 [`2026-09-07-commerce-client-checkout-local-mock-slice.md`](../../docs/superpowers/plans/2026-09-07-commerce-client-checkout-local-mock-slice.md) 执行；它不扩展 D12 的授权范围。
 - Gateway 通用认证与可信上下文仍由现有 Client API Gateway 决策/设计持有；本决策只取代上文列出的 Location、精确 Route 和 RFC 9457 交叉点。
 - 当前实现、模型统计、验证、部署与未完成前置只记录在 [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md)。

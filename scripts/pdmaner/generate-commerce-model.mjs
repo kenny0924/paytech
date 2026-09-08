@@ -26,6 +26,27 @@ const MYSQL_MAPPING_ID = "29D1CE08-4C35-4D2D-AAA9-23D93305B52E";
 const JAVA_MAPPING_ID = "797A1496-D649-4261-89B4-544132EC3F36";
 const MYBATIS_MAPPING_ID = "895CFD1D-4273-4D32-A2C4-CAC70200AB5B";
 
+const ASCII_BINARY_FIELD_PATHS = new Set([
+  "commerce_order.order_no",
+  "commerce_order.client_order_id",
+  "order_item.client_item_id",
+  "order_funds_availability_projection.economics_event_key",
+  "order_funds_availability_projection.economics_source_payload_hash",
+  "order_funds_availability_projection.maturity_event_key",
+  "order_funds_availability_projection.maturity_source_payload_hash",
+  "checkout_session.public_token",
+  "checkout_session.public_origin",
+  "refund_request.refund_request_no",
+  "refund_request.client_refund_id",
+  "command_idempotency.caller_scope",
+  "command_idempotency.idempotency_key",
+  "command_idempotency.resource_no",
+  "command_idempotency.response_location",
+  "compensation_event.event_key",
+  "compensation_event.event_type",
+  "compensation_event.sub_event_type",
+]);
+
 // Explicit production manifest. It is intentionally independent from tests and Markdown.
 const FIELD_MANIFEST = String.raw`
 [t_commerce_order]
@@ -135,6 +156,27 @@ version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
+[t_order_funds_availability_projection]
+order_funds_availability_projection_id BIGINT NN
+order_id BIGINT NN
+finance_economics_id BIGINT N
+maturity_journal_id BIGINT N
+funds_availability_status VARCHAR(32) NN {NOT_APPLICABLE,PENDING,AVAILABLE,FULLY_OFFSET}
+available_amount DECIMAL(24,8) N
+currency CHAR(3) NN
+scheduled_at DATETIME(6) N
+available_at DATETIME(6) N
+economics_event_key VARCHAR(128) N
+economics_source_version BIGINT N
+economics_source_payload_hash CHAR(64) N
+maturity_event_key VARCHAR(128) N
+maturity_source_version BIGINT N
+maturity_source_payload_hash CHAR(64) N
+as_of DATETIME(6) NN
+version BIGINT NN
+create_time DATETIME(6) NN
+update_time DATETIME(6) NN
+
 [t_order_refund_position]
 order_refund_position_id BIGINT NN
 order_id BIGINT NN
@@ -149,7 +191,8 @@ update_time DATETIME(6) NN
 [t_checkout_session]
 checkout_session_id BIGINT NN
 order_id BIGINT NN
-public_token_hash CHAR(64) NN
+public_token CHAR(34) NN
+public_origin VARCHAR(255) NN
 session_status VARCHAR(64) NN {PREPARING,OPEN,PAYMENT_PROCESSING,COMPLETED,CANCELLED,EXPIRED}
 opened_at DATETIME(6) N
 completed_at DATETIME(6) N
@@ -243,14 +286,22 @@ update_time DATETIME(6) NN
 command_idempotency_id BIGINT NN
 caller_scope VARCHAR(128) NN
 operation_type VARCHAR(64) NN OPEN(Commerce Command Operation Catalog)
-idempotency_key VARCHAR(128) NN
+idempotency_key VARCHAR(255) NN
 request_hash CHAR(64) NN
+request_hash_version INT NN
+request_snapshot_schema_version INT N
+request_snapshot_json JSON N
 operation_context_time DATETIME(6) NN
-recovery_stage VARCHAR(64) N OPEN(per-operation Stage Catalog)
-process_status VARCHAR(64) NN OPEN(Command Process Status Catalog)
+recovery_stage VARCHAR(64) N {CLAIMED,AUTHORITIES_RESOLVED,ORDER_COMMITTED,PAYMENT_INTENT_CONFIRMED,PAYMENT_PENDING,REFUND_COMMITTED,PAYMENT_REFUND_BOUND,COMPLETED}
+process_status VARCHAR(64) NN {PROCESSING,SUCCEEDED,FAILED}
 resource_type VARCHAR(64) N OPEN
 resource_id BIGINT N
+resource_no VARCHAR(64) N
 response_code VARCHAR(64) N OPEN
+response_http_status INT N
+response_snapshot_schema_version INT N
+response_location VARCHAR(255) N
+response_body_json JSON N
 lock_owner VARCHAR(64) N
 lock_until DATETIME(6) N
 version BIGINT NN
@@ -261,13 +312,8 @@ update_time DATETIME(6) NN
 id BIGINT NN
 event_key VARCHAR(128) NN
 event_type VARCHAR(64) NN OPEN(Commerce Event/Handler Catalog)
-execution_type VARCHAR(64) NN {MQ_PUBLISH,LOCAL_HANDLER}
-source_type VARCHAR(64) NN OPEN
-source_id BIGINT NN
-source_version BIGINT NN
-schema_version INT NN
-payload_json JSON NN
-payload_hash CHAR(64) NN
+sub_event_type VARCHAR(64) NN
+payload_json JSON N
 execute_status VARCHAR(64) NN {INIT,PROCESSING,ERROR,FAILED}
 execute_count INT NN
 next_execute_at DATETIME(6) NN
@@ -295,11 +341,17 @@ UK uk_order_item(order_id,client_item_id)
 t_order_payment_projection
 UK uk_order_payment(order_id)
 UK uk_payment_intent(payment_intent_id)
+t_order_funds_availability_projection
+UK uk_order_funds_availability(order_id)
+UK uk_order_funds_economics(finance_economics_id)
+UK uk_order_funds_econ_event(economics_event_key)
+UK uk_order_funds_maturity_event(maturity_event_key)
+UK uk_order_funds_maturity_journal(maturity_journal_id)
 t_order_refund_position
 UK uk_order_refund_position(order_id)
 t_checkout_session
 UK uk_checkout_order(order_id)
-UK uk_checkout_token(public_token_hash)
+UK uk_checkout_public_token(public_token)
 t_consumer_context
 UK uk_consumer_context_order(order_id)
 t_consumer_contract
@@ -322,15 +374,25 @@ t_command_idempotency
 UK uk_command_idempotency(caller_scope,operation_type,idempotency_key)
 IDX idx_command_recovery(process_status,lock_until,command_idempotency_id)
 t_compensation_event
-UK uk_compensation_event_key(event_key)
-UK uk_compensation_source(source_type,source_id,source_version,event_type)
-IDX idx_compensation_claim(execute_status,next_execute_at,lock_until)
+UK uk_compensation_event(event_key,event_type,sub_event_type)
+IDX idx_compensation_ready(execute_status,next_execute_at,id)
+IDX idx_compensation_lease(execute_status,lock_until,id)
 `;
+
+const FIELD_DEFAULT_VALUES = Object.freeze({
+  "compensation_event.execute_status": "'INIT'",
+  "compensation_event.execute_count": "0",
+  "compensation_event.next_execute_at": "CURRENT_TIMESTAMP(6)",
+  "compensation_event.lock_version": "1",
+  "compensation_event.create_time": "CURRENT_TIMESTAMP(6)",
+  "compensation_event.update_time": "CURRENT_TIMESTAMP(6)",
+});
 const RELATION_MANIFEST = String.raw`
 1:1 order_context.order_id -> commerce_order.order_id
 1:1 order_legal.order_context_id -> order_context.order_context_id
 n:1 order_item.order_id -> commerce_order.order_id
 1:1 order_payment_projection.order_id -> commerce_order.order_id
+1:1 order_funds_availability_projection.order_id -> commerce_order.order_id
 1:1 order_refund_position.order_id -> commerce_order.order_id
 1:1 checkout_session.order_id -> commerce_order.order_id
 1:1 consumer_context.order_id -> commerce_order.order_id
@@ -372,6 +434,7 @@ const DIAGRAM_GROUPS = Object.freeze([
     defName: "支付与退款",
     primary: Object.freeze([
       "order_payment_projection",
+      "order_funds_availability_projection",
       "order_refund_position",
       "refund_request",
     ]),
@@ -391,6 +454,7 @@ const DIAGRAM_GROUPS = Object.freeze([
 const VERSION_TABLES = Object.freeze([
   "commerce_order",
   "order_payment_projection",
+  "order_funds_availability_projection",
   "order_refund_position",
   "checkout_session",
   "consumer_context",
@@ -590,6 +654,13 @@ function normalizeTemplate(template) {
   if (reservedRule) {
     reservedRule.programCode = reservedRule.programCode.replace(",status,", ",");
   }
+  const mysqlDdlTemplate = model.profile.codeTemplates.find((templateSpec) => templateSpec.type === "dbDDL");
+  const typeLengthTemplate = "{{=field.type}}{{?field.len>0}}{{='('}}{{=field.len}}{{?field.scale>0}}{{=','}}{{=field.scale}}{{?}}{{=')'}}{{?}}";
+  invariant(mysqlDdlTemplate?.createTable.includes(typeLengthTemplate), "MySQL DDL template lacks controlled type fragment");
+  mysqlDdlTemplate.createTable = mysqlDdlTemplate.createTable.replace(
+    typeLengthTemplate,
+    `${typeLengthTemplate}{{? field.extProps && field.extProps.characterSet }} CHARACTER SET {{=field.extProps.characterSet}} COLLATE {{=field.extProps.collation}}{{?}}`,
+  );
   return model;
 }
 
@@ -680,11 +751,13 @@ function buildEntities(model, tables, indexesByTable) {
         primaryKey: manifestField.primaryKey,
         notNull: manifestField.notNull,
         autoIncrement: false,
-        defaultValue: "",
+        defaultValue: FIELD_DEFAULT_VALUES[`${table.defKey}.${manifestField.defKey}`] ?? "",
         hideInGraph: false,
         refDict: "",
         baseType: mapping.baseType,
-        extProps: {},
+        extProps: ASCII_BINARY_FIELD_PATHS.has(`${table.defKey}.${manifestField.defKey}`)
+          ? { characterSet: "ascii", collation: "ascii_bin" }
+          : {},
         domain: mapping.domain,
         id: stableUuid(`field/${table.defKey}/${manifestField.defKey}`),
       };
@@ -815,16 +888,16 @@ function validateMetadata(tables) {
 
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
-    tables: 14,
-    fields: 223,
-    uniqueIndexes: 20,
-    accessIndexes: 11,
-    relations: 14,
+    tables: 15,
+    fields: 246,
+    uniqueIndexes: 24,
+    accessIndexes: 12,
+    relations: 15,
     diagramGroups: 4,
   }), `Unexpected generated totals: ${JSON.stringify(modelTotals(model))}`);
 
   const entitiesByKey = new Map(model.entities.map((entity) => [logicalTableKey(entity.defKey), entity]));
-  invariant(new Set(VERSION_TABLES).size === 7, "Version allowlist must have 7 tables");
+  invariant(new Set(VERSION_TABLES).size === 8, "Version allowlist must have 8 tables");
   invariant(new Set(IMMUTABLE_TABLES).size === 6, "Immutable allowlist must have 6 tables");
   const actualVersionTables = model.entities
     .filter((entity) => entity.fields.some((field) => field.defKey === "version"))
@@ -850,10 +923,10 @@ function validateGeneratedModel(model, tables, relations) {
     invariant(leftPrefix, `Relation field lacks left-prefix index: ${relation.childTable}.${relation.childField}`);
   }
   const primaryTables = DIAGRAM_GROUPS.flatMap((group) => group.primary);
-  invariant(primaryTables.length === 14 && new Set(primaryTables).size === 14, "Every table must have exactly one primary diagram group");
+  invariant(primaryTables.length === 15 && new Set(primaryTables).size === 15, "Every table must have exactly one primary diagram group");
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)
     .filter((cell) => cell.shape === "erdRelation").length;
-  invariant(relationCells === 14, `Expected 14 relation cells, found ${relationCells}`);
+  invariant(relationCells === 15, `Expected 15 relation cells, found ${relationCells}`);
 }
 
 export function structuralProjection(model) {

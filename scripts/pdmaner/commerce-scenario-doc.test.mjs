@@ -24,6 +24,7 @@ const expectedGeneratedLogicalTables = Object.freeze([
   "order_legal",
   "order_item",
   "order_payment_projection",
+  "order_funds_availability_projection",
   "order_refund_position",
   "checkout_session",
   "consumer_context",
@@ -35,11 +36,7 @@ const expectedGeneratedLogicalTables = Object.freeze([
   "compensation_event",
 ]);
 
-const expectedTargetLogicalTables = Object.freeze([
-  ...expectedGeneratedLogicalTables.slice(0, 5),
-  "order_funds_availability_projection",
-  ...expectedGeneratedLogicalTables.slice(5),
-]);
+const expectedTargetLogicalTables = expectedGeneratedLogicalTables;
 
 const removedTables = Object.freeze([
   "order_status_history",
@@ -122,24 +119,17 @@ test("NOVA scenario provides one concrete mapping row for every approved target 
   }
 });
 
-artifactTest("scenario distinguishes the 15-table target from the generated 14-table model", () => {
+artifactTest("scenario and generated model share the exact 15-table target", () => {
   const model = JSON.parse(readFileSync(modelPath, "utf8"));
   const scenarioTables = scenarioTableRows(readScenario()).map((row) => `t_${row.table}`);
   const generatedTables = model.entities.map((entity) => entity.defKey);
-  assert.deepEqual(
-    scenarioTables.filter((table) => table !== "t_order_funds_availability_projection"),
-    generatedTables,
-  );
-  assert.deepEqual(
-    scenarioTables.filter((table) => !generatedTables.includes(table)),
-    ["t_order_funds_availability_projection"],
-  );
+  assert.deepEqual(scenarioTables, generatedTables);
   assert.deepEqual(modelTotals(model), {
-    tables: 14,
-    fields: 223,
-    uniqueIndexes: 20,
-    accessIndexes: 11,
-    relations: 14,
+    tables: 15,
+    fields: 246,
+    uniqueIndexes: 24,
+    accessIndexes: 12,
+    relations: 15,
     diagramGroups: 4,
   });
 });
@@ -259,8 +249,11 @@ artifactTest("removed fulfillment and obsolete Vault/Blind fields stay out of th
   }
 
   const source = readScenario();
-  assert.match(source, /Commerce 15 表目标不保存 Webhook 配置 ID、URL 或 Secret/u);
-  assert.match(source, /当前生成模型仍为 14 表.*独立 PDManer\/SQL\/Java 切片后才可称为实现/u);
+  assert.match(source, /Commerce 15 表(?:目标|模型)不保存 Webhook 配置 ID、URL 或 Secret/u);
+  assert.match(source, /当前生成模型为 15 表 \/ 246 字段 \/ 24 个非主键唯一索引 \/ 12 个访问索引 \/ 15 条本库关系 \/ 4 个 Diagram Group/u);
+  assert.doesNotMatch(source, /当前生成(?:的 PDManer|模型|资产).*14 表\s*\/\s*223 字段/u);
+  assert.match(source, /当前 Vault V1.*Protect\/Reveal/u);
+  assert.doesNotMatch(source, /命令恢复重放同一 Token\/Binding|Retire 未被业务行引用的 Binding/u);
   assert.match(source, /直接保存完整客户端 IP、完整 User-Agent 与可信代理链/u);
   assert.match(source, /不保存 Vault Token、Blind Index 或 Key Version/u);
 });

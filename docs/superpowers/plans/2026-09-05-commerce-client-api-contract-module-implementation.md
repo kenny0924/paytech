@@ -1,5 +1,10 @@
 # Commerce Client API Contract Module Implementation Plan
 
+> **Historical implementation plan:** 本文保留 2026-09-05 首次落地的代码样例和当时门禁作为历史证据。
+> Header 常量、可信 ID/Request ID 参数、请求未知属性策略、Jackson Creator、依赖数量和公共文档要求已经由
+> [`2026-09-08-commerce-client-api-boundary-simplification.md`](./2026-09-08-commerce-client-api-boundary-simplification.md)
+> 取代；不得用下文旧样例恢复 `ClientApiHeaders`、String 身份 ID、Map Creator 或“请求拒绝未知属性”。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 
 **Goal:** Build the non-running <code>com.paytech:paytech-commerce-client-api</code> JAR that projects the ten approved Hosted Checkout V1 operations into ordinary Spring MVC Java interfaces and records, while keeping the public OpenAPI contract authoritative.

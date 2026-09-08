@@ -18,6 +18,14 @@ const paths = Object.freeze({
     workspaceRoot,
     "agent-docs/database/COMMERCE_DATABASE.md",
   ),
+  schema: path.join(
+    workspaceRoot,
+    "commerce-service/docs/database/sql/commerce-schema.sql",
+  ),
+  initialData: path.join(
+    workspaceRoot,
+    "commerce-service/docs/database/sql/commerce-initial-data.sql",
+  ),
   template: path.join(workspaceRoot, "agent-docs/templates/pdmaner/template.pdma.json"),
 });
 
@@ -27,14 +35,16 @@ const requiredArtifacts = [
   paths.decisions,
   paths.commerceDatabase,
   paths.model,
+  paths.schema,
+  paths.initialData,
 ];
 const artifactsReady = requiredArtifacts.every(existsSync);
 const expectedTemplateDigest =
   "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 const expectedModelDigest =
-  "78c2d693c3afc638de82db60692eeec447950653ab7db1e1aebcf382ccf391b3";
+  "14b8f53016b13ae023e48d20f2c1b8a54f30cacc2efdc7a52934116101ca8170";
 const expectedStructuralDigest =
-  "e7cbcf7f62d609331ac2a4a6e07cc2ecce8f02bf726e5ef8c6eb3cabdb9dfc06";
+  "625f365cdda712936d3c4a2c76b7a5b4c1e26d5a348b6f7643f502030ad0c1b4";
 const idPattern =
   /^[A-F0-9]{8}-[A-F0-9]{4}-5[A-F0-9]{3}-[89AB][A-F0-9]{3}-[A-F0-9]{12}$/u;
 
@@ -147,6 +157,27 @@ version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
+[t_order_funds_availability_projection]
+order_funds_availability_projection_id BIGINT NN
+order_id BIGINT NN
+finance_economics_id BIGINT N
+maturity_journal_id BIGINT N
+funds_availability_status VARCHAR(32) NN {NOT_APPLICABLE,PENDING,AVAILABLE,FULLY_OFFSET}
+available_amount DECIMAL(24,8) N
+currency CHAR(3) NN
+scheduled_at DATETIME(6) N
+available_at DATETIME(6) N
+economics_event_key VARCHAR(128) N
+economics_source_version BIGINT N
+economics_source_payload_hash CHAR(64) N
+maturity_event_key VARCHAR(128) N
+maturity_source_version BIGINT N
+maturity_source_payload_hash CHAR(64) N
+as_of DATETIME(6) NN
+version BIGINT NN
+create_time DATETIME(6) NN
+update_time DATETIME(6) NN
+
 [t_order_refund_position]
 order_refund_position_id BIGINT NN
 order_id BIGINT NN
@@ -161,7 +192,8 @@ update_time DATETIME(6) NN
 [t_checkout_session]
 checkout_session_id BIGINT NN
 order_id BIGINT NN
-public_token_hash CHAR(64) NN
+public_token CHAR(34) NN
+public_origin VARCHAR(255) NN
 session_status VARCHAR(64) NN {PREPARING,OPEN,PAYMENT_PROCESSING,COMPLETED,CANCELLED,EXPIRED}
 opened_at DATETIME(6) N
 completed_at DATETIME(6) N
@@ -255,14 +287,22 @@ update_time DATETIME(6) NN
 command_idempotency_id BIGINT NN
 caller_scope VARCHAR(128) NN
 operation_type VARCHAR(64) NN OPEN(Commerce Command Operation Catalog)
-idempotency_key VARCHAR(128) NN
+idempotency_key VARCHAR(255) NN
 request_hash CHAR(64) NN
+request_hash_version INT NN
+request_snapshot_schema_version INT N
+request_snapshot_json JSON N
 operation_context_time DATETIME(6) NN
-recovery_stage VARCHAR(64) N OPEN(per-operation Stage Catalog)
-process_status VARCHAR(64) NN OPEN(Command Process Status Catalog)
+recovery_stage VARCHAR(64) N {CLAIMED,AUTHORITIES_RESOLVED,ORDER_COMMITTED,PAYMENT_INTENT_CONFIRMED,PAYMENT_PENDING,REFUND_COMMITTED,PAYMENT_REFUND_BOUND,COMPLETED}
+process_status VARCHAR(64) NN {PROCESSING,SUCCEEDED,FAILED}
 resource_type VARCHAR(64) N OPEN
 resource_id BIGINT N
+resource_no VARCHAR(64) N
 response_code VARCHAR(64) N OPEN
+response_http_status INT N
+response_snapshot_schema_version INT N
+response_location VARCHAR(255) N
+response_body_json JSON N
 lock_owner VARCHAR(64) N
 lock_until DATETIME(6) N
 version BIGINT NN
@@ -273,13 +313,8 @@ update_time DATETIME(6) NN
 id BIGINT NN
 event_key VARCHAR(128) NN
 event_type VARCHAR(64) NN OPEN(Commerce Event/Handler Catalog)
-execution_type VARCHAR(64) NN {MQ_PUBLISH,LOCAL_HANDLER}
-source_type VARCHAR(64) NN OPEN
-source_id BIGINT NN
-source_version BIGINT NN
-schema_version INT NN
-payload_json JSON NN
-payload_hash CHAR(64) NN
+sub_event_type VARCHAR(64) NN
+payload_json JSON N
 execute_status VARCHAR(64) NN {INIT,PROCESSING,ERROR,FAILED}
 execute_count INT NN
 next_execute_at DATETIME(6) NN
@@ -308,11 +343,17 @@ UK uk_order_item(order_id,client_item_id)
 t_order_payment_projection
 UK uk_order_payment(order_id)
 UK uk_payment_intent(payment_intent_id)
+t_order_funds_availability_projection
+UK uk_order_funds_availability(order_id)
+UK uk_order_funds_economics(finance_economics_id)
+UK uk_order_funds_econ_event(economics_event_key)
+UK uk_order_funds_maturity_event(maturity_event_key)
+UK uk_order_funds_maturity_journal(maturity_journal_id)
 t_order_refund_position
 UK uk_order_refund_position(order_id)
 t_checkout_session
 UK uk_checkout_order(order_id)
-UK uk_checkout_token(public_token_hash)
+UK uk_checkout_public_token(public_token)
 t_consumer_context
 UK uk_consumer_context_order(order_id)
 t_consumer_contract
@@ -335,9 +376,9 @@ t_command_idempotency
 UK uk_command_idempotency(caller_scope,operation_type,idempotency_key)
 IDX idx_command_recovery(process_status,lock_until,command_idempotency_id)
 t_compensation_event
-UK uk_compensation_event_key(event_key)
-UK uk_compensation_source(source_type,source_id,source_version,event_type)
-IDX idx_compensation_claim(execute_status,next_execute_at,lock_until)
+UK uk_compensation_event(event_key,event_type,sub_event_type)
+IDX idx_compensation_ready(execute_status,next_execute_at,id)
+IDX idx_compensation_lease(execute_status,lock_until,id)
 `;
 
 const APPROVED_RELATION_MANIFEST = String.raw`
@@ -345,6 +386,7 @@ const APPROVED_RELATION_MANIFEST = String.raw`
 1:1 order_legal.order_context_id -> order_context.order_context_id
 n:1 order_item.order_id -> commerce_order.order_id
 1:1 order_payment_projection.order_id -> commerce_order.order_id
+1:1 order_funds_availability_projection.order_id -> commerce_order.order_id
 1:1 order_refund_position.order_id -> commerce_order.order_id
 1:1 checkout_session.order_id -> commerce_order.order_id
 1:1 consumer_context.order_id -> commerce_order.order_id
@@ -363,6 +405,7 @@ const expectedTableOrder = Object.freeze([
   "t_order_legal",
   "t_order_item",
   "t_order_payment_projection",
+  "t_order_funds_availability_projection",
   "t_order_refund_position",
   "t_checkout_session",
   "t_consumer_context",
@@ -380,6 +423,7 @@ const expectedTableDisplayNames = Object.freeze({
   order_legal: "订单法律上下文",
   order_item: "订单商品服务明细",
   order_payment_projection: "订单支付投影",
+  order_funds_availability_projection: "订单资金可用性投影",
   order_refund_position: "订单可退款位置",
   checkout_session: "托管收银台会话",
   consumer_context: "消费者当前上下文",
@@ -394,6 +438,7 @@ const expectedTableDisplayNames = Object.freeze({
 const versionTables = Object.freeze([
   "t_commerce_order",
   "t_order_payment_projection",
+  "t_order_funds_availability_projection",
   "t_order_refund_position",
   "t_checkout_session",
   "t_consumer_context",
@@ -537,6 +582,7 @@ const expectedDiagramGroups = Object.freeze({
     defName: "支付与退款",
     primary: Object.freeze([
       "order_payment_projection",
+      "order_funds_availability_projection",
       "order_refund_position",
       "refund_request",
     ]),
@@ -770,6 +816,73 @@ function readPhysicalManifest() {
   return JSON.parse(match[1]);
 }
 
+function sqlUnquote(value) {
+  return value.replace(/''/gu, "'");
+}
+
+function parseIdentifierList(source) {
+  const matches = [...source.matchAll(/`([^`]+)`/gu)].map((match) => match[1]);
+  assert.ok(matches.length > 0, `无法解析 SQL 标识列表：${source}`);
+  return matches;
+}
+
+function parseManualSchema(source) {
+  const tables = [];
+  const tablePattern = /CREATE TABLE `([^`]+)` \(\n([\s\S]*?)\n\) ENGINE=InnoDB DEFAULT CHARACTER SET ([a-z0-9_]+) COLLATE ([a-z0-9_]+) COMMENT='((?:''|[^'])*)';/gu;
+  for (const tableMatch of source.matchAll(tablePattern)) {
+    const [, defKey, body, characterSet, collation, rawComment] = tableMatch;
+    const columns = [];
+    const indexes = [];
+    let primaryKey = [];
+    for (const rawLine of body.split("\n")) {
+      const line = rawLine.trim().replace(/,$/u, "");
+      if (line.startsWith("`")) {
+        const columnMatch = line.match(
+          /^`([^`]+)` ([A-Z]+)(?:\((\d+)(?:,(\d+))?\))?(?: CHARACTER SET ([a-z0-9_]+) COLLATE ([a-z0-9_]+))? (NOT NULL|NULL)(?: DEFAULT ('(?:''|[^'])*'|[A-Z_]+(?:\(\d+\))?|-?\d+))? COMMENT '((?:''|[^'])*)'$/u,
+        );
+        assert.ok(columnMatch, `无法解析 ${defKey} 列：${line}`);
+        columns.push({
+          defKey: columnMatch[1],
+          type: columnMatch[2],
+          len: columnMatch[3] === undefined ? "" : Number(columnMatch[3]),
+          scale: columnMatch[4] === undefined ? "" : Number(columnMatch[4]),
+          characterSet: columnMatch[5] ?? "",
+          collation: columnMatch[6] ?? "",
+          notNull: columnMatch[7] === "NOT NULL",
+          defaultValue: columnMatch[8] ?? "",
+          comment: sqlUnquote(columnMatch[9]),
+        });
+        continue;
+      }
+      const primaryMatch = line.match(/^PRIMARY KEY \((.+)\)$/u);
+      if (primaryMatch) {
+        primaryKey = parseIdentifierList(primaryMatch[1]);
+        continue;
+      }
+      const indexMatch = line.match(
+        /^(UNIQUE KEY|KEY) `([^`]+)` \(([^)]+)\) COMMENT '((?:''|[^'])*)'$/u,
+      );
+      assert.ok(indexMatch, `无法解析 ${defKey} 约束或索引：${line}`);
+      indexes.push({
+        defKey: indexMatch[2],
+        unique: indexMatch[1] === "UNIQUE KEY",
+        fields: parseIdentifierList(indexMatch[3]),
+        comment: sqlUnquote(indexMatch[4]),
+      });
+    }
+    tables.push({
+      defKey,
+      characterSet,
+      collation,
+      comment: sqlUnquote(rawComment),
+      columns,
+      primaryKey,
+      indexes,
+    });
+  }
+  return tables;
+}
+
 function artifactTest(name, fn) {
   test(name, { skip: !artifactsReady }, fn);
 }
@@ -837,13 +950,13 @@ artifactTest("refund request delegates directly to Payment without a Finance res
   assert.ok(fieldKeys.includes("channel_refund_id"));
 });
 
-test("approved field manifest independently sums to the real 223-field candidate", () => {
+test("approved field manifest independently sums to the real 246-field candidate", () => {
   const approvedTables = parseApprovedFieldManifest();
   assert.deepEqual(approvedTables.map((table) => table.defKey), expectedTableOrder);
   assert.equal(
     approvedTables.flatMap((table) => table.fields).length,
-    223,
-    "批准候选字段清单实算必须为 223；不得按旧人工摘要凑数",
+    246,
+    "批准候选字段清单实算必须为 246；不得按旧人工摘要凑数",
   );
 });
 
@@ -876,7 +989,7 @@ artifactTest("model has the exact ordered table and field contract", () => {
   }
 });
 
-artifactTest("model freezes the exact 20 UK and 11 IDX field orders", () => {
+artifactTest("model freezes the exact 24 UK and 12 IDX field orders", () => {
   const model = readModel();
   const expectedIndexes = parseApprovedIndexes();
   for (const entity of model.entities) {
@@ -889,11 +1002,65 @@ artifactTest("model freezes the exact 20 UK and 11 IDX field orders", () => {
     assert.deepEqual(actual, expectedIndexes.get(entity.defKey) ?? [], entity.defKey);
   }
   const totals = modelTotals(model);
-  assert.equal(totals.uniqueIndexes, 20);
-  assert.equal(totals.accessIndexes, 11);
+  assert.equal(totals.uniqueIndexes, 24);
+  assert.equal(totals.accessIndexes, 12);
 });
 
-artifactTest("model has exactly 14 local indexed relations and no cross-system FK", () => {
+artifactTest("compensation event matches the Foundation host defaults and access paths", () => {
+  const compensation = entityMap(readModel()).get("t_compensation_event");
+  const fields = new Map(compensation.fields.map((field) => [field.defKey, field]));
+  const fieldsById = fieldById(compensation);
+  assert.deepEqual(
+    Object.fromEntries([
+      "execute_status",
+      "execute_count",
+      "next_execute_at",
+      "lock_version",
+      "create_time",
+      "update_time",
+    ].map((fieldKey) => [fieldKey, fields.get(fieldKey).defaultValue])),
+    {
+      execute_status: "'INIT'",
+      execute_count: "0",
+      next_execute_at: "CURRENT_TIMESTAMP(6)",
+      lock_version: "1",
+      create_time: "CURRENT_TIMESTAMP(6)",
+      update_time: "CURRENT_TIMESTAMP(6)",
+    },
+  );
+  assert.equal(
+    fields.get("payload_json").comment,
+    "补偿事件执行所需的最小非敏感结构化载荷，不超过 4 KiB UTF-8 JSON Object，且不得包含 Vault Token。",
+  );
+  assert.deepEqual(
+    compensation.indexes.map((index) => ({
+      defKey: index.defKey,
+      unique: index.unique,
+      fields: index.fields.map((entry) => fieldsById.get(entry.fieldDefKey).defKey),
+    })),
+    [
+      { defKey: "uk_compensation_event", unique: true, fields: ["event_key", "event_type", "sub_event_type"] },
+      { defKey: "idx_compensation_ready", unique: false, fields: ["execute_status", "next_execute_at", "id"] },
+      { defKey: "idx_compensation_lease", unique: false, fields: ["execute_status", "lock_until", "id"] },
+    ],
+  );
+});
+
+artifactTest("command recovery enums and bounded snapshots are frozen in field comments", () => {
+  const command = entityMap(readModel()).get("t_command_idempotency");
+  const fields = new Map(command.fields.map((field) => [field.defKey, field]));
+  assert.match(fields.get("process_status").comment, /允许值：PROCESSING、SUCCEEDED、FAILED。/u);
+  assert.match(
+    fields.get("recovery_stage").comment,
+    /允许值：CLAIMED、AUTHORITIES_RESOLVED、ORDER_COMMITTED、PAYMENT_INTENT_CONFIRMED、PAYMENT_PENDING、REFUND_COMMITTED、PAYMENT_REFUND_BOUND、COMPLETED。/u,
+  );
+  assert.match(fields.get("request_snapshot_json").comment, /最多 16 KiB UTF-8/u);
+  assert.match(fields.get("response_body_json").comment, /最多 4 KiB UTF-8/u);
+  assert.match(fields.get("response_body_json").comment, /Checkout URL.*访问能力.*原命令恢复/u);
+  assert.match(fields.get("response_body_json").comment, /普通日志.*MQ.*Webhook.*通用审计/u);
+});
+
+artifactTest("model has exactly 15 local indexed relations and no cross-system FK", () => {
   const model = readModel();
   assert.deepEqual(
     relationSignatures(model).sort(),
@@ -935,8 +1102,8 @@ artifactTest("four diagrams cover each primary table and each relation exactly o
     primaryTables.push(...expected.primary);
   }
   assert.deepEqual(primaryTables.sort(), expectedTableOrder.map(logicalTableKey).sort());
-  assert.equal(new Set(primaryTables).size, 14);
-  assert.equal(relationCells, 14);
+  assert.equal(new Set(primaryTables).size, 15);
+  assert.equal(relationCells, 15);
 });
 
 artifactTest("metadata exactly covers the catalog and annotates closed/open values", async () => {
@@ -1034,7 +1201,18 @@ artifactTest("version, immutability, audit deferral, Vault and forbidden boundar
     assert.ok(!forbiddenTables.includes(entity.defKey), `恢复了已删除表 ${entity.defKey}`);
     for (const field of entity.fields) {
       assert.equal(field.autoIncrement, false, `${entity.defKey}.${field.defKey} 不得自增`);
-      assert.equal(field.defaultValue, "", `${entity.defKey}.${field.defKey} 必须显式无默认值`);
+      const compensationDefaults = {
+        execute_status: "'INIT'",
+        execute_count: "0",
+        next_execute_at: "CURRENT_TIMESTAMP(6)",
+        lock_version: "1",
+        create_time: "CURRENT_TIMESTAMP(6)",
+        update_time: "CURRENT_TIMESTAMP(6)",
+      };
+      const expectedDefault = entity.defKey === "t_compensation_event"
+        ? (compensationDefaults[field.defKey] ?? "")
+        : "";
+      assert.equal(field.defaultValue, expectedDefault, `${entity.defKey}.${field.defKey} 默认值漂移`);
       assert.ok(!forbiddenFieldKeys.includes(field.defKey), `恢复了已删除字段 ${entity.defKey}.${field.defKey}`);
       assert.doesNotMatch(field.defKey, /(?:pan|cvv|cvc|track_data|pin_block|ciphertext)/u);
       if (field.defKey.endsWith("_hash") || field.defKey.endsWith("_blind_index")) {
@@ -1234,11 +1412,11 @@ artifactTest("generated model freezes actual totals and both SHA-256 digests", (
   const modelBytes = readFileSync(paths.model, "utf8");
   const model = JSON.parse(modelBytes);
   const expectedTotals = {
-    tables: 14,
-    fields: 223,
-    uniqueIndexes: 20,
-    accessIndexes: 11,
-    relations: 14,
+    tables: 15,
+    fields: 246,
+    uniqueIndexes: 24,
+    accessIndexes: 12,
+    relations: 15,
     diagramGroups: 4,
   };
   assert.deepEqual(modelTotals(model), expectedTotals);
@@ -1253,6 +1431,80 @@ artifactTest("generated model freezes actual totals and both SHA-256 digests", (
     physicalManifest.structuralProjectionSha256,
     expectedStructuralDigest,
   );
+});
+
+artifactTest("current Commerce database and physical docs report the generated model facts", () => {
+  const logicalSource = readFileSync(paths.commerceDatabase, "utf8");
+  const physicalSource = readFileSync(paths.decisions, "utf8");
+  const currentFacts = /15 表 \/ 246 字段 \/ 24 个非主键唯一索引 \/ 12 个访问索引 \/ 15 条本库关系 \/ 4 个 Diagram Group/u;
+  assert.match(logicalSource, currentFacts);
+  assert.match(physicalSource, /"tables": 15,[\s\S]*"fields": 246,[\s\S]*"uniqueIndexes": 24,[\s\S]*"accessIndexes": 12,[\s\S]*"relations": 15,[\s\S]*"diagramGroups": 4/u);
+  assert.doesNotMatch(logicalSource, /当前已生成(?:资产|模型|的 PDManer).*14 张?表\s*\/\s*223 字段/u);
+  assert.match(logicalSource, /当前 Vault V1.*Protect\/Reveal/u);
+  assert.doesNotMatch(logicalSource, /Token\/Binding|Retire 未被业务行引用的 Binding/u);
+  assert.match(physicalSource, /request_snapshot_json.*最多 16 KiB UTF-8/u);
+  assert.match(physicalSource, /response_body_json.*最多 4 KiB UTF-8.*Checkout URL.*访问能力/u);
+  assert.match(physicalSource, /当前\s+Vault V1[^\r\n]*Protect\/Reveal/u);
+  assert.doesNotMatch(physicalSource, /终止 Binding.*Retire|未被业务行引用.*Binding/u);
+});
+
+artifactTest("manual schema exactly projects all 15 model tables without CHECK or FK", () => {
+  const schema = readFileSync(paths.schema, "utf8");
+  const model = readModel();
+  assert.doesNotMatch(schema, /\b(?:CHECK|FOREIGN\s+KEY)\b/iu);
+  assert.doesNotMatch(schema, /public_token_hash/u);
+  const actualTables = parseManualSchema(schema);
+  assert.equal(
+    (schema.match(/CREATE TABLE `/gu) ?? []).length,
+    actualTables.length,
+    "人工 Schema 存在无法完整解析或未纳入精确比较的 CREATE TABLE",
+  );
+  assert.deepEqual(actualTables.map((table) => table.defKey), model.entities.map((entity) => entity.defKey));
+  assert.equal(actualTables.length, 15);
+
+  for (const entity of model.entities) {
+    const actual = actualTables.find((table) => table.defKey === entity.defKey);
+    const fieldsById = new Map(entity.fields.map((field) => [field.id, field.defKey]));
+    assert.deepEqual(actual.columns, entity.fields.map((field) => ({
+      defKey: field.defKey,
+      type: field.type,
+      len: field.len,
+      scale: field.scale,
+      characterSet: field.extProps.characterSet ?? "",
+      collation: field.extProps.collation ?? "",
+      notNull: field.notNull,
+      defaultValue: field.defaultValue,
+      comment: field.comment,
+    })), `${entity.defKey} 列清单、类型、可空性、默认值、排序规则或注释漂移`);
+    assert.deepEqual(
+      actual.primaryKey,
+      entity.fields.filter((field) => field.primaryKey).map((field) => field.defKey),
+      `${entity.defKey} 主键漂移`,
+    );
+    assert.deepEqual(actual.indexes, entity.indexes.map((index) => ({
+      defKey: index.defKey,
+      unique: index.unique,
+      fields: index.fields.map((entry) => fieldsById.get(entry.fieldDefKey)),
+      comment: index.comment,
+    })), `${entity.defKey} UK/IDX 清单或字段顺序漂移`);
+    assert.equal(actual.characterSet, "utf8mb4", `${entity.defKey} 表字符集漂移`);
+    assert.equal(actual.collation, "utf8mb4_0900_ai_ci", `${entity.defKey} 表排序规则漂移`);
+    assert.equal(actual.comment, entity.comment, `${entity.defKey} 表注释漂移`);
+  }
+
+  const firstSliceTables = [
+    "t_command_idempotency",
+    "t_commerce_order",
+    "t_order_context",
+    "t_order_legal",
+    "t_order_item",
+    "t_order_refund_position",
+    "t_order_funds_availability_projection",
+    "t_checkout_session",
+    "t_order_payment_projection",
+  ];
+  for (const table of firstSliceTables) assert.ok(schema.includes(`CREATE TABLE \`${table}\` (`));
+  assert.match(readFileSync(paths.initialData, "utf8"), /no business.*seed rows/iu);
 });
 
 artifactTest("generator --check proves the checked-in model is current", () => {

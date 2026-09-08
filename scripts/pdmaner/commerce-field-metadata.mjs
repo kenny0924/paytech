@@ -10,6 +10,7 @@ export const TABLE_DISPLAY_NAMES = Object.freeze({
   order_legal: "订单法律上下文",
   order_item: "订单商品服务明细",
   order_payment_projection: "订单支付投影",
+  order_funds_availability_projection: "订单资金可用性投影",
   order_refund_position: "订单可退款位置",
   checkout_session: "托管收银台会话",
   consumer_context: "消费者当前上下文",
@@ -29,6 +30,7 @@ const FIELD_METADATA_SOURCE = String.raw`
 acceptance_type|接受类型|本条证据对应的消费者条款、退款政策或隐私声明类型
 accepted_at|接受时间|消费者完成该项法律接受动作的业务时刻
 active_attempt_id|活动支付尝试标识|支付投影中当前仍可能继续推进的支付尝试标识
+as_of|投影截至时点|本投影已应用来源事件 occurredAt 的最大值，迟到事件不得使其回退
 assignment_id|经营主体分配标识|订单创建时由 Client & Contract 解析并冻结的分配事实标识
 attempt_source_version|尝试来源版本|支付尝试投影已经消费的来源聚合版本
 billing_city|账单城市|消费者账单地址规范化后的城市分析维度，不包含完整街道地址
@@ -40,6 +42,8 @@ browser_major_version|浏览器主版本|由 User-Agent 派生的浏览器主版
 caller_scope|调用方作用域|隔离命令幂等键命名空间的稳定调用方作用域
 cancelled_at|取消时间|Checkout 会话进入取消终态的业务时刻
 captured_amount|已捕获金额|订单支付投影确认成功捕获的累计金额
+available_amount|可用金额|Finance 确认本订单已经成熟进入 Client 可用余额的金额，未成熟时为空
+available_at|资金可用时间|Finance 权威确认本订单资金成熟进入 Client 可用余额的时刻
 cct_commercial_context_hash|商业上下文哈希|CCT-I13 返回的 V5 commercial_context_hash 精确副本，用于关联订单创建时同次完整商业与法律 Bundle；它不是单个 Commercial Term Scope 的内容哈希或 CCT-I14 校验参数
 commercial_context_time|商业上下文时点|CCT 解析经营主体和商业条款时使用并由订单上下文冻结的业务有效时点
 channel_refund_id|渠道退款标识|支付系统负责执行退款的稳定渠道退款标识
@@ -68,15 +72,16 @@ email_vault_token|邮箱 Vault Token|指向 Vault 中消费者 Email 原值的�
 email_domain|邮箱域名|消费者邮箱规范化后的域名分析维度，不包含邮箱本地部分
 entity_source_type|主体来源类型|订单经营主体来源于平台、Client 或 Local Partner 的闭合类型
 event_key|事件幂等键|领域事件或本地恢复动作的全局稳定幂等键
-event_type|事件类型|需要发布或由本地 Handler 恢复执行的 Commerce 事件类型
+event_type|事件类型|本地补偿 Handler 的全应用唯一类型
 evidence_scene|证据场景|网络证据产生于打开 Checkout、提交消费者资料、接受法律条款或开始支付的闭合场景
 execute_count|执行次数|补偿事件已经尝试执行的累计次数
 execute_status|执行状态|本地补偿事件当前的可恢复执行状态
-execution_type|执行方式|区分 MQ 发布与本地 Handler 执行的闭合方式
 expires_at|到期时间|订单允许继续 Checkout 或支付处理的业务截止时刻
 client_order_id|Client 订单标识|Client 在自身命名空间内提供且不可复用的稳定订单业务标识；不承担接口请求幂等职责
 finance_tax_snapshot_id|Finance 税务快照标识|Finance 对订单税务计算结果的不可变快照标识
 finance_tax_snapshot_hash|Finance 税务快照哈希|Finance 税务快照 calculation_hash 的精确副本，按 CODE-MOR:FINANCE:TAX_CALCULATION:1 对 Header、全部 Evidence 和 Tax Line 生成 SHA-256 小写 64 位十六进制，用于校验按标识返回的不可变税务结果
+finance_economics_id|Finance 交易经济标识|Finance PAYMENT Economics 的稳定引用，仅供本库资金可用性投影导航
+funds_availability_status|资金可用性状态|订单资金是否已成熟进入 Client 可用余额的闭合投影状态
 hosting_flag|托管网络标志|网络情报判断当前 IP 是否属于托管网络；1 表示是，0 表示否，NULL 表示未评估
 id|补偿事件标识|本地补偿事件记录的内部唯一标识
 idempotency_key|幂等键|调用方作用域内稳定识别同一业务命令的键
@@ -111,6 +116,13 @@ lock_owner|锁持有者|当前持有数据库 Claim Lease 的服务实例标识
 lock_until|锁截止时间|数据库 Claim Lease 到期并可被其他实例重新认领的时刻
 lock_version|锁版本|补偿事件 Claim Lease 并发更新使用的乐观锁版本
 mcc_code|MCC 代码|订单上下文采用的四位 Merchant Category Code
+economics_event_key|经济计算事件键|Finance EconomicsCalculated 事实的大小写敏感稳定来源事件键
+economics_source_payload_hash|经济计算来源载荷哈希|Finance EconomicsCalculated 规范来源载荷的 SHA-256 小写十六进制完整性哈希
+economics_source_version|经济计算来源版本|Finance EconomicsCalculated 事实的来源版本
+maturity_journal_id|成熟分录标识|Finance 完成资金成熟时对应的稳定 Journal 标识，仅供本库投影导航
+maturity_event_key|成熟事件键|Finance PayableBalanceMatured 事实的大小写敏感稳定来源事件键
+maturity_source_payload_hash|成熟来源载荷哈希|Finance PayableBalanceMatured 规范来源载荷的 SHA-256 小写十六进制完整性哈希
+maturity_source_version|成熟来源版本|Finance PayableBalanceMatured 事实的来源版本
 merchandise_amount|商品服务金额|订单创建时冻结的优惠前商品服务汇总金额
 net_amount|净金额|订单创建时冻结的商品服务金额扣除优惠后的净金额
 network_evidence_id|网络证据标识|一条不可变 Checkout 网络与设备证据的内部唯一标识
@@ -125,6 +137,7 @@ os_family|操作系统族|由 User-Agent 派生且不包含完整原文的操作
 os_major_version|操作系统主版本|由 User-Agent 派生的操作系统主版本分析维度
 order_id|订单标识|Commerce 订单聚合的内部唯一标识
 order_context_id|订单上下文标识|订单创建时冻结外部商业、风控和税务证据引用的内部唯一标识
+order_funds_availability_projection_id|订单资金可用性投影标识|一条 Order-owned 资金可用性投影的内部唯一标识
 order_item_id|订单商品项标识|订单内一条商品或服务明细的内部唯一标识
 order_legal_id|订单法律上下文标识|订单不可变上下文对应法律呈现记录的内部唯一标识
 order_no|订单编号|供接口响应、业务查询与人工操作使用的唯一订单编号
@@ -136,8 +149,9 @@ partner_agreement_operating_entity_id|Partner 合同经营主体关联标识|存
 partner_share_scope_id|Partner 分润范围标识|存在 Local Partner 分润时由 CCT 解析并冻结的精确 Partner Share Scope 标识
 platform_service_charge_scope_id|平台服务费范围标识|CCT-I13 V5 返回并由订单创建冻结的 PLATFORM_SERVICE_CHARGE Commercial Term Scope 稳定标识；仅 PARTNER 来源订单存在
 platform_service_party_id|平台服务法律主体标识|CCT-I13 V5 从 Partner Agreement 唯一 PLATFORM_SIGNATORY 解析并由订单创建冻结的法律 Party 稳定标识；Finance 后续映射本地 Finance Entity
-payload_hash|事件载荷哈希|补偿事件规范化载荷的完整性哈希
-payload_json|事件载荷 JSON|补偿事件执行所需的最小非敏感结构化载荷
+payload_json|事件载荷 JSON|补偿事件执行所需的最小非敏感结构化载荷，不超过 4 KiB UTF-8 JSON Object，且不得包含 Vault Token
+public_origin|公开来源站点|服务端 allowlist 选定并由会话冻结的无路径 HTTPS Origin，用于组合 Checkout URL
+public_token|公开 Token|大小写敏感的 Hosted Checkout 最小能力 Token，仅用于受限 Checkout 页面动作
 payment_intent_id|支付意图标识|Payment Orchestration 为订单创建的稳定支付意图标识
 phone_vault_token|电话 Vault Token|指向 Vault 中消费者 Phone 原值的可选稳定不可枚举 Token
 phone_country_code|电话国家代码|消费者电话号码规范化后的国家或地区呼叫代码分析维度
@@ -153,7 +167,6 @@ public_registration_number|公开注册编号|订单法律卖方对消费者展�
 public_support_email|公开支持邮箱|订单法律卖方对消费者展示的客户支持邮箱
 public_support_phone|公开支持电话|订单法律卖方对消费者展示的可选客户支持电话
 public_tax_registration_number|公开税务登记号|订单法律卖方对消费者展示的可选税务登记编号
-public_token_hash|公开 Token 哈希|Hosted Checkout 公开访问 Token 的不可逆哈希
 proxy_flag|代理网络标志|网络情报判断当前 IP 是否使用代理；1 表示是，0 表示否，NULL 表示未评估
 quantity|数量|订单商品服务项目采用的冻结计量数量
 reason_code|原因代码|退款领域事实采用的受控原因代码
@@ -171,21 +184,27 @@ refunded_amount|已退款金额|订单已经确认成功退款的累计金额
 rendered_content_hash|呈现内容哈希|呈现给消费者的合同文件内容完整性哈希
 rendered_file_id|呈现文件标识|Platform Support 保存的不可变消费者合同文件标识
 request_hash|请求哈希|幂等操作首次请求规范化后的完整性哈希
+request_hash_version|请求哈希版本|用于计算幂等语义请求哈希的固定算法版本
+request_snapshot_json|请求快照 JSON|在业务 Root 建立前用于恢复 Create Checkout 或 Create Refund 的已验证最小语义快照，最多 16 KiB UTF-8
+request_snapshot_schema_version|请求快照模式版本|request_snapshot_json 所遵循的受控语义快照模式版本
+scheduled_at|预计可用时间|Finance 冻结的本订单余额可用时刻，尚未完成经济计算时为空
 request_id|请求追踪标识|Checkout 一次网络证据采集请求的稳定去重与追踪标识
 request_origin|请求来源|区分 Client 与内部 Operations 发起退款的闭合来源
 reserved_amount|预占金额|尚未完成或释放的退款请求占用金额
 resource_id|资源标识|幂等命令成功创建或作用到的本库业务资源标识
+resource_no|公开资源编号|幂等命令冻结的大小写敏感公开业务资源编号
 resource_type|资源类型|幂等命令返回资源所属的 Commerce 资源目录类型
 response_code|响应代码|幂等命令可重放响应采用的稳定业务结果代码
+response_body_json|响应正文 JSON|稳定幂等回执的受控 JSON 正文，最多 4 KiB UTF-8；Create Checkout 回执中的 Checkout URL 具有访问能力，仅用于原命令恢复和重放，禁止进入普通日志、MQ、Webhook 或通用审计
+response_http_status|响应 HTTP 状态|稳定幂等回执冻结的 HTTP 状态码
+response_location|响应 Location|稳定创建回执冻结的大小写敏感相对 Location 值
+response_snapshot_schema_version|响应快照模式版本|response_body_json 所遵循的受控回执模式版本
 risk_checkout_assessment_id|Checkout 风险评估标识|Risk & Compliance 返回且由订单上下文冻结的不可变评估标识
 rounding_amount|舍入调整金额|订单金额计算为保持币种精度而冻结的舍入差额
-schema_version|载荷模式版本|补偿事件 payload_json 所遵循的结构版本
 seller_disclosure_id|卖方披露标识|按订单 consumer_country_code 与 locale 精确命中并冻结的 CCT 卖方公开披露标识，禁止隐式 Locale 回退
 session_status|会话状态|Hosted Checkout 会话当前的闭合生命周期状态
 sort_no|排序序号|保持订单商品服务项目原始呈现顺序的稳定序号
-source_id|来源业务标识|补偿事件对应的业务聚合或本地任务来源标识
-source_type|来源类型|补偿事件来源业务聚合或任务的目录类型
-source_version|来源版本|来源业务聚合或补偿任务采用的单调版本
+sub_event_type|补偿子事件类型|同一补偿 Handler 下区分具体业务子动作的大小写敏感类型
 status_reason_code|状态原因代码|当前终态原因采用的稳定业务代码，适用于取消、失败、过期等需要说明的结果；没有终态原因时为空
 successful_attempt_id|成功支付尝试标识|最终形成订单成功支付结果的支付尝试标识
 tax_amount|税额|订单创建时冻结的消费者实收税额汇总金额
@@ -218,8 +237,8 @@ function parseFieldMetadataSource(source) {
     }
     result[fieldKey] = metadata(defName, description);
   }
-  if (Object.keys(result).length !== 172) {
-    throw new Error(`Commerce 字段元数据必须精确覆盖 172 个唯一字段键，实际 ${Object.keys(result).length}`);
+  if (Object.keys(result).length !== 190) {
+    throw new Error(`Commerce 字段元数据必须精确覆盖 190 个唯一字段键，实际 ${Object.keys(result).length}`);
   }
   return Object.freeze(result);
 }
@@ -232,13 +251,15 @@ export const CLOSED_ENUM_VALUES = Object.freeze({
   "commerce_order.order_status": Object.freeze(["CREATED", "OPEN", "PAID", "CANCELLED", "EXPIRED"]),
   "order_payment_projection.intent_status": Object.freeze(["REQUIRES_PAYMENT", "PROCESSING", "REQUIRES_ACTION", "SUCCEEDED", "FAILED", "EXPIRED", "CANCELLED"]),
   "order_payment_projection.last_attempt_status": Object.freeze(["CREATED", "RISK_CHECKING", "RISK_REJECTED", "RISK_FAILED", "LIMIT_REJECTED", "ROUTING", "PROCESSING", "REQUIRES_ACTION", "UNKNOWN", "SUCCEEDED", "FAILED", "SUCCESS_CONFLICT"]),
+  "order_funds_availability_projection.funds_availability_status": Object.freeze(["NOT_APPLICABLE", "PENDING", "AVAILABLE", "FULLY_OFFSET"]),
   "checkout_session.session_status": Object.freeze(["PREPARING", "OPEN", "PAYMENT_PROCESSING", "COMPLETED", "CANCELLED", "EXPIRED"]),
   "checkout_network_evidence.evidence_scene": Object.freeze(["CHECKOUT_OPEN", "CONSUMER_CONTEXT_SUBMIT", "LEGAL_ACCEPTANCE", "PAYMENT_START"]),
   "checkout_network_evidence.device_type": Object.freeze(["DESKTOP", "MOBILE", "TABLET", "BOT", "OTHER", "UNKNOWN"]),
   "consumer_acceptance.acceptance_type": Object.freeze(["CONSUMER_TERMS", "REFUND_POLICY", "PRIVACY_NOTICE"]),
   "refund_request.request_origin": Object.freeze(["CLIENT", "OPERATIONS"]),
   "refund_request.refund_status": Object.freeze(["PENDING", "PROCESSING", "SUCCEEDED", "FAILED", "CANCELLED"]),
-  "compensation_event.execution_type": Object.freeze(["MQ_PUBLISH", "LOCAL_HANDLER"]),
+  "command_idempotency.recovery_stage": Object.freeze(["CLAIMED", "AUTHORITIES_RESOLVED", "ORDER_COMMITTED", "PAYMENT_INTENT_CONFIRMED", "PAYMENT_PENDING", "REFUND_COMMITTED", "PAYMENT_REFUND_BOUND", "COMPLETED"]),
+  "command_idempotency.process_status": Object.freeze(["PROCESSING", "SUCCEEDED", "FAILED"]),
   "compensation_event.execute_status": Object.freeze(["INIT", "PROCESSING", "ERROR", "FAILED"]),
 });
 
@@ -251,12 +272,9 @@ export const OPEN_CODE_SOURCES = Object.freeze({
   "refund_request.reason_code": "Commerce Refund Reason Catalog",
   "refund_request.status_reason_code": "Commerce Refund Status Reason Catalog",
   "command_idempotency.operation_type": "Commerce Command Operation Catalog",
-  "command_idempotency.recovery_stage": "Commerce 每种操作独立维护的 Recovery Stage Catalog",
-  "command_idempotency.process_status": "Commerce Command Process Status Catalog",
   "command_idempotency.resource_type": "Commerce Command Resource Type Catalog",
   "command_idempotency.response_code": "Commerce Command Response Code Catalog",
-  "compensation_event.event_type": "Commerce Event 与 Local Handler Catalog",
-  "compensation_event.source_type": "Commerce Compensation Source Type Catalog",
+  "compensation_event.event_type": "Commerce Compensation Event Type Catalog",
 });
 
 /**
@@ -268,13 +286,14 @@ export const TABLE_COMMENTS = Object.freeze({
   order_legal: "订单创建时冻结的法律呈现上下文；合同经营主体关联标识精确定位 CCT 合同覆盖关系，卖方披露按订单 consumer_country_code 与 locale 精确解析后冻结展示值。",
   order_item: "订单创建时冻结的商品或服务明细；金额、税务分类和呈现顺序不得在订单创建后原地修改。",
   order_payment_projection: "Payment 订单支付事实的本地可重建投影；只按来源版本和事件幂等键推进，不拥有 Payment 聚合。",
+  order_funds_availability_projection: "Order-owned 资金可用性投影；只由 Payment 与 Finance 权威事件推进，Commerce 不按本机时钟宣布成熟，最终状态不因 Refund、Payout 或当前余额变化回退。",
   order_refund_position: "订单可退款金额的强一致本地位置；始终满足 reserved_amount + refunded_amount <= refundable_base_amount，预占、消费和释放必须通过乐观锁原子更新。",
-  checkout_session: "Hosted Checkout 重定向会话；公开 Token 仅保存不可逆哈希，状态变更使用乐观锁，网络事实写入独立不可变证据表。",
+  checkout_session: "Hosted Checkout 重定向会话；公开 Token 以大小写敏感明文和冻结 Public Origin 保存，状态变更使用乐观锁，网络事实写入独立不可变证据表。",
   consumer_context: "订单当前消费者上下文；consumer_reference 是 Client 命名空间内的非 PII、不透明业务引用，不得提交 Email、Phone、证件号等个人原值；Email、电话、姓名和完整账单地址仅以分用途 Vault Token 保存，Commerce 保留受控派生分析维度。",
   consumer_contract: "呈现给消费者的不可变合同文件事实；文件标识、内容哈希、Locale 与呈现时间共同封存。",
   checkout_network_evidence: "不可变 Checkout 网络与设备证据；Commerce 直接保存可信解析的完整客户端 IP、完整 User-Agent 和可选可信代理链，以及批准的网络和设备派生维度；不保存 Vault Token、盲索引、密钥版本或设备标识。",
   consumer_acceptance: "消费者对特定法律文档类型的不可变接受证据；不维护 Acceptance Summary，Payment Readiness 依据三种必需接受类型的不可变记录实时判定。",
   refund_request: "Commerce 拥有的退款聚合；只保存退款业务状态、订单金额位置所需金额以及 Payment Channel Refund 的稳定标识，不复制下游状态、事件版本、事件键、载荷哈希或渠道执行明细。",
   command_idempotency: "Commerce 同步命令幂等与恢复记录；相同 caller_scope + operation_type + idempotency_key 必须校验 request_hash，Claim Lease 由 lock_owner 与 lock_until 保护。",
-  compensation_event: "业务变更同事务写入的本地可靠执行记录；PROCESSING 必须同时持有 lock_owner 且 lock_until 晚于当前时间，XXL-Job 仅负责唤醒和分片扫描。",
+  compensation_event: "业务变更同事务写入的本地可靠执行记录；身份固定为 event_key、event_type、sub_event_type，PROCESSING 必须同时持有 lock_owner 且 lock_until 晚于当前时间，XXL-Job 仅负责唤醒和分片扫描。",
 });

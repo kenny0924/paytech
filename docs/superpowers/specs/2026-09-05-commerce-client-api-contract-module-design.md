@@ -9,6 +9,7 @@
 - Public Wire authority: [`commerce-service/api/openapi/client-v1.yaml`](../../../commerce-service/api/openapi/client-v1.yaml)
 - Scope: Hosted Checkout V1 的非运行 Java Owner 入站契约模块
 - Error-contract supersession: 本文原 Problem 字段投影由 [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](./2026-09-06-system-wide-rfc-9457-problem-details-design.md) 取代；当前 OpenAPI 投影和 Foundation Writer 继承验证已迁移，契约模块继续不创建 Problem DTO
+- Boundary supersession: Header Owner、可信 ID 类型、请求 JSON 兼容性和公共文档规则由 [`2026-09-08-commerce-client-checkout-structure-simplification-design.md`](./2026-09-08-commerce-client-checkout-structure-simplification-design.md) 第 9 节取代；下文已同步为现行投影
 
 本文定义 `paytech-commerce-client-api` 的 Maven 边界、Java 包、十条接口投影、DTO、兼容性、依赖和验证方式。它不实现 Controller、业务处理、数据库、跨系统调用、Gateway Route 或部署。
 
@@ -79,10 +80,11 @@ paytech-commerce-client-api
 
 允许的直接依赖只有：
 
-- `com.paytech:paytech-common-core`：`CodeEnum`；
+- `com.paytech:paytech-common-core`：`CodeEnum`、稳定 Header 名称和复用的严格可选字段反序列化器；
 - `org.springframework:spring-web`：`@HttpExchange`、方法注解、MVC 参数注解和 `ResponseEntity`；
 - `jakarta.validation:jakarta.validation-api`：传输边界约束；
-- `com.fasterxml.jackson.core:jackson-annotations`：明确 nullable/optional JSON 字段和 Cancel sealed result 的序列化意图。
+- `com.fasterxml.jackson.core:jackson-annotations`：明确 nullable/optional JSON 字段和 Cancel sealed result 的序列化意图；
+- `tools.jackson.core:jackson-databind`：为可缺失但显式 `null` 非法的请求组件选择 Foundation 反序列化器。
 
 版本全部来自既有 Parent/BOM，子模块不声明版本。
 
@@ -93,7 +95,6 @@ paytech-commerce-client-api
 ```text
 com.paytech.commerce.client.api.v1
 ├── common/
-│   ├── ClientApiHeaders.java
 │   ├── ClientApiPaths.java
 │   ├── ClientApiConstraints.java
 │   └── ClientApiModels.java
@@ -119,9 +120,9 @@ com.paytech.commerce.client.api.v1
 └── package-info.java
 ```
 
-- `ClientApiHeaders` 只定义四个协议 Header 常量：三个可信 Gateway Header 和 `Idempotency-Key`；
+- Java 接口从 Foundation `ApiHeaderNames` 复用稳定 Header 名称，不在 Commerce 复制常量；
 - `ClientApiPaths` 只定义 `/external/client-api/v1` 私网 Base Path；公开 `/api/v1` 不进入 Java接口常量；
-- `ClientApiConstraints` 集中定义 Header、公开标识、币种、国家和十进制字符串的编译期正则常量，接口与 DTO 不复制同义表达式；
+- `ClientApiConstraints` 集中定义 Client Reference、币种、国家和十进制字符串的编译期正则常量，接口与 DTO 不复制同义表达式；
 - `ClientApiModels` 只保存多个能力真实共享的 `Amounts`，不演化成通用 `common.jar`；
 - 三个 `*Api` 只声明 HTTP 方法，不内嵌 DTO；
 - 三个 `*Models` 是 `public final` 容器，私有构造器，内部模型使用 `public record`；
@@ -145,33 +146,30 @@ com.paytech.commerce.client.api.v1
 
 公共 Bearer Credential 不进入方法签名；Gateway 完成认证后不向 Commerce 转发它。
 
-### 4.2 每个方法的必需可信 Header
+### 4.2 可信 Header 与基础设施 Request ID
 
-每个方法重复声明以下三个参数，避免通用 Map 或隐式全局变量扩大可信面：
+每个业务方法显式声明两个可信身份参数，避免通用 Map 或隐式全局变量扩大可信面：
 
 ```java
-@RequestHeader("X-Request-Id") String requestId
-@RequestHeader("X-Gateway-Client-Id") String clientId
-@RequestHeader("X-Gateway-Credential-Id") String credentialId
+@RequestHeader(ApiHeaderNames.GATEWAY_CLIENT_ID) @Positive long clientId
+@RequestHeader(ApiHeaderNames.GATEWAY_CREDENTIAL_ID) @Positive long credentialId
 ```
 
-约束为：
-
-- `requestId`：1–64 字符，首字符为 ASCII 字母或数字，其余仅允许 ASCII 字母、数字、`.`、`_`、`-`；
-- `clientId` 与 `credentialId`：正十进制、最多 19 位；
-- Header 必须是单值；重复 Header 的拒绝由 Web 可信上下文边界测试保证，不能依赖普通字符串参数静默合并。
+Gateway 负责认证并注入 Client/Credential ID；Commerce 信任认证结论，但 Web 入站边界仍要求两个 Header
+单值、必填且能绑定为正 `long`。`X-Request-Id` 由 Foundation MVC 基础设施校验、生成、写入 MDC 和回写响应，
+不再进入业务 API 方法签名。
 
 三个 POST 另声明：
 
 ```java
-@RequestHeader("Idempotency-Key") String idempotencyKey
+@RequestHeader(ApiHeaderNames.IDEMPOTENCY_KEY) String idempotencyKey
 ```
 
 其长度为 1–255，首字符为字母或数字，其余只允许字母、数字、`.`、`_`、`:`、`-`，大小写敏感。
 
 ## 5. 三个接口与十个操作
 
-下表省略每个方法都重复的三个可信 Header；`IK` 表示额外的 `Idempotency-Key`。
+下表省略每个方法都重复的两个可信身份 Header；`IK` 表示额外的 `Idempotency-Key`。
 
 | Java 接口 / 方法 | 私网 Method + Path | 额外输入 | Java 正常返回 |
 |---|---|---|---|
@@ -360,7 +358,9 @@ sealed interface CancelOrderResult
 - OpenAPI `RefundResponse.clientRefundId` 使用 `ClientReference | null`，非空值不能绕过长度和字符约束；
 - Java annotations 和 ObjectMapper 合同测试必须证明上述区别，不依赖环境默认值。
 
-请求对象继续拒绝未知字段；响应对象允许未来增加未知字段。Java DTO 不把 `x-known-values` 变成拒绝未知值的封闭反序列化类型。
+请求与响应对象都允许未来增加未知字段，以支持新旧版本滚动升级。请求中的已知字段使用正常 Jackson 属性绑定和
+Jakarta Bean Validation；String Wire 不接受 JSON number/boolean 的隐式标量转换。Java DTO 不把
+`x-known-values` 变成拒绝未知值的封闭反序列化类型。
 
 ## 8. 成功、错误与 Header
 
@@ -443,7 +443,7 @@ Java 方法只声明正常 typed 返回。4xx/5xx 继续由共享 Foundation Cli
 ### 11.3 DTO 和 OpenAPI 漂移
 
 - Java record 字段名、类型、required/optional/nullable、长度、正则、集合大小和已知 Code 与 OpenAPI 双向一致；
-- JSON round-trip 覆盖全部顶层模型、required-null key、optional-null omission、未知状态字符串及多余请求字段拒绝；
+- JSON round-trip 覆盖全部顶层模型、required-null key、optional-null omission、未知状态字符串及多余请求字段兼容忽略；
 - 合成破坏样本证明漂移测试能拒绝新增未声明 Java 字段、错误 Path、缺失 Header、封闭 enum 和放宽金额精度；
 - OpenAPI 同步增加 Cancel 202 Retry-After，并修正 Decimal 与 nullable Client Reference。
 
@@ -481,7 +481,7 @@ git diff --check
 1. 新增 `com.paytech:paytech-commerce-client-api`，它是非运行的 Owner 入站契约 JAR。
 2. OpenAPI 仍是公开 `/api/v1/**` 唯一权威，Java 接口使用私网 `/external/client-api/v1/**`。
 3. 使用三个能力接口和三个 Models 容器，不创建一个巨型接口或十个机械接口。
-4. 每个方法显式接收三个可信 Gateway Header；三个 POST 额外接收幂等 Key。
+4. 每个方法显式接收两个可信 Gateway 身份 Header；Request ID 由 Foundation MVC 基础设施处理，三个 POST 额外接收幂等 Key。
 5. Java 使用普通 DTO/`ResponseEntity`，不使用 WebFlux、Project Reactor、`Mono` 或 `Flux`。
 6. 公开 Code 字段使用 String，已知 enum 仅作为 Code 目录。
 7. 本切片只建立真实契约和测试，不创建空运行时实现，也不解除 Gate 0。

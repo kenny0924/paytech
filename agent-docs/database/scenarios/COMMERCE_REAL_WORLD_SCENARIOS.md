@@ -2,14 +2,11 @@
 
 最后更新：2026-09-05
 
-状态：与 [Commerce 15 表逻辑目标](../COMMERCE_DATABASE.md) 及 [Commerce Client API V1](../../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 同步；当前生成 PDManer 仍为 14 表 / 223 字段，本文件新增的目标场景尚未实施，实际状态只读 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md)。
+状态：与 [Commerce 15 表逻辑目标](../COMMERCE_DATABASE.md) 及 [Commerce Client API V1](../../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 同步；当前生成模型为 15 表 / 246 字段 / 24 个非主键唯一索引 / 12 个访问索引 / 15 条本库关系 / 4 个 Diagram Group。Schema 尚未应用，Java、验证和部署状态只读 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md)。
 
-> **2026-09-05 横切迁移提示：** 本文的逐表记录继续精确描述当前生成模型及当时的消费者假设，不单独拥有
-> Vault 或 `compensation_event` 契约。其中与当前三表 Protect/Reveal、补偿三字段身份和 4 KiB 可选 Payload
-> 不一致的旧字段属于 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md) 中 VAULT-01 / COMP-01
-> 的待迁移现状；完成 [Vault 消费者对齐](../../../docs/superpowers/plans/2026-09-05-vault-consumer-model-alignment.md)
-> 和 [补偿六模型对齐](../../../docs/superpowers/plans/2026-09-05-compensation-event-six-model-alignment.md) 前，
-> 不得把这些场景字段复制到新增模型、SQL、DataObject 或代码。
+> **2026-09-05 横切边界：** 本文不单独拥有 Vault 或 `compensation_event` 契约。当前 Vault V1 只有
+> Protect/Reveal，没有 Binding/Retire；Commerce 只复用已保存 Token。补偿记录使用三字段身份、Foundation
+> 安全默认值和两条固定扫描索引，可选 Payload 最多 4 KiB UTF-8。不得从历史场景恢复已取代能力。
 
 ## 1. 场景范围
 
@@ -100,7 +97,7 @@ CreateOrder 把 `command_idempotency.operation_context_time=2026-08-23T08:00:00.
 | `billing_country_code` / `billing_region_code` / `billing_city` / `billing_postal_prefix` | `AE` / `DU` / `Dubai` / `NULL` |
 | `version` | `2` |
 
-`consumer_reference` 是 Client 命名空间内的非 PII、不透明业务引用；不得复用 Email、Phone、证件号等个人原值。同一规范化 Email/Phone 在平台内部同字段作用域返回稳定 Token，分别兼具受控关联与授权 Reveal；consumer_profile_vault_token 只保护姓名和完整账单地址，不重复包含 Email/Phone。命令恢复重放同一 Token/Binding；Commerce 不把 Token 或个人原值复制到通用审计 JSON。
+`consumer_reference` 是 Client 命名空间内的非 PII、不透明业务引用；不得复用 Email、Phone、证件号等个人原值。同一规范化 Email/Phone 在平台内部同字段作用域返回稳定 Token，分别兼具受控关联与授权 Reveal；consumer_profile_vault_token 只保护姓名和完整账单地址，不重复包含 Email/Phone。当前 Vault V1 仅有 Protect/Reveal，命令恢复复用首次 Protect 后已保存的 Token；Commerce 不把 Token 或个人原值复制到通用审计 JSON。
 
 ### 3.2 Network Evidence 完整行
 
@@ -239,7 +236,7 @@ Captured Reversal 完成后，Order 仍保持 `PAID`，Refund Position 变为 `5
 
 ## 7. 文档、审计与敏感数据边界
 
-Commerce 15 表目标不保存 Webhook 配置 ID、URL 或 Secret，也不保存 Consumer Document Current Projection 或通用 BCR。Receipt 与 Credit Note 的状态、文件和更正关系由 Platform Support 保存，Finance 保存不可变 Fiscal Fact；Commerce 只通过 `t_compensation_event` 可靠发布最小来源事实。Consumer Token、网络原值和派生维度不得进入普通日志、MQ 文档事件或普通业务页面；Hosted Checkout Public Token 的第一方 URI Access Log 是单独确认的窄取舍，不能扩大到 Client API Response Body 日志或其他受限值。场景中没有任何 PAN、CVV/CVC、完整磁道、PIN/PIN Block、卡有效期、主动履约表或主动履约事件。当前生成模型仍为 14 表，必须完成独立 PDManer/SQL/Java 切片后才可称为实现该目标。
+Commerce 15 表模型不保存 Webhook 配置 ID、URL 或 Secret，也不保存 Consumer Document Current Projection 或通用 BCR。Receipt 与 Credit Note 的状态、文件和更正关系由 Platform Support 保存，Finance 保存不可变 Fiscal Fact；Commerce 只通过 `t_compensation_event` 可靠发布最小来源事实。Consumer Token、网络原值和派生维度不得进入普通日志、MQ 文档事件或普通业务页面；Hosted Checkout Public Token 的第一方 URI Access Log 是单独确认的窄取舍，不能扩大到 Client API Response Body 日志或其他受限值。场景中没有任何 PAN、CVV/CVC、完整磁道、PIN/PIN Block、卡有效期、主动履约表或主动履约事件。当前生成模型为 15 表 / 246 字段 / 24 个非主键唯一索引 / 12 个访问索引 / 15 条本库关系 / 4 个 Diagram Group；Schema 尚未应用，不能据此声称 Java、物理数据库或部署完成。
 
 ## 8. 最终可观察结果
 
