@@ -206,7 +206,23 @@ Operations 继续忽略外部 `X-Request-Id` 并由 Gateway 生成新值。Nginx
 
 生产实现必须依赖 Platform Owner 在 `platform-support-api` 发布且返回 `Mono<OwnerResponse>` 的 reactive typed `@HttpExchange` 合同，不能在 Gateway 复制请求/响应 DTO、手写同一 URI 或在 Netty 线程调用 blocking Proxy。若实现时该合同尚未发布，Platform 专项任务必须先冻结其 HTTP Method、Path、Credential 传输位置、确切 Java 类型、最大响应集合与 wire error 形状，Gateway 相关任务保持阻塞。
 
-无论最终 wire 形状如何，语义必须至少满足：
+PLT-I03 的具体消费合同如下；artifact 安装、发布、Provider 验证和部署事实只记录在 [当前实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md)：
+
+| 项目 | 合同 |
+|---|---|
+| Java API | `com.paytech.platform.support.api.apicredential.ApiCredentialValidationApi` |
+| 私有 HTTP | `POST /platform-support/api-credentials/v1/validate`；`/platform-support` 为服务 Context Path，接口注解拥有 `/api-credentials/v1/validate`，只拼接一次 |
+| 请求 | 单值 `X-Platform-Api-Credential` 携带裸 opaque Credential，不含 `Bearer `；无请求 Body；内部 `X-Request-Id` 使用 Gateway 最终可信值 |
+| 成功 | 仅接受 `200 application/json`，按 `ApiCredentialValidationModels.ValidatedCredentialResponseBody` 解码 |
+| 身份字段 | `tenantId`、`ownerRefId`、`credentialId` 为 1–19 位正十进制字符串；`tenantType` 固定 `CLIENT` |
+| Scope | `effectiveScopeCodes` 最多 64 项，每项最多 128 字符；使用 Owner `ApiCredentialConstraints` 的小写精确 Scope 语法，不允许通配；可为空，去重后不可变 |
+| 凭据语法 | 使用 Owner `ApiCredentialConstraints` 校验：8–32 字符 Prefix、一个点分隔符、32–223 字符 Secret，总长 41–256；不得另建 Gateway 业务语法 |
+| 无效认证 | 仅合法 RFC 9457 `401` 且 `code=API_CREDENTIAL_AUTHENTICATION_FAILED` 映射为对外 `401 UNAUTHENTICATED` |
+| 依赖故障 | 其他状态、异常/超时、空响应、非法 JSON/类型、重复 JSON Key、尾随内容、非法身份/Scope 或超限响应，一律对外 `503 DEPENDENCY_UNAVAILABLE` |
+
+响应最多 16 KiB、JSON 最大深度 16；连接默认 1 秒、认证总预算默认 2 秒，最大 10 秒。Client 使用独立的有界连接池与非阻塞 I/O 资源，禁用 Redirect 和自动 Retry。生产通过 `platform-support-service` 服务发现；直接 URI 只允许显式启用且唯一 active profile 为 `auto` 的 `http://127.0.0.1:<port>`，不能作为生产地址回退。
+
+语义必须同时满足：
 
 - 请求只携带 opaque Credential 和必要的内部协议元数据；Credential 只能位于受控 Header 或 Body，不能进入 Path/Query；不得携带调用方选择的 Tenant、Client、Owner 或 required Scope；
 - 成功结果唯一且包含 `tenantId`、固定 `tenantType=CLIENT`、`ownerRefId`、`credentialId`、有界去重的 `effectiveScopeCodes`；
