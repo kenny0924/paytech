@@ -1,6 +1,6 @@
 # Java 单元测试与自动化测试规范
 
-最后更新：2026-09-05
+最后更新：2026-09-09
 
 状态：Confirmed current testing rules。Foundation 与业务服务使用同一基础设施边界，没有 Testcontainers 或自动重建 test-only Schema 的例外；现有偏差和迁移状态见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
@@ -122,6 +122,8 @@ Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景
 
 纯单元测试只用于天然不需要外部协作的对象。如果一个用例只有依赖 Repository、HTTP、Redis 或 MQ 才能成立，应把它放入相应的闭环测试，不使用 Mockito 把依赖返回值拼成一条看似成功的链路。
 
+使用数据库、Redis 或 MQ 的测试必须启动被测服务或对应最小切片的 Spring 应用上下文，复用生产自动配置和中间件客户端生命周期；HTTP 链路同时启动随机端口服务。不得通过静态辅助类独立建连接来替代应用启动。该要求不扩大为启动所有业务系统或自动启停中间件，见 [2026-09-08 决策](./decisions/2026-09-08-middleware-auto-test-configuration.md)。
+
 测试数量服从业务风险，而不是生产类或方法数量。优先用少量业务级用例覆盖一条公开入口到数据库/外部协议的完整链路，并在这些用例中验证关键分支、状态和副作用；不要为了覆盖率给每个 Controller、Processor、Service 或 Repository 方法机械创建孤立测试。只有纯算法、状态机、值对象或转换器的聚焦单元测试能明显缩小故障定位范围时，才额外补充。
 
 ## 6. 服务级 auto 标准链路
@@ -219,7 +221,7 @@ Domain Service → RepositoryImpl → Mapper → local MySQL
 
 Operations Gateway 与所有后续服务统一复用仓库 `local-environment`。Gateway 的路由、JWT、Guard、Redis 与协议测试边界继续遵守 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)，传输与可信 Client IP 测试以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准：
 
-- 只连接 `127.0.0.1:16379` 的 Redis 8.2.1，密码从未提交的 `PAYTECH_REDIS_PASSWORD` 注入；禁止连接宿主机 `6379` 或其他项目实例；
+- 只连接 `127.0.0.1:16379` 的 Redis 8.2.1；固定连接配置放在 `application-auto.yml`，本地测试账号凭据遵守第 7.5 节，`PAYTECH_REDIS_PASSWORD` 仅作为 YAML 环境覆盖入口，不由 Java 直接读取；禁止连接宿主机 `6379` 或其他项目实例；
 - Compose Redis 必须在测试开始前健康；缺失、版本/鉴权错误时快速失败并给出启动提示，不降级到内存实现、方法 Stub 或其他 Redis；
 - 每次 Maven 测试运行生成不可预测且唯一的 Gateway Namespace，所有 Route/Dimension Key 都位于该 Namespace；
 - Setup/Teardown 只用 `SCAN` + 精确前缀删除本次运行 Key，禁止 `KEYS *`、`FLUSHDB`、选择未保留的逻辑库或删除其他运行的 Key；
@@ -411,6 +413,7 @@ TestBase
 
 `application-auto.yml` 必须：
 
+- 集中维护固定连接地址、端口、超时、开关和测试身份配置，由 Spring Profile 加载并绑定；测试辅助类复用 Spring Bean，不直接调用 `System.getenv`、解析 `.env` 或另建默认中间件客户端。固定故障模式参数同样放在 YAML；Java 动态注入只用于运行时产生的 Simulator 地址、随机端口、隔离标识或当前场景明确变化的边界值；
 - 关闭 Nacos、外部配置中心、定时任务和非本测试需要的真实 Consumer；
 - 只允许仓库本地 Loopback URL。仅对仓库隔离、无生产权限且可随时重建的本地测试账号，允许配置固定用户名和密码以支持 Maven/IDE 直接运行，并保留环境变量覆盖入口；生产、共享测试、第三方、Vault、Token、密钥及任何真实环境凭据必须由安全配置注入；
 - 数据库、Redis、MQ 使用第 7.6 节固定的本地地址；Simulator 仍由测试动态注入地址；

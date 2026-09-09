@@ -315,7 +315,7 @@ xxl_job
 - Key 使用 `{service}:{capability}:...` Namespace；Redis Starter 为 `RedisJsonTemplate`、`StringRedisTemplate` 与 Redisson 统一把 `{service}` 默认解析为 `spring.application.name`，服务可用 `redis.key-prefix` 显式覆盖。业务对象缓存优先使用不含 Java 类型信息的普通 JSON；字符串与计数器使用 `StringRedisTemplate`。新增 Key 不使用 `mor` 技术前缀，每个能力必须定义 TTL。
 - Gateway Rate Limiter 与各服务 Key 进一步使用独立前缀，禁止 `KEYS *` 作为运行逻辑。
 - Operations Gateway 不使用 Redis Starter、`StringRedisTemplate` 或 Redisson；它通过 Spring Data Redis Reactive + Lettuce Lua 实现 Rate Token Bucket 和 Concurrency ZSET Lease。
-- 所有 Redis 自动测试连接 `127.0.0.1:16379` 的 `mor-local` Compose Redis，密码从 `.env.local` 对应的 `PAYTECH_REDIS_PASSWORD` 环境注入；不引入 Testcontainers，不连接 `6379`。自动化不得读取、输出或改写 `.env.local`。
+- 所有 Redis 自动测试连接 `127.0.0.1:16379` 的 `mor-local` Compose Redis；固定测试配置由 Spring 加载 `application-auto.yml`，隔离本地测试账号凭据遵守 `UNIT_TEST_GUIDE.md` 第 7.5 节，并允许 `PAYTECH_REDIS_PASSWORD` 环境覆盖。已有实例使用自定义密码时，由开发者安全注入相同值，不自动修改共享服务密码。不引入 Testcontainers，不连接 `6379`；自动化不得读取、输出或改写 `.env.local`。见 [2026-09-08 决策](./decisions/2026-09-08-middleware-auto-test-configuration.md)。
 - 每次 Gateway 测试运行生成唯一 Key Namespace，Setup/Teardown 只用 `SCAN` 删除本次已知前缀，禁止 `KEYS *`、`FLUSHDB` 或停止共享 Compose Redis。Redis 不可用用例连接未监听的 Loopback 端口，不影响其他本地进程。
 - 本地密码来自 `.env.local`；应用日志不得输出完整连接串或密码。
 - 现有宿主机 `6379` Redis 不参与 Code-MoR 开发、测试或故障演练。

@@ -164,3 +164,12 @@
 - **Remaining：** Platform 当前“关联 Tenant 行缺失”按损坏数据返回 503，与公共设计“没有同一 ACTIVE CLIENT Tenant 属于无效认证”的 401 表述仍需 Platform Owner 确认；Gateway 保持依赖失败 503，不猜测错误响应内的业务身份。真实 Provider 部署/服务发现、Credential/Scope SQL 和生命周期、Channel-aware 控制面、真实 Owner Adapter/Approved Target 与 Nginx 域名入口仍需上线前联合验证，本轮 Simulator 成功不代表这些前置已完成。
 - **Commit verification：** 仅包含本次 Client 变更的提交树单独导出复验，Client / PLT-I03 与 Operations 响应/Cookie 专项 171/171 通过，边界脚本通过；未夹带工作开始前已有的 Risk 代码、测试、Target 根或 Body ceiling 调整。上述 1031 项完整结果来自包含这些既有未提交变更的工作区，不是纯 Client 提交树的全量结果。
 - **Delivery state：** Gateway Client 实现已提交到 `api-gateway` 本地 `main`（`4577ee9`），公共合同和本节台账随配套文档提交沉淀；其他任务的未提交修改保留。未推送、发布或部署；未添加生产 Client Target、未激活 Route、未应用 SQL、未修改 Nginx。完成完整门禁并获准执行跨系统准备后，才进入 Client Route rollout。
+
+## 14. Gateway auto 测试启动与 YAML 配置调整（2026-09-09 更新）
+
+- **Implemented in working tree：** 固定 Redis、Platform 客户端、测试身份、服务端口与发现/调度配置集中到 `application-auto.yml`；Java 不再直接读取 `PAYTECH_REDIS_PASSWORD` 或静态创建默认 Redis 连接。Redis 前置检查和按 Namespace 清理复用 Gateway 应用的 Spring 连接工厂，按测试类管理 Sentinel、不销毁应用连接。隔离故障 Gateway 保留唯一 `auto` Profile，通过 YAML 场景参数和动态关闭端口验证失败关闭；重复的手工连接故障测试收敛到现有真实 HTTP 故障 Suite。
+- **Local credential fix：** 已复现样例密码导致的 `WRONGPASS`，随后增加 `application-auto.yml` 对 Git 忽略的 `application-auto.local.yml` 的可选导入；固定配置仍由 Spring 加载，环境变量显式覆盖优先于本机 YAML。经核对现有 `mor-local` Redis 的容器身份及 `127.0.0.1:16379` 绑定，本次修复复用其现有凭据创建权限为 `0600` 的本机文件，不回显凭据、不读取 `.env.local`、不修改 Redis 密码/数据或启停容器。测试自身不查询 Docker 或解析环境文件；隔离故障场景仍只使用唯一 `auto` Profile 和 YAML 中的故障凭据。
+- **Verified：** 显式移除 `PAYTECH_REDIS_PASSWORD` 后，以 JDK 25/Maven 执行 20 个 Suite、249/249 项，0 failures/errors/skipped。覆盖 YAML 默认值/本机导入/覆盖优先级/故障隔离，真实 Redis 前置检查、应用连接工厂复用、Sentinel 清理、Token Bucket/Concurrency Lease，以及 Client API/PLT-I03 和 Operations 响应/Cookie 回归。Gateway 边界脚本通过，脚本测试 11/11，Requirements Site 136/136；本机凭据未进入 tracked diff 或本次验证日志。
+- **Remaining verification：** 本次解决本机 Redis 凭据阻塞，并完成上述相关回归；未重新执行全量 `clean verify` 或 JaCoCo 门禁。第 13 节的旧工作区全量失败与覆盖率记录仍是历史证据，不据此宣称最新工作区全量通过。IDE 使用同一测试资源导入机制，但本轮实际执行器为 Maven，未通过 IDEA UI 运行。
+- **Commit verification：** 仅包含本次测试配置修复的暂存树单独导出，以同一 Git 忽略的本机 YAML 验证，20 个 Suite、249/249 项及边界静态脚本通过；未夹带工作区 Risk 测试、Snapshot Fixture、BFF Simulator、Approved Target 或 Body ceiling 变更。凭据文件及其内容均未进入提交。
+- **Delivery / authority：** Gateway 调整已提交到 `api-gateway` 本地 `main`（`de05227`），公共规则和本节台账随配套文档提交沉淀；未推送或部署，未更改 Gateway 生产业务链或其他服务代码。公共规则依 [2026-09-08 决策](./decisions/2026-09-08-middleware-auto-test-configuration.md) 同步到 `UNIT_TEST_GUIDE.md`、本地环境说明及 Java 测试规则投影，其他系统未在本轮批量迁移。

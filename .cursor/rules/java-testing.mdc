@@ -7,6 +7,7 @@ alwaysApply: false
 # Java 测试边界
 
 - 先读取 `agent-docs/UNIT_TEST_GUIDE.md`；它是完整权威。
+- 涉及数据库、Redis 或 MQ 时启动被测服务/最小切片的 Spring 上下文，HTTP 测试同时启动随机端口服务；固定测试配置集中在 `application-auto.yml`，辅助类复用 Spring 管理的客户端，不直接读取环境变量或独立建默认连接。动态注入仅用于运行时端点、隔离标识和明确场景变量。
 - 优先用少量业务级场景验证公开入口到数据库/外部协议的完整生产链，不给每个内部类或方法机械创建孤立测试。
 - HTTP 链路经过真实 Controller、按需存在的 Processor、Domain Service、Repository/Mapper 和本地数据库；没有 Processor 的简单用例直接走 Controller → Domain Service。
 - 数据库、Redis、RabbitMQ 只复用开发者已启动的仓库 `local-environment`；测试不得使用 Flyway、Liquibase、Testcontainers，或创建、停止、重建容器。
