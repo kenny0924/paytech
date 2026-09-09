@@ -1,5 +1,9 @@
 # Commerce Client Checkout 结构简化实施计划
 
+> 2026-09-09 后继：本计划以“五阶段恢复不变”为前提的内容已由
+> [`2026-09-09-commerce-checkout-recovery-simplification.md`](../../../agent-docs/decisions/2026-09-09-commerce-checkout-recovery-simplification.md)
+> 取代，现行 Create Checkout 恢复检查点为 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`。下文旧术语仅保留为历史执行输入，其余结构重构与 HTTP 测试组织决定继续有效。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** 在不改变 Commerce Client Checkout 外部合同、五阶段恢复、数据库写入集合和错误语义的前提下，拆开当前聚合过多职责的类，统一应用模型，按项目约定使用 Lombok，并让 Checkout 业务测试只从真实 HTTP 入口覆盖生产链。

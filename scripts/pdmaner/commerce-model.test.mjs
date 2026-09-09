@@ -42,7 +42,7 @@ const artifactsReady = requiredArtifacts.every(existsSync);
 const expectedTemplateDigest =
   "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 const expectedModelDigest =
-  "14b8f53016b13ae023e48d20f2c1b8a54f30cacc2efdc7a52934116101ca8170";
+  "e5f0320b2806b95e9b584c14fa16443d492f96373a996e86ee7f74aa48f95999";
 const expectedStructuralDigest =
   "625f365cdda712936d3c4a2c76b7a5b4c1e26d5a348b6f7643f502030ad0c1b4";
 const idPattern =
@@ -293,7 +293,7 @@ request_hash_version INT NN
 request_snapshot_schema_version INT N
 request_snapshot_json JSON N
 operation_context_time DATETIME(6) NN
-recovery_stage VARCHAR(64) N {CLAIMED,AUTHORITIES_RESOLVED,ORDER_COMMITTED,PAYMENT_INTENT_CONFIRMED,PAYMENT_PENDING,REFUND_COMMITTED,PAYMENT_REFUND_BOUND,COMPLETED}
+recovery_stage VARCHAR(64) N {CLAIMED,ORDER_COMMITTED,PAYMENT_PENDING,REFUND_COMMITTED,PAYMENT_REFUND_BOUND,COMPLETED}
 process_status VARCHAR(64) NN {PROCESSING,SUCCEEDED,FAILED}
 resource_type VARCHAR(64) N OPEN
 resource_id BIGINT N
@@ -1052,7 +1052,7 @@ artifactTest("command recovery enums and bounded snapshots are frozen in field c
   assert.match(fields.get("process_status").comment, /允许值：PROCESSING、SUCCEEDED、FAILED。/u);
   assert.match(
     fields.get("recovery_stage").comment,
-    /允许值：CLAIMED、AUTHORITIES_RESOLVED、ORDER_COMMITTED、PAYMENT_INTENT_CONFIRMED、PAYMENT_PENDING、REFUND_COMMITTED、PAYMENT_REFUND_BOUND、COMPLETED。/u,
+    /允许值：CLAIMED、ORDER_COMMITTED、PAYMENT_PENDING、REFUND_COMMITTED、PAYMENT_REFUND_BOUND、COMPLETED。/u,
   );
   assert.match(fields.get("request_snapshot_json").comment, /最多 16 KiB UTF-8/u);
   assert.match(fields.get("response_body_json").comment, /最多 4 KiB UTF-8/u);

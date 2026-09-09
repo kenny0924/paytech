@@ -1,5 +1,9 @@
 # Commerce Client Checkout Local-Mock Slice Implementation Plan
 
+> 2026-09-09 后继：Create Checkout 的五阶段定义已由
+> [`2026-09-09-commerce-checkout-recovery-simplification.md`](../../../agent-docs/decisions/2026-09-09-commerce-checkout-recovery-simplification.md)
+> 收敛为 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`。下方 Step 2 的旧阶段文字仅保留为历史实施证据；Cancel、Create Refund 及其他 Wire/业务合同不受影响。
+
 > 2026-09-08 后继：Task 5 至 Task 7 的 Java 类职责划分和测试组织方式已由
 > [`2026-09-08-commerce-client-checkout-structure-simplification-design.md`](../specs/2026-09-08-commerce-client-checkout-structure-simplification-design.md)
 > 取代。既有 Wire、业务、数据库、幂等、恢复和安全合同继续有效；不得再按本计划为 Processor、Service 或 Repository

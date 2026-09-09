@@ -8,6 +8,7 @@
 - Scope: Commerce-owned Client Server M2M API for Hosted Checkout, Order, Cancel and Refund
 - Partially superseded sections: 第 2.1、2.2 节及第 17 节结论 2 中禁止外部 Java 契约模块、DTO 只落 Web 的部分由 [`2026-09-05-commerce-client-api-contract-module-design.md`](./2026-09-05-commerce-client-api-contract-module-design.md) 取代；其余 Wire 与业务语义继续有效
 - Error-contract supersession: 第 3.4 节 Request ID 通用格式及第 12 节 Problem `type/requestId/timestamp/errors` 形状由 [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](./2026-09-06-system-wide-rfc-9457-problem-details-design.md) 取代；本设计的 Commerce 业务 Code/Status 映射继续有效
+- Recovery-stage supersession: 第 5.5 节中 Create Checkout 的五阶段定义由 [`2026-09-09-commerce-checkout-recovery-simplification.md`](../../../agent-docs/decisions/2026-09-09-commerce-checkout-recovery-simplification.md) 取代，现行恢复检查点为 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`；Cancel 与 Create Refund 不变，下文旧阶段文字仅保留为历史设计证据
 
 本文冻结 Commerce 首个 Client API 的外部 Wire Contract、公开状态、命令幂等、Checkout Token、资金可用性投影、Webhook Payload、Route Manifest、模块落位和跨系统恢复语义。它不代表 Java、OpenAPI、PDManer、SQL、Gateway、Platform Webhook、Nginx 或部署已经完成。
 

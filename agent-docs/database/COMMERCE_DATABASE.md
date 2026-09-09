@@ -98,7 +98,7 @@ CreateOrder 必须原样冻结 CCT-I13 V5 的条件元组：PARTNER 来源时，
 
 Create Checkout、Cancel 和 Create Refund 在 Claim 时冻结请求 Hash、首次 `operation_context_time`、恢复阶段和稳定资源；Create Checkout/Refund 同时冻结各自 Request Snapshot。Create Checkout 的 Snapshot 保留 Client 是否显式提供 `expiresAt` 以及最终有效值；Create Refund 的 Snapshot 保留 Order、Client Refund ID、金额和原因。稳定创建结果冻结上表 Response 字段，使同 Key 重放不依赖后来可变状态或当前公共域名配置。Checkout 创建回执包含 Public Token URL，因此只供原命令恢复，不进入普通 Response Body 日志、MQ/Webhook 或通用审计 Payload。技术暂态和未决结果不得封存为永久失败。
 
-Recovery Stage 固定为：Create Checkout=`CLAIMED | AUTHORITIES_RESOLVED | ORDER_COMMITTED | PAYMENT_INTENT_CONFIRMED | COMPLETED`；Cancel=`CLAIMED | PAYMENT_PENDING | COMPLETED`；Create Refund=`CLAIMED | REFUND_COMMITTED | PAYMENT_REFUND_BOUND | COMPLETED`。`FAILED` 只保存稳定业务失败；依赖超时、网络未知和仍在处理的 Payment 保持 `PROCESSING`。
+Recovery Stage 固定为：Create Checkout=`CLAIMED | ORDER_COMMITTED | COMPLETED`；Cancel=`CLAIMED | PAYMENT_PENDING | COMPLETED`；Create Refund=`CLAIMED | REFUND_COMMITTED | PAYMENT_REFUND_BOUND | COMPLETED`。Create Checkout 的成功和稳定业务失败都进入 `COMPLETED`，由 `process_status=SUCCEEDED | FAILED` 区分结果；依赖超时、网络未知和仍在处理的 Payment 保持 `PROCESSING`。
 
 Refund Request 创建后为 `PENDING`，本地退款额度已预占；Commerce 本地预占成功后直接调用 PAY-I04，Payment 以自身 Refund Position CAS 创建 Channel Refund，Commerce 获得 `channel_refund_id` 后进入 `PROCESSING`。Payment Refund=UNKNOWN 只保留在 Payment 本地，Commerce Request 保持 PROCESSING、本地退款额度继续预占。Payment Refund=SUCCEEDED 同时通知 Commerce 与 Finance：Commerce 同事务消费本地退款额度并将 Request 置为 SUCCEEDED，即 `reserved_amount` 减少、`refunded_amount` 等额增加并写入 `completed_at`；Finance 独立按成功事实记账。Payment Refund=FAILED/CANCELLED 只通知 Commerce，Commerce 同事务释放本地退款额度并进入对应终态，即 `reserved_amount` 等额减少并写入 `status_reason_code + completed_at`。
 

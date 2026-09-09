@@ -2,6 +2,9 @@
 
 日期：2026-09-08
 状态：实施中；结构重构、HTTP 测试组织与 90% 覆盖率门禁已落盘，真实 MySQL HTTP 和覆盖率正向验收待完成；Owner 失败协议测试等待真实合同与 Simulator
+恢复阶段后继（2026-09-09）：本文关于 Create Checkout“五阶段保持不变”的内容已由
+[`2026-09-09-commerce-checkout-recovery-simplification.md`](../../../agent-docs/decisions/2026-09-09-commerce-checkout-recovery-simplification.md)
+取代，现行恢复检查点为 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`；本文旧阶段文字仅保留为本轮结构设计的历史输入，其余职责与测试组织决定继续有效。
 取代范围：仅取代
 [`2026-09-07-commerce-client-checkout-local-mock-slice.md`](../plans/2026-09-07-commerce-client-checkout-local-mock-slice.md)
 中 Task 5 至 Task 7 的 Java 类职责划分和测试组织方式。原计划及

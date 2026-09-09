@@ -258,7 +258,7 @@ export const CLOSED_ENUM_VALUES = Object.freeze({
   "consumer_acceptance.acceptance_type": Object.freeze(["CONSUMER_TERMS", "REFUND_POLICY", "PRIVACY_NOTICE"]),
   "refund_request.request_origin": Object.freeze(["CLIENT", "OPERATIONS"]),
   "refund_request.refund_status": Object.freeze(["PENDING", "PROCESSING", "SUCCEEDED", "FAILED", "CANCELLED"]),
-  "command_idempotency.recovery_stage": Object.freeze(["CLAIMED", "AUTHORITIES_RESOLVED", "ORDER_COMMITTED", "PAYMENT_INTENT_CONFIRMED", "PAYMENT_PENDING", "REFUND_COMMITTED", "PAYMENT_REFUND_BOUND", "COMPLETED"]),
+  "command_idempotency.recovery_stage": Object.freeze(["CLAIMED", "ORDER_COMMITTED", "PAYMENT_PENDING", "REFUND_COMMITTED", "PAYMENT_REFUND_BOUND", "COMPLETED"]),
   "command_idempotency.process_status": Object.freeze(["PROCESSING", "SUCCEEDED", "FAILED"]),
   "compensation_event.execute_status": Object.freeze(["INIT", "PROCESSING", "ERROR", "FAILED"]),
 });
