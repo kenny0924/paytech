@@ -89,6 +89,10 @@ Commerce Client API 的调用者是 Client 自己的服务端，不是 Consumer 
 - 新 Key 复用已有 `clientOrderId` 始终返回 `409 CLIENT_ORDER_ID_ALREADY_EXISTS`。
 - 新 Key 复用已有 `clientRefundId` 时，相同不可变退款内容返回原始 `201` 回执，不同内容返回 `409 CLIENT_REFUND_ID_CONFLICT`。
 - Cancel 对 Order 状态天然收敛；外部不接收 Expected Version，内部锁/CAS 不变。
+- 通用 Claim/Lease/CAS 与 `t_command_idempotency` Mapper/Repository 由按需引入的 Foundation
+  `paytech-command-idempotency` 实现；Commerce 仍拥有上述请求 Hash/Snapshot、Operation、恢复阶段、资源、响应、错误、
+  重放策略、本地表和事务编排。完整代码归属边界见
+  [`2026-09-09-foundation-command-idempotency.md`](./2026-09-09-foundation-command-idempotency.md)。
 
 ### D8. 状态与资金可用性
 

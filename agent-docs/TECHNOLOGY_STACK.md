@@ -1,6 +1,6 @@
 # Code-MoR 技术栈基线
 
-最后更新：2026-09-07
+最后更新：2026-09-09
 
 状态：Confirmed technology baseline。本文只定义产品、版本与技术边界；当前组件的实现、验证和部署状态统一见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
@@ -141,6 +141,7 @@ paytech-foundation/
 ├── paytech-http-client-support/
 ├── paytech-json-canonicalization/
 ├── paytech-mybatis-support/
+├── paytech-command-idempotency/
 ├── paytech-mvc-web-starter/
 ├── paytech-snowflake-id/
 ├── paytech-caffeine-starter/
@@ -149,7 +150,7 @@ paytech-foundation/
 └── paytech-compensation-event/
 ```
 
-已确认的 Foundation 基线共十一个模块；各模块当前是否已实现、验证、发布或部署只见状态台账。依赖方向固定为 `paytech-compensation-event -> paytech-mybatis-support -> paytech-common-core` 和 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；`paytech-http-client-support` 依赖 Common Core、HTTP Problem 与 Spring HTTP 能力但不自动发现业务接口，MVC Starter 依赖 HTTP Problem 实现统一错误输出。`paytech-json-canonicalization` 不依赖 Common Core 或 Spring，只由真实规范 bytes 消费者显式引入，不得经 Common Core、Starter、Compensation Event 或 API 契约传递给非消费者。公共 MyBatis 模块不依赖 Spring 或业务枚举，通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
+已确认的 Foundation 基线共十二个模块；各模块当前是否已实现、验证、发布或部署只见状态台账。依赖方向固定为 `paytech-compensation-event -> paytech-mybatis-support -> paytech-common-core`、`paytech-command-idempotency -> paytech-mybatis-support -> paytech-common-core` 和 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；`paytech-http-client-support` 依赖 Common Core、HTTP Problem 与 Spring HTTP 能力但不自动发现业务接口，MVC Starter 依赖 HTTP Problem 实现统一错误输出。`paytech-json-canonicalization` 不依赖 Common Core 或 Spring，只由真实规范 bytes 消费者显式引入，不得经 Common Core、Starter、Compensation Event、Command Idempotency 或 API 契约传递给非消费者。公共 MyBatis 模块不依赖 Spring 或业务枚举，通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
 
 ### 6.1 `paytech-common-core`
 
@@ -242,6 +243,17 @@ paytech-foundation/
 - 只依赖 Jackson Core 与 BOM 固定的 `io.github.erdtman:java-json-canonicalization`；不依赖 Common Core、Spring、Servlet、MVC、MyBatis、JDBC、Redis、MQ 或业务 artifact；
 - 只有真实生成规范 bytes 的消费者才直接引入；不得经 Common Core、Starter 或 API 契约传递给非消费服务；
 - 完整 API、Object/Number Profile、安全上限、向量、失败与升级合同见[Object Profile 决策](./decisions/2026-09-07-foundation-rfc-8785-json-object-profile.md)和[设计](../docs/superpowers/specs/2026-09-07-foundation-rfc-8785-json-canonicalization-design.md)。
+
+### 6.12 `paytech-command-idempotency`
+
+- 提供服务本地 `t_command_idempotency` 的 Claim、唯一 winner、Lease 续租/到期接管、Version CAS、恢复阶段推进和稳定成功/失败响应冻结；
+- 通过 `command-idempotency.enabled=true` 显式启用 MyBatis 自动配置，未依赖或未启用的服务不受影响；
+- Operation Type 与 Recovery Stage 只作为业务 Owner 提供的稳定字符串 Code 处理；Foundation 只拥有 `PROCESSING | SUCCEEDED | FAILED` 技术状态，不引用业务枚举、DTO 或错误码；
+- 查询可以在事务外执行；所有写操作必须加入宿主已经开启的本地可写事务，JAR 不创建 `TransactionTemplate`、不接收业务 Callback，也不执行远端调用或自动重试；
+- 每个服务继续只使用自己的数据库和本地表；不创建中央幂等服务、跨库查询、Redis 权威状态或 Gateway 业务编排；
+- Foundation 不计算 JCS/Hash，不定义 Snapshot/Response Schema，不解释恢复阶段顺序，也不拥有业务资源唯一键和重放策略；
+- 当前只批准 Commerce 接入；Risk、Platform Support 和其他系统必须在各自切片单独设计、验证并获授权后才能迁移；
+- 完整边界见[命令幂等能力决策](./decisions/2026-09-09-foundation-command-idempotency.md)。
 
 ## 7. Spring Web 与内部调用
 

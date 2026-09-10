@@ -1,6 +1,6 @@
 # Code-MoR 文档治理
 
-最后更新：2026-09-07
+最后更新：2026-09-09
 
 状态：Confirmed。本文定义文档权威、状态和维护方式，不定义业务事实。
 
@@ -32,6 +32,7 @@ Code-MoR 不再用“所有文档排成一条绝对优先级”的方式解决�
 | Java 模块、分层、包、HTTP API 和跨模块边界 | [`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) | 系统模块设计只记录本系统映射 |
 | 第一方 HTTP 4xx/5xx Problem Details、Request ID、错误时间、字段错误及 Gateway/BFF/内部 Client/Vault 传播 | [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md) 是完整合同；[决策记录](./decisions/2026-09-06-system-wide-rfc-9457-problem-details.md)冻结取代范围 | `DEVELOPMENT_CONVENTIONS.md` 与 `JAVA_PROJECT_STRUCTURE.md` 只投影 Java 开发规则；业务系统只拥有自己的 Code/Status；实现和迁移状态只写 `CURRENT_IMPLEMENTATION.md` |
 | Foundation RFC 8785 JSON Object Profile、规范 bytes、严格输入域与 Owner Hash/签名边界 | [Object Profile 决策](./decisions/2026-09-07-foundation-rfc-8785-json-object-profile.md)冻结窄范围；[完整设计](../docs/superpowers/specs/2026-09-07-foundation-rfc-8785-json-canonicalization-design.md)拥有 API、验证、上限、向量和升级合同 | `TECHNOLOGY_STACK.md` 只投影 Foundation 模块、依赖、版本与允许/禁止能力；业务 Owner 继续拥有 Projection、Hash Schema、存储、重放与签名语义；实现、验证、制品发布和部署状态只写 `CURRENT_IMPLEMENTATION.md` |
+| Foundation 服务本地命令幂等 Claim/Lease/CAS 与业务 Owner 边界 | [命令幂等能力决策](./decisions/2026-09-09-foundation-command-idempotency.md) | `TECHNOLOGY_STACK.md` 投影 JAR、依赖和启用边界；各业务 Owner 仍拥有请求 Hash/Snapshot、恢复阶段、错误、事务编排和本地数据库，当前实现、验证与迁移范围只写 `CURRENT_IMPLEMENTATION.md` |
 | Commerce 非运行 Client API Owner ingress 契约模块及 Java/OpenAPI 投影规则 | [契约模块决策](./decisions/2026-09-05-commerce-client-api-contract-module.md)、[设计](../docs/superpowers/specs/2026-09-05-commerce-client-api-contract-module-design.md)与[实施计划](../docs/superpowers/plans/2026-09-05-commerce-client-api-contract-module-implementation.md) | 仅拥有非运行 Java 模块、投影规则与实施顺序；原 Commerce Client API 决策/设计继续拥有其余业务和公共 wire 语义 |
 | Commerce Create Checkout 命令恢复检查点 | [恢复简化决策](./decisions/2026-09-09-commerce-checkout-recovery-simplification.md)与 [`COMMERCE_DATABASE.md`](./database/COMMERCE_DATABASE.md) | 只取代 Create Checkout 的旧五阶段表达；公共 Wire、Cancel/Create Refund 阶段与实现状态仍由各自 Owner 管理 |
 | 技术产品、版本和允许/禁止能力 | [`TECHNOLOGY_STACK.md`](./TECHNOLOGY_STACK.md) | README 记录实际启用值 |
@@ -104,7 +105,7 @@ Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实�
 
 2026-09-05 的 DataObject、Vault V1、Foundation 测试基础设施、Finance 手工缴税和历史治理决定见 [`decisions/2026-09-05-document-governance-and-conflict-resolution.md`](./decisions/2026-09-05-document-governance-and-conflict-resolution.md)。该记录是这些具体冲突的裁决来源。
 
-同日确认的 Superpowers 分阶段工作流与业务 Service/Domain Service 强制 `interface + *Impl` 见 [`decisions/2026-09-05-superpowers-and-service-interface-policy.md`](./decisions/2026-09-05-superpowers-and-service-interface-policy.md)。该决策只取代旧的 Agent 工作流指令和 Service 单实现例外；DataObject Owner-JAR 边界及其他既有决定继续有效。
+2026-09-05 建立并于 2026-09-08 修订的 Superpowers 显式授权规则，以及业务 Service/Domain Service 强制 `interface + *Impl`，见 [`decisions/2026-09-05-superpowers-and-service-interface-policy.md`](./decisions/2026-09-05-superpowers-and-service-interface-policy.md)。Superpowers 默认工作流已被“仅当前用户明确指定时使用”取代；Service 形态、DataObject Owner-JAR 边界及其他既有决定继续有效。
 
 同日确认的业务模块默认无直接依赖、稳定能力单向例外、Owner 合同边界与 `web` Processor 编排规则见 [`decisions/2026-09-05-business-module-collaboration-policy.md`](./decisions/2026-09-05-business-module-collaboration-policy.md)。[`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) 仍是这类 Java 模块协作语义的唯一现行权威，系统模块设计只做具体映射。
 
