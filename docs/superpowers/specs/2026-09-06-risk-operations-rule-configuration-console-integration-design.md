@@ -2,10 +2,10 @@
 
 - Status: Confirmed
 - Decision date: 2026-09-06
-- Implementation status: Not started
-- Deployment status: Not deployed
+- Implementation/deployment authority: [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md)
 - Scope: Operations Console 对 Risk `CHECKOUT_PREPARE` Rule Set、Freeze、TEST Candidate 和八项静态检查的端到端管理入口
 - Decision record: [`2026-09-06-risk-operations-rule-configuration-console-integration.md`](../../../agent-docs/decisions/2026-09-06-risk-operations-rule-configuration-console-integration.md)
+- Implementation plan: [`2026-09-07-risk-operations-rule-configuration-console-integration.md`](../plans/2026-09-07-risk-operations-rule-configuration-console-integration.md)
 
 > 本文是设计权威，不是实现或部署记录。当前源码、验证、数据库应用和环境状态只读
 > [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。
@@ -343,7 +343,9 @@ Route 只检查一个明确 Permission 的合同。
 ### 10.1 模块和类型
 
 Operations BFF 增加 `risk-api` 轻量依赖，但 Controller、Client Port 和 Service Model 不暴露 Owner DTO。
-`RiskDecisionConfigurationClientImpl` 是唯一 Owner DTO 转换位置。现有 `web + test` 模块足够，不新增空 API、
+`RiskDecisionConfigurationClientImpl` 是唯一读取 Owner DTO 字段并执行 Owner↔BFF 显式转换的位置。专用 Client
+配置和成功响应 Converter/Shape Validator 只可用准确 Owner `Class`/泛型 `Type` Token 登记及解码九个传输 Root，
+不得读取字段、建立浏览器投影或从除既有 typed Risk API Proxy 外的 Bean 签名泄漏 Owner 类型。现有 `web + test` 模块足够，不新增空 API、
 Domain Service 或持久化模块。
 
 Browser Wire 使用 BFF 自有的 V1 Model 名称。Rule Set List/Detail、Create/Freeze Rule Set、Candidate
@@ -442,7 +444,8 @@ Validate 从 DRAFT/version=1 发起，使用确定性 Key 和 `expectedVersion=1
 
 | 结果 | 页面行为 |
 |---|---|
-| 400 / Validation Error | 显示安全 Detail 和字段错误；保留表单 |
+| 400 | Malformed JSON、Header/Path/Query 或严格 Shape 错误；显示安全 Detail，保留表单 |
+| 422 / `VALIDATION_ERROR` | 合法 JSON 的字段语义错误；只显示经过校验的 `errors[]`，保留表单 |
 | 403 | 提示权限已变化并刷新 Navigation；不把按钮显隐当授权 |
 | 404 | 关闭过期详情，刷新相应列表 |
 | 409 | 保留编辑或命令上下文，要求人工刷新/确认 |
@@ -506,7 +509,7 @@ Envelope，使 65,537 Bytes 的正常边界请求能够到达 Gateway 并获得�
 - 完整版本流分页、最高 `versionNo` 推定、分页漂移 Fail-Closed、Head 变化 409，以及首次保存后 Rule Set Code
   只读；
 - Authoring Browser Model 不含 Handler 三字段，目录也不持有实现指纹；
-- 409 保留编辑、413 保留编辑、404 过期详情、5xx Request ID；
+- 409/413/422 保留编辑、422 清理旧命令 Key、404 过期详情、5xx Request ID；
 - Candidate DRAFT、待恢复 VALIDATING、八项通过、REJECTED 和不可达状态；
 - Validate Key 跨刷新可重建，且规则内容不进入任何浏览器持久存储或 Console；
 - Validate Header 与 `releaseId/expectedVersion` 不一致时客户端按安全错误显示，且不把该请求当成未知结果。
@@ -524,7 +527,7 @@ Envelope，使 65,537 Bytes 的正常边界请求能够到达 Gateway 并获得�
   精确校验，随机但格式合法、错误 Release ID 或错误 Expected Version 的 Key 都返回 400 且 Risk 零调用；
 - 未知字段、缺失 Null、非法 ID/Code/Enum/集合和损坏上游响应；
 - 无写重试、Redirect 拒绝和超时映射；直接 BFF 测试不断言 Gateway-owned 413；
-- 400/403/404/409/500/502/503/504 与 200 REJECTED；
+- 400/403/404/409/422/500/502/503/504 与 200 REJECTED；
 - Metadata-only 日志在成功、拒绝、超时和异常响应下都不包含策略内容。
 
 运行 JDK 25 `./mvnw clean verify`。
@@ -573,7 +576,7 @@ Nginx -> Gateway -> Operations BFF -> Platform PLT-I02 -> Risk
 - `requirements-site/content/global-use-case-sequences.mjs`：记录 Operations Rule Set/TEST Candidate 目标态全局序列；
 - Operations Web、BFF、Platform、Gateway、Risk 与 Test Environment README；
 - Risk 后端设计中已被本文取代的 1 MiB 建议和文档导航；
-- `CURRENT_IMPLEMENTATION.md`：只在对应代码和门禁真实完成后记录 Implemented/Verified；未部署继续明确标记。
+- `CURRENT_IMPLEMENTATION.md`：只在对应代码和门禁真实完成后记录 Implemented/Verified，并按实记录获授权的本地 `mor-test` SQL、部署与 Smoke 状态；共享/生产环境未部署继续明确标记。
 
 不得把设计批准、SQL 文件存在、本地测试通过或 Route 为 DISABLED 描述成环境已启用。
 
@@ -584,12 +587,16 @@ Nginx -> Gateway -> Operations BFF -> Platform PLT-I02 -> Risk
 
 未来获得单独部署授权后，顺序固定为：
 
-1. 部署现有 Risk 私有后端和已支持新接口的 BFF/Web；
-2. 部署支持 65,536 上限的 Platform/Gateway，以及 128 KiB Connector Envelope；
-3. 以 `DISABLED` 装载九条 Route，并验证 Platform Snapshot Revision/Fingerprint 与 Gateway Last Valid；
-4. 启用只读 Route，验证 PLT-I02、撤权和历史查询；
-5. 依次启用 Save、Freeze、Create Candidate、Validate Route 并只在 TEST 数据上 Smoke；
-6. 最后开放 Console Resource；失败时先隐藏资源，再禁用对应 Route，并确认所有 Gateway 实例回到预期 Snapshot。
+1. 只读验证 Risk 目录；空库时仅在明确授权下先应用 Owner Schema/DML，partial/drift 立即停止；
+2. 部署现有 Risk 私有后端和已支持新接口的 BFF/Web；
+3. 部署支持 65,536 上限的 Platform/Gateway，以及 128 KiB Connector Envelope；
+4. 以 `DISABLED` 装载九条 Route 和六个 Resource，验证 Platform 持久化目录完整；Platform Public Snapshot 与
+   Gateway Runtime Catalog 按既有编译合同只包含有效 ACTIVE Route，因此此时必须排除这九条 Route，而不是把
+   DISABLED 行误称为公开 Snapshot；无效后续 Snapshot 才保留整个 Last Valid 运行目录；
+5. 启用只读 Route，验证 PLT-I02、撤权和历史查询；
+6. 依次启用 Save、Freeze、Create Candidate、Validate Route 并只在 TEST 数据上 Smoke；
+7. 最后开放 Console Resource；失败时先隐藏资源，再禁用对应 Route，并确认所有 Gateway 实例采用新的合法回滚
+   Snapshot。只有编译/拉取失败继续使用旧目录时才标记 Last Valid in use。
 
 该顺序不授权实施 Shadow、生产激活或真实 Checkout 风控执行。
 
@@ -604,4 +611,4 @@ Nginx -> Gateway -> Operations BFF -> Platform PLT-I02 -> Risk
 5. BFF 不拥有 Risk 业务语义或持久状态，Gateway 不直达 Risk；
 6. 规则内容不进入浏览器持久存储、普通日志、错误详情、URL 或遥测；
 7. Web、BFF、Platform、Gateway、Risk 和 Requirements 的实际门禁结果均已记录，既有失败单独归因；
-8. `CURRENT_IMPLEMENTATION.md` 只陈述实际完成和验证范围，并继续标记未部署、未 Shadow、未激活和未运行期评估。
+8. `CURRENT_IMPLEMENTATION.md` 只陈述实际完成和验证范围，按实区分本地 `mor-test` 状态与共享/生产状态，并继续标记共享/生产未部署、未 Shadow、未激活和未运行期评估。
