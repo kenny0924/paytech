@@ -2,7 +2,7 @@
 
 独立的本机 `mor-test` 环境。沿用 `local-environment` 的 MySQL 8.4.11、Redis 8.2.1、RabbitMQ 4.2.9、Nacos 3.1.2 与同一套基础设施初始化脚本，另外部署 Operations 前端、BFF、API Gateway、Platform Support。可与 `mor-local` 同时运行；不会读取其 `.env.local`、共享数据卷或停止其容器。
 
-本目录由根工作区版本管理，前端和各 Java 项目继续独立版本管理。只有已实现的 Operations 链路被部署，其他核心系统/Vault 不创建空应用容器。可选 scheduler 配置与 local 一致，本轮没有启动 XXL-Job。
+本目录由根工作区版本管理，前端和各服务项目继续独立版本管理。已部署 Operations 链路与独立的 Go Vault，其他核心系统不创建空应用容器。可选 scheduler 配置与 local 一致，没有启动 XXL-Job。
 
 ## 当前入口与账号
 
@@ -24,41 +24,105 @@
 
 基础设施密码位于不提交的 `.env.test`；Nacos 管理账号 `nacos`，应用只使用 Namespace `mor-test` 下授权的 `mor-test-services`。RabbitMQ 使用 `mor_test` / `/mor-test`。所有端口只绑定 `127.0.0.1`，Java 应用和静态前端没有宿主机端口映射。
 
+## Vault test 部署
+
+2026-09-04 已新增 `mor-test-vault-service-1`：Go 1.27.1、LOCAL AES、MySQL 三表与真实 Nacos 注册。
+内部地址为 `http://vault-service:18107`，Nacos 为 `mor-test / DEFAULT_GROUP / vault-service`，实例
+`172.30.73.24:18107`。只连接 backend 网络，没有宿主机端口或 Gateway/Nginx 路由；浏览器不能直接调用。
+
+```text
+POST /vault/v1/records/protect
+POST /vault/v1/records/reveal
+```
+
+本次只部署 Vault，不替换 Platform 的 Vault Mock、不接生产 KMS、不发布 Java Client 到制品库。
+当前 [test policy](vault/policy.json) 只允许 `vault-test-smoke` / `vault-test-peer` 的合成测试值；
+`TEST_STABLE_V1` / `TEST_REFERENCE_V1` 不是业务数据类型。真实业务接入需另行定义其类型、调用者和用途授权。
+
+单独准备或更新 Vault，不运行全应用构建脚本：
+
+```sh
+# 只生成缺失的独立 test AES 材料；已有材料保留，库已存在但 Key 丢失时拒绝生成替代 Key。
+python3 test-environment/scripts/vault.py prepare
+
+# 显式操作员动作：先审阅 vault-service/docs/database/sql/vault-schema.sql。
+# 仅空 mor-test/mor_vault 应用三条 CREATE TABLE；已有三表不重放，部分结构拒绝。
+python3 test-environment/scripts/vault.py initialize
+
+GO_BIN=/path/to/prepared/go1.27.1/bin/go ./test-environment/scripts/build-vault.sh
+./test-environment/compose.sh up -d --no-deps --no-build --wait --wait-timeout 90 vault-service
+python3 test-environment/scripts/vault.py smoke
+```
+
+构建仅使用已缓存依赖离线编译 Linux ARM64 静态二进制，再封装为 scratch 镜像，不下载基础镜像或修改 Go 服务。
+容器以 `10001:10001` 运行，只读根目录、移除 Capabilities，SDK 临时文件限定在 64 MiB `/tmp` tmpfs。
+无 Collector 时关闭 OTLP 导出；`/metrics` 与健康端点仍仅在内网可用。
+
+`private/vault.env` 是 `0600` 文件，父目录 `0700`，只在运行时注入独立随机 AES Root/Key ID；不进 Git、
+镜像或 Nacos Config。重建、重启不得重新生成或轮换这些值，应与 test 数据库一起安全备份。
+Compose 对该 env 文件使用可选读取，仅为了未准备 Vault 时仍可操作既有环境；缺失时 Vault 自身拒绝启动，
+不会使用默认密钥。`.env.test` 继续提供已有 test `vault_app` 与 Nacos 应用凭据，绝不读取 `.env.local`。
+
+三表 SQL 沿用服务权威，SHA-256：`bd18057813f213b08061d68cad188940217e928aee14583fdbeacbf839ad37f6`。
+DDL 不在启动流程中执行，无初始化 DML 或业务数据迁移。需要撤回本部署时，只执行
+`./test-environment/compose.sh stop vault-service`，保留三表、AES 材料和镜像供恢复；不要删表、删 Key 或删除卷。
+
+烟测通过真实 Docker 内网 HTTP 调用（复用现有 Platform 容器的 curl 作为探针，不修改其应用），验证健康、
+Nacos 唯一实例、STABLE 跨调用方收敛、幂等重放与冲突、REFERENCE 独立 Token、Reveal、权限拒绝、旧 URL 404、
+审计落库和敏感日志扫描。Vault 单独重启后历史 STABLE Token 不变，既有数据仍能解密；本任务未重建或重启其他容器。
+合成测试记录与审计保留在 test Vault，不清表、不运行 Bootstrap。
+独立密钥准备的 3 项离线测试、健康探针的 200/503/302/204/超时/连接失败检查与需求站 123 项测试通过。
+部署烟测不替代完整 Go/Java 自动门禁、Java Nacos LoadBalancer 专项 manual 测试或 PDManer 人工评审。
+
 ## 日常操作
 
 从工作区根目录运行：
 
 ```sh
 ./test-environment/compose.sh ps
-./test-environment/compose.sh up -d --wait --wait-timeout 240
 ./test-environment/compose.sh down
 ```
 
-`down` 保留 MySQL、Redis、RabbitMQ 数据卷；不要添加 `-v`，不要使用 Docker 全局 prune。首次初始化见下一节；普通重启不会重新运行业务 Schema、初始化目录或 Bootstrap。`compose.sh` 将 `.env.test` 的字面值优先注入 Compose，防止终端里导出的 local 密码覆盖 test 配置。不要把包含秘密的 `compose config` 完整输出写入日志；验证使用 `config --quiet`。
+不要用无服务参数的 `compose.sh up` 更新 Operations 链路；应使用下面两个显式部署阶段，Vault 继续使用上一节的独立流程。无服务参数的 `down` 会停止完整环境，但保留 MySQL、Redis、RabbitMQ 数据卷；不要添加 `-v`，不要使用 Docker 全局 prune。首次初始化见下一节；普通重启不会重新运行业务 Schema、初始化目录或 Bootstrap。`compose.sh` 将 `.env.test` 的字面值优先注入 Compose，防止终端里导出的 local 密码覆盖 test 配置。不要把包含秘密的 `compose config` 完整输出写入日志；验证使用 `config --quiet`。
 
 更新应用代码后：
 
 ```sh
-JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home \
-  ./test-environment/scripts/build.sh
-./test-environment/compose.sh up -d --wait --wait-timeout 240
-python3 test-environment/scripts/smoke.py
+./test-environment/deploy.sh --phase risk-bff-web
+./test-environment/deploy.sh --skip-build --phase platform-gateway-nginx
 ```
 
-构建使用本机 JDK 25、Maven Wrapper、既有私密 Maven Settings 和 Node/npm，按 Build → Foundation → Platform API/Web → Gateway/BFF → 前端顺序执行。Docker 只 COPY 可执行 JAR 或构建后的 `dist`，不会把 Maven Settings、源码工作区或运行秘密复制进镜像。脚本使用 `-DskipTests` 打包；这不是完整 Maven `verify` 或覆盖率验收。
+第一条命令先构建已审阅镜像，等待 MySQL、Redis、RabbitMQ、Nacos 健康，再依次只替换 Risk、BFF、Web；本阶段不执行公开烟测。只有第一条命令成功后才能运行第二条；任一命令中的第一处失败都立即停止，不继续替换后续服务。第二条命令依次只替换 Platform、Nginx、Gateway，全部健康后执行一次现有公开烟测。六个应用更新都使用 `--force-recreate`，保证实际进程加载当前镜像和只读挂载配置；Operations 的两个 API location 都由 Nginx 覆盖写入单值 `X-Entry-Channel: OPERATIONS`，不信任调用方同名 Header，并且先于强制 Channel 的 Gateway 更新。`--phase` 对正常、`--skip-build` 和 `--check-only` 都是必填参数；`--timeout <秒>` 调整默认 240 秒的健康等待时间。健康端点只证明进程状态，不证明 Risk 数据目录已经准备完成。
+
+第一阶段要求已经存在且只能存在一个 Compose-owned `mor-test` MySQL 容器；基础设施启动前后必须是同一个
+no-trunc container ID。MySQL、Redis、RabbitMQ 使用 `--no-recreate --no-build --pull never`，Nacos 才单独使用
+`--no-deps --no-build --pull never` 进入获准的配置驱动替换。MySQL 缺失、多实例或 ID 改变都会在任何应用容器更新前
+失败；部署脚本不会为本流程新建或替换 MySQL 容器或 `mor-test-mysql-data`。
+
+两个阶段通过持久检查点 `private/risk-bff-web-phase.ready` 关联。第一阶段先使旧证据失效，只有本阶段全部成功后，
+才以 `0600` 发布 Nacos、Risk、Platform、Gateway、BFF、Web 六个经审阅本地镜像的精确 image ID，不包含 Nginx 或 Vault。
+第二阶段在任何服务替换之前校验检查点，
+缺失、不安全或与当前六个镜像不符的过期证据都会立即拒绝；不能单独运行第二阶段，也不能用旧检查点跳过第一阶段。
+
+脚本面向已经完成首次准备的 `mor-test`，不会运行 Schema、初始化 DML、增量 SQL 或 Bootstrap，也不会更新独立 Vault。Vault 继续使用上一节的显式流程。构建使用本机 JDK 25、Maven Wrapper、既有私密 Maven Settings 和 Node/npm，按 Build → Foundation → Risk（随即复制可执行 JAR）→ Platform → Gateway → BFF → Web → 其余制品复制顺序执行。Risk 只加入 backend 网络，没有宿主机端口、Gateway/Nginx 路由或 Web/ingress 网络。第二阶段的现有烟测不会修改 Platform 目录或核心业务事实；其登录、Refresh、Logout 和忽略目录中的 `private/access.md` 更新保持原有行为。Docker 只 COPY 可执行 JAR 或构建后的 `dist`，不会把 Maven Settings、源码工作区或运行秘密复制进镜像。脚本使用 `-DskipTests` 打包；部署烟测不是完整 Maven `verify` 或覆盖率验收。
 
 ## 首次准备（已在当前机器执行）
 
 ```sh
 JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home \
   python3 test-environment/scripts/prepare.py
-JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home \
-  ./test-environment/scripts/build.sh
 ./test-environment/compose.sh up -d --wait --wait-timeout 240 mysql redis rabbitmq nacos
 
 # 显式操作员动作：先审阅服务拥有的 Schema/DML 和生成的 private/bootstrap.sql。
-python3 test-environment/scripts/initialize.py --apply-platform-sql --nacos
-./test-environment/compose.sh up -d --wait --wait-timeout 240
+python3 test-environment/scripts/initialize.py --apply-platform-sql
+python3 test-environment/scripts/initialize.py --nacos
+
+# Risk 目录建表/初始化和只读检查属于下游受审步骤；仅当检查明确返回 PREPARED 后继续。
+# PREPARED 之前必须停止，不得启动任何应用服务。
+python3 test-environment/scripts/initialize.py --apply-risk-sql
+python3 test-environment/scripts/initialize.py --verify-risk-catalog
+./test-environment/deploy.sh --phase risk-bff-web
+./test-environment/deploy.sh --skip-build --phase platform-gateway-nginx
 
 # 仅首次显式完成 test Bootstrap 与首管理员改密；它会写真实 test 业务数据和审计。
 python3 test-environment/scripts/smoke.py --complete-bootstrap
@@ -81,7 +145,8 @@ Bootstrap 离线工具只生成 Argon2id PHC 和真实公钥 SQL，不连接数�
 
 菜单调整为“系统管理 > 人员管理、角色管理、审计日志”。增量文件为
 [`sql/2026-09-04-operations-system-menu.sql`](sql/2026-09-04-operations-system-menu.sql)，由操作员审阅后单独应用。
-本机 `mor-test` 已于 2026-09-04 执行。不要重跑 `initialize.py`、当前初始化 DML 或 Bootstrap。
+本机 `mor-test` 已于 2026-09-04 执行。不要重跑旧的 Platform/Nacos 首次变更动作、当前初始化 DML 或 Bootstrap；
+`initialize.py --verify-risk-catalog` 是只读检查，可在不改变状态的前提下单独运行。
 
 该 SQL 使用 UTF-8 和一个显式事务，新增无页面/组件的父菜单、角色列表页面及父菜单可见权限
 `OPERATIONS_SYSTEM_READ`，只把该权限授予现有 `PLATFORM_ADMIN` 与 `OPERATIONS_VIEWER`。人员、角色和审计页面
@@ -148,7 +213,7 @@ Platform 数据库 auto 测试源码已更新并编译，但缺少 local-environ
 
 ## 公共异常与提示更新
 
-2026-09-04 已重建并部署 Platform Support、Operations BFF 与前端，使用 Foundation 的公共业务、参数、并发与系统异常。无需数据库增量或重新初始化；现有账号、密钥和路由目录保留。烟测增加非法分页返回 `INVALID_REQUEST`，以及同密码修改返回 `BUSINESS_CHECK_FAILED` / “新密码不能与当前密码相同”；随后仍验证 Refresh 轮换和退出。
+2026-09-04 已重建并部署 Platform Support、Operations BFF 与前端，使用 Foundation 的公共业务、参数、并发与系统异常。无需数据库增量或重新初始化；现有账号、密钥和路由目录保留。烟测增加非法分页返回 `INVALID_REQUEST`，以及同密码修改经 BFF 安全重建后返回 `BUSINESS_CHECK_FAILED` / “业务校验未通过”；不向浏览器透出 Platform 内部细节。这些反例和退出后的 Refresh 拒绝均验证当前 RFC 9457 Problem 媒体类型、Header/Body Request ID 一致性、六位 UTC 时间和已确认错误码；随后仍验证 Refresh 轮换和退出。
 
 同日进一步将出站异常处理集中到 `paytech-http-client-support`，测试构建脚本已安装该模块。BFF 经共享客户端处理网络、HTTP 状态与错误体，业务方法直接调用注入的 API；143 项公共模块及 134 项 BFF 回归通过，更新 BFF 后上述烟测再次通过。
 
@@ -336,6 +401,299 @@ Custom 展开双端日期时间，要求完整且结束晚于开始。选择与�
 78 项前端测试与生产构建通过。独立浏览器在 Asia/Dubai 验证三种快捷范围的精确 UTC 边界、自定义双端及倒序校验、
 Enter 键、重置、390px 两列快捷项和纵向自定义框；无页面或弹层溢出、无未捕获异常。`/audit` 与 8 个静态资源
 和构建逐字一致，入口 `index-XH4weB_J.js`。10 个 test 容器健康，仅前端容器更新；无 SQL 或后端变更。
+
+## Risk Operations 手工目录与离线门禁（Task 5）
+
+以下入口每次只接受一个动作。先只读核对已持久化的 Platform 目录：
+
+```bash
+python3 test-environment/scripts/initialize.py --verify-risk-operations-stage
+```
+
+只在人工审阅并获准应用既有环境目录增量时执行：
+
+```bash
+python3 test-environment/scripts/initialize.py --apply-risk-operations-sql
+```
+
+[`禁用态目录增量`](sql/2026-09-07-risk-operations-rule-configuration.sql)仅接受完整的历史目录，
+或已经完整准备好的新目录；任何部分准备、孤立子项、错误 ID、大小写、空格、NULL 或不可变内容漂移均停止。
+历史目录只允许当前初始化目录，或本文件已记录的 2026-09-04 操作权限拆分完整形态：旧 Permission `521/525`
+保持 `INACTIVE`、旧 Grant `531/539` 保持 `REVOKED`，且 `570..574` 被整组替换为同业务授权的
+`7001..7005`；不接受两种血统混搭或任意额外历史行。Risk Permission 完整建立后，普通非系统角色可使用非保留
+Grant ID 获授 Risk 权限；系统角色的六个预置 Grant 与 `581..586` 保留 ID 仍逐项精确校验。
+首次应用新增五个 ACTIVE Permission、六个 ACTIVE Role Grant、六个 DISABLED Resource、九个 DISABLED Route，
+以及精确 Header/Query/Guard 子项；报告 Operations 阶段 `BASELINE`。已经完整准备的目录只做只读验证，
+保留当前 Route/Resource 状态；这里的 Operations 阶段与 Risk 数据库目录的 `PREPARED` 是两个不同概念。
+
+Route 发布收敛后，只有九个 Risk Route 全部 ACTIVE 才能显式公开六个 Resource：
+
+```bash
+python3 test-environment/scripts/initialize.py --enable-risk-operations-resources
+```
+
+回滚必须先隐藏 Resource，再按已审阅的 Route 回滚步骤操作：
+
+```bash
+python3 test-environment/scripts/initialize.py --disable-risk-operations-resources
+```
+
+[`Resource enable SQL`](sql/2026-09-07-risk-operations-rule-configuration-resources-enable.sql) 与
+[`Resource disable SQL`](sql/2026-09-07-risk-operations-rule-configuration-resources-disable.sql)
+分别独立锁定并逐字段检查完整行；只接受六项全 ACTIVE 或全 DISABLED，每次实际状态变化递增一次版本，
+重复执行不更新。Disable 不要求 Route 状态，因此可以作为回滚第一步。三个文件只有事务 DML，
+不创建 Schema、不删除数据、不写 Bootstrap；MySQL batch 遇错停止且禁用自动重连。
+
+所有本机 Platform 目录、Resource 和后续 Route 发布操作共用
+`test-environment/private/risk-operations-rollout.lock`。它是持久、不可 unlink、0600 的普通文件，
+以非阻塞 `fcntl.flock` 获取；竞争或不安全文件立即停止。同一个描述符覆盖权威前读、SQL/HTTP 变更及后读。
+该锁只协调遵守此流程的本机操作者；SQL 自身仍使用数据库行锁、精确前置与提交前后置断言。
+不要手工删除锁文件来绕过竞争。只读阶段查询和默认 smoke 不获取写锁。
+
+默认 [`smoke.py`](scripts/smoke.py) 先读取同一个只读一致快照验证器，以数据库 ACTIVE Resource 投影为权威，
+再核对管理员 Navigation，并完整分页核对 HTTP Route 状态：`LEGACY` 为 15 项导航/27 条 Route；
+准备后隐藏阶段为 15/36；只有 `RESOURCES_EXPOSED` 为 21/36。分页总数变化、重复、漏项、状态或导航不一致均失败。
+脚本输出一个闭合 Operations 阶段；既有登录/刷新/退出和私有登录说明保留，不自动应用目录或修改 Risk 业务事实。
+`Browser` 保留对象请求 API，并提供 `request_raw` 发送原始 JSON bytes；只接受明确的 loopback HTTP origin 和端口。
+
+Snapshot waiter 不依赖 Java 运行镜像中并不存在的 `curl`。构建会把 JDK 25 编译的
+`LocalSnapshotEvidenceFetch` 与 readiness probe 一起复制到 `/app/health-probe`；waiter 通过固定 argv 在
+`api-gateway` 内执行它。Java helper 与 Python 调用方分别只允许本机 Gateway Prometheus 和内部 Platform
+Public Snapshot 两个完整 URL；请求固定 GET、禁止重定向、仅接受 2xx，并在 JDK HTTP body subscriber、Python
+bytes 边界同时限制为 1 MiB，随后严格解码 UTF-8。失败时不输出响应或子进程 stderr，且外层 subprocess timeout
+始终不大于当前 monotonic deadline 的剩余时间。共享 Java 镜像不会为此恢复包安装、`RUN` 或远程 `ADD`。
+
+离线验证（不访问 MySQL、网络或真实私有凭据）：
+
+```bash
+python3 test-environment/scripts/test_risk_rule_configuration_catalog.py
+python3 test-environment/scripts/test_risk_database_initialization.py
+python3 test-environment/scripts/test_smoke_stage_contract.py
+python3 test-environment/scripts/test_gateway_snapshot_wait.py
+python3 test-environment/scripts/test_java_image_health_probe.py
+python3 -m unittest discover -s test-environment/scripts -p 'test_*.py'
+```
+
+本节提供源码与离线验证入口，不表示 SQL 已应用或服务已部署。Compose、build、deploy 和应用启动均不选择上述写动作。
+
+## Risk Operations 显式动作手册（Task 6）
+
+下面 12 个动作全部是单次、显式、opt-in 的操作员入口；`deploy.sh`、默认 `smoke.py`、Compose 和应用启动
+不会自动调用它们，也不会自动清理失败现场。所有命令只接受明确的 loopback HTTP origin。除 Snapshot waiter
+外，HTTP 动作都会登录并退出；即使业务读取不变，也会产生 Session、安全审计和 Guard 计数影响，因此执行前
+必须获得覆盖这些影响的授权。命令只输出固定结果或闭合阶段；出现失败、超时、漂移或
+`UNKNOWN_REQUIRES_RECONCILIATION` 时立即停在当前步骤，不凭报错正文猜测结果。
+
+九条 Route 的唯一相邻阶段如下。`--activate-route` 只能从左侧到右侧，`--disable-route` 和恢复动作只能从右侧
+回到左侧；只要六个 Risk Resource 已公开，就必须先执行 Resource disable SQL。
+
+| Route code | 前置阶段 → 成功阶段 | 对应 route smoke |
+|---|---|---|
+| `operations-risk-rule-authoring-context` | `BASELINE → AUTHORING_READ_ACTIVE` | 只读 |
+| `operations-risk-rule-set-list` | `AUTHORING_READ_ACTIVE → RULE_SET_LIST_READ_ACTIVE` | 只读 |
+| `operations-risk-rule-set-detail` | `RULE_SET_LIST_READ_ACTIVE → RULE_SET_DETAIL_READ_ACTIVE` | 只读 404 区分 |
+| `operations-risk-test-candidate-list` | `RULE_SET_DETAIL_READ_ACTIVE → CANDIDATE_LIST_READ_ACTIVE` | 只读 |
+| `operations-risk-test-candidate-detail` | `CANDIDATE_LIST_READ_ACTIVE → READ_ACTIVE` | 只读 404 区分 |
+| `operations-risk-rule-set-save` | `READ_ACTIVE → SAVE_ACTIVE` | 创建不可变 Rule Set 版本 |
+| `operations-risk-rule-set-freeze` | `SAVE_ACTIVE → FREEZE_ACTIVE` | 创建并冻结不可变 Rule Set 版本 |
+| `operations-risk-test-candidate-create` | `FREEZE_ACTIVE → CREATE_ACTIVE` | 创建冻结版本和 TEST Candidate |
+| `operations-risk-test-candidate-validate` | `CREATE_ACTIVE → ALL_ROUTES_ACTIVE` | 创建并校验 TEST Candidate，同 key 重放 |
+
+### Smoke 1：准备授权夹具
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_smoke.py \
+  --base-url http://localhost:28080 --prepare-authorization-fixture
+```
+
+- 前置阶段：Platform 目录和链路可用，持久化目录处于已准备好 36 条 Route 的
+  `BASELINE` 至 `RESOURCES_EXPOSED` 任一闭合阶段；27 条 Route 的 `LEGACY` 不属于本入口。
+- 写入范围：只创建或核对当前随机代次的两个 synthetic Role、Account、Tenant membership、独立密码及
+  `private/risk-rule-configuration-smoke.json`。文件中的 12 位大写十六进制 `fixtureGeneration` 会派生 Role code
+  后缀和 Account email 后缀，避免已软删除历史记录的唯一键冲突；不创建 Permission，不改变 Route、Resource
+  或 Risk 业务事实。
+- 成功证据：仅输出 `PREPARE_AUTHORIZATION_FIXTURE_OK`，文件父目录为 `0700`、文件为 `0600`。
+- 失败停点：夹具任何部分状态不精确即停止，不执行后续授权或 Route 动作。
+- 重跑/对账：从同一私有文件读取当前代次，按派生角色码和登录 Context 对账；只在状态已确认后重跑同一命令，
+  失败后不会自动 cleanup。旧四密码格式文件在不存在 ACTIVE legacy fixture Role 时会原子补入代次。
+- 登录限流恢复：同一条夹具命令中的管理员和 synthetic 账号登录共享一个 90 秒 monotonic deadline，中间的权威观察
+  和不同账号登录都不会重置它。每个登录只会在收到严格 RFC 9457 `429 GATEWAY_RATE_LIMITED`、单值规范且不超过
+  60 秒的 `Retry-After` 后重试一次，等待 `max(Retry-After, 6 秒)`；多个不同登录可能分别等待。
+  `401` 是正常的账号发现结果，不重试；`GATEWAY_CONCURRENCY_LIMITED`、其他 429、异常 Header、第二次 429 或传输结果未知都会立即停止。
+
+### Smoke 2：授予五项 Risk 权限
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_smoke.py \
+  --base-url http://localhost:28080 --grant-authorization-fixture
+```
+
+- 前置阶段：精确为 `ALL_ROUTES_ACTIVE` 或 `RESOURCES_EXPOSED`，且准备动作已成功。
+- 写入范围：只把 authorized synthetic Role 更新为 `OPERATIONS_SYSTEM_READ + 536..540`；denied Role 保持 legacy-only。
+- 成功证据：新登录的两个账号分别证明授权和拒绝，最后仅输出 `GRANT_AUTHORIZATION_FIXTURE_OK`。
+- 失败停点：权限、Role 或 Account 关系不精确即停止，不公开 Resource。
+- 重跑/对账：重新发现两个 Role/Account 并确认权限全集；对账完成后该动作可幂等重跑。
+
+### Smoke 3：探测 Gateway 实际运行阶段
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_smoke.py \
+  --base-url http://localhost:28080 --probe-runtime-stage EXPECTED_RUNTIME_STAGE
+```
+
+仅在 Snapshot waiter 已证明 invalid-refresh Last Valid 坐标后，使用下面的相邻差异形式：
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_smoke.py \
+  --base-url http://localhost:28080 --probe-runtime-stage PRIOR_STAGE \
+  --expected-persisted-stage NEXT_STAGE
+```
+
+- 前置阶段：默认要求持久化阶段等于运行阶段；差异形式只允许持久化相邻下一阶段、运行相邻上一阶段且 Resource 隐藏。
+  `BASELINE` 只使用 repository test Platform Administrator，不要求 synthetic identity；
+  `AUTHORING_READ_ACTIVE` 至 `ALL_ROUTES_ACTIVE` 使用管理员作为 authorized actor 和 synthetic denied actor；
+  `RESOURCES_EXPOSED` 由 synthetic authorized/denied 两个 actor 验证，且前者必须看到精确 Risk Navigation。
+- 写入范围：不改变 Platform/Risk 业务数据；仅有登录、Session、安全审计和 Guard 影响。
+- 成功证据：所有已启用 Route 行为及下一条未启用 Route 都符合预期，仅输出 `PROBE_RUNTIME_STAGE_OK`。
+- 失败停点：阶段、Navigation、权限或行为任一不一致即停止，禁止继续下一个 Route mutation。
+- 重跑/对账：重新运行对应 Snapshot waiter，再用明确的 persisted/runtime 阶段重跑；不得省略行为证据。
+
+### Smoke 4：聚合验证五条读 Route
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_smoke.py \
+  --base-url http://localhost:28080 --read-stage
+```
+
+- 前置阶段：`READ_ACTIVE` 或其后的闭合阶段，两个 synthetic 夹具均已准备且可重新发现；
+  repository test Platform Administrator 作为 authorized actor，另用 synthetic denied actor 验证 403。
+- 写入范围：不创建 Risk 业务事实；只有登录、Session、安全审计和 Guard 影响。
+- 成功证据：五条读 Route 的 Owner/404/denied-403 契约全部成立，仅输出 `READ_STAGE_OK`。
+- 失败停点：任何一条不一致都停止，不启用 Save。
+- 重跑/对账：先重做阶段检查和 runtime probe，再重跑本动作。
+
+### Smoke 5：验证刚启用的一条 Route
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_smoke.py \
+  --base-url http://localhost:28080 --route-smoke ROUTE_CODE
+```
+
+- 前置阶段：必须精确等于上表中该 Route 的成功阶段，两个 synthetic 夹具均已准备且可重新发现；不能在更晚阶段补跑。
+- 写入范围：repository test Platform Administrator 作为 authorized actor，synthetic denied actor 验证 403；前五条 Route
+  只读，Save/Freeze/Create/Validate 会创建唯一命名的不可变 Risk synthetic facts，且永不自动删除；
+  不可变 Risk facts 的审计 actor 是该管理员。
+- 成功证据：authorized 与 denied 结果都符合该 Route 的精确契约，仅输出 `ROUTE_SMOKE_OK`。
+- 失败停点：停止发布；即使失败也不得假设已创建事实不存在。
+- 重跑/对账：读动作可在同阶段重跑；写动作先按唯一 code/ID 和 idempotency 结果对账，再决定重跑或执行 recovery。
+
+### Smoke 6：完整可见链路与 64 KiB 边界
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_smoke.py \
+  --base-url http://localhost:28080 --full
+```
+
+- 前置阶段：精确 `RESOURCES_EXPOSED`，authorized Role 是五项 Risk 权限全集，denied Role 仍为 legacy-only。
+- 写入范围：创建唯一命名的不可变 Risk synthetic facts；临时撤销并恢复 authorized Role 的 read 权限；发送精确
+  65,536-byte 成功体和另一个 65,537-byte 拒绝体；不会删除此前事实。
+- 成功证据：Navigation、权限分离、完整读写链、同 key replay、413 RFC 9457 和唯一 Nacos 实例全部成立，输出 `FULL_OK`。
+- 失败停点：立即停止验收；保留已产生事实，权限恢复结果必须单独对账。
+- 重跑/对账：先核对 Role 权限及唯一 Rule Set code，再使用新一轮唯一 code 重跑，不能把重复事实当作清理目标。
+
+### Smoke 7：清理 synthetic IAM 夹具
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_smoke.py \
+  --base-url http://localhost:28080 --cleanup-authorization-fixture
+```
+
+- 前置阶段：完整验收或明确中止后，管理员链路可用；它不是 Route 失败后的自动步骤。
+- 写入范围：只清理两个 synthetic Account/Role/membership 和凭据文件；不删除 Permission、Route、Resource 或不可变 Risk facts。
+- 成功证据：当前代次的夹具不再 ACTIVE，凭据文件已删除，历史软删除记录可以保留；重复清理仍成立，仅输出
+  `CLEANUP_AUTHORIZATION_FIXTURE_OK`。
+- 失败停点：保留剩余对象并停止，不扩大到其他 IAM 对象。
+- 重跑/对账：按凭据文件中的当前代次派生精确角色码，并通过 Context 对账残留；修复明确阻塞后可幂等重跑。
+
+以下四种 Rollout 的完整权威观察固定为共 14 次 GET：4 页/36 条 Route 列表、9 条 Risk Route Detail 和 1 次 Operations
+Navigation。仅这些 GET 在收到严格 RFC 9457 `429 GATEWAY_RATE_LIMITED` 且单值、规范、当前配置范围
+`1..6` 秒的 `Retry-After` 时最多重试一次。Gateway 先执行 ingress IP Guard、再执行 authenticated-principal
+Guard，因此 Header 是当前拒绝层的最短等待；唯一重试前固定等待 `max(Retry-After, 6 秒)`，覆盖当前
+gateway-admin 最慢的账号维度补充周期。任何并发限流、错误/畸形 Header、第二次 429 或超界值都停止。
+该入口固定为无 Body、无 Idempotency-Key 的 GET，绝不用于 PATCH/POST。每次操作使用一个不在 post-read 或逐 Route
+重置的 monotonic deadline：只读检查 90 秒、单条启用/禁用 180 秒、完整回退 720 秒；每个 HTTP 连接 timeout 取
+`min(20, remaining)`，每次本地数据库权威读取也使用当时的 remaining 作为子进程 timeout，并在返回后再次检查
+deadline。变更动作的等待位于同一个持久 rollout lock 内；PATCH 前到期不写，PATCH 后到期要求显式对账，
+不会继续下一条 Route。
+
+### Rollout 1：只读检查闭合阶段
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_rollout.py \
+  --base-url http://localhost:28080 --inspect-stage
+```
+
+- 前置阶段：Platform 目录已准备，管理员与公开链路可用。
+- 写入范围：不改目录；登录会产生 Session、安全审计和 Guard 影响。
+- 成功证据：数据库、36 条 HTTP Route 列表、9 条 Risk Route Detail 和 Navigation 一致，仅输出一个闭合阶段。
+- 失败停点：任何分页、版本、详情或投影漂移立即停止。
+- 重跑/对账：先用 initializer 的只读阶段检查定位数据库/HTTP 差异，再重跑。
+
+### Rollout 2：启用一条相邻 Route
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_rollout.py \
+  --base-url http://localhost:28080 --activate-route ROUTE_CODE
+```
+
+- 前置阶段：六个 Risk Resource 全部隐藏，当前阶段必须是上表中该 Route 的左侧阶段；已在右侧时只读 no-op。
+- 写入范围：持久 rollout lock 下只 PATCH 该 Route，一次版本递增；另有 Session、安全审计和 Guard 影响。
+- 成功证据：同锁 post-read 精确到右侧阶段并输出该阶段。
+- 失败停点：并发漂移、409 不一致或 `UNKNOWN_REQUIRES_RECONCILIATION` 立即停止，绝不启用下一条。
+- 重跑/对账：先执行 `--inspect-stage`、Snapshot waiter 和 runtime probe；未知结果使用 recovery，不直接重放新 key。
+
+### Rollout 3：禁用一条相邻 Route
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_rollout.py \
+  --base-url http://localhost:28080 --disable-route ROUTE_CODE
+```
+
+- 前置阶段：Resource 已隐藏，当前阶段必须是该 Route 的右侧阶段；已在左侧时只读 no-op。
+- 写入范围：持久 rollout lock 下只 PATCH 该 Route为 `DISABLED`，版本递增一次。
+- 成功证据：同锁 post-read 精确到左侧阶段并输出该阶段。
+- 失败停点：未知、漂移或 post-read 不精确即停止，不能继续禁用更早 Route。
+- 重跑/对账：先检查持久化与 runtime 证据；未知结果必须走 recovery 协调器。
+
+### Rollout 4：回退到 BASELINE
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_rollout.py \
+  --base-url http://localhost:28080 --reconcile-baseline
+```
+
+- 前置阶段：Resource 已隐藏，Route 必须构成任一获批闭合前缀。
+- 写入范围：在一个 rollout lock 内按逆序逐条禁用，绝不改 Resource 或删除 Risk facts。
+- 成功证据：完整权威 post-read 为 `BASELINE` 并只输出该阶段。
+- 失败停点：任一 PATCH 未知即停止；此前已确认的逆序步骤可能已经持久化。
+- 重跑/对账：重新 `--inspect-stage` 确认当前闭合前缀；只有已确认的下一条逆向边才可继续。
+
+### Recovery：恢复一条失败的相邻发布
+
+```bash
+python3 test-environment/scripts/risk_rule_configuration_recovery.py \
+  --base-url http://localhost:28080 --recover-route ROUTE_CODE --timeout-seconds 60
+```
+
+- 前置阶段：Resource 隐藏，持久化状态只能是该 Route 的左侧或右侧阶段；阶段名由共享表推导，操作员不输入。
+- 写入范围：左侧已稳定时只读；右侧时先证明 next SUCCESS，或证明 prior Last Valid 坐标并通过行为探针，随后才禁用该 Route。
+- 成功证据：输出 `ALREADY_AT_PRIOR_STAGE`，或在 prior Snapshot 与行为都成立后输出 `RECOVERED`。
+- 失败停点：未知/malformed runtime、行为探针失败、disable 未知或 prior 未收敛均停止；不触碰 Resource 和 Risk facts。
+- 重跑/对账：重新执行 stage inspector；只在仍是同一相邻边时重跑 recovery。任何未知 Route 结果都不会自动 cleanup。
+
+`--timeout-seconds 60` 分别约束 Recovery 的 Snapshot transition observer / stage waiter，不是整个协调器的
+wall-clock 上限，也不替代 RouteRollout 单条禁用自己的 180 秒 action deadline；Recovery 各段均有界，但总时长可超过
+60 秒。
 
 ## 时间范围下拉组件（2026-09-05）
 

@@ -7,6 +7,7 @@ import time
 import uuid
 
 from smoke import Browser, ORIGIN, ROOT
+from initialize import risk_operations_rollout_lock
 
 
 ROUTE_CODE = "operations-gateway-target-detail"
@@ -52,54 +53,57 @@ def wait_for_public_status(browser, expected_status):
     raise AssertionError(f"Gateway Snapshot 未在期限内切换，最后 HTTP 状态为 {last_status}")
 
 
+def verify_route_status_cycle(browser):
+    """Keep the shared rollout descriptor through restore and its final GET."""
+    with risk_operations_rollout_lock():
+        original = browser.request("GET", ROUTE_DETAIL_PATH)
+        assert original["routeCode"] == ROUTE_CODE and original["status"] == "ACTIVE"
+        try:
+            disable_key = str(uuid.uuid4())
+            disabled = change_status(
+                browser, "DISABLED", original["version"], "mor-test 部署验收：停用只读详情路由", disable_key
+            )
+            assert disabled["status"] == "DISABLED" and disabled["version"] == original["version"] + 1
+            assert change_status(
+                browser, "DISABLED", original["version"], "mor-test 部署验收：停用只读详情路由", disable_key
+            ) == disabled
+
+            stale = change_status(
+                browser,
+                "ACTIVE",
+                original["version"],
+                "mor-test 部署验收：验证旧版本拒绝",
+                expected_status=409,
+            )
+            assert stale["code"] == "CONCURRENT_REQUEST"
+            wait_for_public_status(browser, 404)
+
+            restored = change_status(
+                browser, "ACTIVE", disabled["version"], "mor-test 部署验收：恢复只读详情路由"
+            )
+            assert restored["status"] == "ACTIVE" and restored["version"] == disabled["version"] + 1
+            wait_for_public_status(browser, 200)
+        finally:
+            # A failed response may follow a committed PATCH; always re-read
+            # under the same lock before deciding whether restoration is needed.
+            current = browser.request("GET", ROUTE_DETAIL_PATH)
+            if current["status"] == "DISABLED":
+                change_status(browser, "ACTIVE", current["version"], "mor-test 部署验收异常清理：恢复路由")
+                wait_for_public_status(browser, 200)
+            assert browser.request("GET", ROUTE_DETAIL_PATH)["status"] == "ACTIVE"
+
+
 def main():
     material = json.loads((ROOT / "private/operations-material.json").read_text())
     browser = Browser()
-    changed = False
-    original = None
     browser.login(material["administratorEmail"], material["administratorPassword"])
     try:
         unauthorized = browser.request(
             "GET", "/gateway-admin/v1/routes", authenticated=False, status=401
         )
         assert unauthorized["code"]
-
-        original = browser.request("GET", ROUTE_DETAIL_PATH)
-        assert original["routeCode"] == ROUTE_CODE and original["status"] == "ACTIVE"
-
-        disable_key = str(uuid.uuid4())
-        disabled = change_status(
-            browser, "DISABLED", original["version"], "mor-test 部署验收：停用只读详情路由", disable_key
-        )
-        changed = disabled["status"] == "DISABLED"
-        assert changed and disabled["version"] == original["version"] + 1
-        assert change_status(
-            browser, "DISABLED", original["version"], "mor-test 部署验收：停用只读详情路由", disable_key
-        ) == disabled
-
-        stale = change_status(
-            browser,
-            "ACTIVE",
-            original["version"],
-            "mor-test 部署验收：验证旧版本拒绝",
-            expected_status=409,
-        )
-        assert stale["code"] == "CONCURRENT_REQUEST"
-        wait_for_public_status(browser, 404)
-
-        restored = change_status(
-            browser, "ACTIVE", disabled["version"], "mor-test 部署验收：恢复只读详情路由"
-        )
-        changed = False
-        assert restored["version"] == disabled["version"] + 1
-        wait_for_public_status(browser, 200)
-        assert browser.request("GET", ROUTE_DETAIL_PATH)["status"] == "ACTIVE"
+        verify_route_status_cycle(browser)
     finally:
-        if changed and original is not None:
-            current = browser.request("GET", ROUTE_DETAIL_PATH)
-            if current["status"] == "DISABLED":
-                change_status(browser, "ACTIVE", current["version"], "mor-test 部署验收异常清理：恢复路由")
-                wait_for_public_status(browser, 200)
         if browser.refresh_token:
             browser.request(
                 "POST", "/auth/v1/logout", {"refreshToken": browser.refresh_token}, status=(200, 204)

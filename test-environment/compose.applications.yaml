@@ -18,6 +18,83 @@ x-discovery: &discovery
   TZ: UTC
 
 services:
+  vault-service:
+    profiles: [applications]
+    image: mor-test/vault-service:development
+    build:
+      context: ./artifacts/vault
+      dockerfile: ../../vault/Dockerfile
+    user: "10001:10001"
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=64m,mode=1777"]
+    mem_limit: 256m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 30s
+    env_file:
+      - path: ./private/vault.env
+        required: false
+    environment:
+      VAULT_RUNTIME_MODE: test
+      VAULT_HTTP_ADDRESS: 0.0.0.0:18107
+      VAULT_DB_DSN: vault_app:${MOR_VAULT_DB_PASSWORD:?prepare test secrets}@tcp(mysql:3306)/mor_vault?parseTime=true&loc=UTC
+      VAULT_POLICY_FILE: /app/policy.json
+      VAULT_SNOWFLAKE_DATACENTER_ID: "0"
+      VAULT_SNOWFLAKE_WORKER_ID: "24"
+      VAULT_NACOS_ENABLED: "true"
+      VAULT_NACOS_SERVER_ADDRESS: nacos:8848
+      VAULT_NACOS_NAMESPACE: mor-test
+      VAULT_NACOS_GROUP: DEFAULT_GROUP
+      VAULT_NACOS_INSTANCE_IP: 172.30.73.24
+      VAULT_NACOS_INSTANCE_PORT: "18107"
+      VAULT_NACOS_USERNAME: mor-test-services
+      VAULT_NACOS_PASSWORD: ${MOR_NACOS_SERVICE_PASSWORD:?prepare test secrets}
+      OTEL_TRACES_EXPORTER: none
+      OTEL_RESOURCE_ATTRIBUTES: ""
+      TZ: UTC
+    volumes:
+      - ./vault/policy.json:/app/policy.json:ro
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, /app/vault-probe]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      backend: { ipv4_address: 172.30.73.24 }
+
+  risk-service:
+    <<: *java
+    image: mor-test/risk-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: risk-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.25
+      RISK_DB_URL: jdbc:mysql://mysql:3306/mor_risk?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      RISK_DB_USERNAME: risk_app
+      RISK_DB_PASSWORD: ${MOR_RISK_DB_PASSWORD:?prepare test secrets}
+      RISK_SNOWFLAKE_REGION_ID: "0"
+      RISK_SNOWFLAKE_WORKER_ID: "25"
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18104/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.25 }
+
   platform-support-service:
     <<: *java
     image: mor-test/platform-support-service:development
@@ -43,7 +120,7 @@ services:
       nacos: { condition: service_healthy }
       redis: { condition: service_healthy }
     healthcheck:
-      test: [CMD, curl, -fsS, http://127.0.0.1:18106/platform-support/actuator/health/readiness]
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18106/platform-support/actuator/health/readiness]
       interval: 10s
       timeout: 5s
       retries: 18
@@ -65,8 +142,9 @@ services:
       OPERATIONS_TEST_HTTP_ENABLED: "true"
     depends_on:
       platform-support-service: { condition: service_healthy }
+      risk-service: { condition: service_healthy }
     healthcheck:
-      test: [CMD, curl, -fsS, http://172.30.73.22:18201/actuator/health/readiness]
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://172.30.73.22:18201/actuator/health/readiness]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -101,7 +179,7 @@ services:
       platform-support-service: { condition: service_healthy }
       operations-console-bff: { condition: service_healthy }
     healthcheck:
-      test: [CMD, curl, -fsS, http://127.0.0.1:19080/actuator/health/readiness]
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19080/actuator/health/readiness]
       interval: 10s
       timeout: 5s
       retries: 18
