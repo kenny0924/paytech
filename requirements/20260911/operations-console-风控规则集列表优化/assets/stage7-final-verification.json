@@ -1,0 +1,138 @@
+{
+  "verifiedAt": "2026-09-11T14:34:31.998022+00:00",
+  "originalRules": 21,
+  "originalVersions": 23,
+  "originalRootsAndVersionsUnchanged": true,
+  "originalReleaseCountsUnchanged": [
+    [
+      "TEST",
+      "DRAFT",
+      "NULL",
+      "2"
+    ],
+    [
+      "TEST",
+      "VALIDATING",
+      "NULL",
+      "7"
+    ]
+  ],
+  "runtimeEvaluationAndActionCounts": [
+    [
+      "0",
+      "0"
+    ]
+  ],
+  "syntheticRules": [
+    {
+      "code": "TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E",
+      "status": "DELETED",
+      "managementVersion": "3",
+      "versions": 2
+    },
+    {
+      "code": "TEST_RULE_SET_LIST_F5732C64296B46E8ACEAF4034FCB3BF7",
+      "status": "DELETED",
+      "managementVersion": "3",
+      "versions": 2
+    }
+  ],
+  "temporaryAccountDeleted": true,
+  "routeCount": 37,
+  "resourceCount": 22,
+  "snapshotRefresh": "SUCCESS",
+  "snapshotFailureReason": "NONE",
+  "lastValidFallback": false,
+  "jvmMemoryMetric": true,
+  "resourceLockMetric": true,
+  "containers": [
+    {
+      "service": "mysql",
+      "containerId": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "imageId": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "health": "healthy",
+      "preserved": true
+    },
+    {
+      "service": "redis",
+      "containerId": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "imageId": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "health": "healthy",
+      "preserved": true
+    },
+    {
+      "service": "nacos",
+      "containerId": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "imageId": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "health": "healthy",
+      "preserved": true
+    },
+    {
+      "service": "risk-service",
+      "containerId": "a71fcf17abae22663e0c2834b351cce2fea8c4b916503786a7c1146a302462ec",
+      "imageId": "sha256:46aff45920d364a37e8373c86c42f124fdafc09724cde0a0becfee1513037be5",
+      "health": "healthy",
+      "preserved": false
+    },
+    {
+      "service": "operations-console-bff",
+      "containerId": "39a3c08a220d87aa91df9e96d8caa2517c6ca64f2093dc22c0575704b0efba97",
+      "imageId": "sha256:59be81991657b19431eb9387c3f3378e7da81a9f28434cdedfa764520ef3549b",
+      "health": "healthy",
+      "preserved": false
+    },
+    {
+      "service": "operations-console-web",
+      "containerId": "c9c9b9ced62b291d4afad2d6af0e3aefc8626bf71a3cc81aa8ff027a298e4d36",
+      "imageId": "sha256:83a5141710c3a2e87b21ee845b6f91364c83b184461ac749e2435734f683c94a",
+      "health": "healthy",
+      "preserved": false
+    },
+    {
+      "service": "platform-support-service",
+      "containerId": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "imageId": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332",
+      "health": "healthy",
+      "preserved": true
+    },
+    {
+      "service": "api-gateway",
+      "containerId": "fff353cbb3d799a27c6af2df5d28662d06b84c736a554a5aa5c1a776c7c18dbd",
+      "imageId": "sha256:c5e4a953db1599c7b24b34fc99132fbd4e0ed6ba505a46d33dc699e78b55f070",
+      "health": "healthy",
+      "preserved": true
+    },
+    {
+      "service": "nginx",
+      "containerId": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "imageId": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "health": "healthy",
+      "preserved": true
+    },
+    {
+      "service": "vault-service",
+      "containerId": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "imageId": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "health": "healthy",
+      "preserved": true
+    },
+    {
+      "service": "rabbitmq",
+      "containerId": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "imageId": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "health": "healthy",
+      "preserved": true
+    }
+  ],
+  "staticIndexSha256": "2e2f6e34ea0e7e9c51ff85f01335e01ecd972d8d8e770db518ae7a66b0ed1226",
+  "staticAssets": [
+    {
+      "path": "/assets/index-Dqgzuyqy.js",
+      "sha256": "63d259da80b074e6b37b24253632369010d2ce7bf8d4eaac87e0e11be40e1f0f"
+    },
+    {
+      "path": "/assets/index-Cj75_2K1.css",
+      "sha256": "23b947b67bc9e853cdd3142c0e65ed39422d7b2464ff355d80184919d3bd5fc5"
+    }
+  ]
+}

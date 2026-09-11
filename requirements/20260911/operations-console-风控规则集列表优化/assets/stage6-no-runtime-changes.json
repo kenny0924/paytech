@@ -1,0 +1,14 @@
+{
+  "testRiskMetadataUnchanged": true,
+  "testPlatformMetadataUnchanged": true,
+  "allElevenContainerIdentitiesAndStartTimesUnchanged": true,
+  "developmentImageTagsUnchanged": true,
+  "gatewayStillServingOriginal36Routes": {
+    "valid": true,
+    "refresh_result": "SUCCESS",
+    "failure_reason": "NONE",
+    "last_valid_in_use": false,
+    "operations_route_count": 36
+  },
+  "checkedAt": "2026-09-11T13:04:13.341228+00:00"
+}

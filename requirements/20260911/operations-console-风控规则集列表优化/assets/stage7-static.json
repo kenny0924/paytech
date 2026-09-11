@@ -1,0 +1,58 @@
+{
+  "checkedAt": "2026-09-11T14:40:28.631277+00:00",
+  "requirementsSite": {
+    "command": "npm --prefix requirements-site test",
+    "exitCode": 0,
+    "tests": 136,
+    "passed": 136,
+    "failed": 0,
+    "skipped": 0,
+    "log": "/tmp/risk-rule-list-stage7/requirements-test.log"
+  },
+  "repositories": [
+    {
+      "repository": ".",
+      "diffCheck": "PASSED",
+      "stagedFiles": 0
+    },
+    {
+      "repository": "risk-compliance-service",
+      "diffCheck": "PASSED",
+      "stagedFiles": 0
+    },
+    {
+      "repository": "operations-console-bff",
+      "diffCheck": "PASSED",
+      "stagedFiles": 0
+    },
+    {
+      "repository": "operations-console-web",
+      "diffCheck": "PASSED",
+      "stagedFiles": 0
+    },
+    {
+      "repository": "paytech-foundation",
+      "diffCheck": "PASSED",
+      "stagedFiles": 0
+    },
+    {
+      "repository": "platform-support-service",
+      "diffCheck": "PASSED",
+      "stagedFiles": 0
+    },
+    {
+      "repository": "api-gateway",
+      "diffCheck": "PASSED",
+      "stagedFiles": 0
+    }
+  ],
+  "reviewedSqlConfigurationAndJarHashesUnchanged": true,
+  "deploymentLockReleased": true,
+  "temporaryContainerProbeRemoved": true,
+  "stage7JsonCredentialAndJwtCheck": "PASSED",
+  "markdownLinks": {
+    "status": "PASSED",
+    "checked": 174
+  },
+  "jsonParse": "PASSED"
+}

@@ -1,6 +1,6 @@
 # 开发约定与编码习惯
 
-最后更新：2026-09-10
+最后更新：2026-09-11
 
 ## 1. 使用范围与优先级
 
@@ -16,6 +16,8 @@
 - Java 基础包使用 `com.paytech...`。
 - 公司级 Maven Artifact 和模块目录统一使用 `paytech-*`；`Code-MoR` 产品名以及既有 `mor-local`、`mor_*` 本地运行资源名称不因此改名。新增 Java 类名、包名、Bean 名、配置前缀、日志/指标、错误 Code、Topic/Group 和业务标识不得带 `Mor` / `mor-` 技术前缀；协议兼容确实无法避免时必须写明原因。
 - 类、方法和字段使用完整、专业的业务名称；避免 `getData`、`handle2`、`CommonUtil` 等含义模糊的命名。
+- 用户未明确指定接口版本时，已有接口沿用原版本/路径并在原合同上调整，不自行升级；新接口默认 `/v1`。仍需明确消费者兼容、发布和回退方式，存在无法兼容的具体约束时提交方案请用户决定。
+- 类、接口、record 等类型名不带 `V1`、`V2`、`Version1` 等协议版本标记，例如 `RuleSetDetailResponseBody`。业务对象 `RuleSetVersion`、字段 `versionNo/baseRuleSetVersionId` 及持久化 Hash Schema 的版本语义继续保留。新增及本次涉及的类型按此规则命名，重命名同步提供方、调用方和测试；不扩大为无关仓库批量重构。确认依据见[接口版本与类型命名决策](./decisions/2026-09-11-api-version-and-type-naming.md)。
 - 公开 HTTP 接口及已发布内部 `*-api` 契约中，直接表示完整请求或响应的顶层 DTO 分别命名为 `*RequestBody`、`*ResponseBody`。GET 查询 DTO 也使用 `*RequestBody`，但仍按接口声明通过 Query/Path 等参数传递；名称不要求增加 HTTP Body 或 `@RequestBody`。
 - 仅作为字段嵌套的业务模型、内部领域对象和应用层命令/结果不强制上述后缀，继续按各自业务语义命名。不要为了命名规则创建一层同义包装，或给所有成功响应添加通用外壳。
 - 新增和调整 HTTP DTO 时统一遵循该命名规则。重命名已发布 Java 契约时同步调整提供方与调用方，单纯类型命名变化不改变 JSON 字段、HTTP 方法或参数位置。

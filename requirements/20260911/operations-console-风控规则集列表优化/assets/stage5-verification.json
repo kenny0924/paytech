@@ -1,0 +1,176 @@
+{
+  "stage": 5,
+  "result": "local-integrated-acceptance-passed-awaiting-user-stage-6-confirmation",
+  "productFix": {
+    "issue": "Delete confirmation omitted rule set name",
+    "redEvidence": "/tmp/risk-rule-list-stage5/browser-red.log",
+    "files": [
+      "operations-console-web/src/risk/riskPageModel.ts",
+      "operations-console-web/src/pages/RiskRuleConfiguration.tsx"
+    ]
+  },
+  "checks": [
+    {
+      "command": "npm test",
+      "repository": "operations-console-web",
+      "tests": 876,
+      "failures": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build",
+      "repository": "operations-console-web",
+      "exitCode": 0,
+      "nonBlockingWarnings": [
+        "Vite chunk size advisory"
+      ]
+    },
+    {
+      "command": "node /tmp/risk-rule-list-stage5/browser_verify.cjs",
+      "scenarios": 11,
+      "javascriptErrors": 0,
+      "exitCode": 0,
+      "evidence": "stage5-browser.json",
+      "scope": "production Web with synthetic HTTP"
+    },
+    {
+      "command": "python3 /tmp/risk-rule-list-stage5/integration_verify.py",
+      "successfulChecks": 38,
+      "exitCode": 0,
+      "evidence": "stage5-integration.json",
+      "scope": "Real BFF and Risk HTTP processes with local MySQL/Redis; Platform Simulator and synthetic Gateway headers",
+      "platformObservation": "129 observed Platform calls include diagnostic harness runs; not a per-scenario count"
+    },
+    {
+      "command": "node /tmp/risk-rule-list-stage5/browser_real.cjs",
+      "scenarios": 5,
+      "apiCalls": 25,
+      "javascriptErrors": 0,
+      "exitCode": 0,
+      "evidence": "stage5-browser-real.json",
+      "scope": "Real Web/BFF/Risk and MySQL/Redis; browser session/navigation and Gateway headers are synthetic; Platform is the existing Simulator"
+    },
+    {
+      "command": "Risk packaged-runtime Prometheus scrape",
+      "observed": {
+        "jvmMemory": true,
+        "resourceLockMetrics": true
+      }
+    },
+    {
+      "command": "npm --prefix requirements-site test",
+      "tests": 136,
+      "failures": 0,
+      "skipped": 0,
+      "exitCode": 0
+    }
+  ],
+  "priorValidEvidence": {
+    "source": "stage4-verification.json",
+    "reason": "No backend or model implementation changes during stage 5; new local cross-process and browser checks supplement these results",
+    "riskTests": 162,
+    "bffTests": 1024,
+    "foundationScopedTests": 235,
+    "riskModelTests": 190,
+    "rerunInStage5": false
+  },
+  "fixtureCleanup": {
+    "ownedRuleSetCodes": 7,
+    "ownedRootAndVersionCountsBefore": [
+      7,
+      16
+    ],
+    "remaining": [
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  },
+  "localDatabaseAfterTests": {
+    "rule_sets": 0,
+    "rule_set_versions": 0,
+    "releases": 0,
+    "commands": 0,
+    "active_terminal_actions": 3,
+    "other_risk_connections": 0,
+    "decision_evaluations": 0,
+    "action_effects": 0
+  },
+  "scopeLimits": [
+    "Actual Gateway and Platform authorization/route environment integration not executed",
+    "Existing Platform Simulator plus synthetic trusted Gateway headers/session/navigation",
+    "ACTIVE old-version reference used only as owned test fixture; no activation business implementation",
+    "Nonempty historical manifest backfill not executed; previously applied local manifest empty",
+    "No DDL/initialization DML applied in stage 5",
+    "No Platform/test database writes, deployment, artifact publication, commit or push"
+  ],
+  "staticEvidence": "stage5-static.json",
+  "logs": [
+    {
+      "path": "/tmp/risk-rule-list-stage5/web-tests.log",
+      "sha256": "ba970d726197e8ad13928eb8ceea198d5c3cc42d80a32886798ec4981b4871b7"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage5/web-build.log",
+      "sha256": "0079040ef47467abc7eec7dc39f2d80bda067a45aa22984def17c2fa08801ae5"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage5/browser-red.log",
+      "sha256": "efa9f3083245c37ab7e86ed41f12e565deae75465541334f19e8b07164204d73"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage5/browser-green.log",
+      "sha256": "a471fdaca9d9200554df8755413f9c6ebe66c2fd258af950715bf20b2f9ff21c"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage5/integration-final4.log",
+      "sha256": "24f2229c91b31301a695ac1c5c3eb77ff2a3c87182db06bd9eb10806348e30d1"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage5/browser-real-final.log",
+      "sha256": "ebbb9d396560f3e3f83f9da784bc6141a3a66b03f35aad3fe5ffd8e10e11e354"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage5/mobile-probe.log",
+      "sha256": "1cb34756050e19a4cf772b24e4e5bb884b374c58318d686d9b7a3a71a684ed6e"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage5/capture-confirm.log",
+      "sha256": "2122c82a438c7f9e1f02818e1b06b83b39ef3440a9a46edfcf5693232377bbc9"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage5/requirements-test.log",
+      "sha256": "210886ab4e1a6e543268336e196ef4847ca1bddb45281a1037d9b79d021a222f"
+    }
+  ],
+  "sourceAndArtifactSha256": [
+    {
+      "path": "operations-console-web/src/risk/riskPageModel.ts",
+      "sha256": "8900682efc04167fa38a2d359a419c3fba081f173c1a3dbff5ef3ce059913cb2"
+    },
+    {
+      "path": "operations-console-web/src/pages/RiskRuleConfiguration.tsx",
+      "sha256": "bd9249ea0b7228b62fc22ddd292e6f7c23a1c233b83d707d99461c57a2da4894"
+    },
+    {
+      "path": "risk-compliance-service/risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar",
+      "sha256": "d7eace98c39eeb946e95c9076eeb712d6559035f331fb9a3635b681720eade46"
+    },
+    {
+      "path": "risk-compliance-service/risk-api/target/risk-api-1.0.0-SNAPSHOT.jar",
+      "sha256": "0165f4092d5666ffda0be861c76c21ab8fa6a985adc671596ae91ccacc9d4e34"
+    }
+  ],
+  "nonBlockingBrowserWarnings": [
+    "Existing Ant Design Spin.tip deprecation warning; JavaScript errors count refers to pageerror events"
+  ],
+  "ownedApplicationListenersClosed": [
+    18104,
+    18301,
+    60421,
+    60422
+  ],
+  "staticChecksPassed": true
+}

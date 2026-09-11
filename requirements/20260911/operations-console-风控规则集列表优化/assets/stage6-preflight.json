@@ -1,0 +1,1045 @@
+{
+  "capturedAt": "2026-09-11T12:49:23.422190+00:00",
+  "dockerContext": "desktop-linux",
+  "containers": [
+    {
+      "service": "mysql",
+      "containerId": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "imageId": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "imageTag": "mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "health": "healthy",
+      "startedAt": "2026-09-04T08:25:06.372277969Z",
+      "safeConfiguration": {},
+      "networks": [
+        "mor-test-backend"
+      ],
+      "mounts": [
+        {
+          "type": "bind",
+          "destination": "/docker-entrypoint-initdb.d",
+          "source": "/host_mnt/Users/kenny/Desktop/Workspace/Code-MoR/local-environment/mysql/init"
+        },
+        {
+          "type": "volume",
+          "destination": "/var/lib/mysql",
+          "source": "/var/lib/docker/volumes/mor-test-mysql-data/_data"
+        }
+      ]
+    },
+    {
+      "service": "redis",
+      "containerId": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "imageId": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "imageTag": "redis:8.2.1-alpine@sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "health": "healthy",
+      "startedAt": "2026-09-04T08:25:06.369366719Z",
+      "safeConfiguration": {},
+      "networks": [
+        "mor-test-backend"
+      ],
+      "mounts": [
+        {
+          "type": "volume",
+          "destination": "/data",
+          "source": "/var/lib/docker/volumes/mor-test-redis-data/_data"
+        }
+      ]
+    },
+    {
+      "service": "nacos",
+      "containerId": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "imageId": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "imageTag": "mor-test/nacos:3.1.2",
+      "health": "healthy",
+      "startedAt": "2026-09-08T10:27:41.600042756Z",
+      "safeConfiguration": {},
+      "networks": [
+        "mor-test-backend"
+      ],
+      "mounts": []
+    },
+    {
+      "service": "risk-service",
+      "containerId": "ee561144e81a0f07900eadbf87c9e7dbcbd47c21714c2e18defe4ac31e51ea63",
+      "imageId": "sha256:55e5a50e17a3e6beb7aec5c7585c457712dbc621602868e1f4fa96e741f77ebf",
+      "imageTag": "mor-test/risk-service:development",
+      "health": "healthy",
+      "startedAt": "2026-09-11T07:39:00.373198718Z",
+      "safeConfiguration": {
+        "RISK_SNOWFLAKE_WORKER_ID": "25",
+        "RISK_SNOWFLAKE_REGION_ID": "0",
+        "SERVER_ADDRESS": "0.0.0.0",
+        "NACOS_NAMESPACE": "mor-test"
+      },
+      "networks": [
+        "mor-test-backend"
+      ],
+      "mounts": []
+    },
+    {
+      "service": "operations-console-bff",
+      "containerId": "482daf6dafb6ed0a60da55f84b32485008c09857447ee81f7114634997d5f391",
+      "imageId": "sha256:ca802c008aa418c25fe086c2dff7f0ff32d90d46a8fe0c98d3d838aa7af06590",
+      "imageTag": "mor-test/operations-console-bff:development",
+      "health": "healthy",
+      "startedAt": "2026-09-11T07:39:06.813065888Z",
+      "safeConfiguration": {
+        "NACOS_NAMESPACE": "mor-test"
+      },
+      "networks": [
+        "mor-test-backend"
+      ],
+      "mounts": []
+    },
+    {
+      "service": "operations-console-web",
+      "containerId": "a9557c464fd705cc052e76f6a9bd83c622388aa10b9a154abedc01e409ac30f1",
+      "imageId": "sha256:b9f304f73e718c96734b1e29ba1ba60ffc170df78c096148079246fe706c90f2",
+      "imageTag": "mor-test/operations-console-web:development",
+      "health": "healthy",
+      "startedAt": "2026-09-11T08:07:53.768103298Z",
+      "safeConfiguration": {},
+      "networks": [
+        "mor-test-web"
+      ],
+      "mounts": []
+    },
+    {
+      "service": "platform-support-service",
+      "containerId": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "imageId": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332",
+      "imageTag": "mor-test/platform-support-service:development",
+      "health": "healthy",
+      "startedAt": "2026-09-08T10:28:59.905447584Z",
+      "safeConfiguration": {
+        "NACOS_NAMESPACE": "mor-test",
+        "PLATFORM_SUPPORT_REDIS_PORT": "6379",
+        "SERVER_ADDRESS": "0.0.0.0",
+        "PLATFORM_SUPPORT_REDIS_HOST": "redis"
+      },
+      "networks": [
+        "mor-test-backend"
+      ],
+      "mounts": []
+    },
+    {
+      "service": "api-gateway",
+      "containerId": "fff353cbb3d799a27c6af2df5d28662d06b84c736a554a5aa5c1a776c7c18dbd",
+      "imageId": "sha256:c5e4a953db1599c7b24b34fc99132fbd4e0ed6ba505a46d33dc699e78b55f070",
+      "imageTag": "mor-test/api-gateway:development",
+      "health": "healthy",
+      "startedAt": "2026-09-08T10:29:29.996421501Z",
+      "safeConfiguration": {
+        "MANAGEMENT_SERVER_ADDRESS": "127.0.0.1",
+        "SPRING_DATA_REDIS_PORT": "6379",
+        "NACOS_NAMESPACE": "mor-test",
+        "SPRING_DATA_REDIS_HOST": "redis"
+      },
+      "networks": [
+        "mor-test-backend",
+        "mor-test-ingress"
+      ],
+      "mounts": []
+    },
+    {
+      "service": "nginx",
+      "containerId": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "imageId": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "imageTag": "nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "health": "healthy",
+      "startedAt": "2026-09-08T10:29:06.641971795Z",
+      "safeConfiguration": {},
+      "networks": [
+        "mor-test-ingress",
+        "mor-test-web"
+      ],
+      "mounts": [
+        {
+          "type": "bind",
+          "destination": "/etc/nginx/nginx.conf",
+          "source": "/Users/kenny/Desktop/Workspace/Code-MoR/test-environment/nginx/nginx.conf"
+        }
+      ]
+    },
+    {
+      "service": "vault-service",
+      "containerId": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "imageId": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "imageTag": "mor-test/vault-service:development",
+      "health": "healthy",
+      "startedAt": "2026-09-04T13:08:13.406271054Z",
+      "safeConfiguration": {
+        "VAULT_NACOS_NAMESPACE": "mor-test",
+        "VAULT_NACOS_SERVER_ADDRESS": "nacos:8848",
+        "VAULT_SNOWFLAKE_WORKER_ID": "24"
+      },
+      "networks": [
+        "mor-test-backend"
+      ],
+      "mounts": [
+        {
+          "type": "bind",
+          "destination": "/app/policy.json",
+          "source": "/Users/kenny/Desktop/Workspace/Code-MoR/test-environment/vault/policy.json"
+        }
+      ]
+    },
+    {
+      "service": "rabbitmq",
+      "containerId": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "imageId": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "imageTag": "rabbitmq:4.2.9-management@sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "health": "healthy",
+      "startedAt": "2026-09-04T08:25:06.356402385Z",
+      "safeConfiguration": {},
+      "networks": [
+        "mor-test-backend"
+      ],
+      "mounts": [
+        {
+          "type": "volume",
+          "destination": "/var/lib/rabbitmq",
+          "source": "/var/lib/docker/volumes/mor-test-rabbitmq-data/_data"
+        }
+      ]
+    }
+  ],
+  "repositories": [
+    {
+      "repository": "risk-compliance-service",
+      "head": "d609e04ddee2b6175180a2ec8be8790b8e32c662",
+      "branch": "main",
+      "status": [
+        " M README.md",
+        " M docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md",
+        " M docs/database/risk-compliance.pdma.json",
+        " M docs/database/sql/risk-compliance-schema.sql",
+        " M pom.xml",
+        " M risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementApi.java",
+        " M risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+        " M risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementApi.java",
+        " M risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+        " M risk-api/src/main/java/com/paytech/risk/api/enums/RiskDecisionConfigurationErrorCode.java",
+        " M risk-decision/src/main/java/com/paytech/risk/decision/core/dal/mapper/DecisionRuleSetMapper.java",
+        " M risk-decision/src/main/java/com/paytech/risk/decision/domain/hash/RiskDecisionCanonicalizer.java",
+        " M risk-decision/src/main/java/com/paytech/risk/decision/domain/hash/RiskDecisionCanonicalizerImpl.java",
+        " M risk-decision/src/main/java/com/paytech/risk/decision/domainservice/repository/DecisionRuleSetRepository.java",
+        " M risk-decision/src/main/java/com/paytech/risk/decision/domainservice/repository/impl/DecisionRuleSetRepositoryImpl.java",
+        " M risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/DecisionRuleSetService.java",
+        " M risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionReleaseServiceImpl.java",
+        " M risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl.java",
+        " M risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+        " M risk-test/src/test/java/com/paytech/risk/auto/RiskModuleBoundaryAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/contract/RiskDecisionConfigurationApiContractAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/domainservice/CommandIdempotencyAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/domainservice/DecisionReleaseServiceProtocolAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/domainservice/DecisionRuleSetServiceAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionConfigurationConcurrencyAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionConfigurationReadSnapshotAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionReleaseManagementHttpAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionReleaseValidationRecoveryAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionRuleSetManagementHttpAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/repository/RiskDecisionPersistenceAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/repository/RiskDecisionPersistenceContractAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/auto/service/DecisionConfigurationWebOrchestrationAutoTest.java",
+        " D risk-test/src/test/java/com/paytech/risk/ext/rest/decision/RiskDecisionWireMapperAutoTest.java",
+        " M risk-test/src/test/java/com/paytech/risk/test/builder/DecisionRuleSetRequestBuilder.java",
+        " M risk-test/src/test/java/com/paytech/risk/test/decision/DecisionReleaseTestFixture.java",
+        " M risk-test/src/test/java/com/paytech/risk/test/decision/RiskDecisionHttpClient.java",
+        " M risk-test/src/test/java/com/paytech/risk/test/decision/RiskDecisionTestMapper.java",
+        " M risk-test/src/test/java/com/paytech/risk/test/infrastructure/RiskDatabasePrecondition.java",
+        " M risk-test/src/test/resources/application-auto.yml",
+        " M risk-web/pom.xml",
+        " M risk-web/src/main/java/com/paytech/risk/configuration/PersistenceConfiguration.java",
+        " M risk-web/src/main/java/com/paytech/risk/configuration/RiskApiErrorConfiguration.java",
+        " M risk-web/src/main/java/com/paytech/risk/domain/enums/CommandOperationType.java",
+        " M risk-web/src/main/java/com/paytech/risk/domainservice/service/CommandIdempotencyService.java",
+        " M risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionReleaseManagementController.java",
+        " M risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionRuleSetManagementController.java",
+        " D risk-web/src/main/java/com/paytech/risk/ext/rest/decision/RiskDecisionWireMapper.java",
+        " M risk-web/src/main/java/com/paytech/risk/service/processor/DecisionReleaseManagementProcessor.java",
+        " M risk-web/src/main/java/com/paytech/risk/service/processor/DecisionRuleSetManagementProcessor.java",
+        " M risk-web/src/main/java/com/paytech/risk/service/transaction/RiskTransactionExecutor.java",
+        " M risk-web/src/main/resources/application.yml",
+        "?? risk-decision/src/main/java/com/paytech/risk/decision/core/dal/dataobject/RuleSet.java",
+        "?? risk-decision/src/main/java/com/paytech/risk/decision/core/dal/dataobject/RuleSetReleaseReference.java",
+        "?? risk-decision/src/main/java/com/paytech/risk/decision/domain/enums/RuleSetManagementStatus.java",
+        "?? risk-decision/src/main/java/com/paytech/risk/decision/domainservice/policy/",
+        "?? risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/RuleSetManagementConflictException.java",
+        "?? risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionRuleSetDeletionHttpAutoTest.java",
+        "?? risk-test/src/test/java/com/paytech/risk/ext/rest/decision/RiskDecisionWireConverterAutoTest.java",
+        "?? risk-web/src/main/java/com/paytech/risk/configuration/DecisionRuleSetRequestJsonConfiguration.java",
+        "?? risk-web/src/main/java/com/paytech/risk/ext/rest/decision/RiskDecisionWireConverter.java"
+      ]
+    },
+    {
+      "repository": "operations-console-bff",
+      "head": "4b64b9602de57dd02c35b7cadb5d40e050a3d53e",
+      "branch": "main",
+      "status": [
+        " M README.md",
+        " M paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsConsoleBffApplicationAutoTest.java",
+        " M paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsHttpBodyNamingAutoTest.java",
+        " M paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskClientConfigurationAutoTest.java",
+        " M paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskDecisionConfigurationBrowserBoundaryAutoTest.java",
+        " M paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskDecisionConfigurationClientAutoTest.java",
+        " M paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskDecisionConfigurationModelAutoTest.java",
+        " M paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/test/simulator/PlatformOperationsSimulator.java",
+        " M paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/test/simulator/RiskDecisionConfigurationSimulator.java",
+        " M paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/OperationsErrorStatusResolver.java",
+        " M paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/RiskOwnerResponseShapeValidator.java",
+        " M paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/RiskRequestShapeValidator.java",
+        " M paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/RiskDecisionConfigurationController.java",
+        " M paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/integration/RiskDecisionConfigurationClient.java",
+        " M paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/integration/impl/RiskDecisionConfigurationClientImpl.java",
+        " M paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/service/model/RiskRuleSetModels.java"
+      ]
+    },
+    {
+      "repository": "operations-console-web",
+      "head": "7e8036cf4cb34f34224cddfbabf399a338564b1d",
+      "branch": "main",
+      "status": [
+        " M README.md",
+        " M src/api/paging.test.ts",
+        " M src/hooks/usePaging.ts",
+        " M src/pages/RiskRuleConfiguration.tsx",
+        " M src/risk/RuleSetEditor.tsx",
+        " M src/risk/RuleSetTab.tsx",
+        " M src/risk/riskApiModels.ts",
+        " M src/risk/riskDecisionApi.ts",
+        " M src/risk/riskFixtures.ts",
+        " M src/risk/riskPageModel.test.ts",
+        " M src/risk/riskPageModel.ts",
+        " M src/risk/riskPageWiring.test.ts",
+        " M src/risk/riskResponseValidation.test.ts",
+        " M src/risk/riskResponseValidation.ts",
+        " M src/risk/ruleBuilder.test.ts",
+        " M src/risk/ruleSetHead.test.ts",
+        " M src/risk/ruleSetHead.ts",
+        " M src/risk/useUnsavedRuleGuard.test.ts",
+        "?? src/risk/riskNavigation.test.ts",
+        "?? src/risk/riskNavigation.ts"
+      ]
+    },
+    {
+      "repository": "paytech-foundation",
+      "head": "d85651b8ca2d83ab54e0fff4e0fc0bc40e0d1fc9",
+      "branch": "main",
+      "status": [
+        " M paytech-redis-starter/src/main/java/com/paytech/foundation/redis/core/autoconfigure/RedisResourceLockAutoConfiguration.java",
+        " M paytech-redis-starter/src/main/java/com/paytech/foundation/redis/core/lock/ResourceLockObservation.java",
+        " M paytech-redis-starter/src/test/java/com/paytech/foundation/redis/auto/autoconfigure/RedisResourceLockAutoConfigurationAutoTest.java"
+      ]
+    },
+    {
+      "repository": "platform-support-service",
+      "head": "69bd28715117b52490f4fe95b32a18fb8b1f4381",
+      "branch": "main",
+      "status": [
+        " M docs/database/sql/platform-support-initial-data.sql"
+      ]
+    },
+    {
+      "repository": "api-gateway",
+      "head": "4220da8d3bf40adad4d2ef3d0af58685f20a3d39",
+      "branch": "main",
+      "status": []
+    }
+  ],
+  "risk": {
+    "tableCounts": [
+      [
+        "71",
+        "0"
+      ]
+    ],
+    "versions": [
+      [
+        "210001",
+        "SMOKE_20260908T114019Z_416D78532261",
+        "223044779871670272",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "7b75a2ac7412c2608463c0677b018d38dfae2ca77f14c608752d20e1b45555f7",
+        "2026-09-08 11:40:19.442697",
+        "2026-09-08 11:40:19.442697"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T122756Z_54098B6B3604",
+        "223056763996442624",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "c363cfdd1406c0cb093e70692726ac76efad07559d6658ec3303f794879f50bc",
+        "2026-09-08 12:27:56.715778",
+        "2026-09-08 12:27:56.715778"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T123409Z_31F2E779F754",
+        "223058326664089600",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "e27098016b0e4deb7893b81bfe8dc97600908a7169d5177ebf3734307b085466",
+        "2026-09-08 12:34:09.289011",
+        "2026-09-08 12:34:09.289011"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T125023Z_1F6CF4C9C7B1",
+        "223062412562108416",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "7415792d9dfc4cfaeb69167ee1f38613c9d37e0d6f11eb6905f91960561dc533",
+        "2026-09-08 12:50:23.445022",
+        "2026-09-08 12:50:23.504336"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T132938Z_392C27E01C52",
+        "223072292102574080",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "0bb36558684e4d4b5c6bf8095485febe5f12ef370071a7af3b4dfeb4d1c9e92d",
+        "2026-09-08 13:29:38.909252",
+        "2026-09-08 13:29:38.975330"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T133430Z_2E6C613E4BC1",
+        "223073516021452800",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "aa5fb9c466d4b2eedeaf7f5c8986c4365106b5294f2e13818ce5ae98f7b32c99",
+        "2026-09-08 13:34:30.702357",
+        "2026-09-08 13:34:30.804960"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T133723Z_5FF2313A033F",
+        "223074240474222592",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "cb81379e3561763db3da00f7e8fdf349d68145e1232ea0e41a6c2947ad87867e",
+        "2026-09-08 13:37:23.440300",
+        "2026-09-08 13:37:23.500068"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T134109Z_2ADDD7B18877",
+        "223075188688916480",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "4999f44222729f110d301101b124a53b49a63e3723afe4a12b2e9d9b40a51970",
+        "2026-09-08 13:41:09.508463",
+        "2026-09-08 13:41:09.581832"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T134258Z_DE1832285013",
+        "223075644710424576",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "dc7a37289a71089657cb7b036a71d53b38048dfb1cb11e2b1f87f232745cba32",
+        "2026-09-08 13:42:58.231731",
+        "2026-09-08 13:42:58.296668"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T135257Z_AE67D91DD3D1",
+        "223078156809113600",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "91a429e91f19ab453d4c532d0ec6b2e1f8bd09c19d3ae313fab96e40c63c9dd1",
+        "2026-09-08 13:52:57.171542",
+        "2026-09-08 13:52:57.230188"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T151544Z_04950A883615",
+        "223098991506722816",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "e91f9803306754c3f3d73982d61d00948d9e11750a203eb5a8e2888d74439b2d",
+        "2026-09-08 15:15:44.551688",
+        "2026-09-08 15:15:44.551688"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T151544Z_AD24E079DC19",
+        "223098989917081600",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "bf184b477fd3b947662bff497f58d14da64dcfddc425af3a97e5e7c4e00eac52",
+        "2026-09-08 15:15:44.169626",
+        "2026-09-08 15:15:44.232463"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T152013Z_4D4921C6D5C3",
+        "223100117929005056",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "ced252a84437fddd18e6c4918b487b0342d731bcf1b107d549495e0dfc2fe501",
+        "2026-09-08 15:20:13.110745",
+        "2026-09-08 15:20:13.199717"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T152013Z_D08706A1CEE9",
+        "223100119539617792",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "839cafd8dc14953bdd3ebe29b1edd4384975e791096e17ae64545e7fb637110e",
+        "2026-09-08 15:20:13.495988",
+        "2026-09-08 15:20:13.495988"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T192312Z_B9EB3889D17A",
+        "223161270512226304",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "cbd04cc7343127c00c38d16283a17094a4d6616012f6329d96924bad70edbd44",
+        "2026-09-08 19:23:13.020120",
+        "2026-09-08 19:23:13.064191"
+      ],
+      [
+        "210001",
+        "SMOKE_20260908T192313Z_1EF4A74E358E",
+        "223161271699214336",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "64927414abfe424638207013cbfd01323c8fc6178902c029a216802a77c6c37c",
+        "2026-09-08 19:23:13.307598",
+        "2026-09-08 19:23:13.307598"
+      ],
+      [
+        "210001",
+        "SMOKE_20260911T073948Z_1143DB47334C",
+        "224071416574742528",
+        "1",
+        "RETIRED",
+        "CONFIGURATION",
+        "3491366694a31ae88fc32f5cfa4a546fefc13458264f2420aa3ecbb3db7b5fdd",
+        "2026-09-11 07:39:48.744691",
+        "2026-09-11 07:39:48.988392"
+      ],
+      [
+        "210001",
+        "SMOKE_20260911T073948Z_1143DB47334C",
+        "224071417614929920",
+        "2",
+        "DRAFT",
+        "CONFIGURATION",
+        "882c044f90009e55f66501aca9284aa1f1f0c38877eeb3d39cb3429eb291fac5",
+        "2026-09-11 07:39:48.988392",
+        "2026-09-11 07:39:48.988392"
+      ],
+      [
+        "210001",
+        "SMOKE_20260911T073949Z_89504955539B",
+        "224071417992417280",
+        "1",
+        "FROZEN",
+        "CONFIGURATION",
+        "39b108a4de81d0dcde85032b449f0d31cd9b27b09d09bf82a549ea6e4db5ab56",
+        "2026-09-11 07:39:49.090496",
+        "2026-09-11 07:39:49.169773"
+      ],
+      [
+        "210001",
+        "SMOKE_20260911T074040Z_0234EA885159",
+        "224071633973907456",
+        "1",
+        "RETIRED",
+        "CONFIGURATION",
+        "4490917f04f31b94dde27b502853b99c73d362ec7d8e7b8fd3ca7cbdf44990b3",
+        "2026-09-11 07:40:40.585875",
+        "2026-09-11 08:16:22.426467"
+      ],
+      [
+        "210001",
+        "SMOKE_20260911T074040Z_0234EA885159",
+        "224080617602650112",
+        "2",
+        "DRAFT",
+        "CONFIGURATION",
+        "ce403e1a1c0bb792c42a8df4968ad935c0fd7fee9eb77a9b65f51b6f4bbdf6fc",
+        "2026-09-11 08:16:22.426467",
+        "2026-09-11 08:16:22.426467"
+      ],
+      [
+        "210001",
+        "SMOKE_20260911T074040Z_7F7C5EBC4E41",
+        "224071631960641536",
+        "1",
+        "FROZEN",
+        "CONFIGURATION",
+        "869131279a5f2f9fe5c808213790496f01df219fa3198c5a78ebb032d6031faa",
+        "2026-09-11 07:40:40.104229",
+        "2026-09-11 07:40:40.159577"
+      ],
+      [
+        "210001",
+        "SSSS",
+        "224089451389882368",
+        "1",
+        "DRAFT",
+        "CONFIGURATION",
+        "029b8f53eb2715935c2f9f9eaa767087d445618b5245b6a76e769b18c8f9547d",
+        "2026-09-11 08:51:28.585441",
+        "2026-09-11 08:51:28.585441"
+      ]
+    ],
+    "releases": [
+      [
+        "TEST",
+        "DRAFT",
+        "NULL",
+        "2"
+      ],
+      [
+        "TEST",
+        "VALIDATING",
+        "NULL",
+        "7"
+      ]
+    ],
+    "runtimeCounts": [
+      [
+        "0",
+        "0"
+      ]
+    ],
+    "commands": [
+      [
+        "CREATE_RULE_SET_VERSION",
+        "SUCCEEDED",
+        "23"
+      ],
+      [
+        "CREATE_TEST_DECISION_RELEASE",
+        "SUCCEEDED",
+        "9"
+      ],
+      [
+        "FREEZE_RULE_SET_VERSION",
+        "SUCCEEDED",
+        "12"
+      ],
+      [
+        "VALIDATE_TEST_DECISION_RELEASE",
+        "SUCCEEDED",
+        "7"
+      ]
+    ]
+  },
+  "platform": {
+    "resources": [
+      [
+        "900000000000000565",
+        "OPERATIONS_RISK_MANAGEMENT",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000000566",
+        "OPERATIONS_RISK_RULE_CONFIGURATION",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000000567",
+        "OPERATIONS_RISK_RULE_SET_SAVE",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000000568",
+        "OPERATIONS_RISK_RULE_SET_FREEZE",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000000569",
+        "OPERATIONS_RISK_TEST_CANDIDATE_CREATE",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000000570",
+        "OPERATIONS_RISK_TEST_CANDIDATE_VALIDATE",
+        "ACTIVE",
+        "4"
+      ]
+    ],
+    "routes": [
+      [
+        "900000000000000101",
+        "operations-auth-login",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/auth/v1/login",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000000102",
+        "operations-auth-refresh",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/auth/v1/refresh",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000000103",
+        "operations-auth-logout",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/auth/v1/logout",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001000",
+        "operations-auth-context",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/auth/v1/context",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001001",
+        "operations-auth-password",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/auth/v1/password",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001002",
+        "operations-bootstrap-administrator",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/auth/v1/bootstrap/administrator",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001003",
+        "operations-navigation",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/authorization/v1/navigation",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001004",
+        "operations-account-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/iam/v1/accounts",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001005",
+        "operations-account-create",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/iam/v1/accounts",
+        "ACTIVE",
+        "3"
+      ],
+      [
+        "900000000000001006",
+        "operations-account-disable",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/iam/v1/accounts/{accountId}/disable",
+        "ACTIVE",
+        "3"
+      ],
+      [
+        "900000000000001007",
+        "operations-account-roles",
+        "OPERATIONS",
+        "PUT",
+        "/api/operations/iam/v1/accounts/{accountId}/roles",
+        "ACTIVE",
+        "3"
+      ],
+      [
+        "900000000000001008",
+        "operations-role-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/iam/v1/roles",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001009",
+        "operations-audit-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/audit/v1/events",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001010",
+        "operations-role-permission-options",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/iam/v1/role-permission-options",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001011",
+        "operations-role-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/iam/v1/roles/{roleId}",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001012",
+        "operations-role-create",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/iam/v1/roles",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001013",
+        "operations-role-update",
+        "OPERATIONS",
+        "PUT",
+        "/api/operations/iam/v1/roles/{roleId}",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001014",
+        "operations-role-delete",
+        "OPERATIONS",
+        "DELETE",
+        "/api/operations/iam/v1/roles/{roleId}",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001015",
+        "operations-account-delete",
+        "OPERATIONS",
+        "DELETE",
+        "/api/operations/iam/v1/accounts/{accountId}",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001016",
+        "operations-account-enable",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/iam/v1/accounts/{accountId}/enable",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001017",
+        "operations-audit-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/audit/v1/events/{auditEventId}",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001018",
+        "operations-gateway-target-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/gateway-admin/v1/target-services",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001019",
+        "operations-gateway-target-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/gateway-admin/v1/target-services/{targetServiceCode}",
+        "ACTIVE",
+        "7"
+      ],
+      [
+        "900000000000001020",
+        "operations-gateway-target-status",
+        "OPERATIONS",
+        "PATCH",
+        "/api/operations/gateway-admin/v1/target-services/{targetServiceCode}/status",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001021",
+        "operations-gateway-route-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/gateway-admin/v1/routes",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001022",
+        "operations-gateway-route-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/gateway-admin/v1/routes/{routeCode}",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001023",
+        "operations-gateway-route-status",
+        "OPERATIONS",
+        "PATCH",
+        "/api/operations/gateway-admin/v1/routes/{routeCode}/status",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001024",
+        "operations-risk-rule-authoring-context",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/decision-rule-sets/v1/authoring-context/{pointCode}",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001025",
+        "operations-risk-rule-set-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/decision-rule-sets/v1/rule-sets",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000001026",
+        "operations-risk-rule-set-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/decision-rule-sets/v1/rule-sets/{ruleSetVersionId}",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001027",
+        "operations-risk-rule-set-save",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/decision-rule-sets/v1/rule-sets",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000001028",
+        "operations-risk-rule-set-freeze",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/decision-rule-sets/v1/rule-sets/{ruleSetVersionId}/freeze",
+        "ACTIVE",
+        "8"
+      ],
+      [
+        "900000000000001029",
+        "operations-risk-test-candidate-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/decision-releases/v1/candidates",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000001030",
+        "operations-risk-test-candidate-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/decision-releases/v1/candidates/{releaseId}",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000001031",
+        "operations-risk-test-candidate-create",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/decision-releases/v1/candidates",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001032",
+        "operations-risk-test-candidate-validate",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/decision-releases/v1/candidates/{releaseId}/validate",
+        "ACTIVE",
+        "2"
+      ]
+    ],
+    "role": [
+      [
+        "900000000000000510",
+        "PLATFORM_ADMIN",
+        "ACTIVE",
+        "8"
+      ]
+    ],
+    "reservedCollisions": [
+      [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "counts": [
+      [
+        "36",
+        "21"
+      ]
+    ]
+  }
+}

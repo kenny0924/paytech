@@ -42,7 +42,7 @@
 | Commerce | 15 | 246 | 24 | 12 | 15 | — | 4 |
 | Payment Orchestration | 29 | 373 | 41 | 44 | 63 | — | 7 |
 | Finance | 84 | 1,100 | 145 | 155 | 160 | 22 | 6 |
-| Risk & Compliance | 71 | 865 | 105 | 75 | 111 | 9 | 8 |
+| Risk & Compliance | 72 | 877 | 108 | 76 | 113 | 9 | 8 |
 | Platform Support | 63 | 822 | 123 | 99 | 107 | 5 | 7 |
 
 这些数字表示当前生成资产内部一致；六套模型仍保留 PDManer 4.9.3 应用内人工检查门禁，也不能证明物理数据库已经创建。Platform 的 22 表是当前手工 SQL 投影，不改变 63 表逻辑模型统计。
@@ -210,3 +210,32 @@
 - **精确镜像：** Risk `sha256:55e5a50e17a3`、BFF `sha256:ca802c008aa4`、当前 Web `sha256:b9f304f73e71`（此前缀只用于可读摘要）。首次部署完整 image ID 在上述 `application-images.json`，样式修正的前后容器和完整 Web image ID 在同目录 `web-style-deployment.json`；原 Web 镜像另保留 `before-risk-v1-style-20260911` 标签。部署只使用本机 Maven 缓存与本地镜像，未发布 Nexus 或推送；本地提交状态见下文。
 - **本地提交：** Risk `d609e04`、Operations BFF `4b64b96`、Operations Web `7e8036c` 已按用户要求提交到各仓库当前分支，未推送；配套文档、模型和验收脚本随根仓库本次提交。提交前模型门禁 189/189、Risk 离线验收脚本测试 166/166 再次通过。
 - **范围：** 本次只证明本机 `mor-test` 的规则配置可用，不是生产部署。实际评估、冷却/打标签、标签查询、拒绝字典、Shadow、审批、激活仍不在本期范围；含附加动作的版本禁止冻结。PDManer 应用内人工 Review、其他环境 SQL 和生产验收仍独立保留。
+
+
+## 16. Operations 规则集列表优化（2026-09-11）
+
+- **范围与阶段：** [本需求](../requirements/20260911/operations-console-风控规则集列表优化/requirement.md)及[已批准技术方案](../requirements/20260911/operations-console-风控规则集列表优化/technique.md)用户明确“发布”后，阶段 7 本机 mor-test 部署与真实入口验收已完成，用户随后明确“先git提交一下”，本地提交与归档见下述阶段 8。[交付记录](../requirements/20260911/operations-console-风控规则集列表优化/delivery.md)关联 AC、代码与证据。
+- **Implemented in working tree：** Risk 新增管理根，按根及当前配置查询/分页；整集删除保留编码和全部历史，任一历史版本被当前 ACTIVE Release 使用即阻止删除。保存/冻结/删除/新 Candidate 复用 Redis 资源锁及本地事务、引用校验和 CAS。BFF 新增独立删除权限与一次 Owner 转发。Web 精确编码校验、精简列表、详情/编辑/红色删除菜单、真实 URL 历史及未保存保护，隐藏 Candidate 页面。API 不升级版本，25 个 DTO 类型去协议版本后缀。Platform 单一初始化 DML 同步 16 行注册数据，初始化文件继续保持 Route/按钮 DISABLED 默认值；test 已通过本轮受控 SQL 开放。Gateway 无本轮代码修改。
+- **Foundation 必要修复：** 经用户单独同意，将 `paytech-redis-starter` 的 MeterRegistry 获取延迟到首次记录指标，避免 Advisor 提前初始化破坏 JVM 监控。原监控构造器及资源锁合同保留；本机 Maven 安装只用于 Risk/BFF 集成验证，未远程发布。
+- **Verified：** JDK 25 下 Risk 与 BFF `./mvnw -q clean verify` 均退出 0，分别 162/162、1024/1024，0 failures/errors/skipped；Risk 后续本地 Redis 前置检查也通过删除 HTTP 聚焦回归。Foundation `-pl paytech-redis-starter -am test` 的三个相关模块合计 235/235（其中 Redis Starter 121），不称全 Foundation 验证。Web 876/876、TypeScript/Vite 生产构建通过。Risk 全模型/Schema/场景/Hash 门禁 190/190、Requirements Site 构建与内容测试 136/136 通过；API clean JAR 包含 25 个新 DTO 名且无旧类型残留。详细命令见[验证摘要](../requirements/20260911/operations-console-风控规则集列表优化/assets/stage4-verification.json)。
+- **浏览器及清理：** 生产 Web 组件配合成 HTTP 的 11 个场景通过，覆盖键盘/悬停菜单、删除取消/同键重试、过滤与分页的 Back/Forward、未保存保护及 Candidate 旧 URL，0 JavaScript errors；不是新功能 Gateway 全链路或 test 环境验收。临时预览已关闭；local Root/Version/Release/Command 与 `risk-auto:*` 均无测试残留，三个终态 Action 恢复 ACTIVE。
+- **local SQL：** 用户单独确认备份后应用 `127.0.0.1:13306/mor_risk`。2026-09-11 11:08:20 UTC，核对历史为空、无其他业务连接及 Risk 服务停写后备份原 71 表，再应用本需求 Risk DDL/DML，manifest 为 `[]`；新增 `t_rule_set` 12 列、0 行回填。原 71 表 schema/data dump 与执行前逐字节一致。[执行证据](../requirements/20260911/operations-console-风控规则集列表优化/assets/local-sql-applied.json)记录文件与备份 SHA-256；备份在 `~/Code-MoR-backups/risk-rule-set-list-local-20260911T110820Z/mor_risk-before.sql`。
+- **边界：** 本轮仅部署本机 mor-test，阶段 8 已获本地提交授权；未推送、远程发布制品或操作生产；第 15 节的镜像为上一需求发布时的历史证据，当前三应用镜像以下述阶段 7 为准。
+- **范围限制：** 非空历史回填、真实 Gateway/Platform 删除路由及权限已在阶段 7 核验；实际规则评估、动作执行、Shadow、审批和激活继续不在本期范围。后续阶段段落中“未执行”均指该阶段结束时。
+
+- **阶段 5 独立验收：** 复核业务/接口/并发边界，发现删除确认框缺少名称并修复；本阶段产品代码仅改 Web 确认状态和弹窗。真实 BFF → Risk 独立进程配本地 MySQL/Redis 完成 38 个 HTTP 检查，覆盖当前配置单行列表、权限、实际使用保护、过期删除、同键并发、永久编码及成功历史回放；Platform 为现有 Simulator，并非真实 Gateway/Platform 权限环境验收。
+- **阶段 5 页面及监控：** 修复后 Web 876 项与生产构建通过；11 个合成接口浏览器场景、5 个真实业务接口浏览器场景（25 次 API 调用）通过，0 JavaScript errors，390px 页面稳定后无横向溢出。真实打包 Risk 的 JVM 内存及资源锁指标均存在。后端及模型源码未改，相关全量门禁沿用上述阶段 4 结果。详情见[综合验收](../requirements/20260911/operations-console-风控规则集列表优化/acceptance.md)和[阶段 5 验证摘要](../requirements/20260911/operations-console-风控规则集列表优化/assets/stage5-verification.json)。
+- **阶段 5 清理及动作边界：** 7 组合成规则及相关版本/历史/幂等数据已按所属身份清理，临时 Web/BFF/Risk 服务已关闭；数据库和 Redis 最终只读核对见验证摘要。本阶段未再应用 SQL，未写 Platform/test，未发布制品、部署、提交或推送；第 15 节部署事实不变。
+
+- **阶段 6 准备：** 只读核对 mor-test 仍为 23 个版本/21 个规则集、零 ACTIVE Release、原 36 Route/21 Resource。已生成 21 条 test 专用 Snowflake manifest，核对 71 个 BIGINT 主键列无冲突，DML 同构只读投影为 21 个有效根；实际 INSERT 未执行。准备精确维护/路由开放/资源开放/失败关闭 SQL，未应用。发布方案和恢复限制见[发布包](../requirements/20260911/operations-console-风控规则集列表优化/release.md)。
+- **阶段 6 制品与兼容：** 已构建本地专用 Risk `46aff45920d3`、BFF `59be81991657`、Web `83a5141710c3`；完整 ID、JAR/文件 SHA 及验证边界见[机器可读清单](../requirements/20260911/operations-console-风控规则集列表优化/assets/stage6-release-package.json)。Risk test Compose 补齐现有 Redis 地址/凭据注入及健康依赖，运行配置尚未切换。当前部署的 Platform/Gateway 编译器离线接受新 37 条目录，Gateway 接受维护态 27 条目录；不需替换这两个服务。旧通用 smoke 的 36/21 分类不适用于本次最终 37/22，阶段 7 按发布包做精确实际入口验收。
+
+- **阶段 6 检查与停点：** 部署脚本离线测试 31/31、Requirements Site 构建/内容测试 136/136、跨仓库 diff/链接/SQL 校验通过。最终只读核对两库元数据及 11 个容器完整 ID/启动时间不变，development 镜像标签未切换，Gateway 仍为旧 36 条目录；本阶段没有应用 SQL、部署或提交。待用户按发布包授权阶段 7。
+
+- **阶段 7 Deployed：** 用户明确“发布”，本机 `desktop-linux/mor-test` 完成两库备份及受控 SQL、Risk → BFF → Web 协调升级。当前镜像前缀为 Risk `46aff45920d3`、BFF `59be81991657`、Web `83a5141710c3`，三个容器 healthy，其他八个容器 ID/image 不变。完整记录见[部署验收报告](../requirements/20260911/operations-console-风控规则集列表优化/deployment.md)与[部署证据](../requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-deployment.json)。
+- **阶段 7 SQL/入口：** 备份位于 `~/Code-MoR-backups/risk-rule-set-list-test-20260911T131033Z/`，完整 Risk/Platform SQL 已核验大小、结尾和 SHA-256。新增管理根并回填 21 集，迁移前后原 71 表 schema/data dump 字节一致。Gateway 接受精确 37 Route、22 ACTIVE Operations Resource，`SUCCESS/NONE`、无 Last Valid fallback。唯一健康 Risk 实例，JVM 内存/ResourceLock 指标、公开 HTML/JS/CSS 与新制品均通过核验。
+- **阶段 7 真实验收/清理：** 23 项 HTTP 核对及浏览器查询、菜单、详情、直接编辑、Back/Forward、未保存保护、整集删除、旧 Candidate URL、390px 布局核验完成，0 JavaScript errors。快速浏览器导航触发现有读取 429 后，等待限流恢复核对已保存版本并继续完成，未重复保存或改限流；不宣称单次连续脚本全绿。原 21 根/23 版本及 9 Candidate 状态不变，Evaluation/Action Effect 仍 0；仅新增两组各两版合成规则并以 API 整体删除，保留历史。只读账号真实 DELETE 403 后退出并用 API 删除（CLOSED）。详见[最终核验](../requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-final-verification.json)。
+- **阶段 7 交付停点：** 发布锁已正常释放，临时容器探针已移除；未提交或推送。旧 smoke 的 36/21 分类仍需后续维护，本轮按已批准的精确 37/22 目录和真实入口完成验收。下一步须由用户按[待提交清单](../requirements/20260911/operations-console-风控规则集列表优化/commit-plan.md)确认阶段 8；只确认 test 验收不自动提交。
+
+- **阶段 8 本地提交与归档：** 用户明确“先git提交一下”。paytech-foundation `6f2d692997e2`、risk-compliance-service `d9f0c1c633a8`、operations-console-bff `2e0e8d707db0`、operations-console-web `bf607aaaa961`、platform-support-service `ef6570f71833`，根仓库为[本归档记录](../requirements/20260911/operations-console-风控规则集列表优化/assets/stage8-commits.json)所在提交。均在原 main 分支，本轮未推送、创建 PR/分支或重新部署。四份 Risk 选择性提交源码经 JDK 25 编译，7 个 class 去除调试元数据后与已部署制品一致；其他组件源码与阶段 7 清单一致。详情见[提交归档](../requirements/20260911/operations-console-风控规则集列表优化/completion.md)。
+- **阶段 8 保留项：** 原有公共流程/目录治理、其他需求材料以及 Risk 的 import/格式整理保持未提交，未覆盖工作区源码。冻结入口、人员展示、详情文案、限流体验、名称搜索/复制等讨论仅为后续建议，没有混入本轮实现。等待用户确认本需求结束。

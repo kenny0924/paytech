@@ -1,0 +1,163 @@
+{
+  "scope": "Real Web/BFF/Risk and MySQL/Redis; browser session/navigation and Gateway headers are synthetic; Platform is the existing Simulator",
+  "scenarios": [
+    "real-save-navigates-to-saved-detail-without-unsaved-prompt",
+    "real-save-back-preserves-filter-and-single-row",
+    "stale-delete-409-refreshes-current-name-and-version",
+    "confirmed-whole-set-delete-disappears-from-real-list",
+    "mobile-page-has-no-horizontal-overflow"
+  ],
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "stage5-browser-2323e27b-d775-4b8a-875f-0e5d19b4638a"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-6e5894c8-563c-4d7b-b2c6-d6068cda0c3a"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "stage5-browser-ca8f1208-4907-4e4c-bcb6-761320c12baf"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-6a844e69-e246-48c0-9e63-cfddb1f8c613"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224145081198714880",
+      "status": 200,
+      "requestId": "stage5-browser-32f8f381-81f4-4076-8390-e45a4b21446d"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-1deb0169-e6a7-447f-a0f7-118919d61b43"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224145081198714880",
+      "status": 200,
+      "requestId": "stage5-browser-f17c26f6-ec70-41e4-a522-7db0d9f6d6da"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": "stage5-browser-f27c1414-5866-4f04-a8f7-8430687ce99c"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "stage5-browser-40db0b71-a77d-441e-ac9b-2954d9f4f1e7"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-85fb50fe-a7c0-44c1-84c0-904dda502f6b"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-85141d82-bb24-4be4-997e-301cf11c1126"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-f52e6939-c66e-4c1b-b436-63ef12b7adae"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "stage5-browser-f0f32287-f3f6-4914-a049-7846c9833d95"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224145094620487680",
+      "status": 200,
+      "requestId": "stage5-browser-6e4f7d4f-a204-4ac7-a99a-ea7280e3684d"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "stage5-browser-31835fc8-162e-4557-954b-535b4f685efa"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-40976983-106d-4503-9a8d-70f746833b11"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-b55c7128-3bf9-427f-afff-1888ea542613"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": "stage5-browser-50e1370d-da11-4205-9760-692c102e2bad"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224145081270018048",
+      "status": 409,
+      "requestId": "stage5-browser-1113afcb-2acb-45d2-ad38-468ba4f7b840"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "stage5-browser-9b1f6020-24e2-4804-bd75-5a8c89df8af1"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-8e256c35-edf9-477e-8e33-8578782c39d4"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224145081270018048",
+      "status": 200,
+      "requestId": "stage5-browser-d356b6c6-819a-46f0-a268-a869605db85a"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-e634871e-245c-461b-8ba9-16c1ca592a8b"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "stage5-browser-11650f0a-2d37-4a14-8833-3e581c81590d"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_STAGE5_FE4CE1E4FDD044C7B1C594AB8103F7F5&page=1&size=10",
+      "status": 200,
+      "requestId": "stage5-browser-06564e2e-f7e6-4c7d-b53b-e3f5cf2e8d1c"
+    }
+  ],
+  "errors": []
+}

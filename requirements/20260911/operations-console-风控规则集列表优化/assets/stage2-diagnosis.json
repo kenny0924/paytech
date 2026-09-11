@@ -1,0 +1,256 @@
+{
+  "date": "2026-09-11",
+  "stage": 2,
+  "environment": "mor-test",
+  "origin": "http://localhost:28080",
+  "scope": "Read-only diagnosis; browser changes stayed in memory; no Risk commands submitted.",
+  "httpCases": [
+    {
+      "case": "default",
+      "status": 200,
+      "requestId": "2ea2e791-babe-4a60-9097-3f3479799123",
+      "total": 23,
+      "items": 20,
+      "uniqueRuleSets": 18
+    },
+    {
+      "case": "existing_exact_code",
+      "status": 200,
+      "requestId": "ecfe9829-7398-47bc-9b89-e1b4424901a1",
+      "total": 1,
+      "items": 1,
+      "uniqueRuleSets": 1
+    },
+    {
+      "case": "existing_code_and_status",
+      "status": 200,
+      "requestId": "7fab7bc1-0965-430c-8456-37ee7c2dc3bb",
+      "total": 1,
+      "items": 1,
+      "uniqueRuleSets": 1
+    },
+    {
+      "case": "existing_code_lowercase",
+      "status": 400,
+      "requestId": "c273d714-de2a-4c5b-a7d3-4a25f0f28dfa",
+      "code": "INVALID_REQUEST",
+      "title": "Bad Request",
+      "detail": "请求参数不正确"
+    },
+    {
+      "case": "nonexistent_valid_code",
+      "status": 200,
+      "requestId": "4a43cd43-e6d8-4daf-b60a-085349e3eb5d",
+      "total": 0,
+      "items": 0,
+      "uniqueRuleSets": 0
+    },
+    {
+      "case": "invalid_numeric_start",
+      "status": 400,
+      "requestId": "4eaa8aca-d6cd-4f46-8c5b-bacf21758f84",
+      "code": "INVALID_REQUEST",
+      "title": "Bad Request",
+      "detail": "请求参数不正确"
+    },
+    {
+      "case": "invalid_hyphen",
+      "status": 400,
+      "requestId": "63e23523-0623-4f05-8321-4a7940d9c6c1",
+      "code": "INVALID_REQUEST",
+      "title": "Bad Request",
+      "detail": "请求参数不正确"
+    },
+    {
+      "case": "cleared_filter",
+      "status": 200,
+      "requestId": "e26dc1f1-8103-48d8-babc-204ac7b7d3c7",
+      "total": 23,
+      "items": 20,
+      "uniqueRuleSets": 18
+    }
+  ],
+  "browser": {
+    "status": "PARTIAL_OBSERVATIONS",
+    "limitation": "Primary observations completed; later wait for another detail button timed out. Not a full UI test pass.",
+    "observations": [
+      {
+        "name": "audit",
+        "path": "/audit",
+        "historyLength": 2
+      },
+      {
+        "name": "list",
+        "path": "/risk/rule-configuration?tab=rule-sets",
+        "historyLength": 3,
+        "rows": 10,
+        "totalVersions": 23
+      },
+      {
+        "name": "valid_code_query",
+        "path": "/risk/rule-configuration?tab=rule-sets",
+        "historyLength": 3,
+        "status": 200
+      },
+      {
+        "name": "invalid_code_query",
+        "path": "/risk/rule-configuration?tab=rule-sets",
+        "historyLength": 3,
+        "status": 400,
+        "inlineFormatErrors": 0
+      },
+      {
+        "name": "cleared_query",
+        "path": "/risk/rule-configuration?tab=rule-sets",
+        "historyLength": 3,
+        "status": 200
+      },
+      {
+        "name": "detail",
+        "path": "/risk/rule-configuration?tab=rule-sets",
+        "historyLength": 3
+      },
+      {
+        "name": "back_from_detail",
+        "path": "/audit",
+        "historyLength": 3
+      },
+      {
+        "name": "forward_after_detail_back",
+        "path": "/risk/rule-configuration?tab=rule-sets",
+        "historyLength": 3,
+        "detailVisible": false
+      },
+      {
+        "name": "edit",
+        "path": "/risk/rule-configuration?tab=rule-sets",
+        "historyLength": 3
+      },
+      {
+        "name": "back_from_unmodified_editor",
+        "path": "/audit",
+        "historyLength": 3
+      },
+      {
+        "name": "forward_after_edit_back",
+        "path": "/risk/rule-configuration?tab=rule-sets",
+        "historyLength": 3,
+        "editorVisible": false
+      },
+      {
+        "name": "return_button_loses_filter",
+        "path": "/risk/rule-configuration?tab=rule-sets",
+        "historyLength": 3,
+        "filterValue": ""
+      }
+    ]
+  },
+  "separateUnsavedGuardProbe": {
+    "status": "COMPLETED",
+    "observations": [
+      {
+        "name": "cancel_dirty_back",
+        "path": "/risk/rule-configuration?tab=rule-sets",
+        "draftRetained": true
+      },
+      {
+        "name": "confirm_dirty_back",
+        "path": "/audit"
+      },
+      {
+        "name": "candidate_tab",
+        "path": "/risk/rule-configuration?tab=test-candidates",
+        "historyLength": 3
+      },
+      {
+        "name": "back_from_candidate_tab",
+        "path": "/audit"
+      },
+      {
+        "name": "logout",
+        "path": "/audit",
+        "riskCommandsSubmitted": 0
+      }
+    ]
+  },
+  "databaseReadOnlyAggregates": [
+    {
+      "case": "rule_set_counts",
+      "database": "mor_risk",
+      "rows": [
+        [
+          "23",
+          "21"
+        ]
+      ]
+    },
+    {
+      "case": "release_status_counts",
+      "database": "mor_risk",
+      "rows": [
+        [
+          "TEST",
+          "DRAFT",
+          "NULL",
+          "2"
+        ],
+        [
+          "TEST",
+          "VALIDATING",
+          "NULL",
+          "7"
+        ]
+      ]
+    },
+    {
+      "case": "rule_set_list_query_allowlist",
+      "database": "mor_platform",
+      "rows": [
+        [
+          "page"
+        ],
+        [
+          "pointCode"
+        ],
+        [
+          "ruleSetCode"
+        ],
+        [
+          "size"
+        ],
+        [
+          "status"
+        ]
+      ]
+    },
+    {
+      "case": "rule_set_management_tables",
+      "database": "mor_risk",
+      "rows": [
+        [
+          "t_decision_point_rule_set"
+        ],
+        [
+          "t_rule_set_version"
+        ]
+      ]
+    }
+  ],
+  "bffErrorCorrelation": [
+    {
+      "container": "mor-test-operations-console-bff-1",
+      "requestId": "c273d714-de2a-4c5b-a7d3-4a25f0f28dfa",
+      "matchingLogLines": 2,
+      "markers": [
+        "400",
+        "HandlerMethodValidationException"
+      ]
+    }
+  ],
+  "limits": [
+    "Original user query sample unavailable.",
+    "No ACTIVE releases in this test snapshot.",
+    "Deletion not implemented or tested.",
+    "No business source change, SQL migration, deployment, commit or push."
+  ]
+}

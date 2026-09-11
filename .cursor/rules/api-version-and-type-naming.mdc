@@ -1,0 +1,15 @@
+---
+description: 接口沿用原版本，新接口默认 v1，代码类型名不带版本后缀
+alwaysApply: true
+---
+
+# 接口版本与类型命名
+
+按 `agent-docs/DEVELOPMENT_CONVENTIONS.md` 第 2 节执行；确认来源为
+`agent-docs/decisions/2026-09-11-api-version-and-type-naming.md`。
+
+- 用户未明确指定时，修改原接口，不自行升级；新接口默认 `/v1`。
+- 类、接口、record 名不带 `V1/V2/Version1` 等协议版本标记，例如 `RuleSetDetailResponseBody`。
+- `RuleSetVersion`、`versionNo` 等业务版本语义及历史 Hash Schema 保留。
+- 类型重命名同步提供方和消费者；接口原版本内调整也需明确兼容与发布顺序。
+- 按本次范围增量处理，不自动批量重构无关历史代码；阶段确认和动作授权仍遵循根 `AGENTS.md`。

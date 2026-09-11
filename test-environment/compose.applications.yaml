@@ -81,10 +81,14 @@ services:
       RISK_DB_URL: jdbc:mysql://mysql:3306/mor_risk?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
       RISK_DB_USERNAME: risk_app
       RISK_DB_PASSWORD: ${MOR_RISK_DB_PASSWORD:?prepare test secrets}
+      RISK_REDIS_HOST: redis
+      RISK_REDIS_PORT: "6379"
+      RISK_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
       RISK_SNOWFLAKE_REGION_ID: "0"
       RISK_SNOWFLAKE_WORKER_ID: "25"
     depends_on:
       mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
       nacos: { condition: service_healthy }
     healthcheck:
       test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18104/actuator/health/readiness]

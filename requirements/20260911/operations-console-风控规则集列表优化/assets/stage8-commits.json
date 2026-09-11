@@ -1,0 +1,56 @@
+{
+  "authorization": "用户明确：先git提交一下",
+  "action": "本地提交与归档，不推送、不新建分支、不重新部署",
+  "applicationCommits": [
+    {
+      "repository": "paytech-foundation",
+      "commit": "6f2d692997e29cb0e405df0d057d6051c725f01d",
+      "parent": "d85651b8ca2d83ab54e0fff4e0fc0bc40e0d1fc9",
+      "tree": "086f34adeabbb986fbd4c44f12ff9779361cfefa",
+      "message": "fix(redis): defer resource lock meter registry initialization",
+      "pushed": false
+    },
+    {
+      "repository": "risk-compliance-service",
+      "commit": "d9f0c1c633a842bbf6891e86f2e96eb630ca8f25",
+      "parent": "d609e04ddee2b6175180a2ec8be8790b8e32c662",
+      "tree": "aa9a948fd490a408d66857616916f39e26a86b69",
+      "message": "feat(risk): manage rule sets as a whole with protected deletion",
+      "pushed": false
+    },
+    {
+      "repository": "operations-console-bff",
+      "commit": "2e0e8d707db0bec78ccdccf8f0eb26364858b4fe",
+      "parent": "4b64b9602de57dd02c35b7cadb5d40e050a3d53e",
+      "tree": "15d577b10037cc39dcb5cbdbc275ef5b2976e087",
+      "message": "feat(operations): forward rule set deletion with dedicated permission",
+      "pushed": false
+    },
+    {
+      "repository": "operations-console-web",
+      "commit": "bf607aaaa961a00db22706e8250f4a3b0a2417e7",
+      "parent": "7e8036cf4cb34f34224cddfbabf399a338564b1d",
+      "tree": "baa32fbe90510acd4118437bfe47203707bb20a3",
+      "message": "fix(operations): simplify rule set list and preserve browser navigation",
+      "pushed": false
+    },
+    {
+      "repository": "platform-support-service",
+      "commit": "ef6570f718339d199ab8900e90b6c4d1ee33b492",
+      "parent": "69bd28715117b52490f4fe95b32a18fb8b1f4381",
+      "tree": "5d9678c6ed872517b98131a41bbea406123e54aa",
+      "message": "feat(platform): register operations rule set deletion access",
+      "pushed": false
+    }
+  ],
+  "rootArchive": {
+    "repository": "Code-MoR",
+    "commitReference": "本文件所在归档提交",
+    "resolveCommand": "git log -1 --format=%H -- requirements/20260911/operations-console-风控规则集列表优化/assets/stage8-commits.json"
+  },
+  "preservedChanges": [
+    "此前公共流程/需求目录治理与其他需求材料",
+    "Risk 两份源码原有 import 整理及验收后三份接口/Controller 格式调整"
+  ],
+  "scopeExcluded": "关于冻结入口、列表人员信息、详情可读性、限流体验、名称搜索和复制等新建议尚未研发，本次不包含。"
+}

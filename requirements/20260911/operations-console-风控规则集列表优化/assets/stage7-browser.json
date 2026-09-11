@@ -1,0 +1,268 @@
+{
+  "scope": "Real public Nginx/Gateway/BFF/Risk/Platform; real login; no API interception",
+  "scenarios": [
+    "Actual UI login and filtered single-row list",
+    "Notice, summary, version column and Candidate tab absent",
+    "Invalid code has inline validation without API request",
+    "Valid trimmed code query works",
+    "Browser Back and Forward restore previous rule view and filters",
+    "Direct edit and unsaved Back cancel retain editor",
+    "Actual UI login and filtered single-row list",
+    "Successful second-version save verified after existing rate-limit recovery; no repeated save",
+    "Back after save retains filter and exactly one row",
+    "Red delete action and cancellation without mutation",
+    "Name/code confirmation deletes entire second set",
+    "390px layout has no document overflow",
+    "Legacy Candidate URL normalizes to list",
+    "Actual save/delete HTTP responses and zero JavaScript errors"
+  ],
+  "calls": [
+    {
+      "method": "POST",
+      "path": "/api/operations/auth/v1/login",
+      "status": 200,
+      "requestId": "230948b5-06e8-4b3f-9d73-1ceea2fa40bf"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/auth/v1/context",
+      "status": 200,
+      "requestId": "b60bd58f-2981-4722-b45d-47b26f67fd94"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/authorization/v1/navigation",
+      "status": 200,
+      "requestId": "109b5d15-c0b4-4446-8566-91b2427a353d"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "865b1b2d-df5a-4b55-b662-39d07cb4697b"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "337b57d7-dff8-4c48-8bf9-48a98cfe4469"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "7406fcd9-be51-49c8-be3a-eda66db63153"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "6eba9d75-95fc-4a2e-a022-33c23f9be436"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "502b9ab0-e048-4b03-9655-33b54317884c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "e7fc5f73-6e53-4eea-babd-a25c25d4b1b4"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "71ee51c0-0ca8-4496-947d-6d43414ffb22"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "c3899dc9-f127-4c78-acda-715ed2a59e05"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "dfb0d862-c594-44d3-a7ad-dd53cddd6164"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets/224157933032804352",
+      "status": 200,
+      "requestId": "4552027b-d306-4b1e-978e-f592b07100f4"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "aee8fb8b-6f4d-431f-b84a-7ea0aaac4c37"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets/224157933032804352",
+      "status": 200,
+      "requestId": "7e62e472-a6b3-4593-adfb-6a0bbeb4ee46"
+    },
+    {
+      "method": "POST",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": "1c728f8a-b098-416a-bdbe-1d724c679ae0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 429,
+      "requestId": "4058e47e-10d2-4961-a054-8a30f01c251b"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 429,
+      "requestId": "b7df5e20-96c7-4cae-901a-b18376446083"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 429,
+      "requestId": "42600eab-0533-4a73-9d97-de192924a14e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "67662320-fc38-455f-9753-19391030cafb"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/authorization/v1/navigation",
+      "status": 200,
+      "requestId": "65a4e021-a1a8-4ea8-a379-da61db873743"
+    },
+    {
+      "method": "POST",
+      "path": "/api/operations/auth/v1/login",
+      "status": 200,
+      "requestId": "adb8b56b-efc8-4fd7-90cf-dc9dffc3e8e5"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/auth/v1/context",
+      "status": 200,
+      "requestId": "0992a69d-28a1-4b8e-807d-b3dddf1b36e6"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/authorization/v1/navigation",
+      "status": 200,
+      "requestId": "8aa43b4c-d5e4-47f4-bf5f-c0cef30849a4"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "cc2062b5-443c-4aab-bca1-bb6379cd1865"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "8ce66dc1-4a52-47c3-88f8-ab2083e77585"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "444f5b07-7efc-47b2-86ce-485b026a5719"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "f3e2bf75-184e-4cd0-b7d1-c15c51d22bf8"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "0135e70a-3192-47f9-8d09-6e4f684488c0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets/224158443076947968",
+      "status": 200,
+      "requestId": "38ac908d-08af-4406-9db0-21cf56c9e99e"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "b47dd876-412b-4dd7-b62b-1471ff6993ab"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "ee9195cb-7860-47bc-9295-90ea7edf7221"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets/224157933062164480",
+      "status": 200,
+      "requestId": "12d4397b-3a76-47c6-8843-2f1983788dd9"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "640e7b43-eb23-47b8-9265-b052de09575a"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "94226f5f-c913-4e7c-988a-c89a97093f6b"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/auth/v1/context",
+      "status": 200,
+      "requestId": "db96a4d3-2edf-42ee-a6b2-8c7fc253f3ad"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/authorization/v1/navigation",
+      "status": 200,
+      "requestId": "4dbe30d9-15ac-4c43-9a25-61f5847e05fb"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_243B46C616CA4159A46F45CC77D9CA8E&page=1&size=10",
+      "status": 200,
+      "requestId": "91e3a03f-bdcd-427e-acc4-e82f8a23ca2c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "5279a31e-a81e-4cb3-8cf5-1735a1dccdd7"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/auth/v1/context",
+      "status": 200,
+      "requestId": "9fdb49fb-1f41-483d-bafe-44d67a772eb3"
+    },
+    {
+      "method": "GET",
+      "path": "/api/operations/authorization/v1/navigation",
+      "status": 200,
+      "requestId": "fc245853-f5d6-4d6d-89ca-77f9ac841afe"
+    }
+  ],
+  "errors": []
+}

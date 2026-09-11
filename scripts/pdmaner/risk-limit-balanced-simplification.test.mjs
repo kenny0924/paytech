@@ -56,7 +56,7 @@ function assertRelation(table, childField, parentTable, parentField) {
 
 test("Risk Limit balanced simplification freezes exactly seven tables", () => {
   assert.deepEqual(LIMIT_TABLES.map((table) => table.defKey), EXPECTED_LIMIT_TABLES);
-  assert.equal(RISK_TABLES.length, 71);
+  assert.equal(RISK_TABLES.length, 72);
 
   const keys = new Set(RISK_TABLES.map((table) => table.defKey));
   for (const removed of ["limit_definition", "limit_plan", "limit_plan_version", "limit_plan_item"]) {
@@ -168,7 +168,7 @@ test("Limit CHECK policy rejects ambiguous targets and invalid counter facts", (
 test("Generated Risk model exposes the seven-table Limit contract", () => {
   const model = JSON.parse(readFileSync(modelPath, "utf8"));
   const limitDiagram = model.diagrams.find((diagram) => diagram.defKey === "limits");
-  assert.equal(model.entities.length, 71);
+  assert.equal(model.entities.length, 72);
   assert.deepEqual(
     limitDiagram.properties.primaryTables,
     EXPECTED_LIMIT_TABLES.map((table) => `t_${table}`),

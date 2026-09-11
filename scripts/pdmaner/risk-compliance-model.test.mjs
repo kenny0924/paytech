@@ -141,14 +141,14 @@ function structuralProjection(model) {
   };
 }
 
-test("Risk test-owned Oracle freezes exactly 71 approved tables in eight groups", () => {
+test("Risk test-owned Oracle freezes exactly 72 approved tables in eight groups", () => {
   assert.equal(Object.keys(APPROVED_TABLE_GROUPS).length, 8);
   assert.deepEqual(
     Object.fromEntries(Object.entries(APPROVED_TABLE_GROUPS).map(([key, tables]) => [key, tables.length])),
     EXPECTED_GROUP_SIZES,
   );
-  assert.equal(APPROVED_TABLES.length, 71);
-  assert.equal(new Set(APPROVED_TABLES).size, 71);
+  assert.equal(APPROVED_TABLES.length, 72);
+  assert.equal(new Set(APPROVED_TABLES).size, 72);
   assert.ok(APPROVED_TABLES.every((table) => /^t_[a-z][a-z0-9_]*$/u.test(table)));
   assert.ok(APPROVED_TABLES.every((table) => table.length <= 32));
   assert.ok(FORBIDDEN_TABLES.every((table) => !APPROVED_TABLES.includes(table)));
@@ -203,7 +203,7 @@ test("Risk model matches the independent totals and structural digest", () => {
 test("Risk model has the exact approved table set and eight diagram groups", () => {
   const model = readModel();
   assert.deepEqual(model.entities.map((entity) => entity.defKey).sort(), [...APPROVED_TABLES].sort());
-  assert.equal(modelTotals(model).tables, 71);
+  assert.equal(modelTotals(model).tables, 72);
   assert.equal(modelTotals(model).diagramGroups, 8);
   assert.deepEqual(
     Object.fromEntries(model.diagrams.map((diagram) => [diagram.defKey, diagram.defName])),
@@ -711,8 +711,8 @@ test("Risk model persists the exact same-case composite foreign-key contracts", 
 test("Risk diagrams draw each local relation once and every table owns one primary group", () => {
   const model = readModel();
   const primaryTables = model.diagrams.flatMap((diagram) => diagram.properties.primaryTables);
-  assert.equal(primaryTables.length, 71);
-  assert.equal(new Set(primaryTables).size, 71);
+  assert.equal(primaryTables.length, 72);
+  assert.equal(new Set(primaryTables).size, 72);
   assert.deepEqual([...primaryTables].sort(), [...APPROVED_TABLES].sort());
   const relationCount = model.entities.flatMap((entity) => entity.correlations).length;
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)
@@ -729,4 +729,29 @@ test("Risk model stores no database connection or forbidden card and credential 
   const allFields = model.entities.flatMap((entity) => entity.fields.map((field) => `${entity.defKey}.${field.defKey}`));
   assert.ok(allFields.every((field) => !FORBIDDEN_FIELD_PATTERN.test(field)));
   assert.ok(!JSON.stringify(model).match(/jdbc:\/\/|BEGIN PRIVATE KEY|password\s*[=:]/iu));
+});
+
+
+test("Risk rule set root reserves codes and deletion identity independently of immutable versions", () => {
+  const entity = readModel().entities.find(value => value.defKey === "t_rule_set");
+  assert.deepEqual(entity.fields.map(value => value.defKey), ["rule_set_id", "decision_point_id", "rule_set_code",
+    "current_rule_set_version_id", "status", "version", "deleted_by", "deleted_time", "delete_reason_code",
+    "delete_trigger_id", "create_time", "update_time"]);
+  const fields = new Map(entity.fields.map(value => [value.defKey, value]));
+  assert.equal(fields.get("version").type, "BIGINT");
+  assert.equal(fields.get("version").defaultValue, "1");
+  assert.equal(fields.get("rule_set_id").primaryKey, true);
+  for (const field of ["deleted_by", "deleted_time", "delete_reason_code", "delete_trigger_id"]) {
+    assert.equal(fields.get(field).notNull, false);
+  }
+  assert.equal(fields.get("delete_trigger_id").type, "CHAR");
+  assert.equal(fields.get("delete_trigger_id").len, 64);
+  const byId = new Map(entity.fields.map(value => [value.id, value.defKey]));
+  assert.deepEqual(entity.indexes.map(index => [index.defKey, index.unique,
+    index.fields.map(field => byId.get(field.fieldDefKey))]), [
+      ["uk_rule_set_code", true, ["decision_point_id", "rule_set_code"]],
+      ["uk_rule_set_current", true, ["current_rule_set_version_id"]],
+      ["uk_rule_set_delete_trigger", true, ["delete_trigger_id"]],
+      ["idx_rule_set_list", false, ["status", "decision_point_id", "current_rule_set_version_id"]],
+    ]);
 });

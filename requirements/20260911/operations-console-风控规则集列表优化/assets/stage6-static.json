@@ -1,0 +1,49 @@
+{
+  "errors": [],
+  "executedSqlHashesUnchanged": true,
+  "platformInsertTables": [
+    "t_permission",
+    "t_role_permission",
+    "t_console_resource",
+    "t_gateway_route",
+    "t_gateway_route_header",
+    "t_gateway_guard_rule"
+  ],
+  "platformInsertRows": 16,
+  "platformSqlExecuted": false,
+  "gitDiffChecks": [
+    {
+      "repo": "Code-MoR",
+      "exitCode": 0
+    },
+    {
+      "repo": "risk-compliance-service",
+      "exitCode": 0
+    },
+    {
+      "repo": "operations-console-bff",
+      "exitCode": 0
+    },
+    {
+      "repo": "operations-console-web",
+      "exitCode": 0
+    },
+    {
+      "repo": "paytech-foundation",
+      "exitCode": 0
+    },
+    {
+      "repo": "platform-support-service",
+      "exitCode": 0
+    },
+    {
+      "repo": "api-gateway",
+      "exitCode": 0
+    }
+  ],
+  "markdownFiles": 18,
+  "relativeLinksChecked": 486,
+  "cleanApiJarRenamedTypes": 25,
+  "riskRedisKeysRemaining": 0,
+  "section16AnchorsValid": true
+}

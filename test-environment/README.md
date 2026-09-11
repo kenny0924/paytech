@@ -4,6 +4,8 @@
 
 本目录由根工作区版本管理，前端和各服务项目继续独立版本管理。已部署 Operations 链路与独立的 Go Vault，其他核心系统不创建空应用容器。可选 scheduler 配置与 local 一致，没有启动 XXL-Job。
 
+> 规则集列表优化的三应用增量发布使用[专用发布包](../requirements/20260911/operations-console-风控规则集列表优化/release.md)。当前为准备工件，执行状态见台账；新增目录的 37 Route/22 Resource 不适用下文旧 Risk rollout/smoke 的 36/21 闭合分类。不要用全量部署或旧初始化替代该发布包。
+
 ## 当前入口与账号
 
 - Operations：**http://localhost:28080**，必须使用这个精确 Origin；无需 HTTPS 或安装证书。

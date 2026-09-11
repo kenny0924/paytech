@@ -1,0 +1,34 @@
+{
+  "stage": 8,
+  "authorization": "先git提交一下",
+  "requirementsSite": {
+    "command": "npm --prefix requirements-site test",
+    "exitCode": 0,
+    "tests": 136,
+    "passed": 136,
+    "failed": 0,
+    "skipped": 0
+  },
+  "componentVerification": "BFF/Web/Foundation/Platform match stage 7 source hashes; selected Risk compile and 7 non-debug class comparisons passed",
+  "fullJavaTestsRerun": false,
+  "stagedWhitespaceCheck": "PASSED",
+  "stagedRelativeLinks": {
+    "checked": 461,
+    "missingFromRootIndex": [
+      {
+        "file": "test-environment/README.md",
+        "target": "test-environment/private/access.md"
+      }
+    ],
+    "status": "PASSED",
+    "existingGeneratedPrivateLink": "test-environment/private/access.md is an existing ignored runtime access document; intentionally not committed"
+  },
+  "noWorkingSourceChanges": true,
+  "credentialScan": "PASSED",
+  "pushed": false,
+  "deployedAgain": false,
+  "stagedRootPaths": 82,
+  "checkedAt": "2026-09-11T15:02:03.427101+00:00",
+  "preservedSourceBytes": "All preexisting application working files retained byte for byte",
+  "archiveCommitContainsItsOwnVerification": true
+}

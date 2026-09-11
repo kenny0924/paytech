@@ -936,6 +936,9 @@ class RiskComposeContractTest(unittest.TestCase):
             "      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.25",
             "      RISK_DB_USERNAME: risk_app",
             "      RISK_DB_PASSWORD: ${MOR_RISK_DB_PASSWORD:?prepare test secrets}",
+            "      RISK_REDIS_HOST: redis",
+            '      RISK_REDIS_PORT: "6379"',
+            "      RISK_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}",
             '      RISK_SNOWFLAKE_REGION_ID: "0"',
             '      RISK_SNOWFLAKE_WORKER_ID: "25"',
             "      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18104/actuator/health/readiness]",
@@ -944,7 +947,7 @@ class RiskComposeContractTest(unittest.TestCase):
             self.assertIn(exact_line, risk)
         self.assertIn("jdbc:mysql://mysql:3306/mor_risk?", risk)
         self.assertEqual(
-            {"mysql", "nacos"},
+            {"mysql", "redis", "nacos"},
             set(
                 re.findall(
                     r"^      ([a-z0-9-]+): \{ condition: service_healthy \}$",

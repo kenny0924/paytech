@@ -1,0 +1,17 @@
+{
+  "environment": "local-environment",
+  "host": "127.0.0.1",
+  "port": 13306,
+  "database": "mor_risk",
+  "backup": "/Users/kenny/Code-MoR-backups/risk-rule-set-list-local-20260911T110820Z/mor_risk-before.sql",
+  "backupSha256": "ade9a4960a1e1e4dd2a8f98f51e8ae448153636de120e08bb9810d6fc449fc7b",
+  "existingTableCount": 71,
+  "existingTableDumpUnchanged": true,
+  "newTable": "t_rule_set",
+  "newColumns": 12,
+  "manifestEntries": 0,
+  "rowsInserted": 0,
+  "ddlSha256": "c126cb2249e36cb8112a7388d7c3d86f13e63deb4c274238aa95cd8548aa0324",
+  "dmlSha256": "00942fc45be3d5033192f60701c25be3c08e8e3723f813f94920b73076868e7b",
+  "completedAt": "20260911T110820Z"
+}

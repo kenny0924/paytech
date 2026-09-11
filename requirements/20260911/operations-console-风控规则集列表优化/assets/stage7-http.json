@@ -1,0 +1,267 @@
+{
+  "checks": [
+    "Real administrator login",
+    "22 resources including delete",
+    "Configuration context has five actions",
+    "21 existing rule sets, one row each",
+    "Existing multi-version set exact-code query selects current version",
+    "Existing current detail and hash preserved",
+    "Current-version status filter DRAFT",
+    "Current-version status filter FROZEN",
+    "Invalid code 400 and anonymous 401",
+    "Synthetic first version has management version 1",
+    "Temporary readonly account requires initial password change",
+    "Readonly account can query",
+    "Real readonly delete forbidden with no mutation",
+    "Temporary readonly account logged out and deleted",
+    "Second version still one row and management version 2",
+    "Stale whole-set delete returns RISK_RULE_SET_CHANGED",
+    "Fresh whole-set delete succeeds",
+    "Delete same-key replay preserves receipt",
+    "Deleted whole set disappears",
+    "Original create same-key replay preserved after deletion",
+    "Deleted code cannot be recreated with a new key",
+    "Second synthetic set ready for real browser acceptance",
+    "Real session refresh retains authorized context"
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/authorization/v1/navigation",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/auth/v1/context",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?page=1&size=100&pointCode=CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?page=1&size=100&pointCode=CHECKOUT_PREPARE&ruleSetCode=SMOKE_20260911T074040Z_0234EA885159",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224080617602650112",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?page=1&size=100&pointCode=CHECKOUT_PREPARE&status=DRAFT",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?page=1&size=100&pointCode=CHECKOUT_PREPARE&status=FROZEN",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?ruleSetCode=123",
+      "status": 400,
+      "requestId": "47a0ff9a-b108-4049-b86e-1322ec4cbb46",
+      "code": "INVALID_REQUEST"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 401,
+      "requestId": "c70bb4cd-1320-405a-8bdc-b7f4601bba27",
+      "code": "GATEWAY_UNAUTHORIZED"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?page=1&size=100&pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_F5732C64296B46E8ACEAF4034FCB3BF7",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/iam/v1/accounts",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?ruleSetCode=TEST_RULE_SET_LIST_F5732C64296B46E8ACEAF4034FCB3BF7",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224157784055320576",
+      "status": 403,
+      "requestId": "326bb843-c441-40e6-b57f-14f2884cad41",
+      "code": "OPERATIONS_PERMISSION_DENIED"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/v1/logout",
+      "status": 204,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/iam/v1/accounts?page=1&size=100",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/iam/v1/accounts/224157784495702016",
+      "status": 204,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/auth/v1/logout",
+      "status": 204,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?page=1&size=100&pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_F5732C64296B46E8ACEAF4034FCB3BF7",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?page=1&size=100&pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_F5732C64296B46E8ACEAF4034FCB3BF7",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224157784055320576",
+      "status": 409,
+      "requestId": "5229f2e5-0207-47f1-82d2-0f564e6c0124",
+      "code": "RISK_RULE_SET_CHANGED"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?page=1&size=100&pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_F5732C64296B46E8ACEAF4034FCB3BF7",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224157784055320576",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224157784055320576",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?page=1&size=100&pointCode=CHECKOUT_PREPARE&ruleSetCode=TEST_RULE_SET_LIST_F5732C64296B46E8ACEAF4034FCB3BF7",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224157784000794624",
+      "status": 404,
+      "requestId": "c396a635-8b0d-4172-bc1e-716737e0d934",
+      "code": "RISK_DECISION_CONFIGURATION_NOT_FOUND"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 409,
+      "requestId": "f063d420-0a9a-41f6-b2f5-90517a2a933c",
+      "code": "RISK_RULE_SET_DELETED"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/auth/v1/refresh",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/auth/v1/context",
+      "status": 200,
+      "requestId": null,
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/auth/v1/logout",
+      "status": 204,
+      "requestId": null,
+      "code": null
+    }
+  ]
+}

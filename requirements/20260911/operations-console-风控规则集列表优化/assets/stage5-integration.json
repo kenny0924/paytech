@@ -1,0 +1,276 @@
+{
+  "scope": "Real BFF and Risk HTTP processes with local MySQL/Redis; Platform Simulator and synthetic Gateway headers",
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "stage5-cd9007cb61d44be5876390d986261556",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": "stage5-4fb22606774542e8a65b9b8ae6ff64cf",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": "stage5-98608b86a2704e349483adac7beba5bd",
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10&ruleSetCode=AUTO_STAGE5_70339F918BC449978987DD82DD1F82F2",
+      "status": 200,
+      "requestId": "stage5-78553f7d50334f4ab74cf72e63677c9f",
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10&ruleSetCode=AUTO_STAGE5_70339F918BC449978987DD82DD1F82F2",
+      "status": 200,
+      "requestId": "stage5-2a9a39cac391452da932845acb396366",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142517673984/freeze",
+      "status": 200,
+      "requestId": "stage5-448fc21bcc5449f38b11f5a24cd4eeee",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-releases/v1/candidates",
+      "status": 200,
+      "requestId": "stage5-077ebcef84554a17bbae591b02336eb6",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": "stage5-bbcd75f243a84828af33a769a61c091d",
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10&ruleSetCode=AUTO_STAGE5_70339F918BC449978987DD82DD1F82F2",
+      "status": 200,
+      "requestId": "stage5-eef12d343835466c9b01f3b44ded0ad8",
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10&ruleSetCode=AUTO_STAGE5_70339F918BC449978987DD82DD1F82F2&status=FROZEN",
+      "status": 200,
+      "requestId": "stage5-134e5ddeecf24f8ca36b11b97585c9af",
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142517673984",
+      "status": 200,
+      "requestId": "stage5-9caa884122e3447196cfc4a1f01c1bae",
+      "code": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 403,
+      "requestId": "stage5-1f4ee6fb71b84d01a04479b86d1c29fb",
+      "code": "OPERATIONS_PERMISSION_DENIED"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10&ruleSetCode=AUTO_STAGE5_70339F918BC449978987DD82DD1F82F2",
+      "status": 200,
+      "requestId": "stage5-85236086a8544f619a1a36aa3bed223a",
+      "code": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 409,
+      "requestId": "stage5-003ac7f92d7d4f0ebe85015d82f03432",
+      "code": "RISK_RULE_SET_CHANGED"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10&ruleSetCode=AUTO_STAGE5_70339F918BC449978987DD82DD1F82F2",
+      "status": 200,
+      "requestId": "stage5-2ed96f5bde614b269339c34df37aba69",
+      "code": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 409,
+      "requestId": "stage5-0aa1464c8a684341a38ecb67a978137c",
+      "code": "RISK_RULE_SET_IN_USE"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 400,
+      "requestId": "stage5-251f4a69a03e4027961957a07de7a2cb",
+      "code": "INVALID_REQUEST"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 400,
+      "requestId": "stage5-2c01b1a78a404f38b3c7db198a33bccd",
+      "code": "INVALID_REQUEST"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 400,
+      "requestId": "stage5-a3c35ed4e2ba41e482a384ff4d9c1e83",
+      "code": "INVALID_REQUEST"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 400,
+      "requestId": "stage5-86f2900912814b74b6d4f1c71fe0c240",
+      "code": "INVALID_REQUEST"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 422,
+      "requestId": "stage5-eaeaccf081e54200a683c896f9b3ec7b",
+      "code": "VALIDATION_ERROR"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 400,
+      "requestId": "stage5-278dca913b424c4db8c0fc2733a1f4d2",
+      "code": "INVALID_REQUEST"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 400,
+      "requestId": "stage5-3ba5ce28e52341e29cc35b59e6f8e91d",
+      "code": "INVALID_REQUEST"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 400,
+      "requestId": "stage5-0e7edef4eeab4bd182b8d72a90efa9a0",
+      "code": "INVALID_REQUEST"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 422,
+      "requestId": "stage5-8548c6e64f07415d80adbb5962cd20c9",
+      "code": "VALIDATION_ERROR"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 200,
+      "requestId": "stage5-5b2cd01ae18440738e75bbb2b09eb121",
+      "code": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142568005632",
+      "status": 200,
+      "requestId": "stage5-b686da3bebd841c4982940d1374db2d5",
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10&ruleSetCode=AUTO_STAGE5_70339F918BC449978987DD82DD1F82F2",
+      "status": 200,
+      "requestId": "stage5-54a6b82ffda8477599c212f9152ab1e7",
+      "code": null
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142517673984",
+      "status": 404,
+      "requestId": "stage5-cab1a3a6b9c94b22ad0847c2859ad5c0",
+      "code": "RISK_DECISION_CONFIGURATION_NOT_FOUND"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224144143176179712",
+      "status": 404,
+      "requestId": "stage5-f296e40e45c544a08e0640313b9d68f9",
+      "code": "RISK_DECISION_CONFIGURATION_NOT_FOUND"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": "stage5-e9f55cae84a1408abf83987ff4ff4c7e",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets/224144142517673984/freeze",
+      "status": 200,
+      "requestId": "stage5-a12c8ecc0e524d6eb3ae06d54f1e6d18",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-releases/v1/candidates",
+      "status": 200,
+      "requestId": "stage5-6b6bd2baa661493296cbaa07ba276573",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 409,
+      "requestId": "stage5-96ffe802743643a4af793558a13c19f8",
+      "code": "RISK_RULE_SET_DELETED"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-releases/v1/candidates/224144143088099328",
+      "status": 200,
+      "requestId": "stage5-9857a87b2f5d44d1bad7f30030266f10",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-releases/v1/candidates/224144143088099328/validate",
+      "status": 200,
+      "requestId": "stage5-a7290e81f3604e7d9d3b30e39d3b6ad1",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-releases/v1/candidates/224144143088099328/validate",
+      "status": 200,
+      "requestId": "stage5-f3a7db6d394a42a19019b3c1695bbf3b",
+      "code": null
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "requestId": "stage5-67faf6c2ac854c5ca62545cee9f8ed35",
+      "code": null
+    }
+  ],
+  "platform": {
+    "platformCalls": 129,
+    "unexpectedPlatformCalls": 0
+  },
+  "activeReleaseSetup": "Owned synthetic Candidate status changed temporarily, then restored; no activation API implemented"
+}

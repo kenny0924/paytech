@@ -1,0 +1,107 @@
+[
+  {
+    "ruleSetId": "224149867037978624",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T114019Z_416D78532261"
+  },
+  {
+    "ruleSetId": "224149867037978625",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T122756Z_54098B6B3604"
+  },
+  {
+    "ruleSetId": "224149867037978626",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T123409Z_31F2E779F754"
+  },
+  {
+    "ruleSetId": "224149867037978627",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T125023Z_1F6CF4C9C7B1"
+  },
+  {
+    "ruleSetId": "224149867037978628",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T132938Z_392C27E01C52"
+  },
+  {
+    "ruleSetId": "224149867037978629",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T133430Z_2E6C613E4BC1"
+  },
+  {
+    "ruleSetId": "224149867037978630",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T133723Z_5FF2313A033F"
+  },
+  {
+    "ruleSetId": "224149867037978631",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T134109Z_2ADDD7B18877"
+  },
+  {
+    "ruleSetId": "224149867037978632",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T134258Z_DE1832285013"
+  },
+  {
+    "ruleSetId": "224149867037978633",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T135257Z_AE67D91DD3D1"
+  },
+  {
+    "ruleSetId": "224149867037978634",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T151544Z_04950A883615"
+  },
+  {
+    "ruleSetId": "224149867037978635",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T151544Z_AD24E079DC19"
+  },
+  {
+    "ruleSetId": "224149867037978636",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T152013Z_4D4921C6D5C3"
+  },
+  {
+    "ruleSetId": "224149867037978637",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T152013Z_D08706A1CEE9"
+  },
+  {
+    "ruleSetId": "224149867037978638",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T192312Z_B9EB3889D17A"
+  },
+  {
+    "ruleSetId": "224149867037978639",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260908T192313Z_1EF4A74E358E"
+  },
+  {
+    "ruleSetId": "224149867037978640",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260911T073948Z_1143DB47334C"
+  },
+  {
+    "ruleSetId": "224149867037978641",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260911T073949Z_89504955539B"
+  },
+  {
+    "ruleSetId": "224149867037978642",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260911T074040Z_0234EA885159"
+  },
+  {
+    "ruleSetId": "224149867037978643",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SMOKE_20260911T074040Z_7F7C5EBC4E41"
+  },
+  {
+    "ruleSetId": "224149867037978644",
+    "decisionPointId": "210001",
+    "ruleSetCode": "SSSS"
+  }
+]

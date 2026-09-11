@@ -1,0 +1,49 @@
+{
+  "jdk": "25",
+  "selectedSourceFiles": [
+    "risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl.java",
+    "risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementApi.java",
+    "risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionReleaseManagementController.java",
+    "risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionRuleSetManagementController.java"
+  ],
+  "compile": "PASSED",
+  "comparison": "ASM ClassReader.SKIP_DEBUG; preserve code, signatures, parameters, annotations and attributes except debug/source metadata",
+  "classes": [
+    {
+      "class": "com/paytech/risk/ext/rest/decision/DecisionReleaseManagementController.class",
+      "normalizedSha256": "25e0fe4f571cf3a14155e8463c2f5f6ca88f6626e5e8102b66c08bd474e7d31e",
+      "selectedEqualsWorkingEqualsDeployed": true
+    },
+    {
+      "class": "com/paytech/risk/ext/rest/decision/DecisionRuleSetManagementController.class",
+      "normalizedSha256": "7478ddc445c4126735a5aa3fd483ea7fa3b15ec3fb4bb391fa5aaeec0a721912",
+      "selectedEqualsWorkingEqualsDeployed": true
+    },
+    {
+      "class": "com/paytech/risk/api/decision/DecisionRuleSetManagementApi.class",
+      "normalizedSha256": "d54be32cffb1736008d142b2d6d0fea1fb51a0fb6dde32e3cf90aeddd24a437a",
+      "selectedEqualsWorkingEqualsDeployed": true
+    },
+    {
+      "class": "com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl$MaterializedRules.class",
+      "normalizedSha256": "793816cbae7e143eb5a3460451a34d8ef4baf43b7ca934a3a1ce003eae032516",
+      "selectedEqualsWorkingEqualsDeployed": true
+    },
+    {
+      "class": "com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl$1.class",
+      "normalizedSha256": "0556770cdbe4619251c384549b3115f59fa29699f64e385b618f71dee1fc2a08",
+      "selectedEqualsWorkingEqualsDeployed": true
+    },
+    {
+      "class": "com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl.class",
+      "normalizedSha256": "29c43323fe9af305a3acb916faa05f777bc7e7e9e4444b9b515373739e8081eb",
+      "selectedEqualsWorkingEqualsDeployed": true
+    },
+    {
+      "class": "com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl$IdentifierScope.class",
+      "normalizedSha256": "d24dbd21af83357b7bd6e9eec02a8efd5e1a44e8c59bf1e92bf1308870f93610",
+      "selectedEqualsWorkingEqualsDeployed": true
+    }
+  ],
+  "workingFilesUnchanged": true
+}

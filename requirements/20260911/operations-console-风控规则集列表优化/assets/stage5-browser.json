@@ -1,0 +1,86 @@
+{
+  "scope": "local Vite / production Web with synthetic HTTP, no real business commands",
+  "evidence": [
+    {
+      "name": "invalid-code-inline-no-request",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&page=1&size=10&view=list",
+      "listCalls": 1,
+      "commands": 0
+    },
+    {
+      "name": "detail-pushed",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&ruleSetCode=RULE_02&page=1&size=10&view=detail&selectedRuleSetCode=RULE_02",
+      "listCalls": 4,
+      "commands": 0
+    },
+    {
+      "name": "back-restores-filtered-list",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&ruleSetCode=RULE_02&page=1&size=10&view=list",
+      "listCalls": 5,
+      "commands": 0
+    },
+    {
+      "name": "cancel-back-keeps-editor",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&ruleSetCode=RULE_02&page=1&size=10&view=edit&selectedRuleSetCode=RULE_02",
+      "listCalls": 9,
+      "commands": 0
+    },
+    {
+      "name": "forward-reloads-saved-editor",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&ruleSetCode=RULE_02&page=1&size=10&view=edit&selectedRuleSetCode=RULE_02",
+      "listCalls": 11,
+      "commands": 0
+    },
+    {
+      "name": "red-menu-delete-cancel-no-command",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&ruleSetCode=RULE_02&page=1&size=10&view=list",
+      "listCalls": 12,
+      "commands": 0
+    },
+    {
+      "name": "unknown-delete-retries-exact-envelope",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&ruleSetCode=RULE_02&page=1&size=10&view=list",
+      "listCalls": 13,
+      "commands": 2
+    },
+    {
+      "name": "active-release-delete-disabled",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&page=1&size=10&view=list",
+      "listCalls": 14,
+      "commands": 2
+    },
+    {
+      "name": "back-restores-page-two",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&page=2&size=10&view=list",
+      "listCalls": 17,
+      "commands": 2
+    },
+    {
+      "name": "legacy-candidate-normalized",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&page=1&size=10&view=list",
+      "listCalls": 18,
+      "commands": 2
+    },
+    {
+      "name": "keyboard-menu-detail",
+      "url": "/risk/rule-configuration?pointCode=CHECKOUT_PREPARE&page=1&size=10&view=detail&selectedRuleSetCode=RULE_01",
+      "listCalls": 20,
+      "commands": 2
+    }
+  ],
+  "commands": [
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/101",
+      "body": "{\"expectedVersion\":\"1\"}",
+      "key": "09739acd-15f1-41f2-a045-ab076b210782"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-rule-sets/v1/rule-sets/101",
+      "body": "{\"expectedVersion\":\"1\"}",
+      "key": "09739acd-15f1-41f2-a045-ab076b210782"
+    }
+  ],
+  "errors": []
+}

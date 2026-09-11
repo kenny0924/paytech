@@ -858,7 +858,7 @@ test("Risk Decision Engine Manifest collapses catalog roots and typed Literal ro
     assertManifestUniqueIndex(table, contract.unique);
   }
 
-  for (const removedTable of ["feature_definition", "action_definition", "rule_set", "rule_operand_value"]) {
+  for (const removedTable of ["feature_definition", "action_definition", "rule_operand_value"]) {
     assert.ok(!tables.has(removedTable), `Manifest 保留了已删除表：${removedTable}`);
   }
   assert.deepEqual(
@@ -867,7 +867,7 @@ test("Risk Decision Engine Manifest collapses catalog roots and typed Literal ro
   );
 
   const removedFields = new Set(["feature_id", "action_id", "rule_set_id", "operand_value_id"]);
-  const removedTables = new Set(["feature_definition", "action_definition", "rule_set", "rule_operand_value"]);
+  const removedTables = new Set(["feature_definition", "action_definition", "rule_operand_value"]);
   for (const table of DECISION_ENGINE_TABLES) {
     for (const relation of table.relations) {
       assert.ok(!removedFields.has(relation.childField), `Rule AST 保留了已删除关系字段：${table.defKey}.${relation.childField}`);
@@ -899,8 +899,8 @@ test("Risk staged Manifest and Policy consolidate Release audit and Shadow evide
   const shadowRun = decisionTables.get("release_shadow_run");
   const evaluation = evaluationTables.get("decision_evaluation");
 
-  assert.equal(RISK_TABLES.length, 71);
-  assert.equal(DECISION_ENGINE_TABLES.length, 19);
+  assert.equal(RISK_TABLES.length, 72);
+  assert.equal(DECISION_ENGINE_TABLES.length, 20);
   assert.equal(EVALUATION_TABLES.length, 8);
 
   assert.ok(audit, "缺少目标 Manifest 表：release_audit_event");
@@ -976,8 +976,8 @@ test("Risk staged Manifest and Policy consolidate evaluation traces and Action e
   const trace = evaluationTables.get("evaluation_rule_trace");
   const effect = evaluationTables.get("action_effect");
 
-  assert.equal(RISK_TABLES.length, 71);
-  assert.equal(DECISION_ENGINE_TABLES.length, 19);
+  assert.equal(RISK_TABLES.length, 72);
+  assert.equal(DECISION_ENGINE_TABLES.length, 20);
   assert.equal(EVALUATION_TABLES.length, 8);
 
   assert.ok(trace, "缺少目标 Manifest 表：evaluation_rule_trace");
@@ -1369,13 +1369,13 @@ test("Risk Evaluation cross-row policy freezes Intent, Effect, default decision,
   });
 });
 
-test("Risk Decision Engine and Evaluation freeze the 71-table target inventories", () => {
+test("Risk Decision Engine and Evaluation freeze the 72-table target inventories", () => {
   const model = readModel();
   const groups = new Map(model.diagrams.map((diagram) => [diagram.defKey, diagram.properties.primaryTables]));
   const decisionEngine = [
     "t_decision_point", "t_decision_point_version", "t_decision_point_input_field",
     "t_decision_point_feature", "t_decision_point_rule_set", "t_decision_point_obligation",
-    "t_feature_version", "t_feature_dependency", "t_rule_set_version", "t_risk_rule",
+    "t_feature_version", "t_feature_dependency", "t_rule_set", "t_rule_set_version", "t_risk_rule",
     "t_rule_node", "t_rule_operand", "t_action_version", "t_action_parameter_definition",
     "t_rule_action", "t_rule_action_parameter", "t_decision_release", "t_release_audit_event",
     "t_release_shadow_run",
@@ -1386,7 +1386,7 @@ test("Risk Decision Engine and Evaluation freeze the 71-table target inventories
     "t_transaction_risk_assessment", "t_settlement_risk_assessment",
   ];
 
-  assert.equal(model.entities.length, 71);
+  assert.equal(model.entities.length, 72);
   assert.deepEqual(groups.get("decision_engine")?.sort(), decisionEngine.sort());
   assert.deepEqual(groups.get("evaluation")?.sort(), evaluation.sort());
 });

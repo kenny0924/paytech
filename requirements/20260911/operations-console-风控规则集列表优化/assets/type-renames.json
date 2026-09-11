@@ -1,0 +1,168 @@
+{
+  "status": "stage-3-approved-implemented-in-stage-4",
+  "confirmedRule": "沿用原接口版本，新接口默认 /v1；类型名不含协议版本后缀。",
+  "scope": "Risk 规则配置和关联 Release 管理 DTO；提供方、BFF 调用方和测试同步调整。",
+  "preserve": [
+    "JSON 字段与已有请求 Hash Schema",
+    "RuleSetVersion 业务概念",
+    "versionNo",
+    "baseRuleSetVersionId"
+  ],
+  "renames": [
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "CreateRuleSetVersionRequestBodyV1",
+      "newName": "CreateRuleSetVersionRequestBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "RuleRequestBodyV1",
+      "newName": "RuleRequestBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "ConditionNodeRequestBodyV1",
+      "newName": "ConditionNodeRequestBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "OperandRequestBodyV1",
+      "newName": "OperandRequestBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "RuleActionRequestBodyV1",
+      "newName": "RuleActionRequestBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "FreezeRuleSetVersionRequestBodyV1",
+      "newName": "FreezeRuleSetVersionRequestBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "RuleAuthoringContextResponseBodyV1",
+      "newName": "RuleAuthoringContextResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "DecisionPointDescriptorResponseBodyV1",
+      "newName": "DecisionPointDescriptorResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "DecisionInputFieldDescriptorResponseBodyV1",
+      "newName": "DecisionInputFieldDescriptorResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "DecisionActionDescriptorResponseBodyV1",
+      "newName": "DecisionActionDescriptorResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "RuleSetListItemResponseBodyV1",
+      "newName": "RuleSetListItemResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "RuleSetDetailResponseBodyV1",
+      "newName": "RuleSetDetailResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "CreateRuleSetVersionResponseBodyV1",
+      "newName": "CreateRuleSetVersionResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+      "container": "DecisionRuleSetManagementModels",
+      "oldName": "FreezeRuleSetVersionResponseBodyV1",
+      "newName": "FreezeRuleSetVersionResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "CreateTestReleaseRequestBodyV1",
+      "newName": "CreateTestReleaseRequestBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "ValidateTestReleaseRequestBodyV1",
+      "newName": "ValidateTestReleaseRequestBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "TestReleaseListItemResponseBodyV1",
+      "newName": "TestReleaseListItemResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "TestReleaseDetailResponseBodyV1",
+      "newName": "TestReleaseDetailResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "FrozenCompositionResponseBodyV1",
+      "newName": "FrozenCompositionResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "ReleaseStateChangeResponseBodyV1",
+      "newName": "ReleaseStateChangeResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "ReleaseStaticCheckResponseBodyV1",
+      "newName": "ReleaseStaticCheckResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "InitialStateChangeResponseBodyV1",
+      "newName": "InitialStateChangeResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "ValidationCheckResponseBodyV1",
+      "newName": "ValidationCheckResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "CreateTestReleaseResponseBodyV1",
+      "newName": "CreateTestReleaseResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+      "container": "DecisionReleaseManagementModels",
+      "oldName": "ValidateTestReleaseResponseBodyV1",
+      "newName": "ValidateTestReleaseResponseBody"
+    },
+    {
+      "source": "risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/decision/RiskDecisionWireMapper.java",
+      "oldName": "RiskDecisionWireMapper",
+      "newName": "RiskDecisionWireConverter"
+    }
+  ]
+}

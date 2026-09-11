@@ -1,0 +1,15 @@
+{
+  "generator": "com.paytech.foundation.id.SnowflakeIdGenerator",
+  "node": {
+    "regionId": 31,
+    "workerId": 31,
+    "purpose": "one-shot offline test migration; not an application node"
+  },
+  "manifestSha256": "d3cc494a1e5ca7c338ad326ad50180d573ab807b78f88aa0c59f13f08443396f",
+  "identities": 21,
+  "bigintPrimaryKeyColumnsChecked": 71,
+  "identityCollisions": 0,
+  "readOnlyInsertProjectionRows": 21,
+  "historicalVersions": 23,
+  "executedDdlOrDml": false
+}

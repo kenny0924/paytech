@@ -1004,7 +1004,7 @@ test("Settlement cross-row policy freezes Effect origin, aggregate history, even
   assertDeepFrozen(contracts.CR_SETTLEMENT_ASSESSMENT_DOMAIN, "CR_SETTLEMENT_ASSESSMENT_DOMAIN");
 });
 
-test("Generated Risk model independently exposes the 71-table Settlement target", () => {
+test("Generated Risk model independently exposes the current Settlement target", () => {
   const model = JSON.parse(readFileSync(modelPath, "utf8"));
   const settlementDiagram = model.diagrams.find((diagram) => diagram.defKey === "settlement");
 

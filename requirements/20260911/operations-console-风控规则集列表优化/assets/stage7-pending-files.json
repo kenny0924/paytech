@@ -1,0 +1,876 @@
+{
+  "status": "PROPOSED_AWAITING_STAGE_8_AUTHORIZATION",
+  "action": "Local commits and delivery archiving only; no push, branch, PR, deploy or artifact publication",
+  "repositories": [
+    {
+      "repository": "Code-MoR",
+      "headBefore": "f19cd30d766ea4ae05f622505b538d404884899b",
+      "proposedSummary": "记录规则集列表优化及 test 发布验收",
+      "files": [
+        {
+          "path": ".cursor/rules/api-version-and-type-naming.mdc",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "agent-docs/CURRENT_IMPLEMENTATION.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "agent-docs/DEVELOPMENT_CONVENTIONS.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "agent-docs/DOCUMENT_GOVERNANCE.md",
+          "selection": "仅规则集列表与整体管理 Owner 行及本次 API 版本/类型命名示例；保留此前流程/目录治理改动。"
+        },
+        {
+          "path": "agent-docs/JAVA_PROJECT_STRUCTURE.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "agent-docs/README.md",
+          "selection": "仅公共 API 版本/类型命名入口及规则集列表方案路由；保留此前公共流程、目录治理改动。"
+        },
+        {
+          "path": "agent-docs/database/RISK_COMPLIANCE_DATABASE.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "agent-docs/database/scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "agent-docs/decisions/2026-09-11-api-version-and-type-naming.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements-site/content/global-use-case-sequences.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements-site/content/requirements.ts",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements-site/tests/site-content.test.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/acceptance.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/invalid-code-query-before.png",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/local-sql-applied.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/rule-list-menu-after.png",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/rule-list-notice-before.png",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage2-diagnosis.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage4-browser.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage4-static.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage4-verification.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage5-browser-real.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage5-browser.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage5-delete-confirmation.png",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage5-integration.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage5-list-mobile.png",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage5-static.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage5-verification.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage6-gateway-compatibility.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage6-manifest-check.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage6-no-runtime-changes.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage6-platform-compatibility.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage6-preflight.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage6-release-package.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage6-static.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-browser.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-deployment.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-discovery.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-final-verification.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-http.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-list-mobile-test.png",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-list-test.png",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-pending-files.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-static.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/stage7-verification.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/assets/type-renames.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/commit-plan.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/dml.sql",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/test-close-entry.sql",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/test-enable-risk-routes.sql",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/test-expose-resources.sql",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/test-maintenance.sql",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/test-restore-before-migration.sql",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/ddl.sql",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/dml.sql",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/local-manifest.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/local.sql",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/test-manifest.json",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/test.sql",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/delivery.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/deployment.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/release.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/requirement.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "requirements/20260911/operations-console-风控规则集列表优化/technique.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk-compliance-model.test.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk-compliance-scenario-doc.test.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk-compliance-schema.test.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk-compliance-test-oracle/schema.oracle.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk-decision-engine-contract.test.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk-limit-balanced-simplification.test.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk-settlement-eligibility-balanced-simplification.test.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk/generate-risk-compliance-model.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk/generate-risk-compliance-schema.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk/manifest.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "scripts/pdmaner/risk/manifests/02-decision-engine.mjs",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "test-environment/README.md",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "test-environment/compose.applications.yaml",
+          "selection": "本轮文件变更"
+        },
+        {
+          "path": "test-environment/scripts/test_deploy_script.py",
+          "selection": "本轮文件变更"
+        }
+      ]
+    },
+    {
+      "repository": "risk-compliance-service",
+      "headBefore": "d609e04ddee2b6175180a2ec8be8790b8e32c662",
+      "proposedSummary": "支持规则集整体管理与删除",
+      "files": [
+        {
+          "path": "README.md",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "31b0261dae110dcf0c626baedeb278fb745a7575998c29534ffa23dd8b359533"
+        },
+        {
+          "path": "docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "b340d1851343b5451cf1032887d8d4eff434263661ff676d4c7f915b52346103"
+        },
+        {
+          "path": "docs/database/risk-compliance.pdma.json",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "e3ff5204790a5852396b59262ba4e45d9194c5dab35f4d28d0cf1d02d2e44895"
+        },
+        {
+          "path": "docs/database/sql/risk-compliance-schema.sql",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "738e076d52b62179af532b796b41e78b4df29e3128e7c8d6fabd1587cfa846d9"
+        },
+        {
+          "path": "pom.xml",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "be5ed21875cde40f65fb168d7276552d2add98c8573bdac5b1bff7acb2564565"
+        },
+        {
+          "path": "risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementApi.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "321b38fd778e09283f5c6f34d23c733426406684dd0cf944df0a660ed8448985"
+        },
+        {
+          "path": "risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementModels.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "4761e5c8eb50de5d935610c6fdce0309a30a7d2e9707db1e5683ce042feb0abb"
+        },
+        {
+          "path": "risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementApi.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "c55319136e52cf5f6f9f4ffb77cbf29a5387bc08f69aa659cf4e35a64ea64d35"
+        },
+        {
+          "path": "risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "a52d538ae3ccdcb7efd5a6ed189ce79436f4a6371088fd57c47edcd215ec079e"
+        },
+        {
+          "path": "risk-api/src/main/java/com/paytech/risk/api/enums/RiskDecisionConfigurationErrorCode.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "b333003229a9a06cd9bb18116a24091e09d8f337d7bdc1fe909d227762c7f3a0"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/core/dal/dataobject/RuleSet.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "c6f5d99eb4bd59e09dcfb913c51497c59fa7df5ef169dd6c808ea4ebcf23f473"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/core/dal/dataobject/RuleSetReleaseReference.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "523e07e053b98b47c1efd7c5600acb3149f2f18b622c17eded025f9834f3bf9c"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/core/dal/mapper/DecisionRuleSetMapper.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "f383d9bc7c1d528a8568f0edd3e9adacd20f72731755c8869471990f18ca7aa2"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/domain/enums/RuleSetManagementStatus.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "ba48f6f64c765ed3275ea5d7ab234c121662c30c7646eb0d53f8728fc42b7acf"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/domain/hash/RiskDecisionCanonicalizer.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "0606384d642399f228ae130e14346d4a5f92c202521096942e3cd017470273aa"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/domain/hash/RiskDecisionCanonicalizerImpl.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "8e8821da7b9d3e613326c7002f6eac5a134cfa5e1969f379468524d58baf355f"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/domainservice/policy/RuleSetManagementPolicy.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "08538773f1de0bc2a3a75a6a260241038ea21afff039e8564d9772efa6eb49e6"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/domainservice/repository/DecisionRuleSetRepository.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "33aec9b8d4d7bf34c8f442f50df81d1c9afc6d6108be190d6e264f5582b1aad5"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/domainservice/repository/impl/DecisionRuleSetRepositoryImpl.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "15a2a6ddbb09ca9afd14ad9bf2a783a4f444c60a0c117eee2d50d95feaaa543b"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/DecisionRuleSetService.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "c1af6eed75bd944c884e711128a2a036a2f214a9153e7fc9cb9c539801119bc4"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/RuleSetManagementConflictException.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "70c3edb96ed0b00f9afcaf16d2fb331f88578fa97faaf42bb38343a7a0643002"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionReleaseServiceImpl.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "ddb62c86f79fe10f3b38846b46f0da10f8d563a148c60c71c89ded3bcdca10ef"
+        },
+        {
+          "path": "risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl.java",
+          "selection": "本轮行为与类型修改；排除开始前纯 import 整理",
+          "workingTreeSha256": "815ecaab919918aa104ebb705e5e1e01c773f196f48be12a670d0595c4f679e7"
+        },
+        {
+          "path": "risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "e3378b3a3ab745d156f9f12d65944b4030a0aed2b22107d3a17c44e3e171d55e"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/RiskModuleBoundaryAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "02c8781749817aca9fe7e150793b13acaa715b20b68c02e80c0f4974f79e0525"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/contract/RiskDecisionConfigurationApiContractAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "7cb548d6587a4632dc49a32687cbcadf22fb09bd8acccdc83cec1d10561bb6a5"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/domainservice/CommandIdempotencyAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "39f975377bc6dce09bfa2d9c0b51d50da441be243eff15cd9fa083a70486cf7c"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/domainservice/DecisionReleaseServiceProtocolAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "bca8eed53198eee8506535baaeb9273d04d280185ce674168521e720b793b54d"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/domainservice/DecisionRuleSetServiceAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "a684ffd741357bb3b4ad8d488b8d3a5bd90dce16e826ceae723b3cdb31654620"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionConfigurationConcurrencyAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "956d4357078550a80da9fd82d019a43d982247a6529522ec3220418170d5f791"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionConfigurationReadSnapshotAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "0e2987c1c005c855310928f8407bdd594b94dab16b403dca1ff6cd5ba202cf0d"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionReleaseManagementHttpAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "c73c98a062d99e52864dc393a0db21e66e61e536f643a698cf2e6ea318ddb514"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionReleaseValidationRecoveryAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "a1eada899820cea6e837552089fc9bfc8cf73b4f4d26aee249c8ee4478467a96"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionRuleSetDeletionHttpAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "53a39ac5a65e77e377bb2e41f226e23a2a3d98819fd089a7609fe3da27dd22bb"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionRuleSetManagementHttpAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "4618766dd19bacb90670675ec1711e8606c1ab6d033d0c3f2083dec50c9261e5"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/repository/RiskDecisionPersistenceAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "d0e8825e5495b4cc875b7c6c4c0676e42443e1970a8e4af918fd248990e28207"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/repository/RiskDecisionPersistenceContractAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "833dfb62647fac0c22b9d50f75a78d313ea7aa03fdd54e130584b01e75c41e3e"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/auto/service/DecisionConfigurationWebOrchestrationAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "ca14bebdd233b068920489923ac9c194a5ceadc7a17ea6e95b3bc98221f86a64"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/ext/rest/decision/RiskDecisionWireConverterAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "cc9931fa34b5223856308aa87dbc36dcf2bc8257eebd6f20b77d1b9fba933ada"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/ext/rest/decision/RiskDecisionWireMapperAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": null
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/test/builder/DecisionRuleSetRequestBuilder.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "2bea868c62623a5c913853be8ef07ebac598895a6f77adbca6ca15c7ecb69a05"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/test/decision/DecisionReleaseTestFixture.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "9ad5a29c638913388a0c0f2a4fb5713e5f16698692336aceacdb2bde31cb1e79"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/test/decision/RiskDecisionHttpClient.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "88cef9bfbe170bbc59c17bd5d372755257899d1df2049250d6e597037c48ab4f"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/test/decision/RiskDecisionTestMapper.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "1098297dbaea4612d098ec40cdc6a6c7ab0a2de9cd6542f56cce79b3346b208e"
+        },
+        {
+          "path": "risk-test/src/test/java/com/paytech/risk/test/infrastructure/RiskDatabasePrecondition.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "069456f2e04fc279a89e826f760e6830c9f63e39f81bec425154089156f700dd"
+        },
+        {
+          "path": "risk-test/src/test/resources/application-auto.yml",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "827623bae432be29732b454a4a3bcede36f5c2751516ac5961fa86b3680aa99a"
+        },
+        {
+          "path": "risk-web/pom.xml",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "fc654007e5c598f124a1c10fa44d11f9cbedd08df4faf5284e4f06f7d5cfc0df"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/configuration/DecisionRuleSetRequestJsonConfiguration.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "3e35c89d5823130178a675086b3a892a8905a78e4340adb3f3f0f800a828beb8"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/configuration/PersistenceConfiguration.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "aad5a7c36e3f02a98b70e7e408ad38454cad3370c083918b08d7bb9dafddd038"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/configuration/RiskApiErrorConfiguration.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "0e0608238340a5bab6396a3f5d6438239f36bb30d7f58ffd55c125068d070602"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/domain/enums/CommandOperationType.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "25f699e5bf358f89aa2ead2aca256495a969ea3ca630fe118e90bebced4a4275"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/domainservice/service/CommandIdempotencyService.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "45a14a54ca219a675dc17777ca359e47b26ef9620f88ff44cb786acf966cc216"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionReleaseManagementController.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "857b2b3a1a89ca7324156ba65f99228db0cded1f7e8d02d0ad0bed133b56735b"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionRuleSetManagementController.java",
+          "selection": "本轮行为与类型修改；排除开始前纯 import 整理",
+          "workingTreeSha256": "e124d390ba7ade40e7c989d7ac77a341220a534aa8ee839046137e276a8759b8"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/ext/rest/decision/RiskDecisionWireConverter.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "5183c60c2e8254cdafd900007230866e1c021c21da40902f4449a6c65f167b61"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/ext/rest/decision/RiskDecisionWireMapper.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": null
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/service/processor/DecisionReleaseManagementProcessor.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "249623ffc9137e441d5a1814af3a66049f921c6bd6fcb9d4652b078132e3237d"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/service/processor/DecisionRuleSetManagementProcessor.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "34a001613b675c4998ca4d5fe82465906072cd39a7dadf67f4e8f847ab36f15c"
+        },
+        {
+          "path": "risk-web/src/main/java/com/paytech/risk/service/transaction/RiskTransactionExecutor.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "edb62d2fa1079bbbbc45b26cebb94197868aeea647d3159ed41445b5f606a55c"
+        },
+        {
+          "path": "risk-web/src/main/resources/application.yml",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "6ba53906622261293b8f2297dc0e9fda60eaec9ca502e2f1aa0ef7c3e83e03b4"
+        }
+      ]
+    },
+    {
+      "repository": "operations-console-bff",
+      "headBefore": "4b64b9602de57dd02c35b7cadb5d40e050a3d53e",
+      "proposedSummary": "转发规则集删除并保持原 v1 合同",
+      "files": [
+        {
+          "path": "README.md",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "6b512c34ed1768e58f587506ff509b727926ecfb5e780afcc21e9415b26821c1"
+        },
+        {
+          "path": "paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsConsoleBffApplicationAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "e112a8e8eeb351f114488c71444b0b7134c5ecd5bba0d786417a304bd68b5b98"
+        },
+        {
+          "path": "paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsHttpBodyNamingAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "2a4cd8992dec1b39f029d0898852f15e98cad4b510c1f432c21996eced7d918b"
+        },
+        {
+          "path": "paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskClientConfigurationAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "600ceb7e6392eddc9b9e0138ae377d733a1f44b0278d6335009b3dc6650e7953"
+        },
+        {
+          "path": "paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskDecisionConfigurationBrowserBoundaryAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "2b79896f68383e5b5437ec13004f05a992463a90d373df927664c896132a43e3"
+        },
+        {
+          "path": "paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskDecisionConfigurationClientAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "f5bbb8e3490261c272fb41d9f0cc7f07cac3646896becf919487d2e38fd1d609"
+        },
+        {
+          "path": "paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskDecisionConfigurationModelAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "9d58c8c54c8a11ab02a0b5affb540ec06a02f9ef67af38ed185449d167919cf3"
+        },
+        {
+          "path": "paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/test/simulator/PlatformOperationsSimulator.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "5e2d26209e63972ffcdafcb15907d1387f588bc92b6c1ad00a9129bf34f51eac"
+        },
+        {
+          "path": "paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/test/simulator/RiskDecisionConfigurationSimulator.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "5cc0b3c3ba9ea5d02b94dbd351d9772d9b51b1b81168ca95bee526af37f19c48"
+        },
+        {
+          "path": "paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/OperationsErrorStatusResolver.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "2239d89b84527dca35a3fd0a23aa25ea3931b444b7c7012ecd910f50ded655b3"
+        },
+        {
+          "path": "paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/RiskOwnerResponseShapeValidator.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "3774e32e4732b97e99083c73176a0fd0459e26c0d04ce434ce359523611d3d22"
+        },
+        {
+          "path": "paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/RiskRequestShapeValidator.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "26a98627a635c69e478259910f1ba9de4292c2817773bf2a92bf66b8bcf83e56"
+        },
+        {
+          "path": "paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/RiskDecisionConfigurationController.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "5a560ab0224c7152a26f8dd385955443181d7ab4d3a47d54f3036743101f8641"
+        },
+        {
+          "path": "paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/integration/RiskDecisionConfigurationClient.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "2cbe08e033036cb9898fa4c3907b96bdbde31d5b56a6b8c5d50b087893a9779e"
+        },
+        {
+          "path": "paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/integration/impl/RiskDecisionConfigurationClientImpl.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "c5183fd07ac469451ad141f806ccc0152dd8292ffddb768706488e92725c9176"
+        },
+        {
+          "path": "paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/service/model/RiskRuleSetModels.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "e825cb7a85aa3f61974b59dd267caa000e25937b94b88f1c573234d87fd743bf"
+        }
+      ]
+    },
+    {
+      "repository": "operations-console-web",
+      "headBefore": "7e8036cf4cb34f34224cddfbabf399a338564b1d",
+      "proposedSummary": "优化规则集列表操作与浏览器导航",
+      "files": [
+        {
+          "path": "README.md",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "e84ffa21abdd3679e3ffddcd15f43ca5d9579e6c8e4f3cb92db2686e23bd6ffe"
+        },
+        {
+          "path": "src/api/paging.test.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "da05b15d5a9e1d0ff36ec9f7564cc3f4f7166a4708fe41d43be1c44fbd2e3f16"
+        },
+        {
+          "path": "src/hooks/usePaging.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "971e42a9020669b3f7b4caa10c8cad391b138812fd60624845956441928f9eec"
+        },
+        {
+          "path": "src/pages/RiskRuleConfiguration.tsx",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "bd9249ea0b7228b62fc22ddd292e6f7c23a1c233b83d707d99461c57a2da4894"
+        },
+        {
+          "path": "src/risk/RuleSetEditor.tsx",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "2b3a93d04fa72743a469c20972058474cc23e303a9bedd211210eb5f1e19e170"
+        },
+        {
+          "path": "src/risk/RuleSetTab.tsx",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "ec25148a8f7585e324ec07275b103c2e775d4a6b7c96b4c24a7343fe07a53afa"
+        },
+        {
+          "path": "src/risk/riskApiModels.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "9367ded270532b8697fc9ec2fa29b9e0e7522a63f467c4dfc073752141a5ecb5"
+        },
+        {
+          "path": "src/risk/riskDecisionApi.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "32bd47a07db7d328d43df9a72104ec0e22a55bf8f8bfdc9e3cfba82de2c397b7"
+        },
+        {
+          "path": "src/risk/riskFixtures.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "2927406cb706fbf2ade51f6e16df1af36bad62e2cf7d77f6a39332dbdd2149d4"
+        },
+        {
+          "path": "src/risk/riskNavigation.test.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "a6f1ebbcaec68fe83c3136e36a9b4b6fcc6fa384a1b169d4cc7aeaf85e5e89d1"
+        },
+        {
+          "path": "src/risk/riskNavigation.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "763c2fbee8a66a820cc036e4ec2f14ff6e615aa8d09a01e910ae12f2135558fb"
+        },
+        {
+          "path": "src/risk/riskPageModel.test.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "0ceae0e02b7594ecc74f9dc4b70346281bfb1d181a3f27c56ef71f9b6c740e46"
+        },
+        {
+          "path": "src/risk/riskPageModel.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "8900682efc04167fa38a2d359a419c3fba081f173c1a3dbff5ef3ce059913cb2"
+        },
+        {
+          "path": "src/risk/riskPageWiring.test.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "4828a0476af6dc78b6877332cfc256c6ed485b391c0762a47e7a3fadc7e2f502"
+        },
+        {
+          "path": "src/risk/riskResponseValidation.test.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "9ba0bd9b1ff6eabe8d27aafca72515a14cea3a2a55f526df9cc212c7d81f8641"
+        },
+        {
+          "path": "src/risk/riskResponseValidation.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "17624a2eaa2b1ba61c3ebb5e2cf78c3a11beae9079b578f618039168ba6ef0f9"
+        },
+        {
+          "path": "src/risk/ruleBuilder.test.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "4b827da0e73c3ca2df1ecff2ea61af245cbe68ff08f82edd8646dc8adcb8e42a"
+        },
+        {
+          "path": "src/risk/ruleSetHead.test.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "2ae90dc9d20310b5ad275b56a70589416795bc69800afa9444b9515ede78a9b4"
+        },
+        {
+          "path": "src/risk/ruleSetHead.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "f5af3f4d73c4fe19774425c7918af8ca62fea7dd0141b7a689280f57510679f9"
+        },
+        {
+          "path": "src/risk/useUnsavedRuleGuard.test.ts",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "38c278612c0e9a3d6c2576e6c8483ed4b1edd17537051d1c884ab9a2a24d9abc"
+        }
+      ]
+    },
+    {
+      "repository": "paytech-foundation",
+      "headBefore": "d85651b8ca2d83ab54e0fff4e0fc0bc40e0d1fc9",
+      "proposedSummary": "延迟资源锁监控注册器初始化",
+      "files": [
+        {
+          "path": "paytech-redis-starter/src/main/java/com/paytech/foundation/redis/core/autoconfigure/RedisResourceLockAutoConfiguration.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "9d4ff7066416c45ee02ffa490c8bdf1d20c5229a57f9deaea33eb79cbf33709f"
+        },
+        {
+          "path": "paytech-redis-starter/src/main/java/com/paytech/foundation/redis/core/lock/ResourceLockObservation.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "037dcf41b8e8bf8c24d84c2128635a236c737418eba7ffa1e01bb9204ab6da85"
+        },
+        {
+          "path": "paytech-redis-starter/src/test/java/com/paytech/foundation/redis/auto/autoconfigure/RedisResourceLockAutoConfigurationAutoTest.java",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "1ef73446f71c456d823585d7916a161fba6c1186b101398f75718625a155fbb3"
+        }
+      ]
+    },
+    {
+      "repository": "platform-support-service",
+      "headBefore": "69bd28715117b52490f4fe95b32a18fb8b1f4381",
+      "proposedSummary": "注册 Operations 规则集删除权限和路由",
+      "files": [
+        {
+          "path": "docs/database/sql/platform-support-initial-data.sql",
+          "selection": "本轮文件变更",
+          "workingTreeSha256": "fe3696d5f61f34cf60646d86f7ac99d3d1982b4fbe0a6604a849f9e14926cad1"
+        }
+      ]
+    }
+  ],
+  "excludedPriorOrOtherWork": [
+    "AGENTS.md",
+    ".cursor/rules/requirement-delivery-workflow.mdc",
+    "agent-docs/REQUIREMENT_DELIVERY_WORKFLOW.md",
+    "agent-docs/decisions/2026-09-11-staged-requirement-delivery.md",
+    "requirements/README.md",
+    "requirements/_template/",
+    "requirements/20260911/operations-console-风控规则改动/",
+    "requirements/20260911/client-contract-OE与Client模型梳理/"
+  ],
+  "neverInclude": [
+    "credentials, Token, private environment material",
+    "database backup or temporary acceptance scripts",
+    "target, dist, node_modules, test-environment/artifacts and local images"
+  ],
+  "mixedRiskImportNote": "DecisionRuleSetServiceImpl.java / DecisionRuleSetManagementController.java 在本需求开始前已有 import 整理。阶段 8 只选本轮业务/类型修改，原有纯整理保留在工作区；重叠块用精确暂存内容分离，不回退用户文件。"
+}

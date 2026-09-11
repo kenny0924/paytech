@@ -1,0 +1,139 @@
+{
+  "stage": 4,
+  "result": "development-checks-passed-awaiting-user-stage-5-confirmation",
+  "java": [
+    {
+      "repository": "risk-compliance-service",
+      "command": "./mvnw -q clean verify",
+      "exitCode": 0,
+      "log": "/tmp/risk-rule-list-stage4/risk-clean-verify.log",
+      "suites": 25,
+      "tests": 162,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "repository": "operations-console-bff",
+      "command": "./mvnw -q clean verify",
+      "exitCode": 0,
+      "log": "/tmp/risk-rule-list-stage4/bff-clean-verify.log",
+      "suites": 13,
+      "tests": 1024,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "repository": "paytech-foundation",
+      "command": "./mvnw -q -pl paytech-redis-starter -am test",
+      "exitCode": 0,
+      "log": "/tmp/risk-rule-list-stage4/foundation-tests.log",
+      "suites": 26,
+      "tests": 235,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "modules": [
+        "paytech-common-core",
+        "paytech-caffeine-starter",
+        "paytech-redis-starter"
+      ]
+    }
+  ],
+  "riskPostCleanTargetedVerification": {
+    "reason": "Local Redis fail-fast precondition added after clean verify",
+    "log": "/tmp/risk-rule-list-stage4/risk-last-check.log",
+    "exitCode": 0,
+    "suites": 1,
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "web": {
+    "test": {
+      "command": "npm test",
+      "tests": 876,
+      "failures": 0,
+      "exitCode": 0,
+      "log": "/tmp/risk-rule-list-stage4/web-tests-final3.log"
+    },
+    "build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "/tmp/risk-rule-list-stage4/web-build-final3.log"
+    },
+    "browser": {
+      "scenarios": 11,
+      "javascriptErrors": 0,
+      "syntheticDeleteRequests": 2,
+      "scope": "Production Web components on local Vite with synthetic HTTP; not real BFF/Risk/Gateway integration",
+      "evidence": "stage4-browser.json",
+      "screenshot": "rule-list-menu-after.png"
+    }
+  },
+  "root": [
+    {
+      "command": "node --test scripts/pdmaner/risk-*.test.mjs",
+      "tests": 190,
+      "failures": 0,
+      "exitCode": 0,
+      "log": "/tmp/risk-rule-list-stage4/risk-model-all-final4.log"
+    },
+    {
+      "command": "npm --prefix requirements-site test",
+      "tests": 136,
+      "failures": 0,
+      "exitCode": 0,
+      "log": "/tmp/risk-rule-list-stage4/requirements-last.log"
+    }
+  ],
+  "scopeLimits": [
+    "No stage 5 independent integrated acceptance yet",
+    "No nonempty historical backfill execution; local manifest is empty",
+    "No new Gateway-to-BFF-to-Risk integration proof",
+    "No Platform SQL, test SQL, deployment, remote artifact publication, commit or push",
+    "Existing source changes retained; results refer to working trees"
+  ],
+  "staticEvidence": "stage4-static.json",
+  "localSqlEvidence": "local-sql-applied.json",
+  "logs": [
+    {
+      "path": "/tmp/risk-rule-list-stage4/risk-clean-verify.log",
+      "sha256": "4507b680367358838ec570ddedb9a8aa24ab18d75abb6ad246df54339afcbe94"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage4/bff-clean-verify.log",
+      "sha256": "d842f25a79094c66a7ea7358fa90425ab819538a5b36a1afbf6d9211a645cef7"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage4/foundation-tests.log",
+      "sha256": "babdadb9309cc04584abde1f27a53c3cf43ac0cce8f33df5b8cedbaae35c4e40"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage4/risk-last-check.log",
+      "sha256": "39c5d24c06fe4a72d157c3a37995996cc1d1f286b1c59363334c7c9289703a33"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage4/web-tests-final3.log",
+      "sha256": "c6f06f370609144e5305a0a8704ce5e2635b421ddae3c5d499d847c3f0e9ab9b"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage4/web-build-final3.log",
+      "sha256": "aba786a875dbe089557d19cb060a91d11e3be85aaa00b9cf20b6306fe50e4c1c"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage4/browser-verify-final.log",
+      "sha256": "a471fdaca9d9200554df8755413f9c6ebe66c2fd258af950715bf20b2f9ff21c"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage4/risk-model-all-final4.log",
+      "sha256": "03cb852b16095631b934429a382a9db2f62df555680f78545e9cb05b16f039db"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage4/requirements-last.log",
+      "sha256": "4c2eed41e3dbc2db2776bbba0d6afa4c2de4561c6f33032be7eca37d4985f83e"
+    }
+  ]
+}

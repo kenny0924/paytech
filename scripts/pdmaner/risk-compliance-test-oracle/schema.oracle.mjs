@@ -29,6 +29,7 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_decision_point_obligation",
     "t_feature_version",
     "t_feature_dependency",
+    "t_rule_set",
     "t_rule_set_version",
     "t_risk_rule",
     "t_rule_node",
@@ -102,23 +103,23 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "298a59a6db6e8955799eb189c9e50aa6be8794efe5b9c41f4be38ff02034d03e";
-export const EXPECTED_STRUCTURAL_DIGEST = "64160a217da59a67d9e6d0c3da37729c5c24d1d710f3f1db62455f51ec11b415";
+export const EXPECTED_MODEL_DIGEST = "e3ff5204790a5852396b59262ba4e45d9194c5dab35f4d28d0cf1d02d2e44895";
+export const EXPECTED_STRUCTURAL_DIGEST = "f63ab05f14a33e8acc280c4e4b57f6ea97403e38a3af2d050c06e81872857f76";
 export const EXPECTED_CHECK_POLICY_DIGEST = "5d9921b58298b0a773bc75e11353ef8c5d0d073b5d82002eafe6cc3f5449514f";
 
 export const EXPECTED_TOTALS = Object.freeze({
-  tables: 71,
-  fields: 865,
-  uniqueIndexes: 105,
-  accessIndexes: 75,
-  relations: 111,
+  tables: 72,
+  fields: 877,
+  uniqueIndexes: 108,
+  accessIndexes: 76,
+  relations: 113,
   oneToOneRelations: 9,
   diagramGroups: 8,
 });
 
 export const EXPECTED_GROUP_SIZES = Object.freeze({
   due_diligence: 19,
-  decision_engine: 19,
+  decision_engine: 20,
   evaluation: 8,
   risk_data: 6,
   limits: 7,
@@ -237,7 +238,7 @@ export const SETTLEMENT_ELIGIBILITY_TARGET = Object.freeze({
     "settlement_control_scope",
     "settlement_control_state_change",
   ]),
-  totalTables: 71,
+  totalTables: 72,
   diagramGroups: 8,
   controlFields: Object.freeze([
     "control_id", "control_no", "role_type", "role_id", "control_type", "reason_code",
@@ -662,7 +663,6 @@ export const FORBIDDEN_TABLES = Object.freeze([
   "t_limit_plan_item",
   "t_feature_definition",
   "t_action_definition",
-  "t_rule_set",
   "t_rule_operand_value",
   "t_release_static_check",
   "t_release_approval",

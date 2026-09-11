@@ -70,12 +70,12 @@ function executableSql(sql) {
     .replace(/'(?:''|[^'])*'/gu, "''");
 }
 
-test("Risk Schema creates exactly the 71 final PDManer tables in deterministic order", () => {
+test("Risk Schema creates exactly the 72 final PDManer tables in deterministic order", () => {
   const sql = readSchema();
   const tables = parseTables(sql);
-  assert.equal(model.entities.length, 71);
+  assert.equal(model.entities.length, 72);
   assert.deepEqual(tables.map(({ name }) => name), model.entities.map(({ defKey }) => defKey));
-  assert.equal(tables.length, 71);
+  assert.equal(tables.length, 72);
   assert.ok(tables.some(({ name }) => name === "t_settle_control_state_change"));
 });
 
@@ -116,5 +116,5 @@ test("Risk Schema generator --check proves the committed SQL is current", () => 
     encoding: "utf8",
   });
   assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-  assert.match(result.stdout, /Risk Schema is up to date \(71 tables\)/u);
+  assert.match(result.stdout, /Risk Schema is up to date \(72 tables\)/u);
 });

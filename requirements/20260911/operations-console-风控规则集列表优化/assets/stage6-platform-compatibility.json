@@ -1,0 +1,10 @@
+{
+  "deployedJarSha256": "9c785043ee865b910ec43cc50646d469bf97c7bb95c854907aa99d9de2412616",
+  "compiledActiveRouteCounts": [
+    36,
+    36,
+    37
+  ],
+  "writes": false,
+  "scope": "Deployed Platform compiler, actual current metadata projection and prepared DELETE route"
+}

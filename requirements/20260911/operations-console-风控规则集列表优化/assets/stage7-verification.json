@@ -1,0 +1,39 @@
+{
+  "status": "PASSED_AFTER_BOUNDED_RESUMPTION",
+  "scope": "Existing mor-test public Nginx/Gateway/BFF/Risk/Platform chain; no API interception or synthetic trusted headers",
+  "httpChecks": 23,
+  "loggedHttpRequests": 34,
+  "browserRecordedCheckpoints": 14,
+  "browserLoggedRequests": 41,
+  "browserJavaScriptErrors": 0,
+  "rateLimitObservation": {
+    "detail": "Rapid repeated browser navigation exhausted an existing list-read Guard. The version-save POST succeeded with 200, followed by three list GET 429 responses. After the existing refill window, a fresh login verified the saved current version and completed Back/delete checks without another save. No rate policy was changed.",
+    "continuousBrowserScriptPassed": false,
+    "boundedResumeCompleted": true
+  },
+  "harnessCorrections": [
+    "Navigation uses resourceCode rather than componentKey for buttons; logout requires refreshToken.",
+    "HTTP status is checked from the response, not a required body status member.",
+    "Ant Design two-character button accessible labels include whitespace.",
+    "Final readonly account audit uses t_user_account/CLOSED, not t_account/DELETED."
+  ],
+  "screenshots": {
+    "accepted": [
+      "stage7-list-test.png",
+      "stage7-list-mobile-test.png"
+    ],
+    "omitted": "The deletion-dialog screenshot captured a transitional crop and is not published; dialog name/code and red action were verified through real DOM assertions."
+  },
+  "dataBoundary": {
+    "syntheticRuleSets": 2,
+    "versionsPerSyntheticRuleSet": 2,
+    "cleanup": "Both deleted through the approved whole-set API; immutable history retained",
+    "temporaryReadonlyAccounts": 1,
+    "temporaryAccountCleanup": "Logged out and deleted through Operations API; database account CLOSED",
+    "activeReleaseCreated": false
+  },
+  "remaining": [
+    "Generic legacy smoke stage classification still assumes 36 routes/21 resources; use the approved exact 37/22 stage-7 verification for this release.",
+    "Actual rule evaluation, action execution, Shadow, approval, activation and production rollout remain outside scope."
+  ]
+}

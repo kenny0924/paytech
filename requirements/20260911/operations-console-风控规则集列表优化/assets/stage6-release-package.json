@@ -1,0 +1,277 @@
+{
+  "stage": 6,
+  "result": "release-package-prepared-awaiting-stage-7-authorization",
+  "environment": {
+    "dockerContext": "desktop-linux",
+    "composeProject": "mor-test",
+    "origin": "http://localhost:28080",
+    "mysql": "127.0.0.1:23306",
+    "databases": [
+      "mor_risk",
+      "mor_platform"
+    ],
+    "redis": "mor-test-redis-1:6379"
+  },
+  "builtImages": [
+    {
+      "service": "risk-service",
+      "tag": "mor-test/risk-service:risk-rule-set-list-20260911",
+      "imageId": "sha256:46aff45920d364a37e8373c86c42f124fdafc09724cde0a0becfee1513037be5",
+      "jarSha256": "d7eace98c39eeb946e95c9076eeb712d6559035f331fb9a3635b681720eade46"
+    },
+    {
+      "service": "operations-console-bff",
+      "tag": "mor-test/operations-console-bff:risk-rule-set-list-20260911",
+      "imageId": "sha256:59be81991657b19431eb9387c3f3378e7da81a9f28434cdedfa764520ef3549b",
+      "jarSha256": "9d23d91612db094b0f8932c2770e20e712ea9d57ff774ef6b43d27ce77a5960f"
+    },
+    {
+      "service": "operations-console-web",
+      "tag": "mor-test/operations-console-web:risk-rule-set-list-20260911",
+      "imageId": "sha256:83a5141710c3a2e87b21ee845b6f91364c83b184461ac749e2435734f683c94a",
+      "indexSha256": "2e2f6e34ea0e7e9c51ff85f01335e01ecd972d8d8e770db518ae7a66b0ed1226"
+    }
+  ],
+  "runningImagesBefore": [
+    {
+      "service": "mysql",
+      "containerId": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "imageId": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb"
+    },
+    {
+      "service": "redis",
+      "containerId": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "imageId": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232"
+    },
+    {
+      "service": "nacos",
+      "containerId": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "imageId": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039"
+    },
+    {
+      "service": "risk-service",
+      "containerId": "ee561144e81a0f07900eadbf87c9e7dbcbd47c21714c2e18defe4ac31e51ea63",
+      "imageId": "sha256:55e5a50e17a3e6beb7aec5c7585c457712dbc621602868e1f4fa96e741f77ebf"
+    },
+    {
+      "service": "operations-console-bff",
+      "containerId": "482daf6dafb6ed0a60da55f84b32485008c09857447ee81f7114634997d5f391",
+      "imageId": "sha256:ca802c008aa418c25fe086c2dff7f0ff32d90d46a8fe0c98d3d838aa7af06590"
+    },
+    {
+      "service": "operations-console-web",
+      "containerId": "a9557c464fd705cc052e76f6a9bd83c622388aa10b9a154abedc01e409ac30f1",
+      "imageId": "sha256:b9f304f73e718c96734b1e29ba1ba60ffc170df78c096148079246fe706c90f2"
+    },
+    {
+      "service": "platform-support-service",
+      "containerId": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "imageId": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332"
+    },
+    {
+      "service": "api-gateway",
+      "containerId": "fff353cbb3d799a27c6af2df5d28662d06b84c736a554a5aa5c1a776c7c18dbd",
+      "imageId": "sha256:c5e4a953db1599c7b24b34fc99132fbd4e0ed6ba505a46d33dc699e78b55f070"
+    },
+    {
+      "service": "nginx",
+      "containerId": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "imageId": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c"
+    },
+    {
+      "service": "vault-service",
+      "containerId": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "imageId": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3"
+    },
+    {
+      "service": "rabbitmq",
+      "containerId": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "imageId": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "risk",
+      "path": "risk-compliance-service/risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar",
+      "sha256": "d7eace98c39eeb946e95c9076eeb712d6559035f331fb9a3635b681720eade46",
+      "embeddedLibraries": {
+        "BOOT-INF/lib/paytech-redis-starter-1.0.0-SNAPSHOT.jar": "daea0177ab2cde2d82f34073cfba33f5fb70b2353836c878c69529ffc6853e64",
+        "BOOT-INF/lib/risk-api-1.0.0-SNAPSHOT.jar": "0165f4092d5666ffda0be861c76c21ab8fa6a985adc671596ae91ccacc9d4e34",
+        "BOOT-INF/lib/paytech-snowflake-id-1.0.0-SNAPSHOT.jar": "967274a0f0aa9f777fff63f1eaaf9f5273ce9e395c77b8e5d16e4f72b1e9ee72"
+      }
+    },
+    {
+      "name": "bff",
+      "path": "operations-console-bff/paytech-operations-console-bff-web/target/paytech-operations-console-bff-web-1.0.0-SNAPSHOT-exec.jar",
+      "sha256": "9d23d91612db094b0f8932c2770e20e712ea9d57ff774ef6b43d27ce77a5960f",
+      "embeddedLibraries": {
+        "BOOT-INF/lib/risk-api-1.0.0-SNAPSHOT.jar": "0165f4092d5666ffda0be861c76c21ab8fa6a985adc671596ae91ccacc9d4e34"
+      }
+    }
+  ],
+  "evidence": {
+    "environment": "stage6-preflight.json",
+    "manifest": "stage6-manifest-check.json",
+    "gateway": "stage6-gateway-compatibility.json",
+    "platform": "stage6-platform-compatibility.json",
+    "static": "stage6-static.json",
+    "noRuntimeChanges": "stage6-no-runtime-changes.json"
+  },
+  "configurationFiles": [
+    "test-environment/compose.applications.yaml"
+  ],
+  "files": [
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/dml.sql",
+      "sha256": "75962fbc4c18dfbb688d7a73d950b52ef4113c06751d2900885bbc57fa70a41f"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/test-close-entry.sql",
+      "sha256": "f4cf3abd95c3d35af9d0af50ae45671213a20b303d2318ef669730028a213703"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/test-enable-risk-routes.sql",
+      "sha256": "c5894af99927f7f4e893b37f508f65dfb88c4b28d490b5f0bb9bc6b4f89a03af"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/test-expose-resources.sql",
+      "sha256": "eff217baf809b61cacbcb850a3115dc8e461557c8d563442aa31e34edbba7185"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/test-maintenance.sql",
+      "sha256": "cf5e7bb20e458e3fe929b9ff63f37777c9bf815ac046857b7898b9d97593a4f5"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/platform-support-service/test-restore-before-migration.sql",
+      "sha256": "0a26463ba08be7c85c9f00f592423a9b21594cf96615926d6dcce009d67702a2"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/ddl.sql",
+      "sha256": "c126cb2249e36cb8112a7388d7c3d86f13e63deb4c274238aa95cd8548aa0324"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/dml.sql",
+      "sha256": "00942fc45be3d5033192f60701c25be3c08e8e3723f813f94920b73076868e7b"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/local-manifest.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/local.sql",
+      "sha256": "c3680bbd83fa0294d29d856d41fa969927bba8e618636870b3c786612084e2ab"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/test-manifest.json",
+      "sha256": "d3cc494a1e5ca7c338ad326ad50180d573ab807b78f88aa0c59f13f08443396f"
+    },
+    {
+      "path": "requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/test.sql",
+      "sha256": "e45b7691990129892781c21b12ef2e24d0b9bc47a61dcc02f69220dbdc44fa8e"
+    },
+    {
+      "path": "test-environment/compose.applications.yaml",
+      "sha256": "9989320ea3df37aed64c8350989642f49c842e93d0ca06b68ad86a1de2212a8f"
+    },
+    {
+      "path": "test-environment/scripts/test_deploy_script.py",
+      "sha256": "6a65780851a1568626a824a2ad2fd75c7de0783c979299805b93d32de872e421"
+    }
+  ],
+  "checks": [
+    {
+      "command": "./test-environment/compose.sh config --quiet",
+      "exitCode": 0
+    },
+    {
+      "description": "Previously validated stage 5 source/JAR fingerprints match image inputs",
+      "passed": true
+    },
+    {
+      "description": "Risk/BFF embedded Risk API JARs identical; Risk Redis Starter matches tested Foundation JAR",
+      "passed": true
+    },
+    {
+      "description": "Read-only nonempty Risk INSERT projection",
+      "rows": 21,
+      "executedDml": false
+    },
+    {
+      "description": "Existing deployed Platform compiler accepts original, disabled, active proposed catalog",
+      "activeRouteCounts": [
+        36,
+        36,
+        37
+      ]
+    },
+    {
+      "description": "Existing deployed Gateway compiler accepts original, maintenance, new snapshots",
+      "activeRouteCounts": [
+        36,
+        27,
+        37
+      ]
+    },
+    {
+      "command": "python3 -m unittest discover -s test-environment/scripts -p 'test_deploy_script.py'",
+      "tests": 31,
+      "failures": 0,
+      "exitCode": 0,
+      "initialFailure": "Existing dependency expectation lacked the newly required Redis service; updated with exact test host/port/secret reference"
+    },
+    {
+      "command": "npm --prefix requirements-site test",
+      "tests": 136,
+      "failures": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    {
+      "description": "Static SQL/hash/JSON/link/diff checks",
+      "errors": 0,
+      "relativeLinks": 486,
+      "repositories": 7
+    },
+    {
+      "description": "Final read-only test metadata, container IDs/start times and development image tags match initial snapshot",
+      "passed": true
+    }
+  ],
+  "scopeLimits": [
+    "No database DDL/DML executed in stage 6; nonempty INSERT still pending",
+    "No running test container replaced or restarted",
+    "Three unique local image tags built; development tags unchanged",
+    "No Nexus publication, image push, git commit, branch or push",
+    "Legacy 36-route/21-resource smoke classifiers do not cover the new 37/22 catalog; stage 7 uses requirement-specific live checks"
+  ],
+  "logs": [
+    {
+      "path": "/tmp/risk-rule-list-stage6/build-images.log",
+      "sha256": "7ac0342b9fcc903ab3aa255f0bc0f2ba88b9f28fd4702eb4331d5a3dd1470c33"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage6/gateway-compiler.log",
+      "sha256": "321797b76e0b311b4b187f19fc8419ae560c5994aa6180b07eeaf62b014f7a7a"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage6/platform-compiler.log",
+      "sha256": "2879ce6bbbace683baf9b466533c8b4094e099092f224c02f2c1e7a82ec3b8c5"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage6/deploy-tests.log",
+      "sha256": "bd8a1d65a5441a5ac284f354c0b06a3cc6f69d34976a35e860f88b908146ddc5"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage6/deploy-tests-green.log",
+      "sha256": "82890c0d03bf74fbed4cbb8da8c4fe3ed07968f5891bdd59a9e141c4e89aab31"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage6/requirements-test.log",
+      "sha256": "1a76afeff456e56edf66c023c6f5e32d42f4f8489f0dafde0db586685da65ad4"
+    },
+    {
+      "path": "/tmp/risk-rule-list-stage6/static-checks.log",
+      "sha256": "7f086f6e8b8be0254f446ea9bd5ccddef1d5ac33ac3d350c39207eceb1bbf788"
+    }
+  ]
+}

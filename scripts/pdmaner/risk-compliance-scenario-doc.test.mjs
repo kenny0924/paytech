@@ -37,7 +37,6 @@ const REMOVED_DECISION_TABLES = Object.freeze([
   "t_limit_plan_item",
   "t_feature_definition",
   "t_action_definition",
-  "t_rule_set",
   "t_rule_operand_value",
   "t_release_static_check",
   "t_release_approval",
@@ -78,7 +77,7 @@ const DISPUTE_DECISION_SOURCE_TYPES = Object.freeze([
   "OPERATIONS_CORRECTION",
 ]);
 
-const FINAL_RISK_TOTALS = Object.freeze({
+const HISTORICAL_RISK_TOTALS = Object.freeze({
   tables: 71,
   fields: 865,
   uniqueIndexes: 105,
@@ -142,7 +141,7 @@ function section(document, start, end) {
   return document.slice(startIndex, endIndex);
 }
 
-test("Risk real-world scenarios cover all 71 physical tables and no removed or unknown table", () => {
+test("Risk real-world scenarios cover all 72 physical tables and no removed or unknown table", () => {
   assert.ok(existsSync(scenarioPath), `Risk 现实场景尚未生成：${scenarioPath}`);
   const scenario = readFileSync(scenarioPath, "utf8");
   const model = JSON.parse(readFileSync(modelPath, "utf8"));
@@ -151,9 +150,9 @@ test("Risk real-world scenarios cover all 71 physical tables and no removed or u
   const exampleInventory = tableExampleInventory(scenario);
 
   assert.deepEqual([...modelTables].sort(), [...APPROVED_TABLES].sort());
-  assert.equal(APPROVED_TABLES.length, 71);
+  assert.equal(APPROVED_TABLES.length, 72);
   assert.deepEqual([...exampleInventory.keys()].sort(), [...APPROVED_TABLES].sort());
-  assert.equal(exampleInventory.size, 71);
+  assert.equal(exampleInventory.size, 72);
   for (const [table, count] of exampleInventory) {
     assert.equal(count, 1, `现实场景必须恰有一条逐表示例：${table}`);
   }
@@ -164,13 +163,16 @@ test("Risk real-world scenarios cover all 71 physical tables and no removed or u
   }
 });
 
-test("Risk current documents expose the final Settlement Control topology and generated totals", () => {
+test("Risk documents route current statistics and preserve the historical Settlement snapshot", () => {
   const scenario = readFileSync(scenarioPath, "utf8");
   const logicalDatabase = readFileSync(logicalDatabasePath, "utf8");
   const physicalDecisions = readFileSync(physicalDecisionsPath, "utf8");
   const currentDocuments = [scenario, logicalDatabase, physicalDecisions];
 
-  assert.match(scenario, /与 71 表 Risk & Compliance V1 PDManer 基线同步/u);
+  assert.match(scenario, /现行生成模型统计、验证结果和部署状态只见/u);
+  assert.match(scenario, /规则集管理方案/u);
+  assert.match(scenario, /任一历史版本被当前 ACTIVE Release 使用时禁止整体删除/u);
+  assert.match(physicalDecisions, /已冻结物理基线（历史快照；现行统计由台账维护）/u);
   assert.match(scenario, /Settlement 3 表/u);
   assert.doesNotMatch(scenario, /Settlement 4 表/u);
   assert.match(logicalDatabase, /Settlement Eligibility Control（3 张）/u);
@@ -199,7 +201,9 @@ test("Risk current documents expose the final Settlement Control topology and ge
   )?.[1];
   assert.ok(manifestBlock, "物理决策缺少 Risk manifest block");
   const physicalManifest = JSON.parse(manifestBlock);
-  assert.deepEqual(physicalManifest.modelTotals, FINAL_RISK_TOTALS);
+  assert.deepEqual(physicalManifest.modelTotals, HISTORICAL_RISK_TOTALS);
+  const ledger = readFileSync(path.join(workspaceRoot, "agent-docs/CURRENT_IMPLEMENTATION.md"), "utf8");
+  assert.match(ledger, /\| Risk & Compliance \| 72 \| 877 \| 108 \| 76 \| 113 \| 9 \| 8 \|/u);
   assert.equal(physicalManifest.checkContracts, 82);
   assert.equal(
     physicalManifest.modelSha256,
@@ -215,7 +219,7 @@ test("Risk current documents expose the final Settlement Control topology and ge
   );
   assert.match(
     logicalDatabase,
-    /71 表、865 字段、105 个唯一索引、75 个访问索引、111 条本库逻辑关系、9 条 1:1 关系、8 个 Diagram Groups 和 82 条应用 CHECK Sidecar 契约/u,
+    /现行模型统计见\[当前台账\]/u,
   );
 });
 
@@ -551,7 +555,7 @@ test("Risk decision examples preserve the balanced release, shadow and action co
   const scenario = readFileSync(scenarioPath, "utf8");
 
   for (const marker of [
-    "决策点、规则和发布 19 表",
+    "决策点、规则和发布逐表映射",
     "Evaluation、Assessment 与 Action 8 表",
     "t_release_audit_event",
     "STATIC_CHECK",

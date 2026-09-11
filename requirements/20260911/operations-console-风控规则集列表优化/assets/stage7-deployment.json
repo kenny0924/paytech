@@ -1,0 +1,157 @@
+{
+  "startedAt": "20260911T131033Z",
+  "backupDirectory": "/Users/kenny/Code-MoR-backups/risk-rule-set-list-test-20260911T131033Z",
+  "steps": [
+    {
+      "at": "2026-09-11T13:10:35.878757+00:00",
+      "step": "Environment, source hashes, images and historical metadata match approved package"
+    },
+    {
+      "at": "2026-09-11T13:10:36.017311+00:00",
+      "step": "Stopping only Web, BFF and Risk for backed-up maintenance"
+    },
+    {
+      "at": "2026-09-11T13:10:58.066640+00:00",
+      "step": "Both complete database backups verified; Risk original 71-table baseline captured"
+    },
+    {
+      "at": "2026-09-11T13:10:58.174371+00:00",
+      "step": "SQL applied: db/platform-support-service/test-maintenance.sql"
+    },
+    {
+      "at": "2026-09-11T13:11:01.595530+00:00",
+      "step": "Maintenance snapshot accepted: all nine old Risk routes closed"
+    },
+    {
+      "at": "2026-09-11T13:11:01.739361+00:00",
+      "step": "SQL applied: db/risk-compliance-service/ddl.sql"
+    },
+    {
+      "at": "2026-09-11T13:11:01.868326+00:00",
+      "step": "SQL applied: db/risk-compliance-service/test.sql"
+    },
+    {
+      "at": "2026-09-11T13:11:02.183130+00:00",
+      "step": "21 roots backfilled; original 71 tables byte-for-byte unchanged"
+    },
+    {
+      "at": "2026-09-11T13:11:02.288107+00:00",
+      "step": "SQL applied: db/platform-support-service/dml.sql"
+    },
+    {
+      "at": "2026-09-11T13:11:02.432360+00:00",
+      "step": "Deploying risk-service"
+    },
+    {
+      "at": "2026-09-11T13:11:09.091024+00:00",
+      "step": "Deploying operations-console-bff"
+    },
+    {
+      "at": "2026-09-11T13:11:15.750494+00:00",
+      "step": "Deploying operations-console-web"
+    },
+    {
+      "at": "2026-09-11T13:11:26.864051+00:00",
+      "step": "All three approved images healthy; verifying runtime before exposure"
+    },
+    {
+      "at": "2026-09-11T13:11:28.206921+00:00",
+      "step": "Ready for public rollout; type OPEN to enable reviewed routes and resources"
+    },
+    {
+      "at": "2026-09-11T13:13:22.041110+00:00",
+      "step": "SQL applied: db/platform-support-service/test-enable-risk-routes.sql"
+    },
+    {
+      "at": "2026-09-11T13:13:27.613695+00:00",
+      "step": "SQL applied: db/platform-support-service/test-expose-resources.sql"
+    },
+    {
+      "at": "2026-09-11T13:13:27.844925+00:00",
+      "step": "New 37-route snapshot and 22 resources exposed; awaiting external acceptance"
+    },
+    {
+      "at": "2026-09-11T14:35:03.101357+00:00",
+      "step": "Deployment accepted; releasing rollout lock"
+    }
+  ],
+  "appliedSql": [
+    {
+      "file": "db/platform-support-service/test-maintenance.sql",
+      "sha256": "cf5e7bb20e458e3fe929b9ff63f37777c9bf815ac046857b7898b9d97593a4f5"
+    },
+    {
+      "file": "db/risk-compliance-service/ddl.sql",
+      "sha256": "c126cb2249e36cb8112a7388d7c3d86f13e63deb4c274238aa95cd8548aa0324"
+    },
+    {
+      "file": "db/risk-compliance-service/test.sql",
+      "sha256": "e45b7691990129892781c21b12ef2e24d0b9bc47a61dcc02f69220dbdc44fa8e"
+    },
+    {
+      "file": "db/platform-support-service/dml.sql",
+      "sha256": "75962fbc4c18dfbb688d7a73d950b52ef4113c06751d2900885bbc57fa70a41f"
+    },
+    {
+      "file": "db/platform-support-service/test-enable-risk-routes.sql",
+      "sha256": "c5894af99927f7f4e893b37f508f65dfb88c4b28d490b5f0bb9bc6b4f89a03af"
+    },
+    {
+      "file": "db/platform-support-service/test-expose-resources.sql",
+      "sha256": "eff217baf809b61cacbcb850a3115dc8e461557c8d563442aa31e34edbba7185"
+    }
+  ],
+  "deployed": [
+    {
+      "service": "risk-service",
+      "containerId": "a71fcf17abae22663e0c2834b351cce2fea8c4b916503786a7c1146a302462ec",
+      "imageId": "sha256:46aff45920d364a37e8373c86c42f124fdafc09724cde0a0becfee1513037be5",
+      "health": "healthy"
+    },
+    {
+      "service": "operations-console-bff",
+      "containerId": "39a3c08a220d87aa91df9e96d8caa2517c6ca64f2093dc22c0575704b0efba97",
+      "imageId": "sha256:59be81991657b19431eb9387c3f3378e7da81a9f28434cdedfa764520ef3549b",
+      "health": "healthy"
+    },
+    {
+      "service": "operations-console-web",
+      "containerId": "c9c9b9ced62b291d4afad2d6af0e3aefc8626bf71a3cc81aa8ff027a298e4d36",
+      "imageId": "sha256:83a5141710c3a2e87b21ee845b6f91364c83b184461ac749e2435734f683c94a",
+      "health": "healthy"
+    }
+  ],
+  "backups": [
+    {
+      "file": "/Users/kenny/Code-MoR-backups/risk-rule-set-list-test-20260911T131033Z/mor_risk-before.sql",
+      "bytes": 631081,
+      "sha256": "e95ec378f7477ded5636fe598e52bb756adb39308c60eddaf1735b25c0821bbb"
+    },
+    {
+      "file": "/Users/kenny/Code-MoR-backups/risk-rule-set-list-test-20260911T131033Z/mor_platform-before.sql",
+      "bytes": 2016656,
+      "sha256": "d6fa0ee32b3e2428dea00a74d7c0e744aa2af083d8a79828530ae3a3658e71be"
+    }
+  ],
+  "historicalBaseline": {
+    "file": "/Users/kenny/Code-MoR-backups/risk-rule-set-list-test-20260911T131033Z/risk-original-71-before.sql",
+    "bytes": 599537,
+    "sha256": "f0d198bbec4b23e0dc76702360bee37c639627ecb65af8de368e1dbbda8dc2a1"
+  },
+  "snapshot": {
+    "routes": 37,
+    "refresh": "SUCCESS",
+    "lastValidInUse": false
+  },
+  "rootBackfill": {
+    "roots": 21,
+    "historicalVersions": 23,
+    "highestPointersAndInitialLifecycleVerified": true
+  },
+  "historicalAfter": {
+    "file": "/Users/kenny/Code-MoR-backups/risk-rule-set-list-test-20260911T131033Z/risk-original-71-after.sql",
+    "bytes": 599537,
+    "sha256": "f0d198bbec4b23e0dc76702360bee37c639627ecb65af8de368e1dbbda8dc2a1"
+  },
+  "status": "DEPLOYED_AND_ACCEPTED"
+}

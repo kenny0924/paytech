@@ -1,8 +1,8 @@
 # Risk & Compliance 现实场景与逐表字段映射
 
-最后更新：2026-09-05
+最后更新：2026-09-11
 
-状态：与 71 表 Risk & Compliance V1 PDManer 基线同步；Risk 15 列 Compensation Event、Vault V1 消费者边界、零物理 CHECK/FK、规则版本审计字段、Settlement Eligibility、Dispute、Manual Payout 四检查点与 CCT Local Partner Application Typed Namespace 已通过自动场景门禁；PDManer 4.9.3 应用内人工检查待完成
+本文描述设计场景与逐表映射；现行生成模型统计、验证结果和部署状态只见[当前实现台账](../../CURRENT_IMPLEMENTATION.md)。2026-09-11 的[规则集管理方案](../../../requirements/20260911/operations-console-风控规则集列表优化/technique.md)补充管理根和整体删除；下文运行期、Shadow、审批和激活场景仍是独立设计，不表示本期已实现。
 
 > **2026-09-05 横切迁移提示：** 本文的 Risk 逐表记录已投影当前三表 Protect/Reveal、补偿三字段身份与 4 KiB 可选 Payload，并把关系 Sidecar 保持为应用不变量。这里只能证明 Risk 模型局部对齐；六库 COMP-01 与全局 DB-01 仍按 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md) 的全局证据维护，其中 DB-01 继续受 Vault 物理 Schema 阻塞。
 
@@ -66,7 +66,7 @@ Local Partner Application `730320000000000001` 的 Handler 携带 `application_i
 
 Checkout Decision Point 使用受控 Context Field、工程注册 Feature/Action Handler 和类型安全 Rule AST。生产基线 Release `260001` 已 ACTIVE；Candidate `260002` 完成 8 项强制 STATIC_CHECK 后，以相同输入快照和 `evaluation_time` 对 10,000 个样本执行 SHADOW。每个 STATIC_CHECK 的 (event_time,audit_event_id) 必须严格早于 Candidate 进入 SHADOWING 的 State Change；Run 的 completed_time 必须位于 SHADOWING（含）与 REVIEW_PENDING（含）之间；每个 APPROVAL 的 (event_time,audit_event_id) 必须严格晚于 REVIEW_PENDING。Candidate 只产生 SIMULATED Effect；Shadow 完成且固定质量门禁通过后才进入 REVIEW_PENDING，两个不同 reviewer 必须绑定同一 Shadow Run。第二次批准以同一 approval_request_id、同一 event_time 绑定 Candidate `REVIEW_PENDING→APPROVED`、Candidate `APPROVED→ACTIVE` 与旧 Release `ACTIVE→SUPERSEDED` 三条 State Change，并在同一命令和本地事务中原子完成切换。
 
-### 3.1 决策点、规则和发布 19 表
+### 3.1 决策点、规则和发布逐表映射
 
 | 物理表 | 示例行与生命周期 |
 |---|---|
@@ -78,7 +78,8 @@ Checkout Decision Point 使用受控 Context Field、工程注册 Feature/Action
 | `t_decision_point_obligation` | Checkout 的 Action 型义务为 `obligation_id=210051, trigger_decision=ALLOW, obligation_type=ACTION, action_version_id=240031, sequence_no=1, failure_policy=FAIL_CLOSED`，会以 `obligation_id` 进入 Intent；Payment 的义务为 `obligation_id=210052, obligation_type=RESERVE_LIMIT_GROUP, action_version_id=NULL`，由 0..N 条 Limit Binding 配置且不生成 Action Intent；四个 Manual Payout Point Version 各恰一条 `trigger_decision=ALLOW, obligation_type=CHECK_SETTLEMENT_ELIGIBILITY, action_version_id=NULL, failure_policy=FAIL_CLOSED`，且不得有 Limit Binding。运营不能删除这些系统义务。 |
 | `t_feature_version` | Feature Version 吸收目录身份：`feature_version_id=220011, feature_code=IP_RISK_LEVEL, feature_name=IP Risk Level, business_category=NETWORK, version_no=2, result_value_type=STRING, handler_code=NETWORK_RISK_V2, implementation_version=2.4.1, implementation_hash=sha256:handler, status=ACTIVE`；只允许工程注册 Handler，禁止任意 SQL/Script。 |
 | `t_feature_dependency` | `dependency_id=220021, feature_version_id=220011, dependency_feature_version_id=220012, sequence_no=1, required_flag=1`；发布时验证无环。 |
-| `t_rule_set_version` | Rule Set Version 吸收稳定身份：`rule_set_version_id=230011, decision_point_id=210001, rule_set_code=CHECKOUT_NETWORK, rule_set_name=Checkout Network Rules, version_no=4, status=FROZEN, content_hash=sha256:rules, created_by=900001, change_reason=Block anonymous high-risk checkout, frozen_by=900002, frozen_time=2026-08-26T09:58:00.000000Z`；创建人和非敏感变更原因必填，冻结后不可修改，也不跨 Decision Point 复用。 |
+| `t_rule_set` | `rule_set_id=230001, decision_point_id=210001, rule_set_code=CHECKOUT_NETWORK, current_rule_set_version_id=230011, status=CONFIGURABLE, version=5`；列表只展示一行当前配置。保存或冻结按管理版本 CAS 推进；任一历史版本被当前 ACTIVE Release 使用时禁止整体删除。可删除时根转为 DELETED 并记录删除人、时间、原因和触发身份，编码永久占用，旧版本、Candidate 与成功命令回放保留，不提供恢复。 |
+| `t_rule_set_version` | Rule Set Version 保留不可变配置身份：`rule_set_version_id=230011, decision_point_id=210001, rule_set_code=CHECKOUT_NETWORK, rule_set_name=Checkout Network Rules, version_no=4, status=FROZEN, content_hash=sha256:rules, created_by=900001, change_reason=Block anonymous high-risk checkout, frozen_by=900002, frozen_time=2026-08-26T09:58:00.000000Z`；创建人和非敏感变更原因必填，冻结后不可修改，也不跨 Decision Point 复用。 |
 | `t_risk_rule` | `rule_id=230021, rule_code=DENY_HIGH_RISK_IP, priority_no=10, enabled_flag=1, reason_code=NETWORK_HIGH_RISK`。 |
 | `t_rule_node` | Root `node_id=230031, node_type=GROUP, group_operator=AND`；Child `230032` 为 `PREDICATE/EQ`，同级 Sequence 唯一。 |
 | `t_rule_operand` | Predicate Left `operand_id=230041, operand_role=LEFT, value_sequence=1, source_type=FEATURE, feature_version_id=220011, value_type=STRING`；Right LITERAL `operand_id=230042, operand_role=RIGHT, value_sequence=1, source_type=LITERAL, value_type=STRING, string_value=HIGH`。LITERAL 直接用多行 `value_sequence` 和五个 typed columns 表达；IN/NOT_IN 使用连续 `1..n`，BETWEEN 固定 `[1,2]`，每行仅一个类型值非空。 |

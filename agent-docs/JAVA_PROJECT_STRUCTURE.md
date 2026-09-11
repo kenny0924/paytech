@@ -221,6 +221,8 @@ DataObject 的可见性边界是其 Owner 业务能力 Maven JAR，而不是 Rep
 
 ## 4. API 模块与内部 HTTP 契约
 
+接口演进与代码类型命名遵循 [DEVELOPMENT_CONVENTIONS.md 第 2 节](./DEVELOPMENT_CONVENTIONS.md#2-项目标识与命名)：用户未指定时沿用原接口版本，新接口默认 `/v1`；类型名不带协议版本后缀。业务版本字段和历史持久化格式继续保持各自语义。
+
 推荐结构：
 
 ```text

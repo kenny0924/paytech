@@ -1,0 +1,7 @@
+{
+  "namespace": "mor-test",
+  "service": "risk-service",
+  "healthyInstances": 1,
+  "ip": "172.30.73.25",
+  "port": 18104
+}

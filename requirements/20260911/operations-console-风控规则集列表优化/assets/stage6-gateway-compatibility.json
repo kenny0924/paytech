@@ -1,0 +1,10 @@
+{
+  "deployedJarSha256": "32bbeb8ba89027d0af281d4d9e21a6f2f402299275ada98a19d2099c5a6445ee",
+  "compiledRouteCounts": [
+    36,
+    37
+  ],
+  "writes": false,
+  "scope": "Actual deployed Gateway compiler and registry; synthesized added route matches reviewed Platform DML",
+  "maintenanceRouteCount": 27
+}
