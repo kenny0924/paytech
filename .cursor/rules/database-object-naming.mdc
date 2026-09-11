@@ -7,6 +7,8 @@ alwaysApply: true
 
 When designing or changing PDManer models, Schema/data-change SQL, DataObject/Mapper mappings, or database tests:
 
+- Each database-owning project keeps exactly one canonical model at `docs/database/<service-short-name>.pdma.json`; use a lowercase, no-space kebab-case filename such as `finance.pdma.json`.
+- The model's internal `name`/`describe` may be descriptive but never changes the canonical filename. Reconcile useful changes from PDManer Save-As files into the short-name model, then remove the duplicate; `.back_*` files remain ignored local backups.
 - Every physical table name must be lowercase `snake_case` and start with `t_`, for example `t_party`.
 - Every unique index name must start with `uk_`.
 - Every non-unique index name must start with `idx_`.

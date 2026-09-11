@@ -1,6 +1,6 @@
 # Code-MoR 当前实现状态
 
-最后核对：2026-09-08
+最后核对：2026-09-11
 
 状态：Current status ledger。本页只汇总实现、验证、部署和已决定待迁移事项；架构与业务规则仍由 [`DOCUMENT_GOVERNANCE.md`](./DOCUMENT_GOVERNANCE.md) 路由的主题 Owner 定义。
 
@@ -15,14 +15,14 @@
 
 | 组件 | Implemented | Verified | Deployed | Pending / 未证明 |
 |---|---|---|---|---|
-| Requirements Site | 需求目录和全局序列源文件已存在，仍是需求事实入口；全系统 Problem Profile 决策已投影到现行需求目录 | 2026-09-09 构建及内容门禁 136/136，lint 通过 | 仅本地站点，不对外发布 | 需求存在不代表六系统全部实现或已部署 |
+| Requirements Site | 需求目录和全局序列源文件已存在，仍是需求事实入口；全系统 Problem Profile 决策已投影到现行需求目录 | 2026-09-11 构建及内容门禁 136/136，lint 通过 | 仅本地站点，不对外发布 | 需求存在不代表六系统全部实现或已部署 |
 | Build / Foundation | Maven 构建治理、框架无关 `paytech-http-problem`、严格/迁移期 HTTP Client Reader、唯一 MVC Problem Writer、稳定公共 Header 名称、可复用显式-null/严格时间反序列化器，以及声明式 `@ResourceLock` 已在当前工作区实现 | 2026-09-08 当前 Header/JSON 绑定/MVC Problem 聚焦门禁 29/29，HTTP Problem Profile 5/5；此前 DTO 清理后的 Problem 相关 Reactor 326/326、注入仓库本地 Redis 凭据后的全 Foundation 505/505 是对应历史源码基线 | 最新 Snapshot 仅安装到本机 Maven 仓库供下游源码验证，未发布 Nexus、未部署 | Legacy Reader 须在部署与观测完成后删除；Compensation Event 测试仍自动重建 Schema；Resource Lock 尚未发布或部署 |
 | API Gateway | 动态 Snapshot 消费已经实现；WebFlux Problem Writer、严格 Owner Problem / `HEAD` / Connector 边界已实现；当前工作区新增独立 Client Credential 链、typed identity、exact Scope 和最小下游/响应 Header；Target/Route/Console 管理命令仍是独立事项 | Client / PLT-I03 130/130 与 Operations 响应/Cookie 41/41 专项通过；完整 1031 项仍有与对照副本相同的 36 failures + 3 errors，JaCoCo 门禁未通过；边界脚本通过。细节见第 13 节，早期 Problem 批次证据保留于第 9 节 | 既有 Gateway 仍部署于 `mor-test`（1 个 Target / 27 条 Route）；本次 Client 源码未部署，不声明早期 Problem/Connector rollout 已完成 | 既有 13 个通用失败及工作区 Risk Suite 26 个失败、JaCoCo 门禁、Legacy Operations Owner Reader 删除、Client 跨系统前置与 rollout、Console Resource、环境切换和本地 Nacos Namespace 默认值仍待完成 |
 | Platform Support | 当前工作区已将现有实现拆为 `api + access-control + audit-security + web + test`；Web 仍是唯一应用和组合根，全部模块仍使用一个 Platform 数据库和主 DataSource，审计保留同库专用写池；HTTP/Schema/跨系统合同未改变 | 资源锁改造前序真实 local MySQL/Redis 283/283；拆模块后 135 项纯逻辑/结构门禁、Reactor package 和隔离应用启动通过。认证开启的应用上下文可启动，但审计 Runtime fixture 因共享 `mor_platform` 含部署/人工数据而不满足仅初始化目录前置，17 项均在 fixture setup 被安全阻止 | 既有 Target/Route 控制面部署保持不变；本次模块拆分及 Problem 映射未部署 | 在干净、仅初始化目录的仓库本地 Platform 数据库重跑完整门禁；CUSTOMER 认证/JWKS、生产 Vault/KMS、Console Resource、MQ 和生产部署；其余资源锁/HMAC 风险见第 8 节 |
 | Operations Console BFF | 独立 `web + test` Maven 仓库；当前工作区除既有页面适配外，已使用 Foundation Writer 输出统一 Problem，并在边界重建自身 503/504，保留显式上游迁移 Reader | 2026-09-06 JDK 25 `clean verify` 315/315；严格 Profile 与真实 `HEAD` 聚焦门禁 272/272 | 既有 Gateway 控制面适配部署保持不变；本次 Problem 迁移未部署 | 无数据库和签名密钥；不拥有核心授权或跨系统事务；Legacy Reader 待部署证据后删除 |
 | Operations Console Web | React/TypeScript/Vite/Ant Design 已实现；当前工作区的 API 消费者严格读取 Problem、显示安全 detail/requestId，并为已知目标保留显式旧 Reader | 2026-09-06 测试 216/216，TypeScript 与 Vite 生产构建通过 | 既有控制面页面部署保持不变；本次 Problem Reader 未部署 | Client/Partner 未来会话方案不由此决定；Legacy Reader 待部署证据后删除 |
 | Vault V1 | Go Server、OpenAPI 与 Java Client 的当前工作区已切换统一 Problem/`HEAD`/Request ID 合同；三表 Protect/Reveal 业务边界不变 | 纯 RFC staged tree 的 Java Client `clean verify` 34/34，OpenAPI/YAML/source 静态门禁通过；当前主机没有 Go/gofmt，Go 编译与测试未执行 | 既有 `mor-test` 合成 smoke 部署保持不变；本次 Problem 源码未部署 | 补齐 Go 门禁；Platform 仍使用批准的开发 Mock；生产 KMS、强服务身份、真实消费者、合规验证和生产部署未完成；Legacy Java Reader 待删除 |
-| CCT | 37 表模型与首个 Java 切片已存在；Client Contract 应用继承统一 MVC Problem Writer | 现有模型门禁已记录；本次真实随机端口 Profile 门禁及仓库 `clean verify` 4/4 | 未声明 | 完整服务、物理数据库、生产部署和 Legacy Reader rollout 未证明 |
+| CCT | 40 表/443 字段目标模型与首个 Java 切片已存在；定价模型已改为 Payment Method Profile、准确 OE Price、可组合 Component/Band；Client Contract 应用继承统一 MVC Problem Writer | 2026-09-11 生成器 `--check`、模型契约 80/80、现实场景 7/7 与 Requirements 内容门禁 136/136 通过；此前真实随机端口 Profile 门禁及仓库 `clean verify` 4/4 保持 | 未声明 | 本次只完成设计源、生成器与 PDManer 工件；未生成或执行 Schema SQL，Java 定价、CCT-I13/I14 新 Wire、Payment 晚到事实、Commerce/Finance 迁移、物理数据库和生产部署均未完成 |
 | Commerce | 15 表/246 字段模型与完整人工 SQL 已生成；Client API/Web/Test 及非运行 Owner contract module 已存在；`createCheckout/getCheckout` 已按 Creation/Query/Idempotency、Idempotency Validator、Codec、Converter、Assembler、Repository 和三个真实恢复检查点的 Processor 职责重构，Create 阶段为 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`，纯依赖构造器使用 Lombok。Client API 现复用 Foundation Header 名称、以 `long` 接收可信身份、使用正常 Jackson/Bean Validation 绑定并补齐 JavaDoc/OpenAPI 描述。Test module 已统一 `TestApplication`、`MockTestBase`、`ManualTestBase` 和 auto/manual 本地配置 | 2026-09-10 仓库本地 MySQL 完成 15 表人工准备；Commerce `./mvnw clean verify` 194/194，0 失败/错误/跳过，真实随机端口 HTTP、Repository、Schema Runtime 和 Owner 端口边界均执行，JaCoCo Hosted Checkout 行覆盖率 90.20%（1831/2030），通过 90% 门槛。既有合同/漂移、JavaDoc、模型/Schema、生成器和 Requirements 门禁证据保持 | 未声明 | 本机 `mor_commerce` 只用于本地验证，不构成共享数据库迁移或部署。四个 Owner 仍是 Commerce-owned local-mock 端口，不是真实 `@HttpExchange` 合同。其余八接口、Gateway/Nginx、Checkout 页面、事件/Webhook、真实 Owner 联调、端到端、发布和部署均未完成；当前仅为 local-mock integration-ready |
 | Payment | 29 表模型已生成 | 自动模型门禁通过 | 未声明 | 完整 Java 服务、物理数据库和生产部署未证明 |
 | Finance | 84 表模型与首个余额查询 Java 切片已存在；当前测试消费者统一校验真实 HTTP Problem | 2026-09-06 JDK 25 `clean verify` 25/25，含本地 MySQL 余额路径与 RFC 1123 Date 门禁 | 未声明 | 完整服务与部署未证明；手工缴税异常分支待专项模型闭合 |
@@ -36,7 +36,7 @@
 
 | 系统 | 表 | 字段 | 唯一索引 | 访问索引 | 本库关系 | 1:1 | Diagram Groups |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Client & Contract | 37 | 423 | 57 | 44 | 64 | 7 | 6 |
+| Client & Contract | 40 | 443 | 63 | 46 | 67 | 7 | 6 |
 | Commerce | 15 | 246 | 24 | 12 | 15 | — | 4 |
 | Payment Orchestration | 29 | 373 | 41 | 44 | 63 | — | 7 |
 | Finance | 84 | 1,100 | 145 | 155 | 160 | 22 | 6 |
@@ -58,6 +58,7 @@
 | TEST-01 | Foundation 不使用 Testcontainers 或自动 Schema 初始化 | Redis Starter 已迁移为复用仓库 `local-environment` 且真实门禁通过；Compensation Event 测试仍自动重建 Schema | Compensation Event 静态门禁先失败后通过，并在手工准备的 `mor-local` 上完成受影响 Maven 测试 |
 | COMP-01 | 本地可靠表使用 `event_key + event_type + sub_event_type + 可选最小 payload_json`，任何 Vault Token 禁止进入 Payload | 六库文档/PDManer 仍有旧 source/version/schema/hash/64 KiB 契约；Foundation `CompensationPayloadPolicy` 尚未显式拒绝 `vaultToken` / `*_vault_token` 标准字段名，也缺少相应反例测试 | 六套 Manifest、Policy、模型、场景、SQL 和测试一次性迁移并复核统计；Foundation 登记入口拒绝标准 Vault Token 字段并通过反例测试 |
 | DB-01 | 新建表不使用物理 CHECK/FK，Sidecar 仅表达应用不变量/逻辑关系 | 多份旧物理决策与 Vault DDL 仍有现在时或实际约束 | 应用保护与反例测试齐备后，审核并手工执行逐库约束迁移；物理核验通过 |
+| CCT-PRICING-01 | CCT 用全局不可复用 `payment_method_profile_code` 描述支付方式特征，并由 Term Version 下准确 OE Price 组合 Percentage、Fixed、Tiered Component/Band | 40 表/443 字段 PDManer 目标模型与 80/80 模型门禁已完成；现行 CCT-I13/I14 V5 Scope、Commerce Scope 字段、Finance Scope Reader 与 Payment 晚到事实仍未迁移，本轮没有 Schema SQL、Java 定价或数据库执行 | 独立批准新 Wire 与 Hash/历史 Reader；明确 Payment 标准化事实及时序；同步 CCT/Commerce/Payment/Finance 模型、手工 SQL、Java 与测试；在授权环境人工执行并核验后才关闭 |
 | FIN-01 | Tax Payment 事前承诺门禁与已发生银行扣款的事后事实登记分离 | 专项核对已确认：现有 `Bank Item + Reconciliation Exception` 可保存并追踪已发生扣款，但当前模型不能无损地把“没有前置 Tax Payment 的真实扣款”闭合到 Return/Payable | 正常流、无前置记录真实扣款、重复、金额/归属不匹配和解决流程均有模型与测试 |
 | RUN-01 | Gateway 本地 Nacos 默认 Namespace 与 `mor-local` 一致 | Gateway 当前默认/示例仍为 `public` | 失败断言、配置修正和相关 Gateway 门禁通过 |
 | RISK-OPERATIONS-RULE-CONFIG-01 | `CHECKOUT_PREPARE` 配置后端、Operations BFF 页面聚合适配、Web 结构化规则配置界面、Platform 控制面资源和 Test 环境滚动脚本均已有工作区实现；后端保留不可变 DRAFT/Freeze、TEST Candidate、八项静态检查与持久幂等/两写事务恢复 | Risk 本地真实 MySQL HTTP/持久化/并发与恢复检查已通过；Operations BFF `clean verify` 1006/1006、Web 878/878 与生产构建、Test 环境脚本 325/325 均通过。当前 Risk 全量门禁因本机 `127.0.0.1:13306/mor_risk` 未准备而失败，不将其声明为新通过；人工 PDManer Review 与本轮部署仍未完成 | 完成本轮 Test 环境部署及端到端验收，再闭合 Gateway/Auth/PLT-I02、Shadow/审批/激活和运行期评估；共享或生产使用前仍须完成 PDManer 4.9.3 人工 Review、环境配置与部署验收，且不得用本项关闭 COMP-01、DB-01 或 Vault V1 |
@@ -72,6 +73,7 @@
 
 ## 5. 最近决策与计划
 
+- CCT 定价模型：[`decisions/2026-09-10-cct-payment-method-profile-pricing.md`](./decisions/2026-09-10-cct-payment-method-profile-pricing.md)
 - 决策：[`decisions/2026-09-06-system-wide-rfc-9457-problem-details.md`](./decisions/2026-09-06-system-wide-rfc-9457-problem-details.md)
 - 已确认设计：[`docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md`](../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md)
 - 实施计划：[`docs/superpowers/plans/2026-09-06-system-wide-rfc-9457-problem-profile-implementation.md`](../docs/superpowers/plans/2026-09-06-system-wide-rfc-9457-problem-profile-implementation.md)

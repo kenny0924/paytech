@@ -39,8 +39,9 @@ const physicalDecisionsPath = path.join(
 const generatorSource = readFileSync(generatorPath, "utf8");
 const expectedTemplateDigest =
   "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-const pendingStructuralProjectionDigest = "PENDING_APPROVED_36_DIGEST";
-const expectedStructuralProjectionDigest = "83cb4d442e937599ddb99d64090a039cafbb332807619507af27ea0197b8e7a4";
+const pendingStructuralProjectionDigest = "PENDING_APPROVED_40_DIGEST";
+const expectedStructuralProjectionDigest =
+  "6013f7f066c277b475a251f85c5ca7768689886b5da0335471d4aa4ec804d678";
 
 const leanAssignmentTables = Object.freeze([
   "entity_source_relation",
@@ -130,19 +131,20 @@ const expectedTables = [
   "business_change_record", "business_change_version", "client",
   "client_application", "client_business_classification", "client_business_profile",
   "client_entity_affiliation", "client_entity_assignment",
-  "command_idempotency", "commercial_term_component", "commercial_term_plan",
-  "commercial_term_scope", "commercial_term_version", "compensation_event",
+  "command_idempotency", "commercial_term_component",
+  "commercial_term_component_band", "commercial_term_plan",
+  "commercial_term_price", "commercial_term_version", "compensation_event",
   "consumer_legal_document", "entity_assignment_rule",
   "entity_source_relation", "individual_profile", "local_partner",
   "operating_entity", "operating_entity_application", "organization_profile",
-  "partner_application",
+  "partner_application", "payment_method_profile", "payment_method_profile_cond",
   "party", "party_address", "party_contact",
   "party_identity_key", "party_profile", "party_profile_identifier",
   "party_relation", "seller_disclosure",
 ].sort();
-const expectedFinalTableManifestCount = 37;
-const expectedFinalFieldManifestCount = 423;
-const expectedRelationSignatureCount = 64;
+const expectedFinalTableManifestCount = 40;
+const expectedFinalFieldManifestCount = 443;
+const expectedRelationSignatureCount = 67;
 
 const expectedTableDisplayNames = Object.freeze({
   agreement: "合同",
@@ -161,8 +163,9 @@ const expectedTableDisplayNames = Object.freeze({
   client_entity_assignment: "客户经营主体分配",
   command_idempotency: "命令幂等记录",
   commercial_term_component: "商业条款计算组件",
+  commercial_term_component_band: "商业条款阶梯档位",
   commercial_term_plan: "商业条款方案",
-  commercial_term_scope: "商业条款适用范围",
+  commercial_term_price: "商业条款价格",
   commercial_term_version: "商业条款版本",
   compensation_event: "本地补偿事件",
   consumer_legal_document: "消费者法律文档",
@@ -173,6 +176,8 @@ const expectedTableDisplayNames = Object.freeze({
   operating_entity: "经营主体角色",
   operating_entity_application: "经营主体入驻申请",
   partner_application: "本地合作伙伴入驻申请",
+  payment_method_profile: "支付方式特征",
+  payment_method_profile_cond: "支付方式特征条件",
   organization_profile: "机构资料版本",
   party: "法律主体主档",
   party_address: "主体地址版本",
@@ -241,12 +246,16 @@ const expectedDiagramGroups = Object.freeze({
   pricing_share: Object.freeze({
     defName: "Client Pricing and Partner Share",
     primaryTables: Object.freeze([
+      "payment_method_profile", "payment_method_profile_cond",
       "commercial_term_plan", "commercial_term_version",
-      "commercial_term_scope", "commercial_term_component",
+      "commercial_term_price", "commercial_term_component",
+      "commercial_term_component_band",
     ]),
     tables: Object.freeze([
+      "payment_method_profile", "payment_method_profile_cond",
       "commercial_term_plan", "commercial_term_version",
-      "commercial_term_scope", "commercial_term_component", "agreement", "client",
+      "commercial_term_price", "commercial_term_component",
+      "commercial_term_component_band", "agreement", "client",
       "operating_entity", "local_partner",
     ]),
   }),
@@ -279,8 +288,9 @@ const expectedPrimaryKeys = Object.freeze({
   client_entity_affiliation: "affiliation_id",
   client_entity_assignment: "assignment_id",
   commercial_term_component: "term_component_id",
+  commercial_term_component_band: "term_band_id",
   commercial_term_plan: "term_plan_id",
-  commercial_term_scope: "term_scope_id",
+  commercial_term_price: "term_price_id",
   commercial_term_version: "term_version_id",
   command_idempotency: "idempotency_id",
   compensation_event: "id",
@@ -292,6 +302,8 @@ const expectedPrimaryKeys = Object.freeze({
   operating_entity: "operating_entity_id",
   operating_entity_application: "application_id",
   partner_application: "application_id",
+  payment_method_profile: "payment_method_profile_id",
+  payment_method_profile_cond: "profile_condition_id",
   organization_profile: "profile_id",
   party: "party_id",
   party_address: "address_id",
@@ -350,8 +362,14 @@ const expectedUniqueKeys = Object.freeze({
   agreement: ["agreement_no"],
   commercial_term_plan: ["term_type,plan_code", "client_id", "local_partner_id,term_type"],
   commercial_term_version: ["term_plan_id,version_no", "term_plan_id,active_slot"],
-  commercial_term_scope: ["term_version_id,priority_no"],
-  commercial_term_component: ["term_scope_id,component_code"],
+  payment_method_profile: ["payment_method_profile_code"],
+  payment_method_profile_cond: ["payment_method_profile_id,dimension_code,condition_value"],
+  commercial_term_price: [
+    "term_version_id,operating_entity_id,payment_method_profile_code",
+    "term_version_id,operating_entity_id,priority_no",
+  ],
+  commercial_term_component: ["term_price_id,component_code", "term_price_id,component_no"],
+  commercial_term_component_band: ["term_component_id,band_no", "term_component_id,lower_bound"],
   business_change_record: ["record_type,record_id"], business_change_version: ["history_id,version_no"],
   compensation_event: ["event_key", "source_type,source_id,source_version,event_type"],
   command_idempotency: ["caller_scope,operation_type,idempotency_key"],
@@ -407,11 +425,13 @@ const expectedRelationSignatures = Object.freeze([
   "client_entity_assignment.entity_source_relation_id->entity_source_relation.source_relation_id|n:1",
   "client_entity_assignment.operating_entity_id->operating_entity.operating_entity_id|n:1",
   "client_entity_assignment.rule_id->entity_assignment_rule.rule_id|n:1",
-  "commercial_term_component.term_scope_id->commercial_term_scope.term_scope_id|n:1",
+  "commercial_term_component.term_price_id->commercial_term_price.term_price_id|n:1",
+  "commercial_term_component_band.term_component_id->commercial_term_component.term_component_id|n:1",
   "commercial_term_plan.client_id->client.client_id|1:1",
   "commercial_term_plan.local_partner_id->local_partner.local_partner_id|n:1",
-  "commercial_term_scope.operating_entity_id->operating_entity.operating_entity_id|n:1",
-  "commercial_term_scope.term_version_id->commercial_term_version.term_version_id|n:1",
+  "commercial_term_price.operating_entity_id->operating_entity.operating_entity_id|n:1",
+  "commercial_term_price.payment_method_profile_code->payment_method_profile.payment_method_profile_code|n:1",
+  "commercial_term_price.term_version_id->commercial_term_version.term_version_id|n:1",
   "commercial_term_version.agreement_id->agreement.agreement_id|n:1",
   "commercial_term_version.term_plan_id->commercial_term_plan.term_plan_id|n:1",
   "consumer_legal_document.operating_entity_id->operating_entity.operating_entity_id|n:1",
@@ -430,6 +450,7 @@ const expectedRelationSignatures = Object.freeze([
   "operating_entity_application.source_partner_id->local_partner.local_partner_id|n:1",
   "partner_application.local_partner_id->local_partner.local_partner_id|n:1",
   "partner_application.target_party_profile_id->party_profile.profile_id|n:1",
+  "payment_method_profile_cond.payment_method_profile_id->payment_method_profile.payment_method_profile_id|n:1",
   "organization_profile.profile_id->party_profile.profile_id|1:1",
   "party_address.profile_id->party_profile.profile_id|n:1",
   "party_contact.profile_id->party_profile.profile_id|n:1",
@@ -525,15 +546,27 @@ const expectedFields = Object.freeze({
     "active_slot", "effective_from", "effective_to", "rounding_mode",
     "create_time", "update_time",
   ],
-  commercial_term_scope: [
-    "term_scope_id", "term_version_id", "operating_entity_id", "country_code",
-    "currency", "industry_code", "mcc_code", "payment_method", "priority_no",
-    "create_time", "update_time",
+  payment_method_profile: [
+    "payment_method_profile_id", "payment_method_profile_code", "profile_name",
+    "payment_method_code", "status", "create_time", "update_time",
+  ],
+  payment_method_profile_cond: [
+    "profile_condition_id", "payment_method_profile_id", "dimension_code",
+    "condition_value", "create_time", "update_time",
+  ],
+  commercial_term_price: [
+    "term_price_id", "term_version_id", "operating_entity_id",
+    "payment_method_profile_code", "priority_no", "create_time", "update_time",
   ],
   commercial_term_component: [
-    "term_component_id", "term_scope_id", "component_code", "component_type",
-    "trigger_code", "calculation_base", "rate", "fixed_amount", "currency",
-    "min_amount", "max_amount", "create_time", "update_time",
+    "term_component_id", "term_price_id", "component_no", "component_code",
+    "component_type", "trigger_code", "calculation_base", "rate",
+    "fixed_amount", "currency", "min_amount", "max_amount", "band_mode",
+    "create_time", "update_time",
+  ],
+  commercial_term_component_band: [
+    "term_band_id", "term_component_id", "band_no", "lower_bound",
+    "upper_bound", "rate", "fixed_amount", "create_time", "update_time",
   ],
   client_application: [
     "application_id", "application_no", "application_type", "client_id",
@@ -584,8 +617,9 @@ const expectedFinalFields = Object.freeze({
   client_entity_affiliation: leanAssignmentFields.client_entity_affiliation,
   client_entity_assignment: leanAssignmentFields.client_entity_assignment,
   commercial_term_component: expectedFields.commercial_term_component,
+  commercial_term_component_band: expectedFields.commercial_term_component_band,
   commercial_term_plan: expectedFields.commercial_term_plan,
-  commercial_term_scope: expectedFields.commercial_term_scope,
+  commercial_term_price: expectedFields.commercial_term_price,
   commercial_term_version: expectedFields.commercial_term_version,
   command_idempotency: ["idempotency_id", "caller_scope", "operation_type", "idempotency_key", "request_hash", "response_ref", "status", "expire_time", "create_time", "update_time"],
   compensation_event: ["id", "event_key", "event_type", "execution_type", "source_type", "source_id", "source_version", "schema_version", "payload_json", "payload_hash", "execute_status", "execute_count", "next_execute_at", "lock_owner", "lock_until", "last_error_code", "last_error_summary", "lock_version", "create_time", "update_time"],
@@ -597,6 +631,8 @@ const expectedFinalFields = Object.freeze({
   operating_entity: ["operating_entity_id", "entity_no", "party_id", "operating_country", "status", "create_time", "update_time"],
   operating_entity_application: ["application_id", "application_no", "operating_entity_id", "party_profile_id", "source_type", "source_client_id", "source_partner_id", "client_source_basis", "status", "active_slot", "due_diligence_case_id", "qualification_decision_id", "qualification_decision_version", "qualification_type", "submitted_time", "submission_hash_schema_version", "submission_content_hash", "approved_source_relation_id", "create_time", "update_time"],
   partner_application: ["application_id", "application_no", "local_partner_id", "target_party_profile_id", "requested_by_account_id", "status", "active_slot", "due_diligence_case_id", "qualification_decision_id", "qualification_decision_version", "qualification_type", "submitted_time", "submission_hash_schema_version", "submission_content_hash", "create_by", "create_time", "update_time"],
+  payment_method_profile: expectedFields.payment_method_profile,
+  payment_method_profile_cond: expectedFields.payment_method_profile_cond,
   organization_profile: ["profile_id", "legal_name", "trade_name", "incorporation_country", "organization_type", "incorporation_date", "create_time", "update_time"],
   party: ["party_id", "party_no", "party_type", "create_time", "update_time"],
   party_address: ["address_id", "profile_id", "address_type", "address_line1", "address_line2", "city", "state_or_province", "postal_code", "country_code", "create_time", "update_time"],
@@ -651,13 +687,16 @@ const legacyExpectedNullableFieldPaths = Object.freeze([
   "client_entity_assignment.active_slot",
   "client_entity_assignment.effective_to",
   "commercial_term_component.currency",
+  "commercial_term_component.band_mode",
   "commercial_term_component.fixed_amount",
   "commercial_term_component.max_amount",
   "commercial_term_component.min_amount",
   "commercial_term_component.rate",
   "commercial_term_plan.client_id",
   "commercial_term_plan.local_partner_id",
-  "commercial_term_scope.operating_entity_id",
+  "commercial_term_component_band.upper_bound",
+  "commercial_term_component_band.rate",
+  "commercial_term_component_band.fixed_amount",
   "commercial_term_version.active_slot",
   "commercial_term_version.effective_to",
   "command_idempotency.response_ref",
@@ -767,6 +806,7 @@ const expectedBcrRecordTypes = Object.freeze([
   "CONSUMER_LEGAL_DOCUMENT",
   "SELLER_DISCLOSURE",
   "COMMERCIAL_TERM_PLAN",
+  "PAYMENT_METHOD_PROFILE",
 ]);
 
 const expectedBcrRootTypes = Object.freeze([
@@ -786,6 +826,7 @@ const expectedBcrRootTypes = Object.freeze([
   "CONSUMER_LEGAL_DOCUMENT",
   "SELLER_DISCLOSURE",
   "COMMERCIAL_TERM_PLAN",
+  "PAYMENT_METHOD_PROFILE",
 ]);
 
 const expectedBcrExcludedBusinessTables = Object.freeze([
@@ -801,8 +842,10 @@ const expectedBcrExcludedBusinessTables = Object.freeze([
   "agreement_document_ref",
   "agreement_acceptance",
   "agreement_operating_entity",
-  "commercial_term_scope",
+  "payment_method_profile_cond",
+  "commercial_term_price",
   "commercial_term_component",
+  "commercial_term_component_band",
 ]);
 
 const expectedClosedEnumValues = Object.freeze({
@@ -854,7 +897,9 @@ const expectedClosedEnumValues = Object.freeze({
     "DRAFT", "APPROVED", "SCHEDULED", "ACTIVE", "SUPERSEDED", "EXPIRED",
   ],
   "commercial_term_version.rounding_mode": ["HALF_UP"],
-  "commercial_term_component.component_type": ["PERCENTAGE", "FIXED"],
+  "payment_method_profile.status": ["DRAFT", "ACTIVE", "RETIRED"],
+  "commercial_term_component.component_type": ["PERCENTAGE", "FIXED", "TIERED"],
+  "commercial_term_component.band_mode": ["WHOLE_BASE", "PROGRESSIVE"],
   "business_change_record.record_type": expectedBcrRecordTypes,
   "business_change_record.aggregate_root_type": expectedBcrRootTypes,
   "business_change_version.operation_type": ["CREATE", "UPDATE", "DELETE"],
@@ -883,11 +928,10 @@ const expectedOpenCodeFields = Object.freeze([
   "commercial_term_component.currency",
   "commercial_term_component.trigger_code",
   "commercial_term_plan.status",
-  "commercial_term_scope.industry_code",
-  "commercial_term_scope.mcc_code",
-  "commercial_term_scope.country_code",
-  "commercial_term_scope.currency",
-  "commercial_term_scope.payment_method",
+  "commercial_term_price.payment_method_profile_code",
+  "payment_method_profile.payment_method_code",
+  "payment_method_profile_cond.dimension_code",
+  "payment_method_profile_cond.condition_value",
   "command_idempotency.operation_type",
   "command_idempotency.status",
   "compensation_event.event_type",
@@ -915,6 +959,7 @@ const expectedOpenCodeFields = Object.freeze([
 const expectedBusinessIdentifierCodeFields = Object.freeze([
   "commercial_term_component.component_code",
   "commercial_term_plan.plan_code",
+  "payment_method_profile.payment_method_profile_code",
   "command_idempotency.caller_scope",
   "consumer_legal_document.document_code",
 ].sort());
@@ -1105,10 +1150,14 @@ const expectedMoneyDomainFields = Object.freeze([
   "commercial_term_component.fixed_amount",
   "commercial_term_component.max_amount",
   "commercial_term_component.min_amount",
+  "commercial_term_component_band.fixed_amount",
+  "commercial_term_component_band.lower_bound",
+  "commercial_term_component_band.upper_bound",
 ]);
 
 const expectedDecimalDomainFields = Object.freeze([
   "commercial_term_component.rate",
+  "commercial_term_component_band.rate",
   "party_relation.ownership_percentage",
 ]);
 
@@ -1119,7 +1168,8 @@ const expectedVarcharLengthOverrides = Object.freeze({
   "client_business_profile.website_url": 2048,
   "client_entity_affiliation.mcc_code": 4,
   "client_entity_assignment.mcc_code": 4,
-  "commercial_term_scope.mcc_code": 4,
+  "payment_method_profile.profile_name": 128,
+  "payment_method_profile_cond.condition_value": 128,
   "command_idempotency.idempotency_key": 128,
   "compensation_event.event_key": 128,
   "consumer_legal_document.locale": 35,
@@ -1149,7 +1199,7 @@ const expectedBigIntFieldKeys = Object.freeze(new Set([
 ]));
 
 const expectedIntegerFieldKeys = Object.freeze(new Set([
-  "execute_count", "hash_schema_version",
+  "band_no", "component_no", "execute_count", "hash_schema_version",
   "priority_no", "schema_version", "settlement_business_days", "submission_hash_schema_version",
   "cutoff_second_of_day",
 ]));
@@ -1444,12 +1494,8 @@ const exactAssignmentIndustryMccTables = Object.freeze([
   "client_entity_assignment",
   "entity_assignment_rule",
 ]);
-const wildcardScopeIndustryMccTables = Object.freeze([
-  "commercial_term_scope",
-]);
 const scopeIndustryMccTables = Object.freeze([
   ...exactAssignmentIndustryMccTables,
-  ...wildcardScopeIndustryMccTables,
 ]);
 const forbiddenLegacyTableKeys = Object.freeze(new Set([
   "client_business_activity",
@@ -1499,22 +1545,6 @@ function assertIndustryMccContract(model) {
     );
   }
 
-  for (const tableKey of wildcardScopeIndustryMccTables) {
-    const industry = qualifiedField(model, `${tableKey}.industry_code`);
-    const mcc = qualifiedField(model, `${tableKey}.mcc_code`);
-    assert.ok(industry, `missing Scope industry field: ${tableKey}.industry_code`);
-    assert.ok(mcc, `missing Scope MCC field: ${tableKey}.mcc_code`);
-    assert.deepEqual(
-      [mcc.type, mcc.len, mcc.notNull],
-      ["VARCHAR", 4, true],
-      `Scope MCC physical contract drift: ${tableKey}.mcc_code`,
-    );
-    assert.match(
-      mcc.comment,
-      /四位 MCC(?: 代码)?\s*或\s*(?:经)?批准的\s*[`]?\*[`]?/u,
-      `Scope MCC must declare four-digit MCC or the approved wildcard: ${tableKey}`,
-    );
-  }
 }
 
 function assertNoLegacyIndustryMccStructure(model) {
@@ -1643,7 +1673,7 @@ function assertTargetModelFieldCatalog(model, context) {
   assert.deepEqual(
     model.entities.map((entity) => logicalTableKey(entity.defKey)).sort(),
     expectedTables,
-    `${context} requires the approved 37-table catalog`,
+    `${context} requires the approved 40-table catalog`,
   );
   const entities = entityMap(model);
   for (const tableKey of expectedTables) {
@@ -2004,6 +2034,10 @@ function assertPhysicalPrecisionContract(model) {
     "commercial_term_component.fixed_amount": [24, 8],
     "commercial_term_component.min_amount": [24, 8],
     "commercial_term_component.max_amount": [24, 8],
+    "commercial_term_component_band.lower_bound": [24, 8],
+    "commercial_term_component_band.upper_bound": [24, 8],
+    "commercial_term_component_band.rate": [18, 10],
+    "commercial_term_component_band.fixed_amount": [24, 8],
   });
   const fields = allPhysicalFields(model);
   assert.deepEqual(
@@ -2446,10 +2480,6 @@ function assertTableSpecificFieldSemantics(model) {
     assert.match(comment(tableKey, fieldKey), /(?:精确|准确)/u);
     assert.doesNotMatch(comment(tableKey, fieldKey), /通配/u);
   }
-  for (const [tableKey, fieldKey] of [
-    ["commercial_term_scope", "country_code"],
-    ["commercial_term_scope", "currency"],
-  ]) assert.match(comment(tableKey, fieldKey), /通配/u);
   for (const [tableKey, fieldKey] of [
     ["client_entity_affiliation", "scope_country"],
     ["client_entity_affiliation", "scope_currency"],
@@ -3089,7 +3119,7 @@ function assertStructuralProjectionDigest(model) {
     assert.equal(
       hasApprovedTableCatalog(model),
       false,
-      "replace PENDING_APPROVED_36_DIGEST with the approved 64-hex digest before GREEN",
+      "replace PENDING_APPROVED_40_DIGEST with the approved 64-hex digest before GREEN",
     );
     return;
   }
@@ -3317,8 +3347,8 @@ test("uses the lean four-table automatic entity assignment model", () => {
   );
 });
 
-test("consolidates Client Pricing and Partner Share without internal derived hashes", () => {
-  const entities = entityMap(readModel());
+test("uses reusable Payment Method Profiles and composable commercial prices", () => {
+  const entities = entityMap(generateClientContractModel());
   const expectedCommercialTermFields = {
     commercial_term_plan: [
       "term_plan_id", "plan_code", "term_type", "client_id",
@@ -3329,16 +3359,27 @@ test("consolidates Client Pricing and Partner Share without internal derived has
       "status", "active_slot", "effective_from", "effective_to",
       "rounding_mode", "create_time", "update_time",
     ],
-    commercial_term_scope: [
-      "term_scope_id", "term_version_id", "operating_entity_id",
-      "country_code", "currency", "industry_code", "mcc_code",
-      "payment_method", "priority_no", "create_time", "update_time",
+    payment_method_profile: [
+      "payment_method_profile_id", "payment_method_profile_code", "profile_name",
+      "payment_method_code", "status", "create_time", "update_time",
+    ],
+    payment_method_profile_cond: [
+      "profile_condition_id", "payment_method_profile_id", "dimension_code",
+      "condition_value", "create_time", "update_time",
+    ],
+    commercial_term_price: [
+      "term_price_id", "term_version_id", "operating_entity_id",
+      "payment_method_profile_code", "priority_no", "create_time", "update_time",
     ],
     commercial_term_component: [
-      "term_component_id", "term_scope_id", "component_code",
+      "term_component_id", "term_price_id", "component_no", "component_code",
       "component_type", "trigger_code", "calculation_base", "rate",
-      "fixed_amount", "currency", "min_amount", "max_amount",
+      "fixed_amount", "currency", "min_amount", "max_amount", "band_mode",
       "create_time", "update_time",
+    ],
+    commercial_term_component_band: [
+      "term_band_id", "term_component_id", "band_no", "lower_bound",
+      "upper_bound", "rate", "fixed_amount", "create_time", "update_time",
     ],
   };
 
@@ -3353,7 +3394,9 @@ test("consolidates Client Pricing and Partner Share without internal derived has
   for (const removedTable of [
     "client_pricing_plan", "client_pricing_version", "client_pricing_scope",
     "client_fee_component", "partner_share_plan", "partner_share_version",
-    "partner_share_scope", "partner_share_component",
+    "partner_share_scope", "partner_share_component", "commercial_term_scope",
+    "payment_method", "payment_method_profile_version",
+    "payment_method_profile_condition_value", "dimension_definition",
   ]) {
     assert.equal(entities.has(removedTable), false, `legacy table remains: ${removedTable}`);
   }
@@ -3498,11 +3541,11 @@ test("locks the generated Partner Application physical totals", () => {
     relations: model.entities.flatMap((entity) => entity.correlations).length,
     diagramGroups: model.diagrams.length,
   }, {
-    tables: 37,
-    fields: 423,
-    uniqueIndexes: 57,
-    accessIndexes: 44,
-    relations: 64,
+    tables: 40,
+    fields: 443,
+    uniqueIndexes: 63,
+    accessIndexes: 46,
+    relations: 67,
     diagramGroups: 6,
   });
 });
@@ -3511,7 +3554,7 @@ test("rejects removed Agreement/Legal tables and fields without overreaching int
   assertAgreementLegalSimplificationContract(readModel());
 });
 
-test("uses the exact unique Chinese display-name manifest for all 37 tables", () => {
+test("uses the exact unique Chinese display-name manifest for all 40 tables", () => {
   assertMetadataContract(readModel());
 });
 
@@ -3539,12 +3582,12 @@ test("keeps the approved unique-key contracts", () => {
   }
   assert.equal(
     model.entities.flatMap((entity) => entity.indexes).filter((index) => index.unique).length,
-    57,
+    63,
     "unique-index count drift",
   );
   assert.equal(
     model.entities.flatMap((entity) => entity.indexes).filter((index) => !index.unique).length,
-    44,
+    46,
     "access-index count drift",
   );
 });
@@ -3560,11 +3603,11 @@ test("keeps the approved Agreement and Legal access-index contracts", () => {
   }
 });
 
-test("separates exact Assignment MCC from wildcard-capable commercial Scope MCC", () => {
+test("keeps Assignment MCC exact after moving pricing dimensions into Profile conditions", () => {
   assertIndustryMccContract(readModel());
 });
 
-test("industry/MCC evaluator rejects unbound classification wording and a negated Scope wildcard", () => {
+test("industry/MCC evaluator rejects unbound classification wording and wildcard Assignment scope", () => {
   const model = {
     entities: [
       {
@@ -3606,13 +3649,6 @@ test("industry/MCC evaluator rejects unbound classification wording and a negate
     /Assignment Scope must be exact/u,
   );
 
-  const negatedScopeWildcard = structuredClone(model);
-  qualifiedField(negatedScopeWildcard, "commercial_term_scope.mcc_code").comment =
-    "允许四位 MCC，但不允许批准的 `*` 通配值。";
-  assert.throws(
-    () => assertIndustryMccContract(negatedScopeWildcard),
-    /Scope MCC must declare four-digit MCC or the approved wildcard/u,
-  );
 });
 
 test("rejects exact legacy industry/MCC structure without scanning historical prose", () => {
@@ -3779,7 +3815,7 @@ test("locks the approved Structural Projection or requires its digest before GRE
   assertStructuralProjectionDigest(model);
 });
 
-test("pending Structural Projection digest cannot accept the approved 36-table catalog", () => {
+test("pending Structural Projection digest cannot accept the approved 40-table catalog", () => {
   if (expectedStructuralProjectionDigest !== pendingStructuralProjectionDigest) {
     assert.match(expectedStructuralProjectionDigest, /^[a-f0-9]{64}$/u);
     return;
@@ -3789,7 +3825,7 @@ test("pending Structural Projection digest cannot accept the approved 36-table c
   };
   assert.throws(
     () => assertStructuralProjectionDigest(approvedCatalogFixture),
-    /replace PENDING_APPROVED_36_DIGEST with the approved 64-hex digest before GREEN/u,
+    /replace PENDING_APPROVED_40_DIGEST with the approved 64-hex digest before GREEN/u,
   );
 });
 
@@ -3877,7 +3913,7 @@ test("preserves the nine focused Party Identity tables and their immutable field
   }
 });
 
-test("maps every physical field to the independent literal 37-table manifest", () => {
+test("maps every physical field to the independent literal 40-table manifest", () => {
   const model = readModel();
   assertTargetModelFieldCatalog(model, "complete physical field evaluator");
 });
@@ -3953,6 +3989,7 @@ test("locks the complete compensation-event Claim and physical contract", () => 
 test("keeps model identity and all database connection profiles empty", () => {
   const model = readModel();
   assert.equal(model.name, "Code-MoR Client & Contract Database V1");
+  assert.equal(model.describe, "Client & Contract");
   assert.equal(model.version, "4.9.3");
   assert.deepEqual(model.dbConn, []);
   assert.deepEqual(model.dbConns, []);
@@ -4257,7 +4294,7 @@ test("Operating Entity Application evaluator rejects a weakened approval/source 
   );
 });
 
-test("Field type mapping evaluator accepts the approved 36-table fixture", () => {
+test("Field type mapping evaluator accepts the approved 40-table fixture", () => {
   assertFieldTypeMappingContract(fieldTypeMappingContractFixture());
 });
 
@@ -4355,7 +4392,7 @@ test("direct Agreement and Legal facts use immutable-record metadata and complet
     /PARTNER_SHARE.*PLATFORM_SERVICE_CHARGE.*同一 Local Partner.*PARTNER Agreement/u,
   );
   assert.match(
-    entities.get("commercial_term_scope").comment,
+    entities.get("commercial_term_price").comment,
     /PLATFORM_SERVICE_CHARGE.*Calculation Base Catalog.*残差/u,
   );
   assert.match(
@@ -4414,27 +4451,20 @@ test("generator rejects duplicate explicit index names with different field sign
   );
 });
 
-test("CCT authority does not restore Commercial Term intermediate hashes", () => {
+test("CCT authority defines Profile-priced Commercial Terms without intermediate hashes", () => {
   const authority = readFileSync(
     path.join(workspaceRoot, "agent-docs/database/CLIENT_CONTRACT_DATABASE.md"),
     "utf8",
   );
 
   assert.doesNotMatch(authority, /父 Content Hash 按.*Component Canonical Hash/u);
-  assert.doesNotMatch(
-    authority,
-    /GetImmutableCommercialTermScope\(term_scope_id, expected_commercial_context_hash\)/u,
-  );
+  assert.match(authority, /`payment_method_profile`/u);
+  assert.match(authority, /`payment_method_profile_code`/u);
+  assert.match(authority, /`commercial_term_price`/u);
+  assert.match(authority, /同维度多行按 OR、不同维度按 AND/u);
   assert.match(
     authority,
-    /GetImmutableCommercialTermScope\(term_scope_id, agreement_operating_entity_id, context_as_of_time\)/u,
-  );
-  assert.match(authority, /不得生成 Component Canonical Hash、父 Content Hash 或独立 Domain Tag/u);
-  assert.match(authority, /不能验证或重算完整 V5 `commercial_context_hash`/u);
-  assert.match(authority, /CODE-MOR:CCT:COMMERCIAL_CONTEXT:5/u);
-  assert.match(
-    authority,
-    /platformServicePartyId.*platformServiceCharge.*JSON `null`/u,
+    /Payment Method Profile\/Condition 与 Commercial Term Version\/Price\/Component\/Band 都以结构化行和冻结边界保留历史，不维护中间 Hash/u,
   );
 });
 

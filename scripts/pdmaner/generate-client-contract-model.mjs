@@ -64,15 +64,21 @@ const MONEY_FIELD_PATHS = new Set([
   "commercial_term_component.fixed_amount",
   "commercial_term_component.max_amount",
   "commercial_term_component.min_amount",
+  "commercial_term_component_band.fixed_amount",
+  "commercial_term_component_band.lower_bound",
+  "commercial_term_component_band.upper_bound",
 ]);
 const RATE_FIELD_PATHS = new Set([
   "commercial_term_component.rate",
+  "commercial_term_component_band.rate",
   "party_relation.ownership_percentage",
 ]);
 const INTEGER_FIELDS = new Set([
   "execute_count",
   "hash_schema_version",
   "priority_no",
+  "component_no",
+  "band_no",
   "schema_version",
   "settlement_business_days",
   "submission_hash_schema_version",
@@ -94,7 +100,8 @@ const VARCHAR_LENGTH_OVERRIDES = new Map(Object.entries({
   "client_business_profile.website_url": 2048,
   "client_entity_affiliation.mcc_code": 4,
   "client_entity_assignment.mcc_code": 4,
-  "commercial_term_scope.mcc_code": 4,
+  "payment_method_profile.profile_name": 128,
+  "payment_method_profile_cond.condition_value": 128,
   "command_idempotency.idempotency_key": 128,
   "compensation_event.event_key": 128,
   "consumer_legal_document.locale": 35,
@@ -141,13 +148,16 @@ const NULLABLE_FIELD_PATHS = new Set([
   "client_entity_assignment.active_slot",
   "client_entity_assignment.effective_to",
   "commercial_term_component.currency",
+  "commercial_term_component.band_mode",
   "commercial_term_component.fixed_amount",
   "commercial_term_component.max_amount",
   "commercial_term_component.min_amount",
   "commercial_term_component.rate",
   "commercial_term_plan.client_id",
   "commercial_term_plan.local_partner_id",
-  "commercial_term_scope.operating_entity_id",
+  "commercial_term_component_band.upper_bound",
+  "commercial_term_component_band.rate",
+  "commercial_term_component_band.fixed_amount",
   "commercial_term_version.active_slot",
   "commercial_term_version.effective_to",
   "command_idempotency.response_ref",
@@ -307,19 +317,34 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
   ],
   commercial_term_version: [
     "CLIENT_PRICING 必须引用同一 Client 的 CLIENT Agreement；PARTNER_SHARE 与 PLATFORM_SERVICE_CHARGE 必须引用同一 Local Partner 的 PARTNER Agreement，同一交易命中的两类 Partner Term 必须属于同一 Agreement。",
-    "Agreement 必须覆盖全部 Scope，Version 有效区间不得超出 Agreement；APPROVED 后 Version、Scope 与 Component 业务字段不可修改。",
+    "Agreement 必须覆盖全部 Price 的准确 Operating Entity，Version 有效区间不得超出 Agreement；APPROVED 后 Version、Price、Component 与 Band 业务字段不可修改。",
   ],
-  commercial_term_scope: [
-    "operating_entity_id 为空表示所属 Agreement 覆盖的全部经营主体；country_code、currency、industry_code、mcc_code 与 payment_method 使用批准的目录值或 *。",
-    "PARTNER_SHARE 的 payment_method 固定为 *；CLIENT_PRICING 使用支付方式目录值或 *。",
-    "PLATFORM_SERVICE_CHARGE 使用受控 Calculation Base Catalog 和支付方式目录；不得用 Client Fee、Partner Share、Provider Cost 或其残差倒算平台服务费。",
-    "封存或激活时必须在锁定 Version 后校验完整 Scope Tuple 不重复；不以派生 Scope Hash 代替结构化校验。",
-    "按最小 priority_no 唯一解析；零条或多条候选均 Fail Closed。",
+  payment_method_profile: [
+    "状态只允许 DRAFT、ACTIVE、RETIRED；DRAFT 可在 Profile Root BCR/CAS 下编辑，ACTIVE 后 payment_method_profile_code、payment_method_code 与全部 Condition 永久冻结。",
+    "Condition 变化必须创建新 Profile 与新 Code；RETIRED 只阻止新 Commercial Term Version 引用，历史引用继续可读，Code 不得回收复用。",
+    "一个 Profile 精确绑定一个 Payment Method 稳定代码；CCT 不建立 Payment Method 主表，也不复制名称、图标、路由能力或 Provider 配置。",
+  ],
+  payment_method_profile_cond: [
+    "每行保存一个 dimension_code + condition_value 离散等值条件；同维度多行按 OR，不同维度按 AND，缺少维度表示不限制。",
+    "不保存 CSV、*、Operator、Range，不建立 Dimension Definition、Profile Version 或 Condition Value 子表；维度和值由版本化应用/API 合同校验。",
+    "Condition 是 Profile 聚合内部 Child，使用 payment_method_profile_id 关联，并由 Profile Root BCR/CAS 与冻结规则保护。",
+  ],
+  commercial_term_price: [
+    "每条 Price 属于准确 term_version_id + operating_entity_id，并以 payment_method_profile_code 关联一个 ACTIVE Payment Method Profile；Profile 可跨 Client、Version 与 OE 复用。",
+    "Operating Entity 必须被 Version 引用的 Agreement 覆盖；不允许 NULL、* 或全 OE 通配，旧全 Agreement-OE Scope 迁移时展开为准确 OE Price。",
+    "匹配先选择不同 dimension_code 数量最多的 Profile，再以最小 priority_no 选择；零命中、事实缺失或仍有歧义均 Fail Closed。",
+    "PLATFORM_SERVICE_CHARGE 使用受控 Calculation Base Catalog；不得用 Client Fee、Partner Share、Provider Cost 或其残差倒算平台服务费。",
   ],
   commercial_term_component: [
-    "PERCENTAGE/FIXED 必须满足批准的 rate、fixed_amount、currency、min_amount 与 max_amount 矩阵。",
+    "PERCENTAGE、FIXED、TIERED 必须满足批准的 rate、fixed_amount、currency、min_amount、max_amount 与 band_mode 矩阵。",
+    "多个 Component 按 component_no 稳定计算并相加；PERCENTAGE/FIXED 不得拥有 Band，TIERED 头部 rate/fixed_amount 为空、band_mode 非空且至少拥有一档。",
     "CLIENT_PRICING 使用受控 Client Fee 计算基数目录；PARTNER_SHARE 固定 calculation_base=ACTUAL_CLIENT_FEE；PLATFORM_SERVICE_CHARGE 使用受控 Calculation Base Catalog，现实场景可使用 GROSS_PAYMENT_AMOUNT。",
-    "所属 Version 进入 APPROVED 后结构化 Component 不可修改；调整条款必须创建新 Version。",
+    "所属 Version 进入 APPROVED 后结构化 Component 与 Band 不可修改；调整条款必须创建新 Version。",
+  ],
+  commercial_term_component_band: [
+    "区间使用 [lower_bound,upper_bound)，第一档从 0 开始、连续且无重叠，最后一档 upper_bound 为空。",
+    "每档 rate 与 fixed_amount 恰好一个非空；PROGRESSIVE 首期只允许 rate，固定金额组合使用独立 FIXED Component。",
+    "Band 继承 Component 的 currency 与 calculation_base；同一组件 band_no 从 1 连续编号，所属 Version APPROVED 后不可修改。",
   ],
   consumer_legal_document: [
     "状态时间矩阵：DRAFT 的 approved_time/published_time 均为空；APPROVED 仅 approved_time 非空；ACTIVE、EXPIRED 两者均非空；WITHDRAWN 的 approved_time 非空，未发布撤回时 published_time 可为空。",
@@ -433,8 +458,15 @@ const ACCESS_INDEXES = {
     ["term_plan_id", "status", "effective_from", "effective_to"],
     { defKey: "idx_comm_term_agreement", fields: ["agreement_id"] },
   ],
-  commercial_term_scope: [
-    { defKey: "idx_comm_scope_resolve", fields: ["term_version_id", "operating_entity_id", "country_code", "currency", "industry_code", "mcc_code", "payment_method"] },
+  payment_method_profile: [
+    { defKey: "idx_pm_profile_lookup", fields: ["status", "payment_method_code", "payment_method_profile_code"] },
+  ],
+  payment_method_profile_cond: [
+    { defKey: "idx_pm_cond_lookup", fields: ["dimension_code", "condition_value", "payment_method_profile_id"] },
+  ],
+  commercial_term_price: [
+    { defKey: "idx_term_price_profile", fields: ["payment_method_profile_code", "term_version_id"] },
+    { defKey: "idx_term_price_oe", fields: ["operating_entity_id", "term_version_id"] },
   ],
   business_change_record: [
     ["aggregate_root_type", "aggregate_root_id", "history_id"],
@@ -479,11 +511,13 @@ const LOCAL_RELATIONS = [
   ["client_entity_assignment", "entity_source_relation_id", "entity_source_relation", "source_relation_id", "n"],
   ["client_entity_assignment", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
   ["client_entity_assignment", "rule_id", "entity_assignment_rule", "rule_id", "n"],
-  ["commercial_term_component", "term_scope_id", "commercial_term_scope", "term_scope_id", "n"],
+  ["commercial_term_component", "term_price_id", "commercial_term_price", "term_price_id", "n"],
+  ["commercial_term_component_band", "term_component_id", "commercial_term_component", "term_component_id", "n"],
   ["commercial_term_plan", "client_id", "client", "client_id", "1"],
   ["commercial_term_plan", "local_partner_id", "local_partner", "local_partner_id", "n"],
-  ["commercial_term_scope", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
-  ["commercial_term_scope", "term_version_id", "commercial_term_version", "term_version_id", "n"],
+  ["commercial_term_price", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
+  ["commercial_term_price", "payment_method_profile_code", "payment_method_profile", "payment_method_profile_code", "n"],
+  ["commercial_term_price", "term_version_id", "commercial_term_version", "term_version_id", "n"],
   ["commercial_term_version", "agreement_id", "agreement", "agreement_id", "n"],
   ["commercial_term_version", "term_plan_id", "commercial_term_plan", "term_plan_id", "n"],
   ["consumer_legal_document", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
@@ -511,6 +545,7 @@ const LOCAL_RELATIONS = [
   ["party_profile_identifier", "profile_id", "party_profile", "profile_id", "n"],
   ["party_relation", "organization_party_id", "party", "party_id", "n"],
   ["party_relation", "related_party_id", "party", "party_id", "n"],
+  ["payment_method_profile_cond", "payment_method_profile_id", "payment_method_profile", "payment_method_profile_id", "n"],
   ["seller_disclosure", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
 ];
 
@@ -572,10 +607,13 @@ const DIAGRAM_GROUPS = [
     defKey: "pricing_share",
     defName: "Client Pricing and Partner Share",
     tables: [
+      "payment_method_profile",
+      "payment_method_profile_cond",
       "commercial_term_plan",
       "commercial_term_version",
-      "commercial_term_scope",
+      "commercial_term_price",
       "commercial_term_component",
+      "commercial_term_component_band",
     ],
   },
   {
@@ -897,7 +935,7 @@ function isNullable(tableKey, fieldKey, primaryKey) {
 function normalizeTemplate(template) {
   const model = clone(template);
   model.name = "Code-MoR Client & Contract Database V1";
-  model.describe = "Deterministic PDManer physical model derived from the approved Client & Contract V1 catalog";
+  model.describe = "Client & Contract";
   model.dbConn = [];
   model.dbConns = [];
   model.profile.default.dbConn = "";

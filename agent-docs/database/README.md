@@ -1,6 +1,6 @@
 # 六大核心系统数据库设计总览
 
-最后更新：2026-09-05
+最后更新：2026-09-10
 
 状态：Confirmed business-data authority and routing。本文只拥有六系统的数据事实、状态机和跨系统数据边界；文档权威见 [`DOCUMENT_GOVERNANCE.md`](../DOCUMENT_GOVERNANCE.md)，模型统计、代码、验证和部署状态只见 [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md)。
 
@@ -10,11 +10,13 @@
 
 这些文档是已确认的 V1 业务与逻辑模型基线，不是可执行 DDL。物理模型必须从 [PDManer 项目模板](../templates/pdmaner/template.pdma.json) 派生并遵守 [DATABASE_DESIGN_GUIDE.md](../DATABASE_DESIGN_GUIDE.md)；各系统模型、物理决策和专项设计从下表进入，易变统计与门禁结果不在本页复制。
 
+> **2026-09-10 CCT 定价模型迁移边界：** CCT 当前数据库目标已由 `commercial_term_scope` 改为全局可复用的 Payment Method Profile、准确 OE Price、可组合 Component 与 Band，详见[确认决策](../decisions/2026-09-10-cct-payment-method-profile-pricing.md)。下文仍出现的 CCT-I13/I14 V5 Scope、Scope ID 与 V5 Hash 是尚未完成下游迁移的 legacy Wire，不是新数据库结构；在新版本接口、晚到 Payment 事实归属、历史 Reader 和 Commerce/Finance/Payment 迁移分别获批前，不得把 Scope ID 机械改名为 Price ID。
+
 ## 2. 按系统读取
 
 | 核心系统 | 数据库职责 | 业务事实与当前专项决策 | 模型与物理入口 |
 |---|---|---|---|
-| Client & Contract | Party、Client、Local Partner、Operating Entity、关系、合同、费率和实时交易资格 | [逻辑模型](./CLIENT_CONTRACT_DATABASE.md) · [现实场景](./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md) · [实时交易资格与 Retention 延期](../plans/2026-08-23-cct-realtime-eligibility-retention-deferral-design.md) | [物理决策](../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) · [PDManer](../../client-contract-service/docs/database/client-contract.pdma.json) |
+| Client & Contract | Party、Client、Local Partner、Operating Entity、关系、合同、Payment Method Profile、价格和实时交易资格 | [逻辑模型](./CLIENT_CONTRACT_DATABASE.md) · [组合定价决策](../decisions/2026-09-10-cct-payment-method-profile-pricing.md) · [现实场景](./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md) · [实时交易资格与 Retention 延期](../plans/2026-08-23-cct-realtime-eligibility-retention-deferral-design.md) | [物理决策](../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) · [PDManer](../../client-contract-service/docs/database/client-contract.pdma.json) |
 | Commerce | Order、Order Context、Hosted Checkout、Consumer Context、网络证据、接受记录和退款请求 | [逻辑模型](./COMMERCE_DATABASE.md) · [现实场景](./scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md) · [文档审计与 Cancel/Void/Reversal](../plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md) · [隐私与 Fulfillment 精简](../plans/2026-08-24-commerce-privacy-fulfillment-simplification-design.md) | [物理决策](../../commerce-service/docs/database/COMMERCE_PHYSICAL_DECISIONS.md) · [PDManer](../../commerce-service/docs/database/commerce.pdma.json) |
 | Payment Orchestration | Provider、Provider Account、MID、Capability、Health、路由、Intent/Attempt、渠道退款和 Provider 交互 | [逻辑模型](./PAYMENT_ORCHESTRATION_DATABASE.md) · [现实场景](./scenarios/PAYMENT_REAL_WORLD_SCENARIOS.md) · [Payment Execution 精简](../plans/2026-08-25-payment-execution-simplification-design.md) · [Provider Account/MID 精简](../plans/2026-08-25-payment-provider-account-mid-simplification-design.md) | [物理决策](../../payment-orchestration-service/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md) · [PDManer](../../payment-orchestration-service/docs/database/payment-orchestration.pdma.json) |
 | Risk & Compliance | KYC/KYB/PDD、策略、风险决策、限额、结算限制和争议 | [逻辑模型](./RISK_COMPLIANCE_DATABASE.md) · [现实场景](./scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md) · [Limit 精简](../plans/2026-08-28-risk-limit-balanced-simplification-design.md) · [Dispute 优化](../plans/2026-08-28-risk-dispute-balanced-optimization-design.md) · [Manual Payout 四检查点](../plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) | [物理决策](../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md) · [PDManer](../../risk-compliance-service/docs/database/risk-compliance.pdma.json) |
@@ -35,7 +37,7 @@ flowchart LR
     SUP["Platform Support DB\n身份/Tenant、公共 API 控制面、凭证、文档、通知、Webhook、审计"]
     VAULT["Vault DB（技术基础设施）\n非卡敏感值、加密元数据、访问证据"]
 
-    CCT -->|"Assignment、Agreement Association、Pricing/Share/Platform Service Charge Scope、Platform Service Party 稳定 ID 与 V5 Hash"| COM
+    CCT -->|"目标：Assignment、Agreement、Profile Code 与 Price 证据；legacy V5 Scope 待迁移"| COM
     COM -->|"Order / Refund 业务事实"| PAY
     PAY -->|"Attempt 风控请求、Provider 争议通知"| RISK
     COM -->|"税计算请求"| FIN
@@ -75,7 +77,7 @@ flowchart LR
 
 - 结构化业务表始终保存当前权威事实；Vault Token、文件引用和 JSON 都不能替代尚未定义的业务字段或 Schema。跨系统不可变事实可按精确稳定 ID 经内部 HTTP 查询，并按来源契约冻结足以校验一致性的显式业务 Tuple 或来源 Hash/Version；没有真实消费者的聚合 Hash 不得机械添加，且始终禁止用 ID 重新解析来源系统当前 `ACTIVE`。
 - 独立子表、Current Pointer、Active Slot、乐观锁、业务 Version、Content Hash 和专项 History 必须分别证明其基数、并发、快照或领域证据价值，禁止机械套用。
-- 普通字段和状态变化优先使用经批准的统一行级变更历史；独立 Agreement、Acceptance、Decision、Ledger、来源事实等领域证据继续使用专项不可变表，两类职责不能混淆。CCT 一份 Agreement 本身就是一份独立法律事实，没有 Agreement Version 表；交易上下文使用 Agreement/Association 稳定 ID，商业计算规则另用 Pricing/Share/Platform Service Charge Version/Scope。
+- 普通字段和状态变化优先使用经批准的统一行级变更历史；独立 Agreement、Acceptance、Decision、Ledger、来源事实等领域证据继续使用专项不可变表，两类职责不能混淆。CCT 一份 Agreement 本身就是一份独立法律事实，没有 Agreement Version 表；交易上下文使用 Agreement/Association 稳定 ID，Payment Method Profile 通过不可复用 `payment_method_profile_code` 关联，价格与计算证据使用 Term Version/Price/Component/Band 稳定坐标。
 - 复杂关系图必须用实际 Showcase 讲通写入、当前查询、版本切换和历史追溯；不能只交付一张 ER 图。
 - Client & Contract 的表、字段、Current/Version/BCR、As-Of、CCT-I13 或跨系统交易上下文任务还必须读取 [CCT 现实场景](./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md)；Commerce 的 Order/Order Context、Consumer Contract/Acceptance、Consumer/Network Evidence、退款或 BCR 任务还必须读取 [Commerce 现实场景](./scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md)；Risk & Compliance 的尽调、规则 AST、Action、Shadow 发布、Velocity、限额、结算限制、争议 RFI 或状态机任务还必须读取 [Risk 现实场景](./scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md)、[Limit 7 表平衡精简设计](../plans/2026-08-28-risk-limit-balanced-simplification-design.md)、[Limit 平衡精简实施计划](../plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md)、[Decision Engine 19/8 平衡精简计划](../plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md)；[Dispute 平衡优化设计](../plans/2026-08-28-risk-dispute-balanced-optimization-design.md)；[Dispute 平衡优化实施计划](../plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md)、[DD 19 表精简计划](../plans/2026-08-27-risk-dd-simplification-implementation-plan.md)和[物理建模决策](../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)；Finance 的税务、交易经济、Journal、合同成熟、Account、预存保证金、追偿应收、银行现金容量、Provider 清算与对账、Client/Local Partner Manual Payout 或关账任务还必须读取 [Finance 现实场景](./scenarios/FINANCE_REAL_WORLD_SCENARIOS.md)、[交易经济与会计规则精简计划](../plans/2026-08-26-finance-transaction-economics-accounting-rule-simplification-implementation-plan.md)、[Account Balance 合同成熟精简实施计划](../plans/2026-08-27-finance-account-balance-contract-maturity-simplification-implementation-plan.md)、[退款 Funding 移除实施记录](../plans/2026-08-27-finance-refund-funding-removal-implementation-plan.md)、[通用 Funding 模块删除设计](../plans/2026-08-27-finance-funding-module-removal-design.md)、[通用 Funding 模块删除实施记录](../plans/2026-08-27-finance-funding-module-removal-implementation-plan.md)、[保证金 Account 精简实施记录](../plans/2026-08-27-finance-security-deposit-account-simplification-implementation-plan.md)；[Provider 对账精简实施计划](../plans/2026-08-28-finance-provider-reconciliation-simplification-implementation-plan.md)；[Provider 三阶段账户实施计划](../plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md)；[手工出款精简设计](../plans/2026-08-28-finance-manual-payout-simplification-design.md)；[手工出款精简实施计划](../plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)、[平衡型物理模型设计（历史）](../plans/2026-08-25-finance-balanced-physical-model-design.md)、[PDManer 实施计划（历史）](../plans/2026-08-25-finance-pdmaner-implementation-plan.md)和[物理建模决策](../../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md)。消费者文档状态/版本/文件/更正任务还必须读取 Platform Support 专项文档；Commerce 不保存 Document Projection。新结构必须映射到至少一个真实写入、查询、变更和历史/失败流程。
 - 表总数不是质量指标。设计目标是在不损失业务边界、并发约束和审计能力的前提下删除重复结构与无真实用例的复杂度。
@@ -145,7 +147,7 @@ Client & Contract 的批准模型已删除白名单内普通业务 Root 上机�
 - 修改 Root 时，以 `current_version = expected_change_version` 条件 CAS 到固定 `next_version = expected_change_version + 1`；白名单内发生需留档变化的 Child 追加最终快照并把 `current_version` 更新到该 Root 版本，但不执行独立 Child CAS。
 - 一个命令涉及多个 Root 时，按 `(aggregate_root_type, aggregate_root_id)` 确定顺序锁定。每个 Root 独立校验 CAS、独立计算自己的 `next_version`、独立写 History 和对应 Event；多个 Root 之间只共享同一命令 `trigger_id`，并映射到 Event `_meta.triggerId` 关联，禁止共享或借用另一个 Root 的业务版本。
 - 任一 Root CAS、业务校验、结构化更新、应写 History 或 Event 登记失败，整个本地事务回滚。
-- CCT 的 BCR 版本只服务内部 CAS 与通用行级审计，不升级为 Agreement/Legal 交易接口字段。CCT-I13 的完整 V5 Bundle 覆盖 Assignment 四层、Agreement/Association、Legal/Seller，以及 Client Pricing、条件存在的 Partner Share 和 Partner 来源必须存在的 Platform Service Charge 三类 Commercial Term 的 Plan/Version/Scope/Component；Partner 来源还返回同一 Partner Agreement 的唯一 `PLATFORM_SIGNATORY` Party。Commerce 只冻结其中的 `assignment_id`、Agreement Association ID、Term Scope ID、Platform Service Party ID、Legal/Seller 公开展示值和 V5 Hash，不保存 Finance Entity ID；Finance 再按精确 Scope ID 查询不可变 CCT 历史、映射本地 Finance Entity 并冻结完整计算参数。V5 不含 Eligibility 证明；下游不得使用内部修订号或中间 Hash 替代这些业务事实。
+- CCT 的 BCR 版本只服务内部 CAS 与通用行级审计，不升级为 Agreement/Legal 交易接口字段。**以下 CCT-I13/I14 V5 描述仅是迁移期间的 legacy Wire：** V5 Bundle 使用三类 Commercial Term 的 Plan/Version/Scope/Component，Commerce 冻结 Term Scope ID，Finance 按精确 Scope ID 查询历史。新数据库目标不再包含 Scope；未来 Wire 必须在晚到 Payment 事实明确后返回并冻结 Profile Code、Price、Component/Band 证据，具体接口和 Hash 版本另行设计。迁移完成前历史 V5 不重算、不回填，也不得把 Scope ID 当成 Price ID。
 
 ### 4.3 金额、币种与舍入
 
@@ -214,10 +216,11 @@ sequenceDiagram
     participant Payment
     participant Provider
 
+    Note over CCT,Finance: Legacy CCT-I13/I14 V5 flow shown only as migration inventory
     ClientSystem->>Commerce: CreateOrder(idempotencyKey, client_order_id, checkout data)
     Note over Commerce: Lock operation_context_time for this command and every recovery
-    Commerce->>CCT: CCT-I13 with context_as_of_time=operation_context_time
-    CCT-->>Commerce: Frozen OE, Assignment、Agreement/Scope/Platform Service Party IDs and V5 Hash
+    Commerce->>CCT: Legacy CCT-I13 with context_as_of_time=operation_context_time
+    CCT-->>Commerce: Legacy frozen OE, Assignment、Agreement/Scope/Party IDs and V5 Hash
     Commerce->>Risk: Assess checkout eligibility with immutable OrderPreparationContext
     Risk-->>Commerce: ALLOW / REVIEW / DENY / FAILED / TIMED_OUT
     Note over Commerce: Only ALLOW continues; technical failure is fail-closed
@@ -249,7 +252,7 @@ sequenceDiagram
 
 - 一个 Order 只有一个 Checkout Session 和一个 Payment Intent。
 - `client_order_id` 在 Client 命名空间内永久唯一；同一命令重试必须复用原 `idempotency_key` 和 `operation_context_time`。使用新 Key 重复已有 `client_order_id` 不创建第二个 Order，只返回冲突或已有 `order_no`。
-- `command_idempotency.operation_context_time = CCT-I13.context_as_of_time = order_context.commercial_context_time`；命令恢复不得重新取当前时间。Finance 通过 COM-I04 取得 `commercial_context_time` 后，将其映射回 CCT-I14 的 `context_as_of_time`。
+- Legacy V5 当前仍定义 `command_idempotency.operation_context_time = CCT-I13.context_as_of_time = order_context.commercial_context_time`；命令恢复不得重新取当前时间。Finance 通过 COM-I04 取得 `commercial_context_time` 后，将其映射回 CCT-I14 的 `context_as_of_time`。新定价 Wire 仍待独立设计，不从此等式推导 Price 解析时点。
 - Checkout 资格评估与每个 Payment Attempt 的交易风控是两个独立事实；两者的 `REVIEW/DENY` 都拒绝当前请求，不能在原记录上改为 ALLOW；`FAILED/TIMED_OUT` 是独立技术结果并同样 Fail-Closed，不能伪装成业务 DENY。
 - Payment 创建 Attempt 前必须通过 COM-I10 让 Commerce 实时查询同一 Consumer Contract 下 `CONSUMER_TERMS/REFUND_POLICY/PRIVACY_NOTICE` 三条不可变 Acceptance，逐条验证其 Network Evidence 属于同 Order、同 Checkout Session 且 Scene 为 `LEGAL_ACCEPTANCE`，并冻结三条显式 Acceptance ID、`acceptance_completed_at=max(accepted_at)` 与当前 Order Version；前端布尔值、缓存或仅有页面点击记录都不能绕过该服务端门禁，也不新增集合摘要、集合版本或集合 Hash。
 - 一个 Payment Intent 可以有多次显式顺序 Attempt，但最多一笔业务成功、最多一个非终态 Attempt。
@@ -334,7 +337,7 @@ Provider 报表不等于现金到账；银行入账也不自动等于已匹配�
 
 1. Client、Local Partner、Operating Entity 是 Party 的平级角色；同一 Party 可拥有多个不同角色，角色状态互不替代。
 2. Operating Entity 来源统一为 `PLATFORM/CLIENT/PARTNER`：平台自有主体、Organization Client 自身或经平台审核关联的主体、Local Partner 提供的主体；三类来源都可拥有多个 Operating Entity，且所有主体均由平台管理。CLIENT 来源只保存 `SAME_PARTY/VERIFIED_ASSOCIATION` 审核结论，当前不结构化保存多公司多层持股路径或计算间接持股比例。
-3. Client 和 Local Partner 均不能在交易请求中选择 Operating Entity 或 MID；平台根据 CCT Assignment 选择，Commerce 在 Order 上锁定唯一 Operating Entity。CCT-I13 在每次调用时实时校验当前交易资格，成功后返回不含 Eligibility 对象的完整 V5 Bundle；Commerce 用 Order 主表冻结准确 `industry_code + mcc_code` 与金额/币种，用唯一 Order Context 冻结 Assignment ID、Agreement Association ID、三类 Term Scope ID、Platform Service Party ID、Legal/Seller 展示值、Tax Snapshot ID/Calculation Hash 与 `commercial_context_hash`，不创建 Commerce 聚合 Schema/Hash，也不保存 Finance Entity ID。CCT/Finance 的完整条款与税务事实分别按精确 Scope/Tax Snapshot ID 和其来源证据长期读取，绝不重新解析当前 ACTIVE；Payment 只在该主体下为每个 Attempt 选择 MID，并与 Risk、Finance 继承同一组显式事实。
+3. Client 和 Local Partner 均不能在交易请求中选择 Operating Entity 或 MID；平台根据 CCT Assignment 选择，Commerce 在 Order 上锁定唯一 Operating Entity，Payment 只在该主体下为每个 Attempt 选择 MID。CCT 新数据库目标以 Payment Method Profile Code、准确 OE Price 和 Component/Band 保存价格；Payment 提供晚到支付事实后如何解析与冻结证据须由新 Wire 专项决定。现行 CCT-I13/I14 V5 的 Term Scope ID、Order Context 字段和 Hash 只作为 legacy 迁移输入保留，历史不重算，不能机械映射为 Price ID。
 4. 同一 Client 可通过多个 Operating Entity 交易，任何订单、支付、退款和交易税事实只属于一个交易 Operating Entity；但 Partner 来源的显式 Platform Service Charge 会在 Partner OE 与平台 Finance Entity 两本独立账簿分别形成平衡 Journal，不能把平台利润记入 Partner OE。
 5. Client Fee、Partner Share 与 Platform Service Charge 是三类独立合同条款；Partner Share 以实际 Client Fee 为基数，Platform Service Charge 使用其明确配置的计算基数，均不能作为 Client 费率的附属字段或按交易残差倒算。
 6. Payment、Commerce、Risk、Finance 的并发额度各自独立：Commerce 与 Payment 分别约束订单和渠道可退款金额，Risk 约束风险限额；Finance 不建立通用 Funding 状态，Manual Payout 以 `owner_debit_amount` 锁定 Owner Payable，并在同一 `BANK_CASH` Account 行锁内以 `active_payout_cash` 串行所有活动 Execution 的现金容量。上述状态不能合并或跨库回绑。

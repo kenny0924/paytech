@@ -94,6 +94,8 @@ trusted ingress / request-id / anti-spoof
 
 ### 4.1 调用方字段
 
+Client API 采用最小调用方输入原则：能由可信域名入口、受控 Route 或认证结果确定的路由、Channel、身份与 Tenant 上下文，不要求调用方重复填充，也不接受调用方覆盖。该原则适用于所有接入本合同的 Client API Route；具体业务参数仍由 Owner 定义，不因此统一 Operations 等其他协议面的认证合同。
+
 | 输入 | 规则 | 用途 |
 |---|---|---|
 | `Authorization` | 恰好一个 `Bearer <opaque credential>` | 唯一 Client API 身份材料 |

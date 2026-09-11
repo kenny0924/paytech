@@ -1,9 +1,11 @@
 # Client & Contract 现实场景与数据库映射
 
-最后更新：2026-09-05
-适用基线：Client & Contract 当前 37 表、423 字段、57 个唯一索引、44 个访问索引、64 条本库关系和 6 个关系图组
+最后更新：2026-09-10
+适用基线：Client & Contract 最终 PDManer 生成模型已确认 40 表、443 字段、63 个唯一索引、46 个访问索引、67 条本库关系和 6 个关系图组；Model SHA-256 为 `e36ef6f7a00b67b772895ab834703634dd29854210646920963295a8105d9129`，Structural Projection SHA-256 为 `6013f7f066c277b475a251f85c5ca7768689886b5da0335471d4aa4ec804d678`，模型测试 80/80 通过
 
-> **2026-09-05 横切迁移提示：** 本文的逐表记录继续精确描述当前生成模型及当时的消费者假设，不单独拥有
+> **2026-09-10 定价迁移提示：** 第 8 节描述当前 Payment Method Profile / Price / Component / Band 目标模型。第 9 节完整保留现行 CCT-I13/I14 V5 Scope 场景，但只作为 legacy/pending migration 兼容证据；其中的 `t_commercial_term_scope`、`term_scope_id`、下单时定价解析和 V5 Hash 不属于当前 40 表新写模型，不得改名冒充 Price 或用新模型重算历史交易。新 Wire 尚未定义。
+
+> **2026-09-05 横切迁移提示：** 除上面的定价迁移边界外，本文的既有逐表记录继续描述相应模型与消费者假设，不单独拥有
 > Vault 或 `compensation_event` 契约。其中与当前三表 Protect/Reveal、补偿三字段身份和 4 KiB 可选 Payload
 > 不一致的旧字段属于 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md) 中 VAULT-01 / COMP-01
 > 的待迁移现状；完成 [Vault 消费者对齐](../../../docs/superpowers/plans/2026-09-05-vault-consumer-model-alignment.md)
@@ -12,15 +14,15 @@
 
 ## 1. 文档用途与读取规则
 
-本文用一个连续的现实业务故事解释 Client & Contract（CCT）的表、字段、关系、写入流程、当前查询、版本切换、历史审计和跨系统冻结。后续 Agent 在处理以下任务时，必须同时读取本文、[Client & Contract 数据库设计](../CLIENT_CONTRACT_DATABASE.md) 和 [PDManer 物理模型](../../../client-contract-service/docs/database/client-contract.pdma.json)：
+本文用一个连续的现实业务故事解释 Client & Contract（CCT）的表、字段、关系、写入流程、当前查询、版本切换、历史审计和跨系统冻结。后续 Agent 在处理以下任务时，必须同时读取本文、[Client & Contract 数据库设计](../CLIENT_CONTRACT_DATABASE.md)、[Payment Method Profile 与组合定价决策](../../decisions/2026-09-10-cct-payment-method-profile-pricing.md) 和 [PDManer 物理模型](../../../client-contract-service/docs/database/client-contract.pdma.json)：
 
 - Party、Client、Local Partner 或 Operating Entity 数据如何落库；
 - Application、Source、Affiliation、Assignment 的现实含义；
 - Agreement、Consumer Legal、Seller Disclosure、Pricing、Partner Share 或 Platform Service Charge；
 - Current、业务 Version、Active Slot、BCR、CAS、As-Of、删除或恢复；
-- CCT-I10/CCT-I13、Commerce Order/Order Context 或测试场景数据构造。
+- CCT-I10、legacy CCT-I13/I14、Commerce Order/Order Context 或测试场景数据构造。
 
-本文是当前模型的场景化解释，不是第二份数据库 Catalog。字段、枚举、索引和约束发生冲突时，以 [Client & Contract 数据库设计](../CLIENT_CONTRACT_DATABASE.md)、[物理建模决策](../../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) 和 PDManer 模型为准。本文不授权 Java、手工数据库 SQL、物理数据库或运行环境。
+本文是已确认目标模型的场景化解释，不是第二份数据库 Catalog。定价主题先服从 2026-09-10 决策与 [Client & Contract 数据库设计](../CLIENT_CONTRACT_DATABASE.md)；最终生成统计与物理命名以完成同步后的 [物理建模决策](../../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) 和 PDManer 工件为准。当前工件未同步时只能记为迁移缺口，不能用旧 Scope 反向覆盖本文的新模型。本文不授权 Java、手工数据库 SQL、物理数据库或运行环境。
 
 示例约定：
 
@@ -30,7 +32,7 @@
 - 示例 Hash 均为格式正确的 64 个小写十六进制字符，即 SHA-256 的 256-bit 表示；不宣称由本文展示数据真实计算得出。
 - 除不可变 `t_business_change_version` 外，示例业务表统一假定 `create_time=2026-09-01T08:00:00.000000Z`；`update_time` 是最后一次结构化变更时间。下文只在时间本身参与业务语义时重复列出。
 - Vault Token、Actor、Risk Decision 和 Platform File ID 都是虚构引用；没有敏感原值、真实 Token 或跨库外键。
-- Assignment 的国家、币种、行业和 MCC 都是准确值；只有 `t_commercial_term_scope` 可按已批准规则使用 `*`。
+- Assignment 的国家、币种、行业和 MCC 都是准确值。当前 Price 必须绑定准确非空 OE，Profile Condition 以缺少维度表达“不限制”，不保存 `*`；第 9 节出现的 Scope 通配仅是 legacy V5 事实。
 
 ## 2. 现实参与方
 
@@ -430,7 +432,7 @@ Partner Agreement 同样冻结 Local Partner 与平台服务法律主体；其�
 | `t_agreement_signatory.party_profile_id` | `730110000000000003` | `730110000000000004` |
 | `t_agreement_signatory.signatory_role` | `LOCAL_PARTNER` | `PLATFORM_SIGNATORY` |
 
-包含 `PLATFORM_SERVICE_CHARGE` 的 Partner Agreement 必须恰好一个 `PLATFORM_SIGNATORY`。这里唯一平台法律 Party 为 `730100000000000004`；零个 `PLATFORM_SIGNATORY` 或多个 `PLATFORM_SIGNATORY` 都会使 CCT-I13 和该 Scope 的 CCT-I14 Fail Closed。
+包含 `PLATFORM_SERVICE_CHARGE` 的 Partner Agreement 必须恰好一个 `PLATFORM_SIGNATORY`。这里唯一平台法律 Party 为 `730100000000000004`；零个或多个都会使商业上下文 Fail Closed。现行 legacy CCT-I13 及该 Scope 的 CCT-I14 仍按第 9 节返回并验证该 Party；新 Price Wire 的返回位置尚未定义。
 
 签署文件与最终文件：
 
@@ -495,9 +497,9 @@ Seller Disclosure 是结构化公开展示值，不是文件：
 
 As-Of 查询用 `published_time <= t` 和有效区间，不能排除后来已 EXPIRED/WITHDRAWN、但在历史时点有效的行。内容变化创建新 Legal/Disclosure ID，旧行收窄结束时间；没有 Client Override 或隐式 Locale 回退。
 
-## 8. 场景六：Client Pricing、Partner Share 与 Platform Service Charge
+## 8. 场景六：Payment Method Profile 与组合定价
 
-### 8.1 三个语义独立的 Plan
+### 8.1 三个语义独立的 Plan 与 Version
 
 `PLATFORM_SERVICE_CHARGE` 是第三类 Commercial Term，不是 Client Fee、Partner Share 或 Provider Cost 的残差：
 
@@ -510,11 +512,7 @@ As-Of 查询用 `published_time <= t` 和有效区间，不能排除后来已 EX
 | `t_commercial_term_plan.local_partner_id` | `NULL` | `730300000000000001` | `730300000000000001` |
 | `t_commercial_term_plan.status` | `ACTIVE` | `ACTIVE` | `ACTIVE` |
 
-同一个 Local Partner 可以分别拥有 Share 与 Service Charge Plan，因此唯一约束是 `local_partner_id + term_type`，而不是单列 `local_partner_id`。
-
-Plan Status 是开放生命周期目录；这里的 `ACTIVE` 是当前示例，不把它提升为本文新增的闭合枚举。
-
-### 8.2 不可变 Version 与 Scope
+同一个 Local Partner 可以分别拥有 Share 与 Service Charge Plan，因此唯一约束是 `local_partner_id + term_type`，而不是单列 `local_partner_id`。Plan Status 是开放生命周期目录；这里的 `ACTIVE` 是当前示例，不把它提升为本文新增的闭合枚举。
 
 | 字段 | Client Pricing V1 | Partner Share V1 | Platform Service Charge V1 |
 |---|---|---|---|
@@ -528,43 +526,73 @@ Plan Status 是开放生命周期目录；这里的 `ACTIVE` 是当前示例，�
 | `t_commercial_term_version.effective_to` | `NULL` | `NULL` | `NULL` |
 | `t_commercial_term_version.rounding_mode` | `HALF_UP` | `HALF_UP` | `HALF_UP` |
 
-Client Pricing Scope 使用 `operating_entity_id=NULL` 表示适用于该 Client Agreement 已覆盖的全部 OE；Partner Share 只适用于 Desert：
+### 8.2 全局 Payment Method Profile 与 Condition
 
-| 字段 | Pricing Scope | Share Scope | Service Charge Scope |
-|---|---|---|---|
-| `t_commercial_term_scope.term_scope_id` | `730820000000000001` | `730820000000000002` | `730820000000000003` |
-| `t_commercial_term_scope.term_version_id` | `730810000000000001` | `730810000000000002` | `730810000000000003` |
-| `t_commercial_term_scope.operating_entity_id` | `NULL` | `730400000000000002` | `730400000000000002` |
-| `t_commercial_term_scope.country_code` | `AE` | `AE` | `AE` |
-| `t_commercial_term_scope.currency` | `USD` | `USD` | `USD` |
-| `t_commercial_term_scope.industry_code` | `DIGITAL_SERVICES` | `DIGITAL_SERVICES` | `DIGITAL_SERVICES` |
-| `t_commercial_term_scope.mcc_code` | `'5734'` | `'5734'` | `'5734'` |
-| `t_commercial_term_scope.payment_method` | `CARD` | `*` | `CARD` |
-| `t_commercial_term_scope.priority_no` | `10` | `10` | `10` |
+本场景建立两个可跨 Client、Partner、Version 与 OE 复用的 CARD Profile。Payment Method `CARD` 是 Payment 拥有的稳定代码/应用常量；CCT 不建立 Payment Method 表。
 
-### 8.3 计算组件
+| 字段 | 通用 CARD Profile | Visa/Mastercard Credit 3DS Profile |
+|---|---|---|
+| `t_payment_method_profile.payment_method_profile_id` | `730780000000000001` | `730780000000000002` |
+| `t_payment_method_profile.payment_method_profile_code` | `CARD_ANY_V1` | `CARD_VISA_MC_CREDIT_3DS_V1` |
+| `t_payment_method_profile.profile_name` | `Any card` | `Visa or Mastercard credit with authenticated 3DS` |
+| `t_payment_method_profile.payment_method_code` | `CARD` | `CARD` |
+| `t_payment_method_profile.status` | `ACTIVE` | `ACTIVE` |
 
-| 字段 | 百分比 Client Fee | 固定 Client Fee | Partner Share | Platform Service Charge |
-|---|---|---|---|---|
-| `t_commercial_term_component.term_component_id` | `730830000000000001` | `730830000000000002` | `730830000000000003` | `730830000000000004` |
-| `t_commercial_term_component.term_scope_id` | `730820000000000001` | `730820000000000001` | `730820000000000002` | `730820000000000003` |
-| `t_commercial_term_component.component_code` | `CLIENT_FEE_PERCENT` | `CLIENT_FEE_FIXED` | `PARTNER_SHARE_PERCENT` | `PLATFORM_SERVICE_PERCENT` |
-| `t_commercial_term_component.component_type` | `PERCENTAGE` | `FIXED` | `PERCENTAGE` | `PERCENTAGE` |
-| `t_commercial_term_component.trigger_code` | `PAYMENT_SUCCEEDED` | `PAYMENT_SUCCEEDED` | `PAYMENT_SUCCEEDED` | `PAYMENT_SUCCEEDED` |
-| `t_commercial_term_component.calculation_base` | `GROSS_PAYMENT_AMOUNT` | `GROSS_PAYMENT_AMOUNT` | `ACTUAL_CLIENT_FEE` | `GROSS_PAYMENT_AMOUNT` |
-| `t_commercial_term_component.rate` | `0.0350000000` | `NULL` | `0.2000000000` | `0.0040000000` |
-| `t_commercial_term_component.fixed_amount` | `NULL` | `0.30000000` | `NULL` | `NULL` |
-| `t_commercial_term_component.currency` | `NULL` | `USD` | `NULL` | `NULL` |
-| `t_commercial_term_component.min_amount` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `t_commercial_term_component.max_amount` | `NULL` | `NULL` | `NULL` | `NULL` |
+通用 Profile 没有 Condition，表示只限制 Payment Method。具体 Profile 的条件一值一行：
 
-`PAYMENT_SUCCEEDED` 与 `GROSS_PAYMENT_AMOUNT` 是本场景使用的受控目录示例；实际写入必须通过已注册的 Commercial Term Trigger Catalog 和 Calculation Base Catalog。Partner Share 的 `ACTUAL_CLIENT_FEE` 是当前规范固定基数；Platform Service Charge 的基数必须由合同组件明确返回，不能从其他经济金额倒推。
+| `t_payment_method_profile_cond.profile_condition_id` | `t_payment_method_profile_cond.payment_method_profile_id` | `t_payment_method_profile_cond.dimension_code` | `t_payment_method_profile_cond.condition_value` |
+|---:|---:|---|---|
+| `730781000000000001` | `730780000000000002` | `CARD_NETWORK` | `VISA` |
+| `730781000000000002` | `730780000000000002` | `CARD_NETWORK` | `MASTERCARD` |
+| `730781000000000003` | `730780000000000002` | `FUNDING_TYPE` | `CREDIT` |
+| `730781000000000004` | `730780000000000002` | `AUTHENTICATION_CLASS` | `THREE_DS_AUTHENTICATED` |
 
-三类 Term 共用物理结构，但绝不合并业务语义。若一笔 USD 100.00 支付的实际 Client Fee 是 USD 3.80，则 Partner Share 按 `ACTUAL_CLIENT_FEE` 计算为 USD 0.76；Platform Service Charge 按 `GROSS_PAYMENT_AMOUNT` 的 0.40% 计算为 USD 0.40。Finance 负责最终计算、舍入和记账，CCT 只返回结构化规则。
+两条 `CARD_NETWORK` 是 OR；它们与 `FUNDING_TYPE`、`AUTHENTICATION_CLASS` 之间是 AND。缺少某维度才表示不限制，不能写 `*`、CSV、Operator 或 Range。以上 Dimension/Value 是场景化目录值，不构成 Payment→CCT Wire；允许值、规范化和事实 Owner 必须由后续版本化应用/API 合同批准。
 
-Version APPROVED 后，Version、Scope、Component 不再覆盖。费率变化创建新的 `term_version_id`、Scope ID 和 Component ID；旧 Order 永远使用其冻结的 V1。
+Profile 的外部身份始终是全局唯一且不可复用的 `payment_method_profile_code`；内部 Condition 才使用 `payment_method_profile_id`。DRAFT 可在 Profile Root BCR/CAS 下编辑；ACTIVE 后 Code、Payment Method 和全部 Condition 冻结。RETIRED 只阻止新 Version 引用，历史 Price 仍可读取；条件变化创建新 Profile/Code，不创建 Profile Version。
 
-## 9. 场景七：CCT-I13 为一笔 Order 解析完整商业上下文
+### 8.3 准确 OE Price 与匹配顺序
+
+每条 `t_commercial_term_price` 都绑定准确非空 OE，不再使用 `operating_entity_id=NULL` 或 `*`。下表只展示 Desert OE；若 Client Agreement 覆盖其他 OE，必须为那些 OE 分别建立 Price。
+
+| Price | `t_commercial_term_price.term_price_id` | `t_commercial_term_price.term_version_id` | `t_commercial_term_price.operating_entity_id` | `t_commercial_term_price.payment_method_profile_code` | `t_commercial_term_price.priority_no` |
+|---|---:|---:|---:|---|---:|
+| Client 通用 CARD | `730840000000000001` | `730810000000000001` | `730400000000000002` | `CARD_ANY_V1` | `20` |
+| Client 具体 CARD | `730840000000000002` | `730810000000000001` | `730400000000000002` | `CARD_VISA_MC_CREDIT_3DS_V1` | `10` |
+| Partner Share | `730840000000000003` | `730810000000000002` | `730400000000000002` | `CARD_VISA_MC_CREDIT_3DS_V1` | `10` |
+| Platform Service Charge | `730840000000000004` | `730810000000000003` | `730400000000000002` | `CARD_VISA_MC_CREDIT_3DS_V1` | `10` |
+
+假设 Payment 最终产生受控事实 `payment_method_code=CARD`、`CARD_NETWORK=VISA`、`FUNDING_TYPE=CREDIT`、`AUTHENTICATION_CLASS=THREE_DS_AUTHENTICATED`。Client 的两条 Price 都匹配，但具体 Profile 有 3 个不同 Dimension，优先于 0 个 Dimension 的通用 Profile；只有具体度相同才比较更小的 `priority_no`。这里展示的是确定性模型规则，不是已批准的新 Wire 字段。
+
+无匹配、所需事实缺失、事实值非法，或经过“最大不同 Dimension 数 + 最小 Priority”仍不能唯一解释时都 Fail Closed。Profile 可全局复用，但 Price、优先级、Component 永远属于准确 Version/OE；价格和 Owner 信息不得放入 Profile。
+
+### 8.4 Component 相加与 Band
+
+| Component | `t_commercial_term_component.term_component_id` | `t_commercial_term_component.term_price_id` | `t_commercial_term_component.component_no` | `t_commercial_term_component.component_type` | `t_commercial_term_component.calculation_base` | 参数 | `t_commercial_term_component.band_mode` |
+|---|---:|---:|---:|---|---|---|---|
+| 通用 Client 百分比 | `730850000000000001` | `730840000000000001` | `1` | `PERCENTAGE` | `GROSS_PAYMENT_AMOUNT` | `rate=0.0350000000` | `NULL` |
+| 通用 Client 固定额 | `730850000000000002` | `730840000000000001` | `2` | `FIXED` | `GROSS_PAYMENT_AMOUNT` | `fixed_amount=0.30000000,currency=USD` | `NULL` |
+| 具体 Client 阶梯 | `730850000000000003` | `730840000000000002` | `1` | `TIERED` | `GROSS_PAYMENT_AMOUNT` | `rate=NULL,fixed_amount=NULL` | `WHOLE_BASE` |
+| 具体 Client 固定额 | `730850000000000004` | `730840000000000002` | `2` | `FIXED` | `GROSS_PAYMENT_AMOUNT` | `fixed_amount=0.30000000,currency=USD` | `NULL` |
+| Partner Share | `730850000000000005` | `730840000000000003` | `1` | `PERCENTAGE` | `ACTUAL_CLIENT_FEE` | `rate=0.2000000000` | `NULL` |
+| Platform Service Charge | `730850000000000006` | `730840000000000004` | `1` | `PERCENTAGE` | `GROSS_PAYMENT_AMOUNT` | `rate=0.0040000000` | `NULL` |
+
+所有 Component 的 `trigger_code=PAYMENT_SUCCEEDED`，未展示的 `min_amount/max_amount` 为 `NULL`。`PAYMENT_SUCCEEDED`、`GROSS_PAYMENT_AMOUNT` 与 `ACTUAL_CLIENT_FEE` 都是受控目录示例；实际写入必须通过已批准的 Trigger 与 Calculation Base Catalog。多 Component 按 `component_no` 稳定计算并相加。
+
+具体 Client Price 的 TIERED Component 在 `t_commercial_term_component_band` 中拥有两条连续半开 Band：
+
+| `t_commercial_term_component_band.term_band_id` | `t_commercial_term_component_band.term_component_id` | `t_commercial_term_component_band.band_no` | `t_commercial_term_component_band.lower_bound` | `t_commercial_term_component_band.upper_bound` | `t_commercial_term_component_band.rate` | `t_commercial_term_component_band.fixed_amount` |
+|---:|---:|---:|---:|---:|---:|---:|
+| `730860000000000001` | `730850000000000003` | `1` | `0.00000000` | `100.00000000` | `0.0350000000` | `NULL` |
+| `730860000000000002` | `730850000000000003` | `2` | `100.00000000` | `NULL` | `0.0300000000` | `NULL` |
+
+第一档必须从 0 开始，各档连续、无重叠，最后一档上界必须为 `NULL`。`WHOLE_BASE` 对完整基数使用命中档，因此 USD 100.00 位于第二档，阶梯部分为 USD 3.00，再与固定 Component USD 0.30 相加。`PROGRESSIVE` 则逐段累计，首期只允许比例 Band；固定金额必须是独立 FIXED Component。PERCENTAGE/FIXED 不得拥有 Band，TIERED 至少一档且头部 `rate/fixed_amount` 为空。Finance 负责实际计算、舍入和记账，CCT 只拥有冻结的结构化条款。
+
+Version APPROVED 后，Price、Component 与 Band 冻结。费率或档位变化创建新的 `term_version_id` 及其新 Price/Component/Band 行，不覆盖旧 Version；若只是 Profile 条件语义变化，还必须创建新的 Profile Code。历史 legacy Order 继续按第 9 节的 V5 Scope 合同读取，不能把其 Scope ID 回填为这里的 Price ID。
+
+## 9. 场景七（legacy / pending migration）：CCT-I13 V5 为一笔 Order 解析 Scope Bundle
+
+> 本节保留迁移前的 CCT-I13/I14 V5 场景和稳定示例 ID，便于既有 Commerce/Finance 数据与历史 Reader 对账。这里出现的 `t_commercial_term_scope`、Scope Component 父引用、下单时解析费率和 V5 Canonical Hash 都不是第 8 节的新写模型；不得把 `term_scope_id` 重命名为 Price ID，也不得把本节请求/响应扩写成未经批准的新 Wire。
 
 ### 9.1 请求
 
@@ -587,7 +615,7 @@ Version APPROVED 后，Version、Scope、Component 不再覆盖。费率变化�
 1. 从 `t_client`、ACTIVE `t_party_profile`、ACTIVE `t_client_business_profile` 和 `t_client_business_classification` 验证 Client 及准确分类。
 2. 从 `t_client_entity_assignment` 唯一命中 Assignment B，再沿 FK 验证 `t_entity_assignment_rule`、`t_client_entity_affiliation`、`t_entity_source_relation` 与 Desert `t_operating_entity`。
 3. 按 As-Of 唯一解析 Client `t_agreement` 及 `t_agreement_operating_entity`；因为 Source 为 PARTNER，再解析 Partner Agreement 与 Association。
-4. 分别解析 Client Pricing、Partner Share 和 Platform Service Charge 的 `t_commercial_term_plan`、`t_commercial_term_version`、`t_commercial_term_scope` 与 `t_commercial_term_component`；后两类必须引用同一 Partner Agreement，并解析该合同唯一 `PLATFORM_SIGNATORY`。
+4. 按 legacy V5 读取路径分别解析 Client Pricing、Partner Share 和 Platform Service Charge 的 `t_commercial_term_plan`、`t_commercial_term_version`、`t_commercial_term_scope` 与 Scope-owned `t_commercial_term_component`；后两类必须引用同一 Partner Agreement，并解析该合同唯一 `PLATFORM_SIGNATORY`。
 5. 唯一解析三类 `t_consumer_legal_document` 和一条 `t_seller_disclosure`。
 6. 同步读取 Risk 当前角色资格、Payment 当前路由覆盖、Platform 当前集成就绪。任一依赖失败都 Fail Closed，不持久化 Eligibility。
 
@@ -617,7 +645,7 @@ V5 固定包含 `platformServicePartyId` 和 `platformServiceCharge` 两个属�
 - `mcc_code` 不是四位数字、传入 `*` 或与 Classification Proof 不一致：业务拒绝。
 - Risk、Payment、Platform 超时或协议错误：技术失败并 Fail Closed，不返回部分 Bundle；Commerce 不创建正式 Order、Order Context 或 Checkout Session。
 
-### 9.5 CCT-I14 以全 OE Scope 与精确 Association 成功读取
+### 9.5 Legacy CCT-I14 以全 OE Scope 与精确 Association 成功读取
 
 Payment 成功后，Finance 通过 COM-I04 从同一不可变 Order Context 取得 `order_id/order_context_id`、Client Pricing Scope `730820000000000001`、Client Agreement Association `730640000000000002` 和 `commercial_context_time=2026-10-15T12:00:00.000000Z`。Finance 先将 PaymentSucceeded 与 COM-I04 的参与方、Assignment、金额/币种、行业/MCC 逐字段交叉校验，再把 `commercial_context_time` 映射为下列 `context_as_of_time`：
 
@@ -638,7 +666,7 @@ GetImmutableCommercialTermScope(
 
 响应返回上述 Owner、Agreement、实际 OE、Association 的四个结算字段、Plan/Version 的完整业务字段、Scope 的全部字段，以及按 `component_code,term_component_id` 稳定排序的两个完整 Component。查询直接读取长期保留的结构化 Scope、Version、Plan、Agreement、Association 与 Component 行，不读取 BCR Snapshot 恢复 Header；As-Of 只校验 Version/Agreement 的业务有效期。Finance 把实际命中的 Version/Scope/Component ID 和完整计算参数写入 Transaction Economics Component，并把 Agreement-OE Association 与四个结算到期输入写入 Transaction Economics Header；不会在 Header 重复保存 Plan/Version/Scope 或 V5 Hash。
 
-### 9.6 CCT-I14 永久 Fail Closed 边界
+### 9.6 Legacy CCT-I14 永久 Fail Closed 边界
 
 - 若把 Client Pricing Scope `730820000000000001` 与 Partner Agreement Association `730640000000000003` 组合，Association 的 Agreement 与 Version 的 Agreement 不同，永久 Fail Closed；不得改用当前 Client Agreement Association。
 - 若 Plan Owner 与 Agreement Owner/Type 不一致，例如 `CLIENT_PRICING` Plan 被损坏为指向 Partner Agreement，永久 Fail Closed；BCR Snapshot 不能用来拼接或修复 Header。
@@ -669,15 +697,15 @@ GetImmutableCommercialTermScope(
 
 ### 10.1 费率换版
 
-2026-11-01，Nova 的 Client Fee 从 3.5% + USD 0.30 调整为 3.8% + USD 0.30：
+2026-11-01，Operations 为 Nova 准备新的 Client Pricing Version，将通用 CARD Fee 从 3.5% + USD 0.30 调整为 3.8% + USD 0.30：
 
 1. 以 Pricing Plan Root 的 `expected_change_version=1` 执行 CAS。
 2. 旧 `term_version_id=730810000000000001` 进入 `SUPERSEDED`，`active_slot=NULL`，`effective_to=2026-11-01T00:00:00.000000Z`。
-3. 新建 `t_commercial_term_version.term_version_id=730810000000000003`、`version_no=2`、`status=ACTIVE`、`active_slot=1`。
-4. 新建 Scope `730820000000000003` 和 Component，不覆盖旧行。
+3. 新建 `t_commercial_term_version.term_version_id=730810000000000004`、`version_no=2`、`status=ACTIVE`、`active_slot=1`。
+4. 为 V2 与每个 Agreement 覆盖的准确 OE 新建 Price，再新建按 `component_no` 排序的 Component 和所需 Band；不复制 NULL OE Scope，也不覆盖 V1 的 Price/Component/Band。
 5. 同事务写 BCR 最终快照和 `t_compensation_event`；提交后才唤醒 Dispatcher。
 
-2026-10-15 的旧 Order 继续使用 V1，2026-11-01 之后的新 Order 使用 V2。
+2026-10-15 的既有 Order 继续按第 9 节的 legacy V1 Scope Reader 读取，不回填 Price。V2 可作为新模型配置激活，但何时由交易解析和冻结仍取决于尚未批准的新 Wire；本文不以数据库换版步骤虚构调用方已经迁移。
 
 ### 10.2 Root 与受审计 Child 的 BCR 对应
 
@@ -685,7 +713,7 @@ GetImmutableCommercialTermScope(
 |---:|---|---|---:|---:|
 | `730900000000000001` | `record_type=COMMERCIAL_TERM_PLAN`、`record_id=730800000000000001` | `aggregate_root_type=COMMERCIAL_TERM_PLAN`、`aggregate_root_id=730800000000000001` | `NULL` | `2` |
 | `730900000000000002` | `record_type=COMMERCIAL_TERM_VERSION`、`record_id=730810000000000001` | 同一 Plan Root | `730900000000000001` | `2` |
-| `730900000000000003` | `record_type=COMMERCIAL_TERM_VERSION`、`record_id=730810000000000003` | 同一 Plan Root | `730900000000000001` | `2` |
+| `730900000000000003` | `record_type=COMMERCIAL_TERM_VERSION`、`record_id=730810000000000004` | 同一 Plan Root | `730900000000000001` | `2` |
 
 对应的不可变快照：
 
@@ -715,13 +743,15 @@ GetImmutableCommercialTermScope(
 }
 ```
 
-Root 的 `current_version` 才是 CAS Token。`COMMERCIAL_TERM_VERSION` Child 只是把指针推进到 Root Version 2，不接收独立 Expected Version。Scope 与 Component 已由冻结结构化 Version 保存，不重复写 BCR。
+Root 的 `current_version` 才是 CAS Token。`COMMERCIAL_TERM_VERSION` Child 只是把指针推进到 Root Version 2，不接收独立 Expected Version。Price、Component 与 Band 已由冻结结构化 Version 保存，不重复写 BCR。
+
+Payment Method Profile 是另一个独立 BCR Root。例如 `payment_method_profile_id=730780000000000002` 的 Record Tuple 与 Aggregate Tuple 都是 `PAYMENT_METHOD_PROFILE + 730780000000000002`，Parent 为空；DRAFT 修改或激活只推进这个 Root 的 CAS，不参与任何 Plan Root 的 CAS。`t_payment_method_profile_cond` 不单独建 Record/Snapshot，ACTIVE 后依靠 Profile 冻结规则和结构化行保留历史。
 
 ### 10.3 选择性审计边界
 
-BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY`、`CLIENT_BUSINESS_PROFILE -> CLIENT`、`COMMERCIAL_TERM_VERSION -> COMMERCIAL_TERM_PLAN` 是三个固定 Child 映射。
+BCR 白名单是 20 类 Record Type、17 类 Root Type。`PARTY_PROFILE -> PARTY`、`CLIENT_BUSINESS_PROFILE -> CLIENT`、`COMMERCIAL_TERM_VERSION -> COMMERCIAL_TERM_PLAN` 是三个固定 Child 映射；`PAYMENT_METHOD_PROFILE` 是自身 Root。
 
-以下业务表不重复写 BCR：个人/机构明细、法律标识及其 Profile 关联、地址、联系方式、经营分类、申请材料、Agreement 的 Signatory/Document/Acceptance/OE Association、Commercial Term Scope/Component。四张技术表也不自审计。它们仍由结构化约束、冻结业务版本或追加式证据保留历史。
+以下业务表不重复写 BCR：个人/机构明细、法律标识及其 Profile 关联、地址、联系方式、经营分类、申请材料、Agreement 的 Signatory/Document/Acceptance/OE Association、Payment Method Profile Condition、Commercial Term Price/Component/Band。四张技术表也不自审计。它们仍由结构化约束、所属 Profile/Version 冻结或追加式证据保留历史。
 
 删除白名单对象时，先写 `DELETE` Snapshot 再删除 Current 行，Record 永久保留；删除白名单外 Child 不补造快照。恢复不是修改旧 History，而是新命令、新 Root Version 和新 Snapshot。Acceptance、已冻结合同证据和其他不可变领域事实不得物理删除。
 
@@ -736,7 +766,7 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
 | `t_command_idempotency.operation_type` | `ACTIVATE_CLIENT_PRICING_VERSION` |
 | `t_command_idempotency.idempotency_key` | `nova-pricing-v2-20261101` |
 | `t_command_idempotency.request_hash` | `1212121212121212121212121212121212121212121212121212121212121212` |
-| `t_command_idempotency.response_ref` | `TERM_VERSION:730810000000000003` |
+| `t_command_idempotency.response_ref` | `TERM_VERSION:730810000000000004` |
 | `t_command_idempotency.status` | `COMPLETED`（示例开放目录值） |
 | `t_command_idempotency.expire_time` | `2027-01-30T00:00:00.000000Z` |
 
@@ -767,7 +797,7 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
 
 事务提交后 afterCommit 只唤醒 Dispatcher；Claim/Lease/`lock_version` 负责多实例互斥，XXL-Job 兜底扫描。重试复用同一个 Event Key、Payload 和 Hash。成功记录可以删除，所以 Compensation Event 不是永久业务历史；FAILED 保留告警并走受控人工恢复。
 
-## 11. 37 表场景覆盖矩阵
+## 11. 40 表场景覆盖矩阵
 
 | 分组 | 表 | 场景中的职责 | 历史方式 |
 |---|---|---|---|
@@ -800,10 +830,13 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
 | Agreement | `t_agreement_operating_entity` | 合同覆盖 OE 的稳定关联 | 冻结结构化关联 |
 | Legal | `t_consumer_legal_document` | 三类消费者法律文档 | 独立 As-Of 事实 + BCR Root |
 | Legal | `t_seller_disclosure` | 卖方公开展示值 | 独立 As-Of 事实 + BCR Root |
-| Terms | `t_commercial_term_plan` | Pricing/Share 稳定 Plan | Current + BCR Root |
-| Terms | `t_commercial_term_version` | 不可变费率/分润版本头 | 业务 Version + BCR Child |
-| Terms | `t_commercial_term_scope` | 适用范围和优先级 | 随 Version 冻结 |
-| Terms | `t_commercial_term_component` | 百分比/固定计算输入 | 随 Version 冻结 |
+| Terms | `t_payment_method_profile` | 全局复用的支付特征集合 | Current + 独立 BCR Root；ACTIVE 后冻结 |
+| Terms | `t_payment_method_profile_cond` | 一值一行的离散等值条件 | 随 Profile 冻结，不重复 BCR |
+| Terms | `t_commercial_term_plan` | Pricing/Share/Service Charge 稳定 Plan | Current + BCR Root |
+| Terms | `t_commercial_term_version` | 不可变商业条款版本头 | 业务 Version + BCR Child |
+| Terms | `t_commercial_term_price` | Version、准确 OE 与 Profile Code 的价格绑定 | 随 Version 冻结，不重复 BCR |
+| Terms | `t_commercial_term_component` | 百分比、固定额或阶梯组件 | 随 Version 冻结，不重复 BCR |
+| Terms | `t_commercial_term_component_band` | TIERED 的连续半开档位 | 随 Version 冻结，不重复 BCR |
 | Audit | `t_business_change_record` | 白名单审计身份和 Root CAS | Current 指针，不自审计 |
 | Audit | `t_business_change_version` | 不可变最终行快照 | 只追加，不自审计 |
 | Reliability | `t_compensation_event` | 提交后 MQ/本地任务恢复 | 成功可删，不是历史库 |
@@ -814,11 +847,12 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
 - Party、Client、Local Partner、Operating Entity 不是同一个层级的父子实体；后面三者是 Party 的平级角色。
 - Local Partner 提供 OE，不代表 Partner 自己是法律卖方；交易法律卖方是 Operating Entity。
 - Affiliation 表示 Client 获准使用 OE；Rule 表示候选与优先级；Assignment 表示系统已经解析并生效的结果；Source Relation 表示 OE 来自谁。
-- Agreement-OE Association 表示合同覆盖关系，不表示交易 Scope。交易 Scope 在 Assignment 与 Commercial Term 中分别承担不同职责。
-- Profile Version、Commercial Term Version、Agreement/Legal 稳定 ID 是业务历史；BCR 是选择性审计与 CCT Root CAS，不能互相替代。
+- Agreement-OE Association 表示合同覆盖关系，不表示价格匹配；Assignment 冻结交易 OE，Commercial Term Price 必须逐条引用准确 OE。
+- Party/Business Profile Version、Commercial Term Version、Agreement/Legal 稳定 ID 是业务历史；Payment Method Profile 没有 Version，条件变化创建新 Code。BCR 是选择性审计与 CCT Root CAS，不能替代结构化历史。
+- Payment Method Profile 描述可复用支付特征，不拥有价格、Client、OE、Agreement、有效期或优先级；Price 才拥有这些合同上下文和 Component。
 - `t_business_change_version.snapshot_json` 不参与在线查询、唯一约束或跨系统交易计算，也不能保存 Vault Token、敏感原值或技术锁字段。
 - `t_compensation_event` 解决提交后的可靠执行，`t_command_idempotency` 解决命令重放；二者都不是业务历史或通用 Inbox。
-- CCT-I13 每次实时判断资格，成功后由 Commerce 冻结 V5 Bundle；CCT 不持久化 Eligibility。
+- 现行 CCT-I13 V5 每次实时判断资格，成功后由 Commerce 冻结 legacy Scope Bundle；CCT 不持久化 Eligibility。其新 Price 时序与 Wire 仍待 Owner 设计。
 
 ## 13. 后续 Agent 使用清单
 
@@ -829,11 +863,12 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
 3. 稳定 ID 是否会被 Commerce、Payment、Risk 或 Finance 冻结；
 4. 当前查询与历史 As-Of 查询是否被错误混用；
 5. 新字段能否说明写入者、读取者、删除影响和失败语义；
-6. 示例表名、字段和闭合枚举是否通过场景契约测试。
+6. 示例表名、字段和闭合枚举是否通过场景契约测试；
+7. 当前内容属于 40 表新写模型，还是第 9 节明确隔离的 legacy V5 Reader；两者不得混接。
 
 ## 14. 机器校验 Manifest
 
-下面的 Manifest 只用于验证本文引用未偏离当前 PDManer 模型，不是运行时配置或第二份业务模型。
+下面的 Manifest 用于验证本文第 3—8、10—13 节引用未偏离已写回的 40 表模型，不是运行时配置或第二份业务模型。第 9 节 legacy Scope 引用故意不进入当前表清单；统计已与最终 PDManer 工件复核，两个 Digest 的单一物理台账仍是 `CLIENT_CONTRACT_PHYSICAL_DECISIONS.md`。
 
 <!-- CCT_SCENARIO_MANIFEST_START -->
 ```json
@@ -841,11 +876,11 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
   "schema": "CODE-MOR:CCT:REAL_WORLD_SCENARIOS:1",
   "storyId": "NOVA_GULF_UAE_2026",
   "modelTotals": {
-    "tables": 37,
-    "fields": 423,
-    "uniqueIndexes": 57,
-    "accessIndexes": 44,
-    "relations": 64,
+    "tables": 40,
+    "fields": 443,
+    "uniqueIndexes": 63,
+    "accessIndexes": 46,
+    "relations": 67,
     "diagramGroups": 6
   },
   "scenarios": [
@@ -885,10 +920,10 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
       "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
     },
     {
-      "id": "commercial-terms",
-      "sectionHeading": "## 8. 场景六：Client Pricing、Partner Share 与 Platform Service Charge",
-      "tables": ["t_commercial_term_plan", "t_commercial_term_version", "t_commercial_term_scope", "t_commercial_term_component"],
-      "fieldRefs": ["t_commercial_term_plan.term_plan_id", "t_commercial_term_plan.term_type", "t_commercial_term_version.term_version_id", "t_commercial_term_version.active_slot", "t_commercial_term_scope.term_scope_id", "t_commercial_term_scope.priority_no", "t_commercial_term_component.term_component_id", "t_commercial_term_component.calculation_base"],
+      "id": "payment-method-profile-and-commercial-terms",
+      "sectionHeading": "## 8. 场景六：Payment Method Profile 与组合定价",
+      "tables": ["t_payment_method_profile", "t_payment_method_profile_cond", "t_commercial_term_plan", "t_commercial_term_version", "t_commercial_term_price", "t_commercial_term_component", "t_commercial_term_component_band"],
+      "fieldRefs": ["t_payment_method_profile.payment_method_profile_id", "t_payment_method_profile.payment_method_profile_code", "t_payment_method_profile.payment_method_code", "t_payment_method_profile_cond.profile_condition_id", "t_payment_method_profile_cond.dimension_code", "t_payment_method_profile_cond.condition_value", "t_commercial_term_plan.term_plan_id", "t_commercial_term_plan.term_type", "t_commercial_term_version.term_version_id", "t_commercial_term_version.active_slot", "t_commercial_term_price.term_price_id", "t_commercial_term_price.operating_entity_id", "t_commercial_term_price.payment_method_profile_code", "t_commercial_term_price.priority_no", "t_commercial_term_component.term_component_id", "t_commercial_term_component.term_price_id", "t_commercial_term_component.component_no", "t_commercial_term_component.component_type", "t_commercial_term_component.band_mode", "t_commercial_term_component_band.term_band_id", "t_commercial_term_component_band.lower_bound", "t_commercial_term_component_band.upper_bound"],
       "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
     },
     {
@@ -970,12 +1005,14 @@ BCR 白名单是 18 类 Record Type、15 类 Root Type。`PARTY_PROFILE -> PARTY
     "entity_source_relation.status": ["ACTIVE", "ENDED"],
     "agreement.agreement_type": ["CLIENT", "PARTNER"],
     "consumer_legal_document.document_type": ["CONSUMER_TERMS", "REFUND_POLICY", "PRIVACY_NOTICE"],
+    "payment_method_profile.status": ["DRAFT", "ACTIVE", "RETIRED"],
     "commercial_term_plan.term_type": ["CLIENT_PRICING", "PARTNER_SHARE", "PLATFORM_SERVICE_CHARGE"],
     "commercial_term_version.status": ["DRAFT", "APPROVED", "SCHEDULED", "ACTIVE", "SUPERSEDED", "EXPIRED"],
     "commercial_term_version.rounding_mode": ["HALF_UP"],
-    "commercial_term_component.component_type": ["PERCENTAGE", "FIXED"],
-    "business_change_record.record_type": ["PARTY", "CLIENT", "LOCAL_PARTNER", "OPERATING_ENTITY", "PARTY_PROFILE", "CLIENT_BUSINESS_PROFILE", "COMMERCIAL_TERM_VERSION", "CLIENT_APPLICATION", "PARTNER_APPLICATION", "OPERATING_ENTITY_APPLICATION", "PARTY_RELATION", "CLIENT_ENTITY_AFFILIATION", "ENTITY_ASSIGNMENT_RULE", "CLIENT_ENTITY_ASSIGNMENT", "ENTITY_SOURCE_RELATION", "AGREEMENT", "CONSUMER_LEGAL_DOCUMENT", "SELLER_DISCLOSURE", "COMMERCIAL_TERM_PLAN"],
-    "business_change_record.aggregate_root_type": ["PARTY", "CLIENT", "LOCAL_PARTNER", "OPERATING_ENTITY", "CLIENT_APPLICATION", "PARTNER_APPLICATION", "OPERATING_ENTITY_APPLICATION", "PARTY_RELATION", "CLIENT_ENTITY_AFFILIATION", "ENTITY_ASSIGNMENT_RULE", "CLIENT_ENTITY_ASSIGNMENT", "ENTITY_SOURCE_RELATION", "AGREEMENT", "CONSUMER_LEGAL_DOCUMENT", "SELLER_DISCLOSURE", "COMMERCIAL_TERM_PLAN"],
+    "commercial_term_component.component_type": ["PERCENTAGE", "FIXED", "TIERED"],
+    "commercial_term_component.band_mode": ["WHOLE_BASE", "PROGRESSIVE"],
+    "business_change_record.record_type": ["PARTY", "CLIENT", "LOCAL_PARTNER", "OPERATING_ENTITY", "PARTY_PROFILE", "CLIENT_BUSINESS_PROFILE", "COMMERCIAL_TERM_VERSION", "CLIENT_APPLICATION", "PARTNER_APPLICATION", "OPERATING_ENTITY_APPLICATION", "PARTY_RELATION", "CLIENT_ENTITY_AFFILIATION", "ENTITY_ASSIGNMENT_RULE", "CLIENT_ENTITY_ASSIGNMENT", "ENTITY_SOURCE_RELATION", "AGREEMENT", "CONSUMER_LEGAL_DOCUMENT", "SELLER_DISCLOSURE", "COMMERCIAL_TERM_PLAN", "PAYMENT_METHOD_PROFILE"],
+    "business_change_record.aggregate_root_type": ["PARTY", "CLIENT", "LOCAL_PARTNER", "OPERATING_ENTITY", "CLIENT_APPLICATION", "PARTNER_APPLICATION", "OPERATING_ENTITY_APPLICATION", "PARTY_RELATION", "CLIENT_ENTITY_AFFILIATION", "ENTITY_ASSIGNMENT_RULE", "CLIENT_ENTITY_ASSIGNMENT", "ENTITY_SOURCE_RELATION", "AGREEMENT", "CONSUMER_LEGAL_DOCUMENT", "SELLER_DISCLOSURE", "COMMERCIAL_TERM_PLAN", "PAYMENT_METHOD_PROFILE"],
     "business_change_version.operation_type": ["CREATE", "UPDATE", "DELETE"],
     "compensation_event.execution_type": ["MQ_PUBLISH", "LOCAL_HANDLER"],
     "compensation_event.execute_status": ["INIT", "PROCESSING", "ERROR", "FAILED"],

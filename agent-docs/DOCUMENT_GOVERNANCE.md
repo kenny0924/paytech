@@ -1,6 +1,6 @@
 # Code-MoR 文档治理
 
-最后更新：2026-09-09
+最后更新：2026-09-11
 
 状态：Confirmed。本文定义文档权威、状态和维护方式，不定义业务事实。
 
@@ -26,7 +26,7 @@ Code-MoR 不再用“所有文档排成一条绝对优先级”的方式解决�
 |---|---|---|
 | 文档权威、状态与归档 | 本文 | 入口只链接本文 |
 | 当前实现、验证、部署和待迁移项 | [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) | README 提供证据，不复制全局状态矩阵 |
-| Agent/Superpowers 工作流 | 根 [`AGENTS.md`](../AGENTS.md) 的 `Change discipline` 是唯一现行权威；[`2026-09-05-superpowers-and-service-interface-policy.md`](./decisions/2026-09-05-superpowers-and-service-interface-policy.md) 记录确认理由与取代范围 | `DEVELOPMENT_CONVENTIONS.md` 和 Cursor rule 只做开发侧薄投影 |
+| Agent/Superpowers 工作流及提交、推送、部署等动作授权 | 根 [`AGENTS.md`](../AGENTS.md) 的 `Change discipline` 是唯一现行权威；[`2026-09-05-superpowers-and-service-interface-policy.md`](./decisions/2026-09-05-superpowers-and-service-interface-policy.md) 记录 Superpowers 的确认理由与取代范围 | `DEVELOPMENT_CONVENTIONS.md` 和 Cursor rule 只做开发侧薄投影 |
 | 项目背景、六系统职责和术语 | [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) | 专项文档只补充本领域事实 |
 | 编码、命名、异常、事务和通用依赖习惯 | [`DEVELOPMENT_CONVENTIONS.md`](./DEVELOPMENT_CONVENTIONS.md) | Cursor rule 仅薄投影 |
 | Java 模块、分层、包、HTTP API 和跨模块边界 | [`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) | 系统模块设计只记录本系统映射 |
@@ -37,6 +37,7 @@ Code-MoR 不再用“所有文档排成一条绝对优先级”的方式解决�
 | Commerce Create Checkout 命令恢复检查点 | [恢复简化决策](./decisions/2026-09-09-commerce-checkout-recovery-simplification.md)与 [`COMMERCE_DATABASE.md`](./database/COMMERCE_DATABASE.md) | 只取代 Create Checkout 的旧五阶段表达；公共 Wire、Cancel/Create Refund 阶段与实现状态仍由各自 Owner 管理 |
 | 技术产品、版本和允许/禁止能力 | [`TECHNOLOGY_STACK.md`](./TECHNOLOGY_STACK.md) | README 记录实际启用值 |
 | 入口应用、Gateway、BFF、前端和部署边界 | [`APPLICATION_ARCHITECTURE.md`](./APPLICATION_ARCHITECTURE.md) | 组件 README 记录运行方式 |
+| Client API 最小调用方输入、可信 Channel/身份、Request ID 接纳与最小下游 Header | [Client API Gateway 完整设计](../docs/superpowers/specs/2026-09-05-client-api-gateway-design.md)拥有入口合同；[合同决策](./decisions/2026-09-05-client-api-gateway-contract.md)记录确认理由与范围 | 仅适用于 `CLIENT_API`，不统一其他 Channel 的认证算法或外部 Request ID 行为；具体业务字段仍由业务 Owner 定义，第一方错误响应继续遵守全系统 Problem Profile |
 | 本机开发拓扑、端口和依赖准备 | [`LOCAL_DEVELOPMENT_ENVIRONMENT.md`](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) | `local-environment/README.md` 是操作手册 |
 | Java 测试策略、auto/manual 和覆盖率 | [`UNIT_TEST_GUIDE.md`](./UNIT_TEST_GUIDE.md) | 各仓库 README 记录已运行证据 |
 | 数据库通用物理规则 | [`DATABASE_DESIGN_GUIDE.md`](./DATABASE_DESIGN_GUIDE.md) | 不保存六库实施状态 |
@@ -91,6 +92,13 @@ Supersedes / Superseded sections: 精确路径或作用域
 
 Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据。它们必须保留当时上下文；被取代时增加状态与窄范围后继链接，不重写历史使其看起来从未发生。
 
+### 3.6 公共合同与系统文档分工
+
+- 跨系统共同遵守的接口、Header、错误和信任边界，由该主题的公共文档 Owner 统一维护。各系统文档链接该权威，只补充本系统的实现映射、配置、运行与验证证据，不复制或自行改写公共合同。
+- 系统任务发现公共合同缺口或冲突时，应向主题 Owner 提供差异、影响和建议；公共合同变更由负责该主题的任务收敛后同步，不能在各系统中分别形成不同版本。用户未要求系统任务维护公共文档时，该任务只维护本系统文档并交接公共变更需求。
+- 公共文档不等于全项目无差别适用：必须标明全项目、跨系统协议面或单系统范围。例如 Client API 的最小输入与 Request ID 接纳合同不能自动推广到 Operations。
+- 某次任务由谁负责、先做代码和测试、交付顺序或时限属于计划/交接记录，不固化为长期公共规范。当前实现、验证和部署状态仍只由状态台账及组件证据承载。
+
 ## 4. 更新规则
 
 1. 先确定主题 Owner，再修改内容；同义规则只写一次。
@@ -110,3 +118,5 @@ Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实�
 同日确认的业务模块默认无直接依赖、稳定能力单向例外、Owner 合同边界与 `web` Processor 编排规则见 [`decisions/2026-09-05-business-module-collaboration-policy.md`](./decisions/2026-09-05-business-module-collaboration-policy.md)。[`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) 仍是这类 Java 模块协作语义的唯一现行权威，系统模块设计只做具体映射。
 
 同日确认的 Redis-first Foundation 资源锁合同见 [`decisions/2026-09-05-redis-first-resource-lock.md`](./decisions/2026-09-05-redis-first-resource-lock.md)和[完整设计](../docs/superpowers/specs/2026-09-05-foundation-resource-lock-design.md)。它只在标准同步排他资源协调范围内取代“不得新增通用锁框架”的旧表述，批准的是 Foundation `@ResourceLock` 唯一公共能力，不授权业务服务复制本地注解、Aspect、执行器或客户端；是否需要协调、资源 Key 和数据库最终保护仍由业务不变量决定。Platform 2026-09-04 锁重构文档保留为具体资源选择与历史验证证据，不拥有该公共能力的当前合同。
+
+2026-09-11 确认的 [PDManer 单模型与短文件名决策](./decisions/2026-09-11-pdmaner-single-model-short-filenames.md)收敛各持库服务的模型路径：每个服务只维护一个小写短名 `*.pdma.json`，内部展示名和 PDManer 本地备份不得形成第二个权威模型；完整稳定规则仍由 `DATABASE_DESIGN_GUIDE.md` 拥有。

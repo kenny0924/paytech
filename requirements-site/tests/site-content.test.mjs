@@ -151,6 +151,14 @@ const javaServiceBoundariesRuleSource = readFileSync(
   new URL("../../.cursor/rules/java-service-boundaries.mdc", import.meta.url),
   "utf8",
 );
+const unitTestGuideSource = readFileSync(
+  new URL("../../agent-docs/UNIT_TEST_GUIDE.md", import.meta.url),
+  "utf8",
+);
+const javaTestingRuleSource = readFileSync(
+  new URL("../../.cursor/rules/java-testing.mdc", import.meta.url),
+  "utf8",
+);
 const superpowersWorkflowRuleSource = readOptionalSource(
   "../../.cursor/rules/superpowers-workflow.mdc",
 );
@@ -682,7 +690,7 @@ test("CCT seller tax registration stays optional and explicit in the V5 Canonica
   );
   const canonicalBundle = extractMarkdownSection(
     clientContractDatabaseSource,
-    "### 5.4 CCT-I13 原子 Bundle",
+    "### 5.4 CCT-I13 V5 原子 Bundle（legacy / pending migration）",
   );
 
   assert.match(cctI12, /public_tax_registration_number.*可空/u);
@@ -691,7 +699,7 @@ test("CCT seller tax registration stays optional and explicit in the V5 Canonica
   assert.match(canonicalBundle, /public_tax_registration_number.*固定保留.*JSON `null`.*不得省略/u);
 });
 
-test("CCT returns the complete V5 bundle while Commerce persists one explicit immutable Order Context", () => {
+test("CCT exposes the Profile/Price target while preserving the legacy V5 migration contract", () => {
   const cct09 = source.match(/uc\("CCT-09"[^\n]+/u)?.[0] ?? "";
   const cctI05 = source.match(/iuc\("CCT-I05"[^\n]+/u)?.[0] ?? "";
   const cctI06 = source.match(/iuc\("CCT-I06"[^\n]+/u)?.[0] ?? "";
@@ -700,15 +708,15 @@ test("CCT returns the complete V5 bundle while Commerce persists one explicit im
   const commerce03 = source.match(/uc\("COM-03"[^\n]+/u)?.[0] ?? "";
   const commerceI04 = source.match(/iuc\("COM-I04"[^\n]+/u)?.[0] ?? "";
 
-  assert.match(cct09, /Client Pricing.*Partner Share.*Platform Service Charge.*Commercial Term 四层模型.*完整组件/u);
-  assert.match(cctI05, /Client Pricing Plan\/Version\/Scope.*结构字段.*完整计算参数.*不返回中间 Hash/u);
-  assert.match(cctI06, /Partner Share Plan\/Version\/Scope.*完整计算参数.*ACTUAL_CLIENT_FEE/u);
-  assert.match(cctI13, /完整 V5 Bundle.*Profile\/Classification Proof.*唯一 ACTIVE Assignment/u);
+  assert.match(cct09, /Client Pricing.*Partner Share.*Platform Service Charge.*Payment Method Profile Code.*Operating Entity.*Price.*百分比、固定金额或阶梯 Component\/Band/u);
+  assert.match(cctI05, /Legacy V5 Scope.*Client Pricing Plan\/Version\/Scope.*Profile\/Price\/Band Wire.*(?:不得|禁止).*Scope ID.*Price ID/u);
+  assert.match(cctI06, /Legacy V5 Scope.*Partner Share Plan\/Version\/Scope.*ACTUAL_CLIENT_FEE.*Profile\/Price\/Band Wire/u);
+  assert.match(cctI13, /Legacy V5 Scope.*完整 V5 Bundle.*Profile\/Classification Proof.*唯一 ACTIVE Assignment/u);
   assert.match(cctI13, /Partner Share.*Platform Service Charge.*PLATFORM_SIGNATORY.*platformServicePartyId/u);
   assert.match(cctI13, /三份 Consumer Legal.*完整 Seller Disclosure/u);
   assert.match(cctI13, /Plan\/Version\/Scope 稳定 ID.*Version\/Scope 结构字段.*逐组件完整计算参数/u);
   assert.match(cctI13, /CODE-MOR:CCT:COMMERCIAL_CONTEXT:5/u);
-  assert.match(cctI14, /term_scope_id.*agreement_operating_entity_id.*context_as_of_time.*历史 Scope 闭包/u);
+  assert.match(cctI14, /Legacy V5 Scope.*term_scope_id.*agreement_operating_entity_id.*context_as_of_time.*历史 Scope 闭包/u);
   assert.match(cctI14, /owner_type\/owner_id.*agreement_id\/operating_entity_id.*Plan\/Version.*完整 Scope.*稳定排序.*Component/u);
   assert.match(cctI14, /不重新解析当前 ACTIVE.*Fail-Closed/u);
   assert.match(cctI14, /PLATFORM_SERVICE_CHARGE.*platform_service_party_id/u);
@@ -833,15 +841,15 @@ test("Risk decision releases use typed AST and engineering-registered handlers w
   assert.doesNotMatch(source, /受控 SQL\/Script (?:Feature|Artifact)|代码规则及受控 SQL\/Script/u);
 });
 
-test("database guidance keeps stable Agreement associations separate from commercial term versions", () => {
+test("database guidance keeps stable Agreement associations separate from Profile-priced terms", () => {
   for (const [name, guidance] of [
     ["database overview", databaseOverviewSource],
     ["database design guide", databaseDesignGuideSource],
   ]) {
     assert.match(
       guidance,
-      /Agreement\/Association 稳定 ID.*Pricing\/Share\/Platform Service Charge Version\/Scope/su,
-      `${name} must distinguish stable Agreement associations from commercial versions`,
+      /Agreement\/Association 稳定 ID.*Payment Method Profile.*payment_method_profile_code.*Term Version(?:\/|、)Price(?:\/|、)Component\/Band/su,
+      `${name} must distinguish stable Agreement associations from Profile-priced terms`,
     );
     assert.match(
       guidance,
@@ -1152,7 +1160,7 @@ test("requirements route on-demand dispute RFI notification through Platform Sup
 test("Platform Support requirements expose the generated 63-table public-control-plane snapshot", () => {
   assert.match(source, /Platform Support 当前物理模型为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1 关系和 7 个 Diagram Groups/u);
   assert.match(source, /31 条复合外键、85 条 CHECK 契约与 36 个 `\*_hash` 字段/u);
-  assert.match(source, /Client & Contract 当前物理模型为 37 表、423 字段、57 个唯一索引、44 个访问索引、64 条本库关系、7 条 1:1 关系和 6 个 Diagram Groups/u);
+  assert.match(source, /Client & Contract 当前物理模型为 40 表、443 字段、63 个唯一索引、46 个访问索引、67 条本库关系、7 条 1:1 关系和 6 个 Diagram Groups/u);
   assert.match(source, /Risk & Compliance 当前物理模型为 71 表、862 字段、105 个唯一索引、75 个访问索引、111 条本库关系、9 条 1:1 关系和 8 个 Diagram Groups，并冻结 82 条应用 CHECK Sidecar 契约/u);
   assert.match(source, /Reliable Technical Execution/u);
   assert.match(source, /只保留本系统 compensation_event 与 command_idempotency/u);
@@ -1499,45 +1507,46 @@ test("Platform never turns Client silence into a dispute loss", () => {
   assert.match(platformDatabaseSource, /Client 未响应.*EVIDENCE_REQUIRED.*不得自动认损.*显式授权.*Provider.*LOST.*Risk.*DisputeLost/su);
 });
 
-test("Superpowers workflow follows the approved phase-based policy", () => {
+test("Superpowers skills require explicit authorization from the current user", () => {
   for (const workflowSource of [rootAgentsSource, developmentConventionsSource]) {
     assert.match(
       workflowSource,
-      /设计阶段[\s\S]{0,160}brainstorming[\s\S]{0,160}writing-plans/u,
+      /默认不得调用任何 Superpowers skill/u,
     );
     assert.match(
       workflowSource,
-      /代码阶段[\s\S]{0,240}(?:TDD|test-driven-development)[\s\S]{0,240}(?:并行|parallel)[\s\S]{0,240}(?:调试|debugging)[\s\S]{0,240}(?:验证|verification)/u,
+      /当前用户[\s\S]{0,80}当前请求[\s\S]{0,80}明确指定/u,
     );
     assert.match(
       workflowSource,
-      /subagent-driven-development[\s\S]{0,80}executing-plans[\s\S]{0,80}选择一种/u,
+      /REQUIRED SUB-SKILL[\s\S]{0,160}不得跨请求沿用/u,
     );
+    assert.doesNotMatch(workflowSource, /设计阶段默认使用|代码阶段按真实触发使用/u);
   }
   assert.match(
     superpowersWorkflowRuleSource,
-    /设计阶段[\s\S]{0,160}(?:brainstorming|writing-plans)[\s\S]*代码阶段/u,
+    /Superpowers 显式授权规则[\s\S]{0,400}默认不得调用任何 Superpowers skill/u,
   );
   assert.match(
     superpowersWorkflowRuleSource,
-    /subagent-driven-development[\s\S]{0,80}executing-plans[\s\S]{0,80}选择一种/u,
+    /任务类型[\s\S]{0,120}REQUIRED SUB-SKILL[\s\S]{0,160}不得跨请求沿用/u,
   );
   assert.match(
     rootAgentsSource,
-    /Worktree[\s\S]{0,160}只在[\s\S]{0,160}用户明确要求[\s\S]{0,160}不授权/u,
+    /docs\/superpowers\/\*\*[\s\S]{0,120}不构成 skill 使用授权/u,
   );
   assert.match(
     documentGovernanceSource,
     /Agent\/Superpowers 工作流[\s\S]{0,160}AGENTS\.md[\s\S]{0,160}唯一现行权威/u,
   );
   assert.match(superpowersServicePolicyDecisionSource, /Decision status: Confirmed/u);
-  assert.doesNotMatch(
-    developmentConventionsSource,
-    /除非用户在当前请求中明确要求，否则不要使用 Superpowers/u,
+  assert.match(
+    superpowersServicePolicyDecisionSource,
+    /Last amended: 2026-09-08[\s\S]{0,800}D1\. Superpowers 仅按当前用户的明确指定使用/u,
   );
   assert.doesNotMatch(
     rootAgentsSource,
-    /用户请求 Superpowers-assisted planning/u,
+    /设计阶段默认使用|代码阶段按真实触发使用|用户请求 Superpowers-assisted planning/u,
   );
 });
 
@@ -1573,6 +1582,34 @@ test("Service interface policy requires interface plus Impl without a single-imp
     );
   }
   assert.match(currentImplementationSource, /\| JAVA-02 \|[\s\S]{0,240}尚未完成全量形态审计与迁移/u);
+});
+
+test("Java tests are organized by executable entry and independent risk scenarios", () => {
+  for (const policySource of [
+    unitTestGuideSource,
+    developmentConventionsSource,
+    rootAgentsSource,
+    javaTestingRuleSource,
+  ]) {
+    assert.match(policySource, /HTTP\s*\/\s*(?:API|`\*-api`)/u);
+    assert.match(policySource, /MQ[\s\S]{0,80}(?:Listener|Event Handler)/u);
+    assert.match(policySource, /Job Handler/u);
+    assert.match(policySource, /Compensation Event Handler/u);
+    assert.match(policySource, /(?:公开静态|public static)[\s\S]{0,40}(?:纯 Java|pure-Java)/iu);
+    assert.match(policySource, /(?:每个 Service 方法|one test per Service method)/iu);
+  }
+  assert.match(
+    unitTestGuideSource,
+    /同一入口下的一组独立测试用例[\s\S]{0,120}不得因为新增了一个 Service 方法/u,
+  );
+  assert.match(
+    unitTestGuideSource,
+    /不同场景原则上拆成可独立运行、可独立诊断的测试方法/u,
+  );
+  assert.match(
+    javaTestingRuleSource,
+    /不把多种路径堆进一个测试[\s\S]{0,40}不能只测 happy path/u,
+  );
 });
 
 test("business module collaboration policy defines the default and narrow exception", () => {

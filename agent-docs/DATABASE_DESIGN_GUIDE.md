@@ -1,6 +1,6 @@
 # PDManer 数据库设计规范
 
-最后更新：2026-09-05
+最后更新：2026-09-11
 
 状态：Confirmed database engineering rules。六库/Vault 的模型统计、实现、验证和部署状态统一见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)，不在本规范重复维护。
 
@@ -64,7 +64,7 @@
 <project-root>/
 └── docs/
     └── database/
-        └── <project-name>.pdma.json
+        └── <service-short-name>.pdma.json
 ```
 
 六大核心系统默认使用以下模型路径：
@@ -80,9 +80,11 @@ platform-support-service/docs/database/platform-support.pdma.json
 
 六大核心系统之外，Vault 使用 `vault-service/docs/database/vault.pdma.json`。系统业务语义、现实场景、当前专项决策与物理入口统一从 [database/README.md](./database/README.md) 路由；模型统计、生成/人工门禁、代码、SQL、验证和部署状态只读 [CURRENT_IMPLEMENTATION.md](./CURRENT_IMPLEMENTATION.md)。
 
+模型文件名固定使用上述小写、无空格、`kebab-case` 服务短名；PDManer JSON 内部的 `name`、`describe` 仅用于展示，不得驱动磁盘文件改名。生成器、测试、Schema 来源注释和文档链接必须只引用该短路径。PDManer 保存或另存产生的 `Code-MoR ... Database V1.pdma.json` 等同目录副本只可作为本地临时工件：先与当前短名模型核对并合并确需保留的内容，再删除副本，不能作为第二个权威模型提交。`.back_*` 是被 Git 忽略的本地恢复备份，不计为权威模型，也不得被文档、生成器或测试引用。完整决定见 [PDManer 单模型与短文件名决策](./decisions/2026-09-11-pdmaner-single-model-short-filenames.md)。
+
 Vault V1 的正式实现形态是 Go Server + Java Client，当前批准能力仅为三表 Protect/Reveal。数据库任务必须同时核对 [V1 三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[OpenAPI](../vault-service/api/openapi/v1.yaml)、[物理决策](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和 [PDManer 模型](../vault-service/docs/database/vault.pdma.json)；代码、验证、测试部署、真实消费者接入与生产 KMS/身份/部署缺口只从 [当前实现台账](./CURRENT_IMPLEMENTATION.md)读取。旧架构中被三表设计取代的 Java Server、Binding/Copy、Blind Index/Masked/Metadata、广泛生命周期或“尚未实现”快照均不得当作当前运行时结论。
 
-一个部署服务默认只有一个数据库模型。只有存在已批准的独立物理数据库且生命周期确实不同，才能拆成多个模型。
+一个部署服务默认只有一个数据库模型。只有存在已批准的独立物理数据库且生命周期确实不同，才能拆成多个模型；模型展示名变化不得创建第二个文件。
 
 ## 5. 设计与执行来源
 
@@ -122,7 +124,8 @@ PDManer 模型不能替代可执行 SQL，SQL 也不能替代设计模型。一�
 
 - 每个核心系统只设计和访问自己的数据库。
 - 禁止跨数据库查询、写入、共享表、视图依赖和物理外键。
-- 对其他系统聚合只保存稳定业务 ID，并在字段注释中写清来源系统和语义。
+- 跨系统引用优先使用 Owner 已经定义的全局唯一、创建后不可修改且永不回收复用的业务 Code；只有 Owner 没有这种 Code，或引用的是交易事实、不可变版本、Child 等没有业务 Code 的对象时，才使用稳定业务 ID 或 Owner 明确定义的复合坐标。不得为了套用 Code-first 给每张表机械新增 Code，也不得把可变名称、数据库自增值或含义不稳定的展示编号当作跨系统身份。
+- 每个跨系统引用字段都必须在字段注释中写清来源 Owner、身份语义和稳定性契约；它只保存引用，不复制 Owner 的名称、状态或其他可变事实。
 - PDManer 图中的物理关系只能连接当前数据库内的表。
 - 跨系统一致性通过 HTTP 契约、业务事件、幂等和补偿实现，不能通过数据库关系实现。
 - BFF、Gateway 和入口应用不拥有核心业务事实；没有自身持久化需求时不创建数据库。
@@ -162,7 +165,7 @@ PDManer 模型不能替代可执行 SQL，SQL 也不能替代设计模型。一�
 | 专项 History/Fact 表 | 记录本身是领域证据，具有独立查询、状态机或法定语义 | 每个主表仅为字段/状态变化复制一张结构相同的 History 表 |
 | Blind Index、Alias、密钥轮换表 | 当前存在经批准的等值检索/唯一约束与轮换协议 | 仅为未来可能轮换提前把 Vault 内部密钥、Alias 或索引模型复制进业务库 |
 
-已经追加不可变的独立 Agreement、Acceptance、Decision、Ledger、外部来源事实等继续使用专项表；统一行级历史不能吞并这些领域事实。跨系统交易上下文使用 Agreement/Association 稳定 ID，商业计算规则另用 Pricing/Share/Platform Service Charge Version/Scope；CCT 一份 Agreement 本身就是一份独立法律事实，没有 Agreement Version 表。相反，普通字段或状态变化不应各自建立一套重复历史结构。
+已经追加不可变的独立 Agreement、Acceptance、Decision、Ledger、外部来源事实等继续使用专项表；统一行级历史不能吞并这些领域事实。跨系统交易上下文按第 6 节选择 Agreement/Association 稳定 ID 或不可复用业务 Code；CCT 的 Payment Method Profile 使用稳定 `payment_method_profile_code`，而价格与计算证据使用不可变 Term Version、Price、Component/Band 坐标。CCT 一份 Agreement 本身就是一份独立法律事实，没有 Agreement Version 表。相反，普通字段或状态变化不应各自建立一套重复历史结构。
 
 ### 7.3 场景化审查与可删除性
 
@@ -273,7 +276,7 @@ Client & Contract 已批准把白名单内聚合根对应的 `business_change_re
 - 联合索引字段顺序必须对应主要访问路径，并记录设计理由。
 - 状态转换更新应携带版本或期望旧状态，并验证影响行数。
 - 当前数据库内的关系仅在模型和结构化关联字段中表达，不创建物理外键；写入顺序、关联完整性和删除策略由本服务代码与本地事务保证。
-- 跨系统 ID 绝不能建立物理外键。
+- 任何跨系统引用（无论使用 Code、ID 还是复合坐标）都绝不能建立物理外键。
 - Finance 的账务事实采用追加/补偿方式，不把历史分录设计为可覆盖记录。
 
 ## 12. 数据库连接与安全
@@ -302,6 +305,7 @@ Client & Contract 已批准把白名单内聚合根对应的 `business_change_re
 - 修改任何数据库相关工件前，先读取 `PROJECT_CONTEXT.md`、本文和涉及 Java 时的 `JAVA_PROJECT_STRUCTURE.md`。
 - 新项目只能从项目内模板派生，不从零创建不兼容的 PDManer JSON。
 - 编辑 `*.pdma.json` 时保留 PDManer ID 和引用完整性；不要通过无差别格式化重排整个已有业务模型。
+- 使用 PDManer GUI 后立即检查 Git 状态；若出现“短名模型被删除 + 展示名长文件未跟踪”，应先比较并把有效内容收敛回短名模型，不得继续修改生成器或文档去追随 GUI 自动文件名。
 - 不手工构造未知 PDManer 内部字段。不能确认格式时，优先在 PDManer 中完成结构编辑，再审查 JSON 差异。
 - 不自动恢复已从项目模板删除的数据域、数据库目标或代码模板。
 - 外部原始模板更新时只比较和选择性合并适用变化，不能覆盖项目模板或已有服务模型。
@@ -311,6 +315,7 @@ Client & Contract 已批准把白名单内聚合根对应的 `business_change_re
 本节检查设计、模型、SQL、代码和测试是否在当前获批范围内一致。具体模型统计和已运行证据从 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 进入，不在此清单手工复制。
 
 - [ ] 模型由项目内 PDManer 模板派生，文件可被 PDManer 4.9.3 或兼容版本打开。
+- [ ] 每个持库服务只存在一个短文件名模型；内部展示名、PDManer 另存副本和 `.back_*` 没有形成第二个权威文件，生成器、测试、Schema 注释和文档链接都指向短路径。
 - [ ] JSON 语法有效，内部 ID、数据域、基础类型和关系引用完整。
 - [ ] 模型中没有 `PARTNER_ID`、Merchant 等错误术语或参考项目遗留域。
 - [ ] 模型中没有真实数据库连接和凭据。

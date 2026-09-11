@@ -4,7 +4,10 @@
 状态：实施中；结构重构、HTTP 测试组织与 90% 覆盖率门禁已落盘，真实 MySQL HTTP 和覆盖率正向验收待完成；Owner 失败协议测试等待真实合同与 Simulator
 恢复阶段后继（2026-09-09）：本文关于 Create Checkout“五阶段保持不变”的内容已由
 [`2026-09-09-commerce-checkout-recovery-simplification.md`](../../../agent-docs/decisions/2026-09-09-commerce-checkout-recovery-simplification.md)
-取代，现行恢复检查点为 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`；本文旧阶段文字仅保留为本轮结构设计的历史输入，其余职责与测试组织决定继续有效。
+取代，现行恢复检查点为 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`；本文现行结构与完成条件统一投影三个真实检查点，其余职责与测试组织决定继续有效。
+命令幂等归属后继（2026-09-09）：通用 Command DataObject、Mapper/XML、Repository、技术状态与 Claim/Lease/CAS 已由
+[`2026-09-09-foundation-command-idempotency.md`](../../../agent-docs/decisions/2026-09-09-foundation-command-idempotency.md)
+收敛到 opt-in `paytech-command-idempotency`。Commerce 继续拥有 Checkout Hash、Snapshot、业务阶段、Validator、Converter、错误、资源和事务编排；本次没有把幂等转移给 Gateway 或中央服务。
 取代范围：仅取代
 [`2026-09-07-commerce-client-checkout-local-mock-slice.md`](../plans/2026-09-07-commerce-client-checkout-local-mock-slice.md)
 中 Task 5 至 Task 7 的 Java 类职责划分和测试组织方式。原计划及
@@ -21,7 +24,7 @@
 - Create 请求和 Prepared Checkout 在相邻层之间存在同义模型与纯字段复制；
 - 多个只做依赖字段赋值的显式构造器没有遵守项目 Lombok 约定。
 
-本设计只降低结构复杂度和样板代码，不改变任何外部可观察行为。目标是让每个类有一个可直接说明的职责，让 POST 的五阶段恢复从入口代码即可顺序阅读，并用 HTTP 入口测试覆盖完整生产链。
+本设计只降低结构复杂度和样板代码，不改变任何外部可观察行为。目标是让每个类有一个可直接说明的职责，让 POST 的三个真实恢复检查点从入口代码即可顺序阅读，并用 HTTP 入口测试覆盖完整生产链。
 
 ## 2. 不变边界
 
@@ -31,8 +34,7 @@
 - 仍只实现 `POST /external/client-api/v1/checkouts` 和
   `GET /external/client-api/v1/orders/{orderNo}/checkout`；
 - Java API、OpenAPI、RFC 9457、金额 String Wire、默认 30 分钟及显式 5 分钟到 24 小时过期合同不变；
-- `CLAIMED -> AUTHORITIES_RESOLVED -> ORDER_COMMITTED -> PAYMENT_INTENT_CONFIRMED -> COMPLETED`
-  五阶段、Lease、稳定失败和成功回执重放语义不变；
+- `CLAIMED -> ORDER_COMMITTED -> COMPLETED` 三个真实持久化检查点、Lease、稳定失败和成功回执重放语义不变；
 - CCT、Risk、Finance、Payment 调用仍在 Commerce 写事务之外；
 - 七表创建和 Payment 绑定/过期仍使用短 `TransactionTemplate` 事务与既有 CAS/唯一索引保护；
 - 15 表模型、Mapper XML、人工 SQL、Gateway、Nginx 和 Checkout Web 均不在本重构范围内；
@@ -46,7 +48,8 @@ ClientCheckoutController
 │   ├── CheckoutCreationIdempotencyService
 │   │   ├── CheckoutRequestHasher
 │   │   ├── CheckoutIdempotencySnapshotCodec
-│   │   └── CommandIdempotencyRepository
+│   │   ├── CheckoutCreationIdempotencyValidator
+│   │   └── Foundation CommandIdempotencyService
 │   ├── CheckoutCreationService
 │   │   ├── CheckoutOwnerCommandConverter
 │   │   ├── PreparedCheckoutAssembler
@@ -90,15 +93,21 @@ Processor 只拥有应用编排：
 
 ### 3.4 CheckoutCreationIdempotencyService
 
-原 `CommandIdempotencyService` 收窄并改名为 `CheckoutCreationIdempotencyService`，只拥有 Create Checkout 的：
+原本地 `CommandIdempotencyService` 收窄并改名为 `CheckoutCreationIdempotencyService`。它组合 Foundation API，并只拥有 Create Checkout 的业务解释与恢复编排：
 
-- Claim、请求 Hash 匹配和 Caller Scope 校验；
+- Claim 与命令状态恢复；
 - Lease 获取/续租/接管；
 - 合法阶段迁移；
 - 成功或稳定失败完成；
 - 已冻结成功/失败结果恢复。
 
-ID、Order No、Token、默认过期值等首次 Claim 必须冻结的值仍由该服务分配，但序列化细节不留在服务实现中。
+ID、Order No、Token、默认过期值等首次 Claim 必须冻结的值仍由该服务分配，但序列化细节不留在服务实现中。通用记录构造、技术状态、Mapper/XML、Repository、Claim winner、Lease 与 Version CAS 由 Foundation JAR 拥有；Foundation 不解释 `CREATE_CHECKOUT` 或任一业务恢复阶段，也不创建事务。
+
+具体类 `CheckoutCreationIdempotencyValidator` 集中承载无副作用校验：当前请求与数据库 winner 的
+Caller Scope、Idempotency Key 和语义 Hash 一致性，命令记录生命周期，快照/Claim 坐标，以及冻结结果完整性。
+Processor 在 Claim 后先调用它校验当前请求，再判断成功或失败重放；Service 在执行 Lease、阶段迁移和终态写入前
+仍于原事务内调用相应状态前置校验。Validator 可以校验 Idempotency Service 传入的只读 `CommandRecord`
+投影，但不注入或调用 Repository、不打开事务，也不替代数据库唯一索引、CAS 或受影响行数检查。
 
 具体类 `CheckoutRequestHasher` 只从统一的 `CheckoutCreationRequest` 构造语义投影、调用 Foundation JCS 并计算版本化 SHA-256；不再发布一套嵌套 Request/Item，也不为单实现创建接口。
 
@@ -114,7 +123,7 @@ Commerce Schema，本轮在 V1 首次落地前把 Request Snapshot 定稿为 `{h
 
 ### 3.5 Repository
 
-继续保留一个 `CheckoutRepository`，因为七表创建与 Payment 绑定是同一 Commerce 聚合的原子写入，拆成多个仓储会隐藏事务边界。
+Commerce 继续保留一个 `CheckoutRepository`，因为七表创建与 Payment 绑定是同一 Commerce 聚合的原子写入，拆成多个仓储会隐藏事务边界。通用 Command Idempotency Repository 已迁到 Foundation，不再在 Commerce 复制。
 
 Repository 只负责 MyBatis 调用、唯一冲突识别、expected state/version CAS 和 DataObject 到领域投影的转换。金额、Owner 结果、阶段合法性和 HTTP 回执规则留在上层职责 Owner 中。
 
@@ -194,8 +203,8 @@ Java API/OpenAPI 漂移、模块依赖和文档/模型生成器等静态门禁�
 
 ## 8. 完成条件
 
-- API/Wire、五阶段恢复、数据库和错误合同与重构前一致；
-- Processor 可顺序读出五阶段，不包含金额、JCS 或 SQL 细节；
+- API/Wire、三个真实恢复检查点、数据库和错误合同与当前权威一致；
+- Processor 可顺序读出 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`，不包含金额、JCS 或 SQL 细节；
 - Idempotency Service 不再直接包含 Jackson/JCS 文档 record 和编解码实现；
 - Creation Service 与 Query Service 职责分离；
 - Repository 不再拥有业务阶段决策，Service/Repository 不再重复 `PreparedCheckout` 模型；

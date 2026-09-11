@@ -14,6 +14,7 @@ Desktop.ini
 
 # Local agent scratch state
 /.superpowers/
+/1p
 
 # dependencies
 /requirements-site/node_modules/

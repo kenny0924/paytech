@@ -1,6 +1,6 @@
 # Java 单元测试与自动化测试规范
 
-最后更新：2026-09-09
+最后更新：2026-09-10
 
 状态：Confirmed current testing rules。Foundation 与业务服务使用同一基础设施边界，没有 Testcontainers 或自动重建 test-only Schema 的例外；现有偏差和迁移状态见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
@@ -126,13 +126,30 @@ Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景
 
 测试数量服从业务风险，而不是生产类或方法数量。优先用少量业务级用例覆盖一条公开入口到数据库/外部协议的完整链路，并在这些用例中验证关键分支、状态和副作用；不要为了覆盖率给每个 Controller、Processor、Service 或 Repository 方法机械创建孤立测试。只有纯算法、状态机、值对象或转换器的聚焦单元测试能明显缩小故障定位范围时，才额外补充。
 
+### 5.1 以可执行入口组织测试
+
+测试围绕业务能力的可执行入口组织，不围绕 `Service` / `ServiceImpl` 的方法清单组织。同一入口下的一组独立测试用例可以经过多个 Service 方法，并证明它们协作后的业务结果；不得因为新增了一个 Service 方法就机械新增一个同名测试。
+
+| 入口类型 | 默认触发方式 |
+|---|---|
+| HTTP / `*-api` | 从真实 HTTP Controller 或契约客户端入口触发，覆盖反序列化、校验、协议错误和完整本地链路；不能绕过入口直接调用底层 Service 来代替接口测试 |
+| 模块公开业务接口 | 当 Owner 发布的 Service / Domain Service 接口本身就是进程内业务能力边界且没有更外层协议入口时，从该接口触发，使用真实实现和必要的本地基础设施 |
+| MQ / Event | 向测试 Broker 发送真实消息，由生产 Listener / Event Handler 消费；需要验证的序列化、Ack、重投、幂等和 DLQ 不得通过直接调用下层 Service 绕过 |
+| Job | 从生产 Job Handler / Executor 入口显式触发，不等待真实调度周期，也不直接调用其下层 Service 冒充 Job 测试；涉及 Claim、Lease、分片或批次时保留这些真实路径 |
+| Compensation Event | 从生产 Compensation Dispatcher / `CompensationEventHandler` 入口触发；重试、Claim/Lease、错误分类和完成回写属于该能力时，必须一起经过真实实现 |
+| 纯 Java 入口 | 公开静态方法、工厂、解析器、计算器、状态机或值对象行为可以直接调用，不启动 Spring；私有 Helper 和无独立业务合同的内部方法不单独建测试 |
+
+仅当某个 Service 接口本身就是批准的业务入口，或直接测试一个无协议、无持久化的纯规则组件能明显缩小故障定位范围时，才直接以它为测试入口。这类聚焦测试不能替代该能力已有的 HTTP、MQ、Job 或补偿完整链路测试，也不要求为接口中的每个内部拆分方法各建测试。
+
+普通 Foundation JAR 没有 HTTP 或业务入口时，可以直接从其公开 Java API、自动配置入口或纯机制对象编写聚焦测试，验证参数/事务门禁、Bean 装配、类型转换和 CAS 结果处理。使用 Fake/Stub 端口的此类测试只能证明 Java 协作和失败分类，不能证明 Mapper SQL、真实 Lease 竞争、数据库隔离级别或业务恢复正确性；这些风险仍须由 Foundation 的真实基础设施测试，或首个消费服务从自己的公开入口经过真实 Mapper/本地数据库来验证。业务服务接入 Foundation 后不得因此恢复一套逐 Service 的内部行为测试。
+
 ## 6. 服务级 auto 标准链路
 
 服务级 `auto` 是本规范的核心形态：
 
 ```text
 真实测试客户端
-  → 随机端口 HTTP Controller / 真实消息入口
+  → 随机端口 HTTP Controller / 真实 MQ Listener / Job Handler / Compensation Event Handler
     → [按需存在的 Processor]
       → Domain Service / Domain
         → RepositoryImpl → Mapper → 测试数据库
@@ -144,6 +161,7 @@ Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景
 ```
 
 - 入站 HTTP 测试默认使用随机端口，覆盖请求反序列化、校验、Controller 和错误响应。
+- MQ、Job 和 Compensation Event 测试从各自生产入口触发；显式调用 Handler 是为了跳过等待周期，不得跳过其真实 Claim/Lease、幂等、事务和状态回写。
 - 不需要验证 HTTP 协议的领域规则测试直接调用领域对象，不强制启动 Web Server。
 - 当前服务内部不使用替代实现；测试应覆盖与生产一致的依赖方向，没有 Processor 的简单用例直接经过 Controller → Domain Service。
 - 服务发现不是业务链路的一部分。`auto` 禁用 Nacos 和配置中心，通过测试动态配置把服务名或客户端地址解析到 Simulator。
@@ -466,7 +484,9 @@ void test_normalFlow() {
 
 ## 16. 用例覆盖
 
-一个业务能力至少评估以下相关场景：
+同一入口下的测试集合先按入口合同和业务风险形成场景矩阵，不只写一个 happy path。不同场景原则上拆成可独立运行、可独立诊断的测试方法，不把成功、拒绝、异常和重试路径堆进同一个测试。HTTP/API 重点考虑参数、授权、幂等和错误合同；MQ 重点考虑重复、乱序、重投、Ack/DLQ 和非法消息；Job 重点考虑无待处理数据、批次边界、重复执行、并发 Claim/Lease、部分失败和恢复；Compensation Event Handler 重点考虑未到执行时间、可重试/永久失败、幂等重放、Lease 丢失和完成回写；公开静态或纯函数入口重点考虑典型值、边界值、非法输入和确定性。
+
+一个业务入口至少评估以下相关场景：
 
 - 参数为空、格式错误和非法枚举；
 - 本地权威数据或外部 Simulator 数据不存在；
@@ -483,7 +503,7 @@ void test_normalFlow() {
 - 事务回滚后数据库、Redis、`compensation_event` 和 MQ 的一致性；
 - 不应调用后续外部系统的短路路径。
 
-不是每个方法都机械创建全部场景；根据该能力的真实分支和风险选择，但不能只测试 happy path。
+这些场景集中在入口层验证其可观察结果、权威状态和副作用，不分摊成“每个 Service 方法一个测试类”。根据该能力的真实分支和风险选择适用项，不机械套用全部场景，但不能只测试 happy path。
 
 ## 17. Maven 执行规则
 
@@ -550,8 +570,12 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 - [ ] 纯单元测试没有启动 Spring、容器或行为 Stub 框架。
 - [ ] 服务级测试经过真实 Controller/Listener、按需存在的 Processor、Domain Service 和 Integration/Repository 实现。
 - [ ] 数据库、Redis 和 MQ 在相关场景中复用已启动的仓库 `local-environment`，测试没有创建、停止或重建容器。
+- [ ] 涉及中间件的测试启动了被测服务/最小切片的 Spring 上下文并复用其客户端；HTTP 链路启动随机端口服务，缺失依赖时快速失败并给出准备提示。
+- [ ] 固定测试配置由 `application-auto.yml` 及 Spring 配置绑定加载；Java 未直接读取环境变量、解析 `.env` 或另建默认连接，动态注入仅用于第 12 节允许的运行时/场景值。
 - [ ] 外部 HTTP/MQ 通过有状态 Simulator 和真实协议完成，没有方法级 Stub。
 - [ ] 测试围绕业务能力和完整链路组织，没有为了覆盖率给每个内部方法机械创建孤立测试。
+- [ ] 测试从实际可执行入口触发：HTTP/API、模块公开业务接口、MQ Listener/Event Handler、Job Handler、Compensation Event Handler，或公开静态/纯 Java 合同；没有绕过入口直接测试一串 Service 方法。
+- [ ] 每个入口已按类型评估正常、边界、失败、重放/幂等、并发/事务和副作用场景，没有只覆盖 happy path。
 - [ ] Builder 只构建数据，Mocker 只准备状态，Checker/Probe 只观察和断言。
 - [ ] 未准备场景、意外请求和多余调用都会显式失败。
 - [ ] 响应、本地数据、缓存、事件和外部调用按风险完成联合断言。

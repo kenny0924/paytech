@@ -1,6 +1,6 @@
 # 开发约定与编码习惯
 
-最后更新：2026-09-05
+最后更新：2026-09-10
 
 ## 1. 使用范围与优先级
 
@@ -20,8 +20,11 @@
 - 仅作为字段嵌套的业务模型、内部领域对象和应用层命令/结果不强制上述后缀，继续按各自业务语义命名。不要为了命名规则创建一层同义包装，或给所有成功响应添加通用外壳。
 - 新增和调整 HTTP DTO 时统一遵循该命名规则。重命名已发布 Java 契约时同步调整提供方与调用方，单纯类型命名变化不改变 JSON 字段、HTTP 方法或参数位置。
 - 同一业务能力的 HTTP 请求、响应及相关嵌套模型集中放在独立的 `*Models` 类型中，例如 `AuthenticationModels`、`NavigationModels`；使用 `public final` 容器、私有构造器和 `public record`。`*Api` 接口只声明 HTTP 方法契约，不在接口内定义 DTO。核心服务的传输模型仍发布在自己的轻量 `*-api` 模块，BFF 的本地页面模型由 BFF 自己维护和组装。
+- HTTP Request record 默认使用 Jackson 正常属性绑定，并以 Jakarta Bean Validation 表达必填、长度、格式和集合约束；不得为了手工取字段而给每个 DTO 增加 `@JsonCreator(mode = DELEGATING)`、`Map<String, ?>` 工厂和字段名常量。只有正常绑定无法表达、且专项 Wire 明确要求区分的输入语义才增加自定义反序列化，并必须用入口契约测试证明缺失、显式 `null`、类型错误和未知字段行为。
+- 已发布的 `*Api` 方法、顶层 Request/Response 及其非显然 record component 必须有中文 JavaDoc；外部 API 同时维护 OpenAPI operation、parameter、schema 和 property 描述。注释说明语义、单位、可空条件、默认和兼容约束，不只是把标识符翻译成中文，JavaDoc 与 OpenAPI 不得定义两套含义。
 - 数据库映射对象直接使用业务实体名，由 `dataobject` 包表达其持久化职责；类型名不得追加 `DO` 后缀。DataObject 以所属业务能力 Maven JAR 为可见性边界：该 JAR 内的 Repository、Service、Domain Service 和必要内部应用代码可以使用自己的 DataObject，但 Controller/HTTP API 不得把它直接作为传输对象，其他 Maven 模块也不得导入、接收或返回它。
 - DataObject 的每个字段都要有中文 JavaDoc，说明业务含义、单位、可空条件或关键约束；不得只把字段名翻译一遍。Record Component 同样遵守此规则。
+- `*Mapper` 专用于 MyBatis 持久化接口和明确的数据库映射职责；Wire DTO、Application/Domain 模型、Owner Command/Result 或两个非持久化边界之间的转换组件统一命名为 `*Converter`。Jackson 的 `ObjectMapper` / `JsonMapper` 是第三方固定类型名，不在此规则内。不得用 `Mapper` 为普通转换类制造数据库层歧义。
 - Spring 配置前缀直接从能力开始，例如 `compensation.*`、`xxl.job.*`，不增加无意义的 `paytech` 中间层。
 - Topic 使用小写 `topic_{source_system}_{business_subject}`，Consumer Group/Queue 使用小写 `cg_{consumer_system}_{consumer_subject}`；消息统一使用 UTF-8 JSON。
 
@@ -74,6 +77,7 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - 默认复用少数公共异常：业务检查使用 `BizCheckFailException(message)`（400），参数错误使用 `InvalidParameterException(message)`（400），版本或并发命令冲突使用 `ConcurrentRequestException(message)`（409），系统异常使用 `ErrorException`（500），依赖不可用使用 `ServiceUnavailableException`（503）。不为每条业务拒绝创建异常类或错误码。
 - 普通业务规则只需公共 `BUSINESS_CHECK_FAILED` 加具体中文消息，例如 `throw new BizCheckFailException("不能停用当前登录账号");`。只有前端或其他调用方确实有区别处理的契约时才定义专有 `CodeMessageEnum`，并写明消费者及处理行为；不同提示文字不构成新增错误码的理由。
 - `FailException` 继续作为结果明确的失败基类；`BizCheckFailException` 是新增普通业务检查的首选，`BusinessException` 仅保留兼容。`ErrorException` 表示系统或结果未知的失败，是否重试必须由具备幂等、次数上限和退避的调用契约决定；异常类型不授权自动重试。
+- 数据库记录、外部依赖结果或内部恢复状态违反系统不变量时使用 `ErrorException` 并提供安全的诊断上下文，不用 `IllegalStateException` 充当服务级系统错误。`IllegalStateException` 只保留给不越过业务/协议边界的纯 Java 对象编程错误；一旦该异常代表可在运行中遇到的数据或系统状态，就必须转换为项目异常体系并保留 Cause。
 - 所有业务枚举都实现 `CodeEnum`；只有带可安全外显默认消息的错误枚举实现继承 `CodeEnum` 的 `CodeMessageEnum`。对外发布、调用方需要理解的稳定 Code 枚举定义放在提供方 `*-api` 的 `api/enums`；仅服务内部使用的业务或持久化枚举放在 `*-web` 的 `domain/enums`。提供方 Web 直接复用自己的 API 枚举，不在领域包复制同一组 Code。
 - 每个枚举常量单独声明，相邻枚举项之间保留一行空行，不将多项挤在同一行；若下一项带 JavaDoc 或注解，空行放在上一项与下一项的 JavaDoc/注解之前。API、内部领域及测试枚举均遵循此排版，不改变 Code 值或声明顺序。
 - 数据库、HTTP、MQ、日志和业务比较使用 `getCode()`，禁止依赖 `name()`、`ordinal()` 或枚举声明顺序。Code 发布后不可修改，Java 枚举常量名可以安全重构。
@@ -99,8 +103,15 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - Processor 是按需的用例编排层。Controller 方法少于 10 条有效可执行语句，且只委托一个 Domain Service（BFF 简单转发可为一个本地 Client Port）、没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排时，可以不创建 Processor；空行、注释、花括号和格式换行不计入语句数，不能通过改写格式规避该边界。
 - 任一上述条件不满足时都必须使用 Processor，不因物理代码行数少而例外。Controller 始终不得直接访问 Repository、Mapper 或第三方 SDK，也不得持有 `TransactionTemplate`；确实通过上述必要性门禁的简单一致性读可由 Domain Service 持有只读事务。
 - 一个方法只承担一个明确职责，原则上不超过 30 行；优先卫语句和早期返回，嵌套不超过三层。
-- 不为不存在的职责预建 `Abstract*`、空接口或通用上下文。业务 Service 和 Domain Service 的 `interface + *Impl` 是已确认的类型形态，不等于必须创建一个没有业务职责的 Service；至少两个真实用例共享稳定流程、字段和不变量后才提取抽象基类。请求 ID、认证、网络信任和追踪等协议上下文优先留在 Web/Security 基础设施，不机械复制到每个 Processor 请求。
+- 每个手写 Java 方法都必须有中文 JavaDoc；Lombok、record accessor 等生成方法不要求补写。简单方法至少用一行说明业务目的；涉及事务、幂等、恢复、并发、外部调用、异常转换或重要副作用的复杂方法使用多行 JavaDoc，解释必要的入参、返回值、边界和特殊结果。`@Override` 不因继承了类型签名而省略当前实现承担的业务语义。
+- Processor 的内部辅助方法默认使用包级可见性，不机械声明 `private`；模板扩展点使用 `protected`，真正提供给包外调用方的入口才使用 `public`。包级可见不代表公共 API，调用方仍只能从已批准的 Controller、Service 或 Processor 入口进入。
+- 复杂命令入口应能顺序读出“校验输入与业务前置条件 → 执行业务步骤 → 在明确事务中提交本地事实/检查点”。不依赖数据库当前状态的校验在昂贵外部调用和写事务前完成；依赖当前状态、Lease、唯一键或 CAS 的条件必须在相应事务内、紧邻写入重新确认。不得为了形式让 Controller、Processor、Service、Repository 逐层重复同一校验。
+- Processor 的主处理方法只保留有业务含义的阶段调用，并用简短行内注释标出这些阶段；Hash、协议转换、异常映射、事务细节和恢复分支下沉到命名准确的辅助方法。阶段注释帮助读者理解用例顺序，不逐行复述代码。
+- 多个入口真实复用、且无副作用的校验可以集中到职责明确的 `*Validator`；一次性卫语句留在所属方法，不把散落的 `require*` 机械搬进总揽式公共校验器。Validator 不打开事务、不访问 Repository/Mapper/外部 Client，也不能替代数据库约束、受影响行数和事务内重证。
+- 同一状态对象在多个调用点需要判断“是否属于若干状态之一”时，可由该对象提供类型安全的 `statusIn(Status...)`；单一状态判断继续直接使用 `==`。不建立接受任意枚举/字符串的全局状态工具，也不以该辅助方法绕过合法状态迁移校验。
+- 不为不存在的职责预建 `Abstract*`、空接口或通用上下文。业务 Service 和 Domain Service 的 `interface + *Impl` 是已确认的类型形态，不等于必须创建一个没有业务职责的 Service；通常至少两个真实用例共享稳定流程、字段和不变量后才提取抽象基类。经项目明确确认的跨用例入口标准模板是窄例外，但必须无具体业务依赖，只固定稳定执行骨架；不得借该例外创建单业务父类或提前放入幂等、事务、日志、异常响应和协议上下文。请求 ID、认证、网络信任和追踪等协议上下文优先留在 Web/Security 基础设施，不机械复制到每个 Processor 请求。
 - 从获批用例所需的最小类、模块和配置开始，不预建一行转发类、空层、未来开关或带系统名前缀的同义基础设施。新增服务内通用技术能力前先检查 Foundation；能力天然跨服务，或至少两个真实消费者共享稳定契约时，才提取为职责单一的小型 Foundation JAR。业务 DTO、业务枚举、Repository、Mapper 和第三方模型仍留在所属服务。
+- 参考其他系统实现时，先沿“入口或 Facade → 抽象模板 → 具体 Processor/Client → 实际依赖”读完整调用链，再提炼职责和执行顺序。参考代码只是设计证据；不复制与 Code-MoR 当前 HTTP、Foundation、异常、日志、事务或依赖边界冲突的历史实现。
 - 注释和 JavaDoc 默认使用中文，协议固定词、标准名称和无法准确翻译的专有名词可以保留英文。注释解释约束、原因和边界，不复述代码字面行为。
 - 不运行仓库级批量格式化，也不为了格式重写无关代码；保持改动聚焦，最终格式由项目既定工具或用户 IDE 处理。
 - 不保留空实现、占位测试或 `TODO by Codex`；发现该标记时直接完成对应实现，确实受业务决策阻塞时说明具体缺口。
@@ -139,7 +150,7 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - 同一模块、同一测试切片共享一个最小 `TestApplication`，不要让每个测试类重复声明启动应用；不同切片也不要被迫继承一个启动全部能力的巨型基类。
 - 数据库准备、清理和只读断言集中到注解式 `TestMapper` 或测试 Repository，测试方法和 Mocker 中不要散落大量 `JdbcTemplate` SQL。
 - Builder 只构建合法数据，Mocker 只准备状态，Checker/Probe 只观察和断言；不要使用 Mockito 行为 Stub 替换真实生产链路。
-- 优先用少量业务级用例覆盖“公开入口 → 真实 Controller → 按需 Processor → Domain Service → Repository/Mapper → 本地数据库”及关键副作用，不为了覆盖率给每个内部方法或类机械配一组测试。纯算法、状态机和转换器在能明显缩小故障定位范围时再补充聚焦单元测试。
+- 测试从业务能力的实际入口触发：HTTP/API、模块公开 Service/Domain Service 接口、MQ Listener/Event Handler、Job Handler、Compensation Event Handler，或公开静态/纯 Java 合同。同一入口下的一组独立测试用例覆盖真实下游链路和更多相关业务场景；不为了覆盖率给每个 Service 方法或内部类机械配一组测试。纯算法、状态机和转换器在能明显缩小故障定位范围时再补充聚焦单元测试，完整入口与场景矩阵以 `UNIT_TEST_GUIDE.md` 为准。
 - 测试方法使用清晰的场景名称，例如 `test_invalidParameter`、`test_normalFlow`、`test_retryableError`；异步断言使用有上限的条件等待，不使用固定 `Thread.sleep`。
 - 多个任务或 Maven 进程并行执行时必须使用独立数据库/schema、Redis 前缀和 MQ 命名空间，禁止共享测试库后互相执行 `DROP` 或全表清理。
 
@@ -148,7 +159,7 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - `paytech-dependencies` 统一管理依赖版本，`paytech-parent` 统一管理 Java、插件和测试规则；子模块只声明实际使用的依赖，不重复写版本。
 - 公共代码拆为边界清晰的小型 Foundation JAR，不创建聚合式 `common.jar`，也不把业务 DTO、Repository 或第三方模型塞入公共包。
 - 多任务并行时先检查工作区和路径所有权；共享文件必须有 single-writer，基于最新版逐段增量修改，禁止整文件覆盖或回滚其他任务改动。
-- 下列 Superpowers 规则是根 `AGENTS.md` 中 `Change discipline` 的开发侧薄投影；发生漂移时修复投影，不把本文解释成第二个工作流 Owner。
-- 设计阶段默认使用适用的 Superpowers：新增功能、行为或架构探索先使用 `brainstorming`；已批准的多步骤设计使用 `writing-plans`。纯问答、只读状态检查和无需设计判断的机械操作不为形式调用。
-- 代码阶段按真实触发使用 TDD、并行代理、计划执行、系统化调试和完成前验证，不机械串行调用全部 skill：功能、修复或重构使用 `test-driven-development`；两个以上独立子任务使用 `dispatching-parallel-agents`；已有批准计划且适合拆分时，在 `subagent-driven-development` 与 `executing-plans` 中选择一种；出现 bug、测试失败或异常行为时使用 `systematic-debugging`；声明完成前使用 `verification-before-completion`。
-- `using-git-worktrees`、`finishing-a-development-branch`、`requesting-code-review` 和 `receiving-code-review` 只在任务确实需要隔离、集成或独立评审，或者用户明确要求时使用；skill 本身不授权创建分支、提交、推送或 PR。完整决定见 [`decisions/2026-09-05-superpowers-and-service-interface-policy.md`](./decisions/2026-09-05-superpowers-and-service-interface-policy.md)。
+- 下列规则是根 `AGENTS.md` 中 `Change discipline` 的开发侧薄投影；发生漂移时修复投影，不把本文解释成第二个工作流 Owner。
+- 默认不得调用任何 Superpowers skill。只有当前用户在当前请求中明确指定使用 Superpowers 或点名具体 Superpowers skill 时，才可在该请求授权范围内调用；不得从任务类型、历史回合、计划中的 `REQUIRED SUB-SKILL`、文档路径或其他 Agent 的选择中推断授权，也不得跨请求沿用。
+- 未获明确授权时，仍须执行必要设计、测试先行、系统化诊断和完成前验证，但使用普通工作流与工具，不调用 Superpowers skill。`docs/superpowers/**` 只是文档路径，不构成授权。
+- 非 Superpowers skill 继续按正常触发规则使用；任何 skill 都不授权自行创建分支、提交、推送或 PR。完整决定见 [`decisions/2026-09-05-superpowers-and-service-interface-policy.md`](./decisions/2026-09-05-superpowers-and-service-interface-policy.md)。

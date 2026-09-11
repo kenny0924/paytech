@@ -55,6 +55,12 @@ Converter、三个真实恢复检查点和三个短事务。
 
 Risk、Platform Support、Gateway 和其他系统的现有幂等实现、表结构与行为全部保持不变；后续是否迁移必须单独评审和授权。
 
+### D5. 测试入口按能力边界区分
+
+Foundation JAR 没有 HTTP 业务入口，可以从公开 `CommandIdempotencyService`、自动配置和内部纯机制对象做聚焦测试，验证事务参与门禁、Claim winner、CAS 丢失分类和 opt-in 装配。这类数据库无关测试不作为 Mapper SQL、真实 Lease 竞争或业务恢复语义已经验证的证据。
+
+Commerce 的 Checkout 业务行为仍只从真实随机端口 HTTP 入口验证，经过 Controller、Processor、Commerce Domain Service、Foundation Mapper 和本地数据库；不为接入 JAR 后的每个 Commerce Service 复制内部行为测试。真实 SQL、唯一 winner、Lease/CAS 和事务回滚必须在准备好 Commerce 本地 Schema 后由该入口链路完成。完整公共规则见 [`UNIT_TEST_GUIDE.md`](../UNIT_TEST_GUIDE.md)。
+
 ## 3. 非目标
 
 - 不把 `Idempotency-Key` 的业务执行幂等移动到 Gateway；Gateway 仍只校验/转发已批准的传输 Header。

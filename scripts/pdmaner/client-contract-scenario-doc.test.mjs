@@ -143,11 +143,11 @@ test("现实场景 Manifest 覆盖当前全部物理表并只引用存在的字�
   assert.equal(manifest.schema, expectedSchema);
   assert.equal(manifest.storyId, expectedStoryId);
   const approvedTotals = {
-    tables: 37,
-    fields: 423,
-    uniqueIndexes: 57,
-    accessIndexes: 44,
-    relations: 64,
+    tables: 40,
+    fields: 443,
+    uniqueIndexes: 63,
+    accessIndexes: 46,
+    relations: 67,
     diagramGroups: 6,
   };
   assert.deepEqual(modelTotals(model), approvedTotals);
@@ -200,7 +200,7 @@ test("现实场景 Manifest 覆盖当前全部物理表并只引用存在的字�
   assert.deepEqual(
     [...referencedTables].sort(),
     [...entities.keys()].sort(),
-    "现实场景必须覆盖当前全部 37 张物理表",
+    "现实场景必须覆盖当前全部 40 张物理表",
   );
   for (const tableKey of entities.keys()) {
     assert.equal(
@@ -322,14 +322,18 @@ test("现实场景文档从 Agent、数据库和 CCT 当前导航均可到达", 
   const document = readScenarioDocument();
   for (const [, target] of document.matchAll(/\[[^\]]+\]\(([^)]+)\)/gu)) {
     if (/^(?:https?:|#)/u.test(target)) continue;
-    const targetPath = path.resolve(path.dirname(scenarioPath), target.split("#", 1)[0]);
+    const linkPath = target.split("#", 1)[0].replace(/^<|>$/gu, "");
+    const targetPath = path.resolve(path.dirname(scenarioPath), linkPath);
     assert.ok(existsSync(targetPath), `现实场景文档链接目标不存在：${target}`);
   }
 });
 
-test("现实场景固定 CCT-I14 的精确 Scope 闭包与失败边界", () => {
+test("现实场景隔离保留 Legacy CCT-I14 Scope 闭包与失败边界", () => {
   const document = readScenarioDocument();
 
+  assert.match(document, /场景七（legacy \/ pending migration）/u);
+  assert.match(document, /`t_commercial_term_scope`[\s\S]*不是第 8 节的新写模型/u);
+  assert.match(document, /不得把 `term_scope_id` 重命名为 Price ID/u);
   assert.match(
     document,
     /GetImmutableCommercialTermScope\([\s\S]*term_scope_id=730820000000000001[\s\S]*agreement_operating_entity_id=730640000000000002[\s\S]*context_as_of_time=2026-10-15T12:00:00\.000000Z/u,
@@ -344,14 +348,18 @@ test("现实场景固定 CCT-I14 的精确 Scope 闭包与失败边界", () => {
   assert.match(document, /Commerce 不复制四项结算字段；Finance.*调用 CCT-I14/u);
 });
 
-test("现实场景固定 Partner 平台服务费条款、唯一签约方与 V5 边界", () => {
+test("现实场景固定可复用 Profile、准确 OE Price、组合与阶梯定价", () => {
   const document = readScenarioDocument();
 
-  assert.match(document, /`PLATFORM_SERVICE_CHARGE`.*第三类 Commercial Term/u);
-  assert.match(document, /`GROSS_PAYMENT_AMOUNT`[\s\S]*USD 100\.00[\s\S]*0\.40%[\s\S]*USD 0\.40/u);
-  assert.match(document, /Partner Agreement.*恰好一个.*`PLATFORM_SIGNATORY`/u);
-  assert.match(document, /`platformServicePartyId`.*`platformServiceCharge`/u);
-  assert.match(document, /`CODE-MOR:CCT:COMMERCIAL_CONTEXT:5`/u);
-  assert.match(document, /非 PARTNER.*`platformServicePartyId=null`.*`platformServiceCharge=null`/u);
-  assert.match(document, /零个.*多个.*PLATFORM_SIGNATORY.*Fail Closed/u);
+  assert.match(document, /Payment Method `CARD` 是 Payment 拥有的稳定代码\/应用常量；CCT 不建立 Payment Method 表/u);
+  assert.match(document, /`CARD_NETWORK` 是 OR[\s\S]*`FUNDING_TYPE`、`AUTHENTICATION_CLASS` 之间是 AND/u);
+  assert.match(document, /缺少某维度才表示不限制，不能写 `\*`、CSV、Operator 或 Range/u);
+  assert.match(document, /Profile 的外部身份始终是全局唯一且不可复用的 `payment_method_profile_code`/u);
+  assert.match(document, /每条 `t_commercial_term_price` 都绑定准确非空 OE/u);
+  assert.match(document, /具体 Profile 有 3 个不同 Dimension[\s\S]*只有具体度相同才比较更小的 `priority_no`/u);
+  assert.match(document, /`PERCENTAGE`[\s\S]*`FIXED`[\s\S]*`TIERED`/u);
+  assert.match(document, /多 Component 按 `component_no` 稳定计算并相加/u);
+  assert.match(document, /连续半开 Band[\s\S]*`WHOLE_BASE`[\s\S]*`PROGRESSIVE`/u);
+  assert.match(document, /不创建 Profile Version/u);
+  assert.match(document, /新 Wire 尚未定义/u);
 });

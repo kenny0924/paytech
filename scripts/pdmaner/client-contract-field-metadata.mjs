@@ -36,8 +36,11 @@ export const TABLE_DISPLAY_NAMES = Object.freeze({
   seller_disclosure: "法律卖方披露",
   commercial_term_plan: "商业条款方案",
   commercial_term_version: "商业条款版本",
-  commercial_term_scope: "商业条款适用范围",
+  payment_method_profile: "支付方式特征",
+  payment_method_profile_cond: "支付方式特征条件",
+  commercial_term_price: "商业条款价格",
   commercial_term_component: "商业条款计算组件",
+  commercial_term_component_band: "商业条款阶梯档位",
   business_change_record: "业务行变更历史主档",
   business_change_version: "业务行变更版本明细",
   compensation_event: "本地补偿事件",
@@ -87,13 +90,26 @@ export const FIELD_METADATA = Object.freeze({
   client_id: metadata("Client 标识", "平台 Client 角色的内部唯一标识"),
   client_no: metadata("Client 编号", "供外部接口与业务查询使用的唯一 Client 编号"),
   client_source_basis: metadata("Client 来源依据", "Organization Client 提供 Operating Entity 时采用的法律关系依据"),
-  component_code: metadata("组件编码", "同一定价、分润或平台服务费 Scope 内唯一的业务组件代码"),
-  component_type: metadata("组件类型", "区分百分比组件与固定金额组件的类型代码"),
+  band_mode: metadata("阶梯计算模式", "阶梯组件对完整计算基数或各分段基数应用档位参数的模式"),
+  band_no: metadata("阶梯档位序号", "同一阶梯组件内从 1 开始且连续的稳定档位顺序"),
+  component_code: metadata("组件编码", "同一商业价格内唯一的业务组件代码"),
+  component_no: metadata("组件序号", "同一商业价格内从 1 开始且连续的稳定计算顺序"),
+  component_type: metadata("组件类型", "区分百分比、固定金额与阶梯组件的闭合类型代码"),
+  condition_value: metadata("条件值", "按维度事实 Owner 规则规范化的单个离散匹配值"),
+  dimension_code: metadata("维度代码", "Payment Method Profile 使用的受控匹配维度代码"),
+  lower_bound: metadata("阶梯包含下界", "阶梯档位适用金额区间的包含下界"),
+  payment_method_code: metadata("支付方式代码", "Payment 拥有的稳定 Payment Method 目录代码"),
+  payment_method_profile_code: metadata("支付方式特征编码", "Payment Method Profile 的全局唯一、稳定且不可复用业务代码"),
+  payment_method_profile_id: metadata("支付方式特征标识", "Payment Method Profile 聚合在 CCT 内部使用的唯一标识"),
+  profile_condition_id: metadata("支付方式特征条件标识", "Payment Method Profile 条件行的内部唯一标识"),
+  profile_name: metadata("支付方式特征名称", "供 Operations 识别 Payment Method Profile 的展示名称"),
   term_component_id: metadata("商业条款组件标识", "商业条款计算组件的内部唯一标识"),
+  term_band_id: metadata("商业条款阶梯档位标识", "商业条款阶梯组件档位的内部唯一标识"),
   term_plan_id: metadata("商业条款方案标识", "Client Pricing、Partner Share 或 Platform Service Charge 方案根的内部唯一标识"),
-  term_scope_id: metadata("商业条款范围标识", "商业条款适用范围记录的内部唯一标识"),
+  term_price_id: metadata("商业条款价格标识", "Commercial Term Version 下准确 OE 与 Payment Method Profile 价格绑定的内部唯一标识"),
   term_type: metadata("商业条款类型", "区分客户定价、本地合作伙伴分润与平台服务费的闭合业务类型"),
   term_version_id: metadata("商业条款版本标识", "商业条款不可变业务版本的内部唯一标识"),
+  upper_bound: metadata("阶梯不含上界", "阶梯档位适用金额区间的不包含上界；最后一档为空"),
   city: metadata("城市", "主体地址所在城市或同级行政区域名称"),
   contact_id: metadata("联系方式标识", "Party Profile 联系方式记录的内部唯一标识"),
   contact_masked_value: metadata("联系方式脱敏值", "Vault 按联系方式类型生成的最小受控展示值"),
@@ -101,10 +117,10 @@ export const FIELD_METADATA = Object.freeze({
   contact_vault_token: metadata("联系方式 Vault Token", "指向 Vault 联系方式标量原值的不可枚举 Token；EMAIL 对应 EMAIL_ADDRESS_V1，PHONE 对应 PHONE_E164_V1"),
   content_file_id: metadata("正文文件标识", "Platform 中保存法律正文内容的文件标识"),
   content_hash: metadata("封存内容哈希", "业务版本封存边界内全部规范化内容的完整性哈希"),
-  country_code: metadata("国家代码", "ISO 3166-1 alpha-2 国家代码；Scope 场景可使用批准的通配语义"),
+  country_code: metadata("国家代码", "业务事实使用的精确 ISO 3166-1 alpha-2 国家代码"),
   create_by: metadata("创建人标识", "创建不可变审计快照的正式 Human 或 System Actor 标识"),
   create_time: metadata("创建时间", "数据库记录创建的 UTC 时间，精确到微秒"),
-  currency: metadata("币种代码", "ISO 4217 三位币种代码；Scope 场景可使用批准的通配语义"),
+  currency: metadata("币种代码", "金额字面量、金额边界或业务事实使用的 ISO 4217 三位币种代码"),
   current_version: metadata("当前变更版本", "该业务行最近一次审计快照采用的聚合根版本坐标，允许跳号"),
   disclosure_id: metadata("卖方披露标识", "Operating Entity 公开卖方披露聚合的内部唯一标识"),
   document_id: metadata("文档引用标识", "业务资料包或合同文档引用记录的内部唯一标识"),
@@ -125,7 +141,7 @@ export const FIELD_METADATA = Object.freeze({
   expire_time: metadata("过期时间", "幂等记录停止复用并可进入清理流程的 UTC 微秒精度时刻"),
   family_name: metadata("个人姓氏", "个人姓氏，即法定姓名中的姓氏部分"),
   file_id: metadata("文件标识", "Platform 文件对象的稳定外部标识"),
-  fixed_amount: metadata("固定金额", "固定费用、固定分润或固定平台服务费组件使用的金额；不适用时为空"),
+  fixed_amount: metadata("固定金额", "固定费用或阶梯档位使用的金额参数；不适用时为空"),
   given_name: metadata("个人名字", "个人法定姓名中的名字"),
   hash_schema_version: metadata("哈希结构版本", "解释 Canonical Hash 输入字段、顺序与编码规则的版本号"),
   history_id: metadata("历史记录标识", "业务变更主记录或不可变资格评估历史的内部标识"),
@@ -169,10 +185,9 @@ export const FIELD_METADATA = Object.freeze({
   party_type: metadata("法律主体类型", "区分自然人与机构法律身份的类型代码"),
   payload_hash: metadata("Payload 哈希", "规范化事件或任务 Payload 的 SHA-256 内容哈希"),
   payload_json: metadata("Payload JSON 内容", "领域事件或本地恢复动作的受控 JSON Payload，大小不得超过 64 KiB"),
-  payment_method: metadata("支付方式代码", "Pricing Scope 匹配的支付方式能力代码"),
   plan_code: metadata("计划编号", "定价、分润或平台服务费计划的唯一稳定业务编号"),
   primary_slot: metadata("主要分类唯一槽位", "用于保证同一 Business Profile 最多存在一组主要经营分类"),
-  priority_no: metadata("优先级", "同一准确交易范围内 Operating Entity 候选的确定性顺序，数值越小越优先"),
+  priority_no: metadata("优先级", "同一业务解析范围内候选记录的确定性顺序，数值越小越优先"),
   profile_id: metadata("Party Profile 标识", "Party 资料版本头及其类型明细的内部唯一标识"),
   profile_status: metadata("Party Profile 状态", "Party 资料版本当前所处的生命周期状态"),
   middle_name: metadata("个人中间名", "个人法定姓名中的可选中间名"),
@@ -186,7 +201,7 @@ export const FIELD_METADATA = Object.freeze({
   qualification_decision_id: metadata("资格决定标识", "Risk & Compliance 返回的逻辑决定引用，不建立跨库物理外键"),
   qualification_decision_version: metadata("资格决定版本", "Risk & Compliance 决定的外部版本坐标，与决定标识成组出现"),
   qualification_type: metadata("资格审核类型", "提交时按申请角色和 Party 类型确定并冻结的 Risk 资格类型"),
-  rate: metadata("比例费率", "百分比费用或分润组件使用的小数费率，取值范围为 0 至 1"),
+  rate: metadata("比例费率", "百分比费用、分润或阶梯档位使用的小数费率，取值范围为 0 至 1"),
   record_id: metadata("业务记录标识", "被审计业务行在其 record_type 下的稳定业务标识"),
   record_type: metadata("业务记录类型", "解释 record_id 及其 Snapshot Schema 的稳定领域类型代码"),
   related_party_id: metadata("关联 Party 标识", "Party Relation 中所有者、控制人、董事、签字人或 UBO 的 Party 标识"),
@@ -276,8 +291,22 @@ export const FIELD_DESCRIPTION_OVERRIDES = Object.freeze({
     "本次自动分配命中的规则标识；当前自动分配模式下必须非空",
   "client_entity_assignment.operating_entity_id":
     "规则、Affiliation 与 Source Relation 共同验证后冻结的 Operating Entity 标识",
-  "commercial_term_scope.payment_method":
-    "Client Pricing 可取支付方式目录代码或批准的 *；Partner Share 当前固定为 *",
+  "payment_method_profile.payment_method_code":
+    "该 Profile 精确绑定的 Payment Method 稳定代码；由 Payment 目录拥有，CCT 不建立 Payment Method 主表",
+  "payment_method_profile.payment_method_profile_code":
+    "CCT 拥有的全局唯一稳定代码；创建后不可修改、不可回收复用，跨聚合和跨系统关联必须使用该代码",
+  "payment_method_profile_cond.payment_method_profile_id":
+    "所属 Payment Method Profile 的 CCT 内部标识；Condition 是聚合内部 Child，因此不使用 Code 代替父内关联",
+  "payment_method_profile_cond.dimension_code":
+    "受版本化应用/API 合同约束的定价维度代码；不建立 Dimension Definition 表",
+  "payment_method_profile_cond.condition_value":
+    "该维度的一个规范化离散值；同维度多行按 OR，不同维度按 AND，不保存 CSV 或通配符",
+  "commercial_term_price.payment_method_profile_code":
+    "关联 ACTIVE Payment Method Profile 的全局稳定代码；不得保存或向外传播 Profile 内部 ID",
+  "commercial_term_price.operating_entity_id":
+    "该价格准确适用且必须被所属 Agreement 覆盖的 Operating Entity；不允许 NULL 或通配值",
+  "commercial_term_price.priority_no":
+    "同一 Commercial Term Version 与准确 OE 下、相同具体度候选的确定性顺序，数值越小越优先",
   "operating_entity_application.operating_entity_id":
     "申请创建时即冻结的稳定 Operating Entity 角色标识；审核拒绝或撤回后重提继续复用同一 PENDING 角色",
   "operating_entity_application.party_profile_id":
@@ -313,11 +342,13 @@ export const FIELD_DESCRIPTION_OVERRIDES = Object.freeze({
   "seller_disclosure.country_code":
     "Seller Disclosure 适用的精确 ISO 3166-1 alpha-2 国家代码",
   "commercial_term_component.currency":
-    "固定金额或金额上下限存在时必填的精确 ISO 4217 币种，必须等于所属 Scope 币种；纯百分比且无上下限时为空",
+    "固定金额、金额上下限或阶梯边界存在时必填的精确 ISO 4217 币种；纯百分比且无上下限时为空",
   "compensation_event.source_version":
     "产生该事件或本地恢复动作的 CCT 来源业务记录版本坐标，并参与来源四元组唯一约束",
-  "commercial_term_scope.operating_entity_id":
-    "可选的 Operating Entity Scope；为空表示该 Agreement 覆盖的全部经营主体，封存时校验完整 Scope Tuple 不重复",
+  "commercial_term_component.band_mode":
+    "仅 TIERED 组件非空；WHOLE_BASE 将命中档位参数用于完整基数，PROGRESSIVE 对各档位区间分别计算",
+  "commercial_term_component_band.upper_bound":
+    "档位不包含上界；最后一档必须为空，其他档位必须与下一档下界连续",
   "entity_source_relation.client_source_basis":
     "Organization Client 提供 Operating Entity 时的来源认定依据；source_type=CLIENT 时为 SAME_PARTY 或 VERIFIED_ASSOCIATION，其他来源为空",
   "party_identity_key.issuing_country":
@@ -465,6 +496,7 @@ export const BCR_RECORD_TYPES = Object.freeze([
   "CONSUMER_LEGAL_DOCUMENT",
   "SELLER_DISCLOSURE",
   "COMMERCIAL_TERM_PLAN",
+  "PAYMENT_METHOD_PROFILE",
 ]);
 
 export const BCR_ROOT_TYPES = Object.freeze([
@@ -484,6 +516,7 @@ export const BCR_ROOT_TYPES = Object.freeze([
   "CONSUMER_LEGAL_DOCUMENT",
   "SELLER_DISCLOSURE",
   "COMMERCIAL_TERM_PLAN",
+  "PAYMENT_METHOD_PROFILE",
 ]);
 
 export const BCR_EXCLUDED_BUSINESS_TABLES = Object.freeze([
@@ -499,8 +532,10 @@ export const BCR_EXCLUDED_BUSINESS_TABLES = Object.freeze([
   "agreement_document_ref",
   "agreement_acceptance",
   "agreement_operating_entity",
-  "commercial_term_scope",
+  "payment_method_profile_cond",
+  "commercial_term_price",
   "commercial_term_component",
+  "commercial_term_component_band",
 ]);
 
 export const CLOSED_ENUM_VALUES = Object.freeze({
@@ -533,7 +568,9 @@ export const CLOSED_ENUM_VALUES = Object.freeze({
   "commercial_term_plan.term_type": ["CLIENT_PRICING", "PARTNER_SHARE", "PLATFORM_SERVICE_CHARGE"],
   "commercial_term_version.status": ["DRAFT", "APPROVED", "SCHEDULED", "ACTIVE", "SUPERSEDED", "EXPIRED"],
   "commercial_term_version.rounding_mode": ["HALF_UP"],
-  "commercial_term_component.component_type": ["PERCENTAGE", "FIXED"],
+  "payment_method_profile.status": ["DRAFT", "ACTIVE", "RETIRED"],
+  "commercial_term_component.component_type": ["PERCENTAGE", "FIXED", "TIERED"],
+  "commercial_term_component.band_mode": ["WHOLE_BASE", "PROGRESSIVE"],
   "business_change_record.record_type": BCR_RECORD_TYPES,
   "business_change_record.aggregate_root_type": BCR_ROOT_TYPES,
   "business_change_version.operation_type": ["CREATE", "UPDATE", "DELETE"],
@@ -582,11 +619,10 @@ export const OPEN_CODE_SOURCES = Object.freeze({
   "client_entity_assignment.industry_code": "平台行业目录",
   "client_entity_assignment.mcc_code": "平台采用的 MCC 目录，MCC 必须为四位数字",
   "commercial_term_plan.status": "Commercial Term Plan 生命周期定义",
-  "commercial_term_scope.industry_code": "平台行业目录中的行业代码或批准的 * 通配值",
-  "commercial_term_scope.mcc_code": "平台采用的 MCC 目录中的四位 MCC 代码或批准的 * 通配值",
-  "commercial_term_scope.country_code": "ISO 3166-1 alpha-2 与批准的 Scope 通配规则",
-  "commercial_term_scope.currency": "ISO 4217 与批准的 Scope 通配规则",
-  "commercial_term_scope.payment_method": "Payment Method 能力目录与批准的 Scope 通配规则（Partner Share 固定为 *）",
+  "payment_method_profile.payment_method_code": "Payment 拥有的 Payment Method 稳定代码目录",
+  "payment_method_profile_cond.dimension_code": "CCT Payment Method Profile Dimension Catalog",
+  "payment_method_profile_cond.condition_value": "对应 Dimension 的事实 Owner 规范化值域",
+  "commercial_term_price.payment_method_profile_code": "CCT ACTIVE Payment Method Profile 代码目录",
   "commercial_term_component.calculation_base": "Client Pricing 计算基数目录；Partner Share 固定 ACTUAL_CLIENT_FEE",
   "commercial_term_component.trigger_code": "Commercial Term Trigger Catalog",
   "commercial_term_component.currency": "ISO 4217",
@@ -614,6 +650,7 @@ export const OPEN_CODE_SOURCES = Object.freeze({
 export const BUSINESS_IDENTIFIER_CODE_PATHS = Object.freeze(new Set([
   "commercial_term_component.component_code",
   "commercial_term_plan.plan_code",
+  "payment_method_profile.payment_method_profile_code",
   "command_idempotency.caller_scope",
   "consumer_legal_document.document_code",
 ]));
@@ -627,7 +664,7 @@ export function controlledValueCandidate(fieldPath, fieldKey) {
   }
   return (
     /(?:^|_)(?:status|type|role|method|source|flag|slot|mode|basis|level|system)$/.test(fieldKey) ||
-    ["dimension_code", "calculation_base", "data_class", "result"].includes(fieldKey) ||
+    ["dimension_code", "condition_value", "calculation_base", "data_class", "result"].includes(fieldKey) ||
     fieldKey.endsWith("_code") ||
     fieldKey.endsWith("_country") ||
     fieldKey.endsWith("_currency") ||
