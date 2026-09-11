@@ -1,5 +1,7 @@
 # RCO-14 运营规则编辑 V2：Platform Support 影响评估
 
+> 历史评估提示：本报告记录 2026-09-10 的组件分析。后续按[2026-09-11 V1 配置决策](../../decisions/2026-09-11-risk-rule-v1-configuration.md)收敛；独立 V2、拒绝字典及默认文案建议不再适用于本期。当前系统影响、接口/DML 和技术待办见[V1 配置草案](../2026-09-11-risk-rule-v1-configuration-contract-draft.md)。
+
 - 日期：2026-09-10。
 - 性质：Assessment / 条件性建议，不是合同批准、功能实现或上线验收。
 - 范围：Platform Permission、PLT-I02、Console Resource、公共 Route/Guard、PLT-I20 Snapshot 和目录 SQL。

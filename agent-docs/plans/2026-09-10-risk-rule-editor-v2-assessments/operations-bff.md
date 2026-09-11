@@ -1,5 +1,7 @@
 # RCO-14 Operations BFF 影响评估
 
+> 历史评估提示：本报告记录 2026-09-10 的组件分析。后续按[2026-09-11 V1 配置决策](../../decisions/2026-09-11-risk-rule-v1-configuration.md)收敛；独立 V2、拒绝字典及默认文案建议不再适用于本期。当前系统影响、接口/DML 和技术待办见[V1 配置草案](../2026-09-11-risk-rule-v1-configuration-contract-draft.md)。
+
 - 日期：2026-09-10。
 - 状态：Assessment / 合同待决；本文不是实现、验证通过或部署声明。
 - 范围：四个规则编辑 V2 画板、`CHECKOUT_PREPARE` 配置/冻结/TEST 静态校验；不包含决策流 V2/V3、运行时冷却/标签执行、新决策点或生产发布。

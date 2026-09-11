@@ -1,5 +1,7 @@
 # Operations 规则编辑 V2 需求与链路评估
 
+> 后继决策（2026-09-11）：[V1 配置增量](../decisions/2026-09-11-risk-rule-v1-configuration.md) 已确认原 V1 调整、仅规则配置、动态主体绑定、手工标签和拒绝原因/文案。本报告保留为 2026-09-10 的历史评估；下文的 Proposed、V2 和字典建议不是本期目标。当前接口/DML 分析见[后继草案](./2026-09-11-risk-rule-v1-configuration-contract-draft.md)。
+
 - 需求编号：`RCO-14`。
 - 需求状态：Proposed / 待确认；链路影响评估已完成，扩展合同尚未批准。
 - 日期：2026-09-10。

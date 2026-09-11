@@ -26,6 +26,7 @@ COMPOSE_APPLICATIONS = TEST_ENVIRONMENT / "compose.applications.yaml"
 INITIALIZER = TEST_ENVIRONMENT / "scripts/initialize.py"
 DEFAULT_SMOKE = TEST_ENVIRONMENT / "scripts/smoke.py"
 RISK_SMOKE = TEST_ENVIRONMENT / "scripts/risk_rule_configuration_smoke.py"
+RISK_V1_SMOKE = TEST_ENVIRONMENT / "scripts/risk_rule_v1_configuration_smoke.py"
 ROLLOUT = TEST_ENVIRONMENT / "scripts/risk_rule_configuration_rollout.py"
 RECOVERY = TEST_ENVIRONMENT / "scripts/risk_rule_configuration_recovery.py"
 SNAPSHOT_WAIT = TEST_ENVIRONMENT / "scripts/gateway_snapshot_wait.py"
@@ -66,6 +67,7 @@ READ_ONLY_SOURCES = (
 # the source-only inventory review and the authorized rollout.  A legitimate
 # edit requires a fresh review and an explicit digest update here.
 REVIEWED_SOURCE_PATHS = READ_ONLY_SOURCES + (
+    RISK_V1_SMOKE,
     SNAPSHOT_METRICS,
     RISK_STAGE,
     JAVA_DOCKERFILE,
@@ -79,16 +81,17 @@ REVIEWED_SOURCE_PATHS = READ_ONLY_SOURCES + (
 )
 
 REVIEWED_SOURCE_DIGESTS = {
+    RISK_V1_SMOKE: "e6adb863163a7cb12f6be851ed73682922b7f5a7191747ddde8259f8eadd90ff",
     PLAN: "7a42138ee04ed0dd006e87d1aef0369f3d251df75ff712caa69a3e621abb3678",
-    README: "ca6341b5d9b3b77a3b962a34b6f95276c04c4c409a585eaeb368c48daa86becf",
+    README: "fe4b09e024d7601adf959da0caaa7bff3251b95f62014225a19148a39554e4e2",
     BUILD: "93687e6bafe31dcf29e07f8039377814b9da7c0451dddc4eafb02d6301b3eb2a",
     DEPLOY: "61770117c3aafc2c40debcc80e3f4ae5f87e4def3e3b018614b46a0e6bc5c562",
     COMPOSE_WRAPPER: "e1e215d4305d2a0af9ab8017cfa6cdf2eef5565dd8143b114283ec5bd7ce6c05",
     COMPOSE_BASE: "23df38a23d0432e3851a829b18c8e58ebe9550c915bf0b9e5613c5d1d6a404cf",
     COMPOSE_APPLICATIONS: "fc1c6b43966771308a978420e6e367e951e9a009beb7bc23960fb6cec817717e",
-    INITIALIZER: "025d6d5208b199acbd38815f010284de97dbfe38baa0ff797c1bf811f2581c31",
+    INITIALIZER: "ad9663844773fef2e707cfd020f14d00d095dd487756cbf94c43b6943116ae3e",
     DEFAULT_SMOKE: "2af4f445af2c1b38dfd4da2e9855ecd1767b0a528c12740e2b37d4ec61794551",
-    RISK_SMOKE: "9e6c22ab771309e9981c0eb65387ce7f53c90c610b00862438223d1c5bf817ba",
+    RISK_SMOKE: "9d1e6024bb04aff2bbf238f5606bd26bdeee78bd9486f73fa357fcea01edc7e5",
     ROLLOUT: "0b7e223ec17db0a7283acb063298562f8754c92937bda9c942cbe789ce4a83b9",
     RECOVERY: "7d0cbda018a71d90fc06a856d4a627724e9f26515bd2899c2f6a9af109acbf80",
     SNAPSHOT_WAIT: "8d06203a1d08ac14fea03ed0ba4d0868be891243b44ec06a7da4b3d0b4b251d4",

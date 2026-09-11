@@ -299,13 +299,19 @@ def load_risk_catalog(schema_text=None, initial_data_text=None):
     if len(tables) != len(schema_statements) or len(tables) != 71:
         raise SystemExit("Reviewed Risk schema must contain exactly 71 unique tables; nothing was applied.")
     dml_statements = _sql_statements(initial_data_text if initial_data_text is not None else _stable_sql_text(RISK_INITIAL_DATA))
-    if len(dml_statements) != 2:
-        raise SystemExit("Reviewed Risk DML must contain exactly the Point and Action catalog statements; nothing was applied.")
+    if len(dml_statements) != 4:
+        raise SystemExit("Reviewed Risk DML must contain Point, terminal/configuration Action and Parameter statements; nothing was applied.")
     point_columns, points = _insert_rows(dml_statements[0], "t_decision_point")
-    action_columns, actions = _insert_rows(dml_statements[1], "t_action_version")
-    if len(points) != 1 or len(actions) != 3:
-        raise SystemExit("Reviewed Risk DML must contain one Point and three Action versions; nothing was applied.")
-    return {"tables": frozenset(tables), "point_columns": point_columns, "points": points, "action_columns": action_columns, "actions": actions}
+    action_columns, terminal_actions = _insert_rows(dml_statements[1], "t_action_version")
+    configuration_columns, configuration_actions = _insert_rows(dml_statements[2], "t_action_version")
+    parameter_columns, parameters = _insert_rows(dml_statements[3], "t_action_parameter_definition")
+    if (len(points) != 1 or len(terminal_actions) != 3 or len(configuration_actions) != 2
+            or len(parameters) != 4 or action_columns != configuration_columns):
+        raise SystemExit("Reviewed Risk DML must contain one Point, five Action versions and four Parameter definitions; nothing was applied.")
+    return {"tables": frozenset(tables), "point_columns": point_columns, "points": points,
+            "action_columns": action_columns, "actions": terminal_actions + configuration_actions,
+            "parameter_columns": parameter_columns, "parameters": parameters}
+
 
 
 def _tab_rows(result, expected_columns):
@@ -329,7 +335,9 @@ def verify_risk_catalog():
     action_columns = ", ".join("`" + value + "`" for value in catalog["action_columns"])
     points = _tab_rows(mysql("SELECT " + point_columns + " FROM t_decision_point ORDER BY decision_point_id;", database="mor_risk"), len(catalog["point_columns"]))
     actions = _tab_rows(mysql("SELECT " + action_columns + " FROM t_action_version ORDER BY action_version_id;", database="mor_risk"), len(catalog["action_columns"]))
-    if points != catalog["points"] or actions != catalog["actions"]:
+    parameter_columns = ", ".join("`" + value + "`" for value in catalog["parameter_columns"])
+    parameters = _tab_rows(mysql("SELECT " + parameter_columns + " FROM t_action_parameter_definition ORDER BY parameter_definition_id;", database="mor_risk"), len(catalog["parameter_columns"]))
+    if points != catalog["points"] or actions != catalog["actions"] or parameters != catalog["parameters"]:
         raise SystemExit("Unexpected/partial Risk decision catalog; manual review required, nothing replaced.")
     return "PREPARED"
 

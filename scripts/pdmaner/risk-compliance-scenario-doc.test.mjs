@@ -80,7 +80,7 @@ const DISPUTE_DECISION_SOURCE_TYPES = Object.freeze([
 
 const FINAL_RISK_TOTALS = Object.freeze({
   tables: 71,
-  fields: 862,
+  fields: 865,
   uniqueIndexes: 105,
   accessIndexes: 75,
   relations: 111,
@@ -215,7 +215,7 @@ test("Risk current documents expose the final Settlement Control topology and ge
   );
   assert.match(
     logicalDatabase,
-    /71 表、862 字段、105 个唯一索引、75 个访问索引、111 条本库逻辑关系、9 条 1:1 关系、8 个 Diagram Groups 和 82 条应用 CHECK Sidecar 契约/u,
+    /71 表、865 字段、105 个唯一索引、75 个访问索引、111 条本库逻辑关系、9 条 1:1 关系、8 个 Diagram Groups 和 82 条应用 CHECK Sidecar 契约/u,
   );
 });
 

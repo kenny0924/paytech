@@ -1,5 +1,7 @@
 # Risk Owner 影响评估：运营规则编辑 V2（RCO-14）
 
+> 历史评估提示：本报告记录 2026-09-10 的组件分析。后续按[2026-09-11 V1 配置决策](../../decisions/2026-09-11-risk-rule-v1-configuration.md)收敛；独立 V2、拒绝字典及默认文案建议不再适用于本期。当前系统影响、接口/DML 和技术待办见[V1 配置草案](../2026-09-11-risk-rule-v1-configuration-contract-draft.md)。
+
 - 评估日期：2026-09-10。
 - 状态：评估结论，尚未形成已批准 Risk V2 合同。
 - 范围：`CHECKOUT_PREPARE` 的 Operations 规则配置、读取、Freeze 与 TEST Candidate 静态校验。

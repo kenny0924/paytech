@@ -326,7 +326,7 @@ test("shared v2 fixture freezes seven closed projection triples and independent 
 test("initial DML inserts exactly one CHECKOUT_PREPARE point and three ACTIVE Action Versions", () => {
   const sql = readDml();
   const inserts = parseInserts(sql);
-  assert.deepEqual(inserts.map(({ table }) => table), ["t_decision_point", "t_action_version"]);
+  assert.deepEqual(inserts.map(({ table }) => table), ["t_decision_point", "t_action_version", "t_action_version", "t_action_parameter_definition"]);
   assert.deepEqual(inserts[0].columns, [
     "decision_point_id", "point_code", "point_name", "business_domain", "status", "create_time", "update_time",
   ]);
@@ -365,11 +365,11 @@ test("initial DML has no extra catalog rows, silent overwrite or dynamic values"
   assert.doesNotMatch(sql, /\bINSERT\s+IGNORE\b|\bON\s+DUPLICATE\s+KEY\b|\bREPLACE\s+INTO\b/iu);
   assert.doesNotMatch(sql, /\b(?:CURRENT_TIMESTAMP|NOW)\s*\(/iu);
   assert.doesNotMatch(sql, /sha256:|placeholder/iu);
-  assert.equal([...sql.matchAll(/\bINSERT\s+INTO\b/giu)].length, 2);
-  assert.equal(parseInserts(sql).reduce((count, insert) => count + insert.rows.length, 0), 4);
+  assert.equal([...sql.matchAll(/\bINSERT\s+INTO\b/giu)].length, 4);
+  assert.equal(parseInserts(sql).reduce((count, insert) => count + insert.rows.length, 0), 10);
 });
 
-test("initial DML parser rejects executable residue after the two approved INSERT statements", () => {
+test("initial DML parser rejects executable residue after the four approved INSERT statements", () => {
   const approved = readDml();
   assertDmlHasOnlyApprovedStatements(approved);
   for (const residue of [
@@ -378,12 +378,31 @@ test("initial DML parser rejects executable residue after the two approved INSER
     "CREATE TABLE t_unapproved(id BIGINT);",
     "INSERT INTO `t_action_version` (`action_version_id`) VALUES (240004);",
   ]) {
-    assert.throws(() => assertDmlHasOnlyApprovedStatements(`${approved}\n${residue}`), /(?:只允许两条批准 INSERT|不得有 residue)/u);
+    assert.throws(() => assertDmlHasOnlyApprovedStatements(`${approved}\n${residue}`), /(?:只允许四条批准 INSERT|不得有 residue)/u);
   }
 });
 
 function assertDmlHasOnlyApprovedStatements(sql) {
   const residue = sql.replace(/--[^\n]*(?:\n|$)/gu, "").replace(/INSERT INTO `[^`]+` \([^)]*\) VALUES\s*[\s\S]*?;/gu, "").trim();
-  assert.equal(residue, "", "唯一初始化 DML 剥离注释和两条批准 INSERT 后不得有 residue");
-  assert.equal(parseInserts(sql).length, 2, "唯一初始化 DML 只允许两条批准 INSERT");
+  assert.equal(residue, "", "唯一初始化 DML 剥离注释和四条批准 INSERT 后不得有 residue");
+  assert.equal(parseInserts(sql).length, 4, "唯一初始化 DML 只允许四条批准 INSERT");
 }
+
+test("configuration-only actions have no fabricated handler and exact structured definitions", () => {
+  const inserts = parseInserts(readDml());
+  assert.deepEqual(inserts[2].columns, inserts[1].columns);
+  assert.deepEqual(inserts[2].rows.map(row => row.slice(0, 13)), [
+    ['240004', "'APPLY_COOLDOWN'", "'冷却'", "'RESTRICTION'", '1', 'NULL', 'NULL', 'NULL', '0', 'NULL', "'MAX'", '0', "'CONFIGURATION_ONLY'"],
+    ['240005', "'ADD_RISK_TAG'", "'添加主体标签'", "'TAG'", '1', 'NULL', 'NULL', 'NULL', '0', 'NULL', "'UNION'", '0', "'CONFIGURATION_ONLY'"],
+  ]);
+  assert.deepEqual(inserts[3].columns, ['parameter_definition_id','action_version_id','parameter_code','value_type','required_flag','allowed_source_type','target_parameter_flag','create_time']);
+  assert.deepEqual(inserts[3].rows.map(row => row.slice(0, 7)), [
+    ['2400041','240004',"'SUBJECT_ID'","'STRING'",'1',"'CONTEXT'",'1'],
+    ['2400042','240004',"'DURATION'","'DURATION'",'1',"'LITERAL'",'0'],
+    ['2400051','240005',"'SUBJECT_ID'","'STRING'",'1',"'CONTEXT'",'1'],
+    ['2400052','240005',"'TAG'","'STRING'",'1',"'LITERAL'",'0'],
+  ]);
+  const delta = readFileSync(new URL('docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql', service), 'utf8');
+  assert.deepEqual(parseInserts(delta), inserts.slice(2));
+  assert.doesNotMatch(delta, /UPDATE\s+`?t_(?:rule_set_version|command_idempotency)|DROP\s+/iu);
+});

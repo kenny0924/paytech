@@ -138,6 +138,8 @@ def _rule(rule_number, literal):
         "priorityNo": rule_number,
         "enabledFlag": True,
         "reasonCode": None,
+        "reasonMessage": None,
+        "additionalActions": [],
         "conditionNodes": [
             {
                 "nodeKey": "root{0:03d}".format(rule_number),
@@ -1843,6 +1845,8 @@ class RiskRouteProbe:
             "priorityNo",
             "enabledFlag",
             "reasonCode",
+            "reasonMessage",
+            "additionalActions",
             "conditionNodes",
             "action",
         }

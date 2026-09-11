@@ -128,6 +128,8 @@ class RequestGenerationTest(unittest.TestCase):
                     "priorityNo",
                     "enabledFlag",
                     "reasonCode",
+                    "reasonMessage",
+                    "additionalActions",
                     "conditionNodes",
                     "action",
                 },
@@ -2442,6 +2444,8 @@ class WriteRouteSmokeTest(unittest.TestCase):
             "priorityNo": 1,
             "enabledFlag": True,
             "reasonCode": None,
+            "reasonMessage": None,
+            "additionalActions": [],
             "conditionNodes": [
                 {
                     "nodeKey": "child",
@@ -2473,6 +2477,8 @@ class WriteRouteSmokeTest(unittest.TestCase):
             "priorityNo": 2,
             "enabledFlag": True,
             "reasonCode": None,
+            "reasonMessage": None,
+            "additionalActions": [],
             "conditionNodes": [
                 {
                     "nodeKey": "root-two",
@@ -2626,6 +2632,8 @@ class WriteRouteSmokeTest(unittest.TestCase):
                 "priorityNo": 1,
                 "enabledFlag": True,
                 "reasonCode": None,
+                "reasonMessage": None,
+                "additionalActions": [],
                 "conditionNodes": [
                     {
                         "nodeKey": "root",

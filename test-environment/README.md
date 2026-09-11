@@ -781,3 +781,19 @@ Audit Event 或 Rollback 表。
    数量与 Platform 一致；不得重启后依赖静态 Route 或人工写 Gateway 缓存；
 4. 从公开 HTTP 入口以获授权账号验证 Target/Route 列表和详情，再由正常 Operations 命令处理后续配置并生成应用
    Audit Event。Break-glass 只恢复可管理性，不代替正常配置发布或审计链路。
+
+## Risk V1 配置增量部署（2026-09-11）
+
+本次三个应用的合同和旧 Hash 兼容要求见 [V1 配置接口合同](../agent-docs/plans/2026-09-11-risk-rule-v1-configuration-contract-draft.md)，实际部署/验证状态只见 [当前状态台账](../agent-docs/CURRENT_IMPLEMENTATION.md)。已有 test 库使用服务拥有的 [人工增量 SQL](../risk-compliance-service/docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql)，不运行空库初始化。`--verify-risk-catalog` 核对一个 Point、五个 Action 和四个 Parameter 的完整目录。
+
+在更新前保留三个应用的旧 image ID，备份 test Risk 库及涉及的 Platform Resource 行。镜像须先构建完成；暂时隐藏六个风控 Resource，再停止 Web/BFF/Risk 以结束旧进程对规则库的访问，核对零连接后应用增量 SQL。仅按 Risk → BFF → Web 顺序替换这三个已审阅镜像；现有 Platform、Gateway、Nginx、Vault 和基础设施不因本增量自动重建。健康及目录核对成功后恢复原 Resource 状态。此过程有短暂维护窗口，既有九条 Route 与权限保持原配置。
+
+现有 `risk_rule_configuration_smoke.py --full` 使用新字段齐全的 Rule，并验证纯终态 Freeze/Candidate 和精确 64 KiB 边界。新增显式配置验收：
+
+```sh
+python3 test-environment/scripts/risk_rule_v1_configuration_smoke.py --verify --base-url http://localhost:28080
+```
+
+默认不带 `--verify` 不执行操作。此命令只接受仓库既有 Loopback 入口和完整 `RESOURCES_EXPOSED` 阶段，复用已准备的 synthetic authorized/denied IAM 夹具。它通过实际 Nginx/Gateway/BFF/Risk 验证主体目录、参数、冷却/标签保存与规范化重放、基于旧版保存新版、旧版退役、拒绝文案及幂等冲突、非终态冻结拒绝和纯终态冻结；读取 test Risk 的运行表计数，验证没有执行副作用。合成规则是不可变证据，不自动删除；IAM 夹具按既有显式 cleanup 命令收尾。
+
+写入新格式后不能将 Owner 直接退回忽略新增字段的旧代码，不能以删列或删规则恢复旧版本；异常时保持入口关闭，保留备份和已提交事实，按状态核对后修复。

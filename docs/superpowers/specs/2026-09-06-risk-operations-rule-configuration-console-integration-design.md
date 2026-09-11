@@ -1,5 +1,7 @@
 # Risk Operations Rule Configuration Console 集成设计
 
+> 2026-09-11 后继：[V1 配置增量决策](../../../agent-docs/decisions/2026-09-11-risk-rule-v1-configuration.md)批准动态主体绑定、非终态附加动作配置及手工拒绝原因/文案，取代单一必填零参数终态动作和空参数目录作为后续配置目标的上限。精确 Wire、持久化、历史 Hash 与执行就绪衔接仍见[接口草案](../../../agent-docs/plans/2026-09-11-risk-rule-v1-configuration-contract-draft.md)；本决定不改写历史合同，不授权运行评估或动作执行。
+
 - Status: Confirmed
 - Decision date: 2026-09-06
 - Implementation/deployment authority: [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md)

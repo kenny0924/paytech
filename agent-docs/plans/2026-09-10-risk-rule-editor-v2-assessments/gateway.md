@@ -1,5 +1,7 @@
 # RCO-14 运营规则编辑 V2：API Gateway / Nginx 影响评估
 
+> 历史评估提示：本报告记录 2026-09-10 的组件分析。后续按[2026-09-11 V1 配置决策](../../decisions/2026-09-11-risk-rule-v1-configuration.md)收敛；独立 V2、拒绝字典及默认文案建议不再适用于本期。当前系统影响、接口/DML 和技术待办见[V1 配置草案](../2026-09-11-risk-rule-v1-configuration-contract-draft.md)。
+
 - 日期：2026-09-10。
 - 性质：Assessment / 条件性建议，不是合同批准、功能实现或上线验收。
 - 范围：Operations Web → Nginx → API Gateway → Operations BFF；Risk 与 Platform 的业务合同由各自 Owner 确认。
@@ -70,7 +72,7 @@
 
 以上“通过大小边界”不代表认证、Guard、BFF JSON 或 Risk 业务校验必然通过。413 测试需先满足正确 Route/JWT/Origin 等前置，避免由更早的拒绝掩盖 Body 检查。
 
-现有 [RiskDecisionConfigurationGatewayAutoTest](../../../api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/acceptance/RiskDecisionConfigurationGatewayAutoTest.java) 的字节边界主要使用 `validAsciiJson`；V2 需补充含中文、Emoji、转义字符、多个动作和拒绝文案的实际序列化样本。应由 Web/BFF/Risk 提供典型、最大允许字段组合和接近限额样本，只交接非敏感合成数据或长度结果。本轮没有 V2 真实 DTO 样本或运行测量，不能推导现有上限不足，也不承诺一定容纳全部理论组合。
+当时评估引用的 `RiskDecisionConfigurationGatewayAutoTest`（该源码路径已不在当前工作区） 的字节边界主要使用 `validAsciiJson`；V2 需补充含中文、Emoji、转义字符、多个动作和拒绝文案的实际序列化样本。应由 Web/BFF/Risk 提供典型、最大允许字段组合和接近限额样本，只交接非敏感合成数据或长度结果。本轮没有 V2 真实 DTO 样本或运行测量，不能推导现有上限不足，也不承诺一定容纳全部理论组合。
 
 不引入 gzip Body、业务分片或批量增量保存绕过限制；它们改变媒体类型/编码或完整不可变版本合同，均不是当前授权。新增目录的成功响应也不受“请求 Body 64 KiB”自动保护，目录规模、分页和 BFF Decoder 上限由 BFF/Risk 提供证据，Gateway 继续做传输时限和错误响应边界控制。
 

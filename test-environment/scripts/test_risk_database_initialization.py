@@ -43,6 +43,16 @@ ACTION_ROWS = (
      "8dc8b20590fa0d0c98732d332871901c568207ba9e346277668c9daab3a1e9b7", "1", "DENY",
      "MOST_RESTRICTIVE", "1", "ACTIVE", "2026-09-05 00:00:00.000000", "2026-09-05 00:00:00.000000"))
 
+ACTION_ROWS += (
+    ("240004", "APPLY_COOLDOWN", "冷却", "RESTRICTION", "1", "NULL", "NULL", "NULL", "0", "NULL", "MAX", "0", "CONFIGURATION_ONLY", "2026-09-11 00:00:00.000000", "2026-09-11 00:00:00.000000"),
+    ("240005", "ADD_RISK_TAG", "添加主体标签", "TAG", "1", "NULL", "NULL", "NULL", "0", "NULL", "UNION", "0", "CONFIGURATION_ONLY", "2026-09-11 00:00:00.000000", "2026-09-11 00:00:00.000000"))
+PARAMETER_COLUMNS = ("parameter_definition_id", "action_version_id", "parameter_code", "value_type", "required_flag", "allowed_source_type", "target_parameter_flag", "create_time")
+PARAMETER_ROWS = (
+    ("2400041", "240004", "SUBJECT_ID", "STRING", "1", "CONTEXT", "1", "2026-09-11 00:00:00.000000"),
+    ("2400042", "240004", "DURATION", "DURATION", "1", "LITERAL", "0", "2026-09-11 00:00:00.000000"),
+    ("2400051", "240005", "SUBJECT_ID", "STRING", "1", "CONTEXT", "1", "2026-09-11 00:00:00.000000"),
+    ("2400052", "240005", "TAG", "STRING", "1", "LITERAL", "0", "2026-09-11 00:00:00.000000"))
+
 
 def load_initializer():
     """Import with sentinels: importing this operator tool must do nothing."""
@@ -109,9 +119,11 @@ class RiskDatabaseInitializationTest(unittest.TestCase):
         self.assertEqual(ACTION_COLUMNS, catalog["action_columns"])
         self.assertEqual(POINT_ROWS, catalog["points"])
         self.assertEqual(ACTION_ROWS, catalog["actions"])
+        self.assertEqual(PARAMETER_COLUMNS, catalog["parameter_columns"])
+        self.assertEqual(PARAMETER_ROWS, catalog["parameters"])
         initial_data = (WORKSPACE / "risk-compliance-service/docs/database/sql/risk-compliance-initial-data.sql").read_text(encoding="utf-8")
         schema = (WORKSPACE / "risk-compliance-service/docs/database/sql/risk-compliance-schema.sql").read_text(encoding="utf-8")
-        for column in POINT_COLUMNS + ACTION_COLUMNS:
+        for column in POINT_COLUMNS + ACTION_COLUMNS + PARAMETER_COLUMNS:
             with self.subTest(omitted_parsed_column=column):
                 with self.assertRaises(SystemExit):
                     self.module.load_risk_catalog(schema, initial_data.replace("`" + column + "`", "", 1))
@@ -146,10 +158,23 @@ class RiskDatabaseInitializationTest(unittest.TestCase):
             if "t_action_version" in sql:
                 self.assertIn(", ".join("`" + column + "`" for column in ACTION_COLUMNS), sql)
                 return action_rows
+            if "t_action_parameter_definition" in sql:
+                return "\n".join("\t".join(row) for row in PARAMETER_ROWS)
             self.fail("unexpected query")
 
         self.module.mysql = prepared_mysql
         self.assertEqual("PREPARED", self.module.verify_risk_catalog())
+        for changed in (PARAMETER_ROWS[:-1], PARAMETER_ROWS + PARAMETER_ROWS[:1],
+                        (PARAMETER_ROWS[0][:3] + ("NUMBER",) + PARAMETER_ROWS[0][4:],) + PARAMETER_ROWS[1:]):
+            def malformed_parameter_mysql(sql, database="mor_platform", changed=changed):
+                if "t_action_parameter_definition" in sql:
+                    return "\n".join("\t".join(row) for row in changed)
+                return prepared_mysql(sql, database)
+            self.module.mysql = malformed_parameter_mysql
+            with self.assertRaises(SystemExit):
+                self.module.verify_risk_catalog()
+        self.module.mysql = prepared_mysql
+
 
         def drifted_mysql(sql, database="mor_platform"):
             if "information_schema.tables" in sql:

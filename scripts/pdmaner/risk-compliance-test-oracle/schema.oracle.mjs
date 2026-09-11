@@ -102,13 +102,13 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "68b232ffa2f12423b00497db6682ffd71274f5b8b2d1f4c61d78e9a2db4ad3cf";
-export const EXPECTED_STRUCTURAL_DIGEST = "be58d091f5ffe87fce6c3fa67ad079845896475124ad7c866196e48a9d7992d9";
-export const EXPECTED_CHECK_POLICY_DIGEST = "a1cc6af3ecf7dab474ee6a85f1f5c95caf1f08612834df9c128c19cef746ab11";
+export const EXPECTED_MODEL_DIGEST = "298a59a6db6e8955799eb189c9e50aa6be8794efe5b9c41f4be38ff02034d03e";
+export const EXPECTED_STRUCTURAL_DIGEST = "64160a217da59a67d9e6d0c3da37729c5c24d1d710f3f1db62455f51ec11b415";
+export const EXPECTED_CHECK_POLICY_DIGEST = "5d9921b58298b0a773bc75e11353ef8c5d0d073b5d82002eafe6cc3f5449514f";
 
 export const EXPECTED_TOTALS = Object.freeze({
   tables: 71,
-  fields: 862,
+  fields: 865,
   uniqueIndexes: 105,
   accessIndexes: 75,
   relations: 111,
@@ -177,7 +177,7 @@ export const COMPENSATION_EVENT_RECONSTRUCTION_TARGET = Object.freeze({
 export const RULE_SET_VERSION_AUDIT_TARGET = Object.freeze({
   orderedFields: Object.freeze([
     "rule_set_version_id", "decision_point_id", "rule_set_code", "rule_set_name", "version_no",
-    "status", "content_hash", "created_by", "change_reason", "frozen_by", "frozen_time",
+    "status", "content_hash", "content_format", "created_by", "change_reason", "frozen_by", "frozen_time",
     "create_time", "update_time",
   ]),
   fieldShapes: Object.freeze({
