@@ -305,6 +305,16 @@
 - **Other verification：** 前一源码批次的 `npm --prefix requirements-site test` 构建及 **136/136** 保持为该批证据，本次没有修改需求站源码。23 个 Mapper Query 的 **164 个投影列**已对照模型；本轮 Schema `--check` 和实际库核对通过，文档/模型补充检查见同一证据目录。
 - **Still pending：** Risk Owner 新资格 HTTP 接入、最终解析 HTTP 200/依赖超时及真实跨 Owner 竞态验证、写入口的 Root 传播、Commerce 支付准备接入（基础预检见下方 COM-PRECHECK-01）、存量环境迁移及应用部署。当前通过的是 CCT 本地规则、真实数据库查询和入站边界；Price 匹配接口、Scope 激活/签署写操作不在本批。没有提交、推送或部署。
 
+<a id="commerce-client-gateway-path-20260912"></a>
+
+## COM-CLIENT-PATH-01：2026-09-12 Commerce Client API 入站路径修正
+
+- **Decision / scope：** 用户将已有十个 Client API 服务前缀调整为 `/client-gateway-api/v1`，见[路径修正决定](decisions/2026-09-12-commerce-client-gateway-api-path.md)。Context Path 保持 `/commerce`，公开 OpenAPI 仍是 `/api/v1`；不改变业务行为和数据库。
+- **Implemented：** Commerce `ClientApiPaths`、metadata-only 日志配置、已有契约与 HTTP 测试以及组件 README 已同步。请求过滤器继续引用统一常量；旧路径不保留别名。
+- **Verified：** 已先更新契约断言，确认旧生产常量导致预期失败；随后 Java 25 `./mvnw -q clean verify` **301/301** 通过，0 失败、0 错误、0 跳过。现有十个接口的真实 HTTP 场景改用新前缀，继续验证可信身份、请求约束、幂等、no-store 和业务行为；配置测试验证 metadata-only 前缀。`npm --prefix requirements-site test` 构建及 **136/136** 通过，6 个新增决定链接/锚点和本次差异空白检查通过；源码、配置、测试及 README 无旧前缀残留。日志见 `/Users/kenny/.codex/verification/commerce-client-gateway-prefix-20260912T111828Z/`。验证使用本地基础设施和测试外部依赖，不代表 Gateway 或真实 Owner 联调。
+- **Delivery：** 用户已授权本地提交；Commerce 提交为 `d953d7afa546f4572e3607a3bb3e1324b5ff81f4`，配套路径决定、合同投影与本条状态一同归档。提交前核对 19 个文件与完整验证时的内容一致，本次归档仅补充交付状态。
+- **Deployment / remaining：** 本次未修改 Gateway、Platform、Nginx 或其他服务；没有应用 SQL、推送、发布或部署。后续 Gateway 接入需使用新的 `/commerce/client-gateway-api/v1` 下游地址。
+
 <a id="commerce-precheck-20260911"></a>
 
 ## COM-PRECHECK-01：2026-09-11 Commerce 基础创建接入 CCT

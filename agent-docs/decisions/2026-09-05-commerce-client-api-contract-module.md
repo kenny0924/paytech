@@ -5,6 +5,7 @@
 - Deployment status: Not applicable
 - Decision date: 2026-09-05
 - Scope: Commerce Hosted Checkout V1 的非运行 Java Owner 入站契约模块
+- Path amendment: 服务入站前缀按 [2026-09-12 用户修正](./2026-09-12-commerce-client-gateway-api-path.md) 改为 `/client-gateway-api/v1`；公开 `/api/v1` 合同保持。
 - Supersedes:
   - [`2026-09-05-commerce-client-api-v1.md`](./2026-09-05-commerce-client-api-v1.md) D1 与第 3 节中“只为外部调用不创建 API JAR”的部分；不取代“不创建独立 Client API 服务”及其他业务决定
   - [`2026-09-05-commerce-client-api-v1-design.md`](../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 第 2.1、2.2 节及第 17 节结论 2 中“外部 DTO 全部留在 Web、外部 OpenAPI 不进入 Java API JAR”的部分
@@ -49,7 +50,7 @@ commerce-service/api/openapi/client-v1.yaml
 - `ClientOrderApi`：按 `orderNo` 查询、按 `clientOrderId` 精确查询、取消 Order；
 - `ClientRefundApi`：查询可退款金额、创建退款、列出 Order 退款、按两种公开标识查询退款。
 
-接口使用 Spring `@HttpExchange`、`@GetExchange` 和 `@PostExchange`，声明 Gateway 到 Commerce 的私网 Owner 路径 `/external/client-api/v1/**`。未来 Web Controller 实现接口且不重复声明 Mapping。
+接口使用 Spring `@HttpExchange`、`@GetExchange` 和 `@PostExchange`，声明 Gateway 到 Commerce 的私网 Owner 路径 `/client-gateway-api/v1/**`。未来 Web Controller 实现接口且不重复声明 Mapping。
 
 ### D4. 可信身份与响应语义必须进入签名
 

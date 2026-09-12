@@ -6,6 +6,7 @@
 - Implementation, verification and deployment: see [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md)
 - Decision record: [`2026-09-05-commerce-client-api-v1.md`](../../../agent-docs/decisions/2026-09-05-commerce-client-api-v1.md)
 - Scope: Commerce-owned Client Server M2M API for Hosted Checkout, Order, Cancel and Refund
+- Path amendment: 第 3.1、4 节服务前缀及下游路径已同步 [2026-09-12 用户修正](../../../agent-docs/decisions/2026-09-12-commerce-client-gateway-api-path.md)；Route 表表达后续接入目标，本次没有修改 Gateway 或注册配置。
 - Partially superseded sections: 第 2.1、2.2 节及第 17 节结论 2 中禁止外部 Java 契约模块、DTO 只落 Web 的部分由 [`2026-09-05-commerce-client-api-contract-module-design.md`](./2026-09-05-commerce-client-api-contract-module-design.md) 取代；其余 Wire 与业务语义继续有效
 - Error-contract supersession: 第 3.4 节 Request ID 通用格式及第 12 节 Problem `type/requestId/timestamp/errors` 形状由 [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](./2026-09-06-system-wide-rfc-9457-problem-details-design.md) 取代；本设计的 Commerce 业务 Code/Status 映射继续有效
 - Recovery-stage supersession: 第 5.5 节中 Create Checkout 的五阶段定义由 [`2026-09-09-commerce-checkout-recovery-simplification.md`](../../../agent-docs/decisions/2026-09-09-commerce-checkout-recovery-simplification.md) 取代，现行恢复检查点为 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`；Cancel 与 Create Refund 不变，下文旧阶段文字仅保留为历史设计证据
@@ -147,7 +148,7 @@ com.paytech.commerce.ext.rest.external.clientapi.v1
 
 ### 3.1 Base、媒体类型和版本
 
-- 公共路径以 `/api/v1` 开始；服务私网 Controller 路径以 `/external/client-api/v1` 开始，应用 Context Path 保持 `/commerce`。
+- 公共路径以 `/api/v1` 开始；服务私网 Controller 路径以 `/client-gateway-api/v1` 开始，应用 Context Path 保持 `/commerce`。
 - 成功 Body 使用 `application/json`；错误 Body 使用 `application/problem+json`。
 - 公共响应由 Gateway 重建 `X-Request-Id`、`Cache-Control: no-store` 和 `Pragma: no-cache`；Commerce 私网 Client API Adapter 对自身路径也固定 no-store/no-cache，避免绕过公共入口的本地验证产生可缓存回执。
 - Client API 不启用 CORS，不把 API Key 放入 Cookie，不提供浏览器 Preflight 旁路。
@@ -227,7 +228,7 @@ V1 不提供通配 Scope。Credential 可以组合多个明确 Scope。Webhook �
 ```text
 target_service_code   = commerce-client-api
 discovery_service_name = commerce-service
-approved_path_root    = /commerce/external/client-api/v1
+approved_path_root    = /commerce/client-gateway-api/v1
 channel               = CLIENT_API
 security_profile      = CLIENT_API_CREDENTIAL
 authorization_mode    = API_SCOPE
@@ -241,16 +242,16 @@ response_timeout      = 10000 ms
 
 | Route code | Method | External path | Downstream path | Scope | Query allowlist | Body bytes |
 |---|---|---|---|---|---|---:|
-| `client-api-commerce-checkout-create` | POST | `/api/v1/checkouts` | `/commerce/external/client-api/v1/checkouts` | `checkouts.write` | none | 16384 |
-| `client-api-commerce-checkout-read` | GET | `/api/v1/orders/{orderNo}/checkout` | `/commerce/external/client-api/v1/orders/{orderNo}/checkout` | `orders.read` | none | 0 |
-| `client-api-commerce-order-read` | GET | `/api/v1/orders/{orderNo}` | `/commerce/external/client-api/v1/orders/{orderNo}` | `orders.read` | none | 0 |
-| `client-api-commerce-order-read-client-id` | GET | `/api/v1/orders` | `/commerce/external/client-api/v1/orders` | `orders.read` | `clientOrderId` | 0 |
-| `client-api-commerce-order-cancel` | POST | `/api/v1/orders/{orderNo}/cancel` | `/commerce/external/client-api/v1/orders/{orderNo}/cancel` | `orders.cancel` | none | 0 |
-| `client-api-commerce-refundable-read` | GET | `/api/v1/orders/{orderNo}/refundable-amount` | `/commerce/external/client-api/v1/orders/{orderNo}/refundable-amount` | `refunds.read` | none | 0 |
-| `client-api-commerce-refund-create` | POST | `/api/v1/orders/{orderNo}/refunds` | `/commerce/external/client-api/v1/orders/{orderNo}/refunds` | `refunds.write` | none | 4096 |
-| `client-api-commerce-refund-read` | GET | `/api/v1/refunds/{refundRequestNo}` | `/commerce/external/client-api/v1/refunds/{refundRequestNo}` | `refunds.read` | none | 0 |
-| `client-api-commerce-refund-read-client-id` | GET | `/api/v1/refunds` | `/commerce/external/client-api/v1/refunds` | `refunds.read` | `clientRefundId` | 0 |
-| `client-api-commerce-order-refunds-list` | GET | `/api/v1/orders/{orderNo}/refunds` | `/commerce/external/client-api/v1/orders/{orderNo}/refunds` | `refunds.read` | `limit,cursor` | 0 |
+| `client-api-commerce-checkout-create` | POST | `/api/v1/checkouts` | `/commerce/client-gateway-api/v1/checkouts` | `checkouts.write` | none | 16384 |
+| `client-api-commerce-checkout-read` | GET | `/api/v1/orders/{orderNo}/checkout` | `/commerce/client-gateway-api/v1/orders/{orderNo}/checkout` | `orders.read` | none | 0 |
+| `client-api-commerce-order-read` | GET | `/api/v1/orders/{orderNo}` | `/commerce/client-gateway-api/v1/orders/{orderNo}` | `orders.read` | none | 0 |
+| `client-api-commerce-order-read-client-id` | GET | `/api/v1/orders` | `/commerce/client-gateway-api/v1/orders` | `orders.read` | `clientOrderId` | 0 |
+| `client-api-commerce-order-cancel` | POST | `/api/v1/orders/{orderNo}/cancel` | `/commerce/client-gateway-api/v1/orders/{orderNo}/cancel` | `orders.cancel` | none | 0 |
+| `client-api-commerce-refundable-read` | GET | `/api/v1/orders/{orderNo}/refundable-amount` | `/commerce/client-gateway-api/v1/orders/{orderNo}/refundable-amount` | `refunds.read` | none | 0 |
+| `client-api-commerce-refund-create` | POST | `/api/v1/orders/{orderNo}/refunds` | `/commerce/client-gateway-api/v1/orders/{orderNo}/refunds` | `refunds.write` | none | 4096 |
+| `client-api-commerce-refund-read` | GET | `/api/v1/refunds/{refundRequestNo}` | `/commerce/client-gateway-api/v1/refunds/{refundRequestNo}` | `refunds.read` | none | 0 |
+| `client-api-commerce-refund-read-client-id` | GET | `/api/v1/refunds` | `/commerce/client-gateway-api/v1/refunds` | `refunds.read` | `clientRefundId` | 0 |
+| `client-api-commerce-order-refunds-list` | GET | `/api/v1/orders/{orderNo}/refunds` | `/commerce/client-gateway-api/v1/orders/{orderNo}/refunds` | `refunds.read` | `limit,cursor` | 0 |
 
 POST Header allowlist 为 `Accept`、`Content-Type`、`Idempotency-Key`；GET 为 `Accept`。`X-Request-Id` 和两个可信身份 Header 由 Gateway 固定管线处理，不进入可配置 allowlist。Query 名称必须精确匹配；未知 Query、重复单值 Query、GET Body 或 Cancel Body 返回 `400 INVALID_REQUEST`。
 

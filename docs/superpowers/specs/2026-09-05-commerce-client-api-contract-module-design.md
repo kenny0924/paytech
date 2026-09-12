@@ -8,6 +8,7 @@
 - Decision record: [`2026-09-05-commerce-client-api-contract-module.md`](../../../agent-docs/decisions/2026-09-05-commerce-client-api-contract-module.md)
 - Public Wire authority: [`commerce-service/api/openapi/client-v1.yaml`](../../../commerce-service/api/openapi/client-v1.yaml)
 - Scope: Hosted Checkout V1 的非运行 Java Owner 入站契约模块
+- Path amendment: 服务路径已同步 [2026-09-12 服务前缀修正](../../../agent-docs/decisions/2026-09-12-commerce-client-gateway-api-path.md)；只改变 Commerce 入站路径，不改变公开 OpenAPI。
 - Error-contract supersession: 本文原 Problem 字段投影由 [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](./2026-09-06-system-wide-rfc-9457-problem-details-design.md) 取代；当前 OpenAPI 投影和 Foundation Writer 继承验证已迁移，契约模块继续不创建 Problem DTO
 - Boundary supersession: Header Owner、可信 ID 类型、请求 JSON 兼容性和公共文档规则由 [`2026-09-08-commerce-client-checkout-structure-simplification-design.md`](./2026-09-08-commerce-client-checkout-structure-simplification-design.md) 第 9 节取代；下文已同步为现行投影
 
@@ -27,7 +28,7 @@
 Client Server
   -> public /api/v1/**
   -> Nginx / API Gateway
-  -> private /commerce/external/client-api/v1/**
+  -> private /commerce/client-gateway-api/v1/**
   -> paytech-commerce-web Controller
   -> Commerce business implementation
 ```
@@ -121,7 +122,7 @@ com.paytech.commerce.client.api.v1
 ```
 
 - Java 接口从 Foundation `ApiHeaderNames` 复用稳定 Header 名称，不在 Commerce 复制常量；
-- `ClientApiPaths` 只定义 `/external/client-api/v1` 私网 Base Path；公开 `/api/v1` 不进入 Java接口常量；
+- `ClientApiPaths` 只定义 `/client-gateway-api/v1` 私网 Base Path；公开 `/api/v1` 不进入 Java接口常量；
 - `ClientApiConstraints` 集中定义 Client Reference、币种、国家和十进制字符串的编译期正则常量，接口与 DTO 不复制同义表达式；
 - `ClientApiModels` 只保存多个能力真实共享的 `Amounts`，不演化成通用 `common.jar`；
 - 三个 `*Api` 只声明 HTTP 方法，不内嵌 DTO；
@@ -135,8 +136,8 @@ com.paytech.commerce.client.api.v1
 | 层级 | Base Path | Owner |
 |---|---|---|
 | 公开 Client Wire | `/api/v1` | OpenAPI + Gateway Route Catalog |
-| Commerce 私网接口 | `/external/client-api/v1` | Java `@HttpExchange` 接口 |
-| 应用实际路径 | `/commerce/external/client-api/v1` | Context Path + 私网接口 |
+| Commerce 私网接口 | `/client-gateway-api/v1` | Java `@HttpExchange` 接口 |
+| 应用实际路径 | `/commerce/client-gateway-api/v1` | Context Path + 私网接口 |
 
 接口类级注解使用：
 
@@ -173,16 +174,16 @@ Gateway 负责认证并注入 Client/Credential ID；Commerce 信任认证结论
 
 | Java 接口 / 方法 | 私网 Method + Path | 额外输入 | Java 正常返回 |
 |---|---|---|---|
-| `ClientCheckoutApi.createCheckout` | `POST /external/client-api/v1/checkouts` | `IK`、`@Valid CreateCheckoutRequestBody` | `ResponseEntity<CreateCheckoutResponseBody>`；只能为 `201 + Location` |
-| `ClientCheckoutApi.getCheckout` | `GET /external/client-api/v1/orders/{orderNo}/checkout` | `orderNo` | `CheckoutResponseBody`；200 |
-| `ClientOrderApi.getOrder` | `GET /external/client-api/v1/orders/{orderNo}` | `orderNo` | `OrderResponseBody`；200 |
-| `ClientOrderApi.getOrderByClientOrderId` | `GET /external/client-api/v1/orders?clientOrderId=` | `clientOrderId` | `OrderResponseBody`；200 |
-| `ClientOrderApi.cancelOrder` | `POST /external/client-api/v1/orders/{orderNo}/cancel` | `orderNo`、`IK`；无 Body | `ResponseEntity<CancelOrderResult>`；200 或 202 |
-| `ClientRefundApi.getRefundableAmount` | `GET /external/client-api/v1/orders/{orderNo}/refundable-amount` | `orderNo` | `RefundableAmountResponseBody`；200 |
-| `ClientRefundApi.createRefund` | `POST /external/client-api/v1/orders/{orderNo}/refunds` | `orderNo`、`IK`、`@Valid CreateRefundRequestBody` | `ResponseEntity<CreateRefundResponseBody>`；只能为 `201 + Location` |
-| `ClientRefundApi.listOrderRefunds` | `GET /external/client-api/v1/orders/{orderNo}/refunds` | `orderNo`、可选 `limit`/`cursor` | `RefundListResponseBody`；200 |
-| `ClientRefundApi.getRefund` | `GET /external/client-api/v1/refunds/{refundRequestNo}` | `refundRequestNo` | `RefundResponseBody`；200 |
-| `ClientRefundApi.getRefundByClientRefundId` | `GET /external/client-api/v1/refunds?clientRefundId=` | `clientRefundId` | `RefundResponseBody`；200 |
+| `ClientCheckoutApi.createCheckout` | `POST /client-gateway-api/v1/checkouts` | `IK`、`@Valid CreateCheckoutRequestBody` | `ResponseEntity<CreateCheckoutResponseBody>`；只能为 `201 + Location` |
+| `ClientCheckoutApi.getCheckout` | `GET /client-gateway-api/v1/orders/{orderNo}/checkout` | `orderNo` | `CheckoutResponseBody`；200 |
+| `ClientOrderApi.getOrder` | `GET /client-gateway-api/v1/orders/{orderNo}` | `orderNo` | `OrderResponseBody`；200 |
+| `ClientOrderApi.getOrderByClientOrderId` | `GET /client-gateway-api/v1/orders?clientOrderId=` | `clientOrderId` | `OrderResponseBody`；200 |
+| `ClientOrderApi.cancelOrder` | `POST /client-gateway-api/v1/orders/{orderNo}/cancel` | `orderNo`、`IK`；无 Body | `ResponseEntity<CancelOrderResult>`；200 或 202 |
+| `ClientRefundApi.getRefundableAmount` | `GET /client-gateway-api/v1/orders/{orderNo}/refundable-amount` | `orderNo` | `RefundableAmountResponseBody`；200 |
+| `ClientRefundApi.createRefund` | `POST /client-gateway-api/v1/orders/{orderNo}/refunds` | `orderNo`、`IK`、`@Valid CreateRefundRequestBody` | `ResponseEntity<CreateRefundResponseBody>`；只能为 `201 + Location` |
+| `ClientRefundApi.listOrderRefunds` | `GET /client-gateway-api/v1/orders/{orderNo}/refunds` | `orderNo`、可选 `limit`/`cursor` | `RefundListResponseBody`；200 |
+| `ClientRefundApi.getRefund` | `GET /client-gateway-api/v1/refunds/{refundRequestNo}` | `refundRequestNo` | `RefundResponseBody`；200 |
+| `ClientRefundApi.getRefundByClientRefundId` | `GET /client-gateway-api/v1/refunds?clientRefundId=` | `clientRefundId` | `RefundResponseBody`；200 |
 
 `limit` 缺失时由接口默认到 20，范围 1–100；`cursor` 最长 512。两个按 Client ID 查询的 GET 都是精确单资源查询，不是列表。
 
@@ -479,7 +480,7 @@ git diff --check
 ## 13. 已确认结论
 
 1. 新增 `com.paytech:paytech-commerce-client-api`，它是非运行的 Owner 入站契约 JAR。
-2. OpenAPI 仍是公开 `/api/v1/**` 唯一权威，Java 接口使用私网 `/external/client-api/v1/**`。
+2. OpenAPI 仍是公开 `/api/v1/**` 唯一权威，Java 接口使用私网 `/client-gateway-api/v1/**`。
 3. 使用三个能力接口和三个 Models 容器，不创建一个巨型接口或十个机械接口。
 4. 每个方法显式接收两个可信 Gateway 身份 Header；Request ID 由 Foundation MVC 基础设施处理，三个 POST 额外接收幂等 Key。
 5. Java 使用普通 DTO/`ResponseEntity`，不使用 WebFlux、Project Reactor、`Mono` 或 `Flux`。
