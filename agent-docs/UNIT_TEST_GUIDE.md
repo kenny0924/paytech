@@ -1,6 +1,6 @@
 # Java 单元测试与自动化测试规范
 
-最后更新：2026-09-10
+最后更新：2026-09-12
 
 状态：Confirmed current testing rules。Foundation 与业务服务使用同一基础设施边界，没有 Testcontainers 或自动重建 test-only Schema 的例外；现有偏差和迁移状态见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
@@ -129,6 +129,10 @@ Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景
 ### 5.1 以可执行入口组织测试
 
 测试围绕业务能力的可执行入口组织，不围绕 `Service` / `ServiceImpl` 的方法清单组织。同一入口下的一组独立测试用例可以经过多个 Service 方法，并证明它们协作后的业务结果；不得因为新增了一个 Service 方法就机械新增一个同名测试。
+
+**Handler 与 HTTP Controller 一样是独立业务入口。** 每个新增或修改的业务 Handler 必须有独立、可定位的入口测试类（例如 `RefundSubmissionHandlerAutoTest`），不能只依赖某个 HTTP 用例间接执行 Handler，也不能以“不给内部 Service 逐个建测试”为由省略。测试从真实 Handler 的公开入口或其生产 Dispatcher/Executor 触发，验证输入、返回/错误、数据库事实与正反副作用；不测试其私有辅助方法，也不另造 Processor 方便测试。确认依据见 [2026-09-12 编排与测试边界决定](./decisions/2026-09-12-use-case-orchestration-and-transaction-boundaries.md)。
+
+Handler 的独立测试仍按最小充分范围使用真实 Service、Repository 和本地数据库；“单独单元测试”不表示把下游业务链全部 Stub 掉。任务重试、到期、Claim/Lease、错误分类和完成回写由框架承担时，相应场景必须经过真实 Dispatcher/Scanner；MQ 消费协议场景仍通过真实测试 Broker。外部调用的事务状态和提交顺序由测试侧 Probe/Simulator 观察，禁止向生产 Handler 或 Service 加测试探针。
 
 | 入口类型 | 默认触发方式 |
 |---|---|
@@ -575,6 +579,7 @@ mvn -pl <service>-test -Dtest=SpecificTest test
 - [ ] 外部 HTTP/MQ 通过有状态 Simulator 和真实协议完成，没有方法级 Stub。
 - [ ] 测试围绕业务能力和完整链路组织，没有为了覆盖率给每个内部方法机械创建孤立测试。
 - [ ] 测试从实际可执行入口触发：HTTP/API、模块公开业务接口、MQ Listener/Event Handler、Job Handler、Compensation Event Handler，或公开静态/纯 Java 合同；没有绕过入口直接测试一串 Service 方法。
+- [ ] 新增或修改的业务 Handler 有独立入口测试类；HTTP 链路间接覆盖没有替代 Handler 专项的输入、结果、事务和副作用验证。
 - [ ] 每个入口已按类型评估正常、边界、失败、重放/幂等、并发/事务和副作用场景，没有只覆盖 happy path。
 - [ ] Builder 只构建数据，Mocker 只准备状态，Checker/Probe 只观察和断言。
 - [ ] 未准备场景、意外请求和多余调用都会显式失败。

@@ -1,6 +1,6 @@
 # 开发约定与编码习惯
 
-最后更新：2026-09-11
+最后更新：2026-09-12
 
 ## 1. 使用范围与优先级
 
@@ -41,7 +41,7 @@
 - 数据访问抽象统一命名为 `*Repository`，使用 `interface + *RepositoryImpl`；不要新增 `*Store` 表达同一职责。它在 Foundation 中位于 `persistence/repository`，在业务服务中位于专项工程规范指定的位置。
 - Foundation 的 `core` 只放不直接参与业务分层、但属于组件核心机制的内部能力，例如 `error`、`observability`、`serialization`、`transaction` 和 `autoconfigure`；业务服务的 `core/dal` 按 `JAVA_PROJECT_STRUCTURE.md` 使用，两者都不能成为杂物目录。
 - 外部机制触发内部服务工作时，入站适配器统一放在与 `service` 平级的 `ext` 包下：XXL-Job 等调度入口放 `ext/job`，既有或迁移期 Dubbo Provider 放 `ext/dubbo`，REST Controller 放 `ext/rest`。其他协议只有存在真实入口时才新增 `ext/<protocol>`，不得创建空包。
-- `ext` 只负责协议解析、入口校验、上下文转换和委托 `service`（BFF 简单转发可直接委托本地 Client Port），不承载业务规则、事务编排或持久化逻辑；出站 HTTP、Provider 和第三方 SDK 适配器放独立 `integration` 边界。`ext/dubbo` 只定义兼容代码的位置，不改变当前禁止新增 Dubbo/OpenFeign 的技术边界。
+- 普通 `ext` 适配器只负责协议解析、入口校验、上下文转换和委托 `service`（BFF 简单转发可直接委托本地 Client Port），不承载业务规则、事务编排或持久化逻辑。补偿 Handler 作为任务执行入口，按第 5.2 节直接编排自身任务；出站 HTTP、Provider 和第三方 SDK 适配器放独立 `integration` 边界。`ext/dubbo` 只定义兼容代码的位置，不改变当前禁止新增 Dubbo/OpenFeign 的技术边界。
 - `ext/rest` 中的 Controller/API 只做协议适配；简单用例可以直接委托一个 Domain Service，BFF 简单转发可以直接委托一个本地 Client Port，复杂用例由 `service` 中的 Processor 编排。Domain Service 承载规则，Repository 屏蔽持久化，Mapper 表达 SQL；不得跨层走捷径。
 - Service 和 Domain Service 的模块内方法可以返回本模块 DataObject 或本模块定义的 Domain/Application 对象；是否转换取决于是否需要保护领域不变量、聚合多表或隔离持久化变化，不为形式对称机械复制同义对象。作为跨 Maven 模块合同发布的业务能力接口必须使用 Owner 定义的 Domain / Application Command / Result，不能暴露 DataObject、Repository/Mapper 类型或 `*-api` Request/Response DTO。Controller、Facade 或其他入站适配器负责完成 HTTP 传输对象转换。
 - 所有业务 Service 必须使用 `interface + *Impl`；所有 Domain Service 必须使用 `interface + *Impl`。接口按业务能力命名，实现使用同名接口加 `Impl`，只有实现类标注 `@Service`。该规则不要求创建没有业务职责的空 Service；先判断是否需要 Service，一旦创建就不得以模块内单实现为由省略接口。调用方只依赖接口，不依赖 `*Impl`；Processor、Controller 仍使用具体类，Repository 保持 `interface + *RepositoryImpl`。
@@ -98,17 +98,20 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 
 ## 5. 事务与代码可读性
 
+用例编排、事务边界与测试隔离的确认依据见 [2026-09-12 决定](./decisions/2026-09-12-use-case-orchestration-and-transaction-boundaries.md)。以下规则适用于项目内相关代码，不局限于某个系统或某个接口。
+
 - 所有新增代码、抽象、接口、配置、模块、表和中间层都必须先通过必要性门禁：能够指出当前真实用例、删除该实现会产生的具体错误，以及现有机制为什么不能承担。无法证明这三点时不新增；“以后可能需要”、形式对称、所谓最佳实践或追求层次完整都不构成理由。
 - 优先删除不影响当前正确性、契约和可观测性的代码。评审不能只问“这样写是否正确”，还必须问“完全不写是否仍然正确”；若答案为是，就不保留该实现。
 - 业务和 Foundation 事务统一使用 `TransactionTemplate` 显式表达边界、传播行为和返回值，不使用 `@Transactional`。
+- **事务公理（2026-09-12 用户确认，全项目）：事务内不允许调用外部服务，只能操作数据库。** 此处数据库仅指当前服务拥有、参与本地事务的数据库；与数据库操作直接相关的纯内存校验、计算和对象构建不属于外部调用。
+- 公理约束完整调用链，不只检查事务入口：Processor、Handler、Service、Repository 及其间接调用均不得在数据库事务内发起 HTTP/RPC、调用远端 Owner/Provider/Vault、读写 Redis 或发布 MQ；外部只读查询也没有例外。不得把外部调用藏进本地 Service、Client 包装或异步提交以绕过边界。
+- 依赖下游的业务查询与校验在开启事务前完成；事务内锁定资源、重验本地状态/版本/唯一键/额度并提交本库事实；下游操作在本地提交后执行，需要记录结果时再开启独立短事务。补偿任务可与业务事实在同一事务落表，但实际调度和外部执行必须发生在提交后。
+- “事务外”按实际执行时是否仍处于数据库事务判断，不能只看当前方法是否创建了事务。不得在外层事务中调用含外部操作的流程；提交后的结果写入必须开启独立的有效事务，不能误用原事务的连接或回调上下文。数据库事务回滚时，不得执行依赖该次提交的下游操作。
 - 普通展示、列表和详情读取默认不创建显式事务，即使内部执行多条 SQL，只要业务允许它们观察相邻的已提交状态。只有写操作、显式锁，或已证明多次读取混合不同提交时点会违反当前业务不变量时，才使用事务；选择只读事务时必须在代码或权威设计中说明需要保护的一致性快照及其失败后果。
-- Processor 是按需的用例编排层。Controller 方法少于 10 条有效可执行语句，且只委托一个 Domain Service（BFF 简单转发可为一个本地 Client Port）、没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排时，可以不创建 Processor；空行、注释、花括号和格式换行不计入语句数，不能通过改写格式规避该边界。
-- 任一上述条件不满足时都必须使用 Processor，不因物理代码行数少而例外。Controller 始终不得直接访问 Repository、Mapper 或第三方 SDK，也不得持有 `TransactionTemplate`；确实通过上述必要性门禁的简单一致性读可由 Domain Service 持有只读事务。
 - 一个方法只承担一个明确职责，原则上不超过 30 行；优先卫语句和早期返回，嵌套不超过三层。
 - 每个手写 Java 方法都必须有中文 JavaDoc；Lombok、record accessor 等生成方法不要求补写。简单方法至少用一行说明业务目的；涉及事务、幂等、恢复、并发、外部调用、异常转换或重要副作用的复杂方法使用多行 JavaDoc，解释必要的入参、返回值、边界和特殊结果。`@Override` 不因继承了类型签名而省略当前实现承担的业务语义。
 - Processor 的内部辅助方法默认使用包级可见性，不机械声明 `private`；模板扩展点使用 `protected`，真正提供给包外调用方的入口才使用 `public`。包级可见不代表公共 API，调用方仍只能从已批准的 Controller、Service 或 Processor 入口进入。
-- 复杂命令入口应能顺序读出“校验输入与业务前置条件 → 执行业务步骤 → 在明确事务中提交本地事实/检查点”。不依赖数据库当前状态的校验在昂贵外部调用和写事务前完成；依赖当前状态、Lease、唯一键或 CAS 的条件必须在相应事务内、紧邻写入重新确认。不得为了形式让 Controller、Processor、Service、Repository 逐层重复同一校验。
-- Processor 的主处理方法只保留有业务含义的阶段调用，并用简短行内注释标出这些阶段；Hash、协议转换、异常映射、事务细节和恢复分支下沉到命名准确的辅助方法。阶段注释帮助读者理解用例顺序，不逐行复述代码。
+- 用例入口的阶段顺序、上下文和协作者边界统一按第 5.2 节组织；不依靠方法拆分或层层转发掩盖完整流程。
 - 多个入口真实复用、且无副作用的校验可以集中到职责明确的 `*Validator`；一次性卫语句留在所属方法，不把散落的 `require*` 机械搬进总揽式公共校验器。Validator 不打开事务、不访问 Repository/Mapper/外部 Client，也不能替代数据库约束、受影响行数和事务内重证。
 - 同一状态对象在多个调用点需要判断“是否属于若干状态之一”时，可由该对象提供类型安全的 `statusIn(Status...)`；单一状态判断继续直接使用 `==`。不建立接受任意枚举/字符串的全局状态工具，也不以该辅助方法绕过合法状态迁移校验。
 - 不为不存在的职责预建 `Abstract*`、空接口或通用上下文。业务 Service 和 Domain Service 的 `interface + *Impl` 是已确认的类型形态，不等于必须创建一个没有业务职责的 Service；通常至少两个真实用例共享稳定流程、字段和不变量后才提取抽象基类。经项目明确确认的跨用例入口标准模板是窄例外，但必须无具体业务依赖，只固定稳定执行骨架；不得借该例外创建单业务父类或提前放入幂等、事务、日志、异常响应和协议上下文。请求 ID、认证、网络信任和追踪等协议上下文优先留在 Web/Security 基础设施，不机械复制到每个 Processor 请求。
@@ -133,6 +136,31 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 - 不把数据库事务和悲观锁混为一谈：去掉显式锁不表示取消事务，`UPDATE` 本身仍会获取行锁。幂等与旧版本冲突也不能只交给有 TTL 的 Redis Key。
 - 验证至少覆盖相关的同资源竞争、不同资源并行、事务失败后释放、Lease 过期/中断、依赖不可用，以及跨资源不变量。使用真实仓库本地 MySQL/Redis，不用方法 Stub 证明分布式协调。
 
+### 5.2 用例编排与职责划分
+
+Processor 是按需的用例编排层。Controller 方法少于 10 条有效可执行语句，且只委托一个 Domain Service（BFF 简单转发可为一个本地 Client Port）、没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排时，可以不创建 Processor。空行、注释、花括号和格式换行不计入语句数，不能通过改写格式规避该边界；任一条件不满足时都必须使用 Processor。
+
+Controller 始终不得直接访问 Repository、Mapper 或第三方 SDK，也不得持有 `TransactionTemplate`；确实通过必要性门禁的简单一致性读可由 Domain Service 持有只读事务。复杂用例由 Processor 显式编排本地事务。
+
+Processor 的主处理方法按以下顺序展示用例，不强制每个阶段对应一个类或方法：
+
+| 阶段 | 职责与边界 |
+|---|---|
+| 1. 基础字段验证 | 尽早拒绝缺失、格式或值域错误，完成必要归一化；复用入站绑定与参数校验结果，不逐层重复解析。 |
+| 2. 请求业务验证 | 通过业务 Service 和出站端口查询并校验资格、状态及下游条件；外部查询必须在事务外。事务前的本地状态检查只作预检，不能替代写入时的并发保护。 |
+| 3. 上下文构建 | 汇总后续实际需要的已验证输入、查询结果和操作标识；恢复时加载原命令事实，不把当前重算值覆盖到已冻结结果。 |
+| 4. 本地事务业务处理 | 通过业务 Service 锁定必要资源、重验本地状态/版本/唯一键/额度，原子写入业务事实及需要的幂等、补偿记录；事务内不调用外部服务。 |
+| 5. 下游操作（如有） | 本地提交后调用出站端口，或交给已登记的补偿 Handler 执行；需要回写结果时另开短事务并重验本地状态。不得同步与补偿各自无条件重复提交。 |
+| 6. 响应构建 | 根据已确认的本地事实、处理结果或已冻结的幂等回执构建响应；受理成功与业务最终成功按接口合同区分。 |
+
+- **入口负责编排，Service 负责业务。** Processor 决定阶段顺序、事务边界和协作者调用；业务 Service 负责业务校验、状态迁移、额度或资源处理，并通过 Repository 持久化。不把参数处理、完整用例、幂等协议、远端操作和响应组装全部塞入一个 Service 方法，也不把业务判断上移到 Processor 后只留下 CRUD Service。
+- **上下文只承载数据。** 仅在多阶段确实需要共享数据时建立具有业务名称的上下文，优先不可变；不保存 Spring Bean、Repository、HTTP 请求对象、可执行回调或用于随意传值的通用 Map。一次逻辑操作中按合同必须稳定的标识、时间和幂等信息应构建或恢复后复用，不在内部重试中随意重建；独立的新业务命令仍按自己的合同生成。
+- **技术机制不混入业务规则。** 幂等协议、Hash/快照转换、集成协议及异常映射由职责明确的协作者或辅助方法处理；业务 Owner 仍决定幂等语义、恢复阶段与事务一致性。提取协作者仍须通过必要性门禁，不为每个步骤新增接口、Service 或 Processor。
+- **校验按事实归属放置。** 不依赖可变状态的校验尽早执行；依赖当前状态、Lease、唯一键、CAS 或受影响行数的条件，必须在相应事务内紧邻写入确认。不得为了形式让 Controller、Processor、Service、Repository 逐层重复同一校验。
+- **补偿 Handler 直接编排自身任务。** Handler 已是独立执行入口，可完成任务校验、本地事务准备、事务外下游操作、独立短事务结果落库和补偿结果返回，无须另设专用 Processor。业务规则和持久化继续委托 Domain Service，不直接访问 Repository/Mapper；包与依赖边界见 `JAVA_PROJECT_STRUCTURE.md` 第 5.6 节。
+- **保持已批准的失败与恢复语义。** 下游超时或调用失败不等于下游未受理；按当前用例的幂等、结果查询与补偿合同处理，不能因拆分事务就释放仍需保留的额度、伪造终态或生成新的业务请求。复用已有恢复机制，不自行增加一套重试框架。
+- 主方法以简短注释和业务方法名呈现阶段，细节放在命名准确的辅助方法或协作者中。纯查询、幂等重放或已完成任务可按合同提前返回；不存在的事务或下游步骤直接省略，不建空方法，也不套通用六阶段模板。
+
 ## 6. Compensation Event 的当前精简习惯
 
 涉及补偿时还必须读取 `COMPENSATION_EVENT_GUIDE.md` 和 `paytech-foundation/README.md`。指南中的业务事务、`afterCommit`、Claim/Lease、至少一次、线程池、错误分类、人工恢复、RabbitMQ 与 XXL-Job 职责继续有效；其中所有依赖 `execution_type`、`source_type`、`source_id`、`source_version`、`schema_version`、`payload_hash`、Canonical Envelope、`LocalCompensationEventHandler`、`RabbitMqEventRoute` 或 `mor.compensation.*` 的表/API/配置/测试描述，已被当前精简实现和下列规则替代，不得恢复：
@@ -148,11 +176,16 @@ private final RecoveryAuditRecorder recoveryAuditRecorder;
 ## 7. 测试代码习惯
 
 - 测试基础设施、`auto/manual` 边界、本地中间件和 Simulator 规则以 `UNIT_TEST_GUIDE.md` 为准；测试复用仓库 `local-environment`，不得连接 Nacos、配置中心或任何真实业务环境。
+- **禁止为了测试在业务代码中加入测试实现或测试行为。** Mock、Fake、Simulator、故障注入、固定成功结果、测试计数器和测试专用配置只能放在测试模块的 `src/test/java`、`src/test/resources` 或已批准的测试专用工件中，不得进入生产 `src/main`、运行依赖或可执行制品。生产业务流程不得根据 `test`、`local-mock` 等 Profile/配置切换为模拟行为；仅换类名或默认关闭开关不构成隔离。
+- 测试通过测试侧配置组装被测真实链路及获准的外部 Simulator，不改写生产分支来驱动场景；是否允许端口替身及其证据范围仍服从 `UNIT_TEST_GUIDE.md` 和该切片的明确授权，不能把测试侧模拟通过写成真实 Owner 接口已对接。
+- 外部集成只有在本次范围明确允许暂缓时才能保留 TODO，并写明待接 Owner/契约与缺失行为；未实现时显式返回不可用或按现有合同阻止执行，不能在生产路径伪造成功、远端标识或业务状态。临时模拟仍受测试隔离规则约束，TODO 不构成新增运行 Mock 的许可。
+- 涉及事务或测试装配的重构，按实际风险验证提交/回滚、外部调用时机、幂等重放、并发与补偿恢复，并检查测试替身及依赖未进入运行制品；测试观察与故障控制留在测试侧，不为验证边界在业务代码加入探针或测试专用分支。
 - 仓库隔离且仅监听 Loopback 的本地测试中间件可以使用提交到测试配置的固定本地账号和密码，使 Maven 与 IDE 中的 `auto` 测试无需手工加载 `.env.local` 即可直接运行。该便利仅适用于明确标记为本地测试、没有生产权限且允许随时重建的账号；生产、共享测试、第三方、Vault、Token、密钥及任何真实环境凭据仍必须通过安全配置注入，禁止写入代码或版本库。固定本地凭据必须与 `local-environment` 初始化值一致，并保留显式环境变量覆盖入口。
 - 同一模块、同一测试切片共享一个最小 `TestApplication`，不要让每个测试类重复声明启动应用；不同切片也不要被迫继承一个启动全部能力的巨型基类。
 - 数据库准备、清理和只读断言集中到注解式 `TestMapper` 或测试 Repository，测试方法和 Mocker 中不要散落大量 `JdbcTemplate` SQL。
 - Builder 只构建合法数据，Mocker 只准备状态，Checker/Probe 只观察和断言；不要使用 Mockito 行为 Stub 替换真实生产链路。
 - 测试从业务能力的实际入口触发：HTTP/API、模块公开 Service/Domain Service 接口、MQ Listener/Event Handler、Job Handler、Compensation Event Handler，或公开静态/纯 Java 合同。同一入口下的一组独立测试用例覆盖真实下游链路和更多相关业务场景；不为了覆盖率给每个 Service 方法或内部类机械配一组测试。纯算法、状态机和转换器在能明显缩小故障定位范围时再补充聚焦单元测试，完整入口与场景矩阵以 `UNIT_TEST_GUIDE.md` 为准。
+- Handler 与 HTTP Controller 一样是独立业务入口，新增或修改业务 Handler 必须维护独立入口测试类，不能只用 HTTP 链路的间接覆盖代替。入口、框架调度和事务观察的完整要求见 `UNIT_TEST_GUIDE.md` 第 5.1 节；此要求不扩大为逐个测试内部 Service 或辅助方法。
 - 测试方法使用清晰的场景名称，例如 `test_invalidParameter`、`test_normalFlow`、`test_retryableError`；异步断言使用有上限的条件等待，不使用固定 `Thread.sleep`。
 - 多个任务或 Maven 进程并行执行时必须使用独立数据库/schema、Redis 前缀和 MQ 命名空间，禁止共享测试库后互相执行 `DROP` 或全表清理。
 

@@ -1,6 +1,6 @@
 # Java 项目结构规范
 
-最后更新：2026-09-10
+最后更新：2026-09-12
 
 ## 1. 使用范围
 
@@ -362,7 +362,7 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 
 目录代表职责，不代表必须创建。没有对应能力时不要创建空目录。
 
-`ext` 和 `service` 必须保持平级。外部机制触发本服务工作时，入口适配器按协议放入 `ext/<protocol>`，只完成协议解析、入口校验、调用上下文转换和服务委托；需要编排的内部用例留在 `service`。`ext/job`、`ext/dubbo`、`ext/rest` 是当前标准目录，MQ Listener 在存在实际消费能力时使用 `ext/mq`。出站调用不属于外部触发入口，统一放在平级 `integration` 包。
+`ext` 和 `service` 必须保持平级。外部机制触发本服务工作时，入口适配器按协议放入 `ext/<protocol>`，通常完成协议解析、入口校验、调用上下文转换和服务委托；HTTP 复杂用例编排留在 `service`。补偿 Handler 按第 5.6 节直接编排自身任务，无须另设 Processor。`ext/job`、`ext/dubbo`、`ext/rest` 是当前标准目录，MQ Listener 在存在实际消费能力时使用 `ext/mq`。出站适配实现不属于外部触发入口，统一放在平级 `integration` 包。
 
 `ext/dubbo` 只规定已有或迁移期兼容入口的包位置，不授权新项目引入 Dubbo。Code-MoR 内部同步服务调用仍使用轻量 `*-api` 与 Spring `@HttpExchange`，新项目不得新增 Dubbo 或 OpenFeign 契约。
 
@@ -375,16 +375,20 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 `service/processor` 中的 Processor 负责需要独立应用层的参数校验和业务流程编排，不是每个入口都必须创建的转发类：
 
 ```text
-校验输入与业务前置条件
-  → 获取或恢复处理上下文
-  → 调用领域能力并编排业务步骤
-  → 在明确事务中提交本地事实或检查点
-  → 返回稳定的应用结果
+基础字段验证
+  → 请求业务验证（含事务外的下游查询校验）
+  → 构建或恢复处理上下文
+  → 本地事务业务处理（重验本地事实并提交）
+  → 下游操作调用（如有，必须在事务外）
+  → 构建稳定的应用响应
 ```
+
+各阶段职责、上下文、幂等与恢复协作者的完整规则见 [DEVELOPMENT_CONVENTIONS.md 第 5.2 节](./DEVELOPMENT_CONVENTIONS.md#52-用例编排与职责划分)。入口负责顺序和事务边界，Domain Service 保留业务规则；没有实际职责的阶段不创建空方法或额外层。
 
 - Controller 方法少于 10 条有效可执行语句，且只委托一个 Domain Service、没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排时，可以省略 Processor。空行、注释、花括号和格式换行不计入语句数，不能通过调整格式规避边界。
 - 任一条件不满足时，无论物理代码行数多少都必须使用 Processor。
 - 复杂用例的默认事务边界位于 Processor；省略 Processor 的简单一致性读由 Domain Service 持有只读 `TransactionTemplate`。Controller 不持有事务边界。
+- 上述为 HTTP 用例分层规则；补偿 Handler 的任务编排见第 5.6 节。所有入口都遵守 [事务公理](./DEVELOPMENT_CONVENTIONS.md#5-事务与代码可读性)：事务内只进行本服务数据库操作，不得直接或间接调用外部服务。
 - 需要 Foundation 资源锁的写用例把 `@ResourceLock` 标在启动期可发现、非懒加载 singleton、非 `final` Spring Bean 的公开、非 `static`、非 `final` Processor 具体实现方法，而不是只标接口；override 必须在具体方法重复声明。锁 Aspect 必须包住该方法内部完整的 `TransactionTemplate`，确保全部 Redis 锁先获得、数据库事务后开始，提交或回滚后才逆序释放。Controller、Domain Service、Repository、Mapper、private/final 方法、同类自调用、直接 `new` 的对象、scoped/lazy Bean、异步返回方法和已有外层事务的调用点都不是支持入口；多个资源必须在该用例入口一次声明完整，不能靠嵌套代理调用拼装锁集合。启动门禁同时验证实际代理包含适用的 Resource Lock Advisor，且其顺序位于适用事务 Advisor 外层。
 - Processor 只能调用 Domain Service、按下述约束保持无副作用的 Validator 或明确的应用端口，不得直接调用 Repository、Mapper 或外部 SDK。
 - Processor 的请求和结果使用应用语义，不依赖 `ResponseEntity`、HTTP Header、Servlet 或客户端代理类型；协议参数在 Controller/Web 基础设施完成解析和转换。
@@ -403,6 +407,7 @@ Domain Service 承载业务规则和跨聚合协调：
 - 所有业务 Service 必须使用 `interface + *Impl`；所有 Domain Service 必须使用 `interface + *Impl`。接口按业务能力命名，实现使用相同名称加 `Impl`，调用方依赖接口，只有实现类标注 `@Service`；
 - 该规则不要求创建没有业务职责的空 Service；一旦职责需要 Service，就不因模块内单实现而省略接口。Processor、Controller 保持具体类，Repository 保持 `interface + *RepositoryImpl`；
 - 实现依赖 Repository 和出站端口，不依赖 HTTP Controller 或 Processor；
+- 业务 Service 承担资格校验、状态迁移、额度/资源处理及本地事实持久化，不承担整个用例的入口适配、事务阶段编排和响应组装。依赖出站端口不构成事务内调用许可；任何含外部调用的方法都只能在数据库事务外执行，完整调用链遵守开发规范第 5 节；
 - 普通业务检查优先使用 `BizCheckFailException` 和包含必要上下文的中文消息；只有调用方确实需要按 Code 区别处理时才使用本服务 `CodeMessageEnum` 与对应 `FailException`；
 - 状态转换必须校验旧状态，防止静默覆盖并发更新。
 
@@ -450,8 +455,9 @@ Domain Service → Repository interface → RepositoryImpl → Mapper → 本系
 
 ### 5.6 MQ 与业务事件
 
+- 补偿 Handler 可以直接承担任务元数据校验、本地事务准备、事务外下游操作、本地事务结果落库与补偿结果返回，不单独增加只为该 Handler 服务的 Processor。Handler 依赖 Domain Service、Integration Port 和事务执行器，业务规则仍归 Domain Service；不直接访问 Repository/Mapper，不自行创建重试线程或替代 Foundation Claim/Lease。
 - 存在真实 MQ 入站能力时，`ext/mq` 负责验签/反序列化之后的事件接收、幂等入口和调用领域能力。
-- 业务状态、状态历史和 `compensation_event` 在 Processor 本地事务内原子提交；MQ 发布只能由事务提交后的执行器完成，不得出现数据库回滚但消息已发送。
+- 业务状态、状态历史和 `compensation_event` 在用例入口明确编排的本地事务内原子提交；MQ 发布只能由事务提交后的执行器完成，不得出现数据库回滚但消息已发送。事务边界完整遵守 `DEVELOPMENT_CONVENTIONS.md` 第 5 节公理。
 - 正常路径通过 `afterCommit` 唤醒本地 Dispatcher；XXL-Job 只做兜底扫描、分片或串行隔离，数据库 Claim/Lease/Version 仍是多实例互斥边界。
 - 本地 `compensation_event` 重试复用相同 `event_key + event_type + sub_event_type`，Handler 从本库权威事实重建业务事件；它不保存来源版本、Schema、Canonical Envelope 或 Payload Hash。业务 MQ 信封是否包含领域来源版本、Schema 和 Payload Hash 由该业务事件契约独立决定。Broker Confirm 后本地成功记录允许删除；失败达到上限必须保留、告警并支持带 Actor/Reason/Ticket 的人工重开。
 - MVP 不建立通用 Inbox/Outbox。消费者在本地业务事务中用业务唯一键、`source_event_key`、Payload Hash、来源版本条件更新和状态机支持重复、延迟和乱序消息，并在事务提交后 Ack。
@@ -472,13 +478,18 @@ ext/* 入站适配器
       → RepositoryImpl / IntegrationImpl
         → Mapper / 外部系统
 
-复杂用例：
+复杂 HTTP 用例：
 ext/* 入站适配器
   → Processor
     → Domain Service / Domain
       → Repository interface / Integration port
         → RepositoryImpl / IntegrationImpl
           → Mapper / 外部系统
+
+补偿任务：
+ext/job Handler
+  → Domain Service / Integration Port
+  → 分段本地事务与事务外调用
 ```
 
 禁止：
@@ -536,7 +547,7 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] Request record 使用正常 Jackson 属性绑定和 Jakarta Validation；没有普通绑定可以表达却仍使用 `DELEGATING JsonCreator`、Map 工厂或字段名常量的样板代码。
 - [ ] `*Api`、顶层 Request/Response 和非显然字段具有与 OpenAPI 一致的语义、单位、可空及默认值说明。
 - [ ] Controller 实现 `@HttpExchange` API、没有重复 MVC Mapping；简单用例只委托一个 Domain Service，其他用例委托 Processor。
-- [ ] 外部触发入口位于与 `service` 平级的 `ext/job`、`ext/dubbo`、`ext/rest` 或实际协议子包，且没有承载业务逻辑。
+- [ ] 外部触发入口位于与 `service` 平级的 `ext/job`、`ext/dubbo`、`ext/rest` 或实际协议子包；补偿 Handler 可编排自身任务，业务规则仍委托 Domain Service，不直接操作持久化。
 - [ ] 调用方通过本地 `*Client` 适配器隔离远程 API DTO，没有让远程 DTO进入领域层。
 - [ ] `*ClientImpl` 只承担本地端口到实际代理的适配，公共调用模板没有吸收业务恢复、事务或领域决策，Processor 也没有复制远程调用骨架。
 - [ ] 未新增 Dubbo 或 OpenFeign 契约，内部调用未绕行 Gateway。
@@ -551,7 +562,7 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] DataObject 类型名没有 `DO` 后缀；仅在 Owner 业务 JAR 内使用，HTTP API 和跨 Maven 模块业务接口使用 Domain/Application Command/Result；数据库结构已与 PDManer、手工 DDL/DML、Mapper 和 Repository 保持一致。
 - [ ] 多业务模块默认没有直接 Maven 依赖；每一项直接依赖都已证明是稳定、可复用的 Owner 窄业务接口及 Domain/Application 模型，并保持长期单向、无环且不承担跨模块用例编排。
 - [ ] 循环风险、多 Owner 命令或跨 Owner 写事务由 `web` Processor 使用一个本地 `TransactionTemplate` 编排，模块没有依赖对方的 `*Impl` 或持久化对象。
-- [ ] 事务覆盖本地原子操作，事件在提交后可靠发布。
+- [ ] 事务只覆盖本服务数据库原子操作；包含间接调用在内的外部查询、命令和 MQ 发布均在事务外，结果落库使用后续短事务。
 - [ ] 需要跨实例排他协调时，`@ResourceLock` 位于非 `final` Spring Bean 的公开 Processor 具体实现方法并由 Proxy 可达，包住完整 `TransactionTemplate`；所有资源在进入数据库事务前已知并按确定顺序获取，没有在接口、Controller、Repository、Mapper、private/static/final 方法或同类自调用上依赖 AOP。
 - [ ] Redis-first 协调没有取代幂等、Expected State/Version CAS、唯一索引或业务不变量需要的数据库最终保护；资源锁声明、配置和代理入口通过启动校验与架构测试。
 - [ ] 状态更新校验旧状态/版本并处理并发冲突。

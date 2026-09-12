@@ -1,0 +1,21 @@
+---
+description: Enforces database-only transaction boundaries across Code-MoR
+alwaysApply: true
+---
+
+# 事务公理
+
+- **事务内不允许调用外部服务，只能操作数据库。** 全项目适用，完整权威为 [开发约定第 5 节](../../agent-docs/DEVELOPMENT_CONVENTIONS.md#5-事务与代码可读性)。
+- 数据库仅限当前服务拥有的本地数据库；必要的纯内存校验、计算和对象构建不属于外部调用。
+- 检查完整调用链。Processor、Handler、Service 或其协作者均不得在数据库事务内调用 HTTP/RPC、远端 Owner/Provider/Vault、Redis 或 MQ；外部查询同样禁止。
+- 下游查询在事务前完成；下游操作在本地事务提交后执行；结果落库另开短事务。
+- 补偿登记在事务内只写本库任务表，实际调度和外部执行在提交后进行。
+- 事务内仍须重验本地状态、版本、唯一键和额度，不能把事务前查询结果当作并发保护。
+
+```text
+下游查询（事务外）
+→ 本地事务：锁定、重验、写业务事实与补偿记录
+→ 提交
+→ 下游操作（事务外）
+→ 本地短事务：核验并记录结果
+```

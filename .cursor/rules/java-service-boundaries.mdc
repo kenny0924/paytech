@@ -16,6 +16,11 @@ alwaysApply: false
 - Processor 是按需的编排层：Controller 方法少于 10 条有效可执行语句、只委托一个 Domain Service（BFF 简单转发可为一个本地 Client Port），且没有业务判断、多步骤编排、写事务、幂等、补偿或跨系统协调时可直接委托；任一条件不满足则保留 Processor。
 - Controller 不得直接调用 Repository、Mapper、第三方 SDK 或持有事务；省略 Processor 的简单一致性读可由 Domain Service 持有只读事务。
 - Processor 使用应用语义的请求和结果，不依赖 HTTP 类型；协议上下文由 Web/Security 基础设施处理。
+- 用例按“基础字段验证 → 请求业务验证 → 上下文构建 → 本地事务业务处理 → 下游操作（如有）→ 响应构建”组织，阶段职责以 `DEVELOPMENT_CONVENTIONS.md` 第 5.2 节为准；没有职责的阶段不创建空实现。
+- Processor 负责顺序和事务边界，Service 负责业务规则与本地事实；上下文只承载后续所需数据，不把整条用例下沉到一个 Service，也不为拆方法新增层。
+- 补偿 Handler 直接编排自身任务，无须专用 Processor；业务规则仍委托 Domain Service，不直接访问 Repository/Mapper。
+- 事务内不允许调用外部服务，只能操作本服务数据库；约束完整调用链。下游查询在事务前完成，下游操作在提交后执行，结果落库另开短事务。
+- 生产代码和运行制品不包含测试替身、测试专用分支或模拟成功逻辑；获准暂缓的外部集成应显式不可用并标明具体 TODO。测试隔离完整规则见 `DEVELOPMENT_CONVENTIONS.md` 第 7 节。
 - 所有业务 Service 必须使用 `interface + *Impl`；所有 Domain Service 必须使用 `interface + *Impl`，只有实现类标注 `@Service`，调用方依赖接口。该规则不要求创建没有业务职责的空 Service；Processor、Controller 保持具体类，Repository 保持 `interface + *RepositoryImpl`。不为单个 Processor 预建抽象基类。
 - 有界内部查询默认完整返回 typed DTO；没有负载证据和批准契约时不增加 ETag、`304` 或内容 Hash。
 - `2xx` 返回接口的正常 typed DTO，`4xx/5xx` 使用 Foundation 的直接错误体；不要给所有成功响应增加通用包装。
