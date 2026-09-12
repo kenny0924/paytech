@@ -96,7 +96,7 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 
 export const EXPECTED_TOTALS = Object.freeze({
   tables: 84,
-  fields: 1100,
+  fields: 1109,
   uniqueIndexes: 145,
   accessIndexes: 155,
   relations: 160,
@@ -105,8 +105,8 @@ export const EXPECTED_TOTALS = Object.freeze({
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "7ca69eda77c79810943e86a83063cb2c10c2e9cd9c081ac718567a6a1dc91da4";
-export const EXPECTED_STRUCTURAL_DIGEST = "a40bf35ed812d31b34443272540b80161b621475185763f37f59a943649df03a";
+export const EXPECTED_MODEL_DIGEST = "7b4de1302c14532f960d1a5fd241804ae81b1e030a27609d5110733a18cc5fe6";
+export const EXPECTED_STRUCTURAL_DIGEST = "c51609722c8eb3864ca8c0fd0f34bce756b7c77e038fd328017161cfe0cb6829";
 
 export const APPROVED_VERSION_PATHS = Object.freeze(`
 t_ledger_book.version
@@ -293,7 +293,7 @@ export const EXPECTED_CHECK_CONTRACTS = Object.freeze({
   ck_tax_period_range: "period_start<=period_end",
   ck_tax_rule_lifecycle: "rule_ver>0 AND (effective_to IS NULL OR effective_from<effective_to) AND ((status='DRAFT' AND content_hash IS NULL AND checker_id IS NULL AND checker_decision IS NULL AND decision_time IS NULL) OR (status='PENDING_APPROVAL' AND content_hash IS NOT NULL AND checker_id IS NULL AND checker_decision IS NULL AND decision_time IS NULL) OR (status IN ('ACTIVE','INACTIVE') AND content_hash IS NOT NULL AND checker_id IS NOT NULL AND checker_id<>maker_id AND checker_decision='APPROVED' AND decision_time IS NOT NULL) OR (status='REJECTED' AND content_hash IS NOT NULL AND checker_id IS NOT NULL AND checker_id<>maker_id AND checker_decision='REJECTED' AND decision_time IS NOT NULL))",
   ck_fiscal_line_amount: "net_amount + collected_tax_amount = gross_amount",
-  ck_tax_line_liability: "tax_basis >= 0 AND reporting_tax_basis >= 0 AND tax_rate BETWEEN 0 AND 1 AND collected_tax_amount >= 0 AND reverse_charge_tax_amount >= 0 AND reporting_collected_tax >= 0 AND reporting_reverse_charge_tax >= 0 AND ((liability_mode='SELLER' AND liable_party_type='OPERATING_ENTITY' AND liable_oe_id IS NOT NULL AND reverse_charge_tax_amount=0 AND reporting_reverse_charge_tax=0) OR (liability_mode='BUYER_REVERSE_CHARGE' AND liable_party_type='BUYER' AND liable_oe_id IS NULL AND collected_tax_amount=0 AND reporting_collected_tax=0))",
+  ck_tax_line_liability: "tax_basis >= 0 AND reporting_tax_basis >= 0 AND tax_rate BETWEEN 0 AND 1 AND collected_tax_amount >= 0 AND reverse_charge_tax_amount >= 0 AND reporting_collected_tax >= 0 AND reporting_reverse_charge_tax >= 0 AND ((liability_mode='SELLER' AND liable_party_type='OPERATING_ENTITY' AND liable_entity_no IS NOT NULL AND reverse_charge_tax_amount=0 AND reporting_reverse_charge_tax=0) OR (liability_mode='BUYER_REVERSE_CHARGE' AND liable_party_type='BUYER' AND liable_entity_no IS NULL AND collected_tax_amount=0 AND reporting_collected_tax=0))",
   ck_tax_return_file: "(file_id IS NULL AND file_content_hash IS NULL) OR (file_id IS NOT NULL AND file_content_hash IS NOT NULL)",
   ck_tax_liability_summary: "taxable_amount>=0 AND output_tax>=0 AND recoverable_tax>=0 AND reverse_charge_taxable_amount>=0 AND reverse_charge_tax_amount>=0 AND net_tax_payable=output_tax-recoverable_tax AND ((liability_mode='SELLER' AND reverse_charge_taxable_amount=0 AND reverse_charge_tax_amount=0) OR (liability_mode='BUYER_REVERSE_CHARGE' AND taxable_amount=0 AND output_tax=0 AND recoverable_tax=0 AND net_tax_payable=0))",
   ck_tax_return_lifecycle: "return_ver>0 AND ((status='DRAFT' AND content_hash IS NULL AND checker_id IS NULL AND checker_decision IS NULL AND decision_time IS NULL AND filed_time IS NULL AND authority_ref IS NULL) OR (status='PENDING_APPROVAL' AND content_hash IS NOT NULL AND checker_id IS NULL AND checker_decision IS NULL AND decision_time IS NULL AND filed_time IS NULL AND authority_ref IS NULL) OR (status='APPROVED' AND content_hash IS NOT NULL AND checker_id IS NOT NULL AND checker_id<>maker_id AND checker_decision='APPROVED' AND decision_time IS NOT NULL AND filed_time IS NULL AND authority_ref IS NULL) OR (status='REJECTED' AND content_hash IS NOT NULL AND checker_id IS NOT NULL AND checker_id<>maker_id AND checker_decision='REJECTED' AND decision_time IS NOT NULL AND filed_time IS NULL AND authority_ref IS NULL) OR (status='FILED' AND content_hash IS NOT NULL AND checker_id IS NOT NULL AND checker_id<>maker_id AND checker_decision='APPROVED' AND decision_time IS NOT NULL AND file_id IS NOT NULL AND file_content_hash IS NOT NULL AND filed_time IS NOT NULL) OR (status IN ('ACCEPTED','AMENDMENT_REQUIRED','CLOSED') AND content_hash IS NOT NULL AND checker_id IS NOT NULL AND checker_id<>maker_id AND checker_decision='APPROVED' AND decision_time IS NOT NULL AND file_id IS NOT NULL AND file_content_hash IS NOT NULL AND filed_time IS NOT NULL AND authority_ref IS NOT NULL))",
@@ -347,7 +347,7 @@ export const EXPECTED_CHECK_CONTRACTS = Object.freeze({
   ck_txn_economics_amount: "gross_amount >= 0",
   ck_txn_econ_component_amounts: "basis_amount>=0 AND raw_amount>=0 AND posted_amount>=0 AND (rate_value IS NULL OR (rate_value>=0 AND rate_value<=1)) AND (source_rate IS NULL OR (source_rate>=0 AND source_rate<=1)) AND ((source_fixed_amount IS NULL AND source_currency IS NULL) OR (source_fixed_amount IS NOT NULL AND source_fixed_amount>=0 AND source_currency IS NOT NULL)) AND (source_min_amount IS NULL OR source_min_amount>=0) AND (source_max_amount IS NULL OR source_max_amount>=0) AND (source_min_amount IS NULL OR source_max_amount IS NULL OR source_min_amount<=source_max_amount)",
   ck_txn_econ_component_party: "(party_type IS NULL AND party_id IS NULL) OR (party_type IS NOT NULL AND party_id IS NOT NULL)",
-  ck_txn_econ_component_source: "(source_rule_type IN ('CLIENT_PRICING','PARTNER_SHARE') AND tax_line_id IS NULL AND source_rule_scope_id IS NOT NULL AND source_rule_content_hash IS NULL) OR (source_rule_type='PLATFORM_SERVICE_CHARGE' AND tax_line_id IS NULL AND source_rule_scope_id IS NOT NULL AND source_rule_component_id IS NOT NULL AND source_rule_content_hash IS NULL AND party_type='FINANCE_ENTITY') OR (source_rule_type='TAX_RULE' AND tax_line_id IS NOT NULL AND source_rule_scope_id IS NULL AND source_rule_content_hash IS NOT NULL) OR (source_rule_type='PROVIDER_COST' AND tax_line_id IS NULL AND source_rule_scope_id IS NOT NULL AND source_rule_content_hash IS NOT NULL)",
+  ck_txn_econ_component_source: "((source_rule_type IN ('CLIENT_PRICING','PARTNER_SHARE') AND tax_line_id IS NULL AND source_rule_scope_id IS NOT NULL AND source_rule_content_hash IS NULL) OR (source_rule_type='PLATFORM_SERVICE_CHARGE' AND tax_line_id IS NULL AND source_rule_scope_id IS NOT NULL AND source_rule_component_id IS NOT NULL AND source_rule_content_hash IS NULL AND party_type='FINANCE_ENTITY') OR (source_rule_type='TAX_RULE' AND tax_line_id IS NOT NULL AND source_rule_scope_id IS NULL AND source_rule_content_hash IS NOT NULL) OR (source_rule_type='PROVIDER_COST' AND tax_line_id IS NULL AND source_rule_scope_id IS NOT NULL AND source_rule_content_hash IS NOT NULL)) AND source_price_id IS NULL AND source_profile_code IS NULL AND source_band_evidence IS NULL OR (source_rule_type='CCT_PRICE_COMPONENT' AND source_rule_version_id IS NOT NULL AND source_rule_component_id IS NOT NULL AND source_price_id IS NOT NULL AND source_profile_code IS NOT NULL AND source_rule_scope_id IS NULL AND source_rule_content_hash IS NULL AND tax_line_id IS NULL)",
   ck_txn_econ_component_link: "source_component_id<>target_component_id AND linked_amount>0",
   ck_txn_economics_parent: "parent_economics_id IS NULL OR parent_economics_id<>id",
   ck_txn_economics_type: "(economics_type='PAYMENT' AND parent_economics_id IS NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NOT NULL AND balance_available_time IS NOT NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NULL AND provider_dispute_notice_id IS NULL AND dispute_case_id IS NULL) OR (economics_type='REFUND' AND parent_economics_id IS NOT NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NOT NULL AND channel_refund_id IS NOT NULL AND duplicate_capture_item_id IS NULL AND provider_dispute_notice_id IS NULL AND dispute_case_id IS NULL) OR (economics_type IN ('DUPLICATE_CAPTURE','DUPLICATE_COMPENSATION') AND parent_economics_id IS NOT NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NOT NULL AND provider_dispute_notice_id IS NULL AND dispute_case_id IS NULL) OR (economics_type='DISPUTE' AND parent_economics_id IS NOT NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NULL AND provider_dispute_notice_id IS NOT NULL AND dispute_case_id IS NOT NULL) OR (economics_type='COST_ADJUSTMENT' AND parent_economics_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NULL AND provider_dispute_notice_id IS NULL AND dispute_case_id IS NULL)",
@@ -604,11 +604,11 @@ export const REQUIRED_FIELDS = Object.freeze({
   t_finance_restriction_proj: Object.freeze([
     "source_system", "source_restriction_id", "source_version", "source_event_key",
     "source_payload_hash", "restriction_type", "owner_type", "owner_id", "client_id",
-    "operating_entity_id", "currency_scope_key", "decision", "reason_set_hash",
+    "entity_no", "currency_scope_key", "decision", "reason_set_hash",
     "effective_from", "effective_to", "version",
   ]),
   t_payout: Object.freeze([
-    "payout_no", "request_key", "owner_type", "owner_id", "operating_entity_id",
+    "payout_no", "request_key", "owner_type", "owner_id", "entity_no",
     "currency", "beneficiary_account_id", "beneficiary_content_hash", "available_account_id",
     "locked_account_id", "requested_amount", "fee_mode", "fee_amount", "owner_debit_amount",
     "beneficiary_amount", "cash_required_amount", "assessment_id", "evaluation_id",
@@ -698,10 +698,10 @@ export const FORBIDDEN_TABLE_FIELDS = Object.freeze({
   t_tax_return: Object.freeze(["current_ver_id", "amends_ver_id"]),
   t_tax_return_line: Object.freeze(["tax_return_ver_id"]),
   t_tax_payment: Object.freeze(["tax_return_ver_id"]),
-  t_tax_registration: Object.freeze(["operating_entity_id"]),
-  t_cash_account: Object.freeze(["operating_entity_id"]),
-  t_cash_account_binding: Object.freeze(["operating_entity_id"]),
-  t_recon_exception: Object.freeze(["operating_entity_id"]),
+  t_tax_registration: Object.freeze(["entity_no"]),
+  t_cash_account: Object.freeze(["entity_no"]),
+  t_cash_account_binding: Object.freeze(["entity_no"]),
+  t_recon_exception: Object.freeze(["entity_no"]),
   t_book_sequence: Object.freeze(["version"]),
   t_account: Object.freeze(["balance_direction", "current_balance_side", "current_balance_amount"]),
   t_accounting_instruction: Object.freeze(["accounting_rule_artifact_id"]),

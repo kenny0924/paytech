@@ -46,6 +46,7 @@ function sha256(value) {
 }
 
 function stableUuid(key) {
+  if (key.startsWith("field/")) key = key.replace(/\/entity_no$/, "/operating_entity_id").replace(/\/liable_entity_no$/, "/liable_oe_id").replace(/\/client_agreement_id$/, "/client_agreement_oe_id");
   const bytes = Buffer.from(sha256(`${MODEL_KEY}:${key}`).slice(0, 32), "hex");
   bytes[6] = (bytes[6] & 0x0f) | 0x50;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
@@ -168,6 +169,13 @@ function normalizeTemplate(template) {
     timeRule.defName = "时刻字段使用 DATETIME(6)，日期事实使用 DATE";
     timeRule.programCode = "let key=(data.field.defKey||'').toLowerCase(); let type=(data.field.type||data.field.dbType||'').toUpperCase(); if(key.endsWith('_date')||key==='start_date'||key==='end_date'){return type==='DATE';} if(key.endsWith('_time')||key.endsWith('_at')||key.endsWith('_from')||key.endsWith('_to')||key.endsWith('_until')){return type==='DATETIME' && parseInt(data.field.len)===6;} return true;";
   }
+  const mysqlDdlTemplate = model.profile.codeTemplates.find((templateSpec) => templateSpec.type === "dbDDL");
+  const typeLengthTemplate = "{{=field.type}}{{?field.len>0}}{{='('}}{{=field.len}}{{?field.scale>0}}{{=','}}{{=field.scale}}{{?}}{{=')'}}{{?}}";
+  invariant(mysqlDdlTemplate?.createTable.includes(typeLengthTemplate), "MySQL DDL template lacks controlled type fragment");
+  mysqlDdlTemplate.createTable = mysqlDdlTemplate.createTable.replace(
+    typeLengthTemplate,
+    `${typeLengthTemplate}{{? field.extProps && field.extProps.characterSet }} CHARACTER SET {{=field.extProps.characterSet}} COLLATE {{=field.extProps.collation}}{{?}}`,
+  );
   return model;
 }
 
@@ -248,7 +256,8 @@ function buildEntities(model) {
         hideInGraph: false,
         refDict: "",
         baseType: mapping.baseType,
-        extProps: {},
+        extProps: (["entity_no", "liable_entity_no", "entity_id"].includes(manifestField.defKey) || (table.defKey === "account" && manifestField.defKey === "owner_id") || (table.defKey === "transaction_economic_component" && manifestField.defKey === "party_id"))
+          ? { characterSet: "ascii", collation: "ascii_bin" } : {},
         domain: mapping.domain,
         id: stableUuid(`field/${table.defKey}/${manifestField.defKey}`),
       };

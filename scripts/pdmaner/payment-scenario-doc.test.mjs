@@ -9,7 +9,7 @@ const modelPath = path.join(workspaceRoot, "payment-orchestration-service/docs/d
 const expectedTableNames = Object.freeze([
   "t_payment_provider", "t_provider_account", "t_provider_mid", "t_mid_capability", "t_mid_health_state",
   "t_routing_policy", "t_routing_policy_version", "t_routing_policy_mid", "t_routing_decision", "t_route_candidate_eval",
-  "t_payment_intent", "t_payment_attempt", "t_payment_instrument", "t_payment_action", "t_payment_customer_action", "t_provider_transaction_ref", "t_provider_interaction", "t_duplicate_payment_case", "t_payment_state_transition",
+  "t_payment_intent", "t_payment_attempt", "t_payment_pricing_fact", "t_payment_instrument", "t_payment_action", "t_payment_customer_action", "t_provider_transaction_ref", "t_provider_interaction", "t_duplicate_payment_case", "t_payment_state_transition",
   "t_payment_refund_position", "t_channel_refund", "t_provider_callback", "t_provider_callback_item", "t_provider_event_exception", "t_provider_dispute_notice", "t_provider_dispute_event", "t_provider_dispute_action", "t_command_idempotency", "t_compensation_event",
 ]);
 const retiredNames = Object.freeze(["provider_connection", "provider_connection_version", "mid_limit", "mid_credential_ref", "mid_health", "routing_policy_binding", "routing_rule_condition", "payment_execution_gate", "payment_execution_gate_result", "three_ds_context", "payment_recovery_task", "channel_refund_attempt", "refund_transaction_ref", "active_slot"]);
@@ -19,8 +19,8 @@ function readScenario() {
   return readFileSync(scenarioPath, "utf8");
 }
 function scenarioTableRows(source) {
-  const start = source.indexOf("## 7. 29 表覆盖核对");
-  assert.ok(start >= 0, "Payment 场景缺少 29 表覆盖章节");
+  const start = source.indexOf("## 7. 30 表覆盖核对");
+  assert.ok(start >= 0, "Payment 场景缺少 30 表覆盖章节");
   return source.slice(start).split(/\r?\n/u)
     .filter((line) => /^\|.*\|$/u.test(line))
     .flatMap((line) => [...line.matchAll(/t_[a-z0-9_]+/gu)].map((match) => match[0]));
@@ -46,14 +46,14 @@ function requireModel() {
 
 const scenarioModelReadyAtRegistration = existsSync(modelPath);
 
-test("Payment real-world scenario covers the approved 29 tables exactly once in its coverage catalog", () => {
+test("Payment real-world scenario covers the approved 30 tables exactly once in its coverage catalog", () => {
   const source = readScenario();
   assert.match(source, /NI.*Provider/u);
   assert.match(source, /3DS.*UNKNOWN.*退款.*重复成功.*Callback.*争议/u);
-  const coverageStart = source.indexOf("## 7. 29 表覆盖核对");
+  const coverageStart = source.indexOf("## 7. 30 表覆盖核对");
   const coverage = scenarioTableRows(source);
   assert.deepEqual(coverage, expectedTableNames);
-  assert.equal(new Set(coverage).size, 29);
+  assert.equal(new Set(coverage).size, 30);
   for (const tableName of expectedTableNames) {
     assert.ok(source.slice(0, coverageStart).includes(`| ${tableName} |`), `场景未列出 ${tableName} 的实际行`);
   }
@@ -141,6 +141,6 @@ test("Payment scenario real table field=value rows match model fields and closed
       if (allowed && value !== "NULL") assert.ok(allowed.includes(value), `场景枚举值不合法 ${tableName}.${fieldName}=${value}`);
     }
   }
-  assert.deepEqual([...coveredTables].sort(), [...expectedTableNames].sort(), "场景实际表数据行未覆盖全部 29 表");
+  assert.deepEqual([...coveredTables].sort(), [...expectedTableNames].sort(), "场景实际表数据行未覆盖全部 30 表");
 });
 }

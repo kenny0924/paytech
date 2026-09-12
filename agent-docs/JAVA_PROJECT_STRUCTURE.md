@@ -313,7 +313,7 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 
 - 调用方不重复定义远程 HTTP DTO，也不重新声明 URL。
 - 远程 DTO 只停留在 integration/infrastructure 边界；转换为调用方自己的领域对象后再进入领域逻辑。
-- 内部共享错误协议的 HTTP 代理由配置层通过 Foundation `HttpServiceClientFactory` 创建并注册为单例 Bean，业务 Client 直接注入调用。公共异常转换只作用于这些显式创建的代理；业务类不重复包装 HTTP 状态、网络与错误体处理，特殊恢复或业务转换仍由拥有该语义的层负责。
+- 内部共享错误协议的 HTTP 代理优先通过 Spring `@ImportHttpServices(group = "服务名", types = OwnerApi.class)` 自动注册为单例 Bean，业务 Client 直接注入。配置层返回 Foundation `HttpServiceClientFactory.configureGroup(...)`，为对应 Group 安装公共异常边界；Spring Boot/Cloud 负责客户端创建、传输配置和负载均衡。Group 不配置固定实例 `base-url`，以 Group 名作为服务 ID；Nacos 提供实例。既有显式传输宿主仍可通过 `HttpServiceClientFactory.create(...)` 接入相同异常边界，不自动扩大其他消费者迁移。业务类不重复包装 HTTP 状态、网络与错误体处理，特殊恢复或业务转换仍由拥有该语义的层负责。
 - `@HttpExchange` 本身只定义 HTTP 契约。Nacos 负责服务发现，Spring Cloud LoadBalancer 负责实例选择，底层 `RestClient` 或 `WebClient` 通过部署网络限制的私有 HTTP 发送请求；Java 服务不持有 X.509 应用证书。
 - 超时、统一错误映射、追踪和熔断在调用方基础配置或适配器中处理；命令请求不得在缺少幂等保障时自动重试。
 - 内部服务调用不经过 API Gateway。

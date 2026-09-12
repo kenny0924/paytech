@@ -22,10 +22,10 @@
 | Operations Console BFF | 独立 `web + test` Maven 仓库；当前工作区除既有页面适配外，已使用 Foundation Writer 输出统一 Problem，并在边界重建自身 503/504，保留显式上游迁移 Reader | 2026-09-06 JDK 25 `clean verify` 315/315；严格 Profile 与真实 `HEAD` 聚焦门禁 272/272 | 2026-09-11 本次 BFF 制品已部署到 `mor-test`，Risk 配置跨服务 HTTP 验收通过；见第 15 节 | 无数据库和签名密钥；不拥有核心授权或跨系统事务；Legacy Reader 待部署证据后删除 |
 | Operations Console Web | React/TypeScript/Vite/Ant Design 已实现；当前工作区的 API 消费者严格读取 Problem、显示安全 detail/requestId，并为已知目标保留显式旧 Reader | 2026-09-06 测试 216/216，TypeScript 与 Vite 生产构建通过 | 2026-09-11 本次 Web 制品已部署到 `mor-test`，公开页面/静态资源与构建逐字节一致；见第 15 节 | Client/Partner 未来会话方案不由此决定；Legacy Reader 待部署证据后删除 |
 | Vault V1 | Go Server、OpenAPI 与 Java Client 的当前工作区已切换统一 Problem/`HEAD`/Request ID 合同；三表 Protect/Reveal 业务边界不变 | 纯 RFC staged tree 的 Java Client `clean verify` 34/34，OpenAPI/YAML/source 静态门禁通过；当前主机没有 Go/gofmt，Go 编译与测试未执行 | 既有 `mor-test` 合成 smoke 部署保持不变；本次 Problem 源码未部署 | 补齐 Go 门禁；Platform 仍使用批准的开发 Mock；生产 KMS、强服务身份、真实消费者、合规验证和生产部署未完成；Legacy Java Reader 待删除 |
-| CCT | 40 表/443 字段目标模型与首个 Java 切片已存在；定价模型已改为 Payment Method Profile、准确 OE Price、可组合 Component/Band；Client Contract 应用继承统一 MVC Problem Writer | 2026-09-11 生成器 `--check`、模型契约 80/80、现实场景 7/7 与 Requirements 内容门禁 136/136 通过；此前真实随机端口 Profile 门禁及仓库 `clean verify` 4/4 保持 | 未声明 | 本次只完成设计源、生成器与 PDManer 工件；未生成或执行 Schema SQL，Java 定价、CCT-I13/I14 新 Wire、Payment 晚到事实、Commerce/Finance 迁移、物理数据库和生产部署均未完成 |
-| Commerce | 15 表/246 字段模型与完整人工 SQL 已生成；Client API/Web/Test 及非运行 Owner contract module 已存在；`createCheckout/getCheckout` 已按 Creation/Query/Idempotency、Idempotency Validator、Codec、Converter、Assembler、Repository 和三个真实恢复检查点的 Processor 职责重构，Create 阶段为 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`，纯依赖构造器使用 Lombok。Client API 现复用 Foundation Header 名称、以 `long` 接收可信身份、使用正常 Jackson/Bean Validation 绑定并补齐 JavaDoc/OpenAPI 描述。Test module 已统一 `TestApplication`、`MockTestBase`、`ManualTestBase` 和 auto/manual 本地配置 | 2026-09-10 仓库本地 MySQL 完成 15 表人工准备；Commerce `./mvnw clean verify` 194/194，0 失败/错误/跳过，真实随机端口 HTTP、Repository、Schema Runtime 和 Owner 端口边界均执行，JaCoCo Hosted Checkout 行覆盖率 90.20%（1831/2030），通过 90% 门槛。既有合同/漂移、JavaDoc、模型/Schema、生成器和 Requirements 门禁证据保持 | 未声明 | 本机 `mor_commerce` 只用于本地验证，不构成共享数据库迁移或部署。四个 Owner 仍是 Commerce-owned local-mock 端口，不是真实 `@HttpExchange` 合同。其余八接口、Gateway/Nginx、Checkout 页面、事件/Webhook、真实 Owner 联调、端到端、发布和部署均未完成；当前仅为 local-mock integration-ready |
-| Payment | 29 表模型已生成 | 自动模型门禁通过 | 未声明 | 完整 Java 服务、物理数据库和生产部署未证明 |
-| Finance | 84 表模型与首个余额查询 Java 切片已存在；当前测试消费者统一校验真实 HTTP Problem | 2026-09-06 JDK 25 `clean verify` 25/25，含本地 MySQL 余额路径与 RFC 1123 Date 门禁 | 未声明 | 完整服务与部署未证明；手工缴税异常分支待专项模型闭合 |
+| CCT | 38 表/428 字段目标模型及完整人工 Schema；本地空库已初始化，条件启用的 Checkout 预检/解析已实现，Risk 资格端口仍关闭，见 CCT-QUERY-01 | 全量 Maven verify 32/32；本地 MySQL 结构与测试数据清理核对通过；四系统模型证据见 OE-CLIENT-MODEL-01 | 应用未部署 | Risk 新资格接入、最终解析完整链路、其他写入口/API/MQ、存量库迁移和部署未完成；旧 V5/Hash Reader 保留，Scope 不得绕过 Risk 激活 |
+| Commerce | 15 表/249 字段目标模型；创建只做 CCT 基础预检并建立基础订单，不创建 Payment 单据；已删除 `schemaVersion` 和旧创建分支。本地兼容增量 SQL 与公共 HTTP 收敛见 COM-PRECHECK-01 | `./mvnw -q clean verify` 194/194，0 失败/错误/跳过；真实本地 MySQL、随机端口 HTTP、CCT HTTP Simulator、创建/重放/恢复通过。JaCoCo 90.02%（1254/1393），通过原 90% 门槛 | 应用未部署 | 本地桥接结构为 15 表/250 字段，保留历史列，未等同完整目标 Schema。支付准备、最终合同/Tax/Payment、晚到定价、其他公开接口/事件及真实跨服务联调尚未完成 |
+| Payment | 30 表/393 字段目标模型、Payment Pricing Fact 和完整人工 Schema 已生成 | 2026-09-11 四系统自动模型和场景回归通过，详见 OE-CLIENT-MODEL-01 | 未声明 | 尚无完整 Java 业务服务；新模型不代表已有支付执行、Risk 联调或数据库迁移 |
+| Finance | 84 表/1,109 字段目标模型和完整人工 Schema 已生成；首个余额查询 Java 仍是旧数字身份切片；当前测试消费者统一校验真实 HTTP Problem | 2026-09-06 JDK 25 `clean verify` 25/25，含本地 MySQL 余额路径与 RFC 1123 Date 门禁 | 未声明 | 本次未执行 SQL，旧余额切片不能直接消费新身份 Schema；完整服务与部署未证明；手工缴税异常分支待专项模型闭合 |
 | Risk & Compliance | 71 表/九路由配置切片；本次原 V1 增加可空终态、冷却/主体标签参数、手工拒绝文案、Risk-owned 主体绑定与显式历史格式兼容，见第 15 节 | 2026-09-11 JDK 25 `clean verify` 155/155，含真实本地 MySQL/随机端口 HTTP、旧 Hash Golden 和配置冻结门禁；模型/Schema 189/189 | 2026-09-11 已部署本机 `mor-test`；开发库和 test Risk 库分别获授权备份并应用增量 SQL | Risk 配置的真实 Nginx/Gateway/BFF/Risk HTTP 链已验收；PDManer 人工 Review、其他环境/生产仍待完成；运行期评估和真实动作不在本期范围；全局 COMP-01/DB-01/Vault V1 Gate 保持 |
 | `mor-local` | 仓库提供 MySQL、Redis、RabbitMQ、Nacos 等本地依赖的手工环境 | 当前本机运行状态应按 [`LOCAL_DEVELOPMENT_ENVIRONMENT.md`](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 的命令即时核对 | 仅本机开发环境 | 自动测试只能复用该环境，不得自行拉起替代容器或连接真实业务环境 |
 | `mor-test` | 独立 Docker 测试拓扑当前为 11 个容器、36 条 Route、21 个 Console Resource、19 个 ACTIVE Permission，浏览器入口为 `http://localhost:28080` | 已记录真实登录/IAM/审计/Refresh/Logout、Gateway 控制面启停/幂等/版本冲突/Snapshot 恢复与 Vault 合成 smoke | 本机独立测试环境；Gateway 控制面与 Risk V1 配置入口已部署，11 个容器健康 | 不是 Maven `auto`、覆盖率或生产证据；生产部署仍未声明 |
@@ -38,10 +38,10 @@
 
 | 系统 | 表 | 字段 | 唯一索引 | 访问索引 | 本库关系 | 1:1 | Diagram Groups |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Client & Contract | 40 | 443 | 63 | 46 | 67 | 7 | 6 |
-| Commerce | 15 | 246 | 24 | 12 | 15 | — | 4 |
-| Payment Orchestration | 29 | 373 | 41 | 44 | 63 | — | 7 |
-| Finance | 84 | 1,100 | 145 | 155 | 160 | 22 | 6 |
+| Client & Contract | 38 | 428 | 61 | 43 | 64 | 6 | 6 |
+| Commerce | 15 | 249 | 24 | 12 | 15 | — | 4 |
+| Payment Orchestration | 30 | 393 | 42 | 45 | 65 | 8 | 7 |
+| Finance | 84 | 1,109 | 145 | 155 | 160 | 22 | 6 |
 | Risk & Compliance | 72 | 877 | 108 | 76 | 113 | 9 | 8 |
 | Platform Support | 63 | 822 | 123 | 99 | 107 | 5 | 7 |
 
@@ -60,7 +60,7 @@
 | TEST-01 | Foundation 不使用 Testcontainers 或自动 Schema 初始化 | Redis Starter 已迁移为复用仓库 `local-environment` 且真实门禁通过；Compensation Event 测试仍自动重建 Schema | Compensation Event 静态门禁先失败后通过，并在手工准备的 `mor-local` 上完成受影响 Maven 测试 |
 | COMP-01 | 本地可靠表使用 `event_key + event_type + sub_event_type + 可选最小 payload_json`，任何 Vault Token 禁止进入 Payload | 六库文档/PDManer 仍有旧 source/version/schema/hash/64 KiB 契约；Foundation `CompensationPayloadPolicy` 尚未显式拒绝 `vaultToken` / `*_vault_token` 标准字段名，也缺少相应反例测试 | 六套 Manifest、Policy、模型、场景、SQL 和测试一次性迁移并复核统计；Foundation 登记入口拒绝标准 Vault Token 字段并通过反例测试 |
 | DB-01 | 新建表不使用物理 CHECK/FK，Sidecar 仅表达应用不变量/逻辑关系 | 多份旧物理决策与 Vault DDL 仍有现在时或实际约束 | 应用保护与反例测试齐备后，审核并手工执行逐库约束迁移；物理核验通过 |
-| CCT-PRICING-01 | CCT 用全局不可复用 `payment_method_profile_code` 描述支付方式特征，并由 Term Version 下准确 OE Price 组合 Percentage、Fixed、Tiered Component/Band | 40 表/443 字段 PDManer 目标模型与 80/80 模型门禁已完成；现行 CCT-I13/I14 V5 Scope、Commerce Scope 字段、Finance Scope Reader 与 Payment 晚到事实仍未迁移，本轮没有 Schema SQL、Java 定价或数据库执行 | 独立批准新 Wire 与 Hash/历史 Reader；明确 Payment 标准化事实及时序；同步 CCT/Commerce/Payment/Finance 模型、手工 SQL、Java 与测试；在授权环境人工执行并核验后才关闭 |
+| CCT-PRICING-01 | CCT 用全局不可复用 `payment_method_profile_code` 描述支付方式特征，并由 Term Version 下准确 OE Price 组合 Percentage、Fixed、Tiered Component/Band | 四系统目标模型及完整人工 Schema 已同步；新 Wire、Java、Payment 晚到事实、真实 Risk 接入和数据库执行仍待完成，详见 OE-CLIENT-MODEL-01 | 完成实际历史盘点及新旧 Reader 隔离；实现各 Owner HTTP/MQ、准备恢复与定价；另行接入 Risk，在授权环境迁移并通过真实数据库与端到端验证后关闭 |
 | FIN-01 | Tax Payment 事前承诺门禁与已发生银行扣款的事后事实登记分离 | 专项核对已确认：现有 `Bank Item + Reconciliation Exception` 可保存并追踪已发生扣款，但当前模型不能无损地把“没有前置 Tax Payment 的真实扣款”闭合到 Return/Payable | 正常流、无前置记录真实扣款、重复、金额/归属不匹配和解决流程均有模型与测试 |
 | RUN-01 | Gateway 本地 Nacos 默认 Namespace 与 `mor-local` 一致 | Gateway 当前默认/示例仍为 `public` | 失败断言、配置修正和相关 Gateway 门禁通过 |
 | RISK-OPERATIONS-RULE-CONFIG-01 | `CHECKOUT_PREPARE` 配置后端、BFF 适配与 V1 页面已实现；本次增加动态主体绑定、可空终态和冷却/主体标签配置、手工拒绝文案，保留不可变版本、历史 Hash、持久幂等与纯终态 TEST Candidate | 本次 Risk `clean verify` 155/155、BFF `verify` 1008/1008、Web 887/887 与生产构建、模型/Schema 189/189 通过；获授权备份后已准备本机 `mor_risk` 增量结构/目录。本次 test 环境原有 Risk 脚本 164/164、新显式验收入口 2/2 离线检查通过；三个应用已部署，`RISK_V1_CONFIGURATION_SMOKE_OK` 与 `FULL_OK` 验收通过，人工 PDManer Review 尚未完成 | 本机 test 已完成协调切换和 Gateway/Auth/PLT-I02 实际 HTTP 链验收；其他环境须单独授权和验证。冷却/标签配置不能冻结或执行，运行评估、Shadow、审批和激活须另行设计；不得用本项关闭 COMP-01、DB-01 或 Vault V1 |
@@ -168,7 +168,7 @@
 - **Implemented：** `ClientCheckoutApi#createCheckout/getCheckout` 已由 Commerce Web 的同步 Spring MVC Controller 实现。当前重构把创建、查询、创建幂等、幂等 Validator、快照 Codec、Owner Command 转换和 Prepared Aggregate 组装分成独立职责；通用 Command DataObject、Mapper/XML、Repository、Claim/Lease/CAS 已迁入按需启用的 Foundation `paytech-command-idempotency`。`CreateCheckoutProcessor` 线性编排 claim/resume、authority resolution、prepared persistence、Payment binding 和 replay/expiry，持久化恢复检查点仅为 `CLAIMED -> ORDER_COMMITTED -> COMPLETED`。Commerce 的无副作用 Validator 继续校验当前请求/winner、持久化生命周期、快照坐标和冻结结果；Commerce Domain Service 解释业务阶段并在原有调用方事务中组合 Foundation API。业务 Service、Domain Service 和 Repository 保持 `interface + *Impl`，单实现纯协作者保持具体类；纯依赖赋值构造器使用 Lombok。Create 使用独立的外部语义请求 Hash，以及尚未发布的内部 V1 `{h,p}` JCS 恢复快照；后者以 Payload canonical SHA-256 检测局部损坏（不是认证签名），并 fail closed 校验命令生命周期、命令行/快照坐标和成功回执/实际 Root。`Client + operation + Idempotency-Key` winner、Lease/CAS、应用生成 ID/Order No/三个 Token 候选、正常成功路径三个本地短事务以及 GET 的可信 Client 隔离语义保持不变；CCT、Risk、Finance、Payment 调用仍全部位于本地数据库事务之外。
 - **Persistence / model：** Commerce 设计资产已推进为 15 表/246 字段/24 唯一索引/12 访问索引/15 本库关系/4 图，完整人工 DDL 与单一初始化 DML 已生成。应用保持 `spring.sql.init.mode=never`；经用户授权，当前开发机的仓库 `local-environment` 已人工应用 DDL/DML，并固定 Loopback `commerce_app` 测试密码。该本地准备不构成共享环境迁移或部署。
 - **Integration boundary：** `CctClient`、`RiskClient`、`FinanceClient`、`PaymentClient` 当前是 Commerce-owned 最小端口。确定性 Local Mock 只允许在 active profile 全属于 `local|auto|test` 且显式 `commerce.integrations.mode=local-mock` 时装配；默认 `disabled` 失败关闭。它们不构成 Owner `@HttpExchange` wire 合同、生产降级或路由启用证据。
-- **HTTP / errors / tests：** 两条私有应用路径已实现，OpenAPI 公共路径仍等待 Gateway 映射。Foundation MVC 独占 Request ID 校验/生成/MDC/回写；Commerce API 只接收两个正 `long` 可信身份 Header，并在一个 Web 边界拒绝缺失或重复值。三个 POST 的幂等 Key 仍由单一 Commerce Filter 校验。请求 DTO 使用正常 Jackson 属性绑定，忽略未知属性，拒绝 scalar 到 String 的隐式转换，并以通用反序列化器区分缺失与显式 `null`；结构/类型错误为 400，成功绑定后的 Body 约束错误为 422。Client API 十操作、参数、Request/Response 字段和非显然枚举已同步补齐 JavaDoc/OpenAPI 描述。Test module 现以唯一 `TestApplication` 组合生产应用；随机端口 HTTP 自动测试统一继承 `MockTestBase`，未来人工联调统一继承 `ManualTestBase`，Schema Runtime 保持无 Web 例外。auto/manual 配置固定仓库本地 MySQL、提交且允许环境覆盖的 Loopback 测试密码、禁止 SQL 初始化并显式关闭 Nacos；Commerce 尚无 Redis/RabbitMQ/Nacos 消费者，因此未引入无消费者依赖或连接。Checkout 业务行为测试全部从 `RestTestClient` 进入真实 Controller → Processor → Commerce Domain Service → Foundation Command Idempotency Mapper → Owner 端口，并联合断言数据库事实；不再直接测试 Commerce Processor、Domain Service 或 Hasher。默认 Owner 行为委托生产确定性 Local Mock，测试 Mocker 只在 HTTP 场景中控制失败、协议畸形和并发窗口。Checkout HTTP 场景覆盖创建/查询/校验、语义幂等、Lease 恢复、同一 `clientOrderId` 并发提交窗口、Token 冲突/回滚、快照与生命周期 fail-closed、过期、Owner 失败投影、合法 PARTNER 来源和已提交 Payment Binding 恢复。
+- **HTTP / errors / tests：** 两条私有应用路径已实现，OpenAPI 公共路径仍等待 Gateway 映射。Foundation MVC 独占 Request ID 校验/生成/MDC/回写；Commerce API 只接收两个正 `long` 可信身份 Header，并在一个 Web 边界拒绝缺失或重复值。三个 POST 的幂等 Key 仍由单一 Commerce Filter 校验。请求 DTO 使用正常 Jackson 属性绑定，忽略未知属性，拒绝 scalar 到 String 的隐式转换，并以通用反序列化器区分缺失与显式 `null`；结构/类型错误为 400，成功绑定后的 Body 约束错误为 422。Client API 十操作、参数、Request/Response 字段和非显然枚举已同步补齐 JavaDoc/OpenAPI 描述。Test module 现以唯一 `TestApplication` 组合生产应用；随机端口 HTTP 自动测试统一继承 `MockTestBase`，未来人工联调统一继承 `ManualTestBase`，Schema Runtime 保持无 Web 例外。auto/manual 配置固定仓库本地 MySQL、提交且允许环境覆盖的 Loopback 测试密码、禁止 SQL 初始化并显式关闭 Nacos；初始切片未引入 Redis/RabbitMQ/Nacos 消费者；后续 CCT 的 Nacos 接法与验证以 COM-PRECHECK-01 为准。Checkout 业务行为测试全部从 `RestTestClient` 进入真实 Controller → Processor → Commerce Domain Service → Foundation Command Idempotency Mapper → Owner 端口，并联合断言数据库事实；不再直接测试 Commerce Processor、Domain Service 或 Hasher。默认 Owner 行为委托生产确定性 Local Mock，测试 Mocker 只在 HTTP 场景中控制失败、协议畸形和并发窗口。Checkout HTTP 场景覆盖创建/查询/校验、语义幂等、Lease 恢复、同一 `clientOrderId` 并发提交窗口、Token 冲突/回滚、快照与生命周期 fail-closed、过期、Owner 失败投影、合法 PARTNER 来源和已提交 Payment Binding 恢复。
 - **Verified：** `./mvnw clean verify` 完整通过，194 项测试，0 失败、0 错误、0 跳过；真实本地 MySQL Repository、Schema Runtime 与所有随机端口 HTTP Suite 均执行。JaCoCo Hosted Checkout aggregate 行覆盖率 90.20%（1831/2030），通过 90% 门槛；没有降低阈值或排除生产代码。此前 Foundation JAR 11/11、Client API contract/drift 49/49、JavaDoc、模型/Schema Node 24/24、生成器 `--check` 和 Requirements Site 136/136/lint 证据保持。
 - **Remaining：** 真实 Owner `@HttpExchange` 合同、有状态 Wire Simulator 和跨服务联调仍未实现；当前 Mocker 只验证 Commerce 对端口结果的处理，不证明网络协议或真实 Owner 时序。另八个 Client API 操作、Payment/Funds 事件、Webhook、Gateway/Platform/Nginx、`checkout-web /c/{token}`、发布与部署仍未完成。
 - **Delivery state：** 本切片基础实现、恢复简化、Command Idempotency 迁移与测试基础设施重构已提交到各本地 `main`；最新相关提交包括 Build `e914193`、Foundation `b2f146f`、Commerce `6c01860` 和此前根文档 `8326266`。所有相关改动均未推送、发布或部署。
@@ -239,3 +239,125 @@
 
 - **阶段 8 本地提交与归档：** 用户明确“先git提交一下”。paytech-foundation `6f2d692997e2`、risk-compliance-service `d9f0c1c633a8`、operations-console-bff `2e0e8d707db0`、operations-console-web `bf607aaaa961`、platform-support-service `ef6570f71833`，根仓库为[本归档记录](../requirements/20260911/operations-console-风控规则集列表优化/assets/stage8-commits.json)所在提交。均在原 main 分支，本轮未推送、创建 PR/分支或重新部署。四份 Risk 选择性提交源码经 JDK 25 编译，7 个 class 去除调试元数据后与已部署制品一致；其他组件源码与阶段 7 清单一致。详情见[提交归档](../requirements/20260911/operations-console-风控规则集列表优化/completion.md)。
 - **阶段 8 保留项：** 原有公共流程/目录治理、其他需求材料以及 Risk 的 import/格式整理保持未提交，未覆盖工作区源码。冻结入口、人员展示、详情文案、限流体验、名称搜索/复制等讨论仅为后续建议，没有混入本轮实现。等待用户确认本需求结束。
+
+<a id="oe-client-model-20260911"></a>
+
+## OE-CLIENT-MODEL-01：2026-09-11 四系统模型切片
+
+本次按用户授权修改 CCT、Commerce、Payment、Finance 的模型和配套工件；PDManer 包含在范围内，Risk 的其他在途改动不属于本切片。决定见 [四系统模型决定](decisions/2026-09-11-cct-commerce-oe-pricing-model.md)，产物、SQL 路径及迁移前置见 [实施记录](../requirements/20260911/client-contract-OE与Client模型梳理/model-implementation.md)。
+
+- 已完成：四份模型及图组、生成器、独立字段/关系 Oracle、完整人工 Schema、合成场景和文档路由。模型当前数量见本页第 3 节。
+- 已验证：四系统模型及专项 Schema/身份检查 **147/147**；现实场景回归 **129/129**；Requirements 内容门禁 **71/71**。只声明这次实际运行范围，不沿用先前的 136 项或 Java 结果作为新模型验收。
+- 稳定 ID 对照：CCT 380、Commerce 237、Payment 370、Finance 1090 个同名保留字段及其所属保留表的 PDManer ID 均未漂移；被改名或移出目标的结构按本次差异处理。
+- GUI：PDManer 已刷新 CCT。新 OE、Scope、Affiliation、Agreement Party 检查通过；两个原有 JSON 字段的 largeText Base Type 触发建议级提示，物理 JSON 类型和 Base Type 与变更前相同。CCT 不宣称 GUI 全绿，另外三库的应用内检查待完成。
+- 模型切片当时未完成：四系统新 Java/API/MQ 行为、正式 Wire 迁移、真实 Risk 新身份/Scope Review 联调、存量数据库迁移、真实端到端验证与部署。该模型切片没有执行 SQL；后续 CCT 查询与本地空库初始化见 CCT-QUERY-01。Finance 旧余额查询 SQL 明确保留为旧运行切片，Commerce 现有 Java/本地库同样未升级。
+- 历史与激活门禁：不改历史订单、旧 Scope、签署结果、JSON/Hash 或经济结果；先盘点真实旧身份和 Reader，再安排人工迁移。Risk 新门禁不可用时不激活新范围，不伪造旧数字 ID。
+
+
+<a id="cct-query-20260911"></a>
+
+## CCT-QUERY-01：2026-09-11 Checkout 预检与最终解析首批
+
+用户确认保留 Source Relation，并授权先实现 CCT 两个查询；[切片与数据库动作清单](../requirements/20260911/client-contract-OE与Client模型梳理/cct-query-implementation.md)记录当前范围。Risk 和其余系统代码没有纳入本批。
+
+- **Source implemented / Runtime gated：** `client-contract-api` 发布私有 GET `/checkout-eligibility/v1/precheck` 和 POST `/checkout-context/v1/resolutions`。Web 条件装配本库 MyBatis 只读快照、Client/Primary/准确四要素/来源校验、按优先级的合同/条款/法律证据检查，以及相关 Root 和准确胜出者的输出前复核。默认 `checkout.enabled=false`；Risk 新身份资格查询尚未存在，真实资格端口明确返回 `503 OWNER_UNAVAILABLE`，没有默认通过或测试替代实现。
+- **Verified：** 在本机 Java 25/Maven Wrapper 下执行未筛选测试的 `./mvnw -q verify`，**32/32** 通过，0 失败/错误/跳过；包含 12 个规则、3 个接口契约、4 个 HTTP 边界、9 个真实 MySQL 业务和 4 个原运维基础用例。Web 可执行 JAR 与 API JAR 构建成功。业务用例覆盖预检、合同过期后按优先级继续、配置/Root 变化、未知数据库 Code 拒绝及 Risk 未接入时的明确 503；不把本地候选成功解释为最终解析 HTTP 200。首轮暴露的泛型枚举 Handler 复用问题已修复：XML 按 `javaType` 使用逐枚举注册的 Handler，并补充未知状态不外泄内部信息的用例。完整日志与制品摘要见下方证据目录。
+- **Local database applied：** 用户明确确认后，在 **2026-09-11 19:10:43 UTC** 向 `mor-local-mysql-1` / `127.0.0.1:13306/mor_cct` 人工应用 CCT 完整 Schema；执行前该库为 0 表，未执行业务初始化 DML。实际 **38 表、428 字段、142 个主键/唯一/普通索引**的类型、可空、默认值、字符集/排序规则、完整注释及索引列顺序与 PDManer 一致，物理 FK/CHECK 为 0。全量验证后逐表精确计数均为 0，合成 Fixture 无残留。没有对 test 或其他业务库执行写入。
+- **Backup / evidence：** 受限目录 [`/Users/kenny/.codex/backups/cct-checkout-20260911T191028Z/`](/Users/kenny/.codex/backups/cct-checkout-20260911T191028Z/)保存空库备份、实际执行 SQL、验证日志和 `verification.json`；目录权限 700，文件 600。空库备份 SHA-256 为 `04534aba2e19340eda8baa066b8be94992e654a43dcc37234b38ae427f00c0d4`，实际执行 SQL SHA-256 为 `26ef700eef63ba8e2d22bbfd1fdae64176a9a489de233f0708f2541e7f21c54a`。执行后四份 Schema 的状态注释统一改为链接本台账，DDL 语句未变；不能将完整建表文件重复应用于本地现有库。
+- **Other verification：** 前一源码批次的 `npm --prefix requirements-site test` 构建及 **136/136** 保持为该批证据，本次没有修改需求站源码。23 个 Mapper Query 的 **164 个投影列**已对照模型；本轮 Schema `--check` 和实际库核对通过，文档/模型补充检查见同一证据目录。
+- **Still pending：** Risk Owner 新资格 HTTP 接入、最终解析 HTTP 200/依赖超时及真实跨 Owner 竞态验证、写入口的 Root 传播、Commerce 支付准备接入（基础预检见下方 COM-PRECHECK-01）、存量环境迁移及应用部署。当前通过的是 CCT 本地规则、真实数据库查询和入站边界；Price 匹配接口、Scope 激活/签署写操作不在本批。没有提交、推送或部署。
+
+<a id="commerce-precheck-20260911"></a>
+
+## COM-PRECHECK-01：2026-09-11 Commerce 基础创建接入 CCT
+
+用户确认“下一步让 Commerce 接入基础预检”，随后于 2026-09-12 回复“执行”，授权本地备份、增量迁移与综合验证；具体范围见
+[实施记录](../requirements/20260911/client-contract-OE与Client模型梳理/commerce-precheck-implementation.md)。
+
+- **Source implemented（2026-09-12 直接替换修正）：** 用户确认旧 Commerce 代码未发布，当前 Create 统一在事务外通过
+  CCT Owner `CheckoutEligibilityApi` 预检，仅提交基础 Order/Items、退款仓位、资金投影与 PREPARING Session，
+  按 `CLAIMED → ORDER_COMMITTED → COMPLETED` 冻结回执。删除旧 Resolve/Risk/Finance/Payment 创建链、四组 Local Mock、
+  无消费者的 Prepared 聚合/Mapper/模型以及历史测试夹具；`CheckoutCreationService` 直接承担现有基础创建。
+  请求和回执 JSON 不再有 `schemaVersion`，无 Schema 1/2 分支；不预分配 Context/Legal/Payment ID 或下游幂等键。
+  Foundation 的可选快照版本元数据传 null；语义请求 Hash、永久 Client Order ID、三个冻结 Token、Lease/CAS 与恢复检查点保留。
+- **Wire：** Create 固定返回 `PENDING/ESTIMATED/PREPARING`，税额、舍入、总额均为 null；GET 投影当前状态，
+  成功创建重放保持最初回执。Java DTO 与原 v1 OpenAPI 直接调整，移除旧响应构造器，当前状态和金额字段为必填。
+  `context_format` 不再参与 Java 模型、GET 或恢复分发；本轮不执行 DDL，既有非空列插入固定 `TERM_PRICE`，
+  旧数据库列的物理清理仍未执行，不能据代码简化宣称完整目标数据库迁移完成。
+- **CCT adapter（2026-09-12 服务发现修正）：** 已移除 `commerce.cct.base-url` 和手工构建 RestClient/接口代理。
+  Commerce 通过 `@ImportHttpServices(group="client-contract-service")` 自动注册 CCT Owner API，Spring Cloud LoadBalancer
+  按服务名选择 Nacos Discovery 提供的实例；CCT Web 已补同名注册依赖与配置。Foundation 既有 HTTP 普通 JAR
+  新增 `configureGroup(...)` 挂载原单层异常边界，不增加 Boot/Cloud 依赖或新中间件模块。
+  Spring Group 配置 2 秒连接/5 秒读取超时及禁止重定向，LoadBalancer 和底层 Apache HTTP 都禁止自动重试。
+  成功 JSON 验证类型、日期、字段闭合与资格结果；发现为空/连接中断为依赖不可用。
+  明确无候选才冻结配置失败；配置变动/歧义及技术失败保留命令恢复能力。CCT API JAR 本轮仅安装到本地 Maven 供编译，未发布 Nexus。
+- **Previous development evidence（已被下方直接替换验证取代）：** Java 25 下 22 个测试类共 **119/119** 开发检查通过，0 失败/错误/跳过，包括 API/OpenAPI、
+  金额与旧规范回执字节向量、出站真实 HTTP Simulator、Spring 启动、请求绑定、身份、错误及架构/配置门禁；
+  补充重复字段、未知字段、超长 Body、无效日期和尾随 JSON 后 CCT Wire **6/6** 重验通过。
+  `./mvnw -q -DskipTests package` 及 Client API `javadoc:javadoc` 成功；Mapper XML、增量列与目标模型存在性、
+  本轮 Markdown 本地链接和 `git diff --check` 通过。开发检查没有执行 Checkout 业务落库。
+- **Local database applied（2026-09-12）：** 按明确授权，向 `mor-local-mysql-1` / **127.0.0.1:13306/mor_commerce**
+  人工应用 [增量 ddl.sql](../requirements/20260911/client-contract-OE与Client模型梳理/db/commerce/ddl.sql)，执行时间 `2026-09-12T03:40:40.700244+00:00`。
+  执行前确认该库没有其他连接，备份全库并校验完整建表内容/摘要。迁移前 **15 表/246 字段**、所有表为 0 行；
+  迁移后 **15 表/250 字段**，四个新增列和九个可空调整符合脚本，原字段类型、默认值、字符集/排序规则及 **51 个索引**不变，
+  原列数据摘要一致，物理 FK/CHECK 为 0。该桥接结构保留历史列，不等同 **249 字段**完整目标 Schema；没有执行全量 CREATE。
+- **Previous full verification（2026-09-12，直接替换前源码）：** 迁移后在 Java 25 下执行未筛选测试的 `./mvnw -q clean verify`，**214/214** 全部通过，
+  0 失败/错误/跳过；包含真实随机端口 HTTP → 生产业务链 → 本地 MySQL，以及 CCT 实际出站 HTTP 到 Simulator。
+  基础创建、只写五类事实、最终金额为空、无候选稳定失败、超时/不可用与恢复、过期、Token 冲突回滚、永久 Client Order ID、
+  缺事实拒绝、损坏回执拒绝及 Schema 1 历史恢复均通过。JaCoCo 行覆盖率 **90.33%（2131/2359）**，通过原 **90%** 门槛。
+  Web 可执行 JAR 和 API JAR 构建成功；没有跳过或降低门禁。本轮未发现需要修改代码的失败。
+- **Previous full verification（2026-09-12 直接替换后、服务发现修正前）：** Java 25 下未筛选、未跳过的 `./mvnw -q clean verify`
+  **195/195** 通过，0 失败/错误/跳过；JaCoCo **90.08%（1326/1472）**，原 **90%** 门槛不变。
+  覆盖当前唯一创建链、CCT 实际 HTTP 到 Simulator、缺失/非法 Origin 拒绝、确定拒绝与配置变化/歧义、真实超时、
+  并发永久订单号冲突、两个检查点 Lease 接管、Token 冲突回滚、创建回执在后续状态变化后不变、损坏快照及闭合 JSON。
+  快照去版本回归先出现预期失败，再由直接替换实现通过；删除旧业务用例，保留并迁移适用的幂等/错误/查询用例，
+  不用保留失效功能换取覆盖率。Web/API JAR 构建成功，`git diff --check` 通过；结束后本地 15 张表精确计数全部为 0。
+  本轮仅 Commerce 代码与相关合同/记录变化；没有新增 DDL、修改 Risk/CCT/Finance/Payment 源码或执行部署。
+- **Previous direct-replacement evidence：** [/Users/kenny/.codex/backups/commerce-single-flow-20260912T040743Z](/Users/kenny/.codex/backups/commerce-single-flow-20260912T040743Z)
+  保存修改前源码归档、初始失败证据、最终完整构建日志、Surefire、JaCoCo、源码/制品 SHA-256 和逐表清理结果；
+  `verification.json` 为本轮验收记录。CCT 验证仍为真实 HTTP 契约到 Simulator，最终 OE 解析/支付准备及真实跨服务联调未完成。
+- **Previous full verification（2026-09-12 服务发现修正后、公共 HTTP 收敛前）：** Java 25 下 Commerce 未筛选的 `./mvnw -q clean verify`
+  **192/192** 通过，0 失败/错误/跳过；JaCoCo **90.13%（1315/1459）**，原 **90%** 门槛不变。
+  CCT 同样完整 `clean verify` **32/32** 通过；Foundation `-pl paytech-http-client-support -am install` 成功，
+  HTTP 模块 **105/105** 通过，兼容既有显式 Factory 与新 Spring Group 注册入口，制品只安装本机 Maven。
+  Commerce 使用真实 Spring HTTP 代理、LoadBalancer、SimpleDiscovery 与 HTTP Simulator，覆盖两实例轮询、实例移除、
+  空列表、连接中断不重试、503 不重试、超时/重定向/协议拒绝、Request ID 传播及原创建/幂等/恢复链。
+  测试入口 RestTestClient 复用禁重试传输，避免测试客户端自动重发 503 掩盖首次响应；Client API 的 Reactor 禁入门禁
+  检查 API 自身解析后的依赖，不再误读 Web 运行时类路径，Maven 同时禁止 API 引入 Cloud/Nacos/Reactor。
+  `git diff --check` 通过，结束后本地 Commerce **15 表全部 0 行**。自动测试禁用 Nacos，不访问共享注册中心。
+- **Previous discovery evidence / delivery boundary：**
+  [/Users/kenny/.codex/backups/commerce-cct-discovery-20260912T044028Z](/Users/kenny/.codex/backups/commerce-cct-discovery-20260912T044028Z)
+  保存修改前源码、失败证据、最终构建日志、Surefire/JaCoCo、源码/制品摘要和数据库清理结果。
+  本轮仅 Foundation HTTP 支持、Commerce 发现调用、CCT 注册配置及相应测试/文档变化；无 DDL、无 Risk/Payment/Finance 修改，
+  无 Git 提交/推送、Nexus 发布或部署；**真实 Nacos 注册/发现联调、支付准备与最终 OE/定价链尚未验收**。
+- **Current source（2026-09-12 公共 HTTP 收敛）：** `CctPrecheckConfiguration` 从 **134 行缩为 32 行**，
+  只声明 Owner API、错误转换和严格响应选项。Foundation Factory / Group 入口统一安装 `HttpServiceExchangeInterceptor`，
+  每次同步调用传播合法的 MDC Request ID，不缓存或复制其他 MDC 项；与 MVC Filter 共用 `ApiProblemProfile` 的 MDC Key。
+  `withStrictJsonResponses(8192)` 使用标准 Jackson typed 绑定和公共有界响应读取，删除 CCT 手写 JSON Reader 与响应包装。
+  应用级禁重试策略移入 `HttpClientConfiguration`。删除仅被 CCT 使用的 `AbstractClientTemplate` 及重复调用日志，
+  CCT 适配器只保留资格/日期/原因和明确业务错误解释，不再重复捕获所有参数异常；公共网络/协议错误仍由 Foundation 转换。
+  未新增 Starter、Boot/Cloud 依赖或业务 API；HTTP 普通 JAR 增加 SLF4J API，Logback 只用于该模块测试。
+- **Current full verified（2026-09-12 公共 HTTP 收敛后）：** Commerce Java 25 `./mvnw -q clean verify`
+  **194/194** 通过，0 失败/错误/跳过，JaCoCo **90.02%（1254/1393）**，原 **90%** 门槛不变。
+  Foundation `-pl paytech-http-client-support,paytech-mvc-web-starter -am install` 成功，HTTP **108/108**、MVC **124/124** 通过，
+  仅安装到本机 Maven。真实 HTTP 验证逐请求 MDC A/B/缺失/非法值、不复制其他 MDC、Factory/Group 两种入口、
+  标准 Jackson 闭合/类型约束、UTF-8 正文字节上限（成功及错误）、CCT 负载均衡/无重试/超时/错误映射及原业务恢复。
+  新增预检过程中到期的真实 Checkout 回归，确认 CCT 返回可用也不能提交过期订单，重放不再次查询；公开入口到 CCT 的 Request ID 一致。
+  完成后本地 Commerce **15 表全部 0 行**；`git diff --check` 通过。
+- **Current evidence / boundary：**
+  [/Users/kenny/.codex/backups/commerce-http-simplification-20260912T050237Z](/Users/kenny/.codex/backups/commerce-http-simplification-20260912T050237Z)
+  保存修改前源码、缺失 MDC 的失败证据、最终日志、Surefire/JaCoCo、源码摘要和逐表计数。
+  本次未修改 CCT/Risk/Payment/Finance、API 或数据库结构；没有连接 Nacos、部署、发布 Nexus、提交或推送。
+  真实 Nacos 联调和后续支付准备仍保持未验收状态。
+- **Previous migration cleanup / boundaries：** 验证结束后逐表精确计数，**15 表全部为 0 行**，测试自有 Fixture 无残留；原索引定义与备份逐表一致。
+  本轮没有写 CCT、Risk、Finance、Payment 或 test 数据库，没有修改其他系统源码、部署、提交或推送。
+  支付准备、最终 OE/合同冻结、Tax/Payment Intent、晚到定价、Checkout 页面和公共路由尚未接入；
+  CCT 使用 HTTP Simulator，不把本地成功称为 Commerce 与真实 CCT 数据的完整业务联调。
+- **Backup / acceptance evidence：** [/Users/kenny/.codex/backups/commerce-precheck-20260912T034031Z](/Users/kenny/.codex/backups/commerce-precheck-20260912T034031Z)
+  保存执行前全库 SQL、迁移原文及 SHA-256、逐列/逐表前后校验、完整构建日志、Surefire 报告、JaCoCo XML、制品摘要与清理结果；
+  总结为该目录 `verification.json`。备份未写入版本库。恢复必须核对备份之后的新数据，不自动删库。
+
+- **Evidence：** 开发检查、最终 CCT Wire、构建/JavaDoc、测试编译日志、Surefire 报告及源码摘要保存于
+  [/Users/kenny/.codex/artifacts/commerce-precheck-development-20260911T200120Z](/Users/kenny/.codex/artifacts/commerce-precheck-development-20260911T200120Z)。此目录是研发验证证据，不是数据库备份。
+
+- **Pre-commit verification（2026-09-12）：** 本次待提交源码重新运行 Commerce `clean verify` **194/194**、CCT 安全注入本地测试配置后的 `clean verify` **32/32**；四系统生成器/Schema `--check` 与模型/场景 **276/276** 通过。Foundation 本次暂存源码与前述 HTTP **108/108**、MVC **124/124** 的验证摘要一致。需求站完整工作区构建成功、测试 **134/136**，两项失败来自其他任务的 Gateway 文档；导出本次暂存内容后独立运行完整构建与测试 **136/136** 通过。各仓库暂存差异空白检查通过。证据保存在 [/Users/kenny/.codex/backups/oe-commerce-commit-20260912T052717Z](/Users/kenny/.codex/backups/oe-commerce-commit-20260912T052717Z)；本轮未执行 DDL、推送、部署或制品发布。

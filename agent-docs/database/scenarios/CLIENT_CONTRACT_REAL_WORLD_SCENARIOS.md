@@ -1,5 +1,7 @@
 # Client & Contract 现实场景与数据库映射
 
+> `legacy:` 前缀明确标记已经退出新写模型的旧字段；它们只供解释历史示例，当前结构门禁仅校验未带此前缀的引用。
+
 最后更新：2026-09-10
 适用基线：Client & Contract 最终 PDManer 生成模型已确认 40 表、443 字段、63 个唯一索引、46 个访问索引、67 条本库关系和 6 个关系图组；Model SHA-256 为 `e36ef6f7a00b67b772895ab834703634dd29854210646920963295a8105d9129`，Structural Projection SHA-256 为 `6013f7f066c277b475a251f85c5ca7768689886b5da0335471d4aa4ec804d678`，模型测试 80/80 通过
 
@@ -57,6 +59,9 @@ flowchart TD
 主故事交易范围固定为：`country=AE`、`currency=USD`、`industry_code=DIGITAL_SERVICES`、`mcc_code='5734'`、`locale=en-AE`。MCC 是四位数字字符串，必须保留前导零；一笔 Order 只有这一组准确行业与 MCC。
 
 ## 3. 场景一：建立 Party、Profile 与直接关系
+
+2026-09-11 当前模型映射：`t_party`、`t_party_profile`、`t_individual_profile`、`t_organization_profile`、`t_party_identity_key`、`t_party_profile_identifier`、`t_party_address`、`t_party_contact`、`t_party_relation`；字段引用：`t_party.party_id`、`t_party.party_type`、`t_party_profile.profile_id`、`t_party_profile.active_slot`、`t_individual_profile.profile_id`、`t_individual_profile.birth_date`、`t_organization_profile.profile_id`、`t_organization_profile.legal_name`、`t_party_identity_key.identity_key_id`、`t_party_identity_key.normalized_identifier_value`、`t_party_profile_identifier.profile_identifier_id`、`t_party_profile_identifier.identity_key_id`、`t_party_address.address_id`、`t_party_address.country_code`、`t_party_contact.contact_id`、`t_party_contact.contact_vault_token`、`t_party_relation.relation_version_id`、`t_party_relation.relation_type`。新流按 [四系统决定](../../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 执行；下文旧数字/Assignment/分表签署示例保留为历史合同说明。
+
 
 ### 3.1 输入
 
@@ -154,6 +159,9 @@ Nova 与 Aisha 的直接关系保存为结构化业务版本，不采用多层 O
 Nova 地址或名称变化时创建 Profile V2：V1 进入 `SUPERSEDED`、`active_slot=NULL`、填写 `effective_to`；V2 使用新 `profile_id/version_no=2` 并占用 `active_slot=1`。历史申请、签署和 Order Proof 继续引用 V1 ID。BCR 只审计 `PARTY_PROFILE` 版本头的生命周期，不重复复制机构明细、地址、联系方式或法律标识。
 
 ## 4. 场景二：Client、Local Partner 与 Operating Entity 入驻
+
+2026-09-11 当前模型映射：`t_client`、`t_local_partner`、`t_operating_entity`、`t_client_business_profile`、`t_client_business_classification`、`t_client_application`、`t_partner_application`、`t_operating_entity_application`、`t_application_document`；字段引用：`t_client.client_id`、`t_client.status`、`t_local_partner.local_partner_id`、`t_local_partner.status`、`t_operating_entity.entity_no`、`t_operating_entity.status`、`t_client_business_profile.business_profile_id`、`t_client_business_profile.content_hash`、`t_client_business_classification.classification_id`、`t_client_business_classification.mcc_code`、`t_client_application.application_id`、`t_client_application.requested_by_account_id`、`t_client_application.submission_content_hash`、`t_partner_application.application_id`、`t_partner_application.local_partner_id`、`t_partner_application.requested_by_account_id`、`t_partner_application.qualification_type`、`t_partner_application.submission_content_hash`、`t_operating_entity_application.application_id`、`t_operating_entity_application.approved_source_relation_id`、`t_application_document.document_id`、`t_application_document.partner_application_id`、`t_application_document.file_id`。新流按 [四系统决定](../../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 执行；下文旧数字/Assignment/分表签署示例保留为历史合同说明。
+
 
 ### 4.1 角色主档
 
@@ -254,7 +262,7 @@ Gulf 的 Local Partner 首次入驻先由 `START_OR_RESUME` 在同一 CCT 本地
 | 表.字段 | 示例值 |
 |---|---|
 | `t_operating_entity_application.application_no` | `OEA-DESERT-001` |
-| `t_operating_entity_application.operating_entity_id` | `730400000000000002` |
+| `legacy:t_operating_entity_application.operating_entity_id` | `730400000000000002` |
 | `t_operating_entity_application.party_profile_id` | `730110000000000005` |
 | `t_operating_entity_application.source_type` | `PARTNER` |
 | `t_operating_entity_application.status` | `APPROVED` |
@@ -310,6 +318,9 @@ Gulf 的 Local Partner 首次入驻先由 `START_OR_RESUME` 在同一 CCT 本地
 
 ## 5. 场景三：来源认定、适用关系、规则与自动分配
 
+2026-09-11 当前模型映射：`t_client_entity_affiliation`、`t_entity_source_relation`、`t_operating_entity_scope`；字段引用：`t_client_entity_affiliation.affiliation_id`、`t_client_entity_affiliation.active_slot`、`t_entity_source_relation.source_relation_id`、`t_entity_source_relation.source_type`、`t_operating_entity_scope.scope_id`、`t_operating_entity_scope.entity_no`、`t_operating_entity_scope.application_id`、`t_operating_entity_scope.mcc_code`。新流按 [四系统决定](../../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 执行；下文旧数字/Assignment/分表签署示例保留为历史合同说明。
+
+
 ### 5.1 三种来源关系
 
 | OE | `t_entity_source_relation.source_relation_id` | `t_entity_source_relation.source_type` | Owner / Basis | 状态与区间 |
@@ -334,18 +345,18 @@ Nova 获准在同一准确 Scope 使用 Nova OE 和 Desert OE：
 
 | 字段 | Rule 10 | Rule 20 |
 |---|---:|---:|
-| `t_entity_assignment_rule.rule_id` | `730510000000000001` | `730510000000000002` |
-| `t_entity_assignment_rule.client_id` | `730200000000000001` | `730200000000000001` |
-| `t_entity_assignment_rule.country_code` | `AE` | `AE` |
-| `t_entity_assignment_rule.currency` | `USD` | `USD` |
-| `t_entity_assignment_rule.industry_code` | `DIGITAL_SERVICES` | `DIGITAL_SERVICES` |
-| `t_entity_assignment_rule.mcc_code` | `'5734'` | `'5734'` |
-| `t_entity_assignment_rule.operating_entity_id` | `730400000000000001` | `730400000000000002` |
-| `t_entity_assignment_rule.priority_no` | `10` | `20` |
-| `t_entity_assignment_rule.status` | `ACTIVE` | `ACTIVE` |
-| `t_entity_assignment_rule.active_slot` | `1` | `1` |
-| `t_entity_assignment_rule.effective_from` | `2026-09-10T10:00:00.000000Z` | `2026-09-10T10:00:00.000000Z` |
-| `t_entity_assignment_rule.effective_to` | `NULL` | `NULL` |
+| `legacy:t_entity_assignment_rule.rule_id` | `730510000000000001` | `730510000000000002` |
+| `legacy:t_entity_assignment_rule.client_id` | `730200000000000001` | `730200000000000001` |
+| `legacy:t_entity_assignment_rule.country_code` | `AE` | `AE` |
+| `legacy:t_entity_assignment_rule.currency` | `USD` | `USD` |
+| `legacy:t_entity_assignment_rule.industry_code` | `DIGITAL_SERVICES` | `DIGITAL_SERVICES` |
+| `legacy:t_entity_assignment_rule.mcc_code` | `'5734'` | `'5734'` |
+| `legacy:t_entity_assignment_rule.operating_entity_id` | `730400000000000001` | `730400000000000002` |
+| `legacy:t_entity_assignment_rule.priority_no` | `10` | `20` |
+| `legacy:t_entity_assignment_rule.status` | `ACTIVE` | `ACTIVE` |
+| `legacy:t_entity_assignment_rule.active_slot` | `1` | `1` |
+| `legacy:t_entity_assignment_rule.effective_from` | `2026-09-10T10:00:00.000000Z` | `2026-09-10T10:00:00.000000Z` |
+| `legacy:t_entity_assignment_rule.effective_to` | `NULL` | `NULL` |
 
 ### 5.3 分配建立与现实故障切换
 
@@ -353,16 +364,16 @@ Nova 获准在同一准确 Scope 使用 Nova OE 和 Desert OE：
 
 | 表.字段 | Assignment A |
 |---|---|
-| `t_client_entity_assignment.assignment_id` | `730520000000000001` |
-| `t_client_entity_assignment.client_id` | `730200000000000001` |
-| `t_client_entity_assignment.scope_country` / `t_client_entity_assignment.scope_currency` | `AE` / `USD` |
-| `t_client_entity_assignment.industry_code` / `t_client_entity_assignment.mcc_code` | `DIGITAL_SERVICES` / `'5734'` |
-| `t_client_entity_assignment.operating_entity_id` | `730400000000000001` |
-| `t_client_entity_assignment.affiliation_id` | `730500000000000001` |
-| `t_client_entity_assignment.entity_source_relation_id` | `730430000000000001` |
-| `t_client_entity_assignment.rule_id` | `730510000000000001` |
-| `t_client_entity_assignment.status` / `t_client_entity_assignment.active_slot` | `ACTIVE` / `1` |
-| `t_client_entity_assignment.effective_from` / `t_client_entity_assignment.effective_to` | `2026-09-10T10:00:00.000000Z` / `NULL` |
+| `legacy:t_client_entity_assignment.assignment_id` | `730520000000000001` |
+| `legacy:t_client_entity_assignment.client_id` | `730200000000000001` |
+| `legacy:t_client_entity_assignment.scope_country` / `legacy:t_client_entity_assignment.scope_currency` | `AE` / `USD` |
+| `legacy:t_client_entity_assignment.industry_code` / `legacy:t_client_entity_assignment.mcc_code` | `DIGITAL_SERVICES` / `'5734'` |
+| `legacy:t_client_entity_assignment.operating_entity_id` | `730400000000000001` |
+| `legacy:t_client_entity_assignment.affiliation_id` | `730500000000000001` |
+| `legacy:t_client_entity_assignment.entity_source_relation_id` | `730430000000000001` |
+| `legacy:t_client_entity_assignment.rule_id` | `730510000000000001` |
+| `legacy:t_client_entity_assignment.status` / `legacy:t_client_entity_assignment.active_slot` | `ACTIVE` / `1` |
+| `legacy:t_client_entity_assignment.effective_from` / `legacy:t_client_entity_assignment.effective_to` | `2026-09-10T10:00:00.000000Z` / `NULL` |
 
 2026-10-01，Nova OE 被 Operations 暂停。处理该状态变更的 CCT Processor 在同一本地事务内重新计算受影响 Scope：Rule 10 因 OE 非 ACTIVE 被淘汰，Rule 20 成为唯一最小合格候选。系统结束 Assignment A，并创建 Assignment B：
 
@@ -383,6 +394,9 @@ Assignment 的 Rule、Affiliation 与 Assignment 必须属于同一 Client；Aff
 
 ## 6. 场景四：Client Agreement 与 Partner Agreement
 
+2026-09-11 当前模型映射：`t_agreement`、`t_agreement_party`、`t_agreement_document_ref`、`t_agreement_operating_entity`；字段引用：`t_agreement.agreement_id`、`t_agreement.status`、`t_agreement_party.agreement_party_id`、`t_agreement_party.party_profile_id`、`t_agreement_document_ref.agreement_document_id`、`t_agreement_document_ref.content_hash`、`t_agreement_operating_entity.agreement_operating_entity_id`、`t_agreement_operating_entity.entity_no`、`t_agreement_party.accepted_time`、`t_agreement_party.acceptance_ref_slot`。新流按 [四系统决定](../../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 执行；下文旧数字/Assignment/分表签署示例保留为历史合同说明。
+
+
 ### 6.1 两份独立合同
 
 | 字段 | Client Agreement | Partner Agreement |
@@ -402,7 +416,7 @@ Assignment 的 Rule、Affiliation 与 Assignment 必须属于同一 Client；Aff
 
 Client Agreement 覆盖 Nova 和 Desert 两个 OE；Partner Agreement 只覆盖 Desert：
 
-| `t_agreement_operating_entity.agreement_operating_entity_id` | `t_agreement_operating_entity.agreement_id` | `t_agreement_operating_entity.operating_entity_id` | `t_agreement_operating_entity.settlement_business_days` | `t_agreement_operating_entity.business_calendar_code` | `t_agreement_operating_entity.settlement_timezone` | `t_agreement_operating_entity.cutoff_second_of_day` |
+| `t_agreement_operating_entity.agreement_operating_entity_id` | `t_agreement_operating_entity.agreement_id` | `legacy:t_agreement_operating_entity.operating_entity_id` | `legacy:t_agreement_operating_entity.settlement_business_days` | `legacy:t_agreement_operating_entity.business_calendar_code` | `legacy:t_agreement_operating_entity.settlement_timezone` | `legacy:t_agreement_operating_entity.cutoff_second_of_day` |
 |---:|---:|---:|---:|---|---|---:|
 | `730640000000000001` | `730600000000000001` | `730400000000000001` | `2` | `AE_WORKING_DAYS` | `Asia/Dubai` | `61200` |
 | `730640000000000002` | `730600000000000001` | `730400000000000002` | `2` | `AE_WORKING_DAYS` | `Asia/Dubai` | `61200` |
@@ -416,21 +430,21 @@ Client Agreement 的两个 Signatory：
 
 | 字段 | Nova 签约方 | 平台签约方 |
 |---|---:|---:|
-| `t_agreement_signatory.agreement_signatory_id` | `730610000000000001` | `730610000000000002` |
-| `t_agreement_signatory.agreement_id` | `730600000000000001` | `730600000000000001` |
-| `t_agreement_signatory.party_id` | `730100000000000001` | `730100000000000004` |
-| `t_agreement_signatory.party_profile_id` | `730110000000000001` | `730110000000000004` |
-| `t_agreement_signatory.signatory_role` | `CLIENT` | `PLATFORM_SIGNATORY` |
+| `legacy:t_agreement_signatory.agreement_signatory_id` | `730610000000000001` | `730610000000000002` |
+| `legacy:t_agreement_signatory.agreement_id` | `730600000000000001` | `730600000000000001` |
+| `legacy:t_agreement_signatory.party_id` | `730100000000000001` | `730100000000000004` |
+| `legacy:t_agreement_signatory.party_profile_id` | `730110000000000001` | `730110000000000004` |
+| `legacy:t_agreement_signatory.signatory_role` | `CLIENT` | `PLATFORM_SIGNATORY` |
 
 Partner Agreement 同样冻结 Local Partner 与平台服务法律主体；其中平台 Party 是本次 Platform Service Charge 唯一允许返回的法律收款主体：
 
 | 字段 | Gulf 签约方 | 平台服务签约方 |
 |---|---:|---:|
-| `t_agreement_signatory.agreement_signatory_id` | `730610000000000003` | `730610000000000004` |
-| `t_agreement_signatory.agreement_id` | `730600000000000002` | `730600000000000002` |
-| `t_agreement_signatory.party_id` | `730100000000000003` | `730100000000000004` |
-| `t_agreement_signatory.party_profile_id` | `730110000000000003` | `730110000000000004` |
-| `t_agreement_signatory.signatory_role` | `LOCAL_PARTNER` | `PLATFORM_SIGNATORY` |
+| `legacy:t_agreement_signatory.agreement_signatory_id` | `730610000000000003` | `730610000000000004` |
+| `legacy:t_agreement_signatory.agreement_id` | `730600000000000002` | `730600000000000002` |
+| `legacy:t_agreement_signatory.party_id` | `730100000000000003` | `730100000000000004` |
+| `legacy:t_agreement_signatory.party_profile_id` | `730110000000000003` | `730110000000000004` |
+| `legacy:t_agreement_signatory.signatory_role` | `LOCAL_PARTNER` | `PLATFORM_SIGNATORY` |
 
 包含 `PLATFORM_SERVICE_CHARGE` 的 Partner Agreement 必须恰好一个 `PLATFORM_SIGNATORY`。这里唯一平台法律 Party 为 `730100000000000004`；零个或多个都会使商业上下文 Fail Closed。现行 legacy CCT-I13 及该 Scope 的 CCT-I14 仍按第 9 节返回并验证该 Party；新 Price Wire 的返回位置尚未定义。
 
@@ -448,14 +462,14 @@ Nova 的 E-Sign 接受证据：
 
 | 表.字段 | 示例值 |
 |---|---|
-| `t_agreement_acceptance.acceptance_id` | `730630000000000001` |
-| `t_agreement_acceptance.agreement_signatory_id` | `730610000000000001` |
-| `t_agreement_acceptance.acceptance_method` | `E_SIGNATURE` |
-| `t_agreement_acceptance.accepted_by_actor_id` | `940100000000000002` |
-| `t_agreement_acceptance.accepted_time` | `2026-09-12T13:55:00.000000Z` |
-| `t_agreement_acceptance.evidence_document_id` | `730620000000000002` |
-| `t_agreement_acceptance.acceptance_reference` | `ESIGN-NOVA-20260912-0001` |
-| `t_agreement_acceptance.create_by` | `940100000000000001` |
+| `legacy:t_agreement_acceptance.acceptance_id` | `730630000000000001` |
+| `legacy:t_agreement_acceptance.agreement_signatory_id` | `730610000000000001` |
+| `legacy:t_agreement_acceptance.acceptance_method` | `E_SIGNATURE` |
+| `legacy:t_agreement_acceptance.accepted_by_actor_id` | `940100000000000002` |
+| `legacy:t_agreement_acceptance.accepted_time` | `2026-09-12T13:55:00.000000Z` |
+| `legacy:t_agreement_acceptance.evidence_document_id` | `730620000000000002` |
+| `legacy:t_agreement_acceptance.acceptance_reference` | `ESIGN-NOVA-20260912-0001` |
+| `legacy:t_agreement_acceptance.create_by` | `940100000000000001` |
 
 每个 Signatory 都必须有一条 Acceptance。E-Sign 或 Manual Signature 的 Evidence ID 指向 `EXECUTED_DOCUMENT` 的业务引用 ID，不是 Platform File ID；CLICK_ACCEPTANCE 则指向唯一 Signing Document。Email OTP 只是验证因子，不是新的 `acceptance_method`。
 
@@ -466,6 +480,9 @@ Nova 的 E-Sign 接受证据：
 As-Of 查询按签署、激活和有效区间解析，不能只查当前 `status=ACTIVE`。合同条款变化时创建新的 `agreement_id`；旧合同可进入 EXPIRED/TERMINATED 并收窄 `effective_to`，但历史 Order 仍引用旧 Agreement 与 Association ID。Agreement Root 写 BCR；Signatory、Document、Acceptance、Association 依靠冻结结构化事实，不重复写 BCR。
 
 ## 7. 场景五：Consumer Legal 与 Seller Disclosure
+
+2026-09-11 当前模型映射：`t_consumer_legal_document`、`t_seller_disclosure`；字段引用：`t_consumer_legal_document.legal_document_id`、`t_consumer_legal_document.published_time`、`t_seller_disclosure.disclosure_id`、`t_seller_disclosure.public_legal_name`。新流按 [四系统决定](../../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 执行；下文旧数字/Assignment/分表签署示例保留为历史合同说明。
+
 
 Desert OE 在 `AE/en-AE` 发布三份独立法律文档：
 
@@ -482,7 +499,7 @@ Seller Disclosure 是结构化公开展示值，不是文件：
 | 表.字段 | 示例值 |
 |---|---|
 | `t_seller_disclosure.disclosure_id` | `730710000000000001` |
-| `t_seller_disclosure.operating_entity_id` | `730400000000000002` |
+| `legacy:t_seller_disclosure.operating_entity_id` | `730400000000000002` |
 | `t_seller_disclosure.country_code` / `t_seller_disclosure.locale` | `AE` / `en-AE` |
 | `t_seller_disclosure.public_legal_name` | `Desert Digital Trading LLC` |
 | `t_seller_disclosure.public_registration_number` | `CN-7654321` |
@@ -498,6 +515,9 @@ Seller Disclosure 是结构化公开展示值，不是文件：
 As-Of 查询用 `published_time <= t` 和有效区间，不能排除后来已 EXPIRED/WITHDRAWN、但在历史时点有效的行。内容变化创建新 Legal/Disclosure ID，旧行收窄结束时间；没有 Client Override 或隐式 Locale 回退。
 
 ## 8. 场景六：Payment Method Profile 与组合定价
+
+2026-09-11 当前模型映射：`t_payment_method_profile`、`t_payment_method_profile_cond`、`t_commercial_term_plan`、`t_commercial_term_version`、`t_commercial_term_price`、`t_commercial_term_component`、`t_commercial_term_component_band`；字段引用：`t_payment_method_profile.payment_method_profile_id`、`t_payment_method_profile.payment_method_profile_code`、`t_payment_method_profile.payment_method_code`、`t_payment_method_profile_cond.profile_condition_id`、`t_payment_method_profile_cond.dimension_code`、`t_payment_method_profile_cond.condition_value`、`t_commercial_term_plan.term_plan_id`、`t_commercial_term_plan.term_type`、`t_commercial_term_version.term_version_id`、`t_commercial_term_version.active_slot`、`t_commercial_term_price.term_price_id`、`t_commercial_term_price.entity_no`、`t_commercial_term_price.payment_method_profile_code`、`t_commercial_term_price.priority_no`、`t_commercial_term_component.term_component_id`、`t_commercial_term_component.term_price_id`、`t_commercial_term_component.component_no`、`t_commercial_term_component.component_type`、`t_commercial_term_component.band_mode`、`t_commercial_term_component_band.term_band_id`、`t_commercial_term_component_band.lower_bound`、`t_commercial_term_component_band.upper_bound`。新流按 [四系统决定](../../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 执行；下文旧数字/Assignment/分表签署示例保留为历史合同说明。
+
 
 ### 8.1 三个语义独立的 Plan 与 Version
 
@@ -555,7 +575,7 @@ Profile 的外部身份始终是全局唯一且不可复用的 `payment_method_p
 
 每条 `t_commercial_term_price` 都绑定准确非空 OE，不再使用 `operating_entity_id=NULL` 或 `*`。下表只展示 Desert OE；若 Client Agreement 覆盖其他 OE，必须为那些 OE 分别建立 Price。
 
-| Price | `t_commercial_term_price.term_price_id` | `t_commercial_term_price.term_version_id` | `t_commercial_term_price.operating_entity_id` | `t_commercial_term_price.payment_method_profile_code` | `t_commercial_term_price.priority_no` |
+| Price | `t_commercial_term_price.term_price_id` | `t_commercial_term_price.term_version_id` | `legacy:t_commercial_term_price.operating_entity_id` | `t_commercial_term_price.payment_method_profile_code` | `t_commercial_term_price.priority_no` |
 |---|---:|---:|---:|---|---:|
 | Client 通用 CARD | `730840000000000001` | `730810000000000001` | `730400000000000002` | `CARD_ANY_V1` | `20` |
 | Client 具体 CARD | `730840000000000002` | `730810000000000001` | `730400000000000002` | `CARD_VISA_MC_CREDIT_3DS_V1` | `10` |
@@ -709,6 +729,9 @@ GetImmutableCommercialTermScope(
 
 ### 10.2 Root 与受审计 Child 的 BCR 对应
 
+2026-09-11 当前模型映射：`t_business_change_record`、`t_business_change_version`；字段引用：`t_business_change_record.history_id`、`t_business_change_record.current_version`、`t_business_change_version.change_version_id`、`t_business_change_version.snapshot_json`。新流按 [四系统决定](../../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 执行；下文旧数字/Assignment/分表签署示例保留为历史合同说明。
+
+
 | `t_business_change_record.history_id` | Record Tuple | Aggregate Tuple | Parent | `t_business_change_record.current_version` |
 |---:|---|---|---:|---:|
 | `730900000000000001` | `record_type=COMMERCIAL_TERM_PLAN`、`record_id=730800000000000001` | `aggregate_root_type=COMMERCIAL_TERM_PLAN`、`aggregate_root_id=730800000000000001` | `NULL` | `2` |
@@ -756,6 +779,9 @@ BCR 白名单是 20 类 Record Type、17 类 Root Type。`PARTY_PROFILE -> PARTY
 删除白名单对象时，先写 `DELETE` Snapshot 再删除 Current 行，Record 永久保留；删除白名单外 Child 不补造快照。恢复不是修改旧 History，而是新命令、新 Root Version 和新 Snapshot。Acceptance、已冻结合同证据和其他不可变领域事实不得物理删除。
 
 ### 10.4 命令幂等与 Compensation Event
+
+2026-09-11 当前模型映射：`t_compensation_event`、`t_command_idempotency`；字段引用：`t_compensation_event.id`、`t_compensation_event.event_key`、`t_compensation_event.source_version`、`t_command_idempotency.idempotency_id`、`t_command_idempotency.request_hash`。新流按 [四系统决定](../../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 执行；下文旧数字/Assignment/分表签署示例保留为历史合同说明。
+
 
 费率换版命令先占用 `t_command_idempotency`：
 
@@ -876,86 +902,300 @@ BCR 白名单是 20 类 Record Type、17 类 Root Type。`PARTY_PROFILE -> PARTY
   "schema": "CODE-MOR:CCT:REAL_WORLD_SCENARIOS:1",
   "storyId": "NOVA_GULF_UAE_2026",
   "modelTotals": {
-    "tables": 40,
-    "fields": 443,
-    "uniqueIndexes": 63,
-    "accessIndexes": 46,
-    "relations": 67,
+    "tables": 38,
+    "fields": 428,
+    "uniqueIndexes": 61,
+    "accessIndexes": 43,
+    "relations": 64,
     "diagramGroups": 6
   },
   "scenarios": [
     {
       "id": "party-profile-and-relation",
       "sectionHeading": "## 3. 场景一：建立 Party、Profile 与直接关系",
-      "tables": ["t_party", "t_party_profile", "t_individual_profile", "t_organization_profile", "t_party_identity_key", "t_party_profile_identifier", "t_party_address", "t_party_contact", "t_party_relation"],
-      "fieldRefs": ["t_party.party_id", "t_party.party_type", "t_party_profile.profile_id", "t_party_profile.active_slot", "t_individual_profile.profile_id", "t_individual_profile.birth_date", "t_organization_profile.profile_id", "t_organization_profile.legal_name", "t_party_identity_key.identity_key_id", "t_party_identity_key.normalized_identifier_value", "t_party_profile_identifier.profile_identifier_id", "t_party_profile_identifier.identity_key_id", "t_party_address.address_id", "t_party_address.country_code", "t_party_contact.contact_id", "t_party_contact.contact_vault_token", "t_party_relation.relation_version_id", "t_party_relation.relation_type"],
-      "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
+      "tables": [
+        "t_party",
+        "t_party_profile",
+        "t_individual_profile",
+        "t_organization_profile",
+        "t_party_identity_key",
+        "t_party_profile_identifier",
+        "t_party_address",
+        "t_party_contact",
+        "t_party_relation"
+      ],
+      "fieldRefs": [
+        "t_party.party_id",
+        "t_party.party_type",
+        "t_party_profile.profile_id",
+        "t_party_profile.active_slot",
+        "t_individual_profile.profile_id",
+        "t_individual_profile.birth_date",
+        "t_organization_profile.profile_id",
+        "t_organization_profile.legal_name",
+        "t_party_identity_key.identity_key_id",
+        "t_party_identity_key.normalized_identifier_value",
+        "t_party_profile_identifier.profile_identifier_id",
+        "t_party_profile_identifier.identity_key_id",
+        "t_party_address.address_id",
+        "t_party_address.country_code",
+        "t_party_contact.contact_id",
+        "t_party_contact.contact_vault_token",
+        "t_party_relation.relation_version_id",
+        "t_party_relation.relation_type"
+      ],
+      "flowSteps": [
+        "input",
+        "write_transaction",
+        "current_query",
+        "change_or_failure",
+        "history_or_wire"
+      ]
     },
     {
       "id": "roles-and-onboarding",
       "sectionHeading": "## 4. 场景二：Client、Local Partner 与 Operating Entity 入驻",
-      "tables": ["t_client", "t_local_partner", "t_operating_entity", "t_client_business_profile", "t_client_business_classification", "t_client_application", "t_partner_application", "t_operating_entity_application", "t_application_document"],
-      "fieldRefs": ["t_client.client_id", "t_client.status", "t_local_partner.local_partner_id", "t_local_partner.status", "t_operating_entity.operating_entity_id", "t_operating_entity.status", "t_client_business_profile.business_profile_id", "t_client_business_profile.content_hash", "t_client_business_classification.classification_id", "t_client_business_classification.mcc_code", "t_client_application.application_id", "t_client_application.requested_by_account_id", "t_client_application.submission_content_hash", "t_partner_application.application_id", "t_partner_application.local_partner_id", "t_partner_application.requested_by_account_id", "t_partner_application.qualification_type", "t_partner_application.submission_content_hash", "t_operating_entity_application.application_id", "t_operating_entity_application.approved_source_relation_id", "t_application_document.document_id", "t_application_document.partner_application_id", "t_application_document.file_id"],
-      "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
+      "tables": [
+        "t_client",
+        "t_local_partner",
+        "t_operating_entity",
+        "t_client_business_profile",
+        "t_client_business_classification",
+        "t_client_application",
+        "t_partner_application",
+        "t_operating_entity_application",
+        "t_application_document"
+      ],
+      "fieldRefs": [
+        "t_client.client_id",
+        "t_client.status",
+        "t_local_partner.local_partner_id",
+        "t_local_partner.status",
+        "t_operating_entity.entity_no",
+        "t_operating_entity.status",
+        "t_client_business_profile.business_profile_id",
+        "t_client_business_profile.content_hash",
+        "t_client_business_classification.classification_id",
+        "t_client_business_classification.mcc_code",
+        "t_client_application.application_id",
+        "t_client_application.requested_by_account_id",
+        "t_client_application.submission_content_hash",
+        "t_partner_application.application_id",
+        "t_partner_application.local_partner_id",
+        "t_partner_application.requested_by_account_id",
+        "t_partner_application.qualification_type",
+        "t_partner_application.submission_content_hash",
+        "t_operating_entity_application.application_id",
+        "t_operating_entity_application.approved_source_relation_id",
+        "t_application_document.document_id",
+        "t_application_document.partner_application_id",
+        "t_application_document.file_id"
+      ],
+      "flowSteps": [
+        "input",
+        "write_transaction",
+        "current_query",
+        "change_or_failure",
+        "history_or_wire"
+      ]
     },
     {
       "id": "automatic-entity-assignment",
       "sectionHeading": "## 5. 场景三：来源认定、适用关系、规则与自动分配",
-      "tables": ["t_client_entity_affiliation", "t_entity_assignment_rule", "t_client_entity_assignment", "t_entity_source_relation"],
-      "fieldRefs": ["t_client_entity_affiliation.affiliation_id", "t_client_entity_affiliation.active_slot", "t_entity_assignment_rule.rule_id", "t_entity_assignment_rule.priority_no", "t_client_entity_assignment.assignment_id", "t_client_entity_assignment.entity_source_relation_id", "t_entity_source_relation.source_relation_id", "t_entity_source_relation.source_type"],
-      "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
+      "tables": [
+        "t_client_entity_affiliation",
+        "t_entity_source_relation",
+        "t_operating_entity_scope"
+      ],
+      "fieldRefs": [
+        "t_client_entity_affiliation.affiliation_id",
+        "t_client_entity_affiliation.active_slot",
+        "t_entity_source_relation.source_relation_id",
+        "t_entity_source_relation.source_type",
+        "t_operating_entity_scope.scope_id",
+        "t_operating_entity_scope.entity_no",
+        "t_operating_entity_scope.application_id",
+        "t_operating_entity_scope.mcc_code"
+      ],
+      "flowSteps": [
+        "input",
+        "write_transaction",
+        "current_query",
+        "change_or_failure",
+        "history_or_wire"
+      ]
     },
     {
       "id": "agreement-signing",
       "sectionHeading": "## 6. 场景四：Client Agreement 与 Partner Agreement",
-      "tables": ["t_agreement", "t_agreement_signatory", "t_agreement_document_ref", "t_agreement_acceptance", "t_agreement_operating_entity"],
-      "fieldRefs": ["t_agreement.agreement_id", "t_agreement.status", "t_agreement_signatory.agreement_signatory_id", "t_agreement_signatory.party_profile_id", "t_agreement_document_ref.agreement_document_id", "t_agreement_document_ref.content_hash", "t_agreement_acceptance.acceptance_id", "t_agreement_acceptance.evidence_document_id", "t_agreement_operating_entity.agreement_operating_entity_id", "t_agreement_operating_entity.operating_entity_id", "t_agreement_operating_entity.settlement_business_days", "t_agreement_operating_entity.business_calendar_code", "t_agreement_operating_entity.settlement_timezone", "t_agreement_operating_entity.cutoff_second_of_day"],
-      "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
+      "tables": [
+        "t_agreement",
+        "t_agreement_party",
+        "t_agreement_document_ref",
+        "t_agreement_operating_entity"
+      ],
+      "fieldRefs": [
+        "t_agreement.agreement_id",
+        "t_agreement.status",
+        "t_agreement_party.agreement_party_id",
+        "t_agreement_party.party_profile_id",
+        "t_agreement_document_ref.agreement_document_id",
+        "t_agreement_document_ref.content_hash",
+        "t_agreement_operating_entity.agreement_operating_entity_id",
+        "t_agreement_operating_entity.entity_no",
+        "t_agreement_party.accepted_time",
+        "t_agreement_party.acceptance_ref_slot"
+      ],
+      "flowSteps": [
+        "input",
+        "write_transaction",
+        "current_query",
+        "change_or_failure",
+        "history_or_wire"
+      ]
     },
     {
       "id": "consumer-legal-and-seller-disclosure",
       "sectionHeading": "## 7. 场景五：Consumer Legal 与 Seller Disclosure",
-      "tables": ["t_consumer_legal_document", "t_seller_disclosure"],
-      "fieldRefs": ["t_consumer_legal_document.legal_document_id", "t_consumer_legal_document.published_time", "t_seller_disclosure.disclosure_id", "t_seller_disclosure.public_legal_name"],
-      "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
+      "tables": [
+        "t_consumer_legal_document",
+        "t_seller_disclosure"
+      ],
+      "fieldRefs": [
+        "t_consumer_legal_document.legal_document_id",
+        "t_consumer_legal_document.published_time",
+        "t_seller_disclosure.disclosure_id",
+        "t_seller_disclosure.public_legal_name"
+      ],
+      "flowSteps": [
+        "input",
+        "write_transaction",
+        "current_query",
+        "change_or_failure",
+        "history_or_wire"
+      ]
     },
     {
       "id": "payment-method-profile-and-commercial-terms",
       "sectionHeading": "## 8. 场景六：Payment Method Profile 与组合定价",
-      "tables": ["t_payment_method_profile", "t_payment_method_profile_cond", "t_commercial_term_plan", "t_commercial_term_version", "t_commercial_term_price", "t_commercial_term_component", "t_commercial_term_component_band"],
-      "fieldRefs": ["t_payment_method_profile.payment_method_profile_id", "t_payment_method_profile.payment_method_profile_code", "t_payment_method_profile.payment_method_code", "t_payment_method_profile_cond.profile_condition_id", "t_payment_method_profile_cond.dimension_code", "t_payment_method_profile_cond.condition_value", "t_commercial_term_plan.term_plan_id", "t_commercial_term_plan.term_type", "t_commercial_term_version.term_version_id", "t_commercial_term_version.active_slot", "t_commercial_term_price.term_price_id", "t_commercial_term_price.operating_entity_id", "t_commercial_term_price.payment_method_profile_code", "t_commercial_term_price.priority_no", "t_commercial_term_component.term_component_id", "t_commercial_term_component.term_price_id", "t_commercial_term_component.component_no", "t_commercial_term_component.component_type", "t_commercial_term_component.band_mode", "t_commercial_term_component_band.term_band_id", "t_commercial_term_component_band.lower_bound", "t_commercial_term_component_band.upper_bound"],
-      "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
+      "tables": [
+        "t_payment_method_profile",
+        "t_payment_method_profile_cond",
+        "t_commercial_term_plan",
+        "t_commercial_term_version",
+        "t_commercial_term_price",
+        "t_commercial_term_component",
+        "t_commercial_term_component_band"
+      ],
+      "fieldRefs": [
+        "t_payment_method_profile.payment_method_profile_id",
+        "t_payment_method_profile.payment_method_profile_code",
+        "t_payment_method_profile.payment_method_code",
+        "t_payment_method_profile_cond.profile_condition_id",
+        "t_payment_method_profile_cond.dimension_code",
+        "t_payment_method_profile_cond.condition_value",
+        "t_commercial_term_plan.term_plan_id",
+        "t_commercial_term_plan.term_type",
+        "t_commercial_term_version.term_version_id",
+        "t_commercial_term_version.active_slot",
+        "t_commercial_term_price.term_price_id",
+        "t_commercial_term_price.entity_no",
+        "t_commercial_term_price.payment_method_profile_code",
+        "t_commercial_term_price.priority_no",
+        "t_commercial_term_component.term_component_id",
+        "t_commercial_term_component.term_price_id",
+        "t_commercial_term_component.component_no",
+        "t_commercial_term_component.component_type",
+        "t_commercial_term_component.band_mode",
+        "t_commercial_term_component_band.term_band_id",
+        "t_commercial_term_component_band.lower_bound",
+        "t_commercial_term_component_band.upper_bound"
+      ],
+      "flowSteps": [
+        "input",
+        "write_transaction",
+        "current_query",
+        "change_or_failure",
+        "history_or_wire"
+      ]
     },
     {
       "id": "selective-business-change-history",
       "sectionHeading": "### 10.2 Root 与受审计 Child 的 BCR 对应",
-      "tables": ["t_business_change_record", "t_business_change_version"],
-      "fieldRefs": ["t_business_change_record.history_id", "t_business_change_record.current_version", "t_business_change_version.change_version_id", "t_business_change_version.snapshot_json"],
-      "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
+      "tables": [
+        "t_business_change_record",
+        "t_business_change_version"
+      ],
+      "fieldRefs": [
+        "t_business_change_record.history_id",
+        "t_business_change_record.current_version",
+        "t_business_change_version.change_version_id",
+        "t_business_change_version.snapshot_json"
+      ],
+      "flowSteps": [
+        "input",
+        "write_transaction",
+        "current_query",
+        "change_or_failure",
+        "history_or_wire"
+      ]
     },
     {
       "id": "reliable-execution-and-idempotency",
       "sectionHeading": "### 10.4 命令幂等与 Compensation Event",
-      "tables": ["t_compensation_event", "t_command_idempotency"],
-      "fieldRefs": ["t_compensation_event.id", "t_compensation_event.event_key", "t_compensation_event.source_version", "t_command_idempotency.idempotency_id", "t_command_idempotency.request_hash"],
-      "flowSteps": ["input", "write_transaction", "current_query", "change_or_failure", "history_or_wire"]
+      "tables": [
+        "t_compensation_event",
+        "t_command_idempotency"
+      ],
+      "fieldRefs": [
+        "t_compensation_event.id",
+        "t_compensation_event.event_key",
+        "t_compensation_event.source_version",
+        "t_command_idempotency.idempotency_id",
+        "t_command_idempotency.request_hash"
+      ],
+      "flowSteps": [
+        "input",
+        "write_transaction",
+        "current_query",
+        "change_or_failure",
+        "history_or_wire"
+      ]
     }
   ],
   "partnerApplicationLifecycle": {
     "scenarioId": "roles-and-onboarding",
     "table": "t_partner_application",
     "qualificationType": "PARTNER_DUE_DILIGENCE",
-    "statuses": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
+    "statuses": [
+      "DRAFT",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "APPROVED",
+      "REJECTED",
+      "WITHDRAWN"
+    ],
     "requestedByAccountReference": "PLATFORM_ACCOUNT_EXTERNAL_NO_FK",
     "riskCoordinatesReference": "RISK_EXTERNAL_NO_FK",
     "applicationDocumentParent": "partner_application_id",
     "startOrResumeTransaction": {
-      "atomicWrites": ["PENDING_LOCAL_PARTNER", "DRAFT_PARTNER_APPLICATION", "BCR_ROOT_AND_VERSION", "COMPENSATION_EVENT:ProvisionAccessTenant"],
+      "atomicWrites": [
+        "PENDING_LOCAL_PARTNER",
+        "DRAFT_PARTNER_APPLICATION",
+        "BCR_ROOT_AND_VERSION",
+        "COMPENSATION_EVENT:ProvisionAccessTenant"
+      ],
       "compensationEventExecutionType": "LOCAL_HANDLER",
       "compensationEventDispatch": "AFTER_COMMIT"
     },
     "submitTransaction": {
-      "atomicWrites": ["SUBMITTED_PARTNER_APPLICATION", "APPLICATION_DOCUMENT_FILE_IDS", "SUBMISSION_SNAPSHOT_AND_HASH", "BCR_ROOT_AND_VERSION", "COMPENSATION_EVENT:RiskDueDiligence"],
+      "atomicWrites": [
+        "SUBMITTED_PARTNER_APPLICATION",
+        "APPLICATION_DOCUMENT_FILE_IDS",
+        "SUBMISSION_SNAPSHOT_AND_HASH",
+        "BCR_ROOT_AND_VERSION",
+        "COMPENSATION_EVENT:RiskDueDiligence"
+      ],
       "compensationEventExecutionType": "LOCAL_HANDLER",
       "compensationEventDispatch": "AFTER_COMMIT"
     },
@@ -975,53 +1215,282 @@ BCR 白名单是 20 类 Record Type、17 类 Root Type。`PARTY_PROFILE -> PARTY
       "outcome": "RETRYABLE",
       "tenantCreation": "FORBIDDEN_WITHOUT_REQUESTED_BY_ACCOUNT_ID"
     },
-    "eventOrder": ["PLATFORM_ACCOUNT_VERIFIED", "CCT_DRAFT_PARTNER_APPLICATION_AND_BCR_COMMITTED", "PROVISION_ACCESS_TENANT_AFTER_COMMIT", "ONBOARDING_FILES_UPLOADED_TO_RESOLVED_PENDING_TENANT", "CCT_SUBMITTED_SNAPSHOT_AND_BCR_COMMITTED", "RISK_DUE_DILIGENCE_SUBMISSION_AFTER_COMMIT", "RISK_QUALIFICATION_DECISION", "CCT_APPROVED_STATUS_PROJECTION"],
+    "eventOrder": [
+      "PLATFORM_ACCOUNT_VERIFIED",
+      "CCT_DRAFT_PARTNER_APPLICATION_AND_BCR_COMMITTED",
+      "PROVISION_ACCESS_TENANT_AFTER_COMMIT",
+      "ONBOARDING_FILES_UPLOADED_TO_RESOLVED_PENDING_TENANT",
+      "CCT_SUBMITTED_SNAPSHOT_AND_BCR_COMMITTED",
+      "RISK_DUE_DILIGENCE_SUBMISSION_AFTER_COMMIT",
+      "RISK_QUALIFICATION_DECISION",
+      "CCT_APPROVED_STATUS_PROJECTION"
+    ],
     "rejectedResubmission": "REUSE_PENDING_LOCAL_PARTNER"
   },
   "enumAssertions": {
-    "party.party_type": ["INDIVIDUAL", "ORGANIZATION"],
-    "party_profile.profile_status": ["DRAFT", "FROZEN", "ACTIVE", "SUPERSEDED"],
-    "party_contact.contact_type": ["EMAIL", "PHONE"],
-    "party_relation.relation_type": ["OWNERSHIP", "CONTROL", "DIRECTOR", "SIGNATORY", "UBO"],
-    "party_relation.status": ["DRAFT", "ACTIVE", "ENDED"],
-    "client.status": ["PENDING", "ACTIVE", "SUSPENDED", "TERMINATED"],
-    "local_partner.status": ["PENDING", "ACTIVE", "SUSPENDED", "TERMINATED"],
-    "operating_entity.status": ["PENDING", "ACTIVE", "SUSPENDED", "CLOSED"],
-    "client_business_profile.status": ["DRAFT", "FROZEN", "ACTIVE", "SUPERSEDED"],
-    "client_application.application_type": ["ONBOARDING", "PROFILE_CHANGE"],
-    "client_application.status": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
-    "client_application.qualification_type": ["INDIVIDUAL_KYC", "ORGANIZATION_KYB"],
-    "partner_application.status": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
-    "partner_application.qualification_type": ["PARTNER_DUE_DILIGENCE"],
-    "operating_entity_application.source_type": ["PLATFORM", "CLIENT", "PARTNER"],
-    "operating_entity_application.client_source_basis": ["SAME_PARTY", "VERIFIED_ASSOCIATION"],
-    "operating_entity_application.status": ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN"],
-    "operating_entity_application.qualification_type": ["ENTITY_UNDERWRITING"],
-    "client_entity_affiliation.status": ["ACTIVE", "ENDED"],
-    "client_entity_assignment.status": ["ACTIVE", "ENDED"],
-    "entity_assignment_rule.status": ["ACTIVE", "ENDED"],
-    "entity_source_relation.source_type": ["PLATFORM", "CLIENT", "PARTNER"],
-    "entity_source_relation.client_source_basis": ["SAME_PARTY", "VERIFIED_ASSOCIATION"],
-    "entity_source_relation.status": ["ACTIVE", "ENDED"],
-    "agreement.agreement_type": ["CLIENT", "PARTNER"],
-    "consumer_legal_document.document_type": ["CONSUMER_TERMS", "REFUND_POLICY", "PRIVACY_NOTICE"],
-    "payment_method_profile.status": ["DRAFT", "ACTIVE", "RETIRED"],
-    "commercial_term_plan.term_type": ["CLIENT_PRICING", "PARTNER_SHARE", "PLATFORM_SERVICE_CHARGE"],
-    "commercial_term_version.status": ["DRAFT", "APPROVED", "SCHEDULED", "ACTIVE", "SUPERSEDED", "EXPIRED"],
-    "commercial_term_version.rounding_mode": ["HALF_UP"],
-    "commercial_term_component.component_type": ["PERCENTAGE", "FIXED", "TIERED"],
-    "commercial_term_component.band_mode": ["WHOLE_BASE", "PROGRESSIVE"],
-    "business_change_record.record_type": ["PARTY", "CLIENT", "LOCAL_PARTNER", "OPERATING_ENTITY", "PARTY_PROFILE", "CLIENT_BUSINESS_PROFILE", "COMMERCIAL_TERM_VERSION", "CLIENT_APPLICATION", "PARTNER_APPLICATION", "OPERATING_ENTITY_APPLICATION", "PARTY_RELATION", "CLIENT_ENTITY_AFFILIATION", "ENTITY_ASSIGNMENT_RULE", "CLIENT_ENTITY_ASSIGNMENT", "ENTITY_SOURCE_RELATION", "AGREEMENT", "CONSUMER_LEGAL_DOCUMENT", "SELLER_DISCLOSURE", "COMMERCIAL_TERM_PLAN", "PAYMENT_METHOD_PROFILE"],
-    "business_change_record.aggregate_root_type": ["PARTY", "CLIENT", "LOCAL_PARTNER", "OPERATING_ENTITY", "CLIENT_APPLICATION", "PARTNER_APPLICATION", "OPERATING_ENTITY_APPLICATION", "PARTY_RELATION", "CLIENT_ENTITY_AFFILIATION", "ENTITY_ASSIGNMENT_RULE", "CLIENT_ENTITY_ASSIGNMENT", "ENTITY_SOURCE_RELATION", "AGREEMENT", "CONSUMER_LEGAL_DOCUMENT", "SELLER_DISCLOSURE", "COMMERCIAL_TERM_PLAN", "PAYMENT_METHOD_PROFILE"],
-    "business_change_version.operation_type": ["CREATE", "UPDATE", "DELETE"],
-    "compensation_event.execution_type": ["MQ_PUBLISH", "LOCAL_HANDLER"],
-    "compensation_event.execute_status": ["INIT", "PROCESSING", "ERROR", "FAILED"],
-    "agreement.status": ["DRAFT", "PENDING_SIGNATURE", "SIGNED", "ACTIVE", "EXPIRED", "TERMINATED", "CANCELLED"],
-    "agreement_signatory.signatory_role": ["CLIENT", "LOCAL_PARTNER", "PLATFORM_SIGNATORY", "OPERATING_ENTITY"],
-    "agreement_document_ref.document_type": ["SIGNING_DOCUMENT", "ANNEX", "EXECUTED_DOCUMENT", "TERMINATION_NOTICE"],
-    "agreement_acceptance.acceptance_method": ["E_SIGNATURE", "CLICK_ACCEPTANCE", "MANUAL_SIGNATURE"],
-    "consumer_legal_document.status": ["DRAFT", "APPROVED", "ACTIVE", "EXPIRED", "WITHDRAWN"],
-    "seller_disclosure.status": ["DRAFT", "APPROVED", "ACTIVE", "EXPIRED", "WITHDRAWN"]
+    "party.party_type": [
+      "INDIVIDUAL",
+      "ORGANIZATION"
+    ],
+    "party_profile.profile_status": [
+      "DRAFT",
+      "FROZEN",
+      "ACTIVE",
+      "SUPERSEDED"
+    ],
+    "party_contact.contact_type": [
+      "EMAIL",
+      "PHONE"
+    ],
+    "party_relation.relation_type": [
+      "OWNERSHIP",
+      "CONTROL",
+      "DIRECTOR",
+      "SIGNATORY",
+      "UBO"
+    ],
+    "party_relation.status": [
+      "DRAFT",
+      "ACTIVE",
+      "ENDED"
+    ],
+    "client.status": [
+      "PENDING",
+      "ACTIVE",
+      "SUSPENDED",
+      "TERMINATED"
+    ],
+    "local_partner.status": [
+      "PENDING",
+      "ACTIVE",
+      "SUSPENDED",
+      "TERMINATED"
+    ],
+    "operating_entity.status": [
+      "PENDING",
+      "ACTIVE",
+      "SUSPENDED",
+      "CLOSED"
+    ],
+    "client_business_profile.status": [
+      "DRAFT",
+      "FROZEN",
+      "ACTIVE",
+      "SUPERSEDED"
+    ],
+    "client_application.application_type": [
+      "ONBOARDING",
+      "PROFILE_CHANGE"
+    ],
+    "client_application.status": [
+      "DRAFT",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "APPROVED",
+      "REJECTED",
+      "WITHDRAWN"
+    ],
+    "client_application.qualification_type": [
+      "INDIVIDUAL_KYC",
+      "ORGANIZATION_KYB"
+    ],
+    "partner_application.status": [
+      "DRAFT",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "APPROVED",
+      "REJECTED",
+      "WITHDRAWN"
+    ],
+    "partner_application.qualification_type": [
+      "PARTNER_DUE_DILIGENCE"
+    ],
+    "operating_entity_application.source_type": [
+      "PLATFORM",
+      "CLIENT",
+      "PARTNER"
+    ],
+    "operating_entity_application.client_source_basis": [
+      "SAME_PARTY",
+      "VERIFIED_ASSOCIATION"
+    ],
+    "operating_entity_application.status": [
+      "DRAFT",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "APPROVED",
+      "REJECTED",
+      "WITHDRAWN"
+    ],
+    "operating_entity_application.qualification_type": [
+      "ENTITY_UNDERWRITING",
+      "ENTITY_SCOPE_REVIEW"
+    ],
+    "client_entity_affiliation.status": [
+      "ACTIVE",
+      "ENDED"
+    ],
+    "entity_source_relation.source_type": [
+      "PLATFORM",
+      "CLIENT",
+      "PARTNER"
+    ],
+    "entity_source_relation.client_source_basis": [
+      "SAME_PARTY",
+      "VERIFIED_ASSOCIATION"
+    ],
+    "entity_source_relation.status": [
+      "ACTIVE",
+      "ENDED"
+    ],
+    "agreement.agreement_type": [
+      "CLIENT",
+      "PARTNER"
+    ],
+    "consumer_legal_document.document_type": [
+      "CONSUMER_TERMS",
+      "REFUND_POLICY",
+      "PRIVACY_NOTICE"
+    ],
+    "commercial_term_plan.term_type": [
+      "CLIENT_PRICING",
+      "PARTNER_SHARE",
+      "PLATFORM_SERVICE_CHARGE"
+    ],
+    "commercial_term_version.status": [
+      "DRAFT",
+      "APPROVED",
+      "SCHEDULED",
+      "ACTIVE",
+      "SUPERSEDED",
+      "EXPIRED"
+    ],
+    "commercial_term_version.rounding_mode": [
+      "HALF_UP"
+    ],
+    "payment_method_profile.status": [
+      "DRAFT",
+      "ACTIVE",
+      "RETIRED"
+    ],
+    "commercial_term_component.component_type": [
+      "PERCENTAGE",
+      "FIXED",
+      "TIERED"
+    ],
+    "commercial_term_component.band_mode": [
+      "WHOLE_BASE",
+      "PROGRESSIVE"
+    ],
+    "business_change_record.record_type": [
+      "PARTY",
+      "CLIENT",
+      "LOCAL_PARTNER",
+      "OPERATING_ENTITY",
+      "PARTY_PROFILE",
+      "CLIENT_BUSINESS_PROFILE",
+      "COMMERCIAL_TERM_VERSION",
+      "CLIENT_APPLICATION",
+      "PARTNER_APPLICATION",
+      "OPERATING_ENTITY_APPLICATION",
+      "PARTY_RELATION",
+      "CLIENT_ENTITY_AFFILIATION",
+      "ENTITY_SOURCE_RELATION",
+      "AGREEMENT",
+      "CONSUMER_LEGAL_DOCUMENT",
+      "SELLER_DISCLOSURE",
+      "COMMERCIAL_TERM_PLAN",
+      "PAYMENT_METHOD_PROFILE"
+    ],
+    "business_change_record.aggregate_root_type": [
+      "PARTY",
+      "CLIENT",
+      "LOCAL_PARTNER",
+      "OPERATING_ENTITY",
+      "CLIENT_APPLICATION",
+      "PARTNER_APPLICATION",
+      "OPERATING_ENTITY_APPLICATION",
+      "PARTY_RELATION",
+      "CLIENT_ENTITY_AFFILIATION",
+      "ENTITY_SOURCE_RELATION",
+      "AGREEMENT",
+      "CONSUMER_LEGAL_DOCUMENT",
+      "SELLER_DISCLOSURE",
+      "COMMERCIAL_TERM_PLAN",
+      "PAYMENT_METHOD_PROFILE"
+    ],
+    "business_change_version.operation_type": [
+      "CREATE",
+      "UPDATE",
+      "DELETE"
+    ],
+    "compensation_event.execution_type": [
+      "MQ_PUBLISH",
+      "LOCAL_HANDLER"
+    ],
+    "compensation_event.execute_status": [
+      "INIT",
+      "PROCESSING",
+      "ERROR",
+      "FAILED"
+    ],
+    "agreement.status": [
+      "DRAFT",
+      "PENDING_SIGNATURE",
+      "SIGNED",
+      "ACTIVE",
+      "EXPIRED",
+      "TERMINATED",
+      "CANCELLED"
+    ],
+    "agreement_party.party_role": [
+      "CLIENT",
+      "LOCAL_PARTNER",
+      "PLATFORM_SIGNATORY",
+      "OPERATING_ENTITY"
+    ],
+    "agreement_document_ref.document_type": [
+      "SIGNING_DOCUMENT",
+      "ANNEX",
+      "EXECUTED_DOCUMENT",
+      "TERMINATION_NOTICE"
+    ],
+    "consumer_legal_document.status": [
+      "DRAFT",
+      "APPROVED",
+      "ACTIVE",
+      "EXPIRED",
+      "WITHDRAWN"
+    ],
+    "seller_disclosure.status": [
+      "DRAFT",
+      "APPROVED",
+      "ACTIVE",
+      "EXPIRED",
+      "WITHDRAWN"
+    ],
+    "operating_entity_application.application_type": [
+      "ONBOARDING",
+      "SCOPE_CHANGE"
+    ],
+    "operating_entity_scope.status": [
+      "DRAFT",
+      "ACTIVE",
+      "ENDED"
+    ],
+    "agreement.agreement_format": [
+      "MERGED_PARTY",
+      "LEGACY_ROLE_SIGNATURE"
+    ],
+    "business_change_version.snapshot_format": [
+      "ENTITY_NO",
+      "LEGACY_NUMERIC"
+    ],
+    "agreement_party.acceptance_method": [
+      "E_SIGNATURE",
+      "CLICK_ACCEPTANCE",
+      "MANUAL_SIGNATURE"
+    ]
   }
 }
 ```

@@ -100,7 +100,7 @@ export const TABLES = Object.freeze([
     fields: [
       primaryKey("id", "总账账簿ID", "服务侧生成的总账账簿 Snowflake 主键"),
       field("entity_type", types.code, "NN", "账簿主体类型", "区分由 CCT Operating Entity 或 Finance 本地内部财务主体拥有的账簿", { values: LEDGER_ENTITY_TYPES }),
-      field("entity_id", "BIGINT", "NN", "账簿主体ID", "按主体类型解释的稳定业务ID；Operating Entity 来自 CCT，Finance Entity 使用本地主键，不建立多态外键"),
+      field("entity_id", "VARCHAR(64)", "NN", "账簿主体ID", "按主体类型解释的稳定业务ID；Operating Entity 来自 CCT，Finance Entity 使用本地主键，不建立多态外键"),
       field("currency", types.currency, "NN", "账簿币种", "该账簿唯一使用的 ISO 4217 三位币种代码", { source: "ISO 4217 币种代码" }),
       field("chart_id", "BIGINT", "NN", "会计科目表ID", "该账簿采用的本库稳定会计科目表"),
       field("book_status", types.code, "NN", "账簿状态", "账簿是否允许接收新的会计分录", { values: ["OPEN", "SUSPENDED", "CLOSED"] }),
@@ -123,7 +123,7 @@ export const TABLES = Object.freeze([
       field("ledger_book_id", "BIGINT", "NN", "总账账簿ID", "该账户严格归属的本库经营主体币种账簿"),
       field("chart_account_id", "BIGINT", "NN", "会计科目ID", "该账户使用且必须允许过账的本库会计科目定义"),
       field("owner_type", types.code, "NN", "核算对象类型", "决定账户余额按经营主体、内部财务主体、Client、Local Partner、渠道账户、银行账户或税务机关隔离的类型", { values: ACCOUNT_OWNER_TYPES }),
-      field("owner_id", "BIGINT", "NN", "核算对象ID", "按核算对象类型解释的稳定业务ID；本库对象使用本地主键，外部对象不建立跨库外键"),
+      field("owner_id", "VARCHAR(64)", "NN", "核算对象ID", "按owner_type解释的稳定字符串；OE为entityNo，其余数字身份保存规范十进制字符串；本库对象使用本地主键，外部对象不建立跨库外键"),
       field("balance_bucket", types.code, "NN", "余额桶", "PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner 的 PENDING 是共享待结算桶；PARTNER_RECOVERY_RECEIVABLE 使用 NONE；CLIENT_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，CLIENT_RECOVERY_RECEIVABLE/NONE、CLIENT_SECURITY_DEPOSIT/NONE 以及 Provider 三阶段账户均使用独立会计科目并采用 NONE，不复用应付款余额桶", { values: BALANCE_BUCKETS }),
       field("normal_side", types.code, "NN", "正常余额方向", "创建账户时从会计科目复制并冻结的正常余额方向；账户仍允许借贷双向过账", { values: NORMAL_SIDES }),
       field("account_status", types.code, "NN", "账户状态", "该具体核算账户当前是否允许新的会计分录过账", { values: ACCOUNT_STATUS }),
@@ -161,7 +161,7 @@ export const TABLES = Object.freeze([
     fields: [
       primaryKey("id", "财务日历ID", "服务侧生成的财务日历 Snowflake 主键"),
       field("entity_type", types.code, "NN", "日历主体类型", "区分使用该财务日历的 CCT Operating Entity 或 Finance 本地内部财务主体", { values: LEDGER_ENTITY_TYPES }),
-      field("entity_id", "BIGINT", "NN", "日历主体ID", "按主体类型解释的稳定业务ID；Finance Entity 使用本地主键且不建立多态外键"),
+      field("entity_id", "VARCHAR(64)", "NN", "日历主体ID", "按主体类型解释的稳定业务ID；Finance Entity 使用本地主键且不建立多态外键"),
       field("calendar_code", types.code, "NN", "日历代码", "V1 中该经营主体唯一法定财务日历的稳定展示和接口代码", { source: "Finance 财务日历代码" }),
       field("timezone", "VARCHAR(64)", "NN", "时区", "用于确定财务日期边界的 IANA 时区代码", { source: "IANA 时区数据库" }),
       field("year_start_month", "TINYINT", "NN", "财年起始月份", "财年开始月份，取值范围为一至十二"),

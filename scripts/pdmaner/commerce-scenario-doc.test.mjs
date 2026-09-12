@@ -126,7 +126,7 @@ artifactTest("scenario and generated model share the exact 15-table target", () 
   assert.deepEqual(scenarioTables, generatedTables);
   assert.deepEqual(modelTotals(model), {
     tables: 15,
-    fields: 246,
+    fields: 249,
     uniqueIndexes: 24,
     accessIndexes: 12,
     relations: 15,
@@ -250,7 +250,7 @@ artifactTest("removed fulfillment and obsolete Vault/Blind fields stay out of th
 
   const source = readScenario();
   assert.match(source, /Commerce 15 表(?:目标|模型)不保存 Webhook 配置 ID、URL 或 Secret/u);
-  assert.match(source, /当前生成模型为 15 表 \/ 246 字段 \/ 24 个非主键唯一索引 \/ 12 个访问索引 \/ 15 条本库关系 \/ 4 个 Diagram Group/u);
+  assert.match(source, /当前生成模型为 15 表 \/ 249 字段 \/ 24 个非主键唯一索引 \/ 12 个访问索引 \/ 15 条本库关系 \/ 4 个 Diagram Group/u);
   assert.doesNotMatch(source, /当前生成(?:的 PDManer|模型|资产).*14 表\s*\/\s*223 字段/u);
   assert.match(source, /当前 Vault V1.*Protect\/Reveal/u);
   assert.doesNotMatch(source, /命令恢复重放同一 Token\/Binding|Retire 未被业务行引用的 Binding/u);

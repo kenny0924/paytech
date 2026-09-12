@@ -1,8 +1,10 @@
 # Finance 数据库设计规范
 
+> **2026-09-11 模型更新：** 本页的数字 OE、Assignment、Client 多 OE 合同及旧 Scope 冻结描述，仅适用于迁移前记录与接口；现行目标由 [四系统模型决定](../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 精确取代。Risk 本期不改，Java 与数据库尚未据此迁移，历史订单与 Hash 不重写。
+
 最后更新：2026-08-28
 
-状态：V1 书面逻辑模型已确认；Finance 当前目标模型精确为 84 表、1,100 字段、145 个唯一索引、155 个访问索引、160 条本库关系、22 条 1:1 关系和 6 个 Diagram Groups，其中 Provider 清算、现金与对账主图为 15 表，Tax/Fiscal 主图仍为 23 表，Manual Payout 主图精确为 7 表。PDManer 4.9.3 应用内人工 Review 仍待完成；当前仍不包含手工数据库 SQL、Java 实现、物理数据库或运行环境。
+状态：本期模型采用 2026-09-11 四系统调整；生成统计、验证、Java 与数据库迁移状态统一见 [当前实现台账](../CURRENT_IMPLEMENTATION.md)。
 
 > **2026-09-05 跨主题对齐：** 本文拥有 Finance 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。旧 Vault Binding/Copy/Blind Index/Metadata 与旧补偿字段是 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 记录的迁移债务，不得用于新增实现。手工缴税以“事前承诺门禁 + 事后真实 Debit 保留/异常处理”的已确认决定为准，现有模型无法无损闭环的部分按 [专项计划](../../docs/superpowers/plans/2026-09-05-finance-manual-tax-reconciliation.md) 迁移。
 

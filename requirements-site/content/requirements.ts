@@ -1,3 +1,5 @@
+// 2026-09-11: OE/Client/Pricing target model is governed by agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md.
+// The existing interface/use-case catalog below remains the legacy runtime contract until the separately gated migration; Risk is excluded.
 export type Status = "confirmed" | "proposed" | "mvp" | "later" | "open";
 export type ContentView = "architecture" | "use-cases";
 

@@ -143,11 +143,11 @@ test("现实场景 Manifest 覆盖当前全部物理表并只引用存在的字�
   assert.equal(manifest.schema, expectedSchema);
   assert.equal(manifest.storyId, expectedStoryId);
   const approvedTotals = {
-    tables: 40,
-    fields: 443,
-    uniqueIndexes: 63,
-    accessIndexes: 46,
-    relations: 67,
+    tables: 38,
+    fields: 428,
+    uniqueIndexes: 61,
+    accessIndexes: 43,
+    relations: 64,
     diagramGroups: 6,
   };
   assert.deepEqual(modelTotals(model), approvedTotals);

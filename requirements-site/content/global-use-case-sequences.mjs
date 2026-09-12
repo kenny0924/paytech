@@ -1,3 +1,5 @@
+// 2026-09-11: Existing sequences retain legacy wire timing. Four-system target payment preparation and Price facts are specified in requirements/20260911/client-contract-OE与Client模型梳理/stage3-contracts.md.
+// Risk sequences are unchanged in this model-only slice; do not treat target PDManer completion as E2E rollout.
 export const SEQUENCE_PARTICIPANTS = {
   client: { name: "Client", type: "actor" },
   consumer: { name: "Consumer", type: "actor" },

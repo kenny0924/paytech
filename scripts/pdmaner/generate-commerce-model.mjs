@@ -27,6 +27,7 @@ const JAVA_MAPPING_ID = "797A1496-D649-4261-89B4-544132EC3F36";
 const MYBATIS_MAPPING_ID = "895CFD1D-4273-4D32-A2C4-CAC70200AB5B";
 
 const ASCII_BINARY_FIELD_PATHS = new Set([
+  "commerce_order.entity_no",
   "commerce_order.order_no",
   "commerce_order.client_order_id",
   "order_item.client_item_id",
@@ -54,17 +55,20 @@ order_id BIGINT NN
 order_no VARCHAR(64) NN
 client_id BIGINT NN
 client_order_id VARCHAR(128) NN
-operating_entity_id BIGINT NN
-entity_source_type VARCHAR(64) NN {PLATFORM,CLIENT,PARTNER}
+context_format VARCHAR(32) NN {TERM_PRICE,LEGACY_SCOPE}
+preparation_command_id BIGINT N
+termination_requested_at DATETIME(6) N
+entity_no CHAR(5) N
+entity_source_type VARCHAR(64) N {PLATFORM,CLIENT,PARTNER}
 local_partner_id BIGINT N
-industry_code VARCHAR(64) NN
-mcc_code VARCHAR(4) NN
+industry_code VARCHAR(64) N
+mcc_code VARCHAR(4) N
 merchandise_amount DECIMAL(24,8) NN
 discount_amount DECIMAL(24,8) NN
 net_amount DECIMAL(24,8) NN
-tax_amount DECIMAL(24,8) NN
-rounding_amount DECIMAL(24,8) NN
-total_amount DECIMAL(24,8) NN
+tax_amount DECIMAL(24,8) N
+rounding_amount DECIMAL(24,8) N
+total_amount DECIMAL(24,8) N
 currency CHAR(3) NN
 order_status VARCHAR(64) NN {CREATED,OPEN,PAID,CANCELLED,EXPIRED}
 status_reason_code VARCHAR(64) N OPEN(Order Status Reason Catalog)
@@ -78,11 +82,12 @@ update_time DATETIME(6) NN
 order_context_id BIGINT NN
 order_id BIGINT NN
 commercial_context_time DATETIME(6) NN
-assignment_id BIGINT NN
-cct_commercial_context_hash CHAR(64) NN
-client_pricing_scope_id BIGINT NN
-partner_share_scope_id BIGINT N
-platform_service_charge_scope_id BIGINT N
+affiliation_id BIGINT NN
+entity_scope_id BIGINT NN
+entity_source_relation_id BIGINT NN
+client_pricing_version_id BIGINT NN
+partner_share_version_id BIGINT N
+platform_charge_version_id BIGINT N
 platform_service_party_id BIGINT N
 risk_checkout_assessment_id BIGINT NN
 finance_tax_snapshot_id BIGINT NN
@@ -94,7 +99,8 @@ create_time DATETIME(6) NN
 [t_order_legal]
 order_legal_id BIGINT NN
 order_context_id BIGINT NN
-client_agreement_operating_entity_id BIGINT NN
+client_agreement_id BIGINT NN
+partner_agreement_id BIGINT N
 partner_agreement_operating_entity_id BIGINT N
 consumer_terms_document_id BIGINT NN
 consumer_terms_file_id BIGINT NN
@@ -127,8 +133,6 @@ unit_amount DECIMAL(24,8) NN
 line_gross_amount DECIMAL(24,8) NN
 line_discount_amount DECIMAL(24,8) NN
 line_net_amount DECIMAL(24,8) NN
-line_tax_amount DECIMAL(24,8) NN
-line_total_amount DECIMAL(24,8) NN
 currency CHAR(3) NN
 sort_no INT NN
 create_time DATETIME(6) NN
@@ -484,6 +488,7 @@ function sha256(value) {
 }
 
 function stableUuid(key) {
+  if (key.startsWith("field/") && key.endsWith("/entity_no")) key = key.replace(/entity_no$/, "operating_entity_id");
   const bytes = Buffer.from(sha256(`${MODEL_KEY}:${key}`).slice(0, 32), "hex");
   bytes[6] = (bytes[6] & 0x0f) | 0x50;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
@@ -889,7 +894,7 @@ function validateMetadata(tables) {
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
     tables: 15,
-    fields: 246,
+    fields: 249,
     uniqueIndexes: 24,
     accessIndexes: 12,
     relations: 15,

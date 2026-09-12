@@ -1,5 +1,7 @@
 # 六大核心系统数据库设计总览
 
+> **OE / Client / Pricing 本期路由：** CCT、Commerce、Payment、Finance 的 entityNo、OE Scope、Affiliation、Agreement Party、支付准备与定价事实以 [2026-09-11 四系统决定](../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 为准；Risk 延后接入，旧 Wire/Hash/历史 Reader 继续按迁移边界保留。
+
 最后更新：2026-09-10
 
 状态：Confirmed business-data authority and routing。本文只拥有六系统的数据事实、状态机和跨系统数据边界；文档权威见 [`DOCUMENT_GOVERNANCE.md`](../DOCUMENT_GOVERNANCE.md)，模型统计、代码、验证和部署状态只见 [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md)。

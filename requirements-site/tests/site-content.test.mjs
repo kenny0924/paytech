@@ -897,10 +897,10 @@ test("Commerce authority freezes the generated 15-table Client API model while p
   assert.match(commercePrivacySimplificationDesignSource, /固化 2026-08-24 已确认/u);
   assert.match(commerceDocumentAuditCancelDesignSource, /14 张表.*223 个字段.*20 个唯一索引.*11 个普通索引.*14 条本库关系.*4 个 Diagram Group/su);
   assert.match(commerceDatabaseSource, /V1 权威逻辑目标已确认/u);
-  assert.match(commerceDatabaseSource, /当前已生成模型与人工 Schema 为 15 表 \/ 246 字段/u);
+  assert.match(commerceDatabaseSource, /2026-09-11-cct-commerce-oe-pricing-model/u);
   assert.match(
     currentImplementationSource,
-    /\| Commerce \| 15 \| 246 \| 24 \| 12 \| 15 \| — \| 4 \|/u,
+    /\| Commerce \| 15 \| 249 \| 24 \| 12 \| 15 \| — \| 4 \|/u,
   );
   assert.match(projectContextSource, /当前实现、验证与部署见.*CURRENT_IMPLEMENTATION\.md/su);
 });
@@ -918,9 +918,9 @@ test("the current implementation ledger owns core model snapshots while entry do
     assert.match(entrySource, /DOCUMENT_GOVERNANCE\.md/u);
   }
 
-  assert.match(currentImplementationSource, /\| Commerce \| 15 \| 246 \| 24 \| 12 \| 15 \| — \| 4 \|/u);
-  assert.match(currentImplementationSource, /\| Payment Orchestration \| 29 \| 373 \| 41 \| 44 \| 63 \| — \| 7 \|/u);
-  assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,100 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
+  assert.match(currentImplementationSource, /\| Commerce \| 15 \| 249 \| 24 \| 12 \| 15 \| — \| 4 \|/u);
+  assert.match(currentImplementationSource, /\| Payment Orchestration \| 30 \| 393 \| 42 \| 45 \| 65 \| 8 \| 7 \|/u);
+  assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,109 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
   assert.match(currentImplementationSource, /\| Risk & Compliance \| 72 \| 877 \| 108 \| 76 \| 113 \| 9 \| 8 \|/u);
   assert.match(documentGovernanceSource, /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据/u);
   assert.match(documentGovernanceSource, /被取代时增加状态与窄范围后继链接，不重写历史/u);
@@ -1103,7 +1103,7 @@ test("Commerce design and navigation expose the current privacy and Fulfillment-
     /六系统业务数据事实和状态机[\s\S]*database\/README\.md[\s\S]*当前专项决定和 PDManer/u,
   );
   assert.match(projectContextSource, /更窄的业务不变量由.*database\/README\.md.*专项决策拥有/su);
-  assert.match(currentImplementationSource, /\| Commerce \| 15 \| 246 \| 24 \| 12 \| 15 \| — \| 4 \|/u);
+  assert.match(currentImplementationSource, /\| Commerce \| 15 \| 249 \| 24 \| 12 \| 15 \| — \| 4 \|/u);
 });
 
 test("agent guidance routes consumer evidence work and preserves its non-negotiable boundaries", () => {
@@ -1124,7 +1124,7 @@ test("agent guidance routes consumer evidence work and preserves its non-negotia
 test("Commerce real-world scenario maps exactly the 15 approved target tables", () => {
   assert.match(commerceScenarioSource, /NOVA_COMMERCE_UAE_2026/u);
   assert.match(commerceScenarioSource, /15 表目标逐表映射/u);
-  assert.match(commerceScenarioSource, /当前生成模型为 15 表 \/ 246 字段.*Schema 尚未应用/su);
+  assert.match(commerceScenarioSource, /当前生成模型为 15 表 \/ 249 字段.*Schema 尚未应用/su);
   for (const tableName of expectedCommerceTables) {
     assert.match(
       commerceScenarioSource,
@@ -1495,7 +1495,7 @@ test("historical Finance designs preserve their superseded 98-table stage", () =
   assert.match(financeUnifiedAccountDesignSource, /RESERVED.*CLIENT_RESTRICTED_FUNDS.*历史.*保证金 Account.*替代/su);
   assert.match(financeUnifiedAccountDesignSource, /entity_type.*entity_id.*currency.*ledger_book_id.*推导/su);
   assert.doesNotMatch(financeUnifiedAccountDesignSource, /LOCAL_PARTNER[^\n]*PENDING|PARTNER_PAYABLE_PENDING/u);
-  assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,100 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
+  assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,109 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
   assert.match(
     documentGovernanceSource,
     /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据[\s\S]*被取代时增加状态与窄范围后继链接，不重写历史/u,

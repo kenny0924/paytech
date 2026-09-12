@@ -1,5 +1,7 @@
 # Agent 文档导航
 
+> **OE / Client / Pricing 本期路由：** CCT、Commerce、Payment、Finance 的 entityNo、OE Scope、Affiliation、Agreement Party、支付准备与定价事实以 [2026-09-11 四系统决定](decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 为准；Risk 延后接入，旧 Wire/Hash/历史 Reader 继续按迁移边界保留。
+
 本目录保存 Code-MoR 的长期设计上下文和开发规范。文档权威、当前状态和历史记录已分离：
 
 - 先读 [`DOCUMENT_GOVERNANCE.md`](./DOCUMENT_GOVERNANCE.md)，按主题选择唯一权威；

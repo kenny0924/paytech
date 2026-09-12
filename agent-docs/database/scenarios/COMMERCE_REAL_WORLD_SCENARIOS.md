@@ -2,7 +2,7 @@
 
 最后更新：2026-09-05
 
-状态：与 [Commerce 15 表逻辑目标](../COMMERCE_DATABASE.md) 及 [Commerce Client API V1](../../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 同步；当前生成模型为 15 表 / 246 字段 / 24 个非主键唯一索引 / 12 个访问索引 / 15 条本库关系 / 4 个 Diagram Group。Schema 尚未应用，Java、验证和部署状态只读 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md)。
+状态：与 [Commerce 15 表逻辑目标](../COMMERCE_DATABASE.md) 及 [Commerce Client API V1](../../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 同步；当前生成模型为 15 表 / 249 字段 / 24 个非主键唯一索引 / 12 个访问索引 / 15 条本库关系 / 4 个 Diagram Group。Schema 尚未应用，Java、验证和部署状态只读 [`CURRENT_IMPLEMENTATION.md`](../../CURRENT_IMPLEMENTATION.md)。
 
 > **2026-09-05 横切边界：** 本文不单独拥有 Vault 或 `compensation_event` 契约。当前 Vault V1 只有
 > Protect/Reveal，没有 Binding/Retire；Commerce 只复用已保存 Token。补偿记录使用三字段身份、Foundation
@@ -236,7 +236,7 @@ Captured Reversal 完成后，Order 仍保持 `PAID`，Refund Position 变为 `5
 
 ## 7. 文档、审计与敏感数据边界
 
-Commerce 15 表模型不保存 Webhook 配置 ID、URL 或 Secret，也不保存 Consumer Document Current Projection 或通用 BCR。Receipt 与 Credit Note 的状态、文件和更正关系由 Platform Support 保存，Finance 保存不可变 Fiscal Fact；Commerce 只通过 `t_compensation_event` 可靠发布最小来源事实。Consumer Token、网络原值和派生维度不得进入普通日志、MQ 文档事件或普通业务页面；Hosted Checkout Public Token 的第一方 URI Access Log 是单独确认的窄取舍，不能扩大到 Client API Response Body 日志或其他受限值。场景中没有任何 PAN、CVV/CVC、完整磁道、PIN/PIN Block、卡有效期、主动履约表或主动履约事件。当前生成模型为 15 表 / 246 字段 / 24 个非主键唯一索引 / 12 个访问索引 / 15 条本库关系 / 4 个 Diagram Group；Schema 尚未应用，不能据此声称 Java、物理数据库或部署完成。
+Commerce 15 表模型不保存 Webhook 配置 ID、URL 或 Secret，也不保存 Consumer Document Current Projection 或通用 BCR。Receipt 与 Credit Note 的状态、文件和更正关系由 Platform Support 保存，Finance 保存不可变 Fiscal Fact；Commerce 只通过 `t_compensation_event` 可靠发布最小来源事实。Consumer Token、网络原值和派生维度不得进入普通日志、MQ 文档事件或普通业务页面；Hosted Checkout Public Token 的第一方 URI Access Log 是单独确认的窄取舍，不能扩大到 Client API Response Body 日志或其他受限值。场景中没有任何 PAN、CVV/CVC、完整磁道、PIN/PIN Block、卡有效期、主动履约表或主动履约事件。当前生成模型为 15 表 / 249 字段 / 24 个非主键唯一索引 / 12 个访问索引 / 15 条本库关系 / 4 个 Diagram Group；Schema 尚未应用，不能据此声称 Java、物理数据库或部署完成。
 
 ## 8. 最终可观察结果
 

@@ -129,36 +129,37 @@ function numberOf(record, field) {
   return Number(valueOf(record, field));
 }
 
-function integerKey(value) {
+function identifierKey(value) {
+  if (/^[A-Z]{2}[0-9]{3}$/u.test(String(value))) return String(value);
   if (isNull(value)) return null;
   assert.match(String(value), /^-?\d+$/u, `${value} 不是整数 ID`);
   return BigInt(value).toString();
 }
 
-function integerEqual(left, right) {
-  return !isNull(left) && !isNull(right) && integerKey(left) === integerKey(right);
+function identifierEqual(left, right) {
+  return !isNull(left) && !isNull(right) && identifierKey(left) === identifierKey(right);
 }
 
-function integerLookupMap(records, keyOf) {
-  const lookup = new Map(records.map((record) => [integerKey(keyOf(record)), record]));
+function identifierLookupMap(records, keyOf) {
+  const lookup = new Map(records.map((record) => [identifierKey(keyOf(record)), record]));
   const canonicalGet = lookup.get.bind(lookup);
   const canonicalHas = lookup.has.bind(lookup);
-  lookup.get = (key) => canonicalGet(integerKey(key));
-  lookup.has = (key) => canonicalHas(integerKey(key));
+  lookup.get = (key) => canonicalGet(identifierKey(key));
+  lookup.has = (key) => canonicalHas(identifierKey(key));
   return lookup;
 }
 
 function groupByInteger(records, field) {
-  const grouped = Map.groupBy(records, (record) => integerKey(valueOf(record, field)));
+  const grouped = Map.groupBy(records, (record) => identifierKey(valueOf(record, field)));
   const canonicalGet = grouped.get.bind(grouped);
   const canonicalHas = grouped.has.bind(grouped);
-  grouped.get = (key) => canonicalGet(integerKey(key));
-  grouped.has = (key) => canonicalHas(integerKey(key));
+  grouped.get = (key) => canonicalGet(identifierKey(key));
+  grouped.has = (key) => canonicalHas(identifierKey(key));
   return grouped;
 }
 
 function integerSet(values) {
-  return new Set(values.map(integerKey));
+  return new Set(values.map(identifierKey));
 }
 
 let generatedModelCache;
@@ -332,7 +333,7 @@ const EXACT_DECIMAL_CHECKS = Object.freeze({
     && valueOf(record, "base_currency") !== valueOf(record, "quote_currency"),
   ck_tax_snapshot_amounts: (record, entity) => exactNonNegative(record, entity,
     ["total_collected_tax", "total_reverse_charge_tax", "reporting_collected_tax", "reporting_reverse_charge_tax"]),
-  ck_fiscal_record_sequence: (record, entity) => integerEqual(valueOf(record, "source_version"), "1")
+  ck_fiscal_record_sequence: (record, entity) => identifierEqual(valueOf(record, "source_version"), "1")
     && BigInt(valueOf(record, "generation_key_version")) > 0n
     && BigInt(valueOf(record, "sequence_value")) > 0n
     && fixedCompare(exactRequired(record, entity, "total_amount"), EXACT_ZERO) >= 0,
@@ -346,12 +347,12 @@ const EXACT_DECIMAL_CHECKS = Object.freeze({
     const rate = exactRequired(record, entity, "tax_rate");
     if (fixedCompare(rate, EXACT_ZERO) < 0 || fixedCompare(rate, EXACT_ONE) > 0) return false;
     if (valueOf(record, "liability_mode") === "SELLER") {
-      return valueOf(record, "liable_party_type") === "OPERATING_ENTITY" && !isNull(valueOf(record, "liable_oe_id"))
+      return valueOf(record, "liable_party_type") === "OPERATING_ENTITY" && !isNull(valueOf(record, "liable_entity_no"))
         && fixedEqual(exactRequired(record, entity, "reverse_charge_tax_amount"), EXACT_ZERO)
         && fixedEqual(exactRequired(record, entity, "reporting_reverse_charge_tax"), EXACT_ZERO);
     }
     if (valueOf(record, "liability_mode") === "BUYER_REVERSE_CHARGE") {
-      return valueOf(record, "liable_party_type") === "BUYER" && isNull(valueOf(record, "liable_oe_id"))
+      return valueOf(record, "liable_party_type") === "BUYER" && isNull(valueOf(record, "liable_entity_no"))
         && fixedEqual(exactRequired(record, entity, "collected_tax_amount"), EXACT_ZERO)
         && fixedEqual(exactRequired(record, entity, "reporting_collected_tax"), EXACT_ZERO);
     }
@@ -488,7 +489,7 @@ const EXACT_DECIMAL_CHECKS = Object.freeze({
       && (maximum === null || fixedCompare(maximum, EXACT_ZERO) >= 0)
       && (minimum === null || maximum === null || fixedCompare(minimum, maximum) <= 0);
   },
-  ck_txn_econ_component_link: (record, entity) => !integerEqual(
+  ck_txn_econ_component_link: (record, entity) => !identifierEqual(
     valueOf(record, "source_component_id"),
     valueOf(record, "target_component_id"),
   )
@@ -744,7 +745,7 @@ function recordsFor(records, table) {
 }
 
 function recordsById(records, table) {
-  return integerLookupMap(recordsFor(records, table), (record) => valueOf(record, "id"));
+  return identifierLookupMap(recordsFor(records, table), (record) => valueOf(record, "id"));
 }
 
 function requireRecord(records, table, id) {
@@ -798,13 +799,13 @@ function appendRetiredRuleBundle(records) {
   version.values.set("status", "RETIRED");
   const rulesByCurrentId = new Map();
   recordsFor(records, "t_accounting_rule_line")
-    .filter((rule) => integerEqual(valueOf(rule, "bundle_ver_id"), "100042"))
+    .filter((rule) => identifierEqual(valueOf(rule, "bundle_ver_id"), "100042"))
     .forEach((rule, index) => {
       const clone = { ...rule, lineNumber: 0, values: new Map(rule.values) };
       clone.values.set("id", String(990001 + index));
       clone.values.set("bundle_ver_id", valueOf(version, "id"));
       records.push(clone);
-      rulesByCurrentId.set(integerKey(valueOf(rule, "id")), clone);
+      rulesByCurrentId.set(identifierKey(valueOf(rule, "id")), clone);
     });
   return { bundle, version, rulesByCurrentId };
 }
@@ -855,7 +856,7 @@ function clonedApprovedManualInstructionRows() {
   instruction.values.set("maker_id", valueOf(makerApproval, "actor_id"));
   instruction.values.set("checker_id", valueOf(checkerApproval, "actor_id"));
   const instructionLines = recordsFor(rows, "t_instruction_line")
-    .filter((line) => integerEqual(valueOf(line, "instruction_id"), valueOf(instruction, "id")))
+    .filter((line) => identifierEqual(valueOf(line, "instruction_id"), valueOf(instruction, "id")))
     .toSorted((left, right) => numberOf(left, "line_no") - numberOf(right, "line_no"));
   instructionLines[0].values.set("accounting_rule_line_id", "NULL");
   instructionLines[0].values.set("manual_adjustment_line_id", valueOf(firstAdjustmentLine, "id"));
@@ -867,7 +868,7 @@ function clonedApprovedManualInstructionRows() {
 function journalSummary(records, journalId) {
   const journal = requireRecord(records, "t_journal_entry", journalId);
   const lines = recordsFor(records, "t_journal_line")
-    .filter((line) => integerEqual(valueOf(line, "journal_entry_id"), journalId));
+    .filter((line) => identifierEqual(valueOf(line, "journal_entry_id"), journalId));
   assert.ok(lines.length >= 2, `Journal ${journalId} 缺少双边分录`);
   const debitTotal = fixedSumRecords(lines.filter((line) => valueOf(line, "entry_side") === "DEBIT"), "amount");
   const creditTotal = fixedSumRecords(lines.filter((line) => valueOf(line, "entry_side") === "CREDIT"), "amount");
@@ -888,15 +889,15 @@ function validateDeclaredJournalTruth(declarations, records) {
       .filter((record) => valueOf(record, "source_event_key") === declaration.entryKey);
     assert.equal(instructions.length, 1, `Journal ${declaration.entryKey} 无法唯一解析 Accounting Instruction`);
     const journals = recordsFor(records, "t_journal_entry")
-      .filter((record) => integerEqual(valueOf(record, "instruction_id"), valueOf(instructions[0], "id")));
+      .filter((record) => identifierEqual(valueOf(record, "instruction_id"), valueOf(instructions[0], "id")));
     assert.equal(journals.length, 1, `Journal ${declaration.entryKey} 无法唯一解析 Journal Entry`);
     const summary = journalSummary(records, valueOf(journals[0], "id"));
     for (const line of summary.lines) {
       const instructionLine = instructionLines.get(valueOf(line, "instruction_line_id"));
       assert.ok(instructionLine, `Journal ${declaration.entryKey} Line 缺少 Instruction Line`);
-      assert.ok(integerEqual(valueOf(instructionLine, "instruction_id"), valueOf(instructions[0], "id")),
+      assert.ok(identifierEqual(valueOf(instructionLine, "instruction_id"), valueOf(instructions[0], "id")),
         `Journal ${declaration.entryKey} Line 未绑定同一 Accounting Instruction`);
-      assert.ok(integerEqual(valueOf(instructionLine, "account_id"), valueOf(line, "account_id")));
+      assert.ok(identifierEqual(valueOf(instructionLine, "account_id"), valueOf(line, "account_id")));
       assert.equal(valueOf(instructionLine, "entry_side"), valueOf(line, "entry_side"));
       assert.ok(fixedEqual(fixedValue(instructionLine, "amount"), fixedValue(line, "amount")),
         `Journal ${declaration.entryKey} Instruction/Journal Line 金额不一致`);
@@ -920,28 +921,28 @@ function validatePostedJournalReplay(records) {
   const postedIds = integerSet(posted.map((instruction) => valueOf(instruction, "id")));
   const instructionLinesByInstruction = Map.groupBy(
     recordsFor(records, "t_instruction_line"),
-    (line) => integerKey(valueOf(line, "instruction_id")),
+    (line) => identifierKey(valueOf(line, "instruction_id")),
   );
   const journalsByInstruction = Map.groupBy(
     recordsFor(records, "t_journal_entry"),
-    (journal) => integerKey(valueOf(journal, "instruction_id")),
+    (journal) => identifierKey(valueOf(journal, "instruction_id")),
   );
   const journalLinesByJournal = Map.groupBy(
     recordsFor(records, "t_journal_line"),
-    (line) => integerKey(valueOf(line, "journal_entry_id")),
+    (line) => identifierKey(valueOf(line, "journal_entry_id")),
   );
 
   for (const journal of recordsFor(records, "t_journal_entry")) {
-    assert.ok(postedIds.has(integerKey(valueOf(journal, "instruction_id"))),
+    assert.ok(postedIds.has(identifierKey(valueOf(journal, "instruction_id"))),
       `Journal ${valueOf(journal, "id")} 未绑定 POSTED Instruction`);
   }
   for (const instruction of posted) {
-    const instructionId = integerKey(valueOf(instruction, "id"));
+    const instructionId = identifierKey(valueOf(instruction, "id"));
     const journals = journalsByInstruction.get(instructionId) ?? [];
     assert.equal(journals.length, 1,
       `POSTED Instruction ${valueOf(instruction, "id")} 必须有唯一 represented Journal`);
     const journal = journals[0];
-    assert.ok(integerEqual(valueOf(instruction, "ledger_book_id"), valueOf(journal, "ledger_book_id")),
+    assert.ok(identifierEqual(valueOf(instruction, "ledger_book_id"), valueOf(journal, "ledger_book_id")),
       `Instruction ${valueOf(instruction, "id")} 与 Journal ${valueOf(journal, "id")} Ledger Book 不一致`);
     const ledgerBook = ledgerBooks.get(valueOf(instruction, "ledger_book_id"));
     assert.ok(ledgerBook, `Instruction ${valueOf(instruction, "id")} 缺少 Ledger Book`);
@@ -949,33 +950,33 @@ function validatePostedJournalReplay(records) {
     const calendar = period && calendars.get(valueOf(period, "calendar_id"));
     assert.ok(period && calendar
       && valueOf(calendar, "entity_type") === valueOf(ledgerBook, "entity_type")
-      && integerEqual(valueOf(calendar, "entity_id"), valueOf(ledgerBook, "entity_id")),
+      && identifierEqual(valueOf(calendar, "entity_id"), valueOf(ledgerBook, "entity_id")),
     `Journal ${valueOf(journal, "id")} Accounting Period 不属于 Ledger Book ${valueOf(ledgerBook, "id")}`);
     const instructionLines = instructionLinesByInstruction.get(instructionId) ?? [];
     const instructionLinesById = new Map(instructionLines.map((line) => [
-      integerKey(valueOf(line, "id")),
+      identifierKey(valueOf(line, "id")),
       line,
     ]));
     assert.equal(instructionLinesById.size, instructionLines.length,
       `POSTED Instruction ${valueOf(instruction, "id")} Instruction Line ID 重复`);
-    const journalLines = journalLinesByJournal.get(integerKey(valueOf(journal, "id"))) ?? [];
+    const journalLines = journalLinesByJournal.get(identifierKey(valueOf(journal, "id"))) ?? [];
     assert.equal(journalLines.length, instructionLines.length,
       `Journal ${valueOf(journal, "id")} 与 POSTED Instruction ${valueOf(instruction, "id")} 行数不一致`);
     for (const line of [...instructionLines, ...journalLines]) {
       const account = accounts.get(valueOf(line, "account_id"));
-      assert.ok(account && integerEqual(valueOf(account, "ledger_book_id"), valueOf(ledgerBook, "id")),
+      assert.ok(account && identifierEqual(valueOf(account, "ledger_book_id"), valueOf(ledgerBook, "id")),
         `Journal ${valueOf(journal, "id")} Account ${valueOf(line, "account_id")} 不属于 Ledger Book ${valueOf(ledgerBook, "id")}`);
     }
     const replayed = new Set();
     for (const journalLine of journalLines) {
-      const instructionLineId = integerKey(valueOf(journalLine, "instruction_line_id"));
+      const instructionLineId = identifierKey(valueOf(journalLine, "instruction_line_id"));
       const instructionLine = instructionLinesById.get(instructionLineId);
       assert.ok(instructionLine,
         `Journal ${valueOf(journal, "id")} Line ${valueOf(journalLine, "id")} 未绑定同 Instruction 的 Instruction Line`);
       assert.ok(!replayed.has(instructionLineId),
         `Journal ${valueOf(journal, "id")} 重复重放 Instruction Line ${valueOf(instructionLine, "id")}`);
       replayed.add(instructionLineId);
-      assert.ok(integerEqual(valueOf(journalLine, "account_id"), valueOf(instructionLine, "account_id")),
+      assert.ok(identifierEqual(valueOf(journalLine, "account_id"), valueOf(instructionLine, "account_id")),
         `Journal ${valueOf(journal, "id")} Instruction Line ${valueOf(instructionLine, "id")} account_id 未重放`);
       assert.equal(valueOf(journalLine, "entry_side"), valueOf(instructionLine, "entry_side"),
         `Journal ${valueOf(journal, "id")} Instruction Line ${valueOf(instructionLine, "id")} entry_side 未重放`);
@@ -992,7 +993,7 @@ function assertInstructionCoordinates(lines, expected, context) {
   assert.equal(lines.length, expected.length, `${context} Instruction Line 数量错误`);
   const unmatched = [...lines];
   for (const coordinate of expected) {
-    const index = unmatched.findIndex((line) => integerEqual(valueOf(line, "account_id"), coordinate.accountId)
+    const index = unmatched.findIndex((line) => identifierEqual(valueOf(line, "account_id"), coordinate.accountId)
       && valueOf(line, "entry_side") === coordinate.side
       && fixedEqual(fixedValue(line, "amount"), coordinate.amount));
     assert.ok(index >= 0,
@@ -1017,7 +1018,7 @@ function validatePayoutAccountingCoordinates(records, instructionLinesByInstruct
 
   const bankAccountForExecution = (execution, context) => {
     const candidates = accounts.filter((account) => valueOf(account, "owner_type") === "CASH_ACCOUNT"
-      && integerEqual(valueOf(account, "owner_id"), valueOf(execution, "cash_account_id"))
+      && identifierEqual(valueOf(account, "owner_id"), valueOf(execution, "cash_account_id"))
       && valueOf(account, "balance_bucket") === "NONE"
       && valueOf(chartAccounts.get(valueOf(account, "chart_account_id")), "account_code") === "BANK_CASH");
     assert.equal(candidates.length, 1, `${context} 缺少唯一 BANK_CASH Account`);
@@ -1028,7 +1029,7 @@ function validatePayoutAccountingCoordinates(records, instructionLinesByInstruct
       ? "CLIENT_RECOVERY_RECEIVABLE"
       : "PARTNER_RECOVERY_RECEIVABLE";
     const candidates = accounts.filter((account) => valueOf(account, "owner_type") === valueOf(payout, "owner_type")
-      && integerEqual(valueOf(account, "owner_id"), valueOf(payout, "owner_id"))
+      && identifierEqual(valueOf(account, "owner_id"), valueOf(payout, "owner_id"))
       && valueOf(account, "balance_bucket") === "NONE"
       && valueOf(chartAccounts.get(valueOf(account, "chart_account_id")), "account_code") === expectedCode);
     assert.equal(candidates.length, 1, `${context} 缺少唯一 Owner Recovery Account`);
@@ -1037,13 +1038,13 @@ function validatePayoutAccountingCoordinates(records, instructionLinesByInstruct
 
   for (const payout of recordsFor(records, "t_payout")) {
     const payoutId = valueOf(payout, "id");
-    const canonicalPayoutId = integerKey(payoutId);
+    const canonicalPayoutId = identifierKey(payoutId);
     const amount = fixedValue(payout, "owner_debit_amount");
     const exactInstruction = (type) => instructions.filter((instruction) => valueOf(instruction, "instruction_type") === type
       && valueOf(instruction, "source_event_key") === `${type}:${canonicalPayoutId}`);
     const lock = exactInstruction("PAYOUT_LOCK");
     assert.equal(lock.length, 1, `Payout ${payoutId} 缺少唯一 PAYOUT_LOCK:${payoutId}`);
-    validatedInstructionIds.add(integerKey(valueOf(lock[0], "id")));
+    validatedInstructionIds.add(identifierKey(valueOf(lock[0], "id")));
     assertInstructionCoordinates(instructionLinesByInstruction.get(valueOf(lock[0], "id")) ?? [], [
       { accountId: valueOf(payout, "available_account_id"), side: "DEBIT", amount },
       { accountId: valueOf(payout, "locked_account_id"), side: "CREDIT", amount },
@@ -1052,7 +1053,7 @@ function validatePayoutAccountingCoordinates(records, instructionLinesByInstruct
     const release = exactInstruction("PAYOUT_RELEASE");
     if (release.length > 0) {
       assert.equal(release.length, 1, `Payout ${payoutId} PAYOUT_RELEASE 必须唯一`);
-      validatedInstructionIds.add(integerKey(valueOf(release[0], "id")));
+      validatedInstructionIds.add(identifierKey(valueOf(release[0], "id")));
       assertInstructionCoordinates(instructionLinesByInstruction.get(valueOf(release[0], "id")) ?? [], [
         { accountId: valueOf(payout, "locked_account_id"), side: "DEBIT", amount },
         { accountId: valueOf(payout, "available_account_id"), side: "CREDIT", amount },
@@ -1062,11 +1063,11 @@ function validatePayoutAccountingCoordinates(records, instructionLinesByInstruct
     const paid = exactInstruction("PAYOUT_PAID");
     if (paid.length > 0) {
       assert.equal(paid.length, 1, `Payout ${payoutId} PAYOUT_PAID 必须唯一`);
-      validatedInstructionIds.add(integerKey(valueOf(paid[0], "id")));
+      validatedInstructionIds.add(identifierKey(valueOf(paid[0], "id")));
       const payoutExecutionIds = integerSet(executions
-        .filter((execution) => integerEqual(valueOf(execution, "payout_id"), payoutId))
+        .filter((execution) => identifierEqual(valueOf(execution, "payout_id"), payoutId))
         .map((execution) => valueOf(execution, "id")));
-      const confirmed = matches.filter((match) => payoutExecutionIds.has(integerKey(valueOf(match, "payout_execution_id"))));
+      const confirmed = matches.filter((match) => payoutExecutionIds.has(identifierKey(valueOf(match, "payout_execution_id"))));
       assert.ok(confirmed.length > 0, `Payout ${payoutId} PAYOUT_PAID 缺少 CONFIRMED Debit`);
       const actualDebit = fixedSumRecords(confirmed, "matched_amount");
       const clearingAmount = fixedCompare(actualDebit, fixedValue(payout, "cash_required_amount")) < 0
@@ -1084,7 +1085,7 @@ function validatePayoutAccountingCoordinates(records, instructionLinesByInstruct
   for (const exception of exceptions) {
     const execution = requireRecord(records, "t_payout_execution", valueOf(exception, "source_id"));
     const payout = requireRecord(records, "t_payout", valueOf(execution, "payout_id"));
-    const confirmed = matches.filter((match) => integerEqual(valueOf(match, "payout_execution_id"), valueOf(execution, "id")));
+    const confirmed = matches.filter((match) => identifierEqual(valueOf(match, "payout_execution_id"), valueOf(execution, "id")));
     const actualDebit = fixedSumRecords(confirmed, "matched_amount");
     const signedDelta = fixedSubtract(actualDebit, fixedValue(payout, "cash_required_amount"));
     assert.notEqual(fixedCompare(signedDelta, EXACT_ZERO), 0,
@@ -1096,8 +1097,8 @@ function validatePayoutAccountingCoordinates(records, instructionLinesByInstruct
     const instruction = resolution && requireRecord(records, "t_accounting_instruction", valueOf(resolution, "instruction_id"));
     assert.equal(valueOf(instruction, "instruction_type"), expectedType,
       `Payout ${valueOf(payout, "id")} 实际 Debit 方向必须使用 ${expectedType}`);
-    validatedInstructionIds.add(integerKey(valueOf(instruction, "id")));
-    assert.equal(valueOf(instruction, "source_event_key"), `PAYOUT_FEE_DIFF:${integerKey(valueOf(exception, "id"))}`);
+    validatedInstructionIds.add(identifierKey(valueOf(instruction, "id")));
+    assert.equal(valueOf(instruction, "source_event_key"), `PAYOUT_FEE_DIFF:${identifierKey(valueOf(exception, "id"))}`);
     const delta = fixedAbs(signedDelta);
     assert.ok(fixedEqual(fixedValue(exception, "difference_amount"), delta),
       `Payout ${valueOf(payout, "id")} fee difference 金额不精确`);
@@ -1120,7 +1121,7 @@ function validatePayoutAccountingCoordinates(records, instructionLinesByInstruct
     "PAYOUT_FEE_INCREASE",
     "PAYOUT_FEE_DECREASE",
   ].includes(valueOf(record, "instruction_type")))) {
-    assert.ok(validatedInstructionIds.has(integerKey(valueOf(instruction, "id"))),
+    assert.ok(validatedInstructionIds.has(identifierKey(valueOf(instruction, "id"))),
       `Payout Instruction ${valueOf(instruction, "id")} 未绑定真实 Payout/Exception 冻结坐标`);
   }
 }
@@ -1173,7 +1174,7 @@ function validateAccountingSourceAuthority(records) {
   const journals = recordsFor(records, "t_journal_entry");
   const uniqueIntegerRecord = (table, id, context) => {
     const matches = recordsFor(records, table)
-      .filter((record) => integerEqual(valueOf(record, "id"), id));
+      .filter((record) => identifierEqual(valueOf(record, "id"), id));
     assert.equal(matches.length, 1, `${context} authority source 缺少唯一 ${table}.id=${id}`);
     return matches[0];
   };
@@ -1187,7 +1188,7 @@ function validateAccountingSourceAuthority(records) {
     return match[1];
   };
   const journalForInstruction = (instruction, context) => {
-    const matches = journals.filter((journal) => integerEqual(
+    const matches = journals.filter((journal) => identifierEqual(
       valueOf(journal, "instruction_id"), valueOf(instruction, "id"),
     ));
     assert.equal(matches.length, 1, `${context} authority source 必须唯一落到 Journal`);
@@ -1195,7 +1196,7 @@ function validateAccountingSourceAuthority(records) {
   };
   const requireJournalId = (instruction, journalId, context) => {
     const journal = journalForInstruction(instruction, context);
-    assert.ok(integerEqual(valueOf(journal, "id"), journalId),
+    assert.ok(identifierEqual(valueOf(journal, "id"), journalId),
       `${context} authority source Journal 坐标不一致`);
   };
   const requireSourceSystem = (instruction, expected) => assert.equal(
@@ -1203,7 +1204,7 @@ function validateAccountingSourceAuthority(records) {
     `Instruction ${valueOf(instruction, "id")} ${valueOf(instruction, "instruction_type")} source_system 必须为 ${expected}`,
   );
   const requireSourceVersion = (instruction, expected, context) => assert.ok(
-    integerEqual(valueOf(instruction, "source_version"), expected),
+    identifierEqual(valueOf(instruction, "source_version"), expected),
     `${context} source_version 必须为决定性 authority version ${expected}`,
   );
 
@@ -1214,9 +1215,9 @@ function validateAccountingSourceAuthority(records) {
       const item = uniqueIntegerRecord("t_duplicate_capture_item", itemId, context);
       const economics = recordsFor(records, "t_transaction_economics")
         .filter((record) => valueOf(record, "economics_type") === "DUPLICATE_CAPTURE"
-          && integerEqual(valueOf(record, "duplicate_capture_item_id"), itemId));
+          && identifierEqual(valueOf(record, "duplicate_capture_item_id"), itemId));
       assert.equal(economics.length, 1, `${context} authority source 缺少唯一 DUPLICATE_CAPTURE Economics`);
-      assert.ok(integerEqual(valueOf(item, "source_version"), valueOf(instruction, "source_version")),
+      assert.ok(identifierEqual(valueOf(item, "source_version"), valueOf(instruction, "source_version")),
         `${context} source_version 与 Duplicate Capture authority 不一致`);
       requireJournalId(instruction, valueOf(item, "journal_entry_id"), context);
       requireSourceSystem(instruction, "FINANCE");
@@ -1225,19 +1226,19 @@ function validateAccountingSourceAuthority(records) {
       const economicsId = authorityId(instruction, "PARTNER_RECOVERY_OPEN");
       const context = `Instruction ${valueOf(instruction, "id")} PARTNER_RECOVERY_OPEN`;
       const economics = uniqueIntegerRecord("t_transaction_economics", economicsId, context);
-      assert.ok(integerEqual(valueOf(instruction, "transaction_economics_id"), economicsId),
+      assert.ok(identifierEqual(valueOf(instruction, "transaction_economics_id"), economicsId),
         `${context} transaction_economics_id 与 authority key 不一致`);
       assert.equal(valueOf(economics, "economics_type"), "DISPUTE",
         `${context} authority source 必须为负向 DISPUTE Economics`);
       assert.ok(!isNull(valueOf(economics, "provider_dispute_notice_id"))
         && !isNull(valueOf(economics, "dispute_case_id")),
       `${context} authority source 缺少 Dispute 根坐标`);
-      assert.ok(integerEqual(valueOf(economics, "source_version"), valueOf(instruction, "source_version")),
+      assert.ok(identifierEqual(valueOf(economics, "source_version"), valueOf(instruction, "source_version")),
         `${context} source_version 与 Economics 不一致`);
       const partnerId = valueOf(economics, "local_partner_id");
       const recoveryAccounts = recordsFor(records, "t_account").filter((account) => (
         valueOf(account, "owner_type") === "LOCAL_PARTNER"
-        && integerEqual(valueOf(account, "owner_id"), partnerId)
+        && identifierEqual(valueOf(account, "owner_id"), partnerId)
         && valueOf(account, "balance_bucket") === "NONE"
         && valueOf(chartAccounts.get(valueOf(account, "chart_account_id")), "account_code") === "PARTNER_RECOVERY_RECEIVABLE"
       ));
@@ -1254,14 +1255,14 @@ function validateAccountingSourceAuthority(records) {
       const economics = uniqueIntegerRecord("t_transaction_economics", economicsId, context);
       assert.equal(valueOf(economics, "economics_type"), "PAYMENT",
         `${context} authority source 必须为 PAYMENT Economics`);
-      assert.ok(integerEqual(valueOf(instruction, "transaction_economics_id"), economicsId),
+      assert.ok(identifierEqual(valueOf(instruction, "transaction_economics_id"), economicsId),
         `${context} transaction_economics_id 与 authority key 不一致`);
       const events = recordsFor(records, "t_compensation_event").filter((event) => (
         valueOf(event, "event_type") === "PAYABLE_BALANCE_MATURED"
         && valueOf(event, "event_key") === valueOf(instruction, "source_event_key")
         && valueOf(event, "source_type") === "TRANSACTION_ECONOMICS"
-        && integerEqual(valueOf(event, "source_id"), economicsId)
-        && integerEqual(valueOf(event, "source_version"), valueOf(instruction, "source_version"))
+        && identifierEqual(valueOf(event, "source_id"), economicsId)
+        && identifierEqual(valueOf(event, "source_version"), valueOf(instruction, "source_version"))
       ));
       assert.equal(events.length, 1, `${context} authority source 缺少唯一 maturity Event`);
       requireSourceSystem(instruction, "FINANCE");
@@ -1274,9 +1275,9 @@ function validateAccountingSourceAuthority(records) {
       );
       assert.equal(valueOf(economics, "economics_type"), "REFUND",
         `${context} authority source 必须为 REFUND Economics`);
-      assert.ok(integerEqual(valueOf(economics, "refund_request_id"), refundRequestId),
+      assert.ok(identifierEqual(valueOf(economics, "refund_request_id"), refundRequestId),
         `${context} refund_request_id 与 authority key 不一致`);
-      assert.ok(integerEqual(valueOf(economics, "source_version"), valueOf(instruction, "source_version")),
+      assert.ok(identifierEqual(valueOf(economics, "source_version"), valueOf(instruction, "source_version")),
         `${context} source_version 与 Economics 不一致`);
       requireSourceSystem(instruction, "PAYMENT");
     }],
@@ -1287,7 +1288,7 @@ function validateAccountingSourceAuthority(records) {
         const context = `Instruction ${valueOf(instruction, "id")} ${instructionType}`;
         const payout = uniqueIntegerRecord("t_payout", payoutId, context);
         const events = recordsFor(records, "t_payout_event")
-          .filter((event) => integerEqual(valueOf(event, "payout_id"), payoutId));
+          .filter((event) => identifierEqual(valueOf(event, "payout_id"), payoutId));
         if (instructionType === "PAYOUT_LOCK") {
           const created = events.filter((event) => numberOf(event, "event_no") === 1);
           assert.equal(created.length, 1, `${context} authority source 缺少 PayoutCreated Event`);
@@ -1322,10 +1323,10 @@ function validateAccountingSourceAuthority(records) {
         assert.equal(valueOf(exception, "exception_type"), "FEE_DIFFERENCE",
           `${context} authority source 必须为 FEE_DIFFERENCE Recon Exception`);
         const resolution = uniqueIntegerRecord("t_recon_resolution", valueOf(exception, "applied_resolution_id"), context);
-        assert.ok(integerEqual(valueOf(resolution, "exception_id"), valueOf(exception, "id"))
-          && integerEqual(valueOf(exception, "applied_resolution_id"), valueOf(resolution, "id")),
+        assert.ok(identifierEqual(valueOf(resolution, "exception_id"), valueOf(exception, "id"))
+          && identifierEqual(valueOf(exception, "applied_resolution_id"), valueOf(resolution, "id")),
         `Recon Exception ${valueOf(exception, "id")} 与 Resolution ${valueOf(resolution, "id")} 必须双向一致`);
-        assert.ok(integerEqual(valueOf(resolution, "instruction_id"), valueOf(instruction, "id")),
+        assert.ok(identifierEqual(valueOf(resolution, "instruction_id"), valueOf(instruction, "id")),
           `${context} authority source Resolution 未绑定自身 Instruction`);
         requireSourceVersion(instruction, valueOf(exception, "version"), context);
         requireSourceSystem(instruction, "FINANCE");
@@ -1335,11 +1336,11 @@ function validateAccountingSourceAuthority(records) {
       const bankItemId = authorityId(instruction, "LATE_DEBIT");
       const context = `Instruction ${valueOf(instruction, "id")} LATE_DEBIT`;
       const items = recordsFor(records, "t_bank_statement_item")
-        .filter((item) => integerEqual(valueOf(item, "id"), bankItemId) && valueOf(item, "direction") === "DEBIT");
+        .filter((item) => identifierEqual(valueOf(item, "id"), bankItemId) && valueOf(item, "direction") === "DEBIT");
       const exceptions = recordsFor(records, "t_recon_exception").filter((exception) => (
         valueOf(exception, "exception_type") === "LATE_DEBIT"
         && valueOf(exception, "source_type") === "BANK_STATEMENT_ITEM"
-        && integerEqual(valueOf(exception, "source_id"), bankItemId)
+        && identifierEqual(valueOf(exception, "source_id"), bankItemId)
       ));
       assert.ok(items.length === 1 && exceptions.length === 1,
         `${context} authority source 必须同时是 DEBIT Bank Item 与唯一 Recon Exception`);
@@ -1355,16 +1356,16 @@ function validateAccountingSourceAuthority(records) {
       requireSourceVersion(instruction, valueOf(payment, "version"), context);
       requireJournalId(instruction, valueOf(payment, "journal_entry_id"), context);
       const finalEvents = recordsFor(records, "t_tax_payment_event").filter((event) => (
-        integerEqual(valueOf(event, "tax_payment_id"), paymentId)
+        identifierEqual(valueOf(event, "tax_payment_id"), paymentId)
         && valueOf(event, "event_type") === "RECONCILED"
-        && integerEqual(valueOf(event, "event_no"), valueOf(instruction, "source_version"))
+        && identifierEqual(valueOf(event, "event_no"), valueOf(instruction, "source_version"))
       ));
       assert.equal(finalEvents.length, 1, `${context} source_version 缺少唯一决定性 Tax RECONCILED Event`);
       const matches = recordsFor(records, "t_bank_recon_match").filter((match) => (
-        integerEqual(valueOf(match, "id"), valueOf(finalEvents[0], "source_ref"))
+        identifierEqual(valueOf(match, "id"), valueOf(finalEvents[0], "source_ref"))
         && valueOf(match, "match_type") === "TAX_PAYMENT_DEBIT"
         && valueOf(match, "status") === "CONFIRMED"
-        && integerEqual(valueOf(match, "tax_payment_id"), paymentId)
+        && identifierEqual(valueOf(match, "tax_payment_id"), paymentId)
       ));
       assert.equal(matches.length, 1, `${context} 决定性 Event 缺少自身 CONFIRMED Tax Match`);
       requireSourceSystem(instruction, "FINANCE");
@@ -1390,7 +1391,7 @@ function validateAccountingSourceAuthority(records) {
         "t_transaction_economics", valueOf(instruction, "transaction_economics_id"), context,
       );
       assert.equal(valueOf(economics, "economics_type"), "DISPUTE", `${context} authority source 必须为 DISPUTE Economics`);
-      assert.ok(integerEqual(valueOf(economics, "dispute_case_id"), disputeCaseId),
+      assert.ok(identifierEqual(valueOf(economics, "dispute_case_id"), disputeCaseId),
         `${context} dispute_case_id 与 authority key 不一致`);
     }],
     ...["PLATFORM_SERVICE_CHARGE_PARTNER", "PLATFORM_SERVICE_CHARGE_PLATFORM"].map((instructionType) => [
@@ -1403,7 +1404,7 @@ function validateAccountingSourceAuthority(records) {
         assert.equal(valueOf(instruction, "source_event_key"), valueOf(economics, "source_event_key"),
           `${context} authority key 必须复用 Transaction Economics Event Key`);
         assert.ok(recordsFor(records, "t_transaction_economic_component").some((component) => (
-          integerEqual(valueOf(component, "transaction_economics_id"), valueOf(economics, "id"))
+          identifierEqual(valueOf(component, "transaction_economics_id"), valueOf(economics, "id"))
           && valueOf(component, "component_type") === "PLATFORM_SERVICE_CHARGE"
         )), `${context} authority source 缺少 PLATFORM_SERVICE_CHARGE Component`);
       },
@@ -1415,12 +1416,12 @@ function validateAccountingSourceAuthority(records) {
       const context = `POSTED MANUAL Instruction ${valueOf(instruction, "id")}`;
       const adjustmentId = valueOf(instruction, "manual_adjustment_id");
       const adjustments = recordsFor(records, "t_manual_adjustment")
-        .filter((adjustment) => integerEqual(valueOf(adjustment, "id"), adjustmentId));
+        .filter((adjustment) => identifierEqual(valueOf(adjustment, "id"), adjustmentId));
       assert.equal(adjustments.length, 1, `${context} 必须引用唯一 approved manual_adjustment`);
       const adjustment = adjustments[0];
       assert.ok(["APPROVED", "POSTED"].includes(valueOf(adjustment, "status")),
         `${context} 必须引用 approved manual_adjustment`);
-      assert.ok(integerEqual(valueOf(adjustment, "ledger_book_id"), valueOf(instruction, "ledger_book_id")),
+      assert.ok(identifierEqual(valueOf(adjustment, "ledger_book_id"), valueOf(instruction, "ledger_book_id")),
         `${context} 与 manual_adjustment ledger_book_id 不一致`);
       assert.equal(valueOf(instruction, "input_hash"), valueOf(adjustment, "content_hash"),
         `${context} 未冻结 approved manual_adjustment content_hash`);
@@ -1429,32 +1430,32 @@ function validateAccountingSourceAuthority(records) {
       assert.ok(manualNullSourceFields.every((field) => isNull(valueOf(instruction, field))),
         `${context} source fields 必须全部为 NULL，不得混用 AUTO authority`);
       assert.ok(!isNull(valueOf(instruction, "maker_id")) && !isNull(valueOf(instruction, "checker_id"))
-        && !integerEqual(valueOf(instruction, "maker_id"), valueOf(instruction, "checker_id")),
+        && !identifierEqual(valueOf(instruction, "maker_id"), valueOf(instruction, "checker_id")),
       `${context} Maker/Checker 必须非空且不同`);
       const approvals = recordsFor(records, "t_adjustment_approval").filter((approval) => (
-        integerEqual(valueOf(approval, "adjustment_id"), adjustmentId)
+        identifierEqual(valueOf(approval, "adjustment_id"), adjustmentId)
         && valueOf(approval, "decision") === "APPROVED"
         && valueOf(approval, "approved_content_hash") === valueOf(adjustment, "content_hash")
       ));
       const makerApprovals = approvals.filter((approval) => valueOf(approval, "approval_role") === "MAKER"
-        && integerEqual(valueOf(approval, "actor_id"), valueOf(adjustment, "maker_id"))
-        && integerEqual(valueOf(approval, "actor_id"), valueOf(instruction, "maker_id")));
+        && identifierEqual(valueOf(approval, "actor_id"), valueOf(adjustment, "maker_id"))
+        && identifierEqual(valueOf(approval, "actor_id"), valueOf(instruction, "maker_id")));
       const checkerApprovals = approvals.filter((approval) => valueOf(approval, "approval_role") === "CHECKER"
-        && integerEqual(valueOf(approval, "actor_id"), valueOf(instruction, "checker_id")));
+        && identifierEqual(valueOf(approval, "actor_id"), valueOf(instruction, "checker_id")));
       assert.equal(makerApprovals.length, 1, `${context} 必须有唯一 approved Maker/Checker authority pair`);
       assert.equal(checkerApprovals.length, 1, `${context} 必须有唯一 approved Maker/Checker authority pair`);
       assert.ok(Date.parse(valueOf(adjustment, "submitted_time")) <= Date.parse(valueOf(makerApprovals[0], "decision_time"))
         && Date.parse(valueOf(makerApprovals[0], "decision_time")) <= Date.parse(valueOf(checkerApprovals[0], "decision_time")),
       `${context} submitted/Maker/Checker authority 时间线不单调`);
       const adjustmentLines = recordsFor(records, "t_manual_adjustment_line")
-        .filter((line) => integerEqual(valueOf(line, "adjustment_id"), adjustmentId));
+        .filter((line) => identifierEqual(valueOf(line, "adjustment_id"), adjustmentId));
       const adjustmentLinesById = new Map(adjustmentLines.map((line) => [
-        integerKey(valueOf(line, "id")), line,
+        identifierKey(valueOf(line, "id")), line,
       ]));
       assert.equal(adjustmentLinesById.size, adjustmentLines.length,
         `${context} manual_adjustment Line ID 重复`);
       const instructionLines = recordsFor(records, "t_instruction_line")
-        .filter((line) => integerEqual(valueOf(line, "instruction_id"), valueOf(instruction, "id")));
+        .filter((line) => identifierEqual(valueOf(line, "instruction_id"), valueOf(instruction, "id")));
       assert.equal(instructionLines.length, adjustmentLines.length,
         `${context} 与 manual_adjustment Line 数量不一致`);
       const replayedAdjustmentLines = new Set();
@@ -1464,13 +1465,13 @@ function validateAccountingSourceAuthority(records) {
         const adjustmentLineId = valueOf(line, "manual_adjustment_line_id");
         const adjustmentLine = isNull(adjustmentLineId)
           ? undefined
-          : adjustmentLinesById.get(integerKey(adjustmentLineId));
+          : adjustmentLinesById.get(identifierKey(adjustmentLineId));
         assert.ok(adjustmentLine, `${context} Line 缺少 manual_adjustment Line authority`);
-        const canonicalAdjustmentLineId = integerKey(adjustmentLineId);
+        const canonicalAdjustmentLineId = identifierKey(adjustmentLineId);
         assert.ok(!replayedAdjustmentLines.has(canonicalAdjustmentLineId),
           `${context} 重复重放 manual_adjustment Line ${adjustmentLineId}`);
         replayedAdjustmentLines.add(canonicalAdjustmentLineId);
-        assert.ok(integerEqual(valueOf(line, "account_id"), valueOf(adjustmentLine, "account_id"))
+        assert.ok(identifierEqual(valueOf(line, "account_id"), valueOf(adjustmentLine, "account_id"))
           && valueOf(line, "entry_side") === valueOf(adjustmentLine, "entry_side")
           && fixedRecordEqual(line, "amount", adjustmentLine, "amount"),
         `${context} Line 未一一重放 manual_adjustment`);
@@ -1499,13 +1500,13 @@ function validateAccountingRuleReplay(records) {
   ]);
   const allRules = recordsFor(records, "t_accounting_rule_line");
   const rules = allRules.filter((record) => valueOf(record, "required_flag") === "1");
-  const rulesById = integerLookupMap(rules, (record) => valueOf(record, "id"));
+  const rulesById = identifierLookupMap(rules, (record) => valueOf(record, "id"));
   const ruleVersions = recordsById(records, "t_accounting_rule_bundle_ver");
   const activeBundles = recordsFor(records, "t_accounting_rule_bundle")
     .filter((bundle) => valueOf(bundle, "status") === "ACTIVE");
   const currentVersionIds = integerSet(activeBundles.map((bundle) => valueOf(bundle, "current_ver_id")));
   const rulesByVersionAndType = Map.groupBy(rules, (record) => [
-    integerKey(valueOf(record, "bundle_ver_id")), valueOf(record, "instruction_type"),
+    identifierKey(valueOf(record, "bundle_ver_id")), valueOf(record, "instruction_type"),
   ].join("|"));
   const instructionLinesByInstruction = groupByInteger(recordsFor(records, "t_instruction_line"), "instruction_id");
   const accounts = recordsById(records, "t_account");
@@ -1521,12 +1522,12 @@ function validateAccountingRuleReplay(records) {
   for (const bundle of activeBundles) {
     const currentVersion = ruleVersions.get(valueOf(bundle, "current_ver_id"));
     assert.ok(currentVersion
-      && integerEqual(valueOf(currentVersion, "bundle_id"), valueOf(bundle, "id"))
+      && identifierEqual(valueOf(currentVersion, "bundle_id"), valueOf(bundle, "id"))
       && valueOf(currentVersion, "status") === "ACTIVE",
     `Accounting Rule Bundle ${valueOf(bundle, "id")} current_ver_id 必须绑定自身 ACTIVE Version`);
   }
   for (const currentVersionId of currentVersionIds) {
-    const currentRules = allRules.filter((rule) => integerEqual(valueOf(rule, "bundle_ver_id"), currentVersionId));
+    const currentRules = allRules.filter((rule) => identifierEqual(valueOf(rule, "bundle_ver_id"), currentVersionId));
     assert.equal(currentRules.length, approvedRequiredAccountingRuleCoordinates.size,
       `current Rule Bundle Version ${currentVersionId} 必须精确等于 25-line required catalog`);
     for (const rule of currentRules) {
@@ -1551,7 +1552,7 @@ function validateAccountingRuleReplay(records) {
     const frozenVersion = ruleVersions.get(frozenVersionId);
     assert.ok(frozenVersion && ["APPROVED", "ACTIVE", "RETIRED"].includes(valueOf(frozenVersion, "status")),
       `AUTO Instruction ${instructionId} 缺少批准的冻结 Rule Bundle Version ${frozenVersionId}`);
-    const requiredRules = rulesByVersionAndType.get(`${integerKey(frozenVersionId)}|${instructionType}`) ?? [];
+    const requiredRules = rulesByVersionAndType.get(`${identifierKey(frozenVersionId)}|${instructionType}`) ?? [];
     assert.ok(requiredRules.length > 0,
       `AUTO Instruction ${instructionId}/${instructionType} 冻结 Rule Bundle Version 缺少 required Rule Line 定义`);
     const actualLines = instructionLinesByInstruction.get(instructionId) ?? [];
@@ -1560,7 +1561,7 @@ function validateAccountingRuleReplay(records) {
     for (const line of actualLines) {
       const rule = rulesById.get(valueOf(line, "accounting_rule_line_id"));
       assert.ok(rule, `AUTO Instruction ${instructionId} 引用不存在或非 required Rule Line`);
-      assert.ok(integerEqual(valueOf(rule, "bundle_ver_id"), frozenVersionId),
+      assert.ok(identifierEqual(valueOf(rule, "bundle_ver_id"), frozenVersionId),
         `AUTO Instruction ${instructionId} Line ${valueOf(line, "id")} 未使用冻结 Rule Bundle Version ${frozenVersionId}`);
       assert.ok(approvedOwnerRoles.has(valueOf(rule, "owner_role")),
         `Accounting Rule ${valueOf(rule, "id")} owner_role=${valueOf(rule, "owner_role")} 不在批准词汇`);
@@ -1583,7 +1584,7 @@ function validateAccountingRuleReplay(records) {
         assert.equal(valueOf(chart, "account_code"), expectedAccountCode,
           `AUTO Instruction ${instructionId} Rule Line account_code 未重放`);
       }
-      actualRuleIds.push(integerKey(valueOf(rule, "id")));
+      actualRuleIds.push(identifierKey(valueOf(rule, "id")));
       const sourceCode = valueOf(rule, "amount_source_code");
       const priorAmount = amountsBySource.get(sourceCode);
       const amount = fixedValue(line, "amount");
@@ -1594,12 +1595,12 @@ function validateAccountingRuleReplay(records) {
         amountsBySource.set(sourceCode, amount);
       }
     }
-    const expectedRuleIds = requiredRules.map((record) => integerKey(valueOf(record, "id"))).toSorted();
+    const expectedRuleIds = requiredRules.map((record) => identifierKey(valueOf(record, "id"))).toSorted();
     assert.deepEqual(actualRuleIds.toSorted(), expectedRuleIds,
       `AUTO Instruction ${instructionId}/${instructionType} 缺少 required Rule Line 或重复发射`);
   }
   const maturitySources = new Set(rules
-    .filter((rule) => currentVersionIds.has(integerKey(valueOf(rule, "bundle_ver_id")))
+    .filter((rule) => currentVersionIds.has(identifierKey(valueOf(rule, "bundle_ver_id")))
       && valueOf(rule, "instruction_type") === "PAYABLE_BALANCE_MATURED")
     .map((rule) => valueOf(rule, "amount_source_code")));
   assert.deepEqual(maturitySources, approvedMaturitySources,
@@ -1615,48 +1616,48 @@ function validateTaxAndProviderTuples(records) {
   const taxAuthority = requireRecord(records, "t_tax_authority", valueOf(taxRegistration, "authority_id"));
   const taxOperatingEntityId = valueOf(taxRegistration, "entity_id");
   assert.equal(valueOf(taxRegistration, "entity_type"), "OPERATING_ENTITY");
-  assert.ok(integerEqual(taxOperatingEntityId, "50001"),
+  assert.ok(identifierEqual(taxOperatingEntityId, "AE001"),
     "Tax Registration 必须冻结真实 Operating Entity");
   for (const snapshot of recordsFor(records, "t_tax_snapshot")) {
-    assert.ok(integerEqual(valueOf(snapshot, "operating_entity_id"), taxOperatingEntityId),
+    assert.ok(identifierEqual(valueOf(snapshot, "entity_no"), taxOperatingEntityId),
       `Tax Snapshot ${valueOf(snapshot, "id")} OE 与 Registration 不一致`);
   }
   for (const fiscalRecord of recordsFor(records, "t_fiscal_record")) {
-    assert.ok(integerEqual(valueOf(fiscalRecord, "operating_entity_id"), taxOperatingEntityId),
+    assert.ok(identifierEqual(valueOf(fiscalRecord, "entity_no"), taxOperatingEntityId),
       `Fiscal Record ${valueOf(fiscalRecord, "id")} OE 与 Registration 不一致`);
-    assert.ok(integerEqual(valueOf(fiscalRecord, "tax_registration_id"), valueOf(taxRegistration, "id")));
+    assert.ok(identifierEqual(valueOf(fiscalRecord, "tax_registration_id"), valueOf(taxRegistration, "id")));
   }
   for (const taxLine of recordsFor(records, "t_tax_line")) {
-    assert.ok(integerEqual(valueOf(taxLine, "registration_id"), valueOf(taxRegistration, "id")));
+    assert.ok(identifierEqual(valueOf(taxLine, "registration_id"), valueOf(taxRegistration, "id")));
     if (valueOf(taxLine, "liable_party_type") === "OPERATING_ENTITY") {
-      assert.ok(integerEqual(valueOf(taxLine, "liable_oe_id"), taxOperatingEntityId),
+      assert.ok(identifierEqual(valueOf(taxLine, "liable_entity_no"), taxOperatingEntityId),
         `Tax Line ${valueOf(taxLine, "id")} liable OE 不一致`);
     }
   }
   for (const taxReturn of recordsFor(records, "t_tax_return")) {
-    assert.ok(integerEqual(valueOf(taxReturn, "tax_registration_id"), valueOf(taxRegistration, "id")));
-    assert.ok(integerEqual(valueOf(taxReturn, "authority_id"), valueOf(taxAuthority, "id")));
+    assert.ok(identifierEqual(valueOf(taxReturn, "tax_registration_id"), valueOf(taxRegistration, "id")));
+    assert.ok(identifierEqual(valueOf(taxReturn, "authority_id"), valueOf(taxAuthority, "id")));
   }
   for (const payment of recordsFor(records, "t_tax_payment")) {
     const taxReturn = requireRecord(records, "t_tax_return", valueOf(payment, "tax_return_id"));
     const payableAccount = requireRecord(records, "t_account", valueOf(payment, "tax_payable_account_id"));
-    assert.ok(integerEqual(valueOf(taxReturn, "authority_id"), valueOf(taxAuthority, "id")));
+    assert.ok(identifierEqual(valueOf(taxReturn, "authority_id"), valueOf(taxAuthority, "id")));
     assert.ok(valueOf(payableAccount, "owner_type") === "TAX_AUTHORITY"
-      && integerEqual(valueOf(payableAccount, "owner_id"), valueOf(taxAuthority, "id")),
+      && identifierEqual(valueOf(payableAccount, "owner_id"), valueOf(taxAuthority, "id")),
     "Tax Payment/Account authority tuple 不一致");
     const paymentJournal = journals.get(valueOf(payment, "journal_entry_id"));
     const paymentBook = paymentJournal && ledgerBooks.get(valueOf(paymentJournal, "ledger_book_id"));
     assert.ok(paymentBook
       && valueOf(paymentBook, "entity_type") === "OPERATING_ENTITY"
-      && integerEqual(valueOf(paymentBook, "entity_id"), taxOperatingEntityId)
+      && identifierEqual(valueOf(paymentBook, "entity_id"), taxOperatingEntityId)
       && valueOf(paymentBook, "currency") === valueOf(payment, "currency")
       && valueOf(paymentBook, "currency") === valueOf(taxRegistration, "reporting_currency"),
     `Tax Payment ${valueOf(payment, "id")} Ledger Book OE/currency scope 不一致`);
   }
 
   const providerAccount = requireRecord(records, "t_provider_account", "100051");
-  const providerOperatingEntityId = valueOf(providerAccount, "operating_entity_id");
-  assert.ok(integerEqual(providerOperatingEntityId, "50001"),
+  const providerOperatingEntityId = valueOf(providerAccount, "entity_no");
+  assert.ok(identifierEqual(providerOperatingEntityId, "AE001"),
     "Provider Account 必须冻结真实 Operating Entity");
   const providerPlans = recordsById(records, "t_provider_cost_plan");
   const providerBatches = recordsById(records, "t_provider_settle_batch");
@@ -1683,7 +1684,7 @@ function validateTaxAndProviderTuples(records) {
       const cashAccount = cashAccounts.get(valueOf(version, "cash_account_id"));
       assert.ok(cashAccount
         && valueOf(cashAccount, "entity_type") === valueOf(binding, "entity_type")
-        && integerEqual(valueOf(cashAccount, "entity_id"), valueOf(binding, "entity_id"))
+        && identifierEqual(valueOf(cashAccount, "entity_id"), valueOf(binding, "entity_id"))
         && valueOf(cashAccount, "currency") === valueOf(binding, "currency"),
       `Cash Binding ${bindingId} Version ${valueOf(version, "id")} cash account scope 不一致`);
       assert.ok(isNull(valueOf(version, "effective_to"))
@@ -1707,7 +1708,7 @@ function validateTaxAndProviderTuples(records) {
       const currentVersion = bindingVersions.get(valueOf(binding, "current_ver_id"));
       const currentCashAccount = currentVersion && cashAccounts.get(valueOf(currentVersion, "cash_account_id"));
       assert.ok(currentVersion
-        && integerEqual(valueOf(currentVersion, "binding_id"), bindingId)
+        && identifierEqual(valueOf(currentVersion, "binding_id"), bindingId)
         && valueOf(currentVersion, "status") === "ACTIVE"
         && currentCashAccount
         && valueOf(currentCashAccount, "status") === "ACTIVE",
@@ -1717,23 +1718,23 @@ function validateTaxAndProviderTuples(records) {
   for (const scope of recordsFor(records, "t_provider_cost_scope")) {
     const planVersion = requireRecord(records, "t_provider_cost_plan_ver", valueOf(scope, "cost_ver_id"));
     const plan = providerPlans.get(valueOf(planVersion, "plan_id"));
-    assert.ok(integerEqual(valueOf(plan, "provider_id"), valueOf(providerAccount, "provider_id")),
+    assert.ok(identifierEqual(valueOf(plan, "provider_id"), valueOf(providerAccount, "provider_id")),
       `Provider Cost Scope ${valueOf(scope, "id")} Provider 不一致`);
-    assert.ok(integerEqual(valueOf(scope, "mid_id"), valueOf(providerAccount, "mid_id")),
+    assert.ok(identifierEqual(valueOf(scope, "mid_id"), valueOf(providerAccount, "mid_id")),
       `Provider Cost Scope ${valueOf(scope, "id")} MID 不匹配 Provider Account`);
-    assert.ok(integerEqual(valueOf(scope, "operating_entity_id"), providerOperatingEntityId),
+    assert.ok(identifierEqual(valueOf(scope, "entity_no"), providerOperatingEntityId),
       `Provider Cost Scope ${valueOf(scope, "id")} OE tuple 不一致`);
     assert.equal(valueOf(scope, "currency"), valueOf(providerAccount, "currency"),
       `Provider Cost Scope ${valueOf(scope, "id")} currency tuple 不一致`);
   }
   for (const providerLedgerAccount of recordsFor(records, "t_account")
     .filter((record) => valueOf(record, "owner_type") === "PROVIDER_ACCOUNT")) {
-    assert.ok(integerEqual(valueOf(providerLedgerAccount, "owner_id"), valueOf(providerAccount, "id")),
+    assert.ok(identifierEqual(valueOf(providerLedgerAccount, "owner_id"), valueOf(providerAccount, "id")),
       `Provider ledger Account ${valueOf(providerLedgerAccount, "id")} owner_id 不是 Provider Account PK`);
     const providerBook = ledgerBooks.get(valueOf(providerLedgerAccount, "ledger_book_id"));
     assert.ok(providerBook
       && valueOf(providerBook, "entity_type") === "OPERATING_ENTITY"
-      && integerEqual(valueOf(providerBook, "entity_id"), providerOperatingEntityId)
+      && identifierEqual(valueOf(providerBook, "entity_id"), providerOperatingEntityId)
       && valueOf(providerBook, "currency") === valueOf(providerAccount, "currency"),
     `Provider ledger Account ${valueOf(providerLedgerAccount, "id")} Ledger Book OE/currency scope 不一致`);
   }
@@ -1745,11 +1746,11 @@ function validateTaxAndProviderTuples(records) {
     assert.ok(!isNull(valueOf(itemProviderAccount, "provider_id")) && !isNull(valueOf(itemProviderAccount, "mid_id")),
       `Provider Item ${valueOf(item, "id")} Provider/MID identity 不完整`);
     const economics = requireRecord(records, "t_transaction_economics", valueOf(item, "transaction_economics_id"));
-    assert.ok(integerEqual(valueOf(economics, "operating_entity_id"), valueOf(itemProviderAccount, "operating_entity_id")),
+    assert.ok(identifierEqual(valueOf(economics, "entity_no"), valueOf(itemProviderAccount, "entity_no")),
       `Provider Item ${valueOf(item, "id")} Economics OE tuple 不一致`);
     const matched = item.table === "t_provider_open_item"
-      ? matchedOpenItemIds.has(integerKey(valueOf(item, "id")))
-      : matchedDebitItemIds.has(integerKey(valueOf(item, "id")));
+      ? matchedOpenItemIds.has(identifierKey(valueOf(item, "id")))
+      : matchedDebitItemIds.has(identifierKey(valueOf(item, "id")));
     if (!matched) {
       assert.equal(valueOf(economics, "currency"), valueOf(itemProviderAccount, "currency"),
         `Provider Item ${valueOf(item, "id")} Economics currency 与 Provider Account 不一致`);
@@ -1757,14 +1758,14 @@ function validateTaxAndProviderTuples(records) {
     if (item.table === "t_provider_open_item" && valueOf(item, "item_type") === "PAYMENT") {
       assert.equal(valueOf(economics, "economics_type"), "PAYMENT",
         `Provider Item ${valueOf(item, "id")} PAYMENT 未绑定 PAYMENT Economics`);
-      assert.ok(integerEqual(valueOf(item, "payment_intent_id"), valueOf(economics, "payment_intent_id"))
-        && integerEqual(valueOf(item, "payment_attempt_id"), valueOf(economics, "payment_attempt_id")),
+      assert.ok(identifierEqual(valueOf(item, "payment_intent_id"), valueOf(economics, "payment_intent_id"))
+        && identifierEqual(valueOf(item, "payment_attempt_id"), valueOf(economics, "payment_attempt_id")),
       `Provider Item ${valueOf(item, "id")} Payment root tuple 不一致`);
     }
     if (item.table === "t_provider_debit_item" && valueOf(item, "debit_type") === "REFUND") {
       assert.equal(valueOf(economics, "economics_type"), "REFUND",
         `Provider Item ${valueOf(item, "id")} REFUND 未绑定 REFUND Economics`);
-      assert.ok(integerEqual(valueOf(item, "channel_refund_id"), valueOf(economics, "channel_refund_id")),
+      assert.ok(identifierEqual(valueOf(item, "channel_refund_id"), valueOf(economics, "channel_refund_id")),
         `Provider Item ${valueOf(item, "id")} Refund root tuple 不一致`);
     }
     if (item.table === "t_provider_debit_item") {
@@ -1772,16 +1773,16 @@ function validateTaxAndProviderTuples(records) {
         ? undefined
         : economicsById.get(valueOf(economics, "parent_economics_id"));
       const parentAccounts = parentEconomics
-        ? openItems.filter((openItem) => integerEqual(
+        ? openItems.filter((openItem) => identifierEqual(
           valueOf(openItem, "transaction_economics_id"), valueOf(parentEconomics, "id"),
-        )).map((openItem) => integerKey(valueOf(openItem, "provider_account_id")))
+        )).map((openItem) => identifierKey(valueOf(openItem, "provider_account_id")))
         : [];
-      assert.ok(parentAccounts.includes(integerKey(valueOf(item, "provider_account_id"))),
+      assert.ok(parentAccounts.includes(identifierKey(valueOf(item, "provider_account_id"))),
         `Provider Debit Item ${valueOf(item, "id")} Provider Account 与来源 Economics/原交易 Provider+MID 不一致`);
     }
   }
   for (const batch of recordsFor(records, "t_provider_settle_batch")) {
-    assert.ok(integerEqual(valueOf(batch, "provider_account_id"), valueOf(providerAccount, "id")));
+    assert.ok(identifierEqual(valueOf(batch, "provider_account_id"), valueOf(providerAccount, "id")));
     assert.equal(valueOf(batch, "currency"), valueOf(providerAccount, "currency"),
       `Provider Batch ${valueOf(batch, "id")} currency tuple 不一致`);
   }
@@ -1793,14 +1794,14 @@ function validateTaxAndProviderTuples(records) {
       ? providerOpenItems.get(valueOf(match, "open_item_id"))
       : providerDebitItems.get(valueOf(match, "debit_item_id"));
     assert.ok(target, `Provider Transaction Match ${valueOf(match, "id")} 缺少目标 Item`);
-    assert.ok(integerEqual(valueOf(target, "provider_account_id"), valueOf(batch, "provider_account_id")),
+    assert.ok(identifierEqual(valueOf(target, "provider_account_id"), valueOf(batch, "provider_account_id")),
       `Provider Transaction Match ${valueOf(match, "id")} Provider Account tuple 不一致`);
     const economics = requireRecord(records, "t_transaction_economics", valueOf(target, "transaction_economics_id"));
-    assert.ok(integerEqual(valueOf(economics, "operating_entity_id"), providerOperatingEntityId),
+    assert.ok(identifierEqual(valueOf(economics, "entity_no"), providerOperatingEntityId),
       `Provider Transaction Match ${valueOf(match, "id")} OE tuple 不一致`);
     assert.equal(valueOf(economics, "currency"), valueOf(batch, "currency"),
       `Provider Transaction Match ${valueOf(match, "id")} economics currency 与 Batch 不一致`);
-    const expectedTargetKey = `${valueOf(match, "target_type")}:${integerKey(valueOf(target, "id"))}`;
+    const expectedTargetKey = `${valueOf(match, "target_type")}:${identifierKey(valueOf(target, "id"))}`;
     assert.equal(valueOf(match, "target_key"), expectedTargetKey,
       `Provider Transaction Match ${valueOf(match, "id")} target_key 不一致`);
     assert.equal(valueOf(settleItem, "reference_type"), valueOf(target, "reference_type"),
@@ -1827,13 +1828,13 @@ function validateTaxAndProviderTuples(records) {
     }
   }
   const matchesByAllocationTarget = Map.groupBy(transactionMatches, (match) => [
-    integerKey(valueOf(match, "settle_item_id")),
+    identifierKey(valueOf(match, "settle_item_id")),
     valueOf(match, "target_type"),
     valueOf(match, "target_key"),
   ].join(":"));
   for (const [targetKey, targetMatches] of matchesByAllocationTarget) {
     const allocationNumbers = targetMatches
-      .map((match) => BigInt(integerKey(valueOf(match, "allocation_no"))))
+      .map((match) => BigInt(identifierKey(valueOf(match, "allocation_no"))))
       .toSorted((left, right) => left < right ? -1 : left > right ? 1 : 0);
     for (let index = 0; index < allocationNumbers.length; index += 1) {
       assert.equal(allocationNumbers[index], BigInt(index + 1),
@@ -1854,11 +1855,11 @@ function validateTaxAndProviderTuples(records) {
   }
   const matchesByOpenTarget = Map.groupBy(
     transactionMatches.filter((match) => valueOf(match, "target_type") === "OPEN_ITEM"),
-    (match) => integerKey(valueOf(match, "open_item_id")),
+    (match) => identifierKey(valueOf(match, "open_item_id")),
   );
   const matchesByDebitTarget = Map.groupBy(
     transactionMatches.filter((match) => valueOf(match, "target_type") === "DEBIT_ITEM"),
-    (match) => integerKey(valueOf(match, "debit_item_id")),
+    (match) => identifierKey(valueOf(match, "debit_item_id")),
   );
   const validateTargetSettlement = (item, itemLabel, totalField, targetMatches) => {
     const settled = fixedValue(item, "settled_amount");
@@ -1877,11 +1878,11 @@ function validateTaxAndProviderTuples(records) {
   };
   for (const item of providerOpenItems.values()) {
     validateTargetSettlement(item, "Open Item", "gross_receivable",
-      matchesByOpenTarget.get(integerKey(valueOf(item, "id"))) ?? []);
+      matchesByOpenTarget.get(identifierKey(valueOf(item, "id"))) ?? []);
   }
   for (const item of providerDebitItems.values()) {
     validateTargetSettlement(item, "Debit Item", "expected_amount",
-      matchesByDebitTarget.get(integerKey(valueOf(item, "id"))) ?? []);
+      matchesByDebitTarget.get(identifierKey(valueOf(item, "id"))) ?? []);
   }
 
   const settleItemsByBatch = groupByInteger(recordsFor(records, "t_provider_settle_item"), "batch_id");
@@ -1889,7 +1890,7 @@ function validateTaxAndProviderTuples(records) {
     const batchItems = settleItemsByBatch.get(valueOf(batch, "id")) ?? [];
     assert.ok(batchItems.length > 0, `Provider Batch ${valueOf(batch, "id")} 缺少原始 Settlement Item`);
     const itemNumbers = batchItems
-      .map((item) => BigInt(integerKey(valueOf(item, "item_no"))))
+      .map((item) => BigInt(identifierKey(valueOf(item, "item_no"))))
       .toSorted((left, right) => left < right ? -1 : left > right ? 1 : 0);
     for (let index = 0; index < itemNumbers.length; index += 1) {
       assert.equal(itemNumbers[index], BigInt(index + 1),
@@ -1924,20 +1925,20 @@ function validateTaxAndProviderTuples(records) {
   for (const allocation of providerCostAllocations) {
     const economics = requireRecord(records, "t_transaction_economics", valueOf(allocation, "transaction_economics_id"));
     const paymentTarget = valueOf(economics, "economics_type") === "PAYMENT"
-      && integerEqual(valueOf(allocation, "payment_attempt_id"), valueOf(economics, "payment_attempt_id"))
+      && identifierEqual(valueOf(allocation, "payment_attempt_id"), valueOf(economics, "payment_attempt_id"))
       && isNull(valueOf(allocation, "channel_refund_id"))
       && isNull(valueOf(allocation, "provider_dispute_notice_id"))
       && isNull(valueOf(allocation, "dispute_case_id"));
     const refundTarget = valueOf(economics, "economics_type") === "REFUND"
       && isNull(valueOf(allocation, "payment_attempt_id"))
-      && integerEqual(valueOf(allocation, "channel_refund_id"), valueOf(economics, "channel_refund_id"))
+      && identifierEqual(valueOf(allocation, "channel_refund_id"), valueOf(economics, "channel_refund_id"))
       && isNull(valueOf(allocation, "provider_dispute_notice_id"))
       && isNull(valueOf(allocation, "dispute_case_id"));
     const disputeTarget = valueOf(economics, "economics_type") === "DISPUTE"
       && isNull(valueOf(allocation, "payment_attempt_id"))
       && isNull(valueOf(allocation, "channel_refund_id"))
-      && integerEqual(valueOf(allocation, "provider_dispute_notice_id"), valueOf(economics, "provider_dispute_notice_id"))
-      && integerEqual(valueOf(allocation, "dispute_case_id"), valueOf(economics, "dispute_case_id"));
+      && identifierEqual(valueOf(allocation, "provider_dispute_notice_id"), valueOf(economics, "provider_dispute_notice_id"))
+      && identifierEqual(valueOf(allocation, "dispute_case_id"), valueOf(economics, "dispute_case_id"));
     assert.ok(paymentTarget || refundTarget || disputeTarget,
       `Provider Cost Alloc ${valueOf(allocation, "id")} target tuple 与 Economics 类型/Root 不一致`);
   }
@@ -1948,9 +1949,9 @@ function validateTaxAndProviderTuples(records) {
     const target = valueOf(match, "target_type") === "OPEN_ITEM"
       ? providerOpenItems.get(valueOf(match, "open_item_id"))
       : providerDebitItems.get(valueOf(match, "debit_item_id"));
-    const batchKey = integerKey(valueOf(settleItem, "batch_id"));
+    const batchKey = identifierKey(valueOf(settleItem, "batch_id"));
     if (!matchedEconomicsByBatch.has(batchKey)) matchedEconomicsByBatch.set(batchKey, new Set());
-    matchedEconomicsByBatch.get(batchKey).add(integerKey(valueOf(target, "transaction_economics_id")));
+    matchedEconomicsByBatch.get(batchKey).add(identifierKey(valueOf(target, "transaction_economics_id")));
   }
   const completeCostConfirmIds = new Set();
   for (const confirmation of recordsFor(records, "t_provider_cost_confirm")) {
@@ -1972,12 +1973,12 @@ function validateTaxAndProviderTuples(records) {
         && fixedRecordEqual(confirmation, "actual_cost", settleItem, "net_amount"),
       `Provider Cost Confirm ${valueOf(confirmation, "id")} FEE Item 必须以 actual_cost 精确重放 fee/net`);
     }
-    const allowedEconomics = matchedEconomicsByBatch.get(integerKey(valueOf(batch, "id"))) ?? new Set();
+    const allowedEconomics = matchedEconomicsByBatch.get(identifierKey(valueOf(batch, "id"))) ?? new Set();
     for (const allocation of allocations) {
-      assert.ok(allowedEconomics.has(integerKey(valueOf(allocation, "transaction_economics_id"))),
+      assert.ok(allowedEconomics.has(identifierKey(valueOf(allocation, "transaction_economics_id"))),
         `Provider Cost Alloc ${valueOf(allocation, "id")} 必须属于同 Batch Transaction Match 目标 Economics`);
     }
-    completeCostConfirmIds.add(integerKey(valueOf(confirmation, "id")));
+    completeCostConfirmIds.add(identifierKey(valueOf(confirmation, "id")));
   }
   const costConfirmsByItem = groupByInteger(recordsFor(records, "t_provider_cost_confirm"), "provider_settle_item_id");
   const reconResolutions = recordsById(records, "t_recon_resolution");
@@ -1988,7 +1989,7 @@ function validateTaxAndProviderTuples(records) {
   for (const batch of recordsFor(records, "t_provider_settle_batch")
     .filter((record) => valueOf(record, "status") === "VALIDATED")) {
     const batchItems = recordsFor(records, "t_provider_settle_item")
-      .filter((item) => integerEqual(valueOf(item, "batch_id"), valueOf(batch, "id")));
+      .filter((item) => identifierEqual(valueOf(item, "batch_id"), valueOf(batch, "id")));
     assert.ok(batchItems.length > 0, `Provider Batch ${valueOf(batch, "id")} VALIDATED 但无 Settlement Item`);
     for (const item of batchItems) {
       const itemId = valueOf(item, "id");
@@ -1998,7 +1999,7 @@ function validateTaxAndProviderTuples(records) {
         `Provider Settlement Item ${itemId} Cost Confirm 必须唯一`);
       const itemExceptions = recordsFor(records, "t_recon_exception").filter((exception) => (
         valueOf(exception, "source_type") === "PROVIDER_SETTLE_ITEM"
-        && integerEqual(valueOf(exception, "source_id"), itemId)
+        && identifierEqual(valueOf(exception, "source_id"), itemId)
       ));
       const completeExceptions = itemExceptions.filter((exception) => {
         const allowedType = valueOf(item, "item_type") === "FEE"
@@ -2008,7 +2009,7 @@ function validateTaxAndProviderTuples(records) {
           `Provider Settlement Item ${itemId} Exception type 不属于批准的 item-specific 类型`);
         assert.equal(valueOf(exception, "entity_type"), "OPERATING_ENTITY",
           `Provider Settlement Item ${itemId} Exception OE scope 不一致`);
-        assert.ok(integerEqual(valueOf(exception, "entity_id"), valueOf(providerAccount, "operating_entity_id")),
+        assert.ok(identifierEqual(valueOf(exception, "entity_id"), valueOf(providerAccount, "entity_no")),
           `Provider Settlement Item ${itemId} Exception OE scope 不一致`);
         assert.equal(valueOf(exception, "currency"), valueOf(batch, "currency"),
           `Provider Settlement Item ${itemId} Exception currency 不一致`);
@@ -2017,9 +2018,9 @@ function validateTaxAndProviderTuples(records) {
         if (!["RESOLVED", "CLOSED"].includes(valueOf(exception, "status"))) return false;
         const resolution = reconResolutions.get(valueOf(exception, "applied_resolution_id"));
         return resolution
-          && integerEqual(valueOf(resolution, "exception_id"), valueOf(exception, "id"))
-          && integerEqual(valueOf(exception, "applied_resolution_id"), valueOf(resolution, "id"))
-          && !integerEqual(valueOf(resolution, "maker_id"), valueOf(resolution, "checker_id"))
+          && identifierEqual(valueOf(resolution, "exception_id"), valueOf(exception, "id"))
+          && identifierEqual(valueOf(exception, "applied_resolution_id"), valueOf(resolution, "id"))
+          && !identifierEqual(valueOf(resolution, "maker_id"), valueOf(resolution, "checker_id"))
           && valueOf(resolution, "checker_decision") === "APPROVED"
           && valueOf(resolution, "approved_content_hash") === valueOf(resolution, "content_hash")
           && valueOf(resolution, "status") === "APPLIED";
@@ -2038,7 +2039,7 @@ function validateTaxAndProviderTuples(records) {
           `Provider Settlement Item ${itemId} 已匹配交易行不得同时存在任何 Exception`);
         if (fixedCompare(fixedValue(item, "fee_amount"), EXACT_ZERO) > 0) {
           assert.ok(costConfirms.length === 1
-            && completeCostConfirmIds.has(integerKey(valueOf(costConfirms[0], "id"))),
+            && completeCostConfirmIds.has(identifierKey(valueOf(costConfirms[0], "id"))),
           `Provider Settlement Item ${itemId} 实际 Provider Cost Confirm 不完整`);
         }
         continue;
@@ -2046,12 +2047,12 @@ function validateTaxAndProviderTuples(records) {
       assert.equal(itemMatches.length, 0,
         `Provider Settlement Item ${itemId} FEE/ADJUSTMENT 不得伪造 Transaction Match`);
       const costComplete = costConfirms.length === 1
-        && completeCostConfirmIds.has(integerKey(valueOf(costConfirms[0], "id")));
+        && completeCostConfirmIds.has(identifierKey(valueOf(costConfirms[0], "id")));
       const exceptionComplete = itemExceptions.length === 1 && completeExceptions.length === 1;
       assert.ok(costComplete !== exceptionComplete,
         `Provider Settlement Item ${itemId} is an orphan or ambiguous: FEE/ADJUSTMENT 必须由 Cost Confirm/Alloc 或 controlled Exception 精确处置`);
     }
-    completeValidatedBatchIds.add(integerKey(valueOf(batch, "id")));
+    completeValidatedBatchIds.add(identifierKey(valueOf(batch, "id")));
   }
   for (const match of recordsFor(records, "t_bank_recon_match")
     .filter((record) => ["PROVIDER_CREDIT", "PROVIDER_DEBIT"].includes(valueOf(record, "match_type"))
@@ -2065,7 +2066,7 @@ function validateTaxAndProviderTuples(records) {
     assert.ok(batch && batchProviderAccount && bindingVersion && binding && bankItem && cashAccount,
       `Provider Bank Match ${valueOf(match, "id")} tuple 引用不完整`);
     assert.ok(valueOf(batch, "status") === "VALIDATED"
-      && completeValidatedBatchIds.has(integerKey(valueOf(batch, "id"))),
+      && completeValidatedBatchIds.has(identifierKey(valueOf(batch, "id"))),
     `Provider Bank Match ${valueOf(match, "id")} 必须引用 complete VALIDATED Batch`);
     const decisionTime = valueOf(match, "decision_time");
     assert.ok(["ACTIVE", "EXPIRED"].includes(valueOf(bindingVersion, "status"))
@@ -2076,17 +2077,17 @@ function validateTaxAndProviderTuples(records) {
       `Provider Bank Match ${valueOf(match, "id")} 必须使用 PROVIDER_SETTLEMENT Binding`);
     assert.equal(valueOf(binding, "entity_type"), "OPERATING_ENTITY",
       `Provider Bank Match ${valueOf(match, "id")} Binding entity_type 不一致`);
-    assert.ok(integerEqual(valueOf(binding, "entity_id"), valueOf(batchProviderAccount, "operating_entity_id")),
+    assert.ok(identifierEqual(valueOf(binding, "entity_id"), valueOf(batchProviderAccount, "entity_no")),
       `Provider Bank Match ${valueOf(match, "id")} Binding OE 不一致`);
     assert.equal(valueOf(binding, "currency"), valueOf(batch, "currency"),
       `Provider Bank Match ${valueOf(match, "id")} Binding currency 不一致`);
     assert.equal(valueOf(cashAccount, "entity_type"), "OPERATING_ENTITY",
       `Provider Bank Match ${valueOf(match, "id")} Cash Account entity_type 不一致`);
-    assert.ok(integerEqual(valueOf(cashAccount, "entity_id"), valueOf(batchProviderAccount, "operating_entity_id")),
+    assert.ok(identifierEqual(valueOf(cashAccount, "entity_id"), valueOf(batchProviderAccount, "entity_no")),
       `Provider Bank Match ${valueOf(match, "id")} Cash Account OE 不一致`);
     assert.equal(valueOf(cashAccount, "currency"), valueOf(batch, "currency"),
       `Provider Bank Match ${valueOf(match, "id")} Cash Account currency 不一致`);
-    assert.ok(integerEqual(valueOf(bankItem, "cash_account_id"), valueOf(cashAccount, "id")),
+    assert.ok(identifierEqual(valueOf(bankItem, "cash_account_id"), valueOf(cashAccount, "id")),
       `Provider Bank Match ${valueOf(match, "id")} Bank Item Cash Account 不一致`);
     assert.equal(valueOf(bankItem, "direction"), valueOf(batch, "cash_direction"),
       `Provider Bank Match ${valueOf(match, "id")} direction 与 Batch 不一致`);
@@ -2102,25 +2103,25 @@ function validateTaxAndProviderTuples(records) {
   for (const confirmation of recordsFor(records, "t_provider_cost_confirm")) {
     const settleItem = requireRecord(records, "t_provider_settle_item", valueOf(confirmation, "provider_settle_item_id"));
     const batch = requireRecord(records, "t_provider_settle_batch", valueOf(settleItem, "batch_id"));
-    assert.ok(integerEqual(valueOf(batch, "provider_account_id"), valueOf(providerAccount, "id")));
+    assert.ok(identifierEqual(valueOf(batch, "provider_account_id"), valueOf(providerAccount, "id")));
     const batchProviderAccount = providerAccounts.get(valueOf(batch, "provider_account_id"));
     const allocations = recordsFor(records, "t_provider_cost_alloc")
-      .filter((record) => integerEqual(valueOf(record, "cost_confirm_id"), valueOf(confirmation, "id")));
+      .filter((record) => identifierEqual(valueOf(record, "cost_confirm_id"), valueOf(confirmation, "id")));
     assert.ok(allocations.length > 0, `Provider Cost Confirm ${valueOf(confirmation, "id")} 缺少 allocation`);
     for (const allocation of allocations) {
       const economicsItems = [...providerOpenItems.values(), ...providerDebitItems.values()]
-        .filter((item) => integerEqual(
+        .filter((item) => identifierEqual(
           valueOf(item, "transaction_economics_id"), valueOf(allocation, "transaction_economics_id"),
         ));
-      assert.ok(economicsItems.some((item) => integerEqual(
+      assert.ok(economicsItems.some((item) => identifierEqual(
         valueOf(item, "provider_account_id"), valueOf(batchProviderAccount, "id"),
       )), `Provider Cost Alloc ${valueOf(allocation, "id")} Economics/Confirm/Batch Provider Account 不一致`);
       const matchingScopes = recordsFor(records, "t_provider_cost_scope").filter((scope) => {
         const version = requireRecord(records, "t_provider_cost_plan_ver", valueOf(scope, "cost_ver_id"));
         const plan = providerPlans.get(valueOf(version, "plan_id"));
-        return integerEqual(valueOf(plan, "provider_id"), valueOf(batchProviderAccount, "provider_id"))
-          && integerEqual(valueOf(scope, "mid_id"), valueOf(batchProviderAccount, "mid_id"))
-          && integerEqual(valueOf(scope, "operating_entity_id"), valueOf(batchProviderAccount, "operating_entity_id"))
+        return identifierEqual(valueOf(plan, "provider_id"), valueOf(batchProviderAccount, "provider_id"))
+          && identifierEqual(valueOf(scope, "mid_id"), valueOf(batchProviderAccount, "mid_id"))
+          && identifierEqual(valueOf(scope, "entity_no"), valueOf(batchProviderAccount, "entity_no"))
           && valueOf(scope, "currency") === valueOf(batchProviderAccount, "currency");
       });
       assert.equal(matchingScopes.length, 1,
@@ -2146,8 +2147,8 @@ function validateTaxAndProviderTuples(records) {
 function validateApprovalPairs(approvalRecords) {
   const approvedGroups = Map.groupBy(
     approvalRecords.filter((record) => valueOf(record, "decision") === "APPROVED"),
-    (record) => [integerKey(valueOf(record, "payout_id")), valueOf(record, "action_type"),
-      integerKey(valueOf(record, "action_no"))].join(":"),
+    (record) => [identifierKey(valueOf(record, "payout_id")), valueOf(record, "action_type"),
+      identifierKey(valueOf(record, "action_no"))].join(":"),
   );
   const frozenInputs = ["payout_id", "action_type", "action_no", "decision", "requested_from_status",
     "reason_code", "evidence_ref_id", "approved_content_hash"];
@@ -2158,12 +2159,12 @@ function validateApprovalPairs(approvalRecords) {
     assert.equal(checker.length, 1, `${groupKey} 必须有唯一 MAKER 与 CHECKER`);
     for (const field of frozenInputs) {
       if (["payout_id", "action_no", "evidence_ref_id"].includes(field) && !isNull(valueOf(maker[0], field))) {
-        assert.ok(integerEqual(valueOf(maker[0], field), valueOf(checker[0], field)), `${groupKey} ${field} 不一致`);
+        assert.ok(identifierEqual(valueOf(maker[0], field), valueOf(checker[0], field)), `${groupKey} ${field} 不一致`);
       } else {
         assert.equal(valueOf(maker[0], field), valueOf(checker[0], field), `${groupKey} ${field} 不一致`);
       }
     }
-    assert.ok(!integerEqual(valueOf(maker[0], "actor_id"), valueOf(checker[0], "actor_id")),
+    assert.ok(!identifierEqual(valueOf(maker[0], "actor_id"), valueOf(checker[0], "actor_id")),
       `${groupKey} Maker/Checker actor 必须不同`);
   }
   return approvedGroups.size;
@@ -2178,11 +2179,11 @@ function validatePayoutApprovalEvents(records) {
   for (const event of approvedEvents) {
     const eventId = valueOf(event, "id");
     const payoutId = valueOf(event, "payout_id");
-    const checker = approvals.find((approval) => integerEqual(
+    const checker = approvals.find((approval) => identifierEqual(
       valueOf(approval, "id"), valueOf(event, "approval_id"),
     ));
     const validChecker = checker
-      && integerEqual(valueOf(checker, "payout_id"), payoutId)
+      && identifierEqual(valueOf(checker, "payout_id"), payoutId)
       && valueOf(checker, "action_type") === "PAYOUT_APPROVAL"
       && valueOf(checker, "approval_role") === "CHECKER"
       && valueOf(checker, "decision") === "APPROVED"
@@ -2190,9 +2191,9 @@ function validatePayoutApprovalEvents(records) {
     assert.ok(validChecker,
       `Payout Event ${eventId} APPROVED 必须绑定 Checker approval 的同 action_no 冻结决定`);
     const pair = approvals.filter((approval) => (
-      integerEqual(valueOf(approval, "payout_id"), payoutId)
+      identifierEqual(valueOf(approval, "payout_id"), payoutId)
       && valueOf(approval, "action_type") === "PAYOUT_APPROVAL"
-      && integerEqual(valueOf(approval, "action_no"), valueOf(checker, "action_no"))
+      && identifierEqual(valueOf(approval, "action_no"), valueOf(checker, "action_no"))
       && valueOf(approval, "decision") === "APPROVED"
     ));
     assert.equal(pair.filter((approval) => valueOf(approval, "approval_role") === "MAKER").length, 1,
@@ -2201,9 +2202,9 @@ function validatePayoutApprovalEvents(records) {
       `Payout Event ${eventId} APPROVED Checker action_no 不唯一`);
     assert.equal(valueOf(event, "source_type"), "PAYOUT_APPROVAL",
       `Payout Event ${eventId} APPROVED source_type 必须为 PAYOUT_APPROVAL`);
-    assert.ok(integerEqual(valueOf(event, "source_id"), valueOf(checker, "id")),
+    assert.ok(identifierEqual(valueOf(event, "source_id"), valueOf(checker, "id")),
       `Payout Event ${eventId} APPROVED source_id 必须指向 Checker`);
-    assert.ok(integerEqual(valueOf(event, "actor_id"), valueOf(checker, "actor_id")),
+    assert.ok(identifierEqual(valueOf(event, "actor_id"), valueOf(checker, "actor_id")),
       `Payout Event ${eventId} APPROVED actor_id 必须等于 Checker actor`);
     assert.equal(valueOf(event, "occurred_time"), valueOf(checker, "decision_time"),
       `Payout Event ${eventId} APPROVED 时间必须等于 Checker decision_time`);
@@ -2216,7 +2217,7 @@ function validatePayoutApprovalEvents(records) {
   }
   for (const checker of approvals.filter((approval) => valueOf(approval, "action_type") === "PAYOUT_APPROVAL"
     && valueOf(approval, "approval_role") === "CHECKER" && valueOf(approval, "decision") === "APPROVED")) {
-    const bound = approvedEvents.filter((event) => integerEqual(
+    const bound = approvedEvents.filter((event) => identifierEqual(
       valueOf(event, "approval_id"), valueOf(checker, "id"),
     ));
     assert.equal(bound.length, 1,
@@ -2239,20 +2240,20 @@ function validatePayoutEventAuthority(records) {
       ? undefined
       : executions.get(valueOf(event, "execution_id"));
     if (!isNull(valueOf(event, "execution_id"))) {
-      assert.ok(scopedExecution && integerEqual(valueOf(scopedExecution, "payout_id"), valueOf(payout, "id")),
+      assert.ok(scopedExecution && identifierEqual(valueOf(scopedExecution, "payout_id"), valueOf(payout, "id")),
         `Payout Event ${eventId} authority execution_id 指向另一 Payout`);
     }
 
     if (valueOf(event, "source_type") === "PAYOUT_APPROVAL") {
       const approval = approvals.get(valueOf(event, "source_id"));
       assert.ok(approval
-        && integerEqual(valueOf(approval, "payout_id"), valueOf(payout, "id"))
-        && integerEqual(valueOf(event, "approval_id"), valueOf(approval, "id")),
+        && identifierEqual(valueOf(approval, "payout_id"), valueOf(payout, "id"))
+        && identifierEqual(valueOf(event, "approval_id"), valueOf(approval, "id")),
       `Payout Event ${eventId} authority Approval 元组不属于同一 Payout`);
     }
     if (valueOf(event, "source_type") === "PAYOUT_EXECUTION") {
       const sourceExecution = executions.get(valueOf(event, "source_id"));
-      assert.ok(sourceExecution && integerEqual(valueOf(sourceExecution, "payout_id"), valueOf(payout, "id")),
+      assert.ok(sourceExecution && identifierEqual(valueOf(sourceExecution, "payout_id"), valueOf(payout, "id")),
         `Payout Event ${eventId} authority source Execution 指向另一 Payout`);
     }
     if (valueOf(event, "source_type") !== "BANK_RECON_MATCH") continue;
@@ -2266,15 +2267,15 @@ function validatePayoutEventAuthority(records) {
     const validAuthority = match
       && valueOf(match, "status") === "CONFIRMED"
       && valueOf(match, "match_type") === "PAYOUT_DEBIT"
-      && integerEqual(valueOf(event, "bank_recon_match_id"), valueOf(match, "id"))
+      && identifierEqual(valueOf(event, "bank_recon_match_id"), valueOf(match, "id"))
       && matchExecution
-      && integerEqual(valueOf(matchExecution, "payout_id"), valueOf(payout, "id"))
+      && identifierEqual(valueOf(matchExecution, "payout_id"), valueOf(payout, "id"))
       && targetExecution
-      && integerEqual(valueOf(targetExecution, "id"), valueOf(matchExecution, "id"))
-      && (!evidence || integerEqual(valueOf(evidence, "payout_execution_id"), valueOf(matchExecution, "id")));
+      && identifierEqual(valueOf(targetExecution, "id"), valueOf(matchExecution, "id"))
+      && (!evidence || identifierEqual(valueOf(evidence, "payout_execution_id"), valueOf(matchExecution, "id")));
     assert.ok(validAuthority, `Payout Event ${eventId} BANK_RECON_MATCH authority 元组不完整或跨 Payout/Execution`);
     if (valueOf(event, "event_scope") === "PAYOUT" && valueOf(event, "to_status") === "PAID") {
-      assert.ok(evidence && integerEqual(valueOf(event, "journal_entry_id"), valueOf(payout, "journal_entry_id")),
+      assert.ok(evidence && identifierEqual(valueOf(event, "journal_entry_id"), valueOf(payout, "journal_entry_id")),
         `Payout Event ${eventId} PAID authority 必须冻结自身 Evidence 与 final Journal`);
     }
   }
@@ -2291,7 +2292,7 @@ function validateRetryRequiredEvents(records) {
     const eventId = valueOf(retryEvent, "id");
     const decisiveCandidates = events.filter((event) => (
       valueOf(event, "event_scope") === "EXECUTION"
-      && integerEqual(valueOf(event, "payout_id"), valueOf(retryEvent, "payout_id"))
+      && identifierEqual(valueOf(event, "payout_id"), valueOf(retryEvent, "payout_id"))
       && ["SUBMITTED", "UNKNOWN"].includes(valueOf(event, "from_status"))
       && valueOf(event, "to_status") === "FAILED"
       && numberOf(event, "event_no") < numberOf(retryEvent, "event_no")
@@ -2303,13 +2304,13 @@ function validateRetryRequiredEvents(records) {
     const execution = executions.get(executionId);
     const proof = evidence.get(valueOf(decisive, "evidence_ref_id"));
     const completeBinding = execution
-      && integerEqual(valueOf(execution, "payout_id"), valueOf(retryEvent, "payout_id"))
+      && identifierEqual(valueOf(execution, "payout_id"), valueOf(retryEvent, "payout_id"))
       && valueOf(retryEvent, "source_type") === "PAYOUT_EXECUTION"
-      && integerEqual(valueOf(retryEvent, "source_id"), executionId)
+      && identifierEqual(valueOf(retryEvent, "source_id"), executionId)
       && valueOf(retryEvent, "reason_code") === "NO_DEBIT_PROVED"
-      && integerEqual(valueOf(retryEvent, "evidence_ref_id"), valueOf(decisive, "evidence_ref_id"))
+      && identifierEqual(valueOf(retryEvent, "evidence_ref_id"), valueOf(decisive, "evidence_ref_id"))
       && proof
-      && integerEqual(valueOf(proof, "payout_execution_id"), executionId)
+      && identifierEqual(valueOf(proof, "payout_execution_id"), executionId)
       && valueOf(proof, "evidence_type") === "NO_DEBIT_PROOF"
       && Date.parse(valueOf(decisive, "occurred_time")) <= Date.parse(valueOf(retryEvent, "occurred_time"));
     assert.ok(completeBinding,
@@ -2331,52 +2332,52 @@ function validateCancellationRelease(records) {
 
   for (const payout of cancelled) {
     const payoutId = valueOf(payout, "id");
-    const events = cancellationEvents.filter((event) => integerEqual(valueOf(event, "payout_id"), payoutId));
+    const events = cancellationEvents.filter((event) => identifierEqual(valueOf(event, "payout_id"), payoutId));
     assert.equal(events.length, 1, `Payout ${payoutId} 必须有唯一 CANCELLED Event`);
     const event = events[0];
     const fromStatus = valueOf(event, "from_status");
     if (["APPROVED", "ON_HOLD", "RETRY_REQUIRED"].includes(fromStatus)) {
-      const checker = approvals.find((approval) => integerEqual(valueOf(approval, "id"), valueOf(event, "approval_id")));
+      const checker = approvals.find((approval) => identifierEqual(valueOf(approval, "id"), valueOf(event, "approval_id")));
       assert.ok(checker, `Payout ${payoutId} PAYOUT_CANCEL 缺少 MAKER 与 CHECKER`);
-      assert.ok(integerEqual(valueOf(checker, "payout_id"), payoutId)
+      assert.ok(identifierEqual(valueOf(checker, "payout_id"), payoutId)
         && valueOf(checker, "action_type") === "PAYOUT_CANCEL"
         && valueOf(checker, "approval_role") === "CHECKER"
         && valueOf(checker, "decision") === "APPROVED"
         && valueOf(checker, "requested_from_status") === fromStatus,
       `Payout ${payoutId} CANCELLED Event approval_id 必须指向匹配 Checker`);
-      const pair = approvals.filter((approval) => integerEqual(valueOf(approval, "payout_id"), payoutId)
+      const pair = approvals.filter((approval) => identifierEqual(valueOf(approval, "payout_id"), payoutId)
         && valueOf(approval, "action_type") === "PAYOUT_CANCEL"
-        && integerEqual(valueOf(approval, "action_no"), valueOf(checker, "action_no"))
+        && identifierEqual(valueOf(approval, "action_no"), valueOf(checker, "action_no"))
         && valueOf(approval, "decision") === "APPROVED");
       assert.equal(pair.filter((approval) => valueOf(approval, "approval_role") === "MAKER").length, 1,
         `Payout ${payoutId} PAYOUT_CANCEL 缺少 MAKER 与 CHECKER`);
       assert.equal(pair.filter((approval) => valueOf(approval, "approval_role") === "CHECKER").length, 1,
         `Payout ${payoutId} PAYOUT_CANCEL 缺少 MAKER 与 CHECKER`);
       assert.equal(valueOf(event, "source_type"), "PAYOUT_APPROVAL");
-      assert.ok(integerEqual(valueOf(event, "source_id"), valueOf(checker, "id")));
+      assert.ok(identifierEqual(valueOf(event, "source_id"), valueOf(checker, "id")));
     } else {
       assert.equal(fromStatus, "PENDING_APPROVAL", `Payout ${payoutId} 非法撤回来源状态 ${fromStatus}`);
       assert.ok(isNull(valueOf(event, "approval_id")), `Payout ${payoutId} 申请人撤回不应伪造审批`);
       const executions = recordsFor(records, "t_payout_execution")
-        .filter((execution) => integerEqual(valueOf(execution, "payout_id"), payoutId));
+        .filter((execution) => identifierEqual(valueOf(execution, "payout_id"), payoutId));
       assert.equal(executions.length, 0, `Payout ${payoutId} PENDING_APPROVAL 撤回必须为零 Execution`);
     }
 
-    const releaseKey = `PAYOUT_RELEASE:${integerKey(payoutId)}`;
+    const releaseKey = `PAYOUT_RELEASE:${identifierKey(payoutId)}`;
     const releaseInstructions = instructions.filter((instruction) => valueOf(instruction, "source_event_key") === releaseKey);
     assert.equal(releaseInstructions.length, 1, `Payout ${payoutId} 必须有唯一 ${releaseKey}`);
     const instruction = releaseInstructions[0];
     assert.equal(valueOf(instruction, "instruction_type"), "PAYOUT_RELEASE");
-    const releaseJournals = journals.filter((journal) => integerEqual(valueOf(journal, "instruction_id"), valueOf(instruction, "id")));
+    const releaseJournals = journals.filter((journal) => identifierEqual(valueOf(journal, "instruction_id"), valueOf(instruction, "id")));
     assert.equal(releaseJournals.length, 1, `Payout ${payoutId} release Journal 必须唯一`);
-    assert.ok(integerEqual(valueOf(event, "journal_entry_id"), valueOf(releaseJournals[0], "id")),
+    assert.ok(identifierEqual(valueOf(event, "journal_entry_id"), valueOf(releaseJournals[0], "id")),
       `Payout ${payoutId} CANCELLED Event 必须引用同一 release Journal`);
     const amount = fixedValue(payout, "owner_debit_amount");
     const expected = [
       { accountId: valueOf(payout, "locked_account_id"), side: "DEBIT", amount },
       { accountId: valueOf(payout, "available_account_id"), side: "CREDIT", amount },
     ];
-    assertInstructionCoordinates(instructionLines.filter((line) => integerEqual(valueOf(line, "instruction_id"), valueOf(instruction, "id"))),
+    assertInstructionCoordinates(instructionLines.filter((line) => identifierEqual(valueOf(line, "instruction_id"), valueOf(instruction, "id"))),
       expected, `Payout ${payoutId} release 冻结 Account/金额`);
     assertInstructionCoordinates(journalSummary(records, valueOf(releaseJournals[0], "id")).lines,
       expected, `Payout ${payoutId} release Journal 冻结 Account/金额`);
@@ -2385,7 +2386,7 @@ function validateCancellationRelease(records) {
   for (const instruction of instructions.filter((record) => valueOf(record, "instruction_type") === "PAYOUT_RELEASE")) {
     const match = valueOf(instruction, "source_event_key")?.match(/^PAYOUT_RELEASE:(\d+)$/u);
     assert.ok(match, `PAYOUT_RELEASE Instruction ${valueOf(instruction, "id")} key 非法`);
-    assert.ok(cancelled.some((payout) => integerEqual(valueOf(payout, "id"), match[1])),
+    assert.ok(cancelled.some((payout) => identifierEqual(valueOf(payout, "id"), match[1])),
       `PAYOUT_RELEASE Instruction ${valueOf(instruction, "id")} 指向非 CANCELLED Payout ${match[1]}`);
   }
   return cancelled.length;
@@ -2409,7 +2410,7 @@ function validateExecutionResolutionEvidence(records) {
         && valueOf(event, "to_status") === "FAILED");
       assert.equal(decisive.length, 1, `Execution ${executionId} 缺少唯一 decisive FAILED Event`);
       const proof = evidenceById.get(valueOf(decisive[0], "evidence_ref_id"));
-      assert.ok(proof && integerEqual(valueOf(proof, "payout_execution_id"), executionId)
+      assert.ok(proof && identifierEqual(valueOf(proof, "payout_execution_id"), executionId)
         && valueOf(proof, "evidence_type") === "NO_DEBIT_PROOF",
       `Execution ${executionId} decisive FAILED Event 必须引用 immutable NO_DEBIT_PROOF`);
       provenFailedCount += 1;
@@ -2418,7 +2419,7 @@ function validateExecutionResolutionEvidence(records) {
       && valueOf(candidate, "to_status") === "RECONCILED")) {
       const match = matchesById.get(valueOf(event, "bank_recon_match_id"));
       assert.ok(match && valueOf(match, "status") === "CONFIRMED"
-        && integerEqual(valueOf(match, "payout_execution_id"), executionId),
+        && identifierEqual(valueOf(match, "payout_execution_id"), executionId),
       `Execution ${executionId} UNKNOWN->RECONCILED 必须引用自身 CONFIRMED Bank Match`);
     }
   }
@@ -2438,9 +2439,9 @@ function validateExecutionAttempts(executions) {
       }
       assert.ok(["FAILED", "ABORTED"].includes(valueOf(predecessor, "status")),
         `Payout ${payoutId} 仅允许在 FAILED/ABORTED 后创建重试`);
-      assert.ok(!integerEqual(valueOf(predecessor, "assessment_id"), valueOf(execution, "assessment_id")),
+      assert.ok(!identifierEqual(valueOf(predecessor, "assessment_id"), valueOf(execution, "assessment_id")),
         `Payout ${payoutId} 重试必须使用 fresh assessment`);
-      assert.ok(!integerEqual(valueOf(predecessor, "evaluation_id"), valueOf(execution, "evaluation_id")),
+      assert.ok(!identifierEqual(valueOf(predecessor, "evaluation_id"), valueOf(execution, "evaluation_id")),
         `Payout ${payoutId} 重试必须使用 fresh evaluation`);
     });
   }
@@ -2513,7 +2514,7 @@ function validatePayoutEventGraph(payouts, executions, events) {
       assert.ok(payoutTransitions.has(transition), `Payout ${payoutId} 非法状态转换 ${transition}`);
       if (valueOf(event, "to_status") === "PAYING") {
         const submitted = ordered.find((candidate) => valueOf(candidate, "event_scope") === "EXECUTION"
-          && integerEqual(valueOf(candidate, "execution_id"), valueOf(event, "source_id"))
+          && identifierEqual(valueOf(candidate, "execution_id"), valueOf(event, "source_id"))
           && valueOf(candidate, "to_status") === "SUBMITTED");
         assert.ok(submitted && numberOf(submitted, "event_no") < numberOf(event, "event_no"),
           `Payout ${payoutId} PAYING 必须发生在对应 Execution SUBMITTED 之后`);
@@ -2522,7 +2523,7 @@ function validatePayoutEventGraph(payouts, executions, events) {
       }
       if (valueOf(event, "to_status") === "PAID") {
         const reconciled = ordered.find((candidate) => valueOf(candidate, "event_scope") === "EXECUTION"
-          && integerEqual(valueOf(candidate, "bank_recon_match_id"), valueOf(event, "bank_recon_match_id"))
+          && identifierEqual(valueOf(candidate, "bank_recon_match_id"), valueOf(event, "bank_recon_match_id"))
           && valueOf(candidate, "to_status") === "RECONCILED");
         assert.ok(reconciled && numberOf(reconciled, "event_no") < numberOf(event, "event_no"),
           `Payout ${payoutId} PAID 必须发生在对应 Execution RECONCILED 之后`);
@@ -2544,7 +2545,7 @@ function validatePayoutEventGraph(payouts, executions, events) {
       .toSorted((left, right) => numberOf(left, "attempt_no") - numberOf(right, "attempt_no"));
     for (const execution of payoutExecutions) {
       const executionEvents = ordered.filter((event) => valueOf(event, "event_scope") === "EXECUTION"
-        && integerEqual(valueOf(event, "execution_id"), valueOf(execution, "id")));
+        && identifierEqual(valueOf(event, "execution_id"), valueOf(execution, "id")));
       assert.ok(executionEvents.length > 0, `Execution ${valueOf(execution, "id")} 缺少事件`);
       executionEvents.forEach((event, index) => {
         assert.equal(numberOf(event, "execution_version_after"), index + 1,
@@ -2559,7 +2560,7 @@ function validatePayoutEventGraph(payouts, executions, events) {
         if (transition === "FAILED->FAILED") {
           const validLateDebit = valueOf(event, "reason_code") === "LATE_DEBIT"
             && valueOf(event, "source_type") === "BANK_STATEMENT_ITEM"
-            && valueOf(event, "source_event_key") === `LATE_DEBIT:${integerKey(valueOf(event, "source_id"))}`
+            && valueOf(event, "source_event_key") === `LATE_DEBIT:${identifierKey(valueOf(event, "source_id"))}`
             && !isNull(valueOf(event, "evidence_ref_id"))
             && !isNull(valueOf(event, "journal_entry_id"));
           assert.ok(validLateDebit,
@@ -2593,8 +2594,8 @@ function validatePayoutEventGraph(payouts, executions, events) {
       }
     }
     for (let index = 1; index < payoutExecutions.length; index += 1) {
-      const predecessorEvents = ordered.filter((event) => integerEqual(valueOf(event, "execution_id"), valueOf(payoutExecutions[index - 1], "id")));
-      const retryEvents = ordered.filter((event) => integerEqual(valueOf(event, "execution_id"), valueOf(payoutExecutions[index], "id")));
+      const predecessorEvents = ordered.filter((event) => identifierEqual(valueOf(event, "execution_id"), valueOf(payoutExecutions[index - 1], "id")));
+      const retryEvents = ordered.filter((event) => identifierEqual(valueOf(event, "execution_id"), valueOf(payoutExecutions[index], "id")));
       assert.ok(numberOf(predecessorEvents.at(-1), "event_no") < numberOf(retryEvents[0], "event_no"),
         `Payout ${payoutId} 重试必须发生在前一 Execution 终态后`);
     }
@@ -2608,14 +2609,14 @@ function validatePayoutCreationJournals(records) {
   for (const payout of recordsFor(records, "t_payout")) {
     const payoutId = valueOf(payout, "id");
     const created = recordsFor(records, "t_payout_event")
-      .filter((event) => integerEqual(valueOf(event, "payout_id"), payoutId) && numberOf(event, "event_no") === 1);
+      .filter((event) => identifierEqual(valueOf(event, "payout_id"), payoutId) && numberOf(event, "event_no") === 1);
     assert.equal(created.length, 1, `Payout ${payoutId} 必须有唯一 PayoutCreated 首事件`);
     const journal = journals.get(valueOf(created[0], "journal_entry_id"));
     assert.ok(journal, `Payout ${payoutId} PayoutCreated 缺少 PAYOUT_LOCK Journal`);
     const instruction = instructions.get(valueOf(journal, "instruction_id"));
     assert.equal(valueOf(instruction, "instruction_type"), "PAYOUT_LOCK",
       `Payout ${payoutId} PayoutCreated Journal 不是 PAYOUT_LOCK`);
-    assert.equal(valueOf(instruction, "source_event_key"), `PAYOUT_LOCK:${integerKey(payoutId)}`,
+    assert.equal(valueOf(instruction, "source_event_key"), `PAYOUT_LOCK:${identifierKey(payoutId)}`,
       `Payout ${payoutId} PayoutCreated 未绑定自身 PAYOUT_LOCK`);
   }
   return recordsFor(records, "t_payout").length;
@@ -2633,11 +2634,11 @@ function validateCancelledPayoutSafety(payouts, executions, bankMatches, evidenc
       assert.ok(isNull(valueOf(execution, "active_slot")),
         `CANCELLED Payout ${payoutId} Execution ${valueOf(execution, "id")} 仍占 active_slot`);
       if (status === "FAILED") {
-        assert.ok(evidence.some((record) => integerEqual(valueOf(record, "payout_execution_id"), valueOf(execution, "id"))
+        assert.ok(evidence.some((record) => identifierEqual(valueOf(record, "payout_execution_id"), valueOf(execution, "id"))
           && valueOf(record, "evidence_type") === "NO_DEBIT_PROOF"),
           `CANCELLED Payout ${payoutId} FAILED Execution ${valueOf(execution, "id")} 缺少 definitive NO_DEBIT_PROOF`);
       }
-      const debitMatches = bankMatches.filter((match) => integerEqual(valueOf(match, "payout_execution_id"), valueOf(execution, "id")));
+      const debitMatches = bankMatches.filter((match) => identifierEqual(valueOf(match, "payout_execution_id"), valueOf(execution, "id")));
       assert.equal(debitMatches.length, 0,
         `CANCELLED Payout ${payoutId} Execution ${valueOf(execution, "id")} 仍有未安全处置的银行 Debit`);
     }
@@ -2658,12 +2659,12 @@ function validateFeeDifferenceTimeline(records) {
       && valueOf(record, "exception_type") === "FEE_DIFFERENCE")) {
     const execution = requireRecord(records, "t_payout_execution", valueOf(exception, "source_id"));
     const payout = requireRecord(records, "t_payout", valueOf(execution, "payout_id"));
-    const match = confirmedMatches.find((candidate) => integerEqual(valueOf(candidate, "payout_execution_id"), valueOf(execution, "id")));
+    const match = confirmedMatches.find((candidate) => identifierEqual(valueOf(candidate, "payout_execution_id"), valueOf(execution, "id")));
     assert.ok(match, `FEE_DIFFERENCE ${valueOf(exception, "id")} 缺少 CONFIRMED Match`);
     const item = bankItems.get(valueOf(match, "bank_item_id"));
     const resolution = resolutions.get(valueOf(exception, "applied_resolution_id"));
     assert.ok(item && resolution, `FEE_DIFFERENCE ${valueOf(exception, "id")} 缺少 Statement/Resolution`);
-    const paidEvent = events.find((event) => integerEqual(valueOf(event, "payout_id"), valueOf(payout, "id"))
+    const paidEvent = events.find((event) => identifierEqual(valueOf(event, "payout_id"), valueOf(payout, "id"))
       && valueOf(event, "event_scope") === "PAYOUT" && valueOf(event, "to_status") === "PAID");
     assert.ok(paidEvent, `FEE_DIFFERENCE ${valueOf(exception, "id")} 缺少 PAID Event`);
     const matchTime = Date.parse(valueOf(match, "decision_time"));
@@ -2678,8 +2679,8 @@ function validateFeeDifferenceTimeline(records) {
     assert.equal(valueOf(resolution, "checker_decision"), "APPROVED");
     assert.equal(valueOf(resolution, "status"), "APPLIED");
     const diffInstruction = instructions.get(valueOf(resolution, "instruction_id"));
-    assert.equal(valueOf(diffInstruction, "source_event_key"), `PAYOUT_FEE_DIFF:${integerKey(valueOf(exception, "id"))}`);
-    const diffJournals = journals.filter((journal) => integerEqual(valueOf(journal, "instruction_id"), valueOf(diffInstruction, "id")));
+    assert.equal(valueOf(diffInstruction, "source_event_key"), `PAYOUT_FEE_DIFF:${identifierKey(valueOf(exception, "id"))}`);
+    const diffJournals = journals.filter((journal) => identifierEqual(valueOf(journal, "instruction_id"), valueOf(diffInstruction, "id")));
     assert.equal(diffJournals.length, 1, `FEE_DIFFERENCE ${valueOf(exception, "id")} diff Journal 必须唯一`);
     assert.ok(valueOf(diffJournals[0], "posting_date") >= valueOf(resolution, "decision_time").slice(0, 10),
       `FEE_DIFFERENCE ${valueOf(exception, "id")} fee Journal 早于 resolution approval`);
@@ -2719,7 +2720,7 @@ function validateLateDebitCausality(records) {
     const bankItem = requireRecord(records, "t_bank_statement_item", valueOf(lateException, "source_id"));
     assert.equal(valueOf(bankItem, "direction"), "DEBIT",
       `LATE_DEBIT ${valueOf(lateException, "id")} 必须引用 DEBIT Bank Statement Item`);
-    const eventKey = `LATE_DEBIT:${integerKey(valueOf(bankItem, "id"))}`;
+    const eventKey = `LATE_DEBIT:${identifierKey(valueOf(bankItem, "id"))}`;
     const instructions = recordsFor(records, "t_accounting_instruction")
       .filter((record) => valueOf(record, "instruction_type") === "LATE_DEBIT"
         && valueOf(record, "source_event_key") === eventKey
@@ -2727,7 +2728,7 @@ function validateLateDebitCausality(records) {
     assert.equal(instructions.length, 1, `${eventKey} 必须唯一解析 POSTED LATE_DEBIT Instruction`);
     const instruction = instructions[0];
     const journals = recordsFor(records, "t_journal_entry")
-      .filter((record) => integerEqual(valueOf(record, "instruction_id"), valueOf(instruction, "id")));
+      .filter((record) => identifierEqual(valueOf(record, "instruction_id"), valueOf(instruction, "id")));
     assert.equal(journals.length, 1, `${eventKey} 必须唯一解析 Journal`);
     const journal = journals[0];
     const lateEvents = recordsFor(records, "t_payout_event")
@@ -2737,35 +2738,35 @@ function validateLateDebitCausality(records) {
         && valueOf(record, "reason_code") === "LATE_DEBIT"
         && valueOf(record, "source_type") === "BANK_STATEMENT_ITEM"
         && valueOf(record, "source_event_key") === eventKey
-        && integerEqual(valueOf(record, "source_id"), valueOf(bankItem, "id")));
+        && identifierEqual(valueOf(record, "source_id"), valueOf(bankItem, "id")));
     assert.equal(lateEvents.length, 1, `${eventKey} 必须唯一解析 FAILED->FAILED Payout Event`);
     const lateEvent = lateEvents[0];
     const execution = requireRecord(records, "t_payout_execution", valueOf(lateEvent, "execution_id"));
     const payout = requireRecord(records, "t_payout", valueOf(execution, "payout_id"));
     assert.equal(valueOf(execution, "status"), "FAILED", `${eventKey} 必须保留原 Execution FAILED`);
-    assert.ok(integerEqual(valueOf(lateEvent, "payout_id"), valueOf(payout, "id")),
+    assert.ok(identifierEqual(valueOf(lateEvent, "payout_id"), valueOf(payout, "id")),
       `${eventKey} Event/Payout/Execution 坐标不一致`);
-    assert.ok(integerEqual(valueOf(bankItem, "cash_account_id"), valueOf(execution, "cash_account_id")),
+    assert.ok(identifierEqual(valueOf(bankItem, "cash_account_id"), valueOf(execution, "cash_account_id")),
       `${eventKey} Bank Item/Execution Cash Account 不一致`);
     assert.equal(valueOf(lateException, "entity_type"), "OPERATING_ENTITY",
       `${eventKey} Recon Exception entity_type 不一致`);
-    assert.ok(integerEqual(valueOf(lateException, "entity_id"), valueOf(payout, "operating_entity_id")),
+    assert.ok(identifierEqual(valueOf(lateException, "entity_id"), valueOf(payout, "entity_no")),
       `${eventKey} Recon Exception/Payout OE 不一致`);
     assert.equal(valueOf(lateException, "currency"), valueOf(payout, "currency"),
       `${eventKey} Recon Exception/Payout currency 不一致`);
     const evidence = requireRecord(records, "t_payout_evidence_ref", valueOf(lateEvent, "evidence_ref_id"));
-    assert.ok(integerEqual(valueOf(evidence, "payout_execution_id"), valueOf(execution, "id"))
+    assert.ok(identifierEqual(valueOf(evidence, "payout_execution_id"), valueOf(execution, "id"))
       && valueOf(evidence, "evidence_type") === "RECONCILIATION_SUPPORT",
     `${eventKey} Event Evidence 必须属于同一 Execution 的 RECONCILIATION_SUPPORT`);
-    assert.ok(integerEqual(valueOf(lateEvent, "journal_entry_id"), valueOf(journal, "id")),
+    assert.ok(identifierEqual(valueOf(lateEvent, "journal_entry_id"), valueOf(journal, "id")),
       `${eventKey} Event/Journal 坐标不一致`);
     const normalMatches = recordsFor(records, "t_bank_recon_match")
-      .filter((match) => integerEqual(valueOf(match, "bank_item_id"), valueOf(bankItem, "id")));
+      .filter((match) => identifierEqual(valueOf(match, "bank_item_id"), valueOf(bankItem, "id")));
     assert.equal(normalMatches.length, 0,
       `${eventKey} 迟到 Debit 不得伪装为普通 Bank Match`);
     const decisiveFailed = recordsFor(records, "t_payout_event")
       .filter((event) => valueOf(event, "event_scope") === "EXECUTION"
-        && integerEqual(valueOf(event, "execution_id"), valueOf(execution, "id"))
+        && identifierEqual(valueOf(event, "execution_id"), valueOf(execution, "id"))
         && ["SUBMITTED", "UNKNOWN"].includes(valueOf(event, "from_status"))
         && valueOf(event, "to_status") === "FAILED");
     assert.equal(decisiveFailed.length, 1, `${eventKey} 缺少原 decisive FAILED Event`);
@@ -2803,7 +2804,7 @@ function validateBookAndAccountSequences(records) {
     const journal = journalsById.get(valueOf(line, "journal_entry_id"));
     assert.ok(journal, `Journal Line ${valueOf(line, "id")} 缺少 Journal`);
     const sequence = BigInt(valueOf(journal, "journal_sequence"));
-    const accountId = integerKey(valueOf(line, "account_id"));
+    const accountId = identifierKey(valueOf(line, "account_id"));
     const prior = touchedMaxByAccount.get(accountId);
     if (!prior || sequence > prior) touchedMaxByAccount.set(accountId, sequence);
   }
@@ -2832,9 +2833,9 @@ function validateBookAndAccountSequences(records) {
     const next = BigInt(valueOf(bookSequences[0], "next_value"));
     assert.equal(next, last + 1n, `Ledger Book ${bookId} next_value 必须等于 represented max+1`);
     for (const account of recordsFor(records, "t_account")
-      .filter((record) => integerEqual(valueOf(record, "ledger_book_id"), bookId))) {
+      .filter((record) => identifierEqual(valueOf(record, "ledger_book_id"), bookId))) {
       const accountLast = BigInt(valueOf(account, "last_journal_sequence"));
-      const touchedMax = touchedMaxByAccount.get(integerKey(valueOf(account, "id")));
+      const touchedMax = touchedMaxByAccount.get(identifierKey(valueOf(account, "id")));
       if (touchedMax !== undefined) {
         assert.equal(accountLast, touchedMax,
           `Account ${valueOf(account, "id")} last_journal_sequence 必须等于 represented line max`);
@@ -2855,7 +2856,7 @@ function validateTaxPaymentGraph(records) {
   const matches = recordsFor(records, "t_bank_recon_match")
     .filter((record) => valueOf(record, "match_type") === "TAX_PAYMENT_DEBIT" && valueOf(record, "status") === "CONFIRMED");
   for (const payment of recordsFor(records, "t_tax_payment")) {
-    const confirmed = matches.filter((match) => integerEqual(valueOf(match, "tax_payment_id"), valueOf(payment, "id")));
+    const confirmed = matches.filter((match) => identifierEqual(valueOf(match, "tax_payment_id"), valueOf(payment, "id")));
     const matchedAmount = fixedSumRecords(confirmed, "matched_amount");
     const paymentAmount = fixedValue(payment, "amount");
     if (valueOf(payment, "status") === "CREATED" && fixedCompare(matchedAmount, paymentAmount) >= 0) {
@@ -2868,12 +2869,12 @@ function validateTaxPaymentGraph(records) {
     assert.ok(!isNull(valueOf(payment, "reconciled_time")));
     assert.ok(isNull(valueOf(payment, "active_slot")));
     const summary = journalSummary(records, valueOf(payment, "journal_entry_id"));
-    assert.ok(summary.lines.some((line) => integerEqual(valueOf(line, "account_id"), valueOf(payment, "tax_payable_account_id"))
+    assert.ok(summary.lines.some((line) => identifierEqual(valueOf(line, "account_id"), valueOf(payment, "tax_payable_account_id"))
       && valueOf(line, "entry_side") === "DEBIT" && fixedRecordEqual(line, "amount", payment, "amount")));
-    assert.ok(summary.lines.some((line) => integerEqual(valueOf(line, "account_id"), "20207")
+    assert.ok(summary.lines.some((line) => identifierEqual(valueOf(line, "account_id"), "20207")
       && valueOf(line, "entry_side") === "CREDIT" && fixedRecordEqual(line, "amount", payment, "amount")));
     const paymentEvents = recordsFor(records, "t_tax_payment_event")
-      .filter((event) => integerEqual(valueOf(event, "tax_payment_id"), valueOf(payment, "id")))
+      .filter((event) => identifierEqual(valueOf(event, "tax_payment_id"), valueOf(payment, "id")))
       .toSorted((left, right) => numberOf(left, "event_no") - numberOf(right, "event_no"));
     paymentEvents.forEach((event, index) => assert.equal(numberOf(event, "event_no"), index + 1));
     const reconciledEvent = paymentEvents.at(-1);
@@ -2882,7 +2883,7 @@ function validateTaxPaymentGraph(records) {
     assert.ok(eventMatch
       && valueOf(eventMatch, "status") === "CONFIRMED"
       && valueOf(eventMatch, "match_type") === "TAX_PAYMENT_DEBIT"
-      && integerEqual(valueOf(eventMatch, "tax_payment_id"), valueOf(payment, "id")),
+      && identifierEqual(valueOf(eventMatch, "tax_payment_id"), valueOf(payment, "id")),
     `Tax Payment ${valueOf(payment, "id")} RECONCILED Event 必须引用自身 CONFIRMED TAX_PAYMENT_DEBIT Match`);
     assert.equal(paymentEvents.length, numberOf(payment, "version"));
   }
@@ -2890,7 +2891,7 @@ function validateTaxPaymentGraph(records) {
 }
 
 function validateMaturityGraph(records, economicsId) {
-  const eventKey = `PAYABLE_BALANCE_MATURED:${integerKey(economicsId)}`;
+  const eventKey = `PAYABLE_BALANCE_MATURED:${identifierKey(economicsId)}`;
   const maturityEvents = recordsFor(records, "t_compensation_event")
     .filter((record) => valueOf(record, "event_type") === "PAYABLE_BALANCE_MATURED");
   const maturityInstructions = recordsFor(records, "t_accounting_instruction")
@@ -2898,9 +2899,9 @@ function validateMaturityGraph(records, economicsId) {
   assert.equal(maturityEvents.length, 1, "到期场景必须只有一个 Compensation Event");
   assert.equal(maturityInstructions.length, 1, "到期场景必须只有一个 Accounting Instruction");
   assert.equal(valueOf(maturityEvents[0], "event_key"), eventKey);
-  assert.ok(integerEqual(valueOf(maturityEvents[0], "source_id"), economicsId));
+  assert.ok(identifierEqual(valueOf(maturityEvents[0], "source_id"), economicsId));
   assert.equal(valueOf(maturityInstructions[0], "source_event_key"), eventKey);
-  assert.ok(integerEqual(valueOf(maturityInstructions[0], "transaction_economics_id"), economicsId));
+  assert.ok(identifierEqual(valueOf(maturityInstructions[0], "transaction_economics_id"), economicsId));
   const maturityKeys = new Set([
     ...maturityEvents.map((record) => valueOf(record, "event_key")),
     ...maturityInstructions.map((record) => valueOf(record, "source_event_key")),
@@ -2908,14 +2909,14 @@ function validateMaturityGraph(records, economicsId) {
   assert.deepEqual([...maturityKeys], [eventKey], "同一 economics 只能使用一个精确到期 key");
 
   const journals = recordsFor(records, "t_journal_entry")
-    .filter((record) => integerEqual(valueOf(record, "instruction_id"), valueOf(maturityInstructions[0], "id")));
+    .filter((record) => identifierEqual(valueOf(record, "instruction_id"), valueOf(maturityInstructions[0], "id")));
   assert.equal(journals.length, 1, "到期 Instruction 必须只产生一个 Journal");
-  assert.ok(integerEqual(valueOf(journals[0], "id"), "32242"));
+  assert.ok(identifierEqual(valueOf(journals[0], "id"), "32242"));
   const summary = journalSummary(records, valueOf(journals[0], "id"));
   assert.equal(summary.lines.length, 5, "共同成熟 Journal 必须恰有 Client 两行和 Partner 三行");
 
   const line = (accountId, side) => {
-    const matches = summary.lines.filter((candidate) => integerEqual(valueOf(candidate, "account_id"), accountId)
+    const matches = summary.lines.filter((candidate) => identifierEqual(valueOf(candidate, "account_id"), accountId)
       && valueOf(candidate, "entry_side") === side);
     assert.equal(matches.length, 1, `Journal 32242 缺少 ${accountId}/${side} 唯一行`);
     return matches[0];
@@ -2943,7 +2944,7 @@ function validateMaturityGraph(records, economicsId) {
   for (const [accountId, [ownerType, ownerId, bucket, accountCode]] of expectedAccounts) {
     const account = requireRecord(records, "t_account", accountId);
     assert.equal(valueOf(account, "owner_type"), ownerType, `Account ${accountId} owner_type 错误`);
-    assert.ok(integerEqual(valueOf(account, "owner_id"), ownerId), `Account ${accountId} owner_id 错误`);
+    assert.ok(identifierEqual(valueOf(account, "owner_id"), ownerId), `Account ${accountId} owner_id 错误`);
     assert.equal(valueOf(account, "balance_bucket"), bucket, `Account ${accountId} balance_bucket 错误`);
     assert.equal(valueOf(chartAccounts.get(valueOf(account, "chart_account_id")), "account_code"), accountCode);
   }
@@ -2951,15 +2952,15 @@ function validateMaturityGraph(records, economicsId) {
   const recoveryInstruction = recordsFor(records, "t_accounting_instruction")
     .find((record) => valueOf(record, "instruction_type") === "PARTNER_RECOVERY_OPEN"
       && valueOf(record, "source_event_key") === "PARTNER_RECOVERY_OPEN:31030"
-      && integerEqual(valueOf(record, "transaction_economics_id"), "31030"));
+      && identifierEqual(valueOf(record, "transaction_economics_id"), "31030"));
   assert.ok(recoveryInstruction, "缺少先前 Partner Recovery 负向 Economics 来源");
   const recoveryEconomics = requireRecord(records, "t_transaction_economics", "31030");
   assert.equal(valueOf(recoveryEconomics, "economics_type"), "DISPUTE");
-  assert.ok(integerEqual(valueOf(recoveryEconomics, "local_partner_id"), "41001"));
-  assert.ok(integerEqual(valueOf(recoveryEconomics, "source_version"), valueOf(recoveryInstruction, "source_version")),
+  assert.ok(identifierEqual(valueOf(recoveryEconomics, "local_partner_id"), "41001"));
+  assert.ok(identifierEqual(valueOf(recoveryEconomics, "source_version"), valueOf(recoveryInstruction, "source_version")),
     "Partner Recovery 必须冻结同一负向 Economics/Partner/Version");
   const recoveryJournal = recordsFor(records, "t_journal_entry")
-    .find((record) => integerEqual(valueOf(record, "instruction_id"), valueOf(recoveryInstruction, "id")));
+    .find((record) => identifierEqual(valueOf(record, "instruction_id"), valueOf(recoveryInstruction, "id")));
   assert.ok(recoveryJournal, "缺少先前 Partner Recovery Journal");
   assert.ok(valueOf(recoveryEconomics, "commercial_context_time").slice(0, 10)
     <= valueOf(recoveryJournal, "posting_date"),
@@ -2967,7 +2968,7 @@ function validateMaturityGraph(records, economicsId) {
   assert.ok(valueOf(recoveryJournal, "posting_date") < valueOf(journals[0], "posting_date"),
     "Recovery Debit 必须早于成熟 Credit netting");
   const recoverySummary = journalSummary(records, valueOf(recoveryJournal, "id"));
-  assert.ok(recoverySummary.lines.some((candidate) => integerEqual(valueOf(candidate, "account_id"), "20311")
+  assert.ok(recoverySummary.lines.some((candidate) => identifierEqual(valueOf(candidate, "account_id"), "20311")
     && valueOf(candidate, "entry_side") === "DEBIT"
     && fixedEqual(fixedValue(candidate, "amount"), recoveryNetted)));
 
@@ -3010,7 +3011,7 @@ function validateRcoCheckpoints(checkpoints, records) {
     ["EXECUTION_CREATE", "EXECUTION_CREATE_REPLAY"],
     ["EXTERNAL_SUBMIT", "EXTERNAL_SUBMIT_REPLAY"],
   ];
-  const scopeFields = ["owner_type", "owner_id", "operating_entity_id", "currency", "amount",
+  const scopeFields = ["owner_type", "owner_id", "entity_no", "currency", "amount",
     "control_set_hash", "scope_hash", "frozen_target"];
   const firstPairs = new Set();
   for (const [freshName, replayName] of replayPairs) {
@@ -3024,15 +3025,15 @@ function validateRcoCheckpoints(checkpoints, records) {
     }
     assert.equal(valueOf(fresh, "replay_of"), "NULL");
     assert.equal(valueOf(replay, "replay_of"), freshName);
-    for (const field of ["assessment_id", "evaluation_id", "owner_id", "operating_entity_id"]) {
-      assert.ok(integerEqual(valueOf(replay, field), valueOf(fresh, field)),
+    for (const field of ["assessment_id", "evaluation_id", "owner_id", "entity_no"]) {
+      assert.ok(identifierEqual(valueOf(replay, field), valueOf(fresh, field)),
         `${replayName} 未复用 ${freshName} 的 ${field}`);
     }
     for (const field of ["command_key", "owner_type", "currency", "amount", "control_set_hash", "scope_hash", "frozen_target"]) {
       assert.equal(valueOf(replay, field), valueOf(fresh, field),
         `${replayName} 未复用 ${freshName} 的 ${field}`);
     }
-    firstPairs.add(`${integerKey(valueOf(fresh, "assessment_id"))}:${integerKey(valueOf(fresh, "evaluation_id"))}`);
+    firstPairs.add(`${identifierKey(valueOf(fresh, "assessment_id"))}:${identifierKey(valueOf(fresh, "evaluation_id"))}`);
   }
   assert.equal(firstPairs.size, 4, "四次首次 RCO 调用必须使用互异 assessment/evaluation pair");
 
@@ -3045,8 +3046,8 @@ function validateRcoCheckpoints(checkpoints, records) {
     [externalSubmit, "EXECUTION:93001", execution],
   ]) {
     assert.equal(valueOf(checkpoint, "frozen_target"), target);
-    assert.ok(integerEqual(valueOf(checkpoint, "assessment_id"), valueOf(persisted, "assessment_id")));
-    assert.ok(integerEqual(valueOf(checkpoint, "evaluation_id"), valueOf(persisted, "evaluation_id")));
+    assert.ok(identifierEqual(valueOf(checkpoint, "assessment_id"), valueOf(persisted, "assessment_id")));
+    assert.ok(identifierEqual(valueOf(checkpoint, "evaluation_id"), valueOf(persisted, "evaluation_id")));
     assert.equal(valueOf(checkpoint, "control_set_hash"), valueOf(persisted, "control_set_hash"));
   }
   for (const checkpoint of checkpoints) {
@@ -3054,17 +3055,17 @@ function validateRcoCheckpoints(checkpoints, records) {
       assert.equal(checkpoint.values.has(forbidden), false, `Risk 合同不得新增 ${forbidden}`);
     }
     assert.equal(valueOf(checkpoint, "owner_type"), valueOf(payout, "owner_type"), `${checkpoint.name} owner_type Scope mismatch`);
-    assert.ok(integerEqual(valueOf(checkpoint, "owner_id"), valueOf(payout, "owner_id")), `${checkpoint.name} owner_id Scope mismatch`);
-    assert.ok(integerEqual(valueOf(checkpoint, "operating_entity_id"), valueOf(payout, "operating_entity_id")),
-      `${checkpoint.name} operating_entity_id Scope mismatch`);
+    assert.ok(identifierEqual(valueOf(checkpoint, "owner_id"), valueOf(payout, "owner_id")), `${checkpoint.name} owner_id Scope mismatch`);
+    assert.ok(identifierEqual(valueOf(checkpoint, "entity_no"), valueOf(payout, "entity_no")),
+      `${checkpoint.name} entity_no Scope mismatch`);
     assert.equal(valueOf(checkpoint, "currency"), valueOf(payout, "currency"), `${checkpoint.name} currency Scope mismatch`);
     assert.ok(fixedEqual(fixedRaw(valueOf(checkpoint, "amount")), fixedValue(payout, "cash_required_amount")),
       `${checkpoint.name} amount Scope mismatch`);
     assert.equal(valueOf(checkpoint, "scope_hash"), "hash-scope-92001", `${checkpoint.name} scope_hash mismatch`);
   }
-  assert.ok(!integerEqual(valueOf(byName.get("PAYOUT_CREATE"), "assessment_id"), valueOf(payout, "assessment_id")),
+  assert.ok(!identifierEqual(valueOf(byName.get("PAYOUT_CREATE"), "assessment_id"), valueOf(payout, "assessment_id")),
     "Finance eligibility_hash 不得跳过最终审批 checkpoint");
-  assert.ok(!integerEqual(valueOf(byName.get("EXECUTION_CREATE"), "assessment_id"), valueOf(execution, "assessment_id")),
+  assert.ok(!identifierEqual(valueOf(byName.get("EXECUTION_CREATE"), "assessment_id"), valueOf(execution, "assessment_id")),
     "Finance eligibility_hash 不得跳过外部提交 checkpoint");
   assert.ok(!isNull(valueOf(payout, "eligibility_hash")) && !isNull(valueOf(execution, "eligibility_hash")));
   return firstPairs.size;
@@ -3093,9 +3094,9 @@ function validatePartnerPayoutGates(gates, records) {
   const blocked = byName.get("PARTNER_PAYOUT_BLOCKED");
   const allowed = byName.get("PARTNER_PAYOUT_ALLOWED");
   const account = requireRecord(records, "t_account", valueOf(blocked, "recovery_account_id"));
-  assert.ok(integerEqual(valueOf(allowed, "recovery_account_id"), valueOf(blocked, "recovery_account_id")));
+  assert.ok(identifierEqual(valueOf(allowed, "recovery_account_id"), valueOf(blocked, "recovery_account_id")));
   assert.equal(valueOf(account, "owner_type"), "LOCAL_PARTNER");
-  assert.ok(integerEqual(valueOf(account, "owner_id"), "41001"));
+  assert.ok(identifierEqual(valueOf(account, "owner_id"), "41001"));
   assert.equal(valueOf(account, "balance_bucket"), "NONE");
   const chart = requireRecord(records, "t_chart_account", valueOf(account, "chart_account_id"));
   assert.equal(valueOf(chart, "account_code"), "PARTNER_RECOVERY_RECEIVABLE");
@@ -3105,16 +3106,16 @@ function validatePartnerPayoutGates(gates, records) {
   assert.equal(valueOf(blocked, "decision"), "BLOCKED");
   assert.ok(isNull(valueOf(blocked, "payout_id")), "Partner Recovery 非零时不得创建 Payout root");
   const blockedJournal = journalSummary(records, valueOf(blocked, "source_journal_id"));
-  assert.ok(blockedJournal.lines.some((line) => integerEqual(valueOf(line, "account_id"), valueOf(account, "id"))
+  assert.ok(blockedJournal.lines.some((line) => identifierEqual(valueOf(line, "account_id"), valueOf(account, "id"))
     && valueOf(line, "entry_side") === "DEBIT"
     && fixedEqual(fixedValue(line, "amount"), blockedBalance)));
   assert.ok(fixedEqual(allowedBalance, EXACT_ZERO));
   assert.equal(valueOf(allowed, "decision"), "ALLOW");
   const payout = requireRecord(records, "t_payout", valueOf(allowed, "payout_id"));
   assert.equal(valueOf(payout, "owner_type"), "LOCAL_PARTNER");
-  assert.ok(integerEqual(valueOf(payout, "owner_id"), "41001"));
+  assert.ok(identifierEqual(valueOf(payout, "owner_id"), "41001"));
   const allowedJournal = journalSummary(records, valueOf(allowed, "source_journal_id"));
-  assert.ok(allowedJournal.lines.some((line) => integerEqual(valueOf(line, "account_id"), valueOf(account, "id"))
+  assert.ok(allowedJournal.lines.some((line) => identifierEqual(valueOf(line, "account_id"), valueOf(account, "id"))
     && valueOf(line, "entry_side") === "CREDIT"
     && fixedEqual(fixedValue(line, "amount"), blockedBalance)));
   assert.ok(fixedEqual(fixedValue(account, "net_balance"), EXACT_ZERO));
@@ -3128,15 +3129,15 @@ function validateBeneficiaryReplacement(records) {
   assert.ok(["SUSPENDED", "CLOSED"].includes(valueOf(oldAccount, "status")), "旧 Beneficiary 必须非 current");
   assert.equal(valueOf(replacement, "status"), "VERIFIED");
   assert.equal(valueOf(oldAccount, "owner_type"), valueOf(replacement, "owner_type"));
-  assert.ok(integerEqual(valueOf(oldAccount, "owner_id"), valueOf(replacement, "owner_id")));
+  assert.ok(identifierEqual(valueOf(oldAccount, "owner_id"), valueOf(replacement, "owner_id")));
   assert.equal(valueOf(oldAccount, "currency"), valueOf(replacement, "currency"));
-  assert.ok(!integerEqual(valueOf(oldAccount, "id"), valueOf(replacement, "id")),
+  assert.ok(!identifierEqual(valueOf(oldAccount, "id"), valueOf(replacement, "id")),
     "Beneficiary replacement 必须更换 id");
   for (const field of ["account_code", "bank_account_blind_index", "account_last4", "content_hash"]) {
     assert.notEqual(valueOf(oldAccount, field), valueOf(replacement, field), `Beneficiary replacement 必须更换 ${field}`);
   }
   const historical = recordsFor(records, "t_payout")
-    .filter((payout) => integerEqual(valueOf(payout, "beneficiary_account_id"), valueOf(oldAccount, "id")));
+    .filter((payout) => identifierEqual(valueOf(payout, "beneficiary_account_id"), valueOf(oldAccount, "id")));
   assert.ok(historical.length > 0, "旧 Beneficiary 必须保留历史 Payout 引用");
   for (const payout of historical) {
     assert.equal(valueOf(payout, "beneficiary_content_hash"), valueOf(oldAccount, "content_hash"));
@@ -3176,7 +3177,7 @@ function validateManualPayoutGraph(records) {
     assert.ok(beneficiary, `Payout ${valueOf(payout, "id")} 缺少 Beneficiary`);
     assert.ok(["VERIFIED", "SUSPENDED", "CLOSED"].includes(valueOf(beneficiary, "status")));
     assert.equal(valueOf(beneficiary, "owner_type"), valueOf(payout, "owner_type"));
-    assert.ok(integerEqual(valueOf(beneficiary, "owner_id"), valueOf(payout, "owner_id")));
+    assert.ok(identifierEqual(valueOf(beneficiary, "owner_id"), valueOf(payout, "owner_id")));
     assert.equal(valueOf(beneficiary, "currency"), valueOf(payout, "currency"));
     assert.equal(valueOf(beneficiary, "content_hash"), valueOf(payout, "beneficiary_content_hash"));
 
@@ -3184,24 +3185,24 @@ function validateManualPayoutGraph(records) {
     const locked = accounts.get(valueOf(payout, "locked_account_id"));
     assert.ok(available && locked, `Payout ${valueOf(payout, "id")} 缺少 Owner Account`);
     assert.ok(valueOf(available, "owner_type") === valueOf(payout, "owner_type")
-      && integerEqual(valueOf(available, "owner_id"), valueOf(payout, "owner_id"))
+      && identifierEqual(valueOf(available, "owner_id"), valueOf(payout, "owner_id"))
       && valueOf(available, "balance_bucket") === "AVAILABLE");
     assert.ok(valueOf(locked, "owner_type") === valueOf(payout, "owner_type")
-      && integerEqual(valueOf(locked, "owner_id"), valueOf(payout, "owner_id"))
+      && identifierEqual(valueOf(locked, "owner_id"), valueOf(payout, "owner_id"))
       && valueOf(locked, "balance_bucket") === "LOCKED");
-    assert.ok(integerEqual(valueOf(available, "chart_account_id"), valueOf(locked, "chart_account_id")));
+    assert.ok(identifierEqual(valueOf(available, "chart_account_id"), valueOf(locked, "chart_account_id")));
     const payoutBook = ledgerBooks.get(valueOf(available, "ledger_book_id"));
     assert.ok(payoutBook
-      && integerEqual(valueOf(locked, "ledger_book_id"), valueOf(payoutBook, "id"))
+      && identifierEqual(valueOf(locked, "ledger_book_id"), valueOf(payoutBook, "id"))
       && valueOf(payoutBook, "entity_type") === "OPERATING_ENTITY"
-      && integerEqual(valueOf(payoutBook, "entity_id"), valueOf(payout, "operating_entity_id"))
+      && identifierEqual(valueOf(payoutBook, "entity_id"), valueOf(payout, "entity_no"))
       && valueOf(payoutBook, "currency") === valueOf(payout, "currency"),
     `Payout ${valueOf(payout, "id")} Owner Account Ledger Book OE/currency scope 不一致`);
 
     const payoutExecutions = executionsByPayout.get(valueOf(payout, "id")) ?? [];
     const withdrawalWithoutExecution = valueOf(payout, "status") === "CANCELLED"
       && payoutExecutions.length === 0
-      && recordsFor(records, "t_payout_event").some((event) => integerEqual(valueOf(event, "payout_id"), valueOf(payout, "id"))
+      && recordsFor(records, "t_payout_event").some((event) => identifierEqual(valueOf(event, "payout_id"), valueOf(payout, "id"))
         && valueOf(event, "event_scope") === "PAYOUT"
         && valueOf(event, "from_status") === "PENDING_APPROVAL"
         && valueOf(event, "to_status") === "CANCELLED");
@@ -3211,10 +3212,10 @@ function validateManualPayoutGraph(records) {
         `Payout ${valueOf(payout, "id")} 缺少与 Root 对应的终态 Execution`);
     }
     const lockInstruction = recordsFor(records, "t_accounting_instruction")
-      .find((record) => valueOf(record, "source_event_key") === `PAYOUT_LOCK:${integerKey(valueOf(payout, "id"))}`);
+      .find((record) => valueOf(record, "source_event_key") === `PAYOUT_LOCK:${identifierKey(valueOf(payout, "id"))}`);
     assert.ok(lockInstruction, `Payout ${valueOf(payout, "id")} 缺少 PAYOUT_LOCK`);
     const lockJournal = recordsFor(records, "t_journal_entry")
-      .find((record) => integerEqual(valueOf(record, "instruction_id"), valueOf(lockInstruction, "id")));
+      .find((record) => identifierEqual(valueOf(record, "instruction_id"), valueOf(lockInstruction, "id")));
     journalSummary(records, valueOf(lockJournal, "id"));
   }
 
@@ -3235,9 +3236,9 @@ function validateManualPayoutGraph(records) {
   for (const cancelChecker of recordsFor(records, "t_payout_approval")
     .filter((record) => valueOf(record, "action_type") === "PAYOUT_CANCEL"
       && valueOf(record, "approval_role") === "CHECKER" && valueOf(record, "decision") === "APPROVED")) {
-    const matchingEvents = recordsFor(records, "t_payout_event").filter((event) => integerEqual(valueOf(event, "approval_id"), valueOf(cancelChecker, "id")));
+    const matchingEvents = recordsFor(records, "t_payout_event").filter((event) => identifierEqual(valueOf(event, "approval_id"), valueOf(cancelChecker, "id")));
     assert.equal(matchingEvents.length, 1, `Cancel Checker ${valueOf(cancelChecker, "id")} 必须被唯一 Event 引用`);
-    assert.ok(integerEqual(valueOf(matchingEvents[0], "payout_id"), valueOf(cancelChecker, "payout_id")));
+    assert.ok(identifierEqual(valueOf(matchingEvents[0], "payout_id"), valueOf(cancelChecker, "payout_id")));
     assert.equal(valueOf(matchingEvents[0], "event_scope"), "PAYOUT");
   }
 
@@ -3245,7 +3246,7 @@ function validateManualPayoutGraph(records) {
     const payout = requireRecord(records, "t_payout", valueOf(execution, "payout_id"));
     const binding = bindings.get(valueOf(execution, "cash_account_binding_ver_id"));
     assert.ok(binding, `Execution ${valueOf(execution, "id")} 缺少 Cash Binding Version`);
-    assert.ok(integerEqual(valueOf(binding, "cash_account_id"), valueOf(execution, "cash_account_id")));
+    assert.ok(identifierEqual(valueOf(binding, "cash_account_id"), valueOf(execution, "cash_account_id")));
     const executionRiskAmount = fixedValue(execution, "risk_required_amount");
     const payoutRiskAmount = fixedValue(payout, "risk_required_amount");
     assert.equal(executionRiskAmount === null, payoutRiskAmount === null);
@@ -3261,14 +3262,14 @@ function validateManualPayoutGraph(records) {
     assert.ok(item, `Bank Match ${valueOf(match, "id")} 缺少 Statement Item`);
     assert.equal(valueOf(item, "direction"), "DEBIT");
     assert.ok(fixedRecordEqual(item, "amount", match, "matched_amount"));
-    assert.ok(integerEqual(valueOf(match, "cash_account_binding_ver_id"), valueOf(execution, "cash_account_binding_ver_id")));
+    assert.ok(identifierEqual(valueOf(match, "cash_account_binding_ver_id"), valueOf(execution, "cash_account_binding_ver_id")));
   }
 
   const paid = payouts.filter((payout) => valueOf(payout, "status") === "PAID");
   for (const payout of paid) {
     const execution = executionsByPayout.get(valueOf(payout, "id"))
       .find((candidate) => valueOf(candidate, "status") === "RECONCILED");
-    const confirmed = payoutMatches.filter((match) => integerEqual(valueOf(match, "payout_execution_id"), valueOf(execution, "id")));
+    const confirmed = payoutMatches.filter((match) => identifierEqual(valueOf(match, "payout_execution_id"), valueOf(execution, "id")));
     assert.ok(confirmed.length > 0, `PAID Payout ${valueOf(payout, "id")} 缺少 CONFIRMED Bank Match`);
     if (confirmed.length === 1) {
       assert.equal(valueOf(confirmed[0], "payout_component_type"), "COMBINED");
@@ -3285,15 +3286,15 @@ function validateManualPayoutGraph(records) {
     assert.ok(journal, `PAID Payout ${valueOf(payout, "id")} 的 final Journal 不存在`);
     const instruction = instructions.get(valueOf(journal, "instruction_id"));
     assert.equal(valueOf(instruction, "instruction_type"), "PAYOUT_PAID");
-    assert.equal(valueOf(instruction, "source_event_key"), `PAYOUT_PAID:${integerKey(valueOf(payout, "id"))}`);
+    assert.equal(valueOf(instruction, "source_event_key"), `PAYOUT_PAID:${identifierKey(valueOf(payout, "id"))}`);
     const finalSummary = journalSummary(records, valueOf(journal, "id"));
-    assert.ok(finalSummary.lines.some((line) => integerEqual(valueOf(line, "account_id"), "20207")
+    assert.ok(finalSummary.lines.some((line) => identifierEqual(valueOf(line, "account_id"), "20207")
       && valueOf(line, "entry_side") === "CREDIT"));
 
     const actualDebit = fixedSumRecords(confirmed, "matched_amount");
     const delta = fixedAbs(fixedSubtract(actualDebit, fixedValue(payout, "cash_required_amount")));
     const feeException = exceptions.find((record) => valueOf(record, "source_type") === "PAYOUT_EXECUTION"
-      && integerEqual(valueOf(record, "source_id"), valueOf(execution, "id"))
+      && identifierEqual(valueOf(record, "source_id"), valueOf(execution, "id"))
       && valueOf(record, "exception_type") === "FEE_DIFFERENCE");
     if (fixedEqual(delta, EXACT_ZERO)) {
       assert.equal(feeException, undefined, `Payout ${valueOf(payout, "id")} 无差额却有 FEE_DIFFERENCE`);
@@ -3306,7 +3307,7 @@ function validateManualPayoutGraph(records) {
       assert.ok(["PAYOUT_FEE_INCREASE", "PAYOUT_FEE_DECREASE"].includes(valueOf(diffInstruction, "instruction_type")),
         `Payout ${valueOf(payout, "id")} fee diff Instruction 未按方向拆分`);
       const diffJournal = recordsFor(records, "t_journal_entry")
-        .find((record) => integerEqual(valueOf(record, "instruction_id"), valueOf(diffInstruction, "id")));
+        .find((record) => identifierEqual(valueOf(record, "instruction_id"), valueOf(diffInstruction, "id")));
       journalSummary(records, valueOf(diffJournal, "id"));
     }
   }
@@ -3314,7 +3315,7 @@ function validateManualPayoutGraph(records) {
   const payoutBinding = recordsFor(records, "t_cash_account_binding")
     .find((record) => valueOf(record, "account_purpose") === "PAYOUT");
   assert.ok(payoutBinding, "缺少 account_purpose=PAYOUT 的 Cash Binding");
-  assert.equal(recordsFor(records, "t_account").some((record) => integerEqual(valueOf(record, "id"), "20307")), false);
+  assert.equal(recordsFor(records, "t_account").some((record) => identifierEqual(valueOf(record, "id"), "20307")), false);
   assert.equal(valueOf(requireRecord(records, "t_account", "20207"), "owner_type"), "CASH_ACCOUNT");
 
   for (const journal of recordsFor(records, "t_journal_entry")) {
@@ -3482,11 +3483,11 @@ test("POSTED replay rejects synchronized Lines whose Accounts belong to another 
   const rows = clonedScenarioRows();
   const { control, suspense } = appendSecondLedgerBook(rows);
   for (const line of recordsFor(rows, "t_instruction_line")
-    .filter((record) => integerEqual(valueOf(record, "instruction_id"), "100044"))) {
+    .filter((record) => identifierEqual(valueOf(record, "instruction_id"), "100044"))) {
     line.values.set("account_id", numberOf(line, "line_no") === 1 ? valueOf(control, "id") : valueOf(suspense, "id"));
   }
   for (const line of recordsFor(rows, "t_journal_line")
-    .filter((record) => integerEqual(valueOf(record, "journal_entry_id"), "100046"))) {
+    .filter((record) => identifierEqual(valueOf(record, "journal_entry_id"), "100046"))) {
     line.values.set("account_id", numberOf(line, "line_no") === 1 ? valueOf(control, "id") : valueOf(suspense, "id"));
   }
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
@@ -3530,7 +3531,7 @@ test("AUTO Instruction Lines reject a Rule from a different frozen Bundle Versio
 
 test("current Rule Bundle Version rejects a missing approved catalog coordinate", () => {
   const removedIds = integerSet(["109004", "321412", "322412"]);
-  const rows = clonedScenarioRows().filter((record) => !removedIds.has(integerKey(valueOf(record, "id"))));
+  const rows = clonedScenarioRows().filter((record) => !removedIds.has(identifierKey(valueOf(record, "id"))));
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
     () => validateAccountingRuleReplay(rows),
@@ -3711,11 +3712,11 @@ test("retry Execution rejects a numerically reused Risk pair with leading zeroes
   );
 });
 
-test("full semantic graph accepts a leading-zero Tax Operating Entity identity", () => {
+test("full semantic graph rejects a numeric alias for the exact Tax Operating Entity code", () => {
   const rows = clonedScenarioRows();
   requireRecord(rows, "t_tax_registration", "100011").values.set("entity_id", "050001");
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
-  assert.doesNotThrow(() => validateManualPayoutGraph(rows));
+  assert.throws(() => validateManualPayoutGraph(rows));
 });
 
 test("Provider Batch rejects synchronized Item and Match drift from Batch and target settlement", () => {
@@ -4009,12 +4010,12 @@ test("every POSTED Journal replays its Instruction Lines without account redirec
   const maxSequenceByAccount = new Map();
   for (const line of recordsFor(rows, "t_journal_line")) {
     const sequence = BigInt(valueOf(journals.get(valueOf(line, "journal_entry_id")), "journal_sequence"));
-    const accountId = integerKey(valueOf(line, "account_id"));
+    const accountId = identifierKey(valueOf(line, "account_id"));
     const prior = maxSequenceByAccount.get(accountId);
     if (prior === undefined || sequence > prior) maxSequenceByAccount.set(accountId, sequence);
   }
   for (const account of recordsFor(rows, "t_account")) {
-    const maximum = maxSequenceByAccount.get(integerKey(valueOf(account, "id")));
+    const maximum = maxSequenceByAccount.get(identifierKey(valueOf(account, "id")));
     if (maximum !== undefined) account.values.set("last_journal_sequence", maximum.toString());
   }
   assert.throws(
@@ -4025,8 +4026,8 @@ test("every POSTED Journal replays its Instruction Lines without account redirec
 
 test("every POSTED Instruction has exactly one represented Journal", () => {
   const missing = clonedScenarioRows().filter((record) => !(
-    (record.table === "t_journal_entry" && integerEqual(valueOf(record, "id"), "32241"))
-    || (record.table === "t_journal_line" && integerEqual(valueOf(record, "journal_entry_id"), "32241"))
+    (record.table === "t_journal_entry" && identifierEqual(valueOf(record, "id"), "32241"))
+    || (record.table === "t_journal_line" && identifierEqual(valueOf(record, "journal_entry_id"), "32241"))
   ));
   assert.throws(
     () => validateManualPayoutGraph(missing),
@@ -4059,11 +4060,11 @@ test("PARTNER_RECOVERY_OPEN binds a unique negative Economics fact instead of a 
   const instruction = requireRecord(rows, "t_accounting_instruction", "32141");
   assert.equal(valueOf(instruction, "source_system"), "RISK");
   assert.equal(valueOf(instruction, "source_event_key"), "PARTNER_RECOVERY_OPEN:31030");
-  assert.ok(integerEqual(valueOf(instruction, "transaction_economics_id"), "31030"));
+  assert.ok(identifierEqual(valueOf(instruction, "transaction_economics_id"), "31030"));
   const economics = requireRecord(rows, "t_transaction_economics", "31030");
   assert.equal(valueOf(economics, "economics_type"), "DISPUTE");
-  assert.ok(integerEqual(valueOf(economics, "local_partner_id"), "41001"));
-  assert.ok(integerEqual(valueOf(economics, "source_version"), valueOf(instruction, "source_version")));
+  assert.ok(identifierEqual(valueOf(economics, "local_partner_id"), "41001"));
+  assert.ok(identifierEqual(valueOf(economics, "source_version"), valueOf(instruction, "source_version")));
   const journal = requireRecord(rows, "t_journal_entry", "32241");
   assert.ok(valueOf(economics, "commercial_context_time").slice(0, 10) <= valueOf(journal, "posting_date"));
 });
@@ -4313,13 +4314,13 @@ test("fee-difference Accounting replay rejects the opposite direction", () => {
 test("approved cancellation rejects a missing Maker/Checker decision", () => {
   const removedApprovalIds = integerSet(["92509", "92510"]);
   const rows = clonedScenarioRows().filter((record) => !(record.table === "t_payout_approval"
-    && removedApprovalIds.has(integerKey(valueOf(record, "id")))));
+    && removedApprovalIds.has(identifierKey(valueOf(record, "id")))));
   assert.throws(() => validateManualPayoutGraph(rows), /Payout 92004.*PAYOUT_CANCEL.*MAKER.*CHECKER/u);
 });
 
 test("every cancellation rejects a missing PAYOUT_RELEASE graph", () => {
   const removedIds = integerSet(["32154", "321541", "321542", "32404", "324041", "324042"]);
-  const rows = clonedScenarioRows().filter((record) => !removedIds.has(integerKey(valueOf(record, "id"))));
+  const rows = clonedScenarioRows().filter((record) => !removedIds.has(identifierKey(valueOf(record, "id"))));
   assert.throws(() => validateManualPayoutGraph(rows), /Payout 92004.*PAYOUT_RELEASE/u);
 });
 
@@ -4365,7 +4366,7 @@ test("cancellation release rejects an amount different from the Payout", () => {
 
 test("submitted FAILED execution rejects missing immutable NO_DEBIT_PROOF", () => {
   const rows = clonedScenarioRows().filter((record) => !(record.table === "t_payout_evidence_ref"
-    && integerEqual(valueOf(record, "id"), "93506")));
+    && identifierEqual(valueOf(record, "id"), "93506")));
   assert.throws(() => validateManualPayoutGraph(rows), /Execution 93009.*NO_DEBIT_PROOF/u);
 });
 
@@ -4440,7 +4441,7 @@ test("AUTO Accounting Instructions deterministically replay every required Rule 
   assert.equal(validateAccountingRuleReplay(rows), 23);
 
   const missing = rows.filter((record) => !(record.table === "t_instruction_line"
-    && integerEqual(valueOf(record, "id"), "330012")));
+    && identifierEqual(valueOf(record, "id"), "330012")));
   assert.throws(() => validateAccountingRuleReplay(missing), /缺少 required Rule Line/u);
 
   const wrongType = rows.map((record) => ({ ...record, values: new Map(record.values) }));
@@ -4455,9 +4456,9 @@ test("AUTO Accounting Instructions deterministically replay every required Rule 
 test("Tax and Provider authority tuples close on one OE and exact cost allocation", () => {
   const rows = scenarioRows(readFileSync(scenarioPath, "utf8"));
   assert.deepEqual(validateTaxAndProviderTuples(rows), {
-    taxOperatingEntityId: "50001",
+    taxOperatingEntityId: "AE001",
     taxAuthorityId: "100010",
-    providerOperatingEntityId: "50001",
+    providerOperatingEntityId: "AE001",
     providerAccountId: "100051",
     allocatedCost: "2.00000000",
   });
@@ -5011,12 +5012,12 @@ test("Finance scenarios demonstrate Provider positive and negative three-stage a
   const transactionMatch = recordsFor(rows, "t_provider_transaction_match")[0];
   const bankMatch = recordsFor(rows, "t_bank_recon_match")
     .find((record) => valueOf(record, "match_type") === "PROVIDER_CREDIT");
-  assert.ok(integerEqual(valueOf(transactionMatch, "open_item_id"), valueOf(openItem, "id")));
-  assert.ok(integerEqual(valueOf(transactionMatch, "settle_item_id"), valueOf(settleItem, "id")));
-  assert.ok(integerEqual(valueOf(settleItem, "batch_id"), valueOf(batch, "id")));
+  assert.ok(identifierEqual(valueOf(transactionMatch, "open_item_id"), valueOf(openItem, "id")));
+  assert.ok(identifierEqual(valueOf(transactionMatch, "settle_item_id"), valueOf(settleItem, "id")));
+  assert.ok(identifierEqual(valueOf(settleItem, "batch_id"), valueOf(batch, "id")));
   assert.ok(fixedRecordEqual(transactionMatch, "gross_amount", openItem, "gross_receivable"));
   assert.ok(fixedRecordEqual(transactionMatch, "net_amount", batch, "net_amount"));
-  assert.ok(integerEqual(valueOf(bankMatch, "provider_batch_id"), valueOf(batch, "id")));
+  assert.ok(identifierEqual(valueOf(bankMatch, "provider_batch_id"), valueOf(batch, "id")));
   assert.ok(fixedRecordEqual(bankMatch, "matched_amount", batch, "net_amount"));
   assert.equal(valueOf(bankMatch, "status"), "CONFIRMED");
   assert.equal(valueOf(debitItem, "status"), "OPEN");
@@ -5221,17 +5222,17 @@ test("Finance scenarios post RefundSucceeded directly without a refund Funding r
   const refund = recordsFor(rows, "t_transaction_economics")
     .find((record) => valueOf(record, "economics_type") === "REFUND");
   assert.ok(refund);
-  assert.ok(integerEqual(valueOf(refund, "parent_economics_id"), "31001"));
+  assert.ok(identifierEqual(valueOf(refund, "parent_economics_id"), "31001"));
   const refundComponent = recordsFor(rows, "t_transaction_economic_component")
-    .find((record) => integerEqual(valueOf(record, "transaction_economics_id"), valueOf(refund, "id")));
+    .find((record) => identifierEqual(valueOf(record, "transaction_economics_id"), valueOf(refund, "id")));
   const reversal = recordsFor(rows, "t_transaction_economic_comp_link")
-    .find((record) => integerEqual(valueOf(record, "target_component_id"), valueOf(refundComponent, "id")));
+    .find((record) => identifierEqual(valueOf(record, "target_component_id"), valueOf(refundComponent, "id")));
   assert.equal(valueOf(reversal, "link_type"), "REVERSAL");
   const instruction = recordsFor(rows, "t_accounting_instruction")
-    .find((record) => integerEqual(valueOf(record, "transaction_economics_id"), valueOf(refund, "id")));
+    .find((record) => identifierEqual(valueOf(record, "transaction_economics_id"), valueOf(refund, "id")));
   assert.equal(valueOf(instruction, "instruction_type"), "REFUND_SUCCEEDED");
   const journal = recordsFor(rows, "t_journal_entry")
-    .find((record) => integerEqual(valueOf(record, "instruction_id"), valueOf(instruction, "id")));
+    .find((record) => identifierEqual(valueOf(record, "instruction_id"), valueOf(instruction, "id")));
   const summary = journalSummary(rows, valueOf(journal, "id"));
   assert.equal(fixedFormat(summary.debitTotal), "20.00000000");
   assert.equal(fixedFormat(summary.creditTotal), "20.00000000");
@@ -5397,19 +5398,19 @@ test("Finance scenarios use the 23-table Tax and Fiscal Rule and Return model", 
   }
 
   const taxRule = recordsFor(rows, "t_tax_rule")[0];
-  assert.ok(integerEqual(valueOf(taxRule, "rule_ver"), "1"));
+  assert.ok(identifierEqual(valueOf(taxRule, "rule_ver"), "1"));
   assert.equal(valueOf(taxRule, "content_hash"), "hash-rule-v1");
-  assert.ok(integerEqual(valueOf(taxRule, "maker_id"), "90001"));
-  assert.ok(integerEqual(valueOf(taxRule, "checker_id"), "90002"));
+  assert.ok(identifierEqual(valueOf(taxRule, "maker_id"), "90001"));
+  assert.ok(identifierEqual(valueOf(taxRule, "checker_id"), "90002"));
   assert.equal(valueOf(taxRule, "checker_decision"), "APPROVED");
   assert.equal(valueOf(taxRule, "status"), "ACTIVE");
   assert.equal(taxRule.values.has("current_ver_id"), false);
   const taxRate = recordsFor(rows, "t_tax_rate")[0];
-  assert.ok(integerEqual(valueOf(taxRate, "tax_rule_id"), valueOf(taxRule, "id")));
+  assert.ok(identifierEqual(valueOf(taxRate, "tax_rule_id"), valueOf(taxRule, "id")));
   assert.equal(taxRate.values.has("tax_rule_ver_id"), false);
 
   const taxReturn = recordsFor(rows, "t_tax_return")[0];
-  assert.ok(integerEqual(valueOf(taxReturn, "return_ver"), "1"));
+  assert.ok(identifierEqual(valueOf(taxReturn, "return_ver"), "1"));
   assert.ok(isNull(valueOf(taxReturn, "amends_return_id")));
   assert.equal(valueOf(taxReturn, "content_hash"), "hash-return-v1");
   assert.equal(valueOf(taxReturn, "checker_decision"), "APPROVED");
@@ -5417,7 +5418,7 @@ test("Finance scenarios use the 23-table Tax and Fiscal Rule and Return model", 
   assert.equal(taxReturn.values.has("current_ver_id"), false);
   for (const childTable of ["t_tax_return_line", "t_tax_payment"]) {
     const child = recordsFor(rows, childTable)[0];
-    assert.ok(integerEqual(valueOf(child, "tax_return_id"), valueOf(taxReturn, "id")));
+    assert.ok(identifierEqual(valueOf(child, "tax_return_id"), valueOf(taxReturn, "id")));
     assert.equal(child.values.has("tax_return_ver_id"), false);
   }
   assert.match(content, /离开 DRAFT 后.*冻结.*新.*rule_ver/su);

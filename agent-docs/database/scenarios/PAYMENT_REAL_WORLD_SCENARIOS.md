@@ -16,7 +16,7 @@
 | 事实 | 固定值 |
 |---|---|
 | Provider | NI；provider_id=81001；provider_code=NI |
-| Operating Entity | operating_entity_id=50001 |
+| Operating Entity | entity_no=AE001 |
 | Client / Assignment | client_id=40001；assignment_id=60001 |
 | 订单来源 | source_type=COMMERCE_ORDER；source_id=70001；source_order_context_id=70002 |
 | Intent | payment_intent_id=100001；amount=100.00000000；currency=USD |
@@ -40,7 +40,7 @@
 |---|---|
 | t_payment_provider | provider_id=81001，provider_code=NI，provider_name=Network International，adapter_code=NI_CARD_V1，provider_status=ACTIVE |
 | t_provider_account | provider_account_id=81101，provider_id=81001，account_code=NI-API-AE，external_account_id=NI-TENANT-AE-01，integration_config_key=payment.ni.ae.primary，account_status=ACTIVE |
-| t_provider_mid | mid_id=82001，provider_id=81001，provider_account_id=81101，external_mid_code=NI-MID-A，operating_entity_id=50001，mid_status=ACTIVE，activated_at=2026-08-20T08:00:00.000000Z，closed_at=NULL；mid_id=82002，provider_id=81001，provider_account_id=81101，external_mid_code=NI-MID-B，operating_entity_id=50001，mid_status=ACTIVE，activated_at=2026-08-20T08:05:00.000000Z，closed_at=NULL |
+| t_provider_mid | mid_id=82001，provider_id=81001，provider_account_id=81101，external_mid_code=NI-MID-A，entity_no=AE001，mid_status=ACTIVE，activated_at=2026-08-20T08:00:00.000000Z，closed_at=NULL；mid_id=82002，provider_id=81001，provider_account_id=81101，external_mid_code=NI-MID-B，entity_no=AE001，mid_status=ACTIVE，activated_at=2026-08-20T08:05:00.000000Z，closed_at=NULL |
 | t_mid_capability | 同一 Scope（mid_id=82001，payment_method_code=CARD，scheme_code=VISA，country_code=AE，currency=USD，mcc_code=5732）下：mid_capability_id=82201，capability_code=ACTION.SALE，value_type=BOOLEAN，boolean_value=1，decimal_value=NULL，integer_value=NULL，code_value=NULL，capability_status=ENABLED；82202：ACTION.REFUND/BOOLEAN/1；82203：SECURITY.3DS_MODE/CODE/SUPPORTED；82204：AMOUNT.MIN/DECIMAL/1.00000000；82205：AMOUNT.MAX/DECIMAL/5000.00000000。mid_id=82002 以 82206–82210 保存相同 Scope 与能力值 |
 | t_mid_health_state | mid_health_state_id=82401，mid_id=82001，payment_method_code=CARD，health_status=HEALTHY，circuit_status=CLOSED，health_score=96，sample_count=100，technical_success_count=96，provider_error_count=2，timeout_count=2，technical_success_rate=0.96000000，provider_error_rate=0.02000000，timeout_rate=0.02000000，p95_latency_ms=680，consecutive_failure_count=0，window_started_at=2026-08-25T09:48:00.000000Z，window_ended_at=2026-08-25T09:58:00.000000Z，observed_at=2026-08-25T09:58:00.000000Z，valid_until=2026-08-25T10:08:00.000000Z；mid_health_state_id=82402，mid_id=82002，payment_method_code=CARD，health_status=DEGRADED，circuit_status=HALF_OPEN，health_score=54，sample_count=100，technical_success_count=82，provider_error_count=3，timeout_count=15，technical_success_rate=0.82000000，provider_error_rate=0.03000000，timeout_rate=0.15000000，p95_latency_ms=2400，consecutive_failure_count=3，window_started_at=2026-08-25T09:48:00.000000Z，window_ended_at=2026-08-25T09:58:00.000000Z，observed_at=2026-08-25T09:58:00.000000Z，valid_until=2026-08-25T10:08:00.000000Z |
 | t_routing_policy | routing_policy_id=83001，scope_type=OPERATING_ENTITY，scope_id=50001，country_code=AE，currency=USD，payment_method_code=CARD，industry_code=ELECTRONICS，mcc_code=5732，match_priority=10，policy_status=ACTIVE，current_version_id=83101，version=2 |
@@ -57,7 +57,7 @@ Instrument 采用一个宽单表，不使用 JSON、EAV/Key-Value 或类型子�
 
 | 表 | 实际行与关键字段 |
 |---|---|
-| t_payment_intent | payment_intent_id=100001，source_type=COMMERCE_ORDER，source_id=70001，source_order_context_id=70002，client_id=40001，operating_entity_id=50001，assignment_id=60001，industry_code=ELECTRONICS，mcc_code=5732，amount=100.00000000，currency=USD，intent_status=REQUIRES_ACTION，active_attempt_id=101002，successful_attempt_id=NULL，expires_at=2026-08-25T10:30:00.000000Z，version=4 |
+| t_payment_intent | payment_intent_id=100001，source_type=COMMERCE_ORDER，source_id=70001，source_order_context_id=70002，client_id=40001，entity_no=AE001，context_format=TERM_PRICE，client_pricing_version_id=60002，partner_share_version_id=NULL，platform_charge_version_id=NULL，industry_code=ELECTRONICS，mcc_code=5732，amount=100.00000000，currency=USD，intent_status=REQUIRES_ACTION，active_attempt_id=101002，successful_attempt_id=NULL，expires_at=2026-08-25T10:30:00.000000Z，version=4 |
 | t_payment_attempt | payment_attempt_id=101002，payment_intent_id=100001，attempt_no=2，payment_method_code=CARD，attempt_status=REQUIRES_ACTION，consumer_contract_id=71001，consumer_terms_acceptance_id=71011，refund_policy_acceptance_id=71012，privacy_notice_acceptance_id=71013，acceptance_completed_at=2026-08-25T09:59:55.000000Z，order_version=9，transaction_assessment_id=72001，risk_result=ALLOW，limit_reservation_group_id=72002，authorized_amount=0，captured_amount=0，version=3 |
 | t_payment_instrument | payment_instrument_id=101101，payment_attempt_id=101002，provider_instrument_ref=ni_tok_opaque_8f1，scheme_code=VISA，bin_prefix=41111111，last4=1111，issuer_country_code=AE，provider_fingerprint=ni_fp_opaque_39 |
 | t_routing_decision | routing_decision_id=83302，payment_attempt_id=101002，routing_policy_id=83001，routing_policy_version_id=83101，selected_provider_id=81001，selected_provider_account_id=81101，selected_mid_id=82001，decision_status=SELECTED，decision_reason_code=LOWEST_PRIORITY_HEALTHY |
@@ -120,13 +120,19 @@ NI 的一个验签通过批量 Callback 同时包含退款终态、重复成功�
 | t_provider_interaction | provider_interaction_id=103105，payment_action_id=NULL，provider_dispute_action_id=111001，interaction_no=1，interaction_status=RESPONSE_RECEIVED，started_at=2026-08-26T10:00:52.000000Z，finished_at=2026-08-26T10:01:01.000000Z，request_file_id=76001，request_content_hash=sha256:approved-evidence-package-75003-request，response_file_id=NULL，response_content_hash=NULL，http_status=200，provider_result_code=EVIDENCE_ACCEPTED，latency_ms=9000 |
 | t_compensation_event | id=113002，event_key=dispute-notice-109001-v1，event_type=DisputeNoticeReceived，execution_type=MQ_PUBLISH，source_type=PROVIDER_DISPUTE_NOTICE，source_id=109001，source_version=1，schema_version=1，payload_json={providerDisputeNoticeId:109001}，payload_hash=sha256:dispute-109001-v1，execute_status=INIT，execute_count=0，next_execute_at=2026-08-26T09:00:01.000000Z，lock_owner=NULL，lock_until=NULL，last_error_code=NULL，last_error_summary=NULL，lock_version=1 |
 
-## 7. 29 表覆盖核对
+成功事实完整后追加一次，不能在挑战或 UNKNOWN 时创建：
+
+| 表 | 最终事实 |
+|---|---|
+| t_payment_pricing_fact | payment_fact_id=101201，payment_attempt_id=101002，fact_schema_code=PAYMENT_PRICING_FACTS_1，source_action_id=102002，payment_method_code=CARD，consumer_country_code=AE，currency=USD，card_network=VISA，funding_type=CREDIT，card_level=CLASSIC，authentication_class=THREE_DS_AUTHENTICATED，payment_succeeded_time=2026-08-25T10:04:00.000000Z，amount=100.00000000，client_pricing_version_id=60002，partner_share_version_id=NULL，platform_charge_version_id=NULL，create_time=2026-08-25T10:04:00.000000Z |
+
+## 7. 30 表覆盖核对
 
 | 分组 | 已在本 Showcase 列行的表数 | 表 |
 |---|---:|---|
 | Provider 与 MID | 5/5 | t_payment_provider、t_provider_account、t_provider_mid、t_mid_capability、t_mid_health_state |
 | Payment Routing | 5/5 | t_routing_policy、t_routing_policy_version、t_routing_policy_mid、t_routing_decision、t_route_candidate_eval |
-| 支付执行与异常 | 9/9 | t_payment_intent、t_payment_attempt、t_payment_instrument、t_payment_action、t_payment_customer_action、t_provider_transaction_ref、t_provider_interaction、t_duplicate_payment_case、t_payment_state_transition |
+| 支付执行与异常 | 10/10 | t_payment_intent、t_payment_attempt、t_payment_pricing_fact、t_payment_instrument、t_payment_action、t_payment_customer_action、t_provider_transaction_ref、t_provider_interaction、t_duplicate_payment_case、t_payment_state_transition |
 | Channel Refund | 2/2 | t_payment_refund_position、t_channel_refund |
 | Provider Callback | 3/3 | t_provider_callback、t_provider_callback_item、t_provider_event_exception |
 | Provider Dispute | 3/3 | t_provider_dispute_notice、t_provider_dispute_event、t_provider_dispute_action |

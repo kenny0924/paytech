@@ -1,8 +1,10 @@
 # Payment Orchestration 数据库设计规范
 
+> **2026-09-11 模型更新：** 本页的数字 OE、Assignment、Client 多 OE 合同及旧 Scope 冻结描述，仅适用于迁移前记录与接口；现行目标由 [四系统模型决定](../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 精确取代。Risk 本期不改，Java 与数据库尚未据此迁移，历史订单与 Hash 不重写。
+
 最后更新：2026-08-25
 
-状态：29 表逻辑模型及对应 PDManer 工件已同步并通过自动契约验证；PDManer 4.9.3 应用内检查仍待人工完成。本文件不创建手工数据库 SQL、Java 模块、数据库实例或运行环境。
+状态：本期模型采用 2026-09-11 四系统调整；生成统计、验证、Java 与数据库迁移状态统一见 [当前实现台账](../CURRENT_IMPLEMENTATION.md)。
 
 > **2026-09-05 跨主题对齐：** 本文拥有 Payment 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。当前生成模型中的旧横切字段是 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 记录的迁移债务；新增实现必须遵循 [文档治理路由](../DOCUMENT_GOVERNANCE.md)，不得复制旧契约。
 

@@ -53,7 +53,7 @@ mid_id BIGINT NN
 provider_id BIGINT NN
 provider_account_id BIGINT NN
 external_mid_code VARCHAR(128) NN OPEN(Provider Adapter Catalog)
-operating_entity_id BIGINT NN
+entity_no CHAR(5) NN
 mid_status VARCHAR(64) NN {DRAFT,ACTIVE,SUSPENDED,CLOSED}
 activated_at DATETIME(6) N
 closed_at DATETIME(6) N
@@ -104,7 +104,7 @@ update_time DATETIME(6) NN
 [t_routing_policy]
 routing_policy_id BIGINT NN
 scope_type VARCHAR(64) NN {CLIENT,OPERATING_ENTITY,GLOBAL}
-scope_id BIGINT NN
+scope_id VARCHAR(64) NN
 country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2)
 currency CHAR(3) NN OPEN(ISO 4217)
 payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
@@ -170,8 +170,11 @@ source_type VARCHAR(64) NN OPEN(Payment Source Type Catalog)
 source_id BIGINT NN
 source_order_context_id BIGINT NN
 client_id BIGINT NN
-operating_entity_id BIGINT NN
-assignment_id BIGINT NN
+entity_no CHAR(5) NN
+context_format VARCHAR(32) NN {TERM_PRICE,LEGACY_SCOPE}
+client_pricing_version_id BIGINT NN
+partner_share_version_id BIGINT N
+platform_charge_version_id BIGINT N
 industry_code VARCHAR(64) NN OPEN(CCT/Commerce frozen classification)
 mcc_code VARCHAR(4) NN OPEN(CCT/Commerce frozen classification)
 amount DECIMAL(24,8) NN
@@ -206,6 +209,25 @@ captured_amount DECIMAL(24,8) NN
 version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
+
+[t_payment_pricing_fact]
+payment_fact_id BIGINT NN
+payment_attempt_id BIGINT NN
+fact_schema_code VARCHAR(32) NN {PAYMENT_PRICING_FACTS_1}
+source_action_id BIGINT NN
+payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
+consumer_country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2)
+currency CHAR(3) NN OPEN(ISO 4217)
+card_network VARCHAR(64) N OPEN(Payment normalized card network catalog)
+funding_type VARCHAR(64) N {CREDIT,DEBIT,PREPAID}
+card_level VARCHAR(64) N OPEN(Payment normalized card level catalog)
+authentication_class VARCHAR(64) N {THREE_DS_AUTHENTICATED,THREE_DS_ATTEMPTED,NON_THREE_DS}
+payment_succeeded_time DATETIME(6) NN
+amount DECIMAL(24,8) NN
+client_pricing_version_id BIGINT NN
+partner_share_version_id BIGINT N
+platform_charge_version_id BIGINT N
+create_time DATETIME(6) NN
 
 [t_payment_instrument]
 payment_instrument_id BIGINT NN
@@ -472,7 +494,7 @@ IDX idx_provider_account_status(provider_id,account_status)
 t_provider_mid
 UK uk_provider_mid(provider_id,external_mid_code)
 IDX idx_provider_mid_account(provider_account_id,mid_status)
-IDX idx_provider_mid_entity(operating_entity_id,mid_status)
+IDX idx_provider_mid_entity(entity_no,mid_status)
 t_mid_capability
 UK uk_mid_capability_scope(mid_id,payment_method_code,scheme_code,country_code,currency,mcc_code,capability_code)
 t_mid_health_state
@@ -504,6 +526,9 @@ UK uk_payment_intent_active(active_attempt_id)
 UK uk_payment_intent_success(successful_attempt_id)
 t_payment_attempt
 UK uk_payment_attempt_no(payment_intent_id,attempt_no)
+t_payment_pricing_fact
+UK uk_pricing_fact_attempt(payment_attempt_id)
+IDX idx_pricing_fact_action(source_action_id)
 t_payment_instrument
 UK uk_payment_instrument_attempt(payment_attempt_id)
 t_payment_action
@@ -577,6 +602,8 @@ UK uk_compensation_source(source_type,source_id,source_version,event_type)
 IDX idx_compensation_claim(execute_status,next_execute_at,lock_until)
 `;
 const RELATION_MANIFEST = String.raw`
+1:1 payment_pricing_fact.payment_attempt_id -> payment_attempt.payment_attempt_id
+n:1 payment_pricing_fact.source_action_id -> payment_action.payment_action_id
 n:1 provider_account.provider_id -> payment_provider.provider_id
 n:1 provider_mid.provider_id -> payment_provider.provider_id
 n:1 provider_mid.provider_account_id -> provider_account.provider_account_id
@@ -658,7 +685,7 @@ const DIAGRAM_GROUPS = Object.freeze([
   Object.freeze({
     defKey: "payment_execution",
     defName: "支付执行",
-    primary: Object.freeze(["payment_intent", "payment_attempt", "payment_instrument", "payment_action", "payment_customer_action", "provider_transaction_ref", "provider_interaction", "duplicate_payment_case", "payment_state_transition"]),
+    primary: Object.freeze(["payment_intent", "payment_attempt", "payment_pricing_fact", "payment_instrument", "payment_action", "payment_customer_action", "provider_transaction_ref", "provider_interaction", "duplicate_payment_case", "payment_state_transition"]),
     references: Object.freeze(["payment_provider", "provider_account", "provider_mid", "routing_decision", "channel_refund"]),
   }),
   Object.freeze({
@@ -703,6 +730,7 @@ const VERSION_TABLES = Object.freeze([
 ]);
 
 const IMMUTABLE_TABLES = Object.freeze([
+  "payment_pricing_fact",
   "routing_policy_version",
   "routing_policy_mid",
   "routing_decision",
@@ -727,6 +755,7 @@ function sha256(value) {
 }
 
 function stableUuid(key) {
+  if (key.startsWith("field/") && key.endsWith("/entity_no")) key = key.replace(/entity_no$/, "operating_entity_id");
   const bytes = Buffer.from(sha256(`${MODEL_KEY}:${key}`).slice(0, 32), "hex");
   bytes[6] = (bytes[6] & 0x0f) | 0x50;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
@@ -927,6 +956,13 @@ function normalizeTemplate(template) {
   if (reservedRule) {
     reservedRule.programCode = reservedRule.programCode.replace(",status,", ",");
   }
+  const mysqlDdlTemplate = model.profile.codeTemplates.find((templateSpec) => templateSpec.type === "dbDDL");
+  const typeLengthTemplate = "{{=field.type}}{{?field.len>0}}{{='('}}{{=field.len}}{{?field.scale>0}}{{=','}}{{=field.scale}}{{?}}{{=')'}}{{?}}";
+  invariant(mysqlDdlTemplate?.createTable.includes(typeLengthTemplate), "MySQL DDL template lacks controlled type fragment");
+  mysqlDdlTemplate.createTable = mysqlDdlTemplate.createTable.replace(
+    typeLengthTemplate,
+    `${typeLengthTemplate}{{? field.extProps && field.extProps.characterSet }} CHARACTER SET {{=field.extProps.characterSet}} COLLATE {{=field.extProps.collation}}{{?}}`,
+  );
   return model;
 }
 
@@ -1021,7 +1057,7 @@ function buildEntities(model, tables, indexesByTable) {
         hideInGraph: false,
         refDict: "",
         baseType: mapping.baseType,
-        extProps: {},
+        extProps: ["entity_no", "scope_id"].includes(manifestField.defKey) ? { characterSet: "ascii", collation: "ascii_bin" } : {},
         domain: mapping.domain,
         id: stableUuid(`field/${table.defKey}/${manifestField.defKey}`),
       };
@@ -1157,7 +1193,7 @@ function validateMetadata(tables) {
     .filter((field) => field.openSourceHint)
     .map((field) => `${table.defKey}.${field.defKey}`)).sort();
   invariant(JSON.stringify(openMetadataKeys) === JSON.stringify(openManifestKeys), "Open-code metadata must exactly cover the manifest");
-  invariant(openManifestKeys.length === 50, `Expected 50 true open-code rows, found ${openManifestKeys.length}`);
+  invariant(openManifestKeys.length === 55, `Expected 55 true open-code rows, found ${openManifestKeys.length}`);
   for (const [key, value] of Object.entries(FIELD_METADATA)) {
     invariant(/[\u3400-\u9fff]/u.test(value.defName), `Field display name is not Chinese: ${key}`);
     invariant(/[\u3400-\u9fff]/u.test(value.description), `Field description is not Chinese: ${key}`);
@@ -1166,18 +1202,18 @@ function validateMetadata(tables) {
 
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
-    tables: 29,
-    fields: 373,
-    uniqueIndexes: 41,
-    accessIndexes: 44,
-    relations: 63,
+    tables: 30,
+    fields: 393,
+    uniqueIndexes: 42,
+    accessIndexes: 45,
+    relations: 65,
     diagramGroups: 7,
   }), `Unexpected generated totals: ${JSON.stringify(modelTotals(model))}`);
 
   const entitiesByKey = new Map(model.entities.map((entity) => [logicalTableKey(entity.defKey), entity]));
-  invariant(tables.length === 29, `Field manifest must have 29 tables, found ${tables.length}`);
+  invariant(tables.length === 30, `Field manifest must have 30 tables, found ${tables.length}`);
   invariant(new Set(VERSION_TABLES).size === 12, "Version allowlist must have 12 tables");
-  invariant(new Set(IMMUTABLE_TABLES).size === 9, "Immutable allowlist must have 9 tables");
+  invariant(new Set(IMMUTABLE_TABLES).size === 10, "Immutable allowlist must have 10 tables");
   const actualVersionTables = model.entities
     .filter((entity) => entity.fields.some((field) => field.defKey === "version"))
     .map((entity) => logicalTableKey(entity.defKey));
@@ -1210,12 +1246,12 @@ function validateGeneratedModel(model, tables, relations) {
       );
     }
   }
-  invariant(relations.filter((relation) => relation.cardinality === "1:1").length === 7, "Relation manifest must have 7 enforced 1:1 relations");
+  invariant(relations.filter((relation) => relation.cardinality === "1:1").length === 8, "Relation manifest must have 8 enforced 1:1 relations");
   const primaryTables = DIAGRAM_GROUPS.flatMap((group) => group.primary);
-  invariant(primaryTables.length === 29 && new Set(primaryTables).size === 29, "Every table must have exactly one primary diagram group");
+  invariant(primaryTables.length === 30 && new Set(primaryTables).size === 30, "Every table must have exactly one primary diagram group");
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)
     .filter((cell) => cell.shape === "erdRelation");
-  invariant(relationCells.length === 63, `Expected 63 relation cells, found ${relationCells.length}`);
+  invariant(relationCells.length === 65, `Expected 65 relation cells, found ${relationCells.length}`);
   const relationIds = relations.map(relationId);
   invariant(new Set(relationIds).size === relations.length, "Relation IDs must be unique");
   invariant(

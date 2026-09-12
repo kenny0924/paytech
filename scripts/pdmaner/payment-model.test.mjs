@@ -16,9 +16,9 @@ const paths = Object.freeze({
 
 const coreArtifactPaths = Object.freeze([paths.metadata, paths.generator, paths.model]);
 const expectedTemplateDigest = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-// Approved byte-for-byte and structural digests for the 29-table model.
-const expectedModelDigest = "3b7d3b975ccbc409d68ebf21fd4771c5c84ee2a9fd7a0edc5137db05cbf0935e";
-const expectedStructuralDigest = "c46b59ce1737e3f2cfa0c2cf408ae8f9f81b5e30077aeaeddfd39e9d2195dbef";
+// Approved byte-for-byte and structural digests for the 30-table model.
+const expectedModelDigest = "419101273fcd3171b125c7288e8245c131f37b0ea4daf9012110f7aefc3a0a3a";
+const expectedStructuralDigest = "ee7b9f9975fc05671cdb531d1072c1c69475611597a53e2bae079e83ad73b5df";
 
 // Test-owned oracle. It must never import a generator manifest or parse Markdown.
 const APPROVED_FIELD_MANIFEST = String.raw`
@@ -46,7 +46,7 @@ mid_id BIGINT NN
 provider_id BIGINT NN
 provider_account_id BIGINT NN
 external_mid_code VARCHAR(128) NN OPEN(Provider Adapter Catalog)
-operating_entity_id BIGINT NN
+entity_no CHAR(5) NN
 mid_status VARCHAR(64) NN {DRAFT,ACTIVE,SUSPENDED,CLOSED}
 activated_at DATETIME(6) N
 closed_at DATETIME(6) N
@@ -97,7 +97,7 @@ update_time DATETIME(6) NN
 [t_routing_policy]
 routing_policy_id BIGINT NN
 scope_type VARCHAR(64) NN {CLIENT,OPERATING_ENTITY,GLOBAL}
-scope_id BIGINT NN
+scope_id VARCHAR(64) NN
 country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2)
 currency CHAR(3) NN OPEN(ISO 4217)
 payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
@@ -163,8 +163,11 @@ source_type VARCHAR(64) NN OPEN(Payment Source Type Catalog)
 source_id BIGINT NN
 source_order_context_id BIGINT NN
 client_id BIGINT NN
-operating_entity_id BIGINT NN
-assignment_id BIGINT NN
+entity_no CHAR(5) NN
+context_format VARCHAR(32) NN {TERM_PRICE,LEGACY_SCOPE}
+client_pricing_version_id BIGINT NN
+partner_share_version_id BIGINT N
+platform_charge_version_id BIGINT N
 industry_code VARCHAR(64) NN OPEN(CCT/Commerce frozen classification)
 mcc_code VARCHAR(4) NN OPEN(CCT/Commerce frozen classification)
 amount DECIMAL(24,8) NN
@@ -199,6 +202,25 @@ captured_amount DECIMAL(24,8) NN
 version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
+
+[t_payment_pricing_fact]
+payment_fact_id BIGINT NN
+payment_attempt_id BIGINT NN
+fact_schema_code VARCHAR(32) NN {PAYMENT_PRICING_FACTS_1}
+source_action_id BIGINT NN
+payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
+consumer_country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2)
+currency CHAR(3) NN OPEN(ISO 4217)
+card_network VARCHAR(64) N OPEN(Payment normalized card network catalog)
+funding_type VARCHAR(64) N {CREDIT,DEBIT,PREPAID}
+card_level VARCHAR(64) N OPEN(Payment normalized card level catalog)
+authentication_class VARCHAR(64) N {THREE_DS_AUTHENTICATED,THREE_DS_ATTEMPTED,NON_THREE_DS}
+payment_succeeded_time DATETIME(6) NN
+amount DECIMAL(24,8) NN
+client_pricing_version_id BIGINT NN
+partner_share_version_id BIGINT N
+platform_charge_version_id BIGINT N
+create_time DATETIME(6) NN
 
 [t_payment_instrument]
 payment_instrument_id BIGINT NN
@@ -466,7 +488,7 @@ IDX idx_provider_account_status(provider_id,account_status)
 t_provider_mid
 UK uk_provider_mid(provider_id,external_mid_code)
 IDX idx_provider_mid_account(provider_account_id,mid_status)
-IDX idx_provider_mid_entity(operating_entity_id,mid_status)
+IDX idx_provider_mid_entity(entity_no,mid_status)
 t_mid_capability
 UK uk_mid_capability_scope(mid_id,payment_method_code,scheme_code,country_code,currency,mcc_code,capability_code)
 t_mid_health_state
@@ -498,6 +520,9 @@ UK uk_payment_intent_active(active_attempt_id)
 UK uk_payment_intent_success(successful_attempt_id)
 t_payment_attempt
 UK uk_payment_attempt_no(payment_intent_id,attempt_no)
+t_payment_pricing_fact
+UK uk_pricing_fact_attempt(payment_attempt_id)
+IDX idx_pricing_fact_action(source_action_id)
 t_payment_instrument
 UK uk_payment_instrument_attempt(payment_attempt_id)
 t_payment_action
@@ -572,6 +597,8 @@ IDX idx_compensation_claim(execute_status,next_execute_at,lock_until)
 `;
 
 const APPROVED_RELATION_MANIFEST = String.raw`
+1:1 payment_pricing_fact.payment_attempt_id -> payment_attempt.payment_attempt_id
+n:1 payment_pricing_fact.source_action_id -> payment_action.payment_action_id
 n:1 provider_account.provider_id -> payment_provider.provider_id
 n:1 provider_mid.provider_id -> payment_provider.provider_id
 n:1 provider_mid.provider_account_id -> provider_account.provider_account_id
@@ -752,7 +779,7 @@ CK ck_compensation_lease(execute_status,lock_owner,lock_until) :: (execute_statu
 const approvedTableNames = Object.freeze([
   "t_payment_provider", "t_provider_account", "t_provider_mid", "t_mid_capability", "t_mid_health_state",
   "t_routing_policy", "t_routing_policy_version", "t_routing_policy_mid", "t_routing_decision", "t_route_candidate_eval",
-  "t_payment_intent", "t_payment_attempt", "t_payment_instrument", "t_payment_action", "t_payment_customer_action", "t_provider_transaction_ref", "t_provider_interaction", "t_duplicate_payment_case", "t_payment_state_transition",
+  "t_payment_intent", "t_payment_attempt", "t_payment_pricing_fact", "t_payment_instrument", "t_payment_action", "t_payment_customer_action", "t_provider_transaction_ref", "t_provider_interaction", "t_duplicate_payment_case", "t_payment_state_transition",
   "t_payment_refund_position", "t_channel_refund", "t_provider_callback", "t_provider_callback_item", "t_provider_event_exception", "t_provider_dispute_notice", "t_provider_dispute_event", "t_provider_dispute_action", "t_command_idempotency", "t_compensation_event",
 ]);
 
@@ -771,7 +798,7 @@ const versionFieldWhitelist = new Set([
 const expectedTableDisplayNames = Object.freeze({
   payment_provider: "支付服务商", provider_account: "支付服务商账户", provider_mid: "服务商商户号", mid_capability: "商户号静态能力", mid_health_state: "商户号动态健康状态",
   routing_policy: "路由策略", routing_policy_version: "路由策略版本", routing_policy_mid: "路由策略候选商户号", routing_decision: "路由决策", route_candidate_eval: "路由候选评估",
-  payment_intent: "支付意图", payment_attempt: "支付尝试", payment_instrument: "支付工具", payment_action: "支付渠道动作", payment_customer_action: "支付消费者动作", provider_transaction_ref: "服务商交易引用", provider_interaction: "服务商交互记录", duplicate_payment_case: "重复支付处置", payment_state_transition: "支付状态流转",
+  payment_intent: "支付意图", payment_attempt: "支付尝试", payment_pricing_fact: "支付定价事实", payment_instrument: "支付工具", payment_action: "支付渠道动作", payment_customer_action: "支付消费者动作", provider_transaction_ref: "服务商交易引用", provider_interaction: "服务商交互记录", duplicate_payment_case: "重复支付处置", payment_state_transition: "支付状态流转",
   payment_refund_position: "渠道可退款位置", channel_refund: "渠道退款", provider_callback: "服务商回调", provider_callback_item: "服务商回调项", provider_event_exception: "服务商事件异常", provider_dispute_notice: "服务商争议通知", provider_dispute_event: "服务商争议事件", provider_dispute_action: "服务商争议动作", command_idempotency: "命令幂等记录", compensation_event: "本地补偿事件",
 });
 const expectedTableComments = Object.freeze({
@@ -785,8 +812,9 @@ const expectedTableComments = Object.freeze({
   routing_policy_mid: "路由策略版本中的候选商户号、优先级和权重。",
   routing_decision: "一次支付尝试的不可变最终路由结论，冻结服务商、Provider Account 和商户号。",
   route_candidate_eval: "一次路由决策中全部候选的不可变资格评估证据。",
-  payment_intent: "一个来源订单的唯一支付目标；活动和成功尝试指针由同一根事务维护。",
+  payment_intent: "从已提交Commerce Context取得固定entityNo、金额及Term Version，所有Attempt只能在同一OE下执行；新写去Assignment。Risk未接入新身份时不得伪造资格或跨OE降级。",
   payment_attempt: "同一支付意图内顺序发生的一次支付尝试，冻结支付方式、法律准备与风控结果。",
+  payment_pricing_fact: "成功Attempt的不可变标准化定价事实；必要字段齐备才插入一次。未知不得按零费率入账，成功支付状态不回退；CCT不接收PAN/BIN/Provider原始Payload。",
   payment_instrument: "支付尝试可选的稳定 Provider 工具引用与最小卡片描述，不保存 PAN、CVV 或卡有效期。",
   payment_action: "真实服务商渠道动作；网络重发复用同一动作、幂等键和冻结 Provider Account。",
   payment_customer_action: "一次渠道动作要求消费者完成的当前交互状态；不保存跳转链接、Client Secret、SDK Token 或 QR Payload。",
@@ -808,7 +836,7 @@ const expectedTableComments = Object.freeze({
 const expectedDiagramGroups = Object.freeze({
   provider_mid: Object.freeze({ defName: "Provider 与 MID", primary: Object.freeze(["payment_provider", "provider_account", "provider_mid", "mid_capability", "mid_health_state"]), references: Object.freeze([]) }),
   payment_routing: Object.freeze({ defName: "支付路由", primary: Object.freeze(["routing_policy", "routing_policy_version", "routing_policy_mid", "routing_decision", "route_candidate_eval"]), references: Object.freeze(["payment_provider", "provider_account", "provider_mid", "payment_attempt"]) }),
-  payment_execution: Object.freeze({ defName: "支付执行", primary: Object.freeze(["payment_intent", "payment_attempt", "payment_instrument", "payment_action", "payment_customer_action", "provider_transaction_ref", "provider_interaction", "duplicate_payment_case", "payment_state_transition"]), references: Object.freeze(["payment_provider", "provider_account", "provider_mid", "routing_decision", "channel_refund"]) }),
+  payment_execution: Object.freeze({ defName: "支付执行", primary: Object.freeze(["payment_intent", "payment_attempt", "payment_pricing_fact", "payment_instrument", "payment_action", "payment_customer_action", "provider_transaction_ref", "provider_interaction", "duplicate_payment_case", "payment_state_transition"]), references: Object.freeze(["payment_provider", "provider_account", "provider_mid", "routing_decision", "channel_refund"]) }),
   channel_refund: Object.freeze({ defName: "Channel Refund", primary: Object.freeze(["payment_refund_position", "channel_refund"]), references: Object.freeze(["payment_intent", "payment_attempt", "payment_action", "provider_transaction_ref"]) }),
   provider_callback: Object.freeze({ defName: "Provider Callback", primary: Object.freeze(["provider_callback", "provider_callback_item", "provider_event_exception"]), references: Object.freeze(["payment_provider", "provider_account", "payment_action", "channel_refund", "provider_dispute_notice", "provider_dispute_action"]) }),
   provider_dispute: Object.freeze({ defName: "Provider Dispute", primary: Object.freeze(["provider_dispute_notice", "provider_dispute_event", "provider_dispute_action"]), references: Object.freeze(["payment_provider", "provider_account", "provider_mid", "provider_transaction_ref", "provider_interaction"]) }),
@@ -997,17 +1025,17 @@ function assertPhysicalDecisionsReady() {
 const coreArtifactsReadyAtRegistration = coreArtifactPaths.every((artifact) => existsSync(artifact));
 const physicalDecisionsReadyAtRegistration = existsSync(paths.decisions);
 
-test("Payment test-owned Oracle is internally complete for all 29 tables", () => {
+test("Payment test-owned Oracle is internally complete for all 30 tables", () => {
   const approvedFields = parseApprovedFields();
   assert.deepEqual(approvedFields.map((table) => table.defKey), approvedTableNames);
   assert.ok(approvedFields.every((table) => table.fields.length > 1));
   assert.deepEqual([...parseIndexes().keys()], approvedTableNames);
-  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 373);
+  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 393);
   const oracleIndexes = [...parseIndexes().values()].flat();
-  assert.equal(oracleIndexes.filter((index) => index.unique).length, 41);
-  assert.equal(oracleIndexes.filter((index) => !index.unique).length, 44);
-  assert.equal(parseRelations().length, 63);
-  assert.equal(parseRelations().filter((relation) => relation.cardinality === "1:1").length, 7);
+  assert.equal(oracleIndexes.filter((index) => index.unique).length, 42);
+  assert.equal(oracleIndexes.filter((index) => !index.unique).length, 45);
+  assert.equal(parseRelations().length, 65);
+  assert.equal(parseRelations().filter((relation) => relation.cardinality === "1:1").length, 8);
   const logicalTables = new Set(approvedTableNames.map(logicalTableKey));
   const fieldsByTable = new Map(approvedFields.map((table) => [logicalTableKey(table.defKey), table.fields]));
   const fieldsByPhysicalTable = new Map(approvedFields.map((table) => [table.defKey, new Set(table.fields.map((field) => field.defKey))]));
@@ -1071,7 +1099,7 @@ if (physicalDecisionsReadyAtRegistration) {
 test("Payment Physical Decisions freezes current model totals and digests", () => {
   assertPhysicalDecisionsReady();
   assert.deepEqual(physicalDecisionManifest(), {
-    modelTotals: { tables: 29, fields: 373, uniqueIndexes: 41, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 },
+    modelTotals: { tables: 30, fields: 393, uniqueIndexes: 42, accessIndexes: 45, relations: 65, oneToOneRelations: 8, diagramGroups: 7 },
     templateSha256: expectedTemplateDigest,
     modelSha256: expectedModelDigest,
     structuralProjectionSha256: expectedStructuralDigest,
@@ -1086,7 +1114,7 @@ test("Payment Physical Decisions freezes every approved row-level CHECK", () => 
 }
 
 if (coreArtifactsReadyAtRegistration) {
-test("Payment model has the exact approved 29-table set and no retired roots", () => {
+test("Payment model has the exact approved 30-table set and no retired roots", () => {
     assertCoreReady();
     const model = readModel();
     const actualTableNames = model.entities.map((entity) => entity.defKey);
@@ -1244,12 +1272,12 @@ test("Payment model is deterministic and preserves seven diagram themes", async 
       }
     }
     assert.deepEqual(primaryTables.sort(), approvedTableNames.map(logicalTableKey).sort());
-    assert.equal(new Set(primaryTables).size, 29);
+    assert.equal(new Set(primaryTables).size, 30);
     assert.deepEqual(diagramRelationIds.sort(), relationIds.sort());
     assert.equal(new Set(diagramRelationIds).size, relationIds.length);
     const result = spawnSync(process.execPath, [paths.generator, "--check"], { cwd: workspaceRoot, encoding: "utf8" });
     assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-    assert.deepEqual(modelTotals(model), { tables: 29, fields: 373, uniqueIndexes: 41, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 });
+    assert.deepEqual(modelTotals(model), { tables: 30, fields: 393, uniqueIndexes: 42, accessIndexes: 45, relations: 65, oneToOneRelations: 8, diagramGroups: 7 });
 });
 
 test("Payment shared domains preserve the approved money, weight, time and currency precision", async () => {

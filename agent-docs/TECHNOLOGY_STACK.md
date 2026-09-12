@@ -160,7 +160,8 @@ paytech-foundation/
 
 ### 6.2 `paytech-http-client-support`
 
-- 为同步 `@HttpExchange` Client 提供统一网络、HTTP 状态、共享错误体和解码异常转换；
+- 为同步 `@HttpExchange` Client 提供统一网络、HTTP 状态、共享错误体和解码异常转换，并统一传播合法的 MDC Request ID；
+- 对显式选择闭合 JSON 策略的接口，复用标准 Jackson typed 绑定与响应体字节上限；业务字段语义不下沉 Foundation；
 - 由宿主配置显式创建具体接口代理，不扫描业务包、不自动重试、不安装业务 AOP；
 - 只依赖 Common Core 与必要 Spring HTTP 能力，不依赖某个业务服务、数据库或 MVC Server Starter。
 

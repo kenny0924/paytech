@@ -50,6 +50,8 @@ const LOCAL_DATE_FIELDS = new Set([
   "organization_profile.incorporation_date",
 ]);
 const EXPLICIT_BIGINT_FIELDS = new Set([
+  "base_entity_change_version",
+  "acceptance_recorded_by",
   "create_by",
   "current_version",
   "lock_version",
@@ -85,6 +87,7 @@ const INTEGER_FIELDS = new Set([
   "cutoff_second_of_day",
 ]);
 const FLAG_OR_SLOT_FIELDS = new Set([
+  "acceptance_ref_slot",
   "active_slot",
   "active_source_slot",
   "primary_slot",
@@ -92,9 +95,11 @@ const FLAG_OR_SLOT_FIELDS = new Set([
 ]);
 const TEXT_FIELDS = new Set(["last_error_summary"]);
 const VARCHAR_LENGTH_OVERRIDES = new Map(Object.entries({
+  "agreement_party.acceptance_reference": 128,
+  "operating_entity_scope.mcc_code": 4,
+  "agreement.agreement_format": 32,
+  "business_change_version.snapshot_format": 32,
   "agreement.agreement_name": 255,
-  "agreement_operating_entity.business_calendar_code": 64,
-  "agreement_operating_entity.settlement_timezone": 64,
   "agreement_acceptance.acceptance_reference": 128,
   "client_business_classification.mcc_code": 4,
   "client_business_profile.website_url": 2048,
@@ -124,6 +129,25 @@ const VARCHAR_LENGTH_OVERRIDES = new Map(Object.entries({
   "seller_disclosure.public_support_phone": 32,
 }));
 const NULLABLE_FIELD_PATHS = new Set([
+  "agreement.entity_no",
+  "commercial_term_plan.agreement_id",
+  "commercial_term_plan.entity_no",
+  "commercial_term_price.settlement_business_days",
+  "commercial_term_price.business_calendar_code",
+  "commercial_term_price.settlement_timezone",
+  "commercial_term_price.cutoff_second_of_day",
+  "operating_entity_scope.active_slot",
+  "operating_entity_scope.effective_from",
+  "operating_entity_scope.effective_to",
+  "agreement_party.acceptance_method",
+  "agreement_party.accepted_by_actor_id",
+  "agreement_party.accepted_time",
+  "agreement_party.evidence_document_id",
+  "agreement_party.acceptance_reference",
+  "agreement_party.acceptance_ref_slot",
+  "agreement_party.acceptance_recorded_by",
+  "agreement_party.acceptance_recorded_at",
+
   "application_document.client_application_id",
   "application_document.partner_application_id",
   "application_document.operating_entity_application_id",
@@ -201,9 +225,7 @@ const NULLABLE_FIELD_PATHS = new Set([
   "party_relation.effective_to",
   "party_relation.ownership_percentage",
   "agreement.client_id", "agreement.local_partner_id", "agreement.effective_from", "agreement.effective_to",
-  "agreement.signed_time", "agreement.activated_time", "agreement_acceptance.accepted_by_actor_id",
-  "agreement_operating_entity.settlement_business_days", "agreement_operating_entity.business_calendar_code",
-  "agreement_operating_entity.settlement_timezone", "agreement_operating_entity.cutoff_second_of_day",
+  "agreement.signed_time", "agreement.activated_time",
   "consumer_legal_document.effective_to", "consumer_legal_document.approved_time", "consumer_legal_document.published_time",
   "seller_disclosure.public_tax_registration_number", "seller_disclosure.public_support_phone",
   "seller_disclosure.effective_to", "seller_disclosure.approved_time", "seller_disclosure.published_time",
@@ -222,6 +244,53 @@ const APPLICATION_COMMENT_CLAUSES = [
   "CHECK ((qualification_decision_id IS NULL) = (qualification_decision_version IS NULL))",
 ];
 const TABLE_COMMENT_CLAUSES = Object.freeze({
+  operating_entity_application: [
+    ...APPLICATION_COMMENT_CLAUSES,
+    "CHECK ((status='APPROVED' AND approved_source_relation_id IS NOT NULL) OR (status<>'APPROVED' AND approved_source_relation_id IS NULL))",
+    "Risk Tuple 固定映射：role_type=OPERATING_ENTITY、role_id=entity_no、ONBOARDING 的 qualification_type=ENTITY_UNDERWRITING；SCOPE_CHANGE 的 qualification_type=ENTITY_SCOPE_REVIEW。",
+    "qualification_decision_id 与 qualification_decision_version 必须成组为空或成组非空。",
+    "APPROVED/REJECTED 前 due_diligence_case_id、qualification_decision_id、qualification_decision_version、qualification_type、role_type、role_id 必须匹配同一次 Risk 决策；WITHDRAWN 不要求 Decision。",
+    "qualification_type 由系统按申请类型固定为 ENTITY_UNDERWRITING 或 ENTITY_SCOPE_REVIEW，不接受调用方输入。",
+    "提交后 source_type、source_client_id、source_partner_id、client_source_basis 与 qualification_type 组成的 Source/Qualification Tuple 冻结且不可修改。",
+    "approved_source_relation_id 仅在 APPROVED 时非空，其他状态必须为空。",
+    "Source Owner XOR：PLATFORM 要求 source_client_id IS NULL AND source_partner_id IS NULL；CLIENT 要求 source_client_id IS NOT NULL AND source_partner_id IS NULL；PARTNER 要求 source_client_id IS NULL AND source_partner_id IS NOT NULL。",
+    "CLIENT 来源依据：SAME_PARTY 要求 Client Party=Operating Entity Party；VERIFIED_ASSOCIATION 要求两个 Party 不同，并由已批准申请、冻结材料和匹配的 Risk Qualification Decision 支撑；非 CLIENT 要求 client_source_basis IS NULL。",
+    "SCOPE_CHANGE 必须核对 base_entity_change_version 与完整目标 Scope，沿用既有主体和唯一来源关系，不回退主体状态；过时或拒绝的审核不能撤销现有范围。Risk 新 Tuple 未接入时禁止该流程激活范围。",
+  ],
+  agreement: [
+    "Owner XOR：agreement_type=CLIENT 要求 client_id IS NOT NULL AND local_partner_id IS NULL；agreement_type=PARTNER 要求 client_id IS NULL AND local_partner_id IS NOT NULL。",
+    "Owner Party 规则：CLIENT 合同的实际签约 Owner 为 Client 对应 Party；PARTNER 合同的实际签约 Owner 为 Local Partner 对应 Party。",
+    "状态时间矩阵：DRAFT、PENDING_SIGNATURE、CANCELLED 的 signed_time/activated_time 均为空；SIGNED 的 signed_time 非空且 activated_time 为空；ACTIVE、EXPIRED 两者均非空；TERMINATED 的 signed_time 非空且 activated_time 可为空。",
+    "存在 activated_time 时必须满足 signed_time <= activated_time AND effective_from <= activated_time；EXPIRED、TERMINATED 必须填写 effective_to。",
+    "CHECK (effective_to IS NULL OR effective_from < effective_to)，有效期采用半开区间 [effective_from,effective_to)。",
+    "历史 As-Of 候选必须满足 signed_time <= t AND activated_time <= t AND effective_from <= t AND (effective_to IS NULL OR t < effective_to)，不得按当前 status=ACTIVE 排除历史行；零条或多条候选均 Fail Closed。",
+    "进入 PENDING_SIGNATURE、SIGNED、ACTIVE 和显式替换时，按 Owner、Agreement Type、Operating Entity 的稳定顺序锁定全部相关 Root 并防御性复查区间冲突。",
+    "替换在同一事务收窄旧合同 effective_to、写 BCR/事件和终止依据并冻结新合同；不得按当前状态过滤 EXPIRED/TERMINATED 行，不得回溯收窄到 operation_context_time 之前，旧合同内容、覆盖关系和 effective_from 不得覆盖。",
+  ],
+  agreement_party: [
+    "party_profile_id 必须属于 party_id 且提交签署时已封存；CLIENT/LOCAL_PARTNER 签约方必须分别匹配合同 Owner，PLATFORM_SIGNATORY 为平台授权签约主体，OPERATING_ENTITY 必须属于合同覆盖经营主体。",
+    "包含 PLATFORM_SERVICE_CHARGE 的 PARTNER Agreement 必须恰好一个 PLATFORM_SIGNATORY；零个或多个平台签约方时 CCT-I13/CCT-I14 均 Fail Closed。",
+    "进入 PENDING_SIGNATURE 后签约方不得修改，同一合同 Party 的全部角色必须一次原子写入相同的最终签署结果；仅最小行占 acceptance_ref_slot=1。",
+
+    "Acceptance Method Matrix：CLICK_ACCEPTANCE 的 evidence_document_id 必须指向唯一 SIGNING_DOCUMENT；全部 CLICK_ACCEPTANCE 的合同进入 SIGNED 无需 EXECUTED_DOCUMENT；E_SIGNATURE 和 MANUAL_SIGNATURE 必须指向 EXECUTED_DOCUMENT，任一 E_SIGNATURE 或 MANUAL_SIGNATURE 存在时进入 SIGNED 前必须恰有一份 EXECUTED_DOCUMENT。",
+    "accepted_by_actor_id 是实际在线接受 Actor，create_by 是登记证据 Actor；CLICK_ACCEPTANCE 必须填写 accepted_by_actor_id，E_SIGNATURE/MANUAL_SIGNATURE 按受控签署记录填写，二者不得混同。",
+    "最终接受证据仅允许从待签补齐一次，补齐后不得修改或删除。",
+  ],
+  commercial_term_price: [
+    "每条 Price 属于准确 term_version_id + entity_no，并以 payment_method_profile_code 关联一个 ACTIVE Payment Method Profile；Profile 可跨 Client、Version 与 OE 复用。",
+    "Operating Entity 必须被 Version 引用的 Agreement 覆盖；不允许 NULL、* 或全 OE 通配，旧全 Agreement-OE Scope 迁移时展开为准确 OE Price。",
+    "匹配先选择不同 dimension_code 数量最多的 Profile，再以最小 priority_no 选择；零命中、事实缺失或仍有歧义均 Fail Closed。",
+    "PLATFORM_SERVICE_CHARGE 使用受控 Calculation Base Catalog；不得用 Client Fee、Partner Share、Provider Cost 或其残差倒算平台服务费。",
+    "CLIENT 的四个结算字段全部非空；PARTNER 的四个结算字段全部为空；初期 settlement_timezone=UTC、cutoff_second_of_day=86399。",
+    "CHECK (settlement_business_days IS NULL OR settlement_business_days>=0)",
+    "CHECK (cutoff_second_of_day IS NULL OR cutoff_second_of_day BETWEEN 0 AND 86399)",
+    "UTC 截止时刻精确至秒的起点；23:59:59.000001 已超过 86399 秒截止，使用冻结的工作日日历和实际成功时刻计算。",
+  ],
+  commercial_term_plan: [
+    "Owner XOR：term_type=CLIENT_PRICING 要求 client_id IS NOT NULL AND local_partner_id IS NULL；term_type IN (PARTNER_SHARE,PLATFORM_SERVICE_CHARGE) 要求 client_id IS NULL AND local_partner_id IS NOT NULL。",
+    "term_type、client_id 与 local_partner_id 创建后不可修改；MVP 每份 Client Agreement 一个 Client Pricing Plan，每个 Local Partner 可分别拥有一个 Partner Share Plan 和一个 PLATFORM_SERVICE_CHARGE Plan，通过 local_partner_id + term_type 复合唯一。",
+    "CLIENT_PRICING 的 agreement_id/entity_no/client_id 必须与同一 Client Agreement 一致，local_partner_id 为空；Partner 两类只填 local_partner_id，Version 冻结其 Partner Agreement。",
+  ],
   application_document: [
     "CHECK ((client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1)",
     "client_application_id、partner_application_id 与 operating_entity_application_id 三个 Parent FK 均为本库 RESTRICT。",
@@ -248,72 +317,8 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "APPROVED 前 due_diligence_case_id、qualification_decision_id、qualification_decision_version、qualification_type、role_type、role_id 必须匹配同一次 Risk 决策；WITHDRAWN 不要求 Decision。",
     "创建申请时必须在同一 CCT 本地事务创建或复用一个 PENDING Local Partner、Organization Party 和 Target Party Profile；只有 APPROVED 激活 Role，REJECTED/WITHDRAWN 重提复用该 PENDING Role。",
   ],
-  operating_entity_application: [
-    ...APPLICATION_COMMENT_CLAUSES,
-    "CHECK ((status='APPROVED' AND approved_source_relation_id IS NOT NULL) OR (status<>'APPROVED' AND approved_source_relation_id IS NULL))",
-    "Risk Tuple 固定映射：role_type=OPERATING_ENTITY、role_id=operating_entity_id、qualification_type=ENTITY_UNDERWRITING。",
-    "qualification_decision_id 与 qualification_decision_version 必须成组为空或成组非空。",
-    "APPROVED/REJECTED 前 due_diligence_case_id、qualification_decision_id、qualification_decision_version、qualification_type、role_type、role_id 必须匹配同一次 Risk 决策；WITHDRAWN 不要求 Decision。",
-    "qualification_type 固定由系统写入 ENTITY_UNDERWRITING，不接受调用方输入。",
-    "提交后 source_type、source_client_id、source_partner_id、client_source_basis 与 qualification_type 组成的 Source/Qualification Tuple 冻结且不可修改。",
-    "approved_source_relation_id 仅在 APPROVED 时非空，其他状态必须为空。",
-    "Source Owner XOR：PLATFORM 要求 source_client_id IS NULL AND source_partner_id IS NULL；CLIENT 要求 source_client_id IS NOT NULL AND source_partner_id IS NULL；PARTNER 要求 source_client_id IS NULL AND source_partner_id IS NOT NULL。",
-    "CLIENT 来源依据：SAME_PARTY 要求 Client Party=Operating Entity Party；VERIFIED_ASSOCIATION 要求两个 Party 不同，并由已批准申请、冻结材料和匹配的 Risk Qualification Decision 支撑；非 CLIENT 要求 client_source_basis IS NULL。",
-  ],
-  client_entity_affiliation: [
-    "CHECK ((status='ACTIVE' AND active_slot=1) OR (status='ENDED' AND active_slot IS NULL))",
-    "CHECK (effective_to IS NULL OR effective_from < effective_to)",
-    "Scope 必须精确填写 country、currency、industry_code 与 mcc_code，不支持 NULL、* 或其他通配值。",
-    "client_id、operating_entity_id 与 Scope 创建后不可修改；关系失效时只允许推进为 ENDED 并填写 effective_to。",
-  ],
-  client_entity_assignment: [
-    "CHECK ((status='ACTIVE' AND active_slot=1) OR (status='ENDED' AND active_slot IS NULL))",
-    "CHECK (effective_to IS NULL OR effective_from < effective_to)",
-    "Scope 必须精确填写 country、currency、industry_code 与 mcc_code，不支持 NULL、* 或其他通配值。",
-    "仅允许系统自动分配；rule_id、affiliation_id、entity_source_relation_id 与 operating_entity_id 必须完整冻结，不支持手工分配来源。",
-    "同一 Client 精确 Scope 同时只能有一条 ACTIVE Assignment；CCT 状态变更 Processor 必须在同一本地事务内同步重算受影响的准确 Client/Scope，无法唯一命中则结束旧 Assignment 并 Fail Closed；查询、定时任务和人工操作不得生成或补写 Assignment。",
-    "Client、Scope、经营主体和证明引用创建后不可修改；分配失效时只允许推进为 ENDED 并填写 effective_to。",
-  ],
-  entity_assignment_rule: [
-    "CHECK ((status='ACTIVE' AND active_slot=1) OR (status='ENDED' AND active_slot IS NULL))",
-    "CHECK (effective_to IS NULL OR effective_from < effective_to)",
-    "规则仅属于明确 client_id，Scope 必须精确填写 country、currency、industry_code 与 mcc_code；不支持 GLOBAL、NULL、*、兜底或运行时覆盖。",
-    "同一 Client 精确 Scope 可配置多个候选 Operating Entity，priority_no 越小优先级越高；相同优先级不得并列。",
-    "命中候选必须同时具备 ACTIVE Operating Entity、精确 ACTIVE Affiliation 与唯一 ACTIVE Source Relation；无候选或数据冲突均 Fail Closed。",
-    "规则条件与目标创建后不可修改；规则失效时只允许推进为 ENDED 并填写 effective_to。",
-  ],
-  agreement: [
-    "Owner XOR：agreement_type=CLIENT 要求 client_id IS NOT NULL AND local_partner_id IS NULL；agreement_type=PARTNER 要求 client_id IS NULL AND local_partner_id IS NOT NULL。",
-    "Owner Party 规则：CLIENT 合同的实际签约 Owner 为 Client 对应 Party；PARTNER 合同的实际签约 Owner 为 Local Partner 对应 Party。",
-    "状态时间矩阵：DRAFT、PENDING_SIGNATURE、CANCELLED 的 signed_time/activated_time 均为空；SIGNED 的 signed_time 非空且 activated_time 为空；ACTIVE、EXPIRED 两者均非空；TERMINATED 的 signed_time 非空且 activated_time 可为空。",
-    "存在 activated_time 时必须满足 signed_time <= activated_time AND effective_from <= activated_time；EXPIRED、TERMINATED 必须填写 effective_to。",
-    "CHECK (effective_to IS NULL OR effective_from < effective_to)，有效期采用半开区间 [effective_from,effective_to)。",
-    "历史 As-Of 候选必须满足 signed_time <= t AND activated_time <= t AND effective_from <= t AND (effective_to IS NULL OR t < effective_to)，不得按当前 status=ACTIVE 排除历史行；零条或多条候选均 Fail Closed。",
-    "进入 PENDING_SIGNATURE、SIGNED、ACTIVE 和显式替换时，按 Owner、Agreement Type、Operating Entity 的稳定顺序锁定全部相关 Root 并防御性复查区间冲突。",
-    "替换在同一事务收窄旧合同 effective_to、写 BCR/事件和终止依据并冻结新合同；不得按当前状态过滤 EXPIRED/TERMINATED 行，不得回溯收窄到 operation_context_time 之前，旧合同内容、覆盖关系和 effective_from 不得覆盖。",
-  ],
-  agreement_signatory: [
-    "party_profile_id 必须属于 party_id 且提交签署时已封存；CLIENT/LOCAL_PARTNER 签约方必须分别匹配合同 Owner，PLATFORM_SIGNATORY 为平台授权签约主体，OPERATING_ENTITY 必须属于合同覆盖经营主体。",
-    "包含 PLATFORM_SERVICE_CHARGE 的 PARTNER Agreement 必须恰好一个 PLATFORM_SIGNATORY；零个或多个平台签约方时 CCT-I13/CCT-I14 均 Fail Closed。",
-    "进入 PENDING_SIGNATURE 后签约方不得修改，每个签约方必须恰有一条 Acceptance。",
-  ],
   agreement_document_ref: [
     "每份合同必须且只能有一份 SIGNING_DOCUMENT，可有多份 ANNEX，EXECUTED_DOCUMENT 至多一份；文件与内容哈希成组冻结。",
-  ],
-  agreement_acceptance: [
-    "Acceptance Method Matrix：CLICK_ACCEPTANCE 的 evidence_document_id 必须指向唯一 SIGNING_DOCUMENT；全部 CLICK_ACCEPTANCE 的合同进入 SIGNED 无需 EXECUTED_DOCUMENT；E_SIGNATURE 和 MANUAL_SIGNATURE 必须指向 EXECUTED_DOCUMENT，任一 E_SIGNATURE 或 MANUAL_SIGNATURE 存在时进入 SIGNED 前必须恰有一份 EXECUTED_DOCUMENT。",
-    "accepted_by_actor_id 是实际在线接受 Actor，create_by 是登记证据 Actor；CLICK_ACCEPTANCE 必须填写 accepted_by_actor_id，E_SIGNATURE/MANUAL_SIGNATURE 按受控签署记录填写，二者不得混同。",
-    "接受证据只追加，不得修改或删除。",
-  ],
-  agreement_operating_entity: [
-    "提交签署前至少覆盖一个 Operating Entity；进入 PENDING_SIGNATURE 后覆盖关系及结算字段冻结，只证明法律覆盖，不承载交易 Scope、优先级或业务哈希。",
-    "Agreement Type Tuple：CLIENT Agreement 的四个结算字段（settlement_business_days、business_calendar_code、settlement_timezone、cutoff_second_of_day）全部非空；PARTNER Agreement 的四个结算字段全部为空。",
-    "CHECK (settlement_business_days IS NULL OR settlement_business_days>=0)",
-    "CHECK (cutoff_second_of_day IS NULL OR cutoff_second_of_day BETWEEN 0 AND 86399)",
-  ],
-  commercial_term_plan: [
-    "Owner XOR：term_type=CLIENT_PRICING 要求 client_id IS NOT NULL AND local_partner_id IS NULL；term_type IN (PARTNER_SHARE,PLATFORM_SERVICE_CHARGE) 要求 client_id IS NULL AND local_partner_id IS NOT NULL。",
-    "term_type、client_id 与 local_partner_id 创建后不可修改；MVP 每个 Client 一个 Client Pricing Plan，每个 Local Partner 可分别拥有一个 Partner Share Plan 和一个 PLATFORM_SERVICE_CHARGE Plan，通过 local_partner_id + term_type 复合唯一。",
   ],
   commercial_term_version: [
     "CLIENT_PRICING 必须引用同一 Client 的 CLIENT Agreement；PARTNER_SHARE 与 PLATFORM_SERVICE_CHARGE 必须引用同一 Local Partner 的 PARTNER Agreement，同一交易命中的两类 Partner Term 必须属于同一 Agreement。",
@@ -328,12 +333,6 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "每行保存一个 dimension_code + condition_value 离散等值条件；同维度多行按 OR，不同维度按 AND，缺少维度表示不限制。",
     "不保存 CSV、*、Operator、Range，不建立 Dimension Definition、Profile Version 或 Condition Value 子表；维度和值由版本化应用/API 合同校验。",
     "Condition 是 Profile 聚合内部 Child，使用 payment_method_profile_id 关联，并由 Profile Root BCR/CAS 与冻结规则保护。",
-  ],
-  commercial_term_price: [
-    "每条 Price 属于准确 term_version_id + operating_entity_id，并以 payment_method_profile_code 关联一个 ACTIVE Payment Method Profile；Profile 可跨 Client、Version 与 OE 复用。",
-    "Operating Entity 必须被 Version 引用的 Agreement 覆盖；不允许 NULL、* 或全 OE 通配，旧全 Agreement-OE Scope 迁移时展开为准确 OE Price。",
-    "匹配先选择不同 dimension_code 数量最多的 Profile，再以最小 priority_no 选择；零命中、事实缺失或仍有歧义均 Fail Closed。",
-    "PLATFORM_SERVICE_CHARGE 使用受控 Calculation Base Catalog；不得用 Client Fee、Partner Share、Provider Cost 或其残差倒算平台服务费。",
   ],
   commercial_term_component: [
     "PERCENTAGE、FIXED、TIERED 必须满足批准的 rate、fixed_amount、currency、min_amount、max_amount 与 band_mode 矩阵。",
@@ -373,8 +372,8 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
   ],
   business_change_record: [
     "current_version > 0",
-    `Record Type 白名单：${BCR_RECORD_TYPES.join("、")}；白名单外业务表不得创建 business_change_record 或 business_change_version。`,
-    `不重复审计表：${BCR_EXCLUDED_BUSINESS_TABLES.join("、")}；它们依靠冻结后的结构化业务事实、所属业务版本或追加式领域证据保留历史。`,
+    "Record Type 白名单由 record_type 字段闭合枚举定义；白名单外不创建 BCR。",
+    "非审计 Child 使用冻结的结构化事实或所属版本保留历史，完整目录见 BCR_EXCLUDED_BUSINESS_TABLES。",
     "CREATE 原子协议：创建受审计聚合时，必须在同一事务插入结构化业务数据、Root business_change_record(current_version=1)、Root Version 1 CREATE Snapshot、白名单内且本次确需审计的 Child Record/Snapshot 与本地 compensation_event。",
     "Root UPDATE CAS：外部命令必须携带 expected_change_version，固定 next_version=expected_change_version+1；Root business_change_record 必须以 current_version=expected_change_version 条件 CAS 到 next_version，影响行数必须为 1。",
     "受审计 Child 版本指针：只有 Record Type 白名单内且本次发生需留档变化的 Child 才追加最终 Snapshot，并把 current_version 推进到 Root next_version；Root CAS 已串行化同聚合写入，Child current_version 不是独立 CAS Token。",
@@ -406,13 +405,13 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
 });
 
 const FIELD_COMMENT_CLAUSES = Object.freeze({
-  "agreement_signatory.update_time": "INSERT 时必须等于 create_time；进入 PENDING_SIGNATURE 后不得更新。",
+  "agreement_party.update_time": "创建时等于create_time；待签时冻结身份，最终签署结果仅允许一次整组原子补齐并更新此时间。",
   "agreement_document_ref.update_time": "INSERT 时必须等于 create_time；合同文件引用冻结后不得更新。",
-  "agreement_acceptance.update_time": "INSERT 时必须等于 create_time；接受证据只追加，不得更新。",
-  "agreement_acceptance.accepted_by_actor_id": "该字段是完成接受动作的 Actor，不等同于记录创建人 create_by。",
+
 });
 
 const ACCESS_INDEXES = {
+  operating_entity_scope: [{ defKey: "idx_oe_scope_lookup", fields: ["entity_no", "consumer_country_code", "currency", "industry_code", "mcc_code", "status"] }],
   party_profile: [
     ["party_id", "profile_status", "effective_from", "effective_to"],
   ],
@@ -423,36 +422,27 @@ const ACCESS_INDEXES = {
     ["client_id", "status", "effective_from", "effective_to"],
   ],
   client_entity_affiliation: [
-    ["client_id", "status", "scope_country", "scope_currency", "industry_code", "mcc_code", "effective_from", "effective_to"],
-  ],
-  client_entity_assignment: [
-    ["client_id", "status", "scope_country", "scope_currency", "industry_code", "mcc_code", "effective_from", "effective_to"],
+    { defKey: "idx_aff_priority", fields: ["client_id", "status", "priority_no", "effective_from", "effective_to"] },
   ],
   entity_source_relation: [
-    ["operating_entity_id", "status", "effective_from", "effective_to"],
-  ],
-  entity_assignment_rule: [
-    ["client_id", "status", "country_code", "currency", "industry_code", "mcc_code", "priority_no", "effective_from", "effective_to"],
+    ["entity_no", "status", "effective_from", "effective_to"],
   ],
   agreement: [
     { defKey: "idx_agreement_client_time", fields: ["client_id", "effective_from", "effective_to"] },
     { defKey: "idx_agreement_partner_time", fields: ["local_partner_id", "effective_from", "effective_to"] },
   ],
-  agreement_signatory: [
+  agreement_party: [
     { defKey: "idx_agreement_party", fields: ["party_id"] },
     { defKey: "idx_agreement_profile", fields: ["party_profile_id"] },
   ],
-  agreement_acceptance: [
-    { defKey: "idx_accept_evidence_doc", fields: ["evidence_document_id"] },
-  ],
   agreement_operating_entity: [
-    { defKey: "idx_agreement_oe_entity", fields: ["operating_entity_id"] },
+    { defKey: "idx_agreement_oe_entity", fields: ["entity_no"] },
   ],
   consumer_legal_document: [
-    { defKey: "idx_legal_doc_resolve", fields: ["operating_entity_id", "country_code", "locale", "document_type", "effective_from", "effective_to"] },
+    { defKey: "idx_legal_doc_resolve", fields: ["entity_no", "country_code", "locale", "document_type", "effective_from", "effective_to"] },
   ],
   seller_disclosure: [
-    { defKey: "idx_seller_disclosure_resolve", fields: ["operating_entity_id", "country_code", "locale", "effective_from", "effective_to"] },
+    { defKey: "idx_seller_disclosure_resolve", fields: ["entity_no", "country_code", "locale", "effective_from", "effective_to"] },
   ],
   commercial_term_version: [
     ["term_plan_id", "status", "effective_from", "effective_to"],
@@ -466,7 +456,7 @@ const ACCESS_INDEXES = {
   ],
   commercial_term_price: [
     { defKey: "idx_term_price_profile", fields: ["payment_method_profile_code", "term_version_id"] },
-    { defKey: "idx_term_price_oe", fields: ["operating_entity_id", "term_version_id"] },
+    { defKey: "idx_term_price_oe", fields: ["entity_no", "term_version_id"] },
   ],
   business_change_record: [
     ["aggregate_root_type", "aggregate_root_id", "history_id"],
@@ -480,16 +470,20 @@ const ACCESS_INDEXES = {
 // Each tuple is child table, child field, parent table, parent field, child cardinality.
 // Only references owned by the Client & Contract database are included.
 const LOCAL_RELATIONS = [
+  ["operating_entity_scope", "entity_no", "operating_entity", "entity_no", "n"],
+  ["operating_entity_scope", "application_id", "operating_entity_application", "application_id", "n"],
+  ["agreement", "entity_no", "operating_entity", "entity_no", "n"],
+  ["agreement_party", "evidence_document_id", "agreement_document_ref", "agreement_document_id", "n"],
+  ["commercial_term_plan", "agreement_id", "agreement", "agreement_id", "1"],
+  ["commercial_term_plan", "entity_no", "operating_entity", "entity_no", "n"],
   ["agreement", "client_id", "client", "client_id", "n"],
   ["agreement", "local_partner_id", "local_partner", "local_partner_id", "n"],
-  ["agreement_signatory", "agreement_id", "agreement", "agreement_id", "n"],
-  ["agreement_signatory", "party_id", "party", "party_id", "n"],
-  ["agreement_signatory", "party_profile_id", "party_profile", "profile_id", "n"],
+  ["agreement_party", "agreement_id", "agreement", "agreement_id", "n"],
+  ["agreement_party", "party_id", "party", "party_id", "n"],
+  ["agreement_party", "party_profile_id", "party_profile", "profile_id", "n"],
   ["agreement_document_ref", "agreement_id", "agreement", "agreement_id", "n"],
-  ["agreement_acceptance", "agreement_signatory_id", "agreement_signatory", "agreement_signatory_id", "1"],
-  ["agreement_acceptance", "evidence_document_id", "agreement_document_ref", "agreement_document_id", "n"],
   ["agreement_operating_entity", "agreement_id", "agreement", "agreement_id", "n"],
-  ["agreement_operating_entity", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
+  ["agreement_operating_entity", "entity_no", "operating_entity", "entity_no", "n"],
   ["application_document", "client_application_id", "client_application", "application_id", "n"],
   ["application_document", "partner_application_id", "partner_application", "application_id", "n"],
   ["application_document", "operating_entity_application_id", "operating_entity_application", "application_id", "n"],
@@ -505,32 +499,25 @@ const LOCAL_RELATIONS = [
   ["client_business_classification", "business_profile_id", "client_business_profile", "business_profile_id", "n"],
   ["client_business_profile", "client_id", "client", "client_id", "n"],
   ["client_entity_affiliation", "client_id", "client", "client_id", "n"],
-  ["client_entity_affiliation", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
-  ["client_entity_assignment", "affiliation_id", "client_entity_affiliation", "affiliation_id", "n"],
-  ["client_entity_assignment", "client_id", "client", "client_id", "n"],
-  ["client_entity_assignment", "entity_source_relation_id", "entity_source_relation", "source_relation_id", "n"],
-  ["client_entity_assignment", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
-  ["client_entity_assignment", "rule_id", "entity_assignment_rule", "rule_id", "n"],
+  ["client_entity_affiliation", "entity_no", "operating_entity", "entity_no", "n"],
   ["commercial_term_component", "term_price_id", "commercial_term_price", "term_price_id", "n"],
   ["commercial_term_component_band", "term_component_id", "commercial_term_component", "term_component_id", "n"],
-  ["commercial_term_plan", "client_id", "client", "client_id", "1"],
+  ["commercial_term_plan", "client_id", "client", "client_id", "n"],
   ["commercial_term_plan", "local_partner_id", "local_partner", "local_partner_id", "n"],
-  ["commercial_term_price", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
+  ["commercial_term_price", "entity_no", "operating_entity", "entity_no", "n"],
   ["commercial_term_price", "payment_method_profile_code", "payment_method_profile", "payment_method_profile_code", "n"],
   ["commercial_term_price", "term_version_id", "commercial_term_version", "term_version_id", "n"],
   ["commercial_term_version", "agreement_id", "agreement", "agreement_id", "n"],
   ["commercial_term_version", "term_plan_id", "commercial_term_plan", "term_plan_id", "n"],
-  ["consumer_legal_document", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
-  ["entity_assignment_rule", "client_id", "client", "client_id", "n"],
-  ["entity_assignment_rule", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
-  ["entity_source_relation", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
+  ["consumer_legal_document", "entity_no", "operating_entity", "entity_no", "n"],
+  ["entity_source_relation", "entity_no", "operating_entity", "entity_no", "n"],
   ["entity_source_relation", "source_client_id", "client", "client_id", "n"],
   ["entity_source_relation", "source_partner_id", "local_partner", "local_partner_id", "n"],
   ["individual_profile", "profile_id", "party_profile", "profile_id", "1"],
   ["local_partner", "party_id", "party", "party_id", "1"],
   ["operating_entity", "party_id", "party", "party_id", "1"],
   ["operating_entity_application", "approved_source_relation_id", "entity_source_relation", "source_relation_id", "n"],
-  ["operating_entity_application", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
+  ["operating_entity_application", "entity_no", "operating_entity", "entity_no", "n"],
   ["operating_entity_application", "party_profile_id", "party_profile", "profile_id", "n"],
   ["operating_entity_application", "source_client_id", "client", "client_id", "n"],
   ["operating_entity_application", "source_partner_id", "local_partner", "local_partner_id", "n"],
@@ -546,7 +533,7 @@ const LOCAL_RELATIONS = [
   ["party_relation", "organization_party_id", "party", "party_id", "n"],
   ["party_relation", "related_party_id", "party", "party_id", "n"],
   ["payment_method_profile_cond", "payment_method_profile_id", "payment_method_profile", "payment_method_profile_id", "n"],
-  ["seller_disclosure", "operating_entity_id", "operating_entity", "operating_entity_id", "n"],
+  ["seller_disclosure", "entity_no", "operating_entity", "entity_no", "n"],
 ];
 
 const DIAGRAM_GROUPS = [
@@ -582,12 +569,11 @@ const DIAGRAM_GROUPS = [
   },
   {
     defKey: "entity_assignment",
-    defName: "Entity Assignment and Source",
+    defName: "OE Scope, Affiliation and Source",
     tables: [
       "client_entity_affiliation",
-      "client_entity_assignment",
+      "operating_entity_scope",
       "entity_source_relation",
-      "entity_assignment_rule",
     ],
   },
   {
@@ -595,9 +581,8 @@ const DIAGRAM_GROUPS = [
     defName: "Agreement and Consumer Legal",
     tables: [
       "agreement",
-      "agreement_signatory",
+      "agreement_party",
       "agreement_document_ref",
-      "agreement_acceptance",
       "agreement_operating_entity",
       "consumer_legal_document",
       "seller_disclosure",
@@ -639,6 +624,9 @@ function assert(condition, message) {
 }
 
 function stableUuid(key) {
+  const aliases = { agreement_party: "agreement_signatory", agreement_party_id: "agreement_signatory_id", party_role: "signatory_role" };
+  key = key.split("/").map((part) => aliases[part] ?? part).join("/");
+  if (key.startsWith("field/") && !key.startsWith("field/operating_entity/") && key.endsWith("/entity_no")) key = key.replace(/entity_no$/, "operating_entity_id");
   const bytes = createHash("sha256").update(`${MODEL_KEY}:${key}`).digest().subarray(0, 16);
   bytes[6] = (bytes[6] & 0x0f) | 0x50;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
@@ -877,6 +865,8 @@ function inferPhysicalType(tableKey, fieldKey, primaryKey, typeIds, domainIds) {
     baseType: typeIds.string,
     domain: "",
   };
+  if (fieldKey === "entity_no") return { ...result, type: "CHAR", len: 5, baseType: typeIds.char };
+  if (tableKey === "business_change_record" && ["record_id", "aggregate_root_id"].includes(fieldKey)) return result;
   if (primaryKey || fieldKey === "id" || fieldKey.endsWith("_id")) {
     return { ...result, type: "BIGINT", len: "", baseType: typeIds.BIGINT, domain: primaryKey ? domainIds.PrimaryKey : "" };
   }
@@ -999,8 +989,8 @@ function normalizeTemplate(template) {
   }
   const primaryKeyRule = ruleById.get("2BAB122B-8811-40BB-89F3-CDC24B5862D3");
   if (primaryKeyRule) {
-    primaryKeyRule.defName = "主键必须为非自增 Snowflake BIGINT";
-    primaryKeyRule.programCode = "let fields = data.entity.fields;\nfor(let i=0;i<fields.length;i++){\n  let field = fields[i];\n  if(field.primaryKey){\n    let type=(field.type||field.dbType||\"\").toUpperCase();\n    return !field.autoIncrement && type===\"BIGINT\";\n  }\n}\nreturn false;";
+    primaryKeyRule.defName = "OE使用不可变CHAR(5)主键，其余主键为非自增Snowflake BIGINT";
+    primaryKeyRule.programCode = "let fields = data.entity.fields;\nfor(let i=0;i<fields.length;i++){\n  let field = fields[i];\n  if(field.primaryKey){\n    let type=(field.type||field.dbType||\"\").toUpperCase();\n    return !field.autoIncrement && (data.entity.defKey===\"t_operating_entity\" ? field.defKey===\"entity_no\" && type===\"CHAR\" && Number(field.len)===5 : type===\"BIGINT\");\n  }\n}\nreturn false;";
   }
   const auditFieldsRule = ruleById.get("0B2F0BD2-3B84-4AB1-BA29-9DE9620AF608");
   if (auditFieldsRule) {
@@ -1040,6 +1030,13 @@ function normalizeTemplate(template) {
     largeFieldRule.defName = "仅允许获批的受控 TEXT 字段且禁止 BLOB";
     largeFieldRule.programCode = "let key=(data.field.defKey||\"\").toLowerCase();\nlet type=(data.field.dbType||\"\").toLowerCase();\nif(type===\"blob\"){\n  return false;\n}\nif(type===\"text\"){\n  return key===\"last_error_summary\";\n}\nreturn true;";
   }
+  const mysqlDdlTemplate = model.profile.codeTemplates.find((templateSpec) => templateSpec.type === "dbDDL");
+  const typeLengthTemplate = "{{=field.type}}{{?field.len>0}}{{='('}}{{=field.len}}{{?field.scale>0}}{{=','}}{{=field.scale}}{{?}}{{=')'}}{{?}}";
+  if (!mysqlDdlTemplate?.createTable.includes(typeLengthTemplate)) throw new Error("MySQL DDL template lacks controlled type fragment");
+  mysqlDdlTemplate.createTable = mysqlDdlTemplate.createTable.replace(
+    typeLengthTemplate,
+    `${typeLengthTemplate}{{? field.extProps && field.extProps.characterSet }} CHARACTER SET {{=field.extProps.characterSet}} COLLATE {{=field.extProps.collation}}{{?}}`,
+  );
   return model;
 }
 
@@ -1141,7 +1138,8 @@ function buildEntities(model, catalog) {
         hideInGraph: false,
         refDict: "",
         baseType: physicalType.baseType,
-        extProps: {},
+        extProps: fieldKey === "entity_no" || (table.defKey === "business_change_record" && ["record_id", "aggregate_root_id"].includes(fieldKey))
+          ? { characterSet: "ascii", collation: "ascii_bin" } : {},
         domain: physicalType.domain,
         id: stableUuid(`field/${table.defKey}/${fieldKey}`),
       };

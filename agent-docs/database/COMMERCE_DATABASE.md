@@ -1,8 +1,10 @@
 # Commerce 数据库设计规范
 
+> **2026-09-11 模型更新：** 本页的数字 OE、Assignment、Client 多 OE 合同及旧 Scope 冻结描述，仅适用于迁移前记录与接口；现行目标由 [四系统模型决定](../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 精确取代。Risk 本期不改，Java 与数据库尚未据此迁移，历史订单与 Hash 不重写。
+
 最后更新：2026-09-05
 
-状态：V1 权威逻辑目标已确认。当前已生成模型与人工 Schema 为 15 表 / 246 字段 / 24 个非主键唯一索引 / 12 个访问索引 / 15 条本库关系 / 4 个 Diagram Group；SQL 尚未应用，本状态不代表 Java、物理数据库或运行环境已完成。
+状态：V1 权威逻辑目标已确认；本期模型采用 2026-09-11 四系统调整；生成统计、验证、Java 与数据库迁移状态统一见 [当前实现台账](../CURRENT_IMPLEMENTATION.md)。
 
 > **2026-09-05 跨主题对齐：** 本文拥有 Commerce 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。[Commerce Client API Hosted Checkout V1](../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 已取代旧 Token Hash、Client 提交行业/MCC、外部 Cancel Expected Version 和固定 14 表目标；当前生成模型与其他横切差异按 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 迁移。新增实现必须遵循 [文档治理路由](../DOCUMENT_GOVERNANCE.md)。
 

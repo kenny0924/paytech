@@ -1031,7 +1031,7 @@ test("Finance generalizes only legal-subject roots and preserves transaction OE 
     const fields = fieldKeys(tableKey);
     assert.ok(fields.includes("entity_type"), `${tableKey} 缺少 entity_type`);
     assert.ok(fields.includes("entity_id"), `${tableKey} 缺少 entity_id`);
-    assert.ok(!fields.includes("operating_entity_id"), `${tableKey} 仍使用单一 OE 主体`);
+    assert.ok(!fields.includes("entity_no"), `${tableKey} 仍使用单一 OE 主体`);
     assert.match(
       entities.get(tableKey).fields.find((field) => field.defKey === "entity_type").comment,
       /允许值：OPERATING_ENTITY、FINANCE_ENTITY。$/u,
@@ -1066,7 +1066,7 @@ test("Finance generalizes only legal-subject roots and preserves transaction OE 
     "t_finance_restriction_proj",
   ]) {
     const fields = fieldKeys(tableKey);
-    assert.ok(fields.includes("operating_entity_id"), `${tableKey} 必须保留交易 Operating Entity`);
+    assert.ok(fields.includes("entity_no"), `${tableKey} 必须保留交易 Operating Entity`);
     assert.ok(!fields.includes("entity_type"), `${tableKey} 不得机械泛化主体`);
     assert.ok(!fields.includes("entity_id"), `${tableKey} 不得机械泛化主体`);
   }
@@ -1075,7 +1075,7 @@ test("Finance generalizes only legal-subject roots and preserves transaction OE 
     const fields = fieldKeys(tableKey);
     assert.ok(fields.includes("provider_account_id"), `${tableKey} 必须通过 Provider Account 确定 OE`);
     assert.ok(fields.includes("transaction_economics_id"), `${tableKey} 必须与交易 Economics 交叉校验 OE`);
-    assert.ok(!fields.includes("operating_entity_id"), `${tableKey} 不重复保存父链 OE`);
+    assert.ok(!fields.includes("entity_no"), `${tableKey} 不重复保存父链 OE`);
     assert.ok(!fields.includes("entity_type"), `${tableKey} 不得泛化为 Finance Entity`);
     assert.ok(!fields.includes("entity_id"), `${tableKey} 不得泛化为 Finance Entity`);
   }
@@ -1215,41 +1215,47 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
   }
 
   assert.deepEqual(fieldKeys("t_transaction_economics"), [
-    "id",
-    "economics_type",
-    "source_system",
-    "source_event_key",
-    "source_version",
-    "source_payload_hash",
-    "parent_economics_id",
-    "order_id",
-    "order_context_id",
-    "commercial_context_time",
-    "tax_snapshot_id",
-    "payment_intent_id",
-    "payment_attempt_id",
-    "payment_succeeded_time",
-    "balance_available_time",
-    "refund_request_id",
-    "channel_refund_id",
-    "duplicate_capture_item_id",
-    "provider_dispute_notice_id",
-    "dispute_case_id",
-    "client_id",
-    "operating_entity_id",
-    "assignment_id",
-    "local_partner_id",
-    "consumer_country_code",
-    "payment_method",
-    "industry_code",
-    "mcc_code",
-    "client_agreement_oe_id",
-    "partner_agreement_oe_id",
-    "finance_entity_id",
-    "currency",
-    "gross_amount",
-    "create_time",
-  ]);
+  "id",
+  "economics_type",
+  "source_system",
+  "source_event_key",
+  "source_version",
+  "source_payload_hash",
+  "parent_economics_id",
+  "order_id",
+  "order_context_id",
+  "context_format",
+  "payment_fact_id",
+  "client_price_id",
+  "settlement_business_days",
+  "business_calendar_code",
+  "settlement_timezone",
+  "cutoff_second_of_day",
+  "commercial_context_time",
+  "tax_snapshot_id",
+  "payment_intent_id",
+  "payment_attempt_id",
+  "payment_succeeded_time",
+  "balance_available_time",
+  "refund_request_id",
+  "channel_refund_id",
+  "duplicate_capture_item_id",
+  "provider_dispute_notice_id",
+  "dispute_case_id",
+  "client_id",
+  "entity_no",
+  "local_partner_id",
+  "consumer_country_code",
+  "payment_method",
+  "industry_code",
+  "mcc_code",
+  "client_agreement_id",
+  "partner_agreement_oe_id",
+  "finance_entity_id",
+  "currency",
+  "gross_amount",
+  "create_time"
+]);
   assert.deepEqual(
     indexFields("t_transaction_economics", "uk_econ_source"),
     ["source_system", "source_event_key"],
@@ -1339,35 +1345,38 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
   ]);
 
   assert.deepEqual(fieldKeys("t_transaction_economic_component"), [
-    "id",
-    "transaction_economics_id",
-    "component_no",
-    "component_type",
-    "party_type",
-    "party_id",
-    "tax_line_id",
-    "basis_amount",
-    "rate_value",
-    "raw_amount",
-    "posted_amount",
-    "effect_direction",
-    "source_rule_type",
-    "source_rule_version_id",
-    "source_rule_scope_id",
-    "source_rule_component_id",
-    "source_component_code",
-    "source_trigger_code",
-    "source_calculation_base",
-    "source_rate",
-    "source_fixed_amount",
-    "source_currency",
-    "source_min_amount",
-    "source_max_amount",
-    "source_rule_content_hash",
-    "calculation_method",
-    "rounding_mode",
-    "create_time",
-  ]);
+  "id",
+  "transaction_economics_id",
+  "component_no",
+  "component_type",
+  "party_type",
+  "party_id",
+  "tax_line_id",
+  "basis_amount",
+  "rate_value",
+  "raw_amount",
+  "posted_amount",
+  "effect_direction",
+  "source_rule_type",
+  "source_rule_version_id",
+  "source_price_id",
+  "source_profile_code",
+  "source_band_evidence",
+  "source_rule_scope_id",
+  "source_rule_component_id",
+  "source_component_code",
+  "source_trigger_code",
+  "source_calculation_base",
+  "source_rate",
+  "source_fixed_amount",
+  "source_currency",
+  "source_min_amount",
+  "source_max_amount",
+  "source_rule_content_hash",
+  "calculation_method",
+  "rounding_mode",
+  "create_time"
+]);
   const sourceRuleType = entities.get("t_transaction_economic_component").fields
     .find((field) => field.defKey === "source_rule_type");
   assert.match(

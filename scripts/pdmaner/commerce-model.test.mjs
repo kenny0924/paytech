@@ -42,9 +42,9 @@ const artifactsReady = requiredArtifacts.every(existsSync);
 const expectedTemplateDigest =
   "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 const expectedModelDigest =
-  "e5f0320b2806b95e9b584c14fa16443d492f96373a996e86ee7f74aa48f95999";
+  "93087684ff8fc86f399057843b0620a5517f2135f773afa293946073c0e338cb";
 const expectedStructuralDigest =
-  "625f365cdda712936d3c4a2c76b7a5b4c1e26d5a348b6f7643f502030ad0c1b4";
+  "8abcd8c40cebc486fdfcec3b97df981dfad0e9ab63d9d5fecffcce3f22c6da16";
 const idPattern =
   /^[A-F0-9]{8}-[A-F0-9]{4}-5[A-F0-9]{3}-[89AB][A-F0-9]{3}-[A-F0-9]{12}$/u;
 
@@ -55,17 +55,20 @@ order_id BIGINT NN
 order_no VARCHAR(64) NN
 client_id BIGINT NN
 client_order_id VARCHAR(128) NN
-operating_entity_id BIGINT NN
-entity_source_type VARCHAR(64) NN {PLATFORM,CLIENT,PARTNER}
+context_format VARCHAR(32) NN {TERM_PRICE,LEGACY_SCOPE}
+preparation_command_id BIGINT N
+termination_requested_at DATETIME(6) N
+entity_no CHAR(5) N
+entity_source_type VARCHAR(64) N {PLATFORM,CLIENT,PARTNER}
 local_partner_id BIGINT N
-industry_code VARCHAR(64) NN
-mcc_code VARCHAR(4) NN
+industry_code VARCHAR(64) N
+mcc_code VARCHAR(4) N
 merchandise_amount DECIMAL(24,8) NN
 discount_amount DECIMAL(24,8) NN
 net_amount DECIMAL(24,8) NN
-tax_amount DECIMAL(24,8) NN
-rounding_amount DECIMAL(24,8) NN
-total_amount DECIMAL(24,8) NN
+tax_amount DECIMAL(24,8) N
+rounding_amount DECIMAL(24,8) N
+total_amount DECIMAL(24,8) N
 currency CHAR(3) NN
 order_status VARCHAR(64) NN {CREATED,OPEN,PAID,CANCELLED,EXPIRED}
 status_reason_code VARCHAR(64) N OPEN(Order Status Reason Catalog)
@@ -79,11 +82,12 @@ update_time DATETIME(6) NN
 order_context_id BIGINT NN
 order_id BIGINT NN
 commercial_context_time DATETIME(6) NN
-assignment_id BIGINT NN
-cct_commercial_context_hash CHAR(64) NN
-client_pricing_scope_id BIGINT NN
-partner_share_scope_id BIGINT N
-platform_service_charge_scope_id BIGINT N
+affiliation_id BIGINT NN
+entity_scope_id BIGINT NN
+entity_source_relation_id BIGINT NN
+client_pricing_version_id BIGINT NN
+partner_share_version_id BIGINT N
+platform_charge_version_id BIGINT N
 platform_service_party_id BIGINT N
 risk_checkout_assessment_id BIGINT NN
 finance_tax_snapshot_id BIGINT NN
@@ -95,7 +99,8 @@ create_time DATETIME(6) NN
 [t_order_legal]
 order_legal_id BIGINT NN
 order_context_id BIGINT NN
-client_agreement_operating_entity_id BIGINT NN
+client_agreement_id BIGINT NN
+partner_agreement_id BIGINT N
 partner_agreement_operating_entity_id BIGINT N
 consumer_terms_document_id BIGINT NN
 consumer_terms_file_id BIGINT NN
@@ -128,8 +133,6 @@ unit_amount DECIMAL(24,8) NN
 line_gross_amount DECIMAL(24,8) NN
 line_discount_amount DECIMAL(24,8) NN
 line_net_amount DECIMAL(24,8) NN
-line_tax_amount DECIMAL(24,8) NN
-line_total_amount DECIMAL(24,8) NN
 currency CHAR(3) NN
 sort_no INT NN
 create_time DATETIME(6) NN
@@ -513,11 +516,8 @@ const forbiddenFieldKeys = Object.freeze([
   "business_classification_id",
   "assignment_rule_id",
   "assignment_affiliation_id",
-  "entity_source_relation_id",
   "risk_checkout_outcome",
   "risk_checkout_reason_hash",
-  "client_agreement_id",
-  "partner_agreement_id",
   "seller_country_code",
   "seller_locale",
   "external_order_id",
@@ -950,13 +950,13 @@ artifactTest("refund request delegates directly to Payment without a Finance res
   assert.ok(fieldKeys.includes("channel_refund_id"));
 });
 
-test("approved field manifest independently sums to the real 246-field candidate", () => {
+test("approved field manifest independently sums to the real 249-field candidate", () => {
   const approvedTables = parseApprovedFieldManifest();
   assert.deepEqual(approvedTables.map((table) => table.defKey), expectedTableOrder);
   assert.equal(
     approvedTables.flatMap((table) => table.fields).length,
-    246,
-    "批准候选字段清单实算必须为 246；不得按旧人工摘要凑数",
+    249,
+    "批准候选字段清单实算必须为 249；不得按旧人工摘要凑数",
   );
 });
 
@@ -1301,10 +1301,10 @@ artifactTest("version, immutability, audit deferral, Vault and forbidden boundar
   );
 
   const orderContext = entities.get("t_order_context");
-  assert.equal(orderContext.fields.find((field) => field.defKey === "client_pricing_scope_id").notNull, true);
-  assert.equal(orderContext.fields.find((field) => field.defKey === "partner_share_scope_id").notNull, false);
+  assert.equal(orderContext.fields.find((field) => field.defKey === "client_pricing_version_id").notNull, true);
+  assert.equal(orderContext.fields.find((field) => field.defKey === "partner_share_version_id").notNull, false);
   const platformServiceScope = orderContext.fields.find(
-    (field) => field.defKey === "platform_service_charge_scope_id",
+    (field) => field.defKey === "platform_charge_version_id",
   );
   const platformServiceParty = orderContext.fields.find(
     (field) => field.defKey === "platform_service_party_id",
@@ -1313,15 +1313,15 @@ artifactTest("version, immutability, audit deferral, Vault and forbidden boundar
   assert.ok(platformServiceParty, "Order Context 必须冻结 Platform Service Party");
   assert.equal(platformServiceScope.notNull, false);
   assert.equal(platformServiceParty.notNull, false);
-  assert.match(platformServiceScope.comment, /CCT-I13 V5.*PLATFORM_SERVICE_CHARGE.*Scope/u);
-  assert.match(platformServiceParty.comment, /CCT-I13 V5.*PLATFORM_SIGNATORY.*Party/u);
-  assert.match(orderContext.comment, /PARTNER.*四项成组非空.*非 PARTNER.*四项成组为空/u);
+  assert.match(platformServiceScope.comment, /PARTNER.*CCT.*版本/u);
+  assert.match(platformServiceParty.comment, /支付准备.*PLATFORM_SIGNATORY.*Party/u);
+  assert.match(orderContext.comment, /PARTNER.*三项成组非空.*非 PARTNER.*三项成组为空/u);
   const orderContextFieldsById = new Map(
     orderContext.fields.map((field) => [field.id, field.defKey]),
   );
   assert.ok(
     orderContext.correlations.every((relation) => ![
-      "platform_service_charge_scope_id",
+      "platform_charge_version_id",
       "platform_service_party_id",
     ].includes(orderContextFieldsById.get(relation.myField))),
     "CCT 外部稳定 ID 不建立本地关系",
@@ -1344,14 +1344,14 @@ artifactTest("version, immutability, audit deferral, Vault and forbidden boundar
   );
   const legal = entities.get("t_order_legal");
   const clientAgreementEntity = legal.fields.find(
-    (field) => field.defKey === "client_agreement_operating_entity_id",
+    (field) => field.defKey === "client_agreement_id",
   );
   const partnerAgreementEntity = legal.fields.find(
     (field) => field.defKey === "partner_agreement_operating_entity_id",
   );
   assert.equal(clientAgreementEntity.notNull, true);
   assert.equal(partnerAgreementEntity.notNull, false);
-  assert.match(clientAgreementEntity.comment, /唯一定位 Client 合同与订单 Operating Entity 关联记录/u);
+  assert.match(clientAgreementEntity.comment, /CCT准确Client\/OE合同/u);
   assert.match(partnerAgreementEntity.comment, /唯一定位 Partner 合同与订单 Operating Entity 关联记录/u);
   const item = entities.get("t_order_item");
   assert.match(
@@ -1413,7 +1413,7 @@ artifactTest("generated model freezes actual totals and both SHA-256 digests", (
   const model = JSON.parse(modelBytes);
   const expectedTotals = {
     tables: 15,
-    fields: 246,
+    fields: 249,
     uniqueIndexes: 24,
     accessIndexes: 12,
     relations: 15,
@@ -1436,9 +1436,10 @@ artifactTest("generated model freezes actual totals and both SHA-256 digests", (
 artifactTest("current Commerce database and physical docs report the generated model facts", () => {
   const logicalSource = readFileSync(paths.commerceDatabase, "utf8");
   const physicalSource = readFileSync(paths.decisions, "utf8");
-  const currentFacts = /15 表 \/ 246 字段 \/ 24 个非主键唯一索引 \/ 12 个访问索引 \/ 15 条本库关系 \/ 4 个 Diagram Group/u;
-  assert.match(logicalSource, currentFacts);
-  assert.match(physicalSource, /"tables": 15,[\s\S]*"fields": 246,[\s\S]*"uniqueIndexes": 24,[\s\S]*"accessIndexes": 12,[\s\S]*"relations": 15,[\s\S]*"diagramGroups": 4/u);
+  const currentFacts = /15 表 \/ 249 字段 \/ 24 个非主键唯一索引 \/ 12 个访问索引 \/ 15 条本库关系 \/ 4 个 Diagram Group/u;
+  assert.match(logicalSource, /2026-09-11-cct-commerce-oe-pricing-model/u);
+  assert.match(logicalSource, /CURRENT_IMPLEMENTATION/u);
+  assert.match(physicalSource, /"tables": 15,[\s\S]*"fields": 249,[\s\S]*"uniqueIndexes": 24,[\s\S]*"accessIndexes": 12,[\s\S]*"relations": 15,[\s\S]*"diagramGroups": 4/u);
   assert.doesNotMatch(logicalSource, /当前已生成(?:资产|模型|的 PDManer).*14 张?表\s*\/\s*223 字段/u);
   assert.match(logicalSource, /当前 Vault V1.*Protect\/Reveal/u);
   assert.doesNotMatch(logicalSource, /Token\/Binding|Retire 未被业务行引用的 Binding/u);
