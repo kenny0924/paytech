@@ -8,6 +8,7 @@ alwaysApply: false
 
 When creating or modifying Java source:
 
+- Always use braces for `if`, `else if`, and `else` branch bodies, even for a single statement or guard clause, as required by [Development Conventions, section 5](../../agent-docs/DEVELOPMENT_CONVENTIONS.md#5-事务与代码可读性).
 - Treat the repository-root `eclipse-codestyle.xml` as the authoritative formatter configuration.
 - Use its `P3C-CodeStyle` profile; do not substitute IDE defaults or approximate the style manually.
 - Format every Java file changed by the current task before running the final build and tests.
