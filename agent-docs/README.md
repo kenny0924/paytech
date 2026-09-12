@@ -17,6 +17,7 @@
 1. 根目录 `AGENTS.md`
 2. [DOCUMENT_GOVERNANCE.md](./DOCUMENT_GOVERNANCE.md)
 3. [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md)
+4. 新需求交付读取 [REQUIREMENT_DELIVERY_WORKFLOW.md](./REQUIREMENT_DELIVERY_WORKFLOW.md)，先核对评审状态和适用阶段，再按阶段交付并等待用户确认。
 
 再根据任务读取下表中的专项文档。
 
@@ -29,6 +30,8 @@
 - **中间件测试与服务启动（全项目）：** [UNIT_TEST_GUIDE 第 5、7 节](./UNIT_TEST_GUIDE.md#5-测试分层)。
 - **固定测试配置与动态注入（全项目）：** [UNIT_TEST_GUIDE 第 12 节](./UNIT_TEST_GUIDE.md#12-测试基类与配置)。
 - **Superpowers 显式授权、提交及外部操作授权（全项目）：** [AGENTS.md 的 Change discipline](../AGENTS.md#change-discipline)。
+- **需求交付与逐阶段确认（全项目）：** [需求交付流程与阶段确认](./REQUIREMENT_DELIVERY_WORKFLOW.md)；动作授权仍由根 `AGENTS.md` 拥有。
+- **单项需求目录与检索（全项目）：** [requirements/README.md](../requirements/README.md)，按 `YYYYMMDD/系统-改动内容` 归集需求、技术方案及 SQL 材料；全局需求目录和时序的权威保持不变。
 - **最小调用方参数、可信身份/Channel 和外部 Request ID（仅 Client API）：** [Gateway 公共合同第 4、5、10 节](../docs/superpowers/specs/2026-09-05-client-api-gateway-design.md#4-外部请求合同)。
 - **公共合同与系统文档的维护分工（全项目）：** [DOCUMENT_GOVERNANCE 第 3.6 节](./DOCUMENT_GOVERNANCE.md#36-公共合同与系统文档分工)。
 
@@ -36,6 +39,7 @@
 
 | 任务类型 | 必须读取 | 适用范围 |
 |---|---|---|
+| 新需求、功能调整或跨系统改造的评审、研发、test 部署与交付 | [需求交付流程](./REQUIREMENT_DELIVERY_WORKFLOW.md) + [逐阶段确认决策](./decisions/2026-09-11-staged-requirement-delivery.md) + 本表涉及的专项文档 | 每阶段交付可审阅成果后停下等待用户确认；具体阶段先确认，单阶段请求按用户范围处理；不自动授权 SQL、部署或提交 |
 | 编写或重构 Java、配置或测试代码；调整命名、注释、异常、枚举、事务、依赖声明顺序、公共包或 Foundation 实现习惯 | [DEVELOPMENT_CONVENTIONS.md](./DEVELOPMENT_CONVENTIONS.md) + 对应专项文档 | 项目级稳定编码习惯；不替代业务事实、技术选型和专项测试/补偿规则 |
 | 实现或迁移 RFC 8785 规范 JSON bytes、内容 Hash/签名输入、Risk Canonicalizer，或调整 Foundation JSON Object/Number Profile | [Object Profile 决策](./decisions/2026-09-07-foundation-rfc-8785-json-object-profile.md) + [完整设计](../docs/superpowers/specs/2026-09-07-foundation-rfc-8785-json-canonicalization-design.md) + [实施计划](../docs/superpowers/plans/2026-09-07-foundation-rfc-8785-json-canonicalization.md) + [TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md) + [DEVELOPMENT_CONVENTIONS.md](./DEVELOPMENT_CONVENTIONS.md)；测试另读 [UNIT_TEST_GUIDE.md](./UNIT_TEST_GUIDE.md) | Foundation 只产生受限 Profile 的规范 bytes；业务 Owner 继续拥有 Projection、归一化、Hash Schema、存储、重放和签名语义；无消费需求的服务不接入；实现、验证、制品发布和部署状态只读 `CURRENT_IMPLEMENTATION.md` |
 | 创建、修改或解析第一方 HTTP 4xx/5xx；调整 RFC 9457-based Problem Body、Request ID、错误时间、字段错误、MVC/Gateway/BFF/Vault 错误出口或内部 HTTP Client | [全系统 Problem Profile 决策](./decisions/2026-09-06-system-wide-rfc-9457-problem-details.md) + [完整设计](../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md) + [DEVELOPMENT_CONVENTIONS.md](./DEVELOPMENT_CONVENTIONS.md)；测试另读 [UNIT_TEST_GUIDE.md](./UNIT_TEST_GUIDE.md) | 所有第一方 JSON HTTP API 的唯一错误 Wire Contract；业务系统仍只拥有自己的业务 Code/Status，实现状态只读当前状态台账 |

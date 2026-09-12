@@ -61,7 +61,7 @@ consumer_context_id|消费者上下文标识|订单当前消费者受保护上�
 consumer_contract_id|消费者合同标识|订单呈现给消费者的不可变合同文件记录标识
 consumer_country_code|消费者国家代码|订单创建时冻结的消费者 ISO 3166-1 alpha-2 国家代码
 consumer_profile_vault_token|消费者资料 Vault Token|指向 Vault 中姓名与完整账单地址等消费者资料的稳定不可枚举 Token
-consumer_reference|消费者业务引用|Client 命名空间内的非 PII、不透明消费者业务引用；不得提交 Email、Phone、证件号等个人原值
+consumer_reference|消费者业务引用|Client 命名空间内可选的非 PII、不透明消费者业务引用；当前 Customer 无此输入时为空，不生成假值；不得提交 Email、Phone、证件号等个人原值
 consumer_terms_content_hash|消费者条款内容哈希|订单法律上下文冻结的消费者条款文件内容哈希
 consumer_terms_document_id|消费者条款文档标识|订单法律上下文冻结的消费者条款业务文档标识
 consumer_terms_file_id|消费者条款文件标识|订单法律上下文冻结的消费者条款不可变文件标识

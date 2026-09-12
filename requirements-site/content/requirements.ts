@@ -491,6 +491,7 @@ export const DECISIONS = [
   "一个阿联酋 Operating Entity 先运行，数据模型预留多主体。",
   "Client 可以是中国个人，不在核心模型中强调具体行业或作者身份。",
   "采用平台托管跳转式 Checkout。",
+  "2026-09-12 已确认 Customer Checkout 沿用 /customer-gateway-api/v1/checkouts/{checkoutToken}：查询、保存 Consumer、支付准备归 Commerce，统一 payments 入口归 Payment，一次请求同时提交卡信息与当前合同确认；另有 Payment 原提交查询。Payment 调用 Commerce 保存三份接受/网络证据并取得提交回执后继续支付，Commerce 不反向登记 Payment；不提供独立公开 /card 或 acceptances。Customer 不携带订单版本，legal 返回冻结文档链接，可信 Channel 仍为 CHECKOUT，不新增 Checkout BFF。Card 采集/卡库/平台 Token/受控用卡归 Payment 内一个业务模块，NI 为首个收单 Provider；Commerce 不接卡原值。一次请求不形成跨库事务，所有外呼在本地事务外，接受可成功而支付失败，重试复用原键并防止重复扣款。字段和数据设计见 requirements/20260912/payment-自建CardVault/api-contract.md 及 data-design.md，订单/Consumer/legal 见 commerce-CustomerCheckout接口设计。前序 Hosted Session 和浏览器先登记再发卡的方案已被取代，模块不自动形成运行时隔离，接口/模型/入口部署状态仍按阶段交付。",
   "第一版只开放 USD，一次性支付，金额模型原生支持多币种。",
   "接入多个 Provider/MID，但路由不得突破其获批能力。",
   "Client 和内部运营均可发起全额或部分退款。",

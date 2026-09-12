@@ -8,7 +8,7 @@
 
 Code-MoR 是 PayTech 的 Merchant of Record 平台。Client 将 Consumer 引导到 Hosted Checkout，平台在已分配的 Operating Entity 下选择支付渠道，保存交易及合规证据，并完成多参与方计价、复式记账、对账、退款、争议和主动出款。
 
-当前 MVP 聚焦 USD、一次性支付和 Hosted Checkout，同时保留多币种金额模型。项目不是通用电商、银行核心、支付卡数据仓库或自动化税务/资金运营平台。
+当前 MVP 聚焦 USD、一次性支付和 Hosted Checkout，同时保留多币种金额模型。项目不是通用电商、银行核心或自动化税务/资金运营平台；卡数据能力仅服务于第6节路由的已批准Payment专项范围。
 
 ## 2. 核心参与方与术语
 
@@ -58,7 +58,7 @@ Code-MoR 是 PayTech 的 Merchant of Record 平台。Client 将 Consumer 引导�
 
 ## 6. 安全与隐私
 
-- PAN、CVV/CVC、完整磁道和 PIN/PIN Block 不得进入 Code-MoR 服务、数据库、事件、日志、文件或 Vault。卡片采集与 Tokenization 留在 Provider 托管页面。
+- 2026-09-12 已确认[自建 Payment Card 模块](../requirements/20260912/payment-自建CardVault/requirement.md)，取代只能由Provider托管采集的方向。原始卡处理仅限拟建设的Payment统一Customer支付入口与Card模块；同请求的协议确认由Payment通过独立内部合同交给Commerce，Commerce提交接受事实后返回。Payment Card模块按专项加密设计保存PAN，CVV仅瞬时处理且不持久化/生成摘要。Commerce、其他通用支付接口和现有非卡Vault不接收卡原值，完整磁道及PIN/PIN Block继续排除；模型、真实卡上线与安全评估状态不能从模块决定推断。
 - Vault 只保护已批准的可恢复非卡敏感值。完整 Token 或明文不得进入外部 API、普通日志、MQ 或 BCR。
 - Commerce 的网络证据留在 Commerce 并执行最小访问、审计和禁止外发；它不进入 Vault。
 - MVP 不实现通用自动 Retention、Legal Hold、归档、匿名化或销毁。在真实受监管数据上线前必须另行完成法律/合规设计和验证。

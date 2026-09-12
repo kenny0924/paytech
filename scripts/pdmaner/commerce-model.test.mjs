@@ -42,9 +42,9 @@ const artifactsReady = requiredArtifacts.every(existsSync);
 const expectedTemplateDigest =
   "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 const expectedModelDigest =
-  "93087684ff8fc86f399057843b0620a5517f2135f773afa293946073c0e338cb";
+  "4f0933d4bbb6478c0abe7ad9b4a579f4ac2f791ab572722c9ae71ad1a0d5332f";
 const expectedStructuralDigest =
-  "8abcd8c40cebc486fdfcec3b97df981dfad0e9ab63d9d5fecffcce3f22c6da16";
+  "27c40ec1214547ff13e8dfee0da06a30961ea570d3c585b42a255d442c3362eb";
 const idPattern =
   /^[A-F0-9]{8}-[A-F0-9]{4}-5[A-F0-9]{3}-[89AB][A-F0-9]{3}-[A-F0-9]{12}$/u;
 
@@ -208,7 +208,7 @@ update_time DATETIME(6) NN
 [t_consumer_context]
 consumer_context_id BIGINT NN
 order_id BIGINT NN
-consumer_reference VARCHAR(128) NN
+consumer_reference VARCHAR(128) N
 email_vault_token VARCHAR(128) NN
 phone_vault_token VARCHAR(128) N
 consumer_profile_vault_token VARCHAR(128) NN
@@ -1240,7 +1240,7 @@ artifactTest("version, immutability, audit deferral, Vault and forbidden boundar
     "update_time",
   ]);
   const consumerReference = context.fields.find((field) => field.defKey === "consumer_reference");
-  assert.deepEqual([consumerReference.type, consumerReference.len, consumerReference.notNull], ["VARCHAR", 128, true]);
+  assert.deepEqual([consumerReference.type, consumerReference.len, consumerReference.notNull], ["VARCHAR", 128, false]);
   assert.match(consumerReference.comment, /Client 命名空间.*非 PII.*不得提交.*Email.*Phone.*证件号/u);
   assert.equal(context.fields.find((field) => field.defKey === "phone_vault_token").notNull, false);
   assert.equal(context.indexes.length, 1, "Consumer Context 不得保留普通分析索引");

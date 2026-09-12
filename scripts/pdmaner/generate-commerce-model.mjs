@@ -208,7 +208,7 @@ update_time DATETIME(6) NN
 [t_consumer_context]
 consumer_context_id BIGINT NN
 order_id BIGINT NN
-consumer_reference VARCHAR(128) NN
+consumer_reference VARCHAR(128) N
 email_vault_token VARCHAR(128) NN
 phone_vault_token VARCHAR(128) N
 consumer_profile_vault_token VARCHAR(128) NN

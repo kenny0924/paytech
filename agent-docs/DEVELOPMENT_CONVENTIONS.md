@@ -164,10 +164,15 @@ Processor 的主处理方法按以下顺序展示用例，不强制每个阶段�
 
 ## 6. Compensation Event 的当前精简习惯
 
+事件定义与纯工厂的归属依据见 [2026-09-12 决定](./decisions/2026-09-12-handler-owned-compensation-event-factory.md)。以下为项目级编码规则，具体事件身份与恢复合同仍由补偿任务规范及业务 Owner 管理。
+
 涉及补偿时还必须读取 `COMPENSATION_EVENT_GUIDE.md` 和 `paytech-foundation/README.md`。指南中的业务事务、`afterCommit`、Claim/Lease、至少一次、线程池、错误分类、人工恢复、RabbitMQ 与 XXL-Job 职责继续有效；其中所有依赖 `execution_type`、`source_type`、`source_id`、`source_version`、`schema_version`、`payload_hash`、Canonical Envelope、`LocalCompensationEventHandler`、`RabbitMqEventRoute` 或 `mor.compensation.*` 的表/API/配置/测试描述，已被当前精简实现和下列规则替代，不得恢复：
 
 - 一个 `CompensationEventHandler` 只完成一件事，不再使用 `CompensationExecutionType` 区分执行方式。
-- Handler 运行时以 `eventKey` 和 `subEventType` 查询宿主业务数据库；`payloadJson` 可为空，只保存确实没有其他持久化来源的最小补充数据，不能承载完整业务上下文。
+- **事件定义归执行入口。** 对应 Handler 维护自己的事件类型及纯静态 `buildEvent(业务标识, 必要参数)`，由它封装登记请求的协议字段；Domain Models 保留业务命令与结果，不集中存放 Handler 专属补偿常量。仅为构造一项任务不另建一层 Factory、Service 或 Processor。
+- **调用方只提供业务输入。** 业务标识和已冻结参数由调用方传入；工厂只返回不可变登记请求，可执行必要的纯内存参数校验，不查询数据库、生成新的业务身份、登记任务、调度线程或调用下游，也不依赖 Handler 实例与 Spring Bean 状态。
+- **构建、登记、执行各守边界。** 同一服务、同一编排模块内，Processor 可直接调用 Handler 的纯事件工厂；任务仍在本地业务事务中通过 Registrar 登记，由 Foundation 在提交后唤醒执行器。不得注入 Handler 实例或直接调用 `handle()` 代替可靠调度；包与模块边界见 `JAVA_PROJECT_STRUCTURE.md` 第 5.6 节。
+- Handler 运行时以 `eventKey` 及有业务含义的 `subEventType` 查询宿主业务数据库；无业务子类型时按 `COMPENSATION_EVENT_GUIDE.md` 第 4 节使用占位值。`payloadJson` 可为空，只保存确实没有其他持久化来源的最小补充数据，不能承载完整业务上下文。
 - 历史 `sourceId` / `sourceType` 命名分别收敛为 `eventKey` / `subEventType`；身份字段和接口参数顺序固定为 `eventKey, eventType, subEventType`。
 - 不再保留 `sourceVersion`、`schemaVersion`、Canonical Envelope 或 Payload Hash。
 - Foundation 只要求宿主创建 `t_compensation_event`。人工恢复审计的存储/API/权限由宿主按需实现，不因为引入 JAR 自动要求额外业务表。

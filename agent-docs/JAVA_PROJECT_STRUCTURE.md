@@ -390,7 +390,7 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 - 复杂用例的默认事务边界位于 Processor；省略 Processor 的简单一致性读由 Domain Service 持有只读 `TransactionTemplate`。Controller 不持有事务边界。
 - 上述为 HTTP 用例分层规则；补偿 Handler 的任务编排见第 5.6 节。所有入口都遵守 [事务公理](./DEVELOPMENT_CONVENTIONS.md#5-事务与代码可读性)：事务内只进行本服务数据库操作，不得直接或间接调用外部服务。
 - 需要 Foundation 资源锁的写用例把 `@ResourceLock` 标在启动期可发现、非懒加载 singleton、非 `final` Spring Bean 的公开、非 `static`、非 `final` Processor 具体实现方法，而不是只标接口；override 必须在具体方法重复声明。锁 Aspect 必须包住该方法内部完整的 `TransactionTemplate`，确保全部 Redis 锁先获得、数据库事务后开始，提交或回滚后才逆序释放。Controller、Domain Service、Repository、Mapper、private/final 方法、同类自调用、直接 `new` 的对象、scoped/lazy Bean、异步返回方法和已有外层事务的调用点都不是支持入口；多个资源必须在该用例入口一次声明完整，不能靠嵌套代理调用拼装锁集合。启动门禁同时验证实际代理包含适用的 Resource Lock Advisor，且其顺序位于适用事务 Advisor 外层。
-- Processor 只能调用 Domain Service、按下述约束保持无副作用的 Validator 或明确的应用端口，不得直接调用 Repository、Mapper 或外部 SDK。
+- Processor 的业务调用通过 Domain Service、按下述约束保持无副作用的 Validator 或明确的应用端口，不得直接调用 Repository、Mapper 或外部 SDK。同一服务、同一编排模块内的补偿 Handler 纯静态事件工厂是第 5.6 节规定的窄例外。
 - Processor 的请求和结果使用应用语义，不依赖 `ResponseEntity`、HTTP Header、Servlet 或客户端代理类型；协议参数在 Controller/Web 基础设施完成解析和转换。
 - 一个命令只由一个核心系统拥有。BFF 和 Gateway 不承担该命令的业务编排。
 - 方法使用卫语句，嵌套不超过三层，单个方法原则上不超过 30 行。
@@ -456,6 +456,7 @@ Domain Service → Repository interface → RepositoryImpl → Mapper → 本系
 ### 5.6 MQ 与业务事件
 
 - 补偿 Handler 可以直接承担任务元数据校验、本地事务准备、事务外下游操作、本地事务结果落库与补偿结果返回，不单独增加只为该 Handler 服务的 Processor。Handler 依赖 Domain Service、Integration Port 和事务执行器，业务规则仍归 Domain Service；不直接访问 Repository/Mapper，不自行创建重试线程或替代 Foundation Claim/Lease。
+- 同一服务、同一编排模块内的 Processor 可引用 Handler 的纯静态 `buildEvent(...)` 构造登记请求，定义归属与纯函数要求见 [开发约定第 6 节](./DEVELOPMENT_CONVENTIONS.md#6-compensation-event-的当前精简习惯)。该例外仅允许构造数据，不允许注入、创建 Handler 实例或直接调用其执行入口，也不允许业务模块依赖 `web/ext`；架构检查应区分纯工厂引用与 Handler 实例依赖。
 - 存在真实 MQ 入站能力时，`ext/mq` 负责验签/反序列化之后的事件接收、幂等入口和调用领域能力。
 - 业务状态、状态历史和 `compensation_event` 在用例入口明确编排的本地事务内原子提交；MQ 发布只能由事务提交后的执行器完成，不得出现数据库回滚但消息已发送。事务边界完整遵守 `DEVELOPMENT_CONVENTIONS.md` 第 5 节公理。
 - 正常路径通过 `afterCommit` 唤醒本地 Dispatcher；XXL-Job 只做兜底扫描、分片或串行隔离，数据库 Claim/Lease/Version 仍是多实例互斥边界。

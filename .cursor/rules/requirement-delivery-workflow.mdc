@@ -1,0 +1,13 @@
+---
+description: Route requirement delivery through reviewed stages with user confirmation at each boundary
+alwaysApply: true
+---
+
+# 需求交付与阶段确认
+
+- 新需求先读 `agent-docs/REQUIREMENT_DELIVERY_WORKFLOW.md`，核对评审状态并约定本次适用阶段。
+- 需求材料按 `requirements/README.md` 登记到 `requirements/YYYYMMDD/<系统>-<改动内容>/`；已有正式文档与执行 SQL 通过链接关联。
+- 每阶段交付结果、证据、遗留项及下一阶段范围后停下等待用户确认，不后台执行下一阶段。
+- 阶段内已授权的普通编辑和检查不逐项请示；阶段变更与动作授权以根 `AGENTS.md` 的 `Change discipline` 为唯一权威。
+- SQL、部署、提交、推送等须在明确范围内获得授权；“开始做”、沉默和超时不是全流程授权。
+- 本文件仅做入口薄投影；不更改 Superpowers 显式授权规则，不记录具体需求的实现或部署状态。

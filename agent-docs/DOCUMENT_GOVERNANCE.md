@@ -27,8 +27,9 @@ Code-MoR 不再用“所有文档排成一条绝对优先级”的方式解决�
 | 主题 | 唯一现行权威 | 其他文档的职责 |
 |---|---|---|
 | 文档权威、状态与归档 | 本文 | 入口只链接本文 |
+| 单项需求文件夹、命名及材料索引 | [`requirements/README.md`](../requirements/README.md)，按用户指定的日期/系统-改动内容结构组织 | `requirement.md`、`technique.md` 和 `db/` 归集单次需求材料；已有正式合同、全局需求目录、服务模型/SQL 及当前状态台账仍按各自主题确定权威，不因建目录而复制或迁移 |
 | 当前实现、验证、部署和待迁移项 | [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) | README 提供证据，不复制全局状态矩阵 |
-| Agent/Superpowers 工作流及提交、推送、部署等动作授权 | 根 [`AGENTS.md`](../AGENTS.md) 的 `Change discipline` 是唯一现行权威；[`2026-09-05-superpowers-and-service-interface-policy.md`](./decisions/2026-09-05-superpowers-and-service-interface-policy.md) 记录 Superpowers 的确认理由与取代范围 | `DEVELOPMENT_CONVENTIONS.md` 和 Cursor rule 只做开发侧薄投影 |
+| Agent/Superpowers 工作流、阶段确认及 SQL、提交、推送、部署等动作授权 | 根 [`AGENTS.md`](../AGENTS.md) 的 `Change discipline` 是唯一现行权威；[逐阶段确认决策](./decisions/2026-09-11-staged-requirement-delivery.md)与[Superpowers 决策](./decisions/2026-09-05-superpowers-and-service-interface-policy.md)分别记录确认理由和取代范围 | [`REQUIREMENT_DELIVERY_WORKFLOW.md`](./REQUIREMENT_DELIVERY_WORKFLOW.md)提供公共阶段、交付物与评审模板，不独立授权动作；`DEVELOPMENT_CONVENTIONS.md` 和 Cursor rule 只做开发侧薄投影 |
 | 项目背景、六系统职责和术语 | [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) | 专项文档只补充本领域事实 |
 | 编码、命名、异常、事务和通用依赖习惯 | [`DEVELOPMENT_CONVENTIONS.md`](./DEVELOPMENT_CONVENTIONS.md) | Cursor rule 仅薄投影 |
 | Java 模块、分层、包、HTTP API 和跨模块边界 | [`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) | 系统模块设计只记录本系统映射 |
@@ -103,7 +104,7 @@ Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实�
 - 跨系统共同遵守的接口、Header、错误和信任边界，由该主题的公共文档 Owner 统一维护。各系统文档链接该权威，只补充本系统的实现映射、配置、运行与验证证据，不复制或自行改写公共合同。
 - 系统任务发现公共合同缺口或冲突时，应向主题 Owner 提供差异、影响和建议；公共合同变更由负责该主题的任务收敛后同步，不能在各系统中分别形成不同版本。用户未要求系统任务维护公共文档时，该任务只维护本系统文档并交接公共变更需求。
 - 公共文档不等于全项目无差别适用：必须标明全项目、跨系统协议面或单系统范围。例如 Client API 的最小输入与 Request ID 接纳合同不能自动推广到 Operations。
-- 某次任务由谁负责、先做代码和测试、交付顺序或时限属于计划/交接记录，不固化为长期公共规范。当前实现、验证和部署状态仍只由状态台账及组件证据承载。
+- 某次任务由谁负责、具体系统的交付顺序或时限属于计划/交接记录，不固化为长期公共规范。跨任务通用的阶段与确认模板见[需求交付流程](./REQUIREMENT_DELIVERY_WORKFLOW.md)，具体任务的适用阶段和用户确认记录留在任务计划或会话。当前实现、验证和部署状态仍只由状态台账及组件证据承载。
 
 ## 4. 更新规则
 
@@ -116,6 +117,8 @@ Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实�
 7. 修改共享文档前检查工作区差异并使用逐段补丁；不得覆盖其他任务的未提交内容。
 
 ## 5. 当前已冻结的冲突结论
+
+2026-09-11 用户明确要求后续需求逐阶段交付并停下等待确认，见[逐阶段确认决策](./decisions/2026-09-11-staged-requirement-delivery.md)。[公共流程](./REQUIREMENT_DELIVERY_WORKFLOW.md)中的八阶段划分暂为评审稿；根 `AGENTS.md` 继续拥有动作授权，Superpowers 显式授权规则保持。
 
 2026-09-05 的 DataObject、Vault V1、Foundation 测试基础设施、Finance 手工缴税和历史治理决定见 [`decisions/2026-09-05-document-governance-and-conflict-resolution.md`](./decisions/2026-09-05-document-governance-and-conflict-resolution.md)。该记录是这些具体冲突的裁决来源。
 

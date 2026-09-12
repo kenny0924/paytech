@@ -12,6 +12,7 @@ alwaysApply: false
 - 涉及数据库、Redis 或 MQ 时启动被测服务/最小切片的 Spring 上下文，HTTP 测试同时启动随机端口服务；固定测试配置集中在 `application-auto.yml`，辅助类复用 Spring 管理的客户端，不直接读取环境变量或独立建默认连接。动态注入仅用于运行时端点、隔离标识和明确场景变量。
 - 测试按可执行业务入口组织：HTTP/API、模块公开 Service/Domain Service 接口、MQ Listener/Event Handler、Job Handler、Compensation Event Handler，或公开静态/纯 Java 合同；不给每个 Service 方法或内部类机械创建孤立测试。
 - Handler 与 HTTP Controller 同为独立入口；新增或修改业务 Handler 必须有独立入口测试类，不能只依赖 HTTP 间接覆盖。保留真实本地链路，任务重试/Claim/Lease/回写场景经过生产 Dispatcher/Scanner；事务观察只放测试侧。
+- 补偿事件重构时，正常登记复用 Handler 工厂，同步扫描、数据库观察与清理中的事件身份；负例只改变待验证字段，避免旧事件类型使其他校验分支被提前跳过。完整要求见[测试规范第 5.1 节](../../agent-docs/UNIT_TEST_GUIDE.md#51-以可执行入口组织测试)。
 - HTTP 经过真实 Controller；MQ 通过测试 Broker 进入生产 Listener；Job 和 Compensation 从生产 Handler/Dispatcher 显式触发并保留适用的 Claim/Lease、幂等、事务和回写；公开静态/纯函数直接调用且不启动 Spring。不得绕过入口调用下层 Service 冒充入口测试。
 - 同一入口下用彼此独立的测试方法按风险覆盖正常、参数/边界、无数据、状态拒绝、幂等/重放、并发/事务、依赖失败及正反副作用；不机械套用无关场景，不把多种路径堆进一个测试，也不能只测 happy path。
 - 数据库、Redis、RabbitMQ 只复用开发者已启动的仓库 `local-environment`；测试不得使用 Flyway、Liquibase、Testcontainers，或创建、停止、重建容器。

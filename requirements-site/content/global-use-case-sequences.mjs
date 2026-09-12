@@ -104,7 +104,7 @@ export const GLOBAL_USE_CASE_SEQUENCES = {
     ],
   },
   "E2E-02": {
-    summary: "客户系统创建 Checkout，消费者完成支付，支付事实驱动订单和财务入账。",
+    summary: "当前已确认的新写时序：基础Checkout创建 → Commerce查询/保存Consumer → 支付准备冻结OE/合同/金额和Intent → 展示三份legal冻结文档链接 → 一次POST payments向Payment提交卡信息与合同确认 → Payment在事务外调用Commerce保存三接受及网络证据 → Commerce提交后直接返回 → Payment继续原支付并返回3DS动作或结果 → 查询原提交及Commerce订单状态。三个基础操作归Commerce，payments和原提交查询归Payment；不提供独立公开/card，Commerce不反向登记Payment。卡采集/卡库/平台Token/受控用卡归Payment独立Card模块，Commerce不接卡原值；原幂等键防重复，接受成功不代表支付成功，所有外呼都在本地事务外。字段/数据见requirements/20260912/payment-自建CardVault，订单合同见commerce-CustomerCheckout接口设计。下列消息保留前序Legacy Scope Wire/Provider托管时序供迁移核对，不代表当前目标或已部署流程。",
     participants: ["client_system", "consumer", "api_gateway", "client_api", "platform", "commerce", "client_contract", "risk", "hosted_checkout", "payment", "acquirer", "provider_endpoint", "finance", "vault"],
     messages: [
       { from: "client_system", to: "api_gateway", label: "POST /api/v1/checkouts；Bearer Credential + Idempotency-Key；Body 只含 clientOrderId、currency、consumerCountryCode、可选 expiresAt 和 items", kind: "sync" },

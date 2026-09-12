@@ -1,6 +1,6 @@
 # 本地补偿任务规范
 
-最后更新：2026-09-05
+最后更新：2026-09-12
 
 状态：Confirmed current contract。六库旧模型的传播进度见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)；本文规则更新不代表 PDManer、SQL 或运行数据库已经迁移。
 
@@ -114,9 +114,13 @@ Handler 返回确定成功后删除该记录。唯一索引只在记录存在期
 
 ## 4. Handler 与 MQ 边界
 
+登记请求的定义归属和 `buildEvent(...)` 纯工厂写法见 [开发约定第 6 节](./DEVELOPMENT_CONVENTIONS.md#6-compensation-event-的当前精简习惯)；本节拥有任务身份与执行合同。
+
 `paytech-compensation-event` 只负责本地记录、事务提交后唤醒、Claim/Lease、Handler 调度、重试和人工恢复状态迁移。它不定义 `execution_type`，也不内置 RabbitMQ Route、`RabbitTemplate`、Canonical Envelope 或 Publisher Connection。每个 `event_type` 只对应一个宿主 Handler：
 
 - Handler 接收 `event_key`、`event_type`、`sub_event_type` 和可选最小 Payload；正常路径使用这些身份字段查询本服务权威数据库后执行一项明确动作。
+- 没有业务子类型的任务，由工厂统一使用 `"-"` 作为 `sub_event_type` 占位；Handler 按 `event_key` 恢复事实，不为占位值设置业务分流或额外拒绝条件。确有子类型语义的任务按其批准合同校验和分流；Foundation 仍校验身份字段格式并使用完整三元组实现唯一性与 Claim。
+- 移动事件常量或工厂的位置默认不改变持久化身份值。修改 `event_type` 或 `sub_event_type` 取值时，须同步登记、Handler 注册、扫描过滤、重新登记、测试和已有待执行任务的恢复安排；不得让旧任务因代码改名而失去处理入口。
 - Handler 确定成功时返回 `SUCCESS`；不可重试的业务失败抛出 `FailException` 或返回终态失败；未知或暂时性错误抛出 `ErrorException` 或返回可重试失败。
 - `CompensationExecutionPolicy` 按 Handler 定义 timeout、最大执行次数、初始/最大退避、倍数和抖动，并在启动时复制为不可变快照。
 - timeout 只会请求中断 Handler，不能保证外部副作用已经停止。所有 Handler 仍必须幂等；外部结果未知时必须先查询或转人工恢复，不能直接假定失败后重放。

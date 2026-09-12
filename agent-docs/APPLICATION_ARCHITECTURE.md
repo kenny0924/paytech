@@ -133,18 +133,23 @@ The BFF is different from API Gateway:
 
 ### Hosted Checkout and Consumer Service Portal
 
-`checkout-web` primarily calls the Commerce Checkout API through Gateway:
+`checkout-web` uses one public Checkout path family with operations routed to their business Owners:
 
 ```text
-checkout-web
-  -> API Gateway
-    -> Commerce Checkout API
-      -> Risk & Compliance (internal synchronous decision)
-      -> Payment Orchestration (internal payment command)
-      -> Platform Support (internal document/support capability)
+checkout-web -> API Gateway
+  -> Commerce: GET checkout, PUT consumer, POST preparation
+  -> Payment: POST payments (card + legalConfirmation), GET original submission
+       -> Commerce: internal access / legal confirmation / confirmation query
+       -> NI: original payment execution, outside database transactions
 ```
 
-Suggested route family:
+The [Customer Checkout requirement](../requirements/20260912/commerce-CustomerCheckout接口设计/technique.md) retains the four basic paths under `/customer-gateway-api/v1/checkouts/{checkoutToken}`. The confirmed [Payment Card amendment](../requirements/20260912/payment-自建CardVault/requirement.md) moves only the public `POST .../payments` Owner to Payment: one request carries both card input and the current legal confirmation. Payment calls Commerce with only the confirmation and trusted request evidence. Commerce owns the three immutable acceptance records and their network evidence, commits them locally and returns; it never calls Payment back to register or execute this submission. Payment then continues the original payment outside database transactions. The [API/data draft](../requirements/20260912/payment-自建CardVault/api-contract.md) also defines one Payment submission query, for five public operations in total. The earlier separate public `/card` and internal Payment registration proposals are superseded.
+
+Commerce owns order, Consumer, preparation and legal facts, and returns payment summaries; Payment owns submission, card handling, execution and constrained NI 3DS instructions. Legal documents remain frozen-file links; Customer inputs do not carry an Order version. The trusted Channel is CHECKOUT, unrelated to Platform's human CUSTOMER Realm. No separate Checkout BFF or Gateway business orchestration is introduced. One Pay request does not create a distributed transaction: accepted terms can remain valid after payment failure, while retries preserve the original command and prevent duplicate funds actions.
+
+The Payment Card business module owns collection handling, encrypted card storage, platform tokens and controlled Provider card use. NI remains the first acquiring Provider. A Maven module is not proof of runtime isolation or PCI compliance; actual card-data controls and deployment follow the linked design. Public Gateway mapping and activation remain separate delivery work.
+
+Earlier suggested route families (historical examples; do not register them alongside the confirmed Customer family):
 
 ```text
 /checkout/v1/sessions/**
@@ -153,7 +158,7 @@ Suggested route family:
 /checkout/v1/documents/**
 ```
 
-Commerce is the external owner of the Checkout flow. The browser must not call Risk, Finance, Client & Contract or Vault directly. Commerce owns the single cancel command; Gateway/Checkout Web do not call Payment to void an authorization or Finance to reverse funds. Card entry and tokenization use the selected Provider SDK or Hosted Fields so PAN, CVV/CVC, full track data and PIN data do not enter a Code-MoR backend or Vault. Payment receives only the Provider token and approved card descriptors.
+Commerce remains the Owner of Checkout order/Consumer/legal facts; Payment is the public payment-submission Owner for this confirmed Card use case. The browser must not call Risk, Finance, Client & Contract or Vault directly. Commerce owns cancellation; Gateway/Checkout Web do not call Payment to void an authorization or Finance to reverse funds. Raw card input is confined to the approved Payment entry and Card module; Commerce and the existing non-card Vault do not receive it. CVV remains transient, and full track/PIN data remain excluded.
 
 ### Client Console
 
@@ -280,7 +285,7 @@ The `compensation-event` component has no network endpoint. It runs inside each 
 | Partner Console BFF | Partner Console only | No | Stateless Partner-channel adapter; availability belongs in the status ledger |
 | Operations Console BFF | Operations Console only | No | Stateless Operations-channel adapter; availability belongs in the status ledger |
 | Commerce | Scoped Checkout endpoints | Client System | Exposed |
-| Payment Orchestration | No general browser API | Provider callbacks; narrowly scoped Client API if required | Restricted exposure |
+| Payment Orchestration | Unified Customer payment submission and original-submission query under the approved Card scope | Provider callbacks; narrowly scoped Client API if required | Restricted exposure; implementation and activation follow the Card design |
 | Finance | Browser uses BFF | Client System | Exposed for machine API |
 | Client & Contract | Browser uses BFF | Optional Client profile API | Expose only required machine endpoints |
 | Platform Support | Browser uses BFF | API key/Webhook management where required | Restricted exposure |
