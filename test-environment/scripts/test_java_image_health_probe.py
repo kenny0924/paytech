@@ -19,7 +19,7 @@ COMPOSE_APPLICATIONS = TEST_ENVIRONMENT / "compose.applications.yaml"
 READINESS_URLS = (
     "http://127.0.0.1:18104/actuator/health/readiness",
     "http://127.0.0.1:18106/platform-support/actuator/health/readiness",
-    "http://172.30.73.22:18201/actuator/health/readiness",
+    "http://127.0.0.1:19201/actuator/health/readiness",
     "http://127.0.0.1:19080/actuator/health/readiness",
 )
 
@@ -762,7 +762,7 @@ class JavaImageHealthProbeTest(unittest.TestCase):
                     String[] validUrls = {
                         "http://127.0.0.1:18104/actuator/health/readiness",
                         "http://127.0.0.1:18106/platform-support/actuator/health/readiness",
-                        "http://172.30.73.22:18201/actuator/health/readiness",
+                        "http://127.0.0.1:19201/actuator/health/readiness",
                         "http://127.0.0.1:19080/actuator/health/readiness"
                     };
                     for (String value : validUrls) {

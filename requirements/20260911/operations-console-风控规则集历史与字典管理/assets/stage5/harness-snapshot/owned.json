@@ -1,0 +1,65 @@
+{
+  "codes": [
+    "RCO16_BROWSER_2962C89C70A5",
+    "RCO16_BROWSER_97A0B68C894C"
+  ],
+  "keys": [
+    "e8542c17-40c5-4ef8-aadd-fc547c5b6ddd",
+    "3dc446cd-e6be-4ed3-b863-e5d90bff8eb0",
+    "5830ad7c-6a8b-4bd3-8080-5b3be8887427",
+    "7849fe3f-3802-49c9-b044-25d1d2d1ceda",
+    "10ef5d89-cfe3-4ae2-aed8-4a0c44518c8e",
+    "b599203b-6dfb-475a-a48c-740bd88635e5",
+    "a565acf4-4f82-40e0-8263-02ca6e916b6c",
+    "b768fd81-6a3d-4fdb-b5a4-41f063963a4a",
+    "6e7ba491-a38c-485a-a3e6-4f81cbb53b81",
+    "073e3d37-2827-4831-871c-6b5fa896643e",
+    "36edc211-7378-49ff-a403-ae8b0e7037ec",
+    "45fa15e8-6742-4e87-9c28-bbe69e046607",
+    "9497d8c9-e91c-42ad-8ca9-93bbba4c2f6c",
+    "ab46d065-8b50-41e9-93bc-ea5b74467e97",
+    "f94e2e7d-3570-42c1-bcec-4bcfe5511e01",
+    "a091ae40-d1e4-4dd3-9605-a4fa47af539b"
+  ],
+  "dictionaries": [
+    {
+      "kind": "rejection-reasons",
+      "code": "RCO16_REASON_2962C89C70A5"
+    },
+    {
+      "kind": "subject-tags",
+      "code": "RCO16_TAG_2962C89C70A5"
+    },
+    {
+      "kind": "rejection-reasons",
+      "code": "RCO16_REASON_97A0B68C894C"
+    },
+    {
+      "kind": "subject-tags",
+      "code": "RCO16_TAG_97A0B68C894C"
+    },
+    {
+      "kind": "rejection-reasons",
+      "code": "RCO16_UI_2FE7BB93C3EC"
+    },
+    {
+      "kind": "rejection-reasons",
+      "code": "RCO16_UI_A963F9F902A5"
+    },
+    {
+      "kind": "rejection-reasons",
+      "code": "RCO16_UI_F2437E204FE1"
+    },
+    {
+      "kind": "rejection-reasons",
+      "code": "RCO16_UI_1907AD96E62D"
+    },
+    {
+      "kind": "rejection-reasons",
+      "code": "RCO16_UI_A1853321A7B0"
+    }
+  ],
+  "releases": [
+    "224237161329729536"
+  ]
+}

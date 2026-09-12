@@ -1,0 +1,30 @@
+{
+  "reproducer": "GatewayDatabaseRoutingAutoTest + DynamicOperationsRoutingAutoTest",
+  "before": {
+    "tests": 8,
+    "failures": 0,
+    "errors": 1,
+    "failure": "GET with unknown query stalls on the connection previously used by an unmatched POST; 404 headers and full Problem bytes observed on the wire"
+  },
+  "response_body_consumption_alone": "did not fix",
+  "after": {
+    "tests": 8,
+    "failures": 0,
+    "errors": 0
+  },
+  "production_change": "DynamicRouteWebFilter closes the HTTP connection after an unmatched-route 404 instead of retaining a connection whose unread inbound state can stall following requests",
+  "unchanged": [
+    "404 status",
+    "RFC 9457 Problem fields",
+    "authentication",
+    "Guard",
+    "matched-route forwarding"
+  ],
+  "test_assertions": [
+    "Connection: close on unmatched POST",
+    "GATEWAY_ROUTE_NOT_FOUND Problem",
+    "next GET returns GATEWAY_INVALID_REQUEST",
+    "only the valid request reaches downstream"
+  ],
+  "raw_wire_log_in_repository": false
+}

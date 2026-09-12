@@ -1,0 +1,91 @@
+{
+  "status": "HISTORICAL_PACKAGE_SUPERSEDED_NOT_DEPLOYABLE",
+  "preparedImages": [
+    {
+      "service": "risk-service",
+      "tag": "mor-test/risk-service:rco16-history-dictionaries-20260911",
+      "imageId": "sha256:c6a4f44a8cba07f6e7b4b41903559cd77d575412c32e847cf729a1621e19719a",
+      "jarSha256": "6224c001224b8fdd355dd56dab013e1ce921103f34a0808bf0bc0aacec6a50bc"
+    },
+    {
+      "service": "operations-console-bff",
+      "tag": "mor-test/operations-console-bff:rco16-history-dictionaries-20260911",
+      "imageId": "sha256:8005c98cee03182f1d03b5c6c2599e219b78eb36960858025c705ad399d21a45",
+      "jarSha256": "a4c2ba304ae3b130ec486dc7a743ac0c28d355dfd9d49494a9a2ef8b7a673a3d"
+    },
+    {
+      "service": "operations-console-web",
+      "tag": "mor-test/operations-console-web:rco16-history-dictionaries-20260911",
+      "imageId": "sha256:ef04bdbbd75a76df723843a53fb530efcf5f5e4315f4e4f754325087448ebe27",
+      "indexSha256": "699103060a0e48b713d629f6a6f72dd5a6d69f0bbf38b9b169b051c9c3f498fa",
+      "staticFilesSha256": {
+        "assets/Accounts-CcAQ2IXg.js": "b208f1ac071b9e5c3fa6890a586e3c7311b75a42603cbf50da69f732eabd173f",
+        "assets/Audit-D3eAcELP.css": "05664d0e6d330bc947f68f76dcd684e66a08fa2294e4c4da3ebcf5e7b10ff160",
+        "assets/Audit-DwpZnjNf.js": "08816fc78fdf366e11c80572cfa51e64d4916234c9c896137d03113767072b64",
+        "assets/GatewayConfiguration-yNltFy7p.js": "c0e616d7e34e6f50d909e14cdcb3a562b5dc035da295c5b5dd694a5db0823ceb",
+        "assets/RiskDictionary-CPo5vOQQ.js": "639f7c92db19f2000648bdbbb829a683ca09f7c0f12a3da81e416acd6707185a",
+        "assets/RiskRuleConfiguration-CvamfpeH.js": "baace9f11380d7794847b9602426b2bc9aad79d90c49d1251e0307d4a70fd57d",
+        "assets/Roles-B_sYNyY1.js": "6bb0b69741b5fd346eb3fc5db259aaececee4c704f2bdad4a3a194dc35ccec18",
+        "assets/deletion-ZH2BmGw-.js": "03053fc137c08d6ef6fb1796a8cefabbf62ffbea33d79f69aa0cd37bcb37ad78",
+        "assets/descriptions-CQCzQaak.js": "cf35a21130bc1734978fcf1944dbf576b38dc75a77048685d38bb26272777b3e",
+        "assets/index-Cj75_2K1.css": "23b947b67bc9e853cdd3142c0e65ed39422d7b2464ff355d80184919d3bd5fc5",
+        "assets/index-orUREt5S.js": "f97f1bfeb1a31cf09da649d575cc122584ae7b2a02e8d647819c79732e8dfcdf",
+        "assets/jsx-runtime-C8XPPeiE.js": "ed9968d7ec886ba16d52d471850068f81d9153385c36b91a8364f071769e888e",
+        "assets/modal-CzeDFW7D.js": "ba69f53c9f5ac02c1276a860e897b9f449f7aedbadd02a772625918cd65d3a8d",
+        "assets/paging-DFV_quYq.js": "6994d5dfb9bf97ab931d38325004258d8f43eb3e43d41519eb9a8e69b160029d",
+        "assets/riskRuleConfiguration-CATBAXyb.js": "63338e9492b4990c2653cc42c33ad5fd5ed5fe8c7131e7eb7e03d014e8cf42d9",
+        "assets/riskRuleConfiguration-SgyahN3V.css": "7ba3ed92cec0ca50adbc042714ba00e870a026228c38a987908fded583e5ce36",
+        "assets/usePaging-CAlhzjqH.js": "e997c5c268b3a3f30d61f1267d0e94f31492dd30eb899b6a1c67ff10c56beed1",
+        "index.html": "699103060a0e48b713d629f6a6f72dd5a6d69f0bbf38b9b169b051c9c3f498fa"
+      }
+    }
+  ],
+  "embeddedRiskApiSha256": "f386688562834d1646092995c66fa51a42b544bb4f991a65a49acb47905ae766",
+  "artifactBuild": "Fresh JDK25 Maven Wrapper offline packaging; API copied from reviewed Risk executable and installed only in local Maven cache; BFF repackaged against those exact bytes. Isolated Docker tags and cached digest-pinned bases, no push.",
+  "verification": {
+    "originalSourceFilesMatchedStage5": 97,
+    "bffCleanPackageFullTests": 1040,
+    "bffFinalArtifactBoundaryTests": {
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "sqlOfflineStateChecks": 16,
+    "platformDeployedCompiler": [
+      37,
+      27,
+      27,
+      51
+    ],
+    "gatewayDeployedCompilerEnabled51": "REJECTED",
+    "gatewayInMemoryProposal": [
+      37,
+      27,
+      27,
+      51
+    ]
+  },
+  "sqlSha256": {
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/db/platform-support-service/dml.sql": "bfef7441c15d43a05768c00f62caf248e109d8485a0deea6ed970a541d0d0da6",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/db/platform-support-service/test-close-entry.sql": "bd6055bdedb0316ae98430ecc1b220b8e95c613a6809767f0092460b9823c563",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/db/platform-support-service/test-enable-routes.sql": "ebc0ab5da3650c8f2d27f09a1a628acdcfba3db99c44f79588d435ac318641a6",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/db/platform-support-service/test-expose-resources.sql": "936423fd9284aa120faa2247989b476f607b792c82cd3c42cca51493f4453269",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/db/platform-support-service/test-maintenance.sql": "c7589ea643b7fa7b8579d3d5e904156990f4eaca369b4070e58db1ca714c81a9",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/db/platform-support-service/test-restore-before-migration.sql": "236bc46e8e1a2fc4d59b41b4d01ca184ec8aaa35d57e405df1dcb61151fb5c50",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/db/risk-compliance-service/ddl.sql": "a3bf8d0708ded96422dc530c5c6799b363c5a54b0236f09531de4a4494ee1740",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/db/risk-compliance-service/dml.sql": "5e5b1b7bfb5ce8deffeff673bbd69299da70c61ddfc0aef4c78523997b4291e4"
+  },
+  "pending": [
+    "User confirmation to return to stage 6; fresh test preflight including exact role/grant baseline and versions",
+    "Reconcile current Gateway source with deployed Client API boundary; prepare Gateway and rebuild BFF exact artifacts",
+    "Regenerate five release SQL transactions from fresh role/grant snapshot and review final rollout package",
+    "Explicit stage 7 test SQL/deployment/synthetic-write authorization"
+  ],
+  "sourceEvidence": "../stage5/verification.json",
+  "readOnlyBaseline": "preflight.json",
+  "runtimeUnchangedEvidence": "final-checks.json",
+  "supersededBy": "../../gateway-acceptance.md",
+  "scopeConfirmation": "Dynamic database routing and permission registration timing approved; local stage 5 acceptance passed.",
+  "historicalEvidenceNote": "Image IDs, SQL hashes and verification below describe the original stage 6 attempt; they are preserved and are not the current executable release package."
+}

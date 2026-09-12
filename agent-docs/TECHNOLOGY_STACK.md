@@ -260,7 +260,7 @@ paytech-foundation/
 
 - 六个核心 Java 服务、`operations-console-bff`、`client-console-bff` 和 `partner-console-bff` 默认使用 Spring MVC；Vault V1 Server 使用 Go，Java 调用方通过发布的 `@HttpExchange` Client 访问。
 - API Gateway 使用 Spring Cloud Gateway Server WebFlux；Operations 首期的 JWT、路由、限流和并发 Filter 保持端到端 Reactive。
-- Gateway 验证 Access JWT 和 Channel/Actor 上下文，不处理账号密码登录，也不执行 PLT-I02 或核心资源授权。它消费 Platform 的全量不可变 Snapshot，同时保留 Approved Target Registry、预编译安全实现和绝对安全上限；当前 Route 数量与环境 rollout 见状态台账和 Gateway README。
+- Gateway 验证 Access JWT 和 Channel/Actor 上下文，不处理账号密码登录，也不执行 PLT-I02 或核心资源授权。它消费 Platform 的全量不可变 Snapshot，业务 Target/Discovery/Route 由该快照编译并在请求中固定，见[数据库路由决定](./decisions/2026-09-11-gateway-database-routing.md)；保留预编译安全实现、通用协议校验和绝对安全上限；当前 Route 数量与环境 rollout 见状态台账和 Gateway README。
 - 未匹配的 API 由 Gateway 本地拒绝，不转发到下游；不启用 Discovery Locator、通配外部 Route 或由 Redis 直接充当配置权威。
 - 内部同步接口由提供方 `*-api` JAR 提供 `@HttpExchange` 契约，调用方通过本地 `*Client` 适配器隔离传输 DTO。
 - MVC 服务默认使用 `RestClient`；确有流式或 Reactive 边界时才使用 `WebClient`。

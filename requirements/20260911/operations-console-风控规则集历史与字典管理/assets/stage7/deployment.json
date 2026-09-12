@@ -1,0 +1,287 @@
+{
+  "startedAt": "2026-09-12T06:44:38.786911+00:00",
+  "authorization": "User accepted Gateway scope and requested deployment; then explicitly waived backups and delegated functional acceptance to the user.",
+  "backupPerformed": false,
+  "functionalAcceptancePerformed": false,
+  "syntheticBusinessWrites": false,
+  "events": [
+    {
+      "at": "2026-09-12T06:44:39.649573+00:00",
+      "step": "Exact mor-test target, candidate images and SQL checked"
+    },
+    {
+      "at": "2026-09-12T06:45:01.058251+00:00",
+      "step": "Web, BFF and Risk stopped; backups skipped per user instruction"
+    },
+    {
+      "at": "2026-09-12T06:45:01.186423+00:00",
+      "step": "Applying db/platform-support-service/test-maintenance.sql"
+    },
+    {
+      "at": "2026-09-12T06:45:01.317696+00:00",
+      "step": "Applied db/platform-support-service/test-maintenance.sql",
+      "database": "mor_platform",
+      "sha256": "f1d237e6084147c53ff37f5567bbedfe3b4d0c0f9abe6407b21ebb446de35cd2"
+    },
+    {
+      "at": "2026-09-12T06:45:07.225011+00:00",
+      "step": "Gateway loaded 27 Operations routes",
+      "snapshot": {
+        "valid": true,
+        "refresh_result": "SUCCESS",
+        "failure_reason": "NONE",
+        "last_valid_in_use": false,
+        "operations_route_count": 27
+      }
+    },
+    {
+      "at": "2026-09-12T06:45:07.226450+00:00",
+      "step": "Applying db/risk-compliance-service/ddl.sql"
+    },
+    {
+      "at": "2026-09-12T06:45:07.450144+00:00",
+      "step": "Applied db/risk-compliance-service/ddl.sql",
+      "database": "mor_risk",
+      "sha256": "a3bf8d0708ded96422dc530c5c6799b363c5a54b0236f09531de4a4494ee1740"
+    },
+    {
+      "at": "2026-09-12T06:45:07.450709+00:00",
+      "step": "Applying db/platform-support-service/ddl.sql"
+    },
+    {
+      "at": "2026-09-12T06:45:07.563362+00:00",
+      "step": "Applied db/platform-support-service/ddl.sql",
+      "database": "mor_platform",
+      "sha256": "b1e63521748a43a03b8b794951bfc30622728d88504562676eacc6d0f34ca47c"
+    },
+    {
+      "at": "2026-09-12T06:45:07.565047+00:00",
+      "step": "Applying db/platform-support-service/dml.sql"
+    },
+    {
+      "at": "2026-09-12T06:45:07.674588+00:00",
+      "step": "Applied db/platform-support-service/dml.sql",
+      "database": "mor_platform",
+      "sha256": "99d9a23b5d8f303ba9520a8a9b37daf6bc69b547d2c463a5333f872e9f4abddb"
+    },
+    {
+      "at": "2026-09-12T06:45:07.699601+00:00",
+      "step": "Starting risk-service"
+    },
+    {
+      "at": "2026-09-12T06:45:14.278579+00:00",
+      "step": "risk-service healthy",
+      "container": {
+        "service": "risk-service",
+        "containerId": "ff2c2bab68b24931c37598ea5cf931cae573af6304ad5ff50dcbb525ede1c40c",
+        "imageId": "sha256:c6a4f44a8cba07f6e7b4b41903559cd77d575412c32e847cf729a1621e19719a",
+        "health": "healthy",
+        "status": "running"
+      }
+    },
+    {
+      "at": "2026-09-12T06:45:14.316868+00:00",
+      "step": "Starting operations-console-bff"
+    },
+    {
+      "at": "2026-09-12T06:47:36.257981+00:00",
+      "step": "Stopped; no automatic SQL retry",
+      "errorType": "RuntimeError",
+      "error": "Command failed: /Users/kenny/Desktop/Workspace/Code-MoR/test-environment/compose.sh up --no-deps --no-build; exit=1"
+    },
+    {
+      "at": "2026-09-12T06:49:21.409746+00:00",
+      "step": "Continuing after isolated BFF readiness probe correction",
+      "probeImage": {
+        "service": "operations-console-bff",
+        "tag": "mor-test/operations-console-bff:rco16-history-dictionaries-20260912-probe-fixed",
+        "imageId": "sha256:79b697a757a919823f4d7b1622a15723cf7384953778c12672e673383d72a6c0",
+        "baseImageId": "sha256:1a6c0110750d94a3f062b493818359bb5281571a9cd44fb87400e5143453bbb0",
+        "jarSha256": "d66936ac0e1844f8f0a39d79b91afce141d3f9887f48bfccef08b33f5770d73f",
+        "change": "Only compiled readiness probe; obsolete business address replaced by loopback management address. Application JAR inherited unchanged.",
+        "probeTests": 19,
+        "sourceSha256": "e4cd3fe8d4ee8e90d7dbd1a375885edabe789afdcecbcb019484ae924d6ddc5c"
+      }
+    },
+    {
+      "at": "2026-09-12T06:49:21.486208+00:00",
+      "step": "Starting operations-console-bff"
+    },
+    {
+      "at": "2026-09-12T06:49:38.649074+00:00",
+      "step": "operations-console-bff healthy",
+      "container": {
+        "service": "operations-console-bff",
+        "containerId": "e6fa90cbb61078f0e8bd4a6e336d7a7d65bea5d16fd794cd6e41d94782c5a512",
+        "imageId": "sha256:79b697a757a919823f4d7b1622a15723cf7384953778c12672e673383d72a6c0",
+        "health": "healthy",
+        "status": "running"
+      }
+    },
+    {
+      "at": "2026-09-12T06:49:38.736314+00:00",
+      "step": "Starting api-gateway"
+    },
+    {
+      "at": "2026-09-12T06:49:58.738634+00:00",
+      "step": "api-gateway healthy",
+      "container": {
+        "service": "api-gateway",
+        "containerId": "4552711da4db528e0c3096f974279c5dc1bcb3b1989a095fc16a8c644494b3dd",
+        "imageId": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+        "health": "healthy",
+        "status": "running"
+      }
+    },
+    {
+      "at": "2026-09-12T06:49:58.813697+00:00",
+      "step": "Starting operations-console-web"
+    },
+    {
+      "at": "2026-09-12T06:50:10.179065+00:00",
+      "step": "operations-console-web healthy",
+      "container": {
+        "service": "operations-console-web",
+        "containerId": "1b89d1a159d8a14baca7069a45ffd14c62562b91ab046f799a4b2421f64c18cf",
+        "imageId": "sha256:ef04bdbbd75a76df723843a53fb530efcf5f5e4315f4e4f754325087448ebe27",
+        "health": "healthy",
+        "status": "running"
+      }
+    },
+    {
+      "at": "2026-09-12T06:50:10.765684+00:00",
+      "step": "Gateway loaded 27 Operations routes",
+      "snapshot": {
+        "valid": true,
+        "refresh_result": "SUCCESS",
+        "failure_reason": "NONE",
+        "last_valid_in_use": false,
+        "operations_route_count": 27
+      }
+    },
+    {
+      "at": "2026-09-12T06:50:10.767045+00:00",
+      "step": "Applying db/platform-support-service/test-enable-routes.sql"
+    },
+    {
+      "at": "2026-09-12T06:50:10.871991+00:00",
+      "step": "Applied db/platform-support-service/test-enable-routes.sql",
+      "database": "mor_platform",
+      "sha256": "210a4260c09d139f00f47b6c5b465825223868a6d878121dda68ab59e5e21939"
+    },
+    {
+      "at": "2026-09-12T06:50:14.008969+00:00",
+      "step": "Gateway loaded 51 Operations routes",
+      "snapshot": {
+        "valid": true,
+        "refresh_result": "SUCCESS",
+        "failure_reason": "NONE",
+        "last_valid_in_use": false,
+        "operations_route_count": 51
+      }
+    },
+    {
+      "at": "2026-09-12T06:50:14.009789+00:00",
+      "step": "Applying db/platform-support-service/test-expose-resources.sql"
+    },
+    {
+      "at": "2026-09-12T06:50:14.107640+00:00",
+      "step": "Applied db/platform-support-service/test-expose-resources.sql",
+      "database": "mor_platform",
+      "sha256": "ca776f9a9b7452ed8c687dce4ec6ace2dc6d154eb4bc89d20d7ef1f4dff9e454"
+    },
+    {
+      "at": "2026-09-12T06:50:14.783725+00:00",
+      "step": "Deployment complete; functional acceptance left to user"
+    }
+  ],
+  "status": "DEPLOYED_AWAITING_USER_FUNCTIONAL_ACCEPTANCE",
+  "finalDatabaseState": {
+    "riskTableCount": 74,
+    "activeRoutes": 51,
+    "activeOperationsResources": 32,
+    "roleVersions": "PLATFORM_ADMIN\t12\nOPERATIONS_VIEWER\t6",
+    "nonOperationsRoutes": 0
+  },
+  "containers": [
+    {
+      "service": "mysql",
+      "containerId": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "imageId": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "health": "healthy",
+      "status": "running"
+    },
+    {
+      "service": "redis",
+      "containerId": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "imageId": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "health": "healthy",
+      "status": "running"
+    },
+    {
+      "service": "nacos",
+      "containerId": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "imageId": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "health": "healthy",
+      "status": "running"
+    },
+    {
+      "service": "risk-service",
+      "containerId": "ff2c2bab68b24931c37598ea5cf931cae573af6304ad5ff50dcbb525ede1c40c",
+      "imageId": "sha256:c6a4f44a8cba07f6e7b4b41903559cd77d575412c32e847cf729a1621e19719a",
+      "health": "healthy",
+      "status": "running"
+    },
+    {
+      "service": "operations-console-bff",
+      "containerId": "e6fa90cbb61078f0e8bd4a6e336d7a7d65bea5d16fd794cd6e41d94782c5a512",
+      "imageId": "sha256:79b697a757a919823f4d7b1622a15723cf7384953778c12672e673383d72a6c0",
+      "health": "healthy",
+      "status": "running"
+    },
+    {
+      "service": "operations-console-web",
+      "containerId": "1b89d1a159d8a14baca7069a45ffd14c62562b91ab046f799a4b2421f64c18cf",
+      "imageId": "sha256:ef04bdbbd75a76df723843a53fb530efcf5f5e4315f4e4f754325087448ebe27",
+      "health": "healthy",
+      "status": "running"
+    },
+    {
+      "service": "platform-support-service",
+      "containerId": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "imageId": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332",
+      "health": "healthy",
+      "status": "running"
+    },
+    {
+      "service": "api-gateway",
+      "containerId": "4552711da4db528e0c3096f974279c5dc1bcb3b1989a095fc16a8c644494b3dd",
+      "imageId": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+      "health": "healthy",
+      "status": "running"
+    },
+    {
+      "service": "nginx",
+      "containerId": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "imageId": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "health": "healthy",
+      "status": "running"
+    },
+    {
+      "service": "vault-service",
+      "containerId": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "imageId": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "health": "healthy",
+      "status": "running"
+    },
+    {
+      "service": "rabbitmq",
+      "containerId": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "imageId": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "health": "healthy",
+      "status": "running"
+    }
+  ],
+  "publicPageStatus": 200,
+  "publicIndexSha256": "699103060a0e48b713d629f6a6f72dd5a6d69f0bbf38b9b169b051c9c3f498fa"
+}

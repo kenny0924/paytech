@@ -1,0 +1,27 @@
+{
+  "scope": "Offline SQLite state/transaction simulation of generated SQL using explicit synthetic version/role fixtures; not MySQL locking, test preflight or deployment evidence.",
+  "checks": [
+    "all 182 registration tuples match the manifest, including six REVOKED grants",
+    "maintenance closes all scoped grants including Viewer and custom role",
+    "registration does not activate new grants",
+    "routes and exact original/new grants activate in one transaction",
+    "menu exposure follows accepted routes",
+    "close revokes only owned grants without deleting history",
+    "repeated close preserves every version",
+    "restore recovers snapshot grants, never previously revoked grant",
+    "close from initial",
+    "close from maintenance",
+    "close from registered",
+    "close from routes",
+    "grant version drift rejected without partial close",
+    "Viewer role drift rejected",
+    "unrecorded active grant rejected",
+    "cannot open before registration",
+    "cannot expose before route and grant opening",
+    "cannot restore old app after registration",
+    "partial binding registration rejected",
+    "unknown route state rejected",
+    "legacy preflight without exact role/grant baseline rejected"
+  ],
+  "passed": 21
+}

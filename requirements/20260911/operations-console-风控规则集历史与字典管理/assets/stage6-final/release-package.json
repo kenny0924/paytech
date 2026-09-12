@@ -1,0 +1,173 @@
+{
+  "status": "CANDIDATE_AWAITING_EXPLICIT_GATEWAY_SCOPE_AND_STAGE_7_DEPLOYMENT_APPROVAL",
+  "requirement": "RCO-16",
+  "fullRequirementIncluded": true,
+  "entry": "../../release-final.md",
+  "environment": {
+    "dockerContext": "desktop-linux",
+    "composeProject": "mor-test",
+    "mysqlContainer": "mor-test-mysql-1",
+    "mysqlLoopbackPort": 23306,
+    "databases": [
+      "mor_risk",
+      "mor_platform"
+    ],
+    "publicEntry": "http://localhost:28080"
+  },
+  "runningBaseline": "preflight.json",
+  "candidateImages": [
+    {
+      "service": "risk-service",
+      "tag": "mor-test/risk-service:rco16-history-dictionaries-20260911",
+      "imageId": "sha256:c6a4f44a8cba07f6e7b4b41903559cd77d575412c32e847cf729a1621e19719a",
+      "jarSha256": "6224c001224b8fdd355dd56dab013e1ce921103f34a0808bf0bc0aacec6a50bc",
+      "preparation": "Reused exact previously prepared image; reviewed source hashes rechecked."
+    },
+    {
+      "service": "operations-console-web",
+      "tag": "mor-test/operations-console-web:rco16-history-dictionaries-20260911",
+      "imageId": "sha256:ef04bdbbd75a76df723843a53fb530efcf5f5e4315f4e4f754325087448ebe27",
+      "indexSha256": "699103060a0e48b713d629f6a6f72dd5a6d69f0bbf38b9b169b051c9c3f498fa",
+      "staticFilesSha256": {
+        "assets/Accounts-CcAQ2IXg.js": "b208f1ac071b9e5c3fa6890a586e3c7311b75a42603cbf50da69f732eabd173f",
+        "assets/Audit-D3eAcELP.css": "05664d0e6d330bc947f68f76dcd684e66a08fa2294e4c4da3ebcf5e7b10ff160",
+        "assets/Audit-DwpZnjNf.js": "08816fc78fdf366e11c80572cfa51e64d4916234c9c896137d03113767072b64",
+        "assets/GatewayConfiguration-yNltFy7p.js": "c0e616d7e34e6f50d909e14cdcb3a562b5dc035da295c5b5dd694a5db0823ceb",
+        "assets/RiskDictionary-CPo5vOQQ.js": "639f7c92db19f2000648bdbbb829a683ca09f7c0f12a3da81e416acd6707185a",
+        "assets/RiskRuleConfiguration-CvamfpeH.js": "baace9f11380d7794847b9602426b2bc9aad79d90c49d1251e0307d4a70fd57d",
+        "assets/Roles-B_sYNyY1.js": "6bb0b69741b5fd346eb3fc5db259aaececee4c704f2bdad4a3a194dc35ccec18",
+        "assets/deletion-ZH2BmGw-.js": "03053fc137c08d6ef6fb1796a8cefabbf62ffbea33d79f69aa0cd37bcb37ad78",
+        "assets/descriptions-CQCzQaak.js": "cf35a21130bc1734978fcf1944dbf576b38dc75a77048685d38bb26272777b3e",
+        "assets/index-Cj75_2K1.css": "23b947b67bc9e853cdd3142c0e65ed39422d7b2464ff355d80184919d3bd5fc5",
+        "assets/index-orUREt5S.js": "f97f1bfeb1a31cf09da649d575cc122584ae7b2a02e8d647819c79732e8dfcdf",
+        "assets/jsx-runtime-C8XPPeiE.js": "ed9968d7ec886ba16d52d471850068f81d9153385c36b91a8364f071769e888e",
+        "assets/modal-CzeDFW7D.js": "ba69f53c9f5ac02c1276a860e897b9f449f7aedbadd02a772625918cd65d3a8d",
+        "assets/paging-DFV_quYq.js": "6994d5dfb9bf97ab931d38325004258d8f43eb3e43d41519eb9a8e69b160029d",
+        "assets/riskRuleConfiguration-CATBAXyb.js": "63338e9492b4990c2653cc42c33ad5fd5ed5fe8c7131e7eb7e03d014e8cf42d9",
+        "assets/riskRuleConfiguration-SgyahN3V.css": "7ba3ed92cec0ca50adbc042714ba00e870a026228c38a987908fded583e5ce36",
+        "assets/usePaging-CAlhzjqH.js": "e997c5c268b3a3f30d61f1267d0e94f31492dd30eb899b6a1c67ff10c56beed1",
+        "index.html": "699103060a0e48b713d629f6a6f72dd5a6d69f0bbf38b9b169b051c9c3f498fa"
+      },
+      "preparation": "Reused exact previously prepared image; reviewed source hashes rechecked."
+    },
+    {
+      "service": "operations-console-bff",
+      "tag": "mor-test/operations-console-bff:rco16-history-dictionaries-20260912-verified",
+      "imageId": "sha256:1a6c0110750d94a3f062b493818359bb5281571a9cd44fb87400e5143453bbb0",
+      "jarSha256": "d66936ac0e1844f8f0a39d79b91afce141d3f9887f48bfccef08b33f5770d73f",
+      "preparation": "Repacked from final full verify JAR; exact bytes verified. Earlier candidate had identical extracted entries but different ZIP metadata."
+    },
+    {
+      "service": "api-gateway",
+      "tag": "mor-test/api-gateway:rco16-gateway-candidate-20260912",
+      "imageId": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+      "jarSha256": "3e1c48bcdac6678ba3cec9e3fec48b0cc2253dbcb66fcfa1da869f8b92fbf1c7",
+      "preparation": "Local candidate only; never assigned to development or started."
+    }
+  ],
+  "gatewaySourceScope": "gateway-source-scope.json",
+  "sourceScopeProposal": "Explicitly accept current verified Gateway including existing previously unshipped Client API code; keep Operations-only routes/Nginx and add no Client credentials or activation. Not yet approved.",
+  "sqlSha256": {
+    "db/risk-compliance-service/ddl.sql": "a3bf8d0708ded96422dc530c5c6799b363c5a54b0236f09531de4a4494ee1740",
+    "db/platform-support-service/ddl.sql": "b1e63521748a43a03b8b794951bfc30622728d88504562676eacc6d0f34ca47c",
+    "db/platform-support-service/dml.sql": "99d9a23b5d8f303ba9520a8a9b37daf6bc69b547d2c463a5333f872e9f4abddb",
+    "db/platform-support-service/test-close-entry.sql": "a3f42866a1f9daa21172a1302e0af46968ebec3e340c10b9cf1a9231b0cf8892",
+    "db/platform-support-service/test-enable-routes.sql": "210a4260c09d139f00f47b6c5b465825223868a6d878121dda68ab59e5e21939",
+    "db/platform-support-service/test-expose-resources.sql": "ca776f9a9b7452ed8c687dce4ec6ace2dc6d154eb4bc89d20d7ef1f4dff9e454",
+    "db/platform-support-service/test-maintenance.sql": "f1d237e6084147c53ff37f5567bbedfe3b4d0c0f9abe6407b21ebb446de35cd2",
+    "db/platform-support-service/test-restore-before-migration.sql": "100c4f73faf2bb1bb4e6967aa5fa7bb783bc5bfcaf2682bb6f3a8b890f5110a1"
+  },
+  "deploymentOrder": [
+    "risk-service",
+    "operations-console-bff",
+    "api-gateway",
+    "operations-console-web"
+  ],
+  "unchangedServices": [
+    "platform-support-service",
+    "nginx",
+    "vault-service",
+    "nacos",
+    "mysql",
+    "redis",
+    "rabbitmq"
+  ],
+  "backupPlan": {
+    "directory": "~/Code-MoR-backups/rco16-test-<UTC>/",
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "databases": [
+      "mor_risk",
+      "mor_platform"
+    ],
+    "configurationAndOriginalFourImages": true,
+    "abortOnFailedBackup": true
+  },
+  "normalFinalState": {
+    "riskTables": 74,
+    "gatewayRoutes": 51,
+    "operationsResources": 32,
+    "administratorRoleVersion": 12,
+    "viewerRoleVersion": 6,
+    "originalScopedBindings": 7,
+    "newDictionaryBindings": 6,
+    "clientRoutes": 0
+  },
+  "syntheticAcceptanceLimits": {
+    "rejectionReasons": 2,
+    "subjectTags": 2,
+    "ruleSets": 2,
+    "versionsPerRuleSet": 3,
+    "draftTestCandidate": 1,
+    "temporaryViewerAccount": 1,
+    "noActiveReleaseOrRuleEvaluation": true,
+    "cleanup": "Business API delete synthetic rule sets, disable dictionaries, remove temporary account; preserve history, dictionary codes and audit."
+  },
+  "evidence": {
+    "stage5": "../../gateway-acceptance.md",
+    "compatibility": "compatibility.json",
+    "imageContents": "image-content-check.json",
+    "bffDependencies": "bff-dependency-check.json",
+    "offlineActualSql": "sql-state-check.json",
+    "finalChecks": "final-checks.json",
+    "bffFinalRepackage": "bff-repackage-check.json"
+  },
+  "notExecuted": [
+    "test SQL",
+    "development image retag",
+    "test service deployment/restart",
+    "synthetic test writes",
+    "git commit or push",
+    "Nexus or remote publication"
+  ],
+  "verification": {
+    "bffFullVerify": {
+      "tests": 1041,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "bffFocusedBoundaryTests": 24,
+    "gatewayStage5FullReused": 1199,
+    "platformStage5FullReused": 386,
+    "requirementsSiteTests": 136,
+    "offlinePermissionEdgeChecks": 21,
+    "actualVersionSqlSimulation": "passed",
+    "candidateAndDeployedPlatformRouteCounts": [
+      37,
+      27,
+      27,
+      51
+    ],
+    "deployedGatewayRecoveryRouteCounts": [
+      37,
+      27,
+      27
+    ]
+  },
+  "configSha256": {
+    "test-environment/compose.applications.yaml": "c0e293ff1d0e4c118325ef5b8180131ee6869d4675d0396bd60743ba89605f96",
+    "test-environment/java/Dockerfile": "afc9b88f9f18c95d1bb07cb38aba9d7b725487912fa90036e07799a5081bb9f1",
+    "operations-console-web/deploy/nginx.conf": "b04ba0925de617e851bc9423cd0a0535b0b4bc37a0d9323f6eb4ca55f8cc083a"
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "scenarios": [
+    "real-status-disable-and-enable-with-confirmation",
+    "active-old-version-protects-root-even-when-current-filter-is-empty",
+    "release-filter-back-restores-form-and-results"
+  ],
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags?keyword=RCO16_TAG_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-6125f9b5-76a0-4f4a-8054-7ee80b5c169e"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-dictionaries/v1/subject-tags/RCO16_TAG_97A0B68C894C/status",
+      "status": 200,
+      "requestId": "rco16-browser-4347b584-69cb-43b0-bdbd-033c8dbf02f3"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags?keyword=RCO16_TAG_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-a9cbd243-290f-4d58-afe6-5f2282abb6d6"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-dictionaries/v1/subject-tags/RCO16_TAG_97A0B68C894C/status",
+      "status": 200,
+      "requestId": "rco16-browser-971fee6e-4d93-45a9-9eef-3660cad13da8"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags?keyword=RCO16_TAG_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-338e56af-e7fa-4c3e-92fc-16e35f5f0d1a"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "rco16-browser-a5e715ae-5ac2-4ca7-8f91-dfd9294b3cab"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-18654bce-dbbe-4d4c-9e95-aff0a8531fb0"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/release-references?page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-0cd8476b-24a3-4589-bbeb-967e3b8b215b"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/release-references?ruleSetVersionId=224237164106358784&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-89266e01-5d0f-4fa9-ada5-453c25a20336"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/release-references?page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-11e22af7-46ad-4d14-9407-65b257013446"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "rco16-browser-c3f0fa41-d868-4f30-b9a2-cf69f5cd1c1b"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-40526eff-0f24-49a2-8e4d-42075198129f"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-deecd534-6cf3-4e5c-bd18-18d677945828"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237164106358784",
+      "status": 200,
+      "requestId": "rco16-browser-36528a3f-fc70-4932-b8e6-b9cdde17d0dd"
+    }
+  ],
+  "errors": []
+}

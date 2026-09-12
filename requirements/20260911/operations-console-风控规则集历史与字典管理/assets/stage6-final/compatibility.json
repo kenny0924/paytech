@@ -1,0 +1,37 @@
+{
+  "scope": "Read-only actual test catalog, activation projected in memory; deployed Platform and actual candidate Gateway compiler, no runtime deployment or SQL execution.",
+  "compilers": {
+    "deployedPlatform": {
+      "jarSha256": "9c785043ee865b910ec43cc50646d469bf97c7bb95c854907aa99d9de2412616",
+      "routeCounts": {
+        "before": 37,
+        "maintenance": 27,
+        "registered-disabled": 27,
+        "enabled": 51
+      }
+    },
+    "candidateGateway": {
+      "jarSha256": "3e1c48bcdac6678ba3cec9e3fec48b0cc2253dbcb66fcfa1da869f8b92fbf1c7",
+      "routeCounts": {
+        "before": 37,
+        "maintenance": 27,
+        "registered-disabled": 27,
+        "enabled": 51
+      }
+    },
+    "deployedGatewayRecovery": {
+      "jarSha256": "32bbeb8ba89027d0af281d4d9e21a6f2f402299275ada98a19d2099c5a6445ee",
+      "routeCounts": {
+        "before": 37,
+        "maintenance": 27,
+        "registered-disabled": 27
+      }
+    }
+  },
+  "snapshotSha256": {
+    "before": "56bc22094d73a79ef20bbf1d2d43b43bded978b2f852371053a693a4331c0d0e",
+    "maintenance": "674007f9ed032a3835217b29676d6e36eeba59f5807701b363ceec535577ae4e",
+    "registered-disabled": "674007f9ed032a3835217b29676d6e36eeba59f5807701b363ceec535577ae4e",
+    "enabled": "3e3c5f3294859fe28ad533bcd5748e17cd4027faa312abd94cc5172b37f74e6b"
+  }
+}

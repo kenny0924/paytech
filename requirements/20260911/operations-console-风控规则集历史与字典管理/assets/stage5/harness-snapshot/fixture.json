@@ -1,0 +1,278 @@
+{
+  "code": "RCO16_BROWSER_97A0B68C894C",
+  "reason": "RCO16_REASON_97A0B68C894C",
+  "tag": "RCO16_TAG_97A0B68C894C",
+  "draft": {
+    "pointCode": "CHECKOUT_PREPARE",
+    "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+    "ruleSetName": "风控规则集 · 综合验收",
+    "baseRuleSetVersionId": "224237163879866368",
+    "baseContentHash": "90e360e73025678e866d8edc1362bbeff12b9fd0fa3972a6e91b456c86af9947",
+    "changeReason": "本地综合验收历史版本 12",
+    "rules": [
+      {
+        "ruleCode": "MANUAL_REVIEW",
+        "ruleName": "需人工复核的订单",
+        "priorityNo": 10,
+        "enabledFlag": true,
+        "reasonCode": "RCO16_REASON_97A0B68C894C",
+        "reasonMessage": "已保存的手动覆盖消息",
+        "additionalActions": [
+          {
+            "sequenceNo": 1,
+            "actionCode": "ADD_RISK_TAG",
+            "actionVersionNo": 1,
+            "targetBindingCode": "CURRENT_CLIENT_V1",
+            "parameters": [
+              {
+                "parameterCode": "TAG",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": "RCO16_TAG_97A0B68C894C"
+              }
+            ]
+          }
+        ],
+        "conditionNodes": [
+          {
+            "nodeKey": "1",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "EQ",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "CONTEXT",
+                "fieldCode": "country_code",
+                "valueType": "STRING",
+                "literalValue": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": "AE"
+              }
+            ]
+          }
+        ],
+        "action": {
+          "actionCode": "DENY_CHECKOUT",
+          "actionVersionNo": 1
+        }
+      },
+      {
+        "ruleCode": "COUNTRY_ALLOW",
+        "ruleName": "允许的国家",
+        "priorityNo": 20,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "reasonMessage": null,
+        "additionalActions": [],
+        "conditionNodes": [
+          {
+            "nodeKey": "1",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "EQ",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "CONTEXT",
+                "fieldCode": "country_code",
+                "valueType": "STRING",
+                "literalValue": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": "AE"
+              }
+            ]
+          }
+        ],
+        "action": {
+          "actionCode": "ALLOW_CHECKOUT",
+          "actionVersionNo": 1
+        }
+      }
+    ]
+  },
+  "root": {
+    "ruleSetVersionId": "224237164106358784",
+    "pointVersionId": "224237164106358785",
+    "pointCode": "CHECKOUT_PREPARE",
+    "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+    "ruleSetName": "风控规则集 · 综合验收",
+    "versionNo": 12,
+    "status": "DRAFT",
+    "contentHash": "e0c2c741ece83be132ca42bade9d0bbeef1d4973b59f5befe1a4aabf9b797fe9",
+    "createdBy": "10001",
+    "changeReason": "本地综合验收历史版本 12",
+    "createTime": "2026-09-11T18:38:26.021979Z",
+    "frozenBy": null,
+    "frozenTime": null,
+    "ruleSetId": "224237160809635840",
+    "managementVersion": "13",
+    "inUse": false
+  },
+  "versions": [
+    {
+      "ruleSetVersionId": "224237160742526976",
+      "pointVersionId": "224237160742526977",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 1,
+      "status": "DRAFT",
+      "contentHash": "13ad1f3a4417e15173272985235344fc4026ca65796cf9de9e00f24e47f0b623",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.234506Z"
+    },
+    {
+      "ruleSetVersionId": "224237161547833344",
+      "pointVersionId": "224237161547833345",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 2,
+      "status": "DRAFT",
+      "contentHash": "fe4c0fbe4df1d40821153995a7f9bc23251cfadfe741d47bbf03d2c24888130b",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.419465Z"
+    },
+    {
+      "ruleSetVersionId": "224237161908543488",
+      "pointVersionId": "224237161908543489",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 3,
+      "status": "DRAFT",
+      "contentHash": "7be14adf27309948ac026787d0021d73bd61c1ee0f3f55a2a08503616ff23970",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.474925Z"
+    },
+    {
+      "ruleSetVersionId": "224237162156007424",
+      "pointVersionId": "224237162156007425",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 4,
+      "status": "DRAFT",
+      "contentHash": "e1a1fec4d058f2199f323d7d16e145bcaa4c74f51fc0ad2290c8ebccf797af94",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.552517Z"
+    },
+    {
+      "ruleSetVersionId": "224237162411859968",
+      "pointVersionId": "224237162411859969",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 5,
+      "status": "DRAFT",
+      "contentHash": "9e4a8394a198660ff8e00c9ee53cec9809d5f49af118828b57ede6999ca3ae14",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.613388Z"
+    },
+    {
+      "ruleSetVersionId": "224237162659323904",
+      "pointVersionId": "224237162659323905",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 6,
+      "status": "DRAFT",
+      "contentHash": "9240bbd4e98c75688c5132adc88ee97bd14a660c6d7c5da5fa8b9734e5d1dc8b",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.674605Z"
+    },
+    {
+      "ruleSetVersionId": "224237162877427712",
+      "pointVersionId": "224237162877427713",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 7,
+      "status": "DRAFT",
+      "contentHash": "887aa586381cecce47d5e7857efef53c6eed3f2512384912d2cbeec357e8e19b",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.729223Z"
+    },
+    {
+      "ruleSetVersionId": "224237163120697344",
+      "pointVersionId": "224237163120697345",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 8,
+      "status": "DRAFT",
+      "contentHash": "30918f38d67e799e0b6814e862b3f032bb1cd8bf015044a81a648b636cc8e368",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.782558Z"
+    },
+    {
+      "ruleSetVersionId": "224237163418492928",
+      "pointVersionId": "224237163418492929",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 9,
+      "status": "DRAFT",
+      "contentHash": "924f82b1f093212aed4bc683d7ecd75a14f5ab0f09fca9774de607481cd2294e",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.859524Z"
+    },
+    {
+      "ruleSetVersionId": "224237163632402432",
+      "pointVersionId": "224237163632402433",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 10,
+      "status": "DRAFT",
+      "contentHash": "7165024184ab28018c64d6ea82eaabb71eeecbbd31acd44599bcdfab940b2973",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.911387Z"
+    },
+    {
+      "ruleSetVersionId": "224237163879866368",
+      "pointVersionId": "224237163879866369",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 11,
+      "status": "DRAFT",
+      "contentHash": "90e360e73025678e866d8edc1362bbeff12b9fd0fa3972a6e91b456c86af9947",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:25.961407Z"
+    },
+    {
+      "ruleSetVersionId": "224237164106358784",
+      "pointVersionId": "224237164106358785",
+      "ruleSetCode": "RCO16_BROWSER_97A0B68C894C",
+      "versionNo": 12,
+      "status": "DRAFT",
+      "contentHash": "e0c2c741ece83be132ca42bade9d0bbeef1d4973b59f5befe1a4aabf9b797fe9",
+      "createdBy": "10001",
+      "createTime": "2026-09-11T18:38:26.021979Z"
+    }
+  ],
+  "candidate": {
+    "releaseId": "224237161329729536",
+    "releaseNo": 1,
+    "decisionPointId": "210001",
+    "pointCode": "CHECKOUT_PREPARE",
+    "pointVersionId": "224237160742526977",
+    "ruleSetVersionId": "224237160742526976",
+    "environmentCode": "TEST",
+    "status": "DRAFT",
+    "version": 1,
+    "contentHash": "323243f8edd0ed2f8099b5863a248f2b9e017342e9f1702fccb35e4f242729c2",
+    "createdBy": "10001",
+    "createTime": "2026-09-11T18:38:25.355811Z",
+    "initialStateChange": {
+      "auditEventId": "224237161329729537",
+      "eventTime": "2026-09-11T18:38:25.355811Z",
+      "fromStatus": null,
+      "toStatus": "DRAFT",
+      "reasonCode": "CANDIDATE_CREATED",
+      "triggerType": "OPERATIONS_COMMAND",
+      "actorId": "10001",
+      "aggregateVersion": 1
+    }
+  }
+}

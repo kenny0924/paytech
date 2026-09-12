@@ -1,0 +1,831 @@
+{
+  "createdAt": "2026-09-12T06:57:53.420428+00:00",
+  "environment": "http://localhost:28080",
+  "purpose": "User-requested editable demo configurations",
+  "writes": [
+    {
+      "path": "/decision-dictionaries/v1/rejection-reasons",
+      "body": {
+        "reasonCode": "DEMO_AMOUNT_LIMIT",
+        "name": "示例：订单金额超限",
+        "description": "DEMO 示例数据，供页面配置和人工验证。",
+        "defaultMessage": "示例订单金额超过当前配置阈值，请人工确认。"
+      },
+      "result": {
+        "dictionaryType": "REJECTION_REASON",
+        "code": "DEMO_AMOUNT_LIMIT",
+        "version": "1",
+        "status": "ACTIVE",
+        "changedBy": "221546852372267008",
+        "changedTime": "2026-09-12T06:57:53.746150Z"
+      }
+    },
+    {
+      "path": "/decision-dictionaries/v1/rejection-reasons",
+      "body": {
+        "reasonCode": "DEMO_REGION_RESTRICTED",
+        "name": "示例：地区准入限制",
+        "description": "DEMO 示例数据，供页面配置和人工验证。",
+        "defaultMessage": "示例地区代码不在当前支持范围内。"
+      },
+      "result": {
+        "dictionaryType": "REJECTION_REASON",
+        "code": "DEMO_REGION_RESTRICTED",
+        "version": "1",
+        "status": "ACTIVE",
+        "changedBy": "221546852372267008",
+        "changedTime": "2026-09-12T06:57:54.835158Z"
+      }
+    },
+    {
+      "path": "/decision-dictionaries/v1/rejection-reasons",
+      "body": {
+        "reasonCode": "DEMO_DISCOUNT_ANOMALY",
+        "name": "示例：折扣金额异常",
+        "description": "DEMO 示例数据，供页面配置和人工验证。",
+        "defaultMessage": "示例折扣金额超过当前配置阈值，请人工确认。"
+      },
+      "result": {
+        "dictionaryType": "REJECTION_REASON",
+        "code": "DEMO_DISCOUNT_ANOMALY",
+        "version": "1",
+        "status": "ACTIVE",
+        "changedBy": "221546852372267008",
+        "changedTime": "2026-09-12T06:57:55.886060Z"
+      }
+    },
+    {
+      "path": "/decision-dictionaries/v1/subject-tags",
+      "body": {
+        "tagCode": "DEMO_HIGH_VALUE",
+        "name": "示例：大额订单关注",
+        "description": "DEMO 标签定义；规则示例配置目标为当前 Client，仅供人工验证。"
+      },
+      "result": {
+        "dictionaryType": "SUBJECT_TAG",
+        "code": "DEMO_HIGH_VALUE",
+        "version": "1",
+        "status": "ACTIVE",
+        "changedBy": "221546852372267008",
+        "changedTime": "2026-09-12T06:57:56.952401Z"
+      }
+    },
+    {
+      "path": "/decision-dictionaries/v1/subject-tags",
+      "body": {
+        "tagCode": "DEMO_REGION_REVIEW",
+        "name": "示例：地区准入关注",
+        "description": "DEMO 标签定义；规则示例配置目标为当前 Client，仅供人工验证。"
+      },
+      "result": {
+        "dictionaryType": "SUBJECT_TAG",
+        "code": "DEMO_REGION_REVIEW",
+        "version": "1",
+        "status": "ACTIVE",
+        "changedBy": "221546852372267008",
+        "changedTime": "2026-09-12T06:57:57.987338Z"
+      }
+    },
+    {
+      "path": "/decision-dictionaries/v1/subject-tags",
+      "body": {
+        "tagCode": "DEMO_DISCOUNT_REVIEW",
+        "name": "示例：折扣人工核查",
+        "description": "DEMO 标签定义；规则示例配置目标为当前 Client，仅供人工验证。"
+      },
+      "result": {
+        "dictionaryType": "SUBJECT_TAG",
+        "code": "DEMO_DISCOUNT_REVIEW",
+        "version": "1",
+        "status": "ACTIVE",
+        "changedBy": "221546852372267008",
+        "changedTime": "2026-09-12T06:57:59.027662Z"
+      }
+    },
+    {
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "body": {
+        "pointCode": "CHECKOUT_PREPARE",
+        "ruleSetCode": "DEMO_AMOUNT_GUARD",
+        "ruleSetName": "示例：大额订单与折扣检查",
+        "baseRuleSetVersionId": null,
+        "baseContentHash": null,
+        "changeReason": "创建 DEMO 初始配置，供人工查看详情与编辑。",
+        "rules": [
+          {
+            "ruleCode": "HIGH_AMOUNT",
+            "ruleName": "订单金额超过阈值时拒绝",
+            "priorityNo": 10,
+            "enabledFlag": true,
+            "reasonCode": "DEMO_AMOUNT_LIMIT",
+            "reasonMessage": "示例订单金额超过当前配置阈值，请人工确认。",
+            "additionalActions": [
+              {
+                "sequenceNo": 1,
+                "actionCode": "ADD_RISK_TAG",
+                "actionVersionNo": 1,
+                "targetBindingCode": "CURRENT_CLIENT_V1",
+                "parameters": [
+                  {
+                    "parameterCode": "TAG",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "DEMO_HIGH_VALUE"
+                  }
+                ]
+              }
+            ],
+            "conditionNodes": [
+              {
+                "nodeKey": "1",
+                "parentNodeKey": null,
+                "sequenceNo": 1,
+                "nodeType": "PREDICATE",
+                "groupOperator": null,
+                "comparisonOperator": "GT",
+                "operands": [
+                  {
+                    "operandRole": "LEFT",
+                    "valueSequence": 1,
+                    "sourceType": "CONTEXT",
+                    "fieldCode": "net_amount",
+                    "valueType": "NUMBER",
+                    "literalValue": null
+                  },
+                  {
+                    "operandRole": "RIGHT",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "NUMBER",
+                    "literalValue": "10000"
+                  }
+                ]
+              }
+            ],
+            "action": {
+              "actionCode": "DENY_CHECKOUT",
+              "actionVersionNo": 1
+            }
+          },
+          {
+            "ruleCode": "DISCOUNT_REVIEW",
+            "ruleName": "折扣金额较高时人工复核",
+            "priorityNo": 20,
+            "enabledFlag": true,
+            "reasonCode": null,
+            "reasonMessage": null,
+            "additionalActions": [
+              {
+                "sequenceNo": 1,
+                "actionCode": "ADD_RISK_TAG",
+                "actionVersionNo": 1,
+                "targetBindingCode": "CURRENT_CLIENT_V1",
+                "parameters": [
+                  {
+                    "parameterCode": "TAG",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "DEMO_DISCOUNT_REVIEW"
+                  }
+                ]
+              }
+            ],
+            "conditionNodes": [
+              {
+                "nodeKey": "1",
+                "parentNodeKey": null,
+                "sequenceNo": 1,
+                "nodeType": "PREDICATE",
+                "groupOperator": null,
+                "comparisonOperator": "GT",
+                "operands": [
+                  {
+                    "operandRole": "LEFT",
+                    "valueSequence": 1,
+                    "sourceType": "CONTEXT",
+                    "fieldCode": "discount_amount",
+                    "valueType": "NUMBER",
+                    "literalValue": null
+                  },
+                  {
+                    "operandRole": "RIGHT",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "NUMBER",
+                    "literalValue": "500"
+                  }
+                ]
+              }
+            ],
+            "action": {
+              "actionCode": "REVIEW_CHECKOUT",
+              "actionVersionNo": 1
+            }
+          }
+        ]
+      },
+      "result": {
+        "ruleSetVersionId": "224423283112644608",
+        "pointVersionId": "224423283112644609",
+        "ruleSetCode": "DEMO_AMOUNT_GUARD",
+        "versionNo": 1,
+        "status": "DRAFT",
+        "contentHash": "b4f9c425f806c153fed448ead8c19a8900374b7cff68c3b8cadeefc69d2b4441",
+        "createdBy": "221546852372267008",
+        "createTime": "2026-09-12T06:58:00.259345Z"
+      }
+    },
+    {
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "body": {
+        "pointCode": "CHECKOUT_PREPARE",
+        "ruleSetCode": "DEMO_AMOUNT_GUARD",
+        "ruleSetName": "示例：大额订单与折扣检查",
+        "baseRuleSetVersionId": "224423283112644608",
+        "baseContentHash": "b4f9c425f806c153fed448ead8c19a8900374b7cff68c3b8cadeefc69d2b4441",
+        "changeReason": "DEMO 历史示例：金额拒绝阈值由 10000 调整为 8000。",
+        "rules": [
+          {
+            "ruleCode": "HIGH_AMOUNT",
+            "ruleName": "订单金额超过阈值时拒绝",
+            "priorityNo": 10,
+            "enabledFlag": true,
+            "reasonCode": "DEMO_AMOUNT_LIMIT",
+            "reasonMessage": "示例订单金额超过当前配置阈值，请人工确认。",
+            "additionalActions": [
+              {
+                "sequenceNo": 1,
+                "actionCode": "ADD_RISK_TAG",
+                "actionVersionNo": 1,
+                "targetBindingCode": "CURRENT_CLIENT_V1",
+                "parameters": [
+                  {
+                    "parameterCode": "TAG",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "DEMO_HIGH_VALUE"
+                  }
+                ]
+              }
+            ],
+            "conditionNodes": [
+              {
+                "nodeKey": "1",
+                "parentNodeKey": null,
+                "sequenceNo": 1,
+                "nodeType": "PREDICATE",
+                "groupOperator": null,
+                "comparisonOperator": "GT",
+                "operands": [
+                  {
+                    "operandRole": "LEFT",
+                    "valueSequence": 1,
+                    "sourceType": "CONTEXT",
+                    "fieldCode": "net_amount",
+                    "valueType": "NUMBER",
+                    "literalValue": null
+                  },
+                  {
+                    "operandRole": "RIGHT",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "NUMBER",
+                    "literalValue": "8000"
+                  }
+                ]
+              }
+            ],
+            "action": {
+              "actionCode": "DENY_CHECKOUT",
+              "actionVersionNo": 1
+            }
+          },
+          {
+            "ruleCode": "DISCOUNT_REVIEW",
+            "ruleName": "折扣金额较高时人工复核",
+            "priorityNo": 20,
+            "enabledFlag": true,
+            "reasonCode": null,
+            "reasonMessage": null,
+            "additionalActions": [
+              {
+                "sequenceNo": 1,
+                "actionCode": "ADD_RISK_TAG",
+                "actionVersionNo": 1,
+                "targetBindingCode": "CURRENT_CLIENT_V1",
+                "parameters": [
+                  {
+                    "parameterCode": "TAG",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "DEMO_DISCOUNT_REVIEW"
+                  }
+                ]
+              }
+            ],
+            "conditionNodes": [
+              {
+                "nodeKey": "1",
+                "parentNodeKey": null,
+                "sequenceNo": 1,
+                "nodeType": "PREDICATE",
+                "groupOperator": null,
+                "comparisonOperator": "GT",
+                "operands": [
+                  {
+                    "operandRole": "LEFT",
+                    "valueSequence": 1,
+                    "sourceType": "CONTEXT",
+                    "fieldCode": "discount_amount",
+                    "valueType": "NUMBER",
+                    "literalValue": null
+                  },
+                  {
+                    "operandRole": "RIGHT",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "NUMBER",
+                    "literalValue": "500"
+                  }
+                ]
+              }
+            ],
+            "action": {
+              "actionCode": "REVIEW_CHECKOUT",
+              "actionVersionNo": 1
+            }
+          }
+        ]
+      },
+      "result": {
+        "ruleSetVersionId": "224423287885762560",
+        "pointVersionId": "224423287885762561",
+        "ruleSetCode": "DEMO_AMOUNT_GUARD",
+        "versionNo": 2,
+        "status": "DRAFT",
+        "contentHash": "0e4bf341c5e72ce20c30630575e995887ac74262fcb166f47acf1b5a4b0dd9d0",
+        "createdBy": "221546852372267008",
+        "createTime": "2026-09-12T06:58:01.364747Z"
+      }
+    },
+    {
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "body": {
+        "pointCode": "CHECKOUT_PREPARE",
+        "ruleSetCode": "DEMO_REGION_GUARD",
+        "ruleSetName": "示例：地区准入检查",
+        "baseRuleSetVersionId": null,
+        "baseContentHash": null,
+        "changeReason": "创建 DEMO 初始配置，供人工查看详情与编辑。",
+        "rules": [
+          {
+            "ruleCode": "REGION_DENY",
+            "ruleName": "演示地区代码命中时拒绝",
+            "priorityNo": 10,
+            "enabledFlag": true,
+            "reasonCode": "DEMO_REGION_RESTRICTED",
+            "reasonMessage": "示例地区代码不在当前支持范围内。",
+            "additionalActions": [
+              {
+                "sequenceNo": 1,
+                "actionCode": "ADD_RISK_TAG",
+                "actionVersionNo": 1,
+                "targetBindingCode": "CURRENT_CLIENT_V1",
+                "parameters": [
+                  {
+                    "parameterCode": "TAG",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "DEMO_REGION_REVIEW"
+                  }
+                ]
+              }
+            ],
+            "conditionNodes": [
+              {
+                "nodeKey": "1",
+                "parentNodeKey": null,
+                "sequenceNo": 1,
+                "nodeType": "PREDICATE",
+                "groupOperator": null,
+                "comparisonOperator": "IN",
+                "operands": [
+                  {
+                    "operandRole": "LEFT",
+                    "valueSequence": 1,
+                    "sourceType": "CONTEXT",
+                    "fieldCode": "country_code",
+                    "valueType": "STRING",
+                    "literalValue": null
+                  },
+                  {
+                    "operandRole": "RIGHT",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "ZZ"
+                  }
+                ]
+              }
+            ],
+            "action": {
+              "actionCode": "DENY_CHECKOUT",
+              "actionVersionNo": 1
+            }
+          }
+        ]
+      },
+      "result": {
+        "ruleSetVersionId": "224423292969259008",
+        "pointVersionId": "224423292969259009",
+        "ruleSetCode": "DEMO_REGION_GUARD",
+        "versionNo": 1,
+        "status": "DRAFT",
+        "contentHash": "ff225df7b795eff84862cffec8b3a58114aad37105492361c8d6dd6f7374028b",
+        "createdBy": "221546852372267008",
+        "createTime": "2026-09-12T06:58:02.621295Z"
+      }
+    },
+    {
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "body": {
+        "pointCode": "CHECKOUT_PREPARE",
+        "ruleSetCode": "DEMO_REGION_GUARD",
+        "ruleSetName": "示例：地区准入检查",
+        "baseRuleSetVersionId": "224423292969259008",
+        "baseContentHash": "ff225df7b795eff84862cffec8b3a58114aad37105492361c8d6dd6f7374028b",
+        "changeReason": "DEMO 历史示例：新增演示地区代码 XX；ZZ/XX 均为演示占位值。",
+        "rules": [
+          {
+            "ruleCode": "REGION_DENY",
+            "ruleName": "演示地区代码命中时拒绝",
+            "priorityNo": 10,
+            "enabledFlag": true,
+            "reasonCode": "DEMO_REGION_RESTRICTED",
+            "reasonMessage": "示例地区代码不在当前支持范围内。",
+            "additionalActions": [
+              {
+                "sequenceNo": 1,
+                "actionCode": "ADD_RISK_TAG",
+                "actionVersionNo": 1,
+                "targetBindingCode": "CURRENT_CLIENT_V1",
+                "parameters": [
+                  {
+                    "parameterCode": "TAG",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "DEMO_REGION_REVIEW"
+                  }
+                ]
+              }
+            ],
+            "conditionNodes": [
+              {
+                "nodeKey": "1",
+                "parentNodeKey": null,
+                "sequenceNo": 1,
+                "nodeType": "PREDICATE",
+                "groupOperator": null,
+                "comparisonOperator": "IN",
+                "operands": [
+                  {
+                    "operandRole": "LEFT",
+                    "valueSequence": 1,
+                    "sourceType": "CONTEXT",
+                    "fieldCode": "country_code",
+                    "valueType": "STRING",
+                    "literalValue": null
+                  },
+                  {
+                    "operandRole": "RIGHT",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "ZZ"
+                  },
+                  {
+                    "operandRole": "RIGHT",
+                    "valueSequence": 2,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "XX"
+                  }
+                ]
+              }
+            ],
+            "action": {
+              "actionCode": "DENY_CHECKOUT",
+              "actionVersionNo": 1
+            }
+          }
+        ]
+      },
+      "result": {
+        "ruleSetVersionId": "224423297549438976",
+        "pointVersionId": "224423297549438977",
+        "ruleSetCode": "DEMO_REGION_GUARD",
+        "versionNo": 2,
+        "status": "DRAFT",
+        "contentHash": "2b654565fcf13ac064507b4bfa717302dc3cf235c35e2b876488bb5272e822ca",
+        "createdBy": "221546852372267008",
+        "createTime": "2026-09-12T06:58:03.690261Z"
+      }
+    },
+    {
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "body": {
+        "pointCode": "CHECKOUT_PREPARE",
+        "ruleSetCode": "DEMO_USD_ALLOW",
+        "ruleSetName": "示例：美元订单放行",
+        "baseRuleSetVersionId": null,
+        "baseContentHash": null,
+        "changeReason": "创建 DEMO 初始配置，供人工查看详情与编辑。",
+        "rules": [
+          {
+            "ruleCode": "USD_ALLOW",
+            "ruleName": "美元订单允许结账",
+            "priorityNo": 10,
+            "enabledFlag": true,
+            "reasonCode": null,
+            "reasonMessage": null,
+            "additionalActions": [],
+            "conditionNodes": [
+              {
+                "nodeKey": "1",
+                "parentNodeKey": null,
+                "sequenceNo": 1,
+                "nodeType": "PREDICATE",
+                "groupOperator": null,
+                "comparisonOperator": "EQ",
+                "operands": [
+                  {
+                    "operandRole": "LEFT",
+                    "valueSequence": 1,
+                    "sourceType": "CONTEXT",
+                    "fieldCode": "currency",
+                    "valueType": "STRING",
+                    "literalValue": null
+                  },
+                  {
+                    "operandRole": "RIGHT",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "USD"
+                  }
+                ]
+              }
+            ],
+            "action": {
+              "actionCode": "ALLOW_CHECKOUT",
+              "actionVersionNo": 1
+            }
+          }
+        ]
+      },
+      "result": {
+        "ruleSetVersionId": "224423303002034176",
+        "pointVersionId": "224423303002034177",
+        "ruleSetCode": "DEMO_USD_ALLOW",
+        "versionNo": 1,
+        "status": "DRAFT",
+        "contentHash": "ca3cd2a9ec8401405cde00fa83a5acadbcb89c82a5185d10ff06422a99cbbd80",
+        "createdBy": "221546852372267008",
+        "createTime": "2026-09-12T06:58:04.869682Z"
+      }
+    },
+    {
+      "path": "/decision-rule-sets/v1/rule-sets/224423303002034176/freeze",
+      "body": {
+        "expectedContentHash": "ca3cd2a9ec8401405cde00fa83a5acadbcb89c82a5185d10ff06422a99cbbd80"
+      },
+      "result": {
+        "ruleSetVersionId": "224423303002034176",
+        "pointVersionId": "224423303002034177",
+        "ruleSetCode": "DEMO_USD_ALLOW",
+        "versionNo": 1,
+        "status": "FROZEN",
+        "contentHash": "ca3cd2a9ec8401405cde00fa83a5acadbcb89c82a5185d10ff06422a99cbbd80",
+        "frozenBy": "221546852372267008",
+        "frozenTime": "2026-09-12T06:58:06.091766Z"
+      }
+    },
+    {
+      "path": "/decision-releases/v1/candidates",
+      "body": {
+        "ruleSetVersionId": "224423303002034176",
+        "expectedRuleSetContentHash": "ca3cd2a9ec8401405cde00fa83a5acadbcb89c82a5185d10ff06422a99cbbd80"
+      },
+      "result": {
+        "releaseId": "224423312116256768",
+        "releaseNo": 10,
+        "decisionPointId": "210001",
+        "pointCode": "CHECKOUT_PREPARE",
+        "pointVersionId": "224423303002034177",
+        "ruleSetVersionId": "224423303002034176",
+        "environmentCode": "TEST",
+        "status": "DRAFT",
+        "version": 1,
+        "contentHash": "a590d3744c79d9c49cf8bdfc0a2e8692025bc10191666fee32e6a083e63795b1",
+        "createdBy": "221546852372267008",
+        "createTime": "2026-09-12T06:58:07.171546Z",
+        "initialStateChange": {
+          "auditEventId": "224423312116256769",
+          "eventTime": "2026-09-12T06:58:07.171546Z",
+          "fromStatus": null,
+          "toStatus": "DRAFT",
+          "reasonCode": "CANDIDATE_CREATED",
+          "triggerType": "OPERATIONS_COMMAND",
+          "actorId": "221546852372267008",
+          "aggregateVersion": 1
+        }
+      }
+    },
+    {
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "body": {
+        "pointCode": "CHECKOUT_PREPARE",
+        "ruleSetCode": "DEMO_USD_ALLOW",
+        "ruleSetName": "示例：美元订单放行",
+        "baseRuleSetVersionId": "224423303002034176",
+        "baseContentHash": "ca3cd2a9ec8401405cde00fa83a5acadbcb89c82a5185d10ff06422a99cbbd80",
+        "changeReason": "DEMO 历史示例：新增高优先级折扣异常拒绝；保留旧冻结版本的草稿发布引用。",
+        "rules": [
+          {
+            "ruleCode": "DISCOUNT_DENY",
+            "ruleName": "折扣异常先拒绝",
+            "priorityNo": 10,
+            "enabledFlag": true,
+            "reasonCode": "DEMO_DISCOUNT_ANOMALY",
+            "reasonMessage": "示例折扣金额超过当前配置阈值，请人工确认。",
+            "additionalActions": [],
+            "conditionNodes": [
+              {
+                "nodeKey": "1",
+                "parentNodeKey": null,
+                "sequenceNo": 1,
+                "nodeType": "PREDICATE",
+                "groupOperator": null,
+                "comparisonOperator": "GT",
+                "operands": [
+                  {
+                    "operandRole": "LEFT",
+                    "valueSequence": 1,
+                    "sourceType": "CONTEXT",
+                    "fieldCode": "discount_amount",
+                    "valueType": "NUMBER",
+                    "literalValue": null
+                  },
+                  {
+                    "operandRole": "RIGHT",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "NUMBER",
+                    "literalValue": "1000"
+                  }
+                ]
+              }
+            ],
+            "action": {
+              "actionCode": "DENY_CHECKOUT",
+              "actionVersionNo": 1
+            }
+          },
+          {
+            "ruleCode": "USD_ALLOW",
+            "ruleName": "美元订单允许结账",
+            "priorityNo": 20,
+            "enabledFlag": true,
+            "reasonCode": null,
+            "reasonMessage": null,
+            "additionalActions": [],
+            "conditionNodes": [
+              {
+                "nodeKey": "1",
+                "parentNodeKey": null,
+                "sequenceNo": 1,
+                "nodeType": "PREDICATE",
+                "groupOperator": null,
+                "comparisonOperator": "EQ",
+                "operands": [
+                  {
+                    "operandRole": "LEFT",
+                    "valueSequence": 1,
+                    "sourceType": "CONTEXT",
+                    "fieldCode": "currency",
+                    "valueType": "STRING",
+                    "literalValue": null
+                  },
+                  {
+                    "operandRole": "RIGHT",
+                    "valueSequence": 1,
+                    "sourceType": "LITERAL",
+                    "fieldCode": null,
+                    "valueType": "STRING",
+                    "literalValue": "USD"
+                  }
+                ]
+              }
+            ],
+            "action": {
+              "actionCode": "ALLOW_CHECKOUT",
+              "actionVersionNo": 1
+            }
+          }
+        ]
+      },
+      "result": {
+        "ruleSetVersionId": "224423316587384832",
+        "pointVersionId": "224423316587384833",
+        "ruleSetCode": "DEMO_USD_ALLOW",
+        "versionNo": 2,
+        "status": "DRAFT",
+        "contentHash": "e9dd1476f64bfb317547288b60f29b83bffcbeed72768b4b9c17bac43d03456c",
+        "createdBy": "221546852372267008",
+        "createTime": "2026-09-12T06:58:08.245635Z"
+      }
+    }
+  ],
+  "ruleSets": [
+    {
+      "code": "DEMO_AMOUNT_GUARD",
+      "name": "示例：大额订单与折扣检查",
+      "ruleSetId": "224423283238473728",
+      "versionIds": [
+        "224423283112644608",
+        "224423287885762560"
+      ],
+      "currentVersion": 2,
+      "currentStatus": "DRAFT"
+    },
+    {
+      "code": "DEMO_REGION_GUARD",
+      "name": "示例：地区准入检查",
+      "ruleSetId": "224423292998619136",
+      "versionIds": [
+        "224423292969259008",
+        "224423297549438976"
+      ],
+      "currentVersion": 2,
+      "currentStatus": "DRAFT"
+    },
+    {
+      "code": "DEMO_USD_ALLOW",
+      "name": "示例：美元订单放行",
+      "ruleSetId": "224423303031394304",
+      "versionIds": [
+        "224423303002034176",
+        "224423316587384832"
+      ],
+      "currentVersion": 2,
+      "currentStatus": "DRAFT"
+    }
+  ],
+  "activated": false,
+  "draftRelease": {
+    "releaseId": "224423312116256768",
+    "releaseNo": 10,
+    "decisionPointId": "210001",
+    "pointCode": "CHECKOUT_PREPARE",
+    "pointVersionId": "224423303002034177",
+    "ruleSetVersionId": "224423303002034176",
+    "environmentCode": "TEST",
+    "status": "DRAFT",
+    "version": 1,
+    "contentHash": "a590d3744c79d9c49cf8bdfc0a2e8692025bc10191666fee32e6a083e63795b1",
+    "createdBy": "221546852372267008",
+    "createTime": "2026-09-12T06:58:07.171546Z",
+    "initialStateChange": {
+      "auditEventId": "224423312116256769",
+      "eventTime": "2026-09-12T06:58:07.171546Z",
+      "fromStatus": null,
+      "toStatus": "DRAFT",
+      "reasonCode": "CANDIDATE_CREATED",
+      "triggerType": "OPERATIONS_COMMAND",
+      "actorId": "221546852372267008",
+      "aggregateVersion": 1
+    }
+  },
+  "status": "CREATED_AND_RETAINED_FOR_USER"
+}

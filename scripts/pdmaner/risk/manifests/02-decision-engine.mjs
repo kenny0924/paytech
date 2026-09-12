@@ -23,6 +23,45 @@ const RELEASE_STATUS = ["DRAFT", "VALIDATING", "SHADOWING", "REVIEW_PENDING", "A
 
 export const TABLES = Object.freeze([
   defineTable({
+    key: "rule_reject_reason", name: "规则拒绝原因字典", comment: "规则 DENY 原因的业务字典；当前目录与不可变规则消息相互独立", audit: "custom",
+    fields: [
+      field("rejection_reason_id", "BIGINT", "NN", "拒绝原因标识", "拒绝原因定义标识，由 Risk 服务侧 Snowflake 生成。", {"primaryKey": true}),
+      field("reason_code", "VARCHAR(64)", "NN", "拒绝原因编码", "规则 DENY 结果的拒绝原因编码，创建后固定且永久不复用。", {"source": "Risk 运营维护的拒绝原因目录"}),
+      field("reason_name", "VARCHAR(100)", "NN", "拒绝原因名称", "拒绝原因当前显示名称，1 至 100 字符；不代表历史规则保存时的名称。", {}),
+      field("description", "VARCHAR(500)", "N", "内部说明", "拒绝原因的内部含义说明，最多 500 字符；空串规范为 NULL。", {}),
+      field("default_message", "VARCHAR(500)", "NN", "默认文案", "选择该原因时带入规则的默认内部文案，1 至 500 字符；不回写已保存规则，不作为外部错误消息。", {}),
+      field("status", "VARCHAR(64)", "NN", "选择资格状态", "字典选择资格状态；停用仅禁止新选，不撤销已有配置。", {"values": ["ACTIVE", "DISABLED"]}),
+      field("version", "BIGINT", "NN", "并发版本", "字典并发版本，创建为 1；更新或启停必须匹配期望版本，每次成功更新增加 1。", {"defaultValue": "1"}),
+      field("created_by", "BIGINT", "NN", "创建人", "创建该字典的认证 Operations Account 标识，由 BFF 可信上下文传入。", {}),
+      field("updated_by", "BIGINT", "NN", "更新人", "最后修改该字典的认证 Operations Account 标识；创建时等于 created_by。", {}),
+      field("create_time", "DATETIME(6)", "NN", "创建时间", "字典创建事实的 UTC 微秒时间，由 Risk 应用生成。", {}),
+      field("update_time", "DATETIME(6)", "NN", "更新时间", "字典最后成功变更的 UTC 微秒时间，用于人工核对当前状态。", {}),
+    ],
+    indexes: [
+      { ...uk("uk_rule_reject_reason_code", "reason_code"), comment: "拒绝原因编码永久唯一，包括停用记录" },
+      { ...ix("idx_rule_reject_reason_list", "status", "reason_code"), comment: "支持按选择资格和编码排序的字典查询" },
+    ],
+  }),
+  defineTable({
+    key: "rule_subject_tag", name: "规则主体标签字典", comment: "规则可配置的主体标签定义，不存储任何主体的实际标签实例", audit: "custom",
+    fields: [
+      field("tag_id", "BIGINT", "NN", "标签标识", "规则主体标签定义标识，由 Risk 服务侧 Snowflake 生成。", {"primaryKey": true}),
+      field("tag_code", "VARCHAR(64)", "NN", "标签编码", "主体标签编码，创建后固定且永久不复用。", {"source": "Risk 运营维护的主体标签目录"}),
+      field("tag_name", "VARCHAR(100)", "NN", "标签名称", "主体标签当前显示名称，1 至 100 字符；不代表历史配置时的名称。", {}),
+      field("description", "VARCHAR(500)", "N", "内部说明", "标签的内部业务含义说明，最多 500 字符；空串规范为 NULL。", {}),
+      field("status", "VARCHAR(64)", "NN", "选择资格状态", "标签新选择资格状态，不表示真实主体的标签状态。", {"values": ["ACTIVE", "DISABLED"]}),
+      field("version", "BIGINT", "NN", "并发版本", "标签并发版本，创建为 1；更新或启停必须匹配期望版本，每次成功更新增加 1。", {"defaultValue": "1"}),
+      field("created_by", "BIGINT", "NN", "创建人", "创建标签的认证 Operations Account 标识，由 BFF 可信上下文传入。", {}),
+      field("updated_by", "BIGINT", "NN", "更新人", "最后修改标签的认证 Operations Account 标识。", {}),
+      field("create_time", "DATETIME(6)", "NN", "创建时间", "标签定义创建的 UTC 微秒时间，由 Risk 应用生成。", {}),
+      field("update_time", "DATETIME(6)", "NN", "更新时间", "标签定义最后成功变更的 UTC 微秒时间，用于人工核对当前状态。", {}),
+    ],
+    indexes: [
+      { ...uk("uk_rule_subject_tag_code", "tag_code"), comment: "主体标签编码永久唯一，包括停用记录" },
+      { ...ix("idx_rule_subject_tag_list", "status", "tag_code"), comment: "支持按选择资格和编码排序的标签查询" },
+    ],
+  }),
+  defineTable({
     key: "decision_point",
     name: "决策事件点",
     comment: "保存风险决策事件点的稳定身份和所属业务域",
@@ -243,12 +282,13 @@ export const TABLES = Object.freeze([
       str("rule_name", "规则名称"),
       int("priority_no", "规则优先级"),
       bool("enabled_flag", "是否启用"),
-      code("reason_code", "业务原因代码", "N", null, "Risk 规则配置中手工输入的稳定原因代码，未来由原因目录选择"),
-      field("reason_message", "VARCHAR(500)", "N", "拒绝说明文案", "随规则不可变版本保存的手工内部拒绝说明；历史记录与非拒绝规则可空，不作为对外错误消息"),
+      field("reason_code", "VARCHAR(64)", "N", "业务原因代码", "随不可变规则版本保存的原因代码；DENY 新选择由 Risk 拒绝原因字典治理，旧手工代码按基线兼容；其他终态保留原合同。", { source: "Risk 拒绝原因目录；历史手工代码按基线兼容" }),
+      field("reason_message", "VARCHAR(500)", "N", "拒绝说明文案", "随不可变规则版本保存的内部拒绝文案；选原因时可带出默认值并单独覆盖，历史与非拒绝规则可空，不作为外部错误消息。"),
     ],
     indexes: [
       uk("uk_risk_rule_code", "rule_set_version_id", "rule_code"),
       uk("uk_risk_rule_priority", "rule_set_version_id", "priority_no"),
+      { ...ix("idx_rule_reason", "reason_code", "rule_set_version_id"), comment: "支持由原因代码反查保存规则版本，查询仍验证 DENY 终态" },
     ],
     relations: [rel("rule_set_version_id", "rule_set_version", "rule_set_version_id")],
   }),
@@ -387,6 +427,7 @@ export const TABLES = Object.freeze([
       ix("idx_rule_param_def", "parameter_definition_id"),
       ix("idx_rule_param_feature", "feature_version_id"),
       ix("idx_rule_param_input", "input_field_id"),
+      { ...ix("idx_rule_param_string", "string_value", "parameter_definition_id", "rule_action_id"), comment: "支持标签字面量反查；须同时验证 TAG 参数定义和 ADD_RISK_TAG 动作" },
     ],
     relations: [
       rel("rule_action_id", "rule_action", "rule_action_id"),

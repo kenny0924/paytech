@@ -1,0 +1,95 @@
+{
+  "scenarios": [
+    "real-create-response-loss-manual-query-no-auto-retry-recover",
+    "real-cas-conflict-keeps-draft-until-explicit-load",
+    "dictionary-readonly-drawer",
+    "confirmed-same-route-back-clears-drawer-and-draft"
+  ],
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons?keyword=RCO16_REASON_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-2032999b-3600-4ddd-b6ab-b6adc4d005ba"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-dictionaries/v1/rejection-reasons",
+      "status": 200,
+      "requestId": "rco16-browser-8bd1dfe0-b555-4652-bada-80018ceac497"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_UI_A1853321A7B0",
+      "status": 200,
+      "requestId": "rco16-browser-032bfc37-4da4-41b4-a4c0-e4b8d12b4bc5"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_UI_A1853321A7B0",
+      "status": 200,
+      "requestId": "rco16-browser-1bf23622-5335-4352-bfa3-cc437d099bb1"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons?keyword=RCO16_REASON_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-ce9557c4-4504-40a0-be62-1a89d2ce817c"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_REASON_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-5aaeb46c-9f0c-4a13-ac03-f086f9a67e04"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_REASON_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-d21228fd-0306-4bcf-b0db-d692e37616ff"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_REASON_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-28a3400a-2a5a-46b5-95b4-5fd3bcef5ea9"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_REASON_97A0B68C894C",
+      "status": 409,
+      "requestId": "rco16-browser-873094f1-ff63-4692-82f0-999d4d9ccc29"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_REASON_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-d761acc6-46c1-4867-8a5b-78c8779df8d8"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_REASON_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-c04fcb1b-d054-48e8-b71a-4a3b1d470da7"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_REASON_97A0B68C894C/references?scope=ALL&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-ba564c65-89f7-4ee6-a4d4-b2c99e7c50de"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons?keyword=RCO16_REASON_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-a1b7df14-ca98-4a6b-afc6-261a3483cb37"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_REASON_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-56d02bb3-cefa-46a9-803c-ae0a5b028bc0"
+    }
+  ],
+  "errors": []
+}

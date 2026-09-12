@@ -1,0 +1,15 @@
+{
+  "scope": "Static artifact equality only; local SQL execution evidence is in local-sql-application.json; no Platform catalog activation",
+  "riskTables": 2,
+  "riskColumns": 21,
+  "platformNewOperations": 14,
+  "platformInsertedRows": 182,
+  "newRoutesDisabled": true,
+  "initializationMatchesSevenInsertBlocks": true,
+  "riskCreateTableSqlMatchesModelSchema": true,
+  "sha256": {
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/db/risk-compliance-service/ddl.sql": "a3bf8d0708ded96422dc530c5c6799b363c5a54b0236f09531de4a4494ee1740",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/db/platform-support-service/dml.sql": "bfef7441c15d43a05768c00f62caf248e109d8485a0deea6ed970a541d0d0da6",
+    "risk-compliance-service/docs/database/risk-compliance.pdma.json": "f335d04ee33238452f97068a21fa6ed6f80c0e310861c7843924a2c274212adc"
+  }
+}

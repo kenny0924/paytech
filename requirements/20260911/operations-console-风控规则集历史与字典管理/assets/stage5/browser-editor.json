@@ -1,0 +1,132 @@
+{
+  "scenarios": [
+    "reason-default-manual-override-and-explicit-switch-confirmation",
+    "tag-selection-does-not-create-free-values",
+    "selected-dictionary-read-failure-preserves-saved-facts",
+    "dictionary-menu-enter-space-arrows-escape-drawer-focus",
+    "mobile-drawer-long-text-fits-viewport"
+  ],
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-06944683-11f9-4482-b5f2-7a9448be5a11"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "rco16-browser-d1cf1ad6-a27a-4424-97b6-2f7204304a3a"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "rco16-browser-016fbf95-e94d-4499-9235-6d9dcdd7e67b"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-230882ec-8c7b-401b-9503-1bb5eb55753d"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237164106358784",
+      "status": 200,
+      "requestId": "rco16-browser-8437b5bf-3c41-4ebb-979c-a0f278765f7a"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_REASON_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-10fc3afc-b63a-4b39-ba05-b6d05f35a363"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags/RCO16_TAG_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-3c255bb7-7685-483b-952e-fb81b998ff17"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags?status=ACTIVE&page=1&size=20",
+      "status": 200,
+      "requestId": "rco16-browser-6245c84f-f50c-430e-be91-34637860f9c9"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons?status=ACTIVE&page=1&size=20",
+      "status": 200,
+      "requestId": "rco16-browser-1025b608-73ef-4576-8ff1-4254291f9c72"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_UI_1907AD96E62D",
+      "status": 200,
+      "requestId": "rco16-browser-ccf5c87e-77d2-4ad2-bd7d-33492cd41beb"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags?status=ACTIVE&keyword=UNREGISTERED_TAG&page=1&size=20",
+      "status": 200,
+      "requestId": "rco16-browser-2bac8169-1d6c-46b4-8d4a-dc61509b2e73"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "rco16-browser-1f46def0-7489-4ac3-bbef-cfd55f6e4ad5"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-183ceac3-8921-49eb-97a5-863891dfb49d"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "requestId": "rco16-browser-d4352fd4-c374-4efc-8cd9-71033b974929"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-0e647589-cd7a-4f80-9bca-16e2b22d2a18"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237164106358784",
+      "status": 200,
+      "requestId": "rco16-browser-5bacd9f0-843c-4d88-975c-90038048c67c"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/RCO16_REASON_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-4e6f4ffe-1cc0-4004-8c85-92a560bce71a"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags?keyword=RCO16_TAG_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-84e0fc5d-73ff-4e45-be9e-f7bdae55c37b"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags/RCO16_TAG_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-4653a5e9-0f3e-4437-991a-a97e12e98a10"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags/RCO16_TAG_97A0B68C894C",
+      "status": 200,
+      "requestId": "rco16-browser-dc7c801c-27e4-4d9c-bbf8-abf9b2c14a55"
+    }
+  ],
+  "errors": []
+}

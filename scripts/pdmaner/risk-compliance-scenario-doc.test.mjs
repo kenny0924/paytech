@@ -141,7 +141,7 @@ function section(document, start, end) {
   return document.slice(startIndex, endIndex);
 }
 
-test("Risk real-world scenarios cover all 72 physical tables and no removed or unknown table", () => {
+test("Risk real-world scenarios cover all 74 physical tables and no removed or unknown table", () => {
   assert.ok(existsSync(scenarioPath), `Risk 现实场景尚未生成：${scenarioPath}`);
   const scenario = readFileSync(scenarioPath, "utf8");
   const model = JSON.parse(readFileSync(modelPath, "utf8"));
@@ -150,9 +150,9 @@ test("Risk real-world scenarios cover all 72 physical tables and no removed or u
   const exampleInventory = tableExampleInventory(scenario);
 
   assert.deepEqual([...modelTables].sort(), [...APPROVED_TABLES].sort());
-  assert.equal(APPROVED_TABLES.length, 72);
+  assert.equal(APPROVED_TABLES.length, 74);
   assert.deepEqual([...exampleInventory.keys()].sort(), [...APPROVED_TABLES].sort());
-  assert.equal(exampleInventory.size, 72);
+  assert.equal(exampleInventory.size, 74);
   for (const [table, count] of exampleInventory) {
     assert.equal(count, 1, `现实场景必须恰有一条逐表示例：${table}`);
   }
@@ -203,7 +203,7 @@ test("Risk documents route current statistics and preserve the historical Settle
   const physicalManifest = JSON.parse(manifestBlock);
   assert.deepEqual(physicalManifest.modelTotals, HISTORICAL_RISK_TOTALS);
   const ledger = readFileSync(path.join(workspaceRoot, "agent-docs/CURRENT_IMPLEMENTATION.md"), "utf8");
-  assert.match(ledger, /\| Risk & Compliance \| 72 \| 877 \| 108 \| 76 \| 113 \| 9 \| 8 \|/u);
+  assert.match(ledger, /\| Risk & Compliance \| 74 \| 898 \| 110 \| 80 \| 113 \| 9 \| 8 \|/u);
   assert.equal(physicalManifest.checkContracts, 82);
   assert.equal(
     physicalManifest.modelSha256,

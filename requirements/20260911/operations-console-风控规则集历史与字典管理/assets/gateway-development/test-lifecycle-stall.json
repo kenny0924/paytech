@@ -1,0 +1,17 @@
+{
+  "phase": "Gateway full regression retry",
+  "completed_before_stall": {
+    "tests": 689,
+    "failures": 0,
+    "errors": 0
+  },
+  "observed_main_stack": [
+    "Thread.sleep",
+    "org.springframework.boot.reactor.netty.GracefulShutdown.abort",
+    "org.springframework.boot.actuate.autoconfigure.web.server.ChildManagementContextInitializer.stop",
+    "org.springframework.test.context.cache.DefaultContextCache.pauseOnContextSwitchIfNecessary"
+  ],
+  "diagnosis": "Boot 4.0.8 abort caches shutdownThread then waits for shuttingDown; shutdown can complete between the reads. No netty-shutdown thread remained in the dump.",
+  "remedy": "server.shutdown=immediate in application-auto.yml only; production shutdown unchanged",
+  "source_evidence": "local spring-boot-reactor-netty-4.0.8.jar javap and spring-test-7.0.9-sources.jar"
+}

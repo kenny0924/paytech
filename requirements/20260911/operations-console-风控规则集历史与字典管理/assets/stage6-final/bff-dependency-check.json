@@ -1,0 +1,37 @@
+{
+  "oldStage6Image": "sha256:8005c98cee03182f1d03b5c6c2599e219b78eb36960858025c705ad399d21a45",
+  "newJarSha256": "be86d193e995f5b8a089422df816f01bcf3317de04e83b8c616c04598aa69e52",
+  "dependencyJars": 92,
+  "changedJars": {
+    "BOOT-INF/lib/paytech-http-client-support-1.0.0-SNAPSHOT.jar": {
+      "oldJarSha256": "c1965c7c4e29131d4c1e8373a925e1e9163ea32a35835645148b7886aee8d9f3",
+      "newJarSha256": "7962d5d689086f8d951b8f70b6bb34ae42ce844af5eb46470de2bc9610c81704",
+      "changedEntries": [
+        "com/paytech/foundation/httpclient/api/HttpServiceClientOptions$DependencyFailureKind.class",
+        "com/paytech/foundation/httpclient/core/transport/HttpServiceExchangeInterceptor$BufferedResponse.class",
+        "META-INF/maven/com.paytech/paytech-http-client-support/pom.xml",
+        "com/paytech/foundation/httpclient/core/transport/HttpServiceExchangeInterceptor.class",
+        "com/paytech/foundation/httpclient/api/HttpServiceClientOptions.class",
+        "com/paytech/foundation/httpclient/api/HttpServiceClientFactory.class"
+      ]
+    },
+    "BOOT-INF/lib/paytech-mvc-web-starter-1.0.0-SNAPSHOT.jar": {
+      "oldJarSha256": "7e27a8cb5277e2d9c8d9eae1b2bd4c72d546ad1a6078f6560fb258e6a1ecdc26",
+      "newJarSha256": "15c22fda774f1ebd3b036c13385c989f24e9d3f1163fdf4588fc87caf4895008",
+      "changedEntries": []
+    },
+    "BOOT-INF/lib/paytech-http-problem-1.0.0-SNAPSHOT.jar": {
+      "oldJarSha256": "3306c1229e84619ce40406fbf1f4460fea95cf52e11ae7c1b380d29455fe2189",
+      "newJarSha256": "c5e28661bbd6c8f450c8b7f299ccf994f2e8cc6282982c6669d63cc454810b87",
+      "changedEntries": [
+        "com/paytech/foundation/httpproblem/api/ApiProblemProfile.class"
+      ]
+    }
+  },
+  "scope": "Exact nested jar member comparison; stopped inspection container removed. Full candidate BFF verify follows dependency drift.",
+  "finalTestedJarSha256": "d66936ac0e1844f8f0a39d79b91afce141d3f9887f48bfccef08b33f5770d73f",
+  "nestedDependenciesUnchangedAcrossFinalRepackage": true,
+  "matchesCurrentLocalFoundationOutputs": true,
+  "foundationHeadObserved": "5327feecd6e838d70554d10de64d74fe64203859",
+  "foundationSourceChangedByThisStage": false
+}

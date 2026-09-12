@@ -169,7 +169,7 @@ Readiness 不是持久化业务事实。PLT-I13 在一个一致查询快照内�
 
 所有外部 HTTP API 使用一个 Platform-owned 公共 Route Catalog；内部服务间 HTTP、MQ、XXL-Job、数据库和 Vault 调用绕过 Gateway，不创建 Route，也不消耗公共 Guard Bucket。当前数据库只保存全局当前配置：
 
-- `t_gateway_target` 保存稳定 Target Service Code、Nacos Discovery Service Name、Channel 与启停状态；Gateway 必须再用静态 Approved Target Registry 精确校验 `target_service_code + discovery_service_name + channel`，数据库不能指定 Host、URI、Port、Secret、脚本或任意内部服务；
+- `t_gateway_target` 保存稳定 Target Service Code、Nacos Discovery Service Name、Channel 与启停状态；按[数据库路由决定](../decisions/2026-09-11-gateway-database-routing.md)，Gateway 从完整快照读取这些配置并执行通用校验，不维护第二份业务身份/路径名单；配置维护者负责目标业务监听与开放资格，数据库不能指定 Host、URI、Port、Secret 或脚本；
 - `t_gateway_route` 保存六类 Channel、精确 Method/Path、Target、Security Profile、Authorization Mode、Cookie Mode 与传输上限；`(target_id, channel)` 复合 FK 保证 Route 与 Target 同 Channel；
 - `t_gateway_route_header` 与 `t_gateway_route_query_param` 只允许完整名称，不接受通配、前缀、可信身份 Header 或任意 Query；
 - `t_gateway_guard_rule` 是 Route 当前聚合子行，保存全局 Rate/Concurrency 参数。`TENANT` 只表示认证后把可信 `tenant_id` 加入 Redis Key；控制面表没有 `tenant_id`，不提供 Tenant Override，Redis Counter/Lease 也不入库；
@@ -249,7 +249,7 @@ Snapshot 只投影 ACTIVE Target 及其 ACTIVE Route/子项；DISABLED Target �
 | Webhook Revision | DRAFT → PENDING_VERIFICATION → VERIFIED → ACTIVE | DNS/Challenge/Redirect 不安全则 SUSPENDED，不激活 |
 | Webhook Delivery | CREATED → PROCESSING → SUCCEEDED/RETRY_WAIT/DEAD | Replay 生成号冲突拒绝；旧 Fencing Token 拒绝提交 |
 | Audit Chain | OPEN → SEALED | Hash/序号/签名不匹配拒绝 Seal 并产生 Security Event |
-| Gateway Target/Route | ACTIVE ↔ DISABLED | Target DISABLED 时全部子 Route 从下一份 Snapshot 排除；任何 Registry、Path、Profile/Mode、Permission/Scope 或限制校验失败都拒绝整份候选 Snapshot |
+| Gateway Target/Route | ACTIVE ↔ DISABLED | Target DISABLED 时全部子 Route 从下一份 Snapshot 排除；任何 Target 身份/发现名、Path、Profile/Mode、Permission/Scope 或限制校验失败都拒绝整份候选 Snapshot |
 
 ## 13. 接口与事件契约
 

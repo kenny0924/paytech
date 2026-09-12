@@ -1,0 +1,66 @@
+{
+  "gate_passed": false,
+  "overall_branch": {
+    "covered": 1867,
+    "total": 2380,
+    "ratio": 0.78445378,
+    "required": 0.9
+  },
+  "partition_by_changed_source": {
+    "changed_source": {
+      "covered": 168,
+      "missed": 92,
+      "ratio": 0.6461538461538462
+    },
+    "unchanged_source": {
+      "covered": 1699,
+      "missed": 421,
+      "ratio": 0.8014150943396227
+    }
+  },
+  "changed_source_classes": [
+    {
+      "class": "com/paytech/gateway/routing/runtime/GatewayRuntimeRoute",
+      "covered": 9,
+      "missed": 9
+    },
+    {
+      "class": "com/paytech/gateway/routing/runtime/GatewayRuntimeTarget",
+      "covered": 7,
+      "missed": 5
+    },
+    {
+      "class": "com/paytech/gateway/routing/runtime/GatewayRuntimeSnapshot",
+      "covered": 7,
+      "missed": 3
+    },
+    {
+      "class": "com/paytech/gateway/routing/snapshot/GatewaySnapshotCompiler",
+      "covered": 46,
+      "missed": 12
+    },
+    {
+      "class": "com/paytech/gateway/routing/snapshot/GatewayRoutePolicyValidator",
+      "covered": 79,
+      "missed": 59
+    },
+    {
+      "class": "com/paytech/gateway/routing/GatewayRouteConfiguration",
+      "covered": 8,
+      "missed": 0
+    },
+    {
+      "class": "com/paytech/gateway/routing/DynamicRouteWebFilter",
+      "covered": 10,
+      "missed": 0
+    },
+    {
+      "class": "com/paytech/gateway/configuration/GatewaySnapshotConfiguration",
+      "covered": 2,
+      "missed": 4
+    }
+  ],
+  "missing_from_report": "com/paytech/gateway/routing/snapshot/GatewayGuardProfileCompiler$1",
+  "prior_record": "agent-docs/CURRENT_IMPLEMENTATION.md section13 already records an unmet Gateway coverage gate",
+  "threshold_or_exclusions_changed": false
+}

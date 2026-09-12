@@ -1,0 +1,102 @@
+{
+  "checked_at": "2026-09-12T05:58:42.561881+00:00",
+  "original_database_metadata_unchanged": true,
+  "original_database_after": {
+    "table_counts": {
+      "t_access_tenant": 1,
+      "t_api_credential": 0,
+      "t_api_credential_scope": 0,
+      "t_audit_chain": 1,
+      "t_audit_event": 2,
+      "t_audit_event_attr": 2,
+      "t_auth_session": 1,
+      "t_command_idempotency": 1,
+      "t_console_resource": 12,
+      "t_gateway_guard_rule": 122,
+      "t_gateway_route": 21,
+      "t_gateway_route_header": 82,
+      "t_gateway_route_query_param": 12,
+      "t_gateway_target": 1,
+      "t_jwt_signing_key": 1,
+      "t_password_credential": 2,
+      "t_permission": 12,
+      "t_refresh_token_generation": 1,
+      "t_role": 2,
+      "t_role_permission": 16,
+      "t_security_event": 0,
+      "t_tenant_member": 2,
+      "t_tenant_member_role": 3,
+      "t_user_account": 2
+    },
+    "schema_sha256": "7c237c5c444313cb1becd6a56820a65709f5d56f6e6391a0c70d3f0170eb5058"
+  },
+  "validation_table_counts": {
+    "t_access_tenant": 1,
+    "t_api_credential": 0,
+    "t_api_credential_scope": 0,
+    "t_audit_chain": 0,
+    "t_audit_event": 0,
+    "t_audit_event_attr": 0,
+    "t_auth_session": 0,
+    "t_command_idempotency": 0,
+    "t_console_resource": 32,
+    "t_gateway_guard_rule": 302,
+    "t_gateway_route": 51,
+    "t_gateway_route_header": 182,
+    "t_gateway_route_query_param": 54,
+    "t_gateway_target": 1,
+    "t_jwt_signing_key": 0,
+    "t_password_credential": 0,
+    "t_permission": 26,
+    "t_refresh_token_generation": 0,
+    "t_role": 2,
+    "t_role_permission": 32,
+    "t_security_event": 0,
+    "t_tenant_member": 0,
+    "t_tenant_member_role": 0,
+    "t_user_account": 0
+  },
+  "validation_catalog": {
+    "target": "127.0.0.1:13306/mor_platform_rco16_validation",
+    "read_only": true,
+    "before": {
+      "t_gateway_target": 1,
+      "t_permission": 26,
+      "t_role_permission": 32,
+      "t_console_resource": 32,
+      "t_gateway_route": 51,
+      "t_gateway_route_header": 182,
+      "t_gateway_route_query_param": 54,
+      "t_gateway_guard_rule": 302
+    },
+    "insert": {
+      "t_gateway_target": 0,
+      "t_permission": 0,
+      "t_role_permission": 0,
+      "t_console_resource": 0,
+      "t_gateway_route": 0,
+      "t_gateway_route_header": 0,
+      "t_gateway_route_query_param": 0,
+      "t_gateway_guard_rule": 0
+    },
+    "existing_differences": [],
+    "unexpected_rows": [],
+    "roles": [
+      {
+        "role_id": 900000000000000510,
+        "version": 3,
+        "status": "ACTIVE"
+      },
+      {
+        "role_id": 900000000000000511,
+        "version": 1,
+        "status": "ACTIVE"
+      }
+    ],
+    "operations_accounts": 0,
+    "active_signing_keys": 0,
+    "owned_test_audit_chains": 0,
+    "initializer_sha256": "13d65c8a95074f4aa197671ebf23db8e8a295a0d009316a5945a9e0383ff1aec"
+  },
+  "other_validation_database_connections": 0
+}

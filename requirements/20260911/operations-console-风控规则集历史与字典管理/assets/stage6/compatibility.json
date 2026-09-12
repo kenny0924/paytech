@@ -1,0 +1,32 @@
+{
+  "scope": "Offline actual deployed Platform/Gateway compilers; NO database/service/source mutations",
+  "platform": {
+    "deployedJarSha256": "9c785043ee865b910ec43cc50646d469bf97c7bb95c854907aa99d9de2412616",
+    "routeCounts": [
+      37,
+      27,
+      27,
+      51
+    ]
+  },
+  "gateway": {
+    "deployedJarSha256": "32bbeb8ba89027d0af281d4d9e21a6f2f402299275ada98a19d2099c5a6445ee",
+    "routeCounts": [
+      37,
+      27,
+      27
+    ],
+    "enabled51": "REJECTED: dictionary downstream path not approved",
+    "proposalOnly": {
+      "appendRoot": "/decision-dictionaries/v1/",
+      "routeCounts": [
+        37,
+        27,
+        27,
+        51
+      ],
+      "v2AndLookalikeRootRejected": true
+    }
+  },
+  "releaseGate": "BLOCKED pending explicit Gateway development scope approval; no deployment authorization requested yet"
+}

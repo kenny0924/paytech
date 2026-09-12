@@ -1,0 +1,106 @@
+{
+  "state": "prepared and authorized permission correction applied",
+  "target": "127.0.0.1:13306/mor_platform_rco16_validation",
+  "existing_database_untouched": "mor_platform",
+  "schema_tables": 24,
+  "initializer_insert_rows": 683,
+  "application_grant": [
+    "SELECT",
+    "INSERT",
+    "UPDATE",
+    "DELETE"
+  ],
+  "application_grantee": "platform_app@%",
+  "sources": {
+    "platform-support-service/docs/database/sql/platform-support-schema.sql": "b6e510b9ec9a2fc2d169e44a9294a88048a57ea8e2fdedf0f2a9fe9e2fe4d5cf",
+    "platform-support-service/docs/database/sql/platform-support-initial-data.sql": "9e5ec874c127437430f7f3ad00fad06502e2f21b63bd7eb8363639974fd1d227"
+  },
+  "prepare_sha256": "4f095c401536aa202364ff746b45df188d5f915e7a9cf1d0892cc867bcce680d",
+  "preflight": {
+    "target": "127.0.0.1:13306/mor_platform",
+    "read_only": true,
+    "before": {
+      "t_gateway_target": 1,
+      "t_permission": 12,
+      "t_role_permission": 16,
+      "t_console_resource": 12,
+      "t_gateway_route": 21,
+      "t_gateway_route_header": 82,
+      "t_gateway_route_query_param": 12,
+      "t_gateway_guard_rule": 122
+    },
+    "insert": {
+      "t_gateway_target": 0,
+      "t_permission": 14,
+      "t_role_permission": 16,
+      "t_console_resource": 20,
+      "t_gateway_route": 30,
+      "t_gateway_route_header": 100,
+      "t_gateway_route_query_param": 42,
+      "t_gateway_guard_rule": 180
+    },
+    "existing_differences": [
+      {
+        "table": "t_gateway_route",
+        "id": 900000000000000101,
+        "fields": {
+          "version": {
+            "actual": 2,
+            "expected": 1
+          }
+        }
+      },
+      {
+        "table": "t_gateway_route",
+        "id": 900000000000000102,
+        "fields": {
+          "version": {
+            "actual": 2,
+            "expected": 1
+          }
+        }
+      },
+      {
+        "table": "t_gateway_route",
+        "id": 900000000000000103,
+        "fields": {
+          "version": {
+            "actual": 2,
+            "expected": 1
+          }
+        }
+      },
+      {
+        "table": "t_gateway_route",
+        "id": 900000000000001009,
+        "fields": {
+          "version": {
+            "actual": 2,
+            "expected": 1
+          }
+        }
+      }
+    ],
+    "unexpected_rows": [],
+    "roles": [
+      {
+        "role_id": 900000000000000510,
+        "version": 1,
+        "status": "ACTIVE"
+      },
+      {
+        "role_id": 900000000000000511,
+        "version": 1,
+        "status": "ACTIVE"
+      }
+    ],
+    "operations_accounts": 2,
+    "active_signing_keys": 1,
+    "owned_test_audit_chains": 1,
+    "initializer_sha256": "9e5ec874c127437430f7f3ad00fad06502e2f21b63bd7eb8363639974fd1d227"
+  },
+  "application_evidence": "../../../assets/gateway-acceptance/local-sql-application.json",
+  "sources_note": "Historical initializer hashes used for original database creation; current initializer incorporates the later approved corrective patch.",
+  "permission_correction_evidence": "../../../assets/gateway-acceptance/permission-correction-application.json",
+  "current_initializer_sha256": "13d65c8a95074f4aa197671ebf23db8e8a295a0d009316a5945a9e0383ff1aec"
+}

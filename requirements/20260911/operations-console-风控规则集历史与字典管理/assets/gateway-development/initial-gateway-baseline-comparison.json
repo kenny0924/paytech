@@ -1,0 +1,136 @@
+{
+  "initial_changed": {
+    "totals": {
+      "tests": 954,
+      "failures": 7,
+      "errors": 3,
+      "skipped": 0
+    },
+    "failures": [
+      {
+        "class": "com.paytech.gateway.auto.web.GatewayErrorContractAutoTest",
+        "case": "test_terminalProtectionRejectsUnmarkedCorsAndMissingTrustedRequestId",
+        "type": "org.opentest4j.MultipleFailuresError",
+        "message": "Multiple Failures (3 failures)\n org.opentest4j.AssertionFailedError: expected: <[no-store]> but was: <[]>\n org.opentest4j.AssertionFailedError: expected: <[no-cache]> but was: <[]>\n org.opentest4j.AssertionFailedError: expected: <[Origin]> but was: <[]>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.web.GatewayErrorContractAutoTest",
+        "case": "test_unmatchedRequestIsDeniedWithTrustedRequestId(CapturedOutput)",
+        "type": "java.lang.AssertionError",
+        "message": "Status expected:<401 UNAUTHORIZED> but was:<404 NOT_FOUND>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.observability.GatewayHealthAutoTest",
+        "case": "test_managementEndpointsAndApplicationIngressAreDeniedByDefault",
+        "type": "java.lang.AssertionError",
+        "message": "Status expected:<401 UNAUTHORIZED> but was:<404 NOT_FOUND>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.security.OperationsJwksAvailabilityAutoTest",
+        "case": "test_invalidJwksPoisonsWholeDocument(String, String)",
+        "type": "java.lang.IllegalStateException",
+        "message": "The key use \"use\" and key options \"key_ops\" parameters are not consistent, see RFC 7517, section 4.3"
+      },
+      {
+        "class": "com.paytech.gateway.auto.transport.GatewayTransportAutoTest",
+        "case": "test_exactAggregateHeaderBoundaryParsesAndOneByteOverStopsBeforeExchange",
+        "type": "org.opentest4j.MultipleFailuresError",
+        "message": "Multiple Failures (1 failure)\n org.opentest4j.AssertionFailedError: expected: <true> but was: <false>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.transport.GatewayTransportAutoTest",
+        "case": "test_exactInitialLineBoundaryParsesAndOneByteOverDoesNotReachExchange",
+        "type": "org.opentest4j.MultipleFailuresError",
+        "message": "Multiple Failures (1 failure)\n org.opentest4j.AssertionFailedError: expected: <true> but was: <false>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.transport.GatewayTransportAutoTest",
+        "case": "test_repeatedCaseVariantAuthorizationOverBudgetReturnsLocal431WithoutSideEffects",
+        "type": "org.opentest4j.MultipleFailuresError",
+        "message": "Multiple Failures (1 failure)\n org.opentest4j.AssertionFailedError: expected: <[Content-Type]> but was: <[content-type]>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.transport.GatewayTransportAutoTest",
+        "case": "test_knownPreflightWithOversizedRequestedHeadersKeepsExactTerminalCorsContract",
+        "type": "org.opentest4j.MultipleFailuresError",
+        "message": "Multiple Failures (1 failure)\n org.opentest4j.AssertionFailedError: expected: <[Content-Type]> but was: <[content-type]>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.routing.DynamicOperationsRoutingAutoTest",
+        "case": "configuredGetRouteUsesExactMethodAndQueryAllowlist",
+        "type": "java.lang.IllegalStateException",
+        "message": "Timeout on blocking read for 5000000000 NANOSECONDS"
+      },
+      {
+        "class": "com.paytech.gateway.auto.routing.DynamicOperationsRoutingAutoTest",
+        "case": "pinnedOperationsChannelAppliesCorsAndRendersVariablePathOutsideLegacyPrefix",
+        "type": "org.springframework.web.reactive.function.client.WebClientRequestException",
+        "message": "Connection refused: /[0:0:0:0:0:0:0:1]:80"
+      }
+    ]
+  },
+  "clean_head_4220da8": {
+    "totals": {
+      "tests": 100,
+      "failures": 7,
+      "errors": 2,
+      "skipped": 0
+    },
+    "failures": [
+      {
+        "class": "com.paytech.gateway.auto.web.GatewayErrorContractAutoTest",
+        "case": "test_terminalProtectionRejectsUnmarkedCorsAndMissingTrustedRequestId",
+        "type": "org.opentest4j.MultipleFailuresError",
+        "message": "Multiple Failures (3 failures)\n org.opentest4j.AssertionFailedError: expected: <[no-store]> but was: <[]>\n org.opentest4j.AssertionFailedError: expected: <[no-cache]> but was: <[]>\n org.opentest4j.AssertionFailedError: expected: <[Origin]> but was: <[]>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.web.GatewayErrorContractAutoTest",
+        "case": "test_unmatchedRequestIsDeniedWithTrustedRequestId(CapturedOutput)",
+        "type": "java.lang.AssertionError",
+        "message": "Status expected:<401 UNAUTHORIZED> but was:<404 NOT_FOUND>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.observability.GatewayHealthAutoTest",
+        "case": "test_managementEndpointsAndApplicationIngressAreDeniedByDefault",
+        "type": "java.lang.AssertionError",
+        "message": "Status expected:<401 UNAUTHORIZED> but was:<404 NOT_FOUND>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.security.OperationsJwksAvailabilityAutoTest",
+        "case": "test_invalidJwksPoisonsWholeDocument(String, String)",
+        "type": "java.lang.IllegalStateException",
+        "message": "The key use \"use\" and key options \"key_ops\" parameters are not consistent, see RFC 7517, section 4.3"
+      },
+      {
+        "class": "com.paytech.gateway.auto.transport.GatewayTransportAutoTest",
+        "case": "test_exactAggregateHeaderBoundaryParsesAndOneByteOverStopsBeforeExchange",
+        "type": "org.opentest4j.MultipleFailuresError",
+        "message": "Multiple Failures (1 failure)\n org.opentest4j.AssertionFailedError: expected: <true> but was: <false>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.transport.GatewayTransportAutoTest",
+        "case": "test_exactInitialLineBoundaryParsesAndOneByteOverDoesNotReachExchange",
+        "type": "org.opentest4j.MultipleFailuresError",
+        "message": "Multiple Failures (1 failure)\n org.opentest4j.AssertionFailedError: expected: <true> but was: <false>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.transport.GatewayTransportAutoTest",
+        "case": "test_repeatedCaseVariantAuthorizationOverBudgetReturnsLocal431WithoutSideEffects",
+        "type": "org.opentest4j.MultipleFailuresError",
+        "message": "Multiple Failures (1 failure)\n org.opentest4j.AssertionFailedError: expected: <[Content-Type]> but was: <[content-type]>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.transport.GatewayTransportAutoTest",
+        "case": "test_knownPreflightWithOversizedRequestedHeadersKeepsExactTerminalCorsContract",
+        "type": "org.opentest4j.MultipleFailuresError",
+        "message": "Multiple Failures (1 failure)\n org.opentest4j.AssertionFailedError: expected: <[Content-Type]> but was: <[content-type]>"
+      },
+      {
+        "class": "com.paytech.gateway.auto.routing.DynamicOperationsRoutingAutoTest",
+        "case": "pinnedOperationsChannelAppliesCorsAndRendersVariablePathOutsideLegacyPrefix",
+        "type": "org.springframework.web.reactive.function.client.WebClientRequestException",
+        "message": "Connection refused: /[0:0:0:0:0:0:0:1]:80"
+      }
+    ]
+  }
+}

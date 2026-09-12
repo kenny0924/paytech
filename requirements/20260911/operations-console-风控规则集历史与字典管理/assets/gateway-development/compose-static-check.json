@@ -1,0 +1,12 @@
+{
+  "yaml_parse": "passed",
+  "bff_health_probe": "http://127.0.0.1:19201/actuator/health/readiness",
+  "bff_published_ports": [],
+  "management": {
+    "address": "127.0.0.1",
+    "port": 19201
+  },
+  "business_port": 18201,
+  "container_probe_executed": false,
+  "deployed": false
+}

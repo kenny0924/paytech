@@ -1,0 +1,150 @@
+{
+  "scenarios": [
+    "readonly-content-rule-switch-basic-without-authoring",
+    "history-page2-retired-exact-version-refresh",
+    "history-back-forward-restores-page-and-filter",
+    "release-graph-old-version-and-origin-return",
+    "readonly-1024-collapse-and-390-no-page-overflow"
+  ],
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-03285b44-9b00-4d4c-8da0-f1891d994905"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-569935f6-d5f0-4798-9fc5-eb4c40eaf8df"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-bb499bb6-4244-4928-a0ad-42798e7c1e50"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237164106358784",
+      "status": 200,
+      "requestId": "rco16-browser-2484db7f-11f5-48e1-ab1e-b87c1abdecb2"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-39b61e1f-5f7a-40ab-8e9f-11ed63623f4a"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/versions?maxVersionNo=12&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-c4232693-5c6c-4d56-b9ed-5bb63f86ee99"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/versions?maxVersionNo=12&page=2&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-5fc5912c-e388-4819-8f4f-2c128a08fd5e"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237161547833344",
+      "status": 200,
+      "requestId": "rco16-browser-bccd5766-fbab-4a48-af89-150e222c6e79"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/versions?maxVersionNo=2&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-b68a85a8-9945-457a-a911-79db8381a248"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237161547833344",
+      "status": 200,
+      "requestId": "rco16-browser-16f053a2-ae7a-44c8-9be4-73e038defb3f"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/versions?maxVersionNo=2&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-684b8076-53d9-4a9f-a4ce-9b165d827c76"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237161547833344",
+      "status": 200,
+      "requestId": "rco16-browser-d237996d-9543-43b3-86d1-15a88d7d611b"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/versions?maxVersionNo=12&page=2&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-7bcd2b09-8564-402d-9ab0-ee7c46e58543"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/versions?maxVersionNo=2&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-1a62e299-1d58-4299-8efe-92e57862e662"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/versions?maxVersionNo=12&page=2&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-a9fb18f9-4d4b-4754-a1f1-20b409ae2643"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-eb76ff4d-07a5-4499-a7d9-f065463b4020"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/release-references?page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-0f87a755-b618-4bbc-b964-7fe6535d9f0c"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160742526976",
+      "status": 200,
+      "requestId": "rco16-browser-3a36f331-ea6e-49cd-a68f-0bb121b1143c"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/versions?maxVersionNo=1&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-5b3ebff4-5141-4f2c-b632-811e2de8908a"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237160809635840/release-references?page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-e1779c3f-802e-4afe-8388-96847ae3e830"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-5433ed2d-94d6-4957-8f76-962f059cfc9d"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=RCO16_BROWSER_97A0B68C894C&page=1&size=10",
+      "status": 200,
+      "requestId": "rco16-browser-8532ffeb-f817-4531-9c71-877cb1e51d5b"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224237164106358784",
+      "status": 200,
+      "requestId": "rco16-browser-4704e17d-209a-4fa9-9565-2c4a45195014"
+    }
+  ],
+  "errors": []
+}

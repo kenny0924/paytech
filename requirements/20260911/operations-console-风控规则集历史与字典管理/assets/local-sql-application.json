@@ -1,0 +1,29 @@
+{
+  "target": "127.0.0.1:13306/mor_risk",
+  "container": "mor-local-mysql-1",
+  "tables": [
+    "t_risk_rule",
+    "t_rule_action_parameter"
+  ],
+  "backupFile": "/Users/kenny/Code-MoR-backups/rco16-local-risk-20260911T180707Z/mor_risk-before.sql",
+  "backupBytes": 7195,
+  "backupSha256": "072b752d4b4263a818c26ce922e06c2cbe21c29411020830d787bab418d91ea7",
+  "sqlFile": "requirements/20260911/operations-console-风控规则集历史与字典管理/db/risk-compliance-service/ddl.sql",
+  "sqlSha256": "a3bf8d0708ded96422dc530c5c6799b363c5a54b0236f09531de4a4494ee1740",
+  "beforeTableCount": 72,
+  "beforeAffectedRowCounts": {
+    "t_risk_rule": 0,
+    "t_rule_action_parameter": 0
+  },
+  "executed": true,
+  "applyExitCode": 0,
+  "appliedAtUtc": "2026-09-11T18:07:12.315710+00:00",
+  "afterTableCount": 74,
+  "afterNewColumns": 21,
+  "afterAddedIndexes": 2,
+  "afterAffectedRowCounts": {
+    "t_risk_rule": 0,
+    "t_rule_action_parameter": 0
+  },
+  "checksPassed": true
+}

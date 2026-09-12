@@ -1,0 +1,26 @@
+{
+  "deployedAt": "2026-09-12T07:25:32.754178+00:00",
+  "environment": "http://localhost:28080",
+  "service": "operations-console-web",
+  "imageTag": "mor-test/operations-console-web:rco16-compact-navigation-20260912",
+  "imageId": "sha256:8832199077ef0b9d136d8e43a144552f73526d32341fdb9df09b1c88d3578f51",
+  "previousImageId": "sha256:ef04bdbbd75a76df723843a53fb530efcf5f5e4315f4e4f754325087448ebe27",
+  "health": "healthy",
+  "publicIndexSha256": "759f0b805db2e7e67d204d1f03c8fc3fcb7747caa841ce33d08fd080cf7804db",
+  "otherTenContainersUnchanged": true,
+  "sqlApplied": false,
+  "apiChanged": false,
+  "backupPerformed": false,
+  "userFunctionalAcceptance": "Pending user visual/interaction testing as requested",
+  "focusedTests": 69,
+  "build": "TypeScript and Vite production build passed",
+  "filesSha256": {
+    "src/risk/RuleSetEditor.tsx": "7fd82590f3419ff5c5d249866974437991d5c990c5eb48ce91d6ecc60d4e3e34",
+    "src/risk/ReadRuleSetWorkspace.tsx": "d33b0770a1e4725553287fa29e434efeac070b910e1eae8fb9018d34da067902",
+    "src/risk/RuleSetExplorer.tsx": "f59dfb3dc143b65075c32393b7a34fd2daa904b6baeb5271841c6154607f1f1f",
+    "src/risk/riskRuleConfiguration.css": "06858b4add02ac0032d781cf54837403395ced110316900cc72bdc325aa468fb",
+    "src/pages/RiskRuleConfiguration.tsx": "1ca5e843e525998dfddfeaf508b654cb6d1929c19fb5af1ba7f8731fe29ad226",
+    "src/risk/riskPageWiring.test.ts": "7e74d10829cc223e237f735335011142c8f96d73448864c8913d697ccca12613",
+    "src/risk/ruleWorkspaceNavigation.test.ts": "c626fe98b28996945b9f7e5ad1a863b950a7ee4a7b51e49e81d8d7d3b30f1277"
+  }
+}

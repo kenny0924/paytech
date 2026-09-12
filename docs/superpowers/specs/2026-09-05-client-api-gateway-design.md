@@ -1,5 +1,7 @@
 # Client API Gateway 设计
 
+> **2026-09-11 Target/Route 后继决定：** [数据库路由范围决定](../../../agent-docs/decisions/2026-09-11-gateway-database-routing.md)取代本文静态 Approved Target Registry、具体 Discovery/Path Root 二次名单及关联校验/上线要求；Platform 数据库与完整快照成为业务目标/路由权威。其余认证、Channel、Header、协议和控制面规则保持；[技术修订方案](../../../requirements/20260911/operations-console-风控规则集历史与字典管理/gateway-dynamic-routing-design.md)待阶段评审，运行状态只读当前台账。
+
 日期：2026-09-05
 文档性质：已确认设计；实现、验证与部署状态只读 `agent-docs/CURRENT_IMPLEMENTATION.md`
 范围：只定义 `CLIENT_API` 公网入口；Route Key 与固定私有入口 Channel 标记的共享迁移同时适用于全部公网 Channel

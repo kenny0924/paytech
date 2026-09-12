@@ -1,0 +1,18 @@
+{
+  "deployedGatewayImageId": "sha256:c5e4a953db1599c7b24b34fc99132fbd4e0ed6ba505a46d33dc699e78b55f070",
+  "currentMainHead": "4220da8",
+  "currentMainRegistryRoots": [
+    "/auth/",
+    "/authorization/",
+    "/iam/",
+    "/audit/",
+    "/gateway-admin/"
+  ],
+  "deployedRegistryAdditionalRoots": [
+    "/decision-rule-sets/",
+    "/decision-releases/"
+  ],
+  "proposedAdditionalRoot": "/decision-dictionaries/v1/",
+  "sourceChanged": false,
+  "requiredBeforeRelease": "User confirmation to include Gateway development and regression; reconcile deployed baseline before any new Gateway artifact or rollout"
+}

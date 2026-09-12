@@ -211,7 +211,7 @@ function buildIndexes(table, fieldsByKey) {
       defKey: spec.defKey,
       defName: `${spec.unique ? "唯一" : "访问"}索引 ${spec.fields.join("、")}`,
       unique: spec.unique,
-      comment: `${spec.unique ? "保证业务唯一性" : "支持访问路径"}：${spec.fields.join("、")}`,
+      comment: spec.comment ?? `${spec.unique ? "保证业务唯一性" : "支持访问路径"}：${spec.fields.join("、")}`,
       fields: spec.fields.map((fieldKey, position) => {
         const field = fieldsByKey.get(fieldKey);
         invariant(field, `索引字段不存在：${table.defKey}.${spec.defKey}.${fieldKey}`);
@@ -379,9 +379,9 @@ function isCodeLike(fieldKey) {
 }
 
 function validateManifest() {
-  invariant(TABLES.length === 72, `Risk & Compliance 必须有 72 张表，当前为 ${TABLES.length}`);
+  invariant(TABLES.length === 74, `Risk & Compliance 必须有 74 张表，当前为 ${TABLES.length}`);
   const primaryTables = DIAGRAM_GROUPS.flatMap((group) => group.primary);
-  invariant(primaryTables.length === 72 && new Set(primaryTables).size === 72, "每张表必须恰好属于一个主图组");
+  invariant(primaryTables.length === 74 && new Set(primaryTables).size === 74, "每张表必须恰好属于一个主图组");
   invariant(JSON.stringify([...primaryTables].sort()) === JSON.stringify(TABLES.map((table) => table.defKey).sort()), "图组主表集合与生产 Manifest 不一致");
   const tableByKey = new Map(TABLES.map((table) => [table.defKey, table]));
   for (const table of TABLES) {

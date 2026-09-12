@@ -1,0 +1,9 @@
+{
+  "markdown_files": 16,
+  "local_links": 285,
+  "missing_links": 0,
+  "fence_and_whitespace_checks": "passed",
+  "python_scripts_parsed": 6,
+  "legacy_test_sql_files_fail_closed": 5,
+  "owned_python_cache_removed": true
+}

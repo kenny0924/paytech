@@ -1,0 +1,54 @@
+{
+  "ungrantable_active_admin_bindings": [
+    {
+      "role_permission_id": 900000000000000587,
+      "permission_id": 900000000000000541,
+      "permission_code": "RISK_RULE_SET_DELETE",
+      "status": "ACTIVE",
+      "version": 1
+    },
+    {
+      "role_permission_id": 900000000000012201,
+      "permission_id": 900000000000012101,
+      "permission_code": "RISK_REJECTION_REASON_CREATE",
+      "status": "ACTIVE",
+      "version": 1
+    },
+    {
+      "role_permission_id": 900000000000012202,
+      "permission_id": 900000000000012102,
+      "permission_code": "RISK_REJECTION_REASON_UPDATE",
+      "status": "ACTIVE",
+      "version": 1
+    },
+    {
+      "role_permission_id": 900000000000012203,
+      "permission_id": 900000000000012103,
+      "permission_code": "RISK_REJECTION_REASON_STATUS",
+      "status": "ACTIVE",
+      "version": 1
+    },
+    {
+      "role_permission_id": 900000000000012204,
+      "permission_id": 900000000000012104,
+      "permission_code": "RISK_SUBJECT_TAG_CREATE",
+      "status": "ACTIVE",
+      "version": 1
+    },
+    {
+      "role_permission_id": 900000000000012205,
+      "permission_id": 900000000000012105,
+      "permission_code": "RISK_SUBJECT_TAG_UPDATE",
+      "status": "ACTIVE",
+      "version": 1
+    },
+    {
+      "role_permission_id": 900000000000012206,
+      "permission_id": 900000000000012106,
+      "permission_code": "RISK_SUBJECT_TAG_STATUS",
+      "status": "ACTIVE",
+      "version": 1
+    }
+  ],
+  "count": 7
+}

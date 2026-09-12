@@ -1,0 +1,1146 @@
+{
+  "capturedAt": "2026-09-11T19:15:51.713539+00:00",
+  "dockerContext": "desktop-linux",
+  "containers": [
+    {
+      "service": "mysql",
+      "containerId": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "imageId": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "imageTag": "mysql:8.4.11@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "health": "healthy",
+      "startedAt": "2026-09-04T08:25:06.372277969Z",
+      "networks": [
+        "mor-test-backend"
+      ],
+      "ports": {
+        "3306/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "23306"
+          }
+        ]
+      }
+    },
+    {
+      "service": "redis",
+      "containerId": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "imageId": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "imageTag": "redis:8.2.1-alpine@sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "health": "healthy",
+      "startedAt": "2026-09-04T08:25:06.369366719Z",
+      "networks": [
+        "mor-test-backend"
+      ],
+      "ports": {
+        "6379/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "26379"
+          }
+        ]
+      }
+    },
+    {
+      "service": "nacos",
+      "containerId": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "imageId": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "imageTag": "mor-test/nacos:3.1.2",
+      "health": "healthy",
+      "startedAt": "2026-09-08T10:27:41.600042756Z",
+      "networks": [
+        "mor-test-backend"
+      ],
+      "ports": {
+        "8080/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "28088"
+          }
+        ],
+        "8848/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "18848"
+          }
+        ],
+        "9848/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "19848"
+          }
+        ]
+      }
+    },
+    {
+      "service": "risk-service",
+      "containerId": "a71fcf17abae22663e0c2834b351cce2fea8c4b916503786a7c1146a302462ec",
+      "imageId": "sha256:46aff45920d364a37e8373c86c42f124fdafc09724cde0a0becfee1513037be5",
+      "imageTag": "mor-test/risk-service:development",
+      "health": "healthy",
+      "startedAt": "2026-09-11T13:11:02.778650967Z",
+      "networks": [
+        "mor-test-backend"
+      ],
+      "ports": {}
+    },
+    {
+      "service": "operations-console-bff",
+      "containerId": "39a3c08a220d87aa91df9e96d8caa2517c6ca64f2093dc22c0575704b0efba97",
+      "imageId": "sha256:59be81991657b19431eb9387c3f3378e7da81a9f28434cdedfa764520ef3549b",
+      "imageTag": "mor-test/operations-console-bff:development",
+      "health": "healthy",
+      "startedAt": "2026-09-11T13:11:09.461029846Z",
+      "networks": [
+        "mor-test-backend"
+      ],
+      "ports": {}
+    },
+    {
+      "service": "operations-console-web",
+      "containerId": "c9c9b9ced62b291d4afad2d6af0e3aefc8626bf71a3cc81aa8ff027a298e4d36",
+      "imageId": "sha256:83a5141710c3a2e87b21ee845b6f91364c83b184461ac749e2435734f683c94a",
+      "imageTag": "mor-test/operations-console-web:development",
+      "health": "healthy",
+      "startedAt": "2026-09-11T13:11:16.103009376Z",
+      "networks": [
+        "mor-test-web"
+      ],
+      "ports": {
+        "80/tcp": null,
+        "8080/tcp": null
+      }
+    },
+    {
+      "service": "platform-support-service",
+      "containerId": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "imageId": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332",
+      "imageTag": "mor-test/platform-support-service:development",
+      "health": "healthy",
+      "startedAt": "2026-09-08T10:28:59.905447584Z",
+      "networks": [
+        "mor-test-backend"
+      ],
+      "ports": {}
+    },
+    {
+      "service": "api-gateway",
+      "containerId": "fff353cbb3d799a27c6af2df5d28662d06b84c736a554a5aa5c1a776c7c18dbd",
+      "imageId": "sha256:c5e4a953db1599c7b24b34fc99132fbd4e0ed6ba505a46d33dc699e78b55f070",
+      "imageTag": "mor-test/api-gateway:development",
+      "health": "healthy",
+      "startedAt": "2026-09-08T10:29:29.996421501Z",
+      "networks": [
+        "mor-test-backend",
+        "mor-test-ingress"
+      ],
+      "ports": {}
+    },
+    {
+      "service": "nginx",
+      "containerId": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "imageId": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "imageTag": "nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "health": "healthy",
+      "startedAt": "2026-09-08T10:29:06.641971795Z",
+      "networks": [
+        "mor-test-ingress",
+        "mor-test-web"
+      ],
+      "ports": {
+        "8080/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "28080"
+          }
+        ]
+      }
+    },
+    {
+      "service": "vault-service",
+      "containerId": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "imageId": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "imageTag": "mor-test/vault-service:development",
+      "health": "healthy",
+      "startedAt": "2026-09-04T13:08:13.406271054Z",
+      "networks": [
+        "mor-test-backend"
+      ],
+      "ports": {}
+    },
+    {
+      "service": "rabbitmq",
+      "containerId": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "imageId": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "imageTag": "rabbitmq:4.2.9-management@sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "health": "healthy",
+      "startedAt": "2026-09-04T08:25:06.356402385Z",
+      "networks": [
+        "mor-test-backend"
+      ],
+      "ports": {
+        "15672/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "25673"
+          }
+        ],
+        "5672/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "25672"
+          }
+        ]
+      }
+    }
+  ],
+  "risk": {
+    "tableCounts": [
+      [
+        "72",
+        "0"
+      ]
+    ],
+    "roots": [
+      [
+        "224149867037978624",
+        "210001",
+        "223044779871670272",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978625",
+        "210001",
+        "223056763996442624",
+        "DELETED",
+        "3"
+      ],
+      [
+        "224149867037978626",
+        "210001",
+        "223058326664089600",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978627",
+        "210001",
+        "223062412562108416",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978628",
+        "210001",
+        "223072292102574080",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978629",
+        "210001",
+        "223073516021452800",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978630",
+        "210001",
+        "223074240474222592",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978631",
+        "210001",
+        "223075188688916480",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978632",
+        "210001",
+        "223075644710424576",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978633",
+        "210001",
+        "223078156809113600",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978634",
+        "210001",
+        "223098991506722816",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978635",
+        "210001",
+        "223098989917081600",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978636",
+        "210001",
+        "223100117929005056",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978637",
+        "210001",
+        "223100119539617792",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978638",
+        "210001",
+        "223161270512226304",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978639",
+        "210001",
+        "223161271699214336",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978640",
+        "210001",
+        "224071417614929920",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978641",
+        "210001",
+        "224071417992417280",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978642",
+        "210001",
+        "224080617602650112",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978643",
+        "210001",
+        "224071631960641536",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224149867037978644",
+        "210001",
+        "224089451389882368",
+        "DELETED",
+        "2"
+      ],
+      [
+        "224157784055320576",
+        "210001",
+        "224157931476717568",
+        "DELETED",
+        "3"
+      ],
+      [
+        "224157933062164480",
+        "210001",
+        "224158443076947968",
+        "DELETED",
+        "3"
+      ]
+    ],
+    "versions": [
+      [
+        "223044779871670272",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "7b75a2ac7412c2608463c0677b018d38dfae2ca77f14c608752d20e1b45555f7"
+      ],
+      [
+        "223056763996442624",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "c363cfdd1406c0cb093e70692726ac76efad07559d6658ec3303f794879f50bc"
+      ],
+      [
+        "223058326664089600",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "e27098016b0e4deb7893b81bfe8dc97600908a7169d5177ebf3734307b085466"
+      ],
+      [
+        "223062412562108416",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "7415792d9dfc4cfaeb69167ee1f38613c9d37e0d6f11eb6905f91960561dc533"
+      ],
+      [
+        "223072292102574080",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "0bb36558684e4d4b5c6bf8095485febe5f12ef370071a7af3b4dfeb4d1c9e92d"
+      ],
+      [
+        "223073516021452800",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "aa5fb9c466d4b2eedeaf7f5c8986c4365106b5294f2e13818ce5ae98f7b32c99"
+      ],
+      [
+        "223074240474222592",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "cb81379e3561763db3da00f7e8fdf349d68145e1232ea0e41a6c2947ad87867e"
+      ],
+      [
+        "223075188688916480",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "4999f44222729f110d301101b124a53b49a63e3723afe4a12b2e9d9b40a51970"
+      ],
+      [
+        "223075644710424576",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "dc7a37289a71089657cb7b036a71d53b38048dfb1cb11e2b1f87f232745cba32"
+      ],
+      [
+        "223078156809113600",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "91a429e91f19ab453d4c532d0ec6b2e1f8bd09c19d3ae313fab96e40c63c9dd1"
+      ],
+      [
+        "223098989917081600",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "bf184b477fd3b947662bff497f58d14da64dcfddc425af3a97e5e7c4e00eac52"
+      ],
+      [
+        "223098991506722816",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "e91f9803306754c3f3d73982d61d00948d9e11750a203eb5a8e2888d74439b2d"
+      ],
+      [
+        "223100117929005056",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "ced252a84437fddd18e6c4918b487b0342d731bcf1b107d549495e0dfc2fe501"
+      ],
+      [
+        "223100119539617792",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "839cafd8dc14953bdd3ebe29b1edd4384975e791096e17ae64545e7fb637110e"
+      ],
+      [
+        "223161270512226304",
+        "1",
+        "FROZEN",
+        "LEGACY",
+        "cbd04cc7343127c00c38d16283a17094a4d6616012f6329d96924bad70edbd44"
+      ],
+      [
+        "223161271699214336",
+        "1",
+        "DRAFT",
+        "LEGACY",
+        "64927414abfe424638207013cbfd01323c8fc6178902c029a216802a77c6c37c"
+      ],
+      [
+        "224071416574742528",
+        "1",
+        "RETIRED",
+        "CONFIGURATION",
+        "3491366694a31ae88fc32f5cfa4a546fefc13458264f2420aa3ecbb3db7b5fdd"
+      ],
+      [
+        "224071417614929920",
+        "2",
+        "DRAFT",
+        "CONFIGURATION",
+        "882c044f90009e55f66501aca9284aa1f1f0c38877eeb3d39cb3429eb291fac5"
+      ],
+      [
+        "224071417992417280",
+        "1",
+        "FROZEN",
+        "CONFIGURATION",
+        "39b108a4de81d0dcde85032b449f0d31cd9b27b09d09bf82a549ea6e4db5ab56"
+      ],
+      [
+        "224071631960641536",
+        "1",
+        "FROZEN",
+        "CONFIGURATION",
+        "869131279a5f2f9fe5c808213790496f01df219fa3198c5a78ebb032d6031faa"
+      ],
+      [
+        "224071633973907456",
+        "1",
+        "RETIRED",
+        "CONFIGURATION",
+        "4490917f04f31b94dde27b502853b99c73d362ec7d8e7b8fd3ca7cbdf44990b3"
+      ],
+      [
+        "224080617602650112",
+        "2",
+        "DRAFT",
+        "CONFIGURATION",
+        "ce403e1a1c0bb792c42a8df4968ad935c0fd7fee9eb77a9b65f51b6f4bbdf6fc"
+      ],
+      [
+        "224089451389882368",
+        "1",
+        "DRAFT",
+        "CONFIGURATION",
+        "029b8f53eb2715935c2f9f9eaa767087d445618b5245b6a76e769b18c8f9547d"
+      ],
+      [
+        "224157784000794624",
+        "1",
+        "RETIRED",
+        "CONFIGURATION",
+        "d49f018ba6822e4e745ec8a7e93160022e018131e3fb91e5a28cc69dc8d4343a"
+      ],
+      [
+        "224157931476717568",
+        "2",
+        "DRAFT",
+        "CONFIGURATION",
+        "a5fa6e3add11561da7e41af6ec4960e90079b75500c3012fa083356264867442"
+      ],
+      [
+        "224157933032804352",
+        "1",
+        "RETIRED",
+        "CONFIGURATION",
+        "2e7d49b08864212a35f7dd21897b6bf851f6bc1eaecaabfc23e531843af65918"
+      ],
+      [
+        "224158443076947968",
+        "2",
+        "DRAFT",
+        "CONFIGURATION",
+        "98cc9f2edcdd47937d4d892c06708589a121394f1f5aa2ff3815b0ce342aa392"
+      ]
+    ],
+    "releases": [
+      [
+        "TEST",
+        "DRAFT",
+        "NULL",
+        "2"
+      ],
+      [
+        "TEST",
+        "VALIDATING",
+        "NULL",
+        "7"
+      ]
+    ],
+    "runtimeCounts": [
+      [
+        "0",
+        "0"
+      ]
+    ],
+    "commands": [
+      [
+        "CREATE_RULE_SET_VERSION",
+        "SUCCEEDED",
+        "27"
+      ],
+      [
+        "CREATE_TEST_DECISION_RELEASE",
+        "SUCCEEDED",
+        "9"
+      ],
+      [
+        "DELETE_RULE_SET",
+        "SUCCEEDED",
+        "23"
+      ],
+      [
+        "FREEZE_RULE_SET_VERSION",
+        "SUCCEEDED",
+        "13"
+      ],
+      [
+        "VALIDATE_TEST_DECISION_RELEASE",
+        "SUCCEEDED",
+        "7"
+      ]
+    ],
+    "modifiedColumns": [
+      [
+        "t_risk_rule",
+        "reason_code",
+        "varchar(64)",
+        "YES",
+        "业务原因代码的稳定业务代码。取值来源：Risk 规则配置中手工输入的稳定原因代码，未来由原因目录选择；非固定枚举。"
+      ],
+      [
+        "t_risk_rule",
+        "reason_message",
+        "varchar(500)",
+        "YES",
+        "随规则不可变版本保存的手工内部拒绝说明；历史记录与非拒绝规则可空，不作为对外错误消息。"
+      ],
+      [
+        "t_rule_action_parameter",
+        "string_value",
+        "varchar(512)",
+        "YES",
+        "字符串值的业务值。"
+      ]
+    ],
+    "newIndexCount": [
+      [
+        "0"
+      ]
+    ],
+    "reasonCounts": [
+      [
+        "1",
+        "1",
+        "0"
+      ]
+    ],
+    "actionColumns": [
+      [
+        "t_action_parameter_definition",
+        "parameter_definition_id"
+      ],
+      [
+        "t_action_parameter_definition",
+        "action_version_id"
+      ],
+      [
+        "t_action_parameter_definition",
+        "parameter_code"
+      ],
+      [
+        "t_action_parameter_definition",
+        "value_type"
+      ],
+      [
+        "t_action_parameter_definition",
+        "required_flag"
+      ],
+      [
+        "t_action_parameter_definition",
+        "allowed_source_type"
+      ],
+      [
+        "t_action_parameter_definition",
+        "target_parameter_flag"
+      ],
+      [
+        "t_action_parameter_definition",
+        "create_time"
+      ],
+      [
+        "t_rule_action",
+        "rule_action_id"
+      ],
+      [
+        "t_rule_action",
+        "rule_id"
+      ],
+      [
+        "t_rule_action",
+        "action_version_id"
+      ],
+      [
+        "t_rule_action",
+        "sequence_no"
+      ],
+      [
+        "t_rule_action",
+        "target_binding_code"
+      ],
+      [
+        "t_rule_action",
+        "create_time"
+      ]
+    ]
+  },
+  "platform": {
+    "resources": [
+      [
+        "900000000000000565",
+        "OPERATIONS_RISK_MANAGEMENT",
+        "ACTIVE",
+        "6"
+      ],
+      [
+        "900000000000000566",
+        "OPERATIONS_RISK_RULE_CONFIGURATION",
+        "ACTIVE",
+        "6"
+      ],
+      [
+        "900000000000000567",
+        "OPERATIONS_RISK_RULE_SET_SAVE",
+        "ACTIVE",
+        "6"
+      ],
+      [
+        "900000000000000568",
+        "OPERATIONS_RISK_RULE_SET_FREEZE",
+        "ACTIVE",
+        "6"
+      ],
+      [
+        "900000000000000569",
+        "OPERATIONS_RISK_TEST_CANDIDATE_CREATE",
+        "ACTIVE",
+        "6"
+      ],
+      [
+        "900000000000000570",
+        "OPERATIONS_RISK_TEST_CANDIDATE_VALIDATE",
+        "ACTIVE",
+        "6"
+      ],
+      [
+        "900000000000000571",
+        "OPERATIONS_RISK_RULE_SET_DELETE",
+        "ACTIVE",
+        "2"
+      ]
+    ],
+    "routes": [
+      [
+        "900000000000000101",
+        "operations-auth-login",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/auth/v1/login",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000000102",
+        "operations-auth-refresh",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/auth/v1/refresh",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000000103",
+        "operations-auth-logout",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/auth/v1/logout",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001000",
+        "operations-auth-context",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/auth/v1/context",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001001",
+        "operations-auth-password",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/auth/v1/password",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001002",
+        "operations-bootstrap-administrator",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/auth/v1/bootstrap/administrator",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001003",
+        "operations-navigation",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/authorization/v1/navigation",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001004",
+        "operations-account-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/iam/v1/accounts",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001005",
+        "operations-account-create",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/iam/v1/accounts",
+        "ACTIVE",
+        "3"
+      ],
+      [
+        "900000000000001006",
+        "operations-account-disable",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/iam/v1/accounts/{accountId}/disable",
+        "ACTIVE",
+        "3"
+      ],
+      [
+        "900000000000001007",
+        "operations-account-roles",
+        "OPERATIONS",
+        "PUT",
+        "/api/operations/iam/v1/accounts/{accountId}/roles",
+        "ACTIVE",
+        "3"
+      ],
+      [
+        "900000000000001008",
+        "operations-role-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/iam/v1/roles",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001009",
+        "operations-audit-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/audit/v1/events",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001010",
+        "operations-role-permission-options",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/iam/v1/role-permission-options",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001011",
+        "operations-role-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/iam/v1/roles/{roleId}",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001012",
+        "operations-role-create",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/iam/v1/roles",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001013",
+        "operations-role-update",
+        "OPERATIONS",
+        "PUT",
+        "/api/operations/iam/v1/roles/{roleId}",
+        "ACTIVE",
+        "2"
+      ],
+      [
+        "900000000000001014",
+        "operations-role-delete",
+        "OPERATIONS",
+        "DELETE",
+        "/api/operations/iam/v1/roles/{roleId}",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001015",
+        "operations-account-delete",
+        "OPERATIONS",
+        "DELETE",
+        "/api/operations/iam/v1/accounts/{accountId}",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001016",
+        "operations-account-enable",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/iam/v1/accounts/{accountId}/enable",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001017",
+        "operations-audit-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/audit/v1/events/{auditEventId}",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001018",
+        "operations-gateway-target-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/gateway-admin/v1/target-services",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001019",
+        "operations-gateway-target-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/gateway-admin/v1/target-services/{targetServiceCode}",
+        "ACTIVE",
+        "7"
+      ],
+      [
+        "900000000000001020",
+        "operations-gateway-target-status",
+        "OPERATIONS",
+        "PATCH",
+        "/api/operations/gateway-admin/v1/target-services/{targetServiceCode}/status",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001021",
+        "operations-gateway-route-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/gateway-admin/v1/routes",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001022",
+        "operations-gateway-route-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/gateway-admin/v1/routes/{routeCode}",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001023",
+        "operations-gateway-route-status",
+        "OPERATIONS",
+        "PATCH",
+        "/api/operations/gateway-admin/v1/routes/{routeCode}/status",
+        "ACTIVE",
+        "1"
+      ],
+      [
+        "900000000000001024",
+        "operations-risk-rule-authoring-context",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/decision-rule-sets/v1/authoring-context/{pointCode}",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000001025",
+        "operations-risk-rule-set-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/decision-rule-sets/v1/rule-sets",
+        "ACTIVE",
+        "6"
+      ],
+      [
+        "900000000000001026",
+        "operations-risk-rule-set-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/decision-rule-sets/v1/rule-sets/{ruleSetVersionId}",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000001027",
+        "operations-risk-rule-set-save",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/decision-rule-sets/v1/rule-sets",
+        "ACTIVE",
+        "6"
+      ],
+      [
+        "900000000000001028",
+        "operations-risk-rule-set-freeze",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/decision-rule-sets/v1/rule-sets/{ruleSetVersionId}/freeze",
+        "ACTIVE",
+        "10"
+      ],
+      [
+        "900000000000001029",
+        "operations-risk-test-candidate-list",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/decision-releases/v1/candidates",
+        "ACTIVE",
+        "6"
+      ],
+      [
+        "900000000000001030",
+        "operations-risk-test-candidate-detail",
+        "OPERATIONS",
+        "GET",
+        "/api/operations/decision-releases/v1/candidates/{releaseId}",
+        "ACTIVE",
+        "6"
+      ],
+      [
+        "900000000000001031",
+        "operations-risk-test-candidate-create",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/decision-releases/v1/candidates",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000001032",
+        "operations-risk-test-candidate-validate",
+        "OPERATIONS",
+        "POST",
+        "/api/operations/decision-releases/v1/candidates/{releaseId}/validate",
+        "ACTIVE",
+        "4"
+      ],
+      [
+        "900000000000001033",
+        "operations-risk-rule-set-delete",
+        "OPERATIONS",
+        "DELETE",
+        "/api/operations/decision-rule-sets/v1/rule-sets/{ruleSetId}",
+        "ACTIVE",
+        "2"
+      ]
+    ],
+    "role": [
+      [
+        "900000000000000510",
+        "PLATFORM_ADMIN",
+        "ACTIVE",
+        "9"
+      ]
+    ],
+    "counts": [
+      [
+        "37",
+        "22"
+      ]
+    ],
+    "reservedCollisions": {
+      "t_permission": [
+        [
+          "0"
+        ]
+      ],
+      "t_permissionCodes": [
+        [
+          "0"
+        ]
+      ],
+      "t_role_permission": [
+        [
+          "0"
+        ]
+      ],
+      "t_console_resource": [
+        [
+          "0"
+        ]
+      ],
+      "t_console_resourceCodes": [
+        [
+          "0"
+        ]
+      ],
+      "t_gateway_route": [
+        [
+          "0"
+        ]
+      ],
+      "t_gateway_routeCodes": [
+        [
+          "0"
+        ]
+      ],
+      "t_gateway_route_header": [
+        [
+          "0"
+        ]
+      ],
+      "t_gateway_route_query_param": [
+        [
+          "0"
+        ]
+      ],
+      "t_gateway_guard_rule": [
+        [
+          "0"
+        ]
+      ]
+    }
+  },
+  "verifiedSourceFiles": 97
+}

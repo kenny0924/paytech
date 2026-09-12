@@ -1,0 +1,18 @@
+{
+  "oldCandidate": {
+    "service": "operations-console-bff",
+    "tag": "mor-test/operations-console-bff:rco16-history-dictionaries-20260912",
+    "imageId": "sha256:2b3f986fbc2e87190dbc62dd431ed7d629161900628520c8d679b78425fc831a",
+    "jarSha256": "be86d193e995f5b8a089422df816f01bcf3317de04e83b8c616c04598aa69e52",
+    "preparation": "Local candidate only; never assigned to development or started."
+  },
+  "finalCandidate": {
+    "service": "operations-console-bff",
+    "tag": "mor-test/operations-console-bff:rco16-history-dictionaries-20260912-verified",
+    "imageId": "sha256:1a6c0110750d94a3f062b493818359bb5281571a9cd44fb87400e5143453bbb0",
+    "jarSha256": "d66936ac0e1844f8f0a39d79b91afce141d3f9887f48bfccef08b33f5770d73f",
+    "preparation": "Repacked from final full verify JAR; exact bytes verified. Earlier candidate had identical extracted entries but different ZIP metadata."
+  },
+  "allExtractedJarEntriesIdentical": true,
+  "reason": "Maven full verify repackaged the same files with different ZIP metadata; final image follows exact tested JAR."
+}

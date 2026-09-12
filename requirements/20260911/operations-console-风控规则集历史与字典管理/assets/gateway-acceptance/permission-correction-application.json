@@ -1,0 +1,63 @@
+{
+  "state": "applied",
+  "authorized_by": "2026-09-12 用户回复可以，确认注册顺序修正并备份后应用独立验证库补丁",
+  "target": "127.0.0.1:13306/mor_platform_rco16_validation",
+  "sql_sha256": "9aa99ee0952c847aa410fbdc3f58fb6d68e7e6318a8a1bd1a0d9a9232a5c7add",
+  "backup_directory": "/Users/kenny/Code-MoR-backups/rco16-permission-correction-20260912T053228Z",
+  "backup_sha256": {
+    "t_role-before.json": "a46ae4bc76f5651bae362c73279e8d9e11c3ebbce2f60d181b4a32e88e60c564",
+    "original-database-metadata.json": "fe048f54518d6e6863845f05e7d04f7416edfd458364f30f4c4fbe8cd5a9b385",
+    "t_role_permission-before.json": "6ab1562d8d16641ea64af2b71dfd92c8b8b05cd1618c20d853c0469e3d4b7cdc"
+  },
+  "bindings_after": [
+    {
+      "role_permission_id": 900000000000000587,
+      "permission_id": 900000000000000541,
+      "status": "REVOKED",
+      "version": 2
+    },
+    {
+      "role_permission_id": 900000000000012201,
+      "permission_id": 900000000000012101,
+      "status": "REVOKED",
+      "version": 2
+    },
+    {
+      "role_permission_id": 900000000000012202,
+      "permission_id": 900000000000012102,
+      "status": "REVOKED",
+      "version": 2
+    },
+    {
+      "role_permission_id": 900000000000012203,
+      "permission_id": 900000000000012103,
+      "status": "REVOKED",
+      "version": 2
+    },
+    {
+      "role_permission_id": 900000000000012204,
+      "permission_id": 900000000000012104,
+      "status": "REVOKED",
+      "version": 2
+    },
+    {
+      "role_permission_id": 900000000000012205,
+      "permission_id": 900000000000012105,
+      "status": "REVOKED",
+      "version": 2
+    },
+    {
+      "role_permission_id": 900000000000012206,
+      "permission_id": 900000000000012106,
+      "status": "REVOKED",
+      "version": 2
+    }
+  ],
+  "administrator_after": {
+    "role_id": 900000000000000510,
+    "status": "ACTIVE",
+    "version": 3
+  },
+  "original_database_metadata_unchanged": true,
+  "completed_at": "2026-09-12T05:32:28.604620+00:00"
+}

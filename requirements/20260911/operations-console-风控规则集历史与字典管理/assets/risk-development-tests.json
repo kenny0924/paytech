@@ -1,0 +1,208 @@
+{
+  "command": "./mvnw -q test",
+  "runtime": "JDK 25 / Maven Wrapper 3.9.16",
+  "database": "127.0.0.1:13306/mor_risk",
+  "redis": "127.0.0.1:16379",
+  "counts": {
+    "tests": 181,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "classes": [
+    {
+      "name": "com.paytech.risk.auto.ManualPayoutEligibilityAutoTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.ManualPayoutEligibilityFailClosedAutoTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.RiskApplicationAutoTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.RiskModuleBoundaryAutoTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.configuration.RiskRuntimeConfigurationAutoTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.contract.RiskDecisionConfigurationApiContractAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.domain.DecisionReleaseAggregateAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.domain.DecisionReleaseStaticValidatorAutoTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.domain.DecisionRuleSetAggregateAutoTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.domain.RiskDecisionCanonicalizerAutoTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.domain.RuleAstValidatorAutoTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.domainservice.DecisionReleaseServiceProtocolAutoTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.domainservice.DecisionRuleSetServiceAutoTest",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.ext.http.DecisionConfigurationConcurrencyAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.ext.http.DecisionConfigurationReadSnapshotAutoTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.ext.http.DecisionDictionaryHttpAutoTest",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.ext.http.DecisionReleaseManagementHttpAutoTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.ext.http.DecisionReleaseValidationRecoveryAutoTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.ext.http.DecisionRuleSetDeletionHttpAutoTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.ext.http.DecisionRuleSetManagementHttpAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.ext.http.RuleActionConfigurationHttpAutoTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.repository.CommandIdempotencyRepositoryMySqlAutoTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.repository.RiskDecisionPersistenceAutoTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.repository.RiskDecisionPersistenceContractAutoTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.service.DecisionConfigurationWebOrchestrationAutoTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.paytech.risk.auto.service.RiskOperationRequestContextParserAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "scope": "Stage 4 development regression. Browser/end-to-end AC acceptance remains Stage 5.",
+  "cleanup": {
+    "t_rule_reject_reason": 0,
+    "t_rule_subject_tag": 0,
+    "t_rule_set": 0,
+    "t_rule_set_version": 0,
+    "t_risk_rule": 0,
+    "t_rule_action_parameter": 0,
+    "t_decision_release": 0,
+    "t_command_idempotency": 0
+  },
+  "remainingRiskConnections": 0
+}

@@ -1,0 +1,18 @@
+{
+  "checked": 97,
+  "changed": [
+    {
+      "application": "operations-console-bff",
+      "file": "paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsConsoleBffApplicationAutoTest.java",
+      "old": "37fb026d5d58729289c736f256f747e3b0b89e47646696ce4e3204ed0d96e36a",
+      "new": "9f946b099f30e6b85e9a07a6c16eb472c21e9f782e33cbfa938a1b00ce3c1919"
+    },
+    {
+      "application": "operations-console-bff",
+      "file": "paytech-operations-console-bff-web/src/main/resources/application.yml",
+      "old": "559a2185e6521e3e568df95e5d3d9936482aa8efa43ef48ae9998ccd6293c43d",
+      "new": "8d7d1e8eb1bdd9cb2572a63110eb8fbbb8e4f19831011dfb151b399014b7e45e"
+    }
+  ],
+  "meaning": "Old stage5 evidence remains historical; BFF amended listener/test changes are covered by this stage. Recheck artifact hashes before release."
+}

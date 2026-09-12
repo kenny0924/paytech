@@ -1,0 +1,23 @@
+{
+  "checkedAtUtc": "2026-09-11T20:05:30.499833+00:00",
+  "scope": "Gateway amendment stage 3 documentation and planned comment DDL only",
+  "markdownFilesChecked": 19,
+  "localLinksChecked": 476,
+  "errors": [],
+  "plannedSql": {
+    "file": "db/platform-support-service/ddl.sql",
+    "sha256": "b1e63521748a43a03b8b794951bfc30622728d88504562676eacc6d0f34ca47c",
+    "statements": [
+      "USE mor_platform",
+      "ALTER TABLE t_gateway_target COMMENT"
+    ],
+    "businessSchemaChanges": 0,
+    "tableCommentChanges": 1,
+    "applied": false
+  },
+  "existingPlatformRegistrationDmlUnchanged": true,
+  "stage5FileHashesChecked": 97,
+  "gatewayWorkingTreeClean": true,
+  "applicationTestsRun": false,
+  "databaseOrDeploymentMutations": false
+}

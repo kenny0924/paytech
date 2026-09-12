@@ -148,7 +148,7 @@ services:
       platform-support-service: { condition: service_healthy }
       risk-service: { condition: service_healthy }
     healthcheck:
-      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://172.30.73.22:18201/actuator/health/readiness]
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19201/actuator/health/readiness]
       interval: 10s
       timeout: 5s
       retries: 12

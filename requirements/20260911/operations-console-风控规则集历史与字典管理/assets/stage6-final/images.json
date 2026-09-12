@@ -1,0 +1,56 @@
+{
+  "preparedAt": "2026-09-12T06:12:30.291578+00:00",
+  "images": [
+    {
+      "service": "risk-service",
+      "tag": "mor-test/risk-service:rco16-history-dictionaries-20260911",
+      "imageId": "sha256:c6a4f44a8cba07f6e7b4b41903559cd77d575412c32e847cf729a1621e19719a",
+      "jarSha256": "6224c001224b8fdd355dd56dab013e1ce921103f34a0808bf0bc0aacec6a50bc",
+      "preparation": "Reused exact previously prepared image; reviewed source hashes rechecked."
+    },
+    {
+      "service": "operations-console-web",
+      "tag": "mor-test/operations-console-web:rco16-history-dictionaries-20260911",
+      "imageId": "sha256:ef04bdbbd75a76df723843a53fb530efcf5f5e4315f4e4f754325087448ebe27",
+      "indexSha256": "699103060a0e48b713d629f6a6f72dd5a6d69f0bbf38b9b169b051c9c3f498fa",
+      "staticFilesSha256": {
+        "assets/Accounts-CcAQ2IXg.js": "b208f1ac071b9e5c3fa6890a586e3c7311b75a42603cbf50da69f732eabd173f",
+        "assets/Audit-D3eAcELP.css": "05664d0e6d330bc947f68f76dcd684e66a08fa2294e4c4da3ebcf5e7b10ff160",
+        "assets/Audit-DwpZnjNf.js": "08816fc78fdf366e11c80572cfa51e64d4916234c9c896137d03113767072b64",
+        "assets/GatewayConfiguration-yNltFy7p.js": "c0e616d7e34e6f50d909e14cdcb3a562b5dc035da295c5b5dd694a5db0823ceb",
+        "assets/RiskDictionary-CPo5vOQQ.js": "639f7c92db19f2000648bdbbb829a683ca09f7c0f12a3da81e416acd6707185a",
+        "assets/RiskRuleConfiguration-CvamfpeH.js": "baace9f11380d7794847b9602426b2bc9aad79d90c49d1251e0307d4a70fd57d",
+        "assets/Roles-B_sYNyY1.js": "6bb0b69741b5fd346eb3fc5db259aaececee4c704f2bdad4a3a194dc35ccec18",
+        "assets/deletion-ZH2BmGw-.js": "03053fc137c08d6ef6fb1796a8cefabbf62ffbea33d79f69aa0cd37bcb37ad78",
+        "assets/descriptions-CQCzQaak.js": "cf35a21130bc1734978fcf1944dbf576b38dc75a77048685d38bb26272777b3e",
+        "assets/index-Cj75_2K1.css": "23b947b67bc9e853cdd3142c0e65ed39422d7b2464ff355d80184919d3bd5fc5",
+        "assets/index-orUREt5S.js": "f97f1bfeb1a31cf09da649d575cc122584ae7b2a02e8d647819c79732e8dfcdf",
+        "assets/jsx-runtime-C8XPPeiE.js": "ed9968d7ec886ba16d52d471850068f81d9153385c36b91a8364f071769e888e",
+        "assets/modal-CzeDFW7D.js": "ba69f53c9f5ac02c1276a860e897b9f449f7aedbadd02a772625918cd65d3a8d",
+        "assets/paging-DFV_quYq.js": "6994d5dfb9bf97ab931d38325004258d8f43eb3e43d41519eb9a8e69b160029d",
+        "assets/riskRuleConfiguration-CATBAXyb.js": "63338e9492b4990c2653cc42c33ad5fd5ed5fe8c7131e7eb7e03d014e8cf42d9",
+        "assets/riskRuleConfiguration-SgyahN3V.css": "7ba3ed92cec0ca50adbc042714ba00e870a026228c38a987908fded583e5ce36",
+        "assets/usePaging-CAlhzjqH.js": "e997c5c268b3a3f30d61f1267d0e94f31492dd30eb899b6a1c67ff10c56beed1",
+        "index.html": "699103060a0e48b713d629f6a6f72dd5a6d69f0bbf38b9b169b051c9c3f498fa"
+      },
+      "preparation": "Reused exact previously prepared image; reviewed source hashes rechecked."
+    },
+    {
+      "service": "operations-console-bff",
+      "tag": "mor-test/operations-console-bff:rco16-history-dictionaries-20260912-verified",
+      "imageId": "sha256:1a6c0110750d94a3f062b493818359bb5281571a9cd44fb87400e5143453bbb0",
+      "jarSha256": "d66936ac0e1844f8f0a39d79b91afce141d3f9887f48bfccef08b33f5770d73f",
+      "preparation": "Repacked from final full verify JAR; exact bytes verified. Earlier candidate had identical extracted entries but different ZIP metadata."
+    },
+    {
+      "service": "api-gateway",
+      "tag": "mor-test/api-gateway:rco16-gateway-candidate-20260912",
+      "imageId": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+      "jarSha256": "3e1c48bcdac6678ba3cec9e3fec48b0cc2253dbcb66fcfa1da869f8b92fbf1c7",
+      "preparation": "Local candidate only; never assigned to development or started."
+    }
+  ],
+  "embeddedRiskApiSha256": "f386688562834d1646092995c66fa51a42b544bb4f991a65a49acb47905ae766",
+  "embeddedPlatformApiSha256": "43f69cbe8cb99765fef295a0d1ee05d4b27adde212169893491760ad9d35c8e7",
+  "scope": "No development tag changes, no deployment, no push. Gateway source-scope decision and stage 7 approval remain required."
+}

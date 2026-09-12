@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-09-12T06:35:34.035417+00:00",
+  "unchangedHealthyContainers": 11,
+  "fourDevelopmentTagsUnchanged": true,
+  "candidateImageIdsVerified": 4,
+  "riskAndPlatformReadOnlyBaselineUnchanged": true,
+  "sourceFilesMatchedApprovedEvidence": 99,
+  "bffFullVerify": {
+    "tests": 1041,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "testedBffJarMatchesImage": true,
+  "requirementsSitePassed": 136,
+  "diffChecksPassed": true,
+  "composeQuietValidationPassed": true,
+  "localMarkdownLinksChecked": 305,
+  "pythonSyntaxPassed": true,
+  "ownedPythonCacheRemoved": true,
+  "scope": "Read-only test checks; no test SQL, deployment, restart, git commit/push or remote artifact publication.",
+  "logSha256": {
+    "/tmp/rco16-stage6-bff-package.log": "fbee04c3cbfcbc0926d3899bc8a696622c5ea4be9e9144099af841275bcf6117",
+    "/tmp/rco16-stage6-bff-full.log": "f1d0fd4f7ee33ce527ca154df1dd0362fe66ab23b16d33f77f6e028aaf9dcd90",
+    "/tmp/rco16-stage6-requirements-site.log": "398f08c685f4eda7b52238223c9080847de94a08d596e004941f83f84f0d1967",
+    "/tmp/rco16-stage6-build-images.log": "876f2366dce9f53c1c50934375a7865b2d777b4cc678977ad48fbd77673b2a68"
+  }
+}

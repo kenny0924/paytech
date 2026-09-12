@@ -1,0 +1,62 @@
+{
+  "scope": "Stage 3 static design checks only; no SQL or business HTTP executed",
+  "apiOperations": 14,
+  "readOperations": 8,
+  "writeOperations": 6,
+  "registrationRows": {
+    "t_permission": 6,
+    "t_role_permission": 6,
+    "t_console_resource": 10,
+    "t_gateway_route": 14,
+    "t_gateway_route_header": 40,
+    "t_gateway_route_query_param": 22,
+    "t_gateway_guard_rule": 84
+  },
+  "totalInsertedRows": 182,
+  "additionalRoleCASUpdates": 1,
+  "newRiskTables": 2,
+  "newRiskColumns": 21,
+  "newExistingTableIndexes": 2,
+  "riskSeedRows": 0,
+  "newIdAndNormalizedRouteCollisionsAgainstCheckedInitialSQL": 0,
+  "sqlRowsMatchRegistrationManifest": true,
+  "platformColumnsExistInCurrentSchema": true,
+  "localMarkdownLinksChecked": 71,
+  "missingLocalLinks": 0,
+  "acceptanceCriteria": [
+    "AC-01",
+    "AC-02",
+    "AC-03",
+    "AC-04",
+    "AC-05",
+    "AC-06",
+    "AC-07",
+    "AC-08",
+    "AC-09",
+    "AC-10",
+    "AC-11",
+    "AC-12"
+  ],
+  "pencilFramesWithExportedPng": [
+    "mpjGw",
+    "sC8xw",
+    "xcWYU",
+    "VgJa0",
+    "r6nkjr",
+    "jra1G",
+    "LPAZs",
+    "hJkDb",
+    "X4RR7",
+    "yfhQ1",
+    "LNHOL",
+    "kwBSe"
+  ],
+  "pencilLayoutCheck": "Pencil Get visitor reported zero clipping problems on all 12 frames after layout settled; final save confirmed in UI",
+  "simplification": "Two dictionary roots only; no tag applicability configuration or dictionary receipt/replay; unique code, CAS and manual outcome checks",
+  "limitations": [
+    "SQL has not been executed or validated against a live database",
+    "No application behavior/build claims; implementation pending design approval",
+    "Static route collision check does not replace live full Catalog validation",
+    "Pencil normal-state visuals only; interaction and responsive validation belong to implementation acceptance"
+  ]
+}

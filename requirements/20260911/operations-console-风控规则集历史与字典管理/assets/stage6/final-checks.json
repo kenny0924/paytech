@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-09-11T19:27:17.978495+00:00",
+  "unchangedContainers": [
+    "mysql",
+    "redis",
+    "nacos",
+    "risk-service",
+    "operations-console-bff",
+    "operations-console-web",
+    "platform-support-service",
+    "api-gateway",
+    "nginx",
+    "vault-service",
+    "rabbitmq"
+  ],
+  "developmentTagsUnchanged": true,
+  "riskTableCount": 72,
+  "newDictionaryTableCount": 0,
+  "rootVersionHashesUnchanged": true,
+  "platformRoutes": 37,
+  "activeOperationsResources": 22,
+  "adminRoleVersion": 9,
+  "sourceFilesMatchedStage5": 97,
+  "gatewayWorkingTreeUnmodified": true,
+  "requirementMarkdownLinksChecked": 110,
+  "diffChecksPassed": true,
+  "composeQuietValidationPassed": true,
+  "scope": "Read-only test verification. No test SQL, deployment, restart, commit, push or remote artifact publication."
+}

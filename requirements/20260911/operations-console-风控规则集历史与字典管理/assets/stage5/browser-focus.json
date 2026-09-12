@@ -1,0 +1,11 @@
+{
+  "scope": "production Web with synthetic read-only dictionary HTTP; no business writes",
+  "scenarios": [
+    "readonly-drawer-close-restores-operation-focus",
+    "edit-drawer-close-restores-operation-focus",
+    "status-dialog-close-restores-operation-focus",
+    "create-drawer-close-restores-create-focus"
+  ],
+  "requests": 3,
+  "errors": []
+}

@@ -1,0 +1,6 @@
+{
+  "rows": 1,
+  "columns": 10,
+  "tableComment": "保存已通过架构与安全审批的公共入口目标当前状态；Gateway 仍以静态 Approved Target Registry 复核身份三元组",
+  "action": "apply approved comment-only DDL"
+}

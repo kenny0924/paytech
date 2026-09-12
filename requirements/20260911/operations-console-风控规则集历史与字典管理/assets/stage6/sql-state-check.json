@@ -1,0 +1,22 @@
+{
+  "scope": "Offline SQLite state/gate simulation of reviewed SQL after stripping MySQL-only session/lock syntax. Does not prove MySQL execution or locking; no target DB writes.",
+  "checks": [
+    "maintenance closes exactly old risk entries",
+    "routes open with menus still hidden",
+    "resources open after route gate",
+    "failure closes old and new entries",
+    "failure close is stable on repeat",
+    "pre-migration restore",
+    "baseline version drift rejected",
+    "failed maintenance keeps old routes",
+    "enable without registration rejected",
+    "expose before routes rejected",
+    "restore after registration rejected",
+    "close from original state",
+    "close from maintenance",
+    "close after registration",
+    "partial registration rejected",
+    "unknown close version rejected"
+  ],
+  "passed": 16
+}

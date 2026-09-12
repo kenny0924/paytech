@@ -1,5 +1,7 @@
 # Platform Support 统一公共 API 动态控制面设计
 
+> **2026-09-11 Target/Route 后继决定：** [数据库路由范围决定](../../../agent-docs/decisions/2026-09-11-gateway-database-routing.md)取代本文静态 Approved Target Registry、具体 Discovery/Path Root 二次名单及关联校验/上线要求；Platform 数据库与完整快照成为业务目标/路由权威。其余认证、Channel、Header、协议和控制面规则保持；[技术修订方案](../../../requirements/20260911/operations-console-风控规则集历史与字典管理/gateway-dynamic-routing-design.md)待阶段评审，运行状态只读当前台账。
+
 > 2026-09-05 审计专项后继：[Controller 尽力审计决策](../../../agent-docs/decisions/2026-09-05-platform-controller-best-effort-audit.md)
 > 仅取代本文中既有 Operations Target/Route HTTP 状态命令的“配置与 Audit Event 同事务”约束。
 > 配置事务、CAS、幂等、全局校验及尚未实现的管理命令范围不变；新审计方案的实施状态见当前实现台账。

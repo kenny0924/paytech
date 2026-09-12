@@ -1,0 +1,14 @@
+{
+  "cause": "81-character fixture request IDs exceed the HTTP 64-character limit and are regenerated; ownership cleanup correctly refuses them",
+  "fixture_prefix": "op-http-c170b20c-4656-4a22-8aae-86410a501517",
+  "audit_request_ids": [
+    "6a42980a-b74d-4d9b-be05-bfa9cfc609b7",
+    "d90528fb-a8ca-4934-a1d7-4fab206c0177"
+  ],
+  "chain_id": "8384187197624557644",
+  "account_ids": [
+    "8150766733451112597",
+    "8307224619013217983"
+  ],
+  "cleanup_scope": "exact IDs created by this validation run in mor_platform_rco16_validation only"
+}

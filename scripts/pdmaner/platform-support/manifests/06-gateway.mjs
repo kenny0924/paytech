@@ -29,7 +29,7 @@ export const TABLES = Object.freeze([
   defineTable({
     key: "gateway_target",
     name: "Gateway 受控目标",
-    comment: "保存已通过架构与安全审批的公共入口目标当前状态；Gateway 仍以静态 Approved Target Registry 复核身份三元组",
+    comment: "保存由 Platform 统一管理的公共入口目标当前配置；Gateway 从完整快照读取目标身份与服务发现名称并执行通用校验",
     fields: [
       pk("target_id", "Gateway 目标标识", "Gateway 受控目标的稳定业务标识"),
       str("target_service_code", "目标服务代码", "NN", 128),

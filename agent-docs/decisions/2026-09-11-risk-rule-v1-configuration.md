@@ -1,5 +1,7 @@
 # Operations 风控规则 V1 配置增量决策
 
+> 后继范围：用户已确认[历史查看与业务字典需求](./2026-09-11-risk-rule-history-and-dictionaries.md)，后续将建设拒绝原因与主体标签字典，取代下文第 4–5 节“本期不建字典”的后续目标。本文件继续记录原批次手工配置及历史兼容事实；新接口/模型和旧项再次保存的规则仍待新需求设计，不表示本文件对应实现已迁移。
+
 - Decision status: Confirmed（业务范围与配置语义）；工程 Wire、持久化和兼容规则见接口合同。
 - Decision date: 2026-09-11
 - Implementation/deployment authority: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md)

@@ -1,0 +1,17 @@
+Stage 3 simplified design verification, 2026-09-11
+Command: npm --prefix requirements-site test
+Exit code: 0
+Scope: requirements site build and existing static contract checks only.
+Design: two dictionary roots; no tag applicability relation or dictionary receipt.
+No new Risk/BFF/Web application behavior or SQL was executed.
+
+✔ business module collaboration policy defines the default and narrow exception (0.158ms)
+✔ Finance module design projects the shared collaboration policy (0.099084ms)
+ℹ tests 136
+ℹ suites 0
+ℹ pass 136
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 358.800375

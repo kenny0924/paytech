@@ -1,0 +1,73 @@
+{
+  "requirement": "RCO-16",
+  "acceptedOn": "2026-09-12",
+  "userConfirmation": "我验收了，代码提交吧",
+  "scope": "本地 main 提交；不推送、不重新部署、不应用 SQL",
+  "applications": [
+    {
+      "repository": "risk-compliance-service",
+      "branch": "main",
+      "commit": "27cf50b6fc48b15feac557bfac6a703f7da6d2d2",
+      "subject": "feat(risk): add rule history and configuration dictionaries",
+      "worktreeClean": true,
+      "changedFiles": 56
+    },
+    {
+      "repository": "operations-console-bff",
+      "branch": "main",
+      "commit": "6822928fc3552c93c5745bce267211a0ef46614c",
+      "subject": "feat(operations): forward risk history and dictionary management",
+      "worktreeClean": true,
+      "changedFiles": 25
+    },
+    {
+      "repository": "operations-console-web",
+      "branch": "main",
+      "commit": "9165b95e76da67f041cefc58458d6294f0acb353",
+      "subject": "feat(operations): add rule history dictionaries and compact navigation",
+      "worktreeClean": true,
+      "changedFiles": 18
+    },
+    {
+      "repository": "api-gateway",
+      "branch": "main",
+      "commit": "2f1f70e85e1adf58dd3b4c59c76d06939dde7632",
+      "subject": "feat(gateway): resolve targets and routes from database snapshots",
+      "worktreeClean": true,
+      "changedFiles": 53
+    },
+    {
+      "repository": "platform-support-service",
+      "branch": "main",
+      "commit": "d40b268b64404c1971f911809500cf117954e183",
+      "subject": "feat(platform): register risk dictionaries and dynamic gateway targets",
+      "worktreeClean": true,
+      "changedFiles": 23
+    }
+  ],
+  "workspace": {
+    "repository": "Code-MoR",
+    "branch": "main",
+    "commit": "包含本清单的根仓库提交",
+    "preservedUnrelatedChanges": [
+      "公共需求交付流程和目录治理草稿",
+      "上一轮 operations-console-风控规则改动 未提交材料"
+    ]
+  },
+  "verification": {
+    "applicationEvidence": "当前全部应用改动 SHA-256 与已验收阶段及最后 Web 部署记录一致；Pencil 12 个新增画板，旧画板未变",
+    "requirementsSite": {
+      "command": "npm --prefix requirements-site test",
+      "buildPassed": true,
+      "tests": 136,
+      "passed": 136,
+      "failed": 0,
+      "skipped": 0,
+      "initialFailure": "1 条断言仍要求 Gateway 未部署，依据实际部署台账修正后全量通过",
+      "logSha256": "92dacfe325e9a118cedee5878e3e67a1fba4f745dad8ee70dd3a16bf1be7aacd"
+    },
+    "stagedDiffWhitespace": "passed",
+    "stagedCredentialScan": "no local credential or private-key matches"
+  },
+  "pushed": false
+}

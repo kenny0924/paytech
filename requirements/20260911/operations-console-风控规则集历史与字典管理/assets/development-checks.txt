@@ -1,0 +1,81 @@
+RCO-16 阶段 4 开发检查摘要
+日期：2026-09-11
+状态：阶段 4 开发交付完成，等待用户确认阶段 5 综合验证。
+
+1. Operations Console Web
+   目录：operations-console-web
+   命令：npm test
+   结果：883 tests，883 pass，0 fail，0 skipped。
+   命令：npm run build
+   结果：TypeScript / Vite 生产构建成功。
+   限制：仍有现有的 chunk 大于 500 kB 的构建提示；没有真实浏览器或真实 Risk 联调验收。
+
+2. Operations Console BFF
+   目录：operations-console-bff，使用项目 JDK 25 / Maven Wrapper 3.9.16。
+   命令：./mvnw -q test
+   结果：1039 tests，0 failures，0 errors，0 skipped。
+   收尾命令：./mvnw -q -DskipTests package；使用最终源码及本地 Risk API，构建成功。
+   范围：包含 15 次新增字典/历史/引用路由的真实 BFF HTTP 测试调用。
+   边界：Platform 授权与 Risk 响应由项目 Simulator 提供；不能视为真实 Risk 业务验证。
+   已验证：逐路由授权、拒绝后不调用 Owner、可信身份和 Query 转发、无新增幂等 Header、
+           错误 JSON/Query/GET Body、16 KiB 上限、非法 Owner 响应安全错误及不重试。
+   期间两处旧精确路由/Owner 引用白名单断言未含新合同，修正后先通过定向 78 项，
+   再完成上述全量通过。没有删除旧接口边界约束。
+   收尾另一次直接使用全局 mvn 的构建被 Enforcer 拒绝：全局 3.9.9 不符合 3.9.16 要求；
+   此为命令选错 Maven，不是应用测试失败；改用仓库 ./mvnw 后构建成功。
+
+3. Risk 模型与 SQL 工件
+   工作区根目录。
+   命令：node --test scripts/pdmaner/risk-compliance-model.test.mjs scripts/pdmaner/risk-compliance-schema.test.mjs scripts/pdmaner/risk-compliance-initial-data.test.mjs scripts/pdmaner/risk-compliance-scenario-doc.test.mjs
+   结果：49 tests，49 pass，0 fail，0 skipped。
+   静态核对：2 张字典表共 21 列；新增 CREATE TABLE 与模型生成完整 Schema 一致。
+             Platform 14 个操作共 182 条注册插入，7 组 INSERT 与单一初始化 SQL 一致
+             （仅初始化时间变量名称不同）。新增 Route/Resource 保持 DISABLED。
+   证据：development-artifact-checks.json。
+   本机执行：已按用户“允许”备份后应用 Risk 增量 DDL，退出码 0；无种子或回填。
+   实际 2 表/21 列、主键/唯一/访问索引、表选项及两处旧字段注释均与 PDManer 一致。
+   证据：local-sql-application.json、local-schema-check.json。Platform 注册未执行/未激活。
+
+4. Risk Java
+   目录：risk-compliance-service，使用项目 JDK 25 / Maven Wrapper 3.9.16。
+   命令：./mvnw -q -DskipTests package
+   结果：全模块及测试源码构建成功。
+   首个真实失败证据：旧实现的新字典详情路径返回通用 NOT_FOUND，
+                   新用例期望 RISK_DICTIONARY_NOT_FOUND，HTTP 断言失败。
+   已编写：字典完整生命周期、CAS 同码并发、原因停用精确沿用/新选拒绝/历史及原回放、
+           严格请求结构等 HTTP 用例；原动作配置用例改为通过 API 准备本用例专属字典。
+   最终命令：./mvnw -q test
+   结果：181 tests，0 failures，0 errors，0 skipped，26 个测试类。
+   其中：新字典专项 19 项，原动作配置 4 项；通过真实本服务 HTTP/MySQL/Redis。
+   新增专项涵盖当前值 CRUD/CAS/永久代码、未知与停用旧标签沿用、动作重排、复制动作拒绝、
+   原保存回放、事务回滚无残留、已删除根引用、并发创建、异码资源锁隔离、固定历史上界、
+   TEST/PRODUCTION 旧版本使用与筛选无关的 inUse、断裂发布关系报错、严格请求协议。
+   测试汇总：risk-development-tests.json；与模型核对的本机库为 127.0.0.1:13306/mor_risk，
+   Redis 为 127.0.0.1:16379。测试后 8 类相关业务表计数均为 0，无其他 Risk 连接。
+   期间发现：旧 target 中有过时包路径测试 class，clean test 清理后测试发现恢复；
+   4 个旧契约断言未含新增路由/错误码/日志前缀/编译依赖，按确认范围扩充后通过。
+   补充测试夹具曾错误使用 ISO 时长和条件字段/值域，改回既有毫秒字符串及合法字段后通过；
+   未为迁就夹具放宽生产输入合同。
+
+5. 需求站点
+   命令：npm --prefix requirements-site test
+   结果：站点构建成功；136 tests，136 pass，0 fail，0 skipped。
+   已修正该站点原 Risk 72 表统计断言为本轮生成模型的 74 表；不是业务运行状态变更。
+
+6. 注释与合同
+   用 JDK Compiler Tree API 解析本轮 49 份新增 Java 文件，补齐手写方法中文 JavaDoc，
+   说明当前值、期望版本、锁与事务、精确引用以及错误转换边界。
+   API/BFF 的 24 个 record 补充 ID 字符串、可空条件、UTC 微秒与当前指针含义说明。
+   四个应用和本轮根目录相关差异的空白检查通过；新增文本文件无尾部空白。
+   需求目录最终 69 条本地链接无缺失；工件报告中的当前 SQL/模型 Hash 均一致。
+   api.md 中的字段校验错误从误写的 400 VALIDATION_ERROR 修正为框架现行的
+   422 VALIDATION_ERROR；非法 JSON/请求形状仍为 400 INVALID_REQUEST。
+
+7. 明确未执行
+   - Platform 数据库及 test/其他环境 SQL。
+   - 字典停用与规则保存的两个确定锁顺序、复制规则/变更绑定等尚未覆盖的 AC 组合。
+   - 阶段 5 综合浏览器、键盘、窄屏、权限和完整真实服务联调验收。
+   - Platform 注册激活、test 部署、制品发布、Git 提交或推送。
+
+原始构建日志位于本机 /tmp/rco16-*，可能随系统清理；本摘要与静态工件报告为长期证据入口。
+摘要不包含凭据、请求敏感内容或数据库导出；不把编译、Simulator 或模型测试等同于真实链路完成。

@@ -1,0 +1,2257 @@
+{
+  "requirement": "RCO-16",
+  "status": "REVIEWED_REGISTRATION_NOT_APPLIED_TO_TEST",
+  "database": "mor_platform",
+  "readPermissionId": "900000000000000536",
+  "administratorRoleId": "900000000000000510",
+  "targetId": "900000000000000001",
+  "permissions": [
+    {
+      "id": "900000000000012101",
+      "code": "RISK_REJECTION_REASON_CREATE",
+      "resourceType": "RISK_REJECTION_REASON",
+      "actionCode": "CREATE"
+    },
+    {
+      "id": "900000000000012102",
+      "code": "RISK_REJECTION_REASON_UPDATE",
+      "resourceType": "RISK_REJECTION_REASON",
+      "actionCode": "UPDATE"
+    },
+    {
+      "id": "900000000000012103",
+      "code": "RISK_REJECTION_REASON_STATUS",
+      "resourceType": "RISK_REJECTION_REASON",
+      "actionCode": "CHANGE_STATUS"
+    },
+    {
+      "id": "900000000000012104",
+      "code": "RISK_SUBJECT_TAG_CREATE",
+      "resourceType": "RISK_SUBJECT_TAG",
+      "actionCode": "CREATE"
+    },
+    {
+      "id": "900000000000012105",
+      "code": "RISK_SUBJECT_TAG_UPDATE",
+      "resourceType": "RISK_SUBJECT_TAG",
+      "actionCode": "UPDATE"
+    },
+    {
+      "id": "900000000000012106",
+      "code": "RISK_SUBJECT_TAG_STATUS",
+      "resourceType": "RISK_SUBJECT_TAG",
+      "actionCode": "CHANGE_STATUS"
+    }
+  ],
+  "resources": [
+    {
+      "id": "900000000000012301",
+      "code": "OPERATIONS_RISK_RULE_SET_HISTORY",
+      "type": "BUTTON",
+      "parent": "900000000000000566",
+      "name": "历史版本",
+      "frontendRoute": null,
+      "componentKey": null,
+      "permissionId": "900000000000000536",
+      "order": 60
+    },
+    {
+      "id": "900000000000012302",
+      "code": "OPERATIONS_RISK_RULE_SET_REFERENCES",
+      "type": "BUTTON",
+      "parent": "900000000000000566",
+      "name": "引用关系",
+      "frontendRoute": null,
+      "componentKey": null,
+      "permissionId": "900000000000000536",
+      "order": 70
+    },
+    {
+      "id": "900000000000012303",
+      "code": "OPERATIONS_RISK_REJECTION_REASONS",
+      "type": "MENU",
+      "parent": "900000000000000565",
+      "name": "拒绝原因",
+      "frontendRoute": "/risk/rejection-reasons",
+      "componentKey": "OPERATIONS_RISK_REJECTION_REASONS",
+      "permissionId": "900000000000000536",
+      "order": 20
+    },
+    {
+      "id": "900000000000012304",
+      "code": "OPERATIONS_RISK_SUBJECT_TAGS",
+      "type": "MENU",
+      "parent": "900000000000000565",
+      "name": "主体标签",
+      "frontendRoute": "/risk/subject-tags",
+      "componentKey": "OPERATIONS_RISK_SUBJECT_TAGS",
+      "permissionId": "900000000000000536",
+      "order": 30
+    },
+    {
+      "id": "900000000000012305",
+      "code": "OPERATIONS_RISK_REJECTION_REASON_CREATE",
+      "type": "BUTTON",
+      "parent": "900000000000012303",
+      "name": "新增原因",
+      "frontendRoute": null,
+      "componentKey": null,
+      "permissionId": "900000000000012101",
+      "order": 10
+    },
+    {
+      "id": "900000000000012306",
+      "code": "OPERATIONS_RISK_REJECTION_REASON_UPDATE",
+      "type": "BUTTON",
+      "parent": "900000000000012303",
+      "name": "编辑原因",
+      "frontendRoute": null,
+      "componentKey": null,
+      "permissionId": "900000000000012102",
+      "order": 20
+    },
+    {
+      "id": "900000000000012307",
+      "code": "OPERATIONS_RISK_REJECTION_REASON_STATUS",
+      "type": "BUTTON",
+      "parent": "900000000000012303",
+      "name": "启停原因",
+      "frontendRoute": null,
+      "componentKey": null,
+      "permissionId": "900000000000012103",
+      "order": 30
+    },
+    {
+      "id": "900000000000012308",
+      "code": "OPERATIONS_RISK_SUBJECT_TAG_CREATE",
+      "type": "BUTTON",
+      "parent": "900000000000012304",
+      "name": "新增标签",
+      "frontendRoute": null,
+      "componentKey": null,
+      "permissionId": "900000000000012104",
+      "order": 10
+    },
+    {
+      "id": "900000000000012309",
+      "code": "OPERATIONS_RISK_SUBJECT_TAG_UPDATE",
+      "type": "BUTTON",
+      "parent": "900000000000012304",
+      "name": "编辑标签",
+      "frontendRoute": null,
+      "componentKey": null,
+      "permissionId": "900000000000012105",
+      "order": 20
+    },
+    {
+      "id": "900000000000012310",
+      "code": "OPERATIONS_RISK_SUBJECT_TAG_STATUS",
+      "type": "BUTTON",
+      "parent": "900000000000012304",
+      "name": "启停标签",
+      "frontendRoute": null,
+      "componentKey": null,
+      "permissionId": "900000000000012106",
+      "order": 30
+    }
+  ],
+  "routes": [
+    {
+      "id": "900000000000012001",
+      "code": "operations-risk-rule-set-versions",
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/{ruleSetId}/versions",
+      "externalPath": "/api/operations/decision-rule-sets/v1/rule-sets/{ruleSetId}/versions",
+      "query": [
+        "page",
+        "size",
+        "maxVersionNo"
+      ],
+      "permissionId": "900000000000000536",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012002",
+      "code": "operations-risk-rule-set-release-references",
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/{ruleSetId}/release-references",
+      "externalPath": "/api/operations/decision-rule-sets/v1/rule-sets/{ruleSetId}/release-references",
+      "query": [
+        "page",
+        "size",
+        "environmentCode",
+        "status",
+        "ruleSetVersionId"
+      ],
+      "permissionId": "900000000000000536",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012003",
+      "code": "operations-risk-rejection-reason-list",
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons",
+      "externalPath": "/api/operations/decision-dictionaries/v1/rejection-reasons",
+      "query": [
+        "page",
+        "size",
+        "keyword",
+        "status"
+      ],
+      "permissionId": "900000000000000536",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012004",
+      "code": "operations-risk-rejection-reason-detail",
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/{reasonCode}",
+      "externalPath": "/api/operations/decision-dictionaries/v1/rejection-reasons/{reasonCode}",
+      "query": [],
+      "permissionId": "900000000000000536",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012005",
+      "code": "operations-risk-rejection-reason-create",
+      "method": "POST",
+      "path": "/decision-dictionaries/v1/rejection-reasons",
+      "externalPath": "/api/operations/decision-dictionaries/v1/rejection-reasons",
+      "query": [],
+      "permissionId": "900000000000012101",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012006",
+      "code": "operations-risk-rejection-reason-update",
+      "method": "PUT",
+      "path": "/decision-dictionaries/v1/rejection-reasons/{reasonCode}",
+      "externalPath": "/api/operations/decision-dictionaries/v1/rejection-reasons/{reasonCode}",
+      "query": [],
+      "permissionId": "900000000000012102",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012007",
+      "code": "operations-risk-rejection-reason-status",
+      "method": "POST",
+      "path": "/decision-dictionaries/v1/rejection-reasons/{reasonCode}/status",
+      "externalPath": "/api/operations/decision-dictionaries/v1/rejection-reasons/{reasonCode}/status",
+      "query": [],
+      "permissionId": "900000000000012103",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012008",
+      "code": "operations-risk-rejection-reason-references",
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/rejection-reasons/{reasonCode}/references",
+      "externalPath": "/api/operations/decision-dictionaries/v1/rejection-reasons/{reasonCode}/references",
+      "query": [
+        "page",
+        "size",
+        "scope"
+      ],
+      "permissionId": "900000000000000536",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012009",
+      "code": "operations-risk-subject-tag-list",
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags",
+      "externalPath": "/api/operations/decision-dictionaries/v1/subject-tags",
+      "query": [
+        "page",
+        "size",
+        "keyword",
+        "status"
+      ],
+      "permissionId": "900000000000000536",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012010",
+      "code": "operations-risk-subject-tag-detail",
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags/{tagCode}",
+      "externalPath": "/api/operations/decision-dictionaries/v1/subject-tags/{tagCode}",
+      "query": [],
+      "permissionId": "900000000000000536",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012011",
+      "code": "operations-risk-subject-tag-create",
+      "method": "POST",
+      "path": "/decision-dictionaries/v1/subject-tags",
+      "externalPath": "/api/operations/decision-dictionaries/v1/subject-tags",
+      "query": [],
+      "permissionId": "900000000000012104",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012012",
+      "code": "operations-risk-subject-tag-update",
+      "method": "PUT",
+      "path": "/decision-dictionaries/v1/subject-tags/{tagCode}",
+      "externalPath": "/api/operations/decision-dictionaries/v1/subject-tags/{tagCode}",
+      "query": [],
+      "permissionId": "900000000000012105",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012013",
+      "code": "operations-risk-subject-tag-status",
+      "method": "POST",
+      "path": "/decision-dictionaries/v1/subject-tags/{tagCode}/status",
+      "externalPath": "/api/operations/decision-dictionaries/v1/subject-tags/{tagCode}/status",
+      "query": [],
+      "permissionId": "900000000000012106",
+      "status": "DISABLED"
+    },
+    {
+      "id": "900000000000012014",
+      "code": "operations-risk-subject-tag-references",
+      "method": "GET",
+      "path": "/decision-dictionaries/v1/subject-tags/{tagCode}/references",
+      "externalPath": "/api/operations/decision-dictionaries/v1/subject-tags/{tagCode}/references",
+      "query": [
+        "page",
+        "size",
+        "scope"
+      ],
+      "permissionId": "900000000000000536",
+      "status": "DISABLED"
+    }
+  ],
+  "counts": {
+    "t_permission": 6,
+    "t_role_permission": 6,
+    "t_console_resource": 10,
+    "t_gateway_route": 14,
+    "t_gateway_route_header": 40,
+    "t_gateway_route_query_param": 22,
+    "t_gateway_guard_rule": 84
+  },
+  "tables": {
+    "t_permission": {
+      "columns": [
+        "permission_id",
+        "permission_code",
+        "resource_type",
+        "action_code",
+        "risk_level",
+        "status",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "rows": [
+        [
+          "900000000000012101",
+          "RISK_REJECTION_REASON_CREATE",
+          "RISK_REJECTION_REASON",
+          "CREATE",
+          "MEDIUM",
+          "ACTIVE",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012102",
+          "RISK_REJECTION_REASON_UPDATE",
+          "RISK_REJECTION_REASON",
+          "UPDATE",
+          "MEDIUM",
+          "ACTIVE",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012103",
+          "RISK_REJECTION_REASON_STATUS",
+          "RISK_REJECTION_REASON",
+          "CHANGE_STATUS",
+          "MEDIUM",
+          "ACTIVE",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012104",
+          "RISK_SUBJECT_TAG_CREATE",
+          "RISK_SUBJECT_TAG",
+          "CREATE",
+          "MEDIUM",
+          "ACTIVE",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012105",
+          "RISK_SUBJECT_TAG_UPDATE",
+          "RISK_SUBJECT_TAG",
+          "UPDATE",
+          "MEDIUM",
+          "ACTIVE",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012106",
+          "RISK_SUBJECT_TAG_STATUS",
+          "RISK_SUBJECT_TAG",
+          "CHANGE_STATUS",
+          "MEDIUM",
+          "ACTIVE",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ]
+      ]
+    },
+    "t_role_permission": {
+      "columns": [
+        "role_permission_id",
+        "role_id",
+        "permission_id",
+        "status",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "rows": [
+        [
+          "900000000000012201",
+          "900000000000000510",
+          "900000000000012101",
+          "REVOKED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012202",
+          "900000000000000510",
+          "900000000000012102",
+          "REVOKED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012203",
+          "900000000000000510",
+          "900000000000012103",
+          "REVOKED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012204",
+          "900000000000000510",
+          "900000000000012104",
+          "REVOKED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012205",
+          "900000000000000510",
+          "900000000000012105",
+          "REVOKED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012206",
+          "900000000000000510",
+          "900000000000012106",
+          "REVOKED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ]
+      ]
+    },
+    "t_console_resource": {
+      "columns": [
+        "resource_id",
+        "resource_code",
+        "channel",
+        "resource_type",
+        "parent_resource_id",
+        "display_name",
+        "frontend_route",
+        "component_key",
+        "permission_id",
+        "sort_order",
+        "status",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "rows": [
+        [
+          "900000000000012301",
+          "OPERATIONS_RISK_RULE_SET_HISTORY",
+          "OPERATIONS",
+          "BUTTON",
+          "900000000000000566",
+          "历史版本",
+          null,
+          null,
+          "900000000000000536",
+          60,
+          "DISABLED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012302",
+          "OPERATIONS_RISK_RULE_SET_REFERENCES",
+          "OPERATIONS",
+          "BUTTON",
+          "900000000000000566",
+          "引用关系",
+          null,
+          null,
+          "900000000000000536",
+          70,
+          "DISABLED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012303",
+          "OPERATIONS_RISK_REJECTION_REASONS",
+          "OPERATIONS",
+          "MENU",
+          "900000000000000565",
+          "拒绝原因",
+          "/risk/rejection-reasons",
+          "OPERATIONS_RISK_REJECTION_REASONS",
+          "900000000000000536",
+          20,
+          "DISABLED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012304",
+          "OPERATIONS_RISK_SUBJECT_TAGS",
+          "OPERATIONS",
+          "MENU",
+          "900000000000000565",
+          "主体标签",
+          "/risk/subject-tags",
+          "OPERATIONS_RISK_SUBJECT_TAGS",
+          "900000000000000536",
+          30,
+          "DISABLED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012305",
+          "OPERATIONS_RISK_REJECTION_REASON_CREATE",
+          "OPERATIONS",
+          "BUTTON",
+          "900000000000012303",
+          "新增原因",
+          null,
+          null,
+          "900000000000012101",
+          10,
+          "DISABLED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012306",
+          "OPERATIONS_RISK_REJECTION_REASON_UPDATE",
+          "OPERATIONS",
+          "BUTTON",
+          "900000000000012303",
+          "编辑原因",
+          null,
+          null,
+          "900000000000012102",
+          20,
+          "DISABLED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012307",
+          "OPERATIONS_RISK_REJECTION_REASON_STATUS",
+          "OPERATIONS",
+          "BUTTON",
+          "900000000000012303",
+          "启停原因",
+          null,
+          null,
+          "900000000000012103",
+          30,
+          "DISABLED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012308",
+          "OPERATIONS_RISK_SUBJECT_TAG_CREATE",
+          "OPERATIONS",
+          "BUTTON",
+          "900000000000012304",
+          "新增标签",
+          null,
+          null,
+          "900000000000012104",
+          10,
+          "DISABLED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012309",
+          "OPERATIONS_RISK_SUBJECT_TAG_UPDATE",
+          "OPERATIONS",
+          "BUTTON",
+          "900000000000012304",
+          "编辑标签",
+          null,
+          null,
+          "900000000000012105",
+          20,
+          "DISABLED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012310",
+          "OPERATIONS_RISK_SUBJECT_TAG_STATUS",
+          "OPERATIONS",
+          "BUTTON",
+          "900000000000012304",
+          "启停标签",
+          null,
+          null,
+          "900000000000012106",
+          30,
+          "DISABLED",
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ]
+      ]
+    },
+    "t_gateway_route": {
+      "columns": [
+        "route_id",
+        "route_code",
+        "channel",
+        "http_method",
+        "external_path_template",
+        "downstream_path_template",
+        "target_id",
+        "security_profile_code",
+        "authorization_mode",
+        "permission_id",
+        "required_scope_code",
+        "request_cookie_mode",
+        "response_cookie_mode",
+        "body_limit_bytes",
+        "body_receive_timeout_millis",
+        "response_timeout_millis",
+        "status",
+        "version",
+        "created_by",
+        "updated_by",
+        "create_time",
+        "update_time"
+      ],
+      "rows": [
+        [
+          "900000000000012001",
+          "operations-risk-rule-set-versions",
+          "OPERATIONS",
+          "GET",
+          "/api/operations/decision-rule-sets/v1/rule-sets/{ruleSetId}/versions",
+          "/decision-rule-sets/v1/rule-sets/{ruleSetId}/versions",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000000536",
+          null,
+          "DROP",
+          "NONE",
+          0,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012002",
+          "operations-risk-rule-set-release-references",
+          "OPERATIONS",
+          "GET",
+          "/api/operations/decision-rule-sets/v1/rule-sets/{ruleSetId}/release-references",
+          "/decision-rule-sets/v1/rule-sets/{ruleSetId}/release-references",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000000536",
+          null,
+          "DROP",
+          "NONE",
+          0,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012003",
+          "operations-risk-rejection-reason-list",
+          "OPERATIONS",
+          "GET",
+          "/api/operations/decision-dictionaries/v1/rejection-reasons",
+          "/decision-dictionaries/v1/rejection-reasons",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000000536",
+          null,
+          "DROP",
+          "NONE",
+          0,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012004",
+          "operations-risk-rejection-reason-detail",
+          "OPERATIONS",
+          "GET",
+          "/api/operations/decision-dictionaries/v1/rejection-reasons/{reasonCode}",
+          "/decision-dictionaries/v1/rejection-reasons/{reasonCode}",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000000536",
+          null,
+          "DROP",
+          "NONE",
+          0,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012005",
+          "operations-risk-rejection-reason-create",
+          "OPERATIONS",
+          "POST",
+          "/api/operations/decision-dictionaries/v1/rejection-reasons",
+          "/decision-dictionaries/v1/rejection-reasons",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000012101",
+          null,
+          "DROP",
+          "NONE",
+          16384,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012006",
+          "operations-risk-rejection-reason-update",
+          "OPERATIONS",
+          "PUT",
+          "/api/operations/decision-dictionaries/v1/rejection-reasons/{reasonCode}",
+          "/decision-dictionaries/v1/rejection-reasons/{reasonCode}",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000012102",
+          null,
+          "DROP",
+          "NONE",
+          16384,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012007",
+          "operations-risk-rejection-reason-status",
+          "OPERATIONS",
+          "POST",
+          "/api/operations/decision-dictionaries/v1/rejection-reasons/{reasonCode}/status",
+          "/decision-dictionaries/v1/rejection-reasons/{reasonCode}/status",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000012103",
+          null,
+          "DROP",
+          "NONE",
+          16384,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012008",
+          "operations-risk-rejection-reason-references",
+          "OPERATIONS",
+          "GET",
+          "/api/operations/decision-dictionaries/v1/rejection-reasons/{reasonCode}/references",
+          "/decision-dictionaries/v1/rejection-reasons/{reasonCode}/references",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000000536",
+          null,
+          "DROP",
+          "NONE",
+          0,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012009",
+          "operations-risk-subject-tag-list",
+          "OPERATIONS",
+          "GET",
+          "/api/operations/decision-dictionaries/v1/subject-tags",
+          "/decision-dictionaries/v1/subject-tags",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000000536",
+          null,
+          "DROP",
+          "NONE",
+          0,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012010",
+          "operations-risk-subject-tag-detail",
+          "OPERATIONS",
+          "GET",
+          "/api/operations/decision-dictionaries/v1/subject-tags/{tagCode}",
+          "/decision-dictionaries/v1/subject-tags/{tagCode}",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000000536",
+          null,
+          "DROP",
+          "NONE",
+          0,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012011",
+          "operations-risk-subject-tag-create",
+          "OPERATIONS",
+          "POST",
+          "/api/operations/decision-dictionaries/v1/subject-tags",
+          "/decision-dictionaries/v1/subject-tags",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000012104",
+          null,
+          "DROP",
+          "NONE",
+          16384,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012012",
+          "operations-risk-subject-tag-update",
+          "OPERATIONS",
+          "PUT",
+          "/api/operations/decision-dictionaries/v1/subject-tags/{tagCode}",
+          "/decision-dictionaries/v1/subject-tags/{tagCode}",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000012105",
+          null,
+          "DROP",
+          "NONE",
+          16384,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012013",
+          "operations-risk-subject-tag-status",
+          "OPERATIONS",
+          "POST",
+          "/api/operations/decision-dictionaries/v1/subject-tags/{tagCode}/status",
+          "/decision-dictionaries/v1/subject-tags/{tagCode}/status",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000012106",
+          null,
+          "DROP",
+          "NONE",
+          16384,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ],
+        [
+          "900000000000012014",
+          "operations-risk-subject-tag-references",
+          "OPERATIONS",
+          "GET",
+          "/api/operations/decision-dictionaries/v1/subject-tags/{tagCode}/references",
+          "/decision-dictionaries/v1/subject-tags/{tagCode}/references",
+          "900000000000000001",
+          "OPERATIONS_JWT",
+          "HUMAN_PERMISSION",
+          "900000000000000536",
+          null,
+          "DROP",
+          "NONE",
+          0,
+          5000,
+          10000,
+          "DISABLED",
+          1,
+          1,
+          1,
+          "@rco16_registration_time",
+          "@rco16_registration_time"
+        ]
+      ]
+    },
+    "t_gateway_route_header": {
+      "columns": [
+        "route_header_id",
+        "route_id",
+        "header_name",
+        "header_use"
+      ],
+      "rows": [
+        [
+          "900000000000013001",
+          "900000000000012001",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013002",
+          "900000000000012001",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013003",
+          "900000000000012002",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013004",
+          "900000000000012002",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013005",
+          "900000000000012003",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013006",
+          "900000000000012003",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013007",
+          "900000000000012004",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013008",
+          "900000000000012004",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013009",
+          "900000000000012005",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013010",
+          "900000000000012005",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013011",
+          "900000000000012005",
+          "content-type",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013012",
+          "900000000000012005",
+          "content-type",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013015",
+          "900000000000012006",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013016",
+          "900000000000012006",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013017",
+          "900000000000012006",
+          "content-type",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013018",
+          "900000000000012006",
+          "content-type",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013021",
+          "900000000000012007",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013022",
+          "900000000000012007",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013023",
+          "900000000000012007",
+          "content-type",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013024",
+          "900000000000012007",
+          "content-type",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013027",
+          "900000000000012008",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013028",
+          "900000000000012008",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013029",
+          "900000000000012009",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013030",
+          "900000000000012009",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013031",
+          "900000000000012010",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013032",
+          "900000000000012010",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013033",
+          "900000000000012011",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013034",
+          "900000000000012011",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013035",
+          "900000000000012011",
+          "content-type",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013036",
+          "900000000000012011",
+          "content-type",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013039",
+          "900000000000012012",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013040",
+          "900000000000012012",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013041",
+          "900000000000012012",
+          "content-type",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013042",
+          "900000000000012012",
+          "content-type",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013045",
+          "900000000000012013",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013046",
+          "900000000000012013",
+          "origin",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013047",
+          "900000000000012013",
+          "content-type",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013048",
+          "900000000000012013",
+          "content-type",
+          "FORWARD_REQUEST"
+        ],
+        [
+          "900000000000013051",
+          "900000000000012014",
+          "authorization",
+          "CORS_REQUEST_ALLOWED"
+        ],
+        [
+          "900000000000013052",
+          "900000000000012014",
+          "origin",
+          "FORWARD_REQUEST"
+        ]
+      ]
+    },
+    "t_gateway_route_query_param": {
+      "columns": [
+        "route_query_param_id",
+        "route_id",
+        "parameter_name"
+      ],
+      "rows": [
+        [
+          "900000000000014001",
+          "900000000000012001",
+          "page"
+        ],
+        [
+          "900000000000014002",
+          "900000000000012001",
+          "size"
+        ],
+        [
+          "900000000000014003",
+          "900000000000012001",
+          "maxVersionNo"
+        ],
+        [
+          "900000000000014004",
+          "900000000000012002",
+          "page"
+        ],
+        [
+          "900000000000014005",
+          "900000000000012002",
+          "size"
+        ],
+        [
+          "900000000000014006",
+          "900000000000012002",
+          "environmentCode"
+        ],
+        [
+          "900000000000014007",
+          "900000000000012002",
+          "status"
+        ],
+        [
+          "900000000000014008",
+          "900000000000012002",
+          "ruleSetVersionId"
+        ],
+        [
+          "900000000000014009",
+          "900000000000012003",
+          "page"
+        ],
+        [
+          "900000000000014010",
+          "900000000000012003",
+          "size"
+        ],
+        [
+          "900000000000014011",
+          "900000000000012003",
+          "keyword"
+        ],
+        [
+          "900000000000014012",
+          "900000000000012003",
+          "status"
+        ],
+        [
+          "900000000000014013",
+          "900000000000012008",
+          "page"
+        ],
+        [
+          "900000000000014014",
+          "900000000000012008",
+          "size"
+        ],
+        [
+          "900000000000014015",
+          "900000000000012008",
+          "scope"
+        ],
+        [
+          "900000000000014016",
+          "900000000000012009",
+          "page"
+        ],
+        [
+          "900000000000014017",
+          "900000000000012009",
+          "size"
+        ],
+        [
+          "900000000000014018",
+          "900000000000012009",
+          "keyword"
+        ],
+        [
+          "900000000000014019",
+          "900000000000012009",
+          "status"
+        ],
+        [
+          "900000000000014021",
+          "900000000000012014",
+          "page"
+        ],
+        [
+          "900000000000014022",
+          "900000000000012014",
+          "size"
+        ],
+        [
+          "900000000000014023",
+          "900000000000012014",
+          "scope"
+        ]
+      ]
+    },
+    "t_gateway_guard_rule": {
+      "columns": [
+        "guard_rule_id",
+        "route_id",
+        "rule_type",
+        "dimension",
+        "capacity",
+        "refill_tokens",
+        "refill_period_millis",
+        "concurrency_limit"
+      ],
+      "rows": [
+        [
+          "900000000000015001",
+          "900000000000012001",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015002",
+          "900000000000012001",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015003",
+          "900000000000012001",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015004",
+          "900000000000012001",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015005",
+          "900000000000012001",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015006",
+          "900000000000012001",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015007",
+          "900000000000012002",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015008",
+          "900000000000012002",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015009",
+          "900000000000012002",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015010",
+          "900000000000012002",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015011",
+          "900000000000012002",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015012",
+          "900000000000012002",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015013",
+          "900000000000012003",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015014",
+          "900000000000012003",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015015",
+          "900000000000012003",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015016",
+          "900000000000012003",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015017",
+          "900000000000012003",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015018",
+          "900000000000012003",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015019",
+          "900000000000012004",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015020",
+          "900000000000012004",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015021",
+          "900000000000012004",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015022",
+          "900000000000012004",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015023",
+          "900000000000012004",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015024",
+          "900000000000012004",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015025",
+          "900000000000012005",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015026",
+          "900000000000012005",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015027",
+          "900000000000012005",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015028",
+          "900000000000012005",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015029",
+          "900000000000012005",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015030",
+          "900000000000012005",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015031",
+          "900000000000012006",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015032",
+          "900000000000012006",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015033",
+          "900000000000012006",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015034",
+          "900000000000012006",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015035",
+          "900000000000012006",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015036",
+          "900000000000012006",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015037",
+          "900000000000012007",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015038",
+          "900000000000012007",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015039",
+          "900000000000012007",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015040",
+          "900000000000012007",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015041",
+          "900000000000012007",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015042",
+          "900000000000012007",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015043",
+          "900000000000012008",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015044",
+          "900000000000012008",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015045",
+          "900000000000012008",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015046",
+          "900000000000012008",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015047",
+          "900000000000012008",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015048",
+          "900000000000012008",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015049",
+          "900000000000012009",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015050",
+          "900000000000012009",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015051",
+          "900000000000012009",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015052",
+          "900000000000012009",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015053",
+          "900000000000012009",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015054",
+          "900000000000012009",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015055",
+          "900000000000012010",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015056",
+          "900000000000012010",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015057",
+          "900000000000012010",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015058",
+          "900000000000012010",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015059",
+          "900000000000012010",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015060",
+          "900000000000012010",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015061",
+          "900000000000012011",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015062",
+          "900000000000012011",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015063",
+          "900000000000012011",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015064",
+          "900000000000012011",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015065",
+          "900000000000012011",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015066",
+          "900000000000012011",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015067",
+          "900000000000012012",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015068",
+          "900000000000012012",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015069",
+          "900000000000012012",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015070",
+          "900000000000012012",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015071",
+          "900000000000012012",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015072",
+          "900000000000012012",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015073",
+          "900000000000012013",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015074",
+          "900000000000012013",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015075",
+          "900000000000012013",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015076",
+          "900000000000012013",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015077",
+          "900000000000012013",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015078",
+          "900000000000012013",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ],
+        [
+          "900000000000015079",
+          "900000000000012014",
+          "RATE_LIMIT",
+          "SHARED_ROUTE",
+          300,
+          300,
+          60000,
+          null
+        ],
+        [
+          "900000000000015080",
+          "900000000000012014",
+          "CONCURRENCY",
+          "SHARED_ROUTE",
+          null,
+          null,
+          null,
+          50
+        ],
+        [
+          "900000000000015081",
+          "900000000000012014",
+          "RATE_LIMIT",
+          "CLIENT_IP",
+          10,
+          30,
+          60000,
+          null
+        ],
+        [
+          "900000000000015082",
+          "900000000000012014",
+          "CONCURRENCY",
+          "CLIENT_IP",
+          null,
+          null,
+          null,
+          3
+        ],
+        [
+          "900000000000015083",
+          "900000000000012014",
+          "RATE_LIMIT",
+          "AUTHENTICATED_PRINCIPAL",
+          10,
+          10,
+          60000,
+          null
+        ],
+        [
+          "900000000000015084",
+          "900000000000012014",
+          "CONCURRENCY",
+          "AUTHENTICATED_PRINCIPAL",
+          null,
+          null,
+          null,
+          2
+        ]
+      ]
+    }
+  },
+  "dictionaryWriteRetry": "No command replay; unique code and expectedVersion CAS; operator refreshes current state after an unknown outcome.",
+  "rolePermissionRegistrationStatus": "REVOKED",
+  "activationPolicy": "Activate the six new grants with their Operations routes in the same transaction; restore only original ACTIVE grants from the reviewed environment snapshot."
+}

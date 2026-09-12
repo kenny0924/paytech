@@ -1,5 +1,7 @@
 # Risk & Compliance 数据库设计规范
 
+> 已确认功能增量（2026-09-11）：[历史查看与字典决定](../decisions/2026-09-11-risk-rule-history-and-dictionaries.md)批准统一只读详情、历史列表、发布引用查询以及 Risk 原因/主体标签字典。精确两表结构、接口与旧项兼容已通过阶段 3 评审，合同见[需求材料](../../requirements/20260911/operations-console-风控规则集历史与字典管理/technique.md)。旧代码和消息不按当前字典重写，不新增字典回执表或标签主体关系表；数据库执行和验证状态只见当前台账，其他执行语义不变。
+
 > 2026-09-11 规则集整体管理增量以[已确认需求与方案](../../requirements/20260911/operations-console-风控规则集列表优化/technique.md)第 10–18 节为准：新增 `t_rule_set` 稳定根；列表按根及当前配置分页，删除只终止整体配置管理并永久保留编码、版本、Candidate、审计与幂等回放。有任一版本被当前 ACTIVE Release 使用时禁止删除；冻结或 Candidate 引用本身不算使用中。此项取代旧设计无管理根、版本列表和无整体删除部分，保留其余业务事实。
 
 
@@ -323,6 +325,8 @@ Role Type 固定为 CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON�
 | decision_point_obligation | 工程绑定的类型化系统义务 | obligation_id, point_version_id, trigger_decision, obligation_type, action_version_id, sequence_no, failure_policy, enabled_flag；ACTION 必须有 Action Version；RESERVE_LIMIT_GROUP 与 CHECK_SETTLEMENT_ELIGIBILITY 必须无 Action，前者由 0..N Binding 直接形成占用组，后者不得有 Limit Binding；四个固定 Manual Payout Point Version 各恰一条启用、ALLOW 触发且 FAIL_CLOSED 的 Eligibility 义务 |
 | feature_version | Feature 目录身份与不可变执行版本 | feature_version_id, feature_code, feature_name, business_category, version_no, result_value_type, handler_code, implementation_version, implementation_hash, timeout_ms, status；feature_code+version_no 唯一；只允许工程注册 Handler，不允许 SQL/Script |
 | feature_dependency | Feature Version 的显式依赖 | dependency_id, feature_version_id, dependency_feature_version_id, sequence_no, required_flag；依赖组合与 sequence 分别唯一；不得自依赖或成环 |
+| rule_reject_reason | DENY 原因的当前业务字典 | rejection_reason_id, reason_code, reason_name, description, default_message, status, version, created_by, updated_by, create_time, update_time；代码永久唯一，ACTIVE/DISABLED 只决定新选择资格，默认文案不回写旧规则 |
+| rule_subject_tag | 可配置的主体标签当前定义 | tag_id, tag_code, tag_name, description, status, version, created_by, updated_by, create_time, update_time；代码永久唯一，不存真实主体标签或适用主体关系，含义由运营维护 |
 | rule_set_version | Decision Point 内可冻结的规则集身份与版本 | rule_set_version_id, decision_point_id, rule_set_code, rule_set_name, version_no, status, content_hash, created_by, change_reason, frozen_by, frozen_time；point+code+version 唯一；created_by 与 1..500 字符非敏感 change_reason 在创建时必填，FROZEN 后不可修改且不得跨 Point 复用 |
 | risk_rule | Rule Set Version 内规则 | rule_id, rule_set_version_id, rule_code, rule_name, priority_no, enabled_flag, reason_code；version+code、version+priority 分别唯一 |
 | rule_node | Condition AST 节点 | node_id, rule_id, parent_node_id, node_type, group_operator, comparison_operator, sequence_no；GROUP/PREDICATE 结构合法，同级 sequence 唯一，无环 |

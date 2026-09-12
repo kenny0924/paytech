@@ -1,0 +1,10 @@
+{
+  "service": "operations-console-bff",
+  "tag": "mor-test/operations-console-bff:rco16-history-dictionaries-20260912-probe-fixed",
+  "imageId": "sha256:79b697a757a919823f4d7b1622a15723cf7384953778c12672e673383d72a6c0",
+  "baseImageId": "sha256:1a6c0110750d94a3f062b493818359bb5281571a9cd44fb87400e5143453bbb0",
+  "jarSha256": "d66936ac0e1844f8f0a39d79b91afce141d3f9887f48bfccef08b33f5770d73f",
+  "change": "Only compiled readiness probe; obsolete business address replaced by loopback management address. Application JAR inherited unchanged.",
+  "probeTests": 19,
+  "sourceSha256": "e4cd3fe8d4ee8e90d7dbd1a375885edabe789afdcecbcb019484ae924d6ddc5c"
+}

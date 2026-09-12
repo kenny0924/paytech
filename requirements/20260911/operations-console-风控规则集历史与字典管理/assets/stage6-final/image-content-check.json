@@ -1,0 +1,28 @@
+{
+  "scope": "Stopped temporary inspection containers only; never started; exact owned containers removed after docker cp. Running mor-test untouched.",
+  "images": [
+    {
+      "service": "risk-service",
+      "imageId": "sha256:c6a4f44a8cba07f6e7b4b41903559cd77d575412c32e847cf729a1621e19719a",
+      "jarSha256": "6224c001224b8fdd355dd56dab013e1ce921103f34a0808bf0bc0aacec6a50bc"
+    },
+    {
+      "service": "operations-console-web",
+      "imageId": "sha256:ef04bdbbd75a76df723843a53fb530efcf5f5e4315f4e4f754325087448ebe27",
+      "actualNginxRoot": "/usr/share/nginx/operations-console",
+      "staticFilesMatched": 18,
+      "indexSha256": "699103060a0e48b713d629f6a6f72dd5a6d69f0bbf38b9b169b051c9c3f498fa"
+    },
+    {
+      "service": "operations-console-bff",
+      "imageId": "sha256:1a6c0110750d94a3f062b493818359bb5281571a9cd44fb87400e5143453bbb0",
+      "jarSha256": "d66936ac0e1844f8f0a39d79b91afce141d3f9887f48bfccef08b33f5770d73f",
+      "managementListenerConfiguration": "19201 loopback"
+    },
+    {
+      "service": "api-gateway",
+      "imageId": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+      "jarSha256": "3e1c48bcdac6678ba3cec9e3fec48b0cc2253dbcb66fcfa1da869f8b92fbf1c7"
+    }
+  ]
+}

@@ -1,0 +1,482 @@
+{
+  "checked_at_utc": "2026-09-12T05:58:42.681060+00:00",
+  "state": "stage 5 local acceptance passed; awaiting confirmation to return to stage 6 release preparation",
+  "platform": {
+    "classes": 42,
+    "tests": 386,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "by_class": [
+      {
+        "name": "com.paytech.platform.support.auto.architecture.PlatformCrossModuleContractAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsDirectoryRefactoringHttpAutoTest",
+        "tests": "8",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationLeaseOverlapHttpAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewaySnapshotHttpAutoTest",
+        "tests": "8",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationCanaryHttpAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditRuntimeAutoTest",
+        "tests": "17",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationControllerAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsFixtureRequestIdAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialAuthenticationServiceAutoTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsResourceLockFailureAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsLocalCryptographyAutoTest",
+        "tests": "7",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsPersistenceContractAutoTest",
+        "tests": "66",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditQueryAutoTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.PlatformSupportHealthAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditBestEffortHttpAutoTest",
+        "tests": "15",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.PlatformSupportDependencyBoundaryAutoTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.architecture.PlatformArchitectureAutoTest",
+        "tests": "7",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.database.PlatformDatabaseAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditCompletionAutoTest",
+        "tests": "25",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.OperationsJwksHttpAutoTest",
+        "tests": "11",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.architecture.GatewayEnumOwnershipAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.database.PlatformLocalDatabaseBoundaryAutoTest",
+        "tests": "11",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationManagementPersistenceContractAutoTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditConnectionFailureHttpAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationCompilerAutoTest",
+        "tests": "21",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationConsistencyHttpAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationManagementHttpAutoTest",
+        "tests": "18",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsPasswordPolicyAutoTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.architecture.PlatformCapabilityModuleBoundaryAutoTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialBoundaryAutoTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuthenticationHttpAutoTest",
+        "tests": "39",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuthenticationConcurrencyHttpAutoTest",
+        "tests": "37",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsLockContractAutoTest",
+        "tests": "7",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.PlatformSupportApplicationAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.RiskDictionaryRegistrationCatalogAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsSessionPolicyAutoTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsPagingCatalogContractAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditProjectorAutoTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayDatabaseTargetHttpAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.PlatformSupportConfigurationAutoTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationHttpAutoTest",
+        "tests": "10",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationContractAutoTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      }
+    ],
+    "coverage": {
+      "INSTRUCTION": {
+        "covered": 23697,
+        "total": 24234,
+        "percent": 97.784105
+      },
+      "BRANCH": {
+        "covered": 1839,
+        "total": 2042,
+        "percent": 90.058766
+      }
+    },
+    "command": "./mvnw -q clean verify",
+    "exit_code": 0,
+    "database": "127.0.0.1:13306/mor_platform_rco16_validation",
+    "coverage_gate": "Original 90% instruction and branch minimum unchanged; no new production class exclusions."
+  },
+  "gateway_stage5_reused": {
+    "tests": 1199,
+    "all_previous_changed_source_hashes_unchanged": true,
+    "instruction": {
+      "covered": 18257,
+      "total": 18890,
+      "percent": 96.649021
+    },
+    "branch": {
+      "covered": 2144,
+      "total": 2380,
+      "percent": 90.084034
+    }
+  },
+  "bff_stage4_reused": {
+    "tests": 1041,
+    "all_four_amendment_file_hashes_unchanged": true
+  },
+  "permission_sql_applied": "permission-correction-application.json",
+  "database_check": "permission-correction-database-check.json",
+  "offline_sql_checks": 21,
+  "requirements_site": {
+    "tests": 136,
+    "passed": 136
+  },
+  "source": {
+    "platform-support-service": {
+      "head": "ef6570f718339d199ab8900e90b6c4d1ee33b492",
+      "files_sha256": {
+        "docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md": "36d9b52f5c9e9129bf4b5f016259eefa8cc5ccddcd256033b8f6f96e7b748522",
+        "docs/database/platform-support.pdma.json": "76d82246ec677290b3d95cf0330c2d0ed1f3511ac2c76409d193e24209087190",
+        "docs/database/sql/platform-support-initial-data.sql": "13d65c8a95074f4aa197671ebf23db8e8a295a0d009316a5945a9e0383ff1aec",
+        "docs/database/sql/platform-support-schema.sql": "b6e510b9ec9a2fc2d169e44a9294a88048a57ea8e2fdedf0f2a9fe9e2fe4d5cf",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/PlatformSupportConfigurationAutoTest.java": "6bd61e984e70d2921696e3035cfd563506eb96777072158ec3feafbb49a57934",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/apicredential/ApiCredentialBoundaryAutoTest.java": "3b45d826b6860b2e9b070b4267ea1da15d59dfe83ed13e264688ff243159e94b",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/apicredential/ApiCredentialValidationHttpAutoTest.java": "007b44eaa0907229deb44c5458e6c591426b0ff53b0d86fc589c4c7ae40dfa23",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/OperationsJwksHttpAutoTest.java": "75784e9bf728144e0005de19080ac8d51498137ebd903fee0f9dfafffc3c55e9",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/database/PlatformLocalDatabaseBoundaryAutoTest.java": "e8b2d7313b7f60f117f5fcf7c8012b5797a4f782ad3eaef13baa63c022cd3512",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/gatewayconfiguration/GatewayConfigurationCompilerAutoTest.java": "1b92fef0cc5f891942eac4b74e4018729a9e4d505c1f013bf2a9e2c8c1a69fd6",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/gatewayconfiguration/GatewayConfigurationManagementHttpAutoTest.java": "b87eb9398fc2d5069656446a2bb914c9fe99a2ffed32a2f1ce920c817873922f",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/gatewayconfiguration/GatewayDatabaseTargetHttpAutoTest.java": "4866762699a3685d441bd987b48a6e0451e34982baede4492db17ff524f92078",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/gatewayconfiguration/GatewaySnapshotHttpAutoTest.java": "1bdeeadc4bd3c3ff9858fe41f5c8bdc31e7094be29afa1ffb1a3175a12cf595e",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/gatewayconfiguration/RiskDictionaryRegistrationCatalogAutoTest.java": "37559f4cff2f4e6e756109488bf0eda3a557b06a55129d90658a8c45299167db",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/operations/OperationsAuthenticationConcurrencyHttpAutoTest.java": "8fdaaaf9d2d800a728ad61dfb7ead368933b745e3154af9df285506fbdd5b87d",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/operations/OperationsFixtureRequestIdAutoTest.java": "75051fd1ccdb7e360c41276a9e7de1c7bc76b688057ac9810f5e5269a635deae",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/operations/OperationsPagingCatalogContractAutoTest.java": "9a8bb80feccccb64bd56fcb107a03e0fdc24fd1234502ec975c1fdaccb493ee5",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/operations/OperationsPersistenceContractAutoTest.java": "e4413261a3ec3a687c5d3d9ef48319f3f059fc21df46a624e6dd780112d79eba",
+        "platform-support-test/src/test/java/com/paytech/platform/support/test/apicredential/ApiCredentialFixture.java": "ce8d2ad0272052a87cde6685d68f526f027778fd2069104c470adf6d42b74cce",
+        "platform-support-test/src/test/java/com/paytech/platform/support/test/gatewayconfiguration/GatewayCatalogFixture.java": "4dbf3e8c18b2a4201eca323b1eadce8903f007965401709bb318d45458ce962e",
+        "platform-support-test/src/test/java/com/paytech/platform/support/test/infrastructure/PlatformDatabaseIsolationListener.java": "5526cc3191d7e4b631cdc8625c0375297d62984853ccf868d7d5a99da2c2cfe5",
+        "platform-support-test/src/test/java/com/paytech/platform/support/test/operations/OperationsCanonicalCatalogOracle.java": "d32c5d0d1b97b277f391751de8601b121e84917271dbaee5fe19d357c3a7344b",
+        "platform-support-test/src/test/java/com/paytech/platform/support/test/operations/OperationsFixtureMocker.java": "1f1324a004fc8f0f379bc18dd6582f8549059e7601a9d88cc03352f212e7d993"
+      }
+    },
+    "api-gateway": {
+      "head": "4220da8d3bf40adad4d2ef3d0af58685f20a3d39",
+      "files_sha256": {
+        "README.md": "5e4d867809455f4c7d6369dc5c1e924b52ea2d95fe0c4ae7e9d88fe5af5b8cda",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/acceptance/ClientApiGatewayAcceptanceAutoTest.java": "c1ce2f4c0a0bed23be575eac4c6febc9ffd19859c949c1134a166721911459b0",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/architecture/GatewayArchitectureAutoTest.java": "9c8e33625d308a4fd16ca1ea683b10a86516402d91013a606c4438ad20b6af26",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/architecture/GatewayFilterOrderContractAutoTest.java": "5dd2823e78908f1d4f7dc6a82b2506b41659ceac737de1827038f317e011af7b",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/configuration/PlatformJwksPropertiesAutoTest.java": "56a19c6a86bfbced544a645abeca08949fb139ac564bc37b109a91c84655af80",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/configuration/PlatformSnapshotDiscoveryPropertiesAutoTest.java": "80b5d267182a2995221b46da2e6f690576f7425c045f95972812aca524a218c5",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/ClientApiGuardFlowAutoTest.java": "ed09f29243a8b81ae4d2ed7e3a68a9067fe4f7ad82c388be0402c4a005135fc3",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/GatewayAuthenticatedGuardCommandFactoryAutoTest.java": "efe873404167c10ffb0b7fddd7422996d37370d642bfe6d39bdde6469faf1a5c",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/OperationsGuardFlowAutoTest.java": "799758d761e367d56493d49bb7c706aa4216e2080641cc7d8613dc83088dcbea",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayHealthAutoTest.java": "1307639f21633451fe0b64a91ae6272af61619a5f6ac24e5db6a53e980728755",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayMetricDimensionsAutoTest.java": "ee55a9fc9f0a769761b533d1299c0812d50b994be6c6197c9c99aa23270e2ed0",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewaySnapshotHealthAutoTest.java": "32237be748a5f060c7035432b9aa2a1cc02a9d2a3dbfe9b5147980c8a22668d4",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewaySnapshotMetricsAutoTest.java": "bec568a25557301796f55552e0d7731229ef8f4901b41a4c2b5a7df629aa279f",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/ApprovedTargetTransportAutoTest.java": null,
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/DynamicOperationsRoutingAutoTest.java": "3e1dabbe01762b27d8270123fa44900caf48654505a1376d7ebb31965bc1324b",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewayDatabaseRoutingAutoTest.java": "69cfd2ea626b850b33cc8848d6bad1dd6424644c95fcc39c1c2048cea2b16f72",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewayPathTemplateContractAutoTest.java": "f2b7c76e285e17bd95e7dafe33c32aee96dfbf565d12ba873416f893ae9df3ca",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewayRuntimeCatalogAutoTest.java": "338f819ac31de2981e4e19fba2eef26316244776eea1cd37231507c2f06aced0",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotCompilerAutoTest.java": "84ff344eb055e08102f6ad9e27ca2101e30df43b3cc83484731491f715eb1aae",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotPinningAutoTest.java": "77b35e537b3985de61bb667cd3a5375dcdcd451b21130c2b7461e04058b94cd6",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotPolicyAutoTest.java": "052a999b35d6af7780d76bdc0873a56bd18f2ea3c5ded5968373c57fb68328da",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotRefreshAutoTest.java": "f061908d0cec154f8af9ec08f56486f70c42223bc600010436df5f0d6c4fdb16",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotSchedulingAutoTest.java": "4a156a32fb98ec435cf0d6b650cd6153d26aeeb95965f7f628a1a672d3518372",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/security/GatewayIdentityValueAutoTest.java": "e7164293ea07f7e4e407d3d2b9ea33bef7f390e1a4bf67a547de4fead36a22c0",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsJwksAvailabilityAutoTest.java": "0088928d59e841c43fc335296ccf8fa9519990663a4c6db68bd27c616deeba8a",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsTrustedContextAutoTest.java": "d47ab85d8f826d75fa9758522b1d9df795866b10ea04a33aba78d499ac564781",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/security/ReactiveJwksProviderContractAutoTest.java": "1d12514ae48c30aaeb7d4737c44412169865028f8fc882886bebe50cbb8c43d3",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/transport/GatewayTransportAutoTest.java": "90b6fa6e63a851b61425fd2b7c922b841d9188e197b0080cec033c23cf003087",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayConfiguredCookieHttpAutoTest.java": "3c575b5da670b4b50705f77187020dd5743739b628ae68587b5b8d9d18981d89",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayErrorContractAutoTest.java": "47b2aaae18d7e2e81f7753c37e4cb09f3c6b2fb59ec06529f931bc49f9e507b6",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsAuthenticationCookieAutoTest.java": "5f4047659485e68c6b29607ca106822b550b535b2f7e7991f9fb5dd04c41031a",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsHttpTestModeAutoTest.java": "432fa1dac9c24fd3f7c3bf590e81803e5393469f87e374f8639cd2bb6c83e086",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsReadOriginAutoTest.java": "9f7033c27f5709ef19478f17ffe44e0c91209fda977d2bb48f0fb813eadd7ffb",
+        "api-gateway-test/src/test/java/com/paytech/gateway/configuration/PlatformSnapshotDiscoveryPropertiesAutoTest.java": null,
+        "api-gateway-test/src/test/java/com/paytech/gateway/test/GatewayAutoTestBase.java": "18d112fee83a96965ff84b88ce6509653f32ff68d69e132745160d5435a5c0d2",
+        "api-gateway-test/src/test/java/com/paytech/gateway/test/GatewayAutoTestRuntime.java": "05f3c611d587c1f705c3e50f1c276ca6067b64e523098649848e5e91ed4c13b2",
+        "api-gateway-test/src/test/java/com/paytech/gateway/test/builder/GatewaySnapshotFixture.java": "0362acb6bf3309b29d851edffa9551e1557e1e03f648f9bc6730de6565cfd8b3",
+        "api-gateway-test/src/test/resources/application-auto.yml": "30f166859031e9f9a8a629c0da3d878713dc3179866c57c168affcc7303361c6",
+        "api-gateway-web/src/main/java/com/paytech/gateway/configuration/GatewaySnapshotConfiguration.java": "fd727cbc0d91ac67505a126be484f71df51696cd3553c119827bdb6201f8d1c1",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/DynamicRouteWebFilter.java": "f70b9a723a5c837ac714ae93882fe3b023bb2460827926426dee4645bc360997",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/GatewayRequestRouteHandlerMapping.java": "3a5a9f0bce26e38523eb942cf05f1a8d7a5f8732d11ddde0cfddf82481a5d1e1",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/GatewayRouteConfiguration.java": "c995468841faee0adf06efa517e1fdc1699c58f5fdaec4e2167d44d6208d294a",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeRoute.java": "80d4dae0c4c0985e69ff4a74a32f3a0f3cad3de44a02509d3b02ccf572179c48",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeSnapshot.java": "e2c3bf564c105da1d5b410e51540efefd7ff5c18fcd32642f1e8f10966d17dbc",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeTarget.java": "c53d26b46cf35e36bed14c982cdac9d848fe315f13c81a345d66d73e4b3810ff",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/ApprovedTargetRegistry.java": null,
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewayRoutePolicyValidator.java": "11ee2385bdf330f1942b9025ef98ef4f928dbb3a5c2b3711b2b17d4deae596d6",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotCompiler.java": "18309e859f0ea5665578970e8432f230f96e4d956525d7e6279c8e4631be2206",
+        "api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayExceptionWebHandler.java": "9890cdd15cbba3e75b1f03c43bcc86bff04b17437f7046f2957ab89906c8d95e",
+        "api-gateway-web/src/main/resources/application.yml": "b1ee1c4400488ffe24081c8ede515efb906e515d6bc328c50ad8d0449b47fd04",
+        "scripts/class-file.mjs": "18b2ba355073eb31c0bb9c7549ba13ebb8a14db167a6dfcb59026e09a6064fce",
+        "scripts/class-file.test.mjs": "077521e8b0ffdef5bf335f3e29b3db4826da644e5a2bda5fee2433b02a4e506f",
+        "scripts/verify-jacoco.mjs": "d6163ade1c50fcec301ac58d500146bf6860b134b44e3162588998ed994b8c18"
+      }
+    }
+  },
+  "raw_local_log_sha256": {
+    "/tmp/rco16-stage5-platform-full.log": "fb86375e4e2d822c1116a198556b94a06330d56b4209336de17c287e5ad3b509",
+    "/tmp/rco16-stage5-requirements-site.log": "db5490baa3380dfbcf03de35b0f6ecf3ca9b9a42f182b13dc13e222f8b71d0e6"
+  },
+  "sql_and_preparation_sha256": {
+    "db/platform-support-service/test-restore-before-migration.sql": "807e11d9e9f95474c98dd8bf1679e5af30d6b920f0cf415ed75289e997bf0f08",
+    "db/platform-support-service/ddl.sql": "b1e63521748a43a03b8b794951bfc30622728d88504562676eacc6d0f34ca47c",
+    "db/platform-support-service/registration.json": "1c5b9b832377a9ba8e02fd8200ba530c1853df1ace3ae2277d0f0aee5807c818",
+    "db/platform-support-service/test-expose-resources.sql": "5b2b7e396b9e54b484276be257af833b173e6260a7795fe943a89c31c7b59597",
+    "db/platform-support-service/dml.sql": "99d9a23b5d8f303ba9520a8a9b37daf6bc69b547d2c463a5333f872e9f4abddb",
+    "db/platform-support-service/test-enable-routes.sql": "89dc1de1a9d15f8a12675b31b9893967d088cf20d4f6e32e203ee393a8beebb9",
+    "db/platform-support-service/test-close-entry.sql": "b7cd637a504c93e3cdf4ad870df381417ff090d8187ba5653c3e16c4af602fad",
+    "db/platform-support-service/test-maintenance.sql": "3de4e3530bbf5a5aaab142438bab426abed2841a6969085b7079b6e6e0dc0a81",
+    "db/platform-support-service/local-validation/README.md": "3ba9b1ba071dfd29e701f328eac5bb24f96de3d011b14fc66dc79f613d311c35",
+    "db/platform-support-service/local-validation/manifest.json": "0f68cf244ea4d90d2ef29e380de727793e8988823c5d478676289e5caebc4937",
+    "db/platform-support-service/local-validation/correct-pending-permissions.sql": "9aa99ee0952c847aa410fbdc3f58fb6d68e7e6318a8a1bd1a0d9a9232a5c7add",
+    "db/platform-support-service/local-validation/prepare.sql": "4f095c401536aa202364ff746b45df188d5f915e7a9cf1d0892cc867bcce680d",
+    "assets/stage6/preparation-scripts/final_checks.py": "39d79f46d3314abbce94b655243808f940d0b14663039b6775c6cfcc631aa89b",
+    "assets/stage6/preparation-scripts/compatibility.py": "b324e7cf94d0f65caaf5480583d8a0db0dc094920af4c94eaba76bae1c78879e",
+    "assets/stage6/preparation-scripts/check_sql.py": "84cffe3ed9f051da401d397be3368f3a0e876eba4f34fae546683569f90e12e5",
+    "assets/stage6/preparation-scripts/build_images.py": "d3f98faa01a0aca118036766bd73c137a298903476e9951465b99fdf7f62333b",
+    "assets/stage6/preparation-scripts/README.md": "7090cd5c922851b731bc02bed9fa2095ee34648d38854293b9b7be734953edfe",
+    "assets/stage6/preparation-scripts/prepare_sql.py": "ed9c883dd2470c1b7e0a499aea768d3028aac9287a30481aa32aa69f2646c811",
+    "assets/stage6/preparation-scripts/preflight.py": "01eaa4f5323b3fe57c39eb23c10503532a86107c4d24638fedd3caf3899058c9"
+  },
+  "not_done": [
+    "fresh test preflight and exact release-package regeneration",
+    "test SQL or deployment",
+    "artifact publication",
+    "git commit or push"
+  ],
+  "evidence_boundary": "Gateway/BFF results reused only after source hash verification. Real Platform HTTP uses approved local infrastructure. Release SQL state simulation is SQLite, not MySQL lock or test-environment proof. Historical stage 4 and pre-correction stage 5 evidence preserved.",
+  "artifact_checks": "permission-correction-artifact-check.json",
+  "git_diff_check": {
+    "workspace": "passed",
+    "api-gateway": "passed",
+    "platform-support-service": "passed"
+  },
+  "review_document_sha256": {
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/gateway-acceptance.md": "f8e4484ecb53dd0a1862c4079fea84e719644b128af39b0299755c3bd3aaad5d",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/pending-registration-permissions.md": "c15434d81509c65ee281d7c5addaf2acc3242cd3450de67f038f585e6c1ce7eb",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/delivery.md": "403d515e7596ea384098b58d1ff0315a234b8af817340e2d46cf015f21983f68",
+    "requirements/20260911/operations-console-风控规则集历史与字典管理/release.md": "4d56652ec77ca2bd49be2a5dab4e821f82f8994acd7425873871bcf937dc2bfd",
+    "agent-docs/CURRENT_IMPLEMENTATION.md": "794ff09dcd0da194f4d76e0b7fa76aff786b61603a41c2dbffef7564dce43d6f",
+    "requirements-site/tests/site-content.test.mjs": "a3517a933563ac3e961d41d594d27ff50e999d9e39b3e72e9c258c9df6238329"
+  }
+}

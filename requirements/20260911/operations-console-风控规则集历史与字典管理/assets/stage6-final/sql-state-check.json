@@ -1,0 +1,113 @@
+{
+  "scope": "Offline SQLite transaction/state test from actual read-only preflight, only scoped rows loaded; no test SQL executed and no MySQL locking claim.",
+  "fiveGeneratedFilesMatchReviewedSnapshot": true,
+  "syntheticEdgeCasesPassed": 21,
+  "states": {
+    "before": {
+      "roles": [
+        [
+          900000000000000510,
+          9
+        ],
+        [
+          900000000000000511,
+          4
+        ]
+      ],
+      "activeScopedBindings": 7,
+      "activeScopedRoutes": 10,
+      "activeScopedResources": 7
+    },
+    "maintenance": {
+      "roles": [
+        [
+          900000000000000510,
+          10
+        ],
+        [
+          900000000000000511,
+          5
+        ]
+      ],
+      "activeScopedBindings": 0,
+      "activeScopedRoutes": 0,
+      "activeScopedResources": 0
+    },
+    "registered": {
+      "roles": [
+        [
+          900000000000000510,
+          11
+        ],
+        [
+          900000000000000511,
+          5
+        ]
+      ],
+      "activeScopedBindings": 0,
+      "activeScopedRoutes": 0,
+      "activeScopedResources": 0
+    },
+    "routesEnabled": {
+      "roles": [
+        [
+          900000000000000510,
+          12
+        ],
+        [
+          900000000000000511,
+          6
+        ]
+      ],
+      "activeScopedBindings": 13,
+      "activeScopedRoutes": 24,
+      "activeScopedResources": 0
+    },
+    "resourcesExposed": {
+      "roles": [
+        [
+          900000000000000510,
+          12
+        ],
+        [
+          900000000000000511,
+          6
+        ]
+      ],
+      "activeScopedBindings": 13,
+      "activeScopedRoutes": 24,
+      "activeScopedResources": 17
+    },
+    "closed": {
+      "roles": [
+        [
+          900000000000000510,
+          13
+        ],
+        [
+          900000000000000511,
+          7
+        ]
+      ],
+      "activeScopedBindings": 0,
+      "activeScopedRoutes": 0,
+      "activeScopedResources": 0
+    },
+    "restoredBeforeMigration": {
+      "roles": [
+        [
+          900000000000000510,
+          11
+        ],
+        [
+          900000000000000511,
+          6
+        ]
+      ],
+      "activeScopedBindings": 7,
+      "activeScopedRoutes": 10,
+      "activeScopedResources": 7
+    }
+  },
+  "repeatedCloseStable": true
+}

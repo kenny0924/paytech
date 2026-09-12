@@ -20,7 +20,7 @@ const APPROVED_API_CREDENTIAL_VALIDATIONS = Object.freeze([
     keyPrefixDerivedOwnerRefId: null,
   }),
 ]);
-const APPROVED_GATEWAY_TARGETS = Object.freeze([
+const SCENARIO_GATEWAY_TARGETS = Object.freeze([
   Object.freeze(["operations-console-bff", "operations-console-bff", "OPERATIONS"]),
   Object.freeze(["client-console-bff", "client-console-bff", "CLIENT"]),
   Object.freeze(["partner-console-bff", "partner-console-bff", "PARTNER"]),
@@ -446,12 +446,12 @@ function assertGatewayControlScenarios(rows, content) {
     "场景必须覆盖六个公共 Route Channel",
   );
 
-  for (const [targetServiceCode, discoveryServiceName, channel] of APPROVED_GATEWAY_TARGETS) {
+  for (const [targetServiceCode, discoveryServiceName, channel] of SCENARIO_GATEWAY_TARGETS) {
     findScenarioRecord(rows, "t_gateway_target", (record) => (
       record.get("target_service_code") === targetServiceCode
         && record.get("discovery_service_name") === discoveryServiceName
         && record.get("channel") === channel
-    ), `场景缺少 Approved Target Registry 三元组 ${targetServiceCode}/${discoveryServiceName}/${channel}`);
+    ), `场景缺少数据库 Target 配置 ${targetServiceCode}/${discoveryServiceName}/${channel}`);
   }
 
   const activeRoutes = tableScenarioRecords(rows, "t_gateway_route")
@@ -560,7 +560,7 @@ function assertGatewayControlScenarios(rows, content) {
     .flatMap((row) => fieldAssignments(row.data))
     .filter(({ field }) => field === "tenant_id" || field.endsWith("_hash")), []);
   assert.match(content, /Guard[^。\n]*全局[^。\n]*trusted `tenant_id`[^。\n]*Redis Key[^。\n]*不是[^。\n]*Foreign Key/u);
-  assert.match(content, /Target[^。\n]*静态 Approved Target Registry[^。\n]*双重校验/u);
+  assert.match(content, /Target[^。\n]*数据库完整 Snapshot[^。\n]*通用校验[^。\n]*Route 一起固定/u);
   assert.match(content, /DISABLED Target[^。\n]*ACTIVE Route[^。\n]*Snapshot[^。\n]*排除/u);
   assert.match(content, /Partner[^。\n]*HUMAN_PERMISSION[^。\n]*PLT-I02/u);
 }

@@ -1,0 +1,20 @@
+{
+  "target": "127.0.0.1:13306/mor_risk",
+  "tables": [
+    {
+      "table": "t_rule_reject_reason",
+      "columns": 11,
+      "indexesIncludingPrimary": 3,
+      "modelMatches": true
+    },
+    {
+      "table": "t_rule_subject_tag",
+      "columns": 10,
+      "indexesIncludingPrimary": 3,
+      "modelMatches": true
+    }
+  ],
+  "modifiedColumnComments": 2,
+  "addedOldTableIndexes": 2,
+  "result": "PASS"
+}

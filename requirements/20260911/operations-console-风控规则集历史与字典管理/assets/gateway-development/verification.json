@@ -1,0 +1,141 @@
+{
+  "checked_at_utc": "2026-09-12T04:26:49.963830+00:00",
+  "scope": "RCO-16 Gateway amendment stage 4 development regression; not deployment or stage 5 acceptance",
+  "gateway": {
+    "classes": 60,
+    "tests": 982,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "bff": {
+    "classes": 14,
+    "tests": 1041,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "platform_selected": {
+    "classes": 3,
+    "tests": 23,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "platform_model_schema_scenario": {
+    "tests": 48,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "commands": {
+    "gateway": "JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw -q clean verify",
+    "gateway_boundaries": "node scripts/verify-gateway-boundaries.mjs",
+    "gateway_coverage": "node scripts/verify-jacoco.mjs",
+    "bff": "JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw -q clean verify",
+    "platform": "./mvnw -q -pl platform-support-test -am -Dtest=GatewayDatabaseTargetHttpAutoTest,GatewayConfigurationCompilerAutoTest,RiskDictionaryRegistrationCatalogAutoTest -Dsurefire.failIfNoSpecifiedTests=false test",
+    "model": "node --test scripts/pdmaner/platform-support-{model,schema,scenario-doc}.test.mjs"
+  },
+  "boundaries_output": "Gateway boundaries verified: 113 production Java files, 4 production resource files, 98 test Java files, 3 test resource files.",
+  "coverage_output": "JaCoCo verification failed:\n- JaCoCo aggregate XML omits compiled Gateway class: com/paytech/gateway/routing/snapshot/GatewayGuardProfileCompiler$1\n- branch coverage 78.445378% is below 90% (1867/2380)",
+  "environment": {
+    "java": "25",
+    "maven": "wrapper 3.9.16",
+    "mysql": "local-environment 127.0.0.1:13306/mor_platform",
+    "redis": "local-environment 127.0.0.1:16379",
+    "gateway_discovery": "SimpleDiscovery with runtime-generated aliases and random loopback HTTP simulators",
+    "nacos_used_by_auto_tests": false,
+    "schema_or_seed_sql_applied": false,
+    "test_fixture_writes": "owned rows restored and five Gateway tables compared to original"
+  },
+  "pending": [
+    "Gateway branch coverage 78.445378% remains below 90%; pre-existing missing compiler-generated GatewayGuardProfileCompiler$1 completeness issue remains. Threshold and exclusions unchanged.",
+    "Existing Platform full initialization oracle expects 21 Console Resources but local DB has 12; original GatewaySnapshotHttpAutoTest blocked before fixture writes.",
+    "Stage 5 integration acceptance requires confirmation; any database preparation SQL requires separate concrete approval.",
+    "Stage 6 must reconcile exact Gateway release source and rebuild Gateway/BFF artifacts.",
+    "Container management health probe and test public dictionary entry require authorized deployment."
+  ],
+  "applications": {
+    "api-gateway": {
+      "head": "4220da8d3bf40adad4d2ef3d0af58685f20a3d39",
+      "files_sha256": {
+        "README.md": "5e4d867809455f4c7d6369dc5c1e924b52ea2d95fe0c4ae7e9d88fe5af5b8cda",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/acceptance/ClientApiGatewayAcceptanceAutoTest.java": "c1ce2f4c0a0bed23be575eac4c6febc9ffd19859c949c1134a166721911459b0",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/architecture/GatewayArchitectureAutoTest.java": "9c8e33625d308a4fd16ca1ea683b10a86516402d91013a606c4438ad20b6af26",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/architecture/GatewayFilterOrderContractAutoTest.java": "5dd2823e78908f1d4f7dc6a82b2506b41659ceac737de1827038f317e011af7b",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/ClientApiGuardFlowAutoTest.java": "ed09f29243a8b81ae4d2ed7e3a68a9067fe4f7ad82c388be0402c4a005135fc3",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/GatewayAuthenticatedGuardCommandFactoryAutoTest.java": "efe873404167c10ffb0b7fddd7422996d37370d642bfe6d39bdde6469faf1a5c",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/OperationsGuardFlowAutoTest.java": "799758d761e367d56493d49bb7c706aa4216e2080641cc7d8613dc83088dcbea",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayHealthAutoTest.java": "1307639f21633451fe0b64a91ae6272af61619a5f6ac24e5db6a53e980728755",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayMetricDimensionsAutoTest.java": "ee55a9fc9f0a769761b533d1299c0812d50b994be6c6197c9c99aa23270e2ed0",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewaySnapshotHealthAutoTest.java": "32237be748a5f060c7035432b9aa2a1cc02a9d2a3dbfe9b5147980c8a22668d4",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewaySnapshotMetricsAutoTest.java": "bec568a25557301796f55552e0d7731229ef8f4901b41a4c2b5a7df629aa279f",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/ApprovedTargetTransportAutoTest.java": null,
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/DynamicOperationsRoutingAutoTest.java": "3e1dabbe01762b27d8270123fa44900caf48654505a1376d7ebb31965bc1324b",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewayDatabaseRoutingAutoTest.java": "69cfd2ea626b850b33cc8848d6bad1dd6424644c95fcc39c1c2048cea2b16f72",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewayRuntimeCatalogAutoTest.java": "338f819ac31de2981e4e19fba2eef26316244776eea1cd37231507c2f06aced0",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotCompilerAutoTest.java": "84ff344eb055e08102f6ad9e27ca2101e30df43b3cc83484731491f715eb1aae",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotPinningAutoTest.java": "77b35e537b3985de61bb667cd3a5375dcdcd451b21130c2b7461e04058b94cd6",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotRefreshAutoTest.java": "f061908d0cec154f8af9ec08f56486f70c42223bc600010436df5f0d6c4fdb16",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotSchedulingAutoTest.java": "4a156a32fb98ec435cf0d6b650cd6153d26aeeb95965f7f628a1a672d3518372",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsJwksAvailabilityAutoTest.java": "0088928d59e841c43fc335296ccf8fa9519990663a4c6db68bd27c616deeba8a",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsTrustedContextAutoTest.java": "d47ab85d8f826d75fa9758522b1d9df795866b10ea04a33aba78d499ac564781",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/transport/GatewayTransportAutoTest.java": "90b6fa6e63a851b61425fd2b7c922b841d9188e197b0080cec033c23cf003087",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayErrorContractAutoTest.java": "e6dc0a3f5d1da3064a1d9d922662bd396f741537b1abb7869962f9a649704c25",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsAuthenticationCookieAutoTest.java": "5f4047659485e68c6b29607ca106822b550b535b2f7e7991f9fb5dd04c41031a",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsHttpTestModeAutoTest.java": "432fa1dac9c24fd3f7c3bf590e81803e5393469f87e374f8639cd2bb6c83e086",
+        "api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsReadOriginAutoTest.java": "9f7033c27f5709ef19478f17ffe44e0c91209fda977d2bb48f0fb813eadd7ffb",
+        "api-gateway-test/src/test/java/com/paytech/gateway/test/GatewayAutoTestBase.java": "18d112fee83a96965ff84b88ce6509653f32ff68d69e132745160d5435a5c0d2",
+        "api-gateway-test/src/test/java/com/paytech/gateway/test/GatewayAutoTestRuntime.java": "05f3c611d587c1f705c3e50f1c276ca6067b64e523098649848e5e91ed4c13b2",
+        "api-gateway-test/src/test/java/com/paytech/gateway/test/builder/GatewaySnapshotFixture.java": "0362acb6bf3309b29d851edffa9551e1557e1e03f648f9bc6730de6565cfd8b3",
+        "api-gateway-test/src/test/resources/application-auto.yml": "30f166859031e9f9a8a629c0da3d878713dc3179866c57c168affcc7303361c6",
+        "api-gateway-web/src/main/java/com/paytech/gateway/configuration/GatewaySnapshotConfiguration.java": "fd727cbc0d91ac67505a126be484f71df51696cd3553c119827bdb6201f8d1c1",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/DynamicRouteWebFilter.java": "f70b9a723a5c837ac714ae93882fe3b023bb2460827926426dee4645bc360997",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/GatewayRequestRouteHandlerMapping.java": "3a5a9f0bce26e38523eb942cf05f1a8d7a5f8732d11ddde0cfddf82481a5d1e1",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/GatewayRouteConfiguration.java": "c995468841faee0adf06efa517e1fdc1699c58f5fdaec4e2167d44d6208d294a",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeRoute.java": "80d4dae0c4c0985e69ff4a74a32f3a0f3cad3de44a02509d3b02ccf572179c48",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeSnapshot.java": "e2c3bf564c105da1d5b410e51540efefd7ff5c18fcd32642f1e8f10966d17dbc",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeTarget.java": "c53d26b46cf35e36bed14c982cdac9d848fe315f13c81a345d66d73e4b3810ff",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/ApprovedTargetRegistry.java": null,
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewayRoutePolicyValidator.java": "11ee2385bdf330f1942b9025ef98ef4f928dbb3a5c2b3711b2b17d4deae596d6",
+        "api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotCompiler.java": "18309e859f0ea5665578970e8432f230f96e4d956525d7e6279c8e4631be2206",
+        "api-gateway-web/src/main/resources/application.yml": "b1ee1c4400488ffe24081c8ede515efb906e515d6bc328c50ad8d0449b47fd04"
+      }
+    },
+    "operations-console-bff": {
+      "head": "2e0e8d707db0bec78ccdccf8f0eb26364858b4fe",
+      "amendment_files_sha256": {
+        "README.md": "b3c21e930ddd5a7f75db6043207285d397378e0d567ef308a5b9ac2e1ef6a204",
+        "paytech-operations-console-bff-web/src/main/resources/application.yml": "8d7d1e8eb1bdd9cb2572a63110eb8fbbb8e4f19831011dfb151b399014b7e45e",
+        "paytech-operations-console-bff-test/src/test/resources/application-auto.yml": "faf12de70e059e3c87761faf824f36686d2231d5959b5a84f104989694cc187a",
+        "paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsConsoleBffApplicationAutoTest.java": "9f946b099f30e6b85e9a07a6c16eb472c21e9f782e33cbfa938a1b00ce3c1919"
+      }
+    },
+    "platform-support-service": {
+      "head": "ef6570f718339d199ab8900e90b6c4d1ee33b492",
+      "amendment_files_sha256": {
+        "docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md": "36d9b52f5c9e9129bf4b5f016259eefa8cc5ccddcd256033b8f6f96e7b748522",
+        "docs/database/platform-support.pdma.json": "76d82246ec677290b3d95cf0330c2d0ed1f3511ac2c76409d193e24209087190",
+        "docs/database/sql/platform-support-schema.sql": "b6e510b9ec9a2fc2d169e44a9294a88048a57ea8e2fdedf0f2a9fe9e2fe4d5cf",
+        "platform-support-test/src/test/java/com/paytech/platform/support/auto/gatewayconfiguration/GatewayDatabaseTargetHttpAutoTest.java": "4866762699a3685d441bd987b48a6e0451e34982baede4492db17ff524f92078",
+        "platform-support-test/src/test/java/com/paytech/platform/support/test/gatewayconfiguration/GatewayCatalogFixture.java": "4dbf3e8c18b2a4201eca323b1eadce8903f007965401709bb318d45458ce962e"
+      }
+    }
+  },
+  "root_artifacts_sha256": {
+    "test-environment/compose.applications.yaml": "c0e293ff1d0e4c118325ef5b8180131ee6869d4675d0396bd60743ba89605f96",
+    "scripts/pdmaner/platform-support/manifests/06-gateway.mjs": "e7864a754a8446cb4a90e83ad162d29df95b242e3d4b42d755318837170747ce",
+    "scripts/pdmaner/platform-support-test-oracle/schema.oracle.mjs": "7cef3ec3a1bb6358ef9784d2adacfba5db8aca76279c0d59d4196b610391b917",
+    "scripts/pdmaner/platform-support-scenario-doc.test.mjs": "9efeea8413a3ce1d82532566d08b1381ab282391b7c6b216e9ec86da18efd7e7"
+  },
+  "sql_sha256": {
+    "ddl.sql": "b1e63521748a43a03b8b794951bfc30622728d88504562676eacc6d0f34ca47c",
+    "dml.sql": "bfef7441c15d43a05768c00f62caf248e109d8485a0deea6ed970a541d0d0da6"
+  },
+  "deployed": false,
+  "committed": false,
+  "pushed": false,
+  "functional_regression_passed": true,
+  "all_gates_passed": false,
+  "coverage_gate_passed": false
+}
