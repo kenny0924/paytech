@@ -31,6 +31,78 @@ export const SEQUENCE_PARTICIPANTS = {
 };
 
 export const GLOBAL_USE_CASE_SEQUENCES = {
+  "E2E-16": {
+    "summary": "PLT-16/PLT-17 合并配置管理合同；全部六类 Target/Route 统一维护，菜单/按钮本期仅 OPERATIONS。具体实现及部署状态见 CURRENT_IMPLEMENTATION，配置覆盖不表示全部入口认证已接通。",
+    "participants": [
+      "operations",
+      "operations_console",
+      "api_gateway",
+      "operations_console_bff",
+      "platform"
+    ],
+    "messages": [
+      {
+        "from": "operations",
+        "to": "operations_console",
+        "label": "逐项维护权限、Target/Route、菜单按钮，再通过既有角色管理明确授权；新权限不默认授予普通角色",
+        "kind": "sync"
+      },
+      {
+        "from": "operations_console",
+        "to": "api_gateway",
+        "label": "每次保存分别提交管理命令、变更原因及既有幂等/并发身份，不把多步配置合并为大事务",
+        "kind": "sync"
+      },
+      {
+        "from": "api_gateway",
+        "to": "operations_console_bff",
+        "label": "按 Operations 认证与路由转发可信上下文",
+        "kind": "sync"
+      },
+      {
+        "from": "operations_console_bff",
+        "to": "platform",
+        "label": "先经 PLT-I02 校验管理权限，随后转发当前单个配置命令；新增 18 项能力沿用 v1，合同见本需求 api.md",
+        "kind": "sync"
+      },
+      {
+        "from": "platform",
+        "to": "platform",
+        "label": "校验权限、引用、完整候选和版本，在本库事务写本对象与完整子集合，记录既有审计及幂等；失败不留下部分配置，事务内不调用外部服务",
+        "kind": "sync"
+      },
+      {
+        "from": "platform",
+        "to": "operations_console_bff",
+        "label": "返回保存结果或字段/并发错误，不宣称 Gateway 已加载",
+        "kind": "sync"
+      },
+      {
+        "from": "api_gateway",
+        "to": "platform",
+        "label": "独立通过 PLT-I20 读取完整一致快照，内部查询绕过公网管理链",
+        "kind": "sync"
+      },
+      {
+        "from": "api_gateway",
+        "to": "api_gateway",
+        "label": "复用六类 Channel/Profile/Mode 校验并原子切换，一条请求固定同一快照的 Route/Target，不新增静态业务名单",
+        "kind": "sync"
+      },
+      {
+        "from": "operations_console_bff",
+        "to": "platform",
+        "label": "重新获取按当前账号权限过滤的导航；管理页面多查询由 BFF 组合，业务 API 仍逐次授权",
+        "kind": "sync"
+      },
+      {
+        "from": "operations_console_bff",
+        "to": "operations_console",
+        "label": "展示更新结果；未部署页面及未接通的业务认证不因登记配置而变为可用",
+        "kind": "sync"
+      }
+    ]
+  },
   "E2E-01": {
     summary: "CUSTOMER 完成全局 Account 认证；CCT 先建立 DRAFT Client Application 并投影 PENDING Tenant，Platform 再允许 Onboarding Owner 上传材料；CCT 最终提交后才登记 Risk，审批把临时角色转换为 Tenant Owner。Beneficiary Account 独立由 Finance 审核，不属于 CCT 或交易准备度。",
     participants: ["client", "client_console", "client_console_bff", "api_gateway", "platform", "client_contract", "risk", "finance", "payment", "operations_console", "operations_console_bff", "vault"],

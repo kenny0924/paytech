@@ -1,0 +1,30 @@
+{
+  "stage": "DESIGN_REVIEW",
+  "externalPrefix": "/api/operations",
+  "newEndpoints": [
+    {"id":"A01","method":"POST","path":"/gateway-admin/v1/target-services","routeCode":"operations-gateway-target-create","permission":"GATEWAY_CONFIG_MANAGE","query":[]},
+    {"id":"A02","method":"PUT","path":"/gateway-admin/v1/target-services/{targetServiceCode}","routeCode":"operations-gateway-target-update","permission":"GATEWAY_CONFIG_MANAGE","query":[]},
+    {"id":"A03","method":"POST","path":"/gateway-admin/v1/routes","routeCode":"operations-gateway-route-create","permission":"GATEWAY_CONFIG_MANAGE","query":[]},
+    {"id":"A04","method":"PUT","path":"/gateway-admin/v1/routes/{routeCode}","routeCode":"operations-gateway-route-update","permission":"GATEWAY_CONFIG_MANAGE","query":[]},
+    {"id":"A05","method":"GET","path":"/console-admin/v1/resources","routeCode":"operations-console-resource-list","permission":"CONSOLE_RESOURCE_READ","query":[]},
+    {"id":"A06","method":"GET","path":"/console-admin/v1/resources/{resourceCode}","routeCode":"operations-console-resource-detail","permission":"CONSOLE_RESOURCE_READ","query":[]},
+    {"id":"A07","method":"POST","path":"/console-admin/v1/resources","routeCode":"operations-console-resource-create","permission":"CONSOLE_RESOURCE_MANAGE","query":[]},
+    {"id":"A08","method":"PUT","path":"/console-admin/v1/resources/{resourceCode}","routeCode":"operations-console-resource-update","permission":"CONSOLE_RESOURCE_MANAGE","query":[]},
+    {"id":"A09","method":"PATCH","path":"/console-admin/v1/resources/{resourceCode}/status","routeCode":"operations-console-resource-status","permission":"CONSOLE_RESOURCE_MANAGE","query":[]},
+    {"id":"A10","method":"GET","path":"/permission-admin/v1/permissions","routeCode":"operations-permission-list","permission":"PERMISSION_READ","query":["page","size","code","resourceType","status","riskLevel"]},
+    {"id":"A11","method":"GET","path":"/permission-admin/v1/permissions/{permissionCode}","routeCode":"operations-permission-detail","permission":"PERMISSION_READ","query":[]},
+    {"id":"A12","method":"POST","path":"/permission-admin/v1/permissions","routeCode":"operations-permission-create","permission":"PERMISSION_MANAGE","query":[]},
+    {"id":"A13","method":"PUT","path":"/permission-admin/v1/permissions/{permissionCode}","routeCode":"operations-permission-update","permission":"PERMISSION_MANAGE","query":[]},
+    {"id":"A14","method":"PATCH","path":"/permission-admin/v1/permissions/{permissionCode}/status","routeCode":"operations-permission-status","permission":"PERMISSION_MANAGE","query":[]},
+    {"id":"A15","method":"GET","path":"/permission-admin/v1/permissions/{permissionCode}/references","routeCode":"operations-permission-references","permission":"PERMISSION_READ","query":["kind","page","size"]},
+    {"id":"A16","method":"GET","path":"/gateway-admin/v1/capabilities","routeCode":"operations-gateway-capabilities","permission":"GATEWAY_CONFIG_READ","query":[]},
+    {"id":"A17","method":"GET","path":"/console-admin/v1/resource-capabilities","routeCode":"operations-console-resource-capabilities","permission":"CONSOLE_RESOURCE_READ","query":[]},
+    {"id":"A18","method":"GET","path":"/permission-admin/v1/permission-options","routeCode":"operations-configuration-permission-options","permission":null,"query":["usage","page","size","keyword"]}
+  ],
+  "newPermissions": [
+    {"code":"CONSOLE_RESOURCE_READ","resourceType":"CONSOLE_RESOURCE","actionCode":"READ","riskLevel":"LOW"},
+    {"code":"CONSOLE_RESOURCE_MANAGE","resourceType":"CONSOLE_RESOURCE","actionCode":"MANAGE","riskLevel":"HIGH"},
+    {"code":"PERMISSION_READ","resourceType":"PERMISSION","actionCode":"READ","riskLevel":"LOW"},
+    {"code":"PERMISSION_MANAGE","resourceType":"PERMISSION","actionCode":"MANAGE","riskLevel":"HIGH"}
+  ]
+}

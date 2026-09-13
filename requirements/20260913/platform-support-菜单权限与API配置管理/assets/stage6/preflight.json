@@ -1,0 +1,34 @@
+{
+  "environment": "desktop-linux/mor-test/127.0.0.1:23306/mor_platform",
+  "checks": {
+    "t_permission": "0",
+    "t_role_permission": "0",
+    "t_console_resource": "0",
+    "t_gateway_route": "0",
+    "t_gateway_route_header": "0",
+    "t_gateway_route_query_param": "0",
+    "t_gateway_guard_rule": "0",
+    "t_permission natural": "0",
+    "t_console_resource natural": "0",
+    "t_gateway_route natural": "0",
+    "existing route path conflict": "0",
+    "orphan route children": "0",
+    "existing callback targets": "0",
+    "existing callback routes": "0"
+  },
+  "schemaComparedTables": [
+    "t_permission",
+    "t_role_permission",
+    "t_console_resource",
+    "t_gateway_route",
+    "t_gateway_route_header",
+    "t_gateway_route_query_param",
+    "t_gateway_guard_rule",
+    "t_role"
+  ],
+  "schemaAndIndexMatch": true,
+  "schemaProjectionSha256": "25b1f57a10d43a00b65efc1a1eeb4517b0db58e61a006a95602755f5918876d7",
+  "baselineAdminRoleId": "900000000000000510",
+  "baselineAdminRoleVersion": 17,
+  "databaseWrites": false
+}

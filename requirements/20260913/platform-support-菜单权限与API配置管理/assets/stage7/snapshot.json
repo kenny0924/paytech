@@ -1,0 +1,20 @@
+{
+  "routeCount": 88,
+  "targetCount": 1,
+  "metrics": [
+    "gateway_snapshot_consecutive_failures 0.0",
+    "gateway_snapshot_last_refresh_result{result=\"FAILURE\"} 0.0",
+    "gateway_snapshot_last_refresh_result{result=\"NEVER_ATTEMPTED\"} 0.0",
+    "gateway_snapshot_last_refresh_result{result=\"SUCCESS\"} 1.0",
+    "gateway_snapshot_last_refresh_result{result=\"SUPPRESSED\"} 0.0",
+    "gateway_snapshot_last_valid_in_use 0.0",
+    "gateway_snapshot_routes{channel=\"ALL\"} 88.0",
+    "gateway_snapshot_routes{channel=\"CHANNEL_CALLBACK\"} 0.0",
+    "gateway_snapshot_routes{channel=\"CHECKOUT\"} 0.0",
+    "gateway_snapshot_routes{channel=\"CLIENT\"} 0.0",
+    "gateway_snapshot_routes{channel=\"CLIENT_API\"} 0.0",
+    "gateway_snapshot_routes{channel=\"OPERATIONS\"} 88.0",
+    "gateway_snapshot_routes{channel=\"PARTNER\"} 0.0",
+    "gateway_snapshot_valid 1.0"
+  ]
+}

@@ -1203,7 +1203,7 @@ test("Platform Support catalog uses Tenant credentials and derives readiness wit
   assert.doesNotMatch(platformI13, /Requirement Config|Platform 继续拥有该事实/u);
   assert.doesNotMatch(platform, /ConfigurationActivated|ClientIntegrationReadinessChanged/u);
   assert.match(platform16, /所有外部 HTTP API.*六类.*Route.*Target.*Guard/u);
-  assert.match(platformI19, /permission_id.*required_scope_code.*互斥.*Approved Target Registry/u);
+  assert.match(platformI19, /permission_id.*required_scope_code.*互斥.*Platform 数据库管理.*完整快照.*不再要求静态业务 Registry/u);
   assert.match(platformI20, /每次读取完整全局不可变 Snapshot.*不使用 ETag.*304/u);
   assert.match(platformI20, /完整校验.*原子切换.*Fail-Closed/u);
   assert.match(platformI22, /OPERATIONS.*ACTIVE.*RETIRING.*RS256.*RSA-2048\+.*Fail-Closed/u);

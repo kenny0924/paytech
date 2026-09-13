@@ -1,0 +1,21 @@
+{
+  "candidateAndPreviousComposeConfig": "valid: config --quiet",
+  "requirementsSiteTests": {
+    "tests": 136,
+    "passed": 136,
+    "failed": 0,
+    "log": "/tmp/plt-config-stage6-requirements-tests.log"
+  },
+  "localMarkdownLinks": 119,
+  "testContainers": {
+    "count": 11,
+    "healthy": 11,
+    "runningBaselineUnchanged": true
+  },
+  "sqlReview": "static only; no test SQL execution",
+  "images": "four built with independent tags; image and artifact hashes checked",
+  "remotePublication": false,
+  "gitCommitOrPush": false,
+  "releaseDocumentSha256": "2956f673c4b9804efaaf0963e7583862eef92d867c2ebc0eb1e360d1ffa5b67d",
+  "manifestSha256": "7b5c711d3146d76db20d39faa2002334c120f4f908b5f4bcc73aba043b8250c9"
+}

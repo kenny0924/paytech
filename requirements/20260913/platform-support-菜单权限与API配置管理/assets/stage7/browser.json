@@ -1,0 +1,39 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "pages": [
+    {
+      "path": "/console-resources",
+      "heading": "菜单资源",
+      "screenshot": "browser-resources.png"
+    },
+    {
+      "path": "/permissions",
+      "heading": "权限目录",
+      "screenshot": "browser-permissions.png"
+    },
+    {
+      "path": "/gateway-configuration",
+      "heading": "API 路由管理",
+      "screenshot": "browser-gateway.png"
+    },
+    {
+      "path": "/gateway-configuration?tab=routes&mode=view&code=operations-configuration-permission-options",
+      "heading": "API 路由详情",
+      "readOnlyHasNoSave": true,
+      "screenshot": "browser-route-detail.png"
+    }
+  ],
+  "permissionEditor": {
+    "readOnlyHasNoSave": true,
+    "editHasSave": true,
+    "backReturnsToReadOnly": true,
+    "saved": false,
+    "screenshot": "browser-permission-edit.png"
+  },
+  "pageErrors": [],
+  "logout": true,
+  "visualObservation": "Permission codes longer than their column overlap adjacent resource-type text; recorded for user acceptance, no release package change."
+}

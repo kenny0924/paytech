@@ -17,6 +17,7 @@ const expectedUseCaseIds = [
   "E2E-13",
   "E2E-14",
   "E2E-15",
+  "E2E-16",
 ];
 
 async function loadSequenceCatalog() {

@@ -1,0 +1,12 @@
+{
+  "committed": true,
+  "affected": {
+    "routes": 18,
+    "resources": 4,
+    "adminGrants": 4,
+    "adminRole": 1
+  },
+  "total": 27,
+  "adminRoleVersion": 18,
+  "sqlSha256": "79dca88365fda2bea625f9859c1d04eef101b8420559377a63d7d007b78e6401"
+}

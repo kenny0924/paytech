@@ -1,0 +1,312 @@
+{
+  "boundary": "real Web ingress/Gateway/BFF/Platform/MySQL/Redis; dynamic Target ends at synthetic HTTP probe; local discovery",
+  "results": [
+    {
+      "name": "login-admin",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "login-reader",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "login-denied",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "metadata-/console-admin/v1/resources",
+      "method": "GET",
+      "path": "/console-admin/v1/resources",
+      "status": 200
+    },
+    {
+      "name": "metadata-/console-admin/v1/resource-capabilities",
+      "method": "GET",
+      "path": "/console-admin/v1/resource-capabilities",
+      "status": 200
+    },
+    {
+      "name": "metadata-/gateway-admin/v1/capabilities",
+      "method": "GET",
+      "path": "/gateway-admin/v1/capabilities",
+      "status": 200
+    },
+    {
+      "name": "metadata-/permission-admin/v1/permissions",
+      "method": "GET",
+      "path": "/permission-admin/v1/permissions",
+      "status": 200
+    },
+    {
+      "name": "metadata-/permission-admin/v1/permission-options?usage=CONSOLE_RESOURCE",
+      "method": "GET",
+      "path": "/permission-admin/v1/permission-options?usage=CONSOLE_RESOURCE",
+      "status": 200
+    },
+    {
+      "name": "metadata-/permission-admin/v1/permission-options?usage=GATEWAY_ROUTE",
+      "method": "GET",
+      "path": "/permission-admin/v1/permission-options?usage=GATEWAY_ROUTE",
+      "status": 200
+    },
+    {
+      "name": "authorized-navigation",
+      "method": "GET",
+      "path": "/authorization/v1/navigation",
+      "status": 200
+    },
+    {
+      "name": "reader-resources",
+      "method": "GET",
+      "path": "/console-admin/v1/resources",
+      "status": 200
+    },
+    {
+      "name": "reader-permissions",
+      "method": "GET",
+      "path": "/permission-admin/v1/permissions",
+      "status": 200
+    },
+    {
+      "name": "no-permission-resources",
+      "method": "GET",
+      "path": "/console-admin/v1/resources",
+      "status": 403
+    },
+    {
+      "name": "reader-cannot-write",
+      "method": "POST",
+      "path": "/permission-admin/v1/permissions",
+      "status": 403
+    },
+    {
+      "name": "create-permission",
+      "method": "POST",
+      "path": "/permission-admin/v1/permissions",
+      "status": 200
+    },
+    {
+      "name": "activate-permission",
+      "method": "PATCH",
+      "path": "/permission-admin/v1/permissions/TEST_PERMISSION_2106B32E61B5475CA61F88D34529B520/status",
+      "status": 200
+    },
+    {
+      "name": "edit-permission",
+      "method": "PUT",
+      "path": "/permission-admin/v1/permissions/TEST_PERMISSION_2106B32E61B5475CA61F88D34529B520",
+      "status": 200
+    },
+    {
+      "name": "read-permission",
+      "method": "GET",
+      "path": "/permission-admin/v1/permissions/TEST_PERMISSION_2106B32E61B5475CA61F88D34529B520",
+      "status": 200
+    },
+    {
+      "name": "permission-filter",
+      "method": "GET",
+      "path": "/permission-admin/v1/permissions?code=TEST_PERMISSION_2106B32E61B5475CA61F88D34529B520",
+      "status": 200
+    },
+    {
+      "name": "missing-permission-is-404",
+      "method": "GET",
+      "path": "/permission-admin/v1/permissions/MISSING_STAGE5_PERMISSION",
+      "status": 404
+    },
+    {
+      "name": "create-resource",
+      "method": "POST",
+      "path": "/console-admin/v1/resources",
+      "status": 200
+    },
+    {
+      "name": "edit-resource",
+      "method": "PUT",
+      "path": "/console-admin/v1/resources/TEST_RESOURCE_26227F87CB0149FFAF60D3A519745603",
+      "status": 200
+    },
+    {
+      "name": "resource-replay",
+      "method": "PUT",
+      "path": "/console-admin/v1/resources/TEST_RESOURCE_26227F87CB0149FFAF60D3A519745603",
+      "status": 200
+    },
+    {
+      "name": "resource-conflict",
+      "method": "PUT",
+      "path": "/console-admin/v1/resources/TEST_RESOURCE_26227F87CB0149FFAF60D3A519745603",
+      "status": 409
+    },
+    {
+      "name": "activate-resource",
+      "method": "PATCH",
+      "path": "/console-admin/v1/resources/TEST_RESOURCE_26227F87CB0149FFAF60D3A519745603/status",
+      "status": 200
+    },
+    {
+      "name": "resource-detail",
+      "method": "GET",
+      "path": "/console-admin/v1/resources/TEST_RESOURCE_26227F87CB0149FFAF60D3A519745603",
+      "status": 200
+    },
+    {
+      "name": "permission-resource-references",
+      "method": "GET",
+      "path": "/permission-admin/v1/permissions/TEST_PERMISSION_2106B32E61B5475CA61F88D34529B520/references?kind=RESOURCE",
+      "status": 200
+    },
+    {
+      "name": "explicit-first-grant",
+      "method": "POST",
+      "path": "/iam/v1/roles",
+      "status": 200
+    },
+    {
+      "name": "create-target",
+      "method": "POST",
+      "path": "/gateway-admin/v1/target-services",
+      "status": 200
+    },
+    {
+      "name": "edit-target",
+      "method": "PUT",
+      "path": "/gateway-admin/v1/target-services/test-target-7c3cef80f35248a9a109271d63259cc2",
+      "status": 200
+    },
+    {
+      "name": "activate-target",
+      "method": "PATCH",
+      "path": "/gateway-admin/v1/target-services/test-target-7c3cef80f35248a9a109271d63259cc2/status",
+      "status": 200
+    },
+    {
+      "name": "create-route",
+      "method": "POST",
+      "path": "/gateway-admin/v1/routes",
+      "status": 200
+    },
+    {
+      "name": "edit-route",
+      "method": "PUT",
+      "path": "/gateway-admin/v1/routes/test-route-73ba75a72c6a4b2db20f03c1832ea02c",
+      "status": 200
+    },
+    {
+      "name": "activate-route",
+      "method": "PATCH",
+      "path": "/gateway-admin/v1/routes/test-route-73ba75a72c6a4b2db20f03c1832ea02c/status",
+      "status": 200
+    },
+    {
+      "name": "database-snapshot-dynamic-forwarding",
+      "method": "GET",
+      "path": "/stage5/test-route-73ba75a72c6a4b2db20f03c1832ea02c?detail=full",
+      "status": 200
+    },
+    {
+      "name": "disable-route",
+      "method": "PATCH",
+      "path": "/gateway-admin/v1/routes/test-route-73ba75a72c6a4b2db20f03c1832ea02c/status",
+      "status": 200
+    },
+    {
+      "name": "disabled-route-unavailable",
+      "method": "GET",
+      "path": "/stage5/test-route-73ba75a72c6a4b2db20f03c1832ea02c",
+      "status": 404
+    },
+    {
+      "name": "login-admin",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "login-reader",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "new-resource-hidden-before-grant",
+      "method": "GET",
+      "path": "/authorization/v1/navigation",
+      "status": 200
+    },
+    {
+      "name": "reader-identity",
+      "method": "GET",
+      "path": "/auth/v1/context",
+      "status": 200
+    },
+    {
+      "name": "accounts-for-explicit-grant",
+      "method": "GET",
+      "path": "/iam/v1/accounts",
+      "status": 200
+    },
+    {
+      "name": "roles-for-explicit-grant",
+      "method": "GET",
+      "path": "/iam/v1/roles",
+      "status": 200
+    },
+    {
+      "name": "assign-created-role-to-person",
+      "method": "PUT",
+      "path": "/iam/v1/accounts/8291999187869291742/roles",
+      "status": 204
+    },
+    {
+      "name": "login-reader",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "new-resource-visible-after-grant",
+      "method": "GET",
+      "path": "/authorization/v1/navigation",
+      "status": 200
+    },
+    {
+      "name": "disable-created-permission",
+      "method": "PATCH",
+      "path": "/permission-admin/v1/permissions/TEST_PERMISSION_2106B32E61B5475CA61F88D34529B520/status",
+      "status": 200
+    },
+    {
+      "name": "resource-hidden-after-permission-disabled",
+      "method": "GET",
+      "path": "/authorization/v1/navigation",
+      "status": 200
+    },
+    {
+      "name": "restore-created-permission",
+      "method": "PATCH",
+      "path": "/permission-admin/v1/permissions/TEST_PERMISSION_2106B32E61B5475CA61F88D34529B520/status",
+      "status": 200
+    },
+    {
+      "name": "resource-restored-with-original-grant",
+      "method": "GET",
+      "path": "/authorization/v1/navigation",
+      "status": 200
+    }
+  ],
+  "fixtures": {
+    "permission": "TEST_PERMISSION_2106B32E61B5475CA61F88D34529B520",
+    "resource": "TEST_RESOURCE_26227F87CB0149FFAF60D3A519745603",
+    "role": "TEST_ROLE_44135F63849647BDBCBB58803F3832DC",
+    "target": "test-target-7c3cef80f35248a9a109271d63259cc2",
+    "route": "test-route-73ba75a72c6a4b2db20f03c1832ea02c"
+  }
+}

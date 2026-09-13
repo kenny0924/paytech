@@ -1,0 +1,17 @@
+{
+  "committed": true,
+  "affected": {
+    "t_permission": 4,
+    "t_role_permission": 4,
+    "t_console_resource": 4,
+    "t_gateway_route": 18,
+    "t_gateway_route_header": 76,
+    "t_gateway_route_query_param": 13,
+    "t_gateway_guard_rule": 108
+  },
+  "total": 227,
+  "routes": "DISABLED",
+  "resources": "DISABLED",
+  "newAdminGrants": "REVOKED",
+  "sqlSha256": "1002cccafc0548873fc5d95e44f1c0b42dbc2595657bdec49d60257510732fbe"
+}

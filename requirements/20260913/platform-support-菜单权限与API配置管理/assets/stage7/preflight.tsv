@@ -1,0 +1,14 @@
+t_permission	0
+t_role_permission	0
+t_console_resource	0
+t_gateway_route	0
+t_gateway_route_header	0
+t_gateway_route_query_param	0
+t_gateway_guard_rule	0
+t_permission natural	0
+t_console_resource natural	0
+t_gateway_route natural	0
+existing route path conflict	0
+orphan route children	0
+existing callback targets	0
+existing callback routes	0

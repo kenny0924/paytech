@@ -1,0 +1,35 @@
+{
+  "localMarkdownLinksValid": 139,
+  "requirementsSiteTests": {
+    "tests": 136,
+    "pass": 136,
+    "fail": 0,
+    "log": "/tmp/plt-config-stage7-requirements-tests.log"
+  },
+  "publicApiChecks": 12,
+  "servedWebFilesMatchCandidate": 40,
+  "finalServicesHealthy": 11,
+  "configurationWrites": "227 registration + 27 activation; no additional business fixture writes",
+  "visualIssue": "long permission code overlaps adjacent resource-type column",
+  "gitCommitted": false,
+  "evidenceSha256": {
+    "final-database.tsv": "5e630fff7805efea90991e60d9a57d4acb4672f20d65be4d249ce917ac3405a0",
+    "activation.json": "dae92fb8485ef02d8939f535a7b0077bb1a5056bd0604448b272c8bd9d126eaa",
+    "browser-resources.png": "0a0a8c18c5d767f0a0960bc95671b565d86ae48c9163f176493d7c0e5ac31c6b",
+    "deployment.json": "904e5a45688c6f423bf733c4a1266569cfabbcc476d8e657dacc68ef3e9e55c6",
+    "backup.json": "9e2575651d359bd3dd62595b58cec85644787678012407dee2d0cfdf4163970a",
+    "browser-permission-edit.png": "6b7d110efc8e61730189c72926e6d3be8727d6556749f9407d28517bff06b9a6",
+    "browser-home.png": "d45b726c72fc28b2899c81ede747ec5c28589b9d4352a204552b9e7cbe6a1736",
+    "browser-gateway.png": "860a15f23e915d2c1cbb604ce8dab9d75c0e485b98e092b7e6da73a39653fac7",
+    "registration.json": "aedb4859c85b65cf40f3837322235a221498d53a1135eba274a62d4c6f7e2b79",
+    "browser-permissions.png": "3cbab75869880a08a137f5cdfbfd797439d6a77ef9e2377526aff6356d5965be",
+    "public-api.json": "6b4e9b185b2425df7112d3b5685ef1bf5e17d2d350bb33683ca72ed17c9a03a4",
+    "snapshot.json": "d3b1f35e1aa4dd38309e1dd4fb3f8262ec02115b36d893225ae5b161eee1f29c",
+    "served-web.json": "4a94635f36ad25efb4a9799e8099b42bd217ea7fea459e23b948b952dcb369ea",
+    "browser-route-detail.png": "71f4c4613d78c99315ddbfcd6202d47d5f76ae796bc76592448fc0df1cf5677a",
+    "final-containers.json": "c719ca41795f416b97520eebf917a35ec05e5b5d3d4a6299b09eb04ca5e2ce5f",
+    "preflight.tsv": "30cb3f6b1bea68f4e8a08c53f39e2dae377e8c6acfdd841cc85a07a90bb21c23",
+    "browser.json": "8df628026396c2679d39c8d2f3205a390639f300ef5b6ac6b117b17995488428",
+    "working-tree-paths.json": "821f1751fa3483413697b8058e01c60b167af3f6aabfbee9e3febb5b6f87c32f"
+  }
+}

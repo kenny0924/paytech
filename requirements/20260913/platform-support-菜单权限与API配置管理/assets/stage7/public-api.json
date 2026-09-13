@@ -1,0 +1,75 @@
+{
+  "checks": [
+    {
+      "method": "GET",
+      "path": "/authorization/v1/navigation",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/console-admin/v1/resources",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/permission-admin/v1/permissions?page=1&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/gateway-admin/v1/capabilities",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/console-admin/v1/resource-capabilities",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/permission-admin/v1/permission-options?usage=CONSOLE_RESOURCE&page=1&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/gateway-admin/v1/target-services?page=1&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/gateway-admin/v1/routes?page=1&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?page=1&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224578384481587200",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/decision-flows/v1/flows/224578384930377728",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/permission-admin/v1/permissions/PLT16_17_MISSING_CHECK",
+      "status": 404
+    }
+  ],
+  "channels": [
+    "CHANNEL_CALLBACK",
+    "CHECKOUT",
+    "CLIENT",
+    "CLIENT_API",
+    "OPERATIONS",
+    "PARTNER"
+  ],
+  "newMenusVisible": true,
+  "logout": true,
+  "problemStatusEvidence": "HTTP 404; optional body status not required"
+}

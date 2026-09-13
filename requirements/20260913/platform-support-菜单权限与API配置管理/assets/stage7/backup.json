@@ -1,0 +1,17 @@
+{
+  "database": "desktop-linux/mor-test/127.0.0.1:23306/mor_platform",
+  "directory": "/Users/kenny/Code-MoR-backups/20260913-154927-plt16-17-test",
+  "file": "/Users/kenny/Code-MoR-backups/20260913-154927-plt16-17-test/platform-configuration.sql",
+  "bytes": 136434,
+  "sha256": "06193db0fe150477930df8a182cbe44658df336f01b0bfe914e8555d3aeae236",
+  "tables": [
+    "t_permission",
+    "t_role_permission",
+    "t_console_resource",
+    "t_gateway_route",
+    "t_gateway_route_header",
+    "t_gateway_route_query_param",
+    "t_gateway_guard_rule",
+    "t_role"
+  ]
+}

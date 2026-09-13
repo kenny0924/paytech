@@ -1,0 +1,31 @@
+--- a/paytech-http-client-support/src/main/java/com/paytech/foundation/httpclient/core/error/HttpServiceClientInterceptor.java
++++ b/paytech-http-client-support/src/main/java/com/paytech/foundation/httpclient/core/error/HttpServiceClientInterceptor.java
+@@ -171,6 +171,9 @@
+         if (CommonErrorCode.CONCURRENT_REQUEST.getCode().equals(code)) {
+             return new ConcurrentRequestException(CommonErrorCode.CONCURRENT_REQUEST.getMessage(), failure);
+         }
++        if (CommonErrorCode.NOT_FOUND.getCode().equals(code) && failure.getStatusCode().value() == 404) {
++            return new FailException(CommonErrorCode.NOT_FOUND, null, failure);
++        }
+         CodeMessageEnum contractError = contractErrors.get(code);
+         return contractError == null ? invalidResponse(failure) : new FailException(contractError, null, failure);
+     }
+--- a/paytech-http-client-support/src/test/java/com/paytech/foundation/httpclient/auto/HttpServiceClientFactoryTest.java
++++ b/paytech-http-client-support/src/test/java/com/paytech/foundation/httpclient/auto/HttpServiceClientFactoryTest.java
+@@ -178,7 +178,7 @@
+     }
+ 
+     @ParameterizedTest
+-    @CsvSource({"400,BUSINESS_CHECK_FAILED", "400,INVALID_REQUEST", "409,CONCURRENT_REQUEST"})
++    @CsvSource({"400,BUSINESS_CHECK_FAILED", "400,INVALID_REQUEST", "409,CONCURRENT_REQUEST", "404,NOT_FOUND"})
+     void test_registeredCommon4xxProblemMapsToItsLocalException(int status, String code) {
+         respondProblem(status, problem(status, code));
+ 
+@@ -189,6 +189,7 @@
+         Class<?> expected = switch (code) {
+             case "BUSINESS_CHECK_FAILED" -> BizCheckFailException.class;
+             case "INVALID_REQUEST" -> InvalidParameterException.class;
++            case "NOT_FOUND" -> FailException.class;
+             default -> ConcurrentRequestException.class;
+         };
+         assertEquals(expected, failure.getClass());

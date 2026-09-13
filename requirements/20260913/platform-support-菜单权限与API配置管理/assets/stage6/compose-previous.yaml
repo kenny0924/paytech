@@ -1,0 +1,10 @@
+# Review-only release override; does not change the default Compose files.
+services:
+  platform-support-service:
+    image: sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332
+  operations-console-bff:
+    image: sha256:20f0cc8ca5d1e1c50e90dd2a2bfbca4d9acbe57fb754ea34d5458a543810b665
+  api-gateway:
+    image: sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d
+  operations-console-web:
+    image: sha256:d2216498bb9a2bb902c50baeb88aebda22b172a00f049ce14097c35e1e7fde68

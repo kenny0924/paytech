@@ -1,0 +1,37 @@
+{
+  "updatedAt": "2026-09-13T11:50:56.482591+00:00",
+  "services": [
+    {
+      "service": "api-gateway",
+      "containerId": "ccae4d787010cf5d2986abffe6601d8593ee8b26aa069245409fea8c7c71a1f2",
+      "imageId": "sha256:f907833438992310fe771303066685a5cfe08ddcd93e1cf6ef9a225761358953",
+      "startedAt": "2026-09-13T11:50:03.77011534Z",
+      "health": "healthy",
+      "log": "/tmp/plt-config-stage7-api-gateway-deploy.log"
+    },
+    {
+      "service": "platform-support-service",
+      "containerId": "506671e43d24e6fe01643725b6336debc9de642a1c1c348c2a55fa14b6d272c3",
+      "imageId": "sha256:5c566c1d89511d03311417695b3e66b5dbc29d90b30baa4894f4a6bae4e5e614",
+      "startedAt": "2026-09-13T11:50:21.416673626Z",
+      "health": "healthy",
+      "log": "/tmp/plt-config-stage7-platform-support-service-deploy.log"
+    },
+    {
+      "service": "operations-console-bff",
+      "containerId": "b15d93808ca8d71e6af3cbd77ba3d04ff8f5e5ebaa5e0c23ee7ee0cc715d40fa",
+      "imageId": "sha256:78ff6ca2a3c5ca74017b16b1a4c236909561f37bed860e0d55e4df949c189d91",
+      "startedAt": "2026-09-13T11:50:39.061753676Z",
+      "health": "healthy",
+      "log": "/tmp/plt-config-stage7-operations-console-bff-deploy.log"
+    },
+    {
+      "service": "operations-console-web",
+      "containerId": "faf72b9aedef3f859597dbc5e976c31067423b4e1bcb0a090349c94d3a62c95d",
+      "imageId": "sha256:d1d5fd635c0788fb39b0581956dc9990f5aaf66f8546af38af0fa0b29d2ae82c",
+      "startedAt": "2026-09-13T11:50:45.801086304Z",
+      "health": "healthy",
+      "log": "/tmp/plt-config-stage7-operations-console-web-deploy.log"
+    }
+  ]
+}

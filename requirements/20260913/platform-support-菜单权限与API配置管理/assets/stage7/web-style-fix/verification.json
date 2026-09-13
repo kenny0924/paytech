@@ -1,0 +1,255 @@
+{
+  "visualChecks": [
+    {
+      "width": 1440,
+      "badgeInline": true,
+      "badgeCount": 1,
+      "badgeHeight": 16,
+      "permissionCells": [
+        {
+          "title": "CONSOLE_RESOURCE_MANAGE",
+          "text": "CONSOLE_RESOURCE_MANAGE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "CONSOLE_RESOURCE_READ",
+          "text": "CONSOLE_RESOURCE_READ",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "GATEWAY_CONFIG_MANAGE",
+          "text": "GATEWAY_CONFIG_MANAGE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "GATEWAY_CONFIG_READ",
+          "text": "GATEWAY_CONFIG_READ",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_ASSIGN_ROLES",
+          "text": "OPERATIONS_ACCOUNT_ASSIGN_ROLES",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_CREATE",
+          "text": "OPERATIONS_ACCOUNT_CREATE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_DELETE",
+          "text": "OPERATIONS_ACCOUNT_DELETE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_DISABLE",
+          "text": "OPERATIONS_ACCOUNT_DISABLE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_ENABLE",
+          "text": "OPERATIONS_ACCOUNT_ENABLE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_MANAGE",
+          "text": "OPERATIONS_ACCOUNT_MANAGE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        }
+      ],
+      "documentOverflow": false
+    },
+    {
+      "width": 1024,
+      "badgeInline": true,
+      "badgeCount": 1,
+      "badgeHeight": 16,
+      "permissionCells": [
+        {
+          "title": "CONSOLE_RESOURCE_MANAGE",
+          "text": "CONSOLE_RESOURCE_MANAGE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "CONSOLE_RESOURCE_READ",
+          "text": "CONSOLE_RESOURCE_READ",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "GATEWAY_CONFIG_MANAGE",
+          "text": "GATEWAY_CONFIG_MANAGE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "GATEWAY_CONFIG_READ",
+          "text": "GATEWAY_CONFIG_READ",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_ASSIGN_ROLES",
+          "text": "OPERATIONS_ACCOUNT_ASSIGN_ROLES",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_CREATE",
+          "text": "OPERATIONS_ACCOUNT_CREATE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_DELETE",
+          "text": "OPERATIONS_ACCOUNT_DELETE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_DISABLE",
+          "text": "OPERATIONS_ACCOUNT_DISABLE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_ENABLE",
+          "text": "OPERATIONS_ACCOUNT_ENABLE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        },
+        {
+          "title": "OPERATIONS_ACCOUNT_MANAGE",
+          "text": "OPERATIONS_ACCOUNT_MANAGE",
+          "contained": true,
+          "ellipsis": "ellipsis",
+          "overflow": "hidden",
+          "clipped": false
+        }
+      ],
+      "documentOverflow": false
+    }
+  ],
+  "pageErrors": [],
+  "detailLinkWorks": true,
+  "logout": true,
+  "servedFilesMatch": 40,
+  "containers": [
+    {
+      "service": "operations-console-web",
+      "containerId": "55791dbd0ad282533230cfd55166883df5a90c431becf66595fe3f29bafa5c25",
+      "imageId": "sha256:7aff290486eecefe527f845c78fd5f83d8de774e60e873099b86dba0d49a6586",
+      "healthy": true
+    },
+    {
+      "service": "operations-console-bff",
+      "containerId": "b15d93808ca8d71e6af3cbd77ba3d04ff8f5e5ebaa5e0c23ee7ee0cc715d40fa",
+      "imageId": "sha256:78ff6ca2a3c5ca74017b16b1a4c236909561f37bed860e0d55e4df949c189d91",
+      "healthy": true
+    },
+    {
+      "service": "risk-service",
+      "containerId": "d132472dd14c82c5c840a188cebe6975eb4d7f6bcb79858d3fccb503ffb4c934",
+      "imageId": "sha256:fa91af13a38d41e98d5b8e3a1316ce27a03973ccbc4f7fadb05eb30f180c4376",
+      "healthy": true
+    },
+    {
+      "service": "api-gateway",
+      "containerId": "ccae4d787010cf5d2986abffe6601d8593ee8b26aa069245409fea8c7c71a1f2",
+      "imageId": "sha256:f907833438992310fe771303066685a5cfe08ddcd93e1cf6ef9a225761358953",
+      "healthy": true
+    },
+    {
+      "service": "nginx",
+      "containerId": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "imageId": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "healthy": true
+    },
+    {
+      "service": "platform-support-service",
+      "containerId": "506671e43d24e6fe01643725b6336debc9de642a1c1c348c2a55fa14b6d272c3",
+      "imageId": "sha256:5c566c1d89511d03311417695b3e66b5dbc29d90b30baa4894f4a6bae4e5e614",
+      "healthy": true
+    },
+    {
+      "service": "nacos",
+      "containerId": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "imageId": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "healthy": true
+    },
+    {
+      "service": "vault-service",
+      "containerId": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "imageId": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "healthy": true
+    },
+    {
+      "service": "redis",
+      "containerId": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "imageId": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "healthy": true
+    },
+    {
+      "service": "rabbitmq",
+      "containerId": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "imageId": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "healthy": true
+    },
+    {
+      "service": "mysql",
+      "containerId": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "imageId": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "healthy": true
+    }
+  ],
+  "nonWebContainersUnchanged": 10
+}
