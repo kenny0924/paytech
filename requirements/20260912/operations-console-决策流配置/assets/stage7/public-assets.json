@@ -1,0 +1,28 @@
+{
+  "origin": "http://localhost:28080",
+  "verifiedCount": 22,
+  "sha256": {
+    "assets/Accounts-DhoundK1.js": "e9e12a8c065156799124df557188f326771d6a54da3516b9a9513824780f8405",
+    "assets/Audit-D3eAcELP.css": "05664d0e6d330bc947f68f76dcd684e66a08fa2294e4c4da3ebcf5e7b10ff160",
+    "assets/Audit-urIaN9ku.js": "f1844c9ee23d3a7d7a0516c4c00786cf227a32c05bba773335b9570255b23709",
+    "assets/GatewayConfiguration-CGD9Ot47.js": "426096240db82d4d17d12d81259ed6785659426c4979e8e9ce7b2c2a2df49bd0",
+    "assets/RiskDecisionFlows-524nNVkk.js": "89a94209ec2521f5c8107572ffc58426300ae60d2729b0cf086a2e8bedf1de38",
+    "assets/RiskDecisionFlows-CZAtF-9S.css": "1c43ad53475da469b8a31dd111f760a84021f42704d6b889276dff46f4eb2c20",
+    "assets/RiskDictionary-Bh3RKzVk.js": "c5cdd83bbb1fd396cca596bdb51a7bacae9c90e33e4fc2987ed1abf61b80838e",
+    "assets/RiskRuleConfiguration-CClcxPKY.js": "673cbaac8c842d574dc8d0c2dcbbb989bd2a530eecce39ea1210a23b94737585",
+    "assets/Roles-oJsroE4S.js": "a26ddcd31a5ab31e4adb701938525ace3285e58e7257eaee218c1c0b17b585c6",
+    "assets/deletion-CVAKBMlq.js": "4fa8cad96058e9cfbc0e1968dea789274d77fe7bfd285f76052a36f0d24301c4",
+    "assets/descriptions-CQCzQaak.js": "cf35a21130bc1734978fcf1944dbf576b38dc75a77048685d38bb26272777b3e",
+    "assets/index-BrEp-Qcb.js": "206c298dabac332859af504cd72bb0d0643b46ee751df1a1535aa38789657e58",
+    "assets/index-Cj75_2K1.css": "23b947b67bc9e853cdd3142c0e65ed39422d7b2464ff355d80184919d3bd5fc5",
+    "assets/jsx-runtime-C8XPPeiE.js": "ed9968d7ec886ba16d52d471850068f81d9153385c36b91a8364f071769e888e",
+    "assets/modal-CzeDFW7D.js": "ba69f53c9f5ac02c1276a860e897b9f449f7aedbadd02a772625918cd65d3a8d",
+    "assets/paging-DFV_quYq.js": "6994d5dfb9bf97ab931d38325004258d8f43eb3e43d41519eb9a8e69b160029d",
+    "assets/riskCommands-DIcax2Cz.js": "cac663f60218b162ec0d2a45b5d352843facb717a25217d1923bba8827b648ae",
+    "assets/riskNavigation-DYQciYqv.js": "cbe7211bbb8f97235e4b89714fbf5c3f3abfc3d3f92dd56ecc8b83fb420de99f",
+    "assets/riskRuleConfiguration-BMUDu4IY.css": "76d95c6d0e87f32121505d3f7c3200dc176aa4b1d96d63d08a051b31fcaae50e",
+    "assets/riskRuleConfiguration-D6eRtK1f.js": "757c84d69bdac1f77e7f025c196e3beed30d6e3726aee3e9b55340081c0d17f2",
+    "assets/usePaging-CTrh5YWW.js": "0a2f4d91b1fe35f0c05a4aa4f5574a587e57939e9bb79a0319a040f7b635d6d9",
+    "index.html": "3494b5ed6c8080be3264b2cb0049f1c7780c8c51521362dd23a13fa134c34c81"
+  }
+}

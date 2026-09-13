@@ -1,0 +1,33 @@
+{
+  "target": "desktop-linux/mor-local-mysql-1/127.0.0.1:13306/mor_risk",
+  "authorizedBy": "User 可以 following exact backup and local SQL request",
+  "backupPath": "/Users/kenny/Code-MoR-backups/rco19-local-20260913T040036Z",
+  "backups": {
+    "schema.sql": {
+      "bytes": 238795,
+      "sha256": "86fca49748ad43b182700a0d8d07c5b786df4c943ad06ee8c8c66d324fa2f4c3"
+    },
+    "affected-data.sql": {
+      "bytes": 15954,
+      "sha256": "f383dca63f39afde52530d1de936dcebd0e74a70e1cd33eb2e7dc98e211f863f"
+    }
+  },
+  "applied": [
+    {
+      "file": "requirements/20260912/operations-console-统一风控变量管理与条件编排/db/risk-compliance-service/ddl.sql",
+      "sha256": "90c13c04a17527e12a0bf2432e50ca4bc683234ceb9f3f314a070ae19c1b5432"
+    },
+    {
+      "file": "requirements/20260912/operations-console-统一风控变量管理与条件编排/db/risk-compliance-service/dml.sql",
+      "sha256": "14037600cb70ec101bab2da7f1b7d55ca61e761daeef03d35c59b1e8c507f325"
+    }
+  ],
+  "postcheck": {
+    "definitions": 17,
+    "members": 9,
+    "newTableColumns": 41,
+    "existingAddedColumns": 5,
+    "oldConfigurationRowsUnchanged": true
+  },
+  "appliedAt": "2026-09-13T04:00:38.037535+00:00"
+}

@@ -1,0 +1,156 @@
+{
+  "authorization": "用户要求只修改 Web、不用测试，随后明确部署 test",
+  "tests": "Not run as requested",
+  "scope": "operations-console-web only; no API/DB/other container mutations",
+  "startedAt": "2026-09-12T17:25:22.880480+00:00",
+  "before": {
+    "operations-console-web": {
+      "containerId": "2c42ba9473ce1766fb68032d5f9afde2917ab27697a355434315212d94159429",
+      "imageId": "sha256:e6585089b4e469494f708bfeb2537f1ee79747a7c5483a5ad04e2abe9b25dc16",
+      "startedAt": "2026-09-12T16:49:24.397282175Z",
+      "health": "healthy"
+    },
+    "operations-console-bff": {
+      "containerId": "24a116776a6a2eddcfd0b6cfda36144bdc0873b1d438cf3609baf123c78cd990",
+      "imageId": "sha256:bfc92deaee5ec0b90193eb48be394d48bd9f3bf0ef91bb05402d5a0e31715eaa",
+      "startedAt": "2026-09-12T16:49:17.250592421Z",
+      "health": "healthy"
+    },
+    "risk-service": {
+      "containerId": "cc77cffc484265888dd1cb6bb7bd732a8a1b5b01db91cdce0edc9a6acd6f5109",
+      "imageId": "sha256:89bd500057a2ddb8f43a0cac440dc78db3876dc6c13d80d1b65e5a2225a04945",
+      "startedAt": "2026-09-12T16:49:10.318978668Z",
+      "health": "healthy"
+    },
+    "api-gateway": {
+      "containerId": "4552711da4db528e0c3096f974279c5dc1bcb3b1989a095fc16a8c644494b3dd",
+      "imageId": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+      "startedAt": "2026-09-12T06:49:52.444891428Z",
+      "health": "healthy"
+    },
+    "nginx": {
+      "containerId": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "imageId": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "startedAt": "2026-09-08T10:29:06.641971795Z",
+      "health": "healthy"
+    },
+    "platform-support-service": {
+      "containerId": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "imageId": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332",
+      "startedAt": "2026-09-08T10:28:59.905447584Z",
+      "health": "healthy"
+    },
+    "nacos": {
+      "containerId": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "imageId": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "startedAt": "2026-09-08T10:27:41.600042756Z",
+      "health": "healthy"
+    },
+    "vault-service": {
+      "containerId": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "imageId": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "startedAt": "2026-09-04T13:08:13.406271054Z",
+      "health": "healthy"
+    },
+    "redis": {
+      "containerId": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "imageId": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "startedAt": "2026-09-04T08:25:06.369366719Z",
+      "health": "healthy"
+    },
+    "rabbitmq": {
+      "containerId": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "imageId": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "startedAt": "2026-09-04T08:25:06.356402385Z",
+      "health": "healthy"
+    },
+    "mysql": {
+      "containerId": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "imageId": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "startedAt": "2026-09-04T08:25:06.372277969Z",
+      "health": "healthy"
+    }
+  },
+  "candidateImageId": "sha256:2d40894a389f5fa123493b541c9eec508908fe5da93d234278bf8f821371720b",
+  "sourceSha256": {
+    "src/risk/FlowCanvas.tsx": "743898de227ab73873f5e17535c36cdecaa56323c6ab9cd72dabb7bb79e1616e",
+    "src/risk/FlowPropertyPanel.tsx": "7241ef1d7dd608a1b2e770ad084c68ce5fa97ce411a7d6728549e0b2cf4dd8e8",
+    "src/risk/decisionFlow.css": "185aac853aa0d4fd09b4daacc7ce1b660bbe094a22ddde59c253d3387457e6c3"
+  },
+  "status": "DEPLOYED",
+  "after": {
+    "operations-console-web": {
+      "containerId": "70fedc6efe15a0d478131737c5b433a1446f2694a420e4c9efb4f0fedcf3b3a5",
+      "imageId": "sha256:2d40894a389f5fa123493b541c9eec508908fe5da93d234278bf8f821371720b",
+      "startedAt": "2026-09-12T17:25:23.644339716Z",
+      "health": "healthy"
+    },
+    "operations-console-bff": {
+      "containerId": "24a116776a6a2eddcfd0b6cfda36144bdc0873b1d438cf3609baf123c78cd990",
+      "imageId": "sha256:bfc92deaee5ec0b90193eb48be394d48bd9f3bf0ef91bb05402d5a0e31715eaa",
+      "startedAt": "2026-09-12T16:49:17.250592421Z",
+      "health": "healthy"
+    },
+    "risk-service": {
+      "containerId": "cc77cffc484265888dd1cb6bb7bd732a8a1b5b01db91cdce0edc9a6acd6f5109",
+      "imageId": "sha256:89bd500057a2ddb8f43a0cac440dc78db3876dc6c13d80d1b65e5a2225a04945",
+      "startedAt": "2026-09-12T16:49:10.318978668Z",
+      "health": "healthy"
+    },
+    "api-gateway": {
+      "containerId": "4552711da4db528e0c3096f974279c5dc1bcb3b1989a095fc16a8c644494b3dd",
+      "imageId": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+      "startedAt": "2026-09-12T06:49:52.444891428Z",
+      "health": "healthy"
+    },
+    "nginx": {
+      "containerId": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "imageId": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "startedAt": "2026-09-08T10:29:06.641971795Z",
+      "health": "healthy"
+    },
+    "platform-support-service": {
+      "containerId": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "imageId": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332",
+      "startedAt": "2026-09-08T10:28:59.905447584Z",
+      "health": "healthy"
+    },
+    "nacos": {
+      "containerId": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "imageId": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "startedAt": "2026-09-08T10:27:41.600042756Z",
+      "health": "healthy"
+    },
+    "vault-service": {
+      "containerId": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "imageId": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "startedAt": "2026-09-04T13:08:13.406271054Z",
+      "health": "healthy"
+    },
+    "redis": {
+      "containerId": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "imageId": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "startedAt": "2026-09-04T08:25:06.369366719Z",
+      "health": "healthy"
+    },
+    "rabbitmq": {
+      "containerId": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "imageId": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "startedAt": "2026-09-04T08:25:06.356402385Z",
+      "health": "healthy"
+    },
+    "mysql": {
+      "containerId": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "imageId": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "startedAt": "2026-09-04T08:25:06.372277969Z",
+      "health": "healthy"
+    }
+  },
+  "completedAt": "2026-09-12T17:25:34.349238+00:00",
+  "publicAssets": {
+    "index.html": "813ccaef2d375d8c255dced3f3bf7a7c93cc75074e91f2a09a3fc75c909410ca",
+    "assets/RiskDecisionFlows-B1FW0Gw3.css": "b902a3a0e1a1f080d421ac98dc4a153ae8c0f15ad40c8a09f18ae877890b88ea",
+    "assets/RiskDecisionFlows-C_qvLR6J.js": "f8e511d4d4cce20ed4d752b2fb80c20c3d2fc984760978e0715457eb50750881"
+  },
+  "otherContainersUnchanged": true
+}

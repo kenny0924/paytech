@@ -1,0 +1,9 @@
+{
+  "target": "risk-compliance-service/docs/database/risk-compliance.pdma.json",
+  "sha256": "f335d04ee33238452f97068a21fa6ed6f80c0e310861c7843924a2c274212adc",
+  "status": "STAGE_3_PROPOSAL_NOT_APPLIED",
+  "tables": 4,
+  "columns": 44,
+  "secondaryIndexes": 7,
+  "primaryKeys": 4
+}

@@ -921,7 +921,7 @@ test("the current implementation ledger owns core model snapshots while entry do
   assert.match(currentImplementationSource, /\| Commerce \| 15 \| 249 \| 24 \| 12 \| 15 \| — \| 4 \|/u);
   assert.match(currentImplementationSource, /\| Payment Orchestration \| 30 \| 393 \| 42 \| 45 \| 65 \| 8 \| 7 \|/u);
   assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,109 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
-  assert.match(currentImplementationSource, /\| Risk & Compliance \| 74 \| 898 \| 110 \| 80 \| 113 \| 9 \| 8 \|/u);
+  assert.match(currentImplementationSource, /\| Risk & Compliance \| 78 \| 944 \| 115 \| 80 \| 120 \| 9 \| 8 \|/u);
   assert.match(documentGovernanceSource, /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据/u);
   assert.match(documentGovernanceSource, /被取代时增加状态与窄范围后继链接，不重写历史/u);
 });
@@ -944,7 +944,7 @@ test("the current ledger owns the Platform snapshot and governance routes contro
   assert.match(applicationArchitectureSource, /内部服务.*绕过 Gateway/su);
   assert.match(
     currentImplementationSource,
-    /API Gateway[^\n]*动态 Snapshot、数据库 Target\/Route 绑定与转发[^\n]*已实现[^\n]*2026-09-12 本轮动态路由完整制品已部署 mor-test[^\n]*51 条 Operations Route[^\n]*既有 Client 代码[^\n]*Client 入口未开放/u,
+    /API Gateway[^\n]*动态 Snapshot、数据库 Target\/Route 绑定与转发[^\n]*已实现[^\n]*2026-09-12 本轮动态路由完整制品已部署 mor-test[^\n]*61 条 Operations Route[^\n]*既有 Client 代码[^\n]*Client 入口未开放/u,
   );
 });
 

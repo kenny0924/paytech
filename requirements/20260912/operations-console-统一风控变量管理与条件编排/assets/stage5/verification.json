@@ -1,0 +1,111 @@
+{
+  "recordedAt": "2026-09-13T04:58:38.780514+00:00",
+  "stage": "5",
+  "status": "local integration complete; awaiting stage 6 confirmation",
+  "scope": {
+    "applicationsValidated": [
+      "risk-compliance-service",
+      "operations-console-bff",
+      "operations-console-web"
+    ],
+    "productionFilesChanged": 2,
+    "testFilesChanged": 1,
+    "newApis": 0,
+    "newTables": 0,
+    "newColumns": 0,
+    "fixedDefects": 3
+  },
+  "environment": {
+    "database": "desktop-linux/mor-local-mysql-1/127.0.0.1:13306/mor_risk",
+    "risk": "real application and database/Redis",
+    "bff": "real application and Risk HTTP transport",
+    "web": "production Vite build in Codex browser, observed viewport 1280x720",
+    "platform": "Loopback PlatformOperationsSimulator, 134 requests/127 authorizations, unexpected requests 0",
+    "ingress": "test-only loopback header adapter; synthetic navigation; no actual Gateway/Platform registration validation"
+  },
+  "freshChecks": {
+    "riskVariableHttp": {
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "riskCases": [
+      "ruleAndFlowReadLatestSharedValueWithoutChangingSavedHashesOrSuccessfulReplay",
+      "membersRetainExactTextAndOldPageVersionCannotMixReplacements",
+      "simultaneousCasUpdatesHaveExactlyOneWinner",
+      "catalogAndCurrentValuesComeFromVariableLibrary",
+      "previouslyUnknownInputAliasAppearsWithoutRestartOrCodeRegistration",
+      "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[1]",
+      "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[2]",
+      "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[3]",
+      "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[4]",
+      "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[5]",
+      "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[6]",
+      "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[7]",
+      "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[8]",
+      "duplicateNumericMemberRejectsWholeBatchAndRetainsRootVersion",
+      "catalogSearchAcceptsUnicodeNamesAndTreatsWildcardsLiterally",
+      "dependencyReferencesBlockDeleteAndInvalidCursorIsAClientError",
+      "constantUsesCasAndDeletedCodeCannotBeReused",
+      "systemDefinitionsCannotChangeStatusOrBeDeleted"
+    ],
+    "webFocused": {
+      "tests": 13,
+      "pass": 13,
+      "fail": 0
+    },
+    "webProductionBuild": "passed after all UI fixes; existing >500kB chunk warning",
+    "diffCheck": "root/Risk/BFF/Web passed"
+  },
+  "reusedChecks": {
+    "stage4": "../stage4/verification.json",
+    "riskFull": 254,
+    "bffRisk": 734,
+    "webFull": 913,
+    "note": "Prior full suites were not rerun; fresh checks above cover this stage fixes."
+  },
+  "sourceSha256": {
+    "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/RiskVariableMapper.xml": "31a9a13ff5eec217587a1c84fd9644f4305e4283622664275f9b9f350a802eaa",
+    "risk-compliance-service/risk-test/src/test/java/com/paytech/risk/auto/ext/http/RiskVariableHttpAutoTest.java": "b19b3e2e78aac9db4b9f3cbbabe41e51a42f685212b52bb3afaddd9aaa9dbb07",
+    "operations-console-web/src/pages/RiskVariables.tsx": "683971d5e5f3f6e572ef202430275a2e9a83169037ef76cabc0523c9511144cd",
+    "operations-console-web/dist/index.html": "3b5f71b662aa3548da948183b5a43fc58c9e941d2ddd8481a2c9fa74f4497cc2"
+  },
+  "logSha256": {
+    "rco19-stage5-search-regression.log": "c1279326c5fef1617118c42471f1f9339217570153c07a391bbfa9877d884ae0",
+    "rco19-stage5-web-build.log": "3c0d9f963320c22e1991d7febccbff26c70d4f56aa19c62925c1cfa8ca41c884",
+    "rco19-stage5-web-tests.log": "92c537ec2befab4ed11d08864b2c5873fa34c50f6a2d183ef5572cb492cbb55d"
+  },
+  "limitations": [
+    "AC-13 test example migration deferred to approved deployment stage",
+    "No real decision execution",
+    "No Gateway snapshot/Platform DB registration activation",
+    "No test deployment, artifact publication, Git commit or push"
+  ],
+  "cleanup": {
+    "uiReceiptDeleted": 1,
+    "runtimeFacts": {
+      "t_decision_evaluation": 0,
+      "t_compensation_event": 0,
+      "t_risk_restriction": 0,
+      "t_action_effect": 0,
+      "t_evaluation_action_intent": 0
+    },
+    "t_risk_variable": 17,
+    "t_risk_variable_member": 9,
+    "t_rule_set_version": 0,
+    "t_rule_operand": 0,
+    "t_rule_action_parameter": 0,
+    "t_decision_flow": 0,
+    "t_decision_flow_edge": 0,
+    "ownedVariablesRemaining": 0,
+    "seedThreshold": "8000.00000000",
+    "seedCurrency": "USD"
+  },
+  "temporaryProcesses": {
+    "risk": "stopped",
+    "bff": "stopped",
+    "web": "stopped"
+  },
+  "localLinksChecked": 16
+}

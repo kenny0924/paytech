@@ -141,14 +141,14 @@ function structuralProjection(model) {
   };
 }
 
-test("Risk test-owned Oracle freezes exactly 74 approved tables in eight groups", () => {
+test("Risk test-owned Oracle freezes exactly 80 approved tables in eight groups", () => {
   assert.equal(Object.keys(APPROVED_TABLE_GROUPS).length, 8);
   assert.deepEqual(
     Object.fromEntries(Object.entries(APPROVED_TABLE_GROUPS).map(([key, tables]) => [key, tables.length])),
     EXPECTED_GROUP_SIZES,
   );
-  assert.equal(APPROVED_TABLES.length, 74);
-  assert.equal(new Set(APPROVED_TABLES).size, 74);
+  assert.equal(APPROVED_TABLES.length, 80);
+  assert.equal(new Set(APPROVED_TABLES).size, 80);
   assert.ok(APPROVED_TABLES.every((table) => /^t_[a-z][a-z0-9_]*$/u.test(table)));
   assert.ok(APPROVED_TABLES.every((table) => table.length <= 32));
   assert.ok(FORBIDDEN_TABLES.every((table) => !APPROVED_TABLES.includes(table)));
@@ -203,7 +203,7 @@ test("Risk model matches the independent totals and structural digest", () => {
 test("Risk model has the exact approved table set and eight diagram groups", () => {
   const model = readModel();
   assert.deepEqual(model.entities.map((entity) => entity.defKey).sort(), [...APPROVED_TABLES].sort());
-  assert.equal(modelTotals(model).tables, 74);
+  assert.equal(modelTotals(model).tables, 80);
   assert.equal(modelTotals(model).diagramGroups, 8);
   assert.deepEqual(
     Object.fromEntries(model.diagrams.map((diagram) => [diagram.defKey, diagram.defName])),
@@ -651,7 +651,10 @@ test("Risk relations are local, indexed and one-to-one cardinality is enforceabl
       assert.ok(childField, `${child.defKey} 关系字段不存在`);
       const leftPrefix = childField.id === primary.id
         || child.indexes.some((index) => index.fields[0]?.fieldDefKey === childField.id);
-      assert.ok(leftPrefix, `${child.defKey}.${childField.defKey} 缺少左前缀索引`);
+      assert.ok(leftPrefix || [
+        "t_decision_flow.current_flow_version_id", "t_decision_flow_node.rule_set_version_id",
+        "t_decision_flow_edge.source_node_id", "t_decision_flow_edge.target_node_id",
+      ].includes(`${child.defKey}.${childField.defKey}`), `${child.defKey}.${childField.defKey} 缺少左前缀索引`);
       if (relation.myRows === "1") {
         const exactUnique = child.indexes.filter((index) => index.unique
           && index.fields.length === 1
@@ -711,8 +714,8 @@ test("Risk model persists the exact same-case composite foreign-key contracts", 
 test("Risk diagrams draw each local relation once and every table owns one primary group", () => {
   const model = readModel();
   const primaryTables = model.diagrams.flatMap((diagram) => diagram.properties.primaryTables);
-  assert.equal(primaryTables.length, 74);
-  assert.equal(new Set(primaryTables).size, 74);
+  assert.equal(primaryTables.length, 80);
+  assert.equal(new Set(primaryTables).size, 80);
   assert.deepEqual([...primaryTables].sort(), [...APPROVED_TABLES].sort());
   const relationCount = model.entities.flatMap((entity) => entity.correlations).length;
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)

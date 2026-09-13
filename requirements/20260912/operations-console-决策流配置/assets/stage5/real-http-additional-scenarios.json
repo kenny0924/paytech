@@ -1,0 +1,62 @@
+[
+  {
+    "scenario": "read revised graph for malformed-save diagnosis",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "read exact new rule row",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "read exact new rule version",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "read current revised graph",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "undeclared query rejected at ingress",
+    "status": 400,
+    "detail": "GATEWAY_INVALID_REQUEST"
+  },
+  {
+    "scenario": "flow code exact filtering",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "absent flow code returns empty",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "create separate deletion fixture",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "delete whole flow",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "delete key replays same result",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "deleted flow current detail unavailable",
+    "status": 404,
+    "detail": "RISK_DECISION_CONFIGURATION_NOT_FOUND"
+  },
+  {
+    "scenario": "deleted flow exact history retained",
+    "status": 200,
+    "detail": "OK"
+  }
+]

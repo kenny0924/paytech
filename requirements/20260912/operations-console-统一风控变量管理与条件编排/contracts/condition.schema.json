@@ -1,0 +1,408 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RCO-19 condition data format (HTTP unchanged)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "root"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 2
+    },
+    "root": {
+      "$ref": "#/definitions/expression"
+    }
+  },
+  "definitions": {
+    "operand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operandRole",
+        "valueSequence",
+        "sourceType",
+        "variableCode",
+        "fieldCode",
+        "valueType",
+        "literalValue",
+        "numericUnit",
+        "currencyCode",
+        "currencyVariableCode"
+      ],
+      "properties": {
+        "operandRole": {
+          "enum": [
+            "LEFT",
+            "RIGHT"
+          ]
+        },
+        "valueSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "sourceType": {
+          "enum": [
+            "VARIABLE",
+            "LITERAL"
+          ]
+        },
+        "variableCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fieldCode": {
+          "type": "null"
+        },
+        "valueType": {
+          "enum": [
+            "STRING",
+            "NUMBER",
+            "BOOLEAN",
+            "DATETIME",
+            "DURATION"
+          ]
+        },
+        "literalValue": {
+          "type": [
+            "string",
+            "boolean",
+            "null"
+          ]
+        },
+        "numericUnit": {
+          "enum": [
+            "SCALAR",
+            "MONEY",
+            null
+          ]
+        },
+        "currencyCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currencyVariableCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "sourceType": {
+                "const": "VARIABLE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "variableCode": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+              },
+              "literalValue": {
+                "type": "null"
+              },
+              "numericUnit": {
+                "type": "null"
+              },
+              "currencyCode": {
+                "type": "null"
+              },
+              "currencyVariableCode": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "variableCode": {
+                "type": "null"
+              },
+              "literalValue": {
+                "type": [
+                  "string",
+                  "boolean"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sourceType": {
+                "const": "LITERAL"
+              },
+              "valueType": {
+                "const": "STRING"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "literalValue": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sourceType": {
+                "const": "LITERAL"
+              },
+              "valueType": {
+                "const": "NUMBER"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "literalValue": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]{0,15})(\\.[0-9]{1,8})?$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sourceType": {
+                "const": "LITERAL"
+              },
+              "valueType": {
+                "const": "BOOLEAN"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "literalValue": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sourceType": {
+                "const": "LITERAL"
+              },
+              "valueType": {
+                "const": "DATETIME"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "literalValue": {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{6}Z$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sourceType": {
+                "const": "LITERAL"
+              },
+              "valueType": {
+                "const": "DURATION"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "literalValue": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,18})$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sourceType": {
+                "const": "LITERAL"
+              },
+              "valueType": {
+                "const": "NUMBER"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "numericUnit": {
+                "enum": [
+                  "SCALAR",
+                  "MONEY"
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "numericUnit": {
+                      "const": "SCALAR"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "currencyCode": {
+                      "type": "null"
+                    },
+                    "currencyVariableCode": {
+                      "type": "null"
+                    }
+                  }
+                },
+                "else": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "currencyCode": {
+                          "type": "string"
+                        },
+                        "currencyVariableCode": {
+                          "type": "null"
+                        }
+                      }
+                    },
+                    {
+                      "properties": {
+                        "currencyCode": {
+                          "type": "null"
+                        },
+                        "currencyVariableCode": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "else": {
+            "properties": {
+              "numericUnit": {
+                "type": "null"
+              },
+              "currencyCode": {
+                "type": "null"
+              },
+              "currencyVariableCode": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "expression": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "operator",
+            "operands"
+          ],
+          "properties": {
+            "kind": {
+              "const": "PREDICATE"
+            },
+            "operator": {
+              "enum": [
+                "EQ",
+                "NE",
+                "GT",
+                "GTE",
+                "LT",
+                "LTE",
+                "IN",
+                "NOT_IN",
+                "BETWEEN",
+                "IS_NULL",
+                "IS_NOT_NULL"
+              ]
+            },
+            "operands": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 101,
+              "items": {
+                "$ref": "#/definitions/operand"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "operator",
+            "children"
+          ],
+          "properties": {
+            "kind": {
+              "const": "GROUP"
+            },
+            "operator": {
+              "enum": [
+                "AND",
+                "OR",
+                "NOT"
+              ]
+            },
+            "children": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 32,
+              "items": {
+                "$ref": "#/definitions/expression"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

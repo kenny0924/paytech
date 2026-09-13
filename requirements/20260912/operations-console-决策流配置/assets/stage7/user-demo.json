@@ -1,0 +1,244 @@
+{
+  "authorization": "用户要求：帮我创建一条决策流数据；test 示例保留供用户测试",
+  "origin": "http://localhost:28080",
+  "createdAt": "2026-09-12T17:14:18.843000+00:00",
+  "ruleIdempotencyKey": "10a3eeb5-5cb0-4375-a969-788a18fab5ba",
+  "flowIdempotencyKey": "605f56be-6110-4604-8f68-852ecb8c8e7e",
+  "ruleRequest": {
+    "pointCode": "CHECKOUT_PREPARE",
+    "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+    "ruleSetName": "示例：决策流金额检查",
+    "baseRuleSetVersionId": null,
+    "baseContentHash": null,
+    "changeReason": "按用户要求创建决策流配套示例；净额大于 8000 时命中，动作留空，由连线决定去向。",
+    "rules": [
+      {
+        "ruleCode": "HIGH_AMOUNT_CHECK",
+        "ruleName": "订单净额超过 8000",
+        "priorityNo": 10,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "conditionNodes": [
+          {
+            "nodeKey": "highAmount",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "GT",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "CONTEXT",
+                "fieldCode": "net_amount",
+                "valueType": "NUMBER",
+                "literalValue": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "NUMBER",
+                "literalValue": "8000.00000000"
+              }
+            ]
+          }
+        ],
+        "action": null,
+        "reasonMessage": null,
+        "additionalActions": []
+      }
+    ]
+  },
+  "ruleVersion": {
+    "ruleSetVersionId": "224578384481587200",
+    "pointVersionId": null,
+    "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+    "versionNo": 1,
+    "status": "DRAFT",
+    "contentHash": "01e36620f12d1c1dd98610e5647a01b9939c1b453e5021d25e86b0543be0f379",
+    "createdBy": "221546852372267008",
+    "createTime": "2026-09-12T17:14:19.314340Z"
+  },
+  "flowRequest": {
+    "pointCode": "CHECKOUT_PREPARE",
+    "flowCode": "DEMO_CHECKOUT_BRANCH_FLOW",
+    "flowName": "示例：订单风控条件分流",
+    "baseFlowVersionId": null,
+    "expectedVersion": null,
+    "changeReason": "供人工测试的配置示例：净额大于 8000 拒绝；其余非 USD 转人工审核；其他放行。本期仅保存配置。",
+    "graph": {
+      "schemaVersion": 1,
+      "nodes": [
+        {
+          "nodeKey": "start",
+          "type": "START",
+          "name": "开始",
+          "position": {
+            "x": "0",
+            "y": "200"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "amountCheck",
+          "type": "RULE_SET",
+          "name": "订单金额检查",
+          "position": {
+            "x": "300",
+            "y": "200"
+          },
+          "ruleSetVersionId": "224578384481587200",
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "deny",
+          "type": "END",
+          "name": "大额订单拒绝",
+          "position": {
+            "x": "680",
+            "y": "0"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "DENY",
+          "reasonCode": "DEMO_AMOUNT_LIMIT",
+          "reasonMessage": "示例订单净额超过 8000，拒绝本次请求。"
+        },
+        {
+          "nodeKey": "review",
+          "type": "END",
+          "name": "非美元订单人工审核",
+          "position": {
+            "x": "680",
+            "y": "220"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "REVIEW",
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "allow",
+          "type": "END",
+          "name": "正常订单放行",
+          "position": {
+            "x": "680",
+            "y": "440"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "ALLOW",
+          "reasonCode": null,
+          "reasonMessage": null
+        }
+      ],
+      "edges": [
+        {
+          "edgeKey": "startAmount",
+          "sourceNodeKey": "start",
+          "targetNodeKey": "amountCheck",
+          "type": "UNCONDITIONAL",
+          "priority": 0,
+          "name": "进入金额检查",
+          "condition": null
+        },
+        {
+          "edgeKey": "amountDeny",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "deny",
+          "type": "CONDITIONAL",
+          "priority": 1,
+          "name": "命中大额规则：提前拒绝",
+          "condition": {
+            "schemaVersion": 1,
+            "root": {
+              "kind": "PREDICATE",
+              "source": {
+                "type": "NODE_RESULT",
+                "fieldCode": "matched"
+              },
+              "operator": "EQ",
+              "values": [
+                true
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "currencyReview",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "review",
+          "type": "CONDITIONAL",
+          "priority": 2,
+          "name": "未超额且币种不是 USD",
+          "condition": {
+            "schemaVersion": 1,
+            "root": {
+              "kind": "PREDICATE",
+              "source": {
+                "type": "CONTEXT",
+                "fieldCode": "currency"
+              },
+              "operator": "NE",
+              "values": [
+                "USD"
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "otherwiseAllow",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "allow",
+          "type": "ELSE",
+          "priority": 0,
+          "name": "其他情况：放行",
+          "condition": null
+        }
+      ]
+    }
+  },
+  "validation": {
+    "valid": true,
+    "issues": [],
+    "truncated": false
+  },
+  "flowVersion": {
+    "flowId": "224578384930377728",
+    "flowVersionId": "224578384930377729",
+    "versionNo": 1,
+    "version": "1",
+    "savedBy": "221546852372267008",
+    "savedTime": "2026-09-12T17:14:19.426043Z"
+  },
+  "ruleSetReferences": [
+    {
+      "nodeKey": "amountCheck",
+      "ruleSetId": "224578384506753024",
+      "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+      "ruleSetName": "示例：决策流金额检查",
+      "ruleSetVersionId": "224578384481587200",
+      "versionNo": 1,
+      "ruleCount": 1,
+      "ruleSetStatus": "CONFIGURABLE",
+      "versionStatus": "DRAFT"
+    }
+  ],
+  "verified": {
+    "listRows": 1,
+    "versionNo": 1,
+    "nodes": 5,
+    "edges": 4,
+    "graphReadBackMatches": true,
+    "ruleActionIsEmpty": true
+  },
+  "retainedForUser": true,
+  "editUrl": "http://localhost:28080/risk/decision-flows?view=edit&pointCode=CHECKOUT_PREPARE&flowId=224578384930377728",
+  "creationSessionLoggedOut": true
+}

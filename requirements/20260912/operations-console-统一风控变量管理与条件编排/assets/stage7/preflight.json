@@ -1,0 +1,103 @@
+{
+  "at": "2026-09-13 05:04:38.230115+00:00",
+  "containers": [
+    {
+      "name": "mor-test-operations-console-web-1",
+      "id": "70fedc6efe15a0d478131737c5b433a1446f2694a420e4c9efb4f0fedcf3b3a5",
+      "image": "sha256:2d40894a389f5fa123493b541c9eec508908fe5da93d234278bf8f821371720b",
+      "startedAt": "2026-09-12T17:25:23.644339716Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-operations-console-bff-1",
+      "id": "24a116776a6a2eddcfd0b6cfda36144bdc0873b1d438cf3609baf123c78cd990",
+      "image": "sha256:bfc92deaee5ec0b90193eb48be394d48bd9f3bf0ef91bb05402d5a0e31715eaa",
+      "startedAt": "2026-09-12T16:49:17.250592421Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-risk-service-1",
+      "id": "cc77cffc484265888dd1cb6bb7bd732a8a1b5b01db91cdce0edc9a6acd6f5109",
+      "image": "sha256:89bd500057a2ddb8f43a0cac440dc78db3876dc6c13d80d1b65e5a2225a04945",
+      "startedAt": "2026-09-12T16:49:10.318978668Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-api-gateway-1",
+      "id": "4552711da4db528e0c3096f974279c5dc1bcb3b1989a095fc16a8c644494b3dd",
+      "image": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+      "startedAt": "2026-09-12T06:49:52.444891428Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-nginx-1",
+      "id": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "image": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "startedAt": "2026-09-08T10:29:06.641971795Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-platform-support-service-1",
+      "id": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "image": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332",
+      "startedAt": "2026-09-08T10:28:59.905447584Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-nacos-1",
+      "id": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "image": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "startedAt": "2026-09-08T10:27:41.600042756Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-vault-service-1",
+      "id": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "image": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "startedAt": "2026-09-04T13:08:13.406271054Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-redis-1",
+      "id": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "image": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "startedAt": "2026-09-04T08:25:06.369366719Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-rabbitmq-1",
+      "id": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "image": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "startedAt": "2026-09-04T08:25:06.356402385Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-mysql-1",
+      "id": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "image": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "startedAt": "2026-09-04T08:25:06.372277969Z",
+      "health": "healthy"
+    }
+  ],
+  "admin": [
+    900000000000000510,
+    15
+  ],
+  "demoRule": [
+    224578384506753024,
+    224578384481587200,
+    1
+  ],
+  "demoFlow": [
+    224578384930377728,
+    224578384930377729,
+    1
+  ],
+  "activeRoutes": 61,
+  "activeResources": 35,
+  "sqlSha256": {
+    "db/risk-compliance-service/ddl.sql": "90c13c04a17527e12a0bf2432e50ca4bc683234ceb9f3f314a070ae19c1b5432",
+    "db/risk-compliance-service/dml.sql": "14037600cb70ec101bab2da7f1b7d55ca61e761daeef03d35c59b1e8c507f325",
+    "db/platform-support-service/dml.sql": "68fa7a3e8929231e2842a4c6dd0b39bc7ac9ed9634348b3e19fc3014ba23188a"
+  }
+}

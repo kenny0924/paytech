@@ -1,0 +1,153 @@
+{
+  "at": "2026-09-13 05:23:19.749970+00:00",
+  "containers": [
+    {
+      "name": "mor-test-operations-console-web-1",
+      "id": "850f73ded8a49bec98b18e041e3c7a88e8070a11fa0e2c1dcc7ba40cc24897f0",
+      "image": "sha256:e3e9e6988191a177b516b0bc88900a372592192235e0fb671e226e4339cef3f6",
+      "startedAt": "2026-09-13T05:22:13.410613472Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-operations-console-bff-1",
+      "id": "b319339c64c675ac984b5cbe2bf2a0a962fd1523c434f167eb54f4fb5e2c983e",
+      "image": "sha256:20f0cc8ca5d1e1c50e90dd2a2bfbca4d9acbe57fb754ea34d5458a543810b665",
+      "startedAt": "2026-09-13T05:22:06.288889635Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-risk-service-1",
+      "id": "d132472dd14c82c5c840a188cebe6975eb4d7f6bcb79858d3fccb503ffb4c934",
+      "image": "sha256:fa91af13a38d41e98d5b8e3a1316ce27a03973ccbc4f7fadb05eb30f180c4376",
+      "startedAt": "2026-09-13T05:21:48.787670127Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-api-gateway-1",
+      "id": "4552711da4db528e0c3096f974279c5dc1bcb3b1989a095fc16a8c644494b3dd",
+      "image": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+      "startedAt": "2026-09-12T06:49:52.444891428Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-nginx-1",
+      "id": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "image": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "startedAt": "2026-09-08T10:29:06.641971795Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-platform-support-service-1",
+      "id": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "image": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332",
+      "startedAt": "2026-09-08T10:28:59.905447584Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-nacos-1",
+      "id": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "image": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "startedAt": "2026-09-08T10:27:41.600042756Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-vault-service-1",
+      "id": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "image": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "startedAt": "2026-09-04T13:08:13.406271054Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-redis-1",
+      "id": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "image": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "startedAt": "2026-09-04T08:25:06.369366719Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-rabbitmq-1",
+      "id": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "image": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "startedAt": "2026-09-04T08:25:06.356402385Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-mysql-1",
+      "id": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "image": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "startedAt": "2026-09-04T08:25:06.372277969Z",
+      "health": "healthy"
+    }
+  ],
+  "unchangedContainers": [
+    "mor-test-api-gateway-1",
+    "mor-test-nginx-1",
+    "mor-test-platform-support-service-1",
+    "mor-test-nacos-1",
+    "mor-test-vault-service-1",
+    "mor-test-redis-1",
+    "mor-test-rabbitmq-1",
+    "mor-test-mysql-1"
+  ],
+  "snapshot": {
+    "valid": true,
+    "refresh_result": "SUCCESS",
+    "failure_reason": "NONE",
+    "last_valid_in_use": false,
+    "operations_route_count": 70
+  },
+  "checks": [
+    "administrator navigation contains variable menu",
+    "17 variables available through Gateway/BFF/Risk",
+    "Chinese variable search succeeds",
+    "management context reports 65536 member bytes",
+    "65537-byte member request rejected with HTTP 413; original three members unchanged",
+    "rule and flow latest versions are 2; variable issues empty",
+    "demo constants restored to 8000/USD"
+  ],
+  "memberOversizeProblemCode": "GATEWAY_PAYLOAD_TOO_LARGE",
+  "demo": {
+    "ruleVersion": {
+      "ruleSetVersionId": "224761038741016576",
+      "pointVersionId": null,
+      "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+      "versionNo": 2,
+      "status": "DRAFT",
+      "contentHash": "dc520420beff45ebfda24dea7ed3cf776279b988a14d30ccaf8ebb91de67a8e1",
+      "createdBy": "221546852372267008",
+      "createTime": "2026-09-13T05:20:07.461346Z"
+    },
+    "flowVersion": {
+      "flowId": "224578384930377728",
+      "flowVersionId": "224761039558905856",
+      "versionNo": 2,
+      "version": "2",
+      "savedBy": "221546852372267008",
+      "savedTime": "2026-09-13T05:20:07.671948Z"
+    },
+    "currentValues": {
+      "DEMO_AMOUNT_THRESHOLD": "8000.00000000",
+      "DEMO_STANDARD_CURRENCY": "USD",
+      "INPUT_CURRENCY": null,
+      "INPUT_NET_AMOUNT": null,
+      "NODE_MATCHED": null
+    }
+  },
+  "publicAssets": {
+    "assets/RiskDecisionFlows-B1FW0Gw3.css": "b902a3a0e1a1f080d421ac98dc4a153ae8c0f15ad40c8a09f18ae877890b88ea",
+    "assets/RiskDecisionFlows-DG9BqcJw.js": "4046e096671b4f44cab8d15d0f5e2324db35452a7000041b201429f86863dc65",
+    "assets/RiskVariables-BIFvlM1Y.js": "f767b552d0926faf4b243d0cf72201b27cc01d7462676dd2ef902b29eecb6921",
+    "assets/index-Cj75_2K1.css": "23b947b67bc9e853cdd3142c0e65ed39422d7b2464ff355d80184919d3bd5fc5",
+    "assets/index-DDEnK3U2.js": "d8c325c18286ad3b962e9fba6b50cc65b6fb2792bcb85e2f9792e0be0676f9da",
+    "index.html": "82ad046adc194b57b2645935e90673c9c97f9d297b61d56c296bfceda34fdbeb"
+  },
+  "database": {
+    "variables": 17,
+    "members": 9,
+    "activeRoutes": 70,
+    "activeResources": 38,
+    "adminVersion": 17
+  },
+  "sessionLoggedOut": true,
+  "status": "test deployment complete; awaiting user acceptance"
+}

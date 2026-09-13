@@ -7,9 +7,13 @@ import { TABLES as SETTLEMENT_TABLES } from "./manifests/06-settlement.mjs";
 import { TABLES as DISPUTE_TABLES } from "./manifests/07-dispute.mjs";
 import { TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
 
+import { TABLES as DECISION_FLOW_TABLES } from "./manifests/09-decision-flow.mjs";
+
+import { TABLES as VARIABLE_TABLES } from "./manifests/10-variables.mjs";
+
 export const TABLE_GROUPS = Object.freeze({
   due_diligence: DUE_DILIGENCE_TABLES,
-  decision_engine: DECISION_ENGINE_TABLES,
+  decision_engine: [...DECISION_ENGINE_TABLES, ...DECISION_FLOW_TABLES, ...VARIABLE_TABLES],
   evaluation: EVALUATION_TABLES,
   risk_data: RISK_DATA_TABLES,
   limits: LIMIT_TABLES,
@@ -21,8 +25,8 @@ export const TABLE_GROUPS = Object.freeze({
 export const TABLES = Object.freeze(Object.values(TABLE_GROUPS).flat());
 export const RELATIONS = Object.freeze(TABLES.flatMap((table) => table.relations));
 
-if (TABLES.length !== 74) {
-  throw new Error(`Risk & Compliance 生产模型必须有 74 张表，当前为 ${TABLES.length}`);
+if (TABLES.length !== 80) {
+  throw new Error(`Risk & Compliance 生产模型必须有 80 张表，当前为 ${TABLES.length}`);
 }
 
 if (new Set(TABLES.map((table) => table.defKey)).size !== TABLES.length) {

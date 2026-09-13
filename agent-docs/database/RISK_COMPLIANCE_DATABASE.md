@@ -1,5 +1,10 @@
 # Risk & Compliance 数据库设计规范
 
+> **统一变量配置合同：** [RCO-19 数据方案](../../requirements/20260912/operations-console-统一风控变量管理与条件编排/data.md)与[操作数合同](../../requirements/20260912/operations-console-统一风控变量管理与条件编排/api.md)拥有本期变量目录、双侧 VARIABLE/LITERAL、金额元数据及动作主体引用。下文 FEATURE/CONTEXT/LITERAL 与旧输入白名单描述仅继续适用于原历史格式和未迁移的执行能力；不能用于新配置保存。共享值不进入规则/流程内容 Hash，实际数据库应用和验证状态见[当前台账](../CURRENT_IMPLEMENTATION.md#rco19-variables-20260912)。
+
+
+> 已确认配置范围（2026-09-12）：[RCO-17 决策流配置](../decisions/2026-09-12-risk-decision-flow-configuration.md)批准条件连线、提前结束、版本管理及规则动作可选配置。本期不执行决策；图配置模型、接口和 SQL 尚须阶段 3 评审，不将当前顺序绑定或规则条件树直接解释为流程图。原终态、系统义务和历史语义继续有效。
+
 > 已确认功能增量（2026-09-11）：[历史查看与字典决定](../decisions/2026-09-11-risk-rule-history-and-dictionaries.md)批准统一只读详情、历史列表、发布引用查询以及 Risk 原因/主体标签字典。精确两表结构、接口与旧项兼容已通过阶段 3 评审，合同见[需求材料](../../requirements/20260911/operations-console-风控规则集历史与字典管理/technique.md)。旧代码和消息不按当前字典重写，不新增字典回执表或标签主体关系表；数据库执行和验证状态只见当前台账，其他执行语义不变。
 
 > 2026-09-11 规则集整体管理增量以[已确认需求与方案](../../requirements/20260911/operations-console-风控规则集列表优化/technique.md)第 10–18 节为准：新增 `t_rule_set` 稳定根；列表按根及当前配置分页，删除只终止整体配置管理并永久保留编码、版本、Candidate、审计与幂等回放。有任一版本被当前 ACTIVE Release 使用时禁止删除；冻结或 Candidate 引用本身不算使用中。此项取代旧设计无管理根、版本列表和无整体删除部分，保留其余业务事实。
@@ -315,6 +320,8 @@ Role Type 固定为 CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON�
 
 ### 4.2 Decision Point、Feature、Rule、Action 与 Release（19 张）
 
+2026-09-12 已确认的 [配置解耦修订](../../requirements/20260912/operations-console-决策流配置/simplification.md)覆盖本节普通规则配置的输入来源：规则版本直接记录准确输入合同，Context 条件/动作参数按该合同的 `field_code` 解释；共享工程目录拥有字段类型和用途。旧 Point Version、Input Field 快照及顺序绑定保留为历史发布、原顺序图和成功回放使用，不再随新规则保存复制。Feature、义务、限额和真实执行的其余设计不因本修订扩展或取消。迁移及验证状态见当前台账。
+
 | 逻辑表 | 用途 | 关键字段与约束 |
 |---|---|---|
 | decision_point | 决策事件点稳定身份 | decision_point_id, point_code, point_name, business_domain, status；point_code 唯一；business_domain 决定 Evaluation 允许的输入快照族 |
@@ -327,14 +334,14 @@ Role Type 固定为 CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON�
 | feature_dependency | Feature Version 的显式依赖 | dependency_id, feature_version_id, dependency_feature_version_id, sequence_no, required_flag；依赖组合与 sequence 分别唯一；不得自依赖或成环 |
 | rule_reject_reason | DENY 原因的当前业务字典 | rejection_reason_id, reason_code, reason_name, description, default_message, status, version, created_by, updated_by, create_time, update_time；代码永久唯一，ACTIVE/DISABLED 只决定新选择资格，默认文案不回写旧规则 |
 | rule_subject_tag | 可配置的主体标签当前定义 | tag_id, tag_code, tag_name, description, status, version, created_by, updated_by, create_time, update_time；代码永久唯一，不存真实主体标签或适用主体关系，含义由运营维护 |
-| rule_set_version | Decision Point 内可冻结的规则集身份与版本 | rule_set_version_id, decision_point_id, rule_set_code, rule_set_name, version_no, status, content_hash, created_by, change_reason, frozen_by, frozen_time；point+code+version 唯一；created_by 与 1..500 字符非敏感 change_reason 在创建时必填，FROZEN 后不可修改且不得跨 Point 复用 |
+| rule_set_version | Decision Point 内可冻结的规则集身份与版本 | rule_set_version_id, decision_point_id, input_contract_code, input_contract_version, rule_set_code, rule_set_name, version_no, status, content_hash, created_by, change_reason, frozen_by, frozen_time；准确输入合同无默认值；point+code+version 唯一；created_by 与 1..500 字符非敏感 change_reason 在创建时必填，FROZEN 后不可修改且不得跨 Point 复用 |
 | risk_rule | Rule Set Version 内规则 | rule_id, rule_set_version_id, rule_code, rule_name, priority_no, enabled_flag, reason_code；version+code、version+priority 分别唯一 |
 | rule_node | Condition AST 节点 | node_id, rule_id, parent_node_id, node_type, group_operator, comparison_operator, sequence_no；GROUP/PREDICATE 结构合法，同级 sequence 唯一，无环 |
-| rule_operand | Predicate 来源与多行类型化值 | operand_id, node_id, operand_role, value_sequence, source_type, feature_version_id, input_field_id, value_type, string_value, number_value, boolean_value, datetime_value, duration_value；node+role+sequence 唯一；来源 FEATURE/CONTEXT/LITERAL 三选一；Literal 每行仅一个类型值非空，IN/NOT_IN 使用连续 1..n，BETWEEN 固定两行 [1,2] |
+| rule_operand | Predicate 来源与多行类型化值 | operand_id, node_id, operand_role, value_sequence, source_type, feature_version_id, field_code, value_type, string_value, number_value, boolean_value, datetime_value, duration_value；Context 按所属规则版本的准确合同解析字段及用途；node+role+sequence 唯一；来源 FEATURE/CONTEXT/LITERAL 三选一；Literal 的 field_code 为空且每行仅一个类型值非空，IN/NOT_IN 使用连续 1..n，BETWEEN 固定两行 [1,2] |
 | action_version | Action 目录身份与不可变 Handler 协议 | action_version_id, action_code, action_name, action_category, version_no, handler_code, implementation_version, implementation_hash, terminal_flag, decision_code, merge_policy, shadow_supported_flag, status；action_code+version_no 唯一 |
 | action_parameter_definition | Action 参数协议 | parameter_definition_id, action_version_id, parameter_code, value_type, required_flag, allowed_source_type, target_parameter_flag；参数编码唯一 |
 | rule_action | Rule 绑定的有序 Action | rule_action_id, rule_id, action_version_id, sequence_no；同 Rule sequence 唯一；一条 Rule 最多一个 Terminal |
-| rule_action_parameter | Action 参数绑定 | parameter_id, rule_action_id, parameter_definition_id, value_sequence, source_type, feature_version_id, input_field_id, string_value, number_value, boolean_value, datetime_value, duration_value；来源和值类型严格 XOR；rule_action+definition+value_sequence 唯一；普通及 Control 根参数固定 sequence=1，Settlement Scope 三维按连续 sequence 组成 Tuple |
+| rule_action_parameter | Action 参数绑定 | parameter_id, rule_action_id, parameter_definition_id, value_sequence, source_type, feature_version_id, field_code, string_value, number_value, boolean_value, datetime_value, duration_value；Context 使用所属规则版本准确合同的动作字段，Literal 的 field_code 为空；来源和值类型严格 XOR；rule_action+definition+value_sequence 唯一；普通及 Control 根参数固定 sequence=1，Settlement Scope 三维按连续 sequence 组成 Tuple |
 | decision_release | 一个环境的一份完整候选/生效快照 | release_id, release_no, decision_point_id, point_version_id, environment_code, status, active_slot, content_hash, created_by, activated_time, superseded_time, version；release_no 唯一；point+environment+active_slot 唯一 |
 | release_audit_event | 类型化发布审计流 | audit_event_id, release_id, event_type, event_time；STATIC_CHECK 填 check_code, check_status, severity, error_code, error_summary；APPROVAL 填 shadow_run_id, approval_request_id, approval_status, reviewer_id, review_comment；STATE_CHANGE 填 from_status, to_status, reason_code, trigger_type, trigger_id, actor_id, aggregate_version；三类字段严格互斥且分别建立业务唯一键 |
 | release_shadow_run | 候选 Release 旁路批次与冻结质量汇总 | shadow_run_id, run_no, baseline_release_id, candidate_release_id, status, sample_target, sample_count, started_time, completed_time, allow_to_review_count, allow_to_deny_count, deny_to_allow_count, action_change_count, feature_missing_count, failed_count, timed_out_count, p95_millis, p99_millis, check_status, version；仅 COMPLETED 完整填写质量列；p99>=p95，sample_count<=sample_target |

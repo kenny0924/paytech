@@ -1,0 +1,1217 @@
+{
+  "observedAt": "2026-09-12T12:51:43Z",
+  "scope": "32 decision/rule/release/flow/feature/action tables; read-only source and local/test row-count review; not deletion authorization",
+  "databaseCounts": {
+    "local": {
+      "port": 13306,
+      "counts": {
+        "t_rule_reject_reason": 0,
+        "t_rule_subject_tag": 0,
+        "t_decision_point": 1,
+        "t_decision_point_version": 0,
+        "t_decision_point_input_field": 0,
+        "t_decision_point_feature": 0,
+        "t_decision_point_rule_set": 0,
+        "t_decision_point_obligation": 0,
+        "t_feature_version": 0,
+        "t_feature_dependency": 0,
+        "t_rule_set": 0,
+        "t_rule_set_version": 0,
+        "t_risk_rule": 0,
+        "t_rule_node": 0,
+        "t_rule_operand": 0,
+        "t_action_version": 5,
+        "t_action_parameter_definition": 4,
+        "t_rule_action": 0,
+        "t_rule_action_parameter": 0,
+        "t_decision_release": 0,
+        "t_release_audit_event": 0,
+        "t_release_shadow_run": 0,
+        "t_decision_flow": 0,
+        "t_decision_flow_version": 0,
+        "t_decision_flow_node": 0,
+        "t_decision_flow_edge": 0,
+        "t_decision_evaluation": 0,
+        "t_evaluation_feature_result": 0,
+        "t_evaluation_rule_trace": 0,
+        "t_evaluation_action_intent": 0,
+        "t_action_effect": 0,
+        "t_decision_point_limit_binding": 0
+      },
+      "releaseStatusCounts": []
+    },
+    "test": {
+      "port": 23306,
+      "counts": {
+        "t_rule_reject_reason": 3,
+        "t_rule_subject_tag": 3,
+        "t_decision_point": 1,
+        "t_decision_point_version": 33,
+        "t_decision_point_input_field": 304,
+        "t_decision_point_feature": 0,
+        "t_decision_point_rule_set": 33,
+        "t_decision_point_obligation": 0,
+        "t_feature_version": 0,
+        "t_feature_dependency": 0,
+        "t_rule_set": 26,
+        "t_rule_set_version": 33,
+        "t_risk_rule": 418,
+        "t_rule_node": 418,
+        "t_rule_operand": 836,
+        "t_action_version": 5,
+        "t_action_parameter_definition": 4,
+        "t_rule_action": 427,
+        "t_rule_action_parameter": 24,
+        "t_decision_release": 10,
+        "t_release_audit_event": 73,
+        "t_release_shadow_run": 0,
+        "t_decision_flow": null,
+        "t_decision_flow_version": null,
+        "t_decision_flow_node": null,
+        "t_decision_flow_edge": null,
+        "t_decision_evaluation": 0,
+        "t_evaluation_feature_result": 0,
+        "t_evaluation_rule_trace": 0,
+        "t_evaluation_action_intent": 0,
+        "t_action_effect": 0,
+        "t_decision_point_limit_binding": 0
+      },
+      "releaseStatusCounts": [
+        "TEST\tDRAFT\t3",
+        "TEST\tVALIDATING\t7"
+      ]
+    }
+  },
+  "tables": [
+    {
+      "table": "t_rule_reject_reason",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionDictionaryMapper.xml",
+          "lines": [
+            27,
+            31,
+            34,
+            35,
+            37
+          ]
+        }
+      ],
+      "name": "拒绝原因字典",
+      "category": "保留",
+      "purpose": "规则拒绝与流程 DENY 结束节点共同使用的字典。",
+      "localRows": 0,
+      "testRows": 3
+    },
+    {
+      "table": "t_rule_subject_tag",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionDictionaryMapper.xml",
+          "lines": [
+            64,
+            68,
+            71,
+            72,
+            74
+          ]
+        }
+      ],
+      "name": "主体标签字典",
+      "category": "保留",
+      "purpose": "人工维护可配置的标签；没有主体实际标签事实。",
+      "localRows": 0,
+      "testRows": 3
+    },
+    {
+      "table": "t_decision_point",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            45,
+            93,
+            167,
+            180
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionReleaseMapper.xml",
+          "lines": [
+            71
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            354,
+            369,
+            375,
+            381,
+            392,
+            864,
+            877
+          ]
+        }
+      ],
+      "name": "决策点",
+      "category": "保留",
+      "purpose": "业务发生在哪里，例如结账准备；新旧配置共用的入口身份。",
+      "localRows": 1,
+      "testRows": 1
+    },
+    {
+      "table": "t_decision_point_version",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            44,
+            70
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            427,
+            461,
+            469,
+            491,
+            640,
+            782,
+            801,
+            849
+          ]
+        }
+      ],
+      "name": "旧协议版本",
+      "category": "迁移后评估",
+      "purpose": "保存输入输出协议、默认决定及旧发布版本；目前每个规则集版本配套生成一份，新流程仍借它核对输入协议。",
+      "localRows": 0,
+      "testRows": 33
+    },
+    {
+      "table": "t_decision_point_input_field",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            499,
+            658
+          ]
+        }
+      ],
+      "name": "协议输入字段",
+      "category": "迁移后评估",
+      "purpose": "保存版本可引用字段；规则操作数和动作参数通过 input_field_id 引用。表不一定要删，可先消除逐规则版本重复。",
+      "localRows": 0,
+      "testRows": 304
+    },
+    {
+      "table": "t_decision_point_feature",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            524
+          ]
+        }
+      ],
+      "name": "协议 Feature 绑定",
+      "category": "空表但有读取",
+      "purpose": "旧规则完整读取会查询 Feature 白名单；当前配置不创建 Feature。",
+      "localRows": 0,
+      "testRows": 0
+    },
+    {
+      "table": "t_decision_point_rule_set",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            46,
+            71
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            449,
+            506,
+            514,
+            688,
+            850
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionFlowMapper.xml",
+          "lines": [
+            154
+          ]
+        }
+      ],
+      "name": "旧顺序绑定",
+      "category": "迁移后评估",
+      "purpose": "旧协议版本到规则集版本的顺序关系；规则列表、详情、冻结、发布引用以及新流程协议核对都在用。",
+      "localRows": 0,
+      "testRows": 33
+    },
+    {
+      "table": "t_decision_point_obligation",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            532
+          ]
+        }
+      ],
+      "name": "协议系统义务",
+      "category": "空表但有读取",
+      "purpose": "点版本的工程动作与限额义务；旧规则读取会查询，目前配置不写入。",
+      "localRows": 0,
+      "testRows": 0
+    },
+    {
+      "table": "t_feature_version",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            620
+          ]
+        }
+      ],
+      "name": "Feature 版本",
+      "category": "空表但有读取",
+      "purpose": "预计算字段的定义；闭包及 Hash 在存在引用时读取，当前本机和 test 均为空。",
+      "localRows": 0,
+      "testRows": 0
+    },
+    {
+      "table": "t_feature_dependency",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            631
+          ]
+        }
+      ],
+      "name": "Feature 依赖",
+      "category": "空表但有读取",
+      "purpose": "Feature 之间的依赖关系；完整读取存在相应加载逻辑，目前为空。",
+      "localRows": 0,
+      "testRows": 0
+    },
+    {
+      "table": "t_rule_set",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            48,
+            73,
+            92,
+            166
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            352,
+            811,
+            814,
+            818,
+            822,
+            826,
+            830,
+            836,
+            852,
+            863,
+            878
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionFlowMapper.xml",
+          "lines": [
+            148
+          ]
+        }
+      ],
+      "name": "规则集",
+      "category": "保留",
+      "purpose": "一集一行、当前版本与整体删除状态；与流程身份不同。",
+      "localRows": 0,
+      "testRows": 26
+    },
+    {
+      "table": "t_rule_set_version",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            38,
+            41,
+            47,
+            72,
+            91,
+            165
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            353,
+            400,
+            408,
+            420,
+            479,
+            673,
+            774,
+            790,
+            851,
+            865,
+            872,
+            876
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionFlowMapper.xml",
+          "lines": [
+            151
+          ]
+        }
+      ],
+      "name": "规则集版本",
+      "category": "保留",
+      "purpose": "独立版本的规则配置；新流程引用准确版本，不能追随最新。",
+      "localRows": 0,
+      "testRows": 33
+    },
+    {
+      "table": "t_risk_rule",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            90,
+            164
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            540,
+            696
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionFlowMapper.xml",
+          "lines": [
+            158
+          ]
+        }
+      ],
+      "name": "规则",
+      "category": "保留",
+      "purpose": "规则编码、优先级、名称、拒绝原因；一版规则集包含多条规则。",
+      "localRows": 0,
+      "testRows": 418
+    },
+    {
+      "table": "t_rule_node",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            548,
+            709
+          ]
+        }
+      ],
+      "name": "规则条件节点",
+      "category": "保留",
+      "purpose": "单条规则内部的 AND/OR/NOT 与比较条件树，不是画布节点。",
+      "localRows": 0,
+      "testRows": 418
+    },
+    {
+      "table": "t_rule_operand",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            560,
+            725
+          ]
+        }
+      ],
+      "name": "规则条件值",
+      "category": "保留",
+      "purpose": "条件的字段来源与类型化字面量，例如币种等于 USD。",
+      "localRows": 0,
+      "testRows": 836
+    },
+    {
+      "table": "t_action_version",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            95,
+            169
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            584
+          ]
+        }
+      ],
+      "name": "动作目录版本",
+      "category": "保留",
+      "purpose": "终态和冷却、标签等动作的定义；当前配置读取已有目录。",
+      "localRows": 5,
+      "testRows": 5
+    },
+    {
+      "table": "t_action_parameter_definition",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            98
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            596
+          ]
+        }
+      ],
+      "name": "动作参数定义",
+      "category": "保留",
+      "purpose": "动作支持的参数、值类型和来源约束；已有 4 行目录。",
+      "localRows": 4,
+      "testRows": 4
+    },
+    {
+      "table": "t_rule_action",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            94,
+            168
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            572,
+            747
+          ]
+        }
+      ],
+      "name": "规则动作绑定",
+      "category": "保留",
+      "purpose": "一条规则命中后的终态与附加动作；动作可为空时不写绑定行。",
+      "localRows": 0,
+      "testRows": 427
+    },
+    {
+      "table": "t_rule_action_parameter",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            97
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            608,
+            757
+          ]
+        }
+      ],
+      "name": "规则动作参数值",
+      "category": "保留",
+      "purpose": "本条规则具体配置的冷却时间、标签等参数值。",
+      "localRows": 0,
+      "testRows": 24
+    },
+    {
+      "table": "t_decision_release",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            43,
+            69
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionReleaseMapper.xml",
+          "lines": [
+            70,
+            85,
+            94,
+            139,
+            147,
+            152,
+            221,
+            231
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml",
+          "lines": [
+            848
+          ]
+        }
+      ],
+      "name": "旧候选发布",
+      "category": "仍有历史/接口",
+      "purpose": "旧 TEST Candidate、发布引用与规则集使用保护；test 有 10 行，尚无 ACTIVE，不是新流程发布。",
+      "localRows": 0,
+      "testRows": 10
+    },
+    {
+      "table": "t_release_audit_event",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionReleaseMapper.xml",
+          "lines": [
+            118,
+            129,
+            169,
+            194
+          ]
+        }
+      ],
+      "name": "旧发布审计",
+      "category": "仍有历史/接口",
+      "purpose": "Candidate 的静态检查和状态变化；test 有 73 行，页面隐藏不能替代数据迁移决定。",
+      "localRows": 0,
+      "testRows": 73
+    },
+    {
+      "table": "t_release_shadow_run",
+      "hits": [],
+      "name": "旁路比较批次",
+      "category": "裁剪候选",
+      "purpose": "未来候选与基线的比较批次；无生产 SQL 入口，本机/test 均为空，审计和评估模型仍有关系。",
+      "localRows": 0,
+      "testRows": 0
+    },
+    {
+      "table": "t_decision_flow",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            179
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionFlowMapper.xml",
+          "lines": [
+            20,
+            85,
+            88,
+            91,
+            100,
+            106,
+            139,
+            143
+          ]
+        }
+      ],
+      "name": "决策流",
+      "category": "保留",
+      "purpose": "独立流程编码、当前版本与整体删除状态；不表示运行发布。",
+      "localRows": 0,
+      "testRows": null
+    },
+    {
+      "table": "t_decision_flow_version",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            178
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionFlowMapper.xml",
+          "lines": [
+            39,
+            101,
+            107,
+            111,
+            114,
+            118,
+            123
+          ]
+        }
+      ],
+      "name": "流程版本",
+      "category": "保留",
+      "purpose": "每次保存的不可变配置版本、名称、修改人和原因。",
+      "localRows": 0,
+      "testRows": null
+    },
+    {
+      "table": "t_decision_flow_node",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml",
+          "lines": [
+            177
+          ]
+        },
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionFlowMapper.xml",
+          "lines": [
+            61,
+            126,
+            134
+          ]
+        }
+      ],
+      "name": "流程节点",
+      "category": "可合并",
+      "purpose": "开始、规则集、结束节点；准确规则版本与拒绝原因。可与连线一并存进版本 JSON，但必须重写引用查询。",
+      "localRows": 0,
+      "testRows": null
+    },
+    {
+      "table": "t_decision_flow_edge",
+      "hits": [
+        {
+          "file": "risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionFlowMapper.xml",
+          "lines": [
+            81,
+            130
+          ]
+        }
+      ],
+      "name": "流程连线",
+      "category": "可合并",
+      "purpose": "节点连接、分支条件与优先级。可合入版本 JSON；当前实现仍逐行保存和读取。",
+      "localRows": 0,
+      "testRows": null
+    },
+    {
+      "table": "t_decision_evaluation",
+      "hits": [],
+      "name": "运行评估记录",
+      "category": "裁剪候选",
+      "purpose": "未来一次真实/旁路/回放的决策事实；当前执行持久化未接入，其他业务模型有引用。",
+      "localRows": 0,
+      "testRows": 0
+    },
+    {
+      "table": "t_evaluation_feature_result",
+      "hits": [],
+      "name": "运行 Feature 结果",
+      "category": "裁剪候选",
+      "purpose": "未来每次评估计算的 Feature 值；无生产 SQL 入口，本机/test 均为空。",
+      "localRows": 0,
+      "testRows": 0
+    },
+    {
+      "table": "t_evaluation_rule_trace",
+      "hits": [],
+      "name": "运行规则轨迹",
+      "category": "裁剪候选",
+      "purpose": "未来每次评估的规则/条件命中轨迹；不是配置历史。",
+      "localRows": 0,
+      "testRows": 0
+    },
+    {
+      "table": "t_evaluation_action_intent",
+      "hits": [],
+      "name": "运行动作意图",
+      "category": "裁剪候选",
+      "purpose": "未来命中后形成的动作贡献及合并来源；当前没有生产 SQL 入口。",
+      "localRows": 0,
+      "testRows": 0
+    },
+    {
+      "table": "t_action_effect",
+      "hits": [],
+      "name": "运行动作结果",
+      "category": "裁剪候选",
+      "purpose": "未来合并后的动作及执行状态；限制、名单、结算控制、争议模型有引用。",
+      "localRows": 0,
+      "testRows": 0
+    },
+    {
+      "table": "t_decision_point_limit_binding",
+      "hits": [],
+      "name": "协议限额绑定",
+      "category": "裁剪候选",
+      "purpose": "未来限额义务绑定及取值来源；无生产 SQL 入口，本机/test 均为空。",
+      "localRows": 0,
+      "testRows": 0
+    }
+  ],
+  "relations": [
+    {
+      "from": "t_qualification_decision",
+      "field": "decision_evaluation_id",
+      "to": "t_decision_evaluation",
+      "refField": "evaluation_id"
+    },
+    {
+      "from": "t_decision_point_version",
+      "field": "decision_point_id",
+      "to": "t_decision_point",
+      "refField": "decision_point_id"
+    },
+    {
+      "from": "t_decision_point_input_field",
+      "field": "point_version_id",
+      "to": "t_decision_point_version",
+      "refField": "point_version_id"
+    },
+    {
+      "from": "t_decision_point_feature",
+      "field": "point_version_id",
+      "to": "t_decision_point_version",
+      "refField": "point_version_id"
+    },
+    {
+      "from": "t_decision_point_feature",
+      "field": "feature_version_id",
+      "to": "t_feature_version",
+      "refField": "feature_version_id"
+    },
+    {
+      "from": "t_decision_point_rule_set",
+      "field": "point_version_id",
+      "to": "t_decision_point_version",
+      "refField": "point_version_id"
+    },
+    {
+      "from": "t_decision_point_rule_set",
+      "field": "rule_set_version_id",
+      "to": "t_rule_set_version",
+      "refField": "rule_set_version_id"
+    },
+    {
+      "from": "t_decision_point_obligation",
+      "field": "point_version_id",
+      "to": "t_decision_point_version",
+      "refField": "point_version_id"
+    },
+    {
+      "from": "t_decision_point_obligation",
+      "field": "action_version_id",
+      "to": "t_action_version",
+      "refField": "action_version_id"
+    },
+    {
+      "from": "t_feature_dependency",
+      "field": "feature_version_id",
+      "to": "t_feature_version",
+      "refField": "feature_version_id"
+    },
+    {
+      "from": "t_feature_dependency",
+      "field": "dependency_feature_version_id",
+      "to": "t_feature_version",
+      "refField": "feature_version_id"
+    },
+    {
+      "from": "t_rule_set",
+      "field": "decision_point_id",
+      "to": "t_decision_point",
+      "refField": "decision_point_id"
+    },
+    {
+      "from": "t_rule_set",
+      "field": "current_rule_set_version_id",
+      "to": "t_rule_set_version",
+      "refField": "rule_set_version_id"
+    },
+    {
+      "from": "t_rule_set_version",
+      "field": "decision_point_id",
+      "to": "t_decision_point",
+      "refField": "decision_point_id"
+    },
+    {
+      "from": "t_risk_rule",
+      "field": "rule_set_version_id",
+      "to": "t_rule_set_version",
+      "refField": "rule_set_version_id"
+    },
+    {
+      "from": "t_rule_node",
+      "field": "rule_id",
+      "to": "t_risk_rule",
+      "refField": "rule_id"
+    },
+    {
+      "from": "t_rule_node",
+      "field": "parent_node_id",
+      "to": "t_rule_node",
+      "refField": "node_id"
+    },
+    {
+      "from": "t_rule_operand",
+      "field": "node_id",
+      "to": "t_rule_node",
+      "refField": "node_id"
+    },
+    {
+      "from": "t_rule_operand",
+      "field": "feature_version_id",
+      "to": "t_feature_version",
+      "refField": "feature_version_id"
+    },
+    {
+      "from": "t_rule_operand",
+      "field": "input_field_id",
+      "to": "t_decision_point_input_field",
+      "refField": "input_field_id"
+    },
+    {
+      "from": "t_action_parameter_definition",
+      "field": "action_version_id",
+      "to": "t_action_version",
+      "refField": "action_version_id"
+    },
+    {
+      "from": "t_rule_action",
+      "field": "rule_id",
+      "to": "t_risk_rule",
+      "refField": "rule_id"
+    },
+    {
+      "from": "t_rule_action",
+      "field": "action_version_id",
+      "to": "t_action_version",
+      "refField": "action_version_id"
+    },
+    {
+      "from": "t_rule_action_parameter",
+      "field": "rule_action_id",
+      "to": "t_rule_action",
+      "refField": "rule_action_id"
+    },
+    {
+      "from": "t_rule_action_parameter",
+      "field": "parameter_definition_id",
+      "to": "t_action_parameter_definition",
+      "refField": "parameter_definition_id"
+    },
+    {
+      "from": "t_rule_action_parameter",
+      "field": "feature_version_id",
+      "to": "t_feature_version",
+      "refField": "feature_version_id"
+    },
+    {
+      "from": "t_rule_action_parameter",
+      "field": "input_field_id",
+      "to": "t_decision_point_input_field",
+      "refField": "input_field_id"
+    },
+    {
+      "from": "t_decision_release",
+      "field": "decision_point_id",
+      "to": "t_decision_point",
+      "refField": "decision_point_id"
+    },
+    {
+      "from": "t_decision_release",
+      "field": "point_version_id",
+      "to": "t_decision_point_version",
+      "refField": "point_version_id"
+    },
+    {
+      "from": "t_release_audit_event",
+      "field": "release_id",
+      "to": "t_decision_release",
+      "refField": "release_id"
+    },
+    {
+      "from": "t_release_audit_event",
+      "field": "shadow_run_id",
+      "to": "t_release_shadow_run",
+      "refField": "shadow_run_id"
+    },
+    {
+      "from": "t_release_shadow_run",
+      "field": "baseline_release_id",
+      "to": "t_decision_release",
+      "refField": "release_id"
+    },
+    {
+      "from": "t_release_shadow_run",
+      "field": "candidate_release_id",
+      "to": "t_decision_release",
+      "refField": "release_id"
+    },
+    {
+      "from": "t_decision_flow",
+      "field": "decision_point_id",
+      "to": "t_decision_point",
+      "refField": "decision_point_id"
+    },
+    {
+      "from": "t_decision_flow",
+      "field": "current_flow_version_id",
+      "to": "t_decision_flow_version",
+      "refField": "flow_version_id"
+    },
+    {
+      "from": "t_decision_flow_version",
+      "field": "flow_id",
+      "to": "t_decision_flow",
+      "refField": "flow_id"
+    },
+    {
+      "from": "t_decision_flow_node",
+      "field": "flow_version_id",
+      "to": "t_decision_flow_version",
+      "refField": "flow_version_id"
+    },
+    {
+      "from": "t_decision_flow_node",
+      "field": "rule_set_version_id",
+      "to": "t_rule_set_version",
+      "refField": "rule_set_version_id"
+    },
+    {
+      "from": "t_decision_flow_node",
+      "field": "reason_code",
+      "to": "t_rule_reject_reason",
+      "refField": "reason_code"
+    },
+    {
+      "from": "t_decision_flow_edge",
+      "field": "flow_version_id",
+      "to": "t_decision_flow_version",
+      "refField": "flow_version_id"
+    },
+    {
+      "from": "t_decision_flow_edge",
+      "field": "source_node_id",
+      "to": "t_decision_flow_node",
+      "refField": "node_id"
+    },
+    {
+      "from": "t_decision_flow_edge",
+      "field": "target_node_id",
+      "to": "t_decision_flow_node",
+      "refField": "node_id"
+    },
+    {
+      "from": "t_decision_evaluation",
+      "field": "decision_point_id",
+      "to": "t_decision_point",
+      "refField": "decision_point_id"
+    },
+    {
+      "from": "t_decision_evaluation",
+      "field": "point_version_id",
+      "to": "t_decision_point_version",
+      "refField": "point_version_id"
+    },
+    {
+      "from": "t_decision_evaluation",
+      "field": "release_id",
+      "to": "t_decision_release",
+      "refField": "release_id"
+    },
+    {
+      "from": "t_decision_evaluation",
+      "field": "shadow_run_id",
+      "to": "t_release_shadow_run",
+      "refField": "shadow_run_id"
+    },
+    {
+      "from": "t_decision_evaluation",
+      "field": "baseline_evaluation_id",
+      "to": "t_decision_evaluation",
+      "refField": "evaluation_id"
+    },
+    {
+      "from": "t_evaluation_feature_result",
+      "field": "evaluation_id",
+      "to": "t_decision_evaluation",
+      "refField": "evaluation_id"
+    },
+    {
+      "from": "t_evaluation_feature_result",
+      "field": "feature_version_id",
+      "to": "t_feature_version",
+      "refField": "feature_version_id"
+    },
+    {
+      "from": "t_evaluation_rule_trace",
+      "field": "evaluation_id",
+      "to": "t_decision_evaluation",
+      "refField": "evaluation_id"
+    },
+    {
+      "from": "t_evaluation_rule_trace",
+      "field": "rule_set_version_id",
+      "to": "t_rule_set_version",
+      "refField": "rule_set_version_id"
+    },
+    {
+      "from": "t_evaluation_rule_trace",
+      "field": "rule_id",
+      "to": "t_risk_rule",
+      "refField": "rule_id"
+    },
+    {
+      "from": "t_evaluation_rule_trace",
+      "field": "node_id",
+      "to": "t_rule_node",
+      "refField": "node_id"
+    },
+    {
+      "from": "t_evaluation_action_intent",
+      "field": "evaluation_id",
+      "to": "t_decision_evaluation",
+      "refField": "evaluation_id"
+    },
+    {
+      "from": "t_evaluation_action_intent",
+      "field": "rule_action_id",
+      "to": "t_rule_action",
+      "refField": "rule_action_id"
+    },
+    {
+      "from": "t_evaluation_action_intent",
+      "field": "obligation_id",
+      "to": "t_decision_point_obligation",
+      "refField": "obligation_id"
+    },
+    {
+      "from": "t_evaluation_action_intent",
+      "field": "action_version_id",
+      "to": "t_action_version",
+      "refField": "action_version_id"
+    },
+    {
+      "from": "t_evaluation_action_intent",
+      "field": "merged_effect_id",
+      "to": "t_action_effect",
+      "refField": "effect_id"
+    },
+    {
+      "from": "t_action_effect",
+      "field": "evaluation_id",
+      "to": "t_decision_evaluation",
+      "refField": "evaluation_id"
+    },
+    {
+      "from": "t_action_effect",
+      "field": "action_version_id",
+      "to": "t_action_version",
+      "refField": "action_version_id"
+    },
+    {
+      "from": "t_checkout_input_snapshot",
+      "field": "evaluation_id",
+      "to": "t_decision_evaluation",
+      "refField": "evaluation_id"
+    },
+    {
+      "from": "t_transaction_risk_assessment",
+      "field": "evaluation_id",
+      "to": "t_decision_evaluation",
+      "refField": "evaluation_id"
+    },
+    {
+      "from": "t_settlement_risk_assessment",
+      "field": "evaluation_id",
+      "to": "t_decision_evaluation",
+      "refField": "evaluation_id"
+    },
+    {
+      "from": "t_risk_restriction",
+      "field": "source_effect_id",
+      "to": "t_action_effect",
+      "refField": "effect_id"
+    },
+    {
+      "from": "t_risk_list_entry",
+      "field": "source_effect_id",
+      "to": "t_action_effect",
+      "refField": "effect_id"
+    },
+    {
+      "from": "t_decision_point_limit_binding",
+      "field": "obligation_id",
+      "to": "t_decision_point_obligation",
+      "refField": "obligation_id"
+    },
+    {
+      "from": "t_decision_point_limit_binding",
+      "field": "limit_version_id",
+      "to": "t_limit_version",
+      "refField": "limit_version_id"
+    },
+    {
+      "from": "t_decision_point_limit_binding",
+      "field": "subject_feature_version_id",
+      "to": "t_feature_version",
+      "refField": "feature_version_id"
+    },
+    {
+      "from": "t_decision_point_limit_binding",
+      "field": "subject_input_field_id",
+      "to": "t_decision_point_input_field",
+      "refField": "input_field_id"
+    },
+    {
+      "from": "t_decision_point_limit_binding",
+      "field": "amount_feature_version_id",
+      "to": "t_feature_version",
+      "refField": "feature_version_id"
+    },
+    {
+      "from": "t_decision_point_limit_binding",
+      "field": "amount_input_field_id",
+      "to": "t_decision_point_input_field",
+      "refField": "input_field_id"
+    },
+    {
+      "from": "t_limit_reservation_group",
+      "field": "obligation_id",
+      "to": "t_decision_point_obligation",
+      "refField": "obligation_id"
+    },
+    {
+      "from": "t_settlement_control",
+      "field": "source_action_effect_id",
+      "to": "t_action_effect",
+      "refField": "effect_id"
+    },
+    {
+      "from": "t_dispute_liability_decision",
+      "field": "decision_evaluation_id",
+      "to": "t_decision_evaluation",
+      "refField": "evaluation_id"
+    },
+    {
+      "from": "t_dispute_liability_decision",
+      "field": "action_effect_id",
+      "to": "t_action_effect",
+      "refField": "effect_id"
+    }
+  ]
+}

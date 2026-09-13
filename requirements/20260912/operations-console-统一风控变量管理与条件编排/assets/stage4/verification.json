@@ -1,0 +1,117 @@
+{
+  "requirement": "RCO-19",
+  "recordedAt": "2026-09-13T04:20:33.892763+00:00",
+  "stage": 4,
+  "stageComplete": true,
+  "checks": [
+    {
+      "name": "Risk complete auto regression through real local HTTP/MySQL/Redis and legacy configuration/replay boundaries",
+      "command": "risk-compliance-service: JDK 25 ./mvnw -pl risk-test -am -Dtest=*AutoTest -Dsurefire.failIfNoSpecifiedTests=false test (MOR_RISK_DB_PASSWORD and MOR_REDIS_PASSWORD loaded from local-environment without printing)",
+      "result": "PASS",
+      "tests": 254,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": 38,
+      "logSha256": "0fc1789bde6361ee45657a1b292dc0d555ad0a17d3b4f33c8472b2f9b74dd599",
+      "evidence": "local-regression.json"
+    },
+    {
+      "name": "BFF Risk regression",
+      "command": "operations-console-bff: JDK 25 ./mvnw -pl paytech-operations-console-bff-test -am -Dtest=Risk*AutoTest -Dsurefire.failIfNoSpecifiedTests=false test",
+      "result": "PASS",
+      "tests": 734,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "d7b013f5ebe504998c1eaffe1cabe06c5e7026e5364d537b7321d4b55a9500b5"
+    },
+    {
+      "name": "BFF final variable and flow boundaries (overlaps Risk regression)",
+      "command": "operations-console-bff: JDK 25 ./mvnw -pl paytech-operations-console-bff-test -am -Dtest=RiskVariableBrowserBoundaryAutoTest,RiskFlowBrowserBoundaryAutoTest -Dsurefire.failIfNoSpecifiedTests=false test",
+      "result": "PASS",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "dc9eea442e931e3f106b69581e4b2df0f36bb012cbad732070adf74d90db0e00"
+    },
+    {
+      "name": "Web all tests including stale projection cancellation",
+      "command": "operations-console-web: npm test",
+      "result": "PASS",
+      "tests": 913,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "b1ae0c97e5755aac75912f805f0de1f6233e15a88d04a1d31ef22bd201ccf50b"
+    },
+    {
+      "name": "Web production build",
+      "command": "operations-console-web: npm run build",
+      "result": "PASS",
+      "tests": null,
+      "failures": null,
+      "errors": null,
+      "skipped": null,
+      "logSha256": "93ca3393f33540d252d884c1e6662e29ae19e7bf78c78c91dd1d8c588eda6081"
+    },
+    {
+      "name": "Risk PDManer and Schema consistency",
+      "command": "node --test scripts/pdmaner/risk-variable-model.test.mjs scripts/pdmaner/risk-compliance-model.test.mjs scripts/pdmaner/risk-compliance-schema.test.mjs",
+      "result": "PASS",
+      "tests": 32,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "b218aa39acdc66f02c83855ac4ec2b8b9bbf3b9685f39e0491c20f161a3943b8"
+    },
+    {
+      "name": "Risk API local Maven cache only",
+      "command": "risk-compliance-service: JDK 25 ./mvnw -pl risk-api -am -DskipTests install",
+      "result": "PASS",
+      "tests": null,
+      "failures": null,
+      "errors": null,
+      "skipped": null,
+      "logSha256": "14a56d45c57acbe122592a1ca4d6215a7c3075ae8aa2640080692bda68ebd8ad"
+    },
+    {
+      "name": "Reviewed local Risk increment, post-application and post-test cleanup checks",
+      "result": "PASS",
+      "evidence": [
+        "local-sql-application.json",
+        "local-regression.json"
+      ],
+      "variables": 17,
+      "members": 9,
+      "ownedTestVariablesRemaining": 0,
+      "originalAffectedTableRows": "All four remain zero, matching pre-application state"
+    },
+    {
+      "name": "Design, SQL shape, examples, local document links and existing Pencil exports",
+      "command": "node requirements/20260912/operations-console-统一风控变量管理与条件编排/check-design.mjs",
+      "result": "PASS",
+      "links": 101,
+      "conditionExamples": 10,
+      "invalidContractCases": 7,
+      "pencilBoards": 7,
+      "logSha256": "2d65fafefd2079a560bbae49d07acfa393dcb8a3225e61425b00105482fb9091"
+    },
+    {
+      "name": "Final whitespace checks",
+      "command": "git diff --check in Code-MoR, risk-compliance-service, operations-console-bff, operations-console-web, platform-support-service",
+      "result": "PASS"
+    }
+  ],
+  "limitations": [
+    "Stage 5 end-to-end Risk/BFF/Web integration and browser visual/interaction acceptance await user confirmation.",
+    "Platform registration remains a disabled/REVOKED SQL artifact and has not been applied.",
+    "No test deployment, test example migration, artifact publication, git commit or push.",
+    "Configuration only: no runtime variable resolution, decision execution or action side effects implemented."
+  ],
+  "warnings": [
+    "Vite retains an existing chunk-size advisory; build passed."
+  ],
+  "nextStep": "User reviews stage-4 delivery and confirms stage 5 integrated frontend/backend validation; do not repeat the already applied local SQL."
+}

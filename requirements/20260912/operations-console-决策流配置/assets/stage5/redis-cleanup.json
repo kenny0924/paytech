@@ -1,0 +1,9 @@
+{
+  "taskNamespaceKeyCountRemoved": 0,
+  "patterns": [
+    "rco17-stage5-risk-*",
+    "rco17-stage5-platform-*",
+    "rco17stage5-*"
+  ],
+  "usedFlush": false
+}

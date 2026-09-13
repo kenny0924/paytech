@@ -1,0 +1,54 @@
+{
+  "phase": "verify",
+  "flowId": "224572974676676608",
+  "ruleSetId": "224572973699403776",
+  "checks": [
+    {
+      "check": "Exactly two versions saved; failed graph added no version",
+      "history": {
+        "items": [
+          {
+            "flowVersionId": "224573969729163264",
+            "versionNo": 2,
+            "flowName": "决策流部署验收第二版",
+            "createdBy": "221546852372267008",
+            "createTime": "2026-09-12T16:56:46.271817Z",
+            "changeReason": "RCO17 test：错误保存保留编辑，修正后保存第二版"
+          },
+          {
+            "flowVersionId": "224572974676676609",
+            "versionNo": 1,
+            "flowName": "决策流部署验收",
+            "createdBy": "221546852372267008",
+            "createTime": "2026-09-12T16:52:49.508358Z",
+            "changeReason": "合成配置：条件分支与提前结束验收"
+          }
+        ],
+        "page": 1,
+        "size": 10,
+        "total": 2
+      }
+    },
+    {
+      "check": "Version one remains unchanged"
+    },
+    {
+      "check": "One stale-version save rejected with HTTP 409",
+      "problem": {
+        "type": "about:blank",
+        "title": "Conflict",
+        "detail": "流程版本已变化，请刷新后重新确认",
+        "code": "RISK_FLOW_VERSION_CONFLICT",
+        "requestId": "377231cf-3e98-4333-b279-820cd47033f3",
+        "timestamp": "2026-09-12T16:58:15.515939Z"
+      }
+    },
+    {
+      "check": "Anonymous flow list rejected with HTTP 401",
+      "code": "GATEWAY_UNAUTHORIZED"
+    },
+    {
+      "check": "One row per new rule root; no synthetic legacy Point ID"
+    }
+  ]
+}

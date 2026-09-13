@@ -1,0 +1,261 @@
+{
+  "authorization": "User replied 对 to the exact stage 6 release package: backups, test SQL, 3 services and bounded synthetic acceptance. No Git/shared publication.",
+  "events": [
+    {
+      "at": "2026-09-12T16:45:58.419213+00:00",
+      "step": "Approved target and migration prerequisites confirmed",
+      "preserved": {
+        "t_rule_set": {
+          "count": 26,
+          "sha256": "22a0afa658fc08fc112381de428e9837a517834efc617a58beb46483c6d8f118"
+        },
+        "t_decision_point_version": {
+          "count": 33,
+          "sha256": "0c8af9a707460d964bc8f360a329a40be200f6fe3ebee4facb87da7b9697c73a"
+        },
+        "t_decision_point_input_field": {
+          "count": 304,
+          "sha256": "427f30b361f0641d70f33f495b4e7f7107537727d86d4108ec6e0b60c57a3ef9"
+        },
+        "t_decision_point_rule_set": {
+          "count": 33,
+          "sha256": "e16fc0b3e56609796f1be20aded479e41cb042969f321cf54e0add4fca1c0ad4"
+        },
+        "t_decision_release": {
+          "count": 10,
+          "sha256": "b08e599ac96527168e00e2aa490882240f208297b6ed60e9557ce59237e3fc24"
+        },
+        "t_command_idempotency": {
+          "count": 87,
+          "sha256": "5b0883df008c5b20d8e1d75b942dca61235a43a213f80e173513685ef4a2c13b"
+        }
+      }
+    },
+    {
+      "at": "2026-09-12T16:45:58.830347+00:00",
+      "step": "Scoped backups completed",
+      "files": [
+        {
+          "file": "/Users/kenny/Code-MoR-backups/rco17-test-20260912T164558Z/risk-schema.sql",
+          "bytes": 164262,
+          "sha256": "40c82e9fe38df68dbe31f6f5a586a35ca0a41d49832d7a784fd03b35e09c7afc",
+          "tables": 74
+        },
+        {
+          "file": "/Users/kenny/Code-MoR-backups/rco17-test-20260912T164558Z/risk-migrating-tables.sql",
+          "bytes": 164152,
+          "sha256": "b3ec0b0d9affd20f6c8d2b888ac745726997289b58a8c8d2ee121d2ab09927c8",
+          "tables": 3
+        },
+        {
+          "file": "/Users/kenny/Code-MoR-backups/rco17-test-20260912T164558Z/platform-control-plane.sql",
+          "bytes": 113921,
+          "sha256": "d1e7e035b9dce538880cdaab1609191e6cc987760f2463d6aefbeeaefce218fb",
+          "tables": 9
+        }
+      ]
+    },
+    {
+      "at": "2026-09-12T16:45:58.874950+00:00",
+      "step": "Committed 01-maintenance.sql",
+      "updates": 56,
+      "inserted": 0,
+      "casChecks": 56
+    },
+    {
+      "at": "2026-09-12T16:46:02.105044+00:00",
+      "step": "Gateway loaded 27 routes",
+      "snapshot": {
+        "valid": true,
+        "refresh_result": "SUCCESS",
+        "failure_reason": "NONE",
+        "last_valid_in_use": false,
+        "operations_route_count": 27
+      }
+    },
+    {
+      "at": "2026-09-12T16:46:23.682792+00:00",
+      "step": "Three apps stopped; no Risk writer connections; history unchanged"
+    },
+    {
+      "at": "2026-09-12T16:46:25.828169+00:00",
+      "step": "Old Reader baseline captured",
+      "rules": 33,
+      "releases": 10
+    },
+    {
+      "at": "2026-09-12T16:46:25.880673+00:00",
+      "step": "Applied DDL statement",
+      "file": "db/risk-compliance-service/ddl.sql",
+      "statement": 1
+    },
+    {
+      "at": "2026-09-12T16:46:25.895044+00:00",
+      "step": "Applied DDL statement",
+      "file": "db/risk-compliance-service/ddl.sql",
+      "statement": 2
+    },
+    {
+      "at": "2026-09-12T16:46:25.912806+00:00",
+      "step": "Applied DDL statement",
+      "file": "db/risk-compliance-service/ddl.sql",
+      "statement": 3
+    },
+    {
+      "at": "2026-09-12T16:46:25.925132+00:00",
+      "step": "Applied DDL statement",
+      "file": "db/risk-compliance-service/ddl.sql",
+      "statement": 4
+    },
+    {
+      "at": "2026-09-12T16:46:25.950945+00:00",
+      "step": "Applied DDL statement",
+      "file": "db/risk-compliance-service/simplification/ddl.sql",
+      "statement": 1
+    },
+    {
+      "at": "2026-09-12T16:46:25.987593+00:00",
+      "step": "Applied DDL statement",
+      "file": "db/risk-compliance-service/simplification/ddl.sql",
+      "statement": 2
+    },
+    {
+      "at": "2026-09-12T16:46:25.996920+00:00",
+      "step": "Applied DDL statement",
+      "file": "db/risk-compliance-service/simplification/ddl.sql",
+      "statement": 3
+    },
+    {
+      "at": "2026-09-12T16:46:26.027347+00:00",
+      "step": "Risk backfill committed after same-transaction checks",
+      "metrics": {
+        "backfilled_rule_versions": 33,
+        "backfilled_context_operands": 418,
+        "backfilled_context_parameters": 11,
+        "unfilled_rule_contracts": 0,
+        "unfilled_context_operands": 0,
+        "unfilled_context_parameters": 0,
+        "bad_contract_backfill": 0,
+        "bad_operand_backfill_or_id_reconstruction": 0,
+        "bad_parameter_backfill_or_id_reconstruction": 0
+      }
+    },
+    {
+      "at": "2026-09-12T16:46:27.190648+00:00",
+      "step": "Stopped without replaying SQL",
+      "errorType": "RuntimeError"
+    },
+    {
+      "at": "2026-09-12T16:49:08.822270+00:00",
+      "step": "Corrected historical check passed against original baseline",
+      "verification": {
+        "rules": 33,
+        "releases": 10,
+        "result": "Exact original rule/point/input identity hashes and Release detail/create replay preserved",
+        "helperSha256": "a7593648266bf0e6efa55f42921f719452fa4fb7f4430e942b8c2f92aca75c6e",
+        "oldJarSha256": "6224c001224b8fdd355dd56dab013e1ce921103f34a0808bf0bc0aacec6a50bc",
+        "candidateJarSha256": "73c0d4c81f5f02791d12fe6ff002dd7ca6702730bd4c51fe5927632c7c6c8c65",
+        "correction": "Ordinary configuration intentionally omits Point projection and physical input IDs. Invoke packaged legacy projection and use actual legacy fields for that part; ordinary rule hash still checked."
+      }
+    },
+    {
+      "at": "2026-09-12T16:49:08.886632+00:00",
+      "step": "Applied DDL statement",
+      "file": "db/risk-compliance-service/simplification/finalize-ddl.sql",
+      "statement": 1
+    },
+    {
+      "at": "2026-09-12T16:49:08.935440+00:00",
+      "step": "Applied DDL statement",
+      "file": "db/risk-compliance-service/simplification/finalize-ddl.sql",
+      "statement": 2
+    },
+    {
+      "at": "2026-09-12T16:49:08.982558+00:00",
+      "step": "Applied DDL statement",
+      "file": "db/risk-compliance-service/simplification/finalize-ddl.sql",
+      "statement": 3
+    },
+    {
+      "at": "2026-09-12T16:49:09.004509+00:00",
+      "step": "Final DDL complete; original roots, history, releases and receipts unchanged"
+    },
+    {
+      "at": "2026-09-12T16:49:09.067030+00:00",
+      "step": "Committed 02-registration.sql",
+      "updates": 1,
+      "inserted": 118,
+      "casChecks": 1
+    },
+    {
+      "at": "2026-09-12T16:49:09.785430+00:00",
+      "step": "Gateway loaded 27 routes",
+      "snapshot": {
+        "valid": true,
+        "refresh_result": "SUCCESS",
+        "failure_reason": "NONE",
+        "last_valid_in_use": false,
+        "operations_route_count": 27
+      }
+    },
+    {
+      "at": "2026-09-12T16:49:16.540942+00:00",
+      "step": "risk-service healthy",
+      "containerId": "cc77cffc484265888dd1cb6bb7bd732a8a1b5b01db91cdce0edc9a6acd6f5109",
+      "imageId": "sha256:89bd500057a2ddb8f43a0cac440dc78db3876dc6c13d80d1b65e5a2225a04945"
+    },
+    {
+      "at": "2026-09-12T16:49:23.636043+00:00",
+      "step": "operations-console-bff healthy",
+      "containerId": "24a116776a6a2eddcfd0b6cfda36144bdc0873b1d438cf3609baf123c78cd990",
+      "imageId": "sha256:bfc92deaee5ec0b90193eb48be394d48bd9f3bf0ef91bb05402d5a0e31715eaa"
+    },
+    {
+      "at": "2026-09-12T16:49:36.694197+00:00",
+      "step": "operations-console-web healthy",
+      "containerId": "2c42ba9473ce1766fb68032d5f9afde2917ab27697a355434315212d94159429",
+      "imageId": "sha256:e6585089b4e469494f708bfeb2537f1ee79747a7c5483a5ad04e2abe9b25dc16"
+    },
+    {
+      "at": "2026-09-12T16:49:36.839552+00:00",
+      "step": "Committed 03-enable.sql",
+      "updates": 71,
+      "inserted": 0,
+      "casChecks": 71
+    },
+    {
+      "at": "2026-09-12T16:49:42.698778+00:00",
+      "step": "Gateway loaded 61 routes",
+      "snapshot": {
+        "valid": true,
+        "refresh_result": "SUCCESS",
+        "failure_reason": "NONE",
+        "last_valid_in_use": false,
+        "operations_route_count": 61
+      }
+    },
+    {
+      "at": "2026-09-12T16:49:42.856069+00:00",
+      "step": "Three services deployed; 61 routes and new public HTML verified",
+      "indexSha256": "3494b5ed6c8080be3264b2cb0049f1c7780c8c51521362dd23a13fa134c34c81"
+    },
+    {
+      "at": "2026-09-12T17:10:14.311696+00:00",
+      "step": "Bounded API/browser acceptance and cleanup complete; final schema and image checks passed",
+      "notRun": "Test readonly-account login acceptance: existing viewer accounts disabled/closed; no account changes",
+      "next": "User functional acceptance; Git commit remains unauthorized"
+    }
+  ],
+  "status": "DEPLOYED_AWAITING_USER_ACCEPTANCE",
+  "backupDirectory": "/Users/kenny/Code-MoR-backups/rco17-test-20260912T164558Z",
+  "acceptanceEvidence": [
+    "acceptance-fixture.json",
+    "http-acceptance.json",
+    "browser-acceptance.json",
+    "save-error-status.json",
+    "cleanup.json",
+    "public-assets.json",
+    "final-checks.json",
+    "readonly-account-check.json"
+  ]
+}

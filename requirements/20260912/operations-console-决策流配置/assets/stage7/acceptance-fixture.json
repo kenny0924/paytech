@@ -1,0 +1,251 @@
+{
+  "environment": "http://localhost:28080",
+  "events": [
+    {
+      "step": "Created one rule version",
+      "value": {
+        "ruleSetVersionId": "224572973611323392",
+        "pointVersionId": null,
+        "ruleSetCode": "RCO17_TEST_20260912T165248",
+        "versionNo": 1,
+        "status": "DRAFT",
+        "contentHash": "d5a58f1a4967ad0d7275520c3aa0d5c66dd763db860880e857b179eef172e3b7",
+        "createdBy": "221546852372267008",
+        "createTime": "2026-09-12T16:52:49.247411Z"
+      }
+    },
+    {
+      "step": "Static validation passed",
+      "value": {
+        "valid": true,
+        "issues": [],
+        "truncated": false
+      }
+    },
+    {
+      "step": "Created one flow version",
+      "value": {
+        "flowId": "224572974676676608",
+        "flowVersionId": "224572974676676609",
+        "versionNo": 1,
+        "version": "1",
+        "savedBy": "221546852372267008",
+        "savedTime": "2026-09-12T16:52:49.508358Z"
+      }
+    },
+    {
+      "step": "Same-key replay preserved first version",
+      "value": {
+        "flowId": "224572974676676608",
+        "flowVersionId": "224572974676676609",
+        "versionNo": 1,
+        "version": "1",
+        "savedBy": "221546852372267008",
+        "savedTime": "2026-09-12T16:52:49.508358Z"
+      }
+    },
+    {
+      "step": "Graph comparison corrected for identity sort order; all node/edge content and explicit priorities equal",
+      "value": true
+    },
+    {
+      "step": "Exact rule reference readable through public API",
+      "value": "224572973611323392"
+    }
+  ],
+  "fixtureCode": "RCO17_TEST_20260912T165248",
+  "ruleBody": {
+    "pointCode": "CHECKOUT_PREPARE",
+    "ruleSetCode": "RCO17_TEST_20260912T165248",
+    "ruleSetName": "决策流部署验收规则",
+    "baseRuleSetVersionId": null,
+    "baseContentHash": null,
+    "changeReason": "RCO17 test 发布验收，结束后删除合成配置",
+    "rules": [
+      {
+        "ruleCode": "CURRENCY_CHECK",
+        "ruleName": "美元订单条件示例",
+        "priorityNo": 10,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "reasonMessage": null,
+        "additionalActions": [],
+        "conditionNodes": [
+          {
+            "nodeKey": "currency",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "EQ",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "CONTEXT",
+                "fieldCode": "currency",
+                "valueType": "STRING",
+                "literalValue": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": "USD"
+              }
+            ]
+          }
+        ],
+        "action": {
+          "actionCode": "ALLOW_CHECKOUT",
+          "actionVersionNo": 1
+        }
+      }
+    ]
+  },
+  "ruleVersion": {
+    "ruleSetVersionId": "224572973611323392",
+    "pointVersionId": null,
+    "ruleSetCode": "RCO17_TEST_20260912T165248",
+    "versionNo": 1,
+    "status": "DRAFT",
+    "contentHash": "d5a58f1a4967ad0d7275520c3aa0d5c66dd763db860880e857b179eef172e3b7",
+    "createdBy": "221546852372267008",
+    "createTime": "2026-09-12T16:52:49.247411Z"
+  },
+  "ruleRoot": {
+    "ruleSetVersionId": "224572973611323392",
+    "pointVersionId": null,
+    "pointCode": "CHECKOUT_PREPARE",
+    "ruleSetCode": "RCO17_TEST_20260912T165248",
+    "ruleSetName": "决策流部署验收规则",
+    "versionNo": 1,
+    "status": "DRAFT",
+    "contentHash": "d5a58f1a4967ad0d7275520c3aa0d5c66dd763db860880e857b179eef172e3b7",
+    "createdBy": "221546852372267008",
+    "changeReason": "RCO17 test 发布验收，结束后删除合成配置",
+    "createTime": "2026-09-12T16:52:49.247411Z",
+    "frozenBy": null,
+    "frozenTime": null,
+    "ruleSetId": "224572973699403776",
+    "managementVersion": "1",
+    "inUse": false
+  },
+  "flowBody": {
+    "pointCode": "CHECKOUT_PREPARE",
+    "flowCode": "RCO17_TEST_20260912T165248",
+    "flowName": "决策流部署验收",
+    "baseFlowVersionId": null,
+    "expectedVersion": null,
+    "changeReason": "合成配置：条件分支与提前结束验收",
+    "graph": {
+      "schemaVersion": 1,
+      "nodes": [
+        {
+          "nodeKey": "start",
+          "type": "START",
+          "name": "开始",
+          "position": {
+            "x": "0",
+            "y": "100"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "clientCheck",
+          "type": "RULE_SET",
+          "name": "币种检查",
+          "position": {
+            "x": "300",
+            "y": "100"
+          },
+          "ruleSetVersionId": "224572973611323392",
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "review",
+          "type": "END",
+          "name": "人工审核",
+          "position": {
+            "x": "600",
+            "y": "0"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "REVIEW",
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "allow",
+          "type": "END",
+          "name": "放行",
+          "position": {
+            "x": "600",
+            "y": "250"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "ALLOW",
+          "reasonCode": null,
+          "reasonMessage": null
+        }
+      ],
+      "edges": [
+        {
+          "edgeKey": "startCheck",
+          "sourceNodeKey": "start",
+          "targetNodeKey": "clientCheck",
+          "type": "UNCONDITIONAL",
+          "priority": 0,
+          "name": "进入检查",
+          "condition": null
+        },
+        {
+          "edgeKey": "clientMatched",
+          "sourceNodeKey": "clientCheck",
+          "targetNodeKey": "review",
+          "type": "CONDITIONAL",
+          "priority": 1,
+          "name": "命中转人工复核",
+          "condition": {
+            "schemaVersion": 1,
+            "root": {
+              "kind": "PREDICATE",
+              "source": {
+                "type": "NODE_RESULT",
+                "fieldCode": "matched"
+              },
+              "operator": "EQ",
+              "values": [
+                true
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "clientElse",
+          "sourceNodeKey": "clientCheck",
+          "targetNodeKey": "allow",
+          "type": "ELSE",
+          "priority": 0,
+          "name": "其他情况",
+          "condition": null
+        }
+      ]
+    }
+  },
+  "flowVersion": {
+    "flowId": "224572974676676608",
+    "flowVersionId": "224572974676676609",
+    "versionNo": 1,
+    "version": "1",
+    "savedBy": "221546852372267008",
+    "savedTime": "2026-09-12T16:52:49.508358Z"
+  }
+}

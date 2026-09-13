@@ -1,0 +1,397 @@
+{
+  "list": {
+    "items": [
+      {
+        "ruleSetVersionId": "224423316587384832",
+        "pointVersionId": "224423316587384833",
+        "pointCode": "CHECKOUT_PREPARE",
+        "ruleSetCode": "DEMO_USD_ALLOW",
+        "ruleSetName": "示例：美元订单放行",
+        "versionNo": 2,
+        "status": "DRAFT",
+        "contentHash": "e9dd1476f64bfb317547288b60f29b83bffcbeed72768b4b9c17bac43d03456c",
+        "createdBy": "221546852372267008",
+        "changeReason": "DEMO 历史示例：新增高优先级折扣异常拒绝；保留旧冻结版本的草稿发布引用。",
+        "createTime": "2026-09-12T06:58:08.245635Z",
+        "frozenBy": null,
+        "frozenTime": null,
+        "ruleSetId": "224423303031394304",
+        "managementVersion": "3",
+        "inUse": false
+      }
+    ],
+    "page": 1,
+    "size": 10,
+    "total": 1
+  },
+  "detail": {
+    "ruleSetVersionId": "224423316587384832",
+    "pointVersionId": "224423316587384833",
+    "pointCode": "CHECKOUT_PREPARE",
+    "ruleSetCode": "DEMO_USD_ALLOW",
+    "ruleSetName": "示例：美元订单放行",
+    "versionNo": 2,
+    "status": "DRAFT",
+    "contentHash": "e9dd1476f64bfb317547288b60f29b83bffcbeed72768b4b9c17bac43d03456c",
+    "createdBy": "221546852372267008",
+    "changeReason": "DEMO 历史示例：新增高优先级折扣异常拒绝；保留旧冻结版本的草稿发布引用。",
+    "createTime": "2026-09-12T06:58:08.245635Z",
+    "frozenBy": null,
+    "frozenTime": null,
+    "rules": [
+      {
+        "ruleCode": "DISCOUNT_DENY",
+        "ruleName": "折扣异常先拒绝",
+        "priorityNo": 10,
+        "enabledFlag": true,
+        "reasonCode": "DEMO_DISCOUNT_ANOMALY",
+        "conditionNodes": [
+          {
+            "nodeKey": "224423316587384844",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "GT",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "CONTEXT",
+                "fieldCode": "discount_amount",
+                "valueType": "NUMBER",
+                "literalValue": null,
+                "variableCode": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "NUMBER",
+                "literalValue": "1000.00000000",
+                "variableCode": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              }
+            ]
+          }
+        ],
+        "action": {
+          "actionCode": "DENY_CHECKOUT",
+          "actionVersionNo": 1
+        },
+        "reasonMessage": "示例折扣金额超过当前配置阈值，请人工确认。",
+        "additionalActions": []
+      },
+      {
+        "ruleCode": "USD_ALLOW",
+        "ruleName": "美元订单允许结账",
+        "priorityNo": 20,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "conditionNodes": [
+          {
+            "nodeKey": "224423316587384849",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "EQ",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "CONTEXT",
+                "fieldCode": "currency",
+                "valueType": "STRING",
+                "literalValue": null,
+                "variableCode": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": "USD",
+                "variableCode": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              }
+            ]
+          }
+        ],
+        "action": {
+          "actionCode": "ALLOW_CHECKOUT",
+          "actionVersionNo": 1
+        },
+        "reasonMessage": null,
+        "additionalActions": []
+      }
+    ],
+    "operandFormat": "LEGACY",
+    "currentVariables": [],
+    "valuesAsOf": "2026-09-13T05:39:02.598189Z",
+    "variableIssues": []
+  },
+  "context": {
+    "descriptorCode": "RISK_VARIABLE_AUTHORING",
+    "point": {
+      "pointCode": "CHECKOUT_PREPARE",
+      "pointName": "Checkout Prepare",
+      "businessDomain": "CHECKOUT",
+      "inputContractCode": "ORDER_PREPARATION",
+      "inputContractVersion": 4,
+      "outputContractCode": "RISK_DECISION_RESULT",
+      "defaultDecision": "REVIEW",
+      "evaluationStrategy": "FIRST_TERMINAL",
+      "failureStrategy": "FAIL_CLOSED",
+      "timeoutMillis": 500,
+      "status": "ACTIVE"
+    },
+    "fields": [
+      {
+        "fieldCode": "client_id",
+        "valueType": "STRING",
+        "requiredFlag": true,
+        "dataClassification": "INTERNAL",
+        "ruleReferenceFlag": false,
+        "actionParameterFlag": true,
+        "variableCode": "INPUT_CLIENT_ID"
+      },
+      {
+        "fieldCode": "country_code",
+        "valueType": "STRING",
+        "requiredFlag": true,
+        "dataClassification": "INTERNAL",
+        "ruleReferenceFlag": true,
+        "actionParameterFlag": false,
+        "variableCode": "INPUT_COUNTRY_CODE"
+      },
+      {
+        "fieldCode": "currency",
+        "valueType": "STRING",
+        "requiredFlag": true,
+        "dataClassification": "INTERNAL",
+        "ruleReferenceFlag": true,
+        "actionParameterFlag": false,
+        "variableCode": "INPUT_CURRENCY"
+      },
+      {
+        "fieldCode": "discount_amount",
+        "valueType": "NUMBER",
+        "requiredFlag": true,
+        "dataClassification": "INTERNAL",
+        "ruleReferenceFlag": true,
+        "actionParameterFlag": false,
+        "variableCode": "INPUT_DISCOUNT_AMOUNT"
+      },
+      {
+        "fieldCode": "entity_source_type",
+        "valueType": "STRING",
+        "requiredFlag": true,
+        "dataClassification": "INTERNAL",
+        "ruleReferenceFlag": true,
+        "actionParameterFlag": false,
+        "variableCode": "INPUT_ENTITY_SOURCE_TYPE"
+      },
+      {
+        "fieldCode": "industry_code",
+        "valueType": "STRING",
+        "requiredFlag": true,
+        "dataClassification": "INTERNAL",
+        "ruleReferenceFlag": true,
+        "actionParameterFlag": false,
+        "variableCode": "INPUT_INDUSTRY_CODE"
+      },
+      {
+        "fieldCode": "locale",
+        "valueType": "STRING",
+        "requiredFlag": true,
+        "dataClassification": "INTERNAL",
+        "ruleReferenceFlag": true,
+        "actionParameterFlag": false,
+        "variableCode": "INPUT_LOCALE"
+      },
+      {
+        "fieldCode": "mcc_code",
+        "valueType": "STRING",
+        "requiredFlag": true,
+        "dataClassification": "INTERNAL",
+        "ruleReferenceFlag": true,
+        "actionParameterFlag": false,
+        "variableCode": "INPUT_MCC_CODE"
+      },
+      {
+        "fieldCode": "merchandise_amount",
+        "valueType": "NUMBER",
+        "requiredFlag": true,
+        "dataClassification": "INTERNAL",
+        "ruleReferenceFlag": true,
+        "actionParameterFlag": false,
+        "variableCode": "INPUT_MERCHANDISE_AMOUNT"
+      },
+      {
+        "fieldCode": "net_amount",
+        "valueType": "NUMBER",
+        "requiredFlag": true,
+        "dataClassification": "INTERNAL",
+        "ruleReferenceFlag": true,
+        "actionParameterFlag": false,
+        "variableCode": "INPUT_NET_AMOUNT"
+      }
+    ],
+    "operators": [
+      "EQ",
+      "NE",
+      "GT",
+      "GTE",
+      "LT",
+      "LTE",
+      "IN",
+      "NOT_IN",
+      "BETWEEN",
+      "IS_NULL",
+      "IS_NOT_NULL"
+    ],
+    "actions": [
+      {
+        "actionCode": "ADD_RISK_TAG",
+        "actionName": "添加主体标签",
+        "actionCategory": "TAG",
+        "versionNo": 1,
+        "terminalFlag": false,
+        "decisionCode": null,
+        "mergePolicy": "UNION",
+        "shadowSupportedFlag": false,
+        "status": "CONFIGURATION_ONLY"
+      },
+      {
+        "actionCode": "ALLOW_CHECKOUT",
+        "actionName": "Allow Checkout",
+        "actionCategory": "DECISION",
+        "versionNo": 1,
+        "terminalFlag": true,
+        "decisionCode": "ALLOW",
+        "mergePolicy": "MOST_RESTRICTIVE",
+        "shadowSupportedFlag": true,
+        "status": "ACTIVE"
+      },
+      {
+        "actionCode": "APPLY_COOLDOWN",
+        "actionName": "冷却",
+        "actionCategory": "RESTRICTION",
+        "versionNo": 1,
+        "terminalFlag": false,
+        "decisionCode": null,
+        "mergePolicy": "MAX",
+        "shadowSupportedFlag": false,
+        "status": "CONFIGURATION_ONLY"
+      },
+      {
+        "actionCode": "DENY_CHECKOUT",
+        "actionName": "Deny Checkout",
+        "actionCategory": "DECISION",
+        "versionNo": 1,
+        "terminalFlag": true,
+        "decisionCode": "DENY",
+        "mergePolicy": "MOST_RESTRICTIVE",
+        "shadowSupportedFlag": true,
+        "status": "ACTIVE"
+      },
+      {
+        "actionCode": "REVIEW_CHECKOUT",
+        "actionName": "Review Checkout",
+        "actionCategory": "DECISION",
+        "versionNo": 1,
+        "terminalFlag": true,
+        "decisionCode": "REVIEW",
+        "mergePolicy": "MOST_RESTRICTIVE",
+        "shadowSupportedFlag": true,
+        "status": "ACTIVE"
+      }
+    ],
+    "features": [],
+    "actionParameters": [
+      {
+        "actionCode": "APPLY_COOLDOWN",
+        "actionVersionNo": 1,
+        "parameterCode": "SUBJECT_ID",
+        "valueType": "STRING",
+        "requiredFlag": true,
+        "allowedSourceType": "VARIABLE",
+        "targetParameterFlag": true,
+        "maxValues": 1,
+        "minimumValue": null,
+        "maximumValue": null,
+        "valuePattern": null
+      },
+      {
+        "actionCode": "APPLY_COOLDOWN",
+        "actionVersionNo": 1,
+        "parameterCode": "DURATION",
+        "valueType": "DURATION",
+        "requiredFlag": true,
+        "allowedSourceType": "LITERAL",
+        "targetParameterFlag": false,
+        "maxValues": 1,
+        "minimumValue": "1",
+        "maximumValue": "31536000000",
+        "valuePattern": null
+      },
+      {
+        "actionCode": "ADD_RISK_TAG",
+        "actionVersionNo": 1,
+        "parameterCode": "SUBJECT_ID",
+        "valueType": "STRING",
+        "requiredFlag": true,
+        "allowedSourceType": "VARIABLE",
+        "targetParameterFlag": true,
+        "maxValues": 1,
+        "minimumValue": null,
+        "maximumValue": null,
+        "valuePattern": null
+      },
+      {
+        "actionCode": "ADD_RISK_TAG",
+        "actionVersionNo": 1,
+        "parameterCode": "TAG",
+        "valueType": "STRING",
+        "requiredFlag": true,
+        "allowedSourceType": "LITERAL",
+        "targetParameterFlag": false,
+        "maxValues": 32,
+        "minimumValue": null,
+        "maximumValue": null,
+        "valuePattern": "[A-Z][A-Z0-9_]{0,63}"
+      }
+    ],
+    "obligations": [],
+    "limitBindings": [],
+    "targetBindings": [
+      {
+        "bindingCode": "CURRENT_CLIENT_V1",
+        "displayName": "当前 Client",
+        "subjectType": "CLIENT",
+        "requiredFields": [],
+        "subjectSemanticRole": "CLIENT_ID"
+      }
+    ],
+    "operandFormat": "VARIABLE_REFERENCE",
+    "variableQueryContext": {
+      "pointCode": "CHECKOUT_PREPARE",
+      "inputContractCode": "ORDER_PREPARATION",
+      "inputContractVersion": 4,
+      "usage": "RULE_CONDITION"
+    }
+  }
+}

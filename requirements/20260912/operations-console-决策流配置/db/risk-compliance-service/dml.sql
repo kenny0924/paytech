@@ -1,0 +1,2 @@
+-- RCO-17：Risk 必需初始化 DML 为 0 行。
+-- 复用现有 CHECKOUT_PREPARE、输入字段与拒绝原因目录；不预置业务流程或虚假动作 Handler。

@@ -1,0 +1,129 @@
+{
+  "flowId": "224572974676676608",
+  "pointCode": "CHECKOUT_PREPARE",
+  "flowCode": "RCO17_TEST_20260912T165248",
+  "flowStatus": "CONFIGURABLE",
+  "currentFlowVersionId": "224572974676676609",
+  "currentVersionNo": 1,
+  "version": "1",
+  "flowVersionId": "224572974676676609",
+  "versionNo": 1,
+  "flowName": "决策流部署验收",
+  "inputContractCode": "ORDER_PREPARATION",
+  "inputContractVersion": 4,
+  "createdBy": "221546852372267008",
+  "createTime": "2026-09-12T16:52:49.508358Z",
+  "changeReason": "合成配置：条件分支与提前结束验收",
+  "graph": {
+    "schemaVersion": 1,
+    "nodes": [
+      {
+        "nodeKey": "allow",
+        "type": "END",
+        "name": "放行",
+        "position": {
+          "x": "600",
+          "y": "250"
+        },
+        "ruleSetVersionId": null,
+        "decisionCode": "ALLOW",
+        "reasonCode": null,
+        "reasonMessage": null
+      },
+      {
+        "nodeKey": "clientCheck",
+        "type": "RULE_SET",
+        "name": "币种检查",
+        "position": {
+          "x": "300",
+          "y": "100"
+        },
+        "ruleSetVersionId": "224572973611323392",
+        "decisionCode": null,
+        "reasonCode": null,
+        "reasonMessage": null
+      },
+      {
+        "nodeKey": "review",
+        "type": "END",
+        "name": "人工审核",
+        "position": {
+          "x": "600",
+          "y": "0"
+        },
+        "ruleSetVersionId": null,
+        "decisionCode": "REVIEW",
+        "reasonCode": null,
+        "reasonMessage": null
+      },
+      {
+        "nodeKey": "start",
+        "type": "START",
+        "name": "开始",
+        "position": {
+          "x": "0",
+          "y": "100"
+        },
+        "ruleSetVersionId": null,
+        "decisionCode": null,
+        "reasonCode": null,
+        "reasonMessage": null
+      }
+    ],
+    "edges": [
+      {
+        "edgeKey": "clientElse",
+        "sourceNodeKey": "clientCheck",
+        "targetNodeKey": "allow",
+        "type": "ELSE",
+        "priority": 0,
+        "name": "其他情况",
+        "condition": null
+      },
+      {
+        "edgeKey": "clientMatched",
+        "sourceNodeKey": "clientCheck",
+        "targetNodeKey": "review",
+        "type": "CONDITIONAL",
+        "priority": 1,
+        "name": "命中转人工复核",
+        "condition": {
+          "schemaVersion": 1,
+          "root": {
+            "kind": "PREDICATE",
+            "source": {
+              "type": "NODE_RESULT",
+              "fieldCode": "matched"
+            },
+            "operator": "EQ",
+            "values": [
+              true
+            ]
+          }
+        }
+      },
+      {
+        "edgeKey": "startCheck",
+        "sourceNodeKey": "start",
+        "targetNodeKey": "clientCheck",
+        "type": "UNCONDITIONAL",
+        "priority": 0,
+        "name": "进入检查",
+        "condition": null
+      }
+    ]
+  },
+  "ruleSetReferences": [
+    {
+      "nodeKey": "clientCheck",
+      "ruleSetId": "224572973699403776",
+      "ruleSetCode": "RCO17_TEST_20260912T165248",
+      "ruleSetName": "决策流部署验收规则",
+      "ruleSetVersionId": "224572973611323392",
+      "versionNo": 1,
+      "ruleCount": 1,
+      "ruleSetStatus": "CONFIGURABLE",
+      "versionStatus": "DRAFT"
+    }
+  ]
+}

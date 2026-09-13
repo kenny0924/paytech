@@ -1,0 +1,28 @@
+{
+  "origin": "http://localhost:28080",
+  "route": "/risk/decision-flows",
+  "method": "CUA browser interactions with real deployed services; selected screenshots and server status correlation",
+  "checks": [
+    "Decision-flow menu and one root row visible",
+    "Edit action enters editable canvas",
+    "Unreachable END node save failed with 422; flow name, reason and invalid node draft preserved",
+    "Removing the invalid node saved version two successfully",
+    "History contains exactly two versions; version one read-only and has no save button",
+    "Browser Back returned through history, editor and list in order",
+    "After API cleanup list shows no synthetic flow"
+  ],
+  "screenshots": [
+    "save-error-preserves-draft.png",
+    "history-version-one.png",
+    "cleaned-flow-list.png"
+  ],
+  "errorRequestId": "476c006d-7333-4be0-98d1-1e9785550afd",
+  "cleanup": {
+    "logout": true,
+    "credentialVariableCleared": true,
+    "agentCreatedTabClosed": true
+  },
+  "notRun": [
+    "Test readonly-account login acceptance: existing accounts DISABLED/CLOSED; stage 5 local evidence retained"
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "authorization": "用户：发布；既有 test 示例统一变量迁移已确认",
+  "startedAt": "2026-09-13 05:11:32.926641+00:00",
+  "events": [
+    {
+      "at": "2026-09-13 05:11:33.053590+00:00",
+      "step": "Scoped backup saved",
+      "value": {
+        "path": "/Users/kenny/Code-MoR-backups/rco19-test-20260913T051133Z/affected-schema-and-role.json",
+        "sha256": "3d98d3d8db00ed84c91d6c6a2d5600716fef5e6ec6c8dbd149443255584d2b7b"
+      }
+    },
+    {
+      "at": "2026-09-13 05:11:54.324519+00:00",
+      "step": "Three applications stopped",
+      "value": null
+    },
+    {
+      "at": "2026-09-13 05:11:54.381046+00:00",
+      "step": "Risk DDL 1 applied",
+      "value": null
+    },
+    {
+      "at": "2026-09-13 05:11:54.398871+00:00",
+      "step": "Risk DDL 2 applied",
+      "value": null
+    },
+    {
+      "at": "2026-09-13 05:11:54.457612+00:00",
+      "step": "Risk DDL 3 applied",
+      "value": null
+    },
+    {
+      "at": "2026-09-13 05:11:54.500446+00:00",
+      "step": "Risk DDL 4 applied",
+      "value": null
+    },
+    {
+      "at": "2026-09-13 05:11:54.519727+00:00",
+      "step": "Risk DDL 5 applied",
+      "value": null
+    },
+    {
+      "at": "2026-09-13 05:11:54.531936+00:00",
+      "step": "Risk DDL 6 applied",
+      "value": null
+    },
+    {
+      "at": "2026-09-13 05:11:54.543692+00:00",
+      "step": "mor_risk DML committed",
+      "value": {
+        "sha256": "14037600cb70ec101bab2da7f1b7d55ca61e761daeef03d35c59b1e8c507f325",
+        "affectedRows": [
+          17,
+          9
+        ]
+      }
+    },
+    {
+      "at": "2026-09-13 05:11:54.558037+00:00",
+      "step": "mor_platform DML committed",
+      "value": {
+        "sha256": "68fa7a3e8929231e2842a4c6dd0b39bc7ac9ed9634348b3e19fc3014ba23188a",
+        "affectedRows": [
+          2,
+          2,
+          3,
+          9,
+          24,
+          19,
+          54,
+          1
+        ]
+      }
+    },
+    {
+      "at": "2026-09-13 05:12:01.570307+00:00",
+      "step": "risk-service healthy",
+      "value": {
+        "name": "mor-test-risk-service-1",
+        "id": "48572346f9b68771f7d489561affd7f4660ca2d80a9052403eb7b979df3c994a",
+        "image": "sha256:441de8ca48ce1bc63443d4332670f8b973a850b919ec6dc811fb9145f5cf0c3a",
+        "startedAt": "2026-09-13T05:11:55.037354297Z",
+        "health": "healthy"
+      }
+    },
+    {
+      "at": "2026-09-13 05:12:08.600587+00:00",
+      "step": "operations-console-bff healthy",
+      "value": {
+        "name": "mor-test-operations-console-bff-1",
+        "id": "965d9f6338afbba749d94d00d0175180effa42d32d487ede253082010c0cfaf4",
+        "image": "sha256:2d73bedc8b8a29c63f1aaa4fb328c42f3ca8e47c6a443ff03de7ef5a9121e1c0",
+        "startedAt": "2026-09-13T05:12:02.0886233Z",
+        "health": "healthy"
+      }
+    },
+    {
+      "at": "2026-09-13 05:12:19.709320+00:00",
+      "step": "operations-console-web healthy",
+      "value": {
+        "name": "mor-test-operations-console-web-1",
+        "id": "1e87179e3c4b79c388153cc2197a5d3c35f88a6c63ac4210eccfb2fb6eebd3c1",
+        "image": "sha256:a5a21f646a039b94f5190c506624d405388cef8b2ee19e21dec9a73a3f4cf0b9",
+        "startedAt": "2026-09-13T05:12:09.058397762Z",
+        "health": "healthy"
+      }
+    },
+    {
+      "at": "2026-09-13 05:13:10.642409+00:00",
+      "step": "Resuming uncommitted activation",
+      "value": {
+        "cause": "Python 3.9 does not support zip(strict=True); no activation UPDATE executed; replaced with explicit length check"
+      }
+    },
+    {
+      "at": "2026-09-13 05:13:10.657726+00:00",
+      "step": "Variable routes, menu and administrator permissions activated",
+      "value": null
+    },
+    {
+      "at": "2026-09-13 05:16:05.800775+00:00",
+      "step": "Corrected member route body limit to existing 64 KiB ceiling",
+      "value": {
+        "previousLimit": 262144,
+        "limit": 65536,
+        "sqlSha256": "7662cf6031f0e3219bd657f52ce39e68e59404cb17b82b9b6835c32abd510038"
+      }
+    },
+    {
+      "at": "2026-09-13 05:16:09.116845+00:00",
+      "step": "Gateway snapshot refreshed",
+      "value": {
+        "valid": true,
+        "refresh_result": "SUCCESS",
+        "failure_reason": "NONE",
+        "last_valid_in_use": false,
+        "operations_route_count": 70
+      }
+    }
+  ]
+}

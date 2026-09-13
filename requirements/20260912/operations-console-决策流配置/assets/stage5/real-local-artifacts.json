@@ -1,0 +1,9 @@
+{
+  "scope": "Local package only; no shared publication or deployment",
+  "sha256": {
+    "risk-compliance-service/risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar": "73c0d4c81f5f02791d12fe6ff002dd7ca6702730bd4c51fe5927632c7c6c8c65",
+    "platform-support-service/platform-support-web/target/platform-support-web-1.0.0-SNAPSHOT-exec.jar": "eee230453fe49cf9fb7d996f5efd042df138d4bf84e95e4c29d97cffca711fc9",
+    "operations-console-bff/paytech-operations-console-bff-web/target/paytech-operations-console-bff-web-1.0.0-SNAPSHOT-exec.jar": "d0da064a8ceee85efa26fd7bdebd9c5f3097b776651327ea49609c476c3fb0dd",
+    "api-gateway/api-gateway-web/target/api-gateway-web-1.0.0-SNAPSHOT-exec.jar": "35bc4ee7b236277cc63f2e7649f9d6d0709bf5f721725af77449f85ac6a9050c"
+  }
+}

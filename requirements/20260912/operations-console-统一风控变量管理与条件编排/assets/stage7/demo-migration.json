@@ -1,0 +1,400 @@
+{
+  "startedAt": "2026-09-13 05:20:06.848518+00:00",
+  "events": [
+    {
+      "step": "Current baselines confirmed",
+      "value": {
+        "ruleHash": "01e36620f12d1c1dd98610e5647a01b9939c1b453e5021d25e86b0543be0f379",
+        "flowVersion": "1"
+      }
+    },
+    {
+      "step": "Saved rule variable-reference version",
+      "value": {
+        "ruleSetVersionId": "224761038741016576",
+        "pointVersionId": null,
+        "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+        "versionNo": 2,
+        "status": "DRAFT",
+        "contentHash": "dc520420beff45ebfda24dea7ed3cf776279b988a14d30ccaf8ebb91de67a8e1",
+        "createdBy": "221546852372267008",
+        "createTime": "2026-09-13T05:20:07.461346Z"
+      }
+    },
+    {
+      "step": "Flow static validation passed",
+      "value": {
+        "valid": true,
+        "issues": [],
+        "truncated": false
+      }
+    },
+    {
+      "step": "Saved flow variable-reference version",
+      "value": {
+        "flowId": "224578384930377728",
+        "flowVersionId": "224761039558905856",
+        "versionNo": 2,
+        "version": "2",
+        "savedBy": "221546852372267008",
+        "savedTime": "2026-09-13T05:20:07.671948Z"
+      }
+    },
+    {
+      "step": "New graphs, references and original history verified",
+      "value": {
+        "ruleHash": "dc520420beff45ebfda24dea7ed3cf776279b988a14d30ccaf8ebb91de67a8e1",
+        "flowGraphSha256": "c920f5fc262526434bcea2873be1c237f4673eeb6c848824acdec925b62e9e40",
+        "references": {
+          "DEMO_AMOUNT_THRESHOLD": {
+            "items": [
+              {
+                "consumerType": "RULE_SET",
+                "rootId": "224578384506753024",
+                "versionId": "224761038741016576",
+                "versionNo": 2,
+                "code": "DEMO_FLOW_AMOUNT_CHECK",
+                "name": "示例：决策流金额检查",
+                "scope": "CURRENT",
+                "location": "HIGH_AMOUNT_CHECK/node:224761038741016578/RIGHT:1",
+                "variableCode": "DEMO_AMOUNT_THRESHOLD"
+              }
+            ],
+            "nextCursor": null,
+            "hasMore": false,
+            "scannedRows": 7
+          },
+          "DEMO_STANDARD_CURRENCY": {
+            "items": [
+              {
+                "consumerType": "DECISION_FLOW",
+                "rootId": "224578384930377728",
+                "versionId": "224761039558905856",
+                "versionNo": 2,
+                "code": "DEMO_CHECKOUT_BRANCH_FLOW",
+                "name": "示例：订单风控条件分流",
+                "scope": "CURRENT",
+                "location": "currencyReview:root.operands[1].variableCode",
+                "variableCode": "DEMO_STANDARD_CURRENCY"
+              }
+            ],
+            "nextCursor": null,
+            "hasMore": false,
+            "scannedRows": 6
+          }
+        }
+      }
+    },
+    {
+      "step": "Temporarily changed dedicated demo constant",
+      "value": {
+        "code": "DEMO_AMOUNT_THRESHOLD",
+        "value": "10000.00000000",
+        "version": "2"
+      }
+    },
+    {
+      "step": "Temporarily changed dedicated demo constant",
+      "value": {
+        "code": "DEMO_STANDARD_CURRENCY",
+        "value": "EUR",
+        "version": "2"
+      }
+    },
+    {
+      "step": "Latest values projected without saving rule or flow",
+      "value": {
+        "ruleValues": {
+          "DEMO_AMOUNT_THRESHOLD": "10000.00000000",
+          "INPUT_CURRENCY": null,
+          "INPUT_NET_AMOUNT": null
+        },
+        "flowValues": {
+          "DEMO_AMOUNT_THRESHOLD": "10000.00000000",
+          "DEMO_STANDARD_CURRENCY": "EUR",
+          "INPUT_CURRENCY": null,
+          "INPUT_NET_AMOUNT": null,
+          "NODE_MATCHED": null
+        },
+        "ruleHashUnchanged": true,
+        "flowVersionAndGraphUnchanged": true
+      }
+    },
+    {
+      "step": "Restored demo constant with own exact CAS",
+      "value": {
+        "code": "DEMO_STANDARD_CURRENCY",
+        "value": "USD",
+        "version": "3"
+      }
+    },
+    {
+      "step": "Restored demo constant with own exact CAS",
+      "value": {
+        "code": "DEMO_AMOUNT_THRESHOLD",
+        "value": "8000.00000000",
+        "version": "3"
+      }
+    }
+  ],
+  "ruleIdempotencyKey": "baaaee5c-385a-48a3-8ddb-a1a59b44d369",
+  "flowIdempotencyKey": "5f5c845b-0f4e-4895-aa3e-afa8846787a2",
+  "ruleRequest": {
+    "pointCode": "CHECKOUT_PREPARE",
+    "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+    "ruleSetName": "示例：决策流金额检查",
+    "baseRuleSetVersionId": "224578384481587200",
+    "baseContentHash": "01e36620f12d1c1dd98610e5647a01b9939c1b453e5021d25e86b0543be0f379",
+    "changeReason": "RCO-19 示例迁移：实付金额与共享阈值变量比较，保留原判断含义。",
+    "rules": [
+      {
+        "ruleCode": "HIGH_AMOUNT_CHECK",
+        "ruleName": "订单实付金额超过配置阈值",
+        "priorityNo": 10,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "conditionNodes": [
+          {
+            "nodeKey": "highAmount",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "GT",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "VARIABLE",
+                "variableCode": "INPUT_NET_AMOUNT",
+                "fieldCode": null,
+                "valueType": "NUMBER",
+                "literalValue": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "VARIABLE",
+                "variableCode": "DEMO_AMOUNT_THRESHOLD",
+                "fieldCode": null,
+                "valueType": "NUMBER",
+                "literalValue": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              }
+            ]
+          }
+        ],
+        "action": null,
+        "reasonMessage": null,
+        "additionalActions": []
+      }
+    ],
+    "operandFormat": "VARIABLE_REFERENCE"
+  },
+  "ruleVersion": {
+    "ruleSetVersionId": "224761038741016576",
+    "pointVersionId": null,
+    "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+    "versionNo": 2,
+    "status": "DRAFT",
+    "contentHash": "dc520420beff45ebfda24dea7ed3cf776279b988a14d30ccaf8ebb91de67a8e1",
+    "createdBy": "221546852372267008",
+    "createTime": "2026-09-13T05:20:07.461346Z"
+  },
+  "flowRequest": {
+    "pointCode": "CHECKOUT_PREPARE",
+    "flowCode": "DEMO_CHECKOUT_BRANCH_FLOW",
+    "flowName": "示例：订单风控条件分流",
+    "baseFlowVersionId": "224578384930377729",
+    "expectedVersion": "1",
+    "changeReason": "RCO-19 示例迁移：沿用原分支顺序，金额阈值及标准币种采用共享变量。",
+    "graph": {
+      "schemaVersion": 1,
+      "nodes": [
+        {
+          "nodeKey": "start",
+          "type": "START",
+          "name": "开始",
+          "position": {
+            "x": "0",
+            "y": "200"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "amountCheck",
+          "type": "RULE_SET",
+          "name": "订单金额检查",
+          "position": {
+            "x": "300",
+            "y": "200"
+          },
+          "ruleSetVersionId": "224761038741016576",
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "deny",
+          "type": "END",
+          "name": "超过配置阈值拒绝",
+          "position": {
+            "x": "680",
+            "y": "0"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "DENY",
+          "reasonCode": "DEMO_AMOUNT_LIMIT",
+          "reasonMessage": "示例订单实付金额超过配置阈值，拒绝本次请求。"
+        },
+        {
+          "nodeKey": "review",
+          "type": "END",
+          "name": "非标准币种人工审核",
+          "position": {
+            "x": "680",
+            "y": "220"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "REVIEW",
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "allow",
+          "type": "END",
+          "name": "正常订单放行",
+          "position": {
+            "x": "680",
+            "y": "440"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "ALLOW",
+          "reasonCode": null,
+          "reasonMessage": null
+        }
+      ],
+      "edges": [
+        {
+          "edgeKey": "startAmount",
+          "sourceNodeKey": "start",
+          "targetNodeKey": "amountCheck",
+          "type": "UNCONDITIONAL",
+          "priority": 0,
+          "name": "进入金额检查",
+          "condition": null
+        },
+        {
+          "edgeKey": "amountDeny",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "deny",
+          "type": "CONDITIONAL",
+          "priority": 1,
+          "name": "命中金额检查：提前拒绝",
+          "condition": {
+            "schemaVersion": 2,
+            "root": {
+              "kind": "PREDICATE",
+              "operator": "EQ",
+              "operands": [
+                {
+                  "operandRole": "LEFT",
+                  "valueSequence": 1,
+                  "sourceType": "VARIABLE",
+                  "variableCode": "NODE_MATCHED",
+                  "fieldCode": null,
+                  "valueType": "BOOLEAN",
+                  "literalValue": null,
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                },
+                {
+                  "operandRole": "RIGHT",
+                  "valueSequence": 1,
+                  "sourceType": "LITERAL",
+                  "variableCode": null,
+                  "fieldCode": null,
+                  "valueType": "BOOLEAN",
+                  "literalValue": true,
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "currencyReview",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "review",
+          "type": "CONDITIONAL",
+          "priority": 2,
+          "name": "非标准币种：人工审核",
+          "condition": {
+            "schemaVersion": 2,
+            "root": {
+              "kind": "PREDICATE",
+              "operator": "NE",
+              "operands": [
+                {
+                  "operandRole": "LEFT",
+                  "valueSequence": 1,
+                  "sourceType": "VARIABLE",
+                  "variableCode": "INPUT_CURRENCY",
+                  "fieldCode": null,
+                  "valueType": "STRING",
+                  "literalValue": null,
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                },
+                {
+                  "operandRole": "RIGHT",
+                  "valueSequence": 1,
+                  "sourceType": "VARIABLE",
+                  "variableCode": "DEMO_STANDARD_CURRENCY",
+                  "fieldCode": null,
+                  "valueType": "STRING",
+                  "literalValue": null,
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "otherwiseAllow",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "allow",
+          "type": "ELSE",
+          "priority": 0,
+          "name": "其他情况：放行",
+          "condition": null
+        }
+      ]
+    }
+  },
+  "flowVersion": {
+    "flowId": "224578384930377728",
+    "flowVersionId": "224761039558905856",
+    "versionNo": 2,
+    "version": "2",
+    "savedBy": "221546852372267008",
+    "savedTime": "2026-09-13T05:20:07.671948Z"
+  },
+  "completedAt": "2026-09-13 05:20:08.014152+00:00",
+  "sessionLoggedOut": true,
+  "status": "completed"
+}

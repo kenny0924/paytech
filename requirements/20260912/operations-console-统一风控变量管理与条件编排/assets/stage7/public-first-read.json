@@ -1,0 +1,1053 @@
+{
+  "variables": {
+    "items": [
+      {
+        "variableCode": "DEMO_AMOUNT_THRESHOLD",
+        "variableName": "示例金额阈值",
+        "sourceType": "CONSTANT",
+        "valueType": "NUMBER",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": false,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": "MONEY",
+        "currencyCode": null,
+        "currencyVariableCode": "INPUT_CURRENCY",
+        "formatCode": "NONE",
+        "allowedValuesVariableCode": null,
+        "currentValue": "8000.00000000",
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "DEMO_STANDARD_CURRENCY",
+        "variableName": "示例标准币种",
+        "sourceType": "CONSTANT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": false,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "UPPER_ALPHA_3",
+        "allowedValuesVariableCode": null,
+        "currentValue": "USD",
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "ENTITY_SOURCE_VALUES",
+        "variableName": "实体来源可选值",
+        "sourceType": "COLLECTION",
+        "valueType": "STRING",
+        "pointCode": null,
+        "usages": [],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "TOKEN",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": 3,
+        "previewMembers": [
+          {
+            "value": "PLATFORM",
+            "displayName": "平台提供"
+          },
+          {
+            "value": "CLIENT",
+            "displayName": "Client 提供"
+          },
+          {
+            "value": "PARTNER",
+            "displayName": "Partner 提供"
+          }
+        ],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "INPUT_CLIENT_ID",
+        "variableName": "Client 标识",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "ACTION_PARAMETER"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "POSITIVE_ID",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "INPUT_COUNTRY_CODE",
+        "variableName": "国家/地区",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "UPPER_ALPHA_2",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "INPUT_CURRENCY",
+        "variableName": "币种",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "UPPER_ALPHA_3",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "INPUT_DISCOUNT_AMOUNT",
+        "variableName": "折扣金额",
+        "sourceType": "INPUT",
+        "valueType": "NUMBER",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": "MONEY",
+        "currencyCode": null,
+        "currencyVariableCode": "INPUT_CURRENCY",
+        "formatCode": "NONE",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "INPUT_ENTITY_SOURCE_TYPE",
+        "variableName": "实体来源",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "TOKEN",
+        "allowedValuesVariableCode": "ENTITY_SOURCE_VALUES",
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "INPUT_INDUSTRY_CODE",
+        "variableName": "行业代码",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "TOKEN",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "INPUT_LOCALE",
+        "variableName": "语言地区",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "BCP47",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "INPUT_MCC_CODE",
+        "variableName": "MCC",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "DIGITS_4",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "INPUT_MERCHANDISE_AMOUNT",
+        "variableName": "商品金额",
+        "sourceType": "INPUT",
+        "valueType": "NUMBER",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": "MONEY",
+        "currencyCode": null,
+        "currencyVariableCode": "INPUT_CURRENCY",
+        "formatCode": "NONE",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "INPUT_NET_AMOUNT",
+        "variableName": "实付金额",
+        "sourceType": "INPUT",
+        "valueType": "NUMBER",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": "MONEY",
+        "currencyCode": null,
+        "currencyVariableCode": "INPUT_CURRENCY",
+        "formatCode": "NONE",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "NODE_DECISION",
+        "variableName": "本节点处理结果",
+        "sourceType": "NODE_OUTPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "TOKEN",
+        "allowedValuesVariableCode": "NODE_DECISION_VALUES",
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "NODE_DECISION_VALUES",
+        "variableName": "节点处理结果可选值",
+        "sourceType": "COLLECTION",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "TOKEN",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": 3,
+        "previewMembers": [
+          {
+            "value": "ALLOW",
+            "displayName": "PASS"
+          },
+          {
+            "value": "REVIEW",
+            "displayName": "REVIEW"
+          },
+          {
+            "value": "DENY",
+            "displayName": "REJECT"
+          }
+        ],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "NODE_MATCHED",
+        "variableName": "本节点是否命中",
+        "sourceType": "NODE_OUTPUT",
+        "valueType": "BOOLEAN",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "NONE",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      },
+      {
+        "variableCode": "RESTRICTED_COUNTRIES",
+        "variableName": "示例受限国家集合",
+        "sourceType": "COLLECTION",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": false,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "UPPER_ALPHA_2",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": 3,
+        "previewMembers": [
+          {
+            "value": "IR",
+            "displayName": null
+          },
+          {
+            "value": "KP",
+            "displayName": null
+          },
+          {
+            "value": "SY",
+            "displayName": null
+          }
+        ],
+        "updateTime": "2026-09-13T05:11:54.534647Z"
+      }
+    ],
+    "page": 1,
+    "size": 100,
+    "total": 17,
+    "valuesAsOf": "2026-09-13T05:17:01.296014Z"
+  },
+  "constants": {
+    "DEMO_AMOUNT_THRESHOLD": {
+      "variableCode": "DEMO_AMOUNT_THRESHOLD",
+      "variableName": "示例金额阈值",
+      "sourceType": "CONSTANT",
+      "valueType": "NUMBER",
+      "pointCode": "CHECKOUT_PREPARE",
+      "usages": [
+        "FLOW_CONDITION",
+        "RULE_CONDITION"
+      ],
+      "systemManaged": false,
+      "status": "ACTIVE",
+      "version": "1",
+      "numericUnit": "MONEY",
+      "currencyCode": null,
+      "currencyVariableCode": "INPUT_CURRENCY",
+      "formatCode": "NONE",
+      "allowedValuesVariableCode": null,
+      "currentValue": "8000.00000000",
+      "memberCount": null,
+      "previewMembers": [],
+      "updateTime": "2026-09-13T05:11:54.534647Z",
+      "description": null,
+      "sourceContractCode": null,
+      "sourceContractVersion": null,
+      "sourceField": null,
+      "createBy": "1",
+      "updateBy": "1",
+      "createTime": "2026-09-13T05:11:54.534647Z",
+      "valuesAsOf": "2026-09-13T05:17:01.503886Z",
+      "allowedValues": null
+    },
+    "DEMO_STANDARD_CURRENCY": {
+      "variableCode": "DEMO_STANDARD_CURRENCY",
+      "variableName": "示例标准币种",
+      "sourceType": "CONSTANT",
+      "valueType": "STRING",
+      "pointCode": "CHECKOUT_PREPARE",
+      "usages": [
+        "FLOW_CONDITION",
+        "RULE_CONDITION"
+      ],
+      "systemManaged": false,
+      "status": "ACTIVE",
+      "version": "1",
+      "numericUnit": null,
+      "currencyCode": null,
+      "currencyVariableCode": null,
+      "formatCode": "UPPER_ALPHA_3",
+      "allowedValuesVariableCode": null,
+      "currentValue": "USD",
+      "memberCount": null,
+      "previewMembers": [],
+      "updateTime": "2026-09-13T05:11:54.534647Z",
+      "description": null,
+      "sourceContractCode": null,
+      "sourceContractVersion": null,
+      "sourceField": null,
+      "createBy": "1",
+      "updateBy": "1",
+      "createTime": "2026-09-13T05:11:54.534647Z",
+      "valuesAsOf": "2026-09-13T05:17:01.552597Z",
+      "allowedValues": null
+    }
+  },
+  "members": {
+    "variableCode": "RESTRICTED_COUNTRIES",
+    "version": "1",
+    "items": [
+      {
+        "value": "IR",
+        "displayName": null,
+        "sortOrder": 1
+      },
+      {
+        "value": "KP",
+        "displayName": null,
+        "sortOrder": 2
+      },
+      {
+        "value": "SY",
+        "displayName": null,
+        "sortOrder": 3
+      }
+    ],
+    "page": 1,
+    "size": 100,
+    "total": 3,
+    "valuesAsOf": "2026-09-13T05:17:01.636052Z"
+  },
+  "rule": {
+    "ruleSetVersionId": "224578384481587200",
+    "pointVersionId": null,
+    "pointCode": "CHECKOUT_PREPARE",
+    "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+    "ruleSetName": "示例：决策流金额检查",
+    "versionNo": 1,
+    "status": "DRAFT",
+    "contentHash": "01e36620f12d1c1dd98610e5647a01b9939c1b453e5021d25e86b0543be0f379",
+    "createdBy": "221546852372267008",
+    "changeReason": "按用户要求创建决策流配套示例；净额大于 8000 时命中，动作留空，由连线决定去向。",
+    "createTime": "2026-09-12T17:14:19.314340Z",
+    "frozenBy": null,
+    "frozenTime": null,
+    "rules": [
+      {
+        "ruleCode": "HIGH_AMOUNT_CHECK",
+        "ruleName": "订单净额超过 8000",
+        "priorityNo": 10,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "conditionNodes": [
+          {
+            "nodeKey": "224578384481587202",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "GT",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "CONTEXT",
+                "fieldCode": "net_amount",
+                "valueType": "NUMBER",
+                "literalValue": null,
+                "variableCode": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "NUMBER",
+                "literalValue": "8000.00000000",
+                "variableCode": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              }
+            ]
+          }
+        ],
+        "action": null,
+        "reasonMessage": null,
+        "additionalActions": []
+      }
+    ],
+    "operandFormat": "LEGACY",
+    "currentVariables": [],
+    "valuesAsOf": "2026-09-13T05:17:01.745252Z",
+    "variableIssues": []
+  },
+  "flow": {
+    "flowId": "224578384930377728",
+    "pointCode": "CHECKOUT_PREPARE",
+    "flowCode": "DEMO_CHECKOUT_BRANCH_FLOW",
+    "flowStatus": "CONFIGURABLE",
+    "currentFlowVersionId": "224578384930377729",
+    "currentVersionNo": 1,
+    "version": "1",
+    "flowVersionId": "224578384930377729",
+    "versionNo": 1,
+    "flowName": "示例：订单风控条件分流",
+    "inputContractCode": "ORDER_PREPARATION",
+    "inputContractVersion": 4,
+    "createdBy": "221546852372267008",
+    "createTime": "2026-09-12T17:14:19.426043Z",
+    "changeReason": "供人工测试的配置示例：净额大于 8000 拒绝；其余非 USD 转人工审核；其他放行。本期仅保存配置。",
+    "graph": {
+      "schemaVersion": 1,
+      "nodes": [
+        {
+          "nodeKey": "allow",
+          "type": "END",
+          "name": "正常订单放行",
+          "position": {
+            "x": "680",
+            "y": "440"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "ALLOW",
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "amountCheck",
+          "type": "RULE_SET",
+          "name": "订单金额检查",
+          "position": {
+            "x": "300",
+            "y": "200"
+          },
+          "ruleSetVersionId": "224578384481587200",
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "deny",
+          "type": "END",
+          "name": "大额订单拒绝",
+          "position": {
+            "x": "680",
+            "y": "0"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "DENY",
+          "reasonCode": "DEMO_AMOUNT_LIMIT",
+          "reasonMessage": "示例订单净额超过 8000，拒绝本次请求。"
+        },
+        {
+          "nodeKey": "review",
+          "type": "END",
+          "name": "非美元订单人工审核",
+          "position": {
+            "x": "680",
+            "y": "220"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "REVIEW",
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "start",
+          "type": "START",
+          "name": "开始",
+          "position": {
+            "x": "0",
+            "y": "200"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        }
+      ],
+      "edges": [
+        {
+          "edgeKey": "otherwiseAllow",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "allow",
+          "type": "ELSE",
+          "priority": 0,
+          "name": "其他情况：放行",
+          "condition": null
+        },
+        {
+          "edgeKey": "amountDeny",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "deny",
+          "type": "CONDITIONAL",
+          "priority": 1,
+          "name": "命中大额规则：提前拒绝",
+          "condition": {
+            "schemaVersion": 1,
+            "root": {
+              "kind": "PREDICATE",
+              "source": {
+                "type": "NODE_RESULT",
+                "fieldCode": "matched"
+              },
+              "operator": "EQ",
+              "values": [
+                true
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "currencyReview",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "review",
+          "type": "CONDITIONAL",
+          "priority": 2,
+          "name": "未超额且币种不是 USD",
+          "condition": {
+            "schemaVersion": 1,
+            "root": {
+              "kind": "PREDICATE",
+              "source": {
+                "type": "CONTEXT",
+                "fieldCode": "currency"
+              },
+              "operator": "NE",
+              "values": [
+                "USD"
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "startAmount",
+          "sourceNodeKey": "start",
+          "targetNodeKey": "amountCheck",
+          "type": "UNCONDITIONAL",
+          "priority": 0,
+          "name": "进入金额检查",
+          "condition": null
+        }
+      ]
+    },
+    "ruleSetReferences": [
+      {
+        "nodeKey": "amountCheck",
+        "ruleSetId": "224578384506753024",
+        "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+        "ruleSetName": "示例：决策流金额检查",
+        "ruleSetVersionId": "224578384481587200",
+        "versionNo": 1,
+        "ruleCount": 1,
+        "ruleSetStatus": "CONFIGURABLE",
+        "versionStatus": "DRAFT"
+      }
+    ],
+    "currentVariables": [],
+    "valuesAsOf": "2026-09-13T05:17:01.857708Z",
+    "variableIssues": []
+  },
+  "navigationCodes": [
+    "OPERATIONS_ACCOUNTS",
+    "OPERATIONS_ACCOUNT_CREATE",
+    "OPERATIONS_SYSTEM",
+    "OPERATIONS_ROLE_CREATE",
+    "OPERATIONS_GATEWAY_CONFIGURATION",
+    "OPERATIONS_GATEWAY_CONFIGURATION_MANAGE",
+    "OPERATIONS_RISK_RULE_CONFIGURATION",
+    "OPERATIONS_RISK_RULE_SET_SAVE",
+    "OPERATIONS_RISK_REJECTION_REASON_CREATE",
+    "OPERATIONS_RISK_SUBJECT_TAG_CREATE",
+    "OPERATIONS_RISK_DECISION_FLOW_SAVE",
+    "OPERATIONS_RISK_VARIABLE_MANAGE",
+    "OPERATIONS_ACCOUNT_DISABLE",
+    "OPERATIONS_ROLES",
+    "OPERATIONS_ROLE_EDIT",
+    "OPERATIONS_PLATFORM_CONFIGURATION",
+    "OPERATIONS_RISK_RULE_SET_FREEZE",
+    "OPERATIONS_RISK_REJECTION_REASONS",
+    "OPERATIONS_RISK_REJECTION_REASON_UPDATE",
+    "OPERATIONS_RISK_SUBJECT_TAG_UPDATE",
+    "OPERATIONS_RISK_DECISION_FLOW_DELETE",
+    "OPERATIONS_RISK_VARIABLE_DELETE",
+    "OPERATIONS_AUDIT",
+    "OPERATIONS_ACCOUNT_ASSIGN_ROLES",
+    "OPERATIONS_ROLE_DELETE",
+    "OPERATIONS_RISK_MANAGEMENT",
+    "OPERATIONS_RISK_TEST_CANDIDATE_CREATE",
+    "OPERATIONS_RISK_SUBJECT_TAGS",
+    "OPERATIONS_RISK_REJECTION_REASON_STATUS",
+    "OPERATIONS_RISK_SUBJECT_TAG_STATUS",
+    "OPERATIONS_ACCOUNT_DELETE",
+    "OPERATIONS_RISK_TEST_CANDIDATE_VALIDATE",
+    "OPERATIONS_RISK_DECISION_FLOWS",
+    "OPERATIONS_ACCOUNT_ENABLE",
+    "OPERATIONS_RISK_RULE_SET_DELETE",
+    "OPERATIONS_RISK_VARIABLES",
+    "OPERATIONS_RISK_RULE_SET_HISTORY",
+    "OPERATIONS_RISK_RULE_SET_REFERENCES"
+  ],
+  "context": {
+    "supportedPoints": [
+      {
+        "pointCode": "CHECKOUT_PREPARE",
+        "pointName": "CHECKOUT_PREPARE"
+      }
+    ],
+    "sources": [
+      {
+        "sourceType": "INPUT",
+        "createAllowed": true
+      },
+      {
+        "sourceType": "CONSTANT",
+        "createAllowed": true
+      },
+      {
+        "sourceType": "COLLECTION",
+        "createAllowed": true
+      },
+      {
+        "sourceType": "NODE_OUTPUT",
+        "createAllowed": false
+      }
+    ],
+    "valueTypes": [
+      "STRING",
+      "NUMBER",
+      "BOOLEAN",
+      "DATETIME",
+      "DURATION"
+    ],
+    "formatProfiles": [
+      {
+        "formatCode": "TEXT",
+        "label": "文本，保留大小写和前导零",
+        "help": "文本，保留大小写和前导零"
+      },
+      {
+        "formatCode": "UPPER_ALPHA_2",
+        "label": "两位大写字母",
+        "help": "两位大写字母"
+      },
+      {
+        "formatCode": "UPPER_ALPHA_3",
+        "label": "三位大写字母",
+        "help": "三位大写字母"
+      },
+      {
+        "formatCode": "DIGITS_4",
+        "label": "四位数字字符串",
+        "help": "四位数字字符串"
+      },
+      {
+        "formatCode": "TOKEN",
+        "label": "大写业务编码",
+        "help": "大写业务编码"
+      },
+      {
+        "formatCode": "BCP47",
+        "label": "语言地区标签",
+        "help": "语言地区标签"
+      },
+      {
+        "formatCode": "POSITIVE_ID",
+        "label": "正整数标识字符串",
+        "help": "正整数标识字符串"
+      },
+      {
+        "formatCode": "NONE",
+        "label": "无字符串格式",
+        "help": "无字符串格式"
+      }
+    ],
+    "numericUnits": [
+      "SCALAR",
+      "MONEY"
+    ],
+    "limits": {
+      "memberCount": 1000,
+      "memberBodyBytes": 262144,
+      "literalSetCount": 100
+    },
+    "contracts": [
+      {
+        "contractCode": "ORDER_PREPARATION",
+        "contractVersion": 4,
+        "pointCode": "CHECKOUT_PREPARE",
+        "sourceType": "INPUT",
+        "nodeType": null,
+        "fields": [
+          {
+            "fieldKey": "country_code",
+            "valueType": "STRING",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION",
+              "RULE_CONDITION"
+            ],
+            "numericUnit": null,
+            "currencyFieldKey": null,
+            "semanticRole": null
+          },
+          {
+            "fieldKey": "locale",
+            "valueType": "STRING",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION",
+              "RULE_CONDITION"
+            ],
+            "numericUnit": null,
+            "currencyFieldKey": null,
+            "semanticRole": null
+          },
+          {
+            "fieldKey": "industry_code",
+            "valueType": "STRING",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION",
+              "RULE_CONDITION"
+            ],
+            "numericUnit": null,
+            "currencyFieldKey": null,
+            "semanticRole": null
+          },
+          {
+            "fieldKey": "mcc_code",
+            "valueType": "STRING",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION",
+              "RULE_CONDITION"
+            ],
+            "numericUnit": null,
+            "currencyFieldKey": null,
+            "semanticRole": null
+          },
+          {
+            "fieldKey": "currency",
+            "valueType": "STRING",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION",
+              "RULE_CONDITION"
+            ],
+            "numericUnit": null,
+            "currencyFieldKey": null,
+            "semanticRole": "CURRENCY"
+          },
+          {
+            "fieldKey": "merchandise_amount",
+            "valueType": "NUMBER",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION",
+              "RULE_CONDITION"
+            ],
+            "numericUnit": "MONEY",
+            "currencyFieldKey": "currency",
+            "semanticRole": null
+          },
+          {
+            "fieldKey": "discount_amount",
+            "valueType": "NUMBER",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION",
+              "RULE_CONDITION"
+            ],
+            "numericUnit": "MONEY",
+            "currencyFieldKey": "currency",
+            "semanticRole": null
+          },
+          {
+            "fieldKey": "net_amount",
+            "valueType": "NUMBER",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION",
+              "RULE_CONDITION"
+            ],
+            "numericUnit": "MONEY",
+            "currencyFieldKey": "currency",
+            "semanticRole": null
+          },
+          {
+            "fieldKey": "entity_source_type",
+            "valueType": "STRING",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION",
+              "RULE_CONDITION"
+            ],
+            "numericUnit": null,
+            "currencyFieldKey": null,
+            "semanticRole": null
+          },
+          {
+            "fieldKey": "client_id",
+            "valueType": "STRING",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "ACTION_PARAMETER"
+            ],
+            "numericUnit": null,
+            "currencyFieldKey": null,
+            "semanticRole": "CLIENT_ID"
+          }
+        ]
+      },
+      {
+        "contractCode": "RULE_SET_NODE_RESULT",
+        "contractVersion": 1,
+        "pointCode": "CHECKOUT_PREPARE",
+        "sourceType": "NODE_OUTPUT",
+        "nodeType": "RULE_SET",
+        "fields": [
+          {
+            "fieldKey": "matched",
+            "valueType": "BOOLEAN",
+            "required": true,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION"
+            ],
+            "numericUnit": null,
+            "currencyFieldKey": null,
+            "semanticRole": null
+          },
+          {
+            "fieldKey": "decision",
+            "valueType": "STRING",
+            "required": false,
+            "dataClassification": "INTERNAL",
+            "allowedUsages": [
+              "FLOW_CONDITION"
+            ],
+            "numericUnit": null,
+            "currencyFieldKey": null,
+            "semanticRole": null
+          }
+        ]
+      }
+    ]
+  }
+}

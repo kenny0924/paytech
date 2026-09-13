@@ -1,0 +1,933 @@
+{
+  "threshold": "AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+  "countries": "AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+  "alias": "AUTO_VAR_49BEE301808B4B749D248C92F077DEDB",
+  "rule": "AUTO_7786D406602844749C76BA078CD68870",
+  "ruleVersion": "224750826684424192",
+  "flow": "224750911208038400",
+  "ruleRequest": null,
+  "flowRequest": {
+    "pointCode": "CHECKOUT_PREPARE",
+    "flowCode": "AUTO_A5BA83AFCAF544BBAD556E168D3F33F8",
+    "flowName": "联调变量分支决策流",
+    "baseFlowVersionId": null,
+    "expectedVersion": null,
+    "changeReason": "本机联调",
+    "graph": {
+      "schemaVersion": 1,
+      "nodes": [
+        {
+          "nodeKey": "start",
+          "type": "START",
+          "name": "开始",
+          "ruleSetVersionId": null,
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null,
+          "position": {
+            "x": "40",
+            "y": "150"
+          }
+        },
+        {
+          "nodeKey": "first",
+          "type": "RULE_SET",
+          "name": "金额与地区规则",
+          "ruleSetVersionId": "224750826684424192",
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null,
+          "position": {
+            "x": "300",
+            "y": "150"
+          }
+        },
+        {
+          "nodeKey": "second",
+          "type": "RULE_SET",
+          "name": "后续复核规则",
+          "ruleSetVersionId": "224750826684424192",
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null,
+          "position": {
+            "x": "620",
+            "y": "60"
+          }
+        },
+        {
+          "nodeKey": "allowed",
+          "type": "END",
+          "name": "允许结束",
+          "ruleSetVersionId": null,
+          "decisionCode": "ALLOW",
+          "reasonCode": null,
+          "reasonMessage": null,
+          "position": {
+            "x": "920",
+            "y": "300"
+          }
+        },
+        {
+          "nodeKey": "review",
+          "type": "END",
+          "name": "人工复核",
+          "ruleSetVersionId": null,
+          "decisionCode": "REVIEW",
+          "reasonCode": null,
+          "reasonMessage": null,
+          "position": {
+            "x": "920",
+            "y": "60"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "edgeKey": "entry",
+          "sourceNodeKey": "start",
+          "targetNodeKey": "first",
+          "type": "UNCONDITIONAL",
+          "priority": 0,
+          "name": "进入规则",
+          "condition": null
+        },
+        {
+          "edgeKey": "decision",
+          "sourceNodeKey": "first",
+          "targetNodeKey": "second",
+          "type": "CONDITIONAL",
+          "priority": 1,
+          "name": "拒绝仍进入下一规则集",
+          "condition": {
+            "schemaVersion": 2,
+            "root": {
+              "kind": "PREDICATE",
+              "operator": "EQ",
+              "operands": [
+                {
+                  "operandRole": "LEFT",
+                  "valueSequence": 1,
+                  "sourceType": "VARIABLE",
+                  "fieldCode": null,
+                  "valueType": "STRING",
+                  "literalValue": null,
+                  "variableCode": "NODE_DECISION",
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                },
+                {
+                  "operandRole": "RIGHT",
+                  "valueSequence": 1,
+                  "sourceType": "LITERAL",
+                  "fieldCode": null,
+                  "valueType": "STRING",
+                  "literalValue": "DENY",
+                  "variableCode": null,
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "country",
+          "sourceNodeKey": "first",
+          "targetNodeKey": "second",
+          "type": "CONDITIONAL",
+          "priority": 2,
+          "name": "国家匹配",
+          "condition": {
+            "schemaVersion": 2,
+            "root": {
+              "kind": "PREDICATE",
+              "operator": "IN",
+              "operands": [
+                {
+                  "operandRole": "LEFT",
+                  "valueSequence": 1,
+                  "sourceType": "VARIABLE",
+                  "fieldCode": null,
+                  "valueType": "STRING",
+                  "literalValue": null,
+                  "variableCode": "AUTO_VAR_49BEE301808B4B749D248C92F077DEDB",
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                },
+                {
+                  "operandRole": "RIGHT",
+                  "valueSequence": 1,
+                  "sourceType": "VARIABLE",
+                  "fieldCode": null,
+                  "valueType": "STRING",
+                  "literalValue": null,
+                  "variableCode": "AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "otherwise",
+          "sourceNodeKey": "first",
+          "targetNodeKey": "allowed",
+          "type": "ELSE",
+          "priority": 0,
+          "name": "其他情况",
+          "condition": null
+        },
+        {
+          "edgeKey": "finish",
+          "sourceNodeKey": "second",
+          "targetNodeKey": "review",
+          "type": "UNCONDITIONAL",
+          "priority": 0,
+          "name": "完成复核",
+          "condition": null
+        }
+      ]
+    }
+  },
+  "beforeRule": {
+    "ruleSetVersionId": "224750826684424192",
+    "pointVersionId": null,
+    "pointCode": "CHECKOUT_PREPARE",
+    "ruleSetCode": "AUTO_7786D406602844749C76BA078CD68870",
+    "ruleSetName": "联调统一变量规则集",
+    "versionNo": 1,
+    "status": "DRAFT",
+    "contentHash": "0c5c851892c6feac44af9cab6953aca411fa80f71fc40eb6614f8d59bdcddfe1",
+    "createdBy": "10001",
+    "changeReason": "本机联调",
+    "createTime": "2026-09-13T04:39:32.718485Z",
+    "frozenBy": null,
+    "frozenTime": null,
+    "rules": [
+      {
+        "ruleCode": "AMOUNT",
+        "ruleName": "金额高于共享阈值",
+        "priorityNo": 1,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "conditionNodes": [
+          {
+            "nodeKey": "224750826684424194",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "GT",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "VARIABLE",
+                "fieldCode": null,
+                "valueType": "NUMBER",
+                "literalValue": null,
+                "variableCode": "INPUT_NET_AMOUNT",
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "VARIABLE",
+                "fieldCode": null,
+                "valueType": "NUMBER",
+                "literalValue": null,
+                "variableCode": "AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              }
+            ]
+          }
+        ],
+        "action": null,
+        "reasonMessage": null,
+        "additionalActions": []
+      },
+      {
+        "ruleCode": "COUNTRY",
+        "ruleName": "国家命中共享集合",
+        "priorityNo": 2,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "conditionNodes": [
+          {
+            "nodeKey": "224750826684424198",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "IN",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "VARIABLE",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": null,
+                "variableCode": "AUTO_VAR_49BEE301808B4B749D248C92F077DEDB",
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "VARIABLE",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": null,
+                "variableCode": "AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              }
+            ]
+          }
+        ],
+        "action": null,
+        "reasonMessage": null,
+        "additionalActions": []
+      },
+      {
+        "ruleCode": "CURRENCY",
+        "ruleName": "常量在左变量在右",
+        "priorityNo": 3,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "conditionNodes": [
+          {
+            "nodeKey": "224750826684424202",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "EQ",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": "USD",
+                "variableCode": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "VARIABLE",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": null,
+                "variableCode": "INPUT_CURRENCY",
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              }
+            ]
+          }
+        ],
+        "action": null,
+        "reasonMessage": null,
+        "additionalActions": []
+      },
+      {
+        "ruleCode": "LITERALS",
+        "ruleName": "直接常量条件",
+        "priorityNo": 4,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "conditionNodes": [
+          {
+            "nodeKey": "224750826688618499",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "EQ",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": "AE",
+                "variableCode": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "STRING",
+                "literalValue": "AE",
+                "variableCode": null,
+                "numericUnit": null,
+                "currencyCode": null,
+                "currencyVariableCode": null
+              }
+            ]
+          }
+        ],
+        "action": null,
+        "reasonMessage": null,
+        "additionalActions": []
+      }
+    ],
+    "operandFormat": "VARIABLE_REFERENCE",
+    "currentVariables": [
+      {
+        "variableCode": "AUTO_VAR_49BEE301808B4B749D248C92F077DEDB",
+        "variableName": "联调国家字段映射",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": false,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "UPPER_ALPHA_2",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T04:39:32.610662Z"
+      },
+      {
+        "variableCode": "AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+        "variableName": "联调国家集合",
+        "sourceType": "COLLECTION",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": false,
+        "status": "ACTIVE",
+        "version": "2",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "UPPER_ALPHA_2",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": 2,
+        "previewMembers": [
+          {
+            "value": "AE",
+            "displayName": "阿联酋"
+          },
+          {
+            "value": "SA",
+            "displayName": "沙特"
+          }
+        ],
+        "updateTime": "2026-09-13T04:39:32.568167Z"
+      },
+      {
+        "variableCode": "AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+        "variableName": "联调动态金额阈值",
+        "sourceType": "CONSTANT",
+        "valueType": "NUMBER",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": false,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": "MONEY",
+        "currencyCode": null,
+        "currencyVariableCode": "INPUT_CURRENCY",
+        "formatCode": "NONE",
+        "allowedValuesVariableCode": null,
+        "currentValue": "8000.00000000",
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T04:39:32.477784Z"
+      },
+      {
+        "variableCode": "INPUT_CURRENCY",
+        "variableName": "币种",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "UPPER_ALPHA_3",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T04:00:37.780018Z"
+      },
+      {
+        "variableCode": "INPUT_NET_AMOUNT",
+        "variableName": "实付金额",
+        "sourceType": "INPUT",
+        "valueType": "NUMBER",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": "MONEY",
+        "currencyCode": null,
+        "currencyVariableCode": "INPUT_CURRENCY",
+        "formatCode": "NONE",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T04:00:37.780018Z"
+      }
+    ],
+    "valuesAsOf": "2026-09-13T04:39:52.786438Z",
+    "variableIssues": []
+  },
+  "beforeFlow": {
+    "flowId": "224750911208038400",
+    "pointCode": "CHECKOUT_PREPARE",
+    "flowCode": "AUTO_A5BA83AFCAF544BBAD556E168D3F33F8",
+    "flowStatus": "CONFIGURABLE",
+    "currentFlowVersionId": "224750911208038401",
+    "currentVersionNo": 1,
+    "version": "1",
+    "flowVersionId": "224750911208038401",
+    "versionNo": 1,
+    "flowName": "联调变量分支决策流",
+    "inputContractCode": "ORDER_PREPARATION",
+    "inputContractVersion": 4,
+    "createdBy": "10001",
+    "createTime": "2026-09-13T04:39:52.835969Z",
+    "changeReason": "本机联调",
+    "graph": {
+      "schemaVersion": 1,
+      "nodes": [
+        {
+          "nodeKey": "allowed",
+          "type": "END",
+          "name": "允许结束",
+          "position": {
+            "x": "920",
+            "y": "300"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "ALLOW",
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "first",
+          "type": "RULE_SET",
+          "name": "金额与地区规则",
+          "position": {
+            "x": "300",
+            "y": "150"
+          },
+          "ruleSetVersionId": "224750826684424192",
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "review",
+          "type": "END",
+          "name": "人工复核",
+          "position": {
+            "x": "920",
+            "y": "60"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "REVIEW",
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "second",
+          "type": "RULE_SET",
+          "name": "后续复核规则",
+          "position": {
+            "x": "620",
+            "y": "60"
+          },
+          "ruleSetVersionId": "224750826684424192",
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "start",
+          "type": "START",
+          "name": "开始",
+          "position": {
+            "x": "40",
+            "y": "150"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        }
+      ],
+      "edges": [
+        {
+          "edgeKey": "otherwise",
+          "sourceNodeKey": "first",
+          "targetNodeKey": "allowed",
+          "type": "ELSE",
+          "priority": 0,
+          "name": "其他情况",
+          "condition": null
+        },
+        {
+          "edgeKey": "decision",
+          "sourceNodeKey": "first",
+          "targetNodeKey": "second",
+          "type": "CONDITIONAL",
+          "priority": 1,
+          "name": "拒绝仍进入下一规则集",
+          "condition": {
+            "schemaVersion": 2,
+            "root": {
+              "kind": "PREDICATE",
+              "operator": "EQ",
+              "operands": [
+                {
+                  "operandRole": "LEFT",
+                  "valueSequence": 1,
+                  "sourceType": "VARIABLE",
+                  "fieldCode": null,
+                  "valueType": "STRING",
+                  "literalValue": null,
+                  "variableCode": "NODE_DECISION",
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                },
+                {
+                  "operandRole": "RIGHT",
+                  "valueSequence": 1,
+                  "sourceType": "LITERAL",
+                  "fieldCode": null,
+                  "valueType": "STRING",
+                  "literalValue": "DENY",
+                  "variableCode": null,
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "country",
+          "sourceNodeKey": "first",
+          "targetNodeKey": "second",
+          "type": "CONDITIONAL",
+          "priority": 2,
+          "name": "国家匹配",
+          "condition": {
+            "schemaVersion": 2,
+            "root": {
+              "kind": "PREDICATE",
+              "operator": "IN",
+              "operands": [
+                {
+                  "operandRole": "LEFT",
+                  "valueSequence": 1,
+                  "sourceType": "VARIABLE",
+                  "fieldCode": null,
+                  "valueType": "STRING",
+                  "literalValue": null,
+                  "variableCode": "AUTO_VAR_49BEE301808B4B749D248C92F077DEDB",
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                },
+                {
+                  "operandRole": "RIGHT",
+                  "valueSequence": 1,
+                  "sourceType": "VARIABLE",
+                  "fieldCode": null,
+                  "valueType": "STRING",
+                  "literalValue": null,
+                  "variableCode": "AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+                  "numericUnit": null,
+                  "currencyCode": null,
+                  "currencyVariableCode": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "finish",
+          "sourceNodeKey": "second",
+          "targetNodeKey": "review",
+          "type": "UNCONDITIONAL",
+          "priority": 0,
+          "name": "完成复核",
+          "condition": null
+        },
+        {
+          "edgeKey": "entry",
+          "sourceNodeKey": "start",
+          "targetNodeKey": "first",
+          "type": "UNCONDITIONAL",
+          "priority": 0,
+          "name": "进入规则",
+          "condition": null
+        }
+      ]
+    },
+    "ruleSetReferences": [
+      {
+        "nodeKey": "first",
+        "ruleSetId": "224750826759921664",
+        "ruleSetCode": "AUTO_7786D406602844749C76BA078CD68870",
+        "ruleSetName": "联调统一变量规则集",
+        "ruleSetVersionId": "224750826684424192",
+        "versionNo": 1,
+        "ruleCount": 4,
+        "ruleSetStatus": "CONFIGURABLE",
+        "versionStatus": "DRAFT"
+      },
+      {
+        "nodeKey": "second",
+        "ruleSetId": "224750826759921664",
+        "ruleSetCode": "AUTO_7786D406602844749C76BA078CD68870",
+        "ruleSetName": "联调统一变量规则集",
+        "ruleSetVersionId": "224750826684424192",
+        "versionNo": 1,
+        "ruleCount": 4,
+        "ruleSetStatus": "CONFIGURABLE",
+        "versionStatus": "DRAFT"
+      }
+    ],
+    "currentVariables": [
+      {
+        "variableCode": "AUTO_VAR_49BEE301808B4B749D248C92F077DEDB",
+        "variableName": "联调国家字段映射",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": false,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "UPPER_ALPHA_2",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T04:39:32.610662Z"
+      },
+      {
+        "variableCode": "AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+        "variableName": "联调国家集合",
+        "sourceType": "COLLECTION",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": false,
+        "status": "ACTIVE",
+        "version": "2",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "UPPER_ALPHA_2",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": 2,
+        "previewMembers": [
+          {
+            "value": "AE",
+            "displayName": "阿联酋"
+          },
+          {
+            "value": "SA",
+            "displayName": "沙特"
+          }
+        ],
+        "updateTime": "2026-09-13T04:39:32.568167Z"
+      },
+      {
+        "variableCode": "AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+        "variableName": "联调动态金额阈值",
+        "sourceType": "CONSTANT",
+        "valueType": "NUMBER",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": false,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": "MONEY",
+        "currencyCode": null,
+        "currencyVariableCode": "INPUT_CURRENCY",
+        "formatCode": "NONE",
+        "allowedValuesVariableCode": null,
+        "currentValue": "8000.00000000",
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T04:39:32.477784Z"
+      },
+      {
+        "variableCode": "INPUT_CURRENCY",
+        "variableName": "币种",
+        "sourceType": "INPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "UPPER_ALPHA_3",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T04:00:37.780018Z"
+      },
+      {
+        "variableCode": "INPUT_NET_AMOUNT",
+        "variableName": "实付金额",
+        "sourceType": "INPUT",
+        "valueType": "NUMBER",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION",
+          "RULE_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": "MONEY",
+        "currencyCode": null,
+        "currencyVariableCode": "INPUT_CURRENCY",
+        "formatCode": "NONE",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T04:00:37.780018Z"
+      },
+      {
+        "variableCode": "NODE_DECISION",
+        "variableName": "本节点处理结果",
+        "sourceType": "NODE_OUTPUT",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [
+          "FLOW_CONDITION"
+        ],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "TOKEN",
+        "allowedValuesVariableCode": "NODE_DECISION_VALUES",
+        "currentValue": null,
+        "memberCount": null,
+        "previewMembers": [],
+        "updateTime": "2026-09-13T04:00:37.780018Z"
+      },
+      {
+        "variableCode": "NODE_DECISION_VALUES",
+        "variableName": "节点处理结果可选值",
+        "sourceType": "COLLECTION",
+        "valueType": "STRING",
+        "pointCode": "CHECKOUT_PREPARE",
+        "usages": [],
+        "systemManaged": true,
+        "status": "ACTIVE",
+        "version": "1",
+        "numericUnit": null,
+        "currencyCode": null,
+        "currencyVariableCode": null,
+        "formatCode": "TOKEN",
+        "allowedValuesVariableCode": null,
+        "currentValue": null,
+        "memberCount": 3,
+        "previewMembers": [
+          {
+            "value": "ALLOW",
+            "displayName": "PASS"
+          },
+          {
+            "value": "REVIEW",
+            "displayName": "REVIEW"
+          },
+          {
+            "value": "DENY",
+            "displayName": "REJECT"
+          }
+        ],
+        "updateTime": "2026-09-13T04:00:37.780018Z"
+      }
+    ],
+    "valuesAsOf": "2026-09-13T04:39:52.974323Z",
+    "variableIssues": []
+  }
+}

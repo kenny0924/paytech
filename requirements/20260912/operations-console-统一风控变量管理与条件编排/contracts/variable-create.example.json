@@ -1,0 +1,22 @@
+{
+  "variableCode": "DEMO_AMOUNT_THRESHOLD",
+  "variableName": "示例金额阈值",
+  "description": "用于示例规则的共享阈值",
+  "sourceType": "CONSTANT",
+  "valueType": "NUMBER",
+  "pointCode": "CHECKOUT_PREPARE",
+  "sourceContractCode": null,
+  "sourceContractVersion": null,
+  "sourceField": null,
+  "usages": [
+    "RULE_CONDITION",
+    "FLOW_CONDITION"
+  ],
+  "formatCode": "NONE",
+  "numericUnit": "MONEY",
+  "currencyCode": null,
+  "currencyVariableCode": "INPUT_CURRENCY",
+  "allowedValuesVariableCode": null,
+  "currentValue": "8000.00000000",
+  "status": "ACTIVE"
+}

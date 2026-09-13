@@ -1,0 +1,28 @@
+{
+  "requirementsSite": {
+    "command": "npm --prefix requirements-site test",
+    "build": "passed",
+    "tests": 136,
+    "passed": 136,
+    "failed": 0,
+    "firstRun": "135/136: current route-count assertion still expected 51 after rollout to 61; updated that assertion from actual final-checks evidence and reran full build/test"
+  },
+  "designCheck": {
+    "command": "node requirements/20260912/operations-console-决策流配置/check-design.mjs",
+    "result": "passed",
+    "localLinks": 276
+  },
+  "diffWhitespace": {
+    "result": "passed",
+    "repositories": [
+      "Code-MoR",
+      "risk-compliance-service",
+      "operations-console-bff",
+      "operations-console-web",
+      "paytech-foundation",
+      "platform-support-service",
+      "api-gateway"
+    ]
+  },
+  "applicationTests": "Stage 5 evidence reused for unchanged approved artifacts; no new claim of full application regression in test"
+}

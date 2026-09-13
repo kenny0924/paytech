@@ -1,0 +1,46 @@
+{
+  "sharedValue": "9000 visible through BFF in existing rule and flow; rule hash and rules unchanged; flow graph unchanged (BFF does not expose flow hash; Risk hash check reused from stage 4)",
+  "references": {
+    "items": [
+      {
+        "consumerType": "RULE_SET",
+        "rootId": "224750826759921664",
+        "versionId": "224750826684424192",
+        "versionNo": 1,
+        "code": "AUTO_7786D406602844749C76BA078CD68870",
+        "name": "联调统一变量规则集",
+        "scope": "HISTORY",
+        "location": "AMOUNT/node:224750826684424194/RIGHT:1",
+        "variableCode": "AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB"
+      },
+      {
+        "consumerType": "RULE_SET",
+        "rootId": "224750826759921664",
+        "versionId": "224751241454952448",
+        "versionNo": 2,
+        "code": "AUTO_7786D406602844749C76BA078CD68870",
+        "name": "联调统一变量规则集二版",
+        "scope": "CURRENT",
+        "location": "AMOUNT/node:224751241454952450/RIGHT:1",
+        "variableCode": "AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB"
+      }
+    ],
+    "nextCursor": null,
+    "hasMore": false,
+    "scannedRows": 4
+  },
+  "permission": "READ cannot update; MANAGE without DELETE cannot delete; data unchanged",
+  "unknownDecision": {
+    "valid": false,
+    "issues": [
+      {
+        "code": "VARIABLE_DOMAIN_MISMATCH",
+        "nodeKey": null,
+        "edgeKey": "decision",
+        "field": "graph.edges[1].condition",
+        "message": "比较值不属于变量关联的可选集合"
+      }
+    ],
+    "truncated": false
+  }
+}

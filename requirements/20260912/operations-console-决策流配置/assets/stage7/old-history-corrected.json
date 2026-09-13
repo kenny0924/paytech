@@ -1,0 +1,276 @@
+{
+  "releases": [
+    {
+      "releaseId": "223073516814176256",
+      "createReplayReadable": true,
+      "closureReadable": true,
+      "releaseHashVerified": true,
+      "storedContentHash": "ccf9cd40fc68891299e06a76aef8e891ab37588c8c6d458f52da6f2d210a26b1"
+    },
+    {
+      "releaseId": "223074240985927680",
+      "createReplayReadable": true,
+      "closureReadable": true,
+      "releaseHashVerified": true,
+      "storedContentHash": "f8f045637aef281fab25217d8a81f04badddfedbe8b3668aa35001f0d9920b24"
+    },
+    {
+      "releaseId": "223075189246758912",
+      "createReplayReadable": true,
+      "closureReadable": true,
+      "releaseHashVerified": true,
+      "storedContentHash": "4d7ee4aacb1ce5f73e892614af57d29947a81227b2e78d2eca4bbe7c8b10eee4"
+    },
+    {
+      "releaseId": "223075645175992320",
+      "createReplayReadable": true,
+      "closureReadable": true,
+      "releaseHashVerified": true,
+      "storedContentHash": "635e1e61f0165f3d513d401e7ccb0fb238812637321e488fc226f42903ea1dee"
+    },
+    {
+      "releaseId": "223078157270487040",
+      "createReplayReadable": true,
+      "closureReadable": true,
+      "releaseHashVerified": true,
+      "storedContentHash": "9c637be376011cd010ddcfd3598b0c079c66bde90a339be896d89bf174669ae5"
+    },
+    {
+      "releaseId": "223098990391037952",
+      "createReplayReadable": true,
+      "closureReadable": true,
+      "releaseHashVerified": true,
+      "storedContentHash": "ee4cee4af465969c174fc32d1b50439652bb024bcbd8e7601f296c0e4ed1d076"
+    },
+    {
+      "releaseId": "223100118600093696",
+      "createReplayReadable": true,
+      "closureReadable": true,
+      "releaseHashVerified": true,
+      "storedContentHash": "bc98e30f1bb99e2677a6ab912da858945148ff6559cecf45e127115f528b0bf4"
+    },
+    {
+      "releaseId": "223161270839382016",
+      "createReplayReadable": true,
+      "closureReadable": true,
+      "releaseHashVerified": true,
+      "storedContentHash": "f0985ed56d8f70cdccf380511d31988c170749940c906cb202a69fb19546bc90"
+    },
+    {
+      "releaseId": "224071632497512448",
+      "createReplayReadable": true,
+      "closureReadable": true,
+      "releaseHashVerified": true,
+      "storedContentHash": "e7b96bc24a0a9019ba7e92676e6ae5ce94b8d25f7d48fdb455981c5271cbccc7"
+    },
+    {
+      "releaseId": "224423312116256768",
+      "createReplayReadable": true,
+      "closureReadable": true,
+      "releaseHashVerified": true,
+      "storedContentHash": "a590d3744c79d9c49cf8bdfc0a2e8692025bc10191666fee32e6a083e63795b1"
+    }
+  ],
+  "scope": "Actual packaged historical Reader in MySQL READ ONLY transaction; no business writes or full HTTP replay",
+  "rules": [
+    {
+      "inputFieldsHash": "490e097ee522f45852b9eab132a860be082a2afea149694d9d252fcbaa849f1e",
+      "pointHash": "56c90d9006133a52afc9c77d909919371a93cb12b3d7a97d128b3d63f0179564",
+      "ruleSetVersionId": "223044779871670272",
+      "ruleHash": "7b75a2ac7412c2608463c0677b018d38dfae2ca77f14c608752d20e1b45555f7"
+    },
+    {
+      "inputFieldsHash": "7b3b93e5b324b4c49a9a51c9b3ed7bb447cb813392db79da26a91c2c69027289",
+      "pointHash": "015a2d194b761cc8a4615d5849d55d32946ab7efafa0527c64f49f65c104c098",
+      "ruleSetVersionId": "223056763996442624",
+      "ruleHash": "c363cfdd1406c0cb093e70692726ac76efad07559d6658ec3303f794879f50bc"
+    },
+    {
+      "inputFieldsHash": "a2081b2b5d9471e038c86c4581266cc18d0be398e1fc1326650bd75d5e97fad5",
+      "pointHash": "9dde7b0d480e64c7526e35fe473fa797cbe94d47f0df62e65f9b10537800ab91",
+      "ruleSetVersionId": "223058326664089600",
+      "ruleHash": "e27098016b0e4deb7893b81bfe8dc97600908a7169d5177ebf3734307b085466"
+    },
+    {
+      "inputFieldsHash": "03a26998687f247dbdc1fb1f708bc361b9d9109f5ab58d7ab7fea069d3090ca8",
+      "pointHash": "c1d7affc08e2de81deb12bcca5cf68ee09a6c4b96e9e90917adc6ad0bdda2d53",
+      "ruleSetVersionId": "223062412562108416",
+      "ruleHash": "7415792d9dfc4cfaeb69167ee1f38613c9d37e0d6f11eb6905f91960561dc533"
+    },
+    {
+      "inputFieldsHash": "bededcea8a26dbc9b50205d6d168eb686b9d46d6ebc50a06e20b3cc113de2580",
+      "pointHash": "15722ad34ebd786d6e814b920a0bf2d6efd8c3ac93f5e70920b54ef6d30396b6",
+      "ruleSetVersionId": "223072292102574080",
+      "ruleHash": "0bb36558684e4d4b5c6bf8095485febe5f12ef370071a7af3b4dfeb4d1c9e92d"
+    },
+    {
+      "inputFieldsHash": "914b12428216c6f8a97d890911d5d831a076fd17235e1e15fce6e7372265d3b4",
+      "pointHash": "f08998f3f3fef46e4a80d0d79d684a60426f62c744c19dd7e3c45ba572c2393a",
+      "ruleSetVersionId": "223073516021452800",
+      "ruleHash": "aa5fb9c466d4b2eedeaf7f5c8986c4365106b5294f2e13818ce5ae98f7b32c99"
+    },
+    {
+      "inputFieldsHash": "78f3ac47d7c3adbd2af129515d65eed6f3bc9f38f43bce15573ea1f781f9eec9",
+      "pointHash": "fe5f890dd270e171dcd4d177df73f1b94a144103b720d8c3cf866b246615723e",
+      "ruleSetVersionId": "223074240474222592",
+      "ruleHash": "cb81379e3561763db3da00f7e8fdf349d68145e1232ea0e41a6c2947ad87867e"
+    },
+    {
+      "inputFieldsHash": "84f6d568fd3f4334a45da4abac832a7cdd52082d35729dc4eecf42503112b6d8",
+      "pointHash": "e2328f5aa80452698da5fd3d06036362d1863db5ac37f1020928498eb21dc8e0",
+      "ruleSetVersionId": "223075188688916480",
+      "ruleHash": "4999f44222729f110d301101b124a53b49a63e3723afe4a12b2e9d9b40a51970"
+    },
+    {
+      "inputFieldsHash": "d4ba6c8fa5881cdd0ff4e10322a5857165b61b1f341a146a84b6b3c8e514bd06",
+      "pointHash": "38eb1396967ce0ee16c9992f912d2f1a7f33b9a07a063d67f2093026e2dcddbd",
+      "ruleSetVersionId": "223075644710424576",
+      "ruleHash": "dc7a37289a71089657cb7b036a71d53b38048dfb1cb11e2b1f87f232745cba32"
+    },
+    {
+      "inputFieldsHash": "0a50c2be751e5787b7e46023efa42f5e1010f52f1553abb9a44b5c302028d1bf",
+      "pointHash": "e419fa8df4d1f096aaedccc4814a58bd4f0b650a40b388ef11ebddd8d77fb590",
+      "ruleSetVersionId": "223078156809113600",
+      "ruleHash": "91a429e91f19ab453d4c532d0ec6b2e1f8bd09c19d3ae313fab96e40c63c9dd1"
+    },
+    {
+      "inputFieldsHash": "1f4362cd21e467efe574096fb0131262a051cc90c41da301f3e086cc240be2f9",
+      "pointHash": "a89cbdbed98b22a15bd3054b251ba956391da2d5a36efe04517aad6ade93e7c7",
+      "ruleSetVersionId": "223098989917081600",
+      "ruleHash": "bf184b477fd3b947662bff497f58d14da64dcfddc425af3a97e5e7c4e00eac52"
+    },
+    {
+      "inputFieldsHash": "6fd6a9843fa0e8b3554da62a3d48decdcb15c3229c53cd213af5d1825258b325",
+      "pointHash": "dddb7cc0b8d3bd9b08328a3c80c1189131c7038ea8f42c62da617da3a828c30d",
+      "ruleSetVersionId": "223098991506722816",
+      "ruleHash": "e91f9803306754c3f3d73982d61d00948d9e11750a203eb5a8e2888d74439b2d"
+    },
+    {
+      "inputFieldsHash": "02d08211d889b381ad2a539c3d16931bee8d03e6b7f2d55d21a0a1a8597edaf4",
+      "pointHash": "75a9fb94a6da96977887e6e0851b777be6d1c829ea62666cdb21312c48c0ee01",
+      "ruleSetVersionId": "223100117929005056",
+      "ruleHash": "ced252a84437fddd18e6c4918b487b0342d731bcf1b107d549495e0dfc2fe501"
+    },
+    {
+      "inputFieldsHash": "a6f3ccb5d9af6bf8745434eaaada6a3c9aafa4e8ac221d98803dd0f3786abe61",
+      "pointHash": "dfe03763c12859fc517c654e8b44b635e927905a598f119f67da88473067db5a",
+      "ruleSetVersionId": "223100119539617792",
+      "ruleHash": "839cafd8dc14953bdd3ebe29b1edd4384975e791096e17ae64545e7fb637110e"
+    },
+    {
+      "inputFieldsHash": "10604777ad339c3a65d10735674ba1512f4f39ded2ab6f748667a4a3bbc6b2e5",
+      "pointHash": "4aa0bbb71df4e80e4d6d6db72e362f4145c53533739484fe2d27fcb7913ee985",
+      "ruleSetVersionId": "223161270512226304",
+      "ruleHash": "cbd04cc7343127c00c38d16283a17094a4d6616012f6329d96924bad70edbd44"
+    },
+    {
+      "inputFieldsHash": "9b10970e3b0e8d0ba039e58cf75abb88d003f923d3e5299ec3eac2dfef1aab8c",
+      "pointHash": "994978d21ced45d9777375e2c509915176f66dbf28cf5240b34caca6a7b3be85",
+      "ruleSetVersionId": "223161271699214336",
+      "ruleHash": "64927414abfe424638207013cbfd01323c8fc6178902c029a216802a77c6c37c"
+    },
+    {
+      "inputFieldsHash": "128e31a45145d15a6714d1caa4bcf6af5c7c778a735058ff69e109bec58e171c",
+      "pointHash": "4faf5226ddf8df1e97e074227368f4df5239275071e10f7343f579d91060b919",
+      "ruleSetVersionId": "224071416574742528",
+      "ruleHash": "3491366694a31ae88fc32f5cfa4a546fefc13458264f2420aa3ecbb3db7b5fdd"
+    },
+    {
+      "inputFieldsHash": "4ae1d09c9de73c2dbb5c666dbfa5461789ac8ddca129450cb47ad88a2825fb21",
+      "pointHash": "8e94370ab0f4c977981bc351f9a5065715c1856f2c206c5bfe9739b1f916e5a1",
+      "ruleSetVersionId": "224071417614929920",
+      "ruleHash": "882c044f90009e55f66501aca9284aa1f1f0c38877eeb3d39cb3429eb291fac5"
+    },
+    {
+      "inputFieldsHash": "7e79424c32561834d2fdd53659f46a15190c22422c5ee6a5476543a885752479",
+      "pointHash": "5ea27211d6be8d02855858c3dba282d64152343e74b84005c9ecdeb564a31bcf",
+      "ruleSetVersionId": "224071417992417280",
+      "ruleHash": "39b108a4de81d0dcde85032b449f0d31cd9b27b09d09bf82a549ea6e4db5ab56"
+    },
+    {
+      "inputFieldsHash": "af9b908fc7a9c260731da969616f4e4dfc04f7518bbee1a373c30c0bb2de000d",
+      "pointHash": "5568c10976e61f2febcc9d8fba8b7867341f463088e7e12203b5ad7d93a48c20",
+      "ruleSetVersionId": "224071631960641536",
+      "ruleHash": "869131279a5f2f9fe5c808213790496f01df219fa3198c5a78ebb032d6031faa"
+    },
+    {
+      "inputFieldsHash": "1a5c52d056f3c2383b4d37c850f4430ed7f78be046b0c05db4dbddeedf473254",
+      "pointHash": "88ba086dd3ddd408ba314ede88975fda54e02bd0f8742fea2bc94dabe1bcba4b",
+      "ruleSetVersionId": "224071633973907456",
+      "ruleHash": "4490917f04f31b94dde27b502853b99c73d362ec7d8e7b8fd3ca7cbdf44990b3"
+    },
+    {
+      "inputFieldsHash": "ca2ec545e938eaa7dbc4379e15066c59f1ffa6fd71520136ae1a7941a94a1166",
+      "pointHash": "73962a54b956426eea3f0ef3b237f4553680612770beacb2b6ed2a222bbad4cc",
+      "ruleSetVersionId": "224080617602650112",
+      "ruleHash": "ce403e1a1c0bb792c42a8df4968ad935c0fd7fee9eb77a9b65f51b6f4bbdf6fc"
+    },
+    {
+      "inputFieldsHash": "518e275a4405a58f56cd6db4e124fa615bf4381b457d041d97a1ad1708a8d8c8",
+      "pointHash": "62a15a1d12532d76902a279d724922f580b01924ca60acac66030fedf45a40bb",
+      "ruleSetVersionId": "224089451389882368",
+      "ruleHash": "029b8f53eb2715935c2f9f9eaa767087d445618b5245b6a76e769b18c8f9547d"
+    },
+    {
+      "inputFieldsHash": "b829121ddf42ea3f55c32a0c399c498eaf37cb576df698fbdcc856f7b5fd41e0",
+      "pointHash": "56fce795e73ec115ccc303f534c623b62f00f545133e774a04f6db3db9fac82f",
+      "ruleSetVersionId": "224157784000794624",
+      "ruleHash": "d49f018ba6822e4e745ec8a7e93160022e018131e3fb91e5a28cc69dc8d4343a"
+    },
+    {
+      "inputFieldsHash": "6289bc5cd6931de9d4a4f0332e85e18858c04dae21d5c005c538af9a955c1a51",
+      "pointHash": "a5638d83d0798fd7d07105d382052ded829cab80099cdf46735fb6f9025c694d",
+      "ruleSetVersionId": "224157931476717568",
+      "ruleHash": "a5fa6e3add11561da7e41af6ec4960e90079b75500c3012fa083356264867442"
+    },
+    {
+      "inputFieldsHash": "63138048aa7cd68c9f1bd7a2f8f031442e852db5579dc33287f173861eb021a8",
+      "pointHash": "41284d8b322ca4404ea6c01ca20836271045a7d14065e588b74f8921855912ae",
+      "ruleSetVersionId": "224157933032804352",
+      "ruleHash": "2e7d49b08864212a35f7dd21897b6bf851f6bc1eaecaabfc23e531843af65918"
+    },
+    {
+      "inputFieldsHash": "c7b7227f6970d1112cd49838f6ec062ffbcc2cdf21c68cfd6e3cfd3520c82003",
+      "pointHash": "24959c57d626112d67c2d559e9a87fc35bde3e5470a664e38a7cad6f1707c1b1",
+      "ruleSetVersionId": "224158443076947968",
+      "ruleHash": "98cc9f2edcdd47937d4d892c06708589a121394f1f5aa2ff3815b0ce342aa392"
+    },
+    {
+      "inputFieldsHash": "8ca40d918542eabcd824bd59b6f6d34b294c551521cfa25e857fa743a9e0cac2",
+      "pointHash": "ab3c2c3aecabc3df46121cf9054dfacc7ce47b09dee053a66a5d2ebdfabc74df",
+      "ruleSetVersionId": "224423283112644608",
+      "ruleHash": "b4f9c425f806c153fed448ead8c19a8900374b7cff68c3b8cadeefc69d2b4441"
+    },
+    {
+      "inputFieldsHash": "9ed204307b7fc95b729ce7521b49f432d7debabc38af63e33d9661bf33667a2a",
+      "pointHash": "70bf9605b059097102460f7baa507e29f746209e82ae2379dab633669b70673c",
+      "ruleSetVersionId": "224423287885762560",
+      "ruleHash": "0e4bf341c5e72ce20c30630575e995887ac74262fcb166f47acf1b5a4b0dd9d0"
+    },
+    {
+      "inputFieldsHash": "b466a5f7a9dcc3d268b00f21ddc7963bb06835b845fbb05fa3c468233fc4febe",
+      "pointHash": "157250f4ff995e66bf23b6ba41cc12d8235d9eaf910a614df080952ea12481ef",
+      "ruleSetVersionId": "224423292969259008",
+      "ruleHash": "ff225df7b795eff84862cffec8b3a58114aad37105492361c8d6dd6f7374028b"
+    },
+    {
+      "inputFieldsHash": "6e55ae154d8c768a5c5489ae6048d97004d10ffda0df3c9460699b547826fc44",
+      "pointHash": "cb04cad18a4085519a9c4c0598766243bc82677639351ac28cc46d290d43ee06",
+      "ruleSetVersionId": "224423297549438976",
+      "ruleHash": "2b654565fcf13ac064507b4bfa717302dc3cf235c35e2b876488bb5272e822ca"
+    },
+    {
+      "inputFieldsHash": "19050422fb8c65f15aa9d8b9d16d99e832d059ea9ce0a07b547fd39c7f914161",
+      "pointHash": "73290c14939744f7f4c38fa84c4e589ecb901092978dd8dbeb4153db7000d7a5",
+      "ruleSetVersionId": "224423303002034176",
+      "ruleHash": "ca3cd2a9ec8401405cde00fa83a5acadbcb89c82a5185d10ff06422a99cbbd80"
+    },
+    {
+      "inputFieldsHash": "af0450be7a708f49b92d2e278df34fd3f891617b7d9449bd635afec33f638a51",
+      "pointHash": "48819645d1f5a2cfc239171bc81286a1e6111c106b9fc03ae26b7c4a576895b6",
+      "ruleSetVersionId": "224423316587384832",
+      "ruleHash": "e9dd1476f64bfb317547288b60f29b83bffcbeed72768b4b9c17bac43d03456c"
+    }
+  ],
+  "jarSha256": "6224c001224b8fdd355dd56dab013e1ce921103f34a0808bf0bc0aacec6a50bc"
+}

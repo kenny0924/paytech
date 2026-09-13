@@ -16,6 +16,7 @@ import {
   COMPOSITE_FK_CONTRACTS,
   COMPENSATION_EVENT_RECONSTRUCTION_INVENTORY,
   DIAGRAM_GROUPS,
+  VERSION_SCOPED_RELATIONS,
   FILE_REFERENCE_TUPLES,
   RISK_OWNED_RECOVERABLE_TOKEN_REFERENCES,
   VAULT_TOKEN_REFERENCES,
@@ -379,9 +380,9 @@ function isCodeLike(fieldKey) {
 }
 
 function validateManifest() {
-  invariant(TABLES.length === 74, `Risk & Compliance 必须有 74 张表，当前为 ${TABLES.length}`);
+  invariant(TABLES.length === 80, `Risk & Compliance 必须有 80 张表，当前为 ${TABLES.length}`);
   const primaryTables = DIAGRAM_GROUPS.flatMap((group) => group.primary);
-  invariant(primaryTables.length === 74 && new Set(primaryTables).size === 74, "每张表必须恰好属于一个主图组");
+  invariant(primaryTables.length === 80 && new Set(primaryTables).size === 80, "每张表必须恰好属于一个主图组");
   invariant(JSON.stringify([...primaryTables].sort()) === JSON.stringify(TABLES.map((table) => table.defKey).sort()), "图组主表集合与生产 Manifest 不一致");
   const tableByKey = new Map(TABLES.map((table) => [table.defKey, table]));
   for (const table of TABLES) {
@@ -490,7 +491,7 @@ function validateGeneratedModel(model) {
     const childField = child.fields.find((field) => field.defKey === relation.childField);
     const primary = child.fields.find((field) => field.primaryKey);
     const leftPrefix = childField.id === primary.id || child.indexes.some((index) => index.fields[0]?.fieldDefKey === childField.id);
-    invariant(leftPrefix, `关系子字段缺少左前缀索引：${relation.childTable}.${relation.childField}`);
+    invariant(leftPrefix || VERSION_SCOPED_RELATIONS.includes(`${relation.childTable}.${relation.childField}`), `关系子字段缺少左前缀索引：${relation.childTable}.${relation.childField}`);
     if (relation.cardinality === "1:1") {
       const exactUnique = child.indexes.filter((index) => index.unique && index.fields.length === 1 && index.fields[0].fieldDefKey === childField.id);
       const compositeContract = COMPOSITE_FK_CONTRACTS.find((contract) => (

@@ -70,12 +70,12 @@ function executableSql(sql) {
     .replace(/'(?:''|[^'])*'/gu, "''");
 }
 
-test("Risk Schema creates exactly the 74 final PDManer tables in deterministic order", () => {
+test("Risk Schema creates exactly the 80 final PDManer tables in deterministic order", () => {
   const sql = readSchema();
   const tables = parseTables(sql);
-  assert.equal(model.entities.length, 74);
+  assert.equal(model.entities.length, 80);
   assert.deepEqual(tables.map(({ name }) => name), model.entities.map(({ defKey }) => defKey));
-  assert.equal(tables.length, 74);
+  assert.equal(tables.length, 80);
   assert.ok(tables.some(({ name }) => name === "t_settle_control_state_change"));
 });
 
@@ -86,6 +86,30 @@ test("every Risk SQL column, default, Chinese comment, primary key and index mat
     assert.ok(table, `Schema 缺少表：${entity.defKey}`);
     assert.equal(table.comment, entity.comment, `${entity.defKey} 表注释漂移`);
     assert.deepEqual(table.definitions, expectedDefinitions(entity), `${entity.defKey} 定义漂移`);
+  }
+});
+
+test("rule configuration stores its contract and field codes while preserving legacy composition tables", () => {
+  const tables = new Map(model.entities.map(entity => [entity.defKey, entity]));
+  const fields = name => new Map(tables.get(name).fields.map(field => [field.defKey, field]));
+  const version = fields("t_rule_set_version");
+  for (const [name, type, len] of [["input_contract_code", "VARCHAR", 64], ["input_contract_version", "INT", null]]) {
+    const field = version.get(name);
+    assert.equal(field.type, type);
+    assert.equal(Number(field.len) || null, len);
+    assert.equal(field.notNull, true);
+    assert.equal(field.defaultValue, "");
+  }
+  for (const [name, removedIndex] of [["t_rule_operand", "idx_rule_op_input"], ["t_rule_action_parameter", "idx_rule_param_input"]]) {
+    const columns = fields(name);
+    assert.equal(columns.has("input_field_id"), false);
+    assert.equal(columns.get("field_code").type, "VARCHAR");
+    assert.equal(Number(columns.get("field_code").len), 64);
+    assert.equal(columns.get("field_code").notNull, false);
+    assert.equal(tables.get(name).indexes.some(index => index.defKey === removedIndex), false);
+  }
+  for (const name of ["t_decision_point_version", "t_decision_point_input_field", "t_decision_point_rule_set"]) {
+    assert.ok(tables.has(name), `${name} 仍供历史闭包读取`);
   }
 });
 
@@ -116,5 +140,5 @@ test("Risk Schema generator --check proves the committed SQL is current", () => 
     encoding: "utf8",
   });
   assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-  assert.match(result.stdout, /Risk Schema is up to date \(74 tables\)/u);
+  assert.match(result.stdout, /Risk Schema is up to date \(80 tables\)/u);
 });

@@ -1,0 +1,20 @@
+{
+  "sameGatewayPid": 88796,
+  "transitions": [
+    {
+      "time": "2026-09-12T19:09:06.887+04:00",
+      "targetCount": 1,
+      "routeCount": 36
+    },
+    {
+      "time": "2026-09-12T19:11:03.083+04:00",
+      "targetCount": 1,
+      "routeCount": 48
+    },
+    {
+      "time": "2026-09-12T19:28:16.833+04:00",
+      "targetCount": 1,
+      "routeCount": 36
+    }
+  ]
+}

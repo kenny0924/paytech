@@ -1,0 +1,88 @@
+{
+  "at": "2026-09-13 05:21:28.038479+00:00",
+  "changedProductionFiles": {
+    "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/RiskVariableRequestConfiguration.java": "65c91c6991cd8392a534161a2a765cdbf44188843fe2c07ea93ff946ea4352cb",
+    "operations-console-web/src/pages/RiskVariables.tsx": "8fe0e5e9fbc62bc0aaa58bb3b25ac9ef116855ef47987ce8ce12ba1821efb0ef",
+    "risk-compliance-service/risk-web/src/main/java/com/paytech/risk/configuration/RiskVariableRequestConfiguration.java": "f15f87da697c3ad28086a5cdd06f794fe52be822e01cf569f7331bfa9cfa2834",
+    "risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/decision/RiskVariableWireConverter.java": "84711afa9a74b512a84aec327be2bf65e4db17993284a0594e8ffef35227b57b"
+  },
+  "fixtureSha256": "f6e2751587b49bb6e5b7768706f296a7374987cbd697d2de13e24b35fe6529cb",
+  "checks": {
+    "riskBoundary": 1,
+    "bffVariableBoundary": 7,
+    "webBuild": "passed"
+  },
+  "images": {
+    "risk-service": {
+      "tag": "mor-test/risk-service:rco19-variables-20260913-body-limit",
+      "imageId": "sha256:fa91af13a38d41e98d5b8e3a1316ce27a03973ccbc4f7fadb05eb30f180c4376",
+      "jar": "risk-compliance-service/risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar",
+      "jarSha256": "242c9fed94df508439c70c8ea9269b5eda86f685c1a54e35606490dccb2137d6",
+      "container": {
+        "name": "mor-test-risk-service-1",
+        "id": "d132472dd14c82c5c840a188cebe6975eb4d7f6bcb79858d3fccb503ffb4c934",
+        "image": "sha256:fa91af13a38d41e98d5b8e3a1316ce27a03973ccbc4f7fadb05eb30f180c4376",
+        "startedAt": "2026-09-13T05:21:48.787670127Z",
+        "health": "healthy"
+      }
+    },
+    "operations-console-bff": {
+      "tag": "mor-test/operations-console-bff:rco19-variables-20260913-body-limit",
+      "imageId": "sha256:20f0cc8ca5d1e1c50e90dd2a2bfbca4d9acbe57fb754ea34d5458a543810b665",
+      "jar": "operations-console-bff/paytech-operations-console-bff-web/target/paytech-operations-console-bff-web-1.0.0-SNAPSHOT-exec.jar",
+      "jarSha256": "eb0e61c42a5a3905261449ce187ed70d733a8768e0b8f0a2d2e374420f66472f",
+      "container": {
+        "name": "mor-test-operations-console-bff-1",
+        "id": "b319339c64c675ac984b5cbe2bf2a0a962fd1523c434f167eb54f4fb5e2c983e",
+        "image": "sha256:20f0cc8ca5d1e1c50e90dd2a2bfbca4d9acbe57fb754ea34d5458a543810b665",
+        "startedAt": "2026-09-13T05:22:06.288889635Z",
+        "health": "healthy"
+      }
+    },
+    "operations-console-web": {
+      "tag": "mor-test/operations-console-web:rco19-variables-20260913-body-limit",
+      "imageId": "sha256:e3e9e6988191a177b516b0bc88900a372592192235e0fb671e226e4339cef3f6",
+      "distSha256": {
+        "assets/Accounts-BbiuJp08.js": "ecc1b0b96c37043a89d060def11f918c0e6b7644823e01e4e10cf7e95e5a0a76",
+        "assets/Audit-Cmq6AN3k.js": "248c051538c183f106204ef42d8d913af8c61078444d657496136b10051c076e",
+        "assets/Audit-D3eAcELP.css": "05664d0e6d330bc947f68f76dcd684e66a08fa2294e4c4da3ebcf5e7b10ff160",
+        "assets/GatewayConfiguration-DmjErbQo.js": "42e00cedaa022abe4becad720f22fef4af42560f3437a2609039ea28ea7e0270",
+        "assets/RiskDecisionFlows-B1FW0Gw3.css": "b902a3a0e1a1f080d421ac98dc4a153ae8c0f15ad40c8a09f18ae877890b88ea",
+        "assets/RiskDecisionFlows-DG9BqcJw.js": "4046e096671b4f44cab8d15d0f5e2324db35452a7000041b201429f86863dc65",
+        "assets/RiskDictionary-vfMKqxdt.js": "359e545156fffeb69a7965614a7e283b23d78b7992ea9578a75276a510fd53ad",
+        "assets/RiskRuleConfiguration-BiFQl6o2.js": "682a036135fd19198c8fc056b850dc5d1b592624dfc8d1ab67268656e0087f45",
+        "assets/RiskVariables-BIFvlM1Y.js": "f767b552d0926faf4b243d0cf72201b27cc01d7462676dd2ef902b29eecb6921",
+        "assets/Roles-D-cwsxJ7.js": "9c58bef25db394de4004beb132ddb4342c71d646f1bb8c9522f231e26e7c528c",
+        "assets/VariableControls-BqChYMC9.css": "1f574f0a8212143478dcebc97c097b28ded4b7199811dd4402e292cb2cb4a768",
+        "assets/VariableControls-DeAzmzkc.js": "bf45cf5a54f9284e2d4a26a11656606669582199bcd8f0db6b6b8d5c39cf4bbf",
+        "assets/deletion-DFCN5BOa.js": "f849317726021e396a8f455ecb4bfafb839233e6231a24c4e188b7eb6cdecae3",
+        "assets/descriptions-BoiEO_o5.js": "c3abd4631715649433c02e33a6182562855618f0aab63735f256c20892631f95",
+        "assets/index-Cj75_2K1.css": "23b947b67bc9e853cdd3142c0e65ed39422d7b2464ff355d80184919d3bd5fc5",
+        "assets/index-DDEnK3U2.js": "d8c325c18286ad3b962e9fba6b50cc65b6fb2792bcb85e2f9792e0be0676f9da",
+        "assets/jsx-runtime-BG5j7tg9.js": "5cf412e62e1a24432f7e1dab0dc48f38eba0573a36150e01d11811e6c897f5d7",
+        "assets/modal-39ZBH_jI.js": "c432188972cb13f5a29b7049a592328c536dfb86e40b828af15b37faa0f3dfaa",
+        "assets/paging-BqDr3jT3.js": "548684968d5e1cb11ee983aaa6af464229291d4b9475af123ead86012be41255",
+        "assets/riskCommands-BVX49a2m.js": "2d11cc15bc92bca2d47e118a119a72fc7dab44e863e4917774410ffae44fb45b",
+        "assets/riskNavigation-BtsTmh7O.js": "63d8a212b2fbff503bd15d8e6e4b82ffa55accb9249520d1db2be4537074c3a3",
+        "assets/riskRuleConfiguration-BMUDu4IY.css": "76d95c6d0e87f32121505d3f7c3200dc176aa4b1d96d63d08a051b31fcaae50e",
+        "assets/riskRuleConfiguration-CskoCequ.js": "405015d63b0b45d89c9a3c56ff3406c6c92f999a86fa3df63c42f44350f292d2",
+        "assets/rolldown-runtime-CbXtAM7H.js": "bbf7c5086ae414dc3f33777e3eebf16ea8631325b8bb4690d25091c03567f31a",
+        "assets/table-B9i7NErC.js": "89721940e722bda76124aaa068b7a7fb5360bdf806711fb0e8ab70c636e5f1d2",
+        "assets/tabs-B-VcjHge.js": "1de82774805394b0efd4dfd8267fb7f3cbb839db9c1835481a6f95691345efd1",
+        "assets/typography-Bgm4G4HC.js": "aca3ad9a960fa6c128256ddaa03732b6f5e91636b9061c62691a971b5305efac",
+        "assets/usePaging-giNaEkdV.js": "9f72cf8ce959eebc121cf2a23511d98f54d085304842d5c3b63e8edb796769bd",
+        "assets/useUnsavedRuleGuard-DYvGqUbj.js": "4f0e83c16341e9d07a6a5022a716ab7f180eb10f36fc7bfabc0a43795485384e",
+        "index.html": "82ad046adc194b57b2645935e90673c9c97f9d297b61d56c296bfceda34fdbeb"
+      },
+      "container": {
+        "name": "mor-test-operations-console-web-1",
+        "id": "850f73ded8a49bec98b18e041e3c7a88e8070a11fa0e2c1dcc7ba40cc24897f0",
+        "image": "sha256:e3e9e6988191a177b516b0bc88900a372592192235e0fb671e226e4339cef3f6",
+        "startedAt": "2026-09-13T05:22:13.410613472Z",
+        "health": "healthy"
+      }
+    }
+  },
+  "riskApiSha256": "934f469940ea08bcf17b0c1fa196c98957961ff4cee2879e08990b342e0af5e7",
+  "completedAt": "2026-09-13 05:22:24.218565+00:00"
+}

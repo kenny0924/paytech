@@ -1,0 +1,18 @@
+t_permission	0
+t_role_permission	0
+t_console_resource	0
+t_gateway_route	0
+t_gateway_route_header	0
+t_gateway_route_query_param	0
+t_gateway_guard_rule	0
+t_gateway_route.route_code	0
+t_permission.permission_code	0
+t_console_resource.resource_code	0
+route_method_path	0
+900000000000000001	operations-console-bff	operations-console-bff	OPERATIONS	ACTIVE	1
+900000000000000510	PLATFORM_ADMIN	ACTIVE	3
+900000000000000536	RISK_DECISION_CONFIG_READ	ACTIVE
+900000000000000565	OPERATIONS_RISK_MANAGEMENT	ACTIVE	1
+accounts	0
+sessions	0
+signing_keys	0

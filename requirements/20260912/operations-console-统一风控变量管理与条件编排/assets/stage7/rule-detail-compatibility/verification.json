@@ -1,0 +1,23 @@
+{
+  "requestId": "89f1b178-f8d9-4d18-853a-da2ee01d66e0",
+  "backendStatus": 200,
+  "rootCause": "Web response decoder omitted the LEGACY operand format",
+  "relatedTests": {
+    "tests": 259,
+    "passed": 259,
+    "failed": 0
+  },
+  "build": "passed",
+  "actualPublicResponseDecoded": true,
+  "readOnlyEditorModelCreated": true,
+  "ruleSetCode": "DEMO_USD_ALLOW",
+  "ruleSetVersionId": "224423316587384832",
+  "versionNo": 2,
+  "contentHash": "e9dd1476f64bfb317547288b60f29b83bffcbeed72768b4b9c17bac43d03456c",
+  "ruleCodes": [
+    "DISCOUNT_DENY",
+    "USD_ALLOW"
+  ],
+  "databaseWrites": 0,
+  "browserVisualCheck": "Native Chrome accessibility remained limited to a menu after reload; no visual acceptance claimed"
+}

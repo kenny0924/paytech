@@ -1,0 +1,618 @@
+{
+  "recordedAt": "2026-09-13T04:18:55.437959+00:00",
+  "environment": "desktop-linux/mor-local-mysql-1/127.0.0.1:13306/mor_risk",
+  "postTestCounts": {
+    "variables": 17,
+    "members": 9,
+    "test_variables": 0,
+    "rule_operands": 0,
+    "rule_action_parameters": 0,
+    "flow_edges": 0,
+    "rule_versions": 0
+  },
+  "riskAutoTests": {
+    "tests": 254,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "class": "com.paytech.risk.auto.ManualPayoutEligibilityAutoTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_checkpointSourceMismatchFailsClosed",
+        "test_inputHashMismatchIsRejected",
+        "test_sameCommandWithDifferentInputConflicts",
+        "test_clientEvaluationReturnsStablePairAndMinimumRequirement",
+        "test_creationVersionOtherThanOneIsRejected",
+        "test_localPartnerDoesNotReturnClientDepositRequirement",
+        "test_differentCommandCreatesNewImmutablePair"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ManualPayoutEligibilityFailClosedAutoTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_defaultProfileFailsClosed"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.RiskApplicationAutoTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_healthReportsUpWithoutDetails(String)[1]",
+        "test_healthReportsUpWithoutDetails(String)[2]",
+        "test_healthReportsUpWithoutDetails(String)[3]",
+        "test_prometheusIsAvailable",
+        "test_infoDoesNotExposeEnvironment",
+        "test_onlyApprovedManagementEndpointsAreRegistered"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.RiskModuleBoundaryAutoTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_reactorContainsOnlyApprovedModules",
+        "test_runtimeConfigurationAdaptsFoundationSnowflakeBehindDecisionPort",
+        "test_persistenceConfigurationUsesExplicitMapperAndTypeHandlerBoundaries",
+        "test_onlyApprovedDatabaseBansAreRemoved",
+        "test_applicationJacksonConfigurationBindsToBootMapper",
+        "test_autoDatabaseTargetIsFixedToOwnedLoopbackSchema",
+        "test_runtimeHasOnlyApprovedInfrastructure",
+        "test_onlyWebIsExecutableAndTestIsNotPublished",
+        "test_persistenceDependenciesStayInOwningModules",
+        "test_applicationConfigurationIsStrictMetadataOnlyAndRecursiveForMappers",
+        "test_businessLibrariesHaveOnlyApprovedDependencies"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.configuration.RiskRuntimeConfigurationAutoTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_singleClockUsesUtc"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.contract.RiskDecisionConfigurationApiContractAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_getAndCommandSchemasUseExactTypesExplicitNullsAndDefensiveLists",
+        "test_tenFormalRoutesAndRawHeadersAreExact",
+        "test_listsUseFoundationPagingAndApprovedErrorsKeepTheirStatus",
+        "test_fiveWriteRequestsHaveRequiredMetadataAndExactShapes",
+        "test_strictJsonRequiresAllPropertiesRejectsUnknownAndLiteralOnlyAllowsStringBooleanOrNull"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.domain.DecisionFlowValidatorAutoTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_missingFallbackAndDuplicatePriorityAreLocated",
+        "test_branchingAndEarlyTerminationRemainDeclarative",
+        "test_variableDecisionCanContinueToAnotherRuleSetAndRoundTripsWithoutRuntimeValues",
+        "test_cyclesAndDisconnectedNodesNeverPass",
+        "test_conditionDepthIsBoundedAndCorruptStorageIsNotAnEmptyCondition",
+        "test_incompleteEndDecisionIsAReport",
+        "test_conditionTypesAndForbiddenSourcesCannotBeCoerced",
+        "test_corruptStoredOperatorAndEmptyGroupCannotHideReferences",
+        "test_arrayOrderDoesNotChangeCommandIdentityButBranchPriorityDoes"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.domain.DecisionReleaseAggregateAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_acceptsRejectedOnlyWithEightChecksAndFailureEvent",
+        "test_rejectsPartialDuplicateOrWrongOrderChecks",
+        "test_acceptsDraftAndValidatingZeroCheckStates",
+        "test_acceptsExactlyEightPassedChecksAndDerivesWaitingForShadow",
+        "test_rejectsStatusVersionEventAndCheckMatrixCorruption"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.domain.DecisionReleaseStaticValidatorAutoTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_persistedSummaryContractAcceptsGoldenSafeDotPath",
+        "test_astTypesRejectsLiteralWhoseTypeDiffersFromItsUniqueContextField",
+        "test_handlerAstTypeAndTerminalChecksOwnTheirExactFailures",
+        "test_eightCheckMixedOutcomeDiscriminatorUsesFixedOrder",
+        "test_validClosureReturnsAllEightPassedChecksInFixedOrderAndImmutable",
+        "test_foundationCanonicalizationFailureRemainsUnexpected",
+        "test_corruptClosureStillEvaluatesChecksAfterFirstFailure",
+        "test_astShapeOwnsCatalogUniquenessNullMetadataAndFrozenLimits",
+        "test_persistedLiteralValuesMustAlreadyBeCanonicalAndFieldValid",
+        "test_datetimeLiteralUsesSharedCanonicalUtcMicrosecondGoldenVector",
+        "test_referenceIntegrityRequiresFullPointTestHeaderNoOrphansAndSemanticClosure",
+        "test_violationTupleUsesFixtureOrderDedupAndSafeBoundedSummary"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.domain.DecisionRuleSetAggregateAutoTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_rejectsPredicateChildrenAndInvalidGroupArity",
+        "test_reasonCodeMayBeNullButNeverBlank",
+        "test_rejectsMissingDuplicateOrDisconnectedRoots",
+        "test_rejectsCrossRuleNodeAndNonCanonicalOperandOrder",
+        "test_acceptsOneRootTreeAndCopiesEveryCollection",
+        "test_rejectsBrokenActionAndTopLevelCoordinates"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.domain.RiskDecisionCanonicalizerAutoTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_foundationStringLimitFailureIsNotMappedToInvalidParameter",
+        "test_nfcAndUnpairedSurrogateDiscriminatorsMatchFixture",
+        "test_releaseIdsSortNumericallyAndExplicitNullPropertiesRemainPresent",
+        "test_invalidPublicProjectionInputsFailClosedWithDomainException",
+        "test_writerUsesUtf16KeyOrderStrictSurrogatesAndDefensiveBytes",
+        "test_createSemanticPermutationsNormalizeNfcAndChangedMeaningChangesHash",
+        "test_allSevenSchemaBoundPrimaryTriplesMatchFixtureBytesAndHashes",
+        "test_datetimeLiteralUsesSharedCanonicalUtcMicrosecondGoldenVector",
+        "test_duplicateNumericIdsUseFullCanonicalRowTieBreakInsteadOfArrivalOrder",
+        "test_duplicateDecodedObjectPropertyFailsWithFoundationException"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.domain.RuleAstValidatorAutoTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_configurationAllowsNoActionsWhileLegacyStillRequiresAnAction",
+        "test_validDraftNormalizesNfcNamesDecimalTimeDurationAndCollections",
+        "test_ruleNodeOperandDepthAndInLimitsAreEnforcedAtBoundaries",
+        "test_invalidBaseGraphNodeAndOperandMatricesFailClosed",
+        "test_contextAndLiteralMayUseEitherOppositeSideWithPerRoleSequences",
+        "test_changeReasonPolicyRejectsOnlyNarrowUnsafeShapesWithoutEchoingRawValue",
+        "test_semanticAstAndDirectoryRejectionsUseBusinessCheckWhileRequestShapeUsesInvalidParameter",
+        "test_invalidScalarAndDirectoryValuesFailWithoutEchoingLiteral",
+        "test_descriptorAndRegistryMatchFrozenCheckoutDirectory"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.domain.VariableConditionContractAutoTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "collectionDomainsAndLiteralFormatsFollowCurrentDefinitions",
+        "currentValuesDoNotEnterVariableRuleHashAndOriginalLiteralRetainsItsIdentity",
+        "nodeDecisionKeepsMatchedAndCanBranchOnDenyWithoutExecuting",
+        "arbitraryCodesWorkOnBothSidesAndUseAccurateCurrencyIdentity"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.domainservice.DecisionReleaseServiceProtocolAutoTest",
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_prepareCommandsUseOnlyTheirSchemaBoundCanonicalProjection",
+        "test_historicalDetailAndCreateReplayAcceptRetiredReferencedActionWithStableHandlerContent",
+        "test_validationRecordsHandlerFailureWhenPersistedHandlerDriftsFromRegistry",
+        "test_candidateFailsClosedWhenBuiltInActionCatalogHasParameterDefinitions",
+        "test_legacyReleaseReconstructsOriginalFieldIdsWithoutExpandingItsInputSnapshot",
+        "test_replayFailsClosedWhenPersistedFailedErrorFieldsAreNonCanonical",
+        "test_createListDetailAndReplayUseFrozenClosureAndImmutableInitialFacts",
+        "test_succeededValidationReplayUsesFrozenReferencedActionAfterCurrentCatalogRetires",
+        "test_prepareAndTriggerBoundariesRejectMalformedValuesBeforePersistence",
+        "test_candidateFailsClosedWhenFrozenCompanionIsDamaged",
+        "test_historicalDetailAndCreateReplayDoNotLoadUnreferencedActionAfterItRetires",
+        "test_staleRecoveryWorkerCanStillLoadImmutableClosureAfterWinnerCompletes",
+        "test_validationRecordsHandlerFailureWhenPersistedActionBecomesInactive",
+        "test_historicalDetailFailsClosedWhenReferencedActionHandlerContentIsDamaged",
+        "test_validationRecoveryAndCompletePersistExactlyEightThenReplayFromEvidence",
+        "test_onlyFirstSingularMissUsesDedicatedNotFoundAndDanglingReferencesAreInternalErrors"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.domainservice.DecisionRuleSetServiceAutoTest",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_historicalDetailFailsClosedForDamagedReferencedHandler",
+        "test_createDraftRevalidatesPreparedChangeReasonBeforePersistence",
+        "test_prepareCreateNormalizesAndHashesWithoutPersistenceOrIdentifiers",
+        "test_historicalDetailsAndReplaysUseFrozenReferencedCatalog(String, boolean)[1]",
+        "test_historicalDetailsAndReplaysUseFrozenReferencedCatalog(String, boolean)[2]",
+        "test_historicalDetailsAndReplaysUseFrozenReferencedCatalog(String, boolean)[3]",
+        "test_historicalDetailsAndReplaysUseFrozenReferencedCatalog(String, boolean)[4]",
+        "test_authoringCatalogChecksBuiltInParameterDefinitions",
+        "test_authoringContextUsesDedicatedNotFoundSignalForUnavailablePoint",
+        "test_prepareFreezeUsesCanonicalDecimalIdentifier",
+        "test_listAcceptsFoundationMaximumPageSize",
+        "test_commandsRejectDamagedCompanionWithoutWrites(String, String)[1]",
+        "test_commandsRejectDamagedCompanionWithoutWrites(String, String)[2]",
+        "test_commandsRejectDamagedCompanionWithoutWrites(String, String)[3]",
+        "test_commandsRejectDamagedCompanionWithoutWrites(String, String)[4]",
+        "test_commandsRejectDamagedCompanionWithoutWrites(String, String)[5]",
+        "test_commandsRejectDamagedCompanionWithoutWrites(String, String)[6]"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.DecisionConfigurationConcurrencyAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_sameFrozenRuleSetAllowsTwoCandidatesWithDistinctReleaseNumbers",
+        "test_sameRuleSetCodeAllowsOnlyOneFirstVersion",
+        "test_sameCommandReplaysButDifferentHashConflictsAndCaseVariantIsDistinct",
+        "test_differentRuleSetCodesAllocateDistinctRuleVersionsWithoutLegacyComposition",
+        "test_sameDraftFreezeAllowsOneTransitionAndWinnerReplay"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.DecisionConfigurationReadSnapshotAutoTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_validateCommitBetweenReleaseDetailQueriesReturnsOneOldSnapshot",
+        "test_authoringContextReturnsPointAndCatalogFromOneDatabaseSnapshot",
+        "test_validateCommitBetweenReleaseListQueriesReturnsOneOldSnapshot",
+        "test_freezeCommitBetweenRuleSetDetailQueriesReturnsOneOldSnapshot",
+        "test_validateLoadsFrozenClosureInShortReadOnlyRepeatableReadSnapshot",
+        "test_freezeCommitBetweenRuleSetListQueriesReturnsOneOldSnapshot"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.DecisionDictionaryHttpAutoTest",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_dictionaryResourceLockIsPerTypeAndCode",
+        "test_historyAndDisabledReasonRetentionKeepOriginalReplay",
+        "test_brokenReleaseRelationshipFailsBeforeFiltering",
+        "test_strictBodyShape(String)[1]",
+        "test_strictBodyShape(String)[2]",
+        "test_strictBodyShape(String)[3]",
+        "test_strictBodyShape(String)[4]",
+        "test_concurrentCreatesKeepOnePermanentCode",
+        "test_createEditStatusAndPermanentUniqueness(String)[1]",
+        "test_createEditStatusAndPermanentUniqueness(String)[2]",
+        "test_deletedRootReferencesRetainCurrentPointerWithoutExposingVersionDetail",
+        "test_oldTagRetentionDoesNotPermitCopyingActions(boolean)[1]",
+        "test_oldTagRetentionDoesNotPermitCopyingActions(boolean)[2]",
+        "test_unregisteredCodeHasDictionaryNotFoundProblem",
+        "test_concurrentUpdatesHaveExactlyOneCasWinner",
+        "test_historyUpperBoundDoesNotDriftWhenAnotherVersionIsSaved",
+        "test_legacyNullReasonMessageRemainsReadableButCannotBeNewlySaved",
+        "test_getBodyUnknownQueryAndLimitFailBeforeDatabaseMutation",
+        "test_activeOldVersionSurvivesEmptyReleaseFilters(String)[1]",
+        "test_activeOldVersionSurvivesEmptyReleaseFilters(String)[2]"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.DecisionDictionaryLockOrderHttpAutoTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_disableAndSaveRespectActualDatabaseLockOrder(String, String)[1]",
+        "test_disableAndSaveRespectActualDatabaseLockOrder(String, String)[2]",
+        "test_disableAndSaveRespectActualDatabaseLockOrder(String, String)[3]",
+        "test_disableAndSaveRespectActualDatabaseLockOrder(String, String)[4]"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.DecisionFlowConfigurationHttpAutoTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_successReplayRemainsStableAfterEditAndWholeDeletion",
+        "test_disabledReasonOnlyRetainsOriginalNodeCodeAndMessage",
+        "test_reasonReferencesUseOneMixedPageAcrossRuleAndFlowVersions",
+        "test_legacyProjectionAndPersistedBindingReadRemainAvailableAfterRuleDeletion",
+        "test_saveAndDeleteRaceHasOneWinnerAndNoOrphanVersion",
+        "test_fullVersionRoundTripAndCurrentRootListing",
+        "test_retiredExactReferenceMayRemainButNewOrDeletedReferenceCannotSave",
+        "test_concurrentEditorsOnlyOneCanAdvanceTheSameBase",
+        "test_unknownMembersScalarCoercionAndUndeclaredQueryAreRejected",
+        "test_flowVersionsReferenceNewAndLegacyRulesUsingTheDirectInputContract",
+        "test_incompleteGraphValidationDoesNotWriteAndSaveReturnsFieldErrors"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.DecisionReleaseManagementHttpAutoTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_createReplaysStableCandidateAndPublishesListAndDetail",
+        "test_sameCandidateKeyWithDifferentHashReturnsConflictWithoutMutation"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.DecisionReleaseValidationRecoveryAutoTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_firstValidateCommitsExactlyEightChecksAndReplaysStableResponse",
+        "test_sameOriginalCommandRecoversConcurrentlyWithoutDuplicateEvidence",
+        "test_processingTriggerMustMatchOriginalIdempotencyKey",
+        "test_processingActorMustMatchStartedStateActor",
+        "test_secondProcessingKeyCannotTakeOverOriginalTransactionA",
+        "test_exactPostTransactionAStateRecoversWithOriginalCommand",
+        "test_processingHashForExpectedVersionTwoFailsClosed"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.DecisionRuleSetDeletionHttpAutoTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_deleteRacesWithConfigurationCommands(String)[1]",
+        "test_deleteRacesWithConfigurationCommands(String)[2]",
+        "test_deleteRacesWithConfigurationCommands(String)[3]",
+        "test_deleteReplayDoesNotReloadConfigurationOrActionCatalog",
+        "test_changedVersionAndCorruptActiveSlotRollBack",
+        "test_activeOldVersionBlocksDelete(String)[1]",
+        "test_activeOldVersionBlocksDelete(String)[2]",
+        "test_listFailsClosedForDanglingOrStaleHead",
+        "test_realRedisContentionProtectsEveryManagementCommandAndReleasesAfterFailure",
+        "test_deleteRequestShapeAndSignedLongBounds",
+        "test_deleteWholeSetKeepsFrozenHistoryAndStableCommandReplays",
+        "test_parallelSameDeleteHasOneStableReceipt"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.DecisionRuleSetManagementHttpAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_unsafeChangeReasonReturns400WithoutEchoOrDatabaseWrites",
+        "test_sameKeyRejectsDifferentPayloadWhileCaseVariantRemainsDistinct",
+        "test_nextVersionRetiresPreviousSnapshotAndCannotFreezeVariableConfiguration",
+        "test_authoringContextExposesOnlyApprovedCheckoutCatalog",
+        "test_createPersistsCompleteSnapshotAndReplaysStableResponse"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.RiskVariableHttpAutoTest",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "ruleAndFlowReadLatestSharedValueWithoutChangingSavedHashesOrSuccessfulReplay",
+        "membersRetainExactTextAndOldPageVersionCannotMixReplacements",
+        "simultaneousCasUpdatesHaveExactlyOneWinner",
+        "catalogAndCurrentValuesComeFromVariableLibrary",
+        "previouslyUnknownInputAliasAppearsWithoutRestartOrCodeRegistration",
+        "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[1]",
+        "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[2]",
+        "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[3]",
+        "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[4]",
+        "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[5]",
+        "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[6]",
+        "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[7]",
+        "configurationSaveAndVariableMutationRespectDatabaseLockOrder(String, String, String)[8]",
+        "duplicateNumericMemberRejectsWholeBatchAndRetainsRootVersion",
+        "dependencyReferencesBlockDeleteAndInvalidCursorIsAClientError",
+        "constantUsesCasAndDeletedCodeCannotBeReused",
+        "systemDefinitionsCannotChangeStatusOrBeDeleted"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.RuleActionConfigurationHttpAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_additionalActionsRoundTripAndReplayWithoutExecution",
+        "test_terminalConfigurationRetainsManualMessageButHasNoLegacyCandidate",
+        "test_actionsMayBeOmittedInConfigurationButCannotFreeze",
+        "test_duplicateTagCodesNormalizeAndReplayWithTheSameHash",
+        "test_invalidTargetDurationReasonAndActionShapesNeverCreateConfiguration"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.ext.http.RuleSetInputContractHttpAutoTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_saveReadRetireFreezeAndReplayWithoutCreatingLegacyComposition"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.repository.CommandIdempotencyRepositoryMySqlAutoTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_firstClaimSucceededReplayAndDifferentHashUseOneLockedMySqlRow"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.repository.RiskDecisionPersistenceAutoTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_ruleSetClosureRoundTripsRegisteredEnumsAndUtcMicros",
+        "test_unknownPersistedEnumCodeFailsClosedInsteadOfGuessing"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.repository.RiskDecisionPersistenceContractAutoTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_xmlTouchesExactlyTheDecisionOwnerTables",
+        "test_mapperInterfacesExposeOnlyTheApprovedSurface",
+        "test_releaseXmlLoadsAndMatchesTheExactContract",
+        "test_ruleSetXmlLoadsAndMatchesTheExactContract",
+        "test_lockedResourceDisappearanceAndUnexpectedCasCountAreInternalCorruption",
+        "test_dataObjectsAreExactImmutableDocumentedRecords"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.service.DecisionConfigurationWebOrchestrationAutoTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "controllersImplementOnlyTheFrozenContractsAndRemainValidatedAdapters",
+        "processorsAndControllersArePublishedForBothFrozenApiContracts",
+        "realWebContextPublishesAllRoutesAndSafeRequestInfrastructureWithoutOpeningTheDatabase"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.auto.service.RiskOperationRequestContextParserAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_idempotencyKeyIsOpaqueAsciiAndLengthBounded",
+        "test_parsePreservesValidCanonicalActorAndSession",
+        "test_actorAndPathIdRejectNonCanonicalOrOverflowValuesWithoutTrimming",
+        "test_upperCodeParsingIsExactAndOptionalNullStaysNull",
+        "test_sessionAcceptsOnlyPrintableAsciiWithoutBoundarySpaces"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.decision.domainservice.repository.impl.DecisionListReconstructionRepositoryAutoTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "rule_set_list_validates_an_existing_legacy_companion_point_version",
+        "rule_set_list_without_legacy_binding_does_not_query_point_versions",
+        "release_list_requires_exact_frozen_point_and_rule_set_coordinates"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.decision.domainservice.repository.impl.DecisionReleaseDuplicateKeyClassifierAutoTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "test_onlyExactReleaseNumberIndexIsClassifiedAsBusinessConcurrency"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.decision.domainservice.repository.impl.DecisionRuleSetRepositoryImplAutoTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "only_server_allocated_version_business_indexes_are_concurrent_conflicts"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.domainservice.repository.impl.CommandIdempotencyRepositoryImplAutoTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "candidate_identifier_distinguishes_first_claim_from_an_existing_locked_identity",
+        "missing_target_or_candidate_identifier_collision_fails_closed",
+        "generated_identifier_must_be_positive_before_insert"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.domainservice.service.impl.CommandIdempotencyAutoTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "stateful_protocol_model_proves_validate_reference_and_completion_are_exactly_once",
+        "validate_processing_recovery_uses_stored_reference_even_after_expiry",
+        "request_hash_schema_must_match_its_exact_command_operation",
+        "service_rejects_non_microsecond_write_times_before_persistence",
+        "transaction_executor_opens_one_short_transaction_per_write_without_query_api",
+        "opaque_trigger_id_is_stable_identity_derived_and_never_returns_the_raw_key",
+        "mapper_xml_has_exact_ten_column_mapping_and_guarded_state_transitions",
+        "mapper_xml_binds_each_enum_to_its_registered_handler_instance",
+        "typed_identity_and_response_reference_reject_noncanonical_values",
+        "classifier_fails_closed_for_non_validate_processing_failed_corrupt_or_different_requests"
+      ]
+    },
+    {
+      "class": "com.paytech.risk.ext.rest.decision.RiskDecisionWireConverterAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "requestMappingPreservesLocalKeysAndUsesClosedLiteralTypes",
+        "responseMappingUsesPositiveDecimalIdsAndFixedUtcMicroseconds",
+        "candidateResponsesKeepInitialTriggerPrivateAndStaticCheckNullMatrix",
+        "authoringContextUsesOnlyProvidedDatabaseDefinitions",
+        "closedCodeParsersRejectUnknownOrNullInsteadOfUsingEnumValueOf"
+      ]
+    }
+  ],
+  "logSha256": "0fc1789bde6361ee45657a1b292dc0d555ad0a17d3b4f33c8472b2f9b74dd599"
+}

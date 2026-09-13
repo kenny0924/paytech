@@ -1,0 +1,42 @@
+{
+  "paytech-foundation": {
+    "paytech-mvc-web-starter": [
+      125,
+      0,
+      0,
+      0
+    ],
+    "paytech-http-client-support": [
+      110,
+      0,
+      0,
+      0
+    ],
+    "paytech-common-core": [
+      103,
+      0,
+      0,
+      0
+    ],
+    "paytech-http-problem": [
+      9,
+      0,
+      0,
+      0
+    ]
+  },
+  "operations-console-bff": {
+    "paytech-operations-console-bff-test": [
+      1052,
+      0,
+      0,
+      0
+    ]
+  },
+  "notes": "BFF full run 1052 had one stale factory-count assertion; after updating it, both affected classes (16 tests) passed. Counts above combine the final suite reports, not a second full reactor run.",
+  "web": {
+    "tests": 900,
+    "failures": 0,
+    "build": "passed"
+  }
+}

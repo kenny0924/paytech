@@ -1,0 +1,18 @@
+{
+  "logsSha256": {
+    "rco19-test-build.log": "bdeb83358b405681feb20bfe0e6ea2d7f83fab322ec6a106a90dba97c126e335",
+    "rco19-limit-red.log": "e2d8c2b314af6231d3942b63615029bc649ff10f00998f1eb2a349af5eef75a4",
+    "rco19-limit-risk-red.log": "7607836a0a02f3aeb5291fccdab93e7dbe1bec2f5f9c81fb5c0ccf9333ba49f9",
+    "rco19-limit-green-build.log": "d9f42033a8a2b10131004b3cc8420dcf27c27c7e6f1e93705e16b80b2fd3bfee"
+  },
+  "redEvidence": {
+    "risk": "65,537 bytes accepted as 200 before fix; expected 413",
+    "bff": "65,537 bytes forwarded and returned 404 before fix; expected 413"
+  },
+  "greenEvidence": {
+    "risk": 1,
+    "bff": 7,
+    "webProductionBuild": "passed"
+  },
+  "initialAttempt": "Risk local precondition failed because environment credentials omitted; rerun with existing local environment injection"
+}

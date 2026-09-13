@@ -1,0 +1,14 @@
+{
+  "type": "about:blank",
+  "title": "Unprocessable Content",
+  "detail": "请求字段校验未通过",
+  "code": "VALIDATION_ERROR",
+  "requestId": "a1477980-fb85-4603-99f7-926caf7e5b7b",
+  "timestamp": "2026-09-12T15:57:19.168434Z",
+  "errors": [
+    {
+      "field": "graph.nodes[5].decisionCode",
+      "message": "请检查此处配置"
+    }
+  ]
+}

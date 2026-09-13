@@ -1,0 +1,180 @@
+{
+  "at": "2026-09-13 05:43:07.762371+00:00",
+  "authorization": "RCO-19 已授权 test 发布，同范围详情兼容修复；仅更新 Web",
+  "image": {
+    "tag": "mor-test/operations-console-web:rco19-legacy-detail-20260913",
+    "imageId": "sha256:d2216498bb9a2bb902c50baeb88aebda22b172a00f049ce14097c35e1e7fde68"
+  },
+  "changedSourceSha256": {
+    "operations-console-web/src/risk/riskResponseValidation.test.ts": "dbf39f4dd748da98c654c633c1d20e81a0ac0de620570c0a1c93593474f99718",
+    "operations-console-web/src/risk/riskResponseValidation.ts": "fd28fffa16705b99a550a759a5f209d9d6b9adece83dc315676ab4be2d33b9d0"
+  },
+  "logsSha256": {
+    "rco19-legacy-detail-tests.log": "3185f6b6db213b8bc1e36bbf1f8af344575231aa59eddd9f3f622b80eec477e4",
+    "rco19-legacy-detail-build.log": "cc921d3e04ffd6b25596caf52bfe72a99b97f2bb17e6769f34168e59bdab79c6"
+  },
+  "before": [
+    {
+      "name": "mor-test-operations-console-web-1",
+      "id": "850f73ded8a49bec98b18e041e3c7a88e8070a11fa0e2c1dcc7ba40cc24897f0",
+      "image": "sha256:e3e9e6988191a177b516b0bc88900a372592192235e0fb671e226e4339cef3f6",
+      "startedAt": "2026-09-13T05:22:13.410613472Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-operations-console-bff-1",
+      "id": "b319339c64c675ac984b5cbe2bf2a0a962fd1523c434f167eb54f4fb5e2c983e",
+      "image": "sha256:20f0cc8ca5d1e1c50e90dd2a2bfbca4d9acbe57fb754ea34d5458a543810b665",
+      "startedAt": "2026-09-13T05:22:06.288889635Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-risk-service-1",
+      "id": "d132472dd14c82c5c840a188cebe6975eb4d7f6bcb79858d3fccb503ffb4c934",
+      "image": "sha256:fa91af13a38d41e98d5b8e3a1316ce27a03973ccbc4f7fadb05eb30f180c4376",
+      "startedAt": "2026-09-13T05:21:48.787670127Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-api-gateway-1",
+      "id": "4552711da4db528e0c3096f974279c5dc1bcb3b1989a095fc16a8c644494b3dd",
+      "image": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+      "startedAt": "2026-09-12T06:49:52.444891428Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-nginx-1",
+      "id": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "image": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "startedAt": "2026-09-08T10:29:06.641971795Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-platform-support-service-1",
+      "id": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "image": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332",
+      "startedAt": "2026-09-08T10:28:59.905447584Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-nacos-1",
+      "id": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "image": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "startedAt": "2026-09-08T10:27:41.600042756Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-vault-service-1",
+      "id": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "image": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "startedAt": "2026-09-04T13:08:13.406271054Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-redis-1",
+      "id": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "image": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "startedAt": "2026-09-04T08:25:06.369366719Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-rabbitmq-1",
+      "id": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "image": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "startedAt": "2026-09-04T08:25:06.356402385Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-mysql-1",
+      "id": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "image": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "startedAt": "2026-09-04T08:25:06.372277969Z",
+      "health": "healthy"
+    }
+  ],
+  "after": [
+    {
+      "name": "mor-test-operations-console-web-1",
+      "id": "1a1603f34262d1220a52f9838896c446e30560b150c10f7e36ced78de0212175",
+      "image": "sha256:d2216498bb9a2bb902c50baeb88aebda22b172a00f049ce14097c35e1e7fde68",
+      "startedAt": "2026-09-13T05:43:08.55512222Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-operations-console-bff-1",
+      "id": "b319339c64c675ac984b5cbe2bf2a0a962fd1523c434f167eb54f4fb5e2c983e",
+      "image": "sha256:20f0cc8ca5d1e1c50e90dd2a2bfbca4d9acbe57fb754ea34d5458a543810b665",
+      "startedAt": "2026-09-13T05:22:06.288889635Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-risk-service-1",
+      "id": "d132472dd14c82c5c840a188cebe6975eb4d7f6bcb79858d3fccb503ffb4c934",
+      "image": "sha256:fa91af13a38d41e98d5b8e3a1316ce27a03973ccbc4f7fadb05eb30f180c4376",
+      "startedAt": "2026-09-13T05:21:48.787670127Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-api-gateway-1",
+      "id": "4552711da4db528e0c3096f974279c5dc1bcb3b1989a095fc16a8c644494b3dd",
+      "image": "sha256:70ed9f3aa481535e57d1e3cc0f913ae019190482dfa057c84b87e1b168a5317d",
+      "startedAt": "2026-09-12T06:49:52.444891428Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-nginx-1",
+      "id": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "image": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "startedAt": "2026-09-08T10:29:06.641971795Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-platform-support-service-1",
+      "id": "9af418fcf19291af4b6f29fca655e69936252d2dfc5e4434cc1a1e24452911ea",
+      "image": "sha256:16017501f5589473734c7cbaabfcb688d388ee796c8663f5be1f619abd5b5332",
+      "startedAt": "2026-09-08T10:28:59.905447584Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-nacos-1",
+      "id": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "image": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "startedAt": "2026-09-08T10:27:41.600042756Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-vault-service-1",
+      "id": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "image": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "startedAt": "2026-09-04T13:08:13.406271054Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-redis-1",
+      "id": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "image": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "startedAt": "2026-09-04T08:25:06.369366719Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-rabbitmq-1",
+      "id": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "image": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "startedAt": "2026-09-04T08:25:06.356402385Z",
+      "health": "healthy"
+    },
+    {
+      "name": "mor-test-mysql-1",
+      "id": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "image": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "startedAt": "2026-09-04T08:25:06.372277969Z",
+      "health": "healthy"
+    }
+  ],
+  "otherContainersUnchanged": 10,
+  "publicAssets": {
+    "index.html": "90e6d842f0259f53ffd33adf771bb41d8487253f0708f28d55adca9cc33234db",
+    "assets/RiskRuleConfiguration-I35QBK9N.js": "da7e8bdf1fb1564d3942015aafe44d9b52b06104ee79c13587662238efba4a09"
+  },
+  "completedAt": "2026-09-13 05:43:19.299711+00:00"
+}

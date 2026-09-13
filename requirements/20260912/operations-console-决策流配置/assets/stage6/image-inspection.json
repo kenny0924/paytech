@@ -1,0 +1,14 @@
+{
+  "risk-service": {
+    "jarSha256": "73c0d4c81f5f02791d12fe6ff002dd7ca6702730bd4c51fe5927632c7c6c8c65"
+  },
+  "operations-console-bff": {
+    "jarSha256": "df3073f2cebdddfdad5e43a13f0e43751d51a0d0702bb2f2f29489612f22d0e1"
+  },
+  "operations-console-web": {
+    "distFiles": 22,
+    "indexSha256": "3494b5ed6c8080be3264b2cb0049f1c7780c8c51521362dd23a13fa134c34c81"
+  },
+  "candidateReader": "Compiled against exact candidate JAR; not executed before test backfill",
+  "runningTest": "All 11 original container IDs, images and startup timestamps unchanged"
+}

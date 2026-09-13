@@ -1,0 +1,374 @@
+[
+  {
+    "name": "国家属于集合",
+    "condition": {
+      "schemaVersion": 2,
+      "root": {
+        "kind": "PREDICATE",
+        "operator": "IN",
+        "operands": [
+          {
+            "operandRole": "LEFT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "INPUT_COUNTRY_CODE",
+            "fieldCode": null,
+            "valueType": "STRING",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "RESTRICTED_COUNTRIES",
+            "fieldCode": null,
+            "valueType": "STRING",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "金额大于共享阈值",
+    "condition": {
+      "schemaVersion": 2,
+      "root": {
+        "kind": "PREDICATE",
+        "operator": "GT",
+        "operands": [
+          {
+            "operandRole": "LEFT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "INPUT_NET_AMOUNT",
+            "fieldCode": null,
+            "valueType": "NUMBER",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "DEMO_AMOUNT_THRESHOLD",
+            "fieldCode": null,
+            "valueType": "NUMBER",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "金额比较字段",
+    "condition": {
+      "schemaVersion": 2,
+      "root": {
+        "kind": "PREDICATE",
+        "operator": "LTE",
+        "operands": [
+          {
+            "operandRole": "LEFT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "INPUT_NET_AMOUNT",
+            "fieldCode": null,
+            "valueType": "NUMBER",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "INPUT_MERCHANDISE_AMOUNT",
+            "fieldCode": null,
+            "valueType": "NUMBER",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "左侧直接金额常量",
+    "condition": {
+      "schemaVersion": 2,
+      "root": {
+        "kind": "PREDICATE",
+        "operator": "LT",
+        "operands": [
+          {
+            "operandRole": "LEFT",
+            "valueSequence": 1,
+            "sourceType": "LITERAL",
+            "variableCode": null,
+            "fieldCode": null,
+            "valueType": "NUMBER",
+            "literalValue": "8000.00000000",
+            "numericUnit": "MONEY",
+            "currencyCode": null,
+            "currencyVariableCode": "INPUT_CURRENCY"
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "INPUT_NET_AMOUNT",
+            "fieldCode": null,
+            "valueType": "NUMBER",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "处理结果拒绝仍继续",
+    "condition": {
+      "schemaVersion": 2,
+      "root": {
+        "kind": "PREDICATE",
+        "operator": "EQ",
+        "operands": [
+          {
+            "operandRole": "LEFT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "NODE_DECISION",
+            "fieldCode": null,
+            "valueType": "STRING",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 1,
+            "sourceType": "LITERAL",
+            "variableCode": null,
+            "fieldCode": null,
+            "valueType": "STRING",
+            "literalValue": "DENY",
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "保留是否命中",
+    "condition": {
+      "schemaVersion": 2,
+      "root": {
+        "kind": "PREDICATE",
+        "operator": "EQ",
+        "operands": [
+          {
+            "operandRole": "LEFT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "NODE_MATCHED",
+            "fieldCode": null,
+            "valueType": "BOOLEAN",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 1,
+            "sourceType": "LITERAL",
+            "variableCode": null,
+            "fieldCode": null,
+            "valueType": "BOOLEAN",
+            "literalValue": true,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "两个常量",
+    "condition": {
+      "schemaVersion": 2,
+      "root": {
+        "kind": "PREDICATE",
+        "operator": "EQ",
+        "operands": [
+          {
+            "operandRole": "LEFT",
+            "valueSequence": 1,
+            "sourceType": "LITERAL",
+            "variableCode": null,
+            "fieldCode": null,
+            "valueType": "STRING",
+            "literalValue": "USD",
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 1,
+            "sourceType": "LITERAL",
+            "variableCode": null,
+            "fieldCode": null,
+            "valueType": "STRING",
+            "literalValue": "USD",
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "无节点处理结果",
+    "condition": {
+      "schemaVersion": 2,
+      "root": {
+        "kind": "PREDICATE",
+        "operator": "IS_NULL",
+        "operands": [
+          {
+            "operandRole": "LEFT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "NODE_DECISION",
+            "fieldCode": null,
+            "valueType": "STRING",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "闭区间",
+    "condition": {
+      "schemaVersion": 2,
+      "root": {
+        "kind": "PREDICATE",
+        "operator": "BETWEEN",
+        "operands": [
+          {
+            "operandRole": "LEFT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "INPUT_NET_AMOUNT",
+            "fieldCode": null,
+            "valueType": "NUMBER",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 1,
+            "sourceType": "LITERAL",
+            "variableCode": null,
+            "fieldCode": null,
+            "valueType": "NUMBER",
+            "literalValue": "0.00000000",
+            "numericUnit": "MONEY",
+            "currencyCode": null,
+            "currencyVariableCode": "INPUT_CURRENCY"
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 2,
+            "sourceType": "VARIABLE",
+            "variableCode": "DEMO_AMOUNT_THRESHOLD",
+            "fieldCode": null,
+            "valueType": "NUMBER",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "直接集合常量",
+    "condition": {
+      "schemaVersion": 2,
+      "root": {
+        "kind": "PREDICATE",
+        "operator": "IN",
+        "operands": [
+          {
+            "operandRole": "LEFT",
+            "valueSequence": 1,
+            "sourceType": "VARIABLE",
+            "variableCode": "INPUT_COUNTRY_CODE",
+            "fieldCode": null,
+            "valueType": "STRING",
+            "literalValue": null,
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 1,
+            "sourceType": "LITERAL",
+            "variableCode": null,
+            "fieldCode": null,
+            "valueType": "STRING",
+            "literalValue": "AE",
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          },
+          {
+            "operandRole": "RIGHT",
+            "valueSequence": 2,
+            "sourceType": "LITERAL",
+            "variableCode": null,
+            "fieldCode": null,
+            "valueType": "STRING",
+            "literalValue": "US",
+            "numericUnit": null,
+            "currencyCode": null,
+            "currencyVariableCode": null
+          }
+        ]
+      }
+    }
+  }
+]

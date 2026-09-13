@@ -1,0 +1,98 @@
+{
+  "preparedAt": "2026-09-12T16:41:25.524926+00:00",
+  "status": "STAGE_6_PREPARED_AWAITING_STAGE_7_AUTHORIZATION",
+  "entry": "http://localhost:28080",
+  "dockerContext": "desktop-linux",
+  "composeProject": "mor-test",
+  "databases": [
+    "127.0.0.1:23306/mor_risk",
+    "127.0.0.1:23306/mor_platform"
+  ],
+  "serviceImages": {
+    "risk-service": {
+      "tag": "mor-test/risk-service:rco17-decision-flow-20260912",
+      "imageId": "sha256:89bd500057a2ddb8f43a0cac440dc78db3876dc6c13d80d1b65e5a2225a04945",
+      "architecture": "arm64",
+      "jar": "risk-compliance-service/risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar",
+      "jarSha256": "73c0d4c81f5f02791d12fe6ff002dd7ca6702730bd4c51fe5927632c7c6c8c65"
+    },
+    "operations-console-bff": {
+      "tag": "mor-test/operations-console-bff:rco17-decision-flow-20260912",
+      "imageId": "sha256:bfc92deaee5ec0b90193eb48be394d48bd9f3bf0ef91bb05402d5a0e31715eaa",
+      "architecture": "arm64",
+      "jar": "operations-console-bff/paytech-operations-console-bff-web/target/paytech-operations-console-bff-web-1.0.0-SNAPSHOT-exec.jar",
+      "jarSha256": "df3073f2cebdddfdad5e43a13f0e43751d51a0d0702bb2f2f29489612f22d0e1"
+    },
+    "operations-console-web": {
+      "tag": "mor-test/operations-console-web:rco17-decision-flow-20260912",
+      "imageId": "sha256:e6585089b4e469494f708bfeb2537f1ee79747a7c5483a5ad04e2abe9b25dc16",
+      "architecture": "arm64",
+      "distFilesSha256": {
+        "assets/Accounts-DhoundK1.js": "e9e12a8c065156799124df557188f326771d6a54da3516b9a9513824780f8405",
+        "assets/Audit-D3eAcELP.css": "05664d0e6d330bc947f68f76dcd684e66a08fa2294e4c4da3ebcf5e7b10ff160",
+        "assets/Audit-urIaN9ku.js": "f1844c9ee23d3a7d7a0516c4c00786cf227a32c05bba773335b9570255b23709",
+        "assets/GatewayConfiguration-CGD9Ot47.js": "426096240db82d4d17d12d81259ed6785659426c4979e8e9ce7b2c2a2df49bd0",
+        "assets/RiskDecisionFlows-524nNVkk.js": "89a94209ec2521f5c8107572ffc58426300ae60d2729b0cf086a2e8bedf1de38",
+        "assets/RiskDecisionFlows-CZAtF-9S.css": "1c43ad53475da469b8a31dd111f760a84021f42704d6b889276dff46f4eb2c20",
+        "assets/RiskDictionary-Bh3RKzVk.js": "c5cdd83bbb1fd396cca596bdb51a7bacae9c90e33e4fc2987ed1abf61b80838e",
+        "assets/RiskRuleConfiguration-CClcxPKY.js": "673cbaac8c842d574dc8d0c2dcbbb989bd2a530eecce39ea1210a23b94737585",
+        "assets/Roles-oJsroE4S.js": "a26ddcd31a5ab31e4adb701938525ace3285e58e7257eaee218c1c0b17b585c6",
+        "assets/deletion-CVAKBMlq.js": "4fa8cad96058e9cfbc0e1968dea789274d77fe7bfd285f76052a36f0d24301c4",
+        "assets/descriptions-CQCzQaak.js": "cf35a21130bc1734978fcf1944dbf576b38dc75a77048685d38bb26272777b3e",
+        "assets/index-BrEp-Qcb.js": "206c298dabac332859af504cd72bb0d0643b46ee751df1a1535aa38789657e58",
+        "assets/index-Cj75_2K1.css": "23b947b67bc9e853cdd3142c0e65ed39422d7b2464ff355d80184919d3bd5fc5",
+        "assets/jsx-runtime-C8XPPeiE.js": "ed9968d7ec886ba16d52d471850068f81d9153385c36b91a8364f071769e888e",
+        "assets/modal-CzeDFW7D.js": "ba69f53c9f5ac02c1276a860e897b9f449f7aedbadd02a772625918cd65d3a8d",
+        "assets/paging-DFV_quYq.js": "6994d5dfb9bf97ab931d38325004258d8f43eb3e43d41519eb9a8e69b160029d",
+        "assets/riskCommands-DIcax2Cz.js": "cac663f60218b162ec0d2a45b5d352843facb717a25217d1923bba8827b648ae",
+        "assets/riskNavigation-DYQciYqv.js": "cbe7211bbb8f97235e4b89714fbf5c3f3abfc3d3f92dd56ecc8b83fb420de99f",
+        "assets/riskRuleConfiguration-BMUDu4IY.css": "76d95c6d0e87f32121505d3f7c3200dc176aa4b1d96d63d08a051b31fcaae50e",
+        "assets/riskRuleConfiguration-D6eRtK1f.js": "757c84d69bdac1f77e7f025c196e3beed30d6e3726aee3e9b55340081c0d17f2",
+        "assets/usePaging-CTrh5YWW.js": "0a2f4d91b1fe35f0c05a4aa4f5574a587e57939e9bb79a0319a040f7b635d6d9",
+        "index.html": "3494b5ed6c8080be3264b2cb0049f1c7780c8c51521362dd23a13fa134c34c81"
+      }
+    }
+  },
+  "fileSha256": {
+    "requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/ddl.sql": "ae7e5cc78384b0750232349d5d5a8a670a93ea9235affe6a11b507c3254d10ab",
+    "requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/precheck.sql": "332ea13d63d096d65ac5b7503bb01ecb7bdd7be61aff54b78410897a61c350ce",
+    "requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/ddl.sql": "af97f80915da9d5f7483e407eb48e1011a6c9066c25e68efba073a6903c3a669",
+    "requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/dml.sql": "229e3db4fa574fbcab6c79534a3e15e084eb2d7aefefbc8b6c01687863f7545f",
+    "requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/postcheck.sql": "63dd874a0820533466860c541ba77f4524d5952fe16e06514a9cdaf24c3b6f4c",
+    "requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/finalize-ddl.sql": "c55fc3e446d48b289ba1d6e2a368659bb2e332f06b8462e94fa7ef0fb7d4232f",
+    "requirements/20260912/operations-console-决策流配置/db/platform-support-service/dml.sql": "a008dc59fd749a9f53aebb348502be961817a76d86ceda5d5ffb655880137772",
+    "requirements/20260912/operations-console-决策流配置/db/platform-support-service/test-release/01-maintenance.sql": "470054cbd69a426c41089565c8568409be681f2651063fd66ff99dfa7198a0ab",
+    "requirements/20260912/operations-console-决策流配置/db/platform-support-service/test-release/02-registration.sql": "17ea4c3f39a27fa3a91a79a5b2555bdf7a529a65945e49662f34f4e8e189a527",
+    "requirements/20260912/operations-console-决策流配置/db/platform-support-service/test-release/03-enable.sql": "db4ce5754bbc1019ea289b3b771cd00b0ecf486c4429e09dd91f22d5e6000627",
+    "requirements/20260912/operations-console-决策流配置/db/platform-support-service/test-release/04-emergency-close-after-enable.sql": "cce95801145e4a120bbcdcccc3b396b7a01f4539dbac24b73abb3a4df7dbefa2",
+    "requirements/20260912/operations-console-决策流配置/db/platform-support-service/test-release/05-restore-old-before-enable.sql": "7ac2cd950980921ebd322b1be4ee2978a0ba964b2b0b23cd0ce991a606f9d76d",
+    "test-environment/java/Dockerfile": "afc9b88f9f18c95d1bb07cb38aba9d7b725487912fa90036e07799a5081bb9f1",
+    "test-environment/java/LocalHttpHealthProbe.java": "e4cd3fe8d4ee8e90d7dbd1a375885edabe789afdcecbcb019484ae924d6ddc5c",
+    "test-environment/java/LocalSnapshotEvidenceFetch.java": "bfd582f43c0ce9576561a61fcacc1b4e4b0ee78623c057e7e60b30a9f6a37942",
+    "test-environment/compose.applications.yaml": "c0e293ff1d0e4c118325ef5b8180131ee6869d4675d0396bd60743ba89605f96",
+    "test-environment/compose.sh": "e1e215d4305d2a0af9ab8017cfa6cdf2eef5565dd8143b114283ec5bd7ce6c05",
+    "requirements/20260912/operations-console-决策流配置/assets/stage6/ReadRiskHistory.java": "d7cc70a99a2d459ca00150d430c1a1138b455751c50a46bfbe4da4ead82ed096",
+    "requirements/20260912/operations-console-决策流配置/assets/stage6/read_history.py": "e3dea6ee0e811f26679a2e15b5d0c9d24d6eac3f683858b6fe4ed7a20d7cef45",
+    "requirements/20260912/operations-console-决策流配置/release.md": "f346f74d443a999fcb44ead671721892b4225a19851335358cd097bf095165f0"
+  },
+  "verification": {
+    "requirementsSite": "build passed; 136/136 after correcting one stale Risk model-count assertion",
+    "firstRequirementsRun": "135/136, failed expectation retained pre-simplification counts; actual model 78/944/115/80/120 verified",
+    "design": "4 new tables/44 fields/11 indexes; 118 inserts + 1 role update; 252 local links resolve",
+    "sql": "in-memory SQLite CAS checks passed, not executed against test",
+    "actualOldReader": "33 rule and point hashes match; 10 Release details and create replays readable in MySQL READ ONLY transaction",
+    "candidateReader": "compiles against candidate JAR; test execution pending backfill authorization",
+    "images": "3 exact candidate images inspected; test 11 container identities/images/start times unchanged",
+    "source": "production source hashes unchanged after candidate build",
+    "whitespace": "root + 6 component repositories pass"
+  },
+  "logs": [
+    "/tmp/rco17-stage6-requirements-test.log",
+    "/tmp/rco17-stage6-requirements-recheck.log",
+    "/tmp/rco17-stage6/history-reader.log"
+  ],
+  "appliedTestSql": false,
+  "deployed": false,
+  "sharedPublication": false,
+  "committed": false
+}

@@ -1,0 +1,17 @@
+{
+  "scope": "Existing OPERATIONS_VIEWER assignments only; no account or permission changes",
+  "statusGroups": [
+    [
+      "DISABLED",
+      "ACTIVE",
+      "ACTIVE",
+      "2"
+    ],
+    [
+      "CLOSED",
+      "REVOKED",
+      "REVOKED",
+      "1"
+    ]
+  ]
+}

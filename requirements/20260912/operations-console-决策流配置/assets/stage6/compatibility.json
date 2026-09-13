@@ -1,0 +1,25 @@
+{
+  "scope": "Actual deployed compilers, offline projection only; no service replacement or SQL writes",
+  "compilers": {
+    "platform-support-service": {
+      "deployedJarSha256": "9c785043ee865b910ec43cc50646d469bf97c7bb95c854907aa99d9de2412616",
+      "routeCounts": {
+        "before": 51,
+        "maintenance": 27,
+        "registered-disabled": 27,
+        "enabled": 61
+      },
+      "helper": "requirements/20260911/operations-console-\u98ce\u63a7\u89c4\u5219\u96c6\u5386\u53f2\u4e0e\u5b57\u5178\u7ba1\u7406/assets/stage6/preparation-scripts/CheckPlatformSnapshot.java"
+    },
+    "api-gateway": {
+      "deployedJarSha256": "3e1c48bcdac6678ba3cec9e3fec48b0cc2253dbcb66fcfa1da869f8b92fbf1c7",
+      "routeCounts": {
+        "before": 51,
+        "maintenance": 27,
+        "registered-disabled": 27,
+        "enabled": 61
+      },
+      "helper": "requirements/20260911/operations-console-\u98ce\u63a7\u89c4\u5219\u96c6\u5386\u53f2\u4e0e\u5b57\u5178\u7ba1\u7406/assets/stage6-final/CheckGatewayCandidate.java"
+    }
+  }
+}

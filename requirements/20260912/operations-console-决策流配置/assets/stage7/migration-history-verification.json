@@ -1,0 +1,9 @@
+{
+  "rules": 33,
+  "releases": 10,
+  "result": "Exact original rule/point/input identity hashes and Release detail/create replay preserved",
+  "helperSha256": "a7593648266bf0e6efa55f42921f719452fa4fb7f4430e942b8c2f92aca75c6e",
+  "oldJarSha256": "6224c001224b8fdd355dd56dab013e1ce921103f34a0808bf0bc0aacec6a50bc",
+  "candidateJarSha256": "73c0d4c81f5f02791d12fe6ff002dd7ca6702730bd4c51fe5927632c7c6c8c65",
+  "correction": "Ordinary configuration intentionally omits Point projection and physical input IDs. Invoke packaged legacy projection and use actual legacy fields for that part; ordinary rule hash still checked."
+}

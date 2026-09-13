@@ -1,0 +1,38 @@
+{
+  "observedAt": "2026-09-12T13:11:44.423261+00:00",
+  "scope": "read-only precheck; no SQL migration applied",
+  "environments": {
+    "local": {
+      "port": 13306,
+      "database": "mor_risk",
+      "metrics": {
+        "rule_versions_to_backfill": 0,
+        "context_operands_to_backfill": 0,
+        "context_action_parameters_to_backfill": 0,
+        "legacy_point_versions_preserved": 0,
+        "legacy_input_fields_preserved": 0,
+        "legacy_bindings_preserved": 0,
+        "legacy_releases_preserved": 0,
+        "bad_rule_contract_source": 0,
+        "bad_operand_field_source": 0,
+        "bad_action_parameter_field_source": 0
+      }
+    },
+    "test": {
+      "port": 23306,
+      "database": "mor_risk",
+      "metrics": {
+        "rule_versions_to_backfill": 33,
+        "context_operands_to_backfill": 418,
+        "context_action_parameters_to_backfill": 11,
+        "legacy_point_versions_preserved": 33,
+        "legacy_input_fields_preserved": 304,
+        "legacy_bindings_preserved": 33,
+        "legacy_releases_preserved": 10,
+        "bad_rule_contract_source": 0,
+        "bad_operand_field_source": 0,
+        "bad_action_parameter_field_source": 0
+      }
+    }
+  }
+}

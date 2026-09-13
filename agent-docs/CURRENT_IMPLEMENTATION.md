@@ -1,6 +1,6 @@
 # Code-MoR 当前实现状态
 
-最后核对：2026-09-12
+最后核对：2026-09-13
 
 状态：Current status ledger。本页只汇总实现、验证、部署和已决定待迁移事项；架构与业务规则仍由 [`DOCUMENT_GOVERNANCE.md`](./DOCUMENT_GOVERNANCE.md) 路由的主题 Owner 定义。
 
@@ -17,18 +17,18 @@
 |---|---|---|---|---|
 | Requirements Site | 需求目录和全局序列源文件已存在，仍是需求事实入口；全系统 Problem Profile 决策已投影到现行需求目录 | 2026-09-11 构建及内容门禁 136/136，lint 通过 | 仅本地站点，不对外发布 | 需求存在不代表六系统全部实现或已部署 |
 | Build / Foundation | Maven 构建治理、框架无关 `paytech-http-problem`、严格/迁移期 HTTP Client Reader、唯一 MVC Problem Writer、稳定公共 Header 名称、可复用显式-null/严格时间反序列化器，以及声明式 `@ResourceLock` 已在当前工作区实现 | 2026-09-08 当前 Header/JSON 绑定/MVC Problem 聚焦门禁 29/29，HTTP Problem Profile 5/5；此前 DTO 清理后的 Problem 相关 Reactor 326/326、注入仓库本地 Redis 凭据后的全 Foundation 505/505 是对应历史源码基线 | 最新 Snapshot 仅安装到本机 Maven 仓库供下游源码验证，未发布 Nexus、未部署 | Legacy Reader 须在部署与观测完成后删除；Compensation Event 测试仍自动重建 Schema；Resource Lock 尚未发布或部署 |
-| API Gateway | 动态 Snapshot、数据库 Target/Route 绑定与转发、BFF 管理监听隔离补改已实现，见第 17 节；Client Credential 链源码仍保持 | RCO-16 补改全量 1199/1199；指令 96.649021%、分支 90.084034%；Platform 注册时序修正后 386/386，指令 97.784105%、分支 90.058766%，阶段 5 本地门禁通过 | 2026-09-12 本轮动态路由完整制品已部署 mor-test，Snapshot 接受 51 条 Operations Route；含用户已接受的既有 Client 代码 | Client 入口未开放；本轮 test 功能验收按用户要求由用户执行，见第 17 节 |
-| Platform Support | 当前工作区已将现有实现拆为 `api + access-control + audit-security + web + test`；Web 仍是唯一应用和组合根，全部模块仍使用一个 Platform 数据库和主 DataSource，审计保留同库专用写池；HTTP/Schema/跨系统合同未改变 | 2026-09-12 RCO-16 在获准独立本机库完成 `clean verify` 386/386，指令 97.784105%、分支 90.058766%；原共享库不满足仅初始化前置的问题通过独立验证库处理，保留原有人工数据；详见第 17 节 | 既有 Platform 应用容器保持；2026-09-12 RCO-16 的 182 行注册及发布状态 SQL、Target 表注释已应用 mor-test；模块拆分和 Problem 映射源码未部署 | 精确制品及环境发布另行核对；CUSTOMER 认证/JWKS、生产 Vault/KMS、Console Resource、MQ 和生产部署；其余资源锁/HMAC 风险见第 8 节 |
-| Operations Console BFF | 独立 `web + test` Maven 仓库；当前工作区除既有页面适配外，已使用 Foundation Writer 输出统一 Problem，并在边界重建自身 503/504，保留显式上游迁移 Reader | 2026-09-06 JDK 25 `clean verify` 315/315；严格 Profile 与真实 `HEAD` 聚焦门禁 272/272 | 2026-09-12 RCO-16 BFF 已部署 `mor-test`，19201 回环管理监听健康；原 2026-09-11 跨服务验收保留，本轮功能待用户验收；见第 17 节 | 无数据库和签名密钥；不拥有核心授权或跨系统事务；Legacy Reader 待部署证据后删除 |
-| Operations Console Web | React/TypeScript/Vite/Ant Design 已实现；当前工作区的 API 消费者严格读取 Problem、显示安全 detail/requestId，并为已知目标保留显式旧 Reader | 2026-09-06 测试 216/216，TypeScript 与 Vite 生产构建通过 | 2026-09-12 RCO-16 Web 已部署 `mor-test`，公开入口 200 且 index.html Hash 匹配本轮镜像；功能待用户验收；见第 17 节 | Client/Partner 未来会话方案不由此决定；Legacy Reader 待部署证据后删除 |
+| API Gateway | 动态 Snapshot、数据库 Target/Route 绑定与转发、BFF 管理监听隔离补改已实现，见第 17 节；Client Credential 链源码仍保持 | RCO-16 补改全量 1199/1199；指令 96.649021%、分支 90.084034%；Platform 注册时序修正后 386/386，指令 97.784105%、分支 90.058766%，阶段 5 本地门禁通过 | 2026-09-12 本轮动态路由完整制品已部署 mor-test，原制品保持，RCO-17 注册后 Snapshot 接受 61 条 Operations Route；含用户已接受的既有 Client 代码 | Client 入口未开放；本轮 test 功能验收按用户要求由用户执行，见第 17 节 |
+| Platform Support | 当前工作区已将现有实现拆为 `api + access-control + audit-security + web + test`；Web 仍是唯一应用和组合根，全部模块仍使用一个 Platform 数据库和主 DataSource，审计保留同库专用写池；HTTP/Schema/跨系统合同未改变 | 2026-09-12 RCO-16 在获准独立本机库完成 `clean verify` 386/386，指令 97.784105%、分支 90.058766%；原共享库不满足仅初始化前置的问题通过独立验证库处理，保留原有人工数据；详见第 17 节 | 既有 Platform 应用容器保持；2026-09-12 RCO-16 的 182 行注册及发布状态 SQL、Target 表注释已应用 mor-test；RCO-17 另应用 118 条注册及入口状态 SQL，见 [RCO-17](#rco17-test-20260912)；模块拆分和 Problem 映射源码未部署 | 精确制品及环境发布另行核对；CUSTOMER 认证/JWKS、生产 Vault/KMS、Console Resource、MQ 和生产部署；其余资源锁/HMAC 风险见第 8 节 |
+| Operations Console BFF | 独立 `web + test` Maven 仓库；当前工作区除既有页面适配外，已使用 Foundation Writer 输出统一 Problem，并在边界重建自身 503/504，保留显式上游迁移 Reader | 2026-09-06 JDK 25 `clean verify` 315/315；严格 Profile 与真实 `HEAD` 聚焦门禁 272/272 | 2026-09-12 RCO-17 BFF 已部署 `mor-test`，19201 回环管理监听健康；配置转发及 422 错误投影真实入口通过，待用户验收；见 [RCO-17](#rco17-test-20260912) | 无数据库和签名密钥；不拥有核心授权或跨系统事务；Legacy Reader 待部署证据后删除 |
+| Operations Console Web | React/TypeScript/Vite/Ant Design 已实现；当前工作区的 API 消费者严格读取 Problem、显示安全 detail/requestId，并为已知目标保留显式旧 Reader | 2026-09-06 测试 216/216，TypeScript 与 Vite 生产构建通过 | 2026-09-12 RCO-17 Web 已部署 `mor-test`，HTML/全部静态资源与批准镜像匹配，浏览器限定验收通过；待用户验收；见 [RCO-17](#rco17-test-20260912) | Client/Partner 未来会话方案不由此决定；Legacy Reader 待部署证据后删除 |
 | Vault V1 | Go Server、OpenAPI 与 Java Client 的当前工作区已切换统一 Problem/`HEAD`/Request ID 合同；三表 Protect/Reveal 业务边界不变 | 纯 RFC staged tree 的 Java Client `clean verify` 34/34，OpenAPI/YAML/source 静态门禁通过；当前主机没有 Go/gofmt，Go 编译与测试未执行 | 既有 `mor-test` 合成 smoke 部署保持不变；本次 Problem 源码未部署 | 补齐 Go 门禁；Platform 仍使用批准的开发 Mock；生产 KMS、强服务身份、真实消费者、合规验证和生产部署未完成；Legacy Java Reader 待删除 |
 | CCT | 38 表/428 字段目标模型及完整人工 Schema；本地空库已初始化，条件启用的 Checkout 预检/解析已实现，Risk 资格端口仍关闭，见 CCT-QUERY-01 | 全量 Maven verify 32/32；本地 MySQL 结构与测试数据清理核对通过；四系统模型证据见 OE-CLIENT-MODEL-01 | 应用未部署 | Risk 新资格接入、最终解析完整链路、其他写入口/API/MQ、存量库迁移和部署未完成；旧 V5/Hash Reader 保留，Scope 不得绕过 Risk 激活 |
 | Commerce | 15 表/249 字段目标模型；本期新增 Customer 三操作及 Payment 内部四操作，准备时冻结 OE/合同/税事实并创建 Intent，见 [COM-CUSTOMER-01](#commerce-customer-20260912)；基础创建仍只做预检 | JDK 25 `clean verify` 331/331，0 失败/错误/跳过；真实本地 MySQL/HTTP、按需顺序查询与独立 Handler 恢复验证；JaCoCo 行覆盖率 91.78%（3027/3298）；模型沿用上一轮 17/17 | 应用未部署；获授权本机三表增量 SQL 已执行，本地 Mock 启动入口已验证并关闭 | 本机保留旧列的兼容结构不等于目标新库 Schema；新 Owner 端口为 Mock + TODO，真实跨服务、支付成功事实消费、晚到定价、Payment Card、公共路由及前端联调未完成 |
 | Payment | 30 表/393 字段目标模型、Payment Pricing Fact 和完整人工 Schema 已生成 | 2026-09-11 四系统自动模型和场景回归通过，详见 OE-CLIENT-MODEL-01 | 未声明 | 尚无完整 Java 业务服务；新模型不代表已有支付执行、Risk 联调或数据库迁移 |
 | Finance | 84 表/1,109 字段目标模型和完整人工 Schema 已生成；首个余额查询 Java 仍是旧数字身份切片；当前测试消费者统一校验真实 HTTP Problem | 2026-09-06 JDK 25 `clean verify` 25/25，含本地 MySQL 余额路径与 RFC 1123 Date 门禁 | 未声明 | 本次未执行 SQL，旧余额切片不能直接消费新身份 Schema；完整服务与部署未证明；手工缴税异常分支待专项模型闭合 |
-| Risk & Compliance | 71 表/九路由配置切片；本次原 V1 增加可空终态、冷却/主体标签参数、手工拒绝文案、Risk-owned 主体绑定与显式历史格式兼容，见第 15 节 | 2026-09-11 JDK 25 `clean verify` 155/155，含真实本地 MySQL/随机端口 HTTP、旧 Hash Golden 和配置冻结门禁；模型/Schema 189/189 | 2026-09-12 RCO-16 已部署本机 `mor-test`，新增两类字典表及索引，实际 74 表；本轮按用户明确指令跳过备份，旧批次备份事实保留 | Risk 配置的真实 Nginx/Gateway/BFF/Risk HTTP 链已验收；PDManer 人工 Review、其他环境/生产仍待完成；运行期评估和真实动作不在本期范围；全局 COMP-01/DB-01/Vault V1 Gate 保持 |
+| Risk & Compliance | 71 表/九路由配置切片；本次原 V1 增加可空终态、冷却/主体标签参数、手工拒绝文案、Risk-owned 主体绑定与显式历史格式兼容，见第 15 节 | 2026-09-11 JDK 25 `clean verify` 155/155，含真实本地 MySQL/随机端口 HTTP、旧 Hash Golden 和配置冻结门禁；模型/Schema 189/189 | 2026-09-12 RCO-17 已部署本机 `mor-test`，实际 78 表；四表及三表精简、历史回填与兼容比对完成，见 [RCO-17](#rco17-test-20260912) | Risk 配置的真实 Nginx/Gateway/BFF/Risk HTTP 链已验收；PDManer 人工 Review、其他环境/生产仍待完成；运行期评估和真实动作不在本期范围；全局 COMP-01/DB-01/Vault V1 Gate 保持 |
 | `mor-local` | 仓库提供 MySQL、Redis、RabbitMQ、Nacos 等本地依赖的手工环境 | 当前本机运行状态应按 [`LOCAL_DEVELOPMENT_ENVIRONMENT.md`](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 的命令即时核对 | 仅本机开发环境 | 自动测试只能复用该环境，不得自行拉起替代容器或连接真实业务环境 |
-| `mor-test` | 独立 Docker 测试拓扑当前为 11 个容器、36 条 Route、21 个 Console Resource、19 个 ACTIVE Permission，浏览器入口为 `http://localhost:28080` | 已记录真实登录/IAM/审计/Refresh/Logout、Gateway 控制面启停/幂等/版本冲突/Snapshot 恢复与 Vault 合成 smoke | 本机独立测试环境；Gateway 控制面与 Risk V1 配置入口已部署，11 个容器健康 | 不是 Maven `auto`、覆盖率或生产证据；生产部署仍未声明 |
+| `mor-test` | 独立 Docker 测试拓扑当前为 11 个容器、61 条 ACTIVE Operations Route、35 个 ACTIVE Console Resource；RCO-17 证据见下，浏览器入口为 `http://localhost:28080` | 已记录真实登录/IAM/审计/Refresh/Logout、Gateway 控制面启停/幂等/版本冲突/Snapshot 恢复与 Vault 合成 smoke | 本机独立测试环境；Gateway 控制面与 Risk V1 配置入口已部署，11 个容器健康 | 不是 Maven `auto`、覆盖率或生产证据；生产部署仍未声明 |
 
 组件级命令、精确测试数字和运行配置由各仓库 README/实施记录维护，本页不复制会频繁变化的日志。
 
@@ -42,7 +42,7 @@
 | Commerce | 15 | 249 | 24 | 12 | 15 | — | 4 |
 | Payment Orchestration | 30 | 393 | 42 | 45 | 65 | 8 | 7 |
 | Finance | 84 | 1,109 | 145 | 155 | 160 | 22 | 6 |
-| Risk & Compliance | 74 | 898 | 110 | 80 | 113 | 9 | 8 |
+| Risk & Compliance | 78 | 944 | 115 | 80 | 120 | 9 | 8 |
 | Platform Support | 63 | 822 | 123 | 99 | 107 | 5 | 7 |
 
 这些数字表示当前生成资产内部一致；六套模型仍保留 PDManer 4.9.3 应用内人工检查门禁，也不能证明物理数据库已经创建。Platform 的 22 表是当前手工 SQL 投影，不改变 63 表逻辑模型统计。
@@ -409,6 +409,64 @@
   [/Users/kenny/.codex/artifacts/commerce-precheck-development-20260911T200120Z](/Users/kenny/.codex/artifacts/commerce-precheck-development-20260911T200120Z)。此目录是研发验证证据，不是数据库备份。
 
 - **Pre-commit verification（2026-09-12）：** 本次待提交源码重新运行 Commerce `clean verify` **194/194**、CCT 安全注入本地测试配置后的 `clean verify` **32/32**；四系统生成器/Schema `--check` 与模型/场景 **276/276** 通过。Foundation 本次暂存源码与前述 HTTP **108/108**、MVC **124/124** 的验证摘要一致。需求站完整工作区构建成功、测试 **134/136**，两项失败来自其他任务的 Gateway 文档；导出本次暂存内容后独立运行完整构建与测试 **136/136** 通过。各仓库暂存差异空白检查通过。证据保存在 [/Users/kenny/.codex/backups/oe-commerce-commit-20260912T052717Z](/Users/kenny/.codex/backups/oe-commerce-commit-20260912T052717Z)；本轮未执行 DDL、推送、部署或制品发布。
+
+<a id="rco17-test-20260912"></a>
+
+## RCO-17 决策流配置（2026-09-12，test 已部署，待用户验收）
+
+- **范围与阶段：** [需求目录](../requirements/20260912/operations-console-决策流配置/technique.md)原阶段 1–5 已确认，包含用户批准的[解耦方案修订](../requirements/20260912/operations-console-决策流配置/simplification.md)及阶段 5 必要修复。用户对阶段 6 [test 发布包](../requirements/20260912/operations-console-决策流配置/release.md)回复“对”后，阶段 7 已部署并完成限定环境验收，等待用户完整功能验收。以下阶段 4–6 的“未部署/待授权”保留为当时历史，不代表当前状态。只交付配置管理；无真实执行、发布激活或运行动作。
+- **原四表阶段的模型及本机结构：** 唯一生成源、PDManer、完整 Schema 追加 4 表/44 字段/11 索引时，原 74 个实体逐项保持不变；后续三表精简修订见下文；当前模型总数见第 3 节。获用户单独授权后，已备份本机 Schema 并手工应用增量 DDL 到 `127.0.0.1:13306/mor_risk`，核对 4 张新表及全部列/索引/注释一致。备份及执行范围见 [本机应用记录](../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/local-application.md)。
+- **实现与开发检查：** Risk、BFF、Web 已实现 10 新操作/4 原操作调整，包括流程配置、准确历史/引用、整体删除、动作可选及原因统一反查；无 Gateway 生产代码改动。Risk 完整 reactor **205/205**（真实本机 MySQL/Redis/HTTP），BFF 完整 reactor **1,046/1,046**，Web **894/894** 与生产构建、模型/Schema **29/29**、需求站构建与 **136/136** 通过；设计/注册一致性通过。已检查本机合成 API 场景下的代表性页面交互，不能据此声称真实全链路或完整视觉验收完成。证据及本期修复见 [开发交付报告](../requirements/20260912/operations-console-决策流配置/development-checks.md)。
+- **注册、环境与剩余阶段：** Platform 唯一初始化 SQL 已合入 **118 行注册/1 行角色更新**，逐值核对且每行仅一份；本机独立验证库的应用与关闭状态见下方阶段 5 记录，test 尚未应用本期注册。risk-api 仅安装本机 Maven 仓库用于 BFF 开发。阶段 5 本机视觉/交互、关键故障矩阵及真实 Gateway/Snapshot/授权联调已完成，见下方结果；无本需求的 test 数据库变更、共享制品发布、部署或 Git 提交/推送。
+
+- **2026-09-12 表关系复核：** 用户要求查看表关系及精简空间；已只读核对当前源码、32 张相关表的本机/test 行数和模型引用。7 张未接入运行表为裁剪候选，4 张空表仍有读取逻辑；旧协议版本/输入字段/顺序绑定仍被规则及新图引用资格检查使用，不能视为已被替换。详见 [表关系评审及证据](../requirements/20260912/operations-console-决策流配置/table-relationship-review.md)。未修改应用、模型、SQL 或数据；未作出删除决定，不代表阶段 5 已完成。
+- **精简修订研发完成：** 用户确认后，工作区已将规则版本改为直接保存输入合同，条件/动作参数保存字段代码，并收敛共享输入目录和规则内容还原；新规则保存不再插入三张旧编排表，旧状态及 Release 物理 ID Hash 保留专用兼容读取。BFF/Web 的规则 `pointVersionId` 接受显式 null，Candidate 自身仍要求真实 ID。唯一生成源、模型及最终 Schema 已同步三表的增 4 列/删 2 列及 2 索引，模型/Schema **30/30** 通过。原段落的 205/1,046/894 是精简前证据，不能当作本修订完整回归通过；修订后的完整回归结果见下项。
+- **精简修订本机数据库：** 用户在具体三表 SQL 授权说明后回复“可以”。执行前核对 13306/mor_risk 无写入方、历史及三表全行数为 0；备份后应用扩展、同连接回填/后置检查与显式 COMMIT，再收敛删列。三表 44 个字段结构及全部索引、新四列注释与模型吻合；39 个旧列注释差异与备份一致，本轮保留。备份目录和证据见 [本机应用记录](../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/local-application.md)。test 历史 462 行仅为先前只读快照，未迁移；无共享制品发布、部署或提交。
+- **精简修订开发回归：** Risk 完整 reactor **208/208**（真实本机 HTTP/MySQL/Redis）；最终清理旧冲突分类及无用导入后，受影响测试 **8/8** 再次通过。BFF 完整 reactor **1,051/1,051**，Web **900/900** 和生产构建，模型/Schema **30/30**、原设计/注册及链接检查通过。新规则保存零旧编排新增、新旧规则混合流程引用、准确合同拒绝、原字段 ID/九字段快照与 Hash、旧 Candidate 查询/静态校验/成功回放、并发及 ACTIVE Release 删除阻断通过。历史测试事实与全部流程配置数据已清理。阶段 4 交付证据见 [修订开发检查](../requirements/20260912/operations-console-决策流配置/simplification-development-checks.md)；阶段 5 及真实 test 历史迁移验证仍未完成。
+
+- **RCO-17 阶段 5 完成（2026-09-12）：** 两次本机联调已交付 [综合验证记录](../requirements/20260912/operations-console-决策流配置/acceptance.md)。首轮 CSS 说明区遮挡已修复；用户对两项补充回复“都同意”后，已补开既有规则历史 GET，并完成 Foundation 显式字段校验失败能力、BFF 当前 Body 路径投影及 MVC 422 输出；其他代理默认行为不变。浏览器发现集合字段无法定位，Web 复用静态校验修复，真实保存失败保留草稿、准确定位、修复保存 #3、历史/已删除规则引用只读、整体删除和返回均通过。Foundation 相关 reactor 347/347；BFF 全量 1,052 项中旧工厂数量断言修正后受影响 16/16 通过，最终各 suite 报告均通过；Web 900/900 和构建通过。六张 Pencil 状态已映射检查，实际布局差异见报告，不声称逐像素一致。真实入口使用既有独立 Platform 验证库和 mor_risk、真实四应用/会话/权限，Nacos 由本机 SimpleDiscoveryClient 代替，Vault/签名仍为已有开发适配器边界。最后已关闭 13 Route/3 Resource/2 RolePermission，同一 Gateway 从 49 路由恢复 36、入口 200→404；原配置 version=5、额外历史 Route DISABLED/version=3、角色 version=8。118 条本机注册保留，临时事实/进程/Redis 命名空间及凭据已清理。停在阶段 5 交付确认点；test 历史迁移、制品发布、部署与 Git 提交均未执行。
+- **阶段 6 发布准备交付：** 已构建 Risk/BFF/Web 三个本地候选镜像（完整 ID、源码及制品摘要见 [发布包](../requirements/20260912/operations-console-决策流配置/release.md)），没有替换运行标签。test 只读预检为 33 个规则版本、418 个条件 Context 和 11 个动作 Context，异常 0；实际旧 Risk Reader 的 33 个规则/协议 Hash、10 个 Release 详情及创建回放通过。现有 Platform/Gateway 实际部署编译器离线接收 51→27→27→61 路由，不需替换两个应用。118 行注册及入口切换 SQL 已按 test 角色 12/6 准备并通过内存 CAS 检查；新 Reader 已针对候选 JAR 编译，test 回填后的比对仍属阶段 7 门槛。镜像内容检查通过，11 个 test 原容器/镜像/启动时间未变。当前等待本包的 test 备份、SQL、3 应用部署及限定合成验收授权；未执行 test 写 SQL、共享发布或 Git 提交。
+- **阶段 6 最终材料检查：** 需求站首次 135/136 的失败来自 RCO-17 精简前统计断言遗漏；逐项核对唯一模型后同步断言，重新构建及 136/136 通过。设计/注册一致性、252 个本地链接及根/6 组件空白检查通过。精确 SQL/制品摘要见需求目录 assets/stage6/release-manifest.json，test 写入及部署仍未执行。
+
+- **阶段 7 Deployed（2026-09-12）：** 备份后完成 test 两库 SQL 和 Risk→BFF→Web 升级，镜像前缀为 `89bd500057a2` / `bfc92deaee5e` / `e6585089b4e4`；11 容器健康，其他 8 个容器保持原 ID/镜像/启动时间。Risk 4 新表和 3 旧表精简已应用，回填 462 行；删列前实际旧/新 Reader 与原 33 规则/协议/输入身份 Hash、10 Release 详情和创建回放一致。Platform 118 行注册已生效，Gateway 61 Route / 35 Resource，角色版本 15/8；公开 HTML 与全部 22 静态文件吻合。精确备份、制品、辅助历史校验修正与执行顺序见[部署记录](../requirements/20260912/operations-console-决策流配置/deployment.md)。
+- **阶段 7 验收与停点：** 1 个合成规则集、1 个流程/2 个成功版本完成保存、同键重放、409 旧版本冲突、422 非法图保留草稿、准确历史/规则引用、只读历史及浏览器返回验收；两个管理根已由 API 整体删除，历史保留，无评估/动作事实，验收会话退出。test 只读角色现有账号均停用或关闭，未重跑该身份登录验收，也未改变账号状态；阶段 5 本地证据保留。部署及限定验收已交付，用户功能验收/阶段 8 提交待确认；未 Git 提交/推送、未 Nexus 发布。待提交范围见部署记录，避免混入其他需求。
+
+- **用户验收示例（2026-09-12）：** 用户另行要求创建一条决策流数据，已通过 test API 保留 `DEMO_CHECKOUT_BRANCH_FLOW` / `224578384930377728` 第 1 版，及配套动作留空的金额检查规则集。5 节点/4 连线、静态校验及回读通过；大额拒绝、其余非美元复核、其他放行。与上方已删除的部署验收夹具分开，供用户测试，未启用真实执行；[数据证据](../requirements/20260912/operations-console-决策流配置/assets/stage7/user-demo.json)。
+
+- **Web 样式反馈部署（2026-09-12）：** 用户明确仅 Web、不运行测试，随后授权部署 test。圆角折线、删除说明、无选择时隐藏右侧面板已随 Web 镜像 `2d40894a389f` 部署；前述 `e6585089b4e4` 保留为原阶段 7 制品证据。生产构建通过，容器 healthy，公开 HTML/决策流 JS/CSS 摘要吻合，其他十个容器原 ID/镜像/启动时间不变。未跑测试或业务验收，未改数据库，未提交；[部署证据](../requirements/20260912/operations-console-决策流配置/assets/stage7/web-ui-deployment.json)。
+
+- **下一期待办 RCO-18：** 用户明确保留“是否命中”，另增“本节点处理结果”，允许 REJECT 经连线继续另一个规则集，安排下一期修改；已登记[需求及分析入口](../requirements/20260912/operations-console-决策流节点处理结果/requirement.md)。当前仅记录，未改业务代码、Schema、示例或 test；结果汇总、未命中/空动作及旧终态兼容待方案确认。
+
+<a id="rco19-variables-20260912"></a>
+
+## RCO-19 统一风控变量管理与条件编排（2026-09-12）
+
+- **用户验收与代码提交（2026-09-13）：** 用户反馈“好像没什么问题，提交代码”，确认本轮 test 验收并授权提交。决策流配置、统一变量管理及旧规则详情修复已分别提交：`paytech-foundation` `d2e5603`；`risk-compliance-service` `6d7e684`；`operations-console-bff` `0727168`；`operations-console-web` `feefc36`；`platform-support-service` `74db641`。公共需求、模型生成源、Pencil 与发布证据随本次根仓库提交归档；其他需求的未提交改动保留，未推送。提交前对实际暂存版本检查：需求站点构建及 136/136、Risk 模型/Schema 32/32 通过；应用回归沿用本节已记录的对应发布证据，没有重复全量运行。已执行 SQL 的历史文件保留原始字节。
+
+- **验收缺陷修复（2026-09-13，后于下方初次发布）：** `DEMO_USD_ALLOW` 详情的实际 HTTP 状态为 200，Web 解码器遗漏 `operandFormat=LEGACY` 导致误报服务不可用。已只修改 Web 的格式识别并保留旧语义/未知格式检查；259 项相关检查及生产构建通过，真实响应可生成两条规则的只读编辑模型。test Web 当前镜像为 `rco19-legacy-detail-20260913`，其他 10 容器不变，规则内容/版本/Hash 不变，无 SQL。见[验证证据](../requirements/20260912/operations-console-统一风控变量管理与条件编排/assets/stage7/rule-detail-compatibility/verification.json)与[Web 发布证据](../requirements/20260912/operations-console-统一风控变量管理与条件编排/assets/stage7/rule-detail-compatibility/deployment.json)。该缺陷修复随后获用户验收并提交，见上方记录；此前受限的原生浏览器观察不作为视觉验收证据。
+
+- **test 发布记录（2026-09-13，随后已获用户验收）：** 用户明确“发布”，授权发布准备与既有 `desktop-linux/mor-test` 部署。Risk/BFF/Web 最终镜像标记为 `rco19-variables-20260913-body-limit`，其他 8 容器镜像、身份、启动时间不变。Risk 已应用 2 新表及旧表增量、17 变量/9 成员；Platform 已应用 113 行注册并启用 9 路由/3 资源/2 管理员权限，管理员角色版本 17。Gateway 自动加载 70 路由，Snapshot SUCCESS、NONE、无旧配置回退；11 容器均健康。入口 `http://localhost:28080` 的变量菜单、列表、中文搜索、成员读取可用，6 个 Web 公开资源 Hash 与最终构建一致。见[发布材料](../requirements/20260912/operations-console-统一风控变量管理与条件编排/deployment.md)及[最终检查](../requirements/20260912/operations-console-统一风控变量管理与条件编排/assets/stage7/final-checks.json)。
+- **发布容量修正：** 原成员路由 256 KiB 超过现有 Platform/Gateway 的 64 KiB 绝对上限，导致 Snapshot 拒绝，旧路由保持服务；已将本需求 Route、Web/Risk/BFF 及管理上下文统一到 65,536 字节，并同步初始化/增量 DML 和合同。集合仍最多 1,000 项，同时受总字节限制。新增失败证据后，Risk 65,536/65,537 字节边界 1/1、BFF 变量边界 7/7、JAR/Web 构建通过；test 超限请求返回 413 且原成员未改。未重跑全量回归，未扩大 Gateway 安全上限或替换其制品。
+- **test 示例已迁移：** `DEMO_FLOW_AMOUNT_CHECK` 第 2 版为 `224761038741016576`，Hash 为 `dc520420beff45ebfda24dea7ed3cf776279b988a14d30ccaf8ebb91de67a8e1`；`DEMO_CHECKOUT_BRANCH_FLOW` 第 2 版为 `224761039558905856`，准确引用该规则版本。原第 1 版保持，5 节点/4 连线及初始分支含义不变；流程条件使用 schemaVersion 2 统一变量操作数。共享阈值/标准币种临时改为 10000/EUR 后，无需保存规则/流程即可读到新值且 Hash/版本/图不变；已按本次 CAS 恢复 8000/USD，两个常量管理版本为 3。见[迁移回执](../requirements/20260912/operations-console-统一风控变量管理与条件编排/assets/stage7/demo-migration.json)。验证会话已退出。真实执行未启用，等待用户页面验收；未 Git 提交、推送或向 Nexus 发布。
+
+### 此前各阶段记录
+
+下列“未部署/待确认/未应用”是各阶段结束时的历史状态，当前环境与确认点以上方发布记录为准。
+
+- **需求范围已确认：** 用户确认需求范围并同意进入阶段 2，材料为[范围与验收稿](../requirements/20260912/operations-console-统一风控变量管理与条件编排/requirement.md)。拟统一字段/常量/集合/节点输出目录，规则和流程条件的两侧均可选择变量或常量；RCO-18 作为子项纳入，保留 matched，真实执行延期。用户已确认共享常量/集合修改后自动采用最新成功保存值，无需逐条重新保存引用配置；进一步明确前后端业务变量定义均由变量库管理，已支持来源范围内新增变量不应要求应用改代码、发布或重启，test 示例统一引用迁移纳入本期。已更新范围与 13 项功能/6 项视觉验收，直接常量和历史定义不改写；阶段 2 分析已获确认；阶段 3 完整方案已确认，阶段 4 研发成果已确认，阶段 5 综合验证完成待确认。
+- **本轮实际变更（阶段 4 已交付，2026-09-13）：** 变量 PDManer 生成源、模型、完整 Schema/初始化目录及需求增量材料已同步，当前模型 80 表 / 990 字段。Risk 已实现 9 个变量操作、类型化持久化、资源锁/CAS、集合整批替换、当前/历史引用扫描，以及规则/流程共享操作数校验、当前值投影、历史 Reader/回放隔离和 3 个执行就绪门禁。BFF 已实现 9 个转发操作，保留独立权限校验，并校验 Owner 响应身份、类型、容量和字段错误。Web 已接入变量列表/定义/成员/引用页面及规则/流程共享控件，候选来自变量接口，支持显式去重、草稿保护、当前值刷新和只读投影。Platform 的 113 条注册及角色版本更新已归并到初始化 SQL，仍为禁用/REVOKED 准备态，未应用。工作区实现不代表部署完成；本机 Risk SQL 状态见下方记录。
+- **开发回归停点（阶段 4 完成）：** Risk 完整 auto 回归 **254/254**（38 类，0 失败/错误/跳过）通过，包含 17 个变量真实 HTTP/MySQL/Redis 用例；其中 8 个确定锁顺序用例覆盖规则/流程保存与变量删除/停用的两种先后顺序。共享值更新不改变规则/流程内容 Hash、原成功回放先于现值资格检查、旧冻结/发布/字典/删除/历史快照与并发均随全量通过。修复了幂等层遗漏新业务请求 Hash Schema 的保存问题。BFF 的 734 项 Risk 回归及后续变量/流程边界 13 项通过（有重叠，不相加）；Web 913 项测试及生产构建、模型/Schema 32 项通过，这三个应用/模型检查沿用本阶段未被后续改动影响的证据。本次数据库用例结束后清理验证通过。详见[研发证据](../requirements/20260912/operations-console-统一风控变量管理与条件编排/assets/stage4/verification.json)及[阶段 4 交付材料](../requirements/20260912/operations-console-统一风控变量管理与条件编排/stage4.md)。该阶段成果已获用户确认；阶段 5 增量验证见下文，开发回归不等同于 test 部署或业务验收。
+- **综合验证停点（阶段 5 完成）：** 真实 Web/BFF/Risk 连接本机 MySQL/Redis；Platform 登录/权限使用 HTTP Simulator、导航/入口使用本机适配器，未验证实际 Gateway Snapshot 或启用 Platform 注册。已完成动态变量发现、两处条件引用、共享值更新、历史只读和权限拒绝检查，修复中文搜索 503、集合保存后旧版本读取误报、只读详情值/状态仍可操作三项问题；增量 Risk 18/18、Web 13/13 及最终生产构建通过。独占 Fixture 已清理，17 变量/9 成员保持，5 类执行事实为 0。详见[阶段 5 报告](../requirements/20260912/operations-console-统一风控变量管理与条件编排/stage5.md)及[证据](../requirements/20260912/operations-console-统一风控变量管理与条件编排/assets/stage5/verification.json)。等待用户确认进入阶段 6 发布准备；未部署 test、迁移示例或提交代码。
+- **本机 SQL 已授权并应用（2026-09-13）：** 用户对精确本机应用清单回复“可以”。在 `desktop-linux/mor-local-mysql-1/127.0.0.1:13306/mor_risk` 备份 Schema/四个受影响表后执行已审 DDL/DML；备份位置及文件 Hash 见[应用证据](../requirements/20260912/operations-console-统一风控变量管理与条件编排/assets/stage4/local-sql-application.json)。新表 41 列、旧表 5 新列及 17 变量/9 成员核对通过。回归后测试变量 0，原四个受影响表仍为 0 行；[清理证据](../requirements/20260912/operations-console-统一风控变量管理与条件编排/assets/stage4/local-regression.json)。本轮不重复应用增量，未修改 test 或应用 Platform 注册。
+- **范围与数量校正：** 需求增量为 2 新表 / 41 字段、4 张旧表新增 5 列并修改 4 列注释、11 索引和 Risk 26 条目录；相比阶段 3 摘要补列了原已批准的 `t_rule_set_version.content_format` 注释更新，不增加数据字段或业务功能。Risk API 工件只安装到本机 Maven 缓存供 BFF 编译，未向制品库发布。既有 test 数据、制品与执行能力未改变，未部署、提交、推送；下一步为确认后进入阶段 5。
+
+- **test 示例核对：** 用户明确要求修复 test 示例，已经 `http://localhost:28080` 的既有管理 API 查询 `DEMO_CHECKOUT_BRANCH_FLOW`（流程 ID `224578384930377728`，第 1 版）、配套 `DEMO_FLOW_AMOUNT_CHECK` 和准确版本引用；两者均可配置，引用未丢失，5 节点/4 连线的静态校验返回 `valid=true`、无问题。金额阈值仍是直接常量 `8000`，节点输出目录仅有 `matched`；当时 test 尚无统一变量能力，不能仅改数据获得最新值引用能力；本期代码仍未部署到 test。核对后用户已明确预期为统一变量引用；两个示例的迁移已纳入 RCO-19 范围，须待本期变量配置能力落地后实施。该次只读核对未保存新业务版本或写 SQL，核对会话已退出。上述有限核对不代替 UI 或运行执行验收。
+
+- **阶段 2 分析交付：** [差异与系统影响](../requirements/20260912/operations-console-统一风控变量管理与条件编排/technique.md)已完成，识别固定目录、单来源操作数、节点输出、动作字段、历史/Hash、引用查询及刷新缺口。建议改 Risk/BFF/Web 三应用与 Platform 注册 DML，Gateway/Foundation 暂无必要代码改动；以变量定义+集合成员两表进入方案设计，非已批准 Schema。仅修改需求/目录/状态材料并做静态检查，未改应用或模型、未新运行 test 写入/应用测试，该轮尚未进入阶段 3；用户随后确认后完成本次方案，当时研发/部署/示例迁移尚未执行，现行进展见本节上方记录。
+
+- **阶段 3 方案交付：** [方案入口](../requirements/20260912/operations-console-统一风控变量管理与条件编排/design.md)包含9新增操作、9原合同改动/3门禁、2新表41字段、3旧表新增5字段并改3列注释、11索引、Risk26行/Platform113行及1角色版本更新的评审稿；不是已应用SQL。Pencil在Operations原文件新增7画板及PNG/PDF，原40画板保留，Checkout设计未改。2026-09-12 用户回复“可以，基本没什么问题”，确认方案并授权进入阶段 4；SQL 应用、部署、迁移与提交仍需各自阶段授权。
+- **阶段 4 初始失败证据：** 变量模型测试先确认缺表/缺列，同步后模型/Schema 32 项通过；真实 Risk HTTP 新目录入口用例先得到 404，证明原入口缺失。后续编译、纯合同与 BFF/Web 开发检查见本节最新回归停点；本轮随后获得独立本机 SQL 授权，数据库回归已完成，旧需求 SQL 授权未复用。
+- **设计验证：** check-design.mjs核对SQL现行列名、DDL/注册行数、变量依赖、10条件样例及7错误结构、包内链接和7个导出图；Pencil检查7画板无越界/未完成标记。需求目录/全局时序语法与本轮差异检查结果见delivery.md。这些设计检查本身不代表应用测试、数据库执行或真实运行能力验证；本期实际研发检查另见本节开发回归停点。
 
 <a id="commerce-customer-20260912"></a>
 

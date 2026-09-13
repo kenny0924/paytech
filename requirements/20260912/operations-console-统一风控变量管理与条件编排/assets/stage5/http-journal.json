@@ -1,0 +1,783 @@
+{
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/auth/v1/context",
+      "status": 200,
+      "routeCode": "operations-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?page=1&size=20",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200,
+      "routeCode": "operations-login"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/v1/context",
+      "status": 200,
+      "routeCode": "operations-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?page=1&size=20",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/authoring-context",
+      "status": 200,
+      "routeCode": "operations-risk-variable-manage-context"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-variables/v1/variables",
+      "status": 201,
+      "routeCode": "operations-risk-variable-create"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/authoring-context",
+      "status": 200,
+      "routeCode": "operations-risk-variable-manage-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_3A89AB5636214EC688B4F1E691A50001",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-variables/v1/variables",
+      "status": 201,
+      "routeCode": "operations-risk-variable-create"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-variables/v1/variables",
+      "status": 201,
+      "routeCode": "operations-risk-variable-create"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members-replace"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-variables/v1/variables",
+      "status": 201,
+      "routeCode": "operations-risk-variable-create"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-save"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224750826684424192",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-detail"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-flows/v1/flows",
+      "status": 422,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224750826684424192",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-detail"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-flows/v1/flows",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-flows/v1/flows/224750911208038400",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "routeCode": "operations-risk-rule-authoring-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "routeCode": "operations-risk-rule-authoring-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_7786D406602844749C76BA078CD68870&page=1&size=10",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224750826684424192",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "routeCode": "operations-risk-rule-authoring-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/INPUT_NET_AMOUNT",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/INPUT_NET_AMOUNT",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?pointCode=CHECKOUT_PREPARE&usage=RULE_CONDITION&status=ACTIVE&page=1&size=20",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?pointCode=CHECKOUT_PREPARE&usage=RULE_CONDITION&status=ACTIVE&page=1&size=20",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_7786D406602844749C76BA078CD68870&page=1&size=10",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224750826684424192",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-detail"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-save"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "routeCode": "operations-risk-rule-authoring-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_7786D406602844749C76BA078CD68870&page=1&size=10",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&ruleSetCode=AUTO_7786D406602844749C76BA078CD68870&page=1&size=10",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224751241454952448",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-update"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224750826684424192",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-flows/v1/flows/224750911208038400",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224750826684424192",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-flows/v1/flows/224750911208038400",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB/references",
+      "status": 200,
+      "routeCode": "operations-risk-variable-references"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB?expectedVersion=2",
+      "status": 409,
+      "routeCode": "operations-risk-variable-delete"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 409,
+      "routeCode": "operations-risk-variable-update"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-variables/v1/variables",
+      "status": 400,
+      "routeCode": "operations-risk-variable-create"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 403,
+      "routeCode": "operations-risk-variable-update"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224750826684424192",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-flows/v1/flows/224750911208038400",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB/references",
+      "status": 200,
+      "routeCode": "operations-risk-variable-references"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB?expectedVersion=2",
+      "status": 409,
+      "routeCode": "operations-risk-variable-delete"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 409,
+      "routeCode": "operations-risk-variable-update"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-variables/v1/variables",
+      "status": 400,
+      "routeCode": "operations-risk-variable-create"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 403,
+      "routeCode": "operations-risk-variable-update"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "DELETE",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_3A89AB5636214EC688B4F1E691A50001?expectedVersion=1",
+      "status": 403,
+      "routeCode": "operations-risk-variable-delete"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-flows/v1/flows/validate",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-flows/v1/flows/validate",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?codes=AUTO_VAR_49BEE301808B4B749D248C92F077DEDB%2CAUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A%2CAUTO_VAR_88C8DFDF870043419E7E08F46E1CE1BB%2CINPUT_CURRENCY%2CINPUT_NET_AMOUNT",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE",
+      "status": 200,
+      "routeCode": "operations-risk-rule-authoring-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE&page=1&size=10",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224750826759921664/versions?maxVersionNo=2&page=1&size=10",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-versions"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-list"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-flows/v1/flows/validate",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets?pointCode=CHECKOUT_PREPARE",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-list"
+    },
+    {
+      "method": "POST",
+      "path": "/decision-flows/v1/flows/validate",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224750826684424192",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-rule-sets/v1/rule-sets/224750826759921664/versions?maxVersionNo=1&page=1&size=10",
+      "status": 200,
+      "routeCode": "operations-risk-rule-set-versions"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-flows/v1/authoring-context",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-flows/v1/flows?pointCode=CHECKOUT_PREPARE&page=1&size=10",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-flows/v1/authoring-context?pointCode=CHECKOUT_PREPARE",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-flows/v1/flows/224750911208038400",
+      "status": 200,
+      "routeCode": "operations-risk-flow-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/NODE_DECISION",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/NODE_DECISION",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/NODE_DECISION_VALUES/members?page=1&size=100",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/NODE_DECISION_VALUES/members?page=1&size=100",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_49BEE301808B4B749D248C92F077DEDB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_49BEE301808B4B749D248C92F077DEDB",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?page=1&size=20",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?keyword=%E8%81%94%E8%B0%83%E5%9B%BD%E5%AE%B6%E9%9B%86%E5%90%88&page=1&size=20",
+      "status": 503,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/authoring-context",
+      "status": 200,
+      "routeCode": "operations-risk-variable-manage-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members?page=1&size=100&expectedVersion=2",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members?page=1&size=100&expectedVersion=2",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members-replace"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/authoring-context",
+      "status": 200,
+      "routeCode": "operations-risk-variable-manage-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members?page=1&size=100&expectedVersion=2",
+      "status": 409,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members?page=1&size=100&expectedVersion=3",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/v1/context",
+      "status": 200,
+      "routeCode": "operations-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/authoring-context",
+      "status": 200,
+      "routeCode": "operations-risk-variable-manage-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members?page=1&size=100&expectedVersion=3",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?keyword=%E8%81%94%E8%B0%83%E5%9B%BD%E5%AE%B6%E9%9B%86%E5%90%88",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members?page=1&size=100&expectedVersion=3",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "PUT",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members-replace"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members?page=1&size=100&expectedVersion=4",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/v1/refresh",
+      "status": 200,
+      "routeCode": "operations-navigation"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/v1/context",
+      "status": 200,
+      "routeCode": "operations-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/authoring-context",
+      "status": 200,
+      "routeCode": "operations-risk-variable-manage-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members?page=1&size=100&expectedVersion=4",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members?page=1&size=100&keyword=%E9%98%BF%E8%81%94%E9%85%8B&expectedVersion=4",
+      "status": 200,
+      "routeCode": "operations-risk-variable-members"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?page=1&size=20",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?keyword=%E8%81%94%E8%B0%83&page=1&size=20",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/authoring-context",
+      "status": 200,
+      "routeCode": "operations-risk-variable-manage-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_3A89AB5636214EC688B4F1E691A50001",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/v1/context",
+      "status": 200,
+      "routeCode": "operations-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/authoring-context",
+      "status": 200,
+      "routeCode": "operations-risk-variable-manage-context"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/AUTO_VAR_3A89AB5636214EC688B4F1E691A50001",
+      "status": 200,
+      "routeCode": "operations-risk-variable-detail"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?usage=RULE_CONDITION&nodeType=RULE_SET&pointCode=CHECKOUT_PREPARE&size=100",
+      "status": 400,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?usage=RULE_CONDITION&pointCode=CHECKOUT_PREPARE&size=100",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?usage=FLOW_CONDITION&nodeType=START&pointCode=CHECKOUT_PREPARE&size=100",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?usage=FLOW_CONDITION&nodeType=RULE_SET&pointCode=CHECKOUT_PREPARE&size=100",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    },
+    {
+      "method": "GET",
+      "path": "/decision-variables/v1/variables?keyword=RCO19_NO_SUCH_VARIABLE_9ABF",
+      "status": 200,
+      "routeCode": "operations-risk-variable-list"
+    }
+  ],
+  "platform": {
+    "authorizations": 127,
+    "calls": 134,
+    "unexpected": []
+  }
+}

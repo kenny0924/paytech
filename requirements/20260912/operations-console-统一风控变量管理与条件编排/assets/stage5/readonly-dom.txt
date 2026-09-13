@@ -1,0 +1,79 @@
+- complementary:
+  - generic: P
+  - generic: PAYTECH
+  - menu:
+    - menuitem "变量管理":
+      - generic: 变量管理
+    - menuitem "规则配置":
+      - generic: 规则配置
+    - menuitem "决策流":
+      - generic: 决策流
+    - menuitem "主体标签":
+      - generic: 主体标签
+    - menuitem "拒绝原因":
+      - generic: 拒绝原因
+  - generic: Operations Console
+  - button "收起导航":
+    - generic: Hide Navigation
+- banner:
+  - generic: 运营平台
+  - generic: 开发环境
+  - generic: s***@example.test
+  - button "退出":
+    - generic: 退出
+- main:
+  - heading "联调共享币种" [level=1]
+  - paragraph: AUTO_VAR_3A89AB5636214EC688B4F1E691A50001
+  - button "刷 新":
+    - generic: 刷 新
+  - tablist:
+    - tab "定义" [selected]
+    - tab "引用关系"
+  - tabpanel "定义"
+  - generic "变量编码": "* 变量编码"
+  - textbox "大写字母、数字、下划线" [disabled]: AUTO_VAR_3A89AB5636214EC688B4F1E691A50001
+  - generic "变量名称": "* 变量名称"
+  - textbox [disabled]: 联调共享币种
+  - generic "来源类型": "* 来源类型"
+  - generic "常量变量":
+    - text: 常量变量
+    - combobox [disabled]
+  - img "down":
+  - generic "值类型": "* 值类型"
+  - generic "文本":
+    - text: 文本
+    - combobox [disabled]
+  - img "down":
+  - generic "适用决策点"
+  - generic: 通用
+  - combobox [disabled]
+  - img "down":
+  - generic "格式"
+  - generic "文本，保留大小写和前导零":
+    - text: 文本，保留大小写和前导零
+    - combobox [disabled]
+  - img "down":
+  - generic "用途": "* 用途"
+  - checkbox "规则条件" [checked] [disabled]
+  - generic: 规则条件
+  - checkbox "流程条件" [checked] [disabled]
+  - generic: 流程条件
+  - generic "允许值集合"
+  - generic: 选择变量
+  - combobox "选择变量" [disabled]
+  - img "down":
+  - generic: 可选；集合成员作为这个变量的可选值。
+  - generic "当前值": "* 当前值"
+  - textbox [disabled]: USD
+  - generic "说明"
+  - textbox [disabled]
+  - generic "状态"
+  - generic "启用":
+    - text: 启用
+    - combobox [disabled]
+  - img "down":
+  - complementary:
+    - heading "常量变量" [level=3]
+    - paragraph: 多处配置共享一个值。修改后，引用方会自动采用最新值。
+    - paragraph: 创建后，编码、类型、来源和用途保持固定。
+    - paragraph: 文本，保留大小写和前导零

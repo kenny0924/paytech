@@ -1,0 +1,182 @@
+[
+  {
+    "scenario": "prepare dictionary through Risk HTTP",
+    "status": 200,
+    "detail": "local fixture only"
+  },
+  {
+    "scenario": "save configuration rule without legacy composition",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "save next rule configuration version",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "viewer read context",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "validate mixed old/new rule references",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "viewer cannot validate",
+    "status": 403,
+    "detail": "OPERATIONS_PERMISSION_DENIED"
+  },
+  {
+    "scenario": "viewer cannot save",
+    "status": 403,
+    "detail": "OPERATIONS_PERMISSION_DENIED"
+  },
+  {
+    "scenario": "save-only role can create flow",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "same save key replays original result",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "viewer can read exact graph",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "save-only role cannot delete flow",
+    "status": 403,
+    "detail": "OPERATIONS_PERMISSION_DENIED"
+  },
+  {
+    "scenario": "append graph configuration version",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "stale version save rejected",
+    "status": 409,
+    "detail": "RISK_FLOW_VERSION_CONFLICT"
+  },
+  {
+    "scenario": "history contains two accurate versions",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "original version graph unchanged",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "bound exact new rule reference permits null point",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "legacy graph retains actual source",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "incomplete end reports precise issue",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "incomplete end cannot save",
+    "status": 422,
+    "detail": "VALIDATION_ERROR"
+  },
+  {
+    "scenario": "undeclared query rejected at ingress",
+    "status": 400,
+    "detail": "GATEWAY_INVALID_REQUEST"
+  },
+  {
+    "scenario": "flow code exact filtering",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "absent flow code returns empty",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "picker root lookup",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "rule picker exact history endpoint",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "422 retains real owner field location",
+    "status": 422,
+    "detail": "VALIDATION_ERROR"
+  },
+  {
+    "scenario": "create separate deletion fixture",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "delete complete flow",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "delete replay is stable",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "deleted current flow unavailable",
+    "status": 404,
+    "detail": "RISK_DECISION_CONFIGURATION_NOT_FOUND"
+  },
+  {
+    "scenario": "deleted exact history preserved",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "read owned rule before deletion",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "read owned rule before deletion",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "read owned rule before deletion",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "prepare deleted rule fixture through actual Risk HTTP",
+    "status": 200,
+    "detail": "fixture only; rule deletion Gateway route remains closed"
+  },
+  {
+    "scenario": "read saved flow after referenced rule deletion",
+    "status": 200,
+    "detail": "OK"
+  },
+  {
+    "scenario": "read deleted rule exact historical reference",
+    "status": 200,
+    "detail": "OK"
+  }
+]

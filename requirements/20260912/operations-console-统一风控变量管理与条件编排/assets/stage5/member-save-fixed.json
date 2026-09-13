@@ -1,0 +1,14 @@
+[
+  {
+    "method": "PUT",
+    "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members",
+    "status": 200,
+    "routeCode": "operations-risk-variable-members-replace"
+  },
+  {
+    "method": "GET",
+    "path": "/decision-variables/v1/variables/AUTO_VAR_4A809AE3A7564F99B670C2DEFEC3BB3A/members?page=1&size=100&expectedVersion=4",
+    "status": 200,
+    "routeCode": "operations-risk-variable-members"
+  }
+]

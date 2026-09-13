@@ -1,0 +1,33 @@
+{
+  "phase": "cleanup",
+  "flowId": "224572974676676608",
+  "ruleSetId": "224572973699403776",
+  "checks": [
+    {
+      "check": "Synthetic flow deleted through API",
+      "receipt": {
+        "flowId": "224572974676676608",
+        "status": "DELETED",
+        "version": "3",
+        "deletedBy": "221546852372267008",
+        "deletedTime": "2026-09-12T17:00:13.484900Z"
+      }
+    },
+    {
+      "check": "Synthetic rule set deleted through API",
+      "receipt": {
+        "ruleSetId": "224572973699403776",
+        "status": "DELETED",
+        "version": "2",
+        "deletedBy": "221546852372267008",
+        "deletedTime": "2026-09-12T17:01:07.692751Z"
+      }
+    },
+    {
+      "check": "Both active lists exclude the synthetic configuration"
+    },
+    {
+      "check": "Accurate deleted-flow history and deleted-rule reference preserved"
+    }
+  ]
+}

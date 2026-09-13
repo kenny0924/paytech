@@ -31,13 +31,13 @@ function exactStringSql(field) {
   const collation = field.extProps?.collation;
   invariant(Boolean(characterSet) === Boolean(collation), `字符集与排序规则必须成对声明：${field.defKey}`);
   if (!characterSet) return "";
-  invariant(field.type === "VARCHAR", `仅 VARCHAR 字段可声明精确字符串规则：${field.defKey}`);
-  invariant(characterSet === "ascii" && collation === "ascii_bin", `Risk 精确字符串只允许 ascii/ascii_bin：${field.defKey}`);
+  invariant(["CHAR", "VARCHAR"].includes(field.type), `仅 CHAR/VARCHAR 字段可声明精确字符串规则：${field.defKey}`);
+  invariant((characterSet === "ascii" && collation === "ascii_bin") || (characterSet === "utf8mb4" && collation === "utf8mb4_0900_bin"), `Risk 精确字符串仅允许已批准的二进制排序：${field.defKey}`);
   return ` CHARACTER SET ${characterSet} COLLATE ${collation}`;
 }
 
 function validateModel(model) {
-  invariant(Array.isArray(model.entities) && model.entities.length === 74, "Risk Schema 必须直接覆盖最终 74 表 PDManer");
+  invariant(Array.isArray(model.entities) && model.entities.length === 80, "Risk Schema 必须直接覆盖最终 80 表 PDManer");
   const tableNames = new Set();
   for (const entity of model.entities) {
     invariant(/^t_[a-z][a-z0-9_]*$/u.test(entity.defKey), `非法 Risk 物理表名：${entity.defKey}`);

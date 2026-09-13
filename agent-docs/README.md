@@ -37,6 +37,10 @@
 
 ## 按任务路由
 
+决策流图形配置及规则动作可选配置另读 [RCO-17 范围决定](./decisions/2026-09-12-risk-decision-flow-configuration.md)、[已确认需求](../requirements/20260912/operations-console-决策流配置/requirement.md)与[阶段分析](../requirements/20260912/operations-console-决策流配置/technique.md)，再按下表读取 Risk 配置及公共入口的既有合同；本期不包括真实执行。
+
+统一风控变量库、双侧操作数与 test 示例引用迁移另读 [RCO-19 已确认范围](../requirements/20260912/operations-console-统一风控变量管理与条件编排/requirement.md)及[差异与系统影响](../requirements/20260912/operations-console-统一风控变量管理与条件编排/technique.md)。前后端业务变量定义统一由库管理，共享值采用最新值；阶段 2 已确认，[阶段 3 接口/模型/SQL/Pencil 方案](../requirements/20260912/operations-console-统一风控变量管理与条件编排/design.md)已确认，进入阶段 4，真实执行延期。
+
 | 任务类型 | 必须读取 | 适用范围 |
 |---|---|---|
 | 新需求、功能调整或跨系统改造的评审、研发、test 部署与交付 | [需求交付流程](./REQUIREMENT_DELIVERY_WORKFLOW.md) + [逐阶段确认决策](./decisions/2026-09-11-staged-requirement-delivery.md) + 本表涉及的专项文档 | 每阶段交付可审阅成果后停下等待用户确认；具体阶段先确认，单阶段请求按用户范围处理；不自动授权 SQL、部署或提交 |

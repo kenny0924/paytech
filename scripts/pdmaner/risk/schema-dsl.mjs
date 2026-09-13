@@ -38,11 +38,11 @@ export function field(
   invariant(!values || values.length > 0, `闭合枚举不能为空：${defKey}`);
   invariant(Boolean(characterSet) === Boolean(collation), `字符集与排序规则必须成对声明：${defKey}`);
   invariant(
-    !characterSet || (characterSet === "ascii" && collation === "ascii_bin"),
-    `Risk 精确字符串只允许 ascii/ascii_bin：${defKey}`,
+    !characterSet || ((characterSet === "ascii" && collation === "ascii_bin") || (characterSet === "utf8mb4" && collation === "utf8mb4_0900_bin")),
+    `Risk 精确字符串仅允许已批准的 ascii/utf8mb4 二进制排序：${defKey}`,
   );
   const parsedType = parseType(typeToken);
-  invariant(!characterSet || parsedType.type === "VARCHAR", `仅 VARCHAR 字段可声明精确字符串规则：${defKey}`);
+  invariant(!characterSet || ["CHAR", "VARCHAR"].includes(parsedType.type), `仅 CHAR/VARCHAR 字段可声明精确字符串规则：${defKey}`);
   return Object.freeze({
     defKey,
     ...parsedType,

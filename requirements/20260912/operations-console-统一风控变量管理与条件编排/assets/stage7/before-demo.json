@@ -1,0 +1,221 @@
+{
+  "rule": {
+    "ruleSetVersionId": "224578384481587200",
+    "pointVersionId": null,
+    "pointCode": "CHECKOUT_PREPARE",
+    "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+    "ruleSetName": "示例：决策流金额检查",
+    "versionNo": 1,
+    "status": "DRAFT",
+    "contentHash": "01e36620f12d1c1dd98610e5647a01b9939c1b453e5021d25e86b0543be0f379",
+    "createdBy": "221546852372267008",
+    "changeReason": "按用户要求创建决策流配套示例；净额大于 8000 时命中，动作留空，由连线决定去向。",
+    "createTime": "2026-09-12T17:14:19.314340Z",
+    "frozenBy": null,
+    "frozenTime": null,
+    "rules": [
+      {
+        "ruleCode": "HIGH_AMOUNT_CHECK",
+        "ruleName": "订单净额超过 8000",
+        "priorityNo": 10,
+        "enabledFlag": true,
+        "reasonCode": null,
+        "conditionNodes": [
+          {
+            "nodeKey": "224578384481587202",
+            "parentNodeKey": null,
+            "sequenceNo": 1,
+            "nodeType": "PREDICATE",
+            "groupOperator": null,
+            "comparisonOperator": "GT",
+            "operands": [
+              {
+                "operandRole": "LEFT",
+                "valueSequence": 1,
+                "sourceType": "CONTEXT",
+                "fieldCode": "net_amount",
+                "valueType": "NUMBER",
+                "literalValue": null
+              },
+              {
+                "operandRole": "RIGHT",
+                "valueSequence": 1,
+                "sourceType": "LITERAL",
+                "fieldCode": null,
+                "valueType": "NUMBER",
+                "literalValue": "8000.00000000"
+              }
+            ]
+          }
+        ],
+        "action": null,
+        "reasonMessage": null,
+        "additionalActions": []
+      }
+    ]
+  },
+  "flow": {
+    "flowId": "224578384930377728",
+    "pointCode": "CHECKOUT_PREPARE",
+    "flowCode": "DEMO_CHECKOUT_BRANCH_FLOW",
+    "flowStatus": "CONFIGURABLE",
+    "currentFlowVersionId": "224578384930377729",
+    "currentVersionNo": 1,
+    "version": "1",
+    "flowVersionId": "224578384930377729",
+    "versionNo": 1,
+    "flowName": "示例：订单风控条件分流",
+    "inputContractCode": "ORDER_PREPARATION",
+    "inputContractVersion": 4,
+    "createdBy": "221546852372267008",
+    "createTime": "2026-09-12T17:14:19.426043Z",
+    "changeReason": "供人工测试的配置示例：净额大于 8000 拒绝；其余非 USD 转人工审核；其他放行。本期仅保存配置。",
+    "graph": {
+      "schemaVersion": 1,
+      "nodes": [
+        {
+          "nodeKey": "allow",
+          "type": "END",
+          "name": "正常订单放行",
+          "position": {
+            "x": "680",
+            "y": "440"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "ALLOW",
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "amountCheck",
+          "type": "RULE_SET",
+          "name": "订单金额检查",
+          "position": {
+            "x": "300",
+            "y": "200"
+          },
+          "ruleSetVersionId": "224578384481587200",
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "deny",
+          "type": "END",
+          "name": "大额订单拒绝",
+          "position": {
+            "x": "680",
+            "y": "0"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "DENY",
+          "reasonCode": "DEMO_AMOUNT_LIMIT",
+          "reasonMessage": "示例订单净额超过 8000，拒绝本次请求。"
+        },
+        {
+          "nodeKey": "review",
+          "type": "END",
+          "name": "非美元订单人工审核",
+          "position": {
+            "x": "680",
+            "y": "220"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": "REVIEW",
+          "reasonCode": null,
+          "reasonMessage": null
+        },
+        {
+          "nodeKey": "start",
+          "type": "START",
+          "name": "开始",
+          "position": {
+            "x": "0",
+            "y": "200"
+          },
+          "ruleSetVersionId": null,
+          "decisionCode": null,
+          "reasonCode": null,
+          "reasonMessage": null
+        }
+      ],
+      "edges": [
+        {
+          "edgeKey": "otherwiseAllow",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "allow",
+          "type": "ELSE",
+          "priority": 0,
+          "name": "其他情况：放行",
+          "condition": null
+        },
+        {
+          "edgeKey": "amountDeny",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "deny",
+          "type": "CONDITIONAL",
+          "priority": 1,
+          "name": "命中大额规则：提前拒绝",
+          "condition": {
+            "schemaVersion": 1,
+            "root": {
+              "kind": "PREDICATE",
+              "source": {
+                "type": "NODE_RESULT",
+                "fieldCode": "matched"
+              },
+              "operator": "EQ",
+              "values": [
+                true
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "currencyReview",
+          "sourceNodeKey": "amountCheck",
+          "targetNodeKey": "review",
+          "type": "CONDITIONAL",
+          "priority": 2,
+          "name": "未超额且币种不是 USD",
+          "condition": {
+            "schemaVersion": 1,
+            "root": {
+              "kind": "PREDICATE",
+              "source": {
+                "type": "CONTEXT",
+                "fieldCode": "currency"
+              },
+              "operator": "NE",
+              "values": [
+                "USD"
+              ]
+            }
+          }
+        },
+        {
+          "edgeKey": "startAmount",
+          "sourceNodeKey": "start",
+          "targetNodeKey": "amountCheck",
+          "type": "UNCONDITIONAL",
+          "priority": 0,
+          "name": "进入金额检查",
+          "condition": null
+        }
+      ]
+    },
+    "ruleSetReferences": [
+      {
+        "nodeKey": "amountCheck",
+        "ruleSetId": "224578384506753024",
+        "ruleSetCode": "DEMO_FLOW_AMOUNT_CHECK",
+        "ruleSetName": "示例：决策流金额检查",
+        "ruleSetVersionId": "224578384481587200",
+        "versionNo": 1,
+        "ruleCount": 1,
+        "ruleSetStatus": "CONFIGURABLE",
+        "versionStatus": "DRAFT"
+      }
+    ]
+  }
+}

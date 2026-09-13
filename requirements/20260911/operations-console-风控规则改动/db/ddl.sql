@@ -1,0 +1,6 @@
+-- 文件性质：需求目录的 DDL 引用索引；仅注释，无可执行语句。
+-- 所属服务：risk-compliance-service；逻辑数据库：mor_risk。
+-- 现有唯一增量执行来源（相对 Code-MoR 根目录）：
+-- risk-compliance-service/docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql
+-- 结构变更说明及模型入口见 ../technique.md；执行状态见该文档链接的当前状态台账。
+-- 本文件不是新迁移，也不表示没有 DDL。历史增量不得因创建此目录而重新执行。

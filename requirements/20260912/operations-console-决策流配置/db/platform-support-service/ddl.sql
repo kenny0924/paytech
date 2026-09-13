@@ -1,0 +1,1 @@
+-- RCO-17：Platform Schema 无变化，0 条 DDL。

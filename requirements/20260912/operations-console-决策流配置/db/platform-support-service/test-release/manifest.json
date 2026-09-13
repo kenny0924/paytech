@@ -1,0 +1,48 @@
+{
+  "baseline": "../../../assets/stage6/preflight.json",
+  "database": "127.0.0.1:23306/mor_platform",
+  "registrationSource": "../dml.sql",
+  "stages": {
+    "01-maintenance.sql": {
+      "sha256": "470054cbd69a426c41089565c8568409be681f2651063fd66ff99dfa7198a0ab",
+      "updates": 56,
+      "insertedRows": 0
+    },
+    "02-registration.sql": {
+      "sha256": "17ea4c3f39a27fa3a91a79a5b2555bdf7a529a65945e49662f34f4e8e189a527",
+      "updates": 1,
+      "insertedRows": 118
+    },
+    "03-enable.sql": {
+      "sha256": "db4ce5754bbc1019ea289b3b771cd00b0ecf486c4429e09dd91f22d5e6000627",
+      "updates": 71,
+      "insertedRows": 0
+    },
+    "04-emergency-close-after-enable.sql": {
+      "sha256": "cce95801145e4a120bbcdcccc3b396b7a01f4539dbac24b73abb3a4df7dbefa2",
+      "updates": 71,
+      "insertedRows": 0
+    },
+    "05-restore-old-before-enable.sql": {
+      "sha256": "7ac2cd950980921ebd322b1be4ee2978a0ba964b2b0b23cd0ce991a606f9d76d",
+      "updates": 56,
+      "insertedRows": 0
+    }
+  },
+  "offlineChecks": "Enable 61 routes; emergency close 27; restore old 51; stale CAS 0; immutable columns preserved. SQLite simulation, not MySQL execution.",
+  "affected": {
+    "oldRoutes": 24,
+    "oldResources": 17,
+    "oldActiveBindings": 13,
+    "roles": [
+      {
+        "id": 900000000000000510,
+        "initialVersion": 12
+      },
+      {
+        "id": 900000000000000511,
+        "initialVersion": 6
+      }
+    ]
+  }
+}

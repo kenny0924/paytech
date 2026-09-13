@@ -1,0 +1,38 @@
+{
+  "risk": {
+    "t_decision_flow": 0,
+    "t_decision_flow_version": 0,
+    "t_decision_flow_node": 0,
+    "t_decision_flow_edge": 0,
+    "owned_rule_sets": 0,
+    "owned_commands": 0,
+    "owned_rejection_reasons": 0
+  },
+  "platformEphemeral": {
+    "t_user_account": 0,
+    "t_password_credential": 0,
+    "t_tenant_member": 0,
+    "t_tenant_member_role": 0,
+    "t_auth_session": 0,
+    "t_refresh_token_generation": 0,
+    "t_jwt_signing_key": 0,
+    "t_audit_chain": 0,
+    "t_audit_event": 0,
+    "t_audit_event_attr": 0,
+    "t_security_event": 0,
+    "t_command_idempotency": 0
+  },
+  "mainRoutesDisabledAtVersion5": 12,
+  "administratorRoleVersion": 8,
+  "extraReadRouteStatus": "DISABLED\t3",
+  "testEnvironmentTouched": false,
+  "stoppedProcesses": [
+    "gateway",
+    "bff",
+    "risk",
+    "platform",
+    "vite"
+  ],
+  "browserClosed": true,
+  "backupDirectory": "/Users/kenny/Code-MoR-backups/rco17-platform-recheck-20260912T154835Z"
+}

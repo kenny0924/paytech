@@ -56,9 +56,13 @@ requirements/
 
 | 登记目录 | 需求 | 主入口/Owner | 关联编号 | 材料 |
 |---|---|---|---|---|
+| `20260911` | Operations 风控规则 V1 配置改动 | Operations Console / Risk | RCO-14、RCO-I12、E2E-15 | [需求](./20260911/operations-console-风控规则改动/requirement.md) · [技术入口](./20260911/operations-console-风控规则改动/technique.md) · [交付记录](./20260911/operations-console-风控规则改动/delivery.md) |
 | `20260911` | 风控规则集列表优化 | Operations Console / Risk | RCO-15 / RCO-I12 | [需求](./20260911/operations-console-风控规则集列表优化/requirement.md) · [技术入口](./20260911/operations-console-风控规则集列表优化/technique.md) · [交付记录](./20260911/operations-console-风控规则集列表优化/delivery.md) |
 | `20260911` | 风控规则集历史与字典管理 | Operations Console / Risk | RCO-16 / RCO-I12 / E2E-15 | [需求](./20260911/operations-console-风控规则集历史与字典管理/requirement.md) · [差异与影响](./20260911/operations-console-风控规则集历史与字典管理/technique.md) · [交付记录](./20260911/operations-console-风控规则集历史与字典管理/delivery.md) |
 | `20260911` | OE 与 Client 属性及模型边界梳理 | Client & Contract | CCT-04、CCT-06、CCT-11、CCT-I11/I13 | [需求](./20260911/client-contract-OE与Client模型梳理/requirement.md) · [模型评审稿](./20260911/client-contract-OE与Client模型梳理/technique.md) · [交付记录](./20260911/client-contract-OE与Client模型梳理/delivery.md) · [四系统模型实施](./20260911/client-contract-OE与Client模型梳理/model-implementation.md) |
+| `20260912` | 决策流配置 | Operations Console / Risk | RCO-17，阶段 1/2 已确认，阶段 3 待整体确认（动作可选简化已确认） | [需求](./20260912/operations-console-决策流配置/requirement.md) · [差异与影响](./20260912/operations-console-决策流配置/technique.md) · [页面方案](./20260912/operations-console-决策流配置/ui.md) · [交付记录](./20260912/operations-console-决策流配置/delivery.md) |
 | `20260912` | 自建 Card Vault 与支付卡采集 | Payment / Card 模块 | Payment单请求提交已确认；阶段3字段/恢复与数据稿已同步修订 | [需求](./20260912/payment-自建CardVault/requirement.md) · [差异与影响](./20260912/payment-自建CardVault/technique.md) · [接口字段](./20260912/payment-自建CardVault/api-contract.md) · [数据设计](./20260912/payment-自建CardVault/data-design.md) · [交付记录](./20260912/payment-自建CardVault/delivery.md) |
 
+| `20260912` | 决策流新增节点处理结果条件 | Operations Console / Risk | RCO-18，纳入 RCO-19 评审 | [需求](./20260912/operations-console-决策流节点处理结果/requirement.md) · [技术入口](./20260912/operations-console-决策流节点处理结果/technique.md) · [交付记录](./20260912/operations-console-决策流节点处理结果/delivery.md) |
+| `20260912` | 统一风控变量管理与条件编排 | Operations Console / Risk | RCO-19，阶段 1/2/3 已确认、阶段 4 研发中 | [需求](./20260912/operations-console-统一风控变量管理与条件编排/requirement.md) · [差异与影响](./20260912/operations-console-统一风控变量管理与条件编排/technique.md) · [完整方案](./20260912/operations-console-统一风控变量管理与条件编排/design.md) · [交付记录](./20260912/operations-console-统一风控变量管理与条件编排/delivery.md) |
 本索引只做检索，不复制实现、测试数量或部署状态。

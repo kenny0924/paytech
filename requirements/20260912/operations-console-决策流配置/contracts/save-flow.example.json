@@ -1,0 +1,186 @@
+{
+  "pointCode": "CHECKOUT_PREPARE",
+  "flowCode": "CHECKOUT_STANDARD",
+  "flowName": "结账准备风控",
+  "baseFlowVersionId": null,
+  "expectedVersion": null,
+  "changeReason": "合成示例：配置按检查结果提前结束的路径",
+  "graph": {
+    "schemaVersion": 1,
+    "nodes": [
+      {
+        "nodeKey": "start",
+        "type": "START",
+        "name": "结账准备",
+        "position": {
+          "x": "0",
+          "y": "0"
+        },
+        "ruleSetVersionId": null,
+        "decisionCode": null,
+        "reasonCode": null,
+        "reasonMessage": null
+      },
+      {
+        "nodeKey": "clientCheck",
+        "type": "RULE_SET",
+        "name": "Client 名单检查",
+        "position": {
+          "x": "0",
+          "y": "120"
+        },
+        "ruleSetVersionId": "900000000000071002",
+        "decisionCode": null,
+        "reasonCode": null,
+        "reasonMessage": null
+      },
+      {
+        "nodeKey": "orderCheck",
+        "type": "RULE_SET",
+        "name": "订单异常检查",
+        "position": {
+          "x": "0",
+          "y": "400"
+        },
+        "ruleSetVersionId": "900000000000072004",
+        "decisionCode": null,
+        "reasonCode": null,
+        "reasonMessage": null
+      },
+      {
+        "nodeKey": "deny",
+        "type": "END",
+        "name": "名单拒绝",
+        "position": {
+          "x": "480",
+          "y": "120"
+        },
+        "ruleSetVersionId": null,
+        "decisionCode": "DENY",
+        "reasonCode": "RCO17_EXAMPLE_LIST_MATCH",
+        "reasonMessage": "当前配置不接受此类请求。"
+      },
+      {
+        "nodeKey": "review",
+        "type": "END",
+        "name": "人工审核",
+        "position": {
+          "x": "480",
+          "y": "400"
+        },
+        "ruleSetVersionId": null,
+        "decisionCode": "REVIEW",
+        "reasonCode": null,
+        "reasonMessage": null
+      },
+      {
+        "nodeKey": "allow",
+        "type": "END",
+        "name": "放行",
+        "position": {
+          "x": "0",
+          "y": "660"
+        },
+        "ruleSetVersionId": null,
+        "decisionCode": "ALLOW",
+        "reasonCode": null,
+        "reasonMessage": null
+      }
+    ],
+    "edges": [
+      {
+        "edgeKey": "startCheck",
+        "sourceNodeKey": "start",
+        "targetNodeKey": "clientCheck",
+        "type": "UNCONDITIONAL",
+        "priority": 0,
+        "name": "进入检查",
+        "condition": null
+      },
+      {
+        "edgeKey": "clientMatched",
+        "sourceNodeKey": "clientCheck",
+        "targetNodeKey": "deny",
+        "type": "CONDITIONAL",
+        "priority": 1,
+        "name": "命中后拒绝",
+        "condition": {
+          "schemaVersion": 1,
+          "root": {
+            "kind": "PREDICATE",
+            "source": {
+              "type": "NODE_RESULT",
+              "fieldCode": "matched"
+            },
+            "operator": "EQ",
+            "values": [
+              true
+            ]
+          }
+        }
+      },
+      {
+        "edgeKey": "clientCurrency",
+        "sourceNodeKey": "clientCheck",
+        "targetNodeKey": "review",
+        "type": "CONDITIONAL",
+        "priority": 2,
+        "name": "USD 转审核",
+        "condition": {
+          "schemaVersion": 1,
+          "root": {
+            "kind": "PREDICATE",
+            "source": {
+              "type": "CONTEXT",
+              "fieldCode": "currency"
+            },
+            "operator": "EQ",
+            "values": [
+              "USD"
+            ]
+          }
+        }
+      },
+      {
+        "edgeKey": "clientElse",
+        "sourceNodeKey": "clientCheck",
+        "targetNodeKey": "orderCheck",
+        "type": "ELSE",
+        "priority": 0,
+        "name": "其他情况",
+        "condition": null
+      },
+      {
+        "edgeKey": "orderMatched",
+        "sourceNodeKey": "orderCheck",
+        "targetNodeKey": "review",
+        "type": "CONDITIONAL",
+        "priority": 1,
+        "name": "异常转审核",
+        "condition": {
+          "schemaVersion": 1,
+          "root": {
+            "kind": "PREDICATE",
+            "source": {
+              "type": "NODE_RESULT",
+              "fieldCode": "matched"
+            },
+            "operator": "EQ",
+            "values": [
+              true
+            ]
+          }
+        }
+      },
+      {
+        "edgeKey": "orderElse",
+        "sourceNodeKey": "orderCheck",
+        "targetNodeKey": "allow",
+        "type": "ELSE",
+        "priority": 0,
+        "name": "其他情况",
+        "condition": null
+      }
+    ]
+  }
+}

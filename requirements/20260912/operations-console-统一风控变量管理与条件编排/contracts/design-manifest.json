@@ -1,0 +1,1203 @@
+{
+  "status": "APPROVED_STAGE_4_IN_PROGRESS",
+  "tables": [
+    {
+      "name": "t_risk_variable",
+      "comment": "统一拥有风控变量定义、来源映射、适用范围及当前常量值；不保存变量历史或执行结果",
+      "fields": [
+        {
+          "name": "variable_id",
+          "type": "BIGINT",
+          "nullable": false,
+          "comment": "变量的稳定标识，由 Risk 分配；不作为共享值版本。"
+        },
+        {
+          "name": "variable_code",
+          "type": "VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": false,
+          "comment": "全库唯一且创建后不可修改、不可复用的变量编码，格式为大写字母开头的大写字母数字下划线。取值来源：Risk 统一变量库；非固定枚举。"
+        },
+        {
+          "name": "variable_name",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "comment": "运营展示名称，可修改；不参与规则或流程内容 Hash。"
+        },
+        {
+          "name": "description",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "comment": "变量用途的非敏感说明；未填写时为空。"
+        },
+        {
+          "name": "source_type",
+          "type": "VARCHAR(64)",
+          "nullable": false,
+          "comment": "来源类型，允许 INPUT、CONSTANT、COLLECTION、NODE_OUTPUT；创建后固定。允许值：INPUT、CONSTANT、COLLECTION、NODE_OUTPUT。"
+        },
+        {
+          "name": "value_type",
+          "type": "VARCHAR(64)",
+          "nullable": false,
+          "comment": "标量类型或集合成员类型，允许 STRING、NUMBER、BOOLEAN、DATETIME、DURATION；创建后固定。允许值：STRING、NUMBER、BOOLEAN、DATETIME、DURATION。"
+        },
+        {
+          "name": "point_code",
+          "type": "VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": true,
+          "comment": "适用决策点；INPUT 和 NODE_OUTPUT 必填，常量和集合为空表示全部已支持决策点。取值来源：Risk 决策点目录；非固定枚举。"
+        },
+        {
+          "name": "source_contract_code",
+          "type": "VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": true,
+          "comment": "INPUT 的输入合同或 NODE_OUTPUT 的输出合同代码；其他来源为空。取值来源：Risk 精确输入或节点输出合同；非固定枚举。"
+        },
+        {
+          "name": "source_contract_version",
+          "type": "INT",
+          "nullable": true,
+          "comment": "来源合同的准确版本；仅 INPUT 和 NODE_OUTPUT 非空，不取最新版本兜底。"
+        },
+        {
+          "name": "source_field",
+          "type": "VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": true,
+          "comment": "来源合同中的准确顶层字段键；仅 INPUT 和 NODE_OUTPUT 非空，不接受任意路径、SQL 或脚本。"
+        },
+        {
+          "name": "rule_condition_flag",
+          "type": "TINYINT(1)",
+          "nullable": false,
+          "comment": "是否可用于规则条件；0 或 1，受来源合同允许用途约束。"
+        },
+        {
+          "name": "flow_condition_flag",
+          "type": "TINYINT(1)",
+          "nullable": false,
+          "comment": "是否可用于流程连线条件；0 或 1，节点输出仅当前规则集节点出线可用。"
+        },
+        {
+          "name": "action_parameter_flag",
+          "type": "TINYINT(1)",
+          "nullable": false,
+          "comment": "是否可作为既有动作主体输入；0 或 1，本期只开放 INPUT 的批准主体槽位。"
+        },
+        {
+          "name": "system_managed_flag",
+          "type": "TINYINT(1)",
+          "nullable": false,
+          "comment": "是否为工程合同保留定义；0 或 1，系统定义的结构、状态、删除及系统集合成员不开放运营修改。"
+        },
+        {
+          "name": "format_code",
+          "type": "VARCHAR(64)",
+          "nullable": false,
+          "comment": "通用格式配置，允许 TEXT、UPPER_ALPHA_2、UPPER_ALPHA_3、DIGITS_4、TOKEN、BCP47、POSITIVE_ID、NONE；具体变量的关联由本行管理。允许值：TEXT、UPPER_ALPHA_2、UPPER_ALPHA_3、DIGITS_4、TOKEN、BCP47、POSITIVE_ID、NONE。"
+        },
+        {
+          "name": "numeric_unit",
+          "type": "VARCHAR(64)",
+          "nullable": true,
+          "comment": "NUMBER 的量纲，允许 SCALAR 或 MONEY；其他类型为空。允许值：SCALAR、MONEY。"
+        },
+        {
+          "name": "currency_code",
+          "type": "CHAR(3) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": true,
+          "comment": "MONEY 的固定币种，三位大写字母；与 currency_variable_code 二选一，非 MONEY 为空。取值来源：ISO 4217 币种代码；非固定枚举。"
+        },
+        {
+          "name": "currency_variable_code",
+          "type": "VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": true,
+          "comment": "MONEY 的币种来源变量编码，指向同决策点 INPUT STRING 币种变量；与 currency_code 二选一，非 MONEY 为空。取值来源：Risk 统一变量库的币种输入；非固定枚举。"
+        },
+        {
+          "name": "allowed_values_variable_code",
+          "type": "VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": true,
+          "comment": "可选值来源集合变量编码，必须同成员类型且适用范围覆盖本变量；为空表示无额外枚举范围，集合本身不再引用集合。取值来源：Risk 统一变量库的集合；非固定枚举。"
+        },
+        {
+          "name": "string_value",
+          "type": "VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin",
+          "nullable": true,
+          "comment": "CONSTANT STRING 的当前值；仅匹配来源和值类型时非空，不接受敏感原值。"
+        },
+        {
+          "name": "number_value",
+          "type": "DECIMAL(24,8)",
+          "nullable": true,
+          "comment": "CONSTANT NUMBER 的当前精确数值；仅匹配来源和值类型时非空。"
+        },
+        {
+          "name": "boolean_value",
+          "type": "TINYINT(1)",
+          "nullable": true,
+          "comment": "CONSTANT BOOLEAN 的当前值，0 或 1；仅匹配来源和值类型时非空。"
+        },
+        {
+          "name": "datetime_value",
+          "type": "DATETIME(6)",
+          "nullable": true,
+          "comment": "CONSTANT DATETIME 的当前 UTC 微秒值；仅匹配来源和值类型时非空。"
+        },
+        {
+          "name": "duration_value",
+          "type": "BIGINT",
+          "nullable": true,
+          "comment": "CONSTANT DURATION 的当前非负毫秒值；仅匹配来源和值类型时非空。"
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(64)",
+          "nullable": false,
+          "comment": "当前状态，允许 ACTIVE、DISABLED、DELETED；停用禁止新保存引用，删除仅无任何引用时允许且保留编码。允许值：ACTIVE、DISABLED、DELETED。"
+        },
+        {
+          "name": "version",
+          "type": "BIGINT",
+          "nullable": false,
+          "comment": "变量根的正整数 CAS 版本，定义、值或集合成员成功变更时加一。"
+        },
+        {
+          "name": "create_by",
+          "type": "BIGINT",
+          "nullable": false,
+          "comment": "创建主体的稳定账号或正式系统主体标识。"
+        },
+        {
+          "name": "update_by",
+          "type": "BIGINT",
+          "nullable": false,
+          "comment": "最近修改主体的稳定账号或正式系统主体标识。"
+        },
+        {
+          "name": "create_time",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "Risk 数据库中的 UTC 微秒创建时间。"
+        },
+        {
+          "name": "update_time",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "变量定义或成员最近成功更新的 UTC 微秒时间。"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "columns": [
+            "variable_id"
+          ],
+          "kind": "PRIMARY",
+          "comment": "变量标识"
+        },
+        {
+          "name": "uk_risk_variable_code",
+          "columns": [
+            "variable_code"
+          ],
+          "kind": "UNIQUE",
+          "comment": "保证变量编码永久唯一"
+        },
+        {
+          "name": "idx_risk_variable_filter",
+          "columns": [
+            "status",
+            "source_type",
+            "variable_code"
+          ],
+          "kind": "INDEX",
+          "comment": "支持可用目录按状态和来源查询"
+        },
+        {
+          "name": "idx_risk_variable_options",
+          "columns": [
+            "allowed_values_variable_code"
+          ],
+          "kind": "INDEX",
+          "comment": "支持集合被用作可选值来源的反查"
+        },
+        {
+          "name": "idx_risk_variable_currency",
+          "columns": [
+            "currency_variable_code"
+          ],
+          "kind": "INDEX",
+          "comment": "支持币种变量使用关系和删除保护"
+        }
+      ]
+    },
+    {
+      "name": "t_risk_variable_member",
+      "comment": "保存同类型集合的当前成员及展示名称；由所属变量根统一事务与 CAS 管理，不建立成员版本",
+      "fields": [
+        {
+          "name": "member_id",
+          "type": "BIGINT",
+          "nullable": false,
+          "comment": "集合成员行标识，整体替换时可重新分配；不是变量版本。"
+        },
+        {
+          "name": "variable_code",
+          "type": "VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": false,
+          "comment": "所属 COLLECTION 变量编码，成员类型和量纲由变量根统一拥有。取值来源：Risk 统一变量库；非固定枚举。"
+        },
+        {
+          "name": "value_key",
+          "type": "VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin",
+          "nullable": false,
+          "comment": "成员按通用类型规范化后的精确字符串键，用于唯一去重；不包含 Hash，字符串大小写及前导零保留。"
+        },
+        {
+          "name": "string_value",
+          "type": "VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin",
+          "nullable": true,
+          "comment": "STRING 成员值；仅该类型非空。"
+        },
+        {
+          "name": "number_value",
+          "type": "DECIMAL(24,8)",
+          "nullable": true,
+          "comment": "NUMBER 成员精确数值；仅该类型非空。"
+        },
+        {
+          "name": "boolean_value",
+          "type": "TINYINT(1)",
+          "nullable": true,
+          "comment": "BOOLEAN 成员值，0 或 1；仅该类型非空。"
+        },
+        {
+          "name": "datetime_value",
+          "type": "DATETIME(6)",
+          "nullable": true,
+          "comment": "DATETIME 成员 UTC 微秒值；仅该类型非空。"
+        },
+        {
+          "name": "duration_value",
+          "type": "BIGINT",
+          "nullable": true,
+          "comment": "DURATION 成员非负毫秒值；仅该类型非空。"
+        },
+        {
+          "name": "display_name",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "comment": "成员的可选展示名称，不改变成员业务值；未填写时为空。"
+        },
+        {
+          "name": "sort_order",
+          "type": "INT",
+          "nullable": false,
+          "comment": "成员在管理与选项中的展示顺序，正整数；不参与集合包含判断。"
+        },
+        {
+          "name": "create_time",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "该成员行在 Risk 数据库中的 UTC 微秒写入时间。"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "columns": [
+            "member_id"
+          ],
+          "kind": "PRIMARY",
+          "comment": "成员行标识"
+        },
+        {
+          "name": "uk_risk_variable_member",
+          "columns": [
+            "variable_code",
+            "value_key"
+          ],
+          "kind": "UNIQUE",
+          "comment": "保证同一集合的规范值唯一"
+        },
+        {
+          "name": "idx_risk_variable_member_order",
+          "columns": [
+            "variable_code",
+            "sort_order",
+            "member_id"
+          ],
+          "kind": "INDEX",
+          "comment": "支持集合成员稳定分页和展示"
+        }
+      ]
+    }
+  ],
+  "existingTableAdditions": [
+    {
+      "table": "t_rule_operand",
+      "fields": [
+        {
+          "name": "variable_code",
+          "type": "VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": true,
+          "comment": "VARIABLE 来源的统一变量编码；其他来源为空，历史 CONTEXT 仍使用原 field_code。取值来源：Risk 统一变量库；非固定枚举。"
+        },
+        {
+          "name": "numeric_unit",
+          "type": "VARCHAR(64)",
+          "nullable": true,
+          "comment": "新变量格式 NUMBER 字面量的量纲 SCALAR 或 MONEY；变量引用及旧格式为空。允许值：SCALAR、MONEY。"
+        },
+        {
+          "name": "currency_code",
+          "type": "CHAR(3) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": true,
+          "comment": "新格式 MONEY 字面量的固定币种；与 currency_variable_code 二选一，其他情况为空。取值来源：ISO 4217 币种代码；非固定枚举。"
+        },
+        {
+          "name": "currency_variable_code",
+          "type": "VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": true,
+          "comment": "新格式 MONEY 字面量的币种变量编码；与 currency_code 二选一，其他情况为空。取值来源：Risk 统一变量库的币种输入；非固定枚举。"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_rule_operand_variable",
+          "columns": [
+            "variable_code",
+            "node_id"
+          ],
+          "kind": "INDEX",
+          "comment": "支持统一变量的条件反向引用"
+        },
+        {
+          "name": "idx_rule_operand_currency",
+          "columns": [
+            "currency_variable_code",
+            "node_id"
+          ],
+          "kind": "INDEX",
+          "comment": "支持金额字面量的币种引用反查"
+        }
+      ]
+    },
+    {
+      "table": "t_rule_action_parameter",
+      "fields": [
+        {
+          "name": "variable_code",
+          "type": "VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": true,
+          "comment": "VARIABLE 来源的统一变量编码，仅既有动作主体绑定可用；其他来源为空。取值来源：Risk 统一变量库；非固定枚举。"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_rule_param_variable",
+          "columns": [
+            "variable_code",
+            "rule_action_id"
+          ],
+          "kind": "INDEX",
+          "comment": "支持既有动作主体变量的引用反查"
+        }
+      ]
+    }
+  ],
+  "apis": [
+    {
+      "id": "N01",
+      "method": "GET",
+      "path": "/decision-variables/v1/authoring-context",
+      "routeCode": "operations-risk-variable-manage-context",
+      "query": [
+        "pointCode"
+      ],
+      "bodyLimitBytes": 0,
+      "permission": "READ"
+    },
+    {
+      "id": "N02",
+      "method": "GET",
+      "path": "/decision-variables/v1/variables",
+      "routeCode": "operations-risk-variable-list",
+      "query": [
+        "keyword",
+        "sourceType",
+        "valueType",
+        "status",
+        "pointCode",
+        "usage",
+        "nodeType",
+        "codes",
+        "page",
+        "size"
+      ],
+      "bodyLimitBytes": 0,
+      "permission": "READ"
+    },
+    {
+      "id": "N03",
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/{variableCode}",
+      "routeCode": "operations-risk-variable-detail",
+      "query": [],
+      "bodyLimitBytes": 0,
+      "permission": "READ"
+    },
+    {
+      "id": "N04",
+      "method": "POST",
+      "path": "/decision-variables/v1/variables",
+      "routeCode": "operations-risk-variable-create",
+      "query": [],
+      "bodyLimitBytes": 16384,
+      "permission": "MANAGE"
+    },
+    {
+      "id": "N05",
+      "method": "PUT",
+      "path": "/decision-variables/v1/variables/{variableCode}",
+      "routeCode": "operations-risk-variable-update",
+      "query": [],
+      "bodyLimitBytes": 16384,
+      "permission": "MANAGE"
+    },
+    {
+      "id": "N06",
+      "method": "DELETE",
+      "path": "/decision-variables/v1/variables/{variableCode}",
+      "routeCode": "operations-risk-variable-delete",
+      "query": [
+        "expectedVersion"
+      ],
+      "bodyLimitBytes": 0,
+      "permission": "DELETE"
+    },
+    {
+      "id": "N07",
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/{variableCode}/members",
+      "routeCode": "operations-risk-variable-members",
+      "query": [
+        "keyword",
+        "page",
+        "size",
+        "expectedVersion"
+      ],
+      "bodyLimitBytes": 0,
+      "permission": "READ"
+    },
+    {
+      "id": "N08",
+      "method": "PUT",
+      "path": "/decision-variables/v1/variables/{variableCode}/members",
+      "routeCode": "operations-risk-variable-members-replace",
+      "query": [],
+      "bodyLimitBytes": 65536,
+      "permission": "MANAGE"
+    },
+    {
+      "id": "N09",
+      "method": "GET",
+      "path": "/decision-variables/v1/variables/{variableCode}/references",
+      "routeCode": "operations-risk-variable-references",
+      "query": [
+        "scope",
+        "cursor",
+        "size"
+      ],
+      "bodyLimitBytes": 0,
+      "permission": "READ"
+    }
+  ],
+  "variables": [
+    {
+      "variable_id": "900000000000091001",
+      "variable_code": "INPUT_COUNTRY_CODE",
+      "variable_name": "国家/地区",
+      "description": null,
+      "source_type": "INPUT",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "ORDER_PREPARATION",
+      "source_contract_version": 4,
+      "source_field": "country_code",
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "UPPER_ALPHA_2",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091002",
+      "variable_code": "INPUT_LOCALE",
+      "variable_name": "语言地区",
+      "description": null,
+      "source_type": "INPUT",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "ORDER_PREPARATION",
+      "source_contract_version": 4,
+      "source_field": "locale",
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "BCP47",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091003",
+      "variable_code": "INPUT_INDUSTRY_CODE",
+      "variable_name": "行业代码",
+      "description": null,
+      "source_type": "INPUT",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "ORDER_PREPARATION",
+      "source_contract_version": 4,
+      "source_field": "industry_code",
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "TOKEN",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091004",
+      "variable_code": "INPUT_MCC_CODE",
+      "variable_name": "MCC",
+      "description": null,
+      "source_type": "INPUT",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "ORDER_PREPARATION",
+      "source_contract_version": 4,
+      "source_field": "mcc_code",
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "DIGITS_4",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091005",
+      "variable_code": "INPUT_CURRENCY",
+      "variable_name": "币种",
+      "description": null,
+      "source_type": "INPUT",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "ORDER_PREPARATION",
+      "source_contract_version": 4,
+      "source_field": "currency",
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "UPPER_ALPHA_3",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091006",
+      "variable_code": "INPUT_MERCHANDISE_AMOUNT",
+      "variable_name": "商品金额",
+      "description": null,
+      "source_type": "INPUT",
+      "value_type": "NUMBER",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "ORDER_PREPARATION",
+      "source_contract_version": 4,
+      "source_field": "merchandise_amount",
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "NONE",
+      "numeric_unit": "MONEY",
+      "currency_code": null,
+      "currency_variable_code": "INPUT_CURRENCY",
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091007",
+      "variable_code": "INPUT_DISCOUNT_AMOUNT",
+      "variable_name": "折扣金额",
+      "description": null,
+      "source_type": "INPUT",
+      "value_type": "NUMBER",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "ORDER_PREPARATION",
+      "source_contract_version": 4,
+      "source_field": "discount_amount",
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "NONE",
+      "numeric_unit": "MONEY",
+      "currency_code": null,
+      "currency_variable_code": "INPUT_CURRENCY",
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091008",
+      "variable_code": "INPUT_NET_AMOUNT",
+      "variable_name": "实付金额",
+      "description": null,
+      "source_type": "INPUT",
+      "value_type": "NUMBER",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "ORDER_PREPARATION",
+      "source_contract_version": 4,
+      "source_field": "net_amount",
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "NONE",
+      "numeric_unit": "MONEY",
+      "currency_code": null,
+      "currency_variable_code": "INPUT_CURRENCY",
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091009",
+      "variable_code": "INPUT_ENTITY_SOURCE_TYPE",
+      "variable_name": "实体来源",
+      "description": null,
+      "source_type": "INPUT",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "ORDER_PREPARATION",
+      "source_contract_version": 4,
+      "source_field": "entity_source_type",
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "TOKEN",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": "ENTITY_SOURCE_VALUES",
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091010",
+      "variable_code": "INPUT_CLIENT_ID",
+      "variable_name": "Client 标识",
+      "description": null,
+      "source_type": "INPUT",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "ORDER_PREPARATION",
+      "source_contract_version": 4,
+      "source_field": "client_id",
+      "rule_condition_flag": 0,
+      "flow_condition_flag": 0,
+      "action_parameter_flag": 1,
+      "system_managed_flag": 1,
+      "format_code": "POSITIVE_ID",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091011",
+      "variable_code": "NODE_MATCHED",
+      "variable_name": "本节点是否命中",
+      "description": null,
+      "source_type": "NODE_OUTPUT",
+      "value_type": "BOOLEAN",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "RULE_SET_NODE_RESULT",
+      "source_contract_version": 1,
+      "source_field": "matched",
+      "rule_condition_flag": 0,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "NONE",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091012",
+      "variable_code": "NODE_DECISION",
+      "variable_name": "本节点处理结果",
+      "description": null,
+      "source_type": "NODE_OUTPUT",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": "RULE_SET_NODE_RESULT",
+      "source_contract_version": 1,
+      "source_field": "decision",
+      "rule_condition_flag": 0,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "TOKEN",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": "NODE_DECISION_VALUES",
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091013",
+      "variable_code": "ENTITY_SOURCE_VALUES",
+      "variable_name": "实体来源可选值",
+      "description": null,
+      "source_type": "COLLECTION",
+      "value_type": "STRING",
+      "point_code": null,
+      "source_contract_code": null,
+      "source_contract_version": null,
+      "source_field": null,
+      "rule_condition_flag": 0,
+      "flow_condition_flag": 0,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "TOKEN",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091014",
+      "variable_code": "NODE_DECISION_VALUES",
+      "variable_name": "节点处理结果可选值",
+      "description": null,
+      "source_type": "COLLECTION",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": null,
+      "source_contract_version": null,
+      "source_field": null,
+      "rule_condition_flag": 0,
+      "flow_condition_flag": 0,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 1,
+      "format_code": "TOKEN",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091015",
+      "variable_code": "DEMO_AMOUNT_THRESHOLD",
+      "variable_name": "示例金额阈值",
+      "description": null,
+      "source_type": "CONSTANT",
+      "value_type": "NUMBER",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": null,
+      "source_contract_version": null,
+      "source_field": null,
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 0,
+      "format_code": "NONE",
+      "numeric_unit": "MONEY",
+      "currency_code": null,
+      "currency_variable_code": "INPUT_CURRENCY",
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": "8000.00000000",
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091016",
+      "variable_code": "DEMO_STANDARD_CURRENCY",
+      "variable_name": "示例标准币种",
+      "description": null,
+      "source_type": "CONSTANT",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": null,
+      "source_contract_version": null,
+      "source_field": null,
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 0,
+      "format_code": "UPPER_ALPHA_3",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": "USD",
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    },
+    {
+      "variable_id": "900000000000091017",
+      "variable_code": "RESTRICTED_COUNTRIES",
+      "variable_name": "示例受限国家集合",
+      "description": null,
+      "source_type": "COLLECTION",
+      "value_type": "STRING",
+      "point_code": "CHECKOUT_PREPARE",
+      "source_contract_code": null,
+      "source_contract_version": null,
+      "source_field": null,
+      "rule_condition_flag": 1,
+      "flow_condition_flag": 1,
+      "action_parameter_flag": 0,
+      "system_managed_flag": 0,
+      "format_code": "UPPER_ALPHA_2",
+      "numeric_unit": null,
+      "currency_code": null,
+      "currency_variable_code": null,
+      "allowed_values_variable_code": null,
+      "string_value": null,
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "status": "ACTIVE",
+      "version": "1",
+      "create_by": "1",
+      "update_by": "1",
+      "create_time": "@rco19_time",
+      "update_time": "@rco19_time"
+    }
+  ],
+  "members": [
+    {
+      "member_id": "900000000000092001",
+      "variable_code": "ENTITY_SOURCE_VALUES",
+      "value_key": "PLATFORM",
+      "string_value": "PLATFORM",
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "display_name": "平台提供",
+      "sort_order": 1,
+      "create_time": "@rco19_time"
+    },
+    {
+      "member_id": "900000000000092002",
+      "variable_code": "ENTITY_SOURCE_VALUES",
+      "value_key": "CLIENT",
+      "string_value": "CLIENT",
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "display_name": "Client 提供",
+      "sort_order": 2,
+      "create_time": "@rco19_time"
+    },
+    {
+      "member_id": "900000000000092003",
+      "variable_code": "ENTITY_SOURCE_VALUES",
+      "value_key": "PARTNER",
+      "string_value": "PARTNER",
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "display_name": "Partner 提供",
+      "sort_order": 3,
+      "create_time": "@rco19_time"
+    },
+    {
+      "member_id": "900000000000092004",
+      "variable_code": "NODE_DECISION_VALUES",
+      "value_key": "ALLOW",
+      "string_value": "ALLOW",
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "display_name": "PASS",
+      "sort_order": 1,
+      "create_time": "@rco19_time"
+    },
+    {
+      "member_id": "900000000000092005",
+      "variable_code": "NODE_DECISION_VALUES",
+      "value_key": "REVIEW",
+      "string_value": "REVIEW",
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "display_name": "REVIEW",
+      "sort_order": 2,
+      "create_time": "@rco19_time"
+    },
+    {
+      "member_id": "900000000000092006",
+      "variable_code": "NODE_DECISION_VALUES",
+      "value_key": "DENY",
+      "string_value": "DENY",
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "display_name": "REJECT",
+      "sort_order": 3,
+      "create_time": "@rco19_time"
+    },
+    {
+      "member_id": "900000000000092007",
+      "variable_code": "RESTRICTED_COUNTRIES",
+      "value_key": "IR",
+      "string_value": "IR",
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "display_name": null,
+      "sort_order": 1,
+      "create_time": "@rco19_time"
+    },
+    {
+      "member_id": "900000000000092008",
+      "variable_code": "RESTRICTED_COUNTRIES",
+      "value_key": "KP",
+      "string_value": "KP",
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "display_name": null,
+      "sort_order": 2,
+      "create_time": "@rco19_time"
+    },
+    {
+      "member_id": "900000000000092009",
+      "variable_code": "RESTRICTED_COUNTRIES",
+      "value_key": "SY",
+      "string_value": "SY",
+      "number_value": null,
+      "boolean_value": null,
+      "datetime_value": null,
+      "duration_value": null,
+      "display_name": null,
+      "sort_order": 3,
+      "create_time": "@rco19_time"
+    }
+  ],
+  "counts": {
+    "newOperations": 9,
+    "newBoundaryEndpoints": 18,
+    "newTables": 2,
+    "newTableFields": 41,
+    "existingAlteredTables": 4,
+    "existingAddedFields": 5,
+    "existingCommentChanges": 4,
+    "newIndexesIncludingPrimaryUnique": 11,
+    "riskInsertRows": 26,
+    "platformInsertRows": 113,
+    "platformExistingUpdates": 1
+  },
+  "platformCounts": {
+    "t_permission": 2,
+    "t_role_permission": 2,
+    "t_console_resource": 3,
+    "t_gateway_route": 9,
+    "t_gateway_route_header": 24,
+    "t_gateway_route_query_param": 19,
+    "t_gateway_guard_rule": 54
+  }
+}

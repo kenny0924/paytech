@@ -1,0 +1,22 @@
+{
+  "rebuiltForThisRecheck": [
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-web/target/paytech-operations-console-bff-web-1.0.0-SNAPSHOT-exec.jar",
+      "sha256": "df3073f2cebdddfdad5e43a13f0e43751d51a0d0702bb2f2f29489612f22d0e1"
+    },
+    {
+      "path": "paytech-foundation/paytech-http-client-support/target/paytech-http-client-support-1.0.0-SNAPSHOT.jar",
+      "sha256": "f189f722b4bdd0848b1aaee5d60ba5fdb67156ca3ce3b399865162eb9afb8c23"
+    },
+    {
+      "path": "paytech-foundation/paytech-http-problem/target/paytech-http-problem-1.0.0-SNAPSHOT.jar",
+      "sha256": "4ce1dff7868fdc1f7ee6ce7c3ac6389f25a4d42fb0a111c2d7e01119e94402e7"
+    },
+    {
+      "path": "paytech-foundation/paytech-mvc-web-starter/target/paytech-mvc-web-starter-1.0.0-SNAPSHOT.jar",
+      "sha256": "b74e2d019363b18ddfc911ebccbf67ee21eabc03b03508f2d971799f82b8e2d6"
+    }
+  ],
+  "otherApplications": "Reused unchanged first-round packaged Platform/Risk/Gateway; see real-local-artifacts.json",
+  "published": false
+}

@@ -21,6 +21,12 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_qualification_state_change",
   ]),
   decision_engine: Object.freeze([
+    "t_risk_variable",
+    "t_risk_variable_member",
+    "t_decision_flow",
+    "t_decision_flow_version",
+    "t_decision_flow_node",
+    "t_decision_flow_edge",
     "t_rule_reject_reason",
     "t_rule_subject_tag",
     "t_decision_point",
@@ -105,23 +111,23 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "f335d04ee33238452f97068a21fa6ed6f80c0e310861c7843924a2c274212adc";
-export const EXPECTED_STRUCTURAL_DIGEST = "0dca07db6746834289c81605da729b074b033f1e70000d605c6e9e13a6f397a2";
-export const EXPECTED_CHECK_POLICY_DIGEST = "5d9921b58298b0a773bc75e11353ef8c5d0d073b5d82002eafe6cc3f5449514f";
+export const EXPECTED_MODEL_DIGEST = "4f0d314fe1820a097ed732bf053f2467dbf15b5d5bd062a918ce60bfe9ea6cf1";
+export const EXPECTED_STRUCTURAL_DIGEST = "2d845580b9a7f4227f87ad3bb0e826d70959ed3cc699b7d535462327d6d50772";
+export const EXPECTED_CHECK_POLICY_DIGEST = "d0e1ee7f1531a3041aa51cbe77fec976075ef03dd78da6518922662588d99a1f";
 
 export const EXPECTED_TOTALS = Object.freeze({
-  tables: 74,
-  fields: 898,
-  uniqueIndexes: 110,
-  accessIndexes: 80,
-  relations: 113,
+  tables: 80,
+  fields: 990,
+  uniqueIndexes: 117,
+  accessIndexes: 87,
+  relations: 126,
   oneToOneRelations: 9,
   diagramGroups: 8,
 });
 
 export const EXPECTED_GROUP_SIZES = Object.freeze({
   due_diligence: 19,
-  decision_engine: 22,
+  decision_engine: 28,
   evaluation: 8,
   risk_data: 6,
   limits: 7,
@@ -179,7 +185,7 @@ export const COMPENSATION_EVENT_RECONSTRUCTION_TARGET = Object.freeze({
 
 export const RULE_SET_VERSION_AUDIT_TARGET = Object.freeze({
   orderedFields: Object.freeze([
-    "rule_set_version_id", "decision_point_id", "rule_set_code", "rule_set_name", "version_no",
+    "rule_set_version_id", "decision_point_id", "input_contract_code", "input_contract_version", "rule_set_code", "rule_set_name", "version_no",
     "status", "content_hash", "content_format", "created_by", "change_reason", "frozen_by", "frozen_time",
     "create_time", "update_time",
   ]),
@@ -316,7 +322,7 @@ export const REQUIRED_FIELDS = Object.freeze({
   ]),
   t_rule_operand: Object.freeze([
     "operand_id", "node_id", "operand_role", "value_sequence", "source_type",
-    "feature_version_id", "input_field_id", "value_type", "string_value", "number_value",
+    "feature_version_id", "field_code", "value_type", "string_value", "number_value",
     "boolean_value", "datetime_value", "duration_value",
   ]),
   t_feature_version: Object.freeze([
@@ -327,7 +333,7 @@ export const REQUIRED_FIELDS = Object.freeze({
     "implementation_hash",
   ]),
   t_rule_set_version: Object.freeze([
-    "rule_set_version_id", "decision_point_id", "rule_set_code", "rule_set_name", "version_no",
+    "rule_set_version_id", "decision_point_id", "input_contract_code", "input_contract_version", "rule_set_code", "rule_set_name", "version_no",
   ]),
   t_decision_release: Object.freeze([
     "release_id", "decision_point_id", "point_version_id", "environment_code",

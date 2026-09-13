@@ -1,0 +1,19 @@
+{
+  "requestId": "476c006d-7333-4be0-98d1-1e9785550afd",
+  "servers": {
+    "operations-console-bff": {
+      "matchingLines": 1,
+      "statusMarkers": [
+        "422"
+      ]
+    },
+    "risk-service": {
+      "matchingLines": 0,
+      "statusMarkers": []
+    },
+    "api-gateway": {
+      "matchingLines": 0,
+      "statusMarkers": []
+    }
+  }
+}
