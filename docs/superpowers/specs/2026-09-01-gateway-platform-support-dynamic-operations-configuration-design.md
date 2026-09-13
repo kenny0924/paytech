@@ -1,5 +1,7 @@
 # Platform Support 统一公共 API 动态控制面设计
 
+> 2026-09-13 命名后继：[支付渠道 Channel 决定](../../../agent-docs/decisions/2026-09-13-payment-channel-terminology.md)取代本文支付领域 Provider 命名；业务边界与历史证据保持。现行实体、字段及自有回调代码使用 Channel；外部固定协议与原报文不改写。
+
 > **2026-09-11 Target/Route 后继决定：** [数据库路由范围决定](../../../agent-docs/decisions/2026-09-11-gateway-database-routing.md)取代本文静态 Approved Target Registry、具体 Discovery/Path Root 二次名单及关联校验/上线要求；Platform 数据库与完整快照成为业务目标/路由权威。其余认证、Channel、Header、协议和控制面规则保持；[技术修订方案](../../../requirements/20260911/operations-console-风控规则集历史与字典管理/gateway-dynamic-routing-design.md)待阶段评审，运行状态只读当前台账。
 
 > 2026-09-05 审计专项后继：[Controller 尽力审计决策](../../../agent-docs/decisions/2026-09-05-platform-controller-best-effort-audit.md)

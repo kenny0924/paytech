@@ -1,5 +1,7 @@
 # Finance Provider 三阶段账户实施计划
 
+> 2026-09-13 命名后继：[支付渠道 Channel 决定](../decisions/2026-09-13-payment-channel-terminology.md)取代本文支付领域 Provider 命名；业务边界与历史证据保持。现行实体、字段及自有回调代码使用 Channel；外部固定协议与原报文不改写。
+
 > 状态：实施完成并通过当前隔离工作区自动验证；PDManer 4.9.3 应用内人工检查与主工作区六系统总门禁待集成线程完成。  
 > 日期：2026-08-28  
 > 范围：Finance PDManer-only 模型、权威文档、现实场景、requirements-site 与共享入口；不创建 Java、Migration、物理数据库或部署资产，不提交 Git。

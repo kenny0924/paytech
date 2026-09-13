@@ -374,7 +374,7 @@ const EXACT_DECIMAL_CHECKS = Object.freeze({
     }
     return false;
   },
-  ck_provider_cost_component: (record, entity) => {
+  ck_channel_cost_component: (record, entity) => {
     const rate = fixedValue(record, "rate_value", { entities: [entity] });
     const fixed = fixedValue(record, "fixed_amount", { entities: [entity] });
     const minimum = fixedValue(record, "min_amount", { entities: [entity] });
@@ -387,8 +387,8 @@ const EXACT_DECIMAL_CHECKS = Object.freeze({
       && (maximum === null || fixedCompare(maximum, EXACT_ZERO) >= 0)
       && (minimum === null || maximum === null || fixedCompare(minimum, maximum) <= 0);
   },
-  ck_provider_cost_confirm: (record, entity) => fixedCompare(exactRequired(record, entity, "actual_cost"), EXACT_ZERO) >= 0,
-  ck_provider_cost_alloc_amount: (record, entity) => fixedCompare(exactRequired(record, entity, "allocated_amount"), EXACT_ZERO) >= 0,
+  ck_channel_cost_confirm: (record, entity) => fixedCompare(exactRequired(record, entity, "actual_cost"), EXACT_ZERO) >= 0,
+  ck_channel_cost_alloc_amount: (record, entity) => fixedCompare(exactRequired(record, entity, "allocated_amount"), EXACT_ZERO) >= 0,
   ck_instruction_line_amount: (record, entity) => exactPositive(record, entity, "amount"),
   ck_journal_line_amount: (record, entity) => exactPositive(record, entity, "amount"),
   ck_manual_adjustment_balance: (record, entity) => {
@@ -404,14 +404,14 @@ const EXACT_DECIMAL_CHECKS = Object.freeze({
       && (valueOf(record, "status") !== "SUCCEEDED" || fixedEqual(debit, credit));
   },
   ck_duplicate_capture_amount: (record, entity) => exactPositive(record, entity, "amount"),
-  ck_provider_open_item_amounts: (record, entity) => {
+  ck_channel_open_item_amounts: (record, entity) => {
     const gross = exactRequired(record, entity, "gross_receivable");
     const settled = exactRequired(record, entity, "settled_amount");
     const outstanding = exactRequired(record, entity, "outstanding_amount");
     return fixedCompare(gross, EXACT_ZERO) > 0 && fixedCompare(settled, EXACT_ZERO) >= 0
       && fixedCompare(outstanding, EXACT_ZERO) >= 0 && fixedEqual(fixedAdd(settled, outstanding), gross);
   },
-  ck_provider_open_item_state: (record, entity) => {
+  ck_channel_open_item_state: (record, entity) => {
     const gross = exactRequired(record, entity, "gross_receivable");
     const settled = exactRequired(record, entity, "settled_amount");
     const outstanding = exactRequired(record, entity, "outstanding_amount");
@@ -422,14 +422,14 @@ const EXACT_DECIMAL_CHECKS = Object.freeze({
     if (valueOf(record, "status") === "SETTLED") return fixedEqual(settled, gross) && fixedEqual(outstanding, EXACT_ZERO);
     return valueOf(record, "status") === "EXCEPTION";
   },
-  ck_provider_debit_amounts: (record, entity) => {
+  ck_channel_debit_amounts: (record, entity) => {
     const expected = exactRequired(record, entity, "expected_amount");
     const settled = exactRequired(record, entity, "settled_amount");
     const outstanding = exactRequired(record, entity, "outstanding_amount");
     return fixedCompare(expected, EXACT_ZERO) > 0 && fixedCompare(settled, EXACT_ZERO) >= 0
       && fixedCompare(outstanding, EXACT_ZERO) >= 0 && fixedEqual(fixedAdd(settled, outstanding), expected);
   },
-  ck_provider_debit_state: (record, entity) => {
+  ck_channel_debit_state: (record, entity) => {
     const expected = exactRequired(record, entity, "expected_amount");
     const settled = exactRequired(record, entity, "settled_amount");
     const outstanding = exactRequired(record, entity, "outstanding_amount");
@@ -440,7 +440,7 @@ const EXACT_DECIMAL_CHECKS = Object.freeze({
     if (valueOf(record, "status") === "SETTLED") return fixedEqual(settled, expected) && fixedEqual(outstanding, EXACT_ZERO);
     return valueOf(record, "status") === "EXCEPTION";
   },
-  ck_provider_settle_batch_net: (record, entity) => {
+  ck_channel_settle_batch_net: (record, entity) => {
     const gross = exactRequired(record, entity, "gross_amount");
     const fee = exactRequired(record, entity, "fee_amount");
     const debit = exactRequired(record, entity, "debit_amount");
@@ -456,7 +456,7 @@ const EXACT_DECIMAL_CHECKS = Object.freeze({
     return valueOf(record, "cash_direction") === "NONE"
       && fixedEqual(gross, deductions) && fixedEqual(net, EXACT_ZERO);
   },
-  ck_provider_settle_item_direction: (record, entity) => {
+  ck_channel_settle_item_direction: (record, entity) => {
     const values = ["gross_amount", "fee_amount", "net_amount"].map((field) => exactRequired(record, entity, field));
     if (!values.every((value) => fixedCompare(value, EXACT_ZERO) >= 0)
       || fixedCompare(fixedAdd(...values), EXACT_ZERO) <= 0) return false;
@@ -466,7 +466,7 @@ const EXACT_DECIMAL_CHECKS = Object.freeze({
       || (["REFUND", "DISPUTE", "FEE"].includes(itemType) && direction === "DEBIT")
       || itemType === "ADJUSTMENT";
   },
-  ck_provider_transaction_match_amounts: (record, entity) => {
+  ck_channel_transaction_match_amounts: (record, entity) => {
     const values = ["gross_amount", "fee_amount", "net_amount"].map((field) => exactRequired(record, entity, field));
     return values.every((value) => fixedCompare(value, EXACT_ZERO) >= 0)
       && fixedCompare(fixedAdd(...values), EXACT_ZERO) > 0;
@@ -1137,7 +1137,7 @@ const approvedRequiredAccountingRuleCoordinates = new Set([
   "PAYABLE_BALANCE_MATURED|PARTNER_RECOVERY_NET_CR|RECOVERY_NETTED|FROZEN_ACCOUNT|PARTNER_RECOVERY_RECEIVABLE|NONE|CREDIT",
   "PAYABLE_BALANCE_MATURED|PARTNER_AVAILABLE_CR|PARTNER_NET_AVAILABLE|FROZEN_ACCOUNT|PARTNER_PAYABLE|AVAILABLE|CREDIT",
   "REFUND_SUCCEEDED|REFUND_CLIENT_PENDING_DR|POSTING_AMOUNT|FROZEN_ACCOUNT|CLIENT_PAYABLE|PENDING|DEBIT",
-  "REFUND_SUCCEEDED|REFUND_PROVIDER_PAYABLE_CR|POSTING_AMOUNT|FROZEN_ACCOUNT|PROVIDER_UNSETTLED_PAYABLE|NONE|CREDIT",
+  "REFUND_SUCCEEDED|REFUND_CHANNEL_PAYABLE_CR|POSTING_AMOUNT|FROZEN_ACCOUNT|CHANNEL_UNSETTLED_PAYABLE|NONE|CREDIT",
   "PAYOUT_LOCK|OWNER_AVAILABLE_DR|POSTING_AMOUNT|FROZEN_ACCOUNT|OWNER_PAYABLE|AVAILABLE|DEBIT",
   "PAYOUT_LOCK|OWNER_LOCKED_CR|POSTING_AMOUNT|FROZEN_ACCOUNT|OWNER_PAYABLE|LOCKED|CREDIT",
   "PAYOUT_PAID|OWNER_LOCKED_DR|POSTING_AMOUNT|FROZEN_ACCOUNT|OWNER_PAYABLE|LOCKED|DEBIT",
@@ -1230,7 +1230,7 @@ function validateAccountingSourceAuthority(records) {
         `${context} transaction_economics_id 与 authority key 不一致`);
       assert.equal(valueOf(economics, "economics_type"), "DISPUTE",
         `${context} authority source 必须为负向 DISPUTE Economics`);
-      assert.ok(!isNull(valueOf(economics, "provider_dispute_notice_id"))
+      assert.ok(!isNull(valueOf(economics, "channel_dispute_notice_id"))
         && !isNull(valueOf(economics, "dispute_case_id")),
       `${context} authority source 缺少 Dispute 根坐标`);
       assert.ok(identifierEqual(valueOf(economics, "source_version"), valueOf(instruction, "source_version")),
@@ -1370,19 +1370,19 @@ function validateAccountingSourceAuthority(records) {
       assert.equal(matches.length, 1, `${context} 决定性 Event 缺少自身 CONFIRMED Tax Match`);
       requireSourceSystem(instruction, "FINANCE");
     }],
-    ["PROVIDER_BATCH_SETTLEMENT", (instruction) => {
-      const batchId = authorityId(instruction, "PROVIDER_BATCH_SETTLEMENT");
-      const context = `Instruction ${valueOf(instruction, "id")} PROVIDER_BATCH_SETTLEMENT`;
-      const batch = uniqueIntegerRecord("t_provider_settle_batch", batchId, context);
+    ["CHANNEL_BATCH_SETTLEMENT", (instruction) => {
+      const batchId = authorityId(instruction, "CHANNEL_BATCH_SETTLEMENT");
+      const context = `Instruction ${valueOf(instruction, "id")} CHANNEL_BATCH_SETTLEMENT`;
+      const batch = uniqueIntegerRecord("t_channel_settle_batch", batchId, context);
       assert.equal(valueOf(batch, "status"), "VALIDATED", `${context} authority source 必须为 VALIDATED final Batch`);
     }],
-    ["PROVIDER_BANK_MATCH", (instruction) => {
-      const matchId = authorityId(instruction, "PROVIDER_BANK_MATCH");
-      const context = `Instruction ${valueOf(instruction, "id")} PROVIDER_BANK_MATCH`;
+    ["CHANNEL_BANK_MATCH", (instruction) => {
+      const matchId = authorityId(instruction, "CHANNEL_BANK_MATCH");
+      const context = `Instruction ${valueOf(instruction, "id")} CHANNEL_BANK_MATCH`;
       const match = uniqueIntegerRecord("t_bank_recon_match", matchId, context);
-      assert.ok(["PROVIDER_CREDIT", "PROVIDER_DEBIT"].includes(valueOf(match, "match_type"))
+      assert.ok(["CHANNEL_CREDIT", "CHANNEL_DEBIT"].includes(valueOf(match, "match_type"))
         && valueOf(match, "status") === "CONFIRMED",
-      `${context} authority source 必须为 CONFIRMED Provider Bank Match`);
+      `${context} authority source 必须为 CONFIRMED Channel Bank Match`);
     }],
     ["DISPUTE_LOST", (instruction) => {
       const disputeCaseId = authorityId(instruction, "DISPUTE_LOST");
@@ -1609,7 +1609,7 @@ function validateAccountingRuleReplay(records) {
   return automatic.length;
 }
 
-function validateTaxAndProviderTuples(records) {
+function validateTaxAndChannelTuples(records) {
   const ledgerBooks = recordsById(records, "t_ledger_book");
   const journals = recordsById(records, "t_journal_entry");
   const taxRegistration = requireRecord(records, "t_tax_registration", "100011");
@@ -1655,17 +1655,17 @@ function validateTaxAndProviderTuples(records) {
     `Tax Payment ${valueOf(payment, "id")} Ledger Book OE/currency scope 不一致`);
   }
 
-  const providerAccount = requireRecord(records, "t_provider_account", "100051");
-  const providerOperatingEntityId = valueOf(providerAccount, "entity_no");
-  assert.ok(identifierEqual(providerOperatingEntityId, "AE001"),
-    "Provider Account 必须冻结真实 Operating Entity");
-  const providerPlans = recordsById(records, "t_provider_cost_plan");
-  const providerBatches = recordsById(records, "t_provider_settle_batch");
-  const providerSettleItems = recordsById(records, "t_provider_settle_item");
-  const providerOpenItems = recordsById(records, "t_provider_open_item");
-  const providerDebitItems = recordsById(records, "t_provider_debit_item");
-  const providerAccounts = recordsById(records, "t_provider_account");
-  const transactionMatches = recordsFor(records, "t_provider_transaction_match");
+  const channelAccount = requireRecord(records, "t_channel_account", "100051");
+  const channelOperatingEntityId = valueOf(channelAccount, "entity_no");
+  assert.ok(identifierEqual(channelOperatingEntityId, "AE001"),
+    "Channel Account 必须冻结真实 Operating Entity");
+  const channelPlans = recordsById(records, "t_channel_cost_plan");
+  const channelBatches = recordsById(records, "t_channel_settle_batch");
+  const channelSettleItems = recordsById(records, "t_channel_settle_item");
+  const channelOpenItems = recordsById(records, "t_channel_open_item");
+  const channelDebitItems = recordsById(records, "t_channel_debit_item");
+  const channelAccounts = recordsById(records, "t_channel_account");
+  const transactionMatches = recordsFor(records, "t_channel_transaction_match");
   const matchedOpenItemIds = integerSet(transactionMatches
     .filter((match) => valueOf(match, "target_type") === "OPEN_ITEM")
     .map((match) => valueOf(match, "open_item_id")));
@@ -1715,106 +1715,106 @@ function validateTaxAndProviderTuples(records) {
       `Cash Binding ${bindingId} current_ver_id 必须指向自身唯一当前 ACTIVE Version/Account`);
     }
   }
-  for (const scope of recordsFor(records, "t_provider_cost_scope")) {
-    const planVersion = requireRecord(records, "t_provider_cost_plan_ver", valueOf(scope, "cost_ver_id"));
-    const plan = providerPlans.get(valueOf(planVersion, "plan_id"));
-    assert.ok(identifierEqual(valueOf(plan, "provider_id"), valueOf(providerAccount, "provider_id")),
-      `Provider Cost Scope ${valueOf(scope, "id")} Provider 不一致`);
-    assert.ok(identifierEqual(valueOf(scope, "mid_id"), valueOf(providerAccount, "mid_id")),
-      `Provider Cost Scope ${valueOf(scope, "id")} MID 不匹配 Provider Account`);
-    assert.ok(identifierEqual(valueOf(scope, "entity_no"), providerOperatingEntityId),
-      `Provider Cost Scope ${valueOf(scope, "id")} OE tuple 不一致`);
-    assert.equal(valueOf(scope, "currency"), valueOf(providerAccount, "currency"),
-      `Provider Cost Scope ${valueOf(scope, "id")} currency tuple 不一致`);
+  for (const scope of recordsFor(records, "t_channel_cost_scope")) {
+    const planVersion = requireRecord(records, "t_channel_cost_plan_ver", valueOf(scope, "cost_ver_id"));
+    const plan = channelPlans.get(valueOf(planVersion, "plan_id"));
+    assert.ok(identifierEqual(valueOf(plan, "channel_id"), valueOf(channelAccount, "channel_id")),
+      `Channel Cost Scope ${valueOf(scope, "id")} Channel 不一致`);
+    assert.ok(identifierEqual(valueOf(scope, "mid_id"), valueOf(channelAccount, "mid_id")),
+      `Channel Cost Scope ${valueOf(scope, "id")} MID 不匹配 Channel Account`);
+    assert.ok(identifierEqual(valueOf(scope, "entity_no"), channelOperatingEntityId),
+      `Channel Cost Scope ${valueOf(scope, "id")} OE tuple 不一致`);
+    assert.equal(valueOf(scope, "currency"), valueOf(channelAccount, "currency"),
+      `Channel Cost Scope ${valueOf(scope, "id")} currency tuple 不一致`);
   }
-  for (const providerLedgerAccount of recordsFor(records, "t_account")
-    .filter((record) => valueOf(record, "owner_type") === "PROVIDER_ACCOUNT")) {
-    assert.ok(identifierEqual(valueOf(providerLedgerAccount, "owner_id"), valueOf(providerAccount, "id")),
-      `Provider ledger Account ${valueOf(providerLedgerAccount, "id")} owner_id 不是 Provider Account PK`);
-    const providerBook = ledgerBooks.get(valueOf(providerLedgerAccount, "ledger_book_id"));
-    assert.ok(providerBook
-      && valueOf(providerBook, "entity_type") === "OPERATING_ENTITY"
-      && identifierEqual(valueOf(providerBook, "entity_id"), providerOperatingEntityId)
-      && valueOf(providerBook, "currency") === valueOf(providerAccount, "currency"),
-    `Provider ledger Account ${valueOf(providerLedgerAccount, "id")} Ledger Book OE/currency scope 不一致`);
+  for (const channelLedgerAccount of recordsFor(records, "t_account")
+    .filter((record) => valueOf(record, "owner_type") === "CHANNEL_ACCOUNT")) {
+    assert.ok(identifierEqual(valueOf(channelLedgerAccount, "owner_id"), valueOf(channelAccount, "id")),
+      `Channel ledger Account ${valueOf(channelLedgerAccount, "id")} owner_id 不是 Channel Account PK`);
+    const channelBook = ledgerBooks.get(valueOf(channelLedgerAccount, "ledger_book_id"));
+    assert.ok(channelBook
+      && valueOf(channelBook, "entity_type") === "OPERATING_ENTITY"
+      && identifierEqual(valueOf(channelBook, "entity_id"), channelOperatingEntityId)
+      && valueOf(channelBook, "currency") === valueOf(channelAccount, "currency"),
+    `Channel ledger Account ${valueOf(channelLedgerAccount, "id")} Ledger Book OE/currency scope 不一致`);
   }
   const economicsById = recordsById(records, "t_transaction_economics");
-  const openItems = recordsFor(records, "t_provider_open_item");
-  for (const item of [...recordsFor(records, "t_provider_open_item"), ...recordsFor(records, "t_provider_debit_item")]) {
-    const itemProviderAccount = providerAccounts.get(valueOf(item, "provider_account_id"));
-    assert.ok(itemProviderAccount, `Provider Item ${valueOf(item, "id")} 缺少 Provider Account`);
-    assert.ok(!isNull(valueOf(itemProviderAccount, "provider_id")) && !isNull(valueOf(itemProviderAccount, "mid_id")),
-      `Provider Item ${valueOf(item, "id")} Provider/MID identity 不完整`);
+  const openItems = recordsFor(records, "t_channel_open_item");
+  for (const item of [...recordsFor(records, "t_channel_open_item"), ...recordsFor(records, "t_channel_debit_item")]) {
+    const itemChannelAccount = channelAccounts.get(valueOf(item, "channel_account_id"));
+    assert.ok(itemChannelAccount, `Channel Item ${valueOf(item, "id")} 缺少 Channel Account`);
+    assert.ok(!isNull(valueOf(itemChannelAccount, "channel_id")) && !isNull(valueOf(itemChannelAccount, "mid_id")),
+      `Channel Item ${valueOf(item, "id")} Channel/MID identity 不完整`);
     const economics = requireRecord(records, "t_transaction_economics", valueOf(item, "transaction_economics_id"));
-    assert.ok(identifierEqual(valueOf(economics, "entity_no"), valueOf(itemProviderAccount, "entity_no")),
-      `Provider Item ${valueOf(item, "id")} Economics OE tuple 不一致`);
-    const matched = item.table === "t_provider_open_item"
+    assert.ok(identifierEqual(valueOf(economics, "entity_no"), valueOf(itemChannelAccount, "entity_no")),
+      `Channel Item ${valueOf(item, "id")} Economics OE tuple 不一致`);
+    const matched = item.table === "t_channel_open_item"
       ? matchedOpenItemIds.has(identifierKey(valueOf(item, "id")))
       : matchedDebitItemIds.has(identifierKey(valueOf(item, "id")));
     if (!matched) {
-      assert.equal(valueOf(economics, "currency"), valueOf(itemProviderAccount, "currency"),
-        `Provider Item ${valueOf(item, "id")} Economics currency 与 Provider Account 不一致`);
+      assert.equal(valueOf(economics, "currency"), valueOf(itemChannelAccount, "currency"),
+        `Channel Item ${valueOf(item, "id")} Economics currency 与 Channel Account 不一致`);
     }
-    if (item.table === "t_provider_open_item" && valueOf(item, "item_type") === "PAYMENT") {
+    if (item.table === "t_channel_open_item" && valueOf(item, "item_type") === "PAYMENT") {
       assert.equal(valueOf(economics, "economics_type"), "PAYMENT",
-        `Provider Item ${valueOf(item, "id")} PAYMENT 未绑定 PAYMENT Economics`);
+        `Channel Item ${valueOf(item, "id")} PAYMENT 未绑定 PAYMENT Economics`);
       assert.ok(identifierEqual(valueOf(item, "payment_intent_id"), valueOf(economics, "payment_intent_id"))
         && identifierEqual(valueOf(item, "payment_attempt_id"), valueOf(economics, "payment_attempt_id")),
-      `Provider Item ${valueOf(item, "id")} Payment root tuple 不一致`);
+      `Channel Item ${valueOf(item, "id")} Payment root tuple 不一致`);
     }
-    if (item.table === "t_provider_debit_item" && valueOf(item, "debit_type") === "REFUND") {
+    if (item.table === "t_channel_debit_item" && valueOf(item, "debit_type") === "REFUND") {
       assert.equal(valueOf(economics, "economics_type"), "REFUND",
-        `Provider Item ${valueOf(item, "id")} REFUND 未绑定 REFUND Economics`);
+        `Channel Item ${valueOf(item, "id")} REFUND 未绑定 REFUND Economics`);
       assert.ok(identifierEqual(valueOf(item, "channel_refund_id"), valueOf(economics, "channel_refund_id")),
-        `Provider Item ${valueOf(item, "id")} Refund root tuple 不一致`);
+        `Channel Item ${valueOf(item, "id")} Refund root tuple 不一致`);
     }
-    if (item.table === "t_provider_debit_item") {
+    if (item.table === "t_channel_debit_item") {
       const parentEconomics = isNull(valueOf(economics, "parent_economics_id"))
         ? undefined
         : economicsById.get(valueOf(economics, "parent_economics_id"));
       const parentAccounts = parentEconomics
         ? openItems.filter((openItem) => identifierEqual(
           valueOf(openItem, "transaction_economics_id"), valueOf(parentEconomics, "id"),
-        )).map((openItem) => identifierKey(valueOf(openItem, "provider_account_id")))
+        )).map((openItem) => identifierKey(valueOf(openItem, "channel_account_id")))
         : [];
-      assert.ok(parentAccounts.includes(identifierKey(valueOf(item, "provider_account_id"))),
-        `Provider Debit Item ${valueOf(item, "id")} Provider Account 与来源 Economics/原交易 Provider+MID 不一致`);
+      assert.ok(parentAccounts.includes(identifierKey(valueOf(item, "channel_account_id"))),
+        `Channel Debit Item ${valueOf(item, "id")} Channel Account 与来源 Economics/原交易 Channel+MID 不一致`);
     }
   }
-  for (const batch of recordsFor(records, "t_provider_settle_batch")) {
-    assert.ok(identifierEqual(valueOf(batch, "provider_account_id"), valueOf(providerAccount, "id")));
-    assert.equal(valueOf(batch, "currency"), valueOf(providerAccount, "currency"),
-      `Provider Batch ${valueOf(batch, "id")} currency tuple 不一致`);
+  for (const batch of recordsFor(records, "t_channel_settle_batch")) {
+    assert.ok(identifierEqual(valueOf(batch, "channel_account_id"), valueOf(channelAccount, "id")));
+    assert.equal(valueOf(batch, "currency"), valueOf(channelAccount, "currency"),
+      `Channel Batch ${valueOf(batch, "id")} currency tuple 不一致`);
   }
   for (const match of transactionMatches) {
-    const settleItem = providerSettleItems.get(valueOf(match, "settle_item_id"));
-    const batch = settleItem && providerBatches.get(valueOf(settleItem, "batch_id"));
-    assert.ok(settleItem && batch, `Provider Transaction Match ${valueOf(match, "id")} 缺少 Batch/Item`);
+    const settleItem = channelSettleItems.get(valueOf(match, "settle_item_id"));
+    const batch = settleItem && channelBatches.get(valueOf(settleItem, "batch_id"));
+    assert.ok(settleItem && batch, `Channel Transaction Match ${valueOf(match, "id")} 缺少 Batch/Item`);
     const target = valueOf(match, "target_type") === "OPEN_ITEM"
-      ? providerOpenItems.get(valueOf(match, "open_item_id"))
-      : providerDebitItems.get(valueOf(match, "debit_item_id"));
-    assert.ok(target, `Provider Transaction Match ${valueOf(match, "id")} 缺少目标 Item`);
-    assert.ok(identifierEqual(valueOf(target, "provider_account_id"), valueOf(batch, "provider_account_id")),
-      `Provider Transaction Match ${valueOf(match, "id")} Provider Account tuple 不一致`);
+      ? channelOpenItems.get(valueOf(match, "open_item_id"))
+      : channelDebitItems.get(valueOf(match, "debit_item_id"));
+    assert.ok(target, `Channel Transaction Match ${valueOf(match, "id")} 缺少目标 Item`);
+    assert.ok(identifierEqual(valueOf(target, "channel_account_id"), valueOf(batch, "channel_account_id")),
+      `Channel Transaction Match ${valueOf(match, "id")} Channel Account tuple 不一致`);
     const economics = requireRecord(records, "t_transaction_economics", valueOf(target, "transaction_economics_id"));
-    assert.ok(identifierEqual(valueOf(economics, "entity_no"), providerOperatingEntityId),
-      `Provider Transaction Match ${valueOf(match, "id")} OE tuple 不一致`);
+    assert.ok(identifierEqual(valueOf(economics, "entity_no"), channelOperatingEntityId),
+      `Channel Transaction Match ${valueOf(match, "id")} OE tuple 不一致`);
     assert.equal(valueOf(economics, "currency"), valueOf(batch, "currency"),
-      `Provider Transaction Match ${valueOf(match, "id")} economics currency 与 Batch 不一致`);
+      `Channel Transaction Match ${valueOf(match, "id")} economics currency 与 Batch 不一致`);
     const expectedTargetKey = `${valueOf(match, "target_type")}:${identifierKey(valueOf(target, "id"))}`;
     assert.equal(valueOf(match, "target_key"), expectedTargetKey,
-      `Provider Transaction Match ${valueOf(match, "id")} target_key 不一致`);
+      `Channel Transaction Match ${valueOf(match, "id")} target_key 不一致`);
     assert.equal(valueOf(settleItem, "reference_type"), valueOf(target, "reference_type"),
-      `Provider Transaction Match ${valueOf(match, "id")} reference_type 不一致`);
+      `Channel Transaction Match ${valueOf(match, "id")} reference_type 不一致`);
     assert.equal(valueOf(settleItem, "external_transaction_id"), valueOf(target, "external_transaction_id"),
-      `Provider Transaction Match ${valueOf(match, "id")} external_transaction_id 与目标 Item 不一致`);
-    assert.equal(valueOf(settleItem, "provider_item_ref"), valueOf(target, "external_transaction_id"),
-      `Provider Transaction Match ${valueOf(match, "id")} provider_item_ref 与目标 Item 不一致`);
+      `Channel Transaction Match ${valueOf(match, "id")} external_transaction_id 与目标 Item 不一致`);
+    assert.equal(valueOf(settleItem, "channel_item_ref"), valueOf(target, "external_transaction_id"),
+      `Channel Transaction Match ${valueOf(match, "id")} channel_item_ref 与目标 Item 不一致`);
     if (valueOf(match, "target_type") === "OPEN_ITEM") {
       assert.equal(valueOf(settleItem, "settlement_direction"), "CREDIT",
-        `Provider Transaction Match ${valueOf(match, "id")} Open Item direction 不一致`);
+        `Channel Transaction Match ${valueOf(match, "id")} Open Item direction 不一致`);
       assert.equal(valueOf(settleItem, "item_type"), valueOf(target, "item_type"),
-        `Provider Transaction Match ${valueOf(match, "id")} Open Item type 不一致`);
+        `Channel Transaction Match ${valueOf(match, "id")} Open Item type 不一致`);
     } else {
       const expectedItemType = new Map([
         ["REFUND", "REFUND"],
@@ -1822,9 +1822,9 @@ function validateTaxAndProviderTuples(records) {
         ["DISPUTE", "DISPUTE"],
       ]).get(valueOf(target, "debit_type"));
       assert.equal(valueOf(settleItem, "settlement_direction"), "DEBIT",
-        `Provider Transaction Match ${valueOf(match, "id")} Debit Item direction 不一致`);
+        `Channel Transaction Match ${valueOf(match, "id")} Debit Item direction 不一致`);
       assert.equal(valueOf(settleItem, "item_type"), expectedItemType,
-        `Provider Transaction Match ${valueOf(match, "id")} Debit Item type 不一致`);
+        `Channel Transaction Match ${valueOf(match, "id")} Debit Item type 不一致`);
     }
   }
   const matchesByAllocationTarget = Map.groupBy(transactionMatches, (match) => [
@@ -1838,20 +1838,20 @@ function validateTaxAndProviderTuples(records) {
       .toSorted((left, right) => left < right ? -1 : left > right ? 1 : 0);
     for (let index = 0; index < allocationNumbers.length; index += 1) {
       assert.equal(allocationNumbers[index], BigInt(index + 1),
-        `Provider Transaction Match ${targetKey} allocation_no 必须从 1 连续递增`);
+        `Channel Transaction Match ${targetKey} allocation_no 必须从 1 连续递增`);
     }
   }
   const transactionMatchesByItem = groupByInteger(transactionMatches, "settle_item_id");
   const transactionItemTypes = new Set(["PAYMENT", "DUPLICATE_CAPTURE", "REFUND", "DISPUTE"]);
-  for (const item of recordsFor(records, "t_provider_settle_item")
+  for (const item of recordsFor(records, "t_channel_settle_item")
     .filter((record) => transactionItemTypes.has(valueOf(record, "item_type")))) {
     const itemMatches = transactionMatchesByItem.get(valueOf(item, "id")) ?? [];
     assert.ok(itemMatches.length > 0,
-      `Provider Settlement Item ${valueOf(item, "id")} is an orphan: transaction Item 缺少 Transaction Match`);
+      `Channel Settlement Item ${valueOf(item, "id")} is an orphan: transaction Item 缺少 Transaction Match`);
     assert.ok(fixedEqual(fixedSumRecords(itemMatches, "gross_amount"), fixedValue(item, "gross_amount"))
       && fixedEqual(fixedSumRecords(itemMatches, "fee_amount"), fixedValue(item, "fee_amount"))
       && fixedEqual(fixedSumRecords(itemMatches, "net_amount"), fixedValue(item, "net_amount")),
-    `Provider Settlement Item ${valueOf(item, "id")} matched gross/fee/net 未精确重放权威 Item 金额`);
+    `Channel Settlement Item ${valueOf(item, "id")} matched gross/fee/net 未精确重放权威 Item 金额`);
   }
   const matchesByOpenTarget = Map.groupBy(
     transactionMatches.filter((match) => valueOf(match, "target_type") === "OPEN_ITEM"),
@@ -1866,35 +1866,35 @@ function validateTaxAndProviderTuples(records) {
     const total = fixedValue(item, totalField);
     const matchedGross = fixedSumRecords(targetMatches, "gross_amount");
     assert.ok(fixedEqual(matchedGross, settled),
-      `Provider ${itemLabel} ${valueOf(item, "id")} Match gross 累计必须精确等于 settled_amount`);
+      `Channel ${itemLabel} ${valueOf(item, "id")} Match gross 累计必须精确等于 settled_amount`);
     assert.ok(fixedEqual(fixedSubtract(total, matchedGross), fixedValue(item, "outstanding_amount")),
-      `Provider ${itemLabel} ${valueOf(item, "id")} Match gross 累计与 outstanding_amount 不闭合`);
+      `Channel ${itemLabel} ${valueOf(item, "id")} Match gross 累计与 outstanding_amount 不闭合`);
     if (valueOf(item, "status") === "EXCEPTION") return;
     const expectedStatus = fixedEqual(matchedGross, EXACT_ZERO)
       ? "OPEN"
       : fixedEqual(matchedGross, total) ? "SETTLED" : "PARTIALLY_SETTLED";
     assert.equal(valueOf(item, "status"), expectedStatus,
-      `Provider ${itemLabel} ${valueOf(item, "id")} Match 累计与 status 不一致`);
+      `Channel ${itemLabel} ${valueOf(item, "id")} Match 累计与 status 不一致`);
   };
-  for (const item of providerOpenItems.values()) {
+  for (const item of channelOpenItems.values()) {
     validateTargetSettlement(item, "Open Item", "gross_receivable",
       matchesByOpenTarget.get(identifierKey(valueOf(item, "id"))) ?? []);
   }
-  for (const item of providerDebitItems.values()) {
+  for (const item of channelDebitItems.values()) {
     validateTargetSettlement(item, "Debit Item", "expected_amount",
       matchesByDebitTarget.get(identifierKey(valueOf(item, "id"))) ?? []);
   }
 
-  const settleItemsByBatch = groupByInteger(recordsFor(records, "t_provider_settle_item"), "batch_id");
-  for (const batch of recordsFor(records, "t_provider_settle_batch")) {
+  const settleItemsByBatch = groupByInteger(recordsFor(records, "t_channel_settle_item"), "batch_id");
+  for (const batch of recordsFor(records, "t_channel_settle_batch")) {
     const batchItems = settleItemsByBatch.get(valueOf(batch, "id")) ?? [];
-    assert.ok(batchItems.length > 0, `Provider Batch ${valueOf(batch, "id")} 缺少原始 Settlement Item`);
+    assert.ok(batchItems.length > 0, `Channel Batch ${valueOf(batch, "id")} 缺少原始 Settlement Item`);
     const itemNumbers = batchItems
       .map((item) => BigInt(identifierKey(valueOf(item, "item_no"))))
       .toSorted((left, right) => left < right ? -1 : left > right ? 1 : 0);
     for (let index = 0; index < itemNumbers.length; index += 1) {
       assert.equal(itemNumbers[index], BigInt(index + 1),
-        `Provider Batch ${valueOf(batch, "id")} item_no 必须从 1 连续递增`);
+        `Channel Batch ${valueOf(batch, "id")} item_no 必须从 1 连续递增`);
     }
     for (const item of batchItems) {
       const gross = fixedValue(item, "gross_amount");
@@ -1903,7 +1903,7 @@ function validateTaxAndProviderTuples(records) {
         ? fixedSubtract(gross, fee)
         : fixedAdd(gross, fee);
       assert.ok(fixedCompare(expectedNet, EXACT_ZERO) >= 0 && fixedEqual(expectedNet, fixedValue(item, "net_amount")),
-        `Provider Settlement Item ${valueOf(item, "id")} ${valueOf(item, "settlement_direction")} 行金额方程不成立`);
+        `Channel Settlement Item ${valueOf(item, "id")} ${valueOf(item, "settlement_direction")} 行金额方程不成立`);
     }
     const creditItems = batchItems.filter((item) => valueOf(item, "settlement_direction") === "CREDIT");
     const debitItems = batchItems.filter((item) => valueOf(item, "settlement_direction") === "DEBIT");
@@ -1919,86 +1919,86 @@ function validateTaxAndProviderTuples(records) {
       && fixedEqual(debit, fixedValue(batch, "debit_amount"))
       && fixedEqual(fixedAbs(signedNet), fixedValue(batch, "net_amount"))
       && valueOf(batch, "cash_direction") === expectedDirection,
-    `Provider Batch ${valueOf(batch, "id")} 全部 Item 未精确回放四个金额与 cash_direction`);
+    `Channel Batch ${valueOf(batch, "id")} 全部 Item 未精确回放四个金额与 cash_direction`);
   }
-  const providerCostAllocations = recordsFor(records, "t_provider_cost_alloc");
-  for (const allocation of providerCostAllocations) {
+  const channelCostAllocations = recordsFor(records, "t_channel_cost_alloc");
+  for (const allocation of channelCostAllocations) {
     const economics = requireRecord(records, "t_transaction_economics", valueOf(allocation, "transaction_economics_id"));
     const paymentTarget = valueOf(economics, "economics_type") === "PAYMENT"
       && identifierEqual(valueOf(allocation, "payment_attempt_id"), valueOf(economics, "payment_attempt_id"))
       && isNull(valueOf(allocation, "channel_refund_id"))
-      && isNull(valueOf(allocation, "provider_dispute_notice_id"))
+      && isNull(valueOf(allocation, "channel_dispute_notice_id"))
       && isNull(valueOf(allocation, "dispute_case_id"));
     const refundTarget = valueOf(economics, "economics_type") === "REFUND"
       && isNull(valueOf(allocation, "payment_attempt_id"))
       && identifierEqual(valueOf(allocation, "channel_refund_id"), valueOf(economics, "channel_refund_id"))
-      && isNull(valueOf(allocation, "provider_dispute_notice_id"))
+      && isNull(valueOf(allocation, "channel_dispute_notice_id"))
       && isNull(valueOf(allocation, "dispute_case_id"));
     const disputeTarget = valueOf(economics, "economics_type") === "DISPUTE"
       && isNull(valueOf(allocation, "payment_attempt_id"))
       && isNull(valueOf(allocation, "channel_refund_id"))
-      && identifierEqual(valueOf(allocation, "provider_dispute_notice_id"), valueOf(economics, "provider_dispute_notice_id"))
+      && identifierEqual(valueOf(allocation, "channel_dispute_notice_id"), valueOf(economics, "channel_dispute_notice_id"))
       && identifierEqual(valueOf(allocation, "dispute_case_id"), valueOf(economics, "dispute_case_id"));
     assert.ok(paymentTarget || refundTarget || disputeTarget,
-      `Provider Cost Alloc ${valueOf(allocation, "id")} target tuple 与 Economics 类型/Root 不一致`);
+      `Channel Cost Alloc ${valueOf(allocation, "id")} target tuple 与 Economics 类型/Root 不一致`);
   }
-  const allocationsByConfirm = groupByInteger(providerCostAllocations, "cost_confirm_id");
+  const allocationsByConfirm = groupByInteger(channelCostAllocations, "cost_confirm_id");
   const matchedEconomicsByBatch = new Map();
   for (const match of transactionMatches) {
-    const settleItem = providerSettleItems.get(valueOf(match, "settle_item_id"));
+    const settleItem = channelSettleItems.get(valueOf(match, "settle_item_id"));
     const target = valueOf(match, "target_type") === "OPEN_ITEM"
-      ? providerOpenItems.get(valueOf(match, "open_item_id"))
-      : providerDebitItems.get(valueOf(match, "debit_item_id"));
+      ? channelOpenItems.get(valueOf(match, "open_item_id"))
+      : channelDebitItems.get(valueOf(match, "debit_item_id"));
     const batchKey = identifierKey(valueOf(settleItem, "batch_id"));
     if (!matchedEconomicsByBatch.has(batchKey)) matchedEconomicsByBatch.set(batchKey, new Set());
     matchedEconomicsByBatch.get(batchKey).add(identifierKey(valueOf(target, "transaction_economics_id")));
   }
   const completeCostConfirmIds = new Set();
-  for (const confirmation of recordsFor(records, "t_provider_cost_confirm")) {
-    const settleItem = requireRecord(records, "t_provider_settle_item", valueOf(confirmation, "provider_settle_item_id"));
-    const batch = requireRecord(records, "t_provider_settle_batch", valueOf(settleItem, "batch_id"));
+  for (const confirmation of recordsFor(records, "t_channel_cost_confirm")) {
+    const settleItem = requireRecord(records, "t_channel_settle_item", valueOf(confirmation, "channel_settle_item_id"));
+    const batch = requireRecord(records, "t_channel_settle_batch", valueOf(settleItem, "batch_id"));
     const allocations = allocationsByConfirm.get(valueOf(confirmation, "id")) ?? [];
     assert.ok(allocations.length > 0,
-      `Provider Cost Confirm ${valueOf(confirmation, "id")} 缺少 allocation`);
+      `Channel Cost Confirm ${valueOf(confirmation, "id")} 缺少 allocation`);
     const allocationTotal = fixedAdd(...allocations.map((allocation) => fixedAdd(
       fixedValue(allocation, "allocated_amount"),
       fixedValue(allocation, "rounding_amount"),
     )));
     assert.ok(fixedEqual(allocationTotal, fixedValue(confirmation, "actual_cost")),
-      `Provider Cost Confirm ${valueOf(confirmation, "id")} allocation 合计不等于 actual_cost`);
+      `Channel Cost Confirm ${valueOf(confirmation, "id")} allocation 合计不等于 actual_cost`);
     assert.ok(fixedRecordEqual(confirmation, "actual_cost", settleItem, "fee_amount"),
-      `Provider Cost Confirm ${valueOf(confirmation, "id")} 未精确重放 Settlement Item fee_amount`);
+      `Channel Cost Confirm ${valueOf(confirmation, "id")} 未精确重放 Settlement Item fee_amount`);
     if (["FEE", "ADJUSTMENT"].includes(valueOf(settleItem, "item_type"))) {
       assert.ok(fixedEqual(fixedValue(settleItem, "gross_amount"), EXACT_ZERO)
         && fixedRecordEqual(confirmation, "actual_cost", settleItem, "net_amount"),
-      `Provider Cost Confirm ${valueOf(confirmation, "id")} FEE Item 必须以 actual_cost 精确重放 fee/net`);
+      `Channel Cost Confirm ${valueOf(confirmation, "id")} FEE Item 必须以 actual_cost 精确重放 fee/net`);
     }
     const allowedEconomics = matchedEconomicsByBatch.get(identifierKey(valueOf(batch, "id"))) ?? new Set();
     for (const allocation of allocations) {
       assert.ok(allowedEconomics.has(identifierKey(valueOf(allocation, "transaction_economics_id"))),
-        `Provider Cost Alloc ${valueOf(allocation, "id")} 必须属于同 Batch Transaction Match 目标 Economics`);
+        `Channel Cost Alloc ${valueOf(allocation, "id")} 必须属于同 Batch Transaction Match 目标 Economics`);
     }
     completeCostConfirmIds.add(identifierKey(valueOf(confirmation, "id")));
   }
-  const costConfirmsByItem = groupByInteger(recordsFor(records, "t_provider_cost_confirm"), "provider_settle_item_id");
+  const costConfirmsByItem = groupByInteger(recordsFor(records, "t_channel_cost_confirm"), "channel_settle_item_id");
   const reconResolutions = recordsById(records, "t_recon_resolution");
   const adjustmentExceptionTypes = new Set([
     "UNMATCHED", "SHORT_AMOUNT", "EXCESS_AMOUNT", "FEE_DIFFERENCE", "DATE_DIFFERENCE", "WRONG_ACCOUNT", "WRONG_CURRENCY",
   ]);
   const completeValidatedBatchIds = new Set();
-  for (const batch of recordsFor(records, "t_provider_settle_batch")
+  for (const batch of recordsFor(records, "t_channel_settle_batch")
     .filter((record) => valueOf(record, "status") === "VALIDATED")) {
-    const batchItems = recordsFor(records, "t_provider_settle_item")
+    const batchItems = recordsFor(records, "t_channel_settle_item")
       .filter((item) => identifierEqual(valueOf(item, "batch_id"), valueOf(batch, "id")));
-    assert.ok(batchItems.length > 0, `Provider Batch ${valueOf(batch, "id")} VALIDATED 但无 Settlement Item`);
+    assert.ok(batchItems.length > 0, `Channel Batch ${valueOf(batch, "id")} VALIDATED 但无 Settlement Item`);
     for (const item of batchItems) {
       const itemId = valueOf(item, "id");
       const itemMatches = transactionMatchesByItem.get(itemId) ?? [];
       const costConfirms = costConfirmsByItem.get(itemId) ?? [];
       assert.ok(costConfirms.length <= 1,
-        `Provider Settlement Item ${itemId} Cost Confirm 必须唯一`);
+        `Channel Settlement Item ${itemId} Cost Confirm 必须唯一`);
       const itemExceptions = recordsFor(records, "t_recon_exception").filter((exception) => (
-        valueOf(exception, "source_type") === "PROVIDER_SETTLE_ITEM"
+        valueOf(exception, "source_type") === "CHANNEL_SETTLE_ITEM"
         && identifierEqual(valueOf(exception, "source_id"), itemId)
       ));
       const completeExceptions = itemExceptions.filter((exception) => {
@@ -2006,15 +2006,15 @@ function validateTaxAndProviderTuples(records) {
           ? valueOf(exception, "exception_type") === "FEE_DIFFERENCE"
           : adjustmentExceptionTypes.has(valueOf(exception, "exception_type"));
         assert.ok(allowedType,
-          `Provider Settlement Item ${itemId} Exception type 不属于批准的 item-specific 类型`);
+          `Channel Settlement Item ${itemId} Exception type 不属于批准的 item-specific 类型`);
         assert.equal(valueOf(exception, "entity_type"), "OPERATING_ENTITY",
-          `Provider Settlement Item ${itemId} Exception OE scope 不一致`);
-        assert.ok(identifierEqual(valueOf(exception, "entity_id"), valueOf(providerAccount, "entity_no")),
-          `Provider Settlement Item ${itemId} Exception OE scope 不一致`);
+          `Channel Settlement Item ${itemId} Exception OE scope 不一致`);
+        assert.ok(identifierEqual(valueOf(exception, "entity_id"), valueOf(channelAccount, "entity_no")),
+          `Channel Settlement Item ${itemId} Exception OE scope 不一致`);
         assert.equal(valueOf(exception, "currency"), valueOf(batch, "currency"),
-          `Provider Settlement Item ${itemId} Exception currency 不一致`);
+          `Channel Settlement Item ${itemId} Exception currency 不一致`);
         assert.ok(fixedRecordEqual(exception, "difference_amount", item, "net_amount"),
-          `Provider Settlement Item ${itemId} Exception difference_amount 未完整处置 Item`);
+          `Channel Settlement Item ${itemId} Exception difference_amount 未完整处置 Item`);
         if (!["RESOLVED", "CLOSED"].includes(valueOf(exception, "status"))) return false;
         const resolution = reconResolutions.get(valueOf(exception, "applied_resolution_id"));
         return resolution
@@ -2027,119 +2027,119 @@ function validateTaxAndProviderTuples(records) {
       });
       const blockingExceptions = itemExceptions.filter((exception) => !completeExceptions.includes(exception));
       assert.equal(blockingExceptions.length, 0,
-        `Provider Settlement Item ${itemId} unresolved/blocking Exception 阻断 VALIDATED Batch`);
+        `Channel Settlement Item ${itemId} unresolved/blocking Exception 阻断 VALIDATED Batch`);
       if (transactionItemTypes.has(valueOf(item, "item_type"))) {
         assert.ok(itemMatches.length > 0,
-          `Provider Settlement Item ${itemId} is an orphan: transaction Item 缺少 Transaction Match`);
+          `Channel Settlement Item ${itemId} is an orphan: transaction Item 缺少 Transaction Match`);
         assert.ok(fixedEqual(fixedSumRecords(itemMatches, "gross_amount"), fixedValue(item, "gross_amount"))
           && fixedEqual(fixedSumRecords(itemMatches, "fee_amount"), fixedValue(item, "fee_amount"))
           && fixedEqual(fixedSumRecords(itemMatches, "net_amount"), fixedValue(item, "net_amount")),
-        `Provider Settlement Item ${itemId} matched gross/fee/net 未精确重放权威 Item 金额`);
+        `Channel Settlement Item ${itemId} matched gross/fee/net 未精确重放权威 Item 金额`);
         assert.equal(itemExceptions.length, 0,
-          `Provider Settlement Item ${itemId} 已匹配交易行不得同时存在任何 Exception`);
+          `Channel Settlement Item ${itemId} 已匹配交易行不得同时存在任何 Exception`);
         if (fixedCompare(fixedValue(item, "fee_amount"), EXACT_ZERO) > 0) {
           assert.ok(costConfirms.length === 1
             && completeCostConfirmIds.has(identifierKey(valueOf(costConfirms[0], "id"))),
-          `Provider Settlement Item ${itemId} 实际 Provider Cost Confirm 不完整`);
+          `Channel Settlement Item ${itemId} 实际 Channel Cost Confirm 不完整`);
         }
         continue;
       }
       assert.equal(itemMatches.length, 0,
-        `Provider Settlement Item ${itemId} FEE/ADJUSTMENT 不得伪造 Transaction Match`);
+        `Channel Settlement Item ${itemId} FEE/ADJUSTMENT 不得伪造 Transaction Match`);
       const costComplete = costConfirms.length === 1
         && completeCostConfirmIds.has(identifierKey(valueOf(costConfirms[0], "id")));
       const exceptionComplete = itemExceptions.length === 1 && completeExceptions.length === 1;
       assert.ok(costComplete !== exceptionComplete,
-        `Provider Settlement Item ${itemId} is an orphan or ambiguous: FEE/ADJUSTMENT 必须由 Cost Confirm/Alloc 或 controlled Exception 精确处置`);
+        `Channel Settlement Item ${itemId} is an orphan or ambiguous: FEE/ADJUSTMENT 必须由 Cost Confirm/Alloc 或 controlled Exception 精确处置`);
     }
     completeValidatedBatchIds.add(identifierKey(valueOf(batch, "id")));
   }
   for (const match of recordsFor(records, "t_bank_recon_match")
-    .filter((record) => ["PROVIDER_CREDIT", "PROVIDER_DEBIT"].includes(valueOf(record, "match_type"))
+    .filter((record) => ["CHANNEL_CREDIT", "CHANNEL_DEBIT"].includes(valueOf(record, "match_type"))
       && valueOf(record, "status") === "CONFIRMED")) {
-    const batch = providerBatches.get(valueOf(match, "provider_batch_id"));
-    const batchProviderAccount = batch && providerAccounts.get(valueOf(batch, "provider_account_id"));
+    const batch = channelBatches.get(valueOf(match, "channel_batch_id"));
+    const batchChannelAccount = batch && channelAccounts.get(valueOf(batch, "channel_account_id"));
     const bindingVersion = bindingVersions.get(valueOf(match, "cash_account_binding_ver_id"));
     const binding = bindingVersion && bindings.get(valueOf(bindingVersion, "binding_id"));
     const bankItem = bankItems.get(valueOf(match, "bank_item_id"));
     const cashAccount = bindingVersion && cashAccounts.get(valueOf(bindingVersion, "cash_account_id"));
-    assert.ok(batch && batchProviderAccount && bindingVersion && binding && bankItem && cashAccount,
-      `Provider Bank Match ${valueOf(match, "id")} tuple 引用不完整`);
+    assert.ok(batch && batchChannelAccount && bindingVersion && binding && bankItem && cashAccount,
+      `Channel Bank Match ${valueOf(match, "id")} tuple 引用不完整`);
     assert.ok(valueOf(batch, "status") === "VALIDATED"
       && completeValidatedBatchIds.has(identifierKey(valueOf(batch, "id"))),
-    `Provider Bank Match ${valueOf(match, "id")} 必须引用 complete VALIDATED Batch`);
+    `Channel Bank Match ${valueOf(match, "id")} 必须引用 complete VALIDATED Batch`);
     const decisionTime = valueOf(match, "decision_time");
     assert.ok(["ACTIVE", "EXPIRED"].includes(valueOf(bindingVersion, "status"))
       && valueOf(bindingVersion, "effective_from") <= decisionTime
       && (isNull(valueOf(bindingVersion, "effective_to")) || decisionTime < valueOf(bindingVersion, "effective_to")),
-    `Provider Bank Match ${valueOf(match, "id")} Binding Version 在 decision_time 无效`);
-    assert.equal(valueOf(binding, "account_purpose"), "PROVIDER_SETTLEMENT",
-      `Provider Bank Match ${valueOf(match, "id")} 必须使用 PROVIDER_SETTLEMENT Binding`);
+    `Channel Bank Match ${valueOf(match, "id")} Binding Version 在 decision_time 无效`);
+    assert.equal(valueOf(binding, "account_purpose"), "CHANNEL_SETTLEMENT",
+      `Channel Bank Match ${valueOf(match, "id")} 必须使用 CHANNEL_SETTLEMENT Binding`);
     assert.equal(valueOf(binding, "entity_type"), "OPERATING_ENTITY",
-      `Provider Bank Match ${valueOf(match, "id")} Binding entity_type 不一致`);
-    assert.ok(identifierEqual(valueOf(binding, "entity_id"), valueOf(batchProviderAccount, "entity_no")),
-      `Provider Bank Match ${valueOf(match, "id")} Binding OE 不一致`);
+      `Channel Bank Match ${valueOf(match, "id")} Binding entity_type 不一致`);
+    assert.ok(identifierEqual(valueOf(binding, "entity_id"), valueOf(batchChannelAccount, "entity_no")),
+      `Channel Bank Match ${valueOf(match, "id")} Binding OE 不一致`);
     assert.equal(valueOf(binding, "currency"), valueOf(batch, "currency"),
-      `Provider Bank Match ${valueOf(match, "id")} Binding currency 不一致`);
+      `Channel Bank Match ${valueOf(match, "id")} Binding currency 不一致`);
     assert.equal(valueOf(cashAccount, "entity_type"), "OPERATING_ENTITY",
-      `Provider Bank Match ${valueOf(match, "id")} Cash Account entity_type 不一致`);
-    assert.ok(identifierEqual(valueOf(cashAccount, "entity_id"), valueOf(batchProviderAccount, "entity_no")),
-      `Provider Bank Match ${valueOf(match, "id")} Cash Account OE 不一致`);
+      `Channel Bank Match ${valueOf(match, "id")} Cash Account entity_type 不一致`);
+    assert.ok(identifierEqual(valueOf(cashAccount, "entity_id"), valueOf(batchChannelAccount, "entity_no")),
+      `Channel Bank Match ${valueOf(match, "id")} Cash Account OE 不一致`);
     assert.equal(valueOf(cashAccount, "currency"), valueOf(batch, "currency"),
-      `Provider Bank Match ${valueOf(match, "id")} Cash Account currency 不一致`);
+      `Channel Bank Match ${valueOf(match, "id")} Cash Account currency 不一致`);
     assert.ok(identifierEqual(valueOf(bankItem, "cash_account_id"), valueOf(cashAccount, "id")),
-      `Provider Bank Match ${valueOf(match, "id")} Bank Item Cash Account 不一致`);
+      `Channel Bank Match ${valueOf(match, "id")} Bank Item Cash Account 不一致`);
     assert.equal(valueOf(bankItem, "direction"), valueOf(batch, "cash_direction"),
-      `Provider Bank Match ${valueOf(match, "id")} direction 与 Batch 不一致`);
+      `Channel Bank Match ${valueOf(match, "id")} direction 与 Batch 不一致`);
     const expectedMatchType = valueOf(batch, "cash_direction") === "CREDIT"
-      ? "PROVIDER_CREDIT"
-      : "PROVIDER_DEBIT";
+      ? "CHANNEL_CREDIT"
+      : "CHANNEL_DEBIT";
     assert.equal(valueOf(match, "match_type"), expectedMatchType,
-      `Provider Bank Match ${valueOf(match, "id")} match_type 与 Batch cash_direction 不一致`);
+      `Channel Bank Match ${valueOf(match, "id")} match_type 与 Batch cash_direction 不一致`);
     assert.ok(fixedRecordEqual(match, "matched_amount", batch, "net_amount"),
-      `Provider Bank Match ${valueOf(match, "id")} 金额与 Batch net 不一致`);
+      `Channel Bank Match ${valueOf(match, "id")} 金额与 Batch net 不一致`);
   }
-  let allocatedCost = fixedLiteral("0", Number(decimalField("t_provider_cost_alloc", "allocated_amount").scale));
-  for (const confirmation of recordsFor(records, "t_provider_cost_confirm")) {
-    const settleItem = requireRecord(records, "t_provider_settle_item", valueOf(confirmation, "provider_settle_item_id"));
-    const batch = requireRecord(records, "t_provider_settle_batch", valueOf(settleItem, "batch_id"));
-    assert.ok(identifierEqual(valueOf(batch, "provider_account_id"), valueOf(providerAccount, "id")));
-    const batchProviderAccount = providerAccounts.get(valueOf(batch, "provider_account_id"));
-    const allocations = recordsFor(records, "t_provider_cost_alloc")
+  let allocatedCost = fixedLiteral("0", Number(decimalField("t_channel_cost_alloc", "allocated_amount").scale));
+  for (const confirmation of recordsFor(records, "t_channel_cost_confirm")) {
+    const settleItem = requireRecord(records, "t_channel_settle_item", valueOf(confirmation, "channel_settle_item_id"));
+    const batch = requireRecord(records, "t_channel_settle_batch", valueOf(settleItem, "batch_id"));
+    assert.ok(identifierEqual(valueOf(batch, "channel_account_id"), valueOf(channelAccount, "id")));
+    const batchChannelAccount = channelAccounts.get(valueOf(batch, "channel_account_id"));
+    const allocations = recordsFor(records, "t_channel_cost_alloc")
       .filter((record) => identifierEqual(valueOf(record, "cost_confirm_id"), valueOf(confirmation, "id")));
-    assert.ok(allocations.length > 0, `Provider Cost Confirm ${valueOf(confirmation, "id")} 缺少 allocation`);
+    assert.ok(allocations.length > 0, `Channel Cost Confirm ${valueOf(confirmation, "id")} 缺少 allocation`);
     for (const allocation of allocations) {
-      const economicsItems = [...providerOpenItems.values(), ...providerDebitItems.values()]
+      const economicsItems = [...channelOpenItems.values(), ...channelDebitItems.values()]
         .filter((item) => identifierEqual(
           valueOf(item, "transaction_economics_id"), valueOf(allocation, "transaction_economics_id"),
         ));
       assert.ok(economicsItems.some((item) => identifierEqual(
-        valueOf(item, "provider_account_id"), valueOf(batchProviderAccount, "id"),
-      )), `Provider Cost Alloc ${valueOf(allocation, "id")} Economics/Confirm/Batch Provider Account 不一致`);
-      const matchingScopes = recordsFor(records, "t_provider_cost_scope").filter((scope) => {
-        const version = requireRecord(records, "t_provider_cost_plan_ver", valueOf(scope, "cost_ver_id"));
-        const plan = providerPlans.get(valueOf(version, "plan_id"));
-        return identifierEqual(valueOf(plan, "provider_id"), valueOf(batchProviderAccount, "provider_id"))
-          && identifierEqual(valueOf(scope, "mid_id"), valueOf(batchProviderAccount, "mid_id"))
-          && identifierEqual(valueOf(scope, "entity_no"), valueOf(batchProviderAccount, "entity_no"))
-          && valueOf(scope, "currency") === valueOf(batchProviderAccount, "currency");
+        valueOf(item, "channel_account_id"), valueOf(batchChannelAccount, "id"),
+      )), `Channel Cost Alloc ${valueOf(allocation, "id")} Economics/Confirm/Batch Channel Account 不一致`);
+      const matchingScopes = recordsFor(records, "t_channel_cost_scope").filter((scope) => {
+        const version = requireRecord(records, "t_channel_cost_plan_ver", valueOf(scope, "cost_ver_id"));
+        const plan = channelPlans.get(valueOf(version, "plan_id"));
+        return identifierEqual(valueOf(plan, "channel_id"), valueOf(batchChannelAccount, "channel_id"))
+          && identifierEqual(valueOf(scope, "mid_id"), valueOf(batchChannelAccount, "mid_id"))
+          && identifierEqual(valueOf(scope, "entity_no"), valueOf(batchChannelAccount, "entity_no"))
+          && valueOf(scope, "currency") === valueOf(batchChannelAccount, "currency");
       });
       assert.equal(matchingScopes.length, 1,
-        `Provider Cost Alloc ${valueOf(allocation, "id")} 必须唯一解析同 Provider/MID/OE/currency Cost Scope`);
+        `Channel Cost Alloc ${valueOf(allocation, "id")} 必须唯一解析同 Channel/MID/OE/currency Cost Scope`);
     }
     const allocationTotal = fixedAdd(...allocations.map((allocation) => fixedAdd(
       fixedValue(allocation, "allocated_amount"),
       fixedValue(allocation, "rounding_amount"),
     )));
     assert.ok(fixedEqual(allocationTotal, fixedValue(confirmation, "actual_cost")),
-      `Provider Cost allocation ${fixedFormat(allocationTotal)} 不等于 actual_cost ${valueOf(confirmation, "actual_cost")}`);
+      `Channel Cost allocation ${fixedFormat(allocationTotal)} 不等于 actual_cost ${valueOf(confirmation, "actual_cost")}`);
     allocatedCost = fixedAdd(allocatedCost, allocationTotal);
   }
   return {
     taxOperatingEntityId,
     taxAuthorityId: valueOf(taxAuthority, "id"),
-    providerOperatingEntityId,
-    providerAccountId: valueOf(providerAccount, "id"),
+    channelOperatingEntityId,
+    channelAccountId: valueOf(channelAccount, "id"),
     allocatedCost: fixedFormat(allocatedCost),
   };
 }
@@ -3323,7 +3323,7 @@ function validateManualPayoutGraph(records) {
   }
   validateTaxPaymentGraph(records);
   validateAccountingRuleReplay(records);
-  validateTaxAndProviderTuples(records);
+  validateTaxAndChannelTuples(records);
   validateLateDebitCausality(records);
   validateBookAndAccountSequences(records);
   return {
@@ -3462,9 +3462,9 @@ test("exact money validators reject journal, fee and allocation rounding aliases
 
   const allocationRows = scenarioRows(readFileSync(scenarioPath, "utf8"))
     .map((record) => ({ ...record, values: new Map(record.values) }));
-  requireRecord(allocationRows, "t_provider_cost_confirm", "100039").values.set("actual_cost", "9007199254740992.01");
-  requireRecord(allocationRows, "t_provider_cost_alloc", "100040").values.set("allocated_amount", "9007199254740992.00");
-  assert.throws(() => validateTaxAndProviderTuples(allocationRows), /allocation.*actual_cost/u);
+  requireRecord(allocationRows, "t_channel_cost_confirm", "100039").values.set("actual_cost", "9007199254740992.01");
+  requireRecord(allocationRows, "t_channel_cost_alloc", "100040").values.set("allocated_amount", "9007199254740992.00");
+  assert.throws(() => validateTaxAndChannelTuples(allocationRows), /allocation.*actual_cost/u);
 });
 
 test("POSTED replay rejects Instruction and Journal headers from different Ledger Books", () => {
@@ -3578,7 +3578,7 @@ test("Fee Resolution and Exception require a bidirectional one-to-one authority 
   );
 });
 
-test("Tax RECONCILED Event source_ref rejects a Provider Bank Match", () => {
+test("Tax RECONCILED Event source_ref rejects a Channel Bank Match", () => {
   const rows = clonedScenarioRows();
   requireRecord(rows, "t_tax_payment_event", "100133").values.set("source_ref", "40500");
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
@@ -3588,53 +3588,53 @@ test("Tax RECONCILED Event source_ref rejects a Provider Bank Match", () => {
   );
 });
 
-test("unmatched Provider Debit Item rejects another Provider and MID identity", () => {
+test("unmatched Channel Debit Item rejects another Channel and MID identity", () => {
   const rows = clonedScenarioRows();
-  const otherProvider = appendClonedRecord(rows, "t_provider_account", "100051", "999051");
-  otherProvider.values.set("provider_id", "2");
-  otherProvider.values.set("mid_id", "2");
-  requireRecord(rows, "t_provider_debit_item", "100053")
-    .values.set("provider_account_id", valueOf(otherProvider, "id"));
+  const otherChannel = appendClonedRecord(rows, "t_channel_account", "100051", "999051");
+  otherChannel.values.set("channel_id", "2");
+  otherChannel.values.set("mid_id", "2");
+  requireRecord(rows, "t_channel_debit_item", "100053")
+    .values.set("channel_account_id", valueOf(otherChannel, "id"));
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
-    () => validateTaxAndProviderTuples(rows),
-    /Provider Debit Item 100053.*Provider Account/u,
+    () => validateTaxAndChannelTuples(rows),
+    /Channel Debit Item 100053.*Channel Account/u,
   );
 });
 
-test("Provider Cost Allocation rejects wrong Attempt and wrong Economics target shapes", () => {
+test("Channel Cost Allocation rejects wrong Attempt and wrong Economics target shapes", () => {
   for (const [field, wrongValue] of [
     ["payment_attempt_id", "101003"],
     ["transaction_economics_id", "31020"],
   ]) {
     const rows = clonedScenarioRows();
-    requireRecord(rows, "t_provider_cost_alloc", "100040").values.set(field, wrongValue);
+    requireRecord(rows, "t_channel_cost_alloc", "100040").values.set(field, wrongValue);
     assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
     assert.throws(
-      () => validateTaxAndProviderTuples(rows),
-      /Provider Cost Alloc 100040.*target tuple/u,
+      () => validateTaxAndChannelTuples(rows),
+      /Channel Cost Alloc 100040.*target tuple/u,
     );
   }
 });
 
-test("Provider CREDIT Batch rejects a PROVIDER_DEBIT Bank Match label", () => {
+test("Channel CREDIT Batch rejects a CHANNEL_DEBIT Bank Match label", () => {
   const rows = clonedScenarioRows();
-  requireRecord(rows, "t_bank_recon_match", "40500").values.set("match_type", "PROVIDER_DEBIT");
+  requireRecord(rows, "t_bank_recon_match", "40500").values.set("match_type", "CHANNEL_DEBIT");
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
-    () => validateTaxAndProviderTuples(rows),
-    /Provider Bank Match 40500.*match_type/u,
+    () => validateTaxAndChannelTuples(rows),
+    /Channel Bank Match 40500.*match_type/u,
   );
 });
 
-test("Provider Transaction Match rejects a Settlement external transaction mismatch", () => {
+test("Channel Transaction Match rejects a Settlement external transaction mismatch", () => {
   const rows = clonedScenarioRows();
-  requireRecord(rows, "t_provider_settle_item", "100056")
+  requireRecord(rows, "t_channel_settle_item", "100056")
     .values.set("external_transaction_id", "NI-SALE-WRONG");
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
-    () => validateTaxAndProviderTuples(rows),
-    /Provider Transaction Match 100057.*external_transaction_id/u,
+    () => validateTaxAndChannelTuples(rows),
+    /Channel Transaction Match 100057.*external_transaction_id/u,
   );
 });
 
@@ -3642,7 +3642,7 @@ test("full semantic graph accepts leading-zero aliases for every integer FK", ()
   for (const [table, id, field, alias] of [
     ["t_payout_execution", "93001", "payout_id", "092001"],
     ["t_instruction_line", "321411", "instruction_id", "032141"],
-    ["t_provider_debit_item", "100053", "provider_account_id", "0100051"],
+    ["t_channel_debit_item", "100053", "channel_account_id", "0100051"],
   ]) {
     const rows = clonedScenarioRows();
     requireRecord(rows, table, id).values.set(field, alias);
@@ -3674,29 +3674,29 @@ test("current Accounting Rule Bundle rejects an optional undeclared 26th Rule Li
   );
 });
 
-test("Provider Transaction Match amounts must exactly replay the authoritative Settlement Item", () => {
+test("Channel Transaction Match amounts must exactly replay the authoritative Settlement Item", () => {
   const rows = clonedScenarioRows();
-  const match = requireRecord(rows, "t_provider_transaction_match", "100057");
+  const match = requireRecord(rows, "t_channel_transaction_match", "100057");
   match.values.set("gross_amount", "104");
   match.values.set("fee_amount", "2");
   match.values.set("net_amount", "102");
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
-    () => validateTaxAndProviderTuples(rows),
-    /Provider Settlement Item 100056.*matched gross\/fee\/net/u,
+    () => validateTaxAndChannelTuples(rows),
+    /Channel Settlement Item 100056.*matched gross\/fee\/net/u,
   );
 });
 
-test("VALIDATED Provider Batch rejects an orphan Settlement Item", () => {
+test("VALIDATED Channel Batch rejects an orphan Settlement Item", () => {
   const rows = clonedScenarioRows();
-  const orphan = appendClonedRecord(rows, "t_provider_settle_item", "100056", "999056");
+  const orphan = appendClonedRecord(rows, "t_channel_settle_item", "100056", "999056");
   orphan.values.set("item_no", "2");
-  orphan.values.set("provider_item_ref", "NI-SALE-ORPHAN");
+  orphan.values.set("channel_item_ref", "NI-SALE-ORPHAN");
   orphan.values.set("external_transaction_id", "NI-SALE-ORPHAN");
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
-    () => validateTaxAndProviderTuples(rows),
-    /Provider Settlement Item 999056.*orphan/u,
+    () => validateTaxAndChannelTuples(rows),
+    /Channel Settlement Item 999056.*orphan/u,
   );
 });
 
@@ -3719,10 +3719,10 @@ test("full semantic graph rejects a numeric alias for the exact Tax Operating En
   assert.throws(() => validateManualPayoutGraph(rows));
 });
 
-test("Provider Batch rejects synchronized Item and Match drift from Batch and target settlement", () => {
+test("Channel Batch rejects synchronized Item and Match drift from Batch and target settlement", () => {
   const rows = clonedScenarioRows();
-  for (const table of ["t_provider_settle_item", "t_provider_transaction_match"]) {
-    const record = requireRecord(rows, table, table === "t_provider_settle_item" ? "100056" : "100057");
+  for (const table of ["t_channel_settle_item", "t_channel_transaction_match"]) {
+    const record = requireRecord(rows, table, table === "t_channel_settle_item" ? "100056" : "100057");
     record.values.set("gross_amount", "104");
     record.values.set("fee_amount", "2");
     record.values.set("net_amount", "102");
@@ -3730,82 +3730,82 @@ test("Provider Batch rejects synchronized Item and Match drift from Batch and ta
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
     () => validateManualPayoutGraph(rows),
-    /Provider (?:Batch 100055.*四个金额|Open Item 100052.*settled)/u,
+    /Channel (?:Batch 100055.*四个金额|Open Item 100052.*settled)/u,
   );
 });
 
-test("Provider target settlement rejects zero-match SETTLED and PARTIALLY_SETTLED totals", () => {
+test("Channel target settlement rejects zero-match SETTLED and PARTIALLY_SETTLED totals", () => {
   for (const [status, settled, outstanding] of [
     ["SETTLED", "20", "0"],
     ["PARTIALLY_SETTLED", "10", "10"],
   ]) {
     const rows = clonedScenarioRows();
-    const debitItem = requireRecord(rows, "t_provider_debit_item", "100053");
+    const debitItem = requireRecord(rows, "t_channel_debit_item", "100053");
     debitItem.values.set("status", status);
     debitItem.values.set("settled_amount", settled);
     debitItem.values.set("outstanding_amount", outstanding);
     assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
     assert.throws(
       () => validateManualPayoutGraph(rows),
-      /Provider Debit Item 100053.*Match.*settled/u,
+      /Channel Debit Item 100053.*Match.*settled/u,
     );
   }
 });
 
-test("Provider Cost Allocation rejects Economics outside its matched Batch target set", () => {
+test("Channel Cost Allocation rejects Economics outside its matched Batch target set", () => {
   const rows = clonedScenarioRows();
-  const allocation = requireRecord(rows, "t_provider_cost_alloc", "100040");
+  const allocation = requireRecord(rows, "t_channel_cost_alloc", "100040");
   allocation.values.set("payment_attempt_id", "NULL");
   allocation.values.set("channel_refund_id", "105001");
   allocation.values.set("transaction_economics_id", "31020");
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
     () => validateManualPayoutGraph(rows),
-    /Provider Cost Alloc 100040.*同 Batch.*Economics/u,
+    /Channel Cost Alloc 100040.*同 Batch.*Economics/u,
   );
 });
 
-test("Provider FEE Item cannot fake Cost completeness or escape Batch aggregation", () => {
+test("Channel FEE Item cannot fake Cost completeness or escape Batch aggregation", () => {
   const rows = clonedScenarioRows();
-  const feeItem = appendClonedRecord(rows, "t_provider_settle_item", "100056", "199956");
+  const feeItem = appendClonedRecord(rows, "t_channel_settle_item", "100056", "199956");
   feeItem.values.set("item_no", "2");
-  feeItem.values.set("provider_item_ref", "NI-FEE-ORPHAN");
+  feeItem.values.set("channel_item_ref", "NI-FEE-ORPHAN");
   feeItem.values.set("item_type", "FEE");
   feeItem.values.set("settlement_direction", "DEBIT");
-  feeItem.values.set("reference_type", "PROVIDER_FEE");
+  feeItem.values.set("reference_type", "CHANNEL_FEE");
   feeItem.values.set("external_transaction_id", "NI-FEE-ORPHAN");
   feeItem.values.set("gross_amount", "0");
   feeItem.values.set("fee_amount", "7");
   feeItem.values.set("net_amount", "7");
-  requireRecord(rows, "t_provider_cost_confirm", "100039")
-    .values.set("provider_settle_item_id", "199956");
+  requireRecord(rows, "t_channel_cost_confirm", "100039")
+    .values.set("channel_settle_item_id", "199956");
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
     () => validateManualPayoutGraph(rows),
-    /Provider (?:Cost Confirm 100039.*FEE Item|Batch 100055.*四个金额)/u,
+    /Channel (?:Cost Confirm 100039.*FEE Item|Batch 100055.*四个金额)/u,
   );
 });
 
-test("Provider FEE controlled Exception is not misclassified as a Payout fee difference", () => {
+test("Channel FEE controlled Exception is not misclassified as a Payout fee difference", () => {
   const rows = clonedScenarioRows();
-  const feeItem = appendClonedRecord(rows, "t_provider_settle_item", "100056", "199956");
+  const feeItem = appendClonedRecord(rows, "t_channel_settle_item", "100056", "199956");
   feeItem.values.set("item_no", "2");
-  feeItem.values.set("provider_item_ref", "NI-FEE-CONTROLLED");
+  feeItem.values.set("channel_item_ref", "NI-FEE-CONTROLLED");
   feeItem.values.set("item_type", "FEE");
   feeItem.values.set("settlement_direction", "DEBIT");
-  feeItem.values.set("reference_type", "PROVIDER_FEE");
+  feeItem.values.set("reference_type", "CHANNEL_FEE");
   feeItem.values.set("external_transaction_id", "NI-FEE-CONTROLLED");
   feeItem.values.set("gross_amount", "0");
   feeItem.values.set("fee_amount", "7");
   feeItem.values.set("net_amount", "7");
-  const batch = requireRecord(rows, "t_provider_settle_batch", "100055");
+  const batch = requireRecord(rows, "t_channel_settle_batch", "100055");
   batch.values.set("fee_amount", "9");
   batch.values.set("net_amount", "96");
   requireRecord(rows, "t_bank_statement_item", "40401").values.set("amount", "96");
   requireRecord(rows, "t_bank_recon_match", "40500").values.set("matched_amount", "96");
 
   const exception = appendClonedRecord(rows, "t_recon_exception", "40530", "49934");
-  exception.values.set("source_type", "PROVIDER_SETTLE_ITEM");
+  exception.values.set("source_type", "CHANNEL_SETTLE_ITEM");
   exception.values.set("source_id", "199956");
   exception.values.set("difference_amount", "7");
   exception.values.set("applied_resolution_id", "49935");
@@ -3813,19 +3813,19 @@ test("Provider FEE controlled Exception is not misclassified as a Payout fee dif
   resolution.values.set("exception_id", "49934");
   resolution.values.set("resolution_type", "ACCEPT_TIMING_DIFFERENCE");
   resolution.values.set("instruction_id", "NULL");
-  resolution.values.set("content_hash", "hash-provider-fee-controlled");
-  resolution.values.set("approved_content_hash", "hash-provider-fee-controlled");
+  resolution.values.set("content_hash", "hash-channel-fee-controlled");
+  resolution.values.set("approved_content_hash", "hash-channel-fee-controlled");
 
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
-  assert.doesNotThrow(() => validateTaxAndProviderTuples(rows));
+  assert.doesNotThrow(() => validateTaxAndChannelTuples(rows));
   assert.doesNotThrow(() => validateManualPayoutGraph(rows));
 });
 
-test("Provider ADJUSTMENT controlled Exception must close item scope and exact amount", () => {
+test("Channel ADJUSTMENT controlled Exception must close item scope and exact amount", () => {
   const rows = clonedScenarioRows();
-  const adjustment = appendClonedRecord(rows, "t_provider_settle_item", "100056", "199957");
+  const adjustment = appendClonedRecord(rows, "t_channel_settle_item", "100056", "199957");
   adjustment.values.set("item_no", "2");
-  adjustment.values.set("provider_item_ref", "NI-ADJUSTMENT-FAKE");
+  adjustment.values.set("channel_item_ref", "NI-ADJUSTMENT-FAKE");
   adjustment.values.set("item_type", "ADJUSTMENT");
   adjustment.values.set("settlement_direction", "DEBIT");
   adjustment.values.set("reference_type", "ADJUSTMENT");
@@ -3833,14 +3833,14 @@ test("Provider ADJUSTMENT controlled Exception must close item scope and exact a
   adjustment.values.set("gross_amount", "1");
   adjustment.values.set("fee_amount", "0");
   adjustment.values.set("net_amount", "1");
-  const batch = requireRecord(rows, "t_provider_settle_batch", "100055");
+  const batch = requireRecord(rows, "t_channel_settle_batch", "100055");
   batch.values.set("debit_amount", "1");
   batch.values.set("net_amount", "102");
   requireRecord(rows, "t_bank_recon_match", "40500").values.set("matched_amount", "102");
 
   const exception = appendClonedRecord(rows, "t_recon_exception", "40530", "49934");
   exception.values.set("exception_type", "DATE_DIFFERENCE");
-  exception.values.set("source_type", "PROVIDER_SETTLE_ITEM");
+  exception.values.set("source_type", "CHANNEL_SETTLE_ITEM");
   exception.values.set("source_id", "199957");
   exception.values.set("entity_type", "FINANCE_ENTITY");
   exception.values.set("entity_id", "100003");
@@ -3851,17 +3851,17 @@ test("Provider ADJUSTMENT controlled Exception must close item scope and exact a
   resolution.values.set("exception_id", "49934");
   resolution.values.set("resolution_type", "ACCEPT_TIMING_DIFFERENCE");
   resolution.values.set("instruction_id", "NULL");
-  resolution.values.set("content_hash", "hash-provider-adjustment-resolution");
-  resolution.values.set("approved_content_hash", "hash-provider-adjustment-resolution");
+  resolution.values.set("content_hash", "hash-channel-adjustment-resolution");
+  resolution.values.set("approved_content_hash", "hash-channel-adjustment-resolution");
 
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
     () => validateManualPayoutGraph(rows),
-    /Provider Settlement Item 199957.*Exception.*(?:OE|currency|difference)/u,
+    /Channel Settlement Item 199957.*Exception.*(?:OE|currency|difference)/u,
   );
 });
 
-test("Provider Cash Binding validates current scope while preserving historical Match versions", () => {
+test("Channel Cash Binding validates current scope while preserving historical Match versions", () => {
   const rows = clonedScenarioRows();
   const cashAccount = appendClonedRecord(rows, "t_cash_account", "40200", "49900");
   cashAccount.values.set("entity_type", "FINANCE_ENTITY");
@@ -3893,15 +3893,15 @@ test("Provider Cash Binding validates current scope while preserving historical 
   requireRecord(historical, "t_cash_account_binding", "40201").values.set("current_ver_id", "49902");
   assert.doesNotThrow(() => validateSchemaRecords(historical, generatedModel()));
   assert.doesNotThrow(() => validateManualPayoutGraph(historical),
-    "Provider Match 应允许引用 decision_time 当时有效的历史 Binding Version");
+    "Channel Match 应允许引用 decision_time 当时有效的历史 Binding Version");
 });
 
-test("VALIDATED Provider Batch rejects an unresolved Item Exception after matching", () => {
+test("VALIDATED Channel Batch rejects an unresolved Item Exception after matching", () => {
   const withOpenException = () => {
     const rows = clonedScenarioRows();
     const exception = appendClonedRecord(rows, "t_recon_exception", "40534", "49934");
     exception.values.set("exception_type", "WRONG_ACCOUNT");
-    exception.values.set("source_type", "PROVIDER_SETTLE_ITEM");
+    exception.values.set("source_type", "CHANNEL_SETTLE_ITEM");
     exception.values.set("source_id", "100056");
     exception.values.set("difference_amount", "103");
     exception.values.set("applied_resolution_id", "NULL");
@@ -3913,13 +3913,13 @@ test("VALIDATED Provider Batch rejects an unresolved Item Exception after matchi
   assert.doesNotThrow(() => validateSchemaRecords(open, generatedModel()));
   assert.throws(
     () => validateManualPayoutGraph(open),
-    /Provider Settlement Item 100056.*unresolved.*Exception/u,
+    /Channel Settlement Item 100056.*unresolved.*Exception/u,
   );
 
   const mixed = withOpenException();
   const resolved = appendClonedRecord(mixed, "t_recon_exception", "40530", "49935");
   resolved.values.set("exception_type", "DATE_DIFFERENCE");
-  resolved.values.set("source_type", "PROVIDER_SETTLE_ITEM");
+  resolved.values.set("source_type", "CHANNEL_SETTLE_ITEM");
   resolved.values.set("source_id", "100056");
   resolved.values.set("difference_amount", "103");
   resolved.values.set("applied_resolution_id", "49936");
@@ -3927,32 +3927,32 @@ test("VALIDATED Provider Batch rejects an unresolved Item Exception after matchi
   resolution.values.set("exception_id", "49935");
   resolution.values.set("resolution_type", "ACCEPT_TIMING_DIFFERENCE");
   resolution.values.set("instruction_id", "NULL");
-  resolution.values.set("content_hash", "hash-provider-item-timing");
-  resolution.values.set("approved_content_hash", "hash-provider-item-timing");
+  resolution.values.set("content_hash", "hash-channel-item-timing");
+  resolution.values.set("approved_content_hash", "hash-channel-item-timing");
   assert.doesNotThrow(() => validateSchemaRecords(mixed, generatedModel()));
   assert.throws(
     () => validateManualPayoutGraph(mixed),
-    /Provider Settlement Item 100056.*unresolved.*Exception/u,
+    /Channel Settlement Item 100056.*unresolved.*Exception/u,
   );
 });
 
-test("CONFIRMED Provider Bank Match rejects a REJECTED Batch", () => {
+test("CONFIRMED Channel Bank Match rejects a REJECTED Batch", () => {
   const rows = clonedScenarioRows();
-  requireRecord(rows, "t_provider_settle_batch", "100055").values.set("status", "REJECTED");
+  requireRecord(rows, "t_channel_settle_batch", "100055").values.set("status", "REJECTED");
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
     () => validateManualPayoutGraph(rows),
-    /Provider Bank Match 40500.*complete VALIDATED Batch/u,
+    /Channel Bank Match 40500.*complete VALIDATED Batch/u,
   );
 });
 
-test("Provider Transaction Match allocation_no is continuous within each target", () => {
+test("Channel Transaction Match allocation_no is continuous within each target", () => {
   const rows = clonedScenarioRows();
-  const first = requireRecord(rows, "t_provider_transaction_match", "100057");
+  const first = requireRecord(rows, "t_channel_transaction_match", "100057");
   first.values.set("gross_amount", "50");
   first.values.set("fee_amount", "1");
   first.values.set("net_amount", "49");
-  const third = appendClonedRecord(rows, "t_provider_transaction_match", "100057", "199957");
+  const third = appendClonedRecord(rows, "t_channel_transaction_match", "100057", "199957");
   third.values.set("allocation_no", "3");
   third.values.set("gross_amount", "55");
   third.values.set("fee_amount", "1");
@@ -3960,15 +3960,15 @@ test("Provider Transaction Match allocation_no is continuous within each target"
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
     () => validateManualPayoutGraph(rows),
-    /Provider Transaction Match.*allocation_no.*1.*连续/u,
+    /Channel Transaction Match.*allocation_no.*1.*连续/u,
   );
 });
 
-test("Provider Settlement Item item_no is continuous within each Batch", () => {
+test("Channel Settlement Item item_no is continuous within each Batch", () => {
   const rows = clonedScenarioRows();
-  const refundItem = appendClonedRecord(rows, "t_provider_settle_item", "100056", "199956");
+  const refundItem = appendClonedRecord(rows, "t_channel_settle_item", "100056", "199956");
   refundItem.values.set("item_no", "3");
-  refundItem.values.set("provider_item_ref", "NI-REFUND-90001");
+  refundItem.values.set("channel_item_ref", "NI-REFUND-90001");
   refundItem.values.set("item_type", "REFUND");
   refundItem.values.set("settlement_direction", "DEBIT");
   refundItem.values.set("reference_type", "REFUND");
@@ -3976,7 +3976,7 @@ test("Provider Settlement Item item_no is continuous within each Batch", () => {
   refundItem.values.set("gross_amount", "20");
   refundItem.values.set("fee_amount", "0");
   refundItem.values.set("net_amount", "20");
-  const refundMatch = appendClonedRecord(rows, "t_provider_transaction_match", "100057", "199957");
+  const refundMatch = appendClonedRecord(rows, "t_channel_transaction_match", "100057", "199957");
   refundMatch.values.set("settle_item_id", "199956");
   refundMatch.values.set("target_type", "DEBIT_ITEM");
   refundMatch.values.set("target_key", "DEBIT_ITEM:100053");
@@ -3985,12 +3985,12 @@ test("Provider Settlement Item item_no is continuous within each Batch", () => {
   refundMatch.values.set("gross_amount", "20");
   refundMatch.values.set("fee_amount", "0");
   refundMatch.values.set("net_amount", "20");
-  const refundTarget = requireRecord(rows, "t_provider_debit_item", "100053");
+  const refundTarget = requireRecord(rows, "t_channel_debit_item", "100053");
   refundTarget.values.set("settled_amount", "20");
   refundTarget.values.set("outstanding_amount", "0");
   refundTarget.values.set("status", "SETTLED");
   refundTarget.values.set("version", "2");
-  const batch = requireRecord(rows, "t_provider_settle_batch", "100055");
+  const batch = requireRecord(rows, "t_channel_settle_batch", "100055");
   batch.values.set("debit_amount", "20");
   batch.values.set("net_amount", "83");
   requireRecord(rows, "t_bank_recon_match", "40500").values.set("matched_amount", "83");
@@ -3998,7 +3998,7 @@ test("Provider Settlement Item item_no is continuous within each Batch", () => {
   assert.doesNotThrow(() => validateSchemaRecords(rows, generatedModel()));
   assert.throws(
     () => validateManualPayoutGraph(rows),
-    /Provider Batch 100055.*item_no.*1.*连续/u,
+    /Channel Batch 100055.*item_no.*1.*连续/u,
   );
 });
 
@@ -4214,12 +4214,12 @@ test("FAILED to FAILED is reserved for the complete LATE_DEBIT audit path", () =
   );
 });
 
-test("every Provider open or debit Item validates its Economics currency tuple", () => {
+test("every Channel open or debit Item validates its Economics currency tuple", () => {
   const rows = clonedScenarioRows();
   requireRecord(rows, "t_transaction_economics", "31020").values.set("currency", "EUR");
   assert.throws(
-    () => validateTaxAndProviderTuples(rows),
-    /Provider Item 100053.*Economics currency/u,
+    () => validateTaxAndChannelTuples(rows),
+    /Channel Item 100053.*Economics currency/u,
   );
 });
 
@@ -4396,28 +4396,28 @@ test("PAYING cannot transition back to ON_HOLD", () => {
   assert.throws(() => validatePayoutEventGraph([payout], [execution], events), /PAYING->ON_HOLD/u);
 });
 
-test("Provider tuple rejects a Cost Scope MID outside its Provider Account identity", () => {
+test("Channel tuple rejects a Cost Scope MID outside its Channel Account identity", () => {
   const rows = clonedScenarioRows();
-  requireRecord(rows, "t_provider_cost_scope", "100037").values.set("mid_id", "999999");
-  assert.throws(() => validateTaxAndProviderTuples(rows), /Provider Cost Scope 100037.*MID/u);
+  requireRecord(rows, "t_channel_cost_scope", "100037").values.set("mid_id", "999999");
+  assert.throws(() => validateTaxAndChannelTuples(rows), /Channel Cost Scope 100037.*MID/u);
 });
 
-test("Provider confirmed Bank Match rejects a non-settlement binding purpose", () => {
+test("Channel confirmed Bank Match rejects a non-settlement binding purpose", () => {
   const rows = clonedScenarioRows();
   requireRecord(rows, "t_cash_account_binding", "40201").values.set("account_purpose", "PAYOUT");
-  assert.throws(() => validateTaxAndProviderTuples(rows), /Provider Bank Match 40500.*PROVIDER_SETTLEMENT/u);
+  assert.throws(() => validateTaxAndChannelTuples(rows), /Channel Bank Match 40500.*CHANNEL_SETTLEMENT/u);
 });
 
-test("Provider tuple rejects economics currency outside its Batch", () => {
+test("Channel tuple rejects economics currency outside its Batch", () => {
   const rows = clonedScenarioRows();
   requireRecord(rows, "t_transaction_economics", "31001").values.set("currency", "EUR");
-  assert.throws(() => validateTaxAndProviderTuples(rows), /Provider Transaction Match 100057.*currency/u);
+  assert.throws(() => validateTaxAndChannelTuples(rows), /Channel Transaction Match 100057.*currency/u);
 });
 
-test("maturity prose uses one Agreement-OE T+N and keeps Provider cash timing independent", () => {
+test("maturity prose uses one Agreement-OE T+N and keeps Channel cash timing independent", () => {
   const content = readFileSync(scenarioPath, "utf8");
   assert.match(content, /Client 与 Partner 均为 T\+1 工作日/u);
-  assert.match(content, /Provider T\+2[^。\n]*仅表示 Provider 资金时间[^。\n]*独立于 Owner 成熟周期/u);
+  assert.match(content, /Channel T\+2[^。\n]*仅表示 Channel 资金时间[^。\n]*独立于 Owner 成熟周期/u);
   assert.doesNotMatch(content, /Client T\+(\d+)[^。\n]*Partner T\+(?!\1)\d+/u);
 });
 
@@ -4453,13 +4453,13 @@ test("AUTO Accounting Instructions deterministically replay every required Rule 
   assert.throws(() => validateAccountingRuleReplay(unequal), /amount_source_code.*金额/u);
 });
 
-test("Tax and Provider authority tuples close on one OE and exact cost allocation", () => {
+test("Tax and Channel authority tuples close on one OE and exact cost allocation", () => {
   const rows = scenarioRows(readFileSync(scenarioPath, "utf8"));
-  assert.deepEqual(validateTaxAndProviderTuples(rows), {
+  assert.deepEqual(validateTaxAndChannelTuples(rows), {
     taxOperatingEntityId: "AE001",
     taxAuthorityId: "100010",
-    providerOperatingEntityId: "AE001",
-    providerAccountId: "100051",
+    channelOperatingEntityId: "AE001",
+    channelAccountId: "100051",
     allocatedCost: "2.00000000",
   });
 });
@@ -4935,7 +4935,7 @@ test("Finance reality scenarios cover every approved table", () => {
     "退款成功",
     "重复扣款",
     "拒付与追偿",
-    "Provider 清算与银行到账",
+    "Channel 清算与银行到账",
     "Client 与 Local Partner 手工出款",
     "税务申报与付款",
     "期间关账与重开",
@@ -4958,7 +4958,7 @@ test("Finance scenarios demonstrate the unified account and bucket model", () =>
   const accounts = recordsFor(rows, "t_account");
   assert.deepEqual(
     new Set(accounts.map((record) => valueOf(record, "owner_type"))),
-    new Set(["OPERATING_ENTITY", "CLIENT", "LOCAL_PARTNER", "PROVIDER_ACCOUNT", "CASH_ACCOUNT", "TAX_AUTHORITY"]),
+    new Set(["OPERATING_ENTITY", "CLIENT", "LOCAL_PARTNER", "CHANNEL_ACCOUNT", "CASH_ACCOUNT", "TAX_AUTHORITY"]),
   );
   assert.ok(accounts.some((record) => valueOf(record, "owner_type") === "CLIENT"
     && valueOf(record, "balance_bucket") === "PENDING"));
@@ -4973,11 +4973,11 @@ test("Finance scenarios demonstrate the unified account and bucket model", () =>
   assert.equal(bookSequence.length, 1);
   assert.equal(bookSequence[0].values.has("version"), false, "Book Sequence 不使用额外 Version");
   assert.doesNotMatch(content, /source_type=ACCOUNT/u);
-  assert.match(content, /PROVIDER_COST_INCREASE/u);
-  assert.match(content, /PROVIDER_COST_DECREASE/u);
-  assert.match(content, /预计 Provider Cost.*借记.*PROVIDER_FEE_EXPENSE.*贷记.*PROVIDER_FEE_ACCRUAL/u);
-  assert.match(content, /实际成本 5.*预计成本 2.*借记.*PROVIDER_FEE_EXPENSE.*贷记.*PROVIDER_FEE_ACCRUAL/u);
-  assert.match(content, /实际成本 1.*预计成本 2.*借记.*PROVIDER_FEE_ACCRUAL.*贷记.*PROVIDER_FEE_EXPENSE/u);
+  assert.match(content, /CHANNEL_COST_INCREASE/u);
+  assert.match(content, /CHANNEL_COST_DECREASE/u);
+  assert.match(content, /预计 Channel Cost.*借记.*CHANNEL_FEE_EXPENSE.*贷记.*CHANNEL_FEE_ACCRUAL/u);
+  assert.match(content, /实际成本 5.*预计成本 2.*借记.*CHANNEL_FEE_EXPENSE.*贷记.*CHANNEL_FEE_ACCRUAL/u);
+  assert.match(content, /实际成本 1.*预计成本 2.*借记.*CHANNEL_FEE_ACCRUAL.*贷记.*CHANNEL_FEE_EXPENSE/u);
   assert.match(content, /实际成本等于预计成本.*不创建 COST_ADJUSTMENT/u);
   assert.doesNotMatch(content, /normal_side=BOTH|balance_direction=/u);
   assert.doesNotMatch(content, /RECON_ROUNDING/u);
@@ -4988,53 +4988,53 @@ test("Finance scenarios demonstrate the unified account and bucket model", () =>
   );
 });
 
-test("Finance scenarios demonstrate Provider positive and negative three-stage accounting", () => {
+test("Finance scenarios demonstrate Channel positive and negative three-stage accounting", () => {
   const content = readFileSync(scenarioPath, "utf8");
   const rows = scenarioRows(content);
   for (const accountCode of [
-    "PROVIDER_UNSETTLED_RECEIVABLE",
-    "PROVIDER_SETTLEMENT_RECEIVABLE",
-    "PROVIDER_UNSETTLED_PAYABLE",
-    "PROVIDER_SETTLEMENT_PAYABLE",
+    "CHANNEL_UNSETTLED_RECEIVABLE",
+    "CHANNEL_SETTLEMENT_RECEIVABLE",
+    "CHANNEL_UNSETTLED_PAYABLE",
+    "CHANNEL_SETTLEMENT_PAYABLE",
     "BANK_CASH",
   ]) {
     assert.match(content, new RegExp(accountCode, "u"));
   }
   assert.doesNotMatch(
     content,
-    /\bPROVIDER_RECEIVABLE\b|\bCASH_IN_TRANSIT\b|\bCASH_OUT_TRANSIT\b|CASH_IN_TRANSIT_MISMATCH/u,
+    /\bCHANNEL_RECEIVABLE\b|\bCASH_IN_TRANSIT\b|\bCASH_OUT_TRANSIT\b|CASH_IN_TRANSIT_MISMATCH/u,
   );
 
-  const openItem = recordsFor(rows, "t_provider_open_item")[0];
-  const debitItem = recordsFor(rows, "t_provider_debit_item")[0];
-  const batch = recordsFor(rows, "t_provider_settle_batch")[0];
-  const settleItem = recordsFor(rows, "t_provider_settle_item")[0];
-  const transactionMatch = recordsFor(rows, "t_provider_transaction_match")[0];
+  const openItem = recordsFor(rows, "t_channel_open_item")[0];
+  const debitItem = recordsFor(rows, "t_channel_debit_item")[0];
+  const batch = recordsFor(rows, "t_channel_settle_batch")[0];
+  const settleItem = recordsFor(rows, "t_channel_settle_item")[0];
+  const transactionMatch = recordsFor(rows, "t_channel_transaction_match")[0];
   const bankMatch = recordsFor(rows, "t_bank_recon_match")
-    .find((record) => valueOf(record, "match_type") === "PROVIDER_CREDIT");
+    .find((record) => valueOf(record, "match_type") === "CHANNEL_CREDIT");
   assert.ok(identifierEqual(valueOf(transactionMatch, "open_item_id"), valueOf(openItem, "id")));
   assert.ok(identifierEqual(valueOf(transactionMatch, "settle_item_id"), valueOf(settleItem, "id")));
   assert.ok(identifierEqual(valueOf(settleItem, "batch_id"), valueOf(batch, "id")));
   assert.ok(fixedRecordEqual(transactionMatch, "gross_amount", openItem, "gross_receivable"));
   assert.ok(fixedRecordEqual(transactionMatch, "net_amount", batch, "net_amount"));
-  assert.ok(identifierEqual(valueOf(bankMatch, "provider_batch_id"), valueOf(batch, "id")));
+  assert.ok(identifierEqual(valueOf(bankMatch, "channel_batch_id"), valueOf(batch, "id")));
   assert.ok(fixedRecordEqual(bankMatch, "matched_amount", batch, "net_amount"));
   assert.equal(valueOf(bankMatch, "status"), "CONFIRMED");
   assert.equal(valueOf(debitItem, "status"), "OPEN");
   assert.ok(fixedEqual(fixedValue(debitItem, "settled_amount"), EXACT_ZERO));
   assert.ok(fixedEqual(fixedValue(debitItem, "outstanding_amount"), fixedLiteral("20")));
-  assert.match(content, /交易成功.*PROVIDER_UNSETTLED_RECEIVABLE/su);
-  assert.match(content, /PROVIDER_UNSETTLED_PAYABLE.*PROVIDER_SETTLEMENT_PAYABLE/su);
+  assert.match(content, /交易成功.*CHANNEL_UNSETTLED_RECEIVABLE/su);
+  assert.match(content, /CHANNEL_UNSETTLED_PAYABLE.*CHANNEL_SETTLEMENT_PAYABLE/su);
   assert.match(content, /VALIDATED.*单独.*不能触发.*重分类/u);
   assert.match(content, /多条.*Transaction Match.*一个.*批次.*Journal/u);
-  assert.match(content, /预计 Provider Cost.*不得.*重复/u);
+  assert.match(content, /预计 Channel Cost.*不得.*重复/u);
   assert.ok(fixedEqual(fixedValue(batch, "gross_amount"), fixedLiteral("105")));
   assert.ok(fixedEqual(fixedValue(batch, "fee_amount"), fixedLiteral("2")));
   assert.ok(fixedEqual(fixedValue(batch, "net_amount"), fixedLiteral("103")));
   assert.match(content, /Preliminary Transaction Report.*不能.*最终批次/u);
   assert.match(content, /PROPOSED\/REJECTED.*不过账/u);
-  assert.match(content, /NONE.*禁止 Provider Bank Match/u);
-  assert.match(content, /PROVIDER_SETTLEMENT_MISMATCH/u);
+  assert.match(content, /NONE.*禁止 Channel Bank Match/u);
+  assert.match(content, /CHANNEL_SETTLEMENT_MISMATCH/u);
 });
 
 test("Finance scenarios mature Client and Partner payable balances at one contractual time", () => {
@@ -5088,7 +5088,7 @@ test("Finance scenarios mature Client and Partner payable balances at one contra
 
   for (const expected of [
     "T+1 工作日",
-    "Provider T+2",
+    "Channel T+2",
     "平台承担流动性缺口",
     "FOLLOWING",
     "PAYABLE_BALANCE_MATURED:<economics_id>",
@@ -5103,7 +5103,7 @@ test("Finance scenarios mature Client and Partner payable balances at one contra
     "PENDING -> AVAILABLE/NONE",
     "AVAILABLE -> LOCKED",
     "LOCKED -> AVAILABLE",
-    "Provider 实际结算不阻断",
+    "Channel 实际结算不阻断",
     "未决退款不阻断",
     "balance_available_time >= payment_succeeded_time",
     "Partner Recovery 非零时禁止出款",
@@ -5279,22 +5279,22 @@ test("Finance scenarios use a prepaid security-deposit Account and Journal-only 
   assert.doesNotMatch(content, /CLIENT_RESTRICTED_FUNDS|reserve_case_id=|ReserveHeld|ReserveReleased|RecoveryApplied/u);
 });
 
-test("Finance scenarios explain two-layer Provider reconciliation without Payment online dependency", () => {
+test("Finance scenarios explain two-layer Channel reconciliation without Payment online dependency", () => {
   const content = readFileSync(scenarioPath, "utf8");
   const rows = scenarioRows(content);
 
   for (const removedTable of [
-    "t_provider_settle_alloc",
-    "t_provider_cash_item",
+    "t_channel_settle_alloc",
+    "t_channel_cash_item",
     "t_recon_match",
   ]) {
     assert.ok(!rows.some((row) => row.table === removedTable), `场景仍使用旧对账表 ${removedTable}`);
   }
-  for (const expectedTable of ["t_provider_transaction_match", "t_bank_recon_match"]) {
+  for (const expectedTable of ["t_channel_transaction_match", "t_bank_recon_match"]) {
     assert.ok(rows.some((row) => row.table === expectedTable), `场景缺少 ${expectedTable}`);
   }
   for (const expected of [
-    "第一层：Provider 交易对账",
+    "第一层：Channel 交易对账",
     "第二层：银行现金对账",
     "Finance 本地冻结引用",
     "无需在线查询 Payment",
@@ -5303,12 +5303,12 @@ test("Finance scenarios explain two-layer Provider reconciliation without Paymen
     "交易对账完整",
     "FEE/ADJUSTMENT",
     "Cost Confirm",
-    "Provider Batch 本身就是银行对账目标",
+    "Channel Batch 本身就是银行对账目标",
   ]) {
-    assert.ok(content.includes(expected), `Provider 对账场景缺少关键语义：${expected}`);
+    assert.ok(content.includes(expected), `Channel 对账场景缺少关键语义：${expected}`);
   }
-  assert.doesNotMatch(content, /Provider Cash Item|provider_cash_item_id=/u);
-  assert.match(content, /account_purpose=PROVIDER_SETTLEMENT/u);
+  assert.doesNotMatch(content, /Channel Cash Item|channel_cash_item_id=/u);
+  assert.match(content, /account_purpose=CHANNEL_SETTLEMENT/u);
   assert.doesNotMatch(content, /account_purpose=REFUND/u);
 });
 

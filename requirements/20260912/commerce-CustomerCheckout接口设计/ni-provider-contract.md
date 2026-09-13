@@ -1,5 +1,7 @@
 # NI Card 接入补充
 
+> 2026-09-13 命名后继：[支付渠道 Channel 决定](../../../agent-docs/decisions/2026-09-13-payment-channel-terminology.md)取代本文支付领域 Provider 命名；业务边界与历史证据保持。现行实体、字段及自有回调代码使用 Channel；外部固定协议与原报文不改写。
+
 > 历史接入研究：用户后续明确要求[自建存卡](../payment-自建CardVault/requirement.md)，本稿 Hosted Session/浏览器 NI 采集与 session_id 路径不再作为当前实施方案。NI 仍是首个收单 Provider；其适用卡数据提交协议和 3DS 需在新的卡数据环境边界内设计。保留以下内容供差异核对，不推断它已获实施批准。
 
 2026-09-12：用户已选择 NI（Network International）为首个 Provider。结合既定嵌入式 Checkout UI，本稿采用 N-Genius Online Hosted Session / Web SDK 作为接入方案；仍为四个 Customer 操作，不新增初始化或 resume 操作。本稿补充 NI 参数及研发核验点，不代表已获得渠道账户、已完成沙箱支付或批准数据库变更。

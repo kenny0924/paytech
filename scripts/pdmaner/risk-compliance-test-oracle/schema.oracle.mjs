@@ -111,9 +111,9 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "4f0d314fe1820a097ed732bf053f2467dbf15b5d5bd062a918ce60bfe9ea6cf1";
-export const EXPECTED_STRUCTURAL_DIGEST = "2d845580b9a7f4227f87ad3bb0e826d70959ed3cc699b7d535462327d6d50772";
-export const EXPECTED_CHECK_POLICY_DIGEST = "d0e1ee7f1531a3041aa51cbe77fec976075ef03dd78da6518922662588d99a1f";
+export const EXPECTED_MODEL_DIGEST = "ee01925a0049b64de0f4aee981518e15ea462be1e89319f1d70489e77e092d6e";
+export const EXPECTED_STRUCTURAL_DIGEST = "2082a3927abf0218a2f907cb13a1dbf8974d009d10b685b524d55e3a76ddaf5b";
+export const EXPECTED_CHECK_POLICY_DIGEST = "f35df0098deadbd2e35a26477945e76b6ca6619a35c9ac481a8251b68c4221ce";
 
 export const EXPECTED_TOTALS = Object.freeze({
   tables: 80,
@@ -442,12 +442,12 @@ export const REQUIRED_FIELDS = Object.freeze({
     "required_amount", "required_currency", "control_set_hash",
   ]),
   t_dispute_case: Object.freeze([
-    "dispute_case_id", "provider_dispute_notice_id", "payment_attempt_id", "order_id",
-    "client_id", "disputed_amount", "currency", "client_response_due_time", "provider_response_due_time", "version",
+    "dispute_case_id", "channel_dispute_notice_id", "payment_attempt_id", "order_id",
+    "client_id", "disputed_amount", "currency", "client_response_due_time", "channel_response_due_time", "version",
   ]),
   t_dispute_liability_decision: Object.freeze([
     "outcome_id", "decision_evaluation_id", "action_effect_id",
-    "principal_bearer", "provider_fee_bearer", "platform_error_flag", "provider_recovery_required",
+    "principal_bearer", "channel_fee_bearer", "platform_error_flag", "channel_recovery_required",
     "security_deposit_use_allowed",
   ]),
   t_compensation_event: Object.freeze([

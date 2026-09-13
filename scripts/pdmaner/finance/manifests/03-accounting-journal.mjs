@@ -80,7 +80,7 @@ export const TABLES = Object.freeze([
       field("line_code", types.code, "NN", "规则行代码", "同一规则版本和指令类型内稳定识别该会计含义的代码", {
         source: "Finance 自动记账规则行代码目录",
       }),
-      field("amount_source_code", types.code, "NN", "金额来源代码", "指向交易经济组件或受控业务金额的稳定代码；同一来源允许生成多条借贷规则行；渠道成本差额分别使用 PROVIDER_COST_INCREASE 和 PROVIDER_COST_DECREASE", {
+      field("amount_source_code", types.code, "NN", "金额来源代码", "指向交易经济组件或受控业务金额的稳定代码；同一来源允许生成多条借贷规则行；渠道成本差额分别使用 CHANNEL_COST_INCREASE 和 CHANNEL_COST_DECREASE", {
         source: "Finance 自动记账金额来源目录",
       }),
       field("owner_role", types.code, "NN", "账户核算对象角色", "由固定解释器解析统一账户核算对象类型和稳定ID的业务参与方角色", {

@@ -176,7 +176,7 @@ Readiness 不是持久化业务事实。PLT-I13 在一个一致查询快照内�
 - `t_console_resource` 只保存 `OPERATIONS|CLIENT|PARTNER` 的 `MENU|BUTTON` 当前树；`permission_id` 与 Human Route 一样独立引用 `t_permission`，但 Console Resource 与 Route 不互相引用；同 Channel Parent 由复合 FK 保证；
 - 只有 Target、Route、Console Resource 三个独立根使用 `version`。Header、Query、Guard 作为聚合子项整体替换，不建 `*_ver`、Release、Snapshot、Rollback、Ack、Runtime Counter 或新 `*_hash` 表/字段。
 
-授权关系必须保持分离：Human Route 的 `permission_id` 由 BFF 调 PLT-I02，沿 `Permission <- Role Permission <- Role <- Tenant Member Role <- Tenant Member` 读取当前授权；Client API Route 的 `required_scope_code` 与 PLT-I03 返回的 Effective Credential Scope Code 比较，不外键到某一 Tenant Credential Grant；Checkout 与 Provider Callback 使用各自 Resource/Profile 校验。`t_role.scope_key` 仍是由 Platform/Tenant Scope 派生的隔离键，不是 Client API Scope String。
+授权关系必须保持分离：Human Route 的 `permission_id` 由 BFF 调 PLT-I02，沿 `Permission <- Role Permission <- Role <- Tenant Member Role <- Tenant Member` 读取当前授权；Client API Route 的 `required_scope_code` 与 PLT-I03 返回的 Effective Credential Scope Code 比较，不外键到某一 Tenant Credential Grant；Checkout 与 Channel Callback 使用各自 Resource/Profile 校验。`t_role.scope_key` 仍是由 Platform/Tenant Scope 派生的隔离键，不是 Client API Scope String。
 
 Snapshot 只投影 ACTIVE Target 及其 ACTIVE Route/子项；DISABLED Target 是 Kill Switch，其 ACTIVE 子 Route 保留管理事实但不进入 Snapshot。Snapshot 没有数据库表；PLT-I20 每次都在一致性读取和完整校验后返回全量 typed DTO，不计算或返回 ETag，也不处理 `If-None-Match`/`304`。当前已部署 Operations Gateway 仍使用加固后的静态 Catalog；未来动态版本必须完整验证并原子替换 Snapshot，失败保留 Last Valid，冷启动无有效 Snapshot 不 Ready。Redis 不可用或决策不确定继续按 Gateway 权威 Fail-Closed/有界恢复；当前 Operations Redis 身份组件仍是 raw canonical socket IP 与 exact validated JWT `sub`，Redis Guard 不做 HMAC，只有 Access Log 使用独立 HMAC 假名化。
 
@@ -209,7 +209,7 @@ Snapshot 只投影 ACTIVE Target 及其 ACTIVE Route/子项；DISABLED Target �
 - Worker 使用 Lease + 递增 Fencing Token；Attempt 必须携带 Claim 的 Token。`UNKNOWN` 表示 Provider 结果不确定，必须先按 Provider Request Key 查询，禁止盲目重复发送。
 - Provider Callback 先按冻结 Provider Revision 的公开验证材料验签。只有 `VERIFIED` Callback 可通过复合 FK 锚定 Provider Message/Attempt/Delivery 并推进状态；失败必须保留 Failure Code。
 - `SENT` 只表示 Provider 接受，`DELIVERED` 来自已验签 Callback。晚到 COMPLAINT/HARD_BOUNCE 可覆盖较低优先级正向状态并创建 Suppression。
-- Dispute RFI 通知只负责发送与投递证据：Client 未响应时 Risk Case 保持 `EVIDENCE_REQUIRED`，不得自动认损；必须存在 Client/Operations 的显式授权，或 Provider 已验证的 `LOST` 结果，才由 Risk 决定并发布 `DisputeLost`。
+- Dispute RFI 通知只负责发送与投递证据：Client 未响应时 Risk Case 保持 `EVIDENCE_REQUIRED`，不得自动认损；必须存在 Client/Operations 的显式授权，或 Channel 已验证的 `LOST` 结果，才由 Risk 决定并发布 `DisputeLost`。
 
 ## 9. Client Webhook
 

@@ -21,7 +21,7 @@
 | CCT Local Partner Application | `730320000000000001` |
 | Order / Order Item / Order Context | `410001` / `410011` / `410021` |
 | Payment Intent / Attempt | `510001` / `510011` |
-| Provider / MID | `610001` / `610011` |
+| Channel / MID | `610001` / `610011` |
 | Checkout PRIMARY / SHADOW Evaluation | `310001` / `310002` |
 | Payment PRIMARY Evaluation | `310010` |
 | Payout Creation / Final Approval Evaluation | `310020` / `310021` |
@@ -129,7 +129,7 @@ Point Domain 冻结快照族：CHECKOUT/PAYMENT/SETTLEMENT 分别只能有一张
 
 ## 5. SCN-RISK-04：Payment Attempt 限额、LIMIT_EXCEEDED 与 UNKNOWN
 
-Payment Attempt `510011` 的 PRIMARY Evaluation `310010` 候选 ALLOW。`RESERVE_LIMIT_GROUP` Obligation `210052` 通过 Binding `520021` 冻结 Limit Version `510211`，不生成 Action Intent/Effect；Risk 按稳定顺序锁 Position `530001`，原子创建 Group `540010`、不可变 Reservation `540011` 和 RESERVE Movement `540021`。Provider 结果 UNKNOWN 后只推进 Group 并继续占用；权威 Success 到达才 COMMIT。另一笔请求若超过阈值，整个事务回滚并返回 DENY/LIMIT_EXCEEDED，不留下半个 Group。
+Payment Attempt `510011` 的 PRIMARY Evaluation `310010` 候选 ALLOW。`RESERVE_LIMIT_GROUP` Obligation `210052` 通过 Binding `520021` 冻结 Limit Version `510211`，不生成 Action Intent/Effect；Risk 按稳定顺序锁 Position `530001`，原子创建 Group `540010`、不可变 Reservation `540011` 和 RESERVE Movement `540021`。Channel 结果 UNKNOWN 后只推进 Group 并继续占用；权威 Success 到达才 COMMIT。另一笔请求若超过阈值，整个事务回滚并返回 DENY/LIMIT_EXCEEDED，不留下半个 Group。
 
 ### 5.1 Limit 7 表
 
@@ -138,7 +138,7 @@ Payment Attempt `510011` 的 PRIMARY Evaluation `310010` 候选 ALLOW。`RESERVE
 | `t_limit_version` | `limit_version_id=510211, limit_code=CLIENT_DAILY_AMOUNT, limit_name=Client Daily Amount, version_no=2, subject_type=CLIENT, metric_type=AMOUNT, window_unit=DAY, window_size=1, amount_limit=10000.00000000, count_limit=NULL, currency_mode=PER_CURRENCY, fixed_currency=NULL, status=FROZEN, frozen_by=900001`；身份与阈值同表冻结，只表达固定 UTC Window。 |
 | `t_decision_point_limit_binding` | `binding_id=520021, obligation_id=210052, limit_version_id=510211, sequence_no=1, subject_source_type=CONTEXT, subject_input_field_id=210121, amount_source_type=CONTEXT, amount_input_field_id=210122`；只能属于准确 Point Version 的 RESERVE_LIMIT_GROUP 义务。 |
 | `t_limit_position` | `position_id=530001, limit_version_id=510211, subject_key=client:200001, currency_scope_key=USD, window_start=2026-08-26T00:00Z, window_end=2026-08-27T00:00Z, reserved_amount=108.00000000, committed_amount=0, version=8`。 |
-| `t_limit_reservation_group` | `reservation_group_id=540010, assessment_id=330010, obligation_id=210052, status=PAYMENT_UNKNOWN, hold_reason=PROVIDER_RESULT_UNKNOWN, resolved_time=NULL, version=2`；Group 是唯一当前状态权威；零 Binding 也创建没有 Reservation 明细的空 Group。 |
+| `t_limit_reservation_group` | `reservation_group_id=540010, assessment_id=330010, obligation_id=210052, status=PAYMENT_UNKNOWN, hold_reason=CHANNEL_RESULT_UNKNOWN, resolved_time=NULL, version=2`；Group 是唯一当前状态权威；零 Binding 也创建没有 Reservation 明细的空 Group。 |
 | `t_limit_reservation` | 不可变行 `reservation_id=540011, reservation_group_id=540010, position_id=530001, amount=108.00000000, count_value=0`；不复制 Group 状态、原因、时间或 Version。 |
 | `t_limit_group_state_change` | `change_id=540012, aggregate_version=2` 追加 `RESERVED→PAYMENT_UNKNOWN`；Success 后再追加 `PAYMENT_UNKNOWN→COMMITTED`，Aggregate Version 单调，首行固定 `NULL→RESERVED`。 |
 | `t_limit_movement` | `movement_id=540021, reservation_id=540011, movement_type=RESERVE, amount_delta=108.00000000, count_delta=0, position_version=8`；Position 经 Reservation 定位；Success 追加 COMMIT 的非负绝对转移量，重复事件受 Trigger 唯一键阻挡。 |
@@ -178,25 +178,25 @@ Execution Create 与 External Submit 是两个独立检查点；`BANK_CASH` 在�
 
 ## 7. SCN-RISK-06：Dispute RFI、Outcome 与 Liability
 
-Payment 发布 Provider Dispute Notice `710001`。Risk 幂等创建 Case `720001`，Client Deadline 为 `2026-09-01T00:00:00.000000Z`，早于 Provider Deadline `2026-09-03T00:00:00.000000Z`。开案直接进入 EVIDENCE_REQUIRED，并与 `DisputeEvidenceRequested` 同事务登记；`DisputeOpened` 不触发 Finance 记账或冻结，Client 沉默也不得自动生成 Lost。Client 提交证据包后，Risk 请求 Payment 创建 Provider Action；只有 Provider 权威 LOST 或明确授权处置才由 Risk 冻结 Outcome/Shared-PK Liability 并发布权威结果。
+Payment 发布 Channel Dispute Notice `710001`。Risk 幂等创建 Case `720001`，Client Deadline 为 `2026-09-01T00:00:00.000000Z`，早于 Channel Deadline `2026-09-03T00:00:00.000000Z`。开案直接进入 EVIDENCE_REQUIRED，并与 `DisputeEvidenceRequested` 同事务登记；`DisputeOpened` 不触发 Finance 记账或冻结，Client 沉默也不得自动生成 Lost。Client 提交证据包后，Risk 请求 Payment 创建 Channel Action；只有 Channel 权威 LOST 或明确授权处置才由 Risk 冻结 Outcome/Shared-PK Liability 并发布权威结果。
 
 ### 7.1 Dispute 7 表
 
 | 物理表 | 示例行与生命周期 |
 |---|---|
-| `t_dispute_case` | `dispute_case_id=720001, case_no=DSP-2026-001, provider_dispute_notice_id=710001, provider_dispute_source_version=1, provider_id=610001, mid_id=610011, payment_attempt_id=510011, order_id=410001, client_id=200001, disputed_amount=108.00000000, currency=USD, client_response_due_time=2026-09-01T00:00:00.000000Z, provider_response_due_time=2026-09-03T00:00:00.000000Z`；建案为 `status=EVIDENCE_REQUIRED,current_outcome_id=NULL,version=1`，形成更正后为 `status=CLOSED,current_outcome_id=720052,version=6`。 |
-| `t_dispute_state_change` | `change_id=720011` 追加 `NULL→EVIDENCE_REQUIRED, aggregate_version=1`；随后追加 `UNDER_REVIEW→SUBMITTED, trigger_type=SUBMISSION_REQUEST, trigger_id=720041, aggregate_version=3`、`SUBMITTED→LOST, trigger_type=PROVIDER_OUTCOME, trigger_id=730001, aggregate_version=4`、`LOST→CLOSED, trigger_type=CASE_CLOSE_COMMAND, trigger_id=risk-command:720001-close, aggregate_version=5` 和 `CLOSED→CLOSED, trigger_type=OPERATIONS_CORRECTION, trigger_id=740002, aggregate_version=6`；首次结果与 V1 Outcome 相同，每个结果/更正 Trigger ID 逐值绑定 Outcome 来源，最大 Aggregate Version 始终等于 Case Version。 |
+| `t_dispute_case` | `dispute_case_id=720001, case_no=DSP-2026-001, channel_dispute_notice_id=710001, channel_dispute_source_version=1, channel_id=610001, mid_id=610011, payment_attempt_id=510011, order_id=410001, client_id=200001, disputed_amount=108.00000000, currency=USD, client_response_due_time=2026-09-01T00:00:00.000000Z, channel_response_due_time=2026-09-03T00:00:00.000000Z`；建案为 `status=EVIDENCE_REQUIRED,current_outcome_id=NULL,version=1`，形成更正后为 `status=CLOSED,current_outcome_id=720052,version=6`。 |
+| `t_dispute_state_change` | `change_id=720011` 追加 `NULL→EVIDENCE_REQUIRED, aggregate_version=1`；随后追加 `UNDER_REVIEW→SUBMITTED, trigger_type=SUBMISSION_REQUEST, trigger_id=720041, aggregate_version=3`、`SUBMITTED→LOST, trigger_type=CHANNEL_OUTCOME, trigger_id=730001, aggregate_version=4`、`LOST→CLOSED, trigger_type=CASE_CLOSE_COMMAND, trigger_id=risk-command:720001-close, aggregate_version=5` 和 `CLOSED→CLOSED, trigger_type=OPERATIONS_CORRECTION, trigger_id=740002, aggregate_version=6`；首次结果与 V1 Outcome 相同，每个结果/更正 Trigger ID 逐值绑定 Outcome 来源，最大 Aggregate Version 始终等于 Case Version。 |
 | `t_dispute_evidence_package` | `package_id=720021, dispute_case_id=720001, version_no=1, status=SUBMITTED, content_hash=eeb0a7cb32c7aabadb3c30f57caa7ba3ec05cf82de2e633aafe4c1e4eeada177`；Hash 使用 `CODE-MOR:RISK:DISPUTE_EVIDENCE_PACKAGE:1`，不复制 Case Deadline，提交后不可改。 |
 | `t_dispute_evidence_ref` | `evidence_id=720031, package_id=720021, evidence_type=RECEIPT, file_id=710101, content_hash=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef`；Platform 替换文件会产生新 File ID，Risk 不复制文件版本。 |
-| `t_dispute_submission_request` | `request_id=720041, dispute_case_id=720001, package_id=720021, request_no=1`；`status=UNKNOWN` 时保持 `active_slot=1, provider_dispute_action_id=730001, action_source_version=3, resolved_time=NULL`，因此不能发起第二个 Request；权威回查后推进 `status=SUCCEEDED, active_slot=NULL, resolved_time=2026-09-02T12:00:00.000000Z, version=4`。 |
-| `t_dispute_outcome` | V1 `outcome_id=720051, dispute_case_id=720001, outcome_version=1, outcome=LOST, decision_source_type=PROVIDER_ACTION, decision_source_id=730001, source_version=4, provider_dispute_action_id=730001, supersedes_outcome_id=NULL`；Operations 核验 Provider 更正后追加 V2 `outcome_id=720052, outcome_version=2, outcome=WON, decision_source_type=OPERATIONS_CORRECTION, decision_source_id=740002, source_version=1, provider_dispute_action_id=730002, supersedes_outcome_id=720051`，不得跨案、跳版、回指或分叉。 |
-| `t_dispute_liability_decision` | V1 与 Outcome 共享主键 `outcome_id=720051, decision_evaluation_id=310030, action_effect_id=315030, decided_by=NULL, recommended_principal_bearer=CLIENT, principal_bearer=CLIENT, provider_fee_bearer=CLIENT, platform_error_flag=0, provider_recovery_required=0, security_deposit_use_allowed=1, reason_code=CLIENT_LIABILITY`；Effect `315030` 必须保存 `evaluation_id=310030, effect_mode=REAL, effect_status=APPLIED, execution_type=LOCAL_SYNC, execution_status=SUCCEEDED`。V2 同步创建 `outcome_id=720052, decision_evaluation_id=NULL, action_effect_id=NULL, decided_by=900002, principal_bearer=PLATFORM, security_deposit_use_allowed=0`。人工更正必须冻结操作人；责任行不保存独立 Liability ID、Release ID 或金额。 |
+| `t_dispute_submission_request` | `request_id=720041, dispute_case_id=720001, package_id=720021, request_no=1`；`status=UNKNOWN` 时保持 `active_slot=1, channel_dispute_action_id=730001, action_source_version=3, resolved_time=NULL`，因此不能发起第二个 Request；权威回查后推进 `status=SUCCEEDED, active_slot=NULL, resolved_time=2026-09-02T12:00:00.000000Z, version=4`。 |
+| `t_dispute_outcome` | V1 `outcome_id=720051, dispute_case_id=720001, outcome_version=1, outcome=LOST, decision_source_type=CHANNEL_ACTION, decision_source_id=730001, source_version=4, channel_dispute_action_id=730001, supersedes_outcome_id=NULL`；Operations 核验 Channel 更正后追加 V2 `outcome_id=720052, outcome_version=2, outcome=WON, decision_source_type=OPERATIONS_CORRECTION, decision_source_id=740002, source_version=1, channel_dispute_action_id=730002, supersedes_outcome_id=720051`，不得跨案、跳版、回指或分叉。 |
+| `t_dispute_liability_decision` | V1 与 Outcome 共享主键 `outcome_id=720051, decision_evaluation_id=310030, action_effect_id=315030, decided_by=NULL, recommended_principal_bearer=CLIENT, principal_bearer=CLIENT, channel_fee_bearer=CLIENT, platform_error_flag=0, channel_recovery_required=0, security_deposit_use_allowed=1, reason_code=CLIENT_LIABILITY`；Effect `315030` 必须保存 `evaluation_id=310030, effect_mode=REAL, effect_status=APPLIED, execution_type=LOCAL_SYNC, execution_status=SUCCEEDED`。V2 同步创建 `outcome_id=720052, decision_evaluation_id=NULL, action_effect_id=NULL, decided_by=900002, principal_bearer=PLATFORM, security_deposit_use_allowed=0`。人工更正必须冻结操作人；责任行不保存独立 Liability ID、Release ID 或金额。 |
 
 Package Hash 的 Canonical JSON 只含 `disputeCaseId/versionNo` 和按 `evidenceType + fileId` 排序的 `contentHash/evidenceType/fileId` 数组；Status、Deadline 和审计列均不参与。相同集合无论输入顺序如何都得到同一 Hash，重复 Evidence Identity 或非规范 ID/Hash 直接拒绝。
 
-另一个 Case `720002` 可由明确授权 Client 处置形成 `decision_source_type=CLIENT_DISPOSITION, decision_source_id=740001, provider_dispute_action_id=NULL` 的 V1 LOST，并以 Liability `decided_by` 冻结授权操作人；对应 State Change 必须为 `trigger_type=CLIENT_DISPOSITION, trigger_id=740001`，这不是把 Client 沉默解释为认损。Operations 首次处置同样只允许 V1 LOST，使用 `OPERATIONS_DISPOSITION`；只有 V2+ 更正命令使用 `OPERATIONS_CORRECTION`，每个 CLOSED 自环的 Trigger ID 必须按版本等于对应更正 `decision_source_id`，交换两个更正命令 ID 也必须拒绝。四类来源均以 `decision_source_type + decision_source_id + source_version` 幂等。
+另一个 Case `720002` 可由明确授权 Client 处置形成 `decision_source_type=CLIENT_DISPOSITION, decision_source_id=740001, channel_dispute_action_id=NULL` 的 V1 LOST，并以 Liability `decided_by` 冻结授权操作人；对应 State Change 必须为 `trigger_type=CLIENT_DISPOSITION, trigger_id=740001`，这不是把 Client 沉默解释为认损。Operations 首次处置同样只允许 V1 LOST，使用 `OPERATIONS_DISPOSITION`；只有 V2+ 更正命令使用 `OPERATIONS_CORRECTION`，每个 CLOSED 自环的 Trigger ID 必须按版本等于对应更正 `decision_source_id`，交换两个更正命令 ID 也必须拒绝。四类来源均以 `decision_source_type + decision_source_id + source_version` 幂等。
 
-Risk 拥有 Outcome/Liability，Payment 拥有 Provider 交互。只有权威 `DisputeLost` 触发 Finance Journal；Finance 只能读取显式 `security_deposit_use_allowed=1`，且该值还必须对应 `LOST + principal_bearer=CLIENT`，不能从承担方或 Reason Code 推导。更正为 WON 后只追加补偿 Journal，不改写原账；没有建立 Generic RFI。
+Risk 拥有 Outcome/Liability，Payment 拥有 Channel 交互。只有权威 `DisputeLost` 触发 Finance Journal；Finance 只能读取显式 `security_deposit_use_allowed=1`，且该值还必须对应 `LOST + principal_bearer=CLIENT`，不能从承担方或 Reason Code 推导。更正为 WON 后只追加补偿 Journal，不改写原账；没有建立 Generic RFI。
 
 ## 8. 本地可靠执行与幂等
 
@@ -223,7 +223,7 @@ Risk 补偿事件重建清单按事实族冻结如下；每一行的权威事实
 
 三个 Risk-owned Recoverable Token 是 `t_dd_party_snapshot.snapshot_vault_token`、`t_dd_check.result_vault_token`、`t_screening_hit.name_vault_token`；四个 Commerce Stable Correlation Token 是 Checkout/Transaction 快照各自的 Email/Phone Token，后四者不授予 Risk Reveal。`t_dd_party_snapshot.snapshot_vault_token` 是已批准的案件时点受保护快照，存在合规复核 Reveal 消费者，保持 NOT NULL。七列均保留 `VARCHAR(128)` 协议缓冲；规则配置不调用 Vault。Risk 物理 DDL 目标为零 CHECK、零 FOREIGN KEY，关系和复合关系 Sidecar 继续由 Owner 事务与测试执行；全局 DB-01 未完成且仍受 Vault 物理 Schema 阻塞。
 
-补偿载荷不包含消费者/网络原值、Vault Reveal 值、文件正文、Provider 原文、Secret 或卡数据。XXL-Job 只做丢失唤醒后的兜底扫描；业务唯一键、来源版本和状态机负责消费者幂等。
+补偿载荷不包含消费者/网络原值、Vault Reveal 值、文件正文、Channel 原文、Secret 或卡数据。XXL-Job 只做丢失唤醒后的兜底扫描；业务唯一键、来源版本和状态机负责消费者幂等。
 
 ## 9. 失败与不创建清单
 
@@ -233,5 +233,5 @@ Risk 补偿事件重建清单按事实族冻结如下；每一行的权威事实
 - Limit 任一 Position 超阈值：全部 Position、Reservation、Movement 和 Group 回滚，返回 DENY/LIMIT_EXCEEDED。
 - Payment UNKNOWN：继续保留 Reservation，不由 TTL、调度器或人工脚本释放。
 - Local Partner `MIN_SECURITY_DEPOSIT`：发布和运行都失败，不落 Control；Block 仍可正常命中。
-- Dispute Deadline 逆序、Request/Package 跨 Case、Provider Action 坐标不匹配、首次结果与 V1 Outcome 相反、Trigger ID 与来源错配、Outcome 来源重放冲突、更正链跨案/分叉、State/Case Version 不一致、Timer/沉默形成 LOST、人工责任缺少 `decided_by`、Action Effect 不属于指定 Evaluation 或保证金许可缺少规则/操作人来源：拒绝状态推进。
+- Dispute Deadline 逆序、Request/Package 跨 Case、Channel Action 坐标不匹配、首次结果与 V1 Outcome 相反、Trigger ID 与来源错配、Outcome 来源重放冲突、更正链跨案/分叉、State/Case Version 不一致、Timer/沉默形成 LOST、人工责任缺少 `decided_by`、Action Effect 不属于指定 Evaluation 或保证金许可缺少规则/操作人来源：拒绝状态推进。
 - MVP 不建立 Velocity 聚合桶、通用 Case、通用 RFI、通用 Retention、中央补偿库或无业务消费者的敏感字段。

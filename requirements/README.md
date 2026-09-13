@@ -65,5 +65,13 @@ requirements/
 
 | `20260912` | 决策流新增节点处理结果条件 | Operations Console / Risk | RCO-18，纳入 RCO-19 评审 | [需求](./20260912/operations-console-决策流节点处理结果/requirement.md) · [技术入口](./20260912/operations-console-决策流节点处理结果/technique.md) · [交付记录](./20260912/operations-console-决策流节点处理结果/delivery.md) |
 | `20260912` | 统一风控变量管理与条件编排 | Operations Console / Risk | RCO-19，阶段 1/2/3 已确认、阶段 4 研发中 | [需求](./20260912/operations-console-统一风控变量管理与条件编排/requirement.md) · [差异与影响](./20260912/operations-console-统一风控变量管理与条件编排/technique.md) · [完整方案](./20260912/operations-console-统一风控变量管理与条件编排/design.md) · [交付记录](./20260912/operations-console-统一风控变量管理与条件编排/delivery.md) |
-本索引只做检索，不复制实现、测试数量或部署状态。
+
+| `20260912` | Payment 应用初始化 | Payment Orchestration | 应用基础工程 | [需求](./20260912/payment-应用初始化/requirement.md) · [技术方案](./20260912/payment-应用初始化/technique.md) · [交付记录](./20260912/payment-应用初始化/delivery.md) |
+
+| `20260913` | Payment 业务模块划分 | Payment Orchestration | 四业务模块工程拆分；验证与状态见台账 | [需求](./20260913/payment-业务模块划分/requirement.md) · [模块方案](./20260913/payment-业务模块划分/technique.md) · [交付记录](./20260913/payment-业务模块划分/delivery.md) |
+
+| `20260913` | 全系统支付渠道命名统一 | Payment / 关联核心系统与入口 | 映射已确认；本地实施与验证记录见当前台账 | [需求](./20260913/payment-支付渠道命名统一/requirement.md) · [关联评审](./20260913/payment-支付渠道命名统一/technique.md) · [交付记录](./20260913/payment-支付渠道命名统一/delivery.md) |
+
+| `20260913` | Payment Execution 设计 | Payment / Execution，关联 Commerce | 原基线与 Token 后继修订分开评审；实际状态见台账 | [需求](./20260913/payment-Execution设计/requirement.md) · [技术入口](./20260913/payment-Execution设计/technique.md) · [详细设计](./20260913/payment-Execution设计/design.md) · [Token 修订](./20260913/payment-Execution设计/instrument-token-amendment.md) · [交付记录](./20260913/payment-Execution设计/delivery.md) |
+
 | `20260913` | 菜单权限与 API 配置管理 | Platform Support / Operations Console | PLT-16、PLT-17、E2E-16；阶段 1/2 已确认；36 个新端点、零 DDL、227 行注册、7 张 Pencil 的阶段 3 评审稿 | [需求](./20260913/platform-support-菜单权限与API配置管理/requirement.md) · [技术入口](./20260913/platform-support-菜单权限与API配置管理/technique.md) · [交付记录](./20260913/platform-support-菜单权限与API配置管理/delivery.md) |

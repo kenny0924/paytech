@@ -77,7 +77,7 @@ export const GATEWAY_CONTROL_CONTRACTS = Object.freeze({
     }),
     relations: Object.freeze([]),
     enums: Object.freeze({
-      channel: Object.freeze(["OPERATIONS", "CLIENT", "PARTNER", "CHECKOUT", "CLIENT_API", "PROVIDER_CALLBACK"]),
+      channel: Object.freeze(["OPERATIONS", "CLIENT", "PARTNER", "CHECKOUT", "CLIENT_API", "CHANNEL_CALLBACK"]),
       status: Object.freeze(["ACTIVE", "DISABLED"]),
     }),
   }),
@@ -113,9 +113,9 @@ export const GATEWAY_CONTROL_CONTRACTS = Object.freeze({
       Object.freeze({ childField: "permission_id", parentTable: "permission", parentField: "permission_id", cardinality: "n:1" }),
     ]),
     enums: Object.freeze({
-      channel: Object.freeze(["OPERATIONS", "CLIENT", "PARTNER", "CHECKOUT", "CLIENT_API", "PROVIDER_CALLBACK"]),
-      security_profile_code: Object.freeze(["OPERATIONS_JWT", "CLIENT_JWT", "PARTNER_JWT", "CLIENT_API_CREDENTIAL", "CHECKOUT_SESSION", "PROVIDER_CALLBACK", "PUBLIC"]),
-      authorization_mode: Object.freeze(["PUBLIC", "HUMAN_AUTHENTICATED", "HUMAN_PERMISSION", "API_SCOPE", "CHECKOUT_RESOURCE", "PROVIDER_CALLBACK"]),
+      channel: Object.freeze(["OPERATIONS", "CLIENT", "PARTNER", "CHECKOUT", "CLIENT_API", "CHANNEL_CALLBACK"]),
+      security_profile_code: Object.freeze(["OPERATIONS_JWT", "CLIENT_JWT", "PARTNER_JWT", "CLIENT_API_CREDENTIAL", "CHECKOUT_SESSION", "CHANNEL_CALLBACK", "PUBLIC"]),
+      authorization_mode: Object.freeze(["PUBLIC", "HUMAN_AUTHENTICATED", "HUMAN_PERMISSION", "API_SCOPE", "CHECKOUT_RESOURCE", "CHANNEL_CALLBACK"]),
       request_cookie_mode: Object.freeze(["DROP", "REQUIRE_PROFILE_COOKIE"]),
       response_cookie_mode: Object.freeze(["NONE", "ISSUE_ONLY", "ISSUE_OR_CLEAR", "CLEAR_ONLY"]),
       status: Object.freeze(["ACTIVE", "DISABLED"]),
@@ -242,7 +242,7 @@ export const REQUIRED_GATEWAY_ROUTE_COMPATIBILITY = Object.freeze({
   ]),
   CLIENT_API: Object.freeze(["CLIENT_API_CREDENTIAL:API_SCOPE"]),
   CHECKOUT: Object.freeze(["CHECKOUT_SESSION:CHECKOUT_RESOURCE"]),
-  PROVIDER_CALLBACK: Object.freeze(["PROVIDER_CALLBACK:PROVIDER_CALLBACK"]),
+  CHANNEL_CALLBACK: Object.freeze(["CHANNEL_CALLBACK:CHANNEL_CALLBACK"]),
 });
 
 export const REMOVED_PLATFORM_TABLES = Object.freeze([
@@ -425,7 +425,7 @@ export function isForbiddenSecretField(fieldName) {
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 export const EXPECTED_CHECK_COUNT = 85;
-export const EXPECTED_CHECK_POLICY_DIGEST = "6260b6db67d05e37a3361c32507363271bee61bd4ad9144358c5bc8a1e6a6f3d";
+export const EXPECTED_CHECK_POLICY_DIGEST = "eee538cfb6396fa1c4a2f49202c0154e0973d69cb3e34487373d0aecd0862980";
 
 export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
   ck_federated_provider: Object.freeze({
@@ -461,7 +461,7 @@ export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
     tables: Object.freeze(["gateway_route"]),
   }),
   ck_gateway_route_authorization: Object.freeze({
-    expression: "(authorization_mode='HUMAN_PERMISSION' AND permission_id IS NOT NULL AND required_scope_code IS NULL) OR (authorization_mode='API_SCOPE' AND permission_id IS NULL AND required_scope_code IS NOT NULL) OR (authorization_mode IN ('PUBLIC','HUMAN_AUTHENTICATED','CHECKOUT_RESOURCE','PROVIDER_CALLBACK') AND permission_id IS NULL AND required_scope_code IS NULL)",
+    expression: "(authorization_mode='HUMAN_PERMISSION' AND permission_id IS NOT NULL AND required_scope_code IS NULL) OR (authorization_mode='API_SCOPE' AND permission_id IS NULL AND required_scope_code IS NOT NULL) OR (authorization_mode IN ('PUBLIC','HUMAN_AUTHENTICATED','CHECKOUT_RESOURCE','CHANNEL_CALLBACK') AND permission_id IS NULL AND required_scope_code IS NULL)",
     tables: Object.freeze(["gateway_route"]),
   }),
   ck_gateway_route_limits: Object.freeze({
@@ -544,5 +544,5 @@ export const EXPECTED_TOTALS = Object.freeze({
   diagramGroups: 7,
 });
 
-export const EXPECTED_MODEL_DIGEST = "76d82246ec677290b3d95cf0330c2d0ed1f3511ac2c76409d193e24209087190";
-export const EXPECTED_STRUCTURAL_DIGEST = "78d940143c5549a01308e30baf41770ae7e80497d886d1265cbc600cda0f98df";
+export const EXPECTED_MODEL_DIGEST = "52d442dabb27e8ff239b6b6b42a65fdb733d0062d27165288748e14fbb9d34e9";
+export const EXPECTED_STRUCTURAL_DIGEST = "cc5a23680a406a53fcf1cbc800b5b276dd95ca56e793cc9bd90096174e01bd31";

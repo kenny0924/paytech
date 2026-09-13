@@ -1,0 +1,299 @@
+{
+  "checkedAtUtc": "2026-09-13T10:58:42.197084+00:00",
+  "localLinks": 72,
+  "changedWebFilesWhitespaceChecked": 37,
+  "gitDiffCheck": [
+    "workspace",
+    "payment-orchestration-service"
+  ],
+  "links": [
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./delivery.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./api-contract.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./data-design.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./state-and-recovery.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./mock-contract.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./verification-plan.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./development-checks.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./db/ddl.sql"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../payment-业务模块划分/technique.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CreatePaymentIntentProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentIntentProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ClosePaymentIntentCreationProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/TerminatePaymentIntentProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/SubmitCardPaymentProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentSubmissionProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CapturePaymentProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CreatePaymentRefundProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentRefundProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ReversePaymentProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentPricingFactProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentActionProcessor.java"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./data-design.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../payment-orchestration-service/docs/database/payment-orchestration.pdma.json"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./verification-plan.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/design.md",
+      "target": "./delivery.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./requirement.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./technique.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "../../../agent-docs/decisions/2026-09-13-payment-execution-code-orchestration.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-business-modules"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./technique.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./requirement.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "../../../agent-docs/decisions/2026-09-13-payment-execution-code-orchestration.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./design.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./api-contract.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./api-examples.json"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./data-design.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./db/ddl.sql"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./state-and-recovery.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./mock-contract.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./verification-plan.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./verification-plan.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "../../../agent-docs/REQUIREMENT_DELIVERY_WORKFLOW.md#阶段-3方案接口与数据设计"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./db/execution-create-empty-schema.sql"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./db/ddl.sql"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./development-checks.md"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "./design.md#11-接口与-processor-一一对应"
+    },
+    {
+      "source": "requirements/20260913/payment-Execution设计/delivery.md",
+      "target": "../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../agent-docs/JAVA_PROJECT_STRUCTURE.md"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../agent-docs/DEVELOPMENT_CONVENTIONS.md"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../agent-docs/UNIT_TEST_GUIDE.md"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../requirements/20260913/payment-业务模块划分/technique.md#3-表的唯一归属建议"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../paytech-build/README.md"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../requirements/20260913/payment-Execution设计/design.md"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../requirements/20260913/payment-Execution设计/design.md#11-接口与-processor-一一对应"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../requirements/20260913/payment-Execution设计/db/execution-create-empty-schema.sql"
+    },
+    {
+      "source": "payment-orchestration-service/README.md",
+      "target": "../requirements/20260913/payment-Execution设计/db/ddl.sql"
+    },
+    {
+      "source": "agent-docs/CURRENT_IMPLEMENTATION.md",
+      "target": "../requirements/20260913/payment-Execution设计/db/execution-create-empty-schema.sql"
+    },
+    {
+      "source": "agent-docs/CURRENT_IMPLEMENTATION.md",
+      "target": "../requirements/20260913/payment-Execution设计/assets/local-sql-application.json"
+    },
+    {
+      "source": "agent-docs/CURRENT_IMPLEMENTATION.md",
+      "target": "../requirements/20260913/payment-Execution设计/design.md#11-接口与-processor-一一对应"
+    },
+    {
+      "source": "agent-docs/CURRENT_IMPLEMENTATION.md",
+      "target": "../requirements/20260913/payment-Execution设计/assets/processor-refactor-verification.json"
+    },
+    {
+      "source": "agent-docs/CURRENT_IMPLEMENTATION.md",
+      "target": "../requirements/20260913/payment-Execution设计/assets/development-verification.json"
+    },
+    {
+      "source": "agent-docs/CURRENT_IMPLEMENTATION.md",
+      "target": "../requirements/20260913/payment-Execution设计/assets/processor-refactor-packaged-smoke.json"
+    },
+    {
+      "source": "agent-docs/CURRENT_IMPLEMENTATION.md",
+      "target": "../requirements/20260913/payment-Execution设计/assets/local-fixture-cleanup.json"
+    },
+    {
+      "source": "agent-docs/CURRENT_IMPLEMENTATION.md",
+      "target": "../requirements/20260913/payment-Execution设计/development-checks.md"
+    },
+    {
+      "source": "agent-docs/CURRENT_IMPLEMENTATION.md",
+      "target": "../requirements/20260913/payment-Execution设计/assets/document-checks.json"
+    },
+    {
+      "source": "agent-docs/CURRENT_IMPLEMENTATION.md",
+      "target": "../requirements/20260913/payment-Execution设计/assets/processor-refactor-document-checks.json"
+    }
+  ]
+}

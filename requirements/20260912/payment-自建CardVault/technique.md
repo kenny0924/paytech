@@ -1,5 +1,7 @@
 # Payment Card 模块技术入口
 
+> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
+
 状态：阶段 1 模块边界已确认；用户在阶段 3 将前端两次提交修订为 Payment 承接的一次支付请求，本文同步受影响调用链。本文保留现状与影响分析；本轮阶段 3 交付[接口字段稿](./api-contract.md)和[数据/事务/实施稿](./data-design.md)。具体字段只在这两份稿件维护，未实现或发布接口。
 
 ## 1. 已确认归属与模块职责
@@ -26,7 +28,7 @@
 
 以上沿用[业务能力模块规范](../../../agent-docs/JAVA_PROJECT_STRUCTURE.md#34-复杂核心服务的业务能力模块)。Maven 模块不提供进程、内存或数据库账号的隔离：同进程部署时，Payment `web`、Card 模块及所在运行环境均需纳入卡数据安全评估。独立进程/数据库不是本次模块决定的默认结果。
 
-Card Token、当前授权输入引用和长期“已保存卡”标识是否需要区分，要由真实用途决定。当前不预建通用 Token 层、公共 Detokenize API 或跨 Provider 万能 JSON。
+Card Token、当前授权输入引用和长期“已保存卡”标识是否需要区分，要由真实用途决定。当前不预建通用 Token 层、公共 Detokenize API 或跨 Channel 万能 JSON。
 
 ## 2. 现状差异与能力缺口
 
@@ -35,8 +37,8 @@ Card Token、当前授权输入引用和长期“已保存卡”标识是否需�
 | 能力 | 当前证据 | 本需求需要补齐 |
 |---|---|---|
 | Payment 工程 | 仓库当前只有[数据库设计材料](../../../payment-orchestration-service/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md)，未发现 Java/POM | Payment 应用基础、真实 Card 模块及消费者；模块边界测试随功能实现，不只增加空 JAR |
-| 支付执行 | 目标模型有 Intent、Attempt、Action、Provider Account/MID 和 Customer Action | 对应业务接口、状态机、合法接受门禁、路由、NI Adapter、原执行恢复；新增 Card 模块本身不能代替完整支付执行 |
-| 自建卡库 | [当前 Schema](../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql) 的 `t_payment_instrument` 必须有 `provider_instrument_ref`，并禁止 PAN/有效期 | Card 模块专属加密存储与平台引用；不能将平台 Token 填进 Provider 引用冒充已有模型支持 |
+| 支付执行 | 目标模型有 Intent、Attempt、Action、Channel Account/MID 和 Customer Action | 对应业务接口、状态机、合法接受门禁、路由、NI Adapter、原执行恢复；新增 Card 模块本身不能代替完整支付执行 |
+| 自建卡库 | [当前 Schema](../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql) 的 `t_payment_instrument` 必须有 `channel_instrument_ref`，并禁止 PAN/有效期 | Card 模块专属加密存储与平台引用；不能将平台 Token 填进 Channel 引用冒充已有模型支持 |
 | Commerce | [Commerce README](../../../commerce-service/README.md) 表明已有 Client 创建/查询/取消/退款，最终准备与 Payment 真正接入仍是缺口 | Customer 查询/资料/准备三个公开操作、内部法律确认及 Payment 状态查询；不把卡库塞进 Commerce |
 | Checkout Web | 仓库有已认可的页面设计，未发现前端运行工程 | 页面实现、卡输入组件、统一 Pay 请求、3DS 与结果刷新；页面设计通过不等于 SDK 已接通 |
 | 通用中间件 | [Foundation](../../../paytech-foundation/README.md) 已有 Request ID/MDC、统一错误与按路径仅记录元数据的日志配置 | 复用 `web.logging.metadata-only-path-prefixes`，覆盖卡入口和临时材料响应；无需为 Card 复制 Filter 或 Advice。出站 NI 日志、解析失败及追踪还需单独核验 |
@@ -85,11 +87,11 @@ Card Token、当前授权输入引用和长期“已保存卡”标识是否需�
 
 2026-09-12 只读取官方文档，没有使用账户或调用交易 API：
 
-- [Two stage payments](https://docs.ngenius-payments.com/reference/two-stage-payments-orders) 支持先创建 NI Order，再向其指定 Payment 提交卡数据。建议作为恢复设计的优先候选：先取得并落库稳定 Provider Order/Payment 引用，再发送资金请求。NI Order 创建响应丢失的恢复仍需核实，不能由两阶段流程推断已有幂等保证；文档后半部有旧 3DS 1 示例，不沿用。
+- [Two stage payments](https://docs.ngenius-payments.com/reference/two-stage-payments-orders) 支持先创建 NI Order，再向其指定 Payment 提交卡数据。建议作为恢复设计的优先候选：先取得并落库稳定 Channel Order/Payment 引用，再发送资金请求。NI Order 创建响应丢失的恢复仍需核实，不能由两阶段流程推断已有幂等保证；文档后半部有旧 3DS 1 示例，不沿用。
 - [One stage payments](https://docs.ngenius-payments.com/reference/one-stage-payments-1) 也支持创建订单与卡支付一次请求。它减少渠道调用，但首次响应丢失时稳定查询坐标更需要证据；目前未验证商户自定义引用的查询/去重保证，不先认定该方式能安全自动重试。
-- [Alternative EMV 3DS Workflow](https://docs.ngenius-payments.com/reference/alternative-emv-3ds-workflow-websdk-2) 描述处理 `AWAIT_3DS` 的 SDK 能力。该能力与前序“SDK 托管卡采集”分开评估；文档示例传整份支付响应，项目需核实最小指令字段，不能直接向 Commerce 或浏览器暴露未经筛选的 Provider 响应。
+- [Alternative EMV 3DS Workflow](https://docs.ngenius-payments.com/reference/alternative-emv-3ds-workflow-websdk-2) 描述处理 `AWAIT_3DS` 的 SDK 能力。该能力与前序“SDK 托管卡采集”分开评估；文档示例传整份支付响应，项目需核实最小指令字段，不能直接向 Commerce 或浏览器暴露未经筛选的 Channel 响应。
 
-以上是协议可行性证据。实际 NI 账户权限、动作类型、环境、幂等/恢复和 3DS 最小字段尚未通过沙箱验证；首个 Provider 已选 NI，无需再次选渠道。本次不在浏览器保存 NI 私有凭据，不把平台 Token 当成 NI `session_id`。
+以上是协议可行性证据。实际 NI 账户权限、动作类型、环境、幂等/恢复和 3DS 最小字段尚未通过沙箱验证；首个 Channel 已选 NI，无需再次选渠道。本次不在浏览器保存 NI 私有凭据，不把平台 Token 当成 NI `session_id`。
 
 ## 6. 逐系统改动范围与下一阶段成果
 

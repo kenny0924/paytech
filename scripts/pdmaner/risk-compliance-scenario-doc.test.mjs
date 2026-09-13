@@ -71,7 +71,7 @@ const REMOVED_DISPUTE_FIELDS = Object.freeze([
 ]);
 
 const DISPUTE_DECISION_SOURCE_TYPES = Object.freeze([
-  "PROVIDER_ACTION",
+  "CHANNEL_ACTION",
   "CLIENT_DISPOSITION",
   "OPERATIONS_DISPOSITION",
   "OPERATIONS_CORRECTION",
@@ -328,10 +328,10 @@ test("Dispute documentation freezes the balanced seven-table aggregate and corre
   assert.match(disputeContract, /outcome_version[^。\n]*(?:连续|相邻)/u, "Outcome Version 必须连续");
   assert.match(disputeContract, /supersedes_outcome_id[^。\n]*(?:直接前序|上一版|前一版)/u, "更正必须引用直接前序 Outcome");
   assert.match(disputeContract, /current_outcome_id[^。\n]*(?:链尾|最新版本)/u, "Case 当前指针必须指向同案链尾");
-  assert.match(disputeContract, /Provider[^。\n]*Client[^。\n]*Operations[^。\n]*(?:Version 1|V1)/u);
+  assert.match(disputeContract, /Channel[^。\n]*Client[^。\n]*Operations[^。\n]*(?:Version 1|V1)/u);
   assert.match(disputeContract, /Client\/Operations[^。\n]*(?:只允许|只能)[^。\n]*(?:LOST|Lost)/u);
   assert.match(disputeContract, /(?:Version 2\+|V2\+|Version N)[^。\n]*(?:只允许|只有)[^。\n]*OPERATIONS_CORRECTION/iu);
-  for (const trigger of ["PROVIDER_OUTCOME", "CLIENT_DISPOSITION", "OPERATIONS_DISPOSITION"]) {
+  for (const trigger of ["CHANNEL_OUTCOME", "CLIENT_DISPOSITION", "OPERATIONS_DISPOSITION"]) {
     assert.match(disputeContract, new RegExp(`\\b${trigger}\\b`, "u"), `直接 LOST 缺少可信 Trigger：${trigger}`);
   }
   assert.match(disputeContract, /CLOSED[^。\n]*(?:自环|→CLOSED)[^。\n]*OPERATIONS_CORRECTION/u);
@@ -693,7 +693,7 @@ test("Risk logical decision documentation matches the generated physical contrac
   );
   assert.match(
     logicalDatabase,
-    /直接 LOST[^。\n]*已验证 Provider LOST[^。\n]*已授权 Client[^。\n]*已授权 Operations/u,
+    /直接 LOST[^。\n]*已验证 Channel LOST[^。\n]*已授权 Client[^。\n]*已授权 Operations/u,
   );
 
   const auditCatalogRow = logicalDatabase.match(/\| release_audit_event \|[^\n]+/u)?.[0] ?? "";

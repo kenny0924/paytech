@@ -1,0 +1,362 @@
+{
+  "description": "12 个独立场景的合同样例，不构成顺序执行记录；未调用任何服务，未执行资金操作。所有引用均为合成测试值。",
+  "examples": [
+    {
+      "id": "EX-I01",
+      "method": "POST",
+      "path": "/payment-execution/v1/intents",
+      "headers": {
+        "Idempotency-Key": "example:ex-i01"
+      },
+      "body": {
+        "clientId": "101",
+        "sourceType": "COMMERCE_ORDER",
+        "sourceId": "201",
+        "sourceOrderContextId": "202",
+        "entityNo": "AE001",
+        "contextFormat": "TERM_PRICE",
+        "clientPricingVersionId": "301",
+        "industryCode": "RETAIL",
+        "mccCode": "5732",
+        "amount": "100.00",
+        "currency": "AED",
+        "expiresAt": "2026-09-14T10:00:00Z"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "intentId": "601",
+          "sourceType": "COMMERCE_ORDER",
+          "sourceId": "201",
+          "entityNo": "AE001",
+          "amount": "100.00",
+          "currency": "AED",
+          "status": "REQUIRES_PAYMENT",
+          "newAttemptsAllowed": true,
+          "expiresAt": "2026-09-14T10:00:00Z",
+          "version": "1"
+        }
+      }
+    },
+    {
+      "id": "EX-I02",
+      "method": "GET",
+      "path": "/payment-execution/v1/intents/601",
+      "query": {
+        "clientId": "101"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "intentId": "601",
+          "sourceType": "COMMERCE_ORDER",
+          "sourceId": "201",
+          "entityNo": "AE001",
+          "amount": "100.00",
+          "currency": "AED",
+          "status": "REQUIRES_PAYMENT",
+          "newAttemptsAllowed": true,
+          "expiresAt": "2026-09-14T10:00:00Z",
+          "version": "1"
+        }
+      }
+    },
+    {
+      "id": "EX-I03",
+      "method": "POST",
+      "path": "/payment-execution/v1/intent-creations/close",
+      "headers": {
+        "Idempotency-Key": "example:ex-i03"
+      },
+      "body": {
+        "clientId": "101",
+        "sourceType": "COMMERCE_ORDER",
+        "sourceId": "201"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "sourceType": "COMMERCE_ORDER",
+          "sourceId": "201",
+          "closedAt": "2026-09-14T09:00:00Z",
+          "intentId": "601"
+        }
+      }
+    },
+    {
+      "id": "EX-I04",
+      "method": "POST",
+      "path": "/payment-execution/v1/intents/601/terminate",
+      "headers": {
+        "Idempotency-Key": "example:ex-i04"
+      },
+      "body": {
+        "clientId": "101",
+        "reason": "ORDER_CANCELLED"
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "intentId": "601",
+          "decision": "PENDING",
+          "blockingActionId": "802"
+        }
+      }
+    },
+    {
+      "id": "EX-I05",
+      "method": "POST",
+      "path": "/payment-execution/v1/intents/601/card-payments",
+      "headers": {
+        "Idempotency-Key": "submission:401"
+      },
+      "body": {
+        "clientId": "101",
+        "sourceSubmissionId": "401",
+        "paymentMethodCode": "CARD_TEST",
+        "paymentGoal": "AUTHORIZE_ONLY",
+        "consumerContractId": "501",
+        "consumerTermsAcceptanceId": "502",
+        "refundPolicyAcceptanceId": "503",
+        "privacyNoticeAcceptanceId": "504",
+        "acceptanceCompletedAt": "2026-09-14T09:00:00Z",
+        "orderVersion": "3",
+        "cardReference": "test_card_401",
+        "cardUseSessionRef": "test_use_401",
+        "allowExecution": true
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "sourceSubmissionId": "401",
+          "intentId": "601",
+          "attemptId": "701",
+          "paymentMethodCode": "CARD_TEST",
+          "paymentGoal": "AUTHORIZE_ONLY",
+          "status": "AUTHORIZED",
+          "authorizedAmount": "100.00",
+          "capturedAmount": "0.00",
+          "actionId": "802"
+        }
+      }
+    },
+    {
+      "id": "EX-I06",
+      "method": "GET",
+      "path": "/payment-execution/v1/intents/601/submissions/401",
+      "query": {
+        "clientId": "101"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "sourceSubmissionId": "401",
+          "intentId": "601",
+          "attemptId": "701",
+          "paymentMethodCode": "CARD_TEST",
+          "paymentGoal": "AUTHORIZE_ONLY",
+          "status": "AUTHORIZED",
+          "authorizedAmount": "100.00",
+          "capturedAmount": "0.00",
+          "actionId": "802"
+        }
+      }
+    },
+    {
+      "id": "EX-I07",
+      "method": "POST",
+      "path": "/payment-execution/v1/intents/601/captures",
+      "headers": {
+        "Idempotency-Key": "example:ex-i07"
+      },
+      "body": {
+        "clientId": "101",
+        "authorizationActionId": "802",
+        "amount": "100.00",
+        "currency": "AED"
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "actionId": "803",
+          "intentId": "601",
+          "attemptId": "701",
+          "type": "CAPTURE",
+          "status": "SUBMITTED",
+          "amount": "100.00",
+          "currency": "AED"
+        }
+      }
+    },
+    {
+      "id": "EX-I08",
+      "method": "POST",
+      "path": "/payment-execution/v1/refunds",
+      "headers": {
+        "Idempotency-Key": "example:ex-i08"
+      },
+      "body": {
+        "clientId": "101",
+        "commerceRefundId": "902",
+        "intentId": "601",
+        "originalPaymentActionId": "803",
+        "amount": "40.00",
+        "currency": "AED"
+      },
+      "response": {
+        "status": 202,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "refundId": "901",
+          "commerceRefundId": "902",
+          "intentId": "601",
+          "originalPaymentActionId": "803",
+          "amount": "40.00",
+          "currency": "AED",
+          "status": "PROCESSING",
+          "actionId": "804"
+        }
+      }
+    },
+    {
+      "id": "EX-I09",
+      "method": "GET",
+      "path": "/payment-execution/v1/refunds/901",
+      "query": {
+        "clientId": "101"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "refundId": "901",
+          "commerceRefundId": "902",
+          "intentId": "601",
+          "originalPaymentActionId": "803",
+          "amount": "40.00",
+          "currency": "AED",
+          "status": "PROCESSING",
+          "actionId": "804"
+        }
+      }
+    },
+    {
+      "id": "EX-I10",
+      "method": "POST",
+      "path": "/payment-execution/v1/intents/601/reversals",
+      "headers": {
+        "Idempotency-Key": "example:ex-i10"
+      },
+      "body": {
+        "clientId": "101",
+        "reason": "COMMERCE_REVERSAL"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "intentId": "601",
+          "decision": "REFUND_REQUIRED",
+          "originalPaymentActionId": "803",
+          "amount": "100.00",
+          "currency": "AED"
+        }
+      }
+    },
+    {
+      "id": "EX-I11",
+      "method": "GET",
+      "path": "/payment-execution/v1/intents/601/pricing-facts",
+      "query": {
+        "clientId": "101"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "intentId": "601",
+          "readiness": "PENDING",
+          "missingFields": [
+            "cardLevel"
+          ]
+        }
+      }
+    },
+    {
+      "id": "EX-I12",
+      "method": "GET",
+      "path": "/payment-execution/v1/actions/803",
+      "query": {
+        "clientId": "101"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Cache-Control": "no-store"
+        },
+        "body": {
+          "clientId": "101",
+          "observedAt": "2026-09-14T09:00:00Z",
+          "actionId": "803",
+          "intentId": "601",
+          "attemptId": "701",
+          "type": "CAPTURE",
+          "status": "SUBMITTED",
+          "amount": "100.00",
+          "currency": "AED"
+        }
+      }
+    }
+  ]
+}

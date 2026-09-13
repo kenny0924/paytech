@@ -1,5 +1,7 @@
 # Finance Provider Reconciliation Simplification Implementation Plan
 
+> 2026-09-13 命名后继：[支付渠道 Channel 决定](../decisions/2026-09-13-payment-channel-terminology.md)取代本文支付领域 Provider 命名；业务边界与历史证据保持。现行实体、字段及自有回调代码使用 Channel；外部固定协议与原报文不改写。
+
 > **后续语义收口：** 本文完成的两层 Match 结构与删表决定继续有效；Provider 待清算/结算账户名称、Fee Accrual、最终 Settlement/Remittance Batch 门禁及 Journal 时点由 [Provider 三阶段账户实施计划](./2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md) 补充并取代本文较早的“交易匹配完整即可作为银行目标”简写。
 
 > **For agentic workers:** REQUIRED SUB-SKILLS: Use `superpowers:test-driven-development` for executable model contracts and `superpowers:verification-before-completion` before reporting success. This repository forbids commits for this task; preserve the dirty worktree and report file-level changes instead.

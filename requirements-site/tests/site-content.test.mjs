@@ -360,7 +360,7 @@ test("requirements catalog defines the approved entry applications", () => {
     "PARTNER_CONSOLE",
     "CLIENT_API",
     "OPERATIONS_CONSOLE",
-    "PROVIDER_ENDPOINT",
+    "CHANNEL_ENDPOINT",
     "CONSUMER_SERVICE",
   ]) {
     assert.match(source, new RegExp(`code:\\s*["']${code}["']`));
@@ -625,9 +625,9 @@ test("Finance catalog exposes tax payment, period close, payout cancel, and mate
   assert.match(reconResolution, /旧 FAILED Payout Execution.*普通成功.*新 Execution.*现金承诺/u);
 
   const bankRecon = financeBlock.match(/uc\("FIN-12"[^\n]+/u)?.[0] ?? "";
-  assert.match(bankRecon, /provider_batch_id.*PROVIDER_SETTLEMENT.*payout_execution_id.*PAYOUT.*tax_payment_id.*TAX/u);
+  assert.match(bankRecon, /channel_batch_id.*CHANNEL_SETTLEMENT.*payout_execution_id.*PAYOUT.*tax_payment_id.*TAX/u);
   assert.match(bankRecon, /外部 Debit.*容量不足.*不得拒绝.*新余额/u);
-  assert.doesNotMatch(financeBlock, /Settlement Profile|Settlement Run|Settlement Payment|Settlement Attempt|active_settlement_cash|client_available_time|CLIENT_BALANCE_MATURED|BalanceAvailable|Provider Cash Item/u);
+  assert.doesNotMatch(financeBlock, /Settlement Profile|Settlement Run|Settlement Payment|Settlement Attempt|active_settlement_cash|client_available_time|CLIENT_BALANCE_MATURED|BalanceAvailable|Channel Cash Item/u);
 
   const interfaceIds = [...financeBlock.matchAll(/iuc\("FIN-I(\d+)"/gu)]
     .map((match) => Number(match[1]));
@@ -661,9 +661,9 @@ test("Finance catalog freezes shared maturity, Manual Payout, and the four-point
   assert.match(beneficiary, /Finance-owned.*单表.*DRAFT.*VERIFIED.*content_hash/u);
   assert.match(maturity, /Client.*Partner.*PENDING.*balance_available_time.*PAYABLE_BALANCE_MATURED:<economics_id>.*AVAILABLE/u);
   assert.match(financeBlock, /eligibility_hash.*不能替代.*下一检查点/u);
-  assert.match(paymentCreate, /PaymentSucceeded.*payment_intent_id\/payment_attempt_id.*provider_id\/provider_account_id\/mid_id.*provider_transaction_ref_id\/reference_type\/external_transaction_id/u);
+  assert.match(paymentCreate, /PaymentSucceeded.*payment_intent_id\/payment_attempt_id.*channel_id\/channel_account_id\/mid_id.*channel_transaction_ref_id\/reference_type\/external_transaction_id/u);
   assert.match(requirementsSiteSource, /assessment_id.*evaluation_id.*decision.*reason_codes.*matched_controls.*required_amount.*required_currency.*control_set_hash/u);
-  assert.match(architectureDiagramSource, /Provider 清算.*Manual Payout/u);
+  assert.match(architectureDiagramSource, /Channel 清算.*Manual Payout/u);
 });
 
 test("Commerce has no Fulfillment capability or Risk query", () => {
@@ -919,7 +919,7 @@ test("the current implementation ledger owns core model snapshots while entry do
   }
 
   assert.match(currentImplementationSource, /\| Commerce \| 15 \| 249 \| 24 \| 12 \| 15 \| — \| 4 \|/u);
-  assert.match(currentImplementationSource, /\| Payment Orchestration \| 30 \| 393 \| 42 \| 45 \| 65 \| 8 \| 7 \|/u);
+  assert.match(currentImplementationSource, /\| Payment Orchestration \| 30 \| 402 \| 45 \| 48 \| 67 \| 8 \| 7 \|/u);
   assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,109 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
   assert.match(currentImplementationSource, /\| Risk & Compliance \| 78 \| 944 \| 115 \| 80 \| 120 \| 9 \| 8 \|/u);
   assert.match(documentGovernanceSource, /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据/u);
@@ -1025,7 +1025,7 @@ test("Commerce and Payment reserve refunds locally while Finance posts success o
   assert.match(source, /Finance 只消费 RefundSucceeded.*记账/u);
   assert.match(commerceDatabaseSource, /Commerce 本地预占成功后直接调用 PAY-I04/u);
   assert.match(commerceDatabaseSource, /Payment 以自身 Refund Position CAS 创建 Channel Refund/u);
-  assert.match(commerceDatabaseSource, /CANCELLED.*Provider Action 提交前.*受控主动取消/u);
+  assert.match(commerceDatabaseSource, /CANCELLED.*Channel Action 提交前.*受控主动取消/u);
   assert.doesNotMatch(source, /RefundFunding(?:Released|Consumed)/u);
 });
 
@@ -1039,21 +1039,21 @@ test("PAY-I13 resolves the authoritative reversal branch without a caller-select
   const payI13 = source.split("\n").find((line) => line.includes('iuc("PAY-I13"')) ?? "";
 
   assert.match(payI13, /只供 Commerce 内部调用/u);
-  assert.match(payI13, /调用方不提交 payment_attempt_id 或 target_provider_txn_ref_id/u);
-  assert.match(payI13, /锁定 Intent.*Attempt.*Action.*Provider Transaction Ref.*Expected Version\/CAS/su);
+  assert.match(payI13, /调用方不提交 payment_attempt_id 或 target_channel_txn_ref_id/u);
+  assert.match(payI13, /锁定 Intent.*Attempt.*Action.*Channel Transaction Ref.*Expected Version\/CAS/su);
   assert.match(payI13, /REFUND_REQUIRED.*Commerce.*标准全额.*Refund Request/su);
   assert.match(payI13, /PARTIAL_CAPTURE_REVERSAL_NOT_SUPPORTED/u);
   assert.doesNotMatch(payI13, /PAY-I13 VoidAuthorization|PARTIAL_CAPTURE_REVERSAL_UNSUPPORTED/u);
 });
 
-test("PAY-I02 keeps the first-provider-submit check fail-closed without persistent Gate facts", () => {
+test("PAY-I02 keeps the first-channel-submit check fail-closed without persistent Gate facts", () => {
   const payI02 = source.split("\n").find((line) => line.includes('iuc("PAY-I02"')) ?? "";
 
-  assert.match(payI02, /首次 AUTHORIZE\/SALE\/CAPTURE Provider 提交前同步查询 CCT.*Risk/u);
+  assert.match(payI02, /首次 AUTHORIZE\/SALE\/CAPTURE Channel 提交前同步查询 CCT.*Risk/u);
   assert.match(payI02, /检查通过结果不持久化为独立 Gate/u);
   assert.match(payI02, /明确阻断、缺失、超时或技术失败均 Fail-Closed/u);
   assert.match(payI02, /Attempt\/Action FAILED.*failure_stage\/status_reason_code.*状态流转/u);
-  assert.match(payI02, /不创建 Provider Interaction/u);
+  assert.match(payI02, /不创建 Channel Interaction/u);
 });
 
 test("Payment requirements freeze the generic customer-action, exact refund and duplicate-success contracts", () => {
@@ -1064,10 +1064,10 @@ test("Payment requirements freeze the generic customer-action, exact refund and 
 
   assert.match(payI02, /Payment Method Catalog.*payment_method_code.*Attempt/u);
   assert.match(payI02, /Payment Customer Action.*REDIRECT.*THREE_DS_CHALLENGE.*SDK.*APP_SWITCH.*QR_CODE/u);
-  assert.match(payI02, /稳定.*provider_reference.*不持久化.*Redirect URL.*Client Secret.*SDK Token.*QR Payload/u);
+  assert.match(payI02, /稳定.*channel_reference.*不持久化.*Redirect URL.*Client Secret.*SDK Token.*QR Payload/u);
   assert.match(pay06, /PAYMENT_INTENT.*PAYMENT_ATTEMPT.*PAYMENT_ACTION.*CHANNEL_REFUND.*DUPLICATE_PAYMENT_CASE/u);
   assert.match(pay06, /Callback\/Item\/Exception.*Dispute.*Event.*不重复写入.*状态流转/u);
-  assert.match(payI04, /Payment Refund Position.*original_provider_transaction_ref_id.*target_provider_transaction_ref_id.*REFUND.*original_provider_transaction_ref_id/u);
+  assert.match(payI04, /Payment Refund Position.*original_channel_txn_ref_id.*target_channel_txn_ref_id.*REFUND.*original_channel_txn_ref_id/u);
   assert.match(pay14, /同一 Intent.*第二.*不同.*(?:SALE|完成资金的 CAPTURE).*成功事实/u);
   assert.match(pay14, /重复 Callback.*同一外部交易.*QUERY.*AUTHORIZE.*CAPTURE.*不.*重复支付/u);
   assert.match(pay14, /successful_attempt_id.*不(?:替换|改写).*CONFLICTED.*补偿退款/u);
@@ -1118,7 +1118,7 @@ test("agent guidance routes consumer evidence work and preserves its non-negotia
   assert.match(rootAgentsSource, /consumer_reference.*non-PII.*Email.*Phone.*government identifier/su);
   assert.match(rootAgentsSource, /Email and Phone each use an approved stable Vault Value Token/su);
   assert.match(rootAgentsSource, /client_ip_address.*user_agent.*trusted_proxy_chain/su);
-  assert.match(rootAgentsSource, /DisputeEvidenceRequested.*Client deadline.*Provider deadline/su);
+  assert.match(rootAgentsSource, /DisputeEvidenceRequested.*Client deadline.*Channel deadline/su);
 });
 
 test("Commerce real-world scenario maps exactly the 15 approved target tables", () => {
@@ -1263,8 +1263,8 @@ test("unified authentication and public gateway decisions preserve exact channel
   assert.match(source, /__Secure-operations-refresh.*Path=\/api\/operations\/auth\/v1/u);
   assert.match(source, /__Secure-client-refresh.*Path=\/api\/client\/auth\/v1/u);
   assert.match(source, /__Secure-partner-refresh.*Path=\/api\/partner\/auth\/v1/u);
-  assert.match(source, /Route Channel.*OPERATIONS、CLIENT、PARTNER、CHECKOUT、CLIENT_API、PROVIDER_CALLBACK/u);
-  assert.match(source, /Security Profile.*OPERATIONS_JWT、CLIENT_JWT、PARTNER_JWT、CLIENT_API_CREDENTIAL、CHECKOUT_SESSION、PROVIDER_CALLBACK、PUBLIC/u);
+  assert.match(source, /Route Channel.*OPERATIONS、CLIENT、PARTNER、CHECKOUT、CLIENT_API、CHANNEL_CALLBACK/u);
+  assert.match(source, /Security Profile.*OPERATIONS_JWT、CLIENT_JWT、PARTNER_JWT、CLIENT_API_CREDENTIAL、CHECKOUT_SESSION、CHANNEL_CALLBACK、PUBLIC/u);
   assert.match(source, /SHARED_ROUTE、CLIENT_IP、AUTHENTICATED_PRINCIPAL、TENANT/u);
   assert.match(source, /TENANT.*PLT-I03.*可信 tenant_id.*Redis/u);
   assert.doesNotMatch(source, /Gateway 数据库不拥有 Route|Platform.*不拥有.*Route.*Path.*Method.*Upstream/u);
@@ -1457,7 +1457,7 @@ test("Vault remains non-core and excludes payment card data", () => {
   assert.match(source, /Gateway、BFF、浏览器和外部 Client 不直接访问 Vault/);
   assert.doesNotMatch(source, /Vault 只允许 mTLS\/Workload Identity/u);
   assert.match(source, /PAN、CVV\/CVC、完整磁道数据和 PIN\/PIN Block 不进入 Code-MoR/);
-  assert.match(source, /Provider Token、Scheme、BIN、Last4、Issuer Country 和 Provider Fingerprint/);
+  assert.match(source, /Channel Token、Scheme、BIN、Last4、Issuer Country 和 Channel Fingerprint/);
   assert.match(source, /这些最小卡片元数据仍需分类、脱敏、授权和留存控制/);
   assert.match(source, /Commerce Consumer Email\/Phone 稳定 Value Token.*Commerce→Payment→Risk/su);
   assert.match(source, /不等于自动符合 PCI/);
@@ -1504,7 +1504,7 @@ test("historical Finance designs preserve their superseded 98-table stage", () =
 
 test("Platform never turns Client silence into a dispute loss", () => {
   assert.doesNotMatch(platformDatabaseSource, /Client 未响应后的认损由 Risk 决定/u);
-  assert.match(platformDatabaseSource, /Client 未响应.*EVIDENCE_REQUIRED.*不得自动认损.*显式授权.*Provider.*LOST.*Risk.*DisputeLost/su);
+  assert.match(platformDatabaseSource, /Client 未响应.*EVIDENCE_REQUIRED.*不得自动认损.*显式授权.*Channel.*LOST.*Risk.*DisputeLost/su);
 });
 
 test("Superpowers skills require explicit authorization from the current user", () => {

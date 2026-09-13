@@ -1,0 +1,90 @@
+{
+  "database": "127.0.0.1:13306/mor_payment",
+  "sql": "requirements/20260913/payment-Execution设计/db/execution-create-empty-schema.sql",
+  "sha256": "78c106f371390886d1765b9388a7ddf2b890c25d20e53472c0eb9d4d58707c9e",
+  "targetTables": [
+    "t_payment_intent_binding",
+    "t_payment_intent",
+    "t_payment_attempt",
+    "t_payment_action",
+    "t_channel_transaction_ref",
+    "t_payment_instrument",
+    "t_payment_pricing_fact",
+    "t_payment_state_transition",
+    "t_payment_refund_position",
+    "t_channel_refund",
+    "t_duplicate_payment_case",
+    "t_command_idempotency",
+    "t_compensation_event"
+  ],
+  "existingTables": [],
+  "existingTargets": [],
+  "sqlExecuted": true,
+  "appliedAtUtc": "2026-09-13T09:27:45.771672+00:00",
+  "createdTables": [
+    {
+      "table": "t_channel_refund",
+      "rows": 0
+    },
+    {
+      "table": "t_channel_transaction_ref",
+      "rows": 0
+    },
+    {
+      "table": "t_command_idempotency",
+      "rows": 0
+    },
+    {
+      "table": "t_compensation_event",
+      "rows": 0
+    },
+    {
+      "table": "t_duplicate_payment_case",
+      "rows": 0
+    },
+    {
+      "table": "t_payment_action",
+      "rows": 0
+    },
+    {
+      "table": "t_payment_attempt",
+      "rows": 0
+    },
+    {
+      "table": "t_payment_instrument",
+      "rows": 0
+    },
+    {
+      "table": "t_payment_intent",
+      "rows": 0
+    },
+    {
+      "table": "t_payment_intent_binding",
+      "rows": 0
+    },
+    {
+      "table": "t_payment_pricing_fact",
+      "rows": 0
+    },
+    {
+      "table": "t_payment_refund_position",
+      "rows": 0
+    },
+    {
+      "table": "t_payment_state_transition",
+      "rows": 0
+    }
+  ],
+  "backup": "No existing tables: preflight inventory retained; CREATE only.",
+  "schemaVerification": {
+    "matchedModelColumns": 192,
+    "matchedIndexesIncludingPrimary": 58,
+    "tableCount": 13,
+    "checks": [
+      "column order/type/nullability/default/comment",
+      "index name/columns/uniqueness/comment",
+      "table comment/engine/collation"
+    ],
+    "modelSha256": "b3a4d96caf1eb72a6da2f3e96746d4298a8b43b446aa94501aac2820cd1b3b42"
+  }
+}

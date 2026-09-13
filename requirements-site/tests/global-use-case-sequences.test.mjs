@@ -294,7 +294,7 @@ test("manual payout creates four fresh scoped RCO-I09 evaluations and preserves 
   assert.doesNotMatch(labels, /Candidate|Promotion|Settlement Profile|Settlement Run|Settlement Payment|Settlement Attempt|current_attempt_id/u);
 });
 
-test("dispute RFI keeps Client silence open and requires an explicit disposition or verified Provider outcome", async () => {
+test("dispute RFI keeps Client silence open and requires an explicit disposition or verified Channel outcome", async () => {
   const sequenceCatalog = await loadSequenceCatalog();
   const messages = sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES["E2E-04"].messages;
   const openedIndex = messages.findIndex(
@@ -307,11 +307,11 @@ test("dispute RFI keeps Client silence open and requires an explicit disposition
     (message) => message.from === "client_console" && message.to === "api_gateway" && /举证/u.test(message.label),
   );
 
-  assert.ok(openedIndex >= 0, "a verified provider notice must open the dispute");
+  assert.ok(openedIndex >= 0, "a verified channel notice must open the dispute");
   assert.ok(evidenceRequestedIndex > openedIndex, "Risk must request Client evidence after opening the case");
   assert.ok(evidenceSubmittedIndex > evidenceRequestedIndex, "Client evidence submission follows the RFI notification");
   assert.match(messages[evidenceRequestedIndex].label, /EVIDENCE_REQUIRED/u);
-  assert.match(messages[evidenceRequestedIndex].label, /Client.*截止.*早于.*Provider.*截止/u);
+  assert.match(messages[evidenceRequestedIndex].label, /Client.*截止.*早于.*Channel.*截止/u);
   assert.ok(!messages.some((message) => /DisputeOpened.*finance|冻结.*余额.*准备金|Recovery Receivable/u.test(message.label)));
   assert.ok(
     !messages.some((message) => /(?:未响应|无响应|沉默).*(?:自动)?(?:认损|DisputeLost)/u.test(message.label)),
@@ -327,11 +327,11 @@ test("dispute RFI keeps Client silence open and requires an explicit disposition
   );
   assert.ok(
     messages.some((message) => message.from === "risk" && message.to === "finance" && /明确授权.*(?:接受责任|放弃举证).*决定.*DisputeLost/u.test(message.label)),
-    "only the explicit-disposition branch may produce DisputeLost without a Provider outcome",
+    "only the explicit-disposition branch may produce DisputeLost without a Channel outcome",
   );
   assert.ok(
-    messages.some((message) => message.from === "risk" && message.to === "finance" && /ProviderDisputeOutcomeReceived.*已验证.*LOST.*DisputeLost/u.test(message.label)),
-    "a verified Provider loss may produce DisputeLost",
+    messages.some((message) => message.from === "risk" && message.to === "finance" && /ChannelDisputeOutcomeReceived.*已验证.*LOST.*DisputeLost/u.test(message.label)),
+    "a verified Channel loss may produce DisputeLost",
   );
   assert.ok(
     messages.every((message) => !/履约|Fulfillment/u.test(message.label)),
@@ -339,7 +339,7 @@ test("dispute RFI keeps Client silence open and requires an explicit disposition
   );
 
   const labels = messages.map((message) => message.label).join("\n");
-  assert.match(labels, /PROVIDER_ACTION.*Version 1.*WON\s*\/\s*LOST/u);
+  assert.match(labels, /CHANNEL_ACTION.*Version 1.*WON\s*\/\s*LOST/u);
   assert.match(labels, /CLIENT_DISPOSITION.*OPERATIONS_DISPOSITION.*Version 1.*LOST/u);
   assert.match(labels, /Version 2\+.*OPERATIONS_CORRECTION/u);
   assert.match(labels, /trigger_id\s*=\s*decision_source_id/u);
@@ -483,9 +483,9 @@ test("E2E-05 resolves exact CCT scopes and fails closed instead of using current
   const paymentSucceeded = messages.find(
     (message) => message.from === "payment" && message.to === "finance" && /PaymentSucceeded/u.test(message.label),
   );
-  const providerOpenItemIndex = messages.findIndex(
+  const channelOpenItemIndex = messages.findIndex(
     (message) => message.from === "finance" && message.to === "finance"
-      && /ACTIVE Finance provider_account.*Provider Open Item.*PROVIDER_UNSETTLED_RECEIVABLE/u.test(message.label),
+      && /ACTIVE Finance channel_account.*Channel Open Item.*CHANNEL_UNSETTLED_RECEIVABLE/u.test(message.label),
   );
 
   assert.ok(contextReadIndex >= 0, "Finance must read one immutable Commerce Order Context response");
@@ -500,12 +500,12 @@ test("E2E-05 resolves exact CCT scopes and fails closed instead of using current
   assert.match(messages[freezeIndex].label, /禁止当前\/默认\/零费率.*Journal/u);
   assert.ok(paymentSucceeded, "PaymentSucceeded must be self-contained for Finance");
   assert.match(paymentSucceeded.label, /payment_intent_id.*payment_attempt_id/u);
-  assert.match(paymentSucceeded.label, /provider_id.*provider_account_id.*mid_id/u);
-  assert.match(paymentSucceeded.label, /provider_transaction_ref_id.*reference_type.*external_transaction_id/u);
-  assert.ok(providerOpenItemIndex > freezeIndex, "Finance must create its local Provider Open Item after freezing the economics context");
-  assert.match(messages[providerOpenItemIndex].label, /provider_id \+ mid_id \+ Operating Entity \+ currency/u);
-  assert.match(messages[providerOpenItemIndex].label, /Finance provider_account_id.*payment_intent_id\/payment_attempt_id.*provider_transaction_ref_id.*reference_type.*external_transaction_id.*transaction_economics_id.*gross_receivable/u);
-  assert.match(messages[providerOpenItemIndex].label, /Fail-Closed.*不在线查询 Payment/u);
+  assert.match(paymentSucceeded.label, /channel_id.*channel_account_id.*mid_id/u);
+  assert.match(paymentSucceeded.label, /channel_transaction_ref_id.*reference_type.*external_transaction_id/u);
+  assert.ok(channelOpenItemIndex > freezeIndex, "Finance must create its local Channel Open Item after freezing the economics context");
+  assert.match(messages[channelOpenItemIndex].label, /channel_id \+ mid_id \+ Operating Entity \+ currency/u);
+  assert.match(messages[channelOpenItemIndex].label, /Finance channel_account_id.*payment_intent_id\/payment_attempt_id.*channel_transaction_ref_id.*reference_type.*external_transaction_id.*transaction_economics_id.*gross_receivable/u);
+  assert.match(messages[channelOpenItemIndex].label, /Fail-Closed.*不在线查询 Payment/u);
   assert.equal(messages.some((message) => message.from === "finance" && message.to === "payment"), false);
 });
 
@@ -893,7 +893,7 @@ test("Payment sequences preserve the frozen unknown, refund, and cancellation co
   assert.match(paymentLabels, /FAILED \+ failure_stage/u);
   assert.match(paymentLabels, /首次资金 Action 提交前.*不持久化独立 Gate/u);
   assert.match(paymentLabels, /阻断、缺失、超时或技术失败.*Attempt\/Action FAILED.*State Transition/u);
-  assert.match(paymentLabels, /不创建 Provider Interaction/u);
+  assert.match(paymentLabels, /不创建 Channel Interaction/u);
   assert.doesNotMatch(paymentLabels, /RISK_FAILED|RISK_REJECTED|LIMIT_REJECTED|SUCCESS_CONFLICT/u);
   const paymentAttemptUnknownMessages = paymentFlow.filter((message) => /PaymentAttemptUnknown/.test(message.label));
   assert.equal(paymentAttemptUnknownMessages.length, 1, "PaymentAttemptUnknown must be emitted once per UNKNOWN transition");
@@ -903,7 +903,7 @@ test("Payment sequences preserve the frozen unknown, refund, and cancellation co
     { from: "payment", to: "risk", kind: "async" },
   );
   assert.match(paymentAttemptUnknown.label, /order\/order_context\/intent\/attempt\/action、版本/u);
-  assert.match(paymentAttemptUnknown.label, /Provider ID \+ Provider Account ID \+ MID ID \+ Payment Action ID/u);
+  assert.match(paymentAttemptUnknown.label, /Channel ID \+ Channel Account ID \+ MID ID \+ Payment Action ID/u);
   assert.doesNotMatch(paymentAttemptUnknown.label, /Connection Version|connection_version_id|mid_credential_ref_id/u);
   assert.match(paymentAttemptUnknown.label, /金额币种.*reason\/event time/u);
   const duplicateDetectedIndex = paymentFlow.findIndex((message) => /DuplicatePaymentDetected/.test(message.label));
@@ -963,14 +963,14 @@ test("Payment sequences freeze generic customer actions, exact refund navigation
 
   assert.match(paymentLabels, /Payment Method Catalog.*payment_method_code.*Attempt/u);
   assert.match(paymentLabels, /Payment Customer Action.*REDIRECT.*THREE_DS_CHALLENGE.*SDK.*APP_SWITCH.*QR_CODE/u);
-  assert.match(paymentLabels, /只持久化.*非敏感.*provider_reference.*不保存.*Redirect URL.*Client Secret.*SDK Token.*QR Payload/u);
+  assert.match(paymentLabels, /只持久化.*非敏感.*channel_reference.*不保存.*Redirect URL.*Client Secret.*SDK Token.*QR Payload/u);
   assert.match(paymentLabels, /同一 Intent.*第二.*不同.*SALE.*CAPTURE.*成功事实/u);
   assert.match(paymentLabels, /重复 Callback.*同一外部交易.*QUERY.*AUTHORIZE.*CAPTURE.*不.*Duplicate Payment/u);
   assert.match(paymentLabels, /successful_attempt_id.*不(?:替换|改写).*CONFLICTED.*重复 Ref.*补偿退款/u);
   assert.match(paymentLabels, /PAYMENT_INTENT.*PAYMENT_ATTEMPT.*PAYMENT_ACTION.*CHANNEL_REFUND.*DUPLICATE_PAYMENT_CASE/u);
   assert.match(paymentLabels, /Callback\/Item\/Exception.*Dispute Event.*不写入.*State Transition/u);
-  assert.match(refundLabels, /Payment Refund Position.*original_provider_transaction_ref_id.*原 Payment Action.*Provider Account.*MID/u);
-  assert.match(refundLabels, /REFUND Action.*target_provider_transaction_ref_id.*REFUND Transaction Ref.*original_provider_transaction_ref_id/u);
+  assert.match(refundLabels, /Payment Refund Position.*original_channel_txn_ref_id.*原 Payment Action.*Channel Account.*MID/u);
+  assert.match(refundLabels, /REFUND Action.*target_channel_txn_ref_id.*REFUND Transaction Ref.*original_channel_txn_ref_id/u);
 });
 
 test("Finance sequences resolve exact CCT scopes and freeze their components locally", async () => {
@@ -1054,7 +1054,7 @@ test("E2E-02 keeps the Operating Entity frozen across retries and requires a new
   assert.match(labels, /Client 命名空间.*clientOrderId/u);
   assert.match(labels, /无合格 Operating Entity|路由覆盖.*依赖失败/u);
   assert.match(labels, /不创建 Order/u);
-  assert.match(labels, /临时 Provider\/MID 不可用.*保留同一 Order/u);
+  assert.match(labels, /临时 Channel\/MID 不可用.*保留同一 Order/u);
   assert.match(labels, /新 Attempt.*同一冻结 Operating Entity/u);
   assert.match(labels, /OperatingEntityChanged.*永久不可用/u);
   assert.match(labels, /阻止新 Attempt.*活动或 UNKNOWN Attempt/u);
@@ -1095,15 +1095,15 @@ test("Finance operational sequences close payout cancellation and material recon
   assert.match(reconLabels, /ROUNDING_ADJUSTMENT.*确定性舍入/u);
   assert.match(reconLabels, /金额变化.*新的 Accounting Instruction.*Journal/u);
   assert.match(reconLabels, /不覆盖.*Exception.*来源证据/u);
-  assert.match(reconLabels, /PROVIDER_UNSETTLED_RECEIVABLE.*PROVIDER_SETTLEMENT_RECEIVABLE.*BANK_CASH/u);
-  assert.match(reconLabels, /PROVIDER_UNSETTLED_PAYABLE.*PROVIDER_SETTLEMENT_PAYABLE.*BANK_CASH/u);
+  assert.match(reconLabels, /CHANNEL_UNSETTLED_RECEIVABLE.*CHANNEL_SETTLEMENT_RECEIVABLE.*BANK_CASH/u);
+  assert.match(reconLabels, /CHANNEL_UNSETTLED_PAYABLE.*CHANNEL_SETTLEMENT_PAYABLE.*BANK_CASH/u);
   assert.match(reconLabels, /最终.*Settlement\/Remittance Batch.*交易对账完整/u);
   assert.match(reconLabels, /FEE\/ADJUSTMENT.*Cost Confirm\/Allocation.*已批异常/u);
-  assert.match(reconLabels, /provider_batch_id.*PROVIDER_SETTLEMENT.*payout_execution_id.*PAYOUT.*tax_payment_id.*TAX/u);
+  assert.match(reconLabels, /channel_batch_id.*CHANNEL_SETTLEMENT.*payout_execution_id.*PAYOUT.*tax_payment_id.*TAX/u);
   assert.match(reconLabels, /外部 Debit.*容量不足.*不得拒绝.*新余额/u);
   assert.match(reconLabels, /LATE_DEBIT:<bank_item_id>.*RECON_SUSPENSE_ASSET.*BANK_CASH.*LATE_DEBIT/u);
   assert.match(reconLabels, /旧 FAILED Payout Execution.*普通成功.*新 Execution.*现金承诺/u);
-  assert.doesNotMatch(reconLabels, /Provider Cash Item|Finance.*查询支付、退款与渠道流水|FAILED Settlement Attempt/u);
+  assert.doesNotMatch(reconLabels, /Channel Cash Item|Finance.*查询支付、退款与渠道流水|FAILED Settlement Attempt/u);
 });
 
 test("Finance operational sequences perform period close and tax payment with immutable evidence", async () => {

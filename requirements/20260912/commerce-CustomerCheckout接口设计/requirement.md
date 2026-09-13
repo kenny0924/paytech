@@ -1,6 +1,6 @@
 # Customer Checkout 接口设计
 
-状态：页面和基础路径已认可；首个 Provider 为 NI。后续已确认 Payment 统一接收卡与协议确认的一次 payments 请求；当前支付字段/恢复由[Payment Card 合同](../payment-自建CardVault/api-contract.md)拥有。本次不实施业务代码、模型、SQL 或入口配置，确认记录见 [delivery.md](./delivery.md)。
+状态：页面和基础路径已认可；首个 Channel 为 NI。后续已确认 Payment 统一接收卡与协议确认的一次 payments 请求；当前支付字段/恢复由[Payment Card 合同](../payment-自建CardVault/api-contract.md)拥有。本次不实施业务代码、模型、SQL 或入口配置，确认记录见 [delivery.md](./delivery.md)。
 
 ## 目标与范围
 
@@ -11,7 +11,7 @@
 - AC-01：统一查询可驱动初次加载、信息填写、准备中、支付主页面、动作继续、在途、未知、授权、成功、明确失败及终态页面；不按画板各建一个接口。
 - AC-02：消费者保存信息与支付准备不扣款；只有准备完成、法律确认有效、权威检查通过后才能提交支付。
 - AC-03：支付按钮旁展示三份文件链接和明确说明，实际点击才提交确认；服务端绑定同一冻结合同的三份准确文件、分别记录接受/知悉事实及可信时间和网络证据。没有独立 acceptances 接口。
-- AC-04：Card 采集与受控用卡归 Payment 独立模块，原始卡不进入 Commerce/非卡 Vault；CVV 不持久化。Payment 必须取得 Commerce 已提交接受事实后才执行支付，3DS 保持同一订单/原动作，不能承诺 Provider 支持尚未验证的中断恢复。
+- AC-04：Card 采集与受控用卡归 Payment 独立模块，原始卡不进入 Commerce/非卡 Vault；CVV 不持久化。Payment 必须取得 Commerce 已提交接受事实后才执行支付，3DS 保持同一订单/原动作，不能承诺 Channel 支持尚未验证的中断恢复。
 - AC-05：双击、刷新、超时和换幂等键不会创建并行支付；UNKNOWN 不允许再付款，AUTHORIZED 不展示已完成。
 - AC-06：Token 仅有同一 Checkout 的最小权限；终态、到期及所有关联资源均在 Commerce 校验。页面渲染权限不替代命令端校验。
 - AC-07：所有外部服务调用位于数据库事务外；需要可靠恢复的命令在本地事务保存业务状态和恢复任务，提交后执行。

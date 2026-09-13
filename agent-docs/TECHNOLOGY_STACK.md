@@ -335,7 +335,7 @@ RabbitMQ 是 MVP 唯一业务 MQ，不再并行评估 RocketMQ。
 
 - 可能超出 JavaScript 安全整数范围的 ID 必须编码为十进制字符串；
 - 时间使用 UTC ISO-8601；金额使用最小货币单位或明确的十进制字符串并携带币种；
-- Payload 必须最小化，不放敏感明文、Vault Token、Secret、大文件或 Provider 原始报文；
+- Payload 必须最小化，不放敏感明文、Vault Token、Secret、大文件或 Channel 原始报文；
 - `schemaVersion` 的兼容演进必须先定义消费者策略。
 
 ## 11. 补偿执行参数

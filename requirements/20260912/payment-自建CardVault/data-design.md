@@ -1,5 +1,7 @@
 # Payment Card 数据、事务与实施设计
 
+> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
+
 2026-09-12 阶段 3 单请求修订稿；与 [API 合同](./api-contract.md)配套。以下是拟新增/调整的字段，不是已修改 PDManer、当前数据库或已执行 SQL。Card 模块独占卡库表；Payment `web` 编排同一 Payment 本地事务。
 
 本稿业务增量为 Payment 新增3表/37字段/3主键及9个二级索引，原 Action 增加3个可空字段与1个查询索引；另有2张既有技术表按 Foundation 权威对齐，准确迁移列数须先盘点。相对前稿，Submission 来源列改为本地 payment_command_id，Card 独立 capture_command_id 及其唯一索引删除；均是未落模提案调整。Commerce 复用原接受/命令模型，前序准备字段增量继续由 Customer 专项拥有；本轮 SQL/DML 执行0、页面新增0。
@@ -14,12 +16,12 @@ erDiagram
     t_payment_card ||--o{ t_card_access_event : protected_access
     t_payment_attempt ||--o{ t_payment_action : actions
     t_payment_action ||--o| t_payment_customer_action : authentication
-    t_payment_attempt ||--o| t_payment_instrument : provider_instrument
+    t_payment_attempt ||--o| t_payment_instrument : channel_instrument
 ```
 
 关系是应用校验，不生成 FOREIGN KEY/CHECK。新增三张业务表：提交、加密卡记录、卡访问审计；不新增 Token、卡扩展、CVV 或泛化会话表。Submission 保存统一 Pay 命令的受理与跨服务恢复身份：调用 Commerce 确认前已存在、尚无合法 Attempt，响应丢失时仍可定位原命令。保留它的理由是这段实际生命周期，不再是前端先登记再收卡。Card 保存独立受保护数据，Access Event 保存每次实际访问证据。
 
-现有 Instrument 仍只在 Provider 提供稳定工具引用时创建；平台 Card Token 不填到 provider_instrument_ref。同一 Submission 的 Card 与 Attempt 最多各一条，关联通过 Submission，不在 Attempt 再加重复 card_id。
+现有 Instrument 仍只在 Channel 提供稳定工具引用时创建；平台 Card Token 不填到 channel_instrument_ref。同一 Submission 的 Card 与 Attempt 最多各一条，关联通过 Submission，不在 Attempt 再加重复 card_id。
 
 全部字段按下列顺序落模，均无数据库默认值，由应用显式赋值；例外的技术表遵守各自规范默认值。BIGINT 主键由服务 Snowflake 生成、不自增；时间为 UTC DATETIME(6)。Token、幂等键与精确身份采用大小写敏感比较。所有字段的下表说明作为中文注释来源，闭合状态用应用校验。
 
@@ -89,7 +91,7 @@ CVV不属于加密Payload或HMAC输入。存卡事务失败时丢弃未引用的
 
 Card模块仅开放当前提交的受控执行、必要描述查询和退役；不向普通支付编排返回完整PAN，不提供通用Detokenize API。即使持有Token，也必须校验同Client/Submission/Attempt/Action和允许执行阶段。
 
-用卡资格在授权请求发送边界后即被原Action占用，渠道后续Capture/Refund/Query依赖Provider引用而非重新解密卡。Retired/超期卡不允许发新资金请求；HMAC重放核对不需要解密原PAN。
+用卡资格在授权请求发送边界后即被原Action占用，渠道后续Capture/Refund/Query依赖Channel引用而非重新解密卡。Retired/超期卡不允许发新资金请求；HMAC重放核对不需要解密原PAN。
 
 使用到期与物理数据保留不是同一件事。本期不自动提供“记住卡”，不按未来订阅需求保留PAN。合成数据阶段可验证加密/退役；真实卡上线前必须确定业务必要保存期、备份/副本到期、保留例外及受控销毁程序，不能套用全局默认永久保留。当前未有该业务期限，不虚构30/90天，也不把retired_at解释为已删除备份。
 
@@ -119,11 +121,11 @@ Owner：Card模块。追加不可变的STORE、USE、RETIRE、REWRAP结果，明
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| provider_order_ref | VARCHAR(255) ascii_bin | NI创建Order后返回的稳定Order引用；不是Commerce订单号，不包含链接或bearer参数 |
-| provider_payment_ref | VARCHAR(255) ascii_bin | NI同一Order下的Payment稳定引用；与Order成组落库并绑定原Provider Account/MID |
+| channel_order_ref | VARCHAR(255) ascii_bin | NI创建Order后返回的稳定Order引用；不是Commerce订单号，不包含链接或bearer参数 |
+| channel_payment_ref | VARCHAR(255) ascii_bin | NI同一Order下的Payment稳定引用；与Order成组落库并绑定原Channel Account/MID |
 | card_execution_stage | VARCHAR(32) | 允许值：ORDER_PENDING、ORDER_DISPATCHED、ORDER_READY、CARD_DISPATCHED、CARD_ACCEPTED。NULL表示不适用或前序记录 |
 
-新增 `idx_pay_action_provider_order(provider_account_id,provider_order_ref)` 服务回调/恢复定位；Payment引用进一步校验精确Action坐标，不能只按金额时间近似匹配。前序 `provider_idempotency_key` 保留为原动作身份，但是否外传/被NI去重必须有协议证据；该字段非空不证明NI支持安全重发。
+新增 `idx_pay_action_channel_order(channel_account_id,channel_order_ref)` 服务回调/恢复定位；Payment引用进一步校验精确Action坐标，不能只按金额时间近似匹配。前序 `channel_idempotency_key` 保留为原动作身份，但是否外传/被NI去重必须有协议证据；该字段非空不证明NI支持安全重发。
 
 | 短事务提交后的阶段 | 允许的下一步与崩溃处理 |
 |---|---|
@@ -144,7 +146,7 @@ Owner：Card模块。追加不可变的STORE、USE、RETIRE、REWRAP结果，明
 1. **Payment 请求校验与首次受理：** 字段验证、Commerce 只读访问校验和 HMAC 计算都在事务外。Payment 短事务按 Intent 锁定，重验资格与原键，保存本地命令、Submission 和查询恢复任务；此时不建 Attempt，不调用 Commerce/KMS/NI。卡与 CVV 仍仅在当前请求内存。
 2. **Commerce 接受事务：** Payment 提交后调用内部 confirmation，只传合同确认、稳定提交身份、当前 Token 与可信网络证据，不传卡。Commerce 重新验证当前授权与冻结合同，在自己的短事务原子保存三接受、网络证据和完成回执；已接受的同合同复用原行/证据。提交后直接返回，不调用 Payment 注册、创建 Attempt 或执行资金请求。
 3. **Payment 绑定事务：** 已取得确认后，事务外查新鲜 COM-I10/必要 Owner 资格，Card 模块完成 KMS/加密准备。短事务锁 Intent → Submission，重验命令 Lease/CAS、本地资格和冻结坐标，保存 Card、唯一 Attempt、三个 Acceptance 等既有准备事实及 STORE 审计，推进 CARD_BOUND。回滚时这些本地事实全回滚，已经提交的 Commerce 接受不回滚。
-4. **执行与写回：** 后续路由、Risk、NI 查询均在事务外，结果各用短事务重验并保存；Action 冻结 Provider/Account/MID。短事务保存发送标记及 USE 审计后，Card 模块在事务外使用当前瞬时输入调用 NI。结果另开短事务落库并登记必要事实发布，最终清除瞬时输入；不能依靠补偿重建 CVV。
+4. **执行与写回：** 后续路由、Risk、NI 查询均在事务外，结果各用短事务重验并保存；Action 冻结 Channel/Account/MID。短事务保存发送标记及 USE 审计后，Card 模块在事务外使用当前瞬时输入调用 NI。结果另开短事务落库并登记必要事实发布，最终清除瞬时输入；不能依靠补偿重建 CVV。
 
 确认已提交而响应丢失时，恢复只调用 Commerce confirmation queries 查原回执；Payment 在绑定前按 COM-I10 再检查，稳定回执不替代实时资格。如果查不到，不伪造接受，也不在后台重放确认：待原请求恢复时由当前合法确认/可信证据驱动同一个 Commerce 幂等命令。Payment 不保存网络原值或 Checkout Token 供后台重放。
 
@@ -191,7 +193,7 @@ Owner：Card模块。追加不可变的STORE、USE、RETIRE、REWRAP结果，明
 | Payment 统一payments HTTP/Processor | 一次带卡+确认的请求完成正常提交；原Checkout授权、解析失败无泄漏、卡/合同异参拒绝、CVV无持久记录、确认丢响应恢复、同Intent唯一活动提交与Attempt |
 | Card模块入口 | AAD/密文篡改失败、密钥不可用、用卡范围/退役/期限、Token不可跨Client/Submission、审计失败不外发 |
 | Payment恢复Handler | Lease失效和旧Worker、发送前/后崩溃、UNKNOWN保持占用、输入丢失不自动扣款；不以HTTP测试间接代替Handler测试 |
-| Provider Adapter/前端 | NI单次资金请求、原ref查询、3DS frictionless/challenge/中断、SDK裁剪字段、返回AUTHORIZED不显示已支付 |
+| Channel Adapter/前端 | NI单次资金请求、原ref查询、3DS frictionless/challenge/中断、SDK裁剪字段、返回AUTHORIZED不显示已支付 |
 | 数据库/模块边界 | 真实MySQL唯一键/CAS、事务回滚；非Card模块不得引用其Repository/Mapper/DataObject；无跨库读写 |
 
 使用项目本地MySQL/Redis/RabbitMQ及测试目录中的有状态HTTP Simulator；不使用Testcontainers、H2、Mockito行为Stub或业务Mock。日志采集应验证反序列化错误、出站失败、异常、追踪和所有恢复快照，而不只扫描成功响应。
@@ -203,7 +205,7 @@ Owner：Card模块。追加不可变的STORE、USE、RETIRE、REWRAP结果，明
 | Payment业务DDL | 三张新表；Action三列及一个查询索引 | 本稿完整字段/约束评审；尚未修改模型或生成执行SQL |
 | Payment技术DDL | 原命令幂等/补偿表对齐现行Foundation；确认旧数据保留与新消费者迁移 | 引用唯一Owner，先盘点实际环境，不猜测迁移基线 |
 | Commerce | 复用命令幂等、三接受、网络证据及原准备模型；以Payment submissionId为内部确认幂等键，原接受ID存稳定回执；无提交登记回调，不单建卡表 | 原Customer模型缺口仍按其专项方案处理，不因本稿宣称全库零迁移 |
-| 业务初始化DML | Card Token/Submission无静态目录行；准确Card Method/NI Provider Account/MID按实际目录审批 | 不生成默认NI账户、密钥、假MID或自动ALLOW |
+| 业务初始化DML | Card Token/Submission无静态目录行；准确Card Method/NI Channel Account/MID按实际目录审批 | 不生成默认NI账户、密钥、假MID或自动ALLOW |
 | Gateway/Platform DML | 三个Commerce操作与两个Payment操作的准确Route/Guard/权限绑定；payments原路径改Owner，不新增公开/card | 后续入口交付，不在本轮新增或执行 |
 
 本阶段是字段设计评审，依[数据库设计规范](../../../agent-docs/DATABASE_DESIGN_GUIDE.md)先确认模型增量，再更新唯一PDManer、生成完整Schema和经盘点的增量SQL；应用SQL/部署仍是后续独立动作。

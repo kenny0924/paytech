@@ -61,7 +61,7 @@ partner-console-web/     # Local Partner
 
 `business-portal-web/` / `business-portal-bff/` are retired names; do not add implementation under them. Project-root existence and implementation state are tracked separately in the status ledger. None of these naming decisions authorizes additional runtime capabilities.
 
-Do not create `client-api-service` or `provider-callback-service`. Client API is a logical external API surface routed to the owning core systems. Provider callbacks belong to Payment Orchestration.
+Do not create `client-api-service` or `channel-callback-service`. Client API is a logical external API surface routed to the owning core systems. Channel callbacks belong to Payment Orchestration.
 
 The logical backend target is six core Java services, one Java API Gateway, three separately secured Java Console BFFs and one internal Go Vault: eleven deployable types. This is a target boundary, not a mandate to run or scaffold every deployable. Frontend applications and the embedded `compensation-event` JAR are not backend deployable services.
 
@@ -116,14 +116,14 @@ Cross-system business transaction orchestration remains with the owning core sys
 Refund command
   -> BFF sends one command to Commerce
   -> Commerce owns refund intent and calls Payment internally
-  -> Payment executes the provider refund
+  -> Payment executes the channel refund
 ```
 
-Cancel and Reversal remain separate Commerce commands. `COM-I05 Cancel` calls Payment `PAY-I12` only to prove that no successful Authorization/Capture/Sale or unresolved Provider result exists and to terminate the Intent; it never creates a VOID or Refund and never silently upgrades itself. Operations may separately send `COM-I08 Reversal`; Commerce calls `PAY-I13`, and Payment atomically resolves the authoritative branch under lock. An uncaptured successful Authorization creates a precise-target VOID, while SALE/full Capture returns `REFUND_REQUIRED` so Commerce can create the normal Refund Request and continue through the Commerce Order Refund Position and Payment Channel Refund chain. Finance consumes only `RefundSucceeded` after Provider success. Gateway and BFF never coordinate Payment and Finance business mutations, and an unsolicited post-capture reversal or a reversal of a successful refund is an internal exception workflow, not an entry-layer command.
+Cancel and Reversal remain separate Commerce commands. `COM-I05 Cancel` calls Payment `PAY-I12` only to prove that no successful Authorization/Capture/Sale or unresolved Channel result exists and to terminate the Intent; it never creates a VOID or Refund and never silently upgrades itself. Operations may separately send `COM-I08 Reversal`; Commerce calls `PAY-I13`, and Payment atomically resolves the authoritative branch under lock. An uncaptured successful Authorization creates a precise-target VOID, while SALE/full Capture returns `REFUND_REQUIRED` so Commerce can create the normal Refund Request and continue through the Commerce Order Refund Position and Payment Channel Refund chain. Finance consumes only `RefundSucceeded` after Channel success. Gateway and BFF never coordinate Payment and Finance business mutations, and an unsolicited post-capture reversal or a reversal of a successful refund is an internal exception workflow, not an entry-layer command.
 
 The BFF is different from API Gateway:
 
-- **Gateway** handles external ingress, minimal channel identity validation, Route Scope enforcement, rate limiting, routing, request IDs, and access logs. 所有外部 HTTP API 都由 Platform Support 的公共 Route Catalog 统一维护，覆盖 `OPERATIONS`, `CLIENT`, `PARTNER`, `CHECKOUT`, `CLIENT_API` and `PROVIDER_CALLBACK`. Gateway validates and compiles the global immutable Platform Snapshot, while retaining ownership of the Target Registry, security profiles, protocol limits and Redis runtime state. It does not evaluate `PLT-I02`, resource ownership or page use cases.
+- **Gateway** handles external ingress, minimal channel identity validation, Route Scope enforcement, rate limiting, routing, request IDs, and access logs. 所有外部 HTTP API 都由 Platform Support 的公共 Route Catalog 统一维护，覆盖 `OPERATIONS`, `CLIENT`, `PARTNER`, `CHECKOUT`, `CLIENT_API` and `CHANNEL_CALLBACK`. Gateway validates and compiles the global immutable Platform Snapshot, while retaining ownership of the Target Registry, security profiles, protocol limits and Redis runtime state. It does not evaluate `PLT-I02`, resource ownership or page use cases.
 - **BFF** owns frontend response shapes, authorized query composition and page model assembly. It applies entry authorization and preserves upstream resource authorization; domain decisions remain with core systems.
 - **Core systems** own business rules, state transitions, data, and cross-system domain workflows.
 
@@ -147,7 +147,7 @@ The [Customer Checkout requirement](../requirements/20260912/commerce-CustomerCh
 
 Commerce owns order, Consumer, preparation and legal facts, and returns payment summaries; Payment owns submission, card handling, execution and constrained NI 3DS instructions. Legal documents remain frozen-file links; Customer inputs do not carry an Order version. The trusted Channel is CHECKOUT, unrelated to Platform's human CUSTOMER Realm. No separate Checkout BFF or Gateway business orchestration is introduced. One Pay request does not create a distributed transaction: accepted terms can remain valid after payment failure, while retries preserve the original command and prevent duplicate funds actions.
 
-The Payment Card business module owns collection handling, encrypted card storage, platform tokens and controlled Provider card use. NI remains the first acquiring Provider. A Maven module is not proof of runtime isolation or PCI compliance; actual card-data controls and deployment follow the linked design. Public Gateway mapping and activation remain separate delivery work.
+The Payment Card business module owns collection handling, encrypted card storage, platform tokens and controlled Channel card use. NI remains the first acquiring Channel. A Maven module is not proof of runtime isolation or PCI compliance; actual card-data controls and deployment follow the linked design. Public Gateway mapping and activation remain separate delivery work.
 
 Earlier suggested route families (historical examples; do not register them alongside the confirmed Customer family):
 
@@ -242,12 +242,12 @@ Gateway performs edge controls only. A Client API credential belongs to a Tenant
 
 The dedicated Client API domain determines the trusted `CLIENT_API` channel at Nginx; callers do not submit Channel, Client ID, Tenant ID, Credential ID, Scope or Gateway context. Gateway validates the opaque Credential through PLT-I03, uses the returned Tenant ID only for its Tenant Guard, and forwards only `X-Request-Id`, `X-Gateway-Client-Id` and `X-Gateway-Credential-Id` as trusted Client API identity headers. Route lookup is keyed by trusted Channel + Method + Path, so identical paths may exist in another Channel while overlaps remain forbidden within one Channel. The complete edge contract is the [Client API Gateway design](../docs/superpowers/specs/2026-09-05-client-api-gateway-design.md); the current Commerce business contract is the [Hosted Checkout V1 design](../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md).
 
-### Provider callbacks
+### Channel callbacks
 
-Provider callbacks route directly through Gateway to Payment Orchestration:
+Channel callbacks route directly through Gateway to Payment Orchestration:
 
 ```text
-Provider / Acquirer
+Channel / Acquirer
   -> API Gateway
     -> Payment Orchestration callback interface
 ```
@@ -255,10 +255,10 @@ Provider / Acquirer
 Suggested route family:
 
 ```text
-/callbacks/v1/providers/{providerCode}/**
+/callbacks/v1/channels/{channelCode}/**
 ```
 
-Payment Orchestration verifies signatures, deduplicates messages, maps external states, and publishes normalized MQ facts. When investigation or reconciliation truly requires the original provider interaction, it may retain only a schema-validated, card-data/Secret scan-passed, encrypted raw envelope in controlled object storage. Unexpected PAN, SAD or Secret content must be rejected from persistence and logs and must trigger a security event; “retain original payload” is never an unconditional rule. It is not a separate callback service.
+Payment Orchestration verifies signatures, deduplicates messages, maps external states, and publishes normalized MQ facts. When investigation or reconciliation truly requires the original channel interaction, it may retain only a schema-validated, card-data/Secret scan-passed, encrypted raw envelope in controlled object storage. Unexpected PAN, SAD or Secret content must be rejected from persistence and logs and must trigger a security event; “retain original payload” is never an unconditional rule. It is not a separate callback service.
 
 ### Vault internal access
 
@@ -285,7 +285,7 @@ The `compensation-event` component has no network endpoint. It runs inside each 
 | Partner Console BFF | Partner Console only | No | Stateless Partner-channel adapter; availability belongs in the status ledger |
 | Operations Console BFF | Operations Console only | No | Stateless Operations-channel adapter; availability belongs in the status ledger |
 | Commerce | Scoped Checkout endpoints | Client System | Exposed |
-| Payment Orchestration | Unified Customer payment submission and original-submission query under the approved Card scope | Provider callbacks; narrowly scoped Client API if required | Restricted exposure; implementation and activation follow the Card design |
+| Payment Orchestration | Unified Customer payment submission and original-submission query under the approved Card scope | Channel callbacks; narrowly scoped Client API if required | Restricted exposure; implementation and activation follow the Card design |
 | Finance | Browser uses BFF | Client System | Exposed for machine API |
 | Client & Contract | Browser uses BFF | Optional Client profile API | Expose only required machine endpoints |
 | Platform Support | Browser uses BFF | API key/Webhook management where required | Restricted exposure |
@@ -311,7 +311,7 @@ The fact that a service is reachable through Gateway does not make every interfa
 ## 9. Change sequencing
 
 1. Preserve the six core project roots, API Gateway, three channel-specific BFF boundaries and approved frontend names; do not revive retired `business-portal-*` names.
-2. Do not create standalone Client API or Provider Callback services: route those logical entry surfaces to the owning core systems.
+2. Do not create standalone Client API or Channel Callback services: route those logical entry surfaces to the owning core systems.
 3. Add or split a deployable only after a demonstrated security, scaling, failure-isolation or release-cadence need and an approved architecture change.
 4. Before changing `vault-service`, read the Vault V1 Spec, OpenAPI, physical decisions and current status; do not restore historical Binding/lifecycle APIs without a new approved consumer design.
 5. Determine what already exists, is verified or is deployed only from [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) and the affected repository README.

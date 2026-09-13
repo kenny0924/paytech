@@ -1,5 +1,7 @@
 # 自建 Card Vault 与支付卡采集
 
+> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
+
 2026-09-12 用户已确认自建存卡、Payment内独立Card模块及一次 Pay 请求同时提交卡信息与协议确认，由 Payment 调用 Commerce 保存确认后执行支付。本需求接续 [Customer Checkout](../commerce-CustomerCheckout接口设计/requirement.md)；现状分析见[技术入口](./technique.md)，阶段3字段与数据见[接口稿](./api-contract.md)和[数据稿](./data-design.md)。不把未来PCI计划记为当前合规/上线状态，确认与验证见 [delivery.md](./delivery.md)。
 
 ## 1. 目标与保留决定
@@ -8,7 +10,7 @@
 
 Card 模块属于 `payment-orchestration-service`，建议 Maven 名称为 `paytech-payment-card`。本次确认的是同一 Payment 服务内的业务能力模块，不增加核心系统；也不因模块拆分增加独立仓库、进程或数据库。运行时卡数据环境与访问权限需按实际部署评估，不能把 JAR 边界视为安全隔离证明。
 
-首个收单 Provider 仍为 NI；本次改变卡数据托管方，不取消 NI 的收单职责。原四个 Customer 基础路径保持，其中 payments 的公开 Owner 改为 Payment，另有原提交查询；无前端 Order Version、文档链接、点击 Pay 合并确认、事务内只操作数据库等决定保持。
+首个收单 Channel 仍为 NI；本次改变卡数据托管方，不取消 NI 的收单职责。原四个 Customer 基础路径保持，其中 payments 的公开 Owner 改为 Payment，另有原提交查询；无前端 Order Version、文档链接、点击 Pay 合并确认、事务内只操作数据库等决定保持。
 
 ## 2. 本阶段边界提案
 
@@ -37,6 +39,6 @@ Card 模块属于 `payment-orchestration-service`，建议 Maven 名称为 `payt
 
 ## 4. 对前序方案的取代范围
 
-本次明确指令取代“只能由 Provider 托管卡数据”的产品方向，并将卡能力归到 Payment 内一个业务模块；前序“独立卡库”不再解释为默认新增独立服务。新的原始卡处理例外限定于本专项拟建设的 Payment 统一 Customer 支付入口与 Card 模块，不扩大 Commerce、其他通用支付接口或非卡 Vault 的权限。详见[技术入口](./technique.md)。
+本次明确指令取代“只能由 Channel 托管卡数据”的产品方向，并将卡能力归到 Payment 内一个业务模块；前序“独立卡库”不再解释为默认新增独立服务。新的原始卡处理例外限定于本专项拟建设的 Payment 统一 Customer 支付入口与 Card 模块，不扩大 Commerce、其他通用支付接口或非卡 Vault 的权限。详见[技术入口](./technique.md)。
 
 前序 NI Hosted Session 的 hostedSessionApiKey/outletRef、NI session_id 作为 Customer card.token，以及接受前 NI setup 绑定均不再是新方案的必经合同。NI 专有执行、查询和认证仍需 Payment Adapter 核对；不得把平台 Token 直接送入只接受 NI Session 的端点。

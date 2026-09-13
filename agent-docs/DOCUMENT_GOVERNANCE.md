@@ -1,5 +1,7 @@
 # Code-MoR 文档治理
 
+> **支付渠道术语：** 全系统支付渠道的现行自有命名以 [2026-09-13 Channel 决定](decisions/2026-09-13-payment-channel-terminology.md)为准。Payment、Finance、Risk 及 Gateway/Platform/Operations 的支付回调合同同步使用 Channel；框架、非支付供应商、外部原协议与历史记录按决定中的边界保留。
+
 > **OE / Client / Pricing 本期路由：** CCT、Commerce、Payment、Finance 的 entityNo、OE Scope、Affiliation、Agreement Party、支付准备与定价事实以 [2026-09-11 四系统决定](decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 为准；Risk 延后接入，旧 Wire/Hash/历史 Reader 继续按迁移边界保留。
 
 最后更新：2026-09-11
@@ -59,6 +61,8 @@ Code-MoR 不再用“所有文档排成一条绝对优先级”的方式解决�
 Foundation 资源锁按既有主题分治，不新增重叠 Owner：[`TECHNOLOGY_STACK.md`](./TECHNOLOGY_STACK.md) 拥有公共能力、依赖、配置与失败边界，[`DEVELOPMENT_CONVENTIONS.md` 第 5.1 节](./DEVELOPMENT_CONVENTIONS.md#51-锁与并发控制)拥有是否加锁、实际资源、Redis-first 与数据库最终保护的选择规则，[`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) 拥有公共包、代理入口和 Processor/事务位置，[`UNIT_TEST_GUIDE.md`](./UNIT_TEST_GUIDE.md) 拥有验证门禁，[`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 独占实现、验证、迁移和部署状态。[资源锁决策](./decisions/2026-09-05-redis-first-resource-lock.md)与[完整设计](../docs/superpowers/specs/2026-09-05-foundation-resource-lock-design.md)冻结跨 Owner 的准确窄合同；各 Owner 只维护自己子主题的稳定投影。
 
 某项专项决策可以窄范围取代主题 Owner 的一部分，但必须声明 `Superseded sections` 或准确作用域；未命中的其余部分继续有效。
+
+Payment 的交易级工具 Token、统一 pay、旧 Instrument 移除与 Commerce 幂等衔接，按[Execution 修订评审稿](../requirements/20260913/payment-Execution设计/instrument-token-amendment.md)管理后继目标的详细合同。其明确取代范围外仍沿用原 Owner；方向确认、详细设计评审、代码、物理模型及数据库执行分别判断，不用旧 SQL 或测试证据证明新行为。
 
 ## 3. 文档类型与允许内容
 

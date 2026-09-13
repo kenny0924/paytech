@@ -163,7 +163,7 @@ Finance 保留完整 Tax Snapshot；Commerce 只校验 `H_FINANCE_TAX`、总额�
 | `reason_code` | `CUSTOMER_REQUEST` | `OPERATIONS_ADJUSTMENT` |
 | `reason_summary` | `Consumer requested partial refund` | `Operations correction after case review` |
 | `refund_status` | `SUCCEEDED` | `FAILED` |
-| `status_reason_code` | `NULL` | `PROVIDER_DECLINED` |
+| `status_reason_code` | `NULL` | `CHANNEL_DECLINED` |
 | `channel_refund_id` | `750000000000000201` | `750000000000000202` |
 | `completed_at` | `2026-08-23T09:03:00.000000Z` | `2026-08-23T10:02:00.000000Z` |
 | `version` | `4` | `3` |
@@ -209,7 +209,7 @@ Chargeback 建案后，Risk 将 Dispute Case 置为 `EVIDENCE_REQUIRED` 并发�
 
 ### 6.1 未支付 Cancel
 
-Order A：`order_id=810000000000000060`，`client_order_id=NOVA-CANCEL-9002`，Order=`OPEN`，Session=`OPEN`，Intent=`REQUIRES_PAYMENT`，尚无成功 Authorization/Capture/Sale，也没有已提交或 `UNKNOWN` Provider Action。
+Order A：`order_id=810000000000000060`，`client_order_id=NOVA-CANCEL-9002`，Order=`OPEN`，Session=`OPEN`，Intent=`REQUIRES_PAYMENT`，尚无成功 Authorization/Capture/Sale，也没有已提交或 `UNKNOWN` Channel Action。
 
 Client 使用 `cancel-order-810000000000000060-v1` 调用 `COM-I05`。Commerce 调用 `PAY-I12`，Payment 在 Expected Version 下把 Intent 终止为 `CANCELLED`。Commerce 收到确定结果后在同一本地事务更新：
 
@@ -220,7 +220,7 @@ Client 使用 `cancel-order-810000000000000060-v1` 调用 `COM-I05`。Commerce �
 | `t_order_payment_projection` | `intent_status=CANCELLED`，来源版本单调推进 |
 | `t_compensation_event` | 登记 `OrderCancelled`，提交后发布 |
 
-如果 Provider Action 已提交或为 `UNKNOWN`，`PAY-I12` 返回 `PENDING` 并先 Query；若结果证明已授权或已捕获，则返回 `REVERSAL_REQUIRED`。Cancel 不会静默升级成 Reversal，也不会创建 Refund Request 或 Finance 事实。
+如果 Channel Action 已提交或为 `UNKNOWN`，`PAY-I12` 返回 `PENDING` 并先 Query；若结果证明已授权或已捕获，则返回 `REVERSAL_REQUIRED`。Cancel 不会静默升级成 Reversal，也不会创建 Refund Request 或 Finance 事实。
 
 ### 6.2 授权成功但未 Capture 的 Reversal
 

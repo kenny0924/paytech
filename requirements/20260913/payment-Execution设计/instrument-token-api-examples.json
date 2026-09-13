@@ -1,0 +1,128 @@
+{
+  "description": "交易级 Token 修订的静态合同样例，未请求任何服务。requestTemplate 中的敏感字段为不可发送的脱敏占位；摘要、Token、密钥身份、ID 和时间均为合成示例，不是实际凭据或实际 HMAC 计算结果。CARD_TEST 仅为测试目录代码。",
+  "authority": "instrument-token-amendment.md",
+  "examples": [
+    {
+      "id": "PI-I00",
+      "method": "POST",
+      "path": "/payment-instrument/v1/card-identities",
+      "requestTemplate": {
+        "clientId": "101",
+        "checkoutSessionId": "203",
+        "intentId": "601",
+        "consumerContractId": "301",
+        "paymentMethodCode": "CARD_TEST",
+        "cardIdentity": {
+          "pan": "<current-request-pan>",
+          "expiryMonth": "<current-request-expiry-month>",
+          "expiryYear": "<current-request-expiry-year>",
+          "cardholderName": "<current-request-cardholder-name>"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Cache-Control": "no-store" },
+        "body": {
+          "cardIdentityDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "identityKeyRef": "synthetic-card-identity-key-1"
+        }
+      }
+    },
+    {
+      "id": "PI-I01",
+      "method": "POST",
+      "path": "/payment-instrument/v1/card-tokens",
+      "headers": { "Idempotency-Key": "instrument:501" },
+      "requestTemplate": {
+        "clientId": "101",
+        "intentId": "601",
+        "sourceSubmissionId": "501",
+        "checkoutSessionId": "203",
+        "consumerContractId": "301",
+        "paymentMethodCode": "CARD_TEST",
+        "sourceExpiresAt": "2026-09-14T10:00:00Z",
+        "cardIdentityDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "identityKeyRef": "synthetic-card-identity-key-1",
+        "allowPreparation": true,
+        "card": {
+          "pan": "<current-request-pan>",
+          "expiryMonth": "<current-request-expiry-month>",
+          "expiryYear": "<current-request-expiry-year>",
+          "cardholderName": "<current-request-cardholder-name>",
+          "cvv": "<current-request-cvv>"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Cache-Control": "no-store" },
+        "body": {
+          "paymentInstrumentToken": "pit_SYNTHETIC_EXAMPLE_NOT_A_LIVE_TOKEN",
+          "paymentMethodCode": "CARD_TEST",
+          "expiresAt": "2026-09-14T09:04:00Z"
+        }
+      },
+      "note": "示例截止时间只表达平台窗口早于来源期限，不定义默认四分钟 TTL；重复准备仍返回此原截止时间。"
+    },
+    {
+      "id": "EX-I05",
+      "method": "POST",
+      "path": "/payment-execution/v1/intents/601/pay",
+      "headers": { "Idempotency-Key": "submission:501" },
+      "body": {
+        "clientId": "101",
+        "sourceSubmissionId": "501",
+        "paymentMethodCode": "CARD_TEST",
+        "paymentGoal": "PAY_NOW",
+        "consumerContractId": "301",
+        "consumerTermsAcceptanceId": "401",
+        "refundPolicyAcceptanceId": "402",
+        "privacyNoticeAcceptanceId": "403",
+        "acceptanceCompletedAt": "2026-09-14T09:00:00Z",
+        "orderVersion": "7",
+        "paymentInstrumentToken": "pit_SYNTHETIC_EXAMPLE_NOT_A_LIVE_TOKEN",
+        "allowExecution": true
+      },
+      "response": {
+        "status": 202,
+        "headers": { "Cache-Control": "no-store" },
+        "body": {
+          "clientId": "101",
+          "sourceSubmissionId": "501",
+          "intentId": "601",
+          "attemptId": "701",
+          "paymentMethodCode": "CARD_TEST",
+          "paymentGoal": "PAY_NOW",
+          "status": "UNKNOWN",
+          "authorizedAmount": "0.00",
+          "capturedAmount": "0.00",
+          "actionId": "801",
+          "observedAt": "2026-09-14T09:01:00Z"
+        }
+      }
+    },
+    {
+      "id": "EX-I06",
+      "method": "GET",
+      "path": "/payment-execution/v1/intents/601/submissions/501",
+      "query": { "clientId": "101" },
+      "response": {
+        "status": 200,
+        "headers": { "Cache-Control": "no-store" },
+        "body": {
+          "clientId": "101",
+          "sourceSubmissionId": "501",
+          "intentId": "601",
+          "attemptId": "701",
+          "paymentMethodCode": "CARD_TEST",
+          "paymentGoal": "PAY_NOW",
+          "status": "SUCCEEDED",
+          "authorizedAmount": "0.00",
+          "capturedAmount": "100.00",
+          "actionId": "801",
+          "observedAt": "2026-09-14T09:06:00Z"
+        }
+      },
+      "note": "Token 已过期，原已发送 SALE 的可信查询仍可确认成功。此例不代表本次已经执行支付。"
+    }
+  ]
+}

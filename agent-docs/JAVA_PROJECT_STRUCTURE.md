@@ -321,7 +321,7 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 ### 4.3 OpenAPI 与外部接口
 
 - 内部全 Java 服务以手写 `@HttpExchange` 契约和共享 `*-api` JAR 为默认，使用 springdoc/构建检查输出或校验 OpenAPI 文档。
-- Gateway 暴露的 Client API、Checkout API、Provider Callback 和未来第三方 API 必须保持语言无关的 HTTP/OpenAPI 契约，不要求外部消费者依赖 Java JAR。
+- Gateway 暴露的 Client API、Checkout API、Channel Callback 和未来第三方 API 必须保持语言无关的 HTTP/OpenAPI 契约，不要求外部消费者依赖 Java JAR。
 - 内部 API 与外部 API 使用不同路径、权限和契约包，不能因为 DTO 相似而直接暴露内部接口。
 - 新项目不新增 Dubbo 或 OpenFeign 契约；历史系统迁移必须另行设计兼容期。
 

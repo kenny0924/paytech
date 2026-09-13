@@ -19,8 +19,8 @@
 - Customer 请求和响应均无 `expectedOrderVersion`、`orderVersion`、`schemaVersion`。数据库版本、CAS、资源锁和内部 COM-I10 的 Order Version 保留；浏览器不负责并发版本管理。
 - 三个写操作都要求 `Idempotency-Key`：1–255 字符，首字符字母或数字，其余只允许字母、数字、`.`、`_`、`:`、`-`。服务端作用域为同一 Checkout Session + 操作；同键异参 409，网络重试复用原键。不同键也不能绕过订单唯一准备、唯一在途支付。
 - 相同命令先校验当前访问权限，再定位原受理结果；不能因原命令已使订单进入终态就执行第二次，或用新命令前置条件覆盖原回执。每个尚未执行的外部副作用仍重验资格。
-- 成功使用 `application/json`，错误使用现行 `application/problem+json`。全部响应 `Cache-Control: no-store`。Consumer、Token 和 Provider 临时参数禁止 Body 日志，Checkout Token 在访问日志中脱敏。未知普通 JSON 属性沿现行 MVC 规则忽略；含卡 payments 按 Card 合同严格拒绝未知/重复字段并限制为8 KiB；不支持的 Query、重复单值 Query、GET/Preparation Body 返回 400。
-- 字段类型/结构错误 400，字段约束错误 422。建议本期写请求上限 16 KiB；Provider 特殊限额须在具体分支评审，不能截断凭据。
+- 成功使用 `application/json`，错误使用现行 `application/problem+json`。全部响应 `Cache-Control: no-store`。Consumer、Token 和 Channel 临时参数禁止 Body 日志，Checkout Token 在访问日志中脱敏。未知普通 JSON 属性沿现行 MVC 规则忽略；含卡 payments 按 Card 合同严格拒绝未知/重复字段并限制为8 KiB；不支持的 Query、重复单值 Query、GET/Preparation Body 返回 400。
+- 字段类型/结构错误 400，字段约束错误 422。建议本期写请求上限 16 KiB；Channel 特殊限额须在具体分支评审，不能截断凭据。
 
 | 公共类型 | 格式 |
 |---|---|
@@ -130,7 +130,7 @@
 
 先读 Commerce 本地事实，再在事务外按需查询 Payment 当前视图和 Vault 原值，最后重验最小 Order/Session 状态与内部版本；变化时重新组装，避免跨时点拼接。AUTHORIZED 和当前 Customer Action 不能只靠旧 Commerce 投影，既有设计不新增 PaymentAuthorized MQ。
 
-Commerce GET 只返回已有支付/动作概要，不承载 Card 配置或 NI 指令；Payment 查询只取已有可安全复用的3DS材料，不创建 Provider 会话、重建挑战或提交资金请求。无指令时关闭相应操作，不返回假参数。Payment 不可用时 payment.availability=UNAVAILABLE，关闭 PAY，可展示带 observedAt 的最近可信事实；不存在可信事实就 status=null，不能推断失败或未支付。
+Commerce GET 只返回已有支付/动作概要，不承载 Card 配置或 NI 指令；Payment 查询只取已有可安全复用的3DS材料，不创建 Channel 会话、重建挑战或提交资金请求。无指令时关闭相应操作，不返回假参数。Payment 不可用时 payment.availability=UNAVAILABLE，关闭 PAY，可展示带 observedAt 的最近可信事实；不存在可信事实就 status=null，不能推断失败或未支付。
 
 Payment SUCCEEDED 但 Commerce 尚未 PAID 时继续显示确认中并禁止再付，待 Commerce 消费权威成功事件后展示成功页。GET 不代替该事件写订单。无效 Token 统一 404；到期 410 返回通用提示，不返回个人化订单/支付结果，也不延长 Token。后台仍负责在途支付收敛。
 

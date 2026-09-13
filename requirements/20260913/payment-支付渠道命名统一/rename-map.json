@@ -1,0 +1,868 @@
+{
+  "status": "APPROVED_LOCAL_IMPLEMENTATION",
+  "scope": "All first-party payment-channel terminology; no database execution",
+  "systems": [
+    {
+      "system": "payment-orchestration",
+      "schema": "payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql",
+      "schema_sha256": "e55b23b89bbf6a9afbee0f5c8a45aced55d1fdba825caccdd787e6bfd0213ed3",
+      "model": "payment-orchestration-service/docs/database/payment-orchestration.pdma.json",
+      "model_sha256": "419101273fcd3171b125c7288e8245c131f37b0ea4daf9012110f7aefc3a0a3a",
+      "tables": [
+        {
+          "from": "t_payment_provider",
+          "to": "t_payment_channel"
+        },
+        {
+          "from": "t_provider_account",
+          "to": "t_channel_account"
+        },
+        {
+          "from": "t_provider_mid",
+          "to": "t_channel_mid"
+        },
+        {
+          "from": "t_provider_transaction_ref",
+          "to": "t_channel_transaction_ref"
+        },
+        {
+          "from": "t_provider_interaction",
+          "to": "t_channel_interaction"
+        },
+        {
+          "from": "t_provider_callback",
+          "to": "t_channel_callback"
+        },
+        {
+          "from": "t_provider_callback_item",
+          "to": "t_channel_callback_item"
+        },
+        {
+          "from": "t_provider_event_exception",
+          "to": "t_channel_event_exception"
+        },
+        {
+          "from": "t_provider_dispute_notice",
+          "to": "t_channel_dispute_notice"
+        },
+        {
+          "from": "t_provider_dispute_event",
+          "to": "t_channel_dispute_event"
+        },
+        {
+          "from": "t_provider_dispute_action",
+          "to": "t_channel_dispute_action"
+        }
+      ],
+      "columns": [
+        {
+          "table": "t_payment_provider",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_payment_provider",
+          "from": "provider_code",
+          "to": "channel_code"
+        },
+        {
+          "table": "t_payment_provider",
+          "from": "provider_name",
+          "to": "channel_name"
+        },
+        {
+          "table": "t_payment_provider",
+          "from": "provider_status",
+          "to": "channel_status"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "provider_account_id",
+          "to": "channel_account_id"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_provider_mid",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_provider_mid",
+          "from": "provider_account_id",
+          "to": "channel_account_id"
+        },
+        {
+          "table": "t_mid_health_state",
+          "from": "provider_error_count",
+          "to": "channel_error_count"
+        },
+        {
+          "table": "t_mid_health_state",
+          "from": "provider_error_rate",
+          "to": "channel_error_rate"
+        },
+        {
+          "table": "t_routing_decision",
+          "from": "selected_provider_id",
+          "to": "selected_channel_id"
+        },
+        {
+          "table": "t_routing_decision",
+          "from": "selected_provider_account_id",
+          "to": "selected_channel_account_id"
+        },
+        {
+          "table": "t_route_candidate_eval",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_route_candidate_eval",
+          "from": "provider_account_id",
+          "to": "channel_account_id"
+        },
+        {
+          "table": "t_payment_instrument",
+          "from": "provider_instrument_ref",
+          "to": "channel_instrument_ref"
+        },
+        {
+          "table": "t_payment_instrument",
+          "from": "provider_fingerprint",
+          "to": "channel_fingerprint"
+        },
+        {
+          "table": "t_payment_action",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_payment_action",
+          "from": "provider_account_id",
+          "to": "channel_account_id"
+        },
+        {
+          "table": "t_payment_action",
+          "from": "target_provider_transaction_ref_id",
+          "to": "target_channel_txn_ref_id"
+        },
+        {
+          "table": "t_payment_action",
+          "from": "provider_idempotency_key",
+          "to": "channel_idempotency_key"
+        },
+        {
+          "table": "t_payment_action",
+          "from": "provider_result_time",
+          "to": "channel_result_time"
+        },
+        {
+          "table": "t_payment_customer_action",
+          "from": "provider_reference",
+          "to": "channel_reference"
+        },
+        {
+          "table": "t_provider_transaction_ref",
+          "from": "provider_transaction_ref_id",
+          "to": "channel_transaction_ref_id"
+        },
+        {
+          "table": "t_provider_transaction_ref",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_provider_transaction_ref",
+          "from": "original_provider_transaction_ref_id",
+          "to": "original_channel_txn_ref_id"
+        },
+        {
+          "table": "t_provider_transaction_ref",
+          "from": "provider_event_time",
+          "to": "channel_event_time"
+        },
+        {
+          "table": "t_provider_interaction",
+          "from": "provider_interaction_id",
+          "to": "channel_interaction_id"
+        },
+        {
+          "table": "t_provider_interaction",
+          "from": "provider_dispute_action_id",
+          "to": "channel_dispute_action_id"
+        },
+        {
+          "table": "t_provider_interaction",
+          "from": "provider_result_code",
+          "to": "channel_result_code"
+        },
+        {
+          "table": "t_payment_refund_position",
+          "from": "original_provider_transaction_ref_id",
+          "to": "original_channel_txn_ref_id"
+        },
+        {
+          "table": "t_provider_callback",
+          "from": "provider_callback_id",
+          "to": "channel_callback_id"
+        },
+        {
+          "table": "t_provider_callback",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_provider_callback",
+          "from": "provider_account_id",
+          "to": "channel_account_id"
+        },
+        {
+          "table": "t_provider_callback_item",
+          "from": "provider_callback_item_id",
+          "to": "channel_callback_item_id"
+        },
+        {
+          "table": "t_provider_callback_item",
+          "from": "provider_callback_id",
+          "to": "channel_callback_id"
+        },
+        {
+          "table": "t_provider_callback_item",
+          "from": "provider_event_time",
+          "to": "channel_event_time"
+        },
+        {
+          "table": "t_provider_event_exception",
+          "from": "provider_event_exception_id",
+          "to": "channel_event_exception_id"
+        },
+        {
+          "table": "t_provider_event_exception",
+          "from": "provider_callback_id",
+          "to": "channel_callback_id"
+        },
+        {
+          "table": "t_provider_event_exception",
+          "from": "provider_callback_item_id",
+          "to": "channel_callback_item_id"
+        },
+        {
+          "table": "t_provider_dispute_notice",
+          "from": "provider_dispute_notice_id",
+          "to": "channel_dispute_notice_id"
+        },
+        {
+          "table": "t_provider_dispute_notice",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_provider_dispute_notice",
+          "from": "original_provider_transaction_ref_id",
+          "to": "original_channel_txn_ref_id"
+        },
+        {
+          "table": "t_provider_dispute_notice",
+          "from": "provider_deadline_at",
+          "to": "channel_deadline_at"
+        },
+        {
+          "table": "t_provider_dispute_event",
+          "from": "provider_dispute_event_id",
+          "to": "channel_dispute_event_id"
+        },
+        {
+          "table": "t_provider_dispute_event",
+          "from": "provider_dispute_notice_id",
+          "to": "channel_dispute_notice_id"
+        },
+        {
+          "table": "t_provider_dispute_event",
+          "from": "provider_event_time",
+          "to": "channel_event_time"
+        },
+        {
+          "table": "t_provider_dispute_action",
+          "from": "provider_dispute_action_id",
+          "to": "channel_dispute_action_id"
+        },
+        {
+          "table": "t_provider_dispute_action",
+          "from": "provider_dispute_notice_id",
+          "to": "channel_dispute_notice_id"
+        },
+        {
+          "table": "t_provider_dispute_action",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_provider_dispute_action",
+          "from": "provider_account_id",
+          "to": "channel_account_id"
+        },
+        {
+          "table": "t_provider_dispute_action",
+          "from": "provider_idempotency_key",
+          "to": "channel_idempotency_key"
+        },
+        {
+          "table": "t_provider_dispute_action",
+          "from": "provider_result_time",
+          "to": "channel_result_time"
+        }
+      ],
+      "indexes": [
+        {
+          "table": "t_payment_provider",
+          "from": "uk_payment_provider_code",
+          "to": "uk_payment_channel_code"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "uk_provider_account_code",
+          "to": "uk_channel_account_code"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "uk_provider_account_external",
+          "to": "uk_channel_account_external"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "uk_provider_account_config",
+          "to": "uk_channel_account_config"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "uk_provider_account_owner",
+          "to": "uk_channel_account_owner"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "idx_provider_account_status",
+          "to": "idx_channel_account_status"
+        },
+        {
+          "table": "t_provider_mid",
+          "from": "uk_provider_mid",
+          "to": "uk_channel_mid"
+        },
+        {
+          "table": "t_provider_mid",
+          "from": "idx_provider_mid_account",
+          "to": "idx_channel_mid_account"
+        },
+        {
+          "table": "t_provider_mid",
+          "from": "idx_provider_mid_entity",
+          "to": "idx_channel_mid_entity"
+        },
+        {
+          "table": "t_routing_decision",
+          "from": "idx_route_dec_provider",
+          "to": "idx_route_dec_channel"
+        },
+        {
+          "table": "t_route_candidate_eval",
+          "from": "idx_route_eval_provider",
+          "to": "idx_route_eval_channel"
+        },
+        {
+          "table": "t_provider_transaction_ref",
+          "from": "uk_provider_transaction_ref",
+          "to": "uk_channel_transaction_ref"
+        },
+        {
+          "table": "t_provider_interaction",
+          "from": "uk_provider_interaction_action",
+          "to": "uk_channel_interaction_action"
+        },
+        {
+          "table": "t_provider_interaction",
+          "from": "uk_provider_interact_dispute_act",
+          "to": "uk_channel_interact_dispute_act"
+        },
+        {
+          "table": "t_provider_callback",
+          "from": "uk_provider_callback_dedup",
+          "to": "uk_channel_callback_dedup"
+        },
+        {
+          "table": "t_provider_callback",
+          "from": "uk_provider_callback_fingerprint",
+          "to": "uk_channel_callback_fingerprint"
+        },
+        {
+          "table": "t_provider_callback_item",
+          "from": "uk_provider_callback_item",
+          "to": "uk_channel_callback_item"
+        },
+        {
+          "table": "t_provider_dispute_notice",
+          "from": "uk_provider_dispute_external",
+          "to": "uk_channel_dispute_external"
+        },
+        {
+          "table": "t_provider_dispute_event",
+          "from": "uk_provider_dispute_event",
+          "to": "uk_channel_dispute_event"
+        }
+      ]
+    },
+    {
+      "system": "finance",
+      "schema": "finance-service/docs/database/sql/finance-schema.sql",
+      "schema_sha256": "56e2c30f26a9dd840a838c2165df0d39c6fa08cca986cfdf6beb488ee63cc60a",
+      "model": "finance-service/docs/database/finance.pdma.json",
+      "model_sha256": "7b4de1302c14532f960d1a5fd241804ae81b1e030a27609d5110733a18cc5fe6",
+      "tables": [
+        {
+          "from": "t_provider_cost_plan",
+          "to": "t_channel_cost_plan"
+        },
+        {
+          "from": "t_provider_cost_plan_ver",
+          "to": "t_channel_cost_plan_ver"
+        },
+        {
+          "from": "t_provider_cost_scope",
+          "to": "t_channel_cost_scope"
+        },
+        {
+          "from": "t_provider_cost_component",
+          "to": "t_channel_cost_component"
+        },
+        {
+          "from": "t_provider_cost_confirm",
+          "to": "t_channel_cost_confirm"
+        },
+        {
+          "from": "t_provider_cost_alloc",
+          "to": "t_channel_cost_alloc"
+        },
+        {
+          "from": "t_provider_account",
+          "to": "t_channel_account"
+        },
+        {
+          "from": "t_provider_open_item",
+          "to": "t_channel_open_item"
+        },
+        {
+          "from": "t_provider_debit_item",
+          "to": "t_channel_debit_item"
+        },
+        {
+          "from": "t_provider_settle_batch",
+          "to": "t_channel_settle_batch"
+        },
+        {
+          "from": "t_provider_settle_item",
+          "to": "t_channel_settle_item"
+        },
+        {
+          "from": "t_provider_transaction_match",
+          "to": "t_channel_transaction_match"
+        }
+      ],
+      "columns": [
+        {
+          "table": "t_transaction_economics",
+          "from": "provider_dispute_notice_id",
+          "to": "channel_dispute_notice_id"
+        },
+        {
+          "table": "t_provider_cost_plan",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_provider_cost_scope",
+          "from": "provider_agreement_ref",
+          "to": "channel_agreement_ref"
+        },
+        {
+          "table": "t_provider_cost_confirm",
+          "from": "provider_settle_item_id",
+          "to": "channel_settle_item_id"
+        },
+        {
+          "table": "t_provider_cost_alloc",
+          "from": "provider_dispute_notice_id",
+          "to": "channel_dispute_notice_id"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_provider_open_item",
+          "from": "provider_account_id",
+          "to": "channel_account_id"
+        },
+        {
+          "table": "t_provider_open_item",
+          "from": "provider_transaction_ref_id",
+          "to": "channel_transaction_ref_id"
+        },
+        {
+          "table": "t_provider_debit_item",
+          "from": "provider_account_id",
+          "to": "channel_account_id"
+        },
+        {
+          "table": "t_provider_debit_item",
+          "from": "provider_dispute_notice_id",
+          "to": "channel_dispute_notice_id"
+        },
+        {
+          "table": "t_provider_debit_item",
+          "from": "provider_transaction_ref_id",
+          "to": "channel_transaction_ref_id"
+        },
+        {
+          "table": "t_provider_debit_item",
+          "from": "provider_debit_id",
+          "to": "channel_debit_id"
+        },
+        {
+          "table": "t_duplicate_capture_item",
+          "from": "provider_account_id",
+          "to": "channel_account_id"
+        },
+        {
+          "table": "t_duplicate_capture_item",
+          "from": "provider_transaction_ref_id",
+          "to": "channel_transaction_ref_id"
+        },
+        {
+          "table": "t_provider_settle_batch",
+          "from": "provider_account_id",
+          "to": "channel_account_id"
+        },
+        {
+          "table": "t_provider_settle_batch",
+          "from": "provider_batch_ref",
+          "to": "channel_batch_ref"
+        },
+        {
+          "table": "t_provider_settle_item",
+          "from": "provider_item_ref",
+          "to": "channel_item_ref"
+        },
+        {
+          "table": "t_bank_recon_match",
+          "from": "provider_batch_id",
+          "to": "channel_batch_id"
+        },
+        {
+          "table": "t_recon_resolution",
+          "from": "provider_transaction_match_id",
+          "to": "channel_transaction_match_id"
+        }
+      ],
+      "indexes": [
+        {
+          "table": "t_provider_cost_plan",
+          "from": "uk_provider_cost_plan",
+          "to": "uk_channel_cost_plan"
+        },
+        {
+          "table": "t_provider_cost_plan",
+          "from": "uk_provider_cost_code",
+          "to": "uk_channel_cost_code"
+        },
+        {
+          "table": "t_provider_cost_plan",
+          "from": "uk_provider_cost_current",
+          "to": "uk_channel_cost_current"
+        },
+        {
+          "table": "t_provider_cost_plan_ver",
+          "from": "uk_provider_cost_ver",
+          "to": "uk_channel_cost_ver"
+        },
+        {
+          "table": "t_provider_cost_scope",
+          "from": "uk_provider_cost_scope_no",
+          "to": "uk_channel_cost_scope_no"
+        },
+        {
+          "table": "t_provider_cost_scope",
+          "from": "uk_provider_cost_scope",
+          "to": "uk_channel_cost_scope"
+        },
+        {
+          "table": "t_provider_cost_scope",
+          "from": "idx_provider_cost_match",
+          "to": "idx_channel_cost_match"
+        },
+        {
+          "table": "t_provider_cost_component",
+          "from": "uk_provider_cost_component",
+          "to": "uk_channel_cost_component"
+        },
+        {
+          "table": "t_provider_cost_confirm",
+          "from": "uk_provider_cost_item",
+          "to": "uk_channel_cost_item"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "uk_provider_acct",
+          "to": "uk_channel_acct"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "uk_provider_mid_currency",
+          "to": "uk_channel_mid_currency"
+        },
+        {
+          "table": "t_provider_account",
+          "from": "idx_provider_acct_oe",
+          "to": "idx_channel_acct_oe"
+        },
+        {
+          "table": "t_provider_open_item",
+          "from": "uk_provider_txn_ref",
+          "to": "uk_channel_txn_ref"
+        },
+        {
+          "table": "t_provider_open_item",
+          "from": "uk_provider_external",
+          "to": "uk_channel_external"
+        },
+        {
+          "table": "t_provider_open_item",
+          "from": "idx_provider_attempt",
+          "to": "idx_channel_attempt"
+        },
+        {
+          "table": "t_provider_open_item",
+          "from": "idx_provider_open_econ",
+          "to": "idx_channel_open_econ"
+        },
+        {
+          "table": "t_provider_open_item",
+          "from": "idx_provider_item_status",
+          "to": "idx_channel_item_status"
+        },
+        {
+          "table": "t_provider_debit_item",
+          "from": "uk_provider_debit_ref",
+          "to": "uk_channel_debit_ref"
+        },
+        {
+          "table": "t_provider_debit_item",
+          "from": "uk_provider_debit_id",
+          "to": "uk_channel_debit_id"
+        },
+        {
+          "table": "t_provider_debit_item",
+          "from": "uk_provider_debit_econ",
+          "to": "uk_channel_debit_econ"
+        },
+        {
+          "table": "t_provider_debit_item",
+          "from": "idx_provider_debit_st",
+          "to": "idx_channel_debit_st"
+        },
+        {
+          "table": "t_provider_settle_batch",
+          "from": "uk_provider_batch",
+          "to": "uk_channel_batch"
+        },
+        {
+          "table": "t_provider_settle_batch",
+          "from": "idx_provider_batch_recon",
+          "to": "idx_channel_batch_recon"
+        },
+        {
+          "table": "t_provider_settle_batch",
+          "from": "idx_provider_batch_file",
+          "to": "idx_channel_batch_file"
+        },
+        {
+          "table": "t_provider_settle_item",
+          "from": "uk_provider_item_ref",
+          "to": "uk_channel_item_ref"
+        },
+        {
+          "table": "t_provider_transaction_match",
+          "from": "uk_provider_transaction_match",
+          "to": "uk_channel_transaction_match"
+        },
+        {
+          "table": "t_provider_transaction_match",
+          "from": "idx_provider_txn_open",
+          "to": "idx_channel_txn_open"
+        },
+        {
+          "table": "t_provider_transaction_match",
+          "from": "idx_provider_txn_debit",
+          "to": "idx_channel_txn_debit"
+        },
+        {
+          "table": "t_bank_recon_match",
+          "from": "uk_bank_recon_provider",
+          "to": "uk_bank_recon_channel"
+        },
+        {
+          "table": "t_bank_recon_match",
+          "from": "idx_bank_recon_provider",
+          "to": "idx_bank_recon_channel"
+        },
+        {
+          "table": "t_recon_resolution",
+          "from": "uk_recon_resolution_provider_txn",
+          "to": "uk_recon_resolution_channel_txn"
+        }
+      ]
+    },
+    {
+      "system": "risk-compliance",
+      "schema": "risk-compliance-service/docs/database/sql/risk-compliance-schema.sql",
+      "schema_sha256": "8d5d687393dd41fce050bc85dd5d7d930e1eaaf18a7fb3069f59f366f16dece0",
+      "model": "risk-compliance-service/docs/database/risk-compliance.pdma.json",
+      "model_sha256": "7898b13393a177f82348c7f3b00e51000b83f11750be3c0bb9786ed05d4ef609",
+      "tables": [],
+      "columns": [
+        {
+          "table": "t_dispute_case",
+          "from": "provider_dispute_notice_id",
+          "to": "channel_dispute_notice_id"
+        },
+        {
+          "table": "t_dispute_case",
+          "from": "provider_dispute_source_version",
+          "to": "channel_dispute_source_version"
+        },
+        {
+          "table": "t_dispute_case",
+          "from": "provider_id",
+          "to": "channel_id"
+        },
+        {
+          "table": "t_dispute_case",
+          "from": "provider_response_due_time",
+          "to": "channel_response_due_time"
+        },
+        {
+          "table": "t_dispute_submission_request",
+          "from": "provider_dispute_action_id",
+          "to": "channel_dispute_action_id"
+        },
+        {
+          "table": "t_dispute_outcome",
+          "from": "provider_dispute_action_id",
+          "to": "channel_dispute_action_id"
+        },
+        {
+          "table": "t_dispute_liability_decision",
+          "from": "provider_fee_bearer",
+          "to": "channel_fee_bearer"
+        },
+        {
+          "table": "t_dispute_liability_decision",
+          "from": "provider_recovery_required",
+          "to": "channel_recovery_required"
+        }
+      ],
+      "indexes": [
+        {
+          "table": "t_dispute_submission_request",
+          "from": "uk_dispute_provider_act",
+          "to": "uk_dispute_channel_act"
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "tables": 23,
+    "columns": 79,
+    "indexes": 51
+  },
+  "additional_contract_changes": [
+    {
+      "kind": "gateway_route_security_authorization_code",
+      "from": "PROVIDER_CALLBACK",
+      "to": "CHANNEL_CALLBACK",
+      "owners": [
+        "Platform Support",
+        "API Gateway",
+        "Operations BFF",
+        "Operations Web"
+      ]
+    },
+    {
+      "kind": "event_name",
+      "from": "ProviderDisputeOutcomeReceived",
+      "to": "ChannelDisputeOutcomeReceived",
+      "owners": [
+        "Payment",
+        "Risk"
+      ]
+    },
+    {
+      "kind": "risk_decision_source_type",
+      "from": "PROVIDER_ACTION",
+      "to": "CHANNEL_ACTION"
+    },
+    {
+      "kind": "risk_trigger_type",
+      "from": "PROVIDER_OUTCOME",
+      "to": "CHANNEL_OUTCOME"
+    },
+    {
+      "kind": "payment_channel_bearer",
+      "from": "PROVIDER",
+      "to": "CHANNEL"
+    },
+    {
+      "kind": "finance_payment_channel_business_codes",
+      "from": "PROVIDER_*",
+      "to": "CHANNEL_*",
+      "note": "Scope only verified payment-channel account, cost, settlement and reconciliation codes; not a global replacement instruction"
+    }
+  ],
+  "draft_card_additions": [
+    {
+      "from": "provider_order_ref",
+      "to": "channel_order_ref"
+    },
+    {
+      "from": "provider_payment_ref",
+      "to": "channel_payment_ref"
+    },
+    {
+      "from": "idx_pay_action_provider_order",
+      "to": "idx_pay_action_channel_order"
+    }
+  ],
+  "preserved_examples": [
+    "org.junit.jupiter.params.provider",
+    "ObjectProvider",
+    "AuthenticationProvider",
+    "ReactiveJwksProvider",
+    "RetryAfterProvider",
+    "ReactFlowProvider",
+    "ConfigProvider",
+    "RouterProvider",
+    "Risk t_dd_check.provider_code",
+    "Risk t_screening_run.provider_code",
+    "Platform OAuth/notification/storage providers",
+    "External protocol fields and signed original payloads",
+    "Historical SQL execution records and past signed/hash snapshots"
+  ],
+  "physical_name_notes": {
+    "original_provider_transaction_ref_id": "original_channel_txn_ref_id",
+    "target_provider_transaction_ref_id": "target_channel_txn_ref_id",
+    "reason": "Use txn for these prefixed physical column names to meet the project default 32-character limit; identifier values and reference meaning remain unchanged."
+  }
+}

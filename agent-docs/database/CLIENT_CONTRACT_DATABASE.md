@@ -12,7 +12,7 @@
 
 ## 1. 目标与边界
 
-Client & Contract（CCT）唯一拥有 Party 与资料、Client/Local Partner/Operating Entity 角色、入驻申请、主体来源与分配、Agreement、Consumer Legal、Client Pricing、Partner Share 与 Platform Service Charge，并在交易使用点编排实时资格校验。Risk 拥有 KYC/KYB/Underwriting Case 与 Decision，Platform Support 拥有文件正文和集成就绪事实，Commerce 拥有 Order/Checkout/Consumer Acceptance，Payment 拥有 Provider/MID/路由覆盖/支付，Finance 拥有结算资料、计算结果和账本。CCT 不保存跨系统资格事实副本或 Evaluation，不建跨库外键。
+Client & Contract（CCT）唯一拥有 Party 与资料、Client/Local Partner/Operating Entity 角色、入驻申请、主体来源与分配、Agreement、Consumer Legal、Client Pricing、Partner Share 与 Platform Service Charge，并在交易使用点编排实时资格校验。Risk 拥有 KYC/KYB/Underwriting Case 与 Decision，Platform Support 拥有文件正文和集成就绪事实，Commerce 拥有 Order/Checkout/Consumer Acceptance，Payment 拥有 Channel/MID/路由覆盖/支付，Finance 拥有结算资料、计算结果和账本。CCT 不保存跨系统资格事实副本或 Evaluation，不建跨库外键。
 
 当前目录分组为 `9+10+2+4+2+7+2+2`，当前生成统计统一见实现台账。表数不是独立设计目标；该目录保留已确认的业务事实、并发、审计与可靠执行能力，并删除持久化 Eligibility、通用 Retention、重复生命周期、Current Pointer、无当前产品用例的 Agreement/Legal Root/Version/Binding/Hash、Assignment Policy/Version/Binding、Pricing/Share 重复物理结构、多层权属路径、`commercial_term_scope` 及无独立消费者的中间 Hash。
 
@@ -109,7 +109,7 @@ Client & Contract（CCT）唯一拥有 Party 与资料、Client/Local Partner/Op
 | `commercial_term_component` | Client Fee、Partner Share 或 Platform Service Charge 计算组件 | `term_component_id`, `term_price_id`, `component_no`, `component_code`, `component_type`, `trigger_code`, `calculation_base`, `rate`, `fixed_amount`, `currency`, `min_amount`, `max_amount`, `band_mode`, `create_time`, `update_time` | `uk_comm_term_component(term_price_id,component_code)`、`uk_comm_term_component_no(term_price_id,component_no)`；类型 `PERCENTAGE/FIXED/TIERED`；多行 Component 按 `component_no` 稳定计算并相加；TIERED 的头部 rate/fixed_amount 为空、`band_mode=WHOLE_BASE/PROGRESSIVE` 且至少一档，其他类型不得有 Band |
 | `commercial_term_component_band` | 阶梯定价组件的金额区间与档位参数 | `term_band_id`, `term_component_id`, `band_no`, `lower_bound`, `upper_bound`, `rate`, `fixed_amount`, `create_time`, `update_time` | `uk_comm_term_band_no(term_component_id,band_no)`、`uk_comm_term_band_lower(term_component_id,lower_bound)`；区间为 `[lower_bound,upper_bound)`，从 0 开始、连续、无重叠且最后一档上界为空；每档按组件矩阵填写 rate 或 fixed_amount，PROGRESSIVE 首期只允许 rate |
 
-`payment_method_profile_code` 是 Profile 对聚合外部和跨系统的唯一身份；`payment_method_profile_id` 仅供 Profile 内部 Condition 关联。Code 创建后不可修改、不可回收复用，也不得编码 Client、OE、价格或 Version。Payment Method 本身是 Payment 拥有的稳定代码目录/应用常量，CCT 只验证并保存 `payment_method_code`，不复制 Payment Method 名称、图标、路由能力或 Provider 配置，也不新增 Payment Method 表、Profile Version、Dimension Definition 或 Condition Value 表。
+`payment_method_profile_code` 是 Profile 对聚合外部和跨系统的唯一身份；`payment_method_profile_id` 仅供 Profile 内部 Condition 关联。Code 创建后不可修改、不可回收复用，也不得编码 Client、OE、价格或 Version。Payment Method 本身是 Payment 拥有的稳定代码目录/应用常量，CCT 只验证并保存 `payment_method_code`，不复制 Payment Method 名称、图标、路由能力或 Channel 配置，也不新增 Payment Method 表、Profile Version、Dimension Definition 或 Condition Value 表。
 
 Profile 生命周期严格为 `DRAFT -> ACTIVE -> RETIRED`。DRAFT 的名称、Payment Method 与 Condition 变更受 Profile Root BCR/CAS 保护；ACTIVE 后 Code、Payment Method 和全部 Condition 永久冻结。RETIRED 只禁止新的 Commercial Term Version 引用，既有 Price 的历史引用仍必须可读。条件语义变化时创建新 Profile 与新 Code。
 
@@ -281,7 +281,7 @@ CCT 必须验证 Scope、Version、Plan 与 Agreement 的父链完整，Associat
 
 ### 5.6 新 Price Wire 的迁移边界（尚未定义）
 
-已确认的时序边界只有：下单阶段冻结 Commercial Term Version、Agreement-OE 与上下文时点；Payment 产生并冻结受控的实际支付特征后，才解析准确 Price，并冻结 `payment_method_profile_code`、Price、Component 与 Band 证据。卡组织、资金类型、卡等级和认证分类均由 Payment 标准化提供；CCT 不读取 PAN、完整 BIN 或 Provider 原始 Payload，也不得以“没有挑战”推导非 3DS。
+已确认的时序边界只有：下单阶段冻结 Commercial Term Version、Agreement-OE 与上下文时点；Payment 产生并冻结受控的实际支付特征后，才解析准确 Price，并冻结 `payment_method_profile_code`、Price、Component 与 Band 证据。卡组织、资金类型、卡等级和认证分类均由 Payment 标准化提供；CCT 不读取 PAN、完整 BIN 或 Channel 原始 Payload，也不得以“没有挑战”推导非 3DS。
 
 新接口名称、调用方、请求/响应字段、事实目录与规范化版本、错误契约、Canonical Domain/Hash 版本、Commerce/Payment/Finance 各自冻结字段，以及 legacy Scope 到历史 Reader 的数据迁移策略均未在本文定义。完成 Owner 设计前，现行 V5 调用方继续按第 5.4、5.5 节读取 legacy 数据，新开发不得自行拼出混合 Scope/Price 合同。
 
@@ -293,7 +293,7 @@ CLIENT Source 的 `client_source_basis` 仅为 `SAME_PARTY/VERIFIED_ASSOCIATION`
 
 自动分配只保留 Source Relation、Affiliation、Assignment Rule 和 Assignment 四层。Rule 对一个 Client 的准确国家、币种、Industry、MCC 指定候选 OE 和 Priority；系统按最小 Priority 选择第一条同时具备 ACTIVE OE、ACTIVE Affiliation 和唯一 ACTIVE Source Relation 的规则，并写入 ACTIVE Assignment。触发者固定为 CCT 内部处理 Rule、Affiliation、Source、OE 或 Business Classification 变化的 Processor：状态变更命令在同一本地事务内同步重算受影响的准确 Client/Scope，Assignment 已生成、保持或结束后才提交，提交后的状态才可用于新交易。外部调用方、CCT-I10/I13 查询、定时任务和人工操作都不触发或补写 Assignment；当前不增加工作流、调度器、发布版本或额外事件表。无候选或证据冲突时不猜测，同一命令结束旧 Assignment，并使实时资格校验与 CCT-I13 Fail Closed。CCT 只选择并冻结 OE，不选择 MID；Payment 后续 Attempt 只能在同一 OE 下选择或更换 MID。
 
-Operating Entity 状态变化继续复用 `OperatingEntityChanged`，不增加新事件或事件表。最小 Payload 固定包含 `operating_entity_id`、`operating_entity_status`、`reason_code`、`source_version` 与 `occurred_time`。本轮只有 `operating_entity_status=CLOSED` 表示对既有交易永久不可用：Payment 收到后阻止该主体下的新 Attempt，等待不存在活动或 `UNKNOWN` Attempt 再终止 Intent；Commerce 只在收到对应 `PaymentIntentTerminated` 后取消仍开放的 Order/Session。`SUSPENDED` 的在途交易语义本轮不扩展；临时 Provider/MID shortage 不是 Operating Entity 状态变化，也不得用该事件伪装。既有 Order 不允许切换主体或由平台自动创建替代 Order。
+Operating Entity 状态变化继续复用 `OperatingEntityChanged`，不增加新事件或事件表。最小 Payload 固定包含 `operating_entity_id`、`operating_entity_status`、`reason_code`、`source_version` 与 `occurred_time`。本轮只有 `operating_entity_status=CLOSED` 表示对既有交易永久不可用：Payment 收到后阻止该主体下的新 Attempt，等待不存在活动或 `UNKNOWN` Attempt 再终止 Intent；Commerce 只在收到对应 `PaymentIntentTerminated` 后取消仍开放的 Order/Session。`SUSPENDED` 的在途交易语义本轮不扩展；临时 Channel/MID shortage 不是 Operating Entity 状态变化，也不得用该事件伪装。既有 Order 不允许切换主体或由平台自动创建替代 Order。
 
 ## 7. BCR CAS、修订与可靠执行
 
@@ -423,5 +423,5 @@ erDiagram
 - 禁止把来源扩展为 `DIRECT`；平台自有 OE 使用 `PLATFORM`。
 - 禁止恢复 Agreement/Consumer Legal/Seller Disclosure 的 Root/Version、Current Pointer、Active Slot、Client Override、Agreement 交易 Scope、业务 Content/Scope Hash、Hash Schema Version、Binding Revision 或 Seller Content Hash；也禁止恢复普通业务 `version`、Assignment Policy/Version/Binding、Assignment Root/Version、Assignment 中间 Hash、`source_owner_key`、任何 `current_version_id`、申请/合同材料的文档版本列、Primary/Fallback 双标记、`entity_source_ownership_path`、`entity_source_path_edge` 或 `ownership_path_id`。GLOBAL/Wildcard/Manual Assignment 与多公司多层持股能力必须在出现明确用例后重新设计并审批。
 - 禁止恢复 `commercial_term_scope` 或 Commercial Term 的 `hash_schema_version/content_hash/scope_hash/canonical_hash`，也禁止用 `scope_key`、NULL OE、`*` 或另一种派生摘要改名恢复同一结构。Legacy CCT-I13/I14 的历史 Scope Reader 是迁移期间的兼容能力，不得反向进入当前 40 表新写模型。
-- 禁止建立 Payment Method 主表、Profile Version、Dimension Definition、Condition Value、Operator/Range 子模型，或把价格、Owner、OE、Agreement、有效期、优先级放入 Profile。禁止用 PAN、完整 BIN、Provider 原始 Payload或“无 Challenge”推断 Profile 条件事实。
+- 禁止建立 Payment Method 主表、Profile Version、Dimension Definition、Condition Value、Operator/Range 子模型，或把价格、Owner、OE、Agreement、有效期、优先级放入 Profile。禁止用 PAN、完整 BIN、Channel 原始 Payload或“无 Challenge”推断 Profile 条件事实。
 - 禁止恢复持久化 Client Eligibility/Evaluation、固定七维结果、外部资格来源事实副本或 Eligibility Hash；KYC、Agreement、实时交易资格和 Settlement Eligibility 继续保持不同责任边界。禁止跨库 FK/View/Repository；禁止在 CCT 保存 MID、路由、银行账户、账本、卡数据、Secret 或文件正文。

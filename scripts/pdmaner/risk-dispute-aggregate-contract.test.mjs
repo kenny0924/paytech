@@ -26,9 +26,9 @@ function validSnapshot() {
       disputeCaseId: "720001",
       outcomeVersion: 1,
       outcome: "LOST",
-      decisionSourceType: "PROVIDER_ACTION",
+      decisionSourceType: "CHANNEL_ACTION",
       decisionSourceId: "730001",
-      providerDisputeActionId: "730001",
+      channelDisputeActionId: "730001",
       sourceVersion: 4,
       supersedesOutcomeId: null,
     }],
@@ -49,10 +49,10 @@ function validSnapshot() {
       executionStatus: "SUCCEEDED",
     }],
     stateChanges: [
-      { disputeCaseId: "720001", fromStatus: null, toStatus: "EVIDENCE_REQUIRED", triggerType: "PROVIDER_NOTICE", triggerId: "710001", aggregateVersion: 1 },
+      { disputeCaseId: "720001", fromStatus: null, toStatus: "EVIDENCE_REQUIRED", triggerType: "CHANNEL_NOTICE", triggerId: "710001", aggregateVersion: 1 },
       { disputeCaseId: "720001", fromStatus: "EVIDENCE_REQUIRED", toStatus: "UNDER_REVIEW", triggerType: "CLIENT_EVIDENCE", triggerId: "720021", aggregateVersion: 2 },
       { disputeCaseId: "720001", fromStatus: "UNDER_REVIEW", toStatus: "SUBMITTED", triggerType: "SUBMISSION_REQUEST", triggerId: "720041", aggregateVersion: 3 },
-      { disputeCaseId: "720001", fromStatus: "SUBMITTED", toStatus: "LOST", triggerType: "PROVIDER_OUTCOME", triggerId: "730001", aggregateVersion: 4 },
+      { disputeCaseId: "720001", fromStatus: "SUBMITTED", toStatus: "LOST", triggerType: "CHANNEL_OUTCOME", triggerId: "730001", aggregateVersion: 4 },
     ],
   };
 }
@@ -61,18 +61,18 @@ function clonedSnapshot() {
   return structuredClone(validSnapshot());
 }
 
-test("Dispute aggregate accepts a verified Provider LOST with rule provenance", async () => {
+test("Dispute aggregate accepts a verified Channel LOST with rule provenance", async () => {
   const { collectDisputeAggregateErrors, validateDisputeAggregate } = await loadValidator();
   const snapshot = validSnapshot();
   assert.deepEqual(collectDisputeAggregateErrors(snapshot), []);
   assert.doesNotThrow(() => validateDisputeAggregate(snapshot));
 });
 
-test("Dispute aggregate accepts a verified Provider WON without deposit permission", async () => {
+test("Dispute aggregate accepts a verified Channel WON without deposit permission", async () => {
   const { collectDisputeAggregateErrors } = await loadValidator();
   const snapshot = clonedSnapshot();
   snapshot.outcomes[0].outcome = "WON";
-  snapshot.liabilities[0].principalBearer = "PROVIDER";
+  snapshot.liabilities[0].principalBearer = "CHANNEL";
   snapshot.liabilities[0].securityDepositUseAllowed = false;
   snapshot.stateChanges.at(-1).toStatus = "WON";
   snapshot.caseRow.status = "WON";
@@ -85,7 +85,7 @@ test("Dispute aggregate accepts explicit Client and Operations LOST dispositions
     const snapshot = clonedSnapshot();
     snapshot.outcomes[0].decisionSourceType = sourceType;
     snapshot.outcomes[0].decisionSourceId = sourceType === "CLIENT_DISPOSITION" ? "740001" : "740002";
-    snapshot.outcomes[0].providerDisputeActionId = null;
+    snapshot.outcomes[0].channelDisputeActionId = null;
     snapshot.liabilities[0].decisionEvaluationId = null;
     snapshot.liabilities[0].actionEffectId = null;
     snapshot.liabilities[0].decidedBy = "900001";
@@ -105,7 +105,7 @@ test("Dispute aggregate accepts an authorized Operations correction after close"
     outcome: "WON",
     decisionSourceType: "OPERATIONS_CORRECTION",
     decisionSourceId: "740002",
-    providerDisputeActionId: "730002",
+    channelDisputeActionId: "730002",
     sourceVersion: 1,
     supersedesOutcomeId: "720051",
   });
@@ -157,7 +157,7 @@ test("Dispute initial dispositions may only create an explicitly authorized LOST
     const won = clonedSnapshot();
     won.outcomes[0].decisionSourceType = sourceType;
     won.outcomes[0].decisionSourceId = "740001";
-    won.outcomes[0].providerDisputeActionId = null;
+    won.outcomes[0].channelDisputeActionId = null;
     won.outcomes[0].outcome = "WON";
     won.caseRow.status = "WON";
     won.liabilities[0].securityDepositUseAllowed = false;
@@ -169,7 +169,7 @@ test("Dispute initial dispositions may only create an explicitly authorized LOST
     const mixedAuthority = clonedSnapshot();
     mixedAuthority.outcomes[0].decisionSourceType = sourceType;
     mixedAuthority.outcomes[0].decisionSourceId = "740001";
-    mixedAuthority.outcomes[0].providerDisputeActionId = null;
+    mixedAuthority.outcomes[0].channelDisputeActionId = null;
     mixedAuthority.liabilities[0].decidedBy = "900001";
     mixedAuthority.stateChanges.at(-1).triggerType = sourceType;
     mixedAuthority.stateChanges.at(-1).triggerId = "740001";
@@ -182,13 +182,13 @@ test("Dispute correction requires a direct predecessor and a trusted CLOSED self
   const invalidInitialCorrection = clonedSnapshot();
   invalidInitialCorrection.outcomes[0].decisionSourceType = "OPERATIONS_CORRECTION";
   invalidInitialCorrection.outcomes[0].decisionSourceId = "740002";
-  invalidInitialCorrection.outcomes[0].providerDisputeActionId = null;
+  invalidInitialCorrection.outcomes[0].channelDisputeActionId = null;
   assert.ok(collectDisputeAggregateErrors(invalidInitialCorrection).includes("CORRECTION_SOURCE_REQUIRES_PREDECESSOR"));
 
-  const providerCorrection = clonedSnapshot();
-  providerCorrection.outcomes[0].outcomeVersion = 2;
-  providerCorrection.outcomes[0].supersedesOutcomeId = "720050";
-  assert.ok(collectDisputeAggregateErrors(providerCorrection).includes("CORRECTION_SOURCE_REQUIRES_PREDECESSOR"));
+  const channelCorrection = clonedSnapshot();
+  channelCorrection.outcomes[0].outcomeVersion = 2;
+  channelCorrection.outcomes[0].supersedesOutcomeId = "720050";
+  assert.ok(collectDisputeAggregateErrors(channelCorrection).includes("CORRECTION_SOURCE_REQUIRES_PREDECESSOR"));
 
   const untrustedClosedSelf = clonedSnapshot();
   untrustedClosedSelf.caseRow.status = "CLOSED";
@@ -252,7 +252,7 @@ test("Dispute correction Trigger ID must bind each Operations correction source 
     outcome: "WON",
     decisionSourceType: "OPERATIONS_CORRECTION",
     decisionSourceId: "740002",
-    providerDisputeActionId: "730002",
+    channelDisputeActionId: "730002",
     sourceVersion: 1,
     supersedesOutcomeId: "720051",
   });
@@ -278,7 +278,7 @@ test("Dispute correction Trigger ID must bind each Operations correction source 
     outcome: "LOST",
     decisionSourceType: "OPERATIONS_CORRECTION",
     decisionSourceId: "740003",
-    providerDisputeActionId: "730003",
+    channelDisputeActionId: "730003",
     sourceVersion: 1,
     supersedesOutcomeId: "720052",
   });

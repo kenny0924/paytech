@@ -1,3 +1,4 @@
+import { paymentChannelIdentityKey } from "../payment-channel-identity.mjs";
 import { createHash } from "node:crypto";
 import {
   existsSync,
@@ -49,6 +50,7 @@ function sha256(value) {
 }
 
 function stableUuid(key) {
+  key = paymentChannelIdentityKey(key);
   const bytes = Buffer.from(sha256(`${MODEL_KEY}:${key}`).slice(0, 32), "hex");
   bytes[6] = (bytes[6] & 0x0f) | 0x50;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;

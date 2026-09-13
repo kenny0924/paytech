@@ -1,0 +1,14 @@
+{
+  "artifact": "paytech-payment-web-1.0.0-SNAPSHOT-exec.jar",
+  "sha256": "d3b9ebc931f7c49dfca928b3775508b8aeb2c69ea4b73571c87f416b739bf1fa",
+  "health": {
+    "groups": [
+      "liveness",
+      "readiness"
+    ],
+    "status": "UP"
+  },
+  "unconfiguredExecutionStatus": 503,
+  "cacheControl": "no-store",
+  "deployment": false
+}

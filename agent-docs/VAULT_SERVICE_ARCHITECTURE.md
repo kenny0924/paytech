@@ -12,7 +12,7 @@
 >
 > 当前 V1 使用部署网络限制的私有 HTTP，不持有 X.509 应用证书，并接受必需的 `X-Caller-Service` Header 与静态 `caller_service + action + data_type + purpose` Allowlist 作为 MVP 信任假设。该 Header 可被内部调用方伪造，只能 best-effort 防止误用，不是 mTLS、Workload Identity 或其他强服务认证；当前三表模型也没有 Binding。公网 TLS、可信 Client IP 与 Java 服务私有 HTTP 的统一边界以 [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准。独立 `vault-service` 中的 Go Server 与 Java Client 是正式 V1 实现，结论见 [2026-09-05 决策](./decisions/2026-09-05-document-governance-and-conflict-resolution.md)，协议以 [OpenAPI](../vault-service/api/openapi/v1.yaml) 为准。当前 local/test 成熟度不证明生产 KMS、强服务身份、真实业务接入、部署或合规完成；精确状态只在 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 维护。
 >
-> 本文继续生效的部分是：Vault 只保护获批的可恢复非卡敏感值、永不拥有业务含义、内部专用且不经 Gateway/BFF/浏览器暴露、禁止任何服务直读 Vault 数据库、PAN/CVV/CVC/完整磁道/卡有效期/PIN/PIN Block 排除、KMS/Secrets/对象存储/Provider Tokenization 职责分离，以及其他不与当前三表设计冲突的安全边界。
+> 本文继续生效的部分是：Vault 只保护获批的可恢复非卡敏感值、永不拥有业务含义、内部专用且不经 Gateway/BFF/浏览器暴露、禁止任何服务直读 Vault 数据库、PAN/CVV/CVC/完整磁道/卡有效期/PIN/PIN Block 排除、KMS/Secrets/对象存储/Channel Tokenization 职责分离，以及其他不与当前三表设计冲突的安全边界。
 
 ## 1. 文档目的
 
@@ -23,7 +23,7 @@
 - 设计 Vault 的 PDManer 模型、手工 DDL/DML、DataObject、Mapper 或 Repository；
 - 新增或修改 Protect/Reveal，或评估 Bind、Copy、Retire、Rewrap、Blind Index 等 V1 之外的能力；
 - 调整敏感数据授权、解密审计、MVP 默认保留或密钥轮换；
-- 判断某类数据应进入 Vault、Secrets Manager、对象存储还是 Provider Tokenization。
+- 判断某类数据应进入 Vault、Secrets Manager、对象存储还是 Channel Tokenization。
 
 本文必须与以下文档一起使用：
 
@@ -45,7 +45,7 @@ Vault Service 是独立部署、独立数据库的安全基础设施，不是第
 - 当前 V1 不依赖 Platform Support Workload/User 授权投影或集中 Audit；旧方案中的对应职责和事件补送是历史目标；中央 Retention Policy 与 Legal Hold 同样未进入 V1；
 - KMS/HSM 拥有根密钥和密码学密钥生命周期；Secrets Manager 拥有系统 Secret；
 - 加密对象存储拥有文件正文和大体积原始材料；
-- Provider Tokenization 拥有支付卡数据和卡 Token 的生成、使用与还原能力。
+- Channel Tokenization 拥有支付卡数据和卡 Token 的生成、使用与还原能力。
 
 ```mermaid
 flowchart LR
@@ -66,7 +66,7 @@ flowchart LR
     V --> KMS["KMS / HSM\nKEK、HMAC Key、Token Lookup Key"]
     V -.-> AUDIT["Platform Support Audit\n历史未来目标，V1 不补送"]
     SUP -.->|"历史未来授权投影，V1 不依赖"| V
-    PAY --> PSP["Provider Hosted Fields / Tokenization"]
+    PAY --> PSP["Channel Hosted Fields / Tokenization"]
     SUP --> OBJ["加密对象存储"]
     SUP --> SM["Secrets Manager"]
 ```
@@ -78,7 +78,7 @@ Vault 不得：
 - 查询或写入六个核心系统数据库；
 - 替业务系统判断 Client、Operating Entity、Order、Payment、Case 或 Settlement 的资源所有权；
 - 充当跨系统业务工作流、通用文件库、通用配置中心或通用 Secret Manager；
-- 暴露给浏览器、Client、Partner、Provider 或公共 API Gateway 路由。
+- 暴露给浏览器、Client、Partner、Channel 或公共 API Gateway 路由。
 
 ## 3. 数据范围
 
@@ -105,12 +105,12 @@ Client & Contract 的 Party Identity 首期只注册两个 Vault Data Type：`EM
 
 | 禁止数据 | 正确存放或处理方式 |
 |---|---|
-| PAN、完整银行卡号 | Provider Hosted Fields / SDK / Tokenization |
-| CVV/CVC | 只在 Provider 授权链路瞬时处理，授权后不得保存 |
+| PAN、完整银行卡号 | Channel Hosted Fields / SDK / Tokenization |
+| CVV/CVC | 只在 Channel 授权链路瞬时处理，授权后不得保存 |
 | 完整磁道数据 | 不进入 Code-MoR |
 | PIN、PIN Block | 不进入 Code-MoR |
-| 支付卡有效期 | 由 Provider Token 和 Provider 侧支付工具生命周期管理 |
-| Provider Card Token 的 Detokenization 能力 | 由 Provider 管理；Payment 只保存 Provider Token 及批准的最小卡片描述元数据，后者仍按内部分类保护 |
+| 支付卡有效期 | 由 Channel Token 和 Channel 侧支付工具生命周期管理 |
+| Channel Card Token 的 Detokenization 能力 | 由 Channel 管理；Payment 只保存 Channel Token 及批准的最小卡片描述元数据，后者仍按内部分类保护 |
 | Provider/API/Webhook Secret、私钥、证书私钥、数据库密码 | Secrets Manager/KMS；业务库只保存 `secret_ref` |
 | 用户登录密码或可恢复密码 | 不进入 Vault、事件、日志或文件；内部 Operations 账号仅由 Platform Support 自有认证域保存批准的不可逆自适应校验值，Client/Partner/Consumer 的认证提供方仍待设计；任何可恢复密码均禁止保存 |
 | KMS 根密钥、KEK、HMAC Key 或明文 DEK | KMS/HSM；当前 Vault 数据库只保存非敏感 `kms_key_ref` 和 Wrapped DEK，不保存 Key Version 表/字段 |
@@ -585,7 +585,7 @@ HMAC-SHA-256(
 - Blind Index Key 只存在于 KMS/HSM，业务系统只能通过 Protect 或 Derive API 获得结果；
 - 轮换期 `Read Record Blind Indexes` 由 Vault 内部解密现有 Record，向原 Binding Owner 的 `INDEX_MAINTENANCE` 任务返回 Active 和 Previous Version；调用方不提供原始值。业务系统通过本地 `compensation_event` 更新对应 Tuple，并在批准窗口内执行双版本查询；
 - 如确需把 Blind Index 返回业务库，必须执行下述 Owner 协同覆盖协议；覆盖率与冲突对账完成前不得停用旧版本；
-- Provider Token、高熵随机 ID 和 Content Hash 不应因为“统一”而改成 Blind Index。
+- Channel Token、高熵随机 ID 和 Content Hash 不应因为“统一”而改成 Blind Index。
 
 #### Blind Index 轮换覆盖协议
 
@@ -751,7 +751,7 @@ Vault MVP 不建设通用 Inbox/Outbox。自身可靠后台任务统一使用 `c
 |---|---|---|---|
 | Client & Contract | Party Email、Phone 标量 | Party/Profile/Role/Agreement 事实；姓名、生日、法律标识与地址结构化字段；Contact Token 及专项文档已证明需要的元数据；公开 Seller Disclosure | `contact_type=EMAIL` 使用 `EMAIL_ADDRESS_V1`，`PHONE` 使用 `PHONE_E164_V1`；密码不进入 CCT 或 Vault，现有完整 Tuple 消费者不因 Commerce 精简而删除 |
 | Commerce | Consumer Email、Phone 标量，以及只含姓名/完整账单地址的 Consumer Profile Payload | Order/Context/Checkout/Acceptance/Refund；非 PII `consumer_reference`；Email/Phone Stable Value Token；Profile Token；Network Evidence 原值和批准派生维度 | Email/Phone 同字段规范化值返回同 Token；Profile 禁止重复 Email/Phone。Network Evidence 不进入 Vault，不生成 Blind Index/Key Version/device identifier。Token 仅可经 Commerce→Payment→Risk 同步最小契约传递 |
-| Payment Orchestration | 原则上不托管卡或 Provider Token；确有非卡类 PII 时必须单独审批 Data Type/Field | Provider Token、Scheme、最多八位 BIN、Last4、Issuer Country、Provider Fingerprint 和支付事实 | PAN/CVV/磁道/PIN/卡有效期禁止进入 Vault；Provider Secret 进入 Secrets Manager |
+| Payment Orchestration | 原则上不托管卡或 Channel Token；确有非卡类 PII 时必须单独审批 Data Type/Field | Channel Token、Scheme、最多八位 BIN、Last4、Issuer Country、Channel Fingerprint 和支付事实 | PAN/CVV/磁道/PIN/卡有效期禁止进入 Vault；Channel Secret 进入 Secrets Manager |
 | Risk & Compliance | Due Diligence/KYC/KYB 等另有批准的敏感快照、Feature/Screening 明细 | Case/Assessment/Decision；同步接收的 Consumer Stable Token、Network Evidence 原值与批准维度；文件引用 | Consumer Profile Token 不进入 Risk；Consumer/Network Blind Index/Key Version/device identifier 均删除；同步受限输入不得进入 MQ、外部 API、普通日志或 BCR |
 | Finance | Tax Registration、Buyer Tax ID、Cash/Beneficiary Bank Account、IBAN、Beneficiary Name | Tax/Ledger/Balance/Settlement/Reconciliation 事实、必需 Token 与专项文档已证明需要的元数据、Last4/Fingerprint | Journal 不保存敏感明文；银行账号 Reveal 仅限受控财务 Purpose 和审批/工单场景 |
 | Platform Support | Email、Notification Address、Webhook URL、受限 Audit Attribute 等允许的非 Secret PII | IAM/Permission、Notification/Webhook/File/Audit 事实、必需 Token 与专项文档已证明需要的元数据 | API Key/OTP 只保存 Hash/HMAC；Webhook/API/Provider Secret 和私钥进入 Secrets Manager；文件正文进入对象存储 |
@@ -760,11 +760,11 @@ Vault MVP 不建设通用 Inbox/Outbox。自身可靠后台任务统一使用 `c
 
 - 已批准公开的 Seller Disclosure；
 - 不可逆且无需还原的风险/设备 HMAC；
-- 高熵 Content Hash、Request Hash 和 Provider Fingerprint；
+- 高熵 Content Hash、Request Hash 和 Channel Fingerprint；
 - API Key/OTP Hash；
 - Secrets Manager/KMS Reference；
 - 文件 `file_id + content_hash`；
-- Provider Token 和批准的最小卡片描述元数据（仍需分类、脱敏、授权和留存控制）。
+- Channel Token 和批准的最小卡片描述元数据（仍需分类、脱敏、授权和留存控制）。
 
 ## 17. PCI 与支付卡边界
 
@@ -772,9 +772,9 @@ Vault MVP 不建设通用 Inbox/Outbox。自身可靠后台任务统一使用 `c
 
 ```text
 Consumer Card Data
-  -> Provider Hosted Fields / SDK
-  -> Provider Tokenization
-  -> Code-MoR Payment 只接收 Provider Token + Scheme + BIN + Last4 + Issuer Country + Fingerprint
+  -> Channel Hosted Fields / SDK
+  -> Channel Tokenization
+  -> Code-MoR Payment 只接收 Channel Token + Scheme + BIN + Last4 + Issuer Country + Fingerprint
 ```
 
 强制要求：
@@ -783,9 +783,9 @@ Consumer Card Data
 - 服务端 Data Type Catalog 不提供 `PAN`、`CARD_NUMBER`、`CVV`、`TRACK_DATA`、`PIN` 或通用 Payment Card Payload 类型；
 - Payment Workload 默认没有银行账号/证件等通配 Protect 或 Reveal 权限；
 - 发现疑似卡数据时拒绝请求、产生 Security Event，并按事件响应流程处理，不能为了“先保存再清理”临时入库；
-- Scheme、BIN、Last4、Issuer Country 和 Provider Fingerprint 虽是批准保留的最小卡片描述数据，也必须按内部数据分类执行最小权限、脱敏展示、日志控制和期限留存；不能称为公开数据或完全非敏感数据；
+- Scheme、BIN、Last4、Issuer Country 和 Channel Fingerprint 虽是批准保留的最小卡片描述数据，也必须按内部数据分类执行最小权限、脱敏展示、日志控制和期限留存；不能称为公开数据或完全非敏感数据；
 - 排除 PAN 和 Sensitive Authentication Data 只能缩小 CDE 与评估范围，不等于 Code-MoR 或 Vault 自动符合 PCI；
-- 实际适用的 SAQ 或 ROC、Code-MoR 与 Provider/云服务商之间的责任矩阵、网络分段和控制有效性，必须结合真实数据流由 QSA/收单方独立确认。不能仅凭文档名称、Token 化描述或“不保存 PAN”宣称合规。
+- 实际适用的 SAQ 或 ROC、Code-MoR 与 Channel/云服务商之间的责任矩阵、网络分段和控制有效性，必须结合真实数据流由 QSA/收单方独立确认。不能仅凭文档名称、Token 化描述或“不保存 PAN”宣称合规。
 
 ## 18. 历史实现参考：Code-PMX
 

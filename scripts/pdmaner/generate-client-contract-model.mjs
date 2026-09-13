@@ -280,7 +280,7 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "每条 Price 属于准确 term_version_id + entity_no，并以 payment_method_profile_code 关联一个 ACTIVE Payment Method Profile；Profile 可跨 Client、Version 与 OE 复用。",
     "Operating Entity 必须被 Version 引用的 Agreement 覆盖；不允许 NULL、* 或全 OE 通配，旧全 Agreement-OE Scope 迁移时展开为准确 OE Price。",
     "匹配先选择不同 dimension_code 数量最多的 Profile，再以最小 priority_no 选择；零命中、事实缺失或仍有歧义均 Fail Closed。",
-    "PLATFORM_SERVICE_CHARGE 使用受控 Calculation Base Catalog；不得用 Client Fee、Partner Share、Provider Cost 或其残差倒算平台服务费。",
+    "PLATFORM_SERVICE_CHARGE 使用受控 Calculation Base Catalog；不得用 Client Fee、Partner Share、Channel Cost 或其残差倒算平台服务费。",
     "CLIENT 的四个结算字段全部非空；PARTNER 的四个结算字段全部为空；初期 settlement_timezone=UTC、cutoff_second_of_day=86399。",
     "CHECK (settlement_business_days IS NULL OR settlement_business_days>=0)",
     "CHECK (cutoff_second_of_day IS NULL OR cutoff_second_of_day BETWEEN 0 AND 86399)",
@@ -327,7 +327,7 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
   payment_method_profile: [
     "状态只允许 DRAFT、ACTIVE、RETIRED；DRAFT 可在 Profile Root BCR/CAS 下编辑，ACTIVE 后 payment_method_profile_code、payment_method_code 与全部 Condition 永久冻结。",
     "Condition 变化必须创建新 Profile 与新 Code；RETIRED 只阻止新 Commercial Term Version 引用，历史引用继续可读，Code 不得回收复用。",
-    "一个 Profile 精确绑定一个 Payment Method 稳定代码；CCT 不建立 Payment Method 主表，也不复制名称、图标、路由能力或 Provider 配置。",
+    "一个 Profile 精确绑定一个 Payment Method 稳定代码；CCT 不建立 Payment Method 主表，也不复制名称、图标、路由能力或 Channel 配置。",
   ],
   payment_method_profile_cond: [
     "每行保存一个 dimension_code + condition_value 离散等值条件；同维度多行按 OR，不同维度按 AND，缺少维度表示不限制。",

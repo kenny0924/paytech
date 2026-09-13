@@ -521,7 +521,7 @@ As-Of 查询用 `published_time <= t` 和有效区间，不能排除后来已 EX
 
 ### 8.1 三个语义独立的 Plan 与 Version
 
-`PLATFORM_SERVICE_CHARGE` 是第三类 Commercial Term，不是 Client Fee、Partner Share 或 Provider Cost 的残差：
+`PLATFORM_SERVICE_CHARGE` 是第三类 Commercial Term，不是 Client Fee、Partner Share 或 Channel Cost 的残差：
 
 | 字段 | Client Pricing | Partner Share | Platform Service Charge |
 |---|---|---|---|

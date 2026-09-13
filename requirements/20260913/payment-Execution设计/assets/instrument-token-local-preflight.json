@@ -1,0 +1,27 @@
+{
+  "observedAtUtc": "2026-09-13T13:28:49.102515+00:00",
+  "database": "127.0.0.1:13306/mor_payment",
+  "operation": "read-only SHOW/SELECT inventory and real COUNT(*)",
+  "sqlMigrationExecuted": false,
+  "backupRestoreExecuted": false,
+  "tableRows": {
+    "t_channel_refund": 0,
+    "t_channel_transaction_ref": 0,
+    "t_command_idempotency": 0,
+    "t_compensation_event": 0,
+    "t_duplicate_payment_case": 0,
+    "t_payment_action": 0,
+    "t_payment_attempt": 0,
+    "t_payment_instrument": 0,
+    "t_payment_intent": 0,
+    "t_payment_intent_binding": 0,
+    "t_payment_pricing_fact": 0,
+    "t_payment_refund_position": 0,
+    "t_payment_state_transition": 0
+  },
+  "tableCount": 13,
+  "columnCount": 192,
+  "indexCountIncludingPrimary": 58,
+  "tokenTableExists": false,
+  "approval": "Pending separate authorization for instrument-token-empty-migration.sql and temporary local restore verification"
+}

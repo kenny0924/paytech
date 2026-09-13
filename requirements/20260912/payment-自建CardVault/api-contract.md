@@ -1,5 +1,7 @@
 # Payment Card 与 Customer 支付接口设计
 
+> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
+
 2026-09-12 阶段 3 修订稿。用户已确认一次 Pay 请求同时提交卡信息与协议确认，由 Payment 接收；Payment 调用 Commerce 保存接受事实后继续支付。本文取代前轮“Commerce 登记 → 浏览器 POST /card”的拆分；独立 Card 模块保留。本轮只调整设计，没有实现、发布接口或修改数据库。数据与恢复见 [data-design.md](./data-design.md)，确认与验证见 [delivery.md](./delivery.md)。
 
 方案涉及 Commerce、Payment 两个核心系统及 Checkout Web：公共操作共 5 个（Commerce 3 个、Payment 2 个）；保留原 4 个基础路径，payments 改由 Payment 承接，另有 Payment 提交查询。内部新增 4 个具体操作；取消前稿独立公开 /card 和内部 registrations 提案。表与技术增量见数据稿，不在此重复维护统计。
@@ -81,11 +83,11 @@ NOT_STARTED 必须由 Payment 确认 Intent 尚无提交。确认协议期间的
 | legalConfirmation.confirmed | boolean | 必须 true，表达当前 Pay 点击的确认；不能由页面加载或后台补偿生成 |
 | card.pan | string | ASCII 数字，12–19 位；服务端做长度/Luhn/已支持卡种校验；展示空格由组件提交前移除 |
 | card.expiryMonth | string | 固定两位，01–12 |
-| card.expiryYear | string | 固定四位；按 UTC 月判断未过期，不猜测 Provider 支持的未来上限 |
+| card.expiryYear | string | 固定四位；按 UTC 月判断未过期，不猜测 Channel 支持的未来上限 |
 | card.cardholderName | string | 1–128 Unicode 字符，NFC、去首尾空白、拒绝控制字符；不强制覆盖为 Consumer fullName |
 | card.cvv | string | ASCII 数字 3–4 位，受支持卡种约束；仅本次请求/发送链路使用，不持久化或生成摘要 |
 
-没有前端 amount、currency、Client、Order、OE、Provider、MID、submissionId、Card Token、支付成功状态或卡等级输入。BIN 推断不能冒充 Provider 确认的定价事实。
+没有前端 amount、currency、Client、Order、OE、Channel、MID、submissionId、Card Token、支付成功状态或卡等级输入。BIN 推断不能冒充 Channel 确认的定价事实。
 
 ### 3.1 执行顺序与回执
 
@@ -128,7 +130,7 @@ POST 与 GET P 共用下节 SubmissionView，消费者没有“先获取提交 I
 
 ## 4. Payment GET P 与 SubmissionView
 
-无 Body、无 Query。通过 Commerce 校验当前 Checkout 访问权限，再比较原提交的 Order/Session/Intent 绑定，并读取原支付事实/已有指令。GET 不生成提交、接受、卡、Attempt、Provider Order、挑战或扣款。必要的渠道只读查询仍在事务外。
+无 Body、无 Query。通过 Commerce 校验当前 Checkout 访问权限，再比较原提交的 Order/Session/Intent 绑定，并读取原支付事实/已有指令。GET 不生成提交、接受、卡、Attempt、Channel Order、挑战或扣款。必要的渠道只读查询仍在事务外。
 
 | 字段 | 类型 / 可空 | 含义 |
 |---|---|---|
@@ -138,7 +140,7 @@ POST 与 GET P 共用下节 SubmissionView，消费者没有“先获取提交 I
 | status | enum | AWAITING_CARD / PROCESSING / REQUIRES_ACTION / AUTHORIZED / UNKNOWN / SUCCEEDED / FAILED / CANCELLED / VOIDED / EXPIRED；按第5节投影 |
 | card | object / null | 仅 last4:string(4)；无卡记录时 null，不返回 Token/有效期/姓名/BIN |
 | nextAction | NextAction / null | 同一次 Customer Action，见下表 |
-| failure | object / null | 受控 code(1–64)、message(1–255)，不回显 Provider/Risk 原因 |
+| failure | object / null | 受控 code(1–64)、message(1–255)，不回显 Channel/Risk 原因 |
 | observedAt | Instant | 当前事实的权威观察时间，不伪造渠道证据新鲜度 |
 | pollAfterMs | integer / null | 2000–10000；等待输入/确定终态通常 null |
 | retryIdempotencyKey | string / null | 仅 AWAITING_CARD 且当前允许恢复时返回原 Pay 键，格式沿公共合同；其余 null。仅经本次 Checkout 授权返回，不进入普通日志 |
@@ -147,10 +149,10 @@ POST 与 GET P 共用下节 SubmissionView，消费者没有“先获取提交 I
 |---|---|---|
 | actionId | Id | 原 Customer Action ID |
 | type | THREE_DS_CHALLENGE | 本期 Card 的 3DS 分支 |
-| expiresAt | Instant / null | Provider/既有业务有明确期限时返回；没有证据时不捏造渠道期限，输入截止也不能擅自终止在途资金动作 |
+| expiresAt | Instant / null | Channel/既有业务有明确期限时返回；没有证据时不捏造渠道期限，输入截止也不能擅自终止在途资金动作 |
 | instruction | NiThreeDsInstruction / null | 仅本 Payment 响应提供；当前可读取且可安全复用才返回，不永久冻结到回执 |
 
-NiThreeDsInstruction 是受控类型候选：`type=NI_EMV_3DS`；UUID 字符串 `paymentReference/orderReference/outletRef/threeDSServerTransId`；`messageVersion` 最多16字符；`directoryServerId` 可空、最多64；`authenticationCode` 可空、最多1024；`authenticationUrl/challengeResponseUrl` 为最多4096字符的 HTTPS URL；`threeDSMethodUrl` 同限制且可空。NI 链接需验证环境和同 Order/Payment 坐标，ACS URL 按 Provider 来源与安全策略处理，不能当作后台任意抓取地址。
+NiThreeDsInstruction 是受控类型候选：`type=NI_EMV_3DS`；UUID 字符串 `paymentReference/orderReference/outletRef/threeDSServerTransId`；`messageVersion` 最多16字符；`directoryServerId` 可空、最多64；`authenticationCode` 可空、最多1024；`authenticationUrl/challengeResponseUrl` 为最多4096字符的 HTTPS URL；`threeDSMethodUrl` 同限制且可空。NI 链接需验证环境和同 Order/Payment 坐标，ACS URL 按 Channel 来源与安全策略处理，不能当作后台任意抓取地址。
 
 前端受控 Adapter 根据这个类型调用 NI EMV 3DS SDK；不传整份 NI JSON，不动态执行服务端任意脚本地址。这个裁剪类型须通过 NI sandbox 的 frictionless/challenge/刷新测试后才启用；不足时修改准确字段，不能加任意 JSON。SDK 结束只触发结果查询，不上报“支付成功”。官方流程与限制见 [NI EMV 3DS SDK 指南](https://docs.ngenius-payments.com/reference/alternative-emv-3ds-workflow-websdk-2)。
 
@@ -163,7 +165,7 @@ NiThreeDsInstruction 是受控类型候选：`type=NI_EMV_3DS`；UUID 字符串 
 | 已受理，协议确认或其他必要检查进行中 | PROCESSING，只查询；接受结果未知不等于渠道扣款 UNKNOWN |
 | 原请求丢失输入，确定无可能已发送资金动作，且已失效旧执行权 | AWAITING_CARD，原键重新提交同一个 payments 请求；已有摘要/卡绑定均不可换卡 |
 | 执行或查询中，尚无可返回动作 | PROCESSING，只查询 |
-| Provider Order 创建响应未知或资金请求可能已发送但未确定 | UNKNOWN，只查询，不释放占用 |
+| Channel Order 创建响应未知或资金请求可能已发送但未确定 | UNKNOWN，只查询，不释放占用 |
 | Attempt REQUIRES_ACTION | REQUIRES_ACTION；有可用 instruction 才继续原 3DS |
 | Attempt AUTHORIZED | AUTHORIZED，不显示 PAID，不新建支付 |
 | Attempt SUCCEEDED | SUCCEEDED；Commerce 等待自己的 PaymentSucceeded 消费，不由浏览器写 PAID |

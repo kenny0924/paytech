@@ -205,7 +205,7 @@ test("rendered Platform catalog uses the generated public control plane and Tena
 
   assert.match(content, /63 (?:张)?表、822 (?:个)?字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1 关系和 7 个 Diagram Group/u);
   assert.match(content, /所有外部 HTTP API.*Platform.*公共 Route Catalog.*内部服务调用.*绕过 Gateway/su);
-  assert.match(content, /OPERATIONS.*CLIENT.*PARTNER.*CHECKOUT.*CLIENT_API.*PROVIDER_CALLBACK/su);
+  assert.match(content, /OPERATIONS.*CLIENT.*PARTNER.*CHECKOUT.*CLIENT_API.*CHANNEL_CALLBACK/su);
   assert.match(content, /Tenant.*API Credential.*PHC verifier.*ACTIVE Scope/su);
   assert.match(content, /Integration Readiness.*一致查询快照.*同步派生/su);
   assert.doesNotMatch(content, /管理通用配置生命周期|Technical Configuration|ConfigurationActivated|ClientIntegrationReadinessChanged/u);
@@ -265,14 +265,14 @@ test("Payment owns refund capacity and publishes only authoritative refund termi
   assert.match(payI11, /实时静态配置覆盖诊断.*READY \| NOT_READY \| RESTRICTED、checked_at、reason_code.*候选解释/u);
   assert.match(payI11, /不持久化 Fact\/Version\/Scope Hash.*不把瞬时健康当静态覆盖.*不发布 RoutingCoverageChanged/u);
   assert.match(payI12, /PENDING（reason_code=PAYMENT_IN_PROGRESS）/u);
-  assert.match(payI13, /只供 Commerce 内部调用.*调用方不提交 payment_attempt_id 或 target_provider_txn_ref_id/u);
-  assert.match(payI13, /锁定 Intent、Attempt、Action 与 Provider Transaction Ref.*Expected Version\/CAS/u);
+  assert.match(payI13, /只供 Commerce 内部调用.*调用方不提交 payment_attempt_id 或 target_channel_txn_ref_id/u);
+  assert.match(payI13, /锁定 Intent、Attempt、Action 与 Channel Transaction Ref.*Expected Version\/CAS/u);
   assert.match(payI13, /REFUND_REQUIRED.*captured_amount.*PARTIAL_CAPTURE_REVERSAL_NOT_SUPPORTED/u);
   assert.deepEqual(extractStringArray(paymentBlock, "subscribes"), ["OperatingEntityChanged"]);
   assert.deepEqual(extractStringArray(paymentBlock, "publishes"), [
     "PaymentAttemptStarted", "PaymentAttemptFailed", "PaymentAttemptUnknown", "PaymentSucceeded", "PaymentIntentTerminated",
     "DuplicatePaymentDetected", "DuplicatePaymentRemediated", "RefundSucceeded", "RefundFailed", "RefundCancelled",
-    "DisputeNoticeReceived", "DisputeSubmissionStatusChanged", "ProviderDisputeOutcomeReceived", "RouteSelected", "ChannelHealthChanged",
+    "DisputeNoticeReceived", "DisputeSubmissionStatusChanged", "ChannelDisputeOutcomeReceived", "RouteSelected", "ChannelHealthChanged",
     "MidActivated", "MidSuspended", "MidClosed",
   ]);
 });
@@ -302,7 +302,7 @@ test("entry applications remain outside the six core systems", async () => {
   assert.match(content, /Client Console/);
   assert.match(content, /Partner Console/);
   assert.match(content, /Operations Console/);
-  assert.match(content, /Provider Callback Endpoint/);
+  assert.match(content, /Channel Callback Endpoint/);
 });
 
 test("Partner Console is read-only for transactions and can request only share payouts", async () => {
@@ -349,7 +349,7 @@ test("checkout resolves the single Primary Classification server-side without Cl
   assert.match(content, /CCT-I13.*服务端解析该时点唯一有效 Primary Classification/su);
   assert.match(content, /Commerce 不提交、选择或回退分类/);
   assert.match(content, /不接收 locale、industryCode\/mccCode\/classificationId/);
-  assert.match(content, /Client 不能选择 Operating Entity、Provider 或 MID/);
+  assert.match(content, /Client 不能选择 Operating Entity、Channel 或 MID/);
 });
 
 test("CCT uses the lean automatic assignment proof without policy or assignment versions", async () => {
@@ -372,9 +372,9 @@ test("the rendered model closes onboarding, shared maturity, manual payout, and 
   assert.match(content, /Manual Payout/);
   assert.match(content, /CONTRACT MATURITY/);
   assert.match(content, /Agreement-OE.*T\+N.*Cutoff.*节假日日历/);
-  assert.match(content, /Provider 到账、银行对账和保证金门禁不改变成熟时间/);
+  assert.match(content, /Channel 到账、银行对账和保证金门禁不改变成熟时间/);
   assert.doesNotMatch(content, /Availability Policy|版本化策略决定成熟/);
-  assert.doesNotMatch(content, /满足 Provider\/银行匹配.*后才进入 Available/);
+  assert.doesNotMatch(content, /满足 Channel\/银行匹配.*后才进入 Available/);
   assert.doesNotMatch(content, /Pending、Available、Reserved、Locked/);
   assert.match(content, /Pending、Available、Locked、保证金和 Negative/);
   assert.match(content, /CLIENT_SECURITY_DEPOSIT\/NONE/);
@@ -400,7 +400,7 @@ test("the rendered model closes onboarding, shared maturity, manual payout, and 
 test("the rendered dispute contract freezes outcome provenance and liability authority", async () => {
   const content = await renderPage();
 
-  assert.match(content, /PROVIDER_ACTION[\s\S]*Version 1[\s\S]*WON\s*\/\s*LOST/u);
+  assert.match(content, /CHANNEL_ACTION[\s\S]*Version 1[\s\S]*WON\s*\/\s*LOST/u);
   assert.match(content, /CLIENT_DISPOSITION[\s\S]*OPERATIONS_DISPOSITION[\s\S]*Version 1[\s\S]*LOST/u);
   assert.match(content, /Version 2\+[\s\S]*OPERATIONS_CORRECTION/u);
   assert.match(content, /trigger_id\s*=\s*decision_source_id/u);

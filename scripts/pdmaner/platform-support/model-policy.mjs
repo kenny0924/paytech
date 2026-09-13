@@ -30,7 +30,7 @@ export const GATEWAY_ROUTE_COMPATIBILITY = Object.freeze({
   ]),
   CLIENT_API: Object.freeze(["CLIENT_API_CREDENTIAL:API_SCOPE"]),
   CHECKOUT: Object.freeze(["CHECKOUT_SESSION:CHECKOUT_RESOURCE"]),
-  PROVIDER_CALLBACK: Object.freeze(["PROVIDER_CALLBACK:PROVIDER_CALLBACK"]),
+  CHANNEL_CALLBACK: Object.freeze(["CHANNEL_CALLBACK:CHANNEL_CALLBACK"]),
 });
 
 export const FILE_REFERENCE_TUPLES = Object.freeze([
@@ -131,7 +131,7 @@ export const CHECK_CONTRACTS = Object.freeze({
   ck_gateway_target_version: "version>0",
   ck_gateway_route_status: "status IN ('ACTIVE','DISABLED')",
   ck_gateway_route_version: "version>0",
-  ck_gateway_route_authorization: "(authorization_mode='HUMAN_PERMISSION' AND permission_id IS NOT NULL AND required_scope_code IS NULL) OR (authorization_mode='API_SCOPE' AND permission_id IS NULL AND required_scope_code IS NOT NULL) OR (authorization_mode IN ('PUBLIC','HUMAN_AUTHENTICATED','CHECKOUT_RESOURCE','PROVIDER_CALLBACK') AND permission_id IS NULL AND required_scope_code IS NULL)",
+  ck_gateway_route_authorization: "(authorization_mode='HUMAN_PERMISSION' AND permission_id IS NOT NULL AND required_scope_code IS NULL) OR (authorization_mode='API_SCOPE' AND permission_id IS NULL AND required_scope_code IS NOT NULL) OR (authorization_mode IN ('PUBLIC','HUMAN_AUTHENTICATED','CHECKOUT_RESOURCE','CHANNEL_CALLBACK') AND permission_id IS NULL AND required_scope_code IS NULL)",
   ck_gateway_route_limits: "body_limit_bytes>=0 AND body_receive_timeout_millis>0 AND response_timeout_millis>0",
   ck_gateway_guard_shape: "(rule_type='RATE_LIMIT' AND capacity IS NOT NULL AND refill_tokens IS NOT NULL AND refill_period_millis IS NOT NULL AND concurrency_limit IS NULL) OR (rule_type='CONCURRENCY' AND capacity IS NULL AND refill_tokens IS NULL AND refill_period_millis IS NULL AND concurrency_limit IS NOT NULL)",
   ck_gateway_guard_positive: "(capacity IS NULL OR capacity>0) AND (refill_tokens IS NULL OR refill_tokens>0) AND (refill_period_millis IS NULL OR refill_period_millis>0) AND (concurrency_limit IS NULL OR concurrency_limit>0)",

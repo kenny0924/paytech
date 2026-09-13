@@ -1,0 +1,26 @@
+{
+  "checkedAtUtc": "2026-09-13T13:31:02.274012+00:00",
+  "documents": [
+    "AGENTS.md",
+    "agent-docs/CURRENT_IMPLEMENTATION.md",
+    "agent-docs/database/PAYMENT_ORCHESTRATION_DATABASE.md",
+    "agent-docs/database/scenarios/PAYMENT_REAL_WORLD_SCENARIOS.md",
+    "payment-orchestration-service/README.md",
+    "payment-orchestration-service/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md",
+    "requirements/20260913/payment-Execution设计/data-design.md",
+    "requirements/20260913/payment-Execution设计/technique.md",
+    "requirements/20260913/payment-Execution设计/instrument-token-development-checks.md",
+    "requirements/20260913/payment-Execution设计/api-contract.md",
+    "requirements/20260913/payment-Execution设计/requirement.md",
+    "requirements/20260913/payment-Execution设计/delivery.md",
+    "requirements/20260913/payment-Execution设计/mock-contract.md",
+    "requirements/20260913/payment-Execution设计/verification-plan.md",
+    "requirements/20260913/payment-Execution设计/design.md",
+    "requirements/20260913/payment-Execution设计/state-and-recovery.md",
+    "requirements/20260913/payment-Execution设计/instrument-token-amendment.md",
+    "requirements/20260913/payment-Execution设计/development-checks.md"
+  ],
+  "localLinks": 399,
+  "checks": "Local Markdown target files exist; existing external links and all unrelated historical documents excluded",
+  "failures": []
+}

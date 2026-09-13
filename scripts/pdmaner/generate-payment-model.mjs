@@ -1,3 +1,5 @@
+import { EXECUTION_FIELD_OVERRIDES } from "./payment-execution-field-overrides.mjs";
+import { paymentChannelIdentityKey } from "./payment-channel-identity.mjs";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -29,30 +31,30 @@ const MYBATIS_MAPPING_ID = "895CFD1D-4273-4D32-A2C4-CAC70200AB5B";
 
 // Explicit production manifest. It is intentionally independent from tests and Markdown.
 const FIELD_MANIFEST = String.raw`
-[t_payment_provider]
-provider_id BIGINT NN
-provider_code VARCHAR(64) NN OPEN(Provider Catalog)
-provider_name VARCHAR(255) NN
+[t_payment_channel]
+channel_id BIGINT NN
+channel_code VARCHAR(64) NN OPEN(Channel Catalog)
+channel_name VARCHAR(255) NN
 adapter_code VARCHAR(64) NN OPEN(Adapter Catalog)
-provider_status VARCHAR(64) NN {DRAFT,ACTIVE,SUSPENDED,CLOSED}
+channel_status VARCHAR(64) NN {DRAFT,ACTIVE,SUSPENDED,CLOSED}
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
-[t_provider_account]
-provider_account_id BIGINT NN
-provider_id BIGINT NN
-account_code VARCHAR(64) NN OPEN(Provider Account Catalog)
+[t_channel_account]
+channel_account_id BIGINT NN
+channel_id BIGINT NN
+account_code VARCHAR(64) NN OPEN(Channel Account Catalog)
 external_account_id VARCHAR(128) N
 integration_config_key VARCHAR(128) NN
 account_status VARCHAR(64) NN {DRAFT,ACTIVE,SUSPENDED,CLOSED}
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
-[t_provider_mid]
+[t_channel_mid]
 mid_id BIGINT NN
-provider_id BIGINT NN
-provider_account_id BIGINT NN
-external_mid_code VARCHAR(128) NN OPEN(Provider Adapter Catalog)
+channel_id BIGINT NN
+channel_account_id BIGINT NN
+external_mid_code VARCHAR(128) NN OPEN(Channel Adapter Catalog)
 entity_no CHAR(5) NN
 mid_status VARCHAR(64) NN {DRAFT,ACTIVE,SUSPENDED,CLOSED}
 activated_at DATETIME(6) N
@@ -87,10 +89,10 @@ circuit_status VARCHAR(64) NN {CLOSED,OPEN,HALF_OPEN}
 health_score DECIMAL(5,2) NN
 sample_count INT NN
 technical_success_count INT NN
-provider_error_count INT NN
+channel_error_count INT NN
 timeout_count INT NN
 technical_success_rate DECIMAL(9,8) NN
-provider_error_rate DECIMAL(9,8) NN
+channel_error_rate DECIMAL(9,8) NN
 timeout_rate DECIMAL(9,8) NN
 p95_latency_ms INT NN
 consecutive_failure_count INT NN
@@ -137,9 +139,9 @@ routing_decision_id BIGINT NN
 payment_attempt_id BIGINT NN
 routing_policy_id BIGINT N
 routing_policy_version_id BIGINT N
-selected_provider_id BIGINT N
+selected_channel_id BIGINT N
 selected_mid_id BIGINT N
-selected_provider_account_id BIGINT N
+selected_channel_account_id BIGINT N
 decision_status VARCHAR(64) NN {SELECTED,REJECTED,CONFIGURATION_CONFLICT}
 decision_reason_code VARCHAR(64) N OPEN(Reason Catalog)
 create_time DATETIME(6) NN
@@ -147,9 +149,9 @@ create_time DATETIME(6) NN
 [t_route_candidate_eval]
 route_candidate_eval_id BIGINT NN
 routing_decision_id BIGINT NN
-provider_id BIGINT NN
+channel_id BIGINT NN
 mid_id BIGINT NN
-provider_account_id BIGINT N
+channel_account_id BIGINT N
 eligible_flag TINYINT(1) NN
 candidate_priority INT NN
 weight_value DECIMAL(18,10) NN
@@ -163,6 +165,16 @@ p95_latency_ms INT N
 sample_count INT N
 health_observed_at DATETIME(6) N
 create_time DATETIME(6) NN
+
+[t_payment_intent_binding]
+payment_intent_binding_id BIGINT NN
+source_type VARCHAR(64) NN OPEN(Payment Source Type Catalog)
+source_id BIGINT NN
+client_id BIGINT NN
+payment_intent_id BIGINT N
+closed_at DATETIME(6) N
+create_time DATETIME(6) NN
+update_time DATETIME(6) NN
 
 [t_payment_intent]
 payment_intent_id BIGINT NN
@@ -193,7 +205,7 @@ payment_intent_id BIGINT NN
 attempt_no INT NN
 payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
 attempt_status VARCHAR(64) NN {CREATED,PROCESSING,REQUIRES_ACTION,AUTHORIZED,UNKNOWN,SUCCEEDED,FAILED,CANCELLED,VOIDED,CONFLICTED}
-failure_stage VARCHAR(64) N {READINESS,EXECUTION_GATE,RISK,LIMIT,ROUTING,PROVIDER,RECOVERY,SYSTEM}
+failure_stage VARCHAR(64) N {READINESS,EXECUTION_GATE,RISK,LIMIT,ROUTING,CHANNEL,RECOVERY,SYSTEM}
 status_reason_code VARCHAR(64) N OPEN(Reason Catalog)
 consumer_contract_id BIGINT N
 consumer_terms_acceptance_id BIGINT N
@@ -209,6 +221,10 @@ captured_amount DECIMAL(24,8) NN
 version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
+source_submission_id BIGINT N
+payment_goal VARCHAR(32) N {PAY_NOW,AUTHORIZE_ONLY}
+authentication_requirement VARCHAR(32) N {NOT_REQUIRED,THREE_DS_REQUIRED,CHALLENGE_REQUIRED}
+payment_instrument_token_id BIGINT N
 
 [t_payment_pricing_fact]
 payment_fact_id BIGINT NN
@@ -229,16 +245,19 @@ partner_share_version_id BIGINT N
 platform_charge_version_id BIGINT N
 create_time DATETIME(6) NN
 
-[t_payment_instrument]
-payment_instrument_id BIGINT NN
-payment_attempt_id BIGINT NN
-provider_instrument_ref VARCHAR(512) NN
-scheme_code VARCHAR(64) N OPEN(Scheme Catalog)
-bin_prefix VARCHAR(8) N
-last4 CHAR(4) N
-issuer_country_code CHAR(2) N OPEN(ISO 3166-1 alpha-2)
-provider_fingerprint VARCHAR(255) N
+[t_payment_instrument_token]
+payment_instrument_token_id BIGINT NN
+payment_instrument_token VARCHAR(64) NN
+client_id BIGINT NN
+payment_intent_id BIGINT NN
+source_submission_id BIGINT NN
+payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
+instrument_type VARCHAR(32) NN {CARD}
+instrument_ref VARCHAR(128) NN
+expires_at DATETIME(6) NN
+revoked_at DATETIME(6) N
 create_time DATETIME(6) NN
+update_time DATETIME(6) NN
 
 [t_payment_action]
 payment_action_id BIGINT NN
@@ -246,49 +265,46 @@ payment_attempt_id BIGINT N
 channel_refund_id BIGINT N
 duplicate_payment_case_id BIGINT N
 action_no INT NN
-action_type VARCHAR(64) NN {AUTHORIZE,CAPTURE,SALE,VOID,REFUND,QUERY}
+action_type VARCHAR(64) NN {AUTHENTICATE,AUTHORIZE,CAPTURE,SALE,VOID,REFUND,QUERY}
 action_status VARCHAR(64) NN {CREATED,SUBMITTED,REQUIRES_ACTION,UNKNOWN,SUCCEEDED,FAILED}
-provider_id BIGINT NN
+channel_id BIGINT NN
 mid_id BIGINT NN
-provider_account_id BIGINT NN
-target_provider_transaction_ref_id BIGINT N
+channel_account_id BIGINT NN
+target_channel_txn_ref_id BIGINT N
 amount DECIMAL(24,8) NN
 currency CHAR(3) NN OPEN(ISO 4217)
-provider_idempotency_key VARCHAR(128) NN
-provider_result_time DATETIME(6) N
+channel_idempotency_key VARCHAR(128) NN
+channel_result_time DATETIME(6) N
 version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
+target_payment_action_id BIGINT N
+authentication_action_id BIGINT N
+channel_operation_ref VARCHAR(255) N
+interaction_type VARCHAR(32) N {REDIRECT,THREE_DS_CHALLENGE,SDK,APP_SWITCH,QR_CODE}
+interaction_expires_at DATETIME(6) N
+authentication_outcome VARCHAR(32) N {AUTHENTICATED,ATTEMPTED,FAILED,UNAVAILABLE}
+challenge_performed TINYINT N
+authentication_valid_until DATETIME(6) N
+status_reason_code VARCHAR(64) N OPEN(Reason Catalog)
 
-[t_payment_customer_action]
-payment_customer_action_id BIGINT NN
+[t_channel_transaction_ref]
+channel_transaction_ref_id BIGINT NN
 payment_action_id BIGINT NN
-customer_action_type VARCHAR(64) NN {REDIRECT,THREE_DS_CHALLENGE,SDK,APP_SWITCH,QR_CODE}
-customer_action_status VARCHAR(64) NN {PENDING,COMPLETED,FAILED,EXPIRED}
-provider_reference VARCHAR(255) N
-expires_at DATETIME(6) N
-completed_at DATETIME(6) N
-version BIGINT NN
-create_time DATETIME(6) NN
-update_time DATETIME(6) NN
-
-[t_provider_transaction_ref]
-provider_transaction_ref_id BIGINT NN
-payment_action_id BIGINT NN
-provider_id BIGINT NN
+channel_id BIGINT NN
 mid_id BIGINT NN
 reference_type VARCHAR(64) NN {AUTHORIZE,CAPTURE,SALE,VOID,REFUND}
 external_transaction_id VARCHAR(255) NN
-original_provider_transaction_ref_id BIGINT N
-provider_event_time DATETIME(6) N
+original_channel_txn_ref_id BIGINT N
+channel_event_time DATETIME(6) N
 amount DECIMAL(24,8) NN
 currency CHAR(3) NN OPEN(ISO 4217)
 create_time DATETIME(6) NN
 
-[t_provider_interaction]
-provider_interaction_id BIGINT NN
+[t_channel_interaction]
+channel_interaction_id BIGINT NN
 payment_action_id BIGINT N
-provider_dispute_action_id BIGINT N
+channel_dispute_action_id BIGINT N
 interaction_no INT NN
 interaction_status VARCHAR(64) NN {STARTED,RESPONSE_RECEIVED,NETWORK_ERROR,TIMED_OUT}
 started_at DATETIME(6) NN
@@ -298,7 +314,7 @@ request_content_hash CHAR(64) N
 response_file_id BIGINT N
 response_content_hash CHAR(64) N
 http_status INT N
-provider_result_code VARCHAR(128) N OPEN(Provider Adapter Catalog)
+channel_result_code VARCHAR(128) N OPEN(Channel Adapter Catalog)
 latency_ms INT N
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
@@ -339,7 +355,7 @@ create_time DATETIME(6) NN
 payment_refund_position_id BIGINT NN
 payment_intent_id BIGINT NN
 successful_attempt_id BIGINT NN
-original_provider_transaction_ref_id BIGINT NN
+original_channel_txn_ref_id BIGINT NN
 original_amount DECIMAL(24,8) NN
 reserved_amount DECIMAL(24,8) NN
 refunded_amount DECIMAL(24,8) NN
@@ -359,10 +375,10 @@ version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
-[t_provider_callback]
-provider_callback_id BIGINT NN
-provider_id BIGINT NN
-provider_account_id BIGINT NN
+[t_channel_callback]
+channel_callback_id BIGINT NN
+channel_id BIGINT NN
+channel_account_id BIGINT NN
 external_event_id VARCHAR(255) N
 payload_fingerprint CHAR(64) N
 signature_status VARCHAR(64) NN {VERIFIED,REJECTED,UNKNOWN}
@@ -374,23 +390,23 @@ version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
-[t_provider_callback_item]
-provider_callback_item_id BIGINT NN
-provider_callback_id BIGINT NN
+[t_channel_callback_item]
+channel_callback_item_id BIGINT NN
+channel_callback_id BIGINT NN
 item_no INT NN
-event_type VARCHAR(64) NN OPEN(Provider Adapter Catalog)
+event_type VARCHAR(64) NN OPEN(Channel Adapter Catalog)
 external_transaction_id VARCHAR(255) N
-target_type VARCHAR(64) NN {PAYMENT_ACTION,CHANNEL_REFUND,PROVIDER_DISPUTE_NOTICE,PROVIDER_DISPUTE_ACTION,UNKNOWN}
+target_type VARCHAR(64) NN {PAYMENT_ACTION,CHANNEL_REFUND,CHANNEL_DISPUTE_NOTICE,CHANNEL_DISPUTE_ACTION,UNKNOWN}
 target_id BIGINT N
-normalized_status VARCHAR(64) N OPEN(Provider Adapter Catalog)
-provider_event_time DATETIME(6) N
+normalized_status VARCHAR(64) N OPEN(Channel Adapter Catalog)
+channel_event_time DATETIME(6) N
 mapping_status VARCHAR(64) NN {MAPPED,UNMATCHED,AMBIGUOUS,IGNORED}
 create_time DATETIME(6) NN
 
-[t_provider_event_exception]
-provider_event_exception_id BIGINT NN
-provider_callback_id BIGINT NN
-provider_callback_item_id BIGINT N
+[t_channel_event_exception]
+channel_event_exception_id BIGINT NN
+channel_callback_id BIGINT NN
+channel_callback_item_id BIGINT N
 exception_type VARCHAR(64) NN {SIGNATURE,MATCHING,OUT_OF_ORDER,STATE_CONFLICT,PAYLOAD_SECURITY}
 exception_status VARCHAR(64) NN {OPEN,INVESTIGATING,RESOLVED,IGNORED}
 reason_code VARCHAR(64) N OPEN(Reason Catalog)
@@ -400,16 +416,16 @@ version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
-[t_provider_dispute_notice]
-provider_dispute_notice_id BIGINT NN
-provider_id BIGINT NN
+[t_channel_dispute_notice]
+channel_dispute_notice_id BIGINT NN
+channel_id BIGINT NN
 mid_id BIGINT NN
-original_provider_transaction_ref_id BIGINT NN
+original_channel_txn_ref_id BIGINT NN
 external_dispute_id VARCHAR(255) NN
 dispute_amount DECIMAL(24,8) NN
 currency CHAR(3) NN OPEN(ISO 4217)
 received_at DATETIME(6) NN
-provider_deadline_at DATETIME(6) N
+channel_deadline_at DATETIME(6) N
 current_channel_status VARCHAR(64) NN {RECEIVED,EVIDENCE_REQUIRED,SUBMITTED,UNDER_REVIEW,WON,LOST,CLOSED}
 latest_event_id BIGINT N
 latest_event_no INT NN
@@ -417,20 +433,20 @@ version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
-[t_provider_dispute_event]
-provider_dispute_event_id BIGINT NN
-provider_dispute_notice_id BIGINT NN
+[t_channel_dispute_event]
+channel_dispute_event_id BIGINT NN
+channel_dispute_notice_id BIGINT NN
 event_no INT NN
 event_type VARCHAR(64) NN {NOTICE_RECEIVED,STATUS_CHANGED,OUTCOME_RECEIVED,DEADLINE_UPDATED}
-from_status VARCHAR(64) N OPEN(Provider Dispute Status Catalog)
-to_status VARCHAR(64) N OPEN(Provider Dispute Status Catalog)
-provider_event_time DATETIME(6) N
+from_status VARCHAR(64) N OPEN(Channel Dispute Status Catalog)
+to_status VARCHAR(64) N OPEN(Channel Dispute Status Catalog)
+channel_event_time DATETIME(6) N
 reason_code VARCHAR(64) N OPEN(Reason Catalog)
 create_time DATETIME(6) NN
 
-[t_provider_dispute_action]
-provider_dispute_action_id BIGINT NN
-provider_dispute_notice_id BIGINT NN
+[t_channel_dispute_action]
+channel_dispute_action_id BIGINT NN
+channel_dispute_notice_id BIGINT NN
 dispute_case_id BIGINT NN
 dispute_submission_request_id BIGINT N
 dispute_submission_request_version BIGINT N
@@ -438,11 +454,11 @@ dispute_evidence_package_id BIGINT N
 dispute_evidence_package_version BIGINT N
 action_type VARCHAR(64) NN {SUBMIT_EVIDENCE,QUERY}
 action_status VARCHAR(64) NN {CREATED,SUBMITTED,UNKNOWN,SUCCEEDED,FAILED}
-provider_id BIGINT NN
+channel_id BIGINT NN
 mid_id BIGINT NN
-provider_account_id BIGINT NN
-provider_idempotency_key VARCHAR(128) NN
-provider_result_time DATETIME(6) N
+channel_account_id BIGINT NN
+channel_idempotency_key VARCHAR(128) NN
+channel_result_time DATETIME(6) N
 version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
@@ -464,37 +480,32 @@ update_time DATETIME(6) NN
 id BIGINT NN
 event_key VARCHAR(128) NN
 event_type VARCHAR(64) NN OPEN(Payment Event/Handler Catalog)
-execution_type VARCHAR(64) NN {MQ_PUBLISH,LOCAL_HANDLER}
-source_type VARCHAR(64) NN OPEN(Payment Compensation Source Type Catalog)
-source_id BIGINT NN
-source_version BIGINT NN
-schema_version INT NN
-payload_json JSON NN
-payload_hash CHAR(64) NN
-execute_status VARCHAR(64) NN {INIT,PROCESSING,ERROR,FAILED}
+payload_json VARCHAR(4096) N
+execute_status VARCHAR(16) NN {INIT,PROCESSING,ERROR,FAILED}
 execute_count INT NN
 next_execute_at DATETIME(6) NN
 lock_owner VARCHAR(64) N
 lock_until DATETIME(6) N
 last_error_code VARCHAR(64) N OPEN(Payment Error Catalog)
-last_error_summary TEXT N
+last_error_summary VARCHAR(1000) N
 lock_version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
+sub_event_type VARCHAR(64) NN OPEN(Payment Compensation Sub Event Catalog)
 `;
 const INDEX_MANIFEST = String.raw`
-t_payment_provider
-UK uk_payment_provider_code(provider_code)
-t_provider_account
-UK uk_provider_account_code(provider_id,account_code)
-UK uk_provider_account_external(provider_id,external_account_id)
-UK uk_provider_account_config(provider_id,integration_config_key)
-UK uk_provider_account_owner(provider_account_id,provider_id)
-IDX idx_provider_account_status(provider_id,account_status)
-t_provider_mid
-UK uk_provider_mid(provider_id,external_mid_code)
-IDX idx_provider_mid_account(provider_account_id,mid_status)
-IDX idx_provider_mid_entity(entity_no,mid_status)
+t_payment_channel
+UK uk_payment_channel_code(channel_code)
+t_channel_account
+UK uk_channel_account_code(channel_id,account_code)
+UK uk_channel_account_external(channel_id,external_account_id)
+UK uk_channel_account_config(channel_id,integration_config_key)
+UK uk_channel_account_owner(channel_account_id,channel_id)
+IDX idx_channel_account_status(channel_id,account_status)
+t_channel_mid
+UK uk_channel_mid(channel_id,external_mid_code)
+IDX idx_channel_mid_account(channel_account_id,mid_status)
+IDX idx_channel_mid_entity(entity_no,mid_status)
 t_mid_capability
 UK uk_mid_capability_scope(mid_id,payment_method_code,scheme_code,country_code,currency,mcc_code,capability_code)
 t_mid_health_state
@@ -511,14 +522,17 @@ t_routing_decision
 UK uk_routing_decision_attempt(payment_attempt_id)
 IDX idx_route_dec_policy(routing_policy_id)
 IDX idx_route_dec_pol_ver(routing_policy_version_id)
-IDX idx_route_dec_provider(selected_provider_id)
+IDX idx_route_dec_channel(selected_channel_id)
 IDX idx_route_dec_mid(selected_mid_id)
-IDX idx_route_dec_account(selected_provider_account_id)
+IDX idx_route_dec_account(selected_channel_account_id)
 t_route_candidate_eval
 UK uk_route_candidate_eval(routing_decision_id,mid_id)
-IDX idx_route_eval_provider(provider_id)
+IDX idx_route_eval_channel(channel_id)
 IDX idx_route_eval_mid(mid_id)
-IDX idx_route_eval_account(provider_account_id)
+IDX idx_route_eval_account(channel_account_id)
+t_payment_intent_binding
+UK uk_pay_binding_source(source_type,source_id)
+UK uk_pay_binding_intent(payment_intent_id)
 t_payment_intent
 UK uk_payment_intent_source(source_type,source_id)
 IDX idx_payment_intent_expiry(intent_status,expires_at,payment_intent_id)
@@ -526,30 +540,33 @@ UK uk_payment_intent_active(active_attempt_id)
 UK uk_payment_intent_success(successful_attempt_id)
 t_payment_attempt
 UK uk_payment_attempt_no(payment_intent_id,attempt_no)
+UK uk_pay_attempt_submission(source_submission_id)
+UK uk_pay_attempt_token(payment_instrument_token_id)
 t_payment_pricing_fact
 UK uk_pricing_fact_attempt(payment_attempt_id)
 IDX idx_pricing_fact_action(source_action_id)
-t_payment_instrument
-UK uk_payment_instrument_attempt(payment_attempt_id)
+t_payment_instrument_token
+UK uk_pay_token_value(payment_instrument_token)
+UK uk_pay_token_scope(client_id,payment_intent_id,source_submission_id)
 t_payment_action
 UK uk_payment_action_attempt_no(payment_attempt_id,action_no)
 UK uk_payment_action_refund_no(channel_refund_id,action_no)
 UK uk_pay_action_dup_case_no(duplicate_payment_case_id,action_no)
-UK uk_payment_action_idempotency(provider_id,provider_idempotency_key)
+UK uk_payment_action_idempotency(channel_id,channel_idempotency_key)
 IDX idx_pay_action_mid(mid_id)
-IDX idx_pay_action_account(provider_account_id)
-IDX idx_pay_action_target_ref(target_provider_transaction_ref_id)
-t_payment_customer_action
-UK uk_payment_customer_action(payment_action_id)
-IDX idx_customer_action_status(customer_action_status,expires_at)
-t_provider_transaction_ref
-UK uk_provider_transaction_ref(provider_id,mid_id,reference_type,external_transaction_id)
+IDX idx_pay_action_account(channel_account_id)
+IDX idx_pay_action_target_ref(target_channel_txn_ref_id)
+IDX idx_pay_action_target_action(target_payment_action_id)
+IDX idx_pay_action_authentication(authentication_action_id)
+IDX idx_pay_action_operation(channel_account_id,channel_operation_ref)
+t_channel_transaction_ref
+UK uk_channel_transaction_ref(channel_id,mid_id,reference_type,external_transaction_id)
 IDX idx_txn_ref_action(payment_action_id)
 IDX idx_txn_ref_mid(mid_id)
-IDX idx_txn_ref_original(original_provider_transaction_ref_id)
-t_provider_interaction
-UK uk_provider_interaction_action(payment_action_id,interaction_no)
-UK uk_provider_interact_dispute_act(provider_dispute_action_id,interaction_no)
+IDX idx_txn_ref_original(original_channel_txn_ref_id)
+t_channel_interaction
+UK uk_channel_interaction_action(payment_action_id,interaction_no)
+UK uk_channel_interact_dispute_act(channel_dispute_action_id,interaction_no)
 t_duplicate_payment_case
 UK uk_dup_case_duplicate_action(duplicate_action_id)
 IDX idx_dup_case_intent(payment_intent_id)
@@ -564,147 +581,149 @@ UK uk_payment_transition_no(aggregate_type,aggregate_id,transition_no)
 IDX idx_payment_transition_root(root_type,root_id,create_time)
 IDX idx_payment_transition_trigger(trigger_type,trigger_id,create_time)
 t_payment_refund_position
-UK uk_payment_refund_position(payment_intent_id,original_provider_transaction_ref_id)
+UK uk_payment_refund_position(payment_intent_id,original_channel_txn_ref_id)
 IDX idx_refund_pos_attempt(successful_attempt_id)
-IDX idx_refund_pos_orig_ref(original_provider_transaction_ref_id)
+IDX idx_refund_pos_orig_ref(original_channel_txn_ref_id)
 t_channel_refund
 UK uk_channel_refund_commerce_req(commerce_refund_request_id)
 IDX idx_channel_refund_pos(payment_refund_position_id)
-t_provider_callback
-UK uk_provider_callback_dedup(provider_id,provider_account_id,external_event_id)
-UK uk_provider_callback_fingerprint(provider_id,provider_account_id,payload_fingerprint)
-IDX idx_callback_account(provider_account_id)
-IDX idx_callback_pending(callback_status,received_at,provider_callback_id)
-t_provider_callback_item
-UK uk_provider_callback_item(provider_callback_id,item_no)
-t_provider_event_exception
-IDX idx_event_exc_callback(provider_callback_id)
-IDX idx_event_exc_item(provider_callback_item_id)
-IDX idx_event_exc_open(exception_status,create_time,provider_event_exception_id)
-t_provider_dispute_notice
-UK uk_provider_dispute_external(provider_id,external_dispute_id)
+t_channel_callback
+UK uk_channel_callback_dedup(channel_id,channel_account_id,external_event_id)
+UK uk_channel_callback_fingerprint(channel_id,channel_account_id,payload_fingerprint)
+IDX idx_callback_account(channel_account_id)
+IDX idx_callback_pending(callback_status,received_at,channel_callback_id)
+t_channel_callback_item
+UK uk_channel_callback_item(channel_callback_id,item_no)
+t_channel_event_exception
+IDX idx_event_exc_callback(channel_callback_id)
+IDX idx_event_exc_item(channel_callback_item_id)
+IDX idx_event_exc_open(exception_status,create_time,channel_event_exception_id)
+t_channel_dispute_notice
+UK uk_channel_dispute_external(channel_id,external_dispute_id)
 IDX idx_dispute_notice_mid(mid_id)
-IDX idx_dispute_notice_orig_ref(original_provider_transaction_ref_id)
+IDX idx_dispute_notice_orig_ref(original_channel_txn_ref_id)
 UK uk_dispute_notice_latest(latest_event_id)
-IDX idx_dispute_status_due(current_channel_status,provider_deadline_at)
-t_provider_dispute_event
-UK uk_provider_dispute_event(provider_dispute_notice_id,event_no)
-t_provider_dispute_action
-UK uk_dispute_action_idempotency(provider_id,provider_idempotency_key)
-IDX idx_dispute_action_notice(provider_dispute_notice_id)
+IDX idx_dispute_status_due(current_channel_status,channel_deadline_at)
+t_channel_dispute_event
+UK uk_channel_dispute_event(channel_dispute_notice_id,event_no)
+t_channel_dispute_action
+UK uk_dispute_action_idempotency(channel_id,channel_idempotency_key)
+IDX idx_dispute_action_notice(channel_dispute_notice_id)
 IDX idx_dispute_action_mid(mid_id)
-IDX idx_dispute_action_account(provider_account_id)
+IDX idx_dispute_action_account(channel_account_id)
 t_command_idempotency
 UK uk_command_idempotency(caller_scope,operation_type,idempotency_key)
 t_compensation_event
-UK uk_compensation_event_key(event_key)
-UK uk_compensation_source(source_type,source_id,source_version,event_type)
-IDX idx_compensation_claim(execute_status,next_execute_at,lock_until)
+UK uk_comp_event_identity(event_key,event_type,sub_event_type)
+IDX idx_comp_event_ready(execute_status,next_execute_at,id)
+IDX idx_comp_event_lease(execute_status,lock_until,id)
 `;
 const RELATION_MANIFEST = String.raw`
 1:1 payment_pricing_fact.payment_attempt_id -> payment_attempt.payment_attempt_id
 n:1 payment_pricing_fact.source_action_id -> payment_action.payment_action_id
-n:1 provider_account.provider_id -> payment_provider.provider_id
-n:1 provider_mid.provider_id -> payment_provider.provider_id
-n:1 provider_mid.provider_account_id -> provider_account.provider_account_id
-n:1 mid_capability.mid_id -> provider_mid.mid_id
-n:1 mid_health_state.mid_id -> provider_mid.mid_id
+n:1 channel_account.channel_id -> payment_channel.channel_id
+n:1 channel_mid.channel_id -> payment_channel.channel_id
+n:1 channel_mid.channel_account_id -> channel_account.channel_account_id
+n:1 mid_capability.mid_id -> channel_mid.mid_id
+n:1 mid_health_state.mid_id -> channel_mid.mid_id
 n:1 routing_policy_version.routing_policy_id -> routing_policy.routing_policy_id
 1:1 routing_policy.current_version_id -> routing_policy_version.routing_policy_version_id
 n:1 routing_policy_mid.routing_policy_version_id -> routing_policy_version.routing_policy_version_id
-n:1 routing_policy_mid.mid_id -> provider_mid.mid_id
+n:1 routing_policy_mid.mid_id -> channel_mid.mid_id
 1:1 routing_decision.payment_attempt_id -> payment_attempt.payment_attempt_id
 n:1 routing_decision.routing_policy_id -> routing_policy.routing_policy_id
 n:1 routing_decision.routing_policy_version_id -> routing_policy_version.routing_policy_version_id
-n:1 routing_decision.selected_provider_id -> payment_provider.provider_id
-n:1 routing_decision.selected_mid_id -> provider_mid.mid_id
-n:1 routing_decision.selected_provider_account_id -> provider_account.provider_account_id
+n:1 routing_decision.selected_channel_id -> payment_channel.channel_id
+n:1 routing_decision.selected_mid_id -> channel_mid.mid_id
+n:1 routing_decision.selected_channel_account_id -> channel_account.channel_account_id
 n:1 route_candidate_eval.routing_decision_id -> routing_decision.routing_decision_id
-n:1 route_candidate_eval.provider_id -> payment_provider.provider_id
-n:1 route_candidate_eval.mid_id -> provider_mid.mid_id
-n:1 route_candidate_eval.provider_account_id -> provider_account.provider_account_id
+n:1 route_candidate_eval.channel_id -> payment_channel.channel_id
+n:1 route_candidate_eval.mid_id -> channel_mid.mid_id
+n:1 route_candidate_eval.channel_account_id -> channel_account.channel_account_id
 n:1 payment_attempt.payment_intent_id -> payment_intent.payment_intent_id
 1:1 payment_intent.active_attempt_id -> payment_attempt.payment_attempt_id
 1:1 payment_intent.successful_attempt_id -> payment_attempt.payment_attempt_id
-1:1 payment_instrument.payment_attempt_id -> payment_attempt.payment_attempt_id
+1:1 payment_attempt.payment_instrument_token_id -> payment_instrument_token.payment_instrument_token_id
 n:1 payment_action.payment_attempt_id -> payment_attempt.payment_attempt_id
 n:1 payment_action.channel_refund_id -> channel_refund.channel_refund_id
 n:1 payment_action.duplicate_payment_case_id -> duplicate_payment_case.duplicate_payment_case_id
-n:1 payment_action.provider_id -> payment_provider.provider_id
-n:1 payment_action.mid_id -> provider_mid.mid_id
-n:1 payment_action.provider_account_id -> provider_account.provider_account_id
-n:1 payment_action.target_provider_transaction_ref_id -> provider_transaction_ref.provider_transaction_ref_id
-1:1 payment_customer_action.payment_action_id -> payment_action.payment_action_id
-n:1 provider_transaction_ref.payment_action_id -> payment_action.payment_action_id
-n:1 provider_transaction_ref.provider_id -> payment_provider.provider_id
-n:1 provider_transaction_ref.mid_id -> provider_mid.mid_id
-n:1 provider_transaction_ref.original_provider_transaction_ref_id -> provider_transaction_ref.provider_transaction_ref_id
-n:1 provider_interaction.payment_action_id -> payment_action.payment_action_id
-n:1 provider_interaction.provider_dispute_action_id -> provider_dispute_action.provider_dispute_action_id
+n:1 payment_action.channel_id -> payment_channel.channel_id
+n:1 payment_action.mid_id -> channel_mid.mid_id
+n:1 payment_action.channel_account_id -> channel_account.channel_account_id
+n:1 payment_action.target_channel_txn_ref_id -> channel_transaction_ref.channel_transaction_ref_id
+1:1 payment_intent_binding.payment_intent_id -> payment_intent.payment_intent_id
+n:1 payment_action.target_payment_action_id -> payment_action.payment_action_id
+n:1 payment_action.authentication_action_id -> payment_action.payment_action_id
+n:1 channel_transaction_ref.payment_action_id -> payment_action.payment_action_id
+n:1 channel_transaction_ref.channel_id -> payment_channel.channel_id
+n:1 channel_transaction_ref.mid_id -> channel_mid.mid_id
+n:1 channel_transaction_ref.original_channel_txn_ref_id -> channel_transaction_ref.channel_transaction_ref_id
+n:1 channel_interaction.payment_action_id -> payment_action.payment_action_id
+n:1 channel_interaction.channel_dispute_action_id -> channel_dispute_action.channel_dispute_action_id
 n:1 duplicate_payment_case.payment_intent_id -> payment_intent.payment_intent_id
 n:1 duplicate_payment_case.canonical_attempt_id -> payment_attempt.payment_attempt_id
 n:1 duplicate_payment_case.duplicate_attempt_id -> payment_attempt.payment_attempt_id
 n:1 duplicate_payment_case.canonical_action_id -> payment_action.payment_action_id
 n:1 duplicate_payment_case.duplicate_action_id -> payment_action.payment_action_id
-n:1 duplicate_payment_case.canonical_transaction_ref_id -> provider_transaction_ref.provider_transaction_ref_id
-n:1 duplicate_payment_case.duplicate_transaction_ref_id -> provider_transaction_ref.provider_transaction_ref_id
+n:1 duplicate_payment_case.canonical_transaction_ref_id -> channel_transaction_ref.channel_transaction_ref_id
+n:1 duplicate_payment_case.duplicate_transaction_ref_id -> channel_transaction_ref.channel_transaction_ref_id
 n:1 duplicate_payment_case.compensation_action_id -> payment_action.payment_action_id
 n:1 payment_refund_position.payment_intent_id -> payment_intent.payment_intent_id
 n:1 payment_refund_position.successful_attempt_id -> payment_attempt.payment_attempt_id
-n:1 payment_refund_position.original_provider_transaction_ref_id -> provider_transaction_ref.provider_transaction_ref_id
+n:1 payment_refund_position.original_channel_txn_ref_id -> channel_transaction_ref.channel_transaction_ref_id
 n:1 channel_refund.payment_refund_position_id -> payment_refund_position.payment_refund_position_id
-n:1 provider_callback.provider_id -> payment_provider.provider_id
-n:1 provider_callback.provider_account_id -> provider_account.provider_account_id
-n:1 provider_callback_item.provider_callback_id -> provider_callback.provider_callback_id
-n:1 provider_event_exception.provider_callback_id -> provider_callback.provider_callback_id
-n:1 provider_event_exception.provider_callback_item_id -> provider_callback_item.provider_callback_item_id
-n:1 provider_dispute_notice.provider_id -> payment_provider.provider_id
-n:1 provider_dispute_notice.mid_id -> provider_mid.mid_id
-n:1 provider_dispute_notice.original_provider_transaction_ref_id -> provider_transaction_ref.provider_transaction_ref_id
-1:1 provider_dispute_notice.latest_event_id -> provider_dispute_event.provider_dispute_event_id
-n:1 provider_dispute_event.provider_dispute_notice_id -> provider_dispute_notice.provider_dispute_notice_id
-n:1 provider_dispute_action.provider_dispute_notice_id -> provider_dispute_notice.provider_dispute_notice_id
-n:1 provider_dispute_action.provider_id -> payment_provider.provider_id
-n:1 provider_dispute_action.mid_id -> provider_mid.mid_id
-n:1 provider_dispute_action.provider_account_id -> provider_account.provider_account_id
+n:1 channel_callback.channel_id -> payment_channel.channel_id
+n:1 channel_callback.channel_account_id -> channel_account.channel_account_id
+n:1 channel_callback_item.channel_callback_id -> channel_callback.channel_callback_id
+n:1 channel_event_exception.channel_callback_id -> channel_callback.channel_callback_id
+n:1 channel_event_exception.channel_callback_item_id -> channel_callback_item.channel_callback_item_id
+n:1 channel_dispute_notice.channel_id -> payment_channel.channel_id
+n:1 channel_dispute_notice.mid_id -> channel_mid.mid_id
+n:1 channel_dispute_notice.original_channel_txn_ref_id -> channel_transaction_ref.channel_transaction_ref_id
+1:1 channel_dispute_notice.latest_event_id -> channel_dispute_event.channel_dispute_event_id
+n:1 channel_dispute_event.channel_dispute_notice_id -> channel_dispute_notice.channel_dispute_notice_id
+n:1 channel_dispute_action.channel_dispute_notice_id -> channel_dispute_notice.channel_dispute_notice_id
+n:1 channel_dispute_action.channel_id -> payment_channel.channel_id
+n:1 channel_dispute_action.mid_id -> channel_mid.mid_id
+n:1 channel_dispute_action.channel_account_id -> channel_account.channel_account_id
 `;
 
 const DIAGRAM_GROUPS = Object.freeze([
   Object.freeze({
-    defKey: "provider_mid",
-    defName: "Provider 与 MID",
-    primary: Object.freeze(["payment_provider", "provider_account", "provider_mid", "mid_capability", "mid_health_state"]),
+    defKey: "channel_mid",
+    defName: "Channel 与 MID",
+    primary: Object.freeze(["payment_channel", "channel_account", "channel_mid", "mid_capability", "mid_health_state"]),
     references: Object.freeze([]),
   }),
   Object.freeze({
     defKey: "payment_routing",
     defName: "支付路由",
     primary: Object.freeze(["routing_policy", "routing_policy_version", "routing_policy_mid", "routing_decision", "route_candidate_eval"]),
-    references: Object.freeze(["payment_provider", "provider_account", "provider_mid", "payment_attempt"]),
+    references: Object.freeze(["payment_channel", "channel_account", "channel_mid", "payment_attempt"]),
   }),
   Object.freeze({
     defKey: "payment_execution",
     defName: "支付执行",
-    primary: Object.freeze(["payment_intent", "payment_attempt", "payment_pricing_fact", "payment_instrument", "payment_action", "payment_customer_action", "provider_transaction_ref", "provider_interaction", "duplicate_payment_case", "payment_state_transition"]),
-    references: Object.freeze(["payment_provider", "provider_account", "provider_mid", "routing_decision", "channel_refund"]),
+    primary: Object.freeze(["payment_intent", "payment_attempt", "payment_pricing_fact", "payment_instrument_token", "payment_action", "payment_intent_binding", "channel_transaction_ref", "channel_interaction", "duplicate_payment_case", "payment_state_transition"]),
+    references: Object.freeze(["payment_channel", "channel_account", "channel_mid", "routing_decision", "channel_refund"]),
   }),
   Object.freeze({
     defKey: "channel_refund",
     defName: "Channel Refund",
     primary: Object.freeze(["payment_refund_position", "channel_refund"]),
-    references: Object.freeze(["payment_intent", "payment_attempt", "payment_action", "provider_transaction_ref"]),
+    references: Object.freeze(["payment_intent", "payment_attempt", "payment_action", "channel_transaction_ref"]),
   }),
   Object.freeze({
-    defKey: "provider_callback",
-    defName: "Provider Callback",
-    primary: Object.freeze(["provider_callback", "provider_callback_item", "provider_event_exception"]),
-    references: Object.freeze(["payment_provider", "provider_account", "payment_action", "channel_refund", "provider_dispute_notice", "provider_dispute_action"]),
+    defKey: "channel_callback",
+    defName: "Channel Callback",
+    primary: Object.freeze(["channel_callback", "channel_callback_item", "channel_event_exception"]),
+    references: Object.freeze(["payment_channel", "channel_account", "payment_action", "channel_refund", "channel_dispute_notice", "channel_dispute_action"]),
   }),
   Object.freeze({
-    defKey: "provider_dispute",
-    defName: "Provider Dispute",
-    primary: Object.freeze(["provider_dispute_notice", "provider_dispute_event", "provider_dispute_action"]),
-    references: Object.freeze(["payment_provider", "provider_account", "provider_mid", "provider_transaction_ref", "provider_interaction"]),
+    defKey: "channel_dispute",
+    defName: "Channel Dispute",
+    primary: Object.freeze(["channel_dispute_notice", "channel_dispute_event", "channel_dispute_action"]),
+    references: Object.freeze(["payment_channel", "channel_account", "channel_mid", "channel_transaction_ref", "channel_interaction"]),
   }),
   Object.freeze({
     defKey: "reliability",
@@ -719,14 +738,13 @@ const VERSION_TABLES = Object.freeze([
   "payment_intent",
   "payment_attempt",
   "payment_action",
-  "payment_customer_action",
   "duplicate_payment_case",
   "payment_refund_position",
   "channel_refund",
-  "provider_callback",
-  "provider_event_exception",
-  "provider_dispute_notice",
-  "provider_dispute_action",
+  "channel_callback",
+  "channel_event_exception",
+  "channel_dispute_notice",
+  "channel_dispute_action",
 ]);
 
 const IMMUTABLE_TABLES = Object.freeze([
@@ -735,11 +753,10 @@ const IMMUTABLE_TABLES = Object.freeze([
   "routing_policy_mid",
   "routing_decision",
   "route_candidate_eval",
-  "payment_instrument",
-  "provider_transaction_ref",
+  "channel_transaction_ref",
   "payment_state_transition",
-  "provider_callback_item",
-  "provider_dispute_event",
+  "channel_callback_item",
+  "channel_dispute_event",
 ]);
 
 function invariant(condition, message) {
@@ -755,6 +772,7 @@ function sha256(value) {
 }
 
 function stableUuid(key) {
+  key = paymentChannelIdentityKey(key);
   if (key.startsWith("field/") && key.endsWith("/entity_no")) key = key.replace(/entity_no$/, "operating_entity_id");
   const bytes = Buffer.from(sha256(`${MODEL_KEY}:${key}`).slice(0, 32), "hex");
   bytes[6] = (bytes[6] & 0x0f) | 0x50;
@@ -870,11 +888,11 @@ function relationId(relation) {
 
 function diagramGroupForRelation(relation) {
   if (
-    relation.childTable === "provider_interaction"
-    && relation.childField === "provider_dispute_action_id"
-    && relation.parentTable === "provider_dispute_action"
+    relation.childTable === "channel_interaction"
+    && relation.childField === "channel_dispute_action_id"
+    && relation.parentTable === "channel_dispute_action"
   ) {
-    return "provider_dispute";
+    return "channel_dispute";
   }
   const groups = DIAGRAM_GROUPS.filter((group) => group.primary.includes(relation.childTable));
   invariant(groups.length === 1, `Relation child must have exactly one primary diagram: ${relationStableKey(relation)}`);
@@ -1060,6 +1078,7 @@ function buildEntities(model, tables, indexesByTable) {
         extProps: ["entity_no", "scope_id"].includes(manifestField.defKey) ? { characterSet: "ascii", collation: "ascii_bin" } : {},
         domain: mapping.domain,
         id: stableUuid(`field/${table.defKey}/${manifestField.defKey}`),
+        ...EXECUTION_FIELD_OVERRIDES[`${table.defKey}.${manifestField.defKey}`],
       };
     });
     const fieldsByKey = new Map(fields.map((field) => [field.defKey, field]));
@@ -1193,7 +1212,7 @@ function validateMetadata(tables) {
     .filter((field) => field.openSourceHint)
     .map((field) => `${table.defKey}.${field.defKey}`)).sort();
   invariant(JSON.stringify(openMetadataKeys) === JSON.stringify(openManifestKeys), "Open-code metadata must exactly cover the manifest");
-  invariant(openManifestKeys.length === 55, `Expected 55 true open-code rows, found ${openManifestKeys.length}`);
+  invariant(openManifestKeys.length === 56, `Expected 56 true open-code rows, found ${openManifestKeys.length}`);
   for (const [key, value] of Object.entries(FIELD_METADATA)) {
     invariant(/[\u3400-\u9fff]/u.test(value.defName), `Field display name is not Chinese: ${key}`);
     invariant(/[\u3400-\u9fff]/u.test(value.description), `Field description is not Chinese: ${key}`);
@@ -1203,17 +1222,17 @@ function validateMetadata(tables) {
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
     tables: 30,
-    fields: 393,
-    uniqueIndexes: 42,
-    accessIndexes: 45,
-    relations: 65,
+    fields: 402,
+    uniqueIndexes: 45,
+    accessIndexes: 48,
+    relations: 67,
     diagramGroups: 7,
   }), `Unexpected generated totals: ${JSON.stringify(modelTotals(model))}`);
 
   const entitiesByKey = new Map(model.entities.map((entity) => [logicalTableKey(entity.defKey), entity]));
   invariant(tables.length === 30, `Field manifest must have 30 tables, found ${tables.length}`);
-  invariant(new Set(VERSION_TABLES).size === 12, "Version allowlist must have 12 tables");
-  invariant(new Set(IMMUTABLE_TABLES).size === 10, "Immutable allowlist must have 10 tables");
+  invariant(new Set(VERSION_TABLES).size === 11, "Version allowlist must have 11 tables");
+  invariant(new Set(IMMUTABLE_TABLES).size === 9, "Immutable allowlist must have 9 tables");
   const actualVersionTables = model.entities
     .filter((entity) => entity.fields.some((field) => field.defKey === "version"))
     .map((entity) => logicalTableKey(entity.defKey));
@@ -1251,7 +1270,7 @@ function validateGeneratedModel(model, tables, relations) {
   invariant(primaryTables.length === 30 && new Set(primaryTables).size === 30, "Every table must have exactly one primary diagram group");
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)
     .filter((cell) => cell.shape === "erdRelation");
-  invariant(relationCells.length === 65, `Expected 65 relation cells, found ${relationCells.length}`);
+  invariant(relationCells.length === 67, `Expected 67 relation cells, found ${relationCells.length}`);
   const relationIds = relations.map(relationId);
   invariant(new Set(relationIds).size === relations.length, "Relation IDs must be unique");
   invariant(

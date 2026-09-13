@@ -13,11 +13,11 @@ Code-MoR 是 PayTech 的 Merchant of Record 平台。Client 将 Consumer 引导�
 ## 2. 核心参与方与术语
 
 - **Client**：平台客户，类型只有 `INDIVIDUAL` 和 `ORGANIZATION`；同一角色不再称为 Merchant。
-- **Operating Entity**：与支付 Provider 签约并拥有 MID 的法律卖方主体。
+- **Operating Entity**：与支付 Channel 签约并拥有 MID 的法律卖方主体。
 - **Finance Entity**：Finance 内部的会计主体，可映射平台法律 Party，但不自动拥有 MID，也不替代 CCT Party 权威。
 - **Local Partner**：提供主体资料并按独立规则获得分成的外部合作方。
 - **Consumer**：在 Hosted Checkout 完成支付的最终买方。
-- **Provider / Acquirer**：NI、Geidea 或其他外部支付服务提供方。
+- **Channel / Acquirer**：NI、Geidea 或其他外部支付服务提供方。
 
 ## 3. 六个核心系统
 
@@ -25,9 +25,9 @@ Code-MoR 是 PayTech 的 Merchant of Record 平台。Client 将 Consumer 引导�
 |---|---|---|
 | Client & Contract | Party、Client/Partner/OE、合同、商业规则、实体分配和交易时点资格 | Order、Payment、Ledger、Risk 决策 |
 | Commerce | Order、唯一不可变 Order Context、Consumer Context、网络证据、接受记录和退款意图 | MID 路由、支付渠道状态、会计分录 |
-| Payment Orchestration | Intent、Attempt、Provider/MID 路由、渠道 Action、回调、支付侧退款与 Void | Client 合同、Finance Ledger |
+| Payment Orchestration | Intent、Attempt、Channel/MID 路由、渠道 Action、回调、支付侧退款与 Void | Client 合同、Finance Ledger |
 | Risk & Compliance | 风险/合规评估、KYC/KYB 支持决定、Case、争议和限制 | 支付执行、资金出款和账务事实 |
-| Finance | 交易经济结果、复式账、账户余额、税务/财政事实、对账、保证金、追偿和 Manual Payout | Provider 交易状态、Client 主档和 Risk 决策 |
+| Finance | 交易经济结果、复式账、账户余额、税务/财政事实、对账、保证金、追偿和 Manual Payout | Channel 交易状态、Client 主档和 Risk 决策 |
 | Platform Support | 人类 Account、Realm/Channel、Session、Tenant IAM、公共控制面、文件、通知、Webhook 和平台审计 | 核心业务编排、财务事实和 Gateway 运行计数器 |
 
 每个系统拥有独立数据库。禁止跨库读写、跨库外键或通过共享 DataObject 绕过 Owner。跨系统同步命令/查询使用窄 HTTP 契约，业务事实和内部回调使用 MQ。
@@ -38,7 +38,7 @@ Code-MoR 是 PayTech 的 Merchant of Record 平台。Client 将 Consumer 引导�
 - BFF 负责页面级聚合、授权查询组合和展示模型；它无状态，不拥有核心事实，也不编排跨系统业务事务。
 - Vault 是内部敏感值保护服务，不是第七个核心系统，不拥有 Consumer、Order 或其他业务语义。
 - 每个有状态服务使用本地 `compensation_event` 处理提交后的可靠异步工作；XXL-Job 只是兜底唤醒/分片机制，不建立中央补偿库或通用 Inbox/Outbox。
-- Hosted Checkout、Operations Console、Client Console、Partner Console、Client API、Provider Callback 和 Consumer Service Portal 是逻辑入口，不自动一一对应 Java 服务。
+- Hosted Checkout、Operations Console、Client Console、Partner Console、Client API、Channel Callback 和 Consumer Service Portal 是逻辑入口，不自动一一对应 Java 服务。
 
 入口应用、BFF、Gateway 和部署边界的完整规则由 [`APPLICATION_ARCHITECTURE.md`](./APPLICATION_ARCHITECTURE.md) 拥有。
 
@@ -58,7 +58,7 @@ Code-MoR 是 PayTech 的 Merchant of Record 平台。Client 将 Consumer 引导�
 
 ## 6. 安全与隐私
 
-- 2026-09-12 已确认[自建 Payment Card 模块](../requirements/20260912/payment-自建CardVault/requirement.md)，取代只能由Provider托管采集的方向。原始卡处理仅限拟建设的Payment统一Customer支付入口与Card模块；同请求的协议确认由Payment通过独立内部合同交给Commerce，Commerce提交接受事实后返回。Payment Card模块按专项加密设计保存PAN，CVV仅瞬时处理且不持久化/生成摘要。Commerce、其他通用支付接口和现有非卡Vault不接收卡原值，完整磁道及PIN/PIN Block继续排除；模型、真实卡上线与安全评估状态不能从模块决定推断。
+- 2026-09-12 已确认[自建 Payment Card 模块](../requirements/20260912/payment-自建CardVault/requirement.md)，取代只能由Channel托管采集的方向。原始卡处理仅限拟建设的Payment统一Customer支付入口与Card模块；同请求的协议确认由Payment通过独立内部合同交给Commerce，Commerce提交接受事实后返回。Payment Card模块按专项加密设计保存PAN，CVV仅瞬时处理且不持久化/生成摘要。Commerce、其他通用支付接口和现有非卡Vault不接收卡原值，完整磁道及PIN/PIN Block继续排除；模型、真实卡上线与安全评估状态不能从模块决定推断。
 - Vault 只保护已批准的可恢复非卡敏感值。完整 Token 或明文不得进入外部 API、普通日志、MQ 或 BCR。
 - Commerce 的网络证据留在 Commerce 并执行最小访问、审计和禁止外发；它不进入 Vault。
 - MVP 不实现通用自动 Retention、Legal Hold、归档、匿名化或销毁。在真实受监管数据上线前必须另行完成法律/合规设计和验证。
@@ -78,7 +78,7 @@ Vault 当前契约与仍待迁移的消费者缺口见 [`CURRENT_IMPLEMENTATION.
 
 - 各事件的 SLA、重试/告警参数和人工恢复流程；
 - 国家/地区税务、披露和发票细则；
-- 自动 Provider Settlement、自动缴税和跨境出款；
+- 自动 Channel Settlement、自动缴税和跨境出款；
 - 订阅/周期支付；
 - 生产云厂商、拓扑、交付流水线、KMS、强 Workload Identity 和合规运营；
 - Vault 现有 Protect/Reveal 以外由真实消费者证明需要的窄 V2 能力。

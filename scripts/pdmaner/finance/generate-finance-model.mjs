@@ -1,3 +1,4 @@
+import { paymentChannelIdentityKey } from "../payment-channel-identity.mjs";
 import { createHash } from "node:crypto";
 import {
   existsSync,
@@ -46,6 +47,7 @@ function sha256(value) {
 }
 
 function stableUuid(key) {
+  key = paymentChannelIdentityKey(key);
   if (key.startsWith("field/")) key = key.replace(/\/entity_no$/, "/operating_entity_id").replace(/\/liable_entity_no$/, "/liable_oe_id").replace(/\/client_agreement_id$/, "/client_agreement_oe_id");
   const bytes = Buffer.from(sha256(`${MODEL_KEY}:${key}`).slice(0, 32), "hex");
   bytes[6] = (bytes[6] & 0x0f) | 0x50;
@@ -425,7 +427,7 @@ function validateManifest() {
     invariant(fileId && fileHash, `文件引用必须保存 ID + Content Hash：${tuple.table}`);
     invariant(fileId.notNull === fileHash.notNull, `文件 ID/Hash 空值语义必须一致：${tuple.table}`);
   }
-  invariant(!tableByKey.get("provider_debit_item").fields.some((field) => field.defKey === "channel_refund_attempt_id"), "不得恢复已删除的 Payment Refund Attempt 引用");
+  invariant(!tableByKey.get("channel_debit_item").fields.some((field) => field.defKey === "channel_refund_attempt_id"), "不得恢复已删除的 Payment Refund Attempt 引用");
   const compensation = tableByKey.get("compensation_event");
   invariant(compensation.fields.some((field) => field.defKey === "lock_version"), "Compensation Event 必须使用 lock_version");
   invariant(!compensation.fields.some((field) => field.defKey === "version"), "Compensation Event 不得使用含混的 version");

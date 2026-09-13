@@ -1,5 +1,7 @@
 # Payment Execution 支付工具与消费者动作精简设计
 
+> 2026-09-13 命名后继：[支付渠道 Channel 决定](../decisions/2026-09-13-payment-channel-terminology.md)取代本文支付领域 Provider 命名；业务边界与历史证据保持。现行实体、字段及自有回调代码使用 Channel；外部固定协议与原报文不改写。
+
 最后更新：2026-08-25  
 状态：已确认并完成同步；自动契约已通过，PDManer 4.9.3 应用内检查仍待人工完成
 

@@ -221,7 +221,7 @@ test("Finance removes generic Funding while refund posting remains direct", () =
   }
 });
 
-test("Finance separates Provider transaction matching from bank reconciliation without a derived Cash Item", () => {
+test("Finance separates Channel transaction matching from bank reconciliation without a derived Cash Item", () => {
   const model = readModel();
   const entities = new Map(model.entities.map((entity) => [entity.defKey, entity]));
   const fieldKeys = (tableKey) => entities.get(tableKey)?.fields.map((field) => field.defKey) ?? [];
@@ -239,16 +239,16 @@ test("Finance separates Provider transaction matching from bank reconciliation w
   };
 
   for (const removedTable of [
-    "t_provider_settle_alloc",
-    "t_provider_cash_item",
+    "t_channel_settle_alloc",
+    "t_channel_cash_item",
     "t_recon_match",
   ]) {
     assert.ok(!entities.has(removedTable), `仍保留旧对账表 ${removedTable}`);
   }
 
-  assert.ok(entities.has("t_provider_transaction_match"));
+  assert.ok(entities.has("t_channel_transaction_match"));
   assert.ok(entities.has("t_bank_recon_match"));
-  assert.deepEqual(fieldKeys("t_provider_transaction_match"), [
+  assert.deepEqual(fieldKeys("t_channel_transaction_match"), [
     "id",
     "settle_item_id",
     "target_type",
@@ -262,42 +262,42 @@ test("Finance separates Provider transaction matching from bank reconciliation w
     "create_time",
   ]);
   assert.match(
-    entities.get("t_provider_transaction_match").comment,
+    entities.get("t_channel_transaction_match").comment,
     /本地冻结.*无需在线查询 Payment/u,
   );
   assert.match(
-    entities.get("t_provider_transaction_match").comment,
+    entities.get("t_channel_transaction_match").comment,
     /PAYMENT.*DUPLICATE_CAPTURE.*REFUND.*DISPUTE.*FEE.*ADJUSTMENT.*Cost Confirm.*Recon Exception/u,
   );
   assert.equal(
-    relationTarget("t_provider_transaction_match", "settle_item_id"),
-    "t_provider_settle_item",
+    relationTarget("t_channel_transaction_match", "settle_item_id"),
+    "t_channel_settle_item",
   );
-  assert.equal(relationTarget("t_provider_transaction_match", "open_item_id"), "t_provider_open_item");
-  assert.equal(relationTarget("t_provider_transaction_match", "debit_item_id"), "t_provider_debit_item");
+  assert.equal(relationTarget("t_channel_transaction_match", "open_item_id"), "t_channel_open_item");
+  assert.equal(relationTarget("t_channel_transaction_match", "debit_item_id"), "t_channel_debit_item");
 
-  assert.ok(fieldKeys("t_bank_recon_match").includes("provider_batch_id"));
-  assert.ok(!fieldKeys("t_bank_recon_match").includes("provider_cash_item_id"));
-  assert.equal(relationTarget("t_bank_recon_match", "provider_batch_id"), "t_provider_settle_batch");
+  assert.ok(fieldKeys("t_bank_recon_match").includes("channel_batch_id"));
+  assert.ok(!fieldKeys("t_bank_recon_match").includes("channel_cash_item_id"));
+  assert.equal(relationTarget("t_bank_recon_match", "channel_batch_id"), "t_channel_settle_batch");
   assert.deepEqual(
-    indexFields("t_bank_recon_match", "idx_bank_recon_provider"),
-    ["provider_batch_id", "status"],
+    indexFields("t_bank_recon_match", "idx_bank_recon_channel"),
+    ["channel_batch_id", "status"],
   );
   assert.deepEqual(
-    indexFields("t_provider_settle_batch", "idx_provider_batch_recon"),
-    ["provider_account_id", "status", "cash_direction", "settlement_date"],
+    indexFields("t_channel_settle_batch", "idx_channel_batch_recon"),
+    ["channel_account_id", "status", "cash_direction", "settlement_date"],
   );
 
   const accountPurpose = entities.get("t_cash_account_binding").fields
     .find((field) => field.defKey === "account_purpose");
-  assert.match(accountPurpose.comment, /允许值：PROVIDER_SETTLEMENT、PAYOUT、TAX。$/u);
+  assert.match(accountPurpose.comment, /允许值：CHANNEL_SETTLEMENT、PAYOUT、TAX。$/u);
   assert.doesNotMatch(accountPurpose.comment, /REFUND/u);
 
-  const diagram = model.diagrams.find((candidate) => candidate.defKey === "provider_cash_recon");
+  const diagram = model.diagrams.find((candidate) => candidate.defKey === "channel_cash_recon");
   assert.equal(diagram?.properties?.primaryTables.length, 15);
-  assert.ok(diagram?.properties?.primaryTables.includes("t_provider_transaction_match"));
+  assert.ok(diagram?.properties?.primaryTables.includes("t_channel_transaction_match"));
   assert.ok(diagram?.properties?.primaryTables.includes("t_bank_recon_match"));
-  assert.ok(!diagram?.properties?.primaryTables.includes("t_provider_cash_item"));
+  assert.ok(!diagram?.properties?.primaryTables.includes("t_channel_cash_item"));
 });
 
 test("Finance RE_MATCH resolution identifies exactly one reconciliation layer", () => {
@@ -311,15 +311,15 @@ test("Finance RE_MATCH resolution identifies exactly one reconciliation layer", 
     .find((entity) => entity.id === relationFor(fieldKey)?.refEntity)?.defKey;
 
   assert.ok(!fields.has("recon_match_id"));
-  assert.ok(fields.has("provider_transaction_match_id"));
+  assert.ok(fields.has("channel_transaction_match_id"));
   assert.ok(fields.has("bank_recon_match_id"));
-  assert.equal(relationFor("provider_transaction_match_id")?.myRows, "1");
+  assert.equal(relationFor("channel_transaction_match_id")?.myRows, "1");
   assert.equal(relationFor("bank_recon_match_id")?.myRows, "1");
-  assert.equal(targetFor("provider_transaction_match_id"), "t_provider_transaction_match");
+  assert.equal(targetFor("channel_transaction_match_id"), "t_channel_transaction_match");
   assert.equal(targetFor("bank_recon_match_id"), "t_bank_recon_match");
   assert.match(
     MODEL_CHECK_CONTRACTS.ck_recon_resolution_execution,
-    /provider_transaction_match_id IS NOT NULL AND bank_recon_match_id IS NULL.*provider_transaction_match_id IS NULL AND bank_recon_match_id IS NOT NULL/u,
+    /channel_transaction_match_id IS NOT NULL AND bank_recon_match_id IS NULL.*channel_transaction_match_id IS NULL AND bank_recon_match_id IS NOT NULL/u,
   );
 });
 
@@ -545,7 +545,7 @@ test("Finance mechanical fields and reviewed cross-system tuples stay frozen", (
     [
       { table: "tax_return", id: "file_id", hash: "file_content_hash", idNotNull: false, hashNotNull: false },
       { table: "manual_adjustment", id: "file_id", hash: "file_content_hash", idNotNull: false, hashNotNull: false },
-      { table: "provider_settle_batch", id: "file_id", hash: "file_content_hash", idNotNull: true, hashNotNull: true },
+      { table: "channel_settle_batch", id: "file_id", hash: "file_content_hash", idNotNull: true, hashNotNull: true },
       { table: "bank_statement", id: "file_id", hash: "file_content_hash", idNotNull: true, hashNotNull: true },
       { table: "payout_evidence_ref", id: "file_id", hash: "file_content_hash", idNotNull: true, hashNotNull: true },
     ],
@@ -565,11 +565,11 @@ test("Finance mechanical fields and reviewed cross-system tuples stay frozen", (
   assert.ok(!entities.get("t_command_idempotency").fields.some((field) => field.defKey === "version"));
   assert.ok(!entities.get("t_compensation_event").fields.some((field) => field.defKey === "version"));
   assert.ok(entities.get("t_compensation_event").fields.some((field) => field.defKey === "lock_version"));
-  const providerCostConfirmFields = new Set(
-    entities.get("t_provider_cost_confirm").fields.map((field) => field.defKey),
+  const channelCostConfirmFields = new Set(
+    entities.get("t_channel_cost_confirm").fields.map((field) => field.defKey),
   );
-  for (const removedField of ["provider_id", "settle_batch_ref", "provider_item_ref", "currency"]) {
-    assert.ok(!providerCostConfirmFields.has(removedField), `渠道实际成本恢复了冗余字段 ${removedField}`);
+  for (const removedField of ["channel_id", "settle_batch_ref", "channel_item_ref", "currency"]) {
+    assert.ok(!channelCostConfirmFields.has(removedField), `渠道实际成本恢复了冗余字段 ${removedField}`);
   }
 });
 
@@ -677,7 +677,7 @@ test("Finance shares Client and Partner maturity and uses direct Payout and Tax 
   assert.deepEqual(MODEL_CHECK_BINDINGS.ck_tax_payment_failed_event, ["tax_payment_event"]);
   assert.equal(
     MODEL_CHECK_CONTRACTS.ck_account_owner_bucket,
-    "(owner_type='CLIENT' AND balance_bucket IN ('PENDING','AVAILABLE','LOCKED','NONE')) OR (owner_type='LOCAL_PARTNER' AND balance_bucket IN ('NONE','PENDING','AVAILABLE','LOCKED')) OR (owner_type IN ('OPERATING_ENTITY','FINANCE_ENTITY','PROVIDER_ACCOUNT','CASH_ACCOUNT','TAX_AUTHORITY') AND balance_bucket='NONE')",
+    "(owner_type='CLIENT' AND balance_bucket IN ('PENDING','AVAILABLE','LOCKED','NONE')) OR (owner_type='LOCAL_PARTNER' AND balance_bucket IN ('NONE','PENDING','AVAILABLE','LOCKED')) OR (owner_type IN ('OPERATING_ENTITY','FINANCE_ENTITY','CHANNEL_ACCOUNT','CASH_ACCOUNT','TAX_AUTHORITY') AND balance_bucket='NONE')",
   );
 });
 
@@ -1005,7 +1005,7 @@ test("Finance Entity and polymorphic book ownership are explicit and minimal", (
   assert.match(accountOwnerType.comment, /FINANCE_ENTITY/u);
   assert.equal(
     MODEL_CHECK_CONTRACTS.ck_account_owner_bucket,
-    "(owner_type='CLIENT' AND balance_bucket IN ('PENDING','AVAILABLE','LOCKED','NONE')) OR (owner_type='LOCAL_PARTNER' AND balance_bucket IN ('NONE','PENDING','AVAILABLE','LOCKED')) OR (owner_type IN ('OPERATING_ENTITY','FINANCE_ENTITY','PROVIDER_ACCOUNT','CASH_ACCOUNT','TAX_AUTHORITY') AND balance_bucket='NONE')",
+    "(owner_type='CLIENT' AND balance_bucket IN ('PENDING','AVAILABLE','LOCKED','NONE')) OR (owner_type='LOCAL_PARTNER' AND balance_bucket IN ('NONE','PENDING','AVAILABLE','LOCKED')) OR (owner_type IN ('OPERATING_ENTITY','FINANCE_ENTITY','CHANNEL_ACCOUNT','CASH_ACCOUNT','TAX_AUTHORITY') AND balance_bucket='NONE')",
   );
   assert.ok(!entities.has("t_accounting_entity"));
 });
@@ -1061,7 +1061,7 @@ test("Finance generalizes only legal-subject roots and preserves transaction OE 
   for (const tableKey of [
     "t_tax_snapshot",
     "t_fiscal_record",
-    "t_provider_account",
+    "t_channel_account",
     "t_payout",
     "t_finance_restriction_proj",
   ]) {
@@ -1071,9 +1071,9 @@ test("Finance generalizes only legal-subject roots and preserves transaction OE 
     assert.ok(!fields.includes("entity_id"), `${tableKey} 不得机械泛化主体`);
   }
 
-  for (const tableKey of ["t_provider_open_item", "t_provider_debit_item"]) {
+  for (const tableKey of ["t_channel_open_item", "t_channel_debit_item"]) {
     const fields = fieldKeys(tableKey);
-    assert.ok(fields.includes("provider_account_id"), `${tableKey} 必须通过 Provider Account 确定 OE`);
+    assert.ok(fields.includes("channel_account_id"), `${tableKey} 必须通过 Channel Account 确定 OE`);
     assert.ok(fields.includes("transaction_economics_id"), `${tableKey} 必须与交易 Economics 交叉校验 OE`);
     assert.ok(!fields.includes("entity_no"), `${tableKey} 不重复保存父链 OE`);
     assert.ok(!fields.includes("entity_type"), `${tableKey} 不得泛化为 Finance Entity`);
@@ -1240,7 +1240,7 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
   "refund_request_id",
   "channel_refund_id",
   "duplicate_capture_item_id",
-  "provider_dispute_notice_id",
+  "channel_dispute_notice_id",
   "dispute_case_id",
   "client_id",
   "entity_no",
@@ -1381,7 +1381,7 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
     .find((field) => field.defKey === "source_rule_type");
   assert.match(
     sourceRuleType.comment,
-    /允许值：CLIENT_PRICING、PARTNER_SHARE、PLATFORM_SERVICE_CHARGE、TAX_RULE、PROVIDER_COST/u,
+    /允许值：CLIENT_PRICING、PARTNER_SHARE、PLATFORM_SERVICE_CHARGE、TAX_RULE、CHANNEL_COST/u,
   );
   const partyType = entities.get("t_transaction_economic_component").fields
     .find((field) => field.defKey === "party_type");
@@ -1409,7 +1409,7 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
   assert.ok(!entities.has("t_platform_service_charge"));
   const componentType = entities.get("t_transaction_economic_component").fields
     .find((field) => field.defKey === "component_type");
-  assert.match(componentType.comment, /PROVIDER_COST_INCREASE.*PROVIDER_COST_DECREASE/u);
+  assert.match(componentType.comment, /CHANNEL_COST_INCREASE.*CHANNEL_COST_DECREASE/u);
   const componentLinkComment = entities.get("t_transaction_economic_comp_link").comment;
   assert.match(componentLinkComment, /完整关联集.*posted_amount/u);
   assert.match(componentLinkComment, /稳定顺序锁定.*原组件.*累计关联金额/u);
@@ -1419,15 +1419,15 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
   assert.match(requiredFlag.comment, /金额为零.*整体跳过/u);
   const amountSourceCode = entities.get("t_accounting_rule_line").fields
     .find((field) => field.defKey === "amount_source_code");
-  assert.match(amountSourceCode.comment, /PROVIDER_COST_INCREASE.*PROVIDER_COST_DECREASE/u);
+  assert.match(amountSourceCode.comment, /CHANNEL_COST_INCREASE.*CHANNEL_COST_DECREASE/u);
   assert.ok(entities.has("t_transaction_economic_comp_link"));
 
   const renamedReferences = Object.freeze({
     t_accounting_instruction: ["transaction_economics_id", "accounting_rule_bundle_ver_id"],
     t_instruction_line: ["accounting_rule_line_id"],
-    t_provider_open_item: ["transaction_economics_id"],
-    t_provider_debit_item: ["transaction_economics_id"],
-    t_provider_cost_alloc: ["transaction_economics_id"],
+    t_channel_open_item: ["transaction_economics_id"],
+    t_channel_debit_item: ["transaction_economics_id"],
+    t_channel_cost_alloc: ["transaction_economics_id"],
   });
   for (const [tableKey, expectedFields] of Object.entries(renamedReferences)) {
     const actual = new Set(fieldKeys(tableKey));
@@ -1472,44 +1472,44 @@ test("Finance CHECK policy matches the independent Oracle and rejects stale desi
   }
   assert.doesNotMatch(
     productionSources,
-    /match_type='PROVIDER_RECEIPT'|match_type='PROVIDER_CASH'|trigger_type='SCHEDULED'|ck_settlement_attempt_active|provider_refund_item|cash_in_transit_item|settlement_requirement_snapshot|settlement_mode|RETURN_TO_SOURCE|return_reference|return_file_id|return_file_hash|t_reserve_case|t_restricted_fund|t_restricted_fund_move|t_recovery_case|t_recovery_application|reserve_case_id|balance_reserve_recovery|CLIENT_RESTRICTED_FUNDS|\bt_provider_settle_alloc\b|\bt_provider_cash_item\b|\bt_recon_match\b|\brecon_match_id\b/u,
+    /match_type='CHANNEL_RECEIPT'|match_type='CHANNEL_CASH'|trigger_type='SCHEDULED'|ck_settlement_attempt_active|channel_refund_item|cash_in_transit_item|settlement_requirement_snapshot|settlement_mode|RETURN_TO_SOURCE|return_reference|return_file_id|return_file_hash|t_reserve_case|t_restricted_fund|t_restricted_fund_move|t_recovery_case|t_recovery_application|reserve_case_id|balance_reserve_recovery|CLIENT_RESTRICTED_FUNDS|\bt_channel_settle_alloc\b|\bt_channel_cash_item\b|\bt_recon_match\b|\brecon_match_id\b/u,
   );
   assert.doesNotMatch(productionSources, /finance-test-oracle/u);
   const oracle = readFileSync(paths.oracle, "utf8");
   assert.doesNotMatch(oracle, /from\s+["'][^"']*finance\/(?:manifest|model-policy|generate-finance-model)/u);
 });
 
-test("Finance Provider reconciliation freezes the three-stage account contract", () => {
+test("Finance Channel reconciliation freezes the three-stage account contract", () => {
   const model = readModel();
   const modelSource = JSON.stringify(model);
   for (const accountCode of [
-    "PROVIDER_UNSETTLED_RECEIVABLE",
-    "PROVIDER_SETTLEMENT_RECEIVABLE",
-    "PROVIDER_UNSETTLED_PAYABLE",
-    "PROVIDER_SETTLEMENT_PAYABLE",
-    "PROVIDER_FEE_ACCRUAL",
+    "CHANNEL_UNSETTLED_RECEIVABLE",
+    "CHANNEL_SETTLEMENT_RECEIVABLE",
+    "CHANNEL_UNSETTLED_PAYABLE",
+    "CHANNEL_SETTLEMENT_PAYABLE",
+    "CHANNEL_FEE_ACCRUAL",
   ]) {
     assert.match(modelSource, new RegExp(accountCode, "u"), `模型缺少 ${accountCode} 三阶段账户语义`);
   }
   assert.doesNotMatch(
     modelSource,
-    /\bPROVIDER_RECEIVABLE\b|\bCASH_IN_TRANSIT\b|\bCASH_OUT_TRANSIT\b/u,
+    /\bCHANNEL_RECEIVABLE\b|\bCASH_IN_TRANSIT\b|\bCASH_OUT_TRANSIT\b/u,
   );
 
   const entities = new Map(model.entities.map((entity) => [entity.defKey, entity]));
-  const providerBatch = entities.get("t_provider_settle_batch");
-  assert.match(providerBatch?.comment, /Settlement.*Remittance.*Preliminary Transaction Report/u);
-  assert.match(providerBatch?.comment, /PROVIDER_FEE_ACCRUAL.*不得重复.*Provider Fee Expense/u);
-  const batchStatus = providerBatch.fields.find((field) => field.defKey === "status");
+  const channelBatch = entities.get("t_channel_settle_batch");
+  assert.match(channelBatch?.comment, /Settlement.*Remittance.*Preliminary Transaction Report/u);
+  assert.match(channelBatch?.comment, /CHANNEL_FEE_ACCRUAL.*不得重复.*Channel Fee Expense/u);
+  const batchStatus = channelBatch.fields.find((field) => field.defKey === "status");
   assert.match(batchStatus?.comment, /VALIDATED.*不能.*重分类/u);
   assert.match(batchStatus?.comment, /交易对账完整.*批次.*Journal/u);
 
-  const transactionMatch = entities.get("t_provider_transaction_match");
+  const transactionMatch = entities.get("t_channel_transaction_match");
   assert.match(transactionMatch?.comment, /逐笔.*交易对账/u);
   assert.match(transactionMatch?.comment, /不代表.*银行/u);
 
   const bankMatch = entities.get("t_bank_recon_match");
-  assert.match(bankMatch?.comment, /Provider Batch.*Bank Statement Item/u);
+  assert.match(bankMatch?.comment, /Channel Batch.*Bank Statement Item/u);
   assert.match(bankMatch?.comment, /BANK_CASH/u);
 
   const cashAccount = entities.get("t_cash_account");
@@ -1517,7 +1517,7 @@ test("Finance Provider reconciliation freezes the three-stage account contract",
 
   const trialException = entities.get("t_trial_balance_exception");
   const exceptionType = trialException.fields.find((field) => field.defKey === "exception_type");
-  assert.match(exceptionType?.comment, /PROVIDER_SETTLEMENT_MISMATCH/u);
+  assert.match(exceptionType?.comment, /CHANNEL_SETTLEMENT_MISMATCH/u);
   assert.doesNotMatch(exceptionType?.comment, /CASH_IN_TRANSIT_MISMATCH/u);
 });
 
@@ -1572,10 +1572,10 @@ test("Finance close and material reconciliation controls are structurally review
   assert.match(closeBook.comment, /期间余额/u);
   assert.match(closeBook.comment, /七个关账步骤/u);
 
-  const providerOpenItem = entities.get("t_provider_open_item");
-  const transactionEconomicsField = providerOpenItem.fields
+  const channelOpenItem = entities.get("t_channel_open_item");
+  const transactionEconomicsField = channelOpenItem.fields
     .find((field) => field.defKey === "transaction_economics_id");
-  const transactionEconomicsRelation = providerOpenItem.correlations
+  const transactionEconomicsRelation = channelOpenItem.correlations
     .find((relation) => relation.myField === transactionEconomicsField.id);
   assert.equal(transactionEconomicsRelation?.myRows, "n", "同一支付交易经济结果必须允许多个 Capture 应收项");
   assert.equal(
@@ -1583,14 +1583,14 @@ test("Finance close and material reconciliation controls are structurally review
     "t_transaction_economics",
   );
   assert.deepEqual(
-    providerOpenItem.indexes
+    channelOpenItem.indexes
       .filter((index) => index.fields[0]?.fieldDefKey === transactionEconomicsField.id)
       .map((index) => ({ defKey: index.defKey, unique: index.unique })),
-    [{ defKey: "idx_provider_open_econ", unique: false }],
+    [{ defKey: "idx_channel_open_econ", unique: false }],
   );
 
   for (const field of [
-    "provider_transaction_match_id",
+    "channel_transaction_match_id",
     "bank_recon_match_id",
     "content_hash",
     "checker_decision",
@@ -1601,7 +1601,7 @@ test("Finance close and material reconciliation controls are structurally review
   }
   const reconResolution = entities.get("t_recon_resolution");
   for (const [fieldKey, targetTable] of [
-    ["provider_transaction_match_id", "t_provider_transaction_match"],
+    ["channel_transaction_match_id", "t_channel_transaction_match"],
     ["bank_recon_match_id", "t_bank_recon_match"],
   ]) {
     const matchField = reconResolution.fields.find((field) => field.defKey === fieldKey);
@@ -1628,10 +1628,10 @@ test("Finance close and material reconciliation controls are structurally review
     assert.ok(fieldKeys("t_period_close_book").has(field), `关账账簿范围缺少 ${field}`);
   }
 
-  assert.ok(fieldKeys("t_provider_debit_item").has("transaction_economics_id"));
-  assert.ok(fieldKeys("t_provider_settle_batch").has("debit_amount"));
-  assert.ok(fieldKeys("t_provider_settle_batch").has("cash_direction"));
-  assert.ok(!fieldKeys("t_provider_account").has("settlement_mode"));
+  assert.ok(fieldKeys("t_channel_debit_item").has("transaction_economics_id"));
+  assert.ok(fieldKeys("t_channel_settle_batch").has("debit_amount"));
+  assert.ok(fieldKeys("t_channel_settle_batch").has("cash_direction"));
+  assert.ok(!fieldKeys("t_channel_account").has("settlement_mode"));
 });
 
 test("Finance model carries no connection or forbidden sensitive storage", () => {

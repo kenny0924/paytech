@@ -1,0 +1,199 @@
+{
+  "verifiedAtUtc": "2026-09-13T09:57:01.959449+00:00",
+  "stage": "4 development checks; stage 5 comprehensive acceptance has not been entered",
+  "environment": "JDK 25; repository local MySQL 127.0.0.1:13306/mor_payment and Redis 127.0.0.1:16379; external business Owners are stateful test doubles",
+  "command": "./mvnw -q clean verify",
+  "exitCode": 0,
+  "totals": {
+    "tests": 98,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.paytech.payment.auto.PaymentApplicationAutoTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "3.376"
+    },
+    {
+      "name": "com.paytech.payment.auto.architecture.PaymentModuleBoundaryAutoTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "0.141"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentActionRecoveryHandlerAutoTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "2.003"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentAttemptRecoveryHandlerAutoTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "1.542"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentCommandContractAutoTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "0.007"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentConcurrencyAutoTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "1.225"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentExecutionApiAutoTest",
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "9.359"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentExecutionGuardsAutoTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "4.208"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentFactHandlerAutoTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "0.958"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentFlowRegistryAutoTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "0.002"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentFundsCommandsAutoTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "3.039"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentIntentTerminationHandlerAutoTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "1.204"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentProcessRecoveryAutoTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "10.497"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentRulesAutoTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "0.007"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentTransactionAutoTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "0.134"
+    },
+    {
+      "name": "com.paytech.payment.auto.execution.PaymentTrustedResultAutoTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "4.107"
+    }
+  ],
+  "coverage": {
+    "INSTRUCTION": {
+      "covered": 11963,
+      "missed": 1497,
+      "percent": 88.878158
+    },
+    "BRANCH": {
+      "covered": 851,
+      "missed": 435,
+      "percent": 66.174184
+    }
+  },
+  "moduleCoverage": {
+    "paytech-payment-api": {
+      "INSTRUCTION": {
+        "covered": 408,
+        "missed": 73,
+        "percent": 84.823285
+      }
+    },
+    "paytech-payment-execution": {
+      "INSTRUCTION": {
+        "covered": 6988,
+        "missed": 842,
+        "percent": 89.246488
+      },
+      "BRANCH": {
+        "covered": 561,
+        "missed": 331,
+        "percent": 62.892377
+      }
+    },
+    "paytech-payment-web": {
+      "INSTRUCTION": {
+        "covered": 4567,
+        "missed": 582,
+        "percent": 88.696834
+      },
+      "BRANCH": {
+        "covered": 290,
+        "missed": 104,
+        "percent": 73.604061
+      }
+    }
+  },
+  "coverageGoalMet": false,
+  "sourceManifestSha256": "4ea425b1537068b5c42854e46a187ad8274e5ccd877968994ff2be82f8bb6978",
+  "sourceFileCount": 96,
+  "log": "/tmp/payment-complete-verify.log",
+  "logSha256": "12a9c895d352111b7b3e3d688f442551a0d0d916399d3a046fdddc417f97f3f1",
+  "limitations": [
+    "90 percent coverage target not met",
+    "XXL Admin/executor scheduling has not been activated; production Scanner/Dispatcher tested directly",
+    "Real Channel/Card/Risk/Commerce/Routing/Finance and Broker transport not connected",
+    "Historical nonempty database migration and actual payment acceptance not verified"
+  ]
+}

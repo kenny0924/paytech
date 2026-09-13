@@ -1,0 +1,38 @@
+{
+  "payment-orchestration-service": {
+    "commit": "d35bd4bb96d71e0795e60fac883e329f1d1037c3",
+    "parent": "dcb7ececae2e20b2cece1d0c40504b5f85022562",
+    "tree": "16ef8ac9bd8906f6ad5bb3bf97d1266c90f9a252",
+    "subject": "feat(payment): checkpoint execution with transaction-scoped instrument tokens"
+  },
+  "client-contract-service": {
+    "commit": "a25a11a7697e9d746151f8d0e74c25ca303c2f35",
+    "parent": "e39992b8ad9e81491bcc1018ea19ba84db5e8430",
+    "tree": "b1d78f2c26282eb1cae8757bed5fec9076f002ef",
+    "subject": "docs(cct): align payment channel terminology in database artifacts"
+  },
+  "finance-service": {
+    "commit": "c547603057645b69ccdd757d9d85d68388b00f7f",
+    "parent": "20c5ab3ed5071f40362f5ea3eec2e666bcd363aa",
+    "tree": "8b125008e37253273cefad3b899d18ebacd88727",
+    "subject": "refactor(finance): align payment channel database terminology"
+  },
+  "risk-compliance-service": {
+    "commit": "c989f0c77a91e959dcb29a323ab930c1203f8495",
+    "parent": "6d7e684d94ef9a0a413e00d9597366c83b00ba96",
+    "tree": "7b3e3a4f4da639ed326e7b2ac873107158d13cba",
+    "subject": "refactor(risk): align payment dispute channel terminology"
+  },
+  "platform-support-service": {
+    "commit": "e69cff4aff56eda2cb4d09e9206833b09711f6fb",
+    "parent": "11489363f569cb21904c72d144df0d56b2826a33",
+    "tree": "bdae9753a373e7fa46720e878fc9150c0fe8ce96",
+    "subject": "refactor(platform): align channel callback database contracts"
+  },
+  "commerce-service": {
+    "commit": "e69cacba57aa374132baf924c95d2ce29762ecb7",
+    "parent": "c2765ff940ce3bfb0b5393177a139ead11548184",
+    "tree": "cacc6afc714c584648a4bf505a5f3f85bcb92097",
+    "subject": "refactor(commerce): align payment channel terminology"
+  }
+}

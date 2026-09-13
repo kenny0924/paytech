@@ -93,7 +93,7 @@ export const TABLES = Object.freeze([
     fields: [
       primaryKey("id", "试算平衡异常标识", "试算平衡异常的 Snowflake 主键"),
       field("run_id", "BIGINT", "NN", "试算平衡运行标识", "发现该异常的本库试算平衡运行"),
-      field("exception_type", types.code, "NN", "异常类型", "试算平衡完整性异常的受控分类；COUNTERPARTY_MISMATCH 还覆盖同一 Economics、Component 和币种下 PLATFORM_SERVICE_PAYABLE 与 PLATFORM_SERVICE_RECEIVABLE 不相等；PROVIDER_SETTLEMENT_MISMATCH 覆盖 Provider 待清算、结算应收应付与已确认 Bank Statement 之间的阶段差异", { values: ["COUNTERPARTY_MISMATCH", "PROVIDER_SETTLEMENT_MISMATCH", "GENERAL_LEDGER_MISMATCH", "UNRESOLVED_RECONCILIATION"] }),
+      field("exception_type", types.code, "NN", "异常类型", "试算平衡完整性异常的受控分类；COUNTERPARTY_MISMATCH 还覆盖同一 Economics、Component 和币种下 PLATFORM_SERVICE_PAYABLE 与 PLATFORM_SERVICE_RECEIVABLE 不相等；CHANNEL_SETTLEMENT_MISMATCH 覆盖 Channel 待清算、结算应收应付与已确认 Bank Statement 之间的阶段差异", { values: ["COUNTERPARTY_MISMATCH", "CHANNEL_SETTLEMENT_MISMATCH", "GENERAL_LEDGER_MISMATCH", "UNRESOLVED_RECONCILIATION"] }),
       field("reference_type", types.code, "NN", "异常引用类型", "明确异常所引用的统一账户、会计科目、银行账户或对账异常记录类型", { values: ["ACCOUNT", "CHART_ACCOUNT", "CASH_ACCOUNT", "RECON_EXCEPTION"] }),
       field("reference_id", "BIGINT", "NN", "异常引用标识", "按异常引用类型解释且用于定位被核对对象的稳定主键"),
       field("difference_amount", types.amount, "NN", "差异金额", "核对结果之间的绝对差异金额"),

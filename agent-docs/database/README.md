@@ -1,5 +1,7 @@
 # 六大核心系统数据库设计总览
 
+> **支付渠道术语：** 全系统支付渠道的现行自有命名以 [2026-09-13 Channel 决定](../decisions/2026-09-13-payment-channel-terminology.md)为准。Payment、Finance、Risk 及 Gateway/Platform/Operations 的支付回调合同同步使用 Channel；框架、非支付供应商、外部原协议与历史记录按决定中的边界保留。
+
 > **OE / Client / Pricing 本期路由：** CCT、Commerce、Payment、Finance 的 entityNo、OE Scope、Affiliation、Agreement Party、支付准备与定价事实以 [2026-09-11 四系统决定](../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 为准；Risk 延后接入，旧 Wire/Hash/历史 Reader 继续按迁移边界保留。
 
 最后更新：2026-09-10
@@ -20,9 +22,9 @@
 |---|---|---|---|
 | Client & Contract | Party、Client、Local Partner、Operating Entity、关系、合同、Payment Method Profile、价格和实时交易资格 | [逻辑模型](./CLIENT_CONTRACT_DATABASE.md) · [组合定价决策](../decisions/2026-09-10-cct-payment-method-profile-pricing.md) · [现实场景](./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md) · [实时交易资格与 Retention 延期](../plans/2026-08-23-cct-realtime-eligibility-retention-deferral-design.md) | [物理决策](../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) · [PDManer](../../client-contract-service/docs/database/client-contract.pdma.json) |
 | Commerce | Order、Order Context、Hosted Checkout、Consumer Context、网络证据、接受记录和退款请求 | [逻辑模型](./COMMERCE_DATABASE.md) · [现实场景](./scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md) · [文档审计与 Cancel/Void/Reversal](../plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md) · [隐私与 Fulfillment 精简](../plans/2026-08-24-commerce-privacy-fulfillment-simplification-design.md) | [物理决策](../../commerce-service/docs/database/COMMERCE_PHYSICAL_DECISIONS.md) · [PDManer](../../commerce-service/docs/database/commerce.pdma.json) |
-| Payment Orchestration | Provider、Provider Account、MID、Capability、Health、路由、Intent/Attempt、渠道退款和 Provider 交互 | [逻辑模型](./PAYMENT_ORCHESTRATION_DATABASE.md) · [现实场景](./scenarios/PAYMENT_REAL_WORLD_SCENARIOS.md) · [Payment Execution 精简](../plans/2026-08-25-payment-execution-simplification-design.md) · [Provider Account/MID 精简](../plans/2026-08-25-payment-provider-account-mid-simplification-design.md) | [物理决策](../../payment-orchestration-service/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md) · [PDManer](../../payment-orchestration-service/docs/database/payment-orchestration.pdma.json) |
+| Payment Orchestration | Channel、Channel Account、MID、Capability、Health、路由、Intent/Attempt、渠道退款和 Channel 交互 | [逻辑模型](./PAYMENT_ORCHESTRATION_DATABASE.md) · [现实场景](./scenarios/PAYMENT_REAL_WORLD_SCENARIOS.md) · [Execution 当前后继方案](../../requirements/20260913/payment-Execution设计/data-design.md) · [前序 Execution 精简](../plans/2026-08-25-payment-execution-simplification-design.md) · [Channel Account/MID 精简](../plans/2026-08-25-payment-provider-account-mid-simplification-design.md) | [物理决策](../../payment-orchestration-service/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md) · [PDManer](../../payment-orchestration-service/docs/database/payment-orchestration.pdma.json) |
 | Risk & Compliance | KYC/KYB/PDD、策略、风险决策、限额、结算限制和争议 | [逻辑模型](./RISK_COMPLIANCE_DATABASE.md) · [现实场景](./scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md) · [Limit 精简](../plans/2026-08-28-risk-limit-balanced-simplification-design.md) · [Dispute 优化](../plans/2026-08-28-risk-dispute-balanced-optimization-design.md) · [Manual Payout 四检查点](../plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) | [物理决策](../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md) · [PDManer](../../risk-compliance-service/docs/database/risk-compliance.pdma.json) |
-| Finance | 税、交易经济、复式账、账户、保证金与追偿、Provider 清算、银行现金、对账、Manual Payout 和关账 | [逻辑模型](./FINANCE_DATABASE.md) · [现实场景](./scenarios/FINANCE_REAL_WORLD_SCENARIOS.md) · [交易经济与会计规则](../plans/2026-08-26-finance-transaction-economics-accounting-rule-simplification-implementation-plan.md) · [手工缴税对账后续](../../docs/superpowers/plans/2026-09-05-finance-manual-tax-reconciliation.md) | [物理决策](../../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md) · [PDManer](../../finance-service/docs/database/finance.pdma.json) |
+| Finance | 税、交易经济、复式账、账户、保证金与追偿、Channel 清算、银行现金、对账、Manual Payout 和关账 | [逻辑模型](./FINANCE_DATABASE.md) · [现实场景](./scenarios/FINANCE_REAL_WORLD_SCENARIOS.md) · [交易经济与会计规则](../plans/2026-08-26-finance-transaction-economics-accounting-rule-simplification-implementation-plan.md) · [手工缴税对账后续](../../docs/superpowers/plans/2026-09-05-finance-manual-tax-reconciliation.md) | [物理决策](../../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md) · [PDManer](../../finance-service/docs/database/finance.pdma.json) |
 | Platform Support | 人工 Account、Tenant IAM、API Credential、公共 API 控制面、通知/OTP、Webhook、文件、文档、审计和本地可靠执行 | [逻辑模型](./PLATFORM_SUPPORT_DATABASE.md) · [现实场景](./scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md) · [统一人工认证](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) · [动态公共控制面](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) | [物理决策](../../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md) · [PDManer](../../platform-support-service/docs/database/platform-support.pdma.json) |
 
 一次任务涉及多个系统时必须同时读取对应行；不能从某个系统的本地投影推导并覆盖另一个系统拥有的事实。模型统计、生成/人工门禁、代码、SQL 和部署状态统一读取 [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md)。
@@ -41,18 +43,18 @@ flowchart LR
 
     CCT -->|"目标：Assignment、Agreement、Profile Code 与 Price 证据；legacy V5 Scope 待迁移"| COM
     COM -->|"Order / Refund 业务事实"| PAY
-    PAY -->|"Attempt 风控请求、Provider 争议通知"| RISK
+    PAY -->|"Attempt 风控请求、Channel 争议通知"| RISK
     COM -->|"税计算请求"| FIN
-    PAY -->|"支付事实、RefundSucceeded、Provider Transaction Reference"| FIN
+    PAY -->|"支付事实、RefundSucceeded、Channel Transaction Reference"| FIN
     RISK -->|"结算限制、最低预存保证金要求、争议结果"| FIN
     CCT -.->|"文件引用、Actor 引用"| SUP
     COM -.->|"消费者文档生成请求、OrderCancelled 通知/Webhook"| SUP
     RISK -.->|"证据文件"| SUP
     FIN -.->|"法定文档渲染、付款证据"| SUP
-    PAY -.->|"脱敏 Provider Payload、争议文件引用"| SUP
+    PAY -.->|"脱敏 Channel Payload、争议文件引用"| SUP
     CCT -.->|"Email / Phone Vault Token"| VAULT
     COM -.->|"Vault Token / Internal API"| VAULT
-    PAY -.->|"仅非卡敏感字段；卡片使用 Provider Token"| VAULT
+    PAY -.->|"仅非卡敏感字段；卡片使用 Channel Token"| VAULT
     RISK -.->|"Vault Token / Internal API"| VAULT
     FIN -.->|"Vault Token / Internal API"| VAULT
     VAULT -.->|"V1 不复制访问审计；Platform 不直读 Vault DB"| SUP
@@ -81,7 +83,7 @@ flowchart LR
 - 独立子表、Current Pointer、Active Slot、乐观锁、业务 Version、Content Hash 和专项 History 必须分别证明其基数、并发、快照或领域证据价值，禁止机械套用。
 - 普通字段和状态变化优先使用经批准的统一行级变更历史；独立 Agreement、Acceptance、Decision、Ledger、来源事实等领域证据继续使用专项不可变表，两类职责不能混淆。CCT 一份 Agreement 本身就是一份独立法律事实，没有 Agreement Version 表；交易上下文使用 Agreement/Association 稳定 ID，Payment Method Profile 通过不可复用 `payment_method_profile_code` 关联，价格与计算证据使用 Term Version/Price/Component/Band 稳定坐标。
 - 复杂关系图必须用实际 Showcase 讲通写入、当前查询、版本切换和历史追溯；不能只交付一张 ER 图。
-- Client & Contract 的表、字段、Current/Version/BCR、As-Of、CCT-I13 或跨系统交易上下文任务还必须读取 [CCT 现实场景](./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md)；Commerce 的 Order/Order Context、Consumer Contract/Acceptance、Consumer/Network Evidence、退款或 BCR 任务还必须读取 [Commerce 现实场景](./scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md)；Risk & Compliance 的尽调、规则 AST、Action、Shadow 发布、Velocity、限额、结算限制、争议 RFI 或状态机任务还必须读取 [Risk 现实场景](./scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md)、[Limit 7 表平衡精简设计](../plans/2026-08-28-risk-limit-balanced-simplification-design.md)、[Limit 平衡精简实施计划](../plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md)、[Decision Engine 19/8 平衡精简计划](../plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md)；[Dispute 平衡优化设计](../plans/2026-08-28-risk-dispute-balanced-optimization-design.md)；[Dispute 平衡优化实施计划](../plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md)、[DD 19 表精简计划](../plans/2026-08-27-risk-dd-simplification-implementation-plan.md)和[物理建模决策](../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)；Finance 的税务、交易经济、Journal、合同成熟、Account、预存保证金、追偿应收、银行现金容量、Provider 清算与对账、Client/Local Partner Manual Payout 或关账任务还必须读取 [Finance 现实场景](./scenarios/FINANCE_REAL_WORLD_SCENARIOS.md)、[交易经济与会计规则精简计划](../plans/2026-08-26-finance-transaction-economics-accounting-rule-simplification-implementation-plan.md)、[Account Balance 合同成熟精简实施计划](../plans/2026-08-27-finance-account-balance-contract-maturity-simplification-implementation-plan.md)、[退款 Funding 移除实施记录](../plans/2026-08-27-finance-refund-funding-removal-implementation-plan.md)、[通用 Funding 模块删除设计](../plans/2026-08-27-finance-funding-module-removal-design.md)、[通用 Funding 模块删除实施记录](../plans/2026-08-27-finance-funding-module-removal-implementation-plan.md)、[保证金 Account 精简实施记录](../plans/2026-08-27-finance-security-deposit-account-simplification-implementation-plan.md)；[Provider 对账精简实施计划](../plans/2026-08-28-finance-provider-reconciliation-simplification-implementation-plan.md)；[Provider 三阶段账户实施计划](../plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md)；[手工出款精简设计](../plans/2026-08-28-finance-manual-payout-simplification-design.md)；[手工出款精简实施计划](../plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)、[平衡型物理模型设计（历史）](../plans/2026-08-25-finance-balanced-physical-model-design.md)、[PDManer 实施计划（历史）](../plans/2026-08-25-finance-pdmaner-implementation-plan.md)和[物理建模决策](../../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md)。消费者文档状态/版本/文件/更正任务还必须读取 Platform Support 专项文档；Commerce 不保存 Document Projection。新结构必须映射到至少一个真实写入、查询、变更和历史/失败流程。
+- Client & Contract 的表、字段、Current/Version/BCR、As-Of、CCT-I13 或跨系统交易上下文任务还必须读取 [CCT 现实场景](./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md)；Commerce 的 Order/Order Context、Consumer Contract/Acceptance、Consumer/Network Evidence、退款或 BCR 任务还必须读取 [Commerce 现实场景](./scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md)；Risk & Compliance 的尽调、规则 AST、Action、Shadow 发布、Velocity、限额、结算限制、争议 RFI 或状态机任务还必须读取 [Risk 现实场景](./scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md)、[Limit 7 表平衡精简设计](../plans/2026-08-28-risk-limit-balanced-simplification-design.md)、[Limit 平衡精简实施计划](../plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md)、[Decision Engine 19/8 平衡精简计划](../plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md)；[Dispute 平衡优化设计](../plans/2026-08-28-risk-dispute-balanced-optimization-design.md)；[Dispute 平衡优化实施计划](../plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md)、[DD 19 表精简计划](../plans/2026-08-27-risk-dd-simplification-implementation-plan.md)和[物理建模决策](../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)；Finance 的税务、交易经济、Journal、合同成熟、Account、预存保证金、追偿应收、银行现金容量、Channel 清算与对账、Client/Local Partner Manual Payout 或关账任务还必须读取 [Finance 现实场景](./scenarios/FINANCE_REAL_WORLD_SCENARIOS.md)、[交易经济与会计规则精简计划](../plans/2026-08-26-finance-transaction-economics-accounting-rule-simplification-implementation-plan.md)、[Account Balance 合同成熟精简实施计划](../plans/2026-08-27-finance-account-balance-contract-maturity-simplification-implementation-plan.md)、[退款 Funding 移除实施记录](../plans/2026-08-27-finance-refund-funding-removal-implementation-plan.md)、[通用 Funding 模块删除设计](../plans/2026-08-27-finance-funding-module-removal-design.md)、[通用 Funding 模块删除实施记录](../plans/2026-08-27-finance-funding-module-removal-implementation-plan.md)、[保证金 Account 精简实施记录](../plans/2026-08-27-finance-security-deposit-account-simplification-implementation-plan.md)；[Channel 对账精简实施计划](../plans/2026-08-28-finance-provider-reconciliation-simplification-implementation-plan.md)；[Channel 三阶段账户实施计划](../plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md)；[手工出款精简设计](../plans/2026-08-28-finance-manual-payout-simplification-design.md)；[手工出款精简实施计划](../plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)、[平衡型物理模型设计（历史）](../plans/2026-08-25-finance-balanced-physical-model-design.md)、[PDManer 实施计划（历史）](../plans/2026-08-25-finance-pdmaner-implementation-plan.md)和[物理建模决策](../../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md)。消费者文档状态/版本/文件/更正任务还必须读取 Platform Support 专项文档；Commerce 不保存 Document Projection。新结构必须映射到至少一个真实写入、查询、变更和历史/失败流程。
 - 表总数不是质量指标。设计目标是在不损失业务边界、并发约束和审计能力的前提下删除重复结构与无真实用例的复杂度。
 
 ### 4.1 主键与业务编号
@@ -165,8 +167,8 @@ Client & Contract 的批准模型已删除白名单内普通业务 Root 上机�
 - 当前 Vault V1 只返回 opaque `token` 或 Reveal 原值。业务系统持有受保护值时保存语义明确的 `*_vault_token`；V1 不返回 Blind Index/Key Version、Masked Value、Record Version 或 Metadata Hash，也不允许业务文档假装这些字段已可用。Commerce Consumer 等旧模型若依赖未实现能力，按 [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md) 的 VAULT-01 迁移，不得仅删字段而破坏等值查询、展示或完整性消费者。
 - 若未来真实消费者需要 Blind Index、Masked Value、Metadata/Record Version 或跨接收方 Token，必须先批准窄范围 Vault V2，并同时设计规范化、Purpose 隔离、密钥版本、权限、审计、API、模型和数据迁移。普通 SHA 不能替代针对低熵敏感值的 Keyed HMAC；可关联派生值仍是假名化或准标识数据，不是匿名数据。
 - 业务库可以保存经过分类批准、不能还原原值且确实参与业务规则的派生事实，例如国家代码、证件类型、验证状态、风险结论和脱敏展示；“集中存储”不要求每次查询都 Reveal，也不允许借派生字段重新拼出原始敏感值。
-- PAN、CVV/CVC、完整磁道数据和 PIN/PIN Block 禁止进入 Code-MoR 服务、数据库、事件、日志、文件或 Vault。卡片录入与 Tokenization 使用 Provider Hosted Fields/SDK；Payment 只保存 Provider Token Reference、Scheme、BIN、Last4、Issuer Country 和 Provider Fingerprint，卡片有效期由 Provider Token 管理。这些最小卡片元数据仍必须分类、脱敏、授权和按期留存，不能按普通公开字段处理。
-- 该边界用于缩小 Cardholder Data Environment 和 PCI DSS 评估范围，不代表 Code-MoR 或 Vault 自动取得 PCI 合规；上线前仍需依据实际数据流、Provider 集成方式、责任矩阵和适用 SAQ/ROC，由收单方或合格评估方确认。
+- PAN、CVV/CVC、完整磁道数据和 PIN/PIN Block 禁止进入 Code-MoR 服务、数据库、事件、日志、文件或 Vault。卡片录入与 Tokenization 使用 Channel Hosted Fields/SDK；Payment 只保存 Channel Token Reference、Scheme、BIN、Last4、Issuer Country 和 Channel Fingerprint，卡片有效期由 Channel Token 管理。这些最小卡片元数据仍必须分类、脱敏、授权和按期留存，不能按普通公开字段处理。
+- 该边界用于缩小 Cardholder Data Environment 和 PCI DSS 评估范围，不代表 Code-MoR 或 Vault 自动取得 PCI 合规；上线前仍需依据实际数据流、Channel 集成方式、责任矩阵和适用 SAQ/ROC，由收单方或合格评估方确认。
 - Provider/API Credential、Webhook Signing Secret、IdP Token 和私钥放云 Secrets Manager/KMS，业务库只保存引用；不得把这类运行凭据当作 Vault 业务记录。
 - 文件正文和大体积原始 Payload 放 Platform 管理的加密对象存储；数据库保存稳定 `file_id`、`content_hash`、分类、大小和保留策略。
 - JSON 只用于不可变协议快照、经批准的通用行级审计快照、受版本控制的扩展输入或不参与核心查询的原始信封；需同时保存 Schema Version 和 Payload Hash，可使用专用结构列或上述受控 `_meta`，且不得包含敏感明文或 Vault 内部密文。
@@ -216,7 +218,7 @@ sequenceDiagram
     participant Finance
     participant Risk
     participant Payment
-    participant Provider
+    participant Channel
 
     Note over CCT,Finance: Legacy CCT-I13/I14 V5 flow shown only as migration inventory
     ClientSystem->>Commerce: CreateOrder(idempotencyKey, client_order_id, checkout data)
@@ -238,13 +240,13 @@ sequenceDiagram
     Payment->>Risk: Assess this Attempt and reserve limits
     Risk-->>Payment: ALLOW / REVIEW / DENY / FAILED / TIMED_OUT
     alt ALLOW
-        Payment->>Payment: Select and freeze Provider/MID
-        Payment->>Provider: Execute payment action
-        Provider-->>Payment: Success / explicit failure / unknown
+        Payment->>Payment: Select and freeze Channel/MID
+        Payment->>Channel: Execute payment action
+        Channel-->>Payment: Success / explicit failure / unknown
     else REVIEW or DENY
-        Payment->>Payment: End Attempt without Provider call
+        Payment->>Payment: End Attempt without Channel call
     else FAILED or TIMED_OUT
-        Payment->>Payment: RISK_FAILED without Provider call
+        Payment->>Payment: RISK_FAILED without Channel call
     end
     Payment-->>Commerce: Attempt and Payment facts
     Payment-->>Finance: Payment financial fact
@@ -259,10 +261,10 @@ sequenceDiagram
 - Payment 创建 Attempt 前必须通过 COM-I10 让 Commerce 实时查询同一 Consumer Contract 下 `CONSUMER_TERMS/REFUND_POLICY/PRIVACY_NOTICE` 三条不可变 Acceptance，逐条验证其 Network Evidence 属于同 Order、同 Checkout Session 且 Scene 为 `LEGAL_ACCEPTANCE`，并冻结三条显式 Acceptance ID、`acceptance_completed_at=max(accepted_at)` 与当前 Order Version；前端布尔值、缓存或仅有页面点击记录都不能绕过该服务端门禁，也不新增集合摘要、集合版本或集合 Hash。
 - 一个 Payment Intent 可以有多次显式顺序 Attempt，但最多一笔业务成功、最多一个非终态 Attempt。
 - `UNKNOWN` 是非终态，会继续占用活动槽；不能为了重试把超时当失败。
-- Order 到期只禁止创建新 Attempt；只要存在任一活动 Attempt 就不得单方面终止。尚未提交 Provider 的前置 Attempt 可由 Payment 明确失败，已提交、等待 Consumer 或结果不确定的 Attempt 必须先完成权威查询。
+- Order 到期只禁止创建新 Attempt；只要存在任一活动 Attempt 就不得单方面终止。尚未提交 Channel 的前置 Attempt 可由 Payment 明确失败，已提交、等待 Consumer 或结果不确定的 Attempt 必须先完成权威查询。
 - `REVIEW` 和 `DENY` 都拒绝当前 Attempt；仅内部分析 REVIEW，不把原 Attempt 改成 ALLOW。
 - CCT 必须在正式 Order 打开前解析唯一 Operating Entity；没有合格主体、路由覆盖不足或依赖失败时不创建 Order、Order Context 或 Checkout Session。Payment 不得在后续 Attempt 中切换该主体。
-- Provider/MID 在 Attempt 内冻结；临时 Provider/MID 不可用时保留同一 Order 与 Intent，重试必须创建新 Attempt，且新 Attempt 只能在同一 Operating Entity 下更换 MID。
+- Channel/MID 在 Attempt 内冻结；临时 Channel/MID 不可用时保留同一 Order 与 Intent，重试必须创建新 Attempt，且新 Attempt 只能在同一 Operating Entity 下更换 MID。
 - CCT 复用 `OperatingEntityChanged`，最小携带 `operating_entity_id,operating_entity_status,reason_code,source_version,occurred_time`。本轮只有 `CLOSED` 表示永久不可用：Payment 立即阻止新 Attempt，等待不存在活动或 `UNKNOWN` Attempt 后终止唯一 Intent；Commerce 再取消仍开放的 Order 与 Checkout Session。不自动创建替代 Order、不跨主体重试；Client 仍需交易时必须使用新的 `client_order_id`。`SUSPENDED` 的在途处置暂不扩展。
 
 ### 6.2 退款
@@ -272,7 +274,7 @@ sequenceDiagram
     participant Initiator as Client / Operations
     participant Commerce
     participant Payment
-    participant Provider
+    participant Channel
     participant Finance
 
     Initiator->>Commerce: Request amount-based refund
@@ -285,8 +287,8 @@ sequenceDiagram
         Payment->>Payment: CAS reserve Refund Position and create Channel Refund
         Payment-->>Commerce: Return stable Channel Refund ID
         Commerce->>Commerce: Enter PROCESSING
-        Payment->>Provider: Refund through original Provider/MID
-        Provider-->>Payment: SUCCEEDED / FAILED / CANCELLED / UNKNOWN
+        Payment->>Channel: Refund through original Channel/MID
+        Channel-->>Payment: SUCCEEDED / FAILED / CANCELLED / UNKNOWN
         alt UNKNOWN
             Payment->>Payment: Keep local position and query same Channel Refund
             Note over Commerce: Keep PROCESSING and local reserved amount
@@ -303,15 +305,15 @@ sequenceDiagram
 ```
 
 - 当前只支持 amount-based full/partial refund，不设计 Item Refund。
-- Client 发起退款不需要审批；退款提交 Provider 之前不再调用 Finance，也不再做 Finance 现金预占。
+- Client 发起退款不需要审批；退款提交 Channel 之前不再调用 Finance，也不再做 Finance 现金预占。
 - Commerce Refund 只使用 `order_refund_position + refund_request`：创建 Refund Request 与增加 `reserved_amount` 必须在同一本地事务完成，不再建立 Refund Reservation、Reserve Change 或 Payment Projection。
 - Commerce 只保存 Payment `channel_refund_id`，不保存 Finance 引用、下游状态版本、Event Key、Payload Hash 或 Event Time。PAY-I04 输入稳定的 Commerce Refund Request、Order、金额和币种；Payment 在本库以 Refund Position CAS 约束渠道侧可退款额度。
 - Commerce Refund 状态只使用 `PENDING/PROCESSING/SUCCEEDED/FAILED/CANCELLED`。Payment `UNKNOWN` 不形成外部退款事实：Commerce 保持 PROCESSING 和本地 `reserved_amount`，Payment 保留本地渠道额度并继续查询权威结果。
-- Payment `RefundSucceeded` 同时通知 Commerce 与 Finance：Commerce 在本地消费 Order Refund Position，Finance 才追加 REFUND Economics、Component Link、Provider Debit Item、Journal 与适用的 Fiscal 更正。`RefundFailed/RefundCancelled` 只通知 Commerce 释放本地额度，Finance 不接收、不建状态，也不发布退款资金事件。
+- Payment `RefundSucceeded` 同时通知 Commerce 与 Finance：Commerce 在本地消费 Order Refund Position，Finance 才追加 REFUND Economics、Component Link、Channel Debit Item、Journal 与适用的 Fiscal 更正。`RefundFailed/RefundCancelled` 只通知 Commerce 释放本地额度，Finance 不接收、不建状态，也不发布退款资金事件。
 - 原 Refund Request 明确失败或取消后不可复活；Client 再次退款必须使用新的 `client_refund_id`，Operations 必须生成新的 Command ID；二者都创建新的 Refund Request 与 Channel Refund，并重新校验 Commerce 与 Payment 各自的可退款额度。
-- 渠道退款必须绑定原成功 Attempt、Provider、MID 和 Provider Transaction。
+- 渠道退款必须绑定原成功 Attempt、Channel、MID 和 Channel Transaction。
 
-### 6.3 Provider 到款、对账和 Client 可用余额
+### 6.3 Channel 到款、对账和 Client 可用余额
 
 ```mermaid
 flowchart LR
@@ -326,13 +328,13 @@ flowchart LR
     J --> K["Liability extinguished\nPayout reconciled"]
 ```
 
-Provider 报表不等于现金到账；银行入账也不自动等于已匹配。`AVAILABLE` 是由冻结 `balance_available_time` 决定的 Client/Local Partner 对 Owner 负债状态，不等于独立银行余额：Provider 实际 T+2、Provider/银行匹配和对账不阻断合同成熟，平台承担流动性缺口。Risk 的长期限制与最低保证金只门禁 Manual Payout 的四个检查点，不能改写共同成熟时点。到期成熟与 `RefundSucceeded` 对同一 Economics、Component 和 Account 串行：到期只扣除已经成功并建立 Component Link 的退款，未决退款不阻断成熟；成功退款先扣 `PENDING`，不足再扣 `AVAILABLE`，已 `LOCKED`、已支付或仍不足的部分形成对应 Owner 的 Recovery Receivable，不自动解锁 Payout 资金，也不消耗 `CLIENT_SECURITY_DEPOSIT`。不同 Operating Entity 的账簿、Account、Payout 和银行账户不得净额混用。
+Channel 报表不等于现金到账；银行入账也不自动等于已匹配。`AVAILABLE` 是由冻结 `balance_available_time` 决定的 Client/Local Partner 对 Owner 负债状态，不等于独立银行余额：Channel 实际 T+2、Channel/银行匹配和对账不阻断合同成熟，平台承担流动性缺口。Risk 的长期限制与最低保证金只门禁 Manual Payout 的四个检查点，不能改写共同成熟时点。到期成熟与 `RefundSucceeded` 对同一 Economics、Component 和 Account 串行：到期只扣除已经成功并建立 Component Link 的退款，未决退款不阻断成熟；成功退款先扣 `PENDING`，不足再扣 `AVAILABLE`，已 `LOCKED`、已支付或仍不足的部分形成对应 Owner 的 Recovery Receivable，不自动解锁 Payout 资金，也不消耗 `CLIENT_SECURITY_DEPOSIT`。不同 Operating Entity 的账簿、Account、Payout 和银行账户不得净额混用。
 
 ### 6.4 争议
 
-- Payment 接收并标准化 Provider dispute notice，负责向 Provider 提交或查询。
-- Risk 创建 Dispute Case 后直接进入 `EVIDENCE_REQUIRED`，复用既有 State Change/Evidence Package/Evidence Ref/Submission Request，发布 `DisputeEvidenceRequested`；Client 截止早于 Provider 截止。Client 未响应仍保持 `EVIDENCE_REQUIRED`，不得自动认损或产生 `DisputeLost`；仅经授权人工明确接受责任或放弃举证，或 Provider 权威结果确认为 `LOST`，才可形成 `DisputeLost`。不新增通用 RFI 表。
-- `DisputeOpened` 只让 Risk 建立或更新结算限制/最低预存保证金要求，不触发 Finance 分录。Outcome 只追加版本：`PROVIDER_ACTION` 可形成 Version 1 `WON/LOST`，`CLIENT_DISPOSITION/OPERATIONS_DISPOSITION` 只可形成 Version 1 `LOST`，Version 2+ 只允许 `OPERATIONS_CORRECTION`，结果与更正 State Change 均要求 `trigger_id=decision_source_id`。Liability 的规则授权路径保存 `decision_evaluation_id + action_effect_id` 且 `decided_by` 为空，人工授权路径相反，二者严格 XOR。`DisputeLost/DisputeOutcomeCorrected` 显式携带 Outcome Version、`outcome`、`principal_bearer` 与 `security_deposit_use_allowed`；Finance 只能在 `outcome=LOST + principal_bearer=CLIENT + security_deposit_use_allowed=1` 时先借记 `CLIENT_SECURITY_DEPOSIT/NONE`，不得从原因、来源或规则推导许可，其余短缺借记 `CLIENT_RECOVERY_RECEIVABLE/NONE`。
+- Payment 接收并标准化 Channel dispute notice，负责向 Channel 提交或查询。
+- Risk 创建 Dispute Case 后直接进入 `EVIDENCE_REQUIRED`，复用既有 State Change/Evidence Package/Evidence Ref/Submission Request，发布 `DisputeEvidenceRequested`；Client 截止早于 Channel 截止。Client 未响应仍保持 `EVIDENCE_REQUIRED`，不得自动认损或产生 `DisputeLost`；仅经授权人工明确接受责任或放弃举证，或 Channel 权威结果确认为 `LOST`，才可形成 `DisputeLost`。不新增通用 RFI 表。
+- `DisputeOpened` 只让 Risk 建立或更新结算限制/最低预存保证金要求，不触发 Finance 分录。Outcome 只追加版本：`CHANNEL_ACTION` 可形成 Version 1 `WON/LOST`，`CLIENT_DISPOSITION/OPERATIONS_DISPOSITION` 只可形成 Version 1 `LOST`，Version 2+ 只允许 `OPERATIONS_CORRECTION`，结果与更正 State Change 均要求 `trigger_id=decision_source_id`。Liability 的规则授权路径保存 `decision_evaluation_id + action_effect_id` 且 `decided_by` 为空，人工授权路径相反，二者严格 XOR。`DisputeLost/DisputeOutcomeCorrected` 显式携带 Outcome Version、`outcome`、`principal_bearer` 与 `security_deposit_use_allowed`；Finance 只能在 `outcome=LOST + principal_bearer=CLIENT + security_deposit_use_allowed=1` 时先借记 `CLIENT_SECURITY_DEPOSIT/NONE`，不得从原因、来源或规则推导许可，其余短缺借记 `CLIENT_RECOVERY_RECEIVABLE/NONE`。
 - Platform Support 只保存证据文件并投递 RFI/结果通知，不拥有争议或通用 RFI 状态。
 
 ## 7. 全局强制不变量

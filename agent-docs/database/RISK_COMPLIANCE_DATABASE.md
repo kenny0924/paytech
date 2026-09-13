@@ -42,14 +42,14 @@ Risk & Compliance 数据库是以下事实的唯一权威来源：
 
 - Client & Contract 的 Party/Profile、Client、Local Partner、Operating Entity、Agreement 或商业条款主档；
 - Commerce 的 Order、Checkout、Refund Request 或消费者合同事实；
-- Payment 的 Provider/MID 主档、支付状态、Provider 原始报文、渠道请求响应或 Representment 交互；
+- Payment 的 Channel/MID 主档、支付状态、Channel 原始报文、渠道请求响应或 Representment 交互；
 - Finance 的 Fee Calculation、Ledger、Balance、Reserve、Settlement、Recovery 或实际损失；
 - Platform Support 的文件正文、IAM 用户主档或集中审计日志；
 - Central Vault 的密文、密钥或业务语义。
 
 Risk 可以保存案件时点的不可变 Party Snapshot，但该 Snapshot 只用于解释历史决定，绝不能作为当前 Party 主档对外提供。
 
-Checkout Risk 必须从 Commerce 在最终 Order/Context 落库前构造的不可变 OrderPreparationContext 继承同一组 industry_code + mcc_code；Payment Attempt Risk 直接继承 Payment Intent 从最终 order_id + order_context_id 冻结的同一组合。industry_code 是平台业务行业维度，mcc_code 是收单分类维度，二者不得合并、互相推导，也不得与 Finance tax_category_code 混用。Risk 不接受 Client 借分类选择 Operating Entity、Provider 或 MID。
+Checkout Risk 必须从 Commerce 在最终 Order/Context 落库前构造的不可变 OrderPreparationContext 继承同一组 industry_code + mcc_code；Payment Attempt Risk 直接继承 Payment Intent 从最终 order_id + order_context_id 冻结的同一组合。industry_code 是平台业务行业维度，mcc_code 是收单分类维度，二者不得合并、互相推导，也不得与 Finance tax_category_code 混用。Risk 不接受 Client 借分类选择 Operating Entity、Channel 或 MID。
 
 ## 2. 物理建模统一规则
 
@@ -255,7 +255,7 @@ MVP 不做真实流量灰度。冷却、拉黑等持久副作用无法通过简�
 
 ### 3.7 Dispute 与 Settlement Eligibility
 
-- Payment 归一化 Provider Dispute 通知并负责所有渠道交互。
+- Payment 归一化 Channel Dispute 通知并负责所有渠道交互。
 - Risk 创建 Dispute Case 后直接进入 EVIDENCE_REQUIRED，发起按需 RFI、协调证据、接收渠道结果并形成 Outcome 和 Liability。
 - Risk 通过真实本地 Action Effect 创建 Settlement Control；`SETTLEMENT_BLOCK` 阻断资格，`MIN_SECURITY_DEPOSIT` 只表达 Client 最终最低保证金门槛，不指令 Finance 迁移余额。
 - `DisputeOpened` 只通知开案与举证期限，不触发 Finance 记账或冻结；Client 沉默不得自动形成 `DisputeLost`。
@@ -403,7 +403,7 @@ velocity_event_subject 是明确的事件—主体关联，不是任意属性 EA
 5. SHADOW/REPLAY 不创建 Group，不占 Position。
 6. Group 是唯一当前状态权威，Reservation 不复制状态；每次状态迁移追加 limit_group_state_change。
 7. PaymentSucceeded 将 RESERVED/PAYMENT_UNKNOWN 提交为 COMMITTED。
-8. PaymentAttemptFailed 对安全失败、Provider 提交前 Cancel 和权威 Void 释放为 RELEASED。
+8. PaymentAttemptFailed 对安全失败、Channel 提交前 Cancel 和权威 Void 释放为 RELEASED。
 9. PaymentAttemptUnknown 转为 PAYMENT_UNKNOWN 并继续占用，不得自动过期。
 10. Refund、Dispute 和已 Capture Reversal 默认不恢复原交易额度；重复或乱序事件不得回退终态或重复 Movement。
 
@@ -423,21 +423,21 @@ velocity_event_subject 是明确的事件—主体关联，不是任意属性 EA
 
 | 逻辑表 | 用途 | 关键字段与约束 |
 |---|---|---|
-| dispute_case | Risk 争议案件根 | dispute_case_id, case_no, provider_dispute_notice_id, provider_dispute_source_version, provider_id, mid_id, external_dispute_id, payment_intent_id, payment_attempt_id, order_id, client_id, disputed_amount, currency, current_outcome_id, status, reason_code, client_response_due_time, provider_response_due_time, version；Notice、外部争议组合分别唯一；Client Deadline 早于 Provider Deadline |
+| dispute_case | Risk 争议案件根 | dispute_case_id, case_no, channel_dispute_notice_id, channel_dispute_source_version, channel_id, mid_id, external_dispute_id, payment_intent_id, payment_attempt_id, order_id, client_id, disputed_amount, currency, current_outcome_id, status, reason_code, client_response_due_time, channel_response_due_time, version；Notice、外部争议组合分别唯一；Client Deadline 早于 Channel Deadline |
 | dispute_state_change | Dispute 状态历史 | change_id, dispute_case_id, from_status, to_status, reason_code, trigger_type, trigger_id, actor_id, occurred_time, aggregate_version；追加写且 Aggregate Version 必须与 Case Version 连续一致 |
 | dispute_evidence_package | 一次按需 RFI 证据包 | package_id, dispute_case_id, version_no, status, content_hash；case+version 唯一；SUBMITTED 后不可修改；Deadline 只读取 Case 权威字段 |
 | dispute_evidence_ref | 证据文件引用 | evidence_id, package_id, evidence_type, file_id, content_hash；package+type+file 唯一，只保存 Platform 稳定文件引用 |
-| dispute_submission_request | Risk 给 Payment 的渠道提交指令 | request_id, dispute_case_id, package_id, request_no, status, active_slot, provider_dispute_action_id, action_source_version, requested_time, resolved_time, version；同 Case 最多一个进行中 Request，Request 与 Package 必须同案 |
-| dispute_outcome | 不可变 WON/LOST 版本 | outcome_id, dispute_case_id, outcome_version, outcome, reason_code, decision_source_type, decision_source_id, source_version, provider_dispute_action_id, decided_time, supersedes_outcome_id；case+version 与 source type+id+version 分别唯一；Provider/Client/Operations 首次来源只允许 V1，后两者只产生 LOST；V2+ 只允许 Operations Correction 且更正链不得分叉 |
-| dispute_liability_decision | 责任分类，不计算金额 | outcome_id（Shared PK/FK）, decision_evaluation_id, action_effect_id, recommended_principal_bearer, principal_bearer, provider_fee_bearer, platform_error_flag, provider_recovery_required, security_deposit_use_allowed, override_reason_code, reason_code, decided_by, decided_time；每个 Outcome 恰一条责任决定；规则路径 Evaluation/Effect 成对且 Effect 必须属于同一 Evaluation；人工路径二者必须同时为空并冻结 decided_by，禁止双来源 |
+| dispute_submission_request | Risk 给 Payment 的渠道提交指令 | request_id, dispute_case_id, package_id, request_no, status, active_slot, channel_dispute_action_id, action_source_version, requested_time, resolved_time, version；同 Case 最多一个进行中 Request，Request 与 Package 必须同案 |
+| dispute_outcome | 不可变 WON/LOST 版本 | outcome_id, dispute_case_id, outcome_version, outcome, reason_code, decision_source_type, decision_source_id, source_version, channel_dispute_action_id, decided_time, supersedes_outcome_id；case+version 与 source type+id+version 分别唯一；Channel/Client/Operations 首次来源只允许 V1，后两者只产生 LOST；V2+ 只允许 Operations Correction 且更正链不得分叉 |
+| dispute_liability_decision | 责任分类，不计算金额 | outcome_id（Shared PK/FK）, decision_evaluation_id, action_effect_id, recommended_principal_bearer, principal_bearer, channel_fee_bearer, platform_error_flag, channel_recovery_required, security_deposit_use_allowed, override_reason_code, reason_code, decided_by, decided_time；每个 Outcome 恰一条责任决定；规则路径 Evaluation/Effect 成对且 Effect 必须属于同一 Evaluation；人工路径二者必须同时为空并冻结 decided_by，禁止双来源 |
 
 Dispute 使用既有 Case/State/Evidence Package/Evidence Ref/Submission Request 做按需 RFI，不增加 Generic RFI。Package `content_hash` 按 `CODE-MOR:RISK:DISPUTE_EVIDENCE_PACKAGE:1` 冻结 Case、Package Version，以及按 `evidence_type + file_id` 排序的文件 ID/Hash 集合；Status、时间和审计列不进入 Hash。Risk 决定责任类别并显式给出 `security_deposit_use_allowed`；Finance 计算本金冲回、费用、损失和追偿金额，不能从 `principal_bearer` 或 Reason Code 推导保证金许可。
 
-Submission Request 的 `CREATED/SUBMITTED/UNKNOWN` 占用 `active_slot=1` 且不得写 `resolved_time`；`SUCCEEDED/FAILED/CANCELLED` 释放 Slot 并写收口时间。`SUBMITTED/UNKNOWN/SUCCEEDED` 必须回绑准确 Provider Action ID/Version；`FAILED/CANCELLED` 可在提交前无 Action，也可在提交后带准确 Action。命令重试由稳定 Request ID 与 `command_idempotency` 负责，不在 Request 重复保存 Hash。
+Submission Request 的 `CREATED/SUBMITTED/UNKNOWN` 占用 `active_slot=1` 且不得写 `resolved_time`；`SUCCEEDED/FAILED/CANCELLED` 释放 Slot 并写收口时间。`SUBMITTED/UNKNOWN/SUCCEEDED` 必须回绑准确 Channel Action ID/Version；`FAILED/CANCELLED` 可在提交前无 Action，也可在提交后带准确 Action。命令重试由稳定 Request ID 与 `command_idempotency` 负责，不在 Request 重复保存 Hash。
 
 三条同案复合外键固定为：Request `(package_id, dispute_case_id)` → Package `(package_id, dispute_case_id)`；Case `(current_outcome_id, dispute_case_id)` → Outcome `(outcome_id, dispute_case_id)`；Outcome `(supersedes_outcome_id, dispute_case_id)` → 直接前序 Outcome `(outcome_id, dispute_case_id)`。`outcome_version` 必须相邻连续，`current_outcome_id` 必须指向同案最新链尾；禁止跨案、跳版、回指和分叉。
 
-Outcome Version 1 只允许三种权威入口：已验证 Provider Action 可给出 `WON/LOST`，已授权 Client/Operations 首次处置只能明确接受 `LOST`；Version 2+ 只允许 `OPERATIONS_CORRECTION`，并以非空 `decided_by` 证明授权操作。首次 `WON/LOST` State Change 必须等于 V1 Outcome；Trigger Type 分别为 `PROVIDER_OUTCOME/CLIENT_DISPOSITION/OPERATIONS_DISPOSITION`，且 `trigger_id=decision_source_id`，Provider 路径还等于 `provider_dispute_action_id`。Timer、Deadline、未提交证据和 Client 沉默都不具备 LOST 权限。每次聚合写入后，State Change 最大 Aggregate Version 必须等于 Case Version；`CLOSED→CLOSED` 按版本逐条绑定新 Operations Correction，`trigger_id` 必须等于对应更正的 `decision_source_id`，不得缺失、错配或交换。规则责任的 Action Effect 必须属于 Liability 指定的同一 Evaluation，并已达到 `REAL/APPLIED/LOCAL_SYNC/SUCCEEDED`。
+Outcome Version 1 只允许三种权威入口：已验证 Channel Action 可给出 `WON/LOST`，已授权 Client/Operations 首次处置只能明确接受 `LOST`；Version 2+ 只允许 `OPERATIONS_CORRECTION`，并以非空 `decided_by` 证明授权操作。首次 `WON/LOST` State Change 必须等于 V1 Outcome；Trigger Type 分别为 `CHANNEL_OUTCOME/CLIENT_DISPOSITION/OPERATIONS_DISPOSITION`，且 `trigger_id=decision_source_id`，Channel 路径还等于 `channel_dispute_action_id`。Timer、Deadline、未提交证据和 Client 沉默都不具备 LOST 权限。每次聚合写入后，State Change 最大 Aggregate Version 必须等于 Case Version；`CLOSED→CLOSED` 按版本逐条绑定新 Operations Correction，`trigger_id` 必须等于对应更正的 `decision_source_id`，不得缺失、错配或交换。规则责任的 Action Effect 必须属于 Liability 指定的同一 Evaluation，并已达到 `REAL/APPLIED/LOCAL_SYNC/SUCCEEDED`。
 
 ### 4.8 本地可靠执行与命令幂等（2 张）
 
@@ -687,7 +687,7 @@ stateDiagram-v2
     CLOSED --> [*]
 ~~~
 
-直接 LOST 必须创建 Outcome Version 1 和 Shared-PK Liability Decision，只能由匹配 `PROVIDER_OUTCOME` Trigger 的已验证 Provider LOST、匹配 `CLIENT_DISPOSITION` 的已授权 Client 明确认责，或匹配 `OPERATIONS_DISPOSITION` 的已授权 Operations 明确认责触发；Trigger ID 必须等于对应 Outcome 来源 ID。Deadline、Timer、Client 沉默或未提交证据不得自动认损。CLOSED 自环只允许以 `OPERATIONS_CORRECTION` Trigger 追加一条可信更正版本，且 Trigger ID 必须逐版匹配更正命令，不能覆盖原事实。Case 当前指针必须指向同案链尾；Version N 只能替代同案 Version N-1，首次结果 State 必须等于 V1 Outcome，State Change Aggregate Version 必须与 Case Version 一致，禁止跨案、跳版、回指或分叉。
+直接 LOST 必须创建 Outcome Version 1 和 Shared-PK Liability Decision，只能由匹配 `CHANNEL_OUTCOME` Trigger 的已验证 Channel LOST、匹配 `CLIENT_DISPOSITION` 的已授权 Client 明确认责，或匹配 `OPERATIONS_DISPOSITION` 的已授权 Operations 明确认责触发；Trigger ID 必须等于对应 Outcome 来源 ID。Deadline、Timer、Client 沉默或未提交证据不得自动认损。CLOSED 自环只允许以 `OPERATIONS_CORRECTION` Trigger 追加一条可信更正版本，且 Trigger ID 必须逐版匹配更正命令，不能覆盖原事实。Case 当前指针必须指向同案链尾；Version N 只能替代同案 Version N-1，首次结果 State 必须等于 V1 Outcome，State Change Aggregate Version 必须与 Case Version 一致，禁止跨案、跳版、回指或分叉。
 
 ## 7. 领域事件契约
 
@@ -700,11 +700,11 @@ stateDiagram-v2
 | Subscribe | PaymentSucceeded | 必须含 payment_attempt_id 与 limit_reservation_group_id；将 RESERVED/PAYMENT_UNKNOWN 原子提交 |
 | Subscribe | PaymentAttemptFailed | 必须含 Attempt、Group ID 字段、终态、原因、allow_new_attempt 和来源版本；曾 ALLOW 时 Group ID 必须非空并精确匹配 |
 | Subscribe | PaymentAttemptUnknown | 必须含 Attempt 与 Group ID；仅转 PAYMENT_UNKNOWN 并继续占用 |
-| Subscribe | DisputeNoticeReceived | 以 provider_dispute_notice_id 幂等建案，冻结 Provider/MID/External Dispute、Attempt、金额币种和截止时间 |
-| Subscribe | DisputeSubmissionStatusChanged | 匹配 Risk request_id、Case、Package 与准确 provider_dispute_action_id |
-| Subscribe | ProviderDisputeOutcomeReceived | 绑定 Notice、Risk Request、Action ID 和 Source Version，形成 Risk Outcome |
+| Subscribe | DisputeNoticeReceived | 以 channel_dispute_notice_id 幂等建案，冻结 Channel/MID/External Dispute、Attempt、金额币种和截止时间 |
+| Subscribe | DisputeSubmissionStatusChanged | 匹配 Risk request_id、Case、Package 与准确 channel_dispute_action_id |
+| Subscribe | ChannelDisputeOutcomeReceived | 绑定 Notice、Risk Request、Action ID 和 Source Version，形成 Risk Outcome |
 | Publish | DisputeOpened | 携带 Notice ID/Version、Case、金额币种和两个截止时间；仅启动举证，不触发 Finance 记账或冻结 |
-| Publish | DisputeEvidenceRequested | 与开案同事务登记，携带 Case、Client/Provider Deadline 和材料类型 |
+| Publish | DisputeEvidenceRequested | 与开案同事务登记，携带 Case、Client/Channel Deadline 和材料类型 |
 | Publish | DisputeWon / DisputeLost | 携带 Notice、Case、Outcome ID/Version、Liability、`security_deposit_use_allowed` 和原争议金额币种；只有权威 DisputeLost 才触发 Finance Journal，Client 沉默不得自动生成 Lost |
 | Publish | DisputeOutcomeCorrected | 携带旧/新 Outcome ID/Version、责任分类和显式保证金许可；下游只追加补偿，不改写既有 Journal |
 | Publish | SettlementControlChanged | 每个 Control Version 只发布一个聚合事件，携带 control_id/version、Role、Type、Reason、状态、有效期、金额门槛，以及按 scope_id 排序的完整 Scope Set、scope_count 和 scope_set_hash；创建、释放、过期都保留完整集合，不携带 Finance 实际余额 |
@@ -744,8 +744,8 @@ stateDiagram-v2
 29. 自动规则结果只是 Qualification recommendation；正式 Decision 可由获准自动流程或 Reviewer 形成，覆盖必须记录原因。
 30. Risk 只能发布 Settlement Control 及 Client 最低 Security Deposit 门槛，不修改 Finance Account、余额、Ledger 或银行执行；Local Partner `MIN_SECURITY_DEPOSIT` 配置在发布和运行时都必须失败。
 31. Dispute Case 建案时冻结 Notice、金额币种和 Deadline；Request 与 Package 必须同 Case，`UNKNOWN` 继续占用活动 Slot，直到权威收口才能创建下一 Request。
-32. Risk 拥有 Dispute Outcome/Liability；Payment 拥有 Provider 交互；Finance 拥有金额计算、余额和会计。Outcome 与 Shared-PK Liability、Case 当前指针/Version、State Change 和补偿事件必须在同一 Case Root Lock 本地事务内原子提交。
-33. Outcome 来源只允许 `PROVIDER_ACTION/CLIENT_DISPOSITION/OPERATIONS_DISPOSITION/OPERATIONS_CORRECTION`，以来源 Type+ID+Version 幂等；更正只追加同案线性版本。只有 `LOST + principal_bearer=CLIENT + security_deposit_use_allowed=1` 才允许 Finance 使用 Client 保证金，且该许可不得推导。
+32. Risk 拥有 Dispute Outcome/Liability；Payment 拥有 Channel 交互；Finance 拥有金额计算、余额和会计。Outcome 与 Shared-PK Liability、Case 当前指针/Version、State Change 和补偿事件必须在同一 Case Root Lock 本地事务内原子提交。
+33. Outcome 来源只允许 `CHANNEL_ACTION/CLIENT_DISPOSITION/OPERATIONS_DISPOSITION/OPERATIONS_CORRECTION`，以来源 Type+ID+Version 幂等；更正只追加同案线性版本。只有 `LOST + principal_bearer=CLIENT + security_deposit_use_allowed=1` 才允许 Finance 使用 Client 保证金，且该许可不得推导。
 34. 所有业务状态、History 和需要发布的 compensation_event 同事务提交；重复、冲突和乱序由业务唯一键、Hash 和来源版本处理。
 
 ## 9. 跨系统引用规则
@@ -754,7 +754,7 @@ stateDiagram-v2
 |---|---|---|
 | Client & Contract | party_id、Profile/Relation Version、client_id、local_partner_id、operating_entity_id、Application ID/Version/Hash、必要 Agreement/OE Association 引用 | Party/Profile、Agreement、商业条款主档副本；不得回查当前 CCT 改写历史 |
 | Commerce | order_id、order_context_id、OrderPreparationContext Version/Hash、OE/Assignment、金额币种、industry_code、mcc_code；同步最小契约中的 Consumer Token 和 Network Evidence | Order/Checkout/Refund 主档、consumer_profile Token、device identifier、跨库 View；Token/网络原值不得通过 MQ |
-| Payment Orchestration | payment_intent_id、payment_attempt_id、payment_method_code、Attempt 权威事实、同步透传的批准最小输入、Provider Dispute Notice/Action 引用 | Provider/MID 主档、渠道请求响应、Provider 原始报文、跨库 View |
+| Payment Orchestration | payment_intent_id、payment_attempt_id、payment_method_code、Attempt 权威事实、同步透传的批准最小输入、Channel Dispute Notice/Action 引用 | Channel/MID 主档、渠道请求响应、Channel 原始报文、跨库 View |
 | Finance | RCO-I09 Assessment/Evaluation 坐标、Control ID/Version/Scope Hash、必要追偿上下文 | Account、Balance、Reserve、Ledger、Settlement、实际损失或费用计算结果；Risk 不接收 Finance 本地 eligibility_hash |
 | Platform Support | DD/Dispute 使用 file_id、content_hash；IAM Actor ID、audit correlation ID | 文件正文、文件业务版本副本、IAM 主档、集中审计日志 |
 | Central Vault | 已批准且有恢复消费者的 *_vault_token，以及确有消费者的 Record Version/Metadata Hash | Vault DB、密文、密钥；不得为方便默认增加 Blind Index、Masked Value 或通用 Metadata |
@@ -801,6 +801,6 @@ Risk 业务通过率以 PRIMARY decision_evaluation 及对应 Checkout/Transacti
 - 不用 Redis 作为 Limit 权威来源；Redis 只能做非权威加速。
 - 不把固定 UTC Limit Position 宣称为滑动窗口。
 - 不在 Risk 保存 Finance Balance、Reserve、Ledger 或实际冻结金额。
-- 不在 Risk 保存 Provider 原始报文或渠道请求响应。
+- 不在 Risk 保存 Channel 原始报文或渠道请求响应。
 - 不让 Payment 与 Risk 同时拥有 Dispute 业务终态。
 - 不建立跨库外键、跨库 Repository、通用 Inbox/Outbox、通用 Case/RFI、通用 Retention 或无当前用例的基础设施。

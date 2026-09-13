@@ -26,7 +26,7 @@ const SCENARIO_GATEWAY_TARGETS = Object.freeze([
   Object.freeze(["partner-console-bff", "partner-console-bff", "PARTNER"]),
   Object.freeze(["commerce-checkout-api", "commerce-service", "CHECKOUT"]),
   Object.freeze(["commerce-client-api", "commerce-service", "CLIENT_API"]),
-  Object.freeze(["payment-provider-callback", "payment-orchestration-service", "PROVIDER_CALLBACK"]),
+  Object.freeze(["payment-channel-callback", "payment-orchestration-service", "CHANNEL_CALLBACK"]),
 ]);
 
 function scenarioRows(content) {
@@ -429,7 +429,7 @@ function assertGatewayControlScenarios(rows, content) {
 
   for (const [channel, profile, mode] of [
     ["CHECKOUT", "CHECKOUT_SESSION", "CHECKOUT_RESOURCE"],
-    ["PROVIDER_CALLBACK", "PROVIDER_CALLBACK", "PROVIDER_CALLBACK"],
+    ["CHANNEL_CALLBACK", "CHANNEL_CALLBACK", "CHANNEL_CALLBACK"],
   ]) {
     findScenarioRecord(rows, "t_gateway_route", (record) => (
       record.get("channel") === channel
@@ -442,7 +442,7 @@ function assertGatewayControlScenarios(rows, content) {
 
   assert.deepEqual(
     [...new Set(tableScenarioRecords(rows, "t_gateway_route").map((record) => record.get("channel")))].sort(),
-    ["CHECKOUT", "CLIENT", "CLIENT_API", "OPERATIONS", "PARTNER", "PROVIDER_CALLBACK"],
+    ["CHANNEL_CALLBACK", "CHECKOUT", "CLIENT", "CLIENT_API", "OPERATIONS", "PARTNER"],
     "场景必须覆盖六个公共 Route Channel",
   );
 

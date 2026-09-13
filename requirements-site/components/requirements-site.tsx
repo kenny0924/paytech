@@ -165,7 +165,7 @@ export function RequirementsSite() {
           <div className="scope-grid" aria-label="当前 MVP 范围">
             <article><small>OPERATING ENTITY</small><strong>UAE · 单一主体</strong></article>
             <article><small>CHECKOUT</small><strong>Hosted · USD</strong></article>
-            <article><small>PAYMENT</small><strong>多 Provider / MID</strong></article>
+            <article><small>PAYMENT</small><strong>多 Channel / MID</strong></article>
             <article><small>MANUAL PAYOUT</small><strong>余额锁定 · 人工提交</strong></article>
           </div>
         </header>
@@ -200,10 +200,10 @@ export function RequirementsSite() {
           <EndToEndFlow />
           <div className="principle-grid">
             <article><strong>支付成功</strong><p>只能以渠道服务端通知和主动查询确认，不能以 successUrl 确认。</p></article>
-            <article><strong>按需举证</strong><p>拒付开案进入 EVIDENCE_REQUIRED；Client 截止时间早于 Provider 截止时间。未响应只保持案件待处置，绝不自动认损；只有经明确授权的人工作出的接受责任或放弃举证决定，或者已验证为 LOST 的 Provider Outcome，才能形成 DisputeLost。</p></article>
+            <article><strong>按需举证</strong><p>拒付开案进入 EVIDENCE_REQUIRED；Client 截止时间早于 Channel 截止时间。未响应只保持案件待处置，绝不自动认损；只有经明确授权的人工作出的接受责任或放弃举证决定，或者已验证为 LOST 的 Channel Outcome，才能形成 DisputeLost。</p></article>
             <article><strong>财务不可变</strong><p>退款、拒付和人工调整追加冲销分录，不修改历史账本。</p></article>
             <article><strong>资格可解释</strong><p>Client 的身份、业务、协议、主体、MID 和接入准备状态分别判断并返回原因。</p></article>
-            <article><strong>余额按合同成熟</strong><p>支付成功后 Client Principal 与可选 Partner Share 都先进入 Pending；按 Client Agreement-OE 冻结的 T+N 工作日、时区、Cutoff、节假日日历和 FOLLOWING 计算共同到期时间，再转入 Available。Provider 到账、银行对账和保证金门禁不改变成熟时间。</p></article>
+            <article><strong>余额按合同成熟</strong><p>支付成功后 Client Principal 与可选 Partner Share 都先进入 Pending；按 Client Agreement-OE 冻结的 T+N 工作日、时区、Cutoff、节假日日历和 FOLLOWING 计算共同到期时间，再转入 Available。Channel 到账、银行对账和保证金门禁不改变成熟时间。</p></article>
             <article><strong>四点资格检查</strong><p>Payout create、final Finance approval、Execution create、external submit 都执行新鲜 RCO-I09；返回 assessment_id、evaluation_id、decision、reason_codes、matched_controls、required_amount、required_currency 和 control_set_hash，本地账户门禁失败即 Fail-Closed。</p></article>
             <article><strong>Payout 后可追偿</strong><p>成功退款只冲减 Pending/Available，不动用 Client Security Deposit；只有明确允许的 DisputeLost 才先使用保证金，剩余以 Journal 形成 Recovery Receivable。</p></article>
             <article><strong>敏感值最小化</strong><p>Email/Phone 使用稳定 Vault Token；网络证据受限保存但不进入 Vault，PAN/CVV 不进入平台。</p></article>
@@ -217,7 +217,7 @@ export function RequirementsSite() {
         </section>
 
         <section className="section" id="payment-model">
-          <SectionHeading index="06" title="支付渠道模型" description="避免把 Provider、MID、支付方式和 Scheme 混成一个无法解释的渠道字段。" sectionId="payment-model" onCopy={copyLink} />
+          <SectionHeading index="06" title="支付渠道模型" description="避免把 Channel、MID、支付方式和 Scheme 混成一个无法解释的渠道字段。" sectionId="payment-model" onCopy={copyLink} />
           <PaymentTaxonomyDiagram />
           <div className="boundary-box">
             <div><strong>路由资格</strong><span>订单冻结的 Operating Entity + MCC + 币种 + 地区 + 支付方式 + 业务政策 + 风险 + 限额</span></div>

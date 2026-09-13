@@ -24,7 +24,7 @@ export function BusinessModelDiagram() {
       <div className="business-supports">
         <div><strong>Local Partner</strong><span>主体合作与独立分润</span></div>
         <div><strong>Acquirer</strong><span>NI / Geidea · MID</span></div>
-        <div><strong>Platform</strong><span>Checkout · 风控 · 账本 · Provider 清算 · Manual Payout</span></div>
+        <div><strong>Platform</strong><span>Checkout · 风控 · 账本 · Channel 清算 · Manual Payout</span></div>
       </div>
       <div className="relationship-note note-bottom">扣除税费与成本后形成应付；实际出款再检查保证金</div>
     </div>
@@ -35,14 +35,14 @@ export function CoarseArchitectureDiagram() {
   return (
     <div className="coarse-architecture">
       <div className="gateway-row">
-        <span>Internet / Client / Consumer / Provider</span>
+        <span>Internet / Client / Consumer / Channel</span>
         <b>→</b>
         <strong>API Gateway</strong>
         <small>认证 · 限流 · 路由 · 访问日志</small>
       </div>
       <div className="entry-row">
         <span>Hosted Checkout</span><span>Client Console</span><span>Partner Console</span>
-        <span>Client API</span><span>Operations Console</span><span>Provider Endpoint</span>
+        <span>Client API</span><span>Operations Console</span><span>Channel Endpoint</span>
       </div>
       <div className="entry-row">
         <span>Client Console BFF</span><span>Partner Console BFF</span><span>Operations Console BFF</span>
@@ -68,9 +68,9 @@ export function CoarseArchitectureDiagram() {
 const domainGroups = [
   { service: "Client & Contract", domains: ["Client", "Client / Partner Application", "Business Profile", "Real-time Readiness Check", "Operating Entity", "Local Partner", "Agreement", "Commercial Terms"] },
   { service: "Commerce", domains: ["Checkout Session", "Consumer Contract", "Order Context", "Consumer", "Order", "Refund", "Customer Care"] },
-  { service: "Payment Orchestration", domains: ["Provider Registry", "Provider Account / MID", "Payment Routing", "Payment Execution", "Provider Callback", "Payment Reconciliation"] },
+  { service: "Payment Orchestration", domains: ["Channel Registry", "Channel Account / MID", "Payment Routing", "Payment Execution", "Channel Callback", "Payment Reconciliation"] },
   { service: "Risk & Compliance", domains: ["Role Qualification", "Client / Partner Risk", "Business Policy", "Transaction Risk", "Risk Decision", "Settlement Restriction", "Case Management", "Dispute"] },
-  { service: "Finance", domains: ["Fee Calculation", "Tax & Fiscal Record", "Revenue Share", "Provider Cost & Settlement", "Accounting Instruction", "Legal Entity Ledger", "Account Balance", "Contract Maturity", "Beneficiary Account", "Security Deposit & Recovery Gate", "Manual Payout", "Payout Execution & Reconciliation"] },
+  { service: "Finance", domains: ["Fee Calculation", "Tax & Fiscal Record", "Revenue Share", "Channel Cost & Settlement", "Accounting Instruction", "Legal Entity Ledger", "Account Balance", "Contract Maturity", "Beneficiary Account", "Security Deposit & Recovery Gate", "Manual Payout", "Payout Execution & Reconciliation"] },
   { service: "Platform Support", domains: ["Account & Credential", "Authentication Challenge", "Session", "Google Identity", "Tenant IAM", "Authorization", "API Credential", "Business Email OTP", "Client Webhook", "Notification", "Consumer Document", "Audit", "File & Evidence"] },
 ];
 
@@ -106,8 +106,8 @@ export function EndToEndFlow() {
 
 export function PaymentTaxonomyDiagram() {
   const layers = [
-    { name: "Provider / Gateway", examples: ["Network International", "Geidea"], detail: "连接外部收单能力" },
-    { name: "Provider Account / MID", examples: ["MID", "MCC · 币种 · 限额"], detail: "绑定 Operating Entity" },
+    { name: "Channel / Gateway", examples: ["Network International", "Geidea"], detail: "连接外部收单能力" },
+    { name: "Channel Account / MID", examples: ["MID", "MCC · 币种 · 限额"], detail: "绑定 Operating Entity" },
     { name: "Payment Method", examples: ["Card", "Wallet · Bank Transfer"], detail: "消费者使用的支付方式" },
     { name: "Scheme / Network", examples: ["Visa · Mastercard", "mada"], detail: "卡组织或本地支付网络" },
   ];

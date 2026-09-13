@@ -12,7 +12,7 @@ const INITIAL_DISPOSITION_SOURCES = new Set([
   "OPERATIONS_DISPOSITION",
 ]);
 const RESULT_TRIGGER_BY_SOURCE = Object.freeze({
-  PROVIDER_ACTION: "PROVIDER_OUTCOME",
+  CHANNEL_ACTION: "CHANNEL_OUTCOME",
   CLIENT_DISPOSITION: "CLIENT_DISPOSITION",
   OPERATIONS_DISPOSITION: "OPERATIONS_DISPOSITION",
 });
@@ -82,7 +82,7 @@ function orderedOutcomes(snapshot, errors) {
         outcome.outcomeVersion !== 1
           || outcome.outcome !== "LOST"
           || isPresent(outcome.supersedesOutcomeId)
-          || isPresent(outcome.providerDisputeActionId),
+          || isPresent(outcome.channelDisputeActionId),
         errors,
         "INITIAL_DISPOSITION_ONLY_CREATES_LOST",
       );
@@ -96,7 +96,7 @@ function orderedOutcomes(snapshot, errors) {
       );
     }
     addIf(
-      outcome.decisionSourceType === "PROVIDER_ACTION" && outcome.outcomeVersion !== 1,
+      outcome.decisionSourceType === "CHANNEL_ACTION" && outcome.outcomeVersion !== 1,
       errors,
       "CORRECTION_SOURCE_REQUIRES_PREDECESSOR",
     );
@@ -227,7 +227,7 @@ function validateInitialResultTransition(stateChanges, outcomes, errors) {
 
   const expectedTrigger = RESULT_TRIGGER_BY_SOURCE[initialOutcome.decisionSourceType];
   const sourceCanProduceResult = isPresent(expectedTrigger)
-    && (initialOutcome.outcome === "LOST" || initialOutcome.decisionSourceType === "PROVIDER_ACTION");
+    && (initialOutcome.outcome === "LOST" || initialOutcome.decisionSourceType === "CHANNEL_ACTION");
   if (initialOutcome.outcome === "LOST") {
     addIf(
       !sourceCanProduceResult || resultChange.triggerType !== expectedTrigger,
@@ -241,8 +241,8 @@ function validateInitialResultTransition(stateChanges, outcomes, errors) {
       || resultChange.triggerType !== expectedTrigger
       || !sameId(resultChange.triggerId, initialOutcome.decisionSourceId)
       || (
-        initialOutcome.decisionSourceType === "PROVIDER_ACTION"
-        && !sameId(resultChange.triggerId, initialOutcome.providerDisputeActionId)
+        initialOutcome.decisionSourceType === "CHANNEL_ACTION"
+        && !sameId(resultChange.triggerId, initialOutcome.channelDisputeActionId)
       ),
     errors,
     "RESULT_TRANSITION_SOURCE_COORDINATE_MATCHES_OUTCOME",

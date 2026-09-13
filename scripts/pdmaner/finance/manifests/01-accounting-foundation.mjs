@@ -15,7 +15,7 @@ const ACCOUNT_OWNER_TYPES = [
   "FINANCE_ENTITY",
   "CLIENT",
   "LOCAL_PARTNER",
-  "PROVIDER_ACCOUNT",
+  "CHANNEL_ACCOUNT",
   "CASH_ACCOUNT",
   "TAX_AUTHORITY",
 ];
@@ -117,14 +117,14 @@ export const TABLES = Object.freeze([
   defineTable({
     key: "account",
     name: "统一记账账户",
-    comment: "在具体账簿和可过账科目下按核算对象与余额桶建立唯一记账账户，并保存可由不可变 Journal 重建的当前余额投影；CLIENT_PAYABLE 与 PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner PENDING 是共享待结算桶；Partner reversal 无法由 PENDING/AVAILABLE/LOCKED liability 吸收时使用资产科目 PARTNER_RECOVERY_RECEIVABLE/NONE；Client Recovery 使用 CLIENT_RECOVERY_RECEIVABLE/NONE，保证金使用 CLIENT_SECURITY_DEPOSIT/NONE；Provider 使用 PROVIDER_UNSETTLED_RECEIVABLE、PROVIDER_SETTLEMENT_RECEIVABLE、PROVIDER_UNSETTLED_PAYABLE、PROVIDER_SETTLEMENT_PAYABLE 四个科目表达交易形成、交易对账完整和银行确认三个阶段，Provider Cost 单独使用 PROVIDER_FEE_ACCRUAL，银行现金使用 BANK_CASH。",
+    comment: "在具体账簿和可过账科目下按核算对象与余额桶建立唯一记账账户，并保存可由不可变 Journal 重建的当前余额投影；CLIENT_PAYABLE 与 PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner PENDING 是共享待结算桶；Partner reversal 无法由 PENDING/AVAILABLE/LOCKED liability 吸收时使用资产科目 PARTNER_RECOVERY_RECEIVABLE/NONE；Client Recovery 使用 CLIENT_RECOVERY_RECEIVABLE/NONE，保证金使用 CLIENT_SECURITY_DEPOSIT/NONE；Channel 使用 CHANNEL_UNSETTLED_RECEIVABLE、CHANNEL_SETTLEMENT_RECEIVABLE、CHANNEL_UNSETTLED_PAYABLE、CHANNEL_SETTLEMENT_PAYABLE 四个科目表达交易形成、交易对账完整和银行确认三个阶段，Channel Cost 单独使用 CHANNEL_FEE_ACCRUAL，银行现金使用 BANK_CASH。",
     fields: [
       primaryKey("id", "统一记账账户ID", "服务侧生成的统一记账账户 Snowflake 主键"),
       field("ledger_book_id", "BIGINT", "NN", "总账账簿ID", "该账户严格归属的本库经营主体币种账簿"),
       field("chart_account_id", "BIGINT", "NN", "会计科目ID", "该账户使用且必须允许过账的本库会计科目定义"),
       field("owner_type", types.code, "NN", "核算对象类型", "决定账户余额按经营主体、内部财务主体、Client、Local Partner、渠道账户、银行账户或税务机关隔离的类型", { values: ACCOUNT_OWNER_TYPES }),
       field("owner_id", "VARCHAR(64)", "NN", "核算对象ID", "按owner_type解释的稳定字符串；OE为entityNo，其余数字身份保存规范十进制字符串；本库对象使用本地主键，外部对象不建立跨库外键"),
-      field("balance_bucket", types.code, "NN", "余额桶", "PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner 的 PENDING 是共享待结算桶；PARTNER_RECOVERY_RECEIVABLE 使用 NONE；CLIENT_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，CLIENT_RECOVERY_RECEIVABLE/NONE、CLIENT_SECURITY_DEPOSIT/NONE 以及 Provider 三阶段账户均使用独立会计科目并采用 NONE，不复用应付款余额桶", { values: BALANCE_BUCKETS }),
+      field("balance_bucket", types.code, "NN", "余额桶", "PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner 的 PENDING 是共享待结算桶；PARTNER_RECOVERY_RECEIVABLE 使用 NONE；CLIENT_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，CLIENT_RECOVERY_RECEIVABLE/NONE、CLIENT_SECURITY_DEPOSIT/NONE 以及 Channel 三阶段账户均使用独立会计科目并采用 NONE，不复用应付款余额桶", { values: BALANCE_BUCKETS }),
       field("normal_side", types.code, "NN", "正常余额方向", "创建账户时从会计科目复制并冻结的正常余额方向；账户仍允许借贷双向过账", { values: NORMAL_SIDES }),
       field("account_status", types.code, "NN", "账户状态", "该具体核算账户当前是否允许新的会计分录过账", { values: ACCOUNT_STATUS }),
       field("debit_total", types.amount, "NN", "借方累计", "截至末次分录序号已计入该账户的累计借方金额", {

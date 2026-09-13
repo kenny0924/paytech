@@ -134,7 +134,7 @@ test("Payment final pricing fact is unique per successful Attempt and cannot be 
   field(fact, "payment_succeeded_time");
 });
 
-test("Finance keeps typed book identity and separate legacy provider-cost and new price evidence", () => {
+test("Finance keeps typed book identity and separate legacy channel-cost and new price evidence", () => {
   const model = generateFinanceModel();
   const book = table(model, "t_ledger_book");
   assert.equal(field(book, "entity_id").type, "VARCHAR");

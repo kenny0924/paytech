@@ -33,7 +33,7 @@ finance-service/
 以上六个 Maven 模块已经按统一 Artifact 命名初始化；这只表示工程骨架和当前余额查询切片存在，不代表完整 Finance 服务已经实现。
 
 - Accounting：经济计算、账户、记账、余额与关账。
-- Treasury：Provider 清算、银行资料及对账、手工出款。
+- Treasury：Channel 清算、银行资料及对账、手工出款。
 - Tax：税务计算、Fiscal 单据、申报及缴税业务记录。
 - Web：唯一启动入口；`ext/rest`、`ext/mq`、`ext/job` 适配协议，`service/processor` 编排用例及事务。
 - API：外部 HTTP 契约，不是共享数据库对象库。
@@ -49,19 +49,19 @@ finance-service/
 
 - 基础 9 表：`currency_spec`、`chart_of_accounts`、`chart_account`、`finance_entity`、`ledger_book`、`account`、`fiscal_calendar`、`accounting_period`、`book_sequence`。
 - 经济结果 3 表：`transaction_economics`、`transaction_economic_component`、`transaction_economic_comp_link`。
-- Provider 成本 6 表：`provider_cost_plan`、`provider_cost_plan_ver`、`provider_cost_scope`、`provider_cost_component`、`provider_cost_confirm`、`provider_cost_alloc`。
+- Channel 成本 6 表：`channel_cost_plan`、`channel_cost_plan_ver`、`channel_cost_scope`、`channel_cost_component`、`channel_cost_confirm`、`channel_cost_alloc`。
 - 记账及调整 10 表：`accounting_rule_bundle`、`accounting_rule_bundle_ver`、`accounting_rule_line`、`accounting_instruction`、`instruction_line`、`journal_entry`、`journal_line`、`manual_adjustment`、`manual_adjustment_line`、`adjustment_approval`。
 - 期间及关账 9 表：`ledger_period_balance`、`trial_balance_run`、`trial_balance_line`、`trial_balance_exception`、`period_close`、`period_close_book`、`close_step`、`close_approval`、`close_account_rule`。
 
-T+N、保证金、追偿使用 Accounting 现有 Account/Journal，不恢复已删除工作流。Provider 实际成本证据可由 Treasury 提供，但经济确认及分配写入由 Accounting 完成。
+T+N、保证金、追偿使用 Accounting 现有 Account/Journal，不恢复已删除工作流。Channel 实际成本证据可由 Treasury 提供，但经济确认及分配写入由 Accounting 完成。
 
 ### 3.2 Treasury：22 表
 
-- Provider 7 表：`provider_account`、`provider_open_item`、`provider_debit_item`、`duplicate_capture_item`、`provider_settle_batch`、`provider_settle_item`、`provider_transaction_match`。
+- Channel 7 表：`channel_account`、`channel_open_item`、`channel_debit_item`、`duplicate_capture_item`、`channel_settle_batch`、`channel_settle_item`、`channel_transaction_match`。
 - 银行及对账 8 表：`cash_account`、`cash_account_binding`、`cash_account_binding_ver`、`bank_statement`、`bank_statement_item`、`bank_recon_match`、`recon_exception`、`recon_resolution`。
 - 手工出款 7 表：`beneficiary_account`、`finance_restriction_proj`、`payout`、`payout_approval`、`payout_execution`、`payout_evidence_ref`、`payout_event`。
 
-Provider/Cash Account 是业务资料；其账面余额只存在 Accounting 的 Account。Treasury 不保存第二份权威余额。
+Channel/Cash Account 是业务资料；其账面余额只存在 Accounting 的 Account。Treasury 不保存第二份权威余额。
 
 ### 3.3 Tax：23 表
 
@@ -97,7 +97,7 @@ Tax Payment 不强行映射为 Client/Partner Payout。Tax 拥有税款义务及
 | 用例 | 原子内容 |
 |---|---|
 | 过账 | 指令状态、Journal、序列、Account 投影及必要补偿登记 |
-| 支付/退款事实入账 | 对应经济结果、适用 Provider 明细、Component Link、指令及 Journal |
+| 支付/退款事实入账 | 对应经济结果、适用 Channel 明细、Component Link、指令及 Journal |
 | 平台服务费 | OE/FE 两本账分别平衡且同事务提交 |
 | 成熟 | 来源幂等、适用追偿抵扣、Client/Partner 共同成熟 Journal |
 | 申请出款 | 申请、AVAILABLE→LOCKED、状态事件及命令幂等 |

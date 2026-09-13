@@ -50,14 +50,14 @@ test("Dispute keeps seven lifecycle tables while removing five duplicate fields"
   ]);
   assert.deepEqual(fieldNames(table("dispute_submission_request")), [
     "request_id", "dispute_case_id", "package_id", "request_no", "status", "active_slot",
-    "provider_dispute_action_id", "action_source_version", "requested_time", "resolved_time", "version",
+    "channel_dispute_action_id", "action_source_version", "requested_time", "resolved_time", "version",
     "create_time", "update_time",
   ]);
 
   const liability = table("dispute_liability_decision");
   assert.deepEqual(fieldNames(liability), [
     "outcome_id", "decision_evaluation_id", "action_effect_id", "recommended_principal_bearer",
-    "principal_bearer", "provider_fee_bearer", "platform_error_flag", "provider_recovery_required",
+    "principal_bearer", "channel_fee_bearer", "platform_error_flag", "channel_recovery_required",
     "security_deposit_use_allowed", "override_reason_code", "reason_code", "decided_by", "decided_time",
     "create_time",
   ]);
@@ -96,10 +96,10 @@ test("Dispute freezes the approved Case states, Outcome sources and exact keys",
   assert.deepEqual(index(request, "idx_dispute_req_package").fields, ["package_id", "dispute_case_id"]);
 
   const outcome = table("dispute_outcome");
-  assert.equal(outcome.comment, "保存 Provider 或已授权处置形成的 WON/LOST 结果及 Operations Correction 不可变版本");
+  assert.equal(outcome.comment, "保存 Channel 或已授权处置形成的 WON/LOST 结果及 Operations Correction 不可变版本");
   assert.equal(field(outcome, "reason_code").openSource, "Risk 统一争议结果原因目录");
   assert.deepEqual(field(outcome, "decision_source_type").closedValues, [
-    "PROVIDER_ACTION", "CLIENT_DISPOSITION", "OPERATIONS_DISPOSITION", "OPERATIONS_CORRECTION",
+    "CHANNEL_ACTION", "CLIENT_DISPOSITION", "OPERATIONS_DISPOSITION", "OPERATIONS_CORRECTION",
   ]);
   assert.deepEqual(index(outcome, "uk_dispute_out_source"), {
     defKey: "uk_dispute_out_source",
@@ -112,7 +112,7 @@ test("Dispute freezes the approved Case states, Outcome sources and exact keys",
     unique: true,
     fields: ["supersedes_outcome_id", "dispute_case_id"],
   });
-  assert.deepEqual(index(outcome, "idx_dispute_out_action").fields, ["provider_dispute_action_id"]);
+  assert.deepEqual(index(outcome, "idx_dispute_out_action").fields, ["channel_dispute_action_id"]);
 
   const liability = table("dispute_liability_decision");
   assert.equal(
@@ -123,14 +123,14 @@ test("Dispute freezes the approved Case states, Outcome sources and exact keys",
 
 test("Dispute CHECK contracts are null-safe and bind every approved row matrix", () => {
   const expected = {
-    ck_dispute_deadlines: "provider_dispute_source_version>0 AND disputed_amount>0 AND client_response_due_time<provider_response_due_time",
+    ck_dispute_deadlines: "channel_dispute_source_version>0 AND disputed_amount>0 AND client_response_due_time<channel_response_due_time",
     ck_dispute_case_outcome: "(status IN ('EVIDENCE_REQUIRED','UNDER_REVIEW','SUBMITTED') AND current_outcome_id IS NULL) OR (status IN ('WON','LOST','CLOSED') AND current_outcome_id IS NOT NULL)",
     ck_dispute_state: "aggregate_version>0 AND ((aggregate_version=1 AND from_status IS NULL AND to_status='EVIDENCE_REQUIRED') OR (aggregate_version>1 AND from_status IS NOT NULL AND ((from_status='EVIDENCE_REQUIRED' AND to_status IN ('UNDER_REVIEW','LOST')) OR (from_status='UNDER_REVIEW' AND to_status IN ('SUBMITTED','LOST')) OR (from_status='SUBMITTED' AND to_status IN ('WON','LOST')) OR (from_status IN ('WON','LOST') AND to_status='CLOSED') OR (from_status='CLOSED' AND to_status='CLOSED'))))",
     ck_dispute_package_version: "version_no>0",
     ck_dispute_request_slot_time: "request_no>0 AND requested_time IS NOT NULL AND ((status IN ('CREATED','SUBMITTED','UNKNOWN') AND active_slot IS NOT NULL AND active_slot=1 AND resolved_time IS NULL) OR (status IN ('SUCCEEDED','FAILED','CANCELLED') AND active_slot IS NULL AND resolved_time IS NOT NULL AND requested_time<=resolved_time))",
-    ck_dispute_request_action: "((provider_dispute_action_id IS NULL AND action_source_version IS NULL) OR (provider_dispute_action_id IS NOT NULL AND action_source_version IS NOT NULL AND action_source_version>0)) AND ((status='CREATED' AND provider_dispute_action_id IS NULL) OR (status IN ('SUBMITTED','UNKNOWN','SUCCEEDED') AND provider_dispute_action_id IS NOT NULL) OR status IN ('FAILED','CANCELLED'))",
+    ck_dispute_request_action: "((channel_dispute_action_id IS NULL AND action_source_version IS NULL) OR (channel_dispute_action_id IS NOT NULL AND action_source_version IS NOT NULL AND action_source_version>0)) AND ((status='CREATED' AND channel_dispute_action_id IS NULL) OR (status IN ('SUBMITTED','UNKNOWN','SUCCEEDED') AND channel_dispute_action_id IS NOT NULL) OR status IN ('FAILED','CANCELLED'))",
     ck_dispute_outcome_version: "outcome_version>0 AND source_version>0 AND ((outcome_version=1 AND supersedes_outcome_id IS NULL) OR (outcome_version>1 AND supersedes_outcome_id IS NOT NULL AND supersedes_outcome_id<>outcome_id))",
-    ck_dispute_outcome_source: "(decision_source_type='PROVIDER_ACTION' AND outcome_version=1 AND supersedes_outcome_id IS NULL AND provider_dispute_action_id IS NOT NULL AND decision_source_id=provider_dispute_action_id) OR (decision_source_type IN ('CLIENT_DISPOSITION','OPERATIONS_DISPOSITION') AND outcome_version=1 AND outcome='LOST' AND supersedes_outcome_id IS NULL AND provider_dispute_action_id IS NULL) OR (decision_source_type='OPERATIONS_CORRECTION' AND outcome_version>1 AND supersedes_outcome_id IS NOT NULL)",
+    ck_dispute_outcome_source: "(decision_source_type='CHANNEL_ACTION' AND outcome_version=1 AND supersedes_outcome_id IS NULL AND channel_dispute_action_id IS NOT NULL AND decision_source_id=channel_dispute_action_id) OR (decision_source_type IN ('CLIENT_DISPOSITION','OPERATIONS_DISPOSITION') AND outcome_version=1 AND outcome='LOST' AND supersedes_outcome_id IS NULL AND channel_dispute_action_id IS NULL) OR (decision_source_type='OPERATIONS_CORRECTION' AND outcome_version>1 AND supersedes_outcome_id IS NOT NULL)",
     ck_liability_recommendation: "recommended_principal_bearer IS NULL OR recommended_principal_bearer=principal_bearer OR override_reason_code IS NOT NULL",
     ck_liability_security_deposit: "security_deposit_use_allowed IN (0,1) AND ((decision_evaluation_id IS NOT NULL AND action_effect_id IS NOT NULL AND decided_by IS NULL) OR (decision_evaluation_id IS NULL AND action_effect_id IS NULL AND decided_by IS NOT NULL)) AND (security_deposit_use_allowed=0 OR principal_bearer='CLIENT')",
   };

@@ -24,7 +24,7 @@
 | Vault V1 | Go Server、OpenAPI 与 Java Client 的当前工作区已切换统一 Problem/`HEAD`/Request ID 合同；三表 Protect/Reveal 业务边界不变 | 纯 RFC staged tree 的 Java Client `clean verify` 34/34，OpenAPI/YAML/source 静态门禁通过；当前主机没有 Go/gofmt，Go 编译与测试未执行 | 既有 `mor-test` 合成 smoke 部署保持不变；本次 Problem 源码未部署 | 补齐 Go 门禁；Platform 仍使用批准的开发 Mock；生产 KMS、强服务身份、真实消费者、合规验证和生产部署未完成；Legacy Java Reader 待删除 |
 | CCT | 38 表/428 字段目标模型及完整人工 Schema；本地空库已初始化，条件启用的 Checkout 预检/解析已实现，Risk 资格端口仍关闭，见 CCT-QUERY-01 | 全量 Maven verify 32/32；本地 MySQL 结构与测试数据清理核对通过；四系统模型证据见 OE-CLIENT-MODEL-01 | 应用未部署 | Risk 新资格接入、最终解析完整链路、其他写入口/API/MQ、存量库迁移和部署未完成；旧 V5/Hash Reader 保留，Scope 不得绕过 Risk 激活 |
 | Commerce | 15 表/249 字段目标模型；本期新增 Customer 三操作及 Payment 内部四操作，准备时冻结 OE/合同/税事实并创建 Intent，见 [COM-CUSTOMER-01](#commerce-customer-20260912)；基础创建仍只做预检 | JDK 25 `clean verify` 331/331，0 失败/错误/跳过；真实本地 MySQL/HTTP、按需顺序查询与独立 Handler 恢复验证；JaCoCo 行覆盖率 91.78%（3027/3298）；模型沿用上一轮 17/17 | 应用未部署；获授权本机三表增量 SQL 已执行，本地 Mock 启动入口已验证并关闭 | 本机保留旧列的兼容结构不等于目标新库 Schema；新 Owner 端口为 Mock + TODO，真实跨服务、支付成功事实消费、晚到定价、Payment Card、公共路由及前端联调未完成 |
-| Payment | 30 表/393 字段目标模型、Payment Pricing Fact 和完整人工 Schema 已生成 | 2026-09-11 四系统自动模型和场景回归通过，详见 OE-CLIENT-MODEL-01 | 未声明 | 尚无完整 Java 业务服务；新模型不代表已有支付执行、Risk 联调或数据库迁移 |
+| Payment | 30 表/402 字段目标模型；统一 pay、交易级工具 Token、两个工具接口及独立 Processor 已改造，见 [本地切片](#payment-execution-implementation) | Token 修订限制范围 `verify` 36/36；模型/场景 21/21；新 Schema 业务回归未运行 | 未部署；本机仍为旧 Execution 13 张空表，Token ALTER/DROP 待单独授权 | Payment 研发修订中，20 项 Token 专项已编译未运行；Commerce、真实 Owner、完整回归及综合验收待完成 |
 | Finance | 84 表/1,109 字段目标模型和完整人工 Schema 已生成；首个余额查询 Java 仍是旧数字身份切片；当前测试消费者统一校验真实 HTTP Problem | 2026-09-06 JDK 25 `clean verify` 25/25，含本地 MySQL 余额路径与 RFC 1123 Date 门禁 | 未声明 | 本次未执行 SQL，旧余额切片不能直接消费新身份 Schema；完整服务与部署未证明；手工缴税异常分支待专项模型闭合 |
 | Risk & Compliance | 71 表/九路由配置切片；本次原 V1 增加可空终态、冷却/主体标签参数、手工拒绝文案、Risk-owned 主体绑定与显式历史格式兼容，见第 15 节 | 2026-09-11 JDK 25 `clean verify` 155/155，含真实本地 MySQL/随机端口 HTTP、旧 Hash Golden 和配置冻结门禁；模型/Schema 189/189 | 2026-09-12 RCO-17 已部署本机 `mor-test`，实际 78 表；四表及三表精简、历史回填与兼容比对完成，见 [RCO-17](#rco17-test-20260912) | Risk 配置的真实 Nginx/Gateway/BFF/Risk HTTP 链已验收；PDManer 人工 Review、其他环境/生产仍待完成；运行期评估和真实动作不在本期范围；全局 COMP-01/DB-01/Vault V1 Gate 保持 |
 | `mor-local` | 仓库提供 MySQL、Redis、RabbitMQ、Nacos 等本地依赖的手工环境 | 当前本机运行状态应按 [`LOCAL_DEVELOPMENT_ENVIRONMENT.md`](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 的命令即时核对 | 仅本机开发环境 | 自动测试只能复用该环境，不得自行拉起替代容器或连接真实业务环境 |
@@ -40,7 +40,7 @@
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Client & Contract | 38 | 428 | 61 | 43 | 64 | 6 | 6 |
 | Commerce | 15 | 249 | 24 | 12 | 15 | — | 4 |
-| Payment Orchestration | 30 | 393 | 42 | 45 | 65 | 8 | 7 |
+| Payment Orchestration | 30 | 402 | 45 | 48 | 67 | 8 | 7 |
 | Finance | 84 | 1,109 | 145 | 155 | 160 | 22 | 6 |
 | Risk & Compliance | 78 | 944 | 115 | 80 | 120 | 9 | 8 |
 | Platform Support | 63 | 822 | 123 | 99 | 107 | 5 | 7 |
@@ -58,7 +58,7 @@
 | HTTP-PROBLEM-01 | 除 `HEAD` 无 Body 语义及 pre-application 传输/边缘失败外，所有第一方 JSON HTTP 4xx/5xx 统一为 RFC 9457-based Code-MoR Problem Profile：`type=about:blank`，必填 `title/detail/code/requestId/timestamp`，可选字段错误只有 `field/message`，Body 不含 `status` | Tasks 1–12 已完成 Foundation、HTTP Client、Gateway、Platform/BFF/Web、Vault、Commerce OpenAPI 和现有核心服务测试消费者的源码迁移；Nginx/Connector 顺序已实现静态门禁，变更已合入各受影响仓库的本地 `main`。为未部署 Producer 保留的显式 Legacy Readers 尚未删除；Go 工具链、Gateway 既有 13 个基线失败和 Platform 非干净本地库仍是未闭合门禁；未发布或部署 | 补齐 Go、Gateway 基线与干净 Platform 数据库门禁，发布并按消费者优先顺序部署，观察所有第一方 Producer/Consumer 已使用新 Profile，再删除 Legacy Readers 并重跑全门禁；只有实际环境验收后才更新部署状态 |
 | VAULT-01 | Go Server + Java Client 是 V1 正式实现；V1 只支持三表 Protect/Reveal | 六系统文档仍依赖 Binding/Copy/Blind Index/Masked/Metadata/Retire 等旧能力 | 每个真实消费者完成 V1 适配或获批窄 V2 设计，API/模型/迁移/安全测试一致 |
 | TEST-01 | Foundation 不使用 Testcontainers 或自动 Schema 初始化 | Redis Starter 已迁移为复用仓库 `local-environment` 且真实门禁通过；Compensation Event 测试仍自动重建 Schema | Compensation Event 静态门禁先失败后通过，并在手工准备的 `mor-local` 上完成受影响 Maven 测试 |
-| COMP-01 | 本地可靠表使用 `event_key + event_type + sub_event_type + 可选最小 payload_json`，任何 Vault Token 禁止进入 Payload | 六库文档/PDManer 仍有旧 source/version/schema/hash/64 KiB 契约；Foundation `CompensationPayloadPolicy` 尚未显式拒绝 `vaultToken` / `*_vault_token` 标准字段名，也缺少相应反例测试 | 六套 Manifest、Policy、模型、场景、SQL 和测试一次性迁移并复核统计；Foundation 登记入口拒绝标准 Vault Token 字段并通过反例测试 |
+| COMP-01 | 本地可靠表使用 `event_key + event_type + sub_event_type + 可选最小 payload_json`，任何 Vault Token 禁止进入 Payload | 跨系统前序文档/模型仍有旧 source/version/schema/hash/64 KiB 契约；Payment 本轮已对齐目标模型与代码，并人工创建本机 Execution 相关表；其他环境未迁移，见 [Execution 研发](#payment-execution-implementation)；Foundation `CompensationPayloadPolicy` 尚未显式拒绝 `vaultToken` / `*_vault_token` 标准字段名，也缺少相应反例测试 | 六套 Manifest、Policy、模型、场景、SQL 和测试一次性迁移并复核统计；Foundation 登记入口拒绝标准 Vault Token 字段并通过反例测试 |
 | DB-01 | 新建表不使用物理 CHECK/FK，Sidecar 仅表达应用不变量/逻辑关系 | 多份旧物理决策与 Vault DDL 仍有现在时或实际约束 | 应用保护与反例测试齐备后，审核并手工执行逐库约束迁移；物理核验通过 |
 | CCT-PRICING-01 | CCT 用全局不可复用 `payment_method_profile_code` 描述支付方式特征，并由 Term Version 下准确 OE Price 组合 Percentage、Fixed、Tiered Component/Band | 四系统目标模型及完整人工 Schema 已同步；新 Wire、Java、Payment 晚到事实、真实 Risk 接入和数据库执行仍待完成，详见 OE-CLIENT-MODEL-01 | 完成实际历史盘点及新旧 Reader 隔离；实现各 Owner HTTP/MQ、准备恢复与定价；另行接入 Risk，在授权环境迁移并通过真实数据库与端到端验证后关闭 |
 | FIN-01 | Tax Payment 事前承诺门禁与已发生银行扣款的事后事实登记分离 | 专项核对已确认：现有 `Bank Item + Reconciliation Exception` 可保存并追踪已发生扣款，但当前模型不能无损地把“没有前置 Tax Payment 的真实扣款”闭合到 Return/Payable | 正常流、无前置记录真实扣款、重复、金额/归属不匹配和解决流程均有模型与测试 |
@@ -489,6 +489,73 @@
 
 
 - **按需查询提交复核（2026-09-12）：** 用户授权提交，Commerce 的 46 个相关文件（含格式调整）已提交为 `dedebb2`。提交前 JDK 25 完整 `clean verify` **331/331**，0 失败/错误/跳过，JaCoCo 行覆盖率 **91.78%（3027/3298）**；最新 import 整理后 `test-compile` 通过，需求站完整构建与 **136/136** 通过。根状态文档只提交 Commerce 片段，Risk 等独立任务改动保留在工作区；未推送、发布或部署。新增日志位于同一本机验证目录的 `precommit-verify.log`、`precommit-compile.log` 和 `precommit-requirements-site.log`。
+
+
+<a id="payment-application-foundation"></a>
+
+## Payment 应用基础工程（2026-09-12）
+
+- **Implemented：** `payment-orchestration-service` 新增标准 `paytech-payment-api / web / test` 三模块、Maven Wrapper 3.9.16 与统一 Parent/BOM、Java 25 启动入口。Web 复用公共 MVC Request ID/Problem/元信息日志，只开放 Health/Info/Prometheus，默认监听 `127.0.0.1:18103/payment`。详见[运行说明](../payment-orchestration-service/README.md)与[本次需求](../requirements/20260912/payment-应用初始化/requirement.md)。
+- **Verified：** 完整 `clean verify` 14/14，0 失败/错误/跳过；真实 main/HTTP 验证健康探针、管理端点白名单、统一错误与日志边界。可执行 JAR 默认端口 8 路径 smoke 通过，测试进程已停止；制品无测试及数据库/中间件依赖，Test 不打包。需求站 136/136；JaCoCo 只覆盖启动类 3/3 行，不能外推到尚未实现的业务。详细证据见[交付记录](../requirements/20260912/payment-应用初始化/delivery.md)。
+- **Deployed：** 无。仅本机短时验证，未提交、推送或发布制品。
+- **Pending：** Payment 业务、Card、渠道适配、外部 Owner 集成与持久化随后续用例实施。本次没有修改 Commerce、Payment PDManer/Schema，也没有执行 SQL 或添加 Gateway 配置。
+
+<a id="payment-channel-terminology"></a>
+
+## 支付渠道命名统一（2026-09-13）
+
+- **Implemented：** 按[Channel 决定](./decisions/2026-09-13-payment-channel-terminology.md)同步现行支付渠道术语、Payment/Finance/Risk 生成源、PDManer、完整人工 Schema、模型/场景测试及 Owner 文档；CCT 模型只改支付相关注释，Commerce 模型不变。Platform、Gateway、Operations BFF/Web 的 Route Channel、Security Profile、Authorization Mode 使用 `CHANNEL_CALLBACK`。Payment 四业务模块 Owner 映射与 Card 接口/字段草稿同步命名，没有创建空业务 JAR 或实现 Card 交易。
+- **Verified：** 对改名前六份工作区模型逐项比较，内部 ID、图形连线和所有非命名结构保持；批准的 23 张表名、79 处列名、51 个索引名逐项匹配且无碰撞，新物理名称均不超过 32 字符。模型字节与独立结构摘要按比较后的结果更新，外部业务 ID、金额、状态机和幂等身份不变。
+- **Verified：** JDK 25 Gateway `verify` 1,199/1,199、Operations BFF `verify` 1,052/1,052；Platform 编译器与枚举归属测试 22/22；Operations Web 900/900 与生产构建；需求站 136/136 与构建通过。Java 交叉仓库验证使用临时的第一方 Maven 缓存，未覆盖开发者共享制品。
+- **Known verification gaps：** 全量 PDManer/场景测试 533 项中 518 通过、15 失败；在隔离副本恢复改名前生成源、模型与文档后，同样复现这 15 项，没有新增失败。它们属于 Finance 旧 `operating_entity_id` 断言、Risk 旧 72/74 表清单、旧 Operand 字段及初始化 DML 清单。Platform `GatewaySnapshotHttpAutoTest` 因未注入 `PLATFORM_SUPPORT_TEST_DB_PASSWORD` 而无法取得本地数据库保护，未完成该 HTTP/数据库验证；未读取或改写 `.env.local`，未修改数据库结构或环境配置。
+- **Not deployed / Pending：** 本次没有执行任何数据库迁移、配置真实渠道、部署、发布、提交或推送。运行环境仍需分别核对旧表/列/索引、Finance 目录及既有 Journal/Hash、Risk 争议来源、Gateway Snapshot/回调枚举的切换；历史原报文与外部固定字段保留。Payment 业务执行与 Card 仍按各专项推进，不能从命名完成推断支付能力上线。
+
+命令、基线对照与保留项说明见[交付记录](../requirements/20260913/payment-支付渠道命名统一/delivery.md)。
+
+
+<a id="payment-business-modules"></a>
+
+## Payment 四业务模块工程拆分（2026-09-13）
+
+- **Implemented：** 在原 api/web/test 基础上加入 `paytech-payment-execution / routing / channel / card` 四个普通 JAR，形成七子模块 reactor；父 POM 管理内部版本，Web 作为唯一应用组合根直接依赖 API 和四业务模块，Test 只直接依赖 Web。各业务 JAR 有根包说明与 Maven Enforcer 依赖隔离规则。范围依据见[本次决定](./decisions/2026-09-13-payment-module-scaffolding.md)；[模块方案](../requirements/20260913/payment-业务模块划分/technique.md)维护业务职责与表 Owner。
+- **Verified：** JDK 25、Maven Wrapper `clean verify` 19/19，0 失败/错误/跳过：原 14 项应用真实 HTTP 回归及 5 项模块边界测试。拆分前的新门禁因仅有三模块而失败；拆分后通过。隔离副本加入 `Execution → Channel` 依赖后，Enforcer 明确报告该 JAR 被禁止，未改主工作区或共享制品。
+- **Verified：** Web `-exec.jar` 含 API 与四个普通业务 JAR，不含测试制品；业务 JAR 不含独立启动入口。实际打包应用以随机 Loopback 端口完成 Health/Liveness/Readiness、Info、Prometheus 和未实现 `/payments` 的六路径检查，Request ID 保持，测试进程已停止。30 张当前模型表与架构测试的唯一 Owner 清单完全对应，Payment 数据库工件与本轮开始时逐字节一致。
+- **拆分阶段的边界：** 当时四业务模块为工程骨架，没有可搬迁的既有业务类；后继 Execution 研发另见下一节。路由、资金 Action、跨模块事务、回调重放、Card 加密/权限与 NI 集成仍按各业务专项实现并验证；模块目录与同进程 JAR 不是运行时卡数据隔离证明。
+- **Not deployed：** 本轮未执行 SQL、配置基础设施、部署、发布、提交或推送。业务数据库和跨系统合同未改变。
+
+可复现构建命令与原始证据见[服务 README](../payment-orchestration-service/README.md)和[交付记录](../requirements/20260913/payment-业务模块划分/delivery.md)。
+
+<a id="payment-execution-implementation"></a>
+
+## Payment Execution 本地切片研发（2026-09-13，Token 修订中，待完整回归）
+
+- **当前修订授权与范围：** 用户确认[交易级工具 Token 合同](../requirements/20260913/payment-Execution设计/instrument-token-amendment.md)并进入 Payment 研发。已新增 PI-I00/PI-I01，EX-I05 改为统一 `pay`，各接口独立 Processor；方式共同命令只携带内部 Token ID，Card Flow 通过受控 Owner 完成首次认证或资金动作。其余 Owner 仍为测试 Mock + TODO；本次未适配 Commerce 实际代码、未实现真实 Card 材料存储或 Wallet/Crypto。
+- **数据与恢复实现：** Attempt 直接关联 `t_payment_instrument_token`，移除旧 Instrument DAL 与 CardReference。原来源作用域、固定期限、唯一绑定、撤销、T3 发送门禁和现有补偿任务清理已编码；Owner 材料准备、领取、清理及发送在事务外。SUBMITTED/UNKNOWN 只查询原动作，工具到期不会阻断原 Capture/Void/Refund。源码与场景导航见[修订研发检查](../requirements/20260913/payment-Execution设计/instrument-token-development-checks.md)。
+- **本次已运行验证：** JDK 25 限制五个测试类的 `verify` **36/36**，涵盖应用启动、实际本地 HTTP、合同、Flow Registry、资金纯规则及架构，所有测试源码可编译，七模块完成打包；模型/场景 **21/21**。修复了资源锁不支持两层属性表达式导致的启动失败，改为显式 Intent ID 并在 Processor 内重验。新空库工件的 13 条 CREATE 逐字对应正式 Schema，迁移 Token CREATE 同样一致。[验证证据](../requirements/20260913/payment-Execution设计/assets/instrument-token-development-verification.json)，日志 `/tmp/payment-token-review-verify.log`、`/tmp/payment-token-model-final2.log`。这不是完整 `clean verify`、新覆盖率或数据库业务通过的证据。
+- **实际数据库状态：** 2026-09-13 13:28 UTC 只读核对本机 `mor_payment` 仍为旧 **13 表/192 列/58 个索引（含主键）**，逐表真实 COUNT 均为 0，新 Token 表不存在。[只读证据](../requirements/20260913/payment-Execution设计/assets/instrument-token-local-preflight.json)。[空旧表迁移](../requirements/20260913/payment-Execution设计/db/instrument-token-empty-migration.sql)已准备，ALTER/DROP 与临时本地恢复检查的独立授权尚待回复；未执行该迁移、未做备份恢复演练。生成的正式模型已改为本节上表所示目标，不能据此推断数据库已变更。
+- **尚待完成：** 20 项新增 Token 业务测试及已适配的并发、幂等、崩溃恢复等完整数据库回归尚未执行。获 SQL 授权后需重新确认空表、备份并验证恢复、人工迁移、核对物理结构，再运行完整回归和覆盖率检查；若已出现数据则停止空表方案。综合验收、真实 Owner/渠道、Broker 与调度仍未完成，未推送或部署。
+
+- **本地版本检查点（用户要求“先帮我提交一版本吧”）：** 保存当前 Payment 实现及此前全系统 Channel 命名工件；其他任务的未提交改动排除。当前源码重新运行限制范围 `verify` **36/36**，Commerce 公开合同 **13/13**，需求站构建及 **136/136**、修改文件 ESLint 通过。同步修正需求站中旧 Payment 模型统计断言。全量模型/场景 **518/533**，15 项失败名称与已保留的改名前基线完全一致，无新增失败；不把全量模型检查记为通过。[提交前验证证据](../requirements/20260913/payment-Execution设计/assets/checkpoint-verification.json)。本版本保留 Processor 间调用和通用 Execution 内的 Card 动作选择，刚讨论的职责调整尚未实施；Token SQL 和完整数据库回归继续待办。本次授权仅为本地提交，不包含推送、部署或 SQL 应用。
+
+- **应用仓库本地提交已完成：** payment-orchestration-service `d35bd4bb`；client-contract-service `a25a11a7`；finance-service `c5476030`；risk-compliance-service `c989f0c7`；platform-support-service `e69cff4a`；commerce-service `e69cacba`。其中 Payment 保存当前 Execution/Token 版本，其他五库仅保存此前批准的 Channel 命名关联改动；没有推送、创建分支、部署或执行 SQL。具体父提交与树摘要见[提交证据](../requirements/20260913/payment-Execution设计/assets/checkpoint-commits.json)。
+
+### 旧 SubmitCard 切片及 Processor 重构历史证据
+
+以下记录属于 Token 修订前的源码与 Schema，保留其验证范围；其中 102 项完整回归及覆盖率不能验证当前工具 Token 行为。
+
+
+- **授权与 SQL：** 用户在研发确认后，再次允许读取 Payment/Redis 的本机连接配置，并在 13 张目标表均不存在时应用空库 SQL。只读确认 `127.0.0.1:13306/mor_payment` 为零表后，人工执行[13 表创建工件](../requirements/20260913/payment-Execution设计/db/execution-create-empty-schema.sql)。实际 **13 表/192 列/58 个索引（含主键）**的列序、类型、默认值、空值、注释及索引定义逐项等于正式模型；未执行旧表 ALTER/DROP 或其他系统 SQL。[执行与前置证据](../requirements/20260913/payment-Execution设计/assets/local-sql-application.json)。此处只表示本机 Execution 相关 13 表已创建，完整 Payment 30 表未应用。
+- **实现范围：** Execution 的来源 Binding/单向关闭、Intent、原 submission/Attempt、AUTHENTICATE/资金/QUERY Action、退款预占、原授权 Capture/Void、Reversal 决策绑定、Pricing Fact、首笔成功唯一性和重复扣款补偿。Web 提供 12 个内部 HTTP 接口、短事务命令定位、Redis 资源锁、Card 首次流程及四类可靠 Handler；业务与任务同事务，外部 Owner 调用在事务外。没有消费者交互表或数据库流程编排。
+- **方式抽象：** `PaymentMethodFlow<C>` / `PaymentFlowRegistry` 按精确方式与用例匹配；Card 使用专属输入，非 Card 测试替身不携带 3DS 字段。生产 Owner 默认不可用；稳定 Card 引用受理前校验，瞬时材料不进入库、Hash、任务。其余 Owner 为测试 Mock + TODO，未实现 Wallet/Crypto。
+- **本轮修复：** 补齐 Redis 显式超时；可信结果核对原支付方式并拒绝非二进制挑战事实；统一 Problem Writer 清空响应后恢复 `no-store`；恢复 Handler 不使用无业务含义的占位子类型分流。test 显式依赖其直接消费的 api/execution，覆盖率不再只统计 Web；未改变生产模块依赖。
+- **接口评审重构：** 按用户要求移除两个集中 Processor，12 个接口各自拥有用例入口；七个写用例的短事务受理分别使用独立锁代理。Controller/Converter 位于 `ext/rest/execution`，Mapping 只由 API 声明；Converter 无数据库/外部依赖，Processor 使用应用模型。命令绑定、业务查询与原渠道请求分别采用 Service + Impl；Card 首次流程拆为明确阶段，闭集枚举按稳定 Code 转换。接口路径、请求 Hash 字段序列、锁 Key、金额和状态合同不变。[具体映射与边界](../requirements/20260913/payment-Execution设计/design.md#11-接口与-processor-一一对应)。
+- **开发检查：** 独立 Processor 重构后，JDK 25 七模块 `clean verify` **102/102**，0 失败/错误/跳过。包括 15 项生产装配/HTTP、模块边界、Card 与后续资金操作、权限/严格输入、四类 Handler 独立入口、真实 Scanner/Dispatcher 的并发 Claim/过期 Lease/次数耗尽、实际 Redis 锁过期、事务回滚，以及两种真实 JVM 退出后重启恢复。外部调用 Probe 检查无活动数据库事务；发送前退出保持 UNKNOWN，发送后退出查询补记成功，两者资金发送均仅一次。[本轮逐类结果、源码摘要与覆盖率](../requirements/20260913/payment-Execution设计/assets/processor-refactor-verification.json)，原日志 `/tmp/payment-processor-final-verify.log`；[此前 98 项基线](../requirements/20260913/payment-Execution设计/assets/development-verification.json)保留为历史证据。新增检查覆盖接口/Processor 一一对应、协议与查询分层、稳定 Code 解析及原提交 Hash/只读重放。
+- **打包与数据清理：** 可执行 `-exec.jar` 在随机本地端口启动，健康 UP；正式 Owner 未配置的 Execution 返回 503 且带 `no-store`，检查后进程关闭。[本轮制品证据](../requirements/20260913/payment-Execution设计/assets/processor-refactor-packaged-smoke.json)。每个用例清理其自身 Client 数据；本轮早期遗留的 46 个合成 Client 精确清理后，13 张表均为零行，无业务事实遗留。[清理证据](../requirements/20260913/payment-Execution设计/assets/local-fixture-cleanup.json)。
+- **覆盖率与后续门禁：** API/Execution/Web 完整聚合指令 **88.955351%（12492/14043）**、分支 **66.463415%（872/1312）**；行覆盖率 **91.644909%（1755/1915）**。指令与分支仍未达到项目 90% 目标；`clean verify` 成功不代表该目标已满足。[21 组验收映射](../requirements/20260913/payment-Execution设计/development-checks.md)区分已运行代表场景与待综合核对项。阶段 5 尚未进入；真实 XXL Admin 调度、Broker Confirm/正式 Wire、真实 Owner/渠道、非空旧库迁移均未验收。同 key 保证幂等的重发优化未启用，当前 SUBMITTED/UNKNOWN 统一只查询原动作。
+- **模型与文档基线：** 前一轮交付的 Payment 模型/场景 **21/21**、需求站点 **136/136** 和 105 个本地链接检查保留为历史证据；本次 Processor 重构未改模型、SQL 或需求站点源码。[静态检查摘要](../requirements/20260913/payment-Execution设计/assets/document-checks.json)，日志 `/tmp/payment-delivery-model-final.log`、`/tmp/payment-delivery-site-final.log`。
+- **本轮文档检查：** 接口/Processor 映射、交付记录、README 与本节的 72 个本地链接/锚点通过，37 个本轮 Web 源码文件无行尾空白，工作区及 Payment `git diff --check` 通过。[静态检查](../requirements/20260913/payment-Execution设计/assets/processor-refactor-document-checks.json)。最终回归及制品检查后只读确认 13 张本机表仍为零行。
+- **状态边界：** 这是已完成本轮研发及开发回归的本地模拟切片，综合验收未完成。没有提交、推送、test/生产部署、真实卡支付或其他 Owner 接入。
+
 
 <a id="platform-config-management-20260913"></a>
 
