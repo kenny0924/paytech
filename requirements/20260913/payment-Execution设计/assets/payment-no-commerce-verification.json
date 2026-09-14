@@ -1,0 +1,167 @@
+{
+  "recorded_at_utc": "2026-09-14T05:43:57.630141+00:00",
+  "payment_base_commit": "dbc882e35ae9470b1c13f973bd85c67fd09d0fa2",
+  "scope": "Remove Payment to Commerce port and all three call sites; upstream supplies immutable consumer country at Intent creation; local pricing and recovery use it. Preserve prior uncommitted Caller removal.",
+  "red_phase": {
+    "tests": 18,
+    "failures": 2,
+    "errors": 0,
+    "reason": "Commerce outbound port exists and CreateIntent contract lacks consumerCountryCode.",
+    "log": "/tmp/payment-no-commerce-red.log"
+  },
+  "final_verification": {
+    "phase": "selected clean verify",
+    "exit_code": 0,
+    "suites": [
+      {
+        "name": "com.paytech.payment.auto.architecture.PaymentModuleBoundaryAutoTest",
+        "tests": "9",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentCommandContractAutoTest",
+        "tests": "10",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentFlowRegistryAutoTest",
+        "tests": "2",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentRulesAutoTest",
+        "tests": "3",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0"
+      }
+    ],
+    "tests": 24,
+    "all_test_sources_compiled": true,
+    "seven_modules_packaged": true,
+    "removed_ports_absent_from_jars": true,
+    "log": "/tmp/payment-no-commerce-final.log"
+  },
+  "database_gate": {
+    "attempted_test": "PaymentApplicationAutoTest#test_creationAcceptsUpstreamFactsWithoutCommerce",
+    "exit_code": 1,
+    "tests": 1,
+    "errors": 1,
+    "reason": "Read-only prerequisite: Unknown column 'consumer_country_code' in 'field list'. Application booted; no business request executed.",
+    "log": "/tmp/payment-no-commerce-db-gate.log",
+    "read_only_state": {
+      "intents": 0,
+      "bindings": 0,
+      "commands": 0,
+      "instrument_token_tables": 0,
+      "consumer_country_columns": 0
+    },
+    "ddl_executed": false,
+    "full_database_regression_executed": false
+  },
+  "model_and_schema": {
+    "tests": 21,
+    "failures": 0,
+    "log": "/tmp/payment-no-commerce-model.log",
+    "generator_check": "passed",
+    "tables": 30,
+    "fields": 403,
+    "execution_create_tables": 13,
+    "execution_create_columns": 196,
+    "all_slice_creates_equal_full_schema": true,
+    "country_alter_equals_full_schema_column": true
+  },
+  "static_checks": {
+    "new_method_audit_findings": [],
+    "create_operation": "CREATE_INTENT_V2",
+    "create_hash_change": "Append consumerCountryCode after original fields; old V1 projection is not reinterpreted.",
+    "changed_markdown_links_checked": 124,
+    "missing_links": [],
+    "xml_final_wrap": "Whitespace-only adjustment verified by normalized XML comparison after clean verify."
+  },
+  "source_sha256": {
+    "docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md": "d79d9617638c9673ae78c619ac4afdb85d9c3816b7bd8fcf2d01ed21b3bc4ae8",
+    "docs/database/payment-orchestration.pdma.json": "e7ac0d8bc144da53b7f864f18ddb768cce386a3ff0a9dd47805c111edd91f12b",
+    "docs/database/sql/payment-orchestration-schema.sql": "1b3170cd6bec60ccdba3618c0596cab6d0cf200531ba643b13f8447b4776ded7",
+    "paytech-payment-api/src/main/java/com/paytech/payment/api/execution/PaymentExecutionModels.java": "5d2ad69ee121a21d851ab7e4be1695dde7242e81c9d8409bae49758bee6b773d",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/dataobject/PaymentIntent.java": "f315469b11c45f214315af32ce2ff43e8994d569321e52999b4d806914a82955",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/domain/ExecutionCommands.java": "6d9b650d81c381a1b1de624f5b72fc2f8a0770cd3f626669a78804550b1dee0c",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/domain/ExecutionSnapshots.java": "bac24fc486d1cc5bbcbb914f5f9841933008a82c814919f3592e5cd0a38fd2f2",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/ExecutionSnapshotConverter.java": "e254fbf512bb0f44dac2e3ba7c7958fbf7fb6480dcb464f776041abdd85c6e34",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/PaymentIntentServiceImpl.java": "48762e4e29a993e440acfe094b4514ce673bfe2fcf9d929d78e4c6efb4840e0d",
+    "paytech-payment-execution/src/main/resources/mapper/execution/PaymentExecutionMapper.xml": "6636b0dd0f46c749620c7ff984939d2a791f759441ad72e39261ee87fea753a0",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/PaymentApplicationAutoTest.java": "7b6603a13ffa490eba7924c19c723cbda8963102ac09eec0b136ea5c64ef4989",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/architecture/PaymentModuleBoundaryAutoTest.java": "f7aa56d2d81d20ea8004034a138eb92da19bad3d9fe75674e30574dc902bb8b3",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentCommandContractAutoTest.java": "da0c1079c5b49a0aeef7fa2338ed446d8e196069dab8ef43fb75d8fc190115ff",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentExecutionApiAutoTest.java": "5c199ed076913f85f9d8b85335c7bc5a11e10360e7e8d9474348e84452c1206f",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentInstrumentAutoTest.java": "7a39f92981eb2d48545301501460ae76e876727dd9a94d496db876f2d09599e7",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentTransactionAutoTest.java": "b64c9fb9f2884785df8d59e53af67da96591036e4b3cc187d0bb96e09260364d",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/ExecutionAutoTestBase.java": "714cad09281ff3c797e52bb46fa54a5c53e118ad7c7a422adf04598708b18028",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/ExecutionInfrastructureInitializer.java": "8a03d657a4bf38b304dc66d7b901d247dc8bb92c79662ea5f011dcdb4c79c5b3",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/ExecutionOwnerMocker.java": "0c62e7233d480eb51ee20c9feac83ab9124404ef807641b35806f408eaf55462",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/ExecutionRequestBuilder.java": "976830e49d7423f0f75a9da833afaf27c390063e4eda1416d2e2e16ab72aab3f",
+    "paytech-payment-web/src/main/java/com/paytech/payment/configuration/ExecutionDependencyConfiguration.java": "f6dd676246bb4c91a319b14c173cb4f0f7c6e2d245a3fa3eadb48b2833bf182e",
+    "paytech-payment-web/src/main/java/com/paytech/payment/domain/execution/CommandIdentity.java": "9c2fd954bb55298f46fd0ae578c199465008725435f37d793c67629f8ac41c21",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/ExecutionRequestConverter.java": "11bfceb00ad6a2271ccd6c29048f8f913b1c1f0ef35fda97316b52fd3b0dcc0c",
+    "paytech-payment-web/src/main/java/com/paytech/payment/integration/execution/ExecutionPorts.java": "8180df4ce1c09a5bd7c63605c7c017926683c7c99fe9cbfdf6c0326326280222",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CapturePaymentProcessor.java": "814f0121dcd4e1f8ea6768fe2eddf5d4527d7094652746e600e02400bc7b5918",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ClosePaymentIntentCreationProcessor.java": "38124ddd8f9726091cfef0798bb4dc31cdc7070f9136933323ee3037fcb8e34a",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CreatePaymentIntentProcessor.java": "d6bb68c3fb1a52aaf1e4a85b349368278bb183c7d6819862aa0f865ace47d59a",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CreatePaymentRefundProcessor.java": "a6b5af619a63b2119971d00264c89b005f8e365796b6340f1140a17d39281f40",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentActionProcessor.java": "33578e4d04b6bef38236130886a744758629198779796bdf2fbd30f00ee6c127",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentIntentProcessor.java": "31a20cc6408b6fa9482b012ad47e1a667b268b209e90792a60c4fe9a11eb4553",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentPricingFactProcessor.java": "bf12007dd045739525b72854aa3d635c697d49d05bd0836d0bbc7dea33d63498",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentRefundProcessor.java": "55061113eb903e760a27963cb4a4f59483d9ad7a1f4ea11595cceb23531f18b7",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentSubmissionProcessor.java": "153df1bca9dadd3d77be79ce2b9d0c7b966299119c215f8500e4e0b2dafa0372",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PayProcessor.java": "d69e1abd1777ab14b42b25b8d628d368b99d330a2f3eac260b0c62c3e82d512a",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PaymentActionProcessor.java": "414e974a191ab0a3a4bb542f48e684fdb6be9e112be17751ee9ad5b740b6a80f",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PrepareCardInstrumentProcessor.java": "58aab6eb6e732866070793d223ef838ed00b36f73f7bd64fb75418c35a61816b",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ResolveCardIdentityProcessor.java": "ce8e4d5e365805365ce7d1c34ede8c0b2d15405cf7ab235083dda69861ade249",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ReversePaymentProcessor.java": "fb03da289a7b81a46d6e2c9aeb309482bfc8a5a94a678960b5f87bf07fb3307d",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/TerminatePaymentIntentProcessor.java": "ac645bf81603bbb2a076090450efde54abfd213fb65b6c5e7287f388547972d4"
+  },
+  "limitations": [
+    "Token and consumer country SQL remain unexecuted. Database HTTP/payment/recovery tests compiled but not verified on the new schema.",
+    "Real Commerce upstream API adaptation, Risk/Card/Routing/Channel and MQ owner integration remain TODO.",
+    "Nonempty old schema/command environments require a separately reviewed compatibility migration.",
+    "Local commit details are recorded in commit_checkpoint; no push or deployment."
+  ],
+  "requirements_site": {
+    "tests": 136,
+    "failures": 0,
+    "exit_code": 0,
+    "build_passed": true,
+    "log": "/tmp/payment-no-commerce-site.log"
+  },
+  "commit_checkpoint": {
+    "recorded_at_utc": "2026-09-14T06:10:16.395817+00:00",
+    "payment_commit": "fbe247f45d8bc31eb6ff06adf0711ecf24428b3a",
+    "verified_same_sources": true,
+    "java": {
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "log": "/tmp/payment-trust-commit-verify.log"
+    },
+    "model_and_scenarios": {
+      "tests": 21,
+      "failures": 0,
+      "log": "/tmp/payment-trust-commit-model.log"
+    },
+    "requirements_site": {
+      "tests": 136,
+      "failures": 0,
+      "build_passed": true,
+      "log": "/tmp/payment-trust-commit-site.log"
+    },
+    "sql_executed": false,
+    "push_or_deployment": false
+  }
+}

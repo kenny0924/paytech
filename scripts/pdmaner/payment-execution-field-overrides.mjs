@@ -1,5 +1,8 @@
 /** 已批准 Execution 字段的表级精确注释、默认值与排序规则。 */
 export const EXECUTION_FIELD_OVERRIDES = Object.freeze({
+  "payment_intent.consumer_country_code": {
+    "comment": "Commerce 创建 Intent 时传入并冻结的消费者国家，用于支付定价；后续不得覆盖。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
+  },
   "payment_intent_binding.payment_intent_binding_id": {
     "comment": "来源订单与支付意图创建资格绑定的本库 Snowflake 唯一标识。"
   },

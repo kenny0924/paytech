@@ -17,8 +17,8 @@ const paths = Object.freeze({
 const coreArtifactPaths = Object.freeze([paths.metadata, paths.generator, paths.model]);
 const expectedTemplateDigest = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 // Approved byte-for-byte and structural digests for the 30-table model.
-const expectedModelDigest = "972c215e6d391e8ee5b1f760c618c541f5d0e53029d108e664bc8f0df56d8a32";
-const expectedStructuralDigest = "de1daabe041da7e8006ae126888c61943457f09d374bf906eb10226ea0816761";
+const expectedModelDigest = "e7ac0d8bc144da53b7f864f18ddb768cce386a3ff0a9dd47805c111edd91f12b";
+const expectedStructuralDigest = "8694696e038b1efa151f0fa50434770f1ab85d635d88e8435627d6e9f9708b93";
 
 // Test-owned oracle. It must never import a generator manifest or parse Markdown.
 const APPROVED_FIELD_MANIFEST = String.raw`
@@ -180,6 +180,7 @@ partner_share_version_id BIGINT N
 platform_charge_version_id BIGINT N
 industry_code VARCHAR(64) NN OPEN(CCT/Commerce frozen classification)
 mcc_code VARCHAR(4) NN OPEN(CCT/Commerce frozen classification)
+consumer_country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2)
 amount DECIMAL(24,8) NN
 currency CHAR(3) NN OPEN(ISO 4217)
 intent_status VARCHAR(64) NN {REQUIRES_PAYMENT,PROCESSING,REQUIRES_ACTION,SUCCEEDED,FAILED,EXPIRED,CANCELLED}
@@ -1047,7 +1048,7 @@ test("Payment test-owned Oracle is internally complete for all 30 tables", () =>
   assert.deepEqual(approvedFields.map((table) => table.defKey), approvedTableNames);
   assert.ok(approvedFields.every((table) => table.fields.length > 1));
   assert.deepEqual([...parseIndexes().keys()], approvedTableNames);
-  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 402);
+  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 403);
   const oracleIndexes = [...parseIndexes().values()].flat();
   assert.equal(oracleIndexes.filter((index) => index.unique).length, 45);
   assert.equal(oracleIndexes.filter((index) => !index.unique).length, 48);
@@ -1116,7 +1117,7 @@ if (physicalDecisionsReadyAtRegistration) {
 test("Payment Physical Decisions freezes current model totals and digests", () => {
   assertPhysicalDecisionsReady();
   assert.deepEqual(physicalDecisionManifest(), {
-    modelTotals: { tables: 30, fields: 402, uniqueIndexes: 45, accessIndexes: 48, relations: 67, oneToOneRelations: 8, diagramGroups: 7 },
+    modelTotals: { tables: 30, fields: 403, uniqueIndexes: 45, accessIndexes: 48, relations: 67, oneToOneRelations: 8, diagramGroups: 7 },
     templateSha256: expectedTemplateDigest,
     modelSha256: expectedModelDigest,
     structuralProjectionSha256: expectedStructuralDigest,
@@ -1292,7 +1293,7 @@ test("Payment model is deterministic and preserves seven diagram themes", async 
     assert.equal(new Set(diagramRelationIds).size, relationIds.length);
     const result = spawnSync(process.execPath, [paths.generator, "--check"], { cwd: workspaceRoot, encoding: "utf8" });
     assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-    assert.deepEqual(modelTotals(model), { tables: 30, fields: 402, uniqueIndexes: 45, accessIndexes: 48, relations: 67, oneToOneRelations: 8, diagramGroups: 7 });
+    assert.deepEqual(modelTotals(model), { tables: 30, fields: 403, uniqueIndexes: 45, accessIndexes: 48, relations: 67, oneToOneRelations: 8, diagramGroups: 7 });
 });
 
 test("Payment shared domains preserve the approved money, weight, time and currency precision", async () => {

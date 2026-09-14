@@ -389,6 +389,7 @@ export const OPEN_CODE_SOURCES = Object.freeze({
   "payment_attempt.payment_method_code": "Payment Method Catalog",
   "payment_attempt.status_reason_code": "Reason Catalog",
   "payment_pricing_fact.payment_method_code": "Payment Method Catalog",
+  "payment_intent.consumer_country_code": "ISO 3166-1 alpha-2",
   "payment_pricing_fact.consumer_country_code": "ISO 3166-1 alpha-2",
   "payment_pricing_fact.currency": "ISO 4217",
   "payment_pricing_fact.card_network": "Payment normalized card network catalog",

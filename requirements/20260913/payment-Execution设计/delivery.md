@@ -1,5 +1,9 @@
 # Execution 需求交付记录
 
+## 2026-09-14 移除 Caller
+
+用户明确要求“帮我去掉 caller 的逻辑”，并确定内部调用方完全可信。本次按[内部信任修订](./trusted-internal-amendment.md)移除授权端口与调用、由现有命令身份模型生成 Client 幂等空间，并保留全部业务资源归属及状态门禁。此请求授权相关代码、测试和文档修改，不沿用上一轮的提交授权；没有新增 API 或 Schema 变更，SQL、提交、推送、部署不在本次范围。实际结果统一见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 ## 2026-09-13 PI-I01 局部重构授权
 
 用户明确要求重构 `PaymentInstrumentController#prepareCardInstrument` 的调用链。本次限该 Controller 方法、对应单个 Processor 和相关检查，整理首次准备与原绑定重放的控制流；保持既有接口、业务合同、Hash、资源锁和本地事务原子性，不扩展其他支付入口。实现与实际验证范围见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)；本次请求未授权提交、推送或执行 Token 迁移 SQL。
@@ -152,3 +156,7 @@
 ## 本地版本检查点授权（2026-09-13）
 
 用户要求“先帮我提交一版本吧”，授权保存当前 Payment 研发和此前支付渠道命名关联工件。此次先保留现有结构，讨论中的 Processor 依赖与 Card 动作决策调整未实施；数据库 ALTER/DROP、完整数据库回归、推送和部署不随提交获批。提交与检查状态见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
+- 2026-09-14：用户明确 Payment 系统不允许调用 Commerce；在既有研发范围内按[调用方向修订](./payment-commerce-direction-amendment.md)移除所有 Commerce 出站端口，并补齐创建时传入/冻结国家及本地定价。实际检查与 SQL 待办只见当前台账；此次不提交、部署或执行 SQL。
+
+- 2026-09-14：用户明确要求“提交”，本地提交范围为上述 Caller/Commerce 依赖移除、国家冻结及关联模型、SQL、测试和文档；提交和复验证据见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。排除其他需求修改，未执行 SQL、推送或部署。

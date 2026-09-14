@@ -7,7 +7,7 @@
 ## 已交付代码边界
 
 - Execution：Intent/来源 Binding、原 submission/Attempt、AUTHENTICATE/资金/QUERY Action、退款额度、原交易引用、Pricing Fact、Duplicate Case、状态历史和 MyBatis 持久化。
-- Web：12 个内部接口、受信 Caller/Owner 端口、短事务幂等受理、Redis 资源锁、类型化方式流程、Card 首次流程及四类补偿 Handler。
+- Web：12 个内部接口、可信内部入口与业务 Owner 端口、短事务幂等受理、Redis 资源锁、类型化方式流程、Card 首次流程及四类补偿 Handler。
 - Test：真实 MySQL/Redis/HTTP/Scanner/Dispatcher；外部业务 Owner 为明确场景的状态替身。独立 JVM 在 T3 后直接退出，渠道合成事实保留在测试侧，重启后从数据库恢复原操作。
 - 模型与人工 SQL：按批准设计同步；空库创建工件和空旧表增量工件互斥。此次只应用前者，具体前置与执行摘要见台账。
 
@@ -36,7 +36,7 @@
 | V17 | PaymentExecutionApi：缺失 Pricing 后补齐，单收款事实 | 正式定价 Wire 与历史格式边界属 Owner TODO |
 | V18 | PaymentFactHandler、PaymentActionRecoveryHandler：模拟确认丢失后真实 Scanner 重投、稳定 eventId、过期最终 Lease 超限不再执行 Handler | 真实 Broker 未接入；退款 UNKNOWN 的次数耗尽组合 |
 | V19 | PaymentFlowRegistry、PaymentExecutionGuards、PaymentAttemptRecoveryHandler：非 Card 类型、重复/未匹配注册、恢复不重新路由 | 新 Wallet/Crypto 用例不在本期范围 |
-| V20 | PaymentTrustedResult、PaymentExecutionGuards、Handler 专项：跨 Client/渠道/Account/MID/OE/方式/金额/币种/key 拒绝；当前资格失败无首次发送 | 正式 Caller 与 Owner Wire/版本/期限验证属接入 TODO |
+| V20 | PaymentTrustedResult、PaymentExecutionGuards、Handler 专项：跨 Client/渠道/Account/MID/OE/方式/金额/币种/key 拒绝；当前资格失败无首次发送 | 业务 Owner Wire/版本/期限验证属接入 TODO；Caller 按[内部信任修订](./trusted-internal-amendment.md)移除 |
 | V21 | PaymentConcurrency、PaymentTransaction：实际 Redis Lease 失效后 CAS 保证单发送；业务与任务回滚；所有 Owner Probe 检查事务外调用 | 长时间并发压测、基础设施断连与运营恢复组合 |
 
 ## 本轮实现收敛

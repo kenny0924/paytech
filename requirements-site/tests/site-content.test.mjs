@@ -919,7 +919,7 @@ test("the current implementation ledger owns core model snapshots while entry do
   }
 
   assert.match(currentImplementationSource, /\| Commerce \| 15 \| 249 \| 24 \| 12 \| 15 \| — \| 4 \|/u);
-  assert.match(currentImplementationSource, /\| Payment Orchestration \| 30 \| 402 \| 45 \| 48 \| 67 \| 8 \| 7 \|/u);
+  assert.match(currentImplementationSource, /\| Payment Orchestration \| 30 \| 403 \| 45 \| 48 \| 67 \| 8 \| 7 \|/u);
   assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,109 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
   assert.match(currentImplementationSource, /\| Risk & Compliance \| 78 \| 944 \| 115 \| 80 \| 120 \| 9 \| 8 \|/u);
   assert.match(documentGovernanceSource, /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据/u);

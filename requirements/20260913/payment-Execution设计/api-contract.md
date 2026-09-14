@@ -7,11 +7,11 @@
 ## 1. 统一约定
 
 - 提供方为 Payment Web，业务 Owner 为 Execution。基础路径 `/payment-execution/v1`，仅私有 HTTP 的受信服务入口；不注册 Gateway、BFF、页面或公开 Callback URL。`*-api` 使用 Spring `@HttpExchange`。
-- 命令消费者为 Commerce；Card 提交最终经 Payment 专用 Card 入口转换。查询只向经授权的 Commerce/内部事实消费者开放。本期身份替身固定调用方和 Client 作用域；生产缺少真实调用方认证/授权装配时不可用，不能信任请求自行声明的 callerScope。
-- 每个请求包含必填 `clientId`（POST body / GET query）。服务核对真实调用方权限、资源所属 Client、来源订单及 Intent 的一致性；猜中 ID 不取得权限。跨作用域查询返回 404，未经认证/无能力权限分别 401/403。
+- 命令消费者为 Commerce，查询供可信内部事实消费者使用。按 [2026-09-14 内部信任修订](./trusted-internal-amendment.md)，Payment 信任内部调用方，不再提供 Caller 授权端口或逐次 capability 检查。Commerce 事实由上游请求传入，Payment 不反向调用 Commerce，详见[调用方向修订](./payment-commerce-direction-amendment.md)。
+- 每个请求包含必填 `clientId`（POST body / GET query）。服务核对资源所属 Client、来源订单及 Intent 的一致性；跨作用域查询返回 404。此内部信任约定不改变外部入口的认证授权。
 - ID 为正的十进制 String，最大 Java `long`，无前导零；金额 String，正数、普通十进制、最多 16 位整数和 8 位小数，必须满足当前币种允许精度；币种为已支持的大写 ISO 4217 code。`entityNo` 恰为 CHAR(5) 合法目录值，非调用者自由选路参数。
 - 时间为 UTC RFC 3339 String、最多微秒；枚举均为 String code，未知值拒绝。请求没有隐式业务默认值，未知字段拒绝；所有 ID/金额/时间 JSON 示例都用字符串。
-- POST 必须有 `Idempotency-Key`，1–128 字符，限定小写 ASCII 字母、数字、`:_-` 且以字母或数字开始；实际幂等作用域由服务身份确定。提交支付的 key 固定为 `submission:<sourceSubmissionId>`。
+- POST 必须有 `Idempotency-Key`，1–128 字符，限定小写 ASCII 字母、数字、`:_-` 且以字母或数字开始；服务端按 `client:<clientId>` 隔离幂等作用域，请求不能另行指定 scope。提交支付的 key 固定为 `submission:<sourceSubmissionId>`。
 - 所有读写响应 `Cache-Control: no-store`；本路径只做元数据日志（路径模板、耗时、状态、Request ID）。Card 引用、临时用卡引用、交互指令、网络原值不进日志。
 - 2xx 无通用包装。受理完成且事实已知用 200，已受理但执行中/UNKNOWN 用 202；GET 一律 200 返回观察到的事实。业务拒付属于已受理执行结果；结构/权限/幂等冲突属于 HTTP 错误。
 
@@ -51,7 +51,7 @@ GET 不建新 Attempt/Action、不推进状态、不调用有副作用的恢复�
 
 | 请求 | 字段及限制 |
 |---|---|
-| CreateIntent | `sourceType` 当前只允许 `COMMERCE_ORDER`；`sourceId`=Order ID；`sourceOrderContextId`；`entityNo`；`contextFormat` 必须 `TERM_PRICE`；`clientPricingVersionId`；`partnerShareVersionId?`；`platformChargeVersionId?`；`industryCode`；`mccCode` 4 位数字；`amount`；`currency`；`expiresAt` 必须晚于受理时间。Party 来源等资格由 Mock 预先配置，并验证商业版本组合；不得构造 Scope/Price 替代 ID |
+| CreateIntent | `sourceType` 当前只允许 `COMMERCE_ORDER`；`sourceId`=Order ID；`sourceOrderContextId`；`entityNo`；`contextFormat` 必须 `TERM_PRICE`；`clientPricingVersionId`；`partnerShareVersionId?`；`platformChargeVersionId?`；`industryCode`；`mccCode` 4 位数字；`amount`；`currency`；`expiresAt` 必须晚于受理时间；`consumerCountryCode` 必填、大写两字母。Commerce 先核验并传入冻结事实，Payment 执行本地校验与不可变检查，不回查 Commerce；不得构造 Scope/Price 替代 ID |
 | CloseCreation | `sourceType`、`sourceId`；即使从未创建 Intent 也记录关闭；若已有 Intent 只关闭新建/新尝试资格，返回该 Intent，不宣称资金终止 |
 | Terminate | `reason` 固定 `ORDER_CANCELLED` 或 `OPERATING_ENTITY_CLOSED`；关闭新尝试和初始资金发送资格，再按实际资金事实决定能否终止；已经授权需 Reversal，不静默 Void |
 | SubmitCard | `sourceSubmissionId`=Commerce command ID；`paymentMethodCode`=Routing/方法目录认可的精确 Card code；`paymentGoal` 为 `PAY_NOW` 或 `AUTHORIZE_ONLY`；`consumerContractId`；`consumerTermsAcceptanceId`、`refundPolicyAcceptanceId`、`privacyNoticeAcceptanceId`；`acceptanceCompletedAt`；`orderVersion`；`cardReference` ≤128 ASCII、不具备持有即用权限；`cardUseSessionRef?` ≤128、只在内存使用；`allowExecution` boolean。实际接口不接 PAN、CVV、Checkout Token、Channel 或 MID |
@@ -91,11 +91,11 @@ GET 不建新 Attempt/Action、不推进状态、不调用有副作用的恢复�
 2. `allowExecution=false` 只重放/查询；原身份不存在返回 404，不创建命令/Attempt/Action，也不触发 Card/Risk/Routing。true 仍受 Payment 的当前状态、关闭、OE、认证及用卡门禁约束。
 3. 同 scope/op/key 异请求返回 409；提交 ID 已属于另一 Intent/Client 返回 409（不泄露另一资源 ID）；即使用新 key，也不能绕开 sourceSubmissionId、source order、原授权 Capture、Commerce Refund 唯一约束。
 4. C 表只在单次短事务内记录“命令已受理及资源定位”，`SUCCEEDED` 不是资金成功；同 key 返回相同资源身份与当前状态，不承诺字节级响应不变。该响应可变化，不保存临时 nextAction。
-5. Request Hash 由 Payment 用固定、版本化的字段顺序和长度前缀 UTF-8 编码计算 SHA-256，字段取值规范化明确；不散列 raw card/CVV/临时指令。V1 操作类型带版本，编码：每个字段为 `字段名字节长度:字段名|值字节长度:值|`，null 值长度 `-1`、空值长度 `0`；数字/金额按本稿规范化，时间统一 UTC 微秒。SubmitCard 排除 `allowExecution/cardUseSessionRef/orderVersion`，其余 body 加路径 Intent ID 均参与；其他命令全部业务字段和路径 ID 参与。新编码需新操作版本及兼容读取，不能改变既有 key 的解释。本期不新增 Foundation canonicalization/命令幂等消费者迁移。
+5. 创建命令按[调用方向修订](./payment-commerce-direction-amendment.md)使用 `CREATE_INTENT_V2` 并追加 `consumerCountryCode`；旧 V1 不重写。Request Hash 由 Payment 用固定、版本化的字段顺序和长度前缀 UTF-8 编码计算 SHA-256，字段取值规范化明确；不散列 raw card/CVV/临时指令。V1 操作类型带版本，编码：每个字段为 `字段名字节长度:字段名|值字节长度:值|`，null 值长度 `-1`、空值长度 `0`；数字/金额按本稿规范化，时间统一 UTC 微秒。SubmitCard 排除 `allowExecution/cardUseSessionRef/orderVersion`，其余 body 加路径 Intent ID 均参与；其他命令全部业务字段和路径 ID 参与。新编码需新操作版本及兼容读取，不能改变既有 key 的解释。本期不新增 Foundation canonicalization/命令幂等消费者迁移。
 6. Hash 中金额先去除小数末尾零及无意义小数点，例如 100.00 与 100 统一为 100；ID 保留合法十进制格式，code 不做自由大小写修正；字段按本稿请求字段表顺序，clientId 最前、路径 ID 其次排列。认证引用、Risk 结果等后续派生字段不反过来改变原请求 Hash。
 7. 捕获/退款响应丢失后查原资源；外部调用超时不能当 503 引导新付款，已受理则返回 202 + 原身份 + UNKNOWN。
 
-HTTP 错误遵循[统一 Problem 合同](../../../agent-docs/decisions/2026-09-06-system-wide-rfc-9457-problem-details.md)：400 输入/未支持方式、401/403 身份权限、404 无匹配资源、409 幂等/资金状态冲突、503 受理前依赖不可用、500 未预期内部错误。`application/problem+json`，无包装、无 body status；必填 `type,title,detail,code,requestId,timestamp`，字段错误才有 `errors`，`X-Request-Id` 与 body 一致。细节不包含其他 Client 或卡引用。
+HTTP 错误遵循[统一 Problem 合同](../../../agent-docs/decisions/2026-09-06-system-wide-rfc-9457-problem-details.md)：400 输入/未支持方式、404 无匹配资源、409 幂等/资金状态冲突、503 受理前依赖不可用、500 未预期内部错误。`application/problem+json`，无包装、无 body status；必填 `type,title,detail,code,requestId,timestamp`，字段错误才有 `errors`，`X-Request-Id` 与 body 一致。细节不包含其他 Client 或卡引用。
 
 例如 409 使用 Foundation 通用 CONCURRENT_REQUEST 表达业务冲突，不为每一步创建专用 Exception：
 

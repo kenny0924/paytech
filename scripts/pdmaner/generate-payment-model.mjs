@@ -189,6 +189,7 @@ partner_share_version_id BIGINT N
 platform_charge_version_id BIGINT N
 industry_code VARCHAR(64) NN OPEN(CCT/Commerce frozen classification)
 mcc_code VARCHAR(4) NN OPEN(CCT/Commerce frozen classification)
+consumer_country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2)
 amount DECIMAL(24,8) NN
 currency CHAR(3) NN OPEN(ISO 4217)
 intent_status VARCHAR(64) NN {REQUIRES_PAYMENT,PROCESSING,REQUIRES_ACTION,SUCCEEDED,FAILED,EXPIRED,CANCELLED}
@@ -1212,7 +1213,7 @@ function validateMetadata(tables) {
     .filter((field) => field.openSourceHint)
     .map((field) => `${table.defKey}.${field.defKey}`)).sort();
   invariant(JSON.stringify(openMetadataKeys) === JSON.stringify(openManifestKeys), "Open-code metadata must exactly cover the manifest");
-  invariant(openManifestKeys.length === 56, `Expected 56 true open-code rows, found ${openManifestKeys.length}`);
+  invariant(openManifestKeys.length === 57, `Expected 57 true open-code rows, found ${openManifestKeys.length}`);
   for (const [key, value] of Object.entries(FIELD_METADATA)) {
     invariant(/[\u3400-\u9fff]/u.test(value.defName), `Field display name is not Chinese: ${key}`);
     invariant(/[\u3400-\u9fff]/u.test(value.description), `Field description is not Chinese: ${key}`);
@@ -1222,7 +1223,7 @@ function validateMetadata(tables) {
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
     tables: 30,
-    fields: 402,
+    fields: 403,
     uniqueIndexes: 45,
     accessIndexes: 48,
     relations: 67,

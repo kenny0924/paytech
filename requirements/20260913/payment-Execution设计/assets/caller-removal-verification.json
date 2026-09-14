@@ -1,0 +1,135 @@
+{
+  "recorded_at_utc": "2026-09-14T05:22:01.279815+00:00",
+  "payment_base_commit": "dbc882e35ae9470b1c13f973bd85c67fd09d0fa2",
+  "scope": "Remove Payment Caller port, fallback bean, fourteen Processor authorization calls and test Owner authorization; generate client:<clientId> command scopes in existing CommandIdentity.",
+  "red_phase": {
+    "suite": "PaymentApplicationAutoTest",
+    "tests": 24,
+    "failures": 7,
+    "errors": 0,
+    "expected_failures": "Five internal GET queries and two instrument endpoints expected business 404 but the old Caller returned 503.",
+    "log": "/tmp/payment-remove-caller-red.log"
+  },
+  "final_verification": {
+    "phase": "clean verify",
+    "selected_suites": [
+      {
+        "name": "PaymentApplicationAutoTest",
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentCommandContractAutoTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentFlowRegistryAutoTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentRulesAutoTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentModuleBoundaryAutoTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "exit_code": 0,
+    "all_test_sources_compiled": true,
+    "full_token_regression": false,
+    "log": "/tmp/payment-remove-caller-final.log",
+    "jar_has_removed_caller_class": false
+  },
+  "requirements_site": {
+    "passed": 136,
+    "failed": 0,
+    "exit_code": 0,
+    "log": "/tmp/payment-remove-caller-site.log"
+  },
+  "static_checks": {
+    "command_hash_projections_unchanged": [
+      "TerminatePaymentIntentProcessor.java",
+      "ClosePaymentIntentCreationProcessor.java",
+      "CreatePaymentIntentProcessor.java",
+      "PayProcessor.java",
+      "CapturePaymentProcessor.java",
+      "PrepareCardInstrumentProcessor.java",
+      "CreatePaymentRefundProcessor.java",
+      "ReversePaymentProcessor.java"
+    ],
+    "resource_lock_annotations_unchanged": [
+      "PaymentActionProcessor.java",
+      "PrepareCardInstrumentProcessor.java",
+      "PayAcceptanceProcessor.java",
+      "TerminatePaymentIntentAcceptanceProcessor.java",
+      "CreatePaymentRefundAcceptanceProcessor.java",
+      "CreatePaymentIntentAcceptanceProcessor.java",
+      "CapturePaymentAcceptanceProcessor.java",
+      "ReversePaymentAcceptanceProcessor.java",
+      "ClosePaymentIntentCreationAcceptanceProcessor.java"
+    ],
+    "no_production_caller_interface_or_invocations": true,
+    "new_method_audit_findings": []
+  },
+  "database": {
+    "before": {
+      "commands": 0,
+      "intents": 0
+    },
+    "after": {
+      "commands": 0,
+      "bindings": 0,
+      "intents": 0,
+      "instrument_token_table_count": 0
+    },
+    "http_business_tests": "Close source creation through real HTTP/Redis/production transaction/Mapper; replay, conflicting payload, per-Client scope isolation, ownership rejection and command rollback; fixtures cleaned by their generated Client IDs.",
+    "schema_changes": false,
+    "token_specialized_tests_compiled": 21,
+    "token_specialized_tests_executed": false
+  },
+  "source_sha256": {
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/PaymentApplicationAutoTest.java": "229c6fd2cee1e928e181ab63b3ef656b1e900ad828008d628b628fc2208d5010",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentCommandContractAutoTest.java": "bd0b70473fda2fa3cc71b19948a1c346de7f304a48c482e5f9dbfa9b0b1acfbd",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentExecutionApiAutoTest.java": "0404e236185c4eecebc79367b35a27ef0802a94419303c0d26c7a4ff7cab764c",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentInstrumentAutoTest.java": "7a39f92981eb2d48545301501460ae76e876727dd9a94d496db876f2d09599e7",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/ExecutionAutoTestBase.java": "714cad09281ff3c797e52bb46fa54a5c53e118ad7c7a422adf04598708b18028",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/ExecutionOwnerMocker.java": "35c947c0bca5814da407273b8ca2c9fa4bbbbf9147d63d258c0abd26ede4fc34",
+    "paytech-payment-web/src/main/java/com/paytech/payment/configuration/ExecutionDependencyConfiguration.java": "512c21433bbabc54cca3442a24e2ad17bf628839baf154ba363cf1b6ec2d0593",
+    "paytech-payment-web/src/main/java/com/paytech/payment/domain/execution/CommandIdentity.java": "9c2fd954bb55298f46fd0ae578c199465008725435f37d793c67629f8ac41c21",
+    "paytech-payment-web/src/main/java/com/paytech/payment/integration/execution/ExecutionPorts.java": "6cfa1a58ada191683275ab424bf42e7473375ee4840ae08ad19366413687a8c3",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CapturePaymentProcessor.java": "814f0121dcd4e1f8ea6768fe2eddf5d4527d7094652746e600e02400bc7b5918",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ClosePaymentIntentCreationProcessor.java": "38124ddd8f9726091cfef0798bb4dc31cdc7070f9136933323ee3037fcb8e34a",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CreatePaymentIntentProcessor.java": "684781b50530d9c80b83a353a535e386c73f371f7b255f07a458e3a49cc93bbc",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CreatePaymentRefundProcessor.java": "a6b5af619a63b2119971d00264c89b005f8e365796b6340f1140a17d39281f40",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentActionProcessor.java": "33578e4d04b6bef38236130886a744758629198779796bdf2fbd30f00ee6c127",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentIntentProcessor.java": "31a20cc6408b6fa9482b012ad47e1a667b268b209e90792a60c4fe9a11eb4553",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentPricingFactProcessor.java": "bf12007dd045739525b72854aa3d635c697d49d05bd0836d0bbc7dea33d63498",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentRefundProcessor.java": "55061113eb903e760a27963cb4a4f59483d9ad7a1f4ea11595cceb23531f18b7",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentSubmissionProcessor.java": "153df1bca9dadd3d77be79ce2b9d0c7b966299119c215f8500e4e0b2dafa0372",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PayProcessor.java": "1547968ca709fe6cf281400ef4b1dd721b7705aa1ef5e5dbb192826fa1952e52",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PrepareCardInstrumentProcessor.java": "58aab6eb6e732866070793d223ef838ed00b36f73f7bd64fb75418c35a61816b",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ResolveCardIdentityProcessor.java": "ce8e4d5e365805365ce7d1c34ede8c0b2d15405cf7ab235083dda69861ade249",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ReversePaymentProcessor.java": "fb03da289a7b81a46d6e2c9aeb309482bfc8a5a94a678960b5f87bf07fb3307d",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/TerminatePaymentIntentProcessor.java": "ac645bf81603bbb2a076090450efde54abfd213fb65b6c5e7287f388547972d4"
+  },
+  "limitations": [
+    "Full Token creation/payment/material-lifecycle regression is pending the separately authorized schema migration.",
+    "Existing business Owner adapters remain unavailable production ports.",
+    "No commit, push or deployment for this change."
+  ]
+}

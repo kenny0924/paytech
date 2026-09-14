@@ -12,14 +12,15 @@ Mock 仅在 `paytech-payment-test` 的测试装配中注册。场景必须由测
 
 真实协议尚未定稿时使用类型化、有状态的模块替身；协议定稿后换 HTTP/MQ Simulator 验证真实传输。Foundation MySQL/Redis/补偿机制不是外部业务 Owner，不用 Mock 绕开其最终集成验证。生产缺真实依赖显式启动失败或接口不可用；不得启用测试场景配置作为默认成功路径。
 
+Commerce 是上游调用者，按[调用方向修订](./payment-commerce-direction-amendment.md)向创建/支付命令提供已核验事实；不定义 Commerce 出站端口，Eligibility 和恢复也不得回查 Commerce。消费者国家在 Intent 创建时冻结，定价从本库读取。
+
 ## 2. Owner 合同矩阵
 
 金额、ID、时间在 Owner 内部模型中使用项目类型，HTTP 映射遵循[API 约定](./api-contract.md)。`Result` 使用互斥的类型化结果，不把缺值解释为成功。
 
 | Owner / Web 端口 | 输入 | 返回 | 必备场景 |
 |---|---|---|---|
-| Commerce context `loadFrozenContext` | sourceOrderContextId、sourceOrderId、clientId、Intent 冻结版本 | 精确 entityNo、商业版本、金额/币种、consumerCountry、已冻结法律接受事实；不回调 Commerce 确认 | 完整、跨 Client、错 OE、错接受集合、过期、查无或不可用 |
-| 当前资格 `checkExecutionEligibility`（CCT/Risk/Commerce） | Intent/Attempt、目标 Action 类型、原授权引用、当前 orderVersion | ALLOWED 或明确拒绝/不可用；含评估时间/有效期及 Owner 版本，AUTH 场景含原授权是否可用 | 开放、Order 关闭、OE 关闭、Compliance 限制、版本变更、依赖失败；不伪造数值版本 |
+| 当前资格 `checkExecutionEligibility`（CCT/Risk） | Intent/Attempt、目标 Action 类型、原授权引用、当前 orderVersion | ALLOWED 或明确拒绝/不可用；含评估时间/有效期及 Owner 版本，AUTH 场景含原授权是否可用 | 开放、Order 关闭、OE 关闭、Compliance 限制、版本变更、依赖失败；不伪造数值版本 |
 | Risk `assessPayment` | 原 assessmentId、Intent/Attempt、精确方式/目标、受限风险上下文引用 | ALLOW + authenticationRequirement；或 REVIEW/DENY/FAILED/TIMED_OUT | 无认证、普通 3DS、强制 Challenge、拒绝、复核、超时；同 assessmentId 内容不变且可查原结果 |
 | Routing `selectRoute` | Attempt、冻结 OE、精确 method、金额/币种、requiredCapabilities | 单一 RouteSelection：channelId、accountId、midId、entityNo、方法和明确能力；或 NO_CANDIDATE/UNAVAILABLE | 同 OE 合格、无候选、错 OE、方式不符、能力缺失、同 Attempt 返回冲突结果 |
 | Card `inspectCard` / `acquireUseContext` | clientId、Intent/Attempt、cardReference、可选瞬时 cardUseSessionRef、目标用途 | SAFE_DESCRIPTORS；USABLE 的瞬时用卡上下文，或 INPUT_REQUIRED/UNAVAILABLE | 合成引用正常、错作用域、引用失效、材料过期、恢复缺输入、补输入成功 |
@@ -52,7 +53,7 @@ Channel 能力还须明确 `fundsIdempotency = GUARANTEED / NOT_GUARANTEED` 及�
 
 | ID | 责任 Owner | 接入完成条件 |
 |---|---|---|
-| TODO-EX-COM | Commerce + Payment Web/Card | 现有 CheckoutCardPaymentPort 的回执、requestHash、原 submission、瞬时 CardInput 与新 Execution 合同逐项映射；不新增反向接受确认；Cancel/关闭及 Reversal 退款接续联调 |
+| TODO-EX-COM | Commerce + Payment Web/Card | 现有 CheckoutCardPaymentPort 的回执、requestHash、原 submission、瞬时 CardInput 与新 Execution 合同逐项映射；只由 Commerce 调用 Payment，创建时传入 consumerCountryCode，不反向回查；Cancel/关闭及 Reversal 退款接续联调 |
 | TODO-EX-RISK | Risk + CCT + Commerce | 风险上下文最小合同、原评估查询、实时资格版本/有效期和 OE 关闭事实接入；不得默认通过 |
 | TODO-EX-ROUTE | Routing | 真正的候选能力、唯一决策持久化、同 OE 冻结及原 Action 沿路恢复证明 |
 | TODO-EX-CARD | Card | 稳定 Card 引用/作用域、瞬时使用材料与补输入合同、授权取用和日志边界验证；真实卡数据专项实施另行授权 |

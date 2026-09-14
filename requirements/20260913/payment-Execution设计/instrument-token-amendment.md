@@ -1,5 +1,7 @@
 # 交易级支付工具 Token 与统一 Pay 修订
 
+> **调用方向补充：** Payment 不调用 Commerce；上游核验订单及接受事实后传入。创建时新增国家并冻结的边界见[2026-09-14 修订](./payment-commerce-direction-amendment.md)。
+
 2026-09-13。用户已确认本修订并授权 Payment Execution 与依赖 Mock 研发；本文是交易级工具合同的现行权威。SQL 执行、Commerce 代码及真实 Card 接入仍按独立范围确认。当前实现、数据库与验证状态只见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 **本次方案涉及 Payment、Commerce 两个系统：Payment 新增 3 个 Method/Path（卡身份查询、工具准备、替换旧入口的 pay），停用 1 个旧路径；Commerce 调整 2 个既有接口。Payment 新增 1 表 12 字段，Attempt 增 1 列、删 1 列，删除旧 Instrument 表 9 字段；新增 3 个二级唯一索引、删除旧表 1 个二级唯一索引，主键新增/删除各 1。DML、公共路由注册和新页面均为 0。** Card 的真实存储、CVV 暂存介质及渠道适配仍为 Mock + TODO，不计入本期物理增量。
@@ -124,7 +126,7 @@ Attempt 新增可空 `payment_instrument_token_id BIGINT` 和唯一索引 `uk_pa
 
 原 Instrument 的处置：删除整表；渠道工具引用/指纹在本期没有实际执行消费者，不迁入 Token。Card 提供获准尾号等描述，适用定价维度继续进入不可变 Pricing Fact；展示不可用不能抹除成功资金。Channel Transaction Ref 继续承接 AUTHORIZE/SALE/CAPTURE 等成功资金引用，不能拿工具 Token 代替交易引用。
 
-Token 是受保护的内部定位符，依然逐次校验调用者与资源授权。为了原命令返回同值，本稿保存随机值；不将其设计为 bearer 扣款凭据。准备幂等记录与 Token 绑定共同保留，不能按短技术 TTL 删除后丢失原卡身份摘要；保留/销毁规则在真实 Card 接入前完成，不能借此默认永久保存真实 PAN。
+Token 是受保护的内部定位符；按[内部信任修订](./trusted-internal-amendment.md)，Payment 信任内部调用方，仍逐次核对 Client、Intent、来源及工具绑定范围。为了原命令返回同值，本稿保存随机值；不将其设计为 bearer 扣款凭据。准备幂等记录与 Token 绑定共同保留，不能按短技术 TTL 删除后丢失原卡身份摘要；保留/销毁规则在真实 Card 接入前完成，不能借此默认永久保存真实 PAN。
 
 ## 5. 准备、发送与清理
 

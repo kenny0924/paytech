@@ -4,6 +4,8 @@
 
 > 阶段 3 已获用户确认，当前进入阶段 4 Execution 本地切片研发；其他 Owner 仅测试 Mock + TODO。实际实现与验证边界见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)，阶段确认见[交付记录](./delivery.md)。
 
+> **调用方向后继：** [2026-09-14 修订](./payment-commerce-direction-amendment.md)在 Intent 增加 `consumer_country_code CHAR(2) NOT NULL`，由 Commerce 创建时传入并冻结；Pricing Fact 从本地读取，Payment 不回查 Commerce。以下基线增量统计不包含该后继变更。
+
 ## 1. 表取舍与结构增量
 
 | 表 | Owner | 本稿处置 |
@@ -97,7 +99,7 @@
 | Intent | 一来源一 Intent；active_attempt_id 占用包含等待、UNKNOWN、AUTHORIZED；只有确定可结束后释放。successful_attempt_id 只在第一笔真实收款成功时冻结，不被第二笔成功覆盖 |
 | Transaction Ref | 成功 AUTHORIZE/CAPTURE/SALE/VOID/REFUND 才建；同原 Action/渠道结果去重；实际交易金额/币种核对。不以 AUTHENTICATE、QUERY 或浏览器回跳创建资金引用 |
 | Instrument | 有稳定 Channel 工具引用才建可选行；没有引用可以返回当前请求已知 last4，但不为展示伪造 Instrument，也不承诺重启查询必有 last4 |
-| Pricing Fact | 成功后字段齐备才插入一次；consumerCountry 来自固定 Commerce context；实际认证分类由 Channel 可信事实确认，不能从“没有 Challenge”推断 NON_THREE_DS |
+| Pricing Fact | 成功后字段齐备才插入一次；consumerCountry 来自 Intent 本地冻结的上游输入；实际认证分类由 Channel 可信事实确认，不能从“没有 Challenge”推断 NON_THREE_DS |
 | Refund Position | canonical SALE/全额 CAPTURE 成功时创建；`reserved + refunded ≤ original`，退款 UNKNOWN 不释放 reserved |
 | Channel Refund | 先在本地事务创建并预占，再外部发送；同 commerceRefundId 同内容返回原 Refund，异内容冲突 |
 | Duplicate Case | 第二笔真实成功有不同资金动作/引用才建；正常 AUTHORIZE→CAPTURE 不是重复支付；一 duplicateAction 最多一 Case |

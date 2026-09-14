@@ -1,5 +1,7 @@
 # Payment Orchestration 数据库设计规范
 
+> **Commerce 调用方向：** [2026-09-14 修订](../../requirements/20260913/payment-Execution设计/payment-commerce-direction-amendment.md)禁止 Payment 反向调用 Commerce；Intent 新增 `consumer_country_code CHAR(2) NOT NULL`，上游创建时传入且不可变，定价从本地读取。无新增表或索引，执行状态见台账。
+
 > **交易工具后继：** [已确认的交易级 Token 修订](../../requirements/20260913/payment-Execution设计/instrument-token-amendment.md)取代本页旧 Instrument、卡引用与首次支付入口描述；其余资金和渠道业务边界保留。数据库执行状态见当前台账。
 
 > **2026-09-11 模型更新：** 本页的数字 OE、Assignment、Client 多 OE 合同及旧 Scope 冻结描述，仅适用于迁移前记录与接口；现行目标由 [四系统模型决定](../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 精确取代。Risk 本期不改，Java 与数据库尚未据此迁移，历史订单与 Hash 不重写。
