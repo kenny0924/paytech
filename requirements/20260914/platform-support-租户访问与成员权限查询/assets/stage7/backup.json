@@ -1,0 +1,18 @@
+{
+  "createdAt": "2026-09-14T09:54:28.301276+00:00",
+  "path": "/Users/kenny/Code-MoR-backups/20260914-tenant-access-test/20260914T095428Z/mor_platform-tenant-access-configuration.sql",
+  "tables": [
+    "t_permission",
+    "t_role_permission",
+    "t_console_resource",
+    "t_gateway_route",
+    "t_gateway_route_header",
+    "t_gateway_route_query_param",
+    "t_gateway_guard_rule",
+    "t_role"
+  ],
+  "bytes": 174513,
+  "sha256": "73d40dcf3755ebe546fdaddae84cb44bd75eda03827aece90027da807979de47",
+  "mode": "0o600",
+  "status": "PASS"
+}

@@ -1,0 +1,45 @@
+{
+  "recordedAt": "2026-09-14T09:24:49.055851+00:00",
+  "stage": 5,
+  "status": "PASS",
+  "scope": {
+    "applications": 3,
+    "newBusinessApis": 8,
+    "ownerEndpoints": 8,
+    "bffEndpoints": 8,
+    "schemaChanges": 0,
+    "registrationInserts": 105,
+    "newWebPages": 3
+  },
+  "applicationSourceDriftFromStage4": [],
+  "sourceFilesCompared": 67,
+  "reusedDevelopmentEvidence": "../stage4/verification.json",
+  "newEvidence": {
+    "realIngressChecks": 42,
+    "browserChecks": 19,
+    "integration": "integration.json",
+    "browser": "browser-check.json",
+    "temporarySql": "local-activation.json",
+    "cleanup": "local-postcheck.json"
+  },
+  "applicationCodeChangesThisStage": [],
+  "harnessAdjustment": "Corrected the manual public-ingress error expectation from Owner 500 to existing BFF 503 DEPENDENCY_UNAVAILABLE; audit assertion uses the count before this run to allow a diagnostic rerun. No application behavior changed.",
+  "limitations": [
+    "Local synthetic accounts, tenants and grants only; development Vault/signing adapter and loopback service discovery.",
+    "CUSTOMER login/session chain, CCT projection, external Client business execution, load test and test deployment are outside this stage."
+  ],
+  "notPerformed": [
+    "test deployment",
+    "artifact publication",
+    "git commit",
+    "git push"
+  ],
+  "finalStaticChecks": {
+    "at": "2026-09-14T09:27:52.571864+00:00",
+    "localLinks": 139,
+    "brokenLinks": 0,
+    "diffWhitespace": "PASS",
+    "pythonHarnessSyntax": "PASS",
+    "applicationSourceFilesUnchanged": 67
+  }
+}

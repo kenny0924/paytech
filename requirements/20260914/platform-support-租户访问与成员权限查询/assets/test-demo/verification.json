@@ -1,0 +1,61 @@
+{
+  "checkedAt": "2026-09-14T10:10:52.967530+00:00",
+  "status": "PASS",
+  "mysqlConnectionId": 92649,
+  "committedAt": "2026-09-14T10:10:16.819581Z",
+  "database": "127.0.0.1:23306/mor_platform",
+  "sql": "../../db/test-demo/dml.sql",
+  "sqlSha256": "f823f82c5cfeb255eb87bd1837963fafc6a347ebc105ee5e18edf6cb5c8dc05e",
+  "insertedRows": 9,
+  "updatedRows": 0,
+  "tenantId": "900000000000065001",
+  "tenantName": "DEMO 客户租户（验收）",
+  "memberId": "900000000000065003",
+  "roleCode": "DEMO_CLIENT_VIEWER",
+  "permissionCodes": [
+    "DEMO_CLIENT_ORDER_READ",
+    "DEMO_CLIENT_REFUND_READ"
+  ],
+  "checks": [
+    {
+      "path": "/tenant-access-admin/v1/tenants?tenantId=900000000000065001",
+      "status": 200
+    },
+    {
+      "path": "/tenant-access-admin/v1/tenants/900000000000065001",
+      "status": 200
+    },
+    {
+      "path": "/tenant-access-admin/v1/tenants/900000000000065001/members",
+      "status": 200
+    },
+    {
+      "path": "/tenant-access-admin/v1/tenants/900000000000065001/members/900000000000065003",
+      "status": 200
+    },
+    {
+      "path": "/tenant-access-admin/v1/tenants/900000000000065001/members/900000000000065003/roles",
+      "status": 200
+    },
+    {
+      "path": "/tenant-access-admin/v1/tenants/900000000000065001/members/900000000000065003/permissions",
+      "status": 200
+    },
+    {
+      "path": "/tenant-access-admin/v1/tenants/900000000000065001/members/900000000000065003/permissions/900000000000065006/sources",
+      "status": 200,
+      "sources": 1,
+      "effective": true
+    },
+    {
+      "path": "/tenant-access-admin/v1/tenants/900000000000065001/members/900000000000065003/permissions/900000000000065007/sources",
+      "status": 200,
+      "sources": 1,
+      "effective": true
+    }
+  ],
+  "securityState": "ACTIVE",
+  "existingRowsChanged": false,
+  "loginCredentialsCreated": false,
+  "sessionLoggedOut": true
+}

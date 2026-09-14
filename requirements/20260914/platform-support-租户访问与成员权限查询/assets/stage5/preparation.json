@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-09-14T09:07:55.211171+00:00",
+  "stage": "5",
+  "status": "prepared-awaiting-exact-local-temporary-activation-approval",
+  "sourceDriftFromStage4": [],
+  "reusedChecks": {
+    "platform": 512,
+    "bff": 1163,
+    "web": 938,
+    "source": "../stage4/verification.json"
+  },
+  "prepared": [
+    "exact 11-row enable/restore SQL",
+    "read-only baseline of route/resource status and original admin grants",
+    "compiled real Platform/BFF/Gateway launchers",
+    "syntax-checked Web ingress and API verification script"
+  ],
+  "executedIntegration": false,
+  "databaseMutationsThisStage": false,
+  "deployment": false,
+  "commit": false,
+  "localLinks": 111
+}

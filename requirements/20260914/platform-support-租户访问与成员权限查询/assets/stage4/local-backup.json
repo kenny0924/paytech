@@ -1,0 +1,15 @@
+{
+  "database": "mor_platform_config_validation",
+  "backups": [
+    {
+      "path": "/Users/kenny/Code-MoR-backups/20260914-tenant-access-local/122811/schema.sql",
+      "bytes": 54263,
+      "sha256": "ecdceaccb5a22d1537f616a638f8d886b2e8f9eea99b5c5b37a9c52289350794"
+    },
+    {
+      "path": "/Users/kenny/Code-MoR-backups/20260914-tenant-access-local/122811/registration.sql",
+      "bytes": 142572,
+      "sha256": "aa0873a2286fd734627c62a99b86a5d81cf600ce6cc18a6d4d85b22cf3bf82de"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "checkedAt": "2026-09-14T07:01:48.432085+00:00",
+  "stage": 2,
+  "markdownFiles": 3,
+  "localLinks": 44,
+  "numbering": {
+    "F": 7,
+    "AC": 10,
+    "UI": 6,
+    "proposedApiCapabilities": 8
+  },
+  "dataEvidence": {
+    "environments": 2,
+    "existingIamTables": 7,
+    "existingFields": 75,
+    "columnNamesMatchSchemaAndModel": true,
+    "mutated": false
+  },
+  "applications": {
+    "platform-support-service": {
+      "head": "3cb5e31f08a0b889348d5785dd327e91e762839a",
+      "clean": true
+    },
+    "operations-console-bff": {
+      "head": "85927a7adc941694d0dd3ac4aa46f20685256432",
+      "clean": true
+    },
+    "operations-console-web": {
+      "head": "4ebeed0e9ef41e1938c878c8fd07a62c6c3d5018",
+      "clean": true
+    },
+    "api-gateway": {
+      "head": "a2111df79213107f1697640a0f19466070047409",
+      "clean": true
+    }
+  },
+  "requirementsSite": {
+    "status": "passed",
+    "build": "passed",
+    "tests": 136,
+    "passed": 136,
+    "failed": 0,
+    "log": "/tmp/plt-tenant-access-stage2-requirements-tests.log"
+  },
+  "applicationFunctionalTestsRun": false
+}

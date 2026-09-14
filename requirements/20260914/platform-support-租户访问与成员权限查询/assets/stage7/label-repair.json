@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "cause": "Interactive MySQL latin1 default decoded UTF-8 source as latin1.",
+  "scope": "Only three new t_console_resource display_name fields; exact IDs/old bytes/status/version guarded.",
+  "sql": "../../db/repair-test-display-names.sql",
+  "sqlSha256": "5c3cf0a4b6c18c3a1d9202b93e3a09445cf43c48ff8f56538ae73e1c965827a3",
+  "connectionId": 92576,
+  "committedAt": "2026-09-14T09:59:31.826140Z",
+  "affectedRows": [
+    1,
+    1,
+    1
+  ],
+  "resourceVersionBefore": 2,
+  "resourceVersionAfter": 3,
+  "publicNavigationNames": {
+    "OPERATIONS_TENANT_ACCESS": "租户访问",
+    "OPERATIONS_TENANT_ACCESS_MANAGE": "安全暂停与恢复",
+    "OPERATIONS_TENANT_MEMBER_READ": "查看成员权限"
+  },
+  "publicNavigationCheckedAt": "2026-09-14T10:00:02.961842+00:00",
+  "recoveryCandidate": "../../db/deactivate-test-after-label-repair.sql",
+  "recoveryExecuted": false
+}

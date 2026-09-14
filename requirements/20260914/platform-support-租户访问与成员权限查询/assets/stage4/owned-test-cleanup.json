@@ -1,0 +1,6 @@
+{
+  "chainId": "225170982749450240",
+  "ownedTestEvents": 9,
+  "reason": "First failed run used DB time for command audit instead of injected application clock; cleaned only the verified five test request prefixes on this chain after fixing Clock use.",
+  "remainingChainRows": 0
+}

@@ -1,0 +1,1315 @@
+{
+  "observedAt": "2026-09-14T06:51:07.019655+00:00",
+  "readOnly": true,
+  "dockerContext": "desktop-linux",
+  "environments": [
+    {
+      "container": "mor-test-mysql-1",
+      "database": "mor_platform",
+      "hostPort": 23306,
+      "tables": {
+        "t_access_tenant": {
+          "columnCount": 11,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "tenant_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_type",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "owner_ref_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_name",
+              "type": "varchar(255)",
+              "nullable": false
+            },
+            {
+              "name": "owner_status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "source_version",
+              "type": "int",
+              "nullable": true
+            },
+            {
+              "name": "source_payload_hash",
+              "type": "char(64)",
+              "nullable": true
+            },
+            {
+              "name": "security_status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "tenant_id"
+              ]
+            },
+            {
+              "name": "uk_access_tenant",
+              "unique": true,
+              "columns": [
+                "tenant_type",
+                "owner_ref_id"
+              ]
+            }
+          ]
+        },
+        "t_user_account": {
+          "columnCount": 16,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "account_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "realm",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "account_type",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "login_name",
+              "type": "varchar(64)",
+              "nullable": true
+            },
+            {
+              "name": "email_vault_token",
+              "type": "varchar(255)",
+              "nullable": true
+            },
+            {
+              "name": "email_masked",
+              "type": "varchar(255)",
+              "nullable": true
+            },
+            {
+              "name": "email_verified_time",
+              "type": "datetime(6)",
+              "nullable": true
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "consecutive_password_failures",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "locked_until",
+              "type": "datetime(6)",
+              "nullable": true
+            },
+            {
+              "name": "last_password_failure_time",
+              "type": "datetime(6)",
+              "nullable": true
+            },
+            {
+              "name": "credential_version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "auth_epoch",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "account_id"
+              ]
+            },
+            {
+              "name": "uk_user_account_email",
+              "unique": true,
+              "columns": [
+                "realm",
+                "email_vault_token"
+              ]
+            },
+            {
+              "name": "uk_user_account_login",
+              "unique": true,
+              "columns": [
+                "realm",
+                "login_name"
+              ]
+            },
+            {
+              "name": "uk_user_account_realm",
+              "unique": true,
+              "columns": [
+                "account_id",
+                "realm"
+              ]
+            }
+          ]
+        },
+        "t_tenant_member": {
+          "columnCount": 9,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "member_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "account_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "member_type",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "invited_by",
+              "type": "bigint",
+              "nullable": true
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_tenant_member_account_id",
+              "unique": false,
+              "columns": [
+                "account_id"
+              ]
+            },
+            {
+              "name": "idx_tenant_member_inviter",
+              "unique": false,
+              "columns": [
+                "invited_by",
+                "tenant_id"
+              ]
+            },
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "member_id"
+              ]
+            },
+            {
+              "name": "uk_tenant_member",
+              "unique": true,
+              "columns": [
+                "tenant_id",
+                "account_id"
+              ]
+            },
+            {
+              "name": "uk_tenant_member_identity",
+              "unique": true,
+              "columns": [
+                "member_id",
+                "tenant_id",
+                "account_id"
+              ]
+            },
+            {
+              "name": "uk_tenant_member_owner",
+              "unique": true,
+              "columns": [
+                "member_id",
+                "tenant_id"
+              ]
+            }
+          ]
+        },
+        "t_role": {
+          "columnCount": 11,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "role_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_scope",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "tenant_id",
+              "type": "bigint",
+              "nullable": true
+            },
+            {
+              "name": "scope_key",
+              "type": "varchar(128)",
+              "nullable": false
+            },
+            {
+              "name": "role_code",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "role_name",
+              "type": "varchar(255)",
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "system_role",
+              "type": "tinyint(1)",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_role_tenant_id",
+              "unique": false,
+              "columns": [
+                "tenant_id"
+              ]
+            },
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "role_id"
+              ]
+            },
+            {
+              "name": "uk_role_owner",
+              "unique": true,
+              "columns": [
+                "role_id",
+                "scope_key"
+              ]
+            },
+            {
+              "name": "uk_role_scope",
+              "unique": true,
+              "columns": [
+                "scope_key",
+                "role_code"
+              ]
+            }
+          ]
+        },
+        "t_tenant_member_role": {
+          "columnCount": 12,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "tenant_member_role_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_member_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "role_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "role_scope_key",
+              "type": "varchar(128)",
+              "nullable": false
+            },
+            {
+              "name": "effective_from",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "effective_to",
+              "type": "datetime(6)",
+              "nullable": true
+            },
+            {
+              "name": "granted_by",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_tenant_grant_member_scope",
+              "unique": false,
+              "columns": [
+                "tenant_member_id",
+                "tenant_id"
+              ]
+            },
+            {
+              "name": "idx_tenant_grant_role_scope",
+              "unique": false,
+              "columns": [
+                "role_id",
+                "role_scope_key"
+              ]
+            },
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "tenant_member_role_id"
+              ]
+            },
+            {
+              "name": "uk_tenant_member_role",
+              "unique": true,
+              "columns": [
+                "tenant_member_id",
+                "role_id",
+                "effective_from"
+              ]
+            }
+          ]
+        },
+        "t_role_permission": {
+          "columnCount": 7,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "role_permission_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "role_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "permission_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_role_permiss_permission_id",
+              "unique": false,
+              "columns": [
+                "permission_id"
+              ]
+            },
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "role_permission_id"
+              ]
+            },
+            {
+              "name": "uk_role_permission",
+              "unique": true,
+              "columns": [
+                "role_id",
+                "permission_id"
+              ]
+            }
+          ]
+        },
+        "t_permission": {
+          "columnCount": 9,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "permission_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "permission_code",
+              "type": "varchar(128)",
+              "nullable": false
+            },
+            {
+              "name": "resource_type",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "action_code",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "risk_level",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "permission_id"
+              ]
+            },
+            {
+              "name": "uk_permission",
+              "unique": true,
+              "columns": [
+                "permission_code"
+              ]
+            },
+            {
+              "name": "uk_resource_action",
+              "unique": true,
+              "columns": [
+                "resource_type",
+                "action_code"
+              ]
+            }
+          ]
+        }
+      },
+      "counts": [
+        {
+          "category": "tenants",
+          "scope": "INTERNAL",
+          "count": 1
+        },
+        {
+          "category": "accounts",
+          "scope": "OPERATIONS",
+          "count": 30
+        },
+        {
+          "category": "members",
+          "scope": "INTERNAL",
+          "count": 29
+        },
+        {
+          "category": "credentials",
+          "scope": "CLIENT",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "container": "mor-local-mysql-1",
+      "database": "mor_platform_config_validation",
+      "hostPort": 13306,
+      "tables": {
+        "t_access_tenant": {
+          "columnCount": 11,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "tenant_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_type",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "owner_ref_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_name",
+              "type": "varchar(255)",
+              "nullable": false
+            },
+            {
+              "name": "owner_status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "source_version",
+              "type": "int",
+              "nullable": true
+            },
+            {
+              "name": "source_payload_hash",
+              "type": "char(64)",
+              "nullable": true
+            },
+            {
+              "name": "security_status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "tenant_id"
+              ]
+            },
+            {
+              "name": "uk_access_tenant",
+              "unique": true,
+              "columns": [
+                "tenant_type",
+                "owner_ref_id"
+              ]
+            }
+          ]
+        },
+        "t_user_account": {
+          "columnCount": 16,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "account_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "realm",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "account_type",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "login_name",
+              "type": "varchar(64)",
+              "nullable": true
+            },
+            {
+              "name": "email_vault_token",
+              "type": "varchar(255)",
+              "nullable": true
+            },
+            {
+              "name": "email_masked",
+              "type": "varchar(255)",
+              "nullable": true
+            },
+            {
+              "name": "email_verified_time",
+              "type": "datetime(6)",
+              "nullable": true
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "consecutive_password_failures",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "locked_until",
+              "type": "datetime(6)",
+              "nullable": true
+            },
+            {
+              "name": "last_password_failure_time",
+              "type": "datetime(6)",
+              "nullable": true
+            },
+            {
+              "name": "credential_version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "auth_epoch",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "account_id"
+              ]
+            },
+            {
+              "name": "uk_user_account_email",
+              "unique": true,
+              "columns": [
+                "realm",
+                "email_vault_token"
+              ]
+            },
+            {
+              "name": "uk_user_account_login",
+              "unique": true,
+              "columns": [
+                "realm",
+                "login_name"
+              ]
+            },
+            {
+              "name": "uk_user_account_realm",
+              "unique": true,
+              "columns": [
+                "account_id",
+                "realm"
+              ]
+            }
+          ]
+        },
+        "t_tenant_member": {
+          "columnCount": 9,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "member_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "account_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "member_type",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "invited_by",
+              "type": "bigint",
+              "nullable": true
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_tenant_member_account_id",
+              "unique": false,
+              "columns": [
+                "account_id"
+              ]
+            },
+            {
+              "name": "idx_tenant_member_inviter",
+              "unique": false,
+              "columns": [
+                "invited_by",
+                "tenant_id"
+              ]
+            },
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "member_id"
+              ]
+            },
+            {
+              "name": "uk_tenant_member",
+              "unique": true,
+              "columns": [
+                "tenant_id",
+                "account_id"
+              ]
+            },
+            {
+              "name": "uk_tenant_member_identity",
+              "unique": true,
+              "columns": [
+                "member_id",
+                "tenant_id",
+                "account_id"
+              ]
+            },
+            {
+              "name": "uk_tenant_member_owner",
+              "unique": true,
+              "columns": [
+                "member_id",
+                "tenant_id"
+              ]
+            }
+          ]
+        },
+        "t_role": {
+          "columnCount": 11,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "role_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_scope",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "tenant_id",
+              "type": "bigint",
+              "nullable": true
+            },
+            {
+              "name": "scope_key",
+              "type": "varchar(128)",
+              "nullable": false
+            },
+            {
+              "name": "role_code",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "role_name",
+              "type": "varchar(255)",
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "system_role",
+              "type": "tinyint(1)",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_role_tenant_id",
+              "unique": false,
+              "columns": [
+                "tenant_id"
+              ]
+            },
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "role_id"
+              ]
+            },
+            {
+              "name": "uk_role_owner",
+              "unique": true,
+              "columns": [
+                "role_id",
+                "scope_key"
+              ]
+            },
+            {
+              "name": "uk_role_scope",
+              "unique": true,
+              "columns": [
+                "scope_key",
+                "role_code"
+              ]
+            }
+          ]
+        },
+        "t_tenant_member_role": {
+          "columnCount": 12,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "tenant_member_role_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_member_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "tenant_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "role_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "role_scope_key",
+              "type": "varchar(128)",
+              "nullable": false
+            },
+            {
+              "name": "effective_from",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "effective_to",
+              "type": "datetime(6)",
+              "nullable": true
+            },
+            {
+              "name": "granted_by",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_tenant_grant_member_scope",
+              "unique": false,
+              "columns": [
+                "tenant_member_id",
+                "tenant_id"
+              ]
+            },
+            {
+              "name": "idx_tenant_grant_role_scope",
+              "unique": false,
+              "columns": [
+                "role_id",
+                "role_scope_key"
+              ]
+            },
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "tenant_member_role_id"
+              ]
+            },
+            {
+              "name": "uk_tenant_member_role",
+              "unique": true,
+              "columns": [
+                "tenant_member_id",
+                "role_id",
+                "effective_from"
+              ]
+            }
+          ]
+        },
+        "t_role_permission": {
+          "columnCount": 7,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "role_permission_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "role_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "permission_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_role_permiss_permission_id",
+              "unique": false,
+              "columns": [
+                "permission_id"
+              ]
+            },
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "role_permission_id"
+              ]
+            },
+            {
+              "name": "uk_role_permission",
+              "unique": true,
+              "columns": [
+                "role_id",
+                "permission_id"
+              ]
+            }
+          ]
+        },
+        "t_permission": {
+          "columnCount": 9,
+          "sameColumnNamesAsCurrentSchema": true,
+          "columns": [
+            {
+              "name": "permission_id",
+              "type": "bigint",
+              "nullable": false
+            },
+            {
+              "name": "permission_code",
+              "type": "varchar(128)",
+              "nullable": false
+            },
+            {
+              "name": "resource_type",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "action_code",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "risk_level",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": false
+            },
+            {
+              "name": "version",
+              "type": "int",
+              "nullable": false
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": false
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": false
+            }
+          ],
+          "indexes": [
+            {
+              "name": "PRIMARY",
+              "unique": true,
+              "columns": [
+                "permission_id"
+              ]
+            },
+            {
+              "name": "uk_permission",
+              "unique": true,
+              "columns": [
+                "permission_code"
+              ]
+            },
+            {
+              "name": "uk_resource_action",
+              "unique": true,
+              "columns": [
+                "resource_type",
+                "action_code"
+              ]
+            }
+          ]
+        }
+      },
+      "counts": [
+        {
+          "category": "tenants",
+          "scope": "INTERNAL",
+          "count": 1
+        },
+        {
+          "category": "credentials",
+          "scope": "CLIENT",
+          "count": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+connection	92588	mor_platform	008564d1cb1a
+permissions	3	1	1	ACTIVE	ACTIVE
+grants	3	2	2	ACTIVE	ACTIVE
+resources	3	3	3	ACTIVE	ACTIVE
+routes	8	2	2	ACTIVE	ACTIVE
+headers	20
+queries	20
+guards	48
+role	900000000000000510	20	ACTIVE
+route_links	8
+resource_links	3
+grant_links	3
+route_children	900000000000061001	2	8	6
+route_children	900000000000061002	2	0	6
+route_children	900000000000061003	6	0	6
+route_children	900000000000061004	2	6	6
+route_children	900000000000061005	2	0	6
+route_children	900000000000061006	2	2	6
+route_children	900000000000061007	2	2	6
+route_children	900000000000061008	2	2	6
+active_routes	105
+customer_tenants	0
+customer_members	0

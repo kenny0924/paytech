@@ -1,0 +1,25 @@
+{
+  "status": "applied-to-local-validation-only",
+  "insertRowsByTable": {
+    "t_permission": 3,
+    "t_role_permission": 3,
+    "t_console_resource": 3,
+    "t_gateway_route": 8,
+    "t_gateway_route_header": 20,
+    "t_gateway_route_query_param": 20,
+    "t_gateway_guard_rule": 48
+  },
+  "totalInsertRows": 105,
+  "initialUpdateRows": 0,
+  "initialDeleteRows": 0,
+  "newTargets": 0,
+  "newBusinessTables": 0,
+  "changedBusinessColumns": 0,
+  "newIndexes": 0,
+  "laterActivationExpectedUpdates": {
+    "t_gateway_route": 8,
+    "t_console_resource": 3,
+    "t_role_permission": 3,
+    "t_role": 1
+  }
+}

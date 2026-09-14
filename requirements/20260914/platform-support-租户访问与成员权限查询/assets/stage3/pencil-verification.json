@@ -1,0 +1,71 @@
+{
+  "screens": [
+    {
+      "id": "oAKxo",
+      "name": "租户访问 · 租户列表",
+      "width": 1440,
+      "height": 1040,
+      "placeholder": false,
+      "problems": []
+    },
+    {
+      "id": "W4JmB",
+      "name": "租户访问 · 租户详情与成员",
+      "width": 1440,
+      "height": 1040,
+      "placeholder": false,
+      "problems": []
+    },
+    {
+      "id": "G3rP7x",
+      "name": "租户访问 · 成员角色",
+      "width": 1440,
+      "height": 1040,
+      "placeholder": false,
+      "problems": []
+    },
+    {
+      "id": "o62jzj",
+      "name": "租户访问 · 成员权限与来源",
+      "width": 1440,
+      "height": 1040,
+      "placeholder": false,
+      "problems": []
+    },
+    {
+      "id": "OBfk2",
+      "name": "租户访问 · 暂停确认",
+      "width": 1440,
+      "height": 1040,
+      "placeholder": false,
+      "problems": []
+    },
+    {
+      "id": "x4EHr",
+      "name": "租户访问 · 恢复后仍受业务限制",
+      "width": 1440,
+      "height": 1040,
+      "placeholder": false,
+      "problems": []
+    },
+    {
+      "id": "ZFMGR",
+      "name": "租户访问 · 成员空状态",
+      "width": 1440,
+      "height": 1040,
+      "placeholder": false,
+      "problems": []
+    },
+    {
+      "id": "Pmzq3",
+      "name": "租户访问 · 成员加载失败",
+      "width": 1440,
+      "height": 1040,
+      "placeholder": false,
+      "problems": []
+    }
+  ],
+  "rootCount": 71,
+  "savedVia": "Pen native Save; Edited indicator cleared",
+  "kind": "design-layout-not-browser-test"
+}

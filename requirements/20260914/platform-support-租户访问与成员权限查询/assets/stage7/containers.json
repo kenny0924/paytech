@@ -1,0 +1,82 @@
+{
+  "observedAt": "2026-09-14T10:00:56.832687+00:00",
+  "containers": [
+    {
+      "service": "platform-support-service",
+      "containerId": "7d44eca0a1e804303eb8e13450d3bdd6df823c7e1eab97f73dd0c8d3b8b466a8",
+      "imageId": "sha256:083853a830844145318a36eb225537c9520574d1fecf01d50bdceceaecc29244",
+      "health": "healthy",
+      "replaced": true
+    },
+    {
+      "service": "operations-console-bff",
+      "containerId": "447c0ccf10f5e34e13b40da2cabbae0957d5363e314164452eba04ee6d638cd9",
+      "imageId": "sha256:7957f8c7219922875de420afc895b3158cc7cb409ff154a6ca6fb9bd5137b40a",
+      "health": "healthy",
+      "replaced": true
+    },
+    {
+      "service": "operations-console-web",
+      "containerId": "6c87f16ff3197fbfadf9120856aa2cfcf4e91695e4409331c5f6ae96b8cabc6b",
+      "imageId": "sha256:40785d343525a7bbbeb00439bce8d2dadb350c5d3f459cc28039b405bdc1c696",
+      "health": "healthy",
+      "replaced": true
+    },
+    {
+      "service": "api-gateway",
+      "containerId": "ccae4d787010cf5d2986abffe6601d8593ee8b26aa069245409fea8c7c71a1f2",
+      "imageId": "sha256:f907833438992310fe771303066685a5cfe08ddcd93e1cf6ef9a225761358953",
+      "health": "healthy",
+      "replaced": false
+    },
+    {
+      "service": "risk-service",
+      "containerId": "d132472dd14c82c5c840a188cebe6975eb4d7f6bcb79858d3fccb503ffb4c934",
+      "imageId": "sha256:fa91af13a38d41e98d5b8e3a1316ce27a03973ccbc4f7fadb05eb30f180c4376",
+      "health": "healthy",
+      "replaced": false
+    },
+    {
+      "service": "nginx",
+      "containerId": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+      "imageId": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+      "health": "healthy",
+      "replaced": false
+    },
+    {
+      "service": "nacos",
+      "containerId": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+      "imageId": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+      "health": "healthy",
+      "replaced": false
+    },
+    {
+      "service": "vault-service",
+      "containerId": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+      "imageId": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+      "health": "healthy",
+      "replaced": false
+    },
+    {
+      "service": "redis",
+      "containerId": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+      "imageId": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+      "health": "healthy",
+      "replaced": false
+    },
+    {
+      "service": "rabbitmq",
+      "containerId": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+      "imageId": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+      "health": "healthy",
+      "replaced": false
+    },
+    {
+      "service": "mysql",
+      "containerId": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+      "imageId": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+      "health": "healthy",
+      "replaced": false
+    }
+  ]
+}

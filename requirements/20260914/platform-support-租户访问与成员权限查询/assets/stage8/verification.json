@@ -1,0 +1,56 @@
+{
+  "recordedAt": "2026-09-14T10:23:25.903989+00:00",
+  "userConfirmation": "我做完了，提交吧。",
+  "acceptance": "USER-CONFIRMED",
+  "applicationCommits": {
+    "platform-support-service": {
+      "commit": "cb80a2c7c7ab641b7d0646807d34d7fcc05d037a",
+      "parent": "3cb5e31f08a0b889348d5785dd327e91e762839a",
+      "files": 38,
+      "subject": "feat(platform): add tenant access management and member permission queries"
+    },
+    "operations-console-bff": {
+      "commit": "4685f620ad0f93ec9b78c687813a69100caf1666",
+      "parent": "85927a7adc941694d0dd3ac4aa46f20685256432",
+      "files": 12,
+      "subject": "feat(operations-bff): forward tenant access management APIs"
+    },
+    "operations-console-web": {
+      "commit": "ff0b7003b5581eaafd926d7049ab23f3a8dc6462",
+      "parent": "4ebeed0e9ef41e1938c878c8fd07a62c6c3d5018",
+      "files": 18,
+      "subject": "feat(operations-web): add tenant access and member permission pages"
+    }
+  },
+  "applicationSourceFilesMatchAcceptedSnapshot": 67,
+  "reusedApplicationVerification": "../stage4/verification.json",
+  "reusedIntegrationVerification": "../stage5/verification.json",
+  "reusedDeploymentVerification": "../stage7/verification.json",
+  "testDemoVerification": "../test-demo/verification.json",
+  "requirementsTests": {
+    "passed": 136,
+    "failed": 0,
+    "logSha256": "727f40472f2843f3d412ad650fa69fe5ddeacc3b5163815666213a37e25fd948"
+  },
+  "pencil": {
+    "committedTenantBoards": 8,
+    "previousBoardsPreserved": 63,
+    "otherTaskBoardsExcluded": 19
+  },
+  "secretScan": "PASS: actual environment/private runtime values absent from scoped artifacts",
+  "stagedWhitespace": "PASS",
+  "pushAuthorized": false,
+  "pushPerformed": false,
+  "unrelatedChangesPreserved": true,
+  "rootArchiveCheck": {
+    "rootParent": "a7c5165c9de2f4baa509d2004b725c9ff62a81d4",
+    "stagedFiles": 101,
+    "requirementFiles": 97,
+    "sharedFiles": 4,
+    "localDocumentLinks": 194,
+    "scopeCheck": "PASS",
+    "protectedWorkingFiles": "UNCHANGED",
+    "pencilOtherTaskBoards": "RETAINED",
+    "whitespace": "PASS"
+  }
+}

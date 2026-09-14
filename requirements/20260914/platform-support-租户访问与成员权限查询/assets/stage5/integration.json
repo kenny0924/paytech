@@ -1,0 +1,252 @@
+{
+  "checks": 42,
+  "status": "PASS",
+  "results": [
+    {
+      "name": "login-admin",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "login-reader",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "login-memberReader",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "login-denied",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "tenant-page-one",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants?page=1&size=10",
+      "status": 200
+    },
+    {
+      "name": "tenant-page-two",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants?page=2&size=10",
+      "status": 200
+    },
+    {
+      "name": "client-filter",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants?tenantType=CLIENT",
+      "status": 200
+    },
+    {
+      "name": "partner-filter",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants?tenantType=PARTNER",
+      "status": 200
+    },
+    {
+      "name": "literal-name-filter",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants?tenantName=%E9%AA%8C%E6%94%B6%E5%AE%A2%E6%88%B7_100%25",
+      "status": 200
+    },
+    {
+      "name": "reader-detail",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505",
+      "status": 200
+    },
+    {
+      "name": "denied-list",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants",
+      "status": 403
+    },
+    {
+      "name": "internal-detail",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/900000000000000500",
+      "status": 404
+    },
+    {
+      "name": "reader-members-denied",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/members",
+      "status": 403
+    },
+    {
+      "name": "member-reader-list",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/members",
+      "status": 200
+    },
+    {
+      "name": "member-detail",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/members/8453941344547773224",
+      "status": 200
+    },
+    {
+      "name": "cross-tenant-member",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/8387693387805859529/members/8453941344547773224",
+      "status": 404
+    },
+    {
+      "name": "role-intervals",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/members/8453941344547773224/roles",
+      "status": 200
+    },
+    {
+      "name": "permission-page-one",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/members/8453941344547773224/permissions?page=1&size=10",
+      "status": 200
+    },
+    {
+      "name": "permission-page-two",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/members/8453941344547773224/permissions?page=2&size=10",
+      "status": 200
+    },
+    {
+      "name": "permission-sources",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/members/8453941344547773224/permissions/8347314682039192011/sources",
+      "status": 200
+    },
+    {
+      "name": "empty-members",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7760226079523543867/members",
+      "status": 200
+    },
+    {
+      "name": "empty-roles",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/8387693387805859529/members/8097375898325274128/roles",
+      "status": 200
+    },
+    {
+      "name": "empty-permissions",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/8387693387805859529/members/8097375898325274128/permissions",
+      "status": 200
+    },
+    {
+      "name": "unknown-query",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants?unknown=1",
+      "status": 400
+    },
+    {
+      "name": "audit-before-command",
+      "method": "GET",
+      "path": "/audit/v1/events?resourceType=ACCESS_TENANT&resourceId=7529096671680957505",
+      "status": 200
+    },
+    {
+      "name": "current-before-command",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505",
+      "status": 200
+    },
+    {
+      "name": "reader-pause-denied",
+      "method": "POST",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/security-status",
+      "status": 403
+    },
+    {
+      "name": "real-PLT-I03",
+      "status": 200
+    },
+    {
+      "name": "pause",
+      "method": "POST",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/security-status",
+      "status": 200
+    },
+    {
+      "name": "real-PLT-I03",
+      "status": 401
+    },
+    {
+      "name": "restore",
+      "method": "POST",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/security-status",
+      "status": 200
+    },
+    {
+      "name": "real-PLT-I03",
+      "status": 200
+    },
+    {
+      "name": "old-pause-replay",
+      "method": "POST",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/security-status",
+      "status": 200
+    },
+    {
+      "name": "current-after-replay",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505",
+      "status": 200
+    },
+    {
+      "name": "stale-version",
+      "method": "POST",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/security-status",
+      "status": 409
+    },
+    {
+      "name": "same-status-noop",
+      "method": "POST",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/security-status",
+      "status": 200
+    },
+    {
+      "name": "security-audit",
+      "method": "GET",
+      "path": "/audit/v1/events?resourceType=ACCESS_TENANT&resourceId=7529096671680957505",
+      "status": 200
+    },
+    {
+      "name": "blocked-current",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7792803446162587016",
+      "status": 200
+    },
+    {
+      "name": "restore-owner-blocked",
+      "method": "POST",
+      "path": "/tenant-access-admin/v1/tenants/7792803446162587016/security-status",
+      "status": 200
+    },
+    {
+      "name": "owner-restriction-remains",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7792803446162587016",
+      "status": 200
+    },
+    {
+      "name": "corrupt-source-fails-closed",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/members/8453941344547773224/permissions",
+      "status": 503
+    },
+    {
+      "name": "source-recovered",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/7529096671680957505/members/8453941344547773224/permissions",
+      "status": 200
+    }
+  ]
+}

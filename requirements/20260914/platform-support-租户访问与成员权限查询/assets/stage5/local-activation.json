@@ -1,0 +1,26 @@
+{
+  "recordedAt": "2026-09-14T09:24:49.055403+00:00",
+  "approval": "User replied 可以 to the exact temporary local 11-row activation and owned synthetic fixture request.",
+  "target": "desktop-linux / mor-local-mysql-1 / 127.0.0.1:13306 / mor_platform_config_validation",
+  "enable": {
+    "sql": "../../db/local-acceptance/enable.sql",
+    "connectionId": 142841,
+    "routesChanged": 8,
+    "resourcesChanged": 3,
+    "finalStatus": "ACTIVE",
+    "version": 1,
+    "explicitCommit": true
+  },
+  "restore": {
+    "sql": "../../db/local-acceptance/restore.sql",
+    "connectionId": 142898,
+    "routesChanged": 8,
+    "resourcesChanged": 3,
+    "finalStatus": "DISABLED",
+    "version": 1,
+    "explicitCommit": true
+  },
+  "originalAdminGrants": "3 REVOKED, unchanged",
+  "fixtures": "Owned synthetic data cleaned; see local-postcheck.json",
+  "testEnvironmentTouched": false
+}

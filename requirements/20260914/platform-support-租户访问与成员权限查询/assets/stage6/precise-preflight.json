@@ -1,0 +1,24 @@
+{
+  "observedAt": "2026-09-14T09:41:25.033778+00:00",
+  "target": "desktop-linux / mor-test-mysql-1 / 127.0.0.1:23306/mor_platform",
+  "operatorAccountId": "221546852372267008",
+  "adminRoleId": "900000000000000510",
+  "adminRoleVersion": 19,
+  "targetId": "900000000000000001",
+  "registrationCollisions": 0,
+  "iamTables": 7,
+  "iamColumns": 75,
+  "activeRoutes": 97,
+  "customerTenants": 0,
+  "customerMembers": 0,
+  "catalogCounts": {
+    "t_permission": 40,
+    "t_role_permission": 130,
+    "t_console_resource": 46,
+    "t_gateway_route": 97,
+    "t_gateway_route_header": 340,
+    "t_gateway_route_query_param": 121,
+    "t_gateway_guard_rule": 578
+  },
+  "changesApplied": false
+}

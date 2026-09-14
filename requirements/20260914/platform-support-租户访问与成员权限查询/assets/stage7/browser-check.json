@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-09-14T10:01:44.948Z",
+  "status": "PASS",
+  "origin": "http://localhost:28080",
+  "checks": [
+    "existing-account-login",
+    "UTF-8-tenant-menu",
+    "tenant-list-empty",
+    "partner-type-filter",
+    "reload-preserves-partner-filter",
+    "existing-roles-page",
+    "browser-back-restores-filtered-tenant-list",
+    "logout-returns-login"
+  ],
+  "screenshot": "tenant-access-test.png",
+  "businessWrites": 0,
+  "ownedTabClosed": true,
+  "limits": "No CLIENT/PARTNER data in test; no pause/restore/member-detail test repeated."
+}

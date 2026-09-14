@@ -1,0 +1,13 @@
+SELECT 'connection',CONNECTION_ID(),DATABASE(),@@hostname;
+SELECT 'permissions',COUNT(*),MIN(version),MAX(version),MIN(status),MAX(status) FROM t_permission WHERE permission_id BETWEEN 900000000000061101 AND 900000000000061103;
+SELECT 'grants',COUNT(*),MIN(version),MAX(version),MIN(status),MAX(status) FROM t_role_permission WHERE role_permission_id BETWEEN 900000000000061201 AND 900000000000061203;
+SELECT 'resources',COUNT(*),MIN(version),MAX(version),MIN(status),MAX(status) FROM t_console_resource WHERE resource_id BETWEEN 900000000000061301 AND 900000000000061303;
+SELECT 'routes',COUNT(*),MIN(version),MAX(version),MIN(status),MAX(status) FROM t_gateway_route WHERE route_id BETWEEN 900000000000061001 AND 900000000000061008;
+SELECT 'headers',COUNT(*) FROM t_gateway_route_header WHERE route_header_id BETWEEN 900000000000062001 AND 900000000000062020;
+SELECT 'queries',COUNT(*) FROM t_gateway_route_query_param WHERE route_query_param_id BETWEEN 900000000000063001 AND 900000000000063020;
+SELECT 'guards',COUNT(*) FROM t_gateway_guard_rule WHERE guard_rule_id BETWEEN 900000000000064001 AND 900000000000064048;
+SELECT 'role',role_id,version,status FROM t_role WHERE role_id=900000000000000510;
+SELECT 'route_links',COUNT(*) FROM t_gateway_route r JOIN t_gateway_target t ON t.target_id=r.target_id JOIN t_permission p ON p.permission_id=r.permission_id WHERE r.route_id BETWEEN 900000000000061001 AND 900000000000061008 AND t.target_id=900000000000000001 AND p.permission_id BETWEEN 900000000000061101 AND 900000000000061103;
+SELECT 'resource_links',COUNT(*) FROM t_console_resource r JOIN t_permission p ON p.permission_id=r.permission_id WHERE r.resource_id BETWEEN 900000000000061301 AND 900000000000061303 AND p.permission_id BETWEEN 900000000000061101 AND 900000000000061103;
+SELECT 'grant_links',COUNT(*) FROM t_role_permission g JOIN t_permission p ON p.permission_id=g.permission_id JOIN t_role r ON r.role_id=g.role_id WHERE g.role_permission_id BETWEEN 900000000000061201 AND 900000000000061203 AND r.role_id=900000000000000510 AND p.permission_id BETWEEN 900000000000061101 AND 900000000000061103;
+SELECT 'route_children',r.route_id,(SELECT COUNT(*) FROM t_gateway_route_header h WHERE h.route_id=r.route_id) headers,(SELECT COUNT(*) FROM t_gateway_route_query_param q WHERE q.route_id=r.route_id) queries,(SELECT COUNT(*) FROM t_gateway_guard_rule g WHERE g.route_id=r.route_id) guards FROM t_gateway_route r WHERE r.route_id BETWEEN 900000000000061001 AND 900000000000061008 ORDER BY r.route_id;

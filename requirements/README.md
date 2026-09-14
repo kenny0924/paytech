@@ -79,3 +79,4 @@ requirements/
 本索引只做检索，不复制实现、测试数量或部署状态。
 
 | `20260913` | Client API 接入管理 | Platform Support / Operations Console | PLT-02、PLT-I03、PLT-16、PLT-I19、PLT-I06、E2E-16；Scope 目录、凭证查看与紧急撤销；实现、验证、部署及提交状态见当前台账 | [需求](./20260913/platform-support-ClientAPI接入管理/requirement.md) · [分析入口](./20260913/platform-support-ClientAPI接入管理/technique.md) · [阶段 3 方案](./20260913/platform-support-ClientAPI接入管理/design.md) · [页面](./20260913/platform-support-ClientAPI接入管理/ui.md) · [交付记录](./20260913/platform-support-ClientAPI接入管理/delivery.md) |
+| `20260914` | 租户访问管理与客户/合作伙伴成员权限查询 | Platform Support / Operations Console | PLT-15、PLT-I02、E2E-16；租户安全访问管理、成员权限只读；当前进度见实施台账 | [需求](./20260914/platform-support-租户访问与成员权限查询/requirement.md) · [差异与影响](./20260914/platform-support-租户访问与成员权限查询/technique.md) · [方案与页面](./20260914/platform-support-租户访问与成员权限查询/design.md) · [交付记录](./20260914/platform-support-租户访问与成员权限查询/delivery.md) |

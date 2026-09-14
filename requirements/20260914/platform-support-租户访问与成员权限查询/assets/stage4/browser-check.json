@@ -1,0 +1,22 @@
+{
+  "recordedAt": "2026-09-14T08:46:00.612877+00:00",
+  "environment": "Isolated Web preview at 127.0.0.1:18302 with production React components and synthetic BFF contract fixtures",
+  "checks": [
+    "List filtering writes tenantId and paging to URL",
+    "Tenant detail and member permissions render",
+    "Long permission codes ellipsize",
+    "Permission sources expand lazily",
+    "Browser back from source/member/tenant restores filtered list URL and input",
+    "Pause confirmation requires reason; synthetic success updates security status",
+    "Simulated service failure renders failed refresh with Request ID and retry"
+  ],
+  "screenshots": [
+    "member-browser.png",
+    "error-browser.png"
+  ],
+  "limitations": [
+    "No live Gateway/BFF/Platform browser chain",
+    "UI writes only changed in-memory synthetic fixture data"
+  ],
+  "cleanup": "Temporary browser tab closed; Vite stopped; three preview-only files removed"
+}

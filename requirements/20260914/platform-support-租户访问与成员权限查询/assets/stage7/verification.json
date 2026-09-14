@@ -1,0 +1,47 @@
+{
+  "recordedAt": "2026-09-14T10:04:59.705160+00:00",
+  "stage": 7,
+  "status": "DEPLOYED-CHECKED-AWAITING-USER-ACCEPTANCE",
+  "origin": "http://localhost:28080",
+  "imagesReplaced": 3,
+  "allContainersHealthy": 11,
+  "otherContainersUnchanged": 8,
+  "ddl": 0,
+  "registrationInserts": 105,
+  "activationUpdates": 15,
+  "displayNameRepairUpdates": 3,
+  "effectiveGatewayRoutes": 105,
+  "publicChecks": 13,
+  "additionalUnicodeNameChecks": 3,
+  "publicWebFilesMatched": 46,
+  "browserChecks": 8,
+  "applicationSourceFilesUnchanged": 67,
+  "businessFixturesCreated": 0,
+  "reusedApplicationVerification": "../stage5/verification.json",
+  "evidence": [
+    "preflight.json",
+    "backup.json",
+    "sql-application.json",
+    "snapshot.json",
+    "public-checks.json",
+    "label-repair.json",
+    "browser-check.json",
+    "containers.json"
+  ],
+  "notPerformed": [
+    "test tenant security status writes",
+    "test member detail fixture validation",
+    "git commit",
+    "git push",
+    "remote artifact publication"
+  ],
+  "cleanup": {
+    "browserLoggedOut": true,
+    "ownedBrowserTabClosed": true,
+    "rollbackPerformed": false
+  },
+  "limitations": "No CLIENT/PARTNER tenant/member test data. Full business verification remains stage 5.",
+  "localDocumentLinksChecked": 183,
+  "brokenLinks": 0,
+  "whitespaceCheck": "PASS"
+}

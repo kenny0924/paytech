@@ -1,0 +1,108 @@
+{
+  "preparedAt": "2026-09-14T09:40:36.695422+00:00",
+  "status": "prepared-not-deployed",
+  "environment": "desktop-linux / mor-test",
+  "origin": "http://localhost:28080",
+  "database": "127.0.0.1:23306/mor_platform",
+  "images": {
+    "platform-support-service": {
+      "tag": "mor-test/platform-support-service:tenant-access-20260914",
+      "id": "sha256:083853a830844145318a36eb225537c9520574d1fecf01d50bdceceaecc29244",
+      "architecture": "arm64",
+      "created": "2026-09-14T09:37:51.808289959Z"
+    },
+    "operations-console-bff": {
+      "tag": "mor-test/operations-console-bff:tenant-access-20260914",
+      "id": "sha256:7957f8c7219922875de420afc895b3158cc7cb409ff154a6ca6fb9bd5137b40a",
+      "architecture": "arm64",
+      "created": "2026-09-14T09:38:19.739891917Z"
+    },
+    "operations-console-web": {
+      "tag": "mor-test/operations-console-web:tenant-access-20260914",
+      "id": "sha256:40785d343525a7bbbeb00439bce8d2dadb350c5d3f459cc28039b405bdc1c696",
+      "architecture": "arm64",
+      "created": "2026-09-14T09:39:34.968025882Z"
+    }
+  },
+  "previousImages": {
+    "platform-support-service": "sha256:9bc5b9165b49cd2a237a912215b7813e459217bfebf99ab5df47fe8ec0cbff4e",
+    "operations-console-bff": "sha256:b3e5fa00976ccc899b4ce10c9bd4e327fd0af8540faaaa7118b392e381624950",
+    "operations-console-web": "sha256:fb434d52204e396a0ac439b6f904603f215a65a0967b2c0c40023e702efbbaf3"
+  },
+  "artifacts": {
+    "platform-support-service": {
+      "path": "/tmp/plt-tenant-access-release-20260914/java/platform-support-service.jar",
+      "sha256": "c867a859ca7f8fd74c01180f99d67d83d936183c497b29dcfb932b0f89d6e637",
+      "platformApiSha256": "7dfb8d8a4c0d8175ac676b9bc3ded4dea065e353350d981bac89fd8be41c88f7"
+    },
+    "operations-console-bff": {
+      "path": "/tmp/plt-tenant-access-release-20260914/java/operations-console-bff.jar",
+      "sha256": "4d7dea3536328084c83473a356f32b2afbb54abe2bb535962ef4c10887c99a41",
+      "platformApiSha256": "7dfb8d8a4c0d8175ac676b9bc3ded4dea065e353350d981bac89fd8be41c88f7"
+    }
+  },
+  "webFiles": {
+    "index.html": "ef9e3ca37909e2b5b204bbc344fa3568dad2888eee0724a9feb75ff0ff3a57c7",
+    "assets/table-ZhgY6pOK.js": "44bbcb97c46b43d802057175c3a4c2f4fea09f5b8ac1c205c1637f4a07b08020",
+    "assets/index-Cj75_2K1.css": "23b947b67bc9e853cdd3142c0e65ed39422d7b2464ff355d80184919d3bd5fc5",
+    "assets/modal-DpzQWICC.js": "bf25bce5dd5743e90e9dc16a45d04e654bbf2773a9a74d182175b970c42ea7b4",
+    "assets/ApiCredentials-Ct6HWOx0.js": "7e8abe34957aa9ed7ea6c2684ebb3c4c67806c1a4e5d7e51425aba7146831d6a",
+    "assets/rolldown-runtime-CbXtAM7H.js": "bbf7c5086ae414dc3f33777e3eebf16ea8631325b8bb4690d25091c03567f31a",
+    "assets/typography-XF3LcClI.js": "33d133cb5c79fdde495f51154796cde1c1433958eefc593b53592655911bb64c",
+    "assets/index-GUHYmQfF.js": "974ca8bbee3de34890116ae24336a4eb11c0cbd77abaa615ca50d9d2076e128b",
+    "assets/ConfigurationStatusModal-cYd2zEVH.js": "c18bb8af71e02bc24cdc29829054195112f422d0dcac6ce6483b743be25de213",
+    "assets/Audit-CAmg9txq.js": "19c296d02e668e42e97cf21dce00958aff32e8c89f2e2d10de3e0689eb229a1d",
+    "assets/RiskVariables-CHit8rJ2.js": "09ca2762c6f2d7e1200a0f59b152c100dafd301e8f078722fc56824f5b72a615",
+    "assets/riskNavigation-BwdnTY65.js": "d84ef513f9edbe2a6c8cc72823060d40ece846b3dc49a60cd6201cef4de2420f",
+    "assets/drawer-b3CdxYor.js": "93e3ddb1d90b31437b7ebe1043a843987fb5e9f1fefe3243c75c3d4583bab5e7",
+    "assets/TenantAccess-fC9p-5vr.css": "64b692bcfb2e968bbeaee2746f5c130bc01654d1cfe023380a71a4ef1f44002e",
+    "assets/riskRuleConfiguration-BMUDu4IY.css": "76d95c6d0e87f32121505d3f7c3200dc176aa4b1d96d63d08a051b31fcaae50e",
+    "assets/PlusOutlined-nK9GAuKX.js": "628bccb3f604c8250c28f47d73371729fef856e6e1b2cb9d78f7ee6ff356f6d9",
+    "assets/PermissionSelect-7wz4sejs.js": "5ed3b97519ed696cf9c63fac30e3a7d308f2dd4b445423dc62cc9ee6a6273721",
+    "assets/deletion-CmbtIwTR.js": "2dc13be03e942c047e4bf15624d13ed7d9bf57a8ad2c61d89da83e437ea888fe",
+    "assets/useUnsavedRuleGuard-BKx6iMFy.js": "fb786f3d66bde8d35c8291c772e2582b8d882a463adec33c39edae72fdc26ada",
+    "assets/Permissions-5w224LGK.js": "f71f944ee45582a35416c052c3a18b69c5f775c6a297a1e52874c4cd71f1bcf7",
+    "assets/tabs-C0yRiqA3.js": "c315a098248d3655d8b5ffd829bbbe3a616c4c2464d2c9c8612fc5486e1e0920",
+    "assets/tree-DGejedo3.js": "ac5365b56a1a3aab5ba51f0753cc86315a807890e646628cfb1a665d9ab46ad4",
+    "assets/riskCommands-C9GY5y7H.js": "e622538c613c262e34d9f21a5fe422124a56403a58dd05129f60e5a3f3569c0c",
+    "assets/ApiCredentials-CySkqB7E.css": "97bb7f7ca370347427da7ad9e1bda855e663401dc249a748ca080a18ecc3bf36",
+    "assets/Roles-DdtO2I7J.js": "e10930ee1e95312490ee952a9ca55c3fe44ba89e2c154f9c76e98d0c15c746a6",
+    "assets/VariableControls-BqChYMC9.css": "1f574f0a8212143478dcebc97c097b28ded4b7199811dd4402e292cb2cb4a768",
+    "assets/GatewayConfiguration-CiijH9FS.js": "1ebab81797b13e16f5a979e6c1af1630887bb82d9a158e1c1e29dcbcf1b53223",
+    "assets/riskVariable-D2vf8Y-K.js": "d85a3e7e2eb104f654414752ebaffd616c434529af5b6c4886b7051ac761d4c1",
+    "assets/RiskDecisionFlows-B1FW0Gw3.css": "b902a3a0e1a1f080d421ac98dc4a153ae8c0f15ad40c8a09f18ae877890b88ea",
+    "assets/ConsoleResources-kwObrxrP.js": "eb730d26b6d790e40e6f2661860295c4e37011edb04becadb9877a48288a8b18",
+    "assets/usePaging-Dxim4i8G.js": "efd9a1f394a43e169b91e470979e2301e9829542909c6e63728c1ce9cecd26c0",
+    "assets/RiskRuleConfiguration-DQ-sdxUr.js": "949831f470484020a3214cefaa5be3805fa5cf8f2b73e1490fc9e812be8fadf8",
+    "assets/VariableControls-BS-COcHw.js": "306aa0465554cd1e04569f40db1943964f97f57f7970fc32b53f3d30155a6469",
+    "assets/RiskDictionary-CrrQ15EY.js": "fb96b2e6e87e708a71b3e2f983e6ea5e316daef3d72453a737ac64d24943476e",
+    "assets/paging-Bz268Q6l.js": "7bf2dfed1077f750d1b48e35ca054b1b595e6eb9000c5d71fee6386333192a3b",
+    "assets/useErrorNotification-hUvRN7hc.js": "78b500cb6cd77f4c27a1d8bce99bbf767a48a722e0689dbf13be638ba0a2fbce",
+    "assets/ApiScopes-BGQI0U0u.js": "8d0a53d1799475dec99bbf7d1b524e7d8f1e6260c9fb53e5909cf4e995a489fc",
+    "assets/jsx-runtime-Bb6Imiej.js": "bf49d9347c77cda2bbd9c4ad45c089ace2fcf47d9169a81b45739bbc49f45825",
+    "assets/Audit-D3eAcELP.css": "05664d0e6d330bc947f68f76dcd684e66a08fa2294e4c4da3ebcf5e7b10ff160",
+    "assets/configuration-CK-HuIKJ.css": "f44387f96a2f6b62f8e12c503d0a3321034d7790881cbc6329edfd8fe0143830",
+    "assets/configuration-CG0_IeLi.js": "6841a00c890c38c2054648ae7d68babc641330487f6739ab9ca6a73f4a5ab49d",
+    "assets/RiskDecisionFlows-BC2U4fTF.js": "0043b82389cb3dc0962040e6ea7389c067623b6c4b25880139e7d41890d4cded",
+    "assets/Accounts-DKLTtZ3T.js": "bb988b5c3a0a8a6a5af384962a2044675373c6199b9840a274cb0af8f007a252",
+    "assets/riskRuleConfiguration-DVI00nNY.js": "832f0477d2e9d21dc2d1b754e54af5720d902466a3c837692c0474d51b020a59",
+    "assets/descriptions-OkKIdzp2.js": "afec6b5e1213802c903d60b949ae04a5d3a86e036a0516fb601f38d6c3530a1f",
+    "assets/TenantAccess-BSeHXoJC.js": "165fd6bb22abee2f29bcf5894dbfb35a87324352bd5c57c70a6c5c7c11b0e3fd"
+  },
+  "sourceHeads": {
+    "platform-support-service": "3cb5e31f08a0b889348d5785dd327e91e762839a",
+    "operations-console-bff": "85927a7adc941694d0dd3ac4aa46f20685256432",
+    "operations-console-web": "4ebeed0e9ef41e1938c878c8fd07a62c6c3d5018"
+  },
+  "sourceBaseline": "../stage4/verification.json",
+  "sourceFilesUnchanged": 67,
+  "healthProbeSourceSha256": "e4cd3fe8d4ee8e90d7dbd1a375885edabe789afdcecbcb019484ae924d6ddc5c",
+  "healthProbeClassSha256": "012bbef3c8e160831070dcab3c64121cf06e168a416be8cdf6c55f997e2aa468",
+  "environmentConfigHashes": {
+    "test-environment/compose.yaml": "23df38a23d0432e3851a829b18c8e58ebe9550c915bf0b9e5613c5d1d6a404cf",
+    "test-environment/compose.applications.yaml": "c0e293ff1d0e4c118325ef5b8180131ee6869d4675d0396bd60743ba89605f96",
+    "test-environment/compose.sh": "e1e215d4305d2a0af9ab8017cfa6cdf2eef5565dd8143b114283ec5bd7ce6c05"
+  },
+  "remotePublication": false,
+  "testEnvironmentModified": false
+}

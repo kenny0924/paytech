@@ -651,3 +651,50 @@
 - **阶段 2 已确认，阶段 3 已交付待审阅：** 用户回复“OK”，据此完成 [实施方案](../requirements/20260913/platform-support-ClientAPI接入管理/design.md)、[API](../requirements/20260913/platform-support-ClientAPI接入管理/api.md)、[数据](../requirements/20260913/platform-support-ClientAPI接入管理/data-design.md)、[SQL](../requirements/20260913/platform-support-ClientAPI接入管理/db/README.md) 和 [Pencil 页面](../requirements/20260913/platform-support-ClientAPI接入管理/ui.md)。3 个应用新增 9 项/修改 4 项 API 能力，对应 Platform/BFF 合计 18 个新端点、8 个修改端点；模型新增 1 表/7 字段/1 主键/1 唯一索引、旧业务字段 0、两旧表各加 1 普通索引。test 另补两张原设计表，共需建 3 表/28 字段。注册 SQL 为 127 INSERT + 两旧 Route 更新，初始新路由/菜单/角色授权不生效；不含业务种子或启用 SQL。
 - **阶段 3 页面与边界：** Web docs/design.pen 已保存新增 8 个页面状态和 1 张字段关系图，保留原 54 画板；9 张 PNG 和 8 页 PDF 已导出至本需求 assets/stage3。A09 复用 Route READ，无 PLT-I02 白名单或 Gateway 业务代码扩展。当前仅文档和 Pencil 设计变更，未生成正式模型、修改应用功能、执行 SQL、创建示例、部署、提交或推送。上方阶段 2“尚未进入精确方案”已由本记录接续，当前等待阶段 3 整体确认后进入研发。
 - **阶段 3 验证：** [静态检查证据](../requirements/20260913/platform-support-ClientAPI接入管理/assets/stage3/design-verification.json) 核对端点/注册子项/127 INSERT/两旧 Route 目标、旧两表与正式 Schema 一致、10/11/7 字段、验收编号和本地链接；Pencil 布局无裁剪，9 张 PNG 与 8 页 PDF 有效。需求站生产构建及 136/136 检查通过，日志 `/tmp/plt-client-api-stage3-requirements-tests.log`；没有数据库 SQL/EXPLAIN 或应用功能验证。
+
+<a id="platform-tenant-access-20260914"></a>
+
+### 租户访问管理与客户/合作伙伴成员权限查询：用户验收通过，代码已提交（2026-09-14）
+
+- **阶段 8 用户确认与提交：** 用户回复“我做完了，提交吧。”，确认本期验收并授权提交。Platform `cb80a2c7c7ab641b7d0646807d34d7fcc05d037a`、BFF `4685f620ad0f93ec9b78c687813a69100caf1666`、Web `ff0b7003b5581eaafd926d7049ab23f3a8dc6462`；需求归档随本条记录所在根提交完成。67个源文件与已验收基线一致，复用Platform512/BFF1163/Web938及阶段5/7有效证据；提交前需求站136/136和范围/敏感值/空白检查通过。Web仅纳入本期8张Pencil画板，其他任务19张仍留工作区；根共享文件仅暂存本需求段落，Payment等修改保留。未推送、重新部署或修改test数据。见[交付记录](../requirements/20260914/platform-support-租户访问与成员权限查询/delivery.md)、[提交验证](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage8/verification.json)。Client/Partner Console菜单控制按用户决定延期。
+
+以下记录保留此前部署、示例创建和验收时的观察，由上述用户确认接续。
+
+- **test 示例（部署后追加授权）：** 用户明确要求“帮我创建一条数据”，已创建 CLIENT 租户 `900000000000065001` / “DEMO 客户租户（验收）”，配1个CUSTOMER成员、1个租户只读角色、2项示例权限，共9INSERT，既有行0UPDATE。合成来源不代表真实CCT入驻，没有登录凭据/API Credential；初始双状态ACTIVE。真实公开接口8项查询均通过，成员两项权限各有1个有效来源。当前test有1个CLIENT租户及1个成员；下方阶段7的0数据为部署时观察。见[示例说明](../requirements/20260914/platform-support-租户访问与成员权限查询/db/test-demo/README.md)、[回执](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/test-demo/verification.json)。暂停/恢复留给用户验收，没有提交或重新部署。
+
+- **阶段 7 授权与执行：** 用户对阶段 6 精确发布清单回复“可以”。复核 11 容器、67 源文件及 SQL/制品无漂移后，一次备份八张受影响配置表，按 Platform→BFF→Web 替换三个固定候选镜像；三个应用 healthy，其他八个容器身份/镜像未变。`127.0.0.1:23306/mor_platform` 人工单连接核对后分别提交 105 INSERT、15 启用 UPDATE，0 DDL；管理员角色 version 19→20。见 [部署与验收报告](../requirements/20260914/platform-support-租户访问与成员权限查询/test-acceptance.md)、[阶段 7 证据](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage7/verification.json)。
+- **部署修正：** 初次交互 MySQL 客户端默认 latin1，将三条新 Resource 中文名称写成乱码；页面检查发现后，以精确 ID/旧字节/version 修正为已批准名称，3 UPDATE，Resource version 2→3。实际合计 105 INSERT、18 UPDATE。公开导航及浏览器均确认中文正确；对应 [修正 SQL](../requirements/20260914/platform-support-租户访问与成员权限查询/db/repair-test-display-names.sql) 和 [修正后恢复候选](../requirements/20260914/platform-support-租户访问与成员权限查询/db/deactivate-test-after-label-repair.sql) 已归档，未执行恢复。
+- **部署检查与限制：** Gateway 快照正常加载 105 条有效 Route（新增 8）；真实入口登录、三个新导航资源、客户/合作伙伴空页、不存在/INTERNAL 租户 404、既有人員/角色/API Route/审计/风控规则查询通过。46 个公开 Web 文件与候选摘要一致；浏览器新菜单、筛选、刷新和返回保持条件、退出通过。test 的 CLIENT/PARTNER Tenant/Member 仍为 0，本次没有造数据或重复暂停/恢复/成员明细业务验收；完整业务证据沿用阶段 5。入口 `http://localhost:28080/tenant-access`。当前停点为用户验收；本需求未 Git 提交、推送或发布远程制品。
+
+以下阶段 6 及更早条目保留当时的准备、实施和授权记录，由上述阶段 7 接续。
+
+- **阶段 6 发布准备：** 用户确认阶段 5 后同意准备发布。只读核对 `desktop-linux/mor-test/127.0.0.1:23306/mor_platform`：11 容器健康，IAM 7 表/75 字段齐全，新登记无冲突，管理员角色 version=19、有效 Route 97、CLIENT/PARTNER Tenant/Member 为 0。已构建三个本机候选镜像并固定 image ID，Platform/BFF 内嵌 API 字节一致，Web 46 个文件固定到阶段 5 构建，67 个应用源文件无漂移。已准备 105 INSERT + 15 启用 UPDATE、旧镜像及精确版本停用恢复方案；尚未备份/修改 test 数据、替换运行容器或发布远程制品。候选/恢复 Compose 校验与需求站 136/136 通过。[发布清单](../requirements/20260914/platform-support-租户访问与成员权限查询/release.md)、[制品清单](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage6/release-manifest.json)、[准备证据](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage6/verification.json)。当时停点是等待 test 部署清单授权；该授权及实际执行见阶段 7，不包含 Git 提交或新增 test 业务示例。
+
+- **阶段 5 真实链路与页面：** 用户在具体本机临时启用申请后回复“可以”。生产 Web → 本机入口 → 真实 Gateway/BFF/Platform/MySQL/Redis 完成 42 项检查和 19 项页面核对：暂停后的 PLT-I03 200→401→恢复后200、权限隔离、分页、幂等、审计、来源限制、损坏关联失败关闭；页面冲突保留原因、权限来源、浏览器返回及 1280/390 布局通过。67 个源文件与阶段 4 一致，未新增业务修复；手工脚本纠正了公开入口应按既有 BFF 503 检查而非 Owner 500 的断言。见 [验收报告](../requirements/20260914/platform-support-租户访问与成员权限查询/acceptance.md)、[验证记录](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage5/verification.json)。开发 Vault/签名、本机发现和合成业务数据边界保留，未验收 CUSTOMER 登录或外部 Client 业务执行。
+- **阶段 5 恢复记录：** 自有进程、浏览器和账号/租户/成员授权/凭证/命令/审计/签名夹具已清理，11 行临时配置恢复 DISABLED/version=1，原管理员 3 条关联仍 REVOKED，105 行正式登记保留。见 [SQL 回执](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage5/local-activation.json)、[清理核对](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage5/local-postcheck.json)。没有未关闭验收缺陷；用户已确认接续阶段 6，当前停点见上方。以下保留阶段 4 有效开发证据。
+
+- **实际改动：** Platform/BFF/Web 三应用完成租户列表/详情、安全暂停与恢复、成员/角色/权限及来源查询。8项新业务 API（7读1写，Owner/BFF各8端点）、3页面、0表结构/字段/索引变更、105行登记。只修改目标Tenant安全状态及版本/时间；成员授权只读。Gateway/其他核心应用未改；阶段 4 当时尚未提交、推送、发布或部署。
+- **本机 SQL：** 用户针对具体申请回复“继续”后，已备份并在 `mor-local-mysql-1/127.0.0.1:13306/mor_platform_config_validation` 应用105 INSERT，0DDL/0旧行更新。8新路由、3新资源仍DISABLED，3管理员授权仍REVOKED；安装执行元数据ID1仅为已批准的独立本机例外，没有创建账号。[应用与备份](../requirements/20260914/platform-support-租户访问与成员权限查询/db/local-application.md)。阶段 4 当时 test 尚未应用，阶段 7 执行见上方。
+- **开发检查：** Platform最终 `clean verify` 512/512（其中本期31），指令覆盖率97.82%、分支90.06%，通过原90%门槛；BFF `verify` 1163/1163（本期25），Web938/938及TypeScript/Vite生产构建通过。保留既有Web chunk大小提示。完整记录及当前源文件摘要见 [验证证据](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage4/verification.json)。
+- **阶段 4 回归修正与边界：** 修复已写入的租户安全操作被原审计前缀查询排除；补齐损坏关联、回执与权限停用用例，保留单资源锁、DB行锁/CAS、幂等重放前重新授权。代表性EXPLAIN使用现有索引，非负载测试。当时的浏览器证据仅为生产页面组件与合成响应交互；阶段 5 完整链结果见上方。详见 [验收映射](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage4/acceptance-mapping.md)。
+- **阶段 4 清理记录：** 当时测试合成数据及临时 Web 预览已清理，登记计数/禁用状态保持预期，见 [本机核对](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage4/local-postcheck.json)。后续阶段 5 已执行并恢复，当前停点见上方。
+
+以下阶段 3 条目保留当时的交付及授权证据，当前状态由上方记录接续。
+
+- **设计规模：** Platform/BFF/Web 3 应用，新增 8 项能力（7 读1写，Owner/BFF 各8端点），既有 API 路径/请求变更0；0表结构/字段/索引变更，105 INSERT/0初次旧行UPDATE，后续启用预计15 UPDATE。3功能页面、8张Pencil状态画板；旧审计/页面能力接口有内容扩展，Gateway无需改代码。
+- **本轮工件与观察：** Web docs/design.pen 保存新增8画板，保留原63画板；导出8PNG及8页PDF。只读检查本机验证库和test的新ID/权限/路径占用为0，Active Operations Target/管理员角色各1；未应用SQL、创建示例、修改功能代码、部署、发布或提交。其他任务修改保留。证据入口为 [阶段3材料](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage3/design-verification.json)。
+
+- **阶段 3 检查：** 88 个本地文档链接/锚点、8 项 API 与 105 行 SQL 的列名/值数量/唯一 ID/路径/20 项 Query 对齐、6 个 JSON 示例、7/10/6 验收编号通过；8 张 PNG/8 页 PDF 有效，Pencil 无裁剪且已保存。需求站生产构建及 136/136 检查通过，日志 `/tmp/plt-tenant-access-stage3-requirements-tests.log`。未运行本期应用功能、实际 SQL 或性能测试；[完整证据](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage3/design-verification.json)。
+
+以下阶段 2/1 记录为历史观察及交付口径，已由上方当前阶段接续。
+
+
+- **最新授权与停点：** 用户回复“可以”，确认阶段 1 范围/验收及逐阶段安排；已交付 [阶段 2 差异与影响](../requirements/20260914/platform-support-租户访问与成员权限查询/technique.md)。预计 Platform/BFF/Web 三个应用、约 8 项新 API 能力、0 新业务表/字段，Gateway 无需改代码；精确接口/索引/DML/Pencil 数量在阶段 3 冻结。等待用户确认分析及成员标识采用“脱敏邮箱＋账号 ID”的细化；现有模型没有姓名字段，尚未据此修改阶段 1 F-04。
+- **阶段 2 只读证据：** 已对 desktop-linux 的 test `mor-test-mysql-1/127.0.0.1:23306/mor_platform` 和本机验证库 `mor-local-mysql-1/127.0.0.1:13306/mor_platform_config_validation` 读取七表字段、索引及聚合计数。七表共 75 个既有字段，列名/数量与当前 Schema 一致；PDManer 同步。两库均无 CLIENT/PARTNER Tenant、CUSTOMER 账号/成员及 CLIENT 凭证；test 既有 Operations 数据保留。证据见 [database-observation.json](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage2/database-observation.json)，不是完整库或性能验收。
+- **阶段 2 边界：** 同步 PLT-15/E2E-16 已批准范围，读取现有 PLT-I03/管理测试但未运行功能回归；无应用/模型/SQL/部署/制品发布/提交变更。后续合成数据、CUSTOMER 运行链缺口与安全命令并发在技术稿中明确，未提前创建示例或扩大到 CCT 投影实现。以下阶段 1 记录保留为历史。
+- **阶段 2 文档检查：** 三份 Markdown、44 个本地链接/所引用显式锚点、7/10/6 功能验收编号、8 项分析 API 编号和七表观察与模型/Schema 列名一致性检查通过；四个应用仓库保持干净。`npm --prefix requirements-site test` 生产构建及 136/136 检查通过，差异空白检查通过；证据见 [verification.json](../requirements/20260914/platform-support-租户访问与成员权限查询/assets/stage2/verification.json)。未运行本期应用功能验证，阶段 2 仍待用户确认。
+
+- **需求授权与停点：** 用户选择两项能力一起做；已登记 [需求评审稿](../requirements/20260914/platform-support-租户访问与成员权限查询/requirement.md)、[技术证据入口](../requirements/20260914/platform-support-租户访问与成员权限查询/technique.md) 和 [交付记录](../requirements/20260914/platform-support-租户访问与成员权限查询/delivery.md)。拟覆盖 CLIENT/PARTNER 租户查询、安全暂停/恢复、成员角色和权限只读，7 项功能、10 项功能验收、6 项 UI 验收。等待用户确认整体范围后进入阶段 2；尚未定稿 API/表字段/注册 DML/Pencil 数量。
+- **已核对边界：** 现有 Tenant 模型区分 CCT 来源业务状态与 Platform 安全状态；当前人工授权 API/SQL 限 Operations/INTERNAL，不能推定已支持 CUSTOMER 成员查询。现有 PLT-I03 认证已检查 CLIENT Tenant 的来源 ACTIVE 与安全 ACTIVE。本期不以管理页面替代未建设的 CUSTOMER 登录/会话链，不修改客户主档或提供成员授权写入。
+- **本轮实际动作：** 只读核对文档、源码及工作区，创建阶段 1 材料并追加检索/状态入口。应用代码、模型、数据库和部署均未变更，未提交或推送；未查询本机/test 数据库。其他任务工作区修改保留，已确认范围的全局用例/时序投影待本阶段确认后处理。
+- **阶段 1 文档检查：** 3 个需求 Markdown、19 个本地链接及所引用显式锚点、7/10/6 功能和验收编号、行尾空白检查通过；共享文档差异空白检查通过。`npm --prefix requirements-site test` 完成生产构建及 136/136 检查，日志 `/tmp/plt-tenant-access-stage1-requirements-tests.log`。三个应用仓库保持干净；本轮未运行 Java、HTTP 或页面功能验证，文档检查不代表本期能力已经实现。

@@ -1,0 +1,4 @@
+-- Stage 3 design index only. No executable DDL.
+-- New/changed business tables, columns and indexes: 0.
+-- Existing schema authority: ../../../../platform-support-service/docs/database/sql/platform-support-schema.sql
+-- See ../data-design.md and README.md for the seven existing tables and registration SQL.

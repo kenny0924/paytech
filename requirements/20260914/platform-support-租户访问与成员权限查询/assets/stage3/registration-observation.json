@@ -1,0 +1,36 @@
+{
+  "observedAt": "2026-09-14T07:22:32.369177+00:00",
+  "readOnly": true,
+  "environments": {
+    "local": {
+      "container": "mor-local-mysql-1",
+      "database": "mor_platform_config_validation",
+      "counts": {
+        "permissions": 0,
+        "role_grants": 0,
+        "resources": 0,
+        "routes": 0,
+        "headers": 0,
+        "queries": 0,
+        "guards": 0,
+        "active_target": 1,
+        "active_admin": 1
+      }
+    },
+    "test": {
+      "container": "mor-test-mysql-1",
+      "database": "mor_platform",
+      "counts": {
+        "permissions": 0,
+        "role_grants": 0,
+        "resources": 0,
+        "routes": 0,
+        "headers": 0,
+        "queries": 0,
+        "guards": 0,
+        "active_target": 1,
+        "active_admin": 1
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "observedAt": "2026-09-14T09:54:12.620861+00:00",
+  "status": "PASS",
+  "containersUnchangedHealthy": 11,
+  "sourceFilesUnchanged": 67,
+  "sqlHashesUnchanged": true,
+  "candidateImagesPresent": 3,
+  "environmentConfigUnchanged": true,
+  "databasePreflightUnchanged": true
+}

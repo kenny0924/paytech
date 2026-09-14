@@ -1,0 +1,38 @@
+{
+  "appliedAt": "2026-09-14T08:29:24.503703+00:00",
+  "authorization": "用户在本机具体 SQL 申请后回复“继续”，本轮执行前明确了该含义。",
+  "container": "mor-local-mysql-1",
+  "hostPort": 13306,
+  "database": "mor_platform_config_validation",
+  "connectionId": 142101,
+  "sql": "db/dml.sql",
+  "sqlSha256": "5f6c851e89c04344183c4e396a06797bf8b9255bee5bad21bfc5e2970358d537",
+  "backupEvidence": "local-backup.json",
+  "operatorMetadataId": "1",
+  "operatorException": "Approved independent local installation metadata only; no account or grant activation.",
+  "insertRowsByTable": {
+    "t_permission": 3,
+    "t_role_permission": 3,
+    "t_console_resource": 3,
+    "t_gateway_route": 8,
+    "t_gateway_route_header": 20,
+    "t_gateway_route_query_param": 20,
+    "t_gateway_guard_rule": 48
+  },
+  "insertedRows": 105,
+  "updatedExistingRows": 0,
+  "ddlStatements": 0,
+  "commit": "succeeded",
+  "routes": "8 DISABLED",
+  "resources": "3 DISABLED",
+  "adminRolePermissions": "3 REVOKED",
+  "afterCatalogCounts": {
+    "t_permission": 41,
+    "t_role_permission": 47,
+    "t_console_resource": 49,
+    "t_gateway_route": 105,
+    "t_gateway_route_header": 360,
+    "t_gateway_route_query_param": 141,
+    "t_gateway_guard_rule": 626
+  }
+}

@@ -1,0 +1,422 @@
+{
+  "recordedAt": "2026-09-14T08:55:09.789952+00:00",
+  "stage": "4",
+  "status": "stage4-development-complete-awaiting-stage5-confirmation",
+  "scope": {
+    "applications": 3,
+    "newBusinessApis": 8,
+    "ownerEndpoints": 8,
+    "bffEndpoints": 8,
+    "schemaChanges": 0,
+    "registrationInserts": 105,
+    "newWebPages": 3
+  },
+  "checks": [
+    {
+      "name": "web-unit",
+      "log": "/tmp/plt-tenant-access-web-tests.log",
+      "sha256": "f3b090cf4affc7f2d57090f1f5332afa5836a7cae737773e084a6376d9663471",
+      "tests": 938,
+      "pass": 938,
+      "fail": 0,
+      "skipped": 0,
+      "passed": true
+    },
+    {
+      "name": "web-build",
+      "log": "/tmp/plt-tenant-access-web-build.log",
+      "sha256": "db0b7ac9fc7adb6d4e4cfde04567789a683563c65e0d3ca28f217117983d397c",
+      "passed": true,
+      "warning": "Existing chunk size warning remains."
+    },
+    {
+      "name": "bff-verify",
+      "log": "/tmp/plt-tenant-access-bff-verify.log",
+      "sha256": "c49766d616249cbf620ee156f605094fa7fcf3e6256e0ab710447083ec8ee288",
+      "tests": 1163,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": true
+    },
+    {
+      "name": "platform-static",
+      "log": "/tmp/plt-tenant-access-platform-static.log",
+      "sha256": "f88c16897cb47cb2738e142ae06345a0b078f848c9934909a8f22a21543d4e55",
+      "tests": 95,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": true
+    },
+    {
+      "name": "platform-clean-verify",
+      "command": "./platform-support-service/mvnw -f platform-support-service/pom.xml clean verify",
+      "environment": "JDK 25; local MySQL/Redis, PLATFORM_SUPPORT_TEST_DB_URL -> 127.0.0.1:13306/mor_platform_config_validation",
+      "log": "/tmp/plt-tenant-access-platform-final-verify.log",
+      "sha256": "aeffcc8c77df1425bf7ba4f439d29ce0dd5407b3da7cbc309fe5cd924da6b9b5",
+      "tests": 512,
+      "tenantAccessHttpTests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": true,
+      "coverage": {
+        "INSTRUCTION": {
+          "covered": 37221,
+          "missed": 828,
+          "ratio": 0.9782385870850745
+        },
+        "BRANCH": {
+          "covered": 2672,
+          "missed": 295,
+          "ratio": 0.9005729693292889
+        }
+      },
+      "coverageReportSha256": "3392521128b6ccbde35ec52bf711b8d43ac73ce148d6e42ee1c424f5521cb61a"
+    },
+    {
+      "name": "local-sql-application",
+      "evidence": "local-application.json",
+      "passed": true
+    },
+    {
+      "name": "local-post-test-cleanup",
+      "evidence": "local-postcheck.json",
+      "passed": true
+    },
+    {
+      "name": "representative-explain",
+      "evidence": "query-plan.json",
+      "passed": true,
+      "limitation": "13-permission fixture; not a load test"
+    },
+    {
+      "name": "browser-component-check",
+      "evidence": "browser-check.json",
+      "passed": true,
+      "limitation": "Production components with synthetic fixtures; not integrated browser/BFF/Platform acceptance"
+    }
+  ],
+  "platformFirstRun": {
+    "tests": 485,
+    "failures": 13,
+    "errors": 0,
+    "skipped": 0,
+    "log": "/tmp/plt-tenant-access-platform-existing.log",
+    "assessment": "Historical outdated catalog/page-count/approved-processor assertions corrected; final full clean verify above passes."
+  },
+  "earlyRedGreen": {
+    "owner": "/tmp/plt-tenant-access-red.log => /tmp/plt-tenant-access-green.log; one actual HTTP unauthorised endpoint 404 => expected 403",
+    "web": "/tmp/plt-tenant-access-web-red.log; one microsecond interval check failed, fixed before the full passing suite"
+  },
+  "pending": [
+    "User confirmation to enter stage 5 integrated local acceptance; reuse current test evidence."
+  ],
+  "notPerformed": [
+    "Integrated browser -> BFF -> Platform acceptance",
+    "CUSTOMER human login flow (outside scope)",
+    "test environment writes",
+    "Deployment or artifact publication",
+    "Git commit/push"
+  ],
+  "sourceSnapshot": [
+    {
+      "path": "platform-support-service/README.md",
+      "sha256": "ad5e358fd5ea020ae72ad884e65d22a496e04a692420246cda620d14747eea41"
+    },
+    {
+      "path": "platform-support-service/docs/database/sql/platform-support-initial-data.sql",
+      "sha256": "98a995036486c7b5114c24cae61c7230b7b5b5efded93e3d7b71504852162fd7"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/TenantAccess.java",
+      "sha256": "d2ce53eb2e4aef970f39735318cdf2b663876af56e1c4b2f02e4cb815f5e39d7"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/TenantAccessGrant.java",
+      "sha256": "e3dc763221a152eab1617980f2c60942395eeaf06cf15d22e0f5f7d1cea73f7c"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/TenantAccessMember.java",
+      "sha256": "b67c1c134b49f6944b7efa5e5ef5ce0a335811da32065af4b4505dd68ec30a18"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/TenantAccessPermission.java",
+      "sha256": "b6407aeae32517700da99e1893f0dfff5b63752c8877d722b893b1b7032c39f1"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/TenantAccessSource.java",
+      "sha256": "c423068b3587be06c1718295af0df715978e3515fcc6d0ae4d424319c637a9ca"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/mapper/TenantAccessManagementMapper.java",
+      "sha256": "c677183ece8e966165b3204ad7b9d87629096b4e15614bf86f47082fdcb10979"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/enums/RolePermissionStatus.java",
+      "sha256": "8aea67b3c799db55e5176394d854992879bd2deefc3701dbfa534b7d2993ac70"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/enums/TenantGrantStatus.java",
+      "sha256": "d6748f44a14acff53dc218035ea0436981107f7988c576ed632901e26989006d"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/enums/TenantMemberType.java",
+      "sha256": "4aa75604a71add3d90cbd8f6c9490172f4bdfa7976fc299723023618f47e61b2"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/enums/TenantRoleScope.java",
+      "sha256": "e46812706e665d4e10f128fa1b31ad9bd627bd5e0554131a3e2dd04fe4bc8ae8"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/enums/TenantRoleStatus.java",
+      "sha256": "2d0cc6a6c38cbfb7f5b27f9ef842c723934b00b85a0f4879c9841f91c1220946"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/tenantaccess/TenantAccessModels.java",
+      "sha256": "c067643d857f3e9aea46c585c3a64d33c6f2189793583bae9f24a0b6f2aaa9cb"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/tenantaccess/TenantAccessReason.java",
+      "sha256": "81f9e24486a6fddddcced227bb3a3a1a1158ae64ae6b291fc0f295e1afd96bbd"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/repository/TenantAccessManagementRepository.java",
+      "sha256": "75221aeddc116e7ddf5eddee3291ac7bb62ca56940dbef7d9617bf8373645183"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/repository/impl/TenantAccessManagementRepositoryImpl.java",
+      "sha256": "ad5fd85d6ba4a3577cf91653849b6078fb483d6ca71c3047aa362c6db21ff94e"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/TenantAccessManagementService.java",
+      "sha256": "e4e25d685b183afe7928e3e0cc457d39707025e4a9e7a3ef57cd68866130318a"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/TenantAccessManagementServiceImpl.java",
+      "sha256": "3255f5a45a6b9416b47fb7b3d7db7bf64540344a78c8cce4157bb2bf09cbe71f"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/resources/mapper/access-control/TenantAccessManagementMapper.xml",
+      "sha256": "95abc0aaecbb132fc7b9f0f31cb91000a3e614644372b4af024f8d851182159a"
+    },
+    {
+      "path": "platform-support-service/platform-support-access-control/src/main/resources/operations/console-resource-capabilities.json",
+      "sha256": "dec3732455a5f121f3cf19db5dd3e7c3b36c4a2f4591582c81bb765f3036ec2e"
+    },
+    {
+      "path": "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/tenantaccessmanagement/TenantAccessManagementApi.java",
+      "sha256": "2ebcc841c1670cbcd4e957ad6683488fbfb77d15fc8a2355c3f0e378b2327217"
+    },
+    {
+      "path": "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/tenantaccessmanagement/TenantAccessManagementModels.java",
+      "sha256": "9f5c1db338cf2f0f33358dc12deec2d828501f708c42f69fe62e7ff58ed83f98"
+    },
+    {
+      "path": "platform-support-service/platform-support-audit-security/src/main/java/com/paytech/platform/support/auditsecurity/domain/audit/OperationsAuditFact.java",
+      "sha256": "1a8064aff49b59371219881e4364ebd80c3cf8c498dedbeace000c45b958a371"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/architecture/PlatformArchitectureAutoTest.java",
+      "sha256": "5a7742f8c0e423d7bf27b573d16ca1180b15e8cb4d028aa2a3a2387b136e1fb3"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/architecture/PlatformCrossModuleContractAutoTest.java",
+      "sha256": "d97034ed7085664478012796ccc6dee3e047aecfeac3cd3ceac55292b796e6fc"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/gatewayconfiguration/ConfigurationAuthoringRulesAutoTest.java",
+      "sha256": "4964a971880bfb128e07625721a76e0a9bdf0813bdbc839556554d31130775c6"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/gatewayconfiguration/ConfigurationManagementHttpAutoTest.java",
+      "sha256": "dfe074f1be0c835b6eaf59c801a2736de1dbfeab811654bc2c296e3cbe28afe3"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/operations/OperationsPersistenceContractAutoTest.java",
+      "sha256": "040d69562d7aa7f7456da3296174fda8af983f3483ef7ed6320a63d5ed69dc3e"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/tenantaccess/TenantAccessManagementHttpAutoTest.java",
+      "sha256": "b9bc877ecee76cf4bac920da5a019bd5b18cf3c9fa07a085ed09abfd288eb8e5"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/operations/OperationsCanonicalCatalogOracle.java",
+      "sha256": "b7fd2f1d573455a6fcb76180aafb81c60b78034a0a0e9ac921ef7b746f67b175"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/tenantaccess/TenantAccessFixture.java",
+      "sha256": "462242e5b29962c3cff948f16f0050572f8c97bf6e3ebc9156ea167c9a93e839"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/tenantaccess/TenantAccessTestMapper.java",
+      "sha256": "5d0cd4406b2be1ab1abfe5ab1a0008dde6825e7cc163dc997e34f2ea5e8d7686"
+    },
+    {
+      "path": "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/configuration/ConfigurationManagementRequestConfiguration.java",
+      "sha256": "b39302d016b5ba99f7005f29ba44e589532bb4e71f0dc98d6013a75811850133"
+    },
+    {
+      "path": "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/configuration/PersistenceConfiguration.java",
+      "sha256": "4eef0d157c0471fab2384fadb0493378d26898580585fb5587ec2469c5cef701"
+    },
+    {
+      "path": "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/tenantaccessmanagement/TenantAccessManagementController.java",
+      "sha256": "7bf1c8e16af50d0f8f753a04b4158eb39d4716e99316fd8dc93444fc80c21fee"
+    },
+    {
+      "path": "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/service/processor/TenantAccessManagementProcessor.java",
+      "sha256": "4ec2cc34c02dcc061e31b6f28d459ff2e2a832064ee730e6776ac6f33c9ca0f3"
+    },
+    {
+      "path": "operations-console-bff/README.md",
+      "sha256": "df7245f14ad79784357d92896707593a9c59fa5a7668bd969641f42da88e599a"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsConsoleBffApplicationAutoTest.java",
+      "sha256": "c4e6a8d196499cb7b3e21b9b9c1f1bedf11d239bc7716d43c40eb4a4ea9ff658"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/TenantAccessBrowserAutoTest.java",
+      "sha256": "a5b084b59a9016c644ab7a9a41275649ec47a4b5c94e2202ac8bb7d8dd216fcd"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-test/src/test/resources/tenant-access-boundary.json",
+      "sha256": "a2ab1a137c6063408515e72d035265984719ba23469108532b5008cf0e49d940"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/ConfigurationManagementRequestConfiguration.java",
+      "sha256": "21eded029a71ac0abbc00b5dc4edcf4abb45070e92255164bbed33287fde6d36"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/PlatformClientConfiguration.java",
+      "sha256": "154ee640f700c880c71aad995780f6d6ca0e39ab466d0574054a167b45bad841"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/TenantAccessManagementController.java",
+      "sha256": "ba4ed86e0178ca320247e15f8db858d88af9747872472fd4174648f21ca86a02"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/integration/PlatformTenantAccessManagementClient.java",
+      "sha256": "ee1acb02d2c35cf1d17061583e21ba018edb2a01825775f30055da440eb02d05"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/integration/TenantAccessContractConverter.java",
+      "sha256": "bae6f64dd7615e3c6e870e90a91c06bbc1b9535bbfae53a069d7481b10be0a40"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/integration/impl/PlatformTenantAccessManagementClientImpl.java",
+      "sha256": "839cfa06cb6c760db809ca030361b2cc40c4f0e4d2225e3f428efc4858edc34a"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/service/AuditDetailsProcessor.java",
+      "sha256": "a176736c5018cae2520e7839cfd796107428d5f75b92a977868ef0ca93eb1aa0"
+    },
+    {
+      "path": "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/service/model/TenantAccessManagementModels.java",
+      "sha256": "519cafd2f8dfe1120915e9c05b7c5e774b5635928c2477526f8a4598bd031a5e"
+    },
+    {
+      "path": "operations-console-web/README.md",
+      "sha256": "a738877386ec8306aa73d8c90f7a17cd2e8fec50c0d53814cb533f97f370fba3"
+    },
+    {
+      "path": "operations-console-web/src/App.tsx",
+      "sha256": "286136c0c97d4ab57288cb4bdc759bcc0987a033182220a67cc5af6e4227dde2"
+    },
+    {
+      "path": "operations-console-web/src/configuration/configurationModel.test.ts",
+      "sha256": "b69749e025800d457cfd48873510d8da803e28db21a7b3a8ca04dd3d7d0f767d"
+    },
+    {
+      "path": "operations-console-web/src/hooks/usePaging.ts",
+      "sha256": "69b42092fd1d1aa0f1b0f6a52d15636f63c406b05df57c86aadc2ab5361cefd3"
+    },
+    {
+      "path": "operations-console-web/src/navigation/ConsolePage.tsx",
+      "sha256": "441c5f3316ee83d59a1a16f6aaa40ae49bd0d714ddeeb646f3ecca35f2fb7438"
+    },
+    {
+      "path": "operations-console-web/src/navigation/SidebarMenu.tsx",
+      "sha256": "1892b85d4f76bd76076ee52d1e97adae6d76955935cab9dfa9d8904579eb9b9d"
+    },
+    {
+      "path": "operations-console-web/src/navigation/menu.test.ts",
+      "sha256": "277201ac850ebcb2aab86bce167eb772bf439ce9271a85db577c4352bdc004cc"
+    },
+    {
+      "path": "operations-console-web/src/navigation/menu.ts",
+      "sha256": "4f64867a16409f734ef03d328f4659a50aa9e90c95df3b563504efb40cb179e2"
+    },
+    {
+      "path": "operations-console-web/src/navigation/pageCapabilities.ts",
+      "sha256": "ed71d6bac33a4b128119fce290cf951684795dd0ff6c86459ee4067cd24d8a5d"
+    },
+    {
+      "path": "operations-console-web/src/pages/TenantAccess.tsx",
+      "sha256": "a2879a557375bcee1e83361ca889968017dea531673b45d12c2907300536ea2d"
+    },
+    {
+      "path": "operations-console-web/src/pages/auditView.ts",
+      "sha256": "a9f183d271a76a72372141f1ec86b64840c73f1ed0be9d88f9b11e8721649b6f"
+    },
+    {
+      "path": "operations-console-web/src/risk/riskPageWiring.test.ts",
+      "sha256": "f6b4db9a4b86f82b8f07d4870d3a62dd2a50422698bfc0a76a46ff6a36fed52e"
+    },
+    {
+      "path": "operations-console-web/src/tenantAccess/TenantAccessView.tsx",
+      "sha256": "4d47c04d11fec0a077a154f8d0c142d07e35c133965899d80412eda42cadafad"
+    },
+    {
+      "path": "operations-console-web/src/tenantAccess/TenantMemberAccess.tsx",
+      "sha256": "b0570fb9c17cfd4bd8b9453102c49fd7b10bd083db5fe98be2f1d237a5fe45db"
+    },
+    {
+      "path": "operations-console-web/src/tenantAccess/tenantAccess.css",
+      "sha256": "bdb8ae2e622c0a221a45d9931b486d982a41f6a09ae66fa7b2ecd072415b0c75"
+    },
+    {
+      "path": "operations-console-web/src/tenantAccess/tenantAccess.test.ts",
+      "sha256": "d8c10fea5dbe397b32f59e6801dba44bf74484d4ce2a9039e3e453d327061d94"
+    },
+    {
+      "path": "operations-console-web/src/tenantAccess/tenantAccess.ts",
+      "sha256": "0b936ac45a087c31a80f7640cfaca5e64916ad56b20b163f09f2d11aefb078dd"
+    },
+    {
+      "path": "platform-support-service/platform-support-audit-security/src/main/resources/mapper/audit/OperationsAuditMapper.xml",
+      "sha256": "bff5558d9ec5ea843e067486e5e71d8ad3ba27193ea90fb609c2ee965c8507bc"
+    }
+  ],
+  "regressionHistory": [
+    {
+      "name": "first-full-after-local-registration",
+      "log": "/tmp/plt-tenant-access-platform-verify.log",
+      "tests": 499,
+      "failures": 0,
+      "errors": 0,
+      "buildPassed": false,
+      "cause": "Branch coverage 2678/2999 below .90; addressed by boundary scenarios and removal of duplicate NOT NULL/enum guards. Gate unchanged."
+    },
+    {
+      "name": "first-additional-boundaries",
+      "log": "/tmp/plt-tenant-access-boundaries.log",
+      "tests": 32,
+      "failures": 0,
+      "errors": 1,
+      "cause": "Test attempted NULL in a NOT NULL field; invalid fixture removed. No Schema relaxation."
+    },
+    {
+      "name": "final-focused-boundaries",
+      "log": "/tmp/plt-tenant-access-boundaries-final.log",
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "cause": "Focused scenarios passed; full clean verify above supersedes interim coverage."
+    }
+  ],
+  "localApplication": "105 registration inserts applied with explicit local approval; new routes/resources disabled and admin grants revoked.",
+  "acceptanceMapping": "acceptance-mapping.md"
+}

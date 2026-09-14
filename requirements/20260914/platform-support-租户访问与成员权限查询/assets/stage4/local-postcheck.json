@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-09-14T08:53:48.573474+00:00",
+  "database": "127.0.0.1:13306/mor_platform_config_validation",
+  "catalogUnchangedAfterTests": true,
+  "fixtureCleanupPassed": true,
+  "counts": {
+    "t_permission": 41,
+    "t_role_permission": 47,
+    "t_console_resource": 49,
+    "t_gateway_route": 105,
+    "t_gateway_route_header": 360,
+    "t_gateway_route_query_param": 141,
+    "t_gateway_guard_rule": 626,
+    "clientPartnerTenants": 0,
+    "customerAccounts": 0,
+    "tenantAccessCommands": 0,
+    "tenantAccessTestAudit": 0,
+    "newDisabledRoutes": 8,
+    "newDisabledResources": 3,
+    "newRevokedAdminGrants": 3
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "scope": "stage-3-design-only",
+  "checkedAt": "2026-09-14T07:32:07.639443+00:00",
+  "applicationTestsRun": false,
+  "sqlApplied": false,
+  "deployed": false,
+  "committed": false,
+  "markdownLinksChecked": 88,
+  "apiCapabilities": 8,
+  "readWriteCounts": {
+    "read": 7,
+    "write": 1
+  },
+  "jsonExamplesParsed": 6,
+  "sqlInsertRowsByTable": {
+    "t_permission": 3,
+    "t_role_permission": 3,
+    "t_console_resource": 3,
+    "t_gateway_route": 8,
+    "t_gateway_route_header": 20,
+    "t_gateway_route_query_param": 20,
+    "t_gateway_guard_rule": 48
+  },
+  "sqlShape": "columns match existing Schema; value arity, IDs, routes, query parameters and row counts consistent; not executed",
+  "acceptanceCounts": {
+    "functions": 7,
+    "functionalAcceptance": 10,
+    "uiAcceptance": 6
+  },
+  "pencil": {
+    "newScreens": 8,
+    "existingRootCount": 63,
+    "currentRootCount": 71,
+    "pngCount": 8,
+    "pdfPages": 8,
+    "layoutProblems": 0,
+    "nativeFileSaved": true
+  },
+  "requirementsSite": {
+    "command": "npm --prefix requirements-site test",
+    "build": "passed",
+    "testsPassed": 136,
+    "testsFailed": 0,
+    "log": "/tmp/plt-tenant-access-stage3-requirements-tests.log"
+  },
+  "applicationWorktrees": {
+    "platform": "clean",
+    "bff": "clean",
+    "gateway": "clean",
+    "web": "docs/design.pen only"
+  },
+  "fileHashes": {
+    "api-inventory.json": "cf69c8581fa7b05c615005b5b2f9b8fa0751a8a75e9535e7b151f787e9506f42",
+    "api.md": "1858b45414cba04da0a51584b69b64a0aa565fa11ee81c9c9ee613b9d8c263ba",
+    "assets/stage3/pencil/G3rP7x.png": "8a68984b092f7e1e185cfe2f2c1bfe0b7de8c2d5bb00d6317e21d864055f8213",
+    "assets/stage3/pencil/OBfk2.png": "dbfdf664114ed5878b58a66073a1232795a44e780ee767066d3d9cf934b5e70a",
+    "assets/stage3/pencil/Pmzq3.png": "6d4b81c82a09997e65d86f99aa77cebc5b7b120c5c2f3134bbccae4e0ab4c6a6",
+    "assets/stage3/pencil/W4JmB.png": "e99f3314ff8a82c049808cd2d1df5965ac85205c1db3debe54b2e9eaa120097f",
+    "assets/stage3/pencil/ZFMGR.png": "48e5e2021981f2e7225ea3000718b94b2988ba0339344e7b528cf26b07773118",
+    "assets/stage3/pencil/export.pdf": "d5e977951f14409d660cb567858b45b38673439df92d484d85b049581d0f5be9",
+    "assets/stage3/pencil/o62jzj.png": "d72ba3552bc348bab09e25fe6bd1e01454316bbf468144fee9df245b5a366b40",
+    "assets/stage3/pencil/oAKxo.png": "71297b1060ba0f8d886a280d59c990dfb281d87c5805a43a8a36754524b4feac",
+    "assets/stage3/pencil/x4EHr.png": "1c8c365edb80bda5ba499128fb421e649531a0de3e152d0eae3b2622468d2599",
+    "assets/stage3/pencil-verification.json": "968eb5f181e405222a82a274746be4b6075bd89e8568207a02a3ca983379b504",
+    "assets/stage3/registration-observation.json": "b9490f5bfeff38d7ca9f4e81866aa602d2e2f8055e1c5821c36684c35b85df80",
+    "data-design.md": "0872d81ae23d2833329dec4e4a851793906057f14edc7133f480781d74589d50",
+    "db/README.md": "8e2d4f09d395d83405a0cada5e071471ce953906ca1274735f7c74f31e4e00c4",
+    "db/ddl.sql": "d4ad3f9dc87a7c411364d7cfd7a215289813949ef0327df6d5deb0d206994703",
+    "db/dml.sql": "5f6c851e89c04344183c4e396a06797bf8b9255bee5bad21bfc5e2970358d537",
+    "db/registration-counts.json": "b017a0be767b66b10138f0da5c9ea5e7cd133b4fc4b4d531f3b1771c7d6190e1",
+    "delivery.md": "6704faf4c68e02f877bdf6469a6e499d44864d35d9124608d4d5ee3a5abd8c2a",
+    "design.md": "9bde4ef5d72699b88e5b4f30416f79a96ee19cea7ab847b71060ffa0298f58b0",
+    "requirement.md": "ff02f7d94438592b192ce8c49ceaee5023cbb2aedf723f27896de2b8cd89fefc",
+    "technique.md": "3ed93391bbb92d097e4b6546034e1df95789f790f81b4b72215e13d7e72fd01a",
+    "ui.md": "4409004752dd94049e92c78a275b938c05c3991f899d65feaca361b4bcffa225"
+  }
+}

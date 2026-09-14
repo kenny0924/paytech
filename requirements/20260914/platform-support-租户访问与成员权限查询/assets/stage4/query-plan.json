@@ -1,0 +1,387 @@
+{
+  "statement": "TenantAccessManagementMapper.permissions",
+  "fixture": "13 permissions under one member and one active platform role; actual HTTP page sizes 10+3 with unique IDs.",
+  "limitation": "Representative local plan only; no load or large-tenant performance claim.",
+  "tables": [
+    {
+      "table_name": "g",
+      "access_type": "ref",
+      "key": "uk_tenant_member_role",
+      "rows_examined_per_scan": 1
+    },
+    {
+      "table_name": "r",
+      "access_type": "eq_ref",
+      "key": "PRIMARY",
+      "rows_examined_per_scan": 1
+    },
+    {
+      "table_name": "selected",
+      "access_type": "ALL",
+      "rows_examined_per_scan": 10
+    },
+    {
+      "table_name": "g",
+      "access_type": "ref",
+      "key": "uk_tenant_member_role",
+      "rows_examined_per_scan": 1
+    },
+    {
+      "table_name": "r",
+      "access_type": "eq_ref",
+      "key": "PRIMARY",
+      "rows_examined_per_scan": 1
+    },
+    {
+      "table_name": "rp",
+      "access_type": "ref",
+      "key": "uk_role_permission",
+      "rows_examined_per_scan": 25
+    },
+    {
+      "table_name": "p",
+      "access_type": "eq_ref",
+      "key": "PRIMARY",
+      "rows_examined_per_scan": 1
+    },
+    {
+      "table_name": "p",
+      "access_type": "eq_ref",
+      "key": "PRIMARY",
+      "rows_examined_per_scan": 1
+    },
+    {
+      "table_name": "rp",
+      "access_type": "eq_ref",
+      "key": "uk_role_permission",
+      "rows_examined_per_scan": 1
+    }
+  ],
+  "plan": {
+    "query_block": {
+      "select_id": 1,
+      "cost_info": {
+        "query_cost": "21.33"
+      },
+      "ordering_operation": {
+        "using_filesort": false,
+        "grouping_operation": {
+          "using_temporary_table": true,
+          "using_filesort": true,
+          "cost_info": {
+            "sort_cost": "10.00"
+          },
+          "nested_loop": [
+            {
+              "table": {
+                "table_name": "g",
+                "access_type": "ref",
+                "possible_keys": [
+                  "uk_tenant_member_role",
+                  "idx_tenant_grant_member_scope",
+                  "idx_tenant_grant_role_scope"
+                ],
+                "key": "uk_tenant_member_role",
+                "used_key_parts": [
+                  "tenant_member_id"
+                ],
+                "key_length": "8",
+                "ref": [
+                  "const"
+                ],
+                "rows_examined_per_scan": 1,
+                "rows_produced_per_join": 1,
+                "filtered": "100.00",
+                "cost_info": {
+                  "read_cost": "0.25",
+                  "eval_cost": "0.10",
+                  "prefix_cost": "0.35",
+                  "data_read_per_join": "856"
+                },
+                "used_columns": [
+                  "tenant_member_role_id",
+                  "tenant_member_id",
+                  "role_id",
+                  "effective_from",
+                  "effective_to",
+                  "status"
+                ]
+              }
+            },
+            {
+              "table": {
+                "table_name": "r",
+                "access_type": "eq_ref",
+                "possible_keys": [
+                  "PRIMARY",
+                  "uk_role_owner"
+                ],
+                "key": "PRIMARY",
+                "used_key_parts": [
+                  "role_id"
+                ],
+                "key_length": "8",
+                "ref": [
+                  "mor_platform_config_validation.g.role_id"
+                ],
+                "rows_examined_per_scan": 1,
+                "rows_produced_per_join": 1,
+                "filtered": "100.00",
+                "cost_info": {
+                  "read_cost": "0.25",
+                  "eval_cost": "0.10",
+                  "prefix_cost": "0.70",
+                  "data_read_per_join": "2K"
+                },
+                "used_columns": [
+                  "role_id",
+                  "status"
+                ]
+              }
+            },
+            {
+              "table": {
+                "table_name": "selected",
+                "access_type": "ALL",
+                "rows_examined_per_scan": 10,
+                "rows_produced_per_join": 10,
+                "filtered": "100.00",
+                "using_join_buffer": "hash join",
+                "cost_info": {
+                  "read_cost": "2.63",
+                  "eval_cost": "1.00",
+                  "prefix_cost": "4.33",
+                  "data_read_per_join": "160"
+                },
+                "used_columns": [
+                  "permission_id"
+                ],
+                "materialized_from_subquery": {
+                  "using_temporary_table": true,
+                  "dependent": false,
+                  "cacheable": true,
+                  "query_block": {
+                    "select_id": 3,
+                    "cost_info": {
+                      "query_cost": "37.22"
+                    },
+                    "ordering_operation": {
+                      "using_temporary_table": true,
+                      "using_filesort": true,
+                      "duplicates_removal": {
+                        "using_temporary_table": true,
+                        "using_filesort": false,
+                        "cost_info": {
+                          "sort_cost": "25.00"
+                        },
+                        "nested_loop": [
+                          {
+                            "table": {
+                              "table_name": "g",
+                              "access_type": "ref",
+                              "possible_keys": [
+                                "uk_tenant_member_role",
+                                "idx_tenant_grant_member_scope",
+                                "idx_tenant_grant_role_scope"
+                              ],
+                              "key": "uk_tenant_member_role",
+                              "used_key_parts": [
+                                "tenant_member_id"
+                              ],
+                              "key_length": "8",
+                              "ref": [
+                                "const"
+                              ],
+                              "rows_examined_per_scan": 1,
+                              "rows_produced_per_join": 1,
+                              "filtered": "100.00",
+                              "using_index": true,
+                              "cost_info": {
+                                "read_cost": "0.25",
+                                "eval_cost": "0.10",
+                                "prefix_cost": "0.35",
+                                "data_read_per_join": "856"
+                              },
+                              "used_columns": [
+                                "tenant_member_role_id",
+                                "tenant_member_id",
+                                "role_id"
+                              ]
+                            }
+                          },
+                          {
+                            "table": {
+                              "table_name": "r",
+                              "access_type": "eq_ref",
+                              "possible_keys": [
+                                "PRIMARY",
+                                "uk_role_owner"
+                              ],
+                              "key": "PRIMARY",
+                              "used_key_parts": [
+                                "role_id"
+                              ],
+                              "key_length": "8",
+                              "ref": [
+                                "mor_platform_config_validation.g.role_id"
+                              ],
+                              "rows_examined_per_scan": 1,
+                              "rows_produced_per_join": 1,
+                              "filtered": "100.00",
+                              "using_index": true,
+                              "cost_info": {
+                                "read_cost": "0.25",
+                                "eval_cost": "0.10",
+                                "prefix_cost": "0.70",
+                                "data_read_per_join": "2K"
+                              },
+                              "used_columns": [
+                                "role_id"
+                              ]
+                            }
+                          },
+                          {
+                            "table": {
+                              "table_name": "rp",
+                              "access_type": "ref",
+                              "possible_keys": [
+                                "uk_role_permission",
+                                "idx_role_permiss_permission_id"
+                              ],
+                              "key": "uk_role_permission",
+                              "used_key_parts": [
+                                "role_id"
+                              ],
+                              "key_length": "8",
+                              "ref": [
+                                "mor_platform_config_validation.g.role_id"
+                              ],
+                              "rows_examined_per_scan": 25,
+                              "rows_produced_per_join": 25,
+                              "filtered": "100.00",
+                              "using_index": true,
+                              "cost_info": {
+                                "read_cost": "0.27",
+                                "eval_cost": "2.50",
+                                "prefix_cost": "3.47",
+                                "data_read_per_join": "7K"
+                              },
+                              "used_columns": [
+                                "role_permission_id",
+                                "role_id",
+                                "permission_id"
+                              ]
+                            }
+                          },
+                          {
+                            "table": {
+                              "table_name": "p",
+                              "access_type": "eq_ref",
+                              "possible_keys": [
+                                "PRIMARY"
+                              ],
+                              "key": "PRIMARY",
+                              "used_key_parts": [
+                                "permission_id"
+                              ],
+                              "key_length": "8",
+                              "ref": [
+                                "mor_platform_config_validation.rp.permission_id"
+                              ],
+                              "rows_examined_per_scan": 1,
+                              "rows_produced_per_join": 25,
+                              "filtered": "100.00",
+                              "using_index": true,
+                              "distinct": true,
+                              "cost_info": {
+                                "read_cost": "6.25",
+                                "eval_cost": "2.50",
+                                "prefix_cost": "12.22",
+                                "data_read_per_join": "38K"
+                              },
+                              "used_columns": [
+                                "permission_id"
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "table": {
+                "table_name": "p",
+                "access_type": "eq_ref",
+                "possible_keys": [
+                  "PRIMARY"
+                ],
+                "key": "PRIMARY",
+                "used_key_parts": [
+                  "permission_id"
+                ],
+                "key_length": "8",
+                "ref": [
+                  "selected.permission_id"
+                ],
+                "rows_examined_per_scan": 1,
+                "rows_produced_per_join": 10,
+                "filtered": "100.00",
+                "cost_info": {
+                  "read_cost": "2.50",
+                  "eval_cost": "1.00",
+                  "prefix_cost": "7.83",
+                  "data_read_per_join": "15K"
+                },
+                "used_columns": [
+                  "permission_id",
+                  "permission_code",
+                  "resource_type",
+                  "action_code",
+                  "status"
+                ]
+              }
+            },
+            {
+              "table": {
+                "table_name": "rp",
+                "access_type": "eq_ref",
+                "possible_keys": [
+                  "uk_role_permission",
+                  "idx_role_permiss_permission_id"
+                ],
+                "key": "uk_role_permission",
+                "used_key_parts": [
+                  "role_id",
+                  "permission_id"
+                ],
+                "key_length": "16",
+                "ref": [
+                  "mor_platform_config_validation.g.role_id",
+                  "selected.permission_id"
+                ],
+                "rows_examined_per_scan": 1,
+                "rows_produced_per_join": 10,
+                "filtered": "100.00",
+                "cost_info": {
+                  "read_cost": "2.50",
+                  "eval_cost": "1.00",
+                  "prefix_cost": "11.33",
+                  "data_read_per_join": "2K"
+                },
+                "used_columns": [
+                  "role_permission_id",
+                  "role_id",
+                  "permission_id",
+                  "status"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -33,7 +33,7 @@ export const SEQUENCE_PARTICIPANTS = {
 
 export const GLOBAL_USE_CASE_SEQUENCES = {
   "E2E-16": {
-    "summary": "PLT-16/PLT-17 合并配置管理；全部六类 Target/Route 统一维护，菜单/按钮仅 OPERATIONS。后继 PLT-02 已确认 Operations 凭证查看、Scope 目录/Route 关联与紧急撤销；Client 自助生命周期及真实业务 API 开通延期；API/数据/Pencil 合同见已确认方案，见 requirements/20260913/platform-support-ClientAPI接入管理/design.md。各命令独立执行，实际状态见 CURRENT_IMPLEMENTATION。",
+    "summary": "PLT-16/PLT-17 合并配置管理；全部六类 Target/Route 统一维护，菜单/按钮仅 OPERATIONS。后继 PLT-02 已确认 Operations 凭证查看、Scope 目录/Route 关联与紧急撤销；Client 自助生命周期及真实业务 API 开通延期；API/数据/Pencil 合同见已确认方案，见 requirements/20260913/platform-support-ClientAPI接入管理/design.md。2026-09-14 PLT-15 已确认 CLIENT/PARTNER 租户查询、安全暂停/恢复及成员授权只读，成员标识采用脱敏邮箱/账号 ID，精确方案另行评审，范围见 requirements/20260914/platform-support-租户访问与成员权限查询/requirement.md；不追加 CUSTOMER 登录或 CCT 投影生产链。各命令独立执行，实际状态见 CURRENT_IMPLEMENTATION。",
     "participants": [
       "operations",
       "operations_console",
@@ -45,7 +45,7 @@ export const GLOBAL_USE_CASE_SEQUENCES = {
       {
         "from": "operations",
         "to": "operations_console",
-        "label": "按独立权限查看凭证与关联，或维护权限、Target/Route、菜单按钮、Scope 目录，或紧急撤销指定凭证；新权限不默认授予普通角色",
+        "label": "按独立权限查看凭证与关联，或维护权限、Target/Route、菜单按钮、Scope 目录，或紧急撤销指定凭证；本期新增租户查询、安全暂停/恢复及成员角色/权限只读；新权限不默认授予普通角色",
         "kind": "sync"
       },
       {
@@ -69,7 +69,7 @@ export const GLOBAL_USE_CASE_SEQUENCES = {
       {
         "from": "platform",
         "to": "platform",
-        "label": "按操作校验权限、引用和版本；配置命令仍验证完整候选，Scope 目录不自动授权，紧急撤销只更新指定凭证并保留授权记录。本库事务写业务与既有幂等，提交后尽力记录审计；事务内不调用外部服务",
+        "label": "按操作校验权限、引用和版本；配置命令仍验证完整候选，Scope 目录不自动授权，紧急撤销只更新指定凭证并保留授权记录。租户安全操作只更新目标 CLIENT/PARTNER 安全状态及必要版本，不改来源业务状态、账号/成员/授权/凭证或其他租户；恢复仍受其他限制。本库事务写业务与既有幂等，提交后尽力记录审计；事务内不调用外部服务",
         "kind": "sync"
       },
       {
@@ -87,13 +87,13 @@ export const GLOBAL_USE_CASE_SEQUENCES = {
       {
         "from": "api_gateway",
         "to": "api_gateway",
-        "label": "公共配置复用六类 Channel/Profile/Mode 校验并原子切换，一条请求固定同一快照的 Route/Target；CLIENT_API 新认证继续调用 PLT-I03 检查当前凭证，撤销提交后的新认证拒绝，不追回已通过认证的在途请求",
+        "label": "公共配置复用六类 Channel/Profile/Mode 校验并原子切换，一条请求固定同一快照的 Route/Target；CLIENT_API 新认证继续调用 PLT-I03 检查当前凭证和租户双状态，凭证撤销或租户暂停提交后的新认证拒绝，不追回已通过认证的在途请求",
         "kind": "sync"
       },
       {
         "from": "operations_console_bff",
         "to": "platform",
-        "label": "按各自权限查询导航、凭证/Scope/Route 关系及对象审计，管理页面多查询由 BFF 组合；Scope 查看不附带凭证或审计查看权限",
+        "label": "按各自权限查询导航、凭证/Scope/Route 关系及对象审计，管理页面多查询由 BFF 组合；成员授权查询固定目标 Tenant+Member，由 Platform 返回角色/权限来源和已知限制；租户查看不附带成员查看，Scope 查看不附带凭证或审计查看权限",
         "kind": "sync"
       },
       {

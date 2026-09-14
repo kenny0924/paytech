@@ -1,0 +1,129 @@
+{
+  "stage": "3-review",
+  "businessCapabilities": 8,
+  "ownerEndpoints": 8,
+  "bffEndpoints": 8,
+  "apis": [
+    {
+      "id": "A01",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants",
+      "browserPath": "/api/operations/tenant-access-admin/v1/tenants",
+      "ownerPath": "/platform-support/tenant-access-admin/v1/tenants",
+      "permission": "TENANT_ACCESS_READ",
+      "permissionId": "900000000000061101",
+      "routeCode": "operations-tenant-access-list",
+      "routeId": "900000000000061001",
+      "queryParameters": [
+        "page",
+        "size",
+        "tenantType",
+        "tenantId",
+        "ownerRefId",
+        "tenantName",
+        "ownerStatus",
+        "securityStatus"
+      ]
+    },
+    {
+      "id": "A02",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/{tenantId}",
+      "browserPath": "/api/operations/tenant-access-admin/v1/tenants/{tenantId}",
+      "ownerPath": "/platform-support/tenant-access-admin/v1/tenants/{tenantId}",
+      "permission": "TENANT_ACCESS_READ",
+      "permissionId": "900000000000061101",
+      "routeCode": "operations-tenant-access-detail",
+      "routeId": "900000000000061002",
+      "queryParameters": []
+    },
+    {
+      "id": "A03",
+      "method": "POST",
+      "path": "/tenant-access-admin/v1/tenants/{tenantId}/security-status",
+      "browserPath": "/api/operations/tenant-access-admin/v1/tenants/{tenantId}/security-status",
+      "ownerPath": "/platform-support/tenant-access-admin/v1/tenants/{tenantId}/security-status",
+      "permission": "TENANT_ACCESS_MANAGE",
+      "permissionId": "900000000000061102",
+      "routeCode": "operations-tenant-access-security-status",
+      "routeId": "900000000000061003",
+      "queryParameters": []
+    },
+    {
+      "id": "A04",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/{tenantId}/members",
+      "browserPath": "/api/operations/tenant-access-admin/v1/tenants/{tenantId}/members",
+      "ownerPath": "/platform-support/tenant-access-admin/v1/tenants/{tenantId}/members",
+      "permission": "TENANT_MEMBER_READ",
+      "permissionId": "900000000000061103",
+      "routeCode": "operations-tenant-access-members",
+      "routeId": "900000000000061004",
+      "queryParameters": [
+        "page",
+        "size",
+        "accountId",
+        "emailMasked",
+        "memberType",
+        "memberStatus"
+      ]
+    },
+    {
+      "id": "A05",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}",
+      "browserPath": "/api/operations/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}",
+      "ownerPath": "/platform-support/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}",
+      "permission": "TENANT_MEMBER_READ",
+      "permissionId": "900000000000061103",
+      "routeCode": "operations-tenant-access-member-detail",
+      "routeId": "900000000000061005",
+      "queryParameters": []
+    },
+    {
+      "id": "A06",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}/roles",
+      "browserPath": "/api/operations/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}/roles",
+      "ownerPath": "/platform-support/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}/roles",
+      "permission": "TENANT_MEMBER_READ",
+      "permissionId": "900000000000061103",
+      "routeCode": "operations-tenant-access-member-roles",
+      "routeId": "900000000000061006",
+      "queryParameters": [
+        "page",
+        "size"
+      ]
+    },
+    {
+      "id": "A07",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}/permissions",
+      "browserPath": "/api/operations/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}/permissions",
+      "ownerPath": "/platform-support/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}/permissions",
+      "permission": "TENANT_MEMBER_READ",
+      "permissionId": "900000000000061103",
+      "routeCode": "operations-tenant-access-member-permissions",
+      "routeId": "900000000000061007",
+      "queryParameters": [
+        "page",
+        "size"
+      ]
+    },
+    {
+      "id": "A08",
+      "method": "GET",
+      "path": "/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}/permissions/{permissionId}/sources",
+      "browserPath": "/api/operations/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}/permissions/{permissionId}/sources",
+      "ownerPath": "/platform-support/tenant-access-admin/v1/tenants/{tenantId}/members/{memberId}/permissions/{permissionId}/sources",
+      "permission": "TENANT_MEMBER_READ",
+      "permissionId": "900000000000061103",
+      "routeCode": "operations-tenant-access-permission-sources",
+      "routeId": "900000000000061008",
+      "queryParameters": [
+        "page",
+        "size"
+      ]
+    }
+  ]
+}

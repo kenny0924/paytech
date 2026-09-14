@@ -1,0 +1,67 @@
+{
+  "preparedAt": "2026-09-14T09:45:10.153947+00:00",
+  "status": "PASS-PREPARED-NOT-DEPLOYED",
+  "testContainersUnchangedAndHealthy": 11,
+  "testDatabasePreflightUnchanged": true,
+  "applicationSourceFilesUnchanged": 67,
+  "reusedApplicationChecks": "../stage5/verification.json",
+  "localImagesBuilt": 3,
+  "platformApiBytesIdentical": true,
+  "composeCandidateValid": true,
+  "composePreviousValid": true,
+  "requirementsSiteTests": {
+    "passed": 136,
+    "failed": 0
+  },
+  "logs": {
+    "api-install": {
+      "path": "/tmp/plt-tenant-access-stage6-api-install.log",
+      "sha256": "6b03edf814e7bd91a6d9f72afc5e0346fc9a8330fc4aca3a8e5efbb9ef5d1f37"
+    },
+    "bff-package": {
+      "path": "/tmp/plt-tenant-access-stage6-bff-package.log",
+      "sha256": "0a4c8b9daba77de24996bda9390d4585ee2ba63811ef15db06640890bbb746a5"
+    },
+    "platform-image": {
+      "path": "/tmp/plt-tenant-access-stage6-platform-image.log",
+      "sha256": "28ab88ffbe7e998b95107e5c086f7e29f5d4459319269ccf68a13d156662fb8e"
+    },
+    "bff-image": {
+      "path": "/tmp/plt-tenant-access-stage6-bff-image.log",
+      "sha256": "21bc7239510c8681f3b153e69ad260d861646cbbd54e01e638e08c8084be3f9f"
+    },
+    "web-image": {
+      "path": "/tmp/plt-tenant-access-stage6-web-image.log",
+      "sha256": "63fca48bfef66f7675ee1bcd8592df9a5326d717e08cf22dfdb64c559a1614de"
+    },
+    "requirements-test": {
+      "path": "/tmp/plt-tenant-access-stage6-requirements-test.log",
+      "sha256": "9b4214af34a610eb0c56c66776fe489d45ae21b395066d8adcfc88e54dce56e2"
+    }
+  },
+  "sqlHashes": {
+    "db/dml.sql": "5f6c851e89c04344183c4e396a06797bf8b9255bee5bad21bfc5e2970358d537",
+    "db/activate-test.sql": "ee92a7264c24d25eb2bd4da7202ab24527c8a505fa72f8b23dda959c040c0f87",
+    "db/deactivate-test.sql": "96a98827d5d3745010e9b9d96e79aa2ccd3a437bafbecc2d0f2bd9aff676de86",
+    "assets/stage6/preflight.sql": "f03545e269f89decddd7aaf29ce429796d8067ad48ec66a7f3515147c00e929e"
+  },
+  "plannedDatabaseChanges": {
+    "ddl": 0,
+    "registrationInserts": 105,
+    "activationUpdates": 15,
+    "adminRoleVersionBefore": 19,
+    "adminRoleVersionAfter": 20
+  },
+  "notExecuted": [
+    "test backup",
+    "test SQL writes",
+    "running service replacement",
+    "remote artifact publication",
+    "git commit",
+    "git push",
+    "test business fixture creation"
+  ],
+  "localDocumentLinks": 159,
+  "brokenLinks": 0,
+  "diffWhitespace": "PASS"
+}

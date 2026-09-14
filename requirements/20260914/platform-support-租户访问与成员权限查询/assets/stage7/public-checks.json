@@ -1,0 +1,82 @@
+{
+  "checkedAt": "2026-09-14T09:58:21.724394+00:00",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "login",
+      "status": 200
+    },
+    {
+      "name": "navigation-new-resources",
+      "status": 200,
+      "resources": [
+        "OPERATIONS_TENANT_ACCESS",
+        "OPERATIONS_TENANT_ACCESS_MANAGE",
+        "OPERATIONS_TENANT_MEMBER_READ"
+      ]
+    },
+    {
+      "name": "tenant-list",
+      "status": 200,
+      "total": 0
+    },
+    {
+      "name": "tenant-list?tenantType=CLIENT",
+      "status": 200,
+      "total": 0
+    },
+    {
+      "name": "tenant-list?tenantType=PARTNER",
+      "status": 200,
+      "total": 0
+    },
+    {
+      "name": "tenant-not-found-unknown",
+      "status": 404,
+      "problemAndRequestIdVerified": true
+    },
+    {
+      "name": "tenant-not-found-internal",
+      "status": 404,
+      "problemAndRequestIdVerified": true
+    },
+    {
+      "name": "existing-query",
+      "path": "/iam/v1/accounts",
+      "status": 200,
+      "total": 5
+    },
+    {
+      "name": "existing-query",
+      "path": "/iam/v1/roles",
+      "status": 200,
+      "total": 5
+    },
+    {
+      "name": "existing-query",
+      "path": "/gateway-admin/v1/routes",
+      "status": 200,
+      "total": 105
+    },
+    {
+      "name": "existing-query",
+      "path": "/audit/v1/events",
+      "status": 200,
+      "total": 1490
+    },
+    {
+      "name": "existing-query",
+      "path": "/decision-rule-sets/v1/rule-sets",
+      "status": 200,
+      "total": 4
+    },
+    {
+      "name": "logout",
+      "status": "200-or-204"
+    }
+  ],
+  "publicStaticFilesMatched": 46,
+  "businessWrites": 0,
+  "tokensPersisted": false,
+  "limitations": "No CLIENT/PARTNER tenant or member fixtures in test; full business flow evidence remains in stage 5."
+}

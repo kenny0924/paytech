@@ -1,0 +1,51 @@
+{
+  "checkedAt": "2026-09-14T09:22:40.271681+00:00",
+  "database": "127.0.0.1:13306/mor_platform_config_validation",
+  "catalogUnchangedAfterTests": true,
+  "fixtureCleanupPassed": true,
+  "counts": {
+    "t_permission": 41,
+    "t_role_permission": 47,
+    "t_console_resource": 49,
+    "t_gateway_route": 105,
+    "t_gateway_route_header": 360,
+    "t_gateway_route_query_param": 141,
+    "t_gateway_guard_rule": 626,
+    "operationsAccounts": 0,
+    "sessions": 0,
+    "clientPartnerTenants": 0,
+    "customerAccounts": 0,
+    "tenantAccessCommands": 0,
+    "tenantAccessTestAudit": 0,
+    "newDisabledRoutes": 8,
+    "newDisabledResources": 3,
+    "newRevokedAdminGrants": 3
+  },
+  "emptyFixtureTables": {
+    "t_api_credential": 0,
+    "t_api_credential_scope": 0,
+    "t_audit_chain": 0,
+    "t_audit_event": 0,
+    "t_audit_event_attr": 0,
+    "t_auth_session": 0,
+    "t_command_idempotency": 0,
+    "t_jwt_signing_key": 0,
+    "t_password_credential": 0,
+    "t_refresh_token_generation": 0,
+    "t_security_event": 0,
+    "t_tenant_member": 0,
+    "t_tenant_member_role": 0,
+    "t_user_account": 0
+  },
+  "ownedListenersStopped": {
+    "web": true,
+    "gateway": true,
+    "bff": true,
+    "platform": true
+  },
+  "ownedRedisNamespace": {
+    "beforeCleanup": 0,
+    "afterCleanup": 0,
+    "scope": "exact unique run marker; no other keys touched"
+  }
+}

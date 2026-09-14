@@ -1,0 +1,10 @@
+SELECT DATABASE(),@@hostname,@@port;
+SELECT 'tenants',COUNT(*) FROM t_access_tenant WHERE tenant_type IN ('CLIENT','PARTNER');
+SELECT 'tenant_id_or_owner',COUNT(*) FROM t_access_tenant WHERE tenant_id=900000000000065001 OR (tenant_type='CLIENT' AND owner_ref_id=900000000000065101);
+SELECT 'account',COUNT(*) FROM t_user_account WHERE account_id=900000000000065002;
+SELECT 'member',COUNT(*) FROM t_tenant_member WHERE member_id=900000000000065003 OR tenant_id=900000000000065001;
+SELECT 'role',COUNT(*) FROM t_role WHERE role_id=900000000000065004 OR (scope_key='900000000000065001' AND role_code='DEMO_CLIENT_VIEWER');
+SELECT 'grant',COUNT(*) FROM t_tenant_member_role WHERE tenant_member_role_id=900000000000065005 OR tenant_id=900000000000065001;
+SELECT 'permissions',COUNT(*) FROM t_permission WHERE permission_id IN (900000000000065006,900000000000065007) OR permission_code IN ('DEMO_CLIENT_ORDER_READ','DEMO_CLIENT_REFUND_READ') OR (resource_type IN ('DEMO_CLIENT_ORDER','DEMO_CLIENT_REFUND') AND action_code='READ');
+SELECT 'role_permissions',COUNT(*) FROM t_role_permission WHERE role_permission_id IN (900000000000065008,900000000000065009) OR role_id=900000000000065004;
+SELECT 'operator',account_id,realm,status FROM t_user_account WHERE account_id=221546852372267008;

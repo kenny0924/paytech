@@ -1,0 +1,7 @@
+services:
+  platform-support-service:
+    image: sha256:083853a830844145318a36eb225537c9520574d1fecf01d50bdceceaecc29244
+  operations-console-bff:
+    image: sha256:7957f8c7219922875de420afc895b3158cc7cb409ff154a6ca6fb9bd5137b40a
+  operations-console-web:
+    image: sha256:40785d343525a7bbbeb00439bce8d2dadb350c5d3f459cc28039b405bdc1c696

@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-09-14T09:21:46.183Z",
+  "origin": "http://localhost:62719",
+  "chain": "production Web → loopback ingress → real Gateway → real BFF → real Platform → local MySQL/Redis",
+  "status": "PASS",
+  "checks": [
+    "dynamic-login-and-menu",
+    "tenant-literal-name-filter",
+    "tenant-pagination-10-plus-3",
+    "compact-dropdown-with-red-pause",
+    "tenant-and-member-readonly-context",
+    "four-role-grants-and-distinct-validity-reasons",
+    "permission-dedup-and-four-lazy-sources",
+    "browser-back-preserves-filter",
+    "required-reason",
+    "real-conflict-preserves-draft-and-disables-resubmit",
+    "real-browser-restore-refreshes-row",
+    "owner-restriction-remains-after-security-restore",
+    "empty-members",
+    "empty-permissions",
+    "empty-roles",
+    "corrupt-association-503-with-request-id-and-retry",
+    "readonly-member-denial-and-no-manage-button",
+    "existing-audit-shows-real-command-reasons",
+    "viewport-1280-and-390-no-document-overflow"
+  ],
+  "viewports": [
+    {
+      "width": 1280,
+      "documentWidth": 1280
+    },
+    {
+      "width": 390,
+      "documentWidth": 390
+    }
+  ],
+  "consoleAtFinalCheck": [],
+  "notes": [
+    "Only synthetic local accounts and tenants used.",
+    "Wide tables scroll horizontally; page itself has no horizontal overflow.",
+    "Browser source failure uses approved owned fixture control; no mocked business responses."
+  ]
+}
