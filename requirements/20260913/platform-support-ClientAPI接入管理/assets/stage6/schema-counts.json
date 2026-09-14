@@ -1,0 +1,42 @@
+{
+  "columns": [
+    [
+      "t_api_credential",
+      10
+    ],
+    [
+      "t_api_credential_scope",
+      11
+    ],
+    [
+      "t_api_scope",
+      7
+    ]
+  ],
+  "addedIndexes": [
+    [
+      "t_api_credential_scope",
+      "idx_api_scope_credential",
+      "scope_code",
+      1
+    ],
+    [
+      "t_api_credential_scope",
+      "idx_api_scope_credential",
+      "credential_id",
+      2
+    ],
+    [
+      "t_gateway_route",
+      "idx_gateway_route_scope",
+      "required_scope_code",
+      1
+    ],
+    [
+      "t_gateway_route",
+      "idx_gateway_route_scope",
+      "route_id",
+      2
+    ]
+  ]
+}

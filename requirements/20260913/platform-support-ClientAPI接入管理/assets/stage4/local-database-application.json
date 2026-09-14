@@ -1,0 +1,66 @@
+{
+  "recordedAt": "2026-09-13T17:42:56.167907+00:00",
+  "authorization": {
+    "userReply": "可以，没问题了",
+    "context": "用户在修订后的 DDL + 127 条本机注册申请后，询问新表用途及取值；解释后确认继续。本次回复承接该具体本机申请。"
+  },
+  "target": {
+    "dockerContext": "desktop-linux",
+    "container": "mor-local-mysql-1",
+    "host": "127.0.0.1",
+    "port": 13306,
+    "database": "mor_platform_config_validation",
+    "mysqlVersion": "8.4.11"
+  },
+  "backup": {
+    "file": "/Users/kenny/Code-MoR-backups/platform-client-api-local-20260913/schema-before-20260913T173254Z.sql",
+    "bytes": 6916,
+    "sha256": "218d433b56317e3f7821ce9afab6e95d14165ea720254c2e0c01bbf685702581",
+    "contents": [
+      "t_api_credential_scope Schema",
+      "t_gateway_route Schema"
+    ],
+    "privateMode": "0600"
+  },
+  "files": [
+    {
+      "path": "db/ddl.sql",
+      "sha256": "b44e0ca5ec5f055acd926bf1d66f0fd1f005533e7fddac61b57f77fcda3cc537",
+      "applied": true
+    },
+    {
+      "path": "db/local-registration.sql",
+      "sha256": "2709144cff97a1770fa251efcb7f2058706fda0bb10f24c9a8c69061ff06cc32",
+      "applied": true,
+      "commit": "explicit COMMIT after in-transaction count/status review"
+    }
+  ],
+  "ddl": {
+    "table": "t_api_scope",
+    "columns": 7,
+    "uniqueIndex": "uk_api_scope_code(scope_code)",
+    "existingTableIndexes": [
+      "idx_api_scope_credential(scope_code,credential_id)",
+      "idx_gateway_route_scope(required_scope_code,route_id)"
+    ],
+    "existingColumnsChanged": 0
+  },
+  "catalog": {
+    "permissionsActive": 4,
+    "rolePermissionsRevoked": 4,
+    "resourcesDisabled": 4,
+    "routesDisabled": 9,
+    "headers": 30,
+    "queries": 22,
+    "guards": 54,
+    "total": 127,
+    "oldRouteVersions": 1
+  },
+  "executionNote": "第一次 DML 会话的辅助诊断使用 MySQL 不支持的 @@in_transaction，客户端退出并回滚；再次确认新权限行数为 0 后重试，第二次会话逐项核对 127 行并明确提交。没有部分 DML 提交。DDL 先前已单独完成，不重复执行。",
+  "businessScopesSeeded": 0,
+  "clientCredentialsSeeded": 0,
+  "testEnvironmentChanged": false,
+  "deployment": false,
+  "publication": false,
+  "gitCommitOrPush": false
+}

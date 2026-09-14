@@ -1,0 +1,12 @@
+{
+  "database": "mor_platform",
+  "hostname": "008564d1cb1a",
+  "accountId": "221546852372267008",
+  "roleVersion": 18,
+  "registrationCollisions": 0,
+  "newQueryCollisions": 0,
+  "credentialTablesAbsent": 3,
+  "indexesAbsent": 2,
+  "clientTenants": 0,
+  "activeRoutes": 88
+}

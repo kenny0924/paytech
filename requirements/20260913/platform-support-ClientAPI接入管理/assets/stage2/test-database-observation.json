@@ -1,0 +1,30 @@
+{
+  "context": "desktop-linux",
+  "database": "mor_platform",
+  "port": 23306,
+  "tables": [
+    "t_access_tenant",
+    "t_gateway_route"
+  ],
+  "counts": {
+    "client_tenants": "0",
+    "api_scope_routes": "0"
+  },
+  "observedAtUtc": "2026-09-13T14:00:02.488812+00:00",
+  "mode": "read-only",
+  "existingSchemaFieldCounts": {
+    "t_api_credential": 10,
+    "t_api_credential_scope": 11
+  },
+  "boundary": "Counts and table presence only; no credentials, verifier values, tenant identities, database writes or deployment.",
+  "queriedTables": [
+    "t_api_credential",
+    "t_api_credential_scope",
+    "t_access_tenant",
+    "t_gateway_route"
+  ],
+  "absentTables": [
+    "t_api_credential",
+    "t_api_credential_scope"
+  ]
+}

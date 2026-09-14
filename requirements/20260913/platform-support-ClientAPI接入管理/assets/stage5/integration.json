@@ -1,0 +1,174 @@
+{
+  "checks": 28,
+  "results": [
+    {
+      "name": "login-admin",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "login-reader",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "login-denied",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "admin-credentials",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials",
+      "status": 200
+    },
+    {
+      "name": "admin-credential-detail",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials/7580638168624433692",
+      "status": 200
+    },
+    {
+      "name": "admin-grants",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials/7580638168624433692/scopes",
+      "status": 200
+    },
+    {
+      "name": "reader-credentials",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials",
+      "status": 200
+    },
+    {
+      "name": "reader-credential-detail",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials/7580638168624433692",
+      "status": 200
+    },
+    {
+      "name": "reader-grants",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials/7580638168624433692/scopes",
+      "status": 200
+    },
+    {
+      "name": "denied-credential",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials",
+      "status": 403
+    },
+    {
+      "name": "reader-revoke-denied",
+      "method": "POST",
+      "path": "/api-credential-admin/v1/credentials/7580638168624433692/revoke",
+      "status": 403
+    },
+    {
+      "name": "denied-scope",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes",
+      "status": 403
+    },
+    {
+      "name": "route-only-scope-options",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scope-options?keyword=orders",
+      "status": 200
+    },
+    {
+      "name": "reader-create-denied",
+      "method": "POST",
+      "path": "/api-scope-admin/v1/scopes",
+      "status": 403
+    },
+    {
+      "name": "scope-create",
+      "method": "POST",
+      "path": "/api-scope-admin/v1/scopes",
+      "status": 200
+    },
+    {
+      "name": "scope-create-replay",
+      "method": "POST",
+      "path": "/api-scope-admin/v1/scopes",
+      "status": 200
+    },
+    {
+      "name": "scope-detail",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes/stage5.284cb3d72dcf4f24be9141ab52e32e05?referenceKind=NONE",
+      "status": 200
+    },
+    {
+      "name": "scope-edit",
+      "method": "PUT",
+      "path": "/api-scope-admin/v1/scopes/stage5.284cb3d72dcf4f24be9141ab52e32e05",
+      "status": 200
+    },
+    {
+      "name": "scope-conflict",
+      "method": "PUT",
+      "path": "/api-scope-admin/v1/scopes/stage5.284cb3d72dcf4f24be9141ab52e32e05",
+      "status": 409
+    },
+    {
+      "name": "scope-reference-ROUTE",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes/orders.read?referenceKind=ROUTE&page=1&size=10",
+      "status": 200
+    },
+    {
+      "name": "scope-reference-CREDENTIAL",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes/orders.read?referenceKind=CREDENTIAL&page=1&size=10",
+      "status": 200
+    },
+    {
+      "name": "reference-permission-remains-independent",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes/orders.read?referenceKind=ROUTE",
+      "status": 403
+    },
+    {
+      "name": "object-audit",
+      "method": "GET",
+      "path": "/audit/v1/events?resourceType=API_SCOPE&resourceId=stage5.284cb3d72dcf4f24be9141ab52e32e05",
+      "status": 200
+    },
+    {
+      "name": "scope-current-count",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes",
+      "status": 200
+    },
+    {
+      "name": "prepare-page-0",
+      "method": "POST",
+      "path": "/api-scope-admin/v1/scopes",
+      "status": 200
+    },
+    {
+      "name": "scope-page-two",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes?page=2&size=10",
+      "status": 200
+    },
+    {
+      "name": "scope-filter-literal",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes?keyword=orders",
+      "status": 200
+    },
+    {
+      "name": "invalid-query",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials?unknown=1",
+      "status": 400
+    }
+  ],
+  "browserScopeCode": "stage5.284cb3d72dcf4f24be9141ab52e32e05"
+}

@@ -1,0 +1,51 @@
+[
+  {
+    "file": "platform-support-service/docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql",
+    "sha256": "54e53e23dde088a43b5d948d8adba1e3560393744c611a55d35732a5a3ca5ca7",
+    "statement": 1,
+    "operation": "SET",
+    "result": "APPLIED"
+  },
+  {
+    "file": "platform-support-service/docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql",
+    "sha256": "54e53e23dde088a43b5d948d8adba1e3560393744c611a55d35732a5a3ca5ca7",
+    "statement": 2,
+    "operation": "CREATE",
+    "result": "APPLIED"
+  },
+  {
+    "file": "platform-support-service/docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql",
+    "sha256": "54e53e23dde088a43b5d948d8adba1e3560393744c611a55d35732a5a3ca5ca7",
+    "statement": 3,
+    "operation": "CREATE",
+    "result": "APPLIED"
+  },
+  {
+    "file": "requirements/20260913/platform-support-ClientAPI接入管理/db/ddl.sql",
+    "sha256": "b44e0ca5ec5f055acd926bf1d66f0fd1f005533e7fddac61b57f77fcda3cc537",
+    "statement": 1,
+    "operation": "SET",
+    "result": "APPLIED"
+  },
+  {
+    "file": "requirements/20260913/platform-support-ClientAPI接入管理/db/ddl.sql",
+    "sha256": "b44e0ca5ec5f055acd926bf1d66f0fd1f005533e7fddac61b57f77fcda3cc537",
+    "statement": 2,
+    "operation": "CREATE",
+    "result": "APPLIED"
+  },
+  {
+    "file": "requirements/20260913/platform-support-ClientAPI接入管理/db/ddl.sql",
+    "sha256": "b44e0ca5ec5f055acd926bf1d66f0fd1f005533e7fddac61b57f77fcda3cc537",
+    "statement": 3,
+    "operation": "ALTER",
+    "result": "APPLIED"
+  },
+  {
+    "file": "requirements/20260913/platform-support-ClientAPI接入管理/db/ddl.sql",
+    "sha256": "b44e0ca5ec5f055acd926bf1d66f0fd1f005533e7fddac61b57f77fcda3cc537",
+    "statement": 4,
+    "operation": "ALTER",
+    "result": "APPLIED"
+  }
+]

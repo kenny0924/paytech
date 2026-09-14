@@ -1,0 +1,76 @@
+{
+  "tag": "client-api-20260913",
+  "artifacts": {
+    "platform-support-service": {
+      "jarSha256": "797728c8d73d82d03e531545d52647f3cd23d5b987e0243ed766b56329a5d300",
+      "platformApiSha256": "d908fc69d7e34bb904ecee801b2bcb1f99938e8fba7b84889e88917c7c7bebb1"
+    },
+    "operations-console-bff": {
+      "jarSha256": "1f794fcdb7840186c9df5849055376c0e01f91235a8096f223e56e6d5c08ff4a",
+      "platformApiSha256": "d908fc69d7e34bb904ecee801b2bcb1f99938e8fba7b84889e88917c7c7bebb1"
+    }
+  },
+  "webFiles": {
+    "index.html": "ba6543a06e20f669fca97533d1da9a57fb5a0bd02cf7a2c0a2ab0761577e8560",
+    "assets/table-ZhgY6pOK.js": "44bbcb97c46b43d802057175c3a4c2f4fea09f5b8ac1c205c1637f4a07b08020",
+    "assets/index-Cj75_2K1.css": "23b947b67bc9e853cdd3142c0e65ed39422d7b2464ff355d80184919d3bd5fc5",
+    "assets/modal-DpzQWICC.js": "bf25bce5dd5743e90e9dc16a45d04e654bbf2773a9a74d182175b970c42ea7b4",
+    "assets/RiskDictionary-Dfs8OZf3.js": "7fcc752c16c1fe6d087692655bce6401705bbda2c5cf73270073f24e2e2304ee",
+    "assets/rolldown-runtime-CbXtAM7H.js": "bbf7c5086ae414dc3f33777e3eebf16ea8631325b8bb4690d25091c03567f31a",
+    "assets/typography-XF3LcClI.js": "33d133cb5c79fdde495f51154796cde1c1433958eefc593b53592655911bb64c",
+    "assets/Permissions-BDBCBj7X.js": "134b23b455e72c997266697da7584a4b393630b14b804c3cc08749c350ad143e",
+    "assets/usePaging-DlZhxFkD.js": "a61a4fd21ce297fcacf3ba9b82e9c17e71c4258a40c8282ecc70dd239f49c3aa",
+    "assets/Roles-BaBj6fhq.js": "ecf2030b4d01d93f32384a10ef7d8383692b48fee4c77ca2a3bc4369777b6a88",
+    "assets/Accounts-2uVptobg.js": "b720b975391bad783c57bda26ff16ec7a5ddfe27a9e732e4d81bee883912f9e5",
+    "assets/ConfigurationStatusModal-C3ie7NEn.js": "5cd5e761d743a6e3b0e04afaf58605f2117a999716dedb206fffce21b60991fe",
+    "assets/riskNavigation-BwdnTY65.js": "d84ef513f9edbe2a6c8cc72823060d40ece846b3dc49a60cd6201cef4de2420f",
+    "assets/drawer-b3CdxYor.js": "93e3ddb1d90b31437b7ebe1043a843987fb5e9f1fefe3243c75c3d4583bab5e7",
+    "assets/ApiScopes-BE39U2IN.js": "100600a958090347dfc075d3167fb8d5eb07b874df210eeb3f9f4f0a03b19db2",
+    "assets/riskRuleConfiguration-BMUDu4IY.css": "76d95c6d0e87f32121505d3f7c3200dc176aa4b1d96d63d08a051b31fcaae50e",
+    "assets/PlusOutlined-nK9GAuKX.js": "628bccb3f604c8250c28f47d73371729fef856e6e1b2cb9d78f7ee6ff356f6d9",
+    "assets/index-CKECab_C.js": "fee7e552381d0eee3fda3ef2c0087f1945da0bbe5247b0bc18cf70afffd97cd9",
+    "assets/useUnsavedRuleGuard-D9v7ut3x.js": "4a3df6be886c1b84293508077efbdb3c18d7f1a3d6d8ef31b30cf4d31f875cfc",
+    "assets/PermissionSelect-7wz4sejs.js": "5ed3b97519ed696cf9c63fac30e3a7d308f2dd4b445423dc62cc9ee6a6273721",
+    "assets/deletion-CmbtIwTR.js": "2dc13be03e942c047e4bf15624d13ed7d9bf57a8ad2c61d89da83e437ea888fe",
+    "assets/riskCommands-DWmkVrq5.js": "4c99d32ea1452ef13276b184ce59b1d8f083f5474491d2dd5436a370f2b2aa09",
+    "assets/ApiCredentials-d5Vqgyiz.js": "996451ed6c78ab5a94a2b8bcc7d13954aacc0953882e8cb128033b5c4fa8f0ac",
+    "assets/GatewayConfiguration-FOvaNRBE.js": "1cb307c976d4dfdf63583077cb0317b9e5ac2dd55859733326c8119c0b3a83a3",
+    "assets/tabs-C0yRiqA3.js": "c315a098248d3655d8b5ffd829bbbe3a616c4c2464d2c9c8612fc5486e1e0920",
+    "assets/tree-DGejedo3.js": "ac5365b56a1a3aab5ba51f0753cc86315a807890e646628cfb1a665d9ab46ad4",
+    "assets/ApiCredentials-CySkqB7E.css": "97bb7f7ca370347427da7ad9e1bda855e663401dc249a748ca080a18ecc3bf36",
+    "assets/VariableControls-BqChYMC9.css": "1f574f0a8212143478dcebc97c097b28ded4b7199811dd4402e292cb2cb4a768",
+    "assets/configuration-CXQzsCG8.js": "986e68ef3c136a6f578905e59ad8db7b18794d54fa7e3d02c85859ea08dc8242",
+    "assets/riskVariable-D2vf8Y-K.js": "d85a3e7e2eb104f654414752ebaffd616c434529af5b6c4886b7051ac761d4c1",
+    "assets/ConsoleResources-BI-YW8iN.js": "8e977e9a3421c3e074825642ef166009318aa4472c87e68c067f792cd1cf57cc",
+    "assets/RiskDecisionFlows-B1FW0Gw3.css": "b902a3a0e1a1f080d421ac98dc4a153ae8c0f15ad40c8a09f18ae877890b88ea",
+    "assets/RiskVariables-2X4gmU-z.js": "a50b008fbd2f7214cdcaa830ccda9d9a2832577f8c9b6ec53a2dcab3724650c7",
+    "assets/paging-Bz268Q6l.js": "7bf2dfed1077f750d1b48e35ca054b1b595e6eb9000c5d71fee6386333192a3b",
+    "assets/useErrorNotification-hUvRN7hc.js": "78b500cb6cd77f4c27a1d8bce99bbf767a48a722e0689dbf13be638ba0a2fbce",
+    "assets/RiskRuleConfiguration-3_iT8dCh.js": "55596f1e3a3e20d420d491539c7e64efb6147232921340033a3e98e356ac9740",
+    "assets/jsx-runtime-Bb6Imiej.js": "bf49d9347c77cda2bbd9c4ad45c089ace2fcf47d9169a81b45739bbc49f45825",
+    "assets/Audit-D3eAcELP.css": "05664d0e6d330bc947f68f76dcd684e66a08fa2294e4c4da3ebcf5e7b10ff160",
+    "assets/configuration-CK-HuIKJ.css": "f44387f96a2f6b62f8e12c503d0a3321034d7790881cbc6329edfd8fe0143830",
+    "assets/RiskDecisionFlows-BABhr9LC.js": "014d892fa35e89fd69b57c17c4bcae10d3bee31860d42eff1889b2835275fd06",
+    "assets/VariableControls-D3VQTRTj.js": "7a42847180950c75ae79bd85df098b8eebd0185ac2207c8da0fab4c086324a54",
+    "assets/riskRuleConfiguration-DVI00nNY.js": "832f0477d2e9d21dc2d1b754e54af5720d902466a3c837692c0474d51b020a59",
+    "assets/descriptions-OkKIdzp2.js": "afec6b5e1213802c903d60b949ae04a5d3a86e036a0516fb601f38d6c3530a1f",
+    "assets/Audit-CsSh5m2_.js": "9e588123672945233f13afa2ef34d7d13025885be1c4efe8cacefb8a578e2fad"
+  },
+  "sourceHeads": {
+    "platform-support-service": "e69cff4aff56eda2cb4d09e9206833b09711f6fb",
+    "operations-console-bff": "a3071a729894c43a66748909cc9e46ba45091c75",
+    "operations-console-web": "fba7a24b9351413e1197ec68397bea90a15683d2"
+  },
+  "images": {
+    "platform-support-service": "sha256:9bc5b9165b49cd2a237a912215b7813e459217bfebf99ab5df47fe8ec0cbff4e",
+    "operations-console-bff": "sha256:b3e5fa00976ccc899b4ce10c9bd4e327fd0af8540faaaa7118b392e381624950",
+    "operations-console-web": "sha256:fb434d52204e396a0ac439b6f904603f215a65a0967b2c0c40023e702efbbaf3"
+  },
+  "firstAttemptImages": {
+    "platform-support-service": "sha256:a2073bcc653c08a0ec8ebacde3b826786c89104ed89fb0966e3302fd2a48f51e",
+    "operations-console-bff": "sha256:612e2b6c42fc9449deb5b1c5bfcea44c20864570d5d1ddd14d03719a826402d0",
+    "operations-console-web": "sha256:fb434d52204e396a0ac439b6f904603f215a65a0967b2c0c40023e702efbbaf3"
+  },
+  "healthProbeSourceSha256": "e4cd3fe8d4ee8e90d7dbd1a375885edabe789afdcecbcb019484ae924d6ddc5c",
+  "packagingCorrection": "Recompiled current health probe source; cached class did not allow BFF readiness port 19201. Application JARs unchanged."
+}

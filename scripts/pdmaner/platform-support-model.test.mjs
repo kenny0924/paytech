@@ -191,7 +191,7 @@ function structuralProjection(model) {
   };
 }
 
-test("Platform Support Manifest contains exactly 63 approved tables in seven groups", async () => {
+test("Platform Support Manifest contains exactly 64 approved tables in seven groups", async () => {
   const { TABLES, TABLE_GROUPS } = await import("./platform-support/manifest.mjs");
   assert.equal(Object.keys(APPROVED_TABLE_GROUPS).length, 7);
   assert.deepEqual(
@@ -352,7 +352,7 @@ test("Platform Support Identity group uses global accounts and tenant-owned cred
     "user_account", "password_credential", "federated_identity", "access_tenant",
     "tenant_member", "tenant_invitation", "authentication_challenge", "auth_session",
     "refresh_token_generation", "jwt_signing_key", "role", "permission",
-    "tenant_member_role", "role_permission", "api_credential", "api_credential_scope",
+    "tenant_member_role", "role_permission", "api_credential", "api_scope", "api_credential_scope",
     "email_otp_challenge", "email_otp_attempt",
   ]);
 

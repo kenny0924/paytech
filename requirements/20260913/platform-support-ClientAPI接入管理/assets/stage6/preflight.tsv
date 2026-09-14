@@ -1,0 +1,15 @@
+DATABASE()	@@hostname	@@port
+mor_platform	008564d1cb1a	3306
+role_id	role_code	version	status
+900000000000000510	PLATFORM_ADMIN	18	ACTIVE
+route_id	route_code	version	status
+900000000000001009	operations-audit-list	2	ACTIVE
+900000000000001021	operations-gateway-route-list	1	ACTIVE
+resource_id	resource_code	status
+900000000000000562	OPERATIONS_PLATFORM_CONFIGURATION	ACTIVE
+target_id	target_service_code	channel	status
+900000000000000001	operations-console-bff	OPERATIONS	ACTIVE
+COUNT(*)
+88
+COUNT(*)
+0

@@ -1,0 +1,71 @@
+{
+  "checks": 11,
+  "results": [
+    {
+      "name": "login-admin",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "unicode-or-code-search",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes?keyword=%E6%9F%A5%E8%AF%A2%E8%AE%A2%E5%8D%95",
+      "status": 200
+    },
+    {
+      "name": "unicode-or-code-search",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes?keyword=%E8%AE%A2%E5%8D%95",
+      "status": 200
+    },
+    {
+      "name": "unicode-or-code-search",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes?keyword=%E4%B8%8D%E5%AD%98%E5%9C%A8%E7%9B%AE%E5%BD%95",
+      "status": 200
+    },
+    {
+      "name": "unicode-or-code-search",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes?keyword=orders.read",
+      "status": 200
+    },
+    {
+      "name": "unicode-or-code-search",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes?keyword=ORDERS.READ",
+      "status": 200
+    },
+    {
+      "name": "unicode-or-code-search",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scope-options?keyword=%E6%9F%A5%E8%AF%A2%E8%AE%A2%E5%8D%95",
+      "status": 200
+    },
+    {
+      "name": "unicode-or-code-search",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scope-options?keyword=%E8%AE%A2%E5%8D%95",
+      "status": 200
+    },
+    {
+      "name": "unicode-or-code-search",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scope-options?keyword=%E4%B8%8D%E5%AD%98%E5%9C%A8%E7%9B%AE%E5%BD%95",
+      "status": 200
+    },
+    {
+      "name": "unicode-or-code-search",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scope-options?keyword=orders.read",
+      "status": 200
+    },
+    {
+      "name": "unicode-or-code-search",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scope-options?keyword=ORDERS.READ",
+      "status": 200
+    }
+  ]
+}

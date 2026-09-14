@@ -1,0 +1,79 @@
+[
+  {
+    "service": "operations-console-web",
+    "id": "9cafa0f3d6ef484bee33083257bc240ea6e8319c242ca3b86eb13b9c24e487c9",
+    "image": "sha256:fb434d52204e396a0ac439b6f904603f215a65a0967b2c0c40023e702efbbaf3",
+    "health": "healthy",
+    "name": "/mor-test-operations-console-web-1"
+  },
+  {
+    "service": "operations-console-bff",
+    "id": "fc408b206d6154aff49680361d2b1e51a7575a722b1d39f0678eee1c6aca3d0c",
+    "image": "sha256:b3e5fa00976ccc899b4ce10c9bd4e327fd0af8540faaaa7118b392e381624950",
+    "health": "healthy",
+    "name": "/mor-test-operations-console-bff-1"
+  },
+  {
+    "service": "platform-support-service",
+    "id": "66bc6a6a42dc5f4c3e84450f527d0e21dbc9357cce87898d8c727d9e59fdfb97",
+    "image": "sha256:9bc5b9165b49cd2a237a912215b7813e459217bfebf99ab5df47fe8ec0cbff4e",
+    "health": "healthy",
+    "name": "/mor-test-platform-support-service-1"
+  },
+  {
+    "service": "api-gateway",
+    "id": "ccae4d787010cf5d2986abffe6601d8593ee8b26aa069245409fea8c7c71a1f2",
+    "image": "sha256:f907833438992310fe771303066685a5cfe08ddcd93e1cf6ef9a225761358953",
+    "health": "healthy",
+    "name": "/mor-test-api-gateway-1"
+  },
+  {
+    "service": "risk-service",
+    "id": "d132472dd14c82c5c840a188cebe6975eb4d7f6bcb79858d3fccb503ffb4c934",
+    "image": "sha256:fa91af13a38d41e98d5b8e3a1316ce27a03973ccbc4f7fadb05eb30f180c4376",
+    "health": "healthy",
+    "name": "/mor-test-risk-service-1"
+  },
+  {
+    "service": "nginx",
+    "id": "6915af21f7649f339aa4910908953d444149dabddcf709fc85eeefb1c0e3dffa",
+    "image": "sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c",
+    "health": "healthy",
+    "name": "/mor-test-nginx-1"
+  },
+  {
+    "service": "nacos",
+    "id": "52c6dace2db24d91013a4629732335c9b8376a43a4ac7e1a6892997d5b5439ca",
+    "image": "sha256:b895535483015b132ec294db15d635c5e8567af2f9e7aaa29e7b2cb16b968039",
+    "health": "healthy",
+    "name": "/mor-test-nacos-1"
+  },
+  {
+    "service": "vault-service",
+    "id": "e75af80c66704f3a74f94096cdd3b7bcd93e33778477c823a870b497b4d4c6eb",
+    "image": "sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3",
+    "health": "healthy",
+    "name": "/mor-test-vault-service-1"
+  },
+  {
+    "service": "redis",
+    "id": "448d74b57ce78a8607afa47916fa6489bdc110bef7ded876941fa781d884413e",
+    "image": "sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232",
+    "health": "healthy",
+    "name": "/mor-test-redis-1"
+  },
+  {
+    "service": "rabbitmq",
+    "id": "ac527bae5eef5f3ebda5bcd330f8a64c17c480c809782f5135f08d88de2182f5",
+    "image": "sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031",
+    "health": "healthy",
+    "name": "/mor-test-rabbitmq-1"
+  },
+  {
+    "service": "mysql",
+    "id": "008564d1cb1a7b267e0d713fb01f233735016c00baa8a10e3355b491e32f56c1",
+    "image": "sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb",
+    "health": "healthy",
+    "name": "/mor-test-mysql-1"
+  }
+]

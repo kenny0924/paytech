@@ -929,7 +929,7 @@ test("the current implementation ledger owns core model snapshots while entry do
 test("the current ledger owns the Platform snapshot and governance routes control-plane authority", () => {
   assert.match(
     currentImplementationSource,
-    /\| Platform Support \| 63 \| 822 \| 123 \| 99 \| 107 \| 5 \| 7 \|/u,
+    /\| Platform Support \| 64 \| 829 \| 124 \| 101 \| 109 \| 5 \| 7 \|/u,
   );
   assert.match(
     documentGovernanceSource,
@@ -1157,8 +1157,8 @@ test("requirements route on-demand dispute RFI notification through Platform Sup
   assert.match(platform04, /只负责通知与文件.*不拥有争议状态.*通用 RFI/u);
 });
 
-test("Platform Support requirements expose the generated 63-table public-control-plane snapshot", () => {
-  assert.match(source, /Platform Support 当前物理模型为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1 关系和 7 个 Diagram Groups/u);
+test("Platform Support requirements route current model statistics to the ledger and preserve the control-plane baseline", () => {
+  assert.match(source, /Platform Support 当前生成模型统计由 agent-docs\/CURRENT_IMPLEMENTATION\.md 维护/u);
   assert.match(source, /31 条复合外键、85 条 CHECK 契约与 36 个 `\*_hash` 字段/u);
   assert.match(source, /Client & Contract 当前物理模型为 40 表、443 字段、63 个唯一索引、46 个访问索引、67 条本库关系、7 条 1:1 关系和 6 个 Diagram Groups/u);
   assert.match(source, /Risk & Compliance 当前生成模型统计由 agent-docs\/CURRENT_IMPLEMENTATION\.md 维护/u);

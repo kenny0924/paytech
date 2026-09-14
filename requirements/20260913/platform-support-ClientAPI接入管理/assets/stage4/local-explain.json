@@ -1,0 +1,524 @@
+{
+  "recordedAt": "2026-09-13T17:45:30.254898+00:00",
+  "database": "127.0.0.1:13306/mor_platform_config_validation",
+  "sql": "local-explain.sql",
+  "scope": "Optimizer access paths with synthetic rows in one rolled-back transaction; not a load or latency benchmark. Credential and Route projections/joins read from current production mapper SQL fragments.",
+  "queries": {
+    "scope_exact": "SELECT api_scope_id,scope_code,display_name,description,version,create_time,update_time FROM t_api_scope WHERE scope_code='explain0927f24e8b06.s000' AND BINARY scope_code=BINARY 'explain0927f24e8b06.s000'",
+    "credential_reference_page": "SELECT c.credential_id credentialId,c.tenant_id tenantId,t.tenant_type tenantType,t.owner_ref_id clientId,\n        t.tenant_name clientName,c.key_prefix keyPrefix,c.status storedStatus,t.owner_status tenantOwnerStatus,\n        t.security_status tenantSecurityStatus,c.expires_time expiresTime,c.rotated_from_id rotatedFromId,\n        c.version,c.create_time createTime,c.update_time updateTime FROM t_api_credential c LEFT JOIN t_access_tenant t ON t.tenant_id=c.tenant_id WHERE (t.tenant_type='CLIENT' OR t.tenant_id IS NULL) AND EXISTS(SELECT 1 FROM t_api_credential_scope g WHERE g.credential_id=c.credential_id AND g.scope_code='explain0927f24e8b06.s000' AND BINARY g.scope_code=BINARY 'explain0927f24e8b06.s000') ORDER BY c.credential_id LIMIT 20 OFFSET 0",
+    "credential_reference_count": "SELECT COUNT(*) FROM t_api_credential c LEFT JOIN t_access_tenant t ON t.tenant_id=c.tenant_id WHERE (t.tenant_type='CLIENT' OR t.tenant_id IS NULL) AND EXISTS(SELECT 1 FROM t_api_credential_scope g WHERE g.credential_id=c.credential_id AND g.scope_code='explain0927f24e8b06.s000' AND BINARY g.scope_code=BINARY 'explain0927f24e8b06.s000')",
+    "route_reference_page": "SELECT r.route_id routeId, r.route_code routeCode, r.channel, r.http_method httpMethod,\n        r.external_path_template externalPathTemplate, r.downstream_path_template downstreamPathTemplate,\n        r.target_id targetId, t.target_service_code targetServiceCode, t.status targetStatus,\n        r.security_profile_code securityProfileCode, r.authorization_mode authorizationMode,\n        r.permission_id permissionId, p.permission_code permissionCode, r.required_scope_code requiredScopeCode,\n        r.request_cookie_mode requestCookieMode, r.response_cookie_mode responseCookieMode,\n        r.body_limit_bytes bodyLimitBytes, r.body_receive_timeout_millis bodyReceiveTimeoutMillis,\n        r.response_timeout_millis responseTimeoutMillis, r.status, r.version, r.created_by createdBy,\n        r.updated_by updatedBy, r.create_time createTime, r.update_time updateTime FROM t_gateway_route r\n        JOIN t_gateway_target t ON t.target_id=r.target_id AND t.channel=r.channel\n        LEFT JOIN t_permission p ON p.permission_id=r.permission_id WHERE r.required_scope_code='explain0927f24e8b06.s000' AND BINARY r.required_scope_code=BINARY 'explain0927f24e8b06.s000' ORDER BY r.route_code,r.route_id LIMIT 20 OFFSET 0",
+    "route_reference_count": "SELECT COUNT(*) FROM t_gateway_route r\n        JOIN t_gateway_target t ON t.target_id=r.target_id AND t.channel=r.channel\n        LEFT JOIN t_permission p ON p.permission_id=r.permission_id WHERE r.required_scope_code='explain0927f24e8b06.s000' AND BINARY r.required_scope_code=BINARY 'explain0927f24e8b06.s000'"
+  },
+  "results": {
+    "PLAN_scope_exact": {
+      "query_block": {
+        "select_id": 1,
+        "cost_info": {
+          "query_cost": "1.00"
+        },
+        "table": {
+          "table_name": "t_api_scope",
+          "access_type": "const",
+          "possible_keys": [
+            "uk_api_scope_code"
+          ],
+          "key": "uk_api_scope_code",
+          "used_key_parts": [
+            "scope_code"
+          ],
+          "key_length": "130",
+          "ref": [
+            "const"
+          ],
+          "rows_examined_per_scan": 1,
+          "rows_produced_per_join": 1,
+          "filtered": "100.00",
+          "cost_info": {
+            "read_cost": "0.00",
+            "eval_cost": "0.10",
+            "prefix_cost": "0.00",
+            "data_read_per_join": "3K"
+          },
+          "used_columns": [
+            "api_scope_id",
+            "scope_code",
+            "display_name",
+            "description",
+            "version",
+            "create_time",
+            "update_time"
+          ]
+        }
+      }
+    },
+    "PLAN_credential_reference_page": {
+      "query_block": {
+        "select_id": 1,
+        "cost_info": {
+          "query_cost": "5.91"
+        },
+        "ordering_operation": {
+          "using_temporary_table": true,
+          "using_filesort": true,
+          "cost_info": {
+            "sort_cost": "1.50"
+          },
+          "nested_loop": [
+            {
+              "table": {
+                "table_name": "g",
+                "access_type": "ref",
+                "possible_keys": [
+                  "uk_credential_scope",
+                  "idx_api_scope_credential"
+                ],
+                "key": "idx_api_scope_credential",
+                "used_key_parts": [
+                  "scope_code"
+                ],
+                "key_length": "514",
+                "ref": [
+                  "const"
+                ],
+                "rows_examined_per_scan": 8,
+                "rows_produced_per_join": 8,
+                "filtered": "100.00",
+                "using_index": true,
+                "loosescan": true,
+                "cost_info": {
+                  "read_cost": "0.36",
+                  "eval_cost": "0.80",
+                  "prefix_cost": "1.16",
+                  "data_read_per_join": "16K"
+                },
+                "used_columns": [
+                  "scope_id",
+                  "credential_id",
+                  "scope_code"
+                ],
+                "attached_condition": "(cast(`mor_platform_config_validation`.`g`.`scope_code` as char charset binary) = 'explain0927f24e8b06.s000')"
+              }
+            },
+            {
+              "table": {
+                "table_name": "c",
+                "access_type": "eq_ref",
+                "possible_keys": [
+                  "PRIMARY"
+                ],
+                "key": "PRIMARY",
+                "used_key_parts": [
+                  "credential_id"
+                ],
+                "key_length": "8",
+                "ref": [
+                  "mor_platform_config_validation.g.credential_id"
+                ],
+                "rows_examined_per_scan": 1,
+                "rows_produced_per_join": 1,
+                "filtered": "100.00",
+                "cost_info": {
+                  "read_cost": "2.00",
+                  "eval_cost": "0.10",
+                  "prefix_cost": "3.96",
+                  "data_read_per_join": "2K"
+                },
+                "used_columns": [
+                  "credential_id",
+                  "tenant_id",
+                  "key_prefix",
+                  "expires_time",
+                  "status",
+                  "rotated_from_id",
+                  "version",
+                  "create_time",
+                  "update_time"
+                ]
+              }
+            },
+            {
+              "table": {
+                "table_name": "t",
+                "access_type": "ALL",
+                "possible_keys": [
+                  "PRIMARY"
+                ],
+                "rows_examined_per_scan": 2,
+                "rows_produced_per_join": 1,
+                "filtered": "75.00",
+                "using_join_buffer": "hash join",
+                "cost_info": {
+                  "read_cost": "0.30",
+                  "eval_cost": "0.15",
+                  "prefix_cost": "4.41",
+                  "data_read_per_join": "3K"
+                },
+                "used_columns": [
+                  "tenant_id",
+                  "tenant_type",
+                  "owner_ref_id",
+                  "tenant_name",
+                  "owner_status",
+                  "security_status"
+                ],
+                "attached_condition": "(<if>(found_match(t), ((`mor_platform_config_validation`.`t`.`tenant_type` = 'CLIENT') or (`mor_platform_config_validation`.`t`.`tenant_id` is null)), true) and <if>(is_not_null_compl(t), (`mor_platform_config_validation`.`t`.`tenant_id` = `mor_platform_config_validation`.`c`.`tenant_id`), true))"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "PLAN_credential_reference_count": {
+      "query_block": {
+        "select_id": 1,
+        "cost_info": {
+          "query_cost": "6.06"
+        },
+        "nested_loop": [
+          {
+            "table": {
+              "table_name": "g",
+              "access_type": "ref",
+              "possible_keys": [
+                "uk_credential_scope",
+                "idx_api_scope_credential"
+              ],
+              "key": "idx_api_scope_credential",
+              "used_key_parts": [
+                "scope_code"
+              ],
+              "key_length": "514",
+              "ref": [
+                "const"
+              ],
+              "rows_examined_per_scan": 8,
+              "rows_produced_per_join": 8,
+              "filtered": "100.00",
+              "using_index": true,
+              "loosescan": true,
+              "cost_info": {
+                "read_cost": "0.36",
+                "eval_cost": "0.80",
+                "prefix_cost": "1.16",
+                "data_read_per_join": "16K"
+              },
+              "used_columns": [
+                "credential_id",
+                "scope_code"
+              ],
+              "attached_condition": "(cast(`mor_platform_config_validation`.`g`.`scope_code` as char charset binary) = 'explain0927f24e8b06.s000')"
+            }
+          },
+          {
+            "table": {
+              "table_name": "c",
+              "access_type": "eq_ref",
+              "possible_keys": [
+                "PRIMARY"
+              ],
+              "key": "PRIMARY",
+              "used_key_parts": [
+                "credential_id"
+              ],
+              "key_length": "8",
+              "ref": [
+                "mor_platform_config_validation.g.credential_id"
+              ],
+              "rows_examined_per_scan": 1,
+              "rows_produced_per_join": 1,
+              "filtered": "100.00",
+              "cost_info": {
+                "read_cost": "2.00",
+                "eval_cost": "0.10",
+                "prefix_cost": "3.96",
+                "data_read_per_join": "2K"
+              },
+              "used_columns": [
+                "credential_id",
+                "tenant_id"
+              ]
+            }
+          },
+          {
+            "table": {
+              "table_name": "t",
+              "access_type": "eq_ref",
+              "possible_keys": [
+                "PRIMARY"
+              ],
+              "key": "PRIMARY",
+              "used_key_parts": [
+                "tenant_id"
+              ],
+              "key_length": "8",
+              "ref": [
+                "mor_platform_config_validation.c.tenant_id"
+              ],
+              "rows_examined_per_scan": 1,
+              "rows_produced_per_join": 1,
+              "filtered": "100.00",
+              "cost_info": {
+                "read_cost": "2.00",
+                "eval_cost": "0.10",
+                "prefix_cost": "6.06",
+                "data_read_per_join": "2K"
+              },
+              "used_columns": [
+                "tenant_id",
+                "tenant_type"
+              ],
+              "attached_condition": "<if>(found_match(t), ((`mor_platform_config_validation`.`t`.`tenant_type` = 'CLIENT') or (`mor_platform_config_validation`.`t`.`tenant_id` is null)), true)"
+            }
+          }
+        ]
+      }
+    },
+    "PLAN_route_reference_page": {
+      "query_block": {
+        "select_id": 1,
+        "cost_info": {
+          "query_cost": "3.87"
+        },
+        "ordering_operation": {
+          "using_temporary_table": true,
+          "using_filesort": true,
+          "nested_loop": [
+            {
+              "table": {
+                "table_name": "r",
+                "access_type": "ref",
+                "possible_keys": [
+                  "idx_gateway_route_target",
+                  "idx_gateway_route_channel",
+                  "idx_gateway_route_scope"
+                ],
+                "key": "idx_gateway_route_scope",
+                "used_key_parts": [
+                  "required_scope_code"
+                ],
+                "key_length": "515",
+                "ref": [
+                  "const"
+                ],
+                "rows_examined_per_scan": 4,
+                "rows_produced_per_join": 4,
+                "filtered": "100.00",
+                "index_condition": "(cast(`mor_platform_config_validation`.`r`.`required_scope_code` as char charset binary) = 'explain0927f24e8b06.s000')",
+                "cost_info": {
+                  "read_cost": "1.00",
+                  "eval_cost": "0.40",
+                  "prefix_cost": "1.40",
+                  "data_read_per_join": "18K"
+                },
+                "used_columns": [
+                  "route_id",
+                  "route_code",
+                  "channel",
+                  "http_method",
+                  "external_path_template",
+                  "downstream_path_template",
+                  "target_id",
+                  "security_profile_code",
+                  "authorization_mode",
+                  "permission_id",
+                  "required_scope_code",
+                  "request_cookie_mode",
+                  "response_cookie_mode",
+                  "body_limit_bytes",
+                  "body_receive_timeout_millis",
+                  "response_timeout_millis",
+                  "status",
+                  "version",
+                  "created_by",
+                  "updated_by",
+                  "create_time",
+                  "update_time"
+                ]
+              }
+            },
+            {
+              "table": {
+                "table_name": "t",
+                "access_type": "ALL",
+                "possible_keys": [
+                  "PRIMARY",
+                  "uk_gateway_target_channel",
+                  "idx_gateway_target_status"
+                ],
+                "rows_examined_per_scan": 2,
+                "rows_produced_per_join": 4,
+                "filtered": "50.00",
+                "using_join_buffer": "hash join",
+                "cost_info": {
+                  "read_cost": "0.27",
+                  "eval_cost": "0.40",
+                  "prefix_cost": "2.47",
+                  "data_read_per_join": "8K"
+                },
+                "used_columns": [
+                  "target_id",
+                  "target_service_code",
+                  "channel",
+                  "status"
+                ],
+                "attached_condition": "((`mor_platform_config_validation`.`t`.`channel` = `mor_platform_config_validation`.`r`.`channel`) and (`mor_platform_config_validation`.`t`.`target_id` = `mor_platform_config_validation`.`r`.`target_id`))"
+              }
+            },
+            {
+              "table": {
+                "table_name": "p",
+                "access_type": "eq_ref",
+                "possible_keys": [
+                  "PRIMARY"
+                ],
+                "key": "PRIMARY",
+                "used_key_parts": [
+                  "permission_id"
+                ],
+                "key_length": "8",
+                "ref": [
+                  "mor_platform_config_validation.r.permission_id"
+                ],
+                "rows_examined_per_scan": 1,
+                "rows_produced_per_join": 4,
+                "filtered": "100.00",
+                "cost_info": {
+                  "read_cost": "1.00",
+                  "eval_cost": "0.40",
+                  "prefix_cost": "3.87",
+                  "data_read_per_join": "6K"
+                },
+                "used_columns": [
+                  "permission_id",
+                  "permission_code"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "PLAN_route_reference_count": {
+      "query_block": {
+        "select_id": 1,
+        "cost_info": {
+          "query_cost": "3.38"
+        },
+        "nested_loop": [
+          {
+            "table": {
+              "table_name": "t",
+              "access_type": "index",
+              "possible_keys": [
+                "PRIMARY",
+                "uk_gateway_target_channel",
+                "idx_gateway_target_status"
+              ],
+              "key": "uk_gateway_target_channel",
+              "used_key_parts": [
+                "target_id",
+                "channel"
+              ],
+              "key_length": "266",
+              "rows_examined_per_scan": 2,
+              "rows_produced_per_join": 2,
+              "filtered": "100.00",
+              "using_index": true,
+              "cost_info": {
+                "read_cost": "0.25",
+                "eval_cost": "0.20",
+                "prefix_cost": "0.45",
+                "data_read_per_join": "4K"
+              },
+              "used_columns": [
+                "target_id",
+                "channel"
+              ]
+            }
+          },
+          {
+            "table": {
+              "table_name": "r",
+              "access_type": "ref",
+              "possible_keys": [
+                "idx_gateway_route_target",
+                "idx_gateway_route_channel",
+                "idx_gateway_route_scope"
+              ],
+              "key": "idx_gateway_route_scope",
+              "used_key_parts": [
+                "required_scope_code"
+              ],
+              "key_length": "515",
+              "ref": [
+                "const"
+              ],
+              "rows_examined_per_scan": 4,
+              "rows_produced_per_join": 0,
+              "filtered": "7.55",
+              "index_condition": "(cast(`mor_platform_config_validation`.`r`.`required_scope_code` as char charset binary) = 'explain0927f24e8b06.s000')",
+              "cost_info": {
+                "read_cost": "2.00",
+                "eval_cost": "0.06",
+                "prefix_cost": "3.25",
+                "data_read_per_join": "2K"
+              },
+              "used_columns": [
+                "channel",
+                "target_id",
+                "permission_id",
+                "required_scope_code"
+              ],
+              "attached_condition": "((`mor_platform_config_validation`.`r`.`channel` = `mor_platform_config_validation`.`t`.`channel`) and (`mor_platform_config_validation`.`r`.`target_id` = `mor_platform_config_validation`.`t`.`target_id`))"
+            }
+          },
+          {
+            "table": {
+              "table_name": "p",
+              "access_type": "eq_ref",
+              "possible_keys": [
+                "PRIMARY"
+              ],
+              "key": "PRIMARY",
+              "used_key_parts": [
+                "permission_id"
+              ],
+              "key_length": "8",
+              "ref": [
+                "mor_platform_config_validation.r.permission_id"
+              ],
+              "rows_examined_per_scan": 1,
+              "rows_produced_per_join": 0,
+              "filtered": "100.00",
+              "using_index": true,
+              "cost_info": {
+                "read_cost": "0.08",
+                "eval_cost": "0.06",
+                "prefix_cost": "3.39",
+                "data_read_per_join": "952"
+              },
+              "used_columns": [
+                "permission_id"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "FIXTURE_COUNTS": {
+      "grants": 512,
+      "routes": 256,
+      "scopes": 64,
+      "credentials": 256
+    },
+    "AFTER_ROLLBACK": {
+      "grants": 0,
+      "routes": 0,
+      "scopes": 0,
+      "target": 0,
+      "tenant": 0,
+      "credentials": 0
+    }
+  }
+}

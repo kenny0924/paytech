@@ -13,13 +13,13 @@ const tables = [...sql.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=Inno
 const expectedTables = [
   'user_account', 'password_credential', 'access_tenant', 'tenant_member', 'role', 'permission',
   'tenant_member_role', 'role_permission', 'auth_session', 'refresh_token_generation', 'jwt_signing_key',
-  'api_credential', 'api_credential_scope',
+  'api_credential', 'api_scope', 'api_credential_scope',
   'gateway_target', 'gateway_route', 'gateway_route_header', 'gateway_route_query_param', 'gateway_guard_rule',
   'audit_chain', 'audit_event', 'audit_event_attr', 'security_event', 'command_idempotency', 'console_resource',
 ].map(name => `t_${name}`);
 const quote = value => `'${value.replaceAll("'", "''")}'`;
 
-test('only the 24 implemented tables exist, without physical CHECK or foreign keys', () => {
+test('only the 25 implemented tables exist, without physical CHECK or foreign keys', () => {
   assert.deepEqual(tables.map(table => table[1]).sort(), expectedTables.toSorted());
   assert.doesNotMatch(sql.replace(/^--.*$/gm, ''), /\bCHECK\s*\(|\bFOREIGN\s+KEY\b/i);
 });
@@ -67,7 +67,7 @@ test('existing path/header collations and manual-only initialization are retaine
   assert.doesNotMatch(sql, /\b(?:DROP TABLE|TRUNCATE|INSERT INTO|AUTO_INCREMENT)\b/i);
 });
 
-test('API Credential review SQL exactly matches the approved current-schema definitions', () => {
+test('historical credential bootstrap plus the approved Scope index matches the current schema', () => {
   const expectedNames = ['t_api_credential', 't_api_credential_scope'];
   const changeTables = [
     ...apiCredentialChangeSql.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g),
@@ -77,11 +77,41 @@ test('API Credential review SQL exactly matches the approved current-schema defi
   for (const changeTable of changeTables) {
     const schemaTable = tables.find(table => table[1] === changeTable[1]);
     assert.ok(schemaTable, changeTable[1]);
-    assert.equal(changeTable[2], schemaTable[2], `${changeTable[1]} body`);
+    assert.equal(changeTable[2], schemaTable[2].replace(/,\n  KEY `idx_api_scope_credential`[^\n]*/, ''), `${changeTable[1]} body`);
     assert.equal(changeTable[3], schemaTable[3], `${changeTable[1]} options and full table comment`);
   }
 
   const executableSql = apiCredentialChangeSql.replace(/^--.*$/gm, '');
   assert.doesNotMatch(executableSql, /\bCHECK\s*\(|\bFOREIGN\s+KEY\b/i);
   assert.doesNotMatch(executableSql, /\b(?:DROP|TRUNCATE|INSERT INTO|AUTO_INCREMENT)\b/i);
+});
+
+
+test('Client API increment adds exactly the approved directory and two lookup indexes', () => {
+  const increment = readFileSync(new URL('../../requirements/20260913/platform-support-ClientAPI接入管理/db/ddl.sql', import.meta.url), 'utf8');
+  const created = [...increment.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
+  assert.deepEqual(created.map(t => t[1]), ['t_api_scope']);
+  const directory = tables.find(t => t[1] === 't_api_scope');
+  assert.equal(created[0][2], directory[2]); assert.equal(created[0][3], directory[3]);
+  const added = [...increment.matchAll(/ALTER TABLE `(\w+)`\s+ADD (KEY `\w+` \([^)]*\) COMMENT '[^']*');/g)];
+  assert.deepEqual(added.map(i => i[1]).sort(), ['t_api_credential_scope', 't_gateway_route']);
+  for (const index of added) assert.ok(tables.find(t => t[1] === index[1])[2].includes(index[2]));
+  assert.doesNotMatch(increment.replace(/^--.*$/gm, ''), /\b(?:DROP|DELETE|INSERT|UPDATE|CHECK|FOREIGN)\b/i);
+});
+
+
+test('manual initial catalog and incremental Client API registrations are the same 127 rows', () => {
+  const initial = readFileSync(new URL('docs/database/sql/platform-support-initial-data.sql', service), 'utf8');
+  const increment = readFileSync(new URL('../../requirements/20260913/platform-support-ClientAPI接入管理/db/dml.sql', import.meta.url), 'utf8');
+  const statements = [...increment.matchAll(/INSERT INTO t_\w+[^;]+;/g)].map(m => m[0]);
+  assert.equal(statements.length, 7);
+  const variables = { '@plt_api_time': '@platform_initial_time', '@plt_api_operator': '@platform_initial_actor_id', '@plt_api_target': '900000000000000001', '@plt_api_admin': '900000000000000510', '@plt_api_parent': '900000000000000562', '@plt_api_gateway_read': '900000000000000534', '@plt_api_route_list': '900000000000001021', '@plt_api_audit_list': '900000000000001009' };
+  for (const statement of statements) {
+    const normalized = Object.entries(variables).reduce((sql, [key, value]) => sql.replaceAll(key, value), statement);
+    assert.ok(initial.includes(normalized));
+  }
+  assert.equal(statements.reduce((count, statement) => count + [...statement.matchAll(/^  \(9000000000000/gm)].length, 0), 127);
+  assert.equal((initial.replace(/^--.*$/gm, '').match(/START TRANSACTION;/g) || []).length, 1);
+  assert.equal((initial.replace(/^--.*$/gm, '').match(/COMMIT;/g) || []).length, 1);
+  assert.doesNotMatch(statements.join('\n'), /INSERT INTO t_(?:api_scope|api_credential|access_tenant)\s/);
 });

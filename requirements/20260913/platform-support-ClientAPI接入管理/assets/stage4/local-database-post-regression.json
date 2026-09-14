@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-09-13T17:57:25.344161+00:00",
+  "database": "127.0.0.1:13306/mor_platform_config_validation",
+  "catalogRows": {
+    "t_permission": 4,
+    "t_gateway_route": 9,
+    "t_role_permission": 4,
+    "t_console_resource": 4,
+    "t_gateway_guard_rule": 54,
+    "t_gateway_route_header": 30,
+    "t_gateway_route_query_param": 22
+  },
+  "totalCatalogRows": 127,
+  "businessFixtureCountsAfterRegression": {
+    "scopes": 0,
+    "credentials": 0,
+    "activeSigningKeys": 0,
+    "operationsAccounts": 0
+  },
+  "testEnvironmentChanged": false
+}

@@ -1,0 +1,93 @@
+{
+  "time": "2026-09-13T19:29:02.825895+00:00",
+  "checks": [
+    {
+      "check": "publicStaticFilesMatchBuild",
+      "files": 44,
+      "passed": true
+    },
+    {
+      "check": "existingAdminLogin",
+      "passed": true
+    },
+    {
+      "check": "newMenusAndAuthorizedButtons",
+      "resources": 4,
+      "passed": true
+    },
+    {
+      "path": "/api-credential-admin/v1/credentials?page=1&size=10",
+      "status": 200,
+      "total": 0,
+      "passed": true
+    },
+    {
+      "path": "/api-credential-admin/v1/credentials?page=1&size=10&clientName=%E7%A4%BA%E4%BE%8B",
+      "status": 200,
+      "total": 0,
+      "passed": true
+    },
+    {
+      "path": "/api-scope-admin/v1/scopes?page=1&size=10",
+      "status": 200,
+      "total": 0,
+      "passed": true
+    },
+    {
+      "path": "/api-scope-admin/v1/scopes?page=1&size=10&keyword=%E6%94%AF%E4%BB%98",
+      "status": 200,
+      "total": 0,
+      "passed": true
+    },
+    {
+      "path": "/api-scope-admin/v1/scope-options?page=1&size=10",
+      "status": 200,
+      "total": 0,
+      "passed": true
+    },
+    {
+      "path": "/gateway-admin/v1/routes?page=1&size=10&requiredScopeCode=checkout.read",
+      "status": 200,
+      "total": 0,
+      "passed": true
+    },
+    {
+      "path": "/audit/v1/events?page=1&size=10&resourceType=API_CREDENTIAL&resourceId=1",
+      "status": 200,
+      "total": 2,
+      "passed": true
+    },
+    {
+      "path": "/decision-rule-sets/v1/rule-sets?page=1&size=10&pointCode=CHECKOUT_PREPARE",
+      "status": 200,
+      "total": 4,
+      "passed": true
+    },
+    {
+      "path": "/decision-flows/v1/flows?page=1&size=10&pointCode=CHECKOUT_PREPARE",
+      "status": 200,
+      "total": 1,
+      "passed": true
+    },
+    {
+      "path": "/api-credential-admin/v1/credentials/1",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "passed": true
+    },
+    {
+      "path": "/api-credential-admin/v1/credentials/1/scopes?page=1&size=10",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "passed": true
+    },
+    {
+      "path": "/api-scope-admin/v1/scopes/absent.scope?referenceKind=ROUTE&page=1&size=10",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "passed": true
+    }
+  ],
+  "businessDataWritten": false,
+  "syntheticClientsOrCredentialsCreated": false
+}

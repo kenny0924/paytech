@@ -1,0 +1,18 @@
+{
+  "web.log": {
+    "fullSyntheticCredentialFound": false,
+    "phcFound": false
+  },
+  "gateway.log": {
+    "fullSyntheticCredentialFound": false,
+    "phcFound": false
+  },
+  "bff.log": {
+    "fullSyntheticCredentialFound": false,
+    "phcFound": false
+  },
+  "platform.log": {
+    "fullSyntheticCredentialFound": false,
+    "phcFound": false
+  }
+}

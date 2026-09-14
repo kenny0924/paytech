@@ -3,7 +3,7 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_user_account", "t_password_credential", "t_federated_identity", "t_access_tenant",
     "t_tenant_member", "t_tenant_invitation", "t_authentication_challenge", "t_auth_session",
     "t_refresh_token_generation", "t_jwt_signing_key", "t_role", "t_permission",
-    "t_tenant_member_role", "t_role_permission", "t_api_credential", "t_api_credential_scope",
+    "t_tenant_member_role", "t_role_permission", "t_api_credential", "t_api_scope", "t_api_credential_scope",
     "t_email_otp_challenge", "t_email_otp_attempt",
   ]),
   file_document: Object.freeze([
@@ -34,7 +34,7 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
 });
 
 export const EXPECTED_GROUP_SIZES = Object.freeze({
-  identity_access: 18,
+  identity_access: 19,
   file_document: 12,
   notification: 9,
   webhook: 8,
@@ -43,7 +43,7 @@ export const EXPECTED_GROUP_SIZES = Object.freeze({
   reliability: 2,
 });
 
-export const EXPECTED_TABLE_TOTAL = 63;
+export const EXPECTED_TABLE_TOTAL = 64;
 export const APPROVED_TABLES = Object.freeze(Object.values(APPROVED_TABLE_GROUPS).flat());
 
 export const APPROVED_DIAGRAMS = Object.freeze({
@@ -107,10 +107,12 @@ export const GATEWAY_CONTROL_CONTRACTS = Object.freeze({
       idx_gateway_route_target: Object.freeze(["target_id", "channel", "status"]),
       idx_gateway_route_channel: Object.freeze(["channel", "status", "target_id"]),
       idx_gateway_route_permission: Object.freeze(["permission_id"]),
+      idx_gateway_route_scope: Object.freeze(["required_scope_code", "route_id"]),
     }),
     relations: Object.freeze([
       Object.freeze({ childField: "target_id", parentTable: "gateway_target", parentField: "target_id", cardinality: "n:1" }),
       Object.freeze({ childField: "permission_id", parentTable: "permission", parentField: "permission_id", cardinality: "n:1" }),
+      Object.freeze({ childField: "required_scope_code", parentTable: "api_scope", parentField: "scope_code", cardinality: "n:1" }),
     ]),
     enums: Object.freeze({
       channel: Object.freeze(["OPERATIONS", "CLIENT", "PARTNER", "CHECKOUT", "CLIENT_API", "CHANNEL_CALLBACK"]),
@@ -535,14 +537,14 @@ export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
 });
 
 export const EXPECTED_TOTALS = Object.freeze({
-  tables: 63,
-  fields: 822,
-  uniqueIndexes: 123,
-  accessIndexes: 99,
-  relations: 107,
+  tables: 64,
+  fields: 829,
+  uniqueIndexes: 124,
+  accessIndexes: 101,
+  relations: 109,
   oneToOneRelations: 5,
   diagramGroups: 7,
 });
 
-export const EXPECTED_MODEL_DIGEST = "52d442dabb27e8ff239b6b6b42a65fdb733d0062d27165288748e14fbb9d34e9";
-export const EXPECTED_STRUCTURAL_DIGEST = "cc5a23680a406a53fcf1cbc800b5b276dd95ca56e793cc9bd90096174e01bd31";
+export const EXPECTED_MODEL_DIGEST = "56991d1ede96b2bed6b916862235047f75cacc4dce36a52e87f169510c9c2d4a";
+export const EXPECTED_STRUCTURAL_DIGEST = "d2d20a7bfc1c8d4b2322b22cff66a5067098e2e58dd79bbe40d59fda6e6baaf2";

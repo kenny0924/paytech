@@ -1,0 +1,223 @@
+{
+  "stage": "STAGE_3_REVIEW",
+  "externalPrefix": "/api/operations",
+  "newEndpoints": [
+    {
+      "id": "A01",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials",
+      "platformPath": "/api-credential-admin/v1/credentials",
+      "routeCode": "operations-api-credential-list",
+      "permission": "API_CREDENTIAL_READ",
+      "query": [
+        "page",
+        "size",
+        "clientId",
+        "clientName",
+        "credentialId",
+        "keyPrefix",
+        "status",
+        "scopeCode"
+      ],
+      "platformQuery": [
+        "page",
+        "size",
+        "clientId",
+        "clientName",
+        "credentialId",
+        "keyPrefix",
+        "status",
+        "scopeCode"
+      ]
+    },
+    {
+      "id": "A02",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials/{credentialId}",
+      "platformPath": "/api-credential-admin/v1/credentials/{credentialId}",
+      "routeCode": "operations-api-credential-detail",
+      "permission": "API_CREDENTIAL_READ",
+      "query": [],
+      "platformQuery": []
+    },
+    {
+      "id": "A03",
+      "method": "GET",
+      "path": "/api-credential-admin/v1/credentials/{credentialId}/scopes",
+      "platformPath": "/api-credential-admin/v1/credentials/{credentialId}/scopes",
+      "routeCode": "operations-api-credential-scopes",
+      "permission": "API_CREDENTIAL_READ",
+      "query": [
+        "page",
+        "size"
+      ],
+      "platformQuery": [
+        "page",
+        "size"
+      ]
+    },
+    {
+      "id": "A04",
+      "method": "POST",
+      "path": "/api-credential-admin/v1/credentials/{credentialId}/revoke",
+      "platformPath": "/api-credential-admin/v1/credentials/{credentialId}/revoke",
+      "routeCode": "operations-api-credential-revoke",
+      "permission": "API_CREDENTIAL_REVOKE",
+      "query": [],
+      "platformQuery": []
+    },
+    {
+      "id": "A05",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes",
+      "platformPath": "/api-scope-admin/v1/scopes",
+      "routeCode": "operations-api-scope-list",
+      "permission": "API_SCOPE_READ",
+      "query": [
+        "page",
+        "size",
+        "keyword"
+      ],
+      "platformQuery": [
+        "page",
+        "size",
+        "keyword"
+      ]
+    },
+    {
+      "id": "A06",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes/{scopeCode}",
+      "platformPath": "/api-scope-admin/v1/scopes/{scopeCode}",
+      "routeCode": "operations-api-scope-detail",
+      "permission": "API_SCOPE_READ",
+      "query": [
+        "referenceKind",
+        "page",
+        "size"
+      ],
+      "platformQuery": []
+    },
+    {
+      "id": "A07",
+      "method": "POST",
+      "path": "/api-scope-admin/v1/scopes",
+      "platformPath": "/api-scope-admin/v1/scopes",
+      "routeCode": "operations-api-scope-create",
+      "permission": "API_SCOPE_MANAGE",
+      "query": [],
+      "platformQuery": []
+    },
+    {
+      "id": "A08",
+      "method": "PUT",
+      "path": "/api-scope-admin/v1/scopes/{scopeCode}",
+      "platformPath": "/api-scope-admin/v1/scopes/{scopeCode}",
+      "routeCode": "operations-api-scope-update",
+      "permission": "API_SCOPE_MANAGE",
+      "query": [],
+      "platformQuery": []
+    },
+    {
+      "id": "A09",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scope-options",
+      "platformPath": "/api-scope-admin/v1/scope-options",
+      "routeCode": "operations-api-scope-options",
+      "permission": "GATEWAY_CONFIG_READ",
+      "query": [
+        "page",
+        "size",
+        "keyword"
+      ],
+      "platformQuery": [
+        "page",
+        "size",
+        "keyword"
+      ]
+    }
+  ],
+  "modifiedEndpoints": [
+    {
+      "id": "M01",
+      "method": "GET",
+      "platformPath": "/gateway-admin/v1/routes",
+      "bffPath": "/gateway-admin/v1/routes",
+      "routeCode": "operations-gateway-route-list",
+      "addedQuery": [
+        "requiredScopeCode"
+      ],
+      "change": "exact Scope filter; count and list use same predicate"
+    },
+    {
+      "id": "M02",
+      "method": "POST",
+      "platformPath": "/gateway-admin/v1/routes",
+      "bffPath": "/gateway-admin/v1/routes",
+      "routeCode": "operations-gateway-route-create",
+      "addedQuery": [],
+      "change": "new API_SCOPE binding must exist in directory"
+    },
+    {
+      "id": "M03",
+      "method": "PUT",
+      "platformPath": "/gateway-admin/v1/routes/{routeCode}",
+      "bffPath": "/gateway-admin/v1/routes/{routeCode}",
+      "routeCode": "operations-gateway-route-update",
+      "addedQuery": [],
+      "change": "new or changed API_SCOPE binding must exist in directory; unchanged legacy remains readable"
+    },
+    {
+      "id": "M04",
+      "method": "GET",
+      "platformPath": "/operations/v1/audit-events",
+      "bffPath": "/audit/v1/events",
+      "routeCode": "operations-audit-list",
+      "addedQuery": [
+        "resourceType",
+        "resourceId"
+      ],
+      "change": "authorized exact object filtering"
+    }
+  ],
+  "newPermissions": [
+    {
+      "code": "API_CREDENTIAL_READ",
+      "resourceType": "API_CREDENTIAL",
+      "actionCode": "READ",
+      "riskLevel": "LOW"
+    },
+    {
+      "code": "API_CREDENTIAL_REVOKE",
+      "resourceType": "API_CREDENTIAL",
+      "actionCode": "REVOKE",
+      "riskLevel": "CRITICAL"
+    },
+    {
+      "code": "API_SCOPE_READ",
+      "resourceType": "API_SCOPE",
+      "actionCode": "READ",
+      "riskLevel": "LOW"
+    },
+    {
+      "code": "API_SCOPE_MANAGE",
+      "resourceType": "API_SCOPE",
+      "actionCode": "MANAGE",
+      "riskLevel": "HIGH"
+    }
+  ],
+  "counts": {
+    "newPlatformEndpoints": 9,
+    "newBffEndpoints": 9,
+    "modifiedPlatformEndpoints": 4,
+    "modifiedBffEndpoints": 4,
+    "newTables": 1,
+    "newFields": 7,
+    "oldFieldsAdded": 0,
+    "newUniqueIndexes": 1,
+    "newAccessIndexes": 2,
+    "newPrimaryKeys": 1,
+    "newConsoleResources": 4,
+    "newPermissions": 4
+  }
+}

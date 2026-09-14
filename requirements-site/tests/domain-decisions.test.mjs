@@ -200,10 +200,11 @@ test("system catalog renders six functional systems instead of deployment-level 
   assert.doesNotMatch(content, /14 组业务与支撑系统/);
 });
 
-test("rendered Platform catalog uses the generated public control plane and Tenant-owned credentials", async () => {
+test("rendered Platform catalog routes model status to its authority and keeps Tenant-owned credentials", async () => {
   const content = await renderPage();
 
-  assert.match(content, /63 (?:张)?表、822 (?:个)?字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1 关系和 7 个 Diagram Group/u);
+  assert.match(content, /Platform Support 当前生成模型统计由 agent-docs\/CURRENT_IMPLEMENTATION\.md 维护/u);
+  assert.match(content, /Client API Scope 目录的增量契约/u);
   assert.match(content, /所有外部 HTTP API.*Platform.*公共 Route Catalog.*内部服务调用.*绕过 Gateway/su);
   assert.match(content, /OPERATIONS.*CLIENT.*PARTNER.*CHECKOUT.*CLIENT_API.*CHANNEL_CALLBACK/su);
   assert.match(content, /Tenant.*API Credential.*PHC verifier.*ACTIVE Scope/su);

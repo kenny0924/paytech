@@ -1,0 +1,93 @@
+{
+  "stage": "STAGE_3_REVIEW",
+  "staticCheck": "PASS",
+  "newEndpointCount": 18,
+  "modifiedEndpointCount": 8,
+  "newTableFields": 7,
+  "oldTableFieldsReused": 21,
+  "oldSchemaBlocksExactMatch": true,
+  "insertRows": {
+    "t_permission": 4,
+    "t_role_permission": 4,
+    "t_console_resource": 4,
+    "t_gateway_route": 9,
+    "t_gateway_route_header": 30,
+    "t_gateway_route_query_param": 22,
+    "t_gateway_guard_rule": 54
+  },
+  "totalInsertRows": 127,
+  "updatedRouteRecords": 2,
+  "newAccessIndexes": 2,
+  "markdownLinks": 78,
+  "markdownAnchors": 4,
+  "requirementChecks": {
+    "functions": 9,
+    "acceptance": 10,
+    "ui": 6
+  },
+  "pencil": {
+    "totalTopLevelArtboards": 63,
+    "newArtboards": 9,
+    "clippingProblems": 0,
+    "saved": true,
+    "pdfPages": 8,
+    "pngs": [
+      {
+        "id": "EMZZR",
+        "width": 1440,
+        "height": 1000,
+        "bytes": 82703
+      },
+      {
+        "id": "m5Ay4",
+        "width": 1440,
+        "height": 1040,
+        "bytes": 79144
+      },
+      {
+        "id": "VaGKD",
+        "width": 1440,
+        "height": 1040,
+        "bytes": 66598
+      },
+      {
+        "id": "swBmf",
+        "width": 1440,
+        "height": 1040,
+        "bytes": 69357
+      },
+      {
+        "id": "ZEj67",
+        "width": 1440,
+        "height": 1040,
+        "bytes": 69784
+      },
+      {
+        "id": "ndUmu",
+        "width": 1440,
+        "height": 1040,
+        "bytes": 58803
+      },
+      {
+        "id": "fa7Ax",
+        "width": 1440,
+        "height": 1160,
+        "bytes": 80118
+      },
+      {
+        "id": "TdtU7",
+        "width": 1440,
+        "height": 1000,
+        "bytes": 57912
+      },
+      {
+        "id": "cRqny",
+        "width": 2000,
+        "height": 1150,
+        "bytes": 160752
+      }
+    ]
+  },
+  "sqlExecuted": false,
+  "applicationTestsRun": false
+}

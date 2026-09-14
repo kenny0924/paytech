@@ -1,0 +1,12 @@
+{
+  "fileSha256": "db66e4d597e695a924fd33bf92f6eb9425c5a3bc100419e1d93a83ed6adea676",
+  "affectedRows": [
+    9,
+    4,
+    4,
+    1
+  ],
+  "roleVersion": 19,
+  "committed": true,
+  "activeRoutes": 97
+}

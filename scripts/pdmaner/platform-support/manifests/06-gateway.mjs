@@ -88,10 +88,12 @@ export const TABLES = Object.freeze([
       ix("idx_gateway_route_target", "target_id", "channel", "status"),
       ix("idx_gateway_route_channel", "channel", "status", "target_id"),
       ix("idx_gateway_route_permission", "permission_id"),
+      ix("idx_gateway_route_scope", "required_scope_code", "route_id"),
     ],
     relations: [
       rel("target_id", "gateway_target", "target_id"),
       rel("permission_id", "permission", "permission_id"),
+      rel("required_scope_code", "api_scope", "scope_code"),
     ],
   }),
   defineTable({

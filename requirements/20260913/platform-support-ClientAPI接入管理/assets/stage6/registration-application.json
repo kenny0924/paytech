@@ -1,0 +1,40 @@
+{
+  "fileSha256": "73ea79db3226e7236af892c23111c90564355bae86393ba9a754dfee91c0ee40",
+  "insertRows": [
+    {
+      "table": "t_permission",
+      "insertedRows": 4
+    },
+    {
+      "table": "t_role_permission",
+      "insertedRows": 4
+    },
+    {
+      "table": "t_console_resource",
+      "insertedRows": 4
+    },
+    {
+      "table": "t_gateway_route",
+      "insertedRows": 9
+    },
+    {
+      "table": "t_gateway_route_header",
+      "insertedRows": 30
+    },
+    {
+      "table": "t_gateway_route_query_param",
+      "insertedRows": 22
+    },
+    {
+      "table": "t_gateway_guard_rule",
+      "insertedRows": 54
+    }
+  ],
+  "totalInsertRows": 127,
+  "oldRouteVersions": {
+    "audit": 3,
+    "routeList": 2
+  },
+  "committed": true,
+  "operator": "221546852372267008"
+}

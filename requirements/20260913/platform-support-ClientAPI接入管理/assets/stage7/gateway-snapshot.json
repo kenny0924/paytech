@@ -1,0 +1,23 @@
+{
+  "capturedAt": "2026-09-13T19:30:20.656708+00:00",
+  "schemaVersion": 1,
+  "targets": 1,
+  "routes": 97,
+  "metrics": [
+    "gateway_snapshot_consecutive_failures 0.0",
+    "gateway_snapshot_last_refresh_result{result=\"FAILURE\"} 0.0",
+    "gateway_snapshot_last_refresh_result{result=\"NEVER_ATTEMPTED\"} 0.0",
+    "gateway_snapshot_last_refresh_result{result=\"SUCCESS\"} 1.0",
+    "gateway_snapshot_last_refresh_result{result=\"SUPPRESSED\"} 0.0",
+    "gateway_snapshot_last_success_age_seconds 1.0",
+    "gateway_snapshot_last_valid_in_use 0.0",
+    "gateway_snapshot_routes{channel=\"ALL\"} 97.0",
+    "gateway_snapshot_routes{channel=\"CHANNEL_CALLBACK\"} 0.0",
+    "gateway_snapshot_routes{channel=\"CHECKOUT\"} 0.0",
+    "gateway_snapshot_routes{channel=\"CLIENT\"} 0.0",
+    "gateway_snapshot_routes{channel=\"CLIENT_API\"} 0.0",
+    "gateway_snapshot_routes{channel=\"OPERATIONS\"} 97.0",
+    "gateway_snapshot_routes{channel=\"PARTNER\"} 0.0"
+  ],
+  "gatewayReplaced": false
+}

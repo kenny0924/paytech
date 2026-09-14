@@ -387,6 +387,19 @@ export const TABLES = Object.freeze([
     ],
   }),
   defineTable({
+    key: "api_scope",
+    name: "API Scope 目录",
+    comment: "保存机器 API Scope 的全局定义和展示说明；不保存凭证授权、目录状态或版本历史",
+    fields: [
+      pk("api_scope_id", "Scope 目录标识", "API Scope 目录的服务侧 Snowflake 主键；与凭证授权明细 scope_id 不同"),
+      field("scope_code", "VARCHAR(128)", "NN", "Scope 编码", "机器 API 权限的稳定小写 ASCII 编码，取值由本目录管理；创建后不可修改或回收复用，Route 与授权记录按此编码引用", { characterSet: "ascii", collation: "ascii_bin" }),
+      field("display_name", "VARCHAR(255)", "NN", "展示名称", "API Scope 的非空展示名称，可由获授权运营人员修改，不参与认证匹配"),
+      field("description", "VARCHAR(500)", "N", "能力说明", "API Scope 的业务能力说明；未填写时为 NULL，不保存秘密、凭证值或客户资料"),
+      field("version", "INT", "NN", "并发版本", "目录记录的乐观并发版本，创建为 1；每次成功修改递增 1，不表示历史业务版本"),
+    ],
+    indexes: [uk("uk_api_scope_code", "scope_code")],
+  }),
+  defineTable({
     key: "api_credential_scope",
     name: "接口凭证范围",
     comment: "保存 API Credential 的可查询和可审计授权明细",
@@ -401,8 +414,8 @@ export const TABLES = Object.freeze([
       code("status", "范围状态", "NN", ["ACTIVE", "REVOKED", "EXPIRED"]),
       int("version", "范围并发版本"),
     ],
-    indexes: [uk("uk_credential_scope", "credential_id", "scope_code", "resource_pattern", "action_code")],
-    relations: [rel("credential_id", "api_credential", "credential_id")],
+    indexes: [uk("uk_credential_scope", "credential_id", "scope_code", "resource_pattern", "action_code"), ix("idx_api_scope_credential", "scope_code", "credential_id")],
+    relations: [rel("credential_id", "api_credential", "credential_id"), rel("scope_code", "api_scope", "scope_code")],
   }),
   defineTable({
     key: "email_otp_challenge",

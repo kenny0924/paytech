@@ -1,0 +1,19 @@
+{
+  "stage": "STAGE_3_REVIEW",
+  "insertRows": {
+    "t_permission": 4,
+    "t_role_permission": 4,
+    "t_console_resource": 4,
+    "t_gateway_route": 9,
+    "t_gateway_route_header": 30,
+    "t_gateway_route_query_param": 22,
+    "t_gateway_guard_rule": 54
+  },
+  "totalInsertRows": 127,
+  "updatedRows": {
+    "t_gateway_route": 2
+  },
+  "scopeDirectorySeedRows": 0,
+  "clientCredentialSeedRows": 0,
+  "activationIncluded": false
+}

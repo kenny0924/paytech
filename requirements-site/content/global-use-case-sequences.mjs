@@ -33,7 +33,7 @@ export const SEQUENCE_PARTICIPANTS = {
 
 export const GLOBAL_USE_CASE_SEQUENCES = {
   "E2E-16": {
-    "summary": "PLT-16/PLT-17 合并配置管理合同；全部六类 Target/Route 统一维护，菜单/按钮本期仅 OPERATIONS。具体实现及部署状态见 CURRENT_IMPLEMENTATION，配置覆盖不表示全部入口认证已接通。",
+    "summary": "PLT-16/PLT-17 合并配置管理；全部六类 Target/Route 统一维护，菜单/按钮仅 OPERATIONS。后继 PLT-02 已确认 Operations 凭证查看、Scope 目录/Route 关联与紧急撤销；Client 自助生命周期及真实业务 API 开通延期；API/数据/Pencil 合同见已确认方案，见 requirements/20260913/platform-support-ClientAPI接入管理/design.md。各命令独立执行，实际状态见 CURRENT_IMPLEMENTATION。",
     "participants": [
       "operations",
       "operations_console",
@@ -45,13 +45,13 @@ export const GLOBAL_USE_CASE_SEQUENCES = {
       {
         "from": "operations",
         "to": "operations_console",
-        "label": "逐项维护权限、Target/Route、菜单按钮，再通过既有角色管理明确授权；新权限不默认授予普通角色",
+        "label": "按独立权限查看凭证与关联，或维护权限、Target/Route、菜单按钮、Scope 目录，或紧急撤销指定凭证；新权限不默认授予普通角色",
         "kind": "sync"
       },
       {
         "from": "operations_console",
         "to": "api_gateway",
-        "label": "每次保存分别提交管理命令、变更原因及既有幂等/并发身份，不把多步配置合并为大事务",
+        "label": "查询只提交筛选与对象标识；每次变更独立提交原因及既有幂等/并发身份，不把多步操作合并为大事务",
         "kind": "sync"
       },
       {
@@ -63,43 +63,43 @@ export const GLOBAL_USE_CASE_SEQUENCES = {
       {
         "from": "operations_console_bff",
         "to": "platform",
-        "label": "先经 PLT-I02 校验管理权限，随后转发当前单个配置命令；新增 18 项能力沿用 v1，合同见本需求 api.md",
+        "label": "先经 PLT-I02 校验对应权限，再转发当前单项查询/命令；沿用 v1，菜单路由与 Client API 管控合同分别在所属需求定稿",
         "kind": "sync"
       },
       {
         "from": "platform",
         "to": "platform",
-        "label": "校验权限、引用、完整候选和版本，在本库事务写本对象与完整子集合，记录既有审计及幂等；失败不留下部分配置，事务内不调用外部服务",
+        "label": "按操作校验权限、引用和版本；配置命令仍验证完整候选，Scope 目录不自动授权，紧急撤销只更新指定凭证并保留授权记录。本库事务写业务与既有幂等，提交后尽力记录审计；事务内不调用外部服务",
         "kind": "sync"
       },
       {
         "from": "platform",
         "to": "operations_console_bff",
-        "label": "返回保存结果或字段/并发错误，不宣称 Gateway 已加载",
+        "label": "查询仅返回非秘密管理投影；变更返回结果或字段/并发错误，配置保存不宣称 Gateway 已加载",
         "kind": "sync"
       },
       {
         "from": "api_gateway",
         "to": "platform",
-        "label": "独立通过 PLT-I20 读取完整一致快照，内部查询绕过公网管理链",
+        "label": "Target/Route 等公共配置变更通过独立 PLT-I20 完整快照查询被读取；Scope 名称和凭证撤销不依赖该刷新",
         "kind": "sync"
       },
       {
         "from": "api_gateway",
         "to": "api_gateway",
-        "label": "复用六类 Channel/Profile/Mode 校验并原子切换，一条请求固定同一快照的 Route/Target，不新增静态业务名单",
+        "label": "公共配置复用六类 Channel/Profile/Mode 校验并原子切换，一条请求固定同一快照的 Route/Target；CLIENT_API 新认证继续调用 PLT-I03 检查当前凭证，撤销提交后的新认证拒绝，不追回已通过认证的在途请求",
         "kind": "sync"
       },
       {
         "from": "operations_console_bff",
         "to": "platform",
-        "label": "重新获取按当前账号权限过滤的导航；管理页面多查询由 BFF 组合，业务 API 仍逐次授权",
+        "label": "按各自权限查询导航、凭证/Scope/Route 关系及对象审计，管理页面多查询由 BFF 组合；Scope 查看不附带凭证或审计查看权限",
         "kind": "sync"
       },
       {
         "from": "operations_console_bff",
         "to": "operations_console",
-        "label": "展示更新结果；未部署页面及未接通的业务认证不因登记配置而变为可用",
+        "label": "展示查询或变更结果，不提供 Operations 创建、轮换或调整凭证 Scope；未部署页面及未接通的业务认证不因登记配置而变为可用",
         "kind": "sync"
       }
     ]

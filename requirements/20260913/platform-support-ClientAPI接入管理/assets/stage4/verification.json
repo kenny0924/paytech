@@ -1,0 +1,684 @@
+{
+  "recordedAt": "2026-09-13T17:58:57.406250+00:00",
+  "stage": "STAGE_4_DEVELOPMENT",
+  "phaseComplete": true,
+  "platform": {
+    "compileAndTestCompile": "PASS",
+    "selectedContracts": {
+      "totals": {
+        "tests": 102,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "suite": "com.paytech.platform.support.auto.architecture.PlatformCrossModuleContractAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsPersistenceContractAutoTest",
+          "tests": 66,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsAuditQueryAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.architecture.PlatformArchitectureAutoTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.architecture.GatewayEnumOwnershipAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationManagementPersistenceContractAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.architecture.PlatformCapabilityModuleBoundaryAutoTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsLockContractAutoTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.PlatformSupportConfigurationAutoTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "realManagementHttp": {
+      "status": "PASS",
+      "suite": "com.paytech.platform.support.auto.apicredential.ClientApiManagementHttpAutoTest",
+      "tests": 33,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "logs": [
+      "/tmp/plt-client-api-platform-contract-tests.log",
+      "/tmp/plt-client-api-platform-catalog-final.log",
+      "/tmp/plt-client-api-platform-test-compile.log",
+      "/tmp/plt-client-api-real-http.log",
+      "/tmp/plt-client-api-platform-full-verify.log",
+      "/tmp/plt-client-api-platform-final-focused.log",
+      "/tmp/plt-client-api-platform-management-final.log",
+      "/tmp/plt-client-api-platform-final-verify.log",
+      "/tmp/plt-client-api-platform-completion-verify.log"
+    ],
+    "preparedHttpCases": 33,
+    "latestReportSet": {
+      "totals": {
+        "tests": 480,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "suite": "com.paytech.platform.support.auto.PlatformSupportApplicationAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.PlatformSupportConfigurationAutoTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.PlatformSupportDependencyBoundaryAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.PlatformSupportHealthAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.apicredential.ApiCredentialAuthenticationServiceAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.apicredential.ApiCredentialBoundaryAutoTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationCanaryHttpAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationConsistencyHttpAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationContractAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationControllerAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationHttpAutoTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.apicredential.ClientApiManagementHttpAutoTest",
+          "tests": 33,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.apicredential.ClientApiManagementInputsAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.apicredential.ClientApiMutationReferenceAutoTest",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.architecture.GatewayEnumOwnershipAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.architecture.PlatformArchitectureAutoTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.architecture.PlatformCapabilityModuleBoundaryAutoTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.architecture.PlatformCrossModuleContractAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.authentication.OperationsJwksHttpAutoTest",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.database.PlatformDatabaseAutoTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.database.PlatformLocalDatabaseBoundaryAutoTest",
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.gatewayconfiguration.ConfigurationAuthoringRulesAutoTest",
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.gatewayconfiguration.ConfigurationManagementHttpAutoTest",
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationCompilerAutoTest",
+          "tests": 21,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationLeaseOverlapHttpAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationManagementHttpAutoTest",
+          "tests": 19,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationManagementPersistenceContractAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayDatabaseTargetHttpAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.gatewayconfiguration.GatewaySnapshotHttpAutoTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.gatewayconfiguration.RiskDictionaryRegistrationCatalogAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsAuditBestEffortHttpAutoTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsAuditCompletionAutoTest",
+          "tests": 25,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsAuditConnectionFailureHttpAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsAuditProjectorAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsAuditQueryAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsAuditRuntimeAutoTest",
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsAuthenticationConcurrencyHttpAutoTest",
+          "tests": 37,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsAuthenticationHttpAutoTest",
+          "tests": 39,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsDirectoryRefactoringHttpAutoTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsFixtureRequestIdAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsLocalCryptographyAutoTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsLockContractAutoTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsPagingCatalogContractAutoTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsPasswordPolicyAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsPersistenceContractAutoTest",
+          "tests": 66,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsResourceLockFailureAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.platform.support.auto.operations.OperationsSessionPolicyAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "verifyGate": "PASS",
+    "coverage": {
+      "INSTRUCTION": {
+        "missed": 818,
+        "covered": 34490,
+        "coveredRatio": 0.9768324459046108
+      },
+      "BRANCH": {
+        "missed": 285,
+        "covered": 2574,
+        "coveredRatio": 0.9003147953830011
+      }
+    },
+    "runInterpretation": "Full auto run: 447 cases, five failures from old table/component/query assertions and a missing existing Route minimum query declaration. Synchronized precise contracts, reran 50 affected cases, then added meaningful history/filter/interval/lease and pure normalization/reference regressions. Final current reports: 480 cases, no failures/errors/skips. Final focused verify exit 0; JaCoCo uses repository append=true data across these runs, not a separate clean all-suite run.",
+    "coverageProgress": [
+      {
+        "branchMissed": 320,
+        "branchCovered": 2539,
+        "gate": "FAIL"
+      },
+      {
+        "branchMissed": 293,
+        "branchCovered": 2566,
+        "gate": "FAIL"
+      },
+      {
+        "branchMissed": 287,
+        "branchCovered": 2572,
+        "gate": "FAIL"
+      },
+      {
+        "branchMissed": 285,
+        "branchCovered": 2574,
+        "gate": "PASS"
+      }
+    ]
+  },
+  "bff": {
+    "latestReportSet": {
+      "totals": {
+        "tests": 1138,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "suite": "com.paytech.operations.console.bff.auto.OperationsConsoleBffApplicationAutoTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.RiskDecisionConfigurationClientAutoTest",
+          "tests": 54,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.RiskFlowBrowserBoundaryAutoTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.OperationsHttpTestModeAutoTest",
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.OperationsProblemCheckerAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.RiskDecisionConfigurationBrowserBoundaryAutoTest",
+          "tests": 245,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.OperationsPlatformDiscoveryUnavailableAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.ClientApiManagementBrowserAutoTest",
+          "tests": 33,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.RiskClientConfigurationAutoTest",
+          "tests": 56,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.OperationsHttpTestModeConfigurationAutoTest",
+          "tests": 25,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.RiskDecisionConfigurationModelAutoTest",
+          "tests": 352,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.RiskDictionaryBrowserBoundaryAutoTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.OperationsRiskDiscoveryUnavailableAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.ConfigurationManagementBrowserAutoTest",
+          "tests": 46,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.RolePermissionTreeAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.OperationsHttpBodyNamingAutoTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.OperationsBrowserBoundaryAutoTest",
+          "tests": 254,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "com.paytech.operations.console.bff.auto.RiskVariableBrowserBoundaryAutoTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "runInterpretation": "Full run 1138 identified the old exact application route/logging inventory assertion; after synchronizing the approved 9 endpoints and 2 metadata-only prefixes, affected 41 cases passed. Current report set has no failures. Owner is a Simulator.",
+    "logs": [
+      "/tmp/plt-client-api-bff-all-tests.log",
+      "/tmp/plt-client-api-bff-final-focused.log"
+    ]
+  },
+  "web": {
+    "checks": 923,
+    "failed": 0,
+    "productionBuild": "PASS",
+    "latestBuildIncludesBoundedSelectedScopeLookup": true,
+    "realBrowserAcceptance": "NOT_RUN",
+    "logs": [
+      "/tmp/plt-client-api-web-tests.log",
+      "/tmp/plt-client-api-web-build.log"
+    ]
+  },
+  "model": {
+    "checks": 38,
+    "failed": 0,
+    "modelSha256": "56991d1ede96b2bed6b916862235047f75cacc4dce36a52e87f169510c9c2d4a",
+    "log": "/tmp/plt-client-api-model-tests.log"
+  },
+  "requirementsSite": {
+    "build": "PASS",
+    "checks": 136,
+    "failed": 0,
+    "logs": [
+      "/tmp/plt-client-api-stage4-requirements-tests.log",
+      "/tmp/plt-client-api-stage4-requirements-final.log"
+    ]
+  },
+  "database": {
+    "target": "127.0.0.1:13306/mor_platform_config_validation",
+    "authorization": "APPROVED_REVISED_LOCAL_DDL_AND_127_DORMANT_REGISTRATIONS",
+    "ddlApplied": true,
+    "dmlApplied": true,
+    "localSubsetMatchesCanonicalInitialData": true,
+    "testEnvironmentChanged": false,
+    "credentialOrSecretReadForObservation": false,
+    "executionRecord": "local-database-application.json",
+    "postRegressionRecord": "local-database-post-regression.json",
+    "explainRecord": "local-explain.json",
+    "explain": "PASS: unique Scope lookup; both page/count reverse queries use their new indexes; synthetic transaction rolled back",
+    "newTables": 1,
+    "newFields": 7,
+    "oldTableIndexesAdded": 2,
+    "dormantCatalogRowsInserted": 127
+  },
+  "remaining": [
+    "User confirmation to enter stage 5 browser and integration acceptance",
+    "Stage 6/7 artifact preparation, test SQL and deployment; not authorized in stage 4",
+    "Stage 8 Git commit/push remains separately authorized"
+  ],
+  "artifactPublication": false,
+  "deployment": false,
+  "gitCommitOrPush": false,
+  "artifactReview": {
+    "localMarkdownLinks": 122,
+    "missingLinks": 0,
+    "diffWhitespace": "PASS",
+    "untrackedSourceWhitespace": "PASS",
+    "newJavaFilesScanned": 42,
+    "newJavaMethodJavadocAndGuardBraces": "PASS"
+  },
+  "evidenceSha256": {
+    "assets/stage4/local-database-application.json": "65129fa16f1a27dcb1bbebee9ad01a479a13cd23bbb952b5cfa3bac1f3fe1ace",
+    "assets/stage4/local-database-post-regression.json": "70784c33bbe4c2f78d9de3d46dc5b51601894d0c6c5a673c0f3a3e9f2a3ac780",
+    "assets/stage4/local-explain.sql": "6dd4302c64c5b8e36a22bda859664212aa589f032f3caf168c5359c0151918f8",
+    "assets/stage4/local-explain.json": "d3b68bdf1a09ed6b316a4f6f133f084a92455aad2fc58d0c66caba7cc2b51380"
+  }
+}

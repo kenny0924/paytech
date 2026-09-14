@@ -1,5 +1,7 @@
 # Platform Support 数据库设计规范
 
+> **Client API Scope 后继契约（2026-09-13）：** 本文的公共控制面基线之外，新增独立 Scope 目录及两项查询索引，以[已确认字段与关系](../../requirements/20260913/platform-support-ClientAPI接入管理/data-design.md)为准；原 Credential/Grant 表与 PLT-I03 认证语义保持。本文保留原阶段统计/摘要作为历史证据；当前生成统计、实施和环境状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#platform-client-api-access-20260913)。
+
 最后更新：2026-09-04
 
 > **2026-09-05 操作审计专项决定：** 既有 Operations HTTP 操作改为 Controller 注解声明、业务现场采集、独立事务尽力写入，允许丢失且审计故障不改变业务结果。具体范围与前序取代关系见[审计决策](../decisions/2026-09-05-platform-controller-best-effort-audit.md)。审计自身的链/事件/属性原子性和业务身份/幂等保护继续有效；这不是全 Platform 审计降级、模型迁移或已实施声明。
@@ -10,7 +12,7 @@
 
 > **2026-09-05 跨主题对齐：** 本文拥有 Platform 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。当前生成模型中的旧横切字段是 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 记录的迁移债务；新增实现必须遵循 [文档治理路由](../DOCUMENT_GOVERNANCE.md)，不得复制旧契约。
 
-> **当前权威：** 本文受 [Platform Support 57 表精简设计](../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 与 [统一公共 API 动态控制面设计](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 约束。57 表阶段仍是所有未受影响领域的直接前序；当前生成模型增加六张最小公共控制面表后为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、7 个 Diagram Groups、31 条复合 FK、85 条 CHECK，以及恰好 36 个以 `_hash` 结尾的字段。早期 92/97 表和旧 Gateway Policy/Release 结构只保留为历史。
+> **当前权威：** 本文受 [Platform Support 57 表精简设计](../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)、[统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 与 [统一公共 API 动态控制面设计](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 约束。57 表阶段仍是所有未受影响领域的直接前序；2026-09-01 公共控制面基线增加六张最小表后为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、7 个 Diagram Groups、31 条复合 FK、85 条 CHECK，以及恰好 36 个以 `_hash` 结尾的字段。早期 92/97 表和旧 Gateway Policy/Release 结构只保留为历史。
 
 > **实施边界：** 完整 63 表当前只批准逻辑文档、Manifest、Policy、自动测试和 `platform-support.pdma.json`。除独立批准的 Phase A 21 表手工 SQL/PLT-I20、Operations PLT-I22 JWKS 与 Nacos Discovery 切片外，它不授权其余数据库 SQL、Java 模块、登录/Token 签发、CUSTOMER JWKS、KMS 私钥操作、Secrets/Vault、Redis、MQ、BFF、Gateway 消费或部署实现。
 
@@ -288,6 +290,6 @@ Platform 可发布 `WebhookDelivered`、`WebhookFailed`、`NotificationSent`、`
 
 ## 15. 验证与人工门禁
 
-自动门禁必须证明：63 表分组 `18 + 12 + 9 + 8 + 8 + 6 + 2`、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、36 Hash Allowlist、31 复合 FK、85 条具名 CHECK sidecar 契约、六张且仅六张公共控制面表、无 Gateway `*_ver`/Release/Snapshot/Tenant Override/新 Hash、无通用 Config/持久化 Readiness、无 `_ver` 物理表、无 Platform `client_id`，以及场景对每表恰有一条满足 NN/CHECK/复合身份的有效字段映射。当前 Model SHA-256 为 `d07cfbe2153490c79e17715b8e43ae4e1b6c6ea1436fe8a3a6e063ddaee455bb`，Structural Projection SHA-256 为 `18b9c0ea482073457ed5084d0eddc77e51508d6964d34679905667f8a80e4722`，CHECK Policy SHA-256 为 `6260b6db67d05e37a3361c32507363271bee61bd4ad9144358c5bc8a1e6a6f3d`。PDManer 4.9.3 JSON 没有可移植 CHECK 节点；完整名称、表达式与表绑定冻结在 `scripts/pdmaner/platform-support/model-policy.mjs`，独立 Oracle 冻结其摘要，这些表达式作为代码与场景测试的不变量依据，不生成物理数据库 CHECK。
+原公共控制面阶段门禁记录：63 表分组 `18 + 12 + 9 + 8 + 8 + 6 + 2`、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、36 Hash Allowlist、31 复合 FK、85 条具名 CHECK sidecar 契约、六张且仅六张公共控制面表、无 Gateway `*_ver`/Release/Snapshot/Tenant Override/新 Hash、无通用 Config/持久化 Readiness、无 `_ver` 物理表、无 Platform `client_id`，以及场景对每表恰有一条满足 NN/CHECK/复合身份的有效字段映射。原公共控制面阶段 Model SHA-256 为 `d07cfbe2153490c79e17715b8e43ae4e1b6c6ea1436fe8a3a6e063ddaee455bb`，Structural Projection SHA-256 为 `18b9c0ea482073457ed5084d0eddc77e51508d6964d34679905667f8a80e4722`，CHECK Policy SHA-256 为 `6260b6db67d05e37a3361c32507363271bee61bd4ad9144358c5bc8a1e6a6f3d`。PDManer 4.9.3 JSON 没有可移植 CHECK 节点；完整名称、表达式与表绑定冻结在 `scripts/pdmaner/platform-support/model-policy.mjs`，独立 Oracle 冻结其摘要，这些表达式作为代码与场景测试的不变量依据，不生成物理数据库 CHECK。
 
 PDManer 4.9.3 仍须人工打开并检查七个 Diagram、关系方向、中文显示名和索引，并运行 Validate；sidecar 作为代码与场景测试的业务不变量清单，不映射为物理 CHECK。未批准的表不得据此落库；已批准的 22 表切片遵循独立手工 SQL 实施边界。

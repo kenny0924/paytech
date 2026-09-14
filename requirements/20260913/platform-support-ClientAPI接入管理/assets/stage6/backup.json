@@ -1,0 +1,16 @@
+{
+  "path": "/Users/kenny/Code-MoR-backups/20260913-client-api-test-192338/platform-configuration-before.sql",
+  "sha256": "db21e6f332b6d4137f7e5521a2ea9f29a75542b7cfb40fa34387abfebaa149e9",
+  "bytes": 160764,
+  "tables": [
+    "t_permission",
+    "t_role_permission",
+    "t_console_resource",
+    "t_gateway_route",
+    "t_gateway_route_header",
+    "t_gateway_route_query_param",
+    "t_gateway_guard_rule",
+    "t_role"
+  ],
+  "mode": "0600"
+}

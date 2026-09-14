@@ -75,3 +75,7 @@ requirements/
 | `20260913` | Payment Execution 设计 | Payment / Execution，关联 Commerce | 原基线与 Token 后继修订分开评审；实际状态见台账 | [需求](./20260913/payment-Execution设计/requirement.md) · [技术入口](./20260913/payment-Execution设计/technique.md) · [详细设计](./20260913/payment-Execution设计/design.md) · [Token 修订](./20260913/payment-Execution设计/instrument-token-amendment.md) · [交付记录](./20260913/payment-Execution设计/delivery.md) |
 
 | `20260913` | 菜单权限与 API 配置管理 | Platform Support / Operations Console | PLT-16、PLT-17、E2E-16；阶段 1/2 已确认；36 个新端点、零 DDL、227 行注册、7 张 Pencil 的阶段 3 评审稿 | [需求](./20260913/platform-support-菜单权限与API配置管理/requirement.md) · [技术入口](./20260913/platform-support-菜单权限与API配置管理/technique.md) · [交付记录](./20260913/platform-support-菜单权限与API配置管理/delivery.md) |
+
+本索引只做检索，不复制实现、测试数量或部署状态。
+
+| `20260913` | Client API 接入管理 | Platform Support / Operations Console | PLT-02、PLT-I03、PLT-16、PLT-I19、PLT-I06、E2E-16；Scope 目录、凭证查看与紧急撤销；实现、验证、部署及提交状态见当前台账 | [需求](./20260913/platform-support-ClientAPI接入管理/requirement.md) · [分析入口](./20260913/platform-support-ClientAPI接入管理/technique.md) · [阶段 3 方案](./20260913/platform-support-ClientAPI接入管理/design.md) · [页面](./20260913/platform-support-ClientAPI接入管理/ui.md) · [交付记录](./20260913/platform-support-ClientAPI接入管理/delivery.md) |

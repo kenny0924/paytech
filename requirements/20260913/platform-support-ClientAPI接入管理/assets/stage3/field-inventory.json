@@ -1,0 +1,210 @@
+{
+  "stage": "REVIEW_ONLY",
+  "tables": [
+    {
+      "name": "t_api_credential",
+      "kind": "EXISTING_MODEL",
+      "fields": [
+        {
+          "name": "credential_id",
+          "type": "BIGINT",
+          "nullable": false,
+          "comment": "客户端接口凭证的稳定业务标识。"
+        },
+        {
+          "name": "tenant_id",
+          "type": "BIGINT",
+          "nullable": false,
+          "comment": "访问租户的稳定业务标识。"
+        },
+        {
+          "name": "key_prefix",
+          "type": "VARCHAR(32)",
+          "nullable": false,
+          "comment": "密钥前缀的业务值。"
+        },
+        {
+          "name": "key_verifier_phc",
+          "type": "VARCHAR(512)",
+          "nullable": false,
+          "comment": "密钥 PHC 校验值的业务值。"
+        },
+        {
+          "name": "expires_time",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "凭证到期时间对应的 UTC 微秒时间。"
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(64)",
+          "nullable": false,
+          "comment": "凭证状态的稳定业务代码。允许值：ACTIVE、REVOKED、EXPIRED。"
+        },
+        {
+          "name": "rotated_from_id",
+          "type": "BIGINT",
+          "nullable": true,
+          "comment": "轮换来源凭证的稳定业务标识。"
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "nullable": false,
+          "comment": "凭证并发版本的整数值。"
+        },
+        {
+          "name": "create_time",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。"
+        },
+        {
+          "name": "update_time",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。"
+        }
+      ]
+    },
+    {
+      "name": "t_api_credential_scope",
+      "kind": "EXISTING_MODEL",
+      "fields": [
+        {
+          "name": "scope_id",
+          "type": "BIGINT",
+          "nullable": false,
+          "comment": "接口凭证范围的稳定业务标识。"
+        },
+        {
+          "name": "credential_id",
+          "type": "BIGINT",
+          "nullable": false,
+          "comment": "接口凭证的稳定业务标识。"
+        },
+        {
+          "name": "scope_code",
+          "type": "VARCHAR(128)",
+          "nullable": false,
+          "comment": "授权范围代码的业务值。"
+        },
+        {
+          "name": "resource_pattern",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "comment": "资源模式的业务值。"
+        },
+        {
+          "name": "action_code",
+          "type": "VARCHAR(64)",
+          "nullable": false,
+          "comment": "操作代码的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。"
+        },
+        {
+          "name": "effective_from",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "生效时间对应的 UTC 微秒时间。"
+        },
+        {
+          "name": "effective_to",
+          "type": "DATETIME(6)",
+          "nullable": true,
+          "comment": "失效时间对应的 UTC 微秒时间。"
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(64)",
+          "nullable": false,
+          "comment": "范围状态的稳定业务代码。允许值：ACTIVE、REVOKED、EXPIRED。"
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "nullable": false,
+          "comment": "范围并发版本的整数值。"
+        },
+        {
+          "name": "create_time",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。"
+        },
+        {
+          "name": "update_time",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。"
+        }
+      ]
+    },
+    {
+      "name": "t_api_scope",
+      "kind": "PROPOSED_NEW_MODEL",
+      "fields": [
+        {
+          "name": "api_scope_id",
+          "type": "BIGINT",
+          "nullable": false,
+          "comment": "API Scope 目录的服务侧 Snowflake 主键；与凭证授权明细 scope_id 不同。"
+        },
+        {
+          "name": "scope_code",
+          "type": "VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin",
+          "nullable": false,
+          "comment": "机器 API 权限的稳定小写 ASCII 编码，取值由本目录管理；创建后不可修改或回收复用，Route 与授权记录按此编码引用。"
+        },
+        {
+          "name": "display_name",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "comment": "API Scope 的非空展示名称，可由获授权运营人员修改，不参与认证匹配。"
+        },
+        {
+          "name": "description",
+          "type": "VARCHAR(500)",
+          "nullable": true,
+          "comment": "API Scope 的业务能力说明；未填写时为 NULL，不保存秘密、凭证值或客户资料。"
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "nullable": false,
+          "comment": "目录记录的乐观并发版本，创建为 1；每次成功修改递增 1，不表示历史业务版本。"
+        },
+        {
+          "name": "create_time",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。"
+        },
+        {
+          "name": "update_time",
+          "type": "DATETIME(6)",
+          "nullable": false,
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。"
+        }
+      ]
+    }
+  ],
+  "newAccessIndexes": [
+    {
+      "table": "t_api_credential_scope",
+      "name": "idx_api_scope_credential",
+      "columns": [
+        "scope_code",
+        "credential_id"
+      ]
+    },
+    {
+      "table": "t_gateway_route",
+      "name": "idx_gateway_route_scope",
+      "columns": [
+        "required_scope_code",
+        "route_id"
+      ]
+    }
+  ],
+  "oldTableExecutionSource": "platform-support-service/docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql"
+}

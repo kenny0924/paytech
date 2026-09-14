@@ -1,0 +1,112 @@
+{
+  "at": "2026-09-13T18:31:07.656536+00:00",
+  "stage": 5,
+  "status": "PASS",
+  "scope": "local real Web -> ingress proxy -> Gateway -> BFF -> Platform -> MySQL/Redis; existing dev Vault/signing and local discovery; no test deployment",
+  "fixes": [
+    {
+      "issue": "Credential query inputs had zero rendered width",
+      "change": "124px mode selector with flexible input; accessible input names",
+      "recheck": "Chinese Client filter succeeds; widths checked at 1440/1024/390"
+    },
+    {
+      "issue": "Unicode Scope name search failed with MySQL 1270 illegal mix of collations",
+      "change": "Convert ASCII code expression to utf8mb4_bin for LIKE; no schema change",
+      "red": {
+        "cases": 2,
+        "failures": 1,
+        "failure": "Chinese name expected 200, got 500"
+      },
+      "green": {
+        "tests": 34,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    }
+  ],
+  "platform": {
+    "command": "./mvnw -q -pl platform-support-test -am -Dtest=ClientApiManagementHttpAutoTest -Dsurefire.failIfNoSpecifiedTests=false verify",
+    "exitCode": 0,
+    "focusedHttpTests": {
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverageProfile": "jacoco-phase-a, original append=true cumulative data; not a new clean all-suite run",
+    "coverage": {
+      "INSTRUCTION": {
+        "covered": 34490,
+        "missed": 818
+      },
+      "BRANCH": {
+        "covered": 2574,
+        "missed": 285
+      }
+    }
+  },
+  "web": {
+    "tests": 923,
+    "passed": 923,
+    "buildExitCode": 0,
+    "buildWarning": "Existing shared chunk >500 kB advisory",
+    "browserErrorOrWarnCapturedAtFinalCheck": 0
+  },
+  "realIngressChecks": {
+    "initial": 28,
+    "routeBinding": 8,
+    "fixedSearch": 11,
+    "routeBindingRerun": 8
+  },
+  "browser": [
+    "1440/1024/390 layout",
+    "Client filter/reset",
+    "credential read-only/details/grants",
+    "scope pagination/create/edit/clear description",
+    "scope references/audit",
+    "browser history",
+    "conflict preserves draft",
+    "draft leave/cancel",
+    "dynamic scope selection and saving",
+    "revoke cancel/confirm",
+    "read-only account controls",
+    "Chinese scope search after fix"
+  ],
+  "reuse": "Stage 4 BFF 1138, model 38, requirements-site 136 and prior implementation checks; BFF production code unchanged during stage 5",
+  "processesStopped": [
+    45885,
+    45960,
+    46008,
+    46021,
+    47954,
+    48037,
+    48052
+  ],
+  "temporaryViewportReset": true,
+  "agentBrowserTabClosed": true,
+  "testChanged": false,
+  "remotelyPublished": false,
+  "gitCommitted": false,
+  "sourceSha256": {
+    "operations-console-web/src/clientApi/clientApi.css": "2fe5f59981600e81df6e00190d3f68a1fcfd7a97b17194e3fdb8a34177531d21",
+    "operations-console-web/src/pages/ApiCredentials.tsx": "8d822832294e37a88963b06d177d99348da8b9e0fc2ae08946b60db003483092",
+    "platform-support-service/platform-support-access-control/src/main/resources/mapper/access-control/ApiScopeMapper.xml": "3547776c03d9e458efbc6f2c78fce29aee40aad1380dd1bdaf08ededbe00b22f",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/apicredential/ClientApiManagementHttpAutoTest.java": "b64bbd470539a2067cb5bc789569b0ebc175cc9aa3a144890f1c5972adb85921",
+    "operations-console-web/dist/index.html": "ba6543a06e20f669fca97533d1da9a57fb5a0bd02cf7a2c0a2ab0761577e8560"
+  },
+  "localLogSha256": {
+    "chinese-search-red.log": "09adcec93c4082811c107ede30250a6869febf0cc602fe5721ad744bd7cd88e8",
+    "platform-green-verify.log": "cb5bcdbb2a55ca29d6e41e2e3023fcf98f6455f5e9560e2e1a8c3acb98b184fa",
+    "web-build.log": "d6a97711c7f19bbb07a554d3d772292e78b9ffa0b8a0d4f6471d7b22765240cb",
+    "web-regression.log": "54aa333fb3facaf240d9267d64fa38e3d4eeffecccaafac8fd95d046baa4844c",
+    "requirements-check.log": "3a1a6f41f13c48517fa81eecbcd0536c67e43a17dd21a21d18d0704286dfedd7"
+  },
+  "finalLogsContainSyntheticFullCredentialOrPhc": false,
+  "localMarkdownLinksChecked": 139,
+  "requirementsSite": {
+    "tests": 136,
+    "passed": 136,
+    "buildExitCode": 0
+  }
+}

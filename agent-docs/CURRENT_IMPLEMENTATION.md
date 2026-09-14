@@ -43,9 +43,9 @@
 | Payment Orchestration | 30 | 402 | 45 | 48 | 67 | 8 | 7 |
 | Finance | 84 | 1,109 | 145 | 155 | 160 | 22 | 6 |
 | Risk & Compliance | 78 | 944 | 115 | 80 | 120 | 9 | 8 |
-| Platform Support | 63 | 822 | 123 | 99 | 107 | 5 | 7 |
+| Platform Support | 64 | 829 | 124 | 101 | 109 | 5 | 7 |
 
-这些数字表示当前生成资产内部一致；六套模型仍保留 PDManer 4.9.3 应用内人工检查门禁，也不能证明物理数据库已经创建。Platform 的 22 表是当前手工 SQL 投影，不改变 63 表逻辑模型统计。
+这些数字表示当前生成资产内部一致；六套模型仍保留 PDManer 4.9.3 应用内人工检查门禁，也不能证明物理数据库已经创建。Platform 当前手工 Schema 投影包含 25 表，完整逻辑模型包含 64 表；本期新增 Scope 表及两索引已应用到本机独立 `mor_platform_config_validation`；test 也已补齐三表及索引，详见 [Client API 接入管理](#platform-client-api-access-20260913)。
 
 ## 4. 已确认但尚未全部实施
 
@@ -604,3 +604,44 @@
 - **样式更新运行证据：** test Web 使用 `mor-test/operations-console-web:plt16-17-style-20260913`，镜像 `sha256:7aff290486eecefe527f845c78fd5f83d8de774e60e873099b86dba0d49a6586`。实际浏览器 1440/1024 核对按钮数和名称同行、表格链接不越界、完整提示、详情点击及无页面溢出；40 个公开静态文件与新 dist 一致，无 pageerror，验收会话已退出。其他十个容器 ID/镜像未变，11 个均 healthy。材料见[样式修复清单](../requirements/20260913/platform-support-菜单权限与API配置管理/assets/stage7/web-style-fix/manifest.json)和[检查/截图入口](../requirements/20260913/platform-support-菜单权限与API配置管理/test-acceptance.md#web-样式反馈修复)。首次长编码挤列观察已解决，等待用户继续验收；未提交或推送代码。
 
 - **阶段 8 本地提交归档：** 用户明确要求“代码提交”，据此完成本需求五个应用仓库本地提交：paytech-foundation `6fc398d`；platform-support-service `1148936`；api-gateway `a2111df`；operations-console-bff `a3071a7`；operations-console-web `fba7a24`。包含最终 Web 样式修复及获准的 Foundation 404 / Gateway 回调枚举兼容。源码共 986 项发布 Hash 核对通过（3 项 Web 样式按最后部署清单核对），沿用对应的有效应用回归证据；精确暂存的根文档快照重新构建并通过 136/136 检查，本需求 148 个本地 Markdown 链接存在。共享目录仅暂存本需求条目及对应的三处用例断言，Payment/Finance/Risk 和其他 Channel 模型/Schema/工程修改保留。未推送、未创建 PR、未再次部署或执行 SQL；该提交要求不额外推定用户已完成全部业务验收。
+
+
+<a id="platform-client-api-access-20260913"></a>
+
+### Client API 接入管理：已部署 test，本地提交归档（2026-09-14）
+
+- **最新授权与停点：** 用户已确认阶段 3 并授权研发；本机 SQL 修订申请经新表用途/取值说明后，用户回复“可以，没问题了”。用户随后回复“继续”，确认进入阶段 5；综合验证及本地验收完成后，用户明确要求“部署test”，据此合并阶段 6/7 发布准备与执行，已完成 test 部署，等待用户业务验收。2026-09-14 用户明确要求“git提交”，授权归档本次本地代码与文档；该要求不额外推定全部业务验收完成，没有远程制品发布或推送。
+- **实现范围：** Platform 与 BFF 各新增 9 个端点、各调整 4 个旧端点；Operations 仅查询凭证及授权、独立权限紧急撤销，Scope 查/建/改和 Route 绑定，Client 日常自助生命周期另期。BFF 只聚合当前选中的 Scope 引用页；Web 新增凭证/Scope 页面，复用分页、保存、草稿与错误处理。旧未登记 Scope 绑定读取与同值更新兼容，新的绑定必须存在目录。既有 Route 维护合同同步 requiredScopeCode，Gateway 转发代码未改。源码及 AC 对照见 [development.md](../requirements/20260913/platform-support-ClientAPI接入管理/development.md)。
+- **数据工件：** Manifest/Oracle/PDManer/完整 Schema/单一初始化与增量同步；当前完整模型 64 表/829 字段/124 唯一索引/101 普通索引/109 逻辑关系/5 一对一/7 组，手工 Schema 投影 25 表。模型 SHA-256 为 `56991d1ede96b2bed6b916862235047f75cacc4dce36a52e87f169510c9c2d4a`。历史两表建表文件未改；本期模型只新增一张目录表，test 所缺另外两表为旧设计。
+- **本机数据库：** 仅在 `desktop-linux/mor-local-mysql-1` 的 `127.0.0.1:13306/mor_platform_config_validation`，备份两旧表 Schema 后，应用新 Scope 表/7 字段/两旧表查询索引，以及 127 条本期注册基线。四权限 ACTIVE、资源/Route DISABLED、角色关联 REVOKED，无 Client/凭证/Scope 业务种子；本机基线不执行部署 DML 的两旧 Route version 更新。精确文件 Hash、备份与事务证据见 [本机执行记录](../requirements/20260913/platform-support-ClientAPI接入管理/assets/stage4/local-database-application.json)。完整目录门禁保留，回归后业务夹具无遗留。
+- **已验证边界：** Platform 首轮全量 447 项，修订旧精确清单/维护合同后复验并补充边界场景，当前报告 480 项无失败/错误/跳过；最终 Maven verify 返回 0，指令覆盖率 97.68%、分支 90.03%（按仓库 append 配置累计）。33 项本期真实管理 HTTP 场景覆盖 PLT-I03 前 200/撤销后 401、其他凭证仍 200、权限收回、重放、真实 Lease/行锁/唯一索引、历史异常和审计。BFF 1,138 项当前报告通过，Web 923 项及生产构建通过，模型/Schema 38 项、需求站 136 项及构建通过。API 仅安装到本机 Maven 缓存，未发布远程。详细运行顺序与限制见 [开发检查记录](../requirements/20260913/platform-support-ClientAPI接入管理/assets/stage4/verification.json)。
+- **查询计划与后续：** 用 64 Scope/256 凭证/512 授权/256 Route 的本机合成数据确认 Scope 唯一索引及两反向查询索引，完整事务回滚，无遗留；[EXPLAIN](../requirements/20260913/platform-support-ClientAPI接入管理/assets/stage4/local-explain.json)只证明本样本访问路径，不代表压力性能。上述阶段 4 BFF 使用 Owner Simulator；阶段 5 真实链验证见下，test 发布和提交继续按阶段确认。
+
+- **阶段 5 修复及回归：** 真实浏览器发现凭证查询输入被模式下拉挤成 0px，已修复布局；Scope 中文名称搜索触发 ASCII/Unicode LIKE 字符集冲突，新增真实 HTTP 中文用例先失败后修复，不改 Schema。最终本期 34 项真实管理 HTTP 全通过，聚焦 Maven verify 返回 0、原累计覆盖率门禁通过；Web 923/923 与生产构建通过。BFF/Gateway 本阶段生产代码未改，复用已有开发检查。
+- **阶段 5 完整链及页面：** 本机 Web 生产构建 → 入口代理 → 真实 Gateway/BFF/Platform/MySQL/Redis 完成 36 项代表性检查；修后另完成 11 项搜索复验与 8 项路由复跑。浏览器新增/只读/编辑/分页/引用/审计、权限、草稿冲突、浏览器返回与 1440/1024/390 布局通过；撤销提交后真实 PLT-I03 200→401。中文 Scope 选择保存最终复验通过，浏览器无捕获 error/warn。开发 Vault/签名和本机服务发现边界保留，不宣称真实 Client 业务 API 或 Risk 链已接入。
+- **阶段 5 清理和证据：** 自有进程及浏览器已退出，独立本机库恢复 25 表/1,268 行；临时业务、账号/会话/命令/审计/签名记录均为 0，27 条临时 Route 和 8 个 Resource 恢复 DISABLED。材料见 [acceptance.md](../requirements/20260913/platform-support-ClientAPI接入管理/acceptance.md)、[验证记录](../requirements/20260913/platform-support-ClientAPI接入管理/assets/stage5/verification.json)、[清理计数](../requirements/20260913/platform-support-ClientAPI接入管理/assets/stage5/cleanup.json)。阶段 5 无未关闭验收缺陷；其发布停点已由后续“部署test”授权接续。
+
+- **test 发布结果：** 已在 `desktop-linux/mor-test` 替换 Platform、Operations BFF、Operations Web，最终镜像前缀分别为 `9bc5b9165b49`、`b3e5fa00976c`、`fb434d52204e`；11 个容器健康，Gateway/Risk 等其余 8 个容器 ID 和镜像均未改变。首轮打包复用的旧探针缺少 BFF 19201 端口，已从现行源码重新编译并替换镜像，业务 JAR 未改。精确镜像、JAR、内嵌 API、Web SHA 与恢复边界见 [release.md](../requirements/20260913/platform-support-ClientAPI接入管理/release.md)。
+- **test 数据与启用：** 在 `127.0.0.1:23306/mor_platform` 应用已批准的两旧 Credential/Grant 表及 Scope 新表，共 3 表/28 字段、两反向索引；备份仅涉及八张配置表。注册 127 条配置、两旧 Route 各递增一版；启用 9 Route/4 Resource/4 RolePermission，既有 PLATFORM_ADMIN 18→19。Gateway 自动加载 97 条 Route，当前 Snapshot 成功且不使用失败回退。未创建 Client/凭证/Scope 业务数据，未执行 test 紧急撤销。
+- **test 部署检查：** 15 项轻量检查通过，包括真实管理员登录、新菜单/按钮、凭证与 Scope 查询、中文查询、Scope 筛选与审计过滤、合法 404、旧规则集/决策流查询；公开入口 44 个静态资源 SHA 与本期产物一致。仅检查部署可用性，未在 test 重跑阶段 5 的写入/撤销和浏览器完整验收；用户业务验收待完成。见 [test-acceptance.md](../requirements/20260913/platform-support-ClientAPI接入管理/test-acceptance.md)。
+
+- **阶段 8 本地提交归档（2026-09-14）：** 用户明确要求“git提交”，已提交 platform-support-service `3cb5e31f`；operations-console-bff `85927a7a`；operations-console-web `4ebeed0e`。根目录归档本期需求/API/SQL/Pencil/模型与发布证据，只暂存本期共享台账段落；Payment 及前序 Gateway 文档的其他未提交改动保留。当前 Web 923/923、模型/Schema 38/38、需求站构建及 136/136 复查通过，阶段 5 修复源码 Hash 一致，未改业务代码，Java 沿用阶段 4/5 与 test 部署有效证据。本次只修正文档状态与链接；未推送、未再次部署、未执行 SQL。具体应用提交见 [提交清单](../requirements/20260913/platform-support-ClientAPI接入管理/assets/stage8/application-commits.json)。
+
+以下阶段 1–3 条目保留各次交付历史；其中“尚未研发/待确认”已由上述最新状态接续。
+
+## Platform Client API 接入管理（2026-09-13）
+
+- **阶段 1 范围评审：** 用户同意下一期以 API 凭证生命周期、Scope 目录/授权关联和真实接口接入验证为方向，管理入口先在 Operations。已建立[需求范围](../requirements/20260913/platform-support-ClientAPI接入管理/requirement.md)、[分析入口](../requirements/20260913/platform-support-ClientAPI接入管理/technique.md)和[交付记录](../requirements/20260913/platform-support-ClientAPI接入管理/delivery.md)。仅登记评审稿，11 项功能、11 项功能验收、6 项 UI 验收待确认。旧凭证轮换失效时机 Q1 已询问、待答复；Scope 目录拟先提供新增、名称/说明编辑与引用查询，访问权仍通过凭证授权/撤销控制。
+- **证据及边界：** 已有 PLT-I03 认证代码与凭证/授权结构；当前 Route 的 API Scope 仍为手动输入，缺少本期拟建设的统一目录和生命周期管理入口。真实 Client API 的业务 Owner、有效 Tenant 来源及 test 环境前置在阶段 2 核定，不能沿用旧 Simulator 证据宣称接通。本轮没有改应用/模型、执行 SQL、部署、提交或推送；API/表字段/注册 DML 数量尚未定稿，下一步等待阶段 1 确认。
+- **阶段 1 文档检查：** 本需求 3 个 Markdown 文件、23 个本地链接、功能/验收编号及行尾空白检查通过。`npm --prefix requirements-site test` 构建通过，136 项中 135 通过、1 项失败；失败来自其他 Payment 模型工作中的台账统计 30 表/402 字段/45 唯一索引与旧断言 30/399/43 不一致，本次只追加需求段落，未修改该统计或断言。日志 `/tmp/plt-client-api-stage1-requirements-tests.log`；不把整站检查表述为全部通过，不修改其他需求来消除该失败。
+- **阶段 1 职责修订讨论：** 用户指出日常凭证管理应属于 Client Console，Operations 应支持查看，并询问管理必要性。已在[需求稿首部](../requirements/20260913/platform-support-ClientAPI接入管理/requirement.md)提出修订：客户自助创建/轮换/授权调整/日常撤销，Operations 查看非秘密信息、维护 Scope/Route，紧急撤销仅为待确认建议；Platform 仍统一拥有数据和业务规则。原 Operations 全生命周期稿及其 F/AC/UI 清单暂停，不继续作为默认实现范围；轮换 Q1 暂缓至 Client 自助需求。没有扩大到 Client Console 研发，当前等待修订范围确认。
+- **职责修订检查：** 本轮 24 个本地文档链接及行尾空白检查通过；需求站重新构建和 136/136 检查通过，日志 `/tmp/plt-client-api-responsibility-review-tests.log`。前次 Payment 统计断言失败不再复现，本任务未修改其统计或测试。仅完成职责讨论稿修订，不代表范围获批或功能实现。
+- **后继范围已确认：** 用户回复“可以”，确认 Operations 凭证查看、Scope 目录与 Route 关联、独立授权紧急撤销；Client Console 自助生命周期和首次真实业务 API 开通退出本期。上方原阶段 1 全生命周期清单及 Q1 仅为历史，不再等待本期答复。[需求](../requirements/20260913/platform-support-ClientAPI接入管理/requirement.md) 已整理为 9 项功能、10 项功能验收和 6 项 UI 验收。
+- **阶段 2 已交付待审阅：** [差异与影响](../requirements/20260913/platform-support-ClientAPI接入管理/technique.md) 已核对真实源码与表结构，预计 3 个应用、约 9 项新 API 能力及 4 项旧 API 调整；模型只拟新增一个 Scope 目录，Credential/Grant 复用旧设计，旧业务字段预计不增加，具体端点/字段/索引/DML 在阶段 3 冻结。Gateway 已有逐次 PLT-I03 认证与动态路由，预计无需修改生产逻辑；不扩展 CCT 或 Client Console。
+- **test 只读观察：** `desktop-linux` / `mor-test` / `mor_platform`（宿主端口 23306）当前没有 t_api_credential、t_api_credential_scope，CLIENT Tenant 与 API_SCOPE Route 均为 0；旧两表正式 Schema 共 21 字段。预计后续 test 需应用 3 表建表 SQL，其中 2 表为既有模型补齐。证据见[目标表与计数](../requirements/20260913/platform-support-ClientAPI接入管理/assets/stage2/test-database-observation.json)，仅查询存在性及数量，执行前必须重新核对，不能推断其他环境为空。
+- **阶段边界：** 已同步 PLT-02/PLT-16/PLT-I06/PLT-I19 和 E2E-16 已确认范围。尚未进入精确 API/数据/Pencil 方案、研发或综合验证；没有改应用/模型、执行 SQL、部署或提交。下一步等待用户确认阶段 2 后进入阶段 3。
+- **阶段 2 文档验证：** 本需求 3 份 Markdown 的 33 个本地链接（含 4 个锚点）、9/10/6 功能与验收编号、只读观察字段/目标表关系及空白检查通过；`npm --prefix requirements-site test` 生产构建和 136/136 检查通过，日志 `/tmp/plt-client-api-stage2-requirements-tests.log`。本次未运行 Java 或真实 HTTP 功能回归，文档检查不代表拟议接口或撤销功能已实现。
+
+- **阶段 2 已确认，阶段 3 已交付待审阅：** 用户回复“OK”，据此完成 [实施方案](../requirements/20260913/platform-support-ClientAPI接入管理/design.md)、[API](../requirements/20260913/platform-support-ClientAPI接入管理/api.md)、[数据](../requirements/20260913/platform-support-ClientAPI接入管理/data-design.md)、[SQL](../requirements/20260913/platform-support-ClientAPI接入管理/db/README.md) 和 [Pencil 页面](../requirements/20260913/platform-support-ClientAPI接入管理/ui.md)。3 个应用新增 9 项/修改 4 项 API 能力，对应 Platform/BFF 合计 18 个新端点、8 个修改端点；模型新增 1 表/7 字段/1 主键/1 唯一索引、旧业务字段 0、两旧表各加 1 普通索引。test 另补两张原设计表，共需建 3 表/28 字段。注册 SQL 为 127 INSERT + 两旧 Route 更新，初始新路由/菜单/角色授权不生效；不含业务种子或启用 SQL。
+- **阶段 3 页面与边界：** Web docs/design.pen 已保存新增 8 个页面状态和 1 张字段关系图，保留原 54 画板；9 张 PNG 和 8 页 PDF 已导出至本需求 assets/stage3。A09 复用 Route READ，无 PLT-I02 白名单或 Gateway 业务代码扩展。当前仅文档和 Pencil 设计变更，未生成正式模型、修改应用功能、执行 SQL、创建示例、部署、提交或推送。上方阶段 2“尚未进入精确方案”已由本记录接续，当前等待阶段 3 整体确认后进入研发。
+- **阶段 3 验证：** [静态检查证据](../requirements/20260913/platform-support-ClientAPI接入管理/assets/stage3/design-verification.json) 核对端点/注册子项/127 INSERT/两旧 Route 目标、旧两表与正式 Schema 一致、10/11/7 字段、验收编号和本地链接；Pencil 布局无裁剪，9 张 PNG 与 8 页 PDF 有效。需求站生产构建及 136/136 检查通过，日志 `/tmp/plt-client-api-stage3-requirements-tests.log`；没有数据库 SQL/EXPLAIN 或应用功能验证。

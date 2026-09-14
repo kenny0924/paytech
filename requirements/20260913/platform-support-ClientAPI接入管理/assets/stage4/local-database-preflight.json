@@ -1,0 +1,28 @@
+{
+  "at": "20260913T173254Z",
+  "database": "mor_platform_config_validation",
+  "container": "mor-local-mysql-1",
+  "hostPort": 13306,
+  "oldSchemaMatchesCanonical": true,
+  "catalogCollisionCounts": {
+    "t_permission.primary": 0,
+    "t_permission.natural": 0,
+    "t_role_permission.primary": 0,
+    "t_role_permission.natural": 0,
+    "t_console_resource.primary": 0,
+    "t_console_resource.natural": 0,
+    "t_gateway_route.primary": 0,
+    "t_gateway_route.natural": 0,
+    "t_gateway_route_header.primary": 0,
+    "t_gateway_route_header.natural": 0,
+    "t_gateway_route_query_param.primary": 0,
+    "t_gateway_route_query_param.natural": 0,
+    "t_gateway_guard_rule.primary": 0,
+    "t_gateway_guard_rule.natural": 0
+  },
+  "backupFile": "/Users/kenny/Code-MoR-backups/platform-client-api-local-20260913/schema-before-20260913T173254Z.sql",
+  "backupBytes": 6916,
+  "backupSha256": "218d433b56317e3f7821ce9afab6e95d14165ea720254c2e0c01bbf685702581",
+  "ddlSha256": "b44e0ca5ec5f055acd926bf1d66f0fd1f005533e7fddac61b57f77fcda3cc537",
+  "localRegistrationSha256": "2709144cff97a1770fa251efcb7f2058706fda0bb10f24c9a8c69061ff06cc32"
+}

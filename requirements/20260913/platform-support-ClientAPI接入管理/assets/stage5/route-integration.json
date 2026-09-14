@@ -1,0 +1,55 @@
+{
+  "checks": 8,
+  "results": [
+    {
+      "name": "login-admin",
+      "method": "POST",
+      "path": "/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "create-client-api-target",
+      "method": "POST",
+      "path": "/gateway-admin/v1/target-services",
+      "status": 200
+    },
+    {
+      "name": "create-route-scope-binding",
+      "method": "POST",
+      "path": "/gateway-admin/v1/routes",
+      "status": 200
+    },
+    {
+      "name": "edit-route-scope-binding",
+      "method": "PUT",
+      "path": "/gateway-admin/v1/routes/test-route-db7e1844e5dc4161b184cf1436b03672",
+      "status": 200
+    },
+    {
+      "name": "old-scope-excludes-route",
+      "method": "GET",
+      "path": "/gateway-admin/v1/routes?requiredScopeCode=orders.read",
+      "status": 200
+    },
+    {
+      "name": "new-scope-includes-route",
+      "method": "GET",
+      "path": "/gateway-admin/v1/routes?requiredScopeCode=refunds.write",
+      "status": 200
+    },
+    {
+      "name": "bff-scope-route-reference",
+      "method": "GET",
+      "path": "/api-scope-admin/v1/scopes/refunds.write?referenceKind=ROUTE",
+      "status": 200
+    },
+    {
+      "name": "unknown-scope-rejected",
+      "method": "PUT",
+      "path": "/gateway-admin/v1/routes/test-route-db7e1844e5dc4161b184cf1436b03672",
+      "status": 400
+    }
+  ],
+  "route": "test-route-db7e1844e5dc4161b184cf1436b03672",
+  "target": "test-target-67fe792c3ce046418a0e9fa58031a3d5"
+}
