@@ -1,5 +1,11 @@
 # Execution 需求交付记录
 
+## 2026-09-13 PI-I01 局部重构授权
+
+用户明确要求重构 `PaymentInstrumentController#prepareCardInstrument` 的调用链。本次限该 Controller 方法、对应单个 Processor 和相关检查，整理首次准备与原绑定重放的控制流；保持既有接口、业务合同、Hash、资源锁和本地事务原子性，不扩展其他支付入口。实现与实际验证范围见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)；本次请求未授权提交、推送或执行 Token 迁移 SQL。
+
+2026-09-14，用户明确要求“代码提交”，授权保存上述重构、Payment 当前 import 整理与关联文档。本次仅本地 Git 提交；此前关于 Caller 的讨论未形成改造指令，Caller 接口和默认不可用装配继续保留。SQL、推送和部署仍未获授权；提交结果与复验记录统一见当前台账。
+
 ## 2026-09-13 确认来源
 
 用户在 Payment 模块拆分后，依次讨论 Execution 接口、表与状态机、移除 Customer Action 表、Card 认证/资金操作、Wallet/Crypto 扩展和编排方式。

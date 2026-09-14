@@ -1,0 +1,177 @@
+{
+  "recorded_at_utc": "2026-09-13T17:25:54.956632+00:00",
+  "scope": "PaymentInstrumentController#prepareCardInstrument and its single Processor; local uncommitted refactor",
+  "payment_base_commit": "d35bd4bb96d71e0795e60fac883e329f1d1037c3",
+  "baseline": {
+    "production_edits_applied": false,
+    "suite": "PaymentApplicationAutoTest",
+    "tests": 19,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "log": "/tmp/payment-instrument-refactor-baseline.log",
+    "note": "An initial incorrect INVALID_PARAMETER test expectation was corrected to the existing INVALID_REQUEST contract before this passing baseline."
+  },
+  "verification": {
+    "phase": "verify",
+    "exit_code": 0,
+    "java_version": 25,
+    "selected_suites": [
+      {
+        "name": "PaymentApplicationAutoTest",
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentCommandContractAutoTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentFlowRegistryAutoTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentRulesAutoTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentModuleBoundaryAutoTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "all_test_sources_compiled": true,
+    "log": "/tmp/payment-instrument-refactor-verify.log",
+    "is_full_business_regression": false
+  },
+  "static_checks": {
+    "command_hash_expression_unchanged": true,
+    "resource_lock_unchanged": true,
+    "no_processor_dependency": true,
+    "boundary_review": "Card verification before T1; only local command/token/cleanup in T1; Card material preparation after commit; replay reads original binding without a write transaction."
+  },
+  "java_format_and_javadoc_audit": {
+    "modified_files": 4,
+    "profile": "/Users/kenny/Desktop/Workspace/Settings/2-Cursor/eclipse-codestyle.xml",
+    "missing_method_javadocs": 0,
+    "methods_over_30_body_lines": 0
+  },
+  "requirements_site": {
+    "command": "npm --prefix requirements-site test",
+    "exit_code": 0,
+    "tests": 136,
+    "passed": 136,
+    "failed": 0,
+    "log": "/tmp/payment-prepare-refactor-site.log"
+  },
+  "database": {
+    "instrument_token_table_count": 0,
+    "query": "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='mor_payment' AND table_name='t_payment_instrument_token'",
+    "specialized_tests_compiled": 21,
+    "specialized_tests_run": false,
+    "reason": "Token migration not applied; separate SQL authorization is pending.",
+    "schema_mutations_executed": false
+  },
+  "source_sha256": {
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/PaymentApplicationAutoTest.java": "0989ddd1149bc2cac55fc3c292b06b20fb42b69f429f4d2f524cb8ed64a5a2a1",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentInstrumentAutoTest.java": "cd3933a2e9ee0f75e5817a1e0cafa56a703094000d9367efa767c7e9cae872d7",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/instrument/PaymentInstrumentController.java": "d1e7a0dece22f9e3f70514e9ea74b522697dd4bc5c38456e4c3d4f5d7b68a4b1",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PrepareCardInstrumentProcessor.java": "4f0b88889dea8b519b34fe92a1aa49af32b81bb12f98f9ceeec45be9283aae56"
+  },
+  "limitations": [
+    "Successful token creation/replay and material-lifecycle database scenarios have not run against the new schema.",
+    "Real Card and other Owner integrations remain unavailable production ports.",
+    "No new Git commit, push or deployment for this refactor."
+  ],
+  "local_commit_checkpoint": {
+    "recorded_at_utc": "2026-09-14T05:08:35.022013+00:00",
+    "payment_commit": "dbc882e35ae9470b1c13f973bd85c67fd09d0fa2",
+    "payment_tree": "2951f2074402c9caa5a05ed8c28814824e3cbec2",
+    "commit_scope": "Card instrument preparation refactor, related tests and current Payment import organization; Caller unchanged.",
+    "verification": {
+      "command": "./mvnw -q -Dtest=PaymentApplicationAutoTest,PaymentCommandContractAutoTest,PaymentFlowRegistryAutoTest,PaymentRulesAutoTest,PaymentModuleBoundaryAutoTest -Dsurefire.failIfNoSpecifiedTests=false verify",
+      "exit_code": 0,
+      "selected_suites": [
+        {
+          "name": "PaymentApplicationAutoTest",
+          "tests": 19,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "PaymentCommandContractAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "PaymentFlowRegistryAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "PaymentRulesAutoTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "PaymentModuleBoundaryAutoTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "log": "/tmp/payment-prepare-commit-verify.log",
+      "all_test_sources_compiled": true
+    },
+    "requirements_site": {
+      "command": "npm --prefix requirements-site test",
+      "exit_code": 0,
+      "passed": 136,
+      "failed": 0,
+      "log": "/tmp/payment-prepare-commit-site.log"
+    },
+    "static_checks": {
+      "source_matches_verified_commit": true,
+      "command_hash_and_lock_unchanged": true,
+      "ExecutionApiConverter_change_is_import_only": true,
+      "refactor_method_javadoc_audit": "passed",
+      "git_diff_check": "passed"
+    },
+    "source_sha256": {
+      "paytech-payment-test/src/test/java/com/paytech/payment/auto/PaymentApplicationAutoTest.java": "0989ddd1149bc2cac55fc3c292b06b20fb42b69f429f4d2f524cb8ed64a5a2a1",
+      "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentInstrumentAutoTest.java": "cd3933a2e9ee0f75e5817a1e0cafa56a703094000d9367efa767c7e9cae872d7",
+      "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/ExecutionApiConverter.java": "519ef5508fbdb2e9d729d4e4accde46f65aeeaf60d9f5f34a82d279c9dc93163",
+      "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/instrument/PaymentInstrumentController.java": "d1e7a0dece22f9e3f70514e9ea74b522697dd4bc5c38456e4c3d4f5d7b68a4b1",
+      "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PrepareCardInstrumentProcessor.java": "d85c12b5370dec4ca05f60efd1c880a8dc5a220330f0e8c6cbdfbe801dd262c6"
+    },
+    "database": {
+      "instrument_token_table_count": 0,
+      "specialized_tests_run": false,
+      "specialized_tests_compiled": 21,
+      "schema_mutations_executed": false
+    },
+    "pushed": false,
+    "deployed": false
+  }
+}
