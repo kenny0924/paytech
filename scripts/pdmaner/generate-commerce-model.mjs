@@ -55,6 +55,7 @@ order_id BIGINT NN
 order_no VARCHAR(64) NN
 client_id BIGINT NN
 client_order_id VARCHAR(128) NN
+consumer_country_code CHAR(2) N
 context_format VARCHAR(32) NN {TERM_PRICE,LEGACY_SCOPE}
 preparation_command_id BIGINT N
 termination_requested_at DATETIME(6) N
@@ -700,7 +701,10 @@ function fieldComment(tableKey, field) {
     `Closed values disagree with production manifest: ${pathKey}`,
   );
   invariant(Boolean(openSource) === Boolean(field.openSourceHint), `Open code source disagrees: ${pathKey}`);
-  const clauses = [`${metadata.description}。`];
+  const description = pathKey === "commerce_order.consumer_country_code"
+    ? "基础创建时固定的消费者 ISO 3166-1 alpha-2 国家代码；NULL 仅用于历史订单读取旧创建快照"
+    : metadata.description;
+  const clauses = [`${description}。`];
   if (closedValues) clauses.push(`允许值：${closedValues.join("、")}。`);
   if (openSource) clauses.push(`取值来源：${openSource}；非固定枚举。`);
   return clauses.join("");
@@ -894,7 +898,7 @@ function validateMetadata(tables) {
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
     tables: 15,
-    fields: 249,
+    fields: 250,
     uniqueIndexes: 24,
     accessIndexes: 12,
     relations: 15,

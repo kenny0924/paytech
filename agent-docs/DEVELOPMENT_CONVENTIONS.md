@@ -30,6 +30,13 @@
 - Spring 配置前缀直接从能力开始，例如 `compensation.*`、`xxl.job.*`，不增加无意义的 `paytech` 中间层。
 - Topic 使用小写 `topic_{source_system}_{business_subject}`，Consumer Group/Queue 使用小写 `cg_{consumer_system}_{consumer_subject}`；消息统一使用 UTF-8 JSON。
 
+### 2.1 对外金额格式
+
+- 第一方 HTTP 请求与响应的金额统一使用**币种主单位的普通十进制字符串**，同时携带 ISO 4217 币种（可位于所属订单等外层对象）。例如 `"currency": "USD", "amount": "10.00"` 表示 10 美元，`"1000"` 表示 1000 美元，不得解释为 10 美元。
+- 响应按币种精度补齐小数位：USD/AED 为 `"10.00"`，JPY 为 `"10"`，KWD 为 `"10.000"`。请求允许省略无意义的尾随零，但必须符合业务范围与币种精度；不隐式舍入、不接受 JSON 数值金额或科学计数法。
+- Java 内部使用精确 `BigDecimal` 或项目 Money 值对象，不通过 `float/double` 转换，不在 Processor/Service 中乘除 100 来补偿接口单位。
+- 第三方 Channel 协议如要求最小单位整数，只在对应渠道适配边界精确转换，遵循该渠道合同及币种精度；该协议不改变第一方 API 金额语义。数据库金额和历史记录不因 Wire 格式调整而换算。
+
 ## 3. 包结构与依赖方向
 
 - 复杂核心服务可以按 `JAVA_PROJECT_STRUCTURE.md` 增加少量业务能力 Maven JAR，但模块不是微服务：仍只有一个 `web` 启动进程、一个数据库和一个事务管理器。初始通常控制在 3–5 个模块；没有当前完整业务能力、明确表归属和真实消费者时不拆模块。

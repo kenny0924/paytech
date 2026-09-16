@@ -42,9 +42,9 @@ const artifactsReady = requiredArtifacts.every(existsSync);
 const expectedTemplateDigest =
   "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 const expectedModelDigest =
-  "4f0933d4bbb6478c0abe7ad9b4a579f4ac2f791ab572722c9ae71ad1a0d5332f";
+  "c8ee521adcea9629ebb03e5e84bf852290549ff9917f22616e5d2dc23496acbd";
 const expectedStructuralDigest =
-  "27c40ec1214547ff13e8dfee0da06a30961ea570d3c585b42a255d442c3362eb";
+  "09517acc061fd4093f8aea17436ac97883b9e1cee217f85901f653940a63b2e3";
 const idPattern =
   /^[A-F0-9]{8}-[A-F0-9]{4}-5[A-F0-9]{3}-[89AB][A-F0-9]{3}-[A-F0-9]{12}$/u;
 
@@ -55,6 +55,7 @@ order_id BIGINT NN
 order_no VARCHAR(64) NN
 client_id BIGINT NN
 client_order_id VARCHAR(128) NN
+consumer_country_code CHAR(2) N
 context_format VARCHAR(32) NN {TERM_PRICE,LEGACY_SCOPE}
 preparation_command_id BIGINT N
 termination_requested_at DATETIME(6) N
@@ -950,13 +951,13 @@ artifactTest("refund request delegates directly to Payment without a Finance res
   assert.ok(fieldKeys.includes("channel_refund_id"));
 });
 
-test("approved field manifest independently sums to the real 249-field candidate", () => {
+test("approved field manifest independently sums to the real 250-field candidate", () => {
   const approvedTables = parseApprovedFieldManifest();
   assert.deepEqual(approvedTables.map((table) => table.defKey), expectedTableOrder);
   assert.equal(
     approvedTables.flatMap((table) => table.fields).length,
-    249,
-    "批准候选字段清单实算必须为 249；不得按旧人工摘要凑数",
+    250,
+    "批准候选字段清单实算必须为 250；不得按旧人工摘要凑数",
   );
 });
 
@@ -1413,7 +1414,7 @@ artifactTest("generated model freezes actual totals and both SHA-256 digests", (
   const model = JSON.parse(modelBytes);
   const expectedTotals = {
     tables: 15,
-    fields: 249,
+    fields: 250,
     uniqueIndexes: 24,
     accessIndexes: 12,
     relations: 15,
@@ -1436,10 +1437,10 @@ artifactTest("generated model freezes actual totals and both SHA-256 digests", (
 artifactTest("current Commerce database and physical docs report the generated model facts", () => {
   const logicalSource = readFileSync(paths.commerceDatabase, "utf8");
   const physicalSource = readFileSync(paths.decisions, "utf8");
-  const currentFacts = /15 表 \/ 249 字段 \/ 24 个非主键唯一索引 \/ 12 个访问索引 \/ 15 条本库关系 \/ 4 个 Diagram Group/u;
+  const currentFacts = /15 表 \/ 250 字段 \/ 24 个非主键唯一索引 \/ 12 个访问索引 \/ 15 条本库关系 \/ 4 个 Diagram Group/u;
   assert.match(logicalSource, /2026-09-11-cct-commerce-oe-pricing-model/u);
   assert.match(logicalSource, /CURRENT_IMPLEMENTATION/u);
-  assert.match(physicalSource, /"tables": 15,[\s\S]*"fields": 249,[\s\S]*"uniqueIndexes": 24,[\s\S]*"accessIndexes": 12,[\s\S]*"relations": 15,[\s\S]*"diagramGroups": 4/u);
+  assert.match(physicalSource, /"tables": 15,[\s\S]*"fields": 250,[\s\S]*"uniqueIndexes": 24,[\s\S]*"accessIndexes": 12,[\s\S]*"relations": 15,[\s\S]*"diagramGroups": 4/u);
   assert.doesNotMatch(logicalSource, /当前已生成(?:资产|模型|的 PDManer).*14 张?表\s*\/\s*223 字段/u);
   assert.match(logicalSource, /当前 Vault V1.*Protect\/Reveal/u);
   assert.doesNotMatch(logicalSource, /Token\/Binding|Retire 未被业务行引用的 Binding/u);

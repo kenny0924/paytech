@@ -1,5 +1,8 @@
 # Foundation 服务本地命令幂等能力决策
 
+> **2026-09-16 CreateCheckout 修订：** [业务重构决定](../../requirements/20260916/commerce-CreateCheckout业务重构/technique.md)移除 CreateCheckout 的请求幂等执行。新订单国家保存在 `t_commerce_order.consumer_country_code`，旧命令快照只保留历史读取；本文其他操作的命令合同不变。
+
+
 - Decision status: Confirmed
 - Implementation and deployment status: see [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md)
 - Decision date: 2026-09-09

@@ -180,7 +180,7 @@ export const GLOBAL_USE_CASE_SEQUENCES = {
     summary: "当前已确认的新写时序：基础Checkout创建 → Commerce查询/保存Consumer → 支付准备冻结OE/合同/金额和Intent → 展示三份legal冻结文档链接 → 一次POST payments向Payment提交卡信息与合同确认 → Payment在事务外调用Commerce保存三接受及网络证据 → Commerce提交后直接返回 → Payment继续原支付并返回3DS动作或结果 → 查询原提交及Commerce订单状态。三个基础操作归Commerce，payments和原提交查询归Payment；不提供独立公开/card，Commerce不反向登记Payment。卡采集/卡库/平台Token/受控用卡归Payment独立Card模块，Commerce不接卡原值；原幂等键防重复，接受成功不代表支付成功，所有外呼都在本地事务外。字段/数据见requirements/20260912/payment-自建CardVault，订单合同见commerce-CustomerCheckout接口设计。下列消息保留前序Legacy Scope Wire/Channel托管时序供迁移核对，不代表当前目标或已部署流程。",
     participants: ["client_system", "consumer", "api_gateway", "client_api", "platform", "commerce", "client_contract", "risk", "hosted_checkout", "payment", "acquirer", "channel_endpoint", "finance", "vault"],
     messages: [
-      { from: "client_system", to: "api_gateway", label: "POST /api/v1/checkouts；Bearer Credential + Idempotency-Key；Body 只含 clientOrderId、currency、consumerCountryCode、可选 expiresAt 和 items", kind: "sync" },
+      { from: "client_system", to: "api_gateway", label: "POST /api/v1/checkouts；Bearer Credential + Idempotency-Key；Body 只含 clientOrderId、currency、consumerCountryCode、可选 expiresAt 和 items；金额为币种主单位十进制字符串，USD 10.00 表示 10 美元", kind: "sync" },
       { from: "api_gateway", to: "platform", label: "PLT-I03 校验 CLIENT Tenant-owned API Credential PHC verifier；从已验证 Access Tenant 返回可信 tenant_id、tenant_type=CLIENT、owner_ref_id=client_id、credential_id 与当前 effective ACTIVE Scope；失败即 Fail-Closed", kind: "sync" },
       { from: "api_gateway", to: "client_api", label: "精确要求 checkouts.write 后只转发一次；保留 Idempotency-Key，只注入 X-Request-Id、X-Gateway-Client-Id 与 X-Gateway-Credential-Id，不下传 Authorization、Tenant、Scope、Route 或 Channel", kind: "sync" },
       { from: "client_api", to: "commerce", label: "paytech-commerce-web 内的逻辑 Adapter 使用可信 X-Gateway-Client-Id，校验该 Client 命名空间内的 clientOrderId 永久唯一，并按 Client + CREATE_CHECKOUT + Key Claim；不接受 client_id、locale、industryCode/mccCode/classificationId、Consumer PII、汇总金额、Operating Entity、Channel 或 MID", kind: "sync" },
@@ -204,7 +204,7 @@ export const GLOBAL_USE_CASE_SEQUENCES = {
       { from: "commerce", to: "payment", label: "以 order_id、order_context_id、assignment_id、operating_entity_id、金额/币种与冻结 industry_code/mcc_code 幂等创建唯一 Payment Intent", kind: "sync" },
       { from: "payment", to: "commerce", label: "返回 paymentIntentId 并冻结来源 Order Context 显式事实", kind: "sync" },
       { from: "commerce", to: "commerce", label: "保存 Intent 投影后以 CAS 把 Order/Checkout Session 置为 OPEN，此时才开放 Checkout URL", kind: "sync" },
-      { from: "commerce", to: "client_api", label: "只有 Checkout URL 可用时返回不可变 201 创建回执：公开 orderNo/clientOrderId、checkoutUrl、计算金额、expiresAt 和相对 Location", kind: "sync" },
+      { from: "commerce", to: "client_api", label: "只有 Checkout URL 可用时返回不可变 201 创建回执：公开 orderNo/clientOrderId、checkoutUrl、计算金额、expiresAt 和相对 Location；金额按币种精度输出主单位字符串，USD 保留两位小数", kind: "sync" },
       { from: "client_api", to: "api_gateway", label: "返回版本化 JSON 成功合同；201 Location 仅允许已校验的 /api/v1/ 相对绝对路径，RFC 9457 仅用于 4xx/5xx Problem", kind: "sync" },
       { from: "api_gateway", to: "client_system", label: "返回原始 201 回执；同一 Key 重放同一创建回执，最新状态由 GET 查询", kind: "sync" },
       { from: "hosted_checkout", to: "api_gateway", label: "加载订单与不可变 Order Context", kind: "sync" },

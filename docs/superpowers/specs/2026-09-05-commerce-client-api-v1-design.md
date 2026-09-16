@@ -451,6 +451,13 @@ Base62 alphabet 精确为：
 
 ### 6.2 生成算法
 
+2026-09-16 后继：生成收敛为 Foundation `PublicTokenGenerator.generate(String... mixingValues)`，内部取当前系统 UTC 秒，
+返回 30 位无前缀主体。Commerce 传入大写国家码及 Client ID 十进制文本后拼接 `chk_`；16 字节随机 Payload 与有边界编码的
+混入值 SHA-256 前 16 字节 XOR。详见[公共 Token 合同](../../../paytech-foundation/paytech-common-core/PUBLIC_TOKEN.md)。
+Wire、CRC、持久化及授权规则不变。Token 生成时间不再由业务创建时间传入，也不参与订单有效期判断。
+
+以下逐字节 country/clientId 混入步骤保留为历史生成算法，仅用于解释第 16.4 节旧固定向量；新生成以以上后继为准：
+
 1. 按标准 KSUID 生成 20 bytes：4-byte KSUID seconds + 16-byte CSPRNG payload。
 2. `consumerCountryCode` 先规范为两个大写 ASCII bytes。
 3. 正值 `clientId` 转为 8-byte big-endian two's-complement representation。
@@ -471,7 +478,7 @@ payload[9] ^= clientIdBytes[7]
 
 XOR 只是轻量混入，不可从 Token 解出 country/clientId，也不承担认证、完整性或防伪语义。安全不可猜测性只来自 KSUID 的 128-bit CSPRNG payload；CRC 只发现拼写、截断或大小写错误。
 
-插入 `uk_checkout_public_token` 发生唯一冲突时，在同一本地事务最多重新生成三次；三次均冲突则失败并告警。事务提交后只使用数据库中的 winner，命令恢复不得另生成 Token。
+2026-09-16 用户后续确认只生成一次：创建流程在事务前为 Session 生成一个 Token；插入 `uk_checkout_public_token` 发生唯一冲突时整笔创建事务回滚，不切换候选或自动重新生成。事务提交后只使用数据库中已保存的 Token；历史快照中的候选字段仅为旧数据读取保留。
 
 ### 6.3 数据库
 
@@ -1196,7 +1203,7 @@ Java 应用不得自动建表、迁移或 Seed；不使用 Flyway、Liquibase �
 
 ### 16.4 Token 固定向量
 
-跨语言实现必须通过以下向量：
+历史生成向量保留为 Core 编码、CRC 与旧 Token 读取兼容性依据；新生成接口使用系统时间和随机源，不要求从相同混入值复现此 Token：
 
 ```text
 timestamp          = 2026-09-05T10:00:00Z

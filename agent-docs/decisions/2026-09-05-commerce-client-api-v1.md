@@ -75,7 +75,7 @@ Commerce Client API 的调用者是 Client 自己的服务端，不是 Consumer 
 ### D6. Checkout Public Token
 
 - Token 固定为 `chk_` + 27 字符 KSUID Core + 3 字符 Base62 CRC16 校验码，总长 34，大小写敏感。
-- KSUID 的 4 字节时间戳保持原位；16 字节 CSPRNG Payload 仅以 XOR 混入两字节大写国家码和八字节大端 Client ID，不建立可解码绑定或安全语义。
+- 2026-09-16 后继生成规则：Foundation 静态 `PublicTokenGenerator.generate(String... mixingValues)` 内部取当前系统 UTC 秒，返回无前缀主体；Commerce 传国家码与 Client ID 文本并拼接 `chk_`。16 字节 CSPRNG Payload 与有边界编码的混入值摘要前 16 字节 XOR，不建立可解码绑定或安全语义。旧混入方式生成的 Token 继续可读，已存值不重建；完整边界见[公共 Token 技术说明](../../requirements/20260916/foundation-PublicToken公共生成/technique.md)。
 - 校验码只用于发现录入/传输错误；存在性、Session/Order 关系、状态和 `expiresAt` 才决定 Token 是否可用。
 - 数据库以 ASCII binary collation 明文保存并建立唯一索引；不保存 Hash、不使用 Vault/HMAC/KMS。
 - Token 只授权 Hosted Checkout 的最小页面动作，不能调用 Client API、Cancel、Refund 或读取受限数据。

@@ -39,7 +39,7 @@
 | 系统 | 表 | 字段 | 唯一索引 | 访问索引 | 本库关系 | 1:1 | Diagram Groups |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Client & Contract | 38 | 428 | 61 | 43 | 64 | 6 | 6 |
-| Commerce | 15 | 249 | 24 | 12 | 15 | — | 4 |
+| Commerce | 15 | 250 | 24 | 12 | 15 | — | 4 |
 | Payment Orchestration | 30 | 403 | 45 | 48 | 67 | 8 | 7 |
 | Finance | 84 | 1,109 | 145 | 155 | 160 | 22 | 6 |
 | Risk & Compliance | 78 | 944 | 115 | 80 | 120 | 9 | 8 |
@@ -152,6 +152,27 @@
 - **Verified：** 135 项聚焦纯逻辑/结构测试通过；`./mvnw -q -DskipTests package` 通过；Web executable JAR 包含两个能力 JAR；隔离应用启动通过，认证开启的应用上下文也完成启动；Requirements Site 135/135。共享 `mor_platform` 含部署/人工数据，不满足审计 Runtime suite 的仅初始化目录前置，因此 17 项在 fixture setup 被安全阻止；数据库未重置，当前工作区不声称全量 `clean verify` 通过。
 - **Deployment：** 本次拆分已提交到 `platform-support-service` 本地 `main`（`79b05fd`），尚未推送、发布或部署；影响范围限定为 Platform Support 构建与运行时类路径，不要求 Gateway、BFF、Vault 或六个核心系统同步修改。
 - **Authorities：** [设计](../docs/superpowers/specs/2026-09-06-platform-support-modular-code-design.md)；[执行计划](../docs/superpowers/plans/2026-09-06-platform-support-capability-module-migration.md)。
+
+<a id="foundation-public-token-20260916"></a>
+
+## Public Token 公共静态工具（2026-09-16）
+
+- **Implemented：** Common Core 新增 `PublicTokenGenerator.generate(String... mixingValues)`，内部取当前系统 UTC 秒并使用 128 位 CSPRNG，返回 30 位无前缀主体；`isValid` 提供通用格式/CRC 校验。Commerce 创建 Processor 自行拼接 `chk_`，删除原 Generator 接口与 Spring 实现，业务值对象委托公共校验。后续按用户“一次就够了”改为 Session 只生成一个 Token，删除 Context 候选列表、Session 回写和 Repository 重试；保留数据库唯一约束与旧 Token/快照读取。[范围和兼容边界](../requirements/20260916/foundation-PublicToken公共生成/technique.md)。
+- **Verified：** JDK 25 Common Core `clean install` **130/130（9 Suite）**、Commerce 限定 8 类 `clean package` **92/92**，均无失败、错误或跳过。新增公共入口测试先得到缺少实现的编译失败，再通过当前时间、固定长度、旧向量、非法输入及并发生成验证；Commerce 覆盖 34 位前缀、历史快照、接口/OpenAPI、架构与真实 HTTP 参数拒绝。所有 Commerce 测试源码编译通过，未执行完整落库流程。测试报告和命令记录见[本机证据](/Users/kenny/.codex/verification/foundation-public-token-20260916)。
+- **Document checks：** 新文档链接与改动空白检查通过；需求站内容/全局时序 **106/107**，唯一失败仍为已登记的 Risk 模型统计断言，本轮未修改该模型或断言。
+- **单 Token 后续验证：** JDK 25 生产及全部测试源码编译通过，97 项中 **92 项通过**；另 5 项 `CheckoutCreationServiceAutoTest` 在 `requireSchema` 前置失败，未执行到业务步骤，不能视为事务回滚验收通过。测试已调整为保存原 Session Token，以及重复 Token 抛出数据库唯一冲突并回滚五类事实；最初在旧六参数 Context 上得到预期编译失败，完成签名简化后编译通过。最终 Maven `clean package` 因这 5 项数据库前置失败返回非零，不宣称完整构建通过。[本机增量证据](/Users/kenny/.codex/verification/commerce-single-token-20260916)保存日志、报告和边界；未修改数据库。
+- **Pending：** Common Core 已在本机提交 00ace48，仅安装本机 Maven 仓库，未发布 Nexus、未部署。完整 Commerce 创建成功回归仍受前序本机 `consumer_country_code` 迁移前置阻挡；本轮不执行 SQL，也不修改 PDManer、Gateway 或其他系统。
+
+<a id="decimal-money-wire-20260916"></a>
+
+## 对外金额主单位字符串（2026-09-16）
+
+- **Implemented：** 第一方 HTTP 的格式规则统一为币种主单位十进制字符串，USD `"10.00"` 表示 10 美元。Foundation Money JSON 按币种精度补零；有效精度排除补零，保证最大金额可无损读回。Commerce 原有 Client/Customer 转换已经使用主单位，DTO/OpenAPI 单位说明与公开金额投影回归同步补齐。Payment 创建 Intent 原已直接解析主单位金额，本轮未改 Payment 代码。第三方渠道适配、数据库值及历史 Hash 未修改。[范围与技术边界](../requirements/20260916/commerce-对外金额格式/technique.md)。
+- **Verified：** JDK 25 下 Common Core `clean verify` **116/116**；Commerce 金额及 Client Checkout/Order/Refund、公共字段与 OpenAPI 合同测试 **57/57**，均无失败、错误或跳过。先运行新 Money JSON 断言，旧实现出现 8 个预期失败；最终覆盖不同币种、正负/零、主单位不缩放、最大金额往返及非法 JSON/超精度拒绝。这是公共模块与协议验证，不代表全部服务或真实支付链路回归。
+- **Document checks：** Customer OpenAPI JSON、需求链接与差异空白检查通过。需求站内容及全局时序测试 **106/107**；唯一失败仍为已登记的 Risk 统计断言预期 78 表/944 字段、台账当前 81 表/1,003 字段，本轮未修改这两处数据。日志与测试报告见[本机验证记录](/Users/kenny/.codex/verification/commerce-decimal-money-20260916)。
+- **公共 Money 迁移（同日后续）：** 用户确认后删除 Commerce MoneyValue，创建金额、订单查询、退款及旧创建快照直接使用公共 Money。CommerceDecimalRules 仅保留数量、正负及 DECIMAL(24,8) 范围规则，不持有币种/金额状态。公共 Money 新增 toAmountString，金额字段与 JSON Codec 共用；外部字段仍是字符串，历史快照继续去尾零。请求精度错误保留 422/VALIDATION_ERROR，持久化金额损坏仍为系统错误。
+- **迁移验证：** Common Core `clean install` **116/116**，只安装本机 Maven 仓库；Commerce 限定 12 类 `clean package` **144/144**，包含 13 项真实 HTTP 绑定/金额拒绝测试、商品行计算、旧快照、接口合同与架构门禁。新增正负/数量/整行优惠/精度/溢出断言先在旧实现完成兼容基线；依赖门禁已精确加入直接使用的 Common Core。清理构建后的可执行 JAR 不含 MoneyValue.class，源码也无残留引用。[本机验证记录](/Users/kenny/.codex/verification/commerce-shared-money-20260916)。
+- **Pending：** Common Core 已在本机提交 00ace48，新制品未发布 Nexus、未部署。只读复核本机仍缺少 consumer_country_code，创建成功与退款落库等完整数据库回归受前序迁移前置阻挡；本轮未执行 SQL。
 
 ## 11. Foundation RFC 8785 JSON Object Profile 本地验收（2026-09-07）
 
@@ -698,3 +719,40 @@
 - **已核对边界：** 现有 Tenant 模型区分 CCT 来源业务状态与 Platform 安全状态；当前人工授权 API/SQL 限 Operations/INTERNAL，不能推定已支持 CUSTOMER 成员查询。现有 PLT-I03 认证已检查 CLIENT Tenant 的来源 ACTIVE 与安全 ACTIVE。本期不以管理页面替代未建设的 CUSTOMER 登录/会话链，不修改客户主档或提供成员授权写入。
 - **本轮实际动作：** 只读核对文档、源码及工作区，创建阶段 1 材料并追加检索/状态入口。应用代码、模型、数据库和部署均未变更，未提交或推送；未查询本机/test 数据库。其他任务工作区修改保留，已确认范围的全局用例/时序投影待本阶段确认后处理。
 - **阶段 1 文档检查：** 3 个需求 Markdown、19 个本地链接及所引用显式锚点、7/10/6 功能和验收编号、行尾空白检查通过；共享文档差异空白检查通过。`npm --prefix requirements-site test` 完成生产构建及 136/136 检查，日志 `/tmp/plt-tenant-access-stage1-requirements-tests.log`。三个应用仓库保持干净；本轮未运行 Java、HTTP 或页面功能验证，文档检查不代表本期能力已经实现。
+
+
+<a id="commerce-get-checkout-conventions-20260916"></a>
+
+## Commerce Customer GET 编码规范重构（2026-09-16）
+
+- **范围与实现：** 用户限定 `CustomerCheckoutController#getCheckout` 按最新接口规范重构。GET 使用 Foundation `AbstractProcessor` 和内部 `GetCheckoutRequest/GetCheckoutResponse`，入口拒绝已有事务；Context 留在查询编排内。Controller/Converter 只做协议与模型转换，独立 `response/GetCheckoutResponseBody` 及其 Info 使用 class。消费者回填、Payment 摘要和展示资格由 Processor 编排，本库按需查询保持；原三份文件链接迁至共享 Integration Client，Prepare 仅适配该协作者。移除 `GetCheckoutQuery`、外部查询型 `CheckoutViewService` 与失去消费者的旧 GET record 模型。详见[组件说明](../commerce-service/docs/requirements/20260912-customer-checkout/implementation.md)。
+- **合同与边界：** HTTP 路径、Path/Query、默认 includeConsumer=false、JSON Schema、错误与只读语义不变，不增加 GET Body；Java API 返回类型迁出 Models，Java 消费者须重新编译。继续保持最多两轮版本重验、冻结后不读创建快照、不重复加载商品和详情、单条 SQL 最多三表、外部查询无事务。未修改数据库、Payment 服务或其他 Commerce 用例业务规则。
+- **验证：** 原独立 class 合同测试先失败；完整 JDK 25 `clean verify` **364/364**，0 失败/错误/跳过，JaCoCo 行覆盖 **91.17%（3076/3374）**，90% 门槛通过。最后 Controller 字段命名调整后，GET HTTP 与架构/模块门禁 **38/38** 再次通过。覆盖无调用方事务、受限字段序列化往返、未知 Payment 状态失败关闭，并保留既有真实本地 MySQL、按需查询、并发重读、消费者回填及支付查询回归。OpenAPI 结构比对只有 GET 描述变化，Schema 与其余合同完全相同；差异空白检查通过。
+- **仓库级检查：** `npm --prefix requirements-site test` **136/137**，唯一失败为既有 Risk 模型统计断言仍要求 78 表/944 字段，与当前共享台账不一致；该失败在本次追加台账前已经复现，未修改相关 Risk 内容或测试。
+- **交付状态：** 未提交、推送或部署，没有执行 SQL。本机验证日志：[证据目录](/Users/kenny/.codex/verification/commerce-get-checkout-conventions-20260916)。其余旧接口、Repository 形态与分层不因本次迁移自动视为已符合 2026-09-16 规范。
+
+
+<a id="commerce-create-checkout-conventions-20260916"></a>
+
+## Commerce Client Create Checkout 编码规范重构（2026-09-16）
+
+- **范围与实现：** 用户指定 `ClientCheckoutApi#createCheckout` 按当前规范重构，并以 Payment pay 为代码参考。独立 class `CreateCheckoutRequestBody/ResponseBody` 及嵌套 Info；Controller/Converter 只处理协议，内部 `CreateCheckoutRequest/Response` 取代旧 Command 与同义请求/回执类型。`CreateCheckoutProcessor` 使用 Foundation `AbstractProcessor`，入口拒绝已有事务，原命令先比较并在终态提前返回；新建/恢复的业务检查和 Context 构造由 Processor 编排。详见 [Commerce 组件说明](../commerce-service/README.md#当前-checkout-首片)。
+- **保存与查询：** Context 直接持有同模块订单 `CommerceOrder`、商品、退款仓位、资金投影和 Session；创建 Service 以 REQUIRED 保存五类事实并参与命令检查点原子提交。原聚合 Repository 的多表写入移至 Service，写仓储及 SQL 按表拆分，Session 返回实际插入的 Token。原基础查询投影命名为 `CheckoutCreationView`；Order/Session 读取与两类投影身份查询拆开，完成事务保留各自行锁，不再为构建响应反复加载基础事实。CCT 继续只在数据库事务外调用，未修改 Payment 或其他系统应用。
+- **兼容与恢复：** HTTP 路径、Header、JSON Schema、400/422 边界、USD/金额/期限、201 与 Location、Hash 和无版本标记持久化快照、三阶段恢复及稳定失败回执均保持；Java 契约调用方需更新 import/accessor 后重新编译。Commerce 沿用批准的 Claim/Lease/CAS 与数据库唯一键，没有照搬 Payment 来源提交键，也没有叠加 Redis 锁。数据库模型、DDL、实际结构和网关配置未修改。
+- **验证：** 新增独立 class 与调用方事务门禁测试先在旧实现产生 2 项预期失败。最终 JDK 25 `clean verify` **366/366**，0 失败/错误/跳过，JaCoCo 行覆盖 **91.03%（3046/3346）**，原 90% 门槛通过。真实本地 MySQL 与 CCT HTTP Simulator 覆盖创建、字段/金额校验、重放、租约竞争、预检事务边界、Token 冲突回滚和恢复；OpenAPI/Java 双向漂移检查同时覆盖新 class 与保留 record。差异空白、修改的 XML 解析和组件文档链接检查通过。本机证据：[验证目录](/Users/kenny/.codex/verification/commerce-create-checkout-conventions-20260916)。
+- **交付状态：** 未提交、推送、部署或执行 SQL 迁移；其他旧 Commerce 接口及持久化边界不因本次迁移自动视为已按新规范改造。
+
+<a id="commerce-create-checkout-business-20260916"></a>
+### 2026-09-16 CreateCheckout 业务主流程重构
+
+- **本机提交（2026-09-16）：** 用户要求提交后，Commerce 记录为 `ee9c0c9`、Foundation 为 `00ace48`，包含本轮 Checkout 业务简化、公共 Money/Token 接入及金额注释/OpenAPI 说明同步。按用户要求，最后注释走查及本次提交未运行测试或其他验证；下方测试数字仅为前序执行证据。未推送、发布或部署，待迁移 SQL 未执行。
+
+- **范围：** 用户明确确认仅保留 clientOrderId 业务防重，Gateway 暂不改；[需求与边界](../requirements/20260916/commerce-CreateCheckout业务重构/technique.md)为本次创建入口的后继决定，取代上一节继续保留创建租约和回执恢复的局部实现说明。
+- **代码：** Processor 不再依赖 Key、Hash、Claim、Lease、恢复阶段及回执冻结；业务校验和 CCT 预检在事务外，Service 以 REQUIRED 一次保存五类事实，响应直接使用 Context。并发唯一键冲突映射业务错误；新建国家在订单列保存，相关查询、准备和取消已做适配，旧快照 Reader 仅服务历史订单。
+- **模型与 SQL：** Commerce PDManer、生成器、物理 Manifest、目标 Schema 同步新增 consumer_country_code 可空列；增量 SQL 为 [ddl.sql](../commerce-service/docs/requirements/20260916-create-checkout-business/ddl.sql)。不回填旧订单、不删除历史命令、不调整其他系统模型。
+- **验证进度：** 新增两条行为用例在旧实现下均产生预期失败；模型门禁 17/17、Java 架构/API/历史 Reader 合同测试 51/51 通过，生产及测试源码编译通过，Mapper XML 和差异空白检查通过。Java 完整验证及本地 SQL 执行仍待完成，不能据此认定集成验证通过。
+- **按 Processor 规范修正：** 对照 [processor-conventions.md](../payment-orchestration-service/docs/development/processor-conventions.md)第 6/8/9/11 节，把输入金额关系校验收拢到 validate；主流程明确展示订单号检查、完整 Context、CCT 预检、本地保存、响应。对象使用具名 Builder 构造，订单占用查询归属 CommerceOrderRepository，Service 不再做期限判断；INSERT 条件与影响行数保护写入时仍未到期。Service 方法明确命名为 saveCreateCheckoutContext，保留 REQUIRED 和原有业务错误合同。
+- **金额计算归属后续修正（2026-09-16）：** 用户确认后删除独立 CheckoutAmountCalculator 和 Processor 注入。内部 CreateCheckoutRequest.calculateAmounts 返回行金额及汇总结果，Item 复用公共 Money 进行纯计算；Processor 保留汇总范围校验、错误映射和 Context 构建，外部 Body 与 Service 不增加计算职责。原精度、整行优惠、历史快照及 422/VALIDATION_ERROR 合同保持，没有新增组件、缓存或外部依赖。
+- **金额迁移验证：** JDK 25 限定 9 类 `clean package` **118/118**，无失败、错误或跳过；包括 26 项纯金额计算、多行顺序/省略优惠/汇总、13 项真实 HTTP 参数与金额拒绝、历史快照、API/OpenAPI 与架构门禁。生产和全部测试源码编译通过，两个 Web JAR 均不含旧 Calculator。文档和差异空白检查通过，[本机证据](/Users/kenny/.codex/verification/commerce-request-amounts-20260916)保存日志、报告与制品指纹。本轮未重复运行受下述结构缺失阻挡的数据库套件，不宣称全量落库回归通过；未执行 SQL、提交或部署。
+- **本次修正验证：** JDK 25 编译、51 项架构/API/历史 Reader 合同测试通过；依赖字段顺序、修改的 Mapper XML 和差异空白检查通过。已补充写入时恰好到期拒绝及到期前一微秒成功的真实 Service 测试，但未通过数据库门禁：单条 HTTP 预检用例在 requireSchema 快速失败，确认本地 t_commerce_order 缺少 consumer_country_code，尚未执行任何业务步骤。完整数据库回归和这两条新增用例仍待结构准备，不能视为已通过。[修正证据](/Users/kenny/.codex/verification/commerce-create-checkout-processor-conventions-20260916)。
+- **交付状态：** 已在本机提交，未推送或部署；本地结构迁移已向用户请求授权，尚未执行。证据：[验证目录](/Users/kenny/.codex/verification/commerce-create-checkout-business-20260916)。
