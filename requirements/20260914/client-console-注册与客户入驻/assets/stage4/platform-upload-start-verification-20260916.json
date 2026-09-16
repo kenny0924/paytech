@@ -1,0 +1,671 @@
+{
+  "recordedAt": "2026-09-15T20:44:23.235339+00:00",
+  "scope": "F01 upload start; real local Platform persistence/IAM/Redis; external CCT and storage protocol simulators",
+  "java": {
+    "command": "./mvnw clean verify",
+    "jdk": 25,
+    "suiteCount": 59,
+    "testCount": 593,
+    "suites": [
+      {
+        "name": "com.paytech.platform.support.auto.PlatformSupportApplicationAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.009"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.PlatformSupportConfigurationAutoTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.009"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.PlatformSupportDependencyBoundaryAutoTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.016"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.PlatformSupportHealthAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.967"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialAuthenticationServiceAutoTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.629"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialBoundaryAutoTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.003"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationCanaryHttpAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.427"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationConsistencyHttpAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.435"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationContractAutoTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.007"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationControllerAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.001"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ApiCredentialValidationHttpAutoTest",
+        "tests": "10",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.638"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ClientApiManagementHttpAutoTest",
+        "tests": "34",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "13.737"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ClientApiManagementInputsAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.001"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.apicredential.ClientApiMutationReferenceAutoTest",
+        "tests": "11",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.005"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.architecture.GatewayEnumOwnershipAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.002"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.architecture.PlatformArchitectureAutoTest",
+        "tests": "7",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.23"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.architecture.PlatformCapabilityModuleBoundaryAutoTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.076"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.architecture.PlatformCrossModuleContractAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.004"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.ClientAuditProjectionAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.0"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.ClientAuthenticationContractAutoTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.009"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.ClientAuthenticationHttpAutoTest",
+        "tests": "25",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "12.003"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.ClientEmailChallengePolicyAutoTest",
+        "tests": "7",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.002"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.ClientMailDeliveryAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.015"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.ClientMailOriginAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.013"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.ClientSessionRulesAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.001"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.ClientTokenConfigurationAutoTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.002"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.OnboardingFileConfigurationAutoTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.041"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.OnboardingUploadHttpAutoTest",
+        "tests": "16",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "49.402"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.authentication.OperationsJwksHttpAutoTest",
+        "tests": "11",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.35"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.database.PlatformDatabaseAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "3.831"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.database.PlatformLocalDatabaseBoundaryAutoTest",
+        "tests": "13",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.059"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.ConfigurationAuthoringRulesAutoTest",
+        "tests": "17",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.016"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.ConfigurationManagementHttpAutoTest",
+        "tests": "27",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "14.237"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationCompilerAutoTest",
+        "tests": "21",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.153"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationLeaseOverlapHttpAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "1.089"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationManagementHttpAutoTest",
+        "tests": "19",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "14.123"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayConfigurationManagementPersistenceContractAutoTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.052"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewayDatabaseTargetHttpAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.119"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.GatewaySnapshotHttpAutoTest",
+        "tests": "8",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.388"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.gatewayconfiguration.RiskDictionaryRegistrationCatalogAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.011"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditBestEffortHttpAutoTest",
+        "tests": "15",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "19.441"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditCompletionAutoTest",
+        "tests": "25",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.017"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditConnectionFailureHttpAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "2.412"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditProjectorAutoTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.009"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditQueryAutoTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.009"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuditRuntimeAutoTest",
+        "tests": "17",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "13.369"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuthenticationConcurrencyHttpAutoTest",
+        "tests": "37",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "43.96"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsAuthenticationHttpAutoTest",
+        "tests": "39",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "41.231"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsDirectoryRefactoringHttpAutoTest",
+        "tests": "8",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "17.337"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsFixtureRequestIdAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.002"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsLocalCryptographyAutoTest",
+        "tests": "8",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.571"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsLockContractAutoTest",
+        "tests": "7",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.015"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsPagingCatalogContractAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.053"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsPasswordPolicyAutoTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.279"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsPersistenceContractAutoTest",
+        "tests": "66",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "15.392"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsResourceLockFailureAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "12.146"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.operations.OperationsSessionPolicyAutoTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.006"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.tenantaccess.TenantAccessManagementHttpAutoTest",
+        "tests": "32",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "14.473"
+      },
+      {
+        "name": "com.paytech.platform.support.auto.tenantaccess.TenantProjectionHttpAutoTest",
+        "tests": "12",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "3.778"
+      }
+    ],
+    "log": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-platform-files-tests-wx7tatqi/maven.log",
+    "logSha256": "e1eb7937186b642a3e731fed50a27255de1cd4f40e2e6131b45f78450f8ba54d",
+    "result": {
+      "arguments": [
+        "clean",
+        "verify"
+      ],
+      "exitCode": 0,
+      "beforeCounts": {
+        "t_access_tenant": 1,
+        "t_api_credential": 0,
+        "t_api_credential_scope": 0,
+        "t_api_scope": 0,
+        "t_audit_chain": 0,
+        "t_audit_event": 0,
+        "t_audit_event_attr": 0,
+        "t_auth_session": 0,
+        "t_authentication_challenge": 0,
+        "t_command_idempotency": 0,
+        "t_compensation_event": 0,
+        "t_console_resource": 49,
+        "t_file_object": 0,
+        "t_file_owner_ref": 0,
+        "t_file_scan_policy": 0,
+        "t_file_scan_requirement": 0,
+        "t_file_scan_result": 0,
+        "t_file_upload": 0,
+        "t_gateway_guard_rule": 626,
+        "t_gateway_route": 105,
+        "t_gateway_route_header": 360,
+        "t_gateway_route_query_param": 141,
+        "t_gateway_target": 1,
+        "t_jwt_signing_key": 0,
+        "t_password_credential": 0,
+        "t_permission": 41,
+        "t_refresh_token_generation": 0,
+        "t_role": 2,
+        "t_role_permission": 47,
+        "t_security_event": 0,
+        "t_tenant_member": 0,
+        "t_tenant_member_role": 0,
+        "t_user_account": 0
+      },
+      "afterCounts": {
+        "t_access_tenant": 1,
+        "t_api_credential": 0,
+        "t_api_credential_scope": 0,
+        "t_api_scope": 0,
+        "t_audit_chain": 0,
+        "t_audit_event": 0,
+        "t_audit_event_attr": 0,
+        "t_auth_session": 0,
+        "t_authentication_challenge": 0,
+        "t_command_idempotency": 0,
+        "t_compensation_event": 0,
+        "t_console_resource": 49,
+        "t_file_object": 0,
+        "t_file_owner_ref": 0,
+        "t_file_scan_policy": 0,
+        "t_file_scan_requirement": 0,
+        "t_file_scan_result": 0,
+        "t_file_upload": 0,
+        "t_gateway_guard_rule": 626,
+        "t_gateway_route": 105,
+        "t_gateway_route_header": 360,
+        "t_gateway_route_query_param": 141,
+        "t_gateway_target": 1,
+        "t_jwt_signing_key": 0,
+        "t_password_credential": 0,
+        "t_permission": 41,
+        "t_refresh_token_generation": 0,
+        "t_role": 2,
+        "t_role_permission": 47,
+        "t_security_event": 0,
+        "t_tenant_member": 0,
+        "t_tenant_member_role": 0,
+        "t_user_account": 0
+      },
+      "fixtureCleanupVerified": true
+    }
+  },
+  "newBehaviorTests": {
+    "OnboardingUploadHttpAutoTest": 16,
+    "OnboardingFileConfigurationAutoTest": 4,
+    "ClientAuthenticationHttpAutoTest.uploadRejectsUnverifiedSessionBeforeAnyExternalCall": 1
+  },
+  "failureFirst": {
+    "missingEndpointLog": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-platform-files-tests-u1fr_g60/maven.log",
+    "observed": "Expected invalid CLIENT session 401, absent endpoint returned 404"
+  },
+  "intermediateCorrections": [
+    "Removed an unapproved test JDBC parameter; did not relax the Operations local-database whitelist.",
+    "Updated metadata-only path assertion from 10 to 11 after adding onboarding-files; all prior paths retained.",
+    "CCT simulator error responses now use application/problem+json; malformed transport remains unavailable.",
+    "Mapped structural upload input validation to the agreed 400 response; policy denial remains 422."
+  ],
+  "database": {
+    "execution": "assets/stage4/platform-files-execution-20260915.json",
+    "verified": "assets/stage4/platform-files-post-execution-verification-20260915.json",
+    "testFixturesRestored": true
+  },
+  "sourceSha256": {
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/OnboardingTenantCandidate.java": "96c81a0308f04207cdc5bae7bd998e0f2b41239fc7cdce117b290f2668faa885",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/mapper/TenantProjectionMapper.java": "7ed77dd1668762c1befdfa7d6ba4b5e5f2fa3c8c70271167bba1ff373ae18495",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/repository/TenantProjectionRepository.java": "f0a9a884f99dd959b78476f6a1093097a5133178d64208e6b04cc5460843b23a",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/repository/impl/TenantProjectionRepositoryImpl.java": "3f528acc20eb4b01bd2a585d836c844024063ad632c5e92db0dcaa981078ff37",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/ClientOnboardingAccessService.java": "90263ccf12db5262237592a6abf9d3816c2f5fceeeb457fb1192ed917b09ada7",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/ClientOnboardingAccessServiceImpl.java": "64ced518154cbae48ca289420e599f6fe62e678599b03f2faf3e55550ff108fa",
+    "platform-support-service/platform-support-access-control/src/main/resources/mapper/access-control/TenantProjectionMapper.xml": "a99f77e1d80d3a421b265fe5ab0fc29e140aadc8804bafd00e637648a3be2f1d",
+    "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/enums/OnboardingFileErrorCode.java": "2754c054a12748980691697a7da8c8f4bc9828986dba393cb400d8e6aaeeb48e",
+    "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/onboardingfiles/OnboardingFileApi.java": "b15d436bd7ca244e553ab5a26b87bbec5286c2d109ed31830602bdab341aed93",
+    "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/onboardingfiles/OnboardingFileModels.java": "3f6dabffbf6db848a05597ceddaa4cf70c8f272b65153741832d6705a8195e3b",
+    "platform-support-service/platform-support-file-document/pom.xml": "18ec9d4320f49ac1671d66eb3e0f4f021a588554323712f3fdd1208f8d229b9f",
+    "platform-support-service/platform-support-file-document/src/main/java/com/paytech/platform/support/filedocument/core/dal/dataobject/FileScanPolicy.java": "a6a58aae1b5c0a7bca3ee4a63f61771836fb0e86cd1f90854b2c47377b4c9ee4",
+    "platform-support-service/platform-support-file-document/src/main/java/com/paytech/platform/support/filedocument/core/dal/dataobject/FileUpload.java": "ce609b5cf42b4f1e74f2a03dde398ae1302887dbfb3b166d3bc6ae49b5edec95",
+    "platform-support-service/platform-support-file-document/src/main/java/com/paytech/platform/support/filedocument/core/dal/mapper/FileUploadMapper.java": "cdeb3ec2827f678dadc19ebfefd6601dddd49d0a3d3a44f7e0a6efdcd93b7f15",
+    "platform-support-service/platform-support-file-document/src/main/java/com/paytech/platform/support/filedocument/domain/enums/FileUploadStatus.java": "428af3ffca1d09d85c83880f6e4441f918bf4a6933d8e56f6441cc05f2574c0b",
+    "platform-support-service/platform-support-file-document/src/main/java/com/paytech/platform/support/filedocument/domain/file/UploadModels.java": "3c21273fbbe7a2763b9611b9ed913c633f5bd3c3f4c0b9b15dca87f38641c59d",
+    "platform-support-service/platform-support-file-document/src/main/java/com/paytech/platform/support/filedocument/domainservice/repository/FileUploadRepository.java": "1c315e41be5143e45e8b9fc53c0a16558d48b98cc01378d615c473fef0832563",
+    "platform-support-service/platform-support-file-document/src/main/java/com/paytech/platform/support/filedocument/domainservice/repository/impl/FileUploadRepositoryImpl.java": "19fdb7866cde295107fa5b6c3d1ad0e1f9e3bedabbb6558ae2287379d0767e08",
+    "platform-support-service/platform-support-file-document/src/main/java/com/paytech/platform/support/filedocument/domainservice/service/FileUploadService.java": "38e43166f410bcdefcdcd7e546d6947284fab2b0d9f64e75685c4dd6488c2666",
+    "platform-support-service/platform-support-file-document/src/main/java/com/paytech/platform/support/filedocument/domainservice/service/impl/FileUploadServiceImpl.java": "fc8c0b19c409dec27c0b8da700af805d9e6a9a1c775e1e759c25b59eefde6072",
+    "platform-support-service/platform-support-file-document/src/main/java/com/paytech/platform/support/filedocument/integration/storage/UploadStorage.java": "e37676f46ddf4e86e4e4b74834b49f7a0690400a4b01326fc851902ec665e183",
+    "platform-support-service/platform-support-file-document/src/main/resources/mapper/file-document/FileUploadMapper.xml": "00cd43d2b3264d33800eccbf0c800b7e5d9786954f407c6be411f7dc5e034e96",
+    "platform-support-service/platform-support-test/pom.xml": "7df20dae31697aa17d5458bd7d1069a33a279507f4d1bd0712d5808881313708",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/PlatformSupportConfigurationAutoTest.java": "57b4ebf111a6e8aeb7a2ab7e4bff1effce3ef9495dc01b2654b85a7d76a55568",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/PlatformSupportDependencyBoundaryAutoTest.java": "f378e32d626c2aef9c0204b09df4bfc7922623f22155c45e4dbb6ea647066b13",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/architecture/PlatformArchitectureAutoTest.java": "314d63ada0dbd798d2f6b6f5de3329398464d2cf792c49c6edf286b3f1272cf2",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/architecture/PlatformCapabilityModuleBoundaryAutoTest.java": "db05d6f56806e92f46c36a97a4e2c908d24aa486fd74431ebfce59939230f509",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/ClientAuthenticationHttpAutoTest.java": "92ef01258dcc5a07bf99781ff1dfc31561359d84037b4bcea2d57c6984dd89b0",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/OnboardingFileConfigurationAutoTest.java": "bd0a9077a638162090355ba85e19ff6f3c952022529f5c2d987934a544586e72",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/OnboardingUploadHttpAutoTest.java": "164d3b8c5ee6506e9a230ceed58197a949d8558758c2a56e2c6e49de24ad43bc",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/database/PlatformDatabaseAutoTest.java": "88cf020f5a98b85ce5d3d1c7691e7c1a0d68191cad7a9fceb5ea079fd078d583",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/files/UploadProtocols.java": "f6a0ae97f084c6824412b4118d51d86346de7f5f423f45d3f2c8b680a1f0fedc",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/files/UploadSqlFailure.java": "6bf072f9bd9c43a288b5ae6fec942ea1be22a45d3308fb7e71dfb02965959eca",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/files/UploadTestMapper.java": "0ed815f113d058f69bb4cbcc6653214b5c7f9a4301ca344e1cf416701db68cc6",
+    "platform-support-service/platform-support-web/pom.xml": "ee08192ba304eb732e48def2f0a0fd0794fd5e6e34ca396d0a5cdc594a0ff678",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/configuration/ConfigurationManagementRequestConfiguration.java": "8c74ed4f5c6f28cdc7c6b50a321142764e544723a1770e276ccd54eedb626a37",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/configuration/OnboardingFileConfiguration.java": "d62f0f02fbba0e9f2229c08b0b68376227123aa190005d3164f887dcb86ca02b",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/configuration/PersistenceConfiguration.java": "edd6638b1c8e32b7b29ae67953f5a160d27f5597824ab8c33d79a585181010da",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/configuration/PlatformApiErrorConfiguration.java": "552ea929716a87f544878736900143290fb48e143c4e7835f3d998fdc008dba7",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/core/reliability/service/ClientFileCommandService.java": "6b4833cb9f7865d8c5d83eec53163174e4070005c74ec65647105a11e158ae4d",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/core/reliability/service/impl/ClientFileCommandServiceImpl.java": "4cee6b485f767092eaacb1e027dae1510d2794405c5992660170d552eea19565",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/files/OnboardingFileController.java": "22080371f5d28ca73c650dcd3584efb36f806ee79f17c867ee8218077593f74d",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/integration/files/CctFileTargetClient.java": "1fe3dba1a359d96020d3f827360d041c630acb17014cc184ef2216a55bbf8b27",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/service/processor/OnboardingUploadProcessor.java": "96a261a102ec90c05215f085d477846b1ab9528de42557c1f4ec730d03bf27fa",
+    "platform-support-service/platform-support-web/src/main/resources/application.yml": "0fc3b716448ebba956a15a624af51a389e066a0a9983381069d2b99889096daf",
+    "platform-support-service/pom.xml": "0c089f258c5d49c4444dcbaf86e4f6e124c3e03d0823243c546b978a68dc4424"
+  },
+  "artifactSha256": {
+    "platform-support-service/platform-support-api/target/platform-support-api-1.0.0-SNAPSHOT.jar": "00b2d33e14d90a83cc05a38eb515c67840e7a0b52c83f88b7b0b46b3320a6f5d",
+    "platform-support-service/platform-support-file-document/target/platform-support-file-document-1.0.0-SNAPSHOT.jar": "9979bd78d340e70c22f676c5a55f3655f285d40135d2d476eb0bca35ec564f42",
+    "platform-support-service/platform-support-web/target/platform-support-web-1.0.0-SNAPSHOT-exec.jar": "e60b5e2fce90e8f9f71454187ad9870c8e3b78de890ea9643b5b2fd4a4aea4e8",
+    "platform-support-service/platform-support-web/target/platform-support-web-1.0.0-SNAPSHOT.jar": "2276b9b3110add44a14e2d4407bee5d41c4c6c614c4eb5870bed7ec30d636868"
+  },
+  "coverage": {
+    "INSTRUCTION": {
+      "missed": 1012,
+      "covered": 45091
+    },
+    "BRANCH": {
+      "missed": 382,
+      "covered": 3478
+    },
+    "LINE": {
+      "missed": 224,
+      "covered": 6042
+    },
+    "COMPLEXITY": {
+      "missed": 437,
+      "covered": 3508
+    },
+    "METHOD": {
+      "missed": 63,
+      "covered": 1944
+    },
+    "CLASS": {
+      "missed": 1,
+      "covered": 527
+    }
+  },
+  "limits": [
+    "F02 byte/hash/immutable-version verification is not implemented.",
+    "No production File scan Handler, F03/F04, Risk requirement query or CCT document association is claimed.",
+    "No real storage/scanner adapter, real policy initialization, public route activation or deployment.",
+    "CCT authorization in these Platform tests is an HTTP simulator; CCT owner implementation was separately verified previously.",
+    "Unchanged pre-existing requirements-site Risk-statistic and scenario API-scope catalog failures were not rerun or repaired."
+  ]
+}

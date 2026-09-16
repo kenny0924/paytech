@@ -1,0 +1,102 @@
+{
+  "scope": "CCT compensation model, SQL candidate and read-only preflight; no DDL/DML or Java changes",
+  "tests": {
+    "foundationContractRed": {
+      "tests": 1,
+      "failures": 1,
+      "reason": "legacy 20-field CCT model differs from current Foundation 15-field contract"
+    },
+    "modelsAndCrossOwnerCompatibility": {
+      "tests": 94,
+      "failures": 0
+    },
+    "migrationSafety": {
+      "tests": 4,
+      "failures": 0
+    },
+    "legacyMigrationStaticVerification": "passed; ten-table SQL and historical manifest unchanged",
+    "requirementsSite": {
+      "build": "passed",
+      "tests": 136,
+      "passed": 135,
+      "failed": 1,
+      "existingFailure": "site-content.test.mjs expects old Risk 78/944/115 snapshot; same failure recorded before this change",
+      "log": "/tmp/client-compensation-requirements-site.log"
+    },
+    "java": "not run; no Java or dependency changes"
+  },
+  "unchangedModelAndSchemaTables": 37,
+  "unchangedEntityHashes": {
+    "t_party": "e72d51a951cc47579b282f0a88dad09360ab7b40c0bd3da38f8e7d2f67118eeb",
+    "t_party_profile": "e2097f268470f26bb159aff8e4b48228960b9c7da0fb565e4bcbae3570f92d67",
+    "t_individual_profile": "18d7ba55ccaaa982f694482e4c15ab705224a8b07746a65942313aa80d0d6851",
+    "t_organization_profile": "71fee2ed3e759435cd6952d35bf283bdb0090ce742db143e1288d0bb512237b7",
+    "t_party_identity_key": "85092a4be6dc7d42f8fe8aaf7675ee3cf00529374f9d57fd00c88f241937d49f",
+    "t_party_profile_identifier": "004d6e051ee9272004df6e0c25ac0e040aade2af27720ab453e4082a04bf5699",
+    "t_party_address": "a4252082704c94b3b90f46c60c400db415cd9a6abe094ca26a078cee402af83a",
+    "t_party_contact": "ff4bf9b5b59fb22852f9d286c546b1a5c7695ff7eabdcd909bdb755a7303dc98",
+    "t_party_relation": "b8aa5af76b2e3325129da7112e7c4fabe05c1148dfc8132a47b6773ab99049d0",
+    "t_client": "a0a19ce573b110b9b0ffa7f4207a7d08bb331eda8b8a7c1d28c5982da64f6d05",
+    "t_local_partner": "4393beeaad27f02c35e6c2b80d7f02db3810fa4af4fa24452aa2c47d61da9e1b",
+    "t_operating_entity": "2b8f6bc9eb5e5b70587078db3e4e5740565027074f2bac625be88b0debba12b4",
+    "t_client_business_profile": "cbf9fcf34993c9e62af673064fce4cda721e63e6adceb8189fe180e933f0a72b",
+    "t_client_business_classification": "d83c992f5a8cc7aba951181febb864f4c7b62e8345f2b610e22989b5b5c9e925",
+    "t_client_application": "85be7a9dc4adb502e9a79cbc13677cca4660477554b3f0253a486e3b8fd47f28",
+    "t_partner_application": "74df92922acd3195d9cdde4bfff39b2a571505a2d46e1c3107cf2528200a5e0f",
+    "t_operating_entity_application": "f697201a20e505959f5eee32f74a93b15870b2c357cd8a5a4ecc19f3d9c55922",
+    "t_operating_entity_scope": "b0af221f5140aed472b22cf180c883a3d3abe3ee75fff813b6e03e40ffda3d6a",
+    "t_application_document": "1ee6d86b9f4a12fa6ee4c45d138dc2c16a3ca53aaed44e9fff1a94777071a4c8",
+    "t_client_entity_affiliation": "997975fb48f8e43121aed4334b8cf4c92f098edfe675a86753b079a8f77703a4",
+    "t_entity_source_relation": "24025c94ff9cfd7c841c6f450cd32248e77906845c3b011dcc31a5ce22d9484f",
+    "t_agreement": "a7661748e4730fc549a9237dd642e379b99cbcfce7450cb4088756f90308c60a",
+    "t_agreement_party": "46a07c9d7e8e533f595acc99ad4c0ae6ba832add1656885e5b15f5692acc6a53",
+    "t_agreement_document_ref": "9f5776ea539139d30f585293777b07658aeac143e9ab65891322209958267aae",
+    "t_agreement_operating_entity": "66cc247727f3de849f73ad198a1a3a8155e868fd51967ba7cc75965bff860ccd",
+    "t_consumer_legal_document": "f4473ea33bc37106f3574cfba5443cdce5ebc538a998df9df07dcac9abcd9447",
+    "t_seller_disclosure": "189824d83007c74738a0a8918be024a8e9906ff4b69e8ee22083523ffaeeb31f",
+    "t_payment_method_profile": "d170359bcd6ab27fb49bdf4a3b49f635075a89ffda40fc889650ed98c791df47",
+    "t_payment_method_profile_cond": "f4bf5216737ae3499f9e2211c8d716460097754ba07c4fddf817c47b560ffa5e",
+    "t_commercial_term_plan": "b48e2ccbd2cdeb5a2cd74904f3bf161bcf2ad8a377677097df6916f7cfff9d78",
+    "t_commercial_term_version": "e5518c29d1a1b28f4bca62df3189223a51592f3ed221c13dda988aa48bd81be7",
+    "t_commercial_term_price": "ef1bb7be8de4b885c2cc9f34b5ae92e23779c82169604cb26475c6d180ae375f",
+    "t_commercial_term_component": "00ba69e03cc0615bc5a16972338015b7e72641efb509543cec7bd1f089f5ceed",
+    "t_commercial_term_component_band": "0b02a419a2ac5f286badc480abc225cd9b4bb2b9332cbd61807b069f1fe69215",
+    "t_business_change_record": "a9a04b6d67bf45883b3de8ab1973fdb3eab1034b68e2fc2b528e54db9ee6d57b",
+    "t_business_change_version": "44e376ebadc37c4c1aa4f3436b6de54f272536c0e831d5bf638961dd4b8dddfb",
+    "t_command_idempotency": "d4f9f50c5d5fea7929d13fca7a2f2bac9ecf77ff5d89a0d28185f8d5fa008205"
+  },
+  "localLinkTargetsChecked": 264,
+  "sourceFingerprints": {
+    "scripts/pdmaner/client-compensation-field-storage.mjs": "eb7dab5f4d0daad450116082f188e059964d5e59bb001a2414b563d57a81986e",
+    "scripts/pdmaner/client-compensation-model.test.mjs": "eab3aaffd6e0f243f6425d3cb045fd421b90d5433310e14728c1c3a0eb77c8e6",
+    "scripts/pdmaner/client-contract-field-metadata.mjs": "32153b616a1b382edbfe0ded954a76bd302c2dc3fbf51035236b3be21a607980",
+    "scripts/pdmaner/client-contract-model.test.mjs": "38b01a87dc1e4381f0b213056301157593765a74c34641ba72b422dc6362d894",
+    "scripts/pdmaner/client-onboarding-model.test.mjs": "e630d5cbeba9964d4b312aae4abec64663cf7e073b5e759cff8fba91b644d927",
+    "scripts/pdmaner/oe-client-model.test.mjs": "47d1daedf2e073d46a0b7498c79b8b104ecda4f20b5b06e1a4dba3e39dc48b3e",
+    "scripts/pdmaner/generate-client-contract-model.mjs": "ea6a8e56c3ae591c6f63bd1d530fe017c0eab10c3870424220ef8233b668f0ed",
+    "scripts/pdmaner/generate-oe-client-schemas.mjs": "7d05b22f5c1f5966bb6f36e8c2331094c47ce74523093eddf2f0da30fdedb36a",
+    "client-contract-service/docs/database/client-contract.pdma.json": "4596a3364d90b3796bf255f77f7d4cf1c49459aca09fcecd5b88fb435c8e228e",
+    "client-contract-service/docs/database/sql/client-contract-schema.sql": "b485ffd3ca120517e1e32081c155c7c8cfa67ce8990472e17e125a907cfab5ca",
+    "requirements/20260914/client-console-注册与客户入驻/db/implementation/generate-cct-compensation.mjs": "ebf9cfe5f266f79086ec9095794f0007d919cd97c2c471d41e6adabc885d7368",
+    "requirements/20260914/client-console-注册与客户入驻/db/implementation/cct-compensation-empty.sql": "219fd9a4fd5f3f5f9fceb4f63c113e993f4405095673cfb5a28d104979447944",
+    "requirements/20260914/client-console-注册与客户入驻/db/implementation/cct-compensation-source.sql": "f5d18721176f82a41e17de4f646820ecee89cbc01cf6876295807f269614628d",
+    "requirements/20260914/client-console-注册与客户入驻/db/implementation/cct-compensation-source.json": "f29774a0529ef2da542f24316f569aa7358e92912434cccde4c3bf5bcd0518f5",
+    "requirements/20260914/client-console-注册与客户入驻/db/implementation/cct-compensation-manifest.json": "6423c20fe64dc1579f4f13867536f1fd43e5c767b7c3f04f83d0941cfb5f7706",
+    "requirements/20260914/client-console-注册与客户入驻/db/implementation/generate_migrations.py": "48782f544209bf5c3460e2a46478d98b3f379af570c2ed26b0735f146f2e7c06",
+    "requirements/20260914/client-console-注册与客户入驻/db/implementation/verify_migrations.py": "7d421db70855309d1bf7a0eb0b3ebdf66ef92969845d85a6a79122ead4584507",
+    "requirements/20260914/client-console-注册与客户入驻/db/implementation/client-contract-empty-closure.sql": "dc091d30620d30374fa0e5a0b54f93614201bf4e5c46016d1e1958ebc76a0815",
+    "requirements/20260914/client-console-注册与客户入驻/db/implementation/migration-manifest.json": "77fe9f62443253f3b31e58fdf0f043ca89ae53788d2f473c447cd5f128663eb5",
+    "requirements/20260914/client-console-注册与客户入驻/verification/preflight-cct-compensation.py": "8ab4abb39e309a54fc708a4120d4b45d8778ebd93f61a29bb9580f479b04c9d6",
+    "requirements/20260914/client-console-注册与客户入驻/verification/test-cct-compensation-migration.py": "b374c434ec96366203189c182cdef9eddbc0cf51f2447bb1ea47f13ddc09d993"
+  },
+  "logs": {
+    "models": "/tmp/client-compensation-final-models.log"
+  },
+  "notCompleted": [
+    "exact single-table SQL approval/execution",
+    "Foundation Handler and runtime integration",
+    "Platform PLT-I17 actual write endpoint",
+    "CCT individual/organization create and save APIs",
+    "browser onboarding acceptance"
+  ]
+}

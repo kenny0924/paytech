@@ -15,16 +15,17 @@ const expectedTables = [
   'tenant_member_role', 'role_permission', 'auth_session', 'refresh_token_generation', 'jwt_signing_key',
   'api_credential', 'api_scope', 'api_credential_scope',
   'gateway_target', 'gateway_route', 'gateway_route_header', 'gateway_route_query_param', 'gateway_guard_rule',
-  'audit_chain', 'audit_event', 'audit_event_attr', 'security_event', 'command_idempotency', 'console_resource',
+  'authentication_challenge', 'file_upload', 'file_scan_policy', 'file_scan_requirement', 'file_object', 'file_owner_ref', 'file_scan_result',
+  'audit_chain', 'audit_event', 'audit_event_attr', 'security_event', 'command_idempotency', 'compensation_event', 'console_resource',
 ].map(name => `t_${name}`);
 const quote = value => `'${value.replaceAll("'", "''")}'`;
 
-test('only the 25 implemented tables exist, without physical CHECK or foreign keys', () => {
+test('only the 33 approved schema tables exist, without physical CHECK or foreign keys', () => {
   assert.deepEqual(tables.map(table => table[1]).sort(), expectedTables.toSorted());
   assert.doesNotMatch(sql.replace(/^--.*$/gm, ''), /\bCHECK\s*\(|\bFOREIGN\s+KEY\b/i);
 });
 
-test('every implemented column, default and complete comment matches PDManer', () => {
+test('every schema column, default and complete comment matches PDManer', () => {
   for (const [, name, body, options] of tables) {
     const entity = model.entities.find(entity => entity.defKey === name);
     const columns = [...body.matchAll(/^  `(\w+)` (.*?)(?:,)?$/gm)];
@@ -35,7 +36,12 @@ test('every implemented column, default and complete comment matches PDManer', (
         + (field.defaultValue === '' ? '' : ` DEFAULT ${field.defaultValue}`)
         + ` COMMENT ${quote(field.comment)}`;
       // Retain the existing MySQL ASCII overrides for exact path keys and case-insensitive header names.
-      const actual = columns[index][2].replace(/ CHARACTER SET ascii COLLATE ascii_(?:bin|general_ci)/, '');
+      const charset = field.extProps?.characterSet;
+      const collation = field.extProps?.collation;
+      if (charset) {
+        assert.ok(columns[index][2].includes(` CHARACTER SET ${charset} COLLATE ${collation}`), `${name}.${field.defKey} collation`);
+      }
+      const actual = charset ? columns[index][2].replace(` CHARACTER SET ${charset} COLLATE ${collation}`, '') : columns[index][2];
       assert.equal(actual, definition, `${name}.${field.defKey}`);
     }
     assert.ok(options.includes(`COMMENT=${quote(entity.comment)}`), `${name} full table comment`);

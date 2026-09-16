@@ -291,7 +291,6 @@ export const EXPECTED_HASH_FIELDS = Object.freeze([
   "audit_integrity_point.start_event_hash",
   "authentication_challenge.active_scope_hash",
   "command_idempotency.request_hash",
-  "compensation_event.payload_hash",
   "consumer_document.commerce_source_payload_hash",
   "consumer_document.consumer_ref_hash",
   "consumer_document.fiscal_source_payload_hash",
@@ -301,7 +300,6 @@ export const EXPECTED_HASH_FIELDS = Object.freeze([
   "email_otp_challenge.context_ref_hash",
   "email_otp_challenge.subject_ref_hash",
   "file_object.content_hash",
-  "file_upload.upload_token_hash",
   "notification_attempt.request_hash",
   "notification_provider_callback.payload_hash",
   "notification_request.source_payload_hash",
@@ -347,7 +345,7 @@ export const REQUIRED_FIELDS = Object.freeze({
   t_webhook_delivery: Object.freeze(["webhook_event_id", "tenant_id", "endpoint_id", "endpoint_revision_id", "subscription_id", "event_type", "payload_schema_version", "generation_no", "replay_of_delivery_id", "requested_by", "replay_reason_code", "lease_owner", "lease_until", "fencing_token", "version"]),
   t_webhook_attempt: Object.freeze(["delivery_id", "tenant_id", "endpoint_id", "signing_secret_id", "request_hash", "result"]),
   t_audit_event_attr: Object.freeze(["value_text", "value_vault_token", "value_masked", "value_hash", "classification"]),
-  t_compensation_event: Object.freeze(["lock_owner", "lock_until", "lock_version", "execute_status", "payload_hash"]),
+  t_compensation_event: Object.freeze(["lock_owner", "lock_until", "lock_version", "execute_status", "sub_event_type"]),
   t_command_idempotency: Object.freeze(["caller_scope", "operation_type", "idempotency_key", "request_hash", "response_ref", "status"]),
 });
 
@@ -427,7 +425,7 @@ export function isForbiddenSecretField(fieldName) {
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 export const EXPECTED_CHECK_COUNT = 85;
-export const EXPECTED_CHECK_POLICY_DIGEST = "eee538cfb6396fa1c4a2f49202c0154e0973d69cb3e34487373d0aecd0862980";
+export const EXPECTED_CHECK_POLICY_DIGEST = "6dc3aff176afc5892054e6f4a0579c232c149dddb1063aef5c1f8e730271b25a";
 
 export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
   ck_federated_provider: Object.freeze({
@@ -538,13 +536,13 @@ export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
 
 export const EXPECTED_TOTALS = Object.freeze({
   tables: 64,
-  fields: 829,
-  uniqueIndexes: 124,
-  accessIndexes: 101,
+  fields: 831,
+  uniqueIndexes: 123,
+  accessIndexes: 102,
   relations: 109,
   oneToOneRelations: 5,
   diagramGroups: 7,
 });
 
-export const EXPECTED_MODEL_DIGEST = "56991d1ede96b2bed6b916862235047f75cacc4dce36a52e87f169510c9c2d4a";
-export const EXPECTED_STRUCTURAL_DIGEST = "d2d20a7bfc1c8d4b2322b22cff66a5067098e2e58dd79bbe40d59fda6e6baaf2";
+export const EXPECTED_MODEL_DIGEST = "2e8825eb3873c21868c75ae8eb52c981e20ae3f7012b7520ce9da8b5f1f73108";
+export const EXPECTED_STRUCTURAL_DIGEST = "acc571a1ce5057191829c453d4cf5e3a2c1933b9048e5aa4f6c041c9de6647f3";

@@ -1,5 +1,7 @@
 # Platform Support 数据库设计规范
 
+> **Client Console 入驻目标补充（2026-09-14）：** 用户确认同一账号只有一份未完成 Client 申请。本期上传仍禁止浏览器指定 Tenant，并在原 PLT-I04 唯一候选规则上补充 CCT 申请授权与目标 Client 一致性核对，详见[本期数据评审稿](../../requirements/20260914/client-console-注册与客户入驻/data-design.md#5-邮箱链接会话与文件)。投影未就绪或存在残留歧义时保持拒绝，不能因数量限制跳过核对；Partner、普通 Tenant 文件规则不变。本条不表示数据库或运行合同已迁移。
+
 > **Client API Scope 后继契约（2026-09-13）：** 本文的公共控制面基线之外，新增独立 Scope 目录及两项查询索引，以[已确认字段与关系](../../requirements/20260913/platform-support-ClientAPI接入管理/data-design.md)为准；原 Credential/Grant 表与 PLT-I03 认证语义保持。本文保留原阶段统计/摘要作为历史证据；当前生成统计、实施和环境状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#platform-client-api-access-20260913)。
 
 最后更新：2026-09-04
@@ -106,11 +108,11 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 | 消费者 | 允许字段 |
 | --- | --- |
 | 来源投影/认证/业务 OTP | `access_tenant.source_payload_hash`、`authentication_challenge.active_scope_hash`、`email_otp_challenge.subject_ref_hash`、`email_otp_challenge.context_ref_hash`、`email_otp_attempt.ip_hash`、`email_otp_attempt.device_hash` |
-| File/Document | `file_upload.upload_token_hash`、`file_object.content_hash`、`consumer_document.commerce_source_payload_hash`、`consumer_document.fiscal_source_payload_hash`、`consumer_document.consumer_ref_hash`、`document_access_grant.consumer_ref_hash` |
+| File/Document | `file_object.content_hash`、`consumer_document.commerce_source_payload_hash`、`consumer_document.fiscal_source_payload_hash`、`consumer_document.consumer_ref_hash`、`document_access_grant.consumer_ref_hash` |
 | Notification | `notification_request.source_payload_hash`、`notification_attempt.request_hash`、`notification_provider_callback.payload_hash` |
 | Webhook | `webhook_endpoint_verification.challenge_hash`、`webhook_endpoint_verification.resolved_ip_hash`、`webhook_event.source_payload_hash`、`webhook_event.payload_hash`、`webhook_attempt.request_hash` |
 | Audit/Security | `audit_chain.previous_partition_hash`、`audit_chain.last_event_hash`、`audit_event.previous_event_hash`、`audit_event.attribute_root_hash`、`audit_event.event_hash`、`audit_event.source_payload_hash`、`audit_event.payload_hash`、`audit_event_attr.value_hash`、`audit_integrity_point.start_event_hash`、`audit_integrity_point.end_event_hash`、`audit_integrity_point.root_hash`、`audit_integrity_point.content_hash`、`security_event.source_payload_hash`、`security_event.event_hash` |
-| 可靠执行 | `compensation_event.payload_hash`、`command_idempotency.request_hash` |
+| 可靠执行 | `command_idempotency.request_hash` |
 
 PHC verifier、HMAC、Blind Index、Secret Fingerprint 与 KMS Signature Ref 使用表达其具体安全语义的字段名，不伪装为泛化 Hash。不存在 Scope Set、Reason Set、Requirement Config、Evaluation Evidence、Route/Template Content、响应正文或可推导集合 Hash。
 
@@ -186,8 +188,8 @@ Snapshot 只投影 ACTIVE Target 及其 ACTIVE Route/子项；DISABLED Target �
 
 ### 7.1 File
 
-- Upload Token 只保存 Hash；完成上传后生成不可变 File Object。
-- File 冻结一个 Scan Policy Revision，Requirement 明确列出 Scanner/Type/最低版本/接受结果。Scan Result 通过复合 FK 证明 File 与 Requirement 属于同一 Policy。
+- 入驻上传按[2026-09-15 已确认文件合同](../../requirements/20260914/client-console-注册与客户入驻/file-upload-closure-proposal.md)固定 Owner 申请＋主体、原存储坐标、展示名和扫描策略；上传授权由存储适配器签发，不保存额外 upload_token_hash。完成上传后生成不可变 File Object。
+- File 冻结一个 Scan Policy Revision，Requirement 明确列出 Scanner/Type/最低版本/接受结果。Scan Result 由应用在本地事务中校验 File 与 Requirement 属于同一 Policy；模型关联不导出物理 FK。
 - `AVAILABLE` 只表示所有要求已通过。后续显式重扫可将同一不可变内容改为 `QUARANTINED/UNAVAILABLE`，不覆盖旧 Result。
 - 普通 File 授权由调用上下文、Owner Ref 和统一 Audit 共同完成；不建设第二套通用 File ACL/Event。
 - 入驻阶段 PLT-I04 只接受 Account Context 与已认证的 `requested_by_account_id`，由 Platform 解析唯一 PENDING Tenant/Member/Onboarding Role 后落本地 `tenant_id`；调用方不能预填 Tenant，零个或多个候选均 Fail-Closed。

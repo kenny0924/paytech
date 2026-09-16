@@ -1,0 +1,86 @@
+{
+  "stage": 4,
+  "status": "in progress; first batch incomplete",
+  "recordedAt": "2026-09-14T19:44:58.564008+00:00",
+  "checks": [
+    {
+      "name": "owner-models-and-schemas",
+      "passed": 120,
+      "command": "node --test scripts/pdmaner/client-onboarding-model.test.mjs scripts/pdmaner/client-contract-model.test.mjs scripts/pdmaner/risk-compliance-model.test.mjs scripts/pdmaner/risk-compliance-schema.test.mjs scripts/pdmaner/platform-support-schema.test.mjs",
+      "logSha256": "4aee8b3e52be6b1d0462712f7449c0774af610cd4f161bd9169f600123ee0abe"
+    },
+    {
+      "name": "cct-local-policy-and-contract",
+      "passed": 21,
+      "command": "JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home ./mvnw -Dtest=CheckoutQueryContractAutoTest,CheckoutCandidateRulesAutoTest,ClientContract*AutoTest -Dsurefire.failIfNoSpecifiedTests=false verify",
+      "logSha256": "6dcf9ddad2387a721107435e283091c34e09407ce3da6769cf1ed7ab087f2e2f"
+    },
+    {
+      "name": "platform-authentication-support",
+      "passed": 22,
+      "command": "JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home ./mvnw -Dtest=ClientMailOriginAutoTest,ClientEmailChallengePolicyAutoTest,OperationsPasswordPolicyAutoTest,OperationsLocalCryptographyAutoTest,PlatformCrossModuleContractAutoTest -Dsurefire.failIfNoSpecifiedTests=false test",
+      "logSha256": "07daebac3fedbd3dbe67156d8dc66551be3f9073c22798d6d3fffe0afc909e33"
+    },
+    {
+      "name": "platform-configuration-and-mapper",
+      "passed": 5,
+      "command": "JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home ./mvnw -Dtest=OperationsPersistenceContractAutoTest#test_allOperationsSqlCompilesAndLockReadsFlushSessionCache,PlatformSupportConfigurationAutoTest -Dsurefire.failIfNoSpecifiedTests=false test",
+      "logSha256": "c4a289c7230e7c076fd8320290920b1b6058a29b6e9b11cc8e341ea0b8abdcce"
+    }
+  ],
+  "artifacts": {
+    "client-contract-service/docs/database/client-contract.pdma.json": "8cbd98b974f780c501044da684787274a918862066d1c55cb795fd333ea3a78b",
+    "risk-compliance-service/docs/database/risk-compliance.pdma.json": "f169987a11a0f8e6e93fe189e95781a19fd4bb24d3c98037b1ff9b38dad55490",
+    "platform-support-service/docs/database/sql/platform-support-schema.sql": "c8b7a289c772ac9cf2da6bb5d3f141fd6443e5843360638dc78894030ed991bc"
+  },
+  "migrationStaticVerification": {
+    "scope": "static SQL shape and repeatability only; no database execution",
+    "owners": {
+      "CCT": {
+        "alterTables": 10,
+        "createTables": 0
+      },
+      "Risk": {
+        "alterTables": 3,
+        "createTables": 1
+      },
+      "Platform": {
+        "createTables": 7
+      }
+    },
+    "sha256": {
+      "client-contract-empty-closure.sql": "dc091d30620d30374fa0e5a0b54f93614201bf4e5c46016d1e1958ebc76a0815",
+      "risk-compliance-empty-closure.sql": "46c3dd62839d44469f2499bd2026f8847f1dd1e97782d9d1102ebc4f097921af",
+      "platform-support-additions.sql": "9a1519d18284508c047b8cee6bc8db0de63180967edbdc1c667f69ab9c0fd739",
+      "migration-manifest.json": "77fe9f62443253f3b31e58fdf0f043ca89ae53788d2f473c447cd5f128663eb5"
+    }
+  },
+  "incompleteVerification": [
+    {
+      "name": "CCT HTTP boundary",
+      "attempted": 25,
+      "passed": 21,
+      "errors": 4,
+      "reason": "Local MySQL credentials were unavailable; HTTP application context failed before business tests."
+    }
+  ],
+  "pendingDecision": "registration-password-binding-amendment.md",
+  "notVerified": [
+    "Client HTTP persistence and concurrency",
+    "SMTP delivery",
+    "CUSTOMER login/refresh/logout",
+    "Client Gateway/BFF/Web",
+    "Onboarding/review business chain",
+    "Live database migration"
+  ],
+  "databaseSqlExecuted": false,
+  "deployed": false,
+  "committed": false,
+  "documentLinksChecked": 60,
+  "diffCheck": {
+    "rootScoped": true,
+    "clientContract": true,
+    "platformSupport": true,
+    "riskCompliance": true
+  }
+}

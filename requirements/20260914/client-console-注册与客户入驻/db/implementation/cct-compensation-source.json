@@ -1,0 +1,608 @@
+{
+  "id": "6E347CE8-6CB6-5391-A1E1-AD362F7CD99D",
+  "env": {
+    "base": {
+      "nameSpace": "",
+      "codeRoot": ""
+    }
+  },
+  "defKey": "t_compensation_event",
+  "defName": "本地补偿事件",
+  "comment": "MQ 发布或 after-commit 本地任务；uk_comp_event_key(event_key)、uk_comp_source_fact(source_type,source_id,source_version,event_type)；MQ_PUBLISH/LOCAL_HANDLER，状态 INIT/PROCESSING/ERROR/FAILED；Payload 不可变且最大 64 KiB；Claim/Lease 使用 lock_version；Payload 不可变：schema_version、payload_json 与 payload_hash 创建后不得修改；重试必须复用相同 Event Envelope。；Lease 状态矩阵：PROCESSING 必须同时具有未过期的 lock_owner 与 lock_until；INIT、ERROR、FAILED 不得保留活动 Lease。；Lease Holder 写回：只有持有当前活动 Lease 的执行者可以完成、删除或回写该次尝试；旧执行者不得覆盖新 Lease Holder 的结果。；登记原子性：权威业务事实、业务 History 与 compensation_event 必须在同一本地事务提交；事务内任一点失败全部回滚。；成功删除：MQ_PUBLISH 只有收到 Broker Confirm 后、LOCAL_HANDLER 只有取得确定成功结果后，才允许删除 compensation_event。；失败保留：达到最大重试次数后必须进入 FAILED、保留记录并告警；人工重开必须记录 Actor、Reason 与 Ticket 后回到 ERROR 等待重新 Claim。；Lease 接管：PROCESSING 的 Lease 超时后允许重新 Claim；Claim 与完成/回写都必须使用 lock_version CAS。",
+  "properties": {},
+  "sysProps": {
+    "nameTemplate": "{defKey}[{defName}]"
+  },
+  "notes": {},
+  "headers": [
+    {
+      "refKey": "defKey",
+      "hideInGraph": false,
+      "value": "字段代码",
+      "freeze": false
+    },
+    {
+      "refKey": "defName",
+      "hideInGraph": false,
+      "value": "显示名称",
+      "freeze": false
+    },
+    {
+      "refKey": "primaryKey",
+      "hideInGraph": false,
+      "value": "主键",
+      "freeze": false
+    },
+    {
+      "refKey": "notNull",
+      "hideInGraph": true,
+      "value": "不为空",
+      "freeze": false
+    },
+    {
+      "refKey": "autoIncrement",
+      "hideInGraph": true,
+      "value": "自增",
+      "freeze": false
+    },
+    {
+      "refKey": "domain",
+      "hideInGraph": true,
+      "value": "数据域",
+      "freeze": false
+    },
+    {
+      "refKey": "type",
+      "hideInGraph": false,
+      "value": "数据类型",
+      "freeze": false
+    },
+    {
+      "refKey": "len",
+      "hideInGraph": false,
+      "value": "长度",
+      "freeze": false
+    },
+    {
+      "refKey": "scale",
+      "hideInGraph": false,
+      "value": "小数位数",
+      "freeze": false
+    },
+    {
+      "refKey": "comment",
+      "hideInGraph": true,
+      "value": "说明",
+      "freeze": false
+    },
+    {
+      "refKey": "refDict",
+      "hideInGraph": true,
+      "value": "数据字典",
+      "freeze": false
+    },
+    {
+      "refKey": "defaultValue",
+      "hideInGraph": true,
+      "value": "默认值",
+      "freeze": false
+    },
+    {
+      "refKey": "isStandard",
+      "hideInGraph": false,
+      "value": "标准字段",
+      "enable": false,
+      "freeze": false
+    },
+    {
+      "refKey": "uiHint",
+      "hideInGraph": true,
+      "value": "UI建议",
+      "enable": true,
+      "freeze": false
+    },
+    {
+      "refKey": "extProps",
+      "hideInGraph": true,
+      "value": "拓展属性",
+      "enable": true,
+      "freeze": false
+    },
+    {
+      "refKey": "attr1",
+      "value": "属性1",
+      "hideInGraph": true,
+      "enable": true,
+      "freeze": false
+    },
+    {
+      "refKey": "attr2",
+      "value": "属性2",
+      "hideInGraph": true,
+      "enable": false,
+      "freeze": false
+    },
+    {
+      "refKey": "attr3",
+      "value": "属性3",
+      "hideInGraph": true,
+      "enable": false,
+      "freeze": false
+    },
+    {
+      "refKey": "attr4",
+      "value": "属性4",
+      "hideInGraph": true,
+      "enable": false,
+      "freeze": false
+    },
+    {
+      "refKey": "attr5",
+      "value": "属性5",
+      "hideInGraph": true,
+      "enable": false,
+      "freeze": false
+    },
+    {
+      "refKey": "attr6",
+      "value": "属性6",
+      "hideInGraph": true,
+      "enable": false,
+      "freeze": false
+    },
+    {
+      "refKey": "attr7",
+      "value": "属性7",
+      "hideInGraph": true,
+      "enable": false,
+      "freeze": false
+    },
+    {
+      "refKey": "attr8",
+      "value": "属性8",
+      "hideInGraph": true,
+      "enable": false,
+      "freeze": false
+    },
+    {
+      "refKey": "attr9",
+      "value": "属性9",
+      "hideInGraph": true,
+      "enable": false,
+      "freeze": false
+    }
+  ],
+  "fields": [
+    {
+      "defKey": "id",
+      "defName": "补偿任务标识",
+      "comment": "补偿执行记录的内部唯一标识。",
+      "type": "BIGINT",
+      "len": "",
+      "scale": "",
+      "primaryKey": true,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+      "extProps": {},
+      "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+      "id": "ABACF9C7-5152-5DA9-864F-A46F420103CB"
+    },
+    {
+      "defKey": "event_key",
+      "defName": "事件幂等键",
+      "comment": "领域事件或本地恢复动作的全局稳定幂等键。",
+      "type": "VARCHAR",
+      "len": 128,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+      "extProps": {},
+      "domain": "",
+      "id": "F7FC7497-D537-52AD-8E9C-D16007C3B2E3"
+    },
+    {
+      "defKey": "event_type",
+      "defName": "事件类型",
+      "comment": "需要发布或本地恢复执行的领域事件类型代码。取值来源：CCT Domain Event Catalog；非固定枚举。",
+      "type": "VARCHAR",
+      "len": 64,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+      "extProps": {},
+      "domain": "",
+      "id": "9444C2BE-40BD-5846-86FC-E2419A7DC9B8"
+    },
+    {
+      "defKey": "execution_type",
+      "defName": "执行方式",
+      "comment": "区分 MQ 发布与本地 Handler 执行的方式代码。允许值：MQ_PUBLISH、LOCAL_HANDLER。",
+      "type": "VARCHAR",
+      "len": 64,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+      "extProps": {},
+      "domain": "",
+      "id": "6784FDFD-53A1-58E6-B4F1-3E90CC96A9F0"
+    },
+    {
+      "defKey": "source_type",
+      "defName": "来源类型",
+      "comment": "产生该待执行事件或本地恢复动作的 CCT 业务记录类型代码。取值来源：CCT Compensation Source Catalog；非固定枚举。",
+      "type": "VARCHAR",
+      "len": 64,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+      "extProps": {},
+      "domain": "",
+      "id": "1FEF635C-172F-5BEA-A909-1E2B38950618"
+    },
+    {
+      "defKey": "source_id",
+      "defName": "来源业务标识",
+      "comment": "在 source_type 命名空间内定位补偿来源业务记录的标识。",
+      "type": "BIGINT",
+      "len": "",
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+      "extProps": {},
+      "domain": "",
+      "id": "F7CE8F0F-1427-56F5-9AAD-56C724EFFA59"
+    },
+    {
+      "defKey": "source_version",
+      "defName": "补偿来源版本",
+      "comment": "产生该事件或本地恢复动作的 CCT 来源业务记录版本坐标，并参与来源四元组唯一约束。",
+      "type": "BIGINT",
+      "len": "",
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+      "extProps": {},
+      "domain": "",
+      "id": "A0EEA76F-C9CD-5B71-A974-940A6CC0D0BB"
+    },
+    {
+      "defKey": "schema_version",
+      "defName": "Payload 结构版本",
+      "comment": "解释事件或任务 Payload JSON 结构的版本号。",
+      "type": "INT",
+      "len": "",
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+      "extProps": {},
+      "domain": "",
+      "id": "B5BF8034-7871-512E-8FF4-70ADA3A66B4A"
+    },
+    {
+      "defKey": "payload_json",
+      "defName": "Payload JSON 内容",
+      "comment": "领域事件或本地恢复动作的受控 JSON Payload，大小不得超过 64 KiB。",
+      "type": "JSON",
+      "len": "",
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+      "extProps": {},
+      "domain": "",
+      "id": "2B21A504-FB0B-5F43-873F-13FDCF9939B7"
+    },
+    {
+      "defKey": "payload_hash",
+      "defName": "Payload 哈希",
+      "comment": "输入为 schema_version 对应的非敏感 Canonical Payload，最大 64 KiB。",
+      "type": "CHAR",
+      "len": 64,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+      "extProps": {},
+      "domain": "",
+      "id": "27B0ECEE-FEC4-5C18-967D-779EBC48782E"
+    },
+    {
+      "defKey": "execute_status",
+      "defName": "执行状态",
+      "comment": "补偿任务当前的可恢复执行状态。允许值：INIT、PROCESSING、ERROR、FAILED。",
+      "type": "VARCHAR",
+      "len": 64,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+      "extProps": {},
+      "domain": "",
+      "id": "E189DBA4-E9B1-5693-99C8-FC504DBA1991"
+    },
+    {
+      "defKey": "execute_count",
+      "defName": "执行次数",
+      "comment": "补偿任务已经尝试执行的累计次数。",
+      "type": "INT",
+      "len": "",
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+      "extProps": {},
+      "domain": "",
+      "id": "E14E489D-6A5C-5FAD-8DA7-9C2456DCCB2F"
+    },
+    {
+      "defKey": "next_execute_at",
+      "defName": "下次执行时间",
+      "comment": "补偿任务下一次允许被 Claim 的 UTC 微秒精度时刻。",
+      "type": "DATETIME",
+      "len": 6,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+      "extProps": {},
+      "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+      "id": "865490FE-7967-5842-A62F-5E8898C56789"
+    },
+    {
+      "defKey": "lock_owner",
+      "defName": "租约持有者",
+      "comment": "当前 Claim 补偿任务的执行实例标识。",
+      "type": "VARCHAR",
+      "len": 64,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": false,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+      "extProps": {},
+      "domain": "",
+      "id": "31DA08EA-8AFC-5CF4-A083-DABA2B839AEA"
+    },
+    {
+      "defKey": "lock_until",
+      "defName": "租约截止时间",
+      "comment": "当前补偿任务执行租约到期的 UTC 微秒精度时刻。",
+      "type": "DATETIME",
+      "len": 6,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": false,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+      "extProps": {},
+      "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+      "id": "007648C7-BC87-5C68-931C-084032814CFC"
+    },
+    {
+      "defKey": "last_error_code",
+      "defName": "最后错误代码",
+      "comment": "补偿执行最近一次失败的稳定错误分类代码。取值来源：CCT Compensation Error Catalog；非固定枚举。",
+      "type": "VARCHAR",
+      "len": 64,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": false,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+      "extProps": {},
+      "domain": "",
+      "id": "5A771469-2C8E-536B-B669-399A1852B727"
+    },
+    {
+      "defKey": "last_error_summary",
+      "defName": "最后错误摘要",
+      "comment": "补偿执行最近一次失败的脱敏错误摘要，不保存敏感原文。",
+      "type": "TEXT",
+      "len": "",
+      "scale": "",
+      "primaryKey": false,
+      "notNull": false,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+      "extProps": {},
+      "domain": "",
+      "id": "DE549CB0-1798-54F0-B4AB-CB60ACB8E7FE"
+    },
+    {
+      "defKey": "lock_version",
+      "defName": "技术锁版本",
+      "comment": "补偿任务 Claim 与完成回写使用的独立技术 CAS 版本，不是业务 Revision 或来源版本。",
+      "type": "BIGINT",
+      "len": "",
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+      "extProps": {},
+      "domain": "",
+      "id": "E4300F5A-A3FC-56A1-8299-5F3673A1D679"
+    },
+    {
+      "defKey": "create_time",
+      "defName": "创建时间",
+      "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+      "type": "DATETIME",
+      "len": 6,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+      "extProps": {},
+      "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+      "id": "D09A145E-66BE-5396-AD6B-841DA2B502BB"
+    },
+    {
+      "defKey": "update_time",
+      "defName": "更新时间",
+      "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+      "type": "DATETIME",
+      "len": 6,
+      "scale": "",
+      "primaryKey": false,
+      "notNull": true,
+      "autoIncrement": false,
+      "defaultValue": "",
+      "hideInGraph": false,
+      "refDict": "",
+      "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+      "extProps": {},
+      "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+      "id": "795B389B-F38F-55C6-B61E-44281F5DC685"
+    }
+  ],
+  "correlations": [],
+  "indexes": [
+    {
+      "defKey": "uk_comp_event_key",
+      "defName": "Uk Comp Event Key",
+      "unique": true,
+      "comment": "Unique index for compensation_event on event_key",
+      "fields": [
+        {
+          "fieldDefKey": "F7FC7497-D537-52AD-8E9C-D16007C3B2E3",
+          "ascOrDesc": "A",
+          "id": "B15ADAFE-9FF4-5B32-BF54-3648E5CE95E2"
+        }
+      ],
+      "id": "57B44ADF-3BE3-5A3E-BA86-BACDEB66518B"
+    },
+    {
+      "defKey": "uk_comp_source_fact",
+      "defName": "Uk Comp Source Fact",
+      "unique": true,
+      "comment": "Unique index for compensation_event on source_type, source_id, source_version, event_type",
+      "fields": [
+        {
+          "fieldDefKey": "1FEF635C-172F-5BEA-A909-1E2B38950618",
+          "ascOrDesc": "A",
+          "id": "096ADABF-A5B2-54C1-8765-7B070FB5DE7C"
+        },
+        {
+          "fieldDefKey": "F7CE8F0F-1427-56F5-9AAD-56C724EFFA59",
+          "ascOrDesc": "A",
+          "id": "5A5743A8-0D4D-5C98-B52B-37385F7296F3"
+        },
+        {
+          "fieldDefKey": "A0EEA76F-C9CD-5B71-A974-940A6CC0D0BB",
+          "ascOrDesc": "A",
+          "id": "B4BF26E2-F666-53A4-86FE-5476A2EC10F6"
+        },
+        {
+          "fieldDefKey": "9444C2BE-40BD-5846-86FC-E2419A7DC9B8",
+          "ascOrDesc": "A",
+          "id": "E279CD1E-D816-5430-8F7E-099759660069"
+        }
+      ],
+      "id": "9580AAD4-CCC1-5569-9E65-0098DA1C9667"
+    },
+    {
+      "defKey": "idx_compensation_event_642be450",
+      "defName": "Idx Compensation Event 642be450",
+      "unique": false,
+      "comment": "Access index for compensation_event on execute_status, next_execute_at, lock_until",
+      "fields": [
+        {
+          "fieldDefKey": "E189DBA4-E9B1-5693-99C8-FC504DBA1991",
+          "ascOrDesc": "A",
+          "id": "0D0A0F8E-9440-530E-97AF-931DAC6DBB07"
+        },
+        {
+          "fieldDefKey": "865490FE-7967-5842-A62F-5E8898C56789",
+          "ascOrDesc": "A",
+          "id": "82037BC5-1A50-5104-B3EF-0C94A86E9461"
+        },
+        {
+          "fieldDefKey": "007648C7-BC87-5C68-931C-084032814CFC",
+          "ascOrDesc": "A",
+          "id": "E2240D79-38C1-57A6-ACE4-D5347795A633"
+        }
+      ],
+      "id": "DD6BD4AE-87C4-57DE-B475-1299C6A2B83A"
+    }
+  ],
+  "type": "P"
+}

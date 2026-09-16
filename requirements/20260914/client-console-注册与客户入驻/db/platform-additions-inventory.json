@@ -1,0 +1,39 @@
+{
+  "tables": [
+    {
+      "name": "t_authentication_challenge",
+      "fieldCount": 21,
+      "currentSchemaHasTable": false
+    },
+    {
+      "name": "t_file_upload",
+      "fieldCount": 11,
+      "currentSchemaHasTable": false
+    },
+    {
+      "name": "t_file_scan_policy",
+      "fieldCount": 13,
+      "currentSchemaHasTable": false
+    },
+    {
+      "name": "t_file_scan_requirement",
+      "fieldCount": 10,
+      "currentSchemaHasTable": false
+    },
+    {
+      "name": "t_file_object",
+      "fieldCount": 19,
+      "currentSchemaHasTable": false
+    },
+    {
+      "name": "t_file_owner_ref",
+      "fieldCount": 7,
+      "currentSchemaHasTable": false
+    },
+    {
+      "name": "t_file_scan_result",
+      "fieldCount": 9,
+      "currentSchemaHasTable": false
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "status": "canonical DDL candidate; not executed; environment preflight required",
+  "systems": {
+    "CCT": {
+      "sourceModelSha256": "1ad770428ecdc12f5df55fc719213ca49262dea8274662032772eb88f5835108",
+      "targetModelSha256": "8cbd98b974f780c501044da684787274a918862066d1c55cb795fd333ea3a78b",
+      "tables": [
+        "t_party_profile",
+        "t_individual_profile",
+        "t_organization_profile",
+        "t_party_address",
+        "t_party_contact",
+        "t_party_profile_identifier",
+        "t_party_identity_key",
+        "t_party_relation",
+        "t_client_business_profile",
+        "t_client_application"
+      ],
+      "ddl": "client-contract-empty-closure.sql",
+      "ddlSha256": "dc091d30620d30374fa0e5a0b54f93614201bf4e5c46016d1e1958ebc76a0815"
+    },
+    "Risk": {
+      "sourceModelSha256": "ee01925a0049b64de0f4aee981518e15ea462be1e89319f1d70489e77e092d6e",
+      "targetModelSha256": "f169987a11a0f8e6e93fe189e95781a19fd4bb24d3c98037b1ff9b38dad55490",
+      "tables": [
+        "t_due_diligence_case",
+        "t_dd_case_subject",
+        "t_dd_case_classification",
+        "t_qualification_decision"
+      ],
+      "ddl": "risk-compliance-empty-closure.sql",
+      "ddlSha256": "46c3dd62839d44469f2499bd2026f8847f1dd1e97782d9d1102ebc4f097921af"
+    }
+  }
+}

@@ -1,0 +1,443 @@
+{
+  "status": "Stage 3 review contract; not registered or implemented",
+  "operations": [
+    {
+      "id": "A01",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-auth/v1/register",
+      "owner": "Platform",
+      "request": "Register",
+      "response": "Accepted",
+      "rule": "创建待验证账号；不签发工作区会话"
+    },
+    {
+      "id": "A02",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-auth/v1/email-verification-requests",
+      "owner": "Platform",
+      "request": "Email",
+      "response": "Accepted",
+      "rule": "重发产生新链接，旧链接失效"
+    },
+    {
+      "id": "A03",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-auth/v1/email-verifications",
+      "owner": "Platform",
+      "request": "LinkToken",
+      "response": "VerificationResult",
+      "rule": "单次消费验证链接，不自动免密登录"
+    },
+    {
+      "id": "A04",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-auth/v1/login",
+      "owner": "Platform",
+      "request": "Login",
+      "response": "AccountContext",
+      "rule": "邮箱密码；BFF 设置 HttpOnly Cookie"
+    },
+    {
+      "id": "A05",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-auth/v1/refresh",
+      "owner": "Platform",
+      "request": "Empty",
+      "response": "AccountContext",
+      "rule": "BFF 从 Refresh Cookie 取值，单飞轮换"
+    },
+    {
+      "id": "A06",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-auth/v1/logout",
+      "owner": "Platform",
+      "request": "Empty",
+      "response": "NoContent",
+      "rule": "撤销当前 Session 并清 Cookie"
+    },
+    {
+      "id": "A07",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-auth/v1/password-reset-requests",
+      "owner": "Platform",
+      "request": "Email",
+      "response": "Accepted",
+      "rule": "统一响应，不暴露账号存在性"
+    },
+    {
+      "id": "A08",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-auth/v1/password-resets",
+      "owner": "Platform",
+      "request": "ResetPassword",
+      "response": "NoContent",
+      "rule": "消费重置链接并撤销旧会话"
+    },
+    {
+      "id": "A09",
+      "channel": "CLIENT",
+      "method": "GET",
+      "path": "/client-auth/v1/context",
+      "owner": "Platform",
+      "request": "Empty",
+      "response": "AccountContext",
+      "rule": "读取当前 Account 和会话事实"
+    },
+    {
+      "id": "C01",
+      "channel": "CLIENT",
+      "method": "GET",
+      "path": "/client-onboarding/v1/start",
+      "owner": "Client BFF aggregation",
+      "request": "Empty",
+      "response": "Start",
+      "rule": "BFF 聚合本人申请、上传就绪与工作区"
+    },
+    {
+      "id": "C02",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-onboarding/v1/workspace-context",
+      "owner": "Platform",
+      "request": "WorkspaceSelection",
+      "response": "AccountContext",
+      "rule": "Platform 校验实际 Member 并切换会话"
+    },
+    {
+      "id": "C03",
+      "channel": "CLIENT",
+      "method": "GET",
+      "path": "/client-onboarding/v1/form-options",
+      "owner": "Client BFF aggregation",
+      "request": "FormOptionsQuery",
+      "response": "FormOptions",
+      "rule": "CCT/Risk 提供字典与适用要求，缺配置不默认通过"
+    },
+    {
+      "id": "C04",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-onboarding/v1/applications",
+      "owner": "CCT",
+      "request": "StartApplication",
+      "response": "CommandReceipt",
+      "rule": "每账号个人/组织合计一份未完成申请；恢复原单，类型不匹配返回冲突"
+    },
+    {
+      "id": "C05",
+      "channel": "CLIENT",
+      "method": "GET",
+      "path": "/client-onboarding/v1/applications/{applicationId}",
+      "owner": "Client BFF aggregation",
+      "request": "Empty",
+      "response": "Application",
+      "rule": "CCT 资料与 Risk 当前任务投影；只返回当前账号可见内容"
+    },
+    {
+      "id": "C06",
+      "channel": "CLIENT",
+      "method": "PATCH",
+      "path": "/client-onboarding/v1/applications/{applicationId}/draft",
+      "owner": "CCT",
+      "request": "DraftPatch",
+      "response": "CommandReceipt",
+      "rule": "只允许 DRAFT/RETURNED；明确 dirtyFields；不接受分类/审核字段"
+    },
+    {
+      "id": "C07",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-onboarding/v1/applications/{applicationId}/people",
+      "owner": "CCT",
+      "request": "CreatePerson",
+      "response": "PeopleCommandReceipt",
+      "rule": "组织专属；个人资料与首个关系同一事务保存"
+    },
+    {
+      "id": "C08",
+      "channel": "CLIENT",
+      "method": "PATCH",
+      "path": "/client-onboarding/v1/applications/{applicationId}/people/{partyId}",
+      "owner": "CCT",
+      "request": "PersonPatch",
+      "response": "PeopleCommandReceipt",
+      "rule": "稳定 Party 归属；已批准共享资料只读"
+    },
+    {
+      "id": "C09",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-onboarding/v1/applications/{applicationId}/relations",
+      "owner": "CCT",
+      "request": "Relation",
+      "response": "PeopleCommandReceipt",
+      "rule": "给本申请已关联的人员追加一个关系"
+    },
+    {
+      "id": "C10",
+      "channel": "CLIENT",
+      "method": "PATCH",
+      "path": "/client-onboarding/v1/applications/{applicationId}/relations/{relationId}",
+      "owner": "CCT",
+      "request": "RelationPatch",
+      "response": "PeopleCommandReceipt",
+      "rule": "不能更换组织或相关人归属"
+    },
+    {
+      "id": "C11",
+      "channel": "CLIENT",
+      "method": "DELETE",
+      "path": "/client-onboarding/v1/applications/{applicationId}/relations/{relationId}",
+      "owner": "CCT",
+      "request": "Empty",
+      "response": "NoContent",
+      "rule": "只移除本申请可编辑关系，不删 Party/旧审核事实"
+    },
+    {
+      "id": "C12",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-onboarding/v1/applications/{applicationId}/documents",
+      "owner": "CCT",
+      "request": "DocumentReference",
+      "response": "DocumentResult",
+      "rule": "验证 File/Requirement/Subject 全部准确归属"
+    },
+    {
+      "id": "C13",
+      "channel": "CLIENT",
+      "method": "DELETE",
+      "path": "/client-onboarding/v1/applications/{applicationId}/documents/{documentId}",
+      "owner": "CCT",
+      "request": "Empty",
+      "response": "NoContent",
+      "rule": "仅当前可编辑材料引用；Platform 文件不在此删除"
+    },
+    {
+      "id": "C14",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/client-onboarding/v1/applications/{applicationId}/submissions",
+      "owner": "CCT",
+      "request": "Empty",
+      "response": "Submission",
+      "rule": "完成校验并锁定资料，登记 Risk 后续任务"
+    },
+    {
+      "id": "C15",
+      "channel": "CLIENT",
+      "method": "GET",
+      "path": "/client-onboarding/v1/applications/{applicationId}/review-history",
+      "owner": "Risk",
+      "request": "PageQuery",
+      "response": "ReviewHistory",
+      "rule": "当前账号可见审核动作与任务，不提供 Profile 版本比较"
+    },
+    {
+      "id": "F01",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/onboarding-files/v1/uploads",
+      "owner": "Platform + CCT target authorization",
+      "request": "UploadStart",
+      "response": "Upload",
+      "rule": "核对本人当前可编辑申请，再由 Platform 唯一解析并核对对应 Tenant"
+    },
+    {
+      "id": "F02",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/onboarding-files/v1/uploads/{uploadId}/completion",
+      "owner": "Platform",
+      "request": "Empty",
+      "response": "File",
+      "rule": "由 Platform 查询对象存储确认真实字节和 Hash，不能相信浏览器声明完成"
+    },
+    {
+      "id": "F03",
+      "channel": "CLIENT",
+      "method": "GET",
+      "path": "/onboarding-files/v1/files/{fileId}",
+      "owner": "Platform",
+      "request": "Empty",
+      "response": "File",
+      "rule": "仅授权元数据、扫描状态和可执行动作"
+    },
+    {
+      "id": "F04",
+      "channel": "CLIENT",
+      "method": "POST",
+      "path": "/onboarding-files/v1/files/{fileId}/download",
+      "owner": "Platform",
+      "request": "Empty",
+      "response": "Download",
+      "rule": "再次检查权限与可用性，返回短时受控下载授权"
+    },
+    {
+      "id": "O01",
+      "channel": "OPERATIONS",
+      "method": "GET",
+      "path": "/client-onboarding-admin/v1/cases",
+      "owner": "Risk",
+      "request": "CaseQuery",
+      "response": "CasePage",
+      "rule": "查询经授权范围内的入驻案件"
+    },
+    {
+      "id": "O02",
+      "channel": "OPERATIONS",
+      "method": "GET",
+      "path": "/client-onboarding-admin/v1/cases/{caseId}",
+      "owner": "Operations BFF aggregation",
+      "request": "Empty",
+      "response": "ReviewCase",
+      "rule": "BFF 聚合 CCT 原申请、Risk 任务、文件授权投影"
+    },
+    {
+      "id": "O03",
+      "channel": "OPERATIONS",
+      "method": "PUT",
+      "path": "/client-onboarding-admin/v1/cases/{caseId}/classifications",
+      "owner": "CCT",
+      "request": "ClassificationSet",
+      "response": "ClassificationSetResult",
+      "rule": "CCT 独占此任务分类集合；仅未确认时可改"
+    },
+    {
+      "id": "O04",
+      "channel": "OPERATIONS",
+      "method": "POST",
+      "path": "/client-onboarding-admin/v1/cases/{caseId}/classification-confirmation",
+      "owner": "CCT",
+      "request": "Empty",
+      "response": "CommandResult",
+      "rule": "CCT 固定分类，提交后交给 Risk 检查同一任务"
+    },
+    {
+      "id": "O05",
+      "channel": "OPERATIONS",
+      "method": "POST",
+      "path": "/client-onboarding-admin/v1/cases/{caseId}/evidence/{evidenceId}/review",
+      "owner": "Risk",
+      "request": "EvidenceReview",
+      "response": "CommandResult",
+      "rule": "Risk 记录材料核验结果，不改原文件"
+    },
+    {
+      "id": "O06",
+      "channel": "OPERATIONS",
+      "method": "POST",
+      "path": "/client-onboarding-admin/v1/cases/{caseId}/checks",
+      "owner": "Risk",
+      "request": "CheckResult",
+      "response": "CommandResult",
+      "rule": "Risk 追加真实检查结果与证据"
+    },
+    {
+      "id": "O07",
+      "channel": "OPERATIONS",
+      "method": "POST",
+      "path": "/client-onboarding-admin/v1/cases/{caseId}/return",
+      "owner": "Risk",
+      "request": "ReturnForCorrection",
+      "response": "CommandResult",
+      "rule": "结束当前任务，发事实给 CCT 退回原申请"
+    },
+    {
+      "id": "O08",
+      "channel": "OPERATIONS",
+      "method": "POST",
+      "path": "/client-onboarding-admin/v1/cases/{caseId}/approval",
+      "owner": "Risk",
+      "request": "ReviewDecision",
+      "response": "CommandResult",
+      "rule": "分类、主/子任务、证据、检查全部满足后批准"
+    },
+    {
+      "id": "O09",
+      "channel": "OPERATIONS",
+      "method": "POST",
+      "path": "/client-onboarding-admin/v1/cases/{caseId}/rejection",
+      "owner": "Risk",
+      "request": "ReviewDecision",
+      "response": "CommandResult",
+      "rule": "最终拒绝；不能改回草稿"
+    },
+    {
+      "id": "I01",
+      "channel": "INTERNAL",
+      "method": "POST",
+      "path": "/client-onboarding-review/v1/submissions",
+      "owner": "CCT→Risk",
+      "request": "ReviewSubmission",
+      "response": "ReviewRegistration",
+      "rule": "按提交命令身份幂等建立主/关联人任务"
+    },
+    {
+      "id": "I02",
+      "channel": "INTERNAL",
+      "method": "POST",
+      "path": "/client-onboarding-review/v1/cases/{caseId}/classifications",
+      "owner": "CCT→Risk",
+      "request": "ConfirmedClassifications",
+      "response": "CommandResult",
+      "rule": "幂等接收同任务固定分类"
+    },
+    {
+      "id": "I03",
+      "channel": "INTERNAL",
+      "method": "GET",
+      "path": "/client-onboarding-review/v1/submissions/{submissionId}",
+      "owner": "CCT→Risk",
+      "request": "Empty",
+      "response": "ReviewRegistration",
+      "rule": "登记结果未知时查询原任务，不造新任务"
+    }
+  ],
+  "counts": {
+    "publicBusinessOperations": 37,
+    "internalRecoveryOperations": 3,
+    "byChannel": {
+      "CLIENT": 28,
+      "OPERATIONS": 9,
+      "INTERNAL": 3
+    }
+  },
+  "applicationConcurrency": {
+    "status": "CONFIRMED",
+    "maxActiveApplicationsPerAccount": 1,
+    "typeMismatchError": "ACTIVE_APPLICATION_TYPE_MISMATCH",
+    "uploadExpectedTargetField": "applicationId"
+  },
+  "amendments": [
+    {
+      "date": "2026-09-15",
+      "operations": [
+        "C04",
+        "C06"
+      ],
+      "decision": "../../draft-command-response-proposal.md",
+      "response": "CommandReceipt"
+    },
+    {
+      "date": "2026-09-15",
+      "operations": [
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C11"
+      ],
+      "decision": "../../draft-command-response-proposal.md",
+      "response": "C07-C10 PeopleCommandReceipt; C11 NoContent; C05 reads current people/relations"
+    }
+  ]
+}

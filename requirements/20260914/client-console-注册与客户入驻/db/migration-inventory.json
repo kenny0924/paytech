@@ -1,0 +1,223 @@
+{
+  "status": "READ_ONLY_REVIEW_NOT_EXECUTED",
+  "sources": {
+    "CCT": {
+      "path": "client-contract-service/docs/database/client-contract.pdma.json",
+      "sha256": "1ad770428ecdc12f5df55fc719213ca49262dea8274662032772eb88f5835108"
+    },
+    "Risk": {
+      "path": "risk-compliance-service/docs/database/risk-compliance.pdma.json",
+      "sha256": "ee01925a0049b64de0f4aee981518e15ea462be1e89319f1d70489e77e092d6e"
+    },
+    "Platform": {
+      "path": "platform-support-service/docs/database/platform-support.pdma.json",
+      "sha256": "56991d1ede96b2bed6b916862235047f75cacc4dce36a52e87f169510c9c2d4a"
+    }
+  },
+  "owners": {
+    "CCT": {
+      "emptyGateTables": [
+        "t_party_profile",
+        "t_individual_profile",
+        "t_organization_profile",
+        "t_party_address",
+        "t_party_contact",
+        "t_party_profile_identifier",
+        "t_party_identity_key",
+        "t_party_relation",
+        "t_client_business_profile",
+        "t_client_application",
+        "t_party",
+        "t_client",
+        "t_client_business_classification",
+        "t_partner_application",
+        "t_operating_entity_application",
+        "t_agreement_party"
+      ],
+      "localReferences": [
+        {
+          "table": "t_individual_profile",
+          "column": "profile_id",
+          "targetTable": "t_party_profile",
+          "targetColumn": "profile_id"
+        },
+        {
+          "table": "t_organization_profile",
+          "column": "profile_id",
+          "targetTable": "t_party_profile",
+          "targetColumn": "profile_id"
+        },
+        {
+          "table": "t_party_address",
+          "column": "profile_id",
+          "targetTable": "t_party_profile",
+          "targetColumn": "profile_id"
+        },
+        {
+          "table": "t_party_contact",
+          "column": "profile_id",
+          "targetTable": "t_party_profile",
+          "targetColumn": "profile_id"
+        },
+        {
+          "table": "t_party_profile_identifier",
+          "column": "profile_id",
+          "targetTable": "t_party_profile",
+          "targetColumn": "profile_id"
+        },
+        {
+          "table": "t_party_profile_identifier",
+          "column": "identity_key_id",
+          "targetTable": "t_party_identity_key",
+          "targetColumn": "identity_key_id"
+        },
+        {
+          "table": "t_client_application",
+          "column": "base_party_profile_id",
+          "targetTable": "t_party_profile",
+          "targetColumn": "profile_id"
+        },
+        {
+          "table": "t_client_application",
+          "column": "target_party_profile_id",
+          "targetTable": "t_party_profile",
+          "targetColumn": "profile_id"
+        },
+        {
+          "table": "t_client_application",
+          "column": "base_business_profile_id",
+          "targetTable": "t_client_business_profile",
+          "targetColumn": "business_profile_id"
+        },
+        {
+          "table": "t_client_application",
+          "column": "target_business_profile_id",
+          "targetTable": "t_client_business_profile",
+          "targetColumn": "business_profile_id"
+        },
+        {
+          "table": "t_client_business_classification",
+          "column": "business_profile_id",
+          "targetTable": "t_client_business_profile",
+          "targetColumn": "business_profile_id"
+        },
+        {
+          "table": "t_partner_application",
+          "column": "target_party_profile_id",
+          "targetTable": "t_party_profile",
+          "targetColumn": "profile_id"
+        },
+        {
+          "table": "t_operating_entity_application",
+          "column": "party_profile_id",
+          "targetTable": "t_party_profile",
+          "targetColumn": "profile_id"
+        },
+        {
+          "table": "t_agreement_party",
+          "column": "party_profile_id",
+          "targetTable": "t_party_profile",
+          "targetColumn": "profile_id"
+        }
+      ]
+    },
+    "Risk": {
+      "emptyGateTables": [
+        "t_due_diligence_case",
+        "t_dd_case_subject",
+        "t_dd_case_dependency",
+        "t_dd_party_snapshot",
+        "t_dd_requirement",
+        "t_dd_evidence_ref",
+        "t_dd_check",
+        "t_dd_case_state_change",
+        "t_qualification_decision",
+        "t_qualification_state_change"
+      ],
+      "localReferences": [
+        {
+          "table": "t_dd_case_subject",
+          "column": "case_id",
+          "targetTable": "t_due_diligence_case",
+          "targetColumn": "case_id"
+        },
+        {
+          "table": "t_dd_case_dependency",
+          "column": "parent_case_id",
+          "targetTable": "t_due_diligence_case",
+          "targetColumn": "case_id"
+        },
+        {
+          "table": "t_dd_case_dependency",
+          "column": "child_case_id",
+          "targetTable": "t_due_diligence_case",
+          "targetColumn": "case_id"
+        },
+        {
+          "table": "t_dd_case_dependency",
+          "column": "accepted_decision_id",
+          "targetTable": "t_qualification_decision",
+          "targetColumn": "decision_id"
+        },
+        {
+          "table": "t_dd_party_snapshot",
+          "column": "case_subject_id",
+          "targetTable": "t_dd_case_subject",
+          "targetColumn": "case_subject_id"
+        },
+        {
+          "table": "t_dd_requirement",
+          "column": "case_id",
+          "targetTable": "t_due_diligence_case",
+          "targetColumn": "case_id"
+        },
+        {
+          "table": "t_dd_evidence_ref",
+          "column": "requirement_id",
+          "targetTable": "t_dd_requirement",
+          "targetColumn": "requirement_id"
+        },
+        {
+          "table": "t_dd_evidence_ref",
+          "column": "case_subject_id",
+          "targetTable": "t_dd_case_subject",
+          "targetColumn": "case_subject_id"
+        },
+        {
+          "table": "t_dd_check",
+          "column": "case_subject_id",
+          "targetTable": "t_dd_case_subject",
+          "targetColumn": "case_subject_id"
+        },
+        {
+          "table": "t_dd_case_state_change",
+          "column": "case_id",
+          "targetTable": "t_due_diligence_case",
+          "targetColumn": "case_id"
+        },
+        {
+          "table": "t_qualification_decision",
+          "column": "case_id",
+          "targetTable": "t_due_diligence_case",
+          "targetColumn": "case_id"
+        },
+        {
+          "table": "t_qualification_state_change",
+          "column": "decision_id",
+          "targetTable": "t_qualification_decision",
+          "targetColumn": "decision_id"
+        }
+      ]
+    }
+  },
+  "platformAdditionTables": [
+    "t_authentication_challenge",
+    "t_file_upload",
+    "t_file_scan_policy",
+    "t_file_scan_requirement",
+    "t_file_object",
+    "t_file_owner_ref",
+    "t_file_scan_result"
+  ],
+  "boundary": "Candidate local reference inventory; not proof that cross-owner or historical references are absent. Existing data requires an environment-specific compatibility plan; never choose MAX(version)."
+}

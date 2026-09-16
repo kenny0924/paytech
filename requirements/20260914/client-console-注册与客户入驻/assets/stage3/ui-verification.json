@@ -1,0 +1,675 @@
+{
+  "checked_at": "2026-09-14T15:34:21.964104+00:00",
+  "scope": "Stage 3 UI design subpackage; not completed interface/data design",
+  "status": "passed",
+  "checks": {
+    "local_markdown_links": 61,
+    "functional_pages": 13,
+    "client_boards": 36,
+    "operations_boards": 4,
+    "png_dimensions_verified": 40,
+    "board_overlap_failures": 0,
+    "pencil_layout": {
+      "source": "Pencil execute Get visitor on active editor",
+      "client_problems": 0,
+      "operations_new_board_problems": 0,
+      "client_placeholders": 0,
+      "operations_new_board_placeholders": 0,
+      "operations_check_scope": "Prior stage-3 verification retained; Operations design not changed in this revision."
+    },
+    "saved_files": [
+      {
+        "surface": "client",
+        "path": "client-console-web/design.pen",
+        "bytes": 1037776,
+        "modified_at": "2026-09-14T15:33:02.222975+00:00",
+        "content_read": false
+      },
+      {
+        "surface": "operations",
+        "path": "operations-console-web/docs/design.pen",
+        "bytes": 4549770,
+        "modified_at": "2026-09-14T11:21:18.043Z",
+        "content_read": false
+      }
+    ],
+    "failures": [],
+    "git_diff_check": {
+      "root": "passed",
+      "operations_console_web": "passed"
+    },
+    "subpage_navigation_links": 9,
+    "flow_sections": 8,
+    "flow_sections_overlap_failures": 0,
+    "all_client_boards_preserved": 36,
+    "native_layer_order_verified": true
+  },
+  "exports": [
+    {
+      "id": "bi8Au",
+      "preview": "client-console-web/design-previews/bi8Au.png",
+      "width": 1280,
+      "height": 900,
+      "bytes": 45109
+    },
+    {
+      "id": "OxXyB",
+      "preview": "client-console-web/design-previews/OxXyB.png",
+      "width": 1280,
+      "height": 900,
+      "bytes": 44893
+    },
+    {
+      "id": "Y2ihPZ",
+      "preview": "client-console-web/design-previews/Y2ihPZ.png",
+      "width": 1280,
+      "height": 900,
+      "bytes": 44650
+    },
+    {
+      "id": "Gff8k",
+      "preview": "client-console-web/design-previews/Gff8k.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 27392
+    },
+    {
+      "id": "b7gqVI",
+      "preview": "client-console-web/design-previews/b7gqVI.png",
+      "width": 1280,
+      "height": 900,
+      "bytes": 39163
+    },
+    {
+      "id": "eK63f",
+      "preview": "client-console-web/design-previews/eK63f.png",
+      "width": 1280,
+      "height": 900,
+      "bytes": 45990
+    },
+    {
+      "id": "C4DAe",
+      "preview": "client-console-web/design-previews/C4DAe.png",
+      "width": 1280,
+      "height": 900,
+      "bytes": 43571
+    },
+    {
+      "id": "HBruO",
+      "preview": "client-console-web/design-previews/HBruO.png",
+      "width": 1280,
+      "height": 900,
+      "bytes": 43356
+    },
+    {
+      "id": "bklEQ",
+      "preview": "client-console-web/design-previews/bklEQ.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 59072
+    },
+    {
+      "id": "lZPz3",
+      "preview": "client-console-web/design-previews/lZPz3.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 59151
+    },
+    {
+      "id": "X1Meh",
+      "preview": "client-console-web/design-previews/X1Meh.png",
+      "width": 1440,
+      "height": 1010,
+      "bytes": 129774
+    },
+    {
+      "id": "c7elTm",
+      "preview": "client-console-web/design-previews/c7elTm.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 73338
+    },
+    {
+      "id": "IMF1b",
+      "preview": "client-console-web/design-previews/IMF1b.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 70481
+    },
+    {
+      "id": "Jy6Lg",
+      "preview": "client-console-web/design-previews/Jy6Lg.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 80416
+    },
+    {
+      "id": "DYqRI",
+      "preview": "client-console-web/design-previews/DYqRI.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 72843
+    },
+    {
+      "id": "cc3zU",
+      "preview": "client-console-web/design-previews/cc3zU.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 72056
+    },
+    {
+      "id": "poBXV",
+      "preview": "client-console-web/design-previews/poBXV.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 101451
+    },
+    {
+      "id": "h8duSQ",
+      "preview": "client-console-web/design-previews/h8duSQ.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 96066
+    },
+    {
+      "id": "vV5SC",
+      "preview": "client-console-web/design-previews/vV5SC.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 98955
+    },
+    {
+      "id": "l3Hamr",
+      "preview": "client-console-web/design-previews/l3Hamr.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 79197
+    },
+    {
+      "id": "wQ2PZ",
+      "preview": "client-console-web/design-previews/wQ2PZ.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 98745
+    },
+    {
+      "id": "XfEoP",
+      "preview": "client-console-web/design-previews/XfEoP.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 65554
+    },
+    {
+      "id": "a87l0w",
+      "preview": "client-console-web/design-previews/a87l0w.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 69209
+    },
+    {
+      "id": "y1brN",
+      "preview": "client-console-web/design-previews/y1brN.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 88820
+    },
+    {
+      "id": "P4oiR",
+      "preview": "client-console-web/design-previews/P4oiR.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 64227
+    },
+    {
+      "id": "JBGMc",
+      "preview": "client-console-web/design-previews/JBGMc.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 66347
+    },
+    {
+      "id": "Nvrv3",
+      "preview": "client-console-web/design-previews/Nvrv3.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 69086
+    },
+    {
+      "id": "gh5mA",
+      "preview": "client-console-web/design-previews/gh5mA.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 57797
+    },
+    {
+      "id": "i8stv0",
+      "preview": "client-console-web/design-previews/i8stv0.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 72796
+    },
+    {
+      "id": "v2ceq",
+      "preview": "client-console-web/design-previews/v2ceq.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 86008
+    },
+    {
+      "id": "x8oqu",
+      "preview": "client-console-web/design-previews/x8oqu.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 90391
+    },
+    {
+      "id": "xxYkf",
+      "preview": "client-console-web/design-previews/xxYkf.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 28407
+    },
+    {
+      "id": "I9Ksxp",
+      "preview": "client-console-web/design-previews/I9Ksxp.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 57031
+    },
+    {
+      "id": "V5yMxR",
+      "preview": "client-console-web/design-previews/V5yMxR.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 62669
+    },
+    {
+      "id": "MRXYb",
+      "preview": "client-console-web/design-previews/MRXYb.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 61235
+    },
+    {
+      "id": "UF6gv",
+      "preview": "client-console-web/design-previews/UF6gv.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 56799
+    },
+    {
+      "id": "Iqlha",
+      "preview": "operations-console-web/docs/design-previews/client-onboarding/Iqlha.png",
+      "width": 1440,
+      "height": 1040,
+      "bytes": 71026
+    },
+    {
+      "id": "d86Q4j",
+      "preview": "operations-console-web/docs/design-previews/client-onboarding/d86Q4j.png",
+      "width": 1440,
+      "height": 1040,
+      "bytes": 68625
+    },
+    {
+      "id": "VODxl",
+      "preview": "operations-console-web/docs/design-previews/client-onboarding/VODxl.png",
+      "width": 1440,
+      "height": 1040,
+      "bytes": 66235
+    },
+    {
+      "id": "R4OYc",
+      "preview": "operations-console-web/docs/design-previews/client-onboarding/R4OYc.png",
+      "width": 1440,
+      "height": 1040,
+      "bytes": 73589
+    }
+  ],
+  "requirements_site": {
+    "new_run": false,
+    "reason": "No requirement-site source edits in this UI subpackage; earlier Stage 2 evidence retained separately."
+  },
+  "business_tests": "not_run",
+  "keyboard_and_browser_interaction_tests": "not_run",
+  "database_access": "none",
+  "deployment": "none",
+  "git_commit": "none",
+  "revisions": [
+    {
+      "checked_at": "2026-09-14T11:41:25.392Z",
+      "change": "Simplify authentication screens to white background and centered 400px form; remove promotional sidebar; align mobile registration.",
+      "affected_boards": [
+        "bi8Au",
+        "Y2ihPZ",
+        "OxXyB",
+        "C4DAe",
+        "HBruO",
+        "eK63f",
+        "b7gqVI",
+        "Gff8k"
+      ],
+      "pencil_layout_problems": 0,
+      "removed_sidebar_nodes_remaining": 0,
+      "desktop_centered_forms": 7,
+      "png_dimensions_verified": 8,
+      "previous_saved_file": {
+        "surface": "client",
+        "path": "client-console-web/design.pen",
+        "bytes": 404903,
+        "modified_at": "2026-09-14T11:18:38.130Z",
+        "content_read": false
+      },
+      "saved_via": "Pen Save; Edited indicator cleared"
+    },
+    {
+      "checked_at": "2026-09-14T15:11:41.466253+00:00",
+      "change": "Separate individual and organization onboarding into 4-step and 5-step rows; add three individual form variants and a comparison guide.",
+      "new_boards": [
+        "IMF1b",
+        "XfEoP",
+        "JBGMc",
+        "X1Meh"
+      ],
+      "changed_existing_boards": [
+        "c7elTm",
+        "Jy6Lg",
+        "DYqRI",
+        "cc3zU",
+        "a87l0w",
+        "Nvrv3",
+        "bklEQ"
+      ],
+      "individual_steps": 4,
+      "organization_steps": 5,
+      "branch_step_checks": [
+        {
+          "id": "c7elTm",
+          "steps": [
+            "1  个人资料",
+            "2  经营资料",
+            "3  申请材料",
+            "4  确认提交"
+          ]
+        },
+        {
+          "id": "IMF1b",
+          "steps": [
+            "1  个人资料",
+            "2  经营资料",
+            "3  申请材料",
+            "4  确认提交"
+          ]
+        },
+        {
+          "id": "XfEoP",
+          "steps": [
+            "1  个人资料",
+            "2  经营资料",
+            "3  申请材料",
+            "4  确认提交"
+          ]
+        },
+        {
+          "id": "JBGMc",
+          "steps": [
+            "1  个人资料",
+            "2  经营资料",
+            "3  申请材料",
+            "4  确认提交"
+          ]
+        },
+        {
+          "id": "Jy6Lg",
+          "steps": [
+            "1  组织资料",
+            "2  经营资料",
+            "3  相关人员",
+            "4  申请材料",
+            "5  确认提交"
+          ]
+        },
+        {
+          "id": "DYqRI",
+          "steps": [
+            "1  组织资料",
+            "2  经营资料",
+            "3  相关人员",
+            "4  申请材料",
+            "5  确认提交"
+          ]
+        },
+        {
+          "id": "cc3zU",
+          "steps": [
+            "1  组织资料",
+            "2  经营资料",
+            "3  相关人员",
+            "4  申请材料",
+            "5  确认提交"
+          ]
+        },
+        {
+          "id": "a87l0w",
+          "steps": [
+            "1  组织资料",
+            "2  经营资料",
+            "3  相关人员",
+            "4  申请材料",
+            "5  确认提交"
+          ]
+        },
+        {
+          "id": "Nvrv3",
+          "steps": [
+            "1  组织资料",
+            "2  经营资料",
+            "3  相关人员",
+            "4  申请材料",
+            "5  确认提交"
+          ]
+        }
+      ],
+      "pencil_layout_problems": 0,
+      "placeholders": 0,
+      "unexpected_organization_text_in_individual_boards": 0,
+      "client_pngs_reexported": 27,
+      "design_guide_not_product_page": "X1Meh",
+      "functional_pages_unchanged": 13,
+      "previous_saved_file": {
+        "surface": "client",
+        "path": "client-console-web/design.pen",
+        "bytes": 383995,
+        "modified_at": "2026-09-14T11:41:01.727Z",
+        "content_read": false
+      },
+      "saved_via": "Pen Save; Edited indicator cleared",
+      "operations_changed": false
+    },
+    {
+      "checked_at": "2026-09-14T15:26:09.965070+00:00",
+      "change": "Draw nine onboarding subpage states: create/edit person, relation validation/removal, upload retry, document preview, submitted details, supplement history, unsaved exit.",
+      "new_boards": [
+        "poBXV",
+        "vV5SC",
+        "h8duSQ",
+        "l3Hamr",
+        "y1brN",
+        "P4oiR",
+        "v2ceq",
+        "x8oqu",
+        "wQ2PZ"
+      ],
+      "changed_existing_boards": [
+        "cc3zU",
+        "i8stv0",
+        "X1Meh"
+      ],
+      "pencil_layout_problems": 0,
+      "placeholders": 0,
+      "navigation_entries_verified": 9,
+      "pngs_reexported": 12,
+      "functional_pages_unchanged": 13,
+      "saved_via": "Pen Save; Edited indicator cleared",
+      "previous_saved_file": {
+        "surface": "client",
+        "path": "client-console-web/design.pen",
+        "bytes": 490420,
+        "modified_at": "2026-09-14T15:08:13.092458+00:00",
+        "content_read": false
+      },
+      "operations_changed": false,
+      "interactive_prototype_created": false
+    },
+    {
+      "checked_at": "2026-09-14T15:34:21.964104+00:00",
+      "change": "Organize canvas and Layers into eight onboarding stages; nest the existing 36 boards and place subpages with their parent steps.",
+      "flow_sections": [
+        {
+          "id": "O7dN9",
+          "key": "account",
+          "name": "01 · 账号注册与验证",
+          "x": 0,
+          "y": 0,
+          "width": 5680,
+          "height": 2230,
+          "boards": [
+            "bi8Au",
+            "OxXyB",
+            "Y2ihPZ",
+            "Gff8k",
+            "b7gqVI",
+            "eK63f",
+            "C4DAe",
+            "HBruO"
+          ]
+        },
+        {
+          "id": "lgZyV",
+          "key": "start",
+          "name": "02 · 选择客户身份／继续申请",
+          "x": 0,
+          "y": 2470,
+          "width": 4400,
+          "height": 1230,
+          "boards": [
+            "bklEQ",
+            "lZPz3",
+            "X1Meh"
+          ]
+        },
+        {
+          "id": "kSh9D",
+          "key": "profiles",
+          "name": "03 · 填写基础资料与经营资料",
+          "x": 0,
+          "y": 3940,
+          "width": 5840,
+          "height": 1180,
+          "boards": [
+            "c7elTm",
+            "IMF1b",
+            "Jy6Lg",
+            "DYqRI"
+          ]
+        },
+        {
+          "id": "ne7sI",
+          "key": "people",
+          "name": "04 · 组织相关人员与关系",
+          "x": 0,
+          "y": 5360,
+          "width": 4240,
+          "height": 2360,
+          "boards": [
+            "cc3zU",
+            "poBXV",
+            "h8duSQ",
+            "vV5SC",
+            "l3Hamr",
+            "wQ2PZ"
+          ]
+        },
+        {
+          "id": "UH0nA",
+          "key": "materials",
+          "name": "05 · 上传申请材料",
+          "x": 0,
+          "y": 7960,
+          "width": 4240,
+          "height": 2360,
+          "boards": [
+            "XfEoP",
+            "a87l0w",
+            "y1brN",
+            "P4oiR"
+          ]
+        },
+        {
+          "id": "S3iJe",
+          "key": "submit",
+          "name": "06 · 核对资料并提交",
+          "x": 0,
+          "y": 10560,
+          "width": 2800,
+          "height": 1180,
+          "boards": [
+            "JBGMc",
+            "Nvrv3"
+          ]
+        },
+        {
+          "id": "rpPLR",
+          "key": "review",
+          "name": "07 · 查看审核进度／按需补件",
+          "x": 0,
+          "y": 11980,
+          "width": 3350,
+          "height": 2360,
+          "boards": [
+            "gh5mA",
+            "i8stv0",
+            "v2ceq",
+            "x8oqu",
+            "xxYkf"
+          ]
+        },
+        {
+          "id": "jMfPa",
+          "key": "activation",
+          "name": "08 · 审核结果与客户工作区",
+          "x": 0,
+          "y": 14580,
+          "width": 2800,
+          "height": 2360,
+          "boards": [
+            "I9Ksxp",
+            "V5yMxR",
+            "MRXYb",
+            "UF6gv"
+          ]
+        }
+      ],
+      "new_product_boards": 0,
+      "retained_client_board_ids": 36,
+      "functional_pages_unchanged": 13,
+      "pencil_layout_problems": 0,
+      "placeholders": 0,
+      "native_layer_order_verified": true,
+      "pngs_reexported": [
+        "X1Meh"
+      ],
+      "previous_saved_file": {
+        "surface": "client",
+        "path": "client-console-web/design.pen",
+        "bytes": 927308,
+        "modified_at": "2026-09-14T15:24:47.112378+00:00",
+        "content_read": false
+      },
+      "saved_via": "Pen Save; Edited indicator cleared",
+      "operations_changed": false
+    }
+  ],
+  "successorEvidence": "simplification-verification.json",
+  "scopeNote": "Earlier checks apply to previous baseline boards. Four simplification proposal boards and updated manifest counts are verified separately."
+}

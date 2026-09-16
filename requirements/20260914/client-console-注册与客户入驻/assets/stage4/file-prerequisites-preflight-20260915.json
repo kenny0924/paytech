@@ -1,0 +1,247 @@
+{
+  "recordedAt": "2026-09-15T19:12:29.089294+00:00",
+  "mode": "read-only; schema metadata and counts only; no env-file reads, DDL or DML",
+  "databaseInventory": {
+    "mor_platform_config_validation": {
+      "tableCount": 26,
+      "targets": [
+        {
+          "table": "t_file_upload",
+          "exists": false
+        },
+        {
+          "table": "t_file_scan_policy",
+          "exists": false
+        },
+        {
+          "table": "t_file_scan_requirement",
+          "exists": false
+        },
+        {
+          "table": "t_file_object",
+          "exists": false
+        },
+        {
+          "table": "t_file_owner_ref",
+          "exists": false
+        },
+        {
+          "table": "t_file_scan_result",
+          "exists": false
+        },
+        {
+          "table": "t_compensation_event",
+          "exists": false
+        }
+      ]
+    },
+    "mor_cct": {
+      "tableCount": 38,
+      "targets": [
+        {
+          "table": "t_application_document",
+          "exists": true,
+          "rowCount": 0,
+          "columns": [
+            {
+              "name": "document_id",
+              "type": "bigint",
+              "nullable": "NO"
+            },
+            {
+              "name": "client_application_id",
+              "type": "bigint",
+              "nullable": "YES"
+            },
+            {
+              "name": "partner_application_id",
+              "type": "bigint",
+              "nullable": "YES"
+            },
+            {
+              "name": "operating_entity_application_id",
+              "type": "bigint",
+              "nullable": "YES"
+            },
+            {
+              "name": "subject_party_id",
+              "type": "bigint",
+              "nullable": "NO"
+            },
+            {
+              "name": "requirement_code",
+              "type": "varchar(64)",
+              "nullable": "NO"
+            },
+            {
+              "name": "document_type",
+              "type": "varchar(64)",
+              "nullable": "NO"
+            },
+            {
+              "name": "file_id",
+              "type": "bigint",
+              "nullable": "NO"
+            },
+            {
+              "name": "content_hash",
+              "type": "char(64)",
+              "nullable": "NO"
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": "NO"
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": "NO"
+            }
+          ]
+        }
+      ]
+    },
+    "mor_risk": {
+      "tableCount": 80,
+      "targets": [
+        {
+          "table": "t_dd_program",
+          "exists": true,
+          "rowCount": 0,
+          "columns": [
+            {
+              "name": "program_id",
+              "type": "bigint",
+              "nullable": "NO"
+            },
+            {
+              "name": "program_code",
+              "type": "varchar(64)",
+              "nullable": "NO"
+            },
+            {
+              "name": "qualification_type",
+              "type": "varchar(64)",
+              "nullable": "NO"
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": "NO"
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": "NO"
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": "NO"
+            }
+          ]
+        },
+        {
+          "table": "t_dd_program_version",
+          "exists": true,
+          "rowCount": 0,
+          "columns": [
+            {
+              "name": "program_version_id",
+              "type": "bigint",
+              "nullable": "NO"
+            },
+            {
+              "name": "program_id",
+              "type": "bigint",
+              "nullable": "NO"
+            },
+            {
+              "name": "version_no",
+              "type": "int",
+              "nullable": "NO"
+            },
+            {
+              "name": "review_frequency_code",
+              "type": "varchar(64)",
+              "nullable": "YES"
+            },
+            {
+              "name": "status",
+              "type": "varchar(64)",
+              "nullable": "NO"
+            },
+            {
+              "name": "active_slot",
+              "type": "tinyint(1)",
+              "nullable": "YES"
+            },
+            {
+              "name": "content_hash",
+              "type": "char(64)",
+              "nullable": "NO"
+            },
+            {
+              "name": "approved_by",
+              "type": "bigint",
+              "nullable": "YES"
+            },
+            {
+              "name": "approved_time",
+              "type": "datetime(6)",
+              "nullable": "YES"
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": "NO"
+            },
+            {
+              "name": "update_time",
+              "type": "datetime(6)",
+              "nullable": "NO"
+            }
+          ]
+        },
+        {
+          "table": "t_dd_program_requirement",
+          "exists": true,
+          "rowCount": 0,
+          "columns": [
+            {
+              "name": "program_requirement_id",
+              "type": "bigint",
+              "nullable": "NO"
+            },
+            {
+              "name": "program_version_id",
+              "type": "bigint",
+              "nullable": "NO"
+            },
+            {
+              "name": "requirement_code",
+              "type": "varchar(64)",
+              "nullable": "NO"
+            },
+            {
+              "name": "document_type",
+              "type": "varchar(64)",
+              "nullable": "NO"
+            },
+            {
+              "name": "required_flag",
+              "type": "tinyint(1)",
+              "nullable": "NO"
+            },
+            {
+              "name": "create_time",
+              "type": "datetime(6)",
+              "nullable": "NO"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

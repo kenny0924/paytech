@@ -1,0 +1,697 @@
+{
+  "observed_at": "2026-09-14T10:51:41.683004+00:00",
+  "observation": "Read-only source, test-file inventory and model/manual-DDL comparison; no database or business test run.",
+  "missing_entry_directories": {
+    "client-console-web": true,
+    "client-console-bff": true
+  },
+  "repositories": {
+    "platform-support-service": {
+      "head": "412ee15a0544fc832502eef09f51f54bb4521586",
+      "status": [],
+      "api_files": [
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/apicredential/ApiCredentialValidationApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/apicredentialmanagement/ApiCredentialManagementApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/apiscopemanagement/ApiScopeManagementApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/authentication/OperationsAuthenticationApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/authentication/OperationsJwksQueryApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/authorization/OperationsAuthorizationApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/consolemanagement/ConsoleResourceManagementApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/gatewayconfiguration/GatewaySnapshotQueryApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/gatewayconfiguration/management/GatewayConfigurationManagementApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/operations/OperationsManagementApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/permissionmanagement/PermissionManagementApi.java",
+        "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/tenantaccessmanagement/TenantAccessManagementApi.java"
+      ],
+      "controller_files": [
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/apicredential/ApiCredentialValidationController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/apicredentialmanagement/ApiCredentialManagementController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/apiscopemanagement/ApiScopeManagementController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/authentication/OperationsAuthenticationController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/authentication/OperationsAuthorizationController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/authentication/OperationsJwksController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/authentication/OperationsManagementController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/configurationmanagement/ConsoleResourceManagementController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/configurationmanagement/PermissionManagementController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/gatewayconfiguration/GatewayConfigurationManagementController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/gatewayconfiguration/GatewaySnapshotController.java",
+        "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/tenantaccessmanagement/TenantAccessManagementController.java"
+      ]
+    },
+    "api-gateway": {
+      "head": "a2111df79213107f1697640a0f19466070047409",
+      "status": [],
+      "api_files": [],
+      "controller_files": []
+    },
+    "client-contract-service": {
+      "head": "a25a11a7697e9d746151f8d0e74c25ca303c2f35",
+      "status": [],
+      "api_files": [
+        "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/checkout/CheckoutContextApi.java",
+        "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/checkout/CheckoutEligibilityApi.java"
+      ],
+      "controller_files": [
+        "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ext/rest/CheckoutQueryController.java"
+      ]
+    },
+    "risk-compliance-service": {
+      "head": "c989f0c77a91e959dcb29a323ab930c1203f8495",
+      "status": [],
+      "api_files": [
+        "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionConfigurationQueryApi.java",
+        "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionDictionaryApi.java",
+        "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionFlowManagementApi.java",
+        "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionFlowQueryApi.java",
+        "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionReleaseManagementApi.java",
+        "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementApi.java",
+        "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/RiskVariableApi.java",
+        "risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/evaluation/ManualPayoutEligibilityApi.java"
+      ],
+      "controller_files": [
+        "risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionConfigurationQueryController.java",
+        "risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionDictionaryController.java",
+        "risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionFlowController.java",
+        "risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionReleaseManagementController.java",
+        "risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionRuleSetManagementController.java",
+        "risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/decision/RiskVariableController.java",
+        "risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/evaluation/ManualPayoutEligibilityController.java"
+      ]
+    },
+    "operations-console-bff": {
+      "head": "4685f620ad0f93ec9b78c687813a69100caf1666",
+      "status": [],
+      "api_files": [],
+      "controller_files": [
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/ApiCredentialManagementController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/ApiScopeManagementController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/ConsoleResourceController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/GatewayConfigurationController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/OperationsAuthenticationController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/OperationsManagementController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/PermissionManagementController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/RiskConfigurationQueryController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/RiskDecisionConfigurationController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/RiskDictionaryController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/RiskFlowController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/RiskVariableController.java",
+        "operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/TenantAccessManagementController.java"
+      ]
+    },
+    "operations-console-web": {
+      "head": "ff0b7003b5581eaafd926d7049ab23f3a8dc6462",
+      "status": [
+        " M docs/design.pen"
+      ],
+      "api_files": [],
+      "controller_files": []
+    }
+  },
+  "platform_relevant_model_vs_manual_ddl": [
+    {
+      "table": "t_user_account",
+      "fields": [
+        "account_id",
+        "realm",
+        "account_type",
+        "login_name",
+        "email_vault_token",
+        "email_masked",
+        "email_verified_time",
+        "status",
+        "consecutive_password_failures",
+        "locked_until",
+        "last_password_failure_time",
+        "credential_version",
+        "auth_epoch",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_password_credential",
+      "fields": [
+        "password_credential_id",
+        "account_id",
+        "password_verifier_phc",
+        "algorithm_code",
+        "algorithm_version",
+        "memory_kib",
+        "iterations",
+        "parallelism",
+        "credential_version",
+        "force_change_flag",
+        "status",
+        "password_changed_time",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_federated_identity",
+      "fields": [
+        "federated_identity_id",
+        "account_id",
+        "provider_code",
+        "provider_subject",
+        "binding_method",
+        "status",
+        "bound_time",
+        "revoked_time",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_access_tenant",
+      "fields": [
+        "tenant_id",
+        "tenant_type",
+        "owner_ref_id",
+        "tenant_name",
+        "owner_status",
+        "source_version",
+        "source_payload_hash",
+        "security_status",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_tenant_member",
+      "fields": [
+        "member_id",
+        "tenant_id",
+        "account_id",
+        "member_type",
+        "status",
+        "invited_by",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_tenant_invitation",
+      "fields": [
+        "invitation_id",
+        "invitation_no",
+        "tenant_id",
+        "invited_email_vault_token",
+        "invited_email_masked",
+        "member_type",
+        "initial_role_id",
+        "invited_by_member_id",
+        "expires_time",
+        "status",
+        "active_slot",
+        "accepted_account_id",
+        "accepted_member_id",
+        "accepted_time",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_authentication_challenge",
+      "fields": [
+        "challenge_id",
+        "challenge_no",
+        "realm",
+        "purpose",
+        "account_id",
+        "tenant_invitation_id",
+        "email_vault_token",
+        "email_masked",
+        "active_scope_hash",
+        "secret_hmac",
+        "hmac_key_version",
+        "expires_time",
+        "max_attempts",
+        "used_attempts",
+        "status",
+        "active_slot",
+        "consumed_time",
+        "supersedes_challenge_id",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_auth_session",
+      "fields": [
+        "session_id",
+        "account_id",
+        "realm",
+        "channel",
+        "context_type",
+        "tenant_id",
+        "tenant_member_id",
+        "authentication_method",
+        "account_auth_epoch",
+        "credential_version_snapshot",
+        "issued_time",
+        "last_reauthenticated_time",
+        "last_activity_time",
+        "idle_expire_time",
+        "absolute_expire_time",
+        "current_generation_no",
+        "status",
+        "revocation_reason",
+        "revoked_time",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_refresh_token_generation",
+      "fields": [
+        "refresh_generation_id",
+        "session_id",
+        "generation_no",
+        "token_lookup_id",
+        "token_secret_hmac",
+        "hmac_key_version",
+        "issued_time",
+        "expires_time",
+        "status",
+        "active_slot",
+        "consumed_time",
+        "replaced_by_generation_id",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_jwt_signing_key",
+      "fields": [
+        "signing_key_id",
+        "realm",
+        "kid",
+        "algorithm",
+        "kms_key_ref",
+        "public_jwk_schema_version",
+        "public_jwk_canonical_json",
+        "status",
+        "active_slot",
+        "not_before",
+        "signing_end_time",
+        "verification_end_time",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_role",
+      "fields": [
+        "role_id",
+        "tenant_scope",
+        "tenant_id",
+        "scope_key",
+        "role_code",
+        "role_name",
+        "status",
+        "system_role",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_permission",
+      "fields": [
+        "permission_id",
+        "permission_code",
+        "resource_type",
+        "action_code",
+        "risk_level",
+        "status",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_tenant_member_role",
+      "fields": [
+        "tenant_member_role_id",
+        "tenant_member_id",
+        "tenant_id",
+        "role_id",
+        "role_scope_key",
+        "effective_from",
+        "effective_to",
+        "granted_by",
+        "status",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_role_permission",
+      "fields": [
+        "role_permission_id",
+        "role_id",
+        "permission_id",
+        "status",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": true
+    },
+    {
+      "table": "t_file_upload",
+      "fields": [
+        "upload_id",
+        "tenant_id",
+        "uploader_id",
+        "expected_size",
+        "expected_mime",
+        "upload_token_hash",
+        "expires_time",
+        "status",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_file_scan_policy",
+      "fields": [
+        "policy_id",
+        "policy_code",
+        "revision_no",
+        "rule_schema_version",
+        "allowed_mime_rules",
+        "max_size_bytes",
+        "effective_from",
+        "effective_to",
+        "status",
+        "active_slot",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_file_scan_requirement",
+      "fields": [
+        "requirement_id",
+        "policy_id",
+        "requirement_no",
+        "scanner_code",
+        "scan_type",
+        "minimum_scanner_version",
+        "accepted_result_codes",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_file_object",
+      "fields": [
+        "file_id",
+        "creation_source",
+        "upload_id",
+        "storage_provider",
+        "storage_container_ref",
+        "storage_object_ref",
+        "object_version",
+        "content_hash",
+        "size_bytes",
+        "mime_type",
+        "storage_encryption_key_ref",
+        "classification",
+        "scan_policy_id",
+        "scan_status",
+        "object_status",
+        "available_time",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_file_owner_ref",
+      "fields": [
+        "owner_ref_row_id",
+        "file_id",
+        "owner_system",
+        "owner_type",
+        "owner_ref_id",
+        "purpose_code",
+        "create_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_file_scan_result",
+      "fields": [
+        "scan_result_id",
+        "file_id",
+        "scan_requirement_id",
+        "scan_policy_id",
+        "attempt_no",
+        "scanner_runtime_version",
+        "result_code",
+        "scanned_time",
+        "create_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_notification_provider",
+      "fields": [
+        "provider_id",
+        "provider_code",
+        "channel",
+        "adapter_code",
+        "revision_no",
+        "endpoint_ref",
+        "secret_ref",
+        "callback_verification_key_ref",
+        "callback_algorithm",
+        "capability_config",
+        "capability_schema_version",
+        "effective_from",
+        "effective_to",
+        "status",
+        "active_slot",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_notification_request",
+      "fields": [
+        "request_id",
+        "tenant_id",
+        "source_system",
+        "source_event_key",
+        "source_version",
+        "source_payload_hash",
+        "notification_type",
+        "notification_template_id",
+        "priority",
+        "status",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_notification_delivery",
+      "fields": [
+        "delivery_id",
+        "request_id",
+        "tenant_id",
+        "recipient_no",
+        "channel",
+        "address_vault_token",
+        "address_blind_index",
+        "address_blind_key_ver",
+        "address_masked",
+        "locale",
+        "notification_template_id",
+        "notify_template_translation_id",
+        "message_vault_token",
+        "subject_masked",
+        "body_preview_masked",
+        "sensitivity",
+        "expires_time",
+        "notification_route_id",
+        "status",
+        "next_retry_time",
+        "attempt_count",
+        "lease_owner",
+        "lease_until",
+        "fencing_token",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_notification_attempt",
+      "fields": [
+        "attempt_id",
+        "delivery_id",
+        "attempt_no",
+        "provider_id",
+        "fencing_token",
+        "provider_request_key",
+        "provider_message_id",
+        "request_hash",
+        "response_code",
+        "result",
+        "started_time",
+        "finished_time",
+        "create_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_notification_route",
+      "fields": [
+        "route_id",
+        "route_code",
+        "revision_no",
+        "tenant_id",
+        "notification_type",
+        "channel",
+        "notification_template_id",
+        "primary_provider_id",
+        "fallback_provider_id",
+        "priority",
+        "effective_from",
+        "effective_to",
+        "status",
+        "active_slot",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_notification_provider_callback",
+      "fields": [
+        "callback_id",
+        "provider_id",
+        "provider_message_id",
+        "provider_event_id",
+        "callback_dedup_key",
+        "callback_type",
+        "occurred_time",
+        "payload_hash",
+        "signature_status",
+        "verification_time",
+        "verification_failure_code",
+        "notification_attempt_id",
+        "notification_delivery_id",
+        "create_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_notification_suppression",
+      "fields": [
+        "suppression_id",
+        "channel",
+        "address_blind_index",
+        "address_blind_key_ver",
+        "reason_code",
+        "source_callback_id",
+        "effective_from",
+        "expires_time",
+        "status",
+        "active_slot",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    },
+    {
+      "table": "t_notification_template",
+      "fields": [
+        "template_id",
+        "template_code",
+        "channel",
+        "purpose",
+        "revision_no",
+        "variable_schema",
+        "variable_schema_version",
+        "status",
+        "active_slot",
+        "version",
+        "create_time",
+        "update_time"
+      ],
+      "in_manual_schema": false
+    }
+  ],
+  "risk_compliance_production_files": [
+    "risk-compliance-service/risk-compliance/src/main/java/com/paytech/risk/compliance/package-info.java",
+    "risk-compliance-service/risk-compliance/src/main/resources/.gitkeep"
+  ],
+  "platform_relevant_test_files": [
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/apicredential/ApiCredentialAuthenticationServiceAutoTest.java",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/OperationsJwksHttpAutoTest.java",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/gatewayconfiguration/RiskDictionaryRegistrationCatalogAutoTest.java",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/operations/OperationsAuthenticationConcurrencyHttpAutoTest.java",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/operations/OperationsAuthenticationHttpAutoTest.java",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/tenantaccess/TenantAccessManagementHttpAutoTest.java",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/configuration/OperationsAuthenticationVaultConfigurationAutoTest.java",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/tenantaccess/TenantAccessFixture.java",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/tenantaccess/TenantAccessTestMapper.java"
+  ],
+  "source_hashes": {
+    "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/authentication/OperationsAuthenticationApi.java": "9c34aed5ff6501632dd200ef5202021ac0869b9ce8386ef1181fba838ff4c808",
+    "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/authentication/OperationsJwksQueryApi.java": "d53d03250fe480efcb529b641c7eb4ccb4125c684263e679de542c323d1fe794",
+    "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/tenantaccessmanagement/TenantAccessManagementApi.java": "2ebcc841c1670cbcd4e957ad6683488fbfb77d15fc8a2355c3f0e378b2327217",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/integration/vault/VaultLoginEmailVault.java": "08f2fa71e6bc5eb0d2d7377447ba3d00819793fc2584626c175c1dccd617462d",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/integration/vault/LocalLoginEmailVault.java": "1916cbc3afe5ad85262830ada0441cd81929ec75a3ba56fbfa8bcd7fbae08665",
+    "platform-support-service/docs/database/platform-support.pdma.json": "56991d1ede96b2bed6b916862235047f75cacc4dce36a52e87f169510c9c2d4a",
+    "platform-support-service/docs/database/sql/platform-support-schema.sql": "93c20409932bebca720919f9d1f101ebaddc75479ed69ae99383d683424a7e4e",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ext/rest/CheckoutQueryController.java": "b6c916c81d33d298827a5deb9090b5a2f2a5da0ce89f2ccfe8a6c86c35845319",
+    "client-contract-service/docs/database/client-contract.pdma.json": "1ad770428ecdc12f5df55fc719213ca49262dea8274662032772eb88f5835108",
+    "client-contract-service/docs/database/sql/client-contract-schema.sql": "b28fecb393e2cf74d4561421753f08704cad268ace65c48e698cd584a1c0d4a7",
+    "risk-compliance-service/risk-compliance/src/main/java/com/paytech/risk/compliance/package-info.java": "d10373a6de08f623c79460d5c33ebd0371ebdc71945ad299da8164cae9a8b50d",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/OperationsSecurityConfiguration.java": "809386bc9a3ae593306ec4dcacfba544265438f32bea0f927df16a775f784641",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/ReactiveJwksProvider.java": "0a46810fdcaab49322466c043e9f6aca17957801038172d6df0c6ef08cabdf2e"
+  }
+}

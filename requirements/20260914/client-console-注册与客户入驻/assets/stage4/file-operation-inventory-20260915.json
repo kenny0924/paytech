@@ -1,0 +1,41 @@
+{
+  "status": "Confirmed contract delta; implementation and deployment only in CURRENT_IMPLEMENTATION",
+  "authority": "../../file-upload-closure-proposal.md",
+  "predecessor": "../stage3/api-operation-inventory.json",
+  "publicOperations": 37,
+  "internalOperations": 6,
+  "totalOperations": 43,
+  "addedInternalQueries": [
+    {
+      "id": "I04",
+      "method": "GET",
+      "path": "/internal/client-onboarding/file-targets",
+      "owner": "CCT",
+      "request": "applicationId + subjectPartyId + trusted accountId",
+      "response": "FileTargetResponseBody"
+    },
+    {
+      "id": "I05",
+      "method": "GET",
+      "path": "/internal/onboarding-files/files/{fileId}/verification",
+      "owner": "Platform",
+      "request": "fileId + expectedApplicationId + expectedSubjectPartyId + expectedClientId + requestingAccountId + purpose",
+      "response": "FileVerificationResponseBody"
+    },
+    {
+      "id": "I06",
+      "method": "GET",
+      "path": "/internal/due-diligence/material-requirements",
+      "owner": "Risk",
+      "request": "qualificationType + countryCode",
+      "response": "MaterialRequirementsResponseBody"
+    }
+  ],
+  "changedOperations": {
+    "F01": "subjectPartyId and UUID Idempotency-Key required; retain original target and expiry",
+    "F02": "UUID Idempotency-Key required; fixed FileCompletionReceipt; F03 reads current File",
+    "C12": "fixed DocumentCommandReceipt; C05 reads current references"
+  },
+  "publicRoutesAdded": 0,
+  "registrationDmlRows": 0
+}

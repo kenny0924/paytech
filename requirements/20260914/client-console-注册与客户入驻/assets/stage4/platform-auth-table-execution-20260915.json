@@ -1,0 +1,80 @@
+{
+  "authorizedBy": "User confirmed the exact local single-table execution candidate with 可以",
+  "recordedAt": "2026-09-15T06:56:56.182989+00:00",
+  "target": {
+    "dockerContext": "desktop-linux",
+    "container": "mor-local-mysql-1",
+    "host": "127.0.0.1",
+    "port": 13306,
+    "database": "mor_platform_config_validation"
+  },
+  "sqlSource": "requirements/20260914/client-console-注册与客户入驻/db/implementation/platform-support-additions.sql",
+  "statementSha256": "75d3593444014a252fdcfa6b864b3e55840e40e5015308b373cb778e05a6ad30",
+  "statementsApplied": 1,
+  "executionStatus": "applied and verified",
+  "credentials": "Verified local container; memory only; .env.local not read",
+  "existingTableChecks": [
+    {
+      "table": "t_user_account",
+      "columns": 16,
+      "indexes": 4,
+      "columnsIndexesAndTableMetadataMatch": true
+    },
+    {
+      "table": "t_password_credential",
+      "columns": 15,
+      "indexes": 2,
+      "columnsIndexesAndTableMetadataMatch": true
+    },
+    {
+      "table": "t_auth_session",
+      "columns": 22,
+      "indexes": 5,
+      "columnsIndexesAndTableMetadataMatch": true
+    },
+    {
+      "table": "t_refresh_token_generation",
+      "columns": 15,
+      "indexes": 5,
+      "columnsIndexesAndTableMetadataMatch": true
+    },
+    {
+      "table": "t_jwt_signing_key",
+      "columns": 15,
+      "indexes": 4,
+      "columnsIndexesAndTableMetadataMatch": true
+    },
+    {
+      "table": "t_audit_chain",
+      "columns": 11,
+      "indexes": 3,
+      "columnsIndexesAndTableMetadataMatch": true
+    },
+    {
+      "table": "t_audit_event",
+      "columns": 26,
+      "indexes": 7,
+      "columnsIndexesAndTableMetadataMatch": true
+    }
+  ],
+  "structureBackup": {
+    "path": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-auth-schema-backup-dsuiojfm/mor_platform_config_validation-before.sql",
+    "sha256": "2a6bc27caa6b1de223aab7de4e7cdf52fc8577233edd2e0321a2f81ac7c954c6",
+    "tables": 25
+  },
+  "newTableCheck": {
+    "table": "t_authentication_challenge",
+    "columns": 21,
+    "indexes": 7,
+    "columnsIndexesAndTableMetadataMatch": true
+  },
+  "existingTablesUnchanged": true,
+  "tableCountAfter": 26,
+  "challengeRows": 0,
+  "fixtureCounts": {
+    "customerAccounts": 0,
+    "customerKeys": 0,
+    "clientSessions": 0,
+    "testDateAuditChains": 0
+  }
+}

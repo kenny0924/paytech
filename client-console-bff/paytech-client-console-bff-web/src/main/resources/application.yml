@@ -1,0 +1,71 @@
+server:
+  address: ${CLIENT_BFF_BIND_ADDRESS:127.0.0.1}
+  port: 18202
+  forward-headers-strategy: none
+
+spring:
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  application:
+    name: client-console-bff
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:mor-local}
+        ip: ${CLIENT_BFF_BIND_ADDRESS:127.0.0.1}
+  jmx:
+    enabled: false
+
+logging:
+  pattern:
+    level: "%5p %kvp"
+
+management:
+  server:
+    address: 127.0.0.1
+    port: 19202
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      validate-group-membership: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+client:
+  onboarding-enabled: false
+  console-origin: https://client-console.local.test
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /client-auth
+      - /client-onboarding
+      - /onboarding-files

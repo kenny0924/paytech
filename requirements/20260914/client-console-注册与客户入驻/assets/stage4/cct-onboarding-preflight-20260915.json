@@ -1,0 +1,888 @@
+{
+  "observedAt": "2026-09-15T08:53:37.977463+00:00",
+  "status": "READ_ONLY_PREFLIGHT; NOT_SQL_EXECUTION; NOT_AUTHORIZATION",
+  "target": {
+    "dockerContext": "desktop-linux",
+    "composeProject": "mor-local",
+    "container": "mor-local-mysql-1",
+    "host": "127.0.0.1",
+    "port": 13306
+  },
+  "sourceCommit": "a25a11a7697e9d746151f8d0e74c25ca303c2f35",
+  "sourceModelSha256": "1ad770428ecdc12f5df55fc719213ca49262dea8274662032772eb88f5835108",
+  "sourceSchemaSha256": "b28fecb393e2cf74d4561421753f08704cad268ace65c48e698cd584a1c0d4a7",
+  "ddl": {
+    "path": "requirements/20260914/client-console-注册与客户入驻/db/implementation/client-contract-empty-closure.sql",
+    "sha256": "dc091d30620d30374fa0e5a0b54f93614201bf4e5c46016d1e1958ebc76a0815",
+    "tables": [
+      "t_party_profile",
+      "t_individual_profile",
+      "t_organization_profile",
+      "t_party_address",
+      "t_party_contact",
+      "t_party_profile_identifier",
+      "t_party_identity_key",
+      "t_party_relation",
+      "t_client_business_profile",
+      "t_client_application"
+    ]
+  },
+  "cct": {
+    "database": "mor_cct",
+    "rowCounts": {
+      "t_agreement": 0,
+      "t_agreement_document_ref": 0,
+      "t_agreement_operating_entity": 0,
+      "t_agreement_party": 0,
+      "t_application_document": 0,
+      "t_business_change_record": 0,
+      "t_business_change_version": 0,
+      "t_client": 0,
+      "t_client_application": 0,
+      "t_client_business_classification": 0,
+      "t_client_business_profile": 0,
+      "t_client_entity_affiliation": 0,
+      "t_command_idempotency": 0,
+      "t_commercial_term_component": 0,
+      "t_commercial_term_component_band": 0,
+      "t_commercial_term_plan": 0,
+      "t_commercial_term_price": 0,
+      "t_commercial_term_version": 0,
+      "t_compensation_event": 0,
+      "t_consumer_legal_document": 0,
+      "t_entity_source_relation": 0,
+      "t_individual_profile": 0,
+      "t_local_partner": 0,
+      "t_operating_entity": 0,
+      "t_operating_entity_application": 0,
+      "t_operating_entity_scope": 0,
+      "t_organization_profile": 0,
+      "t_partner_application": 0,
+      "t_party": 0,
+      "t_party_address": 0,
+      "t_party_contact": 0,
+      "t_party_identity_key": 0,
+      "t_party_profile": 0,
+      "t_party_profile_identifier": 0,
+      "t_party_relation": 0,
+      "t_payment_method_profile": 0,
+      "t_payment_method_profile_cond": 0,
+      "t_seller_disclosure": 0
+    },
+    "sourceComparison": [
+      {
+        "table": "t_agreement",
+        "columnCount": 16,
+        "indexCount": 5,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_agreement_document_ref",
+        "columnCount": 7,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_agreement_operating_entity",
+        "columnCount": 5,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_agreement_party",
+        "columnCount": 16,
+        "indexCount": 7,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_application_document",
+        "columnCount": 11,
+        "indexCount": 5,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_business_change_record",
+        "columnCount": 9,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_business_change_version",
+        "columnCount": 8,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client",
+        "columnCount": 9,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client_application",
+        "columnCount": 20,
+        "indexCount": 7,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client_business_classification",
+        "columnCount": 7,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client_business_profile",
+        "columnCount": 16,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client_entity_affiliation",
+        "columnCount": 10,
+        "indexCount": 6,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_command_idempotency",
+        "columnCount": 10,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_commercial_term_component",
+        "columnCount": 15,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_commercial_term_component_band",
+        "columnCount": 9,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_commercial_term_plan",
+        "columnCount": 10,
+        "indexCount": 6,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_commercial_term_price",
+        "columnCount": 11,
+        "indexCount": 5,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": false,
+        "commentDifferenceIsOnlyProviderToChannel": true
+      },
+      {
+        "table": "t_commercial_term_version",
+        "columnCount": 11,
+        "indexCount": 5,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_compensation_event",
+        "columnCount": 20,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_consumer_legal_document",
+        "columnCount": 16,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_entity_source_relation",
+        "columnCount": 12,
+        "indexCount": 6,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_individual_profile",
+        "columnCount": 9,
+        "indexCount": 1,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_local_partner",
+        "columnCount": 8,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_operating_entity",
+        "columnCount": 6,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_operating_entity_application",
+        "columnCount": 22,
+        "indexCount": 7,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_operating_entity_scope",
+        "columnCount": 13,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_organization_profile",
+        "columnCount": 8,
+        "indexCount": 1,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_partner_application",
+        "columnCount": 17,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party",
+        "columnCount": 5,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_address",
+        "columnCount": 11,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_contact",
+        "columnCount": 9,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_identity_key",
+        "columnCount": 9,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_profile",
+        "columnCount": 11,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_profile_identifier",
+        "columnCount": 7,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_relation",
+        "columnCount": 14,
+        "indexCount": 5,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_payment_method_profile",
+        "columnCount": 7,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": false,
+        "commentDifferenceIsOnlyProviderToChannel": true
+      },
+      {
+        "table": "t_payment_method_profile_cond",
+        "columnCount": 6,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_seller_disclosure",
+        "columnCount": 18,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    ],
+    "closureChecks": [
+      {
+        "table_name": "t_party_profile",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_individual_profile",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_organization_profile",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party_address",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party_contact",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party_profile_identifier",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party_identity_key",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party_relation",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_client_business_profile",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_client_application",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_client",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_client_business_classification",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_partner_application",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_operating_entity_application",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_agreement_party",
+        "row_count": 0
+      },
+      {
+        "reference_name": "t_individual_profile.profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_organization_profile.profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_party_address.profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_party_contact.profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_party_profile_identifier.profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_party_profile_identifier.identity_key_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_client_application.base_party_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_client_application.target_party_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_client_application.base_business_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_client_application.target_business_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_client_business_classification.business_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_partner_application.target_party_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_operating_entity_application.party_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_agreement_party.party_profile_id",
+        "missing_parent_count": 0
+      }
+    ],
+    "otherDatabaseConnections": 0,
+    "physicalCheckOrForeignKeyCount": 0,
+    "structureBackup": {
+      "path": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-cct-preflight-fiju8a_5/mor_cct-show-create.sql",
+      "sha256": "4da554fd74292702e55f71a68e3f97a8cf60dd9100b7d98239ab117dd5b41272",
+      "mode": "0600"
+    },
+    "allTablesEmpty": true
+  },
+  "otherOwnerInventories": [
+    {
+      "owner": "commerce",
+      "database": "mor_commerce",
+      "rowCounts": {
+        "t_checkout_network_evidence": 0,
+        "t_checkout_session": 0,
+        "t_command_idempotency": 0,
+        "t_commerce_order": 0,
+        "t_compensation_event": 3,
+        "t_consumer_acceptance": 0,
+        "t_consumer_context": 0,
+        "t_consumer_contract": 0,
+        "t_order_context": 0,
+        "t_order_funds_availability_projection": 0,
+        "t_order_item": 0,
+        "t_order_legal": 0,
+        "t_order_payment_projection": 0,
+        "t_order_refund_position": 0,
+        "t_refund_request": 0
+      },
+      "compensationGroups": [
+        {
+          "event_type": "SUBMISSION_EVENT_TYPE",
+          "sub_event_type": "-",
+          "execute_status": "FAILED",
+          "count": 2
+        },
+        {
+          "event_type": "SUBMISSION_EVENT_TYPE",
+          "sub_event_type": "OTHER",
+          "execute_status": "FAILED",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "owner": "payment",
+      "database": "mor_payment",
+      "rowCounts": {
+        "t_channel_refund": 0,
+        "t_channel_transaction_ref": 0,
+        "t_command_idempotency": 0,
+        "t_compensation_event": 0,
+        "t_duplicate_payment_case": 0,
+        "t_payment_action": 0,
+        "t_payment_attempt": 0,
+        "t_payment_instrument": 0,
+        "t_payment_intent": 0,
+        "t_payment_intent_binding": 0,
+        "t_payment_pricing_fact": 0,
+        "t_payment_refund_position": 0,
+        "t_payment_state_transition": 0
+      }
+    },
+    {
+      "owner": "risk",
+      "database": "mor_risk",
+      "rowCounts": {
+        "t_action_effect": 0,
+        "t_action_parameter_definition": 4,
+        "t_action_version": 5,
+        "t_checkout_input_snapshot": 0,
+        "t_command_idempotency": 0,
+        "t_compensation_event": 0,
+        "t_dd_case_dependency": 0,
+        "t_dd_case_state_change": 0,
+        "t_dd_case_subject": 0,
+        "t_dd_check": 0,
+        "t_dd_evidence_ref": 0,
+        "t_dd_party_snapshot": 0,
+        "t_dd_program": 0,
+        "t_dd_program_check": 0,
+        "t_dd_program_requirement": 0,
+        "t_dd_program_screening": 0,
+        "t_dd_program_version": 0,
+        "t_dd_requirement": 0,
+        "t_decision_evaluation": 0,
+        "t_decision_flow": 0,
+        "t_decision_flow_edge": 0,
+        "t_decision_flow_node": 0,
+        "t_decision_flow_version": 0,
+        "t_decision_point": 1,
+        "t_decision_point_feature": 0,
+        "t_decision_point_input_field": 0,
+        "t_decision_point_limit_binding": 0,
+        "t_decision_point_obligation": 0,
+        "t_decision_point_rule_set": 0,
+        "t_decision_point_version": 0,
+        "t_decision_release": 0,
+        "t_dispute_case": 0,
+        "t_dispute_evidence_package": 0,
+        "t_dispute_evidence_ref": 0,
+        "t_dispute_liability_decision": 0,
+        "t_dispute_outcome": 0,
+        "t_dispute_state_change": 0,
+        "t_dispute_submission_request": 0,
+        "t_due_diligence_case": 0,
+        "t_evaluation_action_intent": 0,
+        "t_evaluation_feature_result": 0,
+        "t_evaluation_rule_trace": 0,
+        "t_feature_dependency": 0,
+        "t_feature_version": 0,
+        "t_limit_group_state_change": 0,
+        "t_limit_movement": 0,
+        "t_limit_position": 0,
+        "t_limit_reservation": 0,
+        "t_limit_reservation_group": 0,
+        "t_limit_version": 0,
+        "t_payment_attempt_fact": 0,
+        "t_qualification_decision": 0,
+        "t_qualification_state_change": 0,
+        "t_release_audit_event": 0,
+        "t_release_shadow_run": 0,
+        "t_risk_list": 0,
+        "t_risk_list_entry": 0,
+        "t_risk_restriction": 0,
+        "t_risk_rule": 0,
+        "t_risk_variable": 17,
+        "t_risk_variable_member": 9,
+        "t_role_qualification": 0,
+        "t_rule_action": 0,
+        "t_rule_action_parameter": 0,
+        "t_rule_node": 0,
+        "t_rule_operand": 0,
+        "t_rule_reject_reason": 0,
+        "t_rule_set": 0,
+        "t_rule_set_version": 0,
+        "t_rule_subject_tag": 0,
+        "t_screening_hit": 0,
+        "t_screening_resolution": 0,
+        "t_screening_run": 0,
+        "t_settle_control_state_change": 0,
+        "t_settlement_control": 0,
+        "t_settlement_control_scope": 0,
+        "t_settlement_risk_assessment": 0,
+        "t_transaction_risk_assessment": 0,
+        "t_velocity_event": 0,
+        "t_velocity_event_subject": 0
+      }
+    },
+    {
+      "owner": "finance",
+      "database": "mor_finance",
+      "rowCounts": {
+        "t_account": 0,
+        "t_chart_account": 0,
+        "t_ledger_book": 0
+      }
+    },
+    {
+      "owner": "platform",
+      "database": "mor_platform",
+      "rowCounts": {
+        "t_access_tenant": 1,
+        "t_api_credential": 0,
+        "t_api_credential_scope": 0,
+        "t_audit_chain": 1,
+        "t_audit_event": 2,
+        "t_audit_event_attr": 2,
+        "t_auth_session": 1,
+        "t_command_idempotency": 1,
+        "t_console_resource": 12,
+        "t_gateway_guard_rule": 122,
+        "t_gateway_route": 21,
+        "t_gateway_route_header": 82,
+        "t_gateway_route_query_param": 12,
+        "t_gateway_target": 1,
+        "t_jwt_signing_key": 1,
+        "t_password_credential": 2,
+        "t_permission": 12,
+        "t_refresh_token_generation": 1,
+        "t_role": 2,
+        "t_role_permission": 16,
+        "t_security_event": 0,
+        "t_tenant_member": 2,
+        "t_tenant_member_role": 3,
+        "t_user_account": 2
+      },
+      "tenantTypes": [
+        {
+          "tenant_type": "INTERNAL",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Point-in-time inventory, not a writer shutdown or exclusive migration lock.",
+    "Only named local databases inspected; no shared environment or browser verification.",
+    "External task contents and business values were not read; nonempty groups require Owner review.",
+    "Legacy CCT compensation table is outside the ten-ALTER candidate and cannot use current Foundation."
+  ],
+  "scriptSha256": "41587cc607e3793db8e6dccfcc79a686db1a8b3d625dab5ba3abd3c80b2c54a1",
+  "verification": {
+    "command": "JAVA_HOME=<JDK 25> CCT_TEST_DB_PASSWORD=<in-memory verified local credential> ./mvnw test -Dtest=CheckoutQueryHttpBoundaryAutoTest -Dsurefire.failIfNoSpecifiedTests=false",
+    "workingDirectory": "client-contract-service",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "testCases": [
+      "approvedCatalogAndCanonicalIdsAreValidatedWithoutDatabaseFallback",
+      "malformedUnknownAndCoercedBodyFieldsFailAtHttpBoundary",
+      "callerAndClosedQueryParametersAreEnforced",
+      "unavailableRiskNeverApprovesClient"
+    ],
+    "reportSha256": "96e05940d3651836c3dc873078e67136ad7fcc189b35ebb9d639700cf09e1357",
+    "scope": "Real CCT HTTP input boundary and unavailable Risk adapter; no business fixture writes; not draft persistence or complete Checkout database regression.",
+    "firstAttempt": "Reactor stopped at API module with no matching tests; retried with failIfNoSpecifiedTests=false only for non-test modules and verified the selected suite executed four tests."
+  },
+  "writerObservation": {
+    "cctJavaProcesses": [],
+    "port18101ListenerPids": [],
+    "limitation": "Observed after test exit; recheck before execution."
+  },
+  "externalReview": {
+    "commerceFailedTasks": "All three are SUBMISSION_EVENT_TYPE; current RefundSubmissionHandler reads Commerce refund facts and calls Payment only. No deletion or replay authorized.",
+    "riskNonemptyTables": "Rule catalog only; no existing case/source rows in inventoried database.",
+    "platformTenantTypes": "INTERNAL only; no CLIENT or PARTNER tenant projection in mor_platform.",
+    "limitation": "Only inventoried local databases; does not assert deployment parity or missing-table readiness."
+  },
+  "sourceFingerprints": {
+    "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/checkout/CheckoutContextApi.java": "2fa1d1b5a5666e176dead96e5d428d5a29cd7d0af96c82693d61d1ac2507cd53",
+    "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/checkout/CheckoutContextModels.java": "faebd8de53a27f826d6ae812c43b739be69f3fca24a500a2aaa330006f0e6ba0",
+    "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/checkout/CheckoutEligibilityApi.java": "d967eccdd02d633fb0b9572734c810356ad359ee4028b4f34bec744ec3076110",
+    "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/checkout/CheckoutEligibilityModels.java": "b1c370547dda011a7c9a3e1caff60d9201ebcb3a176161c423a759cfab74d6df",
+    "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/enums/CheckoutErrorCode.java": "96a3cc046ef881372567f3bce626df821f0d4be8a373e7d5bbb252d46c2e52d2",
+    "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/package-info.java": "8d160efff3b4fabd6d3ac2ad7c9a0c8439e7b12e37c6e586287ebf2e37ebd2fb",
+    "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/CheckoutCandidateRulesAutoTest.java": "1cd665a4522d19b186b452a7e71dfd0ea3dbe4a53acf0269632147aa76fd8b0d",
+    "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/CheckoutQueryContractAutoTest.java": "e112df5dbf039e5709146566d0d6f2bc27839fcda1f4420d6270b5164eb5a684",
+    "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/CheckoutQueryHttpAutoTest.java": "ae07ab6cd265a8a81a364309309cd8d13f9a126959e77ffa7d19dd7023858521",
+    "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/CheckoutQueryHttpBoundaryAutoTest.java": "cc71a0b2f0c3a64c0bbc5b9528a4d269ad4cab639e01e2be5bbbb91d3805a84c",
+    "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractApplicationAutoTest.java": "1bb0e17c20f693273260e1cefafc64be0e574a9d5467373b620a26be012cf61c",
+    "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractConfigurationAutoTest.java": "af5bf124a509be3c11952fb36b7a3422731da41f564a128ba04e03fbcff48e14",
+    "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractHealthAutoTest.java": "0cbec39ae0f914ad9306fbda07765ede830f9aeaaa6feb4cf0d2bdd71e26957c",
+    "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractProblemProfileAutoTest.java": "0e8c6dcb2a20bb619890dad2a7d71c83f521d1b8cd04531af5788393c14beaad",
+    "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/test/CheckoutFixture.java": "c5ca2bacf4a5168eecc06edd25be963d67048f340eb20e87167f937914251ab0",
+    "client-contract-service/client-contract-test/src/test/resources/application-auto.yml": "ecd44374503ec174ab0aaa685414a6da8daeadc3e9d2c3154b30a2127c3377bf",
+    "client-contract-service/client-contract-test/src/test/resources/application-checkout-auto.yml": "389ca467b115d2741e381c257d5096bee04fc2754df0ae38de99e4e7ecea0a0f",
+    "client-contract-service/client-contract-test/src/test/resources/fixtures/checkout-query.json": "eca13d9cf38d6d8aa83bf0f456be0b1766af11b54d57b16d9cacf07e8bd56841",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ClientContractApplication.java": "f84a6604aeef8ee328e5433e21bf386c0562cd5de3d73da6994e9cf3069a5c71",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/CheckoutHttpBoundaryConfiguration.java": "b9bcd60d018cec2c1e25fd843ae2dccc2ee7a2b79a74923f1646f1acd62b71cc",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/CheckoutQueryConfiguration.java": "458b6db25ecb17081cd8d74487dffcad333cae62d5c7729aff4841400bea0ab4",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/CheckoutQueryProperties.java": "ff78c05e137b951abd7ae506430eb9474bf347f71fcf6957fe7c7d026a689c12",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/dataobject/CheckoutRecords.java": "168ddee23f4678efa63d722f64c5c0e14d762380c9f73567a2e7fdf8a86ff499",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/mapper/CheckoutQueryMapper.java": "19b8043c86224b4051ed67091af718ef881abdadcf4ecb62022c93f1277c2448",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/CheckoutContext.java": "e30aff044c1892acec19479fd00ae69cedbfcbdc129159619171afabf7ff69bd",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/CheckoutQuery.java": "3bf272da9870cd2fa9335e37feaf15773eda0d768296d0e6367c6923699d8ce0",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/CheckoutSelection.java": "7cad3bf4b9d708ffe71762543919ae5be02f7b92a26f34cd5603636116378738",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementAgreementFormat.java": "32e4e8bd87beaff877e16382086e23f16fe5b9a56ea6817441aeedd2a9947194",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementAgreementType.java": "08ea9555bd0482709a60ec8b6f23961f5032ee80b7ab24bb475b09bd5083c70d",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementDocumentRefDocumentType.java": "c68bb082c8a1c8ddc0da6e4336bacfaa88512607c4a1dd1ad82183d05974750d",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementPartyAcceptanceMethod.java": "872050dc1771cb0e5eafd04b970f6fcb9ec6bea8287550f3eb03ccbbe491d202",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementPartyPartyRole.java": "d47f5dd68bb39e61b24ae33f3574b230d03c33d819443ffbff82d85ee5726fd0",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementStatus.java": "61582a3be60623c3299aa6383f1c8b49cf3065f88df6147c726eb84bbc9a39de",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/BusinessChangeRecordAggregateRootType.java": "7f7ca7447866c967c5f068496aef25fdfa8f7985276bf3a3b32868d93cb268c0",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/BusinessChangeRecordRecordType.java": "093d838023a4c697f9f48b69f6be18e0da20364d16fcc139223edbab214bd681",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/ClientEntityAffiliationStatus.java": "f652a1b5cccffbe7a525b535bd2c477e73949c4a3fb149fd140886b892e2de0d",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/ClientStatus.java": "d4b1a50337b2988d499bf053c90b540ba6431279071b3eb3eb3232aa92a60543",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/CommercialTermComponentBandMode.java": "ffaee7051542f25c73333180e53509859baa26db4f3df867f98e0299ff7859a2",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/CommercialTermComponentComponentType.java": "9129702f8454d4e95ba52d0c37d319bb93b977bab2e5e7dd8f5d770ae85e53c0",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/CommercialTermPlanTermType.java": "de4c51cd5d648354a47d73f2d788919613624161010148a8cf43fa1f7e65fda4",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/CommercialTermVersionStatus.java": "44622bba0999c5075e06e1fd80c0aedec94df9c6f0d282deb93957978c02ce39",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/ConsumerLegalDocumentDocumentType.java": "92efdc9f31e4012b315d786cd7b7645fe28089de8cc8b9d93edda4bdf511ff05",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/ConsumerLegalDocumentStatus.java": "eb02c1f3d9eb5c894d9c7801200b6220e0aa962a92a2b0c64d6e23b55e51c71f",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/EntitySourceRelationClientSourceBasis.java": "2e34e3b52b8d79d2b2530fe7c11aadb5d8161b18d26db8c443454098af462cc1",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/EntitySourceRelationSourceType.java": "f46594419c46feefddea9275947b9714d90bf68a3b2b5243b69d34d081732789",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/EntitySourceRelationStatus.java": "f84baad57ef5f2479b25008c66b1560c8ac344509fb7ab176a82d8f75bdde97a",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/LocalPartnerStatus.java": "3623cea382a7ebcc6574c918a3ca75b1aa53ad539868ce3a1f6ff874c5dca6f2",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/OperatingEntityApplicationStatus.java": "7373d305c75cc64e7cc2af5eee52517f499c4bb45644d970327b6b8261e041c9",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/OperatingEntityScopeStatus.java": "dd27d43ddbd5f2b3facb75d76073345751a5235c7d7758a669d53628b3a90402",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/OperatingEntityStatus.java": "0e7ae6e8e9239b80ed20c12030e091a9a3c4474e89231a2dcb3518774e8b2a69",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/PaymentMethodProfileStatus.java": "10a3697b1422f077e144b7e8e6be19f4785171c04ad589f77070e693414f2b9c",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/SellerDisclosureStatus.java": "2307d544d0b2814048475b2f6a989a85deb4ed324ac7f6fee3566f6953967357",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/CheckoutCandidateRules.java": "bc2e9c8ebfa96303e778ff19ad890a75bf396a843984b0b898b141541f242c54",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/repository/CheckoutQueryRepository.java": "82ade69f7959eb65d8f39a92da444eed65df6bef918e23bb710cc358c6732c26",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/repository/impl/CheckoutQueryRepositoryImpl.java": "0ba31f621046c59d9bb888543d06254718f065f04ceb43e1d26201480b0602fc",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/CheckoutQueryService.java": "dea5d4468004456d7983f3ec9c522cbcb9bc8a7ab6c951ef9b00c5688d678d8d",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/impl/CheckoutQueryServiceImpl.java": "9b8b5c51b6bf4fccfb7bef9ca5ca58b23b6adb201bf745446b3e939fe458e11c",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ext/rest/CheckoutContextConverter.java": "a7215c66f14631ff65fb3bebb22638b96b22046033aad67b98796ef5e08062cc",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ext/rest/CheckoutQueryController.java": "b6c916c81d33d298827a5deb9090b5a2f2a5da0ce89f2ccfe8a6c86c35845319",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/integration/CheckoutQualificationClient.java": "ce4658ea27bf4a03d99105e8910e1fa11565a7ee5223d3e75b2dd371de1f6644",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/integration/impl/UnavailableCheckoutQualificationClient.java": "76a9264719b611390bec209908fa82fe403a7f0789e8571e3e438cfaeba3d0bb",
+    "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/service/processor/CheckoutResolutionProcessor.java": "d5d42ef8a7ded35b02672c724a7fa8badc21649d453b5df0fdf9c9b5aef58d79",
+    "client-contract-service/client-contract-web/src/main/resources/application.yml": "ead6650b5201cd8180818d4cdb086edc3d96cd7546e148c6ac385e24eebd965e",
+    "client-contract-service/client-contract-web/src/main/resources/mapper/CheckoutQueryMapper.xml": "3e64b5463854e4e3a29ae6d6c9a7cf71cfc6e269b315b5625d9e108923b94af4",
+    "client-contract-service/pom.xml": "e1b57b30e6b661207e248a86cf12d2f9cce274bd9925e8f5e73becfe3bdc087c",
+    "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/ext/job/RefundSubmissionHandler.java": "32c539b14052c5c402061cbef1501e94ca675e5cb4316865003074a45ee1f05b",
+    "requirements/20260914/client-console-注册与客户入驻/cct-write-dependencies.md": "ce4262fda0f8664cc0b598766dca6759c7292cbd3866255a4a86b574ae84da99",
+    "requirements/20260914/client-console-注册与客户入驻/db/implementation/cct-local-execution.md": "669e0ed1d8208efe97fadd99655423ef62215afc073b5ae32ad88e93535aecfd",
+    "requirements/20260914/client-console-注册与客户入驻/verification/preflight-cct-local.py": "41587cc607e3793db8e6dccfcc79a686db1a8b3d625dab5ba3abd3c80b2c54a1"
+  },
+  "sqlExecution": "NOT_EXECUTED; exact CCT ten-table authorization pending; compensation table excluded",
+  "artifactValidation": {
+    "localLinks": 381,
+    "sourceFingerprints": 69,
+    "backupDigestAndPermissions": "PASS",
+    "pythonAst": "PASS",
+    "migrationStaticShapeAndRepeatability": "PASS",
+    "scopedGitDiffCheck": "PASS",
+    "sqlAuthorization": "PENDING"
+  }
+}

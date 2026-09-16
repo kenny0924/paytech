@@ -1,0 +1,41 @@
+{
+  "checked_at": "2026-09-14T10:55:32.739Z",
+  "scope": "Stage 2 documentation and source inventory only",
+  "checks": {
+    "local_markdown_links": 36,
+    "acceptance_id_counts": {
+      "F": 11,
+      "AC": 15,
+      "UI": 8
+    },
+    "source_hashes_verified": 13,
+    "catalog_pointers": 5,
+    "failures": [],
+    "git_diff_check": "passed"
+  },
+  "business_tests": "not_run",
+  "database_access": "none",
+  "deployment": "none",
+  "requirements_site": {
+    "status": "passed",
+    "command": "npm --prefix requirements-site test",
+    "log": "/tmp/client-console-onboarding-stage2-site.log",
+    "exit_code": 0,
+    "build": "passed",
+    "tests": 136,
+    "passed": 136,
+    "failed": 0,
+    "skipped": 0
+  },
+  "application_repository_status": {
+    "platform-support-service": [],
+    "api-gateway": [],
+    "client-contract-service": [],
+    "risk-compliance-service": [],
+    "operations-console-bff": [],
+    "operations-console-web": [
+      " M docs/design.pen"
+    ]
+  },
+  "status": "passed"
+}

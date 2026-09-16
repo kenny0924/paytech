@@ -1,0 +1,209 @@
+{
+  "stage": 4,
+  "status": "in progress; first batch incomplete",
+  "recordedAt": "2026-09-15T03:56:17.938066+00:00",
+  "decision": {
+    "date": "2026-09-15",
+    "record": "../../registration-password-binding-amendment.md",
+    "current": "A01 email/password; A03 challengeNo/secret; email verification followed by password login.",
+    "deferredUntilBeforePublicOpening": "Password and email ownership hardening."
+  },
+  "check": {
+    "workingDirectory": "platform-support-service",
+    "command": "JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home ./mvnw -pl platform-support-test -am '-Dtest=ClientMailDeliveryAutoTest,ClientAuthenticationContractAutoTest,ClientSessionRulesAutoTest,ClientEmailChallengePolicyAutoTest,ClientMailOriginAutoTest,OperationsPasswordPolicyAutoTest,OperationsLocalCryptographyAutoTest,PlatformCrossModuleContractAutoTest,OperationsPersistenceContractAutoTest#test_allOperationsSqlCompilesAndLockReadsFlushSessionCache,PlatformSupportConfigurationAutoTest,PlatformCapabilityModuleBoundaryAutoTest,PlatformArchitectureAutoTest' -Dsurefire.failIfNoSpecifiedTests=false test",
+    "result": "BUILD SUCCESS",
+    "passed": 47,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "class": "com.paytech.platform.support.auto.authentication.ClientMailDeliveryAutoTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.authentication.ClientAuthenticationContractAutoTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.authentication.ClientSessionRulesAutoTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.authentication.ClientEmailChallengePolicyAutoTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.authentication.ClientMailOriginAutoTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.operations.OperationsPasswordPolicyAutoTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.operations.OperationsLocalCryptographyAutoTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.architecture.PlatformCrossModuleContractAutoTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.operations.OperationsPersistenceContractAutoTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.PlatformSupportConfigurationAutoTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.architecture.PlatformCapabilityModuleBoundaryAutoTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.paytech.platform.support.auto.architecture.PlatformArchitectureAutoTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "logSha256": "dc80e626c573c0adf01762306d609fb53d0b7a27ef400c37c784a87c9d63394f"
+  },
+  "httpAttempt": {
+    "command": "JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home ./mvnw -pl platform-support-test -am -Dtest=ClientAuthenticationHttpAutoTest -Dsurefire.failIfNoSpecifiedTests=false test",
+    "result": "BLOCKED_BEFORE_BUSINESS_TESTS",
+    "reportedClassSetupErrors": 1,
+    "businessCasesDefined": 3,
+    "businessCasesExecuted": 0,
+    "reason": "The repository database isolation listener failed: local database credentials were not injected. No fixtures or business statements ran.",
+    "logSha256": "4c302577ec702d333f7f10ccc97e72886e31f2ad221917a3c912fdee7947bfa3"
+  },
+  "boundaries": {
+    "smtp": "Actual JavaMailSender to loopback SMTP Simulator; registration and reset MIME checked. No external recipient.",
+    "database": "Mapper XML, bound parameters and canonical schema columns checked statically; no successful persistence regression.",
+    "authentication": "ACCOUNT context server code only; current scope does not implement workspace switching or Client Gateway/BFF/Web.",
+    "audit": "CUSTOMER audit is not connected yet.",
+    "coverage": "No complete verify or coverage claim.",
+    "defaultEnabled": false
+  },
+  "sourceSha256": {
+    "platform-support-service/docs/database/sql/platform-support-schema.sql": "c8b7a289c772ac9cf2da6bb5d3f141fd6443e5843360638dc78894030ed991bc",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/ClientRefresh.java": "33ddc85dbfe332a94f9007065e223d61c149496a5e24e463cdf1e8a16fdd8a7b",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/ClientSession.java": "e385804a4b237381f780d9ef36d5fa394c925c8c062c753aa8795b1e15cab6cb",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/ClientSigningKey.java": "6aa8a50914bfb1510765b1b3724d9b70cde9d186ba8733944b9f50ccbb0f4b52",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/CustomerAccount.java": "3be7f8222123bceccdbcb30e46e9ef9e50d47cb607fd395fafe2383f021421a8",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/CustomerPassword.java": "ca1b8918e415e0192fed6a3f36d411da4a74c82eed3ed29490e5c5cba717c6bb",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/dataobject/EmailAuthenticationChallenge.java": "1a41c791b5317ec0b3976fae680bf80b86aff9e2ec4822229f18c95c88177509",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/mapper/CustomerAuthenticationMapper.java": "de045f555a2950cd2fbceba52074889b12dd6ca68c935aa827fbf8bd5e9376ca",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/mapper/CustomerRegistrationMapper.java": "986764de118b35e4a87ed3f6a434dd1597d04708a9834e70149242944fd621dc",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/core/dal/mapper/JwtSigningKeyMapper.java": "a487dc87c3c2c836d0eed9669b06ce42461f012dedd315ecdb30f37c01abac75",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/authentication/ClientAuthenticationPlans.java": "6ca53974573c6a2398f45c1ba3b538ba7b2207cc9d3e3bb245c84b8d1516a883",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/authentication/ClientEmailChallengePolicy.java": "e697c93e469349163336355c2bb801578e95d60e6da387ddd9bf7fba7d004c47",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/authentication/ClientRegistrationModels.java": "8e0270d08e4c1adb6322d245a9f05a0a68700d2c15aab4400dad990f37e3c89c",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/authentication/ClientSessionRules.java": "31562b59bd496e8d7d4bceaacea0a268d686a04082f54f3fdbea3e1bc5aa96a4",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/enums/ClientChallengePurpose.java": "5585cebd86498096f95ccb4195a3cdfa77c2a50ff209409c5cdd9100bb493418",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/enums/ClientChallengeStatus.java": "857e2598b964ce002c4082dd625b955e469356af73ccd1f8deb616fd87c93945",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/enums/ClientSessionContextType.java": "11b8ebdcd2ff80644c95734e6b3d8ce5dfda7c469b5a4bd26905e0d21c34596c",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/repository/CustomerAuthenticationRepository.java": "f5e15284500efef772baa8415940bff8ee7aa715bc09df4b1e6bcbcd287174b2",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/repository/CustomerRegistrationRepository.java": "30d878af6c32ca2f065af8150ea8cfb39440027ccd58b33999d53257b74e92d5",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/repository/JwtSigningKeyRepository.java": "c2ef38ebc1b4dc9f802ed0fa54a9650dd2ab63715188641f6b04aff1d5a6c92a",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/repository/impl/CustomerAuthenticationRepositoryImpl.java": "c663b3a39e0f5232b510034394c0a5ed2bf2f6ba4157b978522c9bfaca11c01c",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/repository/impl/CustomerRegistrationRepositoryImpl.java": "3e36b235ae7f491040c87b2b802a6fb5c5a5ea6eef698515e0c06908851a1f04",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/repository/impl/JwtSigningKeyRepositoryImpl.java": "750a3a9af71ae711035fc7abc7f9c8d6457fad6afd8b5a520d42b0f1ef227a61",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/ClientTokenService.java": "4ce8d792215c2b992328f434d47ce20f8f882e5e2eeab2d83640f19ae7a342a5",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/CustomerAuthenticationService.java": "92a0deff28ec6a14ad282dbe751899269127c9713e730a2a44a541d25aa3246d",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/CustomerJwksService.java": "842c17ea2bd645a1a6801c1a79c9e87b750bd5823e849d4f5437fec7a7871027",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/CustomerRegistrationService.java": "1018d5511165f2e0c3468c59bb1fa4044b5cac2ea48cf93ae23dd51cbba34b23",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/ClientTokenServiceImpl.java": "91d184d41bfa745fcfcd7d2b8d23f058c8378f03214888c0395be95225a4dc2c",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/CustomerAuthenticationServiceImpl.java": "f30b9b4b895758f384e2e84e3d6f10c6cc5460bf24fd922d506a1ad31a5b3082",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/CustomerJwksServiceImpl.java": "d4e00c3f43a5ca8afe2f558c8095fa3991e3fb0955ec8a7d351732acd7a7cdfc",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/CustomerRegistrationServiceImpl.java": "6b7143df7c63138f91aa5fa1323c1288093ded7262c0a48e939d45af2cb7741c",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/integration/mail/AuthenticationEmailSender.java": "64722bf617f929e75c8a5933f15dd258a432c11f0ae4ab50f4f4740b1b4672a3",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/integration/signing/HumanAuthenticationCryptography.java": "9dd9fa59dc3534078a69f8c52e0be36502846a90a09ea1e3ba90d4873b3e4cd1",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/integration/signing/LocalHumanAuthenticationCryptography.java": "4f279c1296bd69c9d1069695fb8615f6ab06ef53403b5bec1515604a063b6f74",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/integration/signing/LocalOperationsTokenCryptography.java": "ba9d68a4687740740705b20c357a8419205f2fbf1cded261345c058ad4c18582",
+    "platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/integration/signing/OperationsTokenCryptography.java": "61ff380fa2d449bc971c42f73577fb41cb994ab79fa553e56675b724f5ffeee5",
+    "platform-support-service/platform-support-access-control/src/main/resources/mapper/access-control/CustomerAuthenticationMapper.xml": "5636cdbdc14b5851401f29e3db551e03c69126ef69e56e5af1066972633c2870",
+    "platform-support-service/platform-support-access-control/src/main/resources/mapper/access-control/CustomerRegistrationMapper.xml": "7bbb7410960ef9058e46c6c35d248addb83093a24525d0ff07987370cdbfd3cc",
+    "platform-support-service/platform-support-access-control/src/main/resources/mapper/access-control/JwtSigningKeyMapper.xml": "9b56d28581ff2350bbb5dd24fd061abc2a6a74ced0800935ac8f6a5d1b8fc7d6",
+    "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/authentication/ClientAuthenticationApi.java": "4011a35521982034446a28dabb7dd4cefaa372248a7193f2dccded8cee00cfcf",
+    "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/authentication/ClientAuthenticationModels.java": "76dff4053172267916128f7b6681b1361d728321adc9df45c1e54bf8247dd1c3",
+    "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/authentication/CustomerJwksQueryApi.java": "c0a6c388b550bdfdfe1f52b1a23f1aa17445e60ca52a6160c12c6f01a88b698b",
+    "platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/enums/ClientAuthenticationErrorCode.java": "a1ac95e74ee4a59bbdf71cedcf86a9a7cf30502ae1393ddd796885975fe4acaf",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/architecture/PlatformArchitectureAutoTest.java": "bf98d4d9a2c8d92e3e21588d3ee310d99246b52e003de48f91cd7b2f2bc4901b",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/ClientAuthenticationContractAutoTest.java": "edeaa165cab4b74bbac94dab072ccffa5385e3b86131e8be7852c0e891db940a",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/ClientAuthenticationHttpAutoTest.java": "03515f19bbf0d31c915090f2e0c13c045ae62246c2511654fe8a943151c676f2",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/ClientEmailChallengePolicyAutoTest.java": "f1f1c85863002f50564c642dffc570fa1250e37d7891211c5f567f3dec0b3b9f",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/ClientMailDeliveryAutoTest.java": "de4598901f0894be65b6fe7bcf4b2d2f5d22f4db41813a5046c5bbc540025a59",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/ClientMailOriginAutoTest.java": "17705fbb492e03f17d505036e5c10500a22488841ed3adcba2af9919583227c2",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/ClientSessionRulesAutoTest.java": "09adfaa0e03dbf179a35c344320c8c0c636b4f05702b2a6e7b8599336210d6c9",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/operations/OperationsLocalCryptographyAutoTest.java": "779a880d6ebadd6df66dc1be9eb00c0cfaafa044a2b27ecd2a0bde2a794a4026",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/authentication/ClientAuthenticationProtocols.java": "85a111b8a1c13c6cde039c9660e1b0efda5d2d0976d162e479ffbfd778dab3fa",
+    "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/authentication/ClientAuthenticationTestMapper.java": "31329328cedc90de0ca42a2516e2d26fb8af5a0b8a8c2134b0e13415fce83f31",
+    "platform-support-service/platform-support-web/pom.xml": "a82e75677dbeac136e43e29ce492a4f127abe22e003b213ec96dda1acf9893cd",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/configuration/ClientAuthenticationConfiguration.java": "1227b4206fa171fcf31cbb403c95cfc127bc5491dca827ebed2966fa2fffd09a",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/configuration/PersistenceConfiguration.java": "a5cca312d8b76b7c5734dd115d2f2c737ab6810b84b66d9e694f7cf0126f0d37",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/configuration/PlatformApiErrorConfiguration.java": "c113a1102fa7d7db73b61f087ce24ef3248ae9111b387f46eeb339f2c4bc2bc1",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/authentication/ClientAuthenticationController.java": "5f32fa107d55dadee5f74e6cf253dcfad2669720afe354db489ee1f0f8561820",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/ext/rest/authentication/CustomerJwksController.java": "22fa71b4d7434366dea4dc58ae8eb730fb2c71fefa3e8e4dd6ceb516740aabb1",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/integration/mail/SmtpAuthenticationEmailSender.java": "5bc3eceedeafb44e43e78690863ffb0ed8309d2c81a295a10e417a53d582dcbf",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/service/processor/CustomerAuthenticationCommandProcessor.java": "b0828cc1aa42facdc69cae2e271abb0b9f2684318ddf18b701884f73505fec19",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/service/processor/CustomerAuthenticationProcessor.java": "02780ab9be34e7378df298e4579dbb5b6bc8978bc40e16d9a31f63b420758efe",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/service/processor/CustomerRegistrationCommandProcessor.java": "4b644d923f4b2b40eaf1eb1a4387806d5f768c693dfd3eac4a3d3bb9e4e99a63",
+    "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/service/processor/CustomerRegistrationProcessor.java": "b26265bea7c74bbe1cc94b7cceb442c8cbcce267277fcc76b2e75463aabf2efa",
+    "platform-support-service/platform-support-web/src/main/resources/application.yml": "d90390fe9b393666ec3545759dc17933565e8a7301e1d3ddd073640910b1dfc5"
+  },
+  "notVerified": [
+    "Client HTTP persistence and concurrency",
+    "Refresh reuse and password reset revocation in real MySQL",
+    "Real email provider delivery",
+    "Client Gateway/BFF/Web",
+    "Tenant workspace context",
+    "Onboarding/review business chain"
+  ],
+  "databaseSqlExecuted": false,
+  "deployed": false,
+  "committed": false,
+  "staticChecks": {
+    "sourceHashMatches": 65,
+    "documentLinkTargetsExist": 57,
+    "sourceTrailingWhitespace": 0,
+    "rootScopedDiffCheck": "passed",
+    "platformDiffCheck": "passed"
+  }
+}

@@ -39,6 +39,8 @@
 
 ## 按任务路由
 
+Client Console 邮箱密码注册登录、客户入驻与最小人工审核读取[本期需求](../requirements/20260914/client-console-注册与客户入驻/requirement.md)、[阶段分析](../requirements/20260914/client-console-注册与客户入驻/technique.md)和[简化评审稿](../requirements/20260914/client-console-注册与客户入驻/simplification-design.md)。本期 Google、OTP、团队邀请延后；用户要求取消入驻资料版本，批准后不可修改，并确认退回修改与最终拒绝分开。用户已认可单页及运营在最终批准前确认分类的方向，阶段 3 详细接口、字段投影与实施顺序从[设计入口](../requirements/20260914/client-console-注册与客户入驻/design.md)读取；每账号个人/组织合计一份未完成 Client 申请已由用户确认，规则见详细稿；共享迁移和配置注册方案已补齐，真实环境绑定及非空历史处置按发布门禁执行。实际状态见[当前台账](./CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
+
 Payment 的 Execution、Routing、Channel、Card 工程拆分读取[本次模块决定](./decisions/2026-09-13-payment-module-scaffolding.md)和[模块/表 Owner 方案](../requirements/20260913/payment-业务模块划分/technique.md)；它们只细化 Payment 工程映射，模块协作规则仍由 `JAVA_PROJECT_STRUCTURE.md` 拥有，实际状态见[当前台账](./CURRENT_IMPLEMENTATION.md#payment-business-modules)。
 
 Payment Execution 的代码编排、Card 单一主流程与交互表移除目标读取[2026-09-13 范围决定](./decisions/2026-09-13-payment-execution-code-orchestration.md)、[已确认需求](../requirements/20260913/payment-Execution设计/requirement.md)、[差异/流程抽象分析](../requirements/20260913/payment-Execution设计/technique.md)及[已确认详细设计](../requirements/20260913/payment-Execution设计/design.md)。当前进入阶段 4 Execution 研发，其余能力按测试 Mock + TODO；实现、验证与数据库前置见[当前台账](./CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。

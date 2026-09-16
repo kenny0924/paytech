@@ -1,0 +1,1030 @@
+{
+  "status": "APPLIED_AND_STRUCTURALLY_VERIFIED",
+  "startedAt": "2026-09-15T09:03:26.497827+00:00",
+  "authorization": "User approved the exact local ten-ALTER candidate and isolated Checkout database regression.",
+  "target": {
+    "dockerContext": "desktop-linux",
+    "composeProject": "mor-local",
+    "container": "mor-local-mysql-1",
+    "host": "127.0.0.1",
+    "port": 13306,
+    "database": "mor_cct"
+  },
+  "ddlFileSha256": "dc091d30620d30374fa0e5a0b54f93614201bf4e5c46016d1e1958ebc76a0815",
+  "sourceModelSha256": "1ad770428ecdc12f5df55fc719213ca49262dea8274662032772eb88f5835108",
+  "sourceSchemaSha256": "b28fecb393e2cf74d4561421753f08704cad268ace65c48e698cd584a1c0d4a7",
+  "targetSchemaSha256": "35bfbf7250a3fc1eac881c16851ede6eac1744e7d3b473a7eb34d0ee52621312",
+  "runnerSha256": "be0d4f9904d1f37532616ad6869c4d04aeb78d1dd48d2ef6846094bd3aae1484",
+  "statements": [
+    {
+      "table": "t_party_profile",
+      "sha256": "771a08b245c77fb5e5b8591179b49266473b7609ffb289c06a36edad50e96b87",
+      "startedAt": "2026-09-15T09:03:27.000309+00:00",
+      "status": "APPLIED",
+      "completedAt": "2026-09-15T09:03:27.050155+00:00",
+      "warnings": [],
+      "targetComparison": {
+        "table": "t_party_profile",
+        "columnCount": 7,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    },
+    {
+      "table": "t_individual_profile",
+      "sha256": "f5779581b213bf7f93ec1d28db44cb87dbb9234660ac24aaa222b5f59e41873e",
+      "startedAt": "2026-09-15T09:03:27.159905+00:00",
+      "status": "APPLIED",
+      "completedAt": "2026-09-15T09:03:27.176983+00:00",
+      "warnings": [],
+      "targetComparison": {
+        "table": "t_individual_profile",
+        "columnCount": 9,
+        "indexCount": 1,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    },
+    {
+      "table": "t_organization_profile",
+      "sha256": "67b942f4af6fcfe5bf3b3ce0829e0cf4312652d97467902f326e9f113f21c530",
+      "startedAt": "2026-09-15T09:03:27.326830+00:00",
+      "status": "APPLIED",
+      "completedAt": "2026-09-15T09:03:27.345330+00:00",
+      "warnings": [],
+      "targetComparison": {
+        "table": "t_organization_profile",
+        "columnCount": 8,
+        "indexCount": 1,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    },
+    {
+      "table": "t_party_address",
+      "sha256": "ba2a042ff604b55aa4f634eb06d6a332eb0b0b80fe56c82e0618d53d0e96e3f0",
+      "startedAt": "2026-09-15T09:03:27.450181+00:00",
+      "status": "APPLIED",
+      "completedAt": "2026-09-15T09:03:27.466573+00:00",
+      "warnings": [],
+      "targetComparison": {
+        "table": "t_party_address",
+        "columnCount": 11,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    },
+    {
+      "table": "t_party_contact",
+      "sha256": "ee5b865345b92d81c9c808572fbef93020736038866cf518909feb0875d43edb",
+      "startedAt": "2026-09-15T09:03:27.588099+00:00",
+      "status": "APPLIED",
+      "completedAt": "2026-09-15T09:03:27.606774+00:00",
+      "warnings": [],
+      "targetComparison": {
+        "table": "t_party_contact",
+        "columnCount": 7,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    },
+    {
+      "table": "t_party_profile_identifier",
+      "sha256": "13ba5ab82962472c568f2876b7f1e78baa15adcc176c37cfd8e4377352382417",
+      "startedAt": "2026-09-15T09:03:27.719227+00:00",
+      "status": "APPLIED",
+      "completedAt": "2026-09-15T09:03:27.735283+00:00",
+      "warnings": [],
+      "targetComparison": {
+        "table": "t_party_profile_identifier",
+        "columnCount": 11,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    },
+    {
+      "table": "t_party_identity_key",
+      "sha256": "1f8fe30c8c2f901986caa66c0e2b1baea05e08442b9713ebede749f9d2c43a80",
+      "startedAt": "2026-09-15T09:03:27.842117+00:00",
+      "status": "APPLIED",
+      "completedAt": "2026-09-15T09:03:27.859994+00:00",
+      "warnings": [],
+      "targetComparison": {
+        "table": "t_party_identity_key",
+        "columnCount": 8,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    },
+    {
+      "table": "t_party_relation",
+      "sha256": "9b24d752030cb4c122026131ac47e45f03d9c825254f68a8afbceda91fcf21b2",
+      "startedAt": "2026-09-15T09:03:27.971130+00:00",
+      "status": "APPLIED",
+      "completedAt": "2026-09-15T09:03:28.001129+00:00",
+      "warnings": [],
+      "targetComparison": {
+        "table": "t_party_relation",
+        "columnCount": 11,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    },
+    {
+      "table": "t_client_business_profile",
+      "sha256": "19e7332a3dcc3a2380e81df1dd05c1c56878fa3c0921e594b44e96fa71064c3e",
+      "startedAt": "2026-09-15T09:03:28.169751+00:00",
+      "status": "APPLIED",
+      "completedAt": "2026-09-15T09:03:28.190453+00:00",
+      "warnings": [],
+      "targetComparison": {
+        "table": "t_client_business_profile",
+        "columnCount": 14,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    },
+    {
+      "table": "t_client_application",
+      "sha256": "34822d39799ebfcace48011dbac5868184dd141f69c25a9798acbe97f6f5f43b",
+      "startedAt": "2026-09-15T09:03:28.301370+00:00",
+      "status": "APPLIED",
+      "completedAt": "2026-09-15T09:03:28.324055+00:00",
+      "warnings": [
+        {
+          "Level": "Warning",
+          "Code": 1681,
+          "Message": "Integer display width is deprecated and will be removed in a future release."
+        }
+      ],
+      "targetComparison": {
+        "table": "t_client_application",
+        "columnCount": 13,
+        "indexCount": 6,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    }
+  ],
+  "maintenanceLock": "cct:maintenance:onboarding-20260914",
+  "backupDirectory": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-cct-migration-74jpnf8a",
+  "before": {
+    "database": "mor_cct",
+    "rowCounts": {
+      "t_agreement": 0,
+      "t_agreement_document_ref": 0,
+      "t_agreement_operating_entity": 0,
+      "t_agreement_party": 0,
+      "t_application_document": 0,
+      "t_business_change_record": 0,
+      "t_business_change_version": 0,
+      "t_client": 0,
+      "t_client_application": 0,
+      "t_client_business_classification": 0,
+      "t_client_business_profile": 0,
+      "t_client_entity_affiliation": 0,
+      "t_command_idempotency": 0,
+      "t_commercial_term_component": 0,
+      "t_commercial_term_component_band": 0,
+      "t_commercial_term_plan": 0,
+      "t_commercial_term_price": 0,
+      "t_commercial_term_version": 0,
+      "t_compensation_event": 0,
+      "t_consumer_legal_document": 0,
+      "t_entity_source_relation": 0,
+      "t_individual_profile": 0,
+      "t_local_partner": 0,
+      "t_operating_entity": 0,
+      "t_operating_entity_application": 0,
+      "t_operating_entity_scope": 0,
+      "t_organization_profile": 0,
+      "t_partner_application": 0,
+      "t_party": 0,
+      "t_party_address": 0,
+      "t_party_contact": 0,
+      "t_party_identity_key": 0,
+      "t_party_profile": 0,
+      "t_party_profile_identifier": 0,
+      "t_party_relation": 0,
+      "t_payment_method_profile": 0,
+      "t_payment_method_profile_cond": 0,
+      "t_seller_disclosure": 0
+    },
+    "sourceComparison": [
+      {
+        "table": "t_agreement",
+        "columnCount": 16,
+        "indexCount": 5,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_agreement_document_ref",
+        "columnCount": 7,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_agreement_operating_entity",
+        "columnCount": 5,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_agreement_party",
+        "columnCount": 16,
+        "indexCount": 7,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_application_document",
+        "columnCount": 11,
+        "indexCount": 5,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_business_change_record",
+        "columnCount": 9,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_business_change_version",
+        "columnCount": 8,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client",
+        "columnCount": 9,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client_application",
+        "columnCount": 20,
+        "indexCount": 7,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client_business_classification",
+        "columnCount": 7,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client_business_profile",
+        "columnCount": 16,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client_entity_affiliation",
+        "columnCount": 10,
+        "indexCount": 6,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_command_idempotency",
+        "columnCount": 10,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_commercial_term_component",
+        "columnCount": 15,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_commercial_term_component_band",
+        "columnCount": 9,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_commercial_term_plan",
+        "columnCount": 10,
+        "indexCount": 6,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_commercial_term_price",
+        "columnCount": 11,
+        "indexCount": 5,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": false,
+        "commentDifferenceIsOnlyProviderToChannel": true
+      },
+      {
+        "table": "t_commercial_term_version",
+        "columnCount": 11,
+        "indexCount": 5,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_compensation_event",
+        "columnCount": 20,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_consumer_legal_document",
+        "columnCount": 16,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_entity_source_relation",
+        "columnCount": 12,
+        "indexCount": 6,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_individual_profile",
+        "columnCount": 9,
+        "indexCount": 1,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_local_partner",
+        "columnCount": 8,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_operating_entity",
+        "columnCount": 6,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_operating_entity_application",
+        "columnCount": 22,
+        "indexCount": 7,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_operating_entity_scope",
+        "columnCount": 13,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_organization_profile",
+        "columnCount": 8,
+        "indexCount": 1,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_partner_application",
+        "columnCount": 17,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party",
+        "columnCount": 5,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_address",
+        "columnCount": 11,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_contact",
+        "columnCount": 9,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_identity_key",
+        "columnCount": 9,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_profile",
+        "columnCount": 11,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_profile_identifier",
+        "columnCount": 7,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_relation",
+        "columnCount": 14,
+        "indexCount": 5,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_payment_method_profile",
+        "columnCount": 7,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": false,
+        "commentDifferenceIsOnlyProviderToChannel": true
+      },
+      {
+        "table": "t_payment_method_profile_cond",
+        "columnCount": 6,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_seller_disclosure",
+        "columnCount": 18,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    ],
+    "closureChecks": [
+      {
+        "table_name": "t_party_profile",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_individual_profile",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_organization_profile",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party_address",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party_contact",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party_profile_identifier",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party_identity_key",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party_relation",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_client_business_profile",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_client_application",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_party",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_client",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_client_business_classification",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_partner_application",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_operating_entity_application",
+        "row_count": 0
+      },
+      {
+        "table_name": "t_agreement_party",
+        "row_count": 0
+      },
+      {
+        "reference_name": "t_individual_profile.profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_organization_profile.profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_party_address.profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_party_contact.profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_party_profile_identifier.profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_party_profile_identifier.identity_key_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_client_application.base_party_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_client_application.target_party_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_client_application.base_business_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_client_application.target_business_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_client_business_classification.business_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_partner_application.target_party_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_operating_entity_application.party_profile_id",
+        "missing_parent_count": 0
+      },
+      {
+        "reference_name": "t_agreement_party.party_profile_id",
+        "missing_parent_count": 0
+      }
+    ],
+    "otherDatabaseConnections": 0,
+    "physicalCheckOrForeignKeyCount": 0,
+    "structureBackup": {
+      "path": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-cct-migration-74jpnf8a/mor_cct-show-create.sql",
+      "sha256": "4da554fd74292702e55f71a68e3f97a8cf60dd9100b7d98239ab117dd5b41272",
+      "mode": "0600"
+    },
+    "allTablesEmpty": true
+  },
+  "otherOwnerInventoryUnchangedBeforeExecution": true,
+  "after": {
+    "rowCounts": {
+      "t_agreement": 0,
+      "t_agreement_document_ref": 0,
+      "t_agreement_operating_entity": 0,
+      "t_agreement_party": 0,
+      "t_application_document": 0,
+      "t_business_change_record": 0,
+      "t_business_change_version": 0,
+      "t_client": 0,
+      "t_client_application": 0,
+      "t_client_business_classification": 0,
+      "t_client_business_profile": 0,
+      "t_client_entity_affiliation": 0,
+      "t_command_idempotency": 0,
+      "t_commercial_term_component": 0,
+      "t_commercial_term_component_band": 0,
+      "t_commercial_term_plan": 0,
+      "t_commercial_term_price": 0,
+      "t_commercial_term_version": 0,
+      "t_compensation_event": 0,
+      "t_consumer_legal_document": 0,
+      "t_entity_source_relation": 0,
+      "t_individual_profile": 0,
+      "t_local_partner": 0,
+      "t_operating_entity": 0,
+      "t_operating_entity_application": 0,
+      "t_operating_entity_scope": 0,
+      "t_organization_profile": 0,
+      "t_partner_application": 0,
+      "t_party": 0,
+      "t_party_address": 0,
+      "t_party_contact": 0,
+      "t_party_identity_key": 0,
+      "t_party_profile": 0,
+      "t_party_profile_identifier": 0,
+      "t_party_relation": 0,
+      "t_payment_method_profile": 0,
+      "t_payment_method_profile_cond": 0,
+      "t_seller_disclosure": 0
+    },
+    "unchangedTables": [
+      "t_agreement",
+      "t_agreement_document_ref",
+      "t_agreement_operating_entity",
+      "t_agreement_party",
+      "t_application_document",
+      "t_business_change_record",
+      "t_business_change_version",
+      "t_client",
+      "t_client_business_classification",
+      "t_client_entity_affiliation",
+      "t_command_idempotency",
+      "t_commercial_term_component",
+      "t_commercial_term_component_band",
+      "t_commercial_term_plan",
+      "t_commercial_term_price",
+      "t_commercial_term_version",
+      "t_compensation_event",
+      "t_consumer_legal_document",
+      "t_entity_source_relation",
+      "t_local_partner",
+      "t_operating_entity",
+      "t_operating_entity_application",
+      "t_operating_entity_scope",
+      "t_partner_application",
+      "t_party",
+      "t_payment_method_profile",
+      "t_payment_method_profile_cond",
+      "t_seller_disclosure"
+    ],
+    "schemaSha256ByTable": {
+      "t_agreement": "b7b050064ba47b331c955b22edaaf5933b253264c443d0e80b98e5628e59a8c2",
+      "t_agreement_document_ref": "8fac9f3e681aeabb7072b211512e6f5f0ef896f09e3f19049da9ed00bd5633e8",
+      "t_agreement_operating_entity": "6b625c05e43f35e35d7241f26fe5ae0fbe9a1a9bacc15828c4b4f674154de71a",
+      "t_agreement_party": "b0de646d82e7dbd3a4e1822bfa2ac0ebb6753936d0e9f0864837d82682e14a99",
+      "t_application_document": "21bdcf7abb349c8e07c3db0414e99d6a1abca6bb3dab3a816cc66da97bd819f5",
+      "t_business_change_record": "742e05c49fff670c55e6500a6b615f5e6a17163b2164f4aa1d38bd9d9944135a",
+      "t_business_change_version": "fd3999eab02947d94704143d44648d9c632b7434416e571ff6b008c7a1787038",
+      "t_client": "f4361bc2990889ec7f8b812ca8fffb501da0025cff27535d2ccdbb9c1cea9c47",
+      "t_client_application": "8d3ee33dac9f61b8d8b6bb8087123775f3c98a70a032666c6ac14b51ccec3e6d",
+      "t_client_business_classification": "fc8756f82ea8699b3c2e2bd0ce322f1932532667ca4a337dc8e52c9a9f4e8ac8",
+      "t_client_business_profile": "91e1354ed6931342e01816b3b0c1bbf095273c14e9dc892e8733df9a1751b587",
+      "t_client_entity_affiliation": "0f26a7d8db866c1aeb373264efc7be46dda2e51b132f2c8e50547ebaeb328cce",
+      "t_command_idempotency": "cee5108de22089243d3a3e916b333dbb525be8280b516b3d8873234c922afb6f",
+      "t_commercial_term_component": "4178ef5512528cc835bdf8d61ead829bfa9654789a266e84ba98c5a6a532b724",
+      "t_commercial_term_component_band": "87d99a5cdf94201873ff22904e036b5579b40fe011000bacf1621adb23121443",
+      "t_commercial_term_plan": "75244e6746b11b89b12a746edb02f12dad5c1e7790ffd63418eb358072421096",
+      "t_commercial_term_price": "94df7e65dd49cce6db9d0195140299cb7723ce874762f276fbbbb5775993263a",
+      "t_commercial_term_version": "1dcdc74673758430bc0aa18e9eddc4a1e98531d9edc5b33eaff18f28c3dcfa22",
+      "t_compensation_event": "363a6db23718148cb62a391f31036325dc6355d04e72c3852fdddffde6955c4e",
+      "t_consumer_legal_document": "8591e363696babe86731dae87b871db37e512b5ec84f618a730ebd74c1a913a7",
+      "t_entity_source_relation": "50b45863325e0429092b59e7559facc565c228fc3539361859ab107a6a06d07e",
+      "t_individual_profile": "5641e54225dc5de5b2c00ca07d61b678b312f5f03cb33ccc1718cdb5a41f0787",
+      "t_local_partner": "882e0818cf5958daff191663183b1f63cc978926fd4f1cff3e0ea056f17703bf",
+      "t_operating_entity": "16b38bed67032bdbfbed9048ac8a304018afaac21137a77e35cbf1fcf24f5625",
+      "t_operating_entity_application": "702789ab76e5fae6bd692249fe1742684d5a550118d0733300554e06f1efa19f",
+      "t_operating_entity_scope": "866f3897d6ea553ea48ab180e76caee1b259b7da5da04d77ace8d0565b38eb10",
+      "t_organization_profile": "b3c1b30572a45cbba3a24b98437854368e0689cbbfbc3c3eeaffbe067797adce",
+      "t_partner_application": "91c1d4c8c195839cc9239c7d1a785038fea8da1257cdf25603a0d38d56bfdd83",
+      "t_party": "aadb5361452445b87b19f9edb01e75b13b23c4fa8383772d02d74ded4b30d125",
+      "t_party_address": "cd9b231e4012a5dbeeda21b254a07b6edb64f5627f95cf17564a5e2b00fc9bd0",
+      "t_party_contact": "80826a3db0a85e7d2c1c34aea7fb5d68515838ff5e2fe7b2912abf7d1aad812a",
+      "t_party_identity_key": "c5a921b196fd171d8734b136ba4f4aab1598a923beaadcfce64046eff20ea67f",
+      "t_party_profile": "36c3887a08ad4109c47776893e83ff8d6c72d75fb97c2cce127c9ad476e8f7be",
+      "t_party_profile_identifier": "51e9af455eb708b28c6a7cb85eed925679ac4299f91fd4b2725eb8f0fe45ae05",
+      "t_party_relation": "2cd63e32047ad1b1a55a62493a00c568b41ef27fcb16877f8608289cf25f3c21",
+      "t_payment_method_profile": "447f19d6250f352daf4a3160f0fd25ef593cee503319d7111c625d9ebe907db1",
+      "t_payment_method_profile_cond": "3b1614be47953684b7c3ba6512bc9e70fc95702ca91d683dfe25a73ce34bff91",
+      "t_seller_disclosure": "2acb7521718c9f1cbdc121aa705fc7a49e32aa3bf6093d42d49c59b38418279d"
+    },
+    "structureBackup": {
+      "path": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-cct-migration-74jpnf8a/mor_cct-after-show-create.sql",
+      "sha256": "77e00ad7abc6e6064782b690c6726475729c01b68ebbde8bd1b7f81152beec47",
+      "mode": "0600"
+    },
+    "physicalCheckOrForeignKeyCount": 0
+  },
+  "completedAt": "2026-09-15T09:03:28.359933+00:00",
+  "postTestRecheck": {
+    "rowCounts": {
+      "t_agreement": 0,
+      "t_agreement_document_ref": 0,
+      "t_agreement_operating_entity": 0,
+      "t_agreement_party": 0,
+      "t_application_document": 0,
+      "t_business_change_record": 0,
+      "t_business_change_version": 0,
+      "t_client": 0,
+      "t_client_application": 0,
+      "t_client_business_classification": 0,
+      "t_client_business_profile": 0,
+      "t_client_entity_affiliation": 0,
+      "t_command_idempotency": 0,
+      "t_commercial_term_component": 0,
+      "t_commercial_term_component_band": 0,
+      "t_commercial_term_plan": 0,
+      "t_commercial_term_price": 0,
+      "t_commercial_term_version": 0,
+      "t_compensation_event": 0,
+      "t_consumer_legal_document": 0,
+      "t_entity_source_relation": 0,
+      "t_individual_profile": 0,
+      "t_local_partner": 0,
+      "t_operating_entity": 0,
+      "t_operating_entity_application": 0,
+      "t_operating_entity_scope": 0,
+      "t_organization_profile": 0,
+      "t_partner_application": 0,
+      "t_party": 0,
+      "t_party_address": 0,
+      "t_party_contact": 0,
+      "t_party_identity_key": 0,
+      "t_party_profile": 0,
+      "t_party_profile_identifier": 0,
+      "t_party_relation": 0,
+      "t_payment_method_profile": 0,
+      "t_payment_method_profile_cond": 0,
+      "t_seller_disclosure": 0
+    },
+    "schemaUnchangedSinceMigration": true,
+    "maintenanceLockReleased": true,
+    "otherCctConnections": 0,
+    "affectedTableComparison": [
+      {
+        "table": "t_party_profile",
+        "columnCount": 7,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_individual_profile",
+        "columnCount": 9,
+        "indexCount": 1,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_organization_profile",
+        "columnCount": 8,
+        "indexCount": 1,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_address",
+        "columnCount": 11,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_contact",
+        "columnCount": 7,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_profile_identifier",
+        "columnCount": 11,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_identity_key",
+        "columnCount": 8,
+        "indexCount": 3,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_party_relation",
+        "columnCount": 11,
+        "indexCount": 4,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client_business_profile",
+        "columnCount": 14,
+        "indexCount": 2,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      },
+      {
+        "table": "t_client_application",
+        "columnCount": 13,
+        "indexCount": 6,
+        "columnsMatch": true,
+        "indexesMatch": true,
+        "engineAndCollationMatch": true,
+        "tableCommentMatches": true,
+        "commentDifferenceIsOnlyProviderToChannel": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "stage": "3 design only",
+  "status": "static checks passed; business acceptance not executed",
+  "checks": {
+    "jsonAndGeneratorSyntax": true,
+    "reproducibleReviewGeneration": true,
+    "targetColumnsAndIndexes": {
+      "columns": 159,
+      "tables": 14
+    },
+    "operationsAndRouteMapping": {
+      "operations": 40,
+      "public": 37,
+      "internal": 3,
+      "dmlRows": 0
+    },
+    "manifestAndPngs": {
+      "boards": 49,
+      "newBoards": [
+        {
+          "id": "etC6T",
+          "width": 1280,
+          "height": 1120
+        },
+        {
+          "id": "kJ1Cu",
+          "width": 1280,
+          "height": 2530
+        },
+        {
+          "id": "MEiPB",
+          "width": 1280,
+          "height": 1120
+        },
+        {
+          "id": "YJAdQ",
+          "width": 1280,
+          "height": 1120
+        },
+        {
+          "id": "QK6RC",
+          "width": 1440,
+          "height": 1200
+        }
+      ],
+      "overlaps": 0
+    },
+    "localMarkdownLinkTargets": 109,
+    "gitDiffCheck": true
+  },
+  "targetCounts": {
+    "CCT": {
+      "modifiedTables": 10,
+      "newTables": 0,
+      "addedColumns": 12,
+      "removedColumns": 27,
+      "renamedColumns": 1,
+      "nullabilityChanges": 21
+    },
+    "Risk": {
+      "modifiedTables": 3,
+      "newTables": 1,
+      "addedColumns": 13,
+      "removedColumns": 0,
+      "renamedColumns": 0,
+      "nullabilityChanges": 2
+    }
+  },
+  "pencilIncrementalEvidence": {
+    "client": [
+      "etC6T",
+      "kJ1Cu",
+      "MEiPB",
+      "YJAdQ"
+    ],
+    "operations": [
+      "QK6RC"
+    ],
+    "layoutProblems": 0,
+    "screenshotsInspected": 5,
+    "nativeSaveVerified": [
+      "client-console-web/design.pen",
+      "operations-console-web/docs/design.pen"
+    ],
+    "scope": "MCP layout visitors and screenshots; native file URL and absence of Edited label observed. Existing baseline layouts were not re-reviewed."
+  },
+  "openItems": [
+    "Account concurrent application policy",
+    "Final upload authorization target and uniqueness",
+    "Canonical model and shared historical migration",
+    "Environment target/permission/console registration DML"
+  ],
+  "notExecuted": [
+    "Application implementation",
+    "Database queries or DDL/DML execution",
+    "Application tests",
+    "Browser interaction or mobile tests",
+    "Deployment",
+    "Git commit or push"
+  ],
+  "generatedReviewArtifactSha256": {
+    "target-field-projection.json": "824e341a5b331efb8e05fdd87e0d551c0d3736415537b79b1adfa159182c439c",
+    "cct-target-tables.sql": "fa28ea3543f9039cdadf296f69375b0e2468a7f87279ccff9bfb24938eabaedb",
+    "risk-target-tables.sql": "feab6351d169cd8094423a56b231c20efce9072cfff1f8acce183b6aad25112b",
+    "preflight.sql": "e0f1f1d9b6db5b5ac7109895a7995f2736066c8cd48e829409fcd4c58a92494d",
+    "platform-additions-review.sql": "16b9359fa500fa229817c16a66a8b5f2979cf11ea60bac10e2cea3f6c09bf04f",
+    "platform-additions-inventory.json": "f4285b94fd9ec8d6bd7586f1fcf72f7e9ff743d1d74c116fbfbcaf29bf1b0b00"
+  },
+  "successor": {
+    "path": "single-application-verification.json",
+    "scope": "Account concurrency confirmed as one; account index and explicit upload application target supersede the related prior open items and changed artifact hashes. Original checks remain historical evidence."
+  }
+}

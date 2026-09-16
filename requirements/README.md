@@ -56,6 +56,7 @@ requirements/
 
 | 登记目录 | 需求 | 主入口/Owner | 关联编号 | 材料 |
 |---|---|---|---|---|
+| `20260914` | 注册与客户入驻 | Client Console / Platform、CCT、Risk、Operations | E2E-01、CCT-01、RCO-01、PLT-I15/I16/I17；包含最小人工审核，团队邀请延后 | [需求](./20260914/client-console-注册与客户入驻/requirement.md) · [差异与影响](./20260914/client-console-注册与客户入驻/technique.md) · [详细设计](./20260914/client-console-注册与客户入驻/design.md) · [交付记录](./20260914/client-console-注册与客户入驻/delivery.md) |
 | `20260911` | Operations 风控规则 V1 配置改动 | Operations Console / Risk | RCO-14、RCO-I12、E2E-15 | [需求](./20260911/operations-console-风控规则改动/requirement.md) · [技术入口](./20260911/operations-console-风控规则改动/technique.md) · [交付记录](./20260911/operations-console-风控规则改动/delivery.md) |
 | `20260911` | 风控规则集列表优化 | Operations Console / Risk | RCO-15 / RCO-I12 | [需求](./20260911/operations-console-风控规则集列表优化/requirement.md) · [技术入口](./20260911/operations-console-风控规则集列表优化/technique.md) · [交付记录](./20260911/operations-console-风控规则集列表优化/delivery.md) |
 | `20260911` | 风控规则集历史与字典管理 | Operations Console / Risk | RCO-16 / RCO-I12 / E2E-15 | [需求](./20260911/operations-console-风控规则集历史与字典管理/requirement.md) · [差异与影响](./20260911/operations-console-风控规则集历史与字典管理/technique.md) · [交付记录](./20260911/operations-console-风控规则集历史与字典管理/delivery.md) |

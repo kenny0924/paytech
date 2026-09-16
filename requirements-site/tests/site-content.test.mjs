@@ -921,7 +921,7 @@ test("the current implementation ledger owns core model snapshots while entry do
   assert.match(currentImplementationSource, /\| Commerce \| 15 \| 249 \| 24 \| 12 \| 15 \| — \| 4 \|/u);
   assert.match(currentImplementationSource, /\| Payment Orchestration \| 30 \| 403 \| 45 \| 48 \| 67 \| 8 \| 7 \|/u);
   assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,109 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
-  assert.match(currentImplementationSource, /\| Risk & Compliance \| 78 \| 944 \| 115 \| 80 \| 120 \| 9 \| 8 \|/u);
+  assert.match(currentImplementationSource, /\| Risk & Compliance \| 81 \| 1,003 \| 119 \| 87 \| 127 \| 9 \| 8 \|/u);
   assert.match(documentGovernanceSource, /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据/u);
   assert.match(documentGovernanceSource, /被取代时增加状态与窄范围后继链接，不重写历史/u);
 });
@@ -929,7 +929,7 @@ test("the current implementation ledger owns core model snapshots while entry do
 test("the current ledger owns the Platform snapshot and governance routes control-plane authority", () => {
   assert.match(
     currentImplementationSource,
-    /\| Platform Support \| 64 \| 829 \| 124 \| 101 \| 109 \| 5 \| 7 \|/u,
+    /\| Platform Support \| 64 \| 831 \| 123 \| 102 \| 109 \| 5 \| 7 \|/u,
   );
   assert.match(
     documentGovernanceSource,

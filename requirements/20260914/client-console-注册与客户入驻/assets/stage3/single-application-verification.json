@@ -1,0 +1,60 @@
+{
+  "status": "STATIC_DESIGN_CHECKS_PASSED",
+  "decision": {
+    "status": "CONFIRMED",
+    "maxActiveApplicationsPerAccount": 1,
+    "scope": "CLIENT_ONBOARDING",
+    "sharedClientTypes": [
+      "INDIVIDUAL",
+      "ORGANIZATION"
+    ],
+    "activeStatuses": [
+      "DRAFT",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "RETURNED"
+    ],
+    "terminalStatuses": [
+      "APPROVED",
+      "REJECTED",
+      "WITHDRAWN"
+    ],
+    "activeSlot": 1,
+    "terminalSlot": null,
+    "workspaceMembershipLimit": null
+  },
+  "checks": {
+    "generatorSyntax": true,
+    "reproducibleOutput": true,
+    "canonicalSourceHashesMatch": true,
+    "accountUniqueIndexAndNullability": true,
+    "existingClientUniqueIndexRetained": true,
+    "statusSlotAndDuplicatePreflight": true,
+    "apiAndUiRuleAligned": true,
+    "uploadApplicationTargetAndTypeConflictDefined": true,
+    "operationCountUnchanged": 40,
+    "disabledPublicRoutes": 37,
+    "dmlRowsGenerated": 0,
+    "boardCountUnchanged": 49,
+    "localMarkdownTargets": 105,
+    "gitDiffCheck": true
+  },
+  "generatedArtifactsSha256": {
+    "target-field-projection.json": "84eaf183e2787fd1e4f82acfd7c2d885277bfaf0a5e0589c34124e64491c0247",
+    "cct-target-tables.sql": "ff858091767e1143857b9b292b450c1b1e7d3127e61848d1811dcfdd025a664a",
+    "risk-target-tables.sql": "feab6351d169cd8094423a56b231c20efce9072cfff1f8acce183b6aad25112b",
+    "preflight.sql": "35b554e02d68140328961c613fa012e64ce4e03794da0c43e0dfdb98f13d02d2"
+  },
+  "supersedes": "Previous detail-design verification open items for account concurrency and upload target design; prior runtime limits and historical evidence remain.",
+  "notExecuted": [
+    "Database connection or SQL execution",
+    "Canonical PDManer or service Schema changes",
+    "Application implementation or tests",
+    "Pencil file edits or new visual checks",
+    "Deployment, commit, push"
+  ],
+  "remainingDesignWork": [
+    "Shared non-empty data migration",
+    "Environment route/permission registration and deployment materials"
+  ]
+}

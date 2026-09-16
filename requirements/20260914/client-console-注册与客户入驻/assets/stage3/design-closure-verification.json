@@ -1,0 +1,80 @@
+{
+  "status": "PASS_STATIC_DESIGN_REVIEW",
+  "date": "2026-09-14",
+  "scope": "Design artifacts and canonical requirements content only; no application runtime verification",
+  "counts": {
+    "operations": 40,
+    "publicRoutes": 37,
+    "privateOperations": 3,
+    "permissions": 5,
+    "operationsResources": 5,
+    "managementTemplates": 48,
+    "registrationDmlRows": 0,
+    "localDocumentLinks": 136,
+    "cctRiskIndexChanges": {
+      "added": 13,
+      "removed": 17,
+      "changed": 0,
+      "unchanged": 15
+    },
+    "emptyGateTables": {
+      "CCT": 16,
+      "Risk": 10
+    }
+  },
+  "checks": [
+    "Four generators parse and reproduce identical artifacts",
+    "Canonical CCT/Risk source model fingerprints match review projection",
+    "Operation and route coverage, uniqueness and path mapping",
+    "Cookie-dependent Client paths stay inside authentication Cookie Path",
+    "Route limits, Header/Query allowlists and complete Guard pairs checked against current source limits",
+    "Management templates match current request field sets; every required ID binding resolves by command identity",
+    "Owner-local preflight is SELECT-only; inventory references exist in source models",
+    "Requirement JSON parses and local Markdown targets exist",
+    "Requirements site build and 136 tests pass; original E2E tests updated for submission identity and email links",
+    "Changed requirements content and sequence test files pass ESLint",
+    "git diff --check passes"
+  ],
+  "artifactSha256": {
+    "target-field-projection.json": "84eaf183e2787fd1e4f82acfd7c2d885277bfaf0a5e0589c34124e64491c0247",
+    "cct-target-tables.sql": "ff858091767e1143857b9b292b450c1b1e7d3127e61848d1811dcfdd025a664a",
+    "risk-target-tables.sql": "feab6351d169cd8094423a56b231c20efce9072cfff1f8acce183b6aad25112b",
+    "preflight.sql": "35b554e02d68140328961c613fa012e64ce4e03794da0c43e0dfdb98f13d02d2",
+    "platform-additions-review.sql": "16b9359fa500fa229817c16a66a8b5f2979cf11ea60bac10e2cea3f6c09bf04f",
+    "platform-additions-inventory.json": "f4285b94fd9ec8d6bd7586f1fcf72f7e9ff743d1d74c116fbfbcaf29bf1b0b00",
+    "registration-plan.json": "739b8de483ebe02061ba776722333cc374cb3fd7224aad314e562c1a0be58f4d",
+    "management-command-templates.json": "599f01556dbf0bc34549d4fc20f853ab3524934a4c2ec3f7c7e439d8c447f093",
+    "cct-migration-preflight.sql": "27f21f45f2ffd29ad509d1ebc9627ef86335caee4661f4f0ea2ec176f7956d97",
+    "risk-migration-preflight.sql": "d1d214f9288f3f78236da548cb72853e528dbf416ba9824834e845e80db65dd6",
+    "platform-migration-preflight.sql": "9247ceb25fd4dba6514f36ca4a6623874a1f5c8b215c1b970d390d3e9409d6cc",
+    "migration-inventory.json": "44ab98d80a4516401c711f68f55fd0d1fc48e4099713b0e52ac7c1438dcd22bc"
+  },
+  "sources": {
+    "CCT": {
+      "path": "client-contract-service/docs/database/client-contract.pdma.json",
+      "sha256": "1ad770428ecdc12f5df55fc719213ca49262dea8274662032772eb88f5835108"
+    },
+    "Risk": {
+      "path": "risk-compliance-service/docs/database/risk-compliance.pdma.json",
+      "sha256": "ee01925a0049b64de0f4aee981518e15ea462be1e89319f1d70489e77e092d6e"
+    },
+    "Platform": {
+      "path": "platform-support-service/docs/database/platform-support.pdma.json",
+      "sha256": "56991d1ede96b2bed6b916862235047f75cacc4dce36a52e87f169510c9c2d4a"
+    }
+  },
+  "notExecuted": [
+    "MySQL parser/runtime or preflight execution",
+    "Configuration APIs or role grants",
+    "Application business tests",
+    "Browser interaction or email/file delivery",
+    "Pencil editing or fresh visual verification",
+    "Canonical model/schema migration",
+    "Deployment or git commit"
+  ],
+  "verificationCommands": [
+    "npm --prefix requirements-site test",
+    "cd requirements-site && ./node_modules/.bin/eslint content/requirements.ts content/global-use-case-sequences.mjs tests/global-use-case-sequences.test.mjs",
+    "git diff --check"
+  ]
+}

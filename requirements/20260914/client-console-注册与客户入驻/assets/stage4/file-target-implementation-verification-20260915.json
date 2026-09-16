@@ -1,0 +1,855 @@
+{
+  "recordedAt": "2026-09-15T19:50:25.011393+00:00",
+  "authorization": "User approved file contract amendment; SQL execution separately requested, no reply received at recording time",
+  "implemented": "CCT read-only exact application/subject target authorization; Platform approved model/Schema projection",
+  "cct": {
+    "command": "JDK 25 ./mvnw clean verify",
+    "suiteCount": 13,
+    "totals": {
+      "tests": 105,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "name": "com.paytech.client.contract.auto.CheckoutQueryContractAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.ClientContractHealthAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.CheckoutQueryHttpAutoTest",
+        "tests": "10",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.ClientOnboardingRecoveryConfigurationAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.ClientProjectionSnapshotAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.ClientContractConfigurationAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.CompensationSchemaAutoTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.ClientTenantProjectionAutoTest",
+        "tests": "17",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.ClientDraftHttpAutoTest",
+        "tests": "42",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.ClientContractProblemProfileAutoTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.ClientContractApplicationAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.CheckoutQueryHttpBoundaryAutoTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.client.contract.auto.CheckoutCandidateRulesAutoTest",
+        "tests": "14",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      }
+    ],
+    "newCases": 6,
+    "firstFailureLog": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-cct-tests-lvwma01f/maven.log",
+    "firstFailure": "Missing private file target HTTP route returned 404",
+    "testLog": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-cct-tests-w4a485ob/maven.log",
+    "testLogSha256": "386315e7a396f3f8d12ffccb74c203c28e1340a4e40e2215bdcabcdb2f121b59",
+    "database": "real repository MySQL and Redis",
+    "externalOwners": "Platform and Vault loopback protocol simulators; target query makes no external calls",
+    "fixtureCleanupVerified": true,
+    "tableCount": 38,
+    "remainingRows": 0
+  },
+  "model": {
+    "focusedChecksPassed": 40,
+    "expandedChecks": 52,
+    "expandedPassed": 51,
+    "expandedFailed": 1,
+    "failure": "Existing scenario catalog has 63 rows for 64 modeled tables; t_api_scope absent",
+    "baselineProof": "/tmp/client-files-scenario-baseline.log: 11/12 with pre-change model; same missing-table failure",
+    "log": "/tmp/client-files-model-final.log",
+    "logSha256": "cee7cd9efa94c16024924f38d86833478db1028c61404da5e94e98f69e8623b7",
+    "unchangedEntities": 62,
+    "changedEntities": [
+      "t_file_upload",
+      "t_compensation_event"
+    ],
+    "retainedFieldIdsPreserved": true
+  },
+  "requirementsSite": {
+    "build": "PASS",
+    "tests": 136,
+    "passed": 135,
+    "failed": 1,
+    "failure": "Existing Risk snapshot assertion 78/944/115/80/120/9/8 versus current 81/1003/119/87/127/9/8",
+    "log": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-file-target-site-final-1sn_f_1s/test.log",
+    "logSha256": "ad267d8e120e2a4d77658a013e2153d11d70a0b9cce2179d0686fceed30c1c69"
+  },
+  "staticChecks": {
+    "localLinks": 122,
+    "penLinksSkippedWithoutOpening": 2,
+    "candidateTablesExactCanonicalSchemaMatch": 7,
+    "candidateSqlSha256": "358960eae6650c7734eb940db5cbd35be85107dacbfd552e58d35383cae07791"
+  },
+  "schemaDdlExecuted": false,
+  "businessInitializationDmlExecuted": false,
+  "deployed": false,
+  "remaining": [
+    "Platform upload/completion/scan business implementation",
+    "Risk material requirements query",
+    "CCT material reference commands",
+    "Client BFF/Web wiring",
+    "submission and Operations review flow"
+  ],
+  "sources": [
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-agreement/pom.xml",
+      "sha256": "23c138d35881fcdc4f12a5a4b3b2abebda99d85918b7e5082a819d6ad477f3d8"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-agreement/src/main/java/com/paytech/client/contract/agreement/package-info.java",
+      "sha256": "d7a98daa3ec981e2aaf5ef0b2a7e06524f5b387f6c87f272db90e9724667997f"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-api/pom.xml",
+      "sha256": "5d7990a737d6bd43b009e78140f2fc0c03c69c049e3bb8f9f738e0156888d68b"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-api/src/main/java/com/paytech/client/contract/api/package-info.java",
+      "sha256": "8d160efff3b4fabd6d3ac2ad7c9a0c8439e7b12e37c6e586287ebf2e37ebd2fb"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-assignment/pom.xml",
+      "sha256": "2f8bf01e2ed4c2c8b78e1b2261a6bbff93a655127035db9635f45ecd2bb4ddcd"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-assignment/src/main/java/com/paytech/client/contract/assignment/package-info.java",
+      "sha256": "4e43c5e8aa1fbba6fd23d83b27945d7bfb1f8cad79093feb13c34573ecd7044a"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-commercial-term/pom.xml",
+      "sha256": "ef52a9b11a7f02d71446bd2824cd2ab948f635f4d8dd28937125537e936f144e"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-commercial-term/src/main/java/com/paytech/client/contract/commercialterm/package-info.java",
+      "sha256": "62652e53b5c746a15949de919c65488b57ef5e370861e2adee926a2671981f4a"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-party/pom.xml",
+      "sha256": "75ed054ed41a2c379ddd4091775f88df47c8a81717fc967018e54a2a367d0da1"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-party/src/main/java/com/paytech/client/contract/party/package-info.java",
+      "sha256": "511082f24ac27d376ce48ee7d7d97718729e7ebe464b0db13700253aa5743cae"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-test/pom.xml",
+      "sha256": "197352b6445bc1cddd3abe84d82c4c096a419a7bd6cc9b9020eaf1e29026cf08"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractApplicationAutoTest.java",
+      "sha256": "1bb0e17c20f693273260e1cefafc64be0e574a9d5467373b620a26be012cf61c"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractConfigurationAutoTest.java",
+      "sha256": "89c80db52c2396810c58e00727677bf71bbe3765f8eb8a3239141eeafcde314d"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractHealthAutoTest.java",
+      "sha256": "0cbec39ae0f914ad9306fbda07765ede830f9aeaaa6feb4cf0d2bdd71e26957c"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractModuleBoundaryAutoTest.java",
+      "sha256": "4f0b7ebcb9ff1f908397291ba4732ce539d5a6ac72ad5830567ed6f4370b2cd3"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-test/src/test/resources/application-auto.yml",
+      "sha256": "c2429cb331579259184b1b6184b7cbe25ac6a42659a2b6006e061bfcc3317481"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-web/pom.xml",
+      "sha256": "692cde9768015f79b27849af6c65471a77942dc56070d311b35b00ec113a4c70"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-web/src/main/java/com/paytech/client/contract/ClientContractApplication.java",
+      "sha256": "f84a6604aeef8ee328e5433e21bf386c0562cd5de3d73da6994e9cf3069a5c71"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/client-contract-web/src/main/resources/application.yml",
+      "sha256": "de1bc05249f329221d6b22fc2810c7defb60c558cb25474c870d10204df10c2c"
+    },
+    {
+      "path": "client-contract-service/.worktrees/client-contract-modular-initialization/pom.xml",
+      "sha256": "f9d6b35b734d04133b02fe79525dbc4792bedb7a42c23ff1b80e12269ba93a25"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/pom.xml",
+      "sha256": "b3ff91fe26ba5bed21c7370ba28f33a1b9ee90b0a832701b2bde7f4224ca56e9"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/checkout/CheckoutContextApi.java",
+      "sha256": "2fa1d1b5a5666e176dead96e5d428d5a29cd7d0af96c82693d61d1ac2507cd53"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/checkout/CheckoutContextModels.java",
+      "sha256": "faebd8de53a27f826d6ae812c43b739be69f3fca24a500a2aaa330006f0e6ba0"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/checkout/CheckoutEligibilityApi.java",
+      "sha256": "d967eccdd02d633fb0b9572734c810356ad359ee4028b4f34bec744ec3076110"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/checkout/CheckoutEligibilityModels.java",
+      "sha256": "b1c370547dda011a7c9a3e1caff60d9201ebcb3a176161c423a759cfab74d6df"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/enums/CheckoutErrorCode.java",
+      "sha256": "96a3cc046ef881372567f3bce626df821f0d4be8a373e7d5bbb252d46c2e52d2"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/enums/ClientDraftErrorCode.java",
+      "sha256": "be604005616d7ff4b17a94d75ac3fb2f21659efc0f4f3ef32c53f954b50cc0ff"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/onboarding/ClientDraftApi.java",
+      "sha256": "133eb42fe9e85d98841600396c9e75d4b4f280b51b474b11b2287d87a042e400"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/onboarding/ClientDraftModels.java",
+      "sha256": "9f0f739bc7d3f608ebdf0bb976092acbed94e0bc859da71065eb852d95eb7438"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/onboarding/ClientFileTargetApi.java",
+      "sha256": "a2a8f93da439053d23bdff290492ecc72851a76f8a5b68db22388bd8a5bd63b0"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/onboarding/ClientFileTargetModels.java",
+      "sha256": "4924c9a86e5cf2acebe565338877aa6a6af550a3d796c8abcbd18154cfef1641"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/onboarding/ClientPeopleApi.java",
+      "sha256": "7933bc8282897f147330504e3aa1f4baeffced51cccb8ad264430cd95655f6bb"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/onboarding/ClientPeopleModels.java",
+      "sha256": "bae9da73dc820dd28f590d562c7b11d42e0a98b60b3832848b4dea33ffd26751"
+    },
+    {
+      "path": "client-contract-service/client-contract-api/src/main/java/com/paytech/client/contract/api/package-info.java",
+      "sha256": "8d160efff3b4fabd6d3ac2ad7c9a0c8439e7b12e37c6e586287ebf2e37ebd2fb"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/pom.xml",
+      "sha256": "e07250aa183bbd2806510741fbd0b23e6332b624dd05f42edcbe7c648339a661"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/CheckoutCandidateRulesAutoTest.java",
+      "sha256": "1cd665a4522d19b186b452a7e71dfd0ea3dbe4a53acf0269632147aa76fd8b0d"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/CheckoutQueryContractAutoTest.java",
+      "sha256": "e112df5dbf039e5709146566d0d6f2bc27839fcda1f4420d6270b5164eb5a684"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/CheckoutQueryHttpAutoTest.java",
+      "sha256": "a2f8649915ac6cdde44372cffc082c6c0ed12c2733e0775166855fb963955eb3"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/CheckoutQueryHttpBoundaryAutoTest.java",
+      "sha256": "cc71a0b2f0c3a64c0bbc5b9528a4d269ad4cab639e01e2be5bbbb91d3805a84c"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractApplicationAutoTest.java",
+      "sha256": "e8b7872cf80b238bd339592f99ceff45ba6536bf443c563029e12a5b4acdb918"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractConfigurationAutoTest.java",
+      "sha256": "af5bf124a509be3c11952fb36b7a3422731da41f564a128ba04e03fbcff48e14"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractHealthAutoTest.java",
+      "sha256": "0cbec39ae0f914ad9306fbda07765ede830f9aeaaa6feb4cf0d2bdd71e26957c"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientContractProblemProfileAutoTest.java",
+      "sha256": "0e8c6dcb2a20bb619890dad2a7d71c83f521d1b8cd04531af5788393c14beaad"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientDraftHttpAutoTest.java",
+      "sha256": "192305fcf2d9a63f63688b833d44c308a893aee88bb5cf3f459fc71d7fd17e8a"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientOnboardingRecoveryConfigurationAutoTest.java",
+      "sha256": "bab1034cbbc42ae51d9cbe5cf7b32e44a8984471c79230b5d247f434cb715b46"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientProjectionSnapshotAutoTest.java",
+      "sha256": "3ab74049d4e63d8b8d4fc1867ea80c75b2884a0d2f195756ffc1629b0aab72d7"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/ClientTenantProjectionAutoTest.java",
+      "sha256": "24825188259fbe300021e360d71b8039e01fcf8928c60b70f54816b951fc5ae7"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/auto/CompensationSchemaAutoTest.java",
+      "sha256": "b2528cb3be08adc5410abcf1dd5035ee7cf641f2e46727e98dcfcf1da536e431"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/test/CheckoutFixture.java",
+      "sha256": "92762dbf25043ff55cb28b821d4097492015a9ac6082655edc9b6c94f2dd259c"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/test/compensation/CctCompensationProbeHandler.java",
+      "sha256": "f8f390a41d4f6872fc6442204b00750ea9faa746f7343a9e02b9b58afc25db02"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/test/compensation/CctCompensationTestConfiguration.java",
+      "sha256": "d2d84a0b41871275e50d07992b8b1b69ab04a75cac63da07952d896ee8c3e6a2"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/test/compensation/CctCompensationTestMapper.java",
+      "sha256": "7ea7b37f1ebea2db65d4e9c838bae3bb8d63bea192be76520a0eb6bbf4e1a992"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/test/onboarding/ClientDraftSqlBarrier.java",
+      "sha256": "54de4bbb8c40210fa87a44d9426fe7575548537fe395ac30f51998a33d750772"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/test/onboarding/ClientDraftTestMapper.java",
+      "sha256": "fbf03b973be799a4cddca5991a91968beb647f3a8d7839a4d9a66ef82bf67357"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/test/onboarding/ClientProjectionTestMapper.java",
+      "sha256": "3f078bb8d78e7b0c4ec54b19858f7c3262a1ce0e6b64eba76315301392b25795"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/test/onboarding/OnboardingVaultSimulator.java",
+      "sha256": "72e51ee5c1bb20598dba513aee652c5f146da4a7196dc2457eef12e2cf22b70b"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/java/com/paytech/client/contract/test/onboarding/PlatformProjectionSimulator.java",
+      "sha256": "3fdee2cc99c92c78c7694e5d42eb903bbb86115f26fceee93a37f94edeb5a1ef"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/resources/application-auto.yml",
+      "sha256": "50e715003d57d29b38b078facff5e452a4ced9b246086d65343229b79250dc39"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/resources/application-checkout-auto.yml",
+      "sha256": "389ca467b115d2741e381c257d5096bee04fc2754df0ae38de99e4e7ecea0a0f"
+    },
+    {
+      "path": "client-contract-service/client-contract-test/src/test/resources/application-onboarding-auto.yml",
+      "sha256": "92e2a92b4b1c67ed9fb28077fe6219b3e473216e3bf6dd84ba8172abe982d499"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/pom.xml",
+      "sha256": "61b047cda2bf7b60fba8991d861c64d09f1b361ec49db4ea66f3f0c573876532"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ClientContractApplication.java",
+      "sha256": "f84a6604aeef8ee328e5433e21bf386c0562cd5de3d73da6994e9cf3069a5c71"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/CheckoutHttpBoundaryConfiguration.java",
+      "sha256": "b9bcd60d018cec2c1e25fd843ae2dccc2ee7a2b79a74923f1646f1acd62b71cc"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/CheckoutQueryConfiguration.java",
+      "sha256": "ed75802e50bcce327d7623bfccfb2c234186e24b1e5fe548c97c224469453255"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/CheckoutQueryProperties.java",
+      "sha256": "ff78c05e137b951abd7ae506430eb9474bf347f71fcf6957fe7c7d026a689c12"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/ClientDraftConfiguration.java",
+      "sha256": "36ff07f4674cbc737c6fe6b05d832b66ed771f540ea9e76288a5bf61c417c3af"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/ClientOnboardingRecoveryConfiguration.java",
+      "sha256": "32ece96ad84bc41d091d5a330ebf29f30cd8a5086c100444ab561674216a92a9"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/dataobject/CheckoutRecords.java",
+      "sha256": "168ddee23f4678efa63d722f64c5c0e14d762380c9f73567a2e7fdf8a86ff499"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/dataobject/ClientDraftCommandRecord.java",
+      "sha256": "606f2a7c6ee04c0152b10603a199687f6137b6da698a21eb31e99d92042297ac"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/dataobject/ClientDraftContact.java",
+      "sha256": "382a0bcd62c5dd6eb2e20dd17591cdb36f5508751bc95daea13766875ec04c2a"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/dataobject/ClientDraftFields.java",
+      "sha256": "dd77cdc0faa0059a53489c6c10cf0cfece1d04cd3dda7872cc2eabd97f1a6c72"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/dataobject/ClientDraftIdentity.java",
+      "sha256": "8592807f9be9614e4c61f946d5cd66a8d099590e00e83587e82b690402a5ac74"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/dataobject/ClientPartyRelation.java",
+      "sha256": "66f3877254e57b8ea1ace8a854479e835b126e2daae751d09fcea67fb9b3e83b"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/dataobject/ClientPersonIdentity.java",
+      "sha256": "c00d9fea4a41b2de2d05334128ffe85591826f923d2b3fb96e19b00fb0663595"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/dataobject/ClientProjectionHistory.java",
+      "sha256": "f94b8b1a3e0e68cf45a31e200aaa4c8edca4d941bfca792956b4f560ed2b6c16"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/mapper/CheckoutQueryMapper.java",
+      "sha256": "2f5266c6704563d9d209007d66f55337d8feab3e1b653189075a9dbf5ba09d53"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/mapper/ClientDraftMapper.java",
+      "sha256": "ef31bc91934fecc6b10323fe81bcc4ec62f758406e114bf87f2d36e7ff6fcdd9"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/mapper/ClientPeopleMapper.java",
+      "sha256": "02c6f5e88adc9afd0810ef041c90b9ae5bdc628a6e59ea52b2cf4a70f5e24103"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/mapper/ClientProjectionMapper.java",
+      "sha256": "1e4874a26b22518f7888f352c0734287fc5475366d47a5536a34161e76d72627"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/CheckoutContext.java",
+      "sha256": "e30aff044c1892acec19479fd00ae69cedbfcbdc129159619171afabf7ff69bd"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/CheckoutQuery.java",
+      "sha256": "3bf272da9870cd2fa9335e37feaf15773eda0d768296d0e6367c6923699d8ce0"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/CheckoutSelection.java",
+      "sha256": "7cad3bf4b9d708ffe71762543919ae5be02f7b92a26f34cd5603636116378738"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementAgreementFormat.java",
+      "sha256": "32e4e8bd87beaff877e16382086e23f16fe5b9a56ea6817441aeedd2a9947194"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementAgreementType.java",
+      "sha256": "08ea9555bd0482709a60ec8b6f23961f5032ee80b7ab24bb475b09bd5083c70d"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementDocumentRefDocumentType.java",
+      "sha256": "c68bb082c8a1c8ddc0da6e4336bacfaa88512607c4a1dd1ad82183d05974750d"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementPartyAcceptanceMethod.java",
+      "sha256": "872050dc1771cb0e5eafd04b970f6fcb9ec6bea8287550f3eb03ccbbe491d202"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementPartyPartyRole.java",
+      "sha256": "d47f5dd68bb39e61b24ae33f3574b230d03c33d819443ffbff82d85ee5726fd0"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/AgreementStatus.java",
+      "sha256": "61582a3be60623c3299aa6383f1c8b49cf3065f88df6147c726eb84bbc9a39de"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/BusinessChangeOperation.java",
+      "sha256": "b41e404e23a16d20df209ab771fccf21ce67d0135fca3b68c806d04feea87563"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/BusinessChangeRecordAggregateRootType.java",
+      "sha256": "7f7ca7447866c967c5f068496aef25fdfa8f7985276bf3a3b32868d93cb268c0"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/BusinessChangeRecordRecordType.java",
+      "sha256": "093d838023a4c697f9f48b69f6be18e0da20364d16fcc139223edbab214bd681"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/BusinessChangeSnapshotFormat.java",
+      "sha256": "26ca04387d4799d282fb403b3852022decb084be878f9177a26ee08669d8ff29"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/ClientApplicationStatus.java",
+      "sha256": "b9700f3c52124ac2f739cbd7ddfb67f01af7f567cd9be40e4c9b02b3f3d29fd2"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/ClientEntityAffiliationStatus.java",
+      "sha256": "f652a1b5cccffbe7a525b535bd2c477e73949c4a3fb149fd140886b892e2de0d"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/ClientStatus.java",
+      "sha256": "d4b1a50337b2988d499bf053c90b540ba6431279071b3eb3eb3232aa92a60543"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/ClientType.java",
+      "sha256": "29b31c617fa6752418ae9ebfa8a13cc2c29f710f960ec797e5752f39dce44c15"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/CommercialTermComponentBandMode.java",
+      "sha256": "ffaee7051542f25c73333180e53509859baa26db4f3df867f98e0299ff7859a2"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/CommercialTermComponentComponentType.java",
+      "sha256": "9129702f8454d4e95ba52d0c37d319bb93b977bab2e5e7dd8f5d770ae85e53c0"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/CommercialTermPlanTermType.java",
+      "sha256": "de4c51cd5d648354a47d73f2d788919613624161010148a8cf43fa1f7e65fda4"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/CommercialTermVersionStatus.java",
+      "sha256": "44622bba0999c5075e06e1fd80c0aedec94df9c6f0d282deb93957978c02ce39"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/ConsumerLegalDocumentDocumentType.java",
+      "sha256": "92efdc9f31e4012b315d786cd7b7645fe28089de8cc8b9d93edda4bdf511ff05"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/ConsumerLegalDocumentStatus.java",
+      "sha256": "eb02c1f3d9eb5c894d9c7801200b6220e0aa962a92a2b0c64d6e23b55e51c71f"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/EntitySourceRelationClientSourceBasis.java",
+      "sha256": "2e34e3b52b8d79d2b2530fe7c11aadb5d8161b18d26db8c443454098af462cc1"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/EntitySourceRelationSourceType.java",
+      "sha256": "f46594419c46feefddea9275947b9714d90bf68a3b2b5243b69d34d081732789"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/EntitySourceRelationStatus.java",
+      "sha256": "f84baad57ef5f2479b25008c66b1560c8ac344509fb7ab176a82d8f75bdde97a"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/LocalPartnerStatus.java",
+      "sha256": "3623cea382a7ebcc6574c918a3ca75b1aa53ad539868ce3a1f6ff874c5dca6f2"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/OperatingEntityApplicationStatus.java",
+      "sha256": "7373d305c75cc64e7cc2af5eee52517f499c4bb45644d970327b6b8261e041c9"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/OperatingEntityScopeStatus.java",
+      "sha256": "dd27d43ddbd5f2b3facb75d76073345751a5235c7d7758a669d53628b3a90402"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/OperatingEntityStatus.java",
+      "sha256": "0e7ae6e8e9239b80ed20c12030e091a9a3c4474e89231a2dcb3518774e8b2a69"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/PartyRelationStatus.java",
+      "sha256": "b3b803a8e66e83eb081a0698ac6cfb1a8da30012f4a260de3ccdaf585b5613db"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/PartyRelationType.java",
+      "sha256": "f0762afefdb3e49f0801680d85ca807a41fd96556dbc4b771d235998bd770b5f"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/PaymentMethodProfileStatus.java",
+      "sha256": "10a3697b1422f077e144b7e8e6be19f4785171c04ad589f77070e693414f2b9c"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/enums/SellerDisclosureStatus.java",
+      "sha256": "2307d544d0b2814048475b2f6a989a85deb4ed324ac7f6fee3566f6953967357"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientDraftCommand.java",
+      "sha256": "94b2b9f66510c2481c7d3b044edddcec9af3085e6a56e4c2b4bf1b8dc7488a8f"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientDraftCreation.java",
+      "sha256": "2ce71598779b38d67b44e4a456b734a8a97946eee66626d79f10f72ffebc83fa"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientDraftPatch.java",
+      "sha256": "2ab84bec4ee0cbdab835180038bfcee5e924921d8c094054872506b9ca91614f"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientDraftPolicy.java",
+      "sha256": "6a05f0ecbad30d3a76f885ff4fb6499549644d820edc231dd757efd7d458d224"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientDraftView.java",
+      "sha256": "de807ac4349b4ad80064213ed3d834773cd18f4266f75a078b21698b561b02b1"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientFileTarget.java",
+      "sha256": "905dcb8ba7782db2a4fae8825db1c0fb8a11c9aca50b9c6127238196c054ba49"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientPeopleOperation.java",
+      "sha256": "88400975381b5826ca95a2e234d21c8c52657b090f84cc60d7dc22ee96d580e9"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientPersonCreation.java",
+      "sha256": "53665b402dc4d9dec0812cfdcb4511cd0913adcfc137f01aa727cde5c96b163a"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientPersonView.java",
+      "sha256": "55e8301aef90f58d220a6b6de4bbdbc336a8e314e8c62eefc797ea89a2890240"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientProjectionModels.java",
+      "sha256": "47ac13cfe2e84e737639f4815c08bb82416cf672977ce645cd72ed202ac6dff9"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domain/onboarding/ClientRelationValues.java",
+      "sha256": "dd6943e1c67237afc6d67f0eb2caf84cc63a24950a5c875d049ed99b5032a7ce"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/CheckoutCandidateRules.java",
+      "sha256": "bc2e9c8ebfa96303e778ff19ad890a75bf396a843984b0b898b141541f242c54"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/ClientProjectionSnapshot.java",
+      "sha256": "efd6fcf29927e40cd33f27f9cdbf4712499f885c294d620c70c5ffc16250c378"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/repository/CheckoutQueryRepository.java",
+      "sha256": "82ade69f7959eb65d8f39a92da444eed65df6bef918e23bb710cc358c6732c26"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/repository/ClientDraftRepository.java",
+      "sha256": "a3abf1d958924649676c721f167881e78dd0fd0a29c8de0df32504080a248d27"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/repository/ClientPeopleRepository.java",
+      "sha256": "5803d1712a6a52f24fb674bcc143f044f41fcd03b9b9bc60d9f33f5631d85e69"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/repository/ClientProjectionRepository.java",
+      "sha256": "bf7e950ba80b13a5a378e3fa58010407127c267359a177aebb9a44b6053daa14"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/repository/impl/CheckoutQueryRepositoryImpl.java",
+      "sha256": "540ff57fd269cd765fe8a22ad4a240522823d434014aa01f31e12b1f4df85676"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/repository/impl/ClientDraftRepositoryImpl.java",
+      "sha256": "f7cf630654921bb7dba38c13313a7e5854d3d29c628f5732093e8caae8b73893"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/repository/impl/ClientPeopleRepositoryImpl.java",
+      "sha256": "818f4f415ef5056310bc9f8c51084829c692b09210fa31694997cef18a872ea3"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/repository/impl/ClientProjectionRepositoryImpl.java",
+      "sha256": "a0d8003b6f0e2e0a9d9a1ec2c93c84ab06ff3825325e02df3f384f536b252d93"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/CheckoutQueryService.java",
+      "sha256": "dea5d4468004456d7983f3ec9c522cbcb9bc8a7ab6c951ef9b00c5688d678d8d"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/ClientDraftService.java",
+      "sha256": "a584fa61cfcdb4843f7200efd0adf6049b0d5fa96fb1b49bffc121333d55f988"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/ClientFileTargetService.java",
+      "sha256": "1fe05c7e43581c3678657d43ab36137e136428150295afb810105238d69f93af"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/ClientPeopleService.java",
+      "sha256": "ee530f177885efaf45a245560467fcd97639606b4353862394b2510bac81b1b9"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/ClientProjectionSourceService.java",
+      "sha256": "2ec12133fffb82c0baacea37a9e1efac9ff12b745b3f6597c15116af3ccb7419"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/impl/CheckoutQueryServiceImpl.java",
+      "sha256": "9b8b5c51b6bf4fccfb7bef9ca5ca58b23b6adb201bf745446b3e939fe458e11c"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/impl/ClientDraftServiceImpl.java",
+      "sha256": "23bfa903efd7507a74979ac34c2249f1eda36e5ee4c22edeab83e53c96a42ef8"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/impl/ClientFileTargetServiceImpl.java",
+      "sha256": "290880de36cb243ddb141210bfc1061bab5b7fa13d6c8ecde388c8e7c2446fca"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/impl/ClientPeopleServiceImpl.java",
+      "sha256": "119f48238135dd3124f6aa3d556c700edb5a9b937eca3ab1a78712fe1511a579"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/service/impl/ClientProjectionSourceServiceImpl.java",
+      "sha256": "bff22333e22f0252c8e18bd4bf27de1b4682edbe0d01783c399a59d42dd100ac"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ext/rest/CheckoutContextConverter.java",
+      "sha256": "a7215c66f14631ff65fb3bebb22638b96b22046033aad67b98796ef5e08062cc"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ext/rest/CheckoutQueryController.java",
+      "sha256": "b6c916c81d33d298827a5deb9090b5a2f2a5da0ce89f2ccfe8a6c86c35845319"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ext/rest/ClientDraftController.java",
+      "sha256": "f79c20e9d73192e695c082ecda2876633d1fe54dc2e85d10ad8274c1b7a92d74"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ext/rest/ClientDraftConverter.java",
+      "sha256": "3491e16479d95ddb8172dfa00b6668bdda7fa025872de3ad310b3a58337f82da"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ext/rest/ClientFileTargetController.java",
+      "sha256": "c177c026b2c0aea47f1c5b0a1b8741c512a5d08eb1db1db2ee2d26a98a9b5f44"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ext/rest/ClientPeopleController.java",
+      "sha256": "63f29da3a5880550e928232da2f7e1752e1ec5a0bcd52de0334731abd4f6d036"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/integration/CheckoutQualificationClient.java",
+      "sha256": "ce4658ea27bf4a03d99105e8910e1fa11565a7ee5223d3e75b2dd371de1f6644"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/integration/ClientDraftAccountClient.java",
+      "sha256": "e142a62d84047a4a1aca59a6a3ad2b3b66caaa93b79894b5ecc1a337d448ff4e"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/integration/ClientDraftContactClient.java",
+      "sha256": "19b04698baf23247402c7929537612dc19e96cb930b65fe2487f57486de3088c"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/integration/ClientTenantProjectionClient.java",
+      "sha256": "101f7fba846c494ca6dbde2e673caae88a12ffd315e87bbf7c072e4bbd36913c"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/integration/impl/ClientDraftAccountClientImpl.java",
+      "sha256": "72c7a35df942cb2a42463baa5a821f98a546a56f98f0ee9548846c8011041960"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/integration/impl/ClientDraftContactClientImpl.java",
+      "sha256": "c6a8c6c110c7d6e083faf5dcb126a1e7a9783fa4616bf3e6be8e18b332e6325e"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/integration/impl/ClientTenantProjectionClientImpl.java",
+      "sha256": "1b3592b40b46b91f2fabba3072fb8a3cbe40c62a393b95a15166e38abf8fff3e"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/integration/impl/UnavailableCheckoutQualificationClient.java",
+      "sha256": "76a9264719b611390bec209908fa82fe403a7f0789e8571e3e438cfaeba3d0bb"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/service/handler/ClientTenantProjectionHandler.java",
+      "sha256": "59e2f1c7a520b773f4be167b42b7b109abcbfe11b98c12f67dc1c6770f700848"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/service/processor/CheckoutResolutionProcessor.java",
+      "sha256": "d5d42ef8a7ded35b02672c724a7fa8badc21649d453b5df0fdf9c9b5aef58d79"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/service/processor/ClientDraftProcessor.java",
+      "sha256": "0b7a1cb2024ae33c1052e3cc6985a5db176d7005804326ee93334a9c4171097f"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/service/processor/ClientPeopleProcessor.java",
+      "sha256": "396c186285bfe58d2055681fa82d66f2a6fcc873bd1e40841dd6f3a50b363899"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/resources/application.yml",
+      "sha256": "99112e9459401cffa5c8e0c9a257937ef8bd611e21945a078fd91750da1639e1"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/resources/mapper/CheckoutQueryMapper.xml",
+      "sha256": "8c9c6edf7a883e5df9ce847baace42e0324fa5c37f46fccc60992554adea20e9"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/resources/mapper/ClientDraftMapper.xml",
+      "sha256": "1e397523d53fe84acaaffe647592882bd7f29e74f1f689bec0f46acf3ad9fb81"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/resources/mapper/ClientPeopleMapper.xml",
+      "sha256": "95b0bf217c16d12dd508557e1df0e8db4517749c134677e78b5c3374dc74cec1"
+    },
+    {
+      "path": "client-contract-service/client-contract-web/src/main/resources/mapper/ClientProjectionMapper.xml",
+      "sha256": "d6ca594fd0605399274dde48b5e5bde0de25fe7505c6f5290952c9d53834289b"
+    },
+    {
+      "path": "client-contract-service/pom.xml",
+      "sha256": "7e6aa53cec15ef1bd7cf1bad3f07ed5d0f075d966e89b6fb422cc6ad773633a3"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "requirements/20260914/client-console-注册与客户入驻/db/implementation/platform-files-local.sql",
+      "sha256": "358960eae6650c7734eb940db5cbd35be85107dacbfd552e58d35383cae07791"
+    },
+    {
+      "path": "platform-support-service/docs/database/platform-support.pdma.json",
+      "sha256": "2e8825eb3873c21868c75ae8eb52c981e20ae3f7012b7520ce9da8b5f1f73108"
+    },
+    {
+      "path": "platform-support-service/docs/database/sql/platform-support-schema.sql",
+      "sha256": "1e6fc5a6c37061482782de6fb36a02ac786b627d7bd6b9123926aa190a9b7bf9"
+    },
+    {
+      "path": "requirements/20260914/client-console-注册与客户入驻/assets/stage4/platform-files-execution-preflight-20260915.json",
+      "sha256": "9c30487eb1a4b66699158d1ead9d26daa6f500cd42fcf1733a7bec26eb9867b8"
+    },
+    {
+      "path": "requirements/20260914/client-console-注册与客户入驻/file-upload-closure-proposal.md",
+      "sha256": "6abfdc7e7f04314126faa7b8d2fce04f42f26d885a59089752863d06f04a90bd"
+    }
+  ]
+}

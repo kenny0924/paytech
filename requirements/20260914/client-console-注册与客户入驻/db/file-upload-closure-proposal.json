@@ -1,0 +1,122 @@
+{
+  "status": "DRAFT_REQUIRES_REVIEW; does not supersede current schema/model",
+  "proposedUploadFields": [
+    {
+      "name": "owner_system",
+      "type": "VARCHAR(64)",
+      "nullable": false,
+      "comment": "上传目标所属业务系统代码，来自 Platform 受控代码目录；Client 入驻由 CCT 授权结果固定，浏览器不得提交。"
+    },
+    {
+      "name": "owner_type",
+      "type": "VARCHAR(64)",
+      "nullable": false,
+      "comment": "上传目标的受控资源类型；Client 入驻固定为 CLIENT_APPLICATION_SUBJECT，不允许上传后变更目标类型。"
+    },
+    {
+      "name": "owner_ref_id",
+      "type": "VARCHAR(128)",
+      "nullable": false,
+      "comment": "来源 Owner 定义的不可变目标坐标；Client 入驻为 CCT 的 applicationId:subjectPartyId，两段均为规范正整数 ID，不复制 Client 名称或其他可变事实。"
+    },
+    {
+      "name": "display_name",
+      "type": "VARCHAR(255)",
+      "nullable": false,
+      "comment": "去除路径和控制字符后的文件展示名，最大 255 Unicode 字符；仅授权页面展示，不作为对象存储 Key 或鉴权依据。"
+    },
+    {
+      "name": "storage_provider",
+      "type": "VARCHAR(64)",
+      "nullable": false,
+      "comment": "此次上传使用的对象存储适配器代码，来自受控配置；创建后固定，恢复不得改用当前默认适配器。"
+    },
+    {
+      "name": "storage_container_ref",
+      "type": "VARCHAR(255)",
+      "nullable": false,
+      "comment": "此次上传的目标存储容器引用；不含凭据，创建后固定，完成和恢复必须使用原容器。"
+    },
+    {
+      "name": "storage_object_ref",
+      "type": "VARCHAR(255)",
+      "nullable": false,
+      "comment": "Platform 创建的高熵上传对象引用，不含原始文件名或个人资料；与适配器和容器组成上传目标，不能由浏览器替换。"
+    },
+    {
+      "name": "scan_policy_id",
+      "type": "BIGINT",
+      "nullable": false,
+      "comment": "本次上传在开始时冻结的 Platform File Scan Policy 修订 ID；完成后由 File 继承，不因等待期间默认策略变化而重选。"
+    }
+  ],
+  "removedUploadFields": [
+    "upload_token_hash"
+  ],
+  "uploadIndexChanges": {
+    "addUnique": [
+      "uk_upload_storage_target(storage_provider,storage_container_ref,storage_object_ref)"
+    ],
+    "removeUnique": [
+      "uk_upload_token(upload_token_hash)"
+    ]
+  },
+  "compensationTarget": {
+    "source": "client-contract-service/docs/database/sql/client-contract-schema.sql#t_compensation_event",
+    "columns": 15,
+    "reason": "Reuse the already-approved Foundation runtime contract for a new Platform file-scan consumer; canonical Platform model synchronization still required"
+  },
+  "proposedTables": {
+    "t_file_upload": {
+      "columns": 18,
+      "primaryKeys": 1,
+      "uniqueIndexes": 1,
+      "ordinaryIndexes": 3
+    },
+    "t_file_scan_policy": {
+      "columns": 13,
+      "primaryKeys": 1,
+      "uniqueIndexes": 2,
+      "ordinaryIndexes": 1
+    },
+    "t_file_scan_requirement": {
+      "columns": 10,
+      "primaryKeys": 1,
+      "uniqueIndexes": 3,
+      "ordinaryIndexes": 0
+    },
+    "t_file_object": {
+      "columns": 19,
+      "primaryKeys": 1,
+      "uniqueIndexes": 4,
+      "ordinaryIndexes": 2
+    },
+    "t_file_owner_ref": {
+      "columns": 7,
+      "primaryKeys": 1,
+      "uniqueIndexes": 1,
+      "ordinaryIndexes": 0
+    },
+    "t_file_scan_result": {
+      "columns": 9,
+      "primaryKeys": 1,
+      "uniqueIndexes": 1,
+      "ordinaryIndexes": 3
+    },
+    "t_compensation_event": {
+      "columns": 15,
+      "primaryKeys": 1,
+      "uniqueIndexes": 1,
+      "ordinaryIndexes": 2
+    }
+  },
+  "candidateSql": "platform-files-create-review.sql",
+  "candidateSha256": "ed7753ce81f0ffda1dc62ee221f0e2290f5be33e0f0d80b110b62b67c76ab3cd",
+  "ddlExecuted": false,
+  "dmlRows": 0,
+  "notes": [
+    "No scan-policy, scanner acceptance result or Risk requirement is invented or seeded",
+    "Canonical Platform model and current SQL are not changed by this proposal",
+    "F01 subjectPartyId and Idempotency-Key are proposed protocol changes requiring confirmation"
+  ]
+}

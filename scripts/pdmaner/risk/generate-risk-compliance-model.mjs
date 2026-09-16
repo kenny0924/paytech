@@ -382,9 +382,9 @@ function isCodeLike(fieldKey) {
 }
 
 function validateManifest() {
-  invariant(TABLES.length === 80, `Risk & Compliance 必须有 80 张表，当前为 ${TABLES.length}`);
+  invariant(TABLES.length === 81, `Risk & Compliance 必须有 81 张表，当前为 ${TABLES.length}`);
   const primaryTables = DIAGRAM_GROUPS.flatMap((group) => group.primary);
-  invariant(primaryTables.length === 80 && new Set(primaryTables).size === 80, "每张表必须恰好属于一个主图组");
+  invariant(primaryTables.length === 81 && new Set(primaryTables).size === 81, "每张表必须恰好属于一个主图组");
   invariant(JSON.stringify([...primaryTables].sort()) === JSON.stringify(TABLES.map((table) => table.defKey).sort()), "图组主表集合与生产 Manifest 不一致");
   const tableByKey = new Map(TABLES.map((table) => [table.defKey, table]));
   for (const table of TABLES) {

@@ -7,6 +7,7 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_dd_program_screening",
     "t_due_diligence_case",
     "t_dd_case_subject",
+    "t_dd_case_classification",
     "t_dd_case_dependency",
     "t_dd_party_snapshot",
     "t_dd_requirement",
@@ -111,22 +112,22 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "ee01925a0049b64de0f4aee981518e15ea462be1e89319f1d70489e77e092d6e";
-export const EXPECTED_STRUCTURAL_DIGEST = "2082a3927abf0218a2f907cb13a1dbf8974d009d10b685b524d55e3a76ddaf5b";
-export const EXPECTED_CHECK_POLICY_DIGEST = "f35df0098deadbd2e35a26477945e76b6ca6619a35c9ac481a8251b68c4221ce";
+export const EXPECTED_MODEL_DIGEST = "f169987a11a0f8e6e93fe189e95781a19fd4bb24d3c98037b1ff9b38dad55490";
+export const EXPECTED_STRUCTURAL_DIGEST = "f86a2a6aab85199c611ff353ad837cc4cd2da86e40fe539e8960834aa14196e1";
+export const EXPECTED_CHECK_POLICY_DIGEST = "aa200f92b79ab33b36c8ed3310b76412d06b362d0e69b569b5f9957458c5d14f";
 
 export const EXPECTED_TOTALS = Object.freeze({
-  tables: 80,
-  fields: 990,
-  uniqueIndexes: 117,
+  tables: 81,
+  fields: 1003,
+  uniqueIndexes: 119,
   accessIndexes: 87,
-  relations: 126,
+  relations: 127,
   oneToOneRelations: 9,
   diagramGroups: 8,
 });
 
 export const EXPECTED_GROUP_SIZES = Object.freeze({
-  due_diligence: 19,
+  due_diligence: 20,
   decision_engine: 28,
   evaluation: 8,
   risk_data: 6,
@@ -465,7 +466,7 @@ export const REMOVED_DD_FIELDS = Object.freeze({
   t_due_diligence_case: Object.freeze(["case_type", "current_decision_id", "source_system"]),
   t_dd_program_requirement: Object.freeze(["validity_days"]),
   t_dd_program_screening: Object.freeze(["frequency_days"]),
-  t_dd_case_subject: Object.freeze(["source_profile_version", "source_relation_id", "source_relation_version"]),
+  t_dd_case_subject: Object.freeze(["source_profile_version", "source_relation_version"]),
   t_dd_party_snapshot: Object.freeze(["vault_record_version", "vault_metadata_hash"]),
   t_dd_requirement: Object.freeze(["requirement_code", "requirement_type"]),
   t_dd_evidence_ref: Object.freeze(["case_id", "party_id", "document_type", "document_version"]),
@@ -481,6 +482,7 @@ export const REQUIRED_DD_INDEXES = Object.freeze({
     uk_dd_case_source: Object.freeze([
       "source_namespace",
       "source_application_id",
+      "source_submission_id",
       "role_type",
       "role_id",
       "qualification_type",
@@ -525,11 +527,11 @@ export const REQUIRED_DD_CHECK_CONTRACTS = Object.freeze({
     tables: Object.freeze(["dd_program_check"]),
   }),
   ck_dd_case_active_slot: Object.freeze({
-    expression: "(status IN ('DRAFT','SUBMITTED','IN_REVIEW','WAITING_EVIDENCE') AND active_slot IS NOT NULL AND active_slot=1) OR (status IN ('APPROVED','REJECTED','WITHDRAWN','EXPIRED') AND active_slot IS NULL)",
+    expression: "(status IN ('DRAFT','SUBMITTED','IN_REVIEW','WAITING_EVIDENCE') AND active_slot IS NOT NULL AND active_slot=1) OR (status IN ('RETURNED','APPROVED','REJECTED','WITHDRAWN','EXPIRED') AND active_slot IS NULL)",
     tables: Object.freeze(["due_diligence_case"]),
   }),
   ck_dd_case_times: Object.freeze({
-    expression: "(status='DRAFT' AND submitted_time IS NULL AND decision_time IS NULL) OR (status IN ('SUBMITTED','IN_REVIEW','WAITING_EVIDENCE') AND submitted_time IS NOT NULL AND decision_time IS NULL) OR (status IN ('APPROVED','REJECTED') AND submitted_time IS NOT NULL AND decision_time IS NOT NULL AND submitted_time<=decision_time) OR (status IN ('WITHDRAWN','EXPIRED') AND decision_time IS NULL)",
+    expression: "(status='DRAFT' AND submitted_time IS NULL AND decision_time IS NULL) OR (status IN ('SUBMITTED','IN_REVIEW','WAITING_EVIDENCE') AND submitted_time IS NOT NULL AND decision_time IS NULL) OR (status IN ('RETURNED','APPROVED','REJECTED') AND submitted_time IS NOT NULL AND decision_time IS NOT NULL AND submitted_time<=decision_time) OR (status IN ('WITHDRAWN','EXPIRED') AND decision_time IS NULL)",
     tables: Object.freeze(["due_diligence_case"]),
   }),
   ck_dd_case_tuple: Object.freeze({
@@ -537,11 +539,11 @@ export const REQUIRED_DD_CHECK_CONTRACTS = Object.freeze({
     tables: Object.freeze(["due_diligence_case"]),
   }),
   ck_dd_case_origin: Object.freeze({
-    expression: "(case_origin='APPLICATION' AND ((source_namespace='CCT_CLIENT_APPLICATION' AND role_type IN ('CLIENT','RELATED_PERSON')) OR (source_namespace='CCT_OPERATING_ENTITY_APPLICATION' AND role_type IN ('OPERATING_ENTITY','RELATED_PERSON')) OR (source_namespace='CCT_LOCAL_PARTNER_APPLICATION' AND role_type IN ('LOCAL_PARTNER','RELATED_PERSON'))) AND source_application_id IS NOT NULL AND source_submission_version IS NOT NULL AND source_submission_version>0 AND source_submission_hash IS NOT NULL AND scheduled_review_time IS NULL) OR (case_origin='CONTINUOUS_REVIEW' AND source_namespace='RISK_COMPLIANCE' AND source_application_id IS NULL AND source_submission_version IS NULL AND source_submission_hash IS NULL AND scheduled_review_time IS NOT NULL) OR (case_origin='MANUAL' AND source_namespace='RISK_COMPLIANCE' AND source_application_id IS NULL AND source_submission_version IS NULL AND source_submission_hash IS NULL AND scheduled_review_time IS NULL)",
+    expression: "(case_origin='APPLICATION' AND ((source_namespace='CCT_CLIENT_APPLICATION' AND role_type IN ('CLIENT','RELATED_PERSON')) OR (source_namespace='CCT_OPERATING_ENTITY_APPLICATION' AND role_type IN ('OPERATING_ENTITY','RELATED_PERSON')) OR (source_namespace='CCT_LOCAL_PARTNER_APPLICATION' AND role_type IN ('LOCAL_PARTNER','RELATED_PERSON'))) AND source_application_id IS NOT NULL AND source_submission_id IS NOT NULL AND ((source_namespace='CCT_CLIENT_APPLICATION' AND source_submission_version IS NULL AND source_submission_hash IS NULL) OR (source_namespace<>'CCT_CLIENT_APPLICATION' AND source_submission_version IS NOT NULL AND source_submission_version>0 AND source_submission_hash IS NOT NULL)) AND scheduled_review_time IS NULL) OR (case_origin='CONTINUOUS_REVIEW' AND source_namespace='RISK_COMPLIANCE' AND source_application_id IS NULL AND source_submission_id IS NULL AND source_submission_version IS NULL AND source_submission_hash IS NULL AND scheduled_review_time IS NOT NULL) OR (case_origin='MANUAL' AND source_namespace='RISK_COMPLIANCE' AND source_application_id IS NULL AND source_submission_id IS NULL AND source_submission_version IS NULL AND source_submission_hash IS NULL AND scheduled_review_time IS NULL)",
     tables: Object.freeze(["due_diligence_case"]),
   }),
   ck_dd_subject_relation: Object.freeze({
-    expression: "(subject_role='PRIMARY' AND primary_slot IS NOT NULL AND primary_slot=1 AND source_relation_version_id IS NULL AND source_relation_version_no IS NULL AND ownership_percentage IS NULL) OR (subject_role='UBO' AND primary_slot IS NULL AND source_relation_version_id IS NOT NULL AND source_relation_version_no IS NOT NULL AND source_relation_version_no>0) OR (subject_role IN ('DIRECTOR','SIGNATORY') AND primary_slot IS NULL AND source_relation_version_id IS NOT NULL AND source_relation_version_no IS NOT NULL AND source_relation_version_no>0 AND ownership_percentage IS NULL)",
+    expression: "(subject_role='PRIMARY' AND primary_slot IS NOT NULL AND primary_slot=1 AND source_relation_id IS NULL AND source_relation_version_id IS NULL AND source_relation_version_no IS NULL AND ownership_percentage IS NULL) OR (subject_role='UBO' AND primary_slot IS NULL AND ((source_relation_id IS NOT NULL AND source_relation_version_id IS NULL AND source_relation_version_no IS NULL) OR (source_relation_id IS NULL AND source_relation_version_id IS NOT NULL AND source_relation_version_no IS NOT NULL AND source_relation_version_no>0))) OR (subject_role IN ('DIRECTOR','SIGNATORY') AND primary_slot IS NULL AND ((source_relation_id IS NOT NULL AND source_relation_version_id IS NULL AND source_relation_version_no IS NULL) OR (source_relation_id IS NULL AND source_relation_version_id IS NOT NULL AND source_relation_version_no IS NOT NULL AND source_relation_version_no>0)) AND ownership_percentage IS NULL)",
     tables: Object.freeze(["dd_case_subject"]),
   }),
   ck_dd_subject_ownership: Object.freeze({
@@ -549,7 +551,7 @@ export const REQUIRED_DD_CHECK_CONTRACTS = Object.freeze({
     tables: Object.freeze(["dd_case_subject"]),
   }),
   ck_dd_subject_profile_version: Object.freeze({
-    expression: "source_profile_version_no>0",
+    expression: "source_profile_version_no IS NULL OR source_profile_version_no>0",
     tables: Object.freeze(["dd_case_subject"]),
   }),
   ck_snapshot_schema_version: Object.freeze({
@@ -569,7 +571,7 @@ export const REQUIRED_DD_CHECK_CONTRACTS = Object.freeze({
     tables: Object.freeze(["screening_resolution"]),
   }),
   ck_qual_decision_version: Object.freeze({
-    expression: "decision_version>0",
+    expression: "decision_version IS NULL OR decision_version>0",
     tables: Object.freeze(["qualification_decision"]),
   }),
   ck_aggregate_version: Object.freeze({
@@ -597,7 +599,8 @@ export const REQUIRED_DD_FIELD_SHAPES = Object.freeze({
     version: Object.freeze({ type: "BIGINT", notNull: true }),
   }),
   t_dd_case_subject: Object.freeze({
-    source_profile_version_no: Object.freeze({ type: "BIGINT", notNull: true }),
+    source_profile_version_no: Object.freeze({ type: "BIGINT", notNull: false }),
+    source_relation_id: Object.freeze({ type: "BIGINT", notNull: false }),
     source_relation_version_id: Object.freeze({ type: "BIGINT", notNull: false }),
     source_relation_version_no: Object.freeze({ type: "BIGINT", notNull: false }),
   }),
@@ -632,7 +635,7 @@ export const REQUIRED_DD_COMMENT_FRAGMENTS = Object.freeze({
   }),
   t_due_diligence_case: Object.freeze({
     source_namespace: Object.freeze(["CCT Client Application", "CCT Operating Entity Application", "CCT Local Partner Application"]),
-    source_submission_version: Object.freeze(["仅 APPLICATION", "CCT Application Submission"]),
+    source_submission_version: Object.freeze(["未迁移 APPLICATION", "Client", "本列为空"]),
   }),
   t_dd_case_subject: Object.freeze({
     source_relation_version_id: Object.freeze(["CCT Party Relation Version"]),

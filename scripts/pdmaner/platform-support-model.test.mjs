@@ -219,7 +219,7 @@ test("Platform Support Manifest has the exact consumer-driven hash allowlist", a
       .map((field) => `${table.defKey}.${field.defKey}`))
     .sort();
   assert.deepEqual(actualHashFields, EXPECTED_HASH_FIELDS);
-  assert.equal(actualHashFields.length, 36);
+  assert.equal(actualHashFields.length, 34);
 });
 
 test("Platform Support tenant-owned roots reject obsolete ownership and version tables", async () => {

@@ -37,7 +37,7 @@ function exactStringSql(field) {
 }
 
 function validateModel(model) {
-  invariant(Array.isArray(model.entities) && model.entities.length === 80, "Risk Schema 必须直接覆盖最终 80 表 PDManer");
+  invariant(Array.isArray(model.entities) && model.entities.length === 81, "Risk Schema 必须直接覆盖最终 81 表 PDManer");
   const tableNames = new Set();
   for (const entity of model.entities) {
     invariant(/^t_[a-z][a-z0-9_]*$/u.test(entity.defKey), `非法 Risk 物理表名：${entity.defKey}`);

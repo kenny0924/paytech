@@ -1,0 +1,23 @@
+{
+  "scope": "one CCT compensation ALTER; candidate only, no execution",
+  "table": "t_compensation_event",
+  "sourceFieldCount": 20,
+  "targetFieldCount": 15,
+  "sourceSha256": "f29774a0529ef2da542f24316f569aa7358e92912434cccde4c3bf5bcd0518f5",
+  "targetModelSha256": "4596a3364d90b3796bf255f77f7d4cf1c49459aca09fcecd5b88fb435c8e228e",
+  "sourceSqlSha256": "f5d18721176f82a41e17de4f646820ecee89cbc01cf6876295807f269614628d",
+  "targetTableSha256": "a92b9a1d94b34175743c65b18f7f2e8d241fb858b53265a938f5d408cbf93a56",
+  "ddlSha256": "219fd9a4fd5f3f5f9fceb4f63c113e993f4405095673cfb5a28d104979447944",
+  "removedFields": [
+    "execution_type",
+    "source_type",
+    "source_id",
+    "source_version",
+    "schema_version",
+    "payload_hash"
+  ],
+  "addedFields": [
+    "sub_event_type"
+  ],
+  "preservedExecutedTenTableSqlSha256": "dc091d30620d30374fa0e5a0b54f93614201bf4e5c46016d1e1958ebc76a0815"
+}

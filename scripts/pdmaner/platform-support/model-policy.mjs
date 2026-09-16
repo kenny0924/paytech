@@ -180,7 +180,7 @@ export const CHECK_CONTRACTS = Object.freeze({
   ck_audit_attr_value: "(classification IN ('PUBLIC','INTERNAL') AND value_text IS NOT NULL AND value_vault_token IS NULL AND value_masked IS NULL) OR (classification IN ('CONFIDENTIAL','RESTRICTED') AND value_text IS NULL AND value_vault_token IS NOT NULL AND value_masked IS NOT NULL)",
   ck_audit_range: "sequence_from>0 AND sequence_from<=sequence_to",
   ck_security_source: "source_event_key<>'' AND source_version>0 AND source_payload_hash IS NOT NULL AND schema_version>0",
-  ck_compensation_counters: "source_version>0 AND schema_version>0 AND execute_count>=0 AND lock_version>0",
+  ck_compensation_counters: "execute_count>=0 AND lock_version>0",
   ck_compensation_lease: "(execute_status='PROCESSING' AND lock_owner IS NOT NULL AND lock_until IS NOT NULL) OR (execute_status IN ('INIT','ERROR','FAILED') AND lock_owner IS NULL AND lock_until IS NULL)",
   ck_command_response: "(status='SUCCEEDED' AND response_ref IS NOT NULL) OR (status IN ('PROCESSING','FAILED') AND response_ref IS NULL)",
 });

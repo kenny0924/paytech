@@ -1,0 +1,4222 @@
+{
+  "status": "review projection only; canonical PDManer and current schema unchanged",
+  "systems": {
+    "CCT": {
+      "source": "client-contract-service/docs/database/client-contract.pdma.json",
+      "sha256": "1ad770428ecdc12f5df55fc719213ca49262dea8274662032772eb88f5835108",
+      "tables": [
+        {
+          "name": "t_party_profile",
+          "comment": "Client 入驻简化目标：法律主体资料版本；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "单份 Party 资料的稳定标识，不是版本标识。"
+            },
+            {
+              "name": "party_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "自然人或机构法律身份根的内部唯一标识。"
+            },
+            {
+              "name": "content_hash",
+              "type": "CHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "批准资料内容摘要，保留现有 Checkout 法律资料消费者；未批准为空，批准后不可变。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "draft_application_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "当前可编辑 Client 入驻申请；未批准资料只能由该申请编辑；批准后清空。"
+            },
+            {
+              "name": "approved_time",
+              "type": "DATETIME",
+              "length": "6",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "资料首次批准并永久锁定的 UTC 时间；未批准为空。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_party_profile_party",
+              "columns": [
+                "party_id"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：party_id"
+            }
+          ],
+          "changes": {
+            "drop": [
+              "version_no",
+              "profile_status",
+              "active_slot",
+              "effective_from",
+              "effective_to",
+              "hash_schema_version"
+            ],
+            "nullable": [
+              "content_hash"
+            ],
+            "add": [
+              {
+                "name": "draft_application_id",
+                "type": "BIGINT",
+                "length": "",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "当前可编辑 Client 入驻申请；未批准资料只能由该申请编辑；批准后清空。"
+              },
+              {
+                "name": "approved_time",
+                "type": "DATETIME",
+                "length": "6",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "资料首次批准并永久锁定的 UTC 时间；未批准为空。"
+              }
+            ],
+            "indexes": [
+              {
+                "name": "uk_party_profile_party",
+                "columns": [
+                  "party_id"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：party_id"
+              }
+            ],
+            "comments": {
+              "profile_id": "单份 Party 资料的稳定标识，不是版本标识。",
+              "content_hash": "批准资料内容摘要，保留现有 Checkout 法律资料消费者；未批准为空，批准后不可变。"
+            }
+          },
+          "originalColumns": [
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party 资料版本头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "party_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "自然人或机构法律身份根的内部唯一标识。"
+            },
+            {
+              "name": "version_no",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "同一业务聚合内部不可变版本的序号。"
+            },
+            {
+              "name": "profile_status",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party 资料版本当前所处的生命周期状态。允许值：DRAFT、FROZEN、ACTIVE、SUPERSEDED。"
+            },
+            {
+              "name": "active_slot",
+              "type": "TINYINT",
+              "length": 1,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "以 1 或 NULL 实现条件稀疏唯一约束的技术槽位，具体占槽含义由表级规则定义。允许值：1 或 NULL。取值规则：状态为 ACTIVE 时为 1，其他状态为 NULL。"
+            },
+            {
+              "name": "effective_from",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "业务记录生效区间的 UTC 微秒精度起点，包含该时刻。"
+            },
+            {
+              "name": "effective_to",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "业务记录生效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。"
+            },
+            {
+              "name": "hash_schema_version",
+              "type": "INT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "解释 Canonical Hash 输入字段、顺序与编码规则的版本号。"
+            },
+            {
+              "name": "content_hash",
+              "type": "CHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "输入为封存 Party Profile 头、类型明细、Identifier、Address 与 Contact 的规范化业务字段。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ]
+        },
+        {
+          "name": "t_individual_profile",
+          "comment": "Client 入驻简化目标：个人资料版本；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party 资料头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "given_name",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "个人法定姓名中的名字。"
+            },
+            {
+              "name": "middle_name",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "个人法定姓名中的可选中间名。"
+            },
+            {
+              "name": "family_name",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "个人姓氏，即法定姓名中的姓氏部分。"
+            },
+            {
+              "name": "birth_date",
+              "type": "DATE",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "个人法定出生 LocalDate 日期事实，不包含时区或时刻。"
+            },
+            {
+              "name": "nationality_country",
+              "type": "CHAR",
+              "length": 2,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "个人国籍的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
+            },
+            {
+              "name": "residence_country",
+              "type": "CHAR",
+              "length": 2,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "个人主要居住地的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ],
+          "indexes": [],
+          "changes": {
+            "nullable": [
+              "given_name",
+              "family_name",
+              "birth_date",
+              "nationality_country",
+              "residence_country"
+            ]
+          },
+          "originalColumns": [
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party 资料版本头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "given_name",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "个人法定姓名中的名字。"
+            },
+            {
+              "name": "middle_name",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "个人法定姓名中的可选中间名。"
+            },
+            {
+              "name": "family_name",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "个人姓氏，即法定姓名中的姓氏部分。"
+            },
+            {
+              "name": "birth_date",
+              "type": "DATE",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "个人法定出生 LocalDate 日期事实，不包含时区或时刻。"
+            },
+            {
+              "name": "nationality_country",
+              "type": "CHAR",
+              "length": 2,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "个人国籍的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
+            },
+            {
+              "name": "residence_country",
+              "type": "CHAR",
+              "length": 2,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "个人主要居住地的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ]
+        },
+        {
+          "name": "t_organization_profile",
+          "comment": "Client 入驻简化目标：机构资料版本；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party 资料头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "legal_name",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "机构在注册司法辖区登记的完整法定名称。"
+            },
+            {
+              "name": "trade_name",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "机构对外经营使用的可选商号或交易名称。"
+            },
+            {
+              "name": "incorporation_country",
+              "type": "CHAR",
+              "length": 2,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "机构依法注册成立的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
+            },
+            {
+              "name": "organization_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "按司法辖区和法律形态分类的受控机构类型代码。取值来源：司法辖区机构类型目录；非固定枚举。"
+            },
+            {
+              "name": "incorporation_date",
+              "type": "DATE",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "机构依法成立或注册的 LocalDate 日期事实，不包含时区或时刻。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ],
+          "indexes": [],
+          "changes": {
+            "nullable": [
+              "legal_name",
+              "incorporation_country",
+              "organization_type",
+              "incorporation_date"
+            ]
+          },
+          "originalColumns": [
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party 资料版本头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "legal_name",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "机构在注册司法辖区登记的完整法定名称。"
+            },
+            {
+              "name": "trade_name",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "机构对外经营使用的可选商号或交易名称。"
+            },
+            {
+              "name": "incorporation_country",
+              "type": "CHAR",
+              "length": 2,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "机构依法注册成立的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
+            },
+            {
+              "name": "organization_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "按司法辖区和法律形态分类的受控机构类型代码。取值来源：司法辖区机构类型目录；非固定枚举。"
+            },
+            {
+              "name": "incorporation_date",
+              "type": "DATE",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "机构依法成立或注册的 LocalDate 日期事实，不包含时区或时刻。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ]
+        },
+        {
+          "name": "t_party_address",
+          "comment": "Client 入驻简化目标：主体地址版本；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "address_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party Profile 地址记录的内部唯一标识。"
+            },
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party 资料头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "address_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "地址用途或法律属性的受控分类代码。取值来源：地址用途目录；非固定枚举。"
+            },
+            {
+              "name": "address_line1",
+              "type": "VARCHAR",
+              "length": 255,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "主体地址的主要街道、门牌或建筑信息。"
+            },
+            {
+              "name": "address_line2",
+              "type": "VARCHAR",
+              "length": 255,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "主体地址的可选补充单元、楼层或区域信息。"
+            },
+            {
+              "name": "city",
+              "type": "VARCHAR",
+              "length": 128,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "主体地址所在城市或同级行政区域名称。"
+            },
+            {
+              "name": "state_or_province",
+              "type": "VARCHAR",
+              "length": 128,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "主体地址所在的可选州、省或同级行政区域。"
+            },
+            {
+              "name": "postal_code",
+              "type": "VARCHAR",
+              "length": 32,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "主体地址的可选邮政编码。"
+            },
+            {
+              "name": "country_code",
+              "type": "CHAR",
+              "length": 2,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "地址所在国家的精确 ISO 3166-1 alpha-2 代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_profile_address_type",
+              "columns": [
+                "profile_id",
+                "address_type"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：profile_id,address_type"
+            }
+          ],
+          "changes": {
+            "nullable": [
+              "address_line1",
+              "city",
+              "country_code"
+            ]
+          },
+          "originalColumns": [
+            {
+              "name": "address_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party Profile 地址记录的内部唯一标识。"
+            },
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party 资料版本头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "address_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "地址用途或法律属性的受控分类代码。取值来源：地址用途目录；非固定枚举。"
+            },
+            {
+              "name": "address_line1",
+              "type": "VARCHAR",
+              "length": 255,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "主体地址的主要街道、门牌或建筑信息。"
+            },
+            {
+              "name": "address_line2",
+              "type": "VARCHAR",
+              "length": 255,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "主体地址的可选补充单元、楼层或区域信息。"
+            },
+            {
+              "name": "city",
+              "type": "VARCHAR",
+              "length": 128,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "主体地址所在城市或同级行政区域名称。"
+            },
+            {
+              "name": "state_or_province",
+              "type": "VARCHAR",
+              "length": 128,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "主体地址所在的可选州、省或同级行政区域。"
+            },
+            {
+              "name": "postal_code",
+              "type": "VARCHAR",
+              "length": 32,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "主体地址的可选邮政编码。"
+            },
+            {
+              "name": "country_code",
+              "type": "CHAR",
+              "length": 2,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "地址所在国家的精确 ISO 3166-1 alpha-2 代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ]
+        },
+        {
+          "name": "t_party_contact",
+          "comment": "Client 入驻简化目标：主体联系方式版本；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "contact_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party Profile 联系方式记录的内部唯一标识。"
+            },
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party 资料头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "contact_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "区分邮箱与电话号码的闭合类型。允许值：EMAIL、PHONE。"
+            },
+            {
+              "name": "contact_vault_token",
+              "type": "VARCHAR",
+              "length": 128,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Vault 联系方式标量原值的逻辑引用，不建立跨库物理外键；EMAIL 对应 EMAIL_ADDRESS_V1，PHONE 对应 PHONE_E164_V1。"
+            },
+            {
+              "name": "contact_masked_value",
+              "type": "VARCHAR",
+              "length": 255,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Vault 按联系方式类型生成的最小受控展示值。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_profile_contact_type",
+              "columns": [
+                "profile_id",
+                "contact_type"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：profile_id,contact_type"
+            }
+          ],
+          "changes": {
+            "drop": [
+              "vault_record_version",
+              "vault_metadata_hash"
+            ]
+          },
+          "originalColumns": [
+            {
+              "name": "contact_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party Profile 联系方式记录的内部唯一标识。"
+            },
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party 资料版本头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "contact_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "区分邮箱与电话号码的闭合类型。允许值：EMAIL、PHONE。"
+            },
+            {
+              "name": "contact_vault_token",
+              "type": "VARCHAR",
+              "length": 128,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Vault 联系方式标量原值的逻辑引用，不建立跨库物理外键；EMAIL 对应 EMAIL_ADDRESS_V1，PHONE 对应 PHONE_E164_V1。"
+            },
+            {
+              "name": "contact_masked_value",
+              "type": "VARCHAR",
+              "length": 255,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Vault 按联系方式类型生成的最小受控展示值。"
+            },
+            {
+              "name": "vault_record_version",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Vault 敏感记录的当前元数据版本号。"
+            },
+            {
+              "name": "vault_metadata_hash",
+              "type": "CHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "输入为 Vault 返回的记录元数据，不包含可恢复原值或随机 Vault Token。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ]
+        },
+        {
+          "name": "t_party_profile_identifier",
+          "comment": "Client 入驻简化目标：主体资料法律标识关联；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "profile_identifier_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party Profile 与稳定法律标识关联行的内部唯一标识。"
+            },
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party 资料头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "identity_key_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "跨 Profile 稳定的 Party 法律标识身份键。"
+            },
+            {
+              "name": "valid_from",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "法律标识值有效区间的 UTC 微秒精度起点，包含该时刻。"
+            },
+            {
+              "name": "valid_to",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "法律标识值有效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "identifier_type",
+              "type": "VARCHAR",
+              "length": "64",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "当前资料填报的身份标识类型；草稿可空。"
+            },
+            {
+              "name": "issuing_country",
+              "type": "CHAR",
+              "length": "2",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "当前资料填报的签发国家代码；按标识类型适用。"
+            },
+            {
+              "name": "issuer_scope_key",
+              "type": "VARCHAR",
+              "length": "64",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "当前资料填报的受控签发机构作用域代码；未选可空。"
+            },
+            {
+              "name": "identifier_value",
+              "type": "VARCHAR",
+              "length": "128",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "当前资料填报的原始身份号码；不输出普通日志；草稿可空。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_profile_identity",
+              "columns": [
+                "profile_id",
+                "identity_key_id"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：profile_id,identity_key_id"
+            },
+            {
+              "name": "idx_party_profile_ident_8f43e780",
+              "columns": [
+                "identity_key_id"
+              ],
+              "unique": false,
+              "comment": "支持查询：identity_key_id"
+            }
+          ],
+          "changes": {
+            "nullable": [
+              "identity_key_id",
+              "valid_from"
+            ],
+            "add": [
+              {
+                "name": "identifier_type",
+                "type": "VARCHAR",
+                "length": "64",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "当前资料填报的身份标识类型；草稿可空。"
+              },
+              {
+                "name": "issuing_country",
+                "type": "CHAR",
+                "length": "2",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "当前资料填报的签发国家代码；按标识类型适用。"
+              },
+              {
+                "name": "issuer_scope_key",
+                "type": "VARCHAR",
+                "length": "64",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "当前资料填报的受控签发机构作用域代码；未选可空。"
+              },
+              {
+                "name": "identifier_value",
+                "type": "VARCHAR",
+                "length": "128",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "当前资料填报的原始身份号码；不输出普通日志；草稿可空。"
+              }
+            ]
+          },
+          "originalColumns": [
+            {
+              "name": "profile_identifier_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Party Profile 与稳定法律标识关联行的内部唯一标识。"
+            },
+            {
+              "name": "profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party 资料版本头及其类型明细的内部唯一标识。"
+            },
+            {
+              "name": "identity_key_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "跨 Profile 稳定的 Party 法律标识身份键。"
+            },
+            {
+              "name": "valid_from",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "法律标识值有效区间的 UTC 微秒精度起点，包含该时刻。"
+            },
+            {
+              "name": "valid_to",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "法律标识值有效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ]
+        },
+        {
+          "name": "t_party_identity_key",
+          "comment": "Client 入驻简化目标：法律标识注册主档；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "identity_key_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "跨 Profile 稳定的 Party 法律标识身份键。"
+            },
+            {
+              "name": "party_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "自然人或机构法律身份根的内部唯一标识。"
+            },
+            {
+              "name": "identifier_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "注册号、证件号等法律标识的受控类型代码。取值来源：法律标识类型目录；非固定枚举。"
+            },
+            {
+              "name": "issuing_country",
+              "type": "CHAR",
+              "length": 2,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "国家签发标识使用的 ISO 3166-1 alpha-2 国家代码；issuer_scope_key=GLOBAL 时为空。取值来源：ISO 3166-1 alpha-2，全局标识为空；非固定枚举。"
+            },
+            {
+              "name": "issuer_scope_key",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "法律标识签发国家或 GLOBAL Sentinel 形成的稳定作用域键。"
+            },
+            {
+              "name": "normalized_identifier_value",
+              "type": "VARCHAR",
+              "length": 128,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "按法律标识类型和签发作用域批准规则确定性规范化后的值，用于本库查重和唯一约束。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_party_identity_norm",
+              "columns": [
+                "identifier_type",
+                "issuer_scope_key",
+                "normalized_identifier_value"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：identifier_type,issuer_scope_key,normalized_identifier_value"
+            },
+            {
+              "name": "idx_party_identity_key_party_id",
+              "columns": [
+                "party_id"
+              ],
+              "unique": false,
+              "comment": "支持查询：party_id"
+            }
+          ],
+          "changes": {
+            "drop": [
+              "identifier_value"
+            ]
+          },
+          "originalColumns": [
+            {
+              "name": "identity_key_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "跨 Profile 稳定的 Party 法律标识身份键。"
+            },
+            {
+              "name": "party_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "自然人或机构法律身份根的内部唯一标识。"
+            },
+            {
+              "name": "identifier_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "注册号、证件号等法律标识的受控类型代码。取值来源：法律标识类型目录；非固定枚举。"
+            },
+            {
+              "name": "issuing_country",
+              "type": "CHAR",
+              "length": 2,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "国家签发标识使用的 ISO 3166-1 alpha-2 国家代码；issuer_scope_key=GLOBAL 时为空。取值来源：ISO 3166-1 alpha-2，全局标识为空；非固定枚举。"
+            },
+            {
+              "name": "issuer_scope_key",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "法律标识签发国家或 GLOBAL Sentinel 形成的稳定作用域键。"
+            },
+            {
+              "name": "identifier_value",
+              "type": "VARCHAR",
+              "length": 128,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "身份证件号、护照号或机构注册号等法律标识的结构化原值。"
+            },
+            {
+              "name": "normalized_identifier_value",
+              "type": "VARCHAR",
+              "length": 128,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "按法律标识类型和签发作用域批准规则确定性规范化后的值，用于本库查重和唯一约束。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ]
+        },
+        {
+          "name": "t_party_relation",
+          "comment": "Client 入驻简化目标：主体关系版本；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "relation_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "组织与相关 Party 关系的稳定标识，不是关系版本标识。"
+            },
+            {
+              "name": "organization_party_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party Relation 中被持有、控制或任职的机构 Party 标识。"
+            },
+            {
+              "name": "related_party_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party Relation 中所有者、控制人、董事、签字人或 UBO 的 Party 标识。"
+            },
+            {
+              "name": "relation_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "所有权、控制、任职或 UBO 等法律关系类型代码。允许值：OWNERSHIP、CONTROL、DIRECTOR、SIGNATORY、UBO。"
+            },
+            {
+              "name": "ownership_percentage",
+              "type": "DECIMAL",
+              "length": 18,
+              "scale": 10,
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "法律关系类型具备持股语义时填写的百分比，取值范围为 0 至 100；其他关系类型为空。"
+            },
+            {
+              "name": "effective_from",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "业务记录生效区间的 UTC 微秒精度起点，包含该时刻。"
+            },
+            {
+              "name": "effective_to",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "业务记录生效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。"
+            },
+            {
+              "name": "status",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "当前业务记录在其所属聚合生命周期中的状态代码。允许值：DRAFT、ACTIVE、ENDED。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "client_application_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "拥有本次可编辑关系的 Client 申请；Client 新写必填，其他既有来源可空。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_party_relation_identity",
+              "columns": [
+                "organization_party_id",
+                "related_party_id",
+                "relation_type"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：organization_party_id,related_party_id,relation_type"
+            },
+            {
+              "name": "idx_party_relation_person",
+              "columns": [
+                "related_party_id"
+              ],
+              "unique": false,
+              "comment": "支持查询：related_party_id"
+            },
+            {
+              "name": "idx_party_relation_application",
+              "columns": [
+                "client_application_id"
+              ],
+              "unique": false,
+              "comment": "支持查询：client_application_id"
+            }
+          ],
+          "changes": {
+            "drop": [
+              "version_no",
+              "active_slot",
+              "hash_schema_version",
+              "content_hash"
+            ],
+            "rename": {
+              "relation_version_id": "relation_id"
+            },
+            "add": [
+              {
+                "name": "client_application_id",
+                "type": "BIGINT",
+                "length": "",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "拥有本次可编辑关系的 Client 申请；Client 新写必填，其他既有来源可空。"
+              }
+            ],
+            "indexes": [
+              {
+                "name": "uk_party_relation_identity",
+                "columns": [
+                  "organization_party_id",
+                  "related_party_id",
+                  "relation_type"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：organization_party_id,related_party_id,relation_type"
+              },
+              {
+                "name": "idx_party_relation_person",
+                "columns": [
+                  "related_party_id"
+                ],
+                "unique": false,
+                "comment": "支持查询：related_party_id"
+              },
+              {
+                "name": "idx_party_relation_application",
+                "columns": [
+                  "client_application_id"
+                ],
+                "unique": false,
+                "comment": "支持查询：client_application_id"
+              }
+            ],
+            "comments": {
+              "relation_id": "组织与相关 Party 关系的稳定标识，不是关系版本标识。"
+            }
+          },
+          "originalColumns": [
+            {
+              "name": "relation_version_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "不可变法律关系版本的内部唯一标识。"
+            },
+            {
+              "name": "organization_party_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party Relation 中被持有、控制或任职的机构 Party 标识。"
+            },
+            {
+              "name": "related_party_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party Relation 中所有者、控制人、董事、签字人或 UBO 的 Party 标识。"
+            },
+            {
+              "name": "relation_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "所有权、控制、任职或 UBO 等法律关系类型代码。允许值：OWNERSHIP、CONTROL、DIRECTOR、SIGNATORY、UBO。"
+            },
+            {
+              "name": "version_no",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "同一业务聚合内部不可变版本的序号。"
+            },
+            {
+              "name": "ownership_percentage",
+              "type": "DECIMAL",
+              "length": 18,
+              "scale": 10,
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "法律关系类型具备持股语义时填写的百分比，取值范围为 0 至 100；其他关系类型为空。"
+            },
+            {
+              "name": "effective_from",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "业务记录生效区间的 UTC 微秒精度起点，包含该时刻。"
+            },
+            {
+              "name": "effective_to",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "业务记录生效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。"
+            },
+            {
+              "name": "status",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "当前业务记录在其所属聚合生命周期中的状态代码。允许值：DRAFT、ACTIVE、ENDED。"
+            },
+            {
+              "name": "active_slot",
+              "type": "TINYINT",
+              "length": 1,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "以 1 或 NULL 实现条件稀疏唯一约束的技术槽位，具体占槽含义由表级规则定义。允许值：1 或 NULL。取值规则：状态为 ACTIVE 时为 1，其他状态为 NULL。"
+            },
+            {
+              "name": "hash_schema_version",
+              "type": "INT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "解释 Canonical Hash 输入字段、顺序与编码规则的版本号。"
+            },
+            {
+              "name": "content_hash",
+              "type": "CHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "输入为关系两端、关系类型、持股比例与业务有效期。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ]
+        },
+        {
+          "name": "t_client_business_profile",
+          "comment": "Client 入驻简化目标：客户业务资料版本；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "business_profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Client 单份经营资料稳定标识，不是版本标识。"
+            },
+            {
+              "name": "client_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "平台 Client 角色的内部唯一标识。"
+            },
+            {
+              "name": "business_model_code",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "Client 声明商业模式的受控业务代码。取值来源：Client Business Model Catalog；非固定枚举。"
+            },
+            {
+              "name": "website_url",
+              "type": "VARCHAR",
+              "length": 2048,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "Client 对外经营网站的受控 URL；无网站时可为空。"
+            },
+            {
+              "name": "expected_volume",
+              "type": "DECIMAL",
+              "length": 24,
+              "scale": 8,
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "预计月交易金额，使用 currency 指定币种；提交时大于零。"
+            },
+            {
+              "name": "expected_ticket",
+              "type": "DECIMAL",
+              "length": 24,
+              "scale": 8,
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "Client 声明的预期单笔交易金额。"
+            },
+            {
+              "name": "currency",
+              "type": "CHAR",
+              "length": 3,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "预期交易量与客单价采用的精确 ISO 4217 三位币种代码。取值来源：ISO 4217；非固定枚举。"
+            },
+            {
+              "name": "content_hash",
+              "type": "CHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "已批准单份经营资料内容摘要；未批准为空，不用于草稿版本冲突控制。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "business_description",
+              "type": "VARCHAR",
+              "length": "2000",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "客户实际商品、服务、客户群体及销售方式说明；草稿可空，提交必填。"
+            },
+            {
+              "name": "classification_case_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "本组运营分类所属 Risk 主审核任务；外部引用，不建物理外键。"
+            },
+            {
+              "name": "classification_confirmed_by",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "确认本任务分类的 Operations Account；与确认时间成组。"
+            },
+            {
+              "name": "classification_confirmed_time",
+              "type": "DATETIME",
+              "length": "6",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "本任务分类确认的 UTC 时间；为空时仅为可编辑草稿。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_client_business_profile_client",
+              "columns": [
+                "client_id"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：client_id"
+            }
+          ],
+          "changes": {
+            "drop": [
+              "version_no",
+              "status",
+              "active_slot",
+              "effective_from",
+              "effective_to",
+              "hash_schema_version"
+            ],
+            "nullable": [
+              "business_model_code",
+              "expected_volume",
+              "expected_ticket",
+              "currency",
+              "content_hash"
+            ],
+            "add": [
+              {
+                "name": "business_description",
+                "type": "VARCHAR",
+                "length": "2000",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "客户实际商品、服务、客户群体及销售方式说明；草稿可空，提交必填。"
+              },
+              {
+                "name": "classification_case_id",
+                "type": "BIGINT",
+                "length": "",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "本组运营分类所属 Risk 主审核任务；外部引用，不建物理外键。"
+              },
+              {
+                "name": "classification_confirmed_by",
+                "type": "BIGINT",
+                "length": "",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "确认本任务分类的 Operations Account；与确认时间成组。"
+              },
+              {
+                "name": "classification_confirmed_time",
+                "type": "DATETIME",
+                "length": "6",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "本任务分类确认的 UTC 时间；为空时仅为可编辑草稿。"
+              }
+            ],
+            "indexes": [
+              {
+                "name": "uk_client_business_profile_client",
+                "columns": [
+                  "client_id"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：client_id"
+              }
+            ],
+            "comments": {
+              "business_profile_id": "Client 单份经营资料稳定标识，不是版本标识。",
+              "expected_volume": "预计月交易金额，使用 currency 指定币种；提交时大于零。",
+              "content_hash": "已批准单份经营资料内容摘要；未批准为空，不用于草稿版本冲突控制。"
+            }
+          },
+          "originalColumns": [
+            {
+              "name": "business_profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "Client 业务资料版本的内部唯一标识。"
+            },
+            {
+              "name": "client_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "平台 Client 角色的内部唯一标识。"
+            },
+            {
+              "name": "version_no",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "同一业务聚合内部不可变版本的序号。"
+            },
+            {
+              "name": "status",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "当前业务记录在其所属聚合生命周期中的状态代码。允许值：DRAFT、FROZEN、ACTIVE、SUPERSEDED。"
+            },
+            {
+              "name": "active_slot",
+              "type": "TINYINT",
+              "length": 1,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "以 1 或 NULL 实现条件稀疏唯一约束的技术槽位，具体占槽含义由表级规则定义。允许值：1 或 NULL。取值规则：状态为 ACTIVE 时为 1，其他状态为 NULL。"
+            },
+            {
+              "name": "business_model_code",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Client 声明商业模式的受控业务代码。取值来源：Client Business Model Catalog；非固定枚举。"
+            },
+            {
+              "name": "website_url",
+              "type": "VARCHAR",
+              "length": 2048,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "Client 对外经营网站的受控 URL；无网站时可为空。"
+            },
+            {
+              "name": "expected_volume",
+              "type": "DECIMAL",
+              "length": 24,
+              "scale": 8,
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Client 声明的预期周期交易金额。"
+            },
+            {
+              "name": "expected_ticket",
+              "type": "DECIMAL",
+              "length": 24,
+              "scale": 8,
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Client 声明的预期单笔交易金额。"
+            },
+            {
+              "name": "currency",
+              "type": "CHAR",
+              "length": 3,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "预期交易量与客单价采用的精确 ISO 4217 三位币种代码。取值来源：ISO 4217；非固定枚举。"
+            },
+            {
+              "name": "effective_from",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "业务记录生效区间的 UTC 微秒精度起点，包含该时刻。"
+            },
+            {
+              "name": "effective_to",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "业务记录生效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。"
+            },
+            {
+              "name": "hash_schema_version",
+              "type": "INT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "解释 Canonical Hash 输入字段、顺序与编码规则的版本号。"
+            },
+            {
+              "name": "content_hash",
+              "type": "CHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "输入为封存 Business Profile 与按 industry_code、mcc_code 稳定排序的完整经营分类集合和 primary_slot。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ]
+        },
+        {
+          "name": "t_client_application",
+          "comment": "Client 入驻简化目标：客户申请；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "application_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "业务申请记录的内部唯一标识。"
+            },
+            {
+              "name": "application_no",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "供业务查询与人工操作使用的唯一申请编号。"
+            },
+            {
+              "name": "client_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "平台 Client 角色的内部唯一标识。"
+            },
+            {
+              "name": "requested_by_account_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "发起申请的 Platform CUSTOMER Account 外部稳定标识；一般可空，但 ONBOARDING 必填，不建立跨库物理外键。"
+            },
+            {
+              "name": "status",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "入驻申请状态：DRAFT、SUBMITTED、UNDER_REVIEW、RETURNED、APPROVED、REJECTED、WITHDRAWN。"
+            },
+            {
+              "name": "active_slot",
+              "type": "TINYINT",
+              "length": 1,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "DRAFT、SUBMITTED、UNDER_REVIEW、RETURNED 为 1，终态为 NULL；同一 Account 的个人/组织 Client 入驻合计最多一个进行中申请；同一 Client 的原唯一约束保留。"
+            },
+            {
+              "name": "due_diligence_case_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "Risk & Compliance 尽调 Case 的逻辑引用，不建立跨库物理外键。"
+            },
+            {
+              "name": "qualification_decision_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "当前主审核任务产生的不可变资格决定 ID；新 Client 不携带决定版本。"
+            },
+            {
+              "name": "qualification_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "提交时按申请角色和 Party 类型确定并冻结的 Risk 资格类型。允许值：INDIVIDUAL_KYC、ORGANIZATION_KYB。"
+            },
+            {
+              "name": "submitted_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "业务申请正式提交并进入审核流程的 UTC 微秒精度时刻。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "current_submission_id",
+              "type": "VARCHAR",
+              "length": "64",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "当前正式提交命令 UUID；同次重试复用，退回重提更换；不是资料版本。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_client_application_no",
+              "columns": [
+                "application_no"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：application_no"
+            },
+            {
+              "name": "uk_client_application_active",
+              "columns": [
+                "client_id",
+                "active_slot"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：client_id,active_slot"
+            },
+            {
+              "name": "uk_client_application_account_active",
+              "columns": [
+                "requested_by_account_id",
+                "active_slot"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：requested_by_account_id,active_slot"
+            },
+            {
+              "name": "uk_client_application_submission",
+              "columns": [
+                "current_submission_id"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：current_submission_id"
+            },
+            {
+              "name": "idx_client_application_requester",
+              "columns": [
+                "requested_by_account_id",
+                "status"
+              ],
+              "unique": false,
+              "comment": "支持查询：requested_by_account_id,status"
+            }
+          ],
+          "changes": {
+            "drop": [
+              "application_type",
+              "base_party_profile_id",
+              "target_party_profile_id",
+              "base_business_profile_id",
+              "target_business_profile_id",
+              "qualification_decision_version",
+              "submission_hash_schema_version",
+              "submission_content_hash"
+            ],
+            "nullable": [],
+            "required": [
+              "requested_by_account_id"
+            ],
+            "add": [
+              {
+                "name": "current_submission_id",
+                "type": "VARCHAR",
+                "length": "64",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "当前正式提交命令 UUID；同次重试复用，退回重提更换；不是资料版本。"
+              }
+            ],
+            "indexes": [
+              {
+                "name": "uk_client_application_no",
+                "columns": [
+                  "application_no"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：application_no"
+              },
+              {
+                "name": "uk_client_application_active",
+                "columns": [
+                  "client_id",
+                  "active_slot"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：client_id,active_slot"
+              },
+              {
+                "name": "uk_client_application_account_active",
+                "columns": [
+                  "requested_by_account_id",
+                  "active_slot"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：requested_by_account_id,active_slot"
+              },
+              {
+                "name": "uk_client_application_submission",
+                "columns": [
+                  "current_submission_id"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：current_submission_id"
+              },
+              {
+                "name": "idx_client_application_requester",
+                "columns": [
+                  "requested_by_account_id",
+                  "status"
+                ],
+                "unique": false,
+                "comment": "支持查询：requested_by_account_id,status"
+              }
+            ],
+            "comments": {
+              "qualification_decision_id": "当前主审核任务产生的不可变资格决定 ID；新 Client 不携带决定版本。",
+              "status": "入驻申请状态：DRAFT、SUBMITTED、UNDER_REVIEW、RETURNED、APPROVED、REJECTED、WITHDRAWN。",
+              "active_slot": "DRAFT、SUBMITTED、UNDER_REVIEW、RETURNED 为 1，终态为 NULL；同一 Account 的个人/组织 Client 入驻合计最多一个进行中申请；同一 Client 的原唯一约束保留。"
+            }
+          },
+          "originalColumns": [
+            {
+              "name": "application_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "业务申请记录的内部唯一标识。"
+            },
+            {
+              "name": "application_no",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "供业务查询与人工操作使用的唯一申请编号。"
+            },
+            {
+              "name": "application_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "区分首次入驻与资料变更申请的闭合业务类型。允许值：ONBOARDING、PROFILE_CHANGE。"
+            },
+            {
+              "name": "client_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "平台 Client 角色的内部唯一标识。"
+            },
+            {
+              "name": "requested_by_account_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "发起申请的 Platform CUSTOMER Account 外部稳定标识；一般可空，但 ONBOARDING 必填，不建立跨库物理外键。"
+            },
+            {
+              "name": "base_party_profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "PROFILE_CHANGE 的基准 Party Profile；ONBOARDING 必须为空，提交时必须等于 Client 当时的 ACTIVE Profile。"
+            },
+            {
+              "name": "target_party_profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "申请目标 Party Profile；两类申请均必填，与 Base 不同时提交事务必须将其封存为 FROZEN。"
+            },
+            {
+              "name": "base_business_profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "PROFILE_CHANGE 的基准 Client Business Profile；ONBOARDING 必须为空，提交时必须等于 Client 当时的 ACTIVE Profile。"
+            },
+            {
+              "name": "target_business_profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "申请目标 Client Business Profile；两类申请均必填，与 Base 不同时提交事务必须将其封存为 FROZEN。"
+            },
+            {
+              "name": "status",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "当前业务记录在其所属聚合生命周期中的状态代码。允许值：DRAFT、SUBMITTED、UNDER_REVIEW、APPROVED、REJECTED、WITHDRAWN。"
+            },
+            {
+              "name": "active_slot",
+              "type": "TINYINT",
+              "length": 1,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "同一 Client 的进行中申请稀疏唯一槽位；DRAFT、SUBMITTED、UNDER_REVIEW 占用，终态释放，不表示 ACTIVE 业务状态。允许值：1 或 NULL。取值规则：状态为 DRAFT、SUBMITTED 或 UNDER_REVIEW 时为 1，终态为 NULL。"
+            },
+            {
+              "name": "due_diligence_case_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "Risk & Compliance 尽调 Case 的逻辑引用，不建立跨库物理外键。"
+            },
+            {
+              "name": "qualification_decision_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "Risk & Compliance 资格决定的逻辑引用，与 qualification_decision_version 成组为空或成组非空，不建立跨库物理外键。"
+            },
+            {
+              "name": "qualification_decision_version",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "Risk & Compliance 决定的外部版本坐标，与决定标识成组出现。"
+            },
+            {
+              "name": "qualification_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "提交时按申请角色和 Party 类型确定并冻结的 Risk 资格类型。允许值：INDIVIDUAL_KYC、ORGANIZATION_KYB。"
+            },
+            {
+              "name": "submitted_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "业务申请正式提交并进入审核流程的 UTC 微秒精度时刻。"
+            },
+            {
+              "name": "submission_hash_schema_version",
+              "type": "INT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "解释申请提交包 Canonical Hash 输入对象、排序与编码规则的版本号。"
+            },
+            {
+              "name": "submission_content_hash",
+              "type": "CHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "输入遵循 CODE-MOR:CCT:CLIENT_APPLICATION_SUBMISSION:1，使用 UTF-8 RFC 8785/JCS 后的 SHA-256 小写 64 位 Hex。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录创建的 UTC 时间，精确到微秒。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。"
+            }
+          ]
+        }
+      ]
+    },
+    "Risk": {
+      "source": "risk-compliance-service/docs/database/risk-compliance.pdma.json",
+      "sha256": "ee01925a0049b64de0f4aee981518e15ea462be1e89319f1d70489e77e092d6e",
+      "tables": [
+        {
+          "name": "t_due_diligence_case",
+          "comment": "Client 入驻简化目标：尽调案件；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "case_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "尽调案件的稳定业务标识。"
+            },
+            {
+              "name": "case_no",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "案件编号的业务值。"
+            },
+            {
+              "name": "role_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "角色类型的稳定业务代码。允许值：CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON。"
+            },
+            {
+              "name": "role_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "角色的稳定业务标识。"
+            },
+            {
+              "name": "qualification_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "资格类型的稳定业务代码。允许值：INDIVIDUAL_KYC、ORGANIZATION_KYB、PARTNER_DUE_DILIGENCE、ENTITY_UNDERWRITING、RELATED_PERSON_KYC。"
+            },
+            {
+              "name": "dd_program_version_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "尽调程序版本的稳定业务标识。"
+            },
+            {
+              "name": "case_origin",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "案件来源类型的稳定业务代码。允许值：APPLICATION、CONTINUOUS_REVIEW、MANUAL。"
+            },
+            {
+              "name": "scheduled_review_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "计划复审时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "source_namespace",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "区分 CCT Client Application、CCT Operating Entity Application、CCT Local Partner Application 与 Risk 本地来源的稳定命名空间。允许值：CCT_CLIENT_APPLICATION、CCT_OPERATING_ENTITY_APPLICATION、CCT_LOCAL_PARTNER_APPLICATION、RISK_COMPLIANCE。"
+            },
+            {
+              "name": "source_application_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "来源申请的稳定业务标识。"
+            },
+            {
+              "name": "source_submission_version",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "仅 APPLICATION 保存的 CCT Application Submission 正整数版本；其他 Case Origin 必须为 NULL。"
+            },
+            {
+              "name": "source_submission_hash",
+              "type": "CHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "仅 APPLICATION 保存的 CCT Application Submission Canonical Hash；用于同来源键重试的同 Hash 幂等和异 Hash 冲突。"
+            },
+            {
+              "name": "status",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "尽调案件状态沿用既有处理状态；新 Client 退回时以 RETURNED 终止本次任务，不形成最终拒绝决定。"
+            },
+            {
+              "name": "active_slot",
+              "type": "BOOLEAN",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "进行中状态时为 1，终态必须为 NULL；禁止写入 0。"
+            },
+            {
+              "name": "submitted_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "提交时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "decision_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "决定时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "version",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "案件并发版本的长整数值。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。"
+            },
+            {
+              "name": "source_submission_id",
+              "type": "VARCHAR",
+              "length": "64",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "Client 新入驻为提交命令 UUID；既有 APPLICATION 来源使用 legacy:application_id 稳定迁移键；定时复审为空。"
+            },
+            {
+              "name": "public_note",
+              "type": "VARCHAR",
+              "length": "1000",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "运营确认的客户可见审核说明；最多 1000 字符，不自动复制内部理由。"
+            },
+            {
+              "name": "resolution_note",
+              "type": "VARCHAR",
+              "length": "2000",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "本任务终结的内部审核依据说明；只允许授权 Operations 查询。"
+            },
+            {
+              "name": "return_section",
+              "type": "VARCHAR",
+              "length": "32",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "退回定位分区：BASIC、BUSINESS、PEOPLE、MATERIALS；非退回为空。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_dd_case_no",
+              "columns": [
+                "case_no"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：case_no"
+            },
+            {
+              "name": "uk_dd_case_submission",
+              "columns": [
+                "source_namespace",
+                "source_application_id",
+                "source_submission_id",
+                "role_type",
+                "role_id",
+                "qualification_type"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：source_namespace,source_application_id,source_submission_id,role_type,role_id,qualification_type"
+            },
+            {
+              "name": "uk_dd_case_active",
+              "columns": [
+                "role_type",
+                "role_id",
+                "qualification_type",
+                "active_slot"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：role_type,role_id,qualification_type,active_slot"
+            },
+            {
+              "name": "uk_dd_case_review",
+              "columns": [
+                "role_type",
+                "role_id",
+                "qualification_type",
+                "scheduled_review_time"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：role_type,role_id,qualification_type,scheduled_review_time"
+            },
+            {
+              "name": "idx_dd_case_prog",
+              "columns": [
+                "dd_program_version_id"
+              ],
+              "unique": false,
+              "comment": "支持查询：dd_program_version_id"
+            }
+          ],
+          "changes": {
+            "comments": {
+              "status": "尽调案件状态沿用既有处理状态；新 Client 退回时以 RETURNED 终止本次任务，不形成最终拒绝决定。"
+            },
+            "add": [
+              {
+                "name": "source_submission_id",
+                "type": "VARCHAR",
+                "length": "64",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "Client 新入驻为提交命令 UUID；既有 APPLICATION 来源使用 legacy:application_id 稳定迁移键；定时复审为空。"
+              },
+              {
+                "name": "public_note",
+                "type": "VARCHAR",
+                "length": "1000",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "运营确认的客户可见审核说明；最多 1000 字符，不自动复制内部理由。"
+              },
+              {
+                "name": "resolution_note",
+                "type": "VARCHAR",
+                "length": "2000",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "本任务终结的内部审核依据说明；只允许授权 Operations 查询。"
+              },
+              {
+                "name": "return_section",
+                "type": "VARCHAR",
+                "length": "32",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "退回定位分区：BASIC、BUSINESS、PEOPLE、MATERIALS；非退回为空。"
+              }
+            ],
+            "indexes": [
+              {
+                "name": "uk_dd_case_no",
+                "columns": [
+                  "case_no"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：case_no"
+              },
+              {
+                "name": "uk_dd_case_submission",
+                "columns": [
+                  "source_namespace",
+                  "source_application_id",
+                  "source_submission_id",
+                  "role_type",
+                  "role_id",
+                  "qualification_type"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：source_namespace,source_application_id,source_submission_id,role_type,role_id,qualification_type"
+              },
+              {
+                "name": "uk_dd_case_active",
+                "columns": [
+                  "role_type",
+                  "role_id",
+                  "qualification_type",
+                  "active_slot"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：role_type,role_id,qualification_type,active_slot"
+              },
+              {
+                "name": "uk_dd_case_review",
+                "columns": [
+                  "role_type",
+                  "role_id",
+                  "qualification_type",
+                  "scheduled_review_time"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：role_type,role_id,qualification_type,scheduled_review_time"
+              },
+              {
+                "name": "idx_dd_case_prog",
+                "columns": [
+                  "dd_program_version_id"
+                ],
+                "unique": false,
+                "comment": "支持查询：dd_program_version_id"
+              }
+            ]
+          },
+          "originalColumns": [
+            {
+              "name": "case_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "尽调案件的稳定业务标识。"
+            },
+            {
+              "name": "case_no",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "案件编号的业务值。"
+            },
+            {
+              "name": "role_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "角色类型的稳定业务代码。允许值：CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON。"
+            },
+            {
+              "name": "role_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "角色的稳定业务标识。"
+            },
+            {
+              "name": "qualification_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "资格类型的稳定业务代码。允许值：INDIVIDUAL_KYC、ORGANIZATION_KYB、PARTNER_DUE_DILIGENCE、ENTITY_UNDERWRITING、RELATED_PERSON_KYC。"
+            },
+            {
+              "name": "dd_program_version_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "尽调程序版本的稳定业务标识。"
+            },
+            {
+              "name": "case_origin",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "案件来源类型的稳定业务代码。允许值：APPLICATION、CONTINUOUS_REVIEW、MANUAL。"
+            },
+            {
+              "name": "scheduled_review_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "计划复审时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "source_namespace",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "区分 CCT Client Application、CCT Operating Entity Application、CCT Local Partner Application 与 Risk 本地来源的稳定命名空间。允许值：CCT_CLIENT_APPLICATION、CCT_OPERATING_ENTITY_APPLICATION、CCT_LOCAL_PARTNER_APPLICATION、RISK_COMPLIANCE。"
+            },
+            {
+              "name": "source_application_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "来源申请的稳定业务标识。"
+            },
+            {
+              "name": "source_submission_version",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "仅 APPLICATION 保存的 CCT Application Submission 正整数版本；其他 Case Origin 必须为 NULL。"
+            },
+            {
+              "name": "source_submission_hash",
+              "type": "CHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "仅 APPLICATION 保存的 CCT Application Submission Canonical Hash；用于同来源键重试的同 Hash 幂等和异 Hash 冲突。"
+            },
+            {
+              "name": "status",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "案件状态的稳定业务代码。允许值：DRAFT、SUBMITTED、IN_REVIEW、WAITING_EVIDENCE、APPROVED、REJECTED、WITHDRAWN、EXPIRED。"
+            },
+            {
+              "name": "active_slot",
+              "type": "BOOLEAN",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "进行中状态时为 1，终态必须为 NULL；禁止写入 0。"
+            },
+            {
+              "name": "submitted_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "提交时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "decision_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "决定时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "version",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "案件并发版本的长整数值。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。"
+            },
+            {
+              "name": "update_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。"
+            }
+          ]
+        },
+        {
+          "name": "t_dd_case_subject",
+          "comment": "Client 入驻简化目标：尽调案件主体；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "case_subject_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "案件主体范围的稳定业务标识。"
+            },
+            {
+              "name": "case_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "尽调案件的稳定业务标识。"
+            },
+            {
+              "name": "party_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party 主体的稳定业务标识。"
+            },
+            {
+              "name": "subject_role",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "主体角色的稳定业务代码。允许值：PRIMARY、UBO、DIRECTOR、SIGNATORY。"
+            },
+            {
+              "name": "primary_slot",
+              "type": "BOOLEAN",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "PRIMARY 主体时为 1，关联主体必须为 NULL；禁止写入 0。"
+            },
+            {
+              "name": "source_profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "来源档案的稳定业务标识。"
+            },
+            {
+              "name": "source_profile_version_no",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "案件创建时冻结的 CCT Party Profile version_no 正整数坐标。"
+            },
+            {
+              "name": "source_relation_version_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "关联主体对应的 CCT Party Relation Version 稳定标识；PRIMARY 必须为 NULL。"
+            },
+            {
+              "name": "source_relation_version_no",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "关联主体对应的 CCT Party Relation Version version_no 正整数坐标；PRIMARY 必须为 NULL。"
+            },
+            {
+              "name": "ownership_percentage",
+              "type": "DECIMAL",
+              "length": 18,
+              "scale": 10,
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "UBO 来源关系在 CCT 中冻结的持股百分比，取值大于 0 且不超过 100；其他主体角色必须为 NULL。"
+            },
+            {
+              "name": "required_flag",
+              "type": "BOOLEAN",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "是否必需，1 表示是，0 表示否。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。"
+            },
+            {
+              "name": "source_relation_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "新 Client 入驻的稳定 CCT Party Relation ID；旧版本关系来源为空。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_dd_case_subject",
+              "columns": [
+                "case_id",
+                "party_id",
+                "subject_role"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：case_id,party_id,subject_role"
+            },
+            {
+              "name": "uk_dd_case_primary",
+              "columns": [
+                "case_id",
+                "primary_slot"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：case_id,primary_slot"
+            },
+            {
+              "name": "uk_dd_subject_relation",
+              "columns": [
+                "case_id",
+                "source_relation_version_id"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：case_id,source_relation_version_id"
+            }
+          ],
+          "changes": {
+            "nullable": [
+              "source_profile_version_no"
+            ],
+            "add": [
+              {
+                "name": "source_relation_id",
+                "type": "BIGINT",
+                "length": "",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "新 Client 入驻的稳定 CCT Party Relation ID；旧版本关系来源为空。"
+              }
+            ]
+          },
+          "originalColumns": [
+            {
+              "name": "case_subject_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "案件主体范围的稳定业务标识。"
+            },
+            {
+              "name": "case_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "尽调案件的稳定业务标识。"
+            },
+            {
+              "name": "party_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "Party 主体的稳定业务标识。"
+            },
+            {
+              "name": "subject_role",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "主体角色的稳定业务代码。允许值：PRIMARY、UBO、DIRECTOR、SIGNATORY。"
+            },
+            {
+              "name": "primary_slot",
+              "type": "BOOLEAN",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "PRIMARY 主体时为 1，关联主体必须为 NULL；禁止写入 0。"
+            },
+            {
+              "name": "source_profile_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "来源档案的稳定业务标识。"
+            },
+            {
+              "name": "source_profile_version_no",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "案件创建时冻结的 CCT Party Profile version_no 正整数坐标。"
+            },
+            {
+              "name": "source_relation_version_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "关联主体对应的 CCT Party Relation Version 稳定标识；PRIMARY 必须为 NULL。"
+            },
+            {
+              "name": "source_relation_version_no",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "关联主体对应的 CCT Party Relation Version version_no 正整数坐标；PRIMARY 必须为 NULL。"
+            },
+            {
+              "name": "ownership_percentage",
+              "type": "DECIMAL",
+              "length": 18,
+              "scale": 10,
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "UBO 来源关系在 CCT 中冻结的持股百分比，取值大于 0 且不超过 100；其他主体角色必须为 NULL。"
+            },
+            {
+              "name": "required_flag",
+              "type": "BOOLEAN",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "是否必需，1 表示是，0 表示否。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。"
+            }
+          ]
+        },
+        {
+          "name": "t_dd_case_classification",
+          "comment": "Client 入驻简化目标：审核任务经营分类事实；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "case_classification_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "本任务批准经营分类的稳定行标识。"
+            },
+            {
+              "name": "case_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "拥有该分类审核事实的 Risk 主任务 ID。"
+            },
+            {
+              "name": "industry_code",
+              "type": "VARCHAR",
+              "length": "64",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "CCT 运营确认的行业代码。"
+            },
+            {
+              "name": "mcc_code",
+              "type": "VARCHAR",
+              "length": "4",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "CCT 运营确认的四位 MCC 字符串。"
+            },
+            {
+              "name": "primary_slot",
+              "type": "TINYINT",
+              "length": "1",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "主要分类为 1，其他为空；同一任务恰好一个主要分类。"
+            },
+            {
+              "name": "confirmed_by",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "确认分类的 Operations Account 外部稳定 ID。"
+            },
+            {
+              "name": "confirmed_time",
+              "type": "DATETIME",
+              "length": "6",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "分类确认的 UTC 时间；任务内不可变。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": "6",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "本行创建 UTC 时间。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_case_classification_pair",
+              "columns": [
+                "case_id",
+                "industry_code",
+                "mcc_code"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：case_id,industry_code,mcc_code"
+            },
+            {
+              "name": "uk_case_classification_primary",
+              "columns": [
+                "case_id",
+                "primary_slot"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：case_id,primary_slot"
+            }
+          ],
+          "changes": {
+            "new": true,
+            "add": [
+              {
+                "name": "case_classification_id",
+                "type": "BIGINT",
+                "length": "",
+                "scale": "",
+                "nullable": false,
+                "primary": true,
+                "default": "",
+                "comment": "本任务批准经营分类的稳定行标识。"
+              },
+              {
+                "name": "case_id",
+                "type": "BIGINT",
+                "length": "",
+                "scale": "",
+                "nullable": false,
+                "primary": false,
+                "default": "",
+                "comment": "拥有该分类审核事实的 Risk 主任务 ID。"
+              },
+              {
+                "name": "industry_code",
+                "type": "VARCHAR",
+                "length": "64",
+                "scale": "",
+                "nullable": false,
+                "primary": false,
+                "default": "",
+                "comment": "CCT 运营确认的行业代码。"
+              },
+              {
+                "name": "mcc_code",
+                "type": "VARCHAR",
+                "length": "4",
+                "scale": "",
+                "nullable": false,
+                "primary": false,
+                "default": "",
+                "comment": "CCT 运营确认的四位 MCC 字符串。"
+              },
+              {
+                "name": "primary_slot",
+                "type": "TINYINT",
+                "length": "1",
+                "scale": "",
+                "nullable": true,
+                "primary": false,
+                "default": "",
+                "comment": "主要分类为 1，其他为空；同一任务恰好一个主要分类。"
+              },
+              {
+                "name": "confirmed_by",
+                "type": "BIGINT",
+                "length": "",
+                "scale": "",
+                "nullable": false,
+                "primary": false,
+                "default": "",
+                "comment": "确认分类的 Operations Account 外部稳定 ID。"
+              },
+              {
+                "name": "confirmed_time",
+                "type": "DATETIME",
+                "length": "6",
+                "scale": "",
+                "nullable": false,
+                "primary": false,
+                "default": "",
+                "comment": "分类确认的 UTC 时间；任务内不可变。"
+              },
+              {
+                "name": "create_time",
+                "type": "DATETIME",
+                "length": "6",
+                "scale": "",
+                "nullable": false,
+                "primary": false,
+                "default": "",
+                "comment": "本行创建 UTC 时间。"
+              }
+            ],
+            "indexes": [
+              {
+                "name": "uk_case_classification_pair",
+                "columns": [
+                  "case_id",
+                  "industry_code",
+                  "mcc_code"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：case_id,industry_code,mcc_code"
+              },
+              {
+                "name": "uk_case_classification_primary",
+                "columns": [
+                  "case_id",
+                  "primary_slot"
+                ],
+                "unique": true,
+                "comment": "保证唯一性：case_id,primary_slot"
+              }
+            ]
+          },
+          "originalColumns": []
+        },
+        {
+          "name": "t_qualification_decision",
+          "comment": "Client 入驻简化目标：资格决定；仅供评审，非已部署结构。",
+          "columns": [
+            {
+              "name": "decision_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "资格决定的稳定业务标识。"
+            },
+            {
+              "name": "case_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "尽调案件的稳定业务标识。"
+            },
+            {
+              "name": "decision_version",
+              "type": "INT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "既有资格修订合同的决定版本；新 Client 入驻每任务仅一项终态决定，使用决定 ID，版本为空；由 Case 锁防止第二项决定。"
+            },
+            {
+              "name": "role_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "角色类型的稳定业务代码。允许值：CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON。"
+            },
+            {
+              "name": "role_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "角色的稳定业务标识。"
+            },
+            {
+              "name": "qualification_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "资格类型的稳定业务代码。允许值：INDIVIDUAL_KYC、ORGANIZATION_KYB、PARTNER_DUE_DILIGENCE、ENTITY_UNDERWRITING、RELATED_PERSON_KYC。"
+            },
+            {
+              "name": "decision_evaluation_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "规则评估的稳定业务标识。"
+            },
+            {
+              "name": "decision_source",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "决定来源的稳定业务代码。允许值：AUTOMATED、REVIEWER、OVERRIDE。"
+            },
+            {
+              "name": "recommended_decision",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "建议结论的稳定业务代码。允许值：APPROVE、REVIEW、REJECT。"
+            },
+            {
+              "name": "outcome",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "资格结论的稳定业务代码。允许值：APPROVED、REJECTED、REVOKED、EXPIRED。"
+            },
+            {
+              "name": "override_reason_code",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "覆盖原因的稳定业务代码。取值来源：Risk 资格覆盖原因目录；非固定枚举。"
+            },
+            {
+              "name": "valid_from",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "有效开始时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "valid_to",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "有效结束时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "decided_by",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "决定人的稳定业务标识。"
+            },
+            {
+              "name": "decided_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "决定时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "uk_qual_decision_ver",
+              "columns": [
+                "case_id",
+                "decision_version"
+              ],
+              "unique": true,
+              "comment": "保证唯一性：case_id,decision_version"
+            },
+            {
+              "name": "idx_qual_dec_eval",
+              "columns": [
+                "decision_evaluation_id"
+              ],
+              "unique": false,
+              "comment": "支持查询：decision_evaluation_id"
+            }
+          ],
+          "changes": {
+            "nullable": [
+              "decision_version"
+            ],
+            "comments": {
+              "decision_version": "既有资格修订合同的决定版本；新 Client 入驻每任务仅一项终态决定，使用决定 ID，版本为空；由 Case 锁防止第二项决定。"
+            }
+          },
+          "originalColumns": [
+            {
+              "name": "decision_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": true,
+              "default": "",
+              "comment": "资格决定的稳定业务标识。"
+            },
+            {
+              "name": "case_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "尽调案件的稳定业务标识。"
+            },
+            {
+              "name": "decision_version",
+              "type": "INT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "决定版本的整数值。"
+            },
+            {
+              "name": "role_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "角色类型的稳定业务代码。允许值：CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON。"
+            },
+            {
+              "name": "role_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "角色的稳定业务标识。"
+            },
+            {
+              "name": "qualification_type",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "资格类型的稳定业务代码。允许值：INDIVIDUAL_KYC、ORGANIZATION_KYB、PARTNER_DUE_DILIGENCE、ENTITY_UNDERWRITING、RELATED_PERSON_KYC。"
+            },
+            {
+              "name": "decision_evaluation_id",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "规则评估的稳定业务标识。"
+            },
+            {
+              "name": "decision_source",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "决定来源的稳定业务代码。允许值：AUTOMATED、REVIEWER、OVERRIDE。"
+            },
+            {
+              "name": "recommended_decision",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "建议结论的稳定业务代码。允许值：APPROVE、REVIEW、REJECT。"
+            },
+            {
+              "name": "outcome",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "资格结论的稳定业务代码。允许值：APPROVED、REJECTED、REVOKED、EXPIRED。"
+            },
+            {
+              "name": "override_reason_code",
+              "type": "VARCHAR",
+              "length": 64,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "覆盖原因的稳定业务代码。取值来源：Risk 资格覆盖原因目录；非固定枚举。"
+            },
+            {
+              "name": "valid_from",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "有效开始时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "valid_to",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "有效结束时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "decided_by",
+              "type": "BIGINT",
+              "length": "",
+              "scale": "",
+              "nullable": true,
+              "primary": false,
+              "default": "",
+              "comment": "决定人的稳定业务标识。"
+            },
+            {
+              "name": "decided_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "决定时间对应的 UTC 微秒时间。"
+            },
+            {
+              "name": "create_time",
+              "type": "DATETIME",
+              "length": 6,
+              "scale": "",
+              "nullable": false,
+              "primary": false,
+              "default": "",
+              "comment": "该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "accountConcurrency": {
+    "status": "CONFIRMED",
+    "maxActiveApplicationsPerAccount": 1,
+    "scope": "CLIENT_ONBOARDING",
+    "sharedClientTypes": [
+      "INDIVIDUAL",
+      "ORGANIZATION"
+    ],
+    "activeStatuses": [
+      "DRAFT",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "RETURNED"
+    ],
+    "terminalStatuses": [
+      "APPROVED",
+      "REJECTED",
+      "WITHDRAWN"
+    ],
+    "activeSlot": 1,
+    "terminalSlot": null,
+    "workspaceMembershipLimit": null
+  },
+  "notes": [
+    "No database executed.",
+    "Risk legacy columns remain for other sources; new Client does not fabricate source versions.",
+    "This is a targeted schema projection, not a full new database or a directly applicable migration."
+  ],
+  "counts": {
+    "CCT": {
+      "modifiedTables": 10,
+      "newTables": 0,
+      "addedColumns": 12,
+      "removedColumns": 27,
+      "renamedColumns": 1,
+      "nullabilityChanges": 21
+    },
+    "Risk": {
+      "modifiedTables": 3,
+      "newTables": 1,
+      "addedColumns": 13,
+      "removedColumns": 0,
+      "renamedColumns": 0,
+      "nullabilityChanges": 2
+    }
+  }
+}

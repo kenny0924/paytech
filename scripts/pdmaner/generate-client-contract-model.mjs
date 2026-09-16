@@ -1,3 +1,5 @@
+import { CLIENT_COMPENSATION_FIELD_STORAGE } from "./client-compensation-field-storage.mjs";
+import { CLIENT_ONBOARDING_FIELD_STORAGE } from "./client-onboarding-field-storage.mjs";
 import { createHash } from "node:crypto";
 import {
   existsSync,
@@ -296,17 +298,10 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "client_application_id、partner_application_id 与 operating_entity_application_id 三个 Parent FK 均为本库 RESTRICT。",
   ],
   client_application: [
-    ...APPLICATION_COMMENT_CLAUSES,
-    "CHECK ((application_type='ONBOARDING' AND base_party_profile_id IS NULL AND base_business_profile_id IS NULL AND target_party_profile_id IS NOT NULL AND target_business_profile_id IS NOT NULL) OR (application_type='PROFILE_CHANGE' AND base_party_profile_id IS NOT NULL AND base_business_profile_id IS NOT NULL AND target_party_profile_id IS NOT NULL AND target_business_profile_id IS NOT NULL AND (target_party_profile_id<>base_party_profile_id OR target_business_profile_id<>base_business_profile_id)))",
-    "Client 状态归属：ONBOARDING 仅允许绑定 PENDING Client；PROFILE_CHANGE 仅允许绑定 ACTIVE Client。",
-    "ONBOARDING 必须携带 requested_by_account_id；该字段是 Platform CUSTOMER Account 的外部稳定引用，不建立跨库物理外键。",
-    "Profile 归属：Base/Target Party Profile 必须属于 Client 对应 Party，Base/Target Business Profile 必须属于同一 client_id。",
-    "PROFILE_CHANGE 提交时 Base Party/Business Profile 必须分别等于当时 ACTIVE Profile；与 Base 不同的 Target 必须在同一提交事务封存为 FROZEN。",
-    "qualification_type 在提交时由 Client Party Type 推导：INDIVIDUAL 为 INDIVIDUAL_KYC、ORGANIZATION 为 ORGANIZATION_KYB；不得由调用方输入，提交后冻结且不可修改。",
-    "Risk Tuple 固定映射：role_type=CLIENT、role_id=client_id。",
-    "INDIVIDUAL Client 使用 qualification_type=INDIVIDUAL_KYC；ORGANIZATION Client 使用 qualification_type=ORGANIZATION_KYB。",
-    "qualification_decision_id 与 qualification_decision_version 必须成组为空或成组非空。",
-    "APPROVED/REJECTED 前 due_diligence_case_id、qualification_decision_id、qualification_decision_version、qualification_type、role_type、role_id 必须匹配同一次 Risk 决策；WITHDRAWN 不要求 Decision。",
+    "同账号个人/组织合计一份进行中申请；RETURNED 占用名额，终态释放。",
+    "DRAFT/RETURNED 可编辑；批准后永久只读，最终拒绝不复活。",
+    "提交和重提使用 current_submission_id；旧审核任务结果不得覆盖当前任务。",
+    "资格类型由主 Party 类型推导，最终决定校验准确 Case/Decision/Role Tuple。",
   ],
   partner_application: [
     ...APPLICATION_COMMENT_CLAUSES,
@@ -360,8 +355,8 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "替换在同一事务收窄旧行 effective_to、写 BCR/事件并冻结新行；不得回溯收窄到 operation_context_time 之前；APPROVED 后公开字段、Scope 和 effective_from 不得修改，内容变化创建新 disclosure_id。",
   ],
   party_relation: [
-    "Relation Version 一旦 ACTIVE，organization_party_id、related_party_id、relation_type、ownership_percentage、effective_from、effective_to 均不可修改。",
-    "ACTIVE → ENDED 只推进不进入 content_hash 的生命周期并由 BCR 记录结束时点；若业务有效区间必须变化，必须追加新的 Relation Version，禁止覆盖历史版本。",
+    "稳定关系标识；Client 未批准资料只允许所属可编辑申请维护，批准后关系集合锁定。",
+    "真实关系生效/结束日期保留；非 Client 历史引用不得自动迁移或归并。",
   ],
   entity_source_relation: [
     "CHECK ((status='ACTIVE' AND active_source_slot=1) OR (status='ENDED' AND active_source_slot IS NULL))",
@@ -390,11 +385,11 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "64 KiB",
   ],
   compensation_event: [
-    "Payload 不可变：schema_version、payload_json 与 payload_hash 创建后不得修改；重试必须复用相同 Event Envelope。",
+    "Payload 最小化：payload_json 可空或为最大 4 KiB UTF-8 的不可变 JSON Object；禁止 Vault Token、敏感值及可从本库恢复的上下文。",
     "Lease 状态矩阵：PROCESSING 必须同时具有未过期的 lock_owner 与 lock_until；INIT、ERROR、FAILED 不得保留活动 Lease。",
     "Lease Holder 写回：只有持有当前活动 Lease 的执行者可以完成、删除或回写该次尝试；旧执行者不得覆盖新 Lease Holder 的结果。",
     "登记原子性：权威业务事实、业务 History 与 compensation_event 必须在同一本地事务提交；事务内任一点失败全部回滚。",
-    "成功删除：MQ_PUBLISH 只有收到 Broker Confirm 后、LOCAL_HANDLER 只有取得确定成功结果后，才允许删除 compensation_event。",
+    "成功删除：Handler 只有取得确定成功结果后才允许删除 compensation_event；MQ Handler 必须等待 Broker Confirm。",
     "失败保留：达到最大重试次数后必须进入 FAILED、保留记录并告警；人工重开必须记录 Actor、Reason 与 Ticket 后回到 ERROR 等待重新 Claim。",
     "Lease 接管：PROCESSING 的 Lease 超时后允许重新 Claim；Claim 与完成/回写都必须使用 lock_version CAS。",
   ],
@@ -412,15 +407,9 @@ const FIELD_COMMENT_CLAUSES = Object.freeze({
 
 const ACCESS_INDEXES = {
   operating_entity_scope: [{ defKey: "idx_oe_scope_lookup", fields: ["entity_no", "consumer_country_code", "currency", "industry_code", "mcc_code", "status"] }],
-  party_profile: [
-    ["party_id", "profile_status", "effective_from", "effective_to"],
-  ],
-  party_relation: [
-    ["organization_party_id", "status", "effective_from", "effective_to"],
-  ],
-  client_business_profile: [
-    ["client_id", "status", "effective_from", "effective_to"],
-  ],
+  party_profile: [],
+  party_relation: [{"defKey": "idx_party_relation_person", "fields": ["related_party_id"]}, {"defKey": "idx_party_relation_application", "fields": ["client_application_id"]}],
+  client_business_profile: [],
   client_entity_affiliation: [
     { defKey: "idx_aff_priority", fields: ["client_id", "status", "priority_no", "effective_from", "effective_to"] },
   ],
@@ -462,14 +451,31 @@ const ACCESS_INDEXES = {
     ["aggregate_root_type", "aggregate_root_id", "history_id"],
   ],
   compensation_event: [
-    ["execute_status", "next_execute_at", "lock_until"],
+    { defKey: "idx_comp_event_ready", fields: ["execute_status", "next_execute_at", "id"] },
+    { defKey: "idx_comp_event_lease", fields: ["execute_status", "lock_until", "id"] },
   ],
   command_idempotency: [["expire_time"]],
+  individual_profile: [],
+
+  organization_profile: [],
+
+  party_address: [],
+
+  party_contact: [],
+
+  party_profile_identifier: [{"defKey": "idx_party_profile_ident_8f43e780", "fields": ["identity_key_id"]}],
+
+  party_identity_key: [{"defKey": "idx_party_identity_key_party_id", "fields": ["party_id"]}],
+
+  client_application: [{"defKey": "idx_client_app_requester", "fields": ["requested_by_account_id", "status"]}],
+
 };
 
 // Each tuple is child table, child field, parent table, parent field, child cardinality.
 // Only references owned by the Client & Contract database are included.
 const LOCAL_RELATIONS = [
+  ["party_profile", "draft_application_id", "client_application", "application_id", "n"],
+  ["party_relation", "client_application_id", "client_application", "application_id", "n"],
   ["operating_entity_scope", "entity_no", "operating_entity", "entity_no", "n"],
   ["operating_entity_scope", "application_id", "operating_entity_application", "application_id", "n"],
   ["agreement", "entity_no", "operating_entity", "entity_no", "n"],
@@ -491,11 +497,7 @@ const LOCAL_RELATIONS = [
   ["business_change_record", "parent_history_id", "business_change_record", "history_id", "n"],
   ["business_change_version", "history_id", "business_change_record", "history_id", "n"],
   ["client", "party_id", "party", "party_id", "1"],
-  ["client_application", "base_business_profile_id", "client_business_profile", "business_profile_id", "n"],
-  ["client_application", "base_party_profile_id", "party_profile", "profile_id", "n"],
   ["client_application", "client_id", "client", "client_id", "n"],
-  ["client_application", "target_business_profile_id", "client_business_profile", "business_profile_id", "n"],
-  ["client_application", "target_party_profile_id", "party_profile", "profile_id", "n"],
   ["client_business_classification", "business_profile_id", "client_business_profile", "business_profile_id", "n"],
   ["client_business_profile", "client_id", "client", "client_id", "n"],
   ["client_entity_affiliation", "client_id", "client", "client_id", "n"],
@@ -865,6 +867,12 @@ function inferPhysicalType(tableKey, fieldKey, primaryKey, typeIds, domainIds) {
     baseType: typeIds.string,
     domain: "",
   };
+  const storage = CLIENT_COMPENSATION_FIELD_STORAGE[fieldPath] ?? CLIENT_ONBOARDING_FIELD_STORAGE[fieldPath];
+  if (storage) {
+    const mapping = { BIGINT: "BIGINT", VARCHAR: "string", CHAR: "char", DATE: "localDate", DATETIME: "date", DECIMAL: "double", TINYINT: "int", INT: "int" };
+    return { ...result, type: storage.type, len: storage.length === "" ? "" : Number(storage.length), scale: storage.scale === "" ? "" : Number(storage.scale),
+      baseType: typeIds[mapping[storage.type]], domain: primaryKey ? domainIds.PrimaryKey : storage.type === "DATETIME" ? domainIds.DateTime : MONEY_FIELD_PATHS.has(fieldPath) ? domainIds.Money : RATE_FIELD_PATHS.has(fieldPath) ? domainIds.Decimal : fieldKey === "currency" ? domainIds.currency : "" };
+  }
   if (fieldKey === "entity_no") return { ...result, type: "CHAR", len: 5, baseType: typeIds.char };
   if (tableKey === "business_change_record" && ["record_id", "aggregate_root_id"].includes(fieldKey)) return result;
   if (primaryKey || fieldKey === "id" || fieldKey.endsWith("_id")) {
@@ -917,6 +925,8 @@ function auditFieldsFor(tableKey) {
 
 function isNullable(tableKey, fieldKey, primaryKey) {
   const fieldPath = `${tableKey}.${fieldKey}`;
+  const storage = CLIENT_COMPENSATION_FIELD_STORAGE[fieldPath] ?? CLIENT_ONBOARDING_FIELD_STORAGE[fieldPath];
+  if (storage) return storage.nullable;
   assert(!primaryKey || !NULLABLE_FIELD_PATHS.has(fieldPath), `Primary key cannot be nullable: ${fieldPath}`);
   assert(!AUDIT_FIELDS.includes(fieldKey) || !NULLABLE_FIELD_PATHS.has(fieldPath), `Audit field cannot be nullable: ${fieldPath}`);
   return NULLABLE_FIELD_PATHS.has(fieldPath);
@@ -1134,12 +1144,12 @@ function buildEntities(model, catalog) {
         primaryKey,
         notNull: !isNullable(table.defKey, fieldKey, primaryKey),
         autoIncrement: false,
-        defaultValue: "",
+        defaultValue: CLIENT_COMPENSATION_FIELD_STORAGE[`${table.defKey}.${fieldKey}`]?.defaultValue ?? "",
         hideInGraph: false,
         refDict: "",
         baseType: physicalType.baseType,
-        extProps: fieldKey === "entity_no" || (table.defKey === "business_change_record" && ["record_id", "aggregate_root_id"].includes(fieldKey))
-          ? { characterSet: "ascii", collation: "ascii_bin" } : {},
+        extProps: CLIENT_COMPENSATION_FIELD_STORAGE[`${table.defKey}.${fieldKey}`]?.extProps ?? (fieldKey === "entity_no" || (table.defKey === "business_change_record" && ["record_id", "aggregate_root_id"].includes(fieldKey))
+          ? { characterSet: "ascii", collation: "ascii_bin" } : {}),
         domain: physicalType.domain,
         id: stableUuid(`field/${table.defKey}/${fieldKey}`),
       };

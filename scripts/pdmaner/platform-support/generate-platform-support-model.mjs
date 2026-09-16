@@ -236,7 +236,7 @@ function buildIndexes(table, fieldsByKey) {
       defKey: spec.defKey,
       defName: `${spec.unique ? "唯一" : "访问"}索引 ${spec.fields.join("、")}`,
       unique: spec.unique,
-      comment: `${spec.unique ? "保证业务唯一性" : "支持访问路径"}：${spec.fields.join("、")}`,
+      comment: spec.comment ?? `${spec.unique ? "保证业务唯一性" : "支持访问路径"}：${spec.fields.join("、")}`,
       fields: spec.fields.map((fieldKey, position) => {
         const field = fieldsByKey.get(fieldKey);
         invariant(field, `索引字段不存在：${table.defKey}.${spec.defKey}.${fieldKey}`);

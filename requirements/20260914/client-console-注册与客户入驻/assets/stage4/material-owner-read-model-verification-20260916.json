@@ -1,0 +1,84 @@
+{
+  "recordedAt": "2026-09-16T07:46:15.773231+00:00",
+  "mode": "read-only metadata and counts; no DDL/DML",
+  "systems": {
+    "mor_cct": {
+      "tables": [
+        {
+          "table": "t_application_document",
+          "columnCount": 11,
+          "indexCount": 5,
+          "columnsMatch": true,
+          "indexesMatch": true,
+          "engineAndCollationMatch": true,
+          "tableCommentMatches": true,
+          "commentDifferenceIsOnlyProviderToChannel": false,
+          "columnStructureMatches": true,
+          "indexStructureMatches": true,
+          "showCreateSha256": "21bdcf7abb349c8e07c3db0414e99d6a1abca6bb3dab3a816cc66da97bd819f5",
+          "expectedDdlSha256": "ce772177782a32bd2957430ccd1b4c27419459d8bb2c1e72557c112725558a5e"
+        }
+      ],
+      "counts": {
+        "t_application_document": 0
+      }
+    },
+    "mor_risk": {
+      "tables": [
+        {
+          "table": "t_dd_program",
+          "columnCount": 6,
+          "indexCount": 2,
+          "columnsMatch": false,
+          "indexesMatch": false,
+          "engineAndCollationMatch": true,
+          "tableCommentMatches": false,
+          "commentDifferenceIsOnlyProviderToChannel": false,
+          "columnStructureMatches": true,
+          "indexStructureMatches": true,
+          "showCreateSha256": "060a5c25f74f3ed0323eeecbdfede233ac8fb0f785e7e0264e4de90914609c2a",
+          "expectedDdlSha256": "1e32c9d1380632844af5a5d98d91a9b0cb5e38984e901b61dc8eebc481622fe7",
+          "knownDifference": "Persisted Chinese column/index/table comments contain mojibake. Structural types, nullability, defaults and index definitions match; no DDL executed or comments repaired."
+        },
+        {
+          "table": "t_dd_program_version",
+          "columnCount": 11,
+          "indexCount": 3,
+          "columnsMatch": false,
+          "indexesMatch": false,
+          "engineAndCollationMatch": true,
+          "tableCommentMatches": false,
+          "commentDifferenceIsOnlyProviderToChannel": false,
+          "columnStructureMatches": true,
+          "indexStructureMatches": true,
+          "showCreateSha256": "e4b50713f8b5d932b499b33233d1e454b48425867abdd494fe4d675885d306a7",
+          "expectedDdlSha256": "cbee1cf04276b1d5ac53c88ffc5c24448ae525d7d2d0491b58f1571968effec9",
+          "knownDifference": "Persisted Chinese column/index/table comments contain mojibake. Structural types, nullability, defaults and index definitions match; no DDL executed or comments repaired."
+        },
+        {
+          "table": "t_dd_program_requirement",
+          "columnCount": 6,
+          "indexCount": 2,
+          "columnsMatch": false,
+          "indexesMatch": false,
+          "engineAndCollationMatch": true,
+          "tableCommentMatches": false,
+          "commentDifferenceIsOnlyProviderToChannel": false,
+          "columnStructureMatches": true,
+          "indexStructureMatches": true,
+          "showCreateSha256": "e06d56993901e15dcd838212bea9e6b2e91dfb9d5dc7f181b1cf2b6280a7a70f",
+          "expectedDdlSha256": "e019cb2710ee1feda86d51dc54019aadf303d3dc044509ea1f24be9480205b68",
+          "knownDifference": "Persisted Chinese column/index/table comments contain mojibake. Structural types, nullability, defaults and index definitions match; no DDL executed or comments repaired."
+        }
+      ],
+      "counts": {
+        "t_dd_program": 0,
+        "t_dd_program_version": 0,
+        "t_dd_program_requirement": 0
+      }
+    }
+  },
+  "structuralReadinessVerified": true,
+  "completeSchemaMatch": false,
+  "knownGap": "Risk three DD tables have existing Chinese-comment encoding drift; runtime structure matches. This record is not complete model/schema equivalence."
+}

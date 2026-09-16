@@ -578,7 +578,7 @@ test("E2E-01 exposes a non-persisted CCT-I10 readiness diagnostic", async () => 
   assert.doesNotMatch(labels, /冻结 Requirement Config|Readiness Evaluation|追加不可变 Eligibility Evaluation|ClientEligibilityChanged/u);
 });
 
-test("E2E-01 scopes Risk Case idempotency by typed Application namespace and role", async () => {
+test("E2E-01 scopes Risk Case idempotency by typed Application, submission and role", async () => {
   const sequenceCatalog = await loadSequenceCatalog();
   const messages = sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES["E2E-01"].messages;
   const createCase = messages.find(
@@ -592,14 +592,10 @@ test("E2E-01 scopes Risk Case idempotency by typed Application namespace and rol
   assert.match(createCase.label, /source_namespace=CCT_CLIENT_APPLICATION/u);
   assert.match(
     createCase.label,
-    /CCT_CLIENT_APPLICATION.*CCT_OPERATING_ENTITY_APPLICATION.*RISK_COMPLIANCE/u,
+    /source_namespace \+ source_application_id \+ source_submission_id \+ role_type \+ role_id \+ qualification_type/u,
   );
-  assert.match(
-    createCase.label,
-    /source_namespace \+ source_application_id \+ role_type \+ role_id \+ qualification_type/u,
-  );
-  assert.match(createCase.label, /submission_content_hash.*同值幂等.*异值冲突/u);
-  assert.doesNotMatch(createCase.label, /按 application_id \+ submission_content_hash 幂等创建/u);
+  assert.match(createCase.label, /同 submissionId 同参幂等.*异参冲突/u);
+  assert.doesNotMatch(createCase.label, /submission_content_hash/u);
   assert.ok(returnCase, "E2E-01 must return the main Role Case by the same typed identity");
   assert.match(returnCase.label, /主 Role.*Typed.*身份/u);
 });
@@ -608,7 +604,7 @@ test("E2E-01 authenticates a CUSTOMER Account and provisions its Client Tenant b
   const sequenceCatalog = await loadSequenceCatalog();
   const messages = sequenceCatalog.GLOBAL_USE_CASE_SEQUENCES["E2E-01"].messages;
   const labels = messages.map((message) => message.label);
-  const authenticationIndex = labels.findIndex((label) => /CUSTOMER.*Email\/Password.*Google/u.test(label));
+  const authenticationIndex = labels.findIndex((label) => /CUSTOMER.*Email\/Password.*邮件链接/u.test(label));
   const accountContextIndex = labels.findIndex((label) => /Account Context/u.test(label));
   const draftApplicationIndex = labels.findIndex((label) => /CCT-I15 START_OR_RESUME.*DRAFT.*requested_by_account_id/u.test(label));
   const provisionIndex = labels.findIndex((label) => /PLT-I17.*tenant_type=CLIENT.*owner_ref_id.*requested_by_account_id.*source_version.*payload_hash/u.test(label));

@@ -1,0 +1,815 @@
+{
+  "stage": 4,
+  "status": "Gateway component verified; authentication batch still requires Platform MySQL and HTTPS integration",
+  "recordedAt": "2026-09-15T06:36:09.058179+00:00",
+  "authorization": "User continued current stage 4 authentication batch; no deployment, SQL migration or route activation.",
+  "redEvidence": [
+    {
+      "scope": "CLIENT real HTTP + Redis cookie, Origin and preflight",
+      "tests": 20,
+      "failures": 16,
+      "errors": 0
+    },
+    {
+      "scope": "CLIENT_JWT Snapshot omitting IP or authenticated-principal Guard",
+      "tests": 2,
+      "failures": 2
+    },
+    {
+      "scope": "Default-disabled CLIENT route",
+      "finding": "Framework rejected with empty 401 Basic challenge; now rejects with the standard Problem and no Basic challenge."
+    }
+  ],
+  "checks": [
+    {
+      "workingDirectory": "api-gateway",
+      "command": "JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home ./mvnw clean verify -Dio.netty.leakDetection.level=paranoid -Dio.netty.leakDetection.targetRecords=32",
+      "suites": [
+        {
+          "name": "com.paytech.gateway.auto.acceptance.ClientApiGatewayAcceptanceAutoTest",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.acceptance.OperationsGatewayAcceptanceAutoTest",
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.architecture.GatewayArchitectureAutoTest",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.architecture.GatewayFilterOrderContractAutoTest",
+          "tests": 89,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.configuration.GatewayAutoYamlConfigurationAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.configuration.GatewayBootstrapPropertiesAutoTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.configuration.PlatformCredentialValidationPropertiesAutoTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.configuration.PlatformJwksPropertiesAutoTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.configuration.PlatformSnapshotDiscoveryPropertiesAutoTest",
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.guard.ClientApiGuardFlowAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.guard.GatewayAuthenticatedGuardCommandFactoryAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.guard.GuardPolicyResolutionAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.guard.GuardProfileContractAutoTest",
+          "tests": 19,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.guard.OperationsGuardFlowAutoTest",
+          "tests": 29,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.guard.RedisConcurrencyLeaseAutoTest",
+          "tests": 32,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.guard.RedisGuardUnavailableAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.guard.RedisRateLimitFailureAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.guard.RedisTokenBucketAutoTest",
+          "tests": 29,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.observability.ClientApiObservabilityAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.observability.GatewayAccessLogAutoTest",
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.observability.GatewayHealthAutoTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.observability.GatewayMetricDimensionsAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.observability.GatewayMetricsAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.observability.GatewaySnapshotHealthAutoTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.observability.GatewaySnapshotMetricsAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.observability.GatewayUnavailableHealthAutoTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.redis.RedisEnvironmentPreconditionAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.ClientApiRoutingAutoTest",
+          "tests": 33,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.ClientRoutingContractAutoTest",
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.DynamicOperationsRoutingAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.GatewayDatabaseRoutingAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.GatewayPathTemplateContractAutoTest",
+          "tests": 56,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.GatewayRuntimeCatalogAutoTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.GatewaySnapshotCompilerAutoTest",
+          "tests": 52,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.GatewaySnapshotPinningAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.GatewaySnapshotPolicyAutoTest",
+          "tests": 58,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.GatewaySnapshotRefreshAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.GatewaySnapshotSchedulingAutoTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.OperationsRouteDefinitionContractAutoTest",
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.routing.OperationsRoutingAutoTest",
+          "tests": 26,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.ClientApiCredentialAuthenticationAutoTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.ClientApiCredentialConverterAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.ClientApiIdentityInvariantAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.ClientJwksIsolationAutoTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.ClientJwtValidatorAutoTest",
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.GatewayIdentityValueAutoTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.OperationsJwksAvailabilityAutoTest",
+          "tests": 73,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.OperationsJwtValidationAutoTest",
+          "tests": 79,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.OperationsJwtValidatorAutoTest",
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.OperationsTrustedContextAutoTest",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.PlatformCredentialValidationClientAutoTest",
+          "tests": 43,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.ReactiveJwksProviderContractAutoTest",
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.TrustedRequestBoundaryAutoTest",
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.security.VersionedHmacDigesterAutoTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.transport.ClientApiOwnerSimulatorAutoTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.transport.GatewayTransportAutoTest",
+          "tests": 36,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.ClientApiResponseContractAutoTest",
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.ClientConsoleDisabledHttpAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.ClientConsoleGatewayHttpAutoTest",
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.GatewayConfiguredCookieHttpAutoTest",
+          "tests": 47,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.GatewayErrorContractAutoTest",
+          "tests": 24,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.GatewayPathsAutoTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.GatewayProblemWriterAutoTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.GatewayRequestIdAutoTest",
+          "tests": 25,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.OperationsAuthenticationCookieAutoTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.OperationsCorsAndBodyLimitAutoTest",
+          "tests": 36,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.OperationsHttpTestModeAutoTest",
+          "tests": 47,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.OperationsReadOriginAutoTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.OperationsResponseContractAutoTest",
+          "tests": 37,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.paytech.gateway.auto.web.ReplayableRequestBodyOwnerAutoTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "totals": {
+        "tests": 1261,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "command": "node scripts/verify-gateway-boundaries.mjs",
+      "result": "Gateway boundaries verified: 120 production Java files, 4 production resource files, 107 test Java files, 3 test resource files."
+    },
+    {
+      "command": "node scripts/verify-jacoco.mjs",
+      "result": "JaCoCo verified for 166/167 Gateway classes: instruction 96.624745% (19438/20117), branch 90.051323% (2281/2533)."
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "infrastructure": {
+    "gateway": "real Spring Gateway HTTP listeners",
+    "redis": "repository-owned shared Redis; per-run isolated namespace, scoped cleanup and foreign sentinel verification",
+    "bffAndPlatform": "strict loopback BFF, JWKS and Snapshot protocol simulators; no real Platform database in this run"
+  },
+  "changes": [
+    "Channel-specific refresh cookie profiles for CLIENT and OPERATIONS",
+    "Exact CLIENT Origin, preflight, trusted terminal and early Header error CORS handling",
+    "Mandatory CLIENT_JWT IP and principal Guard pairs; ACCOUNT context needs no Tenant",
+    "Default-disabled route rejection uses RFC 9457 Problem without Basic challenge",
+    "Architecture JWT-consumer allowlist includes the explicitly approved CLIENT authorization component"
+  ],
+  "remaining": [
+    "Platform real MySQL authentication and audit tests require a safe test credential configuration entry",
+    "Full HTTPS browser-to-Gateway-to-BFF-to-Platform integration",
+    "Later CCT onboarding, Risk and Operations manual-review batches"
+  ],
+  "baselineComparison": {
+    "revision": "a2111df79213107f1697640a0f19466070047409",
+    "kind": "isolated git archive copy; no branches, commits or deployment",
+    "command": "./mvnw clean verify -Dgateway.test.local-config=<existing safe local configuration path> -Dio.netty.leakDetection.level=paranoid -Dio.netty.leakDetection.targetRecords=32",
+    "totals": {
+      "tests": 1199,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "nettyBufferWarningReproduced": true
+  },
+  "knownWarnings": [
+    {
+      "category": "Netty ByteBuf release warning",
+      "currentRunObserved": true,
+      "comparison": "Same warning also appears in unchanged HEAD under the same diagnostic mode; this batch does not claim it is fixed or that the run is warning-free."
+    }
+  ],
+  "sourceHashes": {
+    "api-gateway/README.md": "08525c0461d1a5e8a3845bf342d722efc1b9cd0a01fad75c698f4949c1020e0e",
+    "api-gateway/api-gateway-test/pom.xml": "e25bc491d0dd0637fb44584f713cf25324799ab79f5537ad1035219f1e2ede08",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/acceptance/ClientApiGatewayAcceptanceAutoTest.java": "c1ce2f4c0a0bed23be575eac4c6febc9ffd19859c949c1134a166721911459b0",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/acceptance/OperationsGatewayAcceptanceAutoTest.java": "d8c5cc96f59afe9018de00332dea8485b7f8fe00f2550444631ab4ebfee8ea23",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/architecture/GatewayArchitectureAutoTest.java": "a3dc3d6115c97ecf6030da179bd8f0d7d76550842bdc9abc7d72fa99011667be",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/architecture/GatewayFilterOrderContractAutoTest.java": "93462a3bb0bd10ef3eede2e53386383d77a0efe80468ee159caeca7c18c9f736",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/configuration/GatewayAutoYamlConfigurationAutoTest.java": "7566ea0af4d5aac6f5ac7ddc7af3156ca63153202d3b6c8583fd9d4e13e3f197",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/configuration/GatewayBootstrapPropertiesAutoTest.java": "02e1708bc18e3b87988d1d5fa592470bd609c9ed97779d8b2bcdcc18c0a53632",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/configuration/PlatformCredentialValidationPropertiesAutoTest.java": "d838f157ba009c8416a86c606313e01726c7a7c6cd6c6402ca2a719fd9dd2c3a",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/configuration/PlatformJwksPropertiesAutoTest.java": "56a19c6a86bfbced544a645abeca08949fb139ac564bc37b109a91c84655af80",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/configuration/PlatformSnapshotDiscoveryPropertiesAutoTest.java": "80b5d267182a2995221b46da2e6f690576f7425c045f95972812aca524a218c5",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/ClientApiGuardFlowAutoTest.java": "ed09f29243a8b81ae4d2ed7e3a68a9067fe4f7ad82c388be0402c4a005135fc3",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/GatewayAuthenticatedGuardCommandFactoryAutoTest.java": "efe873404167c10ffb0b7fddd7422996d37370d642bfe6d39bdde6469faf1a5c",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/GuardPolicyResolutionAutoTest.java": "b4c8dd43a6d09d3b85193ca9d41b09efa29d2af7a471b90c1aa358bfd713e4bb",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/GuardProfileContractAutoTest.java": "05eba94fc307088df539e141a8d78572dfbc6d071860e74480ae6f01b8bc1e27",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/OperationsGuardFlowAutoTest.java": "799758d761e367d56493d49bb7c706aa4216e2080641cc7d8613dc83088dcbea",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/RedisConcurrencyLeaseAutoTest.java": "3057b27355f1e39143ddd7a979f8963eae7cee9214fb8fc4b049ef6226591a60",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/RedisGuardUnavailableAutoTest.java": "79833a523f004bf343d0ed849f39366b2bf1f176b8088a1d25b40134ead678cc",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/RedisRateLimitFailureAutoTest.java": "bebcacf21992e56d3da86e8f20610054b9f0a7b951de19559b5a410300b26aae",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/guard/RedisTokenBucketAutoTest.java": "857693bbf6508214431841343be342aa6d8d54d7ee87ec5a6969efb48d949696",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/ClientApiObservabilityAutoTest.java": "cb51ca97851b65b9ddad771dfd4e20e82aebf8400bfd9dfe0c8b1f0cfa88e39e",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayAccessLogAutoTest.java": "242a17252f77015cee80e604ed146844c60a3553bcb453dd6ccf71cec29dd120",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayHealthAutoTest.java": "1307639f21633451fe0b64a91ae6272af61619a5f6ac24e5db6a53e980728755",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayMetricDimensionsAutoTest.java": "9c546b9ae169d308fd6923fbbe6031bb79f6cf99b003b36ef973886db0cea0c4",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayMetricsAutoTest.java": "dc607ffbcd42dc2637acfcbeb20901c98e2cc4954dfa1f626f2e16a8e04296b1",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewaySnapshotHealthAutoTest.java": "32237be748a5f060c7035432b9aa2a1cc02a9d2a3dbfe9b5147980c8a22668d4",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewaySnapshotMetricsAutoTest.java": "bec568a25557301796f55552e0d7731229ef8f4901b41a4c2b5a7df629aa279f",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/observability/GatewayUnavailableHealthAutoTest.java": "b6178683f7d85e0c1b50d06cd4285e9f7dc7fb2180d1c07ac21d3b0e2bae6fa8",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/redis/RedisEnvironmentPreconditionAutoTest.java": "a6676680bba8995e4c1537c5e6332aa662359a5cc0102cf77229112782a5db25",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/ClientApiRoutingAutoTest.java": "c737ec0642a4e75382811f1825752d9fd6242ec0c2f670abd4fbacf4c00197ea",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/ClientRoutingContractAutoTest.java": "7014d15866119a11834093d30ad55ffa120ec589c6f68db97848af0dba693548",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/DynamicOperationsRoutingAutoTest.java": "3e1dabbe01762b27d8270123fa44900caf48654505a1376d7ebb31965bc1324b",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewayDatabaseRoutingAutoTest.java": "69cfd2ea626b850b33cc8848d6bad1dd6424644c95fcc39c1c2048cea2b16f72",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewayPathTemplateContractAutoTest.java": "f2b7c76e285e17bd95e7dafe33c32aee96dfbf565d12ba873416f893ae9df3ca",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewayRuntimeCatalogAutoTest.java": "338f819ac31de2981e4e19fba2eef26316244776eea1cd37231507c2f06aced0",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotCompilerAutoTest.java": "84ff344eb055e08102f6ad9e27ca2101e30df43b3cc83484731491f715eb1aae",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotPinningAutoTest.java": "1e9257e11fc2e1db5b20ee600475bf2cdac99b0dc0b2fb8a540c6841b7dd71dd",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotPolicyAutoTest.java": "6df3fc413516dd9d254ec10c6461ff8ccd6d95554459d924d7b5b927762f30b1",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotRefreshAutoTest.java": "f061908d0cec154f8af9ec08f56486f70c42223bc600010436df5f0d6c4fdb16",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/GatewaySnapshotSchedulingAutoTest.java": "4a156a32fb98ec435cf0d6b650cd6153d26aeeb95965f7f628a1a672d3518372",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/OperationsRouteDefinitionContractAutoTest.java": "169f7af6fbd1238dc71bca26e89402642d9901dc522682597e3e508d4c55612d",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/OperationsRoutingAutoTest.java": "1e194971058f29b9bddd3bf83070e78e7a78c239b05f3c8bde0dd48e0ef6f3e9",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/ClientApiCredentialAuthenticationAutoTest.java": "f857bf18ef082a51cce91014f92c6a3f78b3c9551aa9b2501c43eef58dc64933",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/ClientApiCredentialConverterAutoTest.java": "e55724105e8c69a88aa4ad50a18507d8053d520bffd086bb4a49a7c18e99669a",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/ClientApiIdentityInvariantAutoTest.java": "831f4a920665ec3425947bb93c1428ee4a6d68dc3f4c5dca617c601b198801bf",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/ClientJwksIsolationAutoTest.java": "dbafc3ea52a215c2f79a97eb0ff26d19a3982150c0d8fe22ebe7ddccf8405ba9",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/ClientJwtValidatorAutoTest.java": "c99f44baa7dda90558dbf6384f5593e971cac76524a3cfccba8d479f1970b7d2",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/GatewayIdentityValueAutoTest.java": "9e91cda4fb40d3818364e9637cf9516eb45a2c44eb71880c5a69fd8166d3665d",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsJwksAvailabilityAutoTest.java": "0088928d59e841c43fc335296ccf8fa9519990663a4c6db68bd27c616deeba8a",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsJwtValidationAutoTest.java": "617241bf130386dcba1fc0da39818303bbe7b69c0bd69b127027d5c05b69027c",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsJwtValidatorAutoTest.java": "e697774aa6673e78191e01df2add2653feb9a5cdba4e0a697c3e759ff3d6d1c2",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/OperationsTrustedContextAutoTest.java": "762141bd21c5a09dc0b2a8aa7e41a3542e43ba5d71d9f0e13055011af2bd05fe",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/PlatformCredentialValidationClientAutoTest.java": "e6d09487068067e87f871f6b712374587fb4111986fa5720fb50684290506570",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/ReactiveJwksProviderContractAutoTest.java": "1d12514ae48c30aaeb7d4737c44412169865028f8fc882886bebe50cbb8c43d3",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/TrustedRequestBoundaryAutoTest.java": "cea0316984795efcd19d14948f341a9cf32df003485679b1ad335247140434a5",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/security/VersionedHmacDigesterAutoTest.java": "f424e578d2fb04d5304799dc885ec6489d007dec4dad1e4c9959d7492400d4aa",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/transport/ClientApiOwnerSimulatorAutoTest.java": "be3ebfa0b1478c2d4414d5f280eb22cb9daa24e06147ca0f052272615c1162dc",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/transport/GatewayTransportAutoTest.java": "90b6fa6e63a851b61425fd2b7c922b841d9188e197b0080cec033c23cf003087",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/ClientApiResponseContractAutoTest.java": "61d54e9bf7ad9dd4f0712c24d743806561b649f388634f4ee19005709d9d320b",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/ClientConsoleDisabledHttpAutoTest.java": "603fff45e3b0aebde417fc5498cd822899823f7908062867633924404415a5c8",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/ClientConsoleGatewayHttpAutoTest.java": "3855da99df408cfa8a442023e33bc5f9ca24697c37fdc629ad4258f9e69876d5",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayConfiguredCookieHttpAutoTest.java": "3c575b5da670b4b50705f77187020dd5743739b628ae68587b5b8d9d18981d89",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayErrorContractAutoTest.java": "47b2aaae18d7e2e81f7753c37e4cb09f3c6b2fb59ec06529f931bc49f9e507b6",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayPathsAutoTest.java": "e7a39819747020f4e5555e142191916ec9454bd85867bab3bbe634de2c491961",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayProblemWriterAutoTest.java": "3be1b8066623f76deb76027b9e39c17a5d4c6dc424a100a52f316dd8a47c1918",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/GatewayRequestIdAutoTest.java": "2a11e3d0890125b2555eddf705a34ac343069a362a9acc37df6603f251f30122",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsAuthenticationCookieAutoTest.java": "3b63fc3304f82a7e6c187cc8721e1e7bc84d6ffd6d09f4f61ed3f85ad1c6fd51",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsCorsAndBodyLimitAutoTest.java": "362d74bb3196c7ea34fbe57afe34bfd6aa47bd217be20e0b9efc28d40fd48791",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsHttpTestModeAutoTest.java": "2990f046e5e7ffde9b4a53b2ad09c24b61e44cdde022fd3c881b55e653eff389",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsReadOriginAutoTest.java": "80a797263aa254a46b3875bc5c4994138f4cd5d623caa221920fb330756abacb",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/OperationsResponseContractAutoTest.java": "28396527072eca52095d7d45737eb10d7d1a55c5e26bb75c491bf62f8f40fef3",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/ReplayableRequestBodyOwnerAutoTest.java": "e4945599005c787da162a09edb7c2c4c801dfb6af43c808a4206785374a95f18",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/configuration/PlatformSnapshotControlClientAutoTest.java": "47cb23b76ad9b0619d83cb64a69d5f0daf354365875d5bb1f48d8ec0fd808c26",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/guard/OperationsGuardAdmissionTestSupport.java": "00dcdf685a53572131f65f62baa6599cfbde68eba8c289aefeaaa4735fe244f8",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/guard/OperationsGuardTimingInvariant.java": "39deb060d37d9ccb1b721cb001c34a84b7395f1dbc217319534e4d5f0bfe7c7b",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/routing/OperationsAccessRequirement.java": "b2b903d5a3dcf03d4c8e6fa6183263c1221be5e3cba47af7f21aaa8bd651cb44",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/routing/OperationsQueryPolicy.java": "cbf5cc8f63ef275796c963aabcd25892463fb6d6e4189db99cf2a7984e1333cc",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/routing/OperationsRouteCatalog.java": "19dff066fa3b03855f062bc062b13a84d962b0b28b15cb820a0c02e1939b70d3",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/routing/OperationsRouteDefinition.java": "2c7f4c37e62a874dabb50252ac96303e52ac9af14efa76eed3bfaed016757e70",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/routing/RefreshCookieRequirement.java": "f01717472717f32cc46fbced0b9dc53252120616c58a390ed8692fabb0bbc26a",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotCodeParserAutoTest.java": "ab54b7dec7a6f020420abab481fd8569e1127233481b66235b2871ef5b221c3f",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/ClientApiGatewayAutoTestBase.java": "ff7ff9d7cdd0549b9d4e9a2ed2631c406cc792c65a14d7135093c68acf403af7",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/GatewayAutoTestBase.java": "18d112fee83a96965ff84b88ce6509653f32ff68d69e132745160d5435a5c0d2",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/GatewayAutoTestRuntime.java": "05f3c611d587c1f705c3e50f1c276ca6067b64e523098649848e5e91ed4c13b2",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/GatewayProblemChecker.java": "118174b101ece71ca9d79d6ee65617ec99de237af1f2c0c79149bd52793be020",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/GatewayPublicTestClient.java": "26b8c6f8ab9565179ac2b8088c1e7be1727a1ff8a2cae99e7bafbeb1f7c25d04",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/OperationsTestPaths.java": "5e7939c8cdaab77dff651714ef26ca1071bf6439d7a57ea1ef7d458dcca70216",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/RedisUnavailableGatewayAutoTestBase.java": "8a8fe7c2a82f238f8c671211ae20ffa2dedebb1f6b0cecafd05106852fd7dd29",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/builder/GatewaySnapshotFixture.java": "0362acb6bf3309b29d851edffa9551e1557e1e03f648f9bc6730de6565cfd8b3",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/builder/JwtFixtureBuilder.java": "6d54e20a8842136c5a741e33218c77b1d3149845bc4faf49c57aab8cb0e6ca3c",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/probe/GatewayBoundaryTestConfiguration.java": "0eb8d3671ea55fe59683cfc18e232cac8a0c8a127921f90aeece60668a8ad93d",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/redis/GatewayRedisTestConfiguration.java": "88c39a90b65925ebc599989f88418abd31ed377e03674ef43ccf87ee01b61459",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/redis/RedisTestCleaner.java": "477754269a70f94a6a5db07124e2eca5add6c124618882d0a9bb5a0c278731e4",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/redis/RedisTestNamespace.java": "95b034ddbad5048180e8243b0542ea0da28c470e437bbeb11cb1e1b3cee7d7d0",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/redis/RepositoryRedisEnvironment.java": "bff836bf43d60cbad443084c5a691693f9a6ea3b08c25161c4018269f8786709",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/redis/SharedRedisExtension.java": "c29e358d7ce4b3ac68d17143f3a58edbd9c35497078bd65ebf0d6a35d1540474",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/bff/BffRequestJournal.java": "b656f07c4fce85cacf8800e47b42194fdd2cb4553a02239730bfedaf85b89570",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/bff/BffScenarioStore.java": "e779f38beb245cf90744d917ca58294a82ea51a7219fedede44bd0d40566a69d",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/bff/BffTransportProbe.java": "6a6ab2c36b6de424a3a06f51df1d7bcd77f73df8b7cca245835bcee8ae0c0d58",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/bff/OperationsBffSimulator.java": "1aa711848dcefa3b4cc7e88af913370421719434ac44785aac22b2aee5c59c69",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/clientapi/ClientApiOwnerRequestJournal.java": "122469e859be36bad87b29bef7982391e6c8e3b57277160bf1d3715844c9b70d",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/clientapi/ClientApiOwnerScenarioStore.java": "fce493b583bb59f5daed3142e30bcae7ad6e240aa8772cdc2c655cf8ffb8ac10",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/clientapi/ClientApiOwnerSimulator.java": "1662d85bed4c57c435754725a8ae8cbbce3e9039dbe5dbba7d44293a0cb73a13",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/jwks/JwksRequestJournal.java": "268bf715a63f6c78f660642f49f9c9ccf99046e157c3182fb3319060b90a3054",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/jwks/JwksScenarioStore.java": "f134d707ec0ad8d4ee6aa6e067ca9eda697976e78ec2d7a500e8349ae158a91c",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/jwks/JwksSimulator.java": "2a53db5f19ae42685e4ebd6f8cce699dc4786d222dd98953b9913fd499fcdc77",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/platform/PlatformCredentialValidationSimulator.java": "9598f2901a95d4e5fe1fcf2ef4feb661c39b3a1bd34518e6bb125f5c07ec42f7",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/simulator/platform/PlatformSnapshotSimulator.java": "4754cd33f4acc021f35eb3ce8ed9058a6afec1df352eeb1a5fbed11d245bc448",
+    "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/test/time/MutableTestClock.java": "4f04dff476ec04528f7a5cfad7c039ce4add6b5b84cfaac94c5e83a8d32e0288",
+    "api-gateway/api-gateway-test/src/test/resources/application-auto.yml": "3e45d41909a9169722bc1b2b8bb19c321690199dc44f5d2841c46d88a370ae9b",
+    "api-gateway/api-gateway-web/pom.xml": "2432d3902e3f755399fa70c342677a23c7dee79e0bf675be4afaff59ab160a14",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/ApiGatewayApplication.java": "4d6fef09dfe5c1dc96f30df98cb217efead1b61cd9c4d8c1ad2e59d776b05707",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/configuration/GatewayCredentialValidationConfiguration.java": "10f181d5a7d13441150fae69c2e144e2f4f0b4c942204036e72a114cf041cb3e",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/configuration/GatewayJwksConfiguration.java": "da9989334e377fa62cd86e849d0ccff6573c5b693cc25a340f983d3a0ae24d70",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/configuration/GatewaySnapshotConfiguration.java": "fd727cbc0d91ac67505a126be484f71df51696cd3553c119827bdb6201f8d1c1",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/configuration/PlatformCredentialValidationProperties.java": "701a561d61e31800fbb0cebd6df9a75660fba2e2b6f3afa605981e36d7bb0e9a",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/configuration/PlatformJwksProperties.java": "82c5edd621bc7f6420d425d7e05dd6c8e5146546fd43f075d3cd5549ab51c82e",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/configuration/PlatformSnapshotProperties.java": "2ec893f4af12315b76da0a4b50ad097fb6a8c10dd700131630af9fabcce00b30",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/GatewayAuthenticatedGuardGlobalFilter.java": "2d04f6b77279f14a9d58dd76874d5c28eff0280ebf969a9994e08dc96c78c4d2",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/GatewayGuardAdmission.java": "c43795f8cbe26bac53d77c18dbdc0fda936f47fe5ecef77d389816dc0e200607",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/GatewayIngressGuardWebFilter.java": "aaf68bd7f5b915f96e272d9143d52584dcbd729c0280d6ed58a29cc50f1189c6",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/GatewayUpstreamTimeoutGlobalFilter.java": "3acbeebdebffa7dae538989fe6357231a96af4ed7262169032000917417c6b0b",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/GuardDependencyUnavailableException.java": "430e9e43bafde87cda32fff8a6e83cf2403e4c25dc9e60e3eb8df7979f1ba044",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ConcurrencyCommand.java": "41c4d51d35cd33fa7b79ebc265aa5be1c5b4ebc88a9e65fb0f82eba7445f4d41",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ConcurrencyCommandFactory.java": "db34a7602434aad4b19666cea545bcb7a14078bfd0b44910572e9ce60dc5ae91",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ConcurrencyDecision.java": "fc48f87165450decfed5a25c3706a29d2ae4512a0c86d85cb7579c7345aeb6e0",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ConcurrencyKeys.java": "7ff5ed23cf8667785a14c6e6ab418b1f1b394038e2fe0d79b8a74bbe82191e5b",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ConcurrencyLease.java": "d4428131f03be1b98144dc2da3b64d37a0e43e32037917354cc0ef78269d6877",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/ReactiveConcurrencyLimiter.java": "4c58e5ffa7e5b12083ae9b5d785c080bfa0360bc69ef9a8b7268016a78a6fda7",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/concurrency/RedisReactiveConcurrencyLimiter.java": "d5fdc64851d66e98d259123bcc8ade9a47b5c71e0a1b449809a904e8a66715be",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/ConcurrencyRule.java": "e8cdfdfb121545195aa275fab178ed77ebf859c3ddc9fec0c2f9242f08e17c0e",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/GuardContext.java": "637f8400b9c41d9655cf15d8e7de16f9a0cb42f463409919e4a1dd226bde89be",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/GuardDimension.java": "657bd0c1cd9e6fe2024a59da9eb04b38934405edfd60f4c22d9d7250dfd2beff",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/GuardProfile.java": "4d45949049001c0d70a53f7400b9e8296b6282f94f86a1aba8c2f02973e4143b",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/RateLimitRule.java": "8742ec56c0b91ebc554439d09c9df7d710fa6ece944ef898cb4ae9ea1f58ca3a",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/policy/RawGuardIdentity.java": "09215f67086ff9c365d2e3ad637ad3ca95214829fd7f3e027f445a80e0afdeea",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/RateLimitCommand.java": "96dd60fb1b4a4b02b586d493392a1774bdef2ad72902da31da373ddd22b87115",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/RateLimitCommandFactory.java": "19b0790580eba8c028056928ef394a2c33272f315015d6e4107116814953f3a8",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/RateLimitDecision.java": "aea4b36f81e15a2394771b33e861243c56af977ae3526f4b9c2b56bc9962c9da",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/ReactiveRateLimiter.java": "7f48820a8e29af9904b6d964ab4320c7cab6e387a3b6bca4d4da13f2e1f87faf",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/ratelimit/RedisReactiveRateLimiter.java": "e2c9baec373a008bdbc6b00a4b0deb76f98c5246655c25bbd8e20ee74f8e0fca",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/redis/GuardRedisProperties.java": "b3baadea0d2bcc651915aa74243d671171b4365d81c854616a775ba68b114ca6",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/redis/ReactiveRedisScriptExecutor.java": "4ee32b8f3181e26733e4d59562b175230c781caf3ed4dd8003615f9402fce149",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/guard/redis/RedisGuardKeyFactory.java": "55d5db821d4348cd258d18cfc8019812713fa68fafc94d1613b0fea7ef372a21",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewayAccessLogWebFilter.java": "e298f096d36c0e12d9ff4d75d1fed7f09d39791f9c649faa075285d67221620c",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewayBootstrapHealthIndicator.java": "d6c91d1f7f3b9ac88609552c169a668fdf29ee8feb4e479a279f2647c2f3ca38",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewayMetrics.java": "7846b8dd04c0a3d4e0ab7a1dde9856b814ab05d18e30d5a2eb49e653e94306a3",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewayOutcome.java": "da23c100be94fe2a2de2211f8a3bf8bdf8cf7956cae0116bca069db7c5411d62",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewayRedisReactiveHealthIndicator.java": "5a2cf26fc23b226b1abdc1ae776df0f21062d5398f811a11ca94fdfc02bd1ffc",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/observability/GatewaySnapshotMetrics.java": "cf4bed5ef5b85e7fa4a8cc524fa336db00808b6fbcb6c7847e8d8411c9852cfc",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/ClientRoutingProperties.java": "57d16b4b19f9d6c95ea99d6cb716d0d7f4f8807cf3a6a4020a12fe7b759022fd",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/DynamicRouteWebFilter.java": "e137c68303a681fc32f9898999623baf9e86c264a08075f5c24c94b19056a57f",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/GatewayRequestRouteHandlerMapping.java": "3a5a9f0bce26e38523eb942cf05f1a8d7a5f8732d11ddde0cfddf82481a5d1e1",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/GatewayRouteConfiguration.java": "e6bb89e1d5a7ade7ac18f5ee2a712784663f90b65d536cda453f75bfb7ef4880",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/OperationsRouteCode.java": "b027de1a61a9b87652275aac9406be1e5ae35c62a10b4ac2e04f3a22ff6bf471",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/OperationsRoutingProperties.java": "f7fef26db8502cab5c1330199e23bd6ee880267236e2a70ffe135abfb8ba2fc5",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/RefreshCookieResponsePolicy.java": "7b3969d9f0f23ac6c4e195464c74340c8055c21846a6b198cf5b2ba87782b3a9",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayPathTemplate.java": "e736aaec60ba84e82db8dc88fba2abc3ef4df68de6ebc88813765e2c366f023b",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRouteMatch.java": "f90ecc85aa336f962dced213ad87d8afa44a8d015b52ef1ebddc6cf9f4ff0fa0",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeCatalog.java": "79523ae98b75619c48aa86e02cb070b091426efd1ce0d392a37cfadc71657f4c",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeRoute.java": "80d4dae0c4c0985e69ff4a74a32f3a0f3cad3de44a02509d3b02ccf572179c48",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeSnapshot.java": "e2c3bf564c105da1d5b410e51540efefd7ff5c18fcd32642f1e8f10966d17dbc",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeTarget.java": "c53d26b46cf35e36bed14c982cdac9d848fe315f13c81a345d66d73e4b3810ff",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewayGuardProfileCompiler.java": "68cdc58e2384ff8b211186888533901b1e84dc176f0f7683c3816ea82422f32c",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewayRoutePolicyValidator.java": "5bb76fcf00962455f3f3a7cd16b81ed84b2559ef3cb02f0f0ad2e49de1345108",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotCodeParser.java": "ec736a4125ff577d266d803ee768ba0c49c3f4de31cd18df89d6bd585f886f65",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotCompiler.java": "18309e859f0ea5665578970e8432f230f96e4d956525d7e6279c8e4631be2206",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotRefreshScheduler.java": "d76682374646a5efdd5d20372217cd74edde6d626691480cae63834655e71375",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotRefresher.java": "037dab743cb2d44a09055ee69619f73fb8830805c7185fae3f82ded2d46a18ce",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotStatus.java": "8bbd94a5d29296c7a4b061d7394a9de680005e9bb35fa708b2fdbb02c3a2bb50",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotStore.java": "d41f6986b5bf775b3a0ef306bf620e042dd06dc64d3e256c773bc7cd32af42ca",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/InvalidGatewaySnapshotException.java": "3aa750e86a9b458c6def35d626631fa6934d4d585c4cbef01baf423c4b87ae50",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/PlatformGatewaySnapshotClient.java": "2011cdc8cd9447581c09944ee3183c3bc41e64251b493bfba097429f8107385b",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/ReactiveGatewaySnapshotClient.java": "b85687a893007079cb6cd0658d0ca941108fbec2b46c3f1b28575b23549c9085",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/ClientChannelAuthorizationManager.java": "9f6e76c5afd5e1dc05dd70639d202d21da084c56e28977f2881b78da6f9c6468",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/ClientJwtValidator.java": "e96aac7e7c64881f79ca6dd5032e1135f736865d6377a36403dcac90d0855f90",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/ClientSecurityConfiguration.java": "b2ffa0a8086dae35bb0276825e1b611480336d3171d04dcf738fd7634b43968c",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/ClientSecurityProperties.java": "dea2fd32dbf5fc33f32d15f3c15a2ff9387b90113329d6c75a23b8a89973c9ea",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/GatewayFallbackSecurityConfiguration.java": "d96f9fa6f918cd314466fa8c4d70f810b81a8857fc9d68dffc8fc2599a0006b3",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/GatewayHmacProperties.java": "e223573520cc368aa249a818b26cb73edb0cf110b88327c97af28b7741b46376",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/JwksUnavailableException.java": "72e41d9361a09b5a5293a3543f42bf5bfa4869698876a8314493311120e7299f",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/OperationsChannelAuthorizationManager.java": "5ec6def07b3f7657689c025b1a252758ce40244b52e5ef744e6cf784a6ff3ef6",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/OperationsJwtValidator.java": "8b37d6a324a8526578dd041ee808e90e09d909a87acaac2ac7a5d2773afaa80b",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/OperationsSecurityConfiguration.java": "809386bc9a3ae593306ec4dcacfba544265438f32bea0f927df16a775f784641",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/OperationsSecurityProperties.java": "1f11dce0cd65b736eee2c248f27188e7cf96bcd12c818219b3a562b303cf13aa",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/ReactiveJwksProvider.java": "c111fc1281c01e39a80a1fe291473308edb749b72923b9156f731ffd7f794e77",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/VersionedHmacDigester.java": "1699e53977fe8a1a56facfe355e761afb608eeb77a100fabdb689c837e5cdf39",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/clientapi/ClientApiAuthenticationToken.java": "3557a7625fa52dc571853e4434fa61775b6f837163a15990502f5bd7b9d34076",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/clientapi/ClientApiCredentialDependencyUnavailableException.java": "865cea1f20546c0ac0a6f9eb60cefae2f6f2624aa601bdc5b818792bed0016b0",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/clientapi/ClientApiCredentialReactiveAuthenticationManager.java": "0e269ca3b1e2dfee37b8d8c016eae7860f57854e3cd9664b0d15c95d1a853f8c",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/clientapi/ClientApiCredentialServerAuthenticationConverter.java": "0c4962753d26d92ce89f329397cc47841641f7b6ba14c5f5b2ba232fd85d59fa",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/clientapi/ClientApiIdentity.java": "16274bc6ebcd054724c5c670452dd07b3f383fab286aa09bd0fa0c4f72159db5",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/clientapi/ClientApiScopeGlobalFilter.java": "6aa1268f95cf86537a810630ddbbcc1f35da7a2ab9a8efefb47ec17f9a17e206",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/clientapi/ClientApiSecurityConfiguration.java": "0ac30ab95c76282af8b64c9f525e85262fa96f53df42046256ac461e51294939",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/clientapi/PlatformClientApiCredentialValidationClient.java": "b656b5ff5568824a04cb8aa3d764b356c099eeb05da83c1c5e4ab42558111e0a",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/clientapi/ReactiveClientApiCredentialValidationClient.java": "c4f84ef31e9688423cc56b28a52f5080193ee4ce36909230664fc9070ffd01f8",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/identity/ClientConsoleIdentity.java": "4303f9b21bf98d575049ba9ab8599261a0a4dea7aebdb613a30718b1d7322327",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/identity/GatewayAuthenticatedIdentity.java": "1642e2feaace8c1d88e948294f22efb8dd38ed80516a349031de1b73d210ef2e",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/identity/GatewayAuthenticatedIdentityGlobalFilter.java": "49cd19765db465577f977e5633986c3cbdcd5997ad8a282ae56e51a5335bb4e1",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/security/identity/OperationsIdentity.java": "fa26d9db6c51a368dfcc4bdd196da222b19163ec121f8a6e21da53d3482fcbda",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/transport/GatewayHeaderReceiveDeadlineHandler.java": "2b2cb7eee9adcf9bb0bdea7d296175cfc847ee4b3b16e4888f7892d6bc83422c",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/transport/GatewayNettyClientConfiguration.java": "de4bca5164bd2fb75312ae0f24079ab073d7d2a8fff83c39985ea618f9dfd5ab",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/transport/GatewayNettyServerConfiguration.java": "eab2910af7b398b630278244907141c050404fc92be664e839bb3f159bac22e6",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/AuthenticatedClientIdentityGlobalFilter.java": "56bdba0d11b9ce7eed77030295e337473addb432eb1b62d398952b1f6870efd4",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/AuthenticatedOperationsIdentityGlobalFilter.java": "66f74ffe0cc6a256ff65be2910bac55e95059990cacc31caa9e83af83411d7b7",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/ClientApiDownstreamIdentityGlobalFilter.java": "f9d23af20ec8fce0235af227b65cde961e827e123b082095b50330bfe796b34d",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/ClientApiResponseHeaderPolicy.java": "840b224e757b409fd720bea3364c710429c3b06f0377248a97748f8572f41be4",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/ConsoleBoundaryWebFilter.java": "50bb019e841283ee4811523a945bfdbbf6ea8c83cd5c140d76fd5d1fbe961607",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/ConsoleRefreshCookiePolicy.java": "0c4db9d37014f5ef4499b494f482afde94fb6d50925bfec849132ae466c08392",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayErrorCode.java": "23a566d28eeea4dbdea9259c0b121c8690b98eded553cb63e060d64de2b5369c",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayErrorWriter.java": "ad4342eb5f41a084dc9e8b9208d450ebaf52da2b2ffcf41c87caf8eae2676b54",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayExceptionWebHandler.java": "9890cdd15cbba3e75b1f03c43bcc86bff04b17437f7046f2957ab89906c8d95e",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayExchangeAttributes.java": "6210f9497d78772b3f759351206170784edf0eef1a46e6294c893b7184d3d0e6",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayGlobalFilterOrder.java": "ad1b9b80b2eacc80701bc0f9a1bed4d2ef920c2bd6663523569deb6576cd40ba",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayPaths.java": "97ad973c64e4d45478c92736f768accb596c91036dc14c28a4c87f094f909922",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayProtocol.java": "b3cb1fbf92f43a22d95ac3e514e493d9f1aae3436b37a5f566d2c51132f58f5e",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayRequestHeaderLimitsWebFilter.java": "22386bdd4cdb11932a49a5b3b4d9814f41c67bb603243a693576151278f18927",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayRequestIdPolicy.java": "52545d1da736c1985655831b2b0f395003fd59b41d7c0d8fc4d2a623780b97ea",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayRequestPolicyWebFilter.java": "884c9e53d5013a9fc2951df966b51cfc47fd825af7c2469b74a2c7fdb99cddc6",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayResponseContractGlobalFilter.java": "33a60eef1aff567613ece6d52097e726095fbf40e614714ea3f6f6bf5a17f9e2",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayUpstreamFailureClassifier.java": "53d321b42275b9f01144d2dc3f1e4bfabdf889b43be1b8f55f227e6c2b52a368",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayUpstreamProtocolException.java": "b7086bd5a39836b51c25d0640cc1481b0c0d87fd30276dda867553eab9f9f037",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/GatewayUpstreamTimeoutException.java": "c6a75f309acbeb77bfd4d6915944a487c0fd277361dbcfe42b29e36b8d0ce276",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/InvalidUpstreamResponseException.java": "899c4043a9870392e54e7983cbeb0d2fa6ebc90815fc522daba6d7db8b81a8a0",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/OwnerProblemResponseGlobalFilter.java": "29c835042f7854121721e8a78aab7ca96f4abae06d8d49334281745a4d694dab",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/OwnerProblemValidator.java": "eabe129ffc5515269a34a3aa4a841704fa58f00402fe7e15f26dfbf8d3ca0277",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/ReplayableRequestBodyOwner.java": "13d7700e476428ca45710b3b32635da78848767f75c16a3b2b6053b1a01d6fe5",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/RequestBodyLimitGlobalFilter.java": "32b4b0365ff5b539bffdce05c3ba302120d935e45ab0a5afc717699951cb9f1f",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/TrustedRequestContextWebFilter.java": "958e1137bc388bfdb17c62cb55ee7d0b7c9c3dc96681450dc3fe9d4d773023c1",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/TrustedTerminalResponseHeaders.java": "7e75c904ee5eb7025490464526ecb6f29af609d0bb8d55241a63ebf8d826f4b0",
+    "api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/web/UpstreamRequestGlobalFilter.java": "bf7c9fd3b0c075f15ec565c041526c4335d21006d50c24f070c4b7b154a7912c",
+    "api-gateway/api-gateway-web/src/main/resources/application.yml": "b1ee1c4400488ffe24081c8ede515efb906e515d6bc328c50ad8d0449b47fd04",
+    "api-gateway/pom.xml": "c0108648bac8a2ab925b3937730b2614e369c26177c933f8873f691b7f05fd05"
+  },
+  "excludedFromEvidence": [
+    "Local secret configuration files and environment values",
+    "Surefire XML properties and captured raw HTTP payloads",
+    "Design .pen files"
+  ]
+}

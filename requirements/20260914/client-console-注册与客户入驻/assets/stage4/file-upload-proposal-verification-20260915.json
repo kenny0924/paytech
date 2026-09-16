@@ -1,0 +1,56 @@
+{
+  "status": "PASS_STATIC_REVIEW_ONLY",
+  "recordedAt": "2026-09-15T19:22:51.366797+00:00",
+  "checks": {
+    "candidateTableCount": 7,
+    "totals": {
+      "columns": 91,
+      "primaryKeys": 7,
+      "uniqueIndexes": 13,
+      "ordinaryIndexes": 11
+    },
+    "uploadColumnsAdded": 8,
+    "uploadColumnsRemoved": 1,
+    "untouchedFileTablesExactSourceMatch": 5,
+    "compensationExactCctSourceMatch": true,
+    "existingUploadColumnsUnchanged": true,
+    "ddlOnly": true,
+    "columnAndTableCommentsPresent": true,
+    "localLinksChecked": 66,
+    "penLinksSkippedWithoutOpening": 2,
+    "preflightSevenTablesAbsent": true
+  },
+  "artifacts": [
+    {
+      "path": "requirements/20260914/client-console-注册与客户入驻/file-upload-closure-proposal.md",
+      "sha256": "3b4eecbbb95778fa67a91841eb5bd0cc4b507cfae138e4e0e29c123bceee84a3"
+    },
+    {
+      "path": "requirements/20260914/client-console-注册与客户入驻/db/file-upload-closure-proposal.json",
+      "sha256": "0e76d4f3e5ee280530e23aa2e1fb0ccca180de58f2dc22019226b167dfcc17ea"
+    },
+    {
+      "path": "requirements/20260914/client-console-注册与客户入驻/db/platform-files-create-review.sql",
+      "sha256": "ed7753ce81f0ffda1dc62ee221f0e2290f5be33e0f0d80b110b62b67c76ab3cd"
+    },
+    {
+      "path": "requirements/20260914/client-console-注册与客户入驻/assets/stage4/file-prerequisites-preflight-20260915.json",
+      "sha256": "06427c783eca21f67c8bd976378fa0837e1404c817915d21b82d1c5e976ac86d"
+    }
+  ],
+  "databaseStatementsExecuted": 0,
+  "businessCodeTestsRun": false,
+  "canonicalModelModified": false,
+  "requirementsSite": {
+    "command": "npm --prefix requirements-site test",
+    "build": "PASS",
+    "tests": 136,
+    "passed": 135,
+    "failed": 1,
+    "skipped": 0,
+    "exitCode": 1,
+    "failure": "Existing Risk model snapshot assertion at requirements-site/tests/site-content.test.mjs:924 expects 78/944/115/80/120/9/8; current ledger 81/1003/119/87/127/9/8",
+    "log": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/client-file-proposal-site-8mvehyec/test.log",
+    "logSha256": "618dbdbef4d339ac6ed89047e5ef1427c76540e3bfed384e0370fb8e886cbdb8"
+  }
+}

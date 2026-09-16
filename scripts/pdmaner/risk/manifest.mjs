@@ -25,8 +25,8 @@ export const TABLE_GROUPS = Object.freeze({
 export const TABLES = Object.freeze(Object.values(TABLE_GROUPS).flat());
 export const RELATIONS = Object.freeze(TABLES.flatMap((table) => table.relations));
 
-if (TABLES.length !== 80) {
-  throw new Error(`Risk & Compliance 生产模型必须有 80 张表，当前为 ${TABLES.length}`);
+if (TABLES.length !== 81) {
+  throw new Error(`Risk & Compliance 生产模型必须有 81 张表，当前为 ${TABLES.length}`);
 }
 
 if (new Set(TABLES.map((table) => table.defKey)).size !== TABLES.length) {

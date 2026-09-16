@@ -141,14 +141,14 @@ function structuralProjection(model) {
   };
 }
 
-test("Risk test-owned Oracle freezes exactly 80 approved tables in eight groups", () => {
+test("Risk test-owned Oracle freezes exactly 81 approved tables in eight groups", () => {
   assert.equal(Object.keys(APPROVED_TABLE_GROUPS).length, 8);
   assert.deepEqual(
     Object.fromEntries(Object.entries(APPROVED_TABLE_GROUPS).map(([key, tables]) => [key, tables.length])),
     EXPECTED_GROUP_SIZES,
   );
-  assert.equal(APPROVED_TABLES.length, 80);
-  assert.equal(new Set(APPROVED_TABLES).size, 80);
+  assert.equal(APPROVED_TABLES.length, 81);
+  assert.equal(new Set(APPROVED_TABLES).size, 81);
   assert.ok(APPROVED_TABLES.every((table) => /^t_[a-z][a-z0-9_]*$/u.test(table)));
   assert.ok(APPROVED_TABLES.every((table) => table.length <= 32));
   assert.ok(FORBIDDEN_TABLES.every((table) => !APPROVED_TABLES.includes(table)));
@@ -203,7 +203,7 @@ test("Risk model matches the independent totals and structural digest", () => {
 test("Risk model has the exact approved table set and eight diagram groups", () => {
   const model = readModel();
   assert.deepEqual(model.entities.map((entity) => entity.defKey).sort(), [...APPROVED_TABLES].sort());
-  assert.equal(modelTotals(model).tables, 80);
+  assert.equal(modelTotals(model).tables, 81);
   assert.equal(modelTotals(model).diagramGroups, 8);
   assert.deepEqual(
     Object.fromEntries(model.diagrams.map((diagram) => [diagram.defKey, diagram.defName])),
@@ -453,15 +453,17 @@ test("Risk due diligence Application identity scopes idempotency by typed source
   assert.deepEqual(sourceFields, [
     "source_namespace",
     "source_application_id",
+    "source_submission_id",
     "role_type",
     "role_id",
     "qualification_type",
   ]);
-  const sourceKey = ({ sourceNamespace, sourceApplicationId, roleType, roleId, qualificationType }) =>
-    `${sourceNamespace}:${sourceApplicationId}:${roleType}:${roleId}:${qualificationType}`;
+  const sourceKey = ({ sourceNamespace, sourceApplicationId, sourceSubmissionId, roleType, roleId, qualificationType }) =>
+    `${sourceNamespace}:${sourceApplicationId}:${sourceSubmissionId}:${roleType}:${roleId}:${qualificationType}`;
   const first = {
     sourceNamespace: "CCT_CLIENT_APPLICATION",
     sourceApplicationId: 810001,
+    sourceSubmissionId: "604b3eb3-dac3-4a7f-9bb2-556188963781",
     roleType: "CLIENT",
     roleId: 200001,
     qualificationType: "ORGANIZATION_KYB",
@@ -487,6 +489,7 @@ test("Risk due diligence Application identity scopes idempotency by typed source
   };
 
   assert.equal(sourceKey(first), sourceKey(divergent));
+  assert.notEqual(sourceKey(first), sourceKey({ ...first, sourceSubmissionId: "604b3eb3-dac3-4a7f-9bb2-556188963782" }));
   assert.notEqual(first.hash, divergent.hash);
   assert.notEqual(sourceKey(first), sourceKey(relatedPerson));
   assert.notEqual(sourceKey(first), sourceKey(operatingEntity));
@@ -515,8 +518,8 @@ test("Risk Local Partner Application namespace accepts only the approved main an
     ["OPERATING_ENTITY", new Set(["ENTITY_UNDERWRITING"])],
     ["RELATED_PERSON", new Set(["RELATED_PERSON_KYC"])],
   ]);
-  const sourceKey = ({ sourceNamespace, sourceApplicationId, roleType, roleId, qualificationType }) =>
-    `${sourceNamespace}:${sourceApplicationId}:${roleType}:${roleId}:${qualificationType}`;
+  const sourceKey = ({ sourceNamespace, sourceApplicationId, sourceSubmissionId, roleType, roleId, qualificationType }) =>
+    `${sourceNamespace}:${sourceApplicationId}:${sourceSubmissionId}:${roleType}:${roleId}:${qualificationType}`;
   const applicationTupleAccepted = (tuple) => (
     namespaceValues.has(tuple.sourceNamespace)
     && tuple.sourceApplicationId > 0n
@@ -714,8 +717,8 @@ test("Risk model persists the exact same-case composite foreign-key contracts", 
 test("Risk diagrams draw each local relation once and every table owns one primary group", () => {
   const model = readModel();
   const primaryTables = model.diagrams.flatMap((diagram) => diagram.properties.primaryTables);
-  assert.equal(primaryTables.length, 80);
-  assert.equal(new Set(primaryTables).size, 80);
+  assert.equal(primaryTables.length, 81);
+  assert.equal(new Set(primaryTables).size, 81);
   assert.deepEqual([...primaryTables].sort(), [...APPROVED_TABLES].sort());
   const relationCount = model.entities.flatMap((entity) => entity.correlations).length;
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)

@@ -1,0 +1,75 @@
+{
+  "layout": [
+    {
+      "id": "N6WCRY",
+      "name": "00 · 简化方案评审 · 单页填写／邮箱密码",
+      "bounds": {
+        "x": 0,
+        "y": -2980,
+        "width": 4240,
+        "height": 2740
+      },
+      "x": 0,
+      "y": -2980,
+      "placeholder": false
+    },
+    {
+      "id": "XjnJd",
+      "name": "CLIENT · S01 邮箱密码登录",
+      "parentId": "N6WCRY",
+      "bounds": {
+        "x": 2880,
+        "y": 120,
+        "width": 1280,
+        "height": 900
+      },
+      "x": 2880,
+      "y": 120,
+      "placeholder": false
+    },
+    {
+      "id": "i78Gol",
+      "name": "CLIENT · S02 个人单页入驻",
+      "parentId": "N6WCRY",
+      "bounds": {
+        "x": 0,
+        "y": 120,
+        "width": 1280,
+        "height": 2224
+      },
+      "x": 0,
+      "y": 120,
+      "placeholder": false
+    },
+    {
+      "id": "lS2o0",
+      "name": "CLIENT · S03 组织单页入驻",
+      "parentId": "N6WCRY",
+      "bounds": {
+        "x": 1440,
+        "y": 120,
+        "width": 1280,
+        "height": 2377
+      },
+      "x": 1440,
+      "y": 120,
+      "placeholder": false
+    },
+    {
+      "id": "pSF7R",
+      "name": "CLIENT · S04 邮箱密码注册",
+      "parentId": "N6WCRY",
+      "bounds": {
+        "x": 2880,
+        "y": 1140,
+        "width": 1280,
+        "height": 900
+      },
+      "x": 2880,
+      "y": 1140,
+      "placeholder": false
+    }
+  ],
+  "problems": [],
+  "unexpectedAuth": []
+}

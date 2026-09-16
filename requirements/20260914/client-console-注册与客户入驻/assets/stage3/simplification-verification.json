@@ -1,0 +1,43 @@
+{
+  "scope": "Stage 3 simplification proposal only",
+  "approvedDirections": [
+    "email_password_only",
+    "no_onboarding_profile_versions",
+    "returned_editable_final_rejected_terminal",
+    "approved_read_only"
+  ],
+  "proposedChoices": [
+    "single_page_sections",
+    "operations_classification_before_final_approval"
+  ],
+  "clientProposalBoards": [
+    "XjnJd",
+    "i78Gol",
+    "lS2o0",
+    "pSF7R"
+  ],
+  "designFile": "client-console-web/design.pen",
+  "pencilLayoutProblems": [],
+  "pencilPlaceholders": false,
+  "unexpectedGoogleOrOtpTextInProposal": [],
+  "nativeSave": "Cmd+S; design.pen Edited marker cleared",
+  "fileSizeBytes": 1224649,
+  "localLinksChecked": 75,
+  "localLinkErrors": [],
+  "proposalPngDimensionsVerified": 4,
+  "manifestBoardIdsUnique": 44,
+  "gitDiffCheck": "passed",
+  "notVerified": [
+    "live APIs",
+    "live database",
+    "all previous design boards migrated",
+    "Operations classification screen",
+    "mobile simplification layout"
+  ],
+  "unchangedByThisRevision": [
+    "application code",
+    "PDManer",
+    "SQL",
+    "Operations design"
+  ]
+}

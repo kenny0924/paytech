@@ -1,0 +1,164 @@
+package com.paytech.client.console.bff.ext.rest;
+
+import com.paytech.client.console.bff.service.model.ClientOnboardingModels;
+import com.paytech.client.console.bff.ext.rest.response.FormOptionsResponseBody;
+import com.paytech.client.console.bff.service.processor.*;
+import com.paytech.client.contract.api.onboarding.*;
+import com.paytech.client.contract.api.onboarding.ClientDocumentModels.*;
+import com.paytech.client.contract.api.onboarding.ClientDraftModels.*;
+import com.paytech.client.contract.api.onboarding.ClientPeopleModels.*;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+/** 已批准 Client 路径的薄适配；写命令只交给 CCT，不协调跨服务业务。 */
+@RestController
+@lombok.AllArgsConstructor
+@RequestMapping("/client-onboarding/v1")
+@ConditionalOnProperty(name = "client.onboarding-enabled", havingValue = "true")
+public class ClientOnboardingController {
+
+    private final ClientDraftApi drafts;
+    private final ClientPeopleApi people;
+    private final ClientDocumentApi documents;
+    private final ClientSessionProcessor sessions;
+    private final ClientOnboardingProcessor queries;
+
+    /** 当前账号的原申请导航。 */
+    @GetMapping("/start")
+    public ClientOnboardingModels.StartResponseBody start(HttpServletRequest request) {
+        return queries.start(request);
+    }
+
+    /** 通用目录不接受任意主体或审核类型。 */
+    @GetMapping("/form-options")
+    public FormOptionsResponseBody options(
+        HttpServletRequest request,
+        @RequestParam String clientType,
+        @RequestParam(required = false) String countryCode
+    ) {
+        return queries.options(request, clientType, countryCode);
+    }
+
+    /** 创建及恢复保持 CCT 的 201/200 与原命令身份。 */
+    @PostMapping("/applications")
+    public ResponseEntity<CommandReceiptResponseBody> create(
+        HttpServletRequest request,
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody StartApplicationRequestBody body
+    ) {
+        var actor = sessions.identity(request);
+        var result = drafts.create("client-console-bff", actor[0], actor[1], key, body);
+        return ResponseEntity.status(result.getStatusCode()).body(result.getBody());
+    }
+
+    /** 当前表单、要求及文件状态由 BFF 组合。 */
+    @GetMapping("/applications/{app}")
+    public ClientOnboardingModels.ApplicationResponseBody read(HttpServletRequest request, @PathVariable String app) {
+        return queries.read(request, app);
+    }
+
+    /** 页面每次只提交明确的脏字段。 */
+    @PatchMapping("/applications/{app}/draft")
+    public CommandReceiptResponseBody save(
+        HttpServletRequest request,
+        @PathVariable String app,
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody DraftPatchRequestBody body
+    ) {
+        var actor = sessions.identity(request);
+        return drafts.save("client-console-bff", actor[0], actor[1], app, key, body);
+    }
+
+    /** 个人资料及首条关系由 CCT 原子创建。 */
+    @PostMapping("/applications/{app}/people")
+    public ResponseEntity<PeopleCommandReceiptResponseBody> person(
+        HttpServletRequest request,
+        @PathVariable String app,
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody CreatePersonRequestBody body
+    ) {
+        var actor = sessions.identity(request);
+        var result = people.createPerson("client-console-bff", actor[0], actor[1], app, key, body);
+        return ResponseEntity.status(result.getStatusCode()).body(result.getBody());
+    }
+
+    /** 共享批准人员的只读保护仍由 CCT 执行。 */
+    @PatchMapping("/applications/{app}/people/{party}")
+    public PeopleCommandReceiptResponseBody person(
+        HttpServletRequest request,
+        @PathVariable String app,
+        @PathVariable String party,
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody DraftPatchRequestBody body
+    ) {
+        var actor = sessions.identity(request);
+        return people.savePerson("client-console-bff", actor[0], actor[1], app, party, key, body);
+    }
+
+    /** 同一人员追加关系，不创建另一个账号。 */
+    @PostMapping("/applications/{app}/relations")
+    public ResponseEntity<PeopleCommandReceiptResponseBody> relation(
+        HttpServletRequest request,
+        @PathVariable String app,
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody CreateRelationRequestBody body
+    ) {
+        var actor = sessions.identity(request);
+        var result = people.createRelation("client-console-bff", actor[0], actor[1], app, key, body);
+        return ResponseEntity.status(result.getStatusCode()).body(result.getBody());
+    }
+
+    /** 合并原关系的明确修改字段。 */
+    @PatchMapping("/applications/{app}/relations/{relation}")
+    public PeopleCommandReceiptResponseBody relation(
+        HttpServletRequest request,
+        @PathVariable String app,
+        @PathVariable String relation,
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody RelationPatchRequestBody body
+    ) {
+        var actor = sessions.identity(request);
+        return people.saveRelation("client-console-bff", actor[0], actor[1], app, relation, key, body);
+    }
+
+    /** 删除只移除原申请关系，响应保持 204。 */
+    @DeleteMapping("/applications/{app}/relations/{relation}")
+    @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+    public void removeRelation(
+        HttpServletRequest request,
+        @PathVariable String app,
+        @PathVariable String relation,
+        @RequestHeader("Idempotency-Key") String key
+    ) {
+        var actor = sessions.identity(request);
+        people.removeRelation("client-console-bff", actor[0], actor[1], app, relation, key, null);
+    }
+
+    /** 材料关联的当前要求及文件证明由 CCT 核验。 */
+    @PostMapping("/applications/{app}/documents")
+    public ResponseEntity<DocumentCommandReceiptResponseBody> associate(
+        HttpServletRequest request,
+        @PathVariable String app,
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody DocumentReferenceRequestBody body
+    ) {
+        var actor = sessions.identity(request);
+        var result = documents.associate("client-console-bff", actor[0], actor[1], app, key, body);
+        return ResponseEntity.status(result.getStatusCode()).body(result.getBody());
+    }
+
+    /** 删除引用不调用 Platform 删除文件。 */
+    @DeleteMapping("/applications/{app}/documents/{document}")
+    @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+    public void removeDocument(
+        HttpServletRequest request,
+        @PathVariable String app,
+        @PathVariable String document,
+        @RequestHeader("Idempotency-Key") String key
+    ) {
+        var actor = sessions.identity(request);
+        documents.remove("client-console-bff", actor[0], actor[1], app, document, key);
+    }
+}

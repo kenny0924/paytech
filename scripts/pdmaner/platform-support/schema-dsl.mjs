@@ -107,6 +107,7 @@ export function defineTable({
   name,
   comment,
   audit = "mutable",
+  auditFieldOverrides = {},
   fields,
   indexes = [],
   relations = [],
@@ -120,7 +121,8 @@ export function defineTable({
   invariant(fields.length > 0 && fields[0].primaryKey, `首字段必须是主键：${key}`);
   invariant(fields.filter((item) => item.primaryKey).length === 1, `表必须恰有一个主键：${key}`);
   const auditFields = audit === "mutable" ? [CREATE_TIME, UPDATE_TIME] : audit === "immutable" ? [CREATE_TIME] : [];
-  const allFields = [...fields, ...auditFields];
+  invariant(Object.keys(auditFieldOverrides).every(key => auditFields.some(item => item.defKey === key)), "审计字段覆盖必须属于当前审计模式");
+  const allFields = [...fields, ...auditFields.map(item => auditFieldOverrides[item.defKey] ?? item)];
   invariant(new Set(allFields.map((item) => item.defKey)).size === allFields.length, `字段重复：${key}`);
   const fieldKeys = new Set(allFields.map((item) => item.defKey));
   const normalizedIndexes = [...indexes];

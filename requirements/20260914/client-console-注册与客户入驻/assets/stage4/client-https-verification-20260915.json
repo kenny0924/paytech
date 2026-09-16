@@ -1,0 +1,472 @@
+{
+  "date": "2026-09-15",
+  "scope": "Stage 4 local HTTPS protocol integration; browser interaction is pending",
+  "protocol": {
+    "runId": "e57344c4-0148-453b-b0f4-b83e5d44f5c3",
+    "requests": [
+      {
+        "path": "context",
+        "status": 401,
+        "expected": 401,
+        "requestId": "f6814f16-e680-42f2-b05f-21cc74bebdfa",
+        "passed": true
+      },
+      {
+        "path": "context",
+        "status": 401,
+        "expected": 401,
+        "requestId": "8325b9ed-3c15-4f31-ae7d-7b55b547a2a1",
+        "passed": true
+      },
+      {
+        "path": "register",
+        "status": 403,
+        "expected": 403,
+        "requestId": "5d5a75f2-b65b-45a9-b41f-b4ca40e3bf63",
+        "passed": true
+      },
+      {
+        "path": "register",
+        "status": 403,
+        "expected": 403,
+        "requestId": "241f1f83-73b7-47db-a1a0-d822b9cc248f",
+        "passed": true
+      },
+      {
+        "path": "register",
+        "status": 202,
+        "expected": 202,
+        "requestId": "b6602357-c039-4e8a-8761-737e3db676e7",
+        "passed": true
+      },
+      {
+        "path": "login",
+        "status": 401,
+        "expected": 401,
+        "requestId": "cdd16e37-0f43-47b5-8c9f-657571305855",
+        "passed": true
+      },
+      {
+        "path": "email-verifications",
+        "status": 200,
+        "expected": 200,
+        "requestId": "56092345-4251-4af3-bcd3-20bee05f6e41",
+        "passed": true
+      },
+      {
+        "path": "context",
+        "status": 401,
+        "expected": 401,
+        "requestId": "a1e859c6-5d58-47b4-a065-3b9a83bf3393",
+        "passed": true
+      },
+      {
+        "path": "email-verifications",
+        "status": 422,
+        "expected": 422,
+        "requestId": "8f5214b3-b163-474c-a401-4e34465f258b",
+        "passed": true
+      },
+      {
+        "path": "login",
+        "status": 200,
+        "expected": 200,
+        "requestId": "fcfa9369-628b-4643-aeb8-6d597a90fbac",
+        "passed": true
+      },
+      {
+        "path": "context",
+        "status": 200,
+        "expected": 200,
+        "requestId": "efab50fa-b681-40b3-a7e4-f08747a780c1",
+        "passed": true
+      },
+      {
+        "path": "refresh",
+        "status": 403,
+        "expected": 403,
+        "requestId": "02815934-60ec-4549-bc1a-30b0cf1c48a9",
+        "passed": true
+      },
+      {
+        "path": "refresh",
+        "status": 200,
+        "expected": 200,
+        "requestId": "036c5cf7-8534-4cfc-83c3-5d0108aab7a4",
+        "passed": true
+      },
+      {
+        "path": "refresh",
+        "status": 401,
+        "expected": 401,
+        "requestId": "282ac786-6003-4267-bd2a-a4508f107b2c",
+        "passed": true
+      },
+      {
+        "path": "context",
+        "status": 401,
+        "expected": 401,
+        "requestId": "94793e90-9e6c-4731-a7a3-254613253d29",
+        "passed": true
+      },
+      {
+        "path": "refresh",
+        "status": 401,
+        "expected": 401,
+        "requestId": "70645c3c-ab40-4fb5-9304-5d9ecea663b3",
+        "passed": true
+      },
+      {
+        "path": "login",
+        "status": 200,
+        "expected": 200,
+        "requestId": "68aa0427-537c-4767-8d3a-849e07c7bdd8",
+        "passed": true
+      },
+      {
+        "path": "password-reset-requests",
+        "status": 202,
+        "expected": 202,
+        "requestId": "a4b0b12a-b669-43e0-96e6-a15f26eb7b50",
+        "passed": true
+      },
+      {
+        "path": "password-resets",
+        "status": 204,
+        "expected": 204,
+        "requestId": "39c3a126-f2b7-44d2-80c8-3052b4bb861e",
+        "passed": true
+      },
+      {
+        "path": "login",
+        "status": 401,
+        "expected": 401,
+        "requestId": "b4d0bc9c-b6d9-4460-b41e-14c816fa6dfb",
+        "passed": true
+      },
+      {
+        "path": "context",
+        "status": 401,
+        "expected": 401,
+        "requestId": "4d404d93-f2cd-494c-a21e-59075d76bbfa",
+        "passed": true
+      },
+      {
+        "path": "refresh",
+        "status": 401,
+        "expected": 401,
+        "requestId": "05ef5853-4589-4c4a-bcfa-7f685d3f4e2a",
+        "passed": true
+      },
+      {
+        "path": "password-resets",
+        "status": 422,
+        "expected": 422,
+        "requestId": "0249203b-a0a0-469f-81b9-82596392e490",
+        "passed": true
+      },
+      {
+        "path": "login",
+        "status": 200,
+        "expected": 200,
+        "requestId": "8b7b7364-f553-461b-8974-bb9e1379a484",
+        "passed": true
+      },
+      {
+        "path": "logout",
+        "status": 204,
+        "expected": 204,
+        "requestId": "13a920d9-658b-45a9-ab04-df9cb4400643",
+        "passed": true
+      },
+      {
+        "path": "context",
+        "status": 401,
+        "expected": 401,
+        "requestId": "53e3732d-83df-4308-83d5-f449b3243f2d",
+        "passed": true
+      },
+      {
+        "path": "logout",
+        "status": 204,
+        "expected": 204,
+        "requestId": "1ee57c6b-5195-404f-bc57-9d00124b5f21",
+        "passed": true
+      },
+      {
+        "path": "refresh",
+        "status": 401,
+        "expected": 401,
+        "requestId": "c33dcd2c-c899-4a0c-99bd-5d6564723db9",
+        "passed": true
+      }
+    ],
+    "checks": [
+      "Email verification uses actual SMTP link once and does not log in",
+      "Refresh rotates the Secure HttpOnly host cookie under the same session",
+      "Reusing the consumed refresh token revokes its session across Gateway and Platform",
+      "Password reset consumes its SMTP proof once and revokes old password/access/refresh sessions",
+      "Logout is idempotent, clears the exact cookie scope and invalidates the session",
+      "401/403/422 preserve RFC 9457 status and the Gateway request ID",
+      "Every HTTPS request validates the temporary certificate and localhost hostname"
+    ],
+    "allPassed": true
+  },
+  "actualSystems": [
+    "built Client Web served by loopback Nginx",
+    "Gateway",
+    "Client BFF",
+    "Platform",
+    "repository MySQL",
+    "repository Redis"
+  ],
+  "simulatedDependencies": [
+    "Vault HTTP",
+    "SMTP delivery",
+    "Platform routing Snapshot protocol"
+  ],
+  "publicRouteActivation": false,
+  "databaseDdlExecutedThisRun": false,
+  "browser": {
+    "status": "NOT_VERIFIED",
+    "reason": "Chrome NET::ERR_CERT_AUTHORITY_INVALID; browser tool requires user handoff; no bypass or trust-store changes",
+    "automationConnector": "Browser inventory token unavailable; native Chrome reached the certificate interstitial",
+    "userHandoffRequested": true
+  },
+  "fixes": [
+    {
+      "issue": "Repeated email link returned 502 through BFF although Platform returned 422",
+      "cause": "Legacy Unprocessable Entity title conflicts with current strict Problem title",
+      "resolution": "Platform uses UNPROCESSABLE_CONTENT and real HTTP regression asserts the canonical title",
+      "redRequestId": "20003e57-9683-41ba-ae9c-c2a5d81abd5f"
+    },
+    {
+      "issue": "Login returned 502 at Gateway after BFF returned 200",
+      "cause": "Spring ResponseCookie adds Expires, outside the fixed Gateway cookie attribute contract",
+      "resolution": "Shared BFF encoder emits the exact approved issue/clear attributes",
+      "redRequestId": "1a9ebb0a-4c3f-46d3-a5a0-51b3459d366d",
+      "redBffTests": {
+        "tests": 10,
+        "failures": 1,
+        "errors": 0
+      }
+    },
+    {
+      "issue": "Gateway test fixtures used account-context instead of approved context path",
+      "resolution": "Aligned fixture paths with approved API, BFF and Web"
+    }
+  ],
+  "regressions": {
+    "javaSuites": [
+      {
+        "name": "com.paytech.platform.support.auto.authentication.ClientAuthenticationHttpAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "8.637",
+        "reportSha256": "66368f9470680f3543d411ae38bbbbe9fe0f6f7b817cce367f098fd0a9887e48"
+      },
+      {
+        "name": "com.paytech.client.console.bff.auto.ClientAuthenticationHttpAutoTest",
+        "tests": "10",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "2.665",
+        "reportSha256": "8d40d9755316493b233d3d7419c6d82c8d0f2a4d087019cf1804ad80e9cb774c"
+      },
+      {
+        "name": "com.paytech.gateway.auto.web.ClientConsoleGatewayHttpAutoTest",
+        "tests": "22",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "4.001",
+        "reportSha256": "d58e670c9faee3ff81a198da826f0491f0ae71afe122ea442e4c284f11d3da1c"
+      },
+      {
+        "name": "com.paytech.gateway.auto.routing.ClientRoutingContractAutoTest",
+        "tests": "14",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.008",
+        "reportSha256": "386fa7ee1fbbb086d0b74320d32dcf7cb72fce5b5a31bf373eb5e4d225fdcc9a"
+      }
+    ],
+    "javaTotal": 49,
+    "webTests": 4,
+    "webBuild": true,
+    "fullCleanVerifyRunThisTurn": false
+  },
+  "auditOutcomes": [
+    {
+      "action_code": "CLIENT_REGISTER",
+      "result": "SUCCEEDED",
+      "count": 1
+    },
+    {
+      "action_code": "CLIENT_LOGIN",
+      "result": "DENIED",
+      "count": 2
+    },
+    {
+      "action_code": "CLIENT_EMAIL_VERIFY",
+      "result": "SUCCEEDED",
+      "count": 1
+    },
+    {
+      "action_code": "CLIENT_EMAIL_VERIFY",
+      "result": "DENIED",
+      "count": 1
+    },
+    {
+      "action_code": "CLIENT_LOGIN",
+      "result": "SUCCEEDED",
+      "count": 3
+    },
+    {
+      "action_code": "CLIENT_REFRESH",
+      "result": "SUCCEEDED",
+      "count": 1
+    },
+    {
+      "action_code": "CLIENT_REFRESH",
+      "result": "DENIED",
+      "count": 4
+    },
+    {
+      "action_code": "CLIENT_PASSWORD_RESET_REQUEST",
+      "result": "SUCCEEDED",
+      "count": 1
+    },
+    {
+      "action_code": "CLIENT_PASSWORD_RESET",
+      "result": "SUCCEEDED",
+      "count": 1
+    },
+    {
+      "action_code": "CLIENT_PASSWORD_RESET",
+      "result": "DENIED",
+      "count": 1
+    },
+    {
+      "action_code": "CLIENT_LOGOUT",
+      "result": "SUCCEEDED",
+      "count": 2
+    }
+  ],
+  "cleanup": {
+    "database": "mor_platform_config_validation",
+    "before": {
+      "t_user_account": 0,
+      "t_password_credential": 0,
+      "t_auth_session": 0,
+      "t_refresh_token_generation": 0,
+      "t_authentication_challenge": 0,
+      "t_jwt_signing_key": 0,
+      "t_audit_chain": 0,
+      "t_audit_event": 0,
+      "t_audit_event_attr": 0,
+      "t_security_event": 0
+    },
+    "after": {
+      "t_user_account": 0,
+      "t_password_credential": 0,
+      "t_auth_session": 0,
+      "t_refresh_token_generation": 0,
+      "t_authentication_challenge": 0,
+      "t_jwt_signing_key": 0,
+      "t_audit_chain": 0,
+      "t_audit_event": 0,
+      "t_audit_event_attr": 0,
+      "t_security_event": 0
+    },
+    "ownedRedisPrefixesEmpty": true,
+    "listenersStopped": true
+  },
+  "temporaryTlsCertificateSha256": "ba4f7a440775e1bd7dbf2584c5ca7f429e2e1044fe381f0556864ebdd85492b3",
+  "sourceFingerprints": [
+    {
+      "path": "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/routing/ClientRoutingContractAutoTest.java",
+      "sha256": "ac7824a0cf1b271605e35274d668e51e9245eee753aed3df795b0f80b894f701"
+    },
+    {
+      "path": "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/auto/web/ClientConsoleGatewayHttpAutoTest.java",
+      "sha256": "ccfa17a1beda314e9bbf0d521b41b43815d97ecd709b11af94b2bddc8427dfa7"
+    },
+    {
+      "path": "api-gateway/api-gateway-test/src/test/java/com/paytech/gateway/manual/ClientHttpsManualApplication.java",
+      "sha256": "ec85d9e2e5cb2824ceac72b21b469581bacc0fac17e413a43110413532aa6a42"
+    },
+    {
+      "path": "client-console-bff/paytech-client-console-bff-test/src/test/java/com/paytech/client/console/bff/auto/ClientAuthenticationHttpAutoTest.java",
+      "sha256": "5d6719feb1fa755f600b8515122c9a38b98e4b62ddbc840374eb7a125af0f528"
+    },
+    {
+      "path": "client-console-bff/paytech-client-console-bff-test/src/test/java/com/paytech/client/console/bff/manual/ClientHttpsManualApplication.java",
+      "sha256": "a94273f7b790b760bc810e7d122c8254febccfa8d7ca409bb78d808005d418fe"
+    },
+    {
+      "path": "client-console-bff/paytech-client-console-bff-web/src/main/java/com/paytech/client/console/bff/core/ClientRefreshCookie.java",
+      "sha256": "056f7dc00c552e284bcef7027b9f8762da8615a87fe7e04914f19d4422f32e56"
+    },
+    {
+      "path": "client-console-bff/paytech-client-console-bff-web/src/main/java/com/paytech/client/console/bff/ext/rest/ClientProblemAdvice.java",
+      "sha256": "23241a378dea2d95106ebb493ec480022fd88e14789aa310eae681211b3c8080"
+    },
+    {
+      "path": "client-console-bff/paytech-client-console-bff-web/src/main/java/com/paytech/client/console/bff/service/processor/ClientSessionProcessor.java",
+      "sha256": "218616ef526cdfd232a91600dfa6415ad72fead1c245c16c9f0976abd89c1a5f"
+    },
+    {
+      "path": "client-console-web/src/auth.test.ts",
+      "sha256": "65bdd9bcaf078db8b97a02bbd5326b67a8576302e11e131f9d7024b646f85363"
+    },
+    {
+      "path": "client-console-web/src/auth.ts",
+      "sha256": "b4806ff51887c1092564ff2906ef688d7080ba7e0b43bea1527c4678558db75e"
+    },
+    {
+      "path": "client-console-web/src/main.tsx",
+      "sha256": "5c2c3f7719aec312fa97669e3de0fb532e296a63b7f23e0c38bf32a75599c9fb"
+    },
+    {
+      "path": "client-console-web/src/style.css",
+      "sha256": "3f7c5f791c44aa870caf3787cb16059ef4e4c5ae8f1cbf6a6a77a371f27e5ede"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/authentication/ClientAuthenticationHttpAutoTest.java",
+      "sha256": "9a380244d0bdc1c63addf6af62a4a857869cf4c2999590eca112bf5b5746f94d"
+    },
+    {
+      "path": "platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/manual/authentication/ClientHttpsManualApplication.java",
+      "sha256": "3256e28ca1c479d0ed36cb2ba226e5e1f4068dbd70bb986d2a410f141c9fc5f6"
+    },
+    {
+      "path": "platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/configuration/PlatformApiErrorConfiguration.java",
+      "sha256": "973cd877c35f758a1334d2f6c55d72f68d58ad78958b3844003bfff405e69869"
+    },
+    {
+      "path": "requirements/20260914/client-console-注册与客户入驻/verification/run-local-https.py",
+      "sha256": "0bb4bf74e5394df1234eb585db6b8c16b90fd4a546d33b61761ee92b5d1348b8"
+    },
+    {
+      "path": "requirements/20260914/client-console-注册与客户入驻/verification/verify-local-https.py",
+      "sha256": "2f7da034a3fa9f0853adab18974f1ebf7f956ca93f0c08fa3e2b86c662c8d808"
+    }
+  ],
+  "remaining": [
+    "Browser interaction and browser cookie behavior after user certificate confirmation",
+    "Real mail/Vault/routing control-plane integration",
+    "CCT onboarding, Operations/Risk manual review and activation recovery",
+    "Stage 4 overall acceptance; no Stage 5 or deployment claim"
+  ],
+  "deliveryChecks": {
+    "sourceFingerprintsMatched": 17,
+    "localMarkdownLinksChecked": 69,
+    "pythonSyntax": "passed",
+    "rootPlatformGatewayDiffCheck": "passed"
+  }
+}
