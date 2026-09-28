@@ -1,0 +1,1078 @@
+[
+  {
+    "httpMethod": "POST",
+    "path": "/auth/v1/login",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/auth/v1/refresh",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/auth/v1/logout",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/auth/v1/context",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/auth/v1/password",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/auth/v1/bootstrap/administrator",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/iam/v1/accounts",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": [
+      "page",
+      "size"
+    ]
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/iam/v1/accounts",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/iam/v1/accounts/{accountId}/disable",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "PUT",
+    "path": "/iam/v1/accounts/{accountId}/roles",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/iam/v1/roles",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": [
+      "page",
+      "size"
+    ]
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/iam/v1/role-permission-options",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/iam/v1/roles/{roleId}",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/iam/v1/roles",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "PUT",
+    "path": "/iam/v1/roles/{roleId}",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "DELETE",
+    "path": "/iam/v1/roles/{roleId}",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "DELETE",
+    "path": "/iam/v1/accounts/{accountId}",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/iam/v1/accounts/{accountId}/enable",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/gateway-admin/v1/target-services",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": [
+      "page",
+      "size",
+      "channel",
+      "status",
+      "targetServiceCode"
+    ]
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/gateway-admin/v1/target-services/{targetServiceCode}",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "PATCH",
+    "path": "/gateway-admin/v1/target-services/{targetServiceCode}/status",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/gateway-admin/v1/routes",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": [
+      "page",
+      "size",
+      "channel",
+      "status",
+      "targetServiceCode",
+      "routeCode",
+      "requiredScopeCode"
+    ]
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/gateway-admin/v1/routes/{routeCode}",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "PATCH",
+    "path": "/gateway-admin/v1/routes/{routeCode}/status",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/gateway-admin/v1/target-services",
+    "minimumBodyBytes": 65536,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "PUT",
+    "path": "/gateway-admin/v1/target-services/{targetServiceCode}",
+    "minimumBodyBytes": 65536,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/gateway-admin/v1/routes",
+    "minimumBodyBytes": 65536,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "PUT",
+    "path": "/gateway-admin/v1/routes/{routeCode}",
+    "minimumBodyBytes": 65536,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/console-admin/v1/resources",
+    "minimumBodyBytes": 0,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/console-admin/v1/resources/{resourceCode}",
+    "minimumBodyBytes": 0,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/console-admin/v1/resources",
+    "minimumBodyBytes": 65536,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "PUT",
+    "path": "/console-admin/v1/resources/{resourceCode}",
+    "minimumBodyBytes": 65536,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "PATCH",
+    "path": "/console-admin/v1/resources/{resourceCode}/status",
+    "minimumBodyBytes": 65536,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/permission-admin/v1/permissions",
+    "minimumBodyBytes": 0,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": [
+      "page",
+      "size",
+      "code",
+      "resourceType",
+      "status",
+      "riskLevel"
+    ]
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/permission-admin/v1/permissions/{permissionCode}",
+    "minimumBodyBytes": 0,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "POST",
+    "path": "/permission-admin/v1/permissions",
+    "minimumBodyBytes": 65536,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "PUT",
+    "path": "/permission-admin/v1/permissions/{permissionCode}",
+    "minimumBodyBytes": 65536,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "PATCH",
+    "path": "/permission-admin/v1/permissions/{permissionCode}/status",
+    "minimumBodyBytes": 65536,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "content-type",
+        "headerUse": "FORWARD_REQUEST"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "idempotency-key",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/permission-admin/v1/permissions/{permissionCode}/references",
+    "minimumBodyBytes": 0,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": [
+      "kind",
+      "page",
+      "size"
+    ]
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/gateway-admin/v1/capabilities",
+    "minimumBodyBytes": 0,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/console-admin/v1/resource-capabilities",
+    "minimumBodyBytes": 0,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/permission-admin/v1/permission-options",
+    "minimumBodyBytes": 0,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": [
+      "usage",
+      "page",
+      "size",
+      "keyword"
+    ]
+  },
+  {
+    "httpMethod": "GET",
+    "path": "/authorization/v1/navigation",
+    "minimumBodyBytes": 16384,
+    "headers": [
+      {
+        "headerName": "authorization",
+        "headerUse": "CORS_REQUEST_ALLOWED"
+      },
+      {
+        "headerName": "origin",
+        "headerUse": "FORWARD_REQUEST"
+      }
+    ],
+    "queryParameters": []
+  }
+]

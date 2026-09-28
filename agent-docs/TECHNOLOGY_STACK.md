@@ -139,6 +139,7 @@ paytech-foundation/
 ├── paytech-common-core/
 ├── paytech-http-problem/
 ├── paytech-http-client-support/
+├── paytech-test-support/
 ├── paytech-json-canonicalization/
 ├── paytech-mybatis-support/
 ├── paytech-command-idempotency/
@@ -150,7 +151,7 @@ paytech-foundation/
 └── paytech-compensation-event/
 ```
 
-已确认的 Foundation 基线共十二个模块；各模块当前是否已实现、验证、发布或部署只见状态台账。依赖方向固定为 `paytech-compensation-event -> paytech-mybatis-support -> paytech-common-core`、`paytech-command-idempotency -> paytech-mybatis-support -> paytech-common-core` 和 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；`paytech-http-client-support` 依赖 Common Core、HTTP Problem 与 Spring HTTP 能力但不自动发现业务接口，MVC Starter 依赖 HTTP Problem 实现统一错误输出。`paytech-json-canonicalization` 不依赖 Common Core 或 Spring，只由真实规范 bytes 消费者显式引入，不得经 Common Core、Starter、Compensation Event、Command Idempotency 或 API 契约传递给非消费者。公共 MyBatis 模块不依赖 Spring 或业务枚举，通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
+已确认的 Foundation 基线共十三个模块（含测试专用模块）；各模块当前是否已实现、验证、发布或部署只见状态台账。依赖方向固定为 `paytech-compensation-event -> paytech-mybatis-support -> paytech-common-core`、`paytech-command-idempotency -> paytech-mybatis-support -> paytech-common-core` 和 `paytech-compensation-event -> paytech-xxl-job-starter -> xxl-job-core`；`paytech-http-client-support` 依赖 Common Core、HTTP Problem 与 Spring HTTP 能力但不自动发现业务接口，MVC Starter 依赖 HTTP Problem 实现统一错误输出。`paytech-json-canonicalization` 不依赖 Common Core 或 Spring，只由真实规范 bytes 消费者显式引入，不得经 Common Core、Starter、Compensation Event、Command Idempotency 或 API 契约传递给非消费者。公共 MyBatis 模块不依赖 Spring 或业务枚举，通用 XXL-Job Starter 不得反向引用补偿能力。`paytech-caffeine-starter` 提供有界进程内缓存，`paytech-redis-starter` 独立提供默认 Redis CacheManager、Lettuce 普通访问和 Redisson 协调客户端；二者都不依赖补偿或业务模块。
 
 ### 6.1 `paytech-common-core`
 
@@ -206,10 +207,12 @@ paytech-foundation/
 - 每个 Redis Cache 必须由宿主服务注册一个 `RedisCacheDefinition<T>(cacheName, concreteValueType, ttl)`；Cache Name 使用固定小写 kebab-case，值类型必须是可实例化的具体类型，TTL 不短于 1 毫秒，未声明的 Cache 不得动态创建；
 - Redis Cache 使用普通 Jackson 3 JSON，不写 Java 类元数据或 JDK 序列化内容；物理 Key 固定为 `{service-prefix}:cache:{cache-name}::{key}`，其中服务前缀遵守统一 Redis Namespace 规则；
 - `RedisJsonTemplate` 保存不含 Java 类名的普通 UTF-8 JSON，读取时显式传入 `Class<T>` 或 `TypeReference<T>`，实现 `CodeEnum` 的枚举使用稳定 `code` 而非 `name()`；为支持滚动升级，新增未知字段可忽略，其他不兼容变更必须升级 Key 版本；每次写入必须显式提供至少 1 毫秒的 TTL；默认不创建使用 JDK 序列化的通用 `RedisTemplate<Object, Object>`；
-- 通过 `redis.coordination.enabled=true` 按需创建只用于锁、可过期信号量等协调能力的 `RedissonClient`。同步 MVC 服务的标准排他资源协调由 Foundation `paytech-redis-starter` 的公共 `@ResourceLock(prefix, key)` 提供；注解与可重复容器属于 Starter 的 `api`，Advisor、Key 解析、启动校验和自动配置属于 Starter 内部实现。业务服务不得复制注解、Advisor、执行器或第二套客户端；使用该注解时必须使用 Foundation 根据 Spring Data Redis 配置创建并登记来源的唯一单机 `RedissonClient`，宿主自定义或替换客户端失败启动。原始 Redisson 只保留给标准注解无法表达且另有批准契约的协调原语；
-- `@ResourceLock.key` 可以为空以表达由 `prefix` 唯一确定的固定资源；动态 Key 只接受 `#param` 或一层 `#param.field`，完整语法为 `#[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)?`。字段只按 record component 或无参 JavaBean getter 读取，不执行完整 SpEL、方法调用、Bean/类型引用、运算、拼接、索引或多层导航。可求值类型只允许 `String`、整数 primitive/wrapper 或 `UUID`；运行值必须经过有界、安全 ASCII 校验，不得把邮箱、Token、Secret、敏感明文或自由文本放入物理 Key；
+- 通过 `redis.coordination.enabled=true` 按需创建 Foundation 的 RedissonClient。同步写 Processor 的资源锁复用 AbstractLockProcessor；无锁入口使用 AbstractProcessor。未迁移的 @ResourceLock 消费者继续使用注解机制，不能在同一入口叠加。不复制客户端或锁框架。
+- 模板的单资源 LockCommand 参数保持毫秒合同：LOCK 持续等待且可中断；TRY_LOCK 使用非负等待时间，默认 0；租约正数为显式租约，-1 或省略时使用 Watchdog，逻辑 Key 自动加 lock:。多资源 tryLocks 接收完整逻辑 Key 列表与 Duration 等待/租约，不再添加 lock:；先校验、去重并按 ASCII 顺序排列，使用普通 RLock 及共享总等待预算，租约必须有限且至少 1 毫秒，后续锁失败或业务结束逆序释放已获取资源。两种入口均由同一客户端添加服务 Namespace；模板不自行读取注解配置，不承担注解表达式、代理门禁和指标。迁移消费者显式提供配置并维持启动校验。实际参数入口见 [Foundation README](../paytech-foundation/README.md#processor-资源锁模板)。
+- 模板在创建/获取锁时统一处理依赖异常：直接中断或 Redisson 包装的中断恢复线程标记并抛公共并发错误，其他 `RedisException` 转为公共服务不可用错误，保留 Cause。`lockCommand` 和 `processWithinLock` 的业务异常原样传播；业务 Processor 不重复捕获锁异常，释放失败不覆盖业务结果。
+- 以下注解规则只适用于既有或已批准使用 `@ResourceLock` 的消费者；不把模板支持的 Watchdog 或参数接口套用到注解。`@ResourceLock.key` 可以为空以表达由 `prefix` 唯一确定的固定资源；动态 Key 只接受 `#param` 或一层 `#param.field`，完整语法为 `#[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)?`。字段只按 record component 或无参 JavaBean getter 读取，不执行完整 SpEL、方法调用、Bean/类型引用、运算、拼接、索引或多层导航。可求值类型只允许 `String`、整数 primitive/wrapper 或 `UUID`；运行值必须经过有界、安全 ASCII 校验，不得把邮箱、Token、Secret、敏感明文或自由文本放入物理 Key；
 - `prefix` 是固定的小写 kebab-case 段，可用 `:` 分隔，但不得重复包含当前服务 Namespace；Foundation 只在最终逻辑 Key 前添加一次服务 Namespace。一个方法可声明多个资源锁；必须在接触 Redis 前解析全部 Key、规范化并去重，再按完整逻辑 Key 的稳定 ASCII 字典序、在一个总 Wait 预算内获取，任一失败时逆序释放已取得的锁，正常完成时同样逆序释放。注解声明顺序不构成协议；
-- 等待与 Lease 只允许通过服务级 `redis.coordination.resource-lock.wait-time` 和 `redis.coordination.resource-lock.lease-time` 配置，值必须显式、有限且有效，不在注解上逐方法覆盖。使用 `@ResourceLock` 的目标必须是启动期可预测、非 lazy 的 singleton；应用在启动期必须校验协调开关、Foundation Redisson 来源、Namespace/Wait/Lease 配置、具体实现方法的完整 Annotation 集合、FactoryBean/Bean 生命周期、目标类与方法可代理性、JDK 代理接口暴露、实际 Foundation Advisor/内部执行链身份与顺序、同步返回类型、表达式静态绑定、参数元数据、属性可读性和声明类型；任一不满足即失败启动或在不可提前发现的迟创建 Bean 初始化时 Fail-Closed，不能进入业务方法。`Future`、`CompletionStage`、`Callable`/`Runnable`、JDK 函数式或迭代遍历接口、Java `Stream/BaseStream`、Reactive Streams、Java `Flow`、Kotlin Flow 和 Kotlin suspend 均不属于同步返回；
+- 注解锁的等待与 Lease 只允许通过服务级 `redis.coordination.resource-lock.wait-time` 和 `redis.coordination.resource-lock.lease-time` 配置，保持显式、有限且有效的原合同，不逐方法覆盖或启用 Watchdog。模板消费者改用 LockCommand 的参数合同，迁移时须核对同资源互斥域和消费者切换顺序。
 - 锁 Advisor 包住公开、可代理的 Processor 用例方法，并位于其整个 `TransactionTemplate` 外层：先解析并获取全部 Redis 锁，再开启数据库事务，提交或回滚后才逆序释放；一个入口一次声明完整资源集合，不以嵌套带锁调用或方法引用拼装锁。若进入 Interceptor 时已经存在活动数据库事务，必须在解析 Key 和访问 Redis 前失败。竞争超时或中断映射公共并发错误且中断必须恢复；Redis 不可用失败关闭为公共服务不可用错误并保留 Cause；业务异常原样传播；释放失败或 Lease 到期失去 Owner 只记录固定低基数诊断且不得覆盖主异常，也不得 `forceUnlock`；
 - 直接依赖 Redisson Core，不引入 `redisson-spring-boot-starter`，不得注册 `RedissonConnectionFactory` 或替换 Lettuce。`@ResourceLock` 只提供 Redis-first 跨实例协调，不提供 fencing，也不取代事务、幂等、Expected State/Version CAS、唯一索引或业务不变量确实需要的数据库行/哨兵保护；完整合同见[资源锁决策](./decisions/2026-09-05-redis-first-resource-lock.md)和[设计](../docs/superpowers/specs/2026-09-05-foundation-resource-lock-design.md)；
 - Redisson 复用同一套地址、数据库、凭据、超时和 SSL 配置，强制显式配置连接/命令超时与有界线程/连接池；`RedisJsonTemplate`、Redisson 与 `StringRedisTemplate` 共用服务级 Key 前缀，默认取 `spring.application.name`，特殊场景可通过 `redis.key-prefix` 统一覆盖；
@@ -247,14 +250,28 @@ paytech-foundation/
 
 ### 6.12 `paytech-command-idempotency`
 
+- **禁止新增接入。** 按[2026-09-17 全项目职责决定](./decisions/2026-09-17-gateway-request-idempotency.md)，HTTP `Idempotency-Key` 由 Gateway 处理；任何业务系统、BFF 或内部 API 不得新增本 JAR 的依赖、启用或调用，也不得复制同义实现。已存在的模块、配置、表与调用仅作为待迁移存量，不是可推广的能力。
+- Gateway 的请求重放方案单独设计，不将本 JAR 原有的宿主事务、业务恢复阶段或服务本地表模型直接移入 Gateway。完整请求语义与业务防重边界见[开发规范第 5.4 节](./DEVELOPMENT_CONVENTIONS.md#54-请求幂等与业务防重)。
+
+以下仅说明存量组件机制，供受影响消费者迁移时识别原有行为：
+
 - 提供服务本地 `t_command_idempotency` 的 Claim、唯一 winner、Lease 续租/到期接管、Version CAS、恢复阶段推进和稳定成功/失败响应冻结；
 - 通过 `command-idempotency.enabled=true` 显式启用 MyBatis 自动配置，未依赖或未启用的服务不受影响；
 - Operation Type 与 Recovery Stage 只作为业务 Owner 提供的稳定字符串 Code 处理；Foundation 只拥有 `PROCESSING | SUCCEEDED | FAILED` 技术状态，不引用业务枚举、DTO 或错误码；
 - 查询可以在事务外执行；所有写操作必须加入宿主已经开启的本地可写事务，JAR 不创建 `TransactionTemplate`、不接收业务 Callback，也不执行远端调用或自动重试；
 - 每个服务继续只使用自己的数据库和本地表；不创建中央幂等服务、跨库查询、Redis 权威状态或 Gateway 业务编排；
 - Foundation 不计算 JCS/Hash，不定义 Snapshot/Response Schema，不解释恢复阶段顺序，也不拥有业务资源唯一键和重放策略；
-- 当前只批准 Commerce 接入；Risk、Platform Support 和其他系统必须在各自切片单独设计、验证并获授权后才能迁移；
-- 完整边界见[命令幂等能力决策](./decisions/2026-09-09-foundation-command-idempotency.md)。
+- 存量消费者按各自切片迁出，保留业务唯一性与必要恢复；不把本次规范修订当作删除历史数据或直接修改运行协议的授权；
+- 历史机制见[原命令幂等能力决策](./decisions/2026-09-09-foundation-command-idempotency.md)，实际迁移状态只见当前台账。
+
+### 6.13 `paytech-test-support`
+
+- 测试专用普通 JAR，提供真实 HTTP 调用器、入口 Header 工厂、HTTP 响应 Checker 基类、Clear / TestBase 后置清理，以及独立 MVC MockHttpServer；消费方式与职责见[测试规范第 4.1 节](UNIT_TEST_GUIDE.md#41-公共测试组件)。
+- 实现依赖 Common Core、Spring Beans/Context/Web/MVC/Test、Boot Test / Tomcat Servlet 容器支持、Awaitility、Jackson 3 与 JUnit API，版本由统一 BOM 管理；消费者仅以 `test` scope 引入，不进入业务 API、Web、Starter 或部署制品。组件自身测试使用 JUnit Platform Launcher 验证真实生命周期。
+- MockHttpServer 只注册传入的测试 Controller，MVC 读取外部 API 接口映射，不扫描业务组件或启用应用自动配置。宿主将随机地址注入测试服务发现；正常 DTO 与业务匹配留在本地，HTTP 故障响应和实际断连由 MockHttpFault 表达。
+- Spring 测试可用 EnableMockHttpServer 扫描指定包内的 TestComponent，注册 Mocker 与内部 Controller Bean，自动创建服务、动态注册地址并管理关闭。Controller 不进入宿主顶层 Bean 或路由；普通组件和配置类排除，独立服务仍不启用 Boot 自动配置。
+- 宿主提供 `RestTestClient` 和 `ObjectMapper`，不自动配置业务 Bean，不依赖任何业务系统或数据库；Fixture、外部 DTO Mock、业务 Checker 与具体清理由各服务测试模块负责，公共基类仅分派 AfterEach 清理。
+- 公共 API 与示例见[模块说明](../paytech-foundation/paytech-test-support/README.md)，实际发布与验证状态只见[当前台账](CURRENT_IMPLEMENTATION.md#foundation-test-support-20260917)。
 
 ## 7. Spring Web 与内部调用
 
@@ -334,7 +351,7 @@ RabbitMQ 是 MVP 唯一业务 MQ，不再并行评估 RocketMQ。
 ```
 
 - 可能超出 JavaScript 安全整数范围的 ID 必须编码为十进制字符串；
-- 时间使用 UTC ISO-8601；金额使用最小货币单位或明确的十进制字符串并携带币种；
+- 时间使用 UTC ISO-8601；金额使用币种主单位十进制字符串并携带币种，例如 USD `"10.00"` 表示 10 美元；第一方 HTTP 的精度与格式见 [金额格式规范](./DEVELOPMENT_CONVENTIONS.md#21-对外金额格式)；
 - Payload 必须最小化，不放敏感明文、Vault Token、Secret、大文件或 Channel 原始报文；
 - `schemaVersion` 的兼容演进必须先定义消费者策略。
 

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.ReleaseAuditEventMapper">
+
+    <resultMap id="ReleaseAuditEventResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.ReleaseAuditEvent">
+        <constructor>
+            <idArg name="auditEventId" column="audit_event_id" javaType="_long"/>
+            <arg name="releaseId" column="release_id" javaType="_long"/>
+            <arg name="eventType" column="event_type"
+                 javaType="com.paytech.risk.decision.domain.enums.ReleaseAuditEventType"/>
+            <arg name="eventTime" column="event_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="checkCode" column="check_code" javaType="java.lang.String"/>
+            <arg name="checkStatus" column="check_status"
+                 javaType="com.paytech.risk.decision.domain.enums.StaticCheckStatus"/>
+            <arg name="severity" column="severity"
+                 javaType="com.paytech.risk.decision.domain.enums.StaticCheckSeverity"/>
+            <arg name="errorCode" column="error_code" javaType="java.lang.String"/>
+            <arg name="errorSummary" column="error_summary" javaType="java.lang.String"/>
+            <arg name="shadowRunId" column="shadow_run_id" javaType="java.lang.Long"/>
+            <arg name="approvalRequestId" column="approval_request_id" javaType="java.lang.String"/>
+            <arg name="approvalStatus" column="approval_status"
+                 javaType="com.paytech.risk.decision.domain.enums.ReleaseApprovalStatus"/>
+            <arg name="reviewerId" column="reviewer_id" javaType="java.lang.Long"/>
+            <arg name="reviewComment" column="review_comment" javaType="java.lang.String"/>
+            <arg name="fromStatus" column="from_status"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionReleaseStatus"/>
+            <arg name="toStatus" column="to_status"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionReleaseStatus"/>
+            <arg name="reasonCode" column="reason_code" javaType="java.lang.String"/>
+            <arg name="triggerType" column="trigger_type" javaType="java.lang.String"/>
+            <arg name="triggerId" column="trigger_id" javaType="java.lang.String"/>
+            <arg name="actorId" column="actor_id" javaType="java.lang.Long"/>
+            <arg name="aggregateVersion" column="aggregate_version" javaType="java.lang.Integer"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <select id="selectReleaseAuditEvents" resultMap="ReleaseAuditEventResultMap" useCache="false">
+        SELECT audit_event_id, release_id, event_type, event_time, check_code, check_status, severity,
+               error_code, error_summary, shadow_run_id, approval_request_id, approval_status,
+               reviewer_id, review_comment, from_status, to_status, reason_code, trigger_type,
+               trigger_id, actor_id, aggregate_version, create_time
+        FROM t_release_audit_event
+        WHERE release_id = #{releaseId}
+        ORDER BY aggregate_version, audit_event_id
+    </select>
+
+    <select id="selectReleaseAuditEventsByReleaseIds"
+            resultMap="ReleaseAuditEventResultMap" useCache="false">
+        SELECT audit_event_id, release_id, event_type, event_time, check_code, check_status, severity,
+               error_code, error_summary, shadow_run_id, approval_request_id, approval_status,
+               reviewer_id, review_comment, from_status, to_status, reason_code, trigger_type,
+               trigger_id, actor_id, aggregate_version, create_time
+        FROM t_release_audit_event
+        WHERE release_id IN
+        <foreach collection="releaseIds" item="releaseId" open="(" separator="," close=")">
+            #{releaseId}
+        </foreach>
+        ORDER BY release_id, aggregate_version, audit_event_id
+    </select>
+
+    <insert id="insertReleaseAuditEvent">
+        INSERT INTO t_release_audit_event
+        (audit_event_id, release_id, event_type, event_time, check_code, check_status, severity,
+         error_code, error_summary, shadow_run_id, approval_request_id, approval_status, reviewer_id,
+         review_comment, from_status, to_status, reason_code, trigger_type, trigger_id, actor_id,
+         aggregate_version, create_time)
+        VALUES
+        (#{value.auditEventId}, #{value.releaseId},
+         #{value.eventType},
+         #{value.eventTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+         #{value.checkCode,jdbcType=VARCHAR},
+         #{value.checkStatus,jdbcType=VARCHAR},
+         #{value.severity,jdbcType=VARCHAR},
+         #{value.errorCode,jdbcType=VARCHAR}, #{value.errorSummary,jdbcType=VARCHAR},
+         #{value.shadowRunId,jdbcType=BIGINT}, #{value.approvalRequestId,jdbcType=VARCHAR},
+         #{value.approvalStatus,jdbcType=VARCHAR},
+         #{value.reviewerId,jdbcType=BIGINT}, #{value.reviewComment,jdbcType=VARCHAR},
+         #{value.fromStatus,jdbcType=VARCHAR},
+         #{value.toStatus,jdbcType=VARCHAR},
+         #{value.reasonCode,jdbcType=VARCHAR}, #{value.triggerType,jdbcType=VARCHAR},
+         #{value.triggerId,jdbcType=VARCHAR}, #{value.actorId,jdbcType=BIGINT},
+         #{value.aggregateVersion,jdbcType=INTEGER},
+         #{value.createTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})
+    </insert>
+
+    <insert id="insertReleaseAuditEvents">
+        INSERT INTO t_release_audit_event
+        (audit_event_id, release_id, event_type, event_time, check_code, check_status, severity,
+         error_code, error_summary, shadow_run_id, approval_request_id, approval_status, reviewer_id,
+         review_comment, from_status, to_status, reason_code, trigger_type, trigger_id, actor_id,
+         aggregate_version, create_time)
+        VALUES
+        <foreach collection="values" item="value" separator=",">
+            (#{value.auditEventId}, #{value.releaseId},
+             #{value.eventType},
+             #{value.eventTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+             #{value.checkCode,jdbcType=VARCHAR},
+             #{value.checkStatus,jdbcType=VARCHAR},
+             #{value.severity,jdbcType=VARCHAR},
+             #{value.errorCode,jdbcType=VARCHAR}, #{value.errorSummary,jdbcType=VARCHAR},
+             #{value.shadowRunId,jdbcType=BIGINT}, #{value.approvalRequestId,jdbcType=VARCHAR},
+             #{value.approvalStatus,jdbcType=VARCHAR},
+             #{value.reviewerId,jdbcType=BIGINT}, #{value.reviewComment,jdbcType=VARCHAR},
+             #{value.fromStatus,jdbcType=VARCHAR},
+             #{value.toStatus,jdbcType=VARCHAR},
+             #{value.reasonCode,jdbcType=VARCHAR}, #{value.triggerType,jdbcType=VARCHAR},
+             #{value.triggerId,jdbcType=VARCHAR}, #{value.actorId,jdbcType=BIGINT},
+             #{value.aggregateVersion,jdbcType=INTEGER},
+             #{value.createTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})
+        </foreach>
+    </insert>
+
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.payment.channel.core.dal.mapper.MidCapabilityMapper">
+    <resultMap id="row" type="com.paytech.payment.channel.core.dal.dataobject.MidCapability">
+        <result column="mid_capability_id" property="midCapabilityId"/>
+        <result column="mid_id" property="midId"/>
+        <result column="payment_method_code" property="paymentMethodCode"/>
+        <result column="scheme_code" property="schemeCode"/>
+        <result column="country_code" property="countryCode"/>
+        <result column="currency" property="currency"/>
+        <result column="mcc_code" property="mccCode"/>
+        <result column="capability_status" property="capabilityStatus"
+                javaType="com.paytech.payment.channel.core.enums.CapabilityStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="create_time" property="createTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+    <sql id="columns">mid_capability_id, mid_id, payment_method_code, scheme_code, country_code, currency, mcc_code,
+        capability_status, create_time, update_time
+    </sql>
+    <select id="findByMidIds" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM t_mid_capability WHERE mid_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY mid_capability_id
+    </select>
+</mapper>

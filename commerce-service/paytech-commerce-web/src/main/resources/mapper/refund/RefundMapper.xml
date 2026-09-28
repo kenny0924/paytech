@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commerce.core.dal.mapper.refund.RefundMapper">
+    <resultMap id="RefundRequest" type="com.paytech.commerce.core.dal.dataobject.refund.RefundRequest">
+        <id column="refund_request_id" property="refundRequestId" javaType="_long"/>
+        <result column="refund_request_no" property="refundRequestNo" javaType="java.lang.String"/>
+        <result column="order_id" property="orderId" javaType="_long"/>
+        <result column="client_id" property="clientId" javaType="_long"/>
+        <result column="request_origin" property="requestOrigin" javaType="com.paytech.commerce.domain.enums.RefundRequestOrigin"/>
+        <result column="client_refund_id" property="clientRefundId" javaType="java.lang.String"/>
+        <result column="refund_amount" property="refundAmount" javaType="java.math.BigDecimal"/>
+        <result column="currency" property="currency" javaType="java.lang.String"/>
+        <result column="reason_code" property="reasonCode" javaType="java.lang.String"/>
+        <result column="reason_summary" property="reasonSummary" javaType="java.lang.String"/>
+        <result column="refund_status" property="refundStatus" javaType="com.paytech.commerce.domain.enums.RefundStatus"/>
+        <result column="status_reason_code" property="statusReasonCode" javaType="java.lang.String"/>
+        <result column="channel_refund_id" property="channelRefundId" javaType="java.lang.Long"/>
+        <result column="completed_at" property="completedAt" javaType="java.time.Instant"/>
+        <result column="version" property="version" javaType="_long"/>
+        <result column="create_time" property="createTime" javaType="java.time.Instant"/>
+        <result column="update_time" property="updateTime" javaType="java.time.Instant"/>
+    </resultMap>
+    <resultMap id="RefundRequestView" type="com.paytech.commerce.core.dal.dataobject.refund.RefundRequestView"
+        extends="RefundRequest">
+        <result column="order_no" property="orderNo" javaType="java.lang.String"/>
+    </resultMap>
+    <sql id="columns">r.refund_request_id,r.refund_request_no,r.order_id,r.client_id,r.request_origin,r.client_refund_id,r.refund_amount,r.currency,r.reason_code,r.reason_summary,r.refund_status,r.status_reason_code,r.channel_refund_id,r.completed_at,r.version,r.create_time,r.update_time</sql>
+    <select id="findByClientRefundId" resultMap="RefundRequest">
+        SELECT <include refid="columns"/> FROM t_refund_request r
+        WHERE r.client_id=#{clientId} AND r.client_refund_id=#{clientRefundId} AND r.request_origin='CLIENT'
+    </select>
+    <select id="findByRefundRequestNo" resultMap="RefundRequest">
+        SELECT
+        <include refid="columns"/>
+        FROM t_refund_request r
+        WHERE r.client_id=#{clientId} AND r.refund_request_no=#{refundRequestNo}
+    </select>
+    <select id="select" resultMap="RefundRequestView" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/>,o.order_no FROM t_refund_request r
+        JOIN t_commerce_order o ON o.order_id=r.order_id AND o.client_id=r.client_id
+        WHERE 1=1
+        <if test="clientId != null">AND r.client_id=#{clientId}</if>
+        <choose><when test="no != null">AND r.refund_request_no=#{no}</when>
+            <otherwise>AND r.client_refund_id=#{clientRefundId} AND r.request_origin='CLIENT'</otherwise></choose>
+        <if test="lock">FOR UPDATE</if>
+    </select>
+    <select id="list" resultMap="RefundRequest">
+        SELECT
+        <include refid="columns"/>
+        FROM t_refund_request r
+        WHERE r.client_id=#{clientId} AND r.order_id=#{orderId}
+        <if test="time != null">AND (r.create_time &lt; #{time}
+            OR (r.create_time=#{time} AND r.refund_request_no &lt; #{no}))</if>
+        ORDER BY r.create_time DESC,r.refund_request_no DESC LIMIT #{limit}
+    </select>
+    <insert id="insert">
+        INSERT INTO t_refund_request (refund_request_id,refund_request_no,order_id,client_id,request_origin,client_refund_id,refund_amount,currency,reason_code,reason_summary,refund_status,status_reason_code,channel_refund_id,completed_at,version,create_time,update_time)
+        VALUES (#{refundRequestId},#{refundRequestNo},#{orderId},#{clientId},#{requestOrigin},#{clientRefundId},#{refundAmount},#{currency},#{reasonCode},#{reasonSummary},#{refundStatus},#{statusReasonCode},#{channelRefundId},#{completedAt},#{version},#{createTime},#{updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_refund_request SET refund_status=#{status},channel_refund_id=#{channelId},status_reason_code=#{reason},
+            completed_at=#{completedAt},version=version+1,update_time=#{now}
+        WHERE refund_request_id=#{refund.refundRequestId} AND client_id=#{refund.clientId}
+            AND version=#{refund.version} AND refund_status IN ('PENDING','PROCESSING')
+    </update>
+</mapper>

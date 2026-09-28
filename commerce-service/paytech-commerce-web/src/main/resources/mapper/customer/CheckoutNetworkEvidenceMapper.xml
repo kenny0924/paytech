@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commerce.core.dal.mapper.customer.CheckoutNetworkEvidenceMapper">
+    <resultMap id="CheckoutNetworkEvidence" type="com.paytech.commerce.core.dal.dataobject.customer.CheckoutNetworkEvidence">
+        <id column="network_evidence_id" property="networkEvidenceId" javaType="_long"/>
+        <result column="order_id" property="orderId" javaType="_long"/>
+        <result column="checkout_session_id" property="checkoutSessionId" javaType="_long"/>
+        <result column="evidence_scene" property="evidenceScene" javaType="com.paytech.commerce.domain.enums.CheckoutEvidenceScene"/>
+        <result column="request_id" property="requestId" javaType="java.lang.String"/>
+        <result column="client_ip_address" property="clientIpAddress" javaType="java.lang.String"/>
+        <result column="user_agent" property="userAgent" javaType="java.lang.String"/>
+        <result column="trusted_proxy_chain" property="trustedProxyChain" javaType="java.lang.String"/>
+        <result column="occurred_at" property="occurredAt" javaType="java.time.Instant"/>
+        <result column="create_time" property="createTime" javaType="java.time.Instant"/>
+    </resultMap>
+    <select id="findBindingById" resultMap="CheckoutNetworkEvidence" useCache="false" flushCache="true">
+        SELECT network_evidence_id,order_id,checkout_session_id,evidence_scene
+        FROM t_checkout_network_evidence WHERE network_evidence_id=#{evidenceId}
+    </select>
+    <insert id="insert">
+        INSERT INTO t_checkout_network_evidence (network_evidence_id,order_id,checkout_session_id,evidence_scene,
+            request_id,client_ip_address,user_agent,trusted_proxy_chain,device_type,occurred_at,create_time)
+        VALUES (#{networkEvidenceId},#{orderId},#{checkoutSessionId},#{evidenceScene},#{requestId},
+            #{clientIpAddress},#{userAgent},#{trustedProxyChain},'UNKNOWN',#{occurredAt},#{createTime})
+    </insert>
+</mapper>

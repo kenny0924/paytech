@@ -1,0 +1,6 @@
+<configuration>
+    <!-- 必须在首次 SDK 类加载前生效；不依赖 ApplicationContextRunner 初始化 Boot 日志系统。 -->
+    <logger name="com.alibaba.nacos" level="OFF"/>
+    <logger name="com.alibaba.cloud.nacos" level="OFF"/>
+    <root level="OFF"/>
+</configuration>

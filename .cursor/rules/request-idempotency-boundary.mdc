@@ -1,0 +1,12 @@
+---
+description: Gateway owns HTTP request idempotency; business systems own business deduplication
+alwaysApply: true
+---
+
+# 请求幂等职责
+
+- 全项目 HTTP `Idempotency-Key` 由 Gateway 统一处理，不限于 Client Gateway API，也不要求所有接口必须带 Key。
+- BFF、核心系统和内部 API 不新增请求幂等 Filter、AOP、Adapter、Hash/响应快照或服务本地命令表；禁止新增 `paytech-command-idempotency` 依赖、启用或调用。
+- 业务仍维护唯一编号、原记录比较、状态机、数据库约束和必要恢复。例如 Gateway 重放创建订单的首次响应，Commerce 仍保证 `clientOrderId` 唯一；换 Key 不能重复建单。
+- 存量组件/表/Header 是待迁移项，不是新接入例外；不因修改规范直接删数据或改运行协议。MQ 消费、补偿 Claim/Lease、资源锁和第三方协议不因本规则取消。
+- 完整规则只维护在 `agent-docs/DEVELOPMENT_CONVENTIONS.md` 第 5.4 节；确认及取代范围见 `agent-docs/decisions/2026-09-17-gateway-request-idempotency.md`。实现、验证和迁移状态只读 `agent-docs/CURRENT_IMPLEMENTATION.md`。

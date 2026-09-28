@@ -1,5 +1,11 @@
 # Execution 技术方案与差异分析
 
+> **公共幂等包后继：** 用户在差异评审后确认使用公共包，pay 的 Foundation Claim/Complete 消费约定、模型和人工迁移边界见[项目接入说明](../../../payment-orchestration-service/docs/development/command-idempotency-differences.md)。代码、验证和实际数据库状态只见当前台账。
+
+> **字段维护后继：** [整批精简修订](./execution-field-simplification-amendment.md)已取代本文受影响的字段、渠道绑定位置、认证明细、Pricing Fact 与状态历史表要求。本文旧接口/流程细节保留为迁移前基线；后续 Java/HTTP/MQ 改造须逐项对齐，数据库执行状态只见当前台账。
+
+> **状态与 Channel 恢复后继：** capture mode、三表 4/4/5 状态、active_action_id 及移除 QUERY 的现行设计目标以[状态与恢复修订](./execution-state-channel-recovery-amendment.md)为准；下文受影响内容保留为前序基线，未涉及合同继续有效。实现与 SQL 状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 > **交易级 Token 修订评审：** 用户已确认统一 pay、交易级工具 Token、Attempt 直接关联及删除旧 Instrument 的方向；详细合同见[修订稿](./instrument-token-amendment.md)。下文保留上一版合同与评审上下文，受影响部分以修订稿的准确取代范围为准；新合同的实现与验证状态只读[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 > 阶段 1/2 已确认，阶段 3 详细设计已形成评审稿：[完整方案](./design.md) → [接口](./api-contract.md) / [数据](./data-design.md) / [状态恢复](./state-and-recovery.md) / [Mock](./mock-contract.md) / [研发验收](./verification-plan.md)。下文保留阶段 2 的差异分析证据，其中“待设计”问题由上述分册回应，不代表仍无方案。当前未进入应用研发或数据库执行；确认记录见 [delivery.md](./delivery.md)。

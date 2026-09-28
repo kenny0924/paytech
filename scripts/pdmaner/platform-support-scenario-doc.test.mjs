@@ -757,9 +757,9 @@ test("Platform Support scenarios demonstrate approved failure and recovery paths
   const content = readFileSync(scenarioPath, "utf8");
   for (const marker of [
     "SCN-PLT-01", "SCN-PLT-02", "SCN-PLT-03", "SCN-PLT-04",
-    "SCN-PLT-05", "SCN-PLT-06", "SCN-PLT-07", "63 表", "派生 Readiness",
+    "SCN-PLT-05", "SCN-PLT-06", "SCN-PLT-07", "普通 Email 七表", "派生 Readiness",
     "AVAILABLE → QUARANTINED", "Credit Note", "supersedes_version_id",
-    "旧 ACTIVE Version", "晚到 COMPLAINT", "UNKNOWN", "Replay",
+    "旧 ACTIVE Version", "原请求号查询", "UNKNOWN", "Replay",
     "replay_of_delivery_id", "DNS", "Challenge", "fencing_token",
     "审计链不匹配", "INLINE", "VAULT_TOKEN", "lock_version",
     "Operations 连续 5 次 Password 失败锁定 30 分钟",
@@ -819,7 +819,7 @@ test("Platform Support scenarios freeze Tenant ownership and simplified lifecycl
   assert.deepEqual(apiCredentialTenantViolations(rows), []);
   for (const table of [
     "t_api_credential", "t_consumer_document", "t_notification_request",
-    "t_notification_delivery", "t_webhook_endpoint", "t_webhook_event",
+    "t_webhook_endpoint", "t_webhook_event",
     "t_webhook_delivery", "t_webhook_attempt",
   ]) {
     assert.ok(assignmentValues(rows, table, "tenant_id").some(isPresent), `${table} 缺少 Tenant 归属`);
@@ -831,10 +831,15 @@ test("Platform Support scenarios freeze Tenant ownership and simplified lifecycl
   });
   assertScenarioRecord(rows, "t_notification_delivery", {
     address_vault_token: (value) => isPresent(value),
-    message_vault_token: (value) => isPresent(value),
-    notification_route_id: (value) => isPresent(value),
+    request_id: (value) => isPresent(value),
+    status: "UNKNOWN",
   });
-  assertAssignmentValues(rows, "t_notification_attempt", "result", ["ACCEPTED", "UNKNOWN"]);
+  assertScenarioRecord(rows, "t_notification_request", {
+    notification_template_id: (value) => isPresent(value),
+    notification_route_id: (value) => isPresent(value),
+    default_locale: (value) => isPresent(value),
+  });
+  assertAssignmentValues(rows, "t_notification_attempt", "status", ["ACCEPTED", "UNKNOWN"]);
   assertDocumentVersionRecovery(rows);
   assertDirectWebhookReplay(rows);
 });

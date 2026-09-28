@@ -1,0 +1,64 @@
+{
+  "date": "2026-09-14",
+  "scope": "Pay acceptance only: idempotency, database-object context, atomic Attempt/Intent/command binding; payment flow deferred",
+  "java_verification": {
+    "command": "./mvnw -q -pl paytech-payment-test -am -Dtest=PaymentRulesAutoTest,PaymentFlowRegistryAutoTest,PaymentCommandContractAutoTest,PaymentModuleBoundaryAutoTest -Dsurefire.failIfNoSpecifiedTests=false clean verify",
+    "exit_code": 0,
+    "suites": [
+      {
+        "name": "PaymentRulesAutoTest",
+        "tests": 3,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentFlowRegistryAutoTest",
+        "tests": 2,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentCommandContractAutoTest",
+        "tests": 13,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "name": "PaymentModuleBoundaryAutoTest",
+        "tests": 12,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0
+      }
+    ],
+    "all_test_sources_compiled": true
+  },
+  "acceptance_integration": {
+    "command": "./mvnw -q -pl paytech-payment-test -am -Dtest=PaymentPayAcceptanceAutoTest -Dsurefire.failIfNoSpecifiedTests=false test",
+    "exit_code": 1,
+    "cases": 7,
+    "status": "Blocked before test execution: ExecutionInfrastructureInitializer reports missing approved Execution tables; no schema changed"
+  },
+  "original_command_hash_fields_unchanged": true,
+  "source_sha256": {
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/dataobject/PaymentIntent.java": "bee3dd7a8d581fb4f322b20ed11d30239f851d1cf9226aa3427107170958fc8c",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/domain/PayContext.java": "3b81c5d4908ec49676e5cb0d94d34c777e75c5642b30846e993cee77020006b5",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/PaymentExecutionService.java": "c9069f5f8a13eb1cc7d68b99f61a3f43d72d8c60265610da5b653117d283da1e",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/PaymentInstrumentService.java": "6c0ea52360b737c07851d166de45b764dfe2d097427e5ccd6a683fd34e5268f9",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java": "92ea862a38168fb76b1b6f4f85cade4aa02dd510e0bec5f5d28d8221b7bfb937",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/PaymentInstrumentServiceImpl.java": "73523004703959691e486638f6ea188fcf913eff854cc5912854f752273a9d20",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/architecture/PaymentModuleBoundaryAutoTest.java": "8b7526f6d1a29b840a9cfd604fe1b41eacdd6b75d158bd1bc43c19a9e9dc6d6c",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentCommandContractAutoTest.java": "0b13ab2f6372d051b69d172100ccb960eea5ebf18c49fd7d0e3b18799a540f3c",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/ExecutionAutoTestBase.java": "964956b51ff2202e8430361527cf2d6fded73ca8623e2efbf23784ca2123d1a2",
+    "paytech-payment-web/src/main/java/com/paytech/payment/domain/execution/PayInput.java": "e498459b692bd280d3ca6c82f72c623dc197db43aae42e33b5de3c9d5fe3f19b",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/job/PaymentActionRecoveryHandler.java": "ff15e46e1a3593e36dced6d2b988e1b698b027907cfef888124d24eed9eea209",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/job/PaymentAttemptRecoveryHandler.java": "7b7c3c8b1dacd20d17d3cb3d8073cd56ac7d8995b8c47e5a22635994bc14ed29",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/PaymentExecutionController.java": "32caa4a6926d3cd44e91ba47ad94c2bb3e0cf6db9d49de228079c5f8b00b998b",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/processor/PayProcessor.java": "169800fd331a4fa531c743e46cf7c22e91ef22665d1795f3c37c3a921b3533e9",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/transaction/PaymentFlowTransactions.java": "b5993bb8a74f43c782351a087df7a409b57c1dffd9c27c1cc84381605c561040",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentPayAcceptanceAutoTest.java": "382a0155fa91da3ca4b40714a1c003512a796101beda791ac8c41a9d6b2c81af"
+  }
+}

@@ -1,5 +1,13 @@
 # Execution 数据方案
 
+> **2026-09-15 删除来源 Binding：** 用户已确认删除 `t_payment_intent_binding` 和 EX-I03 `CloseCreation`，按已有 Intent 终止；创建结果未明确时由 Commerce 用原键恢复创建后再终止。本文涉及提前关闭、Binding 门禁和锁顺序的内容由[字段修订第 8 节](./execution-field-simplification-amendment.md#8-删除来源-binding)取代；其余历史基线保持。
+
+> **字段维护后继：** [整批精简修订](./execution-field-simplification-amendment.md)已取代本文受影响的字段、渠道绑定位置、认证明细、Pricing Fact 与状态历史表要求。本文旧接口/流程细节保留为迁移前基线；后续 Java/HTTP/MQ 改造须逐项对齐，数据库执行状态只见当前台账。
+
+> **内部风控后继：** [已确认修订](./internal-risk-action-amendment.md)新增 RISK_CHECK，将 transaction_assessment_id / risk_result 从 Attempt 移至该 Action，删除 Payment 的 limit_reservation_group_id，并按风险/渠道类型约束 Action 渠道字段。下文风控字段位置与预分配评估 ID 为旧合同；新写入与历史兼容以修订稿为准。
+
+> **状态与 Channel 恢复后继：** capture mode、三表 4/4/5 状态、active_action_id 及移除 QUERY 的现行设计目标以[状态与恢复修订](./execution-state-channel-recovery-amendment.md)为准；下文受影响内容保留为前序基线，未涉及合同继续有效。实现与 SQL 状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 > **交易级 Token 修订评审：** 用户已确认统一 pay、交易级工具 Token、Attempt 直接关联及删除旧 Instrument 的方向；详细合同见[修订稿](./instrument-token-amendment.md)。下文保留上一版合同与评审上下文，受影响部分以修订稿的准确取代范围为准；新合同的实现与验证状态只读[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 > 阶段 3 已获用户确认，当前进入阶段 4 Execution 本地切片研发；其他 Owner 仅测试 Mock + TODO。实际实现与验证边界见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)，阶段确认见[交付记录](./delivery.md)。
@@ -10,7 +18,7 @@
 
 | 表 | Owner | 本稿处置 |
 |---|---|---|
-| `t_payment_intent_binding` | Execution | 新增 8 字段，2 个唯一二级索引；无枚举状态 |
+| `t_payment_intent_binding` | Execution | 2026-09-15 已确认删除，当前模型不再维护 |
 | `t_payment_intent` | Execution | 结构保留；唯一来源、活动/成功指针、关闭与成功语义明确 |
 | `t_payment_attempt` | Execution | 新增 4 字段、1 个唯一索引；来源提交直接在此去重 |
 | `t_payment_action` | Execution | 新增 9 字段、3 个普通索引；4 个旧字段注释更新 |
@@ -27,26 +35,9 @@
 
 合计新增 1 表 8 字段；3 张旧表新增 14 字段、修改 10 个字段结构、删除 6 字段；另删除 1 表的 10 字段。Action 4 个注释修改单独计数。二级索引新增 9、删除 5；主键新增/删除各 1。业务、路由/权限/控制台注册 DML 均为 0；没有表重命名或数据回填 SQL。
 
-## 2. 来源绑定表
+## 2. 来源关联
 
-| 字段 | MySQL 类型 / 可空 | 写入与用途 |
-|---|---|---|
-| payment_intent_binding_id | BIGINT / 否 | Snowflake 主键 |
-| source_type | VARCHAR(64) ascii_bin / 否 | 当前 `COMMERCE_ORDER`，受控来源命名空间 |
-| source_id | BIGINT / 否 | Commerce Order ID；与 source_type 一起唯一 |
-| client_id | BIGINT / 否 | 校验来源/资源归属，不允许从另一个 Client 抢占绑定 |
-| payment_intent_id | BIGINT / 是 | 已创建 Intent 时必填；关闭先到时为空 |
-| closed_at | DATETIME(6) / 是 | 不可撤销关闭新建、新 Attempt、首次 AUTHORIZE/SALE 的资格；不表示已有资金被取消 |
-| create_time | DATETIME(6) / 否 | UTC，应用写入 |
-| update_time | DATETIME(6) / 否 | UTC，应用写入 |
-
-无业务默认值。新增主键、`uk_pay_binding_source(source_type,source_id)`、`uk_pay_binding_intent(payment_intent_id)`。唯一来源覆盖“没有 Intent 行”的关闭；MySQL nullable unique 允许多个已关闭且无 Intent 的来源。关联由应用校验，不建 FK/CHECK。
-
-允许三种提交后形态：已绑定且开放、已绑定且关闭、未绑定且关闭。`payment_intent_id` 和 `closed_at` 同时为空不得提交。Create/Close 使用同一来源锁与数据库唯一约束；不存在的行由唯一 insert 竞争，失败者重新读取。所有资格检查只在本地事务外取得外部事实，事务内重新核对本地版本。
-
-**关闭不是撤销资金。** 已创建 Intent 的重复 Create 仍返回原 Intent；关闭后不能新建或恢复首次资金发送，但原已提交资金必须查询确认。已经存在的成功授权仍可通过明确 Capture 或 Reversal 处理，Close 不暗中 Void。Terminate 只有确认无成功 AUTHORIZE/CAPTURE/SALE 且无提交未决资金才能返回 TERMINATED。Reversal 创建 Void 后，原授权永久禁止再创建 Capture，即使该次 Void 明确失败也只能重试 Void或人工处理。
-
-绑定关闭只能从 null 变时间；无业务状态枚举，不写状态历史。使用行锁与唯一约束已足够，不额外机械增加 version。此记录与来源 Intent 一起保留，不能随技术幂等记录清理。
+`t_payment_intent_binding` 已删除，来源唯一关联直接由 `t_payment_intent.source_type/source_id` 及原唯一索引维护。创建/终止语义与迁移约束见[字段修订第 8 节](./execution-field-simplification-amendment.md#8-删除来源-binding)。本稿第 1 节其余增量统计为前序历史基线。
 
 ## 3. Attempt 新增字段
 

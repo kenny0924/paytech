@@ -1,0 +1,43 @@
+spring:
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${RISK_TEST_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:}}"
+  cloud:
+    discovery:
+      enabled: false
+    service-registry:
+      auto-registration:
+        enabled: false
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:13306/mor_risk?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: risk_app
+    password: "${RISK_TEST_DB_PASSWORD:${MOR_RISK_DB_PASSWORD:}}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+        connectTimeout: 2000
+        socketTimeout: 2000
+  main:
+    banner-mode: "off"
+  sql:
+    init:
+      mode: never
+
+decision:
+  identifier:
+    region-id: 0
+    worker-id: 0
+
+redis:
+  key-prefix: risk-auto

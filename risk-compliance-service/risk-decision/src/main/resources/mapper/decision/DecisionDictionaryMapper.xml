@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.DecisionDictionaryMapper">
+    <resultMap id="Reason" type="com.paytech.risk.decision.core.dal.dataobject.RuleRejectReason">
+        <constructor>
+            <arg name="rejectionReasonId" column="rejection_reason_id" javaType="_long"/>
+            <arg name="reasonCode" column="reason_code" javaType="java.lang.String"/>
+            <arg name="reasonName" column="reason_name" javaType="java.lang.String"/>
+            <arg name="description" column="description" javaType="java.lang.String"/>
+            <arg name="defaultMessage" column="default_message" javaType="java.lang.String"/>
+            <arg name="status" column="status" javaType="com.paytech.risk.decision.domain.enums.DictionaryStatus"/>
+            <arg name="version" column="version" javaType="_long"/>
+            <arg name="createdBy" column="created_by" javaType="_long"/>
+            <arg name="updatedBy" column="updated_by" javaType="_long"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <sql id="ReasonColumns">rejection_reason_id, reason_code, reason_name, description, default_message, status, version, created_by, updated_by, create_time, update_time</sql>
+    <sql id="ReasonFilter">
+        <where>
+            <if test="pattern != null">(reason_code LIKE #{pattern} ESCAPE '!' OR reason_name LIKE #{pattern} ESCAPE '!')</if>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+    </sql>
+    <select id="findReason" resultMap="Reason" useCache="false" flushCache="true">
+        SELECT <include refid="ReasonColumns"/> FROM t_rule_reject_reason WHERE reason_code = #{code}
+        <choose><when test="lock == 'WRITE'">FOR UPDATE</when><when test="lock == 'SHARE'">FOR SHARE</when></choose>
+    </select>
+    <select id="listReasons" resultMap="Reason">
+        SELECT <include refid="ReasonColumns"/> FROM t_rule_reject_reason <include refid="ReasonFilter"/>
+        ORDER BY reason_code, rejection_reason_id LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countReasons" resultType="long">SELECT COUNT(*) FROM t_rule_reject_reason <include refid="ReasonFilter"/></select>
+    <insert id="insertReason">INSERT INTO t_rule_reject_reason (rejection_reason_id, reason_code, reason_name, description, default_message, status, version, created_by, updated_by, create_time, update_time) VALUES (#{rejectionReasonId}, #{reasonCode}, #{reasonName}, #{description}, #{defaultMessage}, #{status}, #{version}, #{createdBy}, #{updatedBy}, #{createTime}, #{updateTime})</insert>
+    <update id="updateReason">
+        UPDATE t_rule_reject_reason SET reason_name = #{name}, description = #{description},
+        default_message = #{defaultMessage},
+        status = #{status}, version = version + 1, updated_by = #{actorId}, update_time = #{time}
+        WHERE reason_code = #{code} AND version = #{expectedVersion}
+    </update>
+    <resultMap id="Tag" type="com.paytech.risk.decision.core.dal.dataobject.RuleSubjectTag">
+        <constructor>
+            <arg name="tagId" column="tag_id" javaType="_long"/>
+            <arg name="tagCode" column="tag_code" javaType="java.lang.String"/>
+            <arg name="tagName" column="tag_name" javaType="java.lang.String"/>
+            <arg name="description" column="description" javaType="java.lang.String"/>
+            <arg name="status" column="status" javaType="com.paytech.risk.decision.domain.enums.DictionaryStatus"/>
+            <arg name="version" column="version" javaType="_long"/>
+            <arg name="createdBy" column="created_by" javaType="_long"/>
+            <arg name="updatedBy" column="updated_by" javaType="_long"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <sql id="TagColumns">tag_id, tag_code, tag_name, description, status, version, created_by, updated_by, create_time, update_time</sql>
+    <sql id="TagFilter">
+        <where>
+            <if test="pattern != null">(tag_code LIKE #{pattern} ESCAPE '!' OR tag_name LIKE #{pattern} ESCAPE '!')</if>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+    </sql>
+    <select id="findTag" resultMap="Tag" useCache="false" flushCache="true">
+        SELECT <include refid="TagColumns"/> FROM t_rule_subject_tag WHERE tag_code = #{code}
+        <choose><when test="lock == 'WRITE'">FOR UPDATE</when><when test="lock == 'SHARE'">FOR SHARE</when></choose>
+    </select>
+    <select id="listTags" resultMap="Tag">
+        SELECT <include refid="TagColumns"/> FROM t_rule_subject_tag <include refid="TagFilter"/>
+        ORDER BY tag_code, tag_id LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countTags" resultType="long">SELECT COUNT(*) FROM t_rule_subject_tag <include refid="TagFilter"/></select>
+    <insert id="insertTag">INSERT INTO t_rule_subject_tag (tag_id, tag_code, tag_name, description, status, version, created_by, updated_by, create_time, update_time) VALUES (#{tagId}, #{tagCode}, #{tagName}, #{description}, #{status}, #{version}, #{createdBy}, #{updatedBy}, #{createTime}, #{updateTime})</insert>
+    <update id="updateTag">
+        UPDATE t_rule_subject_tag SET tag_name = #{name}, description = #{description},
+        status = #{status}, version = version + 1, updated_by = #{actorId}, update_time = #{time}
+        WHERE tag_code = #{code} AND version = #{expectedVersion}
+    </update>
+</mapper>

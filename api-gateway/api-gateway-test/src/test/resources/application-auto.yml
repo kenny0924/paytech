@@ -1,0 +1,85 @@
+spring:
+  config:
+    # Optional, Git-ignored workstation credentials; loaded identically by Maven and IDE.
+    import: ${gateway.test.local-config:optional:classpath:application-auto.local.yml}
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      # Private fault tests select 'unavailable'; the active Spring profile remains exactly 'auto'.
+      password: ${gateway.test.redis.${gateway.test.redis.scenario:available}.password}
+      connect-timeout: ${gateway.test.redis.${gateway.test.redis.scenario:available}.connect-timeout}
+      timeout: ${gateway.test.redis.${gateway.test.redis.scenario:available}.timeout}
+  cloud:
+    discovery:
+      enabled: true
+    service-registry:
+      auto-registration:
+        enabled: false
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        enabled: false
+server:
+  # 仅自动测试即时关闭；避免 Boot 4.0.8 Netty 在测试上下文暂停时的 abort 等待竞态。
+  shutdown: immediate
+  address: 127.0.0.1
+  port: 0
+management:
+  server:
+    port: 0
+  endpoint:
+    health:
+      show-components: always
+      show-details: always
+gateway:
+  client:
+    console-origin: https://client-console.test
+    security:
+      issuer: https://customer.platform-support.local.test
+      audience: client-console
+  platform-credential:
+    service-id: ""
+    direct-uri-enabled: true
+    connect-timeout: PT0.5S
+    response-timeout: PT1S
+  platform-snapshot:
+    service-id: ""
+    direct-uri-enabled: true
+    connect-timeout: PT1S
+    response-timeout: PT1S
+    max-response-bytes: 1048576
+    refresh-interval: PT5S
+    # Cached contexts share protocol simulators; each test explicitly refreshes its snapshot.
+    scheduling-enabled: false
+  platform-jwks:
+    service-id: ""
+    direct-uri-enabled: true
+  operations:
+    console-origin: https://operations-console.test
+    response-timeout: PT1S
+    security:
+      issuer: https://platform-support.local.test
+      audience: operations-console
+    hmac:
+      access-log:
+        version: test-access-current
+        # Synthetic test-only material, not a deployed signing/logging key.
+        encoded-material: YWNjZXNzLWxvZy1zZWNyZXQtbWF0ZXJpYWwtMzJieXRlcyE=
+  test:
+    redis:
+      required-version: 8.2.1
+      precondition-timeout: 2s
+      available:
+        # Repository .env.example default: isolated Loopback-only test account, never a real environment credential.
+        password: ${PAYTECH_REDIS_PASSWORD:${gateway.test.redis.local-password:local-redis-change-me-2026}}
+        connect-timeout: 2s
+        timeout: 2s
+      unavailable:
+        password: private-unavailable-test
+        connect-timeout: 25ms
+        timeout: 25ms
+logging:
+  level:
+    reactor.netty.http.client.HttpClientConnect: ERROR

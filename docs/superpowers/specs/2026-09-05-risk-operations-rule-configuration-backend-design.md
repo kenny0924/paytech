@@ -27,6 +27,36 @@
 `risk-compliance-service` 内的类型化合同、规则聚合、持久化、冻结、TEST Candidate 和静态校验，
 不代表 Operations Web/BFF/Gateway/Platform 权限、Shadow、审批、激活、真实评估或部署已经完成。
 
+<a id="release-recovery-20260921"></a>
+
+## 2026-09-21 Candidate 请求幂等与业务恢复修订（用户确认）
+
+本修订落实[Gateway 请求幂等决定](../../../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)，只调整 `DecisionReleaseManagementApi` 的创建与校验。下文第 7、8、9.2、9.3、12 节涉及这两个操作的 Risk/BFF Key、请求 Hash、命令表 Claim/Complete 和同键回放描述保留为历史，由本节取代；其他入口的迁移状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。
+
+- Risk 私网 API 与 Operations BFF 不要求、校验、转发或保存这两个操作的 `Idempotency-Key`；HTTP 请求重放归 Gateway。本修订不声明 Gateway 已实现或启用。路由、Body、响应字段、权限和原内容 Hash 投影保持。
+- 创建没有独立业务命令身份。每一次到达 Owner 且通过资格核验的创建都生成一个新 `TEST/DRAFT/version=1` Candidate；发布编号仍在唯一 CHECKOUT_PREPARE 点锁内分配，根和初始审计同事务保存。
+- 一个 Candidate 仅有一轮静态校验。首次请求必须命中 `DRAFT/version=1` 且 `expectedVersion=1`。恢复身份是准确 `releaseId`、原 `expectedVersion=1` 和开始审计中的原操作者；版本或操作者不同返回原并发冲突错误，不开启第二轮检查。
+- 事务 A 锁发布根、核验冻结组成与完整审计，原子保存 `VALIDATING/version=2` 及开始事件。随后用只读 REPEATABLE_READ 装载闭包，在事务外执行固定八项纯检查。事务 B 重新锁同一发布根并核对恢复身份；已有完整结果时直接复用，否则一次保存八项检查及必要的 `REJECTED/version=3` 状态和审计。全通过仍保持 `VALIDATING/version=2`，不执行 Shadow。
+- A/B 之间中断时，原操作者可凭发布身份和原版本恢复 `VALIDATING + zero checks`。并发完成由发布行锁串行，后到者复用已有结果；1–7 条或超过八条检查、重复/未知检查、审计链或根状态不匹配均失败关闭。无需 Key、命令表或额外恢复表。
+- 新状态审计保持 `trigger_type=OPERATIONS_COMMAND`；不透明 `trigger_id` 为 `SHA-256(UTF-8("RISK_TEST_RELEASE:" + releaseId + ":" + stage))`，其中 stage 为 `CREATE` 或 `VALIDATE`，输出小写十六进制。恢复旧 Candidate 直接沿用已保存开始事件的触发标识，拒绝事件引用同一值；不重写历史审计，也不依赖旧 HTTP 请求记录。
+
+实现、编译、测试和部署证据只见[本轮台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#risk-release-management-refactor-20260921)。
+
+<a id="rule-set-idempotency-20260921"></a>
+
+## 2026-09-21 Rule Set 请求幂等迁移修订
+
+沿用已确认的 [Gateway 请求幂等决定](../../../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)，本节调整 `DecisionRuleSetManagementApi` 的保存新版本、冻结和整体删除。下文第 7、8、9.1、12 节及后续配置合同中这三个操作的 Risk/BFF Key、请求 Hash、命令表 Claim/Complete、成功命令优先回放规则保留为历史，由本节取代。Candidate 的恢复仍由前一节独立规定。
+
+- Risk 私网 API 与 Operations BFF 不要求、校验、转发或保存三个操作的 `Idempotency-Key`；HTTP 原响应重放归 Gateway。它们没有独立的业务命令身份，不创建等价的本地回放表或机制，也不声明 Gateway 已经启用。
+- 保存只接受现行 `operandFormat=VARIABLE_REFERENCE`。首版依靠点内永久规则集编码唯一性；追加版本必须匹配锁定当前版本的 `baseRuleSetVersionId + baseContentHash`。重复直调旧请求返回基准冲突；不能因新 HTTP Key 复用已删除编码。旧格式请求不再通过 Risk 命令表恢复成功响应，而按现行格式要求返回 `LEGACY_AUTHORING_NOT_SUPPORTED`。
+- 冻结仍仅允许准确当前 DRAFT、相同内容 Hash 及已批准的旧执行组成；统一变量、附加动作和无动作配置的禁止冻结规则不变。重复直调已冻结版本按当前状态返回原业务校验错误，不伪造一次新冻结。
+- 整体删除必须匹配根的 `expectedVersion`，并在持锁事务中确认全部历史版本均无活动发布引用。删除仅形成根的终态，保留内容、历史和编码；重复直调返回已删除冲突。新 `delete_trigger_id` 为 `SHA-256(UTF-8("RISK_RULE_SET_DELETE:" + ruleSetId))` 的小写十六进制，不包含 HTTP Key；既有删除证据不重写。
+- 三个操作继续共用准确 `decision:rule-set:<pointCode>:<ruleSetCode>` 资源，保留普通 RLock、有限等待/租约、点行锁→根→当前版本及可选旧协议锁顺序、数据库唯一性与 CAS。变量定义仍按编码排序锁定后验证。新版本六表、根指针与原草稿退役在同一短本地事务保存；冻结涉及规则版本、可选旧协议与管理根；删除只更新根。没有事务内远程步骤。
+- 原 API 路径、请求/响应 JSON 字段、错误码、配置容量边界和历史内容 Hash 继续适用。旧命令记录只作历史事实；本修订不授权清理表或历史数据。
+
+实现和验证范围见[本轮台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#risk-rule-set-management-refactor-20260921)。
+
 ## 1. 目标与边界
 
 ### 1.1 目标

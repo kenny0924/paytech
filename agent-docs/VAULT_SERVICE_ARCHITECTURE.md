@@ -1,6 +1,6 @@
 # Vault Service 架构与数据保护规范
 
-最后更新：2026-09-05
+最后更新：2026-09-21
 状态：未被当前 V1 取代的安全边界仍有效；其余内容是历史架构记录
 
 > **2026-09-04 URL 精简：** 当前业务路径仅为 `POST /vault/v1/records/protect` 和
@@ -13,6 +13,8 @@
 > 当前 V1 使用部署网络限制的私有 HTTP，不持有 X.509 应用证书，并接受必需的 `X-Caller-Service` Header 与静态 `caller_service + action + data_type + purpose` Allowlist 作为 MVP 信任假设。该 Header 可被内部调用方伪造，只能 best-effort 防止误用，不是 mTLS、Workload Identity 或其他强服务认证；当前三表模型也没有 Binding。公网 TLS、可信 Client IP 与 Java 服务私有 HTTP 的统一边界以 [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准。独立 `vault-service` 中的 Go Server 与 Java Client 是正式 V1 实现，结论见 [2026-09-05 决策](./decisions/2026-09-05-document-governance-and-conflict-resolution.md)，协议以 [OpenAPI](../vault-service/api/openapi/v1.yaml) 为准。当前 local/test 成熟度不证明生产 KMS、强服务身份、真实业务接入、部署或合规完成；精确状态只在 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 维护。
 >
 > 本文继续生效的部分是：Vault 只保护获批的可恢复非卡敏感值、永不拥有业务含义、内部专用且不经 Gateway/BFF/浏览器暴露、禁止任何服务直读 Vault 数据库、PAN/CVV/CVC/完整磁道/卡有效期/PIN/PIN Block 排除、KMS/Secrets/对象存储/Channel Tokenization 职责分离，以及其他不与当前三表设计冲突的安全边界。
+
+> **2026-09-21 Payment 账号专项例外：** 用户明确批准 CHANNEL_ACCOUNT_CONFIG_V1 托管渠道账号 JSON（含渠道 API 凭据）。具体 Owner Schema、REFERENCE Token、Caller/Purpose 与受控读取边界见[Channel 决定](./decisions/2026-09-21-channel-account-mid-capability-queries.md)及其实施合同。下文 Secrets Manager-only 规则仅在这个账号类型范围内被取代；卡数据、登录密码、根密钥及其他系统 Secret 的禁止边界不变。策略部署与真实环境接入状态只见当前台账。
 
 ## 1. 文档目的
 
@@ -111,7 +113,7 @@ Client & Contract 的 Party Identity 首期只注册两个 Vault Data Type：`EM
 | PIN、PIN Block | 不进入 Code-MoR |
 | 支付卡有效期 | 由 Channel Token 和 Channel 侧支付工具生命周期管理 |
 | Channel Card Token 的 Detokenization 能力 | 由 Channel 管理；Payment 只保存 Channel Token 及批准的最小卡片描述元数据，后者仍按内部分类保护 |
-| Provider/API/Webhook Secret、私钥、证书私钥、数据库密码 | Secrets Manager/KMS；业务库只保存 `secret_ref` |
+| Provider/API/Webhook Secret、私钥、证书私钥、数据库密码 | 默认 Secrets Manager/KMS；Payment 的 CHANNEL_ACCOUNT_CONFIG_V1 按顶部专项例外执行，其他业务库只保存 `secret_ref` |
 | 用户登录密码或可恢复密码 | 不进入 Vault、事件、日志或文件；内部 Operations 账号仅由 Platform Support 自有认证域保存批准的不可逆自适应校验值，Client/Partner/Consumer 的认证提供方仍待设计；任何可恢复密码均禁止保存 |
 | KMS 根密钥、KEK、HMAC Key 或明文 DEK | KMS/HSM；当前 Vault 数据库只保存非敏感 `kms_key_ref` 和 Wrapped DEK，不保存 Key Version 表/字段 |
 | KYC/KYB 文件、付款证据、合同文件和其他文件正文 | 加密对象存储；业务库保存 Platform `file_id + content_hash` |

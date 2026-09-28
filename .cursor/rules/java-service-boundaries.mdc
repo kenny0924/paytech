@@ -4,25 +4,31 @@ globs: **/*.java
 alwaysApply: false
 ---
 
-# Java 服务边界默认规则
+# Java 写接口与服务边界
 
-- 先读取 `agent-docs/DEVELOPMENT_CONVENTIONS.md` 和 `agent-docs/JAVA_PROJECT_STRUCTURE.md`；它们是完整权威。
-- `dataobject` 包中的数据库映射类型使用业务实体名，不加 `DO` 后缀；它可在 Owner 业务 JAR 内部使用，但不得进入 HTTP API 或跨 Maven 模块合同。跨模块业务接口使用 Owner 定义的 Domain/Application Command/Result。每个字段写说明约束而非复述字段名的中文 JavaDoc。
-- 闭合 DataObject 枚举列显式注册 Foundation `CodeEnumTypeHandler`，MySQL `DATETIME(6)` 到 `Instant` 使用 Foundation `InstantTypeHandler`；服务不得复制同义 Handler。
-- 纯依赖赋值使用 `final` 字段和 Lombok `@AllArgsConstructor`；构造器有校验、复制、派生或资源配置逻辑时显式编写。
-- API DTO 和 MQ 契约字段使用 `String` 枚举 Code；对外 Code 枚举定义放在 `*-api/api/enums`，内部枚举放在 `*-web/domain/enums`，均实现 `CodeEnum`。提供方 Web 复用 API 枚举，不复制同义目录；错误枚举按需实现 `CodeMessageEnum`。
-- 内部 `@HttpExchange` API 是 Method、Path、Header 和 DTO 的唯一契约；Controller 实现接口，不重复声明 MVC Mapping。
-- 应用 `context-path` 表达系统边界，API Path 表达业务能力；不要机械添加 `/internal`。
-- Processor 是按需的编排层：Controller 方法少于 10 条有效可执行语句、只委托一个 Domain Service（BFF 简单转发可为一个本地 Client Port），且没有业务判断、多步骤编排、写事务、幂等、补偿或跨系统协调时可直接委托；任一条件不满足则保留 Processor。
-- Controller 不得直接调用 Repository、Mapper、第三方 SDK 或持有事务；省略 Processor 的简单一致性读可由 Domain Service 持有只读事务。
-- Processor 使用应用语义的请求和结果，不依赖 HTTP 类型；协议上下文由 Web/Security 基础设施处理。
-- 用例按“基础字段验证 → 请求业务验证 → 上下文构建 → 本地事务业务处理 → 下游操作（如有）→ 响应构建”组织，阶段职责以 `DEVELOPMENT_CONVENTIONS.md` 第 5.2 节为准；没有职责的阶段不创建空实现。
-- Processor 负责顺序和事务边界，Service 负责业务规则与本地事实；上下文只承载后续所需数据，不把整条用例下沉到一个 Service，也不为拆方法新增层。
-- 补偿 Handler 直接编排自身任务，无须专用 Processor；业务规则仍委托 Domain Service，不直接访问 Repository/Mapper。
-- 事务内不允许调用外部服务，只能操作本服务数据库；约束完整调用链。下游查询在事务前完成，下游操作在提交后执行，结果落库另开短事务。
-- 生产代码和运行制品不包含测试替身、测试专用分支或模拟成功逻辑；获准暂缓的外部集成应显式不可用并标明具体 TODO。测试隔离完整规则见 `DEVELOPMENT_CONVENTIONS.md` 第 7 节。
-- 所有业务 Service 必须使用 `interface + *Impl`；所有 Domain Service 必须使用 `interface + *Impl`，只有实现类标注 `@Service`，调用方依赖接口。该规则不要求创建没有业务职责的空 Service；Processor、Controller 保持具体类，Repository 保持 `interface + *RepositoryImpl`。不为单个 Processor 预建抽象基类。
-- 有界内部查询默认完整返回 typed DTO；没有负载证据和批准契约时不增加 ETag、`304` 或内容 Hash。
-- `2xx` 返回接口的正常 typed DTO，`4xx/5xx` 使用 Foundation 的直接错误体；不要给所有成功响应增加通用包装。
-- 未预期异常直接交给共享 `GlobalExceptionHandler` 处理为 `500`；宽泛 `catch` 只允许承担恢复、清理/异步状态更新或明确的协议转换，并保留原始 Cause。
-- 从当前用例需要的最小类和配置开始；不要创建一行代理、空层或猜测性扩展点。共享技术能力只有在天然跨服务或已有至少两个稳定消费者时才进入职责单一的 Foundation JAR。
+- 完整权威为 `agent-docs/DEVELOPMENT_CONVENTIONS.md` 和 `agent-docs/JAVA_PROJECT_STRUCTURE.md`；2026-09-16 已按 Payment 基准统一，旧示例冲突时按更新后的主题 Owner 执行。
+- 接口实现前实际读取上述规范及 `agent-docs/examples/WRITE_API_EXAMPLE.md`，简述本次 Processor/Context、原子保存和事务外步骤；交付前按示例第 11 节自查并报告证据。不适用项说明原因，不以旧源码覆盖规范，不增加审批。
+- 每个同步写接口由所属业务模块 `service/processor` 的具体 Processor 处理；简单本地查询可以直接委托 Service，不建空 Processor。
+- Controller 只转换协议并委托；不查询 Repository/Mapper，不持有事务，不调用第三方 SDK。HttpExchange API 是唯一协议来源。
+- DB（数据库映射/DataObject）、Context、RequestBody、ResponseBody 使用普通 Java class，禁止 record，包含只读 DB 对象；字段可变性按业务需要决定。完整规则见开发规范第 2 节。
+- API Body 使用独立 class，字段首行简短含义，细节用 `<li>`；Hibernate Validator 处理基础字段约束，不逐层重复。
+- Processor 顺序：基础校验 → 请求方归属与原提交比较 → 新请求业务验证和完整 Context → 本地保存 → 提交后推进 → 最小响应。重放提前返回，不执行新建资格判断或再次推进。
+- Processor 可直接查询所属模块 Repository；不调用 Mapper、逐表写入或访问其他模块仓储。validate 只含输入相关且首次/重放通用的判断。
+- Context 直接持有本模块 DataObject，一次构造后贯穿请求；不存 HTTP 对象、Bean、回调、通用 Map 或重复 ID/执行标志，不进入 Repository/Mapper。
+- Context 可封装仅依赖已加载数据的纯判断、组合条件和计算，如 canCancelLocally()；不查询、调用外部依赖、开事务或推进流程，不缓存派生判断，不替代写入时的 SQL/CAS 保护；完整规则见开发规范第 5.2 节。
+- Service 超过三个业务参数使用具名 Context；构造器、Repository、Mapper 不套用该数量规则。不机械创建同义 Input/View/Snapshot。
+- 多表组合查询结果使用具名 View；单表查询、写接口及普通内部传递一般不增加 View。API ResponseBody、跨模块领域结果和 DataObject Owner 边界保持，详见开发规范第 2.2 节。
+- Service/Domain Service 接收已验证 Context，保留本地业务与保存；不重复查询关系，不调用其他 Service、Processor 或外部依赖。调用组装由 Processor 完成。
+- Processor 入口不能处于调用方已有事务。单 Service 可内部开启完整保存事务；多 Service 原子保存由 Processor 开一个 TransactionTemplate，参与者不独立提交。禁止挂起事务或切换线程绕过。
+- 事务内仅操作本系统数据库；外部查询在事务前、外部操作在提交后。HTTP/RPC、Redis、MQ、KMS 等间接调用也受限制。
+- 跨模块纯本地能力调用 Owner Service；需外部访问时在事务外调用公开 Processor.process。参数是 Owner 领域模型，不传调用方整套 Context/持久化对象；保持单向无环。
+- 单资源写协调复用 AbstractLockProcessor，通过 LockCommand 选择 LOCK/TRY_LOCK；无锁使用 AbstractProcessor。既有 @ResourceLock 合同保留，不叠加、不自动迁移互斥域。
+- 一个 Repository 对应一张表，SQL 在 Mapper XML；写入时保护状态、版本、唯一性及额度，行数不符就失败，成功后直接修改传入原 DataObject，不用 toBuilder 重建或替换 Context 引用。更新对象使用可修改 class，无其他返回语义时返回 void；回滚后丢弃 Context，不能以 Redis 锁替代数据库保护。
+- HTTP Idempotency-Key 统一由 Gateway 处理，不限入口类型；业务系统不写专用 Filter/AOP/Adapter，不新增 paytech-command-idempotency 依赖、启用或调用。存量仅待迁移，不能作为新接口例外。业务唯一键、原记录比较、状态机、CAS 与必要恢复保持；完整规则见开发规范第 5.4 节。
+- 所有业务 Service、Domain Service 使用 `interface + *Impl`；Repository 保持 `interface + *RepositoryImpl`。Processor、Controller 保持具体类；不创建没有业务职责的空 Service。
+- DataObject 不带 DO 后缀，只在 Owner JAR 内使用。API/MQ 枚举字段用 String，稳定 Code 在 api/enums，内部枚举在所属模块 core/enums；显式注册公共 TypeHandler。
+- 复用公共异常、HTTP Problem、请求日志、分页和类型处理；不增加通用成功外壳，不用宽泛 catch 同义包装异常。
+- 自有配置按模块用 ConfigurationProperties，经构造器注入；公共配置复用框架类，不分散使用 @Value，不预建空配置。
+- 默认构造器注入和 final 字段；纯赋值可用 Lombok。方法中文 JavaDoc，辅助方法包级可见，阶段注释简短。
+- Handler 保持独立入口，可组合本地 Service 与事务外 Integration，无须套专用 Processor；业务入口测试及隔离按 UNIT_TEST_GUIDE。
+- Mock/TODO、跳过测试等只能依据当前任务授权，不推广为生产默认；文档更新不证明代码已迁移或通过验证。

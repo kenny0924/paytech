@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileLifecycleMapper">
+ <sql id="FileColumnsQuery">
+ SELECT file_id,storage_provider AS provider,storage_container_ref AS container,storage_object_ref AS object_ref,
+ object_version,content_hash,size_bytes,mime_type,storage_encryption_key_ref AS encryption_key_ref,scan_policy_id AS policy_id,scan_status,object_status
+ FROM t_file_object WHERE file_id=#{id}
+ </sql>
+ <select id="readFile" useCache="false" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileObject">
+ <include refid="FileColumnsQuery"/>
+ </select>
+ <select id="readUploadId" useCache="false" resultType="java.lang.Long">
+ SELECT u.upload_id FROM t_file_object f JOIN t_file_upload u ON u.upload_id=f.upload_id
+ WHERE f.file_id=#{fileId} AND f.creation_source='UPLOAD' AND u.uploader_id=#{accountId} AND u.status='COMPLETED'
+ AND u.owner_system='CCT' AND u.owner_type='CLIENT_APPLICATION_SUBJECT'
+ AND f.storage_provider=u.storage_provider AND f.storage_container_ref=u.storage_container_ref
+ AND f.storage_object_ref=u.storage_object_ref AND f.scan_policy_id=u.scan_policy_id
+ AND EXISTS(SELECT 1 FROM t_file_owner_ref o WHERE o.file_id=f.file_id AND o.owner_system=u.owner_system
+ AND o.owner_type=u.owner_type AND o.owner_ref_id=u.owner_ref_id AND o.purpose_code='CLIENT_ONBOARDING_MATERIAL')
+ </select>
+ <select id="lockUpload" useCache="false" flushCache="true" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload">
+ SELECT upload_id,tenant_id,uploader_id,owner_ref_id,display_name,expected_size,expected_mime,storage_provider,
+ storage_container_ref AS container_ref,storage_object_ref AS object_ref,scan_policy_id,expires_time AS expires_at,status
+ FROM t_file_upload WHERE upload_id=#{id} AND owner_system='CCT' AND owner_type='CLIENT_APPLICATION_SUBJECT' FOR UPDATE
+ </select>
+ <select id="lockFile" useCache="false" flushCache="true" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileObject">
+ <include refid="FileColumnsQuery"/> FOR UPDATE
+ </select>
+ <select id="requirements" useCache="false" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanRequirement">
+ SELECT r.requirement_id AS id,r.scanner_code,r.scan_type AS type,r.minimum_scanner_version AS minimum_version,
+ r.accepted_result_codes AS accepted_codes,s.result_code
+ FROM t_file_scan_requirement r JOIN t_file_scan_policy p ON p.policy_id=r.policy_id
+ LEFT JOIN t_file_scan_result s ON s.file_id=#{fileId} AND s.scan_requirement_id=r.requirement_id AND s.scan_policy_id=r.policy_id AND s.attempt_no=1
+ WHERE r.policy_id=#{policyId} ORDER BY r.requirement_no
+ </select>
+ <insert id="insertFile">
+ INSERT INTO t_file_object(file_id,creation_source,upload_id,storage_provider,storage_container_ref,storage_object_ref,object_version,content_hash,size_bytes,mime_type,storage_encryption_key_ref,classification,scan_policy_id,scan_status,object_status,version,create_time,update_time)
+ VALUES(#{id},'UPLOAD',#{upload.uploadId},#{upload.storageProvider},#{upload.containerRef},#{upload.objectRef},#{proof.objectVersion},#{proof.contentHash},#{proof.sizeBytes},#{proof.mimeType},#{proof.encryptionKeyRef},'RESTRICTED',#{upload.scanPolicyId},'PENDING_SCAN','ACTIVE',1,#{now},#{now})
+ </insert>
+ <insert id="insertOwner">
+ INSERT INTO t_file_owner_ref(owner_ref_row_id,file_id,owner_system,owner_type,owner_ref_id,purpose_code,create_time)
+ VALUES(#{id},#{fileId},'CCT','CLIENT_APPLICATION_SUBJECT',#{owner},'CLIENT_ONBOARDING_MATERIAL',#{now})
+ </insert>
+ <update id="completeUpload">
+ UPDATE t_file_upload SET status='COMPLETED',version=version+1,update_time=#{now}
+ WHERE upload_id=#{id} AND status IN ('CREATED','UPLOADING') AND expires_time &gt; #{now}
+ </update>
+ <update id="scanState">
+ UPDATE t_file_object SET scan_status=#{status},available_time=CASE WHEN #{status}='AVAILABLE' THEN #{now} ELSE NULL END,version=version+1,update_time=#{now} WHERE file_id=#{id}
+ </update>
+ <insert id="insertResult">
+ INSERT INTO t_file_scan_result(scan_result_id,file_id,scan_requirement_id,scan_policy_id,attempt_no,scanner_runtime_version,result_code,scanned_time,create_time)
+ VALUES(#{id},#{result.fileId},#{result.requirementId},#{policyId},#{result.attemptNo},#{result.runtimeVersion},#{result.resultCode},#{result.scannedAt},#{now})
+ </insert>
+</mapper>

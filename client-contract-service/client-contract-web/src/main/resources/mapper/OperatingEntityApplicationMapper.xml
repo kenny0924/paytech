@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.contract.core.dal.mapper.OperatingEntityApplicationMapper">
+    <resultMap id="OperatingEntityApplication" type="com.paytech.client.contract.core.dal.dataobject.CheckoutRecords$OperatingEntityApplication">
+        <constructor>
+            <arg column="application_id" javaType="java.lang.Long"/>
+            <arg column="entity_no" javaType="java.lang.String"/>
+            <arg column="status" javaType="com.paytech.client.contract.domain.enums.OperatingEntityApplicationStatus"/>
+            <arg column="approved_source_relation_id" javaType="java.lang.Long"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="OperatingEntityApplication">
+        SELECT application_id, entity_no, status, approved_source_relation_id
+        FROM t_operating_entity_application
+        WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})
+        ORDER BY application_id
+    </select>
+</mapper>

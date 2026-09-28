@@ -1,0 +1,170 @@
+{
+  "status": "PROPOSED_NOT_APPLIED",
+  "routes": [
+    {
+      "api": "A01",
+      "method": "GET",
+      "ownerPath": "/channel-configuration/v1/channels",
+      "bffPath": "/channel-api-admin/v1/channels",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels",
+      "routeCode": "operations-channel-channel-list",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_READ",
+      "bodyLimitBytes": 0,
+      "queryParameters": [
+        "page",
+        "size",
+        "channelCode"
+      ]
+    },
+    {
+      "api": "A02",
+      "method": "GET",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/catalog",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/catalog",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/catalog",
+      "routeCode": "operations-channel-catalog",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_READ",
+      "bodyLimitBytes": 0,
+      "queryParameters": []
+    },
+    {
+      "api": "A03",
+      "method": "GET",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/apis",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/apis",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/apis",
+      "routeCode": "operations-channel-api-list",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_READ",
+      "bodyLimitBytes": 0,
+      "queryParameters": [
+        "page",
+        "size",
+        "paymentMethodCode",
+        "apiCode"
+      ]
+    },
+    {
+      "api": "A04",
+      "method": "GET",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/apis/{apiId}",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/apis/{apiId}",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/apis/{apiId}",
+      "routeCode": "operations-channel-api-detail",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_READ",
+      "bodyLimitBytes": 0,
+      "queryParameters": []
+    },
+    {
+      "api": "A05",
+      "method": "POST",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/apis",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/apis",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/apis",
+      "routeCode": "operations-channel-api-create",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_MANAGE",
+      "bodyLimitBytes": 65536,
+      "queryParameters": []
+    },
+    {
+      "api": "A06",
+      "method": "PUT",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/apis/{apiId}",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/apis/{apiId}",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/apis/{apiId}",
+      "routeCode": "operations-channel-api-update",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_MANAGE",
+      "bodyLimitBytes": 65536,
+      "queryParameters": []
+    },
+    {
+      "api": "A07",
+      "method": "POST",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/apis/{apiId}/delete",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/apis/{apiId}/delete",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/apis/{apiId}/delete",
+      "routeCode": "operations-channel-api-delete",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_MANAGE",
+      "bodyLimitBytes": 4096,
+      "queryParameters": []
+    },
+    {
+      "api": "A08",
+      "method": "GET",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/schemes",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/schemes",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/schemes",
+      "routeCode": "operations-channel-scheme-list",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_READ",
+      "bodyLimitBytes": 0,
+      "queryParameters": [
+        "page",
+        "size",
+        "schemeCode"
+      ]
+    },
+    {
+      "api": "A09",
+      "method": "GET",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/schemes/{schemeId}",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/schemes/{schemeId}",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/schemes/{schemeId}",
+      "routeCode": "operations-channel-scheme-detail",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_READ",
+      "bodyLimitBytes": 0,
+      "queryParameters": []
+    },
+    {
+      "api": "A10",
+      "method": "POST",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/schemes",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/schemes",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/schemes",
+      "routeCode": "operations-channel-scheme-create",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_MANAGE",
+      "bodyLimitBytes": 65536,
+      "queryParameters": []
+    },
+    {
+      "api": "A11",
+      "method": "PUT",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/schemes/{schemeId}",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/schemes/{schemeId}",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/schemes/{schemeId}",
+      "routeCode": "operations-channel-scheme-update",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_MANAGE",
+      "bodyLimitBytes": 65536,
+      "queryParameters": []
+    },
+    {
+      "api": "A12",
+      "method": "POST",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/schemes/{schemeId}/delete",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/schemes/{schemeId}/delete",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/schemes/{schemeId}/delete",
+      "routeCode": "operations-channel-scheme-delete",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_MANAGE",
+      "bodyLimitBytes": 4096,
+      "queryParameters": []
+    },
+    {
+      "api": "A13",
+      "method": "POST",
+      "ownerPath": "/channel-configuration/v1/channels/{channelCode}/validate",
+      "bffPath": "/channel-api-admin/v1/channels/{channelCode}/validate",
+      "publicPath": "/api/operations/channel-api-admin/v1/channels/{channelCode}/validate",
+      "routeCode": "operations-channel-validate",
+      "permissionCode": "PAYMENT_CHANNEL_CONFIG_MANAGE",
+      "bodyLimitBytes": 65536,
+      "queryParameters": []
+    }
+  ],
+  "insertCounts": {
+    "t_permission": 2,
+    "t_console_resource": 2,
+    "t_gateway_route": 13,
+    "t_gateway_route_header": 40,
+    "t_gateway_route_query_param": 10,
+    "t_gateway_guard_rule": 78
+  },
+  "totalInsertRows": 145
+}

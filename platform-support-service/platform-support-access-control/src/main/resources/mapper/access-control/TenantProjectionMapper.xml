@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.TenantProjectionMapper">
+    <sql id="FileReadCandidates">
+        SELECT t.tenant_id,m.member_id,t.owner_ref_id AS client_id
+        FROM t_access_tenant t JOIN t_tenant_member m ON m.tenant_id=t.tenant_id
+        JOIN t_tenant_member_role g ON g.tenant_id=t.tenant_id AND g.tenant_member_id=m.member_id
+        JOIN t_role r ON r.role_id=g.role_id AND r.tenant_id=t.tenant_id
+        WHERE m.account_id=#{accountId} AND m.member_type='OWNER' AND m.status='ACTIVE'
+            AND t.tenant_type='CLIENT' AND t.tenant_id=#{tenantId} AND t.security_status='ACTIVE'
+            AND t.source_version &gt;= 1 AND REGEXP_LIKE(t.source_payload_hash,'^[0-9a-f]{64}$','c')
+            AND g.status='ACTIVE' AND g.role_scope_key=CAST(t.tenant_id AS CHAR)
+            AND g.effective_from &lt;= #{now} AND (g.effective_to IS NULL OR g.effective_to &gt; #{now})
+            AND r.tenant_scope='TENANT' AND r.scope_key=g.role_scope_key AND r.status='ACTIVE'
+            AND r.system_role=1 AND ((t.owner_status='PENDING' AND r.role_code='TENANT_ONBOARDING_OWNER')
+                OR (t.owner_status='ACTIVE' AND r.role_code='TENANT_OWNER'))
+        ORDER BY t.tenant_id,m.member_id
+    </sql>
+    <select id="fileReadCandidates" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OnboardingTenantCandidate">
+        <include refid="FileReadCandidates"/>
+    </select>
+    <select id="fileAccount" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionAccount">
+        SELECT account_id,realm,account_type,status FROM t_user_account WHERE account_id=#{id}
+    </select>
+    <select id="lockFileReadCandidates" flushCache="true" useCache="false"
+        resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OnboardingTenantCandidate">
+        <include refid="FileReadCandidates"/> FOR UPDATE
+    </select>
+    <select id="lockUploadCandidates" flushCache="true" useCache="false"
+        resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OnboardingTenantCandidate">
+        SELECT t.tenant_id,m.member_id,t.owner_ref_id AS client_id
+        FROM t_access_tenant t JOIN t_tenant_member m ON m.tenant_id=t.tenant_id
+        JOIN t_tenant_member_role g ON g.tenant_id=t.tenant_id AND g.tenant_member_id=m.member_id
+        JOIN t_role r ON r.role_id=g.role_id AND r.tenant_id=t.tenant_id
+        WHERE m.account_id=#{accountId} AND m.member_type='OWNER' AND m.status='ACTIVE'
+            AND t.tenant_type='CLIENT' AND t.owner_status='PENDING' AND t.security_status='ACTIVE'
+            AND t.source_version &gt;= 1 AND REGEXP_LIKE(t.source_payload_hash,'^[0-9a-f]{64}$','c')
+            AND g.status='ACTIVE' AND g.role_scope_key=CAST(t.tenant_id AS CHAR)
+            AND g.effective_from &lt;= #{now} AND (g.effective_to IS NULL OR g.effective_to &gt; #{now})
+            AND r.tenant_scope='TENANT' AND r.scope_key=g.role_scope_key AND r.status='ACTIVE'
+            AND r.system_role=1 AND r.role_code='TENANT_ONBOARDING_OWNER'
+        ORDER BY t.tenant_id,m.member_id FOR UPDATE
+    </select>
+    <sql id="ProjectionColumns">tenant_id, owner_ref_id, owner_status, source_version, source_payload_hash, version</sql>
+    <select id="lockAccount" flushCache="true" useCache="false"
+        resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionAccount">
+        SELECT account_id, realm, account_type, status FROM t_user_account WHERE account_id=#{id} FOR UPDATE
+    </select>
+    <select id="find" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjection">
+        SELECT <include refid="ProjectionColumns"/> FROM t_access_tenant
+        WHERE tenant_type='CLIENT' AND owner_ref_id=#{ownerRefId}
+    </select>
+    <select id="lockTenant" flushCache="true" useCache="false"
+        resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjection">
+        SELECT <include refid="ProjectionColumns"/> FROM t_access_tenant
+        WHERE tenant_type='CLIENT' AND owner_ref_id=#{ownerRefId} FOR UPDATE
+    </select>
+    <select id="owners" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionMember">
+        SELECT member_id, account_id FROM t_tenant_member WHERE tenant_id=#{tenantId} AND member_type='OWNER'
+        ORDER BY member_id
+    </select>
+    <insert id="insertTenant">
+        INSERT INTO t_access_tenant(tenant_id,tenant_type,owner_ref_id,tenant_name,owner_status,
+            source_version,source_payload_hash,security_status,version,create_time,update_time)
+        VALUES(#{id},'CLIENT',#{ownerRefId},CONCAT('Client ',#{ownerRefId}),'PENDING',1,#{hash},'ACTIVE',1,#{now},#{now})
+    </insert>
+    <insert id="insertMember">
+        INSERT INTO t_tenant_member(member_id,tenant_id,account_id,member_type,status,version,create_time,update_time)
+        VALUES(#{id},#{tenantId},#{accountId},'OWNER','ACTIVE',1,#{now},#{now})
+    </insert>
+    <insert id="insertRole">
+        INSERT INTO t_role(role_id,tenant_scope,tenant_id,scope_key,role_code,role_name,status,system_role,version,create_time,update_time)
+        VALUES(#{id},'TENANT',#{tenantId},CAST(#{tenantId} AS CHAR),#{code},
+            CASE WHEN #{code}='TENANT_ONBOARDING_OWNER' THEN '入驻申请负责人' ELSE '客户工作区负责人' END,
+            'ACTIVE',1,1,#{now},#{now})
+    </insert>
+    <insert id="insertGrant">
+        INSERT INTO t_tenant_member_role(tenant_member_role_id,tenant_member_id,tenant_id,role_id,role_scope_key,
+            effective_from,granted_by,status,version,create_time,update_time)
+        VALUES(#{id},#{memberId},#{tenantId},#{roleId},CAST(#{tenantId} AS CHAR),#{now},#{memberId},'ACTIVE',1,#{now},#{now})
+    </insert>
+    <select id="ownerRole" resultType="java.lang.Long">
+        SELECT role_id FROM t_role WHERE tenant_scope='TENANT' AND tenant_id=#{tenantId}
+            AND scope_key=CAST(#{tenantId} AS CHAR) AND role_code='TENANT_OWNER' AND system_role=1
+    </select>
+    <update id="revokeOnboarding">
+        UPDATE t_tenant_member_role g JOIN t_role r ON g.role_id=r.role_id
+        SET g.status='REVOKED',g.effective_to=#{now},g.version=g.version+1,g.update_time=#{now}
+        WHERE g.tenant_id=#{tenantId} AND g.tenant_member_id=#{memberId} AND g.status='ACTIVE'
+            AND r.tenant_scope='TENANT' AND r.tenant_id=#{tenantId} AND r.scope_key=g.role_scope_key
+            AND r.role_code='TENANT_ONBOARDING_OWNER' AND r.system_role=1
+    </update>
+    <update id="updateStatus">
+        UPDATE t_access_tenant SET owner_status=#{status},source_version=#{sourceVersion},source_payload_hash=#{hash},
+            version=version+1,update_time=#{now}
+        WHERE tenant_id=#{id} AND version=#{version} AND source_version=#{previousSourceVersion}
+    </update>
+</mapper>

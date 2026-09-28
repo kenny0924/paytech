@@ -72,33 +72,6 @@
       }
     },
     {
-      "id": "EX-I03",
-      "method": "POST",
-      "path": "/payment-execution/v1/intent-creations/close",
-      "headers": {
-        "Idempotency-Key": "example:ex-i03"
-      },
-      "body": {
-        "clientId": "101",
-        "sourceType": "COMMERCE_ORDER",
-        "sourceId": "201"
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "Cache-Control": "no-store"
-        },
-        "body": {
-          "clientId": "101",
-          "observedAt": "2026-09-14T09:00:00Z",
-          "sourceType": "COMMERCE_ORDER",
-          "sourceId": "201",
-          "closedAt": "2026-09-14T09:00:00Z",
-          "intentId": "601"
-        }
-      }
-    },
-    {
       "id": "EX-I04",
       "method": "POST",
       "path": "/payment-execution/v1/intents/601/terminate",

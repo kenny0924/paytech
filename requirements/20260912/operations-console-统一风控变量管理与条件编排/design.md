@@ -1,5 +1,7 @@
 # 统一变量与条件编排方案
 
+> **2026-09-21 Rule Set 幂等迁移：** 本文中规则集保存、冻结、删除的本地 Key/Claim/成功回放条款由[后端窄范围修订](../../../docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md#rule-set-idempotency-20260921)取代；业务基准、变量锁、内容格式、历史读取和 Hash 不变。当前实现与验证只见台账。
+
 阶段 3 已确认方案；2026-09-12 用户确认后进入阶段 4。方案确认不代表代码、模型或环境已变更。确认记录见 [delivery.md](./delivery.md)，范围见 [requirement.md](./requirement.md)。
 
 **一句话规模：改 Risk / Operations BFF / Web 3 个应用，新增 9 个业务接口（Risk 与 BFF 各 9 个边界端点），修改 9 个既有接口合同并复核 3 个执行门禁；新增 2 表 / 41 字段，4 张旧表受影响（新增 5 字段、4 列注释调整），新增 11 个索引；Risk 插入 26 行、Platform 插入 113 行并更新 1 个角色版本；Pencil 提供 7 个页面状态。Gateway / Foundation 无代码改动。**

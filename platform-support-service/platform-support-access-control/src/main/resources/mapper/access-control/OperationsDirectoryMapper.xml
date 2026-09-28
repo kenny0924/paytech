@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.OperationsDirectoryMapper">
+
+    <select id="managementAuthorizationTime" resultType="java.time.Instant" flushCache="true" useCache="false">
+        SELECT UTC_TIMESTAMP(6)
+    </select>
+
+    <select id="lockRole" resultType="java.lang.Long" flushCache="true" useCache="false">
+        SELECT r.role_id FROM t_role r WHERE r.role_id=#{id}
+        AND <include refid="RoleScope"/>
+        <choose>
+            <when test="exclusive">FOR UPDATE</when>
+            <otherwise>FOR SHARE</otherwise>
+        </choose>
+    </select>
+
+    <sql id="EffectiveRoleGrant">
+        g.status='ACTIVE'
+        AND g.effective_from&lt;=UTC_TIMESTAMP(6)
+        AND (g.effective_to IS NULL OR g.effective_to&gt;UTC_TIMESTAMP(6))
+        AND r.status='ACTIVE'
+        AND ((r.tenant_scope='PLATFORM' AND r.tenant_id IS NULL AND r.scope_key='PLATFORM')
+            OR (r.tenant_scope='TENANT' AND r.tenant_id=g.tenant_id AND r.scope_key=CAST(g.tenant_id AS CHAR)))
+        AND EXISTS (
+            SELECT 1 FROM t_tenant_member m
+            JOIN t_access_tenant t ON t.tenant_id=m.tenant_id
+            JOIN t_user_account a ON a.account_id=m.account_id
+            WHERE m.member_id=g.tenant_member_id AND m.tenant_id=g.tenant_id
+              AND m.status='ACTIVE' AND t.tenant_type='INTERNAL' AND t.owner_ref_id=1
+              AND t.owner_status='ACTIVE' AND t.security_status='ACTIVE'
+              AND a.realm='OPERATIONS' AND a.account_type='HUMAN' AND a.status&lt;&gt;'CLOSED'
+        )
+    </sql>
+
+    <sql id="EffectiveRoleGrantAt">
+        g.status='ACTIVE'
+        AND g.effective_from&lt;=#{effectiveAt}
+        AND (g.effective_to IS NULL OR g.effective_to&gt;#{effectiveAt})
+        AND r.status='ACTIVE'
+        AND ((r.tenant_scope='PLATFORM' AND r.tenant_id IS NULL AND r.scope_key='PLATFORM')
+            OR (r.tenant_scope='TENANT' AND r.tenant_id=g.tenant_id AND r.scope_key=CAST(g.tenant_id AS CHAR)))
+        AND EXISTS (
+            SELECT 1 FROM t_tenant_member m
+            JOIN t_access_tenant t ON t.tenant_id=m.tenant_id
+            JOIN t_user_account a ON a.account_id=m.account_id
+            WHERE m.member_id=g.tenant_member_id AND m.tenant_id=g.tenant_id
+              AND m.status='ACTIVE' AND t.tenant_type='INTERNAL' AND t.owner_ref_id=1
+              AND t.owner_status='ACTIVE' AND t.security_status='ACTIVE'
+              AND a.realm='OPERATIONS' AND a.account_type='HUMAN' AND a.status&lt;&gt;'CLOSED'
+        )
+    </sql>
+
+    <sql id="OperationsPermission">
+        (EXISTS (
+            SELECT 1 FROM t_gateway_route gr
+            JOIN t_gateway_target gt ON gt.target_id=gr.target_id AND gt.channel=gr.channel AND gt.status='ACTIVE'
+            WHERE gr.permission_id=p.permission_id
+              AND gr.channel='OPERATIONS'
+              AND gr.status='ACTIVE'
+              AND gr.authorization_mode='HUMAN_PERMISSION'
+        ) OR EXISTS (
+            SELECT 1 FROM t_console_resource cr
+            WHERE cr.permission_id=p.permission_id
+              AND cr.channel='OPERATIONS'
+              AND cr.status='ACTIVE'
+        ))
+    </sql>
+
+    <sql id="RoleScope">
+        ((r.tenant_scope='TENANT' AND r.scope_key=CAST(r.tenant_id AS CHAR) AND r.tenant_id=(
+            SELECT tenant_id FROM t_access_tenant
+            WHERE tenant_type='INTERNAL' AND owner_ref_id=1
+        )) OR (r.tenant_scope='PLATFORM' AND r.tenant_id IS NULL AND r.scope_key='PLATFORM' AND r.system_role=1
+            AND r.role_code IN ('PLATFORM_ADMIN', 'OPERATIONS_VIEWER')))
+    </sql>
+
+    <sql id="AvailableRoles">
+        FROM t_role r
+        WHERE r.status='ACTIVE'
+        AND <include refid="RoleScope"/>
+    </sql>
+
+    <sql id="RoleColumns">
+        role_id id, role_code code, role_name name, system_role systemRole, version,
+        (tenant_scope='PLATFORM') platformRole, status
+    </sql>
+
+    <sql id="HumanAccountScope">
+        a.realm='OPERATIONS'
+        AND a.account_type='HUMAN'
+        AND a.status&lt;&gt;'CLOSED'
+    </sql>
+
+    <select id="accounts"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsAccount">
+        SELECT <include refid="com.paytech.platform.support.accesscontrol.core.dal.mapper.OperationsIdentityMapper.AccountColumns"/>
+        FROM t_user_account a
+        WHERE <include refid="HumanAccountScope"/>
+        ORDER BY a.account_id
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="accountSummaries"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsAccountSummary">
+        SELECT a.account_id accountId, a.email_masked emailMasked, a.status, a.locked_until lockedUntil,
+            a.version accountVersion, m.member_id memberId, m.version memberVersion, pc.force_change_flag forceChange
+        FROM t_user_account a
+        LEFT JOIN t_tenant_member m ON m.account_id=a.account_id
+            AND m.tenant_id=(SELECT tenant_id FROM t_access_tenant WHERE tenant_type='INTERNAL' AND owner_ref_id=1)
+        LEFT JOIN t_password_credential pc ON pc.account_id=a.account_id AND pc.algorithm_code='ARGON2ID'
+        WHERE <include refid="HumanAccountScope"/>
+        ORDER BY a.account_id
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="accountCount"
+            resultType="_long">
+        SELECT COUNT(*)
+        FROM t_user_account a
+        WHERE <include refid="HumanAccountScope"/>
+    </select>
+
+    <select id="roles"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsRole">
+        SELECT <include refid="RoleColumns"/>
+        <include refid="AvailableRoles"/>
+        ORDER BY role_code, role_id
+    </select>
+
+    <select id="pagedRoles"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsRole">
+        SELECT <include refid="RoleColumns"/>
+        <include refid="AvailableRoles"/>
+        ORDER BY role_code, role_id
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="roleCount"
+            resultType="_long">
+        SELECT COUNT(*)
+        <include refid="AvailableRoles"/>
+    </select>
+
+    <select id="roleEmployeeCounts"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsRoleEmployeeCount">
+        SELECT r.role_id roleId, COUNT(DISTINCT a.account_id) employeeCount
+        FROM t_role r
+        LEFT JOIN t_tenant_member_role g ON g.role_id=r.role_id
+        AND g.role_scope_key=r.scope_key
+        AND g.status='ACTIVE'
+        AND (g.effective_to IS NULL OR g.effective_to &gt; UTC_TIMESTAMP(6))
+        LEFT JOIN t_tenant_member m ON m.member_id=g.tenant_member_id
+        AND m.tenant_id=g.tenant_id
+        AND m.status IN ('ACTIVE', 'SUSPENDED')
+        AND m.tenant_id=(
+            SELECT tenant_id FROM t_access_tenant
+            WHERE tenant_type='INTERNAL' AND owner_ref_id=1
+        )
+        LEFT JOIN t_user_account a ON a.account_id=m.account_id
+        AND a.realm='OPERATIONS'
+        AND a.account_type='HUMAN'
+        WHERE r.status='ACTIVE'
+        AND <include refid="RoleScope"/>
+        AND r.role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+        GROUP BY r.role_id
+        ORDER BY r.role_id
+    </select>
+
+    <select id="memberRoles" parameterType="_long"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsRole">
+        SELECT r.role_id id, r.role_code code, r.role_name name, r.system_role systemRole, r.version,
+        (r.tenant_scope='PLATFORM') platformRole, r.status
+        FROM t_tenant_member_role g
+        JOIN t_role r ON r.role_id=g.role_id
+        AND r.scope_key=g.role_scope_key
+        WHERE g.tenant_member_id=#{memberId}
+        AND <include refid="EffectiveRoleGrant"/>
+        ORDER BY r.role_code
+    </select>
+
+    <select id="memberRolesAt"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsRole">
+        SELECT r.role_id id, r.role_code code, r.role_name name, r.system_role systemRole, r.version,
+        (r.tenant_scope='PLATFORM') platformRole, r.status
+        FROM t_tenant_member_role g
+        JOIN t_role r ON r.role_id=g.role_id
+        AND r.scope_key=g.role_scope_key
+        WHERE g.tenant_member_id=#{memberId}
+        AND <include refid="EffectiveRoleGrantAt"/>
+        ORDER BY r.role_code
+    </select>
+
+    <select id="memberRolesForMembers"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsMemberRole">
+        SELECT g.tenant_member_id memberId, r.role_id roleId, r.role_code code, r.role_name name,
+            r.system_role systemRole, r.version, (r.tenant_scope='PLATFORM') platformRole
+        FROM t_tenant_member_role g
+        JOIN t_role r ON r.role_id=g.role_id AND r.scope_key=g.role_scope_key
+        WHERE g.tenant_member_id IN
+        <foreach collection="memberIds" item="memberId" open="(" separator="," close=")">
+            #{memberId}
+        </foreach>
+        AND <include refid="EffectiveRoleGrant"/>
+        ORDER BY g.tenant_member_id, r.role_code, r.role_id
+    </select>
+
+    <select id="activeMemberRoleIds" parameterType="_long"
+            resultType="java.lang.Long">
+        SELECT DISTINCT role_id
+        FROM t_tenant_member_role
+        WHERE tenant_member_id=#{memberId}
+        AND status='ACTIVE'
+        ORDER BY role_id
+    </select>
+
+    <select id="activeOrFutureAdministratorRoleIds" resultType="java.lang.Long">
+        SELECT DISTINCT r.role_id
+        FROM t_tenant_member_role g
+        JOIN t_tenant_member m ON m.member_id=g.tenant_member_id AND m.tenant_id=g.tenant_id
+        JOIN t_access_tenant t ON t.tenant_id=m.tenant_id
+        JOIN t_user_account a ON a.account_id=m.account_id
+        JOIN t_role r ON r.role_id=g.role_id AND r.scope_key=g.role_scope_key
+        WHERE g.tenant_member_id=#{memberId}
+        AND g.status='ACTIVE'
+        AND (g.effective_to IS NULL OR g.effective_to&gt;#{effectiveAt})
+        AND m.status='ACTIVE'
+        AND t.tenant_type='INTERNAL' AND t.owner_ref_id=1
+        AND t.owner_status='ACTIVE' AND t.security_status='ACTIVE'
+        AND a.realm='OPERATIONS' AND a.account_type='HUMAN' AND a.status&lt;&gt;'CLOSED'
+        AND r.status='ACTIVE' AND r.role_code='PLATFORM_ADMIN' AND r.system_role=1
+        AND r.tenant_scope='PLATFORM' AND r.tenant_id IS NULL AND r.scope_key='PLATFORM'
+        ORDER BY r.role_id
+    </select>
+
+    <select id="permissions" parameterType="_long"
+            resultType="java.lang.String">
+        SELECT DISTINCT p.permission_code
+        FROM t_tenant_member_role g
+        JOIN t_role r ON r.role_id=g.role_id
+        AND r.scope_key=g.role_scope_key
+        JOIN t_role_permission rp ON rp.role_id=r.role_id
+        AND rp.status='ACTIVE'
+        JOIN t_permission p ON p.permission_id=rp.permission_id
+        AND p.status='ACTIVE'
+        WHERE g.tenant_member_id=#{memberId}
+        AND <include refid="EffectiveRoleGrant"/>
+    </select>
+
+    <select id="permissionsAt" resultType="java.lang.String">
+        SELECT DISTINCT p.permission_code
+        FROM t_tenant_member_role g
+        JOIN t_role r ON r.role_id=g.role_id
+        AND r.scope_key=g.role_scope_key
+        JOIN t_role_permission rp ON rp.role_id=r.role_id
+        AND rp.status='ACTIVE'
+        JOIN t_permission p ON p.permission_id=rp.permission_id
+        AND p.status='ACTIVE'
+        WHERE g.tenant_member_id=#{memberId}
+        AND <include refid="EffectiveRoleGrantAt"/>
+    </select>
+
+    <select id="routePermission" parameterType="java.lang.String"
+            resultType="java.lang.String">
+        SELECT p.permission_code
+        FROM t_gateway_route gr
+        JOIN t_gateway_target gt ON gt.target_id=gr.target_id
+        AND gt.channel=gr.channel
+        AND gt.status='ACTIVE'
+        JOIN t_permission p ON p.permission_id=gr.permission_id
+        AND p.status='ACTIVE'
+        WHERE gr.route_code=#{routeCode}
+        AND gr.channel='OPERATIONS'
+        AND gr.status='ACTIVE'
+        AND gr.authorization_mode='HUMAN_PERMISSION'
+    </select>
+
+    <select id="routeAuthorizationMode" parameterType="java.lang.String"
+            resultType="com.paytech.platform.support.api.enums.GatewayAuthorizationMode">
+        SELECT gr.authorization_mode
+        FROM t_gateway_route gr
+        JOIN t_gateway_target gt ON gt.target_id=gr.target_id
+        AND gt.channel=gr.channel
+        AND gt.status='ACTIVE'
+        WHERE gr.route_code=#{routeCode}
+        AND gr.channel='OPERATIONS'
+        AND gr.status='ACTIVE'
+    </select>
+
+    <select id="resources" parameterType="_long"
+            resultType="com.paytech.platform.support.accesscontrol.domain.operations.OperationsNavigationResourceView">
+        SELECT DISTINCT cr.resource_id id, cr.parent_resource_id parentId, cr.resource_code code, cr.resource_type
+        type, cr.display_name displayName, cr.frontend_route frontendRoute, cr.component_key componentKey,
+        cr.permission_id permissionId, cr.sort_order sortOrder
+        FROM t_console_resource cr
+        JOIN t_permission p ON p.permission_id=cr.permission_id
+        AND p.status='ACTIVE'
+        JOIN t_role_permission rp ON rp.permission_id=p.permission_id
+        AND rp.status='ACTIVE'
+        JOIN t_role r ON r.role_id=rp.role_id
+        JOIN t_tenant_member_role g ON g.role_id=r.role_id
+        AND g.role_scope_key=r.scope_key
+        WHERE cr.channel='OPERATIONS'
+        AND cr.status='ACTIVE'
+        AND g.tenant_member_id=#{memberId}
+        AND <include refid="EffectiveRoleGrant"/>
+        ORDER BY cr.sort_order, cr.resource_id
+    </select>
+
+    <sql id="ActiveAdministrators">
+        FROM t_user_account a
+        JOIN t_password_credential pc ON pc.account_id=a.account_id
+        AND pc.status='ACTIVE'
+        AND pc.force_change_flag=0
+        JOIN t_tenant_member m ON m.account_id=a.account_id
+        AND m.status='ACTIVE'
+        JOIN t_access_tenant t ON t.tenant_id=m.tenant_id
+        AND t.tenant_type='INTERNAL'
+        AND t.owner_ref_id=1
+        AND t.owner_status='ACTIVE'
+        AND t.security_status='ACTIVE'
+        JOIN t_tenant_member_role g ON g.tenant_member_id=m.member_id
+        AND g.tenant_id=m.tenant_id
+        JOIN t_role r ON r.role_id=g.role_id
+        AND r.scope_key=g.role_scope_key
+        WHERE a.realm='OPERATIONS'
+        AND a.account_type='HUMAN'
+        AND a.status='ACTIVE'
+        AND r.role_code='PLATFORM_ADMIN'
+        AND r.system_role=1
+        AND r.tenant_scope='PLATFORM'
+        AND <include refid="EffectiveRoleGrant"/>
+    </sql>
+
+    <sql id="ActiveAdministratorsAt">
+        FROM t_user_account a
+        JOIN t_password_credential pc ON pc.account_id=a.account_id
+        AND pc.status='ACTIVE'
+        AND pc.force_change_flag=0
+        JOIN t_tenant_member m ON m.account_id=a.account_id
+        AND m.status='ACTIVE'
+        JOIN t_access_tenant t ON t.tenant_id=m.tenant_id
+        AND t.tenant_type='INTERNAL'
+        AND t.owner_ref_id=1
+        AND t.owner_status='ACTIVE'
+        AND t.security_status='ACTIVE'
+        JOIN t_tenant_member_role g ON g.tenant_member_id=m.member_id
+        AND g.tenant_id=m.tenant_id
+        JOIN t_role r ON r.role_id=g.role_id
+        AND r.scope_key=g.role_scope_key
+        WHERE a.realm='OPERATIONS'
+        AND a.account_type='HUMAN'
+        AND a.status='ACTIVE'
+        AND r.role_code='PLATFORM_ADMIN'
+        AND r.system_role=1
+        AND r.tenant_scope='PLATFORM'
+        AND <include refid="EffectiveRoleGrantAt"/>
+    </sql>
+
+    <select id="activeAdministratorCount" resultType="_long">
+        SELECT COUNT(DISTINCT a.account_id)
+        <include refid="ActiveAdministrators"/>
+    </select>
+
+    <select id="activeAdministratorCountAt" resultType="_long">
+        SELECT COUNT(DISTINCT a.account_id)
+        <include refid="ActiveAdministratorsAt"/>
+    </select>
+
+    <select id="contributesActiveAdministrator" resultType="_boolean">
+        SELECT EXISTS(SELECT 1
+            <include refid="ActiveAdministrators"/>
+            AND a.account_id=#{accountId})
+    </select>
+
+    <select id="contributesActiveAdministratorAt" resultType="_boolean">
+        SELECT EXISTS(SELECT 1
+            <include refid="ActiveAdministratorsAt"/>
+            AND a.account_id=#{accountId})
+    </select>
+
+    <select id="humanAccountCount"
+            resultType="_long">
+        SELECT COUNT(*)
+        FROM t_user_account
+        WHERE realm='OPERATIONS'
+        AND account_type='HUMAN'
+    </select>
+
+    <update id="advanceMember">
+        UPDATE t_tenant_member
+        SET version=version+1, update_time=#{now}
+        WHERE member_id=#{id}
+        AND version=#{version}
+    </update>
+
+    <update id="revokeRoles">
+        UPDATE t_tenant_member_role
+        SET status='REVOKED', effective_to=CASE WHEN effective_from&lt;#{now} THEN #{now} ELSE effective_to END,
+        version=version+1, update_time=#{now}
+        WHERE tenant_member_id=#{memberId}
+        AND status='ACTIVE'
+    </update>
+
+    <insert id="grantRole">
+        INSERT INTO t_tenant_member_role(tenant_member_role_id, tenant_member_id, tenant_id, role_id, role_scope_key,
+        effective_from, granted_by, status, version, create_time, update_time) SELECT #{id}, #{memberId}, #{tenantId},
+        r.role_id, r.scope_key, #{now}, #{actorId}, 'ACTIVE', 1, #{now}, #{now}
+        FROM t_role r
+        JOIN t_tenant_member m ON m.member_id=#{memberId} AND m.tenant_id=#{tenantId} AND m.status='ACTIVE'
+        JOIN t_access_tenant t ON t.tenant_id=m.tenant_id AND t.tenant_type='INTERNAL' AND t.owner_ref_id=1
+        AND t.owner_status='ACTIVE' AND t.security_status='ACTIVE'
+        JOIN t_user_account a ON a.account_id=m.account_id AND a.realm='OPERATIONS' AND a.account_type='HUMAN'
+        AND a.status IN ('ACTIVE', 'DISABLED')
+        WHERE r.role_id=#{roleId}
+        AND r.status='ACTIVE'
+        AND ((r.tenant_scope='PLATFORM' AND r.tenant_id IS NULL AND r.scope_key='PLATFORM')
+            OR (r.tenant_scope='TENANT' AND r.tenant_id=m.tenant_id AND r.scope_key=CAST(m.tenant_id AS CHAR)))
+    </insert>
+
+    <update id="restoreJustRevokedRole">
+        UPDATE t_tenant_member_role g
+        JOIN t_role r ON r.role_id=g.role_id AND r.scope_key=g.role_scope_key
+        SET g.effective_to=NULL, g.granted_by=#{actorId}, g.status='ACTIVE',
+            g.version=g.version+1, g.update_time=#{now}
+        WHERE g.tenant_member_id=#{memberId}
+        AND g.tenant_id=#{tenantId}
+        AND g.role_id=#{roleId}
+        AND g.effective_from=#{now}
+        AND g.status='REVOKED'
+        AND ((r.tenant_scope='PLATFORM' AND r.tenant_id IS NULL AND r.scope_key='PLATFORM')
+            OR (r.tenant_scope='TENANT' AND r.tenant_id=#{tenantId} AND r.scope_key=CAST(#{tenantId} AS CHAR)))
+    </update>
+
+    <select id="role" parameterType="_long"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsRole">
+        SELECT <include refid="RoleColumns"/>
+        <include refid="AvailableRoles"/>
+        AND role_id=#{roleId}
+    </select>
+
+    <select id="roleInOperationsScope" parameterType="_long" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM t_role r
+            WHERE r.role_id=#{roleId}
+            AND <include refid="RoleScope"/>
+        )
+    </select>
+
+    <select id="existingRoleCode" flushCache="true" useCache="false"
+            resultType="_long">
+        SELECT COUNT(*)
+        FROM t_role
+        WHERE role_code=#{code}
+        AND (scope_key=CAST(#{tenantId} AS CHAR)
+        OR system_role=1)
+    </select>
+
+    <select id="rolePermissionIds" parameterType="_long"
+            resultType="java.lang.Long">
+        SELECT permission_id
+        FROM t_role_permission
+        WHERE role_id=#{roleId}
+        AND status='ACTIVE'
+        ORDER BY permission_id
+    </select>
+
+    <select id="grantablePermissions" parameterType="_long"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsPermission">
+        SELECT DISTINCT p.permission_id id, p.permission_code code, p.resource_type resourceType, p.action_code
+        actionCode, p.risk_level riskLevel
+        FROM t_tenant_member_role g
+        JOIN t_role r ON r.role_id=g.role_id
+        AND r.scope_key=g.role_scope_key
+        JOIN t_role_permission rp ON rp.role_id=r.role_id
+        AND rp.status='ACTIVE'
+        JOIN t_permission p ON p.permission_id=rp.permission_id
+        AND p.status='ACTIVE'
+        WHERE g.tenant_member_id=#{memberId}
+        AND <include refid="EffectiveRoleGrant"/>
+        AND <include refid="OperationsPermission"/>
+        ORDER BY p.permission_code, p.permission_id
+    </select>
+
+    <select id="grantablePermissionsAt"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsPermission">
+        SELECT DISTINCT p.permission_id id, p.permission_code code, p.resource_type resourceType, p.action_code
+        actionCode, p.risk_level riskLevel
+        FROM t_tenant_member_role g
+        JOIN t_role r ON r.role_id=g.role_id
+        AND r.scope_key=g.role_scope_key
+        JOIN t_role_permission rp ON rp.role_id=r.role_id
+        AND rp.status='ACTIVE'
+        JOIN t_permission p ON p.permission_id=rp.permission_id
+        AND p.status='ACTIVE'
+        WHERE g.tenant_member_id=#{memberId}
+        AND <include refid="EffectiveRoleGrantAt"/>
+        AND <include refid="OperationsPermission"/>
+        ORDER BY p.permission_code, p.permission_id
+    </select>
+
+    <insert id="insertRole">
+        INSERT INTO t_role(role_id, tenant_scope, tenant_id, scope_key, role_code, role_name, status, system_role,
+        version, create_time, update_time)
+        VALUES(#{id}, 'TENANT', #{tenantId}, CAST(#{tenantId} AS CHAR), #{code}, #{name}, 'ACTIVE', 0, 1, #{now},
+        #{now})
+    </insert>
+
+    <update id="updateRole">
+        UPDATE t_role
+        SET role_name=#{name}, version=version+1, update_time=#{now}
+        WHERE role_id=#{id}
+        AND tenant_scope='TENANT'
+        AND tenant_id=#{tenantId}
+        AND system_role=0
+        AND status='ACTIVE'
+        AND version=#{version}
+    </update>
+
+    <update id="deleteRole">
+        UPDATE t_role
+        SET status='INACTIVE', version=version+1, update_time=#{now}
+        WHERE role_id=#{id}
+        AND tenant_scope='TENANT'
+        AND tenant_id=#{tenantId}
+        AND system_role=0
+        AND status='ACTIVE'
+        AND version=#{version}
+    </update>
+
+    <update id="revokeRolePermissions">
+        UPDATE t_role_permission
+        SET status='REVOKED', version=version+1, update_time=#{now}
+        WHERE role_id=#{roleId}
+        AND status='ACTIVE'
+    </update>
+
+    <insert id="grantPermission">
+        INSERT INTO t_role_permission(role_permission_id, role_id, permission_id, status, version, create_time,
+        update_time)
+        VALUES(#{id}, #{roleId}, #{permissionId}, 'ACTIVE', 1, #{now}, #{now})
+        ON DUPLICATE KEY UPDATE status='ACTIVE', version=version+1, update_time=#{now}
+    </insert>
+
+    <update id="revokePermission">
+        UPDATE t_role_permission SET status='REVOKED',version=version+1,update_time=#{now}
+        WHERE role_id=#{roleId} AND permission_id=#{permissionId} AND status='ACTIVE'
+    </update>
+</mapper>

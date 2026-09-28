@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: resource-lock-test
+
+redis:
+  coordination:
+    enabled: true
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s

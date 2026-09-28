@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.ConsoleResourceMapper">
+    <sql id="Columns">resource_id resourceId,resource_code resourceCode,channel,resource_type resourceType,
+        parent_resource_id parentResourceId,display_name displayName,frontend_route frontendRoute,
+        component_key componentKey,permission_id permissionId,sort_order sortOrder,status,version,
+        create_time createTime,update_time updateTime</sql>
+    <select id="resource" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ConsoleResource">
+        SELECT <include refid="Columns"/> FROM t_console_resource
+        WHERE channel='OPERATIONS' AND resource_code=#{code}
+    </select>
+    <select id="resources" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ConsoleResource">
+        SELECT <include refid="Columns"/> FROM t_console_resource WHERE channel='OPERATIONS'
+        ORDER BY resource_id LIMIT #{limit}
+    </select>
+    <insert id="insert">
+        INSERT INTO t_console_resource (resource_id,resource_code,channel,resource_type,parent_resource_id,display_name,
+            frontend_route,component_key,permission_id,sort_order,status,version,create_time,update_time)
+        VALUES (#{row.resourceId},#{row.resourceCode},#{row.channel},#{row.resourceType},#{row.parentResourceId},
+            #{row.displayName},#{row.frontendRoute},#{row.componentKey},#{row.permissionId},#{row.sortOrder},#{row.status},
+            #{row.version},#{row.createTime},#{row.updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_console_resource SET parent_resource_id=#{parentResourceId},display_name=#{displayName},
+            frontend_route=#{frontendRoute},component_key=#{componentKey},permission_id=#{permissionId},
+            sort_order=#{sortOrder},status=#{status},version=version+1,update_time=#{updateTime}
+        WHERE resource_id=#{row.resourceId} AND channel='OPERATIONS' AND version=#{row.version}
+    </update>
+</mapper>

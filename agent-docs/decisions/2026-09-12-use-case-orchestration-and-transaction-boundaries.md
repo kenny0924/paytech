@@ -1,5 +1,7 @@
 # 用例编排、事务边界与测试隔离决定
 
+> **后继规则（2026-09-16）：** Processor/Service 校验、外部访问、Context 和本地事务归属已由 [Payment 基准合并决定](2026-09-16-payment-based-coding-conventions.md)及其链接的公共规范更新。本文保留原决定依据；未受影响的数据所有权、事务公理、数据库保护和专项合同继续有效。规范变化不表示既有源码已迁移。
+
 - Decision status: Confirmed
 - Decision date: 2026-09-12
 - 依据：用户在 Commerce 退款重构中明确六阶段 Processor、测试实现不得进入业务代码、补偿 Handler 无须专用 Processor，并要求将“事务内不允许调用外部服务，只能操作数据库”抽象为开发规范。

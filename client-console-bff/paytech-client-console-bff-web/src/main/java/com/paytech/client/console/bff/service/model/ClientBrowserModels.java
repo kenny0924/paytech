@@ -1,5 +1,5 @@
 package com.paytech.client.console.bff.service.model;
-import com.paytech.platform.support.api.authentication.ClientAuthenticationModels.AccountContextResponseBody;
+import com.paytech.platform.support.api.authentication.response.AccountContextResponseBody;
 /** 浏览器认证投影有意不包含 Refresh Secret。 */
 public final class ClientBrowserModels {
     private ClientBrowserModels() {}

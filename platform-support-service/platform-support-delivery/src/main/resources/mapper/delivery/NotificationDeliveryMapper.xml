@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.delivery.core.dal.mapper.NotificationDeliveryMapper">
+    <resultMap id="record" type="com.paytech.platform.support.delivery.core.dal.dataobject.NotificationDelivery">
+        <id column="delivery_id" property="deliveryId"/>
+        <result column="request_id" property="requestId"/>
+        <result column="address_vault_token" property="addressVaultToken"/>
+        <result column="locale" property="locale"/>
+        <result column="parameters" property="parameters"/>
+        <result column="status" property="status"/>
+        <result column="attempt_count" property="attemptCount"/>
+        <result column="next_retry_time" property="nextRetryTime"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <select id="find" resultMap="record">SELECT delivery_id, request_id, address_vault_token, locale, parameters,
+        status, attempt_count, next_retry_time, version, create_time, update_time FROM t_notification_delivery WHERE
+        delivery_id = #{id}
+    </select>
+    <insert id="insert">INSERT INTO t_notification_delivery (delivery_id, request_id, address_vault_token, locale,
+        parameters, status, attempt_count, next_retry_time, version, create_time, update_time) VALUES (#{deliveryId},
+        #{requestId}, #{addressVaultToken}, #{locale}, #{parameters}, #{status}, #{attemptCount}, #{nextRetryTime},
+        #{version}, #{createTime}, #{updateTime})
+    </insert>
+    <update id="transition">
+        UPDATE t_notification_delivery SET status = #{status}, attempt_count = #{attemptCount},
+        next_retry_time = #{nextRetryTime}, version = version + 1, update_time = #{now}
+        WHERE delivery_id = #{item.deliveryId} AND version = #{item.version} AND status = #{item.status}
+    </update>
+</mapper>

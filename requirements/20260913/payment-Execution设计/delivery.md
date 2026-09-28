@@ -1,5 +1,62 @@
 # Execution 需求交付记录
 
+## 2026-09-17 查询 Intent 接口
+
+用户确认提供 Intent ID 查询接口，并要求返回 `sourceId/sourceType`。本轮按[查询接口修订](./get-intent-amendment.md)开发既有 EX-I02，只读 Intent 并核对 Client，返回六个必要字段。沿用当前暂缓单元测试的安排，执行编译与静态检查；无数据库结构变更、外部调用或支付推进。实际验证见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
+## 2026-09-16 终止 Intent 接口
+
+后续用户要求所有正常业务结果返回 HTTP 200，由上游自行判断 PENDING；本次仅调整终止接口成功响应及相关注释和合同，错误 HTTP 语义保持。
+
+用户在确认安全终止、未决返回 PENDING、授权需撤销和已支付需退款的边界后，要求“帮我做一下这个接口”，随后确认继续并明确“单元测试可以暂时不写”。本轮执行既有 EX-I04 的研发与编译/静态检查，接口细节见[终止接口修订](./terminate-intent-amendment.md)。不接入 Commerce、Channel 或 MQ，不执行 Schema 变更、提交、推送或部署；实际验证及待办见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
+## 2026-09-15 ActionFactory 与直接执行调整
+
+用户要求由 ActionFactory 管理、不通过补偿事件执行，并在保存上下文后创建 Action。本轮按此调整实现与[动作修订](./card-pay-action-flow-amendment.md)，保留同事务切换与原未决占位；没有新增恢复入口或数据库结构变更。验证与实际范围见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
+## 2026-09-15 CARD + PAY 动作开发确认
+
+用户确认动作和 Attempt 状态设计后要求开始开发，授权实现[Action Flow 修订](./card-pay-action-flow-amendment.md)中的 CARD + PAY、条件对象、一次结果事务切换和公共补偿接入。其余 Owner 保留明确 TODO；不实现 Capture/Void/Refund 新入口。同步自有动作命名及模型注释，保留旧数据切换约束。本次不提交代码、不执行 SQL 或部署；按用户既有要求不新增或运行 Java 单元测试。实际检查结果见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
+## 2026-09-15 公共幂等包接入授权
+
+用户在差异分析后明确“改造吧，使用公共包”，本轮进入原 pay 受理链的接入实施。范围包括 Java/POM/配置、命令表 PDManer、生成源和待人工执行的 SQL；保留一次受理事务、原 Hash、只读观察与动态响应。具体约定见[项目接入说明](../../../payment-orchestration-service/docs/development/command-idempotency-differences.md)，切换路径见[迁移说明](./db/command-idempotency-migration.md)。不新增业务流程、不修改其他系统实现，也不沿用此前提交或数据库执行授权。实现和验证证据见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
+## 2026-09-14 公共幂等包复用方向与差异分析
+
+用户明确要求“保持一致，有公共包的就用公共的”，本轮指定交付差异分析。[项目分析稿](../../../payment-orchestration-service/docs/development/command-idempotency-differences.md)整理公共包与 Payment 的记录、表结构、事务、动态重放及代码归属差异；[Processor 规范](../../../payment-orchestration-service/docs/development/processor-conventions.md)补充公共能力优先复用规则。此确认不等于已完成接入或授权执行数据库迁移；当前进展与核对范围见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
+## 2026-09-14 数据库工件整批精简
+
+用户要求“先帮我把数据库维护一下”，并明确选择“把此前整批字段精简一起整理并落模”。本轮合并字段差异分析、设计和模型/SQL 工件维护；范围见[字段修订](./execution-field-simplification-amendment.md)。同步生成器、独立模型清单、索引/关系、物理决策和场景；其余 Java/接口及实际库切换仍为下一阶段，不沿用此前 SQL 或提交授权。
+
+正式模型与完整 SQL 是当前目标；前序空库迁移标注后继，并准备当前精简的创建/预检/迁移文件。状态历史、认证、路由和 Pricing Fact 的代码及下游消费缺口明确登记[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
+
+## 2026-09-14 pay 按已确认方案重构授权
+
+用户明确要求“按照之前的调整，重构一下这块的代码，参考 transaction 系统”。本次进入已有需求的研发阶段，按三表状态、capture mode、单动作执行位、内部风险 Action 与原渠道操作恢复方案实施；参考 Code-PMX transaction 的入口、模板和具体 Processor 主流程组织。保留每接口独立 Processor，取消 pay/Capture/退款/冲正的重复受理 Processor；共享执行阶段不承担另一个 HTTP 用例。Card 保留方式专属代码流程，Wallet/Crypto 与真实 Owner 仍按既定 Mock + TODO 范围。
+
+本次可以编辑代码、模型、SQL 工件和验证材料；不沿用此前提交或 SQL 执行授权。旧状态、旧 PAY_V1 和非空历史评估必须先收敛或经专项核验迁移，不能直接猜值转换。当前实现与实际验证结果见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
+## 2026-09-14 内部风控 Action 与工具身份确认
+
+用户回复“可以，没问题”，确认 Internal Risk 作为 Action、评估字段迁移、Payment 不保留限额 Group ID，以及换工具/新支付建立新 Attempt。[本次修订](./internal-risk-action-amendment.md)细化 RISK_CHECK 的评估完成与放行区别、风险未知的原评估恢复、类型分派和单动作占位，并同步原 Card/Wallet Excel 中的流程与三表快照。
+
+本轮交付设计和场景附件；其余字段清理建议不随此确认自动生效，也未进入 Java、模型或 SQL 实施。原提交重试与符合工具合同的同卡补材料仍复用身份；新工具不能绕过原未决资金、授权或成功事实。验证结果见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)，不沿用此前提交授权。
+
+## 2026-09-14 限额字段移除与风控步骤讨论
+
+用户明确要求先去掉 Payment Attempt 的 limit_reservation_group_id。本轮按[限额关联修订](./risk-limit-correlation-amendment.md)记录字段移除目标和 Risk 本地原关联消费边界，同步 Payment/Risk 数据库文档入口。Internal Risk 是否成为 Action、风控字段移动及其状态语义仍作为建议讨论；不将问题表述记录为实施确认。工具变更与同卡补输入沿用既有交易级 Token 合同。本轮没有进入 Java/SQL/模型实施，也没有更新 Excel 或沿用此前提交授权。
+
+## 2026-09-14 状态与 Channel 恢复设计收敛
+
+用户提出 capture mode、精简 Attempt/Action 状态及 active_action_id，并明确 QUERY 不属于业务 Action，由 Channel 标准操作内部组织原请求查询、重复响应处理与补偿；对该方向回复“可以”。本轮将这些决定收敛为[状态与恢复修订](./execution-state-channel-recovery-amendment.md)，同步原 [Card/Wallet 场景 Excel](../../../payment-orchestration-service/docs/payment-execution-state-scenarios.xlsx)及主题入口。
+
+修订明确手动授权完成时 Attempt 仍 PROCESSING、清空 active_action_id 并保留 Intent 占用；只有实际收款才成功。恢复始终使用原 Action，查询不创建第二条业务 Action。Excel 增加授权 UNKNOWN 后由 Channel 确认原授权的场景，保留逐步三表快照，作为设计示例供评审。细化字段、接口及历史兼容影响见修订稿；旧文档受影响部分标为前序基线，其他合同保留。
+
+本轮交付限设计与场景附件，不自动进入 Java、模型或 SQL 实施，也不沿用早前的提交授权。新设计与前序实现的差异统一登记[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 ## 2026-09-14 移除 Caller
 
 用户明确要求“帮我去掉 caller 的逻辑”，并确定内部调用方完全可信。本次按[内部信任修订](./trusted-internal-amendment.md)移除授权端口与调用、由现有命令身份模型生成 Client 幂等空间，并保留全部业务资源归属及状态门禁。此请求授权相关代码、测试和文档修改，不沿用上一轮的提交授权；没有新增 API 或 Schema 变更，SQL、提交、推送、部署不在本次范围。实际结果统一见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
@@ -160,3 +217,9 @@
 - 2026-09-14：用户明确 Payment 系统不允许调用 Commerce；在既有研发范围内按[调用方向修订](./payment-commerce-direction-amendment.md)移除所有 Commerce 出站端口，并补齐创建时传入/冻结国家及本地定价。实际检查与 SQL 待办只见当前台账；此次不提交、部署或执行 SQL。
 
 - 2026-09-14：用户明确要求“提交”，本地提交范围为上述 Caller/Commerce 依赖移除、国家冻结及关联模型、SQL、测试和文档；提交和复验证据见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。排除其他需求修改，未执行 SQL、推送或部署。
+
+## 2026-09-14 按精简模型重构 Pay 受理链
+
+用户要求按修改后的模型重构 pay，并明确确认“先完成 pay 受理链，后续流程保持 TODO”。本轮范围为精简请求/幂等投影、Processor 上下文、一次本地事务及响应读取；沿用数据库对象上下文，不新增支付编排层。现行合同见[字段修订第 7 节](./execution-field-simplification-amendment.md#7-pay-受理链合同)，阅读入口见[受理流程](../../../payment-orchestration-service/docs/pay-interface-walkthrough.md)。
+
+本次不进入 Create Intent、后续资金流程、Channel 或通知合同迁移；SQL 执行、提交、推送与部署不在授权范围。实际验证结果及旧库前置只记录于[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。

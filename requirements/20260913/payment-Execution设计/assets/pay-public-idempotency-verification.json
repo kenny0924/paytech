@@ -1,0 +1,69 @@
+{
+  "date": "2026-09-15",
+  "scope": "Payment pay acceptance consumes Foundation paytech-command-idempotency",
+  "authorization": "用户：改造吧，使用公共包；延续不编写或运行 Java 单元测试的要求",
+  "productionBuild": {
+    "command": "JDK 25 ./mvnw -q clean package -Dmaven.test.skip=true",
+    "exitCode": 0,
+    "javaTestsCompiled": false,
+    "javaTestsExecuted": false
+  },
+  "modelChecks": {
+    "command": "node --test scripts/pdmaner/payment-model.test.mjs scripts/pdmaner/payment-execution-simplification.test.mjs",
+    "passed": 17,
+    "failed": 0,
+    "generatorCheck": "node scripts/pdmaner/generate-payment-model.mjs --check",
+    "modelSha256": "3fd61fe8a2be75fbeb90762901777d42a534dcba8c8e270cfea4089141788711",
+    "changedEntity": "t_command_idempotency",
+    "unchangedEntities": 27,
+    "survivingFieldIdsPreserved": true
+  },
+  "sharedContract": {
+    "columns": 24,
+    "addedColumns": 13,
+    "renamedColumn": "command_status -> process_status",
+    "physicalColumnsMatchCommerce": true,
+    "packagedPublicJarPresent": true,
+    "optInEnabled": true,
+    "packagedMapperVsSource": "Only whitespace formatting differs; SQL and XML attributes match",
+    "directConsumerModules": [
+      "paytech-payment-execution",
+      "paytech-payment-web"
+    ]
+  },
+  "offlineMyBatis": {
+    "paymentStatements": 11,
+    "foundationStatements": 6,
+    "singleConfigurationXmlLoad": true,
+    "boundSqlAndParameterHandlersResolved": true,
+    "databaseConnection": false,
+    "note": "Loaded actual packaged JARs into MyBatis Configuration; does not prove application startup or database execution."
+  },
+  "manualSqlArtifacts": {
+    "targetColumnDefinitionsMatched": 24,
+    "combinedAndStandaloneCommandAlterIdentical": true,
+    "createSubsetMatchesCanonicalCommandTable": true,
+    "executed": false,
+    "nonEmptyMigrationIncluded": false
+  },
+  "sourceReview": {
+    "hashOperation": "PAY_INSTRUMENT_V1",
+    "hashVersion": 1,
+    "originalTokenHashAlgorithmPreserved": true,
+    "commandLeaseSeconds": 30,
+    "localTransactionTimeoutSeconds": 5,
+    "claimAndBusinessAndCompleteInOneTransaction": true,
+    "claimWinnerCheckedBeforeBusinessWrites": true,
+    "snapshots": "null",
+    "stableAcknowledgement": "PAY_ACCEPTED / 202",
+    "response": "current Attempt / Action; command acknowledgement is not replayed as HTTP result",
+    "newWrapperClasses": 0
+  },
+  "limits": [
+    "No Java unit tests written or executed",
+    "No database DDL/DML or live schema inspection",
+    "No real HTTP acceptance, concurrency, lease or rollback regression",
+    "No deployment, publish, commit or push",
+    "Risk/Routing/authentication/funds execution remain TODO"
+  ]
+}

@@ -1,0 +1,131 @@
+server:
+  address: 127.0.0.1
+  port: 0
+  servlet:
+    context-path: /payment
+
+spring:
+  config:
+    # 复用仓库已启动的本地 Redis 凭据；不要求 IDE 另行设置环境变量。
+    import:
+      - "optional:file:../../local-environment/.env.local[.properties]"
+      - "optional:file:../local-environment/.env.local[.properties]"
+  application:
+    name: payment-orchestration-service
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            vault-service:
+              - uri: "${test.vault.base-url}"
+    loadbalancer:
+      retry:
+        enabled: false
+    nacos:
+      config:
+        # 启用 nacos Profile 后，从配置中心加载服务配置。
+        enabled: false
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:13306/mor_payment_channel_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: payment_channel_test
+    password: local-channel-test-only
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 2000
+      validation-timeout: 1000
+      connection-init-sql: "SET time_zone = '+00:00'"
+  sql:
+    init:
+      mode: never
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${MOR_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:local-redis-change-me-2026}}"
+      connect-timeout: 2s
+      timeout: 2s
+  jmx:
+    enabled: false
+
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}] %kvp"
+
+web:
+  logging:
+    # 工具凭据和后续交互指令均不进入普通访问日志。
+    metadata-only-path-prefixes:
+      - /
+
+mybatis:
+  mapper-locations: "classpath*:mapper/**/*.xml"
+
+redis:
+  key-prefix: payment-channel-test
+  coordination:
+    enabled: true
+    threads: 2
+    netty-threads: 2
+    connection-minimum-idle-size: 1
+    connection-pool-size: 4
+    subscription-connection-minimum-idle-size: 1
+    subscription-connection-pool-size: 2
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s
+
+payment:
+  channel:
+    capability-definitions:
+      "[ACTION.PAY]": { value-type: BOOLEAN }
+      "[ACTION.AUTHORIZE]": { value-type: BOOLEAN }
+      "[ACTION.AUTHENTICATE]": { value-type: BOOLEAN }
+      "[ACTION.CAPTURE]": { value-type: BOOLEAN }
+      "[ACTION.VOID]": { value-type: BOOLEAN }
+      "[ACTION.REFUND]": { value-type: BOOLEAN }
+      "[AMOUNT.MIN]": { value-type: DECIMAL }
+      "[AMOUNT.MAX]": { value-type: DECIMAL }
+      "[SECURITY.3DS_MODE]": { value-type: CODE, allowed-codes: [REQUIRED, SUPPORTED, UNSUPPORTED] }
+  execution:
+    # 必须显式配置有效窗口；零值仅禁用首次申请，不影响原工具重放。
+    instrument-preparation-window: PT0S
+  card:
+    # 仅用于本地合成卡；真实 Card 能力尚未接入。
+    mock-enabled: false
+  identifier:
+    region-id: 31
+    worker-id: 30
+
+vault:
+  client:
+    caller-service: payment-orchestration-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
+
+management:
+  endpoints:
+    access:
+      default: none
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# test.vault.base-url 由 EnableMockHttpServer 在创建真实 VaultClient 之前注入随机 Loopback 端口。

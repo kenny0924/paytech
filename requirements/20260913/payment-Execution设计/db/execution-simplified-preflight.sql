@@ -1,0 +1,28 @@
+-- 只读预检：每项精确 COUNT 均须为 0；结果不是自动执行授权。
+SELECT DATABASE() AS selected_database, @@hostname AS mysql_host, @@port AS mysql_port;
+SELECT COUNT(*) AS `t_payment_intent_binding_rows` FROM `t_payment_intent_binding`;
+SELECT COUNT(*) AS `t_payment_intent_rows` FROM `t_payment_intent`;
+SELECT COUNT(*) AS `t_payment_attempt_rows` FROM `t_payment_attempt`;
+SELECT COUNT(*) AS `t_payment_action_rows` FROM `t_payment_action`;
+SELECT COUNT(*) AS `t_payment_instrument_rows` FROM `t_payment_instrument`;
+SELECT COUNT(*) AS `t_command_idempotency_rows` FROM `t_command_idempotency`;
+SELECT COUNT(*) AS `t_compensation_event_rows` FROM `t_compensation_event`;
+SELECT COUNT(*) AS `t_channel_refund_rows` FROM `t_channel_refund`;
+SELECT COUNT(*) AS `t_channel_transaction_ref_rows` FROM `t_channel_transaction_ref`;
+SELECT COUNT(*) AS `t_payment_pricing_fact_rows` FROM `t_payment_pricing_fact`;
+SELECT COUNT(*) AS `t_payment_refund_position_rows` FROM `t_payment_refund_position`;
+SELECT COUNT(*) AS `t_duplicate_payment_case_rows` FROM `t_duplicate_payment_case`;
+SELECT COUNT(*) AS `t_payment_state_transition_rows` FROM `t_payment_state_transition`;
+SHOW CREATE TABLE `t_payment_intent_binding`;
+SHOW CREATE TABLE `t_payment_intent`;
+SHOW CREATE TABLE `t_payment_attempt`;
+SHOW CREATE TABLE `t_payment_action`;
+SHOW CREATE TABLE `t_payment_instrument`;
+SHOW CREATE TABLE `t_command_idempotency`;
+SHOW CREATE TABLE `t_compensation_event`;
+SHOW CREATE TABLE `t_channel_refund`;
+SHOW CREATE TABLE `t_channel_transaction_ref`;
+SHOW CREATE TABLE `t_payment_pricing_fact`;
+SHOW CREATE TABLE `t_payment_refund_position`;
+SHOW CREATE TABLE `t_duplicate_payment_case`;
+SHOW CREATE TABLE `t_payment_state_transition`;

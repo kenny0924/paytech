@@ -1,0 +1,59 @@
+{
+  "date": "2026-09-14",
+  "stage": 3,
+  "status": "DESIGN_REVIEW_ONLY",
+  "designChecks": {
+    "scope": "DESIGN_ONLY_NOT_EXECUTED",
+    "failures": [],
+    "markdownFiles": 11,
+    "localLinks": 115,
+    "localAnchors": 14,
+    "acceptanceItems": 16,
+    "managementOperations": 13,
+    "sqlInsertCounts": {
+      "t_permission": 2,
+      "t_console_resource": 2,
+      "t_gateway_route": 13,
+      "t_gateway_route_header": 40,
+      "t_gateway_route_query_param": 10,
+      "t_gateway_guard_rule": 78
+    },
+    "totalInsertRows": 145,
+    "newTables": 2,
+    "newColumns": 17,
+    "newIndexes": 4,
+    "parsedExampleYamlBlocks": 2,
+    "status": "PASSED"
+  },
+  "prototypeChecks": {
+    "status": "PASSED",
+    "scope": "LOCAL_SYNTHETIC_PROTOTYPE_ONLY",
+    "layoutChecks": 40,
+    "interactionChecks": 10,
+    "scriptErrors": [],
+    "wrapper": "QA iframe height expanded for full screenshots; fragment unchanged"
+  },
+  "requirementsSite": {
+    "command": "npm --prefix requirements-site test",
+    "passed": 136,
+    "failed": 0,
+    "skipped": 0,
+    "log": "/tmp/codemor-channel-api-stage3.log"
+  },
+  "prototypeSource": "/Users/kenny/.codex/visualizations/2026/09/14/01a09e50-76f8-72c2-a6b6-8db29398a437/channel-api-console-design.html",
+  "prototypeSha256": "162686ec4ef3215be9b4d3a1e0a50814d9272506d4087e1463b96e04234bcae0",
+  "temporaryEvidence": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/codemor-channel-design-bpjf8nii",
+  "notExecuted": [
+    "JAVA_APPLICATION_TESTS",
+    "DATABASE_SQL",
+    "REAL_OWNER_QUERY",
+    "REAL_NI_REQUEST",
+    "DEPLOYMENT"
+  ],
+  "screenshots": [
+    "api-light-1024.png",
+    "api-dark-320.png",
+    "scheme-light-1024.png"
+  ],
+  "gitDiffCheck": "PASSED"
+}

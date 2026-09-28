@@ -1,5 +1,9 @@
 # Platform Support 数据库设计规范
 
+> **Integration 后继（2026-09-21）：** [归属决定](../decisions/2026-09-21-platform-integration-http-execution.md)将受控外部 API 配置和单次执行纳入 Platform。五类配置对象与内部 HTTP 边界见[修订](../../requirements/20260914/payment-渠道API逻辑定义/platform-http-execution-amendment.md)，字段继续评审；本项是下文“无通用技术配置”的窄例外，不扩展任意配置中心。未因此更新正式模型数量，实际状态见当前台账。
+
+> **Notification 局部后继（2026-09-21）：** [Delivery 需求](../../requirements/20260920/platform-support-Delivery领域规划/requirement.md)及[七表字段](../../requirements/20260920/platform-support-Delivery领域规划/data-design.md)取代本文前序九表、Revision、消息快照、Callback/Suppression、通知 Hash 与领域 Lease/Fencing 描述；未涉及的 Platform 领域保持原合同。当前生成统计、SQL 执行与验证状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#platform-delivery-domain-plan-20260920)。下列前序总量/拓扑保留历史参照，不是当前模型统计。
+
 > **Client Console 入驻目标补充（2026-09-14）：** 用户确认同一账号只有一份未完成 Client 申请。本期上传仍禁止浏览器指定 Tenant，并在原 PLT-I04 唯一候选规则上补充 CCT 申请授权与目标 Client 一致性核对，详见[本期数据评审稿](../../requirements/20260914/client-console-注册与客户入驻/data-design.md#5-邮箱链接会话与文件)。投影未就绪或存在残留歧义时保持拒绝，不能因数量限制跳过核对；Partner、普通 Tenant 文件规则不变。本条不表示数据库或运行合同已迁移。
 
 > **Client API Scope 后继契约（2026-09-13）：** 本文的公共控制面基线之外，新增独立 Scope 目录及两项查询索引，以[已确认字段与关系](../../requirements/20260913/platform-support-ClientAPI接入管理/data-design.md)为准；原 Credential/Grant 表与 PLT-I03 认证语义保持。本文保留原阶段统计/摘要作为历史证据；当前生成统计、实施和环境状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#platform-client-api-access-20260913)。
@@ -63,7 +67,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 | 公共 API 控制面 | 6 | `t_gateway_target`、`t_gateway_route`、`t_gateway_route_header`、`t_gateway_route_query_param`、`t_gateway_guard_rule`、`t_console_resource` |
 | 可靠执行 | 2 | `t_compensation_event`、`t_command_idempotency` |
 
-这七组之外不建立 Gateway Policy/Release/Snapshot/Ack、通用技术配置、通用 Dictionary、通用 Job、Inbox/Outbox、Retention、Legal Hold、Archive Workflow 或自动销毁表。
+Integration 按顶部专项决定管理受控出站 API 定义；除此之外，不建立 Gateway Policy/Release/Snapshot/Ack、任意通用技术配置、通用 Dictionary、通用 Job、Inbox/Outbox、Retention、Legal Hold、Archive Workflow 或自动销毁表。
 
 ## 4. 通用物理规则
 
@@ -207,12 +211,10 @@ Snapshot 只投影 ACTIVE Target 及其 ACTIVE Route/子项；DISABLED Target �
 
 ## 8. Notification 与 Email
 
-- Provider、Route、Template 都是单表 Revision；ACTIVE 行内容冻结，后续修改插入新行。
-- Request 属于 Tenant，以来源系统 + Event Key + Notification Type 唯一防重，并冻结 Source Version/Payload Hash 与 Template ID。
-- Notification Delivery 合并 Recipient、冻结消息和投递执行状态。地址使用 Vault Token + Blind Index/Key Version + Masked；消息正文使用短期 Vault Token；`(request_id, tenant_id, notification_template_id)` 与 Route/Template/Translation 复合 FK 锁定同 Tenant、同 Request Template 和同渲染模板，禁止 Delivery 改用另一 Template。
-- Worker 使用 Lease + 递增 Fencing Token；Attempt 必须携带 Claim 的 Token。`UNKNOWN` 表示 Provider 结果不确定，必须先按 Provider Request Key 查询，禁止盲目重复发送。
-- Provider Callback 先按冻结 Provider Revision 的公开验证材料验签。只有 `VERIFIED` Callback 可通过复合 FK 锚定 Provider Message/Attempt/Delivery 并推进状态；失败必须保留 Failure Code。
-- `SENT` 只表示 Provider 接受，`DELIVERED` 来自已验签 Callback。晚到 COMPLAINT/HARD_BOUNCE 可覆盖较低优先级正向状态并创建 Suppression。
+Notification 现行事实、七表字段、事务与恢复规则由 [Delivery 领域需求](../../requirements/20260920/platform-support-Delivery领域规划/requirement.md)及其链接的 technique/data-design/api 拥有；本文仅保留路由，避免继续维护一份相反的九表模型。
+
+首期普通 Email 仅开放模块内 Processor；每条 Delivery 独立收件，规范化后重复邮箱拒绝。Request 保存默认信息，Delivery 保存差异和状态；模板按语言维护当前内容。UNKNOWN 查询原 Provider/请求号，公共补偿领取配合 Delivery CAS。Document Delivery 的通知租户归属应沿 Delivery → Request 检查，前序 `(notification_delivery_id, tenant_id)` 复合关系不再适用于七表目标。
+
 - Dispute RFI 通知只负责发送与投递证据：Client 未响应时 Risk Case 保持 `EVIDENCE_REQUIRED`，不得自动认损；必须存在 Client/Operations 的显式授权，或 Channel 已验证的 `LOST` 结果，才由 Risk 决定并发布 `DisputeLost`。
 
 ## 9. Client Webhook
@@ -284,7 +286,7 @@ Platform 可发布 `WebhookDelivered`、`WebhookFailed`、`NotificationSent`、`
 5. 所有外部 HTTP API 进入一个全局 Route Catalog，内部调用绕过 Gateway；Platform 保存六表当前配置，Gateway 保存不可变 Runtime Snapshot，Limiter Counter/Lease 在 Redis。
 6. 同来源键/版本、不同 Payload Hash 是冲突，不得覆盖既有业务事实。
 7. ACTIVE Revision/Version 使用可执行唯一键/Slot；新版本失败不破坏旧活动事实。
-8. Notification/Webhook Worker 必须使用 Lease + 单调 Fencing Token；旧 Token 不能提交。
+8. Webhook Worker 保留 Lease + 单调 Fencing Token；Notification 使用第 8 节后继合同的公共 Claim/Lease 与 Delivery version CAS。
 9. File/Audit 完整性只使用有消费者的 Hash；重复 Hash 不取代 File/Document/Event 业务身份。
 10. 所有跨库引用都无物理 FK；所有本库复合所有权关系必须有父唯一键与子左前缀索引，Session/Invitation、Document、Notification 和 Webhook 不得只按单列 ID 形成跨所有者绑定。
 11. Secret/Token/Card 敏感明文不入库、日志、事件、文件或普通响应。

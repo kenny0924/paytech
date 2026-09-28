@@ -1,0 +1,130 @@
+{
+  "scope": "GENERIC_EXECUTION_DOCUMENTATION_STATIC_CHECK",
+  "status": "PASSED",
+  "checks": [
+    {
+      "name": "reading_fragment_only",
+      "passed": true
+    },
+    {
+      "name": "generic_input_shape",
+      "passed": true
+    },
+    {
+      "name": "explicit_context_root",
+      "passed": true
+    },
+    {
+      "name": "output_contract_reference",
+      "passed": true
+    },
+    {
+      "name": "three_status_branches",
+      "passed": true
+    },
+    {
+      "name": "error_has_no_partial_output",
+      "passed": true
+    },
+    {
+      "name": "mapping_matches_contract_SUCCESS",
+      "passed": true
+    },
+    {
+      "name": "mapping_matches_contract_FAIL",
+      "passed": true
+    },
+    {
+      "name": "default_status_is_error",
+      "passed": true
+    },
+    {
+      "name": "expected_accepted_response",
+      "passed": true
+    },
+    {
+      "name": "return_shape_accepted_response",
+      "passed": true
+    },
+    {
+      "name": "expected_recognized_rejection",
+      "passed": true
+    },
+    {
+      "name": "return_shape_recognized_rejection",
+      "passed": true
+    },
+    {
+      "name": "expected_unmatched_response",
+      "passed": true
+    },
+    {
+      "name": "return_shape_unmatched_response",
+      "passed": true
+    },
+    {
+      "name": "expected_response_timeout",
+      "passed": true
+    },
+    {
+      "name": "return_shape_response_timeout",
+      "passed": true
+    },
+    {
+      "name": "missing_required_output_reference_calculation",
+      "passed": true
+    },
+    {
+      "name": "wrong_output_type_reference_calculation",
+      "passed": true
+    },
+    {
+      "name": "success_is_not_financial_finality",
+      "passed": true
+    },
+    {
+      "name": "local_document_links_and_anchors",
+      "passed": true,
+      "detail": {
+        "markdownFiles": 15,
+        "localLinks": 240,
+        "anchors": 34,
+        "errors": []
+      }
+    },
+    {
+      "name": "all_design_json_parse",
+      "passed": true,
+      "detail": {
+        "files": 21,
+        "errors": []
+      }
+    },
+    {
+      "name": "predecessor_sql_remains_partial",
+      "passed": true,
+      "detail": {
+        "tables": 2,
+        "insertStatements": 6,
+        "insertRows": 145,
+        "genericSchema": false
+      }
+    },
+    {
+      "name": "text_format",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "aviatorCompiled": false,
+  "scriptsExecuted": false,
+  "realFunctionsExecuted": false,
+  "networkExecuted": false,
+  "sqlExecuted": false,
+  "executorImplemented": false,
+  "completeDefinitionValidated": false,
+  "genericPhysicalSchemaValidated": false,
+  "genericManagementWireValidated": false,
+  "pencilUpdated": false,
+  "referenceCalculationScope": "Only the four synthetic JSON cases and two missing/type variants; does not invoke Aviator, functions, transport or runtime implementation."
+}

@@ -1,9 +1,19 @@
 # Foundation 服务本地命令幂等能力决策
 
-> **2026-09-16 CreateCheckout 修订：** [业务重构决定](../../requirements/20260916/commerce-CreateCheckout业务重构/technique.md)移除 CreateCheckout 的请求幂等执行。新订单国家保存在 `t_commerce_order.consumer_country_code`，旧命令快照只保留历史读取；本文其他操作的命令合同不变。
+> **2026-09-17 全项目职责修订：** [Gateway 请求幂等决定](2026-09-17-gateway-request-idempotency.md)取代本文的新增接入指引：HTTP `Idempotency-Key` 统一由 Gateway 处理，所有业务系统禁止新增本组件依赖、启用或调用。本文保留的服务本地 Claim/Lease/恢复与“不在 Gateway 处理”说明仅用于存量迁移和历史解释，不是新接口方案；业务防重与必要恢复继续由 Owner 负责。存量代码/表不会随文档自动删除，状态见当前台账。
+
+> **2026-09-17 SubmitPayment 修订：** [支付提交重构](../../requirements/20260917/commerce-SubmitPayment接口重构/technique.md)移除 Payments Header、请求 Hash、命令认领和响应重放；提交、GET 和查询 Handler 均不读取 SUBMIT_CHECKOUT_PAYMENT 命令。submissionId 仅作为 Payment 来源业务编号；历史接受命令列放宽可空，共享组件、Preparation 及历史行保留。
+
+> **2026-09-17 SaveConsumer 修订：** [保存消费者资料重构](../../requirements/20260917/commerce-SaveConsumer接口重构/technique.md)移除 SaveConsumer 对本组件的消费及 Header 要求，每次请求按当前订单状态保存；不读写 SAVE_CHECKOUT_CONSUMER 命令，不删除历史行或共享机制，Preparation/Payments 不在此次调整范围内。
+
+> **2026-09-16 CreateRefund 修订：** [创建退款重构](../../requirements/20260916/commerce-CreateRefund接口重构/technique.md)移除 Client CreateRefund 对本组件的消费，按原 RefundRequest 的业务号和结构化内容防重；不读写 CREATE_REFUND 命令，不删除历史行、共享表或其他消费者。补偿事件自身 Claim/Lease 继续保留。
+
+> **2026-09-16 CancelOrder 修订：** [取消业务重构](../../requirements/20260916/commerce-CancelOrder接口重构/technique.md)移除取消对本组件的消费，不读写 CANCEL_ORDER 命令，不删除历史行或共享表；其余消费者和 Foundation 机制不变。
+
+> **2026-09-16 CreateCheckout 修订：** [业务重构决定](../../requirements/20260916/commerce-CreateCheckout业务重构/technique.md)移除 CreateCheckout 的请求幂等执行。新订单国家保存在 `t_commerce_order.consumer_country_code`；[2026-09-17 查询修订](../../requirements/20260916/commerce-GetCustomerCheckout接口重构/technique.md)进一步移除旧创建快照 Reader 和 Codec，不再为国家字段读取创建命令表。本文其他操作的命令合同不变，不删除共享幂等表或历史记录。
 
 
-- Decision status: Confirmed
+- Decision status: Historical for new adoption; retained for existing-consumer migration
 - Implementation and deployment status: see [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md)
 - Decision date: 2026-09-09
 - Superseded sections: none；本决定只调整通用机制的代码归属，不改变现有业务合同、状态机或数据库所有权
@@ -57,6 +67,10 @@ JAR 当前使用与 Commerce 已批准 `t_command_idempotency` 相同的列合�
 Converter、三个真实恢复检查点和三个短事务。
 
 Risk、Platform Support、Gateway 和其他系统的现有幂等实现、表结构与行为全部保持不变；后续是否迁移必须单独评审和授权。
+
+2026-09-15 后继授权：用户在差异评审后明确要求 Payment 使用公共包，新增 Payment pay 受理链消费者，消费约定与表结构差异由 [Payment 接入说明](../../payment-orchestration-service/docs/development/command-idempotency-differences.md)拥有。此授权包含代码和模型/SQL 文件维护，不包含实际库迁移；不改变其余系统范围。首次 Commerce 迁移记录保留。
+
+2026-09-15 后继简化：Payment pay 随后按用户确认移除公共命令幂等组件，当前按业务来源提交唯一键和原记录比较防重；上段接入授权保留为历史，完整取代说明见上述 Payment 接入记录顶部。Commerce 和其他系统合同不因此改变；[2026-09-16 编码合并](2026-09-16-payment-based-coding-conventions.md)也不强制所有接口消费该 JAR。
 
 ### D5. 测试入口按能力边界区分
 

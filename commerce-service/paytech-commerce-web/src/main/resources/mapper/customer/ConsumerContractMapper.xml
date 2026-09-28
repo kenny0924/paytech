@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commerce.core.dal.mapper.customer.ConsumerContractMapper">
+    <resultMap id="ConsumerContract" type="com.paytech.commerce.core.dal.dataobject.customer.ConsumerContract">
+        <id column="consumer_contract_id" property="consumerContractId" javaType="_long"/>
+        <result column="order_id" property="orderId" javaType="_long"/>
+        <result column="order_legal_id" property="orderLegalId" javaType="_long"/>
+    </resultMap>
+    <select id="findByOrderId" resultMap="ConsumerContract" useCache="false" flushCache="true">
+        SELECT cc.consumer_contract_id,cc.order_id,cc.order_legal_id
+        FROM t_consumer_contract cc
+        JOIN t_order_legal l ON l.order_legal_id=cc.order_legal_id
+        JOIN t_order_context c ON c.order_context_id=l.order_context_id AND c.order_id=cc.order_id
+        WHERE cc.order_id=#{orderId}
+    </select>
+</mapper>

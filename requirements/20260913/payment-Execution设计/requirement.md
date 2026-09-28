@@ -1,5 +1,9 @@
 # Payment Execution 需求
 
+> **字段维护后继：** [整批精简修订](./execution-field-simplification-amendment.md)已取代本文受影响的字段、渠道绑定位置、认证明细、Pricing Fact 与状态历史表要求。本文旧接口/流程细节保留为迁移前基线；后续 Java/HTTP/MQ 改造须逐项对齐，数据库执行状态只见当前台账。
+
+> **状态与 Channel 恢复后继：** capture mode、三表 4/4/5 状态、active_action_id 及移除 QUERY 的现行设计目标以[状态与恢复修订](./execution-state-channel-recovery-amendment.md)为准；下文受影响内容保留为前序基线，未涉及合同继续有效。实现与 SQL 状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 > **交易级 Token 修订评审：** 用户已确认统一 pay、交易级工具 Token、Attempt 直接关联及删除旧 Instrument 的方向；详细合同见[修订稿](./instrument-token-amendment.md)。下文保留上一版合同与评审上下文，受影响部分以修订稿的准确取代范围为准；新合同的实现与验证状态只读[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 > 阶段 3 已获用户确认，当前进入阶段 4 Execution 本地切片研发；其他 Owner 仅测试 Mock + TODO。实际实现与验证边界见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)，阶段确认见[交付记录](./delivery.md)。
@@ -76,7 +80,7 @@ flowchart TD
 | 能力 | Execution 应完成的结果 |
 |---|---|
 | 创建、查询 Intent | 绑定唯一来源订单及其已冻结 OE、金额、币种和商业上下文；原身份重试返回原记录 |
-| 关闭创建资格、终止 Intent | 处理创建与取消的竞态；原身份关闭后，晚到请求不能重新创建；已有成功资金或已提交/UNKNOWN 动作时不能假称未支付终止 |
+| 终止已有 Intent | Commerce 先确认创建结果，再请求终止；创建超时用原键恢复，同一来源唯一。已有成功资金或已提交/UNKNOWN 动作时不能假称未支付终止；取消前置关闭能力已移除，见字段修订第 8 节 |
 | 提交 Card 支付、查询原提交 | 按同一来源提交身份去重，执行 Card 主流程并返回安全状态和必要 nextAction |
 | 认证、查询/继续原交互 | 表达独立认证能力及原交互恢复；是否单独对其他服务公开，随真实消费者在接口设计中确定 |
 | Capture | 针对原成功授权进行扣款；本期沿用一次全额 Capture，不扩展部分、多次或增量授权 |

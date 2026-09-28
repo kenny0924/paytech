@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.paytech</groupId>
+        <artifactId>paytech-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath/>
+    </parent>
+
+    <artifactId>api-gateway</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>api-gateway-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>platform-support-api</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-gateway-boundaries</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>org.springframework:spring-webmvc</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-web</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-webmvc</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-webmvc</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-webmvc-test</exclude>
+                                        <exclude>jakarta.servlet:jakarta.servlet-api</exclude>
+                                        <exclude>javax.servlet:javax.servlet-api</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-tomcat</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-jetty</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-undertow</exclude>
+                                        <exclude>org.springframework.cloud:spring-cloud-starter-gateway</exclude>
+                                        <exclude>com.paytech:paytech-redis-starter</exclude>
+                                        <exclude>com.paytech:paytech-caffeine-starter</exclude>
+                                        <exclude>com.paytech:paytech-mvc-web-starter</exclude>
+                                        <exclude>org.redisson:*</exclude>
+                                        <exclude>org.testcontainers:*</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-testcontainers</exclude>
+                                        <exclude>org.mockito:*</exclude>
+                                        <exclude>com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config</exclude>
+                                        <exclude>com.paytech:platform-support-web</exclude>
+                                        <exclude>com.paytech:client-contract-*</exclude>
+                                        <exclude>com.paytech:commerce-*</exclude>
+                                        <exclude>com.paytech:payment-orchestration-*</exclude>
+                                        <exclude>com.paytech:risk-compliance-*</exclude>
+                                        <exclude>com.paytech:finance-*</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <modules>
+        <module>api-gateway-web</module>
+        <module>api-gateway-test</module>
+    </modules>
+</project>

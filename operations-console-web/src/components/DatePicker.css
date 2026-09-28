@@ -1,0 +1,20 @@
+.shared-date-picker { width: 100%; }
+.shared-date-picker input { font-variant-numeric: tabular-nums; }
+.shared-date-picker .ant-picker-suffix { color: #8a929f; }
+.shared-date-picker-popup .ant-picker-panel-container {
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  border: 1px solid #edf0f2;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgb(31 41 55 / 10%);
+}
+
+@media (max-width: 540px) {
+  .shared-date-picker-popup .ant-picker-datetime-panel { flex-direction: column; }
+  .shared-date-picker-popup .ant-picker-time-panel {
+    border-inline-start: 0;
+    border-top: 1px solid #edf0f2;
+  }
+  .shared-date-picker-popup .ant-picker-time-panel .ant-picker-content { height: 112px; }
+}

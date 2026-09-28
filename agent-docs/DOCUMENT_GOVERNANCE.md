@@ -4,7 +4,7 @@
 
 > **OE / Client / Pricing 本期路由：** CCT、Commerce、Payment、Finance 的 entityNo、OE Scope、Affiliation、Agreement Party、支付准备与定价事实以 [2026-09-11 四系统决定](decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 为准；Risk 延后接入，旧 Wire/Hash/历史 Reader 继续按迁移边界保留。
 
-最后更新：2026-09-11
+最后更新：2026-09-16
 
 状态：Confirmed。本文定义文档权威、状态和维护方式，不定义业务事实。
 
@@ -24,6 +24,10 @@ Code-MoR 不再用“所有文档排成一条绝对优先级”的方式解决�
 
 根 `AGENTS.md` 中为防误操作而保留的业务边界是主题 Owner 的薄安全投影，不因此取得业务语义所有权。若投影与主题 Owner 漂移，应遵循主题 Owner 并在同一变更中修复投影；只有当前用户的明确决定可以改变 Owner 规则。
 
+2026-09-16 已按[用户确认的 Payment 基准合并决定](decisions/2026-09-16-payment-based-coding-conventions.md)统一写接口规范。通用规则仍由下列开发/工程主题 Owner 拥有，Payment 文档负责应用示例；旧 REST Processor、Models + record、Service 外部调用等受影响说明通过后继标记路由，不作为另一套现行规则。
+
+用户进一步确认将完整开发示例集中到 [examples/WRITE_API_EXAMPLE.md](examples/WRITE_API_EXAMPLE.md)。该文档只示范通用规则的应用，两份公共规范继续拥有规则，Payment 本地文档保留业务补充并链接公共示例；不得在各系统另行复制完整教程。根 `AGENTS.md` 维护实现前阅读与交付前自查要求，示例或源码不因此成为另一套业务合同或实现状态证明。
+
 ## 2. 主题 Owner
 
 | 主题 | 唯一现行权威 | 其他文档的职责 |
@@ -37,15 +41,16 @@ Code-MoR 不再用“所有文档排成一条绝对优先级”的方式解决�
 | Java 模块、分层、包、HTTP API 和跨模块边界 | [`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) | 系统模块设计只记录本系统映射 |
 | 第一方 HTTP 4xx/5xx Problem Details、Request ID、错误时间、字段错误及 Gateway/BFF/内部 Client/Vault 传播 | [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md) 是完整合同；[决策记录](./decisions/2026-09-06-system-wide-rfc-9457-problem-details.md)冻结取代范围 | `DEVELOPMENT_CONVENTIONS.md` 与 `JAVA_PROJECT_STRUCTURE.md` 只投影 Java 开发规则；业务系统只拥有自己的 Code/Status；实现和迁移状态只写 `CURRENT_IMPLEMENTATION.md` |
 | Foundation RFC 8785 JSON Object Profile、规范 bytes、严格输入域与 Owner Hash/签名边界 | [Object Profile 决策](./decisions/2026-09-07-foundation-rfc-8785-json-object-profile.md)冻结窄范围；[完整设计](../docs/superpowers/specs/2026-09-07-foundation-rfc-8785-json-canonicalization-design.md)拥有 API、验证、上限、向量和升级合同 | `TECHNOLOGY_STACK.md` 只投影 Foundation 模块、依赖、版本与允许/禁止能力；业务 Owner 继续拥有 Projection、Hash Schema、存储、重放与签名语义；实现、验证、制品发布和部署状态只写 `CURRENT_IMPLEMENTATION.md` |
-| Foundation 服务本地命令幂等 Claim/Lease/CAS 与业务 Owner 边界 | [命令幂等能力决策](./decisions/2026-09-09-foundation-command-idempotency.md) | `TECHNOLOGY_STACK.md` 投影 JAR、依赖和启用边界；各业务 Owner 仍拥有请求 Hash/Snapshot、恢复阶段、错误、事务编排和本地数据库，当前实现、验证与迁移范围只写 `CURRENT_IMPLEMENTATION.md` |
+| HTTP 请求幂等、业务防重与公共组件接入边界 | [DEVELOPMENT_CONVENTIONS.md 第 5.4 节](./DEVELOPMENT_CONVENTIONS.md#54-请求幂等与业务防重)维护完整规则；[2026-09-17 决定](./decisions/2026-09-17-gateway-request-idempotency.md)记录全项目确认与取代范围 | `APPLICATION_ARCHITECTURE.md` 投影 Gateway Owner，`TECHNOLOGY_STACK.md` 投影旧 JAR 禁止新增消费与存量边界；业务 Owner 保留业务唯一性和必要恢复。[旧服务本地命令决定](./decisions/2026-09-09-foundation-command-idempotency.md)仅供迁移/历史解释，不能继续授权接入；实现与迁移只写 `CURRENT_IMPLEMENTATION.md` |
 | Commerce 非运行 Client API Owner ingress 契约模块及 Java/OpenAPI 投影规则 | [契约模块决策](./decisions/2026-09-05-commerce-client-api-contract-module.md)、[设计](../docs/superpowers/specs/2026-09-05-commerce-client-api-contract-module-design.md)与[实施计划](../docs/superpowers/plans/2026-09-05-commerce-client-api-contract-module-implementation.md) | 仅拥有非运行 Java 模块、投影规则与实施顺序；原 Commerce Client API 决策/设计继续拥有其余业务和公共 wire 语义 |
 | Commerce Create Checkout 命令恢复检查点 | [恢复简化决策](./decisions/2026-09-09-commerce-checkout-recovery-simplification.md)与 [`COMMERCE_DATABASE.md`](./database/COMMERCE_DATABASE.md) | 只取代 Create Checkout 的旧五阶段表达；公共 Wire、Cancel/Create Refund 阶段与实现状态仍由各自 Owner 管理 |
 | 技术产品、版本和允许/禁止能力 | [`TECHNOLOGY_STACK.md`](./TECHNOLOGY_STACK.md) | README 记录实际启用值 |
+| 通用外部 API 配置与单次 HTTP 执行 | [Platform Integration 决定](./decisions/2026-09-21-platform-integration-http-execution.md)及[执行修订](../requirements/20260914/payment-渠道API逻辑定义/platform-http-execution-amendment.md) | Platform 管理配置并执行；Payment 等业务方经内部 HTTP 调用，业务事实、凭据与卡边界仍由各 Owner 专项合同管理 |
 | 入口应用、Gateway、BFF、前端和部署边界 | [`APPLICATION_ARCHITECTURE.md`](./APPLICATION_ARCHITECTURE.md) | 组件 README 记录运行方式 |
 | Gateway 业务 Target/Discovery/Route 的配置权威与动态转发 | [2026-09-11 范围决定](./decisions/2026-09-11-gateway-database-routing.md)取代静态业务名单；[技术修订方案](../requirements/20260911/operations-console-风控规则集历史与字典管理/gateway-dynamic-routing-design.md)按阶段评审 | 复用 Platform 数据库和 PLT-I20、固定单次请求 Route/Target、BFF 管理监听隔离；其余 Channel/认证/协议/控制面由原专项设计持有，迁移状态只读当前台账 |
 | Client API 最小调用方输入、可信 Channel/身份、Request ID 接纳与最小下游 Header | [Client API Gateway 完整设计](../docs/superpowers/specs/2026-09-05-client-api-gateway-design.md)拥有入口合同；[合同决策](./decisions/2026-09-05-client-api-gateway-contract.md)记录确认理由与范围 | 仅适用于 `CLIENT_API`，不统一其他 Channel 的认证算法或外部 Request ID 行为；具体业务字段仍由业务 Owner 定义，第一方错误响应继续遵守全系统 Problem Profile |
 | 本机开发拓扑、端口和依赖准备 | [`LOCAL_DEVELOPMENT_ENVIRONMENT.md`](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) | `local-environment/README.md` 是操作手册 |
-| Java 测试策略、auto/manual 和覆盖率 | [`UNIT_TEST_GUIDE.md`](./UNIT_TEST_GUIDE.md) | 各仓库 README 记录已运行证据 |
+| Java 测试策略、DTO Mock、两级 BeforeEach/全局 AfterEach、auto/manual 和覆盖率 | [`UNIT_TEST_GUIDE.md`](./UNIT_TEST_GUIDE.md) | [2026-09-17 决定](./decisions/2026-09-17-test-dto-mock-lifecycle.md)声明取代范围；[示例](./examples/UNIT_TEST_EXAMPLE.md)辅助落地，[旧版](./UNIT_TEST_GUIDE_BEFORE_20260917.md)仅历史；实现/验证状态只读当前台账 |
 | 数据库通用物理规则 | [`DATABASE_DESIGN_GUIDE.md`](./DATABASE_DESIGN_GUIDE.md) | 不保存六库实施状态 |
 | 六系统业务数据事实和状态机 | [`database/README.md`](./database/README.md) 路由的系统文档、当前专项决定和 PDManer | 通用手册不重定义业务语义 |
 | Risk Operations Rule Configuration Backend 首期（`CHECKOUT_PREPARE` Rule Set、TEST Candidate 与静态检查） | [`2026-09-05-risk-operations-rule-configuration-backend.md`](./decisions/2026-09-05-risk-operations-rule-configuration-backend.md) 冻结已确认的窄范围与取代边界；[完整设计](../docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md) 拥有完整合同；[实施计划](../docs/superpowers/plans/2026-09-05-risk-operations-rule-configuration-backend-implementation.md) 拥有执行顺序和验收 | [`database/RISK_COMPLIANCE_DATABASE.md`](./database/RISK_COMPLIANCE_DATABASE.md) 继续拥有未被该窄决定取代的 Risk 业务事实；实现、验证和部署状态只写入 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) |

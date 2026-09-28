@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.foundation.idempotency.persistence.mapper.CommandIdempotencyMapper">
+
+    <resultMap id="CommandIdempotencyResultMap"
+               type="com.paytech.foundation.idempotency.persistence.mapper.CommandIdempotencyRow">
+        <constructor>
+            <idArg column="command_idempotency_id" javaType="_long"/>
+            <arg column="caller_scope" javaType="java.lang.String"/>
+            <arg column="operation_type" javaType="java.lang.String"/>
+            <arg column="idempotency_key" javaType="java.lang.String"/>
+            <arg column="request_hash" javaType="java.lang.String"/>
+            <arg column="request_hash_version" javaType="_int"/>
+            <arg column="request_snapshot_schema_version" javaType="java.lang.Integer"/>
+            <arg column="request_snapshot_json" javaType="java.lang.String"/>
+            <arg column="operation_context_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="recovery_stage" javaType="java.lang.String"/>
+            <arg column="process_status" javaType="java.lang.String"/>
+            <arg column="resource_type" javaType="java.lang.String"/>
+            <arg column="resource_id" javaType="java.lang.Long"/>
+            <arg column="resource_no" javaType="java.lang.String"/>
+            <arg column="response_code" javaType="java.lang.String"/>
+            <arg column="response_http_status" javaType="java.lang.Integer"/>
+            <arg column="response_snapshot_schema_version" javaType="java.lang.Integer"/>
+            <arg column="response_location" javaType="java.lang.String"/>
+            <arg column="response_body_json" javaType="java.lang.String"/>
+            <arg column="lock_owner" javaType="java.lang.String"/>
+            <arg column="lock_until" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="version" javaType="_long"/>
+            <arg column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="update_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="AllColumns">
+        command_idempotency_id,
+        caller_scope,
+        operation_type,
+        idempotency_key,
+        request_hash,
+        request_hash_version,
+        request_snapshot_schema_version,
+        request_snapshot_json,
+        operation_context_time,
+        recovery_stage,
+        process_status,
+        resource_type,
+        resource_id,
+        resource_no,
+        response_code,
+        response_http_status,
+        response_snapshot_schema_version,
+        response_location,
+        response_body_json,
+        lock_owner,
+        lock_until,
+        version,
+        create_time,
+        update_time
+    </sql>
+
+    <insert id="insertOrKeepWinner">
+        INSERT INTO t_command_idempotency (
+        command_idempotency_id, caller_scope, operation_type, idempotency_key, request_hash,
+        request_hash_version, request_snapshot_schema_version, request_snapshot_json,
+        operation_context_time, recovery_stage, process_status, resource_type, resource_id, resource_no,
+        response_code, response_http_status, response_snapshot_schema_version, response_location,
+        response_body_json, lock_owner, lock_until, version, create_time, update_time
+        ) VALUES (
+        #{commandIdempotencyId}, #{callerScope}, #{operationType}, #{idempotencyKey}, #{requestHash},
+        #{requestHashVersion}, #{requestSnapshotSchemaVersion}, #{requestSnapshotJson,jdbcType=LONGVARCHAR},
+        #{operationContextTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+        #{recoveryStage}, #{processStatus}, #{resourceType,jdbcType=VARCHAR}, #{resourceId,jdbcType=BIGINT},
+        #{resourceNo,jdbcType=VARCHAR}, #{responseCode,jdbcType=VARCHAR},
+        #{responseHttpStatus,jdbcType=INTEGER}, #{responseSnapshotSchemaVersion,jdbcType=INTEGER},
+        #{responseLocation,jdbcType=VARCHAR}, #{responseBodyJson,jdbcType=LONGVARCHAR}, #{lockOwner},
+        #{lockUntil,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, 1,
+        #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+        #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        )
+        ON DUPLICATE KEY UPDATE command_idempotency_id = command_idempotency_id
+    </insert>
+
+    <select id="selectByIdentityForUpdate" resultMap="CommandIdempotencyResultMap" flushCache="true" useCache="false">
+        SELECT
+        <include refid="AllColumns"/>
+        FROM t_command_idempotency
+        WHERE caller_scope = #{callerScope}
+        AND operation_type = #{operationType}
+        AND idempotency_key = #{idempotencyKey}
+        FOR UPDATE
+    </select>
+
+    <select id="selectByIdentity" resultMap="CommandIdempotencyResultMap" useCache="false">
+        SELECT
+        <include refid="AllColumns"/>
+        FROM t_command_idempotency
+        WHERE caller_scope = #{callerScope}
+        AND operation_type = #{operationType}
+        AND idempotency_key = #{idempotencyKey}
+    </select>
+
+    <update id="acquireOrRenewLease">
+        UPDATE t_command_idempotency
+        SET lock_owner = #{newLockOwner},
+        lock_until = #{newLockUntil,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+        version = version + 1,
+        update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE command_idempotency_id = #{commandIdempotencyId}
+        AND process_status = 'PROCESSING'
+        AND recovery_stage = #{expectedStage}
+        AND version = #{expectedVersion}
+        AND lock_owner IS NOT NULL
+        AND lock_until IS NOT NULL
+        AND (lock_owner = #{newLockOwner}
+        OR lock_until &lt;= #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})
+        AND #{newLockUntil,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        &gt; #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+    </update>
+
+    <update id="advanceStage">
+        UPDATE t_command_idempotency
+        SET recovery_stage = #{nextStage},
+        lock_until = #{newLockUntil,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+        version = version + 1,
+        update_time = #{updatedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE command_idempotency_id = #{commandIdempotencyId}
+        AND operation_type = #{operationType}
+        AND process_status = 'PROCESSING'
+        AND recovery_stage = #{expectedStage}
+        AND version = #{expectedVersion}
+        AND lock_owner = #{lockOwner}
+        AND lock_until IS NOT NULL
+        AND lock_until &gt; #{updatedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        AND #{newLockUntil,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        &gt; #{updatedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+    </update>
+
+    <update id="complete">
+        UPDATE t_command_idempotency
+        SET recovery_stage = #{completedStage},
+        process_status = #{completedStatus},
+        response_code = #{responseCode},
+        response_http_status = #{responseHttpStatus},
+        response_snapshot_schema_version = #{responseSnapshotSchemaVersion,jdbcType=INTEGER},
+        response_location = #{responseLocation,jdbcType=VARCHAR},
+        response_body_json = #{responseBodyJson,jdbcType=LONGVARCHAR},
+        lock_owner = NULL,
+        lock_until = NULL,
+        version = version + 1,
+        update_time = #{completedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE command_idempotency_id = #{commandIdempotencyId}
+        AND operation_type = #{operationType}
+        AND process_status = 'PROCESSING'
+        AND recovery_stage = #{expectedStage}
+        AND version = #{expectedVersion}
+        AND lock_owner = #{lockOwner}
+        AND lock_until IS NOT NULL
+        AND lock_until &gt; #{completedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+    </update>
+</mapper>

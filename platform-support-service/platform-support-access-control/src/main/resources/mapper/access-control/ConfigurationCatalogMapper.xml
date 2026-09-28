@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.ConfigurationCatalogMapper">
+    <sql id="ResourceColumns">r.resource_id resourceId,r.resource_code resourceCode,r.channel,r.resource_type resourceType,
+        r.parent_resource_id parentResourceId,r.display_name displayName,r.frontend_route frontendRoute,
+        r.component_key componentKey,r.permission_id permissionId,p.permission_code permissionCode,
+        p.status permissionStatus,r.sort_order sortOrder,r.status,r.version,r.create_time createTime,r.update_time updateTime</sql>
+    <sql id="PermissionColumns">p.permission_id permissionId,p.permission_code permissionCode,p.resource_type resourceType,
+        p.action_code actionCode,p.risk_level riskLevel,p.status,p.version,p.create_time createTime,p.update_time updateTime</sql>
+    <select id="resources" resultType="com.paytech.platform.support.accesscontrol.domain.configurationmanagement.ConsoleResourceView">
+        SELECT <include refid="ResourceColumns"/> FROM t_console_resource r
+        LEFT JOIN t_permission p ON p.permission_id=r.permission_id WHERE r.channel='OPERATIONS'
+        ORDER BY r.resource_id LIMIT #{limit}
+    </select>
+    <select id="resource" resultType="com.paytech.platform.support.accesscontrol.domain.configurationmanagement.ConsoleResourceView">
+        SELECT <include refid="ResourceColumns"/> FROM t_console_resource r
+        LEFT JOIN t_permission p ON p.permission_id=r.permission_id
+        WHERE r.channel='OPERATIONS' AND r.resource_code=#{code}
+    </select>
+    <sql id="PermissionFilters">
+        <where>
+            <if test="filter.code != null">AND p.permission_code=#{filter.code}</if>
+            <if test="filter.resourceType != null">AND p.resource_type=#{filter.resourceType}</if>
+            <if test="filter.status != null">AND p.status=#{filter.status}</if>
+            <if test="filter.riskLevel != null">AND p.risk_level=#{filter.riskLevel}</if>
+            <if test="filter.keyword != null">AND (LOCATE(#{filter.keyword},p.permission_code)&gt;0
+                OR LOCATE(#{filter.keyword},p.resource_type)&gt;0 OR LOCATE(#{filter.keyword},p.action_code)&gt;0)</if>
+        </where>
+    </sql>
+    <select id="permissions" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.Permission">
+        SELECT <include refid="PermissionColumns"/> FROM t_permission p <include refid="PermissionFilters"/>
+        ORDER BY p.permission_code,p.permission_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="permissionCount" resultType="_long">
+        SELECT COUNT(*) FROM t_permission p <include refid="PermissionFilters"/>
+    </select>
+    <select id="permission" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.Permission">
+        SELECT <include refid="PermissionColumns"/> FROM t_permission p WHERE p.permission_code=#{code}
+    </select>
+    <select id="lockPermission" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.Permission" flushCache="true" useCache="false">
+        SELECT <include refid="PermissionColumns"/> FROM t_permission p WHERE p.permission_id=#{id}
+        <choose><when test="exclusive">FOR UPDATE</when><otherwise>FOR SHARE</otherwise></choose>
+    </select>
+    <insert id="insertPermission">
+        INSERT INTO t_permission (permission_id,permission_code,resource_type,action_code,risk_level,status,version,create_time,update_time)
+        VALUES (#{row.permissionId},#{row.permissionCode},#{row.resourceType},#{row.actionCode},#{row.riskLevel},#{row.status},
+            #{row.version},#{row.createTime},#{row.updateTime})
+    </insert>
+    <update id="updatePermission">
+        UPDATE t_permission SET risk_level=#{riskLevel},status=#{status},version=version+1,update_time=#{updateTime}
+        WHERE permission_id=#{row.permissionId} AND version=#{row.version}
+    </update>
+    <select id="resourceReferenceCount" resultType="_long">
+        SELECT COUNT(*) FROM t_console_resource WHERE permission_id=#{permissionId}
+    </select>
+    <select id="routeReferenceCount" resultType="_long">
+        SELECT COUNT(*) FROM t_gateway_route WHERE permission_id=#{permissionId}
+    </select>
+    <select id="roleReferenceCount" resultType="_long">
+        SELECT COUNT(*) FROM t_role_permission WHERE permission_id=#{permissionId} AND status='ACTIVE'
+    </select>
+    <select id="resourceReferences" resultType="com.paytech.platform.support.accesscontrol.domain.configurationmanagement.ConfigurationCatalog$ResourceReference">
+        SELECT resource_id resourceId,resource_code resourceCode,display_name displayName,channel,resource_type resourceType,status
+        FROM t_console_resource WHERE permission_id=#{permissionId} ORDER BY resource_code,resource_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="routeReferences" resultType="com.paytech.platform.support.accesscontrol.domain.configurationmanagement.ConfigurationCatalog$RouteReference">
+        SELECT r.route_code routeCode,r.channel,r.http_method httpMethod,r.external_path_template externalPathTemplate,
+            t.target_service_code targetServiceCode,r.status
+        FROM t_gateway_route r JOIN t_gateway_target t ON t.target_id=r.target_id
+        WHERE r.permission_id=#{permissionId} ORDER BY r.route_code,r.route_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="roleReferences" resultType="com.paytech.platform.support.accesscontrol.domain.configurationmanagement.ConfigurationCatalog$RoleReference">
+        SELECT r.role_id roleId,r.role_code roleCode,r.role_name roleName,r.status roleStatus,rp.status grantStatus,r.scope_key scopeKey
+        FROM t_role_permission rp JOIN t_role r ON r.role_id=rp.role_id
+        WHERE rp.permission_id=#{permissionId} AND rp.status='ACTIVE'
+        ORDER BY r.role_code,r.role_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="lockResourceReferences" resultType="_long" flushCache="true" useCache="false">
+        SELECT resource_id FROM t_console_resource WHERE permission_id=#{permissionId} AND channel='OPERATIONS'
+        ORDER BY resource_id FOR SHARE
+    </select>
+    <select id="lockRouteReferences" resultType="_long" flushCache="true" useCache="false">
+        SELECT r.route_id FROM t_gateway_route r JOIN t_gateway_target t ON t.target_id=r.target_id
+        WHERE r.permission_id=#{permissionId} AND r.channel='OPERATIONS'
+        ORDER BY r.route_id FOR SHARE
+    </select>
+    <select id="delegablePermissions" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.Permission">
+        SELECT <include refid="PermissionColumns"/> FROM t_permission p
+        WHERE (EXISTS (SELECT 1 FROM t_console_resource cr WHERE cr.permission_id=p.permission_id AND cr.channel='OPERATIONS'
+            <if test="!administrator">AND cr.status='ACTIVE'</if>)
+            OR EXISTS (SELECT 1 FROM t_gateway_route gr JOIN t_gateway_target gt ON gt.target_id=gr.target_id AND gt.channel=gr.channel
+                WHERE gr.permission_id=p.permission_id AND gr.channel='OPERATIONS' AND gr.authorization_mode='HUMAN_PERMISSION'
+                <if test="!administrator">AND gr.status='ACTIVE' AND gt.status='ACTIVE'</if>))
+        <if test="!includeInactive">AND p.status='ACTIVE'</if>
+        <if test="!administrator">
+            AND EXISTS (SELECT 1 FROM t_tenant_member_role g JOIN t_role r ON r.role_id=g.role_id AND r.scope_key=g.role_scope_key
+                JOIN t_role_permission rp ON rp.role_id=r.role_id AND rp.status='ACTIVE'
+                WHERE g.tenant_member_id=#{memberId} AND rp.permission_id=p.permission_id
+                    AND <include refid="com.paytech.platform.support.accesscontrol.core.dal.mapper.OperationsDirectoryMapper.EffectiveRoleGrantAt"/>)
+        </if>
+        ORDER BY p.permission_id
+    </select>
+</mapper>

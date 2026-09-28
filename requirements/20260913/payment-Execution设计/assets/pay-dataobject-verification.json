@@ -1,0 +1,74 @@
+{
+  "recordedAt": "2026-09-14T17:34:01.504841+00:00",
+  "scope": "PayRequestBody -> existing DataObjects in PayContext -> one local acceptance transaction -> SubmissionResponseBody; no new Java classes.",
+  "removedTypes": [
+    "com.paytech.payment.domain.execution.PayInput",
+    "com.paytech.payment.execution.domain.ExecutionCommands.Pay"
+  ],
+  "removedWork": "No post-save submission requery or ExecutionView/Snapshot conversion solely to return the accepted result.",
+  "retained": "Existing Channel interaction and recovery contracts still use their old snapshots; pay progression remains TODO.",
+  "redEvidence": {
+    "log": "/tmp/payment-dataobject-red.log",
+    "result": "Original Processor lacks process(long, String, PayRequestBody); NoSuchMethodException as expected."
+  },
+  "verification": {
+    "command": "JAVA_HOME=<JDK 25> ./mvnw -q -pl paytech-payment-test -am clean verify -Dtest=PaymentCommandContractAutoTest,PaymentPayPersistenceContractAutoTest,PaymentModuleBoundaryAutoTest,PaymentRulesAutoTest,PaymentFlowRegistryAutoTest -Dsurefire.failIfNoSpecifiedTests=false",
+    "exitCode": 0,
+    "tests": [
+      {
+        "name": "com.paytech.payment.auto.architecture.PaymentModuleBoundaryAutoTest",
+        "tests": "12",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentCommandContractAutoTest",
+        "tests": "26",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentFlowRegistryAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentPayPersistenceContractAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentRulesAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      }
+    ],
+    "allTestSourcesCompiled": true,
+    "log": "/tmp/payment-dataobject-verify.log"
+  },
+  "integration": {
+    "executedThisTurn": false,
+    "reason": "Previously observed local Schema lacks the approved token table and capture mode; database was not migrated."
+  },
+  "sourceSha256": {
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/domain/ExecutionCommands.java": "561d51adab2f506532a8724a14999bc908b324e5da5a2f3bc251903b257b4a10",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/architecture/PaymentModuleBoundaryAutoTest.java": "c1e4df28ed684ac4686b610e7bcd18e3d28ebbe3b88afd8f9ce6d9cd92e0ea3f",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentCommandContractAutoTest.java": "f5cb034a86a7f5de50d8641ff624ae496438963ee1a1e543cab4de2aeecdb83c",
+    "paytech-payment-web/src/main/java/com/paytech/payment/domainservice/service/ExecutionQueryService.java": "008253056d20237ad8ecc25cb04f7d7bde668be59fde5678404037e1747b11d0",
+    "paytech-payment-web/src/main/java/com/paytech/payment/domainservice/service/impl/ExecutionQueryServiceImpl.java": "082bf12bb507dfab8427af387c1fa52521c92e92869bf34ec3be630a9f759449",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/ExecutionApiConverter.java": "b307c407d1162a154751706583106979c824d2c5b4926dee5b22de457f0f3604",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/ExecutionRequestConverter.java": "f66dcb69ce58cd4297a43e33c6a1430e6ad70121e8726ec8d9f9fcb24b4e9f19",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/PaymentExecutionController.java": "d7ba32468bcf37f5a5837eb5c0583c5721a17537f0dee1f3a09b14f85b82ed1f",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/processor/PayProcessor.java": "e56b83d3821f775fc909f1d527465fba2a5a4aa8d7391da04cab531811c52c8c",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/transaction/PaymentFlowTransactions.java": "1769b5773f7c26faff43f9e5ba0fea89861f7e16764247eed2fa7f1f7bb1ffc8"
+  },
+  "previousEvidence": "pay-response-body-verification.json"
+}

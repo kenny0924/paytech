@@ -1,0 +1,195 @@
+{
+  "purpose": "NI Refund a Capture 的离线合成设计数据；不是可调用参数、真实函数/Aviator/NI 执行证据",
+  "context": {
+    "originalTransactionRefId": "3101",
+    "refundAmount": "10.00",
+    "currency": "AED"
+  },
+  "runtime": {
+    "endpointCode": "NI_TRANSACTIONS",
+    "materialState": "SYNTHETIC_DISPLAY_ONLY_NO_HANDLE_OR_TOKEN"
+  },
+  "expectedRequestDisplay": {
+    "method": "POST",
+    "url": "https://api-gateway.sandbox.ngenius-payments.com/transactions/outlets/00000000-0000-4000-8000-000000000001/orders/00000000-0000-4000-8000-000000000002/payments/00000000-0000-4000-8000-000000000003/captures/00000000-0000-4000-8000-000000000004/refund",
+    "headers": {
+      "Authorization": "Bearer <REDACTED>",
+      "Content-Type": "application/vnd.ni-payment.v2+json",
+      "Accept": "application/vnd.ni-payment.v2+json"
+    },
+    "bodyUtf8": "{\"amount\":{\"currencyCode\":\"AED\",\"value\":1000}}"
+  },
+  "syntheticResponse": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/vnd.ni-payment.v2+json"
+    },
+    "body": {
+      "outletId": "00000000-0000-4000-8000-000000000001",
+      "orderReference": "00000000-0000-4000-8000-000000000002",
+      "reference": "00000000-0000-4000-8000-000000000003",
+      "state": "REFUNDED",
+      "amount": {
+        "currencyCode": "AED",
+        "value": 2000
+      },
+      "_embedded": {
+        "cnp:refund": [
+          {
+            "_links": {
+              "self": {
+                "href": "https://api-gateway.sandbox.ngenius-payments.com/transactions/outlets/00000000-0000-4000-8000-000000000001/orders/00000000-0000-4000-8000-000000000002/payments/00000000-0000-4000-8000-000000000003/refund/00000000-0000-4000-8000-000000000005"
+              }
+            },
+            "state": "SUCCESS",
+            "amount": {
+              "currencyCode": "AED",
+              "value": 1000
+            }
+          },
+          {
+            "_links": {
+              "self": {
+                "href": "https://api-gateway.sandbox.ngenius-payments.com/transactions/outlets/00000000-0000-4000-8000-000000000001/orders/00000000-0000-4000-8000-000000000002/payments/00000000-0000-4000-8000-000000000003/refund/00000000-0000-4000-8000-000000000006"
+              }
+            },
+            "state": "SUCCESS",
+            "amount": {
+              "currencyCode": "AED",
+              "value": 1000
+            }
+          }
+        ]
+      }
+    }
+  },
+  "expectedOutput": {
+    "sendState": "RESPONSE_RECEIVED",
+    "failureStage": null,
+    "diagnosticCode": null,
+    "protocolEvidence": {
+      "httpStatus": 200
+    },
+    "resultCode": "UNRESOLVED",
+    "outputs": {
+      "channelPaymentState": "REFUNDED",
+      "refundRecords": [
+        {
+          "refundId": "00000000-0000-4000-8000-000000000005",
+          "state": "SUCCESS",
+          "amount": {
+            "currencyCode": "AED",
+            "value": "1000"
+          }
+        },
+        {
+          "refundId": "00000000-0000-4000-8000-000000000006",
+          "state": "SUCCESS",
+          "amount": {
+            "currencyCode": "AED",
+            "value": "1000"
+          }
+        }
+      ],
+      "observedPaymentRef": "00000000-0000-4000-8000-000000000003",
+      "responseContentType": [
+        "application/vnd.ni-payment.v2+json"
+      ]
+    }
+  },
+  "apiIdentity": {
+    "channelCode": "NI",
+    "paymentMethodCode": "<APPROVED_PAYMENT_METHOD_CODE>",
+    "apiCode": "REFUND_CAPTURE"
+  },
+  "trustedInvocationIdentity": {
+    "clientId": "1001",
+    "paymentActionId": "4101",
+    "frozenRoute": {
+      "channelId": "21",
+      "channelAccountId": "22",
+      "midId": "23",
+      "entityNo": "AE001",
+      "paymentMethodCode": "<APPROVED_PAYMENT_METHOD_CODE>"
+    },
+    "paymentIntentId": "1101"
+  },
+  "contextType": "REFUND",
+  "assumedFunctionResult": {
+    "originalTransactionRefId": "3101",
+    "referenceType": "CAPTURE",
+    "outletId": "00000000-0000-4000-8000-000000000001",
+    "orderRef": "00000000-0000-4000-8000-000000000002",
+    "paymentRef": "00000000-0000-4000-8000-000000000003",
+    "captureId": "00000000-0000-4000-8000-000000000004",
+    "currency": "AED"
+  },
+  "assumedOriginalTransactionFacts": {
+    "channelTransactionRefId": "3101",
+    "paymentActionId": "2101",
+    "referenceType": "CAPTURE",
+    "externalTransactionId": "synthetic-capture-0004",
+    "amount": "20.00",
+    "currency": "AED"
+  },
+  "currencyPrecisionFixture": {
+    "AED": 2,
+    "ZZ0": 0,
+    "ZZ3": 3
+  },
+  "currencyPrecisionFixtureNote": "AED 沿用本例；ZZ0/ZZ3 是仅用于算术边界检查的合成键，不得登记为真实 ISO 币种或保存为 API 输入。",
+  "moneyVectors": [
+    {
+      "amount": "10.00",
+      "currency": "AED",
+      "expected": "1000"
+    },
+    {
+      "amount": "10.000",
+      "currency": "AED",
+      "expected": "1000"
+    },
+    {
+      "amount": "10.001",
+      "currency": "AED",
+      "error": "EXPRESSION_PRECISION"
+    },
+    {
+      "amount": "10",
+      "currency": "ZZ0",
+      "expected": "10"
+    },
+    {
+      "amount": "1.234",
+      "currency": "ZZ3",
+      "expected": "1234"
+    },
+    {
+      "amount": "1.2345",
+      "currency": "ZZ3",
+      "error": "EXPRESSION_PRECISION"
+    },
+    {
+      "amount": "1",
+      "currency": "BAD",
+      "error": "EXPRESSION_CURRENCY_UNAVAILABLE"
+    },
+    {
+      "amount": "9999999999999999.99999999",
+      "currency": "AED",
+      "error": "EXPRESSION_PRECISION"
+    }
+  ],
+  "actualPreflightExpectation": {
+    "sendState": "NOT_SENT",
+    "missingCapabilities": [
+      "CONTEXT_REFUND",
+      "AVIATOR_EXPRESSION",
+      "MONEY_MINOR_UNITS"
+    ],
+    "missingFunctions": [
+      "READ_REFUND_TARGET"
+    ],
+    "scope": "仅本次取值片段的缺失项；不是完整协议执行依赖集合"
+  }
+}

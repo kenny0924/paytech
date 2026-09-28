@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.contract.core.dal.mapper.SellerDisclosureMapper">
+    <resultMap id="SellerDisclosure" type="com.paytech.client.contract.core.dal.dataobject.CheckoutRecords$SellerDisclosure">
+        <constructor>
+            <arg column="disclosure_id" javaType="java.lang.Long"/>
+            <arg column="entity_no" javaType="java.lang.String"/>
+            <arg column="country_code" javaType="java.lang.String"/>
+            <arg column="locale" javaType="java.lang.String"/>
+            <arg column="status" javaType="com.paytech.client.contract.domain.enums.SellerDisclosureStatus"/>
+            <arg column="effective_from" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="effective_to" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="approved_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="published_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="SellerDisclosure">
+        SELECT disclosure_id, entity_no, country_code, locale, status, effective_from, effective_to, approved_time, published_time
+        FROM t_seller_disclosure
+        WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})
+        ORDER BY disclosure_id
+    </select>
+</mapper>

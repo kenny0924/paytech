@@ -10,9 +10,9 @@
 
 | 层 | 研发改动及消费者 |
 |---|---|
-| platform-support-api | 增加 ApiCredentialManagementApi/Models 与 ApiScopeManagementApi/Models，维护 api-credential-admin / api-scope-admin 的 v1 HTTP 合同；改 Route 与审计查询合同；现有 PLT-I03 不变 |
-| Platform web | 新建两个有实际事务/幂等职责的 ManagementProcessor、对应 Controller；复用 OperationsTransactionExecutor、OperationsCommandIdempotencyService、当前审计注解；Scope/凭证写请求使用专用轻量响应，不伪造 Scope 状态 |
-| access-control | ApiCredentialManagementService + Impl 负责读取/撤销，ApiScopeManagementService + Impl 负责目录；Repository + Impl/Mapper 按真实用例组织，管理投影与认证 PHC 候选分离；Route 服务增加目录新绑定校验与查询过滤 |
+| platform-support-api | 增加 ApiCredentialManagementApi 与 ApiScopeManagementApi，DTO 使用独立 request/response class，维护 api-credential-admin / api-scope-admin 的 v1 HTTP 合同；改 Route 与审计查询合同；现有 PLT-I03 不变 |
+| Platform web | Controller/Converter 适配凭证和 Scope 协议并委托各自 Access Control Processor；复用当前审计注解，写请求使用专用轻量响应 |
+| access-control | 凭证查询和撤销由各自 Processor 编排；ApiCredentialManagementService + Impl 只保存撤销 Context，ApiScopeManagementService + Impl 只保存创建/修改 Context；Repository + Impl/Mapper 按真实用例组织，管理投影与认证 PHC 候选分离；Route 服务增加目录新绑定校验与查询过滤 |
 | audit-security | 复用 ConfigurationChanged 的安全字段差异，补 DESCRIPTION 受控字段及三个命令的动作/对象；审计过滤增加 resourceType/resourceId，不新建历史表 |
 | Operations BFF | 增加两组轻量 Client/Controller/DTO；只有 A06 使用 ApiScopeDetailsProcessor 组合目录与选中引用页；独立调用仍分别由 Owner 鉴权；错误/Origin/严格 Query/Body 合同沿用当前做法 |
 | Operations Web | 新 api-credentials、api-scopes 页面与数据适配；Route Scope 选择器/筛选、审计对象筛选；对应页面能力与动作注册；保持历史导航、草稿、长文本省略、统一菜单 |
@@ -23,19 +23,23 @@ BFF 不把凭证 Query DTO 转成 PLT-I03 的 secret-bearing 认证输入；不�
 
 ## 2. 并发、授权与幂等
 
-| 操作 | Redis 资源锁 | 本库最后保护 | 操作类型 / Hash 命名空间 |
+2026-09-17 修订：按用户确认，撤销及 Scope 创建/修改使用 Foundation `AbstractLockProcessor`；请求幂等由 Gateway 统一承担，业务 Owner 保留唯一性和版本保护。Gateway 接入状态由 [CURRENT_IMPLEMENTATION](../../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-api-credential-management-refactor-20260917) 记录，设计归属不代表已经实现。
+
+| 操作 | Redis 资源锁 | 本库最后保护 | 请求幂等归属 |
 |---|---|---|---|
-| 创建 Scope | `api-scope` + scopeCode | uk_api_scope_code 防重复；生成 Snowflake，version=1 | CREATE_API_SCOPE / operations-create-api-scope |
-| 修改 Scope | `api-scope` + scopeCode | UPDATE WHERE api_scope_id AND version；version+1 | UPDATE_API_SCOPE / operations-update-api-scope |
-| 紧急撤销 | `api-credential` + credentialId | 锁定本条 Credential，WHERE credential_id AND version；保留子表 | REVOKE_API_CREDENTIAL / operations-revoke-api-credential |
+| 创建 Scope | `TRY_LOCK`，`lock:api-scope:{scopeCode}` | uk_api_scope_code 防重复；生成 Snowflake，version=1 | Gateway；Platform 无 Hash / 命令回执 |
+| 修改 Scope | `TRY_LOCK`，`lock:api-scope:{scopeCode}` | 锁定原行，UPDATE WHERE api_scope_id AND version；version+1 | Gateway；Platform 无 Hash / 命令回执 |
+| 紧急撤销 | `AbstractLockProcessor` 的 `TRY_LOCK`，逻辑 Key 为 `lock:api-credential:{credentialId}` | 锁定本条 Credential，WHERE credential_id AND version；保留子表 | 请求幂等归 Gateway；Platform 无操作类型 / Hash / 回执 |
 
-Hash 原文固定为有类型 Command 的 JSON 字段：create(scopeCode,displayName,description,reason)，update(scopeCode,displayName,description,expectedVersion,reason)，revoke(credentialId,expectedVersion,reason)。使用当前 ObjectMapper/既有 HMAC 准备方式，不在本期引入 Foundation 通用命令幂等迁移或另一种 Canonical 协议。CallerScope 仍从当前 actorId 生成，OpaqueReferenceNamespace=null；命令类型可区分 same-key 的不同动作，同动作不同对象包含于 Hash。
+Scope 执行顺序：Converter 解析/规范化输入 → `CreateApiScopeProcessor` / `UpdateApiScopeProcessor` → 模板资源锁 → READ COMMITTED 本地短事务（15 秒）→ 当前普通会话及写权限仲裁 → 目录唯一性/原版本检查 → 完整 Context → 本地 Service → Repository/Mapper 保存 → 提交 → 释放资源锁及既有 Controller 审计。事务内只访问本服务数据库，没有 HMAC/Vault 或其他外部步骤。
 
-执行顺序：解析/校验输入 → Foundation @ResourceLock → 事务外准备 HMAC → OperationsTransactionExecutor 短事务 → 当前普通会话及业务权限复核 → 幂等查重 → 查询目标/CAS → 完成幂等 → 提交 → Controller 独立尽力审计。事务内只访问本服务数据库；HMAC/Vault 等外部调用不能藏在事务内。写权限被收回时，重放也拒绝。
+创建 Context 持有完整新 `ApiScope`；更新 Context 持有已锁定原对象、新名称/说明及 UTC 微秒时点。更新 SQL 以原对象版本 CAS，行数正确后回写同一个对象；不构造另一份 after DataObject。唯一索引仍拒绝同编码创建，不把已有目录误当作请求回执。两个入口共用模块 `ApiScopeManagementProperties`，通过 `api-scope.management.lock-wait-time`（默认 500ms）、`lock-lease-time`（默认 30s）传入 LockCommand；这两个启动配置不读取旧注解锁参数。
+
+撤销执行顺序：解析/校验输入 → `RevokeApiCredentialProcessor.process` 检查调用方事务边界 → 模板资源锁 → READ COMMITTED 短事务（15 秒）→ 当前授权 → 凭证行锁/版本检查 → 构造 `RevokeApiCredentialContext` → 本地 Service/Repository CAS 保存并回写原对象 → 提交 → 释放资源锁及既有 Controller 审计。没有事务外 HMAC/Vault 步骤，也没有业务命令查重或回执写入；前端保留原 key 供 Gateway 处理，BFF 不继续向 Platform 传递。等待与租约仍读取 `redis.coordination.resource-lock` 配置，模板 Key 自动包含 `lock:`，不与旧注解叠加。
 
 Scope 的代码不可变且无删除，Route 读取目录后不会遇到目录身份被撤销，不需要为 Route 保存同时取得 Scope 目录锁。新增尚未提交的目录不视作存在；用户先保存 Scope 后再选 Route，不能用默认通过处理目录不可用。Scope 唯一键和版本保护 Redis Lease 到期后的写入，凭证用行锁/CAS，复用当前有限 Wait/Lease 配置；不新增 Tenant 总锁。
 
-沿用 `t_command_idempotency` 已有 requestHash + responseReference：Scope 引用只需 `API_SCOPE:<id>:<version>`，code 由匹配原请求获得；撤销只需 `API_CREDENTIAL:<id>:REVOKED:<version>`。满足现有 255 字符引用上限，不保存完整对象/PHC，也不增加回执表。错误不保存成功回执；同 key 不同 Hash 拒绝。完整成功响应由该固定引用重建，不回查后来已变化的版本。
+Scope 与撤销均不再读写请求幂等命令表或返回历史响应引用。前端仍携带原 key 供 Gateway 使用，业务入口始终按当前授权、唯一编码和版本处理。原命令表及历史记录不在本次代码重构中删除；尚未迁移的其他接口保持各自现状。
 
 ## 3. 撤销生效与旧数据
 
@@ -49,7 +53,7 @@ Route 新建/新绑定必须精确匹配 t_api_scope.scope_code；旧 API_SCOPE 
 
 命令分别声明 `OPERATIONS_API_CREDENTIAL_REVOKE`、`OPERATIONS_API_SCOPE_CREATE`、`OPERATIONS_API_SCOPE_UPDATE`；资源凭证为 API_CREDENTIAL + credentialId，目录为 API_SCOPE + scopeCode。复用既有 beforeVersion/afterVersion、reason、actor/session/requestId 和 ConfigurationFieldChange，不新增请求正文审计或全部 DTO 序列化。
 
-撤销只记录 STATUS；目录只记录 CODE、DISPLAY_NAME、DESCRIPTION 及版本。原因和说明各不超过 500 字符，满足既有单属性 1000 字符 / 4096 字节上限；仅投影这三项目录字段及版本，远低于 256 个属性预算，不新增截断策略。未实际改变的重复撤销不编造 before/after；同 key 重放沿用既有审计约定，不宣称每次都有一条可靠历史。审计失败不回滚业务、不给用户显示伪造的“已记录”。
+撤销只记录 STATUS；目录只记录 CODE、DISPLAY_NAME、DESCRIPTION 及版本。原因和说明各不超过 500 字符，满足既有单属性 1000 字符 / 4096 字节上限；仅投影这三项目录字段及版本，远低于 256 个属性预算，不新增截断策略。未实际改变的重复撤销不编造 before/after；Gateway 命中的请求不进入业务写入，本地仅记录实际保存的受控差异。审计失败不回滚业务、不给用户显示伪造的“已记录”。
 
 Web 凭证/Scope 详情“操作记录”复用原审计接口，独立要求 OPERATIONS_AUDIT_READ；没有权限隐藏标签，直接调用仍拒绝。A06 只请求当前选择的引用类型；额外权限失败明确 403，不吞成空集合。关联 API 不代表目标可用、Scope 已生效或业务资源授权成功。
 
@@ -69,8 +73,8 @@ Web 凭证/Scope 详情“操作记录”复用原审计接口，独立要求 OP
 |---|---|
 | 查询与秘密隔离 | A01 筛选及 total 一致，inactive Tenant/过期/撤销可读；ID 边界、code 大小写、关键字转义；Response/日志/审计无 PHC 或完整 Credential；多 Grant 的凭证引用不重复 |
 | 权限与 BFF | READ、REVOKE、MANAGE、Route READ、Audit READ 分离；A09 只有 Route READ 可用；A06 NONE/ROUTE/CREDENTIAL 返回 shape/403 正确，BFF 保留真实上游错误，不以未授权空页替代拒绝 |
-| 目录写入 | 编码重复、名称同名允许、description 清空、unknown field、同键重放/异内容、旧版本；目录改名不改授权或 PLT-I03 Scope 集合 |
-| 撤销与认证 | 真实 MySQL + PLT-I03 HTTP 撤销前认证成功、提交后失败；其他凭证/轮换来源/Grant 不变；并发撤销、Redis Lease/失败、同键异内容、权限收回、EXPIRED/失效 Tenant 均按合同 |
+| 目录写入 | 编码重复、名称同名允许、description 清空、unknown field、重复编码/旧版本；目录改名不改授权或 PLT-I03 Scope 集合 |
+| 撤销与认证 | 真实 MySQL + PLT-I03 HTTP 撤销前认证成功、提交后失败；其他凭证/轮换来源/Grant 不变；并发撤销、Redis Lease/失败、旧版本重复请求、权限收回、EXPIRED/失效 Tenant 均按合同；请求幂等另在 Gateway 接入时验证 |
 | Route 兼容 | 新/改绑未知 code 拒绝；原未知合法 code 保留/启停/Snapshot 可读；新目录补齐后可选；现有非 API_SCOPE Route 完整 Header/Query/Guard 不被改坏 |
 | 审计 | resourceType/resourceId 精确过滤与权限；完整 reason 与允许字段可查；审计依赖故障不改变已提交业务；无第二套变更历史 |
 | Web | 页面状态/长文本/操作菜单/撤销弹层/浏览器回退/草稿保护/局部错误；选择器分页搜索；生产构建；后续浏览器真实链视觉验收 |

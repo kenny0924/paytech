@@ -1,5 +1,7 @@
 # OE、Client 与 Pricing 四系统模型调整
 
+> **Payment 后继边界：** [2026-09-14 字段精简](../../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md)删除 Payment 的 context_format、Order Context 引用与 Pricing Fact 表；CCT/Commerce/Finance 既有合同和历史引用保留，替代支付属性消费合同须在执行切换前同步，不得因缺失而猜费率。
+
 > 2026-09-12 Commerce 实现范围修正：用户确认旧代码未发布，基础创建直接替换，不保留快照/回执 Schema 版本、
 > 历史创建分支或旧 Owner Mock。本文此前针对 Commerce 旧创建代码的兼容要求在该切片内不再适用；
 > 幂等恢复、并发 CAS、已执行 SQL 记录及其他系统边界保持。具体合同见 [Commerce 基础创建切片](../../requirements/20260911/client-contract-OE与Client模型梳理/commerce-precheck-implementation.md)。

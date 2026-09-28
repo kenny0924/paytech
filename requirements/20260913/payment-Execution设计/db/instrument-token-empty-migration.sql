@@ -1,3 +1,4 @@
+-- 历史前序工件：本次代码须使用 execution-state-risk-*.sql；不得单独应用本文件后启动新代码。
 -- 已确认交易级 Token 合同的空旧表迁移工件；尚未执行，不得由应用或测试自动执行。
 -- 合同来源：../instrument-token-amendment.md 第 4、7 节。
 -- 仅适用于人工确认所有相关 Execution 业务、命令和补偿表均为空，

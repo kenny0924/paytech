@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.DecisionReleaseMapper">
+
+    <resultMap id="DecisionReleaseResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.DecisionRelease">
+        <constructor>
+            <idArg name="releaseId" column="release_id" javaType="_long"/>
+            <arg name="releaseNo" column="release_no" javaType="java.lang.String"/>
+            <arg name="decisionPointId" column="decision_point_id" javaType="_long"/>
+            <arg name="pointVersionId" column="point_version_id" javaType="_long"/>
+            <arg name="environmentCode" column="environment_code"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionEnvironment"/>
+            <arg name="status" column="status"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionReleaseStatus"/>
+            <arg name="activeSlot" column="active_slot" javaType="java.lang.Boolean"/>
+            <arg name="contentHash" column="content_hash" javaType="java.lang.String"/>
+            <arg name="createdBy" column="created_by" javaType="_long"/>
+            <arg name="activatedTime" column="activated_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="supersededTime" column="superseded_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="version" column="version" javaType="_int"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+
+    <sql id="ReleaseListFilter">
+        FROM t_decision_release dr
+        JOIN t_decision_point dp ON dp.decision_point_id = dr.decision_point_id
+        WHERE dr.environment_code = 'TEST'
+        <if test="pointCode != null">
+            AND dp.point_code = #{pointCode}
+        </if>
+        <if test="status != null">
+            AND dr.status = #{status}
+        </if>
+    </sql>
+
+    <select id="selectRelease" resultMap="DecisionReleaseResultMap" useCache="false">
+        SELECT release_id, release_no, decision_point_id, point_version_id, environment_code, status,
+               active_slot, content_hash, created_by, activated_time, superseded_time, version,
+               create_time, update_time
+        FROM t_decision_release
+        WHERE release_id = #{releaseId}
+    </select>
+
+    <select id="lockRelease" resultMap="DecisionReleaseResultMap"
+            useCache="false" flushCache="true">
+        SELECT release_id, release_no, decision_point_id, point_version_id, environment_code, status,
+               active_slot, content_hash, created_by, activated_time, superseded_time, version,
+               create_time, update_time
+        FROM t_decision_release
+        WHERE release_id = #{releaseId}
+        FOR UPDATE
+    </select>
+
+    <select id="selectReleases" resultMap="DecisionReleaseResultMap" useCache="false">
+        SELECT dr.release_id, dr.release_no, dr.decision_point_id, dr.point_version_id,
+               dr.environment_code, dr.status, dr.active_slot, dr.content_hash, dr.created_by,
+               dr.activated_time, dr.superseded_time, dr.version, dr.create_time, dr.update_time
+        <include refid="ReleaseListFilter"/>
+        ORDER BY dr.create_time DESC, dr.release_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countReleases" resultType="long" useCache="false">
+        SELECT COUNT(*)
+        <include refid="ReleaseListFilter"/>
+    </select>
+
+
+
+    <select id="countNonCanonicalReleaseNumbers" resultType="long" useCache="false" flushCache="true">
+        SELECT COUNT(*)
+        FROM t_decision_release
+        WHERE release_no NOT REGEXP '^[1-9][0-9]{0,9}$'
+           OR (CHAR_LENGTH(release_no) = 10 AND release_no &gt; '2147483647')
+        FOR UPDATE
+    </select>
+
+    <select id="selectMaxReleaseNo" resultType="long" useCache="false" flushCache="true">
+        SELECT COALESCE(MAX(CAST(release_no AS UNSIGNED)), 0)
+        FROM t_decision_release
+        FOR UPDATE
+    </select>
+
+    <insert id="insertRelease">
+        INSERT INTO t_decision_release
+        (release_id, release_no, decision_point_id, point_version_id, environment_code, status,
+         active_slot, content_hash, created_by, activated_time, superseded_time, version,
+         create_time, update_time)
+        VALUES
+        (#{value.releaseId}, #{value.releaseNo}, #{value.decisionPointId}, #{value.pointVersionId},
+         #{value.environmentCode},
+         #{value.status},
+         #{value.activeSlot,jdbcType=BOOLEAN}, #{value.contentHash}, #{value.createdBy},
+         #{value.activatedTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+         #{value.supersededTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+         #{value.version},
+         #{value.createTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+         #{value.updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})
+    </insert>
+
+
+
+    <update id="moveReleaseToValidating">
+        UPDATE t_decision_release
+        SET status = 'VALIDATING',
+            version = 2,
+            update_time = #{updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE release_id = #{releaseId}
+          AND status = #{expectedStatus}
+          AND version = #{expectedVersion}
+    </update>
+
+    <update id="moveReleaseToRejected">
+        UPDATE t_decision_release
+        SET status = 'REJECTED',
+            version = 3,
+            update_time = #{updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE release_id = #{releaseId}
+          AND status = #{expectedStatus}
+          AND version = #{expectedVersion}
+    </update>
+
+</mapper>

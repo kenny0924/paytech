@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.RiskVariableMapper">
+    <resultMap id="Variable" type="com.paytech.risk.decision.core.dal.dataobject.RiskVariableDefinition"><constructor>
+        <arg name="variableId" column="variable_id" javaType="_long"/>
+        <arg name="variableCode" column="variable_code" javaType="java.lang.String"/>
+        <arg name="variableName" column="variable_name" javaType="java.lang.String"/>
+        <arg name="description" column="description" javaType="java.lang.String"/>
+        <arg name="sourceType" column="source_type" javaType="com.paytech.risk.decision.domain.enums.VariableSource"/>
+        <arg name="valueType" column="value_type" javaType="com.paytech.risk.decision.domain.enums.DecisionValueType"/>
+        <arg name="pointCode" column="point_code" javaType="java.lang.String"/>
+        <arg name="sourceContractCode" column="source_contract_code" javaType="java.lang.String"/>
+        <arg name="sourceContractVersion" column="source_contract_version" javaType="java.lang.Integer"/>
+        <arg name="sourceField" column="source_field" javaType="java.lang.String"/>
+        <arg name="ruleConditionFlag" column="rule_condition_flag" javaType="_boolean"/>
+        <arg name="flowConditionFlag" column="flow_condition_flag" javaType="_boolean"/>
+        <arg name="actionParameterFlag" column="action_parameter_flag" javaType="_boolean"/>
+        <arg name="systemManagedFlag" column="system_managed_flag" javaType="_boolean"/>
+        <arg name="formatCode" column="format_code" javaType="com.paytech.risk.decision.domain.enums.VariableFormat"/>
+        <arg name="numericUnit" column="numeric_unit" javaType="com.paytech.risk.decision.domain.enums.NumericUnit"/>
+        <arg name="currencyCode" column="currency_code" javaType="java.lang.String"/>
+        <arg name="currencyVariableCode" column="currency_variable_code" javaType="java.lang.String"/>
+        <arg name="allowedValuesVariableCode" column="allowed_values_variable_code" javaType="java.lang.String"/>
+        <arg name="stringValue" column="string_value" javaType="java.lang.String"/>
+        <arg name="numberValue" column="number_value" javaType="java.math.BigDecimal"/>
+        <arg name="booleanValue" column="boolean_value" javaType="java.lang.Boolean"/>
+        <arg name="datetimeValue" column="datetime_value" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <arg name="durationValue" column="duration_value" javaType="java.lang.Long"/>
+        <arg name="status" column="status" javaType="com.paytech.risk.decision.domain.enums.VariableStatus"/>
+        <arg name="version" column="version" javaType="_long"/>
+        <arg name="createBy" column="create_by" javaType="_long"/>
+        <arg name="updateBy" column="update_by" javaType="_long"/>
+        <arg name="createTime" column="create_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <arg name="updateTime" column="update_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </constructor></resultMap>
+    <select id="systemDefinitions" resultMap="Variable" useCache="false">
+        SELECT <include refid="VariableColumns"/> FROM t_risk_variable
+        WHERE point_code = #{pointCode} AND system_managed_flag = 1
+          AND source_type IN ('INPUT', 'NODE_OUTPUT') AND status != 'DELETED'
+        ORDER BY variable_code LIMIT 101
+    </select>
+    <sql id="VariableColumns">variable_id, variable_code, variable_name, description, source_type, value_type, point_code, source_contract_code, source_contract_version, source_field, rule_condition_flag, flow_condition_flag, action_parameter_flag, system_managed_flag, format_code, numeric_unit, currency_code, currency_variable_code, allowed_values_variable_code, string_value, number_value, boolean_value, datetime_value, duration_value, status, version, create_by, update_by, create_time, update_time</sql>
+    <insert id="insertVariable">INSERT INTO t_risk_variable (variable_id, variable_code, variable_name, description, source_type, value_type, point_code, source_contract_code, source_contract_version, source_field, rule_condition_flag, flow_condition_flag, action_parameter_flag, system_managed_flag, format_code, numeric_unit, currency_code, currency_variable_code, allowed_values_variable_code, string_value, number_value, boolean_value, datetime_value, duration_value, status, version, create_by, update_by, create_time, update_time) VALUES (#{variableId}, #{variableCode}, #{variableName}, #{description}, #{sourceType}, #{valueType}, #{pointCode}, #{sourceContractCode}, #{sourceContractVersion}, #{sourceField}, #{ruleConditionFlag}, #{flowConditionFlag}, #{actionParameterFlag}, #{systemManagedFlag}, #{formatCode}, #{numericUnit}, #{currencyCode}, #{currencyVariableCode}, #{allowedValuesVariableCode}, #{stringValue}, #{numberValue}, #{booleanValue}, #{datetimeValue}, #{durationValue}, #{status}, #{version}, #{createBy}, #{updateBy}, #{createTime}, #{updateTime})</insert>
+    <resultMap id="Member" type="com.paytech.risk.decision.core.dal.dataobject.RiskVariableMember"><constructor>
+        <arg name="memberId" column="member_id" javaType="_long"/>
+        <arg name="variableCode" column="variable_code" javaType="java.lang.String"/>
+        <arg name="valueKey" column="value_key" javaType="java.lang.String"/>
+        <arg name="stringValue" column="string_value" javaType="java.lang.String"/>
+        <arg name="numberValue" column="number_value" javaType="java.math.BigDecimal"/>
+        <arg name="booleanValue" column="boolean_value" javaType="java.lang.Boolean"/>
+        <arg name="datetimeValue" column="datetime_value" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <arg name="durationValue" column="duration_value" javaType="java.lang.Long"/>
+        <arg name="displayName" column="display_name" javaType="java.lang.String"/>
+        <arg name="sortOrder" column="sort_order" javaType="_int"/>
+        <arg name="createTime" column="create_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </constructor></resultMap>
+    <sql id="MemberColumns">member_id, variable_code, value_key, string_value, number_value, boolean_value, datetime_value, duration_value, display_name, sort_order, create_time</sql>
+    <insert id="insertMember">INSERT INTO t_risk_variable_member (member_id, variable_code, value_key, string_value, number_value, boolean_value, datetime_value, duration_value, display_name, sort_order, create_time) VALUES (#{memberId}, #{variableCode}, #{valueKey}, #{stringValue}, #{numberValue}, #{booleanValue}, #{datetimeValue}, #{durationValue}, #{displayName}, #{sortOrder}, #{createTime})</insert>
+    <sql id="VariableFilter">
+        <where>
+            <choose>
+                <when test="query.codes != null">
+                    variable_code IN <foreach collection="query.codes" item="code" open="(" separator="," close=")">#{code}</foreach>
+                </when>
+                <otherwise>
+                    <choose><when test="query.status != null">status=#{query.status}</when><otherwise>status &lt;&gt; 'DELETED'</otherwise></choose>
+                    <!-- 编码列是 ASCII；统一按 Unicode 比较，允许同一关键词搜索中文名称并保留编码大小写。 -->
+                    <if test="query.pattern != null">AND (CONVERT(variable_code USING utf8mb4) COLLATE utf8mb4_0900_bin LIKE #{query.pattern} ESCAPE '!' OR variable_name LIKE #{query.pattern} ESCAPE '!')</if>
+                    <if test="query.sourceType != null">AND source_type=#{query.sourceType}</if>
+                    <if test="query.valueType != null">AND value_type=#{query.valueType}</if>
+                    <if test="query.pointCode != null">AND (point_code IS NULL OR point_code=#{query.pointCode})</if>
+                    <if test="query.usage != null">
+                        AND status='ACTIVE'
+                        <choose>
+                            <when test="query.usage.name() == 'RULE_CONDITION'">AND rule_condition_flag=1 AND source_type &lt;&gt; 'NODE_OUTPUT'</when>
+                            <when test="query.usage.name() == 'ACTION_PARAMETER'">AND action_parameter_flag=1 AND source_type='INPUT'</when>
+                            <otherwise>AND flow_condition_flag=1</otherwise>
+                        </choose>
+                        <if test="query.nodeType == null or query.nodeType != 'RULE_SET'">AND source_type &lt;&gt; 'NODE_OUTPUT'</if>
+                    </if>
+                </otherwise>
+            </choose>
+        </where>
+    </sql>
+    <select id="find" resultMap="Variable" useCache="false" flushCache="true">
+        SELECT <include refid="VariableColumns"/> FROM t_risk_variable WHERE variable_code=#{code}
+        <choose><when test="lock == 'WRITE'">FOR UPDATE</when><when test="lock == 'SHARE'">FOR SHARE</when></choose>
+    </select>
+    <select id="list" resultMap="Variable">
+        SELECT <include refid="VariableColumns"/> FROM t_risk_variable <include refid="VariableFilter"/>
+        ORDER BY variable_code LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM t_risk_variable <include refid="VariableFilter"/>
+    </select>
+    <update id="update">
+        UPDATE t_risk_variable SET variable_name=#{change.variableName}, description=#{change.description},
+        string_value=#{change.values.stringValue}, number_value=#{change.values.numberValue}, boolean_value=#{change.values.booleanValue},
+        datetime_value=#{change.values.datetimeValue}, duration_value=#{change.values.durationValue}, status=#{change.status},
+        version=version+1, update_by=#{actorId}, update_time=#{time}
+        WHERE variable_code=#{root.variableCode} AND version=#{root.version}
+    </update>
+    <sql id="MemberFilter">
+        WHERE variable_code=#{code}
+        <if test="pattern != null">AND (value_key LIKE #{pattern} ESCAPE '!' OR display_name LIKE #{pattern} ESCAPE '!')</if>
+    </sql>
+    <select id="members" resultMap="Member">
+        SELECT <include refid="MemberColumns"/> FROM t_risk_variable_member <include refid="MemberFilter"/>
+        ORDER BY sort_order, member_id LIMIT #{limit} OFFSET #{offset}
+        <if test="lock">FOR SHARE</if>
+    </select>
+    <select id="memberCount" resultType="long">
+        SELECT COUNT(*) FROM t_risk_variable_member <include refid="MemberFilter"/>
+    </select>
+    <select id="previewMembers" resultMap="Member">
+        SELECT <include refid="MemberColumns"/> FROM (
+            SELECT <include refid="MemberColumns"/>, ROW_NUMBER() OVER (PARTITION BY variable_code ORDER BY sort_order,member_id) AS row_no
+            FROM t_risk_variable_member WHERE variable_code IN
+            <foreach collection="codes" item="code" open="(" separator="," close=")">#{code}</foreach>
+        ) ranked WHERE row_no &lt;= #{limit} ORDER BY variable_code,sort_order,member_id
+    </select>
+    <select id="memberCounts" resultType="com.paytech.risk.decision.core.dal.dataobject.VariableMemberCount">
+        SELECT variable_code,COUNT(*) AS member_count FROM t_risk_variable_member WHERE variable_code IN
+        <foreach collection="codes" item="code" open="(" separator="," close=")">#{code}</foreach> GROUP BY variable_code
+    </select>
+    <delete id="deleteMembers">DELETE FROM t_risk_variable_member WHERE variable_code=#{code}</delete>
+</mapper>

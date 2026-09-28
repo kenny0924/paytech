@@ -1,5 +1,7 @@
 # 租户访问 API 合同（阶段 3 已确认）
 
+> **2026-09-17 职责修订：** 本文中服务本地命令幂等、Key/Hash/结果引用及重放授权的旧实现描述，按[Gateway 请求幂等决定](../../../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)迁移。浏览器请求幂等由 Gateway 负责，BFF 与 Platform 内部接口不接收或转发 Idempotency-Key；Owner 保留当前业务授权、同状态规则、版本与并发保护。旧文保留为原合同证据，当前源码重构、验证及部署状态见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-tenant-access-refactor-20260917)。
+
 ## 1. 路径、权限与传输
 
 精确清单见 [api-inventory.json](./api-inventory.json)。下表 Path 同时为 BFF Path 和 Platform `@HttpExchange` Path；浏览器加 `/api/operations`，Platform 加既有 servlet 前缀 `/platform-support`。均默认 v1，Java/TS 类型不含版本号。

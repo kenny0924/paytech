@@ -1,0 +1,249 @@
+server:
+  address: 127.0.0.1
+  port: 0
+  servlet:
+    context-path: /platform-support
+
+spring:
+  application:
+    name: platform-support-service
+  main:
+    banner-mode: "off"
+  jmx:
+    enabled: false
+  sql:
+    init:
+      mode: never
+  datasource:
+    url: jdbc:mysql://127.0.0.1:13306/mor_platform?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: platform_app
+    # MockTestBase 自动提供 .env.local 的 MOR_PLATFORM_DB_PASSWORD，无需配置启动环境变量。
+    password: "${PLATFORM_SUPPORT_TEST_DB_PASSWORD:${MOR_PLATFORM_DB_PASSWORD:local-platform-change-me-2026}}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 4
+      minimum-idle: 0
+      initialization-fail-timeout: -1
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+        connectTimeout: 2000
+        socketTimeout: 5000
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${PLATFORM_SUPPORT_TEST_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:local-redis-change-me-2026}}"
+      database: 0
+      connect-timeout: 2s
+      timeout: 2s
+  cloud:
+    discovery:
+      enabled: true
+      client:
+        simple:
+          instances:
+            vault-service:
+              - uri: "${test.notification.vault-url}"
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+        server-addr: 127.0.0.1:8848
+        namespace: mor-local
+  http:
+    clients:
+      imperative:
+        factory: jdk
+      connect-timeout: 2s
+      read-timeout: 5s
+      redirects: dont-follow
+  mail:
+    host: 127.0.0.1
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      "[mail.smtp.connectiontimeout]": 1000
+      "[mail.smtp.timeout]": 2000
+      "[mail.smtp.writetimeout]": 1000
+      "[mail.smtp.starttls.enable]": true
+      "[mail.smtp.starttls.required]": true
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      validate-group-membership: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,gatewaySnapshot
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+  health:
+    redis:
+      enabled: false
+    mail:
+      enabled: false
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+redis:
+  key-prefix: platform-support:mock
+  coordination:
+    enabled: false
+    threads: 4
+    netty-threads: 4
+    connection-minimum-idle-size: 1
+    connection-pool-size: 16
+    subscription-connection-minimum-idle-size: 1
+    subscription-connection-pool-size: 8
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s
+
+vault:
+  client:
+    caller-service: platform-support-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 2s
+    # base-url: 仅 test/unittest 直连时配置，必须与 service-id 互斥；空字符串也会启用直连。
+
+compensation:
+  enabled: true
+  instance-id: platform-support-mock
+  lease-duration: 2m
+  scanner-batch-size: 100
+  coordinator:
+    core-size: 10
+    maximum-size: 20
+    queue-capacity: 80
+    keep-alive: 60s
+  handler:
+    maximum-concurrency: 20
+
+xxl:
+  job:
+    admin:
+      addresses: ""
+      access-token: ""
+      timeout: 3
+    executor:
+      enabled: false
+      app-name: platform-support-service
+      address: ""
+      ip: 127.0.0.1
+      port: 0
+      log-path: ./target/xxl-job
+      log-retention-days: 30
+      excluded-packages: org.springframework.,spring.
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /internal/onboarding-files
+      - /onboarding-files
+      - /authentication
+      - /authorization
+      - /operations
+      - /gateway-admin
+      - /console-admin
+      - /permission-admin
+      - /api-credential-admin
+      - /api-scope-admin
+      - /api-credentials
+      - /tenant-projections
+
+# PLT-I03 与人工认证独立；关闭无关功能和后台任务，不替换生产实现。
+operations:
+  authentication:
+    enabled: false
+    lock-wait-time: 500ms # 仅启用人工认证时消费；沿用正式默认值。
+    lock-lease-time: 30s
+  audit:
+    queue-capacity: 256 # 启用人工认证后才创建异步审计池。
+    # 以下为当前代码的只读预算，列出用于配置清单，不表示可运行时覆盖。
+    worker-count: 1
+    maximum-pool-size: 1
+    minimum-idle: 0
+    max-event-bytes: 65536
+    max-attributes: 256
+    max-attribute-bytes: 4096
+    max-attribute-code-points: 1000
+    connection-timeout-millis: 1000
+    validation-timeout-millis: 500
+    connect-timeout-millis: 1000
+    lock-wait-timeout-seconds: 1
+    statement-timeout-seconds: 2
+    transaction-timeout-seconds: 3
+    socket-timeout-millis: 3000
+    shutdown-timeout-millis: 5000
+client:
+  authentication:
+    enabled: false
+    issuer: https://client.example.test # 合成 issuer；本组测试不签发 Token。
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
+tenant:
+  projection:
+    enabled: false # 本组不启用 CCT 来源投影写入。
+files:
+  onboarding:
+    enabled: false
+    storage-provider: "" # 启用上传时必填；本组没有文件消费者。
+    storage-container-ref: ""
+    scan-policy-code: ""
+    upload-seconds: 900
+    cct-test-base-url: "" # 既有受限直连字段；此处禁用，不连接外部系统。
+ps:
+  access-control:
+    lock-wait-time: 500ms # Scope 管理写接口锁预算。
+    lock-lease-time: 30s
+    tenant-access:
+      lock-wait-time: 500ms
+      lock-lease-time: 30s
+    permission:
+      lock-wait-time: 500ms
+      lock-lease-time: 30s
+    console-resource:
+      lock-wait-time: 500ms
+      lock-lease-time: 30s
+# 保留正式 application.yml 的旧键清单；当前 Properties 消费 ps.access-control。
+api-scope:
+  management:
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
+
+# 通知模块仅在本测试配置启用；Provider 只在 src/test 中按场景配置。
+notification:
+  enabled: true
+  worker-id: 31 # 仅本地通知测试；人工认证启用时共享认证生成器。
+  maximum-send-attempts: 3
+  retry-delay: 30s

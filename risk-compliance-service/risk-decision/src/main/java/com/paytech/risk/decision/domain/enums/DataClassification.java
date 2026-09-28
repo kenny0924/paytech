@@ -1,0 +1,25 @@
+package com.paytech.risk.decision.domain.enums;
+
+import com.paytech.foundation.common.enums.CodeEnum;
+
+/** Risk Decision 的闭合稳定代码。 */
+public enum DataClassification implements CodeEnum {
+    PUBLIC("PUBLIC"),
+
+    INTERNAL("INTERNAL"),
+
+    CONFIDENTIAL_RISK("CONFIDENTIAL_RISK"),
+
+    RESTRICTED_COMPLIANCE("RESTRICTED_COMPLIANCE");
+
+    private final String code;
+
+    DataClassification(String code) {
+        this.code = code;
+    }
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+}

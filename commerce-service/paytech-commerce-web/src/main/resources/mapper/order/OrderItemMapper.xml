@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commerce.core.dal.mapper.order.OrderItemMapper">
+    <select id="findByOrderId" resultMap="com.paytech.commerce.core.dal.mapper.checkout.BasicCheckoutMapper.Item"
+        useCache="false" flushCache="true">
+        SELECT order_item_id,order_id,client_item_id,item_name,item_description,product_type_code,tax_category_code,
+            quantity,unit_amount,line_gross_amount,line_discount_amount,line_net_amount,
+            NULL AS line_tax_amount,NULL AS line_total_amount,currency,sort_no,create_time
+        FROM t_order_item WHERE order_id=#{orderId} ORDER BY sort_no,order_item_id
+    </select>
+    <insert id="insert">
+        INSERT INTO t_order_item (order_item_id,order_id,client_item_id,item_name,item_description,
+            product_type_code,tax_category_code,quantity,unit_amount,line_gross_amount,line_discount_amount,
+            line_net_amount,currency,sort_no,create_time)
+        VALUES (#{orderItemId},#{orderId},#{clientItemId},#{itemName},#{itemDescription},
+            #{productTypeCode},#{taxCategoryCode},#{quantity},#{unitAmount},#{lineGrossAmount},#{lineDiscountAmount},
+            #{lineNetAmount},#{currency},#{sortNo},#{createTime})
+    </insert>
+
+</mapper>

@@ -315,7 +315,8 @@ xxl_job
 - Key 使用 `{service}:{capability}:...` Namespace；Redis Starter 为 `RedisJsonTemplate`、`StringRedisTemplate` 与 Redisson 统一把 `{service}` 默认解析为 `spring.application.name`，服务可用 `redis.key-prefix` 显式覆盖。业务对象缓存优先使用不含 Java 类型信息的普通 JSON；字符串与计数器使用 `StringRedisTemplate`。新增 Key 不使用 `mor` 技术前缀，每个能力必须定义 TTL。
 - Gateway Rate Limiter 与各服务 Key 进一步使用独立前缀，禁止 `KEYS *` 作为运行逻辑。
 - Operations Gateway 不使用 Redis Starter、`StringRedisTemplate` 或 Redisson；它通过 Spring Data Redis Reactive + Lettuce Lua 实现 Rate Token Bucket 和 Concurrency ZSET Lease。
-- 所有 Redis 自动测试连接 `127.0.0.1:16379` 的 `mor-local` Compose Redis；固定测试配置由 Spring 加载 `application-auto.yml`，隔离本地测试账号凭据遵守 `UNIT_TEST_GUIDE.md` 第 7.5 节，并允许 `PAYTECH_REDIS_PASSWORD` 环境覆盖。已有实例使用自定义密码时，由开发者安全注入相同值，不自动修改共享服务密码。不引入 Testcontainers，不连接 `6379`；自动化不得读取、输出或改写 `.env.local`。见 [2026-09-08 决策](./decisions/2026-09-08-middleware-auto-test-configuration.md)。
+- 所有 Redis 自动测试连接 `127.0.0.1:16379` 的 `mor-local` Compose Redis；固定测试配置由 Spring 加载 `application-auto.yml`，隔离本地测试账号凭据遵守 `UNIT_TEST_GUIDE.md` 第 7.5 节，并允许 `PAYTECH_REDIS_PASSWORD` 环境覆盖。已有实例使用自定义密码时，由开发者安全注入相同值，不自动修改共享服务密码。不引入 Testcontainers，不连接 `6379`；除下述明确授权的范围外，自动化不得读取 `.env.local`，所有场景均不得输出或改写该文件。见 [2026-09-08 决策](./decisions/2026-09-08-middleware-auto-test-configuration.md)。
+- **Platform Support Mock 测试的授权例外（2026-09-17）：** 用户明确授权读取 `.env.local` 用于本地测试连接，并要求 Mock 启动无需另配密码。仅该服务测试侧的 `mock` Profile 可自动读取 `MOR_PLATFORM_DB_PASSWORD` 和 `PAYTECH_REDIS_PASSWORD`，不导入其他字段、不执行 Shell、不输出或持久化值；显式覆盖优先。此例外不适用于正式应用、manual Profile 或其他服务。入口见 [测试模块说明](../platform-support-service/platform-support-test/README.md)，实际验证见[当前台账](CURRENT_IMPLEMENTATION.md#platform-api-credential-validation-tests-20260917)。
 - 每次 Gateway 测试运行生成唯一 Key Namespace，Setup/Teardown 只用 `SCAN` 删除本次已知前缀，禁止 `KEYS *`、`FLUSHDB` 或停止共享 Compose Redis。Redis 不可用用例连接未监听的 Loopback 端口，不影响其他本地进程。
 - 本地密码来自 `.env.local`；应用日志不得输出完整连接串或密码。
 - 现有宿主机 `6379` Redis 不参与 Code-MoR 开发、测试或故障演练。
@@ -364,11 +365,11 @@ Java 服务至少验证：
 `auto` 与 `manual` 都复用本文的仓库本地中间件，但不得连接真实业务环境：
 
 - 测试自身不调用 Docker API，不启动、不停止、不重建容器；缺少依赖时快速失败并指向本文件；
-- MySQL 固定连接 `127.0.0.1:13306`，每个服务只使用自己的账号和数据库，DDL/DML 由开发者手工执行；
+- MySQL 固定连接 `127.0.0.1:13306`，每个服务只使用自己的账号和数据库，Schema DDL 与基础设施初始化 DML 由开发者手工执行；每例业务 Fixture 由测试 Mocker 准备。全局清理仅允许作用于测试专用数据库/Schema，不能擦除共享开发数据；
 - Redis 固定连接 `127.0.0.1:16379`，每次运行使用唯一 Namespace，并仅以 `SCAN` 清理本次前缀；
 - RabbitMQ 使用 `/mor-local` 和测试专属 Queue/Binding 名称；Nacos 在 `auto` 中关闭；
 - 有数据库的业务服务从真实随机端口入口经过其生产 Controller、可选 Processor、Domain Service、Repository/Mapper 到本地 MySQL；简单查询不强制增加 Processor，也不使用 Mockito 或 Testcontainers；
-- 内部服务/Provider 仍通过有状态 Simulator 提供真实 HTTP/MQ 协议，不要求同时启动全部业务服务。
+- 外部 HTTP 通过独立测试服务返回按请求配置的 DTO，保留本服务真实 Client 与协议；不强制完整外部状态机，不要求同时启动全部业务服务。MQ 使用真实本地 Broker 与测试消费者。两级 BeforeEach、全局 AfterEach 和同一环境串行规则见现行测试规范。
 
 详细规则见 [UNIT_TEST_GUIDE.md](./UNIT_TEST_GUIDE.md)。
 

@@ -1,0 +1,96 @@
+server:
+  address: 127.0.0.1
+  port: 18104
+
+spring:
+  application:
+    name: risk-service
+  data:
+    redis:
+      host: "${RISK_REDIS_HOST:127.0.0.1}"
+      port: "${RISK_REDIS_PORT:16379}"
+      password: "${RISK_REDIS_PASSWORD:}"
+      connect-timeout: 2s
+      timeout: 2s
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:mor-local}
+        ip: ${SPRING_CLOUD_NACOS_DISCOVERY_IP:${SERVER_ADDRESS:127.0.0.1}}
+  datasource:
+    url: "${RISK_DB_URL}"
+    username: "${RISK_DB_USERNAME}"
+    password: "${RISK_DB_PASSWORD}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+        connectTimeout: 2000
+        socketTimeout: 2000
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+      fail-on-missing-creator-properties: false
+  jmx:
+    enabled: false
+  sql:
+    init:
+      mode: never
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+decision:
+  identifier:
+    region-id: "${RISK_SNOWFLAKE_REGION_ID}"
+    worker-id: "${RISK_SNOWFLAKE_WORKER_ID}"
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /internal/due-diligence/material-requirements
+      - /decision-dictionaries
+      - /decision-rule-sets
+      - /decision-releases
+      - /decision-flows
+      - /decision-variables
+
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+redis:
+  coordination:
+    enabled: true
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s

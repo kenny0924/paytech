@@ -1,5 +1,13 @@
 # Execution 详细设计
 
+> **2026-09-15 删除来源 Binding：** 用户已确认删除 `t_payment_intent_binding` 和 EX-I03 `CloseCreation`，按已有 Intent 终止；创建结果未明确时由 Commerce 用原键恢复创建后再终止。本文涉及提前关闭、Binding 门禁和锁顺序的内容由[字段修订第 8 节](./execution-field-simplification-amendment.md#8-删除来源-binding)取代；其余历史基线保持。
+
+> **字段维护后继：** [整批精简修订](./execution-field-simplification-amendment.md)已取代本文受影响的字段、渠道绑定位置、认证明细、Pricing Fact 与状态历史表要求。本文旧接口/流程细节保留为迁移前基线；后续 Java/HTTP/MQ 改造须逐项对齐，数据库执行状态只见当前台账。
+
+> **首次风控流程后继：** [内部风控 Action 修订](./internal-risk-action-amendment.md)把 Risk 调用落为 RISK_CHECK，占用原 Attempt 执行位；仅 ALLOW 后进入 Routing/方式流程。下文无独立风险 Action 的流程图是前序基线，恢复分派及工具切换按后继合同执行。
+
+> **状态与 Channel 恢复后继：** capture mode、三表 4/4/5 状态、active_action_id 及移除 QUERY 的现行设计目标以[状态与恢复修订](./execution-state-channel-recovery-amendment.md)为准；下文受影响内容保留为前序基线，未涉及合同继续有效。实现与 SQL 状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 > **交易级 Token 修订评审：** 用户已确认统一 pay、交易级工具 Token、Attempt 直接关联及删除旧 Instrument 的方向；详细合同见[修订稿](./instrument-token-amendment.md)。下文保留上一版合同与评审上下文，受影响部分以修订稿的准确取代范围为准；新合同的实现与验证状态只读[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 > 阶段 3 已获用户确认，当前进入阶段 4 Execution 本地切片研发；其他 Owner 仅测试 Mock + TODO。实际实现与验证边界见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)，阶段确认见[交付记录](./delivery.md)。
@@ -8,6 +16,7 @@
 
 | 阅读入口 | 解决的问题 |
 |---|---|
+| [状态与 Channel 恢复修订](./execution-state-channel-recovery-amendment.md) | capture mode、精简状态、活动 Action 占位及 Channel 原操作恢复的现行设计目标 |
 | [交易级 Token 与统一 pay 修订](./instrument-token-amendment.md) | 本轮已确认方向、接口改造、工具期限、Card 材料和 Commerce 幂等衔接的修订评审稿 |
 | [接口合同](./api-contract.md) | 谁调用、传什么、返回什么、读写哪些表 |
 | [数据方案](./data-design.md) | 去掉交互表后存什么、字段/索引增量及迁移边界 |
@@ -60,7 +69,7 @@ flowchart TD
 | `getIntent` | [GetPaymentIntentProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentIntentProcessor.java) |
 | `closeCreation` | [ClosePaymentIntentCreationProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ClosePaymentIntentCreationProcessor.java) |
 | `terminate` | [TerminatePaymentIntentProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/TerminatePaymentIntentProcessor.java) |
-| `pay`（取代旧 `submitCard`） | [PayProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PayProcessor.java) |
+| `pay`（取代旧 `submitCard`） | [PayProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/processor/PayProcessor.java) |
 | `getSubmission` | [GetPaymentSubmissionProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentSubmissionProcessor.java) |
 | `capture` | [CapturePaymentProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CapturePaymentProcessor.java) |
 | `createRefund` | [CreatePaymentRefundProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CreatePaymentRefundProcessor.java) |
@@ -118,7 +127,7 @@ AUTHENTICATE 超时同样进入 UNKNOWN；图中的循环表示原认证恢复�
 ## 3. 持久化取舍
 
 - 来源提交直接绑定 Attempt，不新增 Submission 表。
-- 用一张无枚举状态机的来源绑定表解决“取消先到、创建晚到”；它不替代 Intent。
+- 来源唯一关联保存在 Intent；取消须先确认 Intent 创建结果，再请求终止已有 Intent。
 - 删除 `t_payment_customer_action`；交互类型、期限、稳定渠道操作引用归入 Action。`nextAction` 仍是响应模型，临时交互指令不落库。
 - 新增 AUTHENTICATE 动作及认证事实；认证引用不进入资金交易引用表。
 - 沿用已有业务状态枚举，缩小合法转换；不新增流程实例/节点状态表。保留 UNKNOWN、AUTHORIZED，因为它们分别影响重试和资金操作资格。
@@ -130,6 +139,6 @@ AUTHENTICATE 超时同样进入 UNKNOWN；图中的循环表示原认证恢复�
 
 Commerce 现有 `CheckoutCardPaymentPort` 接收瞬时 CardInput；本稿 Execution API 只接受受控 Card 引用。未来由 Payment Web/Card 专用入口完成转换，不能把本稿接口直接配置为该 Port 的 HTTP 实现。公开 submissionId 仍是 Commerce 命令 ID；不新增 Payment 公共 Customer 入口或反向法律确认回调。依据见 [Commerce 后继修订](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)。
 
-本稿建议重点评审三个选择：**不公开单独的 authenticate/continue；来源绑定表承担创建关闭；Action 承担认证与交互恢复。** 其余系统的真实接入、页面、共享数据库操作均留在后续范围。
+本稿建议重点评审三个选择：**不公开单独的 authenticate/continue；基于已有 Intent 终止；Action 承担认证与交互恢复。** 其余系统的真实接入、页面、共享数据库操作均留在后续范围。
 
 阶段 3 确认后，按[研发计划](./verification-plan.md)进入 Execution 本地切片实施。阶段确认不包含执行 SQL、部署、提交或推送；本轮证据见[交付记录](./delivery.md)。

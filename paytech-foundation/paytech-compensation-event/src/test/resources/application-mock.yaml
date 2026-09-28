@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: compensation-test
+  datasource:
+    url: jdbc:mysql://${PAYTECH_TEST_DB_HOST:127.0.0.1}:${PAYTECH_TEST_DB_PORT:13306}/${PAYTECH_TEST_DB_NAME:paytech_foundation_test}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${PAYTECH_TEST_DB_USER:foundation_test}
+    password: ${PAYTECH_TEST_DB_PASSWORD:local-foundation-test-change-me-2026}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 8
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema/compensation-event.sql
+  cloud:
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        enabled: false

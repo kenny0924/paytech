@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.delivery.core.dal.mapper.NotificationAttemptMapper">
+    <resultMap id="record" type="com.paytech.platform.support.delivery.core.dal.dataobject.NotificationAttempt">
+        <id column="attempt_id" property="attemptId"/>
+        <result column="delivery_id" property="deliveryId"/>
+        <result column="provider_id" property="providerId"/>
+        <result column="provider_request_no" property="providerRequestNo"/>
+        <result column="provider_message_id" property="providerMessageId"/>
+        <result column="status" property="status"/>
+        <result column="response_code" property="responseCode"/>
+        <result column="resolution_source" property="resolutionSource"/>
+        <result column="resolution_code" property="resolutionCode"/>
+        <result column="started_time" property="startedTime"/>
+        <result column="finished_time" property="finishedTime"/>
+        <result column="resolved_time" property="resolvedTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <select id="find" resultMap="record">SELECT attempt_id, delivery_id, provider_id, provider_request_no, provider_message_id, status, response_code, resolution_source, resolution_code, started_time, finished_time, resolved_time, create_time, update_time FROM t_notification_attempt WHERE attempt_id = #{id}</select>
+    <insert id="insert">INSERT INTO t_notification_attempt (attempt_id, delivery_id, provider_id, provider_request_no, provider_message_id, status, response_code, resolution_source, resolution_code, started_time, finished_time, resolved_time, create_time, update_time) VALUES (#{attemptId}, #{deliveryId}, #{providerId}, #{providerRequestNo}, #{providerMessageId}, #{status}, #{responseCode}, #{resolutionSource}, #{resolutionCode}, #{startedTime}, #{finishedTime}, #{resolvedTime}, #{createTime}, #{updateTime})</insert>
+    <select id="findOpen" resultMap="record">SELECT attempt_id, delivery_id, provider_id, provider_request_no, provider_message_id, status, response_code, resolution_source, resolution_code, started_time, finished_time, resolved_time, create_time, update_time FROM t_notification_attempt WHERE delivery_id = #{deliveryId} AND status != 'FAILED' LIMIT 2</select>
+    <update id="resolve">
+        UPDATE t_notification_attempt SET status = #{status}, provider_message_id = COALESCE(#{messageId}, provider_message_id),
+            resolution_source = #{source}, update_time = #{now}
+        <choose>
+            <when test="source.code == 'SEND_RESPONSE'">, response_code = #{code}, finished_time = #{now}</when>
+            <otherwise>, resolution_code = #{code}</otherwise>
+        </choose>
+        <if test="status.code == 'ACCEPTED' or status.code == 'FAILED'">, resolved_time = COALESCE(resolved_time, #{now})</if>
+        WHERE attempt_id = #{item.attemptId} AND status = #{item.status}
+    </update>
+</mapper>

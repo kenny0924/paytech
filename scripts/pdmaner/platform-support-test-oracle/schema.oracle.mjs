@@ -13,9 +13,8 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_document_delivery", "t_document_access_grant",
   ]),
   notification: Object.freeze([
-    "t_notification_provider", "t_notification_request", "t_notification_delivery",
-    "t_notification_attempt", "t_notification_route", "t_notification_provider_callback",
-    "t_notification_suppression", "t_notification_template", "t_notify_template_translation",
+    "t_notification_request", "t_notification_delivery", "t_notification_attempt",
+    "t_notification_template", "t_notification_template_content", "t_notification_provider", "t_notification_route",
   ]),
   webhook: Object.freeze([
     "t_webhook_endpoint", "t_webhook_endpoint_revision", "t_webhook_endpoint_verification",
@@ -36,14 +35,14 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
 export const EXPECTED_GROUP_SIZES = Object.freeze({
   identity_access: 19,
   file_document: 12,
-  notification: 9,
+  notification: 7,
   webhook: 8,
   audit_security: 8,
   gateway_control: 6,
   reliability: 2,
 });
 
-export const EXPECTED_TABLE_TOTAL = 64;
+export const EXPECTED_TABLE_TOTAL = 62;
 export const APPROVED_TABLES = Object.freeze(Object.values(APPROVED_TABLE_GROUPS).flat());
 
 export const APPROVED_DIAGRAMS = Object.freeze({
@@ -300,9 +299,6 @@ export const EXPECTED_HASH_FIELDS = Object.freeze([
   "email_otp_challenge.context_ref_hash",
   "email_otp_challenge.subject_ref_hash",
   "file_object.content_hash",
-  "notification_attempt.request_hash",
-  "notification_provider_callback.payload_hash",
-  "notification_request.source_payload_hash",
   "security_event.event_hash",
   "security_event.source_payload_hash",
   "webhook_attempt.request_hash",
@@ -333,11 +329,10 @@ export const REQUIRED_FIELDS = Object.freeze({
   t_document_version: Object.freeze(["document_id", "document_version_no", "document_template_id", "document_template_translation_id", "renderer_version", "file_id", "active_slot", "attempt_count", "lease_owner", "lease_until", "fencing_token", "version"]),
   t_document_delivery: Object.freeze(["document_ver_id", "document_id", "tenant_id", "notification_delivery_id"]),
   t_document_access_grant: Object.freeze(["document_ver_id", "document_id", "tenant_id", "consumer_ref_hash", "order_id", "status", "version"]),
-  t_notification_provider: Object.freeze(["provider_code", "channel", "revision_no", "secret_ref", "callback_verification_key_ref", "status", "active_slot", "version"]),
-  t_notification_request: Object.freeze(["tenant_id", "source_event_key", "source_version", "source_payload_hash", "notification_template_id"]),
-  t_notification_delivery: Object.freeze(["request_id", "tenant_id", "recipient_no", "address_vault_token", "address_blind_index", "address_masked", "message_vault_token", "notification_template_id", "notify_template_translation_id", "notification_route_id", "lease_owner", "lease_until", "fencing_token", "version"]),
-  t_notification_attempt: Object.freeze(["delivery_id", "provider_id", "provider_request_key", "provider_message_id", "request_hash", "result"]),
-  t_notification_provider_callback: Object.freeze(["provider_id", "payload_hash", "signature_status", "verification_time", "verification_failure_code", "notification_attempt_id", "notification_delivery_id"]),
+  t_notification_provider: Object.freeze(["provider_code", "medium", "status", "version"]),
+  t_notification_request: Object.freeze(["tenant_id", "source_system", "source_event_key", "notification_template_id", "notification_route_id", "default_locale", "default_parameters"]),
+  t_notification_delivery: Object.freeze(["request_id", "address_vault_token", "locale", "parameters", "status", "attempt_count", "next_retry_time", "version"]),
+  t_notification_attempt: Object.freeze(["delivery_id", "provider_id", "provider_request_no", "provider_message_id", "status", "response_code", "resolution_source", "resolution_code", "started_time", "finished_time", "resolved_time", "update_time"]),
   t_webhook_endpoint: Object.freeze(["tenant_id", "endpoint_code", "status", "version"]),
   t_webhook_endpoint_revision: Object.freeze(["endpoint_id", "revision_no", "url_vault_token", "url_masked", "host_name", "status", "active_slot", "version"]),
   t_webhook_signing_secret: Object.freeze(["endpoint_id", "rotation_no", "secret_ref", "secret_fingerprint", "status", "signing_slot", "version"]),
@@ -359,10 +354,9 @@ export const FORBIDDEN_FIELDS_BY_TABLE = Object.freeze({
   t_file_object: Object.freeze(["scan_policy_ver_id", "scan_policy_hash"]),
   t_consumer_document: Object.freeze(["generation_id", "client_id", "current_ver_id", "generation_scope_hash"]),
   t_document_version: Object.freeze(["source_set_hash", "content_hash"]),
-  t_notification_request: Object.freeze(["client_id", "tenant_scope_key", "recipient_set_hash"]),
-  t_notification_delivery: Object.freeze(["recipient_id", "route_hash", "recipient_hash", "content_hash"]),
-  t_notification_attempt: Object.freeze(["provider_ver_id", "response_hash"]),
-  t_notification_provider_callback: Object.freeze(["verification_provider_ver_id", "signature_header_hash", "verified_time"]),
+  t_notification_request: Object.freeze(["client_id", "scope_key", "recipient_set_hash", "notification_type", "medium", "send_mode", "source_payload_hash"]),
+  t_notification_delivery: Object.freeze(["recipient_id", "route_hash", "recipient_hash", "content_hash", "tenant_id", "lease_owner", "lease_until", "fencing_token", "address_blind_index", "address_masked", "message_vault_token"]),
+  t_notification_attempt: Object.freeze(["provider_ver_id", "response_hash", "provider_request_key", "provider_code", "attempt_no", "request_hash", "result"]),
   t_webhook_endpoint: Object.freeze(["client_id", "current_ver_id"]),
   t_webhook_endpoint_revision: Object.freeze(["content_hash", "url_blind_index", "vault_record_version", "vault_metadata_hash"]),
   t_webhook_event: Object.freeze(["client_id", "vault_record_version", "vault_metadata_hash"]),
@@ -394,14 +388,9 @@ export const REQUIRED_COMPOSITE_FKS = Object.freeze([
   Object.freeze({ name: "fk_doc_ver_translation", childTable: "t_document_version", childFields: Object.freeze(["document_template_translation_id", "document_template_id"]), parentTable: "t_document_template_translation", parentFields: Object.freeze(["translation_id", "document_template_id"]) }),
   Object.freeze({ name: "fk_doc_delivery_version", childTable: "t_document_delivery", childFields: Object.freeze(["document_ver_id", "document_id"]), parentTable: "t_document_version", parentFields: Object.freeze(["document_ver_id", "document_id"]) }),
   Object.freeze({ name: "fk_doc_delivery_document", childTable: "t_document_delivery", childFields: Object.freeze(["document_id", "tenant_id"]), parentTable: "t_consumer_document", parentFields: Object.freeze(["document_id", "tenant_id"]) }),
-  Object.freeze({ name: "fk_doc_delivery_notification", childTable: "t_document_delivery", childFields: Object.freeze(["notification_delivery_id", "tenant_id"]), parentTable: "t_notification_delivery", parentFields: Object.freeze(["delivery_id", "tenant_id"]) }),
   Object.freeze({ name: "fk_document_grant_version", childTable: "t_document_access_grant", childFields: Object.freeze(["document_ver_id", "document_id"]), parentTable: "t_document_version", parentFields: Object.freeze(["document_ver_id", "document_id"]) }),
   Object.freeze({ name: "fk_document_grant_subject", childTable: "t_document_access_grant", childFields: Object.freeze(["document_id", "tenant_id", "order_id", "consumer_ref_hash"]), parentTable: "t_consumer_document", parentFields: Object.freeze(["document_id", "tenant_id", "order_id", "consumer_ref_hash"]) }),
   Object.freeze({ name: "fk_audit_integrity_file", childTable: "t_audit_integrity_point", childFields: Object.freeze(["file_id", "content_hash"]), parentTable: "t_file_object", parentFields: Object.freeze(["file_id", "content_hash"]) }),
-  Object.freeze({ name: "fk_notify_delivery_request", childTable: "t_notification_delivery", childFields: Object.freeze(["request_id", "tenant_id", "notification_template_id"]), parentTable: "t_notification_request", parentFields: Object.freeze(["request_id", "tenant_id", "notification_template_id"]) }),
-  Object.freeze({ name: "fk_notify_delivery_route", childTable: "t_notification_delivery", childFields: Object.freeze(["notification_route_id", "tenant_id", "notification_template_id"]), parentTable: "t_notification_route", parentFields: Object.freeze(["route_id", "tenant_id", "notification_template_id"]) }),
-  Object.freeze({ name: "fk_notify_delivery_translation", childTable: "t_notification_delivery", childFields: Object.freeze(["notify_template_translation_id", "notification_template_id"]), parentTable: "t_notify_template_translation", parentFields: Object.freeze(["translation_id", "notification_template_id"]) }),
-  Object.freeze({ name: "fk_notify_callback_attempt", childTable: "t_notification_provider_callback", childFields: Object.freeze(["notification_attempt_id", "provider_id", "provider_message_id", "notification_delivery_id"]), parentTable: "t_notification_attempt", parentFields: Object.freeze(["attempt_id", "provider_id", "provider_message_id", "delivery_id"]) }),
   Object.freeze({ name: "fk_webhook_delivery_event", childTable: "t_webhook_delivery", childFields: Object.freeze(["webhook_event_id", "tenant_id", "event_type", "payload_schema_version"]), parentTable: "t_webhook_event", parentFields: Object.freeze(["event_id", "tenant_id", "event_type", "payload_schema_version"]) }),
   Object.freeze({ name: "fk_webhook_delivery_endpoint", childTable: "t_webhook_delivery", childFields: Object.freeze(["endpoint_id", "tenant_id"]), parentTable: "t_webhook_endpoint", parentFields: Object.freeze(["endpoint_id", "tenant_id"]) }),
   Object.freeze({ name: "fk_webhook_delivery_revision", childTable: "t_webhook_delivery", childFields: Object.freeze(["endpoint_revision_id", "endpoint_id"]), parentTable: "t_webhook_endpoint_revision", parentFields: Object.freeze(["endpoint_revision_id", "endpoint_id"]) }),
@@ -424,8 +413,8 @@ export function isForbiddenSecretField(fieldName) {
 }
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_CHECK_COUNT = 85;
-export const EXPECTED_CHECK_POLICY_DIGEST = "6dc3aff176afc5892054e6f4a0579c232c149dddb1063aef5c1f8e730271b25a";
+export const EXPECTED_CHECK_COUNT = 83;
+export const EXPECTED_CHECK_POLICY_DIGEST = "026f425c4a3ce14250746244d0b120d6e9e91e13eaa276aabfd710c6381036f1";
 
 export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
   ck_federated_provider: Object.freeze({
@@ -490,7 +479,7 @@ export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
   }),
   ck_revision_active_slot: Object.freeze({
     expression: "(status='ACTIVE' AND active_slot=1) OR (status IN ('DRAFT','RETIRED') AND active_slot IS NULL)",
-    tables: Object.freeze(["file_scan_policy", "document_template", "notification_provider", "notification_route", "notification_template"]),
+    tables: Object.freeze(["file_scan_policy", "document_template"]),
   }),
   ck_document_commerce: Object.freeze({
     expression: "(commerce_request_event_key IS NULL AND commerce_source_version IS NULL AND commerce_source_payload_hash IS NULL AND commerce_order_context_id IS NULL AND consumer_terms_file_id IS NULL AND refund_policy_file_id IS NULL AND privacy_notice_file_id IS NULL) OR (commerce_request_event_key IS NOT NULL AND commerce_source_version>0 AND commerce_source_payload_hash IS NOT NULL AND commerce_order_context_id IS NOT NULL AND consumer_terms_file_id IS NOT NULL AND refund_policy_file_id IS NOT NULL AND privacy_notice_file_id IS NOT NULL)",
@@ -508,9 +497,13 @@ export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
     expression: "(status='GENERATED' AND active_slot=1 AND file_id IS NOT NULL) OR (status IN ('CREATED','PROCESSING','ERROR','FAILED','SUPERSEDED') AND active_slot IS NULL)",
     tables: Object.freeze(["document_version"]),
   }),
-  ck_notify_callback_verify: Object.freeze({
-    expression: "verification_time IS NOT NULL AND ((signature_status='VERIFIED' AND verification_failure_code IS NULL AND notification_attempt_id IS NOT NULL AND notification_delivery_id IS NOT NULL) OR (signature_status IN ('FAILED','UNSUPPORTED') AND verification_failure_code IS NOT NULL AND notification_attempt_id IS NULL AND notification_delivery_id IS NULL))",
-    tables: Object.freeze(["notification_provider_callback"]),
+  ck_notify_delivery_retry: Object.freeze({
+    expression: "attempt_count>=0 AND version>0 AND ((status='RETRY_WAIT' AND next_retry_time IS NOT NULL) OR (status<>'RETRY_WAIT' AND next_retry_time IS NULL))",
+    tables: Object.freeze(["notification_delivery"]),
+  }),
+  ck_notify_attempt_identity: Object.freeze({
+    expression: "provider_request_no<>''",
+    tables: Object.freeze(["notification_attempt"]),
   }),
   ck_webhook_payload_storage: Object.freeze({
     expression: "(payload_storage_mode='INLINE' AND payload_inline IS NOT NULL AND payload_vault_token IS NULL) OR (payload_storage_mode='VAULT_TOKEN' AND payload_inline IS NULL AND payload_vault_token IS NOT NULL)",
@@ -535,14 +528,14 @@ export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
 });
 
 export const EXPECTED_TOTALS = Object.freeze({
-  tables: 64,
-  fields: 831,
-  uniqueIndexes: 123,
-  accessIndexes: 102,
-  relations: 109,
-  oneToOneRelations: 5,
+  tables: 62,
+  fields: 760,
+  uniqueIndexes: 111,
+  accessIndexes: 91,
+  relations: 101,
+  oneToOneRelations: 6,
   diagramGroups: 7,
 });
 
-export const EXPECTED_MODEL_DIGEST = "2e8825eb3873c21868c75ae8eb52c981e20ae3f7012b7520ce9da8b5f1f73108";
-export const EXPECTED_STRUCTURAL_DIGEST = "acc571a1ce5057191829c453d4cf5e3a2c1933b9048e5aa4f6c041c9de6647f3";
+export const EXPECTED_MODEL_DIGEST = "01fc6714fa00aa07b9fe790f8b0fdea5271e449814887a9a7682854404dee76e";
+export const EXPECTED_STRUCTURAL_DIGEST = "93943f6916bd8bc3a0916e0583a8761a2dfae3da081f019e1b6ec2920ee70b8c";

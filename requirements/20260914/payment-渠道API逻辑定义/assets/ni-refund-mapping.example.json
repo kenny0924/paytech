@@ -1,0 +1,251 @@
+{
+  "purpose": "DESIGN_MAPPING_FRAGMENT_NOT_API_WIRE_NOT_EXECUTABLE",
+  "channelCode": "NI",
+  "inputDefinition": {
+    "contextType": "REFUND",
+    "requiredPaths": [
+      [
+        "originalTransactionRefId"
+      ],
+      [
+        "refundAmount"
+      ],
+      [
+        "currency"
+      ]
+    ]
+  },
+  "requestSteps": [
+    {
+      "stepCode": "originalTarget",
+      "kind": "CAPABILITY",
+      "capabilityCode": "CALL_SYSTEM_FUNCTION",
+      "parameters": {
+        "functionCode": "READ_REFUND_TARGET"
+      },
+      "inputBindings": {
+        "originalTransactionRefId": {
+          "source": "CONTEXT",
+          "path": [
+            "originalTransactionRefId"
+          ]
+        }
+      },
+      "outputBindings": {
+        "target": [
+          "value"
+        ]
+      }
+    }
+  ],
+  "fieldMappings": [
+    {
+      "location": "PATH",
+      "targetPath": [
+        "outletId"
+      ],
+      "targetDefinition": {
+        "type": "STRING",
+        "required": true,
+        "nullable": false,
+        "displayName": "outletId",
+        "dataClass": "INTERNAL",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "binding": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "result.outletId",
+        "variables": {
+          "result": {
+            "source": "STEP",
+            "stepCode": "originalTarget",
+            "path": [
+              "target"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "location": "PATH",
+      "targetPath": [
+        "orderRef"
+      ],
+      "targetDefinition": {
+        "type": "STRING",
+        "required": true,
+        "nullable": false,
+        "displayName": "orderRef",
+        "dataClass": "INTERNAL",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "binding": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "result.orderRef",
+        "variables": {
+          "result": {
+            "source": "STEP",
+            "stepCode": "originalTarget",
+            "path": [
+              "target"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "location": "PATH",
+      "targetPath": [
+        "paymentRef"
+      ],
+      "targetDefinition": {
+        "type": "STRING",
+        "required": true,
+        "nullable": false,
+        "displayName": "paymentRef",
+        "dataClass": "INTERNAL",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "binding": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "result.paymentRef",
+        "variables": {
+          "result": {
+            "source": "STEP",
+            "stepCode": "originalTarget",
+            "path": [
+              "target"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "location": "PATH",
+      "targetPath": [
+        "captureId"
+      ],
+      "targetDefinition": {
+        "type": "STRING",
+        "required": true,
+        "nullable": false,
+        "displayName": "captureId",
+        "dataClass": "INTERNAL",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "binding": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "result.captureId",
+        "variables": {
+          "result": {
+            "source": "STEP",
+            "stepCode": "originalTarget",
+            "path": [
+              "target"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "location": "BODY",
+      "targetPath": [
+        "amount",
+        "currencyCode"
+      ],
+      "targetDefinition": {
+        "type": "STRING",
+        "required": true,
+        "nullable": false,
+        "displayName": "币种",
+        "dataClass": "INTERNAL",
+        "minLength": 3,
+        "maxLength": 3
+      },
+      "binding": {
+        "source": "CONTEXT",
+        "path": [
+          "currency"
+        ]
+      }
+    },
+    {
+      "location": "BODY",
+      "targetPath": [
+        "amount",
+        "value"
+      ],
+      "targetDefinition": {
+        "type": "INTEGER",
+        "required": true,
+        "nullable": false,
+        "displayName": "最小单位金额",
+        "dataClass": "INTERNAL",
+        "minValue": "0",
+        "maxValue": "999999999999999999999999",
+        "unit": "MINOR_CURRENCY_UNIT"
+      },
+      "binding": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "money.minorUnits(refundContext.refundAmount, refundContext.currency)",
+        "variables": {
+          "refundContext": {
+            "source": "CONTEXT",
+            "path": []
+          }
+        }
+      }
+    },
+    {
+      "location": "HEADER",
+      "targetPath": [
+        "Content-Type"
+      ],
+      "targetDefinition": {
+        "type": "STRING",
+        "required": true,
+        "nullable": false,
+        "displayName": "Content-Type",
+        "dataClass": "INTERNAL",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "binding": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "'application/vnd.ni-payment.v2+json'",
+        "variables": {}
+      }
+    },
+    {
+      "location": "HEADER",
+      "targetPath": [
+        "Accept"
+      ],
+      "targetDefinition": {
+        "type": "STRING",
+        "required": true,
+        "nullable": false,
+        "displayName": "Accept",
+        "dataClass": "INTERNAL",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "binding": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "'application/vnd.ni-payment.v2+json'",
+        "variables": {}
+      }
+    }
+  ]
+}

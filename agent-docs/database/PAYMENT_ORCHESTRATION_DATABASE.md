@@ -1,14 +1,26 @@
 # Payment Orchestration 数据库设计规范
 
+> **2026-09-21 Channel 配置后继：** [范围决定](../decisions/2026-09-21-channel-account-mid-capability-queries.md)与[需求正文](../../requirements/20260921/payment-渠道账号与MID能力查询/requirement.md)精确取代第 3 节受影响目标：删除 adapter_code、账号增加 OE/名称/备注及受保护配置引用方向、能力拆为主从表且明细保存 value_type、保留 country_code、scheme_code 表示支付体系，本期移除健康状态表。两个主链路查询与 SQL 变化见需求；消费者国家、账号 Vault JSON 例外和原交易停用矩阵已确认，详细接口见[实施合同](../../requirements/20260921/payment-渠道账号与MID能力查询/implementation-contract.md)。下文未同步的相关描述是迁移前基线，正式模型、SQL 和环境状态见[当前台账](../CURRENT_IMPLEMENTATION.md#channel-account-mid-query-requirement-20260921)。
+
+> **Action Flow 后继：** [CARD + PAY 修订](../../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)统一自有动作 PAY_RISK / PAY 名称、条件对象和执行位切换；AUTHORIZE 成功结束本次 Flow，Capture 为独立入口。前序 RISK_CHECK / SALE 表述按该范围被取代。
+
+> **当前字段入口：** [2026-09-14 整批字段精简](../../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md)取代下列前序决定中受影响的字段。本文三表、路由与退款导航已合并该修订；历史文档和未迁移代码不反向定义当前目标。
+
+> **内部风控 Action 后继：** [已确认修订](../../requirements/20260913/payment-Execution设计/internal-risk-action-amendment.md)将首次评估记录为 RISK_CHECK，承接 Attempt 的评估 ID 与结果。风险步骤也占 active_action_id，由 Risk 恢复，渠道字段为空；渠道步骤保持完整路由与幂等身份。工具切换遵守同稿的新提交/新 Token/新 Attempt 边界，后续字段取舍见本页顶部当前入口。
+
+> **2026-09-14 限额引用后继：** [Payment/Risk 限额关联修订](../../requirements/20260913/payment-Execution设计/risk-limit-correlation-amendment.md)删除 Payment Attempt 的 limit_reservation_group_id 目标字段，Risk 在本地按原 Attempt 定位占用。仅取代受影响字段与消息输入要求；Risk 内部占用机制保留，实现与迁移状态见当前台账。
+
+> **2026-09-14 状态与恢复后继：** capture mode、Intent/Attempt/Action 状态、active_action_id 及删除 QUERY/target_payment_action_id 的目标以[本次修订](../../requirements/20260913/payment-Execution设计/execution-state-channel-recovery-amendment.md)为准；本页及前序 Execution 方案的受影响部分保留为历史基线，其他业务边界继续有效。正式模型、SQL 与数据库状态见当前台账。
+
 > **Commerce 调用方向：** [2026-09-14 修订](../../requirements/20260913/payment-Execution设计/payment-commerce-direction-amendment.md)禁止 Payment 反向调用 Commerce；Intent 新增 `consumer_country_code CHAR(2) NOT NULL`，上游创建时传入且不可变，定价从本地读取。无新增表或索引，执行状态见台账。
 
 > **交易工具后继：** [已确认的交易级 Token 修订](../../requirements/20260913/payment-Execution设计/instrument-token-amendment.md)取代本页旧 Instrument、卡引用与首次支付入口描述；其余资金和渠道业务边界保留。数据库执行状态见当前台账。
 
 > **2026-09-11 模型更新：** 本页的数字 OE、Assignment、Client 多 OE 合同及旧 Scope 冻结描述，仅适用于迁移前记录与接口；现行目标由 [四系统模型决定](../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 精确取代。Risk 本期不改，Java 与数据库尚未据此迁移，历史订单与 Hash 不重写。
 
-最后更新：2026-09-13
+最后更新：2026-09-14
 
-> **Execution 后继范围：** [已确认方案](../../requirements/20260913/payment-Execution设计/data-design.md)精确取代本页的消费者交互表与旧补偿字段：来源 Binding、Attempt 原提交/目标、Action AUTHENTICATE/QUERY/交互事实按该方案；所有实际数据库状态见当前台账。
+> **Execution 后继范围：** [已确认方案](../../requirements/20260913/payment-Execution设计/data-design.md)精确取代本页的消费者交互表与旧补偿字段：Attempt 原提交/目标、Action AUTHENTICATE/交互事实按该方案；所有实际数据库状态见当前台账。
 
 状态：本期模型采用 2026-09-11 四系统调整；生成统计、验证、Java 与数据库迁移状态统一见 [当前实现台账](../CURRENT_IMPLEMENTATION.md)。
 
@@ -20,10 +32,10 @@
 
 Payment 拥有 Channel/MID 配置、路由选择、支付 Intent/Attempt/渠道动作、Channel Refund、Channel 回调、渠道争议和本地可靠执行事实。它不拥有 Order、Checkout Session、消费者合同或退款业务资格；不拥有 Client、Operating Entity、Risk 规则/争议业务结论、Finance 会计账本/结算、文件二进制、IAM 或 Channel Secret。
 
-Payment Intent 用 source_type + source_id 关联来源；MVP 的 source_type 为 COMMERCE_ORDER，但模型不得把来源语义硬编码为 Checkout。Commerce 已冻结 Client、Operating Entity、Assignment、industry_code、mcc_code、金额、币种和 Order Context；Payment 只按这些时点事实路由，Client 不能选择 Operating Entity、Channel 或 MID。
+Payment Intent 用 source_type + source_id 关联来源；MVP 的 source_type 为 COMMERCE_ORDER，但模型不得把来源语义硬编码为 Checkout。Commerce 已冻结 Client、entity_no、industry_code、mcc_code、金额、币种、消费者国家及条款版本；Payment 只按这些时点事实路由，Client 不能选择 Operating Entity、Channel 或 MID。
 
 - 主键是服务生成的 Snowflake BIGINT，时间为 UTC DATETIME(6)，金额为 DECIMAL(24,8)，权重/比例为 DECIMAL(18,10)，币种为 ISO 4217 CHAR(3)，country_code 为 ISO 3166-1 alpha-2。配置 Scope 的 country_code 可以使用获批 *；Intent、Attempt、Action、Ref、Callback 等交易事实不允许 *。
-- 可变 Root 的 version 使用 expected-version CAS；不可变证据、版本内明细和统一状态流转不机械保存 version。
+- 可变 Root 的 version 使用 expected-version CAS；不可变证据和版本内明细不机械保存 version。
 - Channel/API/Webhook Secret、私钥、证书、Endpoint、超时及其轮换版本不进入 Payment 数据库；Adapter 仅以 Channel Account 的非敏感 integration_config_key 定位运行配置。PAN、CVV/CVC、完整磁道、PIN/PIN Block、卡有效期、Channel Secret、临时 Redirect URL、Client Secret、SDK Token、QR Payload、未审查原文和 Consumer Email/Phone Token/Network Evidence 原值不得进入表、日志、MQ 或补偿 Payload。
 - Channel 原始信封默认不留档；仅在 Schema、卡数据与 Secret 扫描通过后，可保存受控加密文件的 file_id + content_hash 引用。
 - CANCEL 不是 Payment Action；VOID 是未捕获成功 AUTHORIZE 的全额释放；Reversal 是 Commerce 命令，Payment 原子选择 VOID 或标准全额 REFUND。SALE 成功或累计 CAPTURE 等于 Intent 金额才是 PaymentSucceeded。
@@ -35,7 +47,7 @@ Payment Intent 用 source_type + source_id 关联来源；MVP 的 source_type �
 |---|---:|---|
 | Channel 与 MID | 5 | t_payment_channel、t_channel_account、t_channel_mid、t_mid_capability、t_mid_health_state |
 | Payment Routing | 5 | t_routing_policy、t_routing_policy_version、t_routing_policy_mid、t_routing_decision、t_route_candidate_eval |
-| 支付执行与异常 | 10 | t_payment_intent、t_payment_attempt、t_payment_pricing_fact、t_payment_instrument_token、t_payment_action、t_payment_intent_binding、t_channel_transaction_ref、t_channel_interaction、t_duplicate_payment_case、t_payment_state_transition |
+| 支付执行与异常 | 7 | t_payment_intent、t_payment_attempt、t_payment_instrument_token、t_payment_action、t_channel_transaction_ref、t_channel_interaction、t_duplicate_payment_case |
 | Channel Refund | 2 | t_payment_refund_position、t_channel_refund |
 | Channel Callback | 3 | t_channel_callback、t_channel_callback_item、t_channel_event_exception |
 | Channel Dispute | 3 | t_channel_dispute_notice、t_channel_dispute_event、t_channel_dispute_action |
@@ -53,7 +65,7 @@ Channel Account 是 Payment Adapter 调用渠道 API 的技术认证账户或租
 
 ### t_channel_mid
 
-Channel MID 与其唯一 Operating Entity 归属及当前执行账户绑定。字段：mid_id、channel_id、channel_account_id、external_mid_code、operating_entity_id、mid_status、activated_at、closed_at、create_time、update_time。uk_channel_mid(channel_id, external_mid_code) 唯一；idx_channel_mid_account(channel_account_id, mid_status) 与 idx_channel_mid_entity(operating_entity_id, mid_status) 支持路由。一个 Channel 有多个 Account 和 MID，一个 Account 可服务多个 MID；MID 同时保存 channel_id 用于直接表达渠道归属、Channel 内唯一 MID 号和停用筛选。创建或调整 MID 必须验证 channel_mid.channel_id = channel_account.channel_id；channel_account_id 仅能在 MID 非活动时由受控配置命令调整，历史 Action 已冻结账户不漂移。mid_status 取值 DRAFT、ACTIVE、SUSPENDED、CLOSED；operating_entity_id 创建后不可变，归属错误须关闭旧 MID 并新建。
+Channel MID 与其唯一 Operating Entity 归属及当前执行账户绑定。字段：mid_id、channel_id、channel_account_id、external_mid_code、entity_no、mid_status、activated_at、closed_at、create_time、update_time。uk_channel_mid(channel_id, external_mid_code) 唯一；idx_channel_mid_account(channel_account_id, mid_status) 与 idx_channel_mid_entity(entity_no, mid_status) 支持路由。一个 Channel 有多个 Account 和 MID，一个 Account 可服务多个 MID；MID 同时保存 channel_id 用于直接表达渠道归属、Channel 内唯一 MID 号和停用筛选。创建或调整 MID 必须验证 channel_mid.channel_id = channel_account.channel_id；channel_account_id 仅能在 MID 非活动时由受控配置命令调整，历史 Attempt 已冻结账户不漂移。mid_status 取值 DRAFT、ACTIVE、SUSPENDED、CLOSED；entity_no 创建后不可变，归属错误须关闭旧 MID 并新建。
 
 ### t_mid_capability
 
@@ -79,21 +91,31 @@ MID 的固定路由 Scope 加有类型 Key-Value 静态能力。字段：mid_cap
 
 ### t_routing_decision
 
-每个 Attempt 的不可变最终路由结论。字段：routing_decision_id、payment_attempt_id、routing_policy_id、routing_policy_version_id、selected_channel_id、selected_channel_account_id、selected_mid_id、decision_status、decision_reason_code、create_time。uk_routing_decision_attempt(payment_attempt_id) 保证一 Attempt 一结论。decision_status 取值 SELECTED、REJECTED、CONFIGURATION_CONFLICT。Policy ID 与 Version ID 必须成对：SELECTED 全部 Policy/Channel/Channel Account/MID 字段非空；CONFIGURATION_CONFLICT 因不存在唯一获胜策略，Policy 对与选中四字段全部为空；REJECTED 的选中四字段为空，无匹配 Policy 时 Policy 对为空，有匹配 Policy 但无合格 MID 时 Policy 对非空。selected_channel_account_id 只在 SELECTED 时必需冻结；选中 Candidate、Decision 与首个 AUTHORIZE/SALE Action 的 Channel、Channel Account、MID 必须逐值一致。重试新 Attempt 才可重选同一 Operating Entity 下的 MID。本表不可变、只追加，不保存 version。
+每个 Attempt 的不可变最终路由结论。字段：routing_decision_id、payment_attempt_id、routing_policy_id、routing_policy_version_id、selected_channel_id、selected_channel_account_id、selected_mid_id、decision_status、decision_reason_code、create_time。uk_routing_decision_attempt(payment_attempt_id) 保证一 Attempt 一结论。decision_status 取值 SELECTED、REJECTED、CONFIGURATION_CONFLICT。Policy ID 与 Version ID 必须成对：SELECTED 全部 Policy/Channel/Channel Account/MID 字段非空；CONFIGURATION_CONFLICT 因不存在唯一获胜策略，Policy 对与选中四字段全部为空；REJECTED 的选中四字段为空，无匹配 Policy 时 Policy 对为空，有匹配 Policy 但无合格 MID 时 Policy 对非空。selected_channel_account_id 只在 SELECTED 时必需冻结；选中 Candidate、Decision 与 Attempt 的 Channel、Channel Account、MID 必须逐值一致。重试新 Attempt 才可重选同一 Operating Entity 下的 MID。本表不可变、只追加，不保存 version。
 
 ### t_route_candidate_eval
 
 每个决策中全部候选 MID、其执行账户、主要淘汰原因及实际使用的动态健康快照。字段：route_candidate_eval_id、routing_decision_id、channel_id、channel_account_id、mid_id、eligible_flag、candidate_priority、weight_value、exclusion_reason_code、health_status、circuit_status、health_score、technical_success_rate、timeout_rate、p95_latency_ms、sample_count、health_observed_at、create_time。uk_route_candidate_eval(routing_decision_id, mid_id) 唯一。eligible_flag 为 0/1；值为 1 时 channel_account_id 非空且 exclusion_reason_code 为空，值为 0 时 exclusion_reason_code 非空。候选在 Channel/MID/Capability/Account 静态阶段已淘汰时 channel_account_id 与动态健康字段可空；进入动态健康阶段后必须冻结完整健康快照。被选 MID 必须有 eligible_flag=1 行。该表是不可变评估证据，创建后只读，历史 Decision 不反查当前 Health State 解释当时路由。
 
-## 5. 支付执行与异常（9）
+## 5. 支付执行与异常（8）
 
 ### t_payment_intent
 
-一个 Commerce Order 的唯一支付目标。字段：payment_intent_id、source_type、source_id、source_order_context_id、client_id、operating_entity_id、assignment_id、industry_code、mcc_code、amount、currency、intent_status、active_attempt_id、successful_attempt_id、expires_at、version、create_time、update_time。uk_payment_intent_source(source_type, source_id) 唯一；uk_payment_intent_active(active_attempt_id) 与 uk_payment_intent_success(successful_attempt_id) 分别保证同一 Attempt 至多被一个 Intent 指为活动或成功尝试。intent_status 取值 REQUIRES_PAYMENT、PROCESSING、REQUIRES_ACTION、SUCCEEDED、FAILED、EXPIRED、CANCELLED。合法路径为 REQUIRES_PAYMENT→PROCESSING→REQUIRES_ACTION/REQUIRES_PAYMENT/SUCCEEDED/FAILED/EXPIRED/CANCELLED；REQUIRES_ACTION 可回 PROCESSING，终态不可复活。只有 SALE 成功或累计 CAPTURE=amount 可 SUCCEEDED；Void 成功使 Intent CANCELLED。version 的真实竞争者是 Attempt 创建/终止/成功、回调、主动查询、Cancel、Operating Entity 关闭和超时恢复；active_attempt_id/successful_attempt_id 代替任何 Attempt slot。
+一个来源订单唯一的支付目标。字段：payment_intent_id、source_type、source_id、client_id、entity_no、client_pricing_version_id、partner_share_version_id、platform_charge_version_id、industry_code、mcc_code、consumer_country_code、amount、currency、intent_status、active_attempt_id、successful_attempt_id、expires_at、version、create_time、update_time。
+
+source_type + source_id 唯一，Client、OE、金额、币种及条款版本创建后冻结；不再保存 Order Context ID 或 context_format，不反查 Commerce。intent_status 为 OPEN、SUCCEEDED、CANCELLED、EXPIRED。只有 SALE 成功或全额 CAPTURE 成功才 SUCCEEDED；成功 Void 可安全取消。active_attempt_id 保留仍有执行/授权风险的尝试，successful_attempt_id 指向首次全额收款的 canonical Attempt；指针必须属于本 Intent。资源锁、version CAS 与两个单字段唯一索引保护并发和首次成功。
 
 ### t_payment_attempt
 
-同一 Intent 内顺序发生的一次支付尝试。字段：payment_attempt_id、payment_intent_id、attempt_no、payment_method_code、payment_instrument_token_id、attempt_status、failure_stage、status_reason_code、consumer_contract_id、consumer_terms_acceptance_id、refund_policy_acceptance_id、privacy_notice_acceptance_id、acceptance_completed_at、order_version、transaction_assessment_id、risk_result、limit_reservation_group_id、authorized_amount、captured_amount、version、create_time、update_time。payment_method_code 非空并冻结本次 Attempt 从 Payment Method Catalog 选择的精确支付方式，首次支付通过交易工具 Token 受理，payment_instrument_token_id 指向本地 Token 主键，uk_pay_attempt_token 保证一个 Token 最多关联一个 Attempt。新写入必须绑定 Token，字段可空仅为模型兼容边界，不表示本轮已支持非空旧数据迁移。uk_payment_attempt_no(payment_intent_id, attempt_no) 唯一；t_routing_decision.payment_attempt_id 的唯一关系是唯一路由真相。attempt_status 仅取 CREATED、PROCESSING、REQUIRES_ACTION、AUTHORIZED、UNKNOWN、SUCCEEDED、FAILED、CANCELLED、VOIDED、CONFLICTED。合法路径：CREATED→PROCESSING/FAILED/CANCELLED；PROCESSING→REQUIRES_ACTION/AUTHORIZED/UNKNOWN/SUCCEEDED/FAILED/CANCELLED；REQUIRES_ACTION→PROCESSING/UNKNOWN/FAILED/CANCELLED；AUTHORIZED→PROCESSING/UNKNOWN/VOIDED/FAILED；UNKNOWN→PROCESSING/SUCCEEDED/FAILED/VOIDED/CONFLICTED；SUCCEEDED、FAILED、CANCELLED、VOIDED、CONFLICTED 均正常终态。仅已验证且矛盾的 Channel 资金事实可作狭窄权威纠正：FAILED→CONFLICTED；对应 Action 可 FAILED→SUCCEEDED。该事务必须创建 t_duplicate_payment_case、保留两条状态流转、不替换 Intent successful_attempt_id、不发送第二次 PaymentSucceeded，且不得从终态行提交新的 Channel 请求。被 Readiness/Risk/Limit 或首次 Channel 提交前实时检查拦截时形成 FAILED Attempt，并通过 failure_stage/status_reason_code 说明，不建立独立 Gate 记录。version 解决 Callback、QUERY、超时/恢复和操作命令的 CAS 竞争。
+同一 Intent 内一次工具和方式固定的支付尝试。字段：payment_attempt_id、payment_intent_id、attempt_no、source_submission_id、payment_method_code、capture_mode、payment_instrument_token_id、channel_id、channel_account_id、mid_id、attempt_status、active_action_id、authorized_amount、captured_amount、version、create_time、update_time。
+
+attempt_status 仅 PROCESSING、SUCCEEDED、FAILED、CANCELLED。3DS、Wallet 跳转、UNKNOWN 和已授权等待 Capture 均保持 PROCESSING。AUTHORIZE 成功更新 authorized_amount；SALE/全额 CAPTURE 成功更新 captured_amount 并完成 Attempt。Capture/Void 失败仍须保留未释放授权，不能把 Attempt 简单结束为失败。
+
+支付工具直接关联 Token 内部主键；新执行必须有 source_submission_id、capture_mode 和 payment_instrument_token_id，现有可空定义不授权猜测迁移旧数据。更换工具或明确失败后的新支付使用新 Submission/Token/Attempt。uk_payment_attempt_no、uk_pay_attempt_submission、uk_pay_attempt_token 分别保护顺序、原提交和工具唯一绑定；attempt_no 在 Intent 资源保护下由已有 Attempt 分配，不依赖历史表。
+
+Routing 成功前 channel_id/channel_account_id/mid_id 全空，成功后与 Decision/Candidate 一致地成组冻结，后续操作及退款沿原 Attempt 使用，不能重新读取 MID 当前账户替换。三个普通索引支持按渠道、账户及 MID 定位尝试。法律接受归 Commerce；认证要求、评估 ID/结果归 RISK_CHECK Action；不复制失败阶段、原因码或限额占用组。
+
+active_action_id 只能指向本 Attempt 的一个未终态 Action；CREATED/PROCESSING/UNKNOWN 均占位。结果事务只在指针仍等于原 Action 时释放或接续。等待手动 Capture 时可为空，但 Intent 继续占用本 Attempt；空执行位不代表允许再次扣款。
 
 ### t_payment_instrument_token
 
@@ -103,23 +125,23 @@ MID 的固定路由 Scope 加有类型 Key-Value 静态能力。字段：mid_cap
 
 ### t_payment_action
 
-真实 Channel 渠道动作。字段：payment_action_id、payment_attempt_id、channel_refund_id、duplicate_payment_case_id、action_no、action_type、action_status、channel_id、channel_account_id、mid_id、target_channel_txn_ref_id、amount、currency、channel_idempotency_key、channel_result_time、version、create_time、update_time。三父级严格 XOR：恰有一个 payment_attempt_id、channel_refund_id、duplicate_payment_case_id 非空。uk_payment_action_attempt_no(payment_attempt_id, action_no)、uk_payment_action_refund_no(channel_refund_id, action_no)、uk_pay_action_dup_case_no(duplicate_payment_case_id, action_no) 分别保证父级内序号唯一；uk_payment_action_idempotency(channel_id, channel_idempotency_key) 防止重复网络提交。
+一次内部风控或渠道业务步骤。字段：payment_action_id、payment_attempt_id、channel_refund_id、duplicate_payment_case_id、action_no、action_type、action_status、target_channel_txn_ref_id、amount、currency、channel_idempotency_key、transaction_assessment_id、risk_result、authentication_requirement、interaction_type、interaction_expires_at、channel_response_code、channel_response_msg、channel_result_time、version、create_time、update_time。
 
-| 唯一父级 | 允许 action_type | action_no 规则 |
-|---|---|---|
-| Payment Attempt | AUTHORIZE、CAPTURE、SALE、VOID、QUERY | 父级内递增 |
-| Channel Refund | REFUND、QUERY | REFUND 固定为 1；后续 QUERY 必须 >=2 |
-| Duplicate Payment Case | REFUND、QUERY | REFUND 固定为 1；后续 QUERY 必须 >=2 |
+父级 payment_attempt_id、channel_refund_id、duplicate_payment_case_id 严格 XOR。Attempt 支持 RISK_CHECK、AUTHENTICATE、AUTHORIZE、SALE、CAPTURE、VOID；Refund/重复支付处置支持 REFUND。action_no 在父级内递增；不存在 QUERY 或 REVERSAL 业务 Action。action_status 为 CREATED、PROCESSING、UNKNOWN、SUCCEEDED、FAILED；原操作超时由相同 Action 恢复。
 
-Channel Dispute 使用自己的 Action 表。action_status 仅取 CREATED、SUBMITTED、REQUIRES_ACTION、UNKNOWN、SUCCEEDED、FAILED。合法路径 CREATED→SUBMITTED/FAILED；SUBMITTED→REQUIRES_ACTION/UNKNOWN/SUCCEEDED/FAILED；REQUIRES_ACTION→SUBMITTED/UNKNOWN/SUCCEEDED/FAILED；UNKNOWN→SUBMITTED/SUCCEEDED/FAILED；终态不可覆盖，唯一例外是已验证矛盾 Channel 资金事实的 FAILED→SUCCEEDED 权威纠正；该纠正与 Attempt FAILED→CONFLICTED、Duplicate Case 和两条状态流转在同一事务，不能替换 Intent 成功指针、发送第二次 PaymentSucceeded 或从终态行提交新的 Channel 请求。AUTHORIZE、SALE、CAPTURE 从 CREATED 首次转为 SUBMITTED 前必须紧邻执行 Client/Operating Entity 当前状态与 Compliance 限制的同步实时检查；任何明确阻断、依赖失败或结果缺失都 Fail-Closed，Action 与 Attempt 记录 FAILED 及稳定原因且不得创建 Channel Interaction。检查通过结果不持久化为独立 Gate。Action 已进入 SUBMITTED、REQUIRES_ACTION 或 UNKNOWN 后，网络重发必须复用该行、Channel Idempotency Key、Channel Account 与 MID，不重新把可能已发生的渠道请求判定为从未提交；version 解决回调、查询和提交重试竞争。Adapter 从 Action 冻结的 channel_account_id 解析当前运行配置；Channel Account 配置不保存 MID 专属凭据或任何 Secret 内容。
+RISK_CHECK 保存原 transaction_assessment_id、risk_result；可信 ALLOW 同时冻结 authentication_requirement，其他情况为空。AUTHENTICATE.SUCCEEDED 必须表示满足内部认证要求；表单创建和浏览器回跳不构成成功。认证证明、挑战事实与有效期由 Channel 管理并在原资金提交中核验，本表不复制这些字段或认证操作引用。原 Action 保留 interaction_type/interaction_expires_at，交互秘密仅瞬时返回。
 
-### t_payment_intent_binding
+渠道坐标由所属 Attempt 取得。Capture/Void 的 target_channel_txn_ref_id 指原 AUTHORIZE Ref，Refund 指原 SALE/CAPTURE Ref，再从该 Ref 的原资金 Action 导航到 Attempt。不得用当前配置或最新成功 Action 替代精确原交易。channel_idempotency_key 为全局唯一、ASCII 区分大小写的原渠道操作键；RISK_CHECK 为空，渠道动作必填，恢复不换键。
 
-来源订单的唯一创建资格记录；`closed_at` 只允许从空转为关闭时间。关闭可先于 Intent 创建存在，之后不得通过晚到 Create 或新提交绕过。其字段、唯一索引、Action 认证/交互替代及历史限制统一见[Execution 数据方案](../../requirements/20260913/payment-Execution设计/data-design.md)。旧 `t_payment_customer_action` 不再进入目标模型，历史库必须按人工迁移前置单独核验。
+channel_response_code/channel_response_msg 只记录真实渠道响应的安全代码与清洗说明，本地错误不冒充渠道响应。最终状态取可信标准结果，不能解析消息文案推进。先在本地事务取得执行权，事务外调用 Risk/Channel，结果与指针及可靠任务另开短事务提交。
+
+### 来源唯一关联
+
+来源直接保存在 Intent 的 `source_type/source_id`，由原唯一索引保证同一来源一个 Intent。`t_payment_intent_binding` 与提前关闭创建的 EX-I03 已删除；Commerce 先确认创建结果，再终止已有 Intent，未决资金仍返回 PENDING。完整规则见[字段修订第 8 节](../../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md#8-删除来源-binding)。
 
 ### t_channel_transaction_ref
 
-所有 AUTHORIZE、CAPTURE、SALE、VOID、REFUND 的不可变外部交易号。字段：channel_transaction_ref_id、payment_action_id、channel_id、mid_id、reference_type、external_transaction_id、original_channel_txn_ref_id、channel_event_time、amount、currency、create_time。uk_channel_transaction_ref(channel_id, mid_id, reference_type, external_transaction_id) 唯一，且每条 Ref 必须关联产生它的 Action。reference_type 取 AUTHORIZE、CAPTURE、SALE、VOID、REFUND。原 SALE/CAPTURE Ref 通过 payment_action_id 导航到已冻结的 Channel、Channel Account 与 MID；REFUND Action 的 target_channel_txn_ref_id 必须指向该原 Ref，Adapter 使用原 Ref 的 external_transaction_id 发起退款；退款成功后新增独立 external_transaction_id、reference_type=REFUND 的 Ref，并以 original_channel_txn_ref_id 反向指向原 Ref。本表创建后只追加，不以当前 Channel 配置改写历史。
+所有 AUTHORIZE、CAPTURE、SALE、VOID、REFUND 的不可变外部交易号。字段：channel_transaction_ref_id、payment_action_id、channel_id、mid_id、reference_type、external_transaction_id、original_channel_txn_ref_id、channel_event_time、amount、currency、create_time。uk_channel_transaction_ref(channel_id, mid_id, reference_type, external_transaction_id) 唯一，且每条 Ref 必须关联产生它的 Action。reference_type 取 AUTHORIZE、CAPTURE、SALE、VOID、REFUND。原 SALE/CAPTURE Ref 通过 payment_action_id → 原资金 Action.payment_attempt_id 导航到 Attempt 冻结的 Channel、Channel Account 与 MID；REFUND Action 的 target_channel_txn_ref_id 必须指向该原 Ref，Adapter 使用原 Ref 的 external_transaction_id 发起退款；退款成功后新增独立 external_transaction_id、reference_type=REFUND 的 Ref，并以 original_channel_txn_ref_id 反向指向原 Ref。本表创建后只追加，不以当前 Channel 配置改写历史。
 
 ### t_channel_interaction
 
@@ -127,21 +149,18 @@ Channel Dispute 使用自己的 Action 表。action_status 仅取 CREATED、SUBM
 
 ### t_duplicate_payment_case
 
-同一 Intent 出现第二个不同、已验证的资金成功事实时建立的合并 Case 和补偿处置。只有不同 Action/Transaction Ref 的 SALE 成功或完成资金的 CAPTURE 成功才触发；重复 Callback、同一 external_transaction_id 重放、QUERY 确认原 Action，以及正常 AUTHORIZE→CAPTURE 链路都不是重复支付。字段：duplicate_payment_case_id、payment_intent_id、canonical_attempt_id、canonical_action_id、canonical_transaction_ref_id、duplicate_attempt_id、duplicate_action_id、duplicate_transaction_ref_id、duplicate_amount、currency、case_status、compensation_action_id、version、create_time、update_time。uk_dup_case_duplicate_action(duplicate_action_id) 唯一。case_status 取 OPEN、COMPENSATING、COMPENSATION_UNKNOWN、COMPENSATED、MANUAL_REVIEW。第一笔成功保持 canonical，第二笔迟到成功不能覆盖 Intent successful_attempt_id；它必须令后到 Attempt 进入 CONFLICTED、创建本 Case，并对 duplicate_transaction_ref_id 发起补偿退款。未 Capture 的重复 Authorization 只是多余授权冻结，应对精确 Authorization Ref 执行 VOID，不进入重复支付退款。version 防止 Callback、QUERY 和补偿动作结果竞争。
+同一 Intent 出现第二个不同、已验证的资金成功事实时建立的合并 Case 和补偿处置。只有不同 Action/Transaction Ref 的 SALE 成功或完成资金的 CAPTURE 成功才触发；重复 Callback、同一 external_transaction_id 重放、原操作恢复确认原 Action，以及正常 AUTHORIZE→CAPTURE 链路都不是重复支付。字段：duplicate_payment_case_id、payment_intent_id、canonical_attempt_id、canonical_action_id、canonical_transaction_ref_id、duplicate_attempt_id、duplicate_action_id、duplicate_transaction_ref_id、duplicate_amount、currency、case_status、compensation_action_id、version、create_time、update_time。uk_dup_case_duplicate_action(duplicate_action_id) 唯一。case_status 取 OPEN、COMPENSATING、COMPENSATION_UNKNOWN、COMPENSATED、MANUAL_REVIEW。第一笔成功保持 canonical，第二笔迟到成功不能覆盖 Intent successful_attempt_id；它必须令后到 Attempt 进入 SUCCEEDED 并由 Case 标识重复成功、创建本 Case，并对 duplicate_transaction_ref_id 发起补偿退款。未 Capture 的重复 Authorization 只是多余授权冻结，应对精确 Authorization Ref 执行 VOID，不进入重复支付退款。version 防止 Callback、原操作恢复和补偿动作结果竞争。
 
-### t_payment_state_transition
-
-Payment 资金主链白名单聚合的统一追加状态流转。字段：payment_state_transition_id、aggregate_type、aggregate_id、root_type、root_id、from_status、to_status、transition_no、reason_code、trigger_type、trigger_id、create_by、create_time。uk_payment_transition_no(aggregate_type, aggregate_id, transition_no) 保证单对象顺序；idx_payment_transition_root(root_type, root_id, create_time) 支持时间线；idx_payment_transition_trigger(trigger_type, trigger_id, create_time) 支持由同一命令、回调、查询或恢复任务追踪跨聚合变化。aggregate_type 与 root_type 都只允许 PAYMENT_INTENT、PAYMENT_ATTEMPT、PAYMENT_ACTION、CHANNEL_REFUND、DUPLICATE_PAYMENT_CASE。Channel Callback 已有 Callback/Item/Exception 事实，Channel Dispute Notice 已有独立 Event 流，二者不重复写入本表。trigger_id 是最长 128 字符的非空稳定触发标识，不能只依赖 create_by；transition_no 是状态序号不是 CAS。该表只追加，不保存 JSON 快照或 version。Channel/MID/连接与路由配置变更采用 Platform 操作审计和当前结构化状态，不在本表复制第二套配置 History。
 
 ## 6. Channel Refund（2）
 
 ### t_payment_refund_position
 
-Payment 侧按成功支付可退款金额的并发控制 Root。首笔权威 SALE 或完成资金的 CAPTURE 成功并确定 canonical Channel Transaction Ref 时创建。字段：payment_refund_position_id、payment_intent_id、successful_attempt_id、original_channel_txn_ref_id、original_amount、reserved_amount、refunded_amount、currency、version、create_time、update_time。uk_payment_refund_position(payment_intent_id, original_channel_txn_ref_id) 唯一。约束为 reserved_amount + refunded_amount <= original_amount，金额均非负。original_channel_txn_ref_id 精确冻结原成功 Ref；从该 Ref 的 payment_action_id 可恢复 Channel、Channel Account 和 MID。version 的真实竞争者是并发的 Channel Refund 创建、FAILED/CANCELLED 释放、SUCCEEDED 消费以及 UNKNOWN 查询恢复。
+Payment 侧按成功支付可退款金额的并发控制 Root。首笔权威 SALE 或完成资金的 CAPTURE 成功并确定 canonical Channel Transaction Ref 时创建。字段：payment_refund_position_id、payment_intent_id、successful_attempt_id、original_channel_txn_ref_id、original_amount、reserved_amount、refunded_amount、currency、version、create_time、update_time。uk_payment_refund_position(payment_intent_id, original_channel_txn_ref_id) 唯一。约束为 reserved_amount + refunded_amount <= original_amount，金额均非负。original_channel_txn_ref_id 精确冻结原成功 Ref；从该 Ref 的 payment_action_id → 原资金 Action.payment_attempt_id 可恢复 Attempt 冻结的 Channel、Channel Account 和 MID。version 的真实竞争者是并发的 Channel Refund 创建、FAILED/CANCELLED 释放、SUCCEEDED 消费以及 UNKNOWN 查询恢复。
 
 ### t_channel_refund
 
-一个 Commerce Refund Request 的唯一渠道退款 Root。字段：channel_refund_id、commerce_refund_request_id、payment_refund_position_id、refund_amount、currency、refund_status、version、create_time、update_time。`uk_channel_refund_commerce_req(commerce_refund_request_id)` 保证一个 Commerce Refund Request 只有一个渠道退款。Commerce 本地预占后直接调用 PAY-I04；Payment 锁定 Refund Position，以 Version/CAS 原子增加 `reserved_amount` 并创建唯一 Channel Refund，不调用 Finance、不保存 Finance Funding ID 或绑定版本。Intent 与成功 Attempt 已由 Payment Refund Position 唯一冻结，Channel Refund 不重复保存。refund_status 取 CREATED、PROCESSING、UNKNOWN、SUCCEEDED、FAILED、CANCELLED。合法路径 CREATED→PROCESSING/CANCELLED；PROCESSING→UNKNOWN/SUCCEEDED/FAILED/CANCELLED；UNKNOWN→PROCESSING/SUCCEEDED/FAILED/CANCELLED；终态不可复活。UNKNOWN 只保留在 Payment 本地并继续占用 Position，不通知 Finance；SUCCEEDED 把 reserved 转为 refunded并同时通知 Commerce 与 Finance；FAILED/CANCELLED 释放 reserved 且只通知 Commerce。精确退款导航为 Channel Refund → Payment Refund Position → original_channel_txn_ref_id → 原 Ref → 原 payment_action_id → Channel/Channel Account/MID；新 REFUND Action 冻结同一渠道三元组并以 target_channel_txn_ref_id 指向原 Ref，成功 REF 再以 original_channel_txn_ref_id 指向原 Ref。version 保护 Channel Callback、QUERY、主动取消和 Commerce/Finance 成功通知的并发收敛。
+一个 Commerce Refund Request 的唯一渠道退款 Root。字段：channel_refund_id、commerce_refund_request_id、payment_refund_position_id、refund_amount、currency、refund_status、version、create_time、update_time。`uk_channel_refund_commerce_req(commerce_refund_request_id)` 保证一个 Commerce Refund Request 只有一个渠道退款。Commerce 本地预占后直接调用 PAY-I04；Payment 锁定 Refund Position，以 Version/CAS 原子增加 `reserved_amount` 并创建唯一 Channel Refund，不调用 Finance、不保存 Finance Funding ID 或绑定版本。Intent 与成功 Attempt 已由 Payment Refund Position 唯一冻结，Channel Refund 不重复保存。refund_status 取 CREATED、PROCESSING、UNKNOWN、SUCCEEDED、FAILED、CANCELLED。合法路径 CREATED→PROCESSING/CANCELLED；PROCESSING→UNKNOWN/SUCCEEDED/FAILED/CANCELLED；UNKNOWN→PROCESSING/SUCCEEDED/FAILED/CANCELLED；终态不可复活。UNKNOWN 只保留在 Payment 本地并继续占用 Position，不通知 Finance；SUCCEEDED 把 reserved 转为 refunded并同时通知 Commerce 与 Finance；FAILED/CANCELLED 释放 reserved 且只通知 Commerce。精确退款导航为 Channel Refund → Payment Refund Position → original_channel_txn_ref_id → 原 Ref → 原 payment_action_id → 原 payment_attempt_id → Attempt 的 Channel/Channel Account/MID；新 REFUND Action 沿用此冻结三元组并以 target_channel_txn_ref_id 指向原 Ref，成功 REF 再以 original_channel_txn_ref_id 指向原 Ref。version 保护 Channel Callback、QUERY、主动取消和 Commerce/Finance 成功通知的并发收敛。
 
 ## 7. Channel Callback（3）
 
@@ -175,7 +194,9 @@ Channel 争议的不可变事件流。字段：channel_dispute_event_id、channe
 
 ### t_command_idempotency
 
-同步写命令的业务幂等与结果定位。字段：command_idempotency_id、caller_scope、operation_type、idempotency_key、request_hash、command_status、resource_type、resource_id、response_code、create_time、update_time。uk_command_idempotency(caller_scope, operation_type, idempotency_key) 唯一；同键不同 request_hash 必须拒绝。command_status 取 PROCESSING、SUCCEEDED、FAILED。version 不存在：唯一键和原子状态条件更新足以处理同键竞争，资源状态仍由业务 Root CAS 保护。
+Payment 本库命令的通用 Claim、Lease 和 CAS 持久化由 Foundation `paytech-command-idempotency` 负责。字段：command_idempotency_id、caller_scope、operation_type、idempotency_key、request_hash、request_hash_version、request_snapshot_schema_version、request_snapshot_json、operation_context_time、recovery_stage、process_status、resource_type、resource_id、resource_no、response_code、response_http_status、response_snapshot_schema_version、response_location、response_body_json、lock_owner、lock_until、version、create_time、update_time。精确类型、注释和可空性以正式 PDManer 为准；caller_scope、idempotency_key、resource_no、response_location 使用 ascii_bin，key 长度统一为 255。
+
+uk_command_idempotency(caller_scope, operation_type, idempotency_key) 唯一。process_status 取 PROCESSING、SUCCEEDED、FAILED；version 是公共组件的技术 CAS 版本，独立于业务 Root 版本。Payment 继续拥有 Hash、作用域、业务资源与重放语义。pay 在同一本地事务完成 Claim、Attempt 写入和 Complete，只使用 CLAIMED→COMPLETED，命令成功表示受理完成，响应正文为空，重放投影当前 Attempt/Action。详细约定与空表迁移边界见[公共包接入说明](../../payment-orchestration-service/docs/development/command-idempotency-differences.md)；不新增恢复扫描索引或支付流程阶段。
 
 ### t_compensation_event
 
@@ -183,22 +204,23 @@ Channel 争议的不可变事件流。字段：channel_dispute_event_id、channe
 
 ## 10. 核心状态、并发和不变量
 
-- 同一 Intent 同时最多一个 active_attempt_id 和一个 successful_attempt_id。创建 Attempt、清空/设置指针、状态流转及业务事件在同一 Payment 本地事务；UNKNOWN 保留 active_attempt_id，第一笔权威成功才设置 successful_attempt_id。
-- Attempt 创建实时校验 COM-I10 Readiness、主体/Client 与 Risk。失败请求形成 FAILED Attempt，冻结三条 Acceptance ID、acceptance_completed_at、Order Version、Risk Assessment/结果和 Reservation Group（若已取得）；不持久化 Eligibility 或 ATTEMPT_CREATE Gate。
-- AUTHORIZE、SALE、CAPTURE 的首次 Channel 提交必须紧邻同步读取 Client、Operating Entity 和 Compliance 当前权威结论；明确阻断、技术失败、超时或任一结果缺失均 Fail-Closed。Payment 只在 Attempt、Action 与 State Transition 保存失败阶段和稳定原因，权威状态历史由 CCT/Risk 自己持有，不建立 t_payment_execution_gate 或 t_payment_execution_gate_result。VOID、REFUND、QUERY 和已提交/UNKNOWN Action 的幂等恢复不受这项首次提交检查阻断。
-- 当前路由只能从 Policy Root 的 current_version_id 解析。Candidate、Decision 和首个 AUTHORIZE/SALE Action 的 Channel、Channel Account、MID 必须一致；独立 QUERY、REFUND、Dispute Action 也在创建时冻结其 Channel Account。PAY-I11 只诊断静态 Policy/MID Capability/Account 状态，绝不以 t_mid_health_state 的瞬时动态结论作为静态覆盖。
-- Attempt 必须冻结精确 payment_method_code；Attempt 直接关联交易级 Token，工具材料由对应 Owner 控制，不再创建旧 Instrument 行。原 AUTHENTICATE Action 保存交互类型、状态、期限和非 bearer 稳定引用，所有临时会话材料仅短暂返回调用方。
-- V1 支持 SALE，或一次 AUTHORIZE 后一次全额 CAPTURE。没有永久的“一 Attempt 一 Capture”数据库约束，以便未来多 Capture；V1 业务校验阻止第二次 Capture。
-- UNKNOWN 的权威结果由 Callback 或同一父级的 QUERY Action 收敛：Attempt 可建 QUERY；Channel Refund 与 Duplicate Payment Case 在其 REFUND 后只能以 action_no>=2 建 QUERY，并写 Channel Interaction、Ref 和 t_payment_state_transition。不得在 UNKNOWN 期间创建新 Attempt、释放退款 Position 或伪造终态。
-- 处理已验证资金成功事实时必须锁定 Intent：successful_attempt_id 为空才设首笔成功；相同 Action/Ref 是幂等重放；不同 SALE/完成资金 CAPTURE 的 Action/Ref 才创建 Duplicate Case。首笔指针保持不变，后到 Attempt 进入 CONFLICTED，并对重复 Ref 补偿退款。
-- 所有不可变 Decision、Candidate、Transaction Ref、Callback Item、Dispute Event 和 State Transition 仅追加。Channel Interaction 不是追加历史：先插入 STARTED，再接收恰好一次终态条件更新。MVP 默认保留业务数据，不建设自动 Retention、Legal Hold、归档、匿名化或销毁基础设施。
+- 同一 Intent 最多一个活动 Attempt 与一个首笔成功 Attempt；同一 Attempt 最多一个未终态业务 Action。状态、金额、指针和可靠任务在同一事务提交，所有外部调用在事务外。
+- Commerce 负责法律接受校验并传入最小支付事实；Payment 不调用 Commerce。内部风险评估是 RISK_CHECK，ALLOW 后才路由，认证要求跟随该风险结果；Risk 自己保存占额事实。
+- 同一 Attempt 冻结精确支付方式、Token、capture mode 和选定渠道三元组。Channel 处理原渠道操作的查询与安全重发；Execution 不创建 QUERY Action。
+- 资金首次提交前的权威检查保留既有 Fail-Closed 语义，不能把未知请求判为从未发送。UNKNOWN 继续占位，不得借此换卡、重路由或释放退款预占。
+- V1 为 SALE 或 AUTHORIZE 后全额 CAPTURE；手动授权等待仍为 PROCESSING。成功 Void 安全取消，普通退款不回退已完成收款事实。
+- 可信额外资金成功必须锁 Intent，保留 canonical 指针并创建 Duplicate Case。后到 Attempt 为 SUCCEEDED，以 Case 区分重复；不再次发布首笔成功事件。
+- Decision、Candidate、Transaction Ref、Callback Item、Dispute Event 只追加；Channel Interaction 为 STARTED 到一次终态更新。删除通用状态流转表，不删除这些业务证据。
+- 通知不再依赖 transition ID；稳定事件身份与发生时刻的后继合同须在代码切换前完成，不能从最新状态重建旧事件。本地补偿表成功后删除，不能作为永久历史。
 
 ## 11. 已删除/不采用的旧概念
+
+本轮删除 t_payment_pricing_fact、t_payment_state_transition，不新增同义替代表。定价下游对 payment_fact_id/标准化支付属性的消费需独立迁移；不能以删表为由默认零费率或覆盖既有财务事实。
 
 旧 58 表模型中的 routing_policy_binding、routing_rule、routing_rule_condition 由 Scope 下沉到 t_routing_policy 和版本候选集替代；不采用 active_slot、Scope/Content/Projection Hash、专用 History 或 Current Projection。payment_recovery_task 由 t_compensation_event 的单职责 Handler 和原业务 Root 的 UNKNOWN 状态替代。channel_refund_attempt 已并入 t_channel_refund；refund_transaction_ref 已并入 t_channel_transaction_ref(reference_type=REFUND)。t_channel_connection、t_channel_connection_version、t_mid_limit、t_mid_credential_ref 与原 t_mid_health 已分别由 Channel Account、有类型 Capability 和动态 Health State 精简设计替代。t_payment_execution_gate 与 t_payment_execution_gate_result 已删除：首次资金 Action 提交前仍执行实时 Fail-Closed 检查，但不把技术前置校验复制成 Payment 业务聚合。t_three_ds_context 不采用，旧 t_payment_customer_action 已由原 Action 的最小交互事实替代。旧 t_payment_instrument 由交易级 t_payment_instrument_token 替代，不采用 JSON、EAV/Key-Value、工具会话或方式子表。通用工作流 Binding、Recovery、Conflict 双 Root、Dispute Projection、Restriction Projection、通用 Inbox/Outbox 均不进入当前模型。
 
 ## 12. 物理模型状态与后续边界
 
-当前 PDManer 工件按本模型确定性生成为 29 表、373 字段、41 个唯一索引、44 个访问索引、63 条本库关系、7 条 1:1 关系和 7 个 Diagram Groups，并已通过同基线自动契约验证。PDManer 4.9.3 应用内打开、关系图和规范检查仍是不可替代的人工门禁。
+正式 PDManer、完整 Schema、生成统计及实际验证状态由[当前台账](../CURRENT_IMPLEMENTATION.md#payment-execution-implementation)统一记录。字段/类型/索引以当前模型和同步 Schema 为准，旧方案仅保留其未被取代的业务边界。
 
-本次授权只覆盖 PDManer 设计资产，不授权 Schema DDL/初始化 DML 落库、DataObject/Mapper/Repository、本地数据库自动测试、Java 模块、物理数据库或运行环境。进入数据库实现阶段后，必须在新的明确授权下保持 PDManer、手工 SQL、映射代码和自动测试同步。
+本轮维护设计工件，不执行数据库 DDL 或 Java 改造。切换前必须同步映射、流程、Channel 认证、事件发布与定价消费者，再人工应用经评审 SQL；应用启动不创建或迁移业务表。

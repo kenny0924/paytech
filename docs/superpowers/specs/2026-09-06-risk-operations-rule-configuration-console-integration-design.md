@@ -1,5 +1,7 @@
 # Risk Operations Rule Configuration Console 集成设计
 
+> **2026-09-21 Candidate 恢复修订：** [后端现行合同](./2026-09-05-risk-operations-rule-configuration-backend-design.md#release-recovery-20260921)取代本文中 Candidate 创建/校验的 BFF Key 校验、转发和同键恢复要求（含第 10.3 节的 BFF Expected Key 比较）。HTTP Key 由 Gateway 处理；Risk 按发布身份、原 expectedVersion 与原操作者恢复已有校验结果。浏览器入口/权限及其他命令的迁移范围不由本次扩大；当前源码、验证与部署状态只见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#risk-release-management-refactor-20260921)。
+
 > 2026-09-11 后继：[V1 配置增量决策](../../../agent-docs/decisions/2026-09-11-risk-rule-v1-configuration.md)批准动态主体绑定、非终态附加动作配置及手工拒绝原因/文案，取代单一必填零参数终态动作和空参数目录作为后续配置目标的上限。精确 Wire、持久化、历史 Hash 与执行就绪衔接仍见[接口草案](../../../agent-docs/plans/2026-09-11-risk-rule-v1-configuration-contract-draft.md)；本决定不改写历史合同，不授权运行评估或动作执行。
 
 - Status: Confirmed

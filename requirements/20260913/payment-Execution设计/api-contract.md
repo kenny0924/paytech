@@ -1,5 +1,21 @@
 # Execution 内部接口合同
 
+> **2026-09-17 查询 Intent 后继：** EX-I02 按[查询接口修订](./get-intent-amendment.md)只读 Intent，返回 `intentId/sourceType/sourceId/status/activeAttemptId/successfulAttemptId`。成功返回 200；不存在或跨 Client 返回 404，不沿用旧 IntentView 的其他投影字段。
+
+> **2026-09-16 终止 Intent 后继：** EX-I04 按[终止接口修订](./terminate-intent-amendment.md)使用 Intent 资源锁和当前业务事实，不要求独立幂等 Header，响应为 `intentId/status/decision`。正常业务结果统一返回 HTTP 200，由上游判断 PENDING；安全终止只更新 Intent，不自动撤销或退款。
+
+> **2026-09-16 创建 Intent 后继：** 当前 EX-I01 按[创建接口修订](./create-intent-amendment.md)使用来源唯一键与原记录比较，响应仅 `intentId/status`，不要求独立幂等 Header；只保存 Intent。本文其余接口及历史合同按各自后继范围读取。
+
+> **2026-09-15 删除来源 Binding：** 用户已确认删除 `t_payment_intent_binding` 和 EX-I03 `CloseCreation`，按已有 Intent 终止；创建结果未明确时由 Commerce 用原键恢复创建后再终止。本文涉及提前关闭、Binding 门禁和锁顺序的内容由[字段修订第 8 节](./execution-field-simplification-amendment.md#8-删除来源-binding)取代；其余历史基线保持。
+
+> **Pay 受理后继：** 现行精简请求与幂等投影见[字段修订第 7 节](./execution-field-simplification-amendment.md#7-pay-受理链合同)。本次只处理受理链，后续方式流程保持 TODO。
+
+> **字段维护后继：** [整批精简修订](./execution-field-simplification-amendment.md)已取代本文受影响的字段、渠道绑定位置、认证明细、Pricing Fact 与状态历史表要求。本文旧接口/流程细节保留为迁移前基线；后续 Java/HTTP/MQ 改造须逐项对齐，数据库执行状态只见当前台账。
+
+> **风控字段后继：** [RISK_CHECK 修订](./internal-risk-action-amendment.md)保留现有 HTTP 路由，原 Attempt 风控投影改由风险 Action 的可空 transactionAssessmentId / riskResult 承接；Risk 请求/响应与恢复身份同步调整。不得仅凭风险 Action SUCCEEDED 判断允许支付。下文受影响投影为旧合同，其余接口范围保留。
+
+> **状态与 Channel 恢复后继：** capture mode、三表 4/4/5 状态、active_action_id 及移除 QUERY 的现行设计目标以[状态与恢复修订](./execution-state-channel-recovery-amendment.md)为准；下文受影响内容保留为前序基线，未涉及合同继续有效。实现与 SQL 状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 > **交易级 Token 修订评审：** 用户已确认统一 pay、交易级工具 Token、Attempt 直接关联及删除旧 Instrument 的方向；详细合同见[修订稿](./instrument-token-amendment.md)。下文保留上一版合同与评审上下文，受影响部分以修订稿的准确取代范围为准；新合同的实现与验证状态只读[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 > 阶段 3 已获用户确认，当前进入阶段 4 Execution 本地切片研发；其他 Owner 仅测试 Mock + TODO。实际实现与验证边界见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)，阶段确认见[交付记录](./delivery.md)。
@@ -17,20 +33,19 @@
 
 ## 2. 接口与表影响
 
-缩写：B=Intent Binding，I=Intent，A=Attempt，X=Action，T=Transaction Ref，P=Refund Position，R=Channel Refund，F=Pricing Fact，S=State Transition，C=Command Idempotency，E=Compensation Event。Instrument 与 Duplicate Case 在可信结果需要时写入。写表指完整用例可能影响的范围，各次短事务见[恢复设计](./state-and-recovery.md)。
+缩写：I=Intent，A=Attempt，X=Action，T=Transaction Ref，P=Refund Position，R=Channel Refund，F=Pricing Fact，S=State Transition，C=Command Idempotency，E=Compensation Event。Instrument 与 Duplicate Case 在可信结果需要时写入。写表指完整用例可能影响的范围，各次短事务见[恢复设计](./state-and-recovery.md)。
 
 | 编号 | Method + Path（相对基础路径） | 请求 / 响应 | 主读写表 |
 |---|---|---|---|
-| EX-I01 | POST `/intents` | CreateIntent / IntentView | 写 B、I、S、C、E（到期任务） |
-| EX-I02 | GET `/intents/{intentId}` | clientId / IntentView | 读 B、I、A、X |
-| EX-I03 | POST `/intent-creations/close` | CloseCreation / CloseResult | 写 B、C；读 I |
-| EX-I04 | POST `/intents/{intentId}/terminate` | Terminate / TerminationResult | 写 B、I、A、X、S、C、E；读 T |
-| EX-I05 | POST `/intents/{intentId}/card-payments` | SubmitCard / SubmissionView | 写 A、X、I、T、P、F、S、C、E；条件写 Instrument、Duplicate Case；读 B |
+| EX-I01 | POST `/intents` | CreateIntent / IntentView | 写 I、S、C、E（到期任务） |
+| EX-I02 | GET `/intents/{intentId}` | clientId / GetIntentResponseBody | 只读 I |
+| EX-I04 | POST `/intents/{intentId}/terminate` | Terminate / TerminationResult | 写 I、A、X、S、C、E；读 T |
+| EX-I05 | POST `/intents/{intentId}/card-payments` | SubmitCard / SubmissionView | 写 A、X、I、T、P、F、S、C、E；条件写 Instrument、Duplicate Case |
 | EX-I06 | GET `/intents/{intentId}/submissions/{sourceSubmissionId}` | clientId / SubmissionView | 读 I、A、X、Instrument |
-| EX-I07 | POST `/intents/{intentId}/captures` | Capture / ActionView | 写 X、A、I、T、P、F、S、C、E；读 B |
+| EX-I07 | POST `/intents/{intentId}/captures` | Capture / ActionView | 写 X、A、I、T、P、F、S、C、E |
 | EX-I08 | POST `/refunds` | CreateRefund / RefundView | 写 P、R、X、T、S、C、E；读 I、A |
 | EX-I09 | GET `/refunds/{refundId}` | clientId / RefundView | 读 R、P、X、I |
-| EX-I10 | POST `/intents/{intentId}/reversals` | Reversal / ReversalResult | 写 B、X、A、I、T、S、C、E（Void 分支）；读 P、R；不自行创建 Commerce Refund |
+| EX-I10 | POST `/intents/{intentId}/reversals` | Reversal / ReversalResult | 写 X、A、I、T、S、C、E（Void 分支）；读 P、R；不自行创建 Commerce Refund |
 | EX-I11 | GET `/intents/{intentId}/pricing-facts` | clientId / PricingFactView | 读 I、A、F |
 | EX-I12 | GET `/actions/{actionId}` | clientId / ActionView | 读 X、A/R/Duplicate Case、I |
 
@@ -52,8 +67,7 @@ GET 不建新 Attempt/Action、不推进状态、不调用有副作用的恢复�
 | 请求 | 字段及限制 |
 |---|---|
 | CreateIntent | `sourceType` 当前只允许 `COMMERCE_ORDER`；`sourceId`=Order ID；`sourceOrderContextId`；`entityNo`；`contextFormat` 必须 `TERM_PRICE`；`clientPricingVersionId`；`partnerShareVersionId?`；`platformChargeVersionId?`；`industryCode`；`mccCode` 4 位数字；`amount`；`currency`；`expiresAt` 必须晚于受理时间；`consumerCountryCode` 必填、大写两字母。Commerce 先核验并传入冻结事实，Payment 执行本地校验与不可变检查，不回查 Commerce；不得构造 Scope/Price 替代 ID |
-| CloseCreation | `sourceType`、`sourceId`；即使从未创建 Intent 也记录关闭；若已有 Intent 只关闭新建/新尝试资格，返回该 Intent，不宣称资金终止 |
-| Terminate | `reason` 固定 `ORDER_CANCELLED` 或 `OPERATING_ENTITY_CLOSED`；关闭新尝试和初始资金发送资格，再按实际资金事实决定能否终止；已经授权需 Reversal，不静默 Void |
+| Terminate | `reason` 固定 `ORDER_CANCELLED` 或 `OPERATING_ENTITY_CLOSED`；基于已有 Intent 的实际资金事实决定能否终止；未决支付返回 PENDING，不预先声明关闭完成；已经授权需 Reversal，不静默 Void |
 | SubmitCard | `sourceSubmissionId`=Commerce command ID；`paymentMethodCode`=Routing/方法目录认可的精确 Card code；`paymentGoal` 为 `PAY_NOW` 或 `AUTHORIZE_ONLY`；`consumerContractId`；`consumerTermsAcceptanceId`、`refundPolicyAcceptanceId`、`privacyNoticeAcceptanceId`；`acceptanceCompletedAt`；`orderVersion`；`cardReference` ≤128 ASCII、不具备持有即用权限；`cardUseSessionRef?` ≤128、只在内存使用；`allowExecution` boolean。实际接口不接 PAN、CVV、Checkout Token、Channel 或 MID |
 | Capture | `authorizationActionId`；`amount`；`currency`；仅等于原完整授权金额且与 Intent 同币种；不得指定新渠道 |
 | CreateRefund | `commerceRefundId`；`intentId`；`originalPaymentActionId`（成功 SALE 或全额 CAPTURE）；`amount`；`currency`。RefundRequest 与 Payment 原交易必须对应同一 Client/Intent；支持部分/全额、不得超额 |
@@ -63,13 +77,13 @@ GET 不建新 Attempt/Action、不推进状态、不调用有副作用的恢复�
 
 ## 4. 响应字段与状态
 
-所有响应包含 `observedAt`；业务 ID 字段只在对应资源存在时返回。以下响应均包含 `clientId`，无敏感详情或内部凭据。
+以下为前序响应基线；已有专项修订的接口以对应修订为准。旧基线包含 `observedAt/clientId` 的要求不适用于当前创建、查询和终止 Intent 响应。业务 ID 字段只在对应资源存在时返回，无敏感详情或内部凭据。
 
 | 响应 | 字段 |
 |---|---|
 | IntentView | `intentId, sourceType, sourceId, entityNo, amount, currency, status, newAttemptsAllowed, activeAttemptId?, successfulAttemptId?, expiresAt, version, observedAt`；status 为 Intent 枚举，AUTHORIZED 通过 Attempt 表达；newAttemptsAllowed 仅为当前本地门禁投影，true 不替代提交时实时资格检查 |
-| CloseResult | `sourceType, sourceId, closedAt, intentId?, observedAt`；固定关闭创建资格，不能据此向用户宣告“未扣款” |
-| TerminationResult | `intentId, decision, blockingActionId?, observedAt`；decision=`TERMINATED / ALREADY_TERMINATED / PENDING / REVERSAL_REQUIRED / ALREADY_PAID`；PENDING 用 202，其余 200 |
+| GetIntentResponseBody | 按[查询接口修订](./get-intent-amendment.md)返回 `intentId, sourceType, sourceId, status, activeAttemptId?, successfulAttemptId?`；来源为创建时冻结的业务身份，OPEN 也可能处于支付中或授权等待捕获 |
+| TerminationResult | 按[终止接口修订](./terminate-intent-amendment.md)返回 `intentId, status, decision`；decision=`TERMINATED / ALREADY_TERMINATED / PENDING / REVERSAL_REQUIRED / ALREADY_PAID`；正常业务结果均为 200，由上游判断 PENDING |
 | SubmissionView | `sourceSubmissionId, intentId, attemptId, paymentMethodCode, paymentGoal, status, authorizedAmount, capturedAmount, actionId?, nextAction?, failureCode?, last4?, observedAt`；status 为 Attempt 枚举，last4 仅有可信 Card 描述时返回 |
 | ActionView | `actionId, intentId, attemptId?, refundId?, type, status, amount, currency, targetActionId?, failureCode?, observedAt`；不暴露 Channel 凭据、幂等键或远程原始响应 |
 | RefundView | `refundId, commerceRefundId, intentId, originalPaymentActionId, amount, currency, status, actionId?, failureCode?, observedAt`；status 为 Refund 枚举，内部 UNKNOWN 可返回给 Commerce 内部查询，不能作为 RefundFailed 事件 |
@@ -91,7 +105,7 @@ GET 不建新 Attempt/Action、不推进状态、不调用有副作用的恢复�
 2. `allowExecution=false` 只重放/查询；原身份不存在返回 404，不创建命令/Attempt/Action，也不触发 Card/Risk/Routing。true 仍受 Payment 的当前状态、关闭、OE、认证及用卡门禁约束。
 3. 同 scope/op/key 异请求返回 409；提交 ID 已属于另一 Intent/Client 返回 409（不泄露另一资源 ID）；即使用新 key，也不能绕开 sourceSubmissionId、source order、原授权 Capture、Commerce Refund 唯一约束。
 4. C 表只在单次短事务内记录“命令已受理及资源定位”，`SUCCEEDED` 不是资金成功；同 key 返回相同资源身份与当前状态，不承诺字节级响应不变。该响应可变化，不保存临时 nextAction。
-5. 创建命令按[调用方向修订](./payment-commerce-direction-amendment.md)使用 `CREATE_INTENT_V2` 并追加 `consumerCountryCode`；旧 V1 不重写。Request Hash 由 Payment 用固定、版本化的字段顺序和长度前缀 UTF-8 编码计算 SHA-256，字段取值规范化明确；不散列 raw card/CVV/临时指令。V1 操作类型带版本，编码：每个字段为 `字段名字节长度:字段名|值字节长度:值|`，null 值长度 `-1`、空值长度 `0`；数字/金额按本稿规范化，时间统一 UTC 微秒。SubmitCard 排除 `allowExecution/cardUseSessionRef/orderVersion`，其余 body 加路径 Intent ID 均参与；其他命令全部业务字段和路径 ID 参与。新编码需新操作版本及兼容读取，不能改变既有 key 的解释。本期不新增 Foundation canonicalization/命令幂等消费者迁移。
+5. 创建命令按[调用方向修订](./payment-commerce-direction-amendment.md)使用 `CREATE_INTENT_V2` 并追加 `consumerCountryCode`；旧 V1 不重写。Request Hash 由 Payment 用固定、版本化的字段顺序和长度前缀 UTF-8 编码计算 SHA-256，字段取值规范化明确；不散列 raw card/CVV/临时指令。V1 操作类型带版本，编码：每个字段为 `字段名字节长度:字段名|值字节长度:值|`，null 值长度 `-1`、空值长度 `0`；数字/金额按本稿规范化，时间统一 UTC 微秒。SubmitCard 排除 `allowExecution/cardUseSessionRef/orderVersion`，其余 body 加路径 Intent ID 均参与；其他命令全部业务字段和路径 ID 参与。新编码需新操作版本及兼容读取，不能改变既有 key 的解释。canonicalization 不因本期受理链变化而引入；命令幂等的后继消费者授权与消费约定见[Payment 公共包接入说明](../../../payment-orchestration-service/docs/development/command-idempotency-differences.md)，本段旧 SubmitCard 协议仍按顶部路由由后继合同取代。
 6. Hash 中金额先去除小数末尾零及无意义小数点，例如 100.00 与 100 统一为 100；ID 保留合法十进制格式，code 不做自由大小写修正；字段按本稿请求字段表顺序，clientId 最前、路径 ID 其次排列。认证引用、Risk 结果等后续派生字段不反过来改变原请求 Hash。
 7. 捕获/退款响应丢失后查原资源；外部调用超时不能当 503 引导新付款，已受理则返回 202 + 原身份 + UNKNOWN。
 

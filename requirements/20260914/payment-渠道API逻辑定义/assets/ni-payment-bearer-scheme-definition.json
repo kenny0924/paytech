@@ -1,0 +1,33 @@
+{
+  "kind": "CAPABILITY",
+  "capabilityCode": "BEARER_AUTHORIZATION",
+  "inputDefinition": {
+    "accessTokenHandle": {
+      "type": "PROTECTED_HANDLE",
+      "required": true,
+      "nullable": false,
+      "displayName": "accessTokenHandle",
+      "dataClass": "PROTECTED",
+      "purpose": "accessToken",
+      "allowedSinks": [
+        "CAPABILITY:BEARER_AUTHORIZATION"
+      ]
+    }
+  },
+  "outputDefinition": {
+    "headerValue": {
+      "type": "PROTECTED_HANDLE",
+      "required": true,
+      "nullable": false,
+      "displayName": "headerValue",
+      "dataClass": "PROTECTED",
+      "purpose": "authorizationHeader",
+      "allowedSinks": [
+        "HTTP_HEADER:authorization"
+      ]
+    }
+  },
+  "parameterDefinition": {},
+  "fixedParameters": {},
+  "credentialPurpose": "accessToken"
+}

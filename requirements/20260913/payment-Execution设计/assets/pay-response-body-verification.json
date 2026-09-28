@@ -1,0 +1,70 @@
+{
+  "recordedAt": "2026-09-14T16:07:50.962587+00:00",
+  "scope": "REST PayProcessor returns SubmissionResponseBody directly; pay and replay no longer create SubmissionView. Preserve acceptance, idempotency, transaction and HTTP response semantics.",
+  "redEvidence": {
+    "log": "/tmp/payment-response-body-red.log",
+    "result": "Expected SubmissionResponseBody but original PayProcessor.process returned SubmissionView; 1 test, 1 assertion failure, no errors"
+  },
+  "verification": {
+    "command": "JAVA_HOME=<JDK 25> ./mvnw -q -pl paytech-payment-test -am clean verify -Dtest=PaymentCommandContractAutoTest,PaymentPayPersistenceContractAutoTest,PaymentModuleBoundaryAutoTest,PaymentRulesAutoTest,PaymentFlowRegistryAutoTest -Dsurefire.failIfNoSpecifiedTests=false",
+    "exitCode": 0,
+    "tests": [
+      {
+        "name": "com.paytech.payment.auto.architecture.PaymentModuleBoundaryAutoTest",
+        "tests": "12",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentCommandContractAutoTest",
+        "tests": "25",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentFlowRegistryAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentPayPersistenceContractAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentRulesAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      }
+    ],
+    "allTestSourcesCompiled": true,
+    "log": "/tmp/payment-response-body-verify.log"
+  },
+  "integration": {
+    "executedThisTurn": false,
+    "reason": "Previously confirmed local database still lacks the approved token table and capture mode; no migration was performed in this response-only change."
+  },
+  "previousEvidence": "pay-token-hash-verification.json",
+  "sourceSha256": {
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/ExecutionApiConverter.java": "fb791fce11cef6f157c88a3117b1a473fdae46ae8a54dca1a2cb984f95bfe516",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/processor/PayProcessor.java": "34146f28f9126a99a7f182af3fa82dcb9730cfcb58a1b1768208908c45c4fb3b",
+    "paytech-payment-web/src/main/java/com/paytech/payment/domainservice/service/ExecutionQueryService.java": "1ccbb3442e4cbc49240053e9e4e0193b2d2f55a857b93d3912a3d92dd22e7c89",
+    "paytech-payment-web/src/main/java/com/paytech/payment/domainservice/service/impl/ExecutionQueryServiceImpl.java": "5b3ac66ae40c10a7ee82978e9543272815f6224255fb8a26310750791d654f0a",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentCommandContractAutoTest.java": "000cb9b879d3ba70258ac065f06c3d92dcdf90be1fc9d7de29189df7acde39af"
+  },
+  "notPerformed": [
+    "database migration",
+    "business DML",
+    "commit",
+    "push",
+    "deployment"
+  ]
+}

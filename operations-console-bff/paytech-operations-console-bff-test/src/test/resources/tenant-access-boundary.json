@@ -1,0 +1,202 @@
+[
+  {
+    "id": "A01",
+    "method": "GET",
+    "path": "/tenant-access-admin/v1/tenants",
+    "query": "?page=1&size=10&tenantType=CLIENT&tenantId=81001&ownerRefId=31001&tenantName=Sample&ownerStatus=ACTIVE&securityStatus=ACTIVE",
+    "routeCode": "operations-tenant-access-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "tenantId": "81001",
+          "tenantType": "CLIENT",
+          "ownerRefId": "31001",
+          "tenantName": "合成客户",
+          "ownerStatus": "ACTIVE",
+          "securityStatus": "ACTIVE",
+          "version": 1,
+          "createdAt": "2026-09-14T06:00:00Z",
+          "updatedAt": "2026-09-14T06:00:00Z",
+          "tenantAccessAllowed": true,
+          "restrictionReasons": []
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "A02",
+    "method": "GET",
+    "path": "/tenant-access-admin/v1/tenants/81001",
+    "query": "",
+    "routeCode": "operations-tenant-access-detail",
+    "request": null,
+    "response": {
+      "tenantId": "81001",
+      "tenantType": "CLIENT",
+      "ownerRefId": "31001",
+      "tenantName": "合成客户",
+      "ownerStatus": "ACTIVE",
+      "securityStatus": "ACTIVE",
+      "version": 1,
+      "createdAt": "2026-09-14T06:00:00Z",
+      "updatedAt": "2026-09-14T06:00:00Z",
+      "tenantAccessAllowed": true,
+      "restrictionReasons": []
+    }
+  },
+  {
+    "id": "A03",
+    "method": "POST",
+    "path": "/tenant-access-admin/v1/tenants/81001/security-status",
+    "query": "",
+    "routeCode": "operations-tenant-access-security-status",
+    "request": {
+      "securityStatus": "SUSPENDED",
+      "expectedVersion": 1,
+      "reason": "合成暂停"
+    },
+    "response": {
+      "tenantId": "81001",
+      "securityStatus": "SUSPENDED",
+      "version": 2
+    }
+  },
+  {
+    "id": "A04",
+    "method": "GET",
+    "path": "/tenant-access-admin/v1/tenants/81001/members",
+    "query": "?page=1&size=10&accountId=91001&emailMasked=a%2A%2A%2A%40example.test&memberType=OWNER&memberStatus=ACTIVE",
+    "routeCode": "operations-tenant-access-members",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "tenantId": "81001",
+          "memberId": "92001",
+          "accountId": "91001",
+          "emailMasked": "a***@example.test",
+          "memberType": "OWNER",
+          "memberStatus": "ACTIVE",
+          "accountStatus": "ACTIVE",
+          "createdAt": "2026-09-14T06:00:00Z",
+          "updatedAt": "2026-09-14T06:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "A05",
+    "method": "GET",
+    "path": "/tenant-access-admin/v1/tenants/81001/members/92001",
+    "query": "",
+    "routeCode": "operations-tenant-access-member-detail",
+    "request": null,
+    "response": {
+      "tenantId": "81001",
+      "memberId": "92001",
+      "accountId": "91001",
+      "emailMasked": "a***@example.test",
+      "memberType": "OWNER",
+      "memberStatus": "ACTIVE",
+      "accountStatus": "ACTIVE",
+      "createdAt": "2026-09-14T06:00:00Z",
+      "updatedAt": "2026-09-14T06:00:00Z"
+    }
+  },
+  {
+    "id": "A06",
+    "method": "GET",
+    "path": "/tenant-access-admin/v1/tenants/81001/members/92001/roles",
+    "query": "?page=1&size=10",
+    "routeCode": "operations-tenant-access-member-roles",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "grantId": "93001",
+          "roleId": "94001",
+          "roleCode": "TEST_READER",
+          "roleName": "只读角色",
+          "roleScope": "TENANT",
+          "roleTenantId": "81001",
+          "roleStatus": "ACTIVE",
+          "grantStatus": "ACTIVE",
+          "effectiveFrom": "2026-09-14T06:00:00Z",
+          "effectiveTo": null,
+          "effective": true,
+          "reasons": []
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1,
+      "evaluatedAt": "2026-09-14T06:00:00Z"
+    }
+  },
+  {
+    "id": "A07",
+    "method": "GET",
+    "path": "/tenant-access-admin/v1/tenants/81001/members/92001/permissions",
+    "query": "?page=1&size=10",
+    "routeCode": "operations-tenant-access-member-permissions",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "permissionId": "95001",
+          "permissionCode": "TEST_ORDER_READ",
+          "resourceType": "ORDER",
+          "actionCode": "READ",
+          "permissionStatus": "ACTIVE",
+          "sourceCount": 1,
+          "effectiveSourceCount": 1,
+          "effective": true,
+          "reasons": []
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1,
+      "evaluatedAt": "2026-09-14T06:00:00Z"
+    }
+  },
+  {
+    "id": "A08",
+    "method": "GET",
+    "path": "/tenant-access-admin/v1/tenants/81001/members/92001/permissions/95001/sources",
+    "query": "?page=1&size=10",
+    "routeCode": "operations-tenant-access-permission-sources",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "grantId": "93001",
+          "roleId": "94001",
+          "roleCode": "TEST_READER",
+          "roleName": "只读角色",
+          "roleScope": "TENANT",
+          "roleTenantId": "81001",
+          "roleStatus": "ACTIVE",
+          "grantStatus": "ACTIVE",
+          "effectiveFrom": "2026-09-14T06:00:00Z",
+          "effectiveTo": null,
+          "effective": true,
+          "reasons": [],
+          "rolePermissionId": "96001",
+          "rolePermissionStatus": "ACTIVE"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1,
+      "evaluatedAt": "2026-09-14T06:00:00Z"
+    }
+  }
+]

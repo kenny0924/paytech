@@ -1,5 +1,7 @@
 # Redis-first 资源锁与 Foundation 公共能力决策
 
+> **后继规则（2026-09-16）：** 新写 Processor 的默认锁入口与模式选择已由 [Payment 基准合并决定](2026-09-16-payment-based-coding-conventions.md)及其链接的公共规范更新。本文保留原决定依据；未受影响的数据所有权、事务公理、数据库保护和专项合同继续有效。规范变化不表示既有源码已迁移。
+
 Decision status: Confirmed
 
 Implementation status: Not started

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.DecisionConfigurationQueryMapper">
+    <resultMap id="DictionaryRuleReference" type="com.paytech.risk.decision.core.dal.dataobject.DictionaryRuleReference">
+        <constructor>
+            <arg name="ruleId" column="rule_id" javaType="_long"/>
+            <arg name="ruleSetId" column="rule_set_id" javaType="_long"/>
+            <arg name="pointCode" column="point_code" javaType="java.lang.String"/>
+            <arg name="ruleSetCode" column="rule_set_code" javaType="java.lang.String"/>
+            <arg name="ruleSetName" column="rule_set_name" javaType="java.lang.String"/>
+            <arg name="ruleSetVersionId" column="rule_set_version_id" javaType="_long"/>
+            <arg name="versionNo" column="version_no" javaType="_int"/>
+            <arg name="ruleCode" column="rule_code" javaType="java.lang.String"/>
+            <arg name="ruleName" column="rule_name" javaType="java.lang.String"/>
+            <arg name="actionSequenceNo" column="action_sequence_no" javaType="java.lang.Integer"/>
+            <arg name="targetBindingCode" column="target_binding_code" javaType="java.lang.String"/>
+            <arg name="ruleSetStatus" column="rule_set_status" javaType="com.paytech.risk.decision.domain.enums.RuleSetManagementStatus"/>
+            <arg name="isCurrentConfiguration" column="is_current_configuration" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="DecisionPublicationReference" type="com.paytech.risk.decision.core.dal.dataobject.DecisionPublicationReference">
+        <constructor>
+            <arg name="releaseId" column="release_id" javaType="_long"/>
+            <arg name="releaseNo" column="release_no" javaType="java.lang.String"/>
+            <arg name="environmentCode" column="environment_code" javaType="com.paytech.risk.decision.domain.enums.DecisionEnvironment"/>
+            <arg name="status" column="status" javaType="com.paytech.risk.decision.domain.enums.DecisionReleaseStatus"/>
+            <arg name="pointCode" column="point_code" javaType="java.lang.String"/>
+            <arg name="pointVersionId" column="point_version_id" javaType="_long"/>
+            <arg name="pointVersionNo" column="point_version_no" javaType="_int"/>
+            <arg name="ruleSetVersionId" column="rule_set_version_id" javaType="_long"/>
+            <arg name="versionNo" column="version_no" javaType="_int"/>
+            <arg name="activatedTime" column="activated_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="supersededTime" column="superseded_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <sql id="HistoryWhere">WHERE decision_point_id = #{pointId} AND rule_set_code = #{code} AND version_no &lt;= #{maxVersion}</sql>
+    <select id="historyIds" resultType="long">
+        SELECT rule_set_version_id FROM t_rule_set_version <include refid="HistoryWhere"/>
+        ORDER BY version_no DESC, rule_set_version_id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="historyCount" resultType="long">SELECT COUNT(*) FROM t_rule_set_version <include refid="HistoryWhere"/></select>
+    <sql id="ReleaseJoin">
+        FROM t_decision_release dr
+        JOIN t_decision_point_version pv ON pv.point_version_id = dr.point_version_id
+        JOIN t_decision_point dp ON dp.decision_point_id = pv.decision_point_id
+        JOIN t_decision_point_rule_set b ON b.point_version_id = pv.point_version_id
+        JOIN t_rule_set_version rv ON rv.rule_set_version_id = b.rule_set_version_id
+        JOIN t_rule_set rs ON rs.decision_point_id = rv.decision_point_id AND rs.rule_set_code = rv.rule_set_code
+    </sql>
+    <sql id="ReleaseColumns">
+        dr.release_id, dr.release_no, dr.environment_code, dr.status, dp.point_code, pv.point_version_id,
+        pv.version_no AS point_version_no, rv.rule_set_version_id, rv.version_no, dr.activated_time, dr.superseded_time
+    </sql>
+    <sql id="ReleaseFilter">
+        WHERE rs.rule_set_id = #{ruleSetId}
+        <if test="environment != null">AND dr.environment_code = #{environment}</if>
+        <if test="status != null">AND dr.status = #{status}</if>
+        <if test="versionId != null">AND rv.rule_set_version_id = #{versionId}</if>
+    </sql>
+    <select id="releases" resultMap="DecisionPublicationReference">
+        SELECT DISTINCT <include refid="ReleaseColumns"/> <include refid="ReleaseJoin"/><include refid="ReleaseFilter"/>
+        ORDER BY dr.release_id DESC, rv.rule_set_version_id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="releaseCount" resultType="long">
+        SELECT COUNT(DISTINCT dr.release_id, rv.rule_set_version_id) <include refid="ReleaseJoin"/><include refid="ReleaseFilter"/>
+    </select>
+    <!-- 先检查同事件点真实闭包，LEFT JOIN 保留断边，不能把损坏关系过滤成空图。 -->
+    <select id="brokenReleaseCount" resultType="long">
+        SELECT COUNT(*) FROM t_decision_release dr
+        LEFT JOIN t_decision_point_version pv ON pv.point_version_id = dr.point_version_id
+        LEFT JOIN t_decision_point_rule_set b ON b.point_version_id = dr.point_version_id
+        LEFT JOIN t_rule_set_version rv ON rv.rule_set_version_id = b.rule_set_version_id
+        LEFT JOIN t_rule_set rs ON rs.decision_point_id = rv.decision_point_id AND rs.rule_set_code = rv.rule_set_code
+        WHERE (dr.decision_point_id = #{pointId} OR rv.decision_point_id = #{pointId})
+          AND (pv.point_version_id IS NULL OR b.binding_id IS NULL OR rv.rule_set_version_id IS NULL
+            OR rs.rule_set_id IS NULL OR dr.decision_point_id != pv.decision_point_id OR dr.decision_point_id != rv.decision_point_id
+            OR pv.status != 'FROZEN' OR rv.status != 'FROZEN'
+            OR dr.environment_code NOT IN ('TEST', 'PRODUCTION')
+            OR dr.status NOT IN ('DRAFT','VALIDATING','SHADOWING','REVIEW_PENDING','APPROVED','ACTIVE','SUPERSEDED','REJECTED')
+            OR (dr.status = 'ACTIVE' AND (dr.active_slot IS NULL OR dr.active_slot != 1 OR rs.status != 'CONFIGURABLE'))
+            OR (dr.status != 'ACTIVE' AND dr.active_slot IS NOT NULL))
+    </select>
+    <select id="activeReferences" resultMap="DecisionPublicationReference">
+        SELECT DISTINCT <include refid="ReleaseColumns"/> <include refid="ReleaseJoin"/>
+        WHERE dr.status = 'ACTIVE' AND dr.active_slot = 1 AND rv.rule_set_version_id IN
+        <foreach collection="versionIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY dr.release_id DESC, rv.rule_set_version_id DESC
+    </select>
+    <sql id="DictionaryReferenceJoin">
+        FROM t_risk_rule rr
+        JOIN t_rule_set_version rv ON rv.rule_set_version_id = rr.rule_set_version_id
+        JOIN t_rule_set rs ON rs.decision_point_id = rv.decision_point_id AND rs.rule_set_code = rv.rule_set_code
+        JOIN t_decision_point dp ON dp.decision_point_id = rv.decision_point_id
+        JOIN t_rule_action ra ON ra.rule_id = rr.rule_id
+        JOIN t_action_version av ON av.action_version_id = ra.action_version_id
+        <if test="type.getCode() == 'SUBJECT_TAG'">
+            JOIN t_rule_action_parameter rap ON rap.rule_action_id = ra.rule_action_id
+            JOIN t_action_parameter_definition apd ON apd.parameter_definition_id = rap.parameter_definition_id
+                AND apd.action_version_id = ra.action_version_id
+        </if>
+    </sql>
+    <sql id="DictionaryReferenceFilter">
+        <where>
+        <choose>
+            <when test="type.getCode() == 'REJECTION_REASON'">rr.reason_code = #{code} AND av.terminal_flag = 1 AND av.decision_code = 'DENY'</when>
+            <otherwise>av.action_code = 'ADD_RISK_TAG' AND av.terminal_flag = 0 AND apd.parameter_code = 'TAG'
+                AND apd.value_type = 'STRING' AND rap.source_type = 'LITERAL' AND rap.string_value = #{code}
+                AND rap.feature_version_id IS NULL AND rap.field_code IS NULL
+                AND rap.number_value IS NULL AND rap.boolean_value IS NULL AND rap.datetime_value IS NULL AND rap.duration_value IS NULL
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="scope == 'CURRENT'">AND rs.status = 'CONFIGURABLE' AND rs.current_rule_set_version_id = rv.rule_set_version_id</when>
+            <when test="scope == 'HISTORY'">AND rs.status = 'CONFIGURABLE' AND rs.current_rule_set_version_id != rv.rule_set_version_id</when>
+            <when test="scope == 'DELETED'">AND rs.status = 'DELETED'</when>
+        </choose>
+        </where>
+    </sql>
+    <select id="dictionaryReferences" resultMap="DictionaryRuleReference">
+        SELECT DISTINCT rr.rule_id, rs.rule_set_id, dp.point_code, rv.rule_set_code, rv.rule_set_name, rv.rule_set_version_id,
+            rv.version_no, rr.rule_code, rr.rule_name, rs.status AS rule_set_status,
+            (rs.current_rule_set_version_id = rv.rule_set_version_id) AS is_current_configuration,
+            <choose><when test="type.getCode() == 'SUBJECT_TAG'">ra.sequence_no AS action_sequence_no, ra.target_binding_code</when>
+            <otherwise>NULL AS action_sequence_no, NULL AS target_binding_code</otherwise></choose>
+        <include refid="DictionaryReferenceJoin"/><include refid="DictionaryReferenceFilter"/>
+        ORDER BY rv.rule_set_version_id DESC, rr.rule_id, action_sequence_no LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="dictionaryReferenceCount" resultType="long">
+        SELECT COUNT(DISTINCT rr.rule_id, <choose><when test="type.getCode() == 'SUBJECT_TAG'">ra.sequence_no</when><otherwise>0</otherwise></choose>)
+        <include refid="DictionaryReferenceJoin"/><include refid="DictionaryReferenceFilter"/>
+    </select>
+    <resultMap id="RejectionReasonReferenceRow" type="com.paytech.risk.decision.core.dal.dataobject.RejectionReasonReferenceRow">
+        <constructor>
+            <arg name="sourceRowId" column="source_row_id" javaType="_long"/>
+            <arg name="sourceType" column="source_type" javaType="java.lang.String"/>
+            <arg name="pointCode" column="point_code" javaType="java.lang.String"/>
+            <arg name="ruleSetId" column="rule_set_id" javaType="java.lang.Long"/>
+            <arg name="ruleSetCode" column="rule_set_code" javaType="java.lang.String"/>
+            <arg name="ruleSetName" column="rule_set_name" javaType="java.lang.String"/>
+            <arg name="ruleSetVersionId" column="rule_set_version_id" javaType="java.lang.Long"/>
+            <arg name="versionNo" column="version_no" javaType="java.lang.Integer"/>
+            <arg name="ruleCode" column="rule_code" javaType="java.lang.String"/>
+            <arg name="ruleName" column="rule_name" javaType="java.lang.String"/>
+            <arg name="ruleSetStatus" column="rule_set_status" javaType="com.paytech.risk.decision.domain.enums.RuleSetManagementStatus"/>
+            <arg name="isCurrentConfiguration" column="is_current_configuration" javaType="_boolean"/>
+            <arg name="flowId" column="flow_id" javaType="java.lang.Long"/>
+            <arg name="flowCode" column="flow_code" javaType="java.lang.String"/>
+            <arg name="flowName" column="flow_name" javaType="java.lang.String"/>
+            <arg name="flowVersionId" column="flow_version_id" javaType="java.lang.Long"/>
+            <arg name="flowVersionNo" column="flow_version_no" javaType="java.lang.Integer"/>
+            <arg name="nodeKey" column="node_key" javaType="java.lang.String"/>
+            <arg name="nodeName" column="node_name" javaType="java.lang.String"/>
+            <arg name="flowStatus" column="flow_status" javaType="com.paytech.risk.decision.domain.enums.FlowStatus"/>
+        </constructor>
+    </resultMap>
+    <sql id="ReasonUnion">
+        SELECT DISTINCT rr.rule_id AS source_row_id, 'RULE_SET' AS source_type, dp.point_code,
+            rs.rule_set_id, rv.rule_set_code, rv.rule_set_name, rv.rule_set_version_id, rv.version_no,
+            rr.rule_code, rr.rule_name, rs.status AS rule_set_status,
+            (rs.current_rule_set_version_id = rv.rule_set_version_id) AS is_current_configuration,
+            NULL AS flow_id, NULL AS flow_code, NULL AS flow_name, NULL AS flow_version_id,
+            NULL AS flow_version_no, NULL AS node_key, NULL AS node_name, NULL AS flow_status,
+            rv.rule_set_version_id AS source_version_id, rs.status AS source_status
+        FROM t_risk_rule rr
+        JOIN t_rule_set_version rv ON rv.rule_set_version_id = rr.rule_set_version_id
+        JOIN t_rule_set rs ON rs.decision_point_id = rv.decision_point_id AND rs.rule_set_code = rv.rule_set_code
+        JOIN t_decision_point dp ON dp.decision_point_id = rv.decision_point_id
+        JOIN t_rule_action ra ON ra.rule_id = rr.rule_id
+        JOIN t_action_version av ON av.action_version_id = ra.action_version_id
+        WHERE rr.reason_code = #{code} AND av.terminal_flag = 1 AND av.decision_code = 'DENY'
+        UNION ALL
+        SELECT n.node_id, 'FLOW_END', dp.point_code,
+            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            (f.current_flow_version_id = v.flow_version_id), f.flow_id, f.flow_code, v.flow_name,
+            v.flow_version_id, v.version_no, n.node_key, n.node_name, f.status,
+            v.flow_version_id, f.status
+        FROM t_decision_flow_node n
+        JOIN t_decision_flow_version v ON v.flow_version_id = n.flow_version_id
+        JOIN t_decision_flow f ON f.flow_id = v.flow_id
+        JOIN t_decision_point dp ON dp.decision_point_id = f.decision_point_id
+        WHERE n.reason_code = #{code} AND n.node_type = 'END' AND n.decision_code = 'DENY'
+    </sql>
+    <sql id="ReasonScope">
+        <where>
+            <choose>
+                <when test="scope == 'CURRENT'">source_status = 'CONFIGURABLE' AND is_current_configuration = 1</when>
+                <when test="scope == 'HISTORY'">source_status = 'CONFIGURABLE' AND is_current_configuration = 0</when>
+                <when test="scope == 'DELETED'">source_status = 'DELETED'</when>
+            </choose>
+        </where>
+    </sql>
+    <select id="reasonReferences" resultMap="RejectionReasonReferenceRow">
+        SELECT * FROM (<include refid="ReasonUnion"/>) r <include refid="ReasonScope"/>
+        ORDER BY source_version_id DESC, source_type, source_row_id LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="reasonReferenceCount" resultType="long">
+        SELECT COUNT(*) FROM (<include refid="ReasonUnion"/>) r <include refid="ReasonScope"/>
+    </select>
+</mapper>

@@ -1,0 +1,9 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+  main:
+    banner-mode: "off"
+compensation:
+  enabled: false

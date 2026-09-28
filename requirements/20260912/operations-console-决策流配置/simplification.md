@@ -1,5 +1,9 @@
 # 规则配置与旧顺序编排解耦：方案修订
 
+> **2026-09-21 Rule Set 幂等迁移：** 本文中规则集保存、冻结、删除的本地 Key/Claim/成功回放条款由[后端窄范围修订](../../../docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md#rule-set-idempotency-20260921)取代；业务基准、变量锁、内容格式、历史读取和 Hash 不变。当前实现与验证只见台账。
+
+> **2026-09-21 后继修订：** 本文涉及旧 Candidate 创建/校验的成功请求回放要求，由[发布业务恢复合同](../../../docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md#release-recovery-20260921)取代。原字段快照、Point/Rule Set/Release 内容 Hash 及新规则不具备旧发布组成的边界保持。
+
 状态：用户确认关系与全字段总图后回复“下一步”，阶段 3 修订已确认，阶段 4 研发与开发回归已完成；本次三表变更仅已在获批本机执行，用户已确认恢复阶段 5，进展见 [综合验证记录](./acceptance.md)。它只修订 RCO-17 的相关依赖，不重开已确认的页面及流程业务评审。原评审证据见 [表关系评审](./table-relationship-review.md)，确认及执行记录见 [delivery.md](./delivery.md)。
 
 **一句话规模：本修订计划改 Risk、Operations BFF、Web 3 个应用，新增 API 0 个、调整原 API 合同/适用范围 6 个；修改 Risk 3 张旧表，新增 4 列、删除 2 列和 2 个旧索引，不增删表；停止规则保存对 3 张旧配套表的新增，初始化与路由注册 DML 均为 0，页面新增/重绘为 0。** 已观察的 test 回填为 33 个规则版本 + 418 个 Context 操作数 + 11 个 Context 动作参数，共 462 行；本机均为 0。数量是只读快照，执行前须重新核对。

@@ -11,7 +11,7 @@
 - ID 为正十进制字符串，支持有符号 Long 上限，不允许负数、小数、前导加号或 JS Number；version 为正 INT。时间 ISO-8601 UTC 字符串，数据库 DATETIME(6)。枚举精确匹配，不自动改大小写。
 - Scope 编码复用 PLT-I03 约束：1..128 位，`[a-z][a-z0-9]*(?:[.:-][a-z0-9]+)*`，不接受通配、空白或自动小写改写。编码在 JSON、Query、Path 使用同一规范，字符大小写敏感。
 - 空/重复/未知 Query 拒绝；可选条件不填时省略。人类文本 trim，名称/说明的包含搜索对 `%`、`_`、反斜线按文字转义。秘密不得作为查询值；credentialId/keyPrefix 为明确字段，不能传整个 opaque Credential。
-- A04/A07/A08 要求 `Idempotency-Key: [A-Za-z0-9_-]{16,128}`、JSON Body 和 `reason`（trim 后 1..500）。保存成功及同键重放都是 200；查询 200。更新必须有 `expectedVersion`，不允许调用方指定 actor、tenant、status、创建/更新时间。未知/重复 JSON 字段按既有严格解码拒绝。
+- A04/A07/A08 的浏览器请求保留 `Idempotency-Key: [A-Za-z0-9_-]{16,128}`、JSON Body 和 `reason`（trim 后 1..500）。2026-09-17 修订：A04/A07/A08 的请求幂等由 Gateway 统一承担，BFF/Platform 对应合同不再要求或转发该 Header，Platform 不保存命令回执。保存成功为 200，查询为 200。更新必须有 `expectedVersion`，不允许调用方指定 actor、tenant、status、创建/更新时间。未知/重复 JSON 字段按既有严格解码拒绝。Gateway 接入及验证状态见 [CURRENT_IMPLEMENTATION](../../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-api-credential-management-refactor-20260917)。
 - 所有响应 `Cache-Control: no-store`。BFF/日志/审计不读取或投影完整凭证、PHC；不会新建秘密查询/复制 API。
 
 ## 2. 新增端点
@@ -22,11 +22,11 @@
 | A02 | GET /api-credential-admin/v1/credentials/{credentialId} | 无 Query | ApiCredentialDetailResponseBody |
 | A03 | GET /api-credential-admin/v1/credentials/{credentialId}/scopes | page,size | PagingResponseBody&lt;ApiCredentialScopeGrant&gt; |
 | A04 | POST /api-credential-admin/v1/credentials/{credentialId}/revoke | `{expectedVersion,reason}` | ApiCredentialRevokeResponseBody |
-| A05 | GET /api-scope-admin/v1/scopes | page,size,keyword | PagingResponseBody&lt;ApiScopeSummary&gt; |
+| A05 | GET /api-scope-admin/v1/scopes | page,size,keyword | PagingResponseBody&lt;ApiScopeSummaryResponseBody&gt; |
 | A06 | GET /api-scope-admin/v1/scopes/{scopeCode} | Platform 无 Query；BFF 可选 referenceKind,page,size | Platform ApiScopeDetailResponseBody；BFF ApiScopePageResponseBody |
 | A07 | POST /api-scope-admin/v1/scopes | `{scopeCode,displayName,description,reason}` | ApiScopeMutationResponseBody |
 | A08 | PUT /api-scope-admin/v1/scopes/{scopeCode} | `{displayName,description,expectedVersion,reason}` | ApiScopeMutationResponseBody |
-| A09 | GET /api-scope-admin/v1/scope-options | page,size,keyword | PagingResponseBody&lt;ApiScopeOption&gt; |
+| A09 | GET /api-scope-admin/v1/scope-options | page,size,keyword | PagingResponseBody&lt;ApiScopeOptionResponseBody&gt; |
 
 A01 所有条件 AND：clientId 精确匹配 Tenant.owner_ref_id 且 tenant_type=CLIENT；clientName 为 1..255 的 tenant_name 包含搜索；credentialId 精确；keyPrefix 为 8..32 位 PLT-I03 既有前缀语法、精确匹配（不接受点分隔的完整凭证）；status 过滤下述展示状态；scopeCode 匹配任一授权行，不限定其 ACTIVE，不因多条明细重复凭证。空结果 200，详情 ID 不存在 404；读取不调用认证、不要求客户 Tenant 当前 ACTIVE。
 
@@ -66,9 +66,9 @@ BFF 先查 Scope 详情确认 Scope READ 和对象存在，再调用 M01(require
 | ApiCredentialSummary | credentialId:string、tenantId:string、clientId:string、clientName:string、keyPrefix:string、storedStatus:ACTIVE/REVOKED/EXPIRED、status:ACTIVE/REVOKED/EXPIRED、tenantOwnerStatus:PENDING/ACTIVE/SUSPENDED/TERMINATED、tenantSecurityStatus:ACTIVE/SUSPENDED、expiresTime:Instant、version:int、createTime:Instant、updateTime:Instant |
 | ApiCredentialDetailResponseBody | Summary 全字段 + rotatedFromId:string/null；不返回“全部 Scope”无界数组，授权页由 A03 独立取得 |
 | ApiCredentialScopeGrant | scopeId:string（授权明细 ID）、scopeCode:string、displayName:string/null、resourcePattern:string、actionCode:string、storedStatus:ACTIVE/REVOKED/EXPIRED、status:ACTIVE/REVOKED/EXPIRED/PENDING、effectiveFrom:Instant、effectiveTo:Instant/null、version:int、createTime:Instant、updateTime:Instant |
-| ApiScopeSummary | apiScopeId:string、scopeCode:string、displayName:string、description:string/null、version:int |
+| ApiScopeSummaryResponseBody | apiScopeId:string、scopeCode:string、displayName:string、description:string/null、version:int |
 | ApiScopeDetailResponseBody | Summary + createTime:Instant、updateTime:Instant |
-| ApiScopeOption | scopeCode:string、displayName:string |
+| ApiScopeOptionResponseBody | scopeCode:string、displayName:string |
 | ApiCredentialRevokeResponseBody | credentialId:string、status:"REVOKED"、version:int（当次结果） |
 | ApiScopeMutationResponseBody | apiScopeId:string、scopeCode:string、version:int（无虚构 ACTIVE 状态） |
 
@@ -80,9 +80,9 @@ BFF 先查 Scope 详情确认 Scope READ 和对象存在，再调用 M01(require
 
 - A07：displayName trim 后 1..255；description 可为 null，trim 后空串规范为 null，最大 500。scopeCode 不 trim/改写。编码精确唯一，名称允许重名；创建 version=1。
 - A08：Path code 固定；全量传 displayName、description（null 表示清空），CAS 成功 version+1；即使值相同，作为一次带原因的显式保存递增一次，不增加 no-op 协议。冲突 409，前端保留草稿。
-- A04：先当前会话/撤销权限，再幂等重放判断，再读取 CLIENT 凭证并核对 expectedVersion。ACTIVE 或 EXPIRED 均可改为 REVOKED；旧版本返回 409。已 REVOKED 且 expectedVersion 匹配返回当前版本 200，不再递增，但可形成该新命令的既有操作记录。同 key 同内容返回最初响应，不因后续对象变化重新执行；同 key 不同内容 409。权限被收回后旧 key 也不能绕过授权取回结果。
+- A04：每次到达 Platform 的请求先复核当前会话/撤销权限，再锁定 CLIENT 凭证并核对 expectedVersion。ACTIVE 或 EXPIRED 均可改为 REVOKED；旧版本返回 409，包括绕过 Gateway 直接重试已成功请求的情况。已 REVOKED 且 expectedVersion 匹配返回当前版本 200，不递增版本或追加变更审计。Platform 不读取 Hash、幂等命令或历史响应；请求去重与响应重放属于 Gateway 的职责，不能替代 Owner 的版本和状态保护。
 - 不级联修改授权明细、rotated_from_id 指向的旧凭证或后继凭证；不增加恢复、删除、批量撤销、改到期时间 API。
-- 复用 Platform OperationsCommandIdempotencyService；资源锁、Hash、事务及审计细节见 [design.md](./design.md)。响应引用只保存重放必需的标识/版本，无秘密。Scope code 来自原请求/Path，immutable，无需复制完整响应或另建回执表。
+- A07/A08 不读写业务层请求幂等记录。再次到达 Platform 的同编码创建返回 400/BUSINESS_CHECK_FAILED，再次提交旧 expectedVersion 的更新返回 409/CONCURRENT_REQUEST；当前版本的合法编辑按一次新保存递增版本。请求 Key 和原 HTTP 响应重放遵循[全项目幂等职责](../../../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)，资源锁、事务及审计见 [design.md](./design.md)。
 
 ## 5. 既有接口变化
 
@@ -99,6 +99,6 @@ M04 目录审计使用 resourceType=`API_SCOPE`、resourceId=`scopeCode`；凭�
 
 ## 6. 错误与 Web
 
-沿用现有 Problem 合同：`application/problem+json`，type/title/detail/code/requestId/timestamp；X-Request-Id 与 body 相同，不新增 status 字段。结构/Query 错误 400/INVALID_REQUEST；Bean Validation 422/INVALID_REQUEST；失效会话 401/OPERATIONS_SESSION_INVALID；无权限 403/OPERATIONS_PERMISSION_DENIED；新对象不存在 404/NOT_FOUND；重名 Scope code、非法引用 400/BUSINESS_CHECK_FAILED；CAS、同键异内容、资源锁超时 409/CONCURRENT_REQUEST；依赖不可用 503/DEPENDENCY_UNAVAILABLE。旧 Gateway NOT_FOUND 保持其原 code，未知异常按现行全局映射保留 500。
+沿用现有 Problem 合同：`application/problem+json`，type/title/detail/code/requestId/timestamp；X-Request-Id 与 body 相同，不新增 status 字段。结构/Query 错误 400/INVALID_REQUEST；Bean Validation 422/INVALID_REQUEST；失效会话 401/OPERATIONS_SESSION_INVALID；无权限 403/OPERATIONS_PERMISSION_DENIED；新对象不存在 404/NOT_FOUND；重名 Scope code、非法引用 400/BUSINESS_CHECK_FAILED；CAS、资源锁超时 409/CONCURRENT_REQUEST；依赖不可用 503/DEPENDENCY_UNAVAILABLE。旧 Gateway NOT_FOUND 保持其原 code，未知异常按现行全局映射保留 500。
 
 字段错误定位 displayName/description/reason/expectedVersion/requiredScopeCode；不返回 SQL、PHC 或实际凭证。BFF 不把全部 4xx 改成 502/503。400/422/409 保留草稿；503 可重试，同一次未改内容的写入复用 key。成功后刷新详情，不向用户承诺追回已认证的在途调用。

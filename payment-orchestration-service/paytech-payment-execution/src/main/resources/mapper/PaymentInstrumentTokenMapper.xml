@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.payment.execution.core.dal.mapper.PaymentInstrumentTokenMapper">
+
+    <sql id="PaymentInstrumentTokenColumns">
+        payment_instrument_token_id, payment_instrument_token, client_id, payment_intent_id, source_submission_id,
+        payment_method_code, instrument_type, instrument_ref, expires_at, revoked_at, create_time, update_time
+    </sql>
+
+    <select id="findTokenBySubmission" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentInstrumentToken">
+        SELECT <include refid="PaymentInstrumentTokenColumns"/>
+        FROM t_payment_instrument_token
+        WHERE client_id = #{clientId} AND payment_intent_id = #{intentId}
+          AND source_submission_id = #{sourceSubmissionId}
+    </select>
+
+    <insert id="insertToken">
+        INSERT INTO t_payment_instrument_token (<include refid="PaymentInstrumentTokenColumns"/>)
+        SELECT #{paymentInstrumentTokenId}, #{paymentInstrumentToken}, #{clientId}, #{paymentIntentId},
+            #{sourceSubmissionId}, #{paymentMethodCode}, #{instrumentType}, #{instrumentRef},
+            #{expiresAt}, #{revokedAt}, #{createTime}, #{updateTime}
+        FROM t_payment_intent
+        WHERE payment_intent_id = #{paymentIntentId} AND client_id = #{clientId}
+          AND intent_status = 'OPEN' AND expires_at &gt; UTC_TIMESTAMP(6)
+          AND active_attempt_id IS NULL AND successful_attempt_id IS NULL
+          AND #{expiresAt} &gt; UTC_TIMESTAMP(6) AND #{expiresAt} &lt;= expires_at
+          AND NOT EXISTS (
+              SELECT 1 FROM t_payment_attempt WHERE source_submission_id = #{sourceSubmissionId}
+          )
+    </insert>
+
+    <select id="findTokenByValue" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentInstrumentToken">
+        SELECT <include refid="PaymentInstrumentTokenColumns"/>
+        FROM t_payment_instrument_token
+        WHERE payment_instrument_token = #{token}
+    </select>
+
+    <select id="findToken" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentInstrumentToken">
+        SELECT <include refid="PaymentInstrumentTokenColumns"/>
+        FROM t_payment_instrument_token
+        WHERE payment_instrument_token_id = #{tokenId}
+    </select>
+
+    <select id="lockAvailableToken" resultType="java.lang.Long">
+        SELECT payment_instrument_token_id FROM t_payment_instrument_token
+        WHERE payment_instrument_token_id = #{paymentInstrumentTokenId}
+          AND payment_instrument_token = #{paymentInstrumentToken}
+          AND client_id = #{clientId} AND payment_intent_id = #{paymentIntentId}
+          AND source_submission_id = #{sourceSubmissionId} AND payment_method_code = #{paymentMethodCode}
+          AND instrument_type = #{instrumentType} AND instrument_ref = #{instrumentRef}
+          AND revoked_at IS NULL AND expires_at &gt; UTC_TIMESTAMP(6)
+        FOR UPDATE
+    </select>
+
+</mapper>

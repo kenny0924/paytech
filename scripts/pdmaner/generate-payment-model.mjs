@@ -1,3 +1,4 @@
+import { CHANNEL_FIELD_OVERRIDES } from "./payment-channel-field-overrides.mjs";
 import { EXECUTION_FIELD_OVERRIDES } from "./payment-execution-field-overrides.mjs";
 import { paymentChannelIdentityKey } from "./payment-channel-identity.mjs";
 import { createHash } from "node:crypto";
@@ -35,7 +36,6 @@ const FIELD_MANIFEST = String.raw`
 channel_id BIGINT NN
 channel_code VARCHAR(64) NN OPEN(Channel Catalog)
 channel_name VARCHAR(255) NN
-adapter_code VARCHAR(64) NN OPEN(Adapter Catalog)
 channel_status VARCHAR(64) NN {DRAFT,ACTIVE,SUSPENDED,CLOSED}
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
@@ -43,10 +43,11 @@ update_time DATETIME(6) NN
 [t_channel_account]
 channel_account_id BIGINT NN
 channel_id BIGINT NN
-account_code VARCHAR(64) NN OPEN(Channel Account Catalog)
-external_account_id VARCHAR(128) N
-integration_config_key VARCHAR(128) NN
+entity_no CHAR(5) NN
+account_name VARCHAR(128) NN
+account_vault_token VARCHAR(64) N
 account_status VARCHAR(64) NN {DRAFT,ACTIVE,SUSPENDED,CLOSED}
+remark VARCHAR(512) N
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
@@ -70,36 +71,18 @@ scheme_code VARCHAR(64) NN OPEN(Scheme Catalog)
 country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2)
 currency CHAR(3) NN OPEN(ISO 4217)
 mcc_code VARCHAR(4) NN OPEN(CCT/Commerce frozen classification)
-capability_code VARCHAR(128) NN OPEN(MID Capability Catalog)
-value_type VARCHAR(64) NN {BOOLEAN,DECIMAL,INTEGER,CODE}
-boolean_value TINYINT(1) N
-decimal_value DECIMAL(24,8) N
-integer_value BIGINT N
-code_value VARCHAR(128) N
 capability_status VARCHAR(64) NN {ENABLED,DISABLED}
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
-[t_mid_health_state]
-mid_health_state_id BIGINT NN
-mid_id BIGINT NN
-payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
-health_status VARCHAR(64) NN {HEALTHY,DEGRADED,UNHEALTHY,UNKNOWN}
-circuit_status VARCHAR(64) NN {CLOSED,OPEN,HALF_OPEN}
-health_score DECIMAL(5,2) NN
-sample_count INT NN
-technical_success_count INT NN
-channel_error_count INT NN
-timeout_count INT NN
-technical_success_rate DECIMAL(9,8) NN
-channel_error_rate DECIMAL(9,8) NN
-timeout_rate DECIMAL(9,8) NN
-p95_latency_ms INT NN
-consecutive_failure_count INT NN
-window_started_at DATETIME(6) NN
-window_ended_at DATETIME(6) NN
-observed_at DATETIME(6) NN
-valid_until DATETIME(6) NN
+[t_mid_capability_detail]
+mid_capability_detail_id BIGINT NN
+mid_capability_id BIGINT NN
+capability_code VARCHAR(128) NN OPEN(MID Capability Catalog)
+value_type VARCHAR(64) NN {BOOLEAN,DECIMAL,CODE}
+boolean_value TINYINT(1) N
+decimal_value DECIMAL(24,8) N
+code_value VARCHAR(128) N
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
@@ -166,24 +149,12 @@ sample_count INT N
 health_observed_at DATETIME(6) N
 create_time DATETIME(6) NN
 
-[t_payment_intent_binding]
-payment_intent_binding_id BIGINT NN
-source_type VARCHAR(64) NN OPEN(Payment Source Type Catalog)
-source_id BIGINT NN
-client_id BIGINT NN
-payment_intent_id BIGINT N
-closed_at DATETIME(6) N
-create_time DATETIME(6) NN
-update_time DATETIME(6) NN
-
 [t_payment_intent]
 payment_intent_id BIGINT NN
 source_type VARCHAR(64) NN OPEN(Payment Source Type Catalog)
 source_id BIGINT NN
-source_order_context_id BIGINT NN
 client_id BIGINT NN
 entity_no CHAR(5) NN
-context_format VARCHAR(32) NN {TERM_PRICE,LEGACY_SCOPE}
 client_pricing_version_id BIGINT NN
 partner_share_version_id BIGINT N
 platform_charge_version_id BIGINT N
@@ -192,7 +163,7 @@ mcc_code VARCHAR(4) NN OPEN(CCT/Commerce frozen classification)
 consumer_country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2)
 amount DECIMAL(24,8) NN
 currency CHAR(3) NN OPEN(ISO 4217)
-intent_status VARCHAR(64) NN {REQUIRES_PAYMENT,PROCESSING,REQUIRES_ACTION,SUCCEEDED,FAILED,EXPIRED,CANCELLED}
+intent_status VARCHAR(64) NN {OPEN,SUCCEEDED,CANCELLED,EXPIRED}
 active_attempt_id BIGINT N
 successful_attempt_id BIGINT N
 expires_at DATETIME(6) NN
@@ -200,51 +171,26 @@ version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
+
+
 [t_payment_attempt]
 payment_attempt_id BIGINT NN
 payment_intent_id BIGINT NN
 attempt_no INT NN
+source_submission_id BIGINT N
 payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
-attempt_status VARCHAR(64) NN {CREATED,PROCESSING,REQUIRES_ACTION,AUTHORIZED,UNKNOWN,SUCCEEDED,FAILED,CANCELLED,VOIDED,CONFLICTED}
-failure_stage VARCHAR(64) N {READINESS,EXECUTION_GATE,RISK,LIMIT,ROUTING,CHANNEL,RECOVERY,SYSTEM}
-status_reason_code VARCHAR(64) N OPEN(Reason Catalog)
-consumer_contract_id BIGINT N
-consumer_terms_acceptance_id BIGINT N
-refund_policy_acceptance_id BIGINT N
-privacy_notice_acceptance_id BIGINT N
-acceptance_completed_at DATETIME(6) N
-order_version BIGINT N
-transaction_assessment_id BIGINT N
-risk_result VARCHAR(64) N {ALLOW,REVIEW,DENY,FAILED,TIMED_OUT}
-limit_reservation_group_id BIGINT N
+capture_mode VARCHAR(32) N {AUTOMATIC,MANUAL}
+payment_instrument_token_id BIGINT N
+channel_id BIGINT N
+channel_account_id BIGINT N
+mid_id BIGINT N
+attempt_status VARCHAR(64) NN {PROCESSING,SUCCEEDED,FAILED,CANCELLED}
+active_action_id BIGINT N
 authorized_amount DECIMAL(24,8) NN
 captured_amount DECIMAL(24,8) NN
 version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
-source_submission_id BIGINT N
-payment_goal VARCHAR(32) N {PAY_NOW,AUTHORIZE_ONLY}
-authentication_requirement VARCHAR(32) N {NOT_REQUIRED,THREE_DS_REQUIRED,CHALLENGE_REQUIRED}
-payment_instrument_token_id BIGINT N
-
-[t_payment_pricing_fact]
-payment_fact_id BIGINT NN
-payment_attempt_id BIGINT NN
-fact_schema_code VARCHAR(32) NN {PAYMENT_PRICING_FACTS_1}
-source_action_id BIGINT NN
-payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
-consumer_country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2)
-currency CHAR(3) NN OPEN(ISO 4217)
-card_network VARCHAR(64) N OPEN(Payment normalized card network catalog)
-funding_type VARCHAR(64) N {CREDIT,DEBIT,PREPAID}
-card_level VARCHAR(64) N OPEN(Payment normalized card level catalog)
-authentication_class VARCHAR(64) N {THREE_DS_AUTHENTICATED,THREE_DS_ATTEMPTED,NON_THREE_DS}
-payment_succeeded_time DATETIME(6) NN
-amount DECIMAL(24,8) NN
-client_pricing_version_id BIGINT NN
-partner_share_version_id BIGINT N
-platform_charge_version_id BIGINT N
-create_time DATETIME(6) NN
 
 [t_payment_instrument_token]
 payment_instrument_token_id BIGINT NN
@@ -266,35 +212,30 @@ payment_attempt_id BIGINT N
 channel_refund_id BIGINT N
 duplicate_payment_case_id BIGINT N
 action_no INT NN
-action_type VARCHAR(64) NN {AUTHENTICATE,AUTHORIZE,CAPTURE,SALE,VOID,REFUND,QUERY}
-action_status VARCHAR(64) NN {CREATED,SUBMITTED,REQUIRES_ACTION,UNKNOWN,SUCCEEDED,FAILED}
-channel_id BIGINT NN
-mid_id BIGINT NN
-channel_account_id BIGINT NN
+action_type VARCHAR(64) NN {PAY_RISK,AUTHENTICATE,AUTHORIZE,CAPTURE,PAY,VOID,REFUND}
+action_status VARCHAR(64) NN {PROCESSING,UNKNOWN,SUCCEEDED,FAILED}
 target_channel_txn_ref_id BIGINT N
 amount DECIMAL(24,8) NN
 currency CHAR(3) NN OPEN(ISO 4217)
-channel_idempotency_key VARCHAR(128) NN
+channel_idempotency_key VARCHAR(128) N
+transaction_assessment_id BIGINT N
+risk_result VARCHAR(64) N {ALLOW,REVIEW,DENY,FAILED,TIMED_OUT}
+authentication_requirement VARCHAR(32) N {NOT_REQUIRED,THREE_DS_REQUIRED,CHALLENGE_REQUIRED}
+interaction_type VARCHAR(32) N {REDIRECT,THREE_DS_CHALLENGE,SDK,APP_SWITCH,QR_CODE}
+interaction_expires_at DATETIME(6) N
+channel_response_code VARCHAR(128) N OPEN(Channel Adapter Catalog)
+channel_response_msg VARCHAR(512) N
 channel_result_time DATETIME(6) N
 version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
-target_payment_action_id BIGINT N
-authentication_action_id BIGINT N
-channel_operation_ref VARCHAR(255) N
-interaction_type VARCHAR(32) N {REDIRECT,THREE_DS_CHALLENGE,SDK,APP_SWITCH,QR_CODE}
-interaction_expires_at DATETIME(6) N
-authentication_outcome VARCHAR(32) N {AUTHENTICATED,ATTEMPTED,FAILED,UNAVAILABLE}
-challenge_performed TINYINT N
-authentication_valid_until DATETIME(6) N
-status_reason_code VARCHAR(64) N OPEN(Reason Catalog)
 
 [t_channel_transaction_ref]
 channel_transaction_ref_id BIGINT NN
 payment_action_id BIGINT NN
 channel_id BIGINT NN
 mid_id BIGINT NN
-reference_type VARCHAR(64) NN {AUTHORIZE,CAPTURE,SALE,VOID,REFUND}
+reference_type VARCHAR(64) NN {AUTHORIZE,CAPTURE,PAY,VOID,REFUND}
 external_transaction_id VARCHAR(255) NN
 original_channel_txn_ref_id BIGINT N
 channel_event_time DATETIME(6) N
@@ -337,20 +278,6 @@ version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
-[t_payment_state_transition]
-payment_state_transition_id BIGINT NN
-aggregate_type VARCHAR(64) NN {PAYMENT_INTENT,PAYMENT_ATTEMPT,PAYMENT_ACTION,CHANNEL_REFUND,DUPLICATE_PAYMENT_CASE}
-aggregate_id BIGINT NN
-root_type VARCHAR(64) NN {PAYMENT_INTENT,PAYMENT_ATTEMPT,PAYMENT_ACTION,CHANNEL_REFUND,DUPLICATE_PAYMENT_CASE}
-root_id BIGINT NN
-from_status VARCHAR(64) N OPEN(Payment Aggregate Status Catalog)
-to_status VARCHAR(64) NN OPEN(Payment Aggregate Status Catalog)
-transition_no INT NN
-reason_code VARCHAR(64) N OPEN(Reason Catalog)
-trigger_type VARCHAR(64) NN OPEN(Trigger enum)
-trigger_id VARCHAR(128) NN
-create_by VARCHAR(128) NN
-create_time DATETIME(6) NN
 
 [t_payment_refund_position]
 payment_refund_position_id BIGINT NN
@@ -468,12 +395,25 @@ update_time DATETIME(6) NN
 command_idempotency_id BIGINT NN
 caller_scope VARCHAR(128) NN OPEN(Payment Caller Scope Catalog)
 operation_type VARCHAR(64) NN OPEN(Payment Command Operation Catalog)
-idempotency_key VARCHAR(128) NN
+idempotency_key VARCHAR(255) NN
 request_hash CHAR(64) NN
-command_status VARCHAR(64) NN {PROCESSING,SUCCEEDED,FAILED}
+request_hash_version INT NN
+request_snapshot_schema_version INT N
+request_snapshot_json JSON N
+operation_context_time DATETIME(6) NN
+recovery_stage VARCHAR(64) N OPEN(Payment Command Recovery Stage Catalog)
+process_status VARCHAR(64) NN {PROCESSING,SUCCEEDED,FAILED}
 resource_type VARCHAR(64) N OPEN(Payment Command Resource Type Catalog)
 resource_id BIGINT N
+resource_no VARCHAR(64) N
 response_code VARCHAR(64) N OPEN(Payment Command Response Code Catalog)
+response_http_status INT N
+response_snapshot_schema_version INT N
+response_location VARCHAR(255) N
+response_body_json JSON N
+lock_owner VARCHAR(64) N
+lock_until DATETIME(6) N
+version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
@@ -498,19 +438,17 @@ const INDEX_MANIFEST = String.raw`
 t_payment_channel
 UK uk_payment_channel_code(channel_code)
 t_channel_account
-UK uk_channel_account_code(channel_id,account_code)
-UK uk_channel_account_external(channel_id,external_account_id)
-UK uk_channel_account_config(channel_id,integration_config_key)
 UK uk_channel_account_owner(channel_account_id,channel_id)
 IDX idx_channel_account_status(channel_id,account_status)
+IDX idx_channel_account_entity(entity_no,account_status)
 t_channel_mid
 UK uk_channel_mid(channel_id,external_mid_code)
 IDX idx_channel_mid_account(channel_account_id,mid_status)
 IDX idx_channel_mid_entity(entity_no,mid_status)
 t_mid_capability
-UK uk_mid_capability_scope(mid_id,payment_method_code,scheme_code,country_code,currency,mcc_code,capability_code)
-t_mid_health_state
-UK uk_mid_health_state(mid_id,payment_method_code)
+UK uk_mid_capability_scope(mid_id,payment_method_code,scheme_code,country_code,currency,mcc_code)
+t_mid_capability_detail
+UK uk_mid_cap_detail_code(mid_capability_id,capability_code)
 t_routing_policy
 UK uk_routing_policy_scope(scope_type,scope_id,country_code,currency,payment_method_code,industry_code,mcc_code,match_priority)
 UK uk_route_policy_cur_ver(current_version_id)
@@ -531,9 +469,6 @@ UK uk_route_candidate_eval(routing_decision_id,mid_id)
 IDX idx_route_eval_channel(channel_id)
 IDX idx_route_eval_mid(mid_id)
 IDX idx_route_eval_account(channel_account_id)
-t_payment_intent_binding
-UK uk_pay_binding_source(source_type,source_id)
-UK uk_pay_binding_intent(payment_intent_id)
 t_payment_intent
 UK uk_payment_intent_source(source_type,source_id)
 IDX idx_payment_intent_expiry(intent_status,expires_at,payment_intent_id)
@@ -543,9 +478,9 @@ t_payment_attempt
 UK uk_payment_attempt_no(payment_intent_id,attempt_no)
 UK uk_pay_attempt_submission(source_submission_id)
 UK uk_pay_attempt_token(payment_instrument_token_id)
-t_payment_pricing_fact
-UK uk_pricing_fact_attempt(payment_attempt_id)
-IDX idx_pricing_fact_action(source_action_id)
+IDX idx_pay_attempt_channel(channel_id)
+IDX idx_pay_attempt_account(channel_account_id)
+IDX idx_pay_attempt_mid(mid_id)
 t_payment_instrument_token
 UK uk_pay_token_value(payment_instrument_token)
 UK uk_pay_token_scope(client_id,payment_intent_id,source_submission_id)
@@ -553,13 +488,8 @@ t_payment_action
 UK uk_payment_action_attempt_no(payment_attempt_id,action_no)
 UK uk_payment_action_refund_no(channel_refund_id,action_no)
 UK uk_pay_action_dup_case_no(duplicate_payment_case_id,action_no)
-UK uk_payment_action_idempotency(channel_id,channel_idempotency_key)
-IDX idx_pay_action_mid(mid_id)
-IDX idx_pay_action_account(channel_account_id)
+UK uk_payment_action_idempotency(channel_idempotency_key)
 IDX idx_pay_action_target_ref(target_channel_txn_ref_id)
-IDX idx_pay_action_target_action(target_payment_action_id)
-IDX idx_pay_action_authentication(authentication_action_id)
-IDX idx_pay_action_operation(channel_account_id,channel_operation_ref)
 t_channel_transaction_ref
 UK uk_channel_transaction_ref(channel_id,mid_id,reference_type,external_transaction_id)
 IDX idx_txn_ref_action(payment_action_id)
@@ -577,10 +507,6 @@ IDX idx_dup_case_canonical_action(canonical_action_id)
 IDX idx_dup_case_canonical_ref(canonical_transaction_ref_id)
 IDX idx_dup_case_duplicate_ref(duplicate_transaction_ref_id)
 IDX idx_dup_case_comp_action(compensation_action_id)
-t_payment_state_transition
-UK uk_payment_transition_no(aggregate_type,aggregate_id,transition_no)
-IDX idx_payment_transition_root(root_type,root_id,create_time)
-IDX idx_payment_transition_trigger(trigger_type,trigger_id,create_time)
 t_payment_refund_position
 UK uk_payment_refund_position(payment_intent_id,original_channel_txn_ref_id)
 IDX idx_refund_pos_attempt(successful_attempt_id)
@@ -620,13 +546,11 @@ IDX idx_comp_event_ready(execute_status,next_execute_at,id)
 IDX idx_comp_event_lease(execute_status,lock_until,id)
 `;
 const RELATION_MANIFEST = String.raw`
-1:1 payment_pricing_fact.payment_attempt_id -> payment_attempt.payment_attempt_id
-n:1 payment_pricing_fact.source_action_id -> payment_action.payment_action_id
 n:1 channel_account.channel_id -> payment_channel.channel_id
 n:1 channel_mid.channel_id -> payment_channel.channel_id
 n:1 channel_mid.channel_account_id -> channel_account.channel_account_id
 n:1 mid_capability.mid_id -> channel_mid.mid_id
-n:1 mid_health_state.mid_id -> channel_mid.mid_id
+n:1 mid_capability_detail.mid_capability_id -> mid_capability.mid_capability_id
 n:1 routing_policy_version.routing_policy_id -> routing_policy.routing_policy_id
 1:1 routing_policy.current_version_id -> routing_policy_version.routing_policy_version_id
 n:1 routing_policy_mid.routing_policy_version_id -> routing_policy_version.routing_policy_version_id
@@ -648,13 +572,11 @@ n:1 payment_attempt.payment_intent_id -> payment_intent.payment_intent_id
 n:1 payment_action.payment_attempt_id -> payment_attempt.payment_attempt_id
 n:1 payment_action.channel_refund_id -> channel_refund.channel_refund_id
 n:1 payment_action.duplicate_payment_case_id -> duplicate_payment_case.duplicate_payment_case_id
-n:1 payment_action.channel_id -> payment_channel.channel_id
-n:1 payment_action.mid_id -> channel_mid.mid_id
-n:1 payment_action.channel_account_id -> channel_account.channel_account_id
+n:1 payment_attempt.channel_id -> payment_channel.channel_id
+n:1 payment_attempt.mid_id -> channel_mid.mid_id
+n:1 payment_attempt.channel_account_id -> channel_account.channel_account_id
 n:1 payment_action.target_channel_txn_ref_id -> channel_transaction_ref.channel_transaction_ref_id
-1:1 payment_intent_binding.payment_intent_id -> payment_intent.payment_intent_id
-n:1 payment_action.target_payment_action_id -> payment_action.payment_action_id
-n:1 payment_action.authentication_action_id -> payment_action.payment_action_id
+1:1 payment_attempt.active_action_id -> payment_action.payment_action_id
 n:1 channel_transaction_ref.payment_action_id -> payment_action.payment_action_id
 n:1 channel_transaction_ref.channel_id -> payment_channel.channel_id
 n:1 channel_transaction_ref.mid_id -> channel_mid.mid_id
@@ -693,7 +615,7 @@ const DIAGRAM_GROUPS = Object.freeze([
   Object.freeze({
     defKey: "channel_mid",
     defName: "Channel 与 MID",
-    primary: Object.freeze(["payment_channel", "channel_account", "channel_mid", "mid_capability", "mid_health_state"]),
+    primary: Object.freeze(["payment_channel", "channel_account", "channel_mid", "mid_capability", "mid_capability_detail"]),
     references: Object.freeze([]),
   }),
   Object.freeze({
@@ -705,7 +627,7 @@ const DIAGRAM_GROUPS = Object.freeze([
   Object.freeze({
     defKey: "payment_execution",
     defName: "支付执行",
-    primary: Object.freeze(["payment_intent", "payment_attempt", "payment_pricing_fact", "payment_instrument_token", "payment_action", "payment_intent_binding", "channel_transaction_ref", "channel_interaction", "duplicate_payment_case", "payment_state_transition"]),
+    primary: Object.freeze(["payment_intent", "payment_attempt", "payment_instrument_token", "payment_action", "channel_transaction_ref", "channel_interaction", "duplicate_payment_case", ]),
     references: Object.freeze(["payment_channel", "channel_account", "channel_mid", "routing_decision", "channel_refund"]),
   }),
   Object.freeze({
@@ -746,16 +668,17 @@ const VERSION_TABLES = Object.freeze([
   "channel_event_exception",
   "channel_dispute_notice",
   "channel_dispute_action",
+  "command_idempotency",
 ]);
 
 const IMMUTABLE_TABLES = Object.freeze([
-  "payment_pricing_fact",
+
   "routing_policy_version",
   "routing_policy_mid",
   "routing_decision",
   "route_candidate_eval",
   "channel_transaction_ref",
-  "payment_state_transition",
+
   "channel_callback_item",
   "channel_dispute_event",
 ]);
@@ -1080,6 +1003,7 @@ function buildEntities(model, tables, indexesByTable) {
         domain: mapping.domain,
         id: stableUuid(`field/${table.defKey}/${manifestField.defKey}`),
         ...EXECUTION_FIELD_OVERRIDES[`${table.defKey}.${manifestField.defKey}`],
+        ...CHANNEL_FIELD_OVERRIDES[`${table.defKey}.${manifestField.defKey}`],
       };
     });
     const fieldsByKey = new Map(fields.map((field) => [field.defKey, field]));
@@ -1213,7 +1137,7 @@ function validateMetadata(tables) {
     .filter((field) => field.openSourceHint)
     .map((field) => `${table.defKey}.${field.defKey}`)).sort();
   invariant(JSON.stringify(openMetadataKeys) === JSON.stringify(openManifestKeys), "Open-code metadata must exactly cover the manifest");
-  invariant(openManifestKeys.length === 57, `Expected 57 true open-code rows, found ${openManifestKeys.length}`);
+  invariant(openManifestKeys.length === 44, `Expected 44 true open-code rows, found ${openManifestKeys.length}`);
   for (const [key, value] of Object.entries(FIELD_METADATA)) {
     invariant(/[\u3400-\u9fff]/u.test(value.defName), `Field display name is not Chinese: ${key}`);
     invariant(/[\u3400-\u9fff]/u.test(value.description), `Field description is not Chinese: ${key}`);
@@ -1222,22 +1146,22 @@ function validateMetadata(tables) {
 
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
-    tables: 30,
-    fields: 403,
-    uniqueIndexes: 45,
-    accessIndexes: 48,
-    relations: 67,
+    tables: 27,
+    fields: 345,
+    uniqueIndexes: 38,
+    accessIndexes: 44,
+    relations: 63,
     diagramGroups: 7,
   }), `Unexpected generated totals: ${JSON.stringify(modelTotals(model))}`);
 
   const entitiesByKey = new Map(model.entities.map((entity) => [logicalTableKey(entity.defKey), entity]));
-  invariant(tables.length === 30, `Field manifest must have 30 tables, found ${tables.length}`);
-  invariant(new Set(VERSION_TABLES).size === 11, "Version allowlist must have 11 tables");
-  invariant(new Set(IMMUTABLE_TABLES).size === 9, "Immutable allowlist must have 9 tables");
+  invariant(tables.length === 27, `Field manifest must have 27 tables, found ${tables.length}`);
+  invariant(new Set(VERSION_TABLES).size === 12, "Version allowlist must have 12 tables");
+  invariant(new Set(IMMUTABLE_TABLES).size === 7, "Immutable allowlist must have 7 tables");
   const actualVersionTables = model.entities
     .filter((entity) => entity.fields.some((field) => field.defKey === "version"))
     .map((entity) => logicalTableKey(entity.defKey));
-  invariant(JSON.stringify(actualVersionTables) === JSON.stringify(VERSION_TABLES), "Business version tables disagree with allowlist");
+  invariant(JSON.stringify(actualVersionTables) === JSON.stringify(VERSION_TABLES), "Business and command CAS version tables disagree with allowlist");
   for (const tableKey of IMMUTABLE_TABLES) {
     const auditFields = entitiesByKey.get(tableKey).fields
       .filter((field) => ["create_time", "update_time"].includes(field.defKey))
@@ -1251,6 +1175,8 @@ function validateGeneratedModel(model, tables, relations) {
   for (const relation of relations) {
     const child = entitiesByKey.get(relation.childTable);
     const childField = child.fields.find((field) => field.defKey === relation.childField);
+    // active_action_id 只从已锁定 Attempt 正向读取；同父级与唯一占位由应用/CAS 保证，无反查索引消费者。
+    if (relation.childTable === "payment_attempt" && relation.childField === "active_action_id") continue;
     const primary = child.fields.find((field) => field.primaryKey);
     const leftPrefix = childField.id === primary.id || child.indexes.some(
       (index) => index.fields[0]?.fieldDefKey === childField.id,
@@ -1266,12 +1192,12 @@ function validateGeneratedModel(model, tables, relations) {
       );
     }
   }
-  invariant(relations.filter((relation) => relation.cardinality === "1:1").length === 8, "Relation manifest must have 8 enforced 1:1 relations");
+  invariant(relations.filter((relation) => relation.cardinality === "1:1").length === 7, "Relation manifest must have 6 indexed and one application-enforced 1:1 relations");
   const primaryTables = DIAGRAM_GROUPS.flatMap((group) => group.primary);
-  invariant(primaryTables.length === 30 && new Set(primaryTables).size === 30, "Every table must have exactly one primary diagram group");
+  invariant(primaryTables.length === 27 && new Set(primaryTables).size === 27, "Every table must have exactly one primary diagram group");
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)
     .filter((cell) => cell.shape === "erdRelation");
-  invariant(relationCells.length === 67, `Expected 67 relation cells, found ${relationCells.length}`);
+  invariant(relationCells.length === 63, `Expected 63 relation cells, found ${relationCells.length}`);
   const relationIds = relations.map(relationId);
   invariant(new Set(relationIds).size === relations.length, "Relation IDs must be unique");
   invariant(

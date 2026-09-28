@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.CustomerRegistrationMapper">
+    <sql id="AccountColumns">
+        account_id id, email_vault_token emailToken, email_masked emailMasked, email_verified_time verifiedTime,
+        status, credential_version credentialVersion, auth_epoch authEpoch, version,
+        consecutive_password_failures failedAttempts, locked_until lockedUntil
+    </sql>
+    <sql id="ChallengeColumns">
+        challenge_id id, challenge_no challengeNo, account_id accountId, purpose, email_vault_token emailToken,
+        email_masked emailMasked, active_scope_hash scopeHash, secret_hmac secretHmac, hmac_key_version keyVersion,
+        expires_time expiresTime, max_attempts maxAttempts, used_attempts usedAttempts, status,
+        supersedes_challenge_id supersedesId, version, create_time createTime
+    </sql>
+    <select id="accountByEmail" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.CustomerAccount">
+        SELECT <include refid="AccountColumns"/> FROM t_user_account
+        WHERE realm='CUSTOMER' AND account_type='HUMAN' AND login_name IS NULL AND email_vault_token=#{token}
+    </select>
+    <select id="account" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.CustomerAccount">
+        SELECT <include refid="AccountColumns"/> FROM t_user_account
+        WHERE realm='CUSTOMER' AND account_type='HUMAN' AND account_id=#{id}
+    </select>
+    <select id="lockAccount" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.CustomerAccount">
+        SELECT <include refid="AccountColumns"/> FROM t_user_account
+        WHERE realm='CUSTOMER' AND account_type='HUMAN' AND account_id=#{id} FOR UPDATE
+    </select>
+    <insert id="insertAccount">
+        INSERT INTO t_user_account
+        (account_id, realm, account_type, login_name, email_vault_token, email_masked, email_verified_time, status,
+         consecutive_password_failures, locked_until, last_password_failure_time, credential_version, auth_epoch,
+         version, create_time, update_time)
+        VALUES (#{id}, 'CUSTOMER', 'HUMAN', NULL, #{token}, #{masked}, NULL, 'PENDING_VERIFICATION',
+                0, NULL, NULL, 1, 1, 1, #{now}, #{now})
+    </insert>
+    <insert id="insertPassword">
+        INSERT INTO t_password_credential
+        (password_credential_id, account_id, password_verifier_phc, algorithm_code, algorithm_version, memory_kib,
+         iterations, parallelism, credential_version, force_change_flag, status, password_changed_time,
+         version, create_time, update_time)
+        VALUES (#{id}, #{accountId}, #{verifier}, 'ARGON2ID', 19, 19456, 2, 1, 1, 0, 'ACTIVE', #{now}, 1, #{now}, #{now})
+    </insert>
+    <select id="latestChallenge" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.EmailAuthenticationChallenge">
+        SELECT <include refid="ChallengeColumns"/> FROM t_authentication_challenge
+        WHERE realm='CUSTOMER' AND account_id=#{accountId} AND purpose=#{purpose}
+        ORDER BY create_time DESC, challenge_id DESC LIMIT 1
+    </select>
+    <select id="challenge" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.EmailAuthenticationChallenge">
+        SELECT <include refid="ChallengeColumns"/> FROM t_authentication_challenge
+        WHERE realm='CUSTOMER' AND purpose IN ('SIGN_UP_EMAIL','PASSWORD_RESET') AND challenge_no=#{challengeNo}
+          AND account_id IS NOT NULL AND tenant_invitation_id IS NULL
+    </select>
+    <select id="lockChallenge" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.EmailAuthenticationChallenge">
+        SELECT <include refid="ChallengeColumns"/> FROM t_authentication_challenge
+        WHERE realm='CUSTOMER' AND purpose IN ('SIGN_UP_EMAIL','PASSWORD_RESET') AND challenge_id=#{id}
+          AND account_id IS NOT NULL AND tenant_invitation_id IS NULL FOR UPDATE
+    </select>
+    <update id="supersedeChallenge">
+        UPDATE t_authentication_challenge SET status='SUPERSEDED', active_slot=NULL, version=version+1, update_time=#{now}
+        WHERE challenge_id=#{id} AND realm='CUSTOMER' AND status='PENDING' AND active_slot=1 AND version=#{version}
+    </update>
+    <insert id="insertChallenge">
+        INSERT INTO t_authentication_challenge
+        (challenge_id, challenge_no, realm, purpose, account_id, tenant_invitation_id, email_vault_token, email_masked,
+         active_scope_hash, secret_hmac, hmac_key_version, expires_time, max_attempts, used_attempts, status, active_slot,
+         consumed_time, supersedes_challenge_id, version, create_time, update_time)
+        VALUES (#{challenge.id}, #{challenge.challengeNo}, 'CUSTOMER', #{challenge.purpose}, #{challenge.accountId}, NULL,
+                #{challenge.emailToken}, #{challenge.emailMasked}, #{challenge.scopeHash}, #{challenge.secretHmac},
+                #{challenge.keyVersion}, #{challenge.expiresTime}, 5, 0, 'PENDING', 1, NULL, #{challenge.supersedesId},
+                1, #{challenge.createTime}, #{challenge.createTime})
+    </insert>
+    <update id="consumeChallenge">
+        UPDATE t_authentication_challenge SET status='CONSUMED', active_slot=NULL, consumed_time=#{now},
+            version=version+1, update_time=#{now}
+        WHERE challenge_id=#{id} AND realm='CUSTOMER' AND version=#{version} AND status='PENDING'
+          AND active_slot=1 AND expires_time&gt;#{now} AND max_attempts=5 AND used_attempts&lt;max_attempts
+    </update>
+    <update id="failChallenge">
+        UPDATE t_authentication_challenge
+        SET status=CASE WHEN expires_time&lt;=#{now} THEN 'EXPIRED'
+                        WHEN used_attempts+1&gt;=max_attempts THEN 'REVOKED' ELSE 'PENDING' END,
+            active_slot=CASE WHEN expires_time&lt;=#{now} OR used_attempts+1&gt;=max_attempts THEN NULL ELSE 1 END,
+            used_attempts=LEAST(used_attempts+1,max_attempts), version=version+1, update_time=#{now}
+        WHERE challenge_id=#{id} AND realm='CUSTOMER' AND version=#{version} AND status='PENDING' AND active_slot=1
+    </update>
+    <update id="activateAccount">
+        UPDATE t_user_account SET status='ACTIVE', email_verified_time=#{now}, version=version+1, update_time=#{now}
+        WHERE account_id=#{id} AND realm='CUSTOMER' AND status='PENDING_VERIFICATION'
+          AND email_verified_time IS NULL AND email_vault_token=#{token} AND version=#{version}
+    </update>
+    <update id="resetAccount">
+        UPDATE t_user_account SET credential_version=credential_version+1, auth_epoch=auth_epoch+1,
+            consecutive_password_failures=0, locked_until=NULL, last_password_failure_time=NULL,
+            version=version+1, update_time=#{now}
+        WHERE account_id=#{id} AND realm='CUSTOMER' AND status='ACTIVE' AND email_verified_time IS NOT NULL
+          AND version=#{version}
+    </update>
+    <update id="resetPassword">
+        UPDATE t_password_credential SET password_verifier_phc=#{verifier}, algorithm_code='ARGON2ID',
+            algorithm_version=19, memory_kib=19456, iterations=2, parallelism=1,
+            credential_version=credential_version+1, force_change_flag=0,
+            password_changed_time=#{now}, version=version+1, update_time=#{now}
+        WHERE account_id=#{accountId} AND status='ACTIVE' AND credential_version=#{credentialVersion}
+    </update>
+    <update id="revokeAccountSessions">
+        UPDATE t_auth_session SET status='REVOKED', revocation_reason='PASSWORD_RESET', revoked_time=#{now},
+            version=version+1, update_time=#{now}
+        WHERE account_id=#{accountId} AND realm='CUSTOMER' AND status='ACTIVE'
+    </update>
+    <update id="revokeAccountRefresh">
+        UPDATE t_refresh_token_generation r JOIN t_auth_session s ON s.session_id=r.session_id
+        SET r.status='REVOKED', r.active_slot=NULL, r.version=r.version+1, r.update_time=#{now}
+        WHERE s.account_id=#{accountId} AND s.realm='CUSTOMER' AND r.status='ISSUED'
+    </update>
+    <update id="replacePendingAccount">
+        UPDATE t_user_account SET credential_version=credential_version+1, auth_epoch=auth_epoch+1,
+            version=version+1, update_time=#{now}
+        WHERE account_id=#{id} AND realm='CUSTOMER' AND status='PENDING_VERIFICATION'
+          AND email_verified_time IS NULL AND version=#{version}
+    </update>
+</mapper>

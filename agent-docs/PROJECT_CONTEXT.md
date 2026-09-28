@@ -28,13 +28,13 @@ Code-MoR 是 PayTech 的 Merchant of Record 平台。Client 将 Consumer 引导�
 | Payment Orchestration | Intent、Attempt、Channel/MID 路由、渠道 Action、回调、支付侧退款与 Void | Client 合同、Finance Ledger |
 | Risk & Compliance | 风险/合规评估、KYC/KYB 支持决定、Case、争议和限制 | 支付执行、资金出款和账务事实 |
 | Finance | 交易经济结果、复式账、账户余额、税务/财政事实、对账、保证金、追偿和 Manual Payout | Channel 交易状态、Client 主档和 Risk 决策 |
-| Platform Support | 人类 Account、Realm/Channel、Session、Tenant IAM、公共控制面、文件、通知、Webhook 和平台审计 | 核心业务编排、财务事实和 Gateway 运行计数器 |
+| Platform Support | 人类 Account、Realm/Channel、Session、Tenant IAM、公共控制面、文件、通知、Webhook、平台审计，以及获准的 Integration 配置与单次执行 | 核心业务编排、财务事实和 Gateway 运行计数器 |
 
 每个系统拥有独立数据库。禁止跨库读写、跨库外键或通过共享 DataObject 绕过 Owner。跨系统同步命令/查询使用窄 HTTP 契约，业务事实和内部回调使用 MQ。
 
 ## 4. 入口与技术支撑
 
-- API Gateway 负责入口、基础认证、限流、路由、Request ID 和访问日志，不做业务编排或核心资源授权。
+- API Gateway 负责入口、基础认证、限流、路由、Request ID、访问日志及各入口的 HTTP `Idempotency-Key` 请求幂等，不做业务编排或核心资源授权。业务防重、并发保护与必要恢复留在业务 Owner；完整边界见[开发规范第 5.4 节](./DEVELOPMENT_CONVENTIONS.md#54-请求幂等与业务防重)。
 - BFF 负责页面级聚合、授权查询组合和展示模型；它无状态，不拥有核心事实，也不编排跨系统业务事务。
 - Vault 是内部敏感值保护服务，不是第七个核心系统，不拥有 Consumer、Order 或其他业务语义。
 - 每个有状态服务使用本地 `compensation_event` 处理提交后的可靠异步工作；XXL-Job 只是兜底唤醒/分片机制，不建立中央补偿库或通用 Inbox/Outbox。
@@ -45,12 +45,12 @@ Code-MoR 是 PayTech 的 Merchant of Record 平台。Client 将 Consumer 引导�
 ## 5. 固定业务边界
 
 - Client 或 Local Partner 不为单笔交易选择 Operating Entity 或 MID。CCT 冻结 Order 的 Operating Entity，Payment 在该主体下为每个 Attempt 选择 MID。
-- `client_order_id` 在一个 Client 内永久唯一，不是传输幂等键；重试复用原幂等键，不自动创建替代 Order。
+- `client_order_id` 在一个 Client 内永久唯一，不是传输幂等键；启用 Gateway 请求幂等的接口，同一次 HTTP 请求重试复用原 Key。新 Key 也不能重复创建相同业务订单，不自动创建替代 Order。
 - 退款由 Commerce 和 Payment 分别锁定各自可退位置；Finance 只消费 `RefundSucceeded`，不预留退款现金，也不使用保证金支付退款。
 - Cancel 只关闭未支付 Order；Void 只释放成功但未 Capture 的 Authorization；Reversal 由 Commerce 发起并由 Payment 在锁内选择 Void 或完整 Refund 链。
 - Partner 交易访问只读；Partner 不能操作 Order、Payment、Refund、Routing、MID 或 Ledger。
 - Manual Payout 金额和费用由系统计算，MVP 使用固定双人审批、预创建 Execution、人工银行提交、付款证据和完整确认借记后完成。
-- Platform Support 只拥有六张公共控制面当前配置表：Target、Route、Header、Query Parameter、Guard Rule 和 Console Resource；不拥有 Gateway 运行限流状态、数据库 Snapshot、Release、Ack、Tenant Override 或通用技术配置。
+- Platform Support 只拥有六张公共控制面当前配置表：Target、Route、Header、Query Parameter、Guard Rule 和 Console Resource；不拥有 Gateway 运行限流状态、数据库 Snapshot、Release、Ack、Tenant Override 或任意通用技术配置。受控外部 API 定义及单次执行按[2026-09-21 Integration 决定](./decisions/2026-09-21-platform-integration-http-execution.md)新增窄范围，由 Platform 管理并通过内部 HTTP 提供执行能力。
 - `DisputeLost/DisputeOutcomeCorrected` 只有在 `outcome=LOST + principal_bearer=CLIENT + security_deposit_use_allowed=1` 时才允许 Finance 使用 Client Security Deposit，剩余短缺进入 Client Recovery Receivable。
 - Industry/MCC 资格由配置决定，不硬编码某个行业；Offering 对 MVP 可选，订单创建时冻结所需交易上下文。
 

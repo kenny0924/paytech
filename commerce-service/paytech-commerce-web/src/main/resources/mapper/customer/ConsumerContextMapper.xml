@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commerce.core.dal.mapper.customer.ConsumerContextMapper">
+    <select id="existsByOrderId" resultType="boolean" useCache="false" flushCache="true">
+        SELECT EXISTS(SELECT 1 FROM t_consumer_context WHERE order_id=#{orderId})
+    </select>
+    <resultMap id="ConsumerContext" type="com.paytech.commerce.core.dal.dataobject.customer.ConsumerContext">
+        <id column="consumer_context_id" property="consumerContextId"/>
+        <result column="order_id" property="orderId"/>
+        <result column="email_vault_token" property="emailVaultToken"/>
+        <result column="consumer_profile_vault_token" property="consumerProfileVaultToken"/>
+        <result column="email_domain" property="emailDomain"/>
+        <result column="billing_country_code" property="billingCountryCode"/>
+        <result column="billing_region_code" property="billingRegionCode"/>
+        <result column="billing_city" property="billingCity"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <select id="findByOrderId" resultMap="ConsumerContext" useCache="false" flushCache="true">
+        SELECT consumer_context_id,order_id,email_vault_token,consumer_profile_vault_token,email_domain,
+            billing_country_code,billing_region_code,billing_city,version,create_time,update_time
+        FROM t_consumer_context WHERE order_id=#{orderId}
+    </select>
+    <insert id="insert">
+        INSERT INTO t_consumer_context (consumer_context_id,order_id,consumer_reference,email_vault_token,
+            consumer_profile_vault_token,email_domain,billing_country_code,billing_region_code,billing_city,
+            version,create_time,update_time)
+        VALUES (#{consumer.consumerContextId},#{consumer.orderId},NULL,#{values.emailToken},#{values.profileToken},
+            #{emailDomain},#{address.countryCode},#{address.region},#{address.city},1,#{now},#{now})
+    </insert>
+    <update id="update">
+        UPDATE t_consumer_context SET email_vault_token=#{values.emailToken},
+            consumer_profile_vault_token=#{values.profileToken},email_domain=#{emailDomain},
+            billing_country_code=#{address.countryCode},billing_region_code=#{address.region},
+            billing_city=#{address.city},version=version+1,update_time=#{now}
+        WHERE consumer_context_id=#{consumer.consumerContextId} AND order_id=#{consumer.orderId}
+            AND version=#{consumer.version}
+    </update>
+</mapper>

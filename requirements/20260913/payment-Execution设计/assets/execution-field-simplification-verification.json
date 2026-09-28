@@ -1,0 +1,132 @@
+{
+  "date": "2026-09-14",
+  "scope": "Payment database artifacts only; full confirmed field simplification",
+  "model": {
+    "path": "payment-orchestration-service/docs/database/payment-orchestration.pdma.json",
+    "sha256": "acfe540f630ef655497861311fbc0a85196356ddd03ee947e3f76f4a5f87d606",
+    "structuralSha256": "38efc5069c748a1f35b2f7e50774ac25509f893732b099db1e955d71ab2ad0d0",
+    "totals": {
+      "tables": 28,
+      "fields": 358,
+      "uniqueIndexes": 43,
+      "accessIndexes": 43,
+      "relations": 64,
+      "oneToOneRelations": 8,
+      "diagramGroups": 7
+    }
+  },
+  "delta": {
+    "removedTables": [
+      "t_payment_pricing_fact",
+      "t_payment_state_transition"
+    ],
+    "fieldChanges": [
+      {
+        "table": "t_payment_intent",
+        "removed": [
+          "context_format",
+          "source_order_context_id"
+        ],
+        "added": []
+      },
+      {
+        "table": "t_payment_attempt",
+        "removed": [
+          "acceptance_completed_at",
+          "authentication_requirement",
+          "consumer_contract_id",
+          "consumer_terms_acceptance_id",
+          "failure_stage",
+          "order_version",
+          "privacy_notice_acceptance_id",
+          "refund_policy_acceptance_id",
+          "status_reason_code"
+        ],
+        "added": [
+          "channel_account_id",
+          "channel_id",
+          "mid_id"
+        ]
+      },
+      {
+        "table": "t_payment_action",
+        "removed": [
+          "authentication_action_id",
+          "authentication_outcome",
+          "authentication_valid_until",
+          "challenge_performed",
+          "channel_account_id",
+          "channel_id",
+          "channel_operation_ref",
+          "mid_id",
+          "status_reason_code"
+        ],
+        "added": [
+          "authentication_requirement",
+          "channel_response_code",
+          "channel_response_msg"
+        ]
+      }
+    ],
+    "survivingEntityAndFieldIdsStable": true
+  },
+  "checks": [
+    {
+      "command": "node --test scripts/pdmaner/payment-model.test.mjs scripts/pdmaner/payment-scenario-doc.test.mjs scripts/pdmaner/payment-execution-simplification.test.mjs scripts/pdmaner/oe-client-model.test.mjs",
+      "passed": 34,
+      "failed": 0
+    },
+    {
+      "command": "npm --prefix requirements-site run test:content",
+      "passed": 71,
+      "failed": 0
+    },
+    {
+      "command": "node scripts/pdmaner/generate-payment-model.mjs --check",
+      "result": "passed"
+    },
+    {
+      "check": "Manual empty-schema migration static coverage",
+      "result": "10 ALTER definitions cover target columns/indexes; 1 Token CREATE and exactly 3 approved DROP targets; not executed in MySQL"
+    },
+    {
+      "check": "Changed documentation local links",
+      "documents": 24,
+      "links": 819,
+      "missing": 0
+    },
+    {
+      "check": "PDManer application",
+      "result": "Canonical file refreshed; 28 tables visible; all 28 built-in specification checks showed green; execution diagram and moved fields inspected; not all seven diagrams traversed visually"
+    }
+  ],
+  "database": {
+    "target": "127.0.0.1:13306/mor_payment",
+    "access": "read-only",
+    "existingTableCounts": {
+      "t_payment_intent_binding": 0,
+      "t_payment_intent": 0,
+      "t_payment_attempt": 0,
+      "t_payment_action": 0,
+      "t_payment_instrument": 0,
+      "t_command_idempotency": 0,
+      "t_compensation_event": 0,
+      "t_channel_refund": 0,
+      "t_channel_transaction_ref": 0,
+      "t_payment_pricing_fact": 0,
+      "t_payment_refund_position": 0,
+      "t_duplicate_payment_case": 0,
+      "t_payment_state_transition": 0
+    },
+    "targetSchemaApplied": false,
+    "executionTargetTables": 11
+  },
+  "javaChangedThisStage": false,
+  "commitCreated": false,
+  "deployed": false,
+  "limitations": [
+    "No DDL/DML executed; SQL has not been validated by execution in MySQL.",
+    "Existing Java and HTTP/MQ consumers still require route/authentication/history/pricing adaptations before schema rollout.",
+    "The existing Excel retains earlier field locations; the new amendment and PDManer own current fields."
+  ]
+}

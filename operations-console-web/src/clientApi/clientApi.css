@@ -1,0 +1,10 @@
+.client-api-page .client-api-search { display: grid; grid-template-columns: minmax(240px, 1.2fr) minmax(240px, 1.2fr) minmax(140px, .7fr) auto; gap: 16px; align-items: end; }
+.client-api-search > .configuration-actions { margin-bottom: 24px; }
+.client-api-page .client-api-search-mode { width: 124px; min-width: 124px; flex: 0 0 124px; }
+.client-api-search .ant-input-affix-wrapper { min-width: 0; flex: 1; }
+.client-api-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.client-api-modal-actions { justify-content: flex-end; margin-top: 24px; }
+.client-api-reference { margin-top: 24px; }
+.client-api-page .ant-descriptions-item-content { overflow-wrap: anywhere; }
+@media (max-width: 1100px) { .client-api-page .client-api-search { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 650px) { .client-api-page .client-api-search { grid-template-columns: 1fr; } }

@@ -1,0 +1,6 @@
+{
+  "code": "IDEMPOTENCY_KEY_CONFLICT",
+  "message": "幂等键已被不同请求使用",
+  "requestId": "test-request-id-0001",
+  "timestamp": "2026-09-04T00:00:00Z"
+}

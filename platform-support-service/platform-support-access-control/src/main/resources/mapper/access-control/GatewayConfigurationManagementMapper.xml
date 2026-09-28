@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.GatewayConfigurationManagementMapper">
+
+    <sql id="TargetColumns">
+        target_id targetId, target_service_code targetServiceCode, discovery_service_name discoveryServiceName,
+        channel, status, version, created_by createdBy, updated_by updatedBy, create_time createTime,
+        update_time updateTime
+    </sql>
+
+    <sql id="TargetFilters">
+        <where>
+            <if test="code != null">AND target_service_code=#{code}</if>
+            <if test="channel != null">AND channel=#{channel}</if>
+            <if test="status != null">AND status=#{status}</if>
+        </where>
+    </sql>
+
+    <select id="targets"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayTargetManagement">
+        SELECT <include refid="TargetColumns"/>
+        FROM t_gateway_target
+        <include refid="TargetFilters"/>
+        ORDER BY target_service_code, target_id
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="targetCount" resultType="_long">
+        SELECT COUNT(*) FROM t_gateway_target
+        <include refid="TargetFilters"/>
+    </select>
+
+    <select id="target"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayTargetManagement">
+        SELECT <include refid="TargetColumns"/>
+        FROM t_gateway_target
+        WHERE target_service_code=#{code}
+    </select>
+
+    <update id="updateTargetStatus">
+        UPDATE t_gateway_target
+        SET status=#{status}, version=version+1, updated_by=#{actorId}, update_time=#{now}
+        WHERE target_id=#{id} AND version=#{version}
+    </update>
+
+    <sql id="RouteColumns">
+        r.route_id routeId, r.route_code routeCode, r.channel, r.http_method httpMethod,
+        r.external_path_template externalPathTemplate, r.downstream_path_template downstreamPathTemplate,
+        r.target_id targetId, t.target_service_code targetServiceCode, t.status targetStatus,
+        r.security_profile_code securityProfileCode, r.authorization_mode authorizationMode,
+        r.permission_id permissionId, p.permission_code permissionCode, r.required_scope_code requiredScopeCode,
+        r.request_cookie_mode requestCookieMode, r.response_cookie_mode responseCookieMode,
+        r.body_limit_bytes bodyLimitBytes, r.body_receive_timeout_millis bodyReceiveTimeoutMillis,
+        r.response_timeout_millis responseTimeoutMillis, r.status, r.version, r.created_by createdBy,
+        r.updated_by updatedBy, r.create_time createTime, r.update_time updateTime
+    </sql>
+
+    <sql id="RouteFrom">
+        FROM t_gateway_route r
+        JOIN t_gateway_target t ON t.target_id=r.target_id AND t.channel=r.channel
+        LEFT JOIN t_permission p ON p.permission_id=r.permission_id
+    </sql>
+
+    <sql id="RouteFilters">
+        <where>
+            <if test="code != null">AND r.route_code=#{code}</if>
+            <if test="channel != null">AND r.channel=#{channel}</if>
+            <if test="status != null">AND r.status=#{status}</if>
+            <if test="targetCode != null">AND t.target_service_code=#{targetCode}</if>
+            <if test="requiredScopeCode != null">AND r.required_scope_code=#{requiredScopeCode} AND BINARY r.required_scope_code=BINARY #{requiredScopeCode}</if>
+        </where>
+    </sql>
+
+    <select id="routes"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayRouteManagement">
+        SELECT <include refid="RouteColumns"/>
+        <include refid="RouteFrom"/>
+        <include refid="RouteFilters"/>
+        ORDER BY r.route_code, r.route_id
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="routeCount" resultType="_long">
+        SELECT COUNT(*)
+        <include refid="RouteFrom"/>
+        <include refid="RouteFilters"/>
+    </select>
+
+    <select id="route"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayRouteManagement">
+        SELECT <include refid="RouteColumns"/>
+        <include refid="RouteFrom"/>
+        WHERE r.route_code=#{code}
+    </select>
+
+    <select id="routeRoot"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayRouteRoot">
+        SELECT route_id routeId, route_code routeCode, target_id targetId, authorization_mode authorizationMode,
+        permission_id permissionId, status, version
+        FROM t_gateway_route
+        WHERE route_code=#{code}
+    </select>
+
+    <select id="headers"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayRouteHeader">
+        SELECT route_id routeId, header_name headerName, header_use headerUse
+        FROM t_gateway_route_header
+        WHERE route_id=#{routeId}
+        ORDER BY header_use, header_name, route_header_id
+    </select>
+
+    <select id="queryParameters"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayRouteQueryParam">
+        SELECT route_id routeId, parameter_name parameterName
+        FROM t_gateway_route_query_param
+        WHERE route_id=#{routeId}
+        ORDER BY parameter_name, route_query_param_id
+    </select>
+
+    <select id="guardRules"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayGuardRule">
+        SELECT route_id routeId, rule_type ruleType, dimension, capacity, refill_tokens refillTokens,
+        refill_period_millis refillPeriodMillis, concurrency_limit concurrencyLimit
+        FROM t_gateway_guard_rule
+        WHERE route_id=#{routeId}
+        ORDER BY rule_type, dimension, guard_rule_id
+    </select>
+
+    <update id="updateRouteStatus">
+        UPDATE t_gateway_route
+        SET status=#{status}, version=version+1, updated_by=#{actorId}, update_time=#{now}
+        WHERE route_id=#{id} AND version=#{version}
+    </update>
+
+    <select id="permissionActive" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM t_permission WHERE permission_id=#{permissionId} AND status='ACTIVE'
+        )
+    </select>
+
+    <insert id="insertTarget">
+        INSERT INTO t_gateway_target (target_id,target_service_code,discovery_service_name,channel,status,version,
+            created_by,updated_by,create_time,update_time)
+        VALUES (#{row.targetId},#{row.targetServiceCode},#{row.discoveryServiceName},#{row.channel},#{row.status},1,
+            #{actorId},#{actorId},#{now},#{now})
+    </insert>
+    <update id="updateTarget">
+        UPDATE t_gateway_target SET discovery_service_name=#{row.discoveryServiceName},version=version+1,
+            updated_by=#{actorId},update_time=#{now} WHERE target_id=#{row.targetId} AND version=#{version}
+    </update>
+    <insert id="insertRoute">
+        INSERT INTO t_gateway_route (route_id,route_code,channel,http_method,external_path_template,
+            downstream_path_template,target_id,security_profile_code,authorization_mode,permission_id,
+            required_scope_code,request_cookie_mode,response_cookie_mode,body_limit_bytes,body_receive_timeout_millis,
+            response_timeout_millis,status,version,created_by,updated_by,create_time,update_time)
+        VALUES (#{row.routeId},#{row.routeCode},#{row.channel},#{row.httpMethod},#{row.externalPathTemplate},
+            #{row.downstreamPathTemplate},#{row.targetId},#{row.securityProfileCode},#{row.authorizationMode},
+            #{row.permissionId},#{row.requiredScopeCode},#{row.requestCookieMode},#{row.responseCookieMode},
+            #{row.bodyLimitBytes},#{row.bodyReceiveTimeoutMillis},#{row.responseTimeoutMillis},#{row.status},1,
+            #{actorId},#{actorId},#{now},#{now})
+    </insert>
+    <update id="updateRoute">
+        UPDATE t_gateway_route SET http_method=#{row.httpMethod},external_path_template=#{row.externalPathTemplate},
+            downstream_path_template=#{row.downstreamPathTemplate},target_id=#{row.targetId},
+            security_profile_code=#{row.securityProfileCode},authorization_mode=#{row.authorizationMode},
+            permission_id=#{row.permissionId},required_scope_code=#{row.requiredScopeCode},
+            request_cookie_mode=#{row.requestCookieMode},response_cookie_mode=#{row.responseCookieMode},
+            body_limit_bytes=#{row.bodyLimitBytes},body_receive_timeout_millis=#{row.bodyReceiveTimeoutMillis},
+            response_timeout_millis=#{row.responseTimeoutMillis},version=version+1,updated_by=#{actorId},update_time=#{now}
+        WHERE route_id=#{row.routeId} AND version=#{version}
+    </update>
+    <delete id="deleteHeaders">DELETE FROM t_gateway_route_header WHERE route_id=#{routeId}</delete>
+    <delete id="deleteQueries">DELETE FROM t_gateway_route_query_param WHERE route_id=#{routeId}</delete>
+    <delete id="deleteGuards">DELETE FROM t_gateway_guard_rule WHERE route_id=#{routeId}</delete>
+    <insert id="insertHeader">
+        INSERT INTO t_gateway_route_header (route_header_id,route_id,header_name,header_use)
+        VALUES (#{id},#{row.routeId},#{row.headerName},#{row.headerUse})
+    </insert>
+    <insert id="insertQuery">
+        INSERT INTO t_gateway_route_query_param (route_query_param_id,route_id,parameter_name)
+        VALUES (#{id},#{row.routeId},#{row.parameterName})
+    </insert>
+    <insert id="insertGuard">
+        INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,capacity,refill_tokens,
+            refill_period_millis,concurrency_limit)
+        VALUES (#{id},#{row.routeId},#{row.ruleType},#{row.dimension},#{row.capacity},#{row.refillTokens},
+            #{row.refillPeriodMillis},#{row.concurrencyLimit})
+    </insert>
+    <select id="permissionIdentity" resultType="com.paytech.platform.support.accesscontrol.domainservice.repository.GatewayConfigurationManagementRepository$PermissionIdentity">
+        SELECT permission_id permissionId,permission_code permissionCode,status='ACTIVE' active
+        FROM t_permission WHERE permission_id=#{id} FOR SHARE
+    </select>
+</mapper>

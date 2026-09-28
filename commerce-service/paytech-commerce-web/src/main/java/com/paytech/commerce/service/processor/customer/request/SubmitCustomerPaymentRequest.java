@@ -1,0 +1,39 @@
+package com.paytech.commerce.service.processor.customer.request;
+
+import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInput;
+import com.paytech.commerce.domain.customer.CustomerCheckoutModels.NetworkEvidence;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+/** 当前支付的内部输入，不持有 HTTP Body、Servlet 或数据库事务。 */
+@Getter
+@AllArgsConstructor
+public class SubmitCustomerPaymentRequest {
+    /** 原公开 Checkout Token。 */
+    private final String checkoutToken;
+    /** 当前已展示合同的主键。 */
+    @Positive
+    private final long consumerContractId;
+    /** 必须明确同意合同，不从服务器默认值推导。 */
+    @NotNull
+    @AssertTrue
+    private final Boolean confirmed;
+    /** 当前请求瞬时持有的卡输入。 */
+    @Valid
+    @NotNull
+    private final CardInput card;
+    /** 入站适配器从可信连接取得的网络证据。 */
+    @NotNull
+    private final NetworkEvidence evidence;
+    /** 公共组件提供的请求标识。 */
+    @NotBlank
+    @Size(max = 128)
+    private final String requestId;
+}

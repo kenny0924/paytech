@@ -67,7 +67,7 @@ CCT 必须恢复原 Client Root 历史的来源身份，不能用最新 Applicat
 
 ## 4. 事务、并发及开关
 
-Processor 通过 Foundation `@ResourceLock` 协调 `customer:account:{accountId}` 与 `tenant:source:client:{clientId}`。全部 Redis 锁在本地事务之前取得，提交/回滚后释放。事务内按 Account → Tenant → Member/Role 顺序操作本库；不调用 CCT、Vault 或 Redis。
+Processor 继承 Foundation `AbstractLockProcessor`，通过 `LockCommand.tryLocks` 一次提供 `lock:customer:account:{accountId}` 与 `tenant:source:client:{clientId}`；账号键与 Client 认证入口一致。完整逻辑 Key 不再添加额外前缀，沿用服务级 `redis.coordination.resource-lock.wait-time/lease-time`，在启动期校验有限等待及租约。全部 Key 排序去重后共享一次等待预算，全部 Redis 锁在本地事务之前取得，后续锁获取失败或提交/回滚完成后逆序释放。事务内按 Account → Tenant → Member/Role 顺序操作本库；不调用 CCT、Vault 或 Redis。
 
 来源唯一索引、Account/Tenant 行锁及来源/本地版本 CAS 是 Redis 租约到期后的最终保护。不同申请人竞争同一不存在来源时，精确 `uk_access_tenant` 冲突在整体回滚后转换为 409，不把其他唯一键错误冒充幂等成功。
 

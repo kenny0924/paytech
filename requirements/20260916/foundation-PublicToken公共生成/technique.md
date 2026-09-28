@@ -12,3 +12,14 @@
 
 现行 Checkout Wire 与数据库约束仍见[原设计第 6 节](../../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md#6-checkout-public-token)。
 不新增第三方依赖或配置；应用不自动创建或修改数据库。
+
+## Commerce orderNo / refundRequestNo 生成格式
+
+- `CreateCheckoutProcessor` 直接生成 `ord_ + PublicTokenGenerator.generate(clientIdText, clientOrderId)`，移除 CheckoutOrderNumberGenerator 接口和旧 Base64 实现。
+- `CreateRefundProcessor` 直接生成 `rfd_ + PublicTokenGenerator.generate(clientIdText, orderNo, clientRefundId)`，替代 UUID 拼接；只在新退款分支生成，业务重放读取原编号。
+- `chk_`、`ord_`、`rfd_` 保持各自业务意义，主体均为公共工具的 27 位 Core + 3 位校验码，总长度 34。每次生成一次，不增加候选、配置、Spring 组件或另一份编码算法。
+- 创建 Checkout 响应的内部坐标校验同时接受新 Token 主体和旧 22 位 Base64 主体，因为该类型还供历史回执 Reader 使用。只读历史 CheckoutCreationSnapshot 继续按原快照格式解析，新创建不写该快照。
+- 外部订单、退款查询继续接受既有不透明字符串；不以新 CRC 要求阻断旧编号。归属、权限、业务防重仍由已有业务事实决定，不能用编号格式或混入参数代替授权。
+- `order_no`、`refund_request_no` 已为大小写敏感的 VARCHAR(64)，既有唯一索引继续保护生成冲突；无需 DDL、PDManer 或数据回填。OpenAPI 描述新生成格式，但保持原查询输入边界。
+
+本增量只修改 Commerce 消费者及关联说明，Foundation 工具实现不变。按用户要求未执行测试、构建或验证，旧生成器及构造器相关测试适配待后续处理；当前状态见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-public-numbers-20260916)。

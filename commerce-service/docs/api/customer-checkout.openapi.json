@@ -1,0 +1,1298 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Commerce Customer Checkout",
+    "version": "1.0.0",
+    "description": "Commerce 统一提供 5 个 Customer 操作；Token、协议接受和提交编排均在 Commerce。Payment Card 专用内部端口暂为 Mock + TODO，实际路径加 /commerce。公开缓存头由 Gateway 输出，Commerce 不再通过专用 Filter 保证直连缓存头；本次未修改或验证 Gateway。"
+  },
+  "servers": [
+    {
+      "url": "/commerce"
+    }
+  ],
+  "paths": {
+    "/customer-gateway-api/v1/checkouts/{checkoutToken}": {
+      "get": {
+        "operationId": "getCustomerCheckout",
+        "description": "按原 Checkout Token 加载或轮询公开视图；includeConsumer 默认 false，仅显式为 true 时回填已有消费者资料。GET 不写入初始化信息、支付或接受记录，不延长原期限；按需查询，返回前重验版本，事实变化时返回冲突，由调用方重新查询。金额按订单币种精度输出。",
+        "tags": [
+          "Customer"
+        ],
+        "parameters": [
+          {
+            "name": "checkoutToken",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 34,
+              "maxLength": 34
+            },
+            "description": "原 Checkout 的能力令牌；必须通过 CRC、同 Order/Session 归属和当前期限验证。"
+          },
+          {
+            "name": "includeConsumer",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "仅 true 且已保存时读取受控原值；其余 Query、重复单值 Query 或 GET Body 拒绝。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "读取或处理成功。",
+            "headers": {
+              "Cache-Control": {
+                "description": "公开响应由 Gateway 统一设置 no-store，包括错误响应；Commerce 直连不保证该响应头。",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "共享 Foundation Request ID，与 Problem Body 一致。"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCheckoutResponseBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Foundation RFC 9457 Problem；400/403/404/409/410/422/502/503 按实际错误分类。",
+            "headers": {
+              "Cache-Control": {
+                "description": "公开响应由 Gateway 统一设置 no-store，包括错误响应；Commerce 直连不保证该响应头。",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "共享 Foundation Request ID，与 Problem Body 一致。"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer-gateway-api/v1/checkouts/{checkoutToken}/consumer": {
+      "put": {
+        "operationId": "saveCustomerConsumer",
+        "description": "首次法律接受前完整替换消费者资料（创建时的商业初始化不锁定资料）。可选地址成员省略或 null 表示清空；不要求 Idempotency-Key，每次请求按当前订单状态保存，不重放历史响应。资料保护在事务外执行，订单版本与资料在本地事务中原子保存；并发状态或版本变化返回冲突，调用方需重新读取后重试。",
+        "tags": [
+          "Customer"
+        ],
+        "parameters": [
+          {
+            "name": "checkoutToken",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 34,
+              "maxLength": 34
+            },
+            "description": "原 Checkout 的能力令牌；必须通过 CRC、同 Order/Session 归属和当前期限验证。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "读取或处理成功。",
+            "headers": {
+              "Cache-Control": {
+                "description": "公开响应由 Gateway 统一设置 no-store，包括错误响应；Commerce 直连不保证该响应头。",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "共享 Foundation Request ID，与 Problem Body 一致。"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveConsumerResponseBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Foundation RFC 9457 Problem；400/403/404/409/410/422/502/503 按实际错误分类。",
+            "headers": {
+              "Cache-Control": {
+                "description": "公开响应由 Gateway 统一设置 no-store，包括错误响应；Commerce 直连不保证该响应头。",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "共享 Foundation Request ID，与 Problem Body 一致。"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "description": "最多 16 KiB；普通未知成员忽略；Commerce 不提供卡输入模型。",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveConsumerRequestBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer-gateway-api/v1/checkouts/{checkoutToken}/payments": {
+      "post": {
+        "operationId": "submitCustomerPayment",
+        "tags": [
+          "Customer"
+        ],
+        "parameters": [
+          {
+            "name": "checkoutToken",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 34,
+              "maxLength": 34
+            },
+            "description": "原 Checkout 的能力令牌；必须通过 CRC、同 Order/Session 归属和当前期限验证。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "读取或处理成功。",
+            "headers": {
+              "Cache-Control": {
+                "description": "公开响应由 Gateway 统一设置 no-store，包括错误响应；Commerce 直连不保证该响应头。",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "共享 Foundation Request ID，与 Problem Body 一致。"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSubmissionResponseBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Foundation RFC 9457 Problem；400/403/404/409/410/422/502/503 按实际错误分类。",
+            "headers": {
+              "Cache-Control": {
+                "description": "公开响应由 Gateway 统一设置 no-store，包括错误响应；Commerce 直连不保证该响应头。",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "共享 Foundation Request ID，与 Problem Body 一致。"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "原提交已可靠受理，支付执行或结果尚未确定；不承诺缺少 CVV 时可后台完成首发。",
+            "headers": {
+              "Cache-Control": {
+                "description": "公开响应由 Gateway 统一设置 no-store，包括错误响应；Commerce 直连不保证该响应头。",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "共享 Foundation Request ID，与 Problem Body 一致。"
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "const": "2"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSubmissionResponseBody"
+                }
+              }
+            }
+          }
+        },
+        "description": "校验原 Token、订单、消费者及准确合同，在本地短事务保存首次三份法律接受和网络证据。尚无 Intent 时，事务外按 COMMERCE_ORDER + orderId 创建唯一 Intent，短事务绑定并重新验证取消/期限/版本后调用卡支付；已有 Intent 直接复用。创建响应未知时尚未调用卡支付，后续仍使用原订单身份；卡支付响应未知时返回 202 与 submissionId，客户端查询原提交，不自动重复扣款。请求不读写幂等表、Hash 或响应快照；HTTP Idempotency-Key 属于 Gateway。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitPaymentRequestBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer-gateway-api/v1/checkouts/{checkoutToken}/payment-submissions/{submissionId}": {
+      "get": {
+        "operationId": "getCustomerPaymentSubmission",
+        "tags": [
+          "Customer"
+        ],
+        "parameters": [
+          {
+            "name": "checkoutToken",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 34,
+              "maxLength": 34
+            },
+            "description": "原 Checkout 的能力令牌；必须通过 CRC、同 Order/Session 归属和当前期限验证。"
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "description": "原 Commerce 提交 ID，不是授权 Token。",
+            "schema": {
+              "type": "string",
+              "description": "规范正十进制 ID。",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "读取或处理成功。",
+            "headers": {
+              "Cache-Control": {
+                "description": "公开响应由 Gateway 统一设置 no-store，包括错误响应；Commerce 直连不保证该响应头。",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "共享 Foundation Request ID，与 Problem Body 一致。"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSubmissionResponseBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Foundation RFC 9457 Problem；400/403/404/409/410/422/502/503 按实际错误分类。",
+            "headers": {
+              "Cache-Control": {
+                "description": "公开响应由 Gateway 统一设置 no-store，包括错误响应；Commerce 直连不保证该响应头。",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "共享 Foundation Request ID，与 Problem Body 一致。"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "由 Checkout Token 按需读取 Session、订单和唯一 Intent，各查询一次，再使用这些归属及 submissionId 查询 Payment。不读取命令表或响应快照，不开启事务或重查数据库；返回前只校验原访问期限，不因普通版本变化返回 409。有效期内可以查询已支付或取消订单的原提交。Payment 在该订单及 Intent 下未找到提交返回 404；若返回错误归属的结果，按下游协议错误处理。访问到期返回 410。404 只代表查询当时未找到，不能证明在途提交未执行，也不授权自动再次发起支付。"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SaveConsumerRequestBody": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/BillingAddressInfo"
+          }
+        },
+        "required": [
+          "fullName",
+          "email",
+          "billingAddress"
+        ],
+        "additionalProperties": true
+      },
+      "BillingAddressInfo": {
+        "type": "object",
+        "properties": {
+          "countryCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "addressLine1": {
+            "type": "string"
+          },
+          "addressLine2": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "city": {
+            "type": "string"
+          },
+          "postalCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "countryCode",
+          "addressLine1",
+          "city"
+        ],
+        "additionalProperties": true
+      },
+      "SaveConsumerResponseBody": {
+        "type": "object",
+        "properties": {
+          "orderNo": {
+            "type": "string"
+          },
+          "consumerStatus": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderNo",
+          "consumerStatus"
+        ],
+        "additionalProperties": false
+      },
+      "CheckoutAmountsInfo": {
+        "type": "object",
+        "description": "金额使用币种主单位十进制字符串，按币种精度输出；USD 的 10 美元表示为 \"10.00\"，不表示为 1000。新创建订单已确定税、舍入及总额；未初始化历史数据保留 null。",
+        "properties": {
+          "merchandiseAmount": {
+            "description": "优惠前商品总额，等于各行单价乘数量之和；使用订单币种主单位字符串并按币种精度输出。",
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "discountAmount": {
+            "description": "订单优惠总额，等于各行优惠金额之和；使用订单币种主单位字符串并按币种精度输出。",
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "netAmount": {
+            "description": "优惠后税前净额，等于商品总额减优惠总额；使用订单币种主单位字符串并按币种精度输出。",
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "taxAmount": {
+            "description": "税额，使用订单币种主单位字符串并按币种精度输出；新创建时已确定，未初始化历史数据为 null。",
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "roundingAmount": {
+            "description": "舍入调整金额，使用订单币种主单位字符串并按币种精度输出；新创建时已确定，未初始化历史数据为 null。",
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "totalAmount": {
+            "description": "最终应付总额，使用订单币种主单位字符串并按币种精度输出；新创建时已确定，未初始化历史数据为 null，不能用零代替未知。",
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "merchandiseAmount",
+          "discountAmount",
+          "netAmount",
+          "taxAmount",
+          "roundingAmount",
+          "totalAmount"
+        ],
+        "additionalProperties": false
+      },
+      "CheckoutItemInfo": {
+        "type": "object",
+        "description": "商品金额字段使用币种主单位十进制字符串；USD 单价 10 美元表示为 \"10.00\"。quantity 为独立的数量字符串。",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quantity": {
+            "description": "商品数量的正数字符串，可含小数，不受币种小数位限制。",
+            "example": "0.5",
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "unitAmount": {
+            "description": "商品单价，使用订单币种主单位字符串并按币种精度输出；USD 的 10 美元表示为 10.00。",
+            "example": "10.00",
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "discountAmount": {
+            "description": "整行优惠金额，不再乘数量；使用订单币种主单位字符串并按币种精度输出。",
+            "example": "1.00",
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "netAmount": {
+            "description": "优惠后行净额，等于单价乘数量减整行优惠；使用订单币种主单位字符串并按币种精度输出。",
+            "example": "4.00",
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "quantity",
+          "unitAmount",
+          "discountAmount",
+          "netAmount"
+        ],
+        "additionalProperties": false
+      },
+      "ConsumerInfo": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConsumerDetailsInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "details"
+        ],
+        "additionalProperties": false
+      },
+      "ConsumerDetailsInfo": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/BillingAddressInfo"
+          }
+        },
+        "required": [
+          "fullName",
+          "email",
+          "billingAddress"
+        ],
+        "additionalProperties": true
+      },
+      "SellerInfo": {
+        "type": "object",
+        "properties": {
+          "legalName": {
+            "type": "string"
+          },
+          "registrationNumber": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "taxRegistrationNumber": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "addressText": {
+            "type": "string"
+          },
+          "supportEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "supportPhone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "legalName",
+          "registrationNumber",
+          "taxRegistrationNumber",
+          "addressText",
+          "supportEmail",
+          "supportPhone"
+        ],
+        "additionalProperties": false
+      },
+      "DocumentInfo": {
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "CONSUMER_TERMS",
+              "REFUND_POLICY",
+              "PRIVACY_NOTICE"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 4096,
+            "pattern": "^https://"
+          },
+          "urlExpiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "documentType",
+          "title",
+          "url",
+          "urlExpiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "LegalInfo": {
+        "type": "object",
+        "properties": {
+          "consumerContractId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,18}$",
+            "description": "规范 BIGINT 正十进制字符串，不超过 9223372036854775807。"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentInfo"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "consumerContractId",
+          "documents"
+        ],
+        "additionalProperties": false
+      },
+      "NextActionInfo": {
+        "type": "object",
+        "properties": {
+          "actionId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,18}$",
+            "description": "规范 BIGINT 正十进制字符串，不超过 9223372036854775807。"
+          },
+          "type": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "actionId",
+          "type",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "FailureInfo": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "PaymentInfo": {
+        "type": "object",
+        "properties": {
+          "availability": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "UNAVAILABLE"
+            ]
+          },
+          "submissionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[1-9][0-9]{0,18}$",
+                "description": "规范 BIGINT 正十进制字符串，不超过 9223372036854775807。"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "submissionExpiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attemptId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[1-9][0-9]{0,18}$",
+                "description": "规范 BIGINT 正十进制字符串，不超过 9223372036854775807。"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nextAction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NextActionInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "failure": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FailureInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "observedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "availability",
+          "submissionId",
+          "submissionExpiresAt",
+          "attemptId",
+          "status",
+          "nextAction",
+          "failure",
+          "observedAt"
+        ],
+        "additionalProperties": false
+      },
+      "GetCheckoutResponseBody": {
+        "type": "object",
+        "properties": {
+          "orderNo": {
+            "type": "string"
+          },
+          "orderStatus": {
+            "type": "string"
+          },
+          "checkoutStatus": {
+            "type": "string"
+          },
+          "preparationStatus": {
+            "type": "string"
+          },
+          "amountStatus": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "consumerCountryCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$"
+          },
+          "amounts": {
+            "$ref": "#/components/schemas/CheckoutAmountsInfo"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckoutItemInfo"
+            }
+          },
+          "consumer": {
+            "$ref": "#/components/schemas/ConsumerInfo"
+          },
+          "seller": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SellerInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "legal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LegalInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "payment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "SAVE_CONSUMER",
+                "PAY",
+                "CONTINUE_AUTHENTICATION",
+                "CHECK_PAYMENT_STATUS"
+              ]
+            }
+          },
+          "pollAfterMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 2000,
+                "maximum": 10000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "orderNo",
+          "orderStatus",
+          "checkoutStatus",
+          "preparationStatus",
+          "amountStatus",
+          "currency",
+          "consumerCountryCode",
+          "locale",
+          "expiresAt",
+          "amounts",
+          "items",
+          "consumer",
+          "seller",
+          "legal",
+          "payment",
+          "allowedActions",
+          "pollAfterMs"
+        ],
+        "additionalProperties": false
+      },
+      "Problem": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "detail",
+          "code",
+          "requestId",
+          "timestamp"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "LegalConfirmationInfo": {
+        "type": "object",
+        "description": "用户本次 Pay 点击对当前冻结合同的明确确认。",
+        "properties": {
+          "consumerContractId": {
+            "type": "string",
+            "description": "当前 legal 返回的合同 ID。",
+            "pattern": "^[1-9][0-9]{0,18}$"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "const": true,
+            "description": "必须明确 true，不因页面加载或后台恢复默认同意。"
+          }
+        },
+        "required": [
+          "consumerContractId",
+          "confirmed"
+        ],
+        "additionalProperties": false
+      },
+      "CardInfo": {
+        "type": "object",
+        "description": "仅当前请求转交 Payment Card；不进入 Commerce 日志、缓存、数据库或恢复快照。",
+        "properties": {
+          "pan": {
+            "type": "string",
+            "description": "仅 ASCII 数字卡号。",
+            "pattern": "^[0-9]{12,19}$"
+          },
+          "expiryMonth": {
+            "type": "string",
+            "description": "两位月份。",
+            "pattern": "^(0[1-9]|1[0-2])$"
+          },
+          "expiryYear": {
+            "type": "string",
+            "description": "四位年份；有效期规则归 Payment Card。",
+            "pattern": "^[0-9]{4}$"
+          },
+          "cardholderName": {
+            "type": "string",
+            "description": "持卡姓名，拒绝控制字符，Payment 负责规范化。",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "cvv": {
+            "type": "string",
+            "description": "仅瞬时用于当前支付，不持久化且不参与任何摘要。",
+            "pattern": "^[0-9]{3,4}$"
+          }
+        },
+        "required": [
+          "pan",
+          "expiryMonth",
+          "expiryYear",
+          "cardholderName",
+          "cvv"
+        ],
+        "additionalProperties": false
+      },
+      "SubmitPaymentRequestBody": {
+        "type": "object",
+        "description": "一次请求提交卡与协议；严格拒绝未知、重复字段、非字符串卡字段及尾随 JSON，最多 8 KiB，不接受压缩。",
+        "properties": {
+          "legalConfirmation": {
+            "$ref": "#/components/schemas/LegalConfirmationInfo"
+          },
+          "card": {
+            "$ref": "#/components/schemas/CardInfo"
+          }
+        },
+        "required": [
+          "legalConfirmation",
+          "card"
+        ],
+        "additionalProperties": false
+      },
+      "CardSummaryInfo": {
+        "type": "object",
+        "description": "受限卡展示。",
+        "properties": {
+          "last4": {
+            "type": "string",
+            "description": "卡尾四位，不返回卡 Token、姓名、有效期。",
+            "pattern": "^[0-9]{4}$"
+          }
+        },
+        "required": [
+          "last4"
+        ]
+      },
+      "PaymentSubmissionActionInfo": {
+        "type": "object",
+        "description": "Payment 当前已有的 3DS 动作；临时 URL 不进入 Commerce 持久化。",
+        "properties": {
+          "actionId": {
+            "type": "string",
+            "description": "原动作 ID。",
+            "pattern": "^[1-9][0-9]{0,18}$"
+          },
+          "type": {
+            "type": "string",
+            "description": "当前只支持 3DS 挑战。",
+            "enum": [
+              "THREE_DS_CHALLENGE"
+            ]
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "动作期限，渠道未提供时为空。",
+            "format": "date-time"
+          },
+          "redirectUrl": {
+            "type": "string",
+            "description": "Payment 提供并验证来源的当前 HTTPS 挑战地址；Commerce 不抓取该地址。",
+            "format": "uri",
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "actionId",
+          "type",
+          "expiresAt",
+          "redirectUrl"
+        ]
+      },
+      "PaymentSubmissionResponseBody": {
+        "type": "object",
+        "description": "Commerce 原提交当前视图；提交身份来自本地命令，资金事实由 Payment 提供。",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "description": "当前支付提交的业务编号，由 Commerce 生成并传递给 Payment；不是幂等命令 ID，也不是授权 Token。每次 POST 生成新编号，查询沿用该编号。",
+            "pattern": "^[1-9][0-9]{0,18}$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "首次受理冻结的原 Checkout 期限。",
+            "format": "date-time"
+          },
+          "attemptId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Payment 原 Attempt ID；尚未得到时为空。"
+          },
+          "status": {
+            "type": "string",
+            "description": "PROCESSING 也可能仅表示 Commerce 已受理；不能据此推断已向渠道提交。",
+            "enum": [
+              "AWAITING_CARD",
+              "PROCESSING",
+              "REQUIRES_ACTION",
+              "AUTHORIZED",
+              "UNKNOWN",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "VOIDED",
+              "EXPIRED"
+            ]
+          },
+          "card": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CardSummaryInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Payment 已返回受限描述时存在。"
+          },
+          "nextAction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentSubmissionActionInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "只返回当前 Payment 动作，不从本地回执重放临时 URL。"
+          },
+          "failure": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FailureInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "受控错误代码与安全文案。"
+          },
+          "observedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Payment 权威观察时刻；仅本地受理、下游响应未知时为空。",
+            "format": "date-time"
+          },
+          "pollAfterMs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "enum": [
+              2000,
+              null
+            ],
+            "description": "等待结果时建议 2000 毫秒；其余为空。"
+          }
+        },
+        "required": [
+          "submissionId",
+          "expiresAt",
+          "attemptId",
+          "status",
+          "card",
+          "nextAction",
+          "failure",
+          "observedAt",
+          "pollAfterMs"
+        ]
+      }
+    }
+  }
+}

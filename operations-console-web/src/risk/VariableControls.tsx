@@ -1,0 +1,72 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Button, Input, Select, Space, Tag, Tooltip } from 'antd';
+import type { ValueType, OperatorCode, RuleOperand } from './riskApiModels';
+import { emptyOperand, literalOperand, matchesVariableFilters, operatorLabels, variableApi, variableOperand, variableSourceLabels, variableTypeLabels } from './riskVariable';
+import type { VariableDetail, VariableFilters, VariableOperand, VariableProjection, VariableSummary } from './riskVariable';
+import './riskVariables.css';
+
+export function VariableSelect({value,filters={},disabled=false,label='选择变量',accept,onChange}:{value:string|null;filters?:VariableFilters;disabled?:boolean;label?:string;accept?:(v:VariableSummary)=>boolean;onChange:(v:VariableSummary)=>void}) {
+  const [items,setItems]=useState<VariableSummary[]>([]),[selected,setSelected]=useState<VariableDetail|null>(null),[keyword,setKeyword]=useState(''),[page,setPage]=useState(1),[total,setTotal]=useState(0),[open,setOpen]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState(''),[selectionError,setSelectionError]=useState(''),[revision,setRevision]=useState(0);
+  const filterKey=JSON.stringify(filters),request=useRef(0);
+  useEffect(()=>{setSelected(null);setSelectionError('');if(!value)return;const abort=new AbortController();variableApi.detail(value,abort.signal).then(v=>{if(!abort.signal.aborted)setSelected(v);}).catch(()=>{if(!abort.signal.aborted){setSelected(null);setSelectionError('无法读取已选变量，请重试');}});return()=>abort.abort();},[value,revision]);
+  useEffect(()=>{if(!open||disabled)return;const abort=new AbortController(),token=++request.current;setLoading(true);setError('');const timer=setTimeout(()=>{variableApi.list({...JSON.parse(filterKey),status:'ACTIVE',keyword:keyword||undefined,page,size:20},abort.signal).then(r=>{if(token===request.current&&!abort.signal.aborted){setItems(old=>page===1?r.items:[...old,...r.items]);setTotal(r.total??0);}}).catch(()=>{if(!abort.signal.aborted)setError('变量目录读取失败，请重试');}).finally(()=>{if(!abort.signal.aborted)setLoading(false);});},180);return()=>{clearTimeout(timer);abort.abort();};},[open,disabled,filterKey,keyword,page,revision]);
+  useEffect(()=>{const refresh=()=>{if(open){setPage(1);setRevision(r=>r+1);}};window.addEventListener('focus',refresh);return()=>window.removeEventListener('focus',refresh);},[open]);
+  useEffect(()=>setPage(1),[filterKey]);
+  const choices=[...new Map([...(selected?[selected]:[]),...items].map(v=>[v.variableCode,v])).values()];
+  return <div className="variable-select"><Select aria-label={label} showSearch={{filterOption:false,onSearch:s=>{setKeyword(s);setPage(1);}}} value={value||undefined} disabled={disabled} loading={loading} placeholder={label}
+    onOpenChange={next=>{setOpen(next);if(next){setPage(1);setRevision(r=>r+1);}}} onChange={code=>{const v=choices.find(v=>v.variableCode===code);if(v)onChange(v);}}
+    options={choices.map(v=>({value:v.variableCode,label:<span className="variable-option"><strong>{v.variableName}</strong><small>{v.variableCode} · {variableSourceLabels[v.sourceType]}{v.status!=='ACTIVE'?' · 已停用':''}</small></span>,disabled:v.status!=='ACTIVE'||!matchesVariableFilters(v,filters)||!!accept&&!accept(v)}))}
+    popupRender={menu=><>{menu}{error?<div className="variable-popup-message" role="alert">{error}<Button type="link" onClick={()=>setRevision(r=>r+1)}>重试</Button></div>:items.length<total?<Button block type="text" loading={loading} onMouseDown={e=>e.preventDefault()} onClick={()=>setPage(p=>p+1)}>加载更多（{items.length}/{total}）</Button>:null}</>}/>
+    {selected&&<small className="variable-current">{variableTypeLabels[selected.valueType]}{selected.numericUnit==='MONEY'?` · 金额 / ${selected.currencyCode??selected.currencyVariableCode}`:''}{selected.sourceType==='CONSTANT'?` · 当前值 ${String(selected.currentValue)}`:selected.sourceType==='COLLECTION'?` · ${selected.memberCount} 项`:''}</small>}
+    {selectionError&&<small role="alert">{selectionError}<Button type="link" disabled={disabled} onClick={()=>setRevision(r=>r+1)}>重试</Button></small>}
+    {!!value&&!selected&&!loading&&<small className="variable-current">{value}</small>}
+  </div>;
+}
+
+function LiteralValue({value,type,peer,disabled,onChange}:{value:string|boolean|null;type:ValueType;peer:VariableDetail|null;disabled:boolean;onChange:(v:string|boolean)=>void}) {
+  const [options,setOptions]=useState<{value:string;label:string}[]>([]),[keyword,setKeyword]=useState(''),[page,setPage]=useState(1),[more,setMore]=useState(false),[version,setVersion]=useState<string|undefined>(),[error,setError]=useState(''),[revision,setRevision]=useState(0);
+  const collection=peer?.allowedValuesVariableCode;
+  useEffect(()=>{setPage(1);setVersion(undefined);setOptions([]);},[collection]);
+  useEffect(()=>{if(!collection||disabled)return;const abort=new AbortController();setError('');variableApi.members(collection,page,keyword,page===1?undefined:version,abort.signal).then(r=>{if(abort.signal.aborted)return;setVersion(r.version);setOptions(old=>[...(page===1?[]:old),...r.items.map(m=>({value:String(m.value),label:m.displayName??String(m.value)}))]);setMore(r.page*r.size<r.total);}).catch(()=>{if(!abort.signal.aborted)setError('选项已改变或读取失败，请重新打开');});return()=>abort.abort();},[collection,page,keyword,disabled,revision]);
+  if(collection)return <div><Select aria-label="字面值" showSearch={{filterOption:false,onSearch:s=>{setKeyword(s);setPage(1);}}} value={value===null?undefined:String(value)} disabled={disabled} options={options} placeholder="选择当前集合中的值" onChange={v=>onChange(type==='BOOLEAN'?v==='true':v)} onOpenChange={open=>{if(open){setPage(1);setKeyword('');setRevision(r=>r+1);}}} popupRender={menu=><>{menu}{more&&<Button block type="text" onMouseDown={e=>e.preventDefault()} onClick={()=>setPage(p=>p+1)}>加载更多</Button>}</>}/>{error&&<small role="alert">{error}</small>}</div>;
+  if(type==='BOOLEAN')return <Select aria-label="布尔字面值" disabled={disabled} value={value===true?'true':value===false?'false':undefined} options={[{value:'true',label:'是（true）'},{value:'false',label:'否（false）'}]} onChange={v=>onChange(v==='true')}/>;
+  return <Input aria-label="字面值" disabled={disabled} value={value===null?'':String(value)} autoComplete="off" spellCheck={false} placeholder={type==='DATETIME'?'2026-09-13T00:00:00.000000Z':type==='DURATION'?'毫秒':type==='NUMBER'?'十进制数值':'输入文本'} onChange={e=>onChange(e.target.value)}/>;
+}
+
+function OperandControl({value,peer,filters,collection=false,disabled,onChange}:{value:VariableOperand;peer:VariableOperand|undefined;filters:VariableFilters;collection?:boolean;disabled:boolean;onChange:(v:VariableOperand)=>void}) {
+  const [peerDetail,setPeerDetail]=useState<VariableDetail|null>(null),[peerError,setPeerError]=useState(''),[revision,setRevision]=useState(0);
+  useEffect(()=>{setPeerDetail(null);setPeerError('');if(!peer?.variableCode)return;const abort=new AbortController();variableApi.detail(peer.variableCode,abort.signal).then(v=>{if(!abort.signal.aborted)setPeerDetail(v);}).catch(()=>{if(!abort.signal.aborted)setPeerError('关联变量读取失败，暂无法加载可选值');});return()=>abort.abort();},[peer?.variableCode,revision]);
+  useEffect(()=>{const refresh=()=>setRevision(r=>r+1);window.addEventListener('focus',refresh);return()=>window.removeEventListener('focus',refresh);},[]);
+  return <div className="operand-control"><Select aria-label={`${value.operandRole==='LEFT'?'左':'右'}值来源`} disabled={disabled} value={value.sourceType} options={[{value:'VARIABLE',label:'变量'},{value:'LITERAL',label:'字面值'}]} onChange={sourceType=>onChange({...(sourceType==='VARIABLE'?emptyOperand(value.operandRole):literalForPeer(peer??value,value.operandRole,peerDetail)),valueSequence:value.valueSequence})}/>
+    {value.sourceType==='VARIABLE'?<VariableSelect value={value.variableCode} filters={{...filters,...(collection?{sourceType:'COLLECTION'}:{})}} disabled={disabled} accept={v=>collection?v.sourceType==='COLLECTION':v.sourceType!=='COLLECTION'} onChange={v=>onChange({...variableOperand(v,value.operandRole),valueSequence:value.valueSequence})}/>:<>
+      <Select aria-label="字面值类型" value={value.valueType} disabled={disabled} options={Object.entries(variableTypeLabels).map(([value,label])=>({value,label}))} onChange={type=>onChange({...literalOperand(type,value.operandRole),valueSequence:value.valueSequence})}/>
+      {peerError&&<small role="alert">{peerError}<Button type="link" onClick={()=>setRevision(r=>r+1)}>重试</Button></small>}
+      <LiteralValue value={value.literalValue} type={value.valueType} peer={peerDetail} disabled={disabled} onChange={literalValue=>onChange({...value,literalValue})}/>
+      {value.valueType==='NUMBER'&&<div className="operand-money"><Select aria-label="数值单位" value={value.numericUnit} disabled={disabled} options={[{value:'SCALAR',label:'普通数值'},{value:'MONEY',label:'金额'}]} onChange={numericUnit=>onChange({...value,numericUnit,currencyCode:null,currencyVariableCode:null})}/>{value.numericUnit==='MONEY'&&<><Select aria-label="金额币种来源" disabled={disabled} value={value.currencyVariableCode!==null?'VARIABLE':'FIXED'} options={[{value:'FIXED',label:'固定币种'},{value:'VARIABLE',label:'币种变量'}]} onChange={mode=>onChange({...value,currencyCode:mode==='FIXED'?'':null,currencyVariableCode:mode==='VARIABLE'?'':null})}/>{value.currencyVariableCode!==null?<VariableSelect label="选择币种字段变量" value={value.currencyVariableCode} filters={{pointCode:filters.pointCode,sourceType:'INPUT',valueType:'STRING'}} disabled={disabled} onChange={v=>onChange({...value,currencyCode:null,currencyVariableCode:v.variableCode})}/>:<Input aria-label="固定币种" value={value.currencyCode??''} disabled={disabled} placeholder="USD" maxLength={3} onChange={e=>onChange({...value,currencyCode:e.target.value,currencyVariableCode:null})}/>}</>}</div>}
+    </>}
+  </div>;
+}
+function literalForPeer(peer:VariableOperand,role:'LEFT'|'RIGHT',definition?:VariableDetail|null):VariableOperand {
+  const literal=literalOperand(peer.valueType,role);
+  if(peer.valueType!=='NUMBER')return literal;
+  return {...literal,numericUnit:definition?.numericUnit??peer.numericUnit??'SCALAR',currencyCode:definition?.currencyCode??peer.currencyCode??null,currencyVariableCode:definition?.currencyVariableCode??peer.currencyVariableCode??null};
+}
+
+export function VariablePredicateEditor({operator,operands,filters,disabled=false,onChange}:{operator:string;operands:readonly RuleOperand[];filters:VariableFilters;disabled?:boolean;onChange:(operator:OperatorCode,operands:VariableOperand[])=>void}) {
+  const left=(operands.find(o=>o.operandRole==='LEFT')??emptyOperand()) as VariableOperand,rights=operands.filter(o=>o.operandRole==='RIGHT') as VariableOperand[],unary=['IS_NULL','IS_NOT_NULL'].includes(operator),set=['IN','NOT_IN'].includes(operator);
+  const update=(left:VariableOperand,rights:VariableOperand[],next=operator)=>onChange(next as OperatorCode,[{...left,operandRole:'LEFT',valueSequence:1},...rights.map((o,i)=>({...o,operandRole:'RIGHT' as const,valueSequence:i+1}))]);
+  return <div className="variable-predicate"><div className="variable-compare-grid"><div><label className="variable-field-label">左值</label><OperandControl value={left} peer={rights[0]} filters={filters} disabled={disabled} onChange={v=>update(v,rights)}/></div>
+    <div><label className="variable-field-label">比较方式</label><Select aria-label="比较方式" disabled={disabled} value={operator} options={Object.entries(operatorLabels).map(([value,label])=>({value,label}))} onChange={next=>update(left,['IS_NULL','IS_NOT_NULL'].includes(next)?[]:Array.from({length:next==='BETWEEN'?2:1},(_,i)=>rights[i]??literalForPeer(left,'RIGHT')),next)}/></div>
+    {!unary&&<div><label className="variable-field-label">右值{set?' · 集合或字面值列表':''}</label>{rights.map((right,index)=><div key={index} className="variable-right-item"><OperandControl value={right} peer={left} filters={filters} collection={set} disabled={disabled} onChange={v=>update(left,set&&v.sourceType==='VARIABLE'?[v]:rights.map((o,i)=>i===index?v:o))}/>{set&&rights.length>1&&<Button type="text" danger disabled={disabled} onClick={()=>update(left,rights.filter((_,i)=>i!==index))}>移除</Button>}</div>)}{set&&rights.every(r=>r.sourceType==='LITERAL')&&<Button type="link" disabled={disabled||rights.length>=100} onClick={()=>update(left,[...rights,literalForPeer(left,'RIGHT')])}>＋ 添加字面值</Button>}</div>}
+  </div></div>;
+}
+export function VariableProjectionPanel({projection}:{projection:VariableProjection}) {
+  const [items,setItems]=useState<readonly VariableSummary[]>(projection.currentVariables??[]),[asOf,setAsOf]=useState(projection.valuesAsOf),[error,setError]=useState('');
+  const activeRequest=useRef<AbortController|null>(null);
+  useEffect(()=>{setItems(projection.currentVariables??[]);setAsOf(projection.valuesAsOf);setError('');return()=>activeRequest.current?.abort();},[projection]);
+  const codes=[...new Set([...(projection.currentVariables??[]).map(v=>v.variableCode),...(projection.variableIssues??[]).map(v=>v.variableCode)])].sort().join(',');
+  const refresh=useCallback(async()=>{if(!codes)return;activeRequest.current?.abort();const abort=new AbortController();activeRequest.current=abort;try{const all:VariableSummary[]=[];let time='';const list=codes.split(',');for(let i=0;i<list.length;i+=100){const r=await variableApi.list({codes:list.slice(i,i+100).join(',')},abort.signal);if(abort.signal.aborted)return;if(r.missingCodes?.length)throw new Error('部分变量已缺失');all.push(...r.items);time=r.valuesAsOf;}setItems(all);setAsOf(time);setError('');}catch{if(!abort.signal.aborted)setError('当前值刷新失败，原配置仍保留');}},[codes]);
+  useEffect(()=>{const handler=()=>void refresh();window.addEventListener('focus',handler);return()=>window.removeEventListener('focus',handler);},[refresh]);
+  if(!codes)return null;
+  return <section className="variable-projection"><div><strong>引用变量的当前值</strong><Tooltip title="当前值会随变量库更新，配置结构与版本保持原样"><Tag>当前值</Tag></Tooltip><Button type="link" onClick={()=>void refresh()}>刷新</Button><small>{asOf}</small></div>{error&&<Alert type="warning" title={error}/>}<Space wrap>{items.map(v=><Tag key={v.variableCode} color={v.status==='ACTIVE'?undefined:'warning'} title={v.variableCode}>{v.variableName}：{v.sourceType==='CONSTANT'?String(v.currentValue):v.sourceType==='COLLECTION'?`${v.memberCount} 项`:'运行时取值'}{v.status!=='ACTIVE'?' · 已停用':''}</Tag>)}</Space>{projection.variableIssues?.map((v,i)=><p key={i} role="alert">{v.variableCode}：{v.message}</p>)}</section>;
+}

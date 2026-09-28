@@ -11,6 +11,431 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+<a id="commerce-save-consumer-tests-20260921"></a>
+
+## Commerce SaveConsumer 入口测试（2026-09-21）
+
+- **Implemented：** 新增 `SaveConsumerTest` 和独立的 `SaveConsumerTransactionTest`，均以类级 `@see` 关联实际入口。复用正式应用、真实 HTTP/MySQL、已初始化订单 Fixture、Foundation 调用与响应检查、两级 BeforeEach 和全局 AfterEach / Clear。增加测试侧请求 Builder、资料保护 DTO Mocker、数据 Mocker / TestMapper 与响应/数据库 Checker，没有改生产代码、配置、依赖或 DDL。
+- **场景：** HTTP 的 75 个展开用例覆盖创建后保存、旧 CREATED/PREPARING 兼容、跨订单隔离、UTC 微秒、合法长度上界、NFC / 首尾空白 / IDN 邮箱规范化、全量替换与可选字段省略/null 清空、重复 PUT、参数与 Token/状态/到期边界、法律接受锁定、保护异常/畸形结果、已有资料保护失败后重试、调用窗口的真实数据库竞争及并发保存只提交一份。响应比较正式 `SaveConsumerResponseBody`，数据库独立核对消费者及订单版本，相关 Session、商业/税务/法律/支付/退款与任务事实保持原样；CCT、Intent、Card 和取消端口不被调用。
+- **事务：** 5 个独立 Service 用例验证无外层事务时两表提交、新增/替换加入外层 REQUIRED 并随外层回滚、消费者版本 CAS 及唯一约束失败时订单更新一起回滚。保护 DTO 在事务外传入 Service；Mocker 记录调用事务状态，未配置/意外 Reveal/事务内保护调用即使被业务捕获也在清理时使测试失败。
+- **Verified：** JDK 25，清除 Redis 密码和 Spring JSON 环境覆盖，执行 README 所列 `./mvnw -pl paytech-commerce-test -am test '-Dtest=SaveConsumerTest,SaveConsumerTransactionTest,CheckoutIntentCreationTest' -Dsurefire.failIfNoSpecifiedTests=false jacoco:report-aggregate@report-commerce-checkout-coverage`。新增 **80/80**，已有首次支付回归 **16/16**，总计 **96/96** 通过，0 失败、错误、跳过。`SaveConsumerProcessor` 行 **39/39**、分支 **14/14**，Converter 行 **6/6**，Service 行 **7/7**，Consumer Repository 行 **20/20**、分支 **8/8**；仅为本次定向覆盖，未执行全量 auto 或全服务 `verify`。日志 `/tmp/commerce-save-consumer-tests.log`，覆盖报告 `commerce-service/paytech-commerce-test/target/site/jacoco-aggregate/jacoco.xml`。
+- **其他检查：** 本次 Java 空白、差异和文档路径检查通过。`npm --prefix requirements-site test` **128/137** 通过，9 项失败位于未修改的合同/模型/规范文字检查，日志 `/tmp/commerce-save-consumer-site.log`；未调整这些断言。用户原有 `CheckoutIntentCreationTest` 修改原样保留并参与回归。
+- **集成边界：** 当前 `ConsumerProtectionPort` 尚未接入真实 Vault HTTP，测试只在测试模块替换外部端口并配置正式内部 DTO，不能宣称验证了真实 HTTP、加密或稳定 Token 机制。没有增加生产测试分支或伪造成功逻辑；本轮没有执行建表、提交、推送或部署。运行入口见 [Commerce README](../commerce-service/README.md#验证入口)。
+
+<a id="commerce-get-refund-by-client-id-tests-20260921"></a>
+
+## Commerce 按 Client 退款号查询测试（2026-09-21）
+
+- **Implemented：** 新增一个 `GetRefundByClientRefundIdTest`，类级 `@see` 指向 `ClientRefundApi#getRefundByClientRefundId`。复用正式应用、真实 HTTP/MySQL、订单和退款 Builder / Mocker、`GetRefundResponseChecker` 及 `RefundQueryChecker`；不新增测试配置、响应 DTO 或外部 Mock。保持两级 BeforeEach 和公共 AfterEach / Clear。
+- **场景：** 71 个展开用例覆盖全部退款状态、金额精度、微秒时刻、当前版本、更新及订单过期后重复读取；同 Client 多订单/退款定位、同编号跨 Client 隔离、未知资源、Operations 来源排除、关联订单缺失或越权；大小写、Query 保留字符及单次解码、1/128/129 长度、非法字符和可信身份边界，以及持久化事实损坏。每次请求均比较两侧 Client 的订单、关联事实、退款和任务全列快照，并断言相关 CCT/Payment 端口没有调用。
+- **失败证据与修复：** 首次运行 **69/71** 通过，USD `0.001` 与币种 `ZZZ` 两个负例复现 HTTP 400 而非预期 500，日志 `/tmp/commerce-get-refund-by-client-id-red.log`。按开发规范的本库错误分类及已修复的公开退款号入口，在 `GetRefundByClientRefundIdProcessor` 的 Money 转换处仅捕获 `InvalidParameterException`，转换为保留 Cause 的 `ErrorException`。没有重复解析、增加校验器或放宽测试；初始技术说明的“不捕获”限制由[故障分类修订](../requirements/20260916/commerce-GetRefundByClientRefundId接口重构/technique.md#2026-09-21-金额故障分类修订)取代。
+- **Verified：** JDK 25、清除 Redis 密码及 Spring JSON 环境覆盖后，执行 `./mvnw -pl paytech-commerce-test -am test '-Dtest=GetRefundByClientRefundIdTest,GetRefundTest' -Dsurefire.failIfNoSpecifiedTests=false jacoco:report-aggregate@report-commerce-checkout-coverage`，新增入口 **71/71**、公开退款号回归 **49/49**，共 **120/120** 通过，0 失败、错误、跳过。新入口 Processor 行 **20/20**、分支 **4/4**，共用 Converter 行 **7/7**；不代表全服务覆盖率达标，本次未执行全量 auto 或 `verify`。日志 `/tmp/commerce-get-refund-by-client-id-tests.log`，报告 `commerce-service/paytech-commerce-test/target/site/jacoco-aggregate/jacoco.xml`。
+- **其他检查：** 新增 Java 空白、差异及文档链接核对通过。`npm --prefix requirements-site test` **129/137** 通过，8 项既有合同、模型和规范文字断言仍失败，日志 `/tmp/commerce-get-refund-by-client-id-site.log`；未放宽断言或宣称全仓库门禁通过。
+- **交付边界：** API、Controller/Converter、查询归属及按需 Repository 不变；纯查询无 Context、写事务、锁或提交后步骤，也无请求 Key 消费。生产仅修正上述金额异常分类；未改 Foundation、数据库结构、DDL、POM、配置或覆盖率阈值，未提交、推送或部署。运行入口见 [Commerce README](../commerce-service/README.md#验证入口)。
+
+<a id="commerce-get-refundable-amount-tests-20260921"></a>
+
+## Commerce 可退款金额查询测试（2026-09-21）
+
+- **Implemented：** 为 `ClientRefundableAmountApi#getRefundableAmount` 新增一个 `GetRefundableAmountTest`，通过真实 HTTP、正式应用及本地 MySQL 查询。复用订单 Builder / Mocker、退款数据 Mocker 和 `RefundQueryChecker`；仅补充测试侧退款位置更新方法，模拟两次查询间已提交的变更。响应 Checker 使用正式 `GetRefundableAmountResponseBody` getter 和 DTO 回序列化比较，金额期望独立给定，不维护 JSON 字段清单。
+- **覆盖与生命周期：** 57 个参数化展开用例覆盖基数减预占及已退、零额、USD/JPY/KWD 精度和大额、各订单状态、Checkout / Direct Pay 无 Session、位置时点和版本、过期及更新后的重复读取、退款申请不重复扣减、Client 归属、标识与身份参数、位置缺失及损坏事实。每次 HTTP 查询比较两个自有 Client 的订单、关联投影、退款及任务全列快照，并检查 CCT、商业准备、Intent 创建、支付提交和终止端口零调用。保留两级 BeforeEach 和公共 AfterEach / Clear，没有新增启动配置或外部 Mock。
+- **Verified：** JDK 25、清除 Redis 密码和 Spring JSON 环境覆盖后执行 `./mvnw -pl paytech-commerce-test -am test -Dtest=GetRefundableAmountTest -Dsurefire.failIfNoSpecifiedTests=false jacoco:report-aggregate@report-commerce-checkout-coverage`，**57/57** 通过，0 失败、错误、跳过。报告中 `GetRefundableAmountProcessor` 行 **15/15**、分支 **6/6**，Converter 行 **3/3**；仅表示本次入口覆盖，未执行全量 auto 或全服务覆盖率 `verify`。日志 `/tmp/commerce-get-refundable-amount-tests.log`，报告 `commerce-service/paytech-commerce-test/target/site/jacoco-aggregate/jacoco.xml`。
+- **检查与边界：** Java 差异空白及 README 链接检查通过。`npm --prefix requirements-site test` **129/137** 通过，8 项既有合同、模型和规范文字断言仍失败，日志 `/tmp/commerce-get-refundable-amount-site.log`。未修改生产实现、依赖、配置、DDL 或覆盖率门槛；既有数据库表满足测试所需，未执行建表、提交、推送或部署。
+
+<a id="commerce-cancel-without-create-20260921"></a>
+
+## Commerce 取消不再创建 Intent（2026-09-21）
+
+- **Implemented：** 按用户纠正删除 `CancelOrderProcessor.recoverIntent` 及其唯一使用的 `CheckoutIntentService / Impl`，取消不再读取冻结商业上下文、调用创建或补写 Payment 投影。Commerce 本地 `PaymentTerminationClient` 使用 Client + Order 身份定位，移除必需 Intent ID 和派生请求 Key。先提交终止标记，再事务外取消；确定 TERMINATED 或业务 `NOT_FOUND` 后，原 Service 在一个 REQUIRED 事务取消 Order / 可选 Session。PENDING / 不可用仍返回 202，其他错误不按不存在处理。
+- **并发与持久化：** 保留订单版本、未支付状态、已有投影版本或无投影的条件保护。`localOnly` 仅让未经 Payment 确认的本地取消继续要求无接受和无历史准备标识；远端已确定后允许有接受、无投影的订单关闭。提交支付的既有绑定/CAS 事务不改：晚到创建响应因终止标记与版本条件失败，关联一起回滚，不执行卡支付。没有新表、字段、锁、幂等记录或补偿任务。
+- **测试：** 先修改“创建超时后取消不再创建”的真实 HTTP 回归，旧实现因再次调用不可用的创建端口而返回 202，测试失败，日志 `/tmp/commerce-cancel-no-create-red.log`。修改后取消、独立事务及首次支付交错定向 **69/69** 通过，0 失败、错误、跳过，日志 `/tmp/commerce-cancel-no-create-tests.log`。测试侧 `PaymentTerminationMocker` 按订单配置 DTO / 异常，检查调用身份、次数、事务边界和意外调用，参与逐例 Clear；替换前序纯观测 Probe，不改生产行为来注入测试故障。
+- **完整回归：** JDK 25、清除 Redis 密码及 Spring JSON 环境覆盖后执行 `./mvnw -pl paytech-commerce-test -am clean verify`，测试阶段 **497/497** 通过，0 失败、错误、跳过，日志 `/tmp/commerce-cancel-no-create-verify.log`。最终仍在既有 90% 行覆盖率门禁失败，本次 **1470/2016（72.92%）**，未调整阈值或排除生产类。Mapper XML 与差异空白检查通过。`npm --prefix requirements-site test` **129/137** 通过，原有 8 项合同/模型/规范文字断言失败保持，日志 `/tmp/commerce-cancel-no-create-site.log`；不能声明全仓库门禁通过。
+- **集成边界：** 真实 Payment 当前仍只有按 Intent ID 终止的 HTTP 合同；按来源订单取消及错误映射是待接 Owner 能力。本轮仅改 Commerce 端口与原已获准的固定 Mock，未改 Payment 服务。NOT_FOUND 只表示本次业务查询不存在，不能承诺先前超时创建永不完成；晚到未支付 Intent 的远端处理及真实终止竞争仍待 Payment 联调。不得将路由 404、超时或任意业务错误视为不存在。
+- **范围：** 同步 [Commerce 技术方案](../requirements/20260919/commerce-Checkout准备与Intent创建拆分/technique.md#取消) 与 README，保留前序测试记录作为旧流程证据。外部 API Body/路径未改，无需新增协议 DTO；未执行 DDL、提交、推送或部署。
+
+<a id="commerce-cancel-order-tests-20260921"></a>
+
+## Commerce CancelOrder 入口测试（2026-09-21）
+
+本节是取消恢复流程调整前的验证记录；现行行为及后续验证见[取消不再创建 Intent](#commerce-cancel-without-create-20260921)。
+
+- **Implemented：** 新增一个 `CancelOrderTest`，类级 `@see` 指向 `ClientOrderApi#cancelOrder`；另以 `OrderCancellationTransactionTest` 验证公开 Service 的 REQUIRED 传播及 CAS 回滚。复用正式应用、真实 HTTP、本地 MySQL、订单 Fixture、两级 BeforeEach 和全局 AfterEach。新增测试侧取消数据 Mocker / TestMapper、正式 ResponseBody Checker 和数据库 Checker，没有新增生产测试分支、运行配置或数据库结构。
+- **场景：** Checkout / Direct Pay、本地取消、已有 Intent 的终止、终态重提保留原时间、历史准备待定、支付接受后丢失 Intent 关联的恢复及不可用后重试、错误 Intent 归属、支付成功拒绝取消、到期终态、损坏事实、Client 隔离及 HTTP 参数边界。事务入口单独验证外层回滚、会话最后一步 CAS 失败、支付投影版本竞争和订单旧版本拒绝。每次 HTTP 调用检查无关资金、法律接受、网络证据、退款和任务事实不变。
+- **外部边界：** `PaymentTerminationProbe` 仅记录当前终止 Client 的实际调用参数、次数及事务状态，始终执行原 Bean，不改写响应；记录参与全局 Clear。Intent 恢复沿用已有测试侧端口 DTO Mocker，验证恢复失败后保留已提交终止意图、重提沿原订单业务身份继续。当前生产终止 Client 仍固定返回 `TERMINATED`，真实 Payment HTTP、终止超时/待定/拒绝及远端 Intent 唯一性不在本次证明范围。
+- **Verified：** JDK 25 定向 **49/49**（HTTP 44、事务 5）通过，日志 `/tmp/commerce-cancel-order-tests.log`。清除 Redis 密码及 Spring JSON 环境覆盖后，`./mvnw -pl paytech-commerce-test -am clean verify` 的测试阶段 **493/493** 通过，0 失败、错误、跳过，日志 `/tmp/commerce-cancel-order-regression.log`；包括现有首次支付、创建、查询和退款的回归。
+- **Pending：** 完整 `verify` 仍被既有 90% 聚合行覆盖率门禁拦截，本次 **1493/2042（73.11%）**，未降低门槛或排除生产类。需求站检查 **129/137** 通过，8 项失败仍涉及 Checkout 展示、Payment 退款合同、十路由、15 表模型/台账/隐私导航和测试/写接口规范文字断言；日志 `/tmp/commerce-cancel-order-site-tests.log`。不宣称全仓库门禁或真实 Owner 联调完成。
+- **变更边界：** 仅增加测试并更新 Commerce README、本台账；`recoverIntent` 及其他生产逻辑保持原样。未执行 DDL、修改 Foundation、提交、推送或部署。运行入口见 [Commerce README](../commerce-service/README.md#验证入口)。
+
+<a id="commerce-get-order-by-client-id-tests-20260921"></a>
+
+## Commerce GetOrderByClientOrderId 入口测试（2026-09-21）
+
+- **Implemented：** 新增一个 `GetOrderByClientOrderIdTest`，类级 `@see` 指向 `ClientOrderApi#getOrderByClientOrderId`。复用正式应用、真实 HTTP、本地 MySQL、两级 BeforeEach 和全局 AfterEach；沿用 GetOrder 的 Builder、Mocker、数据库只读快照及正式 ResponseBody Checker，没有新增配置或生产替身。
+- **场景：** Checkout / 无 Session 的 Direct Pay、支付及退款摘要、Client 内精确定位、不同 Client 同编号隔离、未知与越权统一 404、禁止回退到 orderNo、大小写、1/128/129 长度边界、Query 保留字符编码、缺失/空白/非 ASCII/控制字符、可信身份头、到期重复查询及必需投影缺失。每次请求比较两个测试 Client 下订单及关联表快照，并断言 CCT 预检和商业初始化零调用。HTTP 调用使用已自动装配的 RestTestClient URI 变量，不拼接或预先展开 Query 值。
+- **Verified：** JDK 25 下 `./mvnw -pl paytech-commerce-test -am test -Dtest=GetOrderByClientOrderIdTest -Dsurefire.failIfNoSpecifiedTests=false` **45/45** 通过，0 失败、错误、跳过，日志 `/tmp/commerce-get-order-by-client-id-tests.log`。本次未重复执行全量 Java 测试或覆盖率 `verify`，不变更既有覆盖率门禁结论。新增源码及 Commerce 差异空白检查通过。
+- **后续 Mock 启动修复：** 用户报告 IDE 启动 `WRONGPASS` 后，核实上述验证曾额外注入 Redis 密码，原 Mock 默认值未匹配本地容器。按用户明确授权，将 `mor-local-redis-1`（仅 `127.0.0.1:16379`）的本地密码写入 `application-mock.yml` 默认值，保留显式环境变量覆盖并同步 README。清除 `COMMERCE_TEST_REDIS_PASSWORD`、`MOR_REDIS_PASSWORD`、`SPRING_DATA_REDIS_PASSWORD` 和 `SPRING_APPLICATION_JSON` 后直接运行同一定向命令，**45/45** 通过，0 失败、错误、跳过，日志 `/tmp/commerce-mock-redis-default-tests.log`。此次补充仅调整测试配置，不修改 Redis 容器密码或生产配置；取代先前“自动测试必须额外注入密码”的操作说明。
+- **其他检查：** `npm --prefix requirements-site test` **129/137** 通过，8 项失败涉及 Checkout 展示、Payment 退款合同、十路由、15 表模型/台账/隐私导航以及测试/写接口规范文字断言；这些失败指向本次未修改的合同或已有模型台账内容，未调整其断言。日志 `/tmp/commerce-get-order-by-client-id-site-tests.log`。
+- **边界：** 仅新增测试并更新 Commerce README、本台账。手工启动已有且停止的 `mor-local-mysql-1` 和 `mor-local-redis-1`，测试只准备/清理自有数据；现有本地 Redis 密码经环境变量注入，不输出或写入仓库。未修改生产代码、API、Foundation、表结构、DDL、POM 或配置；未运行 manual、真实 Owner 联调、提交、推送或部署。运行入口见 [Commerce README](../commerce-service/README.md#验证入口)。
+
+<a id="platform-delivery-domain-plan-20260920"></a>
+
+## Platform Delivery 普通 Email 首期（2026-09-21）
+
+- **确认范围：** 用户要求开始实现，并确认重复规范化邮箱整单拒绝；普通 Email 先行，认证邮件对接后续；只开放模块内调用，HTTP 等强服务身份后开放。邮件 Provider 仍先 Mock，SMS、真实供应商、Operations 管理、查询和 Webhook 不在本期。现行[需求](../requirements/20260920/platform-support-Delivery领域规划/requirement.md)、[执行合同](../requirements/20260920/platform-support-Delivery领域规划/technique.md)、[数据设计](../requirements/20260920/platform-support-Delivery领域规划/data-design.md)、[模块 Demo](../requirements/20260920/platform-support-Delivery领域规划/api.md)及[确认记录](../requirements/20260920/platform-support-Delivery领域规划/delivery.md)已同步。
+- **Implemented：** 新增 platform-support-delivery；SubmitNotificationProcessor 继承公共 AbstractProcessor，基础校验在父类触发，完整 SubmitNotificationContext 保存 Request 与全部 Delivery。NotificationAcceptanceService 原子保存通知事实和空 Payload 的公共补偿任务；NotificationService 只做本地读取/状态事务；NotificationDeliveryHandler 在事务外 Reveal/发送/查询。每个收件人一封邮件，默认值按收件人覆盖；来源业务唯一键只阻止重复创建，不引入 HTTP 请求重放。UNKNOWN 查询原账号和请求号、不增 attempt_count、不切备用；明确失败才允许新尝试。Delivery version/status CAS 保护 Attempt 与投递写回，旧执行者冲突映射为可恢复任务结果。
+- **配置与接口边界：** 正式默认 notification.enabled=false；无生产 Mock 或 Notification HTTP Controller。测试模块提供两个合成账号适配器，Vault 使用正式 Client 和独立 HTTP Mock；新 Purpose PLATFORM_NOTIFICATION_EMAIL_V1 尚未配置真实授权，不复用登录用途。生产开启需配合公共扫描调度、唯一 Worker 和真实适配器。Access Control 现有认证邮件未迁移。
+- **模型与 SQL：** 七表、65 字段按字段清单进入 Manifest、PDManer、正式 Schema 与测试 DDL；Provider 请求号唯一键保持 (provider_request_no, provider_id)，Delivery 唯一键为 (request_id, address_vault_token)。当前完整模型 **62 表、760 字段、111 唯一索引、91 访问索引、101 关系、6 条 1:1、7 图组**；生成器 --check 与 53 项 Platform 模型/Schema/场景测试通过。Notification 不再包含 Callback/Suppression、历史版本、Hash 或领域 Lease 字段；Document 关联租户校验后续沿 Delivery → Request，未实现 Document 通知对接。
+- **本地 SQL 已执行：** 经用户分别明确授权，在 local-environment 的 **127.0.0.1:13306/mor_platform** 执行[七表 CREATE 脚本](../requirements/20260920/platform-support-Delivery领域规划/db/notification-create.sql)，并执行既有正式 Schema 的 t_compensation_event CREATE 定义。执行前核对同名表不存在，不 ALTER/DROP 既有表，不操作 mor-test 或生产。七表字段名称、顺序、非空和完整注释已与 PDManer 复核一致；测试没有自动建表或持久化配置 Seed。
+- **Verified：** JDK 25 全服务 `./mvnw test` **100/100** 通过，0 失败、错误、跳过，包含本次 **20** 个通知用例与既有 **80** 个测试。通知覆盖独立收件人、默认/覆盖、重复地址与来源冲突、父类校验、已有事务拒绝、第二条投递冲突导致整单/补偿任务回滚、原发送查询、账号停用后的查询、UNKNOWN 不重发、SENT 保留、当前文案重试/不兼容拒绝、发送上限、主备切换、终态重入及旧 Worker 晚回写。日志 `/tmp/platform-notification-final-tests.log`；静态测试 `/tmp/platform-notification-static-tests.log`。需求文档 39 个相对路径、4 个 JSON 示例、围栏和差异空白检查通过。
+- **Pending / 覆盖率门禁：** 完整 `clean verify` 的 98 个当时用例均通过，但既有全服务 90% 聚合门禁失败；补充两例后再次 `test` 100/100 通过，再执行 `-DskipTests verify` 刷新报告，门禁仍失败。当前全服务指令 **4971/57794（8.60%）**、分支 **319/5179（6.16%）**；新增 Delivery 指令 **1866/2069（90.19%）**、分支 **184/275（66.91%）**，分支仍低于目标。没有降低门槛或排除生产类。报告 `platform-support-service/platform-support-test/target/site/jacoco-phase-a/jacoco.xml`，日志 `/tmp/platform-notification-final-coverage.log`。不宣称全服务门禁、真实 Provider 协议、真实 Vault 权限或部署验收通过。
+- **交付自查与环境：** API/Controller/Converter、HTTP 身份和 Gateway 幂等项因模块内入口不适用；新 Request 使用唯一键，异步执行使用公共 Claim/Lease 与本地 CAS，不叠加 Redis 锁。Repository 按表维护、SQL 成功后同步对象，Service 不含外部调用，无 DataObject 跨模块合同。用户授权的 .env.local 只用于本地连接且不输出秘密；测试仅准备/清理自身来源与预留配置，真实异步结束后才清理。未提交、推送、发布或部署。
+- **历史：** 2026-09-20 仅完成五份需求文档及静态校验，不代表当时已实现；前序九表模型被本次 Notification 局部后继取代，其他领域保持原边界。
+
+<a id="commerce-payment-order-lock-20260920"></a>
+
+## Commerce 支付订单锁与 Intent 原子绑定（2026-09-20）
+
+- **Implemented：** `SubmitCustomerPaymentProcessor` 继承 Foundation `AbstractLockProcessor`，使用订单资源 `order:{orderId}` 的 TRY_LOCK（等待 0、Watchdog 续租）。锁前按 Token 只查询不可变订单主键，锁内按需加载状态；公开 Token 不作为 Redis Key。同订单并发在法律接受/外部调用前返回 409，锁覆盖本次同步流程。引入 Foundation Redis Starter 和按需协调配置，POM 只放行对应 Starter/客户端依赖，保留其他禁止项；不复制锁实现或增加环境分支。
+- **事务调整：** 外部创建 Intent 后只构建本次 Context 的投影；`CheckoutSubmissionService.bindPayment` 在一个 REQUIRED 事务内插入关联并执行订单 CAS。取消、期限、版本或唯一性冲突时一起回滚，不继续调用卡支付。创建前已提交的三份法律接受保留，后续按原 Order 业务身份找回原 Intent。独立 `confirmPayment` 删除；Cancel 的原 Intent 绑定仍保留，它与外部终止之间存在必要事务边界。Cancel/Save Consumer 未改为 Redis 锁，继续保留原 CAS；Redis 不替代数据库和 Payment Owner 的保护。设计修订见[技术方案](../requirements/20260919/commerce-Checkout准备与Intent创建拆分/technique.md#2026-09-20-锁和本地原子性修订)。
+- **失败证据与验证：** 新增版本竞争回归在修改前稳定失败：409 后仍存在已提交的 Intent 投影，日志 `/tmp/commerce-payment-binding-red.log`。修改后真实 HTTP/MySQL/Redis 定向 **16/16** 通过，新增同订单锁竞争、不同订单独立处理、外呼期间并发拒绝及绑定/CAS 原子回滚后重试；原创建超时、取消交错和后续复用用例继续通过。完整 `clean verify` 测试阶段 **399/399** 通过，0 失败、错误或跳过，日志 `/tmp/commerce-payment-lock-verify.log`。POM/Mapper XML 解析及 `git diff --check` 通过。
+- **Pending：** 完整 `verify` 仍在既有 90% 聚合行覆盖率门禁失败，本次 **1488/2065（72.06%）**，未调整覆盖阈值或排除类。`npm --prefix requirements-site test` **130/137** 通过，7 项失败涉及旧 Commerce 视图/十路由/15 表模型/隐私导航、模型台账、测试规范与写接口规范文字断言；本轮未改这些断言或其规则源，日志 `/tmp/commerce-payment-lock-site-tests.log`。这些结果不影响已通过的 Java 入口测试，但不能声明全仓库门禁通过。
+- **本地环境及边界：** 为真实锁验证，手工启动已存在且停止的 `mor-local-redis-1`，端口核对为 `127.0.0.1:16379`；使用现有本地密码，经环境变量注入且不打印/写入仓库，Mock Context 使用随机 Namespace。没有访问其他项目的 6379、清库、改 Redis 配置、执行 DDL、修改其他服务、提交、推送或部署。正式启动现在需要 Redis 协调连接；操作与配置见 [Commerce README](../commerce-service/README.md)。
+
+<a id="commerce-preparation-intent-20260919"></a>
+
+## Commerce 创建初始化与首次支付 Intent（2026-09-19）
+
+- **Implemented：** 按用户最终确认，删除独立准备阶段与 `prepareCheckout` API，包括 `/preparation` 路径、Processor、Request/Response、展示转换和 GET 的 PREPARE 操作。`CreateCheckoutProcessor` 在事务外取得 OE、商业、资格评估、税务和法律信息；`CheckoutInitializationContext` 校验/组装本库对象，`CheckoutCreationService.saveCreateCheckoutContext` 以 REQUIRED 事务一次保存 Order、商品、退款仓位、资金投影、OPEN Session、Order Context、Order Legal、Consumer Contract。新建返回 READY/FINAL/OPEN，不创建 Intent；GET 只读取展示事实。设计及窄取代范围见[本次技术方案](../requirements/20260919/commerce-Checkout准备与Intent创建拆分/technique.md)。
+- **首次支付：** 保存三份法律接受及网络证据后，在事务外按 `COMMERCE_ORDER + orderId` 创建唯一 Intent，检查返回身份/金额后短事务绑定，并用订单 CAS 检查创建期间的取消与期限。后续支付复用原 Intent；创建响应丢失沿原订单业务身份恢复，卡提交响应未知返回 submissionId 供查询。接受后锁定 Consumer。未受理支付的已初始化订单可本地取消；已受理但无投影时先取得原 Intent 并确认终止，依赖不可用保持待定。事务内仅操作本库，不增加请求 Key/Hash/租约/回执表。
+- **暂缓集成：** 本轮用户明确授权固定外部 Client Mock + TODO；固定 OE AE001、零税/舍入、合成风险与文件引用、`.invalid` 文档链接、固定 Consumer 保护/回填值、支付 PROCESSING 和终止 TERMINATED。配置无测试环境判断，不表明真实 CCT/Risk/Finance/Platform/Vault/Payment 已接通，也不证明真实税务、个人信息保存、扣款或终止。真实 Owner API、支付唯一身份与渠道并发保护仍待接入。
+- **Verified：** Commerce 全模块 `JAVA_HOME="$(/usr/libexec/java_home -v 25)" ./mvnw clean verify` 测试阶段 **395/395** 通过，0 失败、错误或跳过，日志 `/tmp/commerce-initialization-verify.log`。收尾同步错误文案与 Mapper 排版后，定向创建/支付/事务用例 **73/73** 再次通过，日志 `/tmp/commerce-initialization-final.log`。覆盖创建初始化、业务重复/并发、完整多表事务回滚、无 Consumer/Intent 的加载、首次与再次支付、Intent 超时重试、错误归属、卡提交超时、取消恢复/交错，以及旧 preparation 路径 404。使用正式启动类、真实本地 HTTP/MySQL、外部端口 DTO Mocker、两级 BeforeEach 与全局 AfterEach；没有替换内部业务链或在生产代码加入测试分支。外部固定端口测试不等同于真实跨服务 HTTP 联调。
+- **Pending：** 完整 `verify` 在既有 Commerce Hosted Checkout bundle 90% 行覆盖率门禁失败：本次 **1646/2244（73.35%）**。未降低门槛或排除生产代码。报告 `commerce-service/paytech-commerce-test/target/site/jacoco-aggregate/index.html`。源码引用/差异空白、OpenAPI JSON（四个 Customer 操作）、Mapper XML 和时序目录 JavaScript 语法检查通过。
+- **本地数据库：** 用户明确同意后，仅在 `mor-local-mysql-1`（`127.0.0.1:13306/mor_commerce`）执行[四表补齐 SQL](../commerce-service/docs/requirements/20260919-checkout-preparation/local-test-tables.sql)，新增 `t_order_legal`、`t_consumer_context`、`t_checkout_network_evidence`、`t_consumer_acceptance`。未修改已有表或数据；新接受表的历史 `command_idempotency_id` 沿 2026-09-17 已确认增量定义为可空，新流程不写入。测试完整 DDL 同步四表，仍人工执行。未操作 mor-test 或生产库。
+- **迁移边界：** 未改 Payment/Risk 等服务、Gateway、PDManer、历史订单/旧命令/补偿事件。旧 CHECKOUT_PREPARATION Handler 已删除；其他环境如有未初始化订单或旧任务，启用前须单独处理，GET 不补建也不保留兼容准备入口。未提交、推送或部署。
+
+<a id="commerce-get-refund-tests-20260919"></a>
+
+## Commerce GetRefund 入口测试（2026-09-19）
+
+- **Implemented：** 新增一个 `GetRefundTest`，类级 `@see` 指向 `ClientRefundApi#getRefund`，复用正式应用、真实 HTTP、本地 MySQL、两级 BeforeEach 和全局 AfterEach。沿用订单/退款 Mocker 的数据库对象 Builder；新增响应 Checker 通过正式 `GetRefundResponseBody` getter 断言全部业务字段，响应结构遵循 DTO 序列化定义，没有字段名清单或 JSON 路径。
+- **场景：** 五种退款状态、Operations 来源、币种主单位格式与微秒时刻、无 Session/投影的 Checkout 与 Direct Pay、连续查询最新状态、多笔退款精确定位、Client 隔离、关联订单缺失/归属错误、公开号大小写与长度、可信身份头、版本边界和损坏事实。共享只读快照增加孤立退款的覆盖；每次查询比较两个 Client 下订单、关联事实、退款和任务，并检查 CCT 零调用。未决 INIT 任务不能被 GET 推进。
+- **首次验证（修复前）：** 全模块 `JAVA_HOME="$(/usr/libexec/java_home -v 25)" ./mvnw clean verify` 实际运行 **390** 例，其中 **388 通过、2 失败、0 错误、0 跳过**。新 GetRefund **47/49** 通过，既有 **341/341** 全部通过。日志 `/tmp/commerce-get-refund-verify.log`；构建在 Surefire 阶段失败，未执行该轮覆盖率报告/门禁。
+- **修复及复验：** 用户报告失败后，在 GetRefundProcessor 的 Money 转换处仅捕获 `InvalidParameterException` 并转换为保留 Cause 的 `ErrorException`，使本库存量 USD `0.001` 或非法币种 `ZZZ` 返回 500，而非客户端参数错误 400。继续使用 Money 校验，不重复解析金额、增加校验器或放宽测试断言。全模块 `JAVA_HOME="$(/usr/libexec/java_home -v 25)" ./mvnw test` **390/390** 通过，GetRefund **49/49**，0 失败、错误、跳过，日志 `/tmp/commerce-get-refund-error-fix.log`。本次未重跑覆盖率 verify，既有整体覆盖率门禁缺口仍在。
+- **边界：** 初次仅调整测试、README 和本台账；后续修复只增加 GetRefundProcessor 的窄异常分类。未改 API、Foundation、配置、POM、数据库结构或 DDL；纯查询仍无事务、外部调用或新增 Context。只准备和清理本地测试自有数据，未执行 manual、真实 Owner 联调、提交、推送或部署。运行命令见 [Commerce README](../commerce-service/README.md#验证入口)。
+
+<a id="commerce-response-dto-checkers-20260919"></a>
+
+## Commerce 响应 Checker 复用 DTO（2026-09-19）
+
+- **Implemented：** CreateCheckout、GetOrder、CreateRefund、ListOrderRefunds 四个响应 Checker 统一通过正式 ResponseBody getter 读取业务值，删除手写字段名、可空字段清单和字符串路径。响应结构用 DTO 回序列化结果与实际 JSON 比较；业务期望仍来自用例独立准备的场景，不从实际响应反推。本条取代下方相关测试记录中手写字段白名单的当前实现描述。
+- **Verified：** Commerce 全模块 `JAVA_HOME="$(/usr/libexec/java_home -v 25)" ./mvnw test` **341/341** 通过，0 失败、错误、跳过，日志 `/tmp/commerce-response-dto-checkers.log`。本轮未重跑覆盖率 `verify`，既有整体门禁缺口不变。
+- **边界：** 仅调整 Commerce 测试 Checker、README 和本台账；没有改生产代码、API 定义、Foundation 或数据库结构，未提交、推送或部署。
+
+<a id="commerce-list-order-refunds-tests-20260919"></a>
+
+## Commerce ListOrderRefunds 入口测试（2026-09-19）
+
+- **Implemented：** 新增一个 `ListOrderRefundsTest`，类级 `@see` 指向 `ClientRefundApi#listOrderRefunds`，复用正式应用、MockTestBase、真实 HTTP、本地 MySQL 和既有清理。退款 Mocker 扩展为返回数据库对象 Builder，复用原退款写入及身份生成，不为查询构造创建 API 请求。`ListOrderRefundsResponseChecker` 用正式 DTO getter 检查业务字段，原始 JSON 只验证字段集合、类型和显式 null。
+- **场景：** 空页、Client/Operations 来源、所有退款状态、币种格式、默认 20 与 1/100 边界、刚好满页与多取一行、同微秒按大小写敏感退款号倒序、多页无遗漏/重复、翻页期间新增退款与状态更新、Client/Order 隔离、游标版本/规范编码/锚点时间与归属、身份/路径/分页参数和损坏事实拒绝。只读 Checker 比较本例两个 Client 下订单、关联事实、退款和任务的全列快照，并检查 CCT 零调用；预先存在的 INIT 任务不能被 GET 推进。
+- **Verified：** 定向 `JAVA_HOME="$(/usr/libexec/java_home -v 25)" ./mvnw -Dtest=ListOrderRefundsTest -Dsurefire.failIfNoSpecifiedTests=false test` **74/74** 通过，日志 `/tmp/commerce-list-refunds-tests.log`。随后全模块 `clean verify` 测试阶段 **341/341** 通过（新增 74、既有 267），0 失败、错误、跳过，日志 `/tmp/commerce-list-refunds-verify.log`。JaCoCo 中 ListOrderRefundsProcessor 行 **32/32**、分支 **16/16**；ListOrderRefundsConverter 行 **7/7**；RefundCursor 行 **15/15**、分支 **12/14**。报告 `commerce-service/paytech-commerce-test/target/site/jacoco-aggregate/index.html`。
+- **Pending：** 完整 `verify` 仍被既有整体覆盖率门禁拦截：Commerce Hosted Checkout bundle 行 **839/2428（34.56%）**，要求 90%。未降低门槛或排除生产代码，不把单接口测试完成等同于整个服务验收。
+- **边界：** 只调整测试代码、README 和本台账；未改生产实现、API、表结构、DDL、POM、配置或 Foundation。本次仅对本地自有测试资源准备/清理数据，不执行建表或迁移，不配置外部成功 Mock。未运行 manual、真实 Owner 联调，未提交、推送或部署。运行入口见 [Commerce README](../commerce-service/README.md#验证入口)。
+
+<a id="commerce-create-refund-tests-20260919"></a>
+
+## Commerce CreateRefund 入口测试（2026-09-19）
+
+- **Implemented：** 按现行规范新增 `ClientRefundApi#createRefund` 的两个 HTTP 场景类和一个公开 Service 原子性测试类，均声明具体入口 `@see`。复用正式应用、Foundation 调用器、两级 BeforeEach、全局 AfterEach；请求用 Builder，响应通过正式 DTO getter 断言，前置订单和退款由 Mocker/TestMapper 直接入库。测试覆盖受理、Checkout/Direct Pay、币种精度和金额边界、Client 隔离、业务退款号防重/冲突、当前资格和坏数据拒绝、真实并发唯一约束及额度竞争、REQUIRED 回滚和 CAS 失败。
+- **异步与清理：** 保留真实登记器、Dispatcher、Handler 和生产 PaymentRefundClient。当前适配器尚未接入 Payment HTTP，测试验证实际调用失败后退款保持 PROCESSING、预占保留、任务 ERROR 等待恢复，重提只返回原回执，不重复提交。全局清理前等待 Coordinator 与 Handler 全部退出，只删除本轮隔离订单的退款任务、退款申请及原有子表数据；没有替换内部生产组件或加入生产测试分支。
+- **Verified：** 定向 `JAVA_HOME="$(/usr/libexec/java_home -v 25)" ./mvnw '-Dtest=CreateRefund*Test,RefundCreationTransactionTest' -Dsurefire.failIfNoSpecifiedTests=false test` **96/96** 通过（27 创建/防重/并发、67 校验、2 事务），日志 `/tmp/commerce-refund-tests.log`。全模块 `clean verify` 的测试阶段 **267/267** 通过，0 失败、错误、跳过，含原 CreateCheckout/GetOrder **171** 例；日志 `/tmp/commerce-refund-verify.log`。JaCoCo 中 CreateRefundProcessor 行 **46/49（93.88%）**、分支 **13/14（92.86%）**，CreateRefundConverter 行 **4/4**，RefundCreationContext 行 **14/14**。报告为 `commerce-service/paytech-commerce-test/target/site/jacoco-aggregate/index.html`。
+- **Pending：** 整体 `verify` 仍在既有 Commerce Hosted Checkout bundle 的 90% 行覆盖门禁失败，本次 **778/2428（32.04%）**。未降低门槛或排除生产代码；接口测试通过不代表整个服务覆盖率验收通过。真实 Payment HTTP 成功、拒绝、超时、协议错误和后续退款结算不在本轮证明范围。
+- **本地数据库：** 用户明确授权后，仅在 `mor-local-mysql-1`（`127.0.0.1:13306/mor_commerce`）新增原先缺失的 `t_refund_request`、`t_compensation_event`；表定义逐段取自正式 `commerce-service/docs/database/sql/commerce-schema.sql`，完整同步到测试 `src/test/resources/init/ddl.sql`。只执行两条 CREATE TABLE，没有 DROP、ALTER、变更已有数据或访问 mor-test；执行摘录 `/tmp/commerce-create-refund-test-tables.sql`。应用和测试仍不自动建表或迁移。
+- **边界：** 只修改 Commerce 测试代码、测试 DDL、README 和本台账；未改生产实现、API、Foundation、POM 或 Mock 配置。未运行 manual 或真实 Owner 联调，未提交、推送、发布或部署。操作入口见 [Commerce README](../commerce-service/README.md#验证入口)。
+
+<a id="commerce-get-order-tests-20260917"></a>
+
+## Commerce GetOrder 入口测试（2026-09-17）
+
+- **响应对象断言重构：** GetOrderResponseChecker 复用正式 GetOrderResponseBody / ApiProblemResponse，业务字段改用 getter 断言，删除 assertText/assertTime/assertNullField/assertAbsent 等字符串路径方法。原始 JSON 仅校验字段白名单、字符串类型、显式 null 和可选字段省略；保留原场景、数据库只读断言及清理机制。定向 `./mvnw '-Dtest=GetOrder*Test' -Dsurefire.failIfNoSpecifiedTests=false test` **103/103** 通过，0 失败、错误、跳过，日志 `/tmp/commerce-get-order-dto-checker.log`；本次未改生产代码，未重跑下述整体 verify。
+- **Implemented：** 按现行测试规范新增 `ClientOrderApi#getOrder` 的 Success、Validation、Projection、Consistency 四个场景类，每类声明具体接口 `@see` 和自己的 BeforeEach，复用正式应用、MockTestBase、Foundation HTTP 调用器及响应 Checker。Builder 构造事实，自动注入的 OrderQueryDataMocker / TestMapper 直接插入本地数据；不调用创建/支付接口准备数据，不替换内部生产链路。公共 AfterEach 按已有隔离订单 ID 清理，补充支付投影和冻结上下文回收。
+- **Verified：** `JAVA_HOME="$(/usr/libexec/java_home -v 25)" ./mvnw clean verify` 的测试阶段 **171/171** 通过，无失败、错误或跳过；其中 GetOrder **103/103**（22 成功、18 校验、25 投影、38 一致性），既有 CreateCheckout **68/68**。所有 GetOrder 调用均校验数据库前后快照不变、CCT 零调用。JaCoCo 聚合报告中 GetOrderProcessor 行 **121/122（99.18%）**、分支 **145/150（96.67%）**，GetOrderConverter 行 **30/30**、分支 **12/12**。完整日志 `/tmp/commerce-get-order-verify.log`，报告 `commerce-service/paytech-commerce-test/target/site/jacoco-aggregate/index.html`。
+- **Pending：** 完整 `verify` 仍在既有整体覆盖率门禁失败：Commerce Hosted Checkout bundle 行覆盖约 **25%**，低于 **90%**。其统计范围包含其他尚未重建测试的 Customer、Refund 等能力；未排除代码或降低门槛，不能将本接口测试通过表述为完整服务验收通过。
+- **边界：** 只修改测试辅助代码、用例和操作说明，不改业务实现、接口合同、POM、Mock 配置或 Schema。现有测试初始化 DDL 已包含所需表，本轮未执行 DDL；仅对本地测试自有数据执行准备和清理。未运行 manual、真实外部系统联调，未提交、推送或部署。操作入口见 [Commerce README](../commerce-service/README.md#验证入口)。
+
+<a id="commerce-cct-test-probe-20260917"></a>
+
+## Commerce CCT 测试观察器装配精简（2026-09-17）
+
+- **Implemented：** 保留实际用例使用的 AdjustableUtcClock 和 CctTransactionProbe：前者固定/推进时间验证 CCT 返回前过期，后者记录真实出站线程的事务状态。Probe 直接实现 RestClientHttpServiceGroupConfigurer，由既有 TestComponent 扫描挂载到 CCT 客户端；删除 CctPrecheckObservationTestConfiguration，以及 TestApplication 的显式导入和测试 POM 引用。
+- **Verified：** 默认 `./mvnw clean test` **68/68** 通过，包含实际出站事务状态/调用次数断言及时间推进场景；源码和 POM 无已删除类型引用，差异空白检查通过。日志 `/tmp/commerce-cct-probe-autowiring-regression.log`。
+- **边界：** 本轮仅调整测试装配和说明，不改生产代码、用例断言或公共 Foundation；未执行 SQL、提交、推送或部署。下方历史记录中的独立观察配置由本条替代。
+
+<a id="commerce-unused-test-repository-20260917"></a>
+
+## Commerce 旧测试 Repository 清理（2026-09-17）
+
+- **Implemented：** 删除 `test.repository` 下 8 个遗留文件：CheckoutPreparationTestMapper、CustomerCheckoutTestMapper、OrderApiTestMapper、RefundApiTestMapper、RefundSubmissionTestMapper 无调用方；CommerceRepositoryTestMapper、CommerceRepositoryTestFixture、CommerceRepositoryTestConfiguration 仅组成 ManualTestBase 的旧装配链，目前没有 manual 用例继承该基类。移除基类对应导入、Import 和 Fixture 字段；保留 CreateCheckout 使用的 CheckoutCreationTestMapper，以及 manual 基类/资源。
+- **Verified：** 跨工作区 Java/XML 引用核对后删除，无遗留源码或测试配置引用。默认 `./mvnw clean test` **68/68** 通过，0 失败、0 错误、0 跳过；278 个其他源码/资源文件摘要不变，差异空白检查通过。日志 `/tmp/commerce-unused-test-repository-regression.log`。
+- **边界：** 删除前已备份 8 个文件，包含 CheckoutPreparationTestMapper 尚未提交的 import 整理，备份目录记录在 `/tmp/commerce-unused-test-repository-backup-path.txt`。本轮不改生产代码、测试用例、SQL 或数据库结构，未提交、推送或部署。下方历史记录中保留旧 Repository 辅助配置的描述由本条替代。
+
+<a id="foundation-http-test-autoconfiguration-20260917"></a>
+
+## Foundation HTTP 测试自动装配（2026-09-17）
+
+- **Implemented：** `paytech-test-support` 通过 Boot 现有 `@AutoConfigureRestTestClient` 的注解专属 imports 注册 HttpTestClientAutoConfiguration，自动提供 HttpTestInvoker。真实 Servlet 服务使用宿主 ClientHttpRequestFactory、随机端口及 Context Path，保留全部有序 RestTestClientBuilderCustomizer；客户端与调用器延迟初始化，用户显式 Bean 优先，MOCK 上下文保留 Boot 原有客户端。未注册全局自动配置，普通应用不会仅因引入测试 JAR 启用该能力。
+- **Commerce 接入：** 删除 HttpTestClientConfiguration 及 TestApplication、ManualTestBase、测试编译 Profile 中的引用；两个基类沿用已有注解和注入。模块 README 与公共示例同步直接注入写法。本轮未继续修改生产代码；下方测试配置收敛记录中保留 HTTP 工厂的描述由本条替代。
+- **Verified：** 新增 7 个自动装配场景，先记录缺少 HttpTestInvoker 的失败证据，再验证实际 HTTP、宿主传输标记、Context Path、有序定制、302/503 单次响应、用户 Bean 退让、MOCK 回退及无注解不启用。Foundation `-pl paytech-test-support -am clean install` 完成测试支持 **53/53**、Common Core **130/130**；仅安装本机 Maven 缓存。Commerce 默认 `clean test` **68/68** 通过，`-DskipTests package` 通过，Web 可执行 JAR 不含 test-support / Spring Test / Boot Test / JUnit。日志 `/tmp/foundation-http-autoconfig-red.log`、`/tmp/foundation-http-autoconfig-verify.log`、`/tmp/commerce-http-autoconfig-regression.log`、`/tmp/commerce-http-autoconfig-package.log`。
+- **边界：** 未执行 manual 场景、全 Foundation Reactor、Commerce 覆盖率 verify、SQL、提交、推送、发布或部署；旧准备/恢复迁移缺口仍见下方记录。
+
+<a id="commerce-test-configuration-20260917"></a>
+
+## Commerce 测试配置收敛（2026-09-17）
+
+- **Implemented：** 删除 CheckoutTestApplication、CreateCheckoutTestConfiguration，将正式 CommerceApplication 引用、Mock 组件扫描和测试 Mapper 汇总到既有 TestApplication。MockTestBase 使用该组合根，取消生产 Bean 手工清单。HttpTestClientConfiguration 保留真实禁重试传输及随机端口初始化时机定制；ManualTestBase 直接引用正式应用和必要的 HTTP/数据库测试配置，不装配 CCT Mock。测试 POM 同步新入口并移除已删除的时钟配置引用；保留用户已暂存的 PaymentSimulationTestConfiguration 等 15 个辅助类删除。
+- **启动问题修复（用户追加授权）：** 正式扫描先暴露 CustomerCommandServiceImpl 强制依赖已停用 CommandIdempotencyService，后暴露 `RefundService → Registrar → Handler Registry → RefundSubmissionHandler → RefundService` 构造循环。前者使用 ObjectProvider 按需解析，停用时明确返回 DEPENDENCY_UNAVAILABLE；后者在实际登记时取得 Registrar，原本地事务、事件身份和提交后执行语义保持。不启用旧组件、不添加 Mock 分支、不允许循环引用或排除生产 Bean。
+- **Verified：** 两次创建成功单例分别记录缺少幂等 Bean 与退款依赖循环的失败证据；修复后单例通过，随后默认 `./mvnw clean test` 在正式应用扫描下运行 5 个类，**68/68** 通过，0 失败、0 错误、0 跳过。`-Pcheckout-create-tests -DskipTests package` 通过，Web JAR 未包含测试配置、Mock 基类或 test-support / Spring Test / JUnit 依赖。日志 `/tmp/commerce-test-configuration-startup.log`、`/tmp/commerce-test-configuration-next-startup.log`、`/tmp/commerce-test-configuration-startup-fixed.log`、`/tmp/commerce-test-configuration-regression.log`、`/tmp/commerce-test-configuration-package.log`。
+- **Pending：** 旧准备流程仍依赖幂等表保存 OE 选择快照、原准备时刻和 Intent 首发标记；完整移除需要迁移业务恢复事实，本轮只解决应用启动依赖，不宣称这些功能或旧组件消费已迁移。未验证退款、准备及恢复的完整业务回归，也未执行覆盖率 verify。
+- **边界：** 除上述两个获批生产装配修复外，256 个生产源码/资源及保留测试用例文件的摘要一致；配置引用和差异空白检查通过。未改接口合同、数据库或共享组件，未执行 DDL、提交、推送或部署。本条取代下方正式启动类迁移仍待处理的旧状态描述。
+
+<a id="commerce-auto-tests-pruned-20260917"></a>
+
+## Commerce auto 测试仅保留 CreateCheckout（2026-09-17）
+
+- **Implemented：** 按用户要求删除其余 29 个 auto 测试类及 1 个仅供旧合同测试使用的包内辅助类。auto 仅保留 CreateCheckoutSuccessTest、CreateCheckoutDuplicateTest、CreateCheckoutValidationTest、CreateCheckoutPrecheckTest 和 CheckoutCreationTransactionTest；保留测试内容、公共支撑、manual 配置及生产源码，本轮均未改动。README 和测试 POM 注释同步当前范围，没有增加测试排除或降低覆盖率门槛。
+- **Verified：** 默认 `./mvnw -DskipTests clean test-compile` 通过，随后不指定 Profile 执行 `./mvnw test`，仅发现上述 5 个类，合计 **68/68** 通过，0 失败、0 错误、0 跳过。删除前后 305 个保留源码/资源文件的摘要一致，没有遗留对已删除类型的源码引用，差异空白检查通过。日志 `/tmp/commerce-auto-test-pruning-compile.log`、`/tmp/commerce-auto-test-pruning-test.log`。
+- **边界：** 其余接口当前没有 auto 测试，后续按明确任务和现行规范重建；下方旧测试记录保留为历史证据。正式应用启动类迁移仍待处理；未执行覆盖率 `verify`、DDL、提交、推送或部署。
+
+<a id="test-startup-conventions-20260917"></a>
+
+## 测试规范整理与正式启动类约定（2026-09-17）
+
+- **文档已整理：** 按用户确认统一测试职责、真实数据库与外部 DTO Mock、公共组件、两级初始化和后置清理、自动装配、配置清单与手工 DDL、场景拆类和入口引用。服务级入口测试改为复用正式应用启动类及生产组件扫描，取代手工列举生产 Bean 的默认装配方式；纯计算和公共组件机制测试保留必要的最小上下文。现行规则见[测试规范第 12 节](UNIT_TEST_GUIDE.md#12-测试基类与配置)，示例、开发规范和 AI 薄投影同步。
+- **Pending：** Commerce 的 MockTestBase 仍使用 CheckoutTestApplication，后者仍通过长串 Import 装配生产组件，本轮未迁移 Java 代码。此前 CreateCheckout 的 68/68 是原切片的验证证据，不代表正式应用启动方式已经验证。
+- **Verified（文档）：** 六份规范、示例与入口文件的代码围栏、229 个本地文件链接及本条状态锚点检查通过；相关文档差异空白检查通过。已核对现行规范没有继续要求服务级入口手工切片装配，决定记录中的旧写法明确标为已取代。
+- **操作范围：** 本轮仅更新文档，不执行 Java 构建、业务测试、SQL、提交、推送或部署；此前代码实现与验证证据保留在下方记录中。
+
+<a id="foundation-mock-api-server-20260917"></a>
+
+## Foundation MVC Mock Server 与 CCT API 实现（2026-09-17）
+
+- **测试辅助组件自动装配补充：** CheckoutDataMocker、CheckoutCreationChecker、AdjustableUtcClock、CctTransactionProbe 改为 TestComponent，由既有扫描注册；删除对应构造工厂。事务观察器从配置内部类移为独立类，避免配置解析与包扫描重复注册；旧时钟配置仅保留类导入。Foundation Registrar 使用 Spring AnnotationConfigUtils 处理 Primary 等公共定义注解，机制测试验证存在宿主同类型 Bean 时选择标注 Primary 的测试组件。公共组件 **46/46**、Common Core **130/130**、Commerce 创建切片 **68/68** 通过并完成 package，Web JAR 无测试组件及测试依赖。日志 `/tmp/mock-server-component-annotations.log`、`/tmp/commerce-test-components-autowiring-final.log`；前序重复注册及 Primary 缺失失败分别记录在 `/tmp/commerce-test-components-autowiring.log`、`/tmp/commerce-test-components-autowiring-verified.log`，均已修复。规范第 12 节补充“可自动装配则自动装配”，只保留有实际定制/生命周期需要的 Bean 工厂；未改业务逻辑、SQL 或提交。
+- **自动装配后续（取代下方手写 Bean 装配）：** Foundation 新增 EnableMockHttpServer 和内部 Registrar，扫描指定包的 TestComponent，自动注册 Mocker 与 Controller 内部 Bean、独立服务和动态端点；普通组件/配置类排除，Controller 不进入宿主顶层 Bean 或业务路由。Commerce 删除三个 Bean 工厂，CCT Mocker 增加 TestComponent，基类直接注入保持。新增自动装配机制测试 **3/3**，公共模块 **46/46**、Common Core **130/130**、Commerce CreateCheckout **68/68** 通过；公共模块行 **165/173（95.4%）**、分支 **45/48（93.8%）**，Registrar 行/分支均 **100%**。日志 `/tmp/mock-server-autowiring-red.log`、`/tmp/mock-server-autowiring-green.log`、`/tmp/mock-server-autowiring-verify.log`、`/tmp/commerce-mock-server-autowiring.log`。`-DskipTests package` 通过，Web JAR 无 test-support、Spring/Boot Test、JUnit、Awaitility 和 Mock 类；日志 `/tmp/commerce-mock-server-autowiring-package.log`。只改测试工件、装配及文档，未修改业务代码或 SQL；未提交、推送、发布或部署。
+- **Spring 注入后续：** Commerce 测试配置直接创建 MockHttpServer / CctCheckoutMocker Bean，MockTestBase 注入服务，移除静态实例、取实例方法和静态 DynamicPropertySource；DynamicPropertyRegistrar 在客户端装配前注册随机地址，容器负责关闭。`-Pcheckout-create-tests test` **68/68** 通过，日志 `/tmp/commerce-mock-server-injection.log`；本轮只调整测试装配及使用文档，Foundation 实现与业务代码不变。
+- **响应 Builder 后续：** 新增测试侧 CctPrecheckResponseBuilder，CreateCheckout 基类及预检、防重、校验场景的 6 处 PrecheckResponseBody 直接构造全部改为模板和具名字段覆盖；正常默认值保持，非法资格/原因组合不被修复。`-Pcheckout-create-tests test` **68/68** 通过，日志 `/tmp/commerce-precheck-response-builder.log`；未改生产 DTO 或业务逻辑，测试规范同步外部响应 Builder 要求。
+- **错误 DTO 后续修正：** CctCheckoutMocker.mockHttpFailure 直接构造公共 ApiProblemResponse，并复用 ApiProblemProfile.TYPE，移除手写错误 Map；测试规范明确 Map 只用于匹配配置，正常错误体使用正式 DTO。定向执行 4 个 HTTP 错误映射场景和 1 个依赖恢复场景，**5/5** 通过，日志 `/tmp/commerce-cct-problem-dto.log`；本次未重跑全量切片，业务代码不变。
+- **Implemented：** 测试专用模块新增 MockHttpServer / MockHttpFault，独立 Tomcat / MVC 上下文只装配传入的 Mock Controller，跟踪活动请求和意外请求，复用 Clear。Commerce 新增标注 TestComponent 的 MockCheckoutEligibilityApi，实现正式 CheckoutEligibilityApi；删除 CctCheckoutMockServer 的手写路径分发与 Query 解析。服务发现配置、真实出站 API 代理、LoadBalancer 及业务代码保持。
+- **Verified（Foundation）：** 缺少新公共 API 时记录红灯编译失败；新增真实 HTTP 机制测试 **9/9**，覆盖接口继承的 Query/Header/Body 绑定、协议故障、实际断连、404/405/400 意外请求及等待活动请求结束。公共模块合计 **43/43**、依赖 Common Core **130/130**，无失败/错误/跳过；JaCoCo 公共模块行 **133/141（94.3%）**、分支 **37/40（92.5%）**。日志 `/tmp/mock-api-server-red.log`、`/tmp/mock-api-server-green.log`、`/tmp/mock-api-server-verify.log`。
+- **Verified（Commerce）：** 改接 MVC 后以及补充测试组件扫描隔离标记后，两次 `-Pcheckout-create-tests test` 均 **68/68** 通过，包括真实下游错误、超时、断连及并发场景。`-DskipTests package` 通过，Web executable JAR 不包含 paytech-test-support、Mock 类、JUnit、Spring Test 或 Awaitility。日志 `/tmp/commerce-mock-api-regression.log`、`/tmp/commerce-mock-api-final.log`、`/tmp/commerce-mock-api-package.log`。
+- **边界：** 只改测试工件、测试装配和文档，不修改业务接口、DTO、数据库或运行配置；Foundation 目标 JAR 仅本机安装。其他旧接口测试未迁移，未运行全 Commerce auto，未执行 SQL、提交、推送、发布或部署。结构及操作见[交付补充](../requirements/20260917/foundation-公共测试组件/delivery.md#mock-api-接口实现补充2026-09-17)。
+
+<a id="foundation-test-clear-20260917"></a>
+
+## Foundation Clear / TestBase 后置清理（2026-09-17）
+
+- **Implemented：** `paytech-test-support` 新增 Clear 和 TestBase。公共基类注入 List<Clear>，仅在 AfterEach 聚合调用各组件的 clear；没有 BeforeEach 清理。Commerce MockTestBase 继承公共基类，数据 Mocker、CCT Mocker、测试时钟和事务观察器实现 Clear，替代手工清理列表。宿主保留异步停止、意外调用检查和环境不可复用约束；具体 SQL 仍在 Commerce 测试侧。
+- **Verified（Foundation）：** 新 API 缺失时确认测试编译失败；新增实际 JUnit/Spring 生命周期机制测试 **6/6** 通过，公共模块合计 **34/34**，依赖 Common Core **130/130**，均无失败/错误/跳过。覆盖正常两例、准备/执行/后置检查失败仍清理、多项失败汇总与异步停止失败禁止清理和复用。JaCoCo 公共模块行覆盖 **70/70（100%）**，TestBase **5/5**；日志 `/tmp/paytech-test-clear-red.log`、`/tmp/paytech-test-clear-green.log`、`/tmp/paytech-test-clear-verify.log`。
+- **Verified（Commerce）：** `-Pcheckout-create-tests test` 的 HTTP **66/66** 与事务 **2/2**，共 **68/68** 通过，无失败/错误/跳过；真实本地数据库和 DTO HTTP Mock 沿用原测试环境，日志 `/tmp/commerce-test-clear-regression.log`。未执行其他接口全量测试。
+- **边界：** 本轮只改测试工件及规范，未改业务逻辑或 SQL；目标 JAR 仅安装本机缓存，未发布、提交、推送或部署。两级 BeforeEach 仍只做检查与初始化；其他旧测试按授权范围迁移。本条补充下方公共组件原始记录，说明见[交付补充](../requirements/20260917/foundation-公共测试组件/delivery.md#后置清理抽取补充2026-09-17)。
+
+<a id="commerce-create-checkout-validation-20260917"></a>
+
+## Commerce CreateCheckout 两项输入校验修复（2026-09-17）
+
+- **Implemented：** 非 USD 改由 Body/内部 Request 的币种约束提前拒绝，移除响应 Converter 的迟到币种判断；原 Request 增加商品编号重复判断，CreateCheckoutProcessor.validate 在外部查询和落库前返回 422 VALIDATION_ERROR。OpenAPI 同步当前 USD 值域与商品编号唯一性；保留唯一索引、本地五类事实原子保存和事务外 CCT，不改历史订单。
+- **Verified：** 修改前两个原用例均失败；修改后 **2/2** 通过，再执行 `-Pcheckout-create-tests test`，创建 HTTP **66/66** 加事务 **2/2**，共 **68/68** 通过，0 失败/错误/跳过。非 USD 返回 currency 字段错误，两个场景均验证无 CCT 调用、无订单写入。日志 `/tmp/commerce-checkout-validation-red.log`、`/tmp/commerce-checkout-validation-green.log`、`/tmp/commerce-checkout-validation-regression.log`；OpenAPI YAML 解析、枚举和相关差异空白检查通过。
+- **边界：** 此结果取代下方测试重建、组件接入与拆分类记录中的两项未修复结论，保留其历史执行证据。未验证其他接口的全量 auto 或全服务覆盖率，未执行 SQL、提交、推送、发布或部署。规范自查与修复原因见[修复说明](../requirements/20260917/commerce-CreateCheckout测试重建/validation-fix.md)。
+
+<a id="commerce-create-checkout-split-20260917"></a>
+
+## Commerce CreateCheckout 测试按场景拆分（2026-09-17）
+
+- **Implemented：** 原单类拆为 `checkout/create` 包下的 `CreateCheckoutSuccessTest`、`CreateCheckoutDuplicateTest`、`CreateCheckoutValidationTest`、`CreateCheckoutPrecheckTest`。接口测试基类复用路径、invoke 和必要辅助，不包含测试或新增生命周期；各类自行配置 BeforeEach，共用原 MockTestBase、测试应用及清理。当前规范新增同一接口按场景拆类规则；未改生产业务、公共组件或数据库。
+- **Verified：** 原 28 个测试方法及参数源、断言逐字保留，执行数量保持 **66**：成功 6、防重 8、校验 39、预检 13。`-Pcheckout-create-tests '-Dtest=CreateCheckout*Test' clean test` 实际 **64 通过、2 失败、0 错误、0 跳过**；失败集合仍仅为非 USD 币种和重复商品编号提前校验，详情沿用下方公共组件接入记录。日志 `/tmp/commerce-create-checkout-split-tests.log`。
+- **入口引用补充：** 四个场景类的 JavaDoc 各自以 `@see` 引用 `ClientCheckoutApi#createCheckout` 的完整参数签名；事务类引用实际 Service 保存方法。五个类可执行源码保持，JDK 25 JavaDoc `-Xdoclint:reference` 校验通过（`/tmp/commerce-checkout-test-see-javadoc.log`）；本次注释修改未重跑单元测试，规范、AI 规则和示例同步。
+- **默认选择验证：** 不传 `-Dtest` 执行 `-Pcheckout-create-tests test`，四个 HTTP 场景类与原有事务类均被发现，共 **68 例、66 通过、2 个相同失败、0 错误、0 跳过**；事务类 2/2 通过。日志 `/tmp/commerce-create-checkout-split-profile.log`。这证明 Profile 未遗漏拆分后的文件，不代表全部测试通过。
+- **边界：** Maven 编译与执行选择已改为新场景包，旧单类已删除；没有排除失败用例。未执行 SQL、提交、推送或部署。文件分工与当前命令见[测试技术说明](../requirements/20260917/commerce-CreateCheckout测试重建/technique.md)，本轮变更见[交付补充](../requirements/20260917/commerce-CreateCheckout测试重建/delivery.md#场景拆分补充2026-09-17)。
+
+<a id="foundation-test-support-20260917"></a>
+
+## Foundation 公共测试组件与 Commerce 首个接入（2026-09-17）
+
+- **Implemented：** Foundation 新增普通测试 JAR `paytech-test-support`，提供 `HttpTestInvoker`、`TestRequestHeaders` 和 `AbstractHttpResponseChecker<S>`。Build BOM 管理版本；Commerce 测试模块显式以 test scope 接入，CreateCheckout invoke 与响应 Checker 复用公共机制。业务断言、真实数据库 Checker、Mocker、两级生命周期及清理继续属于 Commerce；未改业务服务逻辑。
+- **Verified（Foundation）：** 公开 API 缺失时先确认测试编译失败；实现后目标模块 **28/28** 真实 Loopback HTTP 用例通过，依赖 Common Core **130/130** 通过。JaCoCo 公共模块行覆盖 **65/65（100%）**、分支 **17/20（85%）**；未运行全 Foundation Reactor。日志 `/tmp/paytech-test-support-red.log`、`/tmp/paytech-test-support-verify.log`，报告位于模块 `target/site/jacoco`。
+- **Verified（Commerce）：** `-Pcheckout-create-tests -DskipTests package` 成功；实际创建成功单例通过，随后完整 CreateCheckout 类 **64/66** 通过，2 个失败、0 错误、0 跳过。此次现有本地 Schema 已能执行用例，之前缺列不再阻止本次验证；本任务未执行 DDL，不推断由谁迁移。Web executable JAR 未包含 `paytech-test-support`、JUnit 或 Spring Test。日志 `/tmp/commerce-test-support-package.log`、`/tmp/commerce-test-support-http.log`、`/tmp/commerce-test-support-regression.log`。
+- **修复前缺口（已由上方输入校验修复解决）：** 两个失败对应前序源码走查已记录的问题：非 USD 请求返回 500 且已保存订单；重复 `clientItemId` 返回 500 且已调用 CCT，未按用例期望在写入及外部调用前返回 422。本次保留断言，不以修改业务或掩盖结果使测试变绿；未声称 Commerce 整体回归通过。
+- **操作与迁移边界：** BOM 与 Foundation 目标制品仅安装到本机 Maven 缓存，未发布 Nexus；Payment 和其他测试未迁移。未执行 SQL、提交、推送或部署。使用规范见[测试规范第 4.1 节](UNIT_TEST_GUIDE.md#41-公共测试组件)，范围和命令见[交付记录](../requirements/20260917/foundation-公共测试组件/delivery.md)。
+
+<a id="commerce-create-checkout-tests-20260917"></a>
+
+## Commerce CreateCheckout 测试重建（2026-09-17）
+
+- **Implemented：** 删除旧创建、旧快照/反射合同测试，使用 `CreateCheckoutApiTest` 和 `CheckoutCreationTransactionTest`；前者包含 66 个参数化展开场景，后者覆盖末步回滚及 REQUIRED 传播。新增 Builder、数据库 Mocker/TestMapper、独立 CCT HTTP DTO Mocker、响应/数据库 Checker；真实创建链在共享最小测试应用中运行。两级 BeforeEach 与全局 AfterEach 每例重建和清理，Client/Order 隔离范围外的数据不动。旧其他入口保留原有装配，未迁移为新规范。
+- **Verified：** JDK 25 下 `./mvnw -Pcheckout-create-tests -DskipTests test-compile` 通过（`/tmp/commerce-create-checkout-final-compile.log`）。缺列前置检查加入前，参数/可信 Header/CCT 拒绝、错误、断连、超时等 48 个场景通过，逐例清理通过（`/tmp/commerce-create-checkout-validation-final.log`）。这些验证不包含成功创建、并发写入和本地事务回滚，不能表示全部测试已通过。差异空白检查通过。
+- **Pending：** 本地 `mor_commerce.t_commerce_order` 缺少现有代码需要的 `creation_mode`、`consumer_country_code`；已请求备份表结构并执行两个既有增量 SQL，尚未获得本次执行授权。测试只读检查列存在并明确失败，不自动迁移；单例复核已在 BeforeEach 给出明确缺列提示（`/tmp/commerce-create-checkout-schema-preflight.log`）。非 USD 提前拒绝、重复商品 ID 提前校验的回归用例保留，源码提示存在缺口，待 Schema 就绪后单独确认。完整旧测试仍有删除类型引用，完整应用仍有 Refund/补偿注册循环依赖；本次显式 Profile 不代表全量 auto/verify 或 90% 覆盖率通过。
+- **Mock 配置补充（2026-09-17）：** 新增测试资源 `application-mock.yml`，完整配置当前切片的本地数据库、业务参数、HTTP/服务发现及后台调度，`MockTestBase` 自动启用 `mock`。动态注入仅保留 CCT 随机地址；旧 auto Profile 暂保留给未迁移测试。清除 Checkout/ID/数据库/Nacos 环境变量后的定向运行完成编译、Spring/Tomcat 启动和 MySQL 连接；之后仍被 BeforeEach 的既有缺列检查阻塞，未宣称业务测试通过（`/tmp/commerce-mock-profile-startup.log`）。规范、示例与 AI 规则同步配置约定。本轮未执行 DDL或变更生产代码。
+- **Mock 配置清单补充（2026-09-17）：** 按用户明确用途补齐可选、默认、关闭能力和运行时注入字段，附用途、单位、默认/Mock 值和启用条件；规范及 AI 规则同步要求配置字段变更维护此文件。对实际测试 Classpath 的配置类反射核对，25 个 Commerce/Foundation 字段全部显式列出；生产 YAML 的 47 个叶子键和动态 CCT 地址均无遗漏，Spring YAML 解析通过（`/tmp/commerce-mock-config-catalog-check.log`）。更新后再次清除相关环境变量运行单例，Spring/Tomcat 与 MySQL 连接成功，仍在 BeforeEach 因已有缺列失败（`/tmp/commerce-mock-config-catalog-startup.log`）；不构成业务用例通过。本轮只改配置与文档。
+- **Mock DDL 汇总（2026-09-17）：** 参考 Transaction 测试资源的集中建表方式，新增 [`init/ddl.sql`](../commerce-service/paytech-commerce-test/src/test/resources/init/ddl.sql)，覆盖当前 Mock 创建写入及零副作用查询依赖的 8 张表、128 列。建表语句与正式 Commerce Schema 逐字一致，字段顺序、类型、可空性、默认值、主键/索引及表列注释与 PDManer 静态核对通过；README、缺表提示与测试规范指向手工初始化入口。仅生成文件，未执行 SQL、Java 测试或修改生产代码，原数据库前置阻塞保持。 后续补齐本地数据库、用户创建、本库 DML 授权和 USE；账号/默认密码与 Mock YAML、执行顺序及八张表定义静态核对通过，已有账号不重置密码，SQL 仍未执行。
+- **操作范围：** 手工启动已有 `mor-local-mysql-1` 供验证，未创建容器或改数据卷，未访问 mor-test、执行 DDL、提交、推送或部署。生产仅补上基线缺失的 `GetOrderProcessor` Objects import；业务语义未改，无生产测试开关或替身。详见[交付记录](../requirements/20260917/commerce-CreateCheckout测试重建/delivery.md)和 [Commerce 测试说明](../commerce-service/README.md#测试启动边界)。
+
+<a id="test-dto-mock-lifecycle-20260917"></a>
+
+## 全项目单元测试规范（2026-09-17）
+
+- **文档已沉淀：** [测试规范](./UNIT_TEST_GUIDE.md)明确真实本服务链路、独立 HTTP DTO Mock、Builder/Mocker/Checker、两级 BeforeEach 与全局 AfterEach；[示例](./examples/UNIT_TEST_EXAMPLE.md)展示配置响应、调用检查、测试失败后清理与串行执行。[决定](./decisions/2026-09-17-test-dto-mock-lifecycle.md)声明旧强制有状态 Simulator 等规则的取代范围，旧规范已归档。AGENTS、Cursor、开发/工程规范和路由入口同步。
+- **Pending：** 规范任务本身只交付规范与说明性示例；首个 Commerce 创建测试的后续落地见上方专项记录，其他既有测试不因此视为已迁移。生产代码没有为测试增加分支、探针、模拟成功或依赖。
+- **验证与操作范围：** 文档本地链接目标与测试规范入站锚点核对无缺失，已修改现行入口的差异空白检查通过；本地环境文档同步去除强制有状态 Simulator 的旧投影。未执行 Java 构建、业务测试或运行示例，未执行 SQL、提交、推送或部署。材料见[交付记录](../requirements/20260917/foundation-单元测试规范/delivery.md)。
+
+<a id="gateway-request-idempotency-conventions-20260917"></a>
+
+## 全项目请求幂等职责规范（2026-09-17）
+
+- **文档已沉淀：** 按用户确认，HTTP Idempotency-Key 统一由 Gateway 处理，范围不限于 Client Gateway API；禁止业务系统新增 `paytech-command-idempotency` 依赖、启用、调用或同义服务本地请求重放机制。完整规则见[开发规范第 5.4 节](./DEVELOPMENT_CONVENTIONS.md#54-请求幂等与业务防重)，确认与取代边界见[职责决定](./decisions/2026-09-17-gateway-request-idempotency.md)。公共示例采用目标职责，不能据此推断 Payment 源码已迁移。
+- **Pending：** 本轮不实现/激活 Gateway 请求幂等，不删除旧组件或历史表，不修改实际 API、业务代码、配置或数据库。Preparation 等剩余调用、既有内部/下游 Header 绑定与转发需单独协调迁移；旧机制存在不构成新接入许可。Gateway 并发重复请求、72 小时起算点及响应未记录窗口等实现细节仍待设计。
+- **验证与操作：** 本轮仅维护规范和路由文档，未运行构建、测试或自动验证，未执行 SQL、提交、推送或部署。未迁移系统的业务防重与必要恢复不得被文档中的目标状态替代。材料见[本次交付记录](../requirements/20260917/foundation-请求幂等职责规范/delivery.md)。
+
+<a id="platform-gateway-snapshot-refactor-20260917"></a>
+
+## Platform Gateway Snapshot 查询重构（2026-09-17）
+
+- **Implemented：** `GatewaySnapshotQueryApi` 经 Controller/Converter 进入 Access Control 的 `QueryGatewaySnapshotProcessor.process`；健康检查复用同一入口及响应转换，删除旧 Snapshot 查询 Service/Impl 和 Web Domain Assembler。新入口由组件扫描和构造器注入装配，复用 Foundation 对调用方已有事务及非空内部请求的检查。
+- **读取与模型：** 保留共享查询模板的只读 REPEATABLE READ、2 秒超时；原六项集合读取全部完成后退出事务，再执行全局编译，符合 PLT-I20 专项合同第 8.4 节。原不可变编译聚合收敛为 `GatewaySnapshotView` class，保留嵌套纯领域值和集合不可变性，没有复制另一层结果。现有 Repository/Mapper、持久化对象、SQL 及管理命令共同使用的编译规则未改；存量跨表读取仓储的按表拆分不在本轮完成范围。
+- **协议与消费者：** 顶层响应为 `gatewayconfiguration.response.GatewayPublicSnapshotResponseBody`，三种嵌套 Snapshot 同包改为独立 class；31 个 JSON 字段及类型、字符串 Code、集合不可变性和值相等语义保持。API 方法和字段补齐中文 JavaDoc、返回值、单位、可空及失败说明。Gateway 客户端、编译器和现有测试夹具同步类型/import/getter，未改变路由、Guard、安全校验、原子切换或 Last Valid 规则。HTTP 路径、`schemaVersion=1`、完整 200、合法空路由关闭全部入口、错误走公共 500，以及无 ETag/304 的合同保持；Java 消费者需同步重建 API 制品。
+- **公共示例第 11 节自查：** Controller/Converter 仅处理协议，Processor 查询本模块仓储并在事务外编译，多表组合结果使用 View，不向 Web 暴露 DataObject。此接口没有用户输入字段，不增加 RequestBody 或字段校验器；无参数内部 Request 经模板非空检查。纯查询不需要写 Context、原子保存、CAS/对象回写、资源锁、业务防重、请求幂等或提交后外部调用。没有新增局部异常包装、人工 Bean 配置、生产 Mock、Schema 或网络暴露。
+- **Verified（编译与静态）：** JDK 25 联合 Foundation 11、Platform 7、Gateway 3 个所需模块执行 `-DskipTests clean test-compile` 成功，日志 `/tmp/plt-gateway-snapshot-final-compile.log`。静态比对 `/tmp/plt-gateway-snapshot-static-check.py` 确认 31 个 Wire 字段/类型、转换赋值与顺序、两端编译规则和 SQL 保持，Gateway 20 个源码适配仅涉及类型/import/getter，原有其他修改未覆盖；两个仓库 `git diff --check` 通过。
+- **验证边界：** 按用户要求未新增或运行单元/集成测试；现有测试仅适配类型/getter、class 字段检查和 Converter 包迁移，并完成编译。未运行期验证 Jackson 序列化、Spring 装配、MySQL 一致性、HTTP 刷新或就绪探针；未启动服务、执行 SQL、安装或发布制品、提交、推送或部署。历史需求资产与旧验收快照保留其原基线，不作为新 Java 契约的可执行验证。
+
+<a id="platform-console-resource-refactor-20260917"></a>
+
+## Platform Console Resource 管理重构（2026-09-17）
+
+- **Implemented：** `ConsoleResourceManagementApi` 六项能力分别经 Controller/Converter 进入 Access Control 的 ListConsoleResources、GetConsoleResource、QueryConsoleResourceCapabilities、CreateConsoleResource、UpdateConsoleResource、ChangeConsoleResourceStatus Processor，删除旧 Web 聚合 Processor。API 拆出三个请求、五个响应/内嵌 class，共用保存回执与维护边界也迁为 `configurationmanagement.response` 下两个 class；Gateway/Permission 管理只同步共享 Java 类型，Operations BFF 同步协议转换。
+- **本地保存与规则：** 三个写 Context 持有本表 `ConsoleResource` 原对象；本地 Service 仅依赖 `ConsoleResourceRepository`，不查询授权、关系或其他 Service。新 Mapper 维护本表读写，插入保留原列；条件更新保留资源 ID、OPERATIONS Channel 和原版本条件，SQL 成功后才回写原对象及版本/时间。写入保留 SERIALIZABLE、15 秒超时和权限绑定共享锁；树循环、8 层/2000 条上限、组件及按钮资格、受保护管理入口、停用引用保留规则保持。无变化编辑不更新版本或记录变更审计，沿用既有审计抑制能力；真正修改在版本上限时明确拒绝，避免递增溢出。
+- **查询与模型：** 普通查询沿用无显式事务；原资源与权限 LEFT JOIN 的列、筛选、排序保持，直接映射 `ConsoleResourceView` 并补充支持标记和维护边界。资源对象、查询 View、编辑 Context 通过只读 `ConsoleResourceDefinition` 共用纯结构规则，写入不复制查询 View 或提前改动原对象。既有可授予资源及 Permission 保护查询只适配新 View getter，不改变权限含义。
+- **锁与请求幂等：** 三个写入口使用 `AbstractLockProcessor` TRY_LOCK，实际逻辑 Key 为 `lock:console-resource:operations`，模板统一处理 Redis 中断/不可用。模块配置 `ps.access-control.console-resource.lock-wait-time` 默认 500ms、`lock-lease-time` 默认 30s，启动校验、重启生效。旧注解 Key 没有 `lock:`，混合版本不能视为共用 Redis 互斥，发布需协调切换；数据库保护继续保留。按用户已确认职责，删除这三个入口的本地 Hash/HMAC、幂等占位/回执/重放，Platform API 与 BFF 对应链路不再绑定或传递 HTTP Key；未实现或激活 Gateway 请求幂等，也未迁移其他配置命令。
+- **公共示例第 11 节自查：** API class、字段注释和 Hibernate Validator 保留；数值构造参数显式 required，严格 JSON Converter 跟随新包。Controller/Converter 只做适配，Processor 负责当前授权、Repository 查询、候选校验、Context 与本地事务，Service 只保存，Repository 检查行数并回写同一对象。没有事务内外部调用、提交后外部步骤、额外写 View、DataObject 越界、叠加锁、虚构成功、Schema 或生产 Mock；创建的业务编码唯一保护和编辑/状态 CAS 不作为请求重放。接口仍由 HTTP Bean Validation 触发校验，无新增非 HTTP 消费者。
+- **Verified（编译与静态）：** JDK 25 联合 Foundation 11、Platform 7、Operations BFF 3 个所需模块执行 `-DskipTests clean test-compile` 成功，日志 `/tmp/plt-console-resource-refactor-compile.log`；BFF 移除剩余 Key 参数后以同一 Reactor 执行 `-DskipTests test-compile`，日志 `/tmp/plt-console-resource-refactor-final-compile.log`。静态核对 `/tmp/plt-console-resource-static-check.py` 确认六个 HTTP 路径/方法/非 Key 参数、原审计标记、十个 DTO 字段及约束、原纯结构规则、完整查询 SQL、插入字段、条件更新和保存后对象回写顺序。
+- **验证边界：** 按用户要求未新增或运行单元/集成测试；既有架构及纯规则夹具只适配已迁移类型、getter 和减少的三个注解锁入口，并参与编译。Spring 装配、严格 JSON 运行期解析、MyBatis/MySQL、Redis 并发/租约/回滚、审计及 Gateway 重放联调仍未验证，旧服务本地幂等测试场景需随后按 Gateway 职责迁移。独立消费者需更新共享 API 制品。保留原有工作区改动，未访问数据库、启动服务、安装制品、提交、推送或部署。
+
+<a id="platform-operations-authorization-refactor-20260917"></a>
+
+## Platform Operations 授权与导航接口重构（2026-09-17）
+
+- **Implemented：** `OperationsAuthorizationApi` 的 authorize/navigation 分别经 Controller/Converter 进入 Access Control 的 `AuthorizeOperationsProcessor.process`、`QueryOperationsNavigationProcessor.process`，复用 Foundation 入口检查。API 原 AuthorizationModels/NavigationModels 容器拆为 request/response 下四个独立 class；Operations BFF 同步类型及 getter，保留自己的展示模型。删除旧授权 Service 和无消费者的导航中间模型，Web 管理 Processor 仅移除对应方法，其他管理能力保持。
+- **查询与规则：** 两个 Processor 显式保留 15 秒 REPEATABLE READ 只读快照，组合当前会话、账号、成员、Route 和权限；无业务写入或外部步骤。普通身份、强制改密、Bootstrap 以及 HUMAN_AUTHENTICATED 路由规则保持。导航 Mapper 直接映射 `OperationsNavigationResourceView`，SQL 全部列、JOIN、筛选及排序保持，继续逐层剔除失去可见父节点的后代。View 保留原 `permissionId` 供可授予资源查询复用，HTTP 导航不暴露该字段。
+- **审计与公共示例第 11 节自查：** HTTP 方法、路径、Header、字段、`@NotBlank` 和 Controller `@Audit` 标记保持；沿用此前模块 Processor 迁移的公开审计能力，在真实查询事务中登记完成观察，保持身份事实和 CONTEXT_RESTRICTED/PERMISSION_DENIED 原因，不新增局部异常映射。Controller/Converter 只适配，Processor 查询本模块 Repository 并组合既有本地会话能力，多表结果用 View，不泄露 DataObject。纯查询不需要写 Context、原子保存、锁、CAS/对象回写、业务提交比较或请求幂等；无新增非 HTTP 消费者、配置、Bean 工厂、Schema 或生产 Mock。
+- **Verified（编译与静态）：** JDK 25 联合 Foundation 11、Platform 7、Operations BFF 3 个所需模块执行 `-DskipTests clean test-compile` 成功，日志 `/tmp/plt-operations-authorization-refactor-compile.log`。静态比对确认授权分支、导航迭代过滤、完整 SQL、HTTP 声明、审计注解保持；四个 DTO 字段、组件启用条件和事务参数已核对。Platform 差异和新增源码空白检查通过。
+- **验证边界：** 按用户要求未新增或运行单元/集成测试；既有测试仅适配类型/getter，以及从 record 相等比较改为相同字段逐项断言，并完成编译。尚未运行期验证 Spring 装配、HTTP/MyBatis/MySQL、授权并发或审计链路。独立消费者需更新 Platform API 制品。保留此前 BFF 和根文档未提交改动；未启动服务、执行 SQL、安装制品、提交、推送或部署。
+
+<a id="platform-customer-jwks-refactor-20260917"></a>
+
+## Platform Customer JWKS 查询重构（2026-09-17）
+
+- **Implemented：** `CustomerJwksController` 经共享 `JwksConverter` 构造无参数 `QueryCustomerJwksRequest`，调用 Access Control 的 `QueryCustomerJwksProcessor.process`，统一进入 Foundation 的调用方事务与非空请求检查。Controller、Processor、Service 保持 `client.authentication.enabled=true` 条件装配，未改变开关值；`CustomerJwksService` 仍供 `ClientTokenPreparation` 复用，结果通过既有 class 响应模型返回，不暴露 DataObject。
+- **查询与异常：** Service 只执行一次 CUSTOMER 候选 SELECT，移除显式只读事务和空结果包装，使用应用共享 UTC Clock。原两秒数据库查询限制移至 CUSTOMER Mapper 语句的 `timeout="2"`，列、Realm、状态筛选、排序不变。生命周期、唯一 ACTIVE、RETIRING 930 秒重叠及到期边界、RSA/RS256、公开字段白名单、规范 Base64URLUInt、kid 一致与唯一、16 把/64 KiB 限制保持；不满足发布规则时改用公共 `ErrorException`，继续交给全局处理器返回系统错误，不添加局部 catch 或错误映射。
+- **公共示例第 11 节自查：** 无参 GET、原路径和响应字段保持，不增加 HTTP Body、可选 Realm 或虚构字段；统一入口按用户要求保留 Processor，Service/Repository 各守本地能力边界。单表只读能力无本地原子写入或外部步骤，Context、View、资源锁、写时 CAS/对象回写、业务防重与请求幂等均不适用；使用默认组件扫描及构造器注入，无新增 Bean 工厂、Schema 或生产 Mock。
+- **Verified（编译与静态）：** JDK 25 联合 Foundation 11 与 Platform 7 个所需模块执行 `-DskipTests test-compile` 成功，日志 `/tmp/plt-customer-jwks-refactor-compile.log`。静态比对确认九个校验方法、常量及查询主体（除 Clock 来源）不变，Mapper 仅增加 CUSTOMER 语句超时，API/响应类和令牌准备代码未变；Controller 仅调用 Processor.process，三处启用条件一致。
+- **验证边界：** 按用户要求未新增或运行单元/集成测试；现有 Client HTTP 测试仅将 JWKS 夹具的两处系统时间同步为已注入 Clock，并完成源码编译。尚未运行期验证 Spring 装配、HTTP/MyBatis/MySQL、轮换及语句超时。未启动服务、执行 SQL、安装制品、提交、推送或部署。
+
+<a id="platform-operations-jwks-refactor-20260917"></a>
+
+## Platform Operations JWKS 查询重构（2026-09-17）
+
+- **Implemented：** `OperationsJwksQueryApi` 返回 `api.authentication.response` 下独立普通 class `JsonWebKeySetResponseBody`/`JsonWebKeyResponseBody`，保持原路径、无参 GET 和 `keys`/`key_ops` 等七个 JWK 字段。按用户要求统一接口接入：`JwksConverter` 创建无参数 `QueryOperationsJwksRequest`，Controller 调用 Access Control 的 `QueryOperationsJwksProcessor.process`，经 `AbstractProcessor` 的调用方事务/非空请求检查后复用本地 `OperationsJwksService`，结果再由 Converter 投影。Service 同时被令牌准备流程使用，保留这一真实复用；JWKS 入口不受人类认证开关影响。共享 DTO 的 CUSTOMER Controller/API 与 Gateway `ReactiveJwksProvider` 同步类型及 getter，Gateway 严格解析、错误和缓存逻辑保持。
+- **本地查询与对象边界：** Operations Service 只执行一次本库候选 SELECT，取消多余显式事务，改用应用统一 UTC Clock；原两秒数据库等待限制移为该语句的 `timeout="2"`。所有候选在同一查询结果和时间点完成纯内存校验，无外部依赖或写入。`JwtSigningKey` 从 record 改为普通 class，保留 11 个属性名称和类型；按表 Repository 直接返回所属模块对象，删除同义 `SigningKeyMaterial`。CUSTOMER Service 仅适配共享仓储类型，原查询事务及规则保持。Web 仍只接收不含持久化状态的 `PublicVerificationKey`。
+- **合同与示例第 11 节自查：** 保留唯一 ACTIVE、RETIRING 930 秒重叠与半开到期边界、RSA-2048+/RS256、公开字段白名单、规范 Base64URLUInt、kid 一致及唯一、16 把/64 KiB 限制；Operations 规则拒绝改用公共 `ErrorException`，仍返回统一内部错误。该接口无调用方输入，无 Body 校验项；无参数查询按用户要求使用统一 Processor 入口，未添加可选 Realm 或虚构请求字段；没有写入，Context、View、锁、写事务、业务防重及请求幂等项不适用。未新增 Bean 工厂、Mock、表或字段，模块和 HTTP 边界不暴露 DataObject。
+- **Verified：** JDK 25 联合 Foundation、Platform、两个 BFF 和 Gateway 的 27 个所需模块执行 `-DskipTests clean test-compile` 成功，日志 `/tmp/plt-operations-jwks-compile.log`。静态检查 `/tmp/plt-operations-jwks-static-check.py` 确认校验规则、Realm/列/筛选/排序 SQL、映射属性、HTTP 路径和 Gateway 行为保持；Mapper XML 仅增加 Operations SELECT 超时。临时序列化检查 `/tmp/CheckOperationsJwksWire.java` 使用已编译 DTO，验证 JSON 字段、`key_ops` 往返及 Owner 结果/HTTP Body 字节长度一致。后续统一 Processor 入口后，同一 27 模块 Reactor 执行 `-DskipTests test-compile` 成功，日志 `/tmp/plt-operations-jwks-processor-compile.log`；复核 Controller 仅调用 `.process`、无参请求和组件装配声明，公钥校验及签发共享 Service 未变。相关差异与文档链接检查通过。
+- **验证边界：** 按用户要求未新增或修改仓库测试，未运行单元/集成测试；Spring 装配、真实 HTTP/MyBatis/MySQL、轮换并发及数据库超时尚未运行期验证。未执行 SQL、启动服务、安装制品、提交、发布或部署；独立消费者需使用更新后的 Platform API 制品。
+
+<a id="platform-operations-authentication-refactor-20260917"></a>
+
+## Platform Operations 认证接口重构（2026-09-17）
+
+- **后续公共锁异常收敛：** 按用户要求保留账号/会话锁资源和锁前解析，创建/获取锁时的 Redis 异常统一由 Foundation `AbstractLockProcessor` 处理：直接或 Redisson 包装的中断恢复线程标记并抛公共并发错误，其他 `RedisException` 转为公共服务不可用错误，保留 Cause；锁内业务异常原样传播，释放失败不覆盖结果。移除 Operations 5、Client 8 个 Processor 的重复捕获，其中 Operations 改密/退出/首次管理员和 Client 退出不再重写 `processRequest`。静态比对确认这 13 个 Processor 的锁参数、锁内业务及后续方法逐字未变。JDK 25 联合 Foundation 与 Platform、两个 BFF、Gateway 的 27 个所需模块执行 `-DskipTests clean test-compile` 通过，日志 `/tmp/platform-lock-exception-compile.log`；`git diff --check` 通过。按用户要求未新增、修改或运行测试，本轮未验证真实 Redis 中断/不可用；未安装本地 Maven 制品、发布或部署，消费者单独构建/运行仍需使用包含此次修改的 Foundation 制品。
+- **Implemented：** `OperationsAuthenticationApi` 六个入口分别进入 Access Control 的 LoginOperations、RefreshOperationsSession、LogoutOperations、ChangeOperationsPassword、CreateFirstOperationsAdministrator、GetOperationsContext Processor。Web Controller/Converter 只做协议适配，删除两个旧 Web 认证 Processor；API 原 Models 容器拆为 request/response 下七个独立 class，Operations BFF 同步 Java 类型和 getter，HTTP 路径、Header、字段、Bean Validation 及审计标记保持。
+- **Context 与本地事务：** 五个写入口构造具名 Context，持有所属模块 DataObject；本地 `OperationsAuthenticationService` 只通过按表 Repository 保存，不调用其他 Service 或外部依赖。Repository 检查单行条件写结果并回写原对象。写事务为 READ COMMITTED、15 秒超时；当前上下文查询保留 REPEATABLE READ 只读快照。Vault、密码计算、刷新证明及令牌预签均在写事务前完成，提交前复核当前安全事实；本轮没有提交后外部操作。
+- **安全语义与锁：** 登录失败计数先提交后返回拒绝；刷新保留 Session 行锁、单次消费和正确旧代复用撤销整个会话；改密原子推进账号/凭据并撤销全部会话；首次管理员账号、密码、成员、角色授予与 Bootstrap 关闭原子提交。五个写 Processor 使用 `AbstractLockProcessor` TRY_LOCK，账号与会话实际 Key 为 `lock:operations:account:{id}`、`lock:operations:session:{id}`；未知登录/刷新继续使用受控 HMAC 尝试桶。既有账号管理四个注解锁前缀同步；没有叠加锁。模块配置 `operations.authentication.lock-wait-time/lock-lease-time` 默认 500ms/30s，启动校验，变更需重启。
+- **公共写接口示例第 11 节自查：** API class、Controller/Converter、Owner Request/Processor/Context、本地 Service、按表 Repository、条件 SQL 与对象同步已按职责对应；查询返回 `OperationsContextView`，DataObject 不越过模块或 HTTP 边界。入口仍由 HTTP Bean Validation 与 Header 转换触发校验，未新增非 HTTP 消费者。六个接口原本不携带 HTTP Idempotency-Key，原请求响应重放/Hash 比较不适用；刷新秘密复用属于必须保留的认证安全规则。沿用 Spring 组件扫描与现有基础包，未新增生产 Mock、共享幂等组件消费或数据库结构；无关管理接口保留既有编排。
+- **Verified（编译与静态）：** JDK 25 联合 Reactor 对 Platform 7、Client BFF 3、Operations BFF 3、Gateway 3 模块执行 `-DskipTests clean test-compile` 成功，日志 `/tmp/plt-operations-auth-final-compile.log`。静态检查 `/tmp/plt-operations-auth-static-check.py` 确认六个接口签名/路由/Header、七个 DTO 字段及约束、五组审计标记不变，两个认证/目录 Mapper XML 与改动前逐字相同；本地认证 Service 仅依赖 Clock/Repository，旧类型引用已清理。相关改动通过 `git diff --check`。
+- **验证与发布边界：** 按用户要求未新增或运行测试；既有测试只为类型、移动后的准备组件和锁 Key 做适配并编译。尚未验证 Spring 装配、MyBatis 映射、HTTP 认证链、数据库/Redis 竞争、回滚与审计运行期行为。旧版本锁 Key 没有 `lock:` 前缀，相关入口发布需协调版本，不能依赖混合版本间 Redis 互斥；数据库行锁、条件更新及唯一约束继续保留。未执行 SQL、启动服务、提交、推送或部署。
+
+<a id="platform-client-authentication-refactor-20260917"></a>
+
+## Platform Client 认证接口重构（2026-09-17）
+
+- **Implemented：** `ClientAuthenticationApi` 九个接口迁入 Access Control 的 RegisterClient、RequestClientEmailVerification、RequestClientPasswordReset、VerifyClientEmail、ResetClientPassword、LoginClient、RefreshClientSession、LogoutClient、GetClientAccountContext Processor。Web Controller/Converter 只做协议适配；API 原 Models record 容器拆为 request/response 下十个独立普通 class，保留字段、Bean Validation、HTTP 路径/Header/状态及审计标记。Client BFF 同步 import/getter，不改变 Cookie、Origin、前端或 Gateway 合同。删除四个旧 Web 认证 Processor 和已无消费者的聚合 Repository、ClientTokenService。
+- **阶段与事务：** 八个写 Processor 显式组织 READ COMMITTED、15 秒本地事务并登记审计事务完成观察。共享 Preparation 负责邮箱/Vault、挑战证明、密码校验和令牌签名准备；这些外部或计算步骤在写事务前完成，事务内重新核对当前账号、挑战、会话及签名密钥资格。Issue/ConsumeClientEmail、Login/Refresh/LogoutClient Context 持有本模块当前 DataObject；两个本地 Service 仅组合本库保存，不调用其他 Service 或外部依赖。注册账号/密码/挑战、验证消费/激活、重置密码/安全纪元/会话撤销、登录会话/首个刷新代、刷新消费/后继/会话推进各自原子提交。邮件在提交后发送；邮件依赖暂不可用仍返回既有 202，由重发流程恢复，不保存秘密重试材料。
+- **安全与查询：** 保留反枚举公开响应、挑战用途/单次消费、失败计数提交后拒绝、正确旧刷新令牌重用后提交撤销、密码重置后撤销旧会话等原安全规则，不将其视为 HTTP 请求幂等。认证入口原本没有 Idempotency-Key，本轮没有新增命令幂等组件或响应重放。账号上下文保留 REPEATABLE READ 只读快照及 15 秒超时，以 `ClientAccountView` 穿过模块边界；HTTP 和审计不暴露 DataObject 或原始密码/秘密。
+- **持久化：** CustomerAccount、CustomerPassword、EmailAuthenticationChallenge、ClientSession、ClientRefresh、ClientSigningKey 改为普通可变 class；Repository 按六张表拆分，条件写入检查受影响行数后回写原对象，回滚后的 Context 不复用。注册三项插入补齐行数检查。两个原 Mapper XML 与重构前相同，保留原唯一约束、行锁、CAS、锁定读取缓存设置与固定行锁顺序；没有新增 SQL、表或字段。
+- **锁与配置：** 八个写入口使用 `AbstractLockProcessor` 的 TRY_LOCK；实际 Key 为 `lock:customer:email:{邮箱Token的HMAC}`、`lock:customer:account:{accountId}` 或 `lock:customer:session:{sessionId}`。`ClientAuthenticationProperties` 集中校验既有 CUSTOMER issuer 和新增 `client.authentication.lock-wait-time=500ms`、`lock-lease-time=30s`，配置变更需重启。模板负责事务外获取/释放，保留 Redis 不可用 503 与中断并发错误语义。Tenant Projection 原双资源注解机制保留，两个账号 Key 同步新前缀以协调同资源写入；旧、新版本混合时 Key 不同，部署须协调切换，不能视为 Redis 已跨版本互斥，数据库保护仍保留。未改变其他注解锁或 Scope 配置。
+- **公共写接口示例第 11 节自查：** API class/字段约束和 Controller/Converter、Owner Processor/当前事实复核、完整 Context、本地 Service、事务内外步骤、按表 Repository/CAS/对象回写、实际资源锁、查询 View 与 DTO 边界逐项核对。HTTP Bean Validation 入口保留，无新增非 HTTP 公共入口；既有跨模块上下文查询仍执行当前会话资格检查。本能力没有可重放的业务提交身份，原提交比较及终态响应重放项不适用，挑战消费和刷新重用按安全语义处理。配置集中，复用 Foundation Processor/锁及现有时间/密码/端口能力，未加入生产 Mock、伪造成功或额外协议字段。
+- **编译与静态验证：** JDK 25 临时联合 Reactor 对 Platform 7、Client BFF 3、Operations BFF 3、Gateway 3 模块执行 `-DskipTests clean test-compile` 成功；最后锁异常映射及配置整理后再次 `-DskipTests test-compile` 成功，日志 `/tmp/plt-client-auth-final-compile.log`。源码检查核对九个 HTTP 操作、十个 DTO 的字段与约束、两个不变 Mapper XML、八个模板锁、五个共享账号锁消费者、两个本地 Service 依赖及审计标记，记录 `/tmp/plt-client-auth-static-check.json`。本次差异 `git diff --check` 通过；排除任务开始前已有的 ApiScopeManagementApi 空白差异。
+- **验证边界：** 按用户要求未新增或运行单元测试；现有测试只适配重命名/访问器、配置校验和已删除旧架构入口，并参与编译。未运行本次 Bean 装配、HTTP 认证、MySQL/Redis 竞争、回滚、审计、Vault/SMTP 或浏览器验证，不能把先前版本的链路结果外推到本次重构。没有执行数据库操作、启用入口、提交、推送、发布或部署；此前工作区修改保留。
+
+<a id="platform-api-scope-management-refactor-20260917"></a>
+
+## Platform API Scope 管理接口重构（2026-09-17）
+
+- **Implemented：** `ApiScopeManagementApi` 的 scopes/scope/options/create/update 全部由 Access Control 对应的 `ListApiScopesProcessor`、`GetApiScopeProcessor`、`ListApiScopeOptionsProcessor`、`CreateApiScopeProcessor`、`UpdateApiScopeProcessor` 处理，使用组件扫描及构造器注入；删除旧 Web 聚合 Processor。Controller/Converter 只解析、规范化和投影。API 原 Models record 容器拆成 request/response 下 6 个独立普通 class，保留 HTTP 路径、JSON 字段、严格解码、Bean Validation、分页与各自读取权限；BFF 同步 Java 合同，引用聚合仍由 BFF `ApiScopeDetailsProcessor` 完成。
+- **查询与对象：** 目录是单表查询，使用普通 class `ApiScope`，记录完整性检查位于该对象；跨模块继续返回既有领域 `Scope`，不新增同义 View、不向 Web 暴露 DataObject。列表/选项的筛选、排序、总数 SQL 保持原状；按接口合同保留授权、窗口和总数的同一 REPEATABLE READ 只读快照及 15 秒超时。
+- **写入、Context 与事务：** 创建/更新各自使用 `AbstractLockProcessor`，共用 `lock:api-scope:{scopeCode}`；模块 `ApiScopeManagementProperties` 以 Duration 提供 `api-scope.management.lock-wait-time`（默认 500ms）与 `lock-lease-time`（默认 30s），启动校验，配置变更需重启，不读取旧注解锁配置。模板在事务外获取/释放锁；READ COMMITTED 事务内复核当前授权、唯一编码或原版本，构造 Create/Update Context，通过本地 Service/Repository 保存。更新保留数据库行锁、版本 CAS 和上限保护，SQL 行数正确后回写原对象名称、说明、版本及 UTC 微秒时间；回滚后丢弃 Context。审计仍使用受控字段和既有 Controller 链，没有外部调用或提交后业务推进。
+- **请求幂等迁移：** 创建/更新的 Platform 与 BFF 方法不再接收或转发 Idempotency-Key，删除 Scope 专用 Hash 输入、命令上下文和已无消费者的 ClientApiMutationReference；不删除共享命令表或其他接口的既有调用。前端继续发送 key 供 Gateway 使用。重复到达 Platform 的创建依赖唯一 scopeCode 返回 400，旧版本更新返回 409，业务不重放原 HTTP 响应。Gateway 请求幂等的设计归属不代表已实现，状态见[统一职责记录](#gateway-request-idempotency-conventions-20260917)。
+- **公共写接口示例第 11 节自查：** API class/字段约束、模块内 Request、Owner Processor、完整 Context、本地 Service、按表 Repository、事务及锁边界均已按职责落实。原 HTTP 命令查重/Hash 比较不适用；本能力没有独立业务提交身份，以唯一编码、当前版本保护业务。创建后直接响应、更新后从原对象构造结果，不增加远端步骤或中间 View。SQL、影响行数、对象回写与异常 Cause 保持明确；默认 Spring 装配，无手动 Bean 工厂或生产 Mock。
+- **Verified（编译与静态）：** JDK 25 联合 Reactor 对 Platform 7、Operations BFF 3、Gateway 3 模块执行 `-DskipTests clean test-compile` 成功，日志 `/tmp/plt-api-scope-refactor-final-compile.log`。首轮发现轻量 API 模块无 Lombok，已改为普通构造器/getter，未增加依赖。静态比对确认 6 个 DTO 字段、全部 SELECT/INSERT SQL 与原合同一致，更新为原版本 CAS 加一；无 Scope 注解锁叠加和专用幂等消费。相关仓库 `git diff --check` 通过。
+- **验证边界：** 按用户要求未新增或运行单元测试；现有测试只适配删除类型、Header、业务冲突及锁配置/Key，并完成源码编译。实际 Spring 装配、严格 HTTP 解码、MyBatis 映射、权限/Redis/数据库竞争、回滚和审计运行期回归尚未验证。模板锁 Key 与旧版本不同，混合版本间仍由数据库唯一约束/行锁/CAS 兜底；未执行 SQL、发布、部署或提交。
+
+<a id="platform-api-credential-management-refactor-20260917"></a>
+
+## Platform API Credential 详情、Scope 与撤销接口重构（2026-09-17）
+
+- **Implemented：** `ApiCredentialManagementApi` 的 `credential/scopes/revoke` 分别进入 Access Control 的 `GetApiCredentialProcessor`、`ListApiCredentialScopesProcessor`、`RevokeApiCredentialProcessor`，使用组件扫描与构造器注入。Controller/Converter 负责协议转换；删除旧 Web `ApiCredentialManagementProcessor` 与 API Models 容器，三个响应及撤销请求改为独立普通 class。Operations BFF 同步适配 Java 类型和 getter，HTTP 路径与 JSON 字段保持；撤销 Header 合同按下述后续修订调整。
+- **查询与 View：** 详情使用 `ApiCredentialDetailView` 复用摘要展示规则，轮换来源检查为 View 的纯内存方法；Scope 使用 `ApiCredentialScopeGrantView` 校验区间并计算 REVOKED/EXPIRED/PENDING/ACTIVE。移除旧 Credential/Grant 中间镜像和 Scope record 映射。Scope SQL 归入既有 Scope Repository/Mapper；两个查询保留同一 REPEATABLE READ 快照、15 秒超时与统一 UTC 微秒时点。
+- **撤销 Context、保存与事务：** `RevokeApiCredentialContext` 直接持有已锁定和校验的可变 `ApiCredentialManagement` 及撤销时点。每次到达 Owner 的请求复核当前权限、目标与 expectedVersion，再由本地 `ApiCredentialManagementService` 通过 Repository 保存；原状态/版本 CAS 与影响行数检查保持，成功后同步原对象状态、版本及更新时间。READ COMMITTED 事务保持 15 秒超时，事务回滚后丢弃 Context；事务内只有本库访问与本地审计采集。已 REVOKED 且版本匹配时直接返回当前结果，不再次修改或追加变更审计。
+- **锁与幂等归属修订（Implemented）：** 按用户后续纠正，撤销改为 `AbstractLockProcessor`，Controller 直接调用 `process`，删除 `@ResourceLock` 和额外代理入口。`TRY_LOCK` 使用逻辑 Key `lock:api-credential:{id}`（由模板添加前缀），沿用服务配置的有限 Wait/Lease，完整包围本地事务；数据库行锁/CAS 保留。移除撤销专用 Hash 命令、幂等服务调用、命令记录和响应引用编解码，内部请求直接包含凭证 ID、版本、原因；Platform/BFF 的撤销方法不再要求或传递 Idempotency-Key。前端仍生成并发送原幂等键，Scope 等其他接口继续沿用业务层幂等。严格 HTTP Body 校验、权限检查和响应 JSON 字段保持。
+- **编译与静态验证：** 初次重构的 JDK 25 联合 Reactor 编译日志为 `/tmp/plt-credential-management-compile.log`。锁及幂等归属修订后再次对 Platform 7、Operations BFF 3、Gateway 3 模块执行 `-DskipTests test-compile` 成功，日志 `/tmp/plt-revoke-lock-refactor-final-compile.log`；只适配现有用例的撤销响应、Header 和模板锁 Key，移除已删除编解码器的用例引用，未新增或运行测试。静态检查确认撤销业务代码无专用 Hash/命令回执调用、无叠加锁，前端源码无本次改动，Mapper/SQL 保持原状。
+- **公共写接口示例第 11 节自查：** API class 与 Bean Validation、Controller/Converter 适配、Owner Processor/Context、本地 Service 保存、Repository CAS/对象回写和实际凭证资源锁均保持对应职责。事务内无外部调用，写入不新增 View、不跨模块暴露 DataObject；删除撤销专用命令重放后，Owner 的原命令身份/Hash 比较项不适用，由当前状态与 expectedVersion 决定本地写入。静态差异及相关仓库 `git diff --check` 通过；运行期验证范围见下一项。
+- **验证边界与待接入：** 当前 Gateway 源码与 README 仍为透传 Idempotency-Key，未实现本次安排的统一请求去重/响应重放；该能力属于后续 Gateway 接入，不能将本次 Owner 代码迁出视为端到端幂等已完成。旧版本请求若实际再次到达 Platform 会返回 409。模板与旧注解的锁 Key 不同，混合版本期间不共享 Redis 互斥，仍有数据库行锁/CAS 保护。按用户要求未运行单元测试，Bean 装配、Redis/MySQL 竞争、HTTP 与审计运行期回归未验证。未执行 SQL、提交、发布或部署。
+
+
+<a id="platform-api-credential-list-refactor-20260917"></a>
+
+## Platform API Credential credentials 列表重构（2026-09-17）
+
+- **View 内聚调整（Implemented / 编译验证）：** 按用户要求，关联事实完整性、CLIENT 类型校验与展示状态派生收敛至 `ApiCredentialSummaryView.prepareForDisplay(asOf)`；Processor 只保留查询编排、空条目检查和统一查询时点。保留原异常分类、撤销优先和到期边界，View 不查库、不取当前时间、不修改持久化状态。JDK 25 `-DskipTests test-compile` 的 Platform 7 模块通过，`git diff --check` 通过；日志 `/tmp/plt-credentials-view-compile.log`。未新增或执行单元测试。
+- **Implemented：** `ApiCredentialManagementApi#credentials` 经 Web `ApiCredentialListConverter` 转成内部 `ListApiCredentialsRequest`，由 Access Control 的 `ListApiCredentialsProcessor`（`@Component + @AllArgsConstructor`、Foundation `AbstractProcessor`）编排。会话规则复用 `OperationsSessionService`，普通会话与 `API_CREDENTIAL_READ` 权限由 Processor 组合检查；列表和总数只读取本模块 Repository。移除旧 Web Processor/Service 中的列表方法及重复摘要转换。
+- **协议与查询：** HTTP GET 路径、Header、Query、13 个条目 JSON 字段和分页语义保持；既有严格 Query 解析及分页校验移至 Converter，不新增 GET Body。列表由 SQL 直接映射普通 class `ApiCredentialSummaryView`，不再经过详情用的 `Credential` 镜像；独立 `response.ApiCredentialSummaryResponseBody` 使用普通 class 与属性绑定，Operations BFF 同步适配。多表 JOIN、筛选、排序、Scope EXISTS 去重与总数 SQL 口径保持，列表不读取 PHC 或轮换详情。
+- **事务与规范自查：** 保留 REPEATABLE READ 只读事务、15 秒超时和同一 UTC 微秒状态时点，权限校验先于列表/总数；保留失效 Tenant 可见、撤销优先和损坏关联拒绝规则。审计公开能力增加事务观察入口，委托原 `AuditContext` 注册完成通知；事务内只有本库读取与本地审计采集，没有外部调用。纯查询没有本地原子写入、命令重放、资源锁或保存 Context；这些公共写接口示例项不适用。详情、Scope 和撤销入口的既有实现不在本次迁移范围。
+- **编译与静态验证：** JDK 25 下，临时联合 Reactor 对 Platform 7 模块、Operations BFF 3 模块、Gateway 3 模块执行 `-DskipTests clean test-compile` 成功；最终鉴权编排调整后再次执行 `-DskipTests test-compile` 成功。日志分别为 `/tmp/plt-credentials-compile.log`、`/tmp/plt-credentials-final-compile.log`。Mapper XML 解析及两个应用仓库 `git diff --check` 通过。
+- **验证边界：** 按用户要求未新增或执行单元测试；现有测试仅编译，运行期 Bean 装配、HTTP/数据库一致性和审计回归尚未验证。未执行 SQL、部署、提交或发布。
+
+<a id="platform-api-credential-validation-tests-20260917"></a>
+
+## Platform PLT-I03 validate 接口自动测试（2026-09-17）
+
+- **Implemented：** 用户后续明确要求补充 `ApiCredentialValidationApi#validate` 测试。沿用整理后的测试模块和 `MockTestBase`，通过测试组合根引用正式 `PlatformSupportApplication`，新增成功、401 拒绝、503 数据异常、并发快照四组真实 HTTP 入口测试；未恢复用户已删除的旧测试，也未修改生产代码。辅助组件使用 TestComponent/构造器注入，复用 Foundation HttpTestInvoker、AbstractHttpResponseChecker 和 TestBase/Clear。
+- **场景与生命周期：** 覆盖可信 Client 身份、Scope 隔离/排序/去重/64 项上限、Credential 长度与大小写、重复 Header、错误秘密、全部合法失效状态、微秒级到期/授权窗口、关联/版本/枚举/PHC 损坏、撤销后下次认证，以及两次 SQL 间另一连接提交新 Scope 时的 REPEATABLE READ 快照。全局 BeforeEach 检查基线，类级 BeforeEach 插入本例事实；每次请求验证只读数据库事实、零审计和安全响应，清理前检查日志 canary。Clear 按已登记 ID/Request ID 回收数据并验证，无整表删除。
+- **Verified：** JDK 25 临时 Foundation/Platform/CCT 联合 Reactor，`-pl :platform-support-test -am -Dtest=ApiCredentialValidationSuccessTest,ApiCredentialValidationRejectionTest,ApiCredentialValidationUnavailableTest,ApiCredentialValidationConsistencyTest -Dsurefire.failIfNoSpecifiedTests=false test`，21 模块构建成功，四组共 **74/74**，0 failures/errors/skipped。证据为 `platform-support-test/target/surefire-reports`，本次构建日志 `/tmp/api-credential-tests.log`。成功请求的真实 JDBC 读取同时验证只读、REPEATABLE READ 及两次查询共享连接；并发测试证明当前请求看旧 Scope、下一请求看到新提交。
+- **Mock 启动修正（Implemented / Verified）：** 用户指出 IDEA 启动不应另配密码后，`MockTestBase` 统一接入测试专用 `LocalMockEnvironmentInitializer`，按编译产物/工作目录定位所属工作区，仅在 `mock` Profile 自动加载已授权 `.env.local` 的平台 MySQL 与 Redis 密码，保留显式覆盖，不导入其他秘密或执行 Shell。数据库前置错误区分认证、连通性和表结构，消息只保留安全 SQLState/错误码。新增 6 个合成文件配置机制用例；从测试模块目录启动、移除四个密码环境变量且不使用外部注入脚本，联合 Reactor 共 **80/80** 通过（原 74 个接口用例 + 6 个配置用例），0 failures/errors/skipped。日志 `/tmp/platform-mock-auto-connection-tests.log`；未通过 IDEA UI 执行，IDEA 使用同一 Spring 测试初始化入口。
+- **环境与边界：** 本地配置读取经用户明确授权，密码只保留在测试进程，不输出或写入测试配置。连接仓库已有 MySQL；新增 `application-mock.yml` 配置清单、串行 JUnit 配置及五张所需表的人工 `init/ddl.sql`，没有执行 DDL/迁移。该接口没有外部 HTTP、Redis 锁、MQ 或业务原子写入，相应 Mock/副作用场景不适用。本次不宣称全服务覆盖率、真实依赖断连/超时场景或其他接口回归已通过；未提交、发布或部署。此前“暂不执行测试”是下述重构阶段的历史边界，当前验证以本节为准。
+
+<a id="platform-api-credential-refactor-20260917"></a>
+
+## Platform PLT-I03 validate 按开发手册重构（2026-09-17）
+
+- **Bean 装配简化（Implemented / 编译验证）：** 按用户后续要求，Processor 改用 `@Component + @AllArgsConstructor`，删除专门手动构造 Processor 的 `ApiCredentialConfiguration`。Web `ApplicationConfiguration` 提供统一 UTC Clock，Operations/Client 认证配置移除重复时钟工厂，生产时钟不再受认证开关影响。`-DskipTests clean test-compile` 的 Platform 7 模块编译通过，日志 `/tmp/plt-validate-component-compile.log`；源码确认只有一个生产 Clock 工厂且无旧工厂名称引用。继续按用户要求暂不执行单元测试，未验证运行期装配或数据库链路。
+- **Implemented：** `ApiCredentialValidationApi#validate` 委托 Access Control 的 `ApiCredentialValidationProcessor`，复用 Foundation `AbstractProcessor` 拒绝调用方已有事务。Controller/Converter 仅处理协议和身份字段转换；删除原认证 Service/Impl 及重复 Domain 持久化镜像。多表查询使用 `ApiCredentialCandidateView`/`ApiCredentialIdentityView`，Context 和只读数据库映射使用 class，Scope 查询拆入独立 Repository/Mapper。
+- **合同与事务：** 路径、单一 Credential Header、五个 JSON 字段、Mono、401/503、失败关闭和敏感日志边界不变。响应迁至 `api.apicredential.response.ValidatedCredentialResponseBody` 独立 class，Gateway 与已有测试源码同步 import/getter。保留原两次 SQL 的 REPEATABLE READ 只读快照，PHC 校验在事务结束后执行；无业务写入、命令幂等、资源锁、远端调用或 Schema 变更。SQL 条件与缓存设置逐项比对未变。
+- **Verified（仅编译/静态）：** JDK 25 下通过临时聚合 Reactor 对 Platform/Gateway 执行 `-DskipTests clean test-compile`，10 个模块全部编译成功，包含已有测试源码；日志 `/tmp/plt-validate-clean-compile.log`。旧类型引用、Mapper 绑定与差异空白检查通过。临时聚合只用于源码编译，未安装或发布 Maven 制品。
+- **Pending / 授权边界：** 用户在任务中明确“先不用考虑单元测试”，此后未新增场景或执行测试；上述结果不是接口、数据库、并发、日志或运行期验收。该指令前启动的契约迁移失败检查仅说明旧类型尚不符合目标结构，不作为重构后通过证据。尚未提交、推送、部署或执行数据库 SQL。
+
+<a id="coding-conventions-payment-20260916"></a>
+
+## 写接口规范以 Payment 为基准合并（2026-09-16）
+
+- **公共示例补充（Documented / Verified）：** 用户确认后新增[公共写接口开发示例](examples/WRITE_API_EXAMPLE.md)，覆盖 API 至 Mapper 的调用链、规范化 Processor 主流程、事务边界及交付自查；Payment 本地规范收敛为业务补充，保留原章节锚点。根 AGENTS、Payment 独立仓库入口、规范导航和规则摘要已要求实现前阅读与完成后自查。11 段 Java 与 1 段 XML 示例已对照源码核验，明确标注的事务外推进方法只作规范化示意；链接检查无新增失效，规范静态检查及修改测试的 lint 通过。`npm --prefix requirements-site test` 构建通过，137 项中 133 通过，4 项既有 Commerce 路由合同/模型统计断言失败（日志 `/tmp/write-api-example-tests.log`），失败涉及本次未修改的合同与统计。该检查验证文档入口和内容，不证明 AI 必然执行规则；本轮未改业务 Java、数据库或运行配置，未提交或部署。
+- **Documented：** 用户确认后，按[合并决定](decisions/2026-09-16-payment-based-coding-conventions.md)将 class DTO、业务模块 Processor、查询与校验、Context、本地 Service、事务组合、按表 Repository、请求防重及配置约定上收公共规范。同步工程检查清单、技术栈的模板锁/既有注解锁边界、AGENTS/导航及四份规则摘要；Payment 保留应用示例，受影响旧决定增加窄范围后继路由。
+- **Verified / Existing failure：** 规范相关的三项静态测试通过；`npm --prefix requirements-site test` 完成构建，137 项检查中 136 通过、1 项失败，日志 `/tmp/payment-conventions-site-tests-final.log`。失败为既有 Risk 模型统计断言（测试预期 78/944/...）与台账不一致，已与本轮修改前副本核对：该统计行和失败条件均未由本轮改变。639 个本地文档链接/锚点检查无新增错误，12 个既有失效引用未混入本轮修复；记录 `/tmp/payment-conventions-links.json`。本轮没有 Java 行为变更，不运行 Java 构建来替代文档检查。
+- **Pending：** 既有 Java 仓库尚未按新规则全量审计或迁移；尤其既有 Service 外部调用、Web 编排、Models + record 和注解锁消费者仍按各自任务逐步调整。Payment 暂缓测试及本期 Mock 不推广为公共默认。本轮不改业务源码、业务合同、SQL、环境或部署，未提交。
+
 ## 2. 应用与基础设施
 
 | 组件 | Implemented | Verified | Deployed | Pending / 未证明 |
@@ -18,14 +443,14 @@
 | Requirements Site | 需求目录和全局序列源文件已存在，仍是需求事实入口；全系统 Problem Profile 决策已投影到现行需求目录 | 2026-09-11 构建及内容门禁 136/136，lint 通过 | 仅本地站点，不对外发布 | 需求存在不代表六系统全部实现或已部署 |
 | Build / Foundation | Maven 构建治理、框架无关 `paytech-http-problem`、严格/迁移期 HTTP Client Reader、唯一 MVC Problem Writer、稳定公共 Header 名称、可复用显式-null/严格时间反序列化器，以及声明式 `@ResourceLock` 已在当前工作区实现 | 2026-09-08 当前 Header/JSON 绑定/MVC Problem 聚焦门禁 29/29，HTTP Problem Profile 5/5；此前 DTO 清理后的 Problem 相关 Reactor 326/326、注入仓库本地 Redis 凭据后的全 Foundation 505/505 是对应历史源码基线 | 最新 Snapshot 仅安装到本机 Maven 仓库供下游源码验证，未发布 Nexus、未部署 | Legacy Reader 须在部署与观测完成后删除；Compensation Event 测试仍自动重建 Schema；Resource Lock 尚未发布或部署 |
 | API Gateway | 动态 Snapshot、数据库 Target/Route 绑定与转发、BFF 管理监听隔离补改已实现，见第 17 节；Client Credential 链源码仍保持；当前另补 CLIENT 人类认证入口，见 [Client 切片](#client-console-onboarding-20260914) | 2026-09-15 Gateway 全量 1261/1261；指令 96.624745%、分支 90.051323%，覆盖率/边界通过；对端为协议 Simulator、Redis 为真实本机服务。RCO-16/Platform 历史证据仍见第 17 节 | 2026-09-12 本轮动态路由完整制品已部署 mor-test，原制品保持，RCO-17 注册后 Snapshot 接受 61 条 Operations Route；含用户已接受的既有 Client 代码 | Client 新代码未部署；Client 入口未开放；Netty ByteBuf 警告在 HEAD 对照同样复现，待处理；RCO-17 test 功能验收按用户要求由用户执行，见第 17 节 |
-| Platform Support | 当前工作区已将现有实现拆为 `api + access-control + audit-security + file-document + web + test`；Web 仍是唯一应用和组合根，全部模块仍使用一个 Platform 数据库和主 DataSource，审计保留同库专用写池；既有合同保持兼容，新增 Client PLT-I17 私网开通/状态投影与 F01/F02 上传及 FILE_SCAN 持久化恢复，见 [Client 切片](#client-console-onboarding-20260914) | 2026-09-12 RCO-16 在获准独立本机库完成 `clean verify` 386/386，指令 97.784105%、分支 90.058766%；原共享库不满足仅初始化前置的问题通过独立验证库处理，保留原有人工数据；详见第 17 节 | 既有 Platform 应用容器保持；2026-09-12 RCO-16 的 182 行注册及发布状态 SQL、Target 表注释已应用 mor-test；RCO-17 另应用 118 条注册及入口状态 SQL，见 [RCO-17](#rco17-test-20260912)；模块拆分和 Problem 映射源码未部署 | 精确制品及环境发布另行核对；CUSTOMER 本机认证持久化已聚焦验证；跨 Gateway/BFF/浏览器集成见 Client 切片、生产 Vault/KMS、Console Resource、MQ 和生产部署；其余资源锁/HMAC 风险见第 8 节 |
+| Platform Support | 当前工作区已将现有实现拆为 `api + access-control + audit-security + file-document + delivery + web + test`；Web 仍是唯一应用和组合根，全部模块仍使用一个 Platform 数据库和主 DataSource，审计保留同库专用写池；既有合同保持兼容，新增 Client PLT-I17 私网开通/状态投影与 F01/F02 上传及 FILE_SCAN 持久化恢复，见 [Client 切片](#client-console-onboarding-20260914) | 2026-09-12 RCO-16 在获准独立本机库完成 `clean verify` 386/386，指令 97.784105%、分支 90.058766%；原共享库不满足仅初始化前置的问题通过独立验证库处理，保留原有人工数据；详见第 17 节 | 既有 Platform 应用容器保持；2026-09-12 RCO-16 的 182 行注册及发布状态 SQL、Target 表注释已应用 mor-test；RCO-17 另应用 118 条注册及入口状态 SQL，见 [RCO-17](#rco17-test-20260912)；模块拆分和 Problem 映射源码未部署 | 精确制品及环境发布另行核对；CUSTOMER 本机认证持久化已聚焦验证；跨 Gateway/BFF/浏览器集成见 Client 切片、生产 Vault/KMS、Console Resource、MQ 和生产部署；其余资源锁/HMAC 风险见第 8 节 |
 | Client Console BFF / Web | 认证、申请导航、个人/组织单页、人员/关系、材料及受控目录聚合/交互，见 [Client 切片](#client-console-onboarding-20260914) | 2026-09-16 BFF clean verify 27/27；Web 公共字段反馈后续 26/26 与构建、前次预览认证 5/5；浏览器合成协议验证桌面/390px、目录联动、只读及登录/退出拦截 | 未部署，Client 入口关闭 | 正式提交/审核、真实国家目录及规范化规则、真实多 Owner/存储联调及完整认证浏览器验收待完成 |
 | Operations Console BFF | 独立 `web + test` Maven 仓库；当前工作区除既有页面适配外，已使用 Foundation Writer 输出统一 Problem，并在边界重建自身 503/504，保留显式上游迁移 Reader | 2026-09-06 JDK 25 `clean verify` 315/315；严格 Profile 与真实 `HEAD` 聚焦门禁 272/272 | 2026-09-12 RCO-17 BFF 已部署 `mor-test`，19201 回环管理监听健康；配置转发及 422 错误投影真实入口通过，待用户验收；见 [RCO-17](#rco17-test-20260912) | 无数据库和签名密钥；不拥有核心授权或跨系统事务；Legacy Reader 待部署证据后删除 |
 | Operations Console Web | React/TypeScript/Vite/Ant Design 已实现；当前工作区的 API 消费者严格读取 Problem、显示安全 detail/requestId，并为已知目标保留显式旧 Reader | 2026-09-06 测试 216/216，TypeScript 与 Vite 生产构建通过 | 2026-09-12 RCO-17 Web 已部署 `mor-test`，HTML/全部静态资源与批准镜像匹配，浏览器限定验收通过；待用户验收；见 [RCO-17](#rco17-test-20260912) | Client/Partner 未来会话方案不由此决定；Legacy Reader 待部署证据后删除 |
 | Vault V1 | Go Server、OpenAPI 与 Java Client 的当前工作区已切换统一 Problem/`HEAD`/Request ID 合同；三表 Protect/Reveal 业务边界不变 | 纯 RFC staged tree 的 Java Client `clean verify` 34/34，OpenAPI/YAML/source 静态门禁通过；当前主机没有 Go/gofmt，Go 编译与测试未执行 | 既有 `mor-test` 合成 smoke 部署保持不变；本次 Problem 源码未部署 | 补齐 Go 门禁；Platform 仍使用批准的开发 Mock；生产 KMS、强服务身份、真实消费者、合规验证和生产部署未完成；Legacy Java Reader 待删除 |
 | CCT | 单份主资料、人员/关系、材料引用、只读申请导航与恢复，见 [Client 切片](#client-console-onboarding-20260914) | 2026-09-16 clean verify 140/140（13 Suite）；真实 MySQL/Redis，外围 HTTP Simulator；38 表夹具回收 | 应用未部署，Client 入口关闭 | 正式提交、永久身份绑定、Risk/Operations 审核和真实 Owner 联调待完成 |
 | Commerce | 15 表/249 字段目标模型；本期新增 Customer 三操作及 Payment 内部四操作，准备时冻结 OE/合同/税事实并创建 Intent，见 [COM-CUSTOMER-01](#commerce-customer-20260912)；基础创建仍只做预检 | JDK 25 `clean verify` 331/331，0 失败/错误/跳过；真实本地 MySQL/HTTP、按需顺序查询与独立 Handler 恢复验证；JaCoCo 行覆盖率 91.78%（3027/3298）；模型沿用上一轮 17/17 | 应用未部署；获授权本机三表增量 SQL 已执行，本地 Mock 启动入口已验证并关闭 | 本机保留旧列的兼容结构不等于目标新库 Schema；新 Owner 端口为 Mock + TODO，真实跨服务、支付成功事实消费、晚到定价、Payment Card、公共路由及前端联调未完成 |
-| Payment | 30 表/403 字段目标模型；统一 pay、工具 Token、独立 Processor；移除 Caller 和 Payment→Commerce 出站依赖，Intent 冻结上游国家，见 [本地切片](#payment-execution-implementation) | 本轮限定四类 `clean verify` 24/24，全部测试源码编译、七模块打包；模型/场景 21/21；新 Schema 业务回归未运行 | 未部署；本机仍为旧 Execution Schema，Token 与 Intent 国家迁移待授权人工执行 | Commerce 上游适配、真实 Owner、完整数据库回归与综合验收待完成 |
+| Payment | 27 表/345 字段模型；Channel 五表与两个公开查询见[本地实现](#channel-account-mid-query-requirement-20260921)，Execution 另见[本地切片](#payment-execution-implementation) | Channel JDK 25 clean verify 56 项、模型 18 项通过；专项范围与覆盖率见下方 | 未部署；仅初始化 mor_payment_channel_test，既有业务库未迁移 | Routing 占位消费者、真实渠道、共享库迁移及真实 Vault 策略仍待接入 |
 | Finance | 84 表/1,109 字段目标模型和完整人工 Schema 已生成；首个余额查询 Java 仍是旧数字身份切片；当前测试消费者统一校验真实 HTTP Problem | 2026-09-06 JDK 25 `clean verify` 25/25，含本地 MySQL 余额路径与 RFC 1123 Date 门禁 | 未声明 | 本次未执行 SQL，旧余额切片不能直接消费新身份 Schema；完整服务与部署未证明；手工缴税异常分支待专项模型闭合 |
 | Risk & Compliance | 71 表/九路由配置切片；本次原 V1 增加可空终态、冷却/主体标签参数、手工拒绝文案、Risk-owned 主体绑定与显式历史格式兼容，见第 15 节 | 2026-09-11 JDK 25 `clean verify` 155/155，含真实本地 MySQL/随机端口 HTTP、旧 Hash Golden 和配置冻结门禁；模型/Schema 189/189 | 2026-09-12 RCO-17 已部署本机 `mor-test`，实际 78 表；四表及三表精简、历史回填与兼容比对完成，见 [RCO-17](#rco17-test-20260912) | Risk 配置的真实 Nginx/Gateway/BFF/Risk HTTP 链已验收；PDManer 人工 Review、其他环境/生产仍待完成；运行期评估和真实动作不在本期范围；全局 COMP-01/DB-01/Vault V1 Gate 保持 |
 | `mor-local` | 仓库提供 MySQL、Redis、RabbitMQ、Nacos 等本地依赖的手工环境 | 当前本机运行状态应按 [`LOCAL_DEVELOPMENT_ENVIRONMENT.md`](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 的命令即时核对 | 仅本机开发环境 | 自动测试只能复用该环境，不得自行拉起替代容器或连接真实业务环境 |
@@ -144,7 +569,7 @@
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Client & Contract | 38 | 413 | 60 | 39 | 62 | 6 | 6 |
 | Commerce | 15 | 250 | 24 | 12 | 15 | — | 4 |
-| Payment Orchestration | 30 | 403 | 45 | 48 | 67 | 8 | 7 |
+| Payment Orchestration | 27 | 345 | 38 | 44 | 63 | 7 | 7 |
 | Finance | 84 | 1,109 | 145 | 155 | 160 | 22 | 6 |
 | Risk & Compliance | 81 | 1,003 | 119 | 87 | 127 | 9 | 8 |
 | Platform Support | 64 | 831 | 123 | 102 | 109 | 5 | 7 |
@@ -162,7 +587,7 @@
 | HTTP-PROBLEM-01 | 除 `HEAD` 无 Body 语义及 pre-application 传输/边缘失败外，所有第一方 JSON HTTP 4xx/5xx 统一为 RFC 9457-based Code-MoR Problem Profile：`type=about:blank`，必填 `title/detail/code/requestId/timestamp`，可选字段错误只有 `field/message`，Body 不含 `status` | Tasks 1–12 已完成 Foundation、HTTP Client、Gateway、Platform/BFF/Web、Vault、Commerce OpenAPI 和现有核心服务测试消费者的源码迁移；Nginx/Connector 顺序已实现静态门禁，变更已合入各受影响仓库的本地 `main`。为未部署 Producer 保留的显式 Legacy Readers 尚未删除；Go 工具链、Gateway 既有 13 个基线失败和 Platform 非干净本地库仍是未闭合门禁；未发布或部署 | 补齐 Go、Gateway 基线与干净 Platform 数据库门禁，发布并按消费者优先顺序部署，观察所有第一方 Producer/Consumer 已使用新 Profile，再删除 Legacy Readers 并重跑全门禁；只有实际环境验收后才更新部署状态 |
 | VAULT-01 | Go Server + Java Client 是 V1 正式实现；V1 只支持三表 Protect/Reveal | 六系统文档仍依赖 Binding/Copy/Blind Index/Masked/Metadata/Retire 等旧能力 | 每个真实消费者完成 V1 适配或获批窄 V2 设计，API/模型/迁移/安全测试一致 |
 | TEST-01 | Foundation 不使用 Testcontainers 或自动 Schema 初始化 | Redis Starter 已迁移为复用仓库 `local-environment` 且真实门禁通过；Compensation Event 测试仍自动重建 Schema | Compensation Event 静态门禁先失败后通过，并在手工准备的 `mor-local` 上完成受影响 Maven 测试 |
-| COMP-01 | 本地可靠表使用 `event_key + event_type + sub_event_type + 可选最小 payload_json`，任何 Vault Token 禁止进入 Payload | 跨系统前序文档/模型仍有旧 source/version/schema/hash/64 KiB 契约；Payment 本轮已对齐目标模型与代码，并人工创建本机 Execution 相关表；CCT 模型及本机补偿表已切换，Client Workspace 恢复 Handler 已接通并完成本机验证，见 [Client 切片](#client-console-onboarding-20260914)；其他环境未迁移，见 [Execution 研发](#payment-execution-implementation)；Foundation `CompensationPayloadPolicy` 尚未显式拒绝 `vaultToken` / `*_vault_token` 标准字段名，也缺少相应反例测试 | 六套 Manifest、Policy、模型、场景、SQL 和测试一次性迁移并复核统计；Foundation 登记入口拒绝标准 Vault Token 字段并通过反例测试 |
+| COMP-01 | 本地可靠表使用 `event_key + event_type + sub_event_type + 可选最小 payload_json`，任何 Vault Token 禁止进入 Payload | 跨系统前序文档/模型仍有旧 source/version/schema/hash/64 KiB 契约；Payment 已对齐目标模型与代码并创建本机 Execution 相关表，见 [Execution 研发](#payment-execution-implementation)；CCT 模型及本机补偿表已切换，Client Workspace 恢复 Handler 已接通并完成本机验证，见 [Client 切片](#client-console-onboarding-20260914)；其他环境未迁移。Foundation `CompensationPayloadPolicy` 尚未显式拒绝 `vaultToken` / `*_vault_token` 标准字段名，也缺少相应反例测试 | 六套 Manifest、Policy、模型、场景、SQL 和测试按各自授权迁移并复核；Foundation 登记入口拒绝标准 Vault Token 字段并通过反例测试 |
 | DB-01 | 新建表不使用物理 CHECK/FK，Sidecar 仅表达应用不变量/逻辑关系 | 多份旧物理决策与 Vault DDL 仍有现在时或实际约束 | 应用保护与反例测试齐备后，审核并手工执行逐库约束迁移；物理核验通过 |
 | CCT-PRICING-01 | CCT 用全局不可复用 `payment_method_profile_code` 描述支付方式特征，并由 Term Version 下准确 OE Price 组合 Percentage、Fixed、Tiered Component/Band | 四系统目标模型及完整人工 Schema 已同步；新 Wire、Java、Payment 晚到事实、真实 Risk 接入和数据库执行仍待完成，详见 OE-CLIENT-MODEL-01 | 完成实际历史盘点及新旧 Reader 隔离；实现各 Owner HTTP/MQ、准备恢复与定价；另行接入 Risk，在授权环境迁移并通过真实数据库与端到端验证后关闭 |
 | FIN-01 | Tax Payment 事前承诺门禁与已发生银行扣款的事后事实登记分离 | 专项核对已确认：现有 `Bank Item + Reconciliation Exception` 可保存并追踪已发生扣款，但当前模型不能无损地把“没有前置 Tax Payment 的真实扣款”闭合到 Return/Payable | 正常流、无前置记录真实扣款、重复、金额/归属不匹配和解决流程均有模型与测试 |
@@ -173,7 +598,7 @@
 | GATEWAY-CLIENT-API-01 | Client API 使用专用域名推导的 Channel、PLT-I03 opaque Credential、Credential/Tenant Guard、exact Route Scope、外部可生成的 Request ID 与最小三 Header 下游合同 | Gateway 已消费 Platform 的 reactive PLT-I03 合同并实现独立 Credential Security Chain、Client Identity、exact Scope、最小下游 Header、响应/错误边界与纵向测试；Client 专项 130/130 通过，完整 1031 项仍有与对照副本相同的 39 个失败项；详细验证与剩余前置见第 13 节。PLT-I03 API artifact 仅构建安装到本机 Maven 缓存，不等于远端发布或部署 | 完整门禁和 Platform、Owner、Nginx 前置完成后，才获授权准备生产 Approved Target 与 `DISABLED` Target/Route。首条 Route 切为 `ACTIVE` 后逐实例确认 CLIENT_API Target/Route Count `0 -> 1` 并 smoke；失败先撤销测试 Credential，再禁用 Target/Route 并等待每实例 Count 回到 0。只有成功收敛和 smoke 后才声明可用；后续同 Count 变更须先提供 Snapshot Revision/Fingerprint |
 | AUDIT-01 | Platform 既有 Operations HTTP 审计由 Controller 注解声明，提交结果确认后独立事务尽力写入；允许丢失，审计故障不改变业务结果 | [正式设计](../docs/superpowers/specs/2026-09-05-platform-controller-best-effort-audit-design.md)与[实施计划](../docs/superpowers/plans/2026-09-05-platform-controller-best-effort-audit.md)已实现：29 个方法精确覆盖、业务保护迁移、有界异步隔离、同库独立事务及真实故障回归均通过本地门禁；本次把业务审计接口收敛为 `identify/target/record/suppressReplay`，Processor 由唯一事务执行器自动桥接事务终态并新增递归字节码门禁；首次实现与低侵入收敛已分别提交本地 `main`（`5ce9ad0`、`8b42a64`），均尚未推送或部署，网络未知提交、强制终止和物理基础设施故障不在已验证范围 | 当前实现与验证证据见第 7 节；上线前另行完成环境配置、容量评估和部署回归，不把尽力写入描述为零丢失或物理零影响 |
 
-| COMMAND-IDEMPOTENCY-01 | Foundation 独立 opt-in `paytech-command-idempotency` 已实现服务本地 Claim、Lease、Version CAS、恢复阶段推进和稳定响应冻结；JAR 不创建事务、不计算业务 Hash/Snapshot，也不拥有中央数据库。Commerce Web 是当前唯一批准的迁移消费者 | Build BOM 已管理新 artifact；Foundation 聚焦 `-pl paytech-command-idempotency -am clean verify` 通过，其中新模块 11/11；Commerce 已移除重复的 DataObject、Mapper/XML 和 Repository，并以同一表结构接入公共 API；本地 MySQL 全量 194/194 覆盖 Claim、Lease、CAS、阶段恢复和并发提交窗口。JAR 与 BOM 只安装到本机 Maven 仓库，未发布 Nexus；Risk、Platform Support、Gateway 和其他系统未改动 | 发布前按 Build → Foundation → Commerce 重跑并发布明确版本。其他系统是否迁移必须逐系统批准，不能自动接入 |
+| COMMAND-IDEMPOTENCY-01 | Foundation 独立 opt-in `paytech-command-idempotency` 已实现服务本地 Claim、Lease、Version CAS、恢复阶段推进和稳定响应冻结；JAR 不创建事务、不计算业务 Hash/Snapshot，也不拥有中央数据库。Commerce 为首个消费者；Payment pay 已单独获准接入，当前证据见 [Payment 切片](#payment-execution-implementation) | Build BOM 已管理新 artifact；Foundation 聚焦 `-pl paytech-command-idempotency -am clean verify` 通过，其中新模块 11/11；Commerce 已移除重复的 DataObject、Mapper/XML 和 Repository，并以同一表结构接入公共 API；本地 MySQL 全量 194/194 覆盖 Claim、Lease、CAS、阶段恢复和并发提交窗口。JAR 与 BOM 只安装到本机 Maven 仓库，未发布 Nexus；Risk、Platform Support、Gateway 和其他系统未改动 | 发布前按 Build → Foundation → Commerce 重跑并发布明确版本。其他系统是否迁移必须逐系统批准，不能自动接入 |
 
 上述条目为迁移台账，不授权跳过专项设计直接改生产模型或数据库。
 
@@ -654,7 +1079,214 @@
 
 <a id="payment-execution-implementation"></a>
 
+**2026-09-17 查询 Intent 接口（当前增量）：** 新增 EX-I02 `GET /payment-execution/v1/intents/{intentId}?clientId=...`，响应为 `intentId/sourceType/sourceId/status/activeAttemptId/successfulAttemptId`。入口使用 Hibernate Validator 校验两个 ID；Controller/Converter 只做协议转换，Execution 的 `GetIntentProcessor` 复用 `PaymentIntentRepository.findIntent` 并核对 Client 归属，从同一条记录组装响应。查询成功返回 200 与 no-store，不存在或跨 Client 返回 404。纯单表查询没有新增 Context/View、Service、锁、事务或 SQL，也不推进到期或支付状态；来源字段为创建时冻结的业务身份。合同见[查询接口修订](../requirements/20260913/payment-Execution设计/get-intent-amendment.md)。
+
+**Verified / Pending：** JDK 25 下当前 Foundation 与 Payment 源码临时 Reactor 的 `-pl :paytech-payment-web -am package -Dmaven.test.skip=true` 14 个模块全部通过，日志 `/tmp/payment-get-intent-build.log`；Payment 差异空白检查及 4 份文档的 107 个本地链接检查通过。已核对公共示例第 11 节的最小合同、模块边界、归属检查与仓储复用；写入、重放、锁及事务项不适用于本只读接口。需求站检查仍为 133/137，4 项 Commerce 文档/台账失败与上轮相同，日志 `/tmp/payment-get-intent-doc-tests.log`。沿用当前用户暂缓单元测试的安排，未新增或运行 Java 单元测试；真实 HTTP 校验与数据库联调待验证。未执行数据库操作、提交、发布或部署。
+
+**终止响应 HTTP 200 修订：** 按用户要求，terminateIntent 的所有正常业务决定（含 PENDING）统一返回 200，由上游判断 decision；Controller、API 注释和接口文档同步，错误仍使用原 4xx/5xx。JDK 25 当前源码临时 Reactor 的 14 个模块 `package -Dmaven.test.skip=true` 通过，日志 `/tmp/payment-terminate-http200-build.log`；差异空白检查通过。需求站构建通过，仍为 133/137，4 项既有 Commerce 文档失败未变化，日志 `/tmp/payment-terminate-http200-doc-tests.log`。未新增或运行 Java 单元测试，未提交或部署。
+
+**2026-09-16 终止 Intent 接口（当前增量）：** 用户确认安全终止边界后要求实现，并明确暂不编写单元测试。新增 EX-I04 `POST /payment-execution/v1/intents/{intentId}/terminate`，使用 class Body、Hibernate Validator、Converter、Execution 内 `TerminateIntentProcessor` 与直接持有 Intent/活动 Attempt 的 `TerminateIntentContext`。复用 Foundation TRY_LOCK，与 pay 共用 Intent Key；根据当前状态返回 `TERMINATED / ALREADY_TERMINATED / PENDING / REVERSAL_REQUIRED / ALREADY_PAID`，响应仅 `intentId/status/decision`。安全终止由既有 PaymentExecutionService 的一个短事务更新 Intent，SQL 校验原版本、OPEN、两个 Attempt 指针为空，成功后仓储同步原对象。既有终态直接返回，活动尝试未创建 Action 仍为 PENDING，未释放授权不被改成 CANCELLED。完整合同与范围见[终止接口修订](../requirements/20260913/payment-Execution设计/terminate-intent-amendment.md)。
+
+**Verified / Pending：** JDK 25 临时 Reactor 使用本地 Foundation 与 Payment 当前源码，`-pl :paytech-payment-test,:paytech-payment-channel -am clean package -Dmaven.test.skip=true` 的 16 个模块全部通过，日志 `/tmp/payment-terminate-build.log`；没有使用旧 Foundation 锁 JAR 代替当前源码，也未执行 install 或发布。需求站构建通过，137 项文档检查中 133 通过、4 项既有 Commerce 合同/模型台账断言失败，与此前公共接口示例任务的失败一致，日志 `/tmp/payment-terminate-doc-tests.log`。按用户要求未新增或运行 Java 单元测试，真实 HTTP/MySQL/Redis 并发与回滚仍待验证；不声称该接口已联调或部署。没有新增 Schema、执行数据库操作、增加后台终止任务或真实 Commerce/Channel/MQ 接入，未提交、推送或部署。
+
+**2026-09-16 Foundation Processor 模式锁与 Payment 迁移：** `AbstractLockProcessor` 按 `LockCommand.mode` 单次获取锁：LOCK 持续等待、TRY_LOCK 按指定等待时间尝试，时间单位统一为毫秒，省略租约或租约为 -1 时使用 Redisson Watchdog。移除先 lock 再 tryLock 的重复获取、未使用的 LOCK 等待时间重载及重复 common-core 依赖；中断恢复线程中断标记，未获锁不执行业务，释放失败不覆盖业务结果。公共 `AbstractProcessor.process` 统一拒绝调用方已有事务，ApplyCardInstrument 删除重复检查；Pay 迁移到新父类并保留立即尝试，CreateIntent/ApplyCardInstrument 保留用户选择的等待模式。写接口规范、配置说明及调用链同步更新；Service 编排和数据库事务范围未改变。
+
+**Verified / Pending：** JDK 25 下将 Foundation 与 Payment 当前源码组成临时 Reactor，`-pl :paytech-payment-web -am clean package -Dmaven.test.skip=true` 的 14 个选中模块全部通过，日志 `/tmp/payment-mode-lock-build.log`。未使用旧本机 JAR 代替本次修改的 Foundation 模块，未执行 Maven install 或制品发布。未新增或运行 Java 单元测试；未进行真实 Redis 并发、租约及中断验证（当前进程未提供本地 Redis 测试凭据），未执行数据库测试、SQL、提交或部署。
+
+**2026-09-16 工具申请由 Processor 组合 Service 事务：** `ApplyCardInstrumentProcessor.saveContext` 使用一个 `TransactionTemplate`，依次执行 CardService 本地申请、Card 结果绑定及 PaymentExecutionService 的 Token 保存；后者移除该方法内部的事务包装，直接参与调用方事务。Service 之间没有新增调用，Card Context 仍不进入 Execution 的持久化 Context 或 Repository。申请入口在公共锁模板前检查调用方无活动数据库事务，原提交重放在保存阶段前返回。规范与申请合同同步为“跨 Service 的顺序和原子事务由 Processor 组合”；Card 仍为无外部访问、无真实存储的合成 Mock，需要外部准备时再由 Card Processor 在事务外完成。
+
+**Verified / Pending：** JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过，日志 `/tmp/payment-processor-transaction-build.log`；事务归属、两个 Service 调用顺序、原提交退出点、入口事务检查、无 Service 依赖其他 Service、卡输入边界及 36 个文档链接/锚点静态检查通过，Payment `git diff --check` 通过。未编写或运行 Java 单元测试、真实 HTTP/数据库回滚测试；Card 尚无真实卡记录写入，不能据此宣称 Card 与 Token 两张真实表的原子性已通过联调。未执行 SQL、提交或部署。
+
+**2026-09-16 Payment 配置归集：** 补齐用户创建的 PaymentExecutionProperties，以 `payment.execution.instrument-preparation-window` 管理工具申请窗口；Card Mock 与实例 ID 分别归入 PaymentCardProperties、PaymentIdentifierProperties。移除 Payment 业务源码中的分散 `@Value`，窗口与 Mock 开关通过配置对象读取，原 Token 期限不受配置修改影响。Web 使用 BOM 管理的 Nacos Config Starter，`nacos` Profile 通过 `spring.config.import` 加载可选共享配置和服务配置，默认本地运行仍关闭 Nacos。完整配置项、旧键迁移、动态绑定与重启边界见[配置清单](../payment-orchestration-service/docs/development/configuration.md)，可审阅内容见[服务模板](../payment-orchestration-service/config/nacos/payment-orchestration-service.yaml)。模板不包含密码或共享实例 ID 坐标，未上传 Nacos 或改变其他服务。
+
+**Verified / Pending：** JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过，日志 `/tmp/payment-nacos-configuration-build.log`；独立 Spring 配置上下文验证本地 YAML 加载、默认值、实例 ID 绑定及两次 EnvironmentChangeEvent 重新绑定通过，非法 Duration、缺少节点编号在启动绑定时失败，日志位于 `/tmp/payment-config-check/`。该验证不启动业务应用或连接真实基础设施；Nacos 服务端发布、真实推送刷新及 HTTP/数据库回归未运行。未新增或运行仓库 Java 单元测试，未执行 SQL、提交或部署。
+
+**2026-09-16 applyCardInstrument 完整受理链（当前增量）：** 在前一轮 API/仓储基础上补齐 Execution 的 ApplyCardInstrumentProcessor、内部 Request/Response、持有 Intent/Token 的 Context、Converter 与 PaymentInstrumentController。入口为 `POST /payment-instrument/v1/card-tokens`，按原 Intent 资源锁串行处理，原 Client/Intent/来源提交工具先核对方式与 Card 身份后返回；首次校验 Intent、来源提交和配置窗口，事务外调用 Card，再由现有 PaymentExecutionService 一次事务保存 Token。Token 由 SecureRandom 生成，期限受 Intent、配置窗口与 Card 上限约束；不创建 Attempt/Action 或独立幂等记录，不修改 Schema。Execution 单向依赖公开 CardService，卡输入只经过专用申请请求交给 Card，不进入通用 pay、持久化 Context、SQL 或日志。详细范围及前序合同取代关系见[申请工具修订](../requirements/20260913/payment-Execution设计/apply-card-instrument-amendment.md)。
+
+**Verified / Pending：** JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过，日志 `/tmp/payment-apply-card-instrument-build.log`；Token 12 列与 Schema/SQL 参数、Mapper 方法、主流程顺序、单事务和 Context/卡输入边界、Maven XML 及 18 个文档链接静态核对通过，Payment `git diff --check` 通过。Card 目前只有显式启用的合成 Mock，默认关闭，只接受文档指定的 CARD_TEST 和测试卡，不保存 PAN/CVV 或真实材料；首次工具申请窗口须显式配置为正值。真实 Card 加密、材料领取/清理、HTTP/MySQL/Redis 联调及资金能力未完成；未新增或运行 Java 单元测试，未执行 DDL/DML、提交或部署。
+
+**2026-09-16 CreateIntent 校验与注释评审：** 保留用户新增的 `validate` 钩子，将两项 Partner 定价版本的成组判断放在锁前；有效期资格移回未查到原 Intent 后的新建分支，避免已到期原请求在查询前被拒绝。保留用户 `createIntent` 的 `@param/@return` 与 HTTP 200 注释格式，补充[写接口规范](../payment-orchestration-service/docs/development/processor-conventions.md)第 4.4、6.1 节及校验表、开发/评审清单，并同步创建合同的阶段顺序。JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过，日志 `/tmp/payment-create-intent-validate-build.log`；两段新增规范示例与源码、校验分支位置和 21 个文档链接静态核对通过。未运行 Java 单元测试或真实 HTTP/数据库/Redis 验证，未执行 SQL、提交或部署。
+
+**2026-09-16 创建 Intent 接口（当前增量）：** 按当前 [Payment 写接口规范](../payment-orchestration-service/docs/development/processor-conventions.md)补齐 EX-I01 `POST /payment-execution/v1/intents`，使用 class Body、Converter、Execution 内 CreateIntentProcessor 和持有 PaymentIntent 的完整 CreateIntentContext；扩展既有 Service、Intent Repository/Mapper，一次本地事务只插入 Intent。创建以来源类型和来源 ID 为请求身份，沿用 AbstractApiLockProcessor 锁定来源、来源唯一索引防重；原记录比较 Client、金额/币种及全部冻结输入后返回当前状态，原记录过期或终态不受首次创建期限检查阻断。新记录 OPEN、version=1、两个 Attempt 指针为空，金额复用 Foundation Money；SQL 限制落库时仍未到期。请求字段和仅 intentId/status 的 200/no-store 响应见[创建接口修订](../requirements/20260913/payment-Execution设计/create-intent-amendment.md)。没有额外幂等 Header、命令表、Binding、状态历史、路由或 Action 写入；现有 pay 不变。
+
+**Verified / Pending：** JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过，日志 `/tmp/payment-create-intent-build.log`；静态核对 Intent 20 列与正式 Schema、插入参数逐项一致，来源唯一索引、Mapper 方法、Context 持久化边界及 35 个文档链接通过，Payment `git diff --check` 通过。未编写或运行 Java 单元测试，未进行真实 HTTP/MySQL/Redis 联调，未执行 DDL/DML、提交或部署。创建接口未提供自动到期推进；Commerce 真实适配、CCT 资格、工具准备和真实资金 Owner 仍按后续范围接入。
+
+**2026-09-15 pay 移除公共命令幂等（当前增量）：** 按用户“先不管锁，帮我去掉这个幂等”的要求，Payment Execution/Web 移除 paytech-command-idempotency 依赖和自动配置；删除 Hash、Claim、Lease、完成记录及 Context.commandClaim/newAttempt。HTTP 保留 submission:<sourceSubmissionId> 的固定 Header 合同，内部只传来源提交 ID。Processor 按 Attempt 来源提交读取并核对 Client/Intent、方式、捕获模式和原工具，匹配后直接响应；新受理事务仅插入 Attempt 并 CAS 绑定 Intent。重复键或受理 CAS 冲突在保存事务回滚后重新查询原提交，匹配才返回，不存在则抛出原异常；只有新增成功的请求推进 Action。当前流程与前序公共包接入的取代范围见 [pay 阅读说明](../payment-orchestration-service/docs/pay-interface-walkthrough.md)。
+
+**Verified / Pending：** JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过。未新增或运行 Java 单元测试，未执行 SQL 或真实 HTTP/数据库并发验收，未增加锁、提交或部署。Foundation/Commerce 不变；Payment 现有 Mapper、PDManer 和 Schema 保留，旧 t_command_idempotency 已无运行时读写但尚未清理，旧公共表列迁移不再是 pay 启动前置。受理提交后到首 Action 创建的中断恢复仍沿用原 TODO，本次不扩展执行流程。
+
+**2026-09-15 Attempt 授权与 PAY 完成更新（当前增量）：** 按用户拆分后的 Mapper 接口补齐 authorizeCompleted/payCompleted SQL 及显式 @Param。授权完成更新 authorized_amount，保持原状态及 captured_amount；PAY 完成按当前 Repository 语义同时记录 authorized_amount/captured_amount，并写入目标 SUCCEEDED 状态。两者均按 Attempt ID、当前 Action ID、原状态和版本匹配，更新时清空 active_action_id、递增版本及更新时间；Repository 影响一行后同步清空对象指针。仅调整三个现有生产文件，沿用用户当前 Actor/Flow 调用结构。
+
+**Verified / Pending：** JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过；静态核对两条更新的字段、条件及 Repository 更新成功后回写顺序，`git diff --check` 通过。未编写或运行 Java 单元测试，未执行 SQL 或真实数据库回滚/并发验收，未提交或部署。
+
+**2026-09-15 Action 失败公共处理（当前后继）：** 沿用用户在 ActionFlow 增加的 FAILED 提前结束分支，补齐 PaymentAttemptRepository.actionFailed 及 updateFailed SQL：按 Attempt ID、原版本、PROCESSING 和当前 Action ID 更新为 FAILED、清空执行位、递增版本及更新时间，已有金额不变；影响一行后同步对象。PaymentIntentRepository.attemptFailed 复用既有 completeAttempt，按版本和活动尝试释放占位并保持 OPEN。两次写入与 Action 结果同事务；Pay Actor 移除重复失败处理，评估成功但 DENY/REVIEW 继续由风控 Actor 处理。当前范围仍仅 CARD + PAY，后续 Capture/Void 失败语义不据此推导。
+
+**Verified / Pending：** JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过；静态核对 updateFailed 映射、原状态/版本/动作条件、金额保留及更新后对象同步。用户 Flow、转移定义、ActionActor 接口、PayContext 和各 Owner 调用 TODO 与本轮起点一致。未新增生产类，未编写或运行 Java 单元测试，未执行 SQL、真实数据库回滚或并发验收，未提交或部署。
+
+**2026-09-15 End 业务结果归 Actor（当前后继）：** 按用户确认，PROCESSING/UNKNOWN 仅保存 Action 后返回，不更新或额外校验 Attempt。ActionFlow 在有后继时创建动作并切换执行位，到 End 时调用当前 Actor.doInTransaction；CardPayFlow 移除业务结果 switch，只保留转移定义。AuthorizeActionActor 成功记录授权金额并保留 Attempt PROCESSING；PayActionActor 成功记录收款金额并完成 Attempt/Intent；本次 CARD + PAY 的拒绝、转人工或明确失败由对应 Actor 结束 Attempt 并释放 Intent 活动尝试。Attempt Repository 的 finishAction 以原版本和动作 ID 一次保存目标状态、金额并清空执行位，更新一行后才同步对象；相关写入加入 Flow 的结果事务。Context 不进入持久化层，没有新增生产类。
+
+**Verified / Pending：** JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过；最终制品的三种 End 目标结果及两种指针参数组合完成真实 MyBatis TypeHandler 离线绑定检查。静态对照确认转移定义、四个 Owner 调用 TODO、用户当前 PayContext/PaymentAction/PayProcessor 与本轮起点保持，未决分支无 Attempt 操作。未编写或运行仓库 Java 单元测试，未执行 SQL 或真实事务回滚、并发验收，未提交或部署。资金引用获取、校验和持久化仍待真实资金 Actor 接入；前序 CardPayFlow 负责业务结果及未决分支更新 Attempt 的描述由本增量取代。
+
+**2026-09-15 ActionFlow 终态判断修复：** execute 仅对非终态动作调用 Actor；completeAction 仅对非终态结果保留执行位并停止，终态继续匹配下一动作或 End。保留用户的 ActionStatus.isFinal() 实现，生产代码仅修正两处取反条件；End 仍由具体 Flow 决定 Attempt 状态。JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过；未运行 Java 单元测试、操作数据库、提交或部署。
+
+**2026-09-15 ActionResult 完整结果回写（当前增量）：** saveResult 的九个业务结果字段均由 ActionResult 提供；原 PaymentAction 仅提供 ID、旧状态和版本匹配。Mapper 更新一行后，Repository 才同步全部结果字段、版本和更新时间；SQL 异常或行数失配路径不改对象。ActionResult 复用现有模型的结果列，没有新增表字段或业务类，可空结果为 null 时写入 NULL。JDK 25 全 Reactor生产 `clean package -Dmaven.test.skip=true` 通过；最终制品四组有值/空值与原状态组合的 Mapper 绑定离线通过，静态核对全部对象赋值位于成功更新之后。未运行仓库 Java 单元测试或真实数据库回滚/并发验收，未执行 SQL、提交或部署。
+
+**2026-09-15 ActionFlow.execute 补齐（当前增量）：** 沿用用户的 ActionActor/ActionResult 和 ActionFlowFactory 重构，Flow 负责事务外执行、结果事务与提交后推进。非终态保存并保留原执行位；终态结果、下一动作、卡支付资金引用/金额/Intent 和执行位同事务提交。CardPayFlow 处理业务结果，公共 Flow 不校验风控/资金字段。修复 ActionResult.status 未写入、Mapper action/actionActor 参数失配和 selectById 空实现，结果更新后由 Repository 同步原对象；Flow Key 使用工具类型以匹配 CARD:PAY。保留原提交补绑定不进入执行的边界。Actor 异常按用户新语义返回 UNKNOWN，保存成功后源代码路径返回 202 / PROCESSING；未实现真实 Actor 结果校验、Owner 调用或自动恢复。
+
+**Verified / Pending：** JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过；最终制品中四个相关 Mapper/XML 装配、八组原状态/返回状态的真实 TypeHandler 参数绑定和 selectById 绑定离线通过，没有执行 SQL。未新增业务类，未写或运行仓库 Java 单元测试，未进行真实 HTTP、事务回滚及并发验收；模型/Schema 未改，未执行数据库操作、提交或部署。执行顺序见[阅读说明](../payment-orchestration-service/docs/pay-interface-walkthrough.md#后续流程的位置)。
+
+**2026-09-15 Action 结果校验归属调整：** 风控评估校验移入 PayRiskCheckAction，资金引用校验分别移入 AuthorizeAction/PayAction；已有 AbstractAction 串联 execute 与 validateResult，并共用状态非空检查。ActionExecutionService 删除集中校验，事务、流程推进和异常保存路径保持。JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过；相对修改前的 5 段校验条件、4 个外部能力 TODO 及结果事务方法静态比对通过，没有新增类。未写或运行 Java 单元测试，未执行数据库操作、提交或部署。
+
+**2026-09-15 Action 删除 CREATED（当前增量）：** 用户确认后移除 Execution Action.CREATED；首动作和后继动作构造时即为 PROCESSING/version=1，与 Attempt 执行位创建/切换一起提交。删除两个 Repository、两个 Mapper 及 XML 的 beginAction 和 Service 执行前启动事务，由成功创建/切换的调用直接执行。执行位及结果的原 ID/版本条件保持，Context 仍不进入持久化层。PROCESSING 表示进入处理流程，不证明已提交渠道，也不授权重新执行。保留用户迁入 core/action/flow 的目录与源文件。现行状态为 PROCESSING/UNKNOWN/SUCCEEDED/FAILED，详见[动作修订](../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)。
+
+**Verified / Pending：** JDK 25 全 Reactor 生产 clean package 通过；最终制品四个状态、CARD + PAY 四类动作初态与版本、beginAction 类型/SQL 移除离线核对通过。模型/场景检查 24/24，确定性生成通过；相对本轮起点仅动作状态及 active_action_id 两处字段说明改变，27 表/363 字段及其他结构、Refund/Dispute 状态不变。模型 SHA-256 为 `c73b076f27abef9bb59918365e1fe9559af4cbf675df826e5e70bccc01c18900`；当前空库稿 10 表与正式 Schema 一致，33 个主要文档本地目标通过，见[核对记录](../requirements/20260913/payment-Execution设计/assets/action-no-created-verification.json)。按用户要求未写或运行仓库 Java 单元测试；未验证真实 HTTP/数据库并发、执行 SQL、提交或部署。旧 CREATED 行迁移需单独盘点，实际 Owner 与中断恢复仍 TODO；前序 beginAction/CREATED 执行门禁记录已被本增量取代。
+
+
+**2026-09-15 Repository 的 Context 边界（当前增量）：** 用户明确 Context 是 Service 层产物，不允许传入 Repository。本轮调整 Attempt 的 activateAction/beginAction/completeAction 与 Intent 的 completeAttempt：Service 提取 DataObject、原/下一动作 ID 和目标 IntentStatus，Repository/Mapper/XML 不再依赖 PayContext。Intent 目标状态判断移回 Service；Repository 在写入成功后继续同步对象指针、状态、版本和时间，没有新增 Input/DTO/Map 包装或改变事务边界。规范见[Processor 约定](../payment-orchestration-service/docs/development/processor-conventions.md#3-context-是本次请求的领域数据目录)。
+
+**Verified / Pending：** JDK 25 全 Reactor 生产 `clean package -Dmaven.test.skip=true` 通过；20 个 Payment 持久化文件中 Context 引用为零。基于最终制品与本轮起点 XML，核对 18 个接口方法签名，四个受影响 SQL 在有/无后继及 Intent OPEN/SUCCEEDED 的 16 种组合下，生成语句与有序绑定值完全一致。9 个主源码/XML 文件调整，PayProcessor、CardPayFlow、ActionFactory 和 PayContext 与本轮起点逐字节不变；见[核对记录](../requirements/20260913/payment-Execution设计/assets/repository-context-boundary-verification.json)。未编写或运行 Java 单元测试，未执行真实 HTTP/数据库测试、SQL 迁移、提交或部署；前轮真实能力 TODO 和恢复边界仍保留。
+
+
+**2026-09-15 ActionFactory 与直接执行（当前后继）：** 按用户本轮三点要求，ActionFactory 统一管理动作实现；PayProcessor 顺序为保存上下文 → 创建首 Action → 直接执行。受理事务恢复为 Intent/Attempt/公共命令；后续独立事务插入首 Action 并以 Attempt.active_action_id IS NULL、状态和版本条件绑定。执行沿用同一个 PayContext，不再为后台任务重建上下文。执行前核对原动作占位且只允许 CREATED 取得执行权；终态结果、后继 Action 和执行位同事务保存，提交后直接继续。删除 CardPayActionHandler、事件常量、登记调用及补偿包依赖，同时移除无消费者的恢复查询。前轮补偿任务执行及首 Action 与受理同事务的描述由本增量取代；业务 Flow 和状态映射不变。
+
+**Verified / Pending：** JDK 25 全 Reactor 生产 `clean package -Dmaven.test.skip=true` 通过；最终制品包含 ActionFactory，已不含补偿 Handler 或 compensation-event JAR。离线验证 4 个实现分派、重复/缺失实现拒绝，5 个 Payment + 1 个公共命令 Mapper 的 44 次 SQL 展开和指针/CREATED 条件，源码调用顺序及 33 个文档目标通过；PDManer 与 Schema 相对本轮起点逐字节不变。证据见[本轮记录](../requirements/20260913/payment-Execution设计/assets/action-factory-direct-execution-verification.json)。按用户要求未写或运行 Java 单元测试，未做真实 HTTP/数据库并发验证，未执行 SQL、提交或部署。前轮模型/需求站结果仍是各自历史检查，未在本轮重跑。
+
+**剩余边界：** Risk/Card/Channel 仍为未接入 TODO；当前直调会保存 UNKNOWN 后向请求返回错误，受理事务已提交，同键重放只读原 Attempt。保存上下文与建 Action 之间，以及结果提交与执行后继之间发生中断时，当前没有自动补建或续跑。等待/未知动作保留原执行位，回调及恢复接口后续单独实现；没有重新引入资源锁或其他后台执行机制。
+
+
+**2026-09-15 CARD + PAY Action Flow（当前后继）：** 用户确认后开始动作开发。保留用户 Action/AbstractAction 与已调整的 PayProcessor 风格，统一 ActionType 为 PAY_RISK/AUTHENTICATE/AUTHORIZE/PAY/CAPTURE/VOID/REFUND；仅接入 CARD + PAY。CardPayFlow 用条件对象组合分支，通用 Flow 拒绝零命中/多命中；PayContext 直接持有 Intent、Attempt、工具、原风控/当前/后继 Action 和资金引用。受理事务同时创建首 Action 和公共补偿任务；提交后单步执行，当前结果、下一动作、执行位、资金引用及下一任务同事务保存。Repository 按表拆分，版本/CAS 更新后同步对象；UNKNOWN 恢复保留原未知状态、原 ID 和幂等键，不释放占位。MANUAL 授权成功只结束 Flow，Attempt 仍 PROCESSING；PAY 成功完成 Attempt/Intent。Capture/Void/Refund 只保留类型，未实现入口。设计与历史切换边界见[动作修订](../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)。
+
+**Verified / Pending：** JDK 25 全 Reactor `clean package -Dmaven.test.skip=true` 通过；使用最终制品离线检查 51 个流程分支/异常条件、74 次 SQL 展开，实际 Payment TypeHandler 与 5 个 Payment/2 个 Foundation Mapper 共同加载。模型与场景 24/24、确定性生成检查通过；相对本轮快照仅 8 处字符串同步 PAY_RISK/PAY，仍为 27 表/363 字段/41 UK/43 索引/63 关系/7 条 1:1/7 图，结构摘要未变；模型 SHA-256 为 `a195eed903d3d24b74f0c2d78320b26a6a895a01f84cf898041977566ad9d130`。36 个主要文档本地目标通过；需求站 135/136，唯一失败仍是既有 Risk 模型统计断言不符。本轮未编写或执行仓库 Java 单元测试，未验证真实 HTTP、数据库事务或并发执行；检查证据见[记录](../requirements/20260913/payment-Execution设计/assets/card-pay-action-verification.json)。
+
+**运行限制：** Risk、认证、资金真实能力尚未接入；Action 明确抛出未接入错误，框架保存 UNKNOWN，不合成 ALLOW、assessmentId 或资金成功。Route 仍固定 Mock；真实资金、3DS 交互交付、回调、通知与退款位置创建仍待后续实现。公共补偿默认最多 5 次，任务技术 FAILED 不改变业务未决状态；XXL 扫描默认未启用、未登记调度任务，不能声称进程重启或长期交互恢复已就绪。旧 RISK_CHECK/SALE、旧任务和无首 Action 的历史 Attempt 必须单独盘点切换。未连接数据库、执行 SQL、增加资源锁、修改用户暂存内容、提交、推送或部署；前序只统一枚举、尚未实现 Flow 的记录由本增量精确取代。
+
+
+**2026-09-15 ActionType Java 类型统一：** 用户要求删除 ExecutionCodes.ActionType，现已移除嵌套枚举；PaymentAction 字段及 PaymentConfiguration 的 MyBatis TypeHandler 注册统一引用用户新增的 core.action.ActionType。保留其当前 PAY_RISK/AUTHENTICATE/AUTHORIZE 三个值，以及用户的 Action、AbstractAction 和 PayRiskCheckAction 草稿，未修改暂存内容。此轮仅统一 Java 类型，未裁定其他业务动作的删除；PDManer/Schema 仍使用前序类型说明，旧 RISK_CHECK/SALE 代码与后续 PAY 等类型需随动作定义定稿同步，未添加旧值别名或执行数据迁移。
+
+**Verified / Pending：** JDK 25 `clean package -Dmaven.test.skip=true` 通过；源码无旧枚举引用，Web 制品无 ExecutionCodes$ActionType，PaymentAction 与 MyBatis 配置均引用新枚举。按用户要求未编写或运行 Java 单元测试，未验证旧 Action 数据读取；未连接数据库、执行 SQL、提交或部署。动作转移、条件对象、执行位事务切换及可靠续跑仅讨论方案，尚未实现。
+
+**2026-09-15 pay 受理前路由（当前调用顺序）：** 用户确认先调用 RouteService、具体选路 Mock。PayProcessor 在 buildPayContext 之后、savePayContext 之前调用 Routing 的窄接口，传 Client/OE/金额/币种/方式/capture mode，将返回的 Channel/Account/MID 填入新 Attempt；命令重放与原提交补绑定不重选。Execution 单向依赖 Routing，未暴露 DataObject；RouteServiceImpl 按本期授权固定返回合成 `9001/9002/9003`，不代表真实渠道有效性。用户最新 intent/attempt/instToken 命名和保存 Service 保留，Mapper、Schema、HTTP 请求/响应与 Hash 未改。规则见[字段修订第 9 节](../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md#9-受理前路由)。
+
+**Verified / Pending：** JDK 25/Maven Wrapper `clean package -Dmaven.test.skip=true` 通过，模块 Enforcer 通过，Web 制品包含 Routing 的四个类型及 Service Bean 元数据。源码增量比对确认 Processor 仅增加路由调用、映射和 TODO，原 Context/Service 与本轮开始时逐字节一致；顺序、六个参数、三个返回字段与旧 Attempt 跳过分支静态核对通过，记录为 `/tmp/payment-route-verification.json`。需求站检查 135/136，仍为既有 Risk 模型统计断言不匹配，日志 `/tmp/payment-route-requirements-test.log`。按用户要求未写或运行 Java 单元测试，未验证真实 HTTP、数据库事务或路由失败场景；未连接数据库、执行 SQL、提交、推送或部署。真实选路及选择证据、后续风控/认证/资金执行仍 TODO，接通真实资金前必须替换固定 Mock。
+
+**2026-09-15 删除来源 Binding（当前模型与受理链）：** 按用户确认，从生成源、字段元数据、PDManer、正式 Schema 和当前空库创建稿删除 t_payment_intent_binding；模型为 27 表/363 字段/41 唯一索引/43 访问索引/63 关系/7 条 1:1/7 图，保留的 27 个实体定义与本轮开始时逐项一致。Java 移除 Binding DataObject、Context 字段、Repository/Impl、Mapper/XML 及注入、查询、行锁；原方法中的 Intent 开放、期限和活动/成功 Attempt 检查保留为 checkNewAttemptAllowed。来源唯一索引、Intent CAS、工具保护、公共幂等和单一本地事务不变，用户已调整的 Service 实现保留。
+
+**Designed / Implemented：** [字段修订第 8 节](../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md#8-删除来源-binding)取代 Binding 与提前关闭创建能力；移除前序 EX-I03 合同及示例，Commerce 应先恢复创建结果，再终止已有 Intent，未决资金返回 PENDING。创建、终止、工具准备、资金流程与真实 Commerce 接入仍 TODO。当前旧空库迁移稿改为 9 ALTER/1 CREATE/4 DROP，结果 10 表；已精简环境另有空 Binding 的单表删除稿，非空关闭事实禁止直接丢弃。所有 SQL 只维护文件，没有执行。
+
+**Verified / Pending：** JDK 25/Maven Wrapper `clean package -Dmaven.test.skip=true`、24 项 Payment 模型/场景/Schema 检查通过；场景中遗留 command_status 同步为公共表的 process_status。生成确定性与独立字段、索引、关系清单通过；保留的 8 条 Payment SQL 与修改前一致，打包制品离线加载 8 条业务及 6 条公共幂等 SQL，接口绑定和 TypeHandler 正常，Binding 类与 Context 字段无残留。未新增或运行仓库 Java 单元测试，未连接数据库、执行 DDL/DML、提交、推送或部署；真实事务/并发回归未验证。
+
+需求站检查 135/136，剩余为既有 Risk 模型统计断言不匹配，未改 Risk。新增文档链接无缺失；受影响前序文档仍有 14 个指向此前已删除代码的历史链接，未将它们视作当前实现入口。日志为 `/tmp/payment-remove-binding-model-tests.log`、`/tmp/payment-remove-binding-requirements-test.log`，链接核对为 `/tmp/payment-remove-binding-doc-check.json`。
+
+**2026-09-15 pay 持久化按表拆分：** 按用户要求，将聚合 PaymentExecutionRepository/Mapper 拆成 Intent、Attempt、InstrumentToken、IntentBinding 四组 Repository/Impl、Mapper/XML；Processor 和 Service 直接依赖实际涉及的表仓储。PaymentIntentRepository.activateAttempt 在条件更新恰好一行后同步传入 Intent 的 activeAttemptId、version、updateTime，Service 删除提交后的重复赋值。事务仍集中在 savePayContext，写入顺序、SQL 条件、幂等和原提交补绑定保持；后续事务失败时抛出异常并丢弃本次 Context，重试重新读取。
+
+**Verified / Pending：** JDK 25/Maven Wrapper `clean package -Dmaven.test.skip=true` 通过。逐项比较确认 10 条 SQL 和 4 个列片段与拆分前一致；Processor 方法体除 Repository 接收者外未变。新打包制品离线装配四个 Mapper 与 Foundation 幂等 Mapper，共 16 条语句，接口绑定、SQL 展开及参数 TypeHandler 检查通过，旧聚合 Mapper 未残留。文档链接及差异空白检查通过。按用户既有要求未新增或运行仓库 Java 单元测试；未连接数据库或验证真实事务回滚，未改 Schema、执行 SQL、提交、推送或部署。
+
+需求站检查 134/136；剩余为 Risk 模型统计和 Gateway 当前台账描述的既有断言不匹配。移除本次 Payment 台账新增段落后的内存基线仍复现两项匹配失败，未修改关联系统或测试断言。日志：`/tmp/payment-repository-split-requirements-test.log`。
+
+
+**2026-09-15 pay 响应精简（当前返回合同）：** 用户确认当前只保留 attemptId/status，内部 PayResponse 和 HTTP PayResponseBody 均收敛为两个字段；删除 NextAction 及金额、失败原因、卡展示、观察时刻等投影。Processor 从 Context 中的 Attempt 直接组装结果，移除 Action 查询、对应 Repository/Mapper 方法、XML 查询与列片段，以及 Context 的 paymentAction。Action 数据模型与表结构保留，未新增接口、字段或替代类。HTTP 仅按 Attempt 状态判断：PROCESSING 返回 202，SUCCEEDED/FAILED/CANCELLED 返回 200，保留 no-store；手动授权后仍 PROCESSING 时也返回 202，取消旧授权金额特例。上游需同步精简后的字段合同。
+
+**Verified：** JDK 25/Maven Wrapper `clean package -Dmaven.test.skip=true` 通过；新打包类的离线验证确认两个响应类仅有两个字段且无嵌套类型，四种 Attempt 状态均映射为正确 JSON；MyBatis 离线装配 10 项 Payment 与 6 项公共命令 SQL，通过展开及 TypeHandler 检查。与本轮开始时源码比对确认用户的幂等 else-if 写法、Hash、Context 构建和受理事务保留；其余 SQL 未变。需求站 build 通过，测试 135/136，剩余为前轮同一项 Risk 模型统计断言不匹配，未改动 Risk。未新增或运行仓库 Java 单元测试，未连接数据库/Redis，未执行 SQL、提交或推送。
+
+
+**2026-09-15 pay 删除执行开关（当前请求语义）：** 按用户“去掉，按需写代码”的要求，删除 HTTP PayRequestBody、内部 PayRequest 及 Converter 中的 allowExecution。PayProcessor 命令未命中直接进入受理，命中后比较 Hash 并返回原提交；移除只读观察及对应空值分支。不新增查询接口、替代开关或类。原提交缺少命令时的补绑定路径保留；Hash、受理事务、响应及数据库模型未变。调用方需停止传入旧字段，现有严格 JSON 绑定会拒绝它。Processor 继续使用用户认可的公共模板，资源锁暂不增加，内部请求字段校验及后续支付流程保持既有待办。
+
+**Verified：** JDK 25/Maven Wrapper `clean package -Dmaven.test.skip=true` 通过；使用新打包类的离线检查确认四个顶层请求字段可校验、转换，两个请求模型均无执行开关，旧字段 true/false 均被既有严格绑定拒绝；静态比对确认 Hash、Context 构建、响应和保存事务未改。需求站 build 通过，`npm --prefix requirements-site test` 为 135/136，通过之外的一项失败是 Risk 模型统计断言仍期望 78 表/944 字段，与当前台账不一致，未改动该测试或 Risk。未新增或运行仓库 Java 单元测试，未连接数据库/Redis，未执行 SQL、提交或推送。
+
+
+**2026-09-15 pay Service 归属与 Context 修订（当前结构，取代下方旧 ext/直接 Body 形态）：** 按用户重构继续补齐，PayProcessor、PayRequest、PayResponse 归属 Execution `service/processor`；Controller 经 Spring 管理的 PayConverter 转换 HTTP 模型，Web 不再读取 Execution DataObject。服务方法使用 Context，超过 3 个业务参数时封装为业务 Context；pay 从幂等开始使用同一个 PayContext，保存事务不变。字段注释改为简短含义加必要 `<li>` 说明，约定登记在 [Payment Processor 规范](../payment-orchestration-service/docs/development/processor-conventions.md)。
+
+HTTP 请求沿用用户新增的 `payMethod` 嵌套对象，内部 ID 为 Long，HTTP ID 为字符串；响应 Java 类型为 PayResponseBody，15 个响应字段和 6 个交互字段保持。基础校验继续使用 Hibernate Validator，内部入口通过 @Validated/@Valid 声明约束。公开非 final 的 `process(PayRequest)` 使用公共 ResourceLock 的 `#request.intentId`；不继承 process 为 final 的 AbstractGatewayProcessor，避免代理锁失效。Execution 直接声明 Redis Starter 与 Snowflake 依赖，继续复用公共命令幂等。Hash 字段顺序、Token 字符串参与方式、只读观察语义及 200/202/no-store 保持。上游需同步嵌套请求结构，真实调用迁移尚未验证。
+
+**Verified：** JDK 25 / Maven Wrapper `clean package -Dmaven.test.skip=true` 通过。使用新打包类完成离线检查：嵌套 JSON 与级联校验、Converter Bean 装配及字段映射、原 Hash 向量、资源锁元数据/Intent 键、响应字段与待执行判断均通过；静态比对确认本地事务方法和 Mapper XML 未变，跨模块引用与文档链接检查通过。未新增或运行仓库 Java 单元测试；未连接 HTTP/数据库/Redis，未执行 SQL、提交或部署。Risk、Routing、认证、扣款和真实交互交付继续按原范围保持 TODO。
+
+
+**2026-09-15 pay 基础字段改用 Bean Validation（前序平铺请求校验，结构由上方修订）：** PayRequestBody 的六个字段使用 Jakarta `@NotBlank/@NotNull/@Pattern/@DecimalMax`，涵盖必填、合法字符/长度、捕获模式和正整数字符串的 long 上界；PaymentExecutionApi 的 Body 参数标记 `@Valid`。API 仅增加标准 Validation API 依赖，Web 显式引入 Boot validation starter，运行实现为 Hibernate Validator。移除 PayProcessor.validate；Controller 保留路径解析与 Header/来源提交 ID 对应检查，Processor 保留幂等和业务事实验证。字段错误直接复用 Foundation `422 / VALIDATION_ERROR + errors`，没有新增 Validator、Advice 或模型包装类。
+
+**Verified：** JDK 25/Maven Wrapper `clean package -Dmaven.test.skip=true` 成功。使用实际打包类的离线检查确认：Spring MVC HandlerMethod 能继承接口上的 `@Valid`，全部六字段缺失被拒绝，17 个格式/越界反例被拒绝，long 最大值、64 字符边界、MANUAL/AUTOMATIC 和 true/false 合法。公共异常映射返回 422、VALIDATION_ERROR 及安全字段名/消息，不泄露原 Token；错误 Header 在进入 Processor 前拒绝。前一构建的对照确认原 DTO 无约束且 MVC 无 `@Valid`。未新增或运行仓库 Java 单元测试，未连接数据库/Redis，未执行真实 HTTP/数据库回归、SQL、提交或部署。
+
+
+**2026-09-15 pay HTTP 模型改用 class（前序类名与平铺结构，class 约定保留）：** 按用户要求将 PayRequestBody、SubmissionResponseBody 及嵌套 NextAction 改为普通 class，使用 Lombok Getter/Setter；27 个字段分别补充业务含义、必填/可空条件、格式与单位说明，保留工具请求和交互对象的脱敏 toString。Processor 使用 getter，Converter 逐字段 setter 组装响应；HTTP 方法、JSON 字段、Hash、业务流程和数据库模型不变。Payment 项目 Processor 规范登记此类型约定，API 模块仅补充 provided Lombok 与编译期处理器。
+
+**Verified：** JDK 25/Maven Wrapper `clean package -Dmaven.test.skip=true` 通过；离线使用实际打包类和 Payment JsonMapper 配置验证请求 6 字段、响应 15 字段及嵌套 6 字段，缺失/显式 null Boolean 保持 null，字符串/数字 Boolean、数字 ID 与未知字段仍拒绝，空值序列化和 Token 脱敏保持。字段注释覆盖及 diff 检查通过。未编写或运行 Java 单元测试、未连接数据库，未执行提交或部署。
+
+
+**2026-09-15 Payment pay 接入公共命令幂等（当前代码与目标模型）：** 按用户“改造吧，使用公共包”的确认，Execution/Web 直接依赖 `paytech-command-idempotency` 并显式开启自动配置。删除 Payment 自有 CommandIdempotency DO、CommandStatus、两项仓储/Mapper 方法与命令 SQL；PayContext 直接持有公共 NewCommandClaim，不新增包装类。Processor 保持字段校验→原 Hash/公共 find→业务 Context→一次保存→流程 TODO→直接 ResponseBody。Service 在同一 TransactionTemplate 内执行公共 Claim、核对胜出者、保存 Attempt/Intent 和公共 Complete；使用实际版本、阶段、Owner 和完成时刻，竞争失败在写业务表之前返回 409。
+
+命令仍使用 `client:<clientId> / PAY_INSTRUMENT_V1 / submission:<sourceSubmissionId>` 和原请求 Token Hash；Hash 版本为 1。命令阶段仅 CLAIMED→COMPLETED、30 秒 Lease 配合 5 秒本地事务；完成保存 PAY_ACCEPTED/202 元数据，请求与响应快照为空。只读观察不 Claim，重放读取原 Attempt/Action 的当前状态，不把受理回执当作支付成功。详细消费约定见[接入说明](../payment-orchestration-service/docs/development/command-idempotency-differences.md)。
+
+**目标模型：** 28 表/371 字段/43 唯一索引/43 访问索引/64 本库关系/8 条 1:1/7 图。命令表由 11 列对齐公共包 24 列，状态改名 process_status，保留原字段 ID，补充技术 CAS、Lease 和可空快照；scope/key/resource_no/response_location 对齐 ascii_bin、key 长度 255。与本轮修改前模型逐实体对比，只有命令表变化，其他 27 表逐字节一致；Intent/Attempt/Action 仍为 20/17/22 列。正式 Schema、Execution 创建稿与合并空表迁移稿同步，另提供只改旧空命令表的互斥路径。
+
+**Verified：** JDK 25/Maven Wrapper `clean package -Dmaven.test.skip=true` 成功；既有模型与 Schema 检查 17/17。打包制品包含公共 JAR 与 opt-in；公共 SQL 与当前源码仅格式差异，24 列逐项匹配当前 Commerce 物理列合同。使用实际打包 JAR 在同一个 MyBatis Configuration 离线加载 11 项 Payment 与 6 项 Foundation SQL，参数 Handler 与 SQL 展开通过，无数据库连接。模型确定性、SQL 工件列覆盖与链接/差异检查见[验证记录](../requirements/20260913/payment-Execution设计/assets/pay-public-idempotency-verification.json)。
+
+**Pending / Not deployed：** 按用户要求未编写或运行 Java 单元测试；没有连接数据库或执行 DDL/DML，也未完成真实 HTTP、Claim 并发或事务回滚回归。此前只读核对的本机旧 13 张空表不是本轮实时状态；执行前必须重新预检并按[人工迁移说明](../requirements/20260913/payment-Execution设计/db/command-idempotency-migration.md)选择匹配路径。非空命令表需按历史操作另行制定数据迁移，不能猜值回填。Risk/Routing/认证/资金流程仍 TODO，Foundation/Commerce 源码未改；本轮未提交、推送或部署。
+
+
+**2026-09-14 Payment 公共幂等包接入差异分析（前序评审记录）：** 用户已确认“有公共包的就用公共的”，当前交付为[项目差异稿](../payment-orchestration-service/docs/development/command-idempotency-differences.md)，并更新 Processor 规范的复用规则及原需求技术入口。源码核对确认公共包可在宿主同一事务完成 Claim、业务写入和 Complete；Payment 的 11 列模型对齐其 24 列合同时，新增 13 列、command_status 改名，并需处理键长度/排序规则与可选恢复索引。公共响应正文可为空，pay 的当前状态观察不能机械替换为首次回执重放。本轮仅文档分析；模型列清单及链接核对通过，未修改 Java/POM/PDManer/SQL，未运行单测、连接数据库、提交或部署。该评审时 Payment 尚未实际接入；后继实施见上方记录，Foundation/Commerce 代码未改动。
+
+**2026-09-14 清空源码后按 Transaction 风格重建 pay（公共幂等接入前基线）：** 按用户明确要求，Payment 七模块 `src` 下的 142 个源码、API、测试与运行配置文件全部删除，独立提交为 `e6ac829 chore(payment): clear existing sources before rebuilding pay`；旧实现保存点为 `a3747d0`。Maven 骨架、文档与数据库设计保留。下方旧接口、流程、测试及验证记录均为历史证据，不能用于判断当前可运行能力；该阶段模型由后文的整批数据库工件维护记录描述；当前目标模型见上方公共幂等接入记录。
+
+完整阅读 Transaction 的 PaymentProcessor、AbstractProcessor、TransactionContext 及其保存/执行调用链后，在 Payment 项目内新增 [Processor 开发规范](../payment-orchestration-service/docs/development/processor-conventions.md)。重建 21 个生产 Java 文件、一个 Mapper XML 和运行配置，仅提供 `POST /payment-execution/v1/intents/{intentId}/pay`；RequestBody/ResponseBody 改为顶层 API 类型，JSON 字段合同不变。Controller 只做协议适配，PayProcessor 按字段验证→幂等→构建 Context→一次本地提交→流程 TODO→直接响应组织。Context 持有 Intent、Attempt、工具、来源 Binding、命令记录及当前 Action，不恢复 Input/View/Snapshot、通用 Processor 基类或事务转发层。
+
+`PaymentExecutionServiceImpl.savePayContext` 用一个 TransactionTemplate 完成来源保护、Intent CAS、工具保护、Attempt 与命令插入；只补原提交新版命令时不重新创建 Attempt。事务内通过条件 SQL 和影响行数确认可变状态，并在工具行锁等待结束后的插入语句再检查有效期。六类 DataObject 按当前模型完整映射，不恢复已删除字段或表。`PAY_INSTRUMENT_V1` 继续直接对请求 Token 字符串计算原长度前缀 Hash；Hash 命中先于业务查询，过期/撤销不阻止原提交观察，改 Token 返回 409。HTTP 保持 200/202、no-store 和安全失败投影。
+
+**本轮验证：** JDK 25 + Maven Wrapper 全 Reactor `clean package -Dmaven.test.skip=true` 通过（初次构建的 switch 空值分支语法错误已修正后重跑）；六类对象及 SELECT 列与 PDManer、13 项 Mapper 方法与 XML、两项插入的完整列顺序、文档链接及空白检查通过。日志为 `/tmp/payment-pay-rebuild-package.log`。按用户要求未编写或运行单元测试，也未进行数据库或 HTTP 集成验证；不继承下方历史测试通过数量。
+
+**边界：** 新 pay 只受理，Risk/Routing/认证/扣款/恢复与通知继续 TODO；Card last4 读取未接通，原 3DS 挑战只返回 UNAVAILABLE，不能交付 URL。其他 API、Intent 创建、工具准备、Card/Channel 实现和原测试均已删除，等待逐个实现。Web 只依赖 API/Execution，未用的业务模块与补偿依赖已移除。没有 SQL 执行、环境配置、推送或部署；本轮未重新检查实际数据库，先前观察仍为旧 Schema。规范及新 pay 代码留在工作区供用户评审，尚未作第二次提交。
+
+**2026-09-14 Pay 按精简模型迁移受理链（前序实现，已由上方清空重建取代）：** 用户明确限定“先完成 pay 受理链，后续流程保持 TODO”。`PayRequestBody` 不再包含六个法律接受/订单版本字段，按字段验证→幂等→业务上下文→一次本地事务→流程 TODO→事务外响应组织。上下文沿用数据库对象；新 Attempt 为 PROCESSING、金额零、活动 Action 与渠道三元组为空。序号读取本 Intent 的 `MAX(attempt_no) + 1`；保存只使用专用 Intent 占位 CAS、现行 17 列 Attempt 插入和命令绑定，不调用状态历史或 Pricing Fact。Intent 占位 SQL 同时保护预检 Version、OPEN、活动/成功指针为空与未到期；Binding/Intent/Token 锁和命令唯一键保留。
+
+幂等投影使用 `PAY_INSTRUMENT_V1` 的六个请求字段，第六个为 Token 字符串；按用户后续确认，基础校验后直接计算 Hash，第一次业务查询为命令幂等查询，未命中后才解析 Token 内部 ID。命中后只读取原提交响应，缺少新版绑定的旧提交观察在幂等查询后核对工具。Attempt 仍保存内部 Token ID，幂等表不保存 Token 明文。当前操作名为尚未发布/落库的开发合同，直接修正其投影，旧 `PAY_CAPTURE_MODE_V1` Hash 不改写。原提交优先定位；无新版绑定时按冻结身份复用原 Attempt，只读观察不补命令。三表读取 ResultMap/SQL 已按 20/17/22 列模型调整；补充 Attempt 渠道坐标和 Action 新字段投影。共享 DO/Snapshot 的旧属性、非 pay 生命周期写入以及 Create Intent、Channel、认证、通知、定价实现仍待后续迁移；SQL 已标注这些旧写入不由 pay 调用。本轮没有宣称所有 Execution DO/Mapper 或整个 Payment 运行时已完成模型切换，也未启用原 recover/资金流程。
+
+按用户后续确认，`ext/rest/execution/processor/PayProcessor.process` 直接接收路径 ID、幂等键和原 `PayRequestBody`，首次受理与重放直接返回 `SubmissionResponseBody`。已删除 `PayInput`、`ExecutionCommands.Pay` 及相应转换；`PayContext` 保留现有数据库对象，受理事务只保存并绑定，不再重查并返回 `ExecutionView`。响应从 Intent/Attempt/Action 数据库对象投影，展示查询在事务外；Controller 只补充 HTTP 状态及缓存头。Token 字符串仍在幂等前仅参与 Hash，ID 在业务校验后用于落库；新 Attempt 的工具过期/撤销检查保留，原提交重放不重新要求有效期。旧 Channel 交互读取、recover 与其他用例仍保留原有快照模型；本次没有新增 Java 类。局部对象可见性和只读仓储例外已同步技术规则与架构门禁。
+
+**验证：** JDK 25 + Maven Wrapper 限定五类 `clean verify` **46/46**（合同 26、SQL/PDManer 3、规则 3、方式注册 2、架构 12），全部测试源码编译并完成 Reactor 打包。精简请求反例先在旧代码失败；实际 MyBatis 展开后的受理/观察 SQL、完整 Attempt 插入参数和三表 ResultMap 与当前 PDManer 一致，响应测试覆盖风险、未知及渠道原文不外泄；原 RequestBody 入口契约先在旧签名以 NoSuchMethodException 失败；新增数据库对象响应投影覆盖长 ID、金额精度和工具身份不外泄，保留 10 组 HTTP 投影用例验证捕获模式、活动 Action、只读观察、原响应体及 no-store。12 个真实 HTTP 受理场景已编码；新增同键改成不存在 Token 的 true/false 两例应先返回 409，受理 Hash 断言改为请求 Token。前序首次受理场景在只读 Schema 初始化器因“缺少已批准 Execution 表”停止；前序只读复核仍为旧库，本次没有重跑数据库业务场景，不能记为通过。新测试以专用 TestMapper 准备已存在的新版 Intent，避免调用尚未迁移的 Create Intent/状态历史链。
+
+前序使用已获准的本机配置完成只读核对：127.0.0.1:13306/mor_payment 仍为 13 张空旧表，新 Token 表/capture mode 等尚缺；本轮没有执行 DDL/DML、提交、推送或部署。新 Pay 请求须由上游同步采用，Commerce 真实调用迁移仍未实施。见[受理说明](../payment-orchestration-service/docs/pay-interface-walkthrough.md)、[合同](../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md#7-pay-受理链合同)和[数据库对象链验证](../requirements/20260913/payment-Execution设计/assets/pay-dataobject-verification.json)；[直接响应验证](../requirements/20260913/payment-Execution设计/assets/pay-response-body-verification.json)、[Token Hash 修正验证](../requirements/20260913/payment-Execution设计/assets/pay-token-hash-verification.json)及[前序模型受理验证](../requirements/20260913/payment-Execution设计/assets/pay-model-acceptance-verification.json)保留为修改前证据。
+
+
+**2026-09-14 整批数据库工件维护（公共幂等接入前模型，保留为历史证据）：** 按用户确认同步[字段修订](../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md)。正式 PDManer 与完整 Schema 为 **28 表/358 字段/43 唯一索引/43 访问索引/64 本库关系/8 条 1:1/7 图**；Intent/Attempt/Action 分别 20/17/22 列。删除 Pricing Fact 与状态历史表，渠道三元组移至 Attempt，认证要求移至 RISK_CHECK；删除复制的法律接受与认证明细，Action 新增安全渠道 response code/msg。保留原资金 Ref、最小交互和两层活动指针。
+
+本轮 Payment/跨系统模型、场景与 Schema 检查 **34/34**，需求站内容检查 **71/71**；生成器确定性检查、存续对象 ID 核对及人工迁移文件离线覆盖检查通过。PDManer 应用已刷新，28 表规范检查全部绿色，支付执行图和移动字段已核对；未逐图人工遍历全部七图。[验证记录](../requirements/20260913/payment-Execution设计/assets/execution-field-simplification-verification.json)。SQL 未经实际 MySQL 执行验证，不将这些检查表述为数据库业务回归。
+
+本轮仅维护数据库设计、生成器、独立模型清单、场景及 SQL；[精简 Execution 空库创建](../requirements/20260913/payment-Execution设计/db/execution-simplified-create-empty-schema.sql)为 11 表，[旧空表迁移说明](../requirements/20260913/payment-Execution设计/db/execution-simplified-migration.md)列出 10 ALTER、1 CREATE、3 DROP，文件尚未执行。旧 state-risk 空库脚本已标记为前序。Java 的状态历史、Attempt 序号、路由/认证、Pricing Fact 与通知 Handler 仍待改造；Commerce/Risk/CCT/Finance 的受影响合同列入修订，不能将本次模型检查当作业务集成通过。实际数据库仍为前序旧结构，未执行 DDL/DML、提交或部署。
+
+
+
+
+**2026-09-14 Pay 手写受理骨架补齐（前序受理形态，字段与 Hash 现由上方模型迁移取代）：** 按当前代码草稿，`ext/rest/execution/processor/PayProcessor.process` 只完成基础校验、原命令幂等、`buildContext` 和一次 `saveContext`；Controller 保留 URL Intent ID 的解析传递，资源锁继续绑定 `PayInput.intentId`。上下文沿用本轮数据库对象形态，含 Intent、Attempt、工具、仅新建所需来源 Binding 和 `newAttempt`；支付方式不重复存储。原提交优先定位，只有同一提交才能复用活动 Attempt，新提交不能覆盖其执行位。新建在 Processor 校验资源归属、来源/期限、工具作用域和有效性；Service 只保存预构造对象并保护预检后的关闭、到期、撤销和 CAS。`PaymentFlowTransactions.savePayContext` 原子保存 Attempt、Intent 活动指针、状态证据及幂等记录。保留 `PAY_CAPTURE_MODE_V1` 原 Hash；幂等重放不受新支付资格影响。本阶段不创建 Risk/Channel Action 或自动推进任务，原 Card/recover 实现保留，后续流程接入与原同步完整支付场景适配待下一阶段。该 Pay 手写入口的 Execution 数据库对象/只读仓储依赖为局部实现范围，架构门禁仅放行具体类型并继续禁止直接写仓储、Mapper/SQL 和其他 Owner 内部引用。
+
+本轮 JDK 25 Reactor `clean verify` 的四类规则/契约/架构检查 **30/30**，全部测试源码编译、原 Hash 字段顺序复核和 `git diff --check` 通过。新增受理 HTTP 集成测试 7 场景已尝试运行；使用本机配置凭据后在 `ExecutionInfrastructureInitializer` 因“缺少已批准 Execution 表”停止，未进入业务测试，不能记为通过。没有执行 SQL、部署或本轮提交。前序完整重构保存点为本地 Payment commit `9a56cdf`。见[受理说明](../payment-orchestration-service/docs/pay-interface-walkthrough.md)和[验证记录](../requirements/20260913/payment-Execution设计/assets/pay-context-acceptance-verification.json)。
+
+**2026-09-14 Pay 流程与事务集中重构（取代下方前序流程形态）：** `PayProcessor.process` 的第五步直接调用选中方式的 `flow.execute(accepted)`，不再在 Processor 编排风控或 Card 恢复分支；命令重放/观察提前分流，普通 Hash 命中不重复逐字段校验，旧提交缺命令记录仅走独立兼容方法。`CardPaymentFlow.execute` 明确展示风控→期限→路由→可选认证→SALE/AUTHORIZE，Service 只准备流程指定的动作类型。已存在资金动作跳过重新认证及新动作准备，未决操作沿用原渠道恢复。`PaymentFlowTransactions` 集中拥有初始受理、风险准备/发送权、风险结果、期限/路由失败、Card 动作准备/输入等待、渠道发送权及渠道结果事务；各流程/执行器不再自行打开通用事务。初始受理一次提交，远端结果独立短事务，所有外部调用保持事务外。`PayContext` 去掉重复 submission，方式接口统一使用已受理 `ExecutionView`；移除未用命令包装和泛型/用例分派维度。详见 [pay 阅读说明](../payment-orchestration-service/docs/pay-interface-walkthrough.md)。
+
+新增事务集中架构门禁先在旧实现失败，再通过；限定四类契约/规则/架构的 `clean verify` **28/28**，全部测试源码编译并完成 Reactor 打包。[验证工件](../requirements/20260913/payment-Execution设计/assets/pay-flow-transaction-verification.json)。新增 Card 四条步骤顺序 HTTP 用例及关闭来源后恢复原未知扣款的 Handler 用例只完成编译，未运行数据库业务回归。只读复核本机仍为 13 张空旧表、缺少 Token 表与新字段；本轮未执行 SQL、未提交或部署。
+
+
+**2026-09-14 Pay 六阶段重构（前序形态，已由上方流程与事务集中重构取代）：** `PayProcessor.process` 明确按字段基础验证→幂等→业务验证→一次本地受理事务→提交后推进→响应执行。Token 先只读解析内部 ID，保留 `PAY_CAPTURE_MODE_V1` 的原 Hash 字段序列；Service 装载 `PayContext`，Processor 校验归属、工具、原提交和新支付资格。`PaymentExecutionService.accept(PayContext)` 不再调用 `domain.requireIntent/lockIntent` 或重复参数/原提交验证，按既定行锁顺序保护可变关闭/期限/撤销，并用预检 Intent 版本的 CAS 防止预检后状态变化。新命令绑定、Attempt、风险动作及恢复任务保持原子提交；已受理命令跳过受理事务。其他资金写路径的验证职责未在本次扩大迁移。更新 [pay 阅读说明](../payment-orchestration-service/docs/pay-interface-walkthrough.md)。
+
+本次四类契约/架构测试 **27/27**、全部测试源码编译；新增参数优先校验 2 例、失效工具已完成重放 1 例及双提交竞争 1 例只完成编译，未运行数据库业务回归。只读复核本机仍为 13 张空旧表，缺少 Token 表和 capture_mode；本轮未执行 SQL、未提交或部署。
+
+
+**2026-09-14 submission 校验归属调整：** `PaymentExecutionService.submission(intentId, submissionId)` 改为读取上下文，移除 `domain.requireIntent` 和 `domain.view`，记录缺失返回空。Client 归属、Intent–Attempt 关联及历史兼容性由查询 Processor 和 Pay 的观察/恢复入口验证；已受理流程内部按原身份刷新，不重复校验。本次只覆盖 submission 读取链，其他写方法尚未整体迁移为可信 Context 输入。新增 4 个 HTTP 上下文反例已编译；四类契约/架构测试 **27/27**。数据库业务回归未执行，既有 Schema 授权仍待确认；未提交或执行 SQL。
+
+
+**2026-09-14 accept 事务整理（前序形态，已由上方六阶段重构取代）：** `PayProcessor.accept` 只展示受理 Attempt、准备首次执行、读取最新提交三步；新命令才建立命令绑定，重放仍经过业务 Service 的原提交/工具校验。风险动作和恢复任务保持同事务，首次支付已完成时跳过准备。同步修正支付 Hash 入口测试中的命令类型为 `PAY_CAPTURE_MODE_V1`。四类契约/架构测试重新运行 **27/27**，全部测试源码编译；本轮未执行数据库迁移或业务集成回归，未提交。
+
+
+
+**2026-09-14 本轮重构进度（覆盖下列前序待实施描述）：** 已写入 captureMode、4/4/5 状态、active_action_id、原 RISK_CHECK、Channel 原操作恢复和独立资金用例入口；Pay/Capture/Reversal/Refund 不再依赖其他 Processor。Attempt 不保留评估 ID/结果或限额组，Risk 响应丢失保留原未知动作，可信 ALLOW 后才路由。Risk 关联事实新增 Attempt 身份和不可变来源版本；真实 Risk 消费者仍未接入。Card 按顺序组织可选认证和 SALE/AUTHORIZE；Wallet/Crypto 与真实 Card/Channel/Eligibility/Routing 仍为后续集成范围。
+
+本轮 Java 四类契约/架构 `clean verify` **27/27**，全部测试源码编译、七模块打包；[本轮验证工件](../requirements/20260913/payment-Execution设计/assets/pay-state-risk-refactor-verification.json)；Payment 模型/场景 **21/21**。目标模型 **30 表/402 字段/45 唯一索引/47 访问索引/67 关系/7 图**；其中 active_action_id 为应用约束的前向 1:1 指针，不添加二级索引。SQL 和 Mapper 已同步，完整 MySQL/Redis 业务回归尚待本机 Schema 升级。只读盘点本机 127.0.0.1:13306/mor_payment 的 13 张旧表均为 0 行，Token 表尚缺；[本机空表迁移](../requirements/20260913/payment-Execution设计/db/execution-state-risk-local-empty-migration.sql)已准备，尚未执行。旧 PAY_V1、历史评估和非空环境不在此空库迁移适用范围。未提交、未部署。
+
+
 ## Payment Execution 本地切片研发（2026-09-13，Token 修订中，待完整回归）
+
+- **内部风控 Action 与工具身份（2026-09-14，设计确认、待实施）：** [已确认修订](../requirements/20260913/payment-Execution设计/internal-risk-action-amendment.md)新增 RISK_CHECK，评估 ID/结果移至该 Action，并明确按类型恢复与换工具的新提交/Token/Attempt 边界。原 Excel 已更新为 **29 个合成场景、328 个检查点**，Intent/Attempt/Action 快照分别 **328/319/525 行**；状态、ALLOW 门禁、单动作占位、身份/引用、金额、公式缓存和 11 个原生筛选表核验通过，6 个工作表及新增风险字段完成可视检查。这些仅为设计附件验证；Payment/Risk Java、PDManer、SQL、数据库及真实消费者尚未按此实施，本轮未运行 Java/数据库业务测试、未提交或部署。
+
+- **限额字段移除（2026-09-14，设计决定、待实施）：** 用户确认从 Payment Attempt 移除 limit_reservation_group_id，[修订稿](../requirements/20260913/payment-Execution设计/risk-limit-correlation-amendment.md)明确由 Risk 按原 Attempt→Assessment→Group 处理可信结果。代码、模型、SQL 和消费者迁移仍待实施；后续 RISK_CHECK 与字段移动现已确认，Excel 的更新及核验证据见上一项。
+
+- **状态与 Channel 恢复新目标（2026-09-14，设计已收敛、待实施）：** [修订设计](../requirements/20260913/payment-Execution设计/execution-state-channel-recovery-amendment.md)与 Card/Wallet Excel 已同步 capture mode、三表 4/4/5 状态、active_action_id 及无 QUERY 业务 Action 的 Channel 原操作恢复边界。附件 23 个合成场景、223 个检查点的状态、单动作占位、身份/引用、授权与收款金额及公式缓存核对通过，6 张表已完成可视检查；15 份范围文档的 383 个本地链接（含锚点）及空白检查通过。这些是设计附件核验，本轮没有执行 Java 或数据库测试；下述 Java/测试证据、PDManer、正式 Schema 与数据库仍对应前序实现，不作为新状态/恢复规则已实现的证据。
 
 - **当前修订授权与范围：** 用户确认[交易级工具 Token 合同](../requirements/20260913/payment-Execution设计/instrument-token-amendment.md)并进入 Payment 研发。已新增 PI-I00/PI-I01，EX-I05 改为统一 `pay`，各接口独立 Processor；方式共同命令只携带内部 Token ID，Card Flow 通过受控 Owner 完成首次认证或资金动作。其余 Owner 仍为测试 Mock + TODO；本次未适配 Commerce 实际代码、未实现真实 Card 材料存储或 Wallet/Crypto。
 - **数据与恢复实现：** Attempt 直接关联 `t_payment_instrument_token`，移除旧 Instrument DAL 与 CardReference。原来源作用域、固定期限、唯一绑定、撤销、T3 发送门禁和现有补偿任务清理已编码；Owner 材料准备、领取、清理及发送在事务外。SUBMITTED/UNKNOWN 只查询原动作，工具到期不会阻断原 Capture/Void/Refund。源码与场景导航见[修订研发检查](../requirements/20260913/payment-Execution设计/instrument-token-development-checks.md)。
@@ -831,6 +1463,8 @@
 
 ## Commerce Customer GET 编码规范重构（2026-09-16）
 
+> 以下验证属于当时版本；本轮按表查询及普通类迁移见[后继记录](#commerce-customer-get-query-20260916)，尚未执行新的验证。
+
 - **范围与实现：** 用户限定 `CustomerCheckoutController#getCheckout` 按最新接口规范重构。GET 使用 Foundation `AbstractProcessor` 和内部 `GetCheckoutRequest/GetCheckoutResponse`，入口拒绝已有事务；Context 留在查询编排内。Controller/Converter 只做协议与模型转换，独立 `response/GetCheckoutResponseBody` 及其 Info 使用 class。消费者回填、Payment 摘要和展示资格由 Processor 编排，本库按需查询保持；原三份文件链接迁至共享 Integration Client，Prepare 仅适配该协作者。移除 `GetCheckoutQuery`、外部查询型 `CheckoutViewService` 与失去消费者的旧 GET record 模型。详见[组件说明](../commerce-service/docs/requirements/20260912-customer-checkout/implementation.md)。
 - **合同与边界：** HTTP 路径、Path/Query、默认 includeConsumer=false、JSON Schema、错误与只读语义不变，不增加 GET Body；Java API 返回类型迁出 Models，Java 消费者须重新编译。继续保持最多两轮版本重验、冻结后不读创建快照、不重复加载商品和详情、单条 SQL 最多三表、外部查询无事务。未修改数据库、Payment 服务或其他 Commerce 用例业务规则。
 - **验证：** 原独立 class 合同测试先失败；完整 JDK 25 `clean verify` **364/364**，0 失败/错误/跳过，JaCoCo 行覆盖 **91.17%（3076/3374）**，90% 门槛通过。最后 Controller 字段命名调整后，GET HTTP 与架构/模块门禁 **38/38** 再次通过。覆盖无调用方事务、受限字段序列化往返、未知 Payment 状态失败关闭，并保留既有真实本地 MySQL、按需查询、并发重读、消费者回填及支付查询回归。OpenAPI 结构比对只有 GET 描述变化，Schema 与其余合同完全相同；差异空白检查通过。
@@ -862,3 +1496,291 @@
 - **金额迁移验证：** JDK 25 限定 9 类 `clean package` **118/118**，无失败、错误或跳过；包括 26 项纯金额计算、多行顺序/省略优惠/汇总、13 项真实 HTTP 参数与金额拒绝、历史快照、API/OpenAPI 与架构门禁。生产和全部测试源码编译通过，两个 Web JAR 均不含旧 Calculator。文档和差异空白检查通过，[本机证据](/Users/kenny/.codex/verification/commerce-request-amounts-20260916)保存日志、报告与制品指纹。本轮未重复运行受下述结构缺失阻挡的数据库套件，不宣称全量落库回归通过；未执行 SQL、提交或部署。
 - **本次修正验证：** JDK 25 编译、51 项架构/API/历史 Reader 合同测试通过；依赖字段顺序、修改的 Mapper XML 和差异空白检查通过。已补充写入时恰好到期拒绝及到期前一微秒成功的真实 Service 测试，但未通过数据库门禁：单条 HTTP 预检用例在 requireSchema 快速失败，确认本地 t_commerce_order 缺少 consumer_country_code，尚未执行任何业务步骤。完整数据库回归和这两条新增用例仍待结构准备，不能视为已通过。[修正证据](/Users/kenny/.codex/verification/commerce-create-checkout-processor-conventions-20260916)。
 - **交付状态：** 已在本机提交，未推送或部署；本地结构迁移已向用户请求授权，尚未执行。证据：[验证目录](/Users/kenny/.codex/verification/commerce-create-checkout-business-20260916)。
+
+
+<a id="commerce-runtime-properties-20260916"></a>
+
+## Commerce 运行配置归集（2026-09-16）
+
+- **实现范围：** 按公共配置规范将 CommerceRuntimeConfiguration 的三个 @Value 参数归入 CommerceCheckoutProperties、CommerceIdentifierProperties，通过 @EnableConfigurationProperties 注册并注入 Bean 工厂。配置类负责必填校验，HTTPS Origin 和 Snowflake 范围复用原组件校验；UTC Clock、业务与补偿共用的单例 ID 生成器及 Session Origin 冻结行为保持。
+- **配置兼容：** 原三个 commerce.* 配置键和环境变量不变，无默认值；均按启动读取、修改需重启处理。README 补充配置清单；不增加 Nacos Config 加载、动态刷新或外部配置操作。
+- **验证与交付：** 按用户要求未修改或运行单元测试，未执行构建或其他验证；未提交、推送、部署或执行 SQL。用户已有的 CheckoutSession 和 CheckoutSessionMapper 修改保留，本次未触及。
+
+
+<a id="commerce-checkout-query-merge-20260916"></a>
+
+## Client Checkout 查询并入订单查询（2026-09-16）
+
+- **Implemented：** 用户确认后移除 ClientCheckoutApi#getCheckout 及独立响应、Service、Converter、Repository 查询、Mapper 查询和专用投影。两个订单 GET 补充 checkoutUrl、preparationStatus、amountStatus；复用原三表查询中的 Session 坐标，按原到期规则生成 URL。Customer API、Checkout 创建及 Session 写入/CAS 保持。合同见[本次技术边界](../requirements/20260916/commerce-订单查询合并Checkout/technique.md)。
+- **文档与引用：** OpenAPI、README、需求目录与 COM-I02/COM-I03 投影同步；旧测试仅机械适配删除类型、路由及新字段，没有新增测试用例。
+- **未验证与交付：** 按用户要求未运行测试、构建或其他验证，不声明编译或回归通过。未修改数据库模型、执行 SQL、配置 Gateway、提交、推送或部署。
+
+<a id="commerce-get-order-processor-20260916"></a>
+
+## Commerce Client 订单查询按公共规范重构（2026-09-16）
+
+- **代码调整：** `ClientOrderApi#getOrder` 与同表示的 `getOrderByClientOrderId` 使用独立 `GetOrderResponseBody` class 和嵌套 `*Info`。Controller 通过 Converter 转换内部 Request/Response，`GetOrderProcessor` 继承 `AbstractProcessor`，按 Client 隔离查询并逐项加载本库事实，Context 仅在内部持有数据库对象。原 Converter 的业务状态与额度计算移入 Processor，移除订单详情只读事务和传给 HTTP 层的 OrderView。
+- **关联读取收敛：** 原 OrderQueryService 只保留可退款金额这一简单本地查询，通过 Order/Refund Position 两表查询返回有限结果；不再为该入口加载商品、Session、支付、资金或历史创建快照。订单详情仍保留既有金额、状态、历史国家、原链接与到期规则；HTTP 路径、参数位置和 JSON 字段不变，Java 消费者需重新编译。
+- **未验证与交付：** 按用户要求未运行测试、构建或其他验证，本轮未处理原 record 形态的单元测试适配，不声明编译或回归通过。未更改表结构、执行 SQL、提交、推送或部署。
+
+
+<a id="commerce-order-response-shape-20260916"></a>
+
+## Commerce 订单响应归组与创建方式（2026-09-16）
+
+- **代码与合同：** 按用户确认，两个订单 GET 新增 creationMode，将会话归入 checkout.status/url/expiresAt，移除根级及 fundsAvailability.version；内部查询 Response 同步去掉这两处版本，数据库版本和 CAS 保留。GetOrderProcessor 按实际关联生成可空 checkout，Hosted Checkout 缺失会话仍拒绝，原链接到期规则不变。OpenAPI、README、需求目录与 COM-I02/COM-I03 已同步，[已支付示例](../requirements/20260916/commerce-订单查询合并Checkout/order-paid-response.json)为合成展示数据。
+- **创建与模型：** 新创建入口显式写入 OrderCreationMode.HOSTED_CHECKOUT；新 enum 由 Client API 发布，查询通过显式注册的 Foundation CodeEnumTypeHandler 读取。t_commerce_order 新增 creation_mode VARCHAR(32) NOT NULL DEFAULT 'HOSTED_CHECKOUT'，模型/元数据/生成器、目标 Schema、Java 读写同步；模型现为 15 表、251 字段、24 唯一索引、12 普通索引、15 关系、4 图组，本轮未验证。DIRECT_PAY 仅保留模式值及查询表示，不代表直接支付入口、准备和接受流程已实现。
+- **待迁移与未验证：** [增量 SQL](../requirements/20260916/commerce-订单查询合并Checkout/db/creation-mode.sql)仅准备文件，未连接数据库或执行。运行新代码前必须先在获授权环境加列，也不能据本文件推断其他历史迁移已完成。按用户要求，本轮未处理单元测试、未运行测试、构建或验证，不声明可编译或回归通过；前序 record 契约测试仍需迁移。未提交、推送、配置 Gateway 或部署，其他任务已有修改保留。
+
+
+<a id="commerce-cancel-order-refactor-20260916"></a>
+
+## Commerce Client CancelOrder 编码规范重构（2026-09-16）
+
+- **支付事实判断归属：** OrderPaymentProjection 改为普通 class，Mapper 改为属性映射；成功 Attempt、正捕获金额或成功 Intent 的原组合判断移到 hasSuccessfulPayment()，Processor 调用后决定 REVERSAL_REQUIRED，原判断条件和数据库并发保护保持。未运行测试、构建或验证。
+- **原对象同步修订：** CommerceOrder、CheckoutSession 改为可修改 class，Mapper 使用属性映射，创建/取消调用同步使用 getter。Repository 的 requestTermination/cancel 改为 void，确认 SQL 行数后通过 setter 更新传入原实例；取消 Service 不再接收重建结果或替换 Context，Context 保留 final 引用。此轮没有数据库结构变更，未处理测试或运行构建、验证。
+- **Context 行为修订：** 按用户要求，将纯组合判断 canCancelLocally 从 Processor 移到 OrderCancellationContext，Processor 直接调用 context.canCancelLocally()；原判断条件、查询顺序与 SQL/CAS 保持。公共规范及 Payment 示例同步允许 Context 承载基于已加载数据的纯判断和计算。本轮仍未处理测试或运行构建、验证。
+- **当前修订：** 用户明确指出取消不应保留请求幂等组件，要求按 processor-conventions.md 重做，取代此前“保留取消 Hash/Claim/Lease/恢复回执”的实现方向。删除 OrderCancellationIdempotencyService/Impl 和 OrderCancellation 快照结果类型；内部 Request 仅有 clientId/orderNo，Context 持有 CommerceOrder、可空 CheckoutSession 和按需 OrderPaymentProjection，取消链路不再使用 OrderRecord 或整单联查；不含请求 Key、Hash、命令 ID、Claim、租约、恢复阶段或结果快照。
+- **代码与事务：** Processor 仅依赖 Repository、本地取消 Service、Payment Client；归属查询、已取消提前返回、新请求资格检查和 Context 构造都在事务外。Service 维护 REQUIRED 事务，基础单一次事务取消；需下游权威时先提交终止意图，事务外调用 Payment，再事务保存取消。Order/实际关联 Session 的 CAS 与支付绑定/投影版本、未成功条件保护并发，行数不符整体回滚，不自动重查重试。Hosted Checkout 缺少 Session 仍报数据错误，Direct Pay 没有 Session 时不执行会话 UPDATE、不返回 checkoutStatus；有实际会话则同事务关闭。取消专用联表加锁重读和 Processor 事务已移除，未新增 Redis；下游固定 Order 终止标识仍沿用 PAY-I12 既有合同，不来自 Client Header。
+- **模型与迁移：** 新增 t_commerce_order.cancelled_at DATETIME(6) NULL，首次取消和状态在同一 UPDATE 写入；准备终止的原有订单关闭路径同步保存该时刻。模型、生成器/字段元数据、目标 Schema 和[人工 SQL](../requirements/20260916/commerce-CancelOrder接口重构/db/cancelled-at.sql)同步准备，未执行 SQL；历史时间仅从真实已取消 Session 回填，不从审计时间猜测。模型字段由前序 251 增为 252，表/索引/关系不变；未运行生成器检查或模型测试。部署前需先完成 creation_mode 与 cancelled_at 的迁移。本次未实现 Direct Pay 创建或支付入口。
+- **接口与范围：** Idempotency-Key 仅保留入口格式校验，不由取消业务保存/冻结或校验同 Key 改目标；当前 Gateway 未新增请求幂等能力。已取消返回原取消时间，202/409 业务语义保留，响应去掉内部 version。API/OpenAPI、README、需求目录与取消时序同步；共享命令表、旧记录、Foundation 和 Refund/Customer 幂等保持，不执行 Schema 变更。
+- **未验证及待接入：** 按用户要求未处理单元测试、未运行测试、构建、格式化或静态验证，不声明可编译或回归通过。旧 OrderModels/record、CommerceOrder 构造器、新 Processor/Context 依赖及取消命令 Key/租约/回执测试需后续适配。UnavailablePaymentTerminationClient 与 TODO(PAY-I12) 保持，真实终止、事件消费及后台唤醒未由本次实现。未执行 SQL、提交、推送或部署，见[交付记录](../requirements/20260916/commerce-CancelOrder接口重构/delivery.md)。
+
+
+<a id="commerce-create-refund-20260916"></a>
+
+## Commerce Client CreateRefund 接口规范重构（2026-09-16）
+
+- **代码调整：** 创建 Controller 通过 Converter 使用独立普通类 Body 和内部 Request/Response；Processor 继承 Foundation AbstractProcessor，按需读取 CommerceOrder、原 RefundRequest，新申请才读取支付投影和退款位置。Context 及涉及的数据库对象改为普通类，对象持有纯校验；创建不依赖 OrderRecord 或 Checkout Session。
+- **保存与重复申请：** 移除创建专用 Hash/Claim/Lease、命令回执与事务内整单重查，clientRefundId 原内容重试直接返回原 201 创建事实。Service 自行使用 REQUIRED，原子保存退款、额度预占与提交任务；唯一索引和条件 SQL/CAS 保护并发，写库成功才同步原对象。业务查询 View 保留订单号关联，写入 DO 只含本表字段；Position 写入收敛到所属 Repository。
+- **任务与边界：** 保留补偿登记后的 Foundation 提交后唤醒、原 Handler 的事务外 Payment 调用及未知结果预占。Payment 实际接口、MQ 和 Client Webhook 仍待接入；本轮未扩展退款查询或 Handler 的独立流程设计。HTTP Key 仍必填且校验格式，业务不消费 Key；网关没有新增缓存能力。详见[技术说明](../requirements/20260916/commerce-CreateRefund接口重构/technique.md)。
+- **未验证与交付：** 按用户要求未处理测试、未运行构建或验证，不声明编译或回归通过。原测试中的旧创建类型、构造器和 record accessor 尚需后续适配。未修改数据库结构、执行 SQL、修改 PDManer、提交、推送或部署；前序退款测试记录仅证明对应历史版本。
+
+
+<a id="commerce-public-numbers-20260916"></a>
+
+## Commerce 订单号与退款号统一公共 Token 格式（2026-09-16）
+
+- **代码调整：** 新 orderNo、refundRequestNo 由 Commerce Processor 直接使用 Foundation PublicTokenGenerator 生成主体，分别拼接 ord_、rfd_，与 chk_ 一样总长 34 位；每次新建只生成一次。移除旧订单号生成接口及 Base64 实现，退款移除 UUID 生成。重复业务退款返回原编号。
+- **读取兼容：** CreateCheckoutResponse 接受新主体及旧订单号，以供历史回执读取；历史创建快照 Reader 保持旧格式。对外查询输入不收窄，旧数据库编号不改写；Client 归属检查继续执行。OpenAPI 和 README 已同步新生成格式。两个现有 VARCHAR(64) 字段及唯一索引足够，无表结构变化。
+- **验证与交付：** 按用户要求未处理测试、未运行构建或验证，不声明编译或回归通过。旧生成器和构造器相关测试待后续适配。未执行 SQL、改 PDManer、提交、推送、发布或部署。范围见[技术说明](../requirements/20260916/foundation-PublicToken公共生成/technique.md#commerce-orderno--refundrequestno-生成格式)。
+
+
+<a id="commerce-list-order-refunds-20260916"></a>
+
+## Commerce Client 订单退款列表接口规范重构（2026-09-16）
+
+- **代码调整：** listOrderRefunds 改由继承 Foundation AbstractProcessor 的 ListOrderRefundsProcessor 编排。Controller/Converter 使用内部 Request/Response、独立普通类 ListOrderRefundsResponseBody 和嵌套 RefundInfo；没有新增 GET Body、空 Service 或额外 Context。
+- **按需读取：** 只查询归属当前 Client 的订单主键；有游标时单表读取退款锚点并校验 Order/createTime；分页直接返回本表 RefundRequest。移除列表 Service 的只读事务、OrderRecord、两表 View 和旧 Page/Body 容器。首屏两次读取、续页三次，不加锁、不要求 Session、不加载支付/资金事实或调用外部服务。
+- **合同保持：** 原 Path/Query、1–100 limit、创建时间/退款号倒序、r1 Cursor、金额字符串、退款字段和显式 null 继续使用；下一页取实际返回末项，列表允许显示相邻已提交时点的当前状态。其他退款入口独立流程未在本轮重构。说明见[技术文件](../requirements/20260916/commerce-ListOrderRefunds接口重构/technique.md)。
+- **未验证与交付：** 按用户要求未处理测试、未运行构建或任何验证，不声明编译或回归通过。旧返回类型、构造器和 Service.list 测试需后续适配。未修改数据库结构或索引、执行 SQL、修改 PDManer、提交、推送或部署。
+
+<a id="commerce-get-refund-20260916"></a>
+
+## Commerce Client 按公开退款号查询接口规范重构（2026-09-16）
+
+- **代码调整：** `getRefund` 改由继承 Foundation `AbstractProcessor` 的 `GetRefundProcessor` 编排，Controller / Converter 只转换和委托。内部 Request/Response 和独立 `GetRefundResponseBody` 为普通 class；不增加 Context 或空 Service。
+- **按需读取：** 复用单表退款查询，再按同一 Client / orderId 只取 `order_no`。本入口不再调用 `RefundService.get`、联表 View 或只读事务，不加锁，不依赖 Session、支付或资金投影，不调用外部服务。按 Client 业务退款号查询的后继迁移见下一节。
+- **合同保持：** 原路径参数、金额格式、来源、状态、时间、表示版本和显式 null 不变；未知、跨 Client 及关联订单不可见沿用 `REFUND_NOT_FOUND`。范围见[技术说明](../requirements/20260916/commerce-GetRefund接口重构/technique.md)。
+- **金额组装修订：** 详情及列表 Processor 直接将原 BigDecimal 传入 Money，删除文本往返解析。用户随后删除公开退款号详情的 try/catch，详情直接沿用统一异常处理；列表原有的窄异常转换没有在本次详情重构中调整。
+- **未验证与交付：** 按用户要求未处理测试、未运行构建或验证。返回类型及 Controller 构造器相关测试需后续适配，不声明编译或回归通过。未修改表结构或索引、执行 SQL、修改 PDManer、提交、推送或部署。
+
+<a id="commerce-get-refund-by-client-refund-id-20260916"></a>
+
+## Commerce Client 按业务退款号查询接口规范重构（2026-09-16）
+
+- **代码调整：** 新增普通类 `GetRefundByClientRefundIdRequest` 和继承 Foundation AbstractProcessor 的查询 Processor；Controller/Converter 仅适配，复用已有 `GetRefundResponse`、`GetRefundResponseBody` 和响应转换。
+- **读取与清理：** 复用 CLIENT 来源、可信 Client / clientRefundId 的单表查询及关联订单号标量查询；移除旧 `RefundService.get`、只读事务、View/money 组装、领域 `RefundModels.View`、旧 API `RefundResponseBody` 和 Controller wire。没有新增 SQL、Context、锁、事务或外部调用；提交 Handler 原实现保留。
+- **合同与金额：** 原路径、Query、响应字段、Client 隔离、Operations 不匹配及 REFUND_NOT_FOUND 语义保持。金额按用户最新要求直接调用公共 Money，不加 try/catch 或文本往返解析。范围见[技术说明](../requirements/20260916/commerce-GetRefundByClientRefundId接口重构/technique.md)。
+- **验证与交付：** 按用户要求未处理测试、未运行构建或验证，不声明编译或回归通过；旧 Java 类型、Service 查询和 Controller 构造器相关测试待适配。未修改数据库或 PDManer、执行 SQL、提交、推送或部署。
+
+<a id="commerce-get-refundable-amount-20260916"></a>
+
+## Commerce Client 可退款金额查询接口规范重构（2026-09-16）
+
+- **代码调整：** `getRefundableAmount` 改由继承 Foundation `AbstractProcessor` 的 `GetRefundableAmountProcessor` 编排。Controller/Converter 仅转换和委托，内部 Request/Response 及独立 `GetRefundableAmountResponseBody` 均为普通 class；无额外 Context 或 Service。
+- **读取与清理：** 先按可信 Client / orderNo 读取 `CommerceOrder`，再按 orderId 读取 `OrderRefundPosition`，复用其金额校验与可退余额计算。两次读取不加事务或锁，不依赖 Session、支付和资金投影，不调用外部服务。删除旧 `OrderQueryService/Impl`、领域 `RefundableAmount`、`OrderWireConverter`、API `RefundModels`、联表 View 及专用 Repository/Mapper/XML 查询。
+- **合同与金额：** 原 GET 路径、参数位置及五个 JSON 字段保持；未知或跨 Client 订单返回 `ORDER_NOT_FOUND`。金额直接使用公共 Money 输出，asOf 与 version 来自同一退款位置；未预占额度，创建退款仍按写入合同校验。说明见[技术文件](../requirements/20260916/commerce-GetRefundableAmount接口重构/technique.md)。
+- **验证与交付：** 按用户要求未处理测试、未运行构建或验证，不声明编译或回归通过；Java 返回类型与 Controller 构造器相关测试待适配。未修改其他服务、Gateway、数据库结构或 PDManer，未执行 SQL、提交、推送或部署。
+
+<a id="commerce-get-payment-20260917"></a>
+
+## Commerce Customer GetPayment 接口规范重构（2026-09-17）
+
+- **入口与编排：** 内部 GetCustomerPaymentRequest 移到 request 包，Converter 完成 Path 转换，Controller 只委托并转换响应。Foundation GetCustomerPaymentProcessor 按阶段查询、构造普通类 CustomerPaymentQueryContext、读取 Payment 和构造已有 CustomerPaymentResponse；共享 HTTP 响应保持。
+- **查询与边界：** Session、CommerceOrder、OrderPaymentProjection 各读一次，Context 只持有订单、支付投影和 submissionId，派生固定归属的 PaymentReference。删除返回前的二次查库及版本变化 409；保留基于原期限的内存到期判断和 Payment 结果绑定校验。查询不加事务或锁、不产生接受/支付/补偿任务，未接入真实 Payment。见[技术说明](../requirements/20260917/commerce-GetPayment接口重构/technique.md)。
+- **验证与交付：** 按用户要求未修改测试、未运行测试或构建验证，不声明编译、回归或真实支付集成通过。没有修改其他系统、Gateway、前端、数据库或 PDManer，未执行 SQL、提交、推送或部署。
+
+<a id="commerce-submit-payment-20260917"></a>
+
+## Commerce Customer SubmitPayment 接口规范重构（2026-09-17）
+
+- **入口与去幂等：** 普通类 Body/Info、内部 Request/Response 和 Converter；Submit/GetPayment Processor 复用 Foundation AbstractProcessor。按用户追加要求移除支付 Idempotency-Key、指纹/Hash、命令认领/完成/响应快照、retryIdempotencyKey，以及 GET 的命令表查询；Preparation 及共享组件保留。
+- **数据与事务：** 提交按需读取订单、会话、准确合同、支付投影及消费者存在性；Context 无卡、Token 或命令对象。Service 的 REQUIRED 事务保存订单版本与首次三份接受/网络证据，Processor 直接调用该 Service，已删除支付查询任务登记及额外事务包装。状态、版本、行数和唯一约束继续保护本地事实；同合同原接受复用。executePayment 复用已提交 Context 和原对象回写版本，不重复查询订单、会话或消费者存在性，只保留基于原期限的内存到期判断；本次未运行验证。
+- **支付身份与查询：** 每次 POST 生成新的 submissionId，作为 Payment 来源业务编号；不承诺原请求重放。Payment 提交在本地事务后执行；其 Intent 资金保护仍需真实适配落实。查询直接使用当前订单/Intent/提交编号访问 Payment；未找到不代表在途操作未执行，不自动再次 POST。已按用户确认删除 CheckoutPaymentQueryHandler、专属测试及只供它使用的订单号查询方法/SQL；公开支付查询保留，其他补偿任务不变。详见[技术说明](../requirements/20260917/commerce-SubmitPayment接口重构/technique.md)。
+- **SQL 与验证：** 新代码不读写接受表历史 command_idempotency_id，已准备[可空调整 SQL](../requirements/20260917/commerce-SubmitPayment接口重构/db/ddl.sql)，**未执行，旧 NOT NULL 库需先应用才能使用新写入**。旧基线 DDL/PDManer 尚未同步，新库也需此增量。仅删除被移除 Handler 的专属测试，未调整其余测试、未运行构建或验证，旧类型/构造器/幂等场景测试待适配；不声明编译、回归或真实支付接入通过。未改其他系统、Gateway、前端，未提交、推送或部署。
+
+<a id="commerce-save-consumer-20260917"></a>
+
+## Commerce SaveConsumer 接口规范重构（2026-09-17）
+
+- **代码：** 独立普通类 Body/地址 Info、内部 Request/Response、Converter 和 SaveConsumerContext；SaveConsumerProcessor 复用 Foundation AbstractProcessor，直接读取 Session、CommerceOrder 与 ConsumerContext，不使用旧 OrderRecord 聚合。规范化归 Request，编辑/过期资格归已读对象，Protect 在事务外；Controller 仅转换委托。
+- **保存：** CustomerCheckoutService.saveConsumerContext 使用 REQUIRED 事务更新订单版本与 Consumer；Processor 直接调用该本地保存，不再包裹命令事务。每次请求按订单/Session/Consumer 状态和版本做条件写入，SQL 成功后同步原对象，并发变化返回冲突。订单条件 UPDATE 提供行锁与 CAS，去掉仅为 Claim 顺序新增的显式锁查询。
+- **合同与清理：** 按用户后续“去掉幂等”的要求，SaveConsumer 去除 Header 参数、Filter 强制 Key 校验、请求 Hash、Claim/Complete 及回执重放，不再读写命令表；准备开始后重复保存同样拒绝。原 PUT 路径、Body 和响应字段保持；删除旧 Save 模型、转换、Service 规范化/保存及聚合消费者 upsert，其他用例与共享命令机制、历史记录保留。详见[技术说明](../requirements/20260917/commerce-SaveConsumer接口重构/technique.md)。
+- **验证与交付：** 按用户要求未改测试、未运行构建或验证，不声明编译或回归通过；旧 Java 类型及装配相关测试待适配。未改其他系统、Gateway、数据库结构或 PDManer，未执行 SQL、提交、推送或部署。
+
+<a id="commerce-customer-get-query-20260916"></a>
+
+## Commerce Customer GET 按需查询与对象规范重构（2026-09-16）
+
+- **2026-09-17 后继修订：** 用户要求过期校验归 CommerceOrder，创建国家不再依赖幂等快照，并简化支付摘要查询。已移除 `CheckoutIdempotencySnapshotCodec`、创建快照 / View、专用查询 SQL 和 OrderRecord 创建命令字段；Customer GET、Client 订单查询及准备恢复直接使用订单或冻结上下文国家。PaymentStatus 承载纯协议判断，使用查询完成后的时刻校验 observedAt；不可用降级保持。保留用户移除 GET 自动重读的源码修改，当前版本变化直接返回冲突。未修改测试、执行构建或验证；旧 Codec、字段及构造器相关测试待清理。没有执行历史数据回填或删除共享幂等数据。
+- **前序记录范围：** 以下两轮读取和旧快照回退为 2026-09-16 当时行为，由上述修订取代；其余边界保持。
+
+- **代码调整：** `GetCustomerCheckoutProcessor` 直接从所属 Repository 查询 Session、CommerceOrder、ConsumerContext、支付投影和商品，不再通过查询 Service 装配 OrderRecord。冻结法律展示使用三表 `CheckoutLegalView`，不读取定价、Risk 与税快照。`CheckoutQueryContext`、内部 Response、OrderItem 和版本 View 使用普通 class；就绪、操作资格、轮询和版本比较归 Context。
+- **合同与边界：** 保留原 HTTP 路径、参数、字段、Token 和到期错误；显式消费者回填、原文件链接及 Payment 摘要在事务外取得。GET 无写入、事务或锁，返回前只查版本，最多读取两轮。准备前优先读取订单国家，仅历史缺失值读取原创建快照。Converter 复用公共 Money 按订单币种输出金额，不重复解析。说明见[本次技术文件](../requirements/20260916/commerce-GetCustomerCheckout接口重构/technique.md)。
+- **清理与保留：** 移除旧 Service 的 GET 专用版本比较及旧聚合 Mapper 版本查询；其他写用例仍消费的旧类型和准备逻辑保留，文件链接复用原 Integration Client。保留用户 Controller 注入字段顺序。
+- **验证与交付：** 按用户要求未处理测试、未运行构建或验证，不声明编译或回归通过；内部响应访问器、Processor 装配和查询语句名相关测试待适配。未改其他系统、Gateway、数据库结构或 PDManer，未执行 SQL、提交、推送或部署。
+
+<a id="commerce-ingress-filter-simplification-20260916"></a>
+
+## Commerce 接入 Filter 精简（2026-09-16）
+
+- **代码调整：** 按用户连续确认，删除自动注册的 `ClientApiIdempotencyKeyFilter`、`ClientApiNoStoreResponseFilter`、`ClientOrderRequestFilter`、`ClientRefundRequestFilter` 和 `ClientApiTrustedContextFilter`，不新增替代 Filter、Interceptor 或 Processor 拦截逻辑。Client 写接口保留原 Header 参数声明与框架必填绑定，专用 Key 格式/单值检查不再由 Commerce 执行；订单/退款业务防重不变。
+- **缓存范围：** 被删除的缓存 Filter 同时覆盖 Client API 和 Customer Checkout，两类服务直连均不再由该 Filter 强制 no-store/no-cache。公开缓存头仍由 Gateway 承担，Gateway 代码和配置本轮未改、未验证；请求幂等中间件方案与启用仍待后续，不声明已完成接入。
+- **Query/Body 与保留范围：** Commerce 不再由专用 Filter 拒绝 Order/Refund 的未知 Query、重复单值参数、GET/Cancel Body；这些公开协议限制归上游接入层，本次未改或验证 Gateway。字段注解、Processor 的归属及游标业务校验、Customer 自有请求处理保持。API 注释、OpenAPI、README 及职责决定同步；详见[技术说明](../requirements/20260916/commerce-接入Filter精简/technique.md)。
+- **可信身份与日志：** 删除 Client 身份 Filter 的 Header 单值检查及 `clientId/credentialId` MDC 填充；没有业务消费者依赖该 MDC 输入。身份 Header 原有必填、long 类型绑定及 `@Positive` 约束、Client 资源归属校验和现有 Request ID 链路保持。认证、伪造 Header 清理与可信身份注入归 Gateway，本次未修改或验证其实现。
+- **验证与交付：** 按用户要求未处理测试、未运行构建或验证，不声明编译或回归通过。旧直连 Query/Body 拒绝、缓存头、专有 Key 及部分游标错误断言需后续适配。未改 Foundation、数据库或 PDManer，未执行 SQL、提交、推送或部署。
+
+
+<a id="platform-operations-management-refactor-20260917"></a>
+### Platform OperationsManagementApi 接入重构（2026-09-17）
+
+- 范围：`OperationsManagementApi` 的 16 个入口（8 个写命令、8 个查询）和 Operations BFF 的实际消费者。API 路径、JSON 字段、权限 Code、Controller `@Audit` 声明和成功状态保持；请求/响应及嵌套协议对象迁到 `api.operations.request/response` 普通 class，补齐中文字段与 `@param/@return` 合同。删除两个 Web 管理 Processor 和无消费者的人员 Provisioning Service。
+- 调用链：Controller/Converter → Access Control 独立 Processor.process。人员与角色写入 Context 持有原 Account/Member/Password/Role；`OperationsAccountService` / `OperationsRoleService` 仅组合本地表保存，不调用其他 Service 或外部依赖。复用并扩展已有按表 Repository，新增角色权限 Repository；SQL 成功后回写原对象状态/版本。人员、角色联合结果使用 `OperationsAccountView` / `OperationsRoleView`；现有目录聚合查询 Repository 及共享授权 Policy 的进一步拆分不在本次范围。
+- 原子性与权限：保留账号/成员 CAS、角色聚合版本、角色数据库共享/排他保护、授予上限、系统角色保护、最后一个有效管理员保护及停用/删除账号时的会话/Refresh 撤销。角色权限恢复/移除检查写入行数。查询使用原只读 REPEATABLE_READ，写入使用 READ_COMMITTED，均保留 15 秒超时；`OperationsManagementTransactions` 统一事务完成观察和数据库并发异常转换。审计事实仍交给既有尽力采集/独立落库机制，不并入业务事务。
+- 事务外步骤：创建人员的密码派生与 Vault 稳定邮箱 Token 准备在锁及本地事务前完成；锁键使用 Token 的受控 HMAC 摘要，不暴露邮箱或 Token 原文。唯一邮箱/角色编码冲突只识别归属的数据库索引，不把未知重复键当作成功。没有提交后外部业务动作或新增 MQ/补偿，因此示例的提交后推进不适用。
+- 请求幂等：本次 8 个命令移除内部 API Header、BFF 绑定/转发及本地 Claim/Hash/previous/complete；HTTP 重放由 Gateway 负责。业务唯一性、版本、状态及数据库锁保留。此处没有独立业务操作身份，不增加原业务命令查询/重放分支，也不迁移其他管理接口或删除旧幂等表/组件。
+- 锁：8 个命令统一继承 Foundation AbstractLockProcessor，不叠加 @ResourceLock，不重复 Redis 异常处理。4 个账号变更继续与认证共享 `lock:operations:account:{id}`；角色更新/删除及创建分别使用 `lock:operations:role:{id}` / `lock:operations:role-code:{code}`；人员创建从操作者＋请求 Key 改成 `lock:operations:create-account:{tokenDigest}`。复用 `operations.authentication.lock-wait-time/lock-lease-time`，默认 500ms/30s，无新配置项。角色及人员创建锁命名空间与旧进程不同，后续激活应协调旧写入口退出和消费者更新，本次未发布。
+- 实际验证：JDK 25 执行临时聚合 reactor，`-pl :platform-support-test,:paytech-operations-console-bff-test -am -DskipTests clean test-compile`，Foundation 11＋Platform 7＋Operations BFF 3 共 21 个模块全部成功（`/tmp/plt-operations-management-final-compile.log`）。202 项静态比对覆盖路由/字段、模板入口、审计声明、原条件写 SQL、授权 Policy 保留和任务前无关源码修改保留；Platform/BFF `git diff --check` 通过。非 HTTP Processor 入口有实际 Bean Validation 调用。
+- 验证边界：按用户要求没有新增/运行单元测试，只对已有消费者、编译引用和锁架构断言做必要适配。未运行 Spring/Jackson HTTP、MySQL 回滚、Redis 竞争/租约、审计异步落库或 Gateway 幂等集成回归；旧服务层重放测试预期需随 Gateway 验证任务迁移。编译与静态比对不代表上述运行行为已通过。未执行 SQL、安装发布 Maven 构件、提交、推送或部署，Gateway 本身没有改动。
+
+
+<a id="processor-basic-validation-20260917"></a>
+
+### 2026-09-17 Processor 基础字段校验归公共父类
+
+- **实现：** 按用户确认，将 OperationsManagementSupport 的 Bean Validation 调用移到 Foundation AbstractProcessor.validateBasic。父类方法注入宿主 Validator，先检查请求非空，再验证默认分组及 @Valid 嵌套约束；参数失败使用 InvalidParameterException，未装配校验器失败关闭，不创建独立 ValidatorFactory。Common Core 新增标准 Validation API 与直接使用的 spring-beans 依赖，版本沿用 BOM，Provider 由宿主提供。
+- **清理与边界：** 删除 Operations Management 16 个仅转发 support.validate 的重写以及 Support 中的 Validator 依赖。process 的事务入口检查及 validateBasic → validate → processRequest 顺序保持；业务授权、Context、状态/版本校验、本地原子写入、事务外步骤和锁实现未改。API Credential 的 validateBasic 特殊认证合同保持，缺失/畸形凭证仍按原逻辑返回 401。已同步[公共校验决定](decisions/2026-09-17-processor-basic-validation.md)、开发/工程规范、公共示例及薄规则。
+- **实际验证：** JDK 25 临时聚合 reactor 执行 `-pl :platform-support-test,:paytech-operations-console-bff-test -am -DskipTests clean test-compile`，Foundation/Platform/Operations BFF 共 21 个模块成功（`/tmp/processor-basic-validation-compile.log`）；另执行 `-pl :paytech-commerce-web,:paytech-payment-web -am -Dmaven.test.skip=true clean compile`，Foundation/Commerce/Payment 共 23 个模块成功（`/tmp/processor-validation-consumers-compile.log`）。静态比对确认 16 处只删除重复校验、模板顺序保持、认证特例与锁源码未改变；相关 diff --check 通过。工作期间其他任务对 HttpTestInvoker 的修改保留。
+- **验证限制：** 按用户要求未新增或运行单元测试，未运行应用启动、HTTP、数据库及 Redis 回归；编译成功不代表这些场景已验证。手工 new 的 Processor 若使用默认 validateBasic，需先显式 setValidator；其他模块的既有业务校验与测试装配没有批量迁移。未安装/发布制品、执行 SQL、提交或部署。
+
+
+<a id="platform-permission-management-refactor-20260917"></a>
+
+### 2026-09-17 PermissionManagementApi 接入与用例重构
+
+- **入口与对象：** 7 个接口统一 Controller → Converter → Access Control 的 7 个具体 Processor.process；4 个查询继承 AbstractProcessor，3 个写操作继承 AbstractLockProcessor。API 原 Models/record 拆为 request/response 下 11 个 class/interface，保留七条路由、JSON 字段、三类引用多态及成功 HTTP 200，补齐中文方法/字段说明。内部 Request 使用父类 Bean Validation，不重写基础校验；权限详情组合使用 PermissionDetailView，跨模块输出不暴露 DataObject。
+- **本地保存：** Create/Update/ChangeStatus 各有 Context，持有 t_permission 原对象；PermissionManagementService 只依赖 PermissionRepository。创建固定 INACTIVE，不授予持有人；更新只改风险等级，未变化不写库、不增版本、不追加审计；状态命令拒绝相同状态，保留引用及受保护管理权限规则。Permission DataObject 移入 core/dal/dataobject，Repository 在 CAS 成功后回写风险、状态、版本和时间，拒绝版本溢出；引用查询映射改为 class。旧 ConfigurationCatalog 的未使用权限写/读门面及命令模型移除，其他消费者的共享锁与委派查询继续保留。
+- **事务、锁、审计：** PermissionManagementTransactions 统一 SERIALIZABLE/15 秒本地写事务、审计事务观察与数据库并发异常；普通查询保持无新增事务。逻辑锁均为 permission:{permissionCode}，公共模板负责 Redis 异常与释放；权限排他行锁继续协调绑定/委派共享锁，唯一约束及版本 CAS 保留。三个 Controller 的写审计及四个查询审计声明保持；更新/启停在原对象变更前冻结 typed before 值，成功保存后登记事实。本轮没有事务外业务调用、没有 Schema 变化。
+- **请求幂等与调用方：** Platform 三个写接口和对应 BFF Controller/Client 删除 Idempotency-Key 参数、Hash/prepare/claim/complete/replay；Gateway 的职责按已确认全局决定执行，本次未改 Gateway 或历史命令数据。BFF 只改本接口及共享转换器的 Permission 类型/getter，已有其他改动保留。API/Mapper 类型迁移同步机械调整现有架构测试引用及注解锁数量，没有新增测试用例。
+- **发布边界：** 新 PermissionManagementProperties 使用 ps.access-control.permission.lock-wait-time/lock-lease-time，默认 500ms/30s。物理逻辑部分由旧 permission:{code} 变为模板的 lock:permission:{code}，后续发布须协调停止旧写入口再切换，不能假定混合版本仍使用同一 Redis 锁。未发布、部署或安装制品，未执行 SQL 或提交。
+- **实际验证：** JDK 25 聚合 reactor 的 `-pl :platform-support-test,:paytech-operations-console-bff-test -am -DskipTests test-compile` 最终通过，Foundation/Platform/Operations BFF 共 21 模块成功（/tmp/permission-management-final-compile.log）。此前已 clean 重建目标；最终类型/import 修正后重新编译全部受影响源码与测试源码。154 项静态合同检查通过，覆盖路由、原字段/注解、全部审计声明、模板/幂等清理、授权逻辑、原查询 SQL/锁语义、CAS 回写及 BFF 修改范围；Platform/BFF diff --check 通过。
+- **限制：** 按用户要求未新增或运行单元测试，也未执行 Spring 启动、HTTP/JSON、数据库、Redis 并发及审计回归。旧接口请求幂等的运行期测试语义未迁移，后续应按 Gateway 职责调整；编译与静态检查不能代替上述运行验证。
+
+
+<a id="platform-tenant-access-refactor-20260917"></a>
+
+### 2026-09-17 TenantAccessManagementApi 接入与用例重构
+
+- **入口与校验：** 8 个接口统一 Controller → Converter → Access Control Processor.process；7 个查询使用 AbstractProcessor，安全状态写入使用 AbstractLockProcessor。API 的 9 个 DTO 拆为 request/response 下的 class，补齐中文方法/字段、@param/@return，保留原路径、参数位置、响应字段和值比较语义。内部 Request 复用父类 Bean Validation；严格 JSON 解析器同步新请求包，并通过属性构造器保留 expectedVersion 缺失/空值拒绝。原 API import 整理及 BFF 其他已有修改保留。
+- **查询与本地保存：** 成员、角色授予、权限汇总、来源使用 4 个组合 View，状态解释收敛到 View；普通租户结果使用跨模块摘要。Repository 按租户、成员、成员角色授予入口拆分，复用原 Mapper SQL；所有 SQL 的条件、排序、分页、COUNT、时间边界、行锁和缓存配置未变，仅替换组合结果映射类型。ChangeTenantSecurityStatusContext 持有原 TenantAccess class；Service 只保存租户安全状态，CAS 成功后 Repository 更新原对象的安全状态、版本和时间，不修改来源及授权事实。
+- **事务、锁与审计：** 复用 OperationsManagementTransactions 的 RR 只读快照、READ_COMMITTED 写事务及 15 秒上限，数据库并发异常与 Redis 异常使用已有公共处理。当前操作者授权先于目标读取；安全写保留行锁、旧版本冲突与版本上限，同版本同状态直接返回、不增版本及变更审计。8 个 Controller 审计声明保持；保存前冻结 before 值，成功后登记审计，持久化继续提交后尽力执行。没有事务外业务调用、Schema 或 SQL 数据变更。
+- **幂等与调用方：** Platform/BFF 安全状态入口移除 Idempotency-Key、请求摘要及服务本地 prepare/claim/complete/replay，Gateway 请求幂等职责沿用已确认决定；没有修改 Gateway、历史命令记录或 BFF 页面模型。既有架构测试只做删除类引用与注解锁数量的机械适配。
+- **配置和切换：** TenantAccessManagementProperties 的 ps.access-control.tenant-access.lock-wait-time/lock-lease-time 默认 500ms/30s，独立于旧注解配置。暂停/恢复统一使用 lock:access-tenant:{tenantId}；旧版本使用 access-tenant:{tenantId}，后续发布需要协调切换旧写入口，不能假定混合版本共享 Redis 互斥。来源投影沿用原 source/account 锁与本库并发保护，本轮不改其合同。
+- **实际验证：** JDK 25 临时聚合 reactor 执行 `-pl :platform-support-test,:paytech-operations-console-bff-test -am -DskipTests clean test-compile`，Foundation/Platform/Operations BFF 共 21 模块成功（/tmp/tenant-access-management-final-compile.log）。139 项源码静态检查通过，覆盖路由/字段、SQL/映射、授权范围、公共校验/事务、Context/原对象回写、审计及修改范围（/tmp/tenant-access-static-checks.json）；Platform/BFF diff --check 通过。
+- **限制：** 按用户要求未新增或运行单元测试，未执行 Spring 启动、HTTP/JSON 运行验证、数据库/Redis 并发及审计回归；旧测试中的服务侧幂等与锁键断言尚未迁移。编译和静态核对不代表上述行为已运行验证。未安装、发布、部署制品，未执行数据库操作、提交或推送。
+
+
+<a id="platform-tenant-projection-refactor-20260917"></a>
+
+### 2026-09-17 TenantProjectionApi 接入与用例重构
+
+- **入口与合同：** 开通、来源状态推进、恢复查询统一 Controller → Converter → Access Control 的 ProvisionTenantProcessor、ProjectTenantStatusProcessor、GetTenantProjectionProcessor；API 的 3 个 record 拆为 request/response class，补齐中文方法/字段及参数返回说明。三条路由、字段、类型、校验约束和成功 HTTP 200 保留；严格 JSON Reader 同步新包，来源序号缺失/空值仍拒绝。CCT 投影调用方只适配 import/getter；联编另修复此前认证 DTO 迁移遗留的 ClientDraftAccountClientImpl getter 调用，不改其授权规则。
+- **Context 与本地保存：** ProvisionTenantContext 持有 Tenant、OWNER Member、入驻 Role/Grant 四个实际对象；ProjectTenantStatusContext 持有原 Tenant/Member 与首次 ACTIVE 才创建的正式 Role/Grant。Service 只依赖四个按表 Repository；首次开通四表写入、首次 ACTIVE 的旧授权撤销/正式角色与授权创建/来源 CAS 各在同一事务。Repository 校验影响行数，Tenant CAS 成功后回写原对象来源状态、序号、摘要与本地版本。原 Mapper XML、SQL、参数、行锁和共享文件授权查询不变，未改 Schema。
+- **锁、事务与校验边界：** 首轮保留注解入口，用户指出未继承后已补齐：ProvisionTenantProcessor 与 ProjectTenantStatusProcessor 直接继承 AbstractLockProcessor，查询继承 AbstractProcessor；内部 Request 字段由公共 validateBasic 校验，Provision 第一版关系判断放 validate。两个写入口删除自定义 process 与注解锁，通过 lockCommand 一次提供来源 tenant:source:client 与账号 lock:customer:account 原完整键，通过 processWithinLock 开启本地事务。仍显式复用并启动校验原服务级 Wait/Lease。TenantProjectionTransactions 保持 RR 查询、READ_COMMITTED 写入、15 秒超时及数据库并发异常；来源判断、Context/Service、SQL/CAS、审计及事务内 Account → Tenant → Member/Role 顺序未变，没有外部业务调用。
+- **公共锁模板增量：** AbstractLockProcessor 增加 LockCommand.tryLocks，完整 Key 校验、排序去重，一次共享等待预算，普通 RLock 和有限显式租约，所有锁取得后才执行业务，失败及结束逆序释放已取得的锁。单资源 lock/tryLock 工厂的签名、毫秒参数、lock: 前缀、SpinLock 和 Watchdog 支持保留；共用中断/Redis 异常转换和持有者安全释放。模板不继承旧注解的代理执行链门禁及指标，其他消费者未迁移。工作区既有 Foundation 公共校验、异常改动以及并行测试支持包修改保留。
+- **业务来源恢复：** 保留来源唯一性、原申请人绑定、sourceVersion/payloadHash 比较、旧消息返回当前位置、同版异内容冲突、跳版本未就绪及终态不复活；开通重放先于首次 ACTIVE 账号资格。来源推进不恢复独立 Tenant 安全状态、Member 状态或撤销的角色授予。该业务恢复合同独立于 Gateway HTTP 请求幂等，没有增加服务侧请求幂等组件。PLT-I17 专项合同的账号锁键文字同步既有 Client 认证前缀。
+- **实际验证：** 首轮 23 模块编译及 88 项静态核对作为前序检查点保留。继承补齐后，JDK 25 聚合 reactor 重新执行 `-pl :platform-support-test,:client-contract-test -am -DskipTests clean test-compile`，Foundation/Platform/CCT 共 23 模块成功（/tmp/tenant-projection-inheritance-compile.log）；javap 确认两个写类直接继承 AbstractLockProcessor 且没有自行声明 process/processRequest。39 项源码核对通过，覆盖父类入口、两资源键、总等待预算、部分获取失败释放、异常、配置以及业务/SQL/API/CCT 未变化（/tmp/tenant-projection-inheritance-static.json）。本轮增量 diff --check 通过；任务开始时 API JavaDoc 的三处行末空格未改动。既有测试仅机械适配注解数量、类引用及配置构造参数，没有新增场景。
+- **限制：** 按用户要求未新增或运行单元测试；未做 Spring 启动、HTTP/JSON、MySQL/Redis 并发及审计运行回归。编译与源码核对不代表上述行为已运行验证。未安装、发布、部署制品，未执行数据库操作、提交或推送。
+
+<a id="channel-account-mid-query-requirement-20260921"></a>
+
+## Channel 账号与 MID 能力查询本地实现（2026-09-21）
+
+- **授权与合同：** 文档归档后用户明确要求研发并遵守开发/单测规范；确认消费者国家、账号 JSON 含渠道 API 凭据使用 Vault、原交易允许 SUSPENDED/CLOSED 而 DRAFT 拒绝。随后明确只授权初始化本机 mor-local 的专用测试库。入口为[需求](../requirements/20260921/payment-渠道账号与MID能力查询/requirement.md)、[实施合同](../requirements/20260921/payment-渠道账号与MID能力查询/implementation-contract.md)、[确认记录](../requirements/20260921/payment-渠道账号与MID能力查询/delivery.md)和[范围决定](./decisions/2026-09-21-channel-account-mid-capability-queries.md)。
+- **源码：** Channel 增加 QueryMidCandidatesProcessor / GetChannelExecutionConfigProcessor、内部 Request/View/Context、开放能力目录、五表 Repository/Mapper/类型映射及正式 VaultClient 读取。按完整维度逐代码选择唯一最高精确度，false 可覆盖，损坏配置不当成空候选；新支付重新检查状态、绑定、动作和精确金额，原交易/恢复保留冻结账号。数据库使用短 REPEATABLE_READ 只读快照，结束后才 Reveal。未新增 HTTP、运营写入口、交易记录、重试或查询缓存。
+- **正式装配：** Web 引入 Channel 并扫描正式 Mapper，application.yml、Nacos 模板及配置清单同步能力目录和 Vault Client。完整正式应用启动暴露原有 IdGenerator Bean 缺口，已按既有 Snowflake 配置补齐强类型绑定和正式 Bean；未使用测试专用生产替身。
+- **模型与 SQL：** 正式 PDManer、确定性生成器、独立 oracle 和完整 Schema 同步五表目标；整体仍 27 表，现为 345 字段、38 非主键唯一索引、44 访问索引、63 关系、7 Diagram Group。Channel 五表共 44 字段；移除 Health State 目标，但 Routing 历史健康快照列保留待独立迁移。未准备或执行未经盘点的非空业务库增量 SQL。
+- **数据库执行：** 经用户明确批准，人工执行 paytech-payment-test/src/test/resources/init/ddl.sql，仅创建 127.0.0.1:13306 的 mor_payment_channel_test、专用 SELECT/INSERT/UPDATE/DELETE 账号及五表。模型、正式 SQL 与实际库的字段、类型、可空、排序规则、注释及索引逐项一致（/tmp/channel-verify-db.py）；不含物理 FK/CHECK。未迁移、清理或删改 mor_payment 及其他业务库。测试只接管空基线并在公共 AfterEach 清理本例数据；最终查询五表总行数为 0，专用账号的 Schema 权限仅为该库 SELECT/INSERT/UPDATE/DELETE。
+- **实际验证：** JDK 25 `./mvnw -q -pl paytech-payment-test -am clean verify` 成功，56/56 测试通过（候选入口 14、执行配置入口 30、纯能力规则 9、架构 3），无跳过。正式 PaymentApplication 启动，使用真实本机 MySQL/Redis；Vault 为测试独立 HTTP Server 的合成 DTO，Payment 仍走正式 VaultClient，观察器验证实际发送线程无数据库事务。覆盖跨 OE、状态、换绑、重复精确度、非法值、金额闭合边界、Vault 拒绝/损坏响应、敏感 Payload 结构和异常不泄漏。日志 /tmp/channel-final-verify.log；JaCoCo Channel 行覆盖 245/249（98.39%），分支 178/217（82.03%），不代表整个 Payment 覆盖率。
+- **模型验证：** `generate-payment-model.mjs --check` 通过；payment-channel-query、payment-model、payment-execution-simplification 共 18/18 通过，日志 /tmp/channel-model-tests.log。架构测试限制 Channel 公开类型、五表所有权与 Maven 依赖无环，Channel Enforcer 同时检查真实传递依赖。
+- **前序文档检查：** 初次文档归档的 34 处链接、字段与目录语法检查已通过；当时需求站 site-content 72 项中 66 通过、6 项既有失败，前后失败集合一致（/tmp/channel-requirement-content-baseline.log、/tmp/channel-requirement-content-after.log）。本次最终重跑仍为 72 项、66 通过、6 项失败，失败名称集合完全一致，没有新增失败（/tmp/channel-final-site-content.log）。7 份本次交付文档的 87 处本地链接与锚点、JSON 语法及范围内空白检查通过。此次 Java/模型通过不消除那些独立的历史失败，也不据此宣称需求站全量通过。
+- **未接入与限制：** 现有 RouteService 占位实现没有被本需求替换；可信 scheme/MCC 来源、Routing 策略、真实协议动作、Operations 管理、共享业务库迁移与真实 Vault Allowlist/账号写入均需后续接入。本次只交付受信模块公开查询，未验证真实 Vault/KMS 或外部渠道凭据。Vault 策略 JSON 是待环境维护者合并的窄片段，未部署。未提交、推送或部署服务。
+
+
+<a id="risk-flow-management-refactor-20260921"></a>
+
+## Risk DecisionFlowManagementApi 规范重构（2026-09-21）
+
+- **入口与模型：** 保存、静态校验、整体删除分别由 `risk-decision` 的 `SaveFlowProcessor`、`ValidateFlowProcessor`、`DeleteFlowProcessor` 承担；Controller/Converter 仅适配。管理 Body/响应迁到独立普通 class，共享图结构和四个流程 DataObject 改为 class；HTTP Method/Path、JSON 字段、表达式多态标记、错误映射及 MyBatis 构造映射保持。共享查询 DTO 的引用同步适配，未把整个查询链列为本次重构完成范围。
+- **对象与持久化：** `SaveFlowContext`、`DeleteFlowContext` 持有实际 DataObject；根归属、头版本、编辑基准和删除资格归根对象，节点/连线验证版本归属。`DecisionFlowManagementService` 仅调用四个按表 Repository，组合根、不可变版本、节点和连线写入；不重复查询或调用其他 Service。根 CAS/状态 SQL 及影响行数检查成功后才同步 Context 中的原根，未新增写入 View 或 HTTP DataObject 暴露。
+- **事务与锁：** 两个写 Processor 继承 Foundation `AbstractLockProcessor`，沿用完整 `decision:flow:pointCode:flowCode` 命名空间、普通 RLock、既有有限等待/租约及 5 秒本地事务。准确引用继续按规则根、规则版本、拒绝原因、变量顺序保护；事务内仅执行本地数据库及纯计算。校验使用只读 REPEATABLE_READ，无写入或写锁。无外部业务步骤、提交后推进或 MQ/补偿，因此对应示例检查不适用。
+- **用户确认的幂等迁移：** Risk API 和 Operations BFF 移除保存/删除 Header 绑定与转发、请求摘要及 Claim/Complete/响应回放调用。重复创建按永久编码冲突、旧编辑基准按版本冲突、重复删除按已删除冲突处理；业务唯一索引、CAS 和历史事实保留。这两个操作没有独立业务命令身份，不新增等价本地回放机制。既有命令表、历史记录及其他入口未迁移；修订见[接口合同](../requirements/20260912/operations-console-决策流配置/api.md)和[数据边界](../requirements/20260912/operations-console-决策流配置/data.md)。本轮没有修改或验证 Gateway 请求重放实现/启用状态。
+- **实际验证：** JDK 25 执行 Risk 全 reactor `./mvnw -DskipTests clean test-compile` 成功（含既有测试源码编译）；临时消费者 reactor 使用当前 Risk API 执行 `-pl :paytech-operations-console-bff-web -am -DskipTests compile` 成功。静态检查通过：三个路由、四个管理 DTO 及九个共享结构的字段/访问器、JSON 多态标记、四个 DataObject 的 10/10/13/11 个构造字段与原 XML 对齐、Mapper XML 无改动、写 Processor 锁键/有限参数/超时，以及增量空白检查。
+- **限制与交付：** 按用户要求没有新增、修改或运行测试；BFF 本轮只编译生产源码，其旧测试消费者及请求回放断言需在恢复测试时适配。没有执行 Spring/HTTP/JSON、MySQL 事务回滚、Redis 并发运行验证；编译和源码核对不能代替这些证据。未执行 SQL、修改数据库结构、提交、推送或部署，未声称现有环境已切换。
+
+
+<a id="risk-flow-query-refactor-20260921"></a>
+
+## Risk DecisionFlowQueryApi 规范重构（2026-09-21）
+
+- **范围与入口：** 七个 GET 查询迁到 `risk-decision` 的六个具体 Processor：配置能力、列表、详情、历史、实际规则引用、旧顺序图；当前详情与指定版本详情共用 `FlowDetailProcessor`，可选准确版本 ID 表达查询目标。Controller 只做身份/标量适配并调用公共 `process`，内部 Request 使用普通 class 和基础校验；移除旧 Web `DecisionFlowQueryProcessor` 及编排多个 Service 的 `DecisionFlowService/Impl`。
+- **结果与业务判断：** 六个顶层响应迁入 `api.decision.response` 普通 class，五个共享查询结构改为 class；组合查询返回所属模块的具名 View，单表历史条目使用 `FlowHistoryItem`。当前入口的删除可见性、准确版本归属和历史上界由流程根校验；`LegacyPointFlowContext` 持有实际点、版本与绑定，验证完整连续顺序并投影旧图。配置能力中的变量用途筛选和运算符投影归 Owner View，Web Converter 仅转换字段。
+- **读取边界：** 保持全部查询只读 REPEATABLE_READ 快照，无 Redis 锁、写锁、写入或嵌套 Processor 调用。流程根、版本、节点、连线按表 Repository 读取；旧点版本与绑定补充各自只读 Repository，复用原 SQL。根列表仍沿用既有当前版本名称 JOIN 筛选，总数/当前页/引用与变量均在相应查询快照内。根/版本/引用记录不越过 Owner JAR；准确规则读取保留原 Hash/闭包验证、退休/删除历史资格和当前变量展示。
+- **合同与消费者：** 七个 Method/Path、Header/Path/Query 参数、响应字段、字符串 ID/时间、分页排序/固定上界、LIKE 字面匹配、旧绑定 201 条读取上限、原条件多态与错误转换保持。Operations BFF 更新 DTO 转换、精确响应形状注册和有界响应读取，Risk 的详情响应容量 Advice 同步类型。本轮没有修改查询业务合同、管理写入、Mapper XML 或 Schema。
+- **实际验证：** JDK 25 下 Risk 全 reactor `./mvnw -DskipTests test-compile` 成功，包含 55 个既有测试源码文件的编译；使用当前 Risk API 的临时消费者 reactor 执行 BFF Web 及其上游 `-DskipTests compile` 成功。静态核对通过：七个 GET 路由与参数签名、六个根 DTO 和五个嵌套结构字段/访问器、Mapper XML 字节一致、六个 Processor 的只读快照及无写入/锁/嵌套调用、增量空白检查。对应日志为 `/tmp/risk-flow-query-final-build.log`、`/tmp/risk-flow-query-bff-build.log`；静态脚本为 `/tmp/check-flow-query-refactor.py`。
+- **未覆盖项：** 按用户“单元测试先不做”要求，没有新增、修改或运行测试；BFF 本轮只编译生产源码，旧测试 DTO 引用留待恢复测试时适配。未执行 Spring 启动、HTTP/JSON 序列化、真实 MySQL 快照/分页及并发回归；编译与源码检查不代表运行验证。写入原子性、CAS 回写、请求重放和事务外推进对本次纯查询不适用；未执行 SQL、提交、推送或部署。
+
+
+<a id="platform-integration-http-execution-20260921"></a>
+
+## Platform Integration 配置与 HTTP 执行归属（2026-09-21）
+
+- **已确认方向：** 用户选择配置管理和执行均放在 Platform，Payment 通过内部 HTTP 请求 Platform 完成渠道调用，取代调用方嵌入公共执行 JAR 的建议。[决定](./decisions/2026-09-21-platform-integration-http-execution.md)与[执行修订](../requirements/20260914/payment-渠道API逻辑定义/platform-http-execution-amendment.md)已记录；项目上下文、应用架构、Platform 数据库入口与需求导航同步路由。
+- **边界：** Payment 继续拥有渠道账号/MID/能力、冻结路由、交易状态和业务恢复；Platform 只负责受控配置与单次协议执行，无执行流水、业务幂等及自动重试。两个 HTTP 边界的超时均可能结果不确定。凭据与卡材料交接、获准调用范围、正式 Wire、五表详细物理设计继续评审，未自动授予 Platform 新 Vault 权限。
+- **交付范围：** 本轮只更新设计和文档路由，未改 Payment/Platform Java、PDManer、SQL、Pencil、环境或策略；既有 Payment 查询实现保留。未执行数据库操作、服务部署、提交或推送。
+- **文档验证：** 决定、执行修订、通用合同、需求和确认记录共 5 份文档的 104 处本地链接/锚点与空白检查通过；受影响路由文档的 diff --check 通过。未运行 Java/数据库测试，文档校验不代表内部 HTTP 执行已实现。
+
+<a id="risk-release-management-refactor-20260921"></a>
+
+## Risk DecisionReleaseManagementApi 规范重构（2026-09-21）
+
+- **范围与入口：** 列表、详情、创建 Candidate、静态校验四个接口分别由 `risk-decision` 的 `ListTestReleasesProcessor`、`GetTestReleaseProcessor`、`CreateTestReleaseProcessor`、`ValidateTestReleaseProcessor` 编排；移除旧 Web `DecisionReleaseManagementProcessor`。Controller/Converter 仅适配，内部 Request 由公共 Processor 执行基础校验。两个请求、四个顶层响应及五个共享响应结构使用普通 class；四个 Method/Path、Body/响应字段、字符串 ID/时间和错误码保持。
+- **对象与保存：** `DecisionRelease`、`ReleaseAuditEvent` 改为 class，保留原构造字段顺序及非空约束；根完整性、初次校验资格归根对象，原操作者/原版本恢复判断归 `ValidateTestReleaseContext`。创建/校验 Context 持有实际根与审计记录，响应直接从同一批事实派生。`DecisionReleaseService/Impl` 仅通过单表根/审计 Repository 保存，不重复查询或调用其他 Service；CAS 和影响行数成功后更新原根。
+- **查询与内容：** 多表读取由 Owner `DecisionReleaseReader` 组合根、审计、点、点版本、绑定与规则版本 Repository，输出内部具名 View；既有规则闭包读取仍复用 Owner 能力。`DecisionReleaseAssembler` 只核验已加载事实和组装规范投影，不查询数据库。列表和详情使用只读 REPEATABLE_READ；旧字段 ID、Point/Rule Set/Release 内容 Hash、退休 Action 历史读取和固定八项静态检查保持。
+- **事务与锁：** 创建沿用 `decision:rule-set:<原资源坐标>` 普通 RLock、既有有限等待/租约和 5 秒本地事务，根/初始审计同事务写入；全局发布编号仍在唯一 CHECKOUT_PREPARE 点锁内分配并受唯一索引保护。Validate 使用 `decision:release:<releaseId>` 实际资源锁，事务 A 记录开始事实、只读快照装载、事务外纯检查、事务 B 原子保存八项检查及必要拒绝事件；两个写阶段均为 5 秒短事务，数据库发布行锁和状态/版本 CAS 保留。没有外部业务调用、提交后外部推进或 MQ，因此对应检查不适用。
+- **用户确认的恢复修订：** Risk/BFF 移除创建/校验 Key Header、BFF Expected Key 比较、请求 Hash、Claim/Complete 和响应引用处理；创建每次有效调用生成新 Candidate。Validate 按准确发布身份、原 `expectedVersion=1` 和原操作者恢复，已完成时复用原八项结果；事务 B 再锁根，防止并发重复追加。新审计触发标识来自发布身份与业务阶段，旧开始审计触发值直接沿用。完整现行合同见[后端修订](../docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md#release-recovery-20260921)。旧命令表、历史记录及其他命令入口没有迁移，本轮没有改动或验证 Gateway 请求重放实现/启用状态。
+- **实际验证：** JDK 25 执行 Risk 全 reactor `./mvnw -DskipTests clean compile` 成功；临时消费者 reactor 使用当前 Risk API 执行 `-pl :paytech-operations-console-bff-web -am -DskipTests compile` 成功。静态检查确认 11 个 DTO 的字段/访问器与显式 Null 输出、四个路由、16 项 Mapper 定义在根/审计拆分前后的规范化 XML/SQL 一致、14/22 个 DataObject 构造字段与 XML 对齐、六个原 Hash 投影与核验方法实现保持、事务外检查位置、CAS 后对象回写和 BFF Key 移除。日志 `/tmp/risk-release-final-build.log`、`/tmp/risk-release-bff-build.log`；静态脚本 `/tmp/check-release-refactor.py`，增量空白检查通过。
+- **限制与交付：** 按用户要求没有新增、修改或运行单元测试，也未编译测试源码；既有测试中的旧 Service/DTO/Key 合同需在恢复测试时适配。未验证 Spring 启动、HTTP/JSON 实际序列化、真实 MySQL 事务回滚或 Redis 并发恢复；编译和源码核对不替代这些运行证据。未执行 SQL、修改数据库、提交、推送或部署，未声明环境已切换。
+
+
+<a id="risk-rule-set-management-refactor-20260921"></a>
+
+## Risk DecisionRuleSetManagementApi 规范重构（2026-09-21）
+
+- **范围与入口：** 六个接口（配置能力、列表、详情、保存新版本、冻结、整体删除）分别迁入 `risk-decision` 的六个 Owner Processor，查询继承 `AbstractProcessor`，写入继承 `AbstractLockProcessor`。Controller 只解析可信身份/标量、转换 DTO 和投影既有错误；移除旧 Web `DecisionRuleSetManagementProcessor`。六个 API 方法完整补充中文 JavaDoc、入参、返回值及重要业务边界。九个根 Request/Response 独立到对应包，十二个共享 HTTP 结构改普通 class，JSON 字段保持。
+- **Context 与本地写入：** `CreateRuleSetVersionContext`、`FreezeRuleSetVersionContext`、`DeleteRuleSetContext` 持有真实管理根、准确版本及所需各表 DataObject，无重复身份或执行标志。Processor 在规则集资源锁内开启 5 秒本地事务，完成点→根→版本及可选旧编排锁定、当前变量/字典核验、引用和业务基准核验后一次准备 Context。`RuleSetManagementService/Impl` 只组合单表 Repository：新版本六表、管理根指针和原草稿退役原子保存；冻结准确规则版本、可选旧协议及管理根；删除只更新整体根。Service 不重新查询关系、不调用其他 Service/Processor/外部服务，提交后从原 Context 组装结果。无下游业务步骤或业务响应回放分支，因此示例中这两项不适用。
+- **对象及读取：** 七个参与规则写入的 DataObject 改普通 class，保留原构造字段顺序、非空边界和值相等语义；Repository 在 SQL/CAS 受影响行数确认后修改传入原对象。管理版本比较归 `RuleSet`，当前业务头及冻结证据归 `RuleSetVersion`。纯 `DecisionRuleSetAssembler` 负责投影、物化和历史 Hash 核验，`RuleSetConfigurationReader` 负责共用目录/旧编排/活动引用读取。真实 Flow/Release 消费的 `DecisionRuleSetService` 缩为读取能力，保留旧聚合读取合同。三个查询使用只读 REPEATABLE_READ；SQL、排序、200 条分页上限、历史内容格式、旧字段 ID 与内容 Hash 投影不变。
+- **幂等与消费者：** 沿用已确认迁移方向，Risk/BFF 三个写入口移除 Key Header、请求摘要、Claim/Complete 及本地响应重放；保留永久编码、准确基准版本/Hash、管理 CAS、唯一索引和删除终态。删除事件摘要改由永久根身份派生，既有记录不重写；没有清理命令表、执行 SQL 或声称 Gateway 已启用。具体合同由[Rule Set 窄范围修订](../docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md#rule-set-idempotency-20260921)统一维护。BFF 同步普通 class 访问器、精确响应形状注册和有界 Reader；Risk 严格请求 Reader 继续区分必填键缺失与显式 null，保留重复键、字面量类型和容量限制。
+- **实际验证：** JDK 25 下 Risk 全 reactor 执行 `./mvnw -DskipTests clean compile` 成功；临时消费者 reactor 使用当前 Risk API 执行 BFF Web 及上游 `-DskipTests compile` 成功。静态对照通过：六个路由及方法注释、21 个 HTTP class 字段/访问器、七个 DataObject 构造字段和相等语义、Mapper XML/Java 绑定未变、原 Hash/物化函数体、锁命名空间及参数、同对象回写、BFF JSON 形状和增量空白检查。日志为 `/tmp/risk-ruleset-final-build.log`、`/tmp/risk-ruleset-bff-final-build.log`；静态对照脚本为 `/tmp/check-ruleset-refactor.py`。
+- **限制：** 按用户“单元测试先不做”，本轮没有新增、修改、编译或运行测试源码；旧测试中的 DTO、构造器、Web Processor、幂等回放断言仍待恢复测试时适配。没有执行 Spring/HTTP/JSON、MySQL 事务回滚、Redis 并发运行验证，编译和静态源码对照不代替这些证据。没有数据库迁移、提交、推送或部署。

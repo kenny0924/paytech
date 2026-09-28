@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.contract.core.dal.mapper.EntitySourceRelationMapper">
+    <resultMap id="EntitySourceRelation" type="com.paytech.client.contract.core.dal.dataobject.CheckoutRecords$EntitySourceRelation">
+        <constructor>
+            <arg column="source_relation_id" javaType="java.lang.Long"/>
+            <arg column="entity_no" javaType="java.lang.String"/>
+            <arg column="source_type" javaType="com.paytech.client.contract.domain.enums.EntitySourceRelationSourceType"/>
+            <arg column="source_client_id" javaType="java.lang.Long"/>
+            <arg column="source_partner_id" javaType="java.lang.Long"/>
+            <arg column="client_source_basis" javaType="com.paytech.client.contract.domain.enums.EntitySourceRelationClientSourceBasis"/>
+            <arg column="status" javaType="com.paytech.client.contract.domain.enums.EntitySourceRelationStatus"/>
+            <arg column="active_source_slot" javaType="java.lang.Integer"/>
+            <arg column="effective_from" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="effective_to" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="EntitySourceRelation">
+        SELECT source_relation_id, entity_no, source_type, source_client_id, source_partner_id, client_source_basis, status, active_source_slot, effective_from, effective_to
+        FROM t_entity_source_relation
+        WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})
+        ORDER BY source_relation_id
+    </select>
+</mapper>

@@ -1,0 +1,239 @@
+{
+  "scope": "DESIGN_ONLY",
+  "roots": [
+    {
+      "id": "pCYXo",
+      "name": "CAPI · 适配｜窄屏只读",
+      "bounds": {
+        "x": 3080,
+        "y": 29460,
+        "width": 390,
+        "height": 1120
+      }
+    },
+    {
+      "id": "cPrj3",
+      "name": "CAPI 导览 · D 补充适配视图",
+      "bounds": {
+        "x": 3080,
+        "y": 29260,
+        "width": 1440,
+        "height": 160
+      }
+    },
+    {
+      "id": "qunOX",
+      "name": "CAPI · 公共方案 B｜编辑规则与引用",
+      "bounds": {
+        "x": 1540,
+        "y": 29460,
+        "width": 1440,
+        "height": 1160
+      }
+    },
+    {
+      "id": "ZpOjN",
+      "name": "CAPI · 公共方案 A｜选择可复用规则",
+      "bounds": {
+        "x": 0,
+        "y": 29460,
+        "width": 1440,
+        "height": 1100
+      }
+    },
+    {
+      "id": "wwILp",
+      "name": "CAPI 导览 · C 公共方案维护",
+      "bounds": {
+        "x": 0,
+        "y": 29260,
+        "width": 2980,
+        "height": 160
+      }
+    },
+    {
+      "id": "go7ba",
+      "name": "CAPI · 保存异常 B｜结果待确认",
+      "bounds": {
+        "x": 1540,
+        "y": 27940,
+        "width": 1440,
+        "height": 1100
+      }
+    },
+    {
+      "id": "L5T9z",
+      "name": "CAPI · 保存异常 A｜配置冲突",
+      "bounds": {
+        "x": 0,
+        "y": 27940,
+        "width": 1440,
+        "height": 1100
+      }
+    },
+    {
+      "id": "fUKDU",
+      "name": "CAPI 导览 · 保存异常分支",
+      "bounds": {
+        "x": 0,
+        "y": 27740,
+        "width": 2980,
+        "height": 160
+      }
+    },
+    {
+      "id": "Z2kAR",
+      "name": "CAPI · 03c 字段取值｜系统函数与结果表达式",
+      "bounds": {
+        "x": 3080,
+        "y": 26420,
+        "width": 1440,
+        "height": 1160
+      }
+    },
+    {
+      "id": "A8UU8",
+      "name": "CAPI · 03b 字段取值｜Aviator 表达式",
+      "bounds": {
+        "x": 1540,
+        "y": 26420,
+        "width": 1440,
+        "height": 1160
+      }
+    },
+    {
+      "id": "cFivt",
+      "name": "CAPI · 03a 字段取值｜上下文路径",
+      "bounds": {
+        "x": 0,
+        "y": 26420,
+        "width": 1440,
+        "height": 1160
+      }
+    },
+    {
+      "id": "MR5yt",
+      "name": "CAPI 导览 · B 添加字段与取值设置",
+      "bounds": {
+        "x": 0,
+        "y": 26220,
+        "width": 4520,
+        "height": 160
+      }
+    },
+    {
+      "id": "OdrlY",
+      "name": "CAPI · 06 配置校验｜诊断与定义",
+      "bounds": {
+        "x": 3080,
+        "y": 24960,
+        "width": 1440,
+        "height": 1160
+      }
+    },
+    {
+      "id": "X8mK8",
+      "name": "CAPI · 05 响应映射｜结果规则与输出",
+      "bounds": {
+        "x": 1540,
+        "y": 24960,
+        "width": 1440,
+        "height": 1160
+      }
+    },
+    {
+      "id": "Zo7XM",
+      "name": "CAPI · 04 协议处理｜认证与编解码",
+      "bounds": {
+        "x": 0,
+        "y": 24960,
+        "width": 1440,
+        "height": 1160
+      }
+    },
+    {
+      "id": "MQlLc",
+      "name": "CAPI · 03 请求映射｜字段绑定",
+      "bounds": {
+        "x": 3080,
+        "y": 23660,
+        "width": 1440,
+        "height": 1160
+      }
+    },
+    {
+      "id": "EdZ9f",
+      "name": "CAPI · 02 接口定义｜HTTP 配置",
+      "bounds": {
+        "x": 1540,
+        "y": 23660,
+        "width": 1440,
+        "height": 1160
+      }
+    },
+    {
+      "id": "uiiQ2",
+      "name": "CAPI · 01 入口｜渠道 API 列表",
+      "bounds": {
+        "x": 0,
+        "y": 23660,
+        "width": 1440,
+        "height": 1100
+      }
+    },
+    {
+      "id": "C7kS0",
+      "name": "CAPI 导览 · A API 配置索引",
+      "bounds": {
+        "x": 0,
+        "y": 23460,
+        "width": 4520,
+        "height": 160
+      }
+    }
+  ],
+  "problems": [],
+  "tutorial": [],
+  "overlaps": [],
+  "placeholders": [],
+  "otherChanged": [],
+  "otherRootCount": 75,
+  "status": "PASSED",
+  "date": "2026-09-14",
+  "screenCount": 14,
+  "guideCount": 5,
+  "nativeSaveConfirmed": true,
+  "selectedNode": "X8mK8",
+  "runtimeExecuted": false,
+  "visualReview": [
+    "X8mK8",
+    "zrpvI",
+    "MQlLc",
+    "A8UU8",
+    "EdZ9f"
+  ],
+  "staticChecks": {
+    "scope": "DESIGN_ONLY_NOT_EXECUTED",
+    "failures": [],
+    "markdownFiles": 11,
+    "localLinks": 155,
+    "localAnchors": 20,
+    "acceptanceItems": 16,
+    "managementOperations": 13,
+    "sqlInsertCounts": {
+      "t_permission": 2,
+      "t_console_resource": 2,
+      "t_gateway_route": 13,
+      "t_gateway_route_header": 40,
+      "t_gateway_route_query_param": 10,
+      "t_gateway_guard_rule": 78
+    },
+    "totalInsertRows": 145,
+    "newTables": 2,
+    "newColumns": 17,
+    "newIndexes": 4,
+    "parsedExampleYamlBlocks": 2,
+    "status": "PASSED"
+  },
+  "staticCheckRepair": "历史分析中的 PaymentActionProcessor 源码路径已不存在；保留核查事实，移除失效链接并路由到当前台账。"
+}

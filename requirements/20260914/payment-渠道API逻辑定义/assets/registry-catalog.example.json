@@ -1,0 +1,349 @@
+{
+  "contextTypes": [
+    {
+      "contextType": "PAYMENT",
+      "contextName": "paymentContext",
+      "displayName": "支付上下文",
+      "description": "本次资金 Action 的普通金额与币种投影",
+      "owner": "EXECUTION",
+      "capabilityCode": "CONTEXT_PAYMENT",
+      "fields": {
+        "amount": {
+          "type": "DECIMAL",
+          "required": true,
+          "nullable": false,
+          "displayName": "本次金额",
+          "dataClass": "INTERNAL",
+          "precision": 24,
+          "scale": 8,
+          "minValue": "0.00000001",
+          "maxValue": "9999999999999999.99999999",
+          "unit": "MAJOR_CURRENCY_UNIT"
+        },
+        "currency": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "币种",
+          "dataClass": "INTERNAL",
+          "minLength": 3,
+          "maxLength": 3
+        }
+      },
+      "implementationAvailable": false
+    },
+    {
+      "contextType": "REFUND",
+      "contextName": "refundContext",
+      "displayName": "退款上下文",
+      "description": "本次退款 Action 的原交易引用、金额与币种投影",
+      "owner": "EXECUTION",
+      "capabilityCode": "CONTEXT_REFUND",
+      "fields": {
+        "originalTransactionRefId": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "原渠道交易引用 ID",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 19
+        },
+        "refundAmount": {
+          "type": "DECIMAL",
+          "required": true,
+          "nullable": false,
+          "displayName": "本次退款金额",
+          "dataClass": "INTERNAL",
+          "precision": 24,
+          "scale": 8,
+          "minValue": "0.00000001",
+          "maxValue": "9999999999999999.99999999",
+          "unit": "MAJOR_CURRENCY_UNIT"
+        },
+        "currency": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "币种",
+          "dataClass": "INTERNAL",
+          "minLength": 3,
+          "maxLength": 3
+        }
+      },
+      "implementationAvailable": false
+    }
+  ],
+  "functions": [
+    {
+      "functionCode": "READ_ORIGINAL_CHANNEL_TRANSACTION",
+      "displayName": "读取原渠道交易事实",
+      "description": "只读取得当前退款 Action 绑定的原资金交易；不解析不透明外部交易号",
+      "owner": "EXECUTION",
+      "allowedContextTypes": [
+        "REFUND"
+      ],
+      "allowedChannelCodes": null,
+      "inputDefinition": {
+        "originalTransactionRefId": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "原渠道交易引用 ID",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 19
+        }
+      },
+      "outputDefinition": {
+        "channelTransactionRefId": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "原渠道交易引用 ID",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 19
+        },
+        "paymentActionId": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "原交易 Action ID",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 19
+        },
+        "referenceType": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "原引用类型",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "externalTransactionId": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "原渠道交易号",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "amount": {
+          "type": "DECIMAL",
+          "required": true,
+          "nullable": false,
+          "displayName": "原交易金额",
+          "dataClass": "INTERNAL",
+          "precision": 24,
+          "scale": 8,
+          "minValue": "0.00000001",
+          "maxValue": "9999999999999999.99999999",
+          "unit": "MAJOR_CURRENCY_UNIT"
+        },
+        "currency": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "币种",
+          "dataClass": "INTERNAL",
+          "minLength": 3,
+          "maxLength": 3
+        }
+      },
+      "identityChecks": [
+        "CURRENT_ACTION_OWNED_BY_CLIENT",
+        "TARGET_REFERENCE_MATCHES_ARGUMENT",
+        "FROZEN_ROUTE_MATCHES",
+        "REFUND_ORIGINAL_FUNDS_MATCHES"
+      ],
+      "freshness": "IMMUTABLE_FACT",
+      "timeoutMs": 2000,
+      "maxResultBytes": 65536,
+      "implementationAvailable": false,
+      "missingPolicy": "FAIL",
+      "failureContract": {
+        "stage": "FUNCTION",
+        "codes": [
+          "FUNCTION_UNAVAILABLE",
+          "FUNCTION_ARGUMENT_INVALID",
+          "FUNCTION_NOT_FOUND",
+          "FUNCTION_AMBIGUOUS",
+          "FUNCTION_RESULT_INVALID",
+          "FUNCTION_IDENTITY_MISMATCH",
+          "FUNCTION_TIMEOUT",
+          "FUNCTION_OWNER_UNAVAILABLE"
+        ]
+      }
+    },
+    {
+      "functionCode": "READ_REFUND_TARGET",
+      "displayName": "读取 NI 原 Capture 退款目标",
+      "description": "只读取得原 Capture 的四段 NI 协议坐标；当前缺真实导航事实提供方",
+      "owner": "CHANNEL",
+      "allowedContextTypes": [
+        "REFUND"
+      ],
+      "allowedChannelCodes": [
+        "NI"
+      ],
+      "inputDefinition": {
+        "originalTransactionRefId": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "原渠道交易引用 ID",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 19
+        }
+      },
+      "outputDefinition": {
+        "originalTransactionRefId": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "原渠道交易引用 ID",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 19
+        },
+        "referenceType": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "原引用类型",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "outletId": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "NI Outlet ID",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "orderRef": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "NI Order Reference",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "paymentRef": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "NI Payment Reference",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "captureId": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "NI Capture ID",
+          "dataClass": "INTERNAL",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "currency": {
+          "type": "STRING",
+          "required": true,
+          "nullable": false,
+          "displayName": "币种",
+          "dataClass": "INTERNAL",
+          "minLength": 3,
+          "maxLength": 3
+        }
+      },
+      "identityChecks": [
+        "CURRENT_ACTION_OWNED_BY_CLIENT",
+        "TARGET_REFERENCE_MATCHES_ARGUMENT",
+        "FROZEN_ROUTE_MATCHES",
+        "REFUND_ORIGINAL_FUNDS_MATCHES",
+        "NI_CAPTURE_COORDINATES_MATCHES"
+      ],
+      "freshness": "IMMUTABLE_FACT",
+      "timeoutMs": 2000,
+      "maxResultBytes": 65536,
+      "implementationAvailable": false,
+      "missingPolicy": "FAIL",
+      "failureContract": {
+        "stage": "FUNCTION",
+        "codes": [
+          "FUNCTION_UNAVAILABLE",
+          "FUNCTION_ARGUMENT_INVALID",
+          "FUNCTION_NOT_FOUND",
+          "FUNCTION_AMBIGUOUS",
+          "FUNCTION_RESULT_INVALID",
+          "FUNCTION_IDENTITY_MISMATCH",
+          "FUNCTION_TIMEOUT",
+          "FUNCTION_OWNER_UNAVAILABLE"
+        ]
+      }
+    }
+  ],
+  "expressionProfile": {
+    "engine": "AVIATOR",
+    "capabilityCode": "AVIATOR_EXPRESSION",
+    "implementationAvailable": false,
+    "pureFunctions": [
+      {
+        "name": "money.minorUnits",
+        "displayName": "金额转币种最小单位",
+        "description": "依据本次冻结的币种精度目录进行精确换算，不舍入、不访问业务服务",
+        "capabilityCode": "MONEY_MINOR_UNITS",
+        "argumentOrder": [
+          "amount",
+          "currency"
+        ],
+        "inputDefinition": {
+          "amount": {
+            "type": "DECIMAL",
+            "required": true,
+            "nullable": false,
+            "displayName": "金额",
+            "dataClass": "INTERNAL",
+            "precision": 24,
+            "scale": 8,
+            "minValue": "0",
+            "maxValue": "9999999999999999.99999999",
+            "unit": "MAJOR_CURRENCY_UNIT"
+          },
+          "currency": {
+            "type": "STRING",
+            "required": true,
+            "nullable": false,
+            "displayName": "币种",
+            "dataClass": "INTERNAL",
+            "minLength": 3,
+            "maxLength": 3
+          }
+        },
+        "outputDefinition": {
+          "value": {
+            "type": "INTEGER",
+            "required": true,
+            "nullable": false,
+            "displayName": "最小单位金额",
+            "dataClass": "INTERNAL",
+            "minValue": "0",
+            "maxValue": "999999999999999999999999",
+            "unit": "MINOR_CURRENCY_UNIT"
+          }
+        },
+        "implementationAvailable": false
+      }
+    ]
+  }
+}

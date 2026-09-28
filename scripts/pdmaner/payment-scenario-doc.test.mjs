@@ -9,7 +9,7 @@ const modelPath = path.join(workspaceRoot, "payment-orchestration-service/docs/d
 const expectedTableNames = Object.freeze([
   "t_payment_channel", "t_channel_account", "t_channel_mid", "t_mid_capability", "t_mid_health_state",
   "t_routing_policy", "t_routing_policy_version", "t_routing_policy_mid", "t_routing_decision", "t_route_candidate_eval",
-  "t_payment_intent", "t_payment_attempt", "t_payment_pricing_fact", "t_payment_instrument_token", "t_payment_action", "t_payment_intent_binding", "t_channel_transaction_ref", "t_channel_interaction", "t_duplicate_payment_case", "t_payment_state_transition",
+  "t_payment_intent", "t_payment_attempt", "t_payment_instrument_token", "t_payment_action", "t_channel_transaction_ref", "t_channel_interaction", "t_duplicate_payment_case",
   "t_payment_refund_position", "t_channel_refund", "t_channel_callback", "t_channel_callback_item", "t_channel_event_exception", "t_channel_dispute_notice", "t_channel_dispute_event", "t_channel_dispute_action", "t_command_idempotency", "t_compensation_event",
 ]);
 const retiredNames = Object.freeze(["channel_connection", "channel_connection_version", "mid_limit", "mid_credential_ref", "mid_health", "routing_policy_binding", "routing_rule_condition", "payment_execution_gate", "payment_execution_gate_result", "three_ds_context", "payment_recovery_task", "channel_refund_attempt", "refund_transaction_ref", "active_slot"]);
@@ -19,8 +19,8 @@ function readScenario() {
   return readFileSync(scenarioPath, "utf8");
 }
 function scenarioTableRows(source) {
-  const start = source.indexOf("## 7. 30 表覆盖核对");
-  assert.ok(start >= 0, "Payment 场景缺少 30 表覆盖章节");
+  const start = source.indexOf("## 7. 27 表覆盖核对");
+  assert.ok(start >= 0, "Payment 场景缺少 27 表覆盖章节");
   return source.slice(start).split(/\r?\n/u)
     .filter((line) => /^\|.*\|$/u.test(line))
     .flatMap((line) => [...line.matchAll(/t_[a-z0-9_]+/gu)].map((match) => match[0]));
@@ -46,14 +46,14 @@ function requireModel() {
 
 const scenarioModelReadyAtRegistration = existsSync(modelPath);
 
-test("Payment real-world scenario covers the approved 30 tables exactly once in its coverage catalog", () => {
+test("Payment real-world scenario covers the approved 27 tables exactly once in its coverage catalog", () => {
   const source = readScenario();
   assert.match(source, /NI.*Channel/u);
   assert.match(source, /3DS.*UNKNOWN.*退款.*重复成功.*Callback.*争议/u);
-  const coverageStart = source.indexOf("## 7. 30 表覆盖核对");
+  const coverageStart = source.indexOf("## 7. 27 表覆盖核对");
   const coverage = scenarioTableRows(source);
   assert.deepEqual(coverage, expectedTableNames);
-  assert.equal(new Set(coverage).size, 30);
+  assert.equal(new Set(coverage).size, 27);
   for (const tableName of expectedTableNames) {
     assert.ok(source.slice(0, coverageStart).includes(`| ${tableName} |`), `场景未列出 ${tableName} 的实际行`);
   }
@@ -62,7 +62,7 @@ test("Payment real-world scenario covers the approved 30 tables exactly once in 
 test("Payment scenario preserves pre-submit checks, asynchronous recovery and retired-model boundaries", () => {
   const source = readScenario();
   for (const expected of [
-    "首次 Channel 提交前", "Fail-Closed", "Client/Operating Entity", "Compliance", "channel_account_id=81101", "account_code=NI-API-AE", "integration_config_key=payment.ni.ae.primary", "selected_channel_account_id=81101", "capability_code=ACTION.SALE", "boolean_value=1", "circuit_status=CLOSED", "health_observed_at=", "consumer_terms_acceptance_id=71011", "refund_policy_acceptance_id=71012", "privacy_notice_acceptance_id=71013", "UNKNOWN", "LOCAL_HANDLER", "LATE_DUPLICATE_SALE", "SUBMIT_EVIDENCE",
+    "首次 Channel 提交前", "Fail-Closed", "Client/Operating Entity", "Compliance", "channel_account_id=81101", "account_code=NI-API-AE", "integration_config_key=payment.ni.ae.primary", "selected_channel_account_id=81101", "capability_code=ACTION.SALE", "boolean_value=1", "circuit_status=CLOSED", "health_observed_at=", "authentication_requirement=CHALLENGE_REQUIRED", "Commerce 校验并保存", "UNKNOWN", "LOCAL_HANDLER",  "SUBMIT_EVIDENCE",
   ]) assert.ok(source.includes(expected), `场景缺少关键 Payment 边界：${expected}`);
   for (const retiredName of retiredNames) assert.match(source, new RegExp(`不采用[^\\n]*${retiredName}|${retiredName}.*不采用`, "u"));
 });
@@ -74,9 +74,9 @@ test("Payment scenario freezes payment method, transaction instrument Token and 
   assert.match(source, /t_payment_attempt.*payment_instrument_token_id=101101/su);
   assert.match(source, /t_payment_instrument_token.*payment_instrument_token_id=101101.*source_submission_id=112001.*instrument_type=CARD.*instrument_ref=.*expires_at=/su);
   assert.match(source, /一个 Token 最多关联一个 Attempt/u);
-  assert.match(source, /UNKNOWN 只查询原动作/u);
+  assert.match(source, /UNKNOWN 重入原标准操作/u);
   assert.doesNotMatch(source, /\|\s*t_payment_instrument\s*\||card_reference=/u);
-  assert.match(source, /t_payment_action.*action_type=AUTHENTICATE.*action_status=REQUIRES_ACTION.*interaction_type=THREE_DS_CHALLENGE/su);
+  assert.match(source, /t_payment_action.*action_type=AUTHENTICATE.*action_status=PROCESSING.*interaction_type=THREE_DS_CHALLENGE/su);
   assert.match(source, /REDIRECT.*THREE_DS_CHALLENGE.*SDK.*APP_SWITCH.*QR_CODE/su);
   assert.match(source, /不保存.*Redirect URL.*Client Secret.*SDK Token.*QR Payload/su);
   assert.doesNotMatch(source, /\|\s*t_three_ds_context\s*\|/u);
@@ -97,28 +97,18 @@ test("Payment scenario preserves the exact refund reference chain and strict dup
   assert.match(source, /t_channel_transaction_ref.*reference_type=REFUND.*original_channel_txn_ref_id=/su);
   assert.match(source, /原.*Transaction Ref.*payment_action_id.*Channel Account.*MID/su);
   assert.match(source, /同一 Intent.*第二.*不同.*(?:SALE|CAPTURE).*成功事实/su);
-  assert.match(source, /重复 Callback.*同一外部交易.*QUERY.*AUTHORIZE.*CAPTURE.*不(?:属于|判定为).*重复支付/su);
-  assert.match(source, /successful_attempt_id.*不(?:替换|改写).*CONFLICTED.*补偿退款/su);
+  assert.match(source, /重复 Callback.*同一外部交易.*原操作恢复.*AUTHORIZE.*CAPTURE.*不(?:属于|判定为).*重复支付/su);
+  assert.match(source, /successful_attempt_id.*不(?:替换|改写).*SUCCEEDED.*Duplicate Case.*补偿退款/su);
   assert.match(source, /未 Capture.*Authorization.*VOID.*不.*重复支付退款/su);
 });
 
-test("Payment scenario limits generic state transitions to the five money-flow aggregates", () => {
+test("Payment scenario retains business evidence without generic state history or pricing rows", () => {
   const source = readScenario();
-
-  assert.match(source, /PAYMENT_INTENT.*PAYMENT_ATTEMPT.*PAYMENT_ACTION.*CHANNEL_REFUND.*DUPLICATE_PAYMENT_CASE/su);
-  assert.match(source, /Channel Callback.*Callback\/Item\/Exception.*Channel Dispute Notice.*Event.*不.*t_payment_state_transition/su);
-  const typedRows = actualTableDataRows(source)
-    .filter(({ tableName }) => tableName === "t_payment_state_transition")
-    .map((row) => assignedFields(row.values))
-    .filter((fields) => fields.some(({ fieldName }) => fieldName === "aggregate_type"));
-  assert.ok(typedRows.length > 0, "场景至少需要一条显式状态流转类型行");
-  for (const fields of typedRows) {
-    const aggregateType = fields.find(({ fieldName }) => fieldName === "aggregate_type")?.value;
-    const rootType = fields.find(({ fieldName }) => fieldName === "root_type")?.value;
-    const allowed = new Set(["PAYMENT_INTENT", "PAYMENT_ATTEMPT", "PAYMENT_ACTION", "CHANNEL_REFUND", "DUPLICATE_PAYMENT_CASE"]);
-    assert.ok(allowed.has(aggregateType), `场景状态轨迹 aggregate_type 越界：${aggregateType}`);
-    assert.ok(allowed.has(rootType), `场景状态轨迹 root_type 越界：${rootType}`);
-  }
+  const rows = actualTableDataRows(source);
+  assert.ok(!rows.some(({ tableName }) => ["t_payment_state_transition", "t_payment_pricing_fact"].includes(tableName)));
+  assert.match(source, /Channel Callback.*Callback\/Item\/Exception.*Channel Dispute Notice.*Event/su);
+  assert.match(source, /不再使用 t_payment_state_transition/u);
+  assert.match(source, /资金证据保留 Channel Transaction Ref/u);
 });
 
 test("Payment scenario model artifact is ready for field-value validation", () => { requireModel(); });
@@ -126,7 +116,11 @@ test("Payment scenario model artifact is ready for field-value validation", () =
 if (scenarioModelReadyAtRegistration) {
 test("Payment scenario real table field=value rows match model fields and closed enums", () => {
   const entities = new Map(requireModel().entities.map((entity) => [entity.defKey, entity]));
-  const rows = actualTableDataRows(readScenario());
+  const source = readScenario();
+  for (const line of source.split(/\r?\n/u).filter((line) => /^\|\s*t_[a-z0-9_]+/u.test(line))) {
+    assert.match(line, /^\|\s*t_[a-z0-9_]+\s*\|/u, "Invalid table-data label");
+  }
+  const rows = actualTableDataRows(source);
   assert.ok(rows.length >= 29, "场景缺少实际表数据行");
   const coveredTables = new Set();
   for (const { tableName, values } of rows) {
@@ -143,6 +137,6 @@ test("Payment scenario real table field=value rows match model fields and closed
       if (allowed && value !== "NULL") assert.ok(allowed.includes(value), `场景枚举值不合法 ${tableName}.${fieldName}=${value}`);
     }
   }
-  assert.deepEqual([...coveredTables].sort(), [...expectedTableNames].sort(), "场景实际表数据行未覆盖全部 30 表");
+  assert.deepEqual([...coveredTables].sort(), [...expectedTableNames].sort(), "场景实际表数据行未覆盖全部 27 表");
 });
 }

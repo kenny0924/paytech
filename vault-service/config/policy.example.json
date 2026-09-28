@@ -1,0 +1,14 @@
+{
+  "policyVersion": "non-production-example-v1",
+  "dataTypes": {
+    "EMAIL_ADDRESS_V1": { "tokenMode": "REFERENCE" }
+  },
+  "rules": [
+    {
+      "callerService": "test-caller",
+      "action": "PROTECT",
+      "dataType": "EMAIL_ADDRESS_V1",
+      "purposes": ["CHECKOUT_CONTACT"]
+    }
+  ]
+}

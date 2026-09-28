@@ -55,6 +55,7 @@ order_id BIGINT NN
 order_no VARCHAR(64) NN
 client_id BIGINT NN
 client_order_id VARCHAR(128) NN
+creation_mode VARCHAR(32) NN {HOSTED_CHECKOUT,DIRECT_PAY}
 consumer_country_code CHAR(2) N
 context_format VARCHAR(32) NN {TERM_PRICE,LEGACY_SCOPE}
 preparation_command_id BIGINT N
@@ -75,6 +76,7 @@ order_status VARCHAR(64) NN {CREATED,OPEN,PAID,CANCELLED,EXPIRED}
 status_reason_code VARCHAR(64) N OPEN(Order Status Reason Catalog)
 expires_at DATETIME(6) NN
 paid_at DATETIME(6) N
+cancelled_at DATETIME(6) N
 version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
@@ -385,6 +387,7 @@ IDX idx_compensation_lease(execute_status,lock_until,id)
 `;
 
 const FIELD_DEFAULT_VALUES = Object.freeze({
+  "commerce_order.creation_mode": "'HOSTED_CHECKOUT'",
   "compensation_event.execute_status": "'INIT'",
   "compensation_event.execute_count": "0",
   "compensation_event.next_execute_at": "CURRENT_TIMESTAMP(6)",
@@ -898,7 +901,7 @@ function validateMetadata(tables) {
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
     tables: 15,
-    fields: 250,
+    fields: 252,
     uniqueIndexes: 24,
     accessIndexes: 12,
     relations: 15,

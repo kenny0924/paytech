@@ -1,5 +1,7 @@
 # Payment 模块划分
 
+> **Execution 字段后继：** 本页 execution 表 Owner 清单已同步[字段精简修订](../payment-Execution设计/execution-field-simplification-amendment.md)；旧 Java 文件及 Table Owner 守卫随下一代码阶段迁移，不表示实际数据库已切换。
+
 > **工具表后继目标：** 用户已确认删除旧 Instrument、由 Attempt 直接关联 Execution 所属的交易级 Token；详细字段、接口及 Card 受控适配职责见[修订评审稿](../payment-Execution设计/instrument-token-amendment.md)。下列表清单是前一版映射，不表示新表已落模或旧表已删除。
 
 > 命名后继：现行模型及表归属使用[全系统 Channel 命名决定](../../../agent-docs/decisions/2026-09-13-payment-channel-terminology.md)。下文按新名称同步，四模块职责与表 Owner 保持；此前评审和确认历史见 delivery.md。
@@ -52,7 +54,7 @@ Refund、Void、Customer Action/3DS 状态留在 Execution；NI、Geidea 先按 
 
 | Owner | 现有表 |
 |---|---|
-| execution | `t_payment_intent`、`t_payment_attempt`、`t_payment_pricing_fact`、`t_payment_instrument`、`t_payment_action`、`t_payment_intent_binding`、`t_channel_transaction_ref`、`t_duplicate_payment_case`、`t_payment_state_transition`、`t_payment_refund_position`、`t_channel_refund` |
+| execution | `t_payment_intent`、`t_payment_attempt`、`t_payment_instrument_token`、`t_payment_action`、`t_channel_transaction_ref`、`t_duplicate_payment_case`、`t_payment_refund_position`、`t_channel_refund` |
 | routing | `t_routing_policy`、`t_routing_policy_version`、`t_routing_policy_mid`、`t_routing_decision`、`t_route_candidate_eval` |
 | channel | `t_payment_channel`、`t_channel_account`、`t_channel_mid`、`t_mid_capability`、`t_mid_health_state`、`t_channel_interaction`、`t_channel_callback`、`t_channel_callback_item`、`t_channel_event_exception`、`t_channel_dispute_notice`、`t_channel_dispute_event`、`t_channel_dispute_action` |
 | web 服务级基础设施 | `t_command_idempotency`、`t_compensation_event` |
@@ -69,6 +71,8 @@ Card 专项候选表单独映射，不计入上面的现有表清单：
 每个 Owner 独占自己表的 DataObject、Mapper、Repository 和 SQL；其他模块通过公开业务能力访问，不共享 DataObject，不跨模块 JOIN。服务级技术表保持服务内唯一；本方案不批准 Payment 接入 Foundation 命令幂等的新消费者迁移，该事项继续由 Card 专项评审。
 
 ## 4. 依赖与协作
+
+2026-09-15 后继：pay 的 Processor 已按用户确认归属 Execution；受理前选路允许 Execution → Routing 的单向窄接口依赖，参数/结果由 Routing 定义。此范围取代下方初始骨架对应条款，见[Execution 字段修订第 9 节](../payment-Execution设计/execution-field-simplification-amendment.md#9-受理前路由)；其余模块边界保持。
 
 默认 Maven 依赖为 `test → web → api/execution/routing/channel/card`。Execution 切片的 test 另显式声明直接消费的 api/execution，用于公开合同测试及完整 JaCoCo 聚合；该测试依赖不改变任何生产模块依赖。四个业务模块默认互不依赖，均不反向依赖 web/test，也不借 api 共享内部业务对象。使用同一个进程、数据库及事务管理器。
 

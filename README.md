@@ -1,6 +1,6 @@
 # Code-MoR
 
-Code-MoR 是一个本地维护的 Merchant of Record 平台工作区，包含需求目录、架构与数据库设计、共享 Java 基础设施、六个核心系统，以及 Gateway、BFF、前端和 Vault 等独立仓库。
+Code-MoR 是一个本地维护的 Merchant of Record 平台单仓库，包含需求目录、架构与数据库设计、共享 Java 基础设施、六个核心系统，以及 Gateway、BFF、前端和 Vault 等应用目录。
 
 本工作区中的“已设计”“已实现”“已验证”“已部署”是四种不同状态。请从 [`agent-docs/CURRENT_IMPLEMENTATION.md`](./agent-docs/CURRENT_IMPLEMENTATION.md) 查看当前状态，不要从历史 Spec、Plan、模型统计或本页推断实现进度。
 
@@ -20,7 +20,7 @@ Code-MoR 是一个本地维护的 Merchant of Record 平台工作区，包含需
 
 六个核心系统分别是 Client & Contract、Commerce、Payment Orchestration、Risk & Compliance、Finance 和 Platform Support。API Gateway、入口应用、BFF 和 Vault 不成为第七个核心业务系统。
 
-各应用仓库独立版本化；根仓库维护跨系统需求、架构、联合验证和本地环境。数据库设计从 [`agent-docs/database/README.md`](./agent-docs/database/README.md) 路由，Java 开发从 [`agent-docs/DEVELOPMENT_CONVENTIONS.md`](./agent-docs/DEVELOPMENT_CONVENTIONS.md) 与 [`agent-docs/JAVA_PROJECT_STRUCTURE.md`](./agent-docs/JAVA_PROJECT_STRUCTURE.md) 开始。
+所有应用目录随根仓库统一版本化；根目录还维护跨系统需求、架构、联合验证和本地环境。数据库设计从 [`agent-docs/database/README.md`](./agent-docs/database/README.md) 路由，Java 开发从 [`agent-docs/DEVELOPMENT_CONVENTIONS.md`](./agent-docs/DEVELOPMENT_CONVENTIONS.md) 与 [`agent-docs/JAVA_PROJECT_STRUCTURE.md`](./agent-docs/JAVA_PROJECT_STRUCTURE.md) 开始。
 
 ## 本地需求站点
 

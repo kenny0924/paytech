@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.contract.core.dal.mapper.ClientBusinessClassificationMapper">
+    <resultMap id="ClientBusinessClassification" type="com.paytech.client.contract.core.dal.dataobject.CheckoutRecords$ClientBusinessClassification">
+        <constructor>
+            <arg column="classification_id" javaType="java.lang.Long"/>
+            <arg column="business_profile_id" javaType="java.lang.Long"/>
+            <arg column="industry_code" javaType="java.lang.String"/>
+            <arg column="mcc_code" javaType="java.lang.String"/>
+            <arg column="primary_slot" javaType="java.lang.Integer"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="ClientBusinessClassification">
+        SELECT classification_id, business_profile_id, industry_code, mcc_code, primary_slot
+        FROM t_client_business_classification
+        WHERE business_profile_id IN (SELECT business_profile_id FROM t_client_business_profile WHERE client_id = #{clientId})
+        ORDER BY classification_id
+    </select>
+</mapper>

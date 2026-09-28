@@ -1,0 +1,6 @@
+{
+  "dataType": "EMAIL_ADDRESS_V1",
+  "tokenMode": "STABLE",
+  "value": "TEST-ONLY-NOT-A-SECRET@example.test",
+  "purpose": "CHECKOUT_CONTACT"
+}

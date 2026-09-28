@@ -1,5 +1,9 @@
 # Risk & Compliance 数据库设计规范
 
+> **Payment 风控步骤后继：** [RISK_CHECK 修订](../../requirements/20260913/payment-Execution设计/internal-risk-action-amendment.md)明确 Payment 记录原评估 Action 与结果，并以原 Attempt/请求身份向 Risk 恢复。Risk 保留一 Attempt 一次首次评估及原 Assessment/Group 关联；REVIEW/DENY 不放行，正式技术终态与 Payment 传输超时分开处理，不增加多检查点或 Risk 表。
+
+> **2026-09-14 Payment 限额关联后继：** [限额关联修订](../../requirements/20260913/payment-Execution设计/risk-limit-correlation-amendment.md)将新 Payment 事件的占用定位改为 Risk 本地 Attempt→Assessment→Group，取代下文要求 Payment 保存/传入 Group ID 的相关合同。Risk 自己的 Group ID 和限额状态规则继续有效，旧消息按兼容边界核验；当前实现和数据库状态见台账。
+
 > **统一变量配置合同：** [RCO-19 数据方案](../../requirements/20260912/operations-console-统一风控变量管理与条件编排/data.md)与[操作数合同](../../requirements/20260912/operations-console-统一风控变量管理与条件编排/api.md)拥有本期变量目录、双侧 VARIABLE/LITERAL、金额元数据及动作主体引用。下文 FEATURE/CONTEXT/LITERAL 与旧输入白名单描述仅继续适用于原历史格式和未迁移的执行能力；不能用于新配置保存。共享值不进入规则/流程内容 Hash，实际数据库应用和验证状态见[当前台账](../CURRENT_IMPLEMENTATION.md#rco19-variables-20260912)。
 
 

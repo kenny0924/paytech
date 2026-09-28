@@ -1,0 +1,256 @@
+{
+  "scope": "MODEL_LIBRARY_AND_RESPONSE_SCENES_DESIGN_STATIC_CHECK",
+  "status": "PASSED",
+  "date": "2026-09-15",
+  "sourceFile": "operations-console-web/docs/design.pen",
+  "functionalPages": {
+    "new": 1,
+    "adjusted": 1
+  },
+  "screens": [
+    {
+      "id": "ciXrn",
+      "name": "GAPI · M01 数据模型｜公共模型目录",
+      "bounds": {
+        "x": 1540,
+        "y": 33360,
+        "width": 1440,
+        "height": 1120
+      }
+    },
+    {
+      "id": "krywR",
+      "name": "GAPI · M02 对象模型｜嵌套字段树",
+      "bounds": {
+        "x": 3100,
+        "y": 33360,
+        "width": 1440,
+        "height": 1120
+      }
+    },
+    {
+      "id": "lWKuf",
+      "name": "GAPI · M03 字段编辑｜数组与元素模型",
+      "bounds": {
+        "x": 4660,
+        "y": 33360,
+        "width": 1440,
+        "height": 1120
+      }
+    },
+    {
+      "id": "v6gTVe",
+      "name": "GAPI · M04 响应合同｜场景与输出结构",
+      "bounds": {
+        "x": 1540,
+        "y": 34620,
+        "width": 1440,
+        "height": 1120
+      }
+    },
+    {
+      "id": "EXQBQ",
+      "name": "GAPI · M05 API 请求｜模型绑定与层级取值",
+      "bounds": {
+        "x": 3100,
+        "y": 34620,
+        "width": 1440,
+        "height": 1120
+      }
+    },
+    {
+      "id": "ACSRY",
+      "name": "GAPI · M06 API 响应｜场景匹配与嵌套 outputs",
+      "bounds": {
+        "x": 4660,
+        "y": 34620,
+        "width": 1440,
+        "height": 1160
+      }
+    },
+    {
+      "id": "Hnf5i",
+      "name": "GAPI · M07 模型引用｜变更影响与校验",
+      "bounds": {
+        "x": 1540,
+        "y": 35880,
+        "width": 1440,
+        "height": 1120
+      }
+    },
+    {
+      "id": "PTliP",
+      "name": "GAPI · M08 新建字段｜内嵌对象与子字段",
+      "bounds": {
+        "x": 3100,
+        "y": 35880,
+        "width": 1440,
+        "height": 1120
+      }
+    },
+    {
+      "id": "GTKAi",
+      "name": "GAPI · M00 设计索引｜数据模型与 API 引用",
+      "bounds": {
+        "x": 4660,
+        "y": 35880,
+        "width": 1440,
+        "height": 720
+      }
+    }
+  ],
+  "layout": [
+    {
+      "id": "ciXrn",
+      "nodeCount": 126,
+      "issues": [],
+      "placeholders": []
+    },
+    {
+      "id": "krywR",
+      "nodeCount": 157,
+      "issues": [],
+      "placeholders": []
+    },
+    {
+      "id": "lWKuf",
+      "nodeCount": 128,
+      "issues": [],
+      "placeholders": []
+    },
+    {
+      "id": "v6gTVe",
+      "nodeCount": 138,
+      "issues": [],
+      "placeholders": []
+    },
+    {
+      "id": "EXQBQ",
+      "nodeCount": 149,
+      "issues": [],
+      "placeholders": []
+    },
+    {
+      "id": "ACSRY",
+      "nodeCount": 125,
+      "issues": [],
+      "placeholders": []
+    },
+    {
+      "id": "Hnf5i",
+      "nodeCount": 87,
+      "issues": [],
+      "placeholders": []
+    },
+    {
+      "id": "PTliP",
+      "nodeCount": 118,
+      "issues": [],
+      "placeholders": []
+    },
+    {
+      "id": "GTKAi",
+      "nodeCount": 19,
+      "issues": [],
+      "placeholders": []
+    }
+  ],
+  "rootOverlaps": [],
+  "unrelatedRootsPreserved": true,
+  "unrelatedRootCount": 76,
+  "changedUnrelatedRoots": [],
+  "obsoleteTermsInNewScreens": [],
+  "sampleJsons": [
+    {
+      "screen": "krywR",
+      "name": "示例内容",
+      "content": "{\n  \"originalTransaction\": {\n    \"referenceId\": \"10001\"\n  },\n  \"amount\": {\n    \"value\": \"10.00\",\n    \"currency\": \"AED\"\n  }\n}",
+      "parsed": {
+        "originalTransaction": {
+          "referenceId": "10001"
+        },
+        "amount": {
+          "value": "10.00",
+          "currency": "AED"
+        }
+      }
+    },
+    {
+      "screen": "lWKuf",
+      "name": "数组示例代码",
+      "content": "\"items\": [\n  {\n    \"lineId\": \"L1\",\n    \"quantity\": \"1\",\n    \"amount\": {\n      \"value\": \"10.00\",\n      \"currency\": \"AED\"\n    }\n  }\n]",
+      "parsed": {
+        "items": [
+          {
+            "lineId": "L1",
+            "quantity": "1",
+            "amount": {
+              "value": "10.00",
+              "currency": "AED"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "screen": "ACSRY",
+      "name": "示例JSON",
+      "content": "{\n  \"executeStatus\": \"SUCCESS\",\n  \"outputs\": {\n    \"paymentStatus\":\n      \"ACTION_REQUIRED\",\n    \"transaction\": {\n      \"id\": \"txn_123\"\n    },\n    \"nextAction\": {\n      \"type\": \"REDIRECT\",\n      \"redirect\": {\n        \"url\":\n          \"https://pay.example.test\"\n      }\n    }\n  }\n}",
+      "parsed": {
+        "executeStatus": "SUCCESS",
+        "outputs": {
+          "paymentStatus": "ACTION_REQUIRED",
+          "transaction": {
+            "id": "txn_123"
+          },
+          "nextAction": {
+            "type": "REDIRECT",
+            "redirect": {
+              "url": "https://pay.example.test"
+            }
+          }
+        }
+      }
+    },
+    {
+      "screen": "PTliP",
+      "name": "结构代码",
+      "content": "\"metadata\": {\n  \"source\": \"OPERATIONS\"\n}",
+      "parsed": {
+        "metadata": {
+          "source": "OPERATIONS"
+        }
+      }
+    }
+  ],
+  "nativeSaveConfirmed": true,
+  "nativeEditorFocusedOn": "krywR",
+  "visualReview": "All eight screen sections reviewed with Pencil screenshots; full-resolution nested model and response mapping exports also inspected.",
+  "runtimeImplemented": false,
+  "liveUiInteractionsImplemented": false,
+  "aviatorExecuted": false,
+  "schemaRuntimeTested": false,
+  "sqlExecuted": false,
+  "documentsChecked": true,
+  "documentChecks": {
+    "markdownFiles": 16,
+    "localLinks": 265,
+    "anchors": 35,
+    "newJsonBlocks": 3,
+    "errors": [],
+    "formatErrors": []
+  },
+  "previewErrors": [],
+  "checks": {
+    "nested_context": true,
+    "nested_array": true,
+    "nested_outputs": true,
+    "return_envelope": true,
+    "nested_inline_object": true,
+    "all_root_frames_separate": true,
+    "all_screen_bounds_valid": true,
+    "all_previews_present": true,
+    "unrelated_roots_preserved": true,
+    "removed_return_terms_absent": true
+  }
+}

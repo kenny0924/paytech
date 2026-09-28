@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.delivery.core.dal.mapper.NotificationRouteMapper">
+    <resultMap id="record" type="com.paytech.platform.support.delivery.core.dal.dataobject.NotificationRoute">
+        <id column="route_id" property="routeId"/>
+        <result column="notification_template_id" property="notificationTemplateId"/>
+        <result column="primary_provider_id" property="primaryProviderId"/>
+        <result column="fallback_provider_id" property="fallbackProviderId"/>
+        <result column="status" property="status"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <select id="find" resultMap="record">SELECT route_id, notification_template_id, primary_provider_id, fallback_provider_id, status, version, create_time, update_time FROM t_notification_route WHERE route_id = #{id}</select>
+    <select id="findTemplate" resultMap="record">SELECT route_id, notification_template_id, primary_provider_id, fallback_provider_id, status, version, create_time, update_time FROM t_notification_route WHERE notification_template_id = #{templateId}</select>
+</mapper>

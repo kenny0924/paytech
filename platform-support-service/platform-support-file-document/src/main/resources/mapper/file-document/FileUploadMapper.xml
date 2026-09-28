@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileUploadMapper">
+ <select id="find" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload">
+  SELECT upload_id,tenant_id,uploader_id,owner_ref_id,display_name,expected_size,expected_mime,
+   storage_provider,storage_container_ref AS container_ref,storage_object_ref AS object_ref,
+   scan_policy_id,expires_time AS expires_at,status
+  FROM t_file_upload WHERE upload_id=#{id} AND owner_system='CCT' AND owner_type='CLIENT_APPLICATION_SUBJECT'
+ </select>
+ <select id="policies" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPolicy">
+  SELECT p.policy_id,p.rule_schema_version,p.allowed_mime_rules,p.max_size_bytes,
+   (SELECT COUNT(*) FROM t_file_scan_requirement r WHERE r.policy_id=p.policy_id) AS requirement_count
+  FROM t_file_scan_policy p WHERE p.policy_code=#{code} AND p.status='ACTIVE' AND p.active_slot=1
+   AND (p.effective_from IS NULL OR p.effective_from &lt;= #{now})
+   AND (p.effective_to IS NULL OR p.effective_to &gt; #{now})
+ </select>
+ <insert id="insert">
+  INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,expected_size,expected_mime,owner_system,
+   owner_type,owner_ref_id,display_name,storage_provider,storage_container_ref,storage_object_ref,
+   scan_policy_id,expires_time,status,version,create_time,update_time)
+  VALUES(#{upload.uploadId},#{upload.tenantId},#{upload.uploaderId},#{upload.expectedSize},#{upload.expectedMime},
+   'CCT','CLIENT_APPLICATION_SUBJECT',#{upload.ownerRefId},#{upload.displayName},#{upload.storageProvider},
+   #{upload.containerRef},#{upload.objectRef},#{upload.scanPolicyId},#{upload.expiresAt},'CREATED',1,#{now},#{now})
+ </insert>
+</mapper>

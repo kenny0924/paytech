@@ -1,0 +1,3 @@
+-- Code-MoR Commerce initialization DML.
+-- This release has no business, catalog, account, credential, or test seed rows.
+-- Apply commerce-schema.sql manually before application or auto tests access mor_commerce.

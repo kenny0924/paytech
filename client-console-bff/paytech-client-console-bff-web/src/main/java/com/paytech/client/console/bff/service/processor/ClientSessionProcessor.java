@@ -14,10 +14,10 @@ import com.paytech.client.console.bff.service.model.ClientBrowserModels.TokenGra
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.platform.support.api.authentication.ClientAuthenticationApi;
-import com.paytech.platform.support.api.authentication.ClientAuthenticationModels.AccountContextResponseBody;
-import com.paytech.platform.support.api.authentication.ClientAuthenticationModels.AuthenticationResponseBody;
-import com.paytech.platform.support.api.authentication.ClientAuthenticationModels.LoginRequestBody;
-import com.paytech.platform.support.api.authentication.ClientAuthenticationModels.RefreshRequestBody;
+import com.paytech.platform.support.api.authentication.response.AccountContextResponseBody;
+import com.paytech.platform.support.api.authentication.response.AuthenticationResponseBody;
+import com.paytech.platform.support.api.authentication.request.LoginRequestBody;
+import com.paytech.platform.support.api.authentication.request.RefreshRequestBody;
 import com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode;
 
 import jakarta.servlet.http.Cookie;
@@ -64,22 +64,22 @@ public class ClientSessionProcessor {
     }
 
     private TokenGrantResponseBody grant(AuthenticationResponseBody grant, HttpServletResponse response) {
-        if (grant == null || grant.context() == null || grant.accessToken() == null || grant.accessToken().isBlank()
-            || grant.refreshToken() == null || !grant.refreshToken().matches("[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{43}")) {
+        if (grant == null || grant.getContext() == null || grant.getAccessToken() == null || grant.getAccessToken().isBlank()
+            || grant.getRefreshToken() == null || !grant.getRefreshToken().matches("[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{43}")) {
             throw new ServiceUnavailableException();
         }
         long seconds;
         try {
             seconds =
-                Math.min(604800, Duration.between(Instant.now(), Instant.parse(grant.refreshExpiresAt())).getSeconds());
+                Math.min(604800, Duration.between(Instant.now(), Instant.parse(grant.getRefreshExpiresAt())).getSeconds());
         } catch (RuntimeException invalid) {
             throw new ServiceUnavailableException();
         }
         if (seconds <= 0) {
             throw new ServiceUnavailableException();
         }
-        response.addHeader("Set-Cookie", cookie(grant.refreshToken(), seconds));
-        return new TokenGrantResponseBody(grant.context(), grant.accessToken(), grant.expiresAt());
+        response.addHeader("Set-Cookie", cookie(grant.getRefreshToken(), seconds));
+        return new TokenGrantResponseBody(grant.getContext(), grant.getAccessToken(), grant.getExpiresAt());
     }
 
     private String refreshCookie(HttpServletRequest request) {

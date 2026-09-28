@@ -1,0 +1,5 @@
+# Synthetic configuration-binding fixture; never connects to Redis.
+gateway:
+  test:
+    redis:
+      local-password: synthetic-local-yaml-only

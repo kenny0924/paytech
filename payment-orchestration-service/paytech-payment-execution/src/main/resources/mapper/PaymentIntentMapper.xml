@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.payment.execution.core.dal.mapper.PaymentIntentMapper">
+
+    <sql id="PaymentIntentColumns">
+        payment_intent_id, source_type, source_id, client_id, entity_no, client_pricing_version_id,
+        partner_share_version_id, platform_charge_version_id, industry_code, mcc_code, consumer_country_code, amount,
+        currency, intent_status, active_attempt_id, successful_attempt_id, expires_at, version, create_time,
+        update_time
+    </sql>
+
+    <select id="findIntentBySource" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentIntent">
+        SELECT <include refid="PaymentIntentColumns"/>
+        FROM t_payment_intent
+        WHERE source_type = #{sourceType} AND source_id = #{sourceId}
+    </select>
+
+    <insert id="insertIntent">
+        INSERT INTO t_payment_intent (<include refid="PaymentIntentColumns"/>)
+        SELECT #{paymentIntentId}, #{sourceType}, #{sourceId}, #{clientId}, #{entityNo}, #{clientPricingVersionId},
+            #{partnerShareVersionId}, #{platformChargeVersionId}, #{industryCode}, #{mccCode}, #{consumerCountryCode},
+            #{amount}, #{currency}, #{intentStatus}, #{activeAttemptId}, #{successfulAttemptId}, #{expiresAt},
+            #{version}, #{createTime}, #{updateTime}
+        WHERE #{expiresAt} &gt; UTC_TIMESTAMP(6)
+    </insert>
+
+    <select id="findIntent" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentIntent">
+        SELECT <include refid="PaymentIntentColumns"/>
+        FROM t_payment_intent
+        WHERE payment_intent_id = #{intentId}
+    </select>
+
+    <update id="terminateIntent">
+        UPDATE t_payment_intent
+        SET intent_status = 'CANCELLED', version = version + 1, update_time = #{now}
+        WHERE payment_intent_id = #{intent.paymentIntentId} AND version = #{intent.version}
+          AND intent_status = 'OPEN'
+          AND active_attempt_id IS NULL AND successful_attempt_id IS NULL
+    </update>
+
+    <update id="bindAttempt">
+        UPDATE t_payment_intent
+        SET active_attempt_id = #{activeAttemptId}, version = version + 1,
+        update_time = #{now}
+        WHERE payment_intent_id = #{paymentIntentId} AND version = #{version}
+          AND intent_status = 'OPEN' AND expires_at &gt; UTC_TIMESTAMP(6)
+          AND active_attempt_id IS NULL AND successful_attempt_id IS NULL
+    </update>
+
+    <update id="attemptSucceed">
+        UPDATE t_payment_intent
+        SET active_attempt_id = NULL, intent_status = #{intentStatus},
+        successful_attempt_id =
+        <choose>
+            <when test="intentStatus.code == 'SUCCEEDED'">#{attemptId}</when>
+            <otherwise>NULL</otherwise>
+        </choose>
+        ,
+        version = version + 1, update_time = #{now}
+        WHERE payment_intent_id = #{intent.paymentIntentId} AND version = #{intent.version}
+        AND active_attempt_id = #{attemptId}
+        AND intent_status = 'OPEN' AND successful_attempt_id IS NULL
+    </update>
+
+    <update id="releaseAttempt">
+        UPDATE t_payment_intent
+        SET active_attempt_id = NULL,
+        version = version + 1,
+        update_time = #{now}
+        WHERE payment_intent_id = #{paymentIntentId} AND version = #{version}
+        AND active_attempt_id = #{activeAttemptId}
+        AND intent_status = 'OPEN' AND successful_attempt_id IS NULL
+    </update>
+
+</mapper>

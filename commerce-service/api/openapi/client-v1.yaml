@@ -1,0 +1,1040 @@
+openapi: 3.1.0
+info:
+  title: Code-MoR Commerce Client API
+  version: 1.0.0
+  description: Client-server Hosted Checkout, Order, Cancel, and Refund public contract. Gateway owns authentication, trusted identity injection, and public cache headers; upstream middleware owns transport idempotency. Query allowlists, single-value query rules, and prohibited request bodies are ingress responsibilities. Commerce retains parameter binding, field validation, and Client resource authorization without dedicated key, cache, order-query, refund-query, or trusted-context filters. Ingress implementation and activation are outside this contract change.
+servers:
+  - url: https://api.code-mor.com
+paths:
+  /api/v1/checkouts:
+    post:
+      operationId: createCheckout
+      summary: Create a hosted checkout
+      description: Creates one Commerce order and its hosted checkout for the authenticated Client. clientOrderId is permanently unique within that Client; duplicate creation returns 409 CLIENT_ORDER_ID_ALREADY_EXISTS. Commerce does not store or replay this request by Idempotency-Key.
+      x-required-scope: checkouts.write
+      x-request-body-max-bytes: 16384
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: Reserved transport idempotency header for upstream middleware. Commerce retains parameter binding but does not perform dedicated key validation or use it in checkout business processing; middleware replay is not activated by this contract.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+            pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,254}$'
+            x-case-sensitive: true
+      requestBody:
+        required: true
+        description: Client order, expiry, and item data used to create the hosted checkout.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCheckoutRequest'
+      responses:
+        '201':
+          description: Checkout is ready for the consumer.
+          headers:
+            Location:
+              $ref: '#/components/headers/RelativeLocation'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+            Pragma:
+              $ref: '#/components/headers/Pragma'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCheckoutResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/orders:
+    get:
+      operationId: getOrderByClientOrderId
+      summary: Get an order by Client order ID
+      description: 按 Client 内永久唯一的 clientOrderId 返回当前本地订单视图。公开协议只允许一个非空 clientOrderId，不接受其他 Query 或 Body；这些协议限制由上游接入层处理，Commerce 保留参数绑定、字段校验及 Client 归属判断。未知订单和其他 Client 的订单统一返回 404。
+      x-required-scope: orders.read
+      x-request-body-max-bytes: 0
+      x-query-allowlist: [clientOrderId]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: clientOrderId
+          in: query
+          required: true
+          description: Case-sensitive order identifier that is permanently unique within the authenticated Client.
+          schema:
+            $ref: '#/components/schemas/ClientReference'
+      responses:
+        '200':
+          $ref: '#/components/responses/OrderResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/orders/{orderNo}:
+    get:
+      operationId: getOrder
+      summary: Get an order
+      description: 按大小写敏感的公开订单号读取当前本地 Order、Checkout、Payment、Refund 和 Funds 投影，不同步调用其他服务。准备前 taxAmount、roundingAmount、totalAmount 为 null；相关状态和时间反映已应用事实，可能存在投影延迟。
+      x-required-scope: orders.read
+      x-request-body-max-bytes: 0
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderNo'
+      responses:
+        '200':
+          $ref: '#/components/responses/OrderResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/orders/{orderNo}/cancel:
+    post:
+      operationId: cancelOrder
+      summary: Cancel an unpaid order
+      description: 请求取消未支付订单，无 Body 或 Query。200 表示 Order 和实际关联的 Checkout Session 已关闭，重复请求返回订单原取消时间；HOSTED_CHECKOUT 必须有 Session，DIRECT_PAY 可以无 Session，无会话时省略 checkoutStatus；Payment 未决或暂时不可用时返回 202，可按 Retry-After 再次请求。Idempotency-Key 保留为接入协议 Header，Commerce 取消用例不读取或保存请求幂等记录，不提供同 Key 请求冲突检查或冻结响应。GET 订单只查询本地状态。已成功支付返回 409 REVERSAL_REQUIRED，已过期终态返回 409 ORDER_NOT_CANCELLABLE；保存时业务事实已变化则返回并发冲突，不自动重试。
+      x-required-scope: orders.cancel
+      x-request-body-max-bytes: 0
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderNo'
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 为上游中间件保留的大小写敏感 Header；Commerce 保留参数绑定，不做专用 Key 校验，取消业务不使用该值识别订单或保存请求结果。
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+            pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,254}$'
+            x-case-sensitive: true
+      responses:
+        '200':
+          $ref: '#/components/responses/CancelOrderResponse'
+        '202':
+          $ref: '#/components/responses/CancellationPendingResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/orders/{orderNo}/refundable-amount:
+    get:
+      operationId: getRefundableAmount
+      summary: Get the refundable amount
+      description: 读取本地退款位置，返回退款基数减去预占及已退款金额，并附带该位置的时点和版本。查询不预占额度；实际退款创建仍需并发保护下重新校验。
+      x-required-scope: refunds.read
+      x-request-body-max-bytes: 0
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderNo'
+      responses:
+        '200':
+          $ref: '#/components/responses/RefundableAmountResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/orders/{orderNo}/refunds:
+    post:
+      operationId: createRefund
+      summary: 创建订单退款
+      description: 为已认证 Client 的已支付订单受理全额或部分退款，币种继承订单。相同 clientRefundId 和订单、金额、原因返回原始 201 回执，不重复预占或提交；同业务号内容冲突返回 409 CLIENT_REFUND_ID_CONFLICT。Idempotency-Key 预留给上游中间件，Commerce 不做专用 Key 校验，也不保存请求 Key、Hash、租约或响应快照；相同 Key 配不同 clientRefundId 在 Commerce 仍是独立业务申请。新申请的业务事实在保存时变化则整体回滚并返回并发冲突，不自动重试。
+      x-required-scope: refunds.write
+      x-request-body-max-bytes: 4096
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderNo'
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 为上游中间件保留的传输 Header；Commerce 保留参数绑定，不做专用 Key 校验，也不用于退款业务防重，本次未启用中间件请求重放。
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+            pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,254}$'
+            x-case-sensitive: true
+      requestBody:
+        required: true
+        description: Client 永久唯一退款业务号、金额和创建原因；不提交币种或 OE。
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRefundRequest'
+      responses:
+        '201':
+          description: 退款已在本库持久化受理；201 回执不表示 Payment 已退款成功。
+          headers:
+            Location:
+              $ref: '#/components/headers/RelativeLocation'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+            Pragma:
+              $ref: '#/components/headers/Pragma'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRefundResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+    get:
+      operationId: listOrderRefunds
+      summary: 分页查询订单退款
+      description: 按创建时间、退款号倒序返回同一 Client 和 Order 的当前退款页，包含 Client 和 Operations 来源。默认 limit=20，范围 1 至 100；无退款时返回空 items 和 null nextCursor。游标必须对应当前 Client、Order 和原创建时间，否则返回 INVALID_CURSOR；未知或跨 Client 的订单返回 ORDER_NOT_FOUND。每页读取当前状态，不固定跨页状态快照，不要求 Checkout Session 或推进退款。
+      x-required-scope: refunds.read
+      x-request-body-max-bytes: 0
+      x-query-allowlist: [limit, cursor]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderNo'
+        - name: limit
+          in: query
+          description: 本页最多返回数量，默认 20，允许 1 至 100。
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          description: 上一页返回的大小写敏感、URL-safe、不透明版本化游标；首屏省略，无效或跨订单游标返回 400 INVALID_CURSOR。
+          schema:
+            type: string
+            maxLength: 512
+      responses:
+        '200':
+          $ref: '#/components/responses/RefundListResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/refunds:
+    get:
+      operationId: getRefundByClientRefundId
+      summary: 按 Client 退款业务号查询
+      description: 按当前 Client 命名空间内永久唯一的 clientRefundId 查询，仅匹配 CLIENT 来源退款。未知或跨 Client 均返回 REFUND_NOT_FOUND；返回与按公开退款号查询相同的当前表示，不要求 Checkout Session，不调用 Payment 或推进退款。
+      x-required-scope: refunds.read
+      x-request-body-max-bytes: 0
+      x-query-allowlist: [clientRefundId]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: clientRefundId
+          in: query
+          required: true
+          description: 当前认证 Client 内永久唯一、大小写敏感的退款业务号。
+          schema:
+            $ref: '#/components/schemas/ClientReference'
+      responses:
+        '200':
+          $ref: '#/components/responses/RefundResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/refunds/{refundRequestNo}:
+    get:
+      operationId: getRefund
+      summary: 查询退款
+      description: 按不透明公开退款号查询当前状态，包含 Client 和 Operations 来源。未知及跨 Client 均返回 REFUND_NOT_FOUND；只读取退款事实和关联订单号，不要求 Checkout Session，不调用外部 Payment 或推进退款。
+      x-required-scope: refunds.read
+      x-request-body-max-bytes: 0
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RefundRequestNo'
+      responses:
+        '200':
+          $ref: '#/components/responses/RefundResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Client API Credential
+  parameters:
+    OrderNo:
+      name: orderNo
+      in: path
+      required: true
+      description: Opaque, case-sensitive public Commerce order identifier.
+      schema:
+        $ref: '#/components/schemas/PublicOrderNo'
+    RefundRequestNo:
+      name: refundRequestNo
+      in: path
+      required: true
+      description: 不透明、大小写敏感的 Commerce 公开退款号。
+      schema:
+        $ref: '#/components/schemas/PublicRefundRequestNo'
+  headers:
+    RequestId:
+      description: Case-sensitive request correlation identifier echoed by the responding first-party service.
+      required: true
+      schema:
+        $ref: '#/components/schemas/RequestId'
+    RetryAfter:
+      description: Optional positive delay in seconds before retrying a transient problem.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 86400
+    CacheControl:
+      description: Public response cache policy supplied by Gateway, not by a Commerce response filter; applies to success and error responses.
+      required: true
+      schema:
+        type: string
+        const: no-store
+    Pragma:
+      description: Public compatibility directive supplied by Gateway for legacy HTTP intermediaries.
+      required: true
+      schema:
+        type: string
+        const: no-cache
+    RelativeLocation:
+      description: Validated relative Client API resource path without query or fragment.
+      required: true
+      schema:
+        type: string
+        pattern: '^/api/v1/[A-Za-z0-9_/-]+$'
+  responses:
+    ProblemResponse:
+      description: RFC 9457 problem details.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+        Pragma:
+          $ref: '#/components/headers/Pragma'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    CreateCheckoutResponse:
+      description: Immutable checkout creation receipt.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+        Pragma:
+          $ref: '#/components/headers/Pragma'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateCheckoutResponse'
+    OrderResponse:
+      description: 当前订单及 Checkout 视图，包含原支付链接、准备状态和金额状态。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+        Pragma:
+          $ref: '#/components/headers/Pragma'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OrderResponse'
+    CancelOrderResponse:
+      description: Definitive cancellation result.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+        Pragma:
+          $ref: '#/components/headers/Pragma'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CancelOrderResponse'
+    CancellationPendingResponse:
+      description: 取消仍等待 Payment 确定结果；遵循 Retry-After 再次请求，按同一订单的当前事实处理。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+        Pragma:
+          $ref: '#/components/headers/Pragma'
+        Retry-After:
+          description: 再次请求取消前的等待秒数；GET 订单不推进取消。
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CancellationPendingResponse'
+    RefundableAmountResponse:
+      description: Time-scoped refundable amount advisory.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+        Pragma:
+          $ref: '#/components/headers/Pragma'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RefundableAmountResponse'
+    CreateRefundResponse:
+      description: Immutable refund creation receipt.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+        Pragma:
+          $ref: '#/components/headers/Pragma'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateRefundResponse'
+    RefundResponse:
+      description: Current refund request view.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+        Pragma:
+          $ref: '#/components/headers/Pragma'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RefundResponse'
+    RefundListResponse:
+      description: Cursor-paginated order refund requests.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+        Pragma:
+          $ref: '#/components/headers/Pragma'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RefundListResponse'
+  schemas:
+    ClientReference:
+      type: string
+      description: Case-sensitive printable-ASCII identifier supplied and maintained by the Client.
+      minLength: 1
+      maxLength: 128
+      pattern: '^[!-~]+$'
+    PublicOrderNo:
+      type: string
+      description: 不透明、大小写敏感的公开订单号。新编号为 ord_ 加 30 位公共 Token 主体，共 34 位；客户端按完整字符串保存和传递，旧编号仍可查询。
+      minLength: 1
+      maxLength: 64
+    PublicRefundRequestNo:
+      type: string
+      description: 不透明、大小写敏感的公开退款号。新编号为 rfd_ 加 30 位公共 Token 主体，共 34 位；客户端按完整字符串保存和传递，旧编号仍可查询。
+      minLength: 1
+      maxLength: 64
+    DecimalAmount:
+      type: string
+      description: 币种主单位的非负金额字符串，例如 USD "10.00" 表示 10 美元；请求可省略无意义的尾随零，响应按币种精度补齐小数位。
+      example: '10.00'
+      minLength: 1
+      pattern: '^(?:0|[1-9][0-9]{0,15})(?:[.][0-9]{1,8})?$'
+    PositiveDecimalAmount:
+      type: string
+      minLength: 1
+      description: 币种主单位的正数金额字符串，例如 USD "10.00" 表示 10 美元；请求可省略无意义的尾随零，按币种精度校验且不隐式舍入，响应按币种精度补齐小数位。
+      example: '10.00'
+      pattern: '^(?=.*[1-9])(?:0|[1-9][0-9]{0,15})(?:[.][0-9]{1,8})?$'
+    CreateCheckoutRequest:
+      type: object
+      description: Client request to create one hosted checkout and its Commerce order.
+      additionalProperties: true
+      required: [clientOrderId, currency, consumerCountryCode, items]
+      properties:
+        clientOrderId:
+          $ref: '#/components/schemas/ClientReference'
+          description: Permanent Client-scoped order identifier; it is not a transport idempotency key.
+        currency:
+          type: string
+          description: 订单币种，使用大写 ISO 4217 代码；当前创建入口仅支持 USD，其他币种在预检和写入前拒绝。
+          enum: [USD]
+          minLength: 1
+          pattern: '^[A-Z]{3}$'
+        consumerCountryCode:
+          type: string
+          description: Two-letter uppercase country code for the Consumer context frozen on the order.
+          minLength: 1
+          pattern: '^[A-Z]{2}$'
+        expiresAt:
+          type: string
+          format: date-time
+          description: Optional UTC RFC 3339 timestamp from five minutes through 24 hours after the first operation time; omission uses that first operation time plus 30 minutes, and retries do not recalculate it.
+        items:
+          type: array
+          description: Non-empty item snapshot used to calculate and store the order.
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/CheckoutItemRequest'
+    CheckoutItemRequest:
+      type: object
+      description: One Client-supplied item in a checkout creation request.
+      additionalProperties: true
+      required: [clientItemId, name, productTypeCode, taxCategoryCode, quantity, unitAmount]
+      properties:
+        clientItemId:
+          $ref: '#/components/schemas/ClientReference'
+          description: Client 提供的商品行标识，在本订单内按大小写敏感的原值唯一；重复时在预检和写入前拒绝。
+        name:
+          type: string
+          description: Consumer-facing item name.
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: Optional Consumer-facing item description; explicit null is invalid when the field is present.
+          maxLength: 1024
+        productTypeCode:
+          type: string
+          description: Product classification code maintained by the Client.
+          minLength: 1
+          maxLength: 64
+        taxCategoryCode:
+          type: string
+          description: Tax classification code maintained by the Client.
+          minLength: 1
+          maxLength: 64
+        quantity:
+          $ref: '#/components/schemas/PositiveDecimalAmount'
+          description: 商品数量的正数字符串，可含小数，例如 "2" 或 "0.5"；这是计量数量，不是金额，不受币种小数位限制。
+          example: '0.5'
+        unitAmount:
+          $ref: '#/components/schemas/DecimalAmount'
+          description: 商品单价，使用订单币种主单位金额字符串，例如 USD "10.00" 表示 10 美元。
+        discountAmount:
+          $ref: '#/components/schemas/DecimalAmount'
+          description: 整行优惠金额，使用订单币种主单位字符串；例如 USD "1.00" 表示该行共优惠 1 美元，不再乘数量，不能超过单价乘数量。可省略并按零处理，字段出现时不允许显式 null。
+    CreateRefundRequest:
+      type: object
+      description: Client 提交的全额或部分订单退款申请。
+      additionalProperties: true
+      required: [clientRefundId, amount, reasonCode]
+      properties:
+        clientRefundId:
+          $ref: '#/components/schemas/ClientReference'
+          description: Client 命名空间内永久唯一的退款业务号，独立于传输幂等键。
+        amount:
+          $ref: '#/components/schemas/PositiveDecimalAmount'
+          description: 正数退款金额，使用订单币种主单位字符串，例如 USD "10.00" 表示退款 10 美元；币种继承订单，允许省略无意义的尾随零，按币种精度校验且不隐式舍入。
+        reasonCode:
+          type: string
+          description: Client 为本次退款选择的稳定原因代码。
+          minLength: 1
+          enum: [REQUESTED_BY_CUSTOMER, DUPLICATE, FRAUDULENT, OTHER]
+        reasonSummary:
+          type: string
+          description: 可省略的非敏感说明；禁止包含凭据、卡数据或个人敏感信息；字段出现时不允许显式 null。
+          maxLength: 512
+    Problem:
+      type: object
+      description: Code-MoR RFC 9457 problem details returned for a failed Client API request.
+      required: [type, title, detail, code, requestId, timestamp]
+      properties:
+        type:
+          type: string
+          description: Problem type URI; Client API V1 uses about:blank until a maintained type registry exists.
+          format: uri-reference
+          const: about:blank
+        title:
+          type: string
+          description: Short stable summary of the problem category.
+          minLength: 1
+        detail:
+          type: string
+          description: Human-readable detail specific to this occurrence.
+          minLength: 1
+        code:
+          type: string
+          description: Stable machine-readable Code-MoR error code.
+          minLength: 1
+        requestId:
+          $ref: '#/components/schemas/RequestId'
+          description: Correlation identifier for this failed request.
+        timestamp:
+          $ref: '#/components/schemas/ProblemTimestamp'
+          description: UTC time at which the problem response was produced.
+        errors:
+          type: array
+          description: Optional field-specific validation errors; business errors may omit this collection.
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ProblemFieldError'
+    ProblemFieldError:
+      type: object
+      description: One field-specific validation failure in a Problem response.
+      additionalProperties: false
+      required: [field, message]
+      properties:
+        field:
+          type: string
+          description: Request field path associated with the validation failure.
+          minLength: 1
+        message:
+          type: string
+          description: Human-readable explanation of the field validation failure.
+          minLength: 1
+    ProblemTimestamp:
+      type: string
+      description: UTC RFC 3339 timestamp with exactly six fractional-second digits.
+      format: date-time
+      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$'
+    RequestId:
+      type: string
+      description: Case-sensitive request correlation identifier.
+      minLength: 1
+      maxLength: 64
+      pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'
+      x-case-sensitive: true
+    OrderCreationMode:
+      type: string
+      description: 创建时由服务端固定的接入方式，后续支付尝试或入口变化不修改；当前创建入口仅支持 HOSTED_CHECKOUT，DIRECT_PAY 保留供后续接入。
+      minLength: 1
+      x-known-values: [HOSTED_CHECKOUT, DIRECT_PAY]
+    OrderStatus:
+      type: string
+      description: Current public lifecycle code of a Commerce order.
+      minLength: 1
+      x-known-values: [CREATED, OPEN, PAID, CANCELLED, EXPIRED]
+    CheckoutStatus:
+      type: string
+      description: Current public lifecycle code of a hosted checkout.
+      x-known-values: [PREPARING, OPEN, PAYMENT_PROCESSING, COMPLETED, CANCELLED, EXPIRED]
+    PaymentStatus:
+      type: string
+      description: Current aggregate public payment lifecycle code for an order.
+      minLength: 1
+      x-known-values: [NOT_STARTED, PROCESSING, SUCCEEDED, FAILED, CANCELLED, EXPIRED]
+    RefundStatus:
+      type: string
+      description: Current public lifecycle code of a refund request.
+      minLength: 1
+      x-known-values: [PENDING, PROCESSING, SUCCEEDED, FAILED, CANCELLED]
+    FundsAvailabilityStatus:
+      type: string
+      description: Current public state of funds availability for a paid order.
+      minLength: 1
+      x-known-values: [NOT_APPLICABLE, PENDING, AVAILABLE, FULLY_OFFSET]
+    Amounts:
+      type: object
+      description: 订单汇总金额，统一使用订单币种主单位字符串并按币种精度输出，例如 USD "10.00" 表示 10 美元。
+      required: [merchandiseAmount, discountAmount, netAmount, taxAmount, roundingAmount, totalAmount]
+      properties:
+        merchandiseAmount:
+          $ref: '#/components/schemas/DecimalAmount'
+          description: 优惠前商品总额，等于各行单价乘数量之和；使用订单币种主单位金额字符串。
+        discountAmount:
+          $ref: '#/components/schemas/DecimalAmount'
+          description: 订单优惠总额，等于各行优惠金额之和；使用订单币种主单位金额字符串。
+        netAmount:
+          $ref: '#/components/schemas/DecimalAmount'
+          description: 优惠后税前净额，等于商品总额减优惠总额；使用订单币种主单位金额字符串。
+        taxAmount:
+          anyOf:
+            - $ref: '#/components/schemas/DecimalAmount'
+            - type: 'null'
+          description: 准备前为 null；计税完成后为明确税额。
+        roundingAmount:
+          anyOf:
+            - $ref: '#/components/schemas/DecimalAmount'
+            - type: 'null'
+          description: 准备前为 null；准备后为明确舍入金额。
+        totalAmount:
+          anyOf:
+            - $ref: '#/components/schemas/DecimalAmount'
+            - type: 'null'
+          description: 准备前为 null；准备后为最终金额，不能用零值代替未知。
+        paidAmount:
+          $ref: '#/components/schemas/DecimalAmount'
+          description: 已成功支付金额，使用订单币种主单位金额字符串；当前响应可提供该金额时返回。
+    CreateCheckoutResponse:
+      type: object
+      description: Immutable receipt returned after a checkout and its order have been created.
+      required: [orderNo, clientOrderId, checkoutUrl, currency, amounts, expiresAt, preparationStatus, amountStatus, checkoutStatus]
+      properties:
+        orderNo:
+          $ref: '#/components/schemas/PublicOrderNo'
+          description: Opaque, case-sensitive Commerce order identifier.
+        clientOrderId:
+          $ref: '#/components/schemas/ClientReference'
+          description: Client-supplied order identifier, unique within the Client.
+        checkoutUrl:
+          type: string
+          description: Code-MoR hosted-checkout URL to which the Client redirects the Consumer.
+          format: uri
+        currency:
+          type: string
+          description: Three-letter uppercase ISO 4217 currency code for the returned amounts.
+          minLength: 1
+          pattern: '^[A-Z]{3}$'
+        amounts:
+          $ref: '#/components/schemas/Amounts'
+          description: Calculated order amounts in the response currency.
+        expiresAt:
+          type: string
+          description: UTC time at which the hosted checkout expires.
+          format: date-time
+        preparationStatus:
+          type: string
+          minLength: 1
+          description: 创建时为 PENDING。
+          x-known-values: [PENDING]
+        amountStatus:
+          type: string
+          minLength: 1
+          description: 基础创建为 ESTIMATED，税额、舍入和总额明确为 null。
+          x-known-values: [ESTIMATED]
+        checkoutStatus:
+          type: string
+          minLength: 1
+          description: 创建时为 PREPARING，尚不能支付。
+          x-known-values: [PREPARING]
+    OrderItem:
+      type: object
+      description: Immutable item snapshot stored on an order.
+      required: [clientItemId, name, description, productTypeCode, taxCategoryCode, quantity, unitAmount, discountAmount]
+      properties:
+        clientItemId:
+          $ref: '#/components/schemas/ClientReference'
+          description: Client-supplied item identifier within this order.
+        name:
+          type: string
+          description: Consumer-facing item name.
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: Consumer-facing item description; an empty string represents no supplied description.
+          maxLength: 1024
+        productTypeCode:
+          type: string
+          description: Product classification code maintained by the Client.
+          minLength: 1
+          maxLength: 64
+        taxCategoryCode:
+          type: string
+          description: Tax classification code maintained by the Client.
+          minLength: 1
+          maxLength: 64
+        quantity:
+          $ref: '#/components/schemas/PositiveDecimalAmount'
+          description: 商品数量的正数字符串，可含小数，例如 "2" 或 "0.5"；这是计量数量，不是金额，不受币种小数位限制。
+          example: '0.5'
+        unitAmount:
+          $ref: '#/components/schemas/DecimalAmount'
+          description: 商品单价，使用订单币种主单位金额字符串，例如 USD "10.00" 表示 10 美元。
+        discountAmount:
+          $ref: '#/components/schemas/DecimalAmount'
+          description: 整行优惠金额，使用订单币种主单位字符串并按币种精度输出；例如 USD "1.00" 表示该行共优惠 1 美元，不再乘数量。
+    OrderResponse:
+      type: object
+      description: 统一订单查询视图，包含固定创建方式、可空的 checkout 会话摘要、准备与金额状态，以及支付、退款和资金可用性；按 orderNo 或 clientOrderId 查询使用同一响应，不返回内部并发版本。
+      required: [orderNo, clientOrderId, creationMode, orderStatus, checkout, preparationStatus, amountStatus, paymentStatus, currency,
+        consumerCountryCode, items, amounts, refundSummary, fundsAvailability, createdAt, expiresAt,
+        updatedAt]
+      properties:
+        orderNo:
+          $ref: '#/components/schemas/PublicOrderNo'
+          description: Opaque, case-sensitive Commerce order identifier.
+        clientOrderId:
+          $ref: '#/components/schemas/ClientReference'
+          description: Client-supplied order identifier, unique within the Client.
+        creationMode:
+          $ref: '#/components/schemas/OrderCreationMode'
+        orderStatus:
+          $ref: '#/components/schemas/OrderStatus'
+          description: Current order lifecycle code.
+        preparationStatus:
+          type: string
+          minLength: 1
+          description: 支付准备状态，PENDING 尚未完成准备，READY 已完成准备；不代替订单或支付状态。
+          x-known-values: [PENDING, READY]
+        amountStatus:
+          type: string
+          minLength: 1
+          description: 金额状态，ESTIMATED 时税额、舍入额及总额为 null，FINAL 时为最终金额。
+          x-known-values: [ESTIMATED, FINAL]
+        paymentStatus:
+          $ref: '#/components/schemas/PaymentStatus'
+          description: Current aggregate payment lifecycle code.
+        currency:
+          type: string
+          description: Three-letter uppercase ISO 4217 currency code for every returned amount.
+          minLength: 1
+          pattern: '^[A-Z]{3}$'
+        consumerCountryCode:
+          type: string
+          description: Two-letter uppercase Consumer country code frozen on the order.
+          minLength: 1
+          pattern: '^[A-Z]{2}$'
+        items:
+          type: array
+          description: Immutable order item snapshot.
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        amounts:
+          $ref: '#/components/schemas/Amounts'
+          description: Calculated order amounts in the response currency.
+        checkout:
+          type: [object, 'null']
+          description: 实际关联的收银台会话；没有关联会话时为 null，不仅凭 creationMode 推断。HOSTED_CHECKOUT 创建的订单必须有会话。
+          required: [status, url, expiresAt]
+          properties:
+            status:
+              $ref: '#/components/schemas/CheckoutStatus'
+              minLength: 1
+              description: 收银台会话状态，不代替订单或支付状态。
+            url:
+              type: [string, 'null']
+              format: uri
+              description: 原 Session 的公开链接，到期后为 null；完成支付后到期前仍可展示结果，不代表还能支付。
+            expiresAt:
+              type: string
+              format: date-time
+              description: 收银台会话到期的 UTC 时刻，当前与订单期限一致，重复查询不延长。
+        lastPaymentAttempt:
+          type: [object, 'null']
+          description: Latest payment-attempt summary, or null before any attempt exists.
+          required: [status]
+          properties:
+            status:
+              $ref: '#/components/schemas/PaymentStatus'
+              description: Current lifecycle code of the latest payment attempt.
+        refundSummary:
+          type: object
+          description: Current refund totals for the order.
+          required: [processingAmount, succeededAmount, refundableAmount]
+          properties:
+            processingAmount:
+              $ref: '#/components/schemas/DecimalAmount'
+              description: Amount reserved by refund requests that have not reached a definitive result.
+            succeededAmount:
+              $ref: '#/components/schemas/DecimalAmount'
+              description: Amount refunded successfully.
+            refundableAmount:
+              $ref: '#/components/schemas/DecimalAmount'
+              description: Amount currently eligible for another refund request.
+        fundsAvailability:
+          type: object
+          description: Current view of when paid order funds are available to the Client.
+          required: [status, availableAmount, scheduledAt, availableAt, asOf, updatedAt]
+          properties:
+            status:
+              $ref: '#/components/schemas/FundsAvailabilityStatus'
+              description: Current funds-availability lifecycle code.
+            availableAmount:
+              description: Amount in the Client's effective available balance, or null when not applicable.
+              anyOf:
+                - $ref: '#/components/schemas/DecimalAmount'
+                - type: 'null'
+            scheduledAt:
+              type: [string, 'null']
+              description: Scheduled funds-availability time, or null when no schedule applies.
+              format: date-time
+            availableAt:
+              type: [string, 'null']
+              description: Time funds reached the Client's effective available balance, or null until then.
+              format: date-time
+            asOf:
+              type: string
+              description: UTC time represented by this funds-availability view.
+              format: date-time
+            updatedAt:
+              type: string
+              description: UTC time at which this funds-availability view last changed.
+              format: date-time
+        createdAt:
+          type: string
+          description: UTC order creation time.
+          format: date-time
+        expiresAt:
+          type: string
+          description: UTC order expiry time.
+          format: date-time
+        paidAt:
+          type: [string, 'null']
+          description: UTC successful payment time, or null until payment succeeds.
+          format: date-time
+        updatedAt:
+          type: string
+          description: UTC time at which this order view last changed.
+          format: date-time
+    CancelOrderResponse:
+      type: object
+      description: Definitive result returned after an unpaid order is cancelled.
+      required: [orderNo, orderStatus, cancelledAt]
+      properties:
+        orderNo:
+          $ref: '#/components/schemas/PublicOrderNo'
+          description: Opaque, case-sensitive Commerce order identifier.
+        orderStatus:
+          $ref: '#/components/schemas/OrderStatus'
+          description: Definitive order lifecycle code after cancellation.
+        checkoutStatus:
+          $ref: '#/components/schemas/CheckoutStatus'
+          description: 实际关联会话的取消终态；无 Checkout Session 的 Direct Pay 订单不返回此字段。
+          minLength: 1
+        cancelledAt:
+          type: string
+          description: 订单自身进入取消终态的 UTC 时刻，不依赖 Checkout Session；重复取消返回原时刻。
+          format: date-time
+    CancellationPendingResponse:
+      type: object
+      description: Pending result returned while cancellation awaits a definitive payment state.
+      required: [orderNo, cancellationStatus, reasonCode]
+      properties:
+        orderNo:
+          $ref: '#/components/schemas/PublicOrderNo'
+          description: Opaque, case-sensitive Commerce order identifier.
+        cancellationStatus:
+          type: string
+          description: Cancellation lifecycle code indicating that the command remains pending.
+          minLength: 1
+          x-known-values: [PENDING]
+        reasonCode:
+          type: string
+          description: Reason the cancellation cannot yet reach a definitive result.
+          minLength: 1
+          x-known-values: [PAYMENT_IN_PROGRESS]
+    RefundableAmountResponse:
+      type: object
+      description: 本地退款位置的金额快照，仅作查询参考，不预占额度；创建退款时仍须重新校验，不依赖 Checkout Session。
+      required: [orderNo, currency, refundableAmount, asOf, version]
+      properties:
+        orderNo:
+          $ref: '#/components/schemas/PublicOrderNo'
+          description: Opaque, case-sensitive Commerce order identifier.
+        currency:
+          type: string
+          description: Three-letter uppercase ISO 4217 order currency code.
+          minLength: 1
+          pattern: '^[A-Z]{3}$'
+        refundableAmount:
+          $ref: '#/components/schemas/DecimalAmount'
+          description: 退款基数减去处理中预占与成功退款后的可退金额，使用订单币种主单位字符串并按币种精度输出，例如 USD "10.00"。
+        asOf:
+          type: string
+          description: 本次读取的退款位置最后持久化的 UTC 时刻，不是查询时间。
+          format: date-time
+        version:
+          type: integer
+          description: Non-negative refundable-position version.
+          minimum: 0
+    CreateRefundResponse:
+      type: object
+      description: 退款已持久化受理后的不可变创建回执，不表示渠道退款成功。
+      required: [refundRequestNo, clientRefundId, orderNo, amount, currency, createdAt]
+      properties:
+        refundRequestNo:
+          $ref: '#/components/schemas/PublicRefundRequestNo'
+          description: 不透明、大小写敏感的 Commerce 退款号。
+        clientRefundId:
+          $ref: '#/components/schemas/ClientReference'
+          description: Client 自行分配、在其命名空间内永久唯一的退款业务号。
+        orderNo:
+          $ref: '#/components/schemas/PublicOrderNo'
+          description: 不透明、大小写敏感的 Commerce 订单号。
+        amount:
+          $ref: '#/components/schemas/PositiveDecimalAmount'
+          description: 已受理的退款金额，使用订单币种主单位字符串并按币种精度输出，例如 USD "10.00" 表示 10 美元。
+        currency:
+          type: string
+          description: 订单 ISO 4217 三位大写币种代码。
+          minLength: 1
+          pattern: '^[A-Z]{3}$'
+        createdAt:
+          type: string
+          description: 退款单持久化创建的 UTC 时刻。
+          format: date-time
+    RefundResponse:
+      type: object
+      description: 退款的当前表示，不包含渠道内部坐标或原因原文。
+      required: [refundRequestNo, clientRefundId, requestOrigin, orderNo, amount, currency, refundStatus, reasonCode, statusReasonCode, createdAt, completedAt, updatedAt, version]
+      properties:
+        refundRequestNo:
+          $ref: '#/components/schemas/PublicRefundRequestNo'
+          description: 不透明、大小写敏感的 Commerce 退款号。
+        clientRefundId:
+          description: Client 退款业务号；Operations 来源退款明确返回 null。
+          anyOf:
+            - $ref: '#/components/schemas/ClientReference'
+            - type: 'null'
+        requestOrigin:
+          type: string
+          description: 退款创建来源 CLIENT 或 OPERATIONS。
+          minLength: 1
+          enum: [CLIENT, OPERATIONS]
+        orderNo:
+          $ref: '#/components/schemas/PublicOrderNo'
+          description: 不透明、大小写敏感的 Commerce 订单号。
+        amount:
+          $ref: '#/components/schemas/PositiveDecimalAmount'
+          description: 退款金额，使用订单币种主单位字符串并按币种精度输出，例如 USD "10.00" 表示 10 美元。
+        currency:
+          type: string
+          description: 订单 ISO 4217 三位大写币种代码。
+          minLength: 1
+          pattern: '^[A-Z]{3}$'
+        refundStatus:
+          $ref: '#/components/schemas/RefundStatus'
+          description: 当前退款生命周期；Payment 未决结果始终保持 PROCESSING。
+        reasonCode:
+          type: string
+          description: 退款创建时提交的稳定原因代码。
+          minLength: 1
+        statusReasonCode:
+          type: [string, 'null']
+          description: 当前失败或取消原因代码；不适用时明确返回 null。
+        createdAt:
+          type: string
+          description: 退款单持久化创建的 UTC 时刻。
+          format: date-time
+        completedAt:
+          type: [string, 'null']
+          description: 权威终态完成的 UTC 时刻；未决时明确返回 null。
+          format: date-time
+        updatedAt:
+          type: string
+          description: 当前退款表示最后改变的 UTC 时刻。
+          format: date-time
+        version:
+          type: integer
+          description: 非负退款表示版本，独立于 Order 版本。
+          minimum: 0
+    RefundListResponse:
+      type: object
+      description: 同一订单下按创建时间、退款号倒序排列的一页退款。
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          description: 本页不可变退款列表，包含 Client 和 Operations 来源。
+          items:
+            $ref: '#/components/schemas/RefundResponse'
+        nextCursor:
+          type: [string, 'null']
+          description: 大小写敏感、URL-safe 的不透明版本化游标；没有后续数据时明确返回 null。

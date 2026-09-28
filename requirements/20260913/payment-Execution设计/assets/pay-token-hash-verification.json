@@ -1,0 +1,97 @@
+{
+  "recordedAt": "2026-09-14T15:56:07.737643+00:00",
+  "scope": "Use request paymentInstrumentToken in pay idempotency Hash; perform no business lookup before the idempotency query. Attempt still stores token ID.",
+  "operation": "PAY_INSTRUMENT_V1",
+  "operationNote": "Unreleased local development contract; no rows in the local command table. Historical PAY_CAPTURE_MODE_V1 records are unchanged.",
+  "projection": [
+    "clientId",
+    "intentId",
+    "sourceSubmissionId",
+    "paymentMethodCode",
+    "captureMode",
+    "paymentInstrumentToken"
+  ],
+  "verification": {
+    "command": "JAVA_HOME=<JDK 25> ./mvnw -q -pl paytech-payment-test -am clean verify -Dtest=PaymentCommandContractAutoTest,PaymentPayPersistenceContractAutoTest,PaymentModuleBoundaryAutoTest,PaymentRulesAutoTest,PaymentFlowRegistryAutoTest -Dsurefire.failIfNoSpecifiedTests=false",
+    "exitCode": 0,
+    "tests": [
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentCommandContractAutoTest",
+        "tests": "15",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentFlowRegistryAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentPayPersistenceContractAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentRulesAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.architecture.PaymentModuleBoundaryAutoTest",
+        "tests": "12",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      }
+    ],
+    "allTestSourcesCompiled": true,
+    "log": "/tmp/payment-token-hash-verify.log"
+  },
+  "integration": {
+    "executedThisTurn": false,
+    "addedCases": "Changed nonexistent Token with same idempotency key returns 409 before instrument lookup, for both allowExecution true and false",
+    "updatedAssertion": "Accepted command Hash contains request Token, not internal token ID",
+    "reason": "Local database is still the old empty schema; approved token table and capture mode are missing"
+  },
+  "databaseObservation": {
+    "readOnly": true,
+    "endpoint": "127.0.0.1:13306/mor_payment",
+    "counts": {
+      "t_payment_intent_binding": 0,
+      "t_payment_intent": 0,
+      "t_payment_attempt": 0,
+      "t_payment_action": 0,
+      "t_payment_instrument": 0,
+      "t_command_idempotency": 0,
+      "t_compensation_event": 0,
+      "t_channel_refund": 0,
+      "t_channel_transaction_ref": 0,
+      "t_payment_pricing_fact": 0,
+      "t_payment_refund_position": 0,
+      "t_duplicate_payment_case": 0,
+      "t_payment_state_transition": 0
+    },
+    "instrumentTokenTablePresent": false,
+    "captureModePresent": false
+  },
+  "previousEvidence": "pay-model-acceptance-verification.json",
+  "sourceSha256": {
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/processor/PayProcessor.java": "886c057ba386641af013ecd4a3ceeb5bc22df2a7cb73af8b7852287fbd27be90",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentPayAcceptanceAutoTest.java": "1d96f282d60d95d00dc2a6838cd9dfffe26ec39439b34d6bbdb1ad821b294597",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentExecutionApiAutoTest.java": "98f36accd480754121b6d27dc65f6416a34692b89a878c9bf9cf924980dff465"
+  },
+  "notPerformed": [
+    "database migration",
+    "business DML",
+    "commit",
+    "push",
+    "deployment"
+  ]
+}

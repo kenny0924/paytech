@@ -1,0 +1,42 @@
+{
+  "scope": "COMPLETE_NI_DEFINITION_DESIGN_STATIC_CHECK",
+  "status": "PASSED",
+  "apiCompactBytes": 4938,
+  "schemeCompactBytes": 600,
+  "resolvedSteps": {
+    "originalTarget": "CALL_SYSTEM_FUNCTION",
+    "requestBody": "OBJECT_MAPPING",
+    "encodeBody": "ENCODE_JSON",
+    "authorization": "BEARER_AUTHORIZATION",
+    "decodeResponse": "DECODE_JSON_RESPONSE",
+    "observedFacts": "VALIDATE_AND_PROJECT"
+  },
+  "expressionBindings": 7,
+  "systemFunctionCalls": 1,
+  "capabilityDescriptors": 14,
+  "requestSteps": 4,
+  "responseSteps": 2,
+  "rejectedMutations": [
+    "OBJECT_FIELDS",
+    "UNKNOWN_SCHEME",
+    "FIXED_PARAMETER_OVERRIDE",
+    "FORWARD_REFERENCE",
+    "TARGET_PATH_CONFLICT",
+    "HTTP_BODY_BYTES",
+    "AUTHORIZATION_SOURCE",
+    "SCHEME_TYPE_OR_SINK",
+    "UNKNOWN_PROFILE",
+    "CAPABILITY_PHASE",
+    "CONDITION_OP",
+    "FALLBACK_RESULT",
+    "RESULT_BRANCHES",
+    "OUTPUT_TYPE",
+    "TIMEOUT_BUDGET"
+  ],
+  "approvedPaymentMethodProvided": false,
+  "managementRequestValidated": false,
+  "aviatorCompiled": false,
+  "runtimeExecuted": false,
+  "databaseSqlExecuted": false,
+  "channelRequestsSent": 0
+}

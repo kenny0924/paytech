@@ -1,0 +1,595 @@
+> **历史归档，不作为新测试规范。** 本文保存 2026-09-17 DTO Mock 与两级初始化修订前的规则，仅用于解释历史设计与验证记录。现行规范见 [UNIT_TEST_GUIDE.md](./UNIT_TEST_GUIDE.md)，取代范围见 [2026-09-17 测试规范决定](./decisions/2026-09-17-test-dto-mock-lifecycle.md)。本文原有 Confirmed 字样及禁止预设响应的要求均属于历史。
+
+# Java 单元测试与自动化测试规范
+
+最后更新：2026-09-12
+
+状态：Confirmed current testing rules。Foundation 与业务服务使用同一基础设施边界，没有 Testcontainers 或自动重建 test-only Schema 的例外；现有偏差和迁移状态见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
+
+## 1. 使用范围
+
+当任务涉及 Java 生产逻辑或以下任一测试能力时，Agent 必须完整读取本文：
+
+- JUnit 测试类和测试基类；
+- Builder、Mocker、Simulator、Probe、Checker 或测试数据工具；
+- Mapper/Repository、数据库、Redis 或 MQ 测试；
+- 外部 HTTP 接口、Provider、消息、幂等、超时或并发测试；
+- 测试配置、Maven 执行范围和覆盖率策略。
+
+本文中的 `auto` 指默认由 Maven 和 CI 自动执行的测试集合，不等同于狭义的纯单元测试。纯单元测试、Repository 测试、服务级自动测试和契约测试都可以属于 `auto`，但必须遵守各自的隔离边界。
+
+涉及 `compensation_event`/XXL-Job 或 Vault 时，还必须分别读取 `COMPENSATION_EVENT_GUIDE.md` 和 `VAULT_SERVICE_ARCHITECTURE.md`，并把其中的并发、安全与失败关闭规则转成测试场景。
+
+## 2. 核心原则：测试必须内部闭环
+
+`auto` 的目标不是在运行期间替换某个 Java 方法的返回值，而是让请求经过本服务的真实生产链路，并由仓库维护的本地基础设施或有状态外部系统 Simulator 完成依赖响应。
+
+一个 `auto` 测试只有同时满足以下条件，才算内部闭环：
+
+1. 不连接任何真实业务环境、线上中间件或团队外共享测试环境。
+2. 数据库、Redis 与 RabbitMQ 只复用仓库 `local-environment` 中固定版本的 Loopback 服务；测试不启动、不停止、不重建容器。
+3. DDL 与初始化 DML 由开发者按文档手工应用。测试只准备和清理自己拥有的数据，不创建或变更 Schema、不执行初始化 DML、不销毁共享状态。
+4. 当前测试所覆盖的 Controller、按需存在的 Processor、Domain Service、Repository、Mapper 和 Integration Client 使用真实生产实现。
+5. 外部系统通过真实 HTTP/MQ 协议连接有状态 Simulator，不通过 `when(...).thenReturn(...)` 等方法级 Stub 改写运行时行为。
+6. 未准备业务数据、未识别的请求或未消费的预期调用必须快速失败并输出上下文。
+7. 调用后同时验证接口结果、本地权威数据、`compensation_event`/消息、外部请求以及不应发生的副作用。
+8. 测试可独立、可重复、可随机顺序执行，不依赖上一个测试留下的状态。
+
+闭环范围是当前微服务及其边界，不是一次启动六个核心系统。Simulator 证明当前服务遵守外部契约；外部系统真实实现的正确性由其自身 `auto`、契约测试和少量跨服务端到端测试负责。
+
+## 3. 参考项目结论
+
+`Code-PMX/transaction` 使用独立 `transaction-test` 模块，主要模式为：
+
+```text
+TestBase
+└── MockTestBase
+    └── AbstractPaymentProcessorTest
+        └── 具体业务测试
+```
+
+配套结构包括 `auto/manual/test`、Builder、Mocker、Checker 和 TestMapper。值得保留的做法是：
+
+- 从公开业务入口调用，而不是直接拼接内部实现步骤；
+- 使用 Builder/Mocker 表达前置业务场景；
+- 清理本地数据和测试状态；
+- 同时验证响应、订单、参与方和清算记录；
+- 用 `success/fail/processing` 等业务语言描述外部场景。
+
+参考项目仍存在以下不能照搬的闭环缺口：
+
+- 启动配置仍可能访问配置中心；
+- 真实环境凭据和自动访问配置中心仍不能照搬；仓库隔离、仅监听 Loopback、无生产权限且可随时重建的本地测试账号可以使用版本化固定凭据，以支持 Maven/IDE 直接运行，其他凭据仍不得进入版本库；
+- 多个 Mock Facade 直接返回共享 `response` 字段，未准备时可能返回 `null`；
+- 部分 Mocker 和内部 Map 没有在每个测试前完整重置；
+- Mock 未统一记录请求，无法验证调用参数、次数和幂等键；
+- 固定端口、`PER_CLASS`、方法顺序和 `Thread.sleep` 容易掩盖状态污染；
+- Maven 未通过明确规则保证 `manual` 永远排除在默认测试之外。
+
+Code-MoR 保留测试 DSL 思想，但把方法级 Stub 升级为“业务场景数据 + 真实适配器 + 有状态 Simulator”。
+
+## 4. 测试模块结构
+
+继续使用已确认的方案 A，在独立 `<service>-test` 模块中保留 `auto/manual/test`：
+
+```text
+<service>-test/
+├── pom.xml
+└── src/test/
+    ├── java/<base-package>/
+    │   ├── auto/
+    │   │   ├── domain/                 # 聚合、值对象、规则和状态机
+    │   │   ├── domainservice/          # Domain Service 与 Processor
+    │   │   ├── ext/
+    │   │   │   ├── http/               # HTTP 入口闭环测试
+    │   │   │   └── eventhandler/       # MQ/事件入口闭环测试
+    │   │   └── repository/             # Repository、Mapper 和约束
+    │   ├── manual/                     # 真实环境人工联调，默认不执行
+    │   └── test/
+    │       ├── base/                   # 分层测试基类
+    │       ├── configuration/          # 测试应用与动态连接配置
+    │       ├── builder/                # 请求、本地实体和场景 Builder
+    │       ├── mocker/
+    │       │   ├── local/              # 本服务前置数据
+    │       │   └── external/           # Simulator 场景数据
+    │       ├── simulator/              # 有状态外部系统模拟器
+    │       ├── checker/                # 响应、数据、请求和事件断言
+    │       ├── probe/                  # 只观察请求、消息和异步结果
+    │       ├── infrastructure/         # DB、Redis、MQ、网络故障设施
+    │       └── util/
+    └── resources/
+        ├── application-auto.yml
+        ├── application-manual.yml
+        └── fixtures/
+```
+
+规则：
+
+- `test` 模块依赖被测 `web` 模块，生产模块不得反向依赖 `test`。
+- 可执行测试只放在 `auto` 或 `manual`；`test` 包只存放共享测试基础设施。
+- `auto` 优先按业务能力和生产入口组织，不为了测试术语创建空目录。
+- 没有对应能力时不创建 Simulator、Redis、MQ 或网络故障目录。
+
+## 5. 测试分层
+
+按最小充分范围选择测试，但不能通过缩小范围绕过真实链路风险：
+
+| 类型 | 目标 | 运行边界 |
+|---|---|---|
+| 纯单元测试 | 值对象、聚合行为、状态机、规则、计算和转换 | JUnit 5；不启动 Spring 或 Mock 框架 |
+| 组件测试 | 不涉及协议和持久化的领域协作 | 直接装配小范围真实对象；测试数据通过明确的 Fake/内存实现提供 |
+| Repository 测试 | SQL、映射、唯一约束、分页、事务和乐观锁 | 真实 Repository/Mapper + 仓库本地数据库 |
+| 服务级自动测试 | 从公开入口验证本服务完整用例 | 真实本服务链路 + 测试基础设施 + 外部 Simulator |
+| 契约测试 | HTTP/Event 路径、字段、序列化和兼容性 | 真实契约序列化与协议交互 |
+
+纯单元测试只用于天然不需要外部协作的对象。如果一个用例只有依赖 Repository、HTTP、Redis 或 MQ 才能成立，应把它放入相应的闭环测试，不使用 Mockito 把依赖返回值拼成一条看似成功的链路。
+
+使用数据库、Redis 或 MQ 的测试必须启动被测服务或对应最小切片的 Spring 应用上下文，复用生产自动配置和中间件客户端生命周期；HTTP 链路同时启动随机端口服务。不得通过静态辅助类独立建连接来替代应用启动。该要求不扩大为启动所有业务系统或自动启停中间件，见 [2026-09-08 决策](./decisions/2026-09-08-middleware-auto-test-configuration.md)。
+
+测试数量服从业务风险，而不是生产类或方法数量。优先用少量业务级用例覆盖一条公开入口到数据库/外部协议的完整链路，并在这些用例中验证关键分支、状态和副作用；不要为了覆盖率给每个 Controller、Processor、Service 或 Repository 方法机械创建孤立测试。只有纯算法、状态机、值对象或转换器的聚焦单元测试能明显缩小故障定位范围时，才额外补充。
+
+### 5.1 以可执行入口组织测试
+
+测试围绕业务能力的可执行入口组织，不围绕 `Service` / `ServiceImpl` 的方法清单组织。同一入口下的一组独立测试用例可以经过多个 Service 方法，并证明它们协作后的业务结果；不得因为新增了一个 Service 方法就机械新增一个同名测试。
+
+**Handler 与 HTTP Controller 一样是独立业务入口。** 每个新增或修改的业务 Handler 必须有独立、可定位的入口测试类（例如 `RefundSubmissionHandlerAutoTest`），不能只依赖某个 HTTP 用例间接执行 Handler，也不能以“不给内部 Service 逐个建测试”为由省略。测试从真实 Handler 的公开入口或其生产 Dispatcher/Executor 触发，验证输入、返回/错误、数据库事实与正反副作用；不测试其私有辅助方法，也不另造 Processor 方便测试。确认依据见 [2026-09-12 编排与测试边界决定](./decisions/2026-09-12-use-case-orchestration-and-transaction-boundaries.md)。
+
+Handler 的独立测试仍按最小充分范围使用真实 Service、Repository 和本地数据库；“单独单元测试”不表示把下游业务链全部 Stub 掉。任务重试、到期、Claim/Lease、错误分类和完成回写由框架承担时，相应场景必须经过真实 Dispatcher/Scanner；MQ 消费协议场景仍通过真实测试 Broker。外部调用的事务状态和提交顺序由测试侧 Probe/Simulator 观察，禁止向生产 Handler 或 Service 加测试探针。
+
+补偿事件定义或工厂重构时，正常登记与重新登记场景复用 Handler 的工厂，扫描过滤、数据库观察和清理同步使用当前事件身份。公开工厂的字段契约可按纯 Java 入口验证；提交后执行、回滚不执行和恢复场景继续经过真实框架。任务类型、子类型、Payload 等负例应分别保持其他字段有效，避免因旧主类型错误提前返回而掩盖待验证分支；没有业务子类型时验证它不参与分流，有业务含义时按批准合同覆盖合法与非法值。依据见[事件工厂归属决定](./decisions/2026-09-12-handler-owned-compensation-event-factory.md)。
+
+| 入口类型 | 默认触发方式 |
+|---|---|
+| HTTP / `*-api` | 从真实 HTTP Controller 或契约客户端入口触发，覆盖反序列化、校验、协议错误和完整本地链路；不能绕过入口直接调用底层 Service 来代替接口测试 |
+| 模块公开业务接口 | 当 Owner 发布的 Service / Domain Service 接口本身就是进程内业务能力边界且没有更外层协议入口时，从该接口触发，使用真实实现和必要的本地基础设施 |
+| MQ / Event | 向测试 Broker 发送真实消息，由生产 Listener / Event Handler 消费；需要验证的序列化、Ack、重投、幂等和 DLQ 不得通过直接调用下层 Service 绕过 |
+| Job | 从生产 Job Handler / Executor 入口显式触发，不等待真实调度周期，也不直接调用其下层 Service 冒充 Job 测试；涉及 Claim、Lease、分片或批次时保留这些真实路径 |
+| Compensation Event | 从生产 Compensation Dispatcher / `CompensationEventHandler` 入口触发；重试、Claim/Lease、错误分类和完成回写属于该能力时，必须一起经过真实实现 |
+| 纯 Java 入口 | 公开静态方法、工厂、解析器、计算器、状态机或值对象行为可以直接调用，不启动 Spring；私有 Helper 和无独立业务合同的内部方法不单独建测试 |
+
+仅当某个 Service 接口本身就是批准的业务入口，或直接测试一个无协议、无持久化的纯规则组件能明显缩小故障定位范围时，才直接以它为测试入口。这类聚焦测试不能替代该能力已有的 HTTP、MQ、Job 或补偿完整链路测试，也不要求为接口中的每个内部拆分方法各建测试。
+
+普通 Foundation JAR 没有 HTTP 或业务入口时，可以直接从其公开 Java API、自动配置入口或纯机制对象编写聚焦测试，验证参数/事务门禁、Bean 装配、类型转换和 CAS 结果处理。使用 Fake/Stub 端口的此类测试只能证明 Java 协作和失败分类，不能证明 Mapper SQL、真实 Lease 竞争、数据库隔离级别或业务恢复正确性；这些风险仍须由 Foundation 的真实基础设施测试，或首个消费服务从自己的公开入口经过真实 Mapper/本地数据库来验证。业务服务接入 Foundation 后不得因此恢复一套逐 Service 的内部行为测试。
+
+## 6. 服务级 auto 标准链路
+
+服务级 `auto` 是本规范的核心形态：
+
+```text
+真实测试客户端
+  → 随机端口 HTTP Controller / 真实 MQ Listener / Job Handler / Compensation Event Handler
+    → [按需存在的 Processor]
+      → Domain Service / Domain
+        → RepositoryImpl → Mapper → 测试数据库
+        → Redis Client → 测试 Redis
+        → MQ Producer → 测试 Broker → Message Probe
+        → Integration ClientImpl
+          → @HttpExchange / Provider HTTP Client
+            → 本地外部系统 Simulator
+```
+
+- 入站 HTTP 测试默认使用随机端口，覆盖请求反序列化、校验、Controller 和错误响应。
+- MQ、Job 和 Compensation Event 测试从各自生产入口触发；显式调用 Handler 是为了跳过等待周期，不得跳过其真实 Claim/Lease、幂等、事务和状态回写。
+- 不需要验证 HTTP 协议的领域规则测试直接调用领域对象，不强制启动 Web Server。
+- 当前服务内部不使用替代实现；测试应覆盖与生产一致的依赖方向，没有 Processor 的简单用例直接经过 Controller → Domain Service。
+- 服务发现不是业务链路的一部分。`auto` 禁用 Nacos 和配置中心，通过测试动态配置把服务名或客户端地址解析到 Simulator。
+- 不经过 Gateway 验证内部服务调用。
+
+## 7. 测试基础设施
+
+### 7.1 数据库
+
+Repository 和服务级 `auto` 使用仓库 `local-environment` 中与生产一致类型的 MySQL：
+
+```text
+Domain Service → RepositoryImpl → Mapper → local MySQL
+```
+
+- 开发者先按 `LOCAL_DEVELOPMENT_ENVIRONMENT.md` 启动 MySQL，并手工应用服务的当前 Schema DDL 与唯一初始化 DML。
+- 测试不得自动建表、升级结构或执行初始化 DML；缺失依赖或表结构时必须快速失败并给出准备命令。
+- 默认不使用 H2 替代 MySQL/PostgreSQL，以免掩盖 SQL 方言、索引、锁和事务差异。
+- Repository 测试覆盖唯一约束、空结果、映射、分页、事务回滚、乐观锁和旧状态更新失败。
+- 每个测试使用唯一业务键或显式拥有的 Fixture，并在结束后按外键顺序恢复；禁止清空整个共享 Schema。
+- Code-MoR 使用 MySQL 8.4 LTS，本地镜像固定为当前批准补丁版本，不使用 H2 或其他方言替代。
+
+### 7.2 Redis
+
+生产链路涉及缓存、TTL、幂等键、分布式锁、原子操作、Lua 或序列化时，使用仓库本地 Redis：
+
+```text
+生产 Redis Client → local Redis
+```
+
+- 不通过方法 Stub 返回缓存命中或未命中。
+- Mocker 写入真实测试 Redis，Checker 验证 Key、Value、TTL 和锁释放。
+- 普通 Redis 能力通过真实 Lettuce/Spring Data Redis 链路验证；Redisson 锁或信号量场景还必须覆盖租约/过期、竞争、释放和客户端中断。
+- Foundation `@ResourceLock` 的纯表达式编译、类型规则、Key 规范化/去重/排序可以做不启动 Spring 的聚焦单元测试；合法与非法 Annotation 绑定、代理可达性、Parameter Metadata、协调开关、Namespace 和服务级 Wait/Lease 必须用应用上下文测试证明启动期接受或 Fail-Fast，不能只测首个请求的运行时失败。
+- `@ResourceLock` 的协调测试复用真实本地 Redis，至少覆盖同 Key 竞争、不同 Key 并行、重复 Key 去重、多锁稳定顺序、部分获取失败后的逆序清理、总等待预算、Lease 到期、持有者安全释放、线程中断、Redis 不可用和释放异常。等待使用有上限的条件检查，不使用固定 `Thread.sleep`；日志、指标和失败信息不得包含完整动态 Key 或敏感值。
+- 每个迁移服务必须从真实公开入口经过 Controller/Listener、Spring Proxy、带 Annotation 的 Processor、内部 `TransactionTemplate`、Domain Service 与本地数据库，证明锁在事务前获取、提交/回滚后释放。还必须模拟 Lease 已失效但旧请求继续运行的重叠窗口，验证 Expected State/Version CAS、唯一索引或必要数据库局部保护仍能守住业务不变量。
+- 当前用例完全不使用 Redis 时，不为了形式一致访问 Redis。
+
+### 7.3 MQ
+
+生产链路涉及消息发布或消费时，使用真实测试 Broker：
+
+```text
+出站：真实 Producer → 测试 Broker → Message Probe
+入站：测试 Producer → 测试 Broker → 真实 Listener → 本地业务链路
+```
+
+- Message Probe 是真实测试消费者，只记录消息，不修改业务返回。
+- 测试 Broker 使用 RabbitMQ 4.2 基线和 Spring AMQP 真实客户端，验证 `topic_*` Topic Exchange、`cg_*` Queue、Routing Key、JSON 信封和受控 DLQ 拓扑。
+- 异步发布流程应覆盖业务数据、同事务 `compensation_event`、提交后 Dispatcher、Broker Confirm 和消息内容；成功删除记录不能替代对消息与业务事实的断言。
+- Consumer 测试覆盖 Persistent Message、Manual Ack、重复、延迟、乱序、幂等、Confirm Nack/Timeout、Delivery Limit、重试和死信策略中与当前能力相关的场景。
+- 不直接调用一个被 Stub 的 `EventPublisher` 来声称消息链路已经通过。
+
+### 7.4 Vault
+
+业务服务的 `auto` 不连接共享 Vault 环境，而是通过真实 HTTP 调用有状态 Vault Simulator：
+
+当前 V1 的 API/数据范围以 [`2026-09-02-vault-database-design.md`](../docs/superpowers/specs/2026-09-02-vault-database-design.md) 和 [`vault-service/api/openapi/v1.yaml`](../vault-service/api/openapi/v1.yaml) 为准：只有 Protect/Reveal 与三表模型。当前传输使用部署网络限制的私有 HTTP，不配置应用证书；Simulator 保留必需但可伪造的 `X-Caller-Service` 与静态 Allowlist只能防止误用的弱信任事实。
+
+- Simulator 按 `dataType + tokenMode + canonical value + purpose` 处理 Protect，生成或收敛 opaque Token，并按 `token + purpose` 处理 Reveal；同时记录 Caller、幂等键、Request ID、请求和本地审计观察结果。不得把它简化成按方法名返回固定 DTO，也不得虚构 Tenant、Binding、Blind Index、Masked Value、Record Version 或 Metadata Hash。
+- 当前服务调用覆盖真实私有 HTTP、OpenAPI 定义的 Headers/Body、静态 Allowlist、Protect 幂等冲突、Reveal、本地审计和失败关闭；不得模拟 mTLS 或把 Caller Header 当作强认证。Binding/Copy/Blind Index/Masked/Metadata/Retire/Destroy 只有未来相应 V2 能力获批后才增加测试。
+- Checker 验证业务数据库只保存该消费者已批准的 opaque Token 和自身权威派生事实；日志、错误信息、Trace、Metric、普通 MQ/BCR 与 `compensation_event` 不得出现完整 Token、Reveal 明文或 Vault 内部密文。
+- 覆盖 Vault 超时、不可用、Token 不存在、Caller/Purpose/Data Type 未授权、同幂等键不同请求以及密文或 AAD 篡改等当前 V1 场景。
+- PAN、CVV/CVC、完整磁道数据、PIN/PIN Block 和卡有效期不属于 Vault Simulator 或 Fixture 的合法输入；必须覆盖拒绝持久化、日志零泄漏与 Security Event。Payment 集成测试只使用 Provider Token 与批准的卡片描述字段。
+- Vault 服务自身的 `auto` 使用手工准备的真实本地测试数据库与每个 Fixture 隔离的 LOCAL AES 根密钥，验证 Protect/Reveal、AAD、密文篡改、幂等、策略和本地审计。生产 KMS、轮换和销毁不是 V1 已验证能力。
+
+### 7.5 本地中间件生命周期
+
+- 完整服务级 `auto` 的本地前置条件是 JDK、Maven、Docker/兼容运行环境，以及已由开发者启动并准备好的 `local-environment`。
+- Maven/JUnit 不调用 Docker API，不创建、不停止、不重建容器；镜像使用仓库 Compose 固定版本，不使用 `latest`。
+- 隔离、Loopback-only 且可随时重建的本地测试账号可以使用仓库统一维护的固定密码；测试配置、`local-environment` 初始化值和说明文档必须保持一致，并允许环境变量显式覆盖。生产、共享测试、第三方及任何真实环境凭据仍来自未提交的 `.env.local` 或安全配置，测试与日志不得输出这些值。
+- 并行执行前必须证明数据库业务键、Redis Key、Topic/Consumer Group 和清理逻辑互不干扰。
+
+### 7.6 本地共享服务规则
+
+Operations Gateway 与所有后续服务统一复用仓库 `local-environment`。Gateway 的路由、JWT、Guard、Redis 与协议测试边界继续遵守 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)，传输与可信 Client IP 测试以 [`2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md`](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) 为准：
+
+- 只连接 `127.0.0.1:16379` 的 Redis 8.2.1；固定连接配置放在 `application-auto.yml`，本地测试账号凭据遵守第 7.5 节，`PAYTECH_REDIS_PASSWORD` 仅作为 YAML 环境覆盖入口，不由 Java 直接读取；禁止连接宿主机 `6379` 或其他项目实例；
+- Compose Redis 必须在测试开始前健康；缺失、版本/鉴权错误时快速失败并给出启动提示，不降级到内存实现、方法 Stub 或其他 Redis；
+- 每次 Maven 测试运行生成不可预测且唯一的 Gateway Namespace，所有 Route/Dimension Key 都位于该 Namespace；
+- Setup/Teardown 只用 `SCAN` + 精确前缀删除本次运行 Key，禁止 `KEYS *`、`FLUSHDB`、选择未保留的逻辑库或删除其他运行的 Key；
+- 并行测试必须使用不同 Namespace。Redis 不可用场景通过连接未监听的 Loopback 端口验证 Fail-Closed，不暂停或停止共享 Compose 服务；
+- MySQL 使用 `127.0.0.1:13306`，RabbitMQ 使用仓库固定 Loopback 端口；每个服务仅使用自己的数据库账号和业务 Namespace；
+- CI 或开发者必须先用同一仓库 Compose 定义启动所需服务并手工应用 SQL，再运行默认 `auto`；不能因为环境缺少依赖而静默跳过测试。
+
+本规则不改变真实生产链、Simulator、无方法级 Stub 和可重复断言要求。Gateway 测试仍从随机私有 HTTP 端口启动真实 WebFlux 应用，并使用有状态内部 HTTP BFF/JWKS Simulator；默认请求模拟 Nginx 覆盖一个合法 `X-Real-IP`，缺失、重复、逗号链或非法值必须 Fail-Closed，且 BFF 不能收到任何已消费代理 Header。
+
+## 8. 外部系统 Simulator
+
+### 8.1 定义
+
+Simulator 是一个通过真实协议提供服务的简化外部系统，而不是方法返回值仓库。典型组成：
+
+```text
+<ExternalSystem>Simulator
+├── HTTP Controller / MQ Listener
+├── Request Validator
+├── 简化业务处理
+├── Scenario Store
+├── Response Converter
+└── Request Journal
+```
+
+Simulator 必须：
+
+- HTTP Simulator 运行在测试进程的随机 Loopback 端口；MQ Simulator 通过仓库本地 Broker 的测试专属 Namespace 交互。不得为 Simulator 引入或启动测试容器；
+- 使用与生产客户端相同的 HTTP/MQ 契约；
+- 根据收到的请求和已经准备的业务场景数据计算结果；
+- 校验关键字段，不接受与场景无关的请求；
+- 记录请求、顺序、时间和关联标识，供 Checker 验证；
+- 对缺失场景和未识别请求显式失败；
+- 在每个测试前重置自身数据和 Request Journal。
+
+Simulator 只实现当前服务依赖的最小外部语义，不复制另一个微服务的全部领域模型。
+
+### 8.2 内部 Spring HTTP 服务
+
+内部服务 Simulator 优先依赖提供方的 `*-api` JAR，并实现相同的 `@HttpExchange` 契约：
+
+```text
+本服务 Domain Service
+  → 本地 *Client
+    → 真实 *ClientImpl
+      → 真实 @HttpExchange 代理
+        → Simulator HTTP Controller
+```
+
+这样能够覆盖 URL、HTTP Method、Path/Query/Header、JSON、错误映射、超时配置和幂等键。不能直接替换 `*ClientImpl` 或 `@HttpExchange` 接口返回值来代替这类测试。
+
+### 8.3 第三方 Provider
+
+Provider Simulator 按已批准的第三方协议提供 HTTP Endpoint，并维护最小测试状态，例如账户、外部订单、支付结果或回调记录。生产 Provider Adapter 必须真实发出请求并完成外部状态到本地语义的转换。
+
+### 8.4 故障注入
+
+业务失败通过场景数据产生；网络失败通过测试基础设施产生：
+
+| 场景 | 推荐方式 |
+|---|---|
+| 业务拒绝、无数据、状态不允许 | 准备 Simulator 业务状态，由其规则生成响应 |
+| HTTP 500 或协议错误 | Simulator 的显式故障场景 |
+| 延迟、超时、断连 | Simulator 延迟/提前关闭连接，或测试进程内的协议代理 |
+| MQ/Redis 不可用 | 为当前测试注入未监听的 Loopback 端口、无效凭据或不存在的测试 VHost；不得停止共享 `local-environment` |
+| 非法 JSON/缺失字段 | 专门的协议异常场景 |
+
+故障注入不得通过修改被测 Spring Bean 的方法返回值实现，并且必须在测试结束后恢复。
+
+## 9. 禁止方法级行为 Stub
+
+Code-MoR 自动测试不使用以下方式构造业务结果：
+
+```java
+when(client.call(request)).thenReturn(response);
+doThrow(exception).when(client).call(request);
+```
+
+同样禁止：
+
+- `@MockBean`、`@MockitoBean` 或同类机制替换生产 Repository、Client、Publisher 后声称链路已闭环；
+- Mock Facade 直接返回一个测试期间可变的共享 `response` 字段；
+- 在测试方法中临时修改生产单例 Bean 的状态；
+- 用 Spy 绕过真实分支、事务、序列化或持久化；
+- 通过返回 `null` 表示“未配置场景”。
+
+如果极小的纯算法对象需要一个协作者，应优先重构出显式输入、值对象或无副作用策略。确实需要内存实现时，编写行为稳定、可独立验证的 Fake；Fake 根据输入和内部状态运行，不能由每个测试动态指定某次方法返回什么。
+
+## 10. Builder 与 Mocker
+
+### 10.1 Builder
+
+Builder 提供语义化、合法的默认对象：
+
+```java
+public final class ExternalCaseBuilder {
+    private final ExternalCase externalCase = new ExternalCase();
+
+    public static ExternalCaseBuilder template() {
+        return new ExternalCaseBuilder()
+            .externalId(TestIds.next())
+            .status(ExternalCaseStatus.AVAILABLE);
+    }
+
+    public ExternalCaseBuilder externalId(String value) {
+        externalCase.setExternalId(value);
+        return this;
+    }
+
+    public ExternalCase build() {
+        Assertions.assertNotNull(externalCase.getExternalId());
+        return externalCase;
+    }
+}
+```
+
+- `template()` 返回最小合法默认值，测试只覆盖与场景有关的字段。
+- 提供 `clearXxx()`、`addXxx(...)` 等安全的集合操作。
+- Builder 不访问数据库、Redis、MQ 或外部服务，也不改变全局测试状态。
+- 随机数据必须满足格式约束；幂等、快照和关联断言需要稳定值时显式传入。
+
+### 10.2 Mocker
+
+Mocker 的含义限定为“准备业务场景数据”，不再表示 Mock Java 方法：
+
+```text
+Builder 构建场景数据
+  → Mocker 写入本地数据库/Redis或 Simulator Store
+    → 真实生产链路读取该数据
+      → Simulator/本服务按规则产生结果
+```
+
+推荐 API：
+
+```java
+ExternalCase externalCase = externalCaseMocker.mock(
+    ExternalCaseBuilder.template().externalId(externalId)
+);
+```
+
+- 本地数据 Mocker 通过 Mapper/Test Repository 准备本服务拥有的数据。
+- 外部数据 Mocker 只写入对应 Simulator 的 Scenario Store。
+- Mocker 可以保持本场景创建对象，支持链式准备关联数据。
+- Mocker 不调用被测业务命令偷偷完成 Arrange。
+- `success()`、`rejected()` 等名称必须落到明确业务状态，而不是保存一个待返回的 Response。
+
+## 11. Checker、Probe 与请求记录
+
+Checker 把响应、数据库、Redis、消息和外部调用断言组织成可读 DSL：
+
+```java
+invoke(request)
+    .success()
+    .storedExpectedState()
+    .compensationEventCount("ExpectedEvent", 1);
+
+externalRequestChecker
+    .calledOnceWith(externalId, idempotencyKey)
+    .noUnexpectedCalls();
+```
+
+规则：
+
+- Checker 只读取和断言，不创建前置数据、不调用业务命令、不改变 Simulator 行为。
+- Probe 只观察真实 HTTP 请求、消息或异步结果，不参与业务响应。
+- 集合断言必须验证总数和目标元素；未找到时显式失败。
+- 外部调用验证至少包含次数、关键参数、幂等键和必要的关联 ID。
+- 失败信息包含期望、实际值、业务标识和已记录请求/事件摘要。
+- 失败场景同时验证事务回滚、未发布事件和未发生后续外部调用。
+
+## 12. 测试基类与配置
+
+避免所有测试继承一个启动完整应用的巨大基类：
+
+```text
+TestBase
+├── ServiceAutoTestBase
+├── RepositoryAutoTestBase
+└── MessagingAutoTestBase
+```
+
+- 纯单元测试通常不继承 Spring 基类。
+- `TestBase` 只提供无状态常量、固定时间和确定性 ID 工具。
+- `ServiceAutoTestBase` 管理 Spring、随机端口、测试基础设施、Simulator 和统一重置。
+- `RepositoryAutoTestBase` 只连接本地数据库并装配 MyBatis。
+- `MessagingAutoTestBase` 管理 Broker、测试 Producer/Consumer 和消息清理。
+- `@BeforeEach` 清理当前测试涉及的数据、缓存、消息、Simulator 状态和 Request Journal。
+- 不使用 `@Order`、`PER_CLASS` 或共享可变字段修复测试间依赖。只有真实类级资源必须由非静态生命周期方法管理、每个测试仍在 `@BeforeEach` 完整重置业务状态且测试可随机独立运行时，才可带原因使用 `PER_CLASS`；优先使用无共享业务状态的静态 Extension/Fixture，冗余注解应删除。
+
+`application-auto.yml` 必须：
+
+- 集中维护固定连接地址、端口、超时、开关和测试身份配置，由 Spring Profile 加载并绑定；测试辅助类复用 Spring Bean，不直接调用 `System.getenv`、解析 `.env` 或另建默认中间件客户端。固定故障模式参数同样放在 YAML；Java 动态注入只用于运行时产生的 Simulator 地址、随机端口、隔离标识或当前场景明确变化的边界值；
+- 关闭 Nacos、外部配置中心、定时任务和非本测试需要的真实 Consumer；
+- 只允许仓库本地 Loopback URL。仅对仓库隔离、无生产权限且可随时重建的本地测试账号，允许配置固定用户名和密码以支持 Maven/IDE 直接运行，并保留环境变量覆盖入口；生产、共享测试、第三方、Vault、Token、密钥及任何真实环境凭据必须由安全配置注入；
+- 数据库、Redis、MQ 使用第 7.6 节固定的本地地址；Simulator 仍由测试动态注入地址；
+- 在启动时拒绝未由测试基础设施注册的外部 Endpoint。
+
+## 13. 数据和状态隔离
+
+- TestMapper 提供按聚合 ID 清理、批量清理和只读测试查询。
+- 清理顺序遵守外键，数据库手工 DDL 与生产映射保持一致。
+- Redis 使用独立前缀/数据库并清理相关 Key。
+- MQ 使用测试专属 VHost 或唯一 Exchange/Queue Namespace；生产命名规则映射为测试唯一名，并清理消息、Binding 和消费状态。
+- Simulator Scenario Store 与 Request Journal 每个测试重置。
+- 固定 `Clock`、ID Generator 和随机源在每个测试恢复默认测试状态。
+- 并行测试共享本地中间件时，必须使用唯一业务键、前缀或消息命名空间，禁止互相清理数据。
+
+## 14. 标准测试流程
+
+服务级测试使用 Arrange → Act → Assert，但 Arrange 只准备状态：
+
+```java
+@Test
+void test_normalFlow() {
+    LocalEntity entity = localEntityMocker.mock(LocalEntityBuilder.template());
+    externalCaseMocker.mock(
+        ExternalCaseBuilder.template().externalId(entity.getExternalId())
+    );
+
+    BusinessResponseChecker checker = invoke(
+        BusinessRequestBuilder.template().entityId(entity.getEntityId())
+    );
+
+    checker.success()
+        .storedExpectedState()
+        .compensationEventCount("ExpectedEvent", 1);
+    externalRequestChecker
+        .calledOnceFor(entity.getExternalId())
+        .noUnexpectedCalls();
+}
+```
+
+这个示例中的 Mocker 只写入状态；`invoke` 后的所有处理都经过真实生产实现和真实测试协议。
+
+## 15. 异步与时间
+
+- 禁止使用固定 `Thread.sleep` 判断异步完成。
+- 使用有上限的条件等待，例如 Awaitility，持续检查数据库、消息或 Probe 条件。
+- 超时失败必须输出尚未满足的条件、相关业务 ID、已记录消息和外部请求。
+- 能显式触发 Event Handler、Compensation Dispatcher 或 XXL 扫描 Handler 时，不等待真实定时周期；测试仍必须经过真实 Claim/Lease 和生产 Handler。
+- 时间相关规则注入固定 `Clock`；不要修改宿主机时间。
+
+## 16. 用例覆盖
+
+同一入口下的测试集合先按入口合同和业务风险形成场景矩阵，不只写一个 happy path。不同场景原则上拆成可独立运行、可独立诊断的测试方法，不把成功、拒绝、异常和重试路径堆进同一个测试。HTTP/API 重点考虑参数、授权、幂等和错误合同；MQ 重点考虑重复、乱序、重投、Ack/DLQ 和非法消息；Job 重点考虑无待处理数据、批次边界、重复执行、并发 Claim/Lease、部分失败和恢复；Compensation Event Handler 重点考虑未到执行时间、可重试/永久失败、幂等重放、Lease 丢失和完成回写；公开静态或纯函数入口重点考虑典型值、边界值、非法输入和确定性。
+
+一个业务入口至少评估以下相关场景：
+
+- 参数为空、格式错误和非法枚举；
+- 本地权威数据或外部 Simulator 数据不存在；
+- 正常成功路径；
+- 状态不允许或业务规则违反；
+- 金额、时间、集合和分页边界；
+- 相同幂等键重复请求；
+- 相同幂等键但业务参数不同；
+- 并发状态更新或乐观锁冲突；
+- 使用资源锁时，同一资源竞争、不同资源并行、多资源反向声明仍按确定顺序，以及部分取锁失败不进入业务方法；
+- Redis Lease 失效或协调客户端故障时，数据库最终保护仍阻止旧请求破坏状态、权限上限、资金或跨行不变量；
+- 外部业务失败、处理中、协议错误、超时、断连和未知结果；
+- MQ 重复、乱序和延迟；
+- 事务回滚后数据库、Redis、`compensation_event` 和 MQ 的一致性；
+- 不应调用后续外部系统的短路路径。
+
+这些场景集中在入口层验证其可观察结果、权威状态和副作用，不分摊成“每个 Service 方法一个测试类”。根据该能力的真实分支和风险选择适用项，不机械套用全部场景，但不能只测试 happy path。
+
+## 17. Maven 执行规则
+
+默认测试生命周期只运行 `auto`：
+
+```text
+mvn test
+  → include **/auto/**/*Test.java
+  → exclude manual
+```
+
+`manual` 必须通过独立 Maven Profile 显式运行，例如 `-Pmanual-test`。目录名本身不是隔离措施，父 POM/测试模块必须配置 Surefire 的 include/exclude 或等价 JUnit Tag 规则。
+
+具体 artifactId 创建后使用：
+
+```bash
+mvn test
+mvn -pl <service>-test -am test
+mvn -pl <service>-test -Dtest=SpecificTest test
+```
+
+- 默认 `mvn test` 应完成全部 `auto` 闭环并在 CI 使用相同入口。
+- 可以用 `unit`、`repository`、`service`、`contract` Tag 做本地筛选，但不能改变默认全量范围。
+- 涉及公共契约或父 POM 时运行完整 reactor 测试。
+- 目标覆盖率为 90% 以上，但有效状态、分支和副作用断言优先于数字。
+- 缺少 Docker 等已声明基础条件时，报告为环境阻塞，不得切换到真实共享环境或声称测试通过。
+
+## 18. 明确禁止的做法
+
+- 使用 `when(...).thenReturn(...)`、`doThrow(...).when(...)` 等方法级行为 Stub 拼装业务流程；
+- 用 `@MockBean`、`@MockitoBean` 或 Spy 替换生产链路后声称服务闭环通过；
+- 自动测试连接真实微服务、Provider、Nacos、配置中心，或仓库 Loopback `local-environment` 之外的团队共享基础设施；
+- 在测试内启动、停止或重建 MySQL、Redis、RabbitMQ 容器，或绕过第 7.6 节固定的仓库 `local-environment` 连接其他实例；
+- 让 HTTP Simulator 依赖人工维护的固定端口；它必须由测试进程在随机 Loopback 端口启动；
+- 测试配置写入个人地址、共享账号、生产/第三方/真实环境密码或 Token；隔离的 Loopback-only 本地测试账号固定凭据不在此列；
+- 所有测试默认使用固定端口的 `@SpringBootTest`；
+- 测试依赖固定方法顺序或共享实例状态；
+- Builder 访问基础设施或隐式改变 Simulator；
+- Mocker 保存一个待返回 Response 来改变后续方法结果；
+- Checker 创建数据、重新调用命令或对未找到元素静默通过；
+- 用固定 `Thread.sleep`、日志输出或人工观察代替断言；
+- 空测试、被注释的测试或只打印 `Running` 的占位测试；
+- 为提高覆盖率排除核心业务包或执行代码但不验证结果。
+
+## 19. 新增外部依赖的完成条件
+
+新增任何 HTTP Client、Provider Adapter、Redis 能力或 MQ Producer/Consumer 时，必须同步具备：
+
+- 已由开发者启动的仓库 `local-environment` 真实基础设施，或由测试进程启动的有状态 Simulator；
+- 对应 Scenario Builder/Mocker；
+- Request/Message Probe 与 Checker；
+- 成功、业务失败和相关技术故障场景；
+- 未准备场景和意外请求的快速失败机制；
+- 每个测试后的完整状态重置；
+- 不访问真实环境的动态测试配置。
+
+新增或修改 Foundation `@ResourceLock` 还必须具备受限表达式与 Key 安全测试、启动 Fail-Fast/代理架构测试、真实 Redis 多实例竞争与故障语义、锁在 `TransactionTemplate` 外层的链路证据，以及 Lease 重叠下数据库最终保护的服务级测试。仅证明“拿到过 Redis 锁”不构成完成。
+
+如果一个新功能只能连接真实环境才能验证，则不能视为测试完成。
+
+## 20. 完成检查清单
+
+- [ ] 测试选择了最小充分层级，但没有绕过需要验证的真实链路。
+- [ ] 纯单元测试没有启动 Spring、容器或行为 Stub 框架。
+- [ ] 服务级测试经过真实 Controller/Listener、按需存在的 Processor、Domain Service 和 Integration/Repository 实现。
+- [ ] 数据库、Redis 和 MQ 在相关场景中复用已启动的仓库 `local-environment`，测试没有创建、停止或重建容器。
+- [ ] 涉及中间件的测试启动了被测服务/最小切片的 Spring 上下文并复用其客户端；HTTP 链路启动随机端口服务，缺失依赖时快速失败并给出准备提示。
+- [ ] 固定测试配置由 `application-auto.yml` 及 Spring 配置绑定加载；Java 未直接读取环境变量、解析 `.env` 或另建默认连接，动态注入仅用于第 12 节允许的运行时/场景值。
+- [ ] 外部 HTTP/MQ 通过有状态 Simulator 和真实协议完成，没有方法级 Stub。
+- [ ] 测试围绕业务能力和完整链路组织，没有为了覆盖率给每个内部方法机械创建孤立测试。
+- [ ] 测试从实际可执行入口触发：HTTP/API、模块公开业务接口、MQ Listener/Event Handler、Job Handler、Compensation Event Handler，或公开静态/纯 Java 合同；没有绕过入口直接测试一串 Service 方法。
+- [ ] 新增或修改的业务 Handler 有独立入口测试类；HTTP 链路间接覆盖没有替代 Handler 专项的输入、结果、事务和副作用验证。
+- [ ] 每个入口已按类型评估正常、边界、失败、重放/幂等、并发/事务和副作用场景，没有只覆盖 happy path。
+- [ ] Builder 只构建数据，Mocker 只准备状态，Checker/Probe 只观察和断言。
+- [ ] 未准备场景、意外请求和多余调用都会显式失败。
+- [ ] 响应、本地数据、缓存、事件和外部调用按风险完成联合断言。
+- [ ] 资源锁变更覆盖启动校验、同/异资源并发、多锁顺序、Wait/Lease、Redis 故障、事务外层和数据库最终保护，且没有用 Stub 或固定睡眠替代真实链路。
+- [ ] 每个测试独立、可重复并且不依赖顺序。
+- [ ] 没有生产、共享测试、第三方或真实环境凭据；固定本地测试凭据仅属于隔离的 Loopback-only 可重建账号，并与初始化配置一致。
+- [ ] 默认 Maven 测试只运行 `auto`，`manual` 需要显式 Profile。
+- [ ] 已运行相关 Maven 测试并记录实际结果。

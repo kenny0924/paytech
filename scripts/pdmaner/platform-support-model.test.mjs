@@ -191,7 +191,7 @@ function structuralProjection(model) {
   };
 }
 
-test("Platform Support Manifest contains exactly 64 approved tables in seven groups", async () => {
+test("Platform Support Manifest contains exactly 62 approved tables in seven groups", async () => {
   const { TABLES, TABLE_GROUPS } = await import("./platform-support/manifest.mjs");
   assert.equal(Object.keys(APPROVED_TABLE_GROUPS).length, 7);
   assert.deepEqual(
@@ -219,7 +219,7 @@ test("Platform Support Manifest has the exact consumer-driven hash allowlist", a
       .map((field) => `${table.defKey}.${field.defKey}`))
     .sort();
   assert.deepEqual(actualHashFields, EXPECTED_HASH_FIELDS);
-  assert.equal(actualHashFields.length, 34);
+  assert.equal(actualHashFields.length, 31);
 });
 
 test("Platform Support tenant-owned roots reject obsolete ownership and version tables", async () => {
@@ -416,36 +416,26 @@ test("Platform Support File and Consumer Document use twelve consumer-driven tab
   assert.ok(fieldsOf("document_delivery").includes("notification_delivery_id"));
 });
 
-test("Platform Support Notification uses nine delivery-centered tables", async () => {
+test("Platform Support Notification keeps seven ordinary-email tables and recipient privacy", async () => {
   const { TABLES } = await import("./platform-support/manifests/03-notification.mjs");
-  assert.deepEqual(TABLES.map((table) => table.defKey), [
-    "notification_provider", "notification_request", "notification_delivery",
-    "notification_attempt", "notification_route", "notification_provider_callback",
-    "notification_suppression", "notification_template", "notification_template_translation",
+  assert.deepEqual(TABLES.map(table => table.defKey), [
+    "notification_request", "notification_delivery", "notification_attempt", "notification_template",
+    "notification_template_content", "notification_provider", "notification_route",
   ]);
-
-  const tableByKey = new Map(TABLES.map((table) => [table.defKey, table]));
-  const fieldsOf = (tableKey) => tableByKey.get(tableKey).fields.map((field) => field.defKey);
-  for (const revisionTable of ["notification_provider", "notification_template", "notification_route"]) {
-    assert.ok(fieldsOf(revisionTable).includes("revision_no"));
-    assert.ok(fieldsOf(revisionTable).includes("active_slot"));
+  const tableByKey = new Map(TABLES.map(table => [table.defKey, table]));
+  const fieldsOf = key => tableByKey.get(key).fields.map(field => field.defKey);
+  const uniqueFields = (table, name) => tableByKey.get(table).indexes.find(index => index.defKey === name)?.fields;
+  assert.deepEqual(uniqueFields("notification_request", "uk_notify_source"), ["source_system", "source_event_key"]);
+  assert.deepEqual(uniqueFields("notification_delivery", "uk_notify_recipient"), ["request_id", "address_vault_token"]);
+  assert.deepEqual(uniqueFields("notification_attempt", "uk_notify_provider_request"), ["provider_request_no", "provider_id"]);
+  assert.deepEqual(uniqueFields("notification_template_content", "uk_notify_template_locale"), ["template_id", "locale"]);
+  for (const name of ["notification_template", "notification_template_content", "notification_provider", "notification_route"]) {
+    assert.ok(fieldsOf(name).includes("version"));
+    for (const removed of ["revision_no", "active_slot", "secret_ref", "endpoint"]) assert.ok(!fieldsOf(name).includes(removed));
   }
+  for (const table of TABLES) assert.ok(!table.fields.some(field => field.defKey.endsWith("_hash")));
+  assert.equal(fieldsOf("notification_delivery").includes("tenant_id"), false);
   assert.ok(fieldsOf("notification_request").includes("tenant_id"));
-  assert.equal(fieldsOf("notification_request").includes("recipient_set_hash"), false);
-  assert.deepEqual(
-    tableByKey.get("notification_request").indexes
-      .find((index) => index.defKey === "uk_notify_source")?.fields,
-    ["source_system", "source_event_key", "notification_type"],
-  );
-  for (const mergedField of [
-    "recipient_no", "address_vault_token", "address_blind_index", "address_masked",
-    "message_vault_token", "notify_template_translation_id", "notification_route_id",
-    "lease_owner", "lease_until", "fencing_token",
-  ]) {
-    assert.ok(fieldsOf("notification_delivery").includes(mergedField), `missing notification_delivery.${mergedField}`);
-  }
-  assert.equal(fieldsOf("notification_attempt").includes("response_hash"), false);
-  assert.equal(fieldsOf("notification_provider_callback").includes("signature_header_hash"), false);
 });
 
 test("Platform Support Webhook uses tenant-owned revisions and direct replay deliveries", async () => {
@@ -721,7 +711,7 @@ test("Platform Support separates mutable lifecycle metadata from immutable facts
     "t_notification_provider",
     "t_notification_route",
     "t_notification_template",
-    "t_notify_template_translation",
+    "t_notification_attempt",
     "t_webhook_endpoint_revision",
     "t_webhook_signing_secret",
     "t_webhook_subscription",
@@ -734,8 +724,6 @@ test("Platform Support separates mutable lifecycle metadata from immutable facts
     "t_file_owner_ref",
     "t_file_scan_result",
     "t_document_delivery",
-    "t_notification_attempt",
-    "t_notification_provider_callback",
     "t_webhook_event",
     "t_webhook_attempt",
     "t_audit_event",
@@ -872,13 +860,8 @@ test("Platform Support composite keys bind every security-sensitive identity and
     ["document_id", "tenant_id", "order_id", "consumer_ref_hash"],
     ["document_id", "tenant_id", "order_id", "consumer_ref_hash"],
   ]);
-  assert.deepEqual(tuple("fk_doc_delivery_notification"), [
-    ["notification_delivery_id", "tenant_id"], ["delivery_id", "tenant_id"],
-  ]);
-  assert.deepEqual(tuple("fk_notify_delivery_request"), [
-    ["request_id", "tenant_id", "notification_template_id"],
-    ["request_id", "tenant_id", "notification_template_id"],
-  ]);
+
+
   assert.deepEqual(tuple("fk_webhook_delivery_event"), [
     ["webhook_event_id", "tenant_id", "event_type", "payload_schema_version"],
     ["event_id", "tenant_id", "event_type", "payload_schema_version"],

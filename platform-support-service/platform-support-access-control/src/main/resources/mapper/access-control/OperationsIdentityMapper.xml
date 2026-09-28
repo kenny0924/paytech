@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.OperationsIdentityMapper">
+
+    <sql id="AccountColumns">
+        account_id id, account_type type, email_vault_token emailToken, email_masked emailMasked, status,
+        consecutive_password_failures failures, locked_until lockedUntil, credential_version credentialVersion,
+        auth_epoch authEpoch, version
+    </sql>
+
+    <sql id="SessionColumns">
+        session_id id, account_id accountId, context_type contextType, tenant_id tenantId, tenant_member_id memberId,
+        account_auth_epoch accountEpoch, credential_version_snapshot credentialVersion, issued_time issuedTime,
+        last_activity_time lastActivityTime, idle_expire_time idleExpireTime, absolute_expire_time absoluteExpireTime,
+        current_generation_no generationNo, status
+    </sql>
+
+    <select id="account" parameterType="_long"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsAccount">
+        SELECT <include refid="AccountColumns"/>
+        FROM t_user_account
+        WHERE realm='OPERATIONS'
+        AND account_id=#{id}
+    </select>
+
+    <select id="loginAccount" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsAccount">
+        SELECT <include refid="AccountColumns"/>
+        FROM t_user_account
+        WHERE realm='OPERATIONS'
+        AND ((#{bootstrap}=1 AND account_type='BOOTSTRAP_ADMIN' AND login_name='admin'
+                AND email_vault_token IS NULL AND email_masked IS NULL AND email_verified_time IS NULL)
+            OR (#{bootstrap}=0 AND account_type='HUMAN' AND login_name IS NULL
+                AND email_vault_token=#{token} AND email_masked IS NOT NULL))
+    </select>
+
+    <select id="lockBootstrapAccount" parameterType="_long"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsAccount"
+            flushCache="true" useCache="false">
+        SELECT <include refid="AccountColumns"/>
+        FROM t_user_account
+        WHERE account_id=#{id}
+        AND realm='OPERATIONS'
+        AND account_type='BOOTSTRAP_ADMIN' FOR UPDATE
+    </select>
+
+    <select id="lockManagementActor" parameterType="_long" resultType="java.lang.Long"
+            flushCache="true" useCache="false">
+        SELECT account_id FROM t_user_account WHERE account_id=#{id} AND realm='OPERATIONS' FOR SHARE
+    </select>
+
+    <select id="lockManagementMember" parameterType="_long" resultType="java.lang.Long"
+            flushCache="true" useCache="false">
+        SELECT m.member_id FROM t_tenant_member m
+        WHERE m.member_id=(
+            SELECT scoped.member_id FROM t_tenant_member scoped
+            JOIN t_access_tenant t ON t.tenant_id=scoped.tenant_id
+                AND t.tenant_type='INTERNAL' AND t.owner_ref_id=1
+            JOIN t_user_account a ON a.account_id=scoped.account_id AND a.realm='OPERATIONS'
+            WHERE scoped.account_id=#{accountId}
+        ) FOR SHARE
+    </select>
+
+    <select id="internalTenant" resultType="java.lang.Long">
+        SELECT tenant_id FROM t_access_tenant
+        WHERE tenant_type='INTERNAL' AND owner_ref_id=1
+          AND owner_status='ACTIVE' AND security_status='ACTIVE'
+    </select>
+
+    <select id="password" parameterType="_long"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsPassword">
+        SELECT password_credential_id id, account_id accountId, password_verifier_phc verifier,
+        algorithm_version algorithmVersion, memory_kib memoryKib, iterations, parallelism, credential_version credentialVersion,
+        force_change_flag forceChange, status
+        FROM t_password_credential
+        WHERE account_id=#{id}
+        AND algorithm_code='ARGON2ID'
+    </select>
+
+    <select id="member" parameterType="_long"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsMember">
+        SELECT m.member_id id, m.tenant_id tenantId, m.account_id accountId, m.status, t.owner_status ownerStatus,
+        t.security_status securityStatus, m.version
+        FROM t_tenant_member m
+        JOIN t_access_tenant t ON t.tenant_id=m.tenant_id
+        WHERE m.account_id=#{id}
+        AND t.tenant_type='INTERNAL'
+        AND t.owner_ref_id=1
+    </select>
+
+    <select id="session" parameterType="_long"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsSession">
+        SELECT <include refid="SessionColumns"/>
+        FROM t_auth_session
+        WHERE session_id=#{id}
+        AND realm='OPERATIONS'
+        AND channel='OPERATIONS'
+        AND authentication_method='PASSWORD'
+    </select>
+
+    <select id="lockSession" parameterType="_long"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsSession"
+            flushCache="true" useCache="false">
+        SELECT <include refid="SessionColumns"/>
+        FROM t_auth_session
+        WHERE session_id=#{id}
+        AND realm='OPERATIONS'
+        AND channel='OPERATIONS'
+        AND authentication_method='PASSWORD' FOR UPDATE
+    </select>
+
+    <select id="refresh" parameterType="java.lang.String"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsRefresh">
+        SELECT refresh_generation_id id, session_id sessionId, generation_no generationNo, token_lookup_id lookupId,
+        token_secret_hmac secretHmac, hmac_key_version keyVersion, status, expires_time expiresTime
+        FROM t_refresh_token_generation
+        WHERE token_lookup_id=#{lookupId}
+    </select>
+
+    <select id="signingKey"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsSigningKey">
+        SELECT signing_key_id id, kid, kms_key_ref keyRef, public_jwk_canonical_json publicJwk, not_before notBefore
+        FROM t_jwt_signing_key
+        WHERE realm='OPERATIONS'
+        AND status='ACTIVE'
+        AND active_slot=1
+    </select>
+
+    <update id="passwordFailure">
+        UPDATE t_user_account
+        SET locked_until=CASE WHEN consecutive_password_failures+1&gt;=#{threshold} THEN #{lockedUntil} ELSE NULL END,
+        consecutive_password_failures=consecutive_password_failures+1, last_password_failure_time=#{now},
+        version=version+1, update_time=#{now}
+        WHERE account_id=#{id}
+        AND realm='OPERATIONS'
+        AND status='ACTIVE'
+        AND credential_version=#{expectedCredentialVersion}
+        AND (locked_until IS NULL OR locked_until&lt;=#{now})
+    </update>
+
+    <update id="passwordSuccess">
+        UPDATE t_user_account
+        SET consecutive_password_failures=0, locked_until=NULL, last_password_failure_time=NULL, version=version+1,
+        update_time=#{now}
+        WHERE account_id=#{id}
+        AND realm='OPERATIONS'
+        AND status='ACTIVE'
+        AND version=#{expectedVersion}
+        AND credential_version=#{expectedCredentialVersion}
+        AND auth_epoch=#{expectedAuthEpoch}
+        AND (locked_until IS NULL OR locked_until&lt;=#{now})
+    </update>
+
+    <insert id="insertSession" parameterType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsSession">
+        INSERT INTO t_auth_session(session_id, account_id, realm, channel, context_type, tenant_id, tenant_member_id,
+        authentication_method, account_auth_epoch, credential_version_snapshot, issued_time,
+        last_reauthenticated_time, last_activity_time, idle_expire_time, absolute_expire_time, current_generation_no,
+        status, version, create_time, update_time)
+        VALUES(#{id}, #{accountId}, 'OPERATIONS', 'OPERATIONS', #{contextType}, #{tenantId}, #{memberId}, 'PASSWORD',
+        #{accountEpoch}, #{credentialVersion}, #{issuedTime}, #{issuedTime}, #{lastActivityTime}, #{idleExpireTime},
+        #{absoluteExpireTime}, #{generationNo}, #{status}, 1, #{issuedTime}, #{issuedTime})
+    </insert>
+
+    <insert id="insertRefresh">
+        INSERT INTO t_refresh_token_generation(refresh_generation_id, session_id, generation_no, token_lookup_id,
+        token_secret_hmac, hmac_key_version, issued_time, expires_time, status, active_slot, version, create_time,
+        update_time)
+        VALUES(#{row.id}, #{row.sessionId}, #{row.generationNo}, #{row.lookupId}, #{row.secretHmac},
+        #{row.keyVersion}, #{now}, #{row.expiresTime}, 'ISSUED', 1, 1, #{now}, #{now})
+    </insert>
+
+    <update id="consumeRefresh">
+        UPDATE t_refresh_token_generation
+        SET status='CONSUMED', active_slot=NULL, consumed_time=#{now}, version=version+1, update_time=#{now}
+        WHERE refresh_generation_id=#{id}
+        AND status='ISSUED'
+        AND active_slot=1
+        AND generation_no=#{expectedGeneration}
+        AND expires_time&gt;#{now}
+    </update>
+
+    <update id="linkRefresh">
+        UPDATE t_refresh_token_generation
+        SET replaced_by_generation_id=#{nextId}, version=version+1
+        WHERE refresh_generation_id=#{id}
+        AND status='CONSUMED'
+        AND active_slot IS NULL
+        AND replaced_by_generation_id IS NULL
+    </update>
+
+    <update id="advanceSession">
+        UPDATE t_auth_session
+        SET current_generation_no=#{nextGeneration}, last_activity_time=#{now}, idle_expire_time=#{idle},
+        version=version+1, update_time=#{now}
+        WHERE session_id=#{id}
+        AND status='ACTIVE'
+        AND current_generation_no=#{expectedGeneration}
+        AND account_auth_epoch=#{expectedAuthEpoch}
+        AND credential_version_snapshot=#{expectedCredentialVersion}
+    </update>
+
+    <update id="revokeSession">
+        UPDATE t_auth_session
+        SET status=#{status}, revocation_reason=#{reason}, revoked_time=#{now}, version=version+1, update_time=#{now}
+        WHERE session_id=#{id}
+        AND status='ACTIVE'
+    </update>
+
+    <update id="revokeRefresh">
+        UPDATE t_refresh_token_generation
+        SET status='REVOKED', active_slot=NULL, version=version+1, update_time=#{now}
+        WHERE session_id=#{id}
+        AND status='ISSUED'
+    </update>
+
+    <update id="changeAccountPassword">
+        UPDATE t_user_account
+        SET credential_version=credential_version+1, auth_epoch=auth_epoch+1, version=version+1, update_time=#{now}
+        WHERE account_id=#{id}
+        AND realm='OPERATIONS'
+        AND status='ACTIVE'
+        AND version=#{expectedVersion}
+        AND credential_version=#{expectedCredentialVersion}
+        AND auth_epoch=#{expectedAuthEpoch}
+    </update>
+
+    <update id="changePassword">
+        UPDATE t_password_credential
+        SET password_verifier_phc=#{verifier}, algorithm_version=19, memory_kib=19456, iterations=2, parallelism=1,
+        credential_version=credential_version+1, force_change_flag=0, password_changed_time=#{now}, version=version+1,
+        update_time=#{now}
+        WHERE account_id=#{id}
+        AND status='ACTIVE'
+        AND credential_version=#{expectedCredentialVersion}
+    </update>
+
+    <update id="revokeCurrentSession">
+        UPDATE t_auth_session
+        SET status=#{status}, revocation_reason=#{reason}, revoked_time=#{now}, version=version+1, update_time=#{now}
+        WHERE session_id=#{id}
+        AND account_id=#{accountId}
+        AND realm='OPERATIONS'
+        AND channel='OPERATIONS'
+        AND authentication_method='PASSWORD'
+        AND status='ACTIVE'
+        AND account_auth_epoch=#{expectedAuthEpoch}
+        AND credential_version_snapshot=#{expectedCredentialVersion}
+    </update>
+
+    <update id="revokeAccountSessions">
+        UPDATE t_auth_session
+        SET status=#{status}, revocation_reason=#{reason}, revoked_time=#{now}, version=version+1, update_time=#{now}
+        WHERE account_id=#{accountId}
+        AND realm='OPERATIONS'
+        AND channel='OPERATIONS'
+        AND authentication_method='PASSWORD'
+        AND status='ACTIVE'
+    </update>
+
+    <insert id="insertAccount">
+        INSERT INTO t_user_account(account_id, realm, account_type, email_vault_token, email_masked, status,
+        consecutive_password_failures, credential_version, auth_epoch, version, create_time, update_time)
+        VALUES(#{id}, 'OPERATIONS', 'HUMAN', #{token}, #{masked}, 'ACTIVE', 0, 1, 1, 1, #{now}, #{now})
+    </insert>
+
+    <insert id="insertPassword">
+        INSERT INTO t_password_credential(password_credential_id, account_id, password_verifier_phc, algorithm_code,
+        algorithm_version, memory_kib, iterations, parallelism, credential_version, force_change_flag, status,
+        password_changed_time, version, create_time, update_time)
+        VALUES(#{id}, #{accountId}, #{verifier}, 'ARGON2ID', 19, 19456, 2, 1, 1, 1, 'ACTIVE', #{now}, 1, #{now},
+        #{now})
+    </insert>
+
+    <insert id="insertMember">
+        INSERT INTO t_tenant_member(member_id, tenant_id, account_id, member_type, status, version, create_time,
+        update_time)
+        VALUES(#{id}, #{tenantId}, #{accountId}, 'MEMBER', 'ACTIVE', 1, #{now}, #{now})
+    </insert>
+
+    <update id="disableAccount">
+        UPDATE t_user_account
+        SET status='DISABLED', auth_epoch=auth_epoch+1, version=version+1, update_time=#{now}
+        WHERE account_id=#{id}
+        AND version=#{version}
+        AND status='ACTIVE'
+        AND realm='OPERATIONS'
+        AND account_type='HUMAN'
+        AND EXISTS (SELECT 1 FROM t_tenant_member m
+            JOIN t_access_tenant t ON t.tenant_id=m.tenant_id
+            WHERE m.member_id=#{memberId}
+            AND m.account_id=#{id}
+            AND m.version=#{memberVersion}
+            AND t.tenant_type='INTERNAL'
+            AND t.owner_ref_id=1)
+    </update>
+
+    <update id="disableBootstrapAccount">
+        UPDATE t_user_account
+        SET status='DISABLED', auth_epoch=auth_epoch+1, version=version+1, update_time=#{now}
+        WHERE account_id=#{id}
+        AND version=#{version}
+        AND status='ACTIVE'
+        AND realm='OPERATIONS'
+        AND account_type='BOOTSTRAP_ADMIN'
+    </update>
+
+    <update id="enableAccount">
+        UPDATE t_user_account
+        SET status='ACTIVE', auth_epoch=auth_epoch+1, version=version+1, update_time=#{now}
+        WHERE account_id=#{id}
+        AND realm='OPERATIONS'
+        AND account_type='HUMAN'
+        AND status='DISABLED'
+        AND version=#{version}
+        AND EXISTS (SELECT 1 FROM t_tenant_member m
+            WHERE m.member_id=#{memberId}
+            AND m.account_id=#{id}
+            AND m.version=#{memberVersion})
+    </update>
+
+    <update id="closeAccount">
+        UPDATE t_user_account
+        SET status='CLOSED', auth_epoch=auth_epoch+1, version=version+1, update_time=#{now}
+        WHERE account_id=#{id}
+        AND realm='OPERATIONS'
+        AND account_type='HUMAN'
+        AND status IN ('ACTIVE', 'DISABLED')
+        AND version=#{version}
+    </update>
+
+    <update id="revokeMember">
+        UPDATE t_tenant_member
+        SET status='REVOKED', version=version+1, update_time=#{now}
+        WHERE member_id=#{id}
+        AND tenant_id=#{tenantId}
+        AND version=#{version}
+    </update>
+
+    <update id="revokeAccountRefresh">
+        UPDATE t_refresh_token_generation g
+        JOIN t_auth_session s ON s.session_id=g.session_id
+        SET g.status='REVOKED', g.active_slot=NULL, g.version=g.version+1, g.update_time=#{now}
+        WHERE s.account_id=#{id}
+        AND s.realm='OPERATIONS'
+        AND g.status='ISSUED'
+    </update>
+
+    <update id="revokePassword">
+        UPDATE t_password_credential
+        SET status='REVOKED', version=version+1, update_time=#{now}
+        WHERE account_id=#{id}
+    </update>
+</mapper>

@@ -1,5 +1,11 @@
 # Execution 依赖 Mock 合同
 
+> **字段维护后继：** [整批精简修订](./execution-field-simplification-amendment.md)已取代本文受影响的字段、渠道绑定位置、认证明细、Pricing Fact 与状态历史表要求。本文旧接口/流程细节保留为迁移前基线；后续 Java/HTTP/MQ 改造须逐项对齐，数据库执行状态只见当前台账。
+
+> **Risk Mock 后继：** [内部风控 Action 修订](./internal-risk-action-amendment.md)第 4 节取代下文原 assessmentId 预分配及 Attempt 风控字段合同：以原 Attempt/风险 Action 请求身份恢复真实原评估，返回准确 Assessment ID，区分业务结论、Risk 技术终态和本地未知；不消费 Group ID，不默认 ALLOW。渠道恢复仍只处理渠道类型。
+
+> **状态与 Channel 恢复后继：** capture mode、三表 4/4/5 状态、active_action_id 及移除 QUERY 的现行设计目标以[状态与恢复修订](./execution-state-channel-recovery-amendment.md)为准；下文受影响内容保留为前序基线，未涉及合同继续有效。实现与 SQL 状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 > **交易级 Token 修订评审：** 用户已确认统一 pay、交易级工具 Token、Attempt 直接关联及删除旧 Instrument 的方向；详细合同见[修订稿](./instrument-token-amendment.md)。下文保留上一版合同与评审上下文，受影响部分以修订稿的准确取代范围为准；新合同的实现与验证状态只读[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 > 本期只设计 Execution；下列接口是 Payment Web 的类型化依赖边界与测试场景，不表示相应 Owner API、数据库、消息或真实渠道已实现。正式接入时由 Web 适配 Owner 合同，Execution 不能直接依赖兄弟业务 JAR。

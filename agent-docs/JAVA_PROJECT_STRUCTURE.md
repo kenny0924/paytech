@@ -1,6 +1,8 @@
 # Java 项目结构规范
 
-最后更新：2026-09-12
+最后更新：2026-09-16
+
+> 写接口结构按 [2026-09-16 Payment 基准合并决定](decisions/2026-09-16-payment-based-coding-conventions.md)统一；既有代码按具体任务迁移，本规范更新不代表全项目已完成重构。
 
 ## 1. 使用范围
 
@@ -58,7 +60,7 @@ Code-MoR 继承模块隔离思想，但将 Dubbo `facade-service` 改为 Spring 
         ├── java/<base-package>/
         │   ├── auto/                    # 默认执行的内部闭环测试
         │   ├── manual/                  # 显式 profile 才能运行的人工联调
-        │   └── test/                    # Builder/Mocker/Simulator/Checker 等基础设施
+        │   └── test/                    # Builder/Mocker/Mock HTTP/Checker 等基础设施
         └── resources/                   # auto/manual 配置和 fixture
 ```
 
@@ -69,7 +71,7 @@ Code-MoR 继承模块隔离思想，但将 Dubbo `facade-service` 改为 Spring 
 | 父工程 | 聚合模块、统一版本、插件和依赖管理 | `pom`，不运行 |
 | `api` | 内部 HTTP 契约：`@HttpExchange` 接口、传输 DTO 和契约枚举 | 可发布 JAR，不运行 |
 | `web` | Spring Boot 入口、业务实现、持久化和适配器 | 唯一业务部署单元 |
-| `test` | `auto/manual` 测试、测试数据 DSL、本地中间件连接和外部系统 Simulator | 不发布、不部署 |
+| `test` | `auto/manual` 测试、测试数据 DSL、本地中间件连接、外部 DTO Mocker 与独立 Mock HTTP 服务 | 不发布、不部署 |
 
 默认依赖方向：
 
@@ -82,7 +84,7 @@ test ───────→ web ───────→ api
 - `api` 不得依赖 `web` 或 `test`。
 - `web` 依赖自己的 `api`，由 HTTP Controller 实现契约接口。
 - `test` 可以依赖 `web` 以运行集成测试，但生产模块不得依赖 `test`。
-- `auto` 必须从真实本服务入口完成内部闭环；数据库、Redis 和 MQ 复用开发者已启动的仓库 `local-environment`，测试不得创建、停止或重建容器。外部 HTTP/MQ 通过有状态 Simulator 和真实协议交互；完整边界以 `UNIT_TEST_GUIDE.md` 为准。
+- `auto` 必须从真实本服务入口完成内部闭环；数据库、Redis 和 MQ 复用开发者已启动的仓库 `local-environment`，测试不得创建、停止或重建容器。外部 HTTP 由真实 Client 访问独立的测试 HTTP 接口，按请求返回预设 DTO，不强制外部状态机；MQ 使用真实本地 Broker。两级 BeforeEach 与全局 AfterEach 每例执行，完整边界以 `UNIT_TEST_GUIDE.md` 及其公共示例为准。
 - 测试不得使用 `when(...).thenReturn(...)`、`@MockBean`、`@MockitoBean` 等方法级行为 Stub 替换生产链路；详细边界以 `UNIT_TEST_GUIDE.md` 为准。
 - `manual` 必须由独立 Maven Profile 显式运行，不能进入默认 `mvn test` 和 CI。
 - 其他内部 Java 服务只依赖提供方的 `api`，并在自己的外部集成适配器中使用它。
@@ -160,7 +162,7 @@ BFF 通常只需要 `web + test`：它是无数据库、无签名密钥的页面
 - 禁止通过注入其他模块的 Repository/Mapper、复制 SQL/映射、跨模块 JOIN、数据库 View、存储过程或直接 `JdbcTemplate` 绕过表归属。
 - 同一个物理数据库和本库逻辑关系不代表表可以被任意模块访问。关系字段及其应用校验表达数据完整性，模块接口表达代码访问权限；不得用物理外键替代任一边界。
 - 跨模块需要的数据由 Owner 模块通过业务查询/命令接口提供。接口返回所属模块定义的领域结果；不得暴露 Mapper、Repository、DataObject 或任意 CRUD 能力。
-- 服务级技术表，例如本服务唯一的 `compensation_event` 或命令幂等表，由 `web`/服务级基础设施统一负责；不得复制到每个业务模块。
+- 服务级技术表，例如本服务唯一的 `compensation_event`，由 `web`/服务级基础设施统一负责；不得复制到每个业务模块。存量命令幂等表仅用于待迁移消费者及历史解释，不为新接口增加服务本地请求幂等表。
 
 #### 允许和禁止的依赖
 
@@ -177,12 +179,12 @@ test ───────────────────────→ we
 - `web` 是组合根，可以依赖自己的 `api` 和各业务能力模块。
 - `test` 依赖 `web`；生产模块不得依赖 `test`。
 - 业务能力模块不得依赖 `web`、`test` 或其他模块的实现包。
-- 业务能力模块默认不建立彼此的直接 Maven 依赖。只有被调用能力已经稳定、可复用，Owner 明确发布窄业务接口及 Domain / Application Command / Result，调用不承担跨模块用例编排，且依赖能够长期保持单向、无直接或间接环时，调用方才可以单向依赖 Owner 模块。
-- 获准的调用方只依赖 Owner 发布的业务 Service 或 Domain Service 接口和上述业务模型，不得依赖 `*Impl`、未发布的内部 Domain Service、Spring 内部 Bean 或持久化接口。任一条件不满足时，由 `web` Processor 分别调用相关模块。
-- A 模块需要 B 模块的数据时，只有满足上述稳定单向门禁才能调用 B 发布的业务能力接口；否则由 `web` Processor 先调用 B，再把明确的领域输入交给 A。A 绝对不能调用 B 的 Repository、Mapper、DataObject 或表；所谓“只调用原子 Repository”仍然是越权访问。
+- 业务模块可因真实的 Owner 公开能力建立单向依赖：被调用方提供窄业务入口和自己的领域输入/结果，命令归属明确且依赖长期无环。由用例所属模块的 Processor 组合能力，不因涉及两个模块或两张表就强制上移 Web。
+- 获准调用只依赖 Owner 发布的 Service/Domain Service 接口，或负责外部访问的公开 Processor 及其领域参数。不得访问 `*Impl`、未公开的内部步骤、Repository、Mapper 或 DataObject；调用具体 Processor 不授权穿透其辅助方法。
+- A 模块需要 B 模块的数据时，由 A 的 Processor 调用 B 公开的本地 Service 或事务外 Processor；若无法明确用例 Owner 或依赖会成环，由 Web Processor 分别调用。A 不能调用 B 的 Repository、Mapper、DataObject 或表。
 - `api` 只保存对外传输契约，不用于解决业务模块循环依赖，也不存放内部领域对象、DataObject、Repository 或公共业务实现。
 
-这里的“可以调用 B 的业务能力接口”不等于“可以依赖 B 的任意 Service”。允许的是 B 明确作为模块边界发布的窄接口；若新依赖会形成循环 Maven 依赖，或 A 和 B 互相需要对方，说明协作属于更高层用例或模块边界划错，必须交给 `web` Processor 编排。
+跨模块调用只针对 Owner 明确发布的完整业务能力。各模块 Service 不直接调用其他 Service；顺序和事务由用例 Processor 组合。若 A、B 互相依赖或无法形成稳定用例 Owner，由 Web Processor 协调，不借 api/common 包掩盖循环依赖。
 
 ```text
 正确：PayoutProcessor → AccountingBalanceCommand（锁定余额）
@@ -195,12 +197,12 @@ test ───────────────────────→ we
 
 #### 跨模块用例和事务
 
-复杂用例由 `web` 中的 Processor 编排。Processor 调用模块公开的业务能力接口，不调用 Mapper/Repository，不实现模块内部业务规则。
+复杂用例由业务 Owner 模块的 `service/processor` 编排；无稳定 Owner 或存在依赖环时，使用 Web Processor。Processor 可查询本模块 Repository 完成关系与资格验证；跨模块只能调用公开能力，不能读取对方持久化对象。
 
 同一进程、同一数据库内需要强一致的跨模块写操作，仍使用一个本地 `TransactionTemplate`：
 
 ```text
-Web Processor
+用例 Owner Processor（必要时为 Web Processor）
   └─ TransactionTemplate
        ├─ capability-a business command
        ├─ capability-b business command
@@ -217,6 +219,8 @@ Web Processor
 
 DataObject 的可见性边界是其 Owner 业务能力 Maven JAR，而不是 Repository 类本身。Owner JAR 内的 Repository、Service、Domain Service 和必要内部应用代码可以使用或返回自己的 DataObject；Accounting 等其他模块不得使用 Tax 等 Owner 模块的 DataObject，只能调用其公开业务能力。Controller/HTTP API 也不得把 DataObject 直接作为传输对象。需要保护领域不变量、聚合多表、隔离持久化变化或跨模块发布时，在 Owner 边界转换为 Domain/Application 对象；没有这些价值时不强制在同一 JAR 内复制同义对象。
 
+[公共写接口开发示例](examples/WRITE_API_EXAMPLE.md)以 Payment pay 展示上述规则的完整调用链：Processor 位于所属模块的 service/processor，使用内部 Request/Response 和本模块 DataObject Context，Web Converter 只转换协议模型；开发前读取，交付前按示例第 11 节自查。[Payment 专项补充](../payment-orchestration-service/docs/development/processor-conventions.md)仅维护支付业务映射。此前 REST Processor 直接使用 RequestBody 的例外已被 [2026-09-16 合并决定](decisions/2026-09-16-payment-based-coding-conventions.md)取代。
+
 每次新增或调整业务模块时必须同步验证：模块清单、表唯一归属、获准的单向依赖、Maven 依赖图、跨模块接口、跨模块用例事务范围，以及至少一个阻止越权 `*Impl`、未发布 Domain Service、DataObject、Repository、Mapper、SQL 访问和循环依赖的架构测试。完整决定见 [`decisions/2026-09-05-business-module-collaboration-policy.md`](./decisions/2026-09-05-business-module-collaboration-policy.md)。
 
 ## 4. API 模块与内部 HTTP 契约
@@ -230,7 +234,8 @@ api/
 ├── <capability>/
 │   ├── *CommandApi.java
 │   ├── *QueryApi.java
-│   └── *Models.java        # public record *RequestBody / *ResponseBody 及相关嵌套模型
+│   ├── request/           # 独立的 *RequestBody class
+│   └── response/          # 独立的 *ResponseBody class
 └── enums/
     └── *Status.java
 ```
@@ -239,15 +244,15 @@ api/
 
 - 内部同步接口使用 Spring `@HttpExchange`，具体方法使用 `@GetExchange`、`@PostExchange` 等明确 HTTP 注解。
 - API 按业务能力拆分，例如 `ClientEligibilityQueryApi`、`AgreementCommandApi`；禁止创建包含所有接口的巨型 `ClientContractApi`。
-- `*Api` 只声明 HTTP 方法与协议注解；请求、响应及相关嵌套模型按业务能力组织到独立 `*Models` 容器，不直接定义在 API 接口中。容器使用 `public final` 与私有构造器，传输对象使用 `public record`，保留 `*RequestBody` / `*ResponseBody` 后缀及字段校验。模型仍属于提供方的 `*-api` 模块，BFF 自己的页面模型留在 BFF。
+- `*Api` 只声明 HTTP 方法与协议注解；请求、响应分别使用独立 class，按能力放在 request/response 包，必要嵌套模型也使用 class。不强制 Models 容器或 record，不在 API 接口内定义 DTO。提供方模型属于轻量 `*-api` 模块，BFF 页面模型仍由 BFF 维护。
 - 接口方法使用业务语言命名，并通过 JavaDoc 说明参数、结果、幂等和主要错误语义。
-- Request record 使用正常 Jackson 属性绑定和 Jakarta Bean Validation；不为普通对象绑定增加 `DELEGATING JsonCreator`、Map 工厂或字段名常量。确有专项 Wire 语义需要自定义反序列化时，必须在提供方 API 文档说明其必要性，并从真实 HTTP/契约入口覆盖缺失、显式 `null`、类型错误和未知字段。
-- 顶层 Request/Response 及非显然嵌套字段写明业务含义、单位、可空条件和默认值；外部接口的 JavaDoc 与 OpenAPI 描述同步维护，不得只注释类型名而遗漏字段契约。
+- RequestBody 使用正常 Jackson 属性绑定和 Jakarta Bean Validation / Hibernate Validator，嵌套对象使用 `@Valid`。内部 Request 注解由公共 `AbstractProcessor.validateBasic` 触发，子类不重复调用 Validator；仅依赖输入且首次、重放通用的附加关系放在 validate。非模板入口仍需明确校验触发点，不认为注解会自行执行。
+- RequestBody、ResponseBody 及字段使用中文 JavaDoc：首行简短含义，单位、可空、默认及兼容约束以 `<li>` 补充。API 方法用 `@param/@return` 说明输入输出及必要 HTTP 语义；外部接口同步 OpenAPI 描述。
 - 请求、响应和模型是 HTTP 传输契约，不暴露数据库映射对象、Repository 类型、内部聚合或第三方 SDK 类型。MQ 事件契约不因复用 DTO 而混入 HTTP API。
 - 公开 HTTP 与发布的内部 `*-api` 顶层请求 DTO 使用 `*RequestBody`，顶层响应 DTO 使用 `*ResponseBody`。GET 查询 DTO 同样使用 `*RequestBody`，但命名不改变既有 Query/Path 传参，不要求 GET 携带 Body 或增加 `@RequestBody`。
 - 嵌套业务模型及内部领域、应用层对象不强制该后缀，不为统一命名添加同义包装。新增和调整 HTTP DTO 时统一遵循规则；已发布 Java 类型重命名时同步更新提供方和调用方。详细规则以 `DEVELOPMENT_CONVENTIONS.md` 第 2 节为准。
 - 对外发布且调用方需要理解的稳定 Code 枚举定义统一放在 `api/enums` 并实现 `CodeEnum`；提供方 Web 直接复用，不在领域包复制同义枚举。
-- API DTO 字段仍使用 `String` 承载稳定枚举 Code，不声明 Java enum 字段；`api/enums` 是 Code 目录而不是 JSON 字段类型。仅服务内部使用的枚举放在 Web 的 `domain/enums`，边界转换使用 `getCode()`，消费方显式校验未知 Code。
+- API DTO 字段仍使用 `String` 承载稳定枚举 Code，不声明 Java enum 字段；`api/enums` 是 Code 目录而不是 JSON 字段类型。仅内部使用的枚举放在所属业务模块的 `core/enums`，未拆分时为 Web 的对应包，边界转换使用 `getCode()`，消费方显式校验未知 Code。
 - 契约变更先判断兼容性。新增可选字段优先，删除、改名或改变语义必须明确版本策略。
 - 有界的内部同步查询默认直接返回完整 typed DTO。没有真实负载指标和已批准的兼容契约时，不预先增加 ETag、`If-None-Match`、`304`、Canonical Body Hash 或其他 HTTP 缓存协议。
 - `api` 模块保持轻量，只引入 HTTP 契约、序列化和校验所需依赖；不引入数据库、Spring Boot 应用启动器、服务发现配置或业务实现。
@@ -281,15 +286,16 @@ public interface ClientEligibilityQueryApi {
 @AllArgsConstructor
 public class ClientEligibilityController implements ClientEligibilityQueryApi {
     private final ClientEligibilityService clientEligibilityService;
+    private final ClientEligibilityConverter converter;
 
     @Override
     public ClientEligibilityResponseBody getEligibility(String clientId) {
-        return clientEligibilityService.getEligibility(clientId);
+        return converter.toResponseBody(clientEligibilityService.getEligibility(clientId));
     }
 }
 ```
 
-上例仅适用于方法少于 10 条有效可执行语句、只调用一个 Domain Service，并且没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排的简单用例。空行、注释、花括号和格式换行不计入语句数；任一条件不满足时都必须使用 Processor。Controller 不包含事务、Repository/Mapper/SDK 调用或跨系统编排。
+上例仅适用于无请求关系判断、写事务、防重、跨系统调用或多步编排的本地简单查询。Service 返回自己的领域结果，Converter 完成协议转换，不由 Service 组装 ResponseBody。写操作使用对应 Processor；Controller 不持有事务，不访问 Repository/Mapper/SDK。
 
 `@HttpExchange` 接口是内部 HTTP Method、Path、Header 和 DTO 签名的唯一来源。Controller 必须直接实现该接口，不得再次声明等价的 `@RequestMapping`、`@GetMapping` 或 `@PostMapping`；这些 MVC 注解只用于没有共享 Java API 契约的服务端入口。应用配置的 `context-path` 表达系统边界，接口注解只表达能力内路径，最终地址统一为 `{context-path}/{capability-path}`。接口是否属于内部调用由私有网络、服务发现和 Gateway Catalog 边界决定，不在能力路径中增加调用范围标记。
 
@@ -302,7 +308,7 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 调用方依赖提供方发布的 `*-api` JAR，通过 Spring HTTP Service Client 创建接口代理：
 
 ```text
-调用方 Domain Service
+调用方 Processor / 独立执行入口（事务外）
   → 本地 *Client 端口
     → integration 中的 *ClientImpl
       → 注入的 @HttpExchange API 代理
@@ -327,7 +333,7 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 
 ## 5. Web 模块分层
 
-推荐包结构：
+以下按未拆分业务能力的服务展示；已拆分时，Processor、Service、Context、Integration 及持久化代码位于各自 Owner 模块，Web 保留启动、协议适配和必要的跨模块组合。
 
 ```text
 <base-package>/
@@ -339,12 +345,12 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 │   ├── rest/                        # Controller 与 REST 入站适配器
 │   └── mq/                          # 仅存在真实 MQ 入站能力时创建
 ├── service/
-│   └── processor/                   # 按需创建：复杂用例编排、校验、事务边界
+│   ├── *Service.java / impl/        # 本地业务与保存
+│   └── processor/                   # 写操作入口及复杂查询，含内部 request/response
 ├── integration/
 │   ├── *Client.java                 # 出站端口
 │   └── impl/                        # Provider/RPC/HTTP 适配实现
-├── domain/                          # 聚合、值对象和纯领域模型
-│   └── enums/                       # 仅服务内部使用的业务/持久化枚举
+├── domain/                          # Context、聚合、值对象和纯领域模型
 ├── domainservice/
 │   ├── service/                     # 领域服务接口及 impl
 │   ├── repository/                  # 领域仓储接口及 impl
@@ -354,6 +360,8 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 └── core/
     ├── common/                      # 本服务共享类型
     ├── constant/                    # 稳定常量
+    ├── enums/                       # 模块内部业务/持久化枚举
+    ├── configuration/               # 模块自有 Properties
     └── dal/
         ├── dataobject/              # 数据库映射对象（类型名不加 DO 后缀）
         ├── mapper/                  # MyBatis Mapper
@@ -370,56 +378,56 @@ HTTP 状态是调用方判断结果的第一依据：`2xx` 返回接口定义的
 
 `ext/rest` 中的 Controller 实现 `*-api` 中按能力拆分的 `@HttpExchange` 接口。符合下节简单用例规则时直接委托一个 Domain Service，否则委托一个明确的 Processor。统一参数校验、错误响应、请求 ID 和鉴权上下文由 HTTP 基础设施处理，Controller 不复制业务规则。
 
+查询接口组合多张表的返回数据时使用具名 `*View`；单表查询、写接口及普通内部传递一般不增加 View。查询 View 按归属放在所属模块的 `domain`，BFF 页面聚合结果由 BFF 维护；HTTP 顶层响应仍使用 `*ResponseBody`，不得直接暴露 DataObject。完整选择规则见 [开发规范第 2.2 节](DEVELOPMENT_CONVENTIONS.md#22-view-使用范围)，不为每层创建同义结果或扩大持久化访问权限。
+
 ### 5.2 Processor（按需）
 
-`service/processor` 中的 Processor 负责需要独立应用层的参数校验和业务流程编排，不是每个入口都必须创建的转发类：
+每个同步写接口对应一个具体 Processor，放在所属业务模块的 `service/processor`；内部 Request/Response 放在该 Processor 目录下的 request/response。纯查询没有业务判断或多步编排时，可以由 Controller 委托一个本地 Service，不创建空 Processor。
 
 ```text
-基础字段验证
-  → 请求业务验证（含事务外的下游查询校验）
-  → 构建或恢复处理上下文
-  → 本地事务业务处理（重验本地事实并提交）
-  → 下游操作调用（如有，必须在事务外）
-  → 构建稳定的应用响应
+API 字段校验 → Controller/Converter
+  → AbstractProcessor.process：拒绝已有事务 → validateBasic → validate
+  → 获取实际资源锁（需要时）
+  → 请求方归属 → 原提交查询/比较 → 已存在则构建响应返回
+  → 新请求业务验证 → 一次构造 Context
+  → 事务前依赖（需要时）
+  → Service 本地保存 / Processor 组合多个 Service 的原子事务
+  → 提交后推进（需要时）
+  → 从 Context 构造 Response → 释放锁 → Converter 构造 ResponseBody
 ```
 
-各阶段职责、上下文、幂等与恢复协作者的完整规则见 [DEVELOPMENT_CONVENTIONS.md 第 5.2 节](./DEVELOPMENT_CONVENTIONS.md#52-用例编排与职责划分)。入口负责顺序和事务边界，Domain Service 保留业务规则；没有实际职责的阶段不创建空方法或额外层。
+完整顺序和职责由 [DEVELOPMENT_CONVENTIONS.md 第 5 节](./DEVELOPMENT_CONVENTIONS.md#5-事务与代码可读性)拥有。DB（数据库映射/DataObject）、Context、RequestBody、ResponseBody 均使用普通 Java class，不使用 record；包括只读 DB 对象，完整对象形态约定见同文第 2 节。
 
-- Controller 方法少于 10 条有效可执行语句，且只委托一个 Domain Service、没有业务判断、多步骤编排、写事务、幂等、补偿、跨系统协调或可复用应用编排时，可以省略 Processor。空行、注释、花括号和格式换行不计入语句数，不能通过调整格式规避边界。
-- 任一条件不满足时，无论物理代码行数多少都必须使用 Processor。
-- 复杂用例的默认事务边界位于 Processor；省略 Processor 的简单一致性读由 Domain Service 持有只读 `TransactionTemplate`。Controller 不持有事务边界。
-- 上述为 HTTP 用例分层规则；补偿 Handler 的任务编排见第 5.6 节。所有入口都遵守 [事务公理](./DEVELOPMENT_CONVENTIONS.md#5-事务与代码可读性)：事务内只进行本服务数据库操作，不得直接或间接调用外部服务。
-- 需要 Foundation 资源锁的写用例把 `@ResourceLock` 标在启动期可发现、非懒加载 singleton、非 `final` Spring Bean 的公开、非 `static`、非 `final` Processor 具体实现方法，而不是只标接口；override 必须在具体方法重复声明。锁 Aspect 必须包住该方法内部完整的 `TransactionTemplate`，确保全部 Redis 锁先获得、数据库事务后开始，提交或回滚后才逆序释放。Controller、Domain Service、Repository、Mapper、private/final 方法、同类自调用、直接 `new` 的对象、scoped/lazy Bean、异步返回方法和已有外层事务的调用点都不是支持入口；多个资源必须在该用例入口一次声明完整，不能靠嵌套代理调用拼装锁集合。启动门禁同时验证实际代理包含适用的 Resource Lock Advisor，且其顺序位于适用事务 Advisor 外层。
-- Processor 的业务调用通过 Domain Service、按下述约束保持无副作用的 Validator 或明确的应用端口，不得直接调用 Repository、Mapper 或外部 SDK。同一服务、同一编排模块内的补偿 Handler 纯静态事件工厂是第 5.6 节规定的窄例外。
-- Processor 的请求和结果使用应用语义，不依赖 `ResponseEntity`、HTTP Header、Servlet 或客户端代理类型；协议参数在 Controller/Web 基础设施完成解析和转换。
-- 一个命令只由一个核心系统拥有。BFF 和 Gateway 不承担该命令的业务编排。
-- 方法使用卫语句，嵌套不超过三层，单个方法原则上不超过 30 行。
-- `process`、`processRequest` 等主处理方法只展示能够按顺序阅读的业务阶段，每个阶段调用命名准确的辅助方法，并用简短行内注释。Hash、协议转换、异常映射、事务实现和恢复细节不得淹没主流程；完整类和辅助方法的可见性与 JavaDoc 遵循 `DEVELOPMENT_CONVENTIONS.md`。
-- 不为单个 Processor 创建业务专用抽象基类。通常只有至少两个真实 Processor 共享稳定模板流程和上下文字段时才提取 `Abstract*Processor` 或公共请求上下文；经项目明确确认的 Gateway 入口标准模板是窄例外。
-- Gateway 入口标准模板只允许固定 `process(Request) → validateBasic → validate → processRequest` 一类无状态执行骨架，不注入具体业务 Service，不拥有幂等、事务、恢复阶段、日志或异常响应。HTTP Header 和其他协议参数在入站边界转换为应用 Command 后再进入模板；不得把某个业务的参数固化到所有 Processor。
+- Processor 可查询所属模块 Repository，完成归属、原请求一致性和新请求资格检查；不访问 Mapper，不直接逐表写入，不访问其他模块的仓储或数据库对象。
+- Processor 入口不得在调用方已有事务内执行；模板统一检查，子类不重复。外部访问通过 Client/Integration，需其他模块完成时调用其公开 Processor 的 process；不能通过事务挂起、线程切换或内部方法绕过约束。
+- 单个 Service 的完整保存阶段可以内部开事务；多个 Service 原子保存由 Processor 开启同一本地事务并依次调用。Service 间不自行编排；本地保存提交后才推进外部步骤。
+- Context 一次构造后贯穿请求，直接持有本模块 DataObject；不携带 HTTP Body、Servlet、Bean、回调或重复身份字段，不进入 Repository/Mapper。超过三个 Service 业务参数使用具名 Context。
+- Context 可封装基于已有数据的纯业务判断和派生计算，不限定为字段容器；查询、外部调用、事务和流程编排仍由原层负责。完整边界见开发规范第 5.2 节。
+- 输入和结果使用内部 Request/Response 或明确领域模型，不依赖 ResponseEntity、HTTP Header 和 Servlet。API Body 与内部类型只为真实模块边界转换，不增加同义 Input/View/Snapshot。
+- HTTP `Idempotency-Key` 的校验、摘要与响应重放统一在 Gateway；BFF、Controller/Converter、Processor、Context 和 Service 不承担该机制，不新增公共命令幂等 JAR 的消费或同义 Adapter。内部调用使用明确的业务操作身份；存量 Header/组件按任务迁移。完整规则见[开发规范第 5.4 节](./DEVELOPMENT_CONVENTIONS.md#54-请求幂等与业务防重)。
+- 写入口复用 Foundation AbstractProcessor；需要资源锁时使用 AbstractLockProcessor，单资源通过 LockCommand 选择 LOCK/TRY_LOCK，多资源通过 tryLocks 一次提供完整资源集合。无锁需求不创建假 Key；既有 @ResourceLock 不叠加在模板上，未迁移消费者的多锁、代理和配置合同仍保留。
+- 主方法显示顺序和提前返回，细节放入业务命名的辅助方法；不为每一步建立新类。Body 与内部 Request 用注解声明字段约束，内部 Request 由父类 validateBasic 统一执行；validate 只含输入相关且首次/重放通用的附加判断，查询和当前状态检查留在相应分支。
+- 确需业务防重时，查询原记录使用业务操作唯一身份，不使用当前活动指针或 HTTP Key 替代；比较及重复请求行为由业务合同决定。原提交查询不等同于 Gateway 响应重放，也不是所有写接口的强制阶段。
+- 没有本地保存、路由或后续执行的用例省略对应阶段。一个命令仍由一个核心系统拥有，BFF 和 Gateway 不编排跨系统业务事务。
 
-参考 `transaction` 时必须把 `AbstractProcessTemplate`、`AbstractProcessor`、具体 Processor 与 Facade/Client 调用链一起阅读。Code-MoR 采用其“主方法呈现业务阶段、细节下沉到命名方法”的组织方式；其中 Dubbo 响应对象、`catch Throwable`、字段注入和 `AbstractProcessor` 直接依赖 Repository 是参考项目现状，不是 Code-MoR 允许的实现方式。
+参考 transaction 时读完整调用链，采用其清晰 Context 和阶段组织；不复制 Dubbo 响应对象、通用 catch Throwable 或与当前 HTTP/事务边界冲突的协议实现。
 
 ### 5.3 Domain Service
 
-Domain Service 承载业务规则和跨聚合协调：
+业务 Service 和 Domain Service 处理本地业务与数据保存，均使用 `interface + *Impl`；只有实现标注 `@Service`，调用方依赖接口。不创建没有业务职责的空 Service。Processor、Controller 保持具体类；Repository 保持 `interface + *RepositoryImpl`。
 
-- 所有业务 Service 必须使用 `interface + *Impl`；所有 Domain Service 必须使用 `interface + *Impl`。接口按业务能力命名，实现使用相同名称加 `Impl`，调用方依赖接口，只有实现类标注 `@Service`；
-- 该规则不要求创建没有业务职责的空 Service；一旦职责需要 Service，就不因模块内单实现而省略接口。Processor、Controller 保持具体类，Repository 保持 `interface + *RepositoryImpl`；
-- 实现依赖 Repository 和出站端口，不依赖 HTTP Controller 或 Processor；
-- 业务 Service 承担资格校验、状态迁移、额度/资源处理及本地事实持久化，不承担整个用例的入口适配、事务阶段编排和响应组装。依赖出站端口不构成事务内调用许可；任何含外部调用的方法都只能在数据库事务外执行，完整调用链遵守开发规范第 5 节；
-- 普通业务检查优先使用 `BizCheckFailException` 和包含必要上下文的中文消息；只有调用方确实需要按 Code 区别处理时才使用本服务 `CodeMessageEnum` 与对应 `FailException`；
-- 状态转换必须校验旧状态，防止静默覆盖并发更新。
-
-多个 Service 操作共享的纯业务校验可以按能力放入 `domainservice/validator` 的具体协作者，不为单实现机械增加接口。
-Validator 不注入或调用 Repository、Mapper 或外部 Client，不打开事务；可以接收由 Service
-传入、不携带持久化行为的只读投影，但不得借此自行查询数据。依赖数据库当前状态、Lease、CAS 或唯一索引的
-校验仍由业务 Service 在对应写事务内触发，Validator 不能让后续写操作失去事务内重证。
+- 接收已验证的 Context 或少量明确业务参数；不重复查询、比对已经确认的 Client/资源归属、工具关系或请求字段。
+- 保留本地计算、状态转换与保存职责，通过所属模块 Repository 操作数据库。当前状态、版本、唯一性和额度通过写入条件及更新行数确认，必要局部数据库保护仍按业务不变量保留。
+- Service 不调用其他 Service 或 Processor，不直接或间接访问 HTTP/RPC、Redis、MQ、KMS 等外部能力，也不调用会发起外部操作的 Flow/Actor；此限制不取决于当前是否有事务。
+- 单个 Service 可以完成整个本地保存事务；多个 Service 的组合和原子提交由 Processor 负责，各参与者加入已有事务，不独立提交。
+- Service 的业务参数超过三个时使用具名 Context。Context 不进入 Repository/Mapper；Service 从中取出本模块对象、ID、金额和状态。
+- 同一 Owner 模块内可以使用 DataObject；公开跨模块能力使用 Owner 领域参数/结果，不传 HTTP Body 或调用方的整套 Context。Service 不返回 ResponseBody。
+- 多个用例真正复用的纯规则可以提取 Validator 或业务对象方法；不为复用几行代码建立另一 Service 调用链。
 
 ### 5.3.1 Validator 与 Converter
 
 - HTTP 结构、类型和简单字段约束优先由 Request DTO、Jackson 与 Jakarta Validation 在入站边界完成；Processor/Domain Service 不重复解析协议字段。
-- 业务入口先完成不依赖数据库当前状态的基础和业务校验，再进入业务处理；依赖当前状态、Lease、CAS、唯一索引或受影响行数的检查必须留在相应写事务中并紧邻写入。Validator 只集中真实复用的无副作用规则，不替代事务或数据库最终保护。
+- Body 与内部 Request 的注解负责基础字段约束，分别由 HTTP 入口及公共 validateBasic 触发；Processor 的 validate 只放通用输入关系，查询分支负责归属、原提交和新建资格。依赖当前状态、版本、唯一性和额度的并发保护在写 SQL 与 Repository 行数检查处完成，不要求 Service 再查询整套关系。
 - 同一校验不在 Controller、Processor、Domain Service 和 Repository 逐层重复。一次性、含义清晰的卫语句保留在职责 Owner 中；多个用例共享且足以形成独立职责时才提取 `domainservice/validator/<capability>/*Validator`，不创建全系统 `CommonValidator`。
 - Wire DTO 与 Application/Domain 对象的转换器靠近 `ext/rest` 入站边界；领域对象、Owner Command/Result 或通用持久化记录与业务状态之间的转换放在拥有该语义的 `domainservice/convert/<capability>`。转换组件不访问数据库、不调用外部 Client、不打开事务，也不偷偷执行业务流程。
 - 上述非持久化转换类型统一使用 `*Converter`；`*Mapper` 只用于 `core/dal/mapper` 或 Foundation `persistence/mapper` 中的 MyBatis 持久化接口。简单的一次性构造无需为命名规则机械创建 Converter。
@@ -432,26 +440,22 @@ Repository 使用领域语言屏蔽 MyBatis 细节：
 Domain Service → Repository interface → RepositoryImpl → Mapper → 本系统数据库
 ```
 
-- Repository 不包含跨系统业务规则。
+- 一个 Repository 对应一张表，不接收 Context，不负责跨表用例或跨系统业务规则。
 - Mapper 只表达本系统数据库操作。
 - 生产 SQL 只写在资源目录的 `*Mapper.xml`，接口保留方法签名和参数绑定；禁止 SQL 注解及 `*Provider` 注解。测试源码中的 TestMapper 可保留注解 SQL，具体边界见 [DEVELOPMENT_CONVENTIONS.md](./DEVELOPMENT_CONVENTIONS.md) 的“MyBatis SQL 存放规则”。
 - 每个核心系统只能访问自己的数据库，禁止跨库查询、跨库写入或共享表。
-- 更新状态时携带期望旧状态或版本号；更新行数不为预期值时抛出包含上下文的异常。
+- 更新状态时携带期望旧状态或版本号；行数不符即失败，SQL 更新成功后直接同步传入原对象的状态、版本、时间与关联指针，不重建副本或替换 Context 引用。参与更新的 DataObject 使用可修改 class，无其他返回语义的更新方法使用 void。Repository 不开新事务或自行提交；外层事务回滚后丢弃本次 Context。
 - `dataobject` 中的数据库映射对象直接使用业务实体名，不追加 `DO` 后缀。它可以在 Owner 业务 JAR 内部使用，但不得作为 HTTP API 或跨 Maven 模块业务接口对象返回。
 - 表、字段、索引、手工 DDL/DML 与 DataObject/Mapper 的设计必须和项目 PDManer 模型同步；详细规则见 `DATABASE_DESIGN_GUIDE.md`。
 
 ### 5.5 外部集成
 
-外部 Provider、RPC、HTTP 和第三方 SDK 必须封装在平级 `integration` 包，不能放入表示入站触发的 `ext`：
+外部 HTTP/RPC、Provider SDK、Vault/KMS 等访问由所属模块 `integration` 中的 Client/适配器封装，用例 Processor 或独立执行入口在数据库事务外调用。业务 Service 不依赖出站端口。
 
-- 业务层依赖本地 `*Client` 或端口接口，不直接依赖其他服务的 HTTP API 或第三方 SDK。
-- `*ClientImpl` 可以依赖其他服务的 `*-api` JAR，但必须把远程 DTO 转换为本地领域语义。
-- 参考既有 Client 实现时，必须沿“本地 `*Client` 端口 → `*ClientImpl` → 公共调用模板 → 实际 HTTP/Provider 代理”确认职责。公共模板只处理多个真实 Client 稳定共享的调用骨架、返回值门禁、安全日志和统一异常投影；特定业务错误、恢复阶段、事务和领域决策仍由其 Owner 处理。
-- 第一方内部 HTTP 的网络错误、HTTP 状态和 Problem 解码继续由 Foundation `HttpServiceClientFactory` 负责；业务 `*ClientImpl` 不再复制同义 HTTP 处理。Processor 只调用本地端口，不包裹另一套通用远程调用模板。
-- 实现层负责超时、错误映射、脱敏日志和外部状态转换。
-- 外部原始状态先转换为本系统统一语义，再进入领域逻辑。
-- 不把外部响应对象穿透到领域层。
-- Vault 作为内部 HTTP 集成放在同一边界：本地端口方法显式表达当前 V1 的 `purpose`、Protect 数据类型/Token 模式或 Reveal Token；适配器通过部署网络限制的私有 HTTP 携带 OpenAPI 要求的 `X-Caller-Service`、幂等/请求 Header，并接受静态 Allowlist 只能防止误用而不能认证调用方的限制。V1 不接受 Reason、Resource 或字段选择，也不返回 Binding、Blind Index、Masked Value、Record Version 或 Metadata Hash。Reveal 结果不得写数据库、缓存、事件或日志；业务库只持久化获批的 opaque Token 和自身权威派生事实。
+- 内部同步 HTTP 使用提供方轻量 `*-api` 的 HttpExchange 合同及公共 HTTP Client 能力，不新增 Dubbo/OpenFeign，不在业务 Processor 中直接操作第三方 SDK。
+- Integration 负责远程协议与 Owner 领域输入/结果转换，不持有本地业务事务，不把外部 DTO 或凭据扩散到持久化上下文。
+- 需要另一个本地模块完成外部准备或操作时，调用其公开 Processor；若只有纯本地规则和保存则调用 Service。模块依赖保持单向无环，不通过内部辅助步骤绕过公开入口。
+- 下游失败、未知结果和恢复按业务合同解释，不把异常全部包装成拒绝，不伪造成功或新请求身份；公共错误映射和 Request ID 传播复用 Foundation。
 
 ### 5.6 MQ 与业务事件
 
@@ -472,32 +476,24 @@ Domain Service → Repository interface → RepositoryImpl → Mapper → 本系
 允许的主路径：
 
 ```text
-简单用例：
-ext/* 入站适配器
-  → 一个 Domain Service / Domain
-    → Repository interface / Integration port
-      → RepositoryImpl / IntegrationImpl
-        → Mapper / 外部系统
+本地简单查询：Controller → Service → 本模块 Repository → Mapper
 
-复杂 HTTP 用例：
-ext/* 入站适配器
-  → Processor
-    → Domain Service / Domain
-      → Repository interface / Integration port
-        → RepositoryImpl / IntegrationImpl
-          → Mapper / 外部系统
+写操作/复杂查询：Controller + Converter → 所属模块 Processor
+  ├─ 本模块 Repository 查询 → 关系/资格验证 → 完整 Context
+  ├─ Owner 公开 Service（本地能力）或 Processor（事务外外部能力）
+  ├─ 本地事务 → 本模块/Owner Service → 各自 Repository → Mapper
+  └─ 提交后 Integration / 独立执行入口 → 结果短事务
 
-补偿任务：
-ext/job Handler
-  → Domain Service / Integration Port
-  → 分段本地事务与事务外调用
+补偿任务：Handler → 本地 Service / 事务外 Integration → 分段本地事务
 ```
 
 禁止：
 
 - HTTP Controller 直接访问 Repository 或 Mapper；
 - Processor 直接访问 Mapper 或另一个系统数据库；
-- Repository 调用 Domain Service；
+- Service 调用其他 Service、Processor 或外部依赖；
+- Repository 调用 Domain Service 或接收 Context；
+- 在已有事务内调用 Processor；
 - Domain Service 依赖入站协议对象；
 - BFF、Gateway 或入口应用拥有核心业务事实；
 - 为复用方便让两个服务共享数据库或可变数据库映射对象。
@@ -512,7 +508,7 @@ ext/job Handler
 - 数据类可使用 Lombok `@Data`，但领域对象应谨慎暴露无约束 setter。
 - 每个手写 Java 方法都写清晰中文 JavaDoc；简单方法至少说明业务目的，复杂方法同时解释必要的入参、返回值、事务、副作用和特殊结果。完整规则见 `DEVELOPMENT_CONVENTIONS.md`。
 - 常量和枚举使用业务语义名称，不使用 `getData`、`handle`、`process2` 等模糊名称。
-- 金额使用整数最小货币单位或项目批准的 Money 类型，并显式携带 ISO 4217 币种；禁止浮点金额。
+- 金额在 Java 内使用精确 BigDecimal 或项目 Money 类型，并显式携带 ISO 4217 币种；第一方 HTTP 使用币种主单位十进制字符串，输出按币种补齐小数位，见 [金额格式规范](./DEVELOPMENT_CONVENTIONS.md#21-对外金额格式)。禁止浮点金额；渠道最小单位转换只属于协议适配边界。
 - 时间、时区、ID 和序列生成由基础能力统一提供，不在业务代码中散落静态随机实现。
 - 先实现当前获批用例需要的最小类和配置；不要用一行代理、空抽象或未来扩展点代替清晰的直接调用。只有实际复杂度达到第 5.2 节门槛时才增加 Processor 或应用层抽象。
 
@@ -543,17 +539,18 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] 业务事实属于当前系统，而不是其他五个核心系统。
 - [ ] 公共契约和内部实现没有混在同一模块。
 - [ ] `*-api` 只包含轻量 HTTP 契约，没有业务实现或持久化依赖。
-- [ ] API DTO 的枚举语义使用 `String code`；对外 Code 枚举定义位于 `*-api/api/enums`，内部枚举位于 `*-web/domain/enums`，均实现 `CodeEnum`，错误枚举按需实现 `CodeMessageEnum`，且没有复制同义 Code 目录。
-- [ ] HTTP DTO 按业务能力放入独立 `*Models`，API 接口不内嵌 DTO；顶层类型使用 `*RequestBody` / `*ResponseBody`，GET 参数位置保持，嵌套模型和内部领域对象不机械追加后缀。
-- [ ] Request record 使用正常 Jackson 属性绑定和 Jakarta Validation；没有普通绑定可以表达却仍使用 `DELEGATING JsonCreator`、Map 工厂或字段名常量的样板代码。
+- [ ] API DTO 的枚举语义使用 String code，稳定 Code 定义在 api/enums，内部枚举位于所属模块 core/enums；使用 CodeEnum/按需 CodeMessageEnum，不复制同义目录。
+- [ ] RequestBody/ResponseBody 使用独立 class，按能力放入 request/response；API 不内嵌 DTO，不强制 Models 容器；GET 参数位置不因类型命名变化。
+- [ ] 多表组合查询使用具名 View；其他场景一般不增加 View 中间层，必要的 API 响应和跨模块领域合同仍保持。
+- [ ] RequestBody 使用正常 Jackson 属性绑定与 Hibernate Validator，嵌套使用 @Valid；没有多余的 DELEGATING 工厂，非 HTTP 入口明确校验触发点。
 - [ ] `*Api`、顶层 Request/Response 和非显然字段具有与 OpenAPI 一致的语义、单位、可空及默认值说明。
 - [ ] Controller 实现 `@HttpExchange` API、没有重复 MVC Mapping；简单用例只委托一个 Domain Service，其他用例委托 Processor。
 - [ ] 外部触发入口位于与 `service` 平级的 `ext/job`、`ext/dubbo`、`ext/rest` 或实际协议子包；补偿 Handler 可编排自身任务，业务规则仍委托 Domain Service，不直接操作持久化。
 - [ ] 调用方通过本地 `*Client` 适配器隔离远程 API DTO，没有让远程 DTO进入领域层。
 - [ ] `*ClientImpl` 只承担本地端口到实际代理的适配，公共调用模板没有吸收业务恢复、事务或领域决策，Processor 也没有复制远程调用骨架。
 - [ ] 未新增 Dubbo 或 OpenFeign 契约，内部调用未绕行 Gateway。
-- [ ] 未创建仅做一行转发的 Processor；省略 Processor 时满足少于 10 条有效语句及全部简单用例条件，且 Controller 没有持有事务或访问 Repository、Mapper、SDK。
-- [ ] 实际存在的 Processor 未直接调用 Repository、Mapper 或第三方 SDK。
+- [ ] 每个写操作使用对应 Processor；简单本地查询按实际职责省略，不为形式新建一行转发类。Controller 不持有事务或访问 Repository/Mapper/SDK。
+- [ ] Processor 只查询本模块 Repository，业务写入通过 Service；不调用 Mapper、外部 SDK 或其他模块仓储。
 - [ ] 实际存在的 Processor 未依赖 HTTP 类型，也没有为单一实现创建空泛的抽象基类或公共上下文。
 - [ ] Processor 主处理方法可以按阶段顺序阅读，内部辅助方法使用包级可见性；所有手写方法都有与复杂度相称的中文 JavaDoc。
 - [ ] Domain Service 与 Repository 使用业务语言命名。
@@ -561,15 +558,19 @@ Agent 完成 Java 功能前逐项检查：
 - [ ] 非持久化边界转换使用 `*Converter`，`*Mapper` 只表达 MyBatis/数据库映射职责；一次性简单构造没有被机械包装。
 - [ ] 只访问本系统数据库。
 - [ ] DataObject 类型名没有 `DO` 后缀；仅在 Owner 业务 JAR 内使用，HTTP API 和跨 Maven 模块业务接口使用 Domain/Application Command/Result；数据库结构已与 PDManer、手工 DDL/DML、Mapper 和 Repository 保持一致。
-- [ ] 多业务模块默认没有直接 Maven 依赖；每一项直接依赖都已证明是稳定、可复用的 Owner 窄业务接口及 Domain/Application 模型，并保持长期单向、无环且不承担跨模块用例编排。
-- [ ] 循环风险、多 Owner 命令或跨 Owner 写事务由 `web` Processor 使用一个本地 `TransactionTemplate` 编排，模块没有依赖对方的 `*Impl` 或持久化对象。
+- [ ] 模块依赖用于真实 Owner 公开能力，保持长期单向无环；跨模块只使用公开 Service/Processor 和 Owner 领域输入/结果。
+- [ ] 多 Service 原子保存由用例所属模块 Processor 开一个本地事务；没有稳定 Owner 或存在循环风险时由 Web Processor 组合，未访问对方 Impl 或持久化对象。
 - [ ] 事务只覆盖本服务数据库原子操作；包含间接调用在内的外部查询、命令和 MQ 发布均在事务外，结果落库使用后续短事务。
-- [ ] 需要跨实例排他协调时，`@ResourceLock` 位于非 `final` Spring Bean 的公开 Processor 具体实现方法并由 Proxy 可达，包住完整 `TransactionTemplate`；所有资源在进入数据库事务前已知并按确定顺序获取，没有在接口、Controller、Repository、Mapper、private/static/final 方法或同类自调用上依赖 AOP。
-- [ ] Redis-first 协调没有取代幂等、Expected State/Version CAS、唯一索引或业务不变量需要的数据库最终保护；资源锁声明、配置和代理入口通过启动校验与架构测试。
-- [ ] 状态更新校验旧状态/版本并处理并发冲突。
+- [ ] 写锁复用 AbstractLockProcessor，单资源模式或完整多资源集合、Key、等待和租约明确；既有注解锁保留代理与配置合同，同入口不叠加，迁移核对相同互斥域的所有消费者。
+- [ ] Redis 锁没有取代数据库最终保护；验证范围按实际机制覆盖竞争、释放、中断与租约，未把注解代理门禁当作模板已具备的能力。
+- [ ] Service 不调用其他 Service、Processor 或外部依赖；Processor 入口不在已有事务中执行。
+- [ ] Context 完整构造且只持有本模块数据，不进入 Repository/Mapper；超过三个 Service 业务参数使用具名 Context。
+- [ ] Repository 按表维护；SQL 条件和行数检查通过后同步对象，事务回滚后丢弃 Context。
+- [ ] 原提交查询早于新建资格检查；请求身份和不可变内容比较明确，不以活动指针或通用 DuplicateKeyException 代替防重语义。
+- [ ] 自有配置归入模块 Properties，公共配置复用原组件；模板、加载入口和配置清单一致。
 - [ ] 异常信息包含必要业务上下文。
 - [ ] 未预期异常交给共享全局处理器；局部 `catch` 具有实际恢复、清理、异步状态或协议转换职责，并保留原始 Cause。
 - [ ] 没有为尚未批准的技术方案创建占位基础设施。
 - [ ] 没有一行代理、空层或猜测性公共类；新增 Foundation 能力已有跨服务复用证据且职责单一。
 - [ ] 已按 `UNIT_TEST_GUIDE.md` 补充适当层级的测试。
-- [ ] 新增出站依赖使用已启动的仓库 `local-environment` 或有状态 Simulator，未通过方法级 Stub 绕过真实适配器。
+- [ ] 新增出站依赖使用已启动的仓库 `local-environment` 或独立的测试 HTTP DTO Mock，保留真实适配器、意外调用检查和逐用例全局清理。

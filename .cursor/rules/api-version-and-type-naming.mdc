@@ -11,5 +11,9 @@ alwaysApply: true
 - 用户未明确指定时，修改原接口，不自行升级；新接口默认 `/v1`。
 - 类、接口、record 名不带 `V1/V2/Version1` 等协议版本标记，例如 `RuleSetDetailResponseBody`。
 - `RuleSetVersion`、`versionNo` 等业务版本语义及历史 Hash Schema 保留。
+- DB（数据库映射/DataObject）、Context、RequestBody、ResponseBody 统一使用普通 Java class，不使用 record；DB 只读查询对象也遵守。字段可变性按业务需要决定。
+- API 请求、响应分别使用独立的 *RequestBody/*ResponseBody class，必要嵌套对象也使用 class，不强制 Models 容器；Foundation 已发布机制模型不因此批量重写。
+- 字段首行简短含义，单位、可空、默认及约束用 `<li>`；API 方法用中文 JavaDoc 与 @param/@return，外部接口同步 OpenAPI。
+- 基础字段约束用 Jakarta Bean Validation / Hibernate Validator，嵌套使用 @Valid；内部 Request 由 AbstractProcessor.validateBasic 统一触发，业务子类不重复调用 Validator；非模板入口明确触发点。
 - 类型重命名同步提供方和消费者；接口原版本内调整也需明确兼容与发布顺序。
 - 按本次范围增量处理，不自动批量重构无关历史代码；阶段确认和动作授权仍遵循根 `AGENTS.md`。

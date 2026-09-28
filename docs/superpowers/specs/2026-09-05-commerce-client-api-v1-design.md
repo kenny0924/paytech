@@ -1,5 +1,11 @@
 # Commerce Client API Hosted Checkout V1 设计
 
+> **2026-09-16 接入职责后继：** [已确认 Filter 精简](../../../agent-docs/decisions/2026-09-16-commerce-ingress-filter-simplification.md)删除 Commerce 专用 Key、缓存、Order/Refund Query 和可信身份五个 Filter。下文公开 Header 约束保持，Key 处理归上游中间件，缓存头、认证和可信身份注入归 Gateway；Commerce 保留参数绑定与字段约束、资源归属校验和业务防重，不再重复实现这些专用拦截。中间件具体方案与启用状态另行管理。
+
+> **2026-09-16 CreateRefund 后继：** [本入口重构](../../../requirements/20260916/commerce-CreateRefund接口重构/technique.md)取代 Client 创建退款的 Key/Hash/Claim/Lease 与响应快照合同；clientRefundId 同内容返回原创建回执，改内容冲突。Header 仅保留接入格式校验，预占与任务仍原子提交，提交后使用同一 Payment 退款身份；其余操作按各自修订执行。
+
+> **2026-09-16 CancelOrder 后继：** [已确认纠正](../../../requirements/20260916/commerce-CancelOrder接口重构/technique.md)取代本文取消接口的请求 Key/Hash/Claim/Lease、恢复阶段和响应快照合同；Header 只做接入校验，业务按订单原事实防重，取消响应移除内部 version。Payment 终止权威与确定性下游终止标识不变，其他操作不在本次范围。
+
 - Decision status: Confirmed
 - Written spec review: Completed
 - Decision date: 2026-09-05
@@ -150,7 +156,7 @@ com.paytech.commerce.ext.rest.external.clientapi.v1
 
 - 公共路径以 `/api/v1` 开始；服务私网 Controller 路径以 `/client-gateway-api/v1` 开始，应用 Context Path 保持 `/commerce`。
 - 成功 Body 使用 `application/json`；错误 Body 使用 `application/problem+json`。
-- 公共响应由 Gateway 重建 `X-Request-Id`、`Cache-Control: no-store` 和 `Pragma: no-cache`；Commerce 私网 Client API Adapter 对自身路径也固定 no-store/no-cache，避免绕过公共入口的本地验证产生可缓存回执。
+- 公共响应由 Gateway 重建 `X-Request-Id`、`Cache-Control: no-store` 和 `Pragma: no-cache`；Commerce 私网 Client API Adapter 不再通过专用 Filter 重复强制缓存头，直连服务不具有该公网缓存头保证。
 - Client API 不启用 CORS，不把 API Key 放入 Cookie，不提供浏览器 Preflight 旁路。
 - `POST` 接受 `Content-Type: application/json`；所有接口可接受 `Accept: application/json, application/problem+json`。
 
@@ -174,6 +180,8 @@ X-Gateway-Credential-Id
 
 Commerce 只信任私网 Gateway 注入的 Client ID，不从 Path、Query 或 Body 接受 Client/Tenant/Credential/Scope。Credential ID 只用于安全审计和诊断，不参与业务幂等命名空间；Credential 轮换不能改变幂等结果或资源归属。
 
+Gateway 负责清理外部伪造身份 Header 并注入可信身份。Commerce API 保留两个身份 Header 的必填、long 类型绑定及 `@Positive` 约束，资源查询仍按 Client ID 限定；不再由 `ClientApiTrustedContextFilter` 重复检查 Header 单值或填充 `clientId/credentialId` MDC。Request ID 链路保持，删除 Filter 不代表另一个组件已接管这两个日志字段。
+
 ### 3.3 Scope
 
 | Scope | 接口 |
@@ -191,6 +199,7 @@ V1 不提供通配 Scope。Credential 可以组合多个明确 Scope。Webhook �
 - `X-Request-Id` 遵循 Gateway 已批准的单值、1 至 64 字符规则，只作当前 HTTP 尝试关联。
 - 每个 POST 必须带一个 `Idempotency-Key`；Header 名大小写不敏感，值大小写敏感。
 - Key 长度 1 至 255，只允许首字符字母或数字，其余为字母、数字、`.`、`_`、`:`、`-`；缺失为 `IDEMPOTENCY_KEY_REQUIRED`，非法为 `INVALID_IDEMPOTENCY_KEY`。
+- 上一条是公开接入协议，由上游中间件承担；Commerce 保留 Header 参数声明，不保留专用 Key Filter。框架缺参错误与接入层专有错误不混为同一实现保证；本次未启用请求幂等中间件。
 - `orderNo`、`refundRequestNo`、`clientOrderId`、`clientRefundId` 和 Cursor 都大小写敏感。
 - `clientOrderId` / `clientRefundId` 最长 128 个可打印 ASCII 字符，不允许控制字符或空白；Query 使用时必须正确 URL encode。
 - `orderNo` / `refundRequestNo` 最长 64，Client 必须把它们当作不可解析的 opaque string。
@@ -253,7 +262,7 @@ response_timeout      = 10000 ms
 | `client-api-commerce-refund-read-client-id` | GET | `/api/v1/refunds` | `/commerce/client-gateway-api/v1/refunds` | `refunds.read` | `clientRefundId` | 0 |
 | `client-api-commerce-order-refunds-list` | GET | `/api/v1/orders/{orderNo}/refunds` | `/commerce/client-gateway-api/v1/orders/{orderNo}/refunds` | `refunds.read` | `limit,cursor` | 0 |
 
-POST Header allowlist 为 `Accept`、`Content-Type`、`Idempotency-Key`；GET 为 `Accept`。`X-Request-Id` 和两个可信身份 Header 由 Gateway 固定管线处理，不进入可配置 allowlist。Query 名称必须精确匹配；未知 Query、重复单值 Query、GET Body 或 Cancel Body 返回 `400 INVALID_REQUEST`。
+POST Header allowlist 为 `Accept`、`Content-Type`、`Idempotency-Key`；GET 为 `Accept`。`X-Request-Id` 和两个可信身份 Header 由 Gateway 固定管线处理，不进入可配置 allowlist。公开入口要求 Query 名称精确匹配，未知 Query、重复单值 Query、GET Body 或 Cancel Body 返回 `400 INVALID_REQUEST`；这些协议限制由上游接入层承担。按 [2026-09-16 决定](../../../agent-docs/decisions/2026-09-16-commerce-ingress-filter-simplification.md)，Commerce 已不再用 Order/Refund 专用 Filter 重复拦截，服务直连不能套用这些公开入口错误保证；业务字段及资源归属仍由 Commerce 校验。
 
 创建成功的 `Location` 只允许：
 

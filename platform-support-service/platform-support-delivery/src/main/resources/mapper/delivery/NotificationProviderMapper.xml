@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.delivery.core.dal.mapper.NotificationProviderMapper">
+    <resultMap id="record" type="com.paytech.platform.support.delivery.core.dal.dataobject.NotificationProvider">
+        <id column="provider_id" property="providerId"/>
+        <result column="provider_code" property="providerCode"/>
+        <result column="medium" property="medium"/>
+        <result column="status" property="status"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <select id="find" resultMap="record">SELECT provider_id, provider_code, medium, status, version, create_time, update_time FROM t_notification_provider WHERE provider_id = #{id}</select>
+</mapper>

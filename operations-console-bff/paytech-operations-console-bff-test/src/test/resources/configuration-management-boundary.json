@@ -1,0 +1,529 @@
+[
+  {
+    "id": "A01",
+    "method": "POST",
+    "path": "/gateway-admin/v1/target-services",
+    "query": "",
+    "routeCode": "operations-gateway-target-create",
+    "request": {
+      "targetServiceCode": "test-target",
+      "channel": "CLIENT",
+      "discoveryServiceName": "test-service",
+      "reason": "边界回归"
+    },
+    "response": {
+      "objectType": "GATEWAY_TARGET",
+      "objectId": "10001",
+      "objectCode": "test-target",
+      "status": "DISABLED",
+      "version": 1
+    }
+  },
+  {
+    "id": "A02",
+    "method": "PUT",
+    "path": "/gateway-admin/v1/target-services/test-target",
+    "query": "",
+    "routeCode": "operations-gateway-target-update",
+    "request": {
+      "discoveryServiceName": "test-service-2",
+      "expectedVersion": 1,
+      "reason": "边界回归"
+    },
+    "response": {
+      "objectType": "GATEWAY_TARGET",
+      "objectId": "10001",
+      "objectCode": "test-target",
+      "status": "DISABLED",
+      "version": 2
+    }
+  },
+  {
+    "id": "A03",
+    "method": "POST",
+    "path": "/gateway-admin/v1/routes",
+    "query": "",
+    "routeCode": "operations-gateway-route-create",
+    "request": {
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/operations/test/{id}",
+      "downstreamPathTemplate": "/test/{id}",
+      "targetServiceCode": "test-target",
+      "securityProfileCode": "OPERATIONS_JWT",
+      "authorizationMode": "HUMAN_PERMISSION",
+      "permissionId": "10001",
+      "requiredScopeCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 65536,
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        }
+      ],
+      "queryParameterNames": [
+        "filter"
+      ],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 10,
+          "refillTokens": 10,
+          "refillPeriodMillis": 1000,
+          "concurrencyLimit": null
+        }
+      ],
+      "reason": "边界回归",
+      "routeCode": "test-route",
+      "channel": "OPERATIONS"
+    },
+    "response": {
+      "objectType": "GATEWAY_ROUTE",
+      "objectId": "10001",
+      "objectCode": "test-route",
+      "status": "DISABLED",
+      "version": 1
+    }
+  },
+  {
+    "id": "A04",
+    "method": "PUT",
+    "path": "/gateway-admin/v1/routes/test-route",
+    "query": "",
+    "routeCode": "operations-gateway-route-update",
+    "request": {
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/operations/test/{id}",
+      "downstreamPathTemplate": "/test/{id}",
+      "targetServiceCode": "test-target",
+      "securityProfileCode": "OPERATIONS_JWT",
+      "authorizationMode": "HUMAN_PERMISSION",
+      "permissionId": "10001",
+      "requiredScopeCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 65536,
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        }
+      ],
+      "queryParameterNames": [
+        "filter"
+      ],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 10,
+          "refillTokens": 10,
+          "refillPeriodMillis": 1000,
+          "concurrencyLimit": null
+        }
+      ],
+      "reason": "边界回归",
+      "expectedVersion": 1
+    },
+    "response": {
+      "objectType": "GATEWAY_ROUTE",
+      "objectId": "10001",
+      "objectCode": "test-route",
+      "status": "DISABLED",
+      "version": 2
+    }
+  },
+  {
+    "id": "A05",
+    "method": "GET",
+    "path": "/console-admin/v1/resources",
+    "query": "",
+    "routeCode": "operations-console-resource-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "resourceId": "30001",
+          "resourceCode": "TEST_MENU",
+          "channel": "OPERATIONS",
+          "resourceType": "MENU",
+          "parentResourceId": null,
+          "displayName": "测试目录",
+          "frontendRoute": null,
+          "componentKey": null,
+          "permissionId": "10001",
+          "permissionCode": "TEST_PERMISSION",
+          "permissionStatus": "ACTIVE",
+          "sortOrder": 10,
+          "status": "DISABLED",
+          "version": 1,
+          "managementProtection": {
+            "editableFields": [
+              "riskLevel"
+            ],
+            "statusChangeAllowed": true,
+            "reason": null
+          },
+          "supported": true,
+          "createTime": "2026-09-13T00:00:00Z",
+          "updateTime": "2026-09-13T00:00:00Z"
+        }
+      ]
+    }
+  },
+  {
+    "id": "A06",
+    "method": "GET",
+    "path": "/console-admin/v1/resources/TEST_MENU",
+    "query": "",
+    "routeCode": "operations-console-resource-detail",
+    "request": null,
+    "response": {
+      "resourceId": "30001",
+      "resourceCode": "TEST_MENU",
+      "channel": "OPERATIONS",
+      "resourceType": "MENU",
+      "parentResourceId": null,
+      "displayName": "测试目录",
+      "frontendRoute": null,
+      "componentKey": null,
+      "permissionId": "10001",
+      "permissionCode": "TEST_PERMISSION",
+      "permissionStatus": "ACTIVE",
+      "sortOrder": 10,
+      "status": "DISABLED",
+      "version": 1,
+      "managementProtection": {
+        "editableFields": [
+          "riskLevel"
+        ],
+        "statusChangeAllowed": true,
+        "reason": null
+      },
+      "supported": true,
+      "createTime": "2026-09-13T00:00:00Z",
+      "updateTime": "2026-09-13T00:00:00Z"
+    }
+  },
+  {
+    "id": "A07",
+    "method": "POST",
+    "path": "/console-admin/v1/resources",
+    "query": "",
+    "routeCode": "operations-console-resource-create",
+    "request": {
+      "resourceCode": "TEST_MENU",
+      "resourceType": "MENU",
+      "displayName": "测试目录",
+      "parentResourceId": null,
+      "componentKey": null,
+      "permissionId": "10001",
+      "sortOrder": 10,
+      "reason": "边界回归"
+    },
+    "response": {
+      "objectType": "CONSOLE_RESOURCE",
+      "objectId": "10001",
+      "objectCode": "TEST_MENU",
+      "status": "DISABLED",
+      "version": 1
+    }
+  },
+  {
+    "id": "A08",
+    "method": "PUT",
+    "path": "/console-admin/v1/resources/TEST_MENU",
+    "query": "",
+    "routeCode": "operations-console-resource-update",
+    "request": {
+      "displayName": "测试目录2",
+      "parentResourceId": null,
+      "componentKey": null,
+      "permissionId": "10001",
+      "sortOrder": 10,
+      "expectedVersion": 1,
+      "reason": "边界回归"
+    },
+    "response": {
+      "objectType": "CONSOLE_RESOURCE",
+      "objectId": "10001",
+      "objectCode": "TEST_MENU",
+      "status": "DISABLED",
+      "version": 2
+    }
+  },
+  {
+    "id": "A09",
+    "method": "PATCH",
+    "path": "/console-admin/v1/resources/TEST_MENU/status",
+    "query": "",
+    "routeCode": "operations-console-resource-status",
+    "request": {
+      "status": "ACTIVE",
+      "expectedVersion": 1,
+      "reason": "边界回归"
+    },
+    "response": {
+      "objectType": "CONSOLE_RESOURCE",
+      "objectId": "10001",
+      "objectCode": "TEST_MENU",
+      "status": "DISABLED",
+      "version": 2
+    }
+  },
+  {
+    "id": "A10",
+    "method": "GET",
+    "path": "/permission-admin/v1/permissions",
+    "query": "?page=1&size=10&code=TEST_PERMISSION&resourceType=TEST_RESOURCE&status=ACTIVE&riskLevel=LOW",
+    "routeCode": "operations-permission-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "permissionId": "10001",
+          "permissionCode": "TEST_PERMISSION",
+          "resourceType": "TEST_RESOURCE",
+          "actionCode": "READ",
+          "riskLevel": "LOW",
+          "status": "ACTIVE",
+          "version": 1
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "A11",
+    "method": "GET",
+    "path": "/permission-admin/v1/permissions/TEST_PERMISSION",
+    "query": "",
+    "routeCode": "operations-permission-detail",
+    "request": null,
+    "response": {
+      "permissionId": "10001",
+      "permissionCode": "TEST_PERMISSION",
+      "resourceType": "TEST_RESOURCE",
+      "actionCode": "READ",
+      "riskLevel": "LOW",
+      "status": "ACTIVE",
+      "version": 1,
+      "managementProtection": {
+        "editableFields": [
+          "riskLevel"
+        ],
+        "statusChangeAllowed": true,
+        "reason": null
+      },
+      "referenceCounts": {
+        "resource": 1,
+        "route": 0,
+        "role": 0
+      },
+      "createTime": "2026-09-13T00:00:00Z",
+      "updateTime": "2026-09-13T00:00:00Z"
+    }
+  },
+  {
+    "id": "A12",
+    "method": "POST",
+    "path": "/permission-admin/v1/permissions",
+    "query": "",
+    "routeCode": "operations-permission-create",
+    "request": {
+      "permissionCode": "TEST_PERMISSION",
+      "resourceType": "TEST_RESOURCE",
+      "actionCode": "READ",
+      "riskLevel": "LOW",
+      "reason": "边界回归"
+    },
+    "response": {
+      "objectType": "PERMISSION",
+      "objectId": "10001",
+      "objectCode": "TEST_PERMISSION",
+      "status": "INACTIVE",
+      "version": 1
+    }
+  },
+  {
+    "id": "A13",
+    "method": "PUT",
+    "path": "/permission-admin/v1/permissions/TEST_PERMISSION",
+    "query": "",
+    "routeCode": "operations-permission-update",
+    "request": {
+      "riskLevel": "HIGH",
+      "expectedVersion": 1,
+      "reason": "边界回归"
+    },
+    "response": {
+      "objectType": "PERMISSION",
+      "objectId": "10001",
+      "objectCode": "TEST_PERMISSION",
+      "status": "INACTIVE",
+      "version": 2
+    }
+  },
+  {
+    "id": "A14",
+    "method": "PATCH",
+    "path": "/permission-admin/v1/permissions/TEST_PERMISSION/status",
+    "query": "",
+    "routeCode": "operations-permission-status",
+    "request": {
+      "status": "INACTIVE",
+      "expectedVersion": 1,
+      "reason": "边界回归"
+    },
+    "response": {
+      "objectType": "PERMISSION",
+      "objectId": "10001",
+      "objectCode": "TEST_PERMISSION",
+      "status": "INACTIVE",
+      "version": 2
+    }
+  },
+  {
+    "id": "A15",
+    "method": "GET",
+    "path": "/permission-admin/v1/permissions/TEST_PERMISSION/references",
+    "query": "?kind=RESOURCE&page=1&size=10",
+    "routeCode": "operations-permission-references",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "resourceId": "30001",
+          "resourceCode": "TEST_MENU",
+          "displayName": "测试目录",
+          "channel": "OPERATIONS",
+          "resourceType": "MENU",
+          "status": "DISABLED"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "A16",
+    "method": "GET",
+    "path": "/gateway-admin/v1/capabilities",
+    "query": "",
+    "routeCode": "operations-gateway-capabilities",
+    "request": null,
+    "response": {
+      "channels": [
+        {
+          "channel": "CLIENT",
+          "profiles": [
+            {
+              "securityProfileCode": "CLIENT_JWT",
+              "authorizationModes": [
+                "HUMAN_PERMISSION"
+              ],
+              "requestCookieModes": [
+                "DROP"
+              ],
+              "responseCookieModes": [
+                "NONE"
+              ],
+              "allowedGuardDimensions": [
+                "SHARED_ROUTE"
+              ],
+              "requiredGuardDimensions": [
+                "SHARED_ROUTE"
+              ]
+            }
+          ]
+        }
+      ],
+      "httpMethods": [
+        "GET",
+        "POST"
+      ],
+      "limits": {
+        "maxBodyLimitBytes": 65536,
+        "maxBodyReceiveTimeoutMillis": 5000,
+        "maxResponseTimeoutMillis": 10000,
+        "maxRateCapacity": 600,
+        "maxRateRefillTokens": 600,
+        "maxRateRefillPeriodMillis": 60000,
+        "maxConcurrencyLimit": 50,
+        "maxTargets": 128,
+        "maxRoutes": 4096,
+        "maxCorsHeaders": 64,
+        "maxForwardedHeaders": 64,
+        "maxQueryParameters": 32,
+        "maxGuardRules": 8
+      },
+      "forbiddenHeaderNames": [
+        "x-gateway-actor-subject"
+      ],
+      "headerUses": [
+        "CORS_REQUEST_ALLOWED",
+        "FORWARD_REQUEST"
+      ]
+    }
+  },
+  {
+    "id": "A17",
+    "method": "GET",
+    "path": "/console-admin/v1/resource-capabilities",
+    "query": "",
+    "routeCode": "operations-console-resource-capabilities",
+    "request": null,
+    "response": {
+      "components": [
+        {
+          "componentKey": "OPERATIONS_PERMISSIONS",
+          "displayName": "权限目录",
+          "frontendRoute": "/permissions",
+          "actions": [
+            {
+              "resourceCode": "OPERATIONS_PERMISSION_MANAGE",
+              "displayName": "管理"
+            }
+          ]
+        }
+      ],
+      "resourceTypes": [
+        "MENU",
+        "BUTTON"
+      ],
+      "maxDepth": 8,
+      "maxResources": 2000
+    }
+  },
+  {
+    "id": "A18",
+    "method": "GET",
+    "path": "/permission-admin/v1/permission-options",
+    "query": "?usage=CONSOLE_RESOURCE&page=1&size=10&keyword=TEST",
+    "routeCode": "operations-configuration-permission-options",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "permissionId": "10001",
+          "permissionCode": "TEST_PERMISSION",
+          "resourceType": "TEST_RESOURCE",
+          "actionCode": "READ",
+          "riskLevel": "LOW"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  }
+]

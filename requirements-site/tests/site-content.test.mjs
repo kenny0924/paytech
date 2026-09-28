@@ -919,7 +919,7 @@ test("the current implementation ledger owns core model snapshots while entry do
   }
 
   assert.match(currentImplementationSource, /\| Commerce \| 15 \| 249 \| 24 \| 12 \| 15 \| — \| 4 \|/u);
-  assert.match(currentImplementationSource, /\| Payment Orchestration \| 30 \| 403 \| 45 \| 48 \| 67 \| 8 \| 7 \|/u);
+  assert.match(currentImplementationSource, /\| Payment Orchestration \| 27 \| 363 \| 41 \| 43 \| 63 \| 7 \| 7 \|/u);
   assert.match(currentImplementationSource, /\| Finance \| 84 \| 1,109 \| 145 \| 155 \| 160 \| 22 \| 6 \|/u);
   assert.match(currentImplementationSource, /\| Risk & Compliance \| 81 \| 1,003 \| 119 \| 87 \| 127 \| 9 \| 8 \|/u);
   assert.match(documentGovernanceSource, /Spec 冻结目标和契约，Plan 记录可执行步骤，实施记录保存实际证据/u);
@@ -1612,28 +1612,76 @@ test("Java tests are organized by executable entry and independent risk scenario
   );
 });
 
-test("business module collaboration policy defines the default and narrow exception", () => {
+test("business module collaboration follows the Payment-based Owner Processor boundary", () => {
   assert.match(businessModuleCollaborationDecisionSource, /Decision status: Confirmed/u);
+  assert.match(businessModuleCollaborationDecisionSource, /2026-09-16-payment-based-coding-conventions\.md/u);
   assert.match(
     javaProjectStructureSource,
-    /业务能力模块默认不建立彼此的直接 Maven 依赖/u,
+    /业务 Owner 模块的 `service\/processor` 编排/u,
   );
   assert.match(
     javaProjectStructureSource,
-    /稳定、可复用[\s\S]{0,180}Owner[\s\S]{0,180}单向[\s\S]{0,120}无环/u,
+    /Owner 公开能力建立单向依赖[\s\S]{0,100}无环/u,
   );
   assert.match(
     javaProjectStructureSource,
-    /循环 Maven 依赖[\s\S]{0,160}`web` Processor/u,
+    /无稳定 Owner 或存在依赖环时，使用 Web Processor/u,
   );
   assert.match(
     developmentConventionsSource,
-    /调用方只依赖 Owner 发布的接口[\s\S]{0,160}不得依赖 `\*Impl`/u,
+    /公开的 Service 或 Processor[\s\S]{0,180}不得访问对方 `\*Impl`/u,
   );
   assert.match(
     javaBusinessModuleBoundariesRuleSource,
     /DataObject[\s\S]{0,160}Owner[\s\S]{0,80}JAR/u,
   );
+});
+
+test("shared writing conventions retain Payment responsibilities without promoting temporary exceptions", () => {
+  const decision = readFileSync(
+    new URL("../../agent-docs/decisions/2026-09-16-payment-based-coding-conventions.md", import.meta.url),
+    "utf8",
+  );
+  const paymentGuide = readFileSync(
+    new URL("../../payment-orchestration-service/docs/development/processor-conventions.md", import.meta.url),
+    "utf8",
+  );
+  const writeApiExample = readFileSync(
+    new URL("../../agent-docs/examples/WRITE_API_EXAMPLE.md", import.meta.url),
+    "utf8",
+  );
+  const paymentInstructions = readFileSync(
+    new URL("../../payment-orchestration-service/AGENTS.md", import.meta.url),
+    "utf8",
+  );
+  assert.match(decision, /Decision status: Confirmed/u);
+  assert.match(decision, /Mock \+ TODO[\s\S]{0,80}不推广为长期编码规则/u);
+  for (const policy of [developmentConventionsSource, javaProjectStructureSource, writeApiExample]) {
+    assert.match(policy, /2026-09-16-payment-based-coding-conventions\.md/u);
+    assert.match(policy, /RequestBody[\s\S]{0,160}ResponseBody[\s\S]{0,100}class/u);
+    assert.match(policy, /Processor[\s\S]{0,80}(?:可查询|可以直接查询|可以查询)[\s\S]{0,50}Repository/u);
+    assert.match(policy, /Service[\s\S]{0,100}不调用其他 Service 或 Processor|Service 之间的调用组装放在 Processor/u);
+    assert.match(policy, /Context[\s\S]{0,140}DataObject/u);
+    assert.match(policy, /Context[\s\S]{0,80}(?:不进入|绝不进入)(?: Repository\/Mapper|持久化层)/u);
+    assert.match(policy, /AbstractLockProcessor/u);
+    assert.match(policy, /SQL[\s\S]{0,120}(?:行数|成功后)[\s\S]{0,100}(?:同步|失败)/u);
+  }
+  assert.match(developmentConventionsSource, /Processor 入口统一拒绝调用方已有活动数据库事务/u);
+  assert.match(developmentConventionsSource, /多个 Service 必须一起保存时，Processor 开启一个事务/u);
+  assert.match(developmentConventionsSource, /超过三个业务参数时封装具名 Context/u);
+  assert.match(developmentConventionsSource, /公共命令幂等组件[\s\S]{0,90}不因为公共包存在而强制接入/u);
+  assert.match(developmentConventionsSource, /## 9\. 配置与 Nacos/u);
+  assert.doesNotMatch(javaProjectStructureSource, /Processor 未直接调用 Repository、Mapper|HTTP DTO 按业务能力放入独立 `\*Models`/u);
+  for (const entry of [rootAgentsSource, agentReadmeSource, paymentInstructions, paymentGuide]) {
+    assert.match(entry, /examples\/WRITE_API_EXAMPLE\.md/u);
+  }
+  assert.match(rootAgentsSource, /首次改动实现前实际读取/u);
+  assert.match(rootAgentsSource, /完成前按示例第 11 节逐项核对/u);
+  assert.match(writeApiExample, /## 11\. 交付前逐项核对/u);
+  assert.match(writeApiExample, /源码与规范的已知差异/u);
+  assert.match(writeApiExample, /View[\s\S]{0,120}写接口及普通内部传递一般不增加 View/u);
+  assert.match(paymentGuide, /不再维护第二份完整教程/u);
+  assert.doesNotMatch(paymentGuide, /protected PayResponse processWithinLock/u);
 });
 
 test("Finance module design projects the shared collaboration policy", () => {

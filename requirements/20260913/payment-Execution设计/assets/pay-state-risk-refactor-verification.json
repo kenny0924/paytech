@@ -1,0 +1,54 @@
+{
+  "scope": "Payment Execution capture mode, risk action, action slot and sequential pay refactor",
+  "javaVerification": {
+    "command": "./mvnw -pl paytech-payment-test -am -Dtest=PaymentRulesAutoTest,PaymentFlowRegistryAutoTest,PaymentCommandContractAutoTest,PaymentModuleBoundaryAutoTest -Dsurefire.failIfNoSpecifiedTests=false clean verify",
+    "exitCode": 0,
+    "tests": [
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentCommandContractAutoTest",
+        "tests": "12",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentFlowRegistryAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentRulesAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.architecture.PaymentModuleBoundaryAutoTest",
+        "tests": "10",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      }
+    ],
+    "allTestSourcesCompiled": true,
+    "reactorPackaged": true,
+    "sourceSha256": "10a9a102e8b7b4a0929ed38310506cd850fe80341267302e1515d981a03e8960"
+  },
+  "modelVerification": {
+    "command": "node --test scripts/pdmaner/payment-model.test.mjs scripts/pdmaner/payment-scenario-doc.test.mjs",
+    "passed": 21,
+    "failed": 0
+  },
+  "database": {
+    "target": "127.0.0.1:13306/mor_payment",
+    "readOnlyInventory": "13 old Execution tables each 0 rows",
+    "migrationExecuted": false,
+    "integrationTestsExecuted": false,
+    "pending": "Explicit authorization of reviewed local empty schema migration"
+  },
+  "commitPerformed": false,
+  "deploymentPerformed": false
+}

@@ -1,0 +1,41 @@
+{
+  "date": "2026-09-15",
+  "scope": "Remove Service Context from all Payment Repository/Mapper boundaries; no wrapper DTO introduced",
+  "build": {
+    "command": "./mvnw -q clean package -Dmaven.test.skip=true",
+    "jdk": 25,
+    "exitCode": 0,
+    "log": "/tmp/payment-repository-context-build.log"
+  },
+  "checks": {
+    "persistenceFilesScanned": 20,
+    "contextReferences": 0,
+    "repositoryMapperSignaturesChecked": 18,
+    "sqlBindingEquivalenceCases": 16,
+    "verifier": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/payment-repository-context-check-btjgbl27/RepositoryBoundaryCheck.java",
+    "result": "Repository/Mapper signatures checked: 18; before/after SQL and ordered parameter values identical: 16 cases, including null/next Action and OPEN/SUCCEEDED Intent; no database/HTTP execution.",
+    "unchanged": [
+      "PayProcessor",
+      "CardPayFlow",
+      "ActionFactory",
+      "PayContext"
+    ]
+  },
+  "notPerformed": [
+    "Java unit test suites",
+    "database/HTTP execution",
+    "SQL migration",
+    "commit/push/deployment"
+  ],
+  "sources": {
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/mapper/PaymentAttemptMapper.java": "1279a807d653c426d8e65acfe558349bf8a0262ba3b8f8dc82a792b853d5e730",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/mapper/PaymentIntentMapper.java": "7b97c74cb69ce55cc5c35d0846c99e86aca57f207c79f0e15ed53f032a262724",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/repository/PaymentAttemptRepository.java": "d169b3afcfc722049537eca495679a9f366cf67a0b982a611ca04bbaa15f677f",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/repository/PaymentIntentRepository.java": "a5c04f8b040b2c1670fd45ef449362cbbc1bf71ffde5c3ae1418226be4874ea3",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/repository/impl/PaymentAttemptRepositoryImpl.java": "efe02834d35c1dead16d4f09999ca1b5d5aa26348d5d026250d506262a469276",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/repository/impl/PaymentIntentRepositoryImpl.java": "07ed8633c795f8ba69a454c867f9f9ce1c11237ba0dffe7297d88b7a345c8081",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/ActionExecutionServiceImpl.java": "05ba4b36228a9ae7fd8839706a1b4c908165dcee184b11abfae5d4b5330775b9",
+    "payment-orchestration-service/paytech-payment-execution/src/main/resources/mapper/PaymentAttemptMapper.xml": "d38f1cf8bcecb5b2120e1d54b664117b9d06dfbe7b0fc39e31fdcc2fb3de904e",
+    "payment-orchestration-service/paytech-payment-execution/src/main/resources/mapper/PaymentIntentMapper.xml": "268d67b0f209de98c673cd40f1d1598bdbac36f896b10ae830eb2edf889e2b7b"
+  }
+}

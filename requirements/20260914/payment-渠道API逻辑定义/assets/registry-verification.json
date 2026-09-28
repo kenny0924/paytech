@@ -1,0 +1,26 @@
+{
+  "scope": "DESIGN_FIXTURES_ONLY",
+  "status": "PASSED",
+  "contexts": 2,
+  "contextFields": 5,
+  "systemFunctions": 2,
+  "pureFunctions": 1,
+  "mappedFields": 8,
+  "explicitFunctionCalls": 1,
+  "moneyExpectationVectors": 8,
+  "rejectedMutations": [
+    "UNKNOWN_FIELD",
+    "PURE_FUNCTION_NOT_ALLOWED",
+    "ARGUMENT_TYPE",
+    "FUNCTION_SCOPE",
+    "UNKNOWN_FUNCTION",
+    "FORWARD_REFERENCE",
+    "TARGET_TYPE",
+    "ARGUMENT_ORDER"
+  ],
+  "aviatorCompiled": false,
+  "aviatorExecuted": false,
+  "systemFunctionsExecuted": false,
+  "channelRequestsSent": 0,
+  "completeApiWireValidated": false
+}

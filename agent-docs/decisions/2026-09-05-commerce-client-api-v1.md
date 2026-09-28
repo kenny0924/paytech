@@ -1,5 +1,15 @@
 # Commerce Client API Hosted Checkout V1 决策
 
+> **2026-09-16 接入职责后继：** [Filter 精简决定](2026-09-16-commerce-ingress-filter-simplification.md)移除 Commerce 的专用 Client Key 校验和 Client/Customer 缓存响应包装。公开 Key 协议和请求幂等由上游中间件处理，公开缓存头由 Gateway 输出；保留现行 Header 参数声明与业务防重。本次不实现或激活中间件。
+
+> **2026-09-16 CreateRefund 后继：** [本入口重构](../../requirements/20260916/commerce-CreateRefund接口重构/technique.md)按 clientRefundId 比较原申请并返回原创建回执；移除 Client 创建退款的请求 Key/Hash/Claim/Lease 和回执快照消费，Header 仅保留接入校验。下游退款身份、金额预占和补偿恢复仍保留；Operations 合同及其他接口不因此改变。
+
+> **2026-09-16 CancelOrder 后继：** [本轮用户纠正](../../requirements/20260916/commerce-CancelOrder接口重构/requirement.md)移除取消用例的请求幂等 Hash、Claim/Lease、恢复阶段及冻结回执；按订单原事实防重，Header 仅保留接入校验，取消响应移除内部 version。本文对应取消 Key 冲突和请求重放语义由该修订取代；Payment 终止权威及其 Order 派生标识继续保留。
+
+> **2026-09-16 响应结构后继：** [已确认修订](../../requirements/20260916/commerce-订单查询合并Checkout/response-shape-amendment.md)将两个订单 GET 的会话字段收进 checkout，增加固定 creationMode，删除订单响应与 fundsAvailability 的 version；不改变内部 CAS 或其他操作的合同。
+
+> **2026-09-16 查询合并：** 用户确认[取消独立 Client Checkout 查询](../../requirements/20260916/commerce-订单查询合并Checkout/technique.md)，两个订单 GET 承接支付链接、准备状态和金额状态。以下当前资源清单已更新；旧首片记录仅作为历史保留。
+
 - Decision status: Confirmed
 - Implementation status: See [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md)
 - Deployment status: Not deployed
@@ -37,15 +47,14 @@ Commerce Client API 的调用者是 Client 自己的服务端，不是 Consumer 
 固定接口为：
 
 1. `POST /api/v1/checkouts`
-2. `GET /api/v1/orders/{orderNo}/checkout`
-3. `GET /api/v1/orders/{orderNo}`
-4. `GET /api/v1/orders?clientOrderId=...`
-5. `POST /api/v1/orders/{orderNo}/cancel`
-6. `GET /api/v1/orders/{orderNo}/refundable-amount`
-7. `POST /api/v1/orders/{orderNo}/refunds`
-8. `GET /api/v1/refunds/{refundRequestNo}`
-9. `GET /api/v1/refunds?clientRefundId=...`
-10. `GET /api/v1/orders/{orderNo}/refunds`
+2. `GET /api/v1/orders/{orderNo}`
+3. `GET /api/v1/orders?clientOrderId=...`
+4. `POST /api/v1/orders/{orderNo}/cancel`
+5. `GET /api/v1/orders/{orderNo}/refundable-amount`
+6. `POST /api/v1/orders/{orderNo}/refunds`
+7. `GET /api/v1/refunds/{refundRequestNo}`
+8. `GET /api/v1/refunds?clientRefundId=...`
+9. `GET /api/v1/orders/{orderNo}/refunds`
 
 两个带业务 ID Query 的 GET 都是精确单资源查询；V1 不提供无过滤的 Order 或 Refund 全量列表。
 

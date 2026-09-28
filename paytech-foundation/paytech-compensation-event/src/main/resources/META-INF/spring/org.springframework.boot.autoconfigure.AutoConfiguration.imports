@@ -1,0 +1,2 @@
+com.paytech.foundation.compensation.core.autoconfigure.CompensationEventAutoConfiguration
+com.paytech.foundation.compensation.core.autoconfigure.CompensationXxlJobAutoConfiguration

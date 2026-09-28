@@ -1,5 +1,7 @@
 # Client API Gateway 设计
 
+> **2026-09-17 请求幂等职责修订：** [全项目决定](../../../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)取代本文“Gateway 只透传 Idempotency-Key、由 Owner 执行请求幂等”的部分。HTTP Key 与原响应重放统一归 Gateway，业务防重仍归 Owner；完整规则见[开发规范第 5.4 节](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md#54-请求幂等与业务防重)。该规则适用于全部入口，本文其余 CLIENT_API 专项认证/协议不因此扩展到其他入口。职责确认不表示已实现或激活。
+
 > **2026-09-11 Target/Route 后继决定：** [数据库路由范围决定](../../../agent-docs/decisions/2026-09-11-gateway-database-routing.md)取代本文静态 Approved Target Registry、具体 Discovery/Path Root 二次名单及关联校验/上线要求；Platform 数据库与完整快照成为业务目标/路由权威。其余认证、Channel、Header、协议和控制面规则保持；[技术修订方案](../../../requirements/20260911/operations-console-风控规则集历史与字典管理/gateway-dynamic-routing-design.md)待阶段评审，运行状态只读当前台账。
 
 日期：2026-09-05
@@ -102,7 +104,7 @@ Client API 采用最小调用方输入原则：能由可信域名入口、受控
 |---|---|---|
 | `Authorization` | 恰好一个 `Bearer <opaque credential>` | 唯一 Client API 身份材料 |
 | `X-Request-Id` | 可选、恰好一个合法值 | 跨系统关联，不是身份或幂等 |
-| `Idempotency-Key` | 仅在具体 Owner 命令声明需要时提交 | 业务命令幂等，由 Owner 执行 |
+| `Idempotency-Key` | 在公开接口约定启用请求幂等时提交 | Gateway 处理请求身份与原响应重放；不作为 Owner 业务操作身份 |
 | Path/Query/Body | 由具体 Route 与 Owner API 定义 | 业务输入 |
 | 业务 Header | 必须在 Route forward allowlist 中 | 内容协商或业务协议 |
 
@@ -202,7 +204,7 @@ Operations 继续忽略外部 `X-Request-Id` 并由 Gateway 生成新值。Nginx
 - `CLIENT_API` 的实际 `OPTIONS` 不读取 `Access-Control-Request-Method` 借用 GET/POST Route；未显式配置的 OPTIONS 返回 404，且不进入 PLT-I03、Redis 或 Owner；
 - Request Cookie 一律丢弃，Owner 不接收 Cookie；
 - Request Body 不做业务解析或改写，只在流式边界执行 Route body size 与 body receive timeout；
-- `Idempotency-Key` 只有出现在具体 Route allowlist 中才可转发，Gateway 不解释、不缓存、不生成也不重试。
+- `Idempotency-Key` 由 Gateway 在明确的调用方及操作作用域内处理，不作为新增 Owner API 的业务 Header 转发；已有转发/必填绑定属于待迁移协议，不能仅修改 allowlist 就宣称完成迁移。具体摘要、记录与并发策略另行设计，Gateway 不根据重复请求自动恢复业务执行。
 
 ## 8. Credential 认证与 Scope
 
@@ -217,7 +219,7 @@ PLT-I03 的具体消费合同如下；artifact 安装、发布、Provider 验证
 | Java API | `com.paytech.platform.support.api.apicredential.ApiCredentialValidationApi` |
 | 私有 HTTP | `POST /platform-support/api-credentials/v1/validate`；`/platform-support` 为服务 Context Path，接口注解拥有 `/api-credentials/v1/validate`，只拼接一次 |
 | 请求 | 单值 `X-Platform-Api-Credential` 携带裸 opaque Credential，不含 `Bearer `；无请求 Body；内部 `X-Request-Id` 使用 Gateway 最终可信值 |
-| 成功 | 仅接受 `200 application/json`，按 `ApiCredentialValidationModels.ValidatedCredentialResponseBody` 解码 |
+| 成功 | 仅接受 `200 application/json`，按 `com.paytech.platform.support.api.apicredential.response.ValidatedCredentialResponseBody` 独立 class 解码；2026-09-17 依开发规范迁移 Java 类型位置，JSON 字段保持不变 |
 | 身份字段 | `tenantId`、`ownerRefId`、`credentialId` 为 1–19 位正十进制字符串；`tenantType` 固定 `CLIENT` |
 | Scope | `effectiveScopeCodes` 最多 64 项，每项最多 128 字符；使用 Owner `ApiCredentialConstraints` 的小写精确 Scope 语法，不允许通配；可为空，去重后不可变 |
 | 凭据语法 | 使用 Owner `ApiCredentialConstraints` 校验：8–32 字符 Prefix、一个点分隔符、32–223 字符 Secret，总长 41–256；不得另建 Gateway 业务语法 |
@@ -292,6 +294,8 @@ Gateway 完成空白 Header 重建后，只额外注入：
 
 允许的业务 Header 按 Route allowlist 另行转发。Owner Adapter 必须把 `X-Gateway-Client-Id` 作为可信 Client 身份入口，并拒绝业务 Path/Query/Body 覆盖；核心业务服务继续验证资源确实属于该 Client。
 
+`Idempotency-Key` 属于 Gateway 请求控制协议，不是此处的业务 Header。新 Owner 合同不要求该 Header，使用业务字段表达订单号、来源提交号等身份；存量接口的必填绑定与转发需协调迁移。
+
 ### 10.2 明确禁止下发
 
 `Authorization`、opaque Credential、Prefix/Verifier、effective Scope、Tenant ID/Type、Route Code、Entry/Gateway Channel、Actor Type/Subject、Realm、Session、Context Type、Tenant Member、`X-Real-IP`、Forwarded 系列和 Cookie 一律不下发。
@@ -309,6 +313,8 @@ targetServiceCode + CLIENT_API + discoveryServiceName + approvedPathRoots + lb:/
 不能为了 Gateway 测试预注册空 Owner。自动测试使用 test-only 注入的 Loopback Target；生产 Registry 保持无虚假 Target。
 
 ## 11. 响应合同
+
+以下为首次代理响应的规则。请求幂等重放遵循开发规范第 5.4 节；每次 HTTP 尝试的 Request ID 与原响应关联字段如何投影，由 Gateway 具体方案统一明确，不由业务服务自行实现响应缓存。
 
 - 保留 Owner 的 HTTP Status 与业务响应体；
 - V1 不增加 Route 可配置的响应 Header allowlist；按代码固定、大小写不敏感的集合保留 `Content-Type`、`Content-Length`、`Content-Encoding`、`Content-Language`、`Content-Disposition`、`ETag`、`Last-Modified`、`Retry-After`；
@@ -345,10 +351,11 @@ targetServiceCode + CLIENT_API + discoveryServiceName + approvedPathRoots + lb:/
 
 - Gateway 对 PLT-I03 和 Owner 命令均零自动重试；
 - Client 对一次新的 HTTP 尝试使用新的 Request ID；
-- 同一逻辑命令重试必须复用原 `Idempotency-Key`；
-- Gateway 只转发该 Header，Owner 负责幂等 Namespace、重放和冲突；
+- 启用请求幂等的接口，同一次请求重试复用原 `Idempotency-Key`，由 Gateway 处理作用域、请求摘要、原响应重放和冲突；
+- 原响应重放不再次调用 Owner，不因首次为系统异常或 `202` 而恢复业务或改查最新状态；
 - `client_order_id` 等业务唯一键不等于 transport idempotency key；
-- 429/503/504 不自动表示命令未执行，调用方仍按 Owner 的幂等合同重试。
+- 429/503/504 不自动表示命令未执行；是否已有可重放响应由 Gateway 规则判断，业务最新状态通过 Owner 查询获取。新 Key 进入业务时仍受业务防重约束；
+- 72 小时保留及未定实现边界统一见[开发规范第 5.4 节](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md#54-请求幂等与业务防重)，不在此维护另一份组件设计。
 
 ## 14. 可观测性与审计
 

@@ -1,3 +1,4 @@
+-- 历史前序工件：本次代码须使用 execution-state-risk-*.sql；不得单独应用本文件后启动新代码。
 -- 仅供人工初始化空本地库；不是迁移，不由应用或测试自动执行。
 -- 来源：正式 Payment PDManer 与完整 Schema。执行授权和状态见 CURRENT_IMPLEMENTATION.md。
 

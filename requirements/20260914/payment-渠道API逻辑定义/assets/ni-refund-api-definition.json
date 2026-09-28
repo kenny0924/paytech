@@ -1,0 +1,412 @@
+{
+  "inputDefinition": {
+    "contextType": "REFUND",
+    "requiredPaths": [
+      [
+        "originalTransactionRefId"
+      ],
+      [
+        "refundAmount"
+      ],
+      [
+        "currency"
+      ]
+    ]
+  },
+  "requestSteps": [
+    {
+      "stepCode": "originalTarget",
+      "kind": "CAPABILITY",
+      "capabilityCode": "CALL_SYSTEM_FUNCTION",
+      "parameters": {
+        "functionCode": "READ_REFUND_TARGET"
+      },
+      "inputBindings": {
+        "originalTransactionRefId": {
+          "source": "CONTEXT",
+          "path": [
+            "originalTransactionRefId"
+          ]
+        }
+      },
+      "outputBindings": {
+        "target": [
+          "value"
+        ]
+      }
+    },
+    {
+      "stepCode": "requestBody",
+      "kind": "CAPABILITY",
+      "capabilityCode": "OBJECT_MAPPING",
+      "inputBindings": {
+        "currency": {
+          "source": "CONTEXT",
+          "path": [
+            "currency"
+          ]
+        },
+        "value": {
+          "source": "EXPRESSION",
+          "engine": "AVIATOR",
+          "expression": "money.minorUnits(refundContext.refundAmount, refundContext.currency)",
+          "variables": {
+            "refundContext": {
+              "source": "CONTEXT",
+              "path": []
+            }
+          }
+        }
+      },
+      "parameters": {
+        "fields": [
+          {
+            "inputName": "currency",
+            "targetPath": [
+              "amount",
+              "currencyCode"
+            ],
+            "targetDefinition": {
+              "type": "STRING",
+              "required": true,
+              "nullable": false,
+              "displayName": "币种",
+              "dataClass": "INTERNAL",
+              "minLength": 3,
+              "maxLength": 3
+            }
+          },
+          {
+            "inputName": "value",
+            "targetPath": [
+              "amount",
+              "value"
+            ],
+            "targetDefinition": {
+              "type": "INTEGER",
+              "required": true,
+              "nullable": false,
+              "displayName": "最小单位金额",
+              "dataClass": "INTERNAL",
+              "minValue": "0",
+              "maxValue": "999999999999999999999999",
+              "unit": "MINOR_CURRENCY_UNIT"
+            }
+          }
+        ]
+      },
+      "outputBindings": {
+        "object": [
+          "value"
+        ]
+      }
+    },
+    {
+      "stepCode": "encodeBody",
+      "kind": "CAPABILITY",
+      "capabilityCode": "ENCODE_JSON",
+      "inputBindings": {
+        "value": {
+          "source": "STEP",
+          "stepCode": "requestBody",
+          "path": [
+            "object"
+          ]
+        }
+      },
+      "parameters": {
+        "charset": "UTF-8"
+      },
+      "outputBindings": {
+        "bytes": [
+          "bytes"
+        ]
+      }
+    },
+    {
+      "stepCode": "authorization",
+      "kind": "SCHEME",
+      "schemeCode": "NI_PAYMENT_BEARER",
+      "inputBindings": {
+        "accessTokenHandle": {
+          "source": "RUNTIME",
+          "path": [
+            "credentials",
+            "accessToken"
+          ]
+        }
+      },
+      "parameters": {},
+      "outputBindings": {
+        "headerValue": [
+          "headerValue"
+        ]
+      }
+    }
+  ],
+  "transportDefinition": {
+    "protocol": "HTTP",
+    "method": "POST",
+    "endpointCode": "NI_TRANSACTIONS",
+    "pathTemplate": "/transactions/outlets/{outletId}/orders/{orderRef}/payments/{paymentRef}/captures/{captureId}/refund",
+    "pathBindings": {
+      "outletId": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "result.outletId",
+        "variables": {
+          "result": {
+            "source": "STEP",
+            "stepCode": "originalTarget",
+            "path": [
+              "target"
+            ]
+          }
+        }
+      },
+      "orderRef": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "result.orderRef",
+        "variables": {
+          "result": {
+            "source": "STEP",
+            "stepCode": "originalTarget",
+            "path": [
+              "target"
+            ]
+          }
+        }
+      },
+      "paymentRef": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "result.paymentRef",
+        "variables": {
+          "result": {
+            "source": "STEP",
+            "stepCode": "originalTarget",
+            "path": [
+              "target"
+            ]
+          }
+        }
+      },
+      "captureId": {
+        "source": "EXPRESSION",
+        "engine": "AVIATOR",
+        "expression": "result.captureId",
+        "variables": {
+          "result": {
+            "source": "STEP",
+            "stepCode": "originalTarget",
+            "path": [
+              "target"
+            ]
+          }
+        }
+      }
+    },
+    "queryBindings": [],
+    "headers": [
+      {
+        "name": "Authorization",
+        "values": [
+          {
+            "source": "STEP",
+            "stepCode": "authorization",
+            "path": [
+              "headerValue"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Content-Type",
+        "values": [
+          {
+            "source": "EXPRESSION",
+            "engine": "AVIATOR",
+            "expression": "'application/vnd.ni-payment.v2+json'",
+            "variables": {}
+          }
+        ]
+      },
+      {
+        "name": "Accept",
+        "values": [
+          {
+            "source": "EXPRESSION",
+            "engine": "AVIATOR",
+            "expression": "'application/vnd.ni-payment.v2+json'",
+            "variables": {}
+          }
+        ]
+      }
+    ],
+    "body": {
+      "source": "STEP",
+      "stepCode": "encodeBody",
+      "path": [
+        "bytes"
+      ]
+    },
+    "connectTimeoutMs": 2000,
+    "responseTimeoutMs": 10000,
+    "totalTimeoutMs": 30000
+  },
+  "responseSteps": [
+    {
+      "stepCode": "decodeResponse",
+      "kind": "CAPABILITY",
+      "capabilityCode": "DECODE_JSON_RESPONSE",
+      "inputBindings": {
+        "status": {
+          "source": "RESPONSE",
+          "path": [
+            "status"
+          ]
+        },
+        "contentType": {
+          "source": "RESPONSE",
+          "path": [
+            "headers",
+            "content-type"
+          ]
+        },
+        "bytes": {
+          "source": "RESPONSE",
+          "path": [
+            "body"
+          ]
+        }
+      },
+      "parameters": {
+        "profileCode": "NI_REFUND_CAPTURE"
+      },
+      "outputBindings": {
+        "document": [
+          "document"
+        ]
+      }
+    },
+    {
+      "stepCode": "observedFacts",
+      "kind": "CAPABILITY",
+      "capabilityCode": "VALIDATE_AND_PROJECT",
+      "inputBindings": {
+        "document": {
+          "source": "STEP",
+          "stepCode": "decodeResponse",
+          "path": [
+            "document"
+          ]
+        },
+        "expectedTarget": {
+          "source": "STEP",
+          "stepCode": "originalTarget",
+          "path": [
+            "target"
+          ]
+        }
+      },
+      "parameters": {
+        "profileCode": "NI_REFUND_CAPTURE"
+      },
+      "outputBindings": {
+        "facts": [
+          "facts"
+        ]
+      }
+    }
+  ],
+  "resultRules": {
+    "rules": [
+      {
+        "condition": {
+          "op": "ALL",
+          "children": [
+            {
+              "op": "EQ",
+              "left": {
+                "source": "RESPONSE",
+                "path": [
+                  "status"
+                ]
+              },
+              "right": {
+                "source": "LITERAL",
+                "valueType": "INTEGER",
+                "value": "200"
+              }
+            }
+          ]
+        },
+        "resultCode": "UNRESOLVED"
+      }
+    ],
+    "fallbackResultCode": "UNRECOGNIZED"
+  },
+  "outputDefinition": [
+    {
+      "resultCode": "UNRESOLVED",
+      "fields": [
+        {
+          "name": "channelPaymentState",
+          "valueType": "STRING",
+          "required": true,
+          "binding": {
+            "source": "STEP",
+            "stepCode": "observedFacts",
+            "path": [
+              "facts",
+              "paymentState"
+            ]
+          }
+        },
+        {
+          "name": "refundRecords",
+          "valueType": "ARRAY",
+          "required": true,
+          "binding": {
+            "source": "STEP",
+            "stepCode": "observedFacts",
+            "path": [
+              "facts",
+              "refundRecords"
+            ]
+          }
+        },
+        {
+          "name": "observedPaymentRef",
+          "valueType": "STRING",
+          "required": true,
+          "binding": {
+            "source": "STEP",
+            "stepCode": "observedFacts",
+            "path": [
+              "facts",
+              "paymentReference"
+            ]
+          }
+        },
+        {
+          "name": "responseContentType",
+          "valueType": "ARRAY",
+          "required": false,
+          "binding": {
+            "source": "RESPONSE",
+            "path": [
+              "headers",
+              "content-type"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "resultCode": "UNRECOGNIZED",
+      "fields": []
+    }
+  ]
+}

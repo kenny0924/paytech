@@ -1,0 +1,532 @@
+{
+  "capabilities": [
+    {
+      "capabilityCode": "CALL_SYSTEM_FUNCTION",
+      "displayName": "CALL_SYSTEM_FUNCTION",
+      "usage": "STEP",
+      "phases": [
+        "REQUEST"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "SYSTEM_FUNCTION",
+        "parameterContractCode": "SYSTEM_FUNCTION_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "OBJECT_MAPPING",
+      "displayName": "OBJECT_MAPPING",
+      "usage": "STEP",
+      "phases": [
+        "REQUEST",
+        "RESPONSE"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "OBJECT_MAPPING",
+        "parameterContractCode": "OBJECT_MAPPING_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "ENCODE_JSON",
+      "displayName": "ENCODE_JSON",
+      "usage": "STEP",
+      "phases": [
+        "REQUEST"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "INPUT_JSON_TYPE",
+        "parameterContractCode": "JSON_ENCODE_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "DECODE_JSON_RESPONSE",
+      "displayName": "DECODE_JSON_RESPONSE",
+      "usage": "STEP",
+      "phases": [
+        "RESPONSE"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "RESPONSE_DECODE_PROFILE",
+        "parameterContractCode": "PROFILE_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "VALIDATE_AND_PROJECT",
+      "displayName": "VALIDATE_AND_PROJECT",
+      "usage": "STEP",
+      "phases": [
+        "RESPONSE"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "RESPONSE_PROJECTION_PROFILE",
+        "parameterContractCode": "PROFILE_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "BEARER_AUTHORIZATION",
+      "displayName": "Bearer Authorization",
+      "usage": "STEP",
+      "phases": [
+        "REQUEST"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "FIXED",
+        "inputDefinition": {
+          "accessTokenHandle": {
+            "type": "PROTECTED_HANDLE",
+            "required": true,
+            "nullable": false,
+            "displayName": "accessTokenHandle",
+            "dataClass": "PROTECTED",
+            "purpose": "accessToken",
+            "allowedSinks": [
+              "CAPABILITY:BEARER_AUTHORIZATION"
+            ]
+          }
+        },
+        "outputDefinition": {
+          "headerValue": {
+            "type": "PROTECTED_HANDLE",
+            "required": true,
+            "nullable": false,
+            "displayName": "headerValue",
+            "dataClass": "PROTECTED",
+            "purpose": "authorizationHeader",
+            "allowedSinks": [
+              "HTTP_HEADER:authorization"
+            ]
+          }
+        },
+        "parameterDefinition": {}
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "SIGN_BYTES",
+      "displayName": "SIGN_BYTES",
+      "usage": "STEP",
+      "phases": [
+        "REQUEST",
+        "RESPONSE"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "CRYPTO_PROFILE",
+        "parameterContractCode": "PROFILE_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "VERIFY_BYTES",
+      "displayName": "VERIFY_BYTES",
+      "usage": "STEP",
+      "phases": [
+        "REQUEST",
+        "RESPONSE"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "CRYPTO_PROFILE",
+        "parameterContractCode": "PROFILE_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "ENCRYPT_BYTES",
+      "displayName": "ENCRYPT_BYTES",
+      "usage": "STEP",
+      "phases": [
+        "REQUEST",
+        "RESPONSE"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "CRYPTO_PROFILE",
+        "parameterContractCode": "PROFILE_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "DECRYPT_BYTES",
+      "displayName": "DECRYPT_BYTES",
+      "usage": "STEP",
+      "phases": [
+        "REQUEST",
+        "RESPONSE"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "CRYPTO_PROFILE",
+        "parameterContractCode": "PROFILE_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "CONTEXT_PAYMENT",
+      "displayName": "CONTEXT_PAYMENT",
+      "usage": "CONTEXT",
+      "phases": [
+        "REQUEST"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "CONTEXT_TYPE",
+        "parameterContractCode": "EMPTY_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "CONTEXT_REFUND",
+      "displayName": "CONTEXT_REFUND",
+      "usage": "CONTEXT",
+      "phases": [
+        "REQUEST"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "CONTEXT_TYPE",
+        "parameterContractCode": "EMPTY_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "AVIATOR_EXPRESSION",
+      "displayName": "AVIATOR_EXPRESSION",
+      "usage": "EXPRESSION",
+      "phases": [
+        "REQUEST",
+        "RESPONSE"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "EXPRESSION_PROFILE",
+        "parameterContractCode": "EXPRESSION_PARAMETERS"
+      },
+      "implementationAvailable": false
+    },
+    {
+      "capabilityCode": "MONEY_MINOR_UNITS",
+      "displayName": "MONEY_MINOR_UNITS",
+      "usage": "EXPRESSION",
+      "phases": [
+        "REQUEST",
+        "RESPONSE"
+      ],
+      "allowedChannelCodes": null,
+      "contract": {
+        "kind": "SPECIALIZED",
+        "specializerCode": "PURE_FUNCTION",
+        "parameterContractCode": "EMPTY_PARAMETERS"
+      },
+      "implementationAvailable": false
+    }
+  ],
+  "protocolProfiles": {
+    "response": [
+      {
+        "profileCode": "NI_REFUND_CAPTURE",
+        "allowedChannelCodes": [
+          "NI"
+        ],
+        "allowedContextTypes": [
+          "REFUND"
+        ],
+        "successStatus": 200,
+        "mediaType": "application/vnd.ni-payment.v2+json",
+        "limits": {
+          "maxBytes": 1048576,
+          "maxDepth": 16,
+          "maxNodes": 4096,
+          "maxRefundRecords": 128
+        },
+        "decodeInputDefinition": {
+          "status": {
+            "type": "INTEGER",
+            "required": true,
+            "nullable": false,
+            "displayName": "HTTP status",
+            "dataClass": "INTERNAL",
+            "minValue": "200",
+            "maxValue": "599"
+          },
+          "contentType": {
+            "type": "ARRAY",
+            "required": true,
+            "nullable": false,
+            "displayName": "Content-Type",
+            "dataClass": "INTERNAL",
+            "items": {
+              "type": "STRING",
+              "nullable": false,
+              "dataClass": "INTERNAL",
+              "minLength": 0,
+              "maxLength": 1024
+            },
+            "minItems": 0,
+            "maxItems": 16
+          },
+          "bytes": {
+            "type": "BYTES",
+            "required": true,
+            "nullable": false,
+            "displayName": "bytes",
+            "dataClass": "INTERNAL",
+            "maxBytes": 1048576
+          }
+        },
+        "decodeOutputDefinition": {
+          "document": {
+            "type": "PROTECTED_HANDLE",
+            "required": true,
+            "nullable": false,
+            "displayName": "document",
+            "dataClass": "PROTECTED",
+            "purpose": "parsedResponse",
+            "allowedSinks": [
+              "CAPABILITY:VALIDATE_AND_PROJECT"
+            ]
+          }
+        },
+        "projectionInputDefinition": {
+          "document": {
+            "type": "PROTECTED_HANDLE",
+            "required": true,
+            "nullable": false,
+            "displayName": "document",
+            "dataClass": "PROTECTED",
+            "purpose": "parsedResponse",
+            "allowedSinks": [
+              "CAPABILITY:VALIDATE_AND_PROJECT"
+            ]
+          },
+          "expectedTarget": {
+            "type": "OBJECT",
+            "required": true,
+            "nullable": false,
+            "displayName": "expectedTarget",
+            "dataClass": "INTERNAL",
+            "fields": {
+              "originalTransactionRefId": {
+                "type": "STRING",
+                "required": true,
+                "nullable": false,
+                "displayName": "原渠道交易引用 ID",
+                "dataClass": "INTERNAL",
+                "minLength": 1,
+                "maxLength": 19
+              },
+              "referenceType": {
+                "type": "STRING",
+                "required": true,
+                "nullable": false,
+                "displayName": "原引用类型",
+                "dataClass": "INTERNAL",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "outletId": {
+                "type": "STRING",
+                "required": true,
+                "nullable": false,
+                "displayName": "NI Outlet ID",
+                "dataClass": "INTERNAL",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "orderRef": {
+                "type": "STRING",
+                "required": true,
+                "nullable": false,
+                "displayName": "NI Order Reference",
+                "dataClass": "INTERNAL",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "paymentRef": {
+                "type": "STRING",
+                "required": true,
+                "nullable": false,
+                "displayName": "NI Payment Reference",
+                "dataClass": "INTERNAL",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "captureId": {
+                "type": "STRING",
+                "required": true,
+                "nullable": false,
+                "displayName": "NI Capture ID",
+                "dataClass": "INTERNAL",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "currency": {
+                "type": "STRING",
+                "required": true,
+                "nullable": false,
+                "displayName": "币种",
+                "dataClass": "INTERNAL",
+                "minLength": 3,
+                "maxLength": 3
+              }
+            }
+          }
+        },
+        "projectionOutputDefinition": {
+          "facts": {
+            "type": "OBJECT",
+            "required": true,
+            "nullable": true,
+            "displayName": "facts",
+            "dataClass": "INTERNAL",
+            "fields": {
+              "paymentReference": {
+                "type": "STRING",
+                "required": true,
+                "nullable": false,
+                "displayName": "paymentReference",
+                "dataClass": "INTERNAL",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "paymentState": {
+                "type": "STRING",
+                "required": true,
+                "nullable": false,
+                "displayName": "paymentState",
+                "dataClass": "INTERNAL",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "refundRecords": {
+                "type": "ARRAY",
+                "required": true,
+                "nullable": false,
+                "displayName": "refundRecords",
+                "dataClass": "INTERNAL",
+                "items": {
+                  "type": "OBJECT",
+                  "nullable": false,
+                  "dataClass": "INTERNAL",
+                  "fields": {
+                    "refundId": {
+                      "type": "STRING",
+                      "required": true,
+                      "nullable": false,
+                      "displayName": "refundId",
+                      "dataClass": "INTERNAL",
+                      "minLength": 1,
+                      "maxLength": 128
+                    },
+                    "state": {
+                      "type": "STRING",
+                      "required": true,
+                      "nullable": false,
+                      "displayName": "state",
+                      "dataClass": "INTERNAL",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "amount": {
+                      "type": "OBJECT",
+                      "required": true,
+                      "nullable": false,
+                      "displayName": "amount",
+                      "dataClass": "INTERNAL",
+                      "fields": {
+                        "currencyCode": {
+                          "type": "STRING",
+                          "required": true,
+                          "nullable": false,
+                          "displayName": "币种",
+                          "dataClass": "INTERNAL",
+                          "minLength": 3,
+                          "maxLength": 3
+                        },
+                        "value": {
+                          "type": "INTEGER",
+                          "required": true,
+                          "nullable": false,
+                          "displayName": "最小单位金额",
+                          "dataClass": "INTERNAL",
+                          "minValue": "0",
+                          "maxValue": "999999999999999999999999",
+                          "unit": "MINOR_CURRENCY_UNIT"
+                        }
+                      }
+                    }
+                  }
+                },
+                "minItems": 0,
+                "maxItems": 128
+              }
+            }
+          }
+        },
+        "requiredChecks": [
+          "PARENT_IDENTITY",
+          "CURRENCY",
+          "REFUND_SELF_LINK",
+          "UNIQUE_REFUND_ID",
+          "REQUIRED_FIELDS",
+          "PRECEDING_PROTECTION"
+        ],
+        "projectionFields": [
+          "paymentReference",
+          "paymentState",
+          "refundRecords.refundId",
+          "refundRecords.state",
+          "refundRecords.amount.currencyCode",
+          "refundRecords.amount.value"
+        ],
+        "nonSuccessPolicy": "NULL_FACTS_WITHOUT_SUCCESS_SCHEMA"
+      }
+    ],
+    "crypto": []
+  },
+  "runtimeInputs": [
+    {
+      "path": [
+        "credentials",
+        "accessToken"
+      ],
+      "definition": {
+        "type": "PROTECTED_HANDLE",
+        "required": true,
+        "nullable": false,
+        "displayName": "accessTokenHandle",
+        "dataClass": "PROTECTED",
+        "purpose": "accessToken",
+        "allowedSinks": [
+          "CAPABILITY:BEARER_AUTHORIZATION"
+        ]
+      },
+      "owner": "ACCOUNT_RUNTIME_MATERIAL_PROVIDER",
+      "allowedConsumers": [
+        "BEARER_AUTHORIZATION"
+      ]
+    }
+  ]
+}

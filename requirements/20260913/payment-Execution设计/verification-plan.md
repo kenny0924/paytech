@@ -1,5 +1,11 @@
 # Execution 研发与验收计划
 
+> **2026-09-15 删除来源 Binding：** 用户已确认删除 `t_payment_intent_binding` 和 EX-I03 `CloseCreation`，按已有 Intent 终止；创建结果未明确时由 Commerce 用原键恢复创建后再终止。本文涉及提前关闭、Binding 门禁和锁顺序的内容由[字段修订第 8 节](./execution-field-simplification-amendment.md#8-删除来源-binding)取代；其余历史基线保持。
+
+> **字段维护后继：** [整批精简修订](./execution-field-simplification-amendment.md)已取代本文受影响的字段、渠道绑定位置、认证明细、Pricing Fact 与状态历史表要求。本文旧接口/流程细节保留为迁移前基线；后续 Java/HTTP/MQ 改造须逐项对齐，数据库执行状态只见当前台账。
+
+> **状态与 Channel 恢复后继：** capture mode、三表 4/4/5 状态、active_action_id 及移除 QUERY 的现行设计目标以[状态与恢复修订](./execution-state-channel-recovery-amendment.md)为准；下文受影响内容保留为前序基线，未涉及合同继续有效。实现与 SQL 状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 > **交易级 Token 修订评审：** 用户已确认统一 pay、交易级工具 Token、Attempt 直接关联及删除旧 Instrument 的方向；详细合同见[修订稿](./instrument-token-amendment.md)。下文保留上一版合同与评审上下文，受影响部分以修订稿的准确取代范围为准；新合同的实现与验证状态只读[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 > 阶段 3 已获用户确认，当前进入阶段 4 Execution 本地切片研发；其他 Owner 仅测试 Mock + TODO。实际实现与验证边界见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)，阶段确认见[交付记录](./delivery.md)。
@@ -28,7 +34,7 @@
 | V03 | 强制 Challenge 却收到无感成功；挑战失败/到期 | 保存实际认证事实但不执行资金；要求不满足有安全原因 | 02、07 |
 | V04 | Risk 拒绝/复核/不可用、Routing 无候选/错 OE | 无资金调用；失败 Attempt 可诊断，未配置场景不默认成功 | 02、08、11 |
 | V05 | 同 submission 并发、同 key 异内容、新 key 重复 source | 同内容只受理一 Attempt；冲突拒绝，不改变原 Card/目标/接受事实 | 03、05 |
-| V06 | Close 先到 / Create 先到 / 二者并发 | 只一来源绑定；晚到不能造新 Intent；已有 Intent 返回身份但不谎报资金终止 | 03、05 |
+| V06 | 创建超时后原键恢复再终止、同来源重复创建、pay 与终止并发 | 唯一 Intent；终止仅作用于已有 Intent，未决资金返回 PENDING，不谎报取消成功；没有 Binding 或 CloseCreation | 03、05 |
 | V07 | 认证/资金等待中切 Wallet 或新 Card | 新 Attempt 被活动/UNKNOWN 占用挡住，原查询/结果仍可完成 | 04、05、13 |
 | V08 | Capture 成功/失败/UNKNOWN；新 key 重复 Capture | 成功只一次全额；失败保留 authorized；UNKNOWN 不再 Capture/新支付 | 06、09 |
 | V09 | Capture 与 Reversal 同时到 | 锁内只选择一个资金分支；Void 已接受后不再允许 Capture，Void 失败保留授权 | 05、06 |
@@ -54,7 +60,7 @@
 | 直接扣款 | B(订单201→I601,开放)；A701(SUCCEEDED,goal=PAY_NOW,captured=100)；X801(SALE,SUCCEEDED)；T901(X801)；P1001(original=100,reserved=0,refunded=0) | AUTHENTICATE、Customer Action、伪造 Instrument |
 | 认证后授权 | A702(AUTHORIZED,authorized=100,captured=0,auth=CHALLENGE_REQUIRED)；X802(AUTHENTICATE,SUCCEEDED,challenge=1)；X803(AUTHORIZE,SUCCEEDED,authentication_action_id=802)；T902(X803) | 收款事件、Refund Position、收款 Pricing Fact |
 | 后续 Capture | 原 A702；X804(CAPTURE,SUCCEEDED,target_ref=902)；T903(X804,原授权=902)；P1002(original=100) | 新 Attempt、重新 Routing、丢弃原授权 T902 |
-| 授权 Void | 另一原授权 A703；X806(VOID,SUCCEEDED,target_ref=904)；A703 VOIDED；Intent CANCELLED、Binding 关闭 | Commerce Refund、退款预占、Finance Journal |
+| 授权 Void | 另一原授权 A703；X806(VOID,SUCCEEDED,target_ref=904)；A703 VOIDED；Intent CANCELLED | Commerce Refund、退款预占、Finance Journal |
 | 退款未知 | R1101(commerceRefund=1201,UNKNOWN,amount=40)；X807(REFUND,UNKNOWN,target_ref=903)；P1002(reserved=40,refunded=0) | RefundFailed、释放预占、另一笔同身份 Refund |
 | 认证等待 | X808(AUTHENTICATE,REQUIRES_ACTION,operation_ref=非秘密引用,interaction=THREE_DS_CHALLENGE,expires=确定时刻) | 交互表、URL、SDK Token、CVV、恢复 payload 中的 Card 引用 |
 

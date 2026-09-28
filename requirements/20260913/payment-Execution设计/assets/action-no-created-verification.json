@@ -1,0 +1,52 @@
+{
+  "date": "2026-09-15",
+  "scope": "Remove Execution Action.CREATED and beginAction; creation and next action start PROCESSING",
+  "build": {
+    "jdk": 25,
+    "command": "./mvnw -q clean package -Dmaven.test.skip=true",
+    "exitCode": 0,
+    "log": "/tmp/payment-no-created-build.log"
+  },
+  "checks": {
+    "artifact": "4 ActionStatus codes; all 4 CARD + PAY action builders start PROCESSING/version 1; beginAction absent from 2 repositories, 2 mappers and XML; no database/HTTP execution.",
+    "probe": "/var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/payment-no-created-check-4hyr6wbq/NoCreatedCheck.java",
+    "modelTests": {
+      "passed": 24,
+      "failed": 0,
+      "log": "/tmp/payment-no-created-model-checks.log"
+    },
+    "modelDiff": "Exactly 2 comment/enum strings; no structural or refund/dispute state changes",
+    "emptyCreateTablesMatchCanonical": 10,
+    "localDocumentTargets": 33,
+    "userFlowFormattingAndImportsPreserved": [
+      "paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/action/flow/ActionFlow.java",
+      "paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/action/flow/CardPayFlow.java"
+    ],
+    "contextInPersistence": "absent"
+  },
+  "notPerformed": [
+    "Repository Java unit test suites",
+    "HTTP/database concurrency verification",
+    "database access or SQL migration",
+    "commit/push/deployment"
+  ],
+  "limitations": [
+    "PROCESSING is not proof of channel submission; only creating/switching caller executes",
+    "Real Owner integrations and recovery remain TODO",
+    "Legacy CREATED rows require separately reviewed migration"
+  ],
+  "sources": {
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/action/flow/ActionFlow.java": "a81b007d0424253c905585380ac8eea6f1cbf2e58dbe872bf09c6af1a8753b9f",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/action/flow/CardPayFlow.java": "376f901a948f6b333cf2d44ac6129901cd2ce02cc899c409a2c083313e1e8cd3",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/mapper/PaymentActionMapper.java": "cd203cc5883a95531573d564f5e1fe7936beec074e2446bdb2292692810ada36",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/mapper/PaymentAttemptMapper.java": "3814b2466c4e537bf9ce56a7594272d81603b07efe2f5658090b4c3760cff785",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domain/ExecutionCodes.java": "6a29f8e2d5c3068fd33ede6ab3c1c330fe4a10efcb6b034a732c11a0ef32fc50",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/repository/PaymentActionRepository.java": "9b1816946e1f80e95c1fd0a6d2a1930f54f0f51d65c482cce26de2d2a38de8e3",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/repository/PaymentAttemptRepository.java": "59e7c57d26301e0e17bd194d56a558e83db061542de1587176ad47eda8ddf195",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/repository/impl/PaymentActionRepositoryImpl.java": "f3e0d9070f1cdf88a42cf50c0b291c991c808e48d6a00b0000e30905f675af50",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/repository/impl/PaymentAttemptRepositoryImpl.java": "d087058a62af05f1ec60dccf1e1f2df9bd57cccb413d24b406a9cb7d21494617",
+    "payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/ActionExecutionServiceImpl.java": "fb2105116e3fe65446a01f8b2c59741a7bdabb6aa810e3b8cb1c14ed28a3ae9c",
+    "payment-orchestration-service/paytech-payment-execution/src/main/resources/mapper/PaymentActionMapper.xml": "1cc713a1dbf004b77775ef67084334bfb335fc890a7a27a6b635b1deb3fcc70f",
+    "payment-orchestration-service/paytech-payment-execution/src/main/resources/mapper/PaymentAttemptMapper.xml": "71fbbcc307674321d219da1687d376864896c0ebd653dd764a2f61bb2220b9f5"
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "recordedAt": "2026-09-14T15:32:11.040453+00:00",
+  "scope": "Only pay acceptance, idempotency, local transaction and response. Payment-method execution remains TODO.",
+  "verification": {
+    "command": "JAVA_HOME=<JDK 25> ./mvnw -q -pl paytech-payment-test -am clean verify -Dtest=PaymentCommandContractAutoTest,PaymentPayPersistenceContractAutoTest,PaymentModuleBoundaryAutoTest,PaymentRulesAutoTest,PaymentFlowRegistryAutoTest -Dsurefire.failIfNoSpecifiedTests=false",
+    "exitCode": 0,
+    "tests": [
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentCommandContractAutoTest",
+        "tests": "15",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentFlowRegistryAutoTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentPayPersistenceContractAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.execution.PaymentRulesAutoTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.paytech.payment.auto.architecture.PaymentModuleBoundaryAutoTest",
+        "tests": "12",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      }
+    ],
+    "allTestSourcesCompiled": true,
+    "reactorPackaged": true,
+    "log": "/tmp/payment-pay-model-final-verify.log"
+  },
+  "redEvidence": {
+    "test": "test_payDoesNotRequireCommerceAcceptanceEvidence",
+    "expectedFailure": "Old PayRequestBody still included six Commerce acceptance/order-version fields",
+    "log": "/tmp/payment-pay-model-red.log"
+  },
+  "integration": {
+    "plannedAcceptanceScenarios": 10,
+    "attempted": "PaymentPayAcceptanceAutoTest#test_acceptAndReplayWithoutStartingPaymentFlow",
+    "exitCode": 1,
+    "businessTestsExecuted": false,
+    "failureStage": "read-only schema preflight",
+    "reason": "Missing approved Execution tables; transaction instrument token table and new columns have not been applied",
+    "log": "/tmp/payment-pay-model-db-check.log"
+  },
+  "databaseObservation": {
+    "endpoint": "127.0.0.1:13306/mor_payment",
+    "readOnly": true,
+    "counts": {
+      "t_payment_intent_binding": 0,
+      "t_payment_intent": 0,
+      "t_payment_attempt": 0,
+      "t_payment_action": 0,
+      "t_payment_instrument": 0,
+      "t_command_idempotency": 0,
+      "t_compensation_event": 0,
+      "t_channel_refund": 0,
+      "t_channel_transaction_ref": 0,
+      "t_payment_pricing_fact": 0,
+      "t_payment_refund_position": 0,
+      "t_duplicate_payment_case": 0,
+      "t_payment_state_transition": 0
+    },
+    "instrumentTokenTablePresent": false,
+    "captureModePresent": false
+  },
+  "notPerformed": [
+    "database migration",
+    "business DML",
+    "complete payment flow migration",
+    "Commerce caller migration",
+    "commit",
+    "push",
+    "deployment"
+  ],
+  "remainingMigration": [
+    "legacy fields on shared DataObjects and snapshots",
+    "Create Intent and non-pay lifecycle SQL",
+    "Channel authentication/recovery and notification contracts",
+    "pricing consumers"
+  ],
+  "sourceSha256": {
+    "paytech-payment-api/src/main/java/com/paytech/payment/api/execution/PaymentExecutionModels.java": "ee8cb33c5cd67977ac8da3c7827fc5324278a62a95edc8a0e3641206d3d743a3",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/repository/PaymentExecutionRepositoryImpl.java": "48af68cb08d23059eba1a73240c270bb921f9c62fe28f5c8013ea2c377e619bd",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/mapper/PaymentExecutionMapper.java": "04d3462fdf932b343d17551bef14e12668e785991758a39b0ceadd7a51d67455",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/dataobject/PaymentAttempt.java": "6ba0790b85bc540a908c31a9c5cc74def913312515d6ffa3cfcb66f74d74f718",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/dataobject/PaymentAction.java": "a8d4bf06b7a3fa5f853967638fcc2a0f6603154229c576b47f80d23a0173ef53",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/ExecutionSnapshotConverter.java": "b6c2568b4ca9abbfa33f6b77c0d2c9c99cfec9c9f1672c65e3f687a450444d97",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/repository/PaymentExecutionRepository.java": "fa2ba0b3ceab82f73e924fd56fbebf19f9aa944ec10f39f8d7383c8776256c25",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java": "621a89a44b8f1d1e7ec39e00659ff8ff85d0254f2cda396e3c103f826c665500",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/domain/ExecutionCommands.java": "5b0abc5583f6ad2f4b4d0ae6b7d5d69086f7363d57da87c8d89f663dd6848884",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/domain/ExecutionSnapshots.java": "fc571c507db48046221ed4e8e84878ccc36e52343e6af6c3fec2ddb1c997dfd2",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/ExecutionApiConverter.java": "4c4160b49bd0db85a572ab95cb325acca415791b1a1ec0d91e90442b0cf7d497",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/ExecutionRequestConverter.java": "bf4e155d99d644c38ab01aa9c8a95f6393fdd813004a1b2eaf185b1089532069",
+    "paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/processor/PayProcessor.java": "b9261486cc49d2f2fa21b1ad527afcce50411928dc8bc95513f3ee4061ba5da5",
+    "paytech-payment-web/src/main/java/com/paytech/payment/domainservice/service/impl/ExecutionQueryServiceImpl.java": "765766ba025900a21138b44b27ac4066507b7c0d56daf857545b8ab0bc50c0c2",
+    "paytech-payment-web/src/main/java/com/paytech/payment/domain/execution/PayInput.java": "291a6bcf1176ea966cf8c4d57889bb03f273d5daacb69920945f247a03a4fe41",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/ExecutionInfrastructureInitializer.java": "583369838c8e9de1fe5b556816d35111d15ea450a99ea074c9d2f76251312581",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/ExecutionRequestBuilder.java": "eb80ce267547f2b0daf28e1ccb193406ce5fdf423e792d4173d9b03e0edb072d",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/PaymentPayTestMapper.java": "526cadace0568cbeb9e44e5ee1d631da1fadaf8bdcac9aeb823f83f68bc8804e",
+    "paytech-payment-test/src/test/java/com/paytech/payment/test/execution/ExecutionAutoTestBase.java": "06a474c7ce8a798689adef6732586e9b3140888a229dab5e67b39d8fd5bf694d",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/architecture/PaymentModuleBoundaryAutoTest.java": "0d4ebf2533211b2ac4ff0626c21347d946bc6afbd3db0fa501ea8622686405e2",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentCommandContractAutoTest.java": "dd7f725c57668599bcaaa94af196bcf9da16c8cf5e1f4f289b92989cec6e9c53",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentExecutionGuardsAutoTest.java": "5f6dc3fb262a05e588ea8a13b4da4b406dedd5b26c6281a3dc9cab790e060171",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentExecutionApiAutoTest.java": "abab2c0b5bff0ded0232a2cec1abfc5f50b1cc4cc1afa2637fa8656dd0ad10d7",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentPayAcceptanceAutoTest.java": "c5a79436022c03418b8d040d234fcd3a4bbff2a8b41603c072dce4a35a8aa3af",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentPayPersistenceContractAutoTest.java": "577c5fa1470c9c60f24b5fd036da3508253a52e0b244327b73e19e6e8f785ebb",
+    "paytech-payment-execution/src/main/resources/mapper/execution/PaymentExecutionMapper.xml": "8707db2dba5f8a0fb1b18acae9a59e5848a16f74b85a66afa0190226e39c6e1c"
+  },
+  "staticChecks": {
+    "modifiedDocumentLocalLinkTargets": 100,
+    "missingLocalTargets": 0,
+    "rootGitDiffCheck": "passed",
+    "paymentGitDiffCheck": "passed",
+    "verifiedSourceHashesStillMatch": 26,
+    "modelUnchangedFromApprovedDatabaseArtifact": true
+  }
+}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.delivery.core.dal.mapper.NotificationRequestMapper">
+    <resultMap id="record" type="com.paytech.platform.support.delivery.core.dal.dataobject.NotificationRequest">
+        <id column="request_id" property="requestId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="source_system" property="sourceSystem"/>
+        <result column="source_event_key" property="sourceEventKey"/>
+        <result column="notification_template_id" property="notificationTemplateId"/>
+        <result column="default_locale" property="defaultLocale"/>
+        <result column="default_parameters" property="defaultParameters"/>
+        <result column="notification_route_id" property="notificationRouteId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <select id="find" resultMap="record">SELECT request_id, tenant_id, source_system, source_event_key,
+        notification_template_id, default_locale, default_parameters, notification_route_id, create_time, update_time
+        FROM t_notification_request WHERE request_id = #{id}
+    </select>
+    <insert id="insert">INSERT INTO t_notification_request (request_id, tenant_id, source_system, source_event_key,
+        notification_template_id, default_locale, default_parameters, notification_route_id, create_time, update_time)
+        VALUES (#{requestId}, #{tenantId}, #{sourceSystem}, #{sourceEventKey}, #{notificationTemplateId},
+        #{defaultLocale}, #{defaultParameters}, #{notificationRouteId}, #{createTime}, #{updateTime})
+    </insert>
+    <select id="findSource" resultMap="record">SELECT request_id, tenant_id, source_system, source_event_key,
+        notification_template_id, default_locale, default_parameters, notification_route_id, create_time, update_time
+        FROM t_notification_request WHERE source_system = #{sourceSystem} AND source_event_key = #{sourceEventKey}
+    </select>
+</mapper>

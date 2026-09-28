@@ -1,5 +1,13 @@
 # Commerce 数据库设计规范
 
+> **2026-09-19 Checkout 时序修订：** [创建初始化与首次支付](../../requirements/20260919/commerce-Checkout准备与Intent创建拆分/technique.md)删除独立准备阶段：创建 Checkout 时取得 OE、商业/税务/法律信息，与 Order/Session 原子保存；首次提交支付才创建唯一 Intent，后续复用。该修订取代下文独立准备命令/任务、准备时创建 Intent、Intent 绑定后才 READY 的新写时序；不重写历史数据、旧命令或 Scope。实现、数据库执行及迁移限制只见[当前台账](../CURRENT_IMPLEMENTATION.md#commerce-preparation-intent-20260919)。
+
+> **2026-09-17 SubmitPayment 列约束修订：** [支付去幂等](../../requirements/20260917/commerce-SubmitPayment接口重构/technique.md)使 `t_consumer_acceptance.command_idempotency_id` 仅保留历史用途，新写入不读写该列。现行目标改为可空，不新增替代命令或支付提交表；增量来源为[人工 SQL](../../requirements/20260917/commerce-SubmitPayment接口重构/db/ddl.sql)。PDManer、基线及数据库执行状态见[当前台账](../CURRENT_IMPLEMENTATION.md#commerce-submit-payment-20260917)。
+
+> **2026-09-16 CancelOrder 请求机制修订：** [本轮修订](../../requirements/20260916/commerce-CancelOrder接口重构/technique.md)取消新读写不使用命令表、Hash/租约或冻结回执，仅使用订单取消事实与数据库条件更新；共享命令表及历史记录保留。新增 t_commerce_order.cancelled_at 保存原订单取消时间；仅实际有关联 Session 时同事务关闭会话，HOSTED_CHECKOUT 缺会话仍报错，DIRECT_PAY 可以无会话。支付权威和禁止取消成功支付的约束不变；增量 SQL 尚未执行。
+
+> **2026-09-16 创建方式与响应修订：** [已确认修订](../../requirements/20260916/commerce-订单查询合并Checkout/response-shape-amendment.md)增加订单不可变 creation_mode，当前 HOSTED_CHECKOUT、预留 DIRECT_PAY；历史和默认值为 HOSTED_CHECKOUT。订单查询将会话收进 checkout，移除对外版本，内部版本/CAS 保留。Direct Pay 业务入口仍另行设计。
+
 > **2026-09-16 CreateCheckout 修订：** [业务重构决定](../../requirements/20260916/commerce-CreateCheckout业务重构/technique.md)移除 CreateCheckout 的请求幂等执行。新订单国家保存在 `t_commerce_order.consumer_country_code`，旧命令快照只保留历史读取；本文其他操作的命令合同不变。
 
 

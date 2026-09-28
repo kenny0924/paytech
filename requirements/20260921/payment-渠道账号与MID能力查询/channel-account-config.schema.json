@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CHANNEL_ACCOUNT_CONFIG_V1",
+  "description": "Payment 拥有的账号参数及渠道凭据；整体 UTF-8 不超过 32 KiB；字符串值不得全为空白。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "channelCode", "channelAccountId", "entityNo", "parameters", "credentials"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "channelCode": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "channelAccountId": { "type": "string", "pattern": "^[1-9][0-9]{0,18}$" },
+    "entityNo": { "type": "string", "pattern": "^[A-Za-z0-9]{5}$" },
+    "parameters": { "$ref": "#/$defs/stringMap" },
+    "credentials": { "$ref": "#/$defs/stringMap" }
+  },
+  "$defs": {
+    "stringMap": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+      "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 8192 }
+    }
+  }
+}

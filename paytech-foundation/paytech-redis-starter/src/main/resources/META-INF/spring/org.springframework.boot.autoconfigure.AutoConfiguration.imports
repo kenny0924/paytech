@@ -1,0 +1,4 @@
+com.paytech.foundation.redis.core.autoconfigure.RedisKeyNamespaceAutoConfiguration
+com.paytech.foundation.redis.core.autoconfigure.RedisAutoConfiguration
+com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockAutoConfiguration
+com.paytech.foundation.redis.core.autoconfigure.RedisCacheAutoConfiguration

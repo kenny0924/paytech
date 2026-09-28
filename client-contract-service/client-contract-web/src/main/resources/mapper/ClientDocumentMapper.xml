@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.contract.core.dal.mapper.ClientDocumentMapper">
+ <sql id="scope">FROM t_application_document WHERE client_application_id=#{applicationId} AND partner_application_id IS NULL AND operating_entity_application_id IS NULL</sql>
+ <sql id="columns">document_id,subject_party_id,requirement_code,document_type,file_id,content_hash</sql>
+ <select id="documents" resultType="com.paytech.client.contract.core.dal.dataobject.ClientApplicationDocument">
+ SELECT <include refid="columns"/> <include refid="scope"/> ORDER BY document_id
+ </select>
+ <select id="document" resultType="com.paytech.client.contract.core.dal.dataobject.ClientApplicationDocument">
+ SELECT <include refid="columns"/> <include refid="scope"/> AND document_id=#{id}
+ </select>
+ <select id="retainedSubject" resultType="boolean">
+ SELECT EXISTS(SELECT 1 <include refid="scope"/> AND subject_party_id=#{partyId}
+ AND EXISTS(SELECT 1 FROM t_party WHERE party_id=#{partyId} AND party_type='INDIVIDUAL'))
+ </select>
+ <select id="country" resultType="java.lang.String">
+ <choose><when test="organization">SELECT incorporation_country FROM t_organization_profile WHERE profile_id=#{profileId}</when>
+ <otherwise>SELECT residence_country FROM t_individual_profile WHERE profile_id=#{profileId}</otherwise></choose>
+ </select>
+ <insert id="insert">
+ INSERT INTO t_application_document(document_id,client_application_id,subject_party_id,requirement_code,document_type,file_id,content_hash,create_time,update_time)
+ VALUES(#{document.documentId},#{applicationId},#{document.subjectPartyId},#{document.requirementCode},#{document.documentType},#{document.fileId},#{document.contentHash},#{now},#{now})
+ </insert>
+ <delete id="remove">DELETE <include refid="scope"/> AND document_id=#{id}</delete>
+</mapper>

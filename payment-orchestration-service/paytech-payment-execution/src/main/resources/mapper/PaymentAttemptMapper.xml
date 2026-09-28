@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.payment.execution.core.dal.mapper.PaymentAttemptMapper">
+
+    <sql id="PaymentAttemptColumns">
+        payment_attempt_id, payment_intent_id, attempt_no, source_submission_id, payment_method_code, capture_mode,
+        payment_instrument_token_id, channel_id, channel_account_id, mid_id, attempt_status, active_action_id,
+        authorized_amount, captured_amount, version, create_time, update_time
+    </sql>
+
+    <update id="activateAction">
+        UPDATE t_payment_attempt
+        SET active_action_id = #{actionId}, version = version + 1, update_time = #{now}
+        WHERE payment_attempt_id = #{attempt.paymentAttemptId} AND version = #{attempt.version}
+        AND active_action_id IS NULL AND attempt_status = 'PROCESSING'
+    </update>
+
+
+    <update id="actionSuccess">
+        UPDATE t_payment_attempt
+        SET active_action_id =
+        <choose>
+            <when test="nextActionId != null">#{nextActionId}</when>
+            <otherwise>NULL</otherwise>
+        </choose>
+        ,
+        version = version + 1, update_time = #{now}
+        WHERE payment_attempt_id = #{attempt.paymentAttemptId} AND version = #{attempt.version}
+        AND active_action_id = #{actionId} AND attempt_status = 'PROCESSING'
+    </update>
+
+    <update id="updateToFail">
+        UPDATE t_payment_attempt
+        SET attempt_status = 'FAILED', active_action_id = NULL,
+        version = version + 1, update_time = #{now}
+        WHERE payment_attempt_id = #{attempt.paymentAttemptId} AND version = #{attempt.version}
+        AND active_action_id = #{activeActionId} AND attempt_status = 'PROCESSING'
+    </update>
+
+    <update id="authorizeCompleted">
+        UPDATE t_payment_attempt
+        SET authorized_amount = #{authorizedAmount}, active_action_id = NULL,
+        version = version + 1, update_time = #{now}
+        WHERE payment_attempt_id = #{paymentAttemptId} AND active_action_id = #{activeActionId}
+        AND attempt_status = #{oldStatus} AND version = #{version}
+    </update>
+
+    <update id="payCompleted">
+        UPDATE t_payment_attempt
+        SET authorized_amount = #{payAmount}, captured_amount = #{payAmount},
+        attempt_status = #{newStatus}, active_action_id = NULL,
+        version = version + 1, update_time = #{now}
+        WHERE payment_attempt_id = #{paymentAttemptId} AND active_action_id = #{activeActionId}
+        AND attempt_status = #{oldStatus} AND version = #{version}
+    </update>
+
+    <select id="findAttemptBySubmission" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentAttempt">
+        SELECT <include refid="PaymentAttemptColumns"/>
+        FROM t_payment_attempt
+        WHERE source_submission_id = #{sourceSubmissionId}
+    </select>
+
+    <select id="selectById" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentAttempt">
+        SELECT <include refid="PaymentAttemptColumns"/>
+        FROM t_payment_attempt
+        WHERE payment_attempt_id = #{paymentAttemptId}
+    </select>
+
+    <select id="maxAttemptNo" resultType="int">
+        SELECT COALESCE(MAX(attempt_no), 0)
+        FROM t_payment_attempt WHERE payment_intent_id = #{intentId}
+    </select>
+
+    <!-- 按本条 SQL 执行时刻确认工具和 Intent 有效期。 -->
+    <insert id="insertAttempt">
+        INSERT INTO t_payment_attempt (
+            payment_attempt_id, payment_intent_id, attempt_no, source_submission_id, payment_method_code,
+            capture_mode, payment_instrument_token_id, channel_id, channel_account_id, mid_id, attempt_status,
+            active_action_id, authorized_amount, captured_amount, version, create_time, update_time
+        )
+        SELECT #{paymentAttemptId,jdbcType=BIGINT}, #{paymentIntentId,jdbcType=BIGINT},
+        #{attemptNo,jdbcType=INTEGER}, #{sourceSubmissionId,jdbcType=BIGINT}, #{paymentMethodCode,jdbcType=VARCHAR},
+        #{captureMode,jdbcType=VARCHAR}, #{paymentInstrumentTokenId,jdbcType=BIGINT}, #{channelId,jdbcType=BIGINT},
+        #{channelAccountId,jdbcType=BIGINT}, #{midId,jdbcType=BIGINT}, #{attemptStatus,jdbcType=VARCHAR},
+        #{activeActionId,jdbcType=BIGINT}, #{authorizedAmount,jdbcType=DECIMAL}, #{capturedAmount,jdbcType=DECIMAL},
+        #{version,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}
+        FROM t_payment_instrument_token token
+        JOIN t_payment_intent intent ON intent.payment_intent_id = token.payment_intent_id
+        WHERE token.payment_instrument_token_id = #{paymentInstrumentTokenId}
+          AND token.payment_intent_id = #{paymentIntentId}
+          AND token.revoked_at IS NULL AND token.expires_at &gt; UTC_TIMESTAMP(6)
+          AND intent.expires_at &gt; UTC_TIMESTAMP(6)
+    </insert>
+
+</mapper>

@@ -89,6 +89,8 @@ A01/A02/A03/A04/A05/A07/A08 为公开认证流程，仍受限流、Origin 和指
 
 A01/A02/A07 成功均为 HTTP 202 与相同 Accepted：`{"accepted":true,"resendAfterSeconds":60}`。表示请求已受理，不承诺邮件实际投递。重发冷却/限额为服务端规则，本期拟采用 60 秒间隔；IP 和账号范围的独立保护不依赖前端倒计时。账号是否存在不能改变公开响应内容。
 
+Java 合同使用 `ClientAuthenticationApi`，请求和响应分别位于 `api.authentication.request`、`api.authentication.response`，以独立 class 提供构造器和 getter。Provider 与 Client BFF 更新旧 `ClientAuthenticationModels` 引用时须同步重建；该 Java 类型迁移不改变 A01—A09 的 HTTP 方法、路径、字段、状态码或 Cookie 合同。实现与验证状态见[Client 认证重构台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-client-authentication-refactor-20260917)。
+
 ### 3.2 草稿与个人/组织字段
 
 DraftPatch 使用 `dirtyFields:string[]` 和 `values`。dirtyFields 1—50 项且不得重复；values 的叶字段集合必须与 dirtyFields 精确一致。未列出的字段不变，显式 null 清空可空字段；不得用缺省值覆盖其他分区。首期不接受任意 JSON Patch 路径、数组索引或数据库列名。

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.JwtSigningKeyMapper">
+
+    <select id="selectOperationsVerificationCandidates" timeout="2"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.JwtSigningKey">
+        SELECT signing_key_id AS signingKeyId,
+        realm,
+        kid,
+        algorithm,
+        public_jwk_schema_version AS publicJwkSchemaVersion,
+        public_jwk_canonical_json AS publicJwkCanonicalJson,
+        status,
+        active_slot AS activeSlot,
+        not_before AS notBefore,
+        signing_end_time AS signingEndTime,
+        verification_end_time AS verificationEndTime
+        FROM t_jwt_signing_key
+        WHERE realm = 'OPERATIONS'
+        AND status IN ('ACTIVE', 'RETIRING')
+        ORDER BY CASE status WHEN 'ACTIVE' THEN 0 ELSE 1 END, kid
+    </select>
+    <select id="selectCustomerVerificationCandidates" timeout="2"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.JwtSigningKey">
+        SELECT signing_key_id AS signingKeyId,
+        realm,
+        kid,
+        algorithm,
+        public_jwk_schema_version AS publicJwkSchemaVersion,
+        public_jwk_canonical_json AS publicJwkCanonicalJson,
+        status,
+        active_slot AS activeSlot,
+        not_before AS notBefore,
+        signing_end_time AS signingEndTime,
+        verification_end_time AS verificationEndTime
+        FROM t_jwt_signing_key
+        WHERE realm = 'CUSTOMER'
+        AND status IN ('ACTIVE', 'RETIRING')
+        ORDER BY CASE status WHEN 'ACTIVE' THEN 0 ELSE 1 END, kid
+    </select>
+</mapper>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.contract.core.dal.mapper.OperatingEntityMapper">
+    <resultMap id="OperatingEntity" type="com.paytech.client.contract.core.dal.dataobject.CheckoutRecords$OperatingEntity">
+        <constructor>
+            <arg column="entity_no" javaType="java.lang.String"/>
+            <arg column="party_id" javaType="java.lang.Long"/>
+            <arg column="status" javaType="com.paytech.client.contract.domain.enums.OperatingEntityStatus"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="OperatingEntity">
+        SELECT entity_no, party_id, status
+        FROM t_operating_entity
+        WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})
+        ORDER BY entity_no
+    </select>
+</mapper>

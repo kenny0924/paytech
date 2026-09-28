@@ -1,0 +1,144 @@
+{
+  "scope": "MODEL_DOCUMENTATION_STATIC_CHECK",
+  "status": "PASSED",
+  "markdownFiles": 14,
+  "localLinks": 222,
+  "anchors": 32,
+  "checks": [
+    {
+      "name": "reading_example_scope",
+      "passed": true
+    },
+    {
+      "name": "context_path:originalTransaction:originalTransactionRefId",
+      "passed": true
+    },
+    {
+      "name": "unique_step:originalTransaction",
+      "passed": true
+    },
+    {
+      "name": "prior_reference:buildBody:originalTransaction",
+      "passed": true
+    },
+    {
+      "name": "context_path:buildBody:",
+      "passed": true
+    },
+    {
+      "name": "context_path:buildBody:currency",
+      "passed": true
+    },
+    {
+      "name": "unique_step:buildBody",
+      "passed": true
+    },
+    {
+      "name": "prior_reference:encodeBody:buildBody",
+      "passed": true
+    },
+    {
+      "name": "unique_step:encodeBody",
+      "passed": true
+    },
+    {
+      "name": "prior_reference:signRequest:encodeBody",
+      "passed": true
+    },
+    {
+      "name": "unique_step:signRequest",
+      "passed": true
+    },
+    {
+      "name": "explicit_body_field_mapping",
+      "passed": true
+    },
+    {
+      "name": "mapping_inputs_match",
+      "passed": true
+    },
+    {
+      "name": "script_is_replacement",
+      "passed": true
+    },
+    {
+      "name": "replacement_output_compatible",
+      "passed": true
+    },
+    {
+      "name": "script_reference",
+      "passed": true
+    },
+    {
+      "name": "scheme_reference",
+      "passed": true
+    },
+    {
+      "name": "same_body_bytes_for_sign_and_send",
+      "passed": true
+    },
+    {
+      "name": "credential_reference_only",
+      "passed": true
+    },
+    {
+      "name": "synthetic_amount_vector",
+      "passed": true
+    },
+    {
+      "name": "request_example_sources",
+      "passed": true
+    },
+    {
+      "name": "response_step:channelRefundId",
+      "passed": true
+    },
+    {
+      "name": "response_step:channelStatus",
+      "passed": true
+    },
+    {
+      "name": "response_output_example",
+      "passed": true
+    },
+    {
+      "name": "unrecognized_outputs_empty",
+      "passed": true
+    },
+    {
+      "name": "one_explicit_data_function",
+      "passed": true
+    },
+    {
+      "name": "legacy_ddl_scope_label",
+      "passed": true
+    },
+    {
+      "name": "legacy_ddl_two_tables",
+      "passed": true
+    },
+    {
+      "name": "legacy_ddl_17_columns",
+      "passed": true
+    },
+    {
+      "name": "legacy_ddl_four_indexes",
+      "passed": true
+    },
+    {
+      "name": "legacy_registration_rows",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "aviatorCompiled": false,
+  "scriptExecuted": false,
+  "cryptographyExecuted": false,
+  "httpRequestsSent": 0,
+  "sqlExecuted": false,
+  "fullThreeTableSchemaValidated": false,
+  "completeManagementContractValidated": false,
+  "jsonFilesParsed": 19,
+  "legacyDmlStatements": 6,
+  "legacyDmlValueRows": 145
+}

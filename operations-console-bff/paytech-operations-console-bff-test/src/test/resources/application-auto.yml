@@ -1,0 +1,22 @@
+server:
+  address: 127.0.0.1
+  port: 0
+
+management:
+  server:
+    address: 127.0.0.1
+    port: 0
+
+spring:
+  cloud:
+    discovery:
+      enabled: false
+    service-registry:
+      auto-registration:
+        enabled: false
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+  main:
+    banner-mode: "off"

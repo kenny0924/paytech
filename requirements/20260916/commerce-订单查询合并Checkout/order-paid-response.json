@@ -1,0 +1,57 @@
+{
+  "orderNo": "ord_example001",
+  "clientOrderId": "CLIENT-ORDER-001",
+  "creationMode": "HOSTED_CHECKOUT",
+  "orderStatus": "PAID",
+  "preparationStatus": "READY",
+  "amountStatus": "FINAL",
+  "paymentStatus": "SUCCEEDED",
+  "currency": "USD",
+  "consumerCountryCode": "AE",
+  "items": [
+    {
+      "clientItemId": "ITEM-001",
+      "name": "Example product",
+      "description": "Product description",
+      "productTypeCode": "PRODUCT",
+      "taxCategoryCode": "STANDARD",
+      "quantity": "1",
+      "unitAmount": "100.00",
+      "discountAmount": "0.00"
+    }
+  ],
+  "amounts": {
+    "merchandiseAmount": "100.00",
+    "discountAmount": "0.00",
+    "netAmount": "100.00",
+    "taxAmount": "5.00",
+    "roundingAmount": "0.00",
+    "totalAmount": "105.00",
+    "paidAmount": "105.00"
+  },
+  "checkout": {
+    "status": "COMPLETED",
+    "url": "https://checkout.example.com/c/chk_example",
+    "expiresAt": "2026-09-16T10:30:00Z"
+  },
+  "lastPaymentAttempt": {
+    "status": "SUCCEEDED"
+  },
+  "refundSummary": {
+    "processingAmount": "0.00",
+    "succeededAmount": "0.00",
+    "refundableAmount": "105.00"
+  },
+  "fundsAvailability": {
+    "status": "PENDING",
+    "availableAmount": null,
+    "scheduledAt": null,
+    "availableAt": null,
+    "asOf": "2026-09-16T10:05:00Z",
+    "updatedAt": "2026-09-16T10:05:00Z"
+  },
+  "createdAt": "2026-09-16T10:00:00Z",
+  "expiresAt": "2026-09-16T10:30:00Z",
+  "paidAt": "2026-09-16T10:05:00Z",
+  "updatedAt": "2026-09-16T10:05:00Z"
+}

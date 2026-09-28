@@ -1,0 +1,22 @@
+.tenant-access-page { max-width: 1540px; margin-inline: auto; }
+.tenant-access-page .page-heading { margin-bottom: 24px; }
+.tenant-search, .tenant-member-search { display: grid; grid-template-columns: minmax(130px, .8fr) minmax(220px, 1.8fr) minmax(130px, .85fr) minmax(130px, .85fr) auto; gap: 16px; align-items: end; }
+.tenant-member-search { grid-template-columns: minmax(200px, 1.5fr) minmax(180px, 1.2fr) minmax(120px, .8fr) minmax(120px, .8fr) auto; }
+.tenant-search .configuration-actions, .tenant-member-search .configuration-actions { margin-bottom: 24px; }
+.tenant-id-search { display: grid; grid-template-columns: 240px 260px; gap: 16px; }
+.tenant-summary { border: 1px solid #e5eaf3; border-radius: 10px; padding: 22px 24px; margin-bottom: 20px; background: #fff; }
+.tenant-summary h2 { font-size: 19px; margin: 0 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tenant-summary-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
+.tenant-summary-heading > div { min-width: 0; }
+.tenant-summary .ant-alert { margin-top: 10px; }
+.tenant-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.tenant-reasons { margin-top: 5px; font-size: 12px; line-height: 1.7; color: #8c6d37; overflow-wrap: anywhere; }
+.tenant-authorization-note { font-size: 12px; color: #8090a8; margin-bottom: 16px; }
+.tenant-sources { background: #fafbfe; padding: 16px 18px; border: 1px solid #e8edf5; border-radius: 8px; }
+.tenant-sources h3 { font-size: 14px; margin: 0 0 12px; }
+.tenant-modal-actions { display: flex; justify-content: flex-end; margin-top: 24px; }
+.tenant-access-page .ant-table-cell { vertical-align: top; }
+.tenant-access-page .ant-table-thead > tr > th { background: #f6f8fc; font-size: 13px; }
+.tenant-access-page .ant-table { font-size: 13px; }
+@media (max-width: 1100px) { .tenant-search, .tenant-member-search { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .tenant-id-search, .tenant-search, .tenant-member-search { grid-template-columns: minmax(0, 1fr); } .tenant-summary-heading { display: block; } .tenant-summary-heading > .ant-tag { margin-top: 12px; } .tenant-summary { padding: 18px; } }

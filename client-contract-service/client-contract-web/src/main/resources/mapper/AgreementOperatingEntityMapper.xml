@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.contract.core.dal.mapper.AgreementOperatingEntityMapper">
+    <resultMap id="AgreementOperatingEntity" type="com.paytech.client.contract.core.dal.dataobject.CheckoutRecords$AgreementOperatingEntity">
+        <constructor>
+            <arg column="agreement_operating_entity_id" javaType="java.lang.Long"/>
+            <arg column="agreement_id" javaType="java.lang.Long"/>
+            <arg column="entity_no" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="AgreementOperatingEntity">
+        SELECT agreement_operating_entity_id, agreement_id, entity_no
+        FROM t_agreement_operating_entity
+        WHERE agreement_id IN (SELECT agreement_id FROM t_agreement WHERE client_id = #{clientId} OR (local_partner_id IN (SELECT source_partner_id FROM t_entity_source_relation WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}) AND source_type='PARTNER') AND agreement_id IN (SELECT agreement_id FROM t_agreement_operating_entity WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}))))
+        ORDER BY agreement_operating_entity_id
+    </select>
+</mapper>

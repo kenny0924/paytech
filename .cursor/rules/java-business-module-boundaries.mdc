@@ -10,9 +10,9 @@ alwaysApply: false
 - 业务模块是同一 Spring Boot 服务中的 Maven JAR，不是微服务。默认保持一个 `web` 启动进程、一个数据库和一个事务管理器；不得因内部模块化增加远程调用或分布式事务。
 - 只按当前完整业务能力拆分，初始通常 3–5 个模块。禁止按技术层、单表、单接口、单状态机或未来设想创建模块和占位代码。
 - 每张业务表只有一个 Owner 模块。DataObject 只在其 Owner 业务能力 JAR 内可用；非 Owner 禁止访问或注入对方的 Repository、Mapper、DataObject 和表，也禁止复制 SQL、跨模块 JOIN、View、存储过程或 `JdbcTemplate` 绕过。
-- 业务模块默认不建立彼此的直接 Maven 依赖。只有稳定、可复用的 Owner 能力同时具备窄业务接口、Owner Domain/Application Command/Result、非跨模块用例编排、长期单向和无环条件时，才允许调用方单向依赖 Owner。
-- 获准调用只依赖 Owner 发布的业务 Service/Domain Service 接口及上述模型；禁止依赖 `*Impl`、未发布的内部 Domain Service、DataObject、Repository、Mapper、表、SQL、通用 CRUD 或 API Request/Response。
-- 任一条件不满足，或出现双向/循环依赖、多模块命令编排、整体幂等/失败/补偿语义、跨 Owner 写事务时，由 `web` Processor 分别调用相关模块。不要用 `api` 或模糊 `common` 消除循环。
-- `web` 依赖 `api` 和业务模块并作为组合根；业务模块不依赖 `web` 或 `test`。同库强一致跨模块写由一个本地 `TransactionTemplate` 编排；参与模块加入现有事务，不使用 `REQUIRES_NEW`、提前提交或线程切换。
+- 业务模块只为真实 Owner 公开能力建立稳定、单向、无环的依赖；用例所属模块的 Processor 可组合这些能力，不因涉及多个模块或跨 Owner 本地事务就自动提升 Web。
+- 获准调用只依赖 Owner 发布的本地 Service/Domain Service，或负责外部能力的公开 Processor.process 及其领域输入/结果；不访问 Impl、未公开步骤、DataObject、Repository、Mapper、SQL 或通用 CRUD。
+- 没有稳定用例 Owner、依赖将成环或无法满足上述边界时，由 Web Processor 组合；不通过 api/common 掩盖循环。Service 不调用其他 Service，跨模块调用组合放在 Processor。
+- Web 保持启动与协议组合根，业务模块不依赖 Web/Test。多 Service 同库原子保存由用例 Processor 开一个 TransactionTemplate，参与者加入已有事务、不重复开事务或独立提交；其他 Processor 和外部步骤不能在其中执行。
 - Compensation Event 只处理提交后异步/外部副作用，或真正拆成独立服务后的最终一致性；不得替代当前同库本地事务。
 - 新增模块必须列明职责、表归属、获准单向依赖、公开接口、跨模块用例和事务边界，并用架构测试验证 Maven 无环及阻止实现/持久化越权。

@@ -2,6 +2,8 @@
 
 状态：已确认的数据与并发设计；当前模型、本机数据库及研发验证状态见 [当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 和 [开发交付报告](./development-checks.md)。
 
+> **2026-09-21 管理写入边界修订（用户确认）：** [接口幂等修订](./api.md)取代第 4 节的服务本地 Claim/Complete/响应回放步骤。流程保存仍将管理根、不可变版本、节点、连线放在同一事务；删除仍按根 CAS 写入一次删除事实。两者沿用 `decision:flow:pointCode:flowCode` 资源、普通 RLock、原有限等待/租约和数据库引用锁顺序，通过 Foundation `AbstractLockProcessor` 编排；条件 SQL 成功后同步原根对象。既有命令幂等表和历史记录保留，不做 DDL/DML 或历史数据迁移。第 4 节的旧摘要/回执格式仅解释历史记录，不再用于这两个写入口。实际验证和部署见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#risk-flow-management-refactor-20260921)。
+
 后续变更待审：用户已确认精简重复逻辑的方向，[精简修订](./simplification.md) 提议调整 3 张旧表及其引用，保留本页四张流程表；该修订尚未改变当前模型或数据库。下列“旧表 0 改动”是原阶段 3 口径。
 
 4 张业务配置表、44 个字段、4 个主键、5 个唯一索引、2 个普通索引；现有表 0 个结构修改、0 字段增改、0 历史回填。Platform 只改注册数据。

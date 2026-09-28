@@ -111,20 +111,3 @@ replay_pid*
 # PDManer local backups
 .back_*/
 .back_*.pdma.json
-
-# Independently versioned repositories
-/paytech-build/
-/paytech-foundation/
-/client-contract-service/
-/commerce-service/
-/payment-orchestration-service/
-/risk-compliance-service/
-/finance-service/
-/platform-support-service/
-/vault-service/
-/api-gateway/
-/operations-console-bff/
-/operations-console-web/
-/business-portal-bff/
-/business-portal-web/
-/checkout-web/

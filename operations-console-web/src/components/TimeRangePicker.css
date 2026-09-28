@@ -1,0 +1,123 @@
+.time-range-picker { width: 100%; }
+.time-range-picker > .ant-picker {
+  width: 100%;
+  min-height: 32px;
+  border-radius: 5px;
+}
+.time-range-picker .ant-picker-input > input {
+  font-variant-numeric: tabular-nums;
+}
+.time-range-picker .ant-picker-suffix,
+.time-range-picker .ant-picker-clear { color: #8a929f; }
+.time-range-separator { color: #9aa2ad; }
+
+.time-range-picker-popup .ant-picker-panel-container {
+  overflow: hidden;
+  border: 1px solid #e7eaf0;
+  border-radius: 10px;
+  box-shadow: 0 14px 34px rgb(28 39 60 / 13%);
+}
+.time-range-dropdown { display: flex; align-items: stretch; }
+.time-range-shortcuts {
+  display: flex;
+  width: 150px;
+  flex: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 10px;
+  border-right: 1px solid #edf0f3;
+  background: #fafbfc;
+}
+.time-range-shortcuts-title {
+  padding: 2px 10px 8px;
+  color: #8a929f;
+  font-size: 11px;
+}
+.time-range-shortcuts button {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  color: #3f4752;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.time-range-shortcuts button:hover { background: #f0f3f7; }
+.time-range-shortcuts button.is-active {
+  color: #2f63d8;
+  background: #edf3ff;
+  font-weight: 600;
+}
+.time-range-shortcuts button:focus-visible {
+  outline: 2px solid #5b83df;
+  outline-offset: 1px;
+}
+.time-range-calendar { min-width: 0; }
+.time-range-calendar > .ant-picker-panel-layout { border-radius: 0; }
+.time-range-picker-popup .ant-picker-footer-extra { padding: 0; }
+.time-range-footer {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 12px;
+  color: #8a929f;
+  font-size: 11px;
+}
+.time-range-footer button {
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 5px;
+  color: #68717e;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.time-range-footer button:hover { color: #2f63d8; background: #f3f6fb; }
+
+@media (max-width: 760px) {
+  .time-range-picker-popup { max-width: calc(100vw - 16px); }
+  .time-range-picker-popup .ant-picker-panel-container {
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    overflow: auto;
+  }
+  .time-range-dropdown { flex-direction: column; }
+  .time-range-shortcuts {
+    display: grid;
+    width: auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 10px;
+    border-right: 0;
+    border-bottom: 1px solid #edf0f3;
+  }
+  .time-range-shortcuts-title { grid-column: 1 / -1; padding-bottom: 4px; }
+  .time-range-shortcuts button { text-align: center; }
+  .time-range-calendar .ant-picker-panels > :nth-child(2) { display: none; }
+  .time-range-calendar .ant-picker-panels > :first-child .ant-picker-header-next-btn,
+  .time-range-calendar .ant-picker-panels > :first-child .ant-picker-header-super-next-btn {
+    visibility: visible !important;
+  }
+  .time-range-calendar .ant-picker-datetime-panel { flex-direction: column; }
+  .time-range-calendar .ant-picker-time-panel {
+    border-inline-start: 0;
+    border-top: 1px solid #f0f0f0;
+  }
+  .time-range-calendar .ant-picker-time-panel .ant-picker-content { height: 112px; }
+}
+
+@media (max-width: 760px) and (max-height: 620px) {
+  .time-range-picker-popup {
+    position: fixed !important;
+    inset: 8px 8px auto !important;
+    width: auto;
+    max-height: calc(100vh - 16px);
+  }
+  .time-range-picker-popup .ant-picker-panel-container {
+    max-height: calc(100vh - 32px);
+    margin: 0 auto;
+  }
+}

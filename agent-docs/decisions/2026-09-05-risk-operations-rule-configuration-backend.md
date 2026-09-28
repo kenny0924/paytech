@@ -6,11 +6,13 @@
 - Decision date: 2026-09-05
 - Scope: Risk 私有 `CHECKOUT_PREPARE` Rule Set 作者配置、冻结、TEST Candidate 与八项静态检查
 - Supersedes: 无广泛取代；仅在本记录明确的首期生命周期和配置边界内补充当前 Risk Decision Engine 权威
-- Superseded sections: 无
+- Superseded sections: Candidate 创建与 Validate 的服务本地请求幂等、Key 恢复与触发标识来源，由 2026-09-21 已确认修订取代；其他合同保持。
 
 > 实现、物理数据库、验证和部署的当前状态及精确证据只以
 > [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md) 为准。本记录冻结业务与架构决定，不复制
 > 会变化的本地验证快照；本地实现完成不表示已经部署。
+
+> **2026-09-21 用户确认修订：** Candidate 创建/校验移除 Risk/BFF 的 HTTP Key 处理；校验按发布身份、原版本及原操作者恢复，完成时复用八项事实。完整边界见[后端合同修订](../../docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md#release-recovery-20260921)，取代下文第 2、4、9 项对应的旧请求回放描述。
 
 ## 已确认决定
 

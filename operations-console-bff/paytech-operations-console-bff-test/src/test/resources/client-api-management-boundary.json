@@ -1,0 +1,207 @@
+[
+  {
+    "id": "A01",
+    "method": "GET",
+    "path": "/api-credential-admin/v1/credentials",
+    "query": "?page=1&size=10&keyPrefix=12345678&scopeCode=checkout.read",
+    "response": {
+      "items": [
+        {
+          "credentialId": "101",
+          "tenantId": "201",
+          "clientId": "301",
+          "clientName": "合成 Client",
+          "keyPrefix": "12345678",
+          "storedStatus": "ACTIVE",
+          "status": "ACTIVE",
+          "tenantOwnerStatus": "ACTIVE",
+          "tenantSecurityStatus": "ACTIVE",
+          "expiresTime": "2027-01-01T00:00:00Z",
+          "version": 1,
+          "createTime": "2026-09-13T00:00:00Z",
+          "updateTime": "2026-09-13T00:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "request": null,
+    "routeCode": "operations-api-a01"
+  },
+  {
+    "id": "A02",
+    "method": "GET",
+    "path": "/api-credential-admin/v1/credentials/101",
+    "query": "",
+    "response": {
+      "credentialId": "101",
+      "tenantId": "201",
+      "clientId": "301",
+      "clientName": "合成 Client",
+      "keyPrefix": "12345678",
+      "storedStatus": "ACTIVE",
+      "status": "ACTIVE",
+      "tenantOwnerStatus": "ACTIVE",
+      "tenantSecurityStatus": "ACTIVE",
+      "expiresTime": "2027-01-01T00:00:00Z",
+      "version": 1,
+      "createTime": "2026-09-13T00:00:00Z",
+      "updateTime": "2026-09-13T00:00:00Z",
+      "rotatedFromId": null
+    },
+    "request": null,
+    "routeCode": "operations-api-a02"
+  },
+  {
+    "id": "A03",
+    "method": "GET",
+    "path": "/api-credential-admin/v1/credentials/101/scopes",
+    "query": "?page=1&size=10",
+    "response": {
+      "items": [
+        {
+          "scopeId": "501",
+          "scopeCode": "checkout.read",
+          "displayName": "读取订单",
+          "resourcePattern": "*",
+          "actionCode": "READ",
+          "storedStatus": "ACTIVE",
+          "status": "ACTIVE",
+          "effectiveFrom": "2026-09-13T00:00:00Z",
+          "effectiveTo": null,
+          "version": 1,
+          "createTime": "2026-09-13T00:00:00Z",
+          "updateTime": "2026-09-13T00:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "request": null,
+    "routeCode": "operations-api-a03"
+  },
+  {
+    "id": "A04",
+    "method": "POST",
+    "path": "/api-credential-admin/v1/credentials/101/revoke",
+    "query": "",
+    "response": {
+      "credentialId": "101",
+      "status": "REVOKED",
+      "version": 2
+    },
+    "request": {
+      "expectedVersion": 1,
+      "reason": "测试撤销"
+    },
+    "routeCode": "operations-api-a04"
+  },
+  {
+    "id": "A05",
+    "method": "GET",
+    "path": "/api-scope-admin/v1/scopes",
+    "query": "?page=1&size=10&keyword=checkout",
+    "response": {
+      "items": [
+        {
+          "apiScopeId": "401",
+          "scopeCode": "checkout.read",
+          "displayName": "读取订单",
+          "description": null,
+          "version": 1
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "request": null,
+    "routeCode": "operations-api-a05"
+  },
+  {
+    "id": "A06",
+    "method": "GET",
+    "path": "/api-scope-admin/v1/scopes/checkout.read",
+    "query": "?referenceKind=NONE",
+    "response": {
+      "scope": {
+        "apiScopeId": "401",
+        "scopeCode": "checkout.read",
+        "displayName": "读取订单",
+        "description": null,
+        "version": 1,
+        "createTime": "2026-09-13T00:00:00Z",
+        "updateTime": "2026-09-13T00:00:00Z"
+      },
+      "references": null
+    },
+    "request": null,
+    "routeCode": "operations-api-a06",
+    "upstreamResponse": {
+      "apiScopeId": "401",
+      "scopeCode": "checkout.read",
+      "displayName": "读取订单",
+      "description": null,
+      "version": 1,
+      "createTime": "2026-09-13T00:00:00Z",
+      "updateTime": "2026-09-13T00:00:00Z"
+    }
+  },
+  {
+    "id": "A07",
+    "method": "POST",
+    "path": "/api-scope-admin/v1/scopes",
+    "query": "",
+    "response": {
+      "apiScopeId": "401",
+      "scopeCode": "checkout.read",
+      "version": 1
+    },
+    "request": {
+      "scopeCode": "checkout.read",
+      "displayName": "读取订单",
+      "description": null,
+      "reason": "新增目录"
+    },
+    "routeCode": "operations-api-a07"
+  },
+  {
+    "id": "A08",
+    "method": "PUT",
+    "path": "/api-scope-admin/v1/scopes/checkout.read",
+    "query": "",
+    "response": {
+      "apiScopeId": "401",
+      "scopeCode": "checkout.read",
+      "version": 2
+    },
+    "request": {
+      "displayName": "读取订单详情",
+      "description": null,
+      "expectedVersion": 1,
+      "reason": "修改名称"
+    },
+    "routeCode": "operations-api-a08"
+  },
+  {
+    "id": "A09",
+    "method": "GET",
+    "path": "/api-scope-admin/v1/scope-options",
+    "query": "?keyword=checkout&page=1&size=10",
+    "response": {
+      "items": [
+        {
+          "scopeCode": "checkout.read",
+          "displayName": "读取订单"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "request": null,
+    "routeCode": "operations-api-a09"
+  }
+]

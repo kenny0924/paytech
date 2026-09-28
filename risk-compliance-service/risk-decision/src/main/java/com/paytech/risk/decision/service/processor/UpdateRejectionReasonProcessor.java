@@ -1,0 +1,73 @@
+package com.paytech.risk.decision.service.processor;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
+import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.risk.decision.core.dal.dataobject.RuleRejectReason;
+import com.paytech.risk.decision.domain.dictionary.DecisionDictionary.Content;
+import com.paytech.risk.decision.domain.dictionary.DecisionDictionary.WriteResult;
+import com.paytech.risk.decision.domain.dictionary.RejectionReasonChangeContext;
+import com.paytech.risk.decision.domain.enums.DictionaryType;
+import com.paytech.risk.decision.domainservice.repository.RuleRejectReasonRepository;
+import com.paytech.risk.decision.domainservice.service.DecisionDictionaryService;
+import com.paytech.risk.decision.domainservice.service.DictionaryConflictException;
+import com.paytech.risk.decision.domainservice.service.DictionaryConflictException.Reason;
+import com.paytech.risk.decision.service.processor.request.UpdateRejectionReasonRequest;
+
+import lombok.AllArgsConstructor;
+
+/** 按永久原因编码协调变更，单次事务保存当前事实及构造本次结果。 */
+@Component
+@AllArgsConstructor
+public class UpdateRejectionReasonProcessor extends AbstractLockProcessor<UpdateRejectionReasonRequest, WriteResult> {
+
+    private final Clock clock;
+    private final DecisionDictionaryService service;
+    private final PlatformTransactionManager transactionManager;
+    private final RuleRejectReasonRepository repository;
+    private final RedisResourceLockProperties lockProperties;
+
+    /**
+     * 与现有字典编辑、启停共用完整逻辑 Key、普通 RLock 和有限等待/租约。
+     * <li>迁移使用完整 Key 工厂，避免单锁工厂添加 lock: 后改变原互斥域。</li>
+     */
+    @Override
+    protected LockCommand lockCommand(UpdateRejectionReasonRequest request) {
+        return LockCommand.tryLocks(List.of("decision:dictionary:REJECTION_REASON:" + request.getReasonCode()),
+            Duration.ofNanos(lockProperties.requiredWaitNanos()),
+            Duration.ofNanos(lockProperties.requiredLeaseNanos()));
+    }
+
+    /** 锁内开启本地短事务；提交或回滚完成后由公共模板释放资源锁。 */
+    @Override
+    protected WriteResult processWithinLock(UpdateRejectionReasonRequest request) {
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        transaction.setTimeout(5);
+        return transaction.execute(status -> changeDictionary(request));
+    }
+
+    /** 锁定当前记录并检查版本，保存完整上下文；同值修改也递增版本。 */
+    WriteResult changeDictionary(UpdateRejectionReasonRequest request) {
+        RuleRejectReason value = repository.lockByCode(request.getReasonCode())
+            .orElseThrow(() -> new DictionaryConflictException(Reason.NOT_FOUND));
+        value.verifyIntegrity();
+        value.verifyExpectedVersion(request.getExpectedVersion());
+        var context = new RejectionReasonChangeContext(value,
+            new Content(request.getName(),
+                request.getDescription() != null && request.getDescription().isEmpty() ? null
+                    : request.getDescription(),
+                request.getDefaultMessage()),
+            value.getStatus(), request.getActorAccountId(), clock.instant().truncatedTo(ChronoUnit.MICROS));
+        service.saveRejectionReasonChange(context);
+        return new WriteResult(DictionaryType.REJECTION_REASON, value.getReasonCode(), value.getVersion(),
+            value.getStatus(), value.getUpdatedBy(), value.getUpdateTime());
+    }
+}

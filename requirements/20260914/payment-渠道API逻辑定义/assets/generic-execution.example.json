@@ -1,0 +1,274 @@
+{
+  "exampleKind": "GENERIC_EXECUTION_DESIGN_READING_EXAMPLE",
+  "completeDefinition": false,
+  "runtimeExecuted": false,
+  "protocolCodesAreSynthetic": true,
+  "scope": "通用输入、状态和输出合同片段；不包含完整处理链、受控连接及管理 Wire；不是可导入定义。",
+  "invocation": {
+    "integrationCode": "DEMO_PAY",
+    "apiCode": "REFUND",
+    "context": {
+      "refundContext": {
+        "originalTransactionRefId": "10001",
+        "refundAmount": "10.00",
+        "currency": "AED"
+      }
+    }
+  },
+  "definitionFragment": {
+    "inputPathExample": {
+      "displayPath": "refundContext.currency",
+      "binding": {
+        "source": "CONTEXT",
+        "path": [
+          "refundContext",
+          "currency"
+        ]
+      },
+      "expectedValue": "AED"
+    },
+    "outputContractRef": "REFUND_RESULT",
+    "statusMapping": {
+      "rules": [
+        {
+          "condition": {
+            "op": "ALL",
+            "children": [
+              {
+                "op": "EQ",
+                "left": {
+                  "source": "RESPONSE",
+                  "path": [
+                    "status"
+                  ]
+                },
+                "right": {
+                  "source": "LITERAL",
+                  "valueType": "INTEGER",
+                  "value": "202"
+                }
+              },
+              {
+                "op": "EQ",
+                "left": {
+                  "source": "STEP",
+                  "stepCode": "observedFacts",
+                  "path": [
+                    "facts",
+                    "code"
+                  ]
+                },
+                "right": {
+                  "source": "LITERAL",
+                  "valueType": "STRING",
+                  "value": "00"
+                }
+              }
+            ]
+          },
+          "executeStatus": "SUCCESS"
+        },
+        {
+          "condition": {
+            "op": "ALL",
+            "children": [
+              {
+                "op": "EQ",
+                "left": {
+                  "source": "RESPONSE",
+                  "path": [
+                    "status"
+                  ]
+                },
+                "right": {
+                  "source": "LITERAL",
+                  "valueType": "INTEGER",
+                  "value": "400"
+                }
+              },
+              {
+                "op": "EQ",
+                "left": {
+                  "source": "STEP",
+                  "stepCode": "observedFacts",
+                  "path": [
+                    "facts",
+                    "code"
+                  ]
+                },
+                "right": {
+                  "source": "LITERAL",
+                  "valueType": "STRING",
+                  "value": "05"
+                }
+              }
+            ]
+          },
+          "executeStatus": "FAIL"
+        }
+      ],
+      "defaultStatus": "ERROR"
+    },
+    "outputDefinition": [
+      {
+        "executeStatus": "SUCCESS",
+        "fields": [
+          {
+            "name": "refundId",
+            "binding": {
+              "source": "STEP",
+              "stepCode": "observedFacts",
+              "path": [
+                "facts",
+                "refund_id"
+              ]
+            }
+          },
+          {
+            "name": "refundStatus",
+            "binding": {
+              "source": "STEP",
+              "stepCode": "observedFacts",
+              "path": [
+                "facts",
+                "refund_state"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "executeStatus": "FAIL",
+        "fields": [
+          {
+            "name": "rejectionReason",
+            "binding": {
+              "source": "STEP",
+              "stepCode": "observedFacts",
+              "path": [
+                "facts",
+                "message"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "executeStatus": "ERROR",
+        "fields": []
+      }
+    ]
+  },
+  "outputContractExample": {
+    "code": "REFUND_RESULT",
+    "owner": "BUSINESS_OWNER_DESIGN_EXAMPLE",
+    "note": "同类退款 API 引用同一合同；这里不规定合同的物理存储或真实 Payment Wire。",
+    "statusSchemas": [
+      {
+        "executeStatus": "SUCCESS",
+        "fields": [
+          {
+            "name": "refundId",
+            "valueType": "STRING",
+            "required": true,
+            "nullable": false
+          },
+          {
+            "name": "refundStatus",
+            "valueType": "STRING",
+            "required": true,
+            "nullable": false
+          }
+        ]
+      },
+      {
+        "executeStatus": "FAIL",
+        "fields": [
+          {
+            "name": "rejectionReason",
+            "valueType": "STRING",
+            "required": true,
+            "nullable": false
+          }
+        ]
+      },
+      {
+        "executeStatus": "ERROR",
+        "fields": []
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "accepted_response",
+      "phaseAssumption": "响应保护和必要关联校验已通过；这里仅演示状态与输出。",
+      "response": {
+        "status": "202"
+      },
+      "steps": {
+        "observedFacts": {
+          "facts": {
+            "code": "00",
+            "refund_id": "refund_123",
+            "refund_state": "PROCESSING"
+          }
+        }
+      },
+      "expectedResult": {
+        "executeStatus": "SUCCESS",
+        "outputs": {
+          "refundId": "refund_123",
+          "refundStatus": "PROCESSING"
+        }
+      }
+    },
+    {
+      "name": "recognized_rejection",
+      "phaseAssumption": "响应保护与结构校验已通过。",
+      "response": {
+        "status": "400"
+      },
+      "steps": {
+        "observedFacts": {
+          "facts": {
+            "code": "05",
+            "message": "Refund amount exceeds available amount"
+          }
+        }
+      },
+      "expectedResult": {
+        "executeStatus": "FAIL",
+        "outputs": {
+          "rejectionReason": "Refund amount exceeds available amount"
+        }
+      }
+    },
+    {
+      "name": "unmatched_response",
+      "phaseAssumption": "响应保护与结构校验已通过，但没有状态规则匹配。",
+      "response": {
+        "status": "200"
+      },
+      "steps": {
+        "observedFacts": {
+          "facts": {
+            "code": "NEW_CODE"
+          }
+        }
+      },
+      "expectedResult": {
+        "executeStatus": "ERROR",
+        "outputs": {}
+      }
+    },
+    {
+      "name": "response_timeout",
+      "phaseAssumption": "目标请求可能已被外部处理，尚未收到响应；引擎不重试。",
+      "simulatedRuntimeFailure": "RESPONSE_TIMEOUT",
+      "expectedResult": {
+        "executeStatus": "ERROR",
+        "outputs": {}
+      }
+    }
+  ]
+}

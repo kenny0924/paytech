@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.GatewayConfigurationMapper">
+
+    <select id="selectTargets"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayTarget">
+        SELECT target_id AS targetId,
+        target_service_code AS targetServiceCode,
+        discovery_service_name AS discoveryServiceName,
+        channel,
+        status
+        FROM t_gateway_target
+    </select>
+
+    <select id="selectRoutes"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayRoute">
+        SELECT route_id AS routeId,
+        route_code AS routeCode,
+        channel,
+        http_method AS httpMethod,
+        external_path_template AS externalPathTemplate,
+        downstream_path_template AS downstreamPathTemplate,
+        target_id AS targetId,
+        security_profile_code AS securityProfileCode,
+        authorization_mode AS authorizationMode,
+        permission_id AS permissionId,
+        required_scope_code AS requiredScopeCode,
+        request_cookie_mode AS requestCookieMode,
+        response_cookie_mode AS responseCookieMode,
+        body_limit_bytes AS bodyLimitBytes,
+        body_receive_timeout_millis AS bodyReceiveTimeoutMillis,
+        response_timeout_millis AS responseTimeoutMillis,
+        status
+        FROM t_gateway_route
+    </select>
+
+    <select id="selectPermissionsByIds"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.mapper.GatewayConfigurationMapper$PermissionProjection">
+        SELECT permission_id AS permissionId,
+        permission_code AS permissionCode
+        FROM t_permission
+        <choose>
+            <when test="permissionIds != null and !permissionIds.isEmpty()">
+                WHERE permission_id IN
+                <foreach collection="permissionIds" item="permissionId" open="(" separator="," close=")">
+                    #{permissionId}
+                </foreach>
+            </when>
+            <otherwise>
+                WHERE 1 = 0
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="selectHeaders"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayRouteHeader">
+        SELECT route_id AS routeId,
+        header_name AS headerName,
+        header_use AS headerUse
+        FROM t_gateway_route_header
+    </select>
+
+    <select id="selectQueryParameters"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayRouteQueryParam">
+        SELECT route_id AS routeId,
+        parameter_name AS parameterName
+        FROM t_gateway_route_query_param
+    </select>
+
+    <select id="selectGuardRules"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayGuardRule">
+        SELECT route_id AS routeId,
+        rule_type AS ruleType,
+        dimension,
+        capacity,
+        refill_tokens AS refillTokens,
+        refill_period_millis AS refillPeriodMillis,
+        concurrency_limit AS concurrencyLimit
+        FROM t_gateway_guard_rule
+    </select>
+</mapper>

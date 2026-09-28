@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.TenantAccessManagementMapper">
+    <sql id="tenantColumns">t.tenant_id tenantId,t.tenant_type tenantType,t.owner_ref_id ownerRefId,t.tenant_name tenantName,
+        t.owner_status ownerStatus,t.security_status securityStatus,t.version,t.create_time createdAt,t.update_time updatedAt</sql>
+    <sql id="tenantFilter">WHERE BINARY t.tenant_type!='INTERNAL'
+        <if test="filter.tenantType != null">AND t.tenant_type=#{filter.tenantType}</if>
+        <if test="filter.tenantId != null">AND t.tenant_id=#{filter.tenantId}</if>
+        <if test="filter.ownerRefId != null">AND t.owner_ref_id=#{filter.ownerRefId}</if>
+        <if test="filter.tenantName != null">AND t.tenant_name LIKE #{filter.tenantName} ESCAPE '!'</if>
+        <if test="filter.ownerStatus != null">AND t.owner_status=#{filter.ownerStatus}</if>
+        <if test="filter.securityStatus != null">AND t.security_status=#{filter.securityStatus}</if>
+    </sql>
+    <select id="tenant" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantAccess" useCache="false">
+        SELECT <include refid="tenantColumns"/> FROM t_access_tenant t WHERE t.tenant_id=#{tenantId}
+    </select>
+    <select id="lock" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantAccess" useCache="false" flushCache="true">
+        SELECT <include refid="tenantColumns"/> FROM t_access_tenant t WHERE t.tenant_id=#{tenantId} FOR UPDATE
+    </select>
+    <select id="tenants" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantAccess" useCache="false">
+        SELECT <include refid="tenantColumns"/> FROM t_access_tenant t <include refid="tenantFilter"/> ORDER BY t.tenant_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="tenantCount" resultType="long" useCache="false">SELECT COUNT(*) FROM t_access_tenant t <include refid="tenantFilter"/></select>
+    <sql id="memberColumns">m.tenant_id tenantId,m.member_id memberId,m.account_id accountId,a.email_masked emailMasked,
+        m.member_type memberType,m.status memberStatus,a.status accountStatus,m.create_time createdAt,m.update_time updatedAt,
+        a.realm,a.account_type accountType</sql>
+    <sql id="memberFrom">FROM t_tenant_member m LEFT JOIN t_user_account a ON a.account_id=m.account_id</sql>
+    <sql id="memberFilter">WHERE m.tenant_id=#{tenantId}
+        <if test="filter.accountId != null">AND m.account_id=#{filter.accountId}</if>
+        <if test="filter.emailMasked != null">AND a.email_masked LIKE #{filter.emailMasked} ESCAPE '!'</if>
+        <if test="filter.memberType != null">AND m.member_type=#{filter.memberType}</if>
+        <if test="filter.memberStatus != null">AND m.status=#{filter.memberStatus}</if>
+    </sql>
+    <select id="member" resultType="com.paytech.platform.support.accesscontrol.domain.tenantaccess.TenantMemberView" useCache="false">
+        SELECT <include refid="memberColumns"/> <include refid="memberFrom"/> WHERE m.tenant_id=#{tenantId} AND m.member_id=#{memberId}
+    </select>
+    <select id="members" resultType="com.paytech.platform.support.accesscontrol.domain.tenantaccess.TenantMemberView" useCache="false">
+        SELECT <include refid="memberColumns"/> <include refid="memberFrom"/> <include refid="memberFilter"/> ORDER BY m.member_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="memberCount" resultType="long" useCache="false">SELECT COUNT(*) <include refid="memberFrom"/> <include refid="memberFilter"/></select>
+    <select id="invalidMembers" resultType="long" useCache="false">
+        SELECT COUNT(*) <include refid="memberFrom"/> WHERE m.tenant_id=#{tenantId} AND
+        (a.account_id IS NULL OR a.account_id&lt;=0 OR m.member_id&lt;=0 OR BINARY a.realm!='CUSTOMER' OR BINARY a.account_type!='HUMAN'
+        OR BINARY a.status NOT IN ('PENDING_VERIFICATION','ACTIVE','DISABLED','CLOSED')
+        OR BINARY m.member_type NOT IN ('OWNER','ADMIN','MEMBER') OR BINARY m.status NOT IN ('ACTIVE','SUSPENDED','REVOKED'))
+    </select>
+    <sql id="grantFrom">FROM t_tenant_member_role g LEFT JOIN t_role r ON r.role_id=g.role_id</sql>
+    <sql id="sourceFrom"><include refid="grantFrom"/> JOIN t_role_permission rp ON rp.role_id=g.role_id LEFT JOIN t_permission p ON p.permission_id=rp.permission_id</sql>
+    <select id="invalidGrants" resultType="long" useCache="false">
+        SELECT COUNT(*) <include refid="grantFrom"/> WHERE g.tenant_member_id=#{memberId} AND
+        (g.tenant_id!=#{tenantId} OR r.role_id IS NULL OR r.role_id&lt;=0 OR g.tenant_member_role_id&lt;=0
+        OR BINARY g.status NOT IN ('ACTIVE','REVOKED','EXPIRED') OR BINARY r.status NOT IN ('ACTIVE','INACTIVE')
+        OR g.effective_from IS NULL OR (g.effective_to IS NOT NULL AND g.effective_to&lt;=g.effective_from)
+        OR COALESCE(((BINARY r.tenant_scope='PLATFORM' AND r.tenant_id IS NULL AND BINARY r.scope_key='PLATFORM' AND BINARY g.role_scope_key='PLATFORM')
+        OR (BINARY r.tenant_scope='TENANT' AND r.tenant_id=#{tenantId} AND BINARY r.scope_key=CAST(#{tenantId} AS CHAR) AND BINARY g.role_scope_key=BINARY r.scope_key)),0)=0)
+    </select>
+    <select id="invalidPermissions" resultType="long" useCache="false">
+        SELECT COUNT(*) <include refid="sourceFrom"/> WHERE g.tenant_member_id=#{memberId} AND
+        (p.permission_id IS NULL OR p.permission_id&lt;=0 OR rp.role_permission_id&lt;=0
+        OR BINARY p.status NOT IN ('ACTIVE','INACTIVE') OR BINARY rp.status NOT IN ('ACTIVE','REVOKED'))
+    </select>
+    <sql id="grantColumns">g.tenant_member_role_id grantId,g.role_id roleId,r.role_code roleCode,r.role_name roleName,
+        r.tenant_scope roleScope,r.tenant_id roleTenantId,r.status roleStatus,g.status grantStatus,
+        g.effective_from effectiveFrom,g.effective_to effectiveTo</sql>
+    <!-- 以下标记是角色/来源/权限汇总共用的失效判断；不把时间过期写回数据库。 -->
+    <sql id="grantReasons">(r.status='INACTIVE') roleInactive,(g.status='REVOKED') grantRevoked,
+        (g.effective_from&gt;#{asOf}) grantNotStarted,(g.status='EXPIRED' OR (g.effective_to IS NOT NULL AND g.effective_to&lt;=#{asOf})) grantExpired</sql>
+    <sql id="sourceReasons"><include refid="grantReasons"/>,(rp.status='REVOKED') rolePermissionRevoked,(p.status='INACTIVE') permissionInactive</sql>
+    <select id="roles" resultType="com.paytech.platform.support.accesscontrol.domain.tenantaccess.TenantRoleGrantView" useCache="false">
+        SELECT <include refid="grantColumns"/>,<include refid="grantReasons"/> <include refid="grantFrom"/>
+        WHERE g.tenant_member_id=#{memberId} ORDER BY g.tenant_member_role_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="roleCount" resultType="long" useCache="false">SELECT COUNT(*) FROM t_tenant_member_role WHERE tenant_member_id=#{memberId}</select>
+    <sql id="permissionColumns">p.permission_id permissionId,p.permission_code permissionCode,p.resource_type resourceType,p.action_code actionCode,p.status permissionStatus</sql>
+    <select id="permissionCount" resultType="long" useCache="false">SELECT COUNT(DISTINCT rp.permission_id) <include refid="sourceFrom"/> WHERE g.tenant_member_id=#{memberId}</select>
+    <select id="permissions" resultType="com.paytech.platform.support.accesscontrol.domain.tenantaccess.TenantMemberPermissionView" useCache="false">
+        SELECT permissionId,permissionCode,resourceType,actionCode,permissionStatus,COUNT(*) sourceCount,
+            SUM(NOT(roleInactive OR grantRevoked OR grantNotStarted OR grantExpired OR rolePermissionRevoked OR permissionInactive)) effectiveSourceCount,
+            MAX(roleInactive) roleInactive,MAX(grantRevoked) grantRevoked,MAX(grantNotStarted) grantNotStarted,
+            MAX(grantExpired) grantExpired,MAX(rolePermissionRevoked) rolePermissionRevoked,MAX(permissionInactive) permissionInactive
+        FROM (SELECT <include refid="permissionColumns"/>,<include refid="sourceReasons"/> <include refid="sourceFrom"/>
+            JOIN (SELECT DISTINCT rp.permission_id <include refid="sourceFrom"/> WHERE g.tenant_member_id=#{memberId}
+                ORDER BY rp.permission_id LIMIT #{size} OFFSET #{offset}) selected ON selected.permission_id=p.permission_id
+            WHERE g.tenant_member_id=#{memberId}) facts
+        GROUP BY permissionId,permissionCode,resourceType,actionCode,permissionStatus ORDER BY permissionId
+    </select>
+    <select id="sources" resultType="com.paytech.platform.support.accesscontrol.domain.tenantaccess.TenantPermissionSourceView" useCache="false">
+        SELECT <include refid="grantColumns"/>,rp.role_permission_id rolePermissionId,rp.status rolePermissionStatus,<include refid="sourceReasons"/>
+        <include refid="sourceFrom"/> WHERE g.tenant_member_id=#{memberId} AND rp.permission_id=#{permissionId}
+        ORDER BY g.tenant_member_role_id,rp.role_permission_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="sourceCount" resultType="long" useCache="false">
+        SELECT COUNT(*) <include refid="sourceFrom"/> WHERE g.tenant_member_id=#{memberId} AND rp.permission_id=#{permissionId}
+    </select>
+    <select id="currentTime" resultType="java.time.Instant" useCache="false">SELECT UTC_TIMESTAMP(6)</select>
+    <update id="changeSecurityStatus">
+        UPDATE t_access_tenant SET security_status=#{securityStatus},version=version+1,update_time=#{now}
+        WHERE tenant_id=#{tenantId} AND version=#{expectedVersion} AND tenant_type IN ('CLIENT','PARTNER')
+    </update>
+</mapper>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.ApiScopeMapper">
+    <sql id="columns">api_scope_id apiScopeId, scope_code scopeCode, display_name displayName, description,
+        version, create_time createTime, update_time updateTime</sql>
+    <!-- 名称搜索允许 Unicode；编码转成兼容字符集并保留二进制大小写语义，避免中文关键词与 ascii_bin 冲突。 -->
+    <sql id="filter"><if test="keyword != null">WHERE (CONVERT(scope_code USING utf8mb4) COLLATE utf8mb4_bin LIKE #{keyword} ESCAPE '!' OR display_name LIKE #{keyword} ESCAPE '!')</if></sql>
+    <select id="scope" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ApiScope" useCache="false">
+        SELECT <include refid="columns"/> FROM t_api_scope WHERE scope_code=#{code} AND BINARY scope_code=BINARY #{code}
+    </select>
+    <select id="lock" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ApiScope" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/> FROM t_api_scope WHERE scope_code=#{code} AND BINARY scope_code=BINARY #{code} FOR UPDATE
+    </select>
+    <select id="scopes" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ApiScope" useCache="false">
+        SELECT <include refid="columns"/> FROM t_api_scope <include refid="filter"/>
+        ORDER BY scope_code LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long" useCache="false">SELECT COUNT(*) FROM t_api_scope <include refid="filter"/></select>
+    <insert id="insert">
+        INSERT INTO t_api_scope(api_scope_id,scope_code,display_name,description,version,create_time,update_time)
+        VALUES(#{row.apiScopeId},#{row.scopeCode},#{row.displayName},#{row.description},#{row.version},#{row.createTime},#{row.updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_api_scope SET display_name=#{displayName},description=#{description},version=version+1,update_time=#{updateTime}
+        WHERE api_scope_id=#{row.apiScopeId} AND version=#{row.version}
+    </update>
+</mapper>

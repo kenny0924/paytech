@@ -18,6 +18,8 @@ Five concepts must remain distinct:
 
 These concepts are not one-to-one. Several entry applications may share one frontend or BFF, and several Java services may run on the same container hosts.
 
+HTTP request idempotency through `Idempotency-Key` belongs to API Gateway across all entry channels, not only Client API. Gateway records and replays request responses; it does not resume business workflows. BFFs and core services retain business deduplication, resource authorization, database invariants and necessary business recovery. They must not add service-local request-replay components or new consumers of `paytech-command-idempotency`. Internal calls use explicit business operation identities rather than recreating Gateway semantics. Full rules and migration boundaries are in [Development Conventions §5.4](./DEVELOPMENT_CONVENTIONS.md#54-请求幂等与业务防重) and the [2026-09-17 decision](./decisions/2026-09-17-gateway-request-idempotency.md); this architecture decision does not establish runtime rollout.
+
 ## 2. Backend and frontend project baseline
 
 ### Core backend project roots
@@ -33,6 +35,12 @@ api-gateway/
 ```
 
 Each core backend root owns one business-system boundary and database. Its current code, SQL and verification status is intentionally not repeated here; use the current status ledger and the repository README. The [manual-infrastructure simplification](../docs/superpowers/specs/2026-09-02-manual-infrastructure-and-platform-runtime-simplification.md) supersedes earlier Flyway/Testcontainers/runtime-seed mechanisms, while the [MVC/internal-HTTP design](../docs/superpowers/specs/2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md) supersedes application mTLS transport.
+
+### Platform Integration ownership
+
+The [2026-09-21 Integration decision](./decisions/2026-09-21-platform-integration-http-execution.md) places generic external API configuration and execution in Platform Support. Payment and other business Owners invoke the capability through internal HTTP; Platform loads its own configuration and performs the target external request. Callers do not embed the execution engine or access Platform tables. This adds no separately deployed service or public execution route. Operations configuration management continues through its BFF.
+
+Business routing, frozen account/MID identities, transaction state and recovery remain with the caller. Integration creates no execution journal, business idempotency record or automatic retry. The [detailed amendment](../requirements/20260914/payment-渠道API逻辑定义/platform-http-execution-amendment.md) owns material handoff and the two HTTP boundaries; it does not expand existing Vault or Card permissions.
 
 ### Entry-layer backend project roots
 

@@ -1,0 +1,148 @@
+server:
+  port: 18106
+  servlet:
+    context-path: /platform-support
+
+spring:
+  mail:
+    properties:
+      "[mail.smtp.connectiontimeout]": 1000
+      "[mail.smtp.timeout]": 2000
+      "[mail.smtp.writetimeout]": 1000
+      "[mail.smtp.starttls.enable]": true
+      "[mail.smtp.starttls.required]": true
+  application:
+    name: platform-support-service
+  data:
+    redis:
+      host: "${PLATFORM_SUPPORT_REDIS_HOST:127.0.0.1}"
+      port: "${PLATFORM_SUPPORT_REDIS_PORT:16379}"
+      password: "${PLATFORM_SUPPORT_REDIS_PASSWORD:}"
+      connect-timeout: 2s
+      timeout: 2s
+  datasource:
+    url: "${PLATFORM_SUPPORT_DB_URL}"
+    username: "${PLATFORM_SUPPORT_DB_USERNAME}"
+    password: "${PLATFORM_SUPPORT_DB_PASSWORD}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+        connectTimeout: 2000
+        socketTimeout: 2000
+  cloud:
+    nacos:
+      discovery:
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
+  jmx:
+    enabled: false
+
+vault:
+  client:
+    caller-service: platform-support-service
+    connect-timeout: 2s
+    read-timeout: 2s
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      validate-group-membership: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,gatewaySnapshot
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+  health:
+    redis:
+      enabled: "${operations.authentication.enabled:false}"
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+# Authentication adapters are explicitly development-only; enabling them requires local/auto.
+operations:
+  audit:
+    queue-capacity: 256
+  authentication:
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
+    enabled: false
+
+redis:
+  coordination:
+    enabled: "${operations.authentication.enabled:false}"
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /internal/onboarding-files
+      - /onboarding-files
+      - /authentication
+      - /authorization
+      - /operations
+      - /gateway-admin
+      - /console-admin
+      - /permission-admin
+      - /api-credential-admin
+      - /api-scope-admin
+      - /api-credentials
+      - /tenant-projections
+
+
+client:
+  authentication:
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
+    enabled: false
+
+tenant:
+  projection:
+    enabled: false
+
+# Only the approved file consumer enables local recovery; no external scheduler configuration.
+compensation:
+  enabled: ${files.onboarding.enabled:false}
+
+# Scope create/update share the Foundation Processor lock; timing changes require restart.
+api-scope:
+  management:
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
+
+# 普通邮件只开放模块入口；启用时显式开启 compensation.enabled 并配置实际 Provider/Vault。
+notification:
+  enabled: false
+  # worker-id: 独立启用通知时必须显式分配 0..31，不提供生产默认值。
+  maximum-send-attempts: 3
+  retry-delay: 30s

@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import com.paytech.client.console.bff.service.model.ClientBrowserModels.TokenGrantResponseBody;
 import com.paytech.client.console.bff.service.processor.ClientSessionProcessor;
 import com.paytech.platform.support.api.authentication.ClientAuthenticationApi;
-import com.paytech.platform.support.api.authentication.ClientAuthenticationModels.*;
+import com.paytech.platform.support.api.authentication.request.*;
+import com.paytech.platform.support.api.authentication.response.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

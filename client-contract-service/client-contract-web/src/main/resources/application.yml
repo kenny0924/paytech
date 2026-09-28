@@ -1,0 +1,91 @@
+server:
+  port: 18101
+
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 2000
+      initialization-fail-timeout: 1
+      pool-name: cct-database
+  data:
+    redis:
+      connect-timeout: 1s
+      timeout: 1s
+  cloud:
+    nacos:
+      discovery:
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:public}"
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
+      - com.paytech.vault.client.autoconfigure.VaultClientAutoConfiguration
+  application:
+    name: client-contract-service
+  jmx:
+    enabled: false
+
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      validate-group-membership: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+  health:
+    redis:
+      enabled: ${onboarding.draft-enabled:false}
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+onboarding:
+  recovery-enabled: false
+  draft-enabled: false
+  # 由 CCT 维护的批准目录；默认留空，不初始化任何真实国家规则。修改后重启。
+  form-catalog:
+    organization-types: []
+    business-models: []
+    identifier-types: []
+compensation:
+  enabled: ${onboarding.recovery-enabled:false}
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /client-onboarding
+      - /internal/client-onboarding
+redis:
+  coordination:
+    enabled: ${onboarding.draft-enabled:false}
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s
+vault:
+  client:
+    connect-timeout: 2s
+    read-timeout: 3s

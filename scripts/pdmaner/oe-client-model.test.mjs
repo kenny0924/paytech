@@ -121,17 +121,16 @@ test("Basic Checkout can exist before seller and final tax but keeps durable pre
   assert.ok(!context.fields.some((f) => f.defKey === "assignment_id"));
 });
 
-test("Payment final pricing fact is unique per successful Attempt and cannot be mutated", () => {
+test("Payment preserves OE and term versions while retiring its standalone pricing snapshot", () => {
   const model = generatePaymentModel();
   const intent = table(model, "t_payment_intent");
   assert.equal(field(intent, "entity_no").type, "CHAR");
-  field(intent, "client_pricing_version_id");
-  assert.ok(!intent.fields.some((f) => f.defKey === "assignment_id"));
-  const fact = table(model, "t_payment_pricing_fact");
-  assert.ok(unique(fact, ["payment_attempt_id"]));
-  assert.ok(!fact.fields.some((f) => f.defKey === "update_time"));
-  field(fact, "source_action_id");
-  field(fact, "payment_succeeded_time");
+  for (const name of ["client_pricing_version_id", "partner_share_version_id", "platform_charge_version_id"]) field(intent, name);
+  for (const name of ["assignment_id", "source_order_context_id", "context_format"]) {
+    assert.ok(!intent.fields.some((f) => f.defKey === name));
+  }
+  assert.ok(!model.entities.some((entity) => entity.defKey === "t_payment_pricing_fact"));
+  // Finance's historical payment_fact_id remains below; no fabricated replacement identity.
 });
 
 test("Finance keeps typed book identity and separate legacy channel-cost and new price evidence", () => {

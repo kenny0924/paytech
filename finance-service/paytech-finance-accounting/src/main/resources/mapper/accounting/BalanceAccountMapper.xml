@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.BalanceAccountMapper">
+    <resultMap id="LedgerBook" type="com.paytech.finance.accounting.core.dal.dataobject.LedgerBookRow">
+        <constructor>
+            <idArg column="id" javaType="_long"/>
+            <arg column="chart_id" javaType="_long"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="BalanceAccount" type="com.paytech.finance.accounting.core.dal.dataobject.BalanceAccountRow">
+        <constructor>
+            <idArg column="account_id" javaType="_long"/>
+            <arg column="account_code" javaType="java.lang.String"/>
+            <arg column="balance_bucket" javaType="com.paytech.finance.accounting.domain.enums.BalanceBucket"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+            <arg column="account_normal_side" javaType="com.paytech.finance.accounting.domain.enums.NormalSide"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+            <arg column="chart_normal_side" javaType="com.paytech.finance.accounting.domain.enums.NormalSide"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+            <arg column="posting_allowed" javaType="java.lang.Boolean"/>
+            <arg column="account_chart_id" javaType="java.lang.Long"/>
+            <arg column="book_chart_id" javaType="_long"/>
+            <arg column="account_status" javaType="com.paytech.finance.accounting.domain.enums.AccountStatus"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+            <arg column="net_balance" javaType="java.math.BigDecimal"/>
+        </constructor>
+    </resultMap>
+
+    <select id="ledgerBooks" resultMap="LedgerBook">
+        SELECT id, chart_id
+        FROM t_ledger_book
+        WHERE entity_type='OPERATING_ENTITY'
+          AND entity_id=#{operatingEntityId}
+          AND currency=#{currency}
+        ORDER BY id
+    </select>
+
+    <select id="ownerAccounts" resultMap="BalanceAccount">
+        SELECT a.id account_id, c.account_code, a.balance_bucket, a.normal_side account_normal_side,
+               c.normal_side chart_normal_side, c.posting_allowed, c.chart_id account_chart_id,
+               b.chart_id book_chart_id, a.account_status, a.net_balance
+        FROM t_account a
+        JOIN t_ledger_book b ON b.id=a.ledger_book_id
+        LEFT JOIN t_chart_account c ON c.id=a.chart_account_id
+        WHERE a.ledger_book_id=#{ledgerBookId}
+          AND a.owner_type=#{ownerType,javaType=com.paytech.finance.accounting.domain.enums.OwnerType,
+            typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler}
+          AND a.owner_id=#{ownerId}
+        ORDER BY a.id
+    </select>
+</mapper>

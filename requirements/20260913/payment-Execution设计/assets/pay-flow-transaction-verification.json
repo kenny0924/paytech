@@ -1,0 +1,55 @@
+{
+  "verifiedAt": "2026-09-14T12:23:02.839952+00:00",
+  "command": "./mvnw -q -pl paytech-payment-test -am -Dtest=PaymentRulesAutoTest,PaymentFlowRegistryAutoTest,PaymentCommandContractAutoTest,PaymentModuleBoundaryAutoTest -Dsurefire.failIfNoSpecifiedTests=false clean verify",
+  "tests": [
+    {
+      "class": "PaymentRulesAutoTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "PaymentFlowRegistryAutoTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "PaymentCommandContractAutoTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "PaymentModuleBoundaryAutoTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "newDatabaseCases": "Compiled only: 4 Card step sequences and 1 unknown funds recovery after source closure",
+  "database": "Read-only preflight: 13 empty legacy tables; no migration performed",
+  "sources": {
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/architecture/PaymentModuleBoundaryAutoTest.java": "e468770ef1fed24232e037d382db1ba39202bf21c8a3ad9c47b8a512728cadb0",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/transaction/PaymentFlowTransactions.java": "25afcfbd3718ebd37260d43e5ba9601dd4915e361099e4aaa6274c0b6d5b25d0",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/flow/PaymentMethodFlow.java": "1535a57b15eaafec3ab6cbbbee15de99ca940bdc74e6a9caa10d33162908bdc4",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/flow/PaymentFlowRegistry.java": "f64d3f78084e96976994e4ab0571f28bf6537ad07367c4d288f5eb9db07b2002",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/flow/RiskActionExecutor.java": "f7575e2a7186f0c9132e279029482c0e0bc444287d9039db393d599ef66500af",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/flow/ChannelActionExecutor.java": "f59ad1a11c76768c71e8d15b49eb96b74055b83153615eef896e34d3d0d3e80d",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/flow/CardPaymentFlow.java": "d8f43a252d9ce98de4e8a522a71197157bc1311077ffd3cbc455f27224b414ee",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/PaymentExecutionService.java": "7e0c603f38c6d25d568b5c736ee16097ca9e8e1407f8fdd1a5ff5b4fc8fe311e",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java": "ac7928a815bf6ed77ada0f22b67d1e48ebc26d4ce2f0f24ff2ff24c0652b9aec",
+    "paytech-payment-execution/src/main/java/com/paytech/payment/execution/domain/PayContext.java": "914e24920ed38ebb5d38f577b702e0ba5278df21dfb527fbea2acdeb954704b1",
+    "paytech-payment-web/src/main/java/com/paytech/payment/configuration/ExecutionRuntimeConfiguration.java": "2c47022dcb8ef8d305307374fd702d1a7247f1ec48212a9bfd146c388c3c4fe2",
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/flow/PaymentCommand.java": null,
+    "paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PayProcessor.java": "e03dab61a7640c75a39f0edf98c13c098fdff9419802c63b6168894c8b44bb2b",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentFlowRegistryAutoTest.java": "55d9819bb4c7ff38c46ec8f18e9ab5bd9cbdb52fcf7a9928c8cfa79b95b18f02",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentExecutionApiAutoTest.java": "a85c7560a5655f9c5475a1cdab14724c6bce95268636f6d70bf32cac5cfa5644",
+    "paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentAttemptRecoveryHandlerAutoTest.java": "1a448f1fc82163c3bdd4e0b59f720787f338a1ea80ec806567d18504de8fbd87",
+    "docs/pay-interface-walkthrough.md": "1c5ad024e084350279710b02d4b2ef1a55cffb6dbbc260d64a6de91181049f34"
+  }
+}

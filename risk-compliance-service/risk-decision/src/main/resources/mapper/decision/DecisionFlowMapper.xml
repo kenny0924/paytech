@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.DecisionFlowMapper">
+    <resultMap id="DecisionFlowRow" type="com.paytech.risk.decision.core.dal.dataobject.DecisionFlowRow">
+        <constructor>
+            <idArg name="flowId" column="flow_id" javaType="_long"/>
+            <arg name="decisionPointId" column="decision_point_id" javaType="_long"/>
+            <arg name="flowCode" column="flow_code" javaType="java.lang.String"/>
+            <arg name="currentFlowVersionId" column="current_flow_version_id" javaType="_long"/>
+            <arg name="status" column="status" javaType="com.paytech.risk.decision.domain.enums.FlowStatus"/>
+            <arg name="version" column="version" javaType="_long"/>
+            <arg name="deletedBy" column="deleted_by" javaType="java.lang.Long"/>
+            <arg name="deletedTime" column="deleted_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <sql id="DecisionFlowRowColumns">flow_id, decision_point_id, flow_code, current_flow_version_id, status, version, deleted_by, deleted_time, create_time, update_time</sql>
+    <insert id="insertDecisionFlow">
+        INSERT INTO t_decision_flow (<include refid="DecisionFlowRowColumns"/>)
+        VALUES (#{flowId}, #{decisionPointId}, #{flowCode}, #{currentFlowVersionId}, #{status}, #{version}, #{deletedBy}, #{deletedTime}, #{createTime}, #{updateTime})
+    </insert>
+    <resultMap id="DecisionFlowVersionRow" type="com.paytech.risk.decision.core.dal.dataobject.DecisionFlowVersionRow">
+        <constructor>
+            <idArg name="flowVersionId" column="flow_version_id" javaType="_long"/>
+            <arg name="flowId" column="flow_id" javaType="_long"/>
+            <arg name="versionNo" column="version_no" javaType="_int"/>
+            <arg name="flowName" column="flow_name" javaType="java.lang.String"/>
+            <arg name="inputContractCode" column="input_contract_code" javaType="java.lang.String"/>
+            <arg name="inputContractVersion" column="input_contract_version" javaType="_int"/>
+            <arg name="createdBy" column="created_by" javaType="_long"/>
+            <arg name="changeReason" column="change_reason" javaType="java.lang.String"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <sql id="DecisionFlowVersionRowColumns">flow_version_id, flow_id, version_no, flow_name, input_contract_code, input_contract_version, created_by, change_reason, create_time, update_time</sql>
+    <insert id="insertDecisionFlowVersion">
+        INSERT INTO t_decision_flow_version (<include refid="DecisionFlowVersionRowColumns"/>)
+        VALUES (#{flowVersionId}, #{flowId}, #{versionNo}, #{flowName}, #{inputContractCode}, #{inputContractVersion}, #{createdBy}, #{changeReason}, #{createTime}, #{updateTime})
+    </insert>
+    <resultMap id="DecisionFlowNodeRow" type="com.paytech.risk.decision.core.dal.dataobject.DecisionFlowNodeRow">
+        <constructor>
+            <idArg name="nodeId" column="node_id" javaType="_long"/>
+            <arg name="flowVersionId" column="flow_version_id" javaType="_long"/>
+            <arg name="nodeKey" column="node_key" javaType="java.lang.String"/>
+            <arg name="nodeType" column="node_type" javaType="com.paytech.risk.decision.domain.enums.FlowNodeType"/>
+            <arg name="nodeName" column="node_name" javaType="java.lang.String"/>
+            <arg name="ruleSetVersionId" column="rule_set_version_id" javaType="java.lang.Long"/>
+            <arg name="decisionCode" column="decision_code" javaType="com.paytech.risk.decision.domain.enums.DecisionValue"/>
+            <arg name="reasonCode" column="reason_code" javaType="java.lang.String"/>
+            <arg name="reasonMessage" column="reason_message" javaType="java.lang.String"/>
+            <arg name="positionX" column="position_x" javaType="_int"/>
+            <arg name="positionY" column="position_y" javaType="_int"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <sql id="DecisionFlowNodeRowColumns">node_id, flow_version_id, node_key, node_type, node_name, rule_set_version_id, decision_code, reason_code, reason_message, position_x, position_y, create_time, update_time</sql>
+    <insert id="insertDecisionFlowNode">
+        INSERT INTO t_decision_flow_node (<include refid="DecisionFlowNodeRowColumns"/>)
+        VALUES (#{nodeId}, #{flowVersionId}, #{nodeKey}, #{nodeType}, #{nodeName}, #{ruleSetVersionId}, #{decisionCode}, #{reasonCode}, #{reasonMessage}, #{positionX}, #{positionY}, #{createTime}, #{updateTime})
+    </insert>
+    <resultMap id="DecisionFlowEdgeRow" type="com.paytech.risk.decision.core.dal.dataobject.DecisionFlowEdgeRow">
+        <constructor>
+            <idArg name="edgeId" column="edge_id" javaType="_long"/>
+            <arg name="flowVersionId" column="flow_version_id" javaType="_long"/>
+            <arg name="edgeKey" column="edge_key" javaType="java.lang.String"/>
+            <arg name="sourceNodeId" column="source_node_id" javaType="_long"/>
+            <arg name="targetNodeId" column="target_node_id" javaType="_long"/>
+            <arg name="edgeType" column="edge_type" javaType="com.paytech.risk.decision.domain.enums.FlowEdgeType"/>
+            <arg name="priorityNo" column="priority_no" javaType="_int"/>
+            <arg name="edgeName" column="edge_name" javaType="java.lang.String"/>
+            <arg name="conditionJson" column="condition_json" javaType="java.lang.String"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <sql id="DecisionFlowEdgeRowColumns">edge_id, flow_version_id, edge_key, source_node_id, target_node_id, edge_type, priority_no, edge_name, condition_json, create_time, update_time</sql>
+    <insert id="insertDecisionFlowEdge">
+        INSERT INTO t_decision_flow_edge (<include refid="DecisionFlowEdgeRowColumns"/>)
+        VALUES (#{edgeId}, #{flowVersionId}, #{edgeKey}, #{sourceNodeId}, #{targetNodeId}, #{edgeType}, #{priorityNo}, #{edgeName}, #{conditionJson}, #{createTime}, #{updateTime})
+    </insert>
+    <select id="findRoot" resultMap="DecisionFlowRow">
+        SELECT <include refid="DecisionFlowRowColumns"/> FROM t_decision_flow WHERE flow_id = #{id}
+    </select>
+    <select id="lockRoot" resultMap="DecisionFlowRow" useCache="false" flushCache="true">
+        SELECT <include refid="DecisionFlowRowColumns"/> FROM t_decision_flow WHERE flow_id = #{id} FOR UPDATE
+    </select>
+    <select id="findByCode" resultMap="DecisionFlowRow" useCache="false" flushCache="true">
+        SELECT <include refid="DecisionFlowRowColumns"/> FROM t_decision_flow
+        WHERE decision_point_id = #{pointId} AND flow_code = #{code}
+    </select>
+    <sql id="ListFilter">
+        f.decision_point_id = #{pointId} AND f.status = 'CONFIGURABLE'
+        <if test="code != null">AND f.flow_code = #{code}</if>
+        <if test="pattern != null">AND v.flow_name LIKE #{pattern} ESCAPE '!'</if>
+    </sql>
+    <select id="listRoots" resultMap="DecisionFlowRow">
+        SELECT f.* FROM t_decision_flow f
+        LEFT JOIN t_decision_flow_version v ON v.flow_version_id = f.current_flow_version_id
+        WHERE <include refid="ListFilter"/>
+        ORDER BY f.update_time DESC, f.flow_id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countRoots" resultType="long">
+        SELECT COUNT(*) FROM t_decision_flow f
+        LEFT JOIN t_decision_flow_version v ON v.flow_version_id = f.current_flow_version_id
+        WHERE <include refid="ListFilter"/>
+    </select>
+    <select id="findVersion" resultMap="DecisionFlowVersionRow">
+        SELECT <include refid="DecisionFlowVersionRowColumns"/> FROM t_decision_flow_version WHERE flow_version_id = #{id}
+    </select>
+    <select id="findVersions" resultMap="DecisionFlowVersionRow">
+        SELECT <include refid="DecisionFlowVersionRowColumns"/> FROM t_decision_flow_version
+        WHERE flow_version_id IN <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+    <select id="history" resultMap="DecisionFlowVersionRow">
+        SELECT <include refid="DecisionFlowVersionRowColumns"/> FROM t_decision_flow_version
+        WHERE flow_id = #{flowId} AND version_no &lt;= #{maxVersionNo}
+        ORDER BY version_no DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countHistory" resultType="long">
+        SELECT COUNT(*) FROM t_decision_flow_version WHERE flow_id = #{flowId} AND version_no &lt;= #{maxVersionNo}
+    </select>
+    <select id="nodes" resultMap="DecisionFlowNodeRow">
+        SELECT <include refid="DecisionFlowNodeRowColumns"/> FROM t_decision_flow_node
+        WHERE flow_version_id = #{versionId} ORDER BY node_key LIMIT 51
+    </select>
+    <select id="edges" resultMap="DecisionFlowEdgeRow">
+        SELECT <include refid="DecisionFlowEdgeRowColumns"/> FROM t_decision_flow_edge
+        WHERE flow_version_id = #{versionId} ORDER BY source_node_id, priority_no, edge_key LIMIT 101
+    </select>
+    <select id="ruleSetNodeCounts" resultType="com.paytech.risk.decision.core.dal.mapper.DecisionFlowMapper$NodeCount">
+        SELECT flow_version_id, COUNT(*) AS node_count FROM t_decision_flow_node
+        WHERE flow_version_id IN <foreach collection="ids" item="id" open="(" close=")" separator=",">#{id}</foreach>
+          AND node_type = 'RULE_SET' GROUP BY flow_version_id
+    </select>
+    <update id="advance">
+        UPDATE t_decision_flow SET current_flow_version_id = #{versionId}, version = version + 1, update_time = #{time}
+        WHERE flow_id = #{id} AND version = #{expectedVersion} AND status = 'CONFIGURABLE'
+    </update>
+    <update id="delete">
+        UPDATE t_decision_flow SET status = 'DELETED', version = version + 1, deleted_by = #{actorId},
+            deleted_time = #{time}, update_time = #{time}
+        WHERE flow_id = #{id} AND version = #{expectedVersion} AND status = 'CONFIGURABLE'
+    </update>
+    <select id="shareRuleSet" resultMap="com.paytech.risk.decision.core.dal.mapper.DecisionRuleSetMapper.RuleSetResultMap" useCache="false" flushCache="true">
+        SELECT * FROM t_rule_set WHERE rule_set_id = #{id} FOR SHARE
+    </select>
+    <select id="shareRuleVersion" resultMap="com.paytech.risk.decision.core.dal.mapper.DecisionRuleSetMapper.RuleSetVersionResultMap" useCache="false" flushCache="true">
+        SELECT * FROM t_rule_set_version WHERE rule_set_version_id = #{id} FOR SHARE
+    </select>
+    <select id="legacyBindings" resultMap="com.paytech.risk.decision.core.dal.mapper.DecisionRuleSetMapper.DecisionPointRuleSetResultMap">
+        SELECT * FROM t_decision_point_rule_set WHERE point_version_id = #{pointVersionId}
+        ORDER BY sequence_no, binding_id LIMIT 201
+    </select>
+    <select id="ruleCount" resultType="int">
+        SELECT COUNT(*) FROM t_risk_rule WHERE rule_set_version_id = #{versionId}
+    </select>
+</mapper>

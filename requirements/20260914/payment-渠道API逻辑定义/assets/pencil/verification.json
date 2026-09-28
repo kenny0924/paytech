@@ -1,0 +1,149 @@
+{
+  "file": "operations-console-web/docs/design.pen",
+  "screenCount": 12,
+  "screens": [
+    {
+      "id": "uiiQ2",
+      "name": "CAPI · 01 渠道 API 列表",
+      "x": 0,
+      "y": 23460,
+      "width": 1440,
+      "height": 1100,
+      "placeholder": false,
+      "nodeCount": 90,
+      "layoutProblems": []
+    },
+    {
+      "id": "Z2kAR",
+      "name": "CAPI · 02 请求处理",
+      "x": 1540,
+      "y": 23460,
+      "width": 1440,
+      "height": 1100,
+      "placeholder": false,
+      "nodeCount": 145,
+      "layoutProblems": []
+    },
+    {
+      "id": "MQlLc",
+      "name": "CAPI · 03 数据来源",
+      "x": 3080,
+      "y": 23460,
+      "width": 1440,
+      "height": 1100,
+      "placeholder": false,
+      "nodeCount": 134,
+      "layoutProblems": []
+    },
+    {
+      "id": "Zo7XM",
+      "name": "CAPI · 04 传输",
+      "x": 0,
+      "y": 24700,
+      "width": 1440,
+      "height": 1100,
+      "placeholder": false,
+      "nodeCount": 156,
+      "layoutProblems": []
+    },
+    {
+      "id": "X8mK8",
+      "name": "CAPI · 05 响应与结果",
+      "x": 1540,
+      "y": 24700,
+      "width": 1440,
+      "height": 1100,
+      "placeholder": false,
+      "nodeCount": 123,
+      "layoutProblems": []
+    },
+    {
+      "id": "ZpOjN",
+      "name": "CAPI · 06 公共方案列表",
+      "x": 3080,
+      "y": 24700,
+      "width": 1440,
+      "height": 1100,
+      "placeholder": false,
+      "nodeCount": 116,
+      "layoutProblems": []
+    },
+    {
+      "id": "qunOX",
+      "name": "CAPI · 07 共享方案编辑与引用",
+      "x": 0,
+      "y": 25940,
+      "width": 1440,
+      "height": 1160,
+      "placeholder": false,
+      "nodeCount": 126,
+      "layoutProblems": []
+    },
+    {
+      "id": "EdZ9f",
+      "name": "CAPI · 08 新建 API 与空目录",
+      "x": 1540,
+      "y": 25940,
+      "width": 1440,
+      "height": 1160,
+      "placeholder": false,
+      "nodeCount": 95,
+      "layoutProblems": []
+    },
+    {
+      "id": "OdrlY",
+      "name": "CAPI · 09 配置校验与字段定位",
+      "x": 3080,
+      "y": 25940,
+      "width": 1440,
+      "height": 1160,
+      "placeholder": false,
+      "nodeCount": 99,
+      "layoutProblems": []
+    },
+    {
+      "id": "L5T9z",
+      "name": "CAPI · 10 保存冲突与草稿保留",
+      "x": 0,
+      "y": 27180,
+      "width": 1440,
+      "height": 1100,
+      "placeholder": false,
+      "nodeCount": 99,
+      "layoutProblems": []
+    },
+    {
+      "id": "go7ba",
+      "name": "CAPI · 11 保存结果待确认",
+      "x": 1540,
+      "y": 27180,
+      "width": 1440,
+      "height": 1100,
+      "placeholder": false,
+      "nodeCount": 78,
+      "layoutProblems": []
+    },
+    {
+      "id": "pCYXo",
+      "name": "CAPI · 12 窄屏只读详情",
+      "x": 3080,
+      "y": 27180,
+      "width": 390,
+      "height": 1120,
+      "placeholder": false,
+      "nodeCount": 36,
+      "layoutProblems": []
+    }
+  ],
+  "date": "2026-09-14",
+  "status": "DESIGN_REVIEW_ONLY",
+  "totalNodes": 1297,
+  "savedVia": "Pen native window Command+S; Edited marker cleared",
+  "inspection": "All 12 screens inspected with Pencil screenshots and resolved layout bounds",
+  "notRun": [
+    "APPLICATION_BUILD",
+    "APPLICATION_TESTS",
+    "DATABASE_SQL",
+    "REAL_CHANNEL_CALL"
+  ]
+}

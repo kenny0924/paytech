@@ -1,0 +1,221 @@
+/** 已部署页面与动作的唯一 Web 注册表；服务端目录决定实际展示和授权。 */
+export const pageCapabilities = [
+  {
+    "componentKey": "OPERATIONS_ACCOUNTS",
+    "displayName": "人员管理",
+    "frontendRoute": "/accounts",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_ACCOUNT_CREATE",
+        "displayName": "新增"
+      },
+      {
+        "resourceCode": "OPERATIONS_ACCOUNT_DISABLE",
+        "displayName": "停用"
+      },
+      {
+        "resourceCode": "OPERATIONS_ACCOUNT_ENABLE",
+        "displayName": "启用"
+      },
+      {
+        "resourceCode": "OPERATIONS_ACCOUNT_DELETE",
+        "displayName": "删除"
+      },
+      {
+        "resourceCode": "OPERATIONS_ACCOUNT_ASSIGN_ROLES",
+        "displayName": "分配角色"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_ROLES",
+    "displayName": "角色管理",
+    "frontendRoute": "/roles",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_ROLE_CREATE",
+        "displayName": "新增"
+      },
+      {
+        "resourceCode": "OPERATIONS_ROLE_EDIT",
+        "displayName": "编辑"
+      },
+      {
+        "resourceCode": "OPERATIONS_ROLE_DELETE",
+        "displayName": "删除"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_AUDIT",
+    "displayName": "审计日志",
+    "frontendRoute": "/audit",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_GATEWAY_CONFIGURATION",
+    "displayName": "API 路由管理",
+    "frontendRoute": "/gateway-configuration",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_GATEWAY_CONFIGURATION_MANAGE",
+        "displayName": "管理"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_RISK_RULE_CONFIGURATION",
+    "displayName": "规则配置",
+    "frontendRoute": "/risk/rule-configuration",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_RULE_SET_SAVE",
+        "displayName": "保存"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_RULE_SET_FREEZE",
+        "displayName": "冻结"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_RULE_SET_DELETE",
+        "displayName": "删除"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_RULE_SET_HISTORY",
+        "displayName": "历史版本"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_RULE_SET_REFERENCES",
+        "displayName": "使用关系"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_RISK_DECISION_FLOWS",
+    "displayName": "决策流",
+    "frontendRoute": "/risk/decision-flows",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_DECISION_FLOW_SAVE",
+        "displayName": "保存"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_DECISION_FLOW_DELETE",
+        "displayName": "删除"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_RISK_REJECTION_REASONS",
+    "displayName": "拒绝原因",
+    "frontendRoute": "/risk/rejection-reasons",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_REJECTION_REASON_CREATE",
+        "displayName": "新增"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_REJECTION_REASON_UPDATE",
+        "displayName": "编辑"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_REJECTION_REASON_STATUS",
+        "displayName": "启停"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_RISK_SUBJECT_TAGS",
+    "displayName": "主体标签",
+    "frontendRoute": "/risk/subject-tags",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_SUBJECT_TAG_CREATE",
+        "displayName": "新增"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_SUBJECT_TAG_UPDATE",
+        "displayName": "编辑"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_SUBJECT_TAG_STATUS",
+        "displayName": "启停"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_RISK_VARIABLES",
+    "displayName": "变量管理",
+    "frontendRoute": "/risk/variables",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_VARIABLE_MANAGE",
+        "displayName": "管理"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_VARIABLE_DELETE",
+        "displayName": "删除"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_CONSOLE_RESOURCES",
+    "displayName": "菜单资源",
+    "frontendRoute": "/console-resources",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_CONSOLE_RESOURCE_MANAGE",
+        "displayName": "管理"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_PERMISSIONS",
+    "displayName": "权限目录",
+    "frontendRoute": "/permissions",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_PERMISSION_MANAGE",
+        "displayName": "管理"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_API_CREDENTIALS",
+    "displayName": "API 凭证",
+    "frontendRoute": "/api-credentials",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_API_CREDENTIAL_REVOKE",
+        "displayName": "紧急撤销"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_API_SCOPES",
+    "displayName": "API Scope",
+    "frontendRoute": "/api-scopes",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_API_SCOPE_MANAGE",
+        "displayName": "管理"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_TENANT_ACCESS",
+    "displayName": "租户访问",
+    "frontendRoute": "/tenant-access",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_TENANT_ACCESS_MANAGE",
+        "displayName": "安全暂停与恢复"
+      },
+      {
+        "resourceCode": "OPERATIONS_TENANT_MEMBER_READ",
+        "displayName": "查看成员权限"
+      }
+    ]
+  }
+] as const;
+export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

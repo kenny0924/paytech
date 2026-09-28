@@ -42,7 +42,7 @@ billing_region_code|账单行政区代码|消费者账单地址规范化后的�
 browser_family|浏览器族|由 User-Agent 派生且不包含完整原文的浏览器产品族
 browser_major_version|浏览器主版本|由 User-Agent 派生的浏览器主版本分析维度
 caller_scope|调用方作用域|隔离命令幂等键命名空间的稳定调用方作用域
-cancelled_at|取消时间|Checkout 会话进入取消终态的业务时刻
+cancelled_at|取消时间|本订单或 Checkout 会话进入取消终态的 UTC 业务时刻，重复取消不改写
 captured_amount|已捕获金额|订单支付投影确认成功捕获的累计金额
 channel_refund_id|渠道退款标识|支付系统负责执行退款的稳定渠道退款标识
 checkout_session_id|Checkout 会话标识|Hosted Checkout 会话的内部唯一标识
@@ -66,6 +66,7 @@ consumer_terms_content_hash|消费者条款内容哈希|订单法律上下文冻
 consumer_terms_document_id|消费者条款文档标识|订单法律上下文冻结的消费者条款业务文档标识
 consumer_terms_file_id|消费者条款文件标识|订单法律上下文冻结的消费者条款不可变文件标识
 context_format|交易上下文格式|TERM_PRICE使用entityNo和条款版本；LEGACY_SCOPE保留历史身份及原Scope读取，不回写旧订单
+creation_mode|创建接入方式|服务端根据创建入口固定的订单接入方式，创建后不可修改；HOSTED_CHECKOUT为托管收银台，DIRECT_PAY为预留直接支付接入；已有订单及默认值为HOSTED_CHECKOUT
 create_time|创建时间|数据库记录创建的 UTC 微秒精度时间
 currency|币种代码|金额采用的 ISO 4217 三位币种代码
 device_type|设备类型|由客户端特征派生的桌面端、移动端、平板、机器人、其他或未知闭合类型
@@ -240,8 +241,8 @@ function parseFieldMetadataSource(source) {
     }
     result[fieldKey] = metadata(defName, description);
   }
-  if (Object.keys(result).length !== 193) {
-    throw new Error(`Commerce 字段元数据必须精确覆盖 193 个唯一字段键，实际 ${Object.keys(result).length}`);
+  if (Object.keys(result).length !== 194) {
+    throw new Error(`Commerce 字段元数据必须精确覆盖 194 个唯一字段键，实际 ${Object.keys(result).length}`);
   }
   return Object.freeze(result);
 }
@@ -250,6 +251,7 @@ export const FIELD_METADATA = parseFieldMetadataSource(FIELD_METADATA_SOURCE);
 
 /** 闭合状态与类型必须在字段注释中列全，顺序也是已批准契约的一部分。 */
 export const CLOSED_ENUM_VALUES = Object.freeze({
+  "commerce_order.creation_mode": ["HOSTED_CHECKOUT", "DIRECT_PAY"],
   "commerce_order.entity_source_type": ["PLATFORM", "CLIENT", "PARTNER"],
   "commerce_order.order_status": ["CREATED", "OPEN", "PAID", "CANCELLED", "EXPIRED"],
   "order_payment_projection.intent_status": ["REQUIRES_PAYMENT", "PROCESSING", "REQUIRES_ACTION", "SUCCEEDED", "FAILED", "EXPIRED", "CANCELLED"],

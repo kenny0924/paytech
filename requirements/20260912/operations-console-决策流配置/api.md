@@ -2,6 +2,8 @@
 
 状态：已确认的工程合同；本文件不声明接口已上线，研发及验证证据见 [开发交付报告](./development-checks.md)。范围见 [requirement.md](./requirement.md)，数据与并发见 [data.md](./data.md)。
 
+> **2026-09-21 管理接口幂等修订（用户确认）：** 保存、删除按[现行 Gateway 幂等职责](../../../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)迁移，Risk 私网 API 和 BFF 不再要求、校验或转发 `Idempotency-Key`，也不提供本地响应回放。下文 N03/N08 的服务本地 Key、同键回放及幂等冲突描述保留为原合同记录，由本修订取代；Method/Path、Body/响应字段及权限保持。绕过 Gateway 的重复创建返回编码冲突，旧编辑基准返回版本冲突，再次删除返回 `RISK_FLOW_DELETED`。Gateway 是否已实现或启用请求重放、实际源码验证和部署状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#risk-flow-management-refactor-20260921)，本修订不承诺已上线。
+
 已确认修订：[精简修订第 5 节](./simplification.md#5-接口与消费方) 拥有规则响应中旧 pointVersionId 的可空性及新规则不进入旧 Candidate 的边界，并取代下文对应旧依赖描述；受影响研发证据见 [修订开发检查](./simplification-development-checks.md)。所有路径仍沿用原 v1。
 
 10 个新增业务操作、4 个既有操作调整；每个均在 Risk Owner 与 Operations BFF 各有一处落点，按业务 Method + Path 只计算一次。所有路径沿用或默认 v1，新增 Java 类型名不带版本后缀。
@@ -19,7 +21,7 @@
 | N01 | GET /decision-flows/v1/authoring-context | pointCode 可省略；当前默认唯一支持的 CHECKOUT_PREPARE | 200 FlowAuthoringContextResponseBody；READ |
 | N02 | GET /decision-flows/v1/flows | pointCode 必填；flowCode、keyword、page、size 可选 | 200 Paging&lt;FlowListItem&gt;；READ |
 | N03 | POST /decision-flows/v1/flows | SaveFlowRequestBody；Idempotency-Key 必填 | 200 SaveFlowResponseBody；SAVE |
-| N04 | POST /decision-flows/v1/flows/validate | 与 N03 相同的 Body；无 Idempotency-Key | 200 ValidationResponseBody；SAVE |
+| N04 | POST /decision-flows/v1/flows/validate | 与 N03 相同的 Body；无 Idempotency-Key | 200 ValidateFlowResponseBody；SAVE |
 | N05 | GET /decision-flows/v1/flows/{flowId} | 正 BIGINT ID | 200 FlowDetailResponseBody，当前版本；READ |
 | N06 | GET /decision-flows/v1/flows/{flowId}/versions | maxVersionNo 必填；page、size 可选 | 200 Paging&lt;FlowHistoryItem&gt;；READ |
 | N07 | GET /decision-flows/v1/flows/{flowId}/versions/{flowVersionId} | 两 ID 必须归属一致 | 200 FlowDetailResponseBody，准确版本；READ |

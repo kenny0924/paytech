@@ -11,6 +11,8 @@ const apiCredentialChangeSql = readFileSync(
 );
 const tables = [...sql.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
 const expectedTables = [
+  'notification_request', 'notification_delivery', 'notification_attempt', 'notification_template',
+  'notification_template_content', 'notification_provider', 'notification_route',
   'user_account', 'password_credential', 'access_tenant', 'tenant_member', 'role', 'permission',
   'tenant_member_role', 'role_permission', 'auth_session', 'refresh_token_generation', 'jwt_signing_key',
   'api_credential', 'api_scope', 'api_credential_scope',
@@ -20,7 +22,7 @@ const expectedTables = [
 ].map(name => `t_${name}`);
 const quote = value => `'${value.replaceAll("'", "''")}'`;
 
-test('only the 33 approved schema tables exist, without physical CHECK or foreign keys', () => {
+test('only the 40 approved schema tables exist, without physical CHECK or foreign keys', () => {
   assert.deepEqual(tables.map(table => table[1]).sort(), expectedTables.toSorted());
   assert.doesNotMatch(sql.replace(/^--.*$/gm, ''), /\bCHECK\s*\(|\bFOREIGN\s+KEY\b/i);
 });
@@ -120,4 +122,18 @@ test('manual initial catalog and incremental Client API registrations are the sa
   assert.equal((initial.replace(/^--.*$/gm, '').match(/START TRANSACTION;/g) || []).length, 1);
   assert.equal((initial.replace(/^--.*$/gm, '').match(/COMMIT;/g) || []).length, 1);
   assert.doesNotMatch(statements.join('\n'), /INSERT INTO t_(?:api_scope|api_credential|access_tenant)\s/);
+});
+
+
+test('Notification increment is the exact seven-table current model and test DDL agrees', () => {
+  const increment = readFileSync(new URL('../../requirements/20260920/platform-support-Delivery领域规划/db/notification-create.sql', import.meta.url), 'utf8');
+  const testDdl = readFileSync(new URL('platform-support-test/src/test/resources/init/ddl.sql', service), 'utf8');
+  const created = [...increment.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
+  assert.deepEqual(created.map(t => t[1]), ['t_notification_request', 't_notification_delivery', 't_notification_attempt',
+    't_notification_template', 't_notification_template_content', 't_notification_provider', 't_notification_route']);
+  for (const table of created) {
+    assert.equal(table[0], tables.find(t => t[1] === table[1])[0]);
+    assert.ok(testDdl.includes(table[0]));
+  }
+  assert.doesNotMatch(increment.replace(/^--.*$/gm, ''), /\b(?:DROP|ALTER|DELETE|INSERT|UPDATE|CHECK|FOREIGN)\b/i);
 });

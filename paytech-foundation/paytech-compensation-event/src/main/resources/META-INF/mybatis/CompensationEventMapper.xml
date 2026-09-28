@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.foundation.compensation.persistence.mapper.CompensationEventMapper">
+
+    <resultMap id="CompensationEventResultMap"
+               type="com.paytech.foundation.compensation.model.CompensationEventRecord">
+        <constructor>
+            <idArg column="id" javaType="_long"/>
+            <arg column="event_key" javaType="java.lang.String"/>
+            <arg column="event_type" javaType="java.lang.String"/>
+            <arg column="sub_event_type" javaType="java.lang.String"/>
+            <arg column="payload_json" javaType="java.lang.String"/>
+            <arg column="execute_status"
+                 javaType="com.paytech.foundation.compensation.model.CompensationEventStatus"/>
+            <arg column="execute_count" javaType="_int"/>
+            <arg column="next_execute_at" javaType="java.time.LocalDateTime"/>
+            <arg column="lock_owner" javaType="java.lang.String"/>
+            <arg column="lock_until" javaType="java.time.LocalDateTime"/>
+            <arg column="last_error_code" javaType="java.lang.String"/>
+            <arg column="last_error_summary" javaType="java.lang.String"/>
+            <arg column="lock_version" javaType="_long"/>
+            <arg column="create_time" javaType="java.time.LocalDateTime"/>
+            <arg column="update_time" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="CompensationBacklogResultMap"
+               type="com.paytech.foundation.compensation.persistence.mapper.CompensationBacklogRecord">
+        <constructor>
+            <arg column="pending_rows" javaType="_long"/>
+            <arg column="oldest_pending_micros" javaType="_long"/>
+            <arg column="expired_lease_rows" javaType="_long"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="AllColumns">
+        id,
+        event_key,
+        event_type,
+        sub_event_type,
+        payload_json,
+        execute_status,
+        execute_count,
+        next_execute_at,
+        lock_owner,
+        lock_until,
+        last_error_code,
+        last_error_summary,
+        lock_version,
+        create_time,
+        update_time
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_compensation_event (
+        id,
+        event_key,
+        event_type,
+        sub_event_type,
+        payload_json,
+        execute_status,
+        execute_count,
+        next_execute_at,
+        lock_owner,
+        lock_until,
+        last_error_code,
+        last_error_summary,
+        lock_version,
+        create_time,
+        update_time
+        ) VALUES (
+        #{id},
+        #{eventKey},
+        #{eventType},
+        #{subEventType},
+        #{payloadJson},
+        'INIT',
+        0,
+        UTC_TIMESTAMP(6),
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        1,
+        UTC_TIMESTAMP(6),
+        UTC_TIMESTAMP(6)
+        )
+    </insert>
+
+    <select id="selectByIdentity" resultMap="CompensationEventResultMap">
+        SELECT
+        <include refid="AllColumns"/>
+        FROM t_compensation_event
+        WHERE event_key = #{eventKey}
+        AND event_type = #{eventType}
+        AND sub_event_type = #{subEventType}
+    </select>
+
+    <select id="selectByIdentityForUpdate" resultMap="CompensationEventResultMap">
+        SELECT
+        <include refid="AllColumns"/>
+        FROM t_compensation_event
+        WHERE event_key = #{eventKey}
+        AND event_type = #{eventType}
+        AND sub_event_type = #{subEventType}
+        FOR UPDATE
+    </select>
+
+    <select id="selectByIdForRecovery" resultMap="CompensationEventResultMap">
+        SELECT
+        <include refid="AllColumns"/>
+        FROM t_compensation_event
+        WHERE id = #{eventId}
+        FOR UPDATE
+    </select>
+
+    <sql id="ClaimUpdate">
+        UPDATE t_compensation_event
+        SET execute_status = 'PROCESSING',
+        execute_count = execute_count + 1,
+        lock_owner = #{lockOwner},
+        lock_until = TIMESTAMPADD(MICROSECOND, #{leaseMicros}, UTC_TIMESTAMP(6)),
+        lock_version = lock_version + 1,
+        update_time = UTC_TIMESTAMP(6)
+    </sql>
+
+    <update id="claimReady">
+        <include refid="ClaimUpdate"/>
+        WHERE id = #{eventId}
+        AND execute_status IN ('INIT', 'ERROR')
+        AND next_execute_at &lt;= UTC_TIMESTAMP(6)
+    </update>
+
+    <update id="claimExpiredLease">
+        <include refid="ClaimUpdate"/>
+        WHERE id = #{eventId}
+        AND execute_status = 'PROCESSING'
+        AND lock_owner IS NOT NULL
+        AND lock_until IS NOT NULL
+        AND lock_until &lt;= UTC_TIMESTAMP(6)
+    </update>
+
+    <select id="selectClaimed" resultMap="CompensationEventResultMap">
+        SELECT
+        <include refid="AllColumns"/>
+        FROM t_compensation_event
+        WHERE id = #{eventId}
+        AND execute_status = 'PROCESSING'
+        AND lock_owner = #{lockOwner}
+        AND lock_until &gt; UTC_TIMESTAMP(6)
+    </select>
+
+    <select id="selectCandidateIds" resultType="_long">
+        SELECT id
+        FROM t_compensation_event
+        WHERE (
+        (
+        execute_status IN ('INIT', 'ERROR')
+        AND next_execute_at &lt;= UTC_TIMESTAMP(6)
+        )
+        OR (
+        execute_status = 'PROCESSING'
+        AND lock_owner IS NOT NULL
+        AND lock_until IS NOT NULL
+        AND lock_until &lt;= UTC_TIMESTAMP(6)
+        )
+        )
+        AND MOD(id, #{shardCount}) = #{shardIndex}
+        <if test="eventTypes != null and !eventTypes.isEmpty()">
+            AND event_type IN
+            <foreach collection="eventTypes" item="eventType" open="(" separator="," close=")">
+                #{eventType}
+            </foreach>
+        </if>
+        ORDER BY CASE
+        WHEN execute_status = 'PROCESSING' THEN lock_until
+        ELSE next_execute_at
+        END,
+        id
+        LIMIT #{batchSize}
+    </select>
+
+    <select id="selectBacklog" resultMap="CompensationBacklogResultMap">
+        SELECT COUNT(*) AS pending_rows,
+        COALESCE(
+        GREATEST(TIMESTAMPDIFF(MICROSECOND, MIN(create_time), UTC_TIMESTAMP(6)), 0),
+        0
+        ) AS oldest_pending_micros,
+        COALESCE(
+        SUM(
+        CASE
+        WHEN execute_status = 'PROCESSING'
+        AND lock_owner IS NOT NULL
+        AND lock_until IS NOT NULL
+        AND lock_until &lt;= UTC_TIMESTAMP(6)
+        THEN 1
+        ELSE 0
+        END
+        ),
+        0
+        ) AS expired_lease_rows
+        FROM t_compensation_event
+    </select>
+
+    <delete id="deleteClaimed">
+        DELETE FROM t_compensation_event
+        WHERE id = #{eventId}
+        AND execute_status = 'PROCESSING'
+        AND lock_owner = #{lockOwner}
+        AND lock_version = #{lockVersion}
+        AND lock_until IS NOT NULL
+        AND lock_until &gt; UTC_TIMESTAMP(6)
+    </delete>
+
+    <update id="markRetry">
+        UPDATE t_compensation_event
+        SET execute_status = 'ERROR',
+        next_execute_at = TIMESTAMPADD(MICROSECOND, #{delayMicros}, UTC_TIMESTAMP(6)),
+        lock_owner = NULL,
+        lock_until = NULL,
+        last_error_code = #{errorCode},
+        last_error_summary = #{errorSummary},
+        lock_version = lock_version + 1,
+        update_time = UTC_TIMESTAMP(6)
+        WHERE id = #{eventId}
+        AND execute_status = 'PROCESSING'
+        AND lock_owner = #{lockOwner}
+        AND lock_version = #{lockVersion}
+        AND lock_until IS NOT NULL
+        AND lock_until &gt; UTC_TIMESTAMP(6)
+    </update>
+
+    <update id="markFailed">
+        UPDATE t_compensation_event
+        SET execute_status = 'FAILED',
+        lock_owner = NULL,
+        lock_until = NULL,
+        last_error_code = #{errorCode},
+        last_error_summary = #{errorSummary},
+        lock_version = lock_version + 1,
+        update_time = UTC_TIMESTAMP(6)
+        WHERE id = #{eventId}
+        AND execute_status = 'PROCESSING'
+        AND lock_owner = #{lockOwner}
+        AND lock_version = #{lockVersion}
+        AND lock_until IS NOT NULL
+        AND lock_until &gt; UTC_TIMESTAMP(6)
+    </update>
+
+    <update id="reopenFailed">
+        UPDATE t_compensation_event
+        SET execute_status = 'ERROR',
+        execute_count = 0,
+        next_execute_at = UTC_TIMESTAMP(6),
+        lock_owner = NULL,
+        lock_until = NULL,
+        last_error_code = NULL,
+        last_error_summary = NULL,
+        lock_version = lock_version + 1,
+        update_time = UTC_TIMESTAMP(6)
+        WHERE id = #{eventId}
+        AND execute_status = 'FAILED'
+        AND lock_version = #{expectedLockVersion}
+        AND lock_owner IS NULL
+        AND lock_until IS NULL
+    </update>
+</mapper>

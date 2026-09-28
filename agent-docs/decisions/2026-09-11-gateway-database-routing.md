@@ -1,5 +1,7 @@
 # Gateway Route / Target 数据库管理范围决定
 
+> **2026-09-13 后继范围：** 用户已确认通过 Operations 管理全部六类已有 Channel 的 Target/Route 新增编辑，并维护 Operations 菜单/按钮及权限，见[本期需求](../../requirements/20260913/platform-support-菜单权限与API配置管理/requirement.md)及[阶段分析](../../requirements/20260913/platform-support-菜单权限与API配置管理/technique.md)。这接续本文当批“人工 SQL + 既有启停、不新增 CRUD”的交付上限；数据库权威、通用校验及完整快照机制保持，不恢复静态 Target Registry。具体新增接口与写入合同继续按阶段设计，本文原批次记录保留。
+
 - Decision status: Confirmed（用户确认评估建议范围，包括 Operations BFF 管理端口隔离；2026-09-12 确认修订技术方案并进入阶段 4）。
 - Decision date: 2026-09-11。
 - 确认依据：[需求交付记录](../../requirements/20260911/operations-console-风控规则集历史与字典管理/delivery.md)。

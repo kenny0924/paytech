@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.payment.execution.core.dal.mapper.ChannelTransactionRefMapper">
+    <insert id="insertRef">
+        INSERT INTO t_channel_transaction_ref (channel_transaction_ref_id, payment_action_id, channel_id, mid_id,
+            reference_type, external_transaction_id, original_channel_txn_ref_id, channel_event_time,
+            amount, currency, create_time)
+        VALUES (#{channelTransactionRefId}, #{paymentActionId}, #{channelId}, #{midId}, #{referenceType},
+            #{externalTransactionId}, #{originalChannelTxnRefId,jdbcType=BIGINT},
+            #{channelEventTime,jdbcType=TIMESTAMP}, #{amount}, #{currency}, #{createTime})
+    </insert>
+</mapper>

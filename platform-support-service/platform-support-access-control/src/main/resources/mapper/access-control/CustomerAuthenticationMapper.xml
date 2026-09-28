@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.CustomerAuthenticationMapper">
+    <sql id="SessionColumns">
+        session_id id, account_id accountId, context_type contextType, tenant_id tenantId, tenant_member_id memberId,
+        account_auth_epoch accountEpoch, credential_version_snapshot credentialVersion, issued_time issuedTime,
+        last_activity_time lastActivityTime, idle_expire_time idleExpireTime, absolute_expire_time absoluteExpireTime,
+        current_generation_no generationNo, status, version
+    </sql>
+    <sql id="RefreshColumns">
+        r.refresh_generation_id id, r.session_id sessionId, r.generation_no generationNo, r.token_lookup_id lookupId,
+        r.token_secret_hmac secretHmac, r.hmac_key_version keyVersion, r.status, r.expires_time expiresTime
+    </sql>
+    <select id="password" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.CustomerPassword">
+        SELECT p.password_credential_id id, p.account_id accountId, p.password_verifier_phc verifier,
+        p.algorithm_version algorithmVersion, p.memory_kib memoryKib, p.iterations, p.parallelism,
+        p.credential_version credentialVersion, p.force_change_flag forceChange, p.status
+        FROM t_password_credential p JOIN t_user_account a ON a.account_id=p.account_id
+        WHERE p.account_id=#{accountId} AND p.algorithm_code='ARGON2ID' AND a.realm='CUSTOMER' AND a.account_type='HUMAN'
+    </select>
+    <select id="signingKey" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ClientSigningKey">
+        SELECT signing_key_id id, kid, kms_key_ref keyRef, public_jwk_canonical_json publicJwk,
+        not_before notBefore, version FROM t_jwt_signing_key
+        WHERE realm='CUSTOMER' AND status='ACTIVE' AND active_slot=1 AND algorithm='RS256'
+        AND signing_end_time IS NULL AND verification_end_time IS NULL
+    </select>
+    <select id="session" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ClientSession">
+        SELECT <include refid="SessionColumns"/> FROM t_auth_session
+        WHERE session_id=#{sessionId} AND realm='CUSTOMER' AND channel='CLIENT'
+    </select>
+    <select id="lockSession" flushCache="true" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ClientSession">
+        SELECT <include refid="SessionColumns"/> FROM t_auth_session
+        WHERE session_id=#{sessionId} AND realm='CUSTOMER' AND channel='CLIENT'
+        FOR UPDATE
+    </select>
+    <select id="refresh" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ClientRefresh">
+        SELECT <include refid="RefreshColumns"/> FROM t_refresh_token_generation r
+        JOIN t_auth_session s ON s.session_id=r.session_id
+        WHERE r.token_lookup_id=#{lookup} AND s.realm='CUSTOMER' AND s.channel='CLIENT'
+    </select>
+    <select id="lockRefresh" flushCache="true" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ClientRefresh">
+        SELECT <include refid="RefreshColumns"/> FROM t_refresh_token_generation r
+        JOIN t_auth_session s ON s.session_id=r.session_id
+        WHERE r.token_lookup_id=#{lookup} AND s.realm='CUSTOMER' AND s.channel='CLIENT'
+        FOR UPDATE
+    </select>
+    <update id="passwordFailure">
+        UPDATE t_user_account SET
+        consecutive_password_failures=CASE WHEN locked_until IS NOT NULL AND locked_until&lt;=#{now}
+            THEN 1 ELSE consecutive_password_failures+1 END,
+        locked_until=CASE WHEN consecutive_password_failures&gt;=10 THEN TIMESTAMPADD(MINUTE, 15, #{now}) ELSE NULL END,
+        last_password_failure_time=#{now}, version=version+1, update_time=#{now}
+        WHERE account_id=#{accountId} AND realm='CUSTOMER' AND account_type='HUMAN'
+        AND version=#{expectedVersion} AND status='ACTIVE'
+        AND (locked_until IS NULL OR locked_until&lt;=#{now})
+    </update>
+    <update id="passwordSuccess">
+        UPDATE t_user_account SET consecutive_password_failures=0, locked_until=NULL,
+        last_password_failure_time=NULL, version=version+1, update_time=#{now}
+        WHERE account_id=#{accountId} AND realm='CUSTOMER' AND account_type='HUMAN' AND status='ACTIVE'
+        AND email_verified_time IS NOT NULL AND version=#{expectedVersion}
+        AND credential_version=#{credentialVersion} AND auth_epoch=#{epoch}
+        AND (locked_until IS NULL OR locked_until&lt;=#{now})
+    </update>
+    <insert id="insertSession">
+        INSERT INTO t_auth_session(session_id, account_id, realm, channel, context_type, tenant_id, tenant_member_id,
+        authentication_method, account_auth_epoch, credential_version_snapshot, issued_time, last_reauthenticated_time,
+        last_activity_time, idle_expire_time, absolute_expire_time, current_generation_no, status, version, create_time, update_time)
+        VALUES(#{issue.sessionId}, #{issue.accountId}, 'CUSTOMER', 'CLIENT', 'ACCOUNT', NULL, NULL, 'PASSWORD',
+        #{issue.accountEpoch}, #{issue.credentialVersion}, #{issue.issuedTime}, #{issue.issuedTime}, #{issue.issuedTime},
+        #{issue.idleExpireTime}, #{issue.absoluteExpireTime}, #{issue.generation}, 'ACTIVE', 1, #{issue.issuedTime}, #{issue.issuedTime})
+    </insert>
+    <insert id="insertRefresh">
+        INSERT INTO t_refresh_token_generation(refresh_generation_id, session_id, generation_no, token_lookup_id,
+        token_secret_hmac, hmac_key_version, issued_time, expires_time, status, active_slot, version, create_time, update_time)
+        VALUES(#{issue.refreshId}, #{issue.sessionId}, #{issue.generation}, #{issue.refreshLookup}, #{issue.refreshHmac},
+        #{issue.refreshKeyVersion}, #{issue.issuedTime}, #{issue.absoluteExpireTime}, 'ISSUED', 1, 1,
+        #{issue.issuedTime}, #{issue.issuedTime})
+    </insert>
+    <update id="consumeRefresh">
+        UPDATE t_refresh_token_generation SET status='CONSUMED', active_slot=NULL,
+        consumed_time=#{now}, version=version+1, update_time=#{now}
+        WHERE refresh_generation_id=#{id} AND session_id=#{sessionId} AND generation_no=#{generation}
+        AND status='ISSUED' AND active_slot=1 AND expires_time&gt;#{now}
+    </update>
+    <update id="linkRefresh">
+        UPDATE t_refresh_token_generation SET replaced_by_generation_id=#{nextId}, version=version+1
+        WHERE refresh_generation_id=#{id} AND status='CONSUMED' AND replaced_by_generation_id IS NULL
+    </update>
+    <update id="advanceSession">
+        UPDATE t_auth_session SET current_generation_no=#{issue.generation}, last_activity_time=#{issue.issuedTime},
+        idle_expire_time=#{issue.idleExpireTime}, version=version+1, update_time=#{issue.issuedTime}
+        WHERE session_id=#{issue.sessionId} AND realm='CUSTOMER' AND channel='CLIENT' AND status='ACTIVE'
+        AND version=#{expectedVersion} AND current_generation_no=#{issue.generation}-1
+        AND account_auth_epoch=#{issue.accountEpoch} AND credential_version_snapshot=#{issue.credentialVersion}
+    </update>
+    <update id="revokeSession">
+        UPDATE t_auth_session SET status=#{status}, revocation_reason=#{reason}, revoked_time=#{now},
+        version=version+1, update_time=#{now}
+        WHERE session_id=#{sessionId} AND realm='CUSTOMER' AND channel='CLIENT' AND status='ACTIVE'
+    </update>
+    <update id="revokeRefresh">
+        UPDATE t_refresh_token_generation r JOIN t_auth_session s ON s.session_id=r.session_id
+        SET r.status='REVOKED', r.active_slot=NULL, r.version=r.version+1, r.update_time=#{now}
+        WHERE s.session_id=#{sessionId} AND s.realm='CUSTOMER' AND s.channel='CLIENT' AND r.status='ISSUED'
+    </update>
+</mapper>

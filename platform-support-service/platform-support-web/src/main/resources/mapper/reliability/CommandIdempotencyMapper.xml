@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.core.reliability.mapper.CommandIdempotencyMapper">
+
+    <select id="previousCommand"
+            resultType="java.lang.String">
+        SELECT CONCAT(request_hash, ':', response_ref)
+        FROM t_command_idempotency
+        WHERE caller_scope=#{scope}
+        AND operation_type=#{operation}
+        AND idempotency_key=#{key}
+        AND status='SUCCEEDED'
+    </select>
+
+    <insert id="completeCommand">
+        INSERT INTO t_command_idempotency(id, caller_scope, operation_type, idempotency_key, request_hash,
+        response_ref, status, expire_time, create_time, update_time)
+        VALUES(#{id}, #{scope}, #{operation}, #{key}, #{hash}, #{responseRef}, 'SUCCEEDED', DATE_ADD(#{now}, INTERVAL
+        1 DAY), #{now}, #{now})
+    </insert>
+</mapper>

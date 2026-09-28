@@ -1,5 +1,7 @@
 # Customer Checkout 接口字段
 
+> **2026-09-19 后继时序：** [当前修订](../../20260919/commerce-Checkout准备与Intent创建拆分/technique.md)删除 POST B/preparation、其 Body/响应模型及 PREPARE 操作。创建 Checkout 已完成 OE 等信息初始化，首次支付创建唯一 Intent，Customer 共四个操作且均归 Commerce；HTTP Key 归 Gateway。下文独立准备、准备命令和准备时创建 Intent 的描述仅保留历史背景，现行 Java/OpenAPI 及本次修订优先。
+
 > 当前 Card 方向与提交顺序已确认：Payment 接收一次包含卡与协议确认的 payments 请求，调用 Commerce 保存法律确认后继续支付。订单/Consumer/legal 字段仍由本文拥有；卡提交、执行引用、支付视图及内部接口统一见 [Payment Card 字段稿](../payment-自建CardVault/api-contract.md)，该字段稿为阶段 3 评审稿。旧 NI Hosted Session 只保留在历史研究文档中，不作为当前实施合同。
 
 ## 1. 基础路径、Owner 与公共约定
@@ -17,8 +19,8 @@
 
 - 所有接口校验当前 Token、同 Order/Session 归属、期限和操作权限。Token 不是 Account Session 或 Client Credential，不接受浏览器选择 OE/MID/Client、提交应付金额或宣告支付成功。
 - Customer 请求和响应均无 `expectedOrderVersion`、`orderVersion`、`schemaVersion`。数据库版本、CAS、资源锁和内部 COM-I10 的 Order Version 保留；浏览器不负责并发版本管理。
-- 三个写操作都要求 `Idempotency-Key`：1–255 字符，首字符字母或数字，其余只允许字母、数字、`.`、`_`、`:`、`-`。服务端作用域为同一 Checkout Session + 操作；同键异参 409，网络重试复用原键。不同键也不能绕过订单唯一准备、唯一在途支付。
-- 相同命令先校验当前访问权限，再定位原受理结果；不能因原命令已使订单进入终态就执行第二次，或用新命令前置条件覆盖原回执。每个尚未执行的外部副作用仍重验资格。
+- Preparation 要求 `Idempotency-Key`：1–255 字符，首字符字母或数字，其余只允许字母、数字、`.`、`_`、`:`、`-`。服务端作用域为同一 Checkout Session + 操作；同键异参 409，网络重试复用原键。不同键也不能绕过订单唯一准备、唯一在途支付。SaveConsumer 按 [2026-09-17 修订](../../20260917/commerce-SaveConsumer接口重构/requirement.md)、Payments 按[支付修订](../../20260917/commerce-SubmitPayment接口重构/requirement.md)去除请求幂等，不要求或处理该 Header。Payments 每次生成业务 submissionId，Payment 负责 Intent 的在途与重复扣款保护。
+- Preparation 的相同命令先校验当前访问权限，再定位原受理结果；不能因原命令已使订单进入终态就执行第二次，或用新命令前置条件覆盖原回执。每个尚未执行的外部副作用仍重验资格。
 - 成功使用 `application/json`，错误使用现行 `application/problem+json`。全部响应 `Cache-Control: no-store`。Consumer、Token 和 Channel 临时参数禁止 Body 日志，Checkout Token 在访问日志中脱敏。未知普通 JSON 属性沿现行 MVC 规则忽略；含卡 payments 按 Card 合同严格拒绝未知/重复字段并限制为8 KiB；不支持的 Query、重复单值 Query、GET/Preparation Body 返回 400。
 - 字段类型/结构错误 400，字段约束错误 422。建议本期写请求上限 16 KiB；Channel 特殊限额须在具体分支评审，不能截断凭据。
 
@@ -136,7 +138,7 @@ Payment SUCCEEDED 但 Commerce 尚未 PAID 时继续显示确认中并禁止再�
 
 ## 3. PUT B/consumer：保存消费者资料
 
-Header：`Idempotency-Key`。以下为完整替换；可选字段省略或 null 均清空该字段。
+不要求 `Idempotency-Key`，每次请求按当前订单状态执行，不比较请求 Hash 或重放历史响应。以下为完整替换；可选字段省略或 null 均清空该字段。
 
 ```json
 {
@@ -175,7 +177,7 @@ Header：`Idempotency-Key`。以下为完整替换；可选字段省略或 null 
 
 准备启动前，后一次成功保存覆盖前一次；前端须串行提交保存和准备，不能把输入自动保存与 Continue 并发。准备占有订单后禁止修改，返回 409 CONSUMER_DETAILS_LOCKED。只有填完并保存成功才允许 PREPARE。
 
-服务端在事务外执行 Vault Protect Email/Profile，再于短事务重验订单及准备状态、保存 Token 和本地命令结果。Profile 只含姓名与账单地址，不重复 Email。并发控制全在服务端；幂等和恢复不能将个人原文写入通用快照，也不能用可枚举 Email 裸 Hash 代替安全处理。
+服务端在事务外执行 Vault Protect Email/Profile，再于短事务通过条件 SQL 核对订单、会话和版本，原子保存订单版本、Token 及批准维度，不读写命令表或保存响应快照。Profile 只含姓名与账单地址，不重复 Email。并发控制全在服务端，状态或版本变化返回冲突。顺序重复保存可以再次更新资料及内部版本；准备开始后的重试同样拒绝保存。
 
 ## 4. POST B/preparation：冻结上下文，准备 Intent
 

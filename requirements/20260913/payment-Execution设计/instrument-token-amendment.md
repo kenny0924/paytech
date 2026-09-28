@@ -1,5 +1,15 @@
 # 交易级支付工具 Token 与统一 Pay 修订
 
+> **2026-09-16 申请工具后继：** 当前入口使用用户指定的 `applyCardInstrument`，Processor、精简请求、原工具重放与 Card Mock 范围见[工具申请修订](./apply-card-instrument-amendment.md)。下文旧准备接口和命令机制按该稿的准确范围取代，真实 Card 能力仍未接入。
+
+> **2026-09-15 删除来源 Binding：** 用户已确认删除 `t_payment_intent_binding` 和 EX-I03 `CloseCreation`，按已有 Intent 终止；创建结果未明确时由 Commerce 用原键恢复创建后再终止。本文涉及提前关闭、Binding 门禁和锁顺序的内容由[字段修订第 8 节](./execution-field-simplification-amendment.md#8-删除来源-binding)取代；其余历史基线保持。
+
+> **Pay 受理后继：** 现行精简请求与幂等投影见[字段修订第 7 节](./execution-field-simplification-amendment.md#7-pay-受理链合同)。本次只处理受理链，后续方式流程保持 TODO。
+
+> **字段维护后继：** [整批精简修订](./execution-field-simplification-amendment.md)已取代本文受影响的字段、渠道绑定位置、认证明细、Pricing Fact 与状态历史表要求。本文旧接口/流程细节保留为迁移前基线；后续 Java/HTTP/MQ 改造须逐项对齐，数据库执行状态只见当前台账。
+
+> **状态与 Channel 恢复后继：** capture mode、三表 4/4/5 状态、active_action_id 及移除 QUERY 的现行设计目标以[状态与恢复修订](./execution-state-channel-recovery-amendment.md)为准；下文受影响内容保留为前序基线，未涉及合同继续有效。实现与 SQL 状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 > **调用方向补充：** Payment 不调用 Commerce；上游核验订单及接受事实后传入。创建时新增国家并冻结的边界见[2026-09-14 修订](./payment-commerce-direction-amendment.md)。
 
 2026-09-13。用户已确认本修订并授权 Payment Execution 与依赖 Mock 研发；本文是交易级工具合同的现行权威。SQL 执行、Commerce 代码及真实 Card 接入仍按独立范围确认。当前实现、数据库与验证状态只见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
@@ -37,10 +47,10 @@ PI-I00 不产生业务状态，不要求 Idempotency-Key。PI-I01 固定 `Idempo
 | 用例 | Execution / Web 表影响 | Card 边界 |
 |---|---|---|
 | PI-I00 | 只读 Intent 归属；无 Token、Attempt 或资金写入 | 只读卡身份计算；真实敏感访问审计按 Card 专项接入 |
-| PI-I01 | 写 Token、Command Idempotency、Compensation Event；读 Binding、Intent 及已有 Attempt/Action 门禁 | Card 本地记录经 Owner Service 参与本库短事务；临时材料在提交后准备。本期不创建真实 Card 表 |
+| PI-I01 | 写 Token、Command Idempotency、Compensation Event；读 Intent 及已有 Attempt/Action 门禁 | Card 本地记录经 Owner Service 参与本库短事务；临时材料在提交后准备。本期不创建真实 Card 表 |
 | EX-I05 | 读 Token；写 Attempt 绑定及原有 Intent/Action/状态/资金引用/额度/定价/补偿事实；不写旧 Instrument | 仅受控卡适配器取用必要材料，Execution 不接 PAN/CVV |
 | EX-I06 | 只读原 Attempt/Action/Token 及资金事实 | 经只读 Owner 能力取获准描述；材料消失不影响资金结果 |
-| EX-I03/04/10 的关闭新支付分支 | 原 Wire 保留；Binding 关闭立即阻断新使用，并在本地事务中撤销相关 Token、登记清理任务 | 提交后清理；不改变原授权、退款、UNKNOWN 的处理 |
+| EX-I04/10 | 基于已有 Intent 的资金事实终止或撤销；终止成功时在本地事务撤销 Token、登记清理任务 | EX-I03 已移除；PENDING 不等于关闭成功，原资金仍需确认 |
 
 Token 的业务校验与写入由 Execution 的 `PaymentInstrumentService + Impl` 拥有；Web Processor 组织该 Service 与 Card 的协作。Card 的 API DTO 使用专用受控命名空间；通用 Execution API/应用命令不增加 card/PAN/CVV 字段。
 
@@ -169,7 +179,7 @@ sequenceDiagram
 
 T1 的命令成功只代表“绑定已持久化”，不能冒充临时材料已准备好。进程在 T1 后崩溃，原键仍定位同 Token；带原卡输入且符合资格时可补齐，后台不能从 Token 重建 CVV。Card 真实本地写能力可参与 T1，但 KMS/缓存/渠道调用不能间接进入事务。
 
-发送沿既有来源/Intent 资源锁、数据库唯一约束和 CAS。锁顺序为 Binding → Intent → Token → Attempt → 后续原有资源；所有写入口保持同序。Redis 协调在独立公开代理入口外围，不能以嵌套代理拼锁。材料领取绑定原 Action，不把完整 PAN/CVV返回 Execution 或普通 Channel 模块；它只产生 Card 内当次调用的控制上下文，不入表、不作为上游会话 ID。
+发送沿既有来源/Intent 资源锁、数据库唯一约束和 CAS。锁顺序为 Intent → Token → Attempt → 后续原有资源；所有写入口保持同序。Redis 协调在独立公开代理入口外围，不能以嵌套代理拼锁。材料领取绑定原 Action，不把完整 PAN/CVV返回 Execution 或普通 Channel 模块；它只产生 Card 内当次调用的控制上下文，不入表、不作为上游会话 ID。
 
 在 T3 前领取材料并移出共享暂存，只留本次发送所需的受控内存；领取或预检失败不能把 Action 提前标成 SUBMITTED。T3 失败者丢弃材料，必要时在确认未发时补输入；T3 后任意崩溃都按可能已发送查询。若 T3 后发现材料或期限异常而不能发送，也不能在下一执行者中重新领取发送；按原发送占用保守恢复，不能把 UNKNOWN 改回 CREATED。所有控制上下文在最早可行点释放，不声称 JVM 字符串可验证地立即擦除。
 

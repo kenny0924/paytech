@@ -1,0 +1,271 @@
+-- 前序未执行工件：已由 execution-simplified-* 取代，不要用于当前目标。
+-- 仅针对 127.0.0.1:13306 / mor_payment 的已盘点空 Execution 表。
+-- 人工复核、停止写入并取得执行授权后使用；应用和测试不自动执行。
+-- 2026-09-14 只读盘点：13 张已存在的 Execution/命令/补偿表均为 0 行。
+-- 同步此前工具 Token、Intent 国家及本次状态/风险修订；无业务 DML，无 FK/CHECK。
+-- 旧状态/PAY_V1/评估或任务有数据时立即停止，禁止凭空生成 RISK_CHECK 或转换 Hash。
+-- DDL 非整包原子；失败时核对已执行语句，不盲目重跑。
+-- 前置：保存 SHOW CREATE TABLE 和本地备份；核对下列 COUNT 全部为 0。
+
+SELECT COUNT(*) AS `t_payment_intent_binding_rows` FROM `t_payment_intent_binding`;
+SELECT COUNT(*) AS `t_payment_intent_rows` FROM `t_payment_intent`;
+SELECT COUNT(*) AS `t_payment_attempt_rows` FROM `t_payment_attempt`;
+SELECT COUNT(*) AS `t_payment_action_rows` FROM `t_payment_action`;
+SELECT COUNT(*) AS `t_payment_instrument_rows` FROM `t_payment_instrument`;
+SELECT COUNT(*) AS `t_command_idempotency_rows` FROM `t_command_idempotency`;
+SELECT COUNT(*) AS `t_compensation_event_rows` FROM `t_compensation_event`;
+SELECT COUNT(*) AS `t_channel_refund_rows` FROM `t_channel_refund`;
+SELECT COUNT(*) AS `t_channel_transaction_ref_rows` FROM `t_channel_transaction_ref`;
+SELECT COUNT(*) AS `t_payment_pricing_fact_rows` FROM `t_payment_pricing_fact`;
+SELECT COUNT(*) AS `t_payment_refund_position_rows` FROM `t_payment_refund_position`;
+SELECT COUNT(*) AS `t_duplicate_payment_case_rows` FROM `t_duplicate_payment_case`;
+SELECT COUNT(*) AS `t_payment_state_transition_rows` FROM `t_payment_state_transition`;
+
+-- 逐表结构变更：以下语句只更新已获批字段与索引。
+
+ALTER TABLE `t_payment_intent_binding`
+  MODIFY COLUMN `payment_intent_binding_id` BIGINT NOT NULL COMMENT '来源订单与支付意图创建资格绑定的本库 Snowflake 唯一标识。',
+  MODIFY COLUMN `source_type` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '支付来源的受控命名空间；本期只允许 COMMERCE_ORDER，不接收任意调用方自定义来源。取值来源：Payment Source Type Catalog；非固定枚举。',
+  MODIFY COLUMN `source_id` BIGINT NOT NULL COMMENT '来源命名空间中的稳定业务标识；COMMERCE_ORDER 时为 Commerce Order ID。',
+  MODIFY COLUMN `client_id` BIGINT NOT NULL COMMENT '来源订单所属 Client 标识；创建、关闭和查询必须核对同一 Client 权限。',
+  MODIFY COLUMN `payment_intent_id` BIGINT NULL COMMENT '已创建的唯一支付意图标识；关闭先于创建时为空，非空后不得改变。',
+  MODIFY COLUMN `closed_at` DATETIME(6) NULL COMMENT '关闭新建意图、新 Attempt 和首次 AUTHORIZE/SALE 发送资格的 UTC 微秒时间；开放时为空，关闭不可撤销，不表示既有资金已经取消。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间，由应用写入。',
+  MODIFY COLUMN `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间，由应用写入。',
+  COMMENT = 'Execution 来源绑定与单向关闭事实；关闭不代表资金终止，不承载工作流状态。';
+
+ALTER TABLE `t_payment_intent`
+  MODIFY COLUMN `payment_intent_id` BIGINT NOT NULL COMMENT '一个来源订单唯一支付目标的内部稳定标识。',
+  MODIFY COLUMN `source_type` VARCHAR(64) NOT NULL COMMENT '支付意图来源或补偿事件来源业务事实采用的受控目录类型。取值来源：Payment Source Type Catalog；非固定枚举。',
+  MODIFY COLUMN `source_id` BIGINT NOT NULL COMMENT '支付意图或补偿事件所引用来源事实的稳定业务标识。',
+  MODIFY COLUMN `source_order_context_id` BIGINT NOT NULL COMMENT 'Commerce 在订单创建时冻结并传入的不可变 Order Context 标识。',
+  MODIFY COLUMN `client_id` BIGINT NOT NULL COMMENT '来源订单所属平台 Client 的稳定业务标识。',
+  MODIFY COLUMN `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'CCT唯一不可变OE编号，创建时经营国家二位代码加001–999，如AE001；不是数字代理ID，编号不参与路由。',
+  MODIFY COLUMN `context_format` VARCHAR(32) NOT NULL COMMENT 'TERM_PRICE使用entityNo和条款版本；LEGACY_SCOPE保留历史身份及原Scope读取，不回写旧订单。允许值：TERM_PRICE、LEGACY_SCOPE。',
+  MODIFY COLUMN `client_pricing_version_id` BIGINT NOT NULL COMMENT '支付准备时由CCT固定的Client条款版本，后续准确Price只能从此版本解析。',
+  MODIFY COLUMN `partner_share_version_id` BIGINT NULL COMMENT 'PARTNER来源时固定的CCT分成版本，与平台服务费版本成组非空。',
+  MODIFY COLUMN `platform_charge_version_id` BIGINT NULL COMMENT 'PARTNER来源时固定的CCT服务费版本，与分成版本属于同一Partner合同。',
+  MODIFY COLUMN `industry_code` VARCHAR(64) NOT NULL COMMENT 'Commerce 从 Client & Contract 冻结并传入的平台行业目录代码。取值来源：CCT/Commerce frozen classification；非固定枚举。',
+  MODIFY COLUMN `mcc_code` VARCHAR(4) NOT NULL COMMENT '精确值为 Commerce 从 Client & Contract 冻结的四位 Merchant Category Code；配置 Scope 允许控制通配符 *。取值来源：CCT/Commerce frozen classification；非固定枚举。',
+  ADD COLUMN `consumer_country_code` CHAR(2) NOT NULL COMMENT 'Commerce 创建 Intent 时传入并冻结的消费者国家，用于支付定价；后续不得覆盖。取值来源：ISO 3166-1 alpha-2；非固定枚举。' AFTER `mcc_code`,
+  MODIFY COLUMN `amount` DECIMAL(24,8) NOT NULL COMMENT '当前支付目标或渠道资金动作采用的确定金额。',
+  MODIFY COLUMN `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
+  MODIFY COLUMN `intent_status` VARCHAR(64) NOT NULL COMMENT '一个来源订单支付目标当前的闭合业务生命周期状态。允许值：OPEN、SUCCEEDED、CANCELLED、EXPIRED。',
+  MODIFY COLUMN `active_attempt_id` BIGINT NULL COMMENT '当前仍占用支付意图且可能继续推进或等待权威结果的支付尝试标识。',
+  MODIFY COLUMN `successful_attempt_id` BIGINT NULL COMMENT '支付意图首次形成权威成功结果的支付尝试标识。',
+  MODIFY COLUMN `expires_at` DATETIME(6) NOT NULL COMMENT '支付意图或消费者后续动作允许继续处理的最晚业务时刻；消费者动作未提供期限时为空。',
+  MODIFY COLUMN `version` BIGINT NOT NULL COMMENT '可变 Payment 业务根并发命令与乱序结果条件更新使用的单调版本。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  MODIFY COLUMN `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  COMMENT = '从已提交Commerce Context取得固定entityNo、金额及Term Version，所有Attempt只能在同一OE下执行；新写去Assignment。Risk未接入新身份时不得伪造资格或跨OE降级。';
+
+ALTER TABLE `t_payment_attempt`
+  DROP COLUMN `transaction_assessment_id`,
+  DROP COLUMN `risk_result`,
+  DROP COLUMN `limit_reservation_group_id`,
+  DROP COLUMN `card_reference`,
+  MODIFY COLUMN `payment_attempt_id` BIGINT NOT NULL COMMENT '同一支付意图内一次顺序支付尝试的内部唯一标识。',
+  MODIFY COLUMN `payment_intent_id` BIGINT NOT NULL COMMENT '一个来源订单唯一支付目标的内部稳定标识。',
+  MODIFY COLUMN `attempt_no` INT NOT NULL COMMENT '同一支付意图内从 1 开始单调递增的尝试序号。',
+  MODIFY COLUMN `payment_method_code` VARCHAR(64) NOT NULL COMMENT '支付尝试冻结本次使用的精确支付方式目录值；商户号 Capability 与 Health State 使用精确值，Routing Policy 可使用精确值或控制通配符 *。取值来源：Payment Method Catalog；非固定枚举。',
+  MODIFY COLUMN `attempt_status` VARCHAR(64) NOT NULL COMMENT '一次支付尝试从创建、处理到权威终态的当前状态。允许值：PROCESSING、SUCCEEDED、FAILED、CANCELLED。',
+  MODIFY COLUMN `failure_stage` VARCHAR(64) NULL COMMENT '支付尝试被前置条件阻断、渠道失败或需要恢复时所在的业务处理阶段。允许值：READINESS、EXECUTION_GATE、RISK、LIMIT、ROUTING、CHANNEL、RECOVERY、SYSTEM。',
+  MODIFY COLUMN `status_reason_code` VARCHAR(64) NULL COMMENT '支付尝试当前失败、取消、未知或冲突结果采用的稳定原因代码；无需原因时为空。取值来源：Reason Catalog；非固定枚举。',
+  MODIFY COLUMN `consumer_contract_id` BIGINT NULL COMMENT 'Commerce 已呈现且通过支付准备度校验的不可变消费者合同标识。',
+  MODIFY COLUMN `consumer_terms_acceptance_id` BIGINT NULL COMMENT 'Commerce 中与本次尝试同订单、同会话的消费者条款接受证据标识。',
+  MODIFY COLUMN `refund_policy_acceptance_id` BIGINT NULL COMMENT 'Commerce 中与本次尝试同订单、同会话的退款政策接受证据标识。',
+  MODIFY COLUMN `privacy_notice_acceptance_id` BIGINT NULL COMMENT 'Commerce 中与本次尝试同订单、同会话的隐私声明接受证据标识。',
+  MODIFY COLUMN `acceptance_completed_at` DATETIME(6) NULL COMMENT 'Commerce 确认三项必需法律接受均已完成的业务时刻。',
+  MODIFY COLUMN `order_version` BIGINT NULL COMMENT 'COM-I10 校验法律接受准备度时返回并由支付尝试冻结的订单版本。',
+  MODIFY COLUMN `authorized_amount` DECIMAL(24,8) NOT NULL COMMENT '该支付尝试已获得服务商权威授权的累计金额。',
+  MODIFY COLUMN `captured_amount` DECIMAL(24,8) NOT NULL COMMENT '该支付尝试已经确认成功捕获的累计金额。',
+  MODIFY COLUMN `version` BIGINT NOT NULL COMMENT '可变 Payment 业务根并发命令与乱序结果条件更新使用的单调版本。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  MODIFY COLUMN `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  MODIFY COLUMN `source_submission_id` BIGINT NULL DEFAULT NULL COMMENT 'Commerce 原支付提交命令标识；新执行必填且全局唯一绑定一个 Attempt，历史无可靠身份时为空，不得猜测回填。',
+  CHANGE COLUMN `payment_goal` `capture_mode` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL COMMENT '本次支付尝试冻结的捕获模式；新执行必填且不可修改。允许值：AUTOMATIC、MANUAL。历史未核对时为空。',
+  MODIFY COLUMN `authentication_requirement` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL COMMENT '内部 Risk 允许本次支付后冻结的认证要求。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED。尚无确定允许结果时为空。',
+  ADD COLUMN `payment_instrument_token_id` BIGINT NULL COMMENT '本次尝试关联的交易级工具 Token 内部主键；新统一 pay 必填并校验相同 Client、Intent、来源提交和支付方式，历史未迁移行为空；不存 Token 字符串。' AFTER `authentication_requirement`,
+  ADD COLUMN `active_action_id` BIGINT NULL COMMENT '原尝试当前唯一未终结业务动作；CREATED、PROCESSING、UNKNOWN 占位，终态须核对仍指向原动作才清空；等待手动 Capture 时为空，但 Intent 继续占用该 Attempt。' AFTER `payment_instrument_token_id`,
+  ADD UNIQUE KEY `uk_pay_attempt_token` (`payment_instrument_token_id`) COMMENT '唯一索引：payment_instrument_token_id',
+  COMMENT = '同一支付意图内顺序发生的一次支付尝试，冻结方式、捕获模式、工具和法律准备，持有唯一活动动作。';
+
+ALTER TABLE `t_payment_pricing_fact`
+  MODIFY COLUMN `payment_fact_id` BIGINT NOT NULL COMMENT 'Payment在必要事实齐备后一次插入的最终事实快照标识，不复制Channel原始数据。',
+  MODIFY COLUMN `payment_attempt_id` BIGINT NOT NULL COMMENT '同一支付意图内一次顺序支付尝试的内部唯一标识。',
+  MODIFY COLUMN `fact_schema_code` VARCHAR(32) NOT NULL COMMENT 'Payment标准化定价事实的固定格式，不用于推断未知卡属性。允许值：PAYMENT_PRICING_FACTS_1。',
+  MODIFY COLUMN `source_action_id` BIGINT NOT NULL COMMENT '产生本次支付成功权威事实的Payment Action。',
+  MODIFY COLUMN `payment_method_code` VARCHAR(64) NOT NULL COMMENT '支付尝试冻结本次使用的精确支付方式目录值；商户号 Capability 与 Health State 使用精确值，Routing Policy 可使用精确值或控制通配符 *。取值来源：Payment Method Catalog；非固定枚举。',
+  MODIFY COLUMN `consumer_country_code` CHAR(2) NOT NULL COMMENT '由不可变Commerce Context带入并核验的消费者国家。取值来源：ISO 3166-1 alpha-2；非固定枚举。',
+  MODIFY COLUMN `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
+  MODIFY COLUMN `card_network` VARCHAR(64) NULL COMMENT '经可信Channel证据标准化的卡组织；未知不作为普通卡，CCT不接收原始值。取值来源：Payment normalized card network catalog；非固定枚举。',
+  MODIFY COLUMN `funding_type` VARCHAR(64) NULL COMMENT '经Channel确认的信用、借记或预付分类；必要事实未知时不得生成可定价快照。允许值：CREDIT、DEBIT、PREPAID。',
+  MODIFY COLUMN `card_level` VARCHAR(64) NULL COMMENT 'Payment接入时批准的卡等级代码目录；未确认不猜测。取值来源：Payment normalized card level catalog；非固定枚举。',
+  MODIFY COLUMN `authentication_class` VARCHAR(64) NULL COMMENT 'Channel验证的实际3DS分类，不能由没有Challenge推断NON_THREE_DS。允许值：THREE_DS_AUTHENTICATED、THREE_DS_ATTEMPTED、NON_THREE_DS。',
+  MODIFY COLUMN `payment_succeeded_time` DATETIME(6) NOT NULL COMMENT '与成功Payment Action及PaymentSucceeded逐值一致的UTC微秒时间。',
+  MODIFY COLUMN `amount` DECIMAL(24,8) NOT NULL COMMENT '当前支付目标或渠道资金动作采用的确定金额。',
+  MODIFY COLUMN `client_pricing_version_id` BIGINT NOT NULL COMMENT '支付准备时由CCT固定的Client条款版本，后续准确Price只能从此版本解析。',
+  MODIFY COLUMN `partner_share_version_id` BIGINT NULL COMMENT 'PARTNER来源时固定的CCT分成版本，与平台服务费版本成组非空。',
+  MODIFY COLUMN `platform_charge_version_id` BIGINT NULL COMMENT 'PARTNER来源时固定的CCT服务费版本，与分成版本属于同一Partner合同。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  COMMENT = '成功Attempt的不可变标准化定价事实；必要字段齐备才插入一次。未知不得按零费率入账，成功支付状态不回退；CCT不接收PAN/BIN/Channel原始Payload。';
+
+CREATE TABLE `t_payment_instrument_token` (
+  `payment_instrument_token_id` BIGINT NOT NULL COMMENT '本次交易级支付工具绑定的 Snowflake 内部主键，供 Attempt 和清理任务定位。',
+  `payment_instrument_token` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '安全随机生成的不透明内部支付工具定位符，原准备命令重放同值；仅持有此值不能获得用卡或扣款权限。',
+  `client_id` BIGINT NOT NULL COMMENT '从可信 Payment Intent 核对的所属 CCT Client 稳定标识，创建后不可修改。',
+  `payment_intent_id` BIGINT NOT NULL COMMENT '本次工具固定关联的 Payment Intent 内部主键，创建后不可修改。',
+  `source_submission_id` BIGINT NOT NULL COMMENT 'Commerce 已提交的原支付命令全局稳定标识；当前仅接受 Commerce 命令命名空间，不是 Payment Attempt 标识。',
+  `payment_method_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '本次工具绑定的精确支付方式，创建后不可修改。取值来源：Payment Method Catalog；非固定枚举。',
+  `instrument_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '工具 Owner 的受控类型，本期只实现卡工具。允许值：CARD。',
+  `instrument_ref` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '工具 Owner 返回的稳定内部记录引用，创建后不可修改；不包含原始卡数据、CVV、渠道工具 Token 或可直接使用的临时材料。',
+  `expires_at` DATETIME(6) NOT NULL COMMENT '首次用卡资格的 UTC 微秒精度截止时间，创建时按原支付和材料期限冻结；重试不延长，不表示在途资金失效。',
+  `revoked_at` DATETIME(6) NULL COMMENT '主动撤销新用卡资格的 UTC 微秒精度时间；NULL 表示未主动撤销，仍须检查期限和原执行事实；不能据此撤销渠道资金。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '应用写入的工具绑定创建 UTC 微秒精度时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '应用写入的工具绑定最近有效更新 UTC 微秒精度时间。',
+  PRIMARY KEY (`payment_instrument_token_id`),
+  UNIQUE KEY `uk_pay_token_value` (`payment_instrument_token`) COMMENT '唯一索引：payment_instrument_token',
+  UNIQUE KEY `uk_pay_token_scope` (`client_id`, `payment_intent_id`, `source_submission_id`) COMMENT '唯一索引：client_id、payment_intent_id、source_submission_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Execution 拥有的交易级支付工具 Token 与不可变使用范围，不存卡数据或会话状态。';
+
+ALTER TABLE `t_payment_action`
+  DROP INDEX `idx_pay_action_target_action`,
+  DROP COLUMN `target_payment_action_id`,
+  MODIFY COLUMN `payment_action_id` BIGINT NOT NULL COMMENT '一次真实服务商渠道动作的内部唯一标识。',
+  MODIFY COLUMN `payment_attempt_id` BIGINT NULL COMMENT '同一支付意图内一次顺序支付尝试的内部唯一标识。',
+  MODIFY COLUMN `channel_refund_id` BIGINT NULL COMMENT 'Payment 为一个 Commerce 退款请求创建的唯一渠道退款标识。',
+  MODIFY COLUMN `duplicate_payment_case_id` BIGINT NULL COMMENT '第二笔真实渠道成功处置根的内部唯一标识。',
+  MODIFY COLUMN `action_no` INT NOT NULL COMMENT '同一支付尝试、渠道退款或重复支付处置内单调递增的动作序号。',
+  MODIFY COLUMN `action_type` VARCHAR(64) NOT NULL COMMENT '原支付业务步骤类型；风控和认证不形成资金事实。允许值：RISK_CHECK、AUTHENTICATE、AUTHORIZE、CAPTURE、SALE、VOID、REFUND。无 QUERY 或 REVERSAL 业务动作。',
+  MODIFY COLUMN `action_status` VARCHAR(64) NOT NULL COMMENT '渠道动作从创建、提交到权威结果收敛的当前状态。允许值：CREATED、PROCESSING、UNKNOWN、SUCCEEDED、FAILED。',
+  MODIFY COLUMN `channel_id` BIGINT NULL COMMENT 'Payment 支付渠道稳定标识；RISK_CHECK 必须为空，所有渠道业务动作必填并在原尝试内冻结。',
+  MODIFY COLUMN `mid_id` BIGINT NULL COMMENT '原 Operating Entity 下选定的渠道商户号标识；RISK_CHECK 必须为空，所有渠道业务动作必填并冻结。',
+  MODIFY COLUMN `channel_account_id` BIGINT NULL COMMENT 'Payment 渠道技术账户稳定标识；RISK_CHECK 必须为空，所有渠道业务动作必填并冻结。',
+  MODIFY COLUMN `target_channel_txn_ref_id` BIGINT NULL COMMENT '原成功资金交易引用；CAPTURE/VOID 指 AUTHORIZE，REFUND 指 SALE/CAPTURE；风控、认证与首次资金动作为空。',
+  MODIFY COLUMN `amount` DECIMAL(24,8) NOT NULL COMMENT '原动作冻结的正金额；RISK_CHECK 与 AUTHENTICATE 仅作为输入校验，不产生资金事实；精度上限为 24 位且小数最多 8 位。',
+  MODIFY COLUMN `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
+  MODIFY COLUMN `channel_idempotency_key` VARCHAR(128) NULL COMMENT '原渠道业务动作的稳定幂等键；RISK_CHECK 必须为空，渠道动作必填；恢复不换键，由渠道适配判断重复、查询和安全重发。',
+  MODIFY COLUMN `channel_result_time` DATETIME(6) NULL COMMENT '渠道动作获得当前服务商结果的业务时刻；尚无结果时为空。',
+  MODIFY COLUMN `version` BIGINT NOT NULL COMMENT '可变 Payment 业务根并发命令与乱序结果条件更新使用的单调版本。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  MODIFY COLUMN `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  MODIFY COLUMN `authentication_action_id` BIGINT NULL DEFAULT NULL COMMENT '需要认证的 AUTHORIZE/SALE 绑定同 Attempt 的成功 AUTHENTICATE 标识；要求金额、币种、Card 和渠道坐标一致，其他动作为空。',
+  MODIFY COLUMN `channel_operation_ref` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL COMMENT '渠道返回的稳定非 bearer 操作或认证上下文引用；未取得时为空；不得保存临时 URL、SDK Token、Client Secret 或持有即可继续支付的参数。',
+  MODIFY COLUMN `interaction_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL COMMENT '原 Action 的消费者交互类型，无交互时为空。允许值：REDIRECT、THREE_DS_CHALLENGE、SDK、APP_SWITCH、QR_CODE。本期只写 THREE_DS_CHALLENGE。',
+  MODIFY COLUMN `interaction_expires_at` DATETIME(6) NULL DEFAULT NULL COMMENT '原消费者交互的 UTC 微秒截止时间；PROCESSING 且需要交互时必填，完成后保留历史值，不等于认证证明有效期。',
+  MODIFY COLUMN `authentication_outcome` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL COMMENT 'AUTHENTICATE 获得的可信标准化认证结论。允许值：AUTHENTICATED、ATTEMPTED、FAILED、UNAVAILABLE。无确定结论或非认证动作时为空。',
+  MODIFY COLUMN `challenge_performed` TINYINT NULL DEFAULT NULL COMMENT '可信证据确认是否实际执行挑战：1 是、0 否；未知或非认证动作时为空，不能由浏览器回跳推断。',
+  MODIFY COLUMN `authentication_valid_until` DATETIME(6) NULL DEFAULT NULL COMMENT '成功 AUTHENTICATE 证明可供原资金动作使用的 UTC 微秒截止时间；成功认证必填，其他情形为空。',
+  MODIFY COLUMN `status_reason_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL COMMENT '原 Action 失败、未知或受控等待的稳定安全原因代码；无原因时为空；取值来源为 Execution Reason Catalog，不保存远程原始报文或敏感值。取值来源：Reason Catalog；非固定枚举。',
+  ADD COLUMN `transaction_assessment_id` BIGINT NULL COMMENT 'Risk 返回的原交易评估稳定标识；仅 RISK_CHECK 可填，取得可信原评估身份前为空，已知后不可替换；渠道动作为空。' AFTER `status_reason_code`,
+  ADD COLUMN `risk_result` VARCHAR(64) NULL COMMENT '原 RISK_CHECK 的可信评估结论；渠道动作及未知评估为空。允许值：ALLOW、REVIEW、DENY、FAILED、TIMED_OUT。评估完成不等于允许支付。' AFTER `transaction_assessment_id`,
+  COMMENT = '一次风控或渠道业务动作；原操作恢复复用同一身份，渠道动作冻结 Channel Account。';
+
+ALTER TABLE `t_channel_transaction_ref`
+  MODIFY COLUMN `channel_transaction_ref_id` BIGINT NOT NULL COMMENT '一条不可变服务商外部资金交易引用的内部唯一标识。',
+  MODIFY COLUMN `payment_action_id` BIGINT NOT NULL COMMENT '一次真实服务商渠道动作的内部唯一标识。',
+  MODIFY COLUMN `channel_id` BIGINT NOT NULL COMMENT 'Payment 管理的支付服务商内部唯一标识。',
+  MODIFY COLUMN `mid_id` BIGINT NOT NULL COMMENT 'Payment 管理且唯一归属于一个 Operating Entity 的服务商商户号标识。',
+  MODIFY COLUMN `reference_type` VARCHAR(64) NOT NULL COMMENT '服务商交易引用对应授权、捕获、扣款、撤销或退款的闭合类型。允许值：AUTHORIZE、CAPTURE、SALE、VOID、REFUND。',
+  MODIFY COLUMN `external_transaction_id` VARCHAR(255) NOT NULL COMMENT '服务商命名空间内标识一笔授权、捕获、扣款、撤销或退款的交易编号。',
+  MODIFY COLUMN `original_channel_txn_ref_id` BIGINT NULL COMMENT '退款或争议所指向的原始成功服务商交易引用标识。',
+  MODIFY COLUMN `channel_event_time` DATETIME(6) NULL COMMENT '服务商声明渠道交易、回调项或争议事件发生的业务时刻；未提供时为空。',
+  MODIFY COLUMN `amount` DECIMAL(24,8) NOT NULL COMMENT '当前支付目标或渠道资金动作采用的确定金额。',
+  MODIFY COLUMN `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  COMMENT = '授权、捕获、扣款、撤销或退款的不可变服务商外部交易引用。';
+
+ALTER TABLE `t_duplicate_payment_case`
+  MODIFY COLUMN `duplicate_payment_case_id` BIGINT NOT NULL COMMENT '第二笔真实渠道成功处置根的内部唯一标识。',
+  MODIFY COLUMN `payment_intent_id` BIGINT NOT NULL COMMENT '一个来源订单唯一支付目标的内部稳定标识。',
+  MODIFY COLUMN `canonical_attempt_id` BIGINT NOT NULL COMMENT '支付意图首次权威成功对应的支付尝试标识。',
+  MODIFY COLUMN `canonical_action_id` BIGINT NOT NULL COMMENT '支付意图首次权威成功对应的渠道动作标识。',
+  MODIFY COLUMN `canonical_transaction_ref_id` BIGINT NOT NULL COMMENT '支付意图首次权威成功对应的服务商交易引用标识。',
+  MODIFY COLUMN `duplicate_attempt_id` BIGINT NOT NULL COMMENT '第二笔真实渠道成功对应并进入冲突终态的支付尝试标识。',
+  MODIFY COLUMN `duplicate_action_id` BIGINT NOT NULL COMMENT '第二笔真实渠道成功对应且需要补偿处置的渠道动作标识。',
+  MODIFY COLUMN `duplicate_transaction_ref_id` BIGINT NOT NULL COMMENT '第二笔真实渠道成功对应的服务商交易引用标识。',
+  MODIFY COLUMN `duplicate_amount` DECIMAL(24,8) NOT NULL COMMENT '第二笔真实渠道成功形成且需要退回的确定金额。',
+  MODIFY COLUMN `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
+  MODIFY COLUMN `case_status` VARCHAR(64) NOT NULL COMMENT '第二笔真实渠道成功从发现、补偿到人工处置的当前状态。允许值：OPEN、COMPENSATING、COMPENSATION_UNKNOWN、COMPENSATED、MANUAL_REVIEW。',
+  MODIFY COLUMN `compensation_action_id` BIGINT NULL COMMENT '为处置第二笔真实渠道成功而创建的 REFUND 动作标识；尚未创建时为空。',
+  MODIFY COLUMN `version` BIGINT NOT NULL COMMENT '可变 Payment 业务根并发命令与乱序结果条件更新使用的单调版本。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  MODIFY COLUMN `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  COMMENT = '第二笔真实渠道成功的处置根，不能替换支付意图的首笔成功指针。';
+
+ALTER TABLE `t_payment_state_transition`
+  MODIFY COLUMN `payment_state_transition_id` BIGINT NOT NULL COMMENT '一条不可变 Payment 资金主链白名单对象状态流转的内部唯一标识。',
+  MODIFY COLUMN `aggregate_type` VARCHAR(64) NOT NULL COMMENT '发生本次状态流转的 Payment 白名单业务对象类型。允许值：PAYMENT_INTENT、PAYMENT_ATTEMPT、PAYMENT_ACTION、CHANNEL_REFUND、DUPLICATE_PAYMENT_CASE。',
+  MODIFY COLUMN `aggregate_id` BIGINT NOT NULL COMMENT '发生本次状态流转的 Payment 白名单业务对象标识。',
+  MODIFY COLUMN `root_type` VARCHAR(64) NOT NULL COMMENT '跨子对象查询状态时间线时使用的 Payment 聚合根类型。允许值：PAYMENT_INTENT、PAYMENT_ATTEMPT、PAYMENT_ACTION、CHANNEL_REFUND、DUPLICATE_PAYMENT_CASE。',
+  MODIFY COLUMN `root_id` BIGINT NOT NULL COMMENT '跨子对象查询状态时间线时使用的 Payment 聚合根标识。',
+  MODIFY COLUMN `from_status` VARCHAR(64) NULL COMMENT '状态变更发生前的聚合或服务商争议状态；对象创建时可为空。取值来源：Payment Aggregate Status Catalog；非固定枚举。',
+  MODIFY COLUMN `to_status` VARCHAR(64) NOT NULL COMMENT '状态变更完成后形成的聚合或服务商争议状态。取值来源：Payment Aggregate Status Catalog；非固定枚举。',
+  MODIFY COLUMN `transition_no` INT NOT NULL COMMENT '同一状态对象内从 1 开始单调递增的流转序号，不作为并发版本。',
+  MODIFY COLUMN `reason_code` VARCHAR(64) NULL COMMENT '当前状态流转、异常、健康或争议事实采用的稳定原因代码；无需原因时为空。取值来源：Reason Catalog；非固定枚举。',
+  MODIFY COLUMN `trigger_type` VARCHAR(64) NOT NULL COMMENT '引起本次状态变化的命令、回调、查询或系统任务目录类型。取值来源：Trigger enum；非固定枚举。',
+  MODIFY COLUMN `trigger_id` VARCHAR(128) NOT NULL COMMENT '引起本次状态变化的命令、回调、查询或系统任务的非空稳定标识。',
+  MODIFY COLUMN `create_by` VARCHAR(128) NOT NULL COMMENT '产生本次状态流转的非空人员、系统或服务操作者标识。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  COMMENT = 'Payment 资金主链白名单聚合的统一追加状态流转证据，不复制 Callback 或 Dispute 事件历史。';
+
+ALTER TABLE `t_payment_refund_position`
+  MODIFY COLUMN `payment_refund_position_id` BIGINT NOT NULL COMMENT 'Payment 对原成功交易并发控制预占与已退款金额的位置标识。',
+  MODIFY COLUMN `payment_intent_id` BIGINT NOT NULL COMMENT '一个来源订单唯一支付目标的内部稳定标识。',
+  MODIFY COLUMN `successful_attempt_id` BIGINT NOT NULL COMMENT '支付意图首次形成权威成功结果的支付尝试标识。',
+  MODIFY COLUMN `original_channel_txn_ref_id` BIGINT NOT NULL COMMENT '退款或争议所指向的原始成功服务商交易引用标识。',
+  MODIFY COLUMN `original_amount` DECIMAL(24,8) NOT NULL COMMENT '成功支付对应且可用于渠道退款的原始金额上限。',
+  MODIFY COLUMN `reserved_amount` DECIMAL(24,8) NOT NULL COMMENT '已创建但尚未成功或释放的渠道退款占用金额。',
+  MODIFY COLUMN `refunded_amount` DECIMAL(24,8) NOT NULL COMMENT '原成功支付已经确认通过渠道退回消费者的累计金额。',
+  MODIFY COLUMN `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
+  MODIFY COLUMN `version` BIGINT NOT NULL COMMENT '可变 Payment 业务根并发命令与乱序结果条件更新使用的单调版本。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  MODIFY COLUMN `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  COMMENT = 'Payment 侧渠道可退款金额位置，预占、消费和释放由乐观锁原子保护。';
+
+ALTER TABLE `t_channel_refund`
+  MODIFY COLUMN `channel_refund_id` BIGINT NOT NULL COMMENT 'Payment 为一个 Commerce 退款请求创建的唯一渠道退款标识。',
+  MODIFY COLUMN `commerce_refund_request_id` BIGINT NOT NULL COMMENT 'Commerce 拥有且在 Payment 中唯一对应渠道退款的业务请求标识。',
+  MODIFY COLUMN `payment_refund_position_id` BIGINT NOT NULL COMMENT 'Payment 对原成功交易并发控制预占与已退款金额的位置标识。',
+  MODIFY COLUMN `refund_amount` DECIMAL(24,8) NOT NULL COMMENT '本次渠道退款要求服务商退还给消费者的确定金额。',
+  MODIFY COLUMN `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
+  MODIFY COLUMN `refund_status` VARCHAR(64) NOT NULL COMMENT '渠道退款从创建、处理、未知到权威终态的当前状态。允许值：CREATED、PROCESSING、UNKNOWN、SUCCEEDED、FAILED、CANCELLED。',
+  MODIFY COLUMN `version` BIGINT NOT NULL COMMENT '可变 Payment 业务根并发命令与乱序结果条件更新使用的单调版本。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  MODIFY COLUMN `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  COMMENT = '一个 Commerce Refund Request 的唯一渠道退款根，UNKNOWN 继续占用退款位置。';
+
+ALTER TABLE `t_command_idempotency`
+  MODIFY COLUMN `command_idempotency_id` BIGINT NOT NULL COMMENT '一次 Payment 同步写命令幂等执行记录的内部唯一标识。',
+  MODIFY COLUMN `caller_scope` VARCHAR(128) NOT NULL COMMENT '隔离同步命令幂等键命名空间的稳定调用方作用域。取值来源：Payment Caller Scope Catalog；非固定枚举。',
+  MODIFY COLUMN `operation_type` VARCHAR(64) NOT NULL COMMENT 'Payment 同步写命令采用的受控业务操作代码。取值来源：Payment Command Operation Catalog；非固定枚举。',
+  MODIFY COLUMN `idempotency_key` VARCHAR(128) NOT NULL COMMENT '调用方作用域与操作类型内稳定识别同一业务命令的键。',
+  MODIFY COLUMN `request_hash` CHAR(64) NOT NULL COMMENT '幂等命令首次规范化请求的完整性哈希，用于拒绝同键不同请求。',
+  MODIFY COLUMN `command_status` VARCHAR(64) NOT NULL COMMENT '同步命令当前处于处理中、成功或失败的闭合状态。允许值：PROCESSING、SUCCEEDED、FAILED。',
+  MODIFY COLUMN `resource_type` VARCHAR(64) NULL COMMENT '幂等命令结果所指 Payment 业务资源的目录类型；无资源时为空。取值来源：Payment Command Resource Type Catalog；非固定枚举。',
+  MODIFY COLUMN `resource_id` BIGINT NULL COMMENT '幂等命令创建或作用到的 Payment 本库业务资源标识；无资源时为空。',
+  MODIFY COLUMN `response_code` VARCHAR(64) NULL COMMENT '幂等命令可重放响应采用的稳定业务结果代码；尚无结果时为空。取值来源：Payment Command Response Code Catalog；非固定枚举。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  MODIFY COLUMN `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  COMMENT = 'Payment 同步写命令的幂等记录与结果定位。';
+
+ALTER TABLE `t_compensation_event`
+  MODIFY COLUMN `id` BIGINT NOT NULL COMMENT '本地补偿事件记录的内部唯一标识。',
+  MODIFY COLUMN `event_key` VARCHAR(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NOT NULL COMMENT 'Handler 读取本服务权威事实使用的稳定业务键，最长 128 个 Java 字符；去首尾空白、拒绝控制字符，大小写敏感。',
+  MODIFY COLUMN `event_type` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NOT NULL COMMENT '全应用唯一注册的 Handler 类型，最长 64 个 Java 字符；去首尾空白、拒绝控制字符，大小写敏感。取值来源：Payment Event/Handler Catalog；非固定枚举。',
+  MODIFY COLUMN `payload_json` VARCHAR(4096) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NULL COMMENT '可选最小 JSON Object，通常为空；最多 4 KiB UTF-8 字节由框架校验，不得保存可从本库恢复的上下文、卡数据、Vault Token、凭据或临时交互指令。',
+  MODIFY COLUMN `execute_status` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'INIT' COMMENT '本地补偿任务执行状态。允许值：INIT、PROCESSING、ERROR、FAILED。成功后删除记录，FAILED 不改变业务资金状态。',
+  MODIFY COLUMN `execute_count` INT NOT NULL DEFAULT 0 COMMENT '已开始的 Handler 尝试次数，非负，Claim 时增加；达到上限后不得继续产生副作用。',
+  MODIFY COLUMN `next_execute_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '任务下次允许 Claim 的 UTC 微秒时间，由 Handler 退避策略更新。',
+  MODIFY COLUMN `lock_owner` VARCHAR(64) NULL COMMENT '当前持有本地补偿事件数据库 Claim Lease 的服务实例标识；未被认领时为空。',
+  MODIFY COLUMN `lock_until` DATETIME(6) NULL COMMENT '本地补偿事件 Claim Lease 到期并可被其他实例接管的时刻；无活动 Lease 时为空。',
+  MODIFY COLUMN `last_error_code` VARCHAR(64) NULL COMMENT '补偿事件最近一次执行失败的稳定错误分类代码；尚无错误时为空。取值来源：Payment Error Catalog；非固定枚举。',
+  MODIFY COLUMN `last_error_summary` VARCHAR(1000) NULL COMMENT '最近一次执行失败的脱敏摘要，最长 1000 字符；无错误时为空，不包含卡数据、凭据或其他敏感原值。',
+  MODIFY COLUMN `lock_version` BIGINT NOT NULL DEFAULT 1 COMMENT 'Claim/Lease 使用的正乐观锁版本；登记初始值固定为 1，仅当前 Lease 持有者可回写执行结果。',
+  MODIFY COLUMN `create_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '本地补偿记录创建的 UTC 微秒时间。',
+  MODIFY COLUMN `update_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '本地补偿记录最近更新的 UTC 微秒时间，由写入口维护。',
+  MODIFY COLUMN `sub_event_type` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NOT NULL COMMENT '同一 Handler 下的受控业务子类型，最长 64 个 Java 字符；与 event_key、event_type 共同组成稳定唯一身份。取值来源：Payment Compensation Sub Event Catalog；非固定枚举。',
+  COMMENT = '业务变化同事务登记的本地可靠执行记录；成功后删除，FAILED 保留并可受控重开。';
+
+-- 空旧工具表被交易级 Token 模型取代；再次核对该表 0 行后执行。
+DROP TABLE `t_payment_instrument`;

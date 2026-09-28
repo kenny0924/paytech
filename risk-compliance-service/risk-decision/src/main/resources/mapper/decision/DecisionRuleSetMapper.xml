@@ -1,0 +1,843 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.DecisionRuleSetMapper">
+
+    <resultMap id="RuleSetResultMap" type="com.paytech.risk.decision.core.dal.dataobject.RuleSet">
+        <constructor>
+            <idArg name="ruleSetId" column="rule_set_id" javaType="_long"/>
+            <arg name="decisionPointId" column="decision_point_id" javaType="_long"/>
+            <arg name="ruleSetCode" column="rule_set_code" javaType="java.lang.String"/>
+            <arg name="currentRuleSetVersionId" column="current_rule_set_version_id" javaType="_long"/>
+            <arg name="status" column="status" javaType="com.paytech.risk.decision.domain.enums.RuleSetManagementStatus"/>
+            <arg name="version" column="version" javaType="_long"/>
+            <arg name="deletedBy" column="deleted_by" javaType="java.lang.Long"/>
+            <arg name="deletedTime" column="deleted_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="deleteReasonCode" column="delete_reason_code" javaType="java.lang.String"/>
+            <arg name="deleteTriggerId" column="delete_trigger_id" javaType="java.lang.String"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="RuleSetReleaseReferenceResultMap" type="com.paytech.risk.decision.core.dal.dataobject.RuleSetReleaseReference">
+        <constructor>
+            <idArg name="releaseId" column="release_id" javaType="_long"/>
+            <arg name="releaseDecisionPointId" column="release_decision_point_id" javaType="_long"/>
+            <arg name="releaseStatus" column="release_status" javaType="com.paytech.risk.decision.domain.enums.DecisionReleaseStatus"/>
+            <arg name="activeSlot" column="active_slot" javaType="java.lang.Integer"/>
+            <arg name="pointVersionId" column="point_version_id" javaType="_long"/>
+            <arg name="pointDecisionPointId" column="point_decision_point_id" javaType="java.lang.Long"/>
+            <arg name="pointStatus" column="point_status" javaType="com.paytech.risk.decision.domain.enums.DecisionPointVersionStatus"/>
+            <arg name="bindingId" column="binding_id" javaType="java.lang.Long"/>
+            <arg name="ruleSetVersionId" column="rule_set_version_id" javaType="java.lang.Long"/>
+            <arg name="ruleDecisionPointId" column="rule_decision_point_id" javaType="java.lang.Long"/>
+            <arg name="ruleSetCode" column="rule_set_code" javaType="java.lang.String"/>
+            <arg name="ruleVersionStatus" column="rule_version_status" javaType="com.paytech.risk.decision.domain.enums.RuleSetVersionStatus"/>
+            <arg name="ruleSetId" column="rule_set_id" javaType="java.lang.Long"/>
+            <arg name="managementStatus" column="management_status" javaType="com.paytech.risk.decision.domain.enums.RuleSetManagementStatus"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="DecisionPointResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.DecisionPoint">
+        <constructor>
+            <idArg name="decisionPointId" column="decision_point_id" javaType="_long"/>
+            <arg name="pointCode" column="point_code" javaType="java.lang.String"/>
+            <arg name="pointName" column="point_name" javaType="java.lang.String"/>
+            <arg name="businessDomain" column="business_domain"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionBusinessDomain"/>
+            <arg name="status" column="status"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionPointStatus"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="DecisionPointVersionResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.DecisionPointVersion">
+        <constructor>
+            <idArg name="pointVersionId" column="point_version_id" javaType="_long"/>
+            <arg name="decisionPointId" column="decision_point_id" javaType="_long"/>
+            <arg name="versionNo" column="version_no" javaType="_int"/>
+            <arg name="inputContractCode" column="input_contract_code" javaType="java.lang.String"/>
+            <arg name="inputContractVersion" column="input_contract_version" javaType="_int"/>
+            <arg name="outputContractCode" column="output_contract_code" javaType="java.lang.String"/>
+            <arg name="defaultDecision" column="default_decision"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionValue"/>
+            <arg name="evaluationStrategy" column="evaluation_strategy"
+                 javaType="com.paytech.risk.decision.domain.enums.EvaluationStrategy"/>
+            <arg name="failureStrategy" column="failure_strategy"
+                 javaType="com.paytech.risk.decision.domain.enums.FailureStrategy"/>
+            <arg name="timeoutMillis" column="timeout_ms" javaType="_int"/>
+            <arg name="status" column="status"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionPointVersionStatus"/>
+            <arg name="contentHash" column="content_hash" javaType="java.lang.String"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="DecisionPointInputFieldResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.DecisionPointInputField">
+        <constructor>
+            <idArg name="inputFieldId" column="input_field_id" javaType="_long"/>
+            <arg name="pointVersionId" column="point_version_id" javaType="_long"/>
+            <arg name="fieldCode" column="field_code" javaType="java.lang.String"/>
+            <arg name="valueType" column="value_type"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionValueType"/>
+            <arg name="requiredFlag" column="required_flag" javaType="_boolean"/>
+            <arg name="dataClassification" column="data_classification"
+                 javaType="com.paytech.risk.decision.domain.enums.DataClassification"/>
+            <arg name="ruleReferenceFlag" column="rule_reference_flag" javaType="_boolean"/>
+            <arg name="actionParameterFlag" column="action_parameter_flag" javaType="_boolean"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="DecisionPointFeatureResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.DecisionPointFeature">
+        <constructor>
+            <idArg name="bindingId" column="binding_id" javaType="_long"/>
+            <arg name="pointVersionId" column="point_version_id" javaType="_long"/>
+            <arg name="featureVersionId" column="feature_version_id" javaType="_long"/>
+            <arg name="sequenceNo" column="sequence_no" javaType="_int"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="DecisionPointRuleSetResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.DecisionPointRuleSet">
+        <constructor>
+            <idArg name="bindingId" column="binding_id" javaType="_long"/>
+            <arg name="pointVersionId" column="point_version_id" javaType="_long"/>
+            <arg name="ruleSetVersionId" column="rule_set_version_id" javaType="_long"/>
+            <arg name="sequenceNo" column="sequence_no" javaType="_int"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="DecisionPointObligationResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.DecisionPointObligation">
+        <constructor>
+            <idArg name="obligationId" column="obligation_id" javaType="_long"/>
+            <arg name="pointVersionId" column="point_version_id" javaType="_long"/>
+            <arg name="triggerDecision" column="trigger_decision"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionValue"/>
+            <arg name="obligationType" column="obligation_type"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionObligationType"/>
+            <arg name="actionVersionId" column="action_version_id" javaType="java.lang.Long"/>
+            <arg name="sequenceNo" column="sequence_no" javaType="_int"/>
+            <arg name="failurePolicy" column="failure_policy"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionObligationFailurePolicy"/>
+            <arg name="enabledFlag" column="enabled_flag" javaType="_boolean"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="FeatureVersionResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.FeatureVersion">
+        <constructor>
+            <idArg name="featureVersionId" column="feature_version_id" javaType="_long"/>
+            <arg name="featureCode" column="feature_code" javaType="java.lang.String"/>
+            <arg name="featureName" column="feature_name" javaType="java.lang.String"/>
+            <arg name="businessCategory" column="business_category" javaType="java.lang.String"/>
+            <arg name="versionNo" column="version_no" javaType="_int"/>
+            <arg name="resultValueType" column="result_value_type"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionValueType"/>
+            <arg name="handlerCode" column="handler_code" javaType="java.lang.String"/>
+            <arg name="implementationVersion" column="implementation_version" javaType="java.lang.String"/>
+            <arg name="implementationHash" column="implementation_hash" javaType="java.lang.String"/>
+            <arg name="timeoutMillis" column="timeout_ms" javaType="_int"/>
+            <arg name="status" column="status"
+                 javaType="com.paytech.risk.decision.domain.enums.ExecutionVersionStatus"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="FeatureDependencyResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.FeatureDependency">
+        <constructor>
+            <idArg name="dependencyId" column="dependency_id" javaType="_long"/>
+            <arg name="featureVersionId" column="feature_version_id" javaType="_long"/>
+            <arg name="dependencyFeatureVersionId" column="dependency_feature_version_id" javaType="_long"/>
+            <arg name="sequenceNo" column="sequence_no" javaType="_int"/>
+            <arg name="requiredFlag" column="required_flag" javaType="_boolean"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="RuleSetVersionResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.RuleSetVersion">
+        <constructor>
+            <idArg name="ruleSetVersionId" column="rule_set_version_id" javaType="_long"/>
+            <arg name="decisionPointId" column="decision_point_id" javaType="_long"/>
+            <arg name="ruleSetCode" column="rule_set_code" javaType="java.lang.String"/>
+            <arg name="ruleSetName" column="rule_set_name" javaType="java.lang.String"/>
+            <arg name="versionNo" column="version_no" javaType="_int"/>
+            <arg name="status" column="status"
+                 javaType="com.paytech.risk.decision.domain.enums.RuleSetVersionStatus"/>
+            <arg name="contentHash" column="content_hash" javaType="java.lang.String"/>
+            <arg name="createdBy" column="created_by" javaType="_long"/>
+            <arg name="changeReason" column="change_reason" javaType="java.lang.String"/>
+            <arg name="frozenBy" column="frozen_by" javaType="java.lang.Long"/>
+            <arg name="frozenTime" column="frozen_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="contentFormat" column="content_format" javaType="java.lang.String"/>
+            <arg name="inputContractCode" column="input_contract_code" javaType="java.lang.String"/>
+            <arg name="inputContractVersion" column="input_contract_version" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="RiskRuleResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.RiskRule">
+        <constructor>
+            <idArg name="ruleId" column="rule_id" javaType="_long"/>
+            <arg name="ruleSetVersionId" column="rule_set_version_id" javaType="_long"/>
+            <arg name="ruleCode" column="rule_code" javaType="java.lang.String"/>
+            <arg name="ruleName" column="rule_name" javaType="java.lang.String"/>
+            <arg name="priorityNo" column="priority_no" javaType="_int"/>
+            <arg name="enabledFlag" column="enabled_flag" javaType="_boolean"/>
+            <arg name="reasonCode" column="reason_code" javaType="java.lang.String"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="reasonMessage" column="reason_message" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="RuleNodeResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.RuleNode">
+        <constructor>
+            <idArg name="nodeId" column="node_id" javaType="_long"/>
+            <arg name="ruleId" column="rule_id" javaType="_long"/>
+            <arg name="parentNodeId" column="parent_node_id" javaType="java.lang.Long"/>
+            <arg name="nodeType" column="node_type"
+                 javaType="com.paytech.risk.decision.domain.enums.NodeType"/>
+            <arg name="groupOperator" column="group_operator"
+                 javaType="com.paytech.risk.decision.domain.enums.GroupOperator"/>
+            <arg name="comparisonOperator" column="comparison_operator"
+                 javaType="com.paytech.risk.decision.domain.enums.ComparisonOperator"/>
+            <arg name="sequenceNo" column="sequence_no" javaType="_int"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="RuleOperandResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.RuleOperand">
+        <constructor>
+            <idArg name="operandId" column="operand_id" javaType="_long"/>
+            <arg name="nodeId" column="node_id" javaType="_long"/>
+            <arg name="operandRole" column="operand_role"
+                 javaType="com.paytech.risk.decision.domain.enums.OperandRole"/>
+            <arg name="valueSequence" column="value_sequence" javaType="_int"/>
+            <arg name="sourceType" column="source_type"
+                 javaType="com.paytech.risk.decision.domain.enums.OperandSource"/>
+            <arg name="featureVersionId" column="feature_version_id" javaType="java.lang.Long"/>
+            <arg name="fieldCode" column="field_code" javaType="java.lang.String"/>
+            <arg name="valueType" column="value_type"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionValueType"/>
+            <arg name="stringValue" column="string_value" javaType="java.lang.String"/>
+            <arg name="numberValue" column="number_value" javaType="java.math.BigDecimal"/>
+            <arg name="booleanValue" column="boolean_value" javaType="java.lang.Boolean"/>
+            <arg name="datetimeValue" column="datetime_value" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="durationValue" column="duration_value" javaType="java.lang.Long"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="variableCode" column="variable_code" javaType="java.lang.String"/>
+            <arg name="numericUnit" column="numeric_unit" javaType="com.paytech.risk.decision.domain.enums.NumericUnit"/>
+            <arg name="currencyCode" column="currency_code" javaType="java.lang.String"/>
+            <arg name="currencyVariableCode" column="currency_variable_code" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="ActionVersionResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.ActionVersion">
+        <constructor>
+            <idArg name="actionVersionId" column="action_version_id" javaType="_long"/>
+            <arg name="actionCode" column="action_code" javaType="java.lang.String"/>
+            <arg name="actionName" column="action_name" javaType="java.lang.String"/>
+            <arg name="actionCategory" column="action_category"
+                 javaType="com.paytech.risk.decision.domain.enums.ActionCategory"/>
+            <arg name="versionNo" column="version_no" javaType="_int"/>
+            <arg name="handlerCode" column="handler_code" javaType="java.lang.String"/>
+            <arg name="implementationVersion" column="implementation_version" javaType="java.lang.String"/>
+            <arg name="implementationHash" column="implementation_hash" javaType="java.lang.String"/>
+            <arg name="terminalFlag" column="terminal_flag" javaType="_boolean"/>
+            <arg name="decisionCode" column="decision_code"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionValue"/>
+            <arg name="mergePolicy" column="merge_policy"
+                 javaType="com.paytech.risk.decision.domain.enums.MergePolicy"/>
+            <arg name="shadowSupportedFlag" column="shadow_supported_flag" javaType="_boolean"/>
+            <arg name="status" column="status"
+                 javaType="com.paytech.risk.decision.domain.enums.ExecutionVersionStatus"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="updateTime" column="update_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="ActionParameterDefinitionResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.ActionParameterDefinition">
+        <constructor>
+            <idArg name="parameterDefinitionId" column="parameter_definition_id" javaType="_long"/>
+            <arg name="actionVersionId" column="action_version_id" javaType="_long"/>
+            <arg name="parameterCode" column="parameter_code" javaType="java.lang.String"/>
+            <arg name="valueType" column="value_type"
+                 javaType="com.paytech.risk.decision.domain.enums.DecisionValueType"/>
+            <arg name="requiredFlag" column="required_flag" javaType="_boolean"/>
+            <arg name="allowedSourceType" column="allowed_source_type"
+                 javaType="com.paytech.risk.decision.domain.enums.OperandSource"/>
+            <arg name="targetParameterFlag" column="target_parameter_flag" javaType="_boolean"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="RuleActionResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.RuleAction">
+        <constructor>
+            <idArg name="ruleActionId" column="rule_action_id" javaType="_long"/>
+            <arg name="ruleId" column="rule_id" javaType="_long"/>
+            <arg name="actionVersionId" column="action_version_id" javaType="_long"/>
+            <arg name="sequenceNo" column="sequence_no" javaType="_int"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="targetBindingCode" column="target_binding_code" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="RuleActionParameterResultMap"
+               type="com.paytech.risk.decision.core.dal.dataobject.RuleActionParameter">
+        <constructor>
+            <idArg name="parameterId" column="parameter_id" javaType="_long"/>
+            <arg name="ruleActionId" column="rule_action_id" javaType="_long"/>
+            <arg name="parameterDefinitionId" column="parameter_definition_id" javaType="_long"/>
+            <arg name="valueSequence" column="value_sequence" javaType="_int"/>
+            <arg name="sourceType" column="source_type"
+                 javaType="com.paytech.risk.decision.domain.enums.OperandSource"/>
+            <arg name="featureVersionId" column="feature_version_id" javaType="java.lang.Long"/>
+            <arg name="fieldCode" column="field_code" javaType="java.lang.String"/>
+            <arg name="stringValue" column="string_value" javaType="java.lang.String"/>
+            <arg name="numberValue" column="number_value" javaType="java.math.BigDecimal"/>
+            <arg name="booleanValue" column="boolean_value" javaType="java.lang.Boolean"/>
+            <arg name="datetimeValue" column="datetime_value" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="durationValue" column="duration_value" javaType="java.lang.Long"/>
+            <arg name="createTime" column="create_time" javaType="java.time.Instant"
+                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg name="variableCode" column="variable_code" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="RuleSetListFilter">
+        FROM t_rule_set rs
+        JOIN t_rule_set_version rsv ON rsv.rule_set_version_id = rs.current_rule_set_version_id
+        JOIN t_decision_point dp ON dp.decision_point_id = rs.decision_point_id
+        WHERE rs.status = 'CONFIGURABLE'
+        <if test="pointCode != null">
+            AND dp.point_code = #{pointCode}
+        </if>
+        <if test="ruleSetCode != null">
+            AND rsv.rule_set_code = #{ruleSetCode}
+        </if>
+        <if test="status != null">
+            AND rsv.status = #{status}
+        </if>
+    </sql>
+
+    <select id="selectDecisionPointByCode" resultMap="DecisionPointResultMap" useCache="false">
+        SELECT decision_point_id, point_code, point_name, business_domain, status, create_time, update_time
+        FROM t_decision_point
+        WHERE point_code = #{pointCode}
+    </select>
+
+    <select id="selectDecisionPointById" resultMap="DecisionPointResultMap" useCache="false">
+        SELECT decision_point_id, point_code, point_name, business_domain, status, create_time, update_time
+        FROM t_decision_point
+        WHERE decision_point_id = #{decisionPointId}
+    </select>
+
+    <select id="selectDecisionPointsByIds" resultMap="DecisionPointResultMap" useCache="false">
+        SELECT decision_point_id, point_code, point_name, business_domain, status, create_time, update_time
+        FROM t_decision_point
+        WHERE decision_point_id IN
+        <foreach collection="decisionPointIds" item="decisionPointId" open="(" separator="," close=")">
+            #{decisionPointId}
+        </foreach>
+        ORDER BY decision_point_id
+    </select>
+
+    <select id="lockDecisionPoint" resultMap="DecisionPointResultMap"
+            useCache="false" flushCache="true">
+        SELECT decision_point_id, point_code, point_name, business_domain, status, create_time, update_time
+        FROM t_decision_point
+        WHERE decision_point_id = #{decisionPointId}
+        FOR UPDATE
+    </select>
+
+    <select id="selectRuleSetVersion" resultMap="RuleSetVersionResultMap" useCache="false">
+        SELECT input_contract_code, input_contract_version, content_format, rule_set_version_id, decision_point_id, rule_set_code, rule_set_name, version_no, status,
+               content_hash, created_by, change_reason, frozen_by, frozen_time, create_time, update_time
+        FROM t_rule_set_version
+        WHERE rule_set_version_id = #{ruleSetVersionId}
+    </select>
+
+    <select id="lockRuleSetCodeRange" resultMap="RuleSetVersionResultMap"
+            useCache="false" flushCache="true">
+        SELECT input_contract_code, input_contract_version, content_format, rule_set_version_id, decision_point_id, rule_set_code, rule_set_name, version_no, status,
+               content_hash, created_by, change_reason, frozen_by, frozen_time, create_time, update_time
+        FROM t_rule_set_version FORCE INDEX (uk_rule_set_ver)
+        WHERE decision_point_id = #{decisionPointId}
+          AND rule_set_code = #{ruleSetCode}
+        ORDER BY version_no DESC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <select id="lockRuleSetVersion" resultMap="RuleSetVersionResultMap"
+            useCache="false" flushCache="true">
+        SELECT input_contract_code, input_contract_version, content_format, rule_set_version_id, decision_point_id, rule_set_code, rule_set_name, version_no, status,
+               content_hash, created_by, change_reason, frozen_by, frozen_time, create_time, update_time
+        FROM t_rule_set_version
+        WHERE rule_set_version_id = #{ruleSetVersionId}
+        FOR UPDATE
+    </select>
+
+    <select id="selectRuleSetVersions" resultMap="RuleSetVersionResultMap" useCache="false">
+        SELECT input_contract_code, input_contract_version, content_format, rsv.rule_set_version_id, rsv.decision_point_id, rsv.rule_set_code, rsv.rule_set_name,
+               rsv.version_no, rsv.status, rsv.content_hash, rsv.created_by, rsv.change_reason,
+               rsv.frozen_by, rsv.frozen_time, rsv.create_time, rsv.update_time
+        <include refid="RuleSetListFilter"/>
+        ORDER BY rsv.create_time DESC, rsv.rule_set_version_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countRuleSetVersions" resultType="long" useCache="false">
+        SELECT COUNT(*)
+        <include refid="RuleSetListFilter"/>
+    </select>
+
+    <select id="selectCompanionBindingsByRuleSetVersionIds"
+            resultMap="DecisionPointRuleSetResultMap" useCache="false">
+        SELECT binding_id, point_version_id, rule_set_version_id, sequence_no, create_time
+        FROM t_decision_point_rule_set
+        WHERE rule_set_version_id IN
+        <foreach collection="ruleSetVersionIds" item="ruleSetVersionId" open="(" separator="," close=")">
+            #{ruleSetVersionId}
+        </foreach>
+        ORDER BY rule_set_version_id, point_version_id, sequence_no, binding_id
+    </select>
+
+    <select id="selectPointVersion" resultMap="DecisionPointVersionResultMap" useCache="false">
+        SELECT point_version_id, decision_point_id, version_no, input_contract_code, input_contract_version,
+               output_contract_code, default_decision, evaluation_strategy, failure_strategy, timeout_ms,
+               status, content_hash, create_time, update_time
+        FROM t_decision_point_version
+        WHERE point_version_id = #{pointVersionId}
+    </select>
+
+    <select id="selectPointVersionsByIds" resultMap="DecisionPointVersionResultMap" useCache="false">
+        SELECT point_version_id, decision_point_id, version_no, input_contract_code, input_contract_version,
+               output_contract_code, default_decision, evaluation_strategy, failure_strategy, timeout_ms,
+               status, content_hash, create_time, update_time
+        FROM t_decision_point_version
+        WHERE point_version_id IN
+        <foreach collection="pointVersionIds" item="pointVersionId" open="(" separator="," close=")">
+            #{pointVersionId}
+        </foreach>
+    </select>
+
+    <select id="selectRuleSetVersionsByIds" resultMap="RuleSetVersionResultMap" useCache="false">
+        SELECT input_contract_code, input_contract_version, content_format, rule_set_version_id, decision_point_id, rule_set_code, rule_set_name, version_no, status,
+               content_hash, created_by, change_reason, frozen_by, frozen_time, create_time, update_time
+        FROM t_rule_set_version
+        WHERE rule_set_version_id IN
+        <foreach collection="ruleSetVersionIds" item="ruleSetVersionId" open="(" separator="," close=")">
+            #{ruleSetVersionId}
+        </foreach>
+    </select>
+
+    <select id="lockPointVersion" resultMap="DecisionPointVersionResultMap"
+            useCache="false" flushCache="true">
+        SELECT point_version_id, decision_point_id, version_no, input_contract_code, input_contract_version,
+               output_contract_code, default_decision, evaluation_strategy, failure_strategy, timeout_ms,
+               status, content_hash, create_time, update_time
+        FROM t_decision_point_version
+        WHERE point_version_id = #{pointVersionId}
+        FOR UPDATE
+    </select>
+
+    <select id="selectPointInputFields" resultMap="DecisionPointInputFieldResultMap" useCache="false">
+        SELECT input_field_id, point_version_id, field_code, value_type, required_flag, data_classification,
+               rule_reference_flag, action_parameter_flag, create_time
+        FROM t_decision_point_input_field
+        WHERE point_version_id = #{pointVersionId}
+        ORDER BY field_code, input_field_id
+    </select>
+
+    <select id="selectPointRuleSets" resultMap="DecisionPointRuleSetResultMap" useCache="false">
+        SELECT binding_id, point_version_id, rule_set_version_id, sequence_no, create_time
+        FROM t_decision_point_rule_set
+        WHERE point_version_id = #{pointVersionId}
+        ORDER BY sequence_no, binding_id
+    </select>
+
+    <select id="selectPointRuleSetsByPointVersionIds"
+            resultMap="DecisionPointRuleSetResultMap" useCache="false">
+        SELECT binding_id, point_version_id, rule_set_version_id, sequence_no, create_time
+        FROM t_decision_point_rule_set
+        WHERE point_version_id IN
+        <foreach collection="pointVersionIds" item="pointVersionId" open="(" separator="," close=")">
+            #{pointVersionId}
+        </foreach>
+        ORDER BY point_version_id, sequence_no, binding_id
+    </select>
+
+    <select id="selectPointFeatures" resultMap="DecisionPointFeatureResultMap" useCache="false">
+        SELECT binding_id, point_version_id, feature_version_id, sequence_no, create_time
+        FROM t_decision_point_feature
+        WHERE point_version_id = #{pointVersionId}
+        ORDER BY sequence_no, binding_id
+    </select>
+
+    <select id="selectPointObligations" resultMap="DecisionPointObligationResultMap" useCache="false">
+        SELECT obligation_id, point_version_id, trigger_decision, obligation_type, action_version_id,
+               sequence_no, failure_policy, enabled_flag, create_time
+        FROM t_decision_point_obligation
+        WHERE point_version_id = #{pointVersionId}
+        ORDER BY sequence_no, obligation_id
+    </select>
+
+    <select id="selectRules" resultMap="RiskRuleResultMap" useCache="false">
+        SELECT reason_message, rule_id, rule_set_version_id, rule_code, rule_name, priority_no, enabled_flag,
+               reason_code, create_time, update_time
+        FROM t_risk_rule
+        WHERE rule_set_version_id = #{ruleSetVersionId}
+        ORDER BY priority_no, rule_code, rule_id
+    </select>
+
+    <select id="selectNodes" resultMap="RuleNodeResultMap" useCache="false">
+        SELECT node_id, rule_id, parent_node_id, node_type, group_operator, comparison_operator,
+               sequence_no, create_time, update_time
+        FROM t_rule_node
+        WHERE rule_id IN
+        <foreach collection="ruleIds" item="ruleId" open="(" separator="," close=")">
+            #{ruleId}
+        </foreach>
+        ORDER BY rule_id, sequence_no, node_id
+    </select>
+
+    <select id="selectOperands" resultMap="RuleOperandResultMap" useCache="false">
+        SELECT variable_code, numeric_unit, currency_code, currency_variable_code, operand_id, node_id, operand_role, value_sequence, source_type, feature_version_id,
+               field_code, value_type, string_value, number_value, boolean_value, datetime_value,
+               duration_value, create_time, update_time
+        FROM t_rule_operand
+        WHERE node_id IN
+        <foreach collection="nodeIds" item="nodeId" open="(" separator="," close=")">
+            #{nodeId}
+        </foreach>
+        ORDER BY node_id,
+                 CASE operand_role WHEN 'LEFT' THEN 0 ELSE 1 END,
+                 value_sequence, operand_id
+    </select>
+
+    <select id="selectRuleActions" resultMap="RuleActionResultMap" useCache="false">
+        SELECT target_binding_code, rule_action_id, rule_id, action_version_id, sequence_no, create_time
+        FROM t_rule_action
+        WHERE rule_id IN
+        <foreach collection="ruleIds" item="ruleId" open="(" separator="," close=")">
+            #{ruleId}
+        </foreach>
+        ORDER BY rule_id, sequence_no, rule_action_id
+    </select>
+
+    <select id="selectActionVersions" resultMap="ActionVersionResultMap" useCache="false">
+        SELECT action_version_id, action_code, action_name, action_category, version_no, handler_code,
+               implementation_version, implementation_hash, terminal_flag, decision_code, merge_policy,
+               shadow_supported_flag, status, create_time, update_time
+        FROM t_action_version
+        WHERE action_version_id IN
+        <foreach collection="actionVersionIds" item="actionVersionId" open="(" separator="," close=")">
+            #{actionVersionId}
+        </foreach>
+        ORDER BY action_version_id
+    </select>
+
+    <select id="selectActionParameterDefinitions"
+            resultMap="ActionParameterDefinitionResultMap" useCache="false">
+        SELECT parameter_definition_id, action_version_id, parameter_code, value_type, required_flag,
+               allowed_source_type, target_parameter_flag, create_time
+        FROM t_action_parameter_definition
+        WHERE action_version_id IN
+        <foreach collection="actionVersionIds" item="actionVersionId" open="(" separator="," close=")">
+            #{actionVersionId}
+        </foreach>
+        ORDER BY action_version_id, parameter_code, parameter_definition_id
+    </select>
+
+    <select id="selectRuleActionParameters" resultMap="RuleActionParameterResultMap" useCache="false">
+        SELECT variable_code, parameter_id, rule_action_id, parameter_definition_id, value_sequence, source_type,
+               feature_version_id, field_code, string_value, number_value, boolean_value,
+               datetime_value, duration_value, create_time
+        FROM t_rule_action_parameter
+        WHERE rule_action_id IN
+        <foreach collection="ruleActionIds" item="ruleActionId" open="(" separator="," close=")">
+            #{ruleActionId}
+        </foreach>
+        ORDER BY rule_action_id, parameter_definition_id, value_sequence, parameter_id
+    </select>
+
+    <select id="selectFeatureVersions" resultMap="FeatureVersionResultMap" useCache="false">
+        SELECT feature_version_id, feature_code, feature_name, business_category, version_no,
+               result_value_type, handler_code, implementation_version, implementation_hash,
+               timeout_ms, status, create_time, update_time
+        FROM t_feature_version
+        WHERE feature_version_id IN
+        <foreach collection="featureVersionIds" item="featureVersionId" open="(" separator="," close=")">
+            #{featureVersionId}
+        </foreach>
+        ORDER BY feature_version_id
+    </select>
+
+    <select id="selectFeatureDependencies" resultMap="FeatureDependencyResultMap" useCache="false">
+        SELECT dependency_id, feature_version_id, dependency_feature_version_id, sequence_no,
+               required_flag, create_time
+        FROM t_feature_dependency
+        WHERE feature_version_id IN
+        <foreach collection="featureVersionIds" item="featureVersionId" open="(" separator="," close=")">
+            #{featureVersionId}
+        </foreach>
+        ORDER BY feature_version_id, sequence_no, dependency_id
+    </select>
+
+    <insert id="insertRuleSetVersion">
+        INSERT INTO t_rule_set_version
+        (rule_set_version_id, decision_point_id, rule_set_code, rule_set_name, version_no, status,
+         content_hash, created_by, change_reason, frozen_by, frozen_time, create_time, update_time, content_format, input_contract_code, input_contract_version)
+        VALUES
+        (#{value.ruleSetVersionId}, #{value.decisionPointId}, #{value.ruleSetCode}, #{value.ruleSetName},
+         #{value.versionNo},
+         #{value.status},
+         #{value.contentHash}, #{value.createdBy}, #{value.changeReason},
+         #{value.frozenBy,jdbcType=BIGINT},
+         #{value.frozenTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+         #{value.createTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+         #{value.updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{value.contentFormat}, #{value.inputContractCode}, #{value.inputContractVersion})
+    </insert>
+
+    <insert id="insertRules">
+        INSERT INTO t_risk_rule
+        (rule_id, rule_set_version_id, rule_code, rule_name, priority_no, enabled_flag, reason_code,
+         create_time, update_time, reason_message)
+        VALUES
+        <foreach collection="values" item="value" separator=",">
+            (#{value.ruleId}, #{value.ruleSetVersionId}, #{value.ruleCode}, #{value.ruleName},
+             #{value.priorityNo}, #{value.enabledFlag}, #{value.reasonCode,jdbcType=VARCHAR},
+             #{value.createTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+             #{value.updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{value.reasonMessage,jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+
+    <insert id="insertNodes">
+        INSERT INTO t_rule_node
+        (node_id, rule_id, parent_node_id, node_type, group_operator, comparison_operator, sequence_no,
+         create_time, update_time)
+        VALUES
+        <foreach collection="values" item="value" separator=",">
+            (#{value.nodeId}, #{value.ruleId}, #{value.parentNodeId,jdbcType=BIGINT},
+             #{value.nodeType},
+             #{value.groupOperator,jdbcType=VARCHAR},
+             #{value.comparisonOperator,jdbcType=VARCHAR},
+             #{value.sequenceNo},
+             #{value.createTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+             #{value.updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})
+        </foreach>
+    </insert>
+
+    <insert id="insertOperands">
+        INSERT INTO t_rule_operand
+        (operand_id, node_id, operand_role, value_sequence, source_type, feature_version_id, field_code,
+         value_type, string_value, number_value, boolean_value, datetime_value, duration_value,
+         create_time, update_time, variable_code, numeric_unit, currency_code, currency_variable_code)
+        VALUES
+        <foreach collection="values" item="value" separator=",">
+            (#{value.operandId}, #{value.nodeId},
+             #{value.operandRole},
+             #{value.valueSequence},
+             #{value.sourceType},
+             #{value.featureVersionId,jdbcType=BIGINT}, #{value.fieldCode,jdbcType=VARCHAR},
+             #{value.valueType},
+             #{value.stringValue,jdbcType=VARCHAR}, #{value.numberValue,jdbcType=DECIMAL},
+             #{value.booleanValue,jdbcType=BOOLEAN},
+             #{value.datetimeValue,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+             #{value.durationValue,jdbcType=BIGINT},
+             #{value.createTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+             #{value.updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{value.variableCode,jdbcType=VARCHAR}, #{value.numericUnit,jdbcType=VARCHAR}, #{value.currencyCode,jdbcType=VARCHAR}, #{value.currencyVariableCode,jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+
+    <insert id="insertRuleActions">
+        INSERT INTO t_rule_action
+        (rule_action_id, rule_id, action_version_id, sequence_no, create_time, target_binding_code)
+        VALUES
+        <foreach collection="values" item="value" separator=",">
+            (#{value.ruleActionId}, #{value.ruleId}, #{value.actionVersionId}, #{value.sequenceNo},
+             #{value.createTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{value.targetBindingCode,jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+
+    <insert id="insertRuleActionParameters">
+        INSERT INTO t_rule_action_parameter
+        (parameter_id, rule_action_id, parameter_definition_id, value_sequence, source_type,
+         feature_version_id, field_code, string_value, number_value, boolean_value, datetime_value,
+         duration_value, create_time, variable_code)
+        VALUES
+        <foreach collection="values" item="value" separator=",">
+            (#{value.parameterId}, #{value.ruleActionId}, #{value.parameterDefinitionId}, #{value.valueSequence},
+             #{value.sourceType}, #{value.featureVersionId,jdbcType=BIGINT}, #{value.fieldCode,jdbcType=VARCHAR},
+             #{value.stringValue,jdbcType=VARCHAR}, #{value.numberValue,jdbcType=DECIMAL},
+             #{value.booleanValue,jdbcType=BOOLEAN},
+             #{value.datetimeValue,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+             #{value.durationValue,jdbcType=BIGINT},
+             #{value.createTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{value.variableCode,jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+
+    <update id="retireRuleSetVersion">
+        UPDATE t_rule_set_version
+        SET status = 'RETIRED',
+            update_time = #{updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE rule_set_version_id = #{ruleSetVersionId}
+          AND status = #{expectedStatus}
+    </update>
+
+    <update id="retirePointVersion">
+        UPDATE t_decision_point_version
+        SET status = 'RETIRED',
+            update_time = #{updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE point_version_id = #{pointVersionId}
+          AND status = #{expectedStatus}
+    </update>
+
+    <update id="freezeRuleSetVersion">
+        UPDATE t_rule_set_version
+        SET status = 'FROZEN',
+            frozen_by = #{frozenBy},
+            frozen_time = #{frozenTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+            update_time = #{updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE rule_set_version_id = #{ruleSetVersionId}
+          AND status = #{expectedStatus}
+          AND content_hash = #{expectedContentHash}
+    </update>
+
+    <update id="freezePointVersion">
+        UPDATE t_decision_point_version
+        SET status = 'FROZEN',
+            update_time = #{updateTime,jdbcType=TIMESTAMP,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE point_version_id = #{pointVersionId}
+          AND status = #{expectedStatus}
+          AND content_hash = #{expectedContentHash}
+    </update>
+
+    <sql id="RuleSetColumns">rule_set_id, decision_point_id, rule_set_code, current_rule_set_version_id, status, version, deleted_by, deleted_time, delete_reason_code, delete_trigger_id, create_time, update_time</sql>
+    <select id="selectRuleSet" resultMap="RuleSetResultMap" useCache="false">
+        SELECT <include refid="RuleSetColumns"/> FROM t_rule_set WHERE rule_set_id = #{ruleSetId}
+    </select>
+    <select id="selectRuleSetByCode" resultMap="RuleSetResultMap" useCache="false">
+        SELECT <include refid="RuleSetColumns"/> FROM t_rule_set
+        WHERE decision_point_id = #{decisionPointId} AND rule_set_code = #{ruleSetCode}
+    </select>
+    <select id="lockRuleSet" resultMap="RuleSetResultMap" useCache="false" flushCache="true">
+        SELECT <include refid="RuleSetColumns"/> FROM t_rule_set
+        WHERE decision_point_id = #{decisionPointId} AND rule_set_code = #{ruleSetCode} FOR UPDATE
+    </select>
+    <select id="selectRuleSetsByCurrentVersions" resultMap="RuleSetResultMap" useCache="false">
+        SELECT <include refid="RuleSetColumns"/> FROM t_rule_set WHERE current_rule_set_version_id IN
+        <foreach collection="versionIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+    <insert id="insertRuleSet">
+        INSERT INTO t_rule_set (<include refid="RuleSetColumns"/>) VALUES
+        (#{value.ruleSetId}, #{value.decisionPointId}, #{value.ruleSetCode}, #{value.currentRuleSetVersionId}, #{value.status}, #{value.version}, #{value.deletedBy}, #{value.deletedTime}, #{value.deleteReasonCode}, #{value.deleteTriggerId}, #{value.createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{value.updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})
+    </insert>
+    <update id="advanceRuleSet">
+        UPDATE t_rule_set SET current_rule_set_version_id = #{currentVersionId}, version = version + 1,
+            update_time = #{time,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE rule_set_id = #{value.ruleSetId} AND version = #{value.version}
+            AND current_rule_set_version_id = #{value.currentRuleSetVersionId} AND status = 'CONFIGURABLE'
+    </update>
+    <update id="deleteRuleSet">
+        UPDATE t_rule_set SET status = 'DELETED', version = version + 1, deleted_by = #{actorId},
+            deleted_time = #{time,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, delete_reason_code = 'OPERATOR_REQUEST', delete_trigger_id = #{triggerId},
+            update_time = #{time,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE rule_set_id = #{value.ruleSetId} AND version = #{value.version}
+            AND current_rule_set_version_id = #{value.currentRuleSetVersionId} AND status = 'CONFIGURABLE'
+    </update>
+    <select id="selectReleaseReferences" resultMap="RuleSetReleaseReferenceResultMap" useCache="false" flushCache="true">
+        SELECT dr.release_id, dr.decision_point_id AS release_decision_point_id, dr.status AS release_status,
+            dr.active_slot, dr.point_version_id, pv.decision_point_id AS point_decision_point_id,
+            pv.status AS point_status, b.binding_id, rv.rule_set_version_id,
+            rv.decision_point_id AS rule_decision_point_id, rv.rule_set_code, rv.status AS rule_version_status,
+            rs.rule_set_id, rs.status AS management_status
+        FROM t_decision_release dr
+        LEFT JOIN t_decision_point_version pv ON pv.point_version_id = dr.point_version_id
+        LEFT JOIN t_decision_point_rule_set b ON b.point_version_id = dr.point_version_id
+        LEFT JOIN t_rule_set_version rv ON rv.rule_set_version_id = b.rule_set_version_id
+        LEFT JOIN t_rule_set rs ON rs.decision_point_id = rv.decision_point_id AND rs.rule_set_code = rv.rule_set_code
+        WHERE (dr.status = 'ACTIVE' OR dr.active_slot IS NOT NULL)
+          AND (dr.decision_point_id IN
+            <foreach collection="pointIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+            OR rs.rule_set_id IN
+            <foreach collection="ruleSetIds" item="id" open="(" separator="," close=")">#{id}</foreach>)
+        ORDER BY dr.release_id, b.binding_id
+        <if test="lock">FOR SHARE</if>
+    </select>
+    <select id="countMalformedRuleSets" resultType="long" useCache="false">
+        SELECT (
+            SELECT COUNT(*) FROM t_rule_set rs
+            LEFT JOIN t_decision_point dp ON dp.decision_point_id = rs.decision_point_id
+            LEFT JOIN t_rule_set_version current ON current.rule_set_version_id = rs.current_rule_set_version_id
+            WHERE rs.status != 'DELETED'
+            <if test="pointCode != null">AND (dp.point_code = #{pointCode} OR dp.decision_point_id IS NULL)</if>
+            <if test="ruleSetCode != null">AND rs.rule_set_code = #{ruleSetCode}</if>
+            AND (rs.status != 'CONFIGURABLE' OR dp.decision_point_id IS NULL
+                OR current.rule_set_version_id IS NULL OR current.status NOT IN ('DRAFT', 'FROZEN')
+                OR current.decision_point_id != rs.decision_point_id OR current.rule_set_code != rs.rule_set_code
+                OR EXISTS (SELECT 1 FROM t_rule_set_version newer
+                    WHERE newer.decision_point_id = rs.decision_point_id AND newer.rule_set_code = rs.rule_set_code
+                        AND newer.version_no &gt; current.version_no))
+        ) + (
+            SELECT COUNT(DISTINCT rv.decision_point_id, rv.rule_set_code) FROM t_rule_set_version rv
+            LEFT JOIN t_decision_point dp ON dp.decision_point_id = rv.decision_point_id
+            LEFT JOIN t_rule_set rs ON rs.decision_point_id = rv.decision_point_id AND rs.rule_set_code = rv.rule_set_code
+            WHERE rs.rule_set_id IS NULL
+            <if test="pointCode != null">AND (dp.point_code = #{pointCode} OR dp.decision_point_id IS NULL)</if>
+            <if test="ruleSetCode != null">AND rv.rule_set_code = #{ruleSetCode}</if>
+        )
+    </select>
+</mapper>

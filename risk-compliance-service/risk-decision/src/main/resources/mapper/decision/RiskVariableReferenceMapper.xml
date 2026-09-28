@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.RiskVariableReferenceMapper">
+    <select id="bounds" resultType="com.paytech.risk.decision.core.dal.dataobject.VariableReferenceBound">
+        SELECT 'OPERAND' AS phase,COALESCE(MAX(operand_id),0) AS upper_bound FROM t_rule_operand
+        UNION ALL SELECT 'OPERAND_CURRENCY',COALESCE(MAX(operand_id),0) FROM t_rule_operand
+        UNION ALL SELECT 'ACTION_PARAMETER',COALESCE(MAX(parameter_id),0) FROM t_rule_action_parameter
+        UNION ALL SELECT 'VARIABLE_DEPENDENCY',COALESCE(MAX(variable_id),0) FROM t_risk_variable
+        UNION ALL SELECT 'FLOW_EDGE',COALESCE(MAX(edge_id),0) FROM t_decision_flow_edge
+    </select>
+    <select id="scan" resultType="com.paytech.risk.decision.core.dal.dataobject.VariableReferenceRow">
+        SELECT * FROM (
+        <choose>
+            <when test="phase == 'OPERAND' or phase == 'OPERAND_CURRENCY'">
+                SELECT o.operand_id AS scan_id,'RULE_SET' AS consumer_type,s.rule_set_id AS root_id,
+                    v.rule_set_version_id AS version_id,v.version_no,v.rule_set_code AS code,v.rule_set_name AS name,
+                    CASE WHEN s.status &lt;&gt; 'DELETED' AND s.current_rule_set_version_id=v.rule_set_version_id THEN 'CURRENT' ELSE 'HISTORY' END AS scope,
+                    CONCAT(r.rule_code,'/node:',n.node_id,'/',o.operand_role,':',o.value_sequence) AS location,NULL AS condition_json
+                FROM t_rule_operand o LEFT JOIN t_rule_node n ON n.node_id=o.node_id
+                LEFT JOIN t_risk_rule r ON r.rule_id=n.rule_id LEFT JOIN t_rule_set_version v ON v.rule_set_version_id=r.rule_set_version_id
+                LEFT JOIN t_rule_set s ON s.decision_point_id=v.decision_point_id AND s.rule_set_code=v.rule_set_code
+                WHERE o.operand_id &gt; #{lastId} AND o.operand_id &lt;= #{upperBound}
+                <choose><when test="phase == 'OPERAND'">AND o.variable_code=#{code}</when><otherwise>AND o.currency_variable_code=#{code}</otherwise></choose>
+            </when>
+            <when test="phase == 'ACTION_PARAMETER'">
+                SELECT p.parameter_id AS scan_id,'RULE_SET' AS consumer_type,s.rule_set_id AS root_id,
+                    v.rule_set_version_id AS version_id,v.version_no,v.rule_set_code AS code,v.rule_set_name AS name,
+                    CASE WHEN s.status &lt;&gt; 'DELETED' AND s.current_rule_set_version_id=v.rule_set_version_id THEN 'CURRENT' ELSE 'HISTORY' END AS scope,
+                    CONCAT(r.rule_code,'/action:',a.rule_action_id,'/parameter:',p.parameter_id) AS location,NULL AS condition_json
+                FROM t_rule_action_parameter p LEFT JOIN t_rule_action a ON a.rule_action_id=p.rule_action_id
+                LEFT JOIN t_risk_rule r ON r.rule_id=a.rule_id LEFT JOIN t_rule_set_version v ON v.rule_set_version_id=r.rule_set_version_id
+                LEFT JOIN t_rule_set s ON s.decision_point_id=v.decision_point_id AND s.rule_set_code=v.rule_set_code
+                WHERE p.variable_code=#{code} AND p.parameter_id &gt; #{lastId} AND p.parameter_id &lt;= #{upperBound}
+            </when>
+            <when test="phase == 'VARIABLE_DEPENDENCY'">
+                SELECT variable_id AS scan_id,'VARIABLE' AS consumer_type,variable_id AS root_id,NULL AS version_id,
+                    NULL AS version_no,variable_code AS code,variable_name AS name,'CURRENT' AS scope,
+                    CASE WHEN currency_variable_code=#{code} THEN 'currencyVariableCode' ELSE 'allowedValuesVariableCode' END AS location,NULL AS condition_json
+                FROM t_risk_variable WHERE status &lt;&gt; 'DELETED' AND variable_id &gt; #{lastId} AND variable_id &lt;= #{upperBound}
+                    AND (currency_variable_code=#{code} OR allowed_values_variable_code=#{code})
+            </when>
+            <otherwise>
+                SELECT e.edge_id AS scan_id,'DECISION_FLOW' AS consumer_type,f.flow_id AS root_id,
+                    v.flow_version_id AS version_id,v.version_no,f.flow_code AS code,v.flow_name AS name,
+                    CASE WHEN f.status &lt;&gt; 'DELETED' AND f.current_flow_version_id=v.flow_version_id THEN 'CURRENT' ELSE 'HISTORY' END AS scope,
+                    e.edge_key AS location,e.condition_json
+                FROM t_decision_flow_edge e LEFT JOIN t_decision_flow_version v ON v.flow_version_id=e.flow_version_id
+                LEFT JOIN t_decision_flow f ON f.flow_id=v.flow_id
+                WHERE e.edge_type='CONDITIONAL' AND e.edge_id &gt; #{lastId} AND e.edge_id &lt;= #{upperBound}
+            </otherwise>
+        </choose>
+        ) candidates
+        <if test="scope != 'ALL'">WHERE scope=#{scope}</if>
+        ORDER BY scan_id LIMIT #{limit}
+    </select>
+</mapper>

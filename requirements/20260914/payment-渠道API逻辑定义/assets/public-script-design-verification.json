@@ -1,0 +1,93 @@
+{
+  "date": "2026-09-15",
+  "scope": "Pencil public script UI and documentation; no runtime execution",
+  "screenIds": [
+    "ZpOjN",
+    "qunOX",
+    "gkeLC",
+    "Zo7XM",
+    "h3Bdmu",
+    "wwILp",
+    "ciXrn",
+    "krywR",
+    "lWKuf",
+    "v6gTVe",
+    "EXQBQ",
+    "ACSRY",
+    "Hnf5i",
+    "PTliP",
+    "GTKAi"
+  ],
+  "inspectedNodes": 1768,
+  "layoutIssues": [],
+  "overlaps": [],
+  "placeholders": [],
+  "staleTerms": [],
+  "unrelatedRootsChecked": 76,
+  "unrelatedRootsUnchanged": true,
+  "nativeSaveVerified": true,
+  "focusedFrame": "qunOX",
+  "visualReview": [
+    "ZpOjN",
+    "qunOX",
+    "gkeLC",
+    "Zo7XM",
+    "h3Bdmu",
+    "ACSRY"
+  ],
+  "fullResolutionReview": [
+    "qunOX",
+    "h3Bdmu"
+  ],
+  "runtimeTestsRun": false,
+  "documentation": {
+    "files": 12,
+    "localLinkTargetsChecked": 228,
+    "errors": []
+  },
+  "exportedScriptImages": [
+    {
+      "file": "Zo7XM.png",
+      "dimensions": [
+        1440,
+        1160
+      ]
+    },
+    {
+      "file": "ZpOjN.png",
+      "dimensions": [
+        1440,
+        1100
+      ]
+    },
+    {
+      "file": "gkeLC.png",
+      "dimensions": [
+        1440,
+        1160
+      ]
+    },
+    {
+      "file": "h3Bdmu.png",
+      "dimensions": [
+        1440,
+        1160
+      ]
+    },
+    {
+      "file": "qunOX.png",
+      "dimensions": [
+        1440,
+        1160
+      ]
+    },
+    {
+      "file": "wwILp.png",
+      "dimensions": [
+        2980,
+        160
+      ]
+    }
+  ],
+  "passed": true
+}

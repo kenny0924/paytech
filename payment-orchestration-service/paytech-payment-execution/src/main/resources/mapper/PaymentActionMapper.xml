@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.payment.execution.core.dal.mapper.PaymentActionMapper">
+    <sql id="PaymentActionColumns">
+        payment_action_id, payment_attempt_id, channel_refund_id, duplicate_payment_case_id, action_no,
+        action_type, action_status, target_channel_txn_ref_id, amount, currency, channel_idempotency_key,
+        transaction_assessment_id, risk_result, authentication_requirement, interaction_type, interaction_expires_at,
+        channel_response_code, channel_response_msg, channel_result_time, version, create_time, update_time
+    </sql>
+    <insert id="insertAction">
+        INSERT INTO t_payment_action (<include refid="PaymentActionColumns"/>)
+        VALUES (#{paymentActionId}, #{paymentAttemptId}, #{channelRefundId,jdbcType=BIGINT},
+            #{duplicatePaymentCaseId,jdbcType=BIGINT}, #{actionNo}, #{actionType}, #{actionStatus},
+            #{targetChannelTxnRefId,jdbcType=BIGINT}, #{amount}, #{currency}, #{channelIdempotencyKey,jdbcType=VARCHAR},
+            #{transactionAssessmentId,jdbcType=BIGINT}, #{riskResult,jdbcType=VARCHAR},
+            #{authenticationRequirement,jdbcType=VARCHAR}, #{interactionType,jdbcType=VARCHAR},
+            #{interactionExpiresAt,jdbcType=TIMESTAMP}, #{channelResponseCode,jdbcType=VARCHAR},
+            #{channelResponseMsg,jdbcType=VARCHAR}, #{channelResultTime,jdbcType=TIMESTAMP},
+            #{version}, #{createTime}, #{updateTime})
+    </insert>
+    <update id="saveResult">
+        UPDATE t_payment_action
+        SET action_status = #{result.status},
+            transaction_assessment_id = #{result.transactionAssessmentId,jdbcType=BIGINT},
+            risk_result = #{result.riskResult,jdbcType=VARCHAR},
+            authentication_requirement = #{result.authenticationRequirement,jdbcType=VARCHAR},
+            interaction_type = #{result.interactionType,jdbcType=VARCHAR},
+            interaction_expires_at = #{result.interactionExpiresAt,jdbcType=TIMESTAMP},
+            channel_response_code = #{result.channelResponseCode,jdbcType=VARCHAR},
+            channel_response_msg = #{result.channelResponseMsg,jdbcType=VARCHAR},
+            channel_result_time = #{result.channelResultTime,jdbcType=TIMESTAMP},
+            version = version + 1, update_time = #{now}
+        WHERE payment_action_id = #{action.paymentActionId} AND version = #{action.version}
+          AND action_status = #{action.actionStatus} AND action_status IN ('PROCESSING', 'UNKNOWN')
+    </update>
+    <select id="selectById" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentAction">
+        SELECT <include refid="PaymentActionColumns"/>
+        FROM t_payment_action WHERE payment_action_id = #{actionId}
+    </select>
+</mapper>

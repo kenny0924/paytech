@@ -1,70 +1,50 @@
 /** 已批准 Execution 字段的表级精确注释、默认值与排序规则。 */
 export const EXECUTION_FIELD_OVERRIDES = Object.freeze({
-  "payment_intent.consumer_country_code": {
-    "comment": "Commerce 创建 Intent 时传入并冻结的消费者国家，用于支付定价；后续不得覆盖。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
+  "command_idempotency.process_status": {
+    "id": "0FE17297-EEAF-59F0-AB42-41FB6B60EBB1"
   },
-  "payment_intent_binding.payment_intent_binding_id": {
-    "comment": "来源订单与支付意图创建资格绑定的本库 Snowflake 唯一标识。"
+  "command_idempotency.lock_owner": {
+    "comment": "本次命令 Claim 的唯一持有者；pay 使用请求级随机 UUID，完成后由公共组件清空。"
   },
-  "payment_intent_binding.source_type": {
-    "comment": "支付来源的受控命名空间；本期只允许 COMMERCE_ORDER，不接收任意调用方自定义来源。取值来源：Payment Source Type Catalog；非固定枚举。",
+  "command_idempotency.lock_until": {
+    "comment": "命令 Claim Lease 的 UTC 微秒截止时间；pay 仅覆盖本地短事务，完成 CAS 必须仍在租期内，完成后清空。"
+  },
+  "command_idempotency.version": {
+    "comment": "Foundation 命令 Claim、Lease 和完成 CAS 使用的技术版本；首次为 1，独立于 Payment 业务根版本。"
+  },
+  "command_idempotency.response_code": {
+    "comment": "Payment 命令的稳定回执代码；pay 使用 PAY_ACCEPTED 表示受理完成，不表示资金成功。取值来源：Payment Command Response Code Catalog；非固定枚举。"
+  },
+  "command_idempotency.idempotency_key": {
+    "comment": "调用方在命令作用域内提供的大小写敏感幂等键；pay 固定为 submission 加冒号及原提交标识。",
     "extProps": {
       "characterSet": "ascii",
       "collation": "ascii_bin"
     }
   },
-  "payment_intent_binding.source_id": {
-    "comment": "来源命名空间中的稳定业务标识；COMMERCE_ORDER 时为 Commerce Order ID。"
+  "command_idempotency.caller_scope": {
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
   },
-  "payment_intent_binding.client_id": {
-    "comment": "来源订单所属 Client 标识；创建、关闭和查询必须核对同一 Client 权限。"
+  "command_idempotency.resource_no": {
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
   },
-  "payment_intent_binding.payment_intent_id": {
-    "comment": "已创建的唯一支付意图标识；关闭先于创建时为空，非空后不得改变。"
+  "command_idempotency.response_location": {
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
   },
-  "payment_intent_binding.closed_at": {
-    "comment": "关闭新建意图、新 Attempt 和首次 AUTHORIZE/SALE 发送资格的 UTC 微秒时间；开放时为空，关闭不可撤销，不表示既有资金已经取消。"
-  },
-  "payment_intent_binding.create_time": {
-    "comment": "数据库记录创建的 UTC 微秒精度时间，由应用写入。"
-  },
-  "payment_intent_binding.update_time": {
-    "comment": "数据库记录最近一次持久化更新的 UTC 微秒精度时间，由应用写入。"
+  "payment_intent.consumer_country_code": {
+    "comment": "Commerce 创建 Intent 时传入并冻结的消费者国家，用于支付定价；后续不得覆盖。取值来源：ISO 3166-1 alpha-2；非固定枚举。"
   },
   "payment_attempt.source_submission_id": {
     "comment": "Commerce 原支付提交命令标识；新执行必填且全局唯一绑定一个 Attempt，历史无可靠身份时为空，不得猜测回填。",
-    "defaultValue": "NULL"
-  },
-  "payment_attempt.payment_goal": {
-    "comment": "本次支付尝试冻结的业务目标；新执行必填且不可修改。允许值：PAY_NOW、AUTHORIZE_ONLY。历史未确定时为空。",
-    "extProps": {
-      "characterSet": "ascii",
-      "collation": "ascii_bin"
-    },
-    "defaultValue": "NULL"
-  },
-  "payment_attempt.authentication_requirement": {
-    "comment": "内部 Risk 允许本次支付后冻结的认证要求。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED。尚无确定允许结果时为空。",
-    "extProps": {
-      "characterSet": "ascii",
-      "collation": "ascii_bin"
-    },
-    "defaultValue": "NULL"
-  },
-  "payment_action.target_payment_action_id": {
-    "comment": "QUERY 查询的原 Payment Action 标识；QUERY 必填并与原动作同父级、同渠道，其他动作为空。",
-    "defaultValue": "NULL"
-  },
-  "payment_action.authentication_action_id": {
-    "comment": "需要认证的 AUTHORIZE/SALE 绑定同 Attempt 的成功 AUTHENTICATE 标识；要求金额、币种、Card 和渠道坐标一致，其他动作为空。",
-    "defaultValue": "NULL"
-  },
-  "payment_action.channel_operation_ref": {
-    "comment": "渠道返回的稳定非 bearer 操作或认证上下文引用；未取得时为空；不得保存临时 URL、SDK Token、Client Secret 或持有即可继续支付的参数。",
-    "extProps": {
-      "characterSet": "ascii",
-      "collation": "ascii_bin"
-    },
     "defaultValue": "NULL"
   },
   "payment_action.interaction_type": {
@@ -76,44 +56,27 @@ export const EXECUTION_FIELD_OVERRIDES = Object.freeze({
     "defaultValue": "NULL"
   },
   "payment_action.interaction_expires_at": {
-    "comment": "原消费者交互可继续等待的 UTC 微秒截止时间；REQUIRES_ACTION 时必填，完成后保留历史值，不等于认证证明有效期。",
-    "defaultValue": "NULL"
-  },
-  "payment_action.authentication_outcome": {
-    "comment": "AUTHENTICATE 获得的可信标准化认证结论。允许值：AUTHENTICATED、ATTEMPTED、FAILED、UNAVAILABLE。无确定结论或非认证动作时为空。",
-    "extProps": {
-      "characterSet": "ascii",
-      "collation": "ascii_bin"
-    },
-    "defaultValue": "NULL"
-  },
-  "payment_action.challenge_performed": {
-    "comment": "可信证据确认是否实际执行挑战：1 是、0 否；未知或非认证动作时为空，不能由浏览器回跳推断。",
-    "defaultValue": "NULL"
-  },
-  "payment_action.authentication_valid_until": {
-    "comment": "成功 AUTHENTICATE 证明可供原资金动作使用的 UTC 微秒截止时间；成功认证必填，其他情形为空。",
-    "defaultValue": "NULL"
-  },
-  "payment_action.status_reason_code": {
-    "comment": "原 Action 失败、未知或受控等待的稳定安全原因代码；无原因时为空；取值来源为 Execution Reason Catalog，不保存远程原始报文或敏感值。取值来源：Reason Catalog；非固定枚举。",
-    "extProps": {
-      "characterSet": "ascii",
-      "collation": "ascii_bin"
-    },
+    "comment": "原消费者交互的 UTC 微秒截止时间；PROCESSING 且需要交互时必填，完成后保留历史值，不等于认证证明有效期。",
     "defaultValue": "NULL"
   },
   "payment_action.action_type": {
-    "comment": "原支付语义操作类型；认证无资金效应，查询只收敛原动作。允许值：AUTHENTICATE、AUTHORIZE、CAPTURE、SALE、VOID、REFUND、QUERY。无 REVERSAL 动作。"
+    "comment": "原支付业务步骤类型；风控和认证不形成资金事实。允许值：PAY_RISK、AUTHENTICATE、AUTHORIZE、CAPTURE、PAY、VOID、REFUND。无 QUERY 或 REVERSAL 业务动作。"
+  },
+  "payment_action.action_status": {
+    "comment": "支付业务动作的当前状态；创建即进入 PROCESSING，表示已进入处理流程，不代表已提交渠道。允许值：PROCESSING、UNKNOWN、SUCCEEDED、FAILED。"
   },
   "payment_action.target_channel_txn_ref_id": {
-    "comment": "原成功资金交易引用；CAPTURE/VOID 指 AUTHORIZE，REFUND 指 SALE/CAPTURE，QUERY 在已有成功引用时可附带但仍以 target_payment_action_id 定位；初始支付及认证时为空。"
+    "comment": "原成功资金交易引用；CAPTURE/VOID 指 AUTHORIZE，REFUND 指 PAY/CAPTURE；风控、认证与首次资金动作为空。"
   },
   "payment_action.amount": {
-    "comment": "当前动作绑定的确定正金额；AUTHENTICATE/QUERY 保存被认证或查询操作的金额用于一致性校验，不因此形成资金事实；本期精度上限为 24 位且小数最多 8 位。"
+    "comment": "原动作冻结的正金额；PAY_RISK 与 AUTHENTICATE 仅作为输入校验，不产生资金事实；精度上限为 24 位且小数最多 8 位。"
   },
   "payment_action.channel_idempotency_key": {
-    "comment": "一次语义 Action 在原渠道上的稳定平台幂等键，重试不得改变；字段存在不代表渠道保证幂等，未知结果重发必须另经渠道幂等能力与期限校验。"
+    "comment": "Payment 为原渠道业务动作分配的全局唯一幂等键；PAY_RISK 为空，渠道动作必填；恢复不换键，不依赖可变渠道配置拼接新身份。",
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
   },
   "compensation_event.sub_event_type": {
     "comment": "同一 Handler 下的受控业务子类型，最长 64 个 Java 字符；与 event_key、event_type 共同组成稳定唯一身份。取值来源：Payment Compensation Sub Event Catalog；非固定枚举。",
@@ -228,5 +191,51 @@ export const EXECUTION_FIELD_OVERRIDES = Object.freeze({
   },
   "payment_attempt.payment_instrument_token_id": {
     "comment": "本次尝试关联的交易级工具 Token 内部主键；新统一 pay 必填并校验相同 Client、Intent、来源提交和支付方式，历史未迁移行为空；不存 Token 字符串。"
+  },
+  "payment_attempt.capture_mode": {
+    "comment": "本次支付尝试冻结的捕获模式；新执行必填且不可修改。允许值：AUTOMATIC、MANUAL。历史未核对时为空。",
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    },
+    "defaultValue": "NULL"
+  },
+  "payment_attempt.active_action_id": {
+    "comment": "原尝试当前唯一未终结业务动作；PROCESSING、UNKNOWN 占位，终态须核对仍指向原动作才清空；等待手动 Capture 时为空，但 Intent 继续占用该 Attempt。"
+  },
+  "payment_action.transaction_assessment_id": {
+    "comment": "Risk 返回的原交易评估稳定标识；仅 PAY_RISK 可填，取得可信原评估身份前为空，已知后不可替换；渠道动作为空。"
+  },
+  "payment_action.risk_result": {
+    "comment": "原 PAY_RISK 的可信评估结论；渠道动作及未知评估为空。允许值：ALLOW、REVIEW、DENY、FAILED、TIMED_OUT。评估完成不等于允许支付。"
+  },
+  "payment_attempt.channel_id": {
+    "comment": "Routing 成功后冻结的支付渠道标识；路由前为空，三项渠道坐标同事务绑定后不可修改，后续动作和退款沿原 Attempt 使用。"
+  },
+  "payment_attempt.channel_account_id": {
+    "comment": "Routing 成功后冻结的渠道技术账户标识；路由前为空，三项渠道坐标同事务绑定后不可修改，后续动作和退款沿原 Attempt 使用。"
+  },
+  "payment_attempt.mid_id": {
+    "comment": "Routing 成功后冻结的渠道商户号标识；路由前为空，三项渠道坐标同事务绑定后不可修改，后续动作和退款沿原 Attempt 使用。"
+  },
+  "payment_action.authentication_requirement": {
+    "comment": "仅原 PAY_RISK 获得可信 ALLOW 后冻结的认证要求；其他动作及未放行结果为空。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED。",
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    },
+    "defaultValue": "NULL"
+  },
+  "payment_action.channel_response_code": {
+    "comment": "渠道适配器返回的安全响应代码；仅渠道动作可填，风控结果使用 risk_result，本地异常或未取得响应时为空。取值来源：Channel Adapter Catalog；非固定枚举。",
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    },
+    "defaultValue": "NULL"
+  },
+  "payment_action.channel_response_msg": {
+    "comment": "渠道适配器清洗后的安全响应说明，最长512字符；不得保存原始报文、卡数据、个人信息、凭据或临时交互参数；不是状态机判断依据。",
+    "defaultValue": "NULL"
   }
 });

@@ -1,5 +1,13 @@
 # Execution 状态、事务与恢复
 
+> **2026-09-15 删除来源 Binding：** 用户已确认删除 `t_payment_intent_binding` 和 EX-I03 `CloseCreation`，按已有 Intent 终止；创建结果未明确时由 Commerce 用原键恢复创建后再终止。本文涉及提前关闭、Binding 门禁和锁顺序的内容由[字段修订第 8 节](./execution-field-simplification-amendment.md#8-删除来源-binding)取代；其余历史基线保持。
+
+> **字段维护后继：** [整批精简修订](./execution-field-simplification-amendment.md)已取代本文受影响的字段、渠道绑定位置、认证明细、Pricing Fact 与状态历史表要求。本文旧接口/流程细节保留为迁移前基线；后续 Java/HTTP/MQ 改造须逐项对齐，数据库执行状态只见当前台账。
+
+> **内部风控后继：** [RISK_CHECK 修订](./internal-risk-action-amendment.md)第 3–4 节补充风险执行状态、ALLOW 放行、原评估恢复与单动作占位。风险未知找 Risk，渠道未知找 Channel；Action 完成与业务放行分别判断，下文前置 Risk 的受影响叙述按该后继解释。
+
+> **状态与 Channel 恢复后继：** capture mode、三表 4/4/5 状态、active_action_id 及移除 QUERY 的现行设计目标以[状态与恢复修订](./execution-state-channel-recovery-amendment.md)为准；下文受影响内容保留为前序基线，未涉及合同继续有效。实现与 SQL 状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+
 > **交易级 Token 修订评审：** 用户已确认统一 pay、交易级工具 Token、Attempt 直接关联及删除旧 Instrument 的方向；详细合同见[修订稿](./instrument-token-amendment.md)。下文保留上一版合同与评审上下文，受影响部分以修订稿的准确取代范围为准；新合同的实现与验证状态只读[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 > 本稿定义新 Card 切片的合法行为。保留当前模型的业务状态代码，不把所有枚举间的连线视为合法；对历史更宽的转换按本稿收窄，获批后同步模型说明和测试。
@@ -16,7 +24,7 @@
 | Command Idempotency（Web） | PROCESSING、SUCCEEDED、FAILED | 技术受理状态，仅短事务内收敛；不长期用 PROCESSING 代表支付中 |
 | Compensation Event（Web） | INIT、PROCESSING、ERROR、FAILED | 复用 Foundation；成功删除，不增加业务状态 |
 
-其余 Execution 表没有枚举状态机：Binding 的 closed_at 单向关闭；Pricing Fact/Transaction Ref/State Transition 为事实记录；Instrument 为可选描述；Refund Position 仅金额和 version。被移除的 Customer Action 状态全部停止新写，不再维护“双层等待”。
+其余 Execution 表没有枚举状态机：Pricing Fact/Transaction Ref/State Transition 为事实记录；Instrument 为可选描述；Refund Position 仅金额和 version。被移除的 Customer Action 状态全部停止新写，不再维护“双层等待”。
 
 ## 2. Action 和聚合转换
 
@@ -54,9 +62,9 @@ stateDiagram-v2
 | 资金结果未知 | 原 X→UNKNOWN | →UNKNOWN，保留已知金额 | active/预占均保留，I 保持 PROCESSING，禁止另开支付 |
 | Capture 接受/成功 | CAPTURE CREATED→SUBMITTED→SUCCEEDED | AUTHORIZED→PROCESSING→SUCCEEDED | 成功才 I→SUCCEEDED；写完整扣款 T、P 与待发布事实 |
 | Capture 明确失败 | CAPTURE→FAILED | PROCESSING/UNKNOWN→AUTHORIZED | 原 AUTHORIZE/T/authorized 不变；I PROCESSING，不能释放 active |
-| Void 接受/成功 | VOID CREATED→SUBMITTED→SUCCEEDED | AUTHORIZED→PROCESSING→VOIDED | I→CANCELLED；关闭 binding、清 active；不退款、不入账 |
+| Void 接受/成功 | VOID CREATED→SUBMITTED→SUCCEEDED | AUTHORIZED→PROCESSING→VOIDED | I→CANCELLED；清 active；不退款、不入账 |
 | Void 明确失败 | VOID→FAILED | PROCESSING/UNKNOWN→AUTHORIZED | 原授权仍有效事实；存在 Void 决策时不再允许 Capture，需原业务受控恢复 |
-| 取消/到期，确认尚未发送资金 | 未发送 X→FAILED，原因 EXECUTION_CLOSED | →CANCELLED（认证明确失败则保留 FAILED） | I→CANCELLED/EXPIRED；关闭 binding、清 active |
+| 取消/到期，确认尚未发送资金 | 未发送 X→FAILED，原因 EXECUTION_CLOSED | →CANCELLED（认证明确失败则保留 FAILED） | I→CANCELLED/EXPIRED；清 active |
 
 Intent 到期不会撤销成功授权，也不能让 UNKNOWN 变为 EXPIRED。已授权需继续查询/显式业务处理，禁止自动新支付；成功资金回调必须如实处理，不因本地到期丢弃。现行模型已有 VOIDED；本稿沿用该精确状态，取代早期文档把 Void 后 Attempt 写成 FAILED(AUTHORIZATION_VOIDED) 的描述，仅在本稿获批的新执行范围生效。
 
@@ -110,11 +118,11 @@ sequenceDiagram
 
 每段通过 `TransactionTemplate` 开短事务；事务内只能本库读写，禁止间接 HTTP、Risk、Routing、Redis、Card 或 MQ。`@ResourceLock` Redis-first 协调在 Processor/独立 Handler 外层；DB row lock、CAS、唯一索引仍是最终并发保护。锁失效也不能重复资金成功处理。
 
-资源锁键在事务前从授权命令/只读定位中解析，不从 Tenant 或操作者派生：来源 `payment:source:COMMERCE_ORDER:<orderId>`；已存在资源 `payment:intent:<intentId>`；退款另加 `payment:refund-position:<positionId>`。Create/Close 使用来源键；其余会读写 Binding 的 Intent 用例同时持有来源和 Intent 键；退款/重复补偿在需要时加 position/case 键。全部已知键一次按 ASCII 顺序取得，事务内重验定位版本，禁止调用中途反向追加锁。key 都以原稳定资源标识生成，不以随机请求 ID 生成。
+资源锁键在事务前从授权命令/只读定位中解析，不从 Tenant 或操作者派生：来源 `payment:source:COMMERCE_ORDER:<orderId>`；已存在资源 `payment:intent:<intentId>`；退款另加 `payment:refund-position:<positionId>`。Create 使用来源键；已有 Intent 用例使用 Intent 键；退款/重复补偿在需要时加 position/case 键。全部已知键一次按 ASCII 顺序取得，事务内重验定位版本，禁止调用中途反向追加锁。key 都以原稳定资源标识生成，不以随机请求 ID 生成。
 
-本地数据库锁顺序统一 Binding→Intent→Attempt→Refund Position/Case→Refund→Action；所有入口共用同一 Repository 写边界。不同 operation key 的竞争仍受资金聚合规则约束。每个父对象 action_no 在锁内递增；Refund/Case 首个 REFUND 为 1，后续 QUERY ≥2。
+本地数据库锁顺序统一 Intent→Token→Attempt→Refund Position/Case→Refund→Action；所有入口共用同一 Repository 写边界。不同 operation key 的竞争仍受资金聚合规则约束。每个父对象 action_no 在锁内递增；Refund/Case 首个 REFUND 为 1，后续 QUERY ≥2。
 
-实时资格在首次 AUTHORIZE/SALE/CAPTURE 的发送紧前查询；缺结果、不可用、明确关闭均 fail closed。查询结束后 T3 重新检查 binding/Intent/Action 版本；若本地版本发生变化则重评估。不能承诺跨系统原子锁：真实 Owner 的资格版本/有效期与关闭事件接入是后续合同门禁，本期 Mock 只证明本地收到变化后的阻断。
+实时资格在首次 AUTHORIZE/SALE/CAPTURE 的发送紧前查询；缺结果、不可用、明确关闭均 fail closed。查询结束后 T3 重新检查 Intent/Action 版本；若本地版本发生变化则重评估。不能承诺跨系统原子锁：真实 Owner 的资格版本/有效期与关闭事件接入是后续合同门禁，本期 Mock 只证明本地收到变化后的阻断。
 
 ## 5. 崩溃恢复决策表
 
@@ -148,7 +156,7 @@ sequenceDiagram
 | PaymentSucceeded | 第一笔 SALE/全额 CAPTURE 成功，同事务登记；Commerce、Finance Mock | 稳定 eventId、Intent/Attempt/Action/来源订单/Client、entityNo、金额币种、固定商业版本、实际成功时间；无 Card/Vault 引用或交互指令 |
 | RefundSucceeded | 退款确认且额度落账后；Commerce、Finance Mock | 稳定 eventId、Commerce/Payment Refund ID、原支付 Action、Client/Intent、金额币种、成功时间 |
 | RefundFailed / RefundCancelled | 确认未退款且释放额度后；Commerce Mock | 原 Refund 身份、金额币种、安全原因 |
-| Intent 终止事实 | 实际终止后；Commerce Mock | 原来源/Intent、终止类型及时间；关闭创建资格本身不产生终止事实 |
+| Intent 终止事实 | 实际终止后；Commerce Mock | 原来源/Intent、终止类型及时间；PENDING 不产生终止事实 |
 
 本地事实发布用 `event_key=<clientId>:<transitionId>`、event_type=`PAYMENT_FACT_PUBLICATION_V1`、sub_event_type 为事件类型；eventId 由 `payment:<transitionId>:<eventType>:v1` 确定，重试不变。从不可变状态历史与成功交易引用重建该事件时刻的数据，不能读取后来变化的当前状态冒充原事件。Pricing Fact 缺失不阻断支付成功事实登记；补齐任务按原 Action/固定 context 查询、满足后插入，不重发第二次 PaymentSucceeded，消费者可查 EX-I11。
 

@@ -1,0 +1,394 @@
+{
+  "exampleKind": "DESIGN_READING_EXAMPLE",
+  "description": "虚构 DEMO 请求/响应映射和独立脚本引用片段；不是完整管理请求或可导入定义。普通映射和脚本替代步骤二选一。",
+  "completeDefinition": false,
+  "approvedCatalogCodes": false,
+  "runtimeExecuted": false,
+  "omittedContracts": [
+    "完整脚本输入输出类型",
+    "真实签名 Profile 和材料",
+    "响应保护/解析/关联校验实现",
+    "完整传输限额和管理元数据"
+  ],
+  "channelCode": "DEMO",
+  "inputExample": {
+    "originalTransactionRefId": "10001",
+    "refundAmount": "10.00",
+    "currency": "AED"
+  },
+  "functionResultProjectionExample": {
+    "externalTransactionId": "txn_123"
+  },
+  "requestSteps": [
+    {
+      "stepCode": "originalTransaction",
+      "kind": "CAPABILITY",
+      "capabilityCode": "CALL_SYSTEM_FUNCTION",
+      "parameters": {
+        "functionCode": "READ_ORIGINAL_CHANNEL_TRANSACTION"
+      },
+      "inputBindings": {
+        "originalTransactionRefId": {
+          "source": "CONTEXT",
+          "path": [
+            "originalTransactionRefId"
+          ]
+        }
+      },
+      "outputBindings": {
+        "result": [
+          "value"
+        ]
+      }
+    },
+    {
+      "stepCode": "buildBody",
+      "kind": "CAPABILITY",
+      "capabilityCode": "OBJECT_MAPPING",
+      "inputBindings": {
+        "transactionId": {
+          "source": "EXPRESSION",
+          "engine": "AVIATOR",
+          "expression": "result.externalTransactionId",
+          "variables": {
+            "result": {
+              "source": "STEP",
+              "stepCode": "originalTransaction",
+              "path": [
+                "result"
+              ]
+            }
+          }
+        },
+        "amount": {
+          "source": "EXPRESSION",
+          "engine": "AVIATOR",
+          "expression": "money.minorUnits(refundContext.refundAmount, refundContext.currency)",
+          "variables": {
+            "refundContext": {
+              "source": "CONTEXT",
+              "path": []
+            }
+          }
+        },
+        "currency": {
+          "source": "CONTEXT",
+          "path": [
+            "currency"
+          ]
+        }
+      },
+      "parameters": {
+        "fields": [
+          {
+            "inputName": "transactionId",
+            "targetPath": [
+              "transactionId"
+            ],
+            "targetDefinition": {
+              "type": "STRING",
+              "required": true,
+              "nullable": false,
+              "displayName": "渠道原交易号",
+              "dataClass": "INTERNAL",
+              "minLength": 1,
+              "maxLength": 255
+            }
+          },
+          {
+            "inputName": "amount",
+            "targetPath": [
+              "amount"
+            ],
+            "targetDefinition": {
+              "type": "INTEGER",
+              "required": true,
+              "nullable": false,
+              "displayName": "最小单位金额",
+              "dataClass": "INTERNAL",
+              "minValue": "0",
+              "maxValue": "999999999999999999999999",
+              "unit": "MINOR_CURRENCY_UNIT"
+            }
+          },
+          {
+            "inputName": "currency",
+            "targetPath": [
+              "currency"
+            ],
+            "targetDefinition": {
+              "type": "STRING",
+              "required": true,
+              "nullable": false,
+              "displayName": "币种",
+              "dataClass": "INTERNAL",
+              "minLength": 3,
+              "maxLength": 3
+            }
+          }
+        ]
+      },
+      "outputBindings": {
+        "body": [
+          "value"
+        ]
+      }
+    },
+    {
+      "stepCode": "encodeBody",
+      "kind": "CAPABILITY",
+      "capabilityCode": "ENCODE_JSON",
+      "parameters": {
+        "charset": "UTF-8"
+      },
+      "inputBindings": {
+        "value": {
+          "source": "STEP",
+          "stepCode": "buildBody",
+          "path": [
+            "body"
+          ]
+        }
+      },
+      "outputBindings": {
+        "bytes": [
+          "bytes"
+        ]
+      }
+    },
+    {
+      "stepCode": "signRequest",
+      "kind": "SCHEME",
+      "schemeCode": "REQUEST_BODY_SIGNATURE",
+      "parameters": {},
+      "inputBindings": {
+        "bytes": {
+          "source": "STEP",
+          "stepCode": "encodeBody",
+          "path": [
+            "bytes"
+          ]
+        },
+        "keyHandle": {
+          "source": "RUNTIME",
+          "path": [
+            "credentials",
+            "signingKey"
+          ]
+        }
+      },
+      "outputBindings": {
+        "signature": [
+          "headerValue"
+        ]
+      }
+    }
+  ],
+  "schemeFragment": {
+    "schemeCode": "REQUEST_BODY_SIGNATURE",
+    "schemeName": "请求体签名",
+    "definition": {
+      "kind": "CAPABILITY",
+      "capabilityCode": "SIGN_BYTES",
+      "fixedParameters": {
+        "profileCode": "DEMO_SIGN_EXACT_BODY"
+      },
+      "parameterDefinition": {},
+      "credentialPurpose": "signingKey"
+    }
+  },
+  "scriptAlternative": {
+    "replacesStepCode": "buildBody",
+    "step": {
+      "stepCode": "buildBody",
+      "kind": "SCRIPT",
+      "scriptCode": "BUILD_REFUND_BODY",
+      "parameters": {},
+      "inputBindings": {
+        "transactionId": {
+          "source": "EXPRESSION",
+          "engine": "AVIATOR",
+          "expression": "result.externalTransactionId",
+          "variables": {
+            "result": {
+              "source": "STEP",
+              "stepCode": "originalTransaction",
+              "path": [
+                "result"
+              ]
+            }
+          }
+        },
+        "amount": {
+          "source": "CONTEXT",
+          "path": [
+            "refundAmount"
+          ]
+        },
+        "currency": {
+          "source": "CONTEXT",
+          "path": [
+            "currency"
+          ]
+        }
+      },
+      "outputBindings": {
+        "body": [
+          "value"
+        ]
+      }
+    },
+    "script": {
+      "scriptCode": "BUILD_REFUND_BODY",
+      "scriptName": "组装退款请求体",
+      "engine": "AVIATOR",
+      "sourceCode": "seq.map('transactionId', transactionId, 'amount', money.minorUnits(amount, currency), 'currency', currency)"
+    }
+  },
+  "transportFragment": {
+    "protocol": "HTTP",
+    "method": "POST",
+    "endpointCode": "DEMO_API",
+    "pathTemplate": "/refunds",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "values": [
+          {
+            "source": "EXPRESSION",
+            "engine": "AVIATOR",
+            "expression": "'application/json'",
+            "variables": {}
+          }
+        ]
+      },
+      {
+        "name": "X-Signature",
+        "values": [
+          {
+            "source": "STEP",
+            "stepCode": "signRequest",
+            "path": [
+              "signature"
+            ]
+          }
+        ]
+      }
+    ],
+    "body": {
+      "source": "STEP",
+      "stepCode": "encodeBody",
+      "path": [
+        "bytes"
+      ]
+    }
+  },
+  "expectedRequestBody": {
+    "transactionId": "txn_123",
+    "amount": 1000,
+    "currency": "AED"
+  },
+  "responseExample": {
+    "status": 200,
+    "body": {
+      "refund_id": "refund_001",
+      "status": "PROCESSING"
+    },
+    "processingPrecondition": "假设 responseSteps 已完成该协议所需保护、解析和关联校验；以下只展示获准字段投影和结果映射。",
+    "projectedStepCode": "observedFacts",
+    "projectedOutputs": {
+      "facts": {
+        "refund_id": "refund_001",
+        "status": "PROCESSING"
+      }
+    }
+  },
+  "resultRules": {
+    "rules": [
+      {
+        "condition": {
+          "op": "ALL",
+          "children": [
+            {
+              "op": "EQ",
+              "left": {
+                "source": "RESPONSE",
+                "path": [
+                  "status"
+                ]
+              },
+              "right": {
+                "source": "LITERAL",
+                "valueType": "INTEGER",
+                "value": "200"
+              }
+            },
+            {
+              "op": "EQ",
+              "left": {
+                "source": "STEP",
+                "stepCode": "observedFacts",
+                "path": [
+                  "facts",
+                  "status"
+                ]
+              },
+              "right": {
+                "source": "LITERAL",
+                "valueType": "STRING",
+                "value": "PROCESSING"
+              }
+            }
+          ]
+        },
+        "resultCode": "UNRESOLVED"
+      }
+    ],
+    "fallbackResultCode": "UNRECOGNIZED"
+  },
+  "outputDefinition": [
+    {
+      "resultCode": "UNRESOLVED",
+      "fields": [
+        {
+          "name": "channelRefundId",
+          "valueType": "STRING",
+          "required": true,
+          "binding": {
+            "source": "STEP",
+            "stepCode": "observedFacts",
+            "path": [
+              "facts",
+              "refund_id"
+            ]
+          }
+        },
+        {
+          "name": "channelStatus",
+          "valueType": "STRING",
+          "required": true,
+          "binding": {
+            "source": "STEP",
+            "stepCode": "observedFacts",
+            "path": [
+              "facts",
+              "status"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "resultCode": "UNRECOGNIZED",
+      "fields": []
+    }
+  ],
+  "expectedResultProjection": {
+    "sendState": "RESPONSE_RECEIVED",
+    "resultCode": "UNRESOLVED",
+    "outputs": {
+      "channelRefundId": "refund_001",
+      "channelStatus": "PROCESSING"
+    }
+  }
+}
