@@ -20,7 +20,7 @@
 - **未实现：** 没有 Java、BFF、前端或执行引擎代码；没有执行任何 SQL，没有环境、Vault 策略或权限变更；Payment 账号/MID 查询实现未改动。
 - **Pending（2026-10-13 确认）：** 流程、原子 API、内部接口与[账号材料交接](../requirements/20260914/platform-support-外部API配置与执行/material-handoff.md)已确认。[Platform 读取渠道账号配置](./decisions/2026-10-13-platform-channel-account-reveal.md)的 Vault 策略**未部署**；Platform 初始化函数与 Payment “只校验不 Reveal”查询未实现。
 - **模型（2026-10-13）：** 六表按[物理设计](../requirements/20260914/platform-support-外部API配置与执行/physical-design.md)进入 Platform Manifest 与 PDManer，当前完整模型 **68 表、824 字段、117 唯一索引、92 访问索引、105 关系、6 条 1:1、8 图组**；已有 62 表内容未变。生成器 --check 与 Platform 模型/Schema/场景等 56 项 Node 测试通过。[增量建表 SQL](../requirements/20260914/platform-support-外部API配置与执行/db/platform-support-service/integration-create.sql) 与模型逐列一致，并已追加到完整 Schema `platform-support-schema.sql`（46 表）；**均未执行**；无 DataObject/Mapper/测试 DDL。
-- **页面与管理接口（2026-10-13）：** [页面方案](../requirements/20260914/platform-support-外部API配置与执行/page-design.md)已确认，Operations design.pen 新增 24 张画板并删除 30 张前序画板（历史 PNG 保留，原稿可从 `fff35d2` 恢复）；[管理接口与 344 行注册 SQL](../requirements/20260914/platform-support-外部API配置与执行/admin-api.md) 为评审稿，未执行。
+- **页面与管理接口（2026-10-13）：** [页面方案](../requirements/20260914/platform-support-外部API配置与执行/page-design.md)已确认，Operations design.pen 新增 24 张画板并删除 30 张前序画板（历史 PNG 保留，原稿可从 `fff35d2` 恢复）；[管理接口与 344 行注册 SQL](../requirements/20260914/platform-support-外部API配置与执行/admin-api.md) 已确认（R1～R7），SQL 未执行，代码未开始。
 - **验证：** 受影响文档本地链接与锚点检查、JSON 语法检查、`git diff --check` 通过；`npm --prefix requirements-site test` 128/137 通过，9 项失败与迁移前相同、位于未修改的断言主题。历史检查脚本会重写报告文件，未运行。无提交、推送或部署。迁移记录见[交付记录](../requirements/20261013/platform-support-渠道API配置资料迁移/delivery.md#5-迁移执行2026-10-13)。
 
 <a id="commerce-save-consumer-tests-20260921"></a>

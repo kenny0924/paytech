@@ -1,7 +1,7 @@
-# 外部 API 配置管理接口与注册数据（评审稿）
+# 外部 API 配置管理接口与注册数据
 
 - 日期：2026-10-13
-- 状态：**评审稿**，用户尚未确认。第 9 节列出待确认的选择；确认前不写代码、不执行 SQL。
+- 状态：**已确认**（2026-10-13）。用户对第 9 节 R1～R7 回复“按建议”。代码未开始；注册 SQL 未执行，执行与激活需单独授权。
 - 依据：[页面方案](./page-design.md)（已确认）、[六表物理设计](./physical-design.md)、[流程结构](./flow-definition-contract.md)、[原子 API 结构](./integration-api-definition-contract.md)；写法沿用[菜单权限与 API 配置管理](../../20260913/platform-support-菜单权限与API配置管理/api.md)与[租户访问](../../20260914/platform-support-租户访问与成员权限查询/db/dml.sql)的现行做法，请求幂等按 [2026-09-17 决定](../../../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)由 Gateway 负责。
 - 机器清单：[admin-api-inventory.json](./admin-api-inventory.json)；注册 SQL：[db/platform-support-service/registration-dml.sql](./db/platform-support-service/registration-dml.sql)。
 
@@ -203,9 +203,11 @@
 - 配置变更的操作历史查询；审计沿用 Platform 现有管理写入方式，不新增查询页面。
 - 试运行、导入导出（页面方案 U4、U5 已确认本期不做）。
 
-## 9. 评审点
+## 9. 评审点与确认记录
 
-| 编号 | 问题 | 建议 |
+2026-10-13 用户回复“按照你的来”，下列建议全部确认。
+
+| 编号 | 问题 | 结论 |
 |---|---|---|
 | R1 | 菜单层级 | “外部 API”作为与“风控管理”并列的一级分组，下挂两个菜单。与第一版画板一致；页面方案原写的“平台配置 / 外部 API”三层导航在现有菜单里没有先例，改为两层 |
 | R2 | 权限粒度 | 整个模块一对 READ / MANAGE（已在页面方案 U6 确认），校验接口归 MANAGE |

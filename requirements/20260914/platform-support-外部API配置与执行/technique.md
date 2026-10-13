@@ -81,6 +81,6 @@ Payment 等业务系统 ──内部 HTTP──▶ Platform 标准 API 入口
 5. 账号材料交接：初始化函数参数、Caller/Purpose、内存与日志边界。2026-10-13 [交接方案](./material-handoff.md)已确认：Payment 传 Vault 引用 Token，Platform 直接 Reveal，见[授权决定](../../../agent-docs/decisions/2026-10-13-platform-channel-account-reveal.md)。
 6. 字段路径转义、根数组、多值 Header、条件必填。数值精度、并发编辑、配置大小与路径长度已在[物理设计](./physical-design.md)确定。
 7. 六表物理类型、索引、模块 Owner 与 `t_integration` 命名；获准后同步 Platform PDManer/SQL。2026-10-13 [物理设计](./physical-design.md) P1～P7 已确认（白名单暂不做，基础地址入库）；同日六表进入 Platform PDManer 与完整 Schema，增量 SQL 已写，均未执行。
-8. Operations 标准 API 与流程编辑页面设计。2026-10-13 [页面方案](./page-design.md) U1～U7 已确认，24 张画板见其第 11 节；2026-10-13 起草[管理接口与注册数据评审稿](./admin-api.md)（30 个端点、344 行注册 SQL），待确认 R1～R7。
+8. Operations 标准 API 与流程编辑页面设计。2026-10-13 [页面方案](./page-design.md) U1～U7 已确认，24 张画板见其第 11 节；2026-10-13 [管理接口与注册数据](./admin-api.md) R1～R7 已确认（30 个端点、344 行注册 SQL，未执行）。
 
 以上细节未定前不得自行补成已确认合同。
