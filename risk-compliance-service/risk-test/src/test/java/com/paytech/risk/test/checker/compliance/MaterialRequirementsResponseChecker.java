@@ -1,5 +1,6 @@
 package com.paytech.risk.test.checker.compliance;
 
+import static com.paytech.foundation.common.error.CommonErrorCode.SERVICE_UNAVAILABLE;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -64,7 +65,7 @@ public final class MaterialRequirementsResponseChecker
 
     /** 目录不可用：返回 503，且不输出任何目录字段，调用方不能把它当作无需材料。 */
     public MaterialRequirementsResponseChecker assertUnavailable() {
-        assertProblem(503, "SERVICE_UNAVAILABLE");
+        assertProblem(503, SERVICE_UNAVAILABLE.getCode());
         assertFalse(body().has("items"), "不可用响应不得包含材料目录");
         return this;
     }

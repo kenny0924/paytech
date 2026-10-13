@@ -1,5 +1,9 @@
 package com.paytech.risk.auto.ext.http.compliance;
 
+import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
+import static com.paytech.risk.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
+import static com.paytech.risk.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
+import static com.paytech.risk.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
 import static com.paytech.risk.test.builder.compliance.MaterialProgramBuilder.approved;
 import static com.paytech.risk.test.mocker.compliance.MaterialProgramMocker.row;
 
@@ -16,13 +20,14 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
+import com.paytech.risk.api.enums.MaterialQualificationType;
 import com.paytech.risk.api.compliance.MaterialRequirementsApi;
 import com.paytech.risk.test.base.MockTestBase;
 import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder;
@@ -54,8 +59,8 @@ class MaterialRequirementsApiAutoTest extends MockTestBase {
 
     /** 每种资格类型读取其映射程序的完整目录。 */
     @ParameterizedTest(name = "{0}")
-    @ValueSource(strings = {"INDIVIDUAL_KYC", "ORGANIZATION_KYB", "RELATED_PERSON_KYC"})
-    void test_normalFlow(String qualificationType) {
+    @EnumSource(MaterialQualificationType.class)
+    void test_normalFlow(MaterialQualificationType qualificationType) {
         MockedProgram program = materials.mock(approved(qualificationType));
         materials.mapPrograms(program);
 
@@ -65,104 +70,104 @@ class MaterialRequirementsApiAutoTest extends MockTestBase {
     /** 三种资格同时配置时互不串读，各自返回自己的程序。 */
     @Test
     void test_normalFlow_eachTypeReadsItsOwnProgram() {
-        MockedProgram individual = materials.mock(approved("INDIVIDUAL_KYC"));
-        MockedProgram organization = materials.mock(approved("ORGANIZATION_KYB")
+        MockedProgram individual = materials.mock(approved(INDIVIDUAL_KYC));
+        MockedProgram organization = materials.mock(approved(ORGANIZATION_KYB)
             .requirements(List.of(new Requirement("REGISTRATION_CERTIFICATE", "COMPANY_REGISTRY_EXTRACT", 1))));
-        MockedProgram related = materials.mock(approved("RELATED_PERSON_KYC")
+        MockedProgram related = materials.mock(approved(RELATED_PERSON_KYC)
             .requirements(List.of(new Requirement("IDENTITY_DOCUMENT", "NATIONAL_ID", 0))));
         materials.mapPrograms(individual, organization, related);
 
-        read("INDIVIDUAL_KYC").assertCatalog(individual, TEMPLATE_ITEMS);
-        read("ORGANIZATION_KYB").assertCatalog(organization, organization.requirements());
-        read("RELATED_PERSON_KYC").assertCatalog(related, related.requirements());
+        read(INDIVIDUAL_KYC).assertCatalog(individual, TEMPLATE_ITEMS);
+        read(ORGANIZATION_KYB).assertCatalog(organization, organization.requirements());
+        read(RELATED_PERSON_KYC).assertCatalog(related, related.requirements());
     }
 
     /** 历史修订与非 1 序号的生效修订：只返回唯一 ACTIVE 修订。 */
     @Test
     void test_edgeCase_retiredHistoryIsIgnored() {
-        MockedProgram program = materials.mock(approved("INDIVIDUAL_KYC").versionNo(2));
+        MockedProgram program = materials.mock(approved(INDIVIDUAL_KYC).versionNo(2));
         materials.mockExtraVersion(program, 1, "RETIRED", null);
         materials.mapPrograms(program);
 
-        read("INDIVIDUAL_KYC").assertCatalog(program, TEMPLATE_ITEMS);
+        read(INDIVIDUAL_KYC).assertCatalog(program, TEMPLATE_ITEMS);
     }
 
     /** 材料要求达到 1024 条上限时完整返回并保持排序。 */
     @Test
     void test_edgeCase_maximumRequirements() {
         List<Requirement> sorted = requirements(1024);
-        MockedProgram program = materials.mock(approved("INDIVIDUAL_KYC").requirements(sorted.reversed()));
+        MockedProgram program = materials.mock(approved(INDIVIDUAL_KYC).requirements(sorted.reversed()));
         materials.mapPrograms(program);
 
-        read("INDIVIDUAL_KYC").assertCatalog(program, sorted);
+        read(INDIVIDUAL_KYC).assertCatalog(program, sorted);
     }
 
     /** 映射缺失、指向不存在的程序，或程序资格类型与映射不一致时不可用。 */
     @Test
     void test_noDataFound() {
-        MockedProgram individual = materials.mock(approved("INDIVIDUAL_KYC"));
-        MockedProgram organization = materials.mock(approved("ORGANIZATION_KYB"));
+        MockedProgram individual = materials.mock(approved(INDIVIDUAL_KYC));
+        MockedProgram organization = materials.mock(approved(ORGANIZATION_KYB));
 
         materials.mapPrograms(organization);
-        read("INDIVIDUAL_KYC").assertUnavailable();
+        read(INDIVIDUAL_KYC).assertUnavailable();
 
-        materials.mapRaw(json(List.of(row("INDIVIDUAL_KYC", "MOCK_MATERIAL_MISSING"))));
-        read("INDIVIDUAL_KYC").assertUnavailable();
+        materials.mapRaw(json(List.of(row(INDIVIDUAL_KYC.getCode(), "MOCK_MATERIAL_MISSING"))));
+        read(INDIVIDUAL_KYC).assertUnavailable();
 
-        materials.mapRaw(json(List.of(row("INDIVIDUAL_KYC", organization.programCode()))));
-        read("INDIVIDUAL_KYC").assertUnavailable();
+        materials.mapRaw(json(List.of(row(INDIVIDUAL_KYC.getCode(), organization.programCode()))));
+        read(INDIVIDUAL_KYC).assertUnavailable();
 
         materials.mapPrograms(individual);
-        read("INDIVIDUAL_KYC").assertCatalog(individual, TEMPLATE_ITEMS);
+        read(INDIVIDUAL_KYC).assertCatalog(individual, TEMPLATE_ITEMS);
     }
 
     /** 映射配置任一处非法都使整份映射失效，即便目标资格本身配置正确。 */
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidMappings")
     void test_invalidMapping(String scenario, Function<String, String> mapping) {
-        MockedProgram program = materials.mock(approved("INDIVIDUAL_KYC"));
+        MockedProgram program = materials.mock(approved(INDIVIDUAL_KYC));
         materials.mapRaw(mapping.apply(program.programCode()));
 
-        read("INDIVIDUAL_KYC").assertUnavailable();
+        read(INDIVIDUAL_KYC).assertUnavailable();
     }
 
     /** 程序或修订不是已批准且已生效的唯一权威时不可用。 */
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidPrograms")
     void test_businessRuleViolation_invalidProgram(String scenario, Consumer<MaterialProgramBuilder> change) {
-        MaterialProgramBuilder builder = approved("INDIVIDUAL_KYC");
+        MaterialProgramBuilder builder = approved(INDIVIDUAL_KYC);
         change.accept(builder);
         materials.mapPrograms(materials.mock(builder));
 
-        read("INDIVIDUAL_KYC").assertUnavailable();
+        read(INDIVIDUAL_KYC).assertUnavailable();
     }
 
     /** 同一程序存在两个 ACTIVE 修订时不选第一条掩盖目录损坏。 */
     @Test
     void test_businessRuleViolation_ambiguousActiveVersion() {
-        MockedProgram program = materials.mock(approved("INDIVIDUAL_KYC"));
+        MockedProgram program = materials.mock(approved(INDIVIDUAL_KYC));
         materials.mockExtraVersion(program, 2, "ACTIVE", null);
         materials.mapPrograms(program);
 
-        read("INDIVIDUAL_KYC").assertUnavailable();
+        read(INDIVIDUAL_KYC).assertUnavailable();
     }
 
     /** 材料闭包为空、超限或任一条损坏时不可用。 */
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidRequirements")
     void test_businessRuleViolation_invalidRequirements(String scenario, List<Requirement> requirements) {
-        materials.mapPrograms(materials.mock(approved("INDIVIDUAL_KYC").requirements(requirements)));
+        materials.mapPrograms(materials.mock(approved(INDIVIDUAL_KYC).requirements(requirements)));
 
-        read("INDIVIDUAL_KYC").assertUnavailable();
+        read(INDIVIDUAL_KYC).assertUnavailable();
     }
 
     /** 查询参数不合法或携带 Body 时拒绝；目标资格本身已正确配置。 */
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidQueries")
     void test_invalidParameter(String scenario, String query, String body) {
-        materials.mapPrograms(materials.mock(approved("INDIVIDUAL_KYC")));
+        materials.mapPrograms(materials.mock(approved(INDIVIDUAL_KYC)));
 
-        invoke(query, body).assertProblem(400, "INVALID_REQUEST");
+        invoke(query, body).assertProblem(400, INVALID_REQUEST.getCode());
     }
 
     /** 每个用例都含目标资格的合法映射行，只额外引入一个缺陷；纯结构用例天然没有可用行。 */
@@ -267,8 +272,8 @@ class MaterialRequirementsApiAutoTest extends MockTestBase {
     }
 
     /** 以合法调用方读取指定资格类型。 */
-    private MaterialRequirementsResponseChecker read(String qualificationType) {
-        return invoke("qualificationType=" + qualificationType, null);
+    private MaterialRequirementsResponseChecker read(MaterialQualificationType qualificationType) {
+        return invoke("qualificationType=" + qualificationType.getCode(), null);
     }
 
     /** 以私网调用方发送真实 GET，查询串原样拼接，每次使用独立 Request ID。 */

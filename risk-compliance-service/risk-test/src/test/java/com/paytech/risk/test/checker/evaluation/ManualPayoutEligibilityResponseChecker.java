@@ -1,5 +1,7 @@
 package com.paytech.risk.test.checker.evaluation;
 
+import static com.paytech.foundation.common.error.CommonErrorCode.SERVICE_UNAVAILABLE;
+
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
@@ -27,7 +29,7 @@ public final class ManualPayoutEligibilityResponseChecker
 
     /** 评估链尚未就绪：返回 503 且不泄露任何决定字段。 */
     public ManualPayoutEligibilityResponseChecker assertFailClosed() {
-        assertProblem(503, "SERVICE_UNAVAILABLE");
+        assertProblem(503, SERVICE_UNAVAILABLE.getCode());
         org.junit.jupiter.api.Assertions.assertFalse(body().has("decision"), "Fail-Closed 响应不得包含风控决定");
         return this;
     }

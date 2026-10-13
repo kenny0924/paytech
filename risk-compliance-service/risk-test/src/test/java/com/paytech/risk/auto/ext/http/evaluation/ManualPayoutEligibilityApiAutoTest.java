@@ -1,5 +1,8 @@
 package com.paytech.risk.auto.ext.http.evaluation;
 
+import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
+import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
+import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
 import static com.paytech.risk.test.builder.evaluation.ManualPayoutEligibilityRequestBuilder.*;
 
 import java.util.UUID;
@@ -63,7 +66,7 @@ class ManualPayoutEligibilityApiAutoTest extends MockTestBase {
     @ParameterizedTest(name = "{0}: {1}")
     @MethodSource("invalidFields")
     void test_invalidParameter(String field, String scenario, Supplier<ManualPayoutEligibilityRequestBuilder> request) {
-        invoke(request.get().build()).assertProblem(422, "VALIDATION_ERROR").assertFieldError(field);
+        invoke(request.get().build()).assertProblem(422, VALIDATION_ERROR.getCode()).assertFieldError(field);
     }
 
     /** 格式合法但违反检查点合同的输入在评估前拒绝，不会落入 Fail-Closed。 */
@@ -72,7 +75,7 @@ class ManualPayoutEligibilityApiAutoTest extends MockTestBase {
     void test_businessRuleViolation(String scenario, Supplier<ManualPayoutEligibilityRequestBuilder> request) {
         ManualPayoutEligibilityRequestBody body = request.get().build();
 
-        invoke(body).assertProblem(400, "INVALID_REQUEST");
+        invoke(body).assertProblem(400, INVALID_REQUEST.getCode());
 
         assessmentChecker.assertNotRecorded(body.getInputHash());
     }
@@ -82,7 +85,7 @@ class ManualPayoutEligibilityApiAutoTest extends MockTestBase {
     @MethodSource("malformedBodies")
     void test_malformedBody(String scenario, Function<ObjectMapper, String> rawBody) {
         invoke(TestRequestHeaders.internal(nextRequestId()), rawBody.apply(objectMapper)).assertProblem(400,
-            "INVALID_REQUEST");
+            INVALID_REQUEST.getCode());
     }
 
     /** 非 JSON 请求在进入合同前以 415 拒绝。 */
@@ -91,7 +94,7 @@ class ManualPayoutEligibilityApiAutoTest extends MockTestBase {
         HttpHeaders headers = TestRequestHeaders.internal(nextRequestId());
         headers.setContentType(MediaType.TEXT_PLAIN);
 
-        invoke(headers, json(clientCreation())).assertProblem(415, "UNSUPPORTED_MEDIA_TYPE");
+        invoke(headers, json(clientCreation())).assertProblem(415, UNSUPPORTED_MEDIA_TYPE.getCode());
     }
 
     /** 四个检查点 × 两类角色、命令键不参与摘要，以及金额与 ID 的合法边界。 */

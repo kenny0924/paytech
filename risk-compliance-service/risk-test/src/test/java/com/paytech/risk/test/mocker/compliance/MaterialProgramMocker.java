@@ -10,6 +10,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.boot.test.context.TestComponent;
 
 import com.paytech.foundation.testsupport.api.Clear;
+import com.paytech.risk.api.enums.MaterialQualificationType;
 import com.paytech.risk.compliance.core.configuration.MaterialRequirementsProperties;
 import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder;
 import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder.Requirement;
@@ -47,8 +48,8 @@ public class MaterialProgramMocker implements Clear {
     }
 
     /** 已插入的程序，供用例组装映射与断言。 */
-    public record MockedProgram(long programId, long programVersionId, String programCode, String qualificationType,
-        List<Requirement> requirements) {}
+    public record MockedProgram(long programId, long programVersionId, String programCode,
+        MaterialQualificationType qualificationType,        List<Requirement> requirements) {}
 
     /** 按 Builder 插入一个程序及其唯一修订和全部材料要求。 */
     public MockedProgram mock(MaterialProgramBuilder builder) {
@@ -56,7 +57,7 @@ public class MaterialProgramMocker implements Clear {
         long versionId = randomId();
         String programCode = "MOCK_MATERIAL_" + programId;
         programIds.add(programId);
-        mapper.insertProgram(programId, programCode, builder.qualificationType(), builder.programStatus());
+        mapper.insertProgram(programId, programCode, builder.qualificationType().getCode(), builder.programStatus());
         mapper.insertVersion(versionId, programId, builder.versionNo(), builder.versionStatus(), builder.activeSlot(),
             builder.contentHash(), builder.approvedBy(), builder.approvedTime());
         mapper.insertRequirements(versionId, builder.requirements().stream()
@@ -76,7 +77,7 @@ public class MaterialProgramMocker implements Clear {
     public void mapPrograms(MockedProgram... programs) {
         List<Map<String, String>> rows = new ArrayList<>();
         for (MockedProgram program : programs) {
-            rows.add(row(program.qualificationType(), program.programCode()));
+            rows.add(row(program.qualificationType().getCode(), program.programCode()));
         }
         mapRaw(json.writeValueAsString(rows));
     }

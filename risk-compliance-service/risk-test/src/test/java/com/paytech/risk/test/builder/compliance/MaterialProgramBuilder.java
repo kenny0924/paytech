@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.paytech.risk.api.enums.MaterialQualificationType;
+
 /**
  * 通用材料程序测试数据 Builder
  * <li>approved() 给出已批准、已生效、要求完整的合法程序；用例只改与场景相关的字段。</li>
@@ -19,7 +21,7 @@ public final class MaterialProgramBuilder {
     /** 一条材料要求。 */
     public record Requirement(String requirementCode, String documentType, int requiredFlag) {}
 
-    private final String qualificationType;
+    private final MaterialQualificationType qualificationType;
 
     private String programStatus = "ACTIVE";
 
@@ -39,12 +41,12 @@ public final class MaterialProgramBuilder {
         new Requirement("PROOF_OF_ADDRESS", "UTILITY_BILL", 0),
         new Requirement("IDENTITY_DOCUMENT", "PASSPORT", 1)));
 
-    private MaterialProgramBuilder(String qualificationType) {
+    private MaterialProgramBuilder(MaterialQualificationType qualificationType) {
         this.qualificationType = qualificationType;
     }
 
     /** 指定资格类型下已批准且已生效的合法程序。 */
-    public static MaterialProgramBuilder approved(String qualificationType) {
+    public static MaterialProgramBuilder approved(MaterialQualificationType qualificationType) {
         return new MaterialProgramBuilder(qualificationType);
     }
 
@@ -102,7 +104,7 @@ public final class MaterialProgramBuilder {
         return this;
     }
 
-    public String qualificationType() {
+    public MaterialQualificationType qualificationType() {
         return qualificationType;
     }
 
