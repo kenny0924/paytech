@@ -188,8 +188,19 @@ public final class RuleAstValidatorImpl implements RuleAstValidator {
         }
         values.sort(Comparator.comparing(NormalizedOperand::operandRole).thenComparingInt(NormalizedOperand::valueSequence));
         validateSequences(values);
-        VariableOperandJson.validatePredicate(node.comparisonOperator(), values.stream().map(NormalizedOperand::variableOperand).toList());
+        validateVariablePredicate(node, values);
         return new NormalizedPredicate(node.comparisonOperator(), values);
+    }
+
+    /** 统一格式的谓词形状与旧格式操作数矩阵同属业务规则，按 400 拒绝而非作为系统错误。 */
+    private static void validateVariablePredicate(NodeDraft node, List<NormalizedOperand> values) {
+        try {
+            VariableOperandJson.validatePredicate(node.comparisonOperator(),
+                values.stream().map(NormalizedOperand::variableOperand).toList());
+        } catch (IllegalArgumentException failure) {
+            throw business("谓词形状无效: " + failure.getMessage() + ", 节点: " + node.nodeKey()
+                + ", 操作符: " + node.comparisonOperator());
+        }
     }
 
     private NormalizedPredicate predicate(NodeDraft node) {
