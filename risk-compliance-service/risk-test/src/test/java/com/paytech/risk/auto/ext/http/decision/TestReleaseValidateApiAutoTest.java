@@ -46,7 +46,7 @@ import com.paytech.risk.test.mocker.decision.CandidateMocker.MockedCandidate;
  * <li>未找到：发布 ID 未登记返回 404。</li>
  * <li>业务规则：expectedVersion 不符或非原校验操作者返回 409 CONCURRENT_REQUEST，根与审计不变。</li>
  * <li>完整性：发布摘要、决策点版本摘要或已有检查不完整时失败关闭（500），不写入。</li>
- * <li>参数：路径 ID、Body 缺键、未知字段、非对象、类型错误返回 400；expectedVersion 为空或非正数返回 422；非 JSON 媒体类型返回 415。</li>
+ * <li>参数：路径 ID、Body 缺键、未知字段、重复键、非对象、类型错误（含小数与数字文本）或携带 Query 返回 400；expectedVersion 为空或非正数返回 422；非 JSON 媒体类型返回 415。</li>
  *
  * @see DecisionReleaseManagementApi#validateCandidate(String, String, String, ValidateTestReleaseRequestBody)
  */
@@ -276,6 +276,16 @@ class TestReleaseValidateApiAutoTest extends MockTestBase {
         store.assertUnchanged(candidate);
     }
 
+    /** 写接口不声明 Query，携带任何查询参数均在业务处理前拒绝。 */
+    @Test
+    void test_invalidParameter_query() {
+        MockedCandidate candidate = candidates.mockCandidate(CandidateBuilder.draft());
+
+        invoke(PATH.formatted(candidate.releaseId()) + "?expectedVersion=1", headers(ACTOR, nextRequestId()),
+            new ValidateTestReleaseRequestBody(1)).assertProblem(400, INVALID_REQUEST.getCode());
+        store.assertUnchanged(candidate);
+    }
+
     /** expectedVersion 为空或非正数时返回字段级校验错误。 */
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidExpectedVersions")
@@ -308,6 +318,10 @@ class TestReleaseValidateApiAutoTest extends MockTestBase {
         return Stream.of(Arguments.of("空对象", "{}"), Arguments.of("expectedVersion 为文本", "{\"expectedVersion\":\"one\"}"),
             Arguments.of("expectedVersion 超过 INT", "{\"expectedVersion\":2147483648}"),
             Arguments.of("expectedVersion 为布尔值", "{\"expectedVersion\":true}"),
+            Arguments.of("expectedVersion 为小数", "{\"expectedVersion\":1.5}"),
+            Arguments.of("expectedVersion 为整值小数", "{\"expectedVersion\":1.0}"),
+            Arguments.of("expectedVersion 为数字文本", "{\"expectedVersion\":\"1\"}"),
+            Arguments.of("expectedVersion 重复键", "{\"expectedVersion\":2,\"expectedVersion\":1}"),
             Arguments.of("含未知字段", "{\"expectedVersion\":1,\"releaseId\":\"1\"}"),
             Arguments.of("非 JSON", "expectedVersion=1"), Arguments.of("JSON 数组", "[1]"),
             Arguments.of("截断 JSON", "{\"expectedVersion\":"));

@@ -16,6 +16,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
@@ -33,7 +34,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
  * <li>正常流程：任一历史版本（冻结、退役、当前草稿）按原内容还原规则；被发布引用的冻结版本带旧编排坐标。</li>
  * <li>统一变量格式：附带被引用变量的当前展示值与读取时间；旧格式不引用变量。</li>
  * <li>未找到：版本不存在，或所属规则集已整体删除（含历史版本）时返回 404。</li>
- * <li>参数：路径版本 ID 不是正 BIGINT 十进制文本时在查询前拒绝（400）。</li>
+ * <li>参数：路径版本 ID 不是正 BIGINT 十进制文本、携带任何 Query 或 GET Body 时在查询前拒绝（400）。</li>
  * <li>闭包损坏：内容摘要与规则闭包不符时失败关闭（500）。</li>
  *
  * @see DecisionRuleSetManagementApi#getRuleSet(String, String, String)
@@ -98,6 +99,28 @@ class RuleSetDetailApiAutoTest extends MockTestBase {
         read(ruleSetVersionId).assertProblem(400, INVALID_REQUEST.getCode());
     }
 
+    /** 详情不声明 Query，未知、重复或空参数均在查询前拒绝。 */
+    @ParameterizedTest(name = "query={0}")
+    @MethodSource("invalidQueries")
+    void test_invalidParameter_query(String query) {
+        MockedRuleSet ruleSet = ruleSets.mock(versions(FROZEN, DRAFT));
+
+        read(ruleSet.version(1).ruleSetVersionId() + "?" + query).assertProblem(400, INVALID_REQUEST.getCode());
+    }
+
+    /** 携带 Body 的 GET 请求。 */
+    @Test
+    void test_invalidParameter_getWithBody() {
+        MockedRuleSet ruleSet = ruleSets.mock(versions(FROZEN, DRAFT));
+        String requestId = "risk-rule-set-detail-" + UUID.randomUUID();
+        Instant before = Instant.now();
+        var result = http.exchange(HttpMethod.GET, PATH.formatted(ruleSet.version(1).ruleSetVersionId()),
+            headers(requestId), "{}");
+
+        new RuleSetDetailResponseChecker(result, objectMapper, requestId, before, Instant.now()).assertProblem(400,
+            INVALID_REQUEST.getCode());
+    }
+
     /** 版本内容摘要与规则闭包不符时失败关闭，不返回被篡改的内容。 */
     @Test
     void test_businessRuleViolation_corruptedVersionFailsClosed() {
@@ -107,6 +130,10 @@ class RuleSetDetailApiAutoTest extends MockTestBase {
         read(ruleSet, 1).assertProblem(500, INTERNAL_ERROR.getCode());
         // 损坏只影响该版本，其他版本仍可读取。
         read(ruleSet, 2).assertLegacyVersion(ruleSet, 2, null);
+    }
+
+    static Stream<String> invalidQueries() {
+        return Stream.of("versionNo=1", "page=1&page=1", "page=");
     }
 
     static Stream<String> invalidVersionIds() {

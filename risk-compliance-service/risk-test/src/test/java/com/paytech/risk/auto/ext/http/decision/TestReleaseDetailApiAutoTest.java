@@ -11,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
@@ -26,7 +27,7 @@ import com.paytech.risk.test.mocker.decision.CandidateMocker.MockedCandidate;
  * TEST Candidate 详情查询
  * <li>正常流程：DRAFT、已开始未完成的 VALIDATING、八项通过的 VALIDATING 与 REJECTED 四种形态，返回冻结组成、状态审计与固定顺序检查。</li>
  * <li>未找到：发布 ID 未登记返回 404。</li>
- * <li>参数：路径发布 ID 非规范正 BIGINT 时在查询前拒绝（400）。</li>
+ * <li>参数：路径发布 ID 非规范正 BIGINT、携带任何 Query 或 GET Body 时在查询前拒绝（400）。</li>
  * <li>闭包损坏：发布摘要、决策点版本摘要、规则内容摘要、绑定、状态链或八项检查任一不完整时失败关闭（500）。</li>
  *
  * @see DecisionReleaseManagementApi#getCandidate(String, String, String)
@@ -155,6 +156,30 @@ class TestReleaseDetailApiAutoTest extends MockTestBase {
     @MethodSource("invalidReleaseIds")
     void test_invalidParameter_releaseId(String releaseId) {
         invoke(headers(), PATH.formatted(releaseId)).assertProblem(400, INVALID_REQUEST.getCode());
+    }
+
+    /** 详情不声明 Query，未知、重复或空参数均在查询前拒绝。 */
+    @ParameterizedTest(name = "query={0}")
+    @MethodSource("invalidQueries")
+    void test_invalidParameter_query(String query) {
+        MockedCandidate candidate = candidates.mockCandidate(CandidateBuilder.draft());
+
+        invoke(headers(), PATH.formatted(candidate.releaseId()) + "?" + query).assertProblem(400,
+            INVALID_REQUEST.getCode());
+    }
+
+    /** 携带 Body 的 GET 请求。 */
+    @Test
+    void test_invalidParameter_getWithBody() {
+        MockedCandidate candidate = candidates.mockCandidate(CandidateBuilder.draft());
+        String requestId = nextRequestId();
+
+        new TestReleaseDetailResponseChecker(http.exchange(HttpMethod.GET, PATH.formatted(candidate.releaseId()),
+            headers(requestId), "{}"), objectMapper, requestId).assertProblem(400, INVALID_REQUEST.getCode());
+    }
+
+    static Stream<String> invalidQueries() {
+        return Stream.of("status=DRAFT", "page=1&page=1", "page=");
     }
 
     static Stream<String> invalidReleaseIds() {

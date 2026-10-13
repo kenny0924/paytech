@@ -5,6 +5,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
@@ -41,6 +42,9 @@ public class RejectionReasonListProcessor
     /** 对计数和当前页使用相同筛选，空页保留请求的分页坐标。 */
     PagingResponseBody<Entry> readPage(RejectionReasonListRequest request, PagingRequestBody paging) {
         long total = repository.count(request.getKeyword(), request.getStatus());
+        if (total < 0 || total > 9007199254740991L) {
+            throw new ErrorException("字典分页计数无效");
+        }
         var items = repository.findPage(request.getKeyword(), request.getStatus(), paging.size(), paging.offset())
             .stream().map(this::toEntry).toList();
         return new PagingResponseBody<>(items, paging.page(), paging.size(), total);

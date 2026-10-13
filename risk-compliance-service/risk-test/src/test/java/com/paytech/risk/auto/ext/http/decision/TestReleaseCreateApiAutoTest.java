@@ -43,7 +43,7 @@ import com.paytech.risk.test.mocker.decision.CandidateMocker.MockedCandidate;
  * <li>业务规则：预期内容摘要不符返回 409 CONCURRENT_REQUEST；规则集已删除返回 409 RISK_RULE_SET_DELETED；
  * 草稿版本、无旧发布组成、统一变量格式不具备资格（400 BUSINESS_CHECK_FAILED）。均不写入任何发布。</li>
  * <li>完整性：存储摘要漂移、全表存在非规范发布编号或编号达到上限时失败关闭（500），不写入。</li>
- * <li>参数：Body 缺字段、未知字段、非 JSON、非对象或 ID 超出 BIGINT 返回 400；字段为空、格式或长度非法返回 422 字段错误；非 JSON 媒体类型返回 415。</li>
+ * <li>参数：Body 缺字段、未知字段、重复键、非 JSON、非对象、ID 为 JSON 数值或超出 BIGINT 返回 400；未声明的 Query 返回 400；字段为空、格式或长度非法返回 422 字段错误；非 JSON 媒体类型返回 415。</li>
  *
  * @see DecisionReleaseManagementApi#createCandidate(String, String, CreateTestReleaseRequestBody)
  */
@@ -222,6 +222,17 @@ class TestReleaseCreateApiAutoTest extends MockTestBase {
         store.assertReleases(composition);
     }
 
+    /** 写接口不声明 Query，携带任何查询参数均在业务处理前拒绝。 */
+    @Test
+    void test_invalidParameter_query() {
+        CompositionFacts composition = candidates.mockComposition(CandidateBuilder.composition());
+        String requestId = nextRequestId();
+
+        new TestReleaseCreateResponseChecker(http.post(PATH + "?environmentCode=TEST", headers(requestId),
+            request(composition)), objectMapper, requestId).assertProblem(400, INVALID_REQUEST.getCode());
+        store.assertReleases(composition);
+    }
+
     /** 字段为空或格式、长度非法时返回字段级校验错误。 */
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidFields")
@@ -250,6 +261,10 @@ class TestReleaseCreateApiAutoTest extends MockTestBase {
             Arguments.of("缺少 ruleSetVersionId", "{\"expectedRuleSetContentHash\":\"{hash}\"}"),
             Arguments.of("缺少 expectedRuleSetContentHash", "{\"ruleSetVersionId\":\"{id}\"}"),
             Arguments.of("ruleSetVersionId 超过 BIGINT", body("9223372036854775808", "{hash}")),
+            Arguments.of("ruleSetVersionId 为 JSON 数值", "{\"ruleSetVersionId\":{id},\"expectedRuleSetContentHash\":\"{hash}\"}"),
+            Arguments.of("expectedRuleSetContentHash 为 JSON 数值", "{\"ruleSetVersionId\":\"{id}\",\"expectedRuleSetContentHash\":1}"),
+            Arguments.of("ruleSetVersionId 重复键", "{\"ruleSetVersionId\":\"1\",\"ruleSetVersionId\":\"{id}\","
+                + "\"expectedRuleSetContentHash\":\"{hash}\"}"),
             Arguments.of("含未知字段", "{\"ruleSetVersionId\":\"{id}\",\"expectedRuleSetContentHash\":\"{hash}\","
                 + "\"environmentCode\":\"TEST\"}"),
             Arguments.of("非 JSON", "ruleSetVersionId={id}"), Arguments.of("JSON 数组", "[]"),

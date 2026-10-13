@@ -19,6 +19,9 @@ public interface DecisionRuleSetService {
     /** 已有流程/发布引用允许读取删除根的不可变历史。 */
     DecisionRuleSetAggregate detailForPersistedReference(long ruleSetVersionId);
 
+    /** 旧多绑定点的顺序编排引用读取准确版本，该绑定不视为规则版本的 Companion。 */
+    DecisionRuleSetAggregate detailForLegacyOrchestration(long ruleSetVersionId, long bindingId);
+
     /** 配置能力及已读取系统变量的展示投影。 */
     record RuleAuthoringView(CheckoutPrepareAuthoringDescriptor descriptor,
         List<com.paytech.risk.decision.domain.variable.RiskVariable.Entry> systemDefinitions) {

@@ -105,6 +105,17 @@ class VariableDetailApiAutoTest extends AbstractVariableApiTest {
         read(variable.code()).assertDetail(variable.code(), variable.spec(), null);
     }
 
+    /** 墓碑变量的可选值集合随后被删除时仍可读取，可选值按该集合墓碑的编码、名称、版本、成员数及预览返回。 */
+    @Test
+    void test_edgeCase_tombstoneWithDeletedAllowedValues() {
+        MockedVariable options = variables.mock(VariableBuilder.collection(STRING, UPPER_ALPHA_2).status(VariableStatus.DELETED)
+            .version(5).variableName("Retired countries").member("AE", "UAE").member("SA", null));
+        MockedVariable constant = variables.mock(VariableBuilder.constant(STRING, UPPER_ALPHA_2, "AE")
+            .allowedValuesVariableCode(options.code()).status(VariableStatus.DELETED).version(3));
+
+        read(constant.code()).assertDetail(constant.code(), constant.spec(), options);
+    }
+
     /** 编码不存在。 */
     @Test
     void test_noDataFound() {

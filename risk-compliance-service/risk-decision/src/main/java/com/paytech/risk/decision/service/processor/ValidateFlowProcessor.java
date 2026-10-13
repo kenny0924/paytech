@@ -68,12 +68,14 @@ public class ValidateFlowProcessor extends AbstractProcessor<ValidateFlowRequest
     private Validation validateReferences(Save command, Checked checked) {
         DecisionPoint point = point(command.pointCode());
         DecisionFlowRow root = roots.findByCode(point.decisionPointId(), command.flowCode()).orElse(null);
+        if (command.baseFlowVersionId() != null && root == null) {
+            return baseConflict("编辑的流程不存在，请重新载入后编辑");
+        }
         DecisionFlowVersionRow head;
         try {
             head = verifyBase(command, root);
         } catch (DecisionFlowConfigurationException failure) {
-            return new Validation(false,
-                List.of(new Issue("BASE_CONFLICT", null, null, "baseFlowVersionId", failure.getMessage())), false);
+            return baseConflict(failure.getMessage());
         }
         Graph base = baseGraph(command.pointCode(), root, head);
         Map<String, Node> normalizedNodes =
@@ -88,6 +90,11 @@ public class ValidateFlowProcessor extends AbstractProcessor<ValidateFlowRequest
         return new Validation(issues.isEmpty(), issues.stream().limit(100).toList(), issues.size() > 100);
     }
 
+    /** 编辑基准问题与图问题同样作为校验结果报告，不转为资源错误。 */
+    private static Validation baseConflict(String message) {
+        return new Validation(false, List.of(new Issue("BASE_CONFLICT", null, null, "baseFlowVersionId", message)), false);
+    }
+
     /** 当前可编辑决策点由本库目录确认。 */
     private DecisionPoint point(String code) {
         if (!"CHECKOUT_PREPARE".equals(code)) {
@@ -100,16 +107,13 @@ public class ValidateFlowProcessor extends AbstractProcessor<ValidateFlowRequest
         return point;
     }
 
-    /** 新建编码不可复用；编辑只允许从当前头版本继续。 */
+    /** 新建编码不可复用；编辑只允许从已存在流程的当前头版本继续。 */
     private DecisionFlowVersionRow verifyBase(Save command, DecisionFlowRow root) {
         if (command.baseFlowVersionId() == null) {
             if (root != null) {
                 throw new DecisionFlowConfigurationException(Reason.CODE_EXISTS, "流程编码已存在，删除后也不能复用", List.of());
             }
             return null;
-        }
-        if (root == null) {
-            throw new DecisionConfigurationNotFoundException();
         }
         var head = versions.findById(root.currentFlowVersionId()).orElseThrow(() -> new ErrorException("流程当前版本缺失"));
         root.verifyHead(head);

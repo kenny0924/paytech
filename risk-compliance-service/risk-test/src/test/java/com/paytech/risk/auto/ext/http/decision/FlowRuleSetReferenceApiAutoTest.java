@@ -38,7 +38,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
 
 /**
  * 按已保存来源的真实节点绑定解析准确规则引用
- * <li>正常流程：FLOW_VERSION 按所选流程版本图中的规则集节点解析，LEGACY_POINT 按旧点绑定解析；返回准确规则版本详情及其当前管理状态。</li>
+ * <li>正常流程：FLOW_VERSION 按所选流程版本图中的规则集节点解析，LEGACY_POINT 按旧点绑定解析（含多绑定旧点的任一绑定）；返回准确规则版本详情及其当前管理状态。</li>
  * <li>历史保留：规则集整体删除或流程整体删除后，准确引用仍可读取。</li>
  * <li>未找到：来源版本不存在、节点不存在或不是规则集节点返回 404。</li>
  * <li>参数：来源类型、来源版本 ID、节点键缺失或格式非法，未知/重复 Query 与 GET Body 在查询前拒绝（400）。</li>
@@ -114,6 +114,25 @@ class FlowRuleSetReferenceApiAutoTest extends MockTestBase {
         read("LEGACY_POINT", point.pointVersionId(), nodeKey).assertReference(
             new ExpectedSource("LEGACY_POINT", point.pointVersionId(), nodeKey), ruleSet, 1, CONFIGURABLE,
             point.pointVersionId(), flowTestMapper.ruleNodeId(ruleSet.currentVersionId()), before, now());
+    }
+
+    /** 多绑定旧点的每个绑定都解析各自准确规则版本；顺序编排绑定不是伴随点，规则版本自身的伴随点保持不变。 */
+    @Test
+    void test_normalFlow_legacyPointMultipleBindings() {
+        MockedRuleSet first = ruleSets.mock(versions(FROZEN));
+        MockedRuleSet second = ruleSets.mock(versions(FROZEN));
+        MockedLegacyPoint companion = flows.mockLegacyPoint(second.version(1));
+        MockedLegacyPoint point = flows.mockLegacyPoint(first.version(1), second.version(1));
+        String firstKey = "binding_" + point.bindingIds().get(0);
+        String secondKey = "binding_" + point.bindingIds().get(1);
+        Instant before = now();
+
+        read("LEGACY_POINT", point.pointVersionId(), secondKey).assertReference(
+            new ExpectedSource("LEGACY_POINT", point.pointVersionId(), secondKey), second, 1, CONFIGURABLE,
+            companion.pointVersionId(), flowTestMapper.ruleNodeId(second.currentVersionId()), before, now());
+        read("LEGACY_POINT", point.pointVersionId(), firstKey).assertReference(
+            new ExpectedSource("LEGACY_POINT", point.pointVersionId(), firstKey), first, 1, CONFIGURABLE, null,
+            flowTestMapper.ruleNodeId(first.currentVersionId()), before, now());
     }
 
     /** 来源版本不存在，或节点不存在、不是规则集节点。 */

@@ -122,15 +122,20 @@ public class DecisionRuleSetRepositoryImpl implements DecisionRuleSetRepository 
 
     @Override
     public DecisionRuleSetAggregate requireClosure(long ruleSetVersionId) {
-        return loadRuleSet(ruleSetVersionId, true);
+        return loadRuleSet(ruleSetVersionId, true, null);
     }
 
     @Override
     public DecisionRuleSetAggregate requireConfiguration(long ruleSetVersionId) {
-        return loadRuleSet(ruleSetVersionId, false);
+        return loadRuleSet(ruleSetVersionId, false, null);
     }
 
-    private DecisionRuleSetAggregate loadRuleSet(long ruleSetVersionId, boolean legacy) {
+    @Override
+    public DecisionRuleSetAggregate requireOrchestratedConfiguration(long ruleSetVersionId, long bindingId) {
+        return loadRuleSet(ruleSetVersionId, false, bindingId);
+    }
+
+    private DecisionRuleSetAggregate loadRuleSet(long ruleSetVersionId, boolean legacy, Long orchestrationBindingId) {
         RuleSetVersion ruleSet = requireFound(mapper.selectRuleSetVersion(ruleSetVersionId),
             "规则集版本不存在: ruleSetVersionId=" + ruleSetVersionId);
         DecisionPoint point = mapper.selectDecisionPointById(ruleSet.decisionPointId());
@@ -138,9 +143,7 @@ public class DecisionRuleSetRepositoryImpl implements DecisionRuleSetRepository 
             throw corruption("规则集版本引用的决策事件点缺失或错配");
         }
 
-        List<DecisionPointRuleSet> companions = safe(
-            mapper.selectCompanionBindingsByRuleSetVersionIds(List.of(ruleSetVersionId)), "Companion 绑定");
-        uniqueIds(companions, DecisionPointRuleSet::bindingId, "Companion 绑定");
+        List<DecisionPointRuleSet> companions = companionBindings(ruleSetVersionId, orchestrationBindingId);
         if (companions.size() > 1) throw corruption("规则集版本存在多个旧编排绑定");
         if (legacy && companions.isEmpty()) {
             throw corruption("历史规则集缺少旧编排绑定");
@@ -205,6 +208,23 @@ public class DecisionRuleSetRepositoryImpl implements DecisionRuleSetRepository 
         return new DecisionRuleSetAggregate(point, pointVersion, inputFields, pointFeatures, pointRuleSets,
             obligations, ruleSet, rules, nodes, operands, ruleActions, actionVersions, definitions,
             parameters, featureClosure.versions(), featureClosure.dependencies());
+    }
+
+    /** 读取规则版本的 Companion 候选；已核验的多绑定顺序编排绑定只是引用，不参与一对一 Companion 判断。 */
+    private List<DecisionPointRuleSet> companionBindings(long ruleSetVersionId, Long orchestrationBindingId) {
+        List<DecisionPointRuleSet> bindings = safe(
+            mapper.selectCompanionBindingsByRuleSetVersionIds(List.of(ruleSetVersionId)), "Companion 绑定");
+        uniqueIds(bindings, DecisionPointRuleSet::bindingId, "Companion 绑定");
+        if (orchestrationBindingId == null) {
+            return bindings;
+        }
+        List<DecisionPointRuleSet> companions = bindings.stream()
+            .filter(binding -> binding.bindingId() != orchestrationBindingId).toList();
+        if (companions.size() == bindings.size()) {
+            throw corruption("顺序编排绑定未引用该规则集版本: bindingId=" + orchestrationBindingId
+                + ", ruleSetVersionId=" + ruleSetVersionId);
+        }
+        return companions;
     }
 
     @Override

@@ -17,6 +17,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 import com.paytech.risk.api.decision.DecisionReleaseManagementApi;
@@ -32,7 +33,7 @@ import com.paytech.risk.test.mocker.decision.CandidateMocker.MockedCandidate;
  * TEST Candidate 分页列表
  * <li>正常流程：按创建时间、发布 ID 倒序分页；可按决策点编码与 DRAFT/VALIDATING/REJECTED 状态精确筛选；三态检查结果按审计派生。</li>
  * <li>未找到：没有匹配 Candidate 时返回空页与总数 0；PRODUCTION 环境发布不进入 TEST 列表。</li>
- * <li>参数：分页越界或非允许条数、编码/状态非大写目录值、非候选状态与重复状态在查询前拒绝（400）。</li>
+ * <li>参数：分页越界或非允许条数、编码/状态非大写目录值、非候选状态，以及未知、重复、空 Query 与 GET Body 在查询前拒绝（400）。</li>
  * <li>闭包损坏：页内任一发布根状态越出首期合同、缺少规则集绑定或检查不完整时整页失败关闭（500）。</li>
  *
  * @see DecisionReleaseManagementApi#listCandidates(String, String, Integer, Integer, String, String)
@@ -177,6 +178,16 @@ class TestReleaseListApiAutoTest extends MockTestBase {
         list(query).assertProblem(400, INVALID_REQUEST.getCode());
     }
 
+    /** 携带 Body 的 GET 请求。 */
+    @Test
+    void test_invalidParameter_getWithBody() {
+        candidates.mockCandidate(CandidateBuilder.draft());
+        String requestId = nextRequestId();
+
+        new TestReleaseListResponseChecker(http.exchange(HttpMethod.GET, PATH, headers(requestId), "{}"), objectMapper,
+            requestId).assertProblem(400, INVALID_REQUEST.getCode());
+    }
+
     static Stream<Arguments> invalidQueries() {
         return Stream.of(Arguments.of("page 为 0", "page=0"), Arguments.of("page 为负数", "page=-1"),
             Arguments.of("page 超过 100000", "page=100001"), Arguments.of("page 非数字", "page=one"),
@@ -187,7 +198,9 @@ class TestReleaseListApiAutoTest extends MockTestBase {
             Arguments.of("status 重复", "status=DRAFT&status=REJECTED"),
             Arguments.of("pointCode 小写", "pointCode=checkout_prepare"),
             Arguments.of("pointCode 为空值", "pointCode="), Arguments.of("pointCode 含连字符", "pointCode=CHECKOUT-PREPARE"),
-            Arguments.of("pointCode 超过 64 字符", "pointCode=C" + "A".repeat(64)));
+            Arguments.of("pointCode 超过 64 字符", "pointCode=C" + "A".repeat(64)),
+            Arguments.of("未知参数", "environmentCode=TEST"), Arguments.of("page 为空值", "page="),
+            Arguments.of("size 为空值", "size="), Arguments.of("page 重复", "page=1&page=1"));
     }
 
     private TestReleaseListResponseChecker list(String query) {

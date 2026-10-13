@@ -3,6 +3,7 @@ package com.paytech.risk.decision.domainservice.service.impl;
 import static com.paytech.risk.decision.domainservice.policy.RuleSetManagementPolicy.managementResourceKey;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.springframework.stereotype.Service;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
@@ -43,6 +44,14 @@ public class DecisionRuleSetServiceImpl implements DecisionRuleSetService {
         return requireAggregateAfterKnownReference(ruleSetVersionId);
     }
 
+    /** 旧多绑定点的已核验绑定只作为引用，规则版本自身的 Companion 校验保持不变。 */
+    @Override
+    public DecisionRuleSetAggregate detailForLegacyOrchestration(long ruleSetVersionId, long bindingId) {
+        requirePositiveInternalId(ruleSetVersionId, "ruleSetVersionId");
+        requirePositiveInternalId(bindingId, "bindingId");
+        return aggregateAfterKnownReference(() -> repository.requireOrchestratedConfiguration(ruleSetVersionId, bindingId));
+    }
+
     /** 按已存在版本的不变坐标准备资源锁。 */
     @Override
     public String resourceKeyForVersion(long ruleSetVersionId) {
@@ -61,8 +70,13 @@ public class DecisionRuleSetServiceImpl implements DecisionRuleSetService {
 
     /** 读取已定位规则完整事实并验证原内容。 */
     private DecisionRuleSetAggregate requireAggregateAfterKnownReference(long ruleSetVersionId) {
+        return aggregateAfterKnownReference(() -> repository.requireConfiguration(ruleSetVersionId));
+    }
+
+    /** 已定位引用的闭包在同一快照内消失视为数据损坏。 */
+    private DecisionRuleSetAggregate aggregateAfterKnownReference(Supplier<DecisionRuleSetRepository.DecisionRuleSetAggregate> loader) {
         try {
-            return assembler.toAggregate(repository.requireConfiguration(ruleSetVersionId));
+            return assembler.toAggregate(loader.get());
         } catch (NoSuchElementException exception) {
             throw corruption("已定位的 Rule Set 闭包消失", exception);
         }

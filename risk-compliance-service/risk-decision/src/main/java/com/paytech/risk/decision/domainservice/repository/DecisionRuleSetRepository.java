@@ -56,6 +56,9 @@ public interface DecisionRuleSetRepository {
     /** 普通配置读取只加载规则事实与已有编排的可选身份元数据。 */
     DecisionRuleSetAggregate requireConfiguration(long ruleSetVersionId);
 
+    /** 普通配置读取，排除旧多绑定点中已核验的顺序编排绑定后再判断 Companion。 */
+    DecisionRuleSetAggregate requireOrchestratedConfiguration(long ruleSetVersionId, long bindingId);
+
     /** 仅旧发布/历史使用的完整协议组成。 */
     DecisionRuleSetAggregate requireClosure(long ruleSetVersionId);
 

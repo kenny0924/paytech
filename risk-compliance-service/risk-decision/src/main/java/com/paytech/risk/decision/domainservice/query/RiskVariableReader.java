@@ -92,6 +92,11 @@ public class RiskVariableReader {
     /** 同一根版本的集合不允许被拆成混合批次。 */
     List<Member> collection(Entry entry, boolean currentRead) {
         requireCollection(entry);
+        return storedMembers(entry, currentRead);
+    }
+
+    /** 读取已确认集合身份的全部成员；墓碑保留成员事实，是否可用由调用入口决定。 */
+    List<Member> storedMembers(Entry entry, boolean currentRead) {
         var rows = memberRepository.members(entry.definition().variableCode(), null, 1001, 0, currentRead);
         if (rows.size() > 1000) { throw new ErrorException("集合成员超过批准容量"); }
         return rows.stream().map(r -> RiskVariablePersistenceConverter.member(entry.definition().valueType(), r)).toList();
@@ -158,11 +163,12 @@ public class RiskVariableReader {
                 RiskVariablePersistenceConverter.member(e.definition().valueType(), r)).toList(), null)).toList();
     }
 
-    /** 当前详情的可选值预览有一百项上限，超过时通过成员分页继续读取。 */
+    /** 当前详情的可选值预览有一百项上限，超过时通过成员分页继续读取；已删除的选项集合按墓碑事实展示。 */
     AllowedValues allowedValues(Definition definition) {
         if (definition.allowedValuesVariableCode() == null) { return null; }
         Entry options = required(definition.allowedValuesVariableCode(), null);
-        List<Member> members = collection(options);
+        requireCollectionSource(options);
+        List<Member> members = storedMembers(options, false);
         return new AllowedValues(options.definition().variableCode(), options.variableName(), options.version(), members.size(),
             members.stream().limit(100).toList());
     }
@@ -185,6 +191,11 @@ public class RiskVariableReader {
     /** 集合身份与墓碑状态由服务端独立检查。 */
     void requireCollection(Entry entry) {
         if (entry.status() == VariableStatus.DELETED) { throw failure(VARIABLE_NOT_FOUND, "变量已删除"); }
+        requireCollectionSource(entry);
+    }
+
+    /** 只校验集合身份，供允许展示墓碑的只读路径复用。 */
+    void requireCollectionSource(Entry entry) {
         if (entry.definition().sourceType() != VariableSource.COLLECTION) { throw failure(VARIABLE_TYPE_MISMATCH, "该变量不是集合"); }
     }
 

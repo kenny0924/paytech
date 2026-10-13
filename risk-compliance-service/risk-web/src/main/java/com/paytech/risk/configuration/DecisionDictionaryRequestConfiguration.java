@@ -21,27 +21,28 @@ import jakarta.servlet.http.HttpServletResponse;
 import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.json.JsonMapper;
 
-/** 仅对新增合同验证重复/未知 Query、无 GET Body 及有界精确字典 JSON。 */
+/** 仅对新增合同及规则集查询验证重复/未知 Query、无 GET Body 及有界精确字典 JSON。 */
 @Configuration(proxyBeanMethods = false)
 public class DecisionDictionaryRequestConfiguration implements WebMvcConfigurer {
+    private static final String RULE_SET_BASE = "/decision-rule-sets/v1";
+
     private final JsonMapper mapper;
     /** 复制 JSON 配置以严格检测重复字段，并避免解析异常包含原始内容。 */
     public DecisionDictionaryRequestConfiguration(JsonMapper mapper) {
         this.mapper = mapper.rebuild().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
             .disable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION).build();
     }
-    /** 仅为新增字典、历史和引用路径注册精确查询参数校验。 */
+    /** 仅为新增字典路径及规则集查询注册精确查询参数校验。 */
     @Override public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new HandlerInterceptor() {
             /** 拒绝未知、重复或空 Query 以及 GET Body，阻止其进入业务入口。 */
             @Override public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
                 String path = request.getRequestURI();
-                Set<String> keys = Set.of();
-                if (path.endsWith("/versions")) keys = Set.of("page", "size", "maxVersionNo");
-                else if (path.endsWith("/release-references")) keys = Set.of("page", "size", "environmentCode", "status", "ruleSetVersionId");
-                else if (path.endsWith("/references")) keys = Set.of("page", "size", "scope");
-                else if (request.getMethod().equals("GET") && (path.endsWith("/rejection-reasons") || path.endsWith("/subject-tags")))
-                    keys = Set.of("page", "size", "keyword", "status");
+                Set<String> keys = path.contains(RULE_SET_BASE) ? ruleSetQueryKeys(request.getMethod(), path)
+                    : dictionaryQueryKeys(request.getMethod(), path);
+                if (keys == null) {
+                    return true;
+                }
                 for (var parameter : request.getParameterMap().entrySet()) {
                     if (!keys.contains(parameter.getKey()) || parameter.getValue().length != 1 || parameter.getValue()[0].isEmpty())
                         throw new InvalidParameterException("Query 参数未知、重复或为空");
@@ -50,8 +51,42 @@ public class DecisionDictionaryRequestConfiguration implements WebMvcConfigurer 
                     throw new InvalidParameterException("查询请求不接受 Body");
                 return true;
             }
-        }).addPathPatterns("/decision-dictionaries/v1/**", "/decision-rule-sets/v1/rule-sets/*/versions",
-            "/decision-rule-sets/v1/rule-sets/*/release-references");
+        }).addPathPatterns("/decision-dictionaries/v1/**", "/decision-rule-sets/v1/authoring-context/*",
+            "/decision-rule-sets/v1/rule-sets", "/decision-rule-sets/v1/rule-sets/*",
+            "/decision-rule-sets/v1/rule-sets/*/versions", "/decision-rule-sets/v1/rule-sets/*/release-references");
+    }
+
+    /** 字典列表与引用查询的准确 Query 名单；详情和写操作不接受 Query。 */
+    static Set<String> dictionaryQueryKeys(String method, String path) {
+        if (path.endsWith("/references")) {
+            return Set.of("page", "size", "scope");
+        }
+        if ("GET".equals(method) && (path.endsWith("/rejection-reasons") || path.endsWith("/subject-tags"))) {
+            return Set.of("page", "size", "keyword", "status");
+        }
+        return Set.of();
+    }
+
+    /**
+     * 按规则集查询的准确路径形态返回 Query 名单，名单来自对应 risk-api 接口声明。
+     * <li>能力目录与版本详情不接受 Query；路径段只按位置判断，编码或 ID 恰为 versions 等字面值时不混淆。</li>
+     * <li>创建、冻结和删除等写操作不属于本查询合同，返回 null 保持原有处理。</li>
+     */
+    static Set<String> ruleSetQueryKeys(String method, String path) {
+        if (!"GET".equals(method)) {
+            return null;
+        }
+        String route = path.substring(path.indexOf(RULE_SET_BASE) + RULE_SET_BASE.length());
+        if (route.matches("/rule-sets/[^/]+/versions")) {
+            return Set.of("page", "size", "maxVersionNo");
+        }
+        if (route.matches("/rule-sets/[^/]+/release-references")) {
+            return Set.of("page", "size", "environmentCode", "status", "ruleSetVersionId");
+        }
+        if (route.equals("/rule-sets")) {
+            return Set.of("page", "size", "pointCode", "ruleSetCode", "status");
+        }
+        return Set.of();
     }
     /** 优先注册仅处理字典写请求的有界 JSON 转换器。 */
     @Override public void configureMessageConverters(HttpMessageConverters.ServerBuilder builder) {

@@ -12,6 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
@@ -23,7 +24,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker;
  * 规则配置能力目录查询
  * <li>正常流程：CHECKOUT_PREPARE 返回完整决策点描述、系统 INPUT 变量、运算符、动作、动作参数与主体绑定。</li>
  * <li>未找到：未批准的决策点编码返回 404。</li>
- * <li>参数：决策点编码格式非法时在查询前拒绝（400）。</li>
+ * <li>参数：决策点编码格式非法、携带任何 Query 或 GET Body 时在查询前拒绝（400）。</li>
  * <li>目录漂移：持久化动作目录与工程注册表不一致时失败关闭（500），不返回默认动作。</li>
  *
  * @see DecisionRuleSetManagementApi#getAuthoringContext(String, String, String)
@@ -54,6 +55,22 @@ class RuleAuthoringContextApiAutoTest extends MockTestBase {
         read(pointCode).assertProblem(400, INVALID_REQUEST.getCode());
     }
 
+    /** 能力目录不声明 Query，未知、重复或空参数均在查询前拒绝。 */
+    @ParameterizedTest(name = "query={0}")
+    @MethodSource("invalidQueries")
+    void test_invalidParameter_query(String query) {
+        read("CHECKOUT_PREPARE?" + query).assertProblem(400, INVALID_REQUEST.getCode());
+    }
+
+    /** 携带 Body 的 GET 请求。 */
+    @Test
+    void test_invalidParameter_getWithBody() {
+        String requestId = "risk-rule-authoring-" + UUID.randomUUID();
+
+        new RuleAuthoringContextResponseChecker(http.exchange(HttpMethod.GET, PATH.formatted("CHECKOUT_PREPARE"),
+            headers(requestId), "{}"), objectMapper, requestId).assertProblem(400, INVALID_REQUEST.getCode());
+    }
+
     /** 持久化动作名称与工程注册表漂移时整体失败，不返回目录。 */
     @Test
     void test_businessRuleViolation_actionCatalogDriftFailsClosed() {
@@ -64,6 +81,10 @@ class RuleAuthoringContextApiAutoTest extends MockTestBase {
 
     static Stream<String> unknownPointCodes() {
         return Stream.of("UNKNOWN_POINT", "CHECKOUT_PREPARE_V2", "PAYMENT_AUTHORIZE");
+    }
+
+    static Stream<String> invalidQueries() {
+        return Stream.of("pointCode=CHECKOUT_PREPARE", "page=1&page=1", "page=");
     }
 
     static Stream<String> invalidPointCodes() {

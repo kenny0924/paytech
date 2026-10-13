@@ -3,7 +3,6 @@ package com.paytech.risk.auto.ext.http.decision;
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
 import static com.paytech.risk.api.enums.RiskVariableErrorCode.LEGACY_AUTHORING_NOT_SUPPORTED;
 import static com.paytech.risk.api.enums.RiskVariableErrorCode.VARIABLE_NOT_FOUND;
 import static com.paytech.risk.decision.domain.enums.RuleSetVersionStatus.DRAFT;
@@ -55,7 +54,7 @@ import tools.jackson.databind.node.ObjectNode;
  * <li>正常流程：合法新建草稿、基于当前版本的编辑与保留的已退休引用/停用原因均返回 valid=true，不写入任何流程数据。</li>
  * <li>图问题：结构、文本、节点/连线配置、出口顺序、端点、环与可达性问题以 valid=false 逐项定位，超过 100 项截断。</li>
  * <li>目录问题：规则版本/拒绝原因资格、编辑基准冲突、旧格式条件与未知变量同样作为问题报告。</li>
- * <li>未找到：编辑基准指向不存在的流程编码返回 404。</li>
+ * <li>未找到：编辑基准指向不存在的流程编码作为编辑基准冲突报告（valid=false），不返回 404。</li>
  * <li>参数：传输格式错误（未知/缺失键、类型、媒体类型、Query）返回 400/415，超出数组容量返回 422。</li>
  * <li>业务规则：决策点停用时不可配置（400）。</li>
  *
@@ -229,11 +228,15 @@ class FlowValidateApiAutoTest extends MockTestBase {
         validate(body.toString()).assertTruncated("INVALID_NODE_KEY", "INVALID_TEXT", "INVALID_NODE_TYPE");
     }
 
-    /** 编辑基准指向不存在的流程编码。 */
+    /** 编辑基准指向不存在的流程编码，与其他基准冲突一样报告问题且不创建流程。 */
     @Test
     void test_noDataFound() {
-        validate(SaveFlowRequestBuilder.template(flows.newFlowCode()).base(999_999_999_999_999_999L, 1))
-            .assertProblem(404, RISK_DECISION_CONFIGURATION_NOT_FOUND.getCode());
+        String code = flows.newFlowCode();
+
+        validate(SaveFlowRequestBuilder.template(code).base(999_999_999_999_999_999L, 1))
+            .assertIssues(base("编辑的流程不存在，请重新载入后编辑"));
+
+        store.assertNoFlow(code, 0, 0);
     }
 
     /** 传输格式错误在业务校验前拒绝。 */
