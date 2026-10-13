@@ -3,7 +3,6 @@ package com.paytech.risk.decision.service.processor;
 import static com.paytech.risk.decision.domainservice.policy.RuleSetManagementPolicy.requireConfigurable;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -15,7 +14,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionPoint;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionPointVersion;
@@ -45,15 +43,13 @@ public class FreezeRuleSetVersionProcessor extends AbstractLockProcessor<FreezeR
     private final DecisionRuleSetRepository repository;
     private final PlatformTransactionManager transactionManager;
     private final RuleSetConfigurationReader reader;
-    private final RedisResourceLockProperties lockProperties;
 
-    /** 沿用完整规则集锁键、普通 RLock 和已配置的等待/租约。 */
+    /** 沿用完整规则集锁键、普通 RLock 和原 500ms/30s 等待/租约。 */
     @Override
     protected LockCommand lockCommand(FreezeRuleSetVersionRequest request) {
         String resource = ruleSetService.resourceKeyForVersion(request.getRuleSetVersionId());
         return LockCommand.tryLocks(List.of("decision:rule-set:" + resource),
-            Duration.ofNanos(lockProperties.requiredWaitNanos()),
-            Duration.ofNanos(lockProperties.requiredLeaseNanos()));
+            DecisionResourceLocks.WAIT_TIME, DecisionResourceLocks.LEASE_TIME);
     }
 
     /** 资源锁覆盖完整本地事务，事务结束后由模板释放。 */

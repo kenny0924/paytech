@@ -1,75 +1,91 @@
 package com.paytech.risk.decision.service.processor;
 
-import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.decision.domain.variable.*;
-import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import com.paytech.risk.decision.domain.enums.*;
-import com.paytech.risk.decision.core.dal.dataobject.*;
-import com.paytech.risk.decision.domainservice.query.RiskVariableReader;
-import com.paytech.risk.decision.domainservice.repository.RiskVariableMemberRepository;
-import com.paytech.risk.decision.domainservice.service.*;
-import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
-import com.paytech.risk.decision.service.processor.request.*;
+import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.row;
 import static com.paytech.risk.decision.domainservice.policy.VariableManagementPolicy.*;
-import static com.paytech.risk.decision.domainservice.policy.VariableQueryPolicy.pattern;
-import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.*;
-import static com.paytech.risk.decision.domainservice.service.RiskVariableException.Reason.*;
-import com.paytech.risk.decision.domainservice.policy.VariableQueryPolicy;
-import java.time.*;
+import static com.paytech.risk.decision.domainservice.service.RiskVariableException.Reason.SYSTEM_VARIABLE_READ_ONLY;
+
+import java.time.Clock;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import lombok.AllArgsConstructor;
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
-import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
-import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 
-/** 变量资源锁覆盖本地事务，资格与关系由 Owner 在锁内重新确认。 */
+import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.risk.decision.domain.enums.VariableSource;
+import com.paytech.risk.decision.domain.enums.VariableStatus;
+import com.paytech.risk.decision.domain.variable.CreateVariableContext;
+import com.paytech.risk.decision.domain.variable.RiskVariable.Create;
+import com.paytech.risk.decision.domain.variable.RiskVariable.Entry;
+import com.paytech.risk.decision.domain.variable.VariableDefinitionValidator;
+import com.paytech.risk.decision.domain.variable.VariableDetailResponse;
+import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
+import com.paytech.risk.decision.domainservice.query.RiskVariableReader;
+import com.paytech.risk.decision.domainservice.service.VariableManagementService;
+import com.paytech.risk.decision.service.processor.request.CreateVariableRequest;
+
+import lombok.AllArgsConstructor;
+
+/**
+ * 创建运营维护的变量
+ * <li>变量资源锁覆盖本地事务；依赖根需在同一事务内共享锁定，防止保存前被停用或删除，因此 Context 在事务内构造。</li>
+ * <li>编码唯一性由数据库唯一索引最终保护，冲突整体回滚。</li>
+ */
 @Component
 @AllArgsConstructor
 public class CreateVariableProcessor extends AbstractLockProcessor<CreateVariableRequest, VariableDetailResponse> {
     private final Clock clock;
     private final RiskVariableReader reader;
     private final VariableManagementService service;
-    private final PlatformTransactionManager transactionManager;
     private final DecisionIdentifierGenerator identifiers;
-    private final RedisResourceLockProperties lockProperties;
+    private final PlatformTransactionManager transactionManager;
 
-    /** 保留完整 decision:variable 锁键、RLock 及现有等待与租约配置。 */
-    @Override protected LockCommand lockCommand(CreateVariableRequest request) {
-        if (request.getCommand().definition() == null) throw invalid("变量定义不能为空");
-        VariableDefinitionValidator.code(request.getCommand().definition().variableCode());
-        return LockCommand.tryLocks(List.of("decision:variable:" + request.getCommand().definition().variableCode()),
-            Duration.ofNanos(lockProperties.requiredWaitNanos()), Duration.ofNanos(lockProperties.requiredLeaseNanos()));
+    /** 定义结构、来源和初始状态只依赖输入，在加锁前一次校验。 */
+    @Override
+    protected void validate(CreateVariableRequest request) {
+        Create command = request.getCommand();
+        if (command.definition() == null) {
+            throw invalid("变量定义不能为空");
+        }
+        VariableDefinitionValidator.validate(command.definition());
+        if (command.definition().systemManaged() || command.definition().sourceType() == VariableSource.NODE_OUTPUT) {
+            throw failure(SYSTEM_VARIABLE_READ_ONLY, "系统定义和节点输出只能由工程合同登记");
+        }
+        if (command.status() == null || command.status() == VariableStatus.DELETED) {
+            throw invalid("创建状态只能为 ACTIVE 或 DISABLED");
+        }
     }
 
-    /** 本地保存成功才从原 Context 生成响应，失败不推进其他步骤。 */
-    @Override protected VariableDetailResponse processWithinLock(CreateVariableRequest request) {
+    /** 与同一变量的其他写入口共用同一资源锁，等待超时返回并发冲突。 */
+    @Override
+    protected LockCommand lockCommand(CreateVariableRequest request) {
+        return LockCommand.tryLocks(
+            DecisionResourceLocks.variableKeys(request.getCommand().definition().variableCode()),
+            DecisionResourceLocks.WAIT_TIME, DecisionResourceLocks.LEASE_TIME);
+    }
+
+    @Override
+    protected VariableDetailResponse processWithinLock(CreateVariableRequest request) {
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         transaction.setTimeout(5);
         CreateVariableContext context = transaction.execute(status -> {
-            var prepared = prepareContext(request, clock.instant().truncatedTo(ChronoUnit.MICROS));
+            var prepared = buildContext(request, clock.instant().truncatedTo(ChronoUnit.MICROS));
             service.create(prepared);
             return prepared;
         });
         return context.result();
     }
 
-    /** 读取事实、验证原输入后一次构造完整 Context。 */
-    CreateVariableContext prepareContext(CreateVariableRequest request, Instant time) {
+    /** 锁定依赖并一次构造完整 Context。 */
+    CreateVariableContext buildContext(CreateVariableRequest request, Instant time) {
         Create command = request.getCommand();
-        VariableDefinitionValidator.validate(command.definition());
-        if (command.definition().systemManaged() || command.definition().sourceType() == VariableSource.NODE_OUTPUT)
-            throw failure(SYSTEM_VARIABLE_READ_ONLY, "系统定义和节点输出只能由工程合同登记");
-        if (command.status() == null || command.status() == VariableStatus.DELETED) throw invalid("创建状态只能为 ACTIVE 或 DISABLED");
-        var dependencies = reader.lockRoots(dependencies(command.definition()));
+        var lockedDependencies = reader.lockRoots(dependencies(command.definition()));
         var root = row(identifiers.nextIdentifier(), new Entry(command.definition(), text(command.variableName(), 255, false),
             text(command.description(), 500, true), currentValue(command.definition(), command.currentValue()), command.status(),
             1, request.getActorId(), request.getActorId(), time, time));
-        var context = new CreateVariableContext(root, dependencies, reader.optionMembers(root, dependencies));
+        var context =
+            new CreateVariableContext(root, lockedDependencies, reader.optionMembers(root, lockedDependencies));
         context.verifyIntegrity();
         return context;
     }

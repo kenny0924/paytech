@@ -1,9 +1,7 @@
 package com.paytech.risk.decision.service.processor.request;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -22,5 +20,4 @@ public class UpdateVariableRequest {
     /** 允许修改字段及原版本。 */
     @NotNull
     private final Update command;
-
 }

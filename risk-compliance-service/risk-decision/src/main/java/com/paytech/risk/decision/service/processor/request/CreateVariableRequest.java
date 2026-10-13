@@ -1,9 +1,7 @@
 package com.paytech.risk.decision.service.processor.request;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -18,5 +16,4 @@ public class CreateVariableRequest {
     /** 新变量定义与初值。 */
     @NotNull
     private final Create command;
-
 }

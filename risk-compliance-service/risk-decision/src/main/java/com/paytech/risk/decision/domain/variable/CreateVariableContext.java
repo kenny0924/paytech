@@ -1,14 +1,11 @@
 package com.paytech.risk.decision.domain.variable;
 
-import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.risk.decision.core.dal.dataobject.*;
 import com.paytech.risk.decision.domain.enums.*;
 import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter;
 import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.*;
 import static com.paytech.risk.decision.domainservice.policy.VariableManagementPolicy.*;
 import static com.paytech.risk.decision.domainservice.service.RiskVariableException.Reason.*;
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -27,13 +24,15 @@ public class CreateVariableContext {
     /** 关联选项集合的当前读成员。 */
     private final List<RiskVariableMember> optionMembers;
 
-
     /** 新身份仅允许人工来源和非墓碑状态。 */
     public void verifyIntegrity() {
         root.verifyIntegrity();
-        if (root.systemManagedFlag() || root.sourceType() == VariableSource.NODE_OUTPUT)
+        if (root.systemManagedFlag() || root.sourceType() == VariableSource.NODE_OUTPUT) {
             throw failure(SYSTEM_VARIABLE_READ_ONLY, "系统定义和节点输出只能由工程合同登记");
-        if (root.status() == VariableStatus.DELETED) throw invalid("创建状态只能为 ACTIVE 或 DISABLED");
+        }
+        if (root.status() == VariableStatus.DELETED) {
+            throw invalid("创建状态只能为 ACTIVE 或 DISABLED");
+        }
         verifyDependencies(entry(root).currentValue());
     }
 
@@ -46,14 +45,17 @@ public class CreateVariableContext {
         if (value != null && definition.allowedValuesVariableCode() != null) {
             String key = VariableValueNormalizer.key(definition.valueType(), value);
             if (optionMembers.stream().map(row -> member(definition.valueType(), row))
-                .noneMatch(m -> key.equals(VariableValueNormalizer.key(definition.valueType(), m.value()))))
+                .noneMatch(m -> key.equals(VariableValueNormalizer.key(definition.valueType(), m.value())))) {
                 throw failure(VARIABLE_DOMAIN_MISMATCH, "当前值不属于关联的可选集合");
+            }
         }
     }
 
     /** 从原根与预加载成员生成响应，成功保存后不重新查询根。 */
     public VariableDetailResponse result() {
-        var options = dependencies.get(root.allowedValuesVariableCode());
+        // 依赖 Map 为不可变集合，不能以 null 编码查询。
+        String optionsCode = root.allowedValuesVariableCode();
+        var options = optionsCode == null ? null : dependencies.get(optionsCode);
         AllowedValues allowed = options == null ? null : new AllowedValues(options.variableCode(), options.variableName(),
             options.version(), optionMembers.size(), optionMembers.stream().limit(100)
                 .map(row -> member(options.valueType(), row)).toList());

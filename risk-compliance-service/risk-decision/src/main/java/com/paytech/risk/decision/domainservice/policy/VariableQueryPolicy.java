@@ -1,9 +1,14 @@
 package com.paytech.risk.decision.domainservice.policy;
 
-import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.decision.domain.variable.*;
-import com.paytech.risk.decision.domain.enums.*;
 import java.util.*;
+
+import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.risk.decision.domain.enums.DecisionValueType;
+import com.paytech.risk.decision.domain.enums.VariableSource;
+import com.paytech.risk.decision.domain.enums.VariableStatus;
+import com.paytech.risk.decision.domain.enums.VariableUsage;
+import com.paytech.risk.decision.domain.variable.DecisionSourceContracts;
+import com.paytech.risk.decision.domain.variable.RiskVariable;
 
 /** 目录互斥模式、用途上下文和字面搜索的 Owner 规则。 */
 public final class VariableQueryPolicy {

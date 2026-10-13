@@ -1,78 +1,97 @@
 package com.paytech.risk.decision.service.processor;
 
-import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.decision.domain.variable.*;
-import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import com.paytech.risk.decision.domain.enums.*;
-import com.paytech.risk.decision.core.dal.dataobject.*;
-import com.paytech.risk.decision.domainservice.query.RiskVariableReader;
-import com.paytech.risk.decision.domainservice.repository.RiskVariableMemberRepository;
-import com.paytech.risk.decision.domainservice.service.*;
-import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
-import com.paytech.risk.decision.service.processor.request.*;
+import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.entry;
+import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.typed;
 import static com.paytech.risk.decision.domainservice.policy.VariableManagementPolicy.*;
-import static com.paytech.risk.decision.domainservice.policy.VariableQueryPolicy.pattern;
-import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.*;
-import static com.paytech.risk.decision.domainservice.service.RiskVariableException.Reason.*;
-import com.paytech.risk.decision.domainservice.policy.VariableQueryPolicy;
-import java.time.*;
+
+import java.time.Clock;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import lombok.AllArgsConstructor;
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
-import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
-import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 
-/** 变量资源锁覆盖本地事务，资格与关系由 Owner 在锁内重新确认。 */
+import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.risk.decision.core.dal.dataobject.RiskVariableDefinition;
+import com.paytech.risk.decision.core.dal.dataobject.RiskVariableMember;
+import com.paytech.risk.decision.domain.enums.VariableSource;
+import com.paytech.risk.decision.domain.variable.RiskVariable.Update;
+import com.paytech.risk.decision.domain.variable.UpdateVariableContext;
+import com.paytech.risk.decision.domain.variable.VariableChange;
+import com.paytech.risk.decision.domain.variable.VariableDetailResponse;
+import com.paytech.risk.decision.domainservice.query.RiskVariableReader;
+import com.paytech.risk.decision.domainservice.repository.RiskVariableMemberRepository;
+import com.paytech.risk.decision.domainservice.service.VariableManagementService;
+import com.paytech.risk.decision.service.processor.request.UpdateVariableRequest;
+
+import lombok.AllArgsConstructor;
+
+/**
+ * 按根版本更新变量的名称、说明、常量当前值与状态
+ * <li>变量资源锁覆盖本地事务；根以 FOR UPDATE 读取、依赖根共享锁定，因此 Context 在事务内构造。</li>
+ * <li>版本冲突由 CAS 与更新行数最终确认。</li>
+ */
 @Component
 @AllArgsConstructor
 public class UpdateVariableProcessor extends AbstractLockProcessor<UpdateVariableRequest, VariableDetailResponse> {
     private final Clock clock;
     private final RiskVariableReader reader;
+    private final RiskVariableMemberRepository members;
     private final VariableManagementService service;
     private final PlatformTransactionManager transactionManager;
-    private final RedisResourceLockProperties lockProperties;
-    private final RiskVariableMemberRepository members;
 
-    /** 保留完整 decision:variable 锁键、RLock 及现有等待与租约配置。 */
-    @Override protected LockCommand lockCommand(UpdateVariableRequest request) {
-        return LockCommand.tryLocks(List.of("decision:variable:" + request.getVariableCode()),
-            Duration.ofNanos(lockProperties.requiredWaitNanos()), Duration.ofNanos(lockProperties.requiredLeaseNanos()));
+    /** 与同一变量的其他写入口共用同一资源锁，等待超时返回并发冲突。 */
+    @Override
+    protected LockCommand lockCommand(UpdateVariableRequest request) {
+        return LockCommand.tryLocks(DecisionResourceLocks.variableKeys(request.getVariableCode()),
+            DecisionResourceLocks.WAIT_TIME, DecisionResourceLocks.LEASE_TIME);
     }
 
-    /** 本地保存成功才从原 Context 生成响应，失败不推进其他步骤。 */
-    @Override protected VariableDetailResponse processWithinLock(UpdateVariableRequest request) {
+    @Override
+    protected VariableDetailResponse processWithinLock(UpdateVariableRequest request) {
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         transaction.setTimeout(5);
         UpdateVariableContext context = transaction.execute(status -> {
-            var prepared = prepareContext(request, clock.instant().truncatedTo(ChronoUnit.MICROS));
+            var prepared = buildContext(request, clock.instant().truncatedTo(ChronoUnit.MICROS));
             service.update(prepared);
             return prepared;
         });
         return context.result();
     }
 
-    /** 读取事实、验证原输入后一次构造完整 Context。 */
-    UpdateVariableContext prepareContext(UpdateVariableRequest request, Instant time) {
+    /** 锁定根与依赖、验证可变字段后一次构造完整 Context。 */
+    UpdateVariableContext buildContext(UpdateVariableRequest request, Instant time) {
         Update command = request.getCommand();
         var root = reader.requiredRoot(request.getVariableCode(), "WRITE");
         root.verifyMutable(command.expectedVersion());
         var definition = entry(root).definition();
         Object value = currentValue(definition, command.currentValue());
         root.verifyUpdate(value, command.status());
-        var dependencies = reader.lockRoots(dependencies(definition));
+        var lockedDependencies = reader.lockRoots(dependencies(definition));
         var change = new VariableChange(text(command.variableName(), 255, false), text(command.description(), 500, true),
             typed(definition.valueType(), value), command.status());
-        var previews = root.sourceType() == VariableSource.COLLECTION
-            ? members.members(root.variableCode(), null, 3, 0, true) : List.<RiskVariableMember>of();
-        Long count = root.sourceType() == VariableSource.COLLECTION ? members.memberCount(root.variableCode(), null) : null;
-        var context = new UpdateVariableContext(root, change, dependencies, reader.optionMembers(root, dependencies),
-            count, previews, request.getActorId(), time);
+        var context =
+            new UpdateVariableContext(root, change, lockedDependencies, reader.optionMembers(root, lockedDependencies),
+                memberCount(root), previewMembers(root), request.getActorId(), time);
         context.verifyIntegrity(command.expectedVersion(), value);
         return context;
+    }
+
+    /** 集合返回当前成员总数，其他来源为空。 */
+    Long memberCount(RiskVariableDefinition root) {
+        if (root.sourceType() != VariableSource.COLLECTION) {
+            return null;
+        }
+        return members.memberCount(root.variableCode(), null);
+    }
+
+    /** 集合返回最多 3 项成员预览，其他来源为空列表。 */
+    List<RiskVariableMember> previewMembers(RiskVariableDefinition root) {
+        if (root.sourceType() != VariableSource.COLLECTION) {
+            return List.of();
+        }
+        return members.members(root.variableCode(), null, 3, 0, true);
     }
 }

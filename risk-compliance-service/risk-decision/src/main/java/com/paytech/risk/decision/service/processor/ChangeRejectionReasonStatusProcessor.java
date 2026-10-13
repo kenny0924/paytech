@@ -1,7 +1,6 @@
 package com.paytech.risk.decision.service.processor;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.risk.decision.core.dal.dataobject.RuleRejectReason;
 import com.paytech.risk.decision.domain.dictionary.DecisionDictionary.Content;
@@ -34,7 +32,6 @@ public class ChangeRejectionReasonStatusProcessor
     private final DecisionDictionaryService service;
     private final PlatformTransactionManager transactionManager;
     private final RuleRejectReasonRepository repository;
-    private final RedisResourceLockProperties lockProperties;
 
     /**
      * 与现有字典编辑、启停共用完整逻辑 Key、普通 RLock 和有限等待/租约。
@@ -43,8 +40,7 @@ public class ChangeRejectionReasonStatusProcessor
     @Override
     protected LockCommand lockCommand(ChangeRejectionReasonStatusRequest request) {
         return LockCommand.tryLocks(List.of("decision:dictionary:REJECTION_REASON:" + request.getReasonCode()),
-            Duration.ofNanos(lockProperties.requiredWaitNanos()),
-            Duration.ofNanos(lockProperties.requiredLeaseNanos()));
+            DecisionResourceLocks.WAIT_TIME, DecisionResourceLocks.LEASE_TIME);
     }
 
     /** 锁内开启本地短事务；提交或回滚完成后由公共模板释放资源锁。 */

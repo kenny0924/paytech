@@ -1,7 +1,6 @@
 package com.paytech.risk.decision.service.processor;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -10,7 +9,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowRow;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowVersionRow;
@@ -34,7 +32,6 @@ public class DeleteFlowProcessor extends AbstractLockProcessor<DeleteFlowRequest
     private final DecisionRuleSetRepository rules;
     private final DecisionFlowRootRepository roots;
     private final PlatformTransactionManager transactionManager;
-    private final RedisResourceLockProperties lockProperties;
     private final DecisionFlowManagementService service;
     private final DecisionFlowVersionRepository versions;
 
@@ -45,8 +42,7 @@ public class DeleteFlowProcessor extends AbstractLockProcessor<DeleteFlowRequest
             roots.findById(request.getFlowId()).orElseThrow(DecisionConfigurationNotFoundException::new);
         DecisionPoint point = rules.findPoint(root.decisionPointId()).orElseThrow(() -> new ErrorException("流程决策点缺失"));
         return LockCommand.tryLocks(List.of("decision:flow:" + point.pointCode() + ":" + root.flowCode()),
-            Duration.ofNanos(lockProperties.requiredWaitNanos()),
-            Duration.ofNanos(lockProperties.requiredLeaseNanos()));
+            DecisionResourceLocks.WAIT_TIME, DecisionResourceLocks.LEASE_TIME);
     }
 
     /** 锁内按原主键重新读取并重证头版本，删除结果来自同一根对象。 */

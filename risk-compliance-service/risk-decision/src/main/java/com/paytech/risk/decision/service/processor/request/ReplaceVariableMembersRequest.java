@@ -1,6 +1,5 @@
 package com.paytech.risk.decision.service.processor.request;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import com.paytech.risk.decision.domain.variable.RiskVariable.*;
 import java.util.List;
@@ -26,5 +25,4 @@ public class ReplaceVariableMembersRequest {
     /** 完整替换批次。 */
     @NotNull @Size(max = 1000)
     private final List<@NotNull Member> members;
-
 }

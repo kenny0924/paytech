@@ -1,7 +1,6 @@
 package com.paytech.risk.decision.service.processor;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -13,7 +12,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.risk.decision.core.dal.dataobject.*;
 import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
@@ -48,7 +46,6 @@ public class SaveFlowProcessor extends AbstractLockProcessor<SaveFlowRequest, Sa
     private final DecisionFlowRootRepository roots;
     private final PlatformTransactionManager transactionManager;
     private final DecisionIdentifierGenerator identifiers;
-    private final RedisResourceLockProperties lockProperties;
     private final DecisionFlowReferenceService references;
     private final DecisionFlowManagementService service;
     private final DecisionFlowVariableValidator variableValidator;
@@ -70,8 +67,7 @@ public class SaveFlowProcessor extends AbstractLockProcessor<SaveFlowRequest, Sa
     protected LockCommand lockCommand(SaveFlowRequest request) {
         Save command = request.getConfiguration();
         return LockCommand.tryLocks(List.of("decision:flow:" + command.pointCode() + ":" + command.flowCode()),
-            Duration.ofNanos(lockProperties.requiredWaitNanos()),
-            Duration.ofNanos(lockProperties.requiredLeaseNanos()));
+            DecisionResourceLocks.WAIT_TIME, DecisionResourceLocks.LEASE_TIME);
     }
 
     /** 所有资格重证与四表写入处于同一个本地短事务，完成后才释放资源锁。 */

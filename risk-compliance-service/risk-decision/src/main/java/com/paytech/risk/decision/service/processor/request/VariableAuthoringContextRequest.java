@@ -1,9 +1,6 @@
 package com.paytech.risk.decision.service.processor.request;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,5 +11,4 @@ public class VariableAuthoringContextRequest {
     /** 可选决策点。 */
     @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}")
     private final String pointCode;
-
 }

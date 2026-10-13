@@ -1,41 +1,52 @@
 package com.paytech.risk.decision.service.processor;
 
-import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.decision.domain.variable.*;
-import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import com.paytech.risk.decision.domain.enums.*;
-import com.paytech.risk.decision.core.dal.dataobject.*;
-import com.paytech.risk.decision.domainservice.query.RiskVariableReader;
-import com.paytech.risk.decision.domainservice.repository.RiskVariableMemberRepository;
-import com.paytech.risk.decision.domainservice.service.*;
-import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
-import com.paytech.risk.decision.service.processor.request.*;
-import static com.paytech.risk.decision.domainservice.policy.VariableManagementPolicy.*;
-import static com.paytech.risk.decision.domainservice.policy.VariableQueryPolicy.pattern;
-import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.*;
-import static com.paytech.risk.decision.domainservice.service.RiskVariableException.Reason.*;
-import com.paytech.risk.decision.domainservice.policy.VariableQueryPolicy;
-import java.time.*;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.support.TransactionTemplate;
-import com.paytech.foundation.processor.AbstractProcessor;
+import java.util.Arrays;
+import java.util.List;
 
-/** 返回工程真实支持的变量编排能力，无数据库或外部调用。 */
+import org.springframework.stereotype.Component;
+
+import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.risk.decision.domain.enums.DecisionValueType;
+import com.paytech.risk.decision.domain.enums.NumericUnit;
+import com.paytech.risk.decision.domain.enums.VariableFormat;
+import com.paytech.risk.decision.domain.enums.VariableSource;
+import com.paytech.risk.decision.domain.variable.DecisionSourceContracts;
+import com.paytech.risk.decision.domain.variable.VariableAuthoringCapabilities;
+import com.paytech.risk.decision.service.processor.request.VariableAuthoringContextRequest;
+
+/**
+ * 返回工程已接通的变量编排能力，无数据库或外部调用
+ * <li>按决策点精确筛选来源合同，不以最新版本或固定变量名单替代变量库。</li>
+ */
 @Component
 public class VariableAuthoringContextProcessor extends AbstractProcessor<VariableAuthoringContextRequest, VariableAuthoringCapabilities> {
-    /** 精确按作用域筛选合同，不以最新版本或固定变量名单替代。 */
-    @Override protected VariableAuthoringCapabilities processRequest(VariableAuthoringContextRequest request) {
+    /** 集合成员数量上限。 */
+    static final int MEMBER_LIMIT = 1000;
+
+    /** 整批成员请求的 UTF-8 字节上限，与严格请求读取器一致。 */
+    static final int MEMBER_BODY_BYTES = 65536;
+
+    /** 规则内联集合元素上限。 */
+    static final int LITERAL_SET_LIMIT = 100;
+
+    /** 未支持的决策点只依赖输入，在处理前拒绝。 */
+    @Override
+    protected void validate(VariableAuthoringContextRequest request) {
         String point = request.getPointCode();
-        if (point != null && !DecisionSourceContracts.supports(point)) throw new InvalidParameterException("决策点尚未支持");
-        return new VariableAuthoringCapabilities(DecisionSourceContracts.all().stream().map(c -> c.pointCode()).distinct().toList(),
-            DecisionSourceContracts.all().stream().filter(c -> point == null || point.equals(c.pointCode())).toList(),
-            List.of(VariableSource.values()), Arrays.stream(VariableSource.values()).filter(v -> v != VariableSource.NODE_OUTPUT).toList(),
-            List.of(DecisionValueType.values()), List.of(VariableFormat.values()), List.of(NumericUnit.values()), 1000, 65536, 100);
+        if (point != null && !DecisionSourceContracts.supports(point)) {
+            throw new InvalidParameterException("决策点尚未支持");
+        }
+    }
+
+    @Override
+    protected VariableAuthoringCapabilities processRequest(VariableAuthoringContextRequest request) {
+        String point = request.getPointCode();
+        var points = DecisionSourceContracts.all().stream().map(DecisionSourceContracts.Contract::pointCode).distinct().toList();
+        var contracts = DecisionSourceContracts.all().stream().filter(c -> point == null || point.equals(c.pointCode())).toList();
+        var creatable = Arrays.stream(VariableSource.values()).filter(source -> source != VariableSource.NODE_OUTPUT).toList();
+        return new VariableAuthoringCapabilities(points, contracts, List.of(VariableSource.values()), creatable,
+            List.of(DecisionValueType.values()), List.of(VariableFormat.values()), List.of(NumericUnit.values()),
+            MEMBER_LIMIT, MEMBER_BODY_BYTES, LITERAL_SET_LIMIT);
     }
 }

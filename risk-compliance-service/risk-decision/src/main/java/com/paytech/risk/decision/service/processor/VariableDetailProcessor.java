@@ -1,32 +1,24 @@
 package com.paytech.risk.decision.service.processor;
 
-import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.decision.domain.variable.*;
-import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import com.paytech.risk.decision.domain.enums.*;
-import com.paytech.risk.decision.core.dal.dataobject.*;
-import com.paytech.risk.decision.domainservice.query.RiskVariableReader;
-import com.paytech.risk.decision.domainservice.repository.RiskVariableMemberRepository;
-import com.paytech.risk.decision.domainservice.service.*;
-import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
-import com.paytech.risk.decision.service.processor.request.*;
-import static com.paytech.risk.decision.domainservice.policy.VariableManagementPolicy.*;
-import static com.paytech.risk.decision.domainservice.policy.VariableQueryPolicy.pattern;
-import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.*;
-import static com.paytech.risk.decision.domainservice.service.RiskVariableException.Reason.*;
-import com.paytech.risk.decision.domainservice.policy.VariableQueryPolicy;
-import java.time.*;
+import java.time.Clock;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import lombok.AllArgsConstructor;
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
-import com.paytech.foundation.processor.AbstractProcessor;
 
-/** 在一致快照内完成单一变量查询。 */
+import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.risk.decision.domain.variable.VariableDetailResponse;
+import com.paytech.risk.decision.domainservice.query.RiskVariableReader;
+import com.paytech.risk.decision.service.processor.request.VariableDetailRequest;
+
+import lombok.AllArgsConstructor;
+
+/**
+ * 按永久编码读取变量当前详情，包括停用与墓碑
+ * <li>根、成员预览与可选值集合预览在同一只读可重复读快照内读取。</li>
+ */
 @Component
 @AllArgsConstructor
 public class VariableDetailProcessor extends AbstractProcessor<VariableDetailRequest, VariableDetailResponse> {
@@ -34,14 +26,12 @@ public class VariableDetailProcessor extends AbstractProcessor<VariableDetailReq
     private final RiskVariableReader reader;
     private final PlatformTransactionManager transactionManager;
 
-    /** 只读 RR 覆盖根、关联事实及本页扫描边界。 */
-    @Override protected VariableDetailResponse processRequest(VariableDetailRequest request) {
-        
+    @Override
+    protected VariableDetailResponse processRequest(VariableDetailRequest request) {
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         transaction.setReadOnly(true);
         transaction.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-        return transaction.execute(status -> {
-            return new VariableDetailResponse(reader.detail(request.getVariableCode()), clock.instant().truncatedTo(ChronoUnit.MICROS));
-        });
+        return transaction.execute(status -> new VariableDetailResponse(reader.detail(request.getVariableCode()),
+            clock.instant().truncatedTo(ChronoUnit.MICROS)));
     }
 }

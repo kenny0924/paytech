@@ -1,9 +1,6 @@
 package com.paytech.risk.decision.service.processor.request;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -22,5 +19,4 @@ public class DeleteVariableRequest {
     /** 确认的根版本。 */
     @Positive
     private final long expectedVersion;
-
 }

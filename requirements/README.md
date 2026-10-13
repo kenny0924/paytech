@@ -56,6 +56,7 @@ requirements/
 
 | 登记目录 | 需求 | 主入口/Owner | 关联编号 | 材料 |
 |---|---|---|---|---|
+| `20261013` | 渠道 API 配置资料迁移 | Platform Support / 文档归属 | 迁移需求评审稿；六表、初始化上下文与条件流程整理，原功能目录与代码/数据库暂不迁移 | [需求](./20261013/platform-support-渠道API配置资料迁移/requirement.md) · [资料盘点与方案](./20261013/platform-support-渠道API配置资料迁移/technique.md) · [确认记录](./20261013/platform-support-渠道API配置资料迁移/delivery.md) |
 | `20260921` | 渠道账号与 MID 能力查询 | Payment / Channel | 五表目标、能力主从及 value_type、支付体系与国家条件；移除健康状态，两个主链路查询；账号保护与精确接口合同待定 | [需求与字段](./20260921/payment-渠道账号与MID能力查询/requirement.md) · [技术与 SQL 变更](./20260921/payment-渠道账号与MID能力查询/technique.md) · [确认记录](./20260921/payment-渠道账号与MID能力查询/delivery.md) |
 | `20260920` | Delivery 领域规划 | Platform / Notification | 已确认七表与内部提交入口，首期仅 Email、Provider 先 Mock；查询草案暂缓细化，Operations 管理不纳入，Webhook 仅保留边界 | [需求](./20260920/platform-support-Delivery领域规划/requirement.md) · [领域规则](./20260920/platform-support-Delivery领域规划/technique.md) · [表结构](./20260920/platform-support-Delivery领域规划/data-design.md) · [内部接口](./20260920/platform-support-Delivery领域规划/api.md) · [确认记录](./20260920/platform-support-Delivery领域规划/delivery.md) |
 | `20260917` | 公共测试组件 | Foundation / Build BOM / Commerce 测试 | HTTP Invoker、Header 工厂与 Checker 基类；仅测试依赖 | [需求](./20260917/foundation-公共测试组件/requirement.md) · [技术说明](./20260917/foundation-公共测试组件/technique.md) · [交付记录](./20260917/foundation-公共测试组件/delivery.md) |

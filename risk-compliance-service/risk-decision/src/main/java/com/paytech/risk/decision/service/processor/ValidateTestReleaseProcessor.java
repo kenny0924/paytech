@@ -1,7 +1,6 @@
 package com.paytech.risk.decision.service.processor;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -13,7 +12,6 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.risk.decision.core.dal.dataobject.ReleaseAuditEvent;
 import com.paytech.risk.decision.domain.enums.ConfigurationStatus;
@@ -51,15 +49,13 @@ public class ValidateTestReleaseProcessor
     private final DecisionRuleSetRepository ruleSetRepository;
     private final PlatformTransactionManager transactionManager;
     private final DecisionIdentifierGenerator identifierGenerator;
-    private final RedisResourceLockProperties lockProperties;
     private final DecisionReleaseStaticValidator validator;
 
     /** 对实际发布资源互斥；数据库行锁仍保证租约到期后的并发正确性。 */
     @Override
     protected LockCommand lockCommand(ValidateTestReleaseRequest request) {
         return LockCommand.tryLocks(List.of("decision:release:" + request.getReleaseId()),
-            Duration.ofNanos(lockProperties.requiredWaitNanos()),
-            Duration.ofNanos(lockProperties.requiredLeaseNanos()));
+            DecisionResourceLocks.WAIT_TIME, DecisionResourceLocks.LEASE_TIME);
     }
 
     /** 已完成时提前返回；未完成只恢复原校验，不创建另一轮校验身份。 */

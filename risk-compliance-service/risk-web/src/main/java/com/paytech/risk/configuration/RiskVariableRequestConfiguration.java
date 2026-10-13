@@ -4,10 +4,12 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
 import com.paytech.risk.api.decision.request.UpdateVariableRequestBody;
 import com.paytech.risk.api.decision.request.ReplaceMembersRequestBody;
-import com.paytech.risk.api.decision.RiskVariableModels.*;
+import com.paytech.risk.api.decision.RiskVariableModels.MemberRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Configuration;
@@ -53,7 +55,7 @@ public class RiskVariableRequestConfiguration implements WebMvcConfigurer {
         }).addPathPatterns("/decision-variables/v1/**");
     }
 
-    /** 使用三个 Request record 的真实字段定义校验全部键，避免另维护结构名单。 */
+    /** 使用三个 RequestBody 的真实字段定义校验全部键，避免另维护结构名单。 */
     @Override public void configureMessageConverters(HttpMessageConverters.ServerBuilder builder) {
         builder.configureMessageConvertersList(list -> list.addFirst(new VariableRequestConverter(mapper)));
     }
@@ -75,7 +77,7 @@ public class RiskVariableRequestConfiguration implements WebMvcConfigurer {
 
         /** 复用严格重复键解析器。 */
         VariableRequestConverter(JsonMapper mapper) { super(mapper); }
-        /** 只有本能力的 Request record 才由该转换器处理。 */
+        /** 只有本能力的 RequestBody 才由该转换器处理。 */
         @Override public boolean canRead(ResolvableType type, MediaType mediaType) {
             return REQUESTS.contains(type.resolve()) && super.canRead(type, mediaType);
         }
@@ -100,26 +102,54 @@ public class RiskVariableRequestConfiguration implements WebMvcConfigurer {
         /** 禁止该写请求转换器接管响应。 */
         @Override public boolean canWrite(ResolvableType type, Class<?> valueClass, MediaType mediaType) { return false; }
 
-        /** 完整键由 record 自身提供，标量不接受数字/字符串的隐式互转。 */
+        /** 完整键由请求 class 的实例字段提供，标量不接受数字/字符串的隐式互转。 */
         static void validateRecord(JsonNode node, Class<?> type) {
-            Set<String> keys = Arrays.stream(type.getRecordComponents()).map(c -> c.getName()).collect(Collectors.toSet());
-            if (node == null || !node.isObject() || !node.propertyNames().equals(keys)) { throw new IllegalArgumentException(); }
-            for (var component : type.getRecordComponents()) {
-                JsonNode value = node.get(component.getName());
-                if (value.isNull()) { continue; }
-                if (component.getType() == String.class && !value.isString()) { throw new IllegalArgumentException(); }
-                if (component.getType() == Integer.class && (!value.isIntegralNumber() || !value.canConvertToInt())) { throw new IllegalArgumentException(); }
-                if (component.getType() == Object.class && !value.isString() && !value.isBoolean()) { throw new IllegalArgumentException(); }
-                if (component.getType() == List.class) { validateList(component.getName(), value); }
+            List<Field> fields = fields(type);
+            Set<String> keys = fields.stream().map(Field::getName).collect(Collectors.toSet());
+            if (node == null || !node.isObject() || !node.propertyNames().equals(keys)) {
+                throw new IllegalArgumentException();
             }
+            for (Field field : fields) {
+                validateValue(field, node.get(field.getName()));
+            }
+        }
+
+        /** 按字段声明类型检查单个 JSON 值，显式 null 由 Bean Validation 与业务规则判断。 */
+        static void validateValue(Field field, JsonNode value) {
+            if (value.isNull()) {
+                return;
+            }
+            Class<?> type = field.getType();
+            if (type == String.class && !value.isString()) {
+                throw new IllegalArgumentException();
+            }
+            if (type == Integer.class && (!value.isIntegralNumber() || !value.canConvertToInt())) {
+                throw new IllegalArgumentException();
+            }
+            if (type == Object.class && !value.isString() && !value.isBoolean()) {
+                throw new IllegalArgumentException();
+            }
+            if (type == List.class) {
+                validateList(field.getName(), value);
+            }
+        }
+
+        /** 只取请求合同的实例字段，静态常量不属于 JSON 键。 */
+        static List<Field> fields(Class<?> type) {
+            return Arrays.stream(type.getDeclaredFields()).filter(field -> !Modifier.isStatic(field.getModifiers())).toList();
         }
 
         /** 成员也必须有准确字段；用途数组仅接受字符串。 */
         static void validateList(String name, JsonNode node) {
-            if (!node.isArray()) { throw new IllegalArgumentException(); }
+            if (!node.isArray()) {
+                throw new IllegalArgumentException();
+            }
             for (JsonNode child : node) {
-                if ("members".equals(name)) { validateRecord(child, MemberRequest.class); }
-                else if (!child.isString()) { throw new IllegalArgumentException(); }
+                if ("members".equals(name)) {
+                    validateRecord(child, MemberRequest.class);
+                } else if (!child.isString()) {
+                    throw new IllegalArgumentException();
+                }
             }
         }
     }

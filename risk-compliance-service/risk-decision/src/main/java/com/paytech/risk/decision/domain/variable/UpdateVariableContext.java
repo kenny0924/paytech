@@ -1,16 +1,20 @@
 package com.paytech.risk.decision.domain.variable;
 
-import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.risk.decision.core.dal.dataobject.*;
-import com.paytech.risk.decision.domain.enums.*;
-import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter;
-import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.*;
-import static com.paytech.risk.decision.domainservice.policy.VariableManagementPolicy.*;
-import static com.paytech.risk.decision.domainservice.service.RiskVariableException.Reason.*;
+import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.entry;
+import static com.paytech.risk.decision.domainservice.convert.variable.RiskVariablePersistenceConverter.member;
+import static com.paytech.risk.decision.domainservice.policy.VariableManagementPolicy.failure;
+import static com.paytech.risk.decision.domainservice.service.RiskVariableException.Reason.VARIABLE_DOMAIN_MISMATCH;
+
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.paytech.risk.decision.core.dal.dataobject.RiskVariableDefinition;
+import com.paytech.risk.decision.core.dal.dataobject.RiskVariableMember;
+import com.paytech.risk.decision.domain.variable.RiskVariable.AllowedValues;
+import com.paytech.risk.decision.domain.variable.RiskVariable.View;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -42,7 +46,6 @@ public class UpdateVariableContext {
     /** UTC 微秒命令时间。 */
     private final Instant commandTime;
 
-
     /** 最终版本和依赖判断都基于本次锁定的原始对象。 */
     public void verifyIntegrity(long expectedVersion, Object value) {
         root.verifyMutable(expectedVersion);
@@ -59,14 +62,17 @@ public class UpdateVariableContext {
         if (value != null && definition.allowedValuesVariableCode() != null) {
             String key = VariableValueNormalizer.key(definition.valueType(), value);
             if (optionMembers.stream().map(row -> member(definition.valueType(), row))
-                .noneMatch(m -> key.equals(VariableValueNormalizer.key(definition.valueType(), m.value()))))
+                .noneMatch(m -> key.equals(VariableValueNormalizer.key(definition.valueType(), m.value())))) {
                 throw failure(VARIABLE_DOMAIN_MISMATCH, "当前值不属于关联的可选集合");
+            }
         }
     }
 
     /** 从原根与预加载成员生成响应，成功保存后不重新查询根。 */
     public VariableDetailResponse result() {
-        var options = dependencies.get(root.allowedValuesVariableCode());
+        // 依赖 Map 为不可变集合，不能以 null 编码查询。
+        String optionsCode = root.allowedValuesVariableCode();
+        var options = optionsCode == null ? null : dependencies.get(optionsCode);
         AllowedValues allowed = options == null ? null : new AllowedValues(options.variableCode(), options.variableName(),
             options.version(), optionMembers.size(), optionMembers.stream().limit(100)
                 .map(row -> member(options.valueType(), row)).toList());

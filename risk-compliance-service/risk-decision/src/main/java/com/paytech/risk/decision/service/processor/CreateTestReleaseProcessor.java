@@ -3,7 +3,6 @@ package com.paytech.risk.decision.service.processor;
 import static com.paytech.risk.decision.domainservice.policy.RuleSetManagementPolicy.requireConfigurable;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -16,7 +15,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.risk.decision.core.dal.dataobject.*;
 import com.paytech.risk.decision.domain.enums.ConfigurationStatus;
@@ -52,15 +50,13 @@ public class CreateTestReleaseProcessor extends AbstractLockProcessor<CreateTest
     private final RiskDecisionCanonicalizer canonicalizer;
     private final PlatformTransactionManager transactionManager;
     private final DecisionIdentifierGenerator identifierGenerator;
-    private final RedisResourceLockProperties lockProperties;
 
     /** 沿用规则集完整逻辑 Key、普通 RLock 及原有限等待/租约。 */
     @Override
     protected LockCommand lockCommand(CreateTestReleaseRequest request) {
         String resource = ruleSetService.resourceKeyForVersion(request.getRuleSetVersionId());
         return LockCommand.tryLocks(List.of("decision:rule-set:" + resource),
-            Duration.ofNanos(lockProperties.requiredWaitNanos()),
-            Duration.ofNanos(lockProperties.requiredLeaseNanos()));
+            DecisionResourceLocks.WAIT_TIME, DecisionResourceLocks.LEASE_TIME);
     }
 
     /** 一次有效创建产生一个新 Candidate，根与初始事件同事务提交。 */

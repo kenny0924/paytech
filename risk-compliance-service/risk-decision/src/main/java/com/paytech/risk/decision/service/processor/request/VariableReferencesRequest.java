@@ -1,9 +1,6 @@
 package com.paytech.risk.decision.service.processor.request;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -26,5 +23,4 @@ public class VariableReferencesRequest {
     /** 本页最多返回引用数。 */
     @Min(1) @Max(100)
     private final int size;
-
 }

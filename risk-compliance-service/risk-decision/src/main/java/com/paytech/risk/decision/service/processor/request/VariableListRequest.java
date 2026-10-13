@@ -1,9 +1,5 @@
 package com.paytech.risk.decision.service.processor.request;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-import com.paytech.risk.decision.domain.variable.RiskVariable.*;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -40,5 +36,4 @@ public class VariableListRequest {
 
     /** 可选页大小，批取不可携带。 */
     private final Integer size;
-
 }
