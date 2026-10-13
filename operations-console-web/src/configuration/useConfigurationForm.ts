@@ -12,6 +12,7 @@ export function useConfigurationForm(onAuthorizationChanged: () => void, form?: 
   const { modal, message } = App.useApp(); const notify = useErrorNotification();
   const [dirty, setDirty] = useState(false); const [saving, setSaving] = useState(false);
   const [conflict, setConflict] = useState(false); const busy = useRef(false); const last = useRef<ConfigurationCommand>(undefined);
+  const [fieldErrors, setFieldErrors] = useState<ApiError['fieldErrors']>([]);
   const confirmLeave = useCallback(() => new Promise<boolean>(resolve => {
     modal.confirm({ title: '离开当前编辑？', content: '尚未保存的修改将丢失。', okText: '离开', cancelText: '继续编辑',
       onOk: () => resolve(true), onCancel: () => resolve(false) });
@@ -30,13 +31,14 @@ export function useConfigurationForm(onAuthorizationChanged: () => void, form?: 
       if (!decode && (!configuration || !configuration.objectId || !configuration.objectCode || !Number.isInteger(configuration.version) || configuration.version < 1)) {
         throw new ApiError(502, 'INVALID_RESPONSE');
       }
-      setDirty(false); setConflict(false); last.current = undefined;
+      setDirty(false); setConflict(false); setFieldErrors([]); last.current = undefined;
       void message.success('Platform 当前配置已保存');
       return result as T;
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 403) onAuthorizationChanged();
         if (error.status === 409) setConflict(true);
+        setFieldErrors(error.fieldErrors);
         if (form && error.fieldErrors.length) form.setFields(error.fieldErrors.map(item => ({
           name: item.field.replace(/\[(\d+)\]/g, '.$1').split('.').map(part => /^\d+$/.test(part) ? Number(part) : part),
           errors: [item.message] })));
@@ -44,5 +46,5 @@ export function useConfigurationForm(onAuthorizationChanged: () => void, form?: 
       notify(error, '配置保存失败'); return null;
     } finally { busy.current = false; setSaving(false); }
   }
-  return { dirty, setDirty, saving, conflict, save, reset: () => { setDirty(false); setConflict(false); last.current = undefined; } };
+  return { dirty, setDirty, saving, conflict, fieldErrors, save, reset: () => { setDirty(false); setConflict(false); setFieldErrors([]); last.current = undefined; } };
 }

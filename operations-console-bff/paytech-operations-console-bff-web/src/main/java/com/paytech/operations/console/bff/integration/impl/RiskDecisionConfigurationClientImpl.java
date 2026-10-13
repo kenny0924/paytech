@@ -71,10 +71,10 @@ public final class RiskDecisionConfigurationClientImpl implements RiskDecisionCo
         Validator.equal("VARIABLE_REFERENCE", owner.getOperandFormat());
         var query = owner.getVariableQueryContext();
         Validator.require(query != null);
-        Validator.equal(pointCode, query.pointCode());
-        Validator.equal(point.inputContractCode(), query.inputContractCode());
-        Validator.equal(point.inputContractVersion(), query.inputContractVersion());
-        Validator.equal("RULE_CONDITION", query.usage());
+        Validator.equal(pointCode, query.getPointCode());
+        Validator.equal(point.inputContractCode(), query.getInputContractCode());
+        Validator.equal(point.inputContractVersion(), query.getInputContractVersion());
+        Validator.equal("RULE_CONDITION", query.getUsage());
         return new RuleAuthoringContextResponseBody(owner.getDescriptorCode(), point, fields, owner.getOperators(), actions,
             owner.getFeatures(), parameters, owner.getObligations(), owner.getLimitBindings(), targets, owner.getOperandFormat(),
             RiskVariableConverter.local(owner.getVariableQueryContext()));

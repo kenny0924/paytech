@@ -66,4 +66,8 @@ test('tenant page owns only its three approved routes', () => {
   const menu = { frontendRoute: '/tenant-access', componentKey: 'OPERATIONS_TENANT_ACCESS' } as ConsoleResource;
   assert.deepEqual(pageRoutePaths(menu), ['/tenant-access', '/tenant-access/:tenantId', '/tenant-access/:tenantId/members/:memberId']);
   assert.deepEqual(pageRoutePaths({ ...menu, frontendRoute: '/risk/rule-configuration', componentKey: 'OPERATIONS_RISK_RULE_CONFIGURATION' }), ['/risk/rule-configuration']);
+  assert.deepEqual(pageRoutePaths({ ...menu, frontendRoute: '/external-api/standard-apis', componentKey: 'OPERATIONS_EXTERNAL_STANDARD_APIS' }),
+    ['/external-api/standard-apis', '/external-api/standard-apis/:standardApiCode']);
+  assert.deepEqual(pageRoutePaths({ ...menu, frontendRoute: '/external-api/integrations', componentKey: 'OPERATIONS_EXTERNAL_INTEGRATIONS' }),
+    ['/external-api/integrations', '/external-api/integrations/:integrationCode', '/external-api/integrations/:integrationCode/:section/:childCode']);
 });

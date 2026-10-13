@@ -46,7 +46,14 @@ export function menuAncestors(tree: ConsoleMenu[], pathname: string): string[] {
 /** 页面内部仅登记已实现的详情路径，其他页面继续精确匹配服务端菜单路径。 */
 export function pageRoutePaths(menu: ConsoleResource): string[] {
   if (!menu.frontendRoute) return [];
-  return menu.componentKey === 'OPERATIONS_TENANT_ACCESS'
-    ? [menu.frontendRoute, `${menu.frontendRoute}/:tenantId`, `${menu.frontendRoute}/:tenantId/members/:memberId`]
-    : [menu.frontendRoute];
+  switch (menu.componentKey) {
+    case 'OPERATIONS_TENANT_ACCESS':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:tenantId`, `${menu.frontendRoute}/:tenantId/members/:memberId`];
+    case 'OPERATIONS_EXTERNAL_STANDARD_APIS':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:standardApiCode`];
+    case 'OPERATIONS_EXTERNAL_INTEGRATIONS':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:integrationCode`, `${menu.frontendRoute}/:integrationCode/:section/:childCode`];
+    default:
+      return [menu.frontendRoute];
+  }
 }

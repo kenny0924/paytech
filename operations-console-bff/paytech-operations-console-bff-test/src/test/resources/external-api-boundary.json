@@ -1,0 +1,1285 @@
+[
+  {
+    "id": "E01",
+    "method": "GET",
+    "path": "/external-api-admin/v1/standard-apis",
+    "query": "?page=1&size=10&keyword=PA",
+    "routeCode": "operations-external-api-standard-api-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "standardApiCode": "PAY",
+          "standardApiName": "支付",
+          "requestFieldCount": 2,
+          "responseFieldCount": 1,
+          "implementedBy": [
+            {
+              "integrationCode": "DEMO",
+              "integrationName": "DEMO 渠道"
+            }
+          ],
+          "version": 2,
+          "updateTime": "2026-10-13T06:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "E02",
+    "method": "GET",
+    "path": "/external-api-admin/v1/standard-apis/PAY",
+    "query": "",
+    "routeCode": "operations-external-api-standard-api-detail",
+    "request": null,
+    "response": {
+      "standardApiCode": "PAY",
+      "standardApiName": "支付",
+      "description": null,
+      "requestFields": [
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "paymentContext",
+          "fieldName": "paymentContext",
+          "dataType": "OBJECT",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "paymentContext.attemptId",
+          "fieldName": "paymentContext.attemptId",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "responseFields": [
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "paymentStatus",
+          "fieldName": "paymentStatus",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "implementations": [
+        {
+          "integrationCode": "DEMO",
+          "integrationName": "DEMO 渠道"
+        }
+      ],
+      "version": 2,
+      "createTime": "2026-10-13T06:00:00Z",
+      "updateTime": "2026-10-13T06:00:00Z",
+      "updatedBy": "10001"
+    }
+  },
+  {
+    "id": "E03",
+    "method": "POST",
+    "path": "/external-api-admin/v1/standard-apis",
+    "query": "",
+    "routeCode": "operations-external-api-standard-api-create",
+    "request": {
+      "standardApiCode": "PAY",
+      "standardApiName": "支付",
+      "description": null,
+      "requestFields": [
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "paymentContext",
+          "fieldName": "paymentContext",
+          "dataType": "OBJECT",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "paymentContext.attemptId",
+          "fieldName": "paymentContext.attemptId",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "responseFields": [
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "paymentStatus",
+          "fieldName": "paymentStatus",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "reason": "新增"
+    },
+    "response": {
+      "objectType": "STANDARD_API",
+      "objectCode": "PAY",
+      "version": 1
+    }
+  },
+  {
+    "id": "E04",
+    "method": "PUT",
+    "path": "/external-api-admin/v1/standard-apis/PAY",
+    "query": "",
+    "routeCode": "operations-external-api-standard-api-update",
+    "request": {
+      "standardApiName": "支付",
+      "description": "说明",
+      "requestFields": [
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "paymentContext",
+          "fieldName": "paymentContext",
+          "dataType": "OBJECT",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "paymentContext.attemptId",
+          "fieldName": "paymentContext.attemptId",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "responseFields": [
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "paymentStatus",
+          "fieldName": "paymentStatus",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "expectedVersion": 1,
+      "reason": "修改"
+    },
+    "response": {
+      "objectType": "STANDARD_API",
+      "objectCode": "PAY",
+      "version": 2
+    }
+  },
+  {
+    "id": "E05",
+    "method": "DELETE",
+    "path": "/external-api-admin/v1/standard-apis/PAY",
+    "query": "",
+    "routeCode": "operations-external-api-standard-api-delete",
+    "request": {
+      "expectedVersion": 2,
+      "reason": "删除"
+    },
+    "response": {
+      "objectType": "STANDARD_API",
+      "objectCode": "PAY",
+      "version": 2
+    }
+  },
+  {
+    "id": "E06",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations",
+    "query": "?page=1&size=10&keyword=DE",
+    "routeCode": "operations-external-api-integration-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "integrationCode": "DEMO",
+          "integrationName": "DEMO 渠道",
+          "endpointCount": 1,
+          "apiCount": 1,
+          "scriptCount": 1,
+          "implementedStandardApis": [
+            {
+              "standardApiCode": "PAY",
+              "standardApiName": "支付"
+            }
+          ],
+          "version": 1,
+          "updateTime": "2026-10-13T06:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "E07",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO",
+    "query": "",
+    "routeCode": "operations-external-api-integration-detail",
+    "request": null,
+    "response": {
+      "integrationCode": "DEMO",
+      "integrationName": "DEMO 渠道",
+      "description": null,
+      "endpoints": [
+        {
+          "endpointCode": "DEMO_GATEWAY",
+          "baseUrl": "https://gateway.example.test/api",
+          "referencedApiCodes": [
+            "CREATE_ORDER"
+          ]
+        }
+      ],
+      "apiCount": 1,
+      "scriptCount": 1,
+      "implementationCount": 1,
+      "version": 1,
+      "createTime": "2026-10-13T06:00:00Z",
+      "updateTime": "2026-10-13T06:00:00Z",
+      "updatedBy": "10001"
+    }
+  },
+  {
+    "id": "E08",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations",
+    "query": "",
+    "routeCode": "operations-external-api-integration-create",
+    "request": {
+      "integrationCode": "DEMO",
+      "integrationName": "DEMO 渠道",
+      "description": null,
+      "endpoints": [
+        {
+          "endpointCode": "DEMO_GATEWAY",
+          "baseUrl": "https://gateway.example.test/api"
+        }
+      ],
+      "reason": "新增"
+    },
+    "response": {
+      "objectType": "INTEGRATION",
+      "objectCode": "DEMO",
+      "version": 1
+    }
+  },
+  {
+    "id": "E09",
+    "method": "PUT",
+    "path": "/external-api-admin/v1/integrations/DEMO",
+    "query": "",
+    "routeCode": "operations-external-api-integration-update",
+    "request": {
+      "integrationName": "DEMO 渠道",
+      "description": null,
+      "endpoints": [
+        {
+          "endpointCode": "DEMO_GATEWAY",
+          "baseUrl": "https://gateway.example.test/api"
+        }
+      ],
+      "expectedVersion": 1,
+      "reason": "修改"
+    },
+    "response": {
+      "objectType": "INTEGRATION",
+      "objectCode": "DEMO",
+      "version": 2
+    }
+  },
+  {
+    "id": "E10",
+    "method": "DELETE",
+    "path": "/external-api-admin/v1/integrations/DEMO",
+    "query": "",
+    "routeCode": "operations-external-api-integration-delete",
+    "request": {
+      "expectedVersion": 1,
+      "reason": "删除"
+    },
+    "response": {
+      "objectType": "INTEGRATION",
+      "objectCode": "DEMO",
+      "version": 1
+    }
+  },
+  {
+    "id": "E11",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/apis",
+    "query": "?page=1&size=10&keyword=CRE",
+    "routeCode": "operations-external-api-integration-api-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "apiCode": "CREATE_ORDER",
+          "apiName": "下单",
+          "method": "POST",
+          "endpointCode": "DEMO_GATEWAY",
+          "pathTemplate": "/outlets/{outletRef}/orders",
+          "requestScriptCount": 0,
+          "responseScriptCount": 0,
+          "referencedBy": [
+            "PAY"
+          ],
+          "version": 1,
+          "updateTime": "2026-10-13T06:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "E12",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/apis/CREATE_ORDER",
+    "query": "",
+    "routeCode": "operations-external-api-integration-api-detail",
+    "request": null,
+    "response": {
+      "apiCode": "CREATE_ORDER",
+      "apiName": "下单",
+      "description": null,
+      "requestFields": [
+        {
+          "fieldLocation": "PATH",
+          "fieldPath": "outletRef",
+          "fieldName": "outletRef",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "HEADER",
+          "fieldPath": "Content-Type",
+          "fieldName": "Content-Type",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "orderRef",
+          "fieldName": "orderRef",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "responseFields": [
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "reference",
+          "fieldName": "reference",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "definition": {
+        "params": [
+          {
+            "name": "signingKey",
+            "dataType": "PROTECTED_HANDLE",
+            "required": true
+          }
+        ],
+        "fixedValues": {
+          "HEADER:Content-Type": {
+            "kind": "EXPRESSION",
+            "expression": "'application/json'"
+          }
+        },
+        "transport": {
+          "protocol": "HTTP",
+          "method": "POST",
+          "endpointCode": "DEMO_GATEWAY",
+          "pathTemplate": "/outlets/{outletRef}/orders",
+          "connectTimeoutMs": 2000,
+          "responseTimeoutMs": 10000
+        },
+        "requestEncoding": "JSON",
+        "responseDecoding": "JSON",
+        "scripts": [],
+        "statusRules": [
+          {
+            "condition": "http.responseStatus == 201",
+            "executeStatus": "SUCCESS"
+          }
+        ],
+        "outputs": {
+          "SUCCESS": [
+            {
+              "name": "transactionRef",
+              "dataType": "STRING",
+              "required": true,
+              "value": {
+                "kind": "PATH",
+                "path": "http.responseBody.reference"
+              }
+            }
+          ],
+          "FAIL": []
+        }
+      },
+      "referencedBy": [
+        {
+          "standardApiCode": "PAY",
+          "nodeIds": [
+            "createOrder"
+          ]
+        }
+      ],
+      "version": 1,
+      "createTime": "2026-10-13T06:00:00Z",
+      "updateTime": "2026-10-13T06:00:00Z",
+      "updatedBy": "10001"
+    }
+  },
+  {
+    "id": "E13",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations/DEMO/apis",
+    "query": "",
+    "routeCode": "operations-external-api-integration-api-create",
+    "request": {
+      "apiCode": "CREATE_ORDER",
+      "apiName": "下单",
+      "description": null,
+      "requestFields": [
+        {
+          "fieldLocation": "PATH",
+          "fieldPath": "outletRef",
+          "fieldName": "outletRef",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "HEADER",
+          "fieldPath": "Content-Type",
+          "fieldName": "Content-Type",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "orderRef",
+          "fieldName": "orderRef",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "responseFields": [
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "reference",
+          "fieldName": "reference",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "definition": {
+        "params": [
+          {
+            "name": "signingKey",
+            "dataType": "PROTECTED_HANDLE",
+            "required": true
+          }
+        ],
+        "fixedValues": {
+          "HEADER:Content-Type": {
+            "kind": "EXPRESSION",
+            "expression": "'application/json'"
+          }
+        },
+        "transport": {
+          "protocol": "HTTP",
+          "method": "POST",
+          "endpointCode": "DEMO_GATEWAY",
+          "pathTemplate": "/outlets/{outletRef}/orders",
+          "connectTimeoutMs": 2000,
+          "responseTimeoutMs": 10000
+        },
+        "requestEncoding": "JSON",
+        "responseDecoding": "JSON",
+        "scripts": [],
+        "statusRules": [
+          {
+            "condition": "http.responseStatus == 201",
+            "executeStatus": "SUCCESS"
+          }
+        ],
+        "outputs": {
+          "SUCCESS": [
+            {
+              "name": "transactionRef",
+              "dataType": "STRING",
+              "required": true,
+              "value": {
+                "kind": "PATH",
+                "path": "http.responseBody.reference"
+              }
+            }
+          ],
+          "FAIL": []
+        }
+      },
+      "reason": "新增"
+    },
+    "response": {
+      "objectType": "INTEGRATION_API",
+      "objectCode": "DEMO/CREATE_ORDER",
+      "version": 1
+    }
+  },
+  {
+    "id": "E14",
+    "method": "PUT",
+    "path": "/external-api-admin/v1/integrations/DEMO/apis/CREATE_ORDER",
+    "query": "",
+    "routeCode": "operations-external-api-integration-api-update",
+    "request": {
+      "apiName": "下单",
+      "description": null,
+      "requestFields": [
+        {
+          "fieldLocation": "PATH",
+          "fieldPath": "outletRef",
+          "fieldName": "outletRef",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "HEADER",
+          "fieldPath": "Content-Type",
+          "fieldName": "Content-Type",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "orderRef",
+          "fieldName": "orderRef",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "responseFields": [
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "reference",
+          "fieldName": "reference",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "definition": {
+        "params": [
+          {
+            "name": "signingKey",
+            "dataType": "PROTECTED_HANDLE",
+            "required": true
+          }
+        ],
+        "fixedValues": {
+          "HEADER:Content-Type": {
+            "kind": "EXPRESSION",
+            "expression": "'application/json'"
+          }
+        },
+        "transport": {
+          "protocol": "HTTP",
+          "method": "POST",
+          "endpointCode": "DEMO_GATEWAY",
+          "pathTemplate": "/outlets/{outletRef}/orders",
+          "connectTimeoutMs": 2000,
+          "responseTimeoutMs": 10000
+        },
+        "requestEncoding": "JSON",
+        "responseDecoding": "JSON",
+        "scripts": [],
+        "statusRules": [
+          {
+            "condition": "http.responseStatus == 201",
+            "executeStatus": "SUCCESS"
+          }
+        ],
+        "outputs": {
+          "SUCCESS": [
+            {
+              "name": "transactionRef",
+              "dataType": "STRING",
+              "required": true,
+              "value": {
+                "kind": "PATH",
+                "path": "http.responseBody.reference"
+              }
+            }
+          ],
+          "FAIL": []
+        }
+      },
+      "expectedVersion": 1,
+      "reason": "修改"
+    },
+    "response": {
+      "objectType": "INTEGRATION_API",
+      "objectCode": "DEMO/CREATE_ORDER",
+      "version": 2
+    }
+  },
+  {
+    "id": "E15",
+    "method": "DELETE",
+    "path": "/external-api-admin/v1/integrations/DEMO/apis/CREATE_ORDER",
+    "query": "",
+    "routeCode": "operations-external-api-integration-api-delete",
+    "request": {
+      "expectedVersion": 1,
+      "reason": "删除"
+    },
+    "response": {
+      "objectType": "INTEGRATION_API",
+      "objectCode": "DEMO/CREATE_ORDER",
+      "version": 1
+    }
+  },
+  {
+    "id": "E16",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations/DEMO/apis/validate",
+    "query": "",
+    "routeCode": "operations-external-api-integration-api-validate",
+    "request": {
+      "apiCode": "CREATE_ORDER",
+      "apiName": "下单",
+      "description": null,
+      "requestFields": [
+        {
+          "fieldLocation": "PATH",
+          "fieldPath": "outletRef",
+          "fieldName": "outletRef",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "HEADER",
+          "fieldPath": "Content-Type",
+          "fieldName": "Content-Type",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        },
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "orderRef",
+          "fieldName": "orderRef",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "responseFields": [
+        {
+          "fieldLocation": "BODY",
+          "fieldPath": "reference",
+          "fieldName": "reference",
+          "dataType": "STRING",
+          "required": true,
+          "description": null
+        }
+      ],
+      "definition": {
+        "params": [
+          {
+            "name": "signingKey",
+            "dataType": "PROTECTED_HANDLE",
+            "required": true
+          }
+        ],
+        "fixedValues": {
+          "HEADER:Content-Type": {
+            "kind": "EXPRESSION",
+            "expression": "'application/json'"
+          }
+        },
+        "transport": {
+          "protocol": "HTTP",
+          "method": "POST",
+          "endpointCode": "DEMO_GATEWAY",
+          "pathTemplate": "/outlets/{outletRef}/orders",
+          "connectTimeoutMs": 2000,
+          "responseTimeoutMs": 10000
+        },
+        "requestEncoding": "JSON",
+        "responseDecoding": "JSON",
+        "scripts": [],
+        "statusRules": [
+          {
+            "condition": "http.responseStatus == 201",
+            "executeStatus": "SUCCESS"
+          }
+        ],
+        "outputs": {
+          "SUCCESS": [
+            {
+              "name": "transactionRef",
+              "dataType": "STRING",
+              "required": true,
+              "value": {
+                "kind": "PATH",
+                "path": "http.responseBody.reference"
+              }
+            }
+          ],
+          "FAIL": []
+        }
+      },
+      "expectedVersion": null
+    },
+    "response": {
+      "valid": false,
+      "issues": [
+        {
+          "severity": "ERROR",
+          "code": "PATH_VARIABLE_MISMATCH",
+          "location": "definition.transport.pathTemplate",
+          "message": "路径变量与 PATH 字段不一致"
+        }
+      ]
+    }
+  },
+  {
+    "id": "E17",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/scripts",
+    "query": "?page=1&size=10&keyword=SIGN&executionStage=REQUEST",
+    "routeCode": "operations-external-api-script-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "scriptCode": "DEMO_SIGN",
+          "scriptName": "请求签名",
+          "executionStage": "REQUEST",
+          "parameterNames": [
+            "key"
+          ],
+          "referencedApiCodes": [
+            "CREATE_ORDER"
+          ],
+          "version": 1,
+          "updateTime": "2026-10-13T06:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "E18",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/scripts/DEMO_SIGN",
+    "query": "",
+    "routeCode": "operations-external-api-script-detail",
+    "request": null,
+    "response": {
+      "scriptCode": "DEMO_SIGN",
+      "scriptName": "请求签名",
+      "executionStage": "REQUEST",
+      "parameterDefinition": [
+        {
+          "name": "key",
+          "dataType": "PROTECTED_HANDLE",
+          "required": true
+        }
+      ],
+      "sourceCode": "http.requestHeaders.signature = functions.sign(params.key)",
+      "description": null,
+      "referencedApiCodes": [
+        "CREATE_ORDER"
+      ],
+      "version": 1,
+      "createTime": "2026-10-13T06:00:00Z",
+      "updateTime": "2026-10-13T06:00:00Z",
+      "updatedBy": "10001"
+    }
+  },
+  {
+    "id": "E19",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations/DEMO/scripts",
+    "query": "",
+    "routeCode": "operations-external-api-script-create",
+    "request": {
+      "scriptCode": "DEMO_SIGN",
+      "scriptName": "请求签名",
+      "executionStage": "REQUEST",
+      "parameterDefinition": [
+        {
+          "name": "key",
+          "dataType": "PROTECTED_HANDLE",
+          "required": true
+        }
+      ],
+      "sourceCode": "sign(params.key)",
+      "description": null,
+      "reason": "新增"
+    },
+    "response": {
+      "objectType": "INTEGRATION_SCRIPT",
+      "objectCode": "DEMO/DEMO_SIGN",
+      "version": 1
+    }
+  },
+  {
+    "id": "E20",
+    "method": "PUT",
+    "path": "/external-api-admin/v1/integrations/DEMO/scripts/DEMO_SIGN",
+    "query": "",
+    "routeCode": "operations-external-api-script-update",
+    "request": {
+      "scriptName": "请求签名",
+      "executionStage": "RESPONSE",
+      "parameterDefinition": [],
+      "sourceCode": "verify()",
+      "description": null,
+      "expectedVersion": 1,
+      "reason": "修改"
+    },
+    "response": {
+      "objectType": "INTEGRATION_SCRIPT",
+      "objectCode": "DEMO/DEMO_SIGN",
+      "version": 2
+    }
+  },
+  {
+    "id": "E21",
+    "method": "DELETE",
+    "path": "/external-api-admin/v1/integrations/DEMO/scripts/DEMO_SIGN",
+    "query": "",
+    "routeCode": "operations-external-api-script-delete",
+    "request": {
+      "expectedVersion": 1,
+      "reason": "删除"
+    },
+    "response": {
+      "objectType": "INTEGRATION_SCRIPT",
+      "objectCode": "DEMO/DEMO_SIGN",
+      "version": 1
+    }
+  },
+  {
+    "id": "E22",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations/DEMO/scripts/validate",
+    "query": "",
+    "routeCode": "operations-external-api-script-validate",
+    "request": {
+      "scriptCode": "DEMO_SIGN",
+      "scriptName": "请求签名",
+      "executionStage": "REQUEST",
+      "parameterDefinition": [
+        {
+          "name": "key",
+          "dataType": "PROTECTED_HANDLE",
+          "required": true
+        }
+      ],
+      "sourceCode": "sign(params.key)",
+      "description": null,
+      "expectedVersion": 1
+    },
+    "response": {
+      "valid": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "E23",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/implementations",
+    "query": "",
+    "routeCode": "operations-external-api-implementation-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "standardApiCode": "PAY",
+          "standardApiName": "支付",
+          "nodeCount": 1,
+          "returnCount": 1,
+          "initializerIds": [],
+          "timeoutMs": 20000,
+          "version": 1,
+          "updateTime": "2026-10-13T06:00:00Z"
+        }
+      ]
+    }
+  },
+  {
+    "id": "E24",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/implementations/PAY",
+    "query": "",
+    "routeCode": "operations-external-api-implementation-detail",
+    "request": null,
+    "response": {
+      "standardApiCode": "PAY",
+      "flowDefinition": {
+        "timeoutMs": 20000,
+        "initializers": [],
+        "entry": "createOrder",
+        "nodes": [
+          {
+            "id": "createOrder",
+            "integrationApi": "CREATE_ORDER",
+            "request": {
+              "BODY:orderRef": {
+                "kind": "PATH",
+                "path": "input.paymentContext.attemptId"
+              }
+            }
+          }
+        ],
+        "returns": [
+          {
+            "id": "unknown",
+            "executeStatus": "ERROR"
+          }
+        ],
+        "edges": [
+          {
+            "from": "createOrder",
+            "to": "unknown",
+            "default": true
+          }
+        ]
+      },
+      "version": 1,
+      "createTime": "2026-10-13T06:00:00Z",
+      "updateTime": "2026-10-13T06:00:00Z",
+      "updatedBy": "10001"
+    }
+  },
+  {
+    "id": "E25",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations/DEMO/implementations",
+    "query": "",
+    "routeCode": "operations-external-api-implementation-create",
+    "request": {
+      "standardApiCode": "PAY",
+      "flowDefinition": {
+        "timeoutMs": 20000,
+        "initializers": [],
+        "entry": "createOrder",
+        "nodes": [
+          {
+            "id": "createOrder",
+            "integrationApi": "CREATE_ORDER",
+            "request": {
+              "BODY:orderRef": {
+                "kind": "PATH",
+                "path": "input.paymentContext.attemptId"
+              }
+            }
+          }
+        ],
+        "returns": [
+          {
+            "id": "unknown",
+            "executeStatus": "ERROR"
+          }
+        ],
+        "edges": [
+          {
+            "from": "createOrder",
+            "to": "unknown",
+            "default": true
+          }
+        ]
+      },
+      "reason": "新增"
+    },
+    "response": {
+      "objectType": "INTEGRATION_IMPLEMENTATION",
+      "objectCode": "DEMO/PAY",
+      "version": 1
+    }
+  },
+  {
+    "id": "E26",
+    "method": "PUT",
+    "path": "/external-api-admin/v1/integrations/DEMO/implementations/PAY",
+    "query": "",
+    "routeCode": "operations-external-api-implementation-update",
+    "request": {
+      "flowDefinition": {
+        "timeoutMs": 20000,
+        "initializers": [],
+        "entry": "createOrder",
+        "nodes": [
+          {
+            "id": "createOrder",
+            "integrationApi": "CREATE_ORDER",
+            "request": {
+              "BODY:orderRef": {
+                "kind": "PATH",
+                "path": "input.paymentContext.attemptId"
+              }
+            }
+          }
+        ],
+        "returns": [
+          {
+            "id": "unknown",
+            "executeStatus": "ERROR"
+          }
+        ],
+        "edges": [
+          {
+            "from": "createOrder",
+            "to": "unknown",
+            "default": true
+          }
+        ]
+      },
+      "expectedVersion": 1,
+      "reason": "修改"
+    },
+    "response": {
+      "objectType": "INTEGRATION_IMPLEMENTATION",
+      "objectCode": "DEMO/PAY",
+      "version": 2
+    }
+  },
+  {
+    "id": "E27",
+    "method": "DELETE",
+    "path": "/external-api-admin/v1/integrations/DEMO/implementations/PAY",
+    "query": "",
+    "routeCode": "operations-external-api-implementation-delete",
+    "request": {
+      "expectedVersion": 1,
+      "reason": "删除"
+    },
+    "response": {
+      "objectType": "INTEGRATION_IMPLEMENTATION",
+      "objectCode": "DEMO/PAY",
+      "version": 1
+    }
+  },
+  {
+    "id": "E28",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations/DEMO/implementations/validate",
+    "query": "",
+    "routeCode": "operations-external-api-implementation-validate",
+    "request": {
+      "standardApiCode": "PAY",
+      "flowDefinition": {
+        "timeoutMs": 20000,
+        "initializers": [],
+        "entry": "createOrder",
+        "nodes": [
+          {
+            "id": "createOrder",
+            "integrationApi": "CREATE_ORDER",
+            "request": {
+              "BODY:orderRef": {
+                "kind": "PATH",
+                "path": "input.paymentContext.attemptId"
+              }
+            }
+          }
+        ],
+        "returns": [
+          {
+            "id": "unknown",
+            "executeStatus": "ERROR"
+          }
+        ],
+        "edges": [
+          {
+            "from": "createOrder",
+            "to": "unknown",
+            "default": true
+          }
+        ]
+      },
+      "expectedVersion": 1
+    },
+    "response": {
+      "valid": true,
+      "issues": [
+        {
+          "severity": "WARNING",
+          "code": "VERSION_STALE",
+          "location": "expectedVersion",
+          "message": "配置已被修改，当前版本为 2"
+        }
+      ]
+    }
+  },
+  {
+    "id": "E29",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/flow-editor-context",
+    "query": "?standardApiCode=PAY",
+    "routeCode": "operations-external-api-flow-editor-context",
+    "request": null,
+    "response": {
+      "standardApi": {
+        "requestFields": [
+          {
+            "fieldLocation": "BODY",
+            "fieldPath": "paymentContext",
+            "fieldName": "paymentContext",
+            "dataType": "OBJECT",
+            "required": true,
+            "description": null
+          },
+          {
+            "fieldLocation": "BODY",
+            "fieldPath": "paymentContext.attemptId",
+            "fieldName": "paymentContext.attemptId",
+            "dataType": "STRING",
+            "required": true,
+            "description": null
+          }
+        ],
+        "responseFields": [
+          {
+            "fieldLocation": "BODY",
+            "fieldPath": "paymentStatus",
+            "fieldName": "paymentStatus",
+            "dataType": "STRING",
+            "required": true,
+            "description": null
+          }
+        ]
+      },
+      "apis": [
+        {
+          "apiCode": "CREATE_ORDER",
+          "apiName": "下单",
+          "requestFields": [
+            {
+              "fieldLocation": "PATH",
+              "fieldPath": "outletRef",
+              "fieldName": "outletRef",
+              "dataType": "STRING",
+              "required": true,
+              "description": null,
+              "fixed": false
+            },
+            {
+              "fieldLocation": "HEADER",
+              "fieldPath": "Content-Type",
+              "fieldName": "Content-Type",
+              "dataType": "STRING",
+              "required": true,
+              "description": null,
+              "fixed": true
+            },
+            {
+              "fieldLocation": "BODY",
+              "fieldPath": "orderRef",
+              "fieldName": "orderRef",
+              "dataType": "STRING",
+              "required": true,
+              "description": null,
+              "fixed": false
+            }
+          ],
+          "params": [
+            {
+              "name": "signingKey",
+              "dataType": "PROTECTED_HANDLE",
+              "required": true
+            }
+          ],
+          "outputs": {
+            "SUCCESS": [
+              {
+                "name": "transactionRef",
+                "dataType": "STRING",
+                "required": true
+              }
+            ],
+            "FAIL": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "E30",
+    "method": "GET",
+    "path": "/external-api-admin/v1/editor-capabilities",
+    "query": "",
+    "routeCode": "operations-external-api-editor-capabilities",
+    "request": null,
+    "response": {
+      "enums": {
+        "fieldLocations": [
+          "HEADER",
+          "BODY",
+          "QUERY",
+          "PATH"
+        ],
+        "returnStatuses": [
+          "SUCCESS",
+          "FAIL",
+          "ERROR"
+        ]
+      },
+      "limits": {
+        "flowNodes": 16,
+        "jsonBytes": 65536
+      },
+      "functions": [
+        {
+          "functionCode": "CHANNEL_ACCOUNT_CONFIG",
+          "kind": "INITIALIZER",
+          "params": [
+            {
+              "name": "vaultToken",
+              "dataType": "STRING",
+              "required": true
+            }
+          ],
+          "returns": "OBJECT",
+          "returnRoots": {
+            "credentials": "PROTECTED_HANDLE",
+            "parameters": "OBJECT"
+          },
+          "stages": [
+            "FLOW_INITIALIZER"
+          ]
+        }
+      ]
+    }
+  }
+]

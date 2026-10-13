@@ -8,137 +8,137 @@ final class RiskVariableConverter {
     /** 转换 VariableSummary，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableSummary local(RiskVariableModels.VariableSummary r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableSummary(r.variableCode(), r.variableName(), r.sourceType(), r.valueType(), r.pointCode(), r.usages(), r.systemManaged(), r.status(), r.version(), r.numericUnit(), r.currencyCode(), r.currencyVariableCode(), r.formatCode(), r.allowedValuesVariableCode(), r.currentValue(), r.memberCount(), r.previewMembers() == null ? null : r.previewMembers().stream().map(RiskVariableConverter::local).toList(), r.updateTime());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableSummary(r.getVariableCode(), r.getVariableName(), r.getSourceType(), r.getValueType(), r.getPointCode(), r.getUsages(), r.getSystemManaged(), r.getStatus(), r.getVersion(), r.getNumericUnit(), r.getCurrencyCode(), r.getCurrencyVariableCode(), r.getFormatCode(), r.getAllowedValuesVariableCode(), r.getCurrentValue(), r.getMemberCount(), r.getPreviewMembers() == null ? null : r.getPreviewMembers().stream().map(RiskVariableConverter::local).toList(), r.getUpdateTime());
     }
     /** 转换 VariableDetailResponseBody，保留 null 与准确 Wire 值。 */
-    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableDetailResponseBody local(RiskVariableModels.VariableDetailResponseBody r) {
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableDetailResponseBody local(com.paytech.risk.api.decision.response.VariableDetailResponseBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableDetailResponseBody(r.variableCode(), r.variableName(), r.sourceType(), r.valueType(), r.pointCode(), r.usages(), r.systemManaged(), r.status(), r.version(), r.numericUnit(), r.currencyCode(), r.currencyVariableCode(), r.formatCode(), r.allowedValuesVariableCode(), r.currentValue(), r.memberCount(), r.previewMembers() == null ? null : r.previewMembers().stream().map(RiskVariableConverter::local).toList(), r.updateTime(), r.description(), r.sourceContractCode(), r.sourceContractVersion(), r.sourceField(), r.createBy(), r.updateBy(), r.createTime(), r.valuesAsOf(), local(r.allowedValues()));
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableDetailResponseBody(r.getVariableCode(), r.getVariableName(), r.getSourceType(), r.getValueType(), r.getPointCode(), r.getUsages(), r.getSystemManaged(), r.getStatus(), r.getVersion(), r.getNumericUnit(), r.getCurrencyCode(), r.getCurrencyVariableCode(), r.getFormatCode(), r.getAllowedValuesVariableCode(), r.getCurrentValue(), r.getMemberCount(), r.getPreviewMembers() == null ? null : r.getPreviewMembers().stream().map(RiskVariableConverter::local).toList(), r.getUpdateTime(), r.getDescription(), r.getSourceContractCode(), r.getSourceContractVersion(), r.getSourceField(), r.getCreateBy(), r.getUpdateBy(), r.getCreateTime(), r.getValuesAsOf(), local(r.getAllowedValues()));
     }
     /** 转换 VariableListResponseBody，保留 null 与准确 Wire 值。 */
-    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableListResponseBody local(RiskVariableModels.VariableListResponseBody r) {
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableListResponseBody local(com.paytech.risk.api.decision.response.VariableListResponseBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableListResponseBody(r.items() == null ? null : r.items().stream().map(RiskVariableConverter::local).toList(), r.page(), r.size(), r.total(), r.missingCodes(), r.valuesAsOf());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableListResponseBody(r.getItems() == null ? null : r.getItems().stream().map(RiskVariableConverter::local).toList(), r.getPage(), r.getSize(), r.getTotal(), r.getMissingCodes(), r.getValuesAsOf());
     }
     /** 转换 Member，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.Member local(RiskVariableModels.Member r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.Member(r.value(), r.displayName());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.Member(r.getValue(), r.getDisplayName());
     }
     /** 转换 OrderedMember，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.OrderedMember local(RiskVariableModels.OrderedMember r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.OrderedMember(r.value(), r.displayName(), r.sortOrder());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.OrderedMember(r.getValue(), r.getDisplayName(), r.getSortOrder());
     }
     /** 转换 AllowedValues，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.AllowedValues local(RiskVariableModels.AllowedValues r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.AllowedValues(r.variableCode(), r.variableName(), r.version(), r.memberCount(), r.previewMembers() == null ? null : r.previewMembers().stream().map(RiskVariableConverter::local).toList());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.AllowedValues(r.getVariableCode(), r.getVariableName(), r.getVersion(), r.getMemberCount(), r.getPreviewMembers() == null ? null : r.getPreviewMembers().stream().map(RiskVariableConverter::local).toList());
     }
     /** 转换 VariableMembersResponseBody，保留 null 与准确 Wire 值。 */
-    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableMembersResponseBody local(RiskVariableModels.VariableMembersResponseBody r) {
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableMembersResponseBody local(com.paytech.risk.api.decision.response.VariableMembersResponseBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableMembersResponseBody(r.variableCode(), r.version(), r.items() == null ? null : r.items().stream().map(RiskVariableConverter::local).toList(), r.page(), r.size(), r.total(), r.valuesAsOf());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableMembersResponseBody(r.getVariableCode(), r.getVersion(), r.getItems() == null ? null : r.getItems().stream().map(RiskVariableConverter::local).toList(), r.getPage(), r.getSize(), r.getTotal(), r.getValuesAsOf());
     }
     /** 转换 ReplaceMembersResponseBody，保留 null 与准确 Wire 值。 */
-    static com.paytech.operations.console.bff.service.model.RiskVariableModels.ReplaceMembersResponseBody local(RiskVariableModels.ReplaceMembersResponseBody r) {
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.ReplaceMembersResponseBody local(com.paytech.risk.api.decision.response.ReplaceMembersResponseBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.ReplaceMembersResponseBody(r.variableCode(), r.version(), r.memberCount(), r.updateTime());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.ReplaceMembersResponseBody(r.getVariableCode(), r.getVersion(), r.getMemberCount(), r.getUpdateTime());
     }
     /** 转换 DeleteVariableResponseBody，保留 null 与准确 Wire 值。 */
-    static com.paytech.operations.console.bff.service.model.RiskVariableModels.DeleteVariableResponseBody local(RiskVariableModels.DeleteVariableResponseBody r) {
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.DeleteVariableResponseBody local(com.paytech.risk.api.decision.response.DeleteVariableResponseBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.DeleteVariableResponseBody(r.variableCode(), r.status(), r.version());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.DeleteVariableResponseBody(r.getVariableCode(), r.getStatus(), r.getVersion());
     }
     /** 转换 VariableReference，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableReference local(RiskVariableModels.VariableReference r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableReference(r.consumerType(), r.rootId(), r.versionId(), r.versionNo(), r.code(), r.name(), r.scope(), r.location(), r.variableCode());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableReference(r.getConsumerType(), r.getRootId(), r.getVersionId(), r.getVersionNo(), r.getCode(), r.getName(), r.getScope(), r.getLocation(), r.getVariableCode());
     }
     /** 转换 VariableReferencesResponseBody，保留 null 与准确 Wire 值。 */
-    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableReferencesResponseBody local(RiskVariableModels.VariableReferencesResponseBody r) {
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableReferencesResponseBody local(com.paytech.risk.api.decision.response.VariableReferencesResponseBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableReferencesResponseBody(r.items() == null ? null : r.items().stream().map(RiskVariableConverter::local).toList(), r.nextCursor(), r.hasMore(), r.scannedRows());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableReferencesResponseBody(r.getItems() == null ? null : r.getItems().stream().map(RiskVariableConverter::local).toList(), r.getNextCursor(), r.getHasMore(), r.getScannedRows());
     }
     /** 转换 VariableManagementContextResponseBody，保留 null 与准确 Wire 值。 */
-    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableManagementContextResponseBody local(RiskVariableModels.VariableManagementContextResponseBody r) {
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableManagementContextResponseBody local(com.paytech.risk.api.decision.response.VariableManagementContextResponseBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableManagementContextResponseBody(r.supportedPoints() == null ? null : r.supportedPoints().stream().map(RiskVariableConverter::local).toList(), r.sources() == null ? null : r.sources().stream().map(RiskVariableConverter::local).toList(), r.valueTypes(), r.formatProfiles() == null ? null : r.formatProfiles().stream().map(RiskVariableConverter::local).toList(), r.numericUnits(), local(r.limits()), r.contracts() == null ? null : r.contracts().stream().map(RiskVariableConverter::local).toList());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableManagementContextResponseBody(r.getSupportedPoints() == null ? null : r.getSupportedPoints().stream().map(RiskVariableConverter::local).toList(), r.getSources() == null ? null : r.getSources().stream().map(RiskVariableConverter::local).toList(), r.getValueTypes(), r.getFormatProfiles() == null ? null : r.getFormatProfiles().stream().map(RiskVariableConverter::local).toList(), r.getNumericUnits(), local(r.getLimits()), r.getContracts() == null ? null : r.getContracts().stream().map(RiskVariableConverter::local).toList());
     }
     /** 转换 SupportedPoint，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.SupportedPoint local(RiskVariableModels.SupportedPoint r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.SupportedPoint(r.pointCode(), r.pointName());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.SupportedPoint(r.getPointCode(), r.getPointName());
     }
     /** 转换 SourceCapability，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.SourceCapability local(RiskVariableModels.SourceCapability r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.SourceCapability(r.sourceType(), r.createAllowed());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.SourceCapability(r.getSourceType(), r.getCreateAllowed());
     }
     /** 转换 FormatProfile，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.FormatProfile local(RiskVariableModels.FormatProfile r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.FormatProfile(r.formatCode(), r.label(), r.help());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.FormatProfile(r.getFormatCode(), r.getLabel(), r.getHelp());
     }
     /** 转换 Limits，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.Limits local(RiskVariableModels.Limits r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.Limits(r.memberCount(), r.memberBodyBytes(), r.literalSetCount());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.Limits(r.getMemberCount(), r.getMemberBodyBytes(), r.getLiteralSetCount());
     }
     /** 转换 SourceContract，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.SourceContract local(RiskVariableModels.SourceContract r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.SourceContract(r.contractCode(), r.contractVersion(), r.pointCode(), r.sourceType(), r.nodeType(), r.fields() == null ? null : r.fields().stream().map(RiskVariableConverter::local).toList());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.SourceContract(r.getContractCode(), r.getContractVersion(), r.getPointCode(), r.getSourceType(), r.getNodeType(), r.getFields() == null ? null : r.getFields().stream().map(RiskVariableConverter::local).toList());
     }
     /** 转换 SourceField，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.SourceField local(RiskVariableModels.SourceField r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.SourceField(r.fieldKey(), r.valueType(), r.required(), r.dataClassification(), r.allowedUsages(), r.numericUnit(), r.currencyFieldKey(), r.semanticRole());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.SourceField(r.getFieldKey(), r.getValueType(), r.getRequired(), r.getDataClassification(), r.getAllowedUsages(), r.getNumericUnit(), r.getCurrencyFieldKey(), r.getSemanticRole());
     }
     /** 转换 VariableQueryContext，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableQueryContext local(RiskVariableModels.VariableQueryContext r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableQueryContext(r.pointCode(), r.inputContractCode(), r.inputContractVersion(), r.usage());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableQueryContext(r.getPointCode(), r.getInputContractCode(), r.getInputContractVersion(), r.getUsage());
     }
     /** 转换 VariableIssue，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableIssue local(RiskVariableModels.VariableIssue r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableIssue(r.variableCode(), r.code(), r.message());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableIssue(r.getVariableCode(), r.getCode(), r.getMessage());
     }
     /** 转换 CreateVariableRequestBody，保留 null 与准确 Wire 值。 */
-    static com.paytech.operations.console.bff.service.model.RiskVariableModels.CreateVariableRequestBody local(RiskVariableModels.CreateVariableRequestBody r) {
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.CreateVariableRequestBody local(com.paytech.risk.api.decision.request.CreateVariableRequestBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.CreateVariableRequestBody(r.variableCode(), r.variableName(), r.description(), r.sourceType(), r.valueType(), r.pointCode(), r.sourceContractCode(), r.sourceContractVersion(), r.sourceField(), r.usages(), r.formatCode(), r.numericUnit(), r.currencyCode(), r.currencyVariableCode(), r.allowedValuesVariableCode(), r.currentValue(), r.status());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.CreateVariableRequestBody(r.getVariableCode(), r.getVariableName(), r.getDescription(), r.getSourceType(), r.getValueType(), r.getPointCode(), r.getSourceContractCode(), r.getSourceContractVersion(), r.getSourceField(), r.getUsages(), r.getFormatCode(), r.getNumericUnit(), r.getCurrencyCode(), r.getCurrencyVariableCode(), r.getAllowedValuesVariableCode(), r.getCurrentValue(), r.getStatus());
     }
     /** 转换 UpdateVariableRequestBody，保留 null 与准确 Wire 值。 */
-    static com.paytech.operations.console.bff.service.model.RiskVariableModels.UpdateVariableRequestBody local(RiskVariableModels.UpdateVariableRequestBody r) {
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.UpdateVariableRequestBody local(com.paytech.risk.api.decision.request.UpdateVariableRequestBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.UpdateVariableRequestBody(r.expectedVersion(), r.variableName(), r.description(), r.currentValue(), r.status());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.UpdateVariableRequestBody(r.getExpectedVersion(), r.getVariableName(), r.getDescription(), r.getCurrentValue(), r.getStatus());
     }
     /** 转换 ReplaceMembersRequestBody，保留 null 与准确 Wire 值。 */
-    static com.paytech.operations.console.bff.service.model.RiskVariableModels.ReplaceMembersRequestBody local(RiskVariableModels.ReplaceMembersRequestBody r) {
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.ReplaceMembersRequestBody local(com.paytech.risk.api.decision.request.ReplaceMembersRequestBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.ReplaceMembersRequestBody(r.expectedVersion(), r.members() == null ? null : r.members().stream().map(RiskVariableConverter::local).toList());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.ReplaceMembersRequestBody(r.getExpectedVersion(), r.getMembers() == null ? null : r.getMembers().stream().map(RiskVariableConverter::local).toList());
     }
     /** 转换 MemberRequest，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.MemberRequest local(RiskVariableModels.MemberRequest r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.MemberRequest(r.value(), r.displayName());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.MemberRequest(r.getValue(), r.getDisplayName());
     }
     /** 转换 CreateVariableRequestBody，保留 null 与准确 Wire 值。 */
-    static RiskVariableModels.CreateVariableRequestBody owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.CreateVariableRequestBody r) {
+    static com.paytech.risk.api.decision.request.CreateVariableRequestBody owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.CreateVariableRequestBody r) {
         if (r == null) return null;
-        return new RiskVariableModels.CreateVariableRequestBody(r.variableCode(), r.variableName(), r.description(), r.sourceType(), r.valueType(), r.pointCode(), r.sourceContractCode(), r.sourceContractVersion(), r.sourceField(), r.usages(), r.formatCode(), r.numericUnit(), r.currencyCode(), r.currencyVariableCode(), r.allowedValuesVariableCode(), r.currentValue(), r.status());
+        return new com.paytech.risk.api.decision.request.CreateVariableRequestBody(r.variableCode(), r.variableName(), r.description(), r.sourceType(), r.valueType(), r.pointCode(), r.sourceContractCode(), r.sourceContractVersion(), r.sourceField(), r.usages(), r.formatCode(), r.numericUnit(), r.currencyCode(), r.currencyVariableCode(), r.allowedValuesVariableCode(), r.currentValue(), r.status());
     }
     /** 转换 UpdateVariableRequestBody，保留 null 与准确 Wire 值。 */
-    static RiskVariableModels.UpdateVariableRequestBody owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.UpdateVariableRequestBody r) {
+    static com.paytech.risk.api.decision.request.UpdateVariableRequestBody owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.UpdateVariableRequestBody r) {
         if (r == null) return null;
-        return new RiskVariableModels.UpdateVariableRequestBody(r.expectedVersion(), r.variableName(), r.description(), r.currentValue(), r.status());
+        return new com.paytech.risk.api.decision.request.UpdateVariableRequestBody(r.expectedVersion(), r.variableName(), r.description(), r.currentValue(), r.status());
     }
     /** 转换 ReplaceMembersRequestBody，保留 null 与准确 Wire 值。 */
-    static RiskVariableModels.ReplaceMembersRequestBody owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.ReplaceMembersRequestBody r) {
+    static com.paytech.risk.api.decision.request.ReplaceMembersRequestBody owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.ReplaceMembersRequestBody r) {
         if (r == null) return null;
-        return new RiskVariableModels.ReplaceMembersRequestBody(r.expectedVersion(), r.members() == null ? null : r.members().stream().map(RiskVariableConverter::owner).toList());
+        return new com.paytech.risk.api.decision.request.ReplaceMembersRequestBody(r.expectedVersion(), r.members() == null ? null : r.members().stream().map(RiskVariableConverter::owner).toList());
     }
     /** 转换 MemberRequest，保留 null 与准确 Wire 值。 */
     static RiskVariableModels.MemberRequest owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.MemberRequest r) {

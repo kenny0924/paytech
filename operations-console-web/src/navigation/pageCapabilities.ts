@@ -216,6 +216,28 @@ export const pageCapabilities = [
         "displayName": "查看成员权限"
       }
     ]
+  },
+  {
+    "componentKey": "OPERATIONS_EXTERNAL_STANDARD_APIS",
+    "displayName": "标准 API",
+    "frontendRoute": "/external-api/standard-apis",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_EXTERNAL_STANDARD_API_MANAGE",
+        "displayName": "维护配置"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_EXTERNAL_INTEGRATIONS",
+    "displayName": "接入方",
+    "frontendRoute": "/external-api/integrations",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_EXTERNAL_INTEGRATION_MANAGE",
+        "displayName": "维护配置"
+      }
+    ]
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

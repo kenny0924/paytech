@@ -78,3 +78,4 @@ web:
       - /decision-releases
       - /decision-flows
       - /decision-variables
+      - /external-api-admin

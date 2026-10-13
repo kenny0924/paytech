@@ -68,6 +68,42 @@ public class PlatformClientConfiguration {
         return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.permissionmanagement.PermissionManagementApi.class);
     }
 
+    /** 外部 API 配置管理复用 Platform 私网发现与字段错误解码。 */
+    @Bean
+    com.paytech.platform.support.api.externalapi.StandardApiManagementApi standardApiManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
+        return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.externalapi.StandardApiManagementApi.class);
+    }
+
+    /** 外部 API 配置管理复用 Platform 私网发现与字段错误解码。 */
+    @Bean
+    com.paytech.platform.support.api.externalapi.IntegrationManagementApi integrationManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
+        return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.externalapi.IntegrationManagementApi.class);
+    }
+
+    /** 外部 API 配置管理复用 Platform 私网发现与字段错误解码。 */
+    @Bean
+    com.paytech.platform.support.api.externalapi.IntegrationApiManagementApi integrationApiManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
+        return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.externalapi.IntegrationApiManagementApi.class);
+    }
+
+    /** 外部 API 配置管理复用 Platform 私网发现与字段错误解码。 */
+    @Bean
+    com.paytech.platform.support.api.externalapi.IntegrationScriptManagementApi integrationScriptManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
+        return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.externalapi.IntegrationScriptManagementApi.class);
+    }
+
+    /** 外部 API 配置管理复用 Platform 私网发现与字段错误解码。 */
+    @Bean
+    com.paytech.platform.support.api.externalapi.IntegrationImplementationManagementApi integrationImplementationManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
+        return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.externalapi.IntegrationImplementationManagementApi.class);
+    }
+
+    /** 外部 API 配置管理复用 Platform 私网发现与字段错误解码。 */
+    @Bean
+    com.paytech.platform.support.api.externalapi.ExternalApiEditorApi externalApiEditorApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
+        return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.externalapi.ExternalApiEditorApi.class);
+    }
+
     @Bean
     GatewayConfigurationManagementApi gatewayConfigurationManagementApi(
         HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {

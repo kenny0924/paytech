@@ -34,43 +34,43 @@ public final class RiskVariableClientImpl implements RiskVariableClient {
     @Override public VariableDetailResponseBody getVariable(OperatorContext context, String variableCode) {
         var response = api.getVariable(context.accountId(), context.sessionId(), variableCode);
         RiskVariableResponsePolicy.require(response != null);
-        RiskVariableResponsePolicy.equal(variableCode, response.variableCode());
+        RiskVariableResponsePolicy.equal(variableCode, response.getVariableCode());
         return RiskVariableConverter.local(response);
     }
     @Override public VariableDetailResponseBody createVariable(OperatorContext context, CreateVariableRequestBody body) {
         var response = validated(body, () -> api.createVariable(context.accountId(), context.sessionId(), RiskVariableConverter.owner(body)));
         RiskVariableResponsePolicy.require(response != null);
-        RiskVariableResponsePolicy.equal(body.variableCode(), response.variableCode());
-        RiskVariableResponsePolicy.equal("1", response.version());
+        RiskVariableResponsePolicy.equal(body.variableCode(), response.getVariableCode());
+        RiskVariableResponsePolicy.equal("1", response.getVersion());
         return RiskVariableConverter.local(response);
     }
     @Override public VariableDetailResponseBody updateVariable(OperatorContext context, String variableCode, UpdateVariableRequestBody body) {
         var response = validated(body, () -> api.updateVariable(context.accountId(), context.sessionId(), variableCode, RiskVariableConverter.owner(body)));
         RiskVariableResponsePolicy.require(response != null);
-        RiskVariableResponsePolicy.equal(variableCode, response.variableCode());
-        RiskVariableResponsePolicy.nextVersion(body.expectedVersion(), response.version());
+        RiskVariableResponsePolicy.equal(variableCode, response.getVariableCode());
+        RiskVariableResponsePolicy.nextVersion(body.expectedVersion(), response.getVersion());
         return RiskVariableConverter.local(response);
     }
     @Override public DeleteVariableResponseBody deleteVariable(OperatorContext context, String variableCode, String expectedVersion) {
         var response = api.deleteVariable(context.accountId(), context.sessionId(), variableCode, expectedVersion);
         RiskVariableResponsePolicy.require(response != null);
-        RiskVariableResponsePolicy.equal(variableCode, response.variableCode());
-        RiskVariableResponsePolicy.nextVersion(expectedVersion, response.version());
-        RiskVariableResponsePolicy.equal("DELETED", response.status());
+        RiskVariableResponsePolicy.equal(variableCode, response.getVariableCode());
+        RiskVariableResponsePolicy.nextVersion(expectedVersion, response.getVersion());
+        RiskVariableResponsePolicy.equal("DELETED", response.getStatus());
         return RiskVariableConverter.local(response);
     }
     @Override public VariableMembersResponseBody listMembers(OperatorContext context, String variableCode, String keyword, Integer page, Integer size, String expectedVersion) {
         var response = api.listMembers(context.accountId(), context.sessionId(), variableCode, keyword, page, size, expectedVersion);
         RiskVariableResponsePolicy.require(response != null);
-        RiskVariableResponsePolicy.equal(variableCode, response.variableCode());
+        RiskVariableResponsePolicy.equal(variableCode, response.getVariableCode());
         RiskVariableResponsePolicy.members(response, page, size, expectedVersion);
         return RiskVariableConverter.local(response);
     }
     @Override public ReplaceMembersResponseBody replaceMembers(OperatorContext context, String variableCode, ReplaceMembersRequestBody body) {
         var response = validated(body, () -> api.replaceMembers(context.accountId(), context.sessionId(), variableCode, RiskVariableConverter.owner(body)));
         RiskVariableResponsePolicy.require(response != null);
-        RiskVariableResponsePolicy.equal(variableCode, response.variableCode());
-        RiskVariableResponsePolicy.nextVersion(body.expectedVersion(), response.version());
+        RiskVariableResponsePolicy.equal(variableCode, response.getVariableCode());
+        RiskVariableResponsePolicy.nextVersion(body.expectedVersion(), response.getVersion());
         return RiskVariableConverter.local(response);
     }
     @Override public VariableReferencesResponseBody getReferences(OperatorContext context, String variableCode, String scope, String cursor, Integer size) {

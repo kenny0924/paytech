@@ -2,6 +2,8 @@
 
 租户访问与成员权限查询的现行合同见 [需求 API](../requirements/20260914/platform-support-租户访问与成员权限查询/api.md)：8 项能力，复用既有 IAM 模型；当前研发、验证和部署状态见 [根台账](../agent-docs/CURRENT_IMPLEMENTATION.md#platform-tenant-access-20260914)。
 
+外部 API 配置管理的现行合同见[管理接口](../requirements/20260914/platform-support-外部API配置与执行/admin-api.md)：`/external-api-admin/v1` 下 30 个端点按对象拆成 6 组 Controller → `Platform*Client` Port → Impl，逐字段转换 `service/model/externalapi` 本地模型，`definition`、`flowDefinition` 作为 JSON 原样传递；不接收、不转发 `Idempotency-Key`（由 Gateway 处理）。`ExternalApiRequestConfiguration` 严格解析写 Body（未知属性、重复键含定义内部、尾随内容与标量强转均返回 400，上限 65,536 字节（Gateway 绝对上限））；Owner 422 由 `ExternalApiValidationConverter` 只保留以本次 Body 顶层属性开头的字段路径，说明统一为安全文案，具体问题由三个校验接口返回。
+
 > 本轮规则集整体管理的现行合同见[需求技术方案](../requirements/20260911/operations-console-风控规则集列表优化/technique.md)：沿用原接口版本，一集一行、整体删除及实际生效使用保护；Web 隐藏 Candidate 页面，后端历史合同保留。阶段确认与证据见[交付记录](../requirements/20260911/operations-console-风控规则集列表优化/delivery.md)，实现与环境状态只见[当前台账第 16 节](../agent-docs/CURRENT_IMPLEMENTATION.md#16-operations-规则集列表优化2026-09-11)。
 
 

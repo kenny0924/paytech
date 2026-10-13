@@ -65,7 +65,7 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
                     throw new InvalidParameterException("查询请求不接受 Body");
                 return true;
             }
-        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**");
+        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/external-api-admin/v1/**");
     }
 
     /** 写 Body 有界解析，响应序列化继续走原有转换器。 */

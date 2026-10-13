@@ -11,12 +11,12 @@ import java.util.stream.Collectors;
 import org.springframework.core.ResolvableType;
 import tools.jackson.databind.JsonNode;
 
-/** 变量轻量合同的严格 token Reader；record 定义拥有字段集合，代码不注册业务变量。 */
+/** 变量轻量合同的严格 token Reader；Owner 合同类的实例字段拥有字段集合，代码不注册业务变量。 */
 final class RiskVariableResponseShape {
-    private static final Set<Class<?>> ROOTS = Set.of(RiskVariableModels.VariableManagementContextResponseBody.class,
-        RiskVariableModels.VariableListResponseBody.class, RiskVariableModels.VariableDetailResponseBody.class,
-        RiskVariableModels.VariableMembersResponseBody.class, RiskVariableModels.ReplaceMembersResponseBody.class,
-        RiskVariableModels.DeleteVariableResponseBody.class, RiskVariableModels.VariableReferencesResponseBody.class);
+    private static final Set<Class<?>> ROOTS = Set.of(com.paytech.risk.api.decision.response.VariableManagementContextResponseBody.class,
+        com.paytech.risk.api.decision.response.VariableListResponseBody.class, com.paytech.risk.api.decision.response.VariableDetailResponseBody.class,
+        com.paytech.risk.api.decision.response.VariableMembersResponseBody.class, com.paytech.risk.api.decision.response.ReplaceMembersResponseBody.class,
+        com.paytech.risk.api.decision.response.DeleteVariableResponseBody.class, com.paytech.risk.api.decision.response.VariableReferencesResponseBody.class);
     private static final Set<String> NULLABLE = Set.of("pointCode", "numericUnit", "currencyCode", "currencyVariableCode",
         "allowedValuesVariableCode", "currentValue", "memberCount", "description", "sourceContractCode",
         "sourceContractVersion", "sourceField", "allowedValues", "displayName", "versionId", "versionNo",
@@ -35,10 +35,10 @@ final class RiskVariableResponseShape {
     }
 
     static void validate(JsonNode node, Class<?> type) {
-        require(node != null && node.isObject() && type.isRecord());
-        var components = type.getRecordComponents();
-        var keys = Arrays.stream(components).map(c -> c.getName()).collect(Collectors.toSet());
-        if (type == RiskVariableModels.VariableListResponseBody.class) {
+        require(node != null && node.isObject() && ownerContract(type));
+        var components = components(type);
+        var keys = components.stream().map(c -> c.getName()).collect(Collectors.toSet());
+        if (type == com.paytech.risk.api.decision.response.VariableListResponseBody.class) {
             if (node.has("missingCodes")) keys.removeAll(Set.of("page", "size", "total"));
             else keys.remove("missingCodes");
         }
@@ -53,7 +53,7 @@ final class RiskVariableResponseShape {
             }
             scalar(value, c.getGenericType(), c.getName());
         }
-        if (type == RiskVariableModels.VariableSummary.class || type == RiskVariableModels.VariableDetailResponseBody.class) {
+        if (type == RiskVariableModels.VariableSummary.class || type == com.paytech.risk.api.decision.response.VariableDetailResponseBody.class) {
             require(node.get("previewMembers").size() <= 100);
             String source = node.get("sourceType").stringValue();
             if (source.equals("CONSTANT")) {
@@ -102,8 +102,19 @@ final class RiskVariableResponseShape {
         else if (type instanceof ParameterizedType p && p.getRawType() == List.class) {
             require(value.isArray() && value.size() <= 1000);
             for (var child : value) scalar(child, p.getActualTypeArguments()[0], name);
-        } else if (type instanceof Class<?> record && record.isRecord()) validate(value, record);
+        } else if (type instanceof Class<?> contract && ownerContract(contract)) validate(value, contract);
         else throw new IllegalArgumentException("变量响应出现未声明的类型");
+    }
+
+    /** Risk 公开合同类型；字段集合来自其实例字段。 */
+    private static boolean ownerContract(Class<?> type) {
+        return type.getPackageName().startsWith("com.paytech.risk.api.decision") && !type.isEnum();
+    }
+
+    /** 合同类按声明顺序的实例字段，与 JSON 属性一一对应。 */
+    private static List<java.lang.reflect.Field> components(Class<?> type) {
+        return Arrays.stream(type.getDeclaredFields())
+            .filter(field -> !java.lang.reflect.Modifier.isStatic(field.getModifiers())).toList();
     }
 
     private static void require(boolean valid) {

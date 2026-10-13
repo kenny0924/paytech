@@ -16,6 +16,7 @@
 - [Operations 页面方案（已确认）](./page-design.md)
 - [管理接口与注册数据（已确认）](./admin-api.md)
 - [研发计划 · 第 1 步（已确认）](./dev-plan-step1.md)
+- [研发计划 · 第 2 步（已确认）](./dev-plan-step2.md)
 - [交付记录](./delivery.md)
 - 权威决定：[2026-09-21 Platform 归属](../../../agent-docs/decisions/2026-09-21-platform-integration-http-execution.md)、[2026-10-13 标准 API 与流程编排](../../../agent-docs/decisions/2026-10-13-platform-standard-api-flow.md)
 - 实现与验证状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-standard-api-flow-20261013)

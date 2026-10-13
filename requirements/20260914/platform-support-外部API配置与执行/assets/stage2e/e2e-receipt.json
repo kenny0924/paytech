@@ -1,0 +1,330 @@
+{
+  "date": "2026-10-13",
+  "target": "127.0.0.1:13306/mor_platform_external_api（本机独立库，测试库 mor_platform 未改动）",
+  "database": {
+    "schemaTables": 46,
+    "initialData": "platform-support-initial-data.sql",
+    "registrationIncrements": {
+      "t_permission": 2,
+      "t_role_permission": 2,
+      "t_console_resource": 5,
+      "t_gateway_route": 30,
+      "t_gateway_route_header": 111,
+      "t_gateway_route_query_param": 14,
+      "t_gateway_guard_rule": 180
+    },
+    "activation": {
+      "routes": 30,
+      "resources": 5,
+      "grants": 2,
+      "role": 1
+    },
+    "correction": "18 条写/校验路由 body_limit_bytes 262144 超出 Gateway 绝对上限 65536，导致整份快照 500；本机库与 registration-dml.sql 均改为 65536"
+  },
+  "chain": "production Web build → 本机入口代理 → 真实 Gateway → 真实 BFF → 真实 Platform → 本机 MySQL/Redis",
+  "apiChecks": {
+    "count": 30,
+    "status": "PASS",
+    "results": [
+      {
+        "name": "login-admin",
+        "method": "POST",
+        "path": "/auth/v1/login",
+        "status": 200
+      },
+      {
+        "name": "login-reader",
+        "method": "POST",
+        "path": "/auth/v1/login",
+        "status": 200
+      },
+      {
+        "name": "admin-navigation",
+        "method": "GET",
+        "path": "/authorization/v1/navigation",
+        "status": 200
+      },
+      {
+        "name": "reader-navigation",
+        "method": "GET",
+        "path": "/authorization/v1/navigation",
+        "status": 200
+      },
+      {
+        "name": "capabilities",
+        "method": "GET",
+        "path": "/external-api-admin/v1/editor-capabilities",
+        "status": 200
+      },
+      {
+        "name": "reader-create-denied",
+        "method": "POST",
+        "path": "/external-api-admin/v1/standard-apis",
+        "status": 403
+      },
+      {
+        "name": "standard-api-create",
+        "method": "POST",
+        "path": "/external-api-admin/v1/standard-apis",
+        "status": 200
+      },
+      {
+        "name": "standard-api-invalid-422",
+        "method": "POST",
+        "path": "/external-api-admin/v1/standard-apis",
+        "status": 422
+      },
+      {
+        "name": "integration-create",
+        "method": "POST",
+        "path": "/external-api-admin/v1/integrations",
+        "status": 200
+      },
+      {
+        "name": "script-create",
+        "method": "POST",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/scripts",
+        "status": 200
+      },
+      {
+        "name": "api-validate-invalid",
+        "method": "POST",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/apis/validate",
+        "status": 200
+      },
+      {
+        "name": "api-create-422-paths",
+        "method": "POST",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/apis",
+        "status": 422
+      },
+      {
+        "name": "api-create",
+        "method": "POST",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/apis",
+        "status": 200
+      },
+      {
+        "name": "flow-editor-context",
+        "method": "GET",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/flow-editor-context",
+        "status": 200
+      },
+      {
+        "name": "implementation-validate",
+        "method": "POST",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/implementations/validate",
+        "status": 200
+      },
+      {
+        "name": "implementation-create",
+        "method": "POST",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/implementations",
+        "status": 200
+      },
+      {
+        "name": "implementation-duplicate",
+        "method": "POST",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/implementations",
+        "status": 400
+      },
+      {
+        "name": "standard-api-list",
+        "method": "GET",
+        "path": "/external-api-admin/v1/standard-apis",
+        "status": 200
+      },
+      {
+        "name": "integration-list",
+        "method": "GET",
+        "path": "/external-api-admin/v1/integrations",
+        "status": 200
+      },
+      {
+        "name": "api-list",
+        "method": "GET",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/apis",
+        "status": 200
+      },
+      {
+        "name": "script-list",
+        "method": "GET",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/scripts",
+        "status": 200
+      },
+      {
+        "name": "implementation-list",
+        "method": "GET",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/implementations",
+        "status": 200
+      },
+      {
+        "name": "implementation-detail",
+        "method": "GET",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/implementations/E2E_PAY_490733",
+        "status": 200
+      },
+      {
+        "name": "standard-api-breaking-update",
+        "method": "PUT",
+        "path": "/external-api-admin/v1/standard-apis/E2E_PAY_490733",
+        "status": 400
+      },
+      {
+        "name": "standard-api-update",
+        "method": "PUT",
+        "path": "/external-api-admin/v1/standard-apis/E2E_PAY_490733",
+        "status": 200
+      },
+      {
+        "name": "standard-api-stale",
+        "method": "PUT",
+        "path": "/external-api-admin/v1/standard-apis/E2E_PAY_490733",
+        "status": 409
+      },
+      {
+        "name": "standard-api-delete-referenced",
+        "method": "DELETE",
+        "path": "/external-api-admin/v1/standard-apis/E2E_PAY_490733",
+        "status": 400
+      },
+      {
+        "name": "script-delete-referenced",
+        "method": "DELETE",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/scripts/E2E_SIGN_490733",
+        "status": 400
+      },
+      {
+        "name": "reader-update-denied",
+        "method": "PUT",
+        "path": "/external-api-admin/v1/integrations/E2E_DEMO_490733/implementations/E2E_PAY_490733",
+        "status": 403
+      },
+      {
+        "name": "unknown-query",
+        "method": "GET",
+        "path": "/external-api-admin/v1/standard-apis",
+        "status": 400
+      }
+    ]
+  },
+  "browser": {
+    "shots": [
+      {
+        "name": "admin-01-standard-apis",
+        "path": "/external-api/standard-apis?keyword=E2E_PAY_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "admin-02-standard-api-detail",
+        "path": "/external-api/standard-apis/E2E_PAY_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "admin-03-integrations",
+        "path": "/external-api/integrations?keyword=E2E_DEMO_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "admin-04-workspace-basic",
+        "path": "/external-api/integrations/E2E_DEMO_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "admin-05-workspace-apis",
+        "path": "/external-api/integrations/E2E_DEMO_490733?tab=apis",
+        "expectedTextFound": true
+      },
+      {
+        "name": "admin-06-workspace-scripts",
+        "path": "/external-api/integrations/E2E_DEMO_490733?tab=scripts",
+        "expectedTextFound": true
+      },
+      {
+        "name": "admin-07-workspace-implementations",
+        "path": "/external-api/integrations/E2E_DEMO_490733?tab=implementations",
+        "expectedTextFound": true
+      },
+      {
+        "name": "admin-08-api-editor",
+        "path": "/external-api/integrations/E2E_DEMO_490733/apis/CREATE_ORDER?mode=edit",
+        "expectedTextFound": true
+      },
+      {
+        "name": "admin-09-script-editor",
+        "path": "/external-api/integrations/E2E_DEMO_490733/scripts/E2E_SIGN_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "admin-10-flow-editor",
+        "path": "/external-api/integrations/E2E_DEMO_490733/implementations/E2E_PAY_490733?mode=edit",
+        "expectedTextFound": true
+      },
+      {
+        "name": "admin-11-flow-node-panel"
+      },
+      {
+        "name": "admin-12-flow-validation"
+      },
+      {
+        "name": "admin-edit-buttons-on-flow",
+        "count": 0
+      },
+      {
+        "name": "reader-01-standard-apis",
+        "path": "/external-api/standard-apis?keyword=E2E_PAY_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "reader-02-standard-api-detail",
+        "path": "/external-api/standard-apis/E2E_PAY_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "reader-03-integrations",
+        "path": "/external-api/integrations?keyword=E2E_DEMO_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "reader-04-workspace-basic",
+        "path": "/external-api/integrations/E2E_DEMO_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "reader-05-workspace-apis",
+        "path": "/external-api/integrations/E2E_DEMO_490733?tab=apis",
+        "expectedTextFound": true
+      },
+      {
+        "name": "reader-06-workspace-scripts",
+        "path": "/external-api/integrations/E2E_DEMO_490733?tab=scripts",
+        "expectedTextFound": true
+      },
+      {
+        "name": "reader-07-workspace-implementations",
+        "path": "/external-api/integrations/E2E_DEMO_490733?tab=implementations",
+        "expectedTextFound": true
+      },
+      {
+        "name": "reader-08-api-editor",
+        "path": "/external-api/integrations/E2E_DEMO_490733/apis/CREATE_ORDER",
+        "expectedTextFound": true
+      },
+      {
+        "name": "reader-09-script-editor",
+        "path": "/external-api/integrations/E2E_DEMO_490733/scripts/E2E_SIGN_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "reader-10-flow-editor",
+        "path": "/external-api/integrations/E2E_DEMO_490733/implementations/E2E_PAY_490733",
+        "expectedTextFound": true
+      },
+      {
+        "name": "reader-edit-buttons-on-flow",
+        "count": 0
+      }
+    ],
+    "consoleErrors": []
+  }
+}
