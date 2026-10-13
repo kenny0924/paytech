@@ -13,7 +13,9 @@ import com.paytech.risk.RiskApplication;
 import com.paytech.risk.test.checker.evaluation.SettlementRiskAssessmentChecker;
 import com.paytech.risk.test.clear.RiskRedisCleaner;
 import com.paytech.risk.test.infrastructure.RiskDatabasePrecondition;
+import com.paytech.risk.test.mapper.compliance.MaterialProgramTestMapper;
 import com.paytech.risk.test.mapper.evaluation.SettlementRiskAssessmentTestMapper;
+import com.paytech.risk.test.mocker.compliance.MaterialProgramMocker;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -26,7 +28,8 @@ import tools.jackson.databind.ObjectMapper;
 @AutoConfigureRestTestClient
 @ContextConfiguration(initializers = RiskDatabasePrecondition.class)
 @SpringBootTest(classes = RiskApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({RiskRedisCleaner.class, SettlementRiskAssessmentTestMapper.class, SettlementRiskAssessmentChecker.class})
+@Import({RiskRedisCleaner.class, SettlementRiskAssessmentTestMapper.class, SettlementRiskAssessmentChecker.class,
+    MaterialProgramTestMapper.class, MaterialProgramMocker.class})
 public abstract class MockTestBase extends TestBase {
     @Autowired
     protected HttpTestInvoker http;

@@ -177,7 +177,7 @@ onboarding:
     # I01/I02 审核入口与 /client-onboarding-admin 管理入口开关，默认关闭；相关测试类显式开启。
     enabled: false
   materials:
-    # 材料目录入口开关，默认关闭；相关测试类显式开启。
-    enabled: false
-    # 资格类型到通用材料程序的映射 JSON；每类最多一行，测试可在用例内覆盖。
+    # 材料目录入口开关；生产缺省关闭，mock 环境开启以便所有新规范测试共享同一应用上下文。
+    enabled: true
+    # 资格类型到通用材料程序的映射 JSON；每类最多一行。用例经 MaterialProgramMocker 覆盖，每例结束恢复此值。
     programs-json: '[{"qualificationType":"INDIVIDUAL_KYC","programCode":"CLIENT_INDIVIDUAL_GENERIC"},{"qualificationType":"ORGANIZATION_KYB","programCode":"CLIENT_ORGANIZATION_GENERIC"},{"qualificationType":"RELATED_PERSON_KYC","programCode":"RELATED_PERSON_GENERIC"}]'
