@@ -13,7 +13,8 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.lang.reflect.RecordComponent;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -79,36 +80,41 @@ class RiskDecisionPersistenceContractAutoTest {
     );
 
     @Test
-    void test_dataObjectsAreExactImmutableDocumentedRecords() throws Exception {
+    void test_dataObjectsAreExactDocumentedClasses() throws Exception {
         assertEquals(20, DATAOBJECTS.size());
         for (Map.Entry<String, LinkedHashMap<String, String>> expected : DATAOBJECTS.entrySet()) {
             Class<?> type = Class.forName(DATAOBJECT_PACKAGE + expected.getKey());
-            assertTrue(type.isRecord(), expected.getKey() + " 必须是 record");
-            RecordComponent[] actualComponents = type.getRecordComponents();
-            assertEquals(List.copyOf(expected.getValue().keySet()), Arrays.stream(actualComponents)
-                .map(RecordComponent::getName).toList(),
+            assertFalse(type.isRecord(), expected.getKey() + " 必须是普通 class");
+            List<Field> actualFields = instanceFields(type);
+            assertEquals(List.copyOf(expected.getValue().keySet()), actualFields.stream().map(Field::getName).toList(),
                 expected.getKey() + " 字段顺序不匹配");
-            assertEquals(List.copyOf(expected.getValue().values()), Arrays.stream(actualComponents)
-                .map(component -> component.getType().getName()).toList(),
+            assertEquals(List.copyOf(expected.getValue().values()),
+                actualFields.stream().map(field -> field.getType().getName()).toList(),
                 expected.getKey() + " 字段类型不匹配");
 
             String source = Files.readString(sourceRoot().resolve(expected.getKey() + ".java"));
-            for (String component : expected.getValue().keySet()) {
-                assertTrue(Pattern.compile("(?s)/\\*\\*.*?\\*/\\s+(?:[\\w.<>]+)\\s+"
-                        + Pattern.quote(component) + "\\s*(?:,|\\))").matcher(source).find(),
-                    expected.getKey() + "." + component + " 缺少组件 JavaDoc");
-                if (!isReferenceType(expected.getValue().get(component))) {
+            for (String field : expected.getValue().keySet()) {
+                assertTrue(Pattern.compile("(?s)/\\*\\*.*?\\*/\\s+(?:@[\\w.]+\\s+)*private\\s+(?:final\\s+)?[\\w.<>]+\\s+"
+                        + Pattern.quote(field) + "\\s*;").matcher(source).find(),
+                    expected.getKey() + "." + field + " 缺少字段 JavaDoc");
+                if (!isReferenceType(expected.getValue().get(field))) {
                     continue;
                 }
-                String nullGuard = "Objects.requireNonNull(" + component + ", \"" + component + "\")";
-                if (NULLABLE_FIELDS.getOrDefault(expected.getKey(), Set.of()).contains(component)) {
-                    assertFalse(source.contains(nullGuard), expected.getKey() + "." + component + " 必须保留 null");
+                boolean guarded = source.contains("Objects.requireNonNull(" + field + ", \"" + field + "\")")
+                    || Pattern.compile("@NonNull\\s+private\\s+(?:final\\s+)?[\\w.<>]+\\s+" + Pattern.quote(field) + "\\s*;")
+                        .matcher(source).find();
+                if (NULLABLE_FIELDS.getOrDefault(expected.getKey(), Set.of()).contains(field)) {
+                    assertFalse(guarded, expected.getKey() + "." + field + " 必须保留 null");
                 } else {
-                    assertTrue(source.contains(nullGuard), expected.getKey() + "." + component
-                        + " 必须在 record constructor 拒绝 null");
+                    assertTrue(guarded, expected.getKey() + "." + field + " 必须在构造时拒绝 null");
                 }
             }
         }
+    }
+
+    /** DataObject 的实例字段，按声明顺序。 */
+    private static List<Field> instanceFields(Class<?> type) {
+        return Arrays.stream(type.getDeclaredFields()).filter(field -> !Modifier.isStatic(field.getModifiers())).toList();
     }
 
     @Test
@@ -333,8 +339,8 @@ class RiskDecisionPersistenceContractAutoTest {
         Set<Class<?>> registered = new LinkedHashSet<>();
         for (Map.Entry<String, LinkedHashMap<String, String>> value : DATAOBJECTS.entrySet()) {
             Class<?> dataObject = Class.forName(DATAOBJECT_PACKAGE + value.getKey());
-            for (RecordComponent component : dataObject.getRecordComponents()) {
-                Class<?> type = component.getType();
+            for (Field field : instanceFields(dataObject)) {
+                Class<?> type = field.getType();
                 if (type.isEnum() && registered.add(type)) {
                     registry.register((Class)type, CodeEnumTypeHandler.class);
                 }

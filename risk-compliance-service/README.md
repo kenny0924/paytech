@@ -13,14 +13,14 @@ Maven 根项目为 `risk-service`。为保留现有 PDManer 生成路径、独�
 
 | 模块 | 职责 |
 |---|---|
-| risk-api | Risk 私有管理合同；本切片已发布两个 Decision Management `@HttpExchange` 合同 |
-| risk-decision | 规则、Candidate、静态校验与 Action 目录的领域/持久化实现 |
-| risk-control | 名单、冷却、限额与出款资格控制 |
-| risk-compliance | 尽职调查、资格与争议业务 |
-| risk-web | 唯一 Spring Boot 入口，承载本切片 Controller、Processor、显式短事务与服务级幂等 |
+| risk-api | Risk 私网 `@HttpExchange` 合同：规则集、Candidate、流程、字典、配置查询、统一变量、出款资格与材料目录 |
+| risk-decision | 规则、Candidate、流程、字典、统一变量、静态校验与 Action 目录的 Processor、领域与持久化实现 |
+| risk-control | 名单、冷却、限额与出款资格控制；当前只有 RCO-I09 出款资格 Processor（Fail-Closed） |
+| risk-compliance | 尽职调查、资格与争议业务；当前提供通用材料目录读取 |
+| risk-web | 唯一 Spring Boot 入口，只承载 Controller、协议转换、异常转换与应用装配配置 |
 | risk-test | DB-free 合同/纯测试、真实 Loopback HTTP/MySQL、并发恢复与模块边界验证 |
 
-三个业务 JAR 不相互依赖，由 Web 组合；未来跨模块本地事务使用 TransactionTemplate。API 和业务模块已建立 `src/main/java` 根包与 `src/main/resources`，通过 `package-info.java` 说明模块职责，不创建空 Service、DTO、Mapper 或未来配置。API/业务模块保持普通 JAR；Web 同时生成普通 JAR 和可执行 `-exec.jar`；Test 不发布。
+三个业务 JAR 不相互依赖；写接口与复杂查询的 Processor 位于各自 Owner 模块的 `service/processor`，继承 Foundation `AbstractProcessor` / `AbstractLockProcessor`，本地事务使用 `TransactionTemplate`。API 和业务模块已建立 `src/main/java` 根包与 `src/main/resources`，通过 `package-info.java` 说明模块职责，不创建空 Service、DTO、Mapper 或未来配置。API/业务模块保持普通 JAR；Web 同时生成普通 JAR 和可执行 `-exec.jar`；Test 不发布。
 
 测试集中在 `risk-test/src/test/java`，测试资源位于 `risk-test/src/test/resources`；不为每个业务 JAR 重复建立测试工程。DB-free 测试不会连接业务库；真实 HTTP/Repository/MySQL 测试只可复用手工准备的仓库 `local-environment`，不得建表、迁移或 Seed。
 
@@ -52,14 +52,15 @@ Nacos 配置中心依赖；`auto` 测试显式关闭通用 Discovery、Nacos Dis
 - `/decision-rule-sets/v1`：Authoring Context、Rule Set 列表/详情、Create Version、Freeze；
 - `/decision-releases/v1`：TEST Candidate 列表/详情、Create、Validate。
 
-每个调用都要求 `X-Gateway-Actor-Subject` 与 `X-Gateway-Session-Id`；四个 `POST` 另要求
-`Idempotency-Key`。当前切片只严格解析这些值并把它们作为 correlation 输入：**它不认证 Actor、验证
+每个调用都要求 `X-Gateway-Actor-Subject` 与 `X-Gateway-Session-Id`。HTTP `Idempotency-Key` 按
+[2026-09-17 决定](../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)归 Gateway，Risk 不再解析或重放；
+业务防重依靠唯一编码、根版本 CAS 与数据库约束。当前切片只严格解析操作者与会话并把它们作为 correlation 输入：**它不认证 Actor、验证
 Session 或执行 PLT-I02 授权**。格式不合规、未知代码、损坏闭包或不允许状态均 fail-closed；该边界不能被
 称为 Gateway、BFF、平台权限或真实人员身份。
 
 管理路由及 Foundation 日志仍是 metadata-only：不得记录规则 Body、AST、Literal、原始 Idempotency Key、
-Session、Vault/Consumer/网络原值、Secret、Credential 或完整 Payload。Validate 审计 trigger 仅使用由服务级
-幂等身份导出的 opaque 值，不能保存裸 Key。
+Session、Vault/Consumer/网络原值、Secret、Credential 或完整 Payload。Validate 审计 trigger 由 Candidate
+身份派生，不保存任何请求 Key。服务级命令幂等表 `t_command_idempotency` 已无代码使用，删除需另行评审 DDL。
 
 ### 本地数据库状态与测试边界
 
@@ -92,4 +93,4 @@ Session、Vault/Consumer/网络原值、Secret、Credential 或完整 Payload。
 限额、尽调、争议、远程调用、消息、调度、补偿或部署。完整设计见
 [`../docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md`](../docs/superpowers/specs/2026-09-05-risk-operations-rule-configuration-backend-design.md)。
 
-本轮管理写入使用 Foundation `@ResourceLock`，本机 auto 验证除 MySQL 13306 外还需 local-environment 的 Redis 16379。通过 `RISK_TEST_REDIS_PASSWORD` 或 `MOR_REDIS_PASSWORD` 注入本机 Redis 凭据，测试键使用 `risk-auto` Namespace；不启动容器或自动迁移数据库。已有库必须先人工审核本需求 Risk DDL/DML，不能重跑全量初始化 SQL。
+管理写入使用 Foundation `AbstractLockProcessor` 的显式 Redis 资源锁（`decision:*` Key，等待 500ms、租约 30s），本机 auto 验证除 MySQL 13306 外还需 local-environment 的 Redis 16379。通过 `RISK_TEST_REDIS_PASSWORD` 或 `MOR_REDIS_PASSWORD` 注入本机 Redis 凭据，测试键使用 `risk-auto` Namespace；不启动容器或自动迁移数据库。已有库必须先人工审核本需求 Risk DDL/DML，不能重跑全量初始化 SQL。

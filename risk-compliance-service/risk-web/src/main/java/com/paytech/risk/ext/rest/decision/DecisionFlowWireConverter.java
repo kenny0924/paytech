@@ -67,7 +67,7 @@ final class DecisionFlowWireConverter {
         return switch (value) {
             case GroupExpression g -> new DecisionFlow.Group(g.getOperator(), g.getChildren().stream().map(DecisionFlowWireConverter::expression).toList());
             case PredicateExpression p -> p.getOperands() != null ? new DecisionFlow.Predicate(null, null, p.getOperator(), null,
-                p.getOperands().stream().map(o -> RiskDecisionWireConverter.toDomain(o).variableOperand()).toList())
+                p.getOperands().stream().map(o -> DecisionRuleSetWireConverter.toDomain(o).variableOperand()).toList())
                 : new DecisionFlow.Predicate(p.getSource().getType(), p.getSource().getFieldCode(), p.getOperator(), p.getValues().stream().map(v -> {
                 if (v instanceof String text) return (LiteralValue) new StringLiteral(text);
                 if (v instanceof Boolean bool) return (LiteralValue) new BooleanLiteral(bool);
@@ -95,7 +95,7 @@ final class DecisionFlowWireConverter {
         return switch (value) {
             case DecisionFlow.Group g -> new GroupExpression(g.operator(), g.children().stream().map(DecisionFlowWireConverter::expression).toList());
             case DecisionFlow.Predicate p -> p.operands() != null ? new PredicateExpression(null, p.operator(), null,
-                p.operands().stream().map(RiskDecisionWireConverter::toResponse).toList())
+                p.operands().stream().map(DecisionRuleSetWireConverter::toResponse).toList())
                 : new PredicateExpression(new Source(p.sourceType(), p.fieldCode()), p.operator(), p.values().stream().map(v -> switch (v) {
                 case BooleanLiteral b -> (Object) b.value();
                 case StringLiteral s -> (Object) s.value();
@@ -160,7 +160,7 @@ final class DecisionFlowWireConverter {
 
     static RuleSetReferenceResponseBody storedReference(FlowRuleSetReferenceView r) {
         return new RuleSetReferenceResponseBody(r.getSourceType(), id(r.getSourceVersionId()), r.getNodeKey(), r.getRuleSetStatus(),
-            RiskDecisionWireConverter.toResponse(r.getRuleSet(), r.getCatalog()));
+            DecisionRuleSetWireConverter.toResponse(r.getRuleSet(), r.getCatalog()));
     }
 
     static LegacyPointResponseBody legacy(LegacyPointFlowView p) {

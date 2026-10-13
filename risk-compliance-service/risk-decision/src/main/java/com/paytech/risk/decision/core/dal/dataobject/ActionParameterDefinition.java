@@ -3,31 +3,43 @@ package com.paytech.risk.decision.core.dal.dataobject;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.OperandSource;
 import java.time.Instant;
-import java.util.Objects;
 
-/** Action Version 允许的参数定义。 */
-public record ActionParameterDefinition(
+import lombok.NonNull;
+import lombok.Value;
+import lombok.experimental.Accessors;
+
+/**
+ * Action Version 允许的参数定义。
+ * <li>只读数据库投影；访问方法沿用字段名（fluent），构造参数顺序与 Mapper 构造映射一致。</li>
+ */
+@Value
+@Accessors(fluent = true)
+public class ActionParameterDefinition {
     /** Action 参数定义的稳定业务标识。 */
-    long parameterDefinitionId,
+    private final long parameterDefinitionId;
+
     /** 所属 Action 版本的稳定业务标识。 */
-    long actionVersionId,
+    private final long actionVersionId;
+
     /** Risk 受控目录中的参数编码。 */
-    String parameterCode,
+    @NonNull
+    private final String parameterCode;
+
     /** 参数的闭合值类型。 */
-    DecisionValueType valueType,
+    @NonNull
+    private final DecisionValueType valueType;
+
     /** 参数是否必需。 */
-    boolean requiredFlag,
+    private final boolean requiredFlag;
+
     /** 参数唯一允许的来源类型。 */
-    OperandSource allowedSourceType,
+    @NonNull
+    private final OperandSource allowedSourceType;
+
     /** 参数是否定义 Action 目标。 */
-    boolean targetParameterFlag,
+    private final boolean targetParameterFlag;
+
     /** 记录的 UTC 微秒创建时间。 */
-    Instant createTime
-) {
-    public ActionParameterDefinition {
-        Objects.requireNonNull(parameterCode, "parameterCode");
-        Objects.requireNonNull(valueType, "valueType");
-        Objects.requireNonNull(allowedSourceType, "allowedSourceType");
-        Objects.requireNonNull(createTime, "createTime");
-    }
+    @NonNull
+    private final Instant createTime;
 }

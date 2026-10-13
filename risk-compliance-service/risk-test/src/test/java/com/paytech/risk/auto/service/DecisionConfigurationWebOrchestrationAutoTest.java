@@ -148,17 +148,6 @@ class DecisionConfigurationWebOrchestrationAutoTest {
                     .GET().build());
                 assertInvalidRequest(invalidActor, "risk-web-invalid-actor");
 
-                HttpResponse<String> invalidKey = send(HttpRequest.newBuilder(uri(port,
-                        "/decision-rule-sets/v1/rule-sets/1/freeze"))
-                    .header(RequestIdFilter.HEADER_NAME, "risk-web-invalid-key")
-                    .header("X-Gateway-Actor-Subject", "1")
-                    .header("X-Gateway-Session-Id", "session-1")
-                    .header("Idempotency-Key", "short")
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString("{\"expectedContentHash\":\"" + "a".repeat(64) + "\"}"))
-                    .build());
-                assertInvalidRequest(invalidKey, "risk-web-invalid-key");
-
                 HttpResponse<String> strictJson = send(HttpRequest.newBuilder(uri(port,
                         "/decision-releases/v1/candidates"))
                     .header(RequestIdFilter.HEADER_NAME, "risk-web-strict-json")
@@ -189,7 +178,7 @@ class DecisionConfigurationWebOrchestrationAutoTest {
                     .filter(event -> event.getLoggerName().equals(HttpRequestResponseLoggingFilter.class.getName()))
                     .filter(event -> event.getFormattedMessage().equals("HTTP request completed"))
                     .toList();
-                assertEquals(4, requestLogs.size());
+                assertEquals(3, requestLogs.size());
                 assertEquals(Set.of("/decision-rule-sets/**", "/decision-releases/**"), requestLogs.stream()
                     .map(event -> String.valueOf(keyValue(event, "uri"))).collect(Collectors.toSet()));
                 String renderedLogs = capturedLogs.list.stream()

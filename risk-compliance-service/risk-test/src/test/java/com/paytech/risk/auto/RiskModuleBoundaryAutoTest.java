@@ -6,8 +6,8 @@ import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
 import com.paytech.risk.configuration.PersistenceConfiguration;
 import com.paytech.risk.configuration.RiskRuntimeConfiguration;
 import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
-import com.paytech.risk.domain.enums.CommandIdempotencyStatus;
-import com.paytech.risk.domain.enums.CommandOperationType;
+import com.paytech.risk.decision.domain.enums.DecisionValueType;
+import com.paytech.risk.decision.domain.enums.DictionaryStatus;
 import com.paytech.risk.test.infrastructure.RiskDatabasePrecondition;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -144,7 +144,7 @@ class RiskModuleBoundaryAutoTest {
         MapperScan mapperScan = PersistenceConfiguration.class.getAnnotation(MapperScan.class);
         Assertions.assertNotNull(mapperScan);
         Assertions.assertEquals(Set.of("com.paytech.risk.decision.core.dal.mapper",
-            "com.paytech.risk.core.dal.mapper", "com.paytech.risk.compliance.core.dal.mapper"), Set.of(mapperScan.basePackages()));
+            "com.paytech.risk.compliance.core.dal.mapper"), Set.of(mapperScan.basePackages()));
         Assertions.assertEquals("sqlSessionTemplate", mapperScan.sqlSessionTemplateRef());
 
         PersistenceConfiguration persistence = new PersistenceConfiguration();
@@ -158,13 +158,13 @@ class RiskModuleBoundaryAutoTest {
         Assertions.assertFalse(mybatis.isUseGeneratedKeys());
         Assertions.assertInstanceOf(InstantTypeHandler.class,
             mybatis.getTypeHandlerRegistry().getTypeHandler(Instant.class));
-        Object operationTypeHandler = mybatis.getTypeHandlerRegistry()
-            .getTypeHandler(CommandOperationType.class);
-        Object idempotencyStatusHandler = mybatis.getTypeHandlerRegistry()
-            .getTypeHandler(CommandIdempotencyStatus.class);
-        Assertions.assertInstanceOf(CodeEnumTypeHandler.class, operationTypeHandler);
-        Assertions.assertInstanceOf(CodeEnumTypeHandler.class, idempotencyStatusHandler);
-        Assertions.assertNotSame(operationTypeHandler, idempotencyStatusHandler,
+        Object valueTypeHandler = mybatis.getTypeHandlerRegistry()
+            .getTypeHandler(DecisionValueType.class);
+        Object dictionaryStatusHandler = mybatis.getTypeHandlerRegistry()
+            .getTypeHandler(DictionaryStatus.class);
+        Assertions.assertInstanceOf(CodeEnumTypeHandler.class, valueTypeHandler);
+        Assertions.assertInstanceOf(CodeEnumTypeHandler.class, dictionaryStatusHandler);
+        Assertions.assertNotSame(valueTypeHandler, dictionaryStatusHandler,
             "每个闭合枚举必须绑定自己的 CodeEnumTypeHandler 实例");
 
         Method enumRegistration = PersistenceConfiguration.class.getDeclaredMethod("registerCodeEnumHandler",

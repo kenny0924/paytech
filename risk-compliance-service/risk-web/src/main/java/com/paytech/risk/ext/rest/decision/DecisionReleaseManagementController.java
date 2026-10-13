@@ -43,8 +43,8 @@ public class DecisionReleaseManagementController implements DecisionReleaseManag
         PagingRequestBody paging = PagingRequestBody.of(page, size);
         var request = new ListTestReleasesRequest(paging.page(), paging.size(),
             context.parseOptionalUpperCode("pointCode", pointCode),
-            RiskDecisionWireConverter.parseReleaseStatus(context.parseOptionalUpperCode("status", status)));
-        return RiskDecisionWireConverter.toResponse(mapped(() -> listProcessor.process(request)));
+            DecisionReleaseWireConverter.parseReleaseStatus(context.parseOptionalUpperCode("status", status)));
+        return DecisionReleaseWireConverter.toResponse(mapped(() -> listProcessor.process(request)));
     }
 
     /** 查询准确发布及其完整冻结组成。 */
@@ -52,7 +52,7 @@ public class DecisionReleaseManagementController implements DecisionReleaseManag
     public TestReleaseDetailResponseBody getCandidate(String actorAccountId, String sessionId, String releaseId) {
         context.parse(actorAccountId, sessionId);
         var request = new GetTestReleaseRequest(context.parsePositiveId("releaseId", releaseId));
-        return RiskDecisionWireConverter.toResponse(mapped(() -> detailProcessor.process(request)));
+        return DecisionReleaseWireConverter.toResponse(mapped(() -> detailProcessor.process(request)));
     }
 
     /** 每次有效调用创建一个新 Candidate；HTTP 请求幂等由 Gateway 处理。 */
@@ -63,7 +63,7 @@ public class DecisionReleaseManagementController implements DecisionReleaseManag
         var request = new CreateTestReleaseRequest(actor.actorAccountId(),
             context.parsePositiveId("ruleSetVersionId", requestBody.getRuleSetVersionId()),
             requestBody.getExpectedRuleSetContentHash());
-        return RiskDecisionWireConverter.toResponse(mapped(() -> createProcessor.process(request)));
+        return DecisionReleaseWireConverter.toResponse(mapped(() -> createProcessor.process(request)));
     }
 
     /** 根据发布身份与原校验输入开始、恢复或返回已经完成的结果。 */
@@ -73,6 +73,6 @@ public class DecisionReleaseManagementController implements DecisionReleaseManag
         var actor = context.parse(actorAccountId, sessionId);
         var request = new ValidateTestReleaseRequest(actor.actorAccountId(),
             context.parsePositiveId("releaseId", releaseId), requestBody.getExpectedVersion());
-        return RiskDecisionWireConverter.toResponse(mapped(() -> validateProcessor.process(request)));
+        return DecisionReleaseWireConverter.toResponse(mapped(() -> validateProcessor.process(request)));
     }
 }

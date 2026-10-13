@@ -47,7 +47,7 @@ public class DecisionRuleSetManagementController implements DecisionRuleSetManag
     @Override
     public RuleAuthoringContextResponseBody getAuthoringContext(String actorAccountId, String sessionId, String pointCode) {
         contextParser.parse(actorAccountId, sessionId);
-        return mapped(() -> RiskDecisionWireConverter.toResponse(authoringProcessor.process(new RuleAuthoringContextRequest(
+        return mapped(() -> DecisionRuleSetWireConverter.toResponse(authoringProcessor.process(new RuleAuthoringContextRequest(
             contextParser.parseRequiredUpperCode("pointCode", pointCode)))));
     }
 
@@ -57,10 +57,10 @@ public class DecisionRuleSetManagementController implements DecisionRuleSetManag
         Integer page, Integer size, String pointCode, String ruleSetCode, String status) {
         contextParser.parse(actorAccountId, sessionId);
         var paging = PagingRequestBody.of(page, size);
-        return mapped(() -> RiskDecisionWireConverter.toResponse(listProcessor.process(new RuleSetListRequest(paging.page(),
+        return mapped(() -> DecisionRuleSetWireConverter.toResponse(listProcessor.process(new RuleSetListRequest(paging.page(),
             paging.size(), contextParser.parseOptionalUpperCode("pointCode", pointCode),
             contextParser.parseOptionalUpperCode("ruleSetCode", ruleSetCode),
-            RiskDecisionWireConverter.parseRuleSetStatus(contextParser.parseOptionalUpperCode("status", status))))));
+            DecisionRuleSetWireConverter.parseRuleSetStatus(contextParser.parseOptionalUpperCode("status", status))))));
     }
 
     /** 不可变规则详情与当前变量同快照读取。 */
@@ -69,7 +69,7 @@ public class DecisionRuleSetManagementController implements DecisionRuleSetManag
         contextParser.parse(actorAccountId, sessionId);
         return mapped(() -> {
             var result = detailProcessor.process(new RuleSetDetailRequest(contextParser.parsePositiveId("ruleSetVersionId", ruleSetVersionId)));
-            return RiskDecisionWireConverter.toResponse(result.aggregate(), result.catalog());
+            return DecisionRuleSetWireConverter.toResponse(result.aggregate(), result.catalog());
         });
     }
 
@@ -78,8 +78,8 @@ public class DecisionRuleSetManagementController implements DecisionRuleSetManag
     public CreateRuleSetVersionResponseBody createRuleSetVersion(String actorAccountId, String sessionId,
         CreateRuleSetVersionRequestBody requestBody) {
         var actor = contextParser.parse(actorAccountId, sessionId);
-        return mapped(() -> RiskDecisionWireConverter.toResponse(createProcessor.process(new CreateRuleSetVersionRequest(
-            actor.actorAccountId(), RiskDecisionWireConverter.toDomain(requestBody)))));
+        return mapped(() -> DecisionRuleSetWireConverter.toResponse(createProcessor.process(new CreateRuleSetVersionRequest(
+            actor.actorAccountId(), DecisionRuleSetWireConverter.toDomain(requestBody)))));
     }
 
     /** 按准确规则版本和内容 Hash 请求冻结。 */
@@ -87,7 +87,7 @@ public class DecisionRuleSetManagementController implements DecisionRuleSetManag
     public FreezeRuleSetVersionResponseBody freezeRuleSetVersion(String actorAccountId, String sessionId,
         String ruleSetVersionId, FreezeRuleSetVersionRequestBody requestBody) {
         var actor = contextParser.parse(actorAccountId, sessionId);
-        return mapped(() -> RiskDecisionWireConverter.toResponse(freezeProcessor.process(new FreezeRuleSetVersionRequest(
+        return mapped(() -> DecisionRuleSetWireConverter.toResponse(freezeProcessor.process(new FreezeRuleSetVersionRequest(
             actor.actorAccountId(), contextParser.parsePositiveId("ruleSetVersionId", ruleSetVersionId), requestBody.getExpectedContentHash()))));
     }
 
@@ -96,7 +96,7 @@ public class DecisionRuleSetManagementController implements DecisionRuleSetManag
     public DeleteRuleSetResponseBody deleteRuleSet(String actorAccountId, String sessionId, String ruleSetId,
         DeleteRuleSetRequestBody requestBody) {
         var actor = contextParser.parse(actorAccountId, sessionId);
-        return mapped(() -> RiskDecisionWireConverter.toResponse(deleteProcessor.process(new DeleteRuleSetRequest(
+        return mapped(() -> DecisionRuleSetWireConverter.toResponse(deleteProcessor.process(new DeleteRuleSetRequest(
             actor.actorAccountId(), contextParser.parsePositiveId("ruleSetId", ruleSetId),
             contextParser.parsePositiveId("expectedVersion", requestBody.getExpectedVersion())))));
     }

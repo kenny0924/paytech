@@ -15,14 +15,6 @@ public interface RiskOperationRequestContextParser {
     RiskOperationRequestContext parse(String actorAccountId, String sessionId);
 
     /**
-     * 校验并原样返回幂等键。
-     *
-     * @param idempotencyKey 调用方幂等键
-     * @return 未经改写的合法幂等键
-     */
-    String parseIdempotencyKey(String idempotencyKey);
-
-    /**
      * 解析 canonical 正整数标识。
      *
      * @param parameterName 安全的参数名称，仅用于诊断

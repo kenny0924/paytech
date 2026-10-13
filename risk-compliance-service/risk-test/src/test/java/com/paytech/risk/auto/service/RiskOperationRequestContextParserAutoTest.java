@@ -46,17 +46,6 @@ class RiskOperationRequestContextParserAutoTest {
     }
 
     @Test
-    void test_idempotencyKeyIsOpaqueAsciiAndLengthBounded() {
-        assertEquals("Aa0._:-z", parser.parseIdempotencyKey("Aa0._:-z"));
-        assertEquals("a".repeat(128), parser.parseIdempotencyKey("a".repeat(128)));
-
-        for (String value : List.of("a".repeat(7), "a".repeat(129), "with space", "with/slash", "幂等键")) {
-            assertThrows(InvalidParameterException.class, () -> parser.parseIdempotencyKey(value), value);
-        }
-        assertThrows(InvalidParameterException.class, () -> parser.parseIdempotencyKey(null));
-    }
-
-    @Test
     void test_upperCodeParsingIsExactAndOptionalNullStaysNull() {
         assertEquals("CHECKOUT_PREPARE", parser.parseRequiredUpperCode("pointCode", "CHECKOUT_PREPARE"));
         assertEquals("A" + "1".repeat(63),

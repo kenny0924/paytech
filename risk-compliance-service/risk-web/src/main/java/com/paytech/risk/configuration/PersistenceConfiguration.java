@@ -30,8 +30,6 @@ import com.paytech.risk.decision.domain.enums.RuleSetManagementStatus;
 import com.paytech.risk.decision.domain.enums.StaticCheckCode;
 import com.paytech.risk.decision.domain.enums.StaticCheckSeverity;
 import com.paytech.risk.decision.domain.enums.StaticCheckStatus;
-import com.paytech.risk.domain.enums.CommandIdempotencyStatus;
-import com.paytech.risk.domain.enums.CommandOperationType;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.mybatis.spring.annotation.MapperScan;
 import org.mybatis.spring.boot.autoconfigure.ConfigurationCustomizer;
@@ -44,7 +42,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 @MapperScan(basePackages = {
     "com.paytech.risk.decision.core.dal.mapper",
-    "com.paytech.risk.core.dal.mapper",
     "com.paytech.risk.compliance.core.dal.mapper"
 }, sqlSessionTemplateRef = "sqlSessionTemplate")
 public class PersistenceConfiguration {
@@ -62,8 +59,6 @@ public class PersistenceConfiguration {
             registry.register(InstantTypeHandler.class);
             registerCodeEnumHandler(registry, ActionCategory.class);
             registerCodeEnumHandler(registry, com.paytech.risk.decision.domain.enums.DictionaryStatus.class);
-            registerCodeEnumHandler(registry, CommandIdempotencyStatus.class);
-            registerCodeEnumHandler(registry, CommandOperationType.class);
             registerCodeEnumHandler(registry, ComparisonOperator.class);
             registerCodeEnumHandler(registry, DataClassification.class);
             registerCodeEnumHandler(registry, DecisionBusinessDomain.class);

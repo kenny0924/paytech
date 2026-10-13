@@ -30,6 +30,7 @@ public class DecisionFlowController implements DecisionFlowQueryApi, DecisionFlo
     private final FlowRuleSetReferenceProcessor referenceProcessor;
     private final RiskOperationRequestContextParser context;
 
+    /** 读取流程编排能力，决策点按规范大写编码解析。 */
     @Override
     public FlowAuthoringContextResponseBody authoringContext(String actorAccountId, String sessionId, String pointCode) {
         context.parse(actorAccountId, sessionId);
@@ -37,6 +38,7 @@ public class DecisionFlowController implements DecisionFlowQueryApi, DecisionFlo
         return DecisionFlowWireConverter.authoring(mapped(() -> authoringProcessor.process(request)));
     }
 
+    /** 分页查询流程，筛选编码按规范大写编码解析。 */
     @Override
     public PagingResponseBody<FlowListItemResponseBody> list(String actorAccountId, String sessionId, String pointCode,
         String flowCode, String keyword, Integer page, Integer size) {
@@ -48,6 +50,7 @@ public class DecisionFlowController implements DecisionFlowQueryApi, DecisionFlo
             result.page(), result.size(), result.total());
     }
 
+    /** 读取流程当前版本详情。 */
     @Override
     public FlowDetailResponseBody current(String actorAccountId, String sessionId, String flowId) {
         context.parse(actorAccountId, sessionId);
@@ -55,6 +58,7 @@ public class DecisionFlowController implements DecisionFlowQueryApi, DecisionFlo
         return DecisionFlowWireConverter.detail(mapped(() -> detailProcessor.process(request)));
     }
 
+    /** 读取流程指定历史版本的原样详情。 */
     @Override
     public FlowDetailResponseBody version(String actorAccountId, String sessionId, String flowId, String flowVersionId) {
         context.parse(actorAccountId, sessionId);
@@ -63,6 +67,7 @@ public class DecisionFlowController implements DecisionFlowQueryApi, DecisionFlo
         return DecisionFlowWireConverter.detail(mapped(() -> detailProcessor.process(request)));
     }
 
+    /** 分页查询流程历史版本。 */
     @Override
     public PagingResponseBody<FlowHistoryItemResponseBody> history(String actorAccountId, String sessionId, String flowId,
         Integer maxVersionNo, Integer page, Integer size) {
@@ -73,6 +78,7 @@ public class DecisionFlowController implements DecisionFlowQueryApi, DecisionFlo
             result.page(), result.size(), result.total());
     }
 
+    /** 按真实来源引用读取流程节点引用的规则集准确版本。 */
     @Override
     public RuleSetReferenceResponseBody ruleSetReference(String actorAccountId, String sessionId, String sourceType,
         String sourceVersionId, String nodeKey) {
@@ -82,6 +88,7 @@ public class DecisionFlowController implements DecisionFlowQueryApi, DecisionFlo
         return DecisionFlowWireConverter.storedReference(mapped(() -> referenceProcessor.process(request)));
     }
 
+    /** 读取旧事件点版本的兼容投影，仅供历史对照。 */
     @Override
     public LegacyPointResponseBody legacyPoint(String actorAccountId, String sessionId, String pointVersionId) {
         context.parse(actorAccountId, sessionId);

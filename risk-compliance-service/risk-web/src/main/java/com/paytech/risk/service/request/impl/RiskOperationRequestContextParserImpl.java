@@ -14,8 +14,6 @@ public final class RiskOperationRequestContextParserImpl implements RiskOperatio
 
     private static final Pattern POSITIVE_ID = Pattern.compile("[1-9][0-9]{0,18}");
 
-    private static final Pattern IDEMPOTENCY_KEY = Pattern.compile("[A-Za-z0-9._:-]{8,128}");
-
     private static final Pattern UPPER_CODE = Pattern.compile("[A-Z][A-Z0-9_]{0,63}");
 
     private static final Pattern SAFE_PARAMETER_NAME = Pattern.compile("[A-Za-z][A-Za-z0-9_-]{0,63}");
@@ -27,14 +25,6 @@ public final class RiskOperationRequestContextParserImpl implements RiskOperatio
             throw invalid("sessionId");
         }
         return new RiskOperationRequestContext(actorId, sessionId);
-    }
-
-    @Override
-    public String parseIdempotencyKey(String idempotencyKey) {
-        if (idempotencyKey == null || !IDEMPOTENCY_KEY.matcher(idempotencyKey).matches()) {
-            throw invalid("idempotencyKey");
-        }
-        return idempotencyKey;
     }
 
     @Override
