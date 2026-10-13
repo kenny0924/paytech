@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.CreateRuleSetVersionResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.FreezeRuleSetVersionRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleSetDetailResponseBody;
+import com.paytech.risk.api.decision.response.CreateRuleSetVersionResponseBody;
+import com.paytech.risk.api.decision.request.FreezeRuleSetVersionRequestBody;
+import com.paytech.risk.api.decision.response.RuleSetDetailResponseBody;
 import com.paytech.risk.test.base.RiskServiceAutoTestBase;
 import com.paytech.risk.test.builder.DecisionRuleSetRequestBuilder;
 import com.paytech.risk.test.decision.RiskDecisionHttpClient;
@@ -20,10 +20,27 @@ import org.junit.jupiter.api.Test;
 
 /** 从真实 HTTP 入口验证 Rule Set 不可变快照与服务级幂等持久化。 */
 class DecisionRuleSetManagementHttpAutoTest extends RiskServiceAutoTestBase {
+    private static final tools.jackson.databind.json.JsonMapper OPERAND_JSON =
+        tools.jackson.databind.json.JsonMapper.builder().build();
+
 
     private static final String ACTOR = "910000000000000001";
     private static final String CALLER_SCOPE = "OPERATIONS_ACCOUNT:" + ACTOR;
     private static final String SESSION = "risk-auto-rule-set-session";
+
+    /** 新格式创建与冻结缺少任一必填键时在 HTTP 入口拒绝，不把缺失解释为显式 null。 */
+    @Test
+    void test_missingRequiredKeysAreRejected() throws Exception {
+        try (RiskDecisionHttpClient http = new RiskDecisionHttpClient(port)) {
+            String missingBaseHash = "{\"pointCode\":\"CHECKOUT_PREPARE\",\"ruleSetCode\":\"MISSING_KEY\","
+                + "\"ruleSetName\":\"x\",\"baseRuleSetVersionId\":null,\"changeReason\":\"x\",\"rules\":[],"
+                + "\"operandFormat\":\"VARIABLE_REFERENCE\"}";
+            RiskDecisionHttpClient.assertProblem(http.configuration("POST", "/decision-rule-sets/v1/rule-sets",
+                ACTOR, SESSION, missingBaseHash), 400, "INVALID_REQUEST");
+            RiskDecisionHttpClient.assertProblem(http.configuration("POST", "/decision-rule-sets/v1/rule-sets/1/freeze",
+                ACTOR, SESSION, "{}"), 400, "INVALID_REQUEST");
+        }
+    }
 
     @Test
     void test_authoringContextExposesOnlyApprovedCheckoutCatalog() throws Exception {
@@ -52,7 +69,7 @@ class DecisionRuleSetManagementHttpAutoTest extends RiskServiceAutoTestBase {
     }
 
     @Test
-    void test_createPersistsCompleteSnapshotAndReplaysStableResponse() throws Exception {
+    void test_createPersistsCompleteSnapshotAndRejectsResubmission() throws Exception {
         String ruleSetCode = decisionTestMapper.uniqueRuleSetCode();
         String idempotencyKey = decisionTestMapper.uniqueNamespace();
         var requestBody = DecisionRuleSetRequestBuilder.currentFirstVersion(ruleSetCode);
@@ -62,37 +79,36 @@ class DecisionRuleSetManagementHttpAutoTest extends RiskServiceAutoTestBase {
             assertEquals(200, first.statusCode(), first.body());
             CreateRuleSetVersionResponseBody created = http.body(first, CreateRuleSetVersionResponseBody.class);
 
-            HttpResponse<String> replay = http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION,
+            HttpResponse<String> resubmitted = http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION,
                 idempotencyKey, requestBody);
-            assertEquals(200, replay.statusCode(), replay.body());
-            assertEquals(first.body(), replay.body());
+            RiskDecisionHttpClient.assertProblem(resubmitted, 409, "CONCURRENT_REQUEST");
 
             HttpResponse<String> detailResponse = http.get(
-                "/decision-rule-sets/v1/rule-sets/" + created.ruleSetVersionId(), ACTOR, SESSION);
+                "/decision-rule-sets/v1/rule-sets/" + created.getRuleSetVersionId(), ACTOR, SESSION);
             assertEquals(200, detailResponse.statusCode(), detailResponse.body());
             RuleSetDetailResponseBody detail = http.body(detailResponse, RuleSetDetailResponseBody.class);
-            assertEquals(ruleSetCode, detail.ruleSetCode());
-            var requestedRule = requestBody.rules().getFirst();
-            var persistedRule = detail.rules().getFirst();
-            assertEquals(requestedRule.ruleCode(), persistedRule.ruleCode());
-            assertEquals(requestedRule.ruleName(), persistedRule.ruleName());
-            assertEquals(requestedRule.priorityNo(), persistedRule.priorityNo());
-            assertEquals(requestedRule.enabledFlag(), persistedRule.enabledFlag());
-            assertEquals(requestedRule.reasonCode(), persistedRule.reasonCode());
-            assertEquals(requestedRule.action(), persistedRule.action());
-            assertEquals(requestedRule.conditionNodes().getFirst().sequenceNo(),
-                persistedRule.conditionNodes().getFirst().sequenceNo());
-            assertEquals(requestedRule.conditionNodes().getFirst().nodeType(),
-                persistedRule.conditionNodes().getFirst().nodeType());
-            assertEquals(requestedRule.conditionNodes().getFirst().comparisonOperator(),
-                persistedRule.conditionNodes().getFirst().comparisonOperator());
-            assertEquals(requestedRule.conditionNodes().getFirst().operands(),
-                persistedRule.conditionNodes().getFirst().operands());
+            assertEquals(ruleSetCode, detail.getRuleSetCode());
+            var requestedRule = requestBody.getRules().getFirst();
+            var persistedRule = detail.getRules().getFirst();
+            assertEquals(requestedRule.getRuleCode(), persistedRule.getRuleCode());
+            assertEquals(requestedRule.getRuleName(), persistedRule.getRuleName());
+            assertEquals(requestedRule.getPriorityNo(), persistedRule.getPriorityNo());
+            assertEquals(requestedRule.getEnabledFlag(), persistedRule.getEnabledFlag());
+            assertEquals(requestedRule.getReasonCode(), persistedRule.getReasonCode());
+            assertEquals(requestedRule.getAction().getActionCode(), persistedRule.getAction().getActionCode());
+            assertEquals(requestedRule.getAction().getActionVersionNo(), persistedRule.getAction().getActionVersionNo());
+            assertEquals(requestedRule.getConditionNodes().getFirst().getSequenceNo(),
+                persistedRule.getConditionNodes().getFirst().getSequenceNo());
+            assertEquals(requestedRule.getConditionNodes().getFirst().getNodeType(),
+                persistedRule.getConditionNodes().getFirst().getNodeType());
+            assertEquals(requestedRule.getConditionNodes().getFirst().getComparisonOperator(),
+                persistedRule.getConditionNodes().getFirst().getComparisonOperator());
+            // HTTP 模型为普通 class，按 JSON 结构比较操作数的完整内容。
+            assertEquals(OPERAND_JSON.valueToTree(requestedRule.getConditionNodes().getFirst().getOperands()),
+                OPERAND_JSON.valueToTree(persistedRule.getConditionNodes().getFirst().getOperands()));
 
             DecisionSnapshotCounts counts = decisionTestMapper.snapshotCounts(ruleSetCode);
             assertEquals(new DecisionSnapshotCounts(1, 0, 0, 0, 1, 1, 2, 1), counts);
-            assertEquals(1, decisionTestMapper.ownedCommandCount(
-                "OPERATIONS_ACCOUNT:" + ACTOR, "CREATE_RULE_SET_VERSION", idempotencyKey));
         } finally {
             decisionTestMapper.deleteOwnedDecisionConfigurations(List.of(ruleSetCode),
                 List.of(command("CREATE_RULE_SET_VERSION", idempotencyKey)));
@@ -114,27 +130,26 @@ class DecisionRuleSetManagementHttpAutoTest extends RiskServiceAutoTestBase {
 
             HttpResponse<String> nextResponse = http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION,
                 createNextKey, DecisionRuleSetRequestBuilder.currentNextVersion(
-                    ruleSetCode, first.ruleSetVersionId(), first.contentHash()));
+                    ruleSetCode, first.getRuleSetVersionId(), first.getContentHash()));
             assertEquals(200, nextResponse.statusCode(), nextResponse.body());
             CreateRuleSetVersionResponseBody next = http.body(
                 nextResponse, CreateRuleSetVersionResponseBody.class);
-            assertEquals(2, next.versionNo());
-            assertEquals("DRAFT", next.status());
-            assertNotEquals(first.ruleSetVersionId(), next.ruleSetVersionId());
-            org.junit.jupiter.api.Assertions.assertNull(first.pointVersionId());
-            org.junit.jupiter.api.Assertions.assertNull(next.pointVersionId());
-            assertNotEquals(first.contentHash(), next.contentHash());
+            assertEquals(2, next.getVersionNo());
+            assertEquals("DRAFT", next.getStatus());
+            assertNotEquals(first.getRuleSetVersionId(), next.getRuleSetVersionId());
+            org.junit.jupiter.api.Assertions.assertNull(first.getPointVersionId());
+            org.junit.jupiter.api.Assertions.assertNull(next.getPointVersionId());
+            assertNotEquals(first.getContentHash(), next.getContentHash());
 
             HttpResponse<String> retiredResponse = http.get(
-                "/decision-rule-sets/v1/rule-sets/" + first.ruleSetVersionId(), ACTOR, SESSION);
+                "/decision-rule-sets/v1/rule-sets/" + first.getRuleSetVersionId(), ACTOR, SESSION);
             assertEquals(200, retiredResponse.statusCode(), retiredResponse.body());
-            assertEquals("RETIRED", http.body(retiredResponse, RuleSetDetailResponseBody.class).status());
+            assertEquals("RETIRED", http.body(retiredResponse, RuleSetDetailResponseBody.class).getStatus());
 
             HttpResponse<String> freezeResponse = http.post(
-                "/decision-rule-sets/v1/rule-sets/" + next.ruleSetVersionId() + "/freeze", ACTOR, SESSION,
-                freezeKey, new FreezeRuleSetVersionRequestBody(next.contentHash()));
+                "/decision-rule-sets/v1/rule-sets/" + next.getRuleSetVersionId() + "/freeze", ACTOR, SESSION,
+                freezeKey, new FreezeRuleSetVersionRequestBody(next.getContentHash()));
             RiskDecisionHttpClient.assertProblem(freezeResponse, 400, "BUSINESS_CHECK_FAILED");
-            assertEquals(0, decisionTestMapper.ownedCommandCount(CALLER_SCOPE, "FREEZE_RULE_SET_VERSION", freezeKey));
 
             HttpResponse<String> listResponse = http.get(
                 "/decision-rule-sets/v1/rule-sets?page=1&size=10&pointCode=CHECKOUT_PREPARE&ruleSetCode="
@@ -144,7 +159,7 @@ class DecisionRuleSetManagementHttpAutoTest extends RiskServiceAutoTestBase {
             var page = http.json(listResponse);
             assertEquals(1, page.get("total").asLong());
             assertEquals(1, page.get("items").size());
-            assertEquals(next.ruleSetVersionId(), page.get("items").get(0).get("ruleSetVersionId").asText());
+            assertEquals(next.getRuleSetVersionId(), page.get("items").get(0).get("ruleSetVersionId").asText());
             assertEquals("DRAFT", page.get("items").get(0).get("status").asText());
             org.junit.jupiter.api.Assertions.assertTrue(page.get("items").get(0).hasNonNull("ruleSetId"));
             assertEquals("2", page.get("items").get(0).get("managementVersion").asText());
@@ -179,10 +194,6 @@ class DecisionRuleSetManagementHttpAutoTest extends RiskServiceAutoTestBase {
             HttpResponse<String> caseVariant = http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION,
                 caseVariantKey, DecisionRuleSetRequestBuilder.currentFirstVersion(secondRuleSetCode));
             assertEquals(200, caseVariant.statusCode(), caseVariant.body());
-            assertEquals(1, decisionTestMapper.ownedCommandBinaryCount(
-                "OPERATIONS_ACCOUNT:" + ACTOR, "CREATE_RULE_SET_VERSION", lowerKey));
-            assertEquals(1, decisionTestMapper.ownedCommandBinaryCount(
-                "OPERATIONS_ACCOUNT:" + ACTOR, "CREATE_RULE_SET_VERSION", caseVariantKey));
             assertEquals(new DecisionSnapshotCounts(1, 0, 0, 0, 1, 1, 2, 1),
                 decisionTestMapper.snapshotCounts(firstRuleSetCode));
             assertEquals(new DecisionSnapshotCounts(1, 0, 0, 0, 1, 1, 2, 1),
@@ -235,8 +246,6 @@ class DecisionRuleSetManagementHttpAutoTest extends RiskServiceAutoTestBase {
                 RiskDecisionHttpClient.assertProblem(response, 400, "INVALID_REQUEST");
                 assertFalse(response.body().contains(raw));
                 assertEquals(0, decisionTestMapper.snapshotCounts(ruleSetCode).total());
-                assertEquals(0, decisionTestMapper.ownedCommandCount(
-                    CALLER_SCOPE, "CREATE_RULE_SET_VERSION", idempotencyKey));
             }
         } finally {
             decisionTestMapper.deleteOwnedDecisionConfigurations(ruleSetCodes, commands);

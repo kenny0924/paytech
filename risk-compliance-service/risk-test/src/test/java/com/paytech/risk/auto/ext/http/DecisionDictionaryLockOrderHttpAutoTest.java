@@ -85,8 +85,6 @@ class DecisionDictionaryLockOrderHttpAutoTest extends RiskServiceAutoTestBase {
                 if (saveFirst) assertEquals(200, secondResult.statusCode(), secondResult.body());
                 else assertProblem(secondResult, 409, "RISK_DICTIONARY_SELECTION_UNAVAILABLE");
                 assertEquals(saveFirst ? 1 : 0, decisionTestMapper.ruleSetVersionCount(ruleSet));
-                assertEquals(saveFirst ? 1 : 0, decisionTestMapper.ownedCommandCount("OPERATIONS_ACCOUNT:" + ACTOR,
-                    "CREATE_RULE_SET_VERSION", key));
                 var current = http.json(http.get(path + "/" + code, ACTOR, SESSION));
                 assertEquals("DISABLED", current.path("status").asString());
                 assertEquals("2", current.path("version").asString());

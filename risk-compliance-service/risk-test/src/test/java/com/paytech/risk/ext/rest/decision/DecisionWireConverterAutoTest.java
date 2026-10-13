@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ConditionNodeRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.CreateRuleSetVersionRequestBody;
+import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleActionRequestBody;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
@@ -27,26 +27,26 @@ import com.paytech.risk.decision.domain.release.DecisionReleaseStaticValidator.S
 import com.paytech.risk.decision.domain.rule.RuleAstValidator.BooleanLiteral;
 import com.paytech.risk.decision.domain.rule.RuleAstValidator.NullLiteral;
 import com.paytech.risk.decision.domain.rule.RuleAstValidator.StringLiteral;
-import com.paytech.risk.decision.domainservice.service.DecisionReleaseService.CreatedCandidate;
-import com.paytech.risk.decision.domainservice.service.DecisionReleaseService.ValidatedCandidate;
+import com.paytech.risk.decision.domain.release.DecisionReleaseResult.CreatedCandidate;
+import com.paytech.risk.decision.domain.release.DecisionReleaseResult.ValidatedCandidate;
 import com.paytech.risk.decision.domainservice.service.DecisionRuleSetService.CreatedRuleSet;
-import com.paytech.risk.decision.domainservice.service.DecisionRuleSetService.RuleAuthoringContext;
+import com.paytech.risk.decision.domainservice.service.DecisionRuleSetService.RuleAuthoringView;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** Risk domain 与稳定 Wire record 之间的纯适配测试。 */
-class RiskDecisionWireConverterAutoTest {
+/** 规则集与发布领域模型和 HTTP 模型之间的纯转换测试。 */
+class DecisionWireConverterAutoTest {
 
     @Test
     void authoringContextUsesOnlyProvidedDatabaseDefinitions() {
-        var response = RiskDecisionWireConverter.toResponse(
-            new RuleAuthoringContext(CheckoutPrepareAuthoringDescriptor.v1(), List.of(input("OPERATOR_LOCALE", "locale"), input("OTHER_CURRENCY", "currency"))));
+        var response = DecisionRuleSetWireConverter.toResponse(
+            new RuleAuthoringView(CheckoutPrepareAuthoringDescriptor.v1(), List.of(input("OPERATOR_LOCALE", "locale"), input("OTHER_CURRENCY", "currency"))));
 
         assertEquals(List.of("currency", "locale"),
-            response.fields().stream().map(value -> value.fieldCode()).toList());
+            response.getFields().stream().map(value -> value.getFieldCode()).toList());
         assertEquals(List.of("ADD_RISK_TAG", "ALLOW_CHECKOUT", "APPLY_COOLDOWN", "DENY_CHECKOUT", "REVIEW_CHECKOUT"),
-            response.actions().stream().map(value -> value.actionCode()).toList());
+            response.getActions().stream().map(value -> value.getActionCode()).toList());
     }
 
     private static com.paytech.risk.decision.domain.variable.RiskVariable.Entry input(String code, String field) {
@@ -70,7 +70,7 @@ class RiskDecisionWireConverterAutoTest {
                     new OperandRequestBody("RIGHT", 1, "LITERAL", null, "NUMBER", "1.0")))),
                 new RuleActionRequestBody("ALLOW_CHECKOUT", 1))));
 
-        var domain = RiskDecisionWireConverter.toDomain(request);
+        var domain = DecisionRuleSetWireConverter.toDomain(request);
 
         assertEquals("root", domain.rules().getFirst().conditionNodes().getFirst().nodeKey());
         assertEquals(NullLiteral.INSTANCE,
@@ -81,7 +81,7 @@ class RiskDecisionWireConverterAutoTest {
 
         OperandRequestBody booleanOperand = new OperandRequestBody(
             "RIGHT", 1, "LITERAL", null, "BOOLEAN", true);
-        assertEquals(new BooleanLiteral(true), RiskDecisionWireConverter.toDomain(booleanOperand).literalValue());
+        assertEquals(new BooleanLiteral(true), DecisionRuleSetWireConverter.toDomain(booleanOperand).literalValue());
     }
 
     @Test
@@ -90,17 +90,17 @@ class RiskDecisionWireConverterAutoTest {
         CreatedRuleSet created = new CreatedRuleSet(301L, 202L, "ORDER_LIMIT", 1,
             RuleSetVersionStatus.DRAFT, "a".repeat(64), 11L, time);
 
-        var response = RiskDecisionWireConverter.toResponse(created);
+        var response = DecisionRuleSetWireConverter.toResponse(created);
 
-        assertEquals("301", response.ruleSetVersionId());
-        assertEquals("202", response.pointVersionId());
-        assertEquals("11", response.createdBy());
-        assertEquals("2026-09-05T01:02:03.120000Z", response.createTime());
-        assertThrows(ErrorException.class, () -> RiskDecisionWireConverter.positiveId(0L));
+        assertEquals("301", response.getRuleSetVersionId());
+        assertEquals("202", response.getPointVersionId());
+        assertEquals("11", response.getCreatedBy());
+        assertEquals("2026-09-05T01:02:03.120000Z", response.getCreateTime());
+        assertThrows(ErrorException.class, () -> DecisionWireValues.positiveId(0L));
         CreatedRuleSet nanosecondTime = new CreatedRuleSet(301L, 202L, "ORDER_LIMIT", 1,
             RuleSetVersionStatus.DRAFT, "a".repeat(64), 11L,
             Instant.parse("2026-09-05T01:02:03.123456789Z"));
-        assertThrows(ErrorException.class, () -> RiskDecisionWireConverter.toResponse(nanosecondTime));
+        assertThrows(ErrorException.class, () -> DecisionRuleSetWireConverter.toResponse(nanosecondTime));
     }
 
     @Test
@@ -111,28 +111,28 @@ class RiskDecisionWireConverterAutoTest {
         CreatedCandidate created = new CreatedCandidate(801L, 1, 201L, "CHECKOUT_PREPARE", 202L, 301L,
             DecisionEnvironment.TEST, DecisionReleaseStatus.DRAFT, 1, "b".repeat(64), 11L, time, initial);
 
-        var createResponse = RiskDecisionWireConverter.toResponse(created);
-        assertEquals("811", createResponse.initialStateChange().auditEventId());
-        assertEquals("OPERATIONS_COMMAND", createResponse.initialStateChange().triggerType());
-        assertEquals("11", createResponse.initialStateChange().actorId());
+        var createResponse = DecisionReleaseWireConverter.toResponse(created);
+        assertEquals("811", createResponse.getInitialStateChange().getAuditEventId());
+        assertEquals("OPERATIONS_COMMAND", createResponse.getInitialStateChange().getTriggerType());
+        assertEquals("11", createResponse.getInitialStateChange().getActorId());
 
         StaticCheckResult passed = new StaticCheckResult(StaticCheckCode.REFERENCE_INTEGRITY,
             StaticCheckStatus.PASSED, StaticCheckSeverity.INFO, null, null);
         ValidatedCandidate validated = new ValidatedCandidate(801L, 1, DecisionEnvironment.TEST,
             DecisionReleaseStatus.VALIDATING, 2, "b".repeat(64), true, List.of(passed));
-        var validateResponse = RiskDecisionWireConverter.toResponse(validated);
-        assertEquals(Boolean.TRUE, validateResponse.allStaticChecksPassed());
-        assertNull(validateResponse.checks().getFirst().errorCode());
-        assertNull(validateResponse.checks().getFirst().errorSummary());
+        var validateResponse = DecisionReleaseWireConverter.toResponse(validated);
+        assertEquals(Boolean.TRUE, validateResponse.getAllStaticChecksPassed());
+        assertNull(validateResponse.getChecks().getFirst().getErrorCode());
+        assertNull(validateResponse.getChecks().getFirst().getErrorSummary());
     }
 
     @Test
     void closedCodeParsersRejectUnknownOrNullInsteadOfUsingEnumValueOf() {
-        assertEquals(RuleSetVersionStatus.FROZEN, RiskDecisionWireConverter.parseRuleSetStatus("FROZEN"));
-        assertNull(RiskDecisionWireConverter.parseRuleSetStatus(null));
+        assertEquals(RuleSetVersionStatus.FROZEN, DecisionRuleSetWireConverter.parseRuleSetStatus("FROZEN"));
+        assertNull(DecisionRuleSetWireConverter.parseRuleSetStatus(null));
         assertThrows(com.paytech.foundation.common.error.InvalidParameterException.class,
-            () -> RiskDecisionWireConverter.parseRuleSetStatus("frozen"));
+            () -> DecisionRuleSetWireConverter.parseRuleSetStatus("frozen"));
         assertThrows(com.paytech.foundation.common.error.InvalidParameterException.class,
-            () -> RiskDecisionWireConverter.parseReleaseStatus("UNKNOWN"));
+            () -> DecisionReleaseWireConverter.parseReleaseStatus("UNKNOWN"));
     }
 }

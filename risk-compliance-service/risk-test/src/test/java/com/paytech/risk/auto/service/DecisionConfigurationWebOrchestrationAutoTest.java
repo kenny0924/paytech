@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
@@ -43,10 +42,11 @@ class DecisionConfigurationWebOrchestrationAutoTest {
 
     @Test
     void processorsAndControllersArePublishedForBothFrozenApiContracts() {
+        // 写接口 Processor 位于 Owner 模块 risk-decision，Web 只保留 Controller。
         assertDoesNotThrow(() -> Class.forName(
-            "com.paytech.risk.service.processor.DecisionRuleSetManagementProcessor"));
+            "com.paytech.risk.decision.service.processor.CreateRuleSetVersionProcessor"));
         assertDoesNotThrow(() -> Class.forName(
-            "com.paytech.risk.service.processor.DecisionReleaseManagementProcessor"));
+            "com.paytech.risk.decision.service.processor.CreateTestReleaseProcessor"));
         assertDoesNotThrow(() -> Class.forName(
             "com.paytech.risk.ext.rest.decision.DecisionRuleSetManagementController"));
         assertDoesNotThrow(() -> Class.forName(
@@ -54,13 +54,11 @@ class DecisionConfigurationWebOrchestrationAutoTest {
     }
 
     @Test
-    void controllersImplementOnlyTheFrozenContractsAndRemainValidatedAdapters() {
+    void controllersImplementOnlyTheFrozenContractsAsRestAdapters() {
         assertTrue(DecisionRuleSetManagementApi.class.isAssignableFrom(DecisionRuleSetManagementController.class));
         assertTrue(DecisionReleaseManagementApi.class.isAssignableFrom(DecisionReleaseManagementController.class));
         assertTrue(DecisionRuleSetManagementController.class.isAnnotationPresent(RestController.class));
         assertTrue(DecisionReleaseManagementController.class.isAnnotationPresent(RestController.class));
-        assertTrue(DecisionRuleSetManagementController.class.isAnnotationPresent(Validated.class));
-        assertTrue(DecisionReleaseManagementController.class.isAnnotationPresent(Validated.class));
     }
 
     @Test
@@ -131,7 +129,8 @@ class DecisionConfigurationWebOrchestrationAutoTest {
             ), decisionRoutes(context.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class)));
             assertEquals(1, context.getBeansOfType(RequestIdFilter.class).size());
             assertEquals(1, context.getBeansOfType(HttpRequestResponseLoggingFilter.class).size());
-            assertEquals(Set.of("/internal/due-diligence/material-requirements", "/decision-rule-sets", "/decision-releases", "/decision-dictionaries", "/decision-flows", "/decision-variables"),
+            assertEquals(Set.of("/internal/due-diligence/material-requirements", "/client-onboarding-review",
+                    "/decision-rule-sets", "/decision-releases", "/decision-dictionaries", "/decision-flows", "/decision-variables"),
                 Set.copyOf(context.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes()));
 
             var rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(

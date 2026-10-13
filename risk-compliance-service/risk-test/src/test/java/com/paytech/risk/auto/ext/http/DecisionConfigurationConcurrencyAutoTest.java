@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.CreateTestReleaseRequestBody;
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.CreateTestReleaseResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.CreateRuleSetVersionRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.CreateRuleSetVersionResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.FreezeRuleSetVersionRequestBody;
+import com.paytech.risk.api.decision.request.CreateTestReleaseRequestBody;
+import com.paytech.risk.api.decision.response.CreateTestReleaseResponseBody;
+import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
+import com.paytech.risk.api.decision.response.CreateRuleSetVersionResponseBody;
+import com.paytech.risk.api.decision.request.FreezeRuleSetVersionRequestBody;
 import com.paytech.risk.test.base.RiskServiceAutoTestBase;
 import com.paytech.risk.test.builder.DecisionRuleSetRequestBuilder;
 import com.paytech.risk.test.decision.RiskDecisionHttpClient;
@@ -60,9 +60,9 @@ class DecisionConfigurationConcurrencyAutoTest extends RiskServiceAutoTestBase {
                 CreateRuleSetVersionResponseBody.class);
             CreateRuleSetVersionResponseBody second = http.body(responses.get(1),
                 CreateRuleSetVersionResponseBody.class);
-            assertNotEquals(first.ruleSetVersionId(), second.ruleSetVersionId());
-            assertNull(first.pointVersionId());
-            assertNull(second.pointVersionId());
+            assertNotEquals(first.getRuleSetVersionId(), second.getRuleSetVersionId());
+            assertNull(first.getPointVersionId());
+            assertNull(second.getPointVersionId());
             assertEquals(1, decisionTestMapper.snapshotCounts(firstCode).ruleSetVersions());
             assertEquals(1, decisionTestMapper.snapshotCounts(secondCode).ruleSetVersions());
         } finally {
@@ -104,10 +104,9 @@ class DecisionConfigurationConcurrencyAutoTest extends RiskServiceAutoTestBase {
             command("CREATE_TEST_DECISION_RELEASE", firstCandidateKey),
             command("CREATE_TEST_DECISION_RELEASE", secondCandidateKey));
         try (RiskDecisionHttpClient http = new RiskDecisionHttpClient(port)) {
-            new LegacyRuleSetTestMapper(jdbc, new TransactionTemplate(transactionManager), identifiers)
+            var created = new LegacyRuleSetTestMapper(jdbc, new TransactionTemplate(transactionManager), identifiers)
                 .insertFirstVersion(code, Long.parseLong(ACTOR), createKey);
-            CreateRuleSetVersionResponseBody created = create(http, code, createKey);
-            freeze(http, created, freezeKey);
+            freeze(http, created.ruleSetVersionId(), created.contentHash(), freezeKey);
             var candidateBody = new CreateTestReleaseRequestBody(
                 created.ruleSetVersionId(), created.contentHash());
             List<HttpResponse<String>> responses = whilePointLocked(() -> List.of(
@@ -121,8 +120,8 @@ class DecisionConfigurationConcurrencyAutoTest extends RiskServiceAutoTestBase {
                 CreateTestReleaseResponseBody.class);
             CreateTestReleaseResponseBody second = http.body(responses.get(1),
                 CreateTestReleaseResponseBody.class);
-            assertNotEquals(first.releaseId(), second.releaseId());
-            assertNotEquals(first.releaseNo(), second.releaseNo());
+            assertNotEquals(first.getReleaseId(), second.getReleaseId());
+            assertNotEquals(first.getReleaseNo(), second.getReleaseNo());
             assertEquals(2, decisionTestMapper.releaseCount(code));
         } finally {
             decisionTestMapper.deleteOwnedDecisionConfigurations(List.of(code), commands);
@@ -130,41 +129,25 @@ class DecisionConfigurationConcurrencyAutoTest extends RiskServiceAutoTestBase {
     }
 
     @Test
-    void test_sameCommandReplaysButDifferentHashConflictsAndCaseVariantIsDistinct() throws Exception {
-        String firstCode = decisionTestMapper.uniqueRuleSetCode();
-        String changedCode = decisionTestMapper.uniqueRuleSetCode();
-        String generatedKey = decisionTestMapper.uniqueNamespace();
-        String suffix = generatedKey.substring("risk-auto-".length() + 1);
-        String baseKey = "risk-auto-a" + suffix;
-        String caseVariantKey = "risk-auto-A" + suffix;
-        List<OwnedCommandIdentity> commands = List.of(command("CREATE_RULE_SET_VERSION", baseKey),
-            command("CREATE_RULE_SET_VERSION", caseVariantKey));
+    void test_concurrentSameCreateHasOneWinner() throws Exception {
+        String code = decisionTestMapper.uniqueRuleSetCode();
+        String key = decisionTestMapper.uniqueNamespace();
+        List<OwnedCommandIdentity> commands = List.of(command("CREATE_RULE_SET_VERSION", key));
         try (RiskDecisionHttpClient http = new RiskDecisionHttpClient(port)) {
-            CreateRuleSetVersionRequestBody body = DecisionRuleSetRequestBuilder.currentFirstVersion(firstCode);
-            List<HttpResponse<String>> sameKey = concurrently(() -> List.of(
-                () -> http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, baseKey, body),
-                () -> http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, baseKey, body)));
-            assertEquals(List.of(200, 200), statuses(sameKey), bodies(sameKey));
-            assertEquals(sameKey.get(0).body(), sameKey.get(1).body());
-
-            HttpResponse<String> conflict = http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION,
-                baseKey, DecisionRuleSetRequestBuilder.currentFirstVersion(changedCode));
-            RiskDecisionHttpClient.assertProblem(conflict, 409, "CONCURRENT_REQUEST");
-
-            HttpResponse<String> caseVariant = http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION,
-                caseVariantKey, DecisionRuleSetRequestBuilder.currentFirstVersion(changedCode));
-            assertEquals(200, caseVariant.statusCode(), caseVariant.body());
-            assertEquals(1, decisionTestMapper.ownedCommandCount(
-                CALLER_SCOPE, "CREATE_RULE_SET_VERSION", baseKey));
-            assertEquals(1, decisionTestMapper.ownedCommandCount(
-                CALLER_SCOPE, "CREATE_RULE_SET_VERSION", caseVariantKey));
+            CreateRuleSetVersionRequestBody body = DecisionRuleSetRequestBuilder.currentFirstVersion(code);
+            List<HttpResponse<String>> responses = concurrently(() -> List.of(
+                () -> http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, key, body),
+                () -> http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, key, body)));
+            // 同一编码的首版本只能创建一次；HTTP 请求重放归 Gateway，业务侧以唯一编码与根版本防重。
+            assertEquals(List.of(200, 409), sortedStatuses(responses), bodies(responses));
+            assertEquals(1, decisionTestMapper.ruleSetVersionCount(code));
         } finally {
-            decisionTestMapper.deleteOwnedDecisionConfigurations(List.of(firstCode, changedCode), commands);
+            decisionTestMapper.deleteOwnedDecisionConfigurations(List.of(code), commands);
         }
     }
 
     @Test
-    void test_sameDraftFreezeAllowsOneTransitionAndWinnerReplay() throws Exception {
+    void test_sameDraftFreezeAllowsOneTransitionAndRejectsRepeat() throws Exception {
         String code = decisionTestMapper.uniqueRuleSetCode();
         String createKey = decisionTestMapper.uniqueNamespace();
         String firstFreezeKey = decisionTestMapper.uniqueNamespace();
@@ -173,9 +156,8 @@ class DecisionConfigurationConcurrencyAutoTest extends RiskServiceAutoTestBase {
             command("FREEZE_RULE_SET_VERSION", firstFreezeKey),
             command("FREEZE_RULE_SET_VERSION", secondFreezeKey));
         try (RiskDecisionHttpClient http = new RiskDecisionHttpClient(port)) {
-            new LegacyRuleSetTestMapper(jdbc, new TransactionTemplate(transactionManager), identifiers)
+            var created = new LegacyRuleSetTestMapper(jdbc, new TransactionTemplate(transactionManager), identifiers)
                 .insertFirstVersion(code, Long.parseLong(ACTOR), createKey);
-            CreateRuleSetVersionResponseBody created = create(http, code, createKey);
             FreezeRuleSetVersionRequestBody body = new FreezeRuleSetVersionRequestBody(created.contentHash());
             String path = "/decision-rule-sets/v1/rule-sets/" + created.ruleSetVersionId() + "/freeze";
             List<HttpResponse<String>> responses = whilePointLocked(() -> List.of(
@@ -188,30 +170,19 @@ class DecisionConfigurationConcurrencyAutoTest extends RiskServiceAutoTestBase {
             HttpResponse<String> winner = responses.stream().filter(response -> response.statusCode() == 200)
                 .findFirst().orElseThrow();
             String winnerKey = responses.get(0).statusCode() == 200 ? firstFreezeKey : secondFreezeKey;
-            HttpResponse<String> replay = http.post(path, ACTOR, SESSION, winnerKey, body);
-            assertEquals(200, replay.statusCode(), replay.body());
-            assertEquals(winner.body(), replay.body());
+            // 已冻结版本再次冻结按当前状态拒绝，不重放首次响应。
+            RiskDecisionHttpClient.assertProblem(http.post(path, ACTOR, SESSION, winnerKey, body), 400,
+                "BUSINESS_CHECK_FAILED");
         } finally {
             decisionTestMapper.deleteOwnedDecisionConfigurations(List.of(code), commands);
         }
     }
 
-    private CreateRuleSetVersionResponseBody create(
-        RiskDecisionHttpClient http,
-        String code,
-        String key
-    ) throws Exception {
-        HttpResponse<String> response = http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, key,
-            DecisionRuleSetRequestBuilder.firstVersion(code));
-        assertEquals(200, response.statusCode(), response.body());
-        return http.body(response, CreateRuleSetVersionResponseBody.class);
-    }
-
-    private void freeze(RiskDecisionHttpClient http, CreateRuleSetVersionResponseBody created, String key)
+    private void freeze(RiskDecisionHttpClient http, String ruleSetVersionId, String contentHash, String key)
         throws Exception {
         HttpResponse<String> response = http.post(
-            "/decision-rule-sets/v1/rule-sets/" + created.ruleSetVersionId() + "/freeze",
-            ACTOR, SESSION, key, new FreezeRuleSetVersionRequestBody(created.contentHash()));
+            "/decision-rule-sets/v1/rule-sets/" + ruleSetVersionId + "/freeze",
+            ACTOR, SESSION, key, new FreezeRuleSetVersionRequestBody(contentHash));
         assertEquals(200, response.statusCode(), response.body());
     }
 

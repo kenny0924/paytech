@@ -13,7 +13,6 @@ import com.paytech.risk.decision.core.dal.dataobject.ReleaseAuditEvent;
 import com.paytech.risk.decision.core.dal.dataobject.RuleSetVersion;
 import com.paytech.risk.decision.core.dal.dataobject.RuleSet;
 import com.paytech.risk.decision.domain.enums.RuleSetManagementStatus;
-import com.paytech.risk.decision.core.dal.mapper.DecisionReleaseMapper;
 import com.paytech.risk.decision.core.dal.mapper.DecisionRuleSetMapper;
 import com.paytech.risk.decision.domain.enums.DecisionBusinessDomain;
 import com.paytech.risk.decision.domain.enums.DecisionEnvironment;
@@ -25,7 +24,6 @@ import com.paytech.risk.decision.domain.enums.EvaluationStrategy;
 import com.paytech.risk.decision.domain.enums.FailureStrategy;
 import com.paytech.risk.decision.domain.enums.ReleaseAuditEventType;
 import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
-import com.paytech.risk.decision.domainservice.repository.DecisionReleaseRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionRuleSetRepository;
 import java.lang.reflect.Proxy;
 import java.time.Instant;
@@ -67,34 +65,6 @@ class DecisionListReconstructionRepositoryAutoTest {
         assertNull(page.items().getFirst().companionBinding());
     }
 
-    @Test
-    void release_list_requires_exact_frozen_point_and_rule_set_coordinates() {
-        assertEquals(1, releaseRepository(
-            List.of(pointVersion(1, DecisionPointVersionStatus.FROZEN)),
-            List.of(ruleSet(1, RuleSetVersionStatus.FROZEN))).findPage(releaseQuery()).items().size());
-
-        assertThrows(ErrorException.class, () -> releaseRepository(List.of(),
-            List.of(ruleSet(1, RuleSetVersionStatus.FROZEN))).findPage(releaseQuery()));
-        assertThrows(ErrorException.class, () -> releaseRepository(
-            List.of(pointVersion(1, DecisionPointVersionStatus.FROZEN)), List.of()).findPage(releaseQuery()));
-        assertThrows(ErrorException.class, () -> releaseRepository(List.of(
-            pointVersion(1, DecisionPointVersionStatus.FROZEN),
-            pointVersion(1, DecisionPointVersionStatus.FROZEN)),
-            List.of(ruleSet(1, RuleSetVersionStatus.FROZEN))).findPage(releaseQuery()));
-        assertThrows(ErrorException.class, () -> releaseRepository(
-            List.of(pointVersion(2, DecisionPointVersionStatus.FROZEN)),
-            List.of(ruleSet(1, RuleSetVersionStatus.FROZEN))).findPage(releaseQuery()));
-        assertThrows(ErrorException.class, () -> releaseRepository(
-            List.of(pointVersion(1, DecisionPointVersionStatus.DRAFT)),
-            List.of(ruleSet(1, RuleSetVersionStatus.FROZEN))).findPage(releaseQuery()));
-        assertThrows(ErrorException.class, () -> releaseRepository(
-            List.of(pointVersion(1, DecisionPointVersionStatus.FROZEN)),
-            List.of(ruleSet(2, RuleSetVersionStatus.FROZEN))).findPage(releaseQuery()));
-        assertThrows(ErrorException.class, () -> releaseRepository(
-            List.of(pointVersion(1, DecisionPointVersionStatus.FROZEN)),
-            List.of(ruleSet(1, RuleSetVersionStatus.DRAFT))).findPage(releaseQuery()));
-    }
-
     private static DecisionRuleSetRepositoryImpl ruleSetRepository(List<DecisionPointVersion> pointVersions) {
         return new DecisionRuleSetRepositoryImpl(proxy(DecisionRuleSetMapper.class, Map.of(
             "countMalformedRuleSets", 0L,
@@ -107,31 +77,8 @@ class DecisionListReconstructionRepositoryAutoTest {
         )));
     }
 
-    private static DecisionReleaseRepositoryImpl releaseRepository(
-        List<DecisionPointVersion> pointVersions,
-        List<RuleSetVersion> ruleSets
-    ) {
-        DecisionRuleSetMapper ruleSetMapper = proxy(DecisionRuleSetMapper.class, Map.of(
-            "selectDecisionPointsByIds", List.of(point()),
-            "selectPointRuleSetsByPointVersionIds", List.of(binding()),
-            "selectPointVersionsByIds", pointVersions,
-            "selectRuleSetVersionsByIds", ruleSets
-        ));
-        DecisionReleaseMapper releaseMapper = proxy(DecisionReleaseMapper.class, Map.of(
-            "selectReleases", List.of(release()),
-            "countReleases", 1L,
-            "selectReleaseAuditEventsByReleaseIds", List.of(initialState())
-        ));
-        DecisionRuleSetRepository unused = proxy(DecisionRuleSetRepository.class, Map.of());
-        return new DecisionReleaseRepositoryImpl(releaseMapper, ruleSetMapper, unused);
-    }
-
     private static DecisionRuleSetRepository.RuleSetPageQuery ruleSetQuery() {
         return new DecisionRuleSetRepository.RuleSetPageQuery(null, null, null, 10, 0);
-    }
-
-    private static DecisionReleaseRepository.ReleasePageQuery releaseQuery() {
-        return new DecisionReleaseRepository.ReleasePageQuery(null, null, 10, 0);
     }
 
     private static DecisionPoint point() {

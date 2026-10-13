@@ -32,7 +32,7 @@ public final class LegacyRuleSetTestMapper {
         var owned = new RiskDecisionTestMapper(jdbc);
         assertEquals(0, owned.ruleSetVersionCount(code));
         var request = DecisionRuleSetRequestBuilder.firstVersion(code);
-        var rule = request.rules().getFirst();
+        var rule = request.getRules().getFirst();
         var catalog = CheckoutPrepareAuthoringDescriptor.v1();
         var action = catalog.actions().getFirst();
         var point = catalog.point();
@@ -40,14 +40,14 @@ public final class LegacyRuleSetTestMapper {
         var condition = new PredicateProjection(ComparisonOperator.EQ, List.of(
             new OperandProjection(OperandRole.LEFT, 1, OperandSource.CONTEXT, "country_code", DecisionValueType.STRING, NullValue.INSTANCE),
             new OperandProjection(OperandRole.RIGHT, 1, OperandSource.LITERAL, null, DecisionValueType.STRING, new StringValue("AE"))));
-        var ruleProjection = new RuleSetVersionProjection(point.pointCode(), code, request.ruleSetName(), 1, List.of(
-            new RuleProjection(rule.ruleCode(), rule.ruleName(), rule.priorityNo(), true, rule.reasonCode(), condition,
+        var ruleProjection = new RuleSetVersionProjection(point.pointCode(), code, request.getRuleSetName(), 1, List.of(
+            new RuleProjection(rule.getRuleCode(), rule.getRuleName(), rule.getPriorityNo(), true, rule.getReasonCode(), condition,
                 new ActionProjection(action.actionCode(), 1, action.handlerCode(), action.implementationVersion(),
                     action.implementationHash(), action.actionCategory(), true, action.decisionCode(), action.mergePolicy(), true))));
         String ruleHash = canonicalizer.ruleSetVersion(ruleProjection).sha256LowerHex();
         String requestHash = canonicalizer.createRuleSetVersionCommand(new CreateRuleSetVersionCommandProjection(
-            point.pointCode(), code, request.ruleSetName(), null, null, request.changeReason(), List.of(
-                new CommandRuleProjection(rule.ruleCode(), rule.ruleName(), rule.priorityNo(), true, rule.reasonCode(),
+            point.pointCode(), code, request.getRuleSetName(), null, null, request.getChangeReason(), List.of(
+                new CommandRuleProjection(rule.getRuleCode(), rule.getRuleName(), rule.getPriorityNo(), true, rule.getReasonCode(),
                     condition, new CommandActionProjection(action.actionCode(), 1), null, List.of())))).sha256LowerHex();
         long versionId = identifiers.nextIdentifier();
         long pointVersionId = identifiers.nextIdentifier();
@@ -65,7 +65,7 @@ public final class LegacyRuleSetTestMapper {
                     f.dataClassification(), f.ruleReferenceFlag(), f.actionParameterFlag())).toList(),
                 List.of(new RuleSetBindingProjection(1, code, 1, ruleHash)), List.of(), List.of(), List.of())).sha256LowerHex();
             jdbc.update("INSERT INTO t_rule_set_version(rule_set_version_id,decision_point_id,input_contract_code,input_contract_version,rule_set_code,rule_set_name,version_no,status,content_hash,content_format,created_by,change_reason,create_time,update_time) VALUES(?,?,?,?,?,?,1,'DRAFT',?,'LEGACY',?,?,?,?)",
-                versionId, pointId, point.inputContractCode(), point.inputContractVersion(), code, request.ruleSetName(), ruleHash, actor, request.changeReason(), timestamp, timestamp);
+                versionId, pointId, point.inputContractCode(), point.inputContractVersion(), code, request.getRuleSetName(), ruleHash, actor, request.getChangeReason(), timestamp, timestamp);
             jdbc.update("INSERT INTO t_rule_set(rule_set_id,decision_point_id,rule_set_code,current_rule_set_version_id,status,version,create_time,update_time) VALUES(?,?,?,?,'CONFIGURABLE',1,?,?)",
                 identifiers.nextIdentifier(), pointId, code, versionId, timestamp, timestamp);
             jdbc.update("INSERT INTO t_decision_point_version(point_version_id,decision_point_id,version_no,input_contract_code,input_contract_version,output_contract_code,default_decision,evaluation_strategy,failure_strategy,timeout_ms,status,content_hash,create_time,update_time) VALUES(?,?,?,?,?,?,?,?,?,?,'DRAFT',?,?,?)",
@@ -76,7 +76,7 @@ public final class LegacyRuleSetTestMapper {
             }
             jdbc.update("INSERT INTO t_decision_point_rule_set(binding_id,point_version_id,rule_set_version_id,sequence_no,create_time) VALUES(?,?,?,1,?)", identifiers.nextIdentifier(), pointVersionId, versionId, timestamp);
             jdbc.update("INSERT INTO t_risk_rule(rule_id,rule_set_version_id,rule_code,rule_name,priority_no,enabled_flag,reason_code,create_time,update_time) VALUES(?,?,?,?,?,1,?,?,?)",
-                ruleId, versionId, rule.ruleCode(), rule.ruleName(), rule.priorityNo(), rule.reasonCode(), timestamp, timestamp);
+                ruleId, versionId, rule.getRuleCode(), rule.getRuleName(), rule.getPriorityNo(), rule.getReasonCode(), timestamp, timestamp);
             jdbc.update("INSERT INTO t_rule_node(node_id,rule_id,node_type,comparison_operator,sequence_no,create_time,update_time) VALUES(?,?,'PREDICATE','EQ',1,?,?)", nodeId, ruleId, timestamp, timestamp);
             jdbc.update("INSERT INTO t_rule_operand(operand_id,node_id,operand_role,value_sequence,source_type,field_code,value_type,create_time,update_time) VALUES(?,?,'LEFT',1,'CONTEXT','country_code','STRING',?,?)", identifiers.nextIdentifier(), nodeId, timestamp, timestamp);
             jdbc.update("INSERT INTO t_rule_operand(operand_id,node_id,operand_role,value_sequence,source_type,value_type,string_value,create_time,update_time) VALUES(?,?,'RIGHT',1,'LITERAL','STRING','AE',?,?)", identifiers.nextIdentifier(), nodeId, timestamp, timestamp);

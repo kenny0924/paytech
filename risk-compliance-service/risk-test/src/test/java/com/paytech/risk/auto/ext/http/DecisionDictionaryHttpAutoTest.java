@@ -84,7 +84,7 @@ class DecisionDictionaryHttpAutoTest extends RiskServiceAutoTestBase {
             success(http.dictionary("POST",DICTIONARIES+"rejection-reasons/"+reason+"/status",ACTOR,SESSION,"{\"expectedVersion\":\"1\",\"status\":\"DISABLED\"}"));
             ObjectNode next=draft.deepCopy();next.put("baseRuleSetVersionId",firstId).put("baseContentHash",hash).put("changeReason","只调整配置名称").put("ruleSetName","新的规则集名称");
             var second=http.post(RULES,ACTOR,SESSION,key(identities),next);success(second);
-            assertEquals(first.body(),http.post(RULES,ACTOR,SESSION,originalKey,draft).body());
+            com.paytech.risk.test.decision.RiskDecisionHttpClient.assertProblem(http.post(RULES,ACTOR,SESSION,originalKey,draft), 409, "CONCURRENT_REQUEST");
             String secondId=http.json(second).path("ruleSetVersionId").asString();next.put("baseRuleSetVersionId",secondId).put("baseContentHash",http.json(second).path("contentHash").asString());((ObjectNode)next.at("/rules/0")).put("reasonMessage","修改停用原因的消息");
             assertProblem(http.post(RULES,ACTOR,SESSION,key(identities),next),409,"RISK_DICTIONARY_SELECTION_UNAVAILABLE");
             var history=http.get(RULES+"/"+rootId+"/versions?page=1&size=10&maxVersionNo=1",ACTOR,SESSION);success(history);assertEquals(1,http.json(history).path("total").asInt());assertFalse(http.json(history).at("/items/0/isCurrent").asBoolean());
@@ -134,15 +134,13 @@ class DecisionDictionaryHttpAutoTest extends RiskServiceAutoTestBase {
             ((ObjectNode) next.at("/rules/0")).set("additionalActions", reordered);
             var saved = http.post(RULES, ACTOR, SESSION, key(identities), next);
             success(saved);
-            assertEquals(first.body(), http.post(RULES, ACTOR, SESSION, originalKey, draft).body());
+            com.paytech.risk.test.decision.RiskDecisionHttpClient.assertProblem(http.post(RULES, ACTOR, SESSION, originalKey, draft), 409, "CONCURRENT_REQUEST");
             ObjectNode copied = nextDraft(next, http.json(saved));
             ((tools.jackson.databind.node.ArrayNode) copied.at("/rules/0/additionalActions"))
                 .add(((ObjectNode) reordered.get(1)).deepCopy().put("sequenceNo", 3));
             String rejectedKey = key(identities);
             assertProblem(http.post(RULES, ACTOR, SESSION, rejectedKey, copied), 409, "RISK_DICTIONARY_SELECTION_UNAVAILABLE");
             assertEquals(2, decisionTestMapper.ruleSetVersionCount(ruleSet));
-            assertEquals(0, decisionTestMapper.ownedCommandCount("OPERATIONS_ACCOUNT:" + ACTOR,
-                "CREATE_RULE_SET_VERSION", rejectedKey));
             ObjectNode copiedRule = nextDraft(next, http.json(saved));
             ((tools.jackson.databind.node.ArrayNode) copiedRule.get("rules")).add(
                 ((ObjectNode) copiedRule.at("/rules/0")).deepCopy().put("ruleCode", "COPIED_RULE").put("priorityNo", 20));
@@ -252,7 +250,7 @@ class DecisionDictionaryHttpAutoTest extends RiskServiceAutoTestBase {
         try (var fixture = releaseFixture(); var http = new RiskDecisionHttpClient(port)) {
             var first = fixture.arrangeFrozenCandidate();
             var second = http.post(RULES, ACTOR, SESSION, fixture.nextKey(), DecisionRuleSetRequestBuilder.currentNextVersion(
-                fixture.ruleSetCode(), first.created().ruleSetVersionId(), first.request().expectedRuleSetContentHash()));
+                fixture.ruleSetCode(), first.created().getRuleSetVersionId(), first.request().getExpectedRuleSetContentHash()));
             success(second);
             var root = ruleSetRoot(http, fixture.ruleSetCode());
             String path = RULES + "/" + root.path("ruleSetId").asString() + "/versions?maxVersionNo=2&size=10";
@@ -279,10 +277,10 @@ class DecisionDictionaryHttpAutoTest extends RiskServiceAutoTestBase {
         try (var fixture = releaseFixture(); var http = new RiskDecisionHttpClient(port)) {
             var candidate = fixture.arrangeFrozenCandidate();
             var second = http.post(RULES, ACTOR, SESSION, fixture.nextKey(), DecisionRuleSetRequestBuilder.currentNextVersion(
-                fixture.ruleSetCode(), candidate.created().ruleSetVersionId(), candidate.request().expectedRuleSetContentHash()));
+                fixture.ruleSetCode(), candidate.created().getRuleSetVersionId(), candidate.request().getExpectedRuleSetContentHash()));
             success(second);
             jdbc.update("UPDATE t_decision_release SET environment_code=?,status='ACTIVE',active_slot=1,activated_time=UTC_TIMESTAMP(6) WHERE release_id=?",
-                environment, candidate.created().releaseId());
+                environment, candidate.created().getReleaseId());
             String path = RULES + "/" + ruleSetRoot(http, fixture.ruleSetCode()).path("ruleSetId").asString() + "/release-references";
             var result = http.get(path, ACTOR, SESSION);
             success(result);
@@ -290,7 +288,7 @@ class DecisionDictionaryHttpAutoTest extends RiskServiceAutoTestBase {
             assertTrue(body.path("inUse").asBoolean());
             assertEquals(1, body.at("/references/total").asInt());
             assertEquals(environment, body.at("/references/items/0/environmentCode").asString());
-            assertEquals(candidate.created().ruleSetVersionId(), body.at("/references/items/0/ruleSetVersionId").asString());
+            assertEquals(candidate.created().getRuleSetVersionId(), body.at("/references/items/0/ruleSetVersionId").asString());
             for (String filter : List.of("status=DRAFT", "page=2", "ruleSetVersionId=" + http.json(second).path("ruleSetVersionId").asString())) {
                 var empty = http.get(path + "?" + filter, ACTOR, SESSION);
                 success(empty);
@@ -306,10 +304,10 @@ class DecisionDictionaryHttpAutoTest extends RiskServiceAutoTestBase {
         try (var fixture = releaseFixture(); var http = new RiskDecisionHttpClient(port)) {
             var candidate = fixture.arrangeFrozenCandidate();
             String path = RULES + "/" + ruleSetRoot(http, fixture.ruleSetCode()).path("ruleSetId").asString() + "/release-references?status=ACTIVE";
-            String pointVersionId = candidate.created().pointVersionId();
-            jdbc.update("UPDATE t_decision_release SET point_version_id=? WHERE release_id=?", Long.MAX_VALUE, candidate.created().releaseId());
+            String pointVersionId = candidate.created().getPointVersionId();
+            jdbc.update("UPDATE t_decision_release SET point_version_id=? WHERE release_id=?", Long.MAX_VALUE, candidate.created().getReleaseId());
             try { assertEquals(500, http.get(path, ACTOR, SESSION).statusCode()); }
-            finally { jdbc.update("UPDATE t_decision_release SET point_version_id=? WHERE release_id=?", pointVersionId, candidate.created().releaseId()); }
+            finally { jdbc.update("UPDATE t_decision_release SET point_version_id=? WHERE release_id=?", pointVersionId, candidate.created().getReleaseId()); }
             success(http.get(path, ACTOR, SESSION));
         }
     }

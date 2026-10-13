@@ -67,7 +67,7 @@ class DecisionFlowConfigurationHttpAutoTest extends RiskServiceAutoTestBase {
     }
 
     @Test
-    void test_successReplayRemainsStableAfterEditAndWholeDeletion() throws Exception {
+    void test_resubmissionIsRejectedAfterEditAndWholeDeletion() throws Exception {
         String code = decisionTestMapper.uniqueRuleSetCode();
         var keys = new ArrayList<OwnedCommandIdentity>();
         try (var http = new RiskDecisionHttpClient(port)) {
@@ -75,7 +75,7 @@ class DecisionFlowConfigurationHttpAutoTest extends RiskServiceAutoTestBase {
             String firstKey = key("SAVE_DECISION_FLOW", keys);
             var first = save(http, request, firstKey);
             var changed = request.deepCopy().put("flowName", "变化");
-            assertProblem(http.post(BASE + "/flows", ACTOR, SESSION, firstKey, changed), 409, "CONCURRENT_REQUEST");
+            assertProblem(http.post(BASE + "/flows", ACTOR, SESSION, firstKey, changed), 409, "RISK_FLOW_CODE_EXISTS");
             var edited = request.deepCopy().put("baseFlowVersionId", first.get("flowVersionId").asText()).put("expectedVersion", "1");
             save(http, edited, key("SAVE_DECISION_FLOW", keys));
             String flow = first.get("flowId").asText();
@@ -83,8 +83,9 @@ class DecisionFlowConfigurationHttpAutoTest extends RiskServiceAutoTestBase {
             var deletion = http.deleteFlow(BASE + "/flows/" + flow + "?expectedVersion=2", ACTOR, SESSION, deleteKey);
             assertEquals(200, deletion.statusCode(), deletion.body());
             assertEquals("3", http.json(deletion).get("version").asText());
-            assertEquals(first, save(http, request, firstKey));
-            assertEquals(deletion.body(), http.deleteFlow(BASE + "/flows/" + flow + "?expectedVersion=2", ACTOR, SESSION, deleteKey).body());
+            // 流程编码永久唯一；删除后重复提交与重复删除都按当前事实拒绝，不重放首次响应。
+            assertProblem(http.post(BASE + "/flows", ACTOR, SESSION, firstKey, request), 409, "RISK_FLOW_CODE_EXISTS");
+            assertEquals(409, http.deleteFlow(BASE + "/flows/" + flow + "?expectedVersion=2", ACTOR, SESSION, deleteKey).statusCode());
             assertProblem(http.get(BASE + "/flows/" + flow, ACTOR, SESSION), 404, "RISK_DECISION_CONFIGURATION_NOT_FOUND");
             assertEquals("DELETED", get(http, BASE + "/flows/" + flow + "/versions/" + first.get("flowVersionId").asText()).get("flowStatus").asText());
             assertProblem(http.post(BASE + "/flows", ACTOR, SESSION, key("SAVE_DECISION_FLOW", keys), request), 409, "RISK_FLOW_CODE_EXISTS");

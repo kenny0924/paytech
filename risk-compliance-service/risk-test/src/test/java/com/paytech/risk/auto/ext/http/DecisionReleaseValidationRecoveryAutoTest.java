@@ -1,17 +1,15 @@
 package com.paytech.risk.auto.ext.http;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.TestReleaseDetailResponseBody;
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.ValidateTestReleaseRequestBody;
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.ValidateTestReleaseResponseBody;
+import com.paytech.risk.api.decision.response.TestReleaseDetailResponseBody;
+import com.paytech.risk.api.decision.request.ValidateTestReleaseRequestBody;
+import com.paytech.risk.api.decision.response.ValidateTestReleaseResponseBody;
 import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
 import com.paytech.risk.test.base.RiskServiceAutoTestBase;
 import com.paytech.risk.test.decision.DecisionReleaseTestFixture;
-import com.paytech.risk.test.decision.DecisionReleaseTestFixture.CommandFacts;
 import com.paytech.risk.test.decision.DecisionReleaseTestFixture.ReleaseFacts;
 import com.paytech.risk.test.decision.RiskDecisionHttpClient;
 import java.net.http.HttpResponse;
@@ -26,7 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 
-/** 验证 Validate 两事务、精确 post-A 恢复及不可达接管状态的真实 MySQL 协议。 */
+/**
+ * 验证 Validate 两事务、开始后中断的恢复及恢复身份校验的真实 MySQL 协议
+ * <li>恢复由 Candidate 自身状态驱动：已开始未完成时，原操作者以原 expectedVersion 重入完成原校验。</li>
+ * <li>HTTP Idempotency-Key 归 Gateway，本服务不再按请求 Key 记录或比对命令。</li>
+ *
+ * @see com.paytech.risk.api.decision.DecisionReleaseManagementApi
+ */
 class DecisionReleaseValidationRecoveryAutoTest extends RiskServiceAutoTestBase {
 
     private static final List<String> CHECK_ORDER = List.of(
@@ -60,60 +64,52 @@ class DecisionReleaseValidationRecoveryAutoTest extends RiskServiceAutoTestBase 
 
             assertPassed(fixture, candidate, first);
             ReleaseFacts completed = fixture.releaseFacts(candidate);
-            assertEquals(new ReleaseFacts("VALIDATING", 2, candidate.created().contentHash(), 2, 8), completed);
+            assertEquals(new ReleaseFacts("VALIDATING", 2, candidate.created().getContentHash(), 2, 8), completed);
             assertEquals(CHECK_ORDER, fixture.checkCodes(candidate));
-            CommandFacts command = fixture.commandFacts(DecisionReleaseTestFixture.ACTOR, key);
-            assertEquals("SUCCEEDED", command.status());
-            assertEquals("release:" + candidate.created().releaseId(), command.responseReference());
 
             HttpResponse<String> replay = fixture.postValidate(
                 candidate, DecisionReleaseTestFixture.ACTOR, key, 1);
             assertEquals(200, replay.statusCode(), replay.body());
             assertEquals(first.body(), replay.body());
             assertEquals(completed, fixture.releaseFacts(candidate));
-            assertEquals(command, fixture.commandFacts(DecisionReleaseTestFixture.ACTOR, key));
 
             HttpResponse<String> detailResponse = fixture.getCandidate(candidate);
             assertEquals(200, detailResponse.statusCode(), detailResponse.body());
             TestReleaseDetailResponseBody detail = fixture.body(
                 detailResponse, TestReleaseDetailResponseBody.class);
-            assertEquals(Boolean.TRUE, detail.allStaticChecksPassed());
-            assertTrue(detail.waitingForShadow());
-            assertEquals(2, detail.stateChanges().size());
-            assertEquals(CHECK_ORDER, detail.staticChecks().stream().map(value -> value.checkCode()).toList());
+            assertEquals(Boolean.TRUE, detail.getAllStaticChecksPassed());
+            assertTrue(detail.getWaitingForShadow());
+            assertEquals(2, detail.getStateChanges().size());
+            assertEquals(CHECK_ORDER, detail.getStaticChecks().stream().map(value -> value.getCheckCode()).toList());
         }
     }
 
     @Test
-    void test_exactPostTransactionAStateRecoversWithOriginalCommand() throws Exception {
+    void test_startedValidationRecoversForOriginalActor() throws Exception {
         try (DecisionReleaseTestFixture fixture = fixture()) {
             var candidate = fixture.arrangeFrozenCandidate();
             String key = fixture.nextKey();
-            fixture.seedPostTransactionA(candidate, DecisionReleaseTestFixture.ACTOR, key, 1,
-                DecisionReleaseTestFixture.ACTOR_ID, null);
-            assertEquals(new ReleaseFacts("VALIDATING", 2, candidate.created().contentHash(), 2, 0),
+            fixture.seedValidationStarted(candidate, DecisionReleaseTestFixture.ACTOR_ID);
+            assertEquals(new ReleaseFacts("VALIDATING", 2, candidate.created().getContentHash(), 2, 0),
                 fixture.releaseFacts(candidate));
-            assertEquals("PROCESSING", fixture.commandFacts(DecisionReleaseTestFixture.ACTOR, key).status());
 
             HttpResponse<String> response = fixture.postValidate(
                 candidate, DecisionReleaseTestFixture.ACTOR, key, 1);
 
             assertPassed(fixture, candidate, response);
-            assertEquals(new ReleaseFacts("VALIDATING", 2, candidate.created().contentHash(), 2, 8),
+            assertEquals(new ReleaseFacts("VALIDATING", 2, candidate.created().getContentHash(), 2, 8),
                 fixture.releaseFacts(candidate));
-            assertEquals("SUCCEEDED", fixture.commandFacts(DecisionReleaseTestFixture.ACTOR, key).status());
         }
     }
 
     @Test
-    void test_sameOriginalCommandRecoversConcurrentlyWithoutDuplicateEvidence() throws Exception {
+    void test_concurrentRecoveryCompletesOnceWithoutDuplicateEvidence() throws Exception {
         try (DecisionReleaseTestFixture fixture = fixture();
              RiskDecisionHttpClient firstClient = new RiskDecisionHttpClient(port);
              RiskDecisionHttpClient secondClient = new RiskDecisionHttpClient(port)) {
             var candidate = fixture.arrangeFrozenCandidate();
             String key = fixture.nextKey();
-            fixture.seedPostTransactionA(candidate, DecisionReleaseTestFixture.ACTOR, key, 1,
-                DecisionReleaseTestFixture.ACTOR_ID, null);
+            fixture.seedValidationStarted(candidate, DecisionReleaseTestFixture.ACTOR_ID);
             CountDownLatch ready = new CountDownLatch(2);
             CountDownLatch start = new CountDownLatch(1);
             ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -127,8 +123,7 @@ class DecisionReleaseValidationRecoveryAutoTest extends RiskServiceAutoTestBase 
 
                 HttpResponse<String> firstResponse = first.get(10, TimeUnit.SECONDS);
                 HttpResponse<String> secondResponse = second.get(10, TimeUnit.SECONDS);
-                String persistedEvidence = "; releaseFacts=" + fixture.releaseFacts(candidate)
-                    + "; commandFacts=" + fixture.commandFacts(DecisionReleaseTestFixture.ACTOR, key);
+                String persistedEvidence = "; releaseFacts=" + fixture.releaseFacts(candidate);
                 assertEquals(200, firstResponse.statusCode(), firstResponse.body() + persistedEvidence);
                 assertEquals(200, secondResponse.statusCode(), secondResponse.body() + persistedEvidence);
                 assertPassed(fixture, candidate, firstResponse);
@@ -139,67 +134,27 @@ class DecisionReleaseValidationRecoveryAutoTest extends RiskServiceAutoTestBase 
                 executor.shutdownNow();
             }
 
-            assertEquals(1, fixture.commandCount(DecisionReleaseTestFixture.ACTOR, key));
-            assertEquals("SUCCEEDED", fixture.commandFacts(DecisionReleaseTestFixture.ACTOR, key).status());
-            assertEquals(new ReleaseFacts("VALIDATING", 2, candidate.created().contentHash(), 2, 8),
+            assertEquals(new ReleaseFacts("VALIDATING", 2, candidate.created().getContentHash(), 2, 8),
                 fixture.releaseFacts(candidate));
             assertEquals(CHECK_ORDER, fixture.checkCodes(candidate));
         }
     }
 
     @Test
-    void test_processingHashForExpectedVersionTwoFailsClosed() throws Exception {
+    void test_recoveryWithDifferentExpectedVersionIsRejected() throws Exception {
         try (DecisionReleaseTestFixture fixture = fixture()) {
             var candidate = fixture.arrangeFrozenCandidate();
-            String key = fixture.nextKey();
-            fixture.seedPostTransactionA(candidate, DecisionReleaseTestFixture.ACTOR, key, 2,
-                DecisionReleaseTestFixture.ACTOR_ID, null);
-            assertInternalErrorAndUnchanged(fixture, candidate, DecisionReleaseTestFixture.ACTOR, key, 2);
+            fixture.seedValidationStarted(candidate, DecisionReleaseTestFixture.ACTOR_ID);
+            assertConflictAndUnchanged(fixture, candidate, DecisionReleaseTestFixture.ACTOR, fixture.nextKey(), 2);
         }
     }
 
     @Test
-    void test_secondProcessingKeyCannotTakeOverOriginalTransactionA() throws Exception {
+    void test_recoveryByDifferentActorIsRejected() throws Exception {
         try (DecisionReleaseTestFixture fixture = fixture()) {
             var candidate = fixture.arrangeFrozenCandidate();
-            String originalKey = fixture.nextKey();
-            fixture.seedPostTransactionA(candidate, DecisionReleaseTestFixture.ACTOR, originalKey, 1,
-                DecisionReleaseTestFixture.ACTOR_ID, null);
-            String takeoverKey = fixture.nextKey();
-            fixture.insertProcessingCommand(candidate, DecisionReleaseTestFixture.ACTOR, takeoverKey, 1);
-            CommandFacts originalBefore = fixture.commandFacts(DecisionReleaseTestFixture.ACTOR, originalKey);
-
-            assertInternalErrorAndUnchanged(
-                fixture, candidate, DecisionReleaseTestFixture.ACTOR, takeoverKey, 1);
-            assertEquals(originalBefore, fixture.commandFacts(DecisionReleaseTestFixture.ACTOR, originalKey));
-        }
-    }
-
-    @Test
-    void test_processingActorMustMatchStartedStateActor() throws Exception {
-        try (DecisionReleaseTestFixture fixture = fixture()) {
-            var candidate = fixture.arrangeFrozenCandidate();
-            String key = fixture.nextKey();
-            fixture.seedPostTransactionA(candidate, DecisionReleaseTestFixture.OTHER_ACTOR, key, 1,
-                DecisionReleaseTestFixture.ACTOR_ID, null);
-
-            assertInternalErrorAndUnchanged(
-                fixture, candidate, DecisionReleaseTestFixture.OTHER_ACTOR, key, 1);
-        }
-    }
-
-    @Test
-    void test_processingTriggerMustMatchOriginalIdempotencyKey() throws Exception {
-        try (DecisionReleaseTestFixture fixture = fixture()) {
-            var candidate = fixture.arrangeFrozenCandidate();
-            String key = fixture.nextKey();
-            String wrongTrigger = "f".repeat(64);
-            var command = fixture.seedPostTransactionA(candidate, DecisionReleaseTestFixture.ACTOR, key, 1,
-                DecisionReleaseTestFixture.ACTOR_ID, wrongTrigger);
-            DecisionReleaseTestFixture.requireDifferentTrigger(command.triggerId(), wrongTrigger);
-
-            assertInternalErrorAndUnchanged(
-                fixture, candidate, DecisionReleaseTestFixture.ACTOR, key, 1);
+            fixture.seedValidationStarted(candidate, DecisionReleaseTestFixture.ACTOR_ID);
+            assertConflictAndUnchanged(fixture, candidate, DecisionReleaseTestFixture.OTHER_ACTOR, fixture.nextKey(), 1);
         }
     }
 
@@ -212,19 +167,19 @@ class DecisionReleaseValidationRecoveryAutoTest extends RiskServiceAutoTestBase 
             + fixture.releaseFacts(candidate));
         ValidateTestReleaseResponseBody validated = fixture.body(
             response, ValidateTestReleaseResponseBody.class);
-        assertEquals(candidate.created().releaseId(), validated.releaseId());
-        assertEquals(candidate.created().releaseNo(), validated.releaseNo());
-        assertEquals("TEST", validated.environmentCode());
-        assertEquals("VALIDATING", validated.status());
-        assertEquals(2, validated.version());
-        assertEquals(candidate.created().contentHash(), validated.contentHash());
-        assertTrue(validated.allStaticChecksPassed());
-        assertEquals(CHECK_ORDER, validated.checks().stream().map(value -> value.checkCode()).toList());
-        validated.checks().forEach(check -> {
-            assertEquals("PASSED", check.checkStatus());
-            assertEquals("INFO", check.severity());
-            assertNull(check.errorCode());
-            assertNull(check.errorSummary());
+        assertEquals(candidate.created().getReleaseId(), validated.getReleaseId());
+        assertEquals(candidate.created().getReleaseNo(), validated.getReleaseNo());
+        assertEquals("TEST", validated.getEnvironmentCode());
+        assertEquals("VALIDATING", validated.getStatus());
+        assertEquals(2, validated.getVersion());
+        assertEquals(candidate.created().getContentHash(), validated.getContentHash());
+        assertTrue(validated.getAllStaticChecksPassed());
+        assertEquals(CHECK_ORDER, validated.getChecks().stream().map(value -> value.getCheckCode()).toList());
+        validated.getChecks().forEach(check -> {
+            assertEquals("PASSED", check.getCheckStatus());
+            assertEquals("INFO", check.getSeverity());
+            assertNull(check.getErrorCode());
+            assertNull(check.getErrorSummary());
         });
     }
 
@@ -239,12 +194,13 @@ class DecisionReleaseValidationRecoveryAutoTest extends RiskServiceAutoTestBase 
         if (!start.await(5, TimeUnit.SECONDS)) {
             throw new IllegalStateException("并发 Validate 未收到起跑信号");
         }
-        return client.post("/decision-releases/v1/candidates/" + candidate.created().releaseId() + "/validate",
+        return client.post("/decision-releases/v1/candidates/" + candidate.created().getReleaseId() + "/validate",
             DecisionReleaseTestFixture.ACTOR, DecisionReleaseTestFixture.SESSION, key,
             new ValidateTestReleaseRequestBody(1));
     }
 
-    private static void assertInternalErrorAndUnchanged(
+    /** 恢复身份不符时返回并发冲突，Candidate 状态与审计不变。 */
+    private static void assertConflictAndUnchanged(
         DecisionReleaseTestFixture fixture,
         DecisionReleaseTestFixture.Candidate candidate,
         String actor,
@@ -252,14 +208,11 @@ class DecisionReleaseValidationRecoveryAutoTest extends RiskServiceAutoTestBase 
         int expectedVersion
     ) throws Exception {
         ReleaseFacts releaseBefore = fixture.releaseFacts(candidate);
-        CommandFacts commandBefore = fixture.commandFacts(actor, key);
 
         HttpResponse<String> response = fixture.postValidate(candidate, actor, key, expectedVersion);
 
-        RiskDecisionHttpClient.assertProblem(response, 500, "INTERNAL_ERROR");
-        assertFalse(response.body().contains(key));
+        RiskDecisionHttpClient.assertProblem(response, 409, "CONCURRENT_REQUEST");
         assertEquals(releaseBefore, fixture.releaseFacts(candidate));
-        assertEquals(commandBefore, fixture.commandFacts(actor, key));
     }
 
     private DecisionReleaseTestFixture fixture() {

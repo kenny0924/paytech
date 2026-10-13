@@ -1,7 +1,7 @@
 package com.paytech.risk.test.builder;
 
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ConditionNodeRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.CreateRuleSetVersionRequestBody;
+import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleActionRequestBody;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
@@ -35,19 +35,19 @@ public final class DecisionRuleSetRequestBuilder {
     }
 
     public static CreateRuleSetVersionRequestBody current(CreateRuleSetVersionRequestBody old) {
-        var rules = old.rules().stream().map(rule -> new RuleRequestBody(rule.ruleCode(), rule.ruleName(),
-            rule.priorityNo(), rule.enabledFlag(), rule.reasonCode(), rule.conditionNodes().stream().map(node ->
-                new ConditionNodeRequestBody(node.nodeKey(), node.parentNodeKey(), node.sequenceNo(), node.nodeType(),
-                    node.groupOperator(), node.comparisonOperator(), node.operands().stream().map(operand ->
-                        new OperandRequestBody(operand.operandRole(), operand.valueSequence(),
-                            operand.sourceType().equals("CONTEXT") ? "VARIABLE" : operand.sourceType(), null,
-                            operand.valueType(), operand.literalValue(), operand.fieldCode() == null ? null
-                                : "INPUT_" + operand.fieldCode().toUpperCase(java.util.Locale.ROOT),
-                            operand.valueType().equals("NUMBER") && operand.sourceType().equals("LITERAL") ? "SCALAR" : null,
-                            null, null)).toList())).toList(), rule.action(), rule.reasonMessage(),
-            rule.additionalActions() == null ? List.of() : rule.additionalActions())).toList();
-        return new CreateRuleSetVersionRequestBody(old.pointCode(), old.ruleSetCode(), old.ruleSetName(),
-            old.baseRuleSetVersionId(), old.baseContentHash(), old.changeReason(), rules, "VARIABLE_REFERENCE");
+        var rules = old.getRules().stream().map(rule -> new RuleRequestBody(rule.getRuleCode(), rule.getRuleName(),
+            rule.getPriorityNo(), rule.getEnabledFlag(), rule.getReasonCode(), rule.getConditionNodes().stream().map(node ->
+                new ConditionNodeRequestBody(node.getNodeKey(), node.getParentNodeKey(), node.getSequenceNo(), node.getNodeType(),
+                    node.getGroupOperator(), node.getComparisonOperator(), node.getOperands().stream().map(operand ->
+                        new OperandRequestBody(operand.getOperandRole(), operand.getValueSequence(),
+                            operand.getSourceType().equals("CONTEXT") ? "VARIABLE" : operand.getSourceType(), null,
+                            operand.getValueType(), operand.getLiteralValue(), operand.getFieldCode() == null ? null
+                                : "INPUT_" + operand.getFieldCode().toUpperCase(java.util.Locale.ROOT),
+                            operand.getValueType().equals("NUMBER") && operand.getSourceType().equals("LITERAL") ? "SCALAR" : null,
+                            null, null)).toList())).toList(), rule.getAction(), rule.getReasonMessage(),
+            rule.getAdditionalActions() == null ? List.of() : rule.getAdditionalActions())).toList();
+        return new CreateRuleSetVersionRequestBody(old.getPointCode(), old.getRuleSetCode(), old.getRuleSetName(),
+            old.getBaseRuleSetVersionId(), old.getBaseContentHash(), old.getChangeReason(), rules, "VARIABLE_REFERENCE");
     }
 
     public static CreateRuleSetVersionRequestBody firstVersion(String ruleSetCode, String countryCode) {

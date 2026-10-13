@@ -35,8 +35,7 @@ class RuleActionConfigurationHttpAutoTest extends RiskServiceAutoTestBase {
             assertEquals(200, detail.statusCode(), detail.body());
             assertTrue(http.json(detail).at("/rules/0/action").isNull());
             assertEquals(0, http.json(detail).at("/rules/0/additionalActions").size());
-            assertEquals(saved.body(), http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION,
-                commandKey, request).body());
+            com.paytech.risk.test.decision.RiskDecisionHttpClient.assertProblem(http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, commandKey, request), 409, "CONCURRENT_REQUEST");
             var frozen = http.post("/decision-rule-sets/v1/rule-sets/" + versionId + "/freeze", ACTOR, SESSION,
                 key("FREEZE_RULE_SET_VERSION", identities),
                 java.util.Map.of("expectedContentHash", result.path("contentHash").asText()));
@@ -73,7 +72,7 @@ class RuleActionConfigurationHttpAutoTest extends RiskServiceAutoTestBase {
                     "expectedRuleSetContentHash", root.path("contentHash").asText()));
             assertEquals(400, candidate.statusCode(), candidate.body());
             assertEquals("BUSINESS_CHECK_FAILED", http.json(candidate).path("code").asText());
-            assertEquals(saved.body(), http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, key, request).body());
+            com.paytech.risk.test.decision.RiskDecisionHttpClient.assertProblem(http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, key, request), 409, "CONCURRENT_REQUEST");
         } finally { decisionTestMapper.deleteOwnedDecisionConfigurations(List.of(code), identities); dictionaryTestMapper.deleteOwned(reasonCode); }
     }
 
@@ -140,7 +139,7 @@ class RuleActionConfigurationHttpAutoTest extends RiskServiceAutoTestBase {
             var parameters = detail.at("/rules/0/additionalActions/0/parameters");
             assertEquals(2, parameters.size()); assertEquals(firstTag, parameters.get(0).path("literalValue").asText());
             rule.set("additionalActions", detail.at("/rules/0/additionalActions"));
-            assertEquals(saved.body(), http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, key, body).body());
+            com.paytech.risk.test.decision.RiskDecisionHttpClient.assertProblem(http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, key, body), 409, "CONCURRENT_REQUEST");
         } finally { decisionTestMapper.deleteOwnedDecisionConfigurations(List.of(code), identities); dictionaryTestMapper.deleteOwned(firstTag); dictionaryTestMapper.deleteOwned(secondTag); }
     }
 
@@ -182,7 +181,7 @@ class RuleActionConfigurationHttpAutoTest extends RiskServiceAutoTestBase {
             var created = http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, key, body);
             assertEquals(200, created.statusCode(), created.body());
             var replay = http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, key, body);
-            assertEquals(created.body(), replay.body());
+            com.paytech.risk.test.decision.RiskDecisionHttpClient.assertProblem(replay, 409, "CONCURRENT_REQUEST");
             var result = http.json(created);
             String id = result.get("ruleSetVersionId").asText();
             var detail = http.get("/decision-rule-sets/v1/rule-sets/" + id, ACTOR, SESSION);

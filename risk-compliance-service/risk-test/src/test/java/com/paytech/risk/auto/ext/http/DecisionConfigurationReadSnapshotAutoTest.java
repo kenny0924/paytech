@@ -6,15 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.TestReleaseDetailResponseBody;
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.ValidateTestReleaseResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.CreateRuleSetVersionResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.FreezeRuleSetVersionRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleSetDetailResponseBody;
+import com.paytech.risk.api.decision.response.TestReleaseDetailResponseBody;
+import com.paytech.risk.api.decision.response.ValidateTestReleaseResponseBody;
+import com.paytech.risk.api.decision.request.FreezeRuleSetVersionRequestBody;
+import com.paytech.risk.api.decision.response.RuleSetDetailResponseBody;
 import com.paytech.risk.decision.domain.release.DecisionReleaseStaticValidator;
 import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
 import com.paytech.risk.test.base.RiskServiceAutoTestBase;
-import com.paytech.risk.test.builder.DecisionRuleSetRequestBuilder;
 import com.paytech.risk.test.decision.DecisionReleaseTestFixture;
 import com.paytech.risk.test.decision.RiskDecisionHttpClient;
 import com.paytech.risk.test.decision.RiskDecisionTestMapper.OwnedCommandIdentity;
@@ -73,7 +71,7 @@ class DecisionConfigurationReadSnapshotAutoTest extends RiskServiceAutoTestBase 
         try (RiskDecisionHttpClient reader = new RiskDecisionHttpClient(port);
              RiskDecisionHttpClient writer = new RiskDecisionHttpClient(port);
              var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
-            CreateRuleSetVersionResponseBody created = create(writer, code, createKey);
+            var created = create(writer, code, createKey);
             String detailPath = "/decision-rule-sets/v1/rule-sets/" + created.ruleSetVersionId();
             try (var gate = sqlBarrier.pauseAfter(".selectDecisionPointById", 1)) {
                 Future<HttpResponse<String>> detail = executor.submit(() -> reader.get(detailPath, ACTOR, SESSION));
@@ -86,12 +84,12 @@ class DecisionConfigurationReadSnapshotAutoTest extends RiskServiceAutoTestBase 
 
                 HttpResponse<String> response = detail.get(5, TimeUnit.SECONDS);
                 assertEquals(200, response.statusCode(), response.body());
-                assertEquals("DRAFT", reader.body(response, RuleSetDetailResponseBody.class).status());
+                assertEquals("DRAFT", reader.body(response, RuleSetDetailResponseBody.class).getStatus());
                 assertReadSnapshot(gate);
             }
 
             HttpResponse<String> current = reader.get(detailPath, ACTOR, SESSION);
-            assertEquals("FROZEN", reader.body(current, RuleSetDetailResponseBody.class).status());
+            assertEquals("FROZEN", reader.body(current, RuleSetDetailResponseBody.class).getStatus());
         } finally {
             decisionTestMapper.deleteOwnedDecisionConfigurations(List.of(code), commands);
         }
@@ -108,7 +106,7 @@ class DecisionConfigurationReadSnapshotAutoTest extends RiskServiceAutoTestBase 
         try (RiskDecisionHttpClient reader = new RiskDecisionHttpClient(port);
              RiskDecisionHttpClient writer = new RiskDecisionHttpClient(port);
              var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
-            CreateRuleSetVersionResponseBody created = create(writer, code, createKey);
+            var created = create(writer, code, createKey);
             String listPath = "/decision-rule-sets/v1/rule-sets?page=1&size=10"
                 + "&pointCode=CHECKOUT_PREPARE&ruleSetCode=" + code + "&status=DRAFT";
             String detailPath = "/decision-rule-sets/v1/rule-sets/" + created.ruleSetVersionId();
@@ -145,7 +143,7 @@ class DecisionConfigurationReadSnapshotAutoTest extends RiskServiceAutoTestBase 
              var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
             var candidate = fixture.arrangeFrozenCandidate();
             String validateKey = fixture.nextKey();
-            String detailPath = "/decision-releases/v1/candidates/" + candidate.created().releaseId();
+            String detailPath = "/decision-releases/v1/candidates/" + candidate.created().getReleaseId();
             try (var gate = sqlBarrier.pauseBefore(".selectReleaseAuditEvents", 1)) {
                 Future<HttpResponse<String>> detail = executor.submit(() -> reader.get(detailPath, ACTOR, SESSION));
                 assertTrue(gate.awaitReached(BARRIER_TIMEOUT), "Candidate 详情未到达 Root/Audit 读取窗口");
@@ -157,16 +155,16 @@ class DecisionConfigurationReadSnapshotAutoTest extends RiskServiceAutoTestBase 
                 HttpResponse<String> response = detail.get(5, TimeUnit.SECONDS);
                 assertEquals(200, response.statusCode(), response.body());
                 TestReleaseDetailResponseBody old = fixture.body(response, TestReleaseDetailResponseBody.class);
-                assertEquals("DRAFT", old.status());
-                assertEquals(1, old.stateChanges().size());
-                assertTrue(old.staticChecks().isEmpty());
+                assertEquals("DRAFT", old.getStatus());
+                assertEquals(1, old.getStateChanges().size());
+                assertTrue(old.getStaticChecks().isEmpty());
                 assertReadSnapshot(gate);
             }
 
             TestReleaseDetailResponseBody current = fixture.body(fixture.getCandidate(candidate),
                 TestReleaseDetailResponseBody.class);
-            assertEquals("VALIDATING", current.status());
-            assertEquals(8, current.staticChecks().size());
+            assertEquals("VALIDATING", current.getStatus());
+            assertEquals(8, current.getStaticChecks().size());
         }
     }
 
@@ -191,7 +189,7 @@ class DecisionConfigurationReadSnapshotAutoTest extends RiskServiceAutoTestBase 
                 assertEquals(200, response.statusCode(), response.body());
                 var json = fixture.json(response);
                 assertEquals(1, json.get("total").longValue());
-                assertEquals(candidate.created().releaseId(), json.get("items").get(0).get("releaseId").textValue());
+                assertEquals(candidate.created().getReleaseId(), json.get("items").get(0).get("releaseId").textValue());
                 assertEquals("DRAFT", json.get("items").get(0).get("status").textValue());
                 assertReadSnapshot(gate);
             }
@@ -246,7 +244,8 @@ class DecisionConfigurationReadSnapshotAutoTest extends RiskServiceAutoTestBase 
             try (var validationGate = validationBarrier.pauseNext()) {
                 Future<HttpResponse<String>> response;
                 RiskSqlBarrier.TransactionObservation closureTransaction;
-                try (var closureGate = sqlBarrier.pauseAfter(".selectRelease", 3)) {
+                // 开始事务与完成事务都以 lockRelease 加锁读根；只有只读快照内的冻结闭包装载执行 selectRelease。
+                try (var closureGate = sqlBarrier.pauseAfter(".selectRelease", 1)) {
                     response = executor.submit(() -> fixture.postValidate(candidate, ACTOR, validateKey, 1));
                     assertTrue(closureGate.awaitReached(BARRIER_TIMEOUT),
                         "Validate 未进入事务 A 后的冻结闭包装载");
@@ -262,10 +261,11 @@ class DecisionConfigurationReadSnapshotAutoTest extends RiskServiceAutoTestBase 
                 assertFalse(validation.active(), "staticValidator.validate 必须在事务外执行: " + validation);
                 assertNull(validation.transactionId(), "事务外纯校验不得继承闭包读事务标识");
 
-                try (var completionGate = sqlBarrier.pauseBefore(".upsertClaimCandidate", 1)) {
+                // 事务 B 以再次锁定发布根开始；屏障在事务 A 结束后创建，因此是创建后的首次 lockRelease。
+                try (var completionGate = sqlBarrier.pauseBefore(".lockRelease", 1)) {
                     validationGate.release();
                     assertTrue(completionGate.awaitReached(BARRIER_TIMEOUT),
-                        "Validate 未进入事务 B 的首个幂等 SQL");
+                        "Validate 未进入事务 B 的首条锁定 SQL");
                     RiskSqlBarrier.TransactionObservation completion = completionGate.observation();
                     assertTrue(completion.active(), "事务 B 必须是实际写事务: " + completion);
                     assertFalse(completion.readOnly(), "事务 B 不得继承 read-only 属性: " + completion);
@@ -276,24 +276,21 @@ class DecisionConfigurationReadSnapshotAutoTest extends RiskServiceAutoTestBase 
                     HttpResponse<String> validated = response.get(5, TimeUnit.SECONDS);
                     assertEquals(200, validated.statusCode(), validated.body());
                     assertEquals("VALIDATING", fixture.body(validated,
-                        ValidateTestReleaseResponseBody.class).status());
+                        ValidateTestReleaseResponseBody.class).getStatus());
                 }
             }
         }
     }
 
-    private CreateRuleSetVersionResponseBody create(
+    /** 直接准备一个旧格式 DRAFT 版本，供冻结与读取快照场景使用。 */
+    private com.paytech.risk.test.decision.LegacyRuleSetTestMapper.Version create(
         RiskDecisionHttpClient http,
         String code,
         String key
-    ) throws Exception {
-        new com.paytech.risk.test.decision.LegacyRuleSetTestMapper(jdbc,
+    ) {
+        return new com.paytech.risk.test.decision.LegacyRuleSetTestMapper(jdbc,
             new org.springframework.transaction.support.TransactionTemplate(transactionManager), identifiers)
             .insertFirstVersion(code, Long.parseLong(ACTOR), key);
-        HttpResponse<String> response = http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, key,
-            DecisionRuleSetRequestBuilder.firstVersion(code));
-        assertEquals(200, response.statusCode(), response.body());
-        return http.body(response, CreateRuleSetVersionResponseBody.class);
     }
 
     private DecisionReleaseTestFixture fixture() {

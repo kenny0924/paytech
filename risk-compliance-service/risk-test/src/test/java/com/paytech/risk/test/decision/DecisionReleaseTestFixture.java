@@ -1,23 +1,17 @@
 package com.paytech.risk.test.decision;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.CreateTestReleaseRequestBody;
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.CreateTestReleaseResponseBody;
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.ValidateTestReleaseRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.CreateRuleSetVersionResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.FreezeRuleSetVersionRequestBody;
-import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizer.ValidateTestReleaseCommandProjection;
-import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizerImpl;
+import com.paytech.risk.api.decision.request.CreateTestReleaseRequestBody;
+import com.paytech.risk.api.decision.response.CreateTestReleaseResponseBody;
+import com.paytech.risk.api.decision.request.ValidateTestReleaseRequestBody;
+import com.paytech.risk.api.decision.response.CreateRuleSetVersionResponseBody;
+import com.paytech.risk.api.decision.request.FreezeRuleSetVersionRequestBody;
+import com.paytech.risk.decision.core.dal.dataobject.ReleaseAuditEvent;
 import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
-import com.paytech.risk.domain.enums.CommandOperationType;
-import com.paytech.risk.domainservice.service.CommandIdempotencyService;
-import com.paytech.risk.domainservice.service.CommandIdempotencyService.CommandRequest;
 import com.paytech.risk.test.builder.DecisionRuleSetRequestBuilder;
 import java.net.http.HttpResponse;
 import java.sql.Timestamp;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -35,9 +29,6 @@ public final class DecisionReleaseTestFixture implements AutoCloseable {
     public static final String OTHER_ACTOR = "910000000000000002";
     public static final long OTHER_ACTOR_ID = 910000000000000002L;
     public static final String SESSION = "risk-auto-release-session";
-
-    private static final String CALLER_PREFIX = "OPERATIONS_ACCOUNT:";
-    private static final String VALIDATE_OPERATION = "VALIDATE_TEST_DECISION_RELEASE";
 
     private final RiskDecisionHttpClient http;
     private final RiskDecisionTestMapper decisionMapper;
@@ -109,12 +100,12 @@ public final class DecisionReleaseTestFixture implements AutoCloseable {
         int expectedVersion
     ) throws Exception {
         own(key);
-        return http.post("/decision-releases/v1/candidates/" + candidate.created().releaseId() + "/validate",
+        return http.post("/decision-releases/v1/candidates/" + candidate.created().getReleaseId() + "/validate",
             actor, SESSION, key, new ValidateTestReleaseRequestBody(expectedVersion));
     }
 
     public HttpResponse<String> getCandidate(Candidate candidate) throws Exception {
-        return http.get("/decision-releases/v1/candidates/" + candidate.created().releaseId(), ACTOR, SESSION);
+        return http.get("/decision-releases/v1/candidates/" + candidate.created().getReleaseId(), ACTOR, SESSION);
     }
 
     public HttpResponse<String> listDraftCandidates() throws Exception {
@@ -130,22 +121,16 @@ public final class DecisionReleaseTestFixture implements AutoCloseable {
         return http.json(response);
     }
 
-    /** 原子种入一个与事务 A 最终持久化图像完全相同的恢复起点。 */
-    public ProcessingCommand seedPostTransactionA(
-        Candidate candidate,
-        String commandActor,
-        String key,
-        int requestExpectedVersion,
-        long stateActor,
-        String explicitStateTrigger
-    ) {
-        own(key);
-        long releaseId = Long.parseLong(candidate.created().releaseId());
-        ProcessingCommand command = command(commandActor, key, releaseId, requestExpectedVersion);
-        String stateTrigger = explicitStateTrigger == null ? command.triggerId() : explicitStateTrigger;
+    /**
+     * 种入与 Validate 开始事务提交后完全一致的恢复起点：根进入 VALIDATING，只有开始审计、尚无检查结果
+     *
+     * @param candidate 已创建的 DRAFT Candidate
+     * @param stateActor 开始审计记录的操作者
+     */
+    public void seedValidationStarted(Candidate candidate, long stateActor) {
+        long releaseId = Long.parseLong(candidate.created().getReleaseId());
         Instant now = nextEventTime(releaseId);
         transaction.executeWithoutResult(ignored -> {
-            insertProcessing(command, releaseId, now);
             assertEquals(1, jdbc.update("UPDATE t_decision_release SET status='VALIDATING',version=2,update_time=? "
                 + "WHERE release_id=? AND status='DRAFT' AND version=1", Timestamp.from(now), releaseId));
             assertEquals(1, jdbc.update("INSERT INTO t_release_audit_event(audit_event_id,release_id,event_type,"
@@ -154,53 +139,23 @@ public final class DecisionReleaseTestFixture implements AutoCloseable {
                     + "reason_code,trigger_type,trigger_id,actor_id,aggregate_version,create_time) "
                     + "VALUES(?,?, 'STATE_CHANGE', ?,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"
                     + "'DRAFT','VALIDATING','STATIC_VALIDATION_STARTED','OPERATIONS_COMMAND',?,?,2,?)",
-                identifiers.nextIdentifier(), releaseId, Timestamp.from(now), stateTrigger, stateActor,
-                Timestamp.from(now)));
+                identifiers.nextIdentifier(), releaseId, Timestamp.from(now),
+                ReleaseAuditEvent.triggerId(releaseId, "VALIDATE"), stateActor, Timestamp.from(now)));
         });
-        return command;
-    }
-
-    public ProcessingCommand insertProcessingCommand(
-        Candidate candidate,
-        String actor,
-        String key,
-        int expectedVersion
-    ) {
-        own(key);
-        long releaseId = Long.parseLong(candidate.created().releaseId());
-        ProcessingCommand command = command(actor, key, releaseId, expectedVersion);
-        insertProcessing(command, releaseId, nextEventTime(releaseId));
-        return command;
     }
 
     public ReleaseFacts releaseFacts(Candidate candidate) {
-        long releaseId = Long.parseLong(candidate.created().releaseId());
+        long releaseId = Long.parseLong(candidate.created().getReleaseId());
         return jdbc.queryForObject("SELECT status,version,content_hash FROM t_decision_release WHERE release_id=?",
             (result, ignored) -> new ReleaseFacts(result.getString("status"), result.getInt("version"),
                 result.getString("content_hash"), countAudits(releaseId, "STATE_CHANGE"),
                 countAudits(releaseId, "STATIC_CHECK")), releaseId);
     }
 
-    public CommandFacts commandFacts(String actor, String key) {
-        return jdbc.queryForObject("SELECT request_hash,response_ref,status,expire_time,create_time,update_time "
-                + "FROM t_command_idempotency WHERE caller_scope=? AND operation_type=? "
-                + "AND BINARY idempotency_key=BINARY ?",
-            (result, ignored) -> new CommandFacts(result.getString("request_hash"),
-                result.getString("response_ref"), result.getString("status"),
-                result.getTimestamp("expire_time").toInstant(), result.getTimestamp("create_time").toInstant(),
-                result.getTimestamp("update_time").toInstant()), callerScope(actor), VALIDATE_OPERATION, key);
-    }
-
-    public long commandCount(String actor, String key) {
-        return jdbc.queryForObject("SELECT COUNT(*) FROM t_command_idempotency WHERE caller_scope=? "
-                + "AND operation_type=? AND BINARY idempotency_key=BINARY ?",
-            Long.class, callerScope(actor), VALIDATE_OPERATION, key);
-    }
-
     public List<String> checkCodes(Candidate candidate) {
         return jdbc.queryForList("SELECT check_code FROM t_release_audit_event WHERE release_id=? "
                 + "AND event_type='STATIC_CHECK' ORDER BY audit_event_id",
-            String.class, Long.parseLong(candidate.created().releaseId()));
+            String.class, Long.parseLong(candidate.created().getReleaseId()));
     }
 
     public long releaseCount() {
@@ -211,28 +166,6 @@ public final class DecisionReleaseTestFixture implements AutoCloseable {
         String key = decisionMapper.uniqueNamespace();
         own(key);
         return key;
-    }
-
-    public static String callerScope(String actor) {
-        return CALLER_PREFIX + actor;
-    }
-
-    private ProcessingCommand command(String actor, String key, long releaseId, int expectedVersion) {
-        var canonical = new RiskDecisionCanonicalizerImpl().validateTestReleaseCommand(
-            new ValidateTestReleaseCommandProjection(Long.toString(releaseId), expectedVersion));
-        CommandRequest request = CommandIdempotencyService.request(
-            CommandIdempotencyService.identity(actor, CommandOperationType.VALIDATE_TEST_DECISION_RELEASE, key),
-            canonical.schema(), canonical.sha256LowerHex());
-        return new ProcessingCommand(actor, key, request.requestHash(), CommandIdempotencyService.opaqueTriggerId(request));
-    }
-
-    private void insertProcessing(ProcessingCommand command, long releaseId, Instant now) {
-        assertEquals(1, jdbc.update("INSERT INTO t_command_idempotency(idempotency_id,caller_scope,operation_type,"
-                + "idempotency_key,request_hash,response_ref,status,expire_time,create_time,update_time) "
-                + "VALUES(?,?, 'VALIDATE_TEST_DECISION_RELEASE', ?,?,?,'PROCESSING',?,?,?)",
-            identifiers.nextIdentifier(), callerScope(command.actor()), command.key(), command.requestHash(),
-            "release:" + releaseId, Timestamp.from(now.plus(Duration.ofHours(24))), Timestamp.from(now),
-            Timestamp.from(now)));
     }
 
     private long countAudits(long releaseId, String eventType) {
@@ -269,26 +202,7 @@ public final class DecisionReleaseTestFixture implements AutoCloseable {
     ) {
     }
 
-    public record ProcessingCommand(String actor, String key, String requestHash, String triggerId) {
-    }
-
     public record ReleaseFacts(String status, int version, String contentHash, long stateChanges, long staticChecks) {
     }
 
-    public record CommandFacts(
-        String requestHash,
-        String responseReference,
-        String status,
-        Instant expireTime,
-        Instant createTime,
-        Instant updateTime
-    ) {
-        public CommandFacts {
-            assertEquals(Duration.ofHours(24), Duration.between(createTime, expireTime));
-        }
-    }
-
-    public static void requireDifferentTrigger(String expected, String replacement) {
-        assertNotEquals(expected, replacement);
-    }
 }

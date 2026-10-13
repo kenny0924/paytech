@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.CreateRuleSetVersionResponseBody;
+import com.paytech.risk.api.decision.response.CreateRuleSetVersionResponseBody;
 import com.paytech.risk.decision.domain.enums.DecisionBusinessDomain;
 import com.paytech.risk.decision.domain.enums.DecisionPointVersionStatus;
 import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
@@ -43,7 +43,7 @@ class RiskDecisionPersistenceAutoTest extends RiskServiceAutoTestBase {
             assertEquals(200, response.statusCode(), response.body());
             var created = http.body(response, CreateRuleSetVersionResponseBody.class);
 
-            var closure = ruleSetRepository.requireConfiguration(Long.parseLong(created.ruleSetVersionId()));
+            var closure = ruleSetRepository.requireConfiguration(Long.parseLong(created.getRuleSetVersionId()));
             assertEquals(DecisionBusinessDomain.CHECKOUT, closure.decisionPoint().businessDomain());
             assertNotNull(closure.decisionPoint().status());
             org.junit.jupiter.api.Assertions.assertNull(closure.pointVersion());
@@ -78,10 +78,10 @@ class RiskDecisionPersistenceAutoTest extends RiskServiceAutoTestBase {
             assertEquals(200, response.statusCode(), response.body());
             var created = http.body(response, CreateRuleSetVersionResponseBody.class);
             jdbc.update("UPDATE t_rule_set_version SET status='UNKNOWN_AUTO' WHERE rule_set_version_id=?",
-                Long.parseLong(created.ruleSetVersionId()));
+                Long.parseLong(created.getRuleSetVersionId()));
 
             RuntimeException failure = assertThrows(RuntimeException.class,
-                () -> ruleSetRepository.requireConfiguration(Long.parseLong(created.ruleSetVersionId())));
+                () -> ruleSetRepository.requireConfiguration(Long.parseLong(created.getRuleSetVersionId())));
             assertTrue(rootCause(failure).getMessage().contains("未知枚举 Code"));
             assertTrue(rootCause(failure).getMessage().contains("UNKNOWN_AUTO"));
         } finally {

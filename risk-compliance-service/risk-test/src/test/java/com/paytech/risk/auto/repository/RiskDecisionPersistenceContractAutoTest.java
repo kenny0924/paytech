@@ -136,25 +136,31 @@ class RiskDecisionPersistenceContractAutoTest {
         ));
         assertMapperSurface("DecisionReleaseMapper", Set.of(
             "selectRelease", "lockRelease", "selectReleases", "countReleases",
-            "selectReleaseAuditEvents", "selectReleaseAuditEventsByReleaseIds",
             "countNonCanonicalReleaseNumbers", "selectMaxReleaseNo", "insertRelease",
-            "insertReleaseAuditEvent", "insertReleaseAuditEvents", "moveReleaseToValidating",
-            "moveReleaseToRejected"
+            "moveReleaseToValidating", "moveReleaseToRejected"
+        ));
+        // 发布审计按表拆为独立 Mapper，一个 Repository 对应一张表。
+        assertMapperSurface("ReleaseAuditEventMapper", Set.of(
+            "selectReleaseAuditEvents", "selectReleaseAuditEventsByReleaseIds",
+            "insertReleaseAuditEvent", "insertReleaseAuditEvents"
         ));
     }
 
     @Test
     void test_lockedResourceDisappearanceAndUnexpectedCasCountAreInternalCorruption() throws Exception {
+        // 发布根加锁读取返回 Optional，由调用方把缺失转换为不存在；锁中资源消失的 corruption 检查只在规则集仓储。
+        Class<?> ruleSetRepository = Class.forName(
+            "com.paytech.risk.decision.domainservice.repository.impl.DecisionRuleSetRepositoryImpl");
+        Method requireLocked = ruleSetRepository.getDeclaredMethod("requireLocked", Object.class, String.class);
+        requireLocked.setAccessible(true);
+        InvocationTargetException missing = assertThrows(InvocationTargetException.class,
+            () -> requireLocked.invoke(null, null, "missing"));
+        assertEquals("com.paytech.foundation.common.error.ErrorException",
+            missing.getCause().getClass().getName(), "锁中资源消失必须为 500 corruption");
+
         for (String implementation : List.of("DecisionRuleSetRepositoryImpl", "DecisionReleaseRepositoryImpl")) {
             Class<?> type = Class.forName(
                 "com.paytech.risk.decision.domainservice.repository.impl." + implementation);
-
-            Method requireLocked = type.getDeclaredMethod("requireLocked", Object.class, String.class);
-            requireLocked.setAccessible(true);
-            InvocationTargetException missing = assertThrows(InvocationTargetException.class,
-                () -> requireLocked.invoke(null, null, "missing"));
-            assertEquals("com.paytech.foundation.common.error.ErrorException",
-                missing.getCause().getClass().getName(), implementation + " 锁中资源消失必须为 500 corruption");
 
             Method requireCas = type.getDeclaredMethod("requireCas", int.class, String.class);
             requireCas.setAccessible(true);
@@ -173,10 +179,6 @@ class RiskDecisionPersistenceContractAutoTest {
         assertTrue(ruleSetSource.contains("requireLocked(mapper.lockDecisionPoint"));
         assertTrue(ruleSetSource.contains("requireLocked(mapper.lockRuleSetVersion"));
         assertTrue(ruleSetSource.contains("requireLocked(mapper.lockPointVersion"));
-        String releaseSource = Files.readString(Path.of(System.getProperty("risk.reactor.root"),
-            "risk-decision", "src", "main", "java", "com", "paytech", "risk", "decision",
-            "domainservice", "repository", "impl", "DecisionReleaseRepositoryImpl.java"));
-        assertTrue(releaseSource.contains("requireLocked(releaseMapper.lockRelease"));
     }
 
     @Test
@@ -238,14 +240,11 @@ class RiskDecisionPersistenceContractAutoTest {
     @Test
     void test_releaseXmlLoadsAndMatchesTheExactContract() throws Exception {
         MapperXml xml = mapperXml("DecisionReleaseMapper");
-        assertEquals(Set.of("DecisionReleaseResultMap", "ReleaseAuditEventResultMap"),
-            xml.ids("resultMap"));
+        assertEquals(Set.of("DecisionReleaseResultMap"), xml.ids("resultMap"));
         assertEquals(Set.of("ReleaseListFilter"), xml.ids("sql"));
         assertEquals(Set.of("selectRelease", "lockRelease", "selectReleases", "countReleases",
-            "selectReleaseAuditEvents", "selectReleaseAuditEventsByReleaseIds",
             "countNonCanonicalReleaseNumbers", "selectMaxReleaseNo"), xml.ids("select"));
-        assertEquals(Set.of("insertRelease", "insertReleaseAuditEvent", "insertReleaseAuditEvents"),
-            xml.ids("insert"));
+        assertEquals(Set.of("insertRelease"), xml.ids("insert"));
         assertEquals(Set.of("moveReleaseToValidating", "moveReleaseToRejected"), xml.ids("update"));
 
         xml.assertSharedFilter("selectReleases", "countReleases", "ReleaseListFilter");
@@ -271,6 +270,19 @@ class RiskDecisionPersistenceContractAutoTest {
         assertContainsNormalized(xml.statement("moveReleaseToRejected"),
             "and version = #{expectedversion}");
         xml.assertLocks("lockRelease");
+        xml.assertAllSelectsDisableCache();
+        xml.assertResultMapsMatchDataObjects();
+        xml.assertEveryResultMapUsesJavaTypeBoundEnumHandlers();
+        xml.assertParametersUseRegisteredEnumsAndExplicitInstants();
+        xml.assertSafeSql();
+    }
+
+    @Test
+    void test_releaseAuditXmlLoadsAndMatchesTheExactContract() throws Exception {
+        MapperXml xml = mapperXml("ReleaseAuditEventMapper");
+        assertEquals(Set.of("ReleaseAuditEventResultMap"), xml.ids("resultMap"));
+        assertEquals(Set.of("selectReleaseAuditEvents", "selectReleaseAuditEventsByReleaseIds"), xml.ids("select"));
+        assertEquals(Set.of("insertReleaseAuditEvent", "insertReleaseAuditEvents"), xml.ids("insert"));
         xml.assertBatch("insertReleaseAuditEvents", "values");
         xml.assertAllSelectsDisableCache();
         xml.assertResultMapsMatchDataObjects();
@@ -281,7 +293,8 @@ class RiskDecisionPersistenceContractAutoTest {
 
     @Test
     void test_xmlTouchesExactlyTheDecisionOwnerTables() throws Exception {
-        String allXml = mapperXml("DecisionRuleSetMapper").raw + mapperXml("DecisionReleaseMapper").raw;
+        String allXml = mapperXml("DecisionRuleSetMapper").raw + mapperXml("DecisionReleaseMapper").raw
+            + mapperXml("ReleaseAuditEventMapper").raw;
         Matcher matcher = Pattern.compile("\\bt_[a-z_]+\\b").matcher(allXml);
         Set<String> actual = new LinkedHashSet<>();
         while (matcher.find()) {

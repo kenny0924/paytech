@@ -38,7 +38,7 @@ class RuleSetInputContractHttpAutoTest extends RiskServiceAutoTestBase {
             var history = http.get("/decision-rule-sets/v1/rule-sets/" + firstId, ACTOR, SESSION);
             assertEquals(200, history.statusCode(), history.body());
             assertEquals("RETIRED", http.json(history).path("status").asText());
-            assertEquals(first.body(), http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, createKey, body).body());
+            com.paytech.risk.test.decision.RiskDecisionHttpClient.assertProblem(http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, createKey, body), 409, "CONCURRENT_REQUEST");
             String freezeKey = key("FREEZE_RULE_SET_VERSION", commands);
             var freezeBody = Map.of("expectedContentHash", root.path("contentHash").asText());
             var frozen = http.post("/decision-rule-sets/v1/rule-sets/" + secondId + "/freeze", ACTOR, SESSION, freezeKey, freezeBody);

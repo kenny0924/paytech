@@ -229,8 +229,8 @@ class RiskVariableHttpAutoTest extends RiskServiceAutoTestBase {
             }
             send("DELETE", ROOT + "/" + variableCode + "?expectedVersion=2", null, 409);
             send("PUT", ROOT + "/" + variableCode, update("2", "9000", "DISABLED"), 200);
-            assertEquals(ruleResult.body(), http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, ruleKey, rule).body());
-            assertEquals(flowResult.body(), http.post("/decision-flows/v1/flows", ACTOR, SESSION, flowKey, flow).body());
+            RiskDecisionHttpClient.assertProblem(http.post("/decision-rule-sets/v1/rule-sets", ACTOR, SESSION, ruleKey, rule), 409, "CONCURRENT_REQUEST");
+            RiskDecisionHttpClient.assertProblem(http.post("/decision-flows/v1/flows", ACTOR, SESSION, flowKey, flow), 409, "RISK_FLOW_CODE_EXISTS");
             assertEquals(runtimeBefore, decisionTestMapper.runtimeFactCounts());
         } finally {
             flowTestMapper.clean(flowCode);
@@ -285,7 +285,6 @@ class RiskVariableHttpAutoTest extends RiskServiceAutoTestBase {
                 }
                 else if (mutation.equals("DELETE")) RiskDecisionHttpClient.assertProblem(secondResult, 409, "VARIABLE_IN_USE");
                 else assertEquals(200, secondResult.statusCode(), secondResult.body());
-                assertEquals(saveFirst ? 1 : 0, decisionTestMapper.ownedCommandCount("OPERATIONS_ACCOUNT:" + ACTOR, operation, key));
                 String expectedStatus = mutation.equals("DISABLE") ? "DISABLED" : saveFirst ? "ACTIVE" : "DELETED";
                 assertEquals(expectedStatus, send("GET", path, null, 200).path("status").asString());
                 if (saveFirst) {

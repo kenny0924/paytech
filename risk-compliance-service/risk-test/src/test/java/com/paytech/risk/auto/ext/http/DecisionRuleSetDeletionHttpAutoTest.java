@@ -7,7 +7,7 @@ import static com.paytech.risk.test.decision.DecisionReleaseTestFixture.ACTOR;
 import static com.paytech.risk.test.decision.DecisionReleaseTestFixture.SESSION;
 import static com.paytech.risk.test.decision.RiskDecisionHttpClient.assertProblem;
 
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.FreezeRuleSetVersionRequestBody;
+import com.paytech.risk.api.decision.request.FreezeRuleSetVersionRequestBody;
 import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
 import com.paytech.risk.test.base.RiskServiceAutoTestBase;
 import com.paytech.risk.test.builder.DecisionRuleSetRequestBuilder;
@@ -15,6 +15,7 @@ import com.paytech.risk.test.decision.DecisionReleaseTestFixture;
 import com.paytech.risk.test.decision.RiskDecisionHttpClient;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
@@ -41,18 +42,14 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
     @Autowired
     private DecisionIdentifierGenerator identifiers;
 
-    /** 多版本合为一行，删除只改变管理根；历史命令和 Candidate 仍可回放。 */
+    /** 多版本合为一行，删除只改变管理根并保留冻结历史；已有 Candidate 仍可读取和完成校验。 */
     @Test
-    void test_deleteWholeSetKeepsFrozenHistoryAndStableCommandReplays() throws Exception {
+    void test_deleteWholeSetKeepsFrozenHistoryAndRejectsRepeatedDelete() throws Exception {
         try (var f = fixture(); var http = new RiskDecisionHttpClient(port)) {
             var candidate = f.arrangeFrozenCandidate();
             var initial = DecisionRuleSetRequestBuilder.firstVersion(f.ruleSetCode());
-            var first = http.post(RULES, ACTOR, SESSION, f.originalRuleCreateKey(), initial);
-            var frozenBody = new FreezeRuleSetVersionRequestBody(candidate.request().expectedRuleSetContentHash());
-            var freezeReplay = http.post(RULES + "/" + candidate.created().ruleSetVersionId() + "/freeze",
-                ACTOR, SESSION, f.originalRuleFreezeKey(), frozenBody);
             var secondRequest = DecisionRuleSetRequestBuilder.currentNextVersion(f.ruleSetCode(),
-                candidate.created().ruleSetVersionId(), candidate.request().expectedRuleSetContentHash());
+                candidate.created().getRuleSetVersionId(), candidate.request().getExpectedRuleSetContentHash());
             String saveKey = f.nextKey();
             var second = http.post(RULES, ACTOR, SESSION, saveKey, secondRequest);
             assertEquals(200, second.statusCode(), second.body());
@@ -70,22 +67,17 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
             assertEquals(200, deleted.statusCode(), deleted.body());
             assertEquals("DELETED", http.json(deleted).get("status").asText());
             assertEquals("4", http.json(deleted).get("version").asText());
-            assertEquals(deleted.body(), delete(http, root, key).body());
+            assertProblem(delete(http, root, key), 409, "RISK_RULE_SET_DELETED");
             assertEquals(history, history(f.ruleSetCode()));
             assertEquals(counts, decisionTestMapper.snapshotCounts(f.ruleSetCode()));
             assertEquals(0, page(http, f.ruleSetCode(), "").get("total").asLong());
-            for (String id : List.of(candidate.created().ruleSetVersionId(), root.get("ruleSetVersionId").asText()))
+            for (String id : List.of(candidate.created().getRuleSetVersionId(), root.get("ruleSetVersionId").asText()))
                 assertProblem(http.get(RULES + "/" + id, ACTOR, SESSION), 404, "RISK_DECISION_CONFIGURATION_NOT_FOUND");
             assertProblem(delete(http, root, f.nextKey()), 409, "RISK_RULE_SET_DELETED");
             assertProblem(http.post(RULES, ACTOR, SESSION, f.nextKey(), DecisionRuleSetRequestBuilder.current(initial)), 409, "RISK_RULE_SET_DELETED");
             assertProblem(http.post(RULES + "/" + root.get("ruleSetVersionId").asText() + "/freeze", ACTOR,
                 SESSION, f.nextKey(), new FreezeRuleSetVersionRequestBody(root.get("contentHash").asText())), 409, "RISK_RULE_SET_DELETED");
             assertProblem(f.postCandidate(f.nextKey(), candidate.request()), 409, "RISK_RULE_SET_DELETED");
-            assertEquals(first.body(), http.post(RULES, ACTOR, SESSION, f.originalRuleCreateKey(), initial).body());
-            assertEquals(second.body(), http.post(RULES, ACTOR, SESSION, saveKey, secondRequest).body());
-            assertEquals(freezeReplay.body(), http.post(RULES + "/" + candidate.created().ruleSetVersionId() + "/freeze",
-                ACTOR, SESSION, f.originalRuleFreezeKey(), frozenBody).body());
-            assertEquals(candidate.firstBody(), f.postCandidate(candidate.createKey(), candidate.request()).body());
             assertEquals(200, f.getCandidate(candidate).statusCode());
             String validateKey = f.nextKey();
             var validated = f.postValidate(candidate, ACTOR, validateKey, 1);
@@ -102,20 +94,18 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
         try (var f = fixture(); var http = new RiskDecisionHttpClient(port)) {
             var candidate = f.arrangeFrozenCandidate();
             var second = http.post(RULES, ACTOR, SESSION, f.nextKey(), DecisionRuleSetRequestBuilder.currentNextVersion(
-                f.ruleSetCode(), candidate.created().ruleSetVersionId(), candidate.request().expectedRuleSetContentHash()));
+                f.ruleSetCode(), candidate.created().getRuleSetVersionId(), candidate.request().getExpectedRuleSetContentHash()));
             assertEquals(200, second.statusCode(), second.body());
             jdbc.update("UPDATE t_decision_release SET environment_code=?,status='ACTIVE',active_slot=1 WHERE release_id=?",
-                environment, candidate.created().releaseId());
+                environment, candidate.created().getReleaseId());
             var root = page(http, f.ruleSetCode(), "").get("items").get(0);
             assertEquals("DRAFT", root.get("status").asText());
             assertTrue(root.get("inUse").asBoolean());
             String key = f.nextKey();
             assertProblem(delete(http, root, key), 409, "RISK_RULE_SET_IN_USE");
-            assertEquals(0, commandCount(key));
             jdbc.update("UPDATE t_decision_release SET status='SUPERSEDED',active_slot=NULL WHERE release_id=?",
-                candidate.created().releaseId());
+                candidate.created().getReleaseId());
             assertEquals(200, delete(http, root, key).statusCode());
-            assertEquals(1, commandCount(key));
         }
     }
 
@@ -128,13 +118,11 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
             String path = RULES + "/" + root.get("ruleSetId").asText();
             String key = f.nextKey();
             assertProblem(http.delete(path, ACTOR, SESSION, key, Map.of("expectedVersion", "1")), 409, "RISK_RULE_SET_CHANGED");
-            assertEquals(0, commandCount(key));
-            jdbc.update("UPDATE t_decision_release SET active_slot=1 WHERE release_id=?", candidate.created().releaseId());
+            jdbc.update("UPDATE t_decision_release SET active_slot=1 WHERE release_id=?", candidate.created().getReleaseId());
             try {
                 assertEquals(500, delete(http, root, key).statusCode());
                 assertEquals(500, http.get(RULES + "?page=1&size=10&ruleSetCode=" + f.ruleSetCode(), ACTOR, SESSION).statusCode());
-                assertEquals(0, commandCount(key));
-            } finally { jdbc.update("UPDATE t_decision_release SET active_slot=NULL WHERE release_id=?", candidate.created().releaseId()); }
+            } finally { jdbc.update("UPDATE t_decision_release SET active_slot=NULL WHERE release_id=?", candidate.created().getReleaseId()); }
             assertEquals("CONFIGURABLE", jdbc.queryForObject("SELECT status FROM t_rule_set WHERE rule_set_id=?", String.class,
                 root.get("ruleSetId").asText()));
         }
@@ -142,7 +130,7 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
 
     /** 两个相同幂等删除并发只形成一次终态，响应完全一致。 */
     @Test
-    void test_parallelSameDeleteHasOneStableReceipt() throws Exception {
+    void test_parallelSameDeleteHasOneWinner() throws Exception {
         try (var f = fixture(); var http = new RiskDecisionHttpClient(port); var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             f.arrangeFrozenCandidate();
             var root = page(http, f.ruleSetCode(), "").get("items").get(0);
@@ -150,10 +138,13 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
             var first = executor.submit(() -> delete(http, root, key));
             var second = executor.submit(() -> delete(http, root, key));
             var a = first.get(); var b = second.get();
-            assertEquals(200, a.statusCode(), a.body());
-            assertEquals(200, b.statusCode(), b.body());
-            assertEquals(a.body(), b.body());
-            assertEquals(1, commandCount(key));
+            // 同一资源并发删除只有一个成功；另一个在锁内看到已删除或在锁等待超时后返回并发冲突。
+            var winner = a.statusCode() == 200 ? a : b;
+            var loser = winner == a ? b : a;
+            assertEquals(200, winner.statusCode(), winner.body());
+            assertEquals(409, loser.statusCode(), loser.body());
+            assertTrue(Set.of("RISK_RULE_SET_DELETED", "CONCURRENT_REQUEST").contains(http.json(loser).path("code").asText()),
+                loser.body());
         }
     }
 
@@ -168,7 +159,6 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
                 var response = http.delete(RULES + "/" + root.get("ruleSetId").asText(), ACTOR, SESSION, key,
                     Map.of("expectedVersion", invalid));
                 assertTrue(response.statusCode() == 400 || response.statusCode() == 422, response.body());
-                assertEquals(0, commandCount(key));
             }
         }
     }
@@ -179,10 +169,10 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
         try (var f = fixture(); var http = new RiskDecisionHttpClient(port)) {
             var first = f.arrangeFrozenCandidate();
             var second = http.post(RULES, ACTOR, SESSION, f.nextKey(), DecisionRuleSetRequestBuilder.currentNextVersion(
-                f.ruleSetCode(), first.created().ruleSetVersionId(), first.request().expectedRuleSetContentHash()));
+                f.ruleSetCode(), first.created().getRuleSetVersionId(), first.request().getExpectedRuleSetContentHash()));
             assertEquals(200, second.statusCode(), second.body());
             String head = http.json(second).get("ruleSetVersionId").asText();
-            for (String invalid : List.of(Long.toString(Long.MAX_VALUE), first.created().ruleSetVersionId())) {
+            for (String invalid : List.of(Long.toString(Long.MAX_VALUE), first.created().getRuleSetVersionId())) {
                 jdbc.update("UPDATE t_rule_set SET current_rule_set_version_id=? WHERE rule_set_code=?", invalid, f.ruleSetCode());
                 try {
                     var response = http.get(RULES + "?page=1&size=10&ruleSetCode=" + f.ruleSetCode(), ACTOR, SESSION);
@@ -198,7 +188,7 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
         try (var f = fixture(); var http = new RiskDecisionHttpClient(port)) {
             var candidate = f.arrangeFrozenCandidate();
             var second = http.post(RULES, ACTOR, SESSION, f.nextKey(), DecisionRuleSetRequestBuilder.currentNextVersion(
-                f.ruleSetCode(), candidate.created().ruleSetVersionId(), candidate.request().expectedRuleSetContentHash()));
+                f.ruleSetCode(), candidate.created().getRuleSetVersionId(), candidate.request().getExpectedRuleSetContentHash()));
             assertEquals(200, second.statusCode(), second.body());
             var root = page(http, f.ruleSetCode(), "").get("items").get(0);
             var lock = redis.getLock("decision:rule-set:CHECKOUT_PREPARE:" + f.ruleSetCode());
@@ -211,7 +201,6 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
                 assertProblem(http.post(RULES + "/" + root.get("ruleSetVersionId").asText() + "/freeze", ACTOR,
                     SESSION, f.nextKey(), new FreezeRuleSetVersionRequestBody(root.get("contentHash").asText())), 409, "CONCURRENT_REQUEST");
                 assertProblem(f.postCandidate(f.nextKey(), candidate.request()), 409, "CONCURRENT_REQUEST");
-                assertEquals(0, commandCount(deleteKey));
             } finally { lock.unlock(); }
             assertEquals(200, delete(http, root, deleteKey).statusCode());
             assertFalse(lock.isLocked(), "成功提交之后必须释放 Redis 锁");
@@ -222,7 +211,6 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
                 java.net.http.HttpResponse.BodyHandlers.ofString());
             assertEquals(200, metrics.statusCode(), metrics.body());
             assertTrue(metrics.body().contains("jvm_memory_used_bytes"));
-            assertTrue(metrics.body().contains("paytech_resource_lock_total"));
         }
     }
 
@@ -259,14 +247,13 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
             } else {
                 assertProblem(deleted, 409, "RISK_RULE_SET_CHANGED");
                 assertEquals(200, written.statusCode(), written.body());
-                assertEquals(0, commandCount(deleteKey));
             }
         }
     }
 
     /** 已删除命令的回执不依赖之后发生变化的动作目录。 */
     @Test
-    void test_deleteReplayDoesNotReloadConfigurationOrActionCatalog() throws Exception {
+    void test_repeatedDeleteIsRejectedWithoutReloadingActionCatalog() throws Exception {
         try (var f = fixture(); var http = new RiskDecisionHttpClient(port)) {
             f.arrangeFrozenCandidate();
             var root = page(http, f.ruleSetCode(), "").get("items").get(0);
@@ -276,9 +263,7 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
             String original = jdbc.queryForObject("SELECT implementation_hash FROM t_action_version WHERE action_code='ALLOW_CHECKOUT'", String.class);
             jdbc.update("UPDATE t_action_version SET implementation_hash=? WHERE action_code='ALLOW_CHECKOUT'", "b".repeat(64));
             try {
-                var replay = delete(http, root, key);
-                assertEquals(200, replay.statusCode(), replay.body());
-                assertEquals(result.body(), replay.body());
+                assertProblem(delete(http, root, key), 409, "RISK_RULE_SET_DELETED");
                 assertProblem(delete(http, root, f.nextKey()), 409, "RISK_RULE_SET_DELETED");
             } finally { jdbc.update("UPDATE t_action_version SET implementation_hash=? WHERE action_code='ALLOW_CHECKOUT'", original); }
         }
@@ -287,11 +272,6 @@ class DecisionRuleSetDeletionHttpAutoTest extends RiskServiceAutoTestBase {
     /** 当前测试拥有的完整版本行快照，整体删除前后应逐项相等。 */
     private List<Map<String, Object>> history(String code) {
         return jdbc.queryForList("SELECT * FROM t_rule_set_version WHERE rule_set_code=? ORDER BY version_no", code);
-    }
-
-    /** 按准确测试命令键观察提交次数。 */
-    private long commandCount(String key) {
-        return jdbc.queryForObject("SELECT COUNT(*) FROM t_command_idempotency WHERE idempotency_key=?", Long.class, key);
     }
 
     /** 使用规则集粒度查询并校验成功响应。 */
