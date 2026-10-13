@@ -58,7 +58,7 @@ class ExternalApiEditorTest extends ExternalApiTestBase {
                 context.getStandardApi().getRequestFields().stream().map(ApiFieldDetail::getFieldPath).toList()),
             () -> assertEquals(2, context.getStandardApi().getResponseFields().size()),
             () -> assertEquals(ExternalApiSamples.CREATE_ORDER, api.getApiCode()),
-            () -> assertEquals(List.of("outletRef:false", "Content-Type:true", "orderRef:false", "amount:false"),
+            () -> assertEquals(List.of("outletRef:false", "X-Api-Version:true", "orderRef:false", "amount:false"),
                 api.getRequestFields().stream().map(ExternalApiEditorTest::fixed).toList()),
             () -> assertEquals(List.of("signingKey:PROTECTED_HANDLE"),
                 api.getParams().stream().map(parameter -> parameter.getName() + ":" + parameter.getDataType())

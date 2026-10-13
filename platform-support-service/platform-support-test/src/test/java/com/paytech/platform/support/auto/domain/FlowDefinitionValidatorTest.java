@@ -68,9 +68,9 @@ class FlowDefinitionValidatorTest {
     @Test
     void test_validFlowSummary() {
         var createOrder = new ApiContract(ExternalApiSamples.CREATE_ORDER, "下单",
-            List.of(field(ApiFieldLocation.PATH, "outletRef"), field(ApiFieldLocation.HEADER, "Content-Type"),
+            List.of(field(ApiFieldLocation.PATH, "outletRef"), field(ApiFieldLocation.HEADER, "X-Api-Version"),
                 field(ApiFieldLocation.BODY, "orderRef"), field(ApiFieldLocation.BODY, "amount")),
-            Set.of("HEADER:content-type"), List.of(new ParameterDeclaration("signingKey", "PROTECTED_HANDLE", true)),
+            Set.of("HEADER:x-api-version"), List.of(new ParameterDeclaration("signingKey", "PROTECTED_HANDLE", true)),
             Map.of("SUCCESS", List.of(new ParameterDeclaration("transactionRef", "STRING", true))));
         var request = List.of(new FieldDefinition(ApiFieldLocation.BODY, "paymentContext", "上下文",
             ApiFieldDataType.OBJECT, true, null), field("paymentContext.attemptId", true),

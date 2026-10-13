@@ -47,11 +47,11 @@ def field(location, path, data_type='STRING', required=True):
 standard_request = [field('BODY', 'paymentContext', 'OBJECT'), field('BODY', 'paymentContext.attemptId'),
                     field('BODY', 'paymentContext.amount'), field('BODY', 'paymentContext.vaultToken')]
 standard_response = [field('BODY', 'paymentStatus'), field('BODY', 'transactionRef', required=False)]
-api_request = [field('PATH', 'outletRef'), field('HEADER', 'Content-Type'), field('BODY', 'orderRef'), field('BODY', 'amount')]
+api_request = [field('PATH', 'outletRef'), field('HEADER', 'X-Api-Version'), field('BODY', 'orderRef'), field('BODY', 'amount')]
 api_response = [field('BODY', 'reference'), field('BODY', 'state')]
 definition = {
     'params': [{'name': 'signingKey', 'dataType': 'PROTECTED_HANDLE', 'required': True}],
-    'fixedValues': {'HEADER:Content-Type': {'kind': 'EXPRESSION', 'expression': "'application/json'"}},
+    'fixedValues': {'HEADER:X-Api-Version': {'kind': 'EXPRESSION', 'expression': "'2'"}},
     'transport': {'protocol': 'HTTP', 'method': 'POST', 'endpointCode': 'DEMO_GATEWAY', 'pathTemplate': '/outlets/{outletRef}/orders',
                   'connectTimeoutMs': 2000, 'responseTimeoutMs': 10000},
     'requestEncoding': 'JSON', 'responseDecoding': 'JSON',

@@ -282,7 +282,7 @@ textarea.xapi-code-editor, .xapi-code-editor textarea { background: #1f2430 !imp
 .xmap-toolbar { display: flex; align-items: center; gap: 12px; padding: 12px 24px; }
 .xmap-body { flex: 1; min-height: 0; display: flex; gap: 16px; padding: 0 24px 16px; }
 .xmap-table { flex: 1; min-width: 0; overflow: auto; border: 1px solid var(--xapi-border); border-radius: 4px; align-self: flex-start; max-height: 100%; }
-.xmap-thead, .xmap-tmain { display: grid; grid-template-columns: 210px 70px minmax(0, 1fr); gap: 12px; align-items: center; }
+.xmap-thead, .xmap-tmain { display: grid; grid-template-columns: 280px 90px minmax(0, 1fr); gap: 12px; align-items: center; }
 .xmap-thead { position: sticky; top: 0; z-index: 2; height: 34px; padding: 0 12px; background: #f7f8fb; border-bottom: 1px solid var(--xapi-border); font-size: 12px; color: var(--xapi-muted); }
 .xmap-tgroup { padding: 4px 12px; background: #fafbfd; border-bottom: 1px solid var(--xapi-line); font-size: 11px; letter-spacing: .4px; color: var(--xapi-muted); }
 .xmap-tgroup.is-fixed { display: flex; gap: 10px; letter-spacing: 0; border-bottom: 0; }
@@ -301,8 +301,8 @@ textarea.xapi-code-editor, .xapi-code-editor textarea { background: #1f2430 !imp
 .xmap-function .external-api-binding-arg { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 6px; align-items: start; font-size: 12px; }
 .xmap-clear { border: 0; background: none; cursor: pointer; color: var(--xapi-faint); padding: 5px 2px; }
 .xmap-clear:hover { color: #cf1322; }
-.xmap-hint { padding-left: 304px; font-size: 11px; color: #ad6800; }
-.xmap-note { padding-left: 304px; font-size: 11px; color: var(--xapi-faint); }
+.xmap-hint { padding-left: 394px; font-size: 11px; color: #ad6800; }
+.xmap-note { padding-left: 394px; font-size: 11px; color: var(--xapi-faint); }
 .xmap-suggest { display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 0 8px; border: 1px dashed #b7c4e8; border-radius: 4px; min-width: 0; }
 .xmap-suggest code { font-family: var(--xapi-mono); font-size: 11px; color: #7f93c9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .xmap-suggest-tag { font-size: 10px; color: var(--xapi-primary); flex-shrink: 0; }
@@ -311,7 +311,7 @@ textarea.xapi-code-editor, .xapi-code-editor textarea { background: #1f2430 !imp
 .xmap-option { display: flex; justify-content: space-between; gap: 12px; }
 .xmap-option code { font-family: var(--xapi-mono); font-size: 11px; }
 .xmap-option span { font-family: var(--xapi-mono); font-size: 10px; color: var(--xapi-faint); }
-.xmap-vars { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--xapi-border); border-radius: 4px;
+.xmap-vars { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--xapi-border); border-radius: 4px;
   background: #fafbfd; min-height: 0; }
 .xmap-vars-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
 .xmap-target { font-size: 11px; color: var(--xapi-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

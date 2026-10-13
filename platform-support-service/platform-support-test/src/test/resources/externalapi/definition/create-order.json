@@ -7,9 +7,9 @@
     }
   ],
   "fixedValues": {
-    "HEADER:Content-Type": {
+    "HEADER:X-Api-Version": {
       "kind": "EXPRESSION",
-      "expression": "'application/json'"
+      "expression": "'2'"
     }
   },
   "transport": {

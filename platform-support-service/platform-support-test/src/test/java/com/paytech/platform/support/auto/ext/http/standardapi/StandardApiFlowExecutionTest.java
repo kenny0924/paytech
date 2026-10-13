@@ -65,7 +65,7 @@ class StandardApiFlowExecutionTest extends ExternalApiTestBase {
         externalApi.implementation(demo, pay, ExternalApiSamples.payFlow());
     }
 
-    /** 渠道 201 CAPTURED：SUCCESS，请求路径按段编码、Content-Type 来自固定值、签名由脚本用受控句柄计算。 */
+    /** 渠道 201 CAPTURED：SUCCESS，请求路径按段编码、版本头来自固定值、Content-Type 按 JSON 编码补默认值、签名由脚本用受控句柄计算。 */
     @Test
     void test_success() {
         allowAccount(DEMO);
@@ -74,6 +74,7 @@ class StandardApiFlowExecutionTest extends ExternalApiTestBase {
         assertResult(ExecuteStatus.SUCCESS, Map.of("paymentStatus", "PAID", "transactionRef", "ref-1"), execute());
         var request = channel.only();
         assertAll(() -> assertEquals("application/json", request.headers().get("content-type")),
+            () -> assertEquals("2", request.headers().get("x-api-version")),
             () -> assertEquals(hmac(API_KEY, ATTEMPT), request.headers().get("signature")),
             () -> assertEquals("{\"orderRef\":\"" + ATTEMPT + "\",\"amount\":\"10.00\"}", request.body()),
             () -> assertEquals(1, channelAccountVault.revealCount()));

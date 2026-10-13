@@ -58,10 +58,10 @@ public final class ExternalApiSamples {
         return List.of(new IntegrationEndpointBody(ENDPOINT, "https://gateway.example.test/api"));
     }
 
-    /** 下单原子 API 请求字段：路径门店、固定 Content-Type、订单号与金额。 */
+    /** 下单原子 API 请求字段：路径门店、固定版本头 X-Api-Version、订单号与金额；Content-Type 由请求编码补默认值。 */
     public static List<ApiFieldBody> createOrderRequestFields() {
         return List.of(field(PATH, "outletRef", STRING, true),
-            field(HEADER, "Content-Type", STRING, true),
+            field(HEADER, "X-Api-Version", STRING, true),
             field(BODY, "orderRef", STRING, true),
             field(BODY, "amount", STRING, true));
     }

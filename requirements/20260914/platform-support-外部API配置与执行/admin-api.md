@@ -122,7 +122,7 @@
   "description": null,
   "requestFields": [
     {"fieldLocation":"PATH","fieldPath":"outletRef","fieldName":"门店引用","dataType":"STRING","required":true,"description":null},
-    {"fieldLocation":"HEADER","fieldPath":"Content-Type","fieldName":"内容类型","dataType":"STRING","required":true,"description":null}
+    {"fieldLocation":"HEADER","fieldPath":"X-Api-Version","fieldName":"接口版本","dataType":"STRING","required":true,"description":null}
   ],
   "responseFields": [
     {"fieldLocation":"BODY","fieldPath":"reference","fieldName":"渠道订单号","dataType":"STRING","required":true,"description":null}

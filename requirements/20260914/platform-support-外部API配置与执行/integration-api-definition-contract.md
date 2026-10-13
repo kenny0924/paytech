@@ -73,6 +73,7 @@
 - 值只能是**常量表达式**（不引用 `input`、`resources`、`steps`、`params`），保证原子 API 与具体流程无关。
 - 已有固定值的字段不能再由节点赋值，保存流程时拒绝冲突。
 - 节点赋值与固定值合起来必须覆盖全部必填请求字段（流程保存时校验）。
+- 请求没有 `Content-Type` 时，执行按 `requestEncoding` 补默认值（`JSON` 为 `application/json`，`FORM_URLENCODED` 为 `application/x-www-form-urlencoded`）。只有渠道要求其他值（如上例的厂商类型）时，才把它定义为请求字段并设固定值。
 
 ## 5. 传输与编解码
 
@@ -201,7 +202,7 @@
     {"name":"signingKey","dataType":"PROTECTED_HANDLE","required":true}
   ],
   "fixedValues": {
-    "HEADER:Content-Type": {"kind":"EXPRESSION","expression":"'application/json'"}
+    "HEADER:X-Api-Version": {"kind":"EXPRESSION","expression":"'2'"}
   },
   "transport": {
     "protocol":"HTTP","method":"POST","endpointCode":"DEMO_GATEWAY",
@@ -233,4 +234,4 @@
 }
 ```
 
-对应的请求字段（`t_api_field`，`INTEGRATION_API_REQUEST`）：`PATH outletRef`、`HEADER Content-Type`、`BODY merchantOrderReference`、`BODY amount.value`、`BODY amount.currencyCode`。其中 `Content-Type` 由固定值提供，其余由流程节点 `request` 赋值，`signingKey` 由节点 `params` 绑定。HTTP 201 但状态不是 `CAPTURED`/`DECLINED`，或任何非 201 响应，都落入 `ERROR`。
+对应的请求字段（`t_api_field`，`INTEGRATION_API_REQUEST`）：`PATH outletRef`、`HEADER X-Api-Version`、`BODY merchantOrderReference`、`BODY amount.value`、`BODY amount.currencyCode`。其中 `X-Api-Version` 由固定值提供，`Content-Type` 按 `JSON` 编码自动补 `application/json`，其余由流程节点 `request` 赋值，`signingKey` 由节点 `params` 绑定。HTTP 201 但状态不是 `CAPTURED`/`DECLINED`，或任何非 201 响应，都落入 `ERROR`。

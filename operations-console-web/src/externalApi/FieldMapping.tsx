@@ -127,7 +127,7 @@ export function MappingDrawer({ open, heading, subtitle, targets, bindings, vari
   variables: VariableOptions; functions: RegisteredFunction[];
   onClose: () => void; onApply: (changes: Map<string, Binding | undefined>) => void;
 }) {
-  return <Drawer open={open} width={1000} placement="right" destroyOnHidden closable={false} rootClassName="xmap-drawer"
+  return <Drawer open={open} width="min(1440px, calc(100vw - 120px))" placement="right" destroyOnHidden closable={false} rootClassName="xmap-drawer"
     styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column' } }} onClose={onClose} keyboard={false}>
     {open && <MappingEditor heading={heading} subtitle={subtitle} targets={targets} bindings={bindings} variables={variables}
       functions={functions} onClose={onClose} onApply={onApply} />}

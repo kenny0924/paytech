@@ -69,7 +69,7 @@ standard_request = [field('BODY', 'paymentContext', 'OBJECT'), field('BODY', 'pa
 standard_response = [field('BODY', 'paymentStatus'), field('BODY', 'transactionRef', required=False)]
 create_definition = {
     'params': [{'name': 'signingKey', 'dataType': 'PROTECTED_HANDLE', 'required': True}],
-    'fixedValues': {'HEADER:Content-Type': constant('application/json')},
+    'fixedValues': {'HEADER:X-Api-Version': constant('2')},
     'transport': {'protocol': 'HTTP', 'method': 'POST', 'endpointCode': 'DEMO_GATEWAY', 'pathTemplate': '/outlets/{outletRef}/orders',
                   'connectTimeoutMs': 2000, 'responseTimeoutMs': 10000},
     'requestEncoding': 'JSON', 'responseDecoding': 'JSON',
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     assert [e['field'] for e in rejected['errors']] == ['sourceCode'], rejected
     call('api-create-order', 'POST', I + '/apis', admin,
          {'apiCode': CREATE, 'apiName': '下单', 'description': None,
-          'requestFields': [field('PATH', 'outletRef'), field('HEADER', 'Content-Type'), field('BODY', 'orderRef'), field('BODY', 'amount')],
+          'requestFields': [field('PATH', 'outletRef'), field('HEADER', 'X-Api-Version'), field('BODY', 'orderRef'), field('BODY', 'amount')],
           'responseFields': [field('BODY', 'reference', required=False), field('BODY', 'state')],
           'definition': create_definition, 'reason': '3e 端到端'})
     call('api-query-order', 'POST', I + '/apis', admin,
