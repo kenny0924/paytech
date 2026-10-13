@@ -39,7 +39,7 @@ Channel 维护渠道、技术账号、MID 及其静态能力。Routing 需要取
 - 共享业务数据库迁移、真实 Vault 策略部署、服务部署或提交。
 - Routing 策略与既有占位选路的替换；本期交付供后续消费者接入的 Channel 查询能力。
 
-[通用执行修订](../../20260914/payment-渠道API逻辑定义/generic-execution-amendment.md)继续拥有 `execute(integrationCode, apiCode, context)`、字段映射、公共脚本和 `executeStatus + outputs` 的合同。本需求的两个查询不直接复用该执行结果类型，也不把地图、邮件等非支付接入写入 Payment Channel 表。
+[Platform 外部 API 配置与执行](../../20260914/platform-support-外部API配置与执行/requirement.md)拥有标准 API、渠道流程、字段映射、公共脚本和 `executeStatus + outputs` 的现行合同（2026-10-13 起取代原[通用执行修订](../../20260914/platform-support-外部API配置与执行/generic-execution-amendment.md)的 `execute(integrationCode, apiCode, context)` 单次调用形式）。本需求的两个查询不直接复用该执行结果类型，也不把地图、邮件等非支付接入写入 Payment Channel 表。
 
 ## 2. 已确定的业务关系
 

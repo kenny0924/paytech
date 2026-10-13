@@ -2,8 +2,9 @@
 
 - Decision status: Confirmed（Owner 和跨系统调用方式）；物理字段、HTTP Wire 和运行材料交接继续细化。
 - Decision date: 2026-09-21
+- Superseded sections: 第 1 节“单次最多一个目标外部操作……跨 API 业务编排”及配置对象列举、第 3 节“Integration 五表草案”，由 [2026-10-13 标准 API 与流程决定](./2026-10-13-platform-standard-api-flow.md)取代；其余 Owner、内部 HTTP、Gateway、Vault/Card 边界继续有效。
 - 用户决定：通用 API 配置和执行放在 Platform，Payment 调用 Platform 暴露的 HTTP 接口完成渠道调用。
-- 详细合同：[Platform HTTP 执行修订](../../requirements/20260914/payment-渠道API逻辑定义/platform-http-execution-amendment.md)。
+- 详细合同：[Platform HTTP 执行修订](../../requirements/20260914/platform-support-外部API配置与执行/platform-http-execution-amendment.md)。
 - 实施、验证和部署状态：[当前台账](../CURRENT_IMPLEMENTATION.md#platform-integration-http-execution-20260921)。
 
 ## 1. 决定
@@ -16,11 +17,11 @@ Payment 继续拥有支付 Channel、Account、MID、能力、路由选择、冻
 
 ## 2. 精确取代范围
 
-- 取代[通用执行修订](../../requirements/20260914/payment-渠道API逻辑定义/generic-execution-amendment.md)第 1 节的“Owner 未定、引擎由调用方嵌入”落点，及本次讨论中“Platform 仅管理配置、公共 JAR 在 Payment 内执行”的建议。
+- 取代[通用执行修订](../../requirements/20260914/platform-support-外部API配置与执行/generic-execution-amendment.md)第 1 节的“Owner 未定、引擎由调用方嵌入”落点，及本次讨论中“Platform 仅管理配置、公共 JAR 在 Payment 内执行”的建议。
 - 取代本需求旧 design/db 草稿中受影响的 Payment 配置管理和 Payment 数据库存储目标。旧表字段和 SQL 不自动迁到 Platform，不作为新的可执行 Schema。
 - 为 [PROJECT_CONTEXT](../PROJECT_CONTEXT.md) 与 [Platform 数据库规范](../database/PLATFORM_SUPPORT_DATABASE.md)的“不拥有通用技术配置”增加本项窄范围：受控的外部 API 定义及单次执行。不扩展成任意配置中心、中央业务编排或重试服务。
 - 不改变 Gateway 入站路由控制面的职责。Integration 管理出站外部调用定义，与 Gateway Target/Route 不是同一套表。
-- 不改变 Payment 五表查询的 Owner、Vault Caller/Purpose、秘密及卡材料边界；新增跨进程运行材料交接需要单独明确，不能从 HTTP 执行归属推导新的 Reveal 权限。
+- 不改变 Payment 五表查询的 Owner、Vault Caller/Purpose、秘密及卡材料边界；新增跨进程运行材料交接需要单独明确，不能从 HTTP 执行归属推导新的 Reveal 权限。（2026-10-13 已由 [Platform 读取决定](./2026-10-13-platform-channel-account-reveal.md)单独明确。）
 
 ## 3. 下一步设计范围
 

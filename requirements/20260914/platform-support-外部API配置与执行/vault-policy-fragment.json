@@ -1,0 +1,13 @@
+{
+  "dataTypes": {
+    "CHANNEL_ACCOUNT_CONFIG_V1": { "tokenMode": "REFERENCE" }
+  },
+  "rules": [
+    {
+      "callerService": "platform-support-service",
+      "action": "REVEAL",
+      "dataType": "CHANNEL_ACCOUNT_CONFIG_V1",
+      "purposes": ["CHANNEL_EXECUTION"]
+    }
+  ]
+}

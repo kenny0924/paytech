@@ -48,7 +48,7 @@
 
 The Risk cross-system payout authority additionally includes the [2026-08-29 Manual Payout eligibility checkpoint alignment record](agent-docs/plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md): Risk evaluates the four Manual Payout checkpoints without restoring Settlement Candidate, Run or Payment structures. Current model statistics belong only in `agent-docs/CURRENT_IMPLEMENTATION.md`.
 
-通用外部 API 配置与执行的 Owner 和跨系统调用方式以 [2026-09-21 Platform Integration 决定](agent-docs/decisions/2026-09-21-platform-integration-http-execution.md)及其执行修订为准：Platform 管理配置并执行，Payment 等业务系统通过内部 HTTP 调用；原业务事实、Vault 与 Card 边界不因此扩大。
+通用外部 API 配置与执行的 Owner 和跨系统调用方式以 [2026-09-21 Platform Integration 决定](agent-docs/decisions/2026-09-21-platform-integration-http-execution.md)及 [2026-10-13 标准 API 与流程决定](agent-docs/decisions/2026-10-13-platform-standard-api-flow.md)为准：Platform 管理配置并执行，Payment 等业务系统通过内部 HTTP 调用标准 API，渠道流程不编排冲正等资金反向操作；原业务事实与 Card 边界不因此扩大，Vault 仅按 [2026-10-13 账号读取决定](agent-docs/decisions/2026-10-13-platform-channel-account-reveal.md)为 Platform 增加渠道账号配置的执行用 Reveal。
 
 ## Canonical terminology
 - Client: platform customer, with `INDIVIDUAL` and `ORGANIZATION` types. Do not rename it Merchant or use both names for the same role.

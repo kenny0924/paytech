@@ -11,6 +11,18 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+<a id="platform-standard-api-flow-20261013"></a>
+
+## Platform 外部 API 配置资料迁移与标准 API 流程设计（2026-10-13）
+
+- **Designed：** 用户确认 Platform 对内提供标准 API、渠道以同步流程组合原子 API，冲正等资金反向操作不在流程中编排，见[决定](./decisions/2026-10-13-platform-standard-api-flow.md)。现行[需求](../requirements/20260914/platform-support-外部API配置与执行/requirement.md)、[六表数据设计](../requirements/20260914/platform-support-外部API配置与执行/data-design.md)和[流程设计](../requirements/20260914/platform-support-外部API配置与执行/flow-design.md)已整理；完整 `definition_json`/`flow_definition_json`、内部 HTTP Wire、材料交接与物理模型仍为 Pending。
+- **资料迁移：** 原 `requirements/20260914/payment-渠道API逻辑定义/` 81 个文件迁入 `requirements/20260914/platform-support-外部API配置与执行/`，原目录仅留[迁移说明](../requirements/20260914/payment-渠道API逻辑定义/README.md)；历史 SQL/JSON/PNG/Python 内容哈希与迁移前一致，旧 DDL/DML 标注禁止执行。仓库内有效引用已更新。
+- **未实现：** 没有 Java、BFF、前端或执行引擎代码；没有执行任何 SQL，没有环境、Vault 策略或权限变更；Payment 账号/MID 查询实现未改动。
+- **Pending（2026-10-13 确认）：** 流程、原子 API、内部接口与[账号材料交接](../requirements/20260914/platform-support-外部API配置与执行/material-handoff.md)已确认。[Platform 读取渠道账号配置](./decisions/2026-10-13-platform-channel-account-reveal.md)的 Vault 策略**未部署**；Platform 初始化函数与 Payment “只校验不 Reveal”查询未实现。
+- **模型（2026-10-13）：** 六表按[物理设计](../requirements/20260914/platform-support-外部API配置与执行/physical-design.md)进入 Platform Manifest 与 PDManer，当前完整模型 **68 表、824 字段、117 唯一索引、92 访问索引、105 关系、6 条 1:1、8 图组**；已有 62 表内容未变。生成器 --check 与 Platform 模型/Schema/场景等 56 项 Node 测试通过。[增量建表 SQL](../requirements/20260914/platform-support-外部API配置与执行/db/platform-support-service/integration-create.sql) 与模型逐列一致，并已追加到完整 Schema `platform-support-schema.sql`（46 表）；**均未执行**；无 DataObject/Mapper/测试 DDL。
+- **页面与管理接口（2026-10-13）：** [页面方案](../requirements/20260914/platform-support-外部API配置与执行/page-design.md)已确认，Operations design.pen 新增 24 张画板并删除 30 张前序画板（历史 PNG 保留，原稿可从 `fff35d2` 恢复）；[管理接口与 344 行注册 SQL](../requirements/20260914/platform-support-外部API配置与执行/admin-api.md) 为评审稿，未执行。
+- **验证：** 受影响文档本地链接与锚点检查、JSON 语法检查、`git diff --check` 通过；`npm --prefix requirements-site test` 128/137 通过，9 项失败与迁移前相同、位于未修改的断言主题。历史检查脚本会重写报告文件，未运行。无提交、推送或部署。迁移记录见[交付记录](../requirements/20261013/platform-support-渠道API配置资料迁移/delivery.md#5-迁移执行2026-10-13)。
+
 <a id="commerce-save-consumer-tests-20260921"></a>
 
 ## Commerce SaveConsumer 入口测试（2026-09-21）
@@ -1756,7 +1768,8 @@ HTTP 请求沿用用户新增的 `payMethod` 嵌套对象，内部 ID 为 Long�
 
 ## Platform Integration 配置与 HTTP 执行归属（2026-09-21）
 
-- **已确认方向：** 用户选择配置管理和执行均放在 Platform，Payment 通过内部 HTTP 请求 Platform 完成渠道调用，取代调用方嵌入公共执行 JAR 的建议。[决定](./decisions/2026-09-21-platform-integration-http-execution.md)与[执行修订](../requirements/20260914/payment-渠道API逻辑定义/platform-http-execution-amendment.md)已记录；项目上下文、应用架构、Platform 数据库入口与需求导航同步路由。
+- **2026-10-13 后继：** 单次执行限制与五表草案已由[标准 API 与流程决定](./decisions/2026-10-13-platform-standard-api-flow.md)取代，当前状态见[对应条目](#platform-standard-api-flow-20261013)；本条保留 2026-09-21 记录。
+- **已确认方向：** 用户选择配置管理和执行均放在 Platform，Payment 通过内部 HTTP 请求 Platform 完成渠道调用，取代调用方嵌入公共执行 JAR 的建议。[决定](./decisions/2026-09-21-platform-integration-http-execution.md)与[执行修订](../requirements/20260914/platform-support-外部API配置与执行/platform-http-execution-amendment.md)已记录；项目上下文、应用架构、Platform 数据库入口与需求导航同步路由。
 - **边界：** Payment 继续拥有渠道账号/MID/能力、冻结路由、交易状态和业务恢复；Platform 只负责受控配置与单次协议执行，无执行流水、业务幂等及自动重试。两个 HTTP 边界的超时均可能结果不确定。凭据与卡材料交接、获准调用范围、正式 Wire、五表详细物理设计继续评审，未自动授予 Platform 新 Vault 权限。
 - **交付范围：** 本轮只更新设计和文档路由，未改 Payment/Platform Java、PDManer、SQL、Pencil、环境或策略；既有 Payment 查询实现保留。未执行数据库操作、服务部署、提交或推送。
 - **文档验证：** 决定、执行修订、通用合同、需求和确认记录共 5 份文档的 104 处本地链接/锚点与空白检查通过；受影响路由文档的 diff --check 通过。未运行 Java/数据库测试，文档校验不代表内部 HTTP 执行已实现。

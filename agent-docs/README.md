@@ -23,7 +23,7 @@
 
 再根据任务读取下表中的专项文档。
 
-通用外部 API 配置与执行读取[Platform Integration 决定](./decisions/2026-09-21-platform-integration-http-execution.md)及[HTTP 执行修订](../requirements/20260914/payment-渠道API逻辑定义/platform-http-execution-amendment.md)。配置与执行归 Platform，Payment 等系统通过内部 HTTP 调用；字段和运行材料交接继续细化。
+通用外部 API 配置与执行读取[Platform Integration 决定](./decisions/2026-09-21-platform-integration-http-execution.md)、[2026-10-13 标准 API 与流程决定](./decisions/2026-10-13-platform-standard-api-flow.md)及[现行需求](../requirements/20260914/platform-support-外部API配置与执行/requirement.md)。配置与执行归 Platform，Payment 等系统通过内部 HTTP 调用标准 API，渠道以流程组合原子 API；完整 JSON、Wire 和运行材料交接继续细化。
 
 ## 公共规范速查
 

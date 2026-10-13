@@ -14,7 +14,7 @@
 >
 > 本文继续生效的部分是：Vault 只保护获批的可恢复非卡敏感值、永不拥有业务含义、内部专用且不经 Gateway/BFF/浏览器暴露、禁止任何服务直读 Vault 数据库、PAN/CVV/CVC/完整磁道/卡有效期/PIN/PIN Block 排除、KMS/Secrets/对象存储/Channel Tokenization 职责分离，以及其他不与当前三表设计冲突的安全边界。
 
-> **2026-09-21 Payment 账号专项例外：** 用户明确批准 CHANNEL_ACCOUNT_CONFIG_V1 托管渠道账号 JSON（含渠道 API 凭据）。具体 Owner Schema、REFERENCE Token、Caller/Purpose 与受控读取边界见[Channel 决定](./decisions/2026-09-21-channel-account-mid-capability-queries.md)及其实施合同。下文 Secrets Manager-only 规则仅在这个账号类型范围内被取代；卡数据、登录密码、根密钥及其他系统 Secret 的禁止边界不变。策略部署与真实环境接入状态只见当前台账。
+> **2026-09-21 Payment 账号专项例外：** 用户明确批准 CHANNEL_ACCOUNT_CONFIG_V1 托管渠道账号 JSON（含渠道 API 凭据）。具体 Owner Schema、REFERENCE Token、Caller/Purpose 与受控读取边界见[Channel 决定](./decisions/2026-09-21-channel-account-mid-capability-queries.md)及其实施合同。2026-10-13 [Platform 读取决定](./decisions/2026-10-13-platform-channel-account-reveal.md)为该类型增加 Caller `platform-support-service`（仅 `CHANNEL_EXECUTION` Reveal）。下文 Secrets Manager-only 规则仅在这个账号类型范围内被取代；卡数据、登录密码、根密钥及其他系统 Secret 的禁止边界不变。策略部署与真实环境接入状态只见当前台账。
 
 ## 1. 文档目的
 

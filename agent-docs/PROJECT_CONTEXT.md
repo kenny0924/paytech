@@ -28,7 +28,7 @@ Code-MoR 是 PayTech 的 Merchant of Record 平台。Client 将 Consumer 引导�
 | Payment Orchestration | Intent、Attempt、Channel/MID 路由、渠道 Action、回调、支付侧退款与 Void | Client 合同、Finance Ledger |
 | Risk & Compliance | 风险/合规评估、KYC/KYB 支持决定、Case、争议和限制 | 支付执行、资金出款和账务事实 |
 | Finance | 交易经济结果、复式账、账户余额、税务/财政事实、对账、保证金、追偿和 Manual Payout | Channel 交易状态、Client 主档和 Risk 决策 |
-| Platform Support | 人类 Account、Realm/Channel、Session、Tenant IAM、公共控制面、文件、通知、Webhook、平台审计，以及获准的 Integration 配置与单次执行 | 核心业务编排、财务事实和 Gateway 运行计数器 |
+| Platform Support | 人类 Account、Realm/Channel、Session、Tenant IAM、公共控制面、文件、通知、Webhook、平台审计，以及获准的 Integration 配置、标准 API 与渠道同步流程执行 | 核心业务编排、财务事实和 Gateway 运行计数器 |
 
 每个系统拥有独立数据库。禁止跨库读写、跨库外键或通过共享 DataObject 绕过 Owner。跨系统同步命令/查询使用窄 HTTP 契约，业务事实和内部回调使用 MQ。
 
@@ -50,7 +50,7 @@ Code-MoR 是 PayTech 的 Merchant of Record 平台。Client 将 Consumer 引导�
 - Cancel 只关闭未支付 Order；Void 只释放成功但未 Capture 的 Authorization；Reversal 由 Commerce 发起并由 Payment 在锁内选择 Void 或完整 Refund 链。
 - Partner 交易访问只读；Partner 不能操作 Order、Payment、Refund、Routing、MID 或 Ledger。
 - Manual Payout 金额和费用由系统计算，MVP 使用固定双人审批、预创建 Execution、人工银行提交、付款证据和完整确认借记后完成。
-- Platform Support 只拥有六张公共控制面当前配置表：Target、Route、Header、Query Parameter、Guard Rule 和 Console Resource；不拥有 Gateway 运行限流状态、数据库 Snapshot、Release、Ack、Tenant Override 或任意通用技术配置。受控外部 API 定义及单次执行按[2026-09-21 Integration 决定](./decisions/2026-09-21-platform-integration-http-execution.md)新增窄范围，由 Platform 管理并通过内部 HTTP 提供执行能力。
+- Platform Support 只拥有六张公共控制面当前配置表：Target、Route、Header、Query Parameter、Guard Rule 和 Console Resource；不拥有 Gateway 运行限流状态、数据库 Snapshot、Release、Ack、Tenant Override 或任意通用技术配置。受控外部 API 定义、标准 API 及其渠道同步流程执行按[2026-09-21 Integration 决定](./decisions/2026-09-21-platform-integration-http-execution.md)与[2026-10-13 标准 API 与流程决定](./decisions/2026-10-13-platform-standard-api-flow.md)新增窄范围，由 Platform 管理并通过内部 HTTP 提供执行能力；不扩展为任意配置中心、跨系统业务事务编排、重试或恢复服务。
 - `DisputeLost/DisputeOutcomeCorrected` 只有在 `outcome=LOST + principal_bearer=CLIENT + security_deposit_use_allowed=1` 时才允许 Finance 使用 Client Security Deposit，剩余短缺进入 Client Recovery Receivable。
 - Industry/MCC 资格由配置决定，不硬编码某个行业；Offering 对 MVP 可选，订单创建时冻结所需交易上下文。
 

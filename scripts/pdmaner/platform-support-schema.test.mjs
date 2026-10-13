@@ -19,10 +19,11 @@ const expectedTables = [
   'gateway_target', 'gateway_route', 'gateway_route_header', 'gateway_route_query_param', 'gateway_guard_rule',
   'authentication_challenge', 'file_upload', 'file_scan_policy', 'file_scan_requirement', 'file_object', 'file_owner_ref', 'file_scan_result',
   'audit_chain', 'audit_event', 'audit_event_attr', 'security_event', 'command_idempotency', 'compensation_event', 'console_resource',
+  'standard_api', 'api_field', 'integration', 'integration_api', 'integration_script', 'integration_standard_api',
 ].map(name => `t_${name}`);
 const quote = value => `'${value.replaceAll("'", "''")}'`;
 
-test('only the 40 approved schema tables exist, without physical CHECK or foreign keys', () => {
+test('only the 46 approved schema tables exist, without physical CHECK or foreign keys', () => {
   assert.deepEqual(tables.map(table => table[1]).sort(), expectedTables.toSorted());
   assert.doesNotMatch(sql.replace(/^--.*$/gm, ''), /\bCHECK\s*\(|\bFOREIGN\s+KEY\b/i);
 });
@@ -135,5 +136,14 @@ test('Notification increment is the exact seven-table current model and test DDL
     assert.equal(table[0], tables.find(t => t[1] === table[1])[0]);
     assert.ok(testDdl.includes(table[0]));
   }
+  assert.doesNotMatch(increment.replace(/^--.*$/gm, ''), /\b(?:DROP|ALTER|DELETE|INSERT|UPDATE|CHECK|FOREIGN)\b/i);
+});
+
+test('External API configuration increment is the exact six-table current model', () => {
+  const increment = readFileSync(new URL('../../requirements/20260914/platform-support-外部API配置与执行/db/platform-support-service/integration-create.sql', import.meta.url), 'utf8');
+  const created = [...increment.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
+  assert.deepEqual(created.map(t => t[1]), ['t_standard_api', 't_api_field', 't_integration', 't_integration_api',
+    't_integration_script', 't_integration_standard_api']);
+  for (const table of created) assert.equal(table[0], tables.find(t => t[1] === table[1])[0]);
   assert.doesNotMatch(increment.replace(/^--.*$/gm, ''), /\b(?:DROP|ALTER|DELETE|INSERT|UPDATE|CHECK|FOREIGN)\b/i);
 });

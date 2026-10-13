@@ -3,13 +3,13 @@
 登记日期：2026-10-13  
 Owner：Platform Support  
 关联方：Payment、Operations Web/BFF、项目文档与需求站点  
-状态：迁移需求评审稿。业务方向沿用本次对话已经确认的决定；本次只登记需求，不执行目录迁移、代码迁移或数据库变更。
+状态：已确认并于 2026-10-13 执行资料迁移，结果见[交付记录](./delivery.md#5-迁移执行2026-10-13)。代码迁移与数据库变更不在范围内。
 
 本文定义一次资料归属迁移及设计整理。原功能需求仍保留首次登记日期 2026-09-14；本目录记录本次迁移任务，不替代迁移后功能需求的长期维护入口。
 
 - [资料盘点与迁移方案草案](./technique.md)
 - [确认与交付记录](./delivery.md)
-- [原功能需求](../../20260914/payment-渠道API逻辑定义/requirement.md)
+- [迁移后现行需求](../../20260914/platform-support-外部API配置与执行/requirement.md) · [原功能需求（历史）](../../20260914/platform-support-外部API配置与执行/legacy-requirement.md) · [原目录迁移说明](../../20260914/payment-渠道API逻辑定义/README.md)
 - [已确认的 Platform 归属决定](../../../agent-docs/decisions/2026-09-21-platform-integration-http-execution.md)
 - [现有实现与迁移状态入口](../../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-integration-http-execution-20260921)
 
@@ -53,7 +53,7 @@ Owner：Platform Support
 - Platform 中的标准 API 模块定义统一业务请求和响应，例如 `PAY`、`AUTHORIZE`；独立模块不等于新增部署服务。
 - 渠道原子 API 负责单次外部协议操作、请求组装、脚本处理、响应解析及结果映射。
 - 渠道与标准 API 的组合定义该渠道如何实现标准 API，同一个标准 API 可以由多个渠道分别实现。
-- 标准 API 的流程在一次调用内组合原子 API，处理约定的异常兼容，例如有条件地查询原操作或执行冲正。
+- 标准 API 的流程在一次调用内组合原子 API，处理约定的异常兼容，例如有条件地查询原操作。（2026-10-13 用户确认：冲正属于危险操作，不在流程中编排。）
 - Payment 等业务系统通过 Platform 内部 HTTP 入口调用，管理入口仍经过 Operations BFF。
 - Platform 不选择 Payment MID，不接管支付资格、冻结路由、资金状态或调用结束后的业务恢复。
 
@@ -123,7 +123,7 @@ Owner：Platform Support
 - 条件只读上下文，不发起外部查询、不修改运行数据；表达式执行异常不能静默当作 false。
 - 原子 API 仍只执行本 API 的单次目标操作。标准 API 可按显式配置调用多个原子节点；这不是底层 HTTP 客户端自动重试。
 - query 节点执行成功不等于支付成功；分支可以同时判断 `executeStatus` 和业务 `outputs`。
-- 查询、冲正只在符合具体渠道合同的条件下执行，不能把所有 `ERROR` 或超时统一当作支付失败或冲正依据。
+- 查询只在符合具体渠道合同的条件下执行，不能把所有 `ERROR` 或超时统一当作支付失败；冲正等资金反向操作不在流程中编排（2026-10-13 用户确认）。
 
 ### 3.6 脚本、结果和持久化边界
 

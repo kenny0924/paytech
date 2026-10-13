@@ -1,6 +1,6 @@
 # Platform Support 数据库设计规范
 
-> **Integration 后继（2026-09-21）：** [归属决定](../decisions/2026-09-21-platform-integration-http-execution.md)将受控外部 API 配置和单次执行纳入 Platform。五类配置对象与内部 HTTP 边界见[修订](../../requirements/20260914/payment-渠道API逻辑定义/platform-http-execution-amendment.md)，字段继续评审；本项是下文“无通用技术配置”的窄例外，不扩展任意配置中心。未因此更新正式模型数量，实际状态见当前台账。
+> **Integration 后继（2026-09-21，2026-10-13 修订）：** [归属决定](../decisions/2026-09-21-platform-integration-http-execution.md)将受控外部 API 配置和执行纳入 Platform；[标准 API 与流程决定](../decisions/2026-10-13-platform-standard-api-flow.md)改为标准 API 加渠道同步流程。六表见[数据设计](../../requirements/20260914/platform-support-外部API配置与执行/data-design.md)与[物理设计](../../requirements/20260914/platform-support-外部API配置与执行/physical-design.md)，2026-10-13 已进入 PDManer（图组 integration），SQL 未执行；本项是下文“无通用技术配置”的窄例外，不扩展任意配置中心。未因此更新正式模型数量，实际状态见当前台账。
 
 > **Notification 局部后继（2026-09-21）：** [Delivery 需求](../../requirements/20260920/platform-support-Delivery领域规划/requirement.md)及[七表字段](../../requirements/20260920/platform-support-Delivery领域规划/data-design.md)取代本文前序九表、Revision、消息快照、Callback/Suppression、通知 Hash 与领域 Lease/Fencing 描述；未涉及的 Platform 领域保持原合同。当前生成统计、SQL 执行与验证状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#platform-delivery-domain-plan-20260920)。下列前序总量/拓扑保留历史参照，不是当前模型统计。
 

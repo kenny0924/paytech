@@ -170,7 +170,22 @@ Audit append 在 Chain 行上串行分配序号；`previous_event_hash` 必须�
 | `t_compensation_event` | `id=900001，event_key=320001，event_type=FILE_SCAN，sub_event_type=-，payload_json=NULL，execute_status=PROCESSING，execute_count=2，next_execute_at=2026-09-01T16:30:00Z，lock_owner=platform-02，lock_until=2026-09-01T16:31:00Z，last_error_code=NULL，last_error_summary=NULL，lock_version=3`；Handler 从原 fileId 恢复冻结策略，确定完成并提交结果后删除任务；`lock_version` 防止旧 Worker 完成新 Claim。 |
 | `t_command_idempotency` | 【Succeeded： id=900011，caller_scope=tenant-210001，operation_type=CREATE_WEBHOOK_REPLAY，idempotency_key=idem-replay-610011-1，request_hash=h-idem-request，response_ref=delivery-610012，status=SUCCEEDED，expire_time=2026-10-01T00:00:00Z】；【Conflict input： id=900012，caller_scope=tenant-210001，operation_type=CREATE_WEBHOOK_REPLAY，idempotency_key=idem-replay-610011-1，request_hash=h-different-request，response_ref=NULL，status=FAILED，expire_time=2026-10-01T00:00:00Z】；成功只返回稳定 Response Ref。 |
 
-## 9. 失败关闭与最小数据清单
+## 9. SCN-PLT-08：标准 API PAY 的 NI 渠道流程
+
+Payment 校验冻结账号后调用 Platform 标准 API `PAY`，请求体带 `integrationCode=NI` 与 Vault 引用 Token。Platform 在短只读事务中加载以下六表配置，事务外先初始化账号资料，再执行下单节点；下单返回 ERROR 时按渠道合同查询一次，查到已扣款才返回 SUCCESS，其余返回 ERROR，由 Payment 按原操作身份处理。流程不编排冲正，不保存流程实例、节点记录或报文。设计见[外部 API 配置与执行](../../../requirements/20260914/platform-support-外部API配置与执行/requirement.md)。
+
+### 9.1 外部 API 配置 6 表
+
+| 物理表 | 代表性记录与判定 |
+| --- | --- |
+| `t_standard_api` | `standard_api_id=810001，standard_api_code=PAY，standard_api_name=支付，description=NULL，version=1，created_by=220001，updated_by=220001`；字段由 `t_api_field` 维护，不保存调用方白名单。 |
+| `t_api_field` | 【标准请求： api_field_id=810101，api_id=810001，direction=STANDARD_API_REQUEST，field_location=BODY，field_path=paymentContext.amount.value，field_name=支付金额，data_type=STRING，required_flag=1，sort_no=1，description=NULL】；【渠道请求： api_field_id=810102，api_id=820101，direction=INTEGRATION_API_REQUEST，field_location=PATH，field_path=outletRef，field_name=门店引用，data_type=STRING，required_flag=1，sort_no=1，description=NULL】；同一 `api_id` 按方向区分标准 API 与原子 API，唯一键防止同位置同路径重复。 |
+| `t_integration` | `integration_id=820001，integration_code=NI，integration_name=NI渠道，description=NULL，endpoints=[{endpointCode:NI_GATEWAY,baseUrl:https://api-gateway.ni.example}]，version=3，created_by=220001，updated_by=220001`；与 Client Integration Readiness 无关，实际出站仍受部署网络白名单限制。 |
+| `t_integration_api` | 【下单： integration_api_id=820101，integration_id=820001，api_code=CREATE_ORDER，api_name=创建订单，description=NULL，definition_json={transport:{endpointCode:NI_GATEWAY},statusRules:2,outputs:SUCCESS/FAIL}，version=2，created_by=220001，updated_by=220001】；【查单： integration_api_id=820102，integration_id=820001，api_code=QUERY_ORDER，api_name=查询订单，description=NULL，definition_json={transport:{endpointCode:NI_GATEWAY},statusRules:1,outputs:SUCCESS}，version=1，created_by=220001，updated_by=220001】；凭据只通过 `params` 受控句柄进入签名函数，不写入定义。 |
+| `t_integration_script` | `integration_script_id=820201，integration_id=820001，script_code=NI_SIGN，script_name=请求签名，execution_stage=REQUEST，parameter_definition=[{name:key,dataType:PROTECTED_HANDLE,required:true}]，source_code=functions.sign(params.key)，description=NULL，version=1，created_by=220001，updated_by=220001`；被 `CREATE_ORDER` 引用时不能删除。 |
+| `t_integration_standard_api` | `integration_standard_api_id=830001，integration_id=820001，standard_api_id=810001，flow_definition_json={timeoutMs:25000,entry:createPayment,nodes:2,returns:4}，version=4，created_by=220001，updated_by=220001`；`(integration_id,standard_api_id)` 唯一；删除后 Payment 调用得到保证未发送的 404。 |
+
+## 10. 失败关闭与最小数据清单
 
 - 不保存 Password 明文、Google authorization code、Access/Refresh/ID Token、OIDC client secret、KMS private key、Webhook signing secret 值、PAN 或 CVV。
 - Email/URL/消息正文等可恢复敏感值使用 Vault Token；只有明确的等值查询、完整性、幂等或安全消费者才保留 Hash。

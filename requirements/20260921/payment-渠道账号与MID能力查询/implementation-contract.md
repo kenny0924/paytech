@@ -43,7 +43,7 @@
 ## 4. Vault 账号配置
 
 - 业务库只保存 `account_vault_token`，物理列允许 NULL 以支持 DRAFT；执行读取时要求有效的 43 字符 Base64URL Token。
-- Data Type：`CHANNEL_ACCOUNT_CONFIG_V1`，Token Mode：`REFERENCE`；读取 Purpose：`CHANNEL_EXECUTION`，Caller：`payment-orchestration-service`。
+- Data Type：`CHANNEL_ACCOUNT_CONFIG_V1`，Token Mode：`REFERENCE`；读取 Purpose：`CHANNEL_EXECUTION`，Caller：`payment-orchestration-service`。2026-10-13 起 Platform 执行标准 API 时也以 `platform-support-service` 读取，见[决定](../../../agent-docs/decisions/2026-10-13-platform-channel-account-reveal.md)；Payment 后续需新增“只校验不 Reveal”的查询，本期未改。
 - 结构见 [JSON Schema](./channel-account-config.schema.json)，完整 UTF-8 Payload 最大 32 KiB（沿用 Vault 上限）。数字 Schema 版本固定为 1；这是结构版本，不是配置发布机制。
 - `channelCode`、`channelAccountId`、`entityNo` 必须与本地冻结账号一致；用于拒绝错绑 Token，不代替 Vault 的 Caller/Purpose 授权。
 - `parameters`、`credentials` 均为有界字符串键值对象，最多各 64 项，键 1..64 字符，值 1..8192 字符且不全为空白。渠道接入方定义具体参数名称；不假设 externalMidCode 等于 outletId，也不假设 channelCode 等于 integrationCode。

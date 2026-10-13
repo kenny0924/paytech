@@ -40,7 +40,9 @@ Each core backend root owns one business-system boundary and database. Its curre
 
 The [2026-09-21 Integration decision](./decisions/2026-09-21-platform-integration-http-execution.md) places generic external API configuration and execution in Platform Support. Payment and other business Owners invoke the capability through internal HTTP; Platform loads its own configuration and performs the target external request. Callers do not embed the execution engine or access Platform tables. This adds no separately deployed service or public execution route. Operations configuration management continues through its BFF.
 
-Business routing, frozen account/MID identities, transaction state and recovery remain with the caller. Integration creates no execution journal, business idempotency record or automatic retry. The [detailed amendment](../requirements/20260914/payment-渠道API逻辑定义/platform-http-execution-amendment.md) owns material handoff and the two HTTP boundaries; it does not expand existing Vault or Card permissions.
+The [2026-10-13 standard API decision](./decisions/2026-10-13-platform-standard-api-flow.md) lets callers invoke Platform standard APIs; each Integration implements a standard API with a synchronous flow of atomic APIs and conditional edges inside one call. Flows never orchestrate reversal, void or refund-type fund-reversing operations.
+
+Business routing, frozen account/MID identities, transaction state and recovery remain with the caller. Integration creates no execution journal, flow instance, business idempotency record or automatic retry. The [current requirement](../requirements/20260914/platform-support-外部API配置与执行/requirement.md) owns the six-table, flow and context design; the [2026-09-21 amendment](../requirements/20260914/platform-support-外部API配置与执行/platform-http-execution-amendment.md) still owns the two HTTP boundaries. The only Vault expansion is the [2026-10-13 decision](./decisions/2026-10-13-platform-channel-account-reveal.md) letting Platform reveal `CHANNEL_ACCOUNT_CONFIG_V1` for `CHANNEL_EXECUTION`; Card permissions are unchanged.
 
 ### Entry-layer backend project roots
 

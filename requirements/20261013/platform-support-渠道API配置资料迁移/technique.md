@@ -1,6 +1,6 @@
 # 渠道 API 配置资料迁移：资料盘点与方案草案
 
-本稿服务于[迁移需求](./requirement.md)，记录现有证据和拟执行清单；本次授权仅为编写需求。目录迁移及旧文档更新尚待后续明确启动。
+本稿服务于[迁移需求](./requirement.md)，记录迁移前证据和执行清单。2026-10-13 用户确认后已执行，下文第 1 节链接已指向迁移后位置，执行结果见[交付记录第 5 节](./delivery.md#5-迁移执行2026-10-13)。
 
 ## 1. 现状证据
 
@@ -10,12 +10,12 @@
 
 | 现有资料 | 与当前讨论的差异 | 迁移处理 |
 |---|---|---|
-| [原需求](../../20260914/payment-渠道API逻辑定义/requirement.md) | 标准 API 编排仍列为后续，输入/输出引用旧公共模型 | 按已确认的六表、标准 API 与原子 API 分层整理现行正文 |
-| [归属决定](../../../agent-docs/decisions/2026-09-21-platform-integration-http-execution.md)及[执行修订](../../20260914/payment-渠道API逻辑定义/platform-http-execution-amendment.md) | Owner 已为 Platform，但仍描述五类对象与统一单次目标调用 | 精确修订为原子单次操作与标准 API 同步流程两层，不扩大业务状态 Owner |
-| [公共模型与响应场景](../../20260914/payment-渠道API逻辑定义/model-library-and-response-scenes.md) | 仍以独立对象模型和响应合同维护 | 保留历史范围，新字段合同归共用字段表 |
-| [公共脚本](../../20260914/payment-渠道API逻辑定义/public-script-http-context-design.md) | 脚本 HTTP 对象原则适用；模型引用和上下文说明需同步 | 保留受控脚本语义，更新现行入口与上下文引用 |
-| [原数据与 SQL 入口](../../20260914/payment-渠道API逻辑定义/db/README.md) | 前序 Payment 配置表与旧管理注册不能作为 Platform 六表 Schema | 保留历史 SQL 原文，新增清楚的适用范围与新设计入口 |
-| [原页面说明](../../20260914/payment-渠道API逻辑定义/ui.md)与[设计源](../../../operations-console-web/docs/design.pen) | 页面曾包含公共模型等前序结构 | 保留设计文件位置，标注与本轮结构的差异，不重画页面 |
+| [原需求](../../20260914/platform-support-外部API配置与执行/legacy-requirement.md) | 标准 API 编排仍列为后续，输入/输出引用旧公共模型 | 按已确认的六表、标准 API 与原子 API 分层整理现行正文 |
+| [归属决定](../../../agent-docs/decisions/2026-09-21-platform-integration-http-execution.md)及[执行修订](../../20260914/platform-support-外部API配置与执行/platform-http-execution-amendment.md) | Owner 已为 Platform，但仍描述五类对象与统一单次目标调用 | 精确修订为原子单次操作与标准 API 同步流程两层，不扩大业务状态 Owner |
+| [公共模型与响应场景](../../20260914/platform-support-外部API配置与执行/model-library-and-response-scenes.md) | 仍以独立对象模型和响应合同维护 | 保留历史范围，新字段合同归共用字段表 |
+| [公共脚本](../../20260914/platform-support-外部API配置与执行/public-script-http-context-design.md) | 脚本 HTTP 对象原则适用；模型引用和上下文说明需同步 | 保留受控脚本语义，更新现行入口与上下文引用 |
+| [原数据与 SQL 入口](../../20260914/platform-support-外部API配置与执行/db/README.md) | 前序 Payment 配置表与旧管理注册不能作为 Platform 六表 Schema | 保留历史 SQL 原文，新增清楚的适用范围与新设计入口 |
+| [原页面说明](../../20260914/platform-support-外部API配置与执行/ui.md)与[设计源](../../../operations-console-web/docs/design.pen) | 页面曾包含公共模型等前序结构 | 保留设计文件位置，标注与本轮结构的差异，不重画页面 |
 | [Payment 账号与 MID 查询需求](../../20260921/payment-渠道账号与MID能力查询/requirement.md) | 有指向旧通用执行资料的引用 | 只更新相关链接，不迁移其模型、源码或查询合同 |
 
 ## 2. 建议实施步骤

@@ -56,7 +56,7 @@ requirements/
 
 | 登记目录 | 需求 | 主入口/Owner | 关联编号 | 材料 |
 |---|---|---|---|---|
-| `20261013` | 渠道 API 配置资料迁移 | Platform Support / 文档归属 | 迁移需求评审稿；六表、初始化上下文与条件流程整理，原功能目录与代码/数据库暂不迁移 | [需求](./20261013/platform-support-渠道API配置资料迁移/requirement.md) · [资料盘点与方案](./20261013/platform-support-渠道API配置资料迁移/technique.md) · [确认记录](./20261013/platform-support-渠道API配置资料迁移/delivery.md) |
+| `20261013` | 渠道 API 配置资料迁移 | Platform Support / 文档归属 | 2026-10-13 已执行资料迁移；代码与数据库不迁移 | [需求](./20261013/platform-support-渠道API配置资料迁移/requirement.md) · [资料盘点与方案](./20261013/platform-support-渠道API配置资料迁移/technique.md) · [确认记录](./20261013/platform-support-渠道API配置资料迁移/delivery.md) |
 | `20260921` | 渠道账号与 MID 能力查询 | Payment / Channel | 五表目标、能力主从及 value_type、支付体系与国家条件；移除健康状态，两个主链路查询；账号保护与精确接口合同待定 | [需求与字段](./20260921/payment-渠道账号与MID能力查询/requirement.md) · [技术与 SQL 变更](./20260921/payment-渠道账号与MID能力查询/technique.md) · [确认记录](./20260921/payment-渠道账号与MID能力查询/delivery.md) |
 | `20260920` | Delivery 领域规划 | Platform / Notification | 已确认七表与内部提交入口，首期仅 Email、Provider 先 Mock；查询草案暂缓细化，Operations 管理不纳入，Webhook 仅保留边界 | [需求](./20260920/platform-support-Delivery领域规划/requirement.md) · [领域规则](./20260920/platform-support-Delivery领域规划/technique.md) · [表结构](./20260920/platform-support-Delivery领域规划/data-design.md) · [内部接口](./20260920/platform-support-Delivery领域规划/api.md) · [确认记录](./20260920/platform-support-Delivery领域规划/delivery.md) |
 | `20260917` | 公共测试组件 | Foundation / Build BOM / Commerce 测试 | HTTP Invoker、Header 工厂与 Checker 基类；仅测试依赖 | [需求](./20260917/foundation-公共测试组件/requirement.md) · [技术说明](./20260917/foundation-公共测试组件/technique.md) · [交付记录](./20260917/foundation-公共测试组件/delivery.md) |
@@ -95,7 +95,7 @@ requirements/
 
 | `20260913` | 菜单权限与 API 配置管理 | Platform Support / Operations Console | PLT-16、PLT-17、E2E-16；阶段 1/2 已确认；36 个新端点、零 DDL、227 行注册、7 张 Pencil 的阶段 3 评审稿 | [需求](./20260913/platform-support-菜单权限与API配置管理/requirement.md) · [技术入口](./20260913/platform-support-菜单权限与API配置管理/technique.md) · [交付记录](./20260913/platform-support-菜单权限与API配置管理/delivery.md) |
 
-| `20260914` | 渠道 API 逻辑定义 | 通用外部 API / Operations；管理 Owner 待定 | 阶段 3 页面修订；公共方案合并公共脚本，HTTP 工作对象、源码与参数绑定已补 S01～S05；层级模型及场景保留，通用管理 Wire 与物理模型待补 | [需求](./20260914/payment-渠道API逻辑定义/requirement.md) · [通用执行](./20260914/payment-渠道API逻辑定义/generic-execution-amendment.md) · [公共脚本](./20260914/payment-渠道API逻辑定义/public-script-http-context-design.md) · [模型与场景](./20260914/payment-渠道API逻辑定义/model-library-and-response-scenes.md) · [页面](./20260914/payment-渠道API逻辑定义/ui.md) · [交付记录](./20260914/payment-渠道API逻辑定义/delivery.md) |
+| `20260914` | 外部 API 配置与执行（原“渠道 API 逻辑定义”） | Platform Support / Payment 调用、Operations 管理 | 2026-10-13 迁入 Platform 目录；标准 API、渠道原子 API 与流程编排，六表字段稿、初始化与条件流程；完整 JSON、Wire、材料交接与物理模型待定 | [需求](./20260914/platform-support-外部API配置与执行/requirement.md) · [技术说明](./20260914/platform-support-外部API配置与执行/technique.md) · [数据设计](./20260914/platform-support-外部API配置与执行/data-design.md) · [流程设计](./20260914/platform-support-外部API配置与执行/flow-design.md) · [交付记录](./20260914/platform-support-外部API配置与执行/delivery.md) · [原目录迁移说明](./20260914/payment-渠道API逻辑定义/README.md) |
 
 本索引只做检索，不复制实现、测试数量或部署状态。
 

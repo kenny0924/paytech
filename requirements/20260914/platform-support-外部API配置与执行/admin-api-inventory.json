@@ -1,0 +1,379 @@
+{
+  "status": "stage-3-review-draft",
+  "platformContextPath": "/platform-support",
+  "browserPrefix": "/api/operations",
+  "bffTarget": "operations-console-bff",
+  "endpoints": [
+    {
+      "id": "E01",
+      "name": "标准 API 列表",
+      "method": "GET",
+      "path": "/external-api-admin/v1/standard-apis",
+      "routeCode": "external-api-standard-api-list",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [
+        "page",
+        "size",
+        "keyword"
+      ],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E02",
+      "name": "标准 API 详情",
+      "method": "GET",
+      "path": "/external-api-admin/v1/standard-apis/{standardApiCode}",
+      "routeCode": "external-api-standard-api-detail",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E03",
+      "name": "创建标准 API",
+      "method": "POST",
+      "path": "/external-api-admin/v1/standard-apis",
+      "routeCode": "external-api-standard-api-create",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E04",
+      "name": "修改标准 API",
+      "method": "PUT",
+      "path": "/external-api-admin/v1/standard-apis/{standardApiCode}",
+      "routeCode": "external-api-standard-api-update",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E05",
+      "name": "删除标准 API",
+      "method": "DELETE",
+      "path": "/external-api-admin/v1/standard-apis/{standardApiCode}",
+      "routeCode": "external-api-standard-api-delete",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E06",
+      "name": "接入方列表",
+      "method": "GET",
+      "path": "/external-api-admin/v1/integrations",
+      "routeCode": "external-api-integration-list",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [
+        "page",
+        "size",
+        "keyword"
+      ],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E07",
+      "name": "接入方详情",
+      "method": "GET",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}",
+      "routeCode": "external-api-integration-detail",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E08",
+      "name": "创建接入方",
+      "method": "POST",
+      "path": "/external-api-admin/v1/integrations",
+      "routeCode": "external-api-integration-create",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E09",
+      "name": "修改接入方",
+      "method": "PUT",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}",
+      "routeCode": "external-api-integration-update",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E10",
+      "name": "删除接入方",
+      "method": "DELETE",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}",
+      "routeCode": "external-api-integration-delete",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E11",
+      "name": "原子 API 列表",
+      "method": "GET",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/apis",
+      "routeCode": "external-api-integration-api-list",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [
+        "page",
+        "size",
+        "keyword"
+      ],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E12",
+      "name": "原子 API 详情",
+      "method": "GET",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/apis/{apiCode}",
+      "routeCode": "external-api-integration-api-detail",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E13",
+      "name": "创建原子 API",
+      "method": "POST",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/apis",
+      "routeCode": "external-api-integration-api-create",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E14",
+      "name": "修改原子 API",
+      "method": "PUT",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/apis/{apiCode}",
+      "routeCode": "external-api-integration-api-update",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E15",
+      "name": "删除原子 API",
+      "method": "DELETE",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/apis/{apiCode}",
+      "routeCode": "external-api-integration-api-delete",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E16",
+      "name": "校验原子 API",
+      "method": "POST",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/apis/validate",
+      "routeCode": "external-api-integration-api-validate",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E17",
+      "name": "公共脚本列表",
+      "method": "GET",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/scripts",
+      "routeCode": "external-api-script-list",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [
+        "page",
+        "size",
+        "keyword",
+        "executionStage"
+      ],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E18",
+      "name": "公共脚本详情",
+      "method": "GET",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/scripts/{scriptCode}",
+      "routeCode": "external-api-script-detail",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E19",
+      "name": "创建公共脚本",
+      "method": "POST",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/scripts",
+      "routeCode": "external-api-script-create",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E20",
+      "name": "修改公共脚本",
+      "method": "PUT",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/scripts/{scriptCode}",
+      "routeCode": "external-api-script-update",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E21",
+      "name": "删除公共脚本",
+      "method": "DELETE",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/scripts/{scriptCode}",
+      "routeCode": "external-api-script-delete",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E22",
+      "name": "校验公共脚本",
+      "method": "POST",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/scripts/validate",
+      "routeCode": "external-api-script-validate",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E23",
+      "name": "标准 API 实现列表",
+      "method": "GET",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/implementations",
+      "routeCode": "external-api-implementation-list",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E24",
+      "name": "标准 API 实现详情",
+      "method": "GET",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/implementations/{standardApiCode}",
+      "routeCode": "external-api-implementation-detail",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E25",
+      "name": "创建标准 API 实现",
+      "method": "POST",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/implementations",
+      "routeCode": "external-api-implementation-create",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E26",
+      "name": "修改标准 API 实现",
+      "method": "PUT",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/implementations/{standardApiCode}",
+      "routeCode": "external-api-implementation-update",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E27",
+      "name": "删除标准 API 实现",
+      "method": "DELETE",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/implementations/{standardApiCode}",
+      "routeCode": "external-api-implementation-delete",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": true
+    },
+    {
+      "id": "E28",
+      "name": "校验标准 API 实现",
+      "method": "POST",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/implementations/validate",
+      "routeCode": "external-api-implementation-validate",
+      "permission": "EXTERNAL_API_MANAGE",
+      "queryParameters": [],
+      "requestBody": true,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E29",
+      "name": "流程编辑器上下文",
+      "method": "GET",
+      "path": "/external-api-admin/v1/integrations/{integrationCode}/flow-editor-context",
+      "routeCode": "external-api-flow-editor-context",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [
+        "standardApiCode"
+      ],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    },
+    {
+      "id": "E30",
+      "name": "编辑器能力目录",
+      "method": "GET",
+      "path": "/external-api-admin/v1/editor-capabilities",
+      "routeCode": "external-api-editor-capabilities",
+      "permission": "EXTERNAL_API_READ",
+      "queryParameters": [],
+      "requestBody": false,
+      "gatewayIdempotencyKey": false
+    }
+  ],
+  "registration": {
+    "insertRowsByTable": {
+      "t_permission": 2,
+      "t_role_permission": 2,
+      "t_console_resource": 5,
+      "t_gateway_route": 30,
+      "t_gateway_route_header": 111,
+      "t_gateway_route_query_param": 14,
+      "t_gateway_guard_rule": 180
+    },
+    "totalInsertRows": 344,
+    "updateRows": 0,
+    "deleteRows": 0,
+    "newTargets": 0,
+    "idRange": "900000000000071001-900000000000074180",
+    "laterActivationUpdates": {
+      "t_gateway_route": 30,
+      "t_console_resource": 5,
+      "t_role_permission": 2,
+      "t_role": 1
+    }
+  }
+}

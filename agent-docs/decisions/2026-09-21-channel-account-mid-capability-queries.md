@@ -21,9 +21,9 @@
 
 本决定精确取代 [Payment 数据库规范](../database/PAYMENT_ORCHESTRATION_DATABASE.md)第 3 节及[前序五表方案](../plans/2026-08-25-payment-provider-account-mid-simplification-design.md)中受影响的 Channel/Account/Capability/Health 目标；工件及数据库实际状态只见当前台账。
 
-对 [Vault 安全边界](../VAULT_SERVICE_ARCHITECTURE.md)和[数据库规范](../DATABASE_DESIGN_GUIDE.md)中的渠道 Secret 限制，仅为 Payment 的 CHANNEL_ACCOUNT_CONFIG_V1 增加专项例外：REFERENCE Token、CHANNEL_EXECUTION Purpose，Caller 为 payment-orchestration-service。账号 Schema 与策略片段由需求持有。卡数据、登录密码、KMS/Vault 根密钥、其他系统 Secret 的限制不变；Vault 不解析 Payment 业务含义，不增加业务表，也不因此成为通用 Secret Manager。
+对 [Vault 安全边界](../VAULT_SERVICE_ARCHITECTURE.md)和[数据库规范](../DATABASE_DESIGN_GUIDE.md)中的渠道 Secret 限制，仅为 Payment 的 CHANNEL_ACCOUNT_CONFIG_V1 增加专项例外：REFERENCE Token、CHANNEL_EXECUTION Purpose，Caller 为 payment-orchestration-service（2026-10-13 起另有 platform-support-service，仅限 [Platform 读取决定](./2026-10-13-platform-channel-account-reveal.md)的执行用途）。账号 Schema 与策略片段由需求持有。卡数据、登录密码、KMS/Vault 根密钥、其他系统 Secret 的限制不变；Vault 不解析 Payment 业务含义，不增加业务表，也不因此成为通用 Secret Manager。
 
-不取代未涉及的 MID 字段、Execution 冻结坐标、Routing 最终选择、Card 保护边界、Callback/Dispute 数据所有权，以及[通用执行器](../../requirements/20260914/payment-渠道API逻辑定义/generic-execution-amendment.md)的无执行持久化/无自动重试合同。
+不取代未涉及的 MID 字段、Execution 冻结坐标、Routing 最终选择、Card 保护边界、Callback/Dispute 数据所有权，以及[通用执行器](../../requirements/20260914/platform-support-外部API配置与执行/generic-execution-amendment.md)的无执行持久化/无自动重试合同。
 
 删除健康能力需要后续核对 Routing 中复制的健康字段，但本轮未逐字段批准那些表的删除。schema 字段总量和运行状态继续只由当前台账维护。
 
