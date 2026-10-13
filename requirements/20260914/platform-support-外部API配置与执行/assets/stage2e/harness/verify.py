@@ -109,7 +109,7 @@ if __name__ == '__main__':
     call('script-create', 'POST', I + '/scripts', admin,
          {'scriptCode': SCRIPT, 'scriptName': '请求签名', 'executionStage': 'REQUEST',
           'parameterDefinition': [{'name': 'key', 'dataType': 'PROTECTED_HANDLE', 'required': True}],
-          'sourceCode': 'http.requestHeaders.signature = functions.sign(params.key)', 'description': None, 'reason': '2e 端到端'})
+          'sourceCode': 'http.requestHeaders.signature = hmacSha256Hex(params.key, http.requestBody.orderRef)', 'description': None, 'reason': '2e 端到端'})
     broken = dict(definition, transport=dict(definition['transport'], pathTemplate='/outlets/{storeRef}/orders'))
     issues = call('api-validate-invalid', 'POST', I + '/apis/validate', admin,
                   {'apiCode': API, 'apiName': '下单', 'description': None, 'requestFields': api_request, 'responseFields': api_response,

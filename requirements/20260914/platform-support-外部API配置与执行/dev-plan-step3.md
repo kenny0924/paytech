@@ -141,6 +141,8 @@ Payment（事务外，第 4 步接入）
 **3d 结果（2026-10-13，待确认）：** 补齐 3c-2 未覆盖的入口场景，没有修改生产代码。`StandardApiExecutionScenarioTest`（5 个）覆盖：GET + 固定 QUERY + 无请求体 + `bearerAuth` + RESPONSE 脚本 `json.get/json.set`；表单编码 + `basicAuth`；执行前预算耗尽 503；非必需初始化项失败（节点因受控句柄缺失 ERROR，渠道零请求）；第一个节点之后出边条件非布尔（200 + ERROR）；并用输出捕获断言 Platform 日志中没有凭据与渠道响应报文。`StandardApiExecutionTest` 的 500/422 用例补充“渠道零请求、Vault 零读取”断言。
 - 测试发现：本机 Mock 服务（Tomcat）默认拒绝路径中的 `%2F`，返回非 JSON 错误页，执行器按约定记为节点 ERROR；路径段编码改用 `?`（`%3F`）验证。真实渠道是否接受 `%2F` 取决于渠道服务端。
 
+**3e 结果（2026-10-13，待确认）：** 本机端到端通过，回执见 [stage3e/e2e-receipt.json](./assets/stage3e/e2e-receipt.json)，启动器与脚本见 [stage3e/harness](./assets/stage3e/harness/)。配置经 Web 代理 → Gateway → BFF → Platform 保存（标准 API、接入方、签名脚本、下单与查询两个原子 API、带补查分支的流程；越权脚本 `eval(...)` 保存被 422 拒绝），执行直连 Platform 内部接口：成功、拒绝、补查（下单 504 → 查询 CAPTURED）三条路径结果正确；前置 404/422 时渠道零请求；Gateway 不路由执行接口；合成渠道验证下单签名全部有效；各服务日志不含 API Key。2e 验证脚本中无法保存的示例源码已替换为白名单写法。
+
 ## 8. 风险
 
 - **表达式安全：** Aviator 默认能力过宽，剖面配置错误可能执行任意代码。用专门的拒绝测试锁定白名单。

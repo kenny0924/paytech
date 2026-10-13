@@ -1,0 +1,134 @@
+{
+  "date": "2026-10-13",
+  "target": "127.0.0.1:13306/mor_platform_external_api（沿用 2e 本机独立库，测试库 mor_platform 未改动）",
+  "chain": {
+    "configuration": "Web 代理 → Gateway → BFF → Platform（Operations 管理接口）",
+    "execution": "直连 Platform 内部接口 POST /platform-support/standard-apis/v1/{code}/execute（不经 Gateway，Gateway 对该路径返回 404）",
+    "vault": "测试装配 Vault Mock（CHANNEL_EXECUTION，3 个合成账号）",
+    "channel": "本机合成渠道 channel.py（HMAC 验签；订单号末位 1/2/3 → CAPTURED/DECLINED/504；查询返回 CAPTURED）"
+  },
+  "standardApi": "E3_PAY_19E0BE",
+  "integration": "E3_DEMO_19E0BE",
+  "paths": {
+    "success": "createOrder SUCCESS → paid",
+    "declined": "createOrder FAIL → declined",
+    "recovered": "createOrder ERROR（渠道 504）→ queryOrder SUCCESS → paidAfterQuery"
+  },
+  "channelTraffic": [
+    {
+      "method": "POST",
+      "status": 201,
+      "signatureValid": true
+    },
+    {
+      "method": "POST",
+      "status": 201,
+      "signatureValid": true
+    },
+    {
+      "method": "POST",
+      "status": 504,
+      "signatureValid": true
+    },
+    {
+      "method": "GET",
+      "status": 200,
+      "signatureValid": null
+    }
+  ],
+  "logCheck": "Platform、BFF、Gateway、Web、渠道日志均不含随机 API Key",
+  "checks": 15,
+  "status": "PASS",
+  "results": [
+    {
+      "name": "login-admin",
+      "method": "POST",
+      "path": "/api/operations/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "standard-api-create",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/standard-apis",
+      "status": 200
+    },
+    {
+      "name": "integration-create",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations",
+      "status": 200
+    },
+    {
+      "name": "script-create",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/E3_DEMO_19E0BE/scripts",
+      "status": 200
+    },
+    {
+      "name": "script-unsafe-422",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/E3_DEMO_19E0BE/scripts",
+      "status": 422
+    },
+    {
+      "name": "api-create-order",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/E3_DEMO_19E0BE/apis",
+      "status": 200
+    },
+    {
+      "name": "api-query-order",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/E3_DEMO_19E0BE/apis",
+      "status": 200
+    },
+    {
+      "name": "implementation-validate",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/E3_DEMO_19E0BE/implementations/validate",
+      "status": 200
+    },
+    {
+      "name": "implementation-create",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/E3_DEMO_19E0BE/implementations",
+      "status": 200
+    },
+    {
+      "name": "gateway-does-not-route-execute",
+      "method": "POST",
+      "path": "/api/operations/standard-apis/v1/E3_PAY_19E0BE/execute",
+      "status": 404
+    },
+    {
+      "name": "execute-unknown-integration-404",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/E3_PAY_19E0BE/execute",
+      "status": 404
+    },
+    {
+      "name": "execute-invalid-input-422",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/E3_PAY_19E0BE/execute",
+      "status": 422
+    },
+    {
+      "name": "execute-success",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/E3_PAY_19E0BE/execute",
+      "status": 200
+    },
+    {
+      "name": "execute-declined",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/E3_PAY_19E0BE/execute",
+      "status": 200
+    },
+    {
+      "name": "execute-recovered-by-query",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/E3_PAY_19E0BE/execute",
+      "status": 200
+    }
+  ]
+}

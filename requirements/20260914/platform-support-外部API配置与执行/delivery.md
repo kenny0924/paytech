@@ -550,3 +550,13 @@ Pencil 主界面和局部截图复核通过，全部 CAPI 节点无裁切、无�
 - **调整：** 新增 `src/test/resources/externalapi/`：`definition/`（create-order、query-order、form-refund）、`flow/`（pay、call-create-order、call-query-order、call-form-refund、diamond、self-reference、initializer-cycle、initializer-self）、`script/`（sign、bearer、basic、flatten，`.av` 源码）、`vault/channel-account.json`；加载工具 `ExternalApiFixtures` 每次返回新对象。`ExternalApiSamples` 的下单定义、支付流程与签名脚本改为读取文件；场景测试、完整流程测试与流程校验测试改为“加载文件 + 只改本场景相关属性”（如 timeoutMs、required、出边条件、门店）。
 - **保留内联：** 一行的取值绑定与请求输入，以及 `FlowEngineTest` 的 4 行出边样例、`ExpressionEngineTest` 的 3 行脚本——它们就是用例要检验的规则本身。
 - **验证：** Platform `./mvnw -o install`：337/337 通过，用例行为不变；JaCoCo Phase A 门禁同前。未提交。
+
+## 41. 第 3 步 · 3e 本机端到端（2026-10-13）
+
+- **请求：** 用户回复“可以”。
+- **环境：** 沿用 2e 本机独立库 `mor_platform_external_api` 与 Web 入口；停止 2e 的 Platform、BFF、Gateway 后用当前代码重启。Platform 使用 [stage3e 启动器](./assets/stage3e/harness/PlatformE2e.java)（在 Vault Mock 中登记 3 个合成渠道账号，API Key 每次随机生成、只写入 0600 运行文件）；新增本机合成渠道 [channel.py](./assets/stage3e/harness/channel.py)；BFF、Gateway 沿用 2e 启动器。
+- **结果：** [verify.py](./assets/stage3e/harness/verify.py) 15 项全部通过，回执见 [e2e-receipt.json](./assets/stage3e/e2e-receipt.json)：成功、拒绝、补查三条路径正确；渠道流量为 POST 201、POST 201、POST 504、GET 200，下单签名均有效；前置 404/422 无渠道请求；Gateway 对执行路径返回 404；日志不含 API Key。
+- **其他：** [2e 验证脚本](./assets/stage2e/harness/verify.py)的示例脚本源码由 `functions.sign(...)` 改为 `hmacSha256Hex(params.key, http.requestBody.orderRef)`（2e 回执为历史记录，未重跑）。
+- **数据：** 独立库新增本次合成配置（E3_ 前缀）与合成人员，不清理；未执行任何 SQL 文件，测试库与共享环境未改动。
+- **运行状态：** Web、Platform、渠道、BFF、Gateway 仍在本机运行，可随时停止。
+- **范围：** 未修改生产代码、BFF、前端或 Vault 策略，未提交。第 3 步 3a～3e 全部完成。
