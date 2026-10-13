@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Alert, AutoComplete, Button, Form, Input, List, Modal, Select, Space, Tag } from 'antd';
+import { useRef, useState } from 'react';
+import { AutoComplete, Form, Input, Modal, Select, Space } from 'antd';
 import type { RegisteredFunction, ValidationIssue } from './editorModel';
 import type { Binding, BindingKind } from './integrationApiModel';
 
@@ -52,18 +52,21 @@ export function BindingInput({ value, onChange, kinds, paths = [], functions = [
   </div>;
 }
 
-/** 校验结果列表：错误与警告分级显示，点击“定位”交给调用方切换页签或高亮。 */
+/** 校验结果栏：错误为浅红横幅“校验结果 · N 个错误”，逐条显示说明与位置，“定位”交给调用方切换页签或选中对象。 */
 export function ValidationPanel({ issues, onLocate, stale }: {
   issues: ValidationIssue[] | null; onLocate: (issue: ValidationIssue) => void; stale?: boolean;
 }) {
-  if (issues === null) return null;
-  return <section className="configuration-editor external-api-validation">
-    <h2>校验结果{stale && <Tag className="external-api-tag">内容已修改，结果可能过期</Tag>}</h2>
-    {issues.length === 0 ? <Alert type="success" showIcon title="校验通过" /> : <List size="small" dataSource={issues} renderItem={issue =>
-      <List.Item actions={[<Button key="locate" type="link" size="small" onClick={() => onLocate(issue)}>定位</Button>]}>
-        <Space align="start"><Tag color={issue.severity === 'ERROR' ? 'red' : 'orange'}>{issue.severity === 'ERROR' ? '错误' : '提示'}</Tag>
-          <div><div>{issue.message}</div><div className="cell-meta"><code>{issue.location}</code> · {issue.code}</div></div></Space>
-      </List.Item>} />}
+  if (issues === null || issues.length === 0) return null;
+  const errors = issues.filter(issue => issue.severity === 'ERROR').length;
+  const warnings = issues.length - errors;
+  const title = errors ? `校验结果 · ${errors} 个错误${warnings ? `，${warnings} 个提示` : ''}`
+    : warnings ? `校验通过 · ${warnings} 个提示` : '校验通过';
+  return <section className={`xapi-validation${errors ? '' : ' ok'}`} aria-live="polite">
+    <div className="xapi-validation-title">{title}{stale && <span className="xapi-field-hint">（内容已修改，结果可能过期）</span>}</div>
+    {issues.map((issue, index) => <div key={`${issue.location}:${index}`} className="xapi-validation-item">
+      <span>{issue.severity === 'ERROR' ? '⊗' : 'ⓘ'}</span>
+      <span>{issue.message}<small>{issue.location} · {issue.code}</small></span>
+      <button type="button" className="xapi-link" onClick={() => onLocate(issue)}>定位</button></div>)}
   </section>;
 }
 
@@ -81,4 +84,45 @@ export function ReasonDialog({ open, saving, onCancel, onConfirm }: {
         <Input.TextArea rows={3} maxLength={500} showCount autoFocus /></Form.Item>
     </Form>
   </Modal>;
+}
+
+/**
+ * 保存流程：点击保存（或离开时“保存并离开”）→ 先做本地检查 → 填写变更原因 → 提交；返回是否保存成功。
+ * 原因弹窗取消或本地检查失败都返回 false。
+ */
+export function useReasonFlow(perform: (reason: string) => Promise<boolean>, check: () => Promise<boolean> | boolean = () => true) {
+  const [open, setOpen] = useState(false);
+  const waiter = useRef<((ok: boolean) => void) | null>(null);
+  const finish = (ok: boolean) => { waiter.current?.(ok); waiter.current = null; };
+  async function start(): Promise<boolean> {
+    if (!(await check())) return false;
+    setOpen(true);
+    return new Promise<boolean>(resolve => { waiter.current = resolve; });
+  }
+  return {
+    open, start,
+    cancel: () => { setOpen(false); finish(false); },
+    confirm: async (reason: string) => { const ok = await perform(reason); setOpen(false); finish(ok); },
+  };
+}
+
+/** 取值的文字形式：路径原样，表达式原文，函数写成 FN(参数…) → result。 */
+export function bindingText(binding: Binding | undefined): string {
+  if (!binding) return '';
+  if (binding.kind === 'PATH') return binding.path;
+  if (binding.kind === 'EXPRESSION') return binding.expression;
+  const args = Object.entries(binding.args).map(([name, arg]) => `${name}: ${bindingText(arg)}`).join(', ');
+  return `${binding.function}(${args})${binding.result && binding.result !== 'result' ? ` → ${binding.result}` : ''}`;
+}
+
+/** 取值的只读展示：灰底小标签“路径 / 表达式 / 函数” + 蓝色等宽文字；没有取值时显示占位文字。 */
+export function BindingView({ binding, empty = '未赋值' }: { binding?: Binding; empty?: string }) {
+  if (!binding) return <span className="xapi-field-hint">{empty}</span>;
+  return <span><span className="xapi-kind">{kindLabels[binding.kind]}</span>
+    <code className="xapi-mono xapi-mono-ref">{breakAtDots(bindingText(binding))}</code></span>;
+}
+
+/** 长路径只在“.”之后允许换行，避免在单词中间断开。 */
+export function breakAtDots(text: string) {
+  return text.split(/(?<=\.)/).map((part, index) => <span key={index}>{part}<wbr /></span>);
 }

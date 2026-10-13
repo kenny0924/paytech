@@ -1,35 +1,45 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { flushSync } from 'react-dom';
-import { Alert, Button, Checkbox, Form, Input, InputNumber, Select, Space, Table, Tabs, Tag } from 'antd';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Alert, App, Button, Form, Input, InputNumber, Modal, Radio, Select, Switch, Table, Tabs } from 'antd';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { session } from '../api/session';
 import type { ConsoleResource } from '../api/types';
-import { useConfigurationForm } from '../configuration/useConfigurationForm';
 import { useErrorNotification } from '../feedback/useErrorNotification';
-import { BindingInput, ReasonDialog, ValidationPanel, emptyBinding } from './EditorParts';
+import { BindingInput, BindingView, ReasonDialog, ValidationPanel, emptyBinding, useReasonFlow } from './EditorParts';
 import { FieldTable } from './FieldTable';
 import { decodeCapabilities, decodeValidation } from './editorModel';
 import type { Capabilities, ValidationIssue } from './editorModel';
-import { Loading, LoadFailure, SaveNotice, hasButton, loadAllPages, useDetail } from './externalApiHooks';
+import { ConflictBanner, Loading, LoadFailure, hasButton, loadAllPages, useCopyDraft, useDetail, useEditorSave } from './externalApiHooks';
 import {
-  codePattern, dataTypeLabels, decodeIntegration, decodeMutation, decodePage, decodeScriptSummary, errorRows, externalApiBase,
+  codePattern, decodeIntegration, decodeMutation, decodePage, decodeScriptSummary, errorRows, externalApiBase,
   fieldDataTypes, integrationPath, integrationRoute, manageIntegrations, replaceQuery, toFieldBodies,
 } from './externalApiModel';
 import type { ApiField, FieldDataType, FieldLocation, IntegrationDetail, IntegrationScriptSummary } from './externalApiModel';
 import {
-  decodeIntegrationApi, emptyDraft, fieldKey, fixedKeySet, issueTab, methods, moveItem, nextScriptUseId, paramTypes,
-  pathVariableHints, requestEncodings, responseDecodings, responseReadPaths, toDefinition, toDraft,
+  decodeIntegrationApi, emptyDraft, fieldKey, issueTab, methods, moveItem, nextScriptUseId, normalizeKey, paramTypes,
+  pathVariables, requestEncodings, responseDecodings, responseReadPaths, toDefinition, toDraft,
 } from './integrationApiModel';
 import type {
-  DefinitionDraft, EditorTab, IntegrationApiDetail, OutputDeclaration, ParamDeclaration, ParamType, ScriptUse, StatusRule,
+  Binding, DefinitionDraft, EditorTab, FixedValue, IntegrationApiDetail, OutputDeclaration, ParamDeclaration, ParamType, ScriptUse,
+  StatusRule,
 } from './integrationApiModel';
+import { Field, HandleMark, Mono, Note, PageHeader, Panel, ReadOnlyValue, StatusTag, counted } from './ui';
 
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; integrationCode: string; apiCode: string | null }
 const allLocations: FieldLocation[] = ['HEADER', 'BODY', 'QUERY', 'PATH'];
 const responseLocations: FieldLocation[] = ['HEADER', 'BODY'];
 const capabilityPath = `${externalApiBase}/editor-capabilities`;
 const scriptPage = (value: unknown) => decodePage(value, decodeScriptSummary, item => item.scriptCode);
+const noManage = '只读 · 无“外部 API 管理”权限';
+
+/** 由规范化键（HEADER 小写）还原为字段原有写法的键，例如 HEADER:Content-Type。 */
+function rawKey(key: string, fields: ApiField[]): string {
+  const [location, ...rest] = key.split(':');
+  const path = rest.join(':');
+  const field = fields.find(item => item.fieldLocation === location && (location === 'HEADER' ? item.fieldPath.toLowerCase() === path : item.fieldPath === path));
+  return field ? `${field.fieldLocation}:${field.fieldPath}` : key;
+}
 
 /** 原子 API 编辑与详情（/integrations/:code/apis/:apiCode，?mode=edit；新建为 /apis/new）。 */
 export function IntegrationApiEditor({ resources, onAuthorizationChanged, integrationCode, apiCode }: Props) {
@@ -52,8 +62,8 @@ export function IntegrationApiEditor({ resources, onAuthorizationChanged, integr
   }, [integrationCode, notify]);
   if (creating && !canManage) return <Alert type="warning" showIcon title="当前没有接入方维护权限" />;
   if (integration.loading || api.loading || capabilities.loading || scripts === undefined) return <Loading />;
-  if (!integration.data) return <LoadFailure failure={integration.failure} retry={integration.refresh} />;
-  if (!creating && !api.data) return <LoadFailure failure={api.failure} retry={api.refresh} />;
+  if (!integration.data) return <LoadFailure title="接入方加载失败" failure={integration.failure} retry={integration.refresh} />;
+  if (!creating && !api.data) return <LoadFailure title="原子 API 加载失败" failure={api.failure} retry={api.refresh} />;
   return <ApiForm key={`${api.data?.version}:${readOnly}`} integration={integration.data} detail={api.data} readOnly={readOnly}
     canManage={canManage} capabilities={capabilities.data} scripts={scripts} onAuthorizationChanged={onAuthorizationChanged}
     onReload={api.refresh} />;
@@ -65,9 +75,9 @@ interface FormProps {
 }
 
 function ApiForm({ integration, detail, readOnly, canManage, capabilities, scripts, onAuthorizationChanged, onReload }: FormProps) {
-  const location = useLocation(); const navigate = useNavigate(); const notify = useErrorNotification();
-  const editor = useConfigurationForm(onAuthorizationChanged);
-  const creating = !detail; const base = `${integrationPath}/${integration.integrationCode}/apis`;
+  const location = useLocation(); const navigate = useNavigate(); const notify = useErrorNotification(); const copy = useCopyDraft(); const { message } = App.useApp();
+  const editor = useEditorSave(onAuthorizationChanged);
+  const creating = !detail; const integrationCode = integration.integrationCode; const base = `${integrationPath}/${integrationCode}/apis`;
   const [apiCode, setApiCode] = useState(detail?.apiCode ?? '');
   const [apiName, setApiName] = useState(detail?.apiName ?? '');
   const [description, setDescription] = useState(detail?.description ?? '');
@@ -79,8 +89,8 @@ function ApiForm({ integration, detail, readOnly, canManage, capabilities, scrip
   const [issues, setIssues] = useState<ValidationIssue[] | null>(null);
   const [stale, setStale] = useState(false);
   const [validating, setValidating] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const disabled = readOnly || editor.saving || editor.conflict;
+  const leaving = useRef(false);
+  const disabled = readOnly || editor.saving;
   function touch() { editor.setDirty(true); setStale(issues !== null); }
   function update(patch: Partial<DefinitionDraft>) { setDraft(current => ({ ...current, ...patch })); touch(); }
   function body() {
@@ -94,230 +104,371 @@ function ApiForm({ integration, detail, readOnly, canManage, capabilities, scrip
         body: JSON.stringify({ apiCode: creating ? apiCode.trim() : detail.apiCode, ...body(), expectedVersion: detail?.version ?? null }) },
         decodeValidation);
       setIssues(result.issues); setStale(false);
+      if (!result.issues.length) void message.success('校验通过，配置可以保存');
       const first = result.issues.find(issue => issue.severity === 'ERROR');
       if (first) setTab(issueTab(first.location));
     } catch (error) { notify(error, '校验未完成'); } finally { setValidating(false); }
   }
-  async function save(reason: string) {
+  const reasonFlow = useReasonFlow(async reason => {
     const code = creating ? apiCode.trim() : detail.apiCode;
-    const objectCode = `${integration.integrationCode}/${code}`;
     const result = await editor.save(creating ? base : `${base}/${code}`, creating ? 'POST' : 'PUT',
       creating ? { apiCode: code, ...body(), reason } : { ...body(), expectedVersion: detail.version, reason },
-      value => decodeMutation(value, 'INTEGRATION_API', objectCode));
-    setSaving(false);
-    if (result) {
-      flushSync(() => editor.setDirty(false));
-      void navigate(`${integrationRoute}/${integration.integrationCode}/apis/${code}`, { replace: true });
-    } else if (!editor.conflict) {
-      void validate();
-    }
-  }
-  const fixedKeys = fixedKeySet(draft.fixedValues);
-  const pathHints = pathVariableHints(draft.transport.pathTemplate, requestFields);
+      value => decodeMutation(value, 'INTEGRATION_API', `${integrationCode}/${code}`));
+    if (!result) { if (!editor.conflict) void validate(); return false; }
+    flushSync(() => editor.setDirty(false));
+    if (!leaving.current) void navigate(`${integrationRoute}/${integrationCode}/apis/${code}`, { replace: true });
+    return true;
+  }, () => !!apiName.trim() && (!creating || codePattern.test(apiCode.trim())));
+  const { setSaveForLeave } = editor;
+  useEffect(() => setSaveForLeave(readOnly ? null : () => { leaving.current = true; return reasonFlow.start().finally(() => { leaving.current = false; }); }));
+  const latest = useCallback(() => session.request(`${base}/${detail?.apiCode}`, {}, value => decodeIntegrationApi(value, detail!.apiCode)), [base, detail]);
+  const fixedValues = new Map(draft.fixedValues.map(item => [normalizeKey(item.key), item.expression]));
   const readPaths = responseReadPaths(responseFields, draft.params);
   const scriptParamPaths = draft.params.filter(param => param.name.trim()).map(param => `params.${param.name.trim()}`);
-  const title = creating ? '新建原子 API' : `接入方 ${integration.integrationCode} / 原子 API / ${detail.apiCode}`;
+  const code = detail?.apiCode;
+  const workspace = `${integrationRoute}/${integrationCode}`;
+  const crumbs = [{ label: '外部 API' }, { label: '接入方', to: integrationRoute }, { label: integrationCode, to: workspace },
+    { label: '原子 API', to: `${workspace}?tab=apis` }, ...(creating ? [{ label: '新建' }]
+      : readOnly ? [{ label: code! }, { label: '详情' }] : [{ label: code!, to: `${workspace}/apis/${code}` }, { label: '编辑' }])];
+  const title = creating ? '新建原子 API' : readOnly ? `原子 API · ${code}` : `编辑原子 API · ${code}`;
   const tabs: { key: EditorTab; label: string; children: ReactNode }[] = [
     { key: 'interface', label: '接口', children: <InterfaceTab {...{ creating, disabled, apiCode, setApiCode, apiName, setApiName, description,
-      setDescription, draft, update, integration, pathHints, touch, detail }} /> },
-    { key: 'request', label: `请求字段（${requestFields.length}）`, children: <FieldTable value={requestFields} locations={allLocations}
-      readOnly={disabled} fixedKeys={fixedKeys} serverErrorRows={errorRows(editor.fieldErrors, 'requestFields')}
-      onChange={fields => { setRequestFields(fields); touch(); }} /> },
-    { key: 'response', label: `响应字段（${responseFields.length}）`, children: <FieldTable value={responseFields} locations={responseLocations}
-      readOnly={disabled} serverErrorRows={errorRows(editor.fieldErrors, 'responseFields')}
-      onChange={fields => { setResponseFields(fields); touch(); }} /> },
+      setDescription, draft, update, integration, requestFields, touch, detail }} /> },
+    { key: 'request', label: counted('请求字段', requestFields.length), children: <>
+      <FieldTable value={requestFields} locations={allLocations} readOnly={disabled} fixedValues={fixedValues}
+        onSourceChange={(previous, key, expression) => {
+          const kept = draft.fixedValues.filter(item => normalizeKey(item.key) !== previous && normalizeKey(item.key) !== key);
+          update({ fixedValues: key && expression !== null ? [...kept, { key: rawKey(key, requestFields), expression }] : kept });
+        }}
+        hint="请求结构按渠道文档逐行维护；值在流程节点里填写。标“固定”的字段由协议固定值提供，节点不能再赋值。"
+        serverErrorRows={errorRows(editor.fieldErrors, 'requestFields')} onChange={fields => { setRequestFields(fields); touch(); }} />
+      <Note items={['PATH 字段与路径模板中的 {变量} 一一对应，值按单个路径段编码。', 'HEADER 名称大小写不敏感；同一位置下路径不能重复。',
+        '“响应字段”页签结构相同，只允许 HEADER、BODY。']} /></> },
+    { key: 'response', label: counted('响应字段', responseFields.length), children: <FieldTable value={responseFields}
+      locations={responseLocations} readOnly={disabled} hint="响应结构按渠道文档维护；出现即校验类型，必填只在判定为 SUCCESS 时校验。"
+      serverErrorRows={errorRows(editor.fieldErrors, 'responseFields')} onChange={fields => { setResponseFields(fields); touch(); }} /> },
     { key: 'params', label: '调用参数与固定值', children: <ParamsTab draft={draft} update={update} requestFields={requestFields} disabled={disabled} /> },
-    { key: 'scripts', label: `脚本（${draft.requestScripts.length + draft.responseScripts.length}）`, children:
+    { key: 'scripts', label: counted('脚本', draft.requestScripts.length + draft.responseScripts.length), children:
       <ScriptsTab draft={draft} update={update} scripts={scripts} paramPaths={scriptParamPaths} disabled={disabled} /> },
-    { key: 'rules', label: `状态规则（${draft.statusRules.length}）`, children:
-      <RulesTab rules={draft.statusRules} onChange={statusRules => update({ statusRules })} readPaths={readPaths} disabled={disabled} /> },
+    { key: 'rules', label: counted('状态规则', draft.statusRules.length), children:
+      <RulesTab rules={draft.statusRules} onChange={statusRules => update({ statusRules })} disabled={disabled} /> },
     { key: 'outputs', label: '输出', children: <OutputsTab draft={draft} update={update} readPaths={readPaths}
       functions={capabilities?.functions ?? []} disabled={disabled} /> },
   ];
-  return <div className="configuration-page external-api-page">
-    <div className="page-heading"><h1>{title}</h1><Space>
-      {readOnly && canManage && detail && <Button onClick={() => void navigate(replaceQuery(location.search, { mode: 'edit' }))}>编辑</Button>}
-      {!readOnly && <><Button loading={validating} onClick={() => void validate()}>校验</Button>
-        <Button type="primary" disabled={editor.conflict || !apiName.trim() || creating && !codePattern.test(apiCode.trim())}
-          onClick={() => setSaving(true)}>保存</Button></>}</Space></div>
-    {!readOnly && <div className="external-api-save-row"><SaveNotice /></div>}
-    {editor.conflict && <Alert type="warning" showIcon title="该配置已被他人修改，本地修改已保留。" action={<Button onClick={onReload}>重新加载</Button>} />}
-    <section className="configuration-editor"><Tabs activeKey={tab} onChange={key => setTab(key as EditorTab)} items={tabs} /></section>
+  return <>
+    <PageHeader crumbs={crumbs} title={title} readOnlyHint={!canManage ? noManage : undefined}
+      actions={readOnly ? canManage && detail && <Button type="primary" onClick={() => void navigate(replaceQuery(location.search, { mode: 'edit' }))}>编辑</Button>
+        : <><Button loading={validating} onClick={() => void validate()}>校验</Button>
+          <Button type="primary" loading={editor.saving} onClick={() => void reasonFlow.start()}>保存</Button></>} />
+    {editor.conflict && detail && <ConflictBanner code={detail.apiCode} baseVersion={detail.version} latest={latest} onReload={onReload}
+      onCopy={() => copy({ apiName, description, requestFields, responseFields, definition: toDefinition(draft) })} />}
+    <Tabs className="xapi-tabs" activeKey={tab} onChange={key => setTab(key as EditorTab)}
+      items={tabs.map(item => ({ ...item, children: <div className="xapi-tab-body">{item.children}</div> }))} />
     <ValidationPanel issues={issues} stale={stale} onLocate={issue => setTab(issueTab(issue.location))} />
-    {detail && <section className="configuration-editor"><h2>被以下标准 API 实现引用</h2>
-      {detail.referencedBy.length ? <Space wrap>{detail.referencedBy.map(item => <Tag key={item.standardApiCode}>
-        {item.standardApiCode}（节点 {item.nodeIds.join('、')}）</Tag>)}</Space> : <span className="muted">暂无引用</span>}</section>}
-    <ReasonDialog open={saving} saving={editor.saving} onCancel={() => setSaving(false)} onConfirm={reason => void save(reason)} />
-  </div>;
+    <ReasonDialog open={reasonFlow.open} saving={editor.saving} onCancel={reasonFlow.cancel} onConfirm={reason => void reasonFlow.confirm(reason)} />
+  </>;
 }
 
 function InterfaceTab({ creating, disabled, apiCode, setApiCode, apiName, setApiName, description, setDescription, draft, update, integration,
-  pathHints, touch, detail }: {
+  requestFields, touch, detail }: {
   creating: boolean; disabled: boolean; apiCode: string; setApiCode: (v: string) => void; apiName: string; setApiName: (v: string) => void;
   description: string; setDescription: (v: string) => void; draft: DefinitionDraft; update: (patch: Partial<DefinitionDraft>) => void;
-  integration: IntegrationDetail; pathHints: string[]; touch: () => void; detail?: IntegrationApiDetail;
+  integration: IntegrationDetail; requestFields: ApiField[]; touch: () => void; detail?: IntegrationApiDetail;
 }) {
   const transport = (patch: Partial<DefinitionDraft['transport']>) => update({ transport: { ...draft.transport, ...patch } });
-  return <Form layout="vertical" disabled={disabled}>
-    <div className="configuration-grid two">
-      <Form.Item label="编码" extra={creating ? '创建后不可修改' : undefined}
-        validateStatus={creating && apiCode && !codePattern.test(apiCode) ? 'error' : undefined}>
-        <Input value={apiCode} maxLength={64} disabled={!creating || disabled} placeholder="例如 CREATE_ORDER"
-          onChange={event => { setApiCode(event.target.value); touch(); }} /></Form.Item>
-      <Form.Item label="名称"><Input value={apiName} maxLength={128} onChange={event => { setApiName(event.target.value); touch(); }} /></Form.Item>
-    </div>
-    <Form.Item label="说明"><Input.TextArea rows={2} maxLength={512} value={description}
-      onChange={event => { setDescription(event.target.value); touch(); }} /></Form.Item>
-    <h3>HTTP 传输</h3>
-    <div className="configuration-grid two">
-      <Form.Item label="Method"><Select value={draft.transport.method} options={methods.map(value => ({ value, label: value }))}
-        onChange={method => transport({ method })} /></Form.Item>
-      <Form.Item label="地址代码" extra="来自接入方的出站地址"><Select value={draft.transport.endpointCode || undefined}
-        options={integration.endpoints.map(item => ({ value: item.endpointCode, label: `${item.endpointCode} · ${item.baseUrl}` }))}
-        onChange={endpointCode => transport({ endpointCode })} /></Form.Item>
-    </div>
-    <Form.Item label="路径模板" extra="以 / 开头的相对路径；{变量} 必须与 PATH 字段一一对应"
-      validateStatus={pathHints.length ? 'warning' : undefined} help={pathHints.length ? pathHints.join('；') : undefined}>
-      <Input value={draft.transport.pathTemplate} maxLength={512} className="external-api-code-input"
-        onChange={event => transport({ pathTemplate: event.target.value })} /></Form.Item>
-    <div className="configuration-grid two">
-      <Form.Item label="连接超时（ms）" extra="100～10000"><InputNumber min={100} max={10000} value={draft.transport.connectTimeoutMs}
-        onChange={value => transport({ connectTimeoutMs: value ?? 2000 })} /></Form.Item>
-      <Form.Item label="响应超时（ms）" extra="100～30000"><InputNumber min={100} max={30000} value={draft.transport.responseTimeoutMs}
-        onChange={value => transport({ responseTimeoutMs: value ?? 10000 })} /></Form.Item>
-      <Form.Item label="请求编码" extra="NONE 表示无请求体，此时不能有 BODY 字段"><Select value={draft.requestEncoding}
-        options={requestEncodings.map(value => ({ value, label: value }))} onChange={requestEncoding => update({ requestEncoding })} /></Form.Item>
-      <Form.Item label="响应解码" extra="NONE 不解析，交给响应脚本处理"><Select value={draft.responseDecoding}
-        options={responseDecodings.map(value => ({ value, label: value }))} onChange={responseDecoding => update({ responseDecoding })} /></Form.Item>
-    </div>
-    {detail && <div className="muted">当前版本 {detail.version} · 更新于 {new Date(detail.updateTime).toLocaleString('zh-CN')}</div>}
-  </Form>;
+  const endpoint = integration.endpoints.find(item => item.endpointCode === draft.transport.endpointCode);
+  const pathFields = requestFields.filter(field => field.fieldLocation === 'PATH').map(field => field.fieldPath);
+  const variables = pathVariables(draft.transport.pathTemplate);
+  const extraFields = pathFields.filter(name => !variables.includes(name));
+  const value = (editable: ReactNode, shown: ReactNode, mono?: boolean) => disabled ? <ReadOnlyValue value={shown} mono={mono} /> : editable;
+  return <>
+    <Panel title="基本信息"><div className="xapi-grid xapi-grid-3">
+      <Field label="编码（创建后只读）" hint={creating && apiCode && !codePattern.test(apiCode) ? '大写字母开头，包含大写字母、数字或下划线' : undefined}>
+        {creating && !disabled ? <Input value={apiCode} maxLength={64} className="xapi-mono-input" placeholder="例如 CREATE_ORDER"
+          onChange={event => { setApiCode(event.target.value); touch(); }} /> : <ReadOnlyValue mono value={apiCode} />}</Field>
+      <Field label="名称">{value(<Input value={apiName} maxLength={128} onChange={event => { setApiName(event.target.value); touch(); }} />, apiName)}</Field>
+      <Field label="说明">{value(<Input value={description} maxLength={512} onChange={event => { setDescription(event.target.value); touch(); }} />, description)}</Field>
+    </div></Panel>
+    <Panel title="HTTP 传输">
+      <div className="xapi-grid xapi-grid-http">
+        <Field label="Method">{value(<Select value={draft.transport.method} className="xapi-mono-input"
+          options={methods.map(item => ({ value: item, label: item }))} onChange={method => transport({ method })} />, draft.transport.method, true)}</Field>
+        <Field label="地址代码" hint={endpoint ? <Mono tone="muted">{endpoint.baseUrl}</Mono> : '请选择接入方的出站地址'}>
+          {value(<Select value={draft.transport.endpointCode || undefined} className="xapi-mono-input"
+            options={integration.endpoints.map(item => ({ value: item.endpointCode, label: item.endpointCode }))}
+            onChange={endpointCode => transport({ endpointCode })} />, draft.transport.endpointCode, true)}</Field>
+        <Field label="路径模板" hint={<span className="xapi-path-checks">
+          {variables.map(name => pathFields.includes(name)
+            ? <span key={name} className="ok">变量 {`{${name}}`} ✓ 已有同名 PATH 字段</span>
+            : <span key={name} className="warn">变量 {`{${name}}`} ✗ 缺少同名 PATH 字段</span>)}
+          {extraFields.map(name => <span key={name} className="warn">PATH 字段 {name} 未出现在路径模板中</span>)}
+          {!variables.length && !extraFields.length && '以 / 开头的相对路径'}</span>}>
+          {value(<Input value={draft.transport.pathTemplate} maxLength={512} className="xapi-mono-input"
+            onChange={event => transport({ pathTemplate: event.target.value })} />, draft.transport.pathTemplate, true)}</Field>
+      </div>
+      <div className="xapi-grid xapi-grid-4">
+        <Field label="连接超时（ms）" hint="100～10000">{value(<InputNumber min={100} max={10000} value={draft.transport.connectTimeoutMs} style={{ width: '100%' }}
+          onChange={next => transport({ connectTimeoutMs: next ?? 2000 })} />, draft.transport.connectTimeoutMs, true)}</Field>
+        <Field label="响应超时（ms）" hint="100～30000">{value(<InputNumber min={100} max={30000} value={draft.transport.responseTimeoutMs} style={{ width: '100%' }}
+          onChange={next => transport({ responseTimeoutMs: next ?? 10000 })} />, draft.transport.responseTimeoutMs, true)}</Field>
+        <Field label="请求编码" hint="JSON / FORM_URLENCODED / NONE">{value(<Select value={draft.requestEncoding} className="xapi-mono-input"
+          options={requestEncodings.map(item => ({ value: item, label: item }))} onChange={requestEncoding => update({ requestEncoding })} />,
+          draft.requestEncoding, true)}</Field>
+        <Field label="响应解码" hint="JSON / NONE（交给响应脚本）">{value(<Select value={draft.responseDecoding} className="xapi-mono-input"
+          options={responseDecodings.map(item => ({ value: item, label: item }))} onChange={responseDecoding => update({ responseDecoding })} />,
+          draft.responseDecoding, true)}</Field>
+      </div>
+      <Note items={['实际超时取配置值与流程剩余预算的较小者。不自动重试、不跟随重定向、不保存 Cookie；Host、Content-Length 等由系统处理，不能配置。']} />
+    </Panel>
+    {detail && <Panel title="被引用">
+      <p className="xapi-desc">{detail.referencedBy.length ? <>{detail.referencedBy.map((item, index) => <span key={item.standardApiCode}>
+        {index > 0 && '；'}<Link to={`${integrationRoute}/${integration.integrationCode}/implementations/${item.standardApiCode}`}>
+          {item.standardApiCode}</Link> 流程的节点 <Mono>{item.nodeIds.join('、')}</Mono></span>)}。修改必填请求字段或删除本 API 时，保存校验会列出这些引用。</>
+        : '暂无标准 API 实现引用本 API。'}</p>
+    </Panel>}
+  </>;
 }
+
+/** 通用编辑弹窗：确定时把表单值交给调用方；用于调用参数、固定值、状态规则、输出与脚本引用。 */
+function EditModal<T extends object>({ title, initial, onCancel, onSave, children, width = 520 }: {
+  title: string; initial: T; onCancel: () => void; onSave: (value: T) => void; children: ReactNode; width?: number;
+}) {
+  const [form] = Form.useForm<T>();
+  return <Modal open width={width} title={title} okText="应用" onCancel={onCancel} onOk={() => form.submit()} destroyOnHidden>
+    <Form form={form} layout="vertical" requiredMark={false} initialValues={initial} onFinish={values => onSave({ ...initial, ...values })}>
+      {children}</Form>
+  </Modal>;
+}
+
+/** 列表行的“编辑 / 删除”。 */
+function RowOps({ onEdit, onRemove, extra }: { onEdit: () => void; onRemove: () => void; extra?: ReactNode }) {
+  return <span className="xapi-ops">{extra}<button type="button" className="xapi-link" onClick={onEdit}>编辑</button>
+    <button type="button" className="xapi-link" onClick={onRemove}>删除</button></span>;
+}
+
+const typeOption = (type: string) => ({ value: type, label: type });
 
 function ParamsTab({ draft, update, requestFields, disabled }: {
   draft: DefinitionDraft; update: (patch: Partial<DefinitionDraft>) => void; requestFields: ApiField[]; disabled: boolean;
 }) {
-  const setParam = (index: number, patch: Partial<ParamDeclaration>) =>
-    update({ params: draft.params.map((param, i) => i === index ? { ...param, ...patch } : param) });
-  const setFixed = (index: number, patch: Partial<{ key: string; expression: string }>) =>
-    update({ fixedValues: draft.fixedValues.map((item, i) => i === index ? { ...item, ...patch } : item) });
+  const [param, setParam] = useState<{ index: number | null; value: ParamDeclaration } | null>(null);
+  const [fixed, setFixed] = useState<{ index: number | null; value: FixedValue } | null>(null);
+  const usage = (name: string) => {
+    const ref = `params.${name}`;
+    const scripts = [...draft.requestScripts, ...draft.responseScripts]
+      .filter(use => Object.values(use.params).some(binding => binding.kind === 'PATH' ? binding.path === ref : binding.kind === 'EXPRESSION' && binding.expression.includes(ref)))
+      .map(use => `脚本 ${use.id}`);
+    const rules = draft.statusRules.some(rule => rule.condition.includes(ref)) ? ['状态规则'] : [];
+    const outputs = [...draft.outputs.SUCCESS, ...draft.outputs.FAIL].some(output => JSON.stringify(output.value).includes(ref)) ? ['输出'] : [];
+    return [...scripts, ...rules, ...outputs];
+  };
   const fieldKeys = requestFields.map(fieldKey);
-  return <div>
-    <h3>调用参数</h3>
-    <p className="muted">由流程节点每次提供。受控句柄（PROTECTED_HANDLE）只能交给脚本或注册函数，不能写进报文或输出。</p>
-    <Table rowKey={(_, index) => String(index)} size="small" pagination={false} dataSource={draft.params} columns={[
-      { title: '名称', render: (_, row, index) => <Input value={row.name} disabled={disabled} maxLength={64} placeholder="小写字母开头"
-        onChange={event => setParam(index, { name: event.target.value })} /> },
-      { title: '类型', width: 200, render: (_, row, index) => <Select value={row.dataType} disabled={disabled} style={{ width: '100%' }}
-        options={paramTypes.map(type => ({ value: type, label: type === 'PROTECTED_HANDLE' ? '🔒 受控句柄' : dataTypeLabels[type as FieldDataType] }))}
-        onChange={(dataType: ParamType) => setParam(index, { dataType })} /> },
-      { title: '必填', width: 70, render: (_, row, index) => <Checkbox checked={row.required} disabled={disabled}
-        onChange={event => setParam(index, { required: event.target.checked })} /> },
-      { title: '说明', render: (_, row, index) => <Input value={row.description ?? ''} disabled={disabled} maxLength={512}
-        onChange={event => setParam(index, { description: event.target.value })} /> },
-      ...(disabled ? [] : [{ title: '', width: 70, render: (_: unknown, __: ParamDeclaration, index: number) => <Button type="link" danger
-        onClick={() => update({ params: draft.params.filter((_, i) => i !== index) })}>删除</Button> }]),
-    ]} />
-    {!disabled && <Button className="external-api-add" onClick={() => update({ params: [...draft.params, { name: '', dataType: 'STRING', required: true }] })}>添加参数</Button>}
-    <h3>协议固定值</h3>
-    <p className="muted">只能是常量表达式；已设固定值的请求字段不能再由流程节点赋值。</p>
-    <Table rowKey={(_, index) => String(index)} size="small" pagination={false} dataSource={draft.fixedValues} columns={[
-      { title: '请求字段', width: 320, render: (_, row, index) => <Select value={row.key || undefined} disabled={disabled} style={{ width: '100%' }}
-        placeholder="选择请求字段" options={fieldKeys.map(key => ({ value: key, label: key }))} onChange={key => setFixed(index, { key })} /> },
-      { title: '常量表达式', render: (_, row, index) => <Input value={row.expression} disabled={disabled} className="external-api-code-input"
-        placeholder="'application/json'" onChange={event => setFixed(index, { expression: event.target.value })} /> },
-      ...(disabled ? [] : [{ title: '', width: 70, render: (_: unknown, __: unknown, index: number) => <Button type="link" danger
-        onClick={() => update({ fixedValues: draft.fixedValues.filter((_, i) => i !== index) })}>删除</Button> }]),
-    ]} />
-    {!disabled && <Button className="external-api-add" onClick={() => update({ fixedValues: [...draft.fixedValues, { key: '', expression: '' }] })}>添加固定值</Button>}
-  </div>;
+  return <>
+    <Panel className="xapi-plain" title="调用参数" extra={!disabled && <Button onClick={() => setParam({ index: null, value: { name: '', dataType: 'STRING', required: true } })}>添加参数</Button>}>
+      <p className="xapi-desc">报文字段以外、由流程节点每次提供的值。PROTECTED_HANDLE 只能交给注册函数，不能写进报文字段、输出或日志。</p>
+      <div className="xapi-table-wrap"><Table rowKey={(_, index) => String(index)} pagination={false} dataSource={draft.params}
+        locale={{ emptyText: '暂无调用参数' }} columns={[
+          { title: '名称', width: 180, render: (_, row) => <Mono>{row.name}</Mono> },
+          { title: '类型', width: 200, render: (_, row) => row.dataType === 'PROTECTED_HANDLE' ? <HandleMark /> : <Mono>{row.dataType}</Mono> },
+          { title: '必填', width: 70, render: (_, row) => row.required ? '是' : '否' },
+          { title: '说明', ellipsis: true, render: (_, row) => row.description || '—' },
+          { title: '使用位置', width: 200, render: (_, row) => usage(row.name).join('、') || '—' },
+          ...(disabled ? [] : [{ title: '操作', width: 110, render: (_: unknown, row: ParamDeclaration, index: number) =>
+            <RowOps onEdit={() => setParam({ index, value: row })} onRemove={() => update({ params: draft.params.filter((_, i) => i !== index) })} /> }]),
+        ]} /></div>
+    </Panel>
+    <Panel className="xapi-plain" title="协议固定值" extra={!disabled && <Button onClick={() => setFixed({ index: null, value: { key: '', expression: '' } })}>添加固定值</Button>}>
+      <p className="xapi-desc">按渠道协议对请求字段写死的常量；只能是常量表达式，不能引用 input、resources、steps 或 params。设置后该字段在节点中只读。</p>
+      <div className="xapi-table-wrap"><Table rowKey={(_, index) => String(index)} pagination={false} dataSource={draft.fixedValues}
+        locale={{ emptyText: '暂无固定值' }} columns={[
+          { title: '请求字段', width: 320, render: (_, row) => <Mono>{row.key.replace(':', ' ')}</Mono> },
+          { title: '常量表达式', render: (_, row) => <span className="xapi-code-block">{row.expression}</span> },
+          ...(disabled ? [] : [{ title: '操作', width: 110, render: (_: unknown, row: FixedValue, index: number) =>
+            <RowOps onEdit={() => setFixed({ index, value: row })} onRemove={() => update({ fixedValues: draft.fixedValues.filter((_, i) => i !== index) })} /> }]),
+        ]} /></div>
+    </Panel>
+    {param && <EditModal title={param.index === null ? '添加调用参数' : '编辑调用参数'} initial={param.value} onCancel={() => setParam(null)}
+      onSave={value => { const next = { ...value, name: value.name.trim(), description: value.description?.trim() || null };
+        update({ params: param.index === null ? [...draft.params, next] : draft.params.map((item, i) => i === param.index ? next : item) }); setParam(null); }}>
+      <Form.Item name="name" label="名称" rules={[{ required: true, pattern: /^[a-z][A-Za-z0-9]{0,63}$/, message: '小写字母开头，只含字母和数字' }]}>
+        <Input className="xapi-mono-input" maxLength={64} /></Form.Item>
+      <Form.Item name="dataType" label="类型"><Select className="xapi-mono-input" options={paramTypes.map(typeOption)} /></Form.Item>
+      <div className="xapi-inline-switch" style={{ marginBottom: 24 }}><Form.Item name="required" valuePropName="checked" noStyle><Switch size="small" /></Form.Item><span>必填</span></div>
+      <Form.Item name="description" label="说明"><Input maxLength={512} /></Form.Item>
+    </EditModal>}
+    {fixed && <EditModal title={fixed.index === null ? '添加固定值' : '编辑固定值'} initial={fixed.value} onCancel={() => setFixed(null)}
+      onSave={value => { update({ fixedValues: fixed.index === null ? [...draft.fixedValues, value] : draft.fixedValues.map((item, i) => i === fixed.index ? value : item) }); setFixed(null); }}>
+      <Form.Item name="key" label="请求字段" rules={[{ required: true, message: '请选择请求字段' }]}>
+        <Select className="xapi-mono-input" options={fieldKeys.map(key => ({ value: key, label: key.replace(':', ' ') }))} /></Form.Item>
+      <Form.Item name="expression" label="常量表达式" rules={[{ required: true, whitespace: true, message: '请填写常量表达式' }]}
+        extra="字符串写成 'application/json'，数字直接写 100">
+        <Input className="xapi-mono-input" maxLength={4096} /></Form.Item>
+    </EditModal>}
+  </>;
 }
 
 function ScriptsTab({ draft, update, scripts, paramPaths, disabled }: {
   draft: DefinitionDraft; update: (patch: Partial<DefinitionDraft>) => void; scripts: IntegrationScriptSummary[];
   paramPaths: string[]; disabled: boolean;
 }) {
+  const [editing, setEditing] = useState<{ stage: 'REQUEST' | 'RESPONSE'; index: number | null; value: ScriptUse } | null>(null);
+  const handleParams = new Set(draft.params.filter(param => param.dataType === 'PROTECTED_HANDLE').map(param => `params.${param.name}`));
   const group = (stage: 'REQUEST' | 'RESPONSE') => {
     const key = stage === 'REQUEST' ? 'requestScripts' : 'responseScripts';
     const uses = draft[key]; const available = scripts.filter(script => script.executionStage === stage);
     const set = (next: ScriptUse[]) => update({ [key]: next } as Partial<DefinitionDraft>);
-    return <div key={stage}>
-      <h3>{stage === 'REQUEST' ? '请求阶段（编码前，按顺序执行）' : '响应阶段（解码后，按顺序执行）'}</h3>
-      <Table rowKey={(_, index) => String(index)} size="small" pagination={false} dataSource={uses} locale={{ emptyText: '无' }} columns={[
-        { title: 'ID', width: 150, render: (_, row, index) => <Input value={row.id} disabled={disabled} maxLength={64}
-          onChange={event => set(uses.map((use, i) => i === index ? { ...use, id: event.target.value } : use))} /> },
-        { title: '脚本', width: 220, render: (_, row, index) => <Select value={row.scriptCode || undefined} disabled={disabled} style={{ width: '100%' }}
-          placeholder="选择本阶段脚本" options={available.map(script => ({ value: script.scriptCode, label: `${script.scriptCode} · ${script.scriptName}` }))}
-          onChange={scriptCode => set(uses.map((use, i) => i === index ? { ...use, scriptCode, params: {} } : use))} /> },
-        { title: '参数取值（params.* 或常量）', render: (_, row, index) => {
-          const names = scripts.find(script => script.scriptCode === row.scriptCode)?.parameterNames ?? [];
-          return names.length ? names.map(name => <div key={name} className="external-api-binding-arg"><span className="muted">{name}</span>
-            <BindingInput value={row.params[name]} kinds={['PATH', 'EXPRESSION']} paths={paramPaths} disabled={disabled}
-              onChange={binding => set(uses.map((use, i) => i === index ? { ...use, params: { ...use.params, [name]: binding } } : use))} /></div>)
-            : <span className="muted">无参数</span>;
-        } },
-        ...(disabled ? [] : [{ title: '', width: 150, render: (_: unknown, __: ScriptUse, index: number) => <Space size={0}>
-          <Button type="link" size="small" disabled={index === 0} onClick={() => set(moveItem(uses, index, -1))}>上移</Button>
-          <Button type="link" size="small" disabled={index === uses.length - 1} onClick={() => set(moveItem(uses, index, 1))}>下移</Button>
-          <Button type="link" size="small" danger onClick={() => set(uses.filter((_, i) => i !== index))}>删除</Button></Space> }]),
-      ]} />
-      {!disabled && <Button className="external-api-add" disabled={!available.length}
-        onClick={() => set([...uses, { id: nextScriptUseId([...draft.requestScripts, ...draft.responseScripts]), scriptCode: '', stage, params: {} }])}>
-        添加{stage === 'REQUEST' ? '请求' : '响应'}脚本</Button>}
+    return <div key={stage} className="xapi-group">
+      <div className="xapi-group-head"><div><span className="xapi-kind">{stage}</span>
+        <span className="xapi-desc">{stage === 'REQUEST' ? '请求组装后、编码发送前' : '解码响应后、状态判定前'}</span></div>
+        {!disabled && <span className="xapi-ops">{!available.length && <span className="xapi-field-hint">本接入方还没有 {stage} 阶段的公共脚本</span>}
+          <Button disabled={!available.length} onClick={() => setEditing({ stage, index: null,
+            value: { id: nextScriptUseId([...draft.requestScripts, ...draft.responseScripts]), scriptCode: available[0]?.scriptCode ?? '', stage, params: {} } })}>
+            引用脚本</Button></span>}</div>
+      {uses.length === 0 && <div className="xapi-field-hint">暂无{stage === 'REQUEST' ? '请求' : '响应'}脚本</div>}
+      {uses.map((use, index) => {
+        const script = scripts.find(item => item.scriptCode === use.scriptCode);
+        const names = script?.parameterNames ?? Object.keys(use.params);
+        return <div key={`${use.id}:${index}`} className="xapi-card-row"><span className="xapi-seq">{index + 1}</span>
+          <div className="xapi-card-main"><Mono>{use.id}</Mono>
+            <span className="xapi-field-hint">{use.scriptCode} · {script?.scriptName ?? '脚本不存在'}</span>
+            {names.length ? names.map(name => {
+              const binding = use.params[name];
+              const handle = binding?.kind === 'PATH' && handleParams.has(binding.path);
+              return <div key={name} className="xapi-binding-line">{name}<span className="xapi-arrow">←</span>
+                {handle && <span className="xapi-handle">🔒 </span>}<span className="xapi-mono-ref">{binding ? (binding.kind === 'PATH' ? binding.path
+                  : binding.kind === 'EXPRESSION' ? binding.expression : binding.function) : '未赋值'}</span></div>;
+            }) : <span className="xapi-field-hint">无参数</span>}
+          </div>
+          {!disabled && <span className="xapi-ops">
+            <button type="button" className="xapi-link" disabled={index === 0} onClick={() => set(moveItem(uses, index, -1))}>↑</button>
+            <button type="button" className="xapi-link" disabled={index === uses.length - 1} onClick={() => set(moveItem(uses, index, 1))}>↓</button>
+            <button type="button" className="xapi-link" onClick={() => setEditing({ stage, index, value: use })}>编辑</button>
+            <button type="button" className="xapi-link" onClick={() => set(uses.filter((_, i) => i !== index))}>移除</button></span>}
+        </div>;
+      })}
     </div>;
   };
-  return <div>{group('REQUEST')}{group('RESPONSE')}</div>;
+  return <>
+    <p className="xapi-desc">按顺序执行；脚本参数只能取 params.* 或常量，受控句柄只能交给注册函数，脚本读不到明文。</p>
+    {group('REQUEST')}{group('RESPONSE')}
+    <Note items={['响应验签读取原始响应字节（http.responseRaw），不受响应脚本对工作副本的修改影响。', '被引用脚本修改阶段或参数时，保存会校验并列出本 API。']} />
+    {editing && <ScriptUseModal editing={editing} scripts={scripts.filter(script => script.executionStage === editing.stage)} paramPaths={paramPaths}
+      onCancel={() => setEditing(null)} onSave={value => {
+        const key = editing.stage === 'REQUEST' ? 'requestScripts' : 'responseScripts';
+        const uses = draft[key];
+        update({ [key]: editing.index === null ? [...uses, value] : uses.map((item, i) => i === editing.index ? value : item) } as Partial<DefinitionDraft>);
+        setEditing(null);
+      }} />}
+  </>;
 }
 
-function RulesTab({ rules, onChange, readPaths, disabled }: {
-  rules: StatusRule[]; onChange: (rules: StatusRule[]) => void; readPaths: string[]; disabled: boolean;
+function ScriptUseModal({ editing, scripts, paramPaths, onCancel, onSave }: {
+  editing: { stage: 'REQUEST' | 'RESPONSE'; index: number | null; value: ScriptUse }; scripts: IntegrationScriptSummary[];
+  paramPaths: string[]; onCancel: () => void; onSave: (value: ScriptUse) => void;
 }) {
-  return <div>
-    <p className="muted">按顺序判定，第一条为真即决定结果；全部为假固定为 ERROR。可读：{readPaths.slice(0, 6).join('、')}{readPaths.length > 6 ? ' 等' : ''}</p>
-    <Table rowKey={(_, index) => String(index)} size="small" pagination={false} dataSource={[...rules, null]} columns={[
-      { title: '#', width: 50, render: (_, __, index) => index + 1 },
-      { title: '条件', render: (_, row, index) => row ? <Input.TextArea value={row.condition} disabled={disabled} autoSize maxLength={4096}
-        className="external-api-code-input" placeholder="http.responseStatus == 201 && http.responseBody.state == 'CAPTURED'"
-        onChange={event => onChange(rules.map((rule, i) => i === index ? { ...rule, condition: event.target.value } : rule))} />
-        : <span className="muted">其他情况（固定）</span> },
-      { title: '结果', width: 140, render: (_, row, index) => row ? <Select value={row.executeStatus} disabled={disabled} style={{ width: '100%' }}
-        options={[{ value: 'SUCCESS', label: 'SUCCESS' }, { value: 'FAIL', label: 'FAIL' }]}
-        onChange={(executeStatus: StatusRule['executeStatus']) => onChange(rules.map((rule, i) => i === index ? { ...rule, executeStatus } : rule))} />
-        : <Tag>ERROR</Tag> },
-      ...(disabled ? [] : [{ title: '', width: 150, render: (_: unknown, row: StatusRule | null, index: number) => row && <Space size={0}>
-        <Button type="link" size="small" disabled={index === 0} onClick={() => onChange(moveItem(rules, index, -1))}>上移</Button>
-        <Button type="link" size="small" disabled={index === rules.length - 1} onClick={() => onChange(moveItem(rules, index, 1))}>下移</Button>
-        <Button type="link" size="small" danger onClick={() => onChange(rules.filter((_, i) => i !== index))}>删除</Button></Space> }]),
-    ]} />
-    {!disabled && <Button className="external-api-add" onClick={() => onChange([...rules, { condition: '', executeStatus: 'SUCCESS' }])}>添加规则</Button>}
-  </div>;
+  const [value, setValue] = useState(editing.value);
+  const names = scripts.find(script => script.scriptCode === value.scriptCode)?.parameterNames ?? [];
+  return <Modal open width={620} title={editing.index === null ? `引用 ${editing.stage} 脚本` : '编辑脚本引用'} okText="应用"
+    okButtonProps={{ disabled: !value.id.trim() || !value.scriptCode }} onCancel={onCancel}
+    onOk={() => onSave({ ...value, id: value.id.trim() })}>
+    <div className="xapi-form-stack">
+      <Field label="引用 ID"><Input value={value.id} maxLength={64} className="xapi-mono-input" onChange={event => setValue({ ...value, id: event.target.value })} /></Field>
+      <Field label="公共脚本"><Select value={value.scriptCode || undefined} className="xapi-mono-input"
+        options={scripts.map(script => ({ value: script.scriptCode, label: `${script.scriptCode} · ${script.scriptName}` }))}
+        onChange={scriptCode => setValue({ ...value, scriptCode, params: {} })} /></Field>
+      {names.map(name => <Field key={name} label={<Mono>{name}</Mono>}>
+        <BindingInput value={value.params[name]} kinds={['PATH', 'EXPRESSION']} paths={paramPaths}
+          onChange={binding => setValue({ ...value, params: { ...value.params, [name]: binding } })} /></Field>)}
+      {!names.length && <span className="xapi-field-hint">该脚本没有参数</span>}
+    </div>
+  </Modal>;
+}
+
+function RulesTab({ rules, onChange, disabled }: { rules: StatusRule[]; onChange: (rules: StatusRule[]) => void; disabled: boolean }) {
+  const [editing, setEditing] = useState<{ index: number | null; value: StatusRule } | null>(null);
+  type Row = { rule: StatusRule | null; index: number };
+  const rows: Row[] = [...rules.map((rule, index) => ({ rule, index })), { rule: null, index: rules.length }];
+  return <>
+    <div className="xapi-toolbar"><span className="xapi-desc">按顺序判定，第一条为真即决定结果；全部为假固定为 ERROR。不存在“HTTP 200 即成功”的默认规则。</span>
+      {!disabled && <Button onClick={() => setEditing({ index: null, value: { condition: '', executeStatus: 'SUCCESS' } })}>添加规则</Button>}</div>
+    <div className="xapi-table-wrap"><Table<Row> rowKey="index" pagination={false} dataSource={rows}
+      rowClassName={row => row.rule ? '' : 'xapi-row-fixed'} columns={[
+        { title: '顺序', width: 70, render: (_, row) => row.rule ? row.index + 1 : '—' },
+        { title: '条件（Aviator 布尔表达式）', render: (_, row) => row.rule ? <span className="xapi-code-block">{row.rule.condition || ' '}</span>
+          : '其他情况（固定，不可编辑）' },
+        { title: '执行状态', width: 120, render: (_, row) => <StatusTag status={row.rule ? row.rule.executeStatus : 'ERROR'} /> },
+        ...(disabled ? [] : [{ title: '操作', width: 190, render: (_: unknown, row: Row) => row.rule && <RowOps
+          extra={<><button type="button" className="xapi-link" disabled={row.index === 0} onClick={() => onChange(moveItem(rules, row.index, -1))}>上移</button>
+            <button type="button" className="xapi-link" disabled={row.index === rules.length - 1} onClick={() => onChange(moveItem(rules, row.index, 1))}>下移</button></>}
+          onEdit={() => setEditing({ index: row.index, value: row.rule! })} onRemove={() => onChange(rules.filter((_, i) => i !== row.index))} /> }]),
+      ]} /></div>
+    <Note items={[<>条件可读取：<Mono>http.responseStatus</Mono>、<Mono>http.responseHeaders</Mono>、<Mono>http.responseBody</Mono>、<Mono>params.*</Mono>（受控句柄除外）。</>,
+      '表达式异常或结果不是布尔值时为 ERROR；判定为 SUCCESS 后再校验响应必填字段，必填输出缺失时结果改为 ERROR。']} />
+    {editing && <EditModal width={640} title={editing.index === null ? '添加状态规则' : '编辑状态规则'} initial={editing.value} onCancel={() => setEditing(null)}
+      onSave={value => { onChange(editing.index === null ? [...rules, value] : rules.map((item, i) => i === editing.index ? value : item)); setEditing(null); }}>
+      <Form.Item name="condition" label="条件（Aviator 布尔表达式）" rules={[{ required: true, whitespace: true, message: '请填写条件' }]}>
+        <Input.TextArea autoSize={{ minRows: 3 }} maxLength={4096} className="xapi-mono-input"
+          placeholder="http.responseStatus == 201 && http.responseBody.state == 'CAPTURED'" /></Form.Item>
+      <Form.Item name="executeStatus" label="执行状态"><Radio.Group options={['SUCCESS', 'FAIL'].map(typeOption)} optionType="button" /></Form.Item>
+    </EditModal>}
+  </>;
 }
 
 function OutputsTab({ draft, update, readPaths, functions, disabled }: {
   draft: DefinitionDraft; update: (patch: Partial<DefinitionDraft>) => void; readPaths: string[];
   functions: Capabilities['functions']; disabled: boolean;
 }) {
+  const [editing, setEditing] = useState<{ status: 'SUCCESS' | 'FAIL'; index: number | null; value: OutputDeclaration } | null>(null);
   const branch = (status: 'SUCCESS' | 'FAIL') => {
     const rows = draft.outputs[status];
     const set = (next: OutputDeclaration[]) => update({ outputs: { ...draft.outputs, [status]: next } });
-    const patch = (index: number, value: Partial<OutputDeclaration>) => set(rows.map((row, i) => i === index ? { ...row, ...value } : row));
-    return <div key={status}>
-      <h3>{status} 分支</h3>
-      <Table rowKey={(_, index) => String(index)} size="small" pagination={false} dataSource={rows} locale={{ emptyText: '无输出' }} columns={[
-        { title: '名称', width: 170, render: (_, row, index) => <Input value={row.name} disabled={disabled} maxLength={64}
-          onChange={event => patch(index, { name: event.target.value })} /> },
-        { title: '类型', width: 110, render: (_, row, index) => <Select value={row.dataType} disabled={disabled} style={{ width: '100%' }}
-          options={fieldDataTypes.map(type => ({ value: type, label: dataTypeLabels[type] }))} onChange={(dataType: FieldDataType) => patch(index, { dataType })} /> },
-        { title: '必填', width: 60, render: (_, row, index) => <Checkbox checked={row.required} disabled={disabled}
-          onChange={event => patch(index, { required: event.target.checked })} /> },
-        { title: '取值', render: (_, row, index) => <BindingInput value={row.value} kinds={['PATH', 'EXPRESSION', 'FUNCTION']} paths={readPaths}
-          functions={functions} disabled={disabled} onChange={value => patch(index, { value })} /> },
-        ...(disabled ? [] : [{ title: '', width: 70, render: (_: unknown, __: OutputDeclaration, index: number) => <Button type="link" danger
-          onClick={() => set(rows.filter((_, i) => i !== index))}>删除</Button> }]),
-      ]} />
-      {!disabled && <Button className="external-api-add" onClick={() => set([...rows, { name: '', dataType: 'STRING', required: false, value: emptyBinding('PATH') }])}>
-        添加输出</Button>}
+    return <div key={status} className="xapi-group">
+      <div className="xapi-group-head"><div><StatusTag status={status} /><span className="xapi-desc">{rows.length} 个输出</span></div>
+        {!disabled && <Button onClick={() => setEditing({ status, index: null, value: { name: '', dataType: 'STRING', required: false, value: emptyBinding('PATH') } })}>添加输出</Button>}</div>
+      <div className="xapi-table-wrap"><Table rowKey={(_, index) => String(index)} pagination={false} dataSource={rows} locale={{ emptyText: '无输出' }} columns={[
+        { title: '名称', width: 180, render: (_, row) => <Mono>{row.name}</Mono> },
+        { title: '类型', width: 110, render: (_, row) => <Mono>{row.dataType}</Mono> },
+        { title: '必填', width: 70, render: (_, row) => row.required ? '是' : '否' },
+        { title: '取值', render: (_, row) => <BindingView binding={row.value} /> },
+        ...(disabled ? [] : [{ title: '操作', width: 110, render: (_: unknown, row: OutputDeclaration, index: number) =>
+          <RowOps onEdit={() => setEditing({ status, index, value: row })} onRemove={() => set(rows.filter((_, i) => i !== index))} /> }]),
+      ]} /></div>
     </div>;
   };
-  return <div>{branch('SUCCESS')}{branch('FAIL')}<h3>ERROR 分支</h3><p className="muted">固定输出空对象。必填输出缺失或类型不符时整个结果改为 ERROR。</p></div>;
+  return <>
+    <p className="xapi-desc">状态判定后按分支映射输出，写入 steps.&lt;节点&gt;.outputs 供流程使用；必填输出缺失或类型不符时整个结果改为 ERROR。</p>
+    {branch('SUCCESS')}{branch('FAIL')}
+    <div className="xapi-group"><div className="xapi-group-head"><div><StatusTag status="ERROR" /><span className="xapi-desc">固定为空对象 {'{}'}，不可配置。</span></div></div></div>
+    {editing && <OutputModal editing={editing} readPaths={readPaths} functions={functions} onCancel={() => setEditing(null)}
+      onSave={value => {
+        const rows = draft.outputs[editing.status];
+        update({ outputs: { ...draft.outputs, [editing.status]: editing.index === null ? [...rows, value] : rows.map((item, i) => i === editing.index ? value : item) } });
+        setEditing(null);
+      }} />}
+  </>;
 }
+
+function OutputModal({ editing, readPaths, functions, onCancel, onSave }: {
+  editing: { status: 'SUCCESS' | 'FAIL'; index: number | null; value: OutputDeclaration }; readPaths: string[];
+  functions: Capabilities['functions']; onCancel: () => void; onSave: (value: OutputDeclaration) => void;
+}) {
+  const [value, setValue] = useState(editing.value);
+  const nameValid = /^[a-z][A-Za-z0-9]{0,63}$/.test(value.name.trim());
+  return <Modal open width={620} title={`${editing.index === null ? '添加' : '编辑'} ${editing.status} 输出`} okText="应用"
+    okButtonProps={{ disabled: !nameValid }} onCancel={onCancel} onOk={() => onSave({ ...value, name: value.name.trim() })}>
+    <div className="xapi-form-stack">
+      <div className="xapi-form-row">
+        <Field label="名称" hint={value.name && !nameValid ? '小写字母开头，只含字母和数字' : undefined}>
+          <Input value={value.name} maxLength={64} className="xapi-mono-input" onChange={event => setValue({ ...value, name: event.target.value })} /></Field>
+        <Field label="类型"><Select value={value.dataType} className="xapi-mono-input" options={fieldDataTypes.map(typeOption)}
+          onChange={(dataType: FieldDataType) => setValue({ ...value, dataType })} /></Field>
+      </div>
+      <div className="xapi-inline-switch"><Switch size="small" checked={value.required} onChange={required => setValue({ ...value, required })} /><span>必填</span></div>
+      <Field label="取值" hint="可读 http.* 与不含受控句柄的 params.*；按数组取值时用表达式明确选择元素，如 #http.responseBody.errors[0].code。">
+        <BindingInput value={value.value} kinds={['PATH', 'EXPRESSION', 'FUNCTION']} paths={readPaths} functions={functions}
+          onChange={(binding: Binding) => setValue({ ...value, value: binding })} /></Field>
+    </div>
+  </Modal>;
+}
+
+export type { ParamType };

@@ -13,6 +13,8 @@ export function usePaging<T>(path: string, decodePage?: PageDecoder<T>,
   initialFilters: Readonly<Record<string, string>> = {}, options?: {
     initialPaging?: PagingRequestBody;
     enabled?: boolean;
+    /** 失败时是否弹出错误通知；默认弹出。页面自行展示失败信息（含请求编号）时传 false。 */
+    notifyOnError?: boolean;
     onQueryChange?: (query: { paging: PagingRequestBody; filters: Readonly<Record<string, string>> }, replace?: boolean) => void;
   }): UsePagingResult<T> {
   const notifyError = useErrorNotification();
@@ -35,11 +37,11 @@ export function usePaging<T>(path: string, decodePage?: PageDecoder<T>,
         if (!controller.signal.aborted) {
           setFailure(error);
           setError(error instanceof Error ? error.message : '暂时无法加载列表，请重试。');
-          notifyError(error, '列表加载失败');
+          if (options?.notifyOnError !== false) notifyError(error, '列表加载失败');
         }
       }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [loadPage, paging.page, paging.size, filters, reload, notifyError, options?.enabled]);
+  }, [loadPage, paging.page, paging.size, filters, reload, notifyError, options?.enabled, options?.notifyOnError]);
 
   function onChange(page: number, size: number) {
     const next = changePaging(paging, page, size);

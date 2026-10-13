@@ -1,0 +1,146 @@
+[
+  {
+    "board": "QsmsL",
+    "name": "standard-api-list",
+    "file": "01-QsmsL-standard-api-list.png",
+    "note": ""
+  },
+  {
+    "board": "aWSB5",
+    "name": "standard-api-edit-field",
+    "file": "02-aWSB5-standard-api-edit-field.png",
+    "note": ""
+  },
+  {
+    "board": "zM5lQ",
+    "name": "integration-list",
+    "file": "03-zM5lQ-integration-list.png",
+    "note": ""
+  },
+  {
+    "board": "rDRrX",
+    "name": "workspace-basic",
+    "file": "04-rDRrX-workspace-basic.png",
+    "note": ""
+  },
+  {
+    "board": "B6SIWQ",
+    "name": "api-interface",
+    "file": "05-B6SIWQ-api-interface.png",
+    "note": ""
+  },
+  {
+    "board": "ajM1s",
+    "name": "api-status-rules",
+    "file": "06-ajM1s-api-status-rules.png",
+    "note": ""
+  },
+  {
+    "board": "H8MVL7",
+    "name": "script-edit",
+    "file": "07-H8MVL7-script-edit.png",
+    "note": ""
+  },
+  {
+    "board": "D6g5lH",
+    "name": "flow-edit-invalid",
+    "file": "08-D6g5lH-flow-edit-invalid.png",
+    "note": "校验失败由浏览器拦截构造"
+  },
+  {
+    "board": "X9Bdwk",
+    "name": "flow-node-values",
+    "file": "09-X9Bdwk-flow-node-values.png",
+    "note": ""
+  },
+  {
+    "board": "SBF41",
+    "name": "api-request-fields",
+    "file": "10-SBF41-api-request-fields.png",
+    "note": ""
+  },
+  {
+    "board": "NtUrV",
+    "name": "api-params-fixed",
+    "file": "11-NtUrV-api-params-fixed.png",
+    "note": ""
+  },
+  {
+    "board": "lIt5B",
+    "name": "api-scripts",
+    "file": "12-lIt5B-api-scripts.png",
+    "note": ""
+  },
+  {
+    "board": "OHYDb",
+    "name": "api-outputs",
+    "file": "13-OHYDb-api-outputs.png",
+    "note": ""
+  },
+  {
+    "board": "KYgmt",
+    "name": "workspace-apis",
+    "file": "14-KYgmt-workspace-apis.png",
+    "note": ""
+  },
+  {
+    "board": "q1TwH",
+    "name": "workspace-scripts",
+    "file": "15-q1TwH-workspace-scripts.png",
+    "note": ""
+  },
+  {
+    "board": "t02TpP",
+    "name": "workspace-implementations-new",
+    "file": "16-t02TpP-workspace-implementations-new.png",
+    "note": ""
+  },
+  {
+    "board": "EHoOg",
+    "name": "delete-protected",
+    "file": "17-EHoOg-delete-protected.png",
+    "note": ""
+  },
+  {
+    "board": "QLWO0",
+    "name": "conflict",
+    "file": "18-QLWO0-conflict.png",
+    "note": "两个页面先后保存同一版本"
+  },
+  {
+    "board": "Hx8aB",
+    "name": "empty-implementations",
+    "file": "19-Hx8aB-empty-implementations.png",
+    "note": ""
+  },
+  {
+    "board": "HJbVI",
+    "name": "load-failed",
+    "file": "20-HJbVI-load-failed.png",
+    "note": "列表接口由浏览器拦截返回 503"
+  },
+  {
+    "board": "XTG38",
+    "name": "reader-detail",
+    "file": "21-XTG38-reader-detail.png",
+    "note": ""
+  },
+  {
+    "board": "BwTsU",
+    "name": "unsaved-leave",
+    "file": "22-BwTsU-unsaved-leave.png",
+    "note": ""
+  },
+  {
+    "board": "q940Qq",
+    "name": "flow-return",
+    "file": "23-q940Qq-flow-return.png",
+    "note": ""
+  },
+  {
+    "board": "CCcAX",
+    "name": "flow-initializer",
+    "file": "24-CCcAX-flow-initializer.png",
+    "note": ""
+  }
+]

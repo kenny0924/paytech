@@ -220,7 +220,13 @@ export function readableSteps(flow: Flow, vertex: string, inclusive: boolean): s
   return flow.nodes.map(node => node.id).filter(id => dominating.has(id) && (inclusive || id !== vertex));
 }
 
-export interface VariableOptions { paths: string[]; unavailableSteps: string[]; handlePaths: string[] }
+export interface VariableOptions {
+  paths: string[]; unavailableSteps: string[]; handlePaths: string[];
+  /** 变量的声明类型：input 取标准 API 字段类型，steps 取原子 API 输出类型，executeStatus 为 STRING。 */
+  types?: Record<string, string>;
+  /** 初始化结果的根（如 resources.channelAccount.parameters）：键名在运行时才知道，值类型为声明的类型。 */
+  mapRoots?: Record<string, string>;
+}
 
 /**
  * 取值编辑器的变量树：input（标准 API 请求字段）、resources（初始化项非凭据返回属性）、steps（必经节点的状态与输出），
@@ -228,24 +234,28 @@ export interface VariableOptions { paths: string[]; unavailableSteps: string[]; 
  */
 export function variableOptions(flow: Flow, context: FlowEditorContext, functions: RegisteredFunction[], vertex: string | null,
   inclusive = false): VariableOptions {
+  const types: Record<string, string> = {}; const mapRoots: Record<string, string> = {};
   const input = context.standardApi.requestFields.filter(field => field.fieldLocation === 'BODY' && !field.fieldPath.includes('[]'))
-    .map(field => `input.${field.fieldPath}`);
+    .map(field => { types[`input.${field.fieldPath}`] = field.dataType; return `input.${field.fieldPath}`; });
   const resources: string[] = []; const handlePaths: string[] = [];
   for (const initializer of flow.initializers) {
     const declared = functions.find(item => item.functionCode === initializer.function);
     for (const [root, type] of Object.entries(declared?.returnRoots ?? {})) {
       if (type === 'PROTECTED_HANDLE') handlePaths.push(`resources.${initializer.id}.${root}.`);
-      else resources.push(`resources.${initializer.id}.${root}`);
+      else { resources.push(`resources.${initializer.id}.${root}`); mapRoots[`resources.${initializer.id}.${root}`] = type; }
     }
   }
   const readable = vertex === null ? [] : readableSteps(flow, vertex, inclusive);
   const steps = readable.flatMap(id => {
     const api = context.apis.find(item => item.apiCode === flow.nodes.find(node => node.id === id)?.integrationApi);
-    const outputs = [...new Set([...(api?.outputs.SUCCESS ?? []), ...(api?.outputs.FAIL ?? [])].map(item => item.name))];
-    return [`steps.${id}.executeStatus`, ...outputs.map(name => `steps.${id}.outputs.${name}`)];
+    const outputs = new Map<string, string>();
+    for (const item of [...(api?.outputs.SUCCESS ?? []), ...(api?.outputs.FAIL ?? [])]) if (!outputs.has(item.name)) outputs.set(item.name, item.dataType);
+    types[`steps.${id}.executeStatus`] = 'STRING';
+    for (const [name, type] of outputs) types[`steps.${id}.outputs.${name}`] = type;
+    return [`steps.${id}.executeStatus`, ...[...outputs.keys()].map(name => `steps.${id}.outputs.${name}`)];
   });
   const unavailableSteps = flow.nodes.map(node => node.id).filter(id => !readable.includes(id) && id !== vertex);
-  return { paths: [...input, ...resources, ...steps], unavailableSteps, handlePaths };
+  return { paths: [...input, ...resources, ...steps], unavailableSteps, handlePaths, types, mapRoots };
 }
 
 /** 请求键：LOCATION:path，HEADER 名称按小写比较。 */
@@ -295,33 +305,32 @@ export function flowTarget(location: string): FlowTarget {
 
 export interface Position { x: number; y: number }
 
+/** 画布布局常量：节点列与出口列的横坐标、行距。 */
+export const canvasGrid = { nodeX: 0, returnX: 470, startY: 0, firstY: 100, nodeGap: 180, returnGap: 104 };
+
 /**
- * 自动布局：按从 entry 出发的最长路径分层（开始节点在第 0 层），同层按声明顺序横向排列；不可达的顶点放在最后一层。
- * 位置只用于显示，不写入流程定义。
+ * 工作台布局（画板“流程编辑”）：开始在顶部，原子 API 节点按从入口出发的顺序排成一列，出口排在右侧一列，
+ * 出口顺序跟随首次连到它的节点及其出口顺序；不可达的节点与出口排在各列末尾。位置只用于显示，不写入流程定义。
  */
-export function layout(flow: Flow, startId: string): Map<string, Position> {
-  const vertices = [...flow.nodes.map(node => node.id), ...flow.returns.map(item => item.id)];
-  const depth = new Map<string, number>();
-  if (flow.entry && vertices.includes(flow.entry)) {
-    const live = reachable(flow, flow.entry);
-    const order = topological(flow, live) ?? [...live];
-    depth.set(flow.entry, 1);
-    for (const vertex of order) {
-      const current = depth.get(vertex);
-      if (current === undefined) continue;
-      for (const edge of flow.edges.filter(item => item.from === vertex && live.has(item.to))) {
-        depth.set(edge.to, Math.max(depth.get(edge.to) ?? 0, current + 1));
-      }
-    }
+export function workbenchLayout(flow: Flow, startId: string): Map<string, Position> {
+  const nodeIds = new Set(flow.nodes.map(node => node.id));
+  const returnIds = new Set(flow.returns.map(item => item.id));
+  const nodeOrder: string[] = [];
+  const queue = flow.entry && nodeIds.has(flow.entry) ? [flow.entry] : [];
+  while (queue.length) {
+    const id = queue.shift()!;
+    if (nodeOrder.includes(id)) continue;
+    nodeOrder.push(id);
+    for (const edge of outgoing(flow, id)) if (nodeIds.has(edge.to) && !nodeOrder.includes(edge.to)) queue.push(edge.to);
   }
-  const last = Math.max(1, ...depth.values()) + 1;
-  for (const vertex of vertices) if (!depth.has(vertex)) depth.set(vertex, last);
-  const positions = new Map<string, Position>([[startId, { x: 0, y: 0 }]]);
-  const columns = new Map<number, number>();
-  for (const vertex of vertices) {
-    const layer = depth.get(vertex)!; const column = columns.get(layer) ?? 0;
-    columns.set(layer, column + 1);
-    positions.set(vertex, { x: column * 300, y: layer * 170 });
+  for (const node of flow.nodes) if (!nodeOrder.includes(node.id)) nodeOrder.push(node.id);
+  const returnOrder: string[] = [];
+  for (const id of nodeOrder) {
+    for (const edge of outgoing(flow, id)) if (returnIds.has(edge.to) && !returnOrder.includes(edge.to)) returnOrder.push(edge.to);
   }
+  for (const item of flow.returns) if (!returnOrder.includes(item.id)) returnOrder.push(item.id);
+  const positions = new Map<string, Position>([[startId, { x: canvasGrid.nodeX, y: canvasGrid.startY }]]);
+  nodeOrder.forEach((id, index) => positions.set(id, { x: canvasGrid.nodeX, y: canvasGrid.firstY + index * canvasGrid.nodeGap }));
+  returnOrder.forEach((id, index) => positions.set(id, { x: canvasGrid.returnX, y: canvasGrid.firstY + index * canvasGrid.returnGap }));
   return positions;
 }

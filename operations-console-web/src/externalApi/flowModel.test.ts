@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  addEdge, dominators, flowTarget, idPrefix, layout, newFlow, nextId, outgoing, readableSteps, removeVertex, renameVertex,
-  reorderOutgoing, requestCoverage, statusCondition, toFlow, toFlowJson, variableOptions,
+  addEdge, canvasGrid, dominators, flowTarget, idPrefix, newFlow, nextId, outgoing, readableSteps, removeVertex, renameVertex,
+  reorderOutgoing, requestCoverage, statusCondition, toFlow, toFlowJson, variableOptions, workbenchLayout,
 } from './flowModel.ts';
 import type { ApiContract, Flow, FlowEditorContext } from './flowModel.ts';
 import type { ApiField } from './externalApiModel.ts';
@@ -97,15 +97,14 @@ test('校验问题位置映射到编辑对象', () => {
   assert.deepEqual(flowTarget('standardApiCode'), { kind: 'flow' });
 });
 
-test('布局按最长路径分层，不可达顶点放最后一层', () => {
-  const flow = { ...diamond(), returns: [...diamond().returns, { id: 'orphan', executeStatus: 'ERROR' as const }] };
-  const positions = layout(flow, '__start');
-  assert.deepEqual(positions.get('__start'), { x: 0, y: 0 });
-  assert.equal(positions.get('a')!.y, 170);
-  assert.equal(positions.get('b')!.y, 340);
-  assert.equal(positions.get('d')!.y, 510);
-  assert.equal(positions.get('done')!.y, 680);
-  assert.equal(positions.get('orphan')!.y, 850);
+test('工作台布局：节点按从入口出发的顺序成列，出口在右列按首次连入顺序排列，不可达的排在末尾', () => {
+  const flow = { ...diamond(), nodes: [...diamond().nodes, node('lonely')],
+    returns: [{ id: 'orphan', executeStatus: 'ERROR' as const }, ...diamond().returns] };
+  const positions = workbenchLayout(flow, '__start');
+  const { nodeX, returnX, firstY, nodeGap, returnGap } = canvasGrid;
+  assert.deepEqual(positions.get('__start'), { x: nodeX, y: 0 });
+  assert.deepEqual(['a', 'b', 'c', 'd', 'lonely'].map(id => positions.get(id)), [0, 1, 2, 3, 4].map(index => ({ x: nodeX, y: firstY + index * nodeGap })));
+  assert.deepEqual(['done', 'other', 'orphan'].map(id => positions.get(id)), [0, 1, 2].map(index => ({ x: returnX, y: firstY + index * returnGap })));
 });
 
 test('序列化：ERROR 出口不带 outputs，兜底连线只带 from/to/default，空调用参数省略；解析后再序列化不变', () => {

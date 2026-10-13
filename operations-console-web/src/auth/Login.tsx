@@ -3,6 +3,9 @@ import { Alert, Button, Form, Input } from 'antd';
 import { session } from '../api/session';
 import type { SessionContextResponseBody } from '../api/types';
 import { useErrorNotification } from '../feedback/useErrorNotification';
+import { devLoginDefaults } from './devLogin';
+
+const devDefaults = devLoginDefaults(import.meta.env);
 
 export function Login({ onLogin, initialMessage }: { onLogin: (context: SessionContextResponseBody) => void; initialMessage: string }) {
   const notifyError = useErrorNotification();
@@ -14,7 +17,7 @@ export function Login({ onLogin, initialMessage }: { onLogin: (context: SessionC
     catch (error) {
       notifyError(error, '登录失败');
     }
-    finally { form.setFieldValue('password', ''); setLoading(false); }
+    finally { form.setFieldValue('password', devDefaults.password ?? ''); setLoading(false); }
   }
   return <main className="login-page">
     <section className="login-main"><div className="login-form">
@@ -22,7 +25,7 @@ export function Login({ onLogin, initialMessage }: { onLogin: (context: SessionC
       <h1>登录 Operations</h1>
       <p className="muted">使用你的内部人员账号继续。</p>
       {initialMessage && <Alert type="success" title={initialMessage} showIcon className="form-alert" />}
-      <Form form={form} layout="vertical" onFinish={login} requiredMark={false}>
+      <Form form={form} layout="vertical" onFinish={login} requiredMark={false} initialValues={devDefaults}>
         <Form.Item label="Email / 初始化账号" name="loginIdentifier" rules={[{ required: true, message: '请输入账号' }]}>
           <Input autoComplete="username" placeholder="name@company.com" size="large" maxLength={320} />
         </Form.Item>
