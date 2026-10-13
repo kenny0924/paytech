@@ -60,11 +60,16 @@ class RiskModuleBoundaryAutoTest {
                     dependencies);
             } else if (module.equals("decision")) {
                 Assertions.assertEquals(Set.of("paytech-common-core", "paytech-json-canonicalization",
-                    "paytech-mybatis-support", "mybatis", "spring-context", "spring-tx", "lombok", "jackson-databind"), dependencies);
+                    "paytech-mybatis-support", "paytech-redis-starter", "mybatis", "spring-context", "spring-tx", "lombok",
+                    "jackson-databind"), dependencies);
                 Assertions.assertEquals(Set.of("provided"),
                     values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
             } else if (module.equals("compliance")) {
                 Assertions.assertEquals(Set.of("paytech-common-core", "mybatis", "spring-context"), dependencies);
+            } else if (module.equals("control")) {
+                Assertions.assertEquals(Set.of("paytech-common-core", "spring-context", "lombok"), dependencies);
+                Assertions.assertEquals(Set.of("provided"),
+                    values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
             } else {
                 Assertions.assertTrue(dependencies.isEmpty(), "当前业务 JAR 不应引入依赖: " + module);
             }

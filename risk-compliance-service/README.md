@@ -82,9 +82,9 @@ Session、Vault/Consumer/网络原值、Secret、Credential 或完整 Payload。
 
 ## RCO-I09 最小内部接口
 
-`POST /manual-payout-eligibility/v1/evaluations` 已发布四个 Manual Payout 检查点的内部契约。接口是否属于内部调用由私有网络、服务发现和 Gateway Catalog 边界决定，不编码进能力路径。默认 Profile 使用 Fail-Closed 实现并返回 `503 SERVICE_UNAVAILABLE`，因为 RCO-I09 所需的 PRODUCTION/ACTIVE 正式运行 Release 与 Assessment/Evaluation 执行、持久化链尚未实现，不能产生生产 ALLOW。
+`POST /manual-payout-eligibility/v1/evaluations` 已发布四个 Manual Payout 检查点的内部契约，由 `risk-control` 的 `ManualPayoutEligibilityProcessor` 处理。接口是否属于内部调用由私有网络、服务发现和 Gateway Catalog 边界决定，不编码进能力路径。
 
-显式 `local-evaluation-bootstrap` Profile 只用于本地调用方契约联调：严格验证检查点/来源矩阵、创建版本、Canonical Money、Scope 与 `inputHash`，同一 `commandKey` 同内容重放稳定 pair、异内容返回 409；Client 返回零最低保证金，Local Partner 不返回 Client 保证金字段。该实现只保存在进程内，重启后不可检索，禁止用于生产、共享测试或财务业务决定。
+入口先严格校验检查点/来源矩阵、创建类版本、角色、ID 范围与 `inputHash`，输入错误返回 `400`；合法请求一律返回 `503 SERVICE_UNAVAILABLE`，因为 RCO-I09 所需的 PRODUCTION/ACTIVE 正式运行 Release 与 Assessment/Evaluation 执行、持久化链尚未实现，不能产生 ALLOW。原 `local-evaluation-bootstrap` 内存放行实现违反生产代码不得含模拟行为的规则，已删除；调用方联调需使用测试侧 DTO Mock。
 
 ## 本轮范围
 

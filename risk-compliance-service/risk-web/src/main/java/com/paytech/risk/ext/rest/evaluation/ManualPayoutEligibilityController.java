@@ -1,38 +1,49 @@
 package com.paytech.risk.ext.rest.evaluation;
 
-import com.paytech.risk.api.evaluation.ManualPayoutEligibilityApi;
-import com.paytech.risk.api.evaluation.ManualPayoutEligibilityModels.EvaluateRequestBody;
-import com.paytech.risk.api.evaluation.ManualPayoutEligibilityModels.EvaluateResponseBody;
-import com.paytech.risk.decision.domain.ManualPayoutEligibilityCommand;
-import com.paytech.risk.decision.domain.ManualPayoutEligibilityResult;
-import com.paytech.risk.decision.domainservice.service.ManualPayoutEligibilityService;
 import java.math.BigDecimal;
+
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * RCO-I09 Manual Payout 资格评估内部 HTTP 入口。
- */
+import com.paytech.risk.api.evaluation.ManualPayoutEligibilityApi;
+import com.paytech.risk.api.evaluation.request.ManualPayoutEligibilityRequestBody;
+import com.paytech.risk.api.evaluation.response.ManualPayoutEligibilityResponseBody;
+import com.paytech.risk.control.service.processor.ManualPayoutEligibilityProcessor;
+import com.paytech.risk.control.service.processor.request.ManualPayoutEligibilityRequest;
+import com.paytech.risk.control.service.processor.response.ManualPayoutEligibilityResponse;
+
+import lombok.AllArgsConstructor;
+
+/** RCO-I09 Manual Payout 资格评估私网 HTTP 入口，只做协议转换并委托 Owner Processor。 */
 @RestController
+@AllArgsConstructor
 public class ManualPayoutEligibilityController implements ManualPayoutEligibilityApi {
+    private final ManualPayoutEligibilityProcessor eligibilityProcessor;
 
-    private final ManualPayoutEligibilityService eligibilityService;
-
-    public ManualPayoutEligibilityController(ManualPayoutEligibilityService eligibilityService) {
-        this.eligibilityService = eligibilityService;
-    }
-
+    /** 转换 Body 后委托 risk-control 评估。 */
     @Override
-    public EvaluateResponseBody evaluate(EvaluateRequestBody request) {
-        ManualPayoutEligibilityResult result = eligibilityService.evaluate(toCommand(request));
-        return new EvaluateResponseBody(result.assessmentId(), result.evaluationId(), result.decision(),
-            result.reasonCodes(), result.matchedControls(), result.requiredAmount(), result.requiredCurrency(),
-            result.controlSetHash());
+    public ManualPayoutEligibilityResponseBody evaluate(ManualPayoutEligibilityRequestBody request) {
+        return toResponseBody(eligibilityProcessor.process(toRequest(request)));
     }
 
-    private ManualPayoutEligibilityCommand toCommand(EvaluateRequestBody request) {
-        return new ManualPayoutEligibilityCommand(request.commandKey(), request.checkpointType(), request.roleType(),
-            request.roleId(), request.operatingEntityId(), new BigDecimal(request.grossAmount()), request.currency(),
-            request.bankCountry(), request.sourceFactType(), request.sourceFactId(), request.sourceFactVersion(),
-            request.inputHash());
+    /** 金额按币种主单位十进制字符串精确转换，不经过浮点。 */
+    ManualPayoutEligibilityRequest toRequest(ManualPayoutEligibilityRequestBody body) {
+        return new ManualPayoutEligibilityRequest(body.getCommandKey(), body.getCheckpointType(), body.getRoleType(),
+            body.getRoleId(), body.getOperatingEntityId(), new BigDecimal(body.getGrossAmount()), body.getCurrency(),
+            body.getBankCountry(), body.getSourceFactType(), body.getSourceFactId(), body.getSourceFactVersion(),
+            body.getInputHash());
+    }
+
+    /** 评估结果逐字段投影为响应 Body。 */
+    ManualPayoutEligibilityResponseBody toResponseBody(ManualPayoutEligibilityResponse response) {
+        ManualPayoutEligibilityResponseBody body = new ManualPayoutEligibilityResponseBody();
+        body.setAssessmentId(response.getAssessmentId());
+        body.setEvaluationId(response.getEvaluationId());
+        body.setDecision(response.getDecision());
+        body.setReasonCodes(response.getReasonCodes());
+        body.setMatchedControls(response.getMatchedControls());
+        body.setRequiredAmount(response.getRequiredAmount());
+        body.setRequiredCurrency(response.getRequiredCurrency());
+        body.setControlSetHash(response.getControlSetHash());
+        return body;
     }
 }
