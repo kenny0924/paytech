@@ -8,6 +8,7 @@ import java.util.Optional;
  * 当前已确认的注册函数签名目录（研发计划第 4 节）；函数实现在第 3 步执行引擎中完成。
  *
  * <p>CHANNEL_ACCOUNT_CONFIG 签名见材料交接第 4 节；MONEY_MINOR_UNITS 按币种精度把主单位金额精确换算为最小单位整数。
+ * 脚本函数（研发计划第 3 步第 5 节）只能在公共脚本中调用：认证函数返回受控句柄，由传输层发送时取出明文。
  */
 public final class RegisteredFunctionCatalog {
 
@@ -16,6 +17,11 @@ public final class RegisteredFunctionCatalog {
 
     /** 纯函数类别。 */
     public static final String PURE = "PURE";
+
+    /** 公共脚本函数类别。 */
+    public static final String SCRIPT = "SCRIPT";
+
+    private static final String HANDLE = "PROTECTED_HANDLE";
 
     /** 全部已注册函数。 */
     public static final List<RegisteredFunction> FUNCTIONS = List.of(
@@ -28,15 +34,42 @@ public final class RegisteredFunctionCatalog {
             Map.of("parameters", "STRING", "credentials", "PROTECTED_HANDLE")),
         new RegisteredFunction("MONEY_MINOR_UNITS", PURE,
             List.of(new ParameterDeclaration("amount", "STRING", true), new ParameterDeclaration("currency", "STRING", true)),
-            "INTEGER", Map.of()));
+            "INTEGER", Map.of()),
+        script("bearerAuth", "PROTECTED_HANDLE（Bearer 认证 Header 值）", new ParameterDeclaration("token", HANDLE, true)),
+        script("basicAuth", "PROTECTED_HANDLE（Basic 认证 Header 值）", new ParameterDeclaration("username", HANDLE, true),
+            new ParameterDeclaration("password", HANDLE, true)),
+        script("hmacSha256Hex", "STRING（小写十六进制）", new ParameterDeclaration("key", HANDLE, true),
+            new ParameterDeclaration("message", "STRING", true)),
+        script("hmacSha256Base64", "STRING（Base64）", new ParameterDeclaration("key", HANDLE, true),
+            new ParameterDeclaration("message", "STRING", true)),
+        script("sha256Hex", "STRING（小写十六进制）", new ParameterDeclaration("message", "STRING", true)),
+        script("base64Encode", "STRING（UTF-8 字节的 Base64）", new ParameterDeclaration("value", "STRING", true)),
+        script("json.get", "按点分路径读取的值，不存在为 nil", new ParameterDeclaration("target", "OBJECT", true),
+            new ParameterDeclaration("path", "STRING", true)),
+        script("json.set", "OBJECT（写入后的 target）", new ParameterDeclaration("target", "OBJECT", true),
+            new ParameterDeclaration("path", "STRING", true), new ParameterDeclaration("value", "ANY", true)));
 
     private RegisteredFunctionCatalog() {
     }
 
-    /** 函数可出现的位置：初始化函数只在流程初始化项；纯函数用于流程节点、出口与原子 API 输出取值。 */
+    /** 函数可出现的位置：初始化函数只在流程初始化项；纯函数用于流程节点、出口与原子 API 输出取值；脚本函数只在公共脚本。 */
     public static List<String> usages(RegisteredFunction function) {
-        return INITIALIZER.equals(function.getKind()) ? List.of("FLOW_INITIALIZER")
-            : List.of("FLOW_NODE", "FLOW_RETURN", "API_OUTPUT");
+        return switch (function.getKind()) {
+            case INITIALIZER -> List.of("FLOW_INITIALIZER");
+            case SCRIPT -> List.of("INTEGRATION_SCRIPT");
+            default -> List.of("FLOW_NODE", "FLOW_RETURN", "API_OUTPUT");
+        };
+    }
+
+    /** 某一类别的函数编码。 */
+    public static java.util.Set<String> codes(String kind) {
+        return FUNCTIONS.stream().filter(function -> function.getKind().equals(kind)).map(RegisteredFunction::getCode)
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    /** 脚本函数：无返回属性。 */
+    private static RegisteredFunction script(String code, String returns, ParameterDeclaration... args) {
+        return new RegisteredFunction(code, SCRIPT, List.of(args), returns, Map.of());
     }
 
     /** 按编码查找注册函数。 */

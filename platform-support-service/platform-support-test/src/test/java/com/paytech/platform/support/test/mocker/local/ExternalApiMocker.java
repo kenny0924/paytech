@@ -10,22 +10,12 @@ import com.paytech.platform.support.api.enums.ApiFieldDataType;
 import com.paytech.platform.support.api.enums.ApiFieldLocation;
 import com.paytech.platform.support.api.enums.ScriptExecutionStage;
 import com.paytech.platform.support.api.externalapi.request.ApiFieldBody;
-import com.paytech.platform.support.integration.core.dal.dataobject.ApiField;
-import com.paytech.platform.support.integration.core.dal.dataobject.Integration;
-import com.paytech.platform.support.integration.core.dal.dataobject.IntegrationApi;
-import com.paytech.platform.support.integration.core.dal.dataobject.IntegrationImplementation;
-import com.paytech.platform.support.integration.core.dal.dataobject.IntegrationScript;
-import com.paytech.platform.support.integration.core.dal.dataobject.StandardApi;
+import com.paytech.platform.support.integration.core.dal.dataobject.*;
 import com.paytech.platform.support.integration.core.enums.ApiFieldDirection;
 import com.paytech.platform.support.integration.domain.EndpointDefinition;
 import com.paytech.platform.support.integration.domain.ExternalApiConfigurationCodec;
 import com.paytech.platform.support.integration.domain.ParameterDeclaration;
-import com.paytech.platform.support.integration.domainservice.repository.ApiFieldRepository;
-import com.paytech.platform.support.integration.domainservice.repository.IntegrationApiRepository;
-import com.paytech.platform.support.integration.domainservice.repository.IntegrationImplementationRepository;
-import com.paytech.platform.support.integration.domainservice.repository.IntegrationRepository;
-import com.paytech.platform.support.integration.domainservice.repository.IntegrationScriptRepository;
-import com.paytech.platform.support.integration.domainservice.repository.StandardApiRepository;
+import com.paytech.platform.support.integration.domainservice.repository.*;
 import com.paytech.platform.support.test.builder.ExternalApiSamples;
 import com.paytech.platform.support.test.builder.OperatorBuilder;
 
@@ -69,9 +59,13 @@ public class ExternalApiMocker {
 
     /** 使用样例出站地址的接入方。 */
     public Integration integration(String code) {
+        return integration(code, ExternalApiSamples.endpoints().getFirst().getBaseUrl());
+    }
+
+    /** 出站地址 DEMO_GATEWAY 指向指定基础地址的接入方，执行测试用它指向本机 Mock 渠道。 */
+    public Integration integration(String code, String baseUrl) {
         Instant now = operations.now();
-        var endpoints = ExternalApiSamples.endpoints().stream()
-            .map(endpoint -> new EndpointDefinition(endpoint.getEndpointCode(), endpoint.getBaseUrl())).toList();
+        var endpoints = List.of(new EndpointDefinition(ExternalApiSamples.ENDPOINT, baseUrl));
         var row = new Integration(OperatorBuilder.nextId(), code, code + " 渠道", null, codec.endpointsJson(endpoints),
             1, CREATOR, CREATOR, now, now);
         integrations.insert(row);
@@ -85,26 +79,36 @@ public class ExternalApiMocker {
 
     /** 使用样例字段、指定定义的原子 API。 */
     public IntegrationApi integrationApi(Integration integration, String code, JsonNode definition) {
+        return integrationApi(integration, code, definition, ExternalApiSamples.createOrderRequestFields(),
+            ExternalApiSamples.createOrderResponseFields());
+    }
+
+    /** 指定字段与定义的原子 API。 */
+    public IntegrationApi integrationApi(Integration integration, String code, JsonNode definition,
+        List<ApiFieldBody> requestFields, List<ApiFieldBody> responseFields) {
         Instant now = operations.now();
         var row = new IntegrationApi(OperatorBuilder.nextId(), integration.getIntegrationId(), code, code + " 名称",
             null, ExternalApiSamples.text(definition), 1, CREATOR, CREATOR, now, now);
         integrationApis.insert(row);
-        insertFields(row.getIntegrationApiId(), ApiFieldDirection.INTEGRATION_API_REQUEST,
-            ExternalApiSamples.createOrderRequestFields(), now);
-        insertFields(row.getIntegrationApiId(), ApiFieldDirection.INTEGRATION_API_RESPONSE,
-            ExternalApiSamples.createOrderResponseFields(), now);
+        insertFields(row.getIntegrationApiId(), ApiFieldDirection.INTEGRATION_API_REQUEST, requestFields, now);
+        insertFields(row.getIntegrationApiId(), ApiFieldDirection.INTEGRATION_API_RESPONSE, responseFields, now);
         return row;
     }
 
     /** 使用样例参数与源码的签名脚本。 */
     public IntegrationScript signScript(Integration integration, ScriptExecutionStage stage) {
-        Instant now = operations.now();
         var parameters = ExternalApiSamples.signParameters().stream()
             .map(parameter -> new ParameterDeclaration(parameter.getName(), parameter.getDataType(),
                 parameter.getRequired())).toList();
-        var row = new IntegrationScript(OperatorBuilder.nextId(), integration.getIntegrationId(),
-            ExternalApiSamples.SIGN_SCRIPT, "请求签名", stage, codec.parametersJson(parameters),
-            ExternalApiSamples.signSource(), null, 1, CREATOR, CREATOR, now, now);
+        return script(integration, ExternalApiSamples.SIGN_SCRIPT, stage, parameters, ExternalApiSamples.signSource());
+    }
+
+    /** 指定编码、阶段、参数与源码的公共脚本。 */
+    public IntegrationScript script(Integration integration, String code, ScriptExecutionStage stage,
+        List<ParameterDeclaration> parameters, String sourceCode) {
+        Instant now = operations.now();
+        var row = new IntegrationScript(OperatorBuilder.nextId(), integration.getIntegrationId(), code, "请求签名", stage,
+            codec.parametersJson(parameters), sourceCode, null, 1, CREATOR, CREATOR, now, now);
         scripts.insert(row);
         return row;
     }

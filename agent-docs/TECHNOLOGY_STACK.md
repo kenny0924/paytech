@@ -46,6 +46,7 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | 数据访问 | MyBatis Spring Boot Starter | 4.0.1 | 与 Spring Boot 4.0 线对齐；Mapper XML 为默认复杂 SQL 载体 |
 | MyBatis Core | MyBatis | 3.5.19 | 由统一 BOM 管理；公共 TypeHandler 位于无 Spring 自动配置的 `paytech-mybatis-support` |
 | JSON 规范化 | RFC 8785 + Code-MoR JSON Object Profile | `io.github.erdtman:java-json-canonicalization:1.1` | BOM 固定；Foundation 严格前置验证并只对受限 Object/Number Profile 背书，第三方类型不进公共 API，升级必须通过逐字节门禁 |
+| 配置表达式与脚本 | AviatorScript | `com.googlecode.aviator:aviator:5.3.3` | 只用于 Platform 外部 API 配置的条件、取值表达式与公共脚本；版本暂由 Platform 根 POM 固定，其他服务需要时先上移到统一 BOM。必须经 `ExpressionEngine` 的白名单剖面解释执行：禁用模块/use/new/静态调用/Lambda/fn/while/正则匹配，不开放任何 Java 类，循环次数有上限；5.3.3 无求值超时，不得作为通用规则引擎或在其他场景直接使用 |
 | 数据库 | MySQL LTS | 8.4；本地固定 8.4.11 | 早期允许一个实例承载多数据库，但每系统独立数据库和账号 |
 | Schema 演进 | 人工审查并执行的 SQL | 每服务一份当前 DDL + 一份初始化 DML | PDManer 是设计源；应用启动不建表、不迁移、不灌初始数据 |
 | MQ | RabbitMQ | 4.2；本地固定 4.2.9 | 对齐 Amazon MQ RabbitMQ 4.2；自建生产前重新选择当时受支持系列 |

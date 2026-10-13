@@ -1,0 +1,104 @@
+{
+  "timeoutMs": 20000,
+  "initializers": [
+    {
+      "id": "channelAccount",
+      "function": "CHANNEL_ACCOUNT_CONFIG",
+      "required": true,
+      "args": {
+        "vaultToken": {
+          "kind": "PATH",
+          "path": "input.paymentContext.vaultToken"
+        },
+        "channelCode": {
+          "kind": "EXPRESSION",
+          "expression": "'DEMO'"
+        },
+        "channelAccountId": {
+          "kind": "PATH",
+          "path": "input.paymentContext.attemptId"
+        },
+        "entityNo": {
+          "kind": "PATH",
+          "path": "input.paymentContext.attemptId"
+        }
+      }
+    }
+  ],
+  "entry": "createOrder",
+  "nodes": [
+    {
+      "id": "createOrder",
+      "integrationApi": "CREATE_ORDER",
+      "request": {
+        "PATH:outletRef": {
+          "kind": "PATH",
+          "path": "resources.channelAccount.parameters.outletId"
+        },
+        "BODY:orderRef": {
+          "kind": "PATH",
+          "path": "input.paymentContext.attemptId"
+        },
+        "BODY:amount": {
+          "kind": "PATH",
+          "path": "input.paymentContext.amount"
+        }
+      },
+      "params": {
+        "signingKey": {
+          "kind": "PATH",
+          "path": "resources.channelAccount.credentials.apiKey"
+        }
+      }
+    }
+  ],
+  "returns": [
+    {
+      "id": "paid",
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "paymentStatus": {
+          "kind": "EXPRESSION",
+          "expression": "'PAID'"
+        },
+        "transactionRef": {
+          "kind": "PATH",
+          "path": "steps.createOrder.outputs.transactionRef"
+        }
+      }
+    },
+    {
+      "id": "declined",
+      "executeStatus": "FAIL",
+      "outputs": {
+        "paymentStatus": {
+          "kind": "EXPRESSION",
+          "expression": "'DECLINED'"
+        }
+      }
+    },
+    {
+      "id": "unknown",
+      "executeStatus": "ERROR"
+    }
+  ],
+  "edges": [
+    {
+      "from": "createOrder",
+      "to": "paid",
+      "condition": "steps.createOrder.executeStatus == 'SUCCESS'",
+      "priority": 1
+    },
+    {
+      "from": "createOrder",
+      "to": "declined",
+      "condition": "steps.createOrder.executeStatus == 'FAIL'",
+      "priority": 2
+    },
+    {
+      "from": "createOrder",
+      "to": "unknown",
+      "default": true
+    }
+  ]
+}

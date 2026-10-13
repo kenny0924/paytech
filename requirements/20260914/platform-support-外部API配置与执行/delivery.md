@@ -487,3 +487,66 @@ Pencil 主界面和局部截图复核通过，全部 CAPI 节点无裁切、无�
 - **2d（2026-10-13）：** 用户回复“继续”。完成流程编辑：初始化项侧栏、画布、节点/出口/初始化项属性面板、出口顺序、取值与条件编辑、必经变量提示、校验定位；画布位置每次按图结构自动布局（F4）。前端测试 967/967、构建通过。
 - **2e（2026-10-13）：** 用户回复“确认开始”。在本机独立库 `mor_platform_external_api` 执行建库、完整 Schema、初始化目录、注册 SQL（344 行）与启用 SQL；经真实入口 → Gateway → BFF → Platform 完成 30 项接口检查与 22 个页面的无头浏览器走查（控制台错误 0），见 [回执](./assets/stage2e/e2e-receipt.json)。发现注册数据中 18 条路由请求体上限 262,144 超出 Gateway 绝对上限 65,536（会使整份快照失败），已在注册 SQL、[管理接口](./admin-api.md)第 6 节与 BFF 统一改为 65,536；整个请求体受 64 KiB 约束，单个定义实际可用空间略小于 64 KiB。
 
+## 34. 研发计划 · 第 3 步评审稿（2026-10-13）
+
+- **请求：** 第 2 步提交为 `927e248` 后，用户回复“可以”，进入第 3 步计划。
+- **交付：** [研发计划 · 第 3 步](./dev-plan-step3.md)：执行接口与调用链、模块与包、取值/组装/脚本/传输/出口规则、Aviator 引入与白名单剖面、首批注册函数、测试与 3a～3e 实施顺序。
+- **待用户确认：** G1～G8，其中 G1（引入 Aviator 依赖）与 G8（修改 Platform 代码与技术栈文档）是动作授权。
+- **范围：** 只写计划；没有修改代码、Vault 策略或执行 SQL，没有提交。本机第 2 步验证服务仍在运行。
+- **用户确认（2026-10-13）：** 回复“可以”，G1～G8 按建议；开始实施 3a。
+
+## 35. 第 3 步 · 3a Aviator 白名单与保存时编译（2026-10-13）
+
+- **依赖：** Platform 根 POM 固定 `com.googlecode.aviator:aviator:5.3.3`（无运行时传递依赖），只由 `platform-support-integration` 引入；[技术栈](../../../agent-docs/TECHNOLOGY_STACK.md)第 3 节登记版本与使用边界。
+- **引擎：** `ExpressionEngine` 为只读、脚本两个剖面各建一个解释执行实例；不开放任何 Java 类；浮点字面量按十进制解析；编译结果 LRU 缓存 1024 条。编译前静态检查函数调用只能在剖面白名单内、禁止 `=~`；实例中移除白名单外的具名函数（保留 Aviator 编译 for 语句所需的内部 `with_meta`），防止以函数值间接调用绕过；白名单内置函数缺失时启动即失败。脚本函数（`bearerAuth` 等）已列入白名单，实现在 3c 注册。
+- **保存时校验：** `ValueBindingValidator` 的表达式（EXPRESSION、FUNCTION result、出边条件、状态规则条件）按只读剖面编译并拒绝上下文根以外的变量；`IntegrationScriptValidator` 按脚本剖面编译源码。问题码 `EXPRESSION_INVALID`，位置指向具体表达式或 `sourceCode`。
+- **偏差：** 5.3.3 无求值超时，见[第 3 步计划](./dev-plan-step3.md)第 7 节 3a 结果。
+- **测试：** 新增 `auto/domain/ExpressionEngineTest`（7 个：只读拒绝清单、只读求值与十进制、脚本剖面、循环上限、函数值绕过、白名单函数、保存时问题码）；测试样例脚本由未开放的 `functions.sign(...)` 改为 `hmacSha256Hex(params.key, http.requestBody.orderRef)`。Platform `./mvnw -o install`：314/314 通过。
+- **已知：** `platform-support-test` 的 JaCoCo “Phase A runtime” 门禁（不含 integration 模块）在 `verify` 阶段报覆盖率 0.40/0.25 不达标，与本步无关，属既有问题。第 2 步 2e 端到端脚本里的样例源码 `functions.sign(...)` 在 3a 之后无法保存，3e 重建端到端时一并替换。
+- **范围：** 未修改 BFF、前端、Vault 策略，未执行 SQL，未提交。
+
+## 36. 第 3 步 · 3b 执行引擎核心（2026-10-13）
+
+- **请求：** 用户对 3a 回复“可以”，进入 3b。
+- **快照加载：** `ExecutionSnapshotLoader` 用一次 REPEATABLE_READ 只读事务（5 秒）读取标准 API、接入方、实现流程、流程引用的原子 API 及其字段与脚本；事务外用保存时的同一套校验器（字段、出站地址、脚本、原子 API 定义、流程）重新校验，未通过记录问题代码与位置并返回 `INTEGRATION_CONFIG_INVALID`；标准 API 或实现不存在返回对应 404 代码。HTTP 状态映射在 3d 接入。
+- **取值与结构：** `FieldSchema` 校验并转换标准 API 输入、校验组装出的输出；`ValueResolver` 实现 PATH/EXPRESSION/FUNCTION 的缺失、null、类型规则；`MONEY_MINOR_UNITS` 无损换算。规则细节见[第 3 步计划](./dev-plan-step3.md)第 7 节 3b 结果。
+- **流程引擎：** `FlowEngine` 从入口逐个执行节点（节点异常记为该节点 ERROR），按优先级判断出边（非布尔或异常整次 ERROR），预算耗尽或节点重复整次 ERROR，到出口后按输出结构映射（失败改为 ERROR、输出空对象）。日志只记编码、节点/出口 ID、状态与耗时。
+- **合同修正：** Aviator 5.3.3 不支持 `a.b[0].c`，[原子 API 结构](./integration-api-definition-contract.md)第 8、10 节示例改为 `#http.responseBody.errors[0].code` 并加说明。
+- **测试：** 新增 `auto/domain/ExecutionValueTest`（4 个：输入结构、PATH 缺失与 null、表达式类型、金额换算）与 `FlowEngineTest`（4 个：出边优先级、非布尔条件、出口映射、出口回退 ERROR）。Platform `./mvnw -o install`：322/322 通过；JaCoCo Phase A 门禁同 3a 记录，属既有问题。
+- **范围：** 未接入执行接口与出站 HTTP，未修改 BFF、前端或 Vault 策略，未执行 SQL，未提交。
+
+## 37. 第 3 步 · 3c-1 执行入口提前（2026-10-13）
+
+- **请求：** 用户指出 3b 的 `ExecutionSnapshotLoader` 没有调用方；同意把执行入口提前（“可以，按照你的计划来吧”）。[第 3 步计划](./dev-plan-step3.md)第 7 节改为 3c-1 / 3c-2 / 3d。
+- **实现：** `StandardApiCommandApi`（`POST /standard-apis/v1/{standardApiCode}/execute`）、`ExecuteStandardApiRequestBody` / `ExecuteStandardApiResponseBody`、`StandardApiExecutionController`（只做转换）、`ExecuteStandardApiProcessor`（加载快照 → 运行前校验 → 校验 input），`PlatformApiErrorConfiguration` 映射 404/500/503。
+- **差异：** input 字段错误返回 422（[内部接口](./internal-api.md)第 3.2 节已加实现说明）；5xx 代码改用 `ErrorException` 抛出（Foundation 只把 `FailException` 映射为 4xx，首次运行测试时发现 500 被映射成 400）。
+- **临时状态：** input 校验通过后暂时返回 500“尚未接入”，代码中有 `TODO by CLAUDE`，3c-2 删除。
+- **测试：** 新增 `auto/ext/http/standardapi/StandardApiExecutionTest`（5 个：标准 API 不存在、实现不存在、流程或原子 API 被写坏、input 字段错误、请求体缺字段）。Platform `./mvnw -o install`：327/327 通过；JaCoCo Phase A 门禁同前，属既有问题。
+- **范围：** 未修改 BFF、前端、Vault 策略，未执行 SQL，未提交。
+
+## 38. 第 3 步 · 3c-2 初始化、出站 HTTP 与脚本（2026-10-13）
+
+- **请求：** 用户回复“可以，继续 3c-2”。
+- **实现：** 见[第 3 步计划](./dev-plan-step3.md)第 7 节 3c-2 结果。标准 API 现在可以完整执行：Vault 读取渠道账号 → 节点组装请求 → REQUEST 脚本 → 发送 → 解码 → RESPONSE 脚本 → 状态规则 → 输出 → 出边 → 出口。
+- **测试设施：** `ChannelMocker` + `ChannelMockController`（独立 Mock HTTP 服务上的 `/channel/**`，按“方法 + 路径”返回配置的响应、记录请求；错误状态经 `MockHttpFault` 写出）；`ChannelAccountVaultMocker`（`VaultMockController` 新增 `CHANNEL_EXECUTION` 用途）；两者的意外调用检查加入 `MockTestBase` 全局 AfterEach；`ExternalApiMocker.integration(code, baseUrl)`；测试配置 `allowed-schemes: [https, http]`。
+- **新增测试：** `StandardApiFlowExecutionTest`（5 个）：成功（核对路径段编码 `outlet%201`、固定值 Content-Type、脚本用受控句柄算出的 HMAC 签名与请求体）、拒绝、节点 ERROR（渠道 500 无规则命中、成功响应缺必填字段、连接断开）、响应超时、初始化失败（Vault 503、账号身份不一致，均 503 且渠道零请求）。日志检查：测试输出中未出现合成密钥。
+- **既有测试调整：** 能力目录用例纳入脚本函数；出站地址非法协议用例由 `http://` 改为 `ftp://`（mock 配置已允许 http）。
+- **验证：** Platform `./mvnw -o install`：332/332 通过；JaCoCo Phase A 门禁同前，属既有问题。
+- **未覆盖（留给 3d）：** FORM/NONE 编码、QUERY、RESPONSE 脚本与 `json.*`、`basicAuth`/`bearerAuth`、执行前预算耗尽 503、非必需初始化项失败。
+- **范围：** 未修改 BFF、前端（能力目录新增 `SCRIPT` 类别的函数，脚本编辑器会列出它们，未做浏览器验证），未修改共享或线上 Vault 策略，未执行 SQL，未提交。
+
+## 39. 第 3 步 · 3d 边界场景与收尾（2026-10-13）
+
+- **请求：** 用户回复“继续”。
+- **实现：** 只补测试与测试设施，没有修改生产代码；场景与发现见[第 3 步计划](./dev-plan-step3.md)第 7 节 3d 结果。测试设施新增 `ExternalApiMocker.integrationApi(…, requestFields, responseFields)`、`ExternalApiMocker.script(…)`、`ChannelAccountVaultMocker.delay(…)`。
+- **第一个节点前后的承诺：** 404/500/422/503 用例均断言渠道零请求（500/422 另断言 Vault 零读取）；节点异常、渠道错误、断连、超时、出边非布尔均返回 200 + ERROR。
+- **日志：** Platform 自有日志只含编码、节点/出口/初始化项 ID、状态、渠道 HTTP 状态、耗时与固定原因；测试断言日志不含合成凭据与渠道响应标记。入站请求与响应 Body 仍按 W5 由 MVC 公共日志完整记录。
+- **验证：** Platform `./mvnw -o install`：337/337 通过；JaCoCo Phase A 门禁同前，属既有问题（integration 模块不在该门禁统计内，本步未单独统计覆盖率）。
+- **范围：** 未修改 BFF、前端、Vault 策略，未执行 SQL，未提交。
+
+## 40. 测试数据改为资源文件（2026-10-13）
+
+- **请求：** 用户指出单元测试中的脚本与参数数据过大，建议放到 `platform-support-test/src/test/resources`。
+- **调整：** 新增 `src/test/resources/externalapi/`：`definition/`（create-order、query-order、form-refund）、`flow/`（pay、call-create-order、call-query-order、call-form-refund、diamond、self-reference、initializer-cycle、initializer-self）、`script/`（sign、bearer、basic、flatten，`.av` 源码）、`vault/channel-account.json`；加载工具 `ExternalApiFixtures` 每次返回新对象。`ExternalApiSamples` 的下单定义、支付流程与签名脚本改为读取文件；场景测试、完整流程测试与流程校验测试改为“加载文件 + 只改本场景相关属性”（如 timeoutMs、required、出边条件、门店）。
+- **保留内联：** 一行的取值绑定与请求输入，以及 `FlowEngineTest` 的 4 行出边样例、`ExpressionEngineTest` 的 3 行脚本——它们就是用例要检验的规则本身。
+- **验证：** Platform `./mvnw -o install`：337/337 通过，用例行为不变；JaCoCo Phase A 门禁同前。未提交。

@@ -1,0 +1,1 @@
+http.requestHeaders.signature = hmacSha256Hex(params.key, http.requestBody.orderRef)

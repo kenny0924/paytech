@@ -1,0 +1,46 @@
+{
+  "timeoutMs": 1000,
+  "initializers": [],
+  "entry": "a",
+  "nodes": [
+    {
+      "id": "a",
+      "integrationApi": "API",
+      "request": {
+        "BODY:id": {
+          "kind": "PATH",
+          "path": "steps.a.outputs.value"
+        }
+      }
+    }
+  ],
+  "returns": [
+    {
+      "id": "done",
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "status": {
+          "kind": "PATH",
+          "path": "steps.a.outputs.value"
+        }
+      }
+    },
+    {
+      "id": "failed",
+      "executeStatus": "ERROR"
+    }
+  ],
+  "edges": [
+    {
+      "from": "a",
+      "to": "done",
+      "condition": "steps.a.executeStatus == 'SUCCESS'",
+      "priority": 1
+    },
+    {
+      "from": "a",
+      "to": "failed",
+      "default": true
+    }
+  ]
+}

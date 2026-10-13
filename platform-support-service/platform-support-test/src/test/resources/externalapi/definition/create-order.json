@@ -1,0 +1,69 @@
+{
+  "params": [
+    {
+      "name": "signingKey",
+      "dataType": "PROTECTED_HANDLE",
+      "required": true
+    }
+  ],
+  "fixedValues": {
+    "HEADER:Content-Type": {
+      "kind": "EXPRESSION",
+      "expression": "'application/json'"
+    }
+  },
+  "transport": {
+    "protocol": "HTTP",
+    "method": "POST",
+    "endpointCode": "DEMO_GATEWAY",
+    "pathTemplate": "/outlets/{outletRef}/orders",
+    "connectTimeoutMs": 2000,
+    "responseTimeoutMs": 10000
+  },
+  "requestEncoding": "JSON",
+  "responseDecoding": "JSON",
+  "scripts": [],
+  "statusRules": [
+    {
+      "condition": "http.responseStatus == 201 && http.responseBody.state == 'CAPTURED'",
+      "executeStatus": "SUCCESS"
+    },
+    {
+      "condition": "http.responseStatus == 201 && http.responseBody.state == 'DECLINED'",
+      "executeStatus": "FAIL"
+    }
+  ],
+  "outputs": {
+    "SUCCESS": [
+      {
+        "name": "transactionRef",
+        "dataType": "STRING",
+        "required": true,
+        "value": {
+          "kind": "PATH",
+          "path": "http.responseBody.reference"
+        }
+      },
+      {
+        "name": "state",
+        "dataType": "STRING",
+        "required": true,
+        "value": {
+          "kind": "PATH",
+          "path": "http.responseBody.state"
+        }
+      }
+    ],
+    "FAIL": [
+      {
+        "name": "errorCode",
+        "dataType": "STRING",
+        "required": false,
+        "value": {
+          "kind": "PATH",
+          "path": "http.responseBody.errorCode"
+        }
+      }
+    ]
+  }
+}

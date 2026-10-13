@@ -8,15 +8,22 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.platform.support.integration.core.configuration.ExternalApiExecutionProperties;
+
+import lombok.AllArgsConstructor;
+
 import com.paytech.platform.support.integration.domain.EndpointDefinition;
 import com.paytech.platform.support.integration.domain.ValidationIssue;
 
-/** 接入方出站地址的静态规则（物理设计第 4 节 P5）；纯内存校验。 */
+/** 接入方出站地址的静态规则（物理设计第 4 节 P5）；纯内存校验，允许的协议来自执行配置（默认只有 https）。 */
 @Component
+@AllArgsConstructor
 public class IntegrationEndpointValidator {
 
     /** 每个接入方最多出站地址数。 */
     public static final int MAX_ENDPOINTS = 16;
+
+    final ExternalApiExecutionProperties properties;
 
     /**
      * 校验接入方的全部出站地址。
@@ -45,7 +52,7 @@ public class IntegrationEndpointValidator {
         return issues;
     }
 
-    /** 只允许带主机名的 https 地址，可带路径前缀，不允许用户信息、查询串和片段；返回 null 表示合法。 */
+    /** 只允许配置协议（默认 https）且带主机名的地址，可带路径前缀，不允许用户信息、查询串和片段；返回 null 表示合法。 */
     String baseUrlProblem(String value) {
         URI uri;
         try {
@@ -53,8 +60,8 @@ public class IntegrationEndpointValidator {
         } catch (URISyntaxException failure) {
             return "基础地址不是合法 URL";
         }
-        if (!"https".equals(uri.getScheme())) {
-            return "基础地址只允许 https";
+        if (uri.getScheme() == null || !properties.getAllowedSchemes().contains(uri.getScheme())) {
+            return "基础地址只允许 " + String.join("、", properties.getAllowedSchemes());
         }
         if (uri.getHost() == null || uri.getHost().isBlank()) {
             return "基础地址必须包含主机名";

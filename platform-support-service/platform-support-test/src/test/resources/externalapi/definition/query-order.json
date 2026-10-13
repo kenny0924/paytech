@@ -1,0 +1,64 @@
+{
+  "params": [
+    {
+      "name": "token",
+      "dataType": "PROTECTED_HANDLE",
+      "required": true
+    }
+  ],
+  "fixedValues": {
+    "QUERY:expand": {
+      "kind": "EXPRESSION",
+      "expression": "'detail view'"
+    }
+  },
+  "transport": {
+    "protocol": "HTTP",
+    "method": "GET",
+    "endpointCode": "DEMO_GATEWAY",
+    "pathTemplate": "/orders/{orderRef}",
+    "connectTimeoutMs": 2000,
+    "responseTimeoutMs": 10000
+  },
+  "requestEncoding": "NONE",
+  "responseDecoding": "JSON",
+  "scripts": [
+    {
+      "id": "auth",
+      "scriptCode": "BEARER",
+      "stage": "REQUEST",
+      "params": {
+        "token": {
+          "kind": "PATH",
+          "path": "params.token"
+        }
+      }
+    },
+    {
+      "id": "flatten",
+      "scriptCode": "FLATTEN",
+      "stage": "RESPONSE",
+      "params": {}
+    }
+  ],
+  "statusRules": [
+    {
+      "condition": "http.responseStatus == 200 && http.responseBody.state == 'PAID'",
+      "executeStatus": "SUCCESS"
+    }
+  ],
+  "outputs": {
+    "SUCCESS": [
+      {
+        "name": "transactionRef",
+        "dataType": "STRING",
+        "required": true,
+        "value": {
+          "kind": "PATH",
+          "path": "http.responseBody.data.reference"
+        }
+      }
+    ],
+    "FAIL": []
+  }
+}

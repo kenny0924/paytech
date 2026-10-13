@@ -2,9 +2,7 @@ package com.paytech.platform.support.test.builder;
 
 import static com.paytech.platform.support.api.enums.ApiFieldDataType.OBJECT;
 import static com.paytech.platform.support.api.enums.ApiFieldDataType.STRING;
-import static com.paytech.platform.support.api.enums.ApiFieldLocation.BODY;
-import static com.paytech.platform.support.api.enums.ApiFieldLocation.HEADER;
-import static com.paytech.platform.support.api.enums.ApiFieldLocation.PATH;
+import static com.paytech.platform.support.api.enums.ApiFieldLocation.*;
 
 import java.util.List;
 
@@ -75,22 +73,7 @@ public final class ExternalApiSamples {
 
     /** 下单原子 API 定义：受控句柄参数、固定值、HTTP 传输、两条状态规则与分支输出，不引用脚本。 */
     public static ObjectNode createOrderDefinition() {
-        return object("""
-            {"params":[{"name":"signingKey","dataType":"PROTECTED_HANDLE","required":true}],
-             "fixedValues":{"HEADER:Content-Type":{"kind":"EXPRESSION","expression":"'application/json'"}},
-             "transport":{"protocol":"HTTP","method":"POST","endpointCode":"DEMO_GATEWAY",
-               "pathTemplate":"/outlets/{outletRef}/orders","connectTimeoutMs":2000,"responseTimeoutMs":10000},
-             "requestEncoding":"JSON","responseDecoding":"JSON","scripts":[],
-             "statusRules":[
-               {"condition":"http.responseStatus == 201 && http.responseBody.state == 'CAPTURED'","executeStatus":"SUCCESS"},
-               {"condition":"http.responseStatus == 201 && http.responseBody.state == 'DECLINED'","executeStatus":"FAIL"}],
-             "outputs":{
-               "SUCCESS":[
-                 {"name":"transactionRef","dataType":"STRING","required":true,"value":{"kind":"PATH","path":"http.responseBody.reference"}},
-                 {"name":"state","dataType":"STRING","required":true,"value":{"kind":"PATH","path":"http.responseBody.state"}}],
-               "FAIL":[
-                 {"name":"errorCode","dataType":"STRING","required":false,"value":{"kind":"PATH","path":"http.responseBody.errorCode"}}]}}
-            """);
+        return ExternalApiFixtures.definition("create-order");
     }
 
     /** 在定义中引用签名脚本：REQUEST 阶段，以 params.signingKey 绑定脚本参数 key。 */
@@ -107,9 +90,9 @@ public final class ExternalApiSamples {
         return List.of(new ScriptParameterBody("key", "PROTECTED_HANDLE", true));
     }
 
-    /** 签名脚本源码；第 1 步只做非空与长度校验。 */
+    /** 签名脚本源码：用受控句柄对订单号做 HMAC-SHA256，写入 signature Header。 */
     public static String signSource() {
-        return "http.requestHeaders.signature = functions.sign(params.key)";
+        return ExternalApiFixtures.script("sign");
     }
 
     /**
@@ -118,32 +101,7 @@ public final class ExternalApiSamples {
      * <p>下单节点读取初始化结果与标准 API 输入，签名密钥以受控句柄 PATH 绑定；成功出口读取必经节点输出。
      */
     public static ObjectNode payFlow() {
-        return object("""
-            {"timeoutMs":20000,
-             "initializers":[{"id":"channelAccount","function":"CHANNEL_ACCOUNT_CONFIG","required":true,"args":{
-               "vaultToken":{"kind":"PATH","path":"input.paymentContext.vaultToken"},
-               "channelCode":{"kind":"EXPRESSION","expression":"'DEMO'"},
-               "channelAccountId":{"kind":"PATH","path":"input.paymentContext.attemptId"},
-               "entityNo":{"kind":"PATH","path":"input.paymentContext.attemptId"}}}],
-             "entry":"createOrder",
-             "nodes":[{"id":"createOrder","integrationApi":"CREATE_ORDER",
-               "request":{
-                 "PATH:outletRef":{"kind":"PATH","path":"resources.channelAccount.parameters.outletId"},
-                 "BODY:orderRef":{"kind":"PATH","path":"input.paymentContext.attemptId"},
-                 "BODY:amount":{"kind":"PATH","path":"input.paymentContext.amount"}},
-               "params":{"signingKey":{"kind":"PATH","path":"resources.channelAccount.credentials.apiKey"}}}],
-             "returns":[
-               {"id":"paid","executeStatus":"SUCCESS","outputs":{
-                 "paymentStatus":{"kind":"EXPRESSION","expression":"'PAID'"},
-                 "transactionRef":{"kind":"PATH","path":"steps.createOrder.outputs.transactionRef"}}},
-               {"id":"declined","executeStatus":"FAIL","outputs":{
-                 "paymentStatus":{"kind":"EXPRESSION","expression":"'DECLINED'"}}},
-               {"id":"unknown","executeStatus":"ERROR"}],
-             "edges":[
-               {"from":"createOrder","to":"paid","condition":"steps.createOrder.executeStatus == 'SUCCESS'","priority":1},
-               {"from":"createOrder","to":"declined","condition":"steps.createOrder.executeStatus == 'FAIL'","priority":2},
-               {"from":"createOrder","to":"unknown","default":true}]}
-            """);
+        return ExternalApiFixtures.flow("pay");
     }
 
     /** 构造字段，显示名称同路径、说明为空。 */

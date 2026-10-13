@@ -1,0 +1,88 @@
+{
+  "timeoutMs": 20000,
+  "initializers": [
+    {
+      "id": "channelAccount",
+      "function": "CHANNEL_ACCOUNT_CONFIG",
+      "required": true,
+      "args": {
+        "vaultToken": {
+          "kind": "PATH",
+          "path": "input.paymentContext.vaultToken"
+        },
+        "channelCode": {
+          "kind": "EXPRESSION",
+          "expression": "'DEMO'"
+        },
+        "channelAccountId": {
+          "kind": "PATH",
+          "path": "input.paymentContext.attemptId"
+        },
+        "entityNo": {
+          "kind": "PATH",
+          "path": "input.paymentContext.attemptId"
+        }
+      }
+    }
+  ],
+  "entry": "call",
+  "nodes": [
+    {
+      "id": "call",
+      "integrationApi": "CALL",
+      "request": {
+        "PATH:outletRef": {
+          "kind": "PATH",
+          "path": "resources.channelAccount.parameters.outletId"
+        },
+        "BODY:orderRef": {
+          "kind": "PATH",
+          "path": "input.paymentContext.attemptId"
+        },
+        "BODY:amount": {
+          "kind": "PATH",
+          "path": "input.paymentContext.amount"
+        }
+      },
+      "params": {
+        "signingKey": {
+          "kind": "PATH",
+          "path": "resources.channelAccount.credentials.apiKey"
+        }
+      }
+    }
+  ],
+  "returns": [
+    {
+      "id": "done",
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "paymentStatus": {
+          "kind": "EXPRESSION",
+          "expression": "'PAID'"
+        },
+        "transactionRef": {
+          "kind": "PATH",
+          "path": "steps.call.outputs.transactionRef"
+        }
+      }
+    },
+    {
+      "id": "unknown",
+      "executeStatus": "ERROR"
+    }
+  ],
+  "edges": [
+    {
+      "from": "call",
+      "to": "done",
+      "condition": "steps.call.executeStatus == 'SUCCESS'",
+      "priority": 1
+    },
+    {
+      "from": "call",
+      "to": "unknown",
+      "default": true
+    }
+  ]
+}

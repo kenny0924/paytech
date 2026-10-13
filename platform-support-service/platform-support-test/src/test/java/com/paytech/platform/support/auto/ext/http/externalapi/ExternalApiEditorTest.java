@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.platform.support.api.enums.ApiFieldLocation;
+import com.paytech.platform.support.integration.domain.RegisteredFunctionCatalog;
 import com.paytech.platform.support.api.enums.OperationsErrorCode;
 import com.paytech.platform.support.api.externalapi.ExternalApiEditorApi;
 import com.paytech.platform.support.api.externalapi.response.*;
@@ -77,7 +78,7 @@ class ExternalApiEditorTest extends ExternalApiTestBase {
         get(BASE + "/integrations/NOPE/flow-editor-context?standardApiCode=PAY", reader).assertProblem(404, CommonErrorCode.NOT_FOUND);
     }
 
-    /** 能力目录的枚举与上限和合同一致，注册函数区分初始化与纯函数用途。 */
+    /** 能力目录的枚举与上限和合同一致，注册函数区分初始化、纯函数与只在公共脚本中使用的脚本函数。 */
     @Test
     void test_editorCapabilities() {
         var capabilities =
@@ -98,7 +99,12 @@ class ExternalApiEditorTest extends ExternalApiTestBase {
             () -> assertEquals(
                 List.of("CHANNEL_ACCOUNT_CONFIG:INITIALIZER:[FLOW_INITIALIZER]",
                     "MONEY_MINOR_UNITS:PURE:[FLOW_NODE, FLOW_RETURN, API_OUTPUT]"),
-                functions.stream().map(ExternalApiEditorTest::function).sorted().toList()));
+                functions.stream().filter(item -> !RegisteredFunctionCatalog.SCRIPT.equals(item.getKind()))
+                    .map(ExternalApiEditorTest::function).sorted().toList()),
+            () -> assertEquals(RegisteredFunctionCatalog.codes(RegisteredFunctionCatalog.SCRIPT),
+                functions.stream().filter(item -> RegisteredFunctionCatalog.SCRIPT.equals(item.getKind()))
+                    .peek(item -> assertEquals(List.of("INTEGRATION_SCRIPT"), item.getStages()))
+                    .map(item -> item.getFunctionCode()).collect(Collectors.toSet())));
     }
 
     /** 没有外部 API 权限的人员不能读取目录。 */

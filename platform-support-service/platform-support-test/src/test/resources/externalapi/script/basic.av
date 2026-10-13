@@ -1,0 +1,2 @@
+## REQUEST：用两个受控句柄写入 Basic 认证 Header
+http.requestHeaders.Authorization = basicAuth(params.username, params.password);

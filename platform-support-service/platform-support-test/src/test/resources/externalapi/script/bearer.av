@@ -1,0 +1,2 @@
+## REQUEST：用受控句柄写入 Bearer 认证 Header，脚本读不到明文
+http.requestHeaders.Authorization = bearerAuth(params.token);

@@ -14,15 +14,18 @@ import com.paytech.platform.support.integration.domain.ApiContract;
 import com.paytech.platform.support.integration.domain.FieldDefinition;
 import com.paytech.platform.support.integration.domain.ParameterDeclaration;
 import com.paytech.platform.support.integration.domain.ValidationIssue;
+import com.paytech.platform.support.integration.domainservice.expression.ExpressionEngine;
 import com.paytech.platform.support.integration.domainservice.validator.FlowDefinitionValidator;
 import com.paytech.platform.support.integration.domainservice.validator.ValueBindingValidator;
+import com.paytech.platform.support.test.builder.ExternalApiFixtures;
 import com.paytech.platform.support.test.builder.ExternalApiSamples;
 
 import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 流程静态校验的图规则：支配节点决定 steps 引用是否必经，菱形汇合、条件读起点自身、节点读自身、
- * 初始化项依赖环与摘要。HTTP 入口的错误映射由实现管理测试覆盖，本类只直接调用公开校验器。
+ * 初始化项依赖环与摘要。流程数据在 src/test/resources/externalapi/flow；HTTP 入口的错误映射由实现管理测试覆盖，
+ * 本类只直接调用公开校验器。
  *
  * @see FlowDefinitionValidator#validate(tools.jackson.databind.JsonNode, List, List, Map)
  */
@@ -32,26 +35,12 @@ class FlowDefinitionValidatorTest {
     private static final List<FieldDefinition> RESPONSE = List.of(field("status", true), field("ref", false));
 
     private final FlowDefinitionValidator validator =
-        new FlowDefinitionValidator(JsonMapper.builder().build(), new ValueBindingValidator());
+        new FlowDefinitionValidator(JsonMapper.builder().build(), new ValueBindingValidator(new ExpressionEngine()));
 
     /** 菱形：a 分两路到 b、c 再汇合到 d；d 之后的出口可以读 a 与 d，不能读只在一条分支上的 b。 */
     @Test
     void test_diamondDominators() {
-        var issues = validate("""
-            {"timeoutMs":1000,"initializers":[],"entry":"a",
-             "nodes":[%s,%s,%s,%s],
-             "returns":[{"id":"done","executeStatus":"SUCCESS","outputs":{
-                 "status":{"kind":"PATH","path":"steps.a.outputs.value"},
-                 "ref":{"kind":"PATH","path":"steps.b.outputs.value"}}},
-               {"id":"other","executeStatus":"SUCCESS","outputs":{"status":{"kind":"PATH","path":"steps.d.outputs.value"}}}],
-             "edges":[
-               {"from":"a","to":"b","condition":"steps.a.executeStatus == 'SUCCESS'","priority":1},
-               {"from":"a","to":"c","default":true},
-               {"from":"b","to":"d","default":true},
-               {"from":"c","to":"d","default":true},
-               {"from":"d","to":"done","condition":"steps.d.executeStatus == 'SUCCESS'","priority":1},
-               {"from":"d","to":"other","default":true}]}
-            """.formatted(node("a"), node("b"), node("c"), node("d")));
+        var issues = validate(ExternalApiFixtures.flow("diamond"));
 
         assertEquals(List.of("STEP_NOT_ON_ALL_PATHS@flowDefinition.returns[0].outputs.ref"), issues);
     }
@@ -59,14 +48,7 @@ class FlowDefinitionValidatorTest {
     /** 连线条件可以读起点自身结果；节点请求不能读自身结果。 */
     @Test
     void test_selfReference() {
-        var issues = validate("""
-            {"timeoutMs":1000,"initializers":[],"entry":"a",
-             "nodes":[{"id":"a","integrationApi":"API","request":{"BODY:id":{"kind":"PATH","path":"steps.a.outputs.value"}}}],
-             "returns":[{"id":"done","executeStatus":"SUCCESS","outputs":{"status":{"kind":"PATH","path":"steps.a.outputs.value"}}},
-               {"id":"failed","executeStatus":"ERROR"}],
-             "edges":[{"from":"a","to":"done","condition":"steps.a.executeStatus == 'SUCCESS'","priority":1},
-               {"from":"a","to":"failed","default":true}]}
-            """);
+        var issues = validate(ExternalApiFixtures.flow("self-reference"));
 
         assertEquals(List.of("STEP_NOT_ON_ALL_PATHS@flowDefinition.nodes[0].request.BODY:id"), issues);
     }
@@ -74,21 +56,8 @@ class FlowDefinitionValidatorTest {
     /** 初始化项互相依赖形成环被拒绝；引用自身结果既是非法引用，也构成自环。 */
     @Test
     void test_initializerDependencies() {
-        String account = """
-            {"id":"%s","function":"CHANNEL_ACCOUNT_CONFIG","required":true,"args":{
-              "vaultToken":{"kind":"PATH","path":"%s"},
-              "channelCode":{"kind":"EXPRESSION","expression":"'DEMO'"},
-              "channelAccountId":{"kind":"PATH","path":"input.orderId"},
-              "entityNo":{"kind":"PATH","path":"input.orderId"}}}""";
-        var cycle = validate("""
-            {"timeoutMs":1000,"initializers":[%s,%s],"entry":"a","nodes":[%s],
-             "returns":[{"id":"failed","executeStatus":"ERROR"}],"edges":[{"from":"a","to":"failed","default":true}]}
-            """.formatted(account.formatted("first", "resources.second.parameters.outletId"),
-            account.formatted("second", "resources.first.parameters.outletId"), node("a")));
-        var self = validate("""
-            {"timeoutMs":1000,"initializers":[%s],"entry":"a","nodes":[%s],
-             "returns":[{"id":"failed","executeStatus":"ERROR"}],"edges":[{"from":"a","to":"failed","default":true}]}
-            """.formatted(account.formatted("first", "resources.first.parameters.outletId"), node("a")));
+        var cycle = validate(ExternalApiFixtures.flow("initializer-cycle"));
+        var self = validate(ExternalApiFixtures.flow("initializer-self"));
 
         assertEquals(List.of("INITIALIZER_CYCLE@flowDefinition.initializers"), cycle);
         assertEquals(List.of("INITIALIZER_CYCLE@flowDefinition.initializers",
@@ -128,8 +97,8 @@ class FlowDefinitionValidatorTest {
         assertTrue(codes(result.getIssues()).contains("TIMEOUT_INVALID@flowDefinition.timeoutMs"));
     }
 
-    private List<String> validate(String flow) {
-        return codes(validator.validate(ExternalApiSamples.object(flow), REQUEST, RESPONSE, apis()).getIssues());
+    private List<String> validate(tools.jackson.databind.JsonNode flow) {
+        return codes(validator.validate(flow, REQUEST, RESPONSE, apis()).getIssues());
     }
 
     /** 单个原子 API：请求只有 BODY id，SUCCESS 输出 value。 */
@@ -138,11 +107,6 @@ class FlowDefinitionValidatorTest {
             Map.of("SUCCESS", List.of(new ParameterDeclaration("value", "STRING", false)))));
     }
 
-    /** 请求 id 取标准 API 输入的节点。 */
-    private static String node(String id) {
-        return "{\"id\":\"%s\",\"integrationApi\":\"API\",\"request\":{\"BODY:id\":{\"kind\":\"PATH\",\"path\":\"input.orderId\"}}}"
-            .formatted(id);
-    }
 
     private static List<String> codes(List<ValidationIssue> issues) {
         return issues.stream().map(issue -> issue.getCode() + "@" + issue.getLocation()).sorted().toList();

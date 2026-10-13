@@ -1,0 +1,2 @@
+## RESPONSE：把嵌套的 data.status 提到顶层 state，供状态规则判断
+http.responseBody = json.set(http.responseBody, 'state', json.get(http.responseBody, 'data.status'));

@@ -249,6 +249,8 @@ ps:
     configuration:
       lock-wait-time: 500ms # 外部 API 配置写入的 TRY_LOCK 等待；全模块共用 lock:external-api-config。
       lock-lease-time: 30s # 资源锁租约；版本 CAS 仍为最终保护。
+    execution:
+      allowed-schemes: [https, http] # 只在本机 mock 允许 http，执行测试的出站地址指向本机 Mock 渠道。
 # 保留正式 application.yml 的旧键清单；当前 Properties 消费 ps.access-control。
 api-scope:
   management:

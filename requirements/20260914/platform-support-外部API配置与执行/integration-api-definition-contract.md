@@ -168,13 +168,14 @@
   ],
   "FAIL": [
     {"name":"errorCode","dataType":"STRING","required":false,
-     "value":{"kind":"EXPRESSION","expression":"http.responseBody.errors == nil ? nil : http.responseBody.errors[0].code"}}
+     "value":{"kind":"EXPRESSION","expression":"http.responseBody.errors == nil ? nil : #http.responseBody.errors[0].code"}}
   ]
 }
 ```
 
 - 分支键只能是 `SUCCESS`、`FAIL`；`ERROR` 固定输出空对象。
 - 输出结构保存在 `definition_json`，不进入 `t_api_field`（A2 已确认）。流程保存时据此校验 `steps.<id>.outputs.*` 引用：只要任一分支声明了该字段即可引用，运行时实际缺失按[流程结构第 5 节](./flow-definition-contract.md#5-运行时缺失与类型)处理。
+- **数组下标写法（2026-10-13 第 3 步 3a 实测补充）：** Aviator 5.3.3 不支持 `a.b[0].c`，带下标的嵌套读取须加 `#` 前缀写成 `#a.b[0].c`；本节与第 10 节示例已按此修正。
 - 取值可用 `PATH`、`EXPRESSION`、纯 `FUNCTION`，可读 `http.*` 与 `params`（不含受控句柄）。`[]` 数组路径只用于定义；按数组取值必须用表达式明确选择元素（如上例 `errors[0]`），`PATH` 不能使用 `[]` 或隐式取第一个。
 - 必填输出缺失或类型不符：整个结果改为 `ERROR`。
 
@@ -226,7 +227,7 @@
     ],
     "FAIL": [
       {"name":"errorCode","dataType":"STRING","required":false,
-       "value":{"kind":"EXPRESSION","expression":"http.responseBody.errors == nil ? nil : http.responseBody.errors[0].code"}}
+       "value":{"kind":"EXPRESSION","expression":"http.responseBody.errors == nil ? nil : #http.responseBody.errors[0].code"}}
     ]
   }
 }

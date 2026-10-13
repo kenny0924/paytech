@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "channelCode": "DEMO",
+  "channelAccountId": "301000000000000001",
+  "entityNo": "301000000000000001",
+  "parameters": {
+    "outletId": "outlet-1"
+  },
+  "credentials": {
+    "apiKey": "synthetic-signing-key",
+    "username": "synthetic-merchant"
+  }
+}

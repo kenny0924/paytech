@@ -1,0 +1,77 @@
+{
+  "timeoutMs": 1000,
+  "initializers": [
+    {
+      "id": "first",
+      "function": "CHANNEL_ACCOUNT_CONFIG",
+      "required": true,
+      "args": {
+        "vaultToken": {
+          "kind": "PATH",
+          "path": "resources.second.parameters.outletId"
+        },
+        "channelCode": {
+          "kind": "EXPRESSION",
+          "expression": "'DEMO'"
+        },
+        "channelAccountId": {
+          "kind": "PATH",
+          "path": "input.orderId"
+        },
+        "entityNo": {
+          "kind": "PATH",
+          "path": "input.orderId"
+        }
+      }
+    },
+    {
+      "id": "second",
+      "function": "CHANNEL_ACCOUNT_CONFIG",
+      "required": true,
+      "args": {
+        "vaultToken": {
+          "kind": "PATH",
+          "path": "resources.first.parameters.outletId"
+        },
+        "channelCode": {
+          "kind": "EXPRESSION",
+          "expression": "'DEMO'"
+        },
+        "channelAccountId": {
+          "kind": "PATH",
+          "path": "input.orderId"
+        },
+        "entityNo": {
+          "kind": "PATH",
+          "path": "input.orderId"
+        }
+      }
+    }
+  ],
+  "entry": "a",
+  "nodes": [
+    {
+      "id": "a",
+      "integrationApi": "API",
+      "request": {
+        "BODY:id": {
+          "kind": "PATH",
+          "path": "input.orderId"
+        }
+      }
+    }
+  ],
+  "returns": [
+    {
+      "id": "failed",
+      "executeStatus": "ERROR"
+    }
+  ],
+  "edges": [
+    {
+      "from": "a",
+      "to": "failed",
+      "default": true
+    }
+  ]
+}

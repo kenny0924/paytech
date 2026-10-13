@@ -1,0 +1,107 @@
+{
+  "timeoutMs": 1000,
+  "initializers": [],
+  "entry": "a",
+  "nodes": [
+    {
+      "id": "a",
+      "integrationApi": "API",
+      "request": {
+        "BODY:id": {
+          "kind": "PATH",
+          "path": "input.orderId"
+        }
+      }
+    },
+    {
+      "id": "b",
+      "integrationApi": "API",
+      "request": {
+        "BODY:id": {
+          "kind": "PATH",
+          "path": "input.orderId"
+        }
+      }
+    },
+    {
+      "id": "c",
+      "integrationApi": "API",
+      "request": {
+        "BODY:id": {
+          "kind": "PATH",
+          "path": "input.orderId"
+        }
+      }
+    },
+    {
+      "id": "d",
+      "integrationApi": "API",
+      "request": {
+        "BODY:id": {
+          "kind": "PATH",
+          "path": "input.orderId"
+        }
+      }
+    }
+  ],
+  "returns": [
+    {
+      "id": "done",
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "status": {
+          "kind": "PATH",
+          "path": "steps.a.outputs.value"
+        },
+        "ref": {
+          "kind": "PATH",
+          "path": "steps.b.outputs.value"
+        }
+      }
+    },
+    {
+      "id": "other",
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "status": {
+          "kind": "PATH",
+          "path": "steps.d.outputs.value"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "a",
+      "to": "b",
+      "condition": "steps.a.executeStatus == 'SUCCESS'",
+      "priority": 1
+    },
+    {
+      "from": "a",
+      "to": "c",
+      "default": true
+    },
+    {
+      "from": "b",
+      "to": "d",
+      "default": true
+    },
+    {
+      "from": "c",
+      "to": "d",
+      "default": true
+    },
+    {
+      "from": "d",
+      "to": "done",
+      "condition": "steps.d.executeStatus == 'SUCCESS'",
+      "priority": 1
+    },
+    {
+      "from": "d",
+      "to": "other",
+      "default": true
+    }
+  ]
+}

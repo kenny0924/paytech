@@ -86,10 +86,10 @@ class IntegrationManagementTest extends ExternalApiTestBase {
                 .getImplementedStandardApis().stream().map(reference -> reference.getStandardApiCode()).toList()));
     }
 
-    /** 出站地址只允许 https、不带查询串，代码不能重复；一次返回全部位置。 */
+    /** 出站地址协议必须在允许列表中（默认 https，本机 mock 另允许 http）、不带查询串，代码不能重复；一次返回全部位置。 */
     @Test
     void test_invalidEndpoints() {
-        var endpoints = List.of(new IntegrationEndpointBody("PLAIN", "http://gateway.example.test"),
+        var endpoints = List.of(new IntegrationEndpointBody("PLAIN", "ftp://gateway.example.test"),
             new IntegrationEndpointBody("QUERY", "https://gateway.example.test/api?key=1"),
             new IntegrationEndpointBody("PLAIN", "https://other.example.test"));
 

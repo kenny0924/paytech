@@ -12,15 +12,22 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.platform.support.integration.domain.RegisteredFunctionCatalog;
 import com.paytech.platform.support.integration.domain.ValidationIssue;
+import com.paytech.platform.support.integration.domainservice.expression.ExpressionEngine;
+import com.paytech.platform.support.integration.domainservice.expression.ExpressionInvalidException;
+import com.paytech.platform.support.integration.domainservice.expression.ExpressionProfile;
+
+import lombok.AllArgsConstructor;
 
 import tools.jackson.databind.JsonNode;
 
 /**
  * 取值绑定 ValueBinding（PATH / EXPRESSION / FUNCTION）的静态规则，原子 API 与流程共用。
  *
- * <p>第 1 步不编译 Aviator（评审点 D3），只校验结构、长度并从表达式文本提取上下文引用，由调用方判断引用是否允许。
+ * <p>表达式按只读剖面编译（研发计划第 3 步第 4 节），只能读取上下文根下的变量；
+ * 再从表达式文本提取上下文引用，由调用方判断引用是否允许。
  */
 @Component
+@AllArgsConstructor
 public class ValueBindingValidator {
 
     /** 单个表达式的最大字符数。 */
@@ -33,6 +40,8 @@ public class ValueBindingValidator {
     private static final Pattern REFERENCE = Pattern.compile(
         "(?<![A-Za-z0-9_$.])(input|resources|steps|params|http|result)((?:\\.[A-Za-z_$][A-Za-z0-9_$]*|\\[[^\\]]*])*)");
     private static final Pattern PATH = Pattern.compile("[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*");
+
+    final ExpressionEngine expressionEngine;
 
     /**
      * 校验一个取值绑定。
@@ -151,7 +160,7 @@ public class ValueBindingValidator {
         }
     }
 
-    /** 读取非空、不超长的表达式文本。 */
+    /** 读取非空、不超长且能按只读剖面编译的表达式文本。 */
     String expressionText(JsonNode node, String location, List<ValidationIssue> issues) {
         if (node == null || !node.isString() || node.asString().isBlank()) {
             issues.add(new ValidationIssue("EXPRESSION_EMPTY", location, "表达式不能为空"));
@@ -161,7 +170,27 @@ public class ValueBindingValidator {
             issues.add(new ValidationIssue("EXPRESSION_TOO_LONG", location, "表达式最多 " + MAX_EXPRESSION + " 字符"));
             return null;
         }
+        String problem = compileProblem(node.asString());
+        if (problem != null) {
+            issues.add(new ValidationIssue("EXPRESSION_INVALID", location, problem));
+            return null;
+        }
         return node.asString();
+    }
+
+    /** 按只读剖面编译并检查变量都在上下文根下；返回 null 表示通过，否则为问题说明。 */
+    String compileProblem(String expression) {
+        try {
+            for (String variable : expressionEngine.compile(ExpressionProfile.READ_ONLY, expression).getVariableFullNames()) {
+                String root = variable.contains(".") ? variable.substring(0, variable.indexOf('.')) : variable;
+                if (!ROOTS.contains(root)) {
+                    return "表达式引用了未知变量：" + variable;
+                }
+            }
+            return null;
+        } catch (ExpressionInvalidException exception) {
+            return exception.getMessage();
+        }
     }
 
     /** 对象只允许指定属性。 */

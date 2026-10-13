@@ -1,0 +1,62 @@
+{
+  "params": [
+    {
+      "name": "username",
+      "dataType": "PROTECTED_HANDLE",
+      "required": true
+    },
+    {
+      "name": "password",
+      "dataType": "PROTECTED_HANDLE",
+      "required": true
+    }
+  ],
+  "fixedValues": {},
+  "transport": {
+    "protocol": "HTTP",
+    "method": "POST",
+    "endpointCode": "DEMO_GATEWAY",
+    "pathTemplate": "/refunds",
+    "connectTimeoutMs": 2000,
+    "responseTimeoutMs": 10000
+  },
+  "requestEncoding": "FORM_URLENCODED",
+  "responseDecoding": "JSON",
+  "scripts": [
+    {
+      "id": "auth",
+      "scriptCode": "BASIC",
+      "stage": "REQUEST",
+      "params": {
+        "username": {
+          "kind": "PATH",
+          "path": "params.username"
+        },
+        "password": {
+          "kind": "PATH",
+          "path": "params.password"
+        }
+      }
+    }
+  ],
+  "statusRules": [
+    {
+      "condition": "http.responseStatus == 201",
+      "executeStatus": "SUCCESS"
+    }
+  ],
+  "outputs": {
+    "SUCCESS": [
+      {
+        "name": "transactionRef",
+        "dataType": "STRING",
+        "required": true,
+        "value": {
+          "kind": "PATH",
+          "path": "http.responseBody.reference"
+        }
+      }
+    ],
+    "FAIL": []
+  }
+}

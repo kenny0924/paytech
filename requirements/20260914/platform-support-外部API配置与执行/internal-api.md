@@ -101,6 +101,8 @@ Content-Type: application/json
 
 上表的 `code` 名称是拟定值。
 
+**实现说明（2026-10-13 第 3 步 3c-1）：** `input` 不满足标准 API 请求字段时按[全系统 Problem 设计](../../../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md)第 4.1 节返回 **422** `VALIDATION_ERROR` 及 `errors[]`（位置以 `input.` 开头）；请求体不是合法 JSON 时为 400。两种情况都保证没有发出渠道请求。
+
 ### 3.3 其他情况：结果未知
 
 调用方遇到以下情况，必须按“可能已经发出渠道请求”处理，由 Payment 按原操作身份恢复：
