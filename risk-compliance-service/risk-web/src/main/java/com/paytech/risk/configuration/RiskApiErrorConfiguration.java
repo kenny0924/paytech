@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 
-/** Risk API 专有资源不存在错误到 404 的窄映射。 */
+/** Risk API 专有错误到 HTTP 状态的窄映射。 */
 @Configuration(proxyBeanMethods = false)
 public class RiskApiErrorConfiguration {
 
@@ -18,6 +18,13 @@ public class RiskApiErrorConfiguration {
                     case INVALID_VARIABLE_DEFINITION, INVALID_OPERAND, LEGACY_AUTHORING_NOT_SUPPORTED -> HttpStatus.BAD_REQUEST;
                     case SYSTEM_VARIABLE_READ_ONLY -> HttpStatus.FORBIDDEN;
                     case VARIABLE_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                    default -> HttpStatus.CONFLICT;
+                };
+            }
+            if (errorCode instanceof com.paytech.risk.compliance.core.enums.ClientReviewErrorCode review) {
+                return switch (review) {
+                    case CLIENT_REVIEW_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                    case CLIENT_REVIEW_NOT_READY -> HttpStatus.UNPROCESSABLE_CONTENT;
                     default -> HttpStatus.CONFLICT;
                 };
             }

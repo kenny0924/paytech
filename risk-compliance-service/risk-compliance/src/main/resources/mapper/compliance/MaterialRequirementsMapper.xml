@@ -12,6 +12,7 @@
     </resultMap>
 
     <resultMap id="MaterialRequirementMap" type="com.paytech.risk.compliance.core.dal.dataobject.MaterialRequirement">
+        <result column="program_requirement_id" property="programRequirementId"/>
         <result column="requirement_code" property="requirementCode"/>
         <result column="document_type" property="documentType"/>
         <result column="required_flag" property="requiredFlag"/>
@@ -26,7 +27,7 @@
     </select>
 
     <select id="requirements" useCache="false" resultMap="MaterialRequirementMap">
-        SELECT requirement_code, document_type, required_flag FROM t_dd_program_requirement
+        SELECT program_requirement_id, requirement_code, document_type, required_flag FROM t_dd_program_requirement
         WHERE program_version_id = #{versionId} ORDER BY requirement_code LIMIT 1025
     </select>
 </mapper>

@@ -18,7 +18,7 @@ public final class RiskDatabasePrecondition
     implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     /** Risk 当前获批物理模型中的表数。 */
-    public static final int EXPECTED_TABLE_COUNT = 80;
+    public static final int EXPECTED_TABLE_COUNT = 81;
 
     /**
      * 不包含凭据的本地数据库准备说明。

@@ -10,6 +10,7 @@ import org.springframework.test.context.ContextConfiguration;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.TestBase;
 import com.paytech.risk.RiskApplication;
+import com.paytech.risk.test.checker.compliance.ClientReviewStoreChecker;
 import com.paytech.risk.test.checker.decision.DictionaryRecordChecker;
 import com.paytech.risk.test.checker.decision.FlowStoreChecker;
 import com.paytech.risk.test.checker.decision.ReleaseStoreChecker;
@@ -18,6 +19,7 @@ import com.paytech.risk.test.checker.decision.VariableDataChecker;
 import com.paytech.risk.test.checker.evaluation.SettlementRiskAssessmentChecker;
 import com.paytech.risk.test.clear.RiskRedisCleaner;
 import com.paytech.risk.test.infrastructure.RiskDatabasePrecondition;
+import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper;
 import com.paytech.risk.test.mapper.compliance.MaterialProgramTestMapper;
 import com.paytech.risk.test.mapper.decision.DictionaryReferenceTestMapper;
 import com.paytech.risk.test.mapper.decision.DictionaryTestMapper;
@@ -26,6 +28,7 @@ import com.paytech.risk.test.mapper.decision.ReleaseTestMapper;
 import com.paytech.risk.test.mapper.decision.RuleSetTestMapper;
 import com.paytech.risk.test.mapper.decision.VariableTestMapper;
 import com.paytech.risk.test.mapper.evaluation.SettlementRiskAssessmentTestMapper;
+import com.paytech.risk.test.mocker.compliance.ClientReviewMocker;
 import com.paytech.risk.test.mocker.compliance.MaterialProgramMocker;
 import com.paytech.risk.test.mocker.decision.CandidateMocker;
 import com.paytech.risk.test.mocker.decision.DictionaryMocker;
@@ -33,6 +36,7 @@ import com.paytech.risk.test.mocker.decision.DictionaryReferenceMocker;
 import com.paytech.risk.test.mocker.decision.FlowMocker;
 import com.paytech.risk.test.mocker.decision.RuleSetMocker;
 import com.paytech.risk.test.mocker.decision.VariableMocker;
+import com.paytech.risk.test.probe.ClientReviewResultProbe;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -51,7 +55,8 @@ import tools.jackson.databind.ObjectMapper;
     FlowTestMapper.class, FlowMocker.class, FlowStoreChecker.class, ReleaseTestMapper.class, CandidateMocker.class,
     ReleaseStoreChecker.class, DictionaryTestMapper.class, DictionaryReferenceTestMapper.class, DictionaryMocker.class,
     DictionaryReferenceMocker.class, DictionaryRecordChecker.class,
-    VariableTestMapper.class, VariableMocker.class, VariableDataChecker.class})
+    VariableTestMapper.class, VariableMocker.class, VariableDataChecker.class,
+    ClientReviewTestMapper.class, ClientReviewMocker.class, ClientReviewStoreChecker.class, ClientReviewResultProbe.class})
 public abstract class MockTestBase extends TestBase {
     @Autowired
     protected HttpTestInvoker http;

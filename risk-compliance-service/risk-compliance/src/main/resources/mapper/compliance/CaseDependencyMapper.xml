@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.compliance.core.dal.mapper.CaseDependencyMapper">
+    <insert id="insert">
+        INSERT INTO t_dd_case_dependency(dependency_id, parent_case_id, child_case_id, dependency_type, required_flag, version, create_time, update_time)
+        VALUES(#{row.dependencyId}, #{row.parentCaseId}, #{row.childCaseId}, #{row.dependencyType}, #{row.requiredFlag}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="findByParent" useCache="false" resultType="com.paytech.risk.compliance.core.dal.dataobject.CaseDependency">
+        SELECT dependency_id AS dependencyId, parent_case_id AS parentCaseId, child_case_id AS childCaseId,
+            dependency_type AS dependencyType, required_flag AS requiredFlag, version, create_time AS createTime, update_time AS updateTime
+        FROM t_dd_case_dependency WHERE parent_case_id = #{parentCaseId} ORDER BY dependency_id
+    </select>
+</mapper>

@@ -174,8 +174,9 @@ decision:
 
 onboarding:
   review:
-    # I01/I02 审核入口与 /client-onboarding-admin 管理入口开关，默认关闭；相关测试类显式开启。
-    enabled: false
+    # I01/I02 审核登记入口与 /client-onboarding-admin 管理入口开关；生产缺省关闭，mock 环境开启以便所有新规范测试共享同一应用上下文。
+    # 审核结论经 compensation 补偿任务发布到 RabbitMQ topic_risk_client_review / client_review.decided.v1。
+    enabled: true
   materials:
     # 材料目录入口开关；生产缺省关闭，mock 环境开启以便所有新规范测试共享同一应用上下文。
     enabled: true

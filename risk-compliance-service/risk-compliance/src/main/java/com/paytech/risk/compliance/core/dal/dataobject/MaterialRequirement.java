@@ -5,6 +5,9 @@ import lombok.Data;
 /** 程序修订下的一条材料要求，来自 t_dd_program_requirement。 */
 @Data
 public class MaterialRequirement {
+    /** 程序材料模板 ID。 */
+    private long programRequirementId;
+
     /** 稳定材料要求代码。 */
     private String requirementCode;
 

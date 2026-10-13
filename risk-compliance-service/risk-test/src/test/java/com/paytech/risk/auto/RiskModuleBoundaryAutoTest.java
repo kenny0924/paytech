@@ -65,8 +65,8 @@ class RiskModuleBoundaryAutoTest {
                 Assertions.assertEquals(Set.of("provided"),
                     values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
             } else if (module.equals("compliance")) {
-                Assertions.assertEquals(Set.of("paytech-common-core", "mybatis", "spring-context", "spring-tx",
-                    "spring-boot", "jackson-databind", "lombok"), dependencies);
+                Assertions.assertEquals(Set.of("paytech-common-core", "paytech-compensation-event", "mybatis", "spring-context",
+                    "spring-tx", "spring-boot", "jackson-databind", "lombok"), dependencies);
                 Assertions.assertEquals(Set.of("provided"),
                     values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
             } else if (module.equals("control")) {
@@ -80,7 +80,8 @@ class RiskModuleBoundaryAutoTest {
         Set<String> web = values(readPom("risk-web"),
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId");
         Assertions.assertEquals(Set.of("risk-api", "risk-decision",
-            "risk-control", "risk-compliance", "paytech-mvc-web-starter", "paytech-snowflake-id", "paytech-redis-starter"), web);
+            "risk-control", "risk-compliance", "paytech-mvc-web-starter", "paytech-snowflake-id", "paytech-redis-starter",
+            "paytech-compensation-event"), web);
     }
 
     @Test
@@ -101,9 +102,8 @@ class RiskModuleBoundaryAutoTest {
         Set<String> bans = values(readPom(""),
             "/project/build/plugins/plugin[artifactId='maven-enforcer-plugin']/executions/execution"
                 + "[id='risk-bootstrap-scope']/configuration/rules/bannedDependencies/excludes/exclude");
+        // 2026-10-13 用户批准：Client 入驻审核结果经 RabbitMQ 回传 CCT，放开 AMQP/RabbitMQ/补偿任务/XXL-Job。
         Assertions.assertEquals(Set.of("org.flywaydb:*", "org.liquibase:*", "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config",
-            "org.springframework.amqp:*", "com.rabbitmq:*", "com.xuxueli:*",
-            "com.paytech:paytech-compensation-event", "com.paytech:paytech-xxl-job-starter",
             "org.springframework:spring-webflux", "org.springframework.cloud:spring-cloud-starter-gateway*",
             "org.springframework.cloud:spring-cloud-starter-openfeign", "org.apache.dubbo:*", "org.mockito:*",
             "org.testcontainers:*"), bans);
@@ -130,11 +130,12 @@ class RiskModuleBoundaryAutoTest {
             "com/paytech/foundation/id/IdGenerator.class", "com/alibaba/nacos/api/NacosFactory.class",
             "com/paytech/foundation/jsoncanonicalization/api/Rfc8785JsonCanonicalizer.class",
             "com/paytech/foundation/mybatis/typehandler/InstantTypeHandler.class",
-            "org/redisson/Redisson.class", "org/springframework/transaction/support/TransactionTemplate.class")) {
+            "org/redisson/Redisson.class", "org/springframework/transaction/support/TransactionTemplate.class",
+            "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
+            "com/paytech/foundation/compensation/api/CompensationEventRegistrar.class")) {
             Assertions.assertNotNull(getClass().getClassLoader().getResource(resource), resource);
         }
-        for (String resource : Set.of("org/springframework/amqp/rabbit/core/RabbitTemplate.class",
-            "org/mockito/Mockito.class", "org/testcontainers/containers/MySQLContainer.class")) {
+        for (String resource : Set.of("org/mockito/Mockito.class", "org/testcontainers/containers/MySQLContainer.class")) {
             Assertions.assertNull(getClass().getClassLoader().getResource(resource), resource);
         }
     }
@@ -179,11 +180,14 @@ class RiskModuleBoundaryAutoTest {
 
     @Test
     void test_runtimeConfigurationAdaptsFoundationSnowflakeBehindDecisionPort() throws Exception {
+        RiskRuntimeConfiguration configuration = new RiskRuntimeConfiguration();
+        Method sharedFactory = RiskRuntimeConfiguration.class.getDeclaredMethod("riskIdGenerator", long.class, long.class);
+        sharedFactory.setAccessible(true);
+        Object shared = sharedFactory.invoke(configuration, 3L, 5L);
         Method generatorFactory = RiskRuntimeConfiguration.class
-            .getDeclaredMethod("decisionIdentifierGenerator", long.class, long.class);
+            .getDeclaredMethod("decisionIdentifierGenerator", com.paytech.foundation.id.IdGenerator.class);
         generatorFactory.setAccessible(true);
-        DecisionIdentifierGenerator generator = (DecisionIdentifierGenerator)generatorFactory
-            .invoke(new RiskRuntimeConfiguration(), 3L, 5L);
+        DecisionIdentifierGenerator generator = (DecisionIdentifierGenerator)generatorFactory.invoke(configuration, shared);
 
         long first = generator.nextIdentifier();
         long second = generator.nextIdentifier();
@@ -204,10 +208,13 @@ class RiskModuleBoundaryAutoTest {
             properties.getProperty("spring.jackson.deserialization.fail-on-unknown-properties"));
         Assertions.assertEquals("false",
             properties.getProperty("spring.jackson.deserialization.fail-on-missing-creator-properties"));
-        Assertions.assertEquals(Set.of("/internal/due-diligence/material-requirements", "/decision-rule-sets", "/decision-releases", "/decision-dictionaries"), Set.of(
-            properties.getProperty("web.logging.metadata-only-path-prefixes[0]"),
-            properties.getProperty("web.logging.metadata-only-path-prefixes[1]"),
-            properties.getProperty("web.logging.metadata-only-path-prefixes[2]"), properties.getProperty("web.logging.metadata-only-path-prefixes[3]")));
+        Set<String> metadataOnly = new HashSet<>();
+        for (int index = 0; properties.getProperty("web.logging.metadata-only-path-prefixes[" + index + "]") != null; index++) {
+            metadataOnly.add(properties.getProperty("web.logging.metadata-only-path-prefixes[" + index + "]"));
+        }
+        Assertions.assertEquals(Set.of("/internal/due-diligence/material-requirements", "/client-onboarding-review", "/client-onboarding-admin",
+            "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows",
+            "/decision-variables"), metadataOnly);
         Assertions.assertEquals("${RISK_SNOWFLAKE_REGION_ID}",
             properties.getProperty("decision.identifier.region-id"));
         Assertions.assertEquals("${RISK_SNOWFLAKE_WORKER_ID}",
@@ -233,17 +240,19 @@ class RiskModuleBoundaryAutoTest {
         }
     }
 
+    /** mock Profile 的数据库目标固定为本机 Loopback 的 mor_risk 与 risk_app 账号，且从不执行 SQL 初始化。 */
     @Test
-    void test_autoDatabaseTargetIsFixedToOwnedLoopbackSchema() {
-        Properties properties = properties("application-auto.yml");
+    void test_mockDatabaseTargetIsFixedToOwnedLoopbackSchema() {
+        Properties properties = properties("application-mock.yml");
         String url = properties.getProperty("spring.datasource.url");
         String username = properties.getProperty("spring.datasource.username");
         Assertions.assertEquals(
             "jdbc:mysql://127.0.0.1:13306/mor_risk?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
             url);
         Assertions.assertEquals("risk_app", username);
-        Assertions.assertEquals("${RISK_TEST_DB_PASSWORD:${MOR_RISK_DB_PASSWORD:}}",
-            properties.getProperty("spring.datasource.password"));
+        // 环境变量优先，缺省为仓库 local-environment 的 Loopback 本地密码；断言只核对覆盖顺序，不复述密码值。
+        Assertions.assertTrue(properties.getProperty("spring.datasource.password")
+            .startsWith("${RISK_TEST_DB_PASSWORD:${MOR_RISK_DB_PASSWORD:"));
         Assertions.assertEquals("never", properties.getProperty("spring.sql.init.mode"));
         Assertions.assertEquals("0", properties.getProperty("decision.identifier.region-id"));
         Assertions.assertEquals("0", properties.getProperty("decision.identifier.worker-id"));
