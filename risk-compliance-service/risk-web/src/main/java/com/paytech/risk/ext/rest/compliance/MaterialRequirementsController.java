@@ -1,23 +1,46 @@
 package com.paytech.risk.ext.rest.compliance;
-import org.springframework.web.bind.annotation.RestController;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.api.compliance.*;
-import com.paytech.risk.api.enums.MaterialQualificationType;
+import com.paytech.risk.api.compliance.MaterialRequirementsApi;
+import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
 import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementsResponseBody;
-import com.paytech.risk.service.processor.MaterialRequirementsProcessor;
-/** CCT 与 Client BFF 的材料目录私网能力；Caller Header 仅防误用，不等于强服务认证。 */
-@RestController @lombok.AllArgsConstructor
-@ConditionalOnProperty(name="onboarding.materials.enabled",havingValue="true")
+import com.paytech.risk.compliance.core.enums.MaterialQualificationType;
+import com.paytech.risk.compliance.service.processor.MaterialRequirementsProcessor;
+import com.paytech.risk.compliance.service.processor.request.MaterialRequirementsRequest;
+import com.paytech.risk.compliance.service.processor.response.MaterialRequirementsResponse;
+
+import lombok.AllArgsConstructor;
+
+/**
+ * CCT 与 Client BFF 读取通用材料目录的私网入口
+ * <li>仅在 onboarding.materials.enabled=true 时注册。</li>
+ * <li>X-Caller-Service 暂不校验，调用方鉴权待后续统一安全方案处理；Header 保留以兼容既有合同。</li>
+ */
+@RestController
+@AllArgsConstructor
+@ConditionalOnProperty(name = "onboarding.materials.enabled", havingValue = "true")
 public class MaterialRequirementsController implements MaterialRequirementsApi {
     private final MaterialRequirementsProcessor processor;
-    /** 当前只发布 Client 入驻三类材料要求，不替代运营权限。 */
-    @Override public RequirementsResponseBody read(String caller,String type,String country) {
-        if (!java.util.Set.of("client-contract-service","client-console-bff").contains(caller)) { throw new ResponseStatusException(HttpStatus.NOT_FOUND); }
-        if (type==null || country==null || !country.matches("[A-Z]{2}")) throw new InvalidParameterException("材料主体类型和国家代码无效");
-        try { return processor.read(MaterialQualificationType.fromCode(type),country); }
-        catch (IllegalArgumentException invalid) { throw new InvalidParameterException("材料资格类型无效"); }
+
+    /** 校验资格类型后委托 risk-compliance 读取。 */
+    @Override
+    public RequirementsResponseBody read(String caller, String qualificationType) {
+        MaterialQualificationType type = MaterialQualificationType.ofCode(qualificationType);
+        if (type == null) {
+            throw new InvalidParameterException("材料资格类型无效");
+        }
+        return toResponseBody(processor.process(new MaterialRequirementsRequest(type)));
+    }
+
+    /** BIGINT 身份按十进制字符串输出。 */
+    RequirementsResponseBody toResponseBody(MaterialRequirementsResponse response) {
+        return new RequirementsResponseBody(Long.toString(response.getProgramId()),
+            Long.toString(response.getProgramVersionId()),
+            response.getItems().stream()
+                .map(item -> new RequirementBody(item.getRequirementCode(), item.getDocumentType(), item.isRequired()))
+                .toList());
     }
 }

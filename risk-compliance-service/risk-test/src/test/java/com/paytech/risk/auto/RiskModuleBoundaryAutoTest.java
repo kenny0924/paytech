@@ -65,7 +65,10 @@ class RiskModuleBoundaryAutoTest {
                 Assertions.assertEquals(Set.of("provided"),
                     values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
             } else if (module.equals("compliance")) {
-                Assertions.assertEquals(Set.of("paytech-common-core", "mybatis", "spring-context"), dependencies);
+                Assertions.assertEquals(Set.of("paytech-common-core", "mybatis", "spring-context", "spring-tx",
+                    "spring-boot", "jackson-databind", "lombok"), dependencies);
+                Assertions.assertEquals(Set.of("provided"),
+                    values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
             } else if (module.equals("control")) {
                 Assertions.assertEquals(Set.of("paytech-common-core", "spring-context", "lombok"), dependencies);
                 Assertions.assertEquals(Set.of("provided"),

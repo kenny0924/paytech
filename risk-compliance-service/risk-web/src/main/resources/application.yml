@@ -94,3 +94,10 @@ redis:
     resource-lock:
       wait-time: 500ms
       lease-time: 30s
+
+# Client 入驻通用材料目录：每类资格一个全局程序，不按国家区分；材料充分性由人工审核判断。
+# 程序数据由 requirements/20260914/client-console-注册与客户入驻/db/implementation/risk-generic-materials-init.sql 手工初始化。
+onboarding:
+  materials:
+    enabled: false
+    programs-json: '[{"qualificationType":"INDIVIDUAL_KYC","programCode":"CLIENT_INDIVIDUAL_GENERIC"},{"qualificationType":"ORGANIZATION_KYB","programCode":"CLIENT_ORGANIZATION_GENERIC"},{"qualificationType":"RELATED_PERSON_KYC","programCode":"RELATED_PERSON_GENERIC"}]'
