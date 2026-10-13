@@ -1,6 +1,6 @@
 # Risk 配置字段清单，同时作为 MockTestBase（mock Profile）的可运行配置。
 # 本文件列全 Risk 自定义配置、已接入公共组件的配置及实际使用的框架配置；配置字段变化必须同步本文件。
-# 本地中间件密码不入库：由 RISK_TEST_* 或 local-environment/.env.local 导出的 MOR_* 环境变量注入；用户名与 vhost 使用 .env.example 公开默认值。
+# 固定账号密码仅适用于仓库 local-environment 的 Loopback 本地测试中间件（UNIT_TEST_GUIDE 第 198、302 条），IDE/Maven 无需设置环境变量；如本机实例密码不同，可用 RISK_TEST_* 或 MOR_* 环境变量覆盖。
 
 # ==================== 中间件、框架与公共组件配置 ====================
 
@@ -35,7 +35,7 @@ spring:
   datasource:
     url: "jdbc:mysql://127.0.0.1:13306/mor_risk?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
     username: risk_app
-    password: "${RISK_TEST_DB_PASSWORD:${MOR_RISK_DB_PASSWORD:}}"
+    password: "${RISK_TEST_DB_PASSWORD:${MOR_RISK_DB_PASSWORD:b5eaa083862987988ff66f2b704d8e7c19d3bd599c5f9ebf}}"
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-init-sql: "SET time_zone = '+00:00'"
@@ -50,14 +50,14 @@ spring:
     redis:
       host: 127.0.0.1
       port: 16379
-      password: "${RISK_TEST_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:}}"
+      password: "${RISK_TEST_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}"
       connect-timeout: 2s
       timeout: 2s
   rabbitmq:
     host: 127.0.0.1
     port: 5672
     username: "${RISK_TEST_RABBITMQ_USERNAME:${MOR_RABBITMQ_USER:mor_local}}"
-    password: "${RISK_TEST_RABBITMQ_PASSWORD:${MOR_RABBITMQ_PASSWORD:}}"
+    password: "${RISK_TEST_RABBITMQ_PASSWORD:${MOR_RABBITMQ_PASSWORD:c4a5fc41a6c65710372fab6bd28e51602d1cd25eeffe0360}}"
     virtual-host: "${RISK_TEST_RABBITMQ_VHOST:${MOR_RABBITMQ_VHOST:/mor-local}}"
     connection-timeout: 2s
     publisher-confirm-type: correlated
