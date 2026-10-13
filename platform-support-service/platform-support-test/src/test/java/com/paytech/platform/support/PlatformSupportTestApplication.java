@@ -11,8 +11,8 @@ import com.paytech.platform.support.test.configuration.LocalTestConfiguration;
  * <p>独立 HTTP Mock 实现 Vault 正式接口，业务侧仍使用正式 VaultClient。
  * 本地测试组件和 Mapper 由 LocalTestConfiguration 扫描；邮件 Provider 仅在测试中提供适配器。
  */
-@com.paytech.foundation.testsupport.api.EnableMockHttpServer(basePackages = "com.paytech.platform.support.test.notification.http",
-    baseUrlProperty = "test.notification.vault-url")
+@com.paytech.foundation.testsupport.api.EnableMockHttpServer(basePackages = "com.paytech.platform.support.test.mock.external",
+    baseUrlProperty = "test.mock-http.base-url")
 @TestConfiguration(proxyBeanMethods = false)
 @Import({PlatformSupportApplication.class, LocalTestConfiguration.class})
 public class PlatformSupportTestApplication {

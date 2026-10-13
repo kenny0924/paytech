@@ -16,7 +16,7 @@ import org.springframework.core.env.MapPropertySource;
 /** Mock 测试启动时复用仓库本地连接配置，不修改进程环境或导入其他服务的秘密。 */
 public class LocalMockEnvironmentInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    private static final Set<String> CONNECTION_KEYS = Set.of("MOR_PLATFORM_DB_PASSWORD", "PAYTECH_REDIS_PASSWORD");
+    private static final Set<String> CONNECTION_KEYS = Set.of("MOR_PLATFORM_DB_PASSWORD", "MOR_REDIS_PASSWORD", "PAYTECH_REDIS_PASSWORD");
     private final Path workspace;
 
     /** Spring 测试从编译产物或工作目录定位所属工作区，兼容 IDEA 与 Maven 的不同启动目录。 */

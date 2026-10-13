@@ -36,7 +36,8 @@ spring:
     redis:
       host: 127.0.0.1
       port: 16379
-      password: "${PLATFORM_SUPPORT_TEST_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:local-redis-change-me-2026}}"
+      # .env.local 中仓库 Redis 密码名为 MOR_REDIS_PASSWORD；PAYTECH_REDIS_PASSWORD 为 compose 启动变量。
+      password: "${PLATFORM_SUPPORT_TEST_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:local-redis-change-me-2026}}}"
       database: 0
       connect-timeout: 2s
       timeout: 2s
@@ -46,8 +47,11 @@ spring:
       client:
         simple:
           instances:
+            # 同一独立 Mock HTTP 服务承载 Vault 与 CCT 正式合同，地址由 EnableMockHttpServer 运行时注入。
             vault-service:
-              - uri: "${test.notification.vault-url}"
+              - uri: "${test.mock-http.base-url}"
+            client-contract-service:
+              - uri: "${test.mock-http.base-url}"
     nacos:
       discovery:
         enabled: false
@@ -63,15 +67,16 @@ spring:
       redirects: dont-follow
   mail:
     host: 127.0.0.1
-    port: 1025
+    port: 1025 # 测试运行时由 SmtpMockServer 的随机端口覆盖。
     username: ""
     password: ""
     properties:
       "[mail.smtp.connectiontimeout]": 1000
       "[mail.smtp.timeout]": 2000
       "[mail.smtp.writetimeout]": 1000
-      "[mail.smtp.starttls.enable]": true
-      "[mail.smtp.starttls.required]": true
+      # 正式配置要求 STARTTLS；Loopback 测试 SMTP 不提供 TLS，仅在 Mock 中关闭。
+      "[mail.smtp.starttls.enable]": false
+      "[mail.smtp.starttls.required]": false
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*Mapper.xml
@@ -117,7 +122,7 @@ management:
 redis:
   key-prefix: platform-support:mock
   coordination:
-    enabled: false
+    enabled: true # 认证、管理写接口、租户投影与文件的资源锁均依赖 Redis 协调。
     threads: 4
     netty-threads: 4
     connection-minimum-idle-size: 1
@@ -180,15 +185,17 @@ web:
       - /api-scope-admin
       - /api-credentials
       - /tenant-projections
+      - /external-api-admin
 
-# PLT-I03 与人工认证独立；关闭无关功能和后台任务，不替换生产实现。
+# 人工认证、管理接口与租户投影在 Mock 中全部启用；本地密钥为仓库隔离的合成测试值。
 operations:
   authentication:
-    enabled: false
-    lock-wait-time: 500ms # 仅启用人工认证时消费；沿用正式默认值。
+    enabled: true
+    worker-id: 30 # Snowflake Worker；启用人工认证时由通知、Client 认证与租户投影共用。
+    lock-wait-time: 500ms
     lock-lease-time: 30s
   audit:
-    queue-capacity: 256 # 启用人工认证后才创建异步审计池。
+    queue-capacity: 256 # 异步审计队列容量。
     # 以下为当前代码的只读预算，列出用于配置清单，不表示可运行时覆盖。
     worker-count: 1
     maximum-pool-size: 1
@@ -207,13 +214,16 @@ operations:
     shutdown-timeout-millis: 5000
 client:
   authentication:
-    enabled: false
-    issuer: https://client.example.test # 合成 issuer；本组测试不签发 Token。
+    enabled: true
+    issuer: https://client.example.test # 合成 issuer。
+    worker-id: 29 # 仅 Operations 认证关闭时创建 Client 专用 Snowflake；Mock 中共用 Operations 生成器。
+    mail-from: noreply@example.test # 注册与重置邮件发件人。
+    public-origin: https://client.example.test # 邮件链接站点。
     lock-wait-time: 500ms
     lock-lease-time: 30s
 tenant:
   projection:
-    enabled: false # 本组不启用 CCT 来源投影写入。
+    enabled: true # CCT 来源投影写入口；依赖人工认证与 Redis 协调。
 files:
   onboarding:
     enabled: false
@@ -235,6 +245,10 @@ ps:
     console-resource:
       lock-wait-time: 500ms
       lock-lease-time: 30s
+  integration:
+    configuration:
+      lock-wait-time: 500ms # 外部 API 配置写入的 TRY_LOCK 等待；全模块共用 lock:external-api-config。
+      lock-lease-time: 30s # 资源锁租约；版本 CAS 仍为最终保护。
 # 保留正式 application.yml 的旧键清单；当前 Properties 消费 ps.access-control。
 api-scope:
   management:
@@ -247,3 +261,12 @@ notification:
   worker-id: 31 # 仅本地通知测试；人工认证启用时共享认证生成器。
   maximum-send-attempts: 3
   retry-delay: 30s
+
+# 本地认证适配器的合成测试密钥（RSA 2048 PKCS#8 与 32 字节 HMAC，Base64）；只用于 Loopback Mock，不对应任何真实环境。
+# 全局 Mocker 由同一私钥推导 ACTIVE 公钥 JWK 写入 t_jwt_signing_key。
+OPERATIONS_LOCAL_SIGNING_PRIVATE_KEY_BASE64: "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCpdyonDDIKQHKo8zUYhKXkCG+hP5v06k7ntvfpPf1/h7ByZ8MPSJEvFGZP7XEpPZw9nCQCbVIH1JMB/j5ZRLoM6w8+NTgQeU1E5GvliD1SIbGRROvdi7vbp3XwGqpw4AK+MrOrJ9tONZPmXHPWAo8z3G11MiT6FFiRhzhNyPLBqlyIm3FkD4R8fFdD3XIaq5Sm4FSU4i3jzpiI1J19JHNMtAfjZjXF6DlyK2+06WL2BBZe9/30DXXBl81G9BCqvDHKx3eQXj3fceJqV/3g5K9f5cHeSE8nVMW4fg8fpOeqetCMEr9Itp2Sawk/otxDi6kxMm6HgN9ngNVMjXWQ5TULAgMBAAECggEADQiQzpQBI6MbrnBi4wUNfsfcHgcdLYb5YctDe3k8p+d9sJU+ZH+5es95o8GodGC8RX8rkQXRy0kts6q9wAvcuBjUAUrPVwtqEyRZdm8Cy4nmQdZbjzYSBEcq3bgo56l/suhSkGIhjpa16BlJzdBAlBKEVwEjF7PwFxefqVimvJihOLnZ4vQnwzdoc9wDHA73+1HN3boTExOGSx81oo/40IuW8ak9fGQHR7iMVp6SAlkvbjLiu+EA12nV3TenqJV7XGgeZ6URJGMIc01knISMiV9aGP8H9rJv+VevWGm7F/OyLciUjGhIVFpmAXhAPwLU/MmNAtNfuK4V7KrvZ/IXkQKBgQDR00dmfh86+/11DrL5IBjGxz9m1sj2pyqfkKL5I9HAP4cnfc5cyurVg9xmGY8wtcPiTmaZk7ctvJaZRaaSmIYHHCnVn5Osa+QkZaqjZ2VrjMnS1FmiLimqpRESL4RqnKVRovI9JKfTAljKu+k4hdtZJJatRbdV1l0PnNPoV53VhwKBgQDOwiyjrFIct5LKJnlpT8thvOtyrDQIWbPPbm/kVcmo+Aa6oIpXGYIxAwTxT4ximL81f2+POWenyaCy7Ph8sqYcHwy9RwSsEpPGMEM6UbNNHOwYtZBxUck7BgjbXwmTs7ahG7xgAC2sr79RJp/5jU10srQqG7dTr8P4/H7QlkUFXQKBgQCH4WQGurxszU1pJfi/HosNB3FGnueL29vdc6Qm5YxrDHjxGSavrvT/CqKLOBgjukI9ZvpIkIF6y/tXDOT/YGjDZ/irj+jpKwGWlIQ5x7bFPGpi7wOQ5IY1LSpt9XmyNPlWccif0gIgww9PUvuIkB7pjqlJUrGUk/q2JqCQgVUENwKBgFJiqOrnBSkQNNt8DTDbbM0bPC5LU8hoBfAHr2oqjNpZSkUfJ0Chl3D0JQoKioPXHYmxp8BIPXdsLi5don39qZbXAHqDS+dM17lHDeK1H18AwUrvPgkJb8enFexjqCtElucHaD5Qk+KVfQRXAbOsjEqN0qBcvuYHyWzzH4z587K5AoGBAKtVKT1tPx2IitbsYf+dU+DV0A3C9T2Ers0/cwYM1Lu0b62BdYKrafsLTFrJ4nY5/p9hX67CZY1RyfDNWTAMbdw0rrcvpVD5Vvr4G8q8Up3MKolL+b6RjBenL/3BKZw8CtQHzspdIoe2uUy0o3S9Lcl8dY8T9GiChGHmlmZPeHu/"
+OPERATIONS_LOCAL_HMAC_KEY_BASE64: "1syKWMdr+yUdeVJrtnvE9F4NjzO78scpQBeOIPNjGic="
+OPERATIONS_LOCAL_HMAC_KEY_VERSION: 1
+CLIENT_LOCAL_SIGNING_PRIVATE_KEY_BASE64: "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDQ/2NvpFmJHqo5tAXmXH3EIIjIzqYDoFT7CtqwIDeSDL5hFH/xSnXT9r8TOIWdgbMilW7MF1JJgEhTHWqNfq1Vx97bSdrdZ3hkZM8jcYB6CbYHt1SI8/TK8LpD5O2zmKo3V27o0hYgpHiTw0EqOGOeyCwE9bvtoEl1SKCzISnDrr60XnBvJEHyH7OR1eBdW5anFCsNW8NsmzpX64eOSyYdxD7CVC1yMX8ZKX8AVlDmE93jFhI8lgoGbLg0Wb2w+7DEPFMkrhNUTkMXpVFvc0XPJrD00LKTk37K3RXgWgB6E3EX/hD9oWgeX23jzgfMujP5ozdy9JSk2y+hYzp9RVLDAgMBAAECggEAKQMcw7E4IrjCRb2GdNyMj3qk7ObkXAzP8E2CeZJw5Teb+lf3/WUTtysR9tceHTjw6qXxTpp6+tJyHuFEYgzMPeuRV23oRY9C6EyB+14QDKKwNlZq/88Dp/lSS/V2EcqxCFgfew+S6QftY22q8XqMTgHQ5Y5FOQ29rIa6hjxJQk1CyfHFMGXsUWcRQc7UVOEj0REmPfigognTPo0YncG63ZLXzOUkBDlWWETKAakhgqhauC48oqRs3h1fO1kus2pmnWMq8SXS0bI/rfCWJSAqexjlnV/xVqCxeCMCRhHypETemGvAOtGVartj9FqN1bP86S8hnype0EiIpqDomH9PfQKBgQD1+th7G6z1HASGoai2ACIpQVC+I9z3lFS2389B7uTLdX9f7ZHKHSHxJ/6VGBHaJr2TEwx17GHHThmlKeU1HiA0Lmaktbtaj6XehLSHM7gKEsfrQF53ZNKwokkpKWC/Cew/i+yUnIxmfP3Imt7hb6lehPA2j/dnu6sfb7NrSEgE1QKBgQDZguFfoVXxiAmV4ngwJxIjnLRSFiMMP0Jv6gFbGBep4wHZiAh9Cx+HD/1BBspY/gYDnlLJ1KCEzAG2Rl+rziANTjUkwgARv0qyvaIrfUkKe7z2fSV9WTY6dcNxHgrEw1b14iJz4MWyTxqq2ou3UDM6nUG2e3+PQMRQWP1jY3OlNwKBgQCUgq7RJRR3qELTRicmO05kuhqVsfFnSRcckmP/2swoSvhsYnLzJEOp5gu+2JlurJUohweu6tjeDDlPjsvkFhw7ZQhzyYUkWDY88sJMHt2ut0gcsPBYBXdvTYv+Xg0bSlJoy4I694mNF0niJB8M3O3VM04UozcsWhInGLmqvCk/QQKBgGGb7Euf+RN0uuh6QvlI70jv77POn1fFo6jZWFZqz2O7rX7THwwOS82ujTX7OB8Lj+Nbz0cnlglCC5qiphhRXezapdqi/Kj6MSlZFEdz560+riPnMUW5HS7K3jQLCUYXaxTYsCFUQyOrgAogHQbchMDPBUhAz5OXuwFbjgpl/OWtAoGAeLzhClWjd4PV5Tlgb6wXGdtGw0nQWp0H20OmgEPrmCHcFetH08SDlN9AKp2mexqta8mIbwlxNE1EsdN5BrkZy2FPTxgkILSWt5RmsuWdcgV7iBaKXyPZakWwCzKSkLxkc2DINMqrfTGbSQz8AzCcRb7SIiDjaIw1fI0lsVzUzz8="
+CLIENT_LOCAL_HMAC_KEY_BASE64: "mjJ4rge5AkXkOxpdD2ypxApjtRpH4J2vY2V0tqkWslM="
+CLIENT_LOCAL_HMAC_KEY_VERSION: 1

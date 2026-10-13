@@ -118,6 +118,7 @@ web:
       - /api-scope-admin
       - /api-credentials
       - /tenant-projections
+      - /external-api-admin
 
 
 client:
@@ -133,6 +134,13 @@ tenant:
 # Only the approved file consumer enables local recovery; no external scheduler configuration.
 compensation:
   enabled: ${files.onboarding.enabled:false}
+
+# 外部 API 配置写入共用一把资源锁（lock:external-api-config）；修改需重启。
+ps:
+  integration:
+    configuration:
+      lock-wait-time: 500ms
+      lock-lease-time: 30s
 
 # Scope create/update share the Foundation Processor lock; timing changes require restart.
 api-scope:

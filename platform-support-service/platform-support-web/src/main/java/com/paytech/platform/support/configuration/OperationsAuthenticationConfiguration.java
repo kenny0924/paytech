@@ -19,15 +19,15 @@ import com.paytech.vault.client.VaultClient;
 
 import tools.jackson.databind.ObjectMapper;
 
-/** 开发认证必须显式启用，且只能在 local/auto/test 环境运行；无生产 Mock fallback。 */
+/** 开发认证必须显式启用，且只能在 local/auto/test/mock 环境运行；无生产 Mock fallback。 */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(name = "operations.authentication.enabled", havingValue = "true")
 public class OperationsAuthenticationConfiguration {
     public OperationsAuthenticationConfiguration(Environment environment) {
         String[] profiles = environment.getActiveProfiles();
         if (profiles.length == 0
-            || Arrays.stream(profiles).anyMatch(p -> !p.equals("local") && !p.equals("auto") && !p.equals("test"))) {
-            throw new IllegalStateException("当前认证适配器仅允许显式 local/auto/test，生产必须先接入真实 KMS");
+            || Arrays.stream(profiles).anyMatch(p -> !p.equals("local") && !p.equals("auto") && !p.equals("test") && !p.equals("mock"))) {
+            throw new IllegalStateException("当前认证适配器仅允许显式 local/auto/test/mock，生产必须先接入真实 KMS");
         }
     }
 

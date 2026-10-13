@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.integration.core.dal.mapper.IntegrationApiMapper">
+    <sql id="columns">integration_api_id integrationApiId, integration_id integrationId, api_code apiCode, api_name apiName, description description, definition_json definitionJson, version version, created_by createdBy, updated_by updatedBy, create_time createTime, update_time updateTime</sql>
+    <sql id="filter">WHERE integration_id=#{integrationId}<if test="keyword != null"> AND (CONVERT(api_code USING utf8mb4) COLLATE utf8mb4_bin LIKE #{keyword} ESCAPE '!' OR api_name LIKE #{keyword} ESCAPE '!')</if></sql>
+    <select id="byCode" resultType="com.paytech.platform.support.integration.core.dal.dataobject.IntegrationApi" useCache="false">
+        SELECT <include refid="columns"/> FROM t_integration_api WHERE integration_id=#{integrationId} AND api_code=#{code}
+    </select>
+    <select id="lock" resultType="com.paytech.platform.support.integration.core.dal.dataobject.IntegrationApi" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/> FROM t_integration_api WHERE integration_id=#{integrationId} AND api_code=#{code} FOR UPDATE
+    </select>
+    <select id="allByIntegration" resultType="com.paytech.platform.support.integration.core.dal.dataobject.IntegrationApi" useCache="false">
+        SELECT <include refid="columns"/> FROM t_integration_api WHERE integration_id=#{integrationId} ORDER BY api_code
+    </select>
+    <select id="list" resultType="com.paytech.platform.support.integration.core.dal.dataobject.IntegrationApi" useCache="false">
+        SELECT <include refid="columns"/> FROM t_integration_api <include refid="filter"/>
+        ORDER BY api_code, integration_api_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long" useCache="false">SELECT COUNT(*) FROM t_integration_api <include refid="filter"/></select>
+    <select id="countByIntegrations" resultType="com.paytech.platform.support.integration.core.dal.dataobject.IntegrationChildCount" useCache="false">
+        SELECT integration_id integrationId, COUNT(*) childCount FROM t_integration_api WHERE integration_id IN
+        <foreach collection="integrationIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        GROUP BY integration_id
+    </select>
+    <!-- 只抽取出站地址代码，不加载完整执行定义。 -->
+    <select id="endpointReferences" resultType="com.paytech.platform.support.integration.core.dal.dataobject.IntegrationApiEndpoint" useCache="false">
+        SELECT api_code apiCode, JSON_UNQUOTE(JSON_EXTRACT(definition_json, '$.transport.endpointCode')) endpointCode
+        FROM t_integration_api WHERE integration_id=#{integrationId} ORDER BY api_code
+    </select>
+    <insert id="insert">
+        INSERT INTO t_integration_api(integration_api_id,integration_id,api_code,api_name,description,definition_json,version,created_by,updated_by,create_time,update_time)
+        VALUES(#{row.integrationApiId},#{row.integrationId},#{row.apiCode},#{row.apiName},#{row.description},#{row.definitionJson},#{row.version},#{row.createdBy},#{row.updatedBy},#{row.createTime},#{row.updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_integration_api SET api_name=#{apiName}, description=#{description}, definition_json=#{definitionJson},
+        version=version+1, updated_by=#{updatedBy}, update_time=#{updateTime}
+        WHERE integration_api_id=#{row.integrationApiId} AND version=#{row.version}
+    </update>
+    <delete id="delete">
+        DELETE FROM t_integration_api WHERE integration_api_id=#{row.integrationApiId} AND version=#{row.version}
+    </delete>
+</mapper>

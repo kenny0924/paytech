@@ -158,8 +158,8 @@
 
 | HTTP / code | 场景 |
 |---|---|
-| 400 `INVALID_REQUEST` | JSON 结构错误、未知字段、非法 Query；**保存时静态校验失败**也用此码，`errors[{field,message}]` 给出与 `ValidationResponseBody.location` 相同的路径 |
-| 422 `INVALID_REQUEST` | Bean Validation 字段约束（长度、格式、必填） |
+| 400 `INVALID_REQUEST` | JSON 结构错误、未知字段、非法 Query 或路径编码 |
+| 422 `VALIDATION_ERROR` | Bean Validation 字段约束（长度、格式、必填）；**保存时静态校验失败**也用此码，`errors[{field,message}]` 给出与 `ValidationResponseBody.location` 相同的路径（2026-10-13 实现时修订：Foundation 只有 `RequestBodyValidationException` 能携带字段错误，原稿“400 + errors[]”无法表达） |
 | 400 `BUSINESS_CHECK_FAILED` | 编码重复、被引用不能删除、引用不存在（如节点引用的原子 API 已删） |
 | 401 / 403 | 会话失效 / 无权限 |
 | 404 `NOT_FOUND` | 标准 API、接入方、原子 API、脚本或实现不存在 |

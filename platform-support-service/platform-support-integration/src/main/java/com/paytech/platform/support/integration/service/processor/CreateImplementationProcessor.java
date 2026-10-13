@@ -1,0 +1,90 @@
+package com.paytech.platform.support.integration.service.processor;
+
+import java.util.List;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+
+import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsManagementPolicyService;
+import com.paytech.platform.support.auditsecurity.domain.audit.OperationsAuditFact.ConfigurationField;
+import com.paytech.platform.support.auditsecurity.domain.audit.OperationsAuditFact.ConfigurationFieldChange;
+import com.paytech.platform.support.auditsecurity.domainservice.service.OperationsAuditService;
+import com.paytech.platform.support.integration.core.configuration.ExternalApiConfigurationProperties;
+import com.paytech.platform.support.integration.core.dal.dataobject.Integration;
+import com.paytech.platform.support.integration.core.dal.dataobject.IntegrationImplementation;
+import com.paytech.platform.support.integration.core.dal.dataobject.StandardApi;
+import com.paytech.platform.support.integration.domain.ExternalApiConfigurationCodec;
+import com.paytech.platform.support.integration.domain.ExternalApiMutation;
+import com.paytech.platform.support.integration.domain.ExternalApiPermissions;
+import com.paytech.platform.support.integration.domainservice.repository.IntegrationImplementationRepository;
+import com.paytech.platform.support.integration.domainservice.service.IntegrationImplementationManagementService;
+import com.paytech.platform.support.integration.service.processor.request.CreateImplementationRequest;
+
+import lombok.AllArgsConstructor;
+
+/**
+ * E25 创建渠道标准 API 实现：全模块配置锁内依次锁定接入方与标准 API，在一个本地事务中完成权限复核、流程静态校验与保存。
+ *
+ * <p>同一接入方对同一标准 API 只有一份实现，唯一索引是最终保护。配置锁失效时，接入方行锁与原子 API 修改串行、标准 API 行锁与标准 API 修改及删除串行；加锁顺序固定为接入方在前、标准 API 在后。
+ */
+@Component
+@AllArgsConstructor
+@ConditionalOnProperty(name = "operations.authentication.enabled", havingValue = "true")
+public class CreateImplementationProcessor
+    extends AbstractLockProcessor<CreateImplementationRequest, ExternalApiMutation> {
+
+    /** 审计与写结果中的对象类型。 */
+    static final String OBJECT_TYPE = "INTEGRATION_IMPLEMENTATION";
+
+    private final OperationsAuditService audit;
+    private final ExternalApiConfigurationCodec codec;
+    private final IntegrationChildSupport children;
+    private final ImplementationSupport flows;
+    private final ExternalApiTransactions transactions;
+    private final ExternalApiProcessorSupport support;
+    private final OperationsManagementPolicyService policy;
+    private final ExternalApiConfigurationProperties properties;
+    private final IntegrationImplementationRepository implementations;
+    private final IntegrationImplementationManagementService service;
+
+    @Override
+    protected LockCommand lockCommand(CreateImplementationRequest request) {
+        return LockCommand.tryLock(ExternalApiPermissions.LOCK_KEY,
+            Math.toIntExact(properties.getLockWaitTime().toMillis()),
+            Math.toIntExact(properties.getLockLeaseTime().toMillis()));
+    }
+
+    @Override
+    protected ExternalApiMutation processWithinLock(CreateImplementationRequest request) {
+        return transactions.write(() -> {
+            var actor = policy.authorizeManagement(request.getActor(), request.getSession(), null, List.of(), null,
+                null, false, ExternalApiPermissions.MANAGE);
+            Integration integration = children.lockIntegration(request.getIntegrationCode());
+            StandardApi standardApi = flows.referencedStandardApi(request.getStandardApiCode());
+            if (implementations.byKey(integration.getIntegrationId(), standardApi.getStandardApiId()) != null) {
+                throw new BizCheckFailException("该接入方已实现此标准 API：" + standardApi.getStandardApiCode());
+            }
+            var result = flows.check(standardApi, integration.getIntegrationId(), request.getFlowDefinition());
+            support.requireValid(result.getIssues());
+            String json = result.getSummary().getNormalizedJson();
+            var row = buildRow(integration, standardApi, json, policy.parseId(request.getActor()));
+            service.create(row);
+            String objectCode = integration.getIntegrationCode() + "/" + standardApi.getStandardApiCode();
+            var changes = List.of(
+                new ConfigurationFieldChange(ConfigurationField.CODE, null, standardApi.getStandardApiCode()),
+                new ConfigurationFieldChange(ConfigurationField.DEFINITION_DIGEST, null, codec.sha256(json)));
+            audit.record(() -> support.changed(request.getActor(), actor.member().tenantId(), OBJECT_TYPE, objectCode,
+                0, 1, changes, request.getReason(), row.getCreateTime()));
+            return new ExternalApiMutation(OBJECT_TYPE, objectCode, 1);
+        });
+    }
+
+    /** 新实现的标识、初始版本 1 与规范化流程。 */
+    IntegrationImplementation buildRow(Integration integration, StandardApi standardApi, String json, long actorId) {
+        var now = support.now();
+        return new IntegrationImplementation(support.nextId(), integration.getIntegrationId(),
+            standardApi.getStandardApiId(), json, 1, actorId, actorId, now, now);
+    }
+}

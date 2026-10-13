@@ -24,12 +24,12 @@ import tools.jackson.databind.ObjectMapper;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(name = "client.authentication.enabled", havingValue = "true")
 public class ClientAuthenticationConfiguration {
-    /** 当前本地加密适配器只允许明确的 local/auto/test 环境。 */
+    /** 当前本地加密适配器只允许明确的 local/auto/test/mock 环境。 */
     public ClientAuthenticationConfiguration(Environment environment) {
         String[] profiles = environment.getActiveProfiles();
         if (profiles.length == 0 || Arrays.stream(profiles).anyMatch(profile ->
-            !profile.equals("local") && !profile.equals("auto") && !profile.equals("test"))) {
-            throw new IllegalStateException("当前 Client 密钥适配器仅用于 local/auto/test，生产须接入真实 KMS");
+            !profile.equals("local") && !profile.equals("auto") && !profile.equals("test") && !profile.equals("mock"))) {
+            throw new IllegalStateException("当前 Client 密钥适配器仅用于 local/auto/test/mock，生产须接入真实 KMS");
         }
         if (!environment.getProperty("redis.coordination.enabled", Boolean.class, false)) {
             throw new IllegalStateException("Client 认证必须开启 redis.coordination.enabled 并配置本地 Redis");

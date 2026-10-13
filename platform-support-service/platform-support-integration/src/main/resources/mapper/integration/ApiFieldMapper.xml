@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.integration.core.dal.mapper.ApiFieldMapper">
+    <sql id="columns">api_field_id apiFieldId, api_id apiId, direction direction, field_location fieldLocation, field_path fieldPath, field_name fieldName, data_type dataType, required_flag requiredFlag, sort_no sortNo, description description, create_time createTime, update_time updateTime</sql>
+    <select id="byApis" resultType="com.paytech.platform.support.integration.core.dal.dataobject.ApiField" useCache="false">
+        SELECT <include refid="columns"/> FROM t_api_field WHERE api_id IN
+        <foreach collection="apiIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        AND direction IN <foreach collection="directions" item="d" open="(" separator="," close=")">#{d.code}</foreach>
+        ORDER BY api_id, direction, sort_no, api_field_id
+    </select>
+    <delete id="deleteByApi">
+        DELETE FROM t_api_field WHERE api_id=#{apiId}
+        AND direction IN <foreach collection="directions" item="d" open="(" separator="," close=")">#{d.code}</foreach>
+    </delete>
+    <insert id="insertAll">
+        INSERT INTO t_api_field(api_field_id,api_id,direction,field_location,field_path,field_name,data_type,required_flag,sort_no,description,create_time,update_time) VALUES
+        <foreach collection="rows" item="row" separator=",">(#{row.apiFieldId},#{row.apiId},#{row.direction},#{row.fieldLocation},#{row.fieldPath},#{row.fieldName},#{row.dataType},#{row.requiredFlag},#{row.sortNo},#{row.description},#{row.createTime},#{row.updateTime})</foreach>
+    </insert>
+</mapper>

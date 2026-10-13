@@ -24,6 +24,7 @@ import com.paytech.platform.support.auditsecurity.domain.enums.OperationsAuditCl
 @MapperScan(basePackages = {"com.paytech.platform.support.accesscontrol.core.dal.mapper",
     "com.paytech.platform.support.filedocument.core.dal.mapper",
     "com.paytech.platform.support.delivery.core.dal.mapper",
+    "com.paytech.platform.support.integration.core.dal.mapper",
     "com.paytech.platform.support.auditsecurity.core.dal.mapper",
     "com.paytech.platform.support.core.reliability.mapper"}, sqlSessionTemplateRef = "sqlSessionTemplate")
 public class PersistenceConfiguration {
@@ -48,6 +49,11 @@ public class PersistenceConfiguration {
         registry.register(com.paytech.platform.support.delivery.core.enums.NotificationDeliveryStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.delivery.core.enums.NotificationAttemptStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.delivery.core.enums.NotificationResolutionSource.class, CodeEnumTypeHandler.class);
+
+        registry.register(com.paytech.platform.support.integration.core.enums.ApiFieldDirection.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.api.enums.ApiFieldLocation.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.api.enums.ApiFieldDataType.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.api.enums.ScriptExecutionStage.class, CodeEnumTypeHandler.class);
 
         registry.register(com.paytech.platform.support.api.enums.FileScanStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.api.enums.FileObjectStatus.class, CodeEnumTypeHandler.class);

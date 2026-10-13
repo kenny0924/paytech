@@ -96,7 +96,28 @@ public sealed interface OperationsAuditFact permits OperationsAuditFact.Outcome,
 
         RISK_LEVEL,
 
-        STATUS
+        STATUS,
+
+        /** 外部 API 请求字段组的规范化 SHA-256 摘要。 */
+        REQUEST_FIELDS_DIGEST,
+
+        /** 外部 API 响应字段组的规范化 SHA-256 摘要。 */
+        RESPONSE_FIELDS_DIGEST,
+
+        /** 接入方出站地址列表的规范化 SHA-256 摘要。 */
+        ENDPOINTS_DIGEST,
+
+        /** 原子 API 执行定义的规范化 SHA-256 摘要。 */
+        DEFINITION_DIGEST,
+
+        /** 公共脚本参数声明的规范化 SHA-256 摘要。 */
+        PARAMETERS_DIGEST,
+
+        /** 公共脚本源码的 SHA-256 摘要。 */
+        SOURCE_DIGEST,
+
+        /** 公共脚本执行阶段。 */
+        EXECUTION_STAGE
     }
 
     /** 集合使用规范化指纹，防止完整子集合突破既有审计属性容量。 */

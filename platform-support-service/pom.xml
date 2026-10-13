@@ -32,6 +32,11 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
+                <artifactId>platform-support-integration</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
                 <artifactId>paytech-vault-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -117,6 +122,7 @@
         <module>platform-support-audit-security</module>
         <module>platform-support-file-document</module>
         <module>platform-support-delivery</module>
+        <module>platform-support-integration</module>
         <module>platform-support-web</module>
         <module>platform-support-test</module>
     </modules>
