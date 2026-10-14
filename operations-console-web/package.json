@@ -10,7 +10,7 @@
     "dev": "vite --host 127.0.0.1 --port 18301 --strictPort",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 18301 --strictPort",
-    "test": "node --experimental-strip-types --test src/**/*.test.ts"
+    "test": "node --experimental-strip-types --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "@xyflow/react": "12.11.6",

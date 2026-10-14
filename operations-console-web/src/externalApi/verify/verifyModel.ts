@@ -195,6 +195,11 @@ export function duplicateNames(rows: EntryRow[]): string[] {
 
 export const matches = ['EQUALS', 'EXISTS', 'ABSENT', 'REGEX', 'ONE_OF'] as const;
 export type Match = typeof matches[number];
+/** 期望值按字面比较，不渲染模板变量；写了 ${...} 时提示改用“存在”或在后续步骤输入中引用。 */
+export function hasTemplateVariable(value: string): boolean {
+  return /\$\{[^{}]*\}/.test(value);
+}
+
 export const matchLabels: Record<Match, string> = {
   EQUALS: '等于', EXISTS: '存在', ABSENT: '不存在', REGEX: '正则匹配', ONE_OF: '属于其一',
 };

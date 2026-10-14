@@ -65,7 +65,7 @@
 - 新页面：验证账号详情/编辑/新建（`/:code/verify-accounts/:code|new`，普通参数与沙箱凭据键值对，明文保存提示）、验证用例详情/编辑/新建（`/:code/verify-cases/:code|new`，多步骤、模板变量、期望核对）、运行详情（`/:code/verify-runs/:runCode`，运行中每 2 秒刷新，展示出站地址沙箱标记、配置版本、每步实际输入/结果/期望核对与脱敏渠道报文）。
 - 发起运行弹窗填写运行原因并说明会真实调用沙箱地址。
 - 基本信息出站地址增加“沙箱”列与开关；打开开关需二次确认（误标生产地址会产生真实交易），只在为 true 时提交 `sandbox`。
-- 验证：`npm test` **983/983**（含 `verifyModel.test.ts` 5 项），`npm run build` 通过（仅有原有的 chunk 体积提示），`tsc` 与 lint 无问题。
+- 验证：`npm test` **983/983**（更正：当时的 `npm test` 未覆盖 `verifyModel.test.ts`，该文件 5 项为单独运行通过，见第 9 节），`npm run build` 通过（仅有原有的 chunk 体积提示），`tsc` 与 lint 无问题。
 - **未做：** 浏览器实测。验证接口的 Gateway Route 尚未注册（注册 SQL 未执行），页面只完成编译与模型测试。
 
 未执行新的 SQL，未提交。
@@ -99,3 +99,20 @@
 **阶段 5 待确认。** 未覆盖：在收银台付款后查询 `SUCCEEDED`（PayerMax 需求验收第 3 项），需要人工在 UAT 收银台付款。
 
 **提交（2026-10-14）：** 用户要求“代码提交一下”，阶段 2～5 改动本地提交，未推送；其他会话的工作区改动未纳入。
+
+## 8. 页面设计补充（2026-10-14）
+
+用户要求把已实现的验证页面统一补到 Pencil。`operations-console-web/docs/design.pen` 新增“外部 API 第一版”27～33（第 4 行，y=41100），按已实现页面绘制，示例数据不含真实 UAT 材料：
+- 27 接入方工作区｜验证；28 接入方编辑｜出站地址沙箱标记（含确认弹窗）；29 验证账号编辑；30 验证用例编辑；31 发起验证运行；32 运行详情｜通过与报文证据；33 运行详情｜未通过（未标记沙箱）。
+- 同步修改 04 接入方工作区｜基本信息：出站地址表增加“沙箱”列与第 4 条说明。
+
+## 9. 优化：期望值中的模板变量提示（2026-10-14）
+
+用户同意后实现：用例编辑器的期望值包含 `${...}` 时，输入框显示警告并提示“期望值按字面比较，模板变量不会替换；要核对前序步骤的值，请改用“存在”，或在后续步骤的输入中引用它”（不阻止保存）；模板变量说明补充一条。新增纯函数 `hasTemplateVariable` 及测试。
+- 发现并修正：`operations-console-web` 的 `npm test` 原脚本 `src/**/*.test.ts` 未加引号，由 `sh` 展开时不递归，`src/externalApi/verify/verifyModel.test.ts` 从未被执行；改为由 Node 展开的带引号 glob 后共 **989/989**（原 983 项 + 验证模型 6 项）。`npm run build`、`tsc`、lint 通过；浏览器中输入模板变量出现提示，改回普通值后消失。
+
+## 10. 全量回归（2026-10-14）
+
+- Platform：JDK 25 `./mvnw -o -pl platform-support-test -am test` **415/415**（工作区含其他会话未提交的 Platform 改动）。
+- BFF：首次全量 1279 项中 1 项失败：`OperationsConsoleBffApplicationAutoTest.test_applicationReusesFoundationAndExposesExactOperationsRoutes` 精确核对 BFF 暴露路由，阶段 4 新增 V01～V14 后未同步预期清单（阶段 4 当时只运行了 `ExternalApiBrowserAutoTest`，已提交的 `ed0d27e` 中存在此问题）。补齐 14 条验证路由后 `./mvnw -o test` **1279/1279**。
+- 前端：`npm test` **989/989**，`npm run build` 通过。

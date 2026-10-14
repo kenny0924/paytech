@@ -17,7 +17,7 @@ import type { ImplementationSummary } from '../externalApiModel';
 import { Field, Mono, Note, PageHeader, Panel, ReadOnlyValue, formatTime } from '../ui';
 import type { Crumb } from '../ui';
 import {
-  caseStatusLabels, decodeAccounts, decodeCase, decodeRunSummary, emptyStep, executeStatuses, issueStep, matchLabels, matches,
+  caseStatusLabels, decodeAccounts, decodeCase, decodeRunSummary, emptyStep, executeStatuses, hasTemplateVariable, issueStep, matchLabels, matches,
   runStatusLabels, templateVariables, toStepDrafts, toSteps, verifyPath, verifyRoute,
 } from './verifyModel';
 import type { Match, OutputRow, StepDraft, VerifyAccountSummary, VerifyCaseDetail, VerifyRunSummary } from './verifyModel';
@@ -186,6 +186,7 @@ function CaseForm({ integrationCode, detail, onAuthorizationChanged, onReload }:
     <Panel title="输入模板变量">
       <ul className="xapi-verify-variables">{templateVariables.map(item => <li key={item.name}><Mono>{item.name}</Mono> {item.description}</li>)}</ul>
       <Note items={['变量只能写在字符串值中；整串只有一个变量时保留原类型（如对象、数字），嵌在文字中时按字符串拼接。',
+        '模板变量只在输入中替换；期望值按字面比较，跨步骤一致性用“存在”或在后续步骤输入中引用。',
         '期望“执行前返回问题”（如 422）的负向用例本就有意提交不合法输入，保存时不校验输入结构。']} />
     </Panel>
     <ReasonDialog open={reasonFlow.open} saving={editor.saving} onCancel={reasonFlow.cancel} onConfirm={reason => void reasonFlow.confirm(reason)} />
@@ -238,8 +239,11 @@ function StepPanel({ index, step, total, focused, problems, issues, standardApis
               { title: '匹配方式', width: 150, render: (_, row, at) => <Select value={row.match} style={{ width: '100%' }}
                 onChange={(value: Match) => setOutput(at, { match: value })} options={matches.map(item => ({ value: item, label: matchLabels[item] }))} /> },
               { title: '期望值', render: (_, row, at) => row.match === 'EXISTS' || row.match === 'ABSENT' ? <span className="xapi-desc">—</span>
-                : <Input value={row.value} className="xapi-mono-input" placeholder={row.match === 'ONE_OF' ? 'A, B 或 JSON 数组' : row.match === 'REGEX' ? '^https://' : '"PENDING" 或 PENDING'}
-                  onChange={event => setOutput(at, { value: event.target.value })} /> },
+                : <><Input value={row.value} className="xapi-mono-input" placeholder={row.match === 'ONE_OF' ? 'A, B 或 JSON 数组' : row.match === 'REGEX' ? '^https://' : '"PENDING" 或 PENDING'}
+                  status={hasTemplateVariable(row.value) ? 'warning' : undefined}
+                  onChange={event => setOutput(at, { value: event.target.value })} />
+                  {hasTemplateVariable(row.value) && <p className="xapi-field-hint warn">期望值按字面比较，模板变量不会替换；
+                    要核对前序步骤的值，请改用“存在”，或在后续步骤的输入中引用它。</p>}</> },
               { title: '', width: 60, render: (_, __, at) => <button type="button" className="xapi-link"
                 onClick={() => onChange({ outputs: step.outputs.filter((_, position) => position !== at) })}>删除</button> },
             ]} /></div>

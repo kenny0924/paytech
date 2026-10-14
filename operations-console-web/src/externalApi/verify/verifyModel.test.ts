@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { ApiError } from '../../api/session.ts';
 import {
   decodeAccount, decodeAccounts, decodeCase, decodeCaseSummary, decodeRun, decodeRunStart, duplicateNames, emptyStep,
-  issueStep, toEntries, toRows, toStepDrafts, toSteps,
+  hasTemplateVariable, issueStep, toEntries, toRows, toStepDrafts, toSteps,
 } from './verifyModel.ts';
 
 const time = '2026-10-14T06:00:00Z';
@@ -66,4 +66,12 @@ test('步骤编辑态：输入不是 JSON 对象、问题状态不是整数时�
   assert.deepEqual(toSteps(drafts).problems.map(item => `${item.step}:${item.field}`), ['0:input', '1:input', '1:problemStatus']);
   assert.equal(issueStep('steps[3].expect.outputs[0].path'), 3);
   assert.equal(issueStep('accountCode'), null);
+});
+
+test('期望值中的模板变量：整串或嵌入文字都识别，普通值与不完整写法不识别', () => {
+  assert.equal(hasTemplateVariable('${steps.pay.outputs.channelTransactionRef}'), true);
+  assert.equal(hasTemplateVariable('T-${run.code}'), true);
+  assert.equal(hasTemplateVariable('"PENDING"'), false);
+  assert.equal(hasTemplateVariable('$ 10.00'), false);
+  assert.equal(hasTemplateVariable('${'), false);
 });
