@@ -1,0 +1,113 @@
+{
+ "date": "2026-10-14",
+ "environment": "mor-test (http://localhost:28080, mor_platform @ 127.0.0.1:23306)",
+ "integration": "PAYERMAX",
+ "endpoint": "https://pay-gate-uat.payermax.com/aggregate-pay/api/gateway",
+ "account": "UAT_MAIN（凭据只在 test 库，不在此回执）",
+ "blockedBeforeSandbox": {
+  "runStatus": "FAILED",
+  "failureSummary": "步骤 query：execution 期望 EQUALS \"EXECUTED\"，实际 \"出站地址未标记沙箱，验证运行未发出请求: PAYERMAX_GATEWAY, 接入方: PAYERMAX\"",
+  "kind": [
+   "NOT_EXECUTED"
+  ]
+ },
+ "cases": {
+  "UAT_PAY_THEN_QUERY": {
+   "runCode": "236063254923788288",
+   "runStatus": "PASSED",
+   "sandboxEndpoints": [
+    true
+   ],
+   "steps": [
+    {
+     "stepKey": "pay",
+     "stepStatus": "PASSED",
+     "executeStatus": "SUCCESS",
+     "paymentStatus": "PENDING",
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ],
+      [
+       "outputs.nextAction.redirectUrl",
+       true
+      ],
+      [
+       "outputs.channelTransactionRef",
+       true
+      ]
+     ]
+    },
+    {
+     "stepKey": "query",
+     "stepStatus": "PASSED",
+     "executeStatus": "SUCCESS",
+     "paymentStatus": "PENDING",
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ],
+      [
+       "outputs.channelTransactionRef",
+       true
+      ]
+     ]
+    }
+   ],
+   "channel": [
+    {
+     "node": "createOrder",
+     "http": 200,
+     "status": "SUCCESS"
+    },
+    {
+     "node": "queryOrder",
+     "http": 200,
+     "status": "SUCCESS"
+    }
+   ]
+  },
+  "UAT_QUERY_NOT_FOUND": {
+   "runCode": "236063263694077952",
+   "runStatus": "PASSED",
+   "sandboxEndpoints": [
+    true
+   ],
+   "steps": [
+    {
+     "stepKey": "query",
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "paymentStatus": "NOT_FOUND",
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ]
+     ]
+    }
+   ],
+   "channel": [
+    {
+     "node": "queryOrder",
+     "http": 200,
+     "status": "FAIL"
+    }
+   ]
+  }
+ }
+}

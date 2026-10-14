@@ -116,3 +116,7 @@
 - Platform：JDK 25 `./mvnw -o -pl platform-support-test -am test` **415/415**（工作区含其他会话未提交的 Platform 改动）。
 - BFF：首次全量 1279 项中 1 项失败：`OperationsConsoleBffApplicationAutoTest.test_applicationReusesFoundationAndExposesExactOperationsRoutes` 精确核对 BFF 暴露路由，阶段 4 新增 V01～V14 后未同步预期清单（阶段 4 当时只运行了 `ExternalApiBrowserAutoTest`，已提交的 `ed0d27e` 中存在此问题）。补齐 14 条验证路由后 `./mvnw -o test` **1279/1279**。
 - 前端：`npm test` **989/989**，`npm run build` 通过。
+
+## 11. mor-test 发布（2026-10-14）
+
+用户确认发布外部 API、渠道沙箱验证与 PayerMax 配置（A+B+C），客户入驻随后由其会话单独发布。[发布清单](release/release.md)经批准执行：test `mor_platform` 补 25 表、登记 499 行、启用 52 行；Gateway、Platform（开启补偿）、BFF、Web 升级到 `ba36b63`；16 个菜单页检查通过；PayerMax UAT 两个用例在 test 通过。偏差（登记提前提交、启动顺序、Gateway Client 占位配置、限流 429）与遗留见[执行记录](release/test-acceptance.md)。

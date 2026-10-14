@@ -1,0 +1,10 @@
+# 回退用：当前（2026-10-14 只读核对）四个应用容器的原镜像。
+services:
+  api-gateway:
+    image: sha256:f907833438992310fe771303066685a5cfe08ddcd93e1cf6ef9a225761358953
+  platform-support-service:
+    image: sha256:083853a830844145318a36eb225537c9520574d1fecf01d50bdceceaecc29244
+  operations-console-bff:
+    image: sha256:7957f8c7219922875de420afc895b3158cc7cb409ff154a6ca6fb9bd5137b40a
+  operations-console-web:
+    image: sha256:40785d343525a7bbbeb00439bce8d2dadb350c5d3f459cc28039b405bdc1c696

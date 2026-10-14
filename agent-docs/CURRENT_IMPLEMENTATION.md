@@ -21,7 +21,8 @@
 - **阶段 4 Implemented / Verified（2026-10-14）：** BFF 透传 V01～V14（`ExternalApiBrowserAutoTest` 102/102；全量回归补齐路由清单后 BFF 1279/1279）；Operations 接入方“验证”页签、验证账号/用例编辑页、运行详情与出站地址沙箱开关（`npm test` 983/983，`npm run build` 通过）；V12 增加运行原因。[注册 SQL](../requirements/20261014/platform-support-渠道沙箱验证/db/registration-dml.sql)（14 Route，DISABLED）未执行，页面未做浏览器实测。
 - **阶段 5 本机 Verified（2026-10-14）：** 注册与本机启用 SQL 仅在 `mor_platform_external_api` 执行（14 Route ACTIVE）；经真实入口对合成 PayerMax 跑通：未标沙箱时运行在发请求前失败，标记后两个用例 PASSED，证据不含私钥，[回执](../requirements/20261014/platform-support-渠道沙箱验证/assets/stage5-mock-receipt.json)；浏览器 8 页无错误。
 - **PayerMax UAT Verified（2026-10-14，本机）：** 接入方 `PAYERMAX`（UAT 地址标记沙箱）两个用例 PASSED：下单 → 查询 PENDING、查询不存在订单；请求与响应双向验签通过，[回执](../requirements/20261014/platform-support-渠道沙箱验证/assets/stage5-uat-receipt.json)。
-- **Pending：** 收银台付款后查询 SUCCEEDED（人工付款）；共享环境 SQL 未执行。阶段 2～5 已按用户要求本地提交（2026-10-14），未推送。
+- **mor-test Deployed / Verified（2026-10-14）：** 按[发布清单](../requirements/20261014/platform-support-渠道沙箱验证/release/release.md)经用户批准执行（含外部 API 与 PayerMax 配置）：test `mor_platform` 补 25 表（与完整 Schema 一致）、登记 499 行、启用 52 行（ACTIVE 路由 149）；Gateway/Platform/BFF/Web 为 `ba36b63` 候选镜像，Platform `COMPENSATION_ENABLED=true`，Risk 未升级；16 个菜单页与 PayerMax UAT 两个用例通过。Gateway 因 Client 配置绑定缺陷暂用两项占位环境变量（Client 通道关闭），待修复后删除。见[执行记录](../requirements/20261014/platform-support-渠道沙箱验证/release/test-acceptance.md)。
+- **Pending：** 收银台付款后查询 SUCCEEDED（人工付款）；test 正式标准 API 执行需 Vault 渠道账号读取策略；其他共享环境未执行。阶段 2～5 已按用户要求本地提交（2026-10-14），未推送。
 
 <a id="payermax-integration-20261014"></a>
 
