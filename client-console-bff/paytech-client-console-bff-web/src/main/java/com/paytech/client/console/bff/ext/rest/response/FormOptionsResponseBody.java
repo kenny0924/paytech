@@ -10,18 +10,16 @@ import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBod
 public class FormOptionsResponseBody {
     /** 当前客户类型。 */
     private String clientType;
-    /** 主资料国家，可空。 */
-    private String countryCode;
     /** CCT 目录状态，不能解释为提交就绪。 */
     private String catalogStatus;
-    /** 适用注册国的组织类型。 */
+    /** 通用组织类型；个人为空列表。 */
     private List<CatalogOptionResponseBody> organizationTypes;
     /** 此类型可选经营模式。 */
     private List<CatalogOptionResponseBody> businessModels;
-    /** 证件类型及独立签发国/机构。 */
+    /** 证件类型及签发国要求。 */
     private List<IdentifierOptionResponseBody> identifierTypes;
     /** Risk 材料要求状态。 */
     private String requirementsStatus;
-    /** 当前准确国家的材料要求。 */
+    /** 主主体资格类型的通用材料要求。 */
     private List<RequirementBody> requirements;
 }

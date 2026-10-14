@@ -31,7 +31,7 @@ public class ClientRequestInterceptor implements HandlerInterceptor {
         if(!(read && origins.isEmpty()) && (origins.size()!=1 || !origin.equals(origins.getFirst()))) {
             throw new FailException(ClientBffErrorCode.ORIGIN_REJECTED);
         }
-        boolean emptyCommand=request.getRequestURI().startsWith("/client-onboarding/") && "DELETE".equals(request.getMethod())
+        boolean emptyCommand=request.getRequestURI().startsWith("/client-onboarding/") && ("DELETE".equals(request.getMethod()) || request.getRequestURI().endsWith("/submissions"))
             || request.getRequestURI().startsWith("/onboarding-files/") && (request.getRequestURI().endsWith("/completion") || request.getRequestURI().endsWith("/download"));
         if(!read && !emptyCommand) {
             try {

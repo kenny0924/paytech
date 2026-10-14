@@ -20,11 +20,10 @@ public final class ClientOnboardingModels {
         String activeApplicationId
     ) {}
 
-    /** unavailable 与未填国家均不得解释为无需材料。 */
+    /** unavailable 不得解释为无需材料；材料按资格类型通用，不按国家区分。 */
     public record MaterialSubject(
         String subjectPartyId,
         String qualificationType,
-        String countryCode,
         String requirementsStatus,
         List<RequirementBody> requirements
     ) {}
@@ -41,7 +40,16 @@ public final class ClientOnboardingModels {
         FileResponseBody file
     ) {}
 
-    /** 当前表单和材料；只读状态由 CCT 决定，不能据此推断可提交。 */
+    /**
+     * Risk 最近一次审核的客户可见结果；只在 CCT 状态为 RETURNED/APPROVED/REJECTED 时读取
+     * <li>不含内部理由、核验记录或决定人。</li>
+     */
+    public record ReviewResult(String outcome, String returnSection, String publicNote, String decidedAt) {}
+
+    /**
+     * 当前表单和材料；只读状态由 CCT 决定，不能据此推断可提交
+     * <li>reviewStatus：NONE 不适用；AVAILABLE 已读取 review；UNAVAILABLE Risk 不可用或与 CCT 状态不一致，不伪造结果。</li>
+     */
     public record ApplicationResponseBody(
         String applicationId,
         String applicationNo,
@@ -55,7 +63,9 @@ public final class ClientOnboardingModels {
         List<PersonResponseBody> people,
         List<RelationResponseBody> relations,
         List<Document> documents,
-        List<MaterialSubject> materialSubjects
+        List<MaterialSubject> materialSubjects,
+        String reviewStatus,
+        ReviewResult review
     ) {
         /** 表单和文件展示名不打印到日志。 */
         @Override

@@ -23,7 +23,7 @@ public class ClientErrorStatusResolver implements ApiErrorStatusResolver {
         if(code instanceof com.paytech.client.contract.api.enums.ClientDraftErrorCode) {
             return switch(code.getCode()) {
                 case "CLIENT_SESSION_INVALID" -> HttpStatus.UNAUTHORIZED;
-                case "INVALID_DRAFT","ORGANIZATION_REQUIRED","MATERIAL_COUNTRY_REQUIRED","MATERIAL_REQUIREMENT_INVALID" -> HttpStatus.UNPROCESSABLE_CONTENT;
+                case "INVALID_DRAFT","ORGANIZATION_REQUIRED","MATERIAL_REQUIREMENT_INVALID","SUBMISSION_INCOMPLETE" -> HttpStatus.UNPROCESSABLE_CONTENT;
                 case "DOCUMENT_NOT_FOUND","APPLICATION_NOT_FOUND","PERSON_NOT_FOUND","RELATION_NOT_FOUND" -> HttpStatus.NOT_FOUND;
                 case "DRAFT_CONTEXT_INVALID","ONBOARDING_DEPENDENCY_UNAVAILABLE" -> HttpStatus.SERVICE_UNAVAILABLE;
                 default -> HttpStatus.CONFLICT;

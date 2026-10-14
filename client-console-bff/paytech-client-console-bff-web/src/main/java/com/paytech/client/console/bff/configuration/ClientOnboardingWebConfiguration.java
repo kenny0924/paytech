@@ -57,7 +57,7 @@ public class ClientOnboardingWebConfiguration implements WebMvcConfigurer {
                         for (var entry : request.getParameterMap().entrySet()) {
                             if (
                                 !options ||
-                                !Set.of("clientType", "countryCode").contains(entry.getKey()) ||
+                                !"clientType".equals(entry.getKey()) ||
                                 entry.getValue().length != 1 ||
                                 entry.getValue()[0].isBlank()
                             ) {
@@ -66,14 +66,17 @@ public class ClientOnboardingWebConfiguration implements WebMvcConfigurer {
                         }
                         String method = request.getMethod(),
                             path = request.getRequestURI();
+                        boolean submission = path.endsWith("/submissions");
                         boolean empty =
                             Set.of("GET", "HEAD", "DELETE").contains(method) ||
                             path.endsWith("/completion") ||
-                            path.endsWith("/download");
+                            path.endsWith("/download") ||
+                            submission;
                         if (empty && request.getInputStream().read() != -1) {
                             throw new InvalidParameterException("当前操作不接受 Body");
                         }
-                        if (!Set.of("GET", "HEAD").contains(method) && !path.endsWith("/download")) {
+                        // C14 按申请状态防重，不要求 Idempotency-Key。
+                        if (!Set.of("GET", "HEAD").contains(method) && !path.endsWith("/download") && !submission) {
                             var keys = Collections.list(request.getHeaders("Idempotency-Key"));
                             if (
                                 keys.size() != 1 ||

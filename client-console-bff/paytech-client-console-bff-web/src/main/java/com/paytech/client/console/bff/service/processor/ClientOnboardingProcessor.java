@@ -11,6 +11,7 @@ import com.paytech.platform.support.api.enums.*;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.FileResponseBody;
 import com.paytech.risk.api.compliance.MaterialRequirementsApi;
+import com.paytech.risk.api.compliance.ClientReviewResultApi;
 import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -31,6 +32,13 @@ public class ClientOnboardingProcessor {
     private final ClientSessionProcessor sessions;
     private final MaterialRequirementsApi risk;
     private final ClientOnboardingStartApi applications;
+    private final ClientReviewResultApi reviews;
+
+    /** 有客户可见审核结果的 CCT 状态。 */
+    static final Set<String> REVIEWED = Set.of("RETURNED", "APPROVED", "REJECTED");
+
+    /** Risk 退回合同允许的分区。 */
+    static final Set<String> RETURN_SECTIONS = Set.of("BASIC", "BUSINESS", "PEOPLE", "MATERIALS");
 
     /** GET 只导航既有申请，不以读取页面触发创建。 */
     public StartResponseBody start(HttpServletRequest request) {
@@ -56,35 +64,35 @@ public class ClientOnboardingProcessor {
         );
     }
 
-    /** C03 并发组合非个人目录；一个 Owner 不可用时保留另一方事实。 */
-    public FormOptionsResponseBody options(HttpServletRequest request, String type, String country) {
+    /** C03 并发组合通用目录与主主体材料要求；一个 Owner 不可用时保留另一方事实，不按国家区分。 */
+    public FormOptionsResponseBody options(HttpServletRequest request, String type) {
         var identity=sessions.identity(request);
         sessions.context(request);
-        if (!Set.of("INDIVIDUAL", "ORGANIZATION").contains(type) || (country != null && !country.matches("[A-Z]{2}"))) {
-            throw new InvalidParameterException("客户类型或国家格式无效");
+        if (!Set.of("INDIVIDUAL", "ORGANIZATION").contains(type)) {
+            throw new InvalidParameterException("客户类型无效");
         }
         var executor=Executors.newFixedThreadPool(2,Thread.ofVirtual().factory());
         long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(3);
         try {
-            var catalogFuture=executor.submit(context(() -> catalog(identity,type,country)));
-            var requirementsFuture=country==null ? null : executor.submit(context(() -> requirements(
-                type.equals("ORGANIZATION") ? "ORGANIZATION_KYB" : "INDIVIDUAL_KYC",country)));
+            var catalogFuture=executor.submit(context(() -> catalog(identity,type)));
+            var requirementsFuture=executor.submit(context(() -> requirements(
+                type.equals("ORGANIZATION") ? "ORGANIZATION_KYB" : "INDIVIDUAL_KYC")));
             var catalog=result(catalogFuture,deadline);
             var required=result(requirementsFuture,deadline);
             sessions.context(request);
-            return new FormOptionsResponseBody(type,country,catalog==null ? "UNAVAILABLE" : catalog.getCatalogStatus(),
+            return new FormOptionsResponseBody(type,catalog==null ? "UNAVAILABLE" : catalog.getCatalogStatus(),
                 catalog==null ? List.of() : catalog.getOrganizationTypes(),
                 catalog==null ? List.of() : catalog.getBusinessModels(),
                 catalog==null ? List.of() : catalog.getIdentifierTypes(),
-                country==null ? "COUNTRY_REQUIRED" : required==null ? "UNAVAILABLE" : "AVAILABLE",
+                required==null ? "UNAVAILABLE" : "AVAILABLE",
                 required==null ? List.of() : required);
         } finally { executor.shutdownNow(); }
     }
 
-    /** CCT 目录必须属于准确请求维度；未知状态与缺失列表显式不可用。 */
-    ClientFormOptionsResponseBody catalog(String[] identity,String type,String country) {
-        var value=catalogs.options("client-console-bff",identity[0],identity[1],type,country);
-        if(value==null || !type.equals(value.getClientType()) || !Objects.equals(country,value.getCountryCode())
+    /** CCT 目录必须属于准确客户类型；未知状态与缺失列表显式不可用。 */
+    ClientFormOptionsResponseBody catalog(String[] identity,String type) {
+        var value=catalogs.options("client-console-bff",identity[0],identity[1],type);
+        if(value==null || !type.equals(value.getClientType())
             || value.getOrganizationTypes()==null || value.getBusinessModels()==null || value.getIdentifierTypes()==null
             || value.getOrganizationTypes().size()>200 || value.getBusinessModels().size()>200 || value.getIdentifierTypes().size()>200) {
             throw new ServiceUnavailableException();
@@ -93,7 +101,7 @@ public class ClientOnboardingProcessor {
         catch(IllegalArgumentException | NullPointerException invalid) { throw new ServiceUnavailableException(); }
         if("AVAILABLE".equals(value.getCatalogStatus()) && (value.getBusinessModels().isEmpty() || value.getIdentifierTypes().isEmpty()
             || ("ORGANIZATION".equals(type) && value.getOrganizationTypes().isEmpty()))) { throw new ServiceUnavailableException(); }
-        if(value.getIdentifierTypes().stream().anyMatch(i -> i==null || i.getIssuers()==null || i.getIssuers().isEmpty() || i.getIssuers().size()>50)) {
+        if(value.getIdentifierTypes().stream().anyMatch(i -> i==null || !Set.of("REQUIRED","NONE").contains(i.getIssuingCountryMode()))) {
             throw new ServiceUnavailableException();
         }
         return value;
@@ -111,13 +119,10 @@ public class ClientOnboardingProcessor {
             var subjects = subjects(draft);
             var required = new LinkedHashMap<String, Future<List<RequirementBody>>>();
             for (var subject : subjects) {
-                if (subject.countryCode() != null) {
-                    required.put(
-                        subject.subjectPartyId(),
-                        executor.submit(context(() -> requirements(subject.qualificationType(), subject.countryCode())))
-                    );
-                }
+                required.computeIfAbsent(subject.qualificationType(), type -> executor.submit(context(() -> requirements(type))));
             }
+            var reviewFuture = REVIEWED.contains(draft.status())
+                ? executor.submit(context(() -> review(draft.applicationId(), draft.status()))) : null;
             var metadata = new LinkedHashMap<String, Future<FileResponseBody>>();
             for (var doc : draft.documents()) {
                 metadata.computeIfAbsent(doc.fileId(), id -> executor.submit(context(() -> file(identity, id))));
@@ -125,17 +130,11 @@ public class ClientOnboardingProcessor {
             var material = subjects
                 .stream()
                 .map(subject -> {
-                    var list = result(required.get(subject.subjectPartyId()), deadline);
-                    String status = subject.countryCode() == null
-                        ? "COUNTRY_REQUIRED"
-                        : list == null
-                            ? "UNAVAILABLE"
-                            : "AVAILABLE";
+                    var list = result(required.get(subject.qualificationType()), deadline);
                     return new MaterialSubject(
                         subject.subjectPartyId(),
                         subject.qualificationType(),
-                        subject.countryCode(),
-                        status,
+                        list == null ? "UNAVAILABLE" : "AVAILABLE",
                         list == null ? List.of() : list
                     );
                 })
@@ -157,6 +156,7 @@ public class ClientOnboardingProcessor {
                     );
                 })
                 .toList();
+            var review = result(reviewFuture, deadline);
             sessions.context(request);
             return new ApplicationResponseBody(
                 draft.applicationId(),
@@ -171,11 +171,25 @@ public class ClientOnboardingProcessor {
                 draft.people(),
                 draft.relations(),
                 documents,
-                material
+                material,
+                reviewFuture == null ? "NONE" : review == null ? "UNAVAILABLE" : "AVAILABLE",
+                review
             );
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    /** Risk 审核结果只与 CCT 结束状态一致时采用；不一致说明投影尚未同步，按不可用处理。 */
+    ReviewResult review(String applicationId, String status) {
+        var value = reviews.result("client-console-bff", applicationId);
+        if (value == null || !applicationId.equals(value.getApplicationId()) || !status.equals(value.getOutcome())) {
+            throw new ServiceUnavailableException();
+        }
+        if ("RETURNED".equals(status) && (value.getReturnSection() == null || !RETURN_SECTIONS.contains(value.getReturnSection()))) {
+            throw new ServiceUnavailableException();
+        }
+        return new ReviewResult(value.getOutcome(), value.getReturnSection(), value.getPublicNote(), value.getDecidedAt());
     }
 
     /** 已发布代码必须识别，未知状态不默认开放下载。 */
@@ -198,8 +212,8 @@ public class ClientOnboardingProcessor {
     }
 
     /** 规则目录只允许真实、唯一且有界的条目；Program 身份不投影给浏览器。 */
-    List<RequirementBody> requirements(String type, String country) {
-        var value = risk.read("client-console-bff", type, country);
+    List<RequirementBody> requirements(String type) {
+        var value = risk.read("client-console-bff", type);
         if (value == null || value.items() == null || value.items().isEmpty() || value.items().size() > 1024) {
             throw new ServiceUnavailableException();
         }
@@ -226,9 +240,7 @@ public class ClientOnboardingProcessor {
         rows.add(
             subject(
                 draft.subjectPartyId(),
-                organization ? "ORGANIZATION_KYB" : "INDIVIDUAL_KYC",
-                draft.values(),
-                organization
+                organization ? "ORGANIZATION_KYB" : "INDIVIDUAL_KYC"
             )
         );
         for (var person : draft.people()) {
@@ -242,21 +254,15 @@ public class ClientOnboardingProcessor {
                             Set.of("DRAFT", "ACTIVE").contains(relation.status())
                     )
             ) {
-                rows.add(subject(person.partyId(), "RELATED_PERSON_KYC", person.values(), false));
+                rows.add(subject(person.partyId(), "RELATED_PERSON_KYC"));
             }
         }
         return rows;
     }
 
-    /** 未填国家只提示补充，不自动替换为国籍或默认国家。 */
-    MaterialSubject subject(String party, String type, Map<String, Map<String, String>> values, boolean organization) {
-        String country = values
-            .getOrDefault(organization ? "organization" : "individual", Map.of())
-            .get(organization ? "incorporationCountry" : "residenceCountry");
-        if (country != null && !country.matches("[A-Z]{2}")) {
-            throw new ServiceUnavailableException();
-        }
-        return new MaterialSubject(party, type, country, "COUNTRY_REQUIRED", List.of());
+    /** 材料主体只由资格类型决定材料要求；要求在聚合时按类型查询一次。 */
+    MaterialSubject subject(String party, String type) {
+        return new MaterialSubject(party, type, "UNAVAILABLE", List.of());
     }
 
     /** 限制响应工作量，并拒绝 Owner 身份不匹配。 */

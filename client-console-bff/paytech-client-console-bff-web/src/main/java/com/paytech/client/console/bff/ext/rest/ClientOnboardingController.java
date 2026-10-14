@@ -9,7 +9,10 @@ import com.paytech.client.contract.api.onboarding.ClientDraftModels.*;
 import com.paytech.client.contract.api.onboarding.ClientPeopleModels.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
+import com.paytech.client.contract.api.onboarding.response.SubmissionCheckResponseBody;
+import com.paytech.client.contract.api.onboarding.response.SubmissionResponseBody;
 import org.springframework.web.bind.annotation.*;
 
 /** 已批准 Client 路径的薄适配；写命令只交给 CCT，不协调跨服务业务。 */
@@ -22,6 +25,7 @@ public class ClientOnboardingController {
     private final ClientDraftApi drafts;
     private final ClientPeopleApi people;
     private final ClientDocumentApi documents;
+    private final ClientSubmissionApi submissions;
     private final ClientSessionProcessor sessions;
     private final ClientOnboardingProcessor queries;
 
@@ -35,10 +39,9 @@ public class ClientOnboardingController {
     @GetMapping("/form-options")
     public FormOptionsResponseBody options(
         HttpServletRequest request,
-        @RequestParam String clientType,
-        @RequestParam(required = false) String countryCode
+        @RequestParam String clientType
     ) {
-        return queries.options(request, clientType, countryCode);
+        return queries.options(request, clientType);
     }
 
     /** 创建及恢复保持 CCT 的 201/200 与原命令身份。 */
@@ -147,6 +150,22 @@ public class ClientOnboardingController {
         var actor = sessions.identity(request);
         var result = documents.associate("client-console-bff", actor[0], actor[1], app, key, body);
         return ResponseEntity.status(result.getStatusCode()).body(result.getBody());
+    }
+
+    /** C14 正式提交；Body 为空，不要求 Idempotency-Key，重复提交由 CCT 按申请状态返回原提交。 */
+    @PostMapping("/applications/{app}/submissions")
+    public ResponseEntity<SubmissionResponseBody> submit(HttpServletRequest request, @PathVariable String app) {
+        var actor = sessions.identity(request);
+        var result = submissions.submit("client-console-bff", actor[0], actor[1], app);
+        return ResponseEntity.status(result.getStatusCode()).cacheControl(CacheControl.noStore()).body(result.getBody());
+    }
+
+    /** C16 提交前核对：转发 CCT 的逐项问题，不改变状态。 */
+    @GetMapping("/applications/{app}/submission-check")
+    public ResponseEntity<SubmissionCheckResponseBody> check(HttpServletRequest request, @PathVariable String app) {
+        var actor = sessions.identity(request);
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(submissions.check("client-console-bff", actor[0], actor[1], app));
     }
 
     /** 删除引用不调用 Platform 删除文件。 */

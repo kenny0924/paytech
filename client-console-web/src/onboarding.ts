@@ -53,7 +53,68 @@ export type Application = {
     requirementsStatus: string;
     requirements: Requirement[];
   }[];
+  reviewStatus?: "NONE" | "AVAILABLE" | "UNAVAILABLE";
+  review?: ReviewResult | null;
 };
+/** 最近一次审核的客户可见结果；内部理由不会返回到页面。 */
+export type ReviewResult = {
+  outcome: "RETURNED" | "APPROVED" | "REJECTED";
+  returnSection: "BASIC" | "BUSINESS" | "PEOPLE" | "MATERIALS" | null;
+  publicNote: string | null;
+  decidedAt: string | null;
+};
+/** 退回分区对应的页面位置。 */
+export const returnSections: Record<string, { label: string; anchor: string }> = {
+  BASIC: { label: "基础资料", anchor: "profile" },
+  BUSINESS: { label: "经营资料", anchor: "business" },
+  PEOPLE: { label: "相关人员", anchor: "people" },
+  MATERIALS: { label: "申请材料", anchor: "materials" },
+};
+export type ResultBanner = {
+  tone: "warning" | "success" | "error" | "info";
+  title: string;
+  lines: string[];
+  anchor: string | null;
+};
+/**
+ * 审核结果提示；只用 CCT 状态与 Risk 公开说明，不推断工作区已可用
+ * <li>结果读取失败时给出通用说明，不把未知错误当成审核原因。</li>
+ */
+export function resultBanner(app: Pick<Application, "status" | "reviewStatus" | "review">): ResultBanner | null {
+  const review = app.reviewStatus === "AVAILABLE" && app.review?.outcome === app.status ? app.review : null;
+  const note = review?.publicNote?.trim() || null;
+  const unavailable = "审核说明暂时无法读取，请稍后刷新页面。";
+  if (app.status === "RETURNED") {
+    const section = review?.returnSection ? returnSections[review.returnSection] : undefined;
+    return {
+      tone: "warning",
+      title: "申请需要修改后重新提交",
+      lines: [
+        ...(section ? ["需要修改：" + section.label] : []),
+        ...(note ? [note] : review ? [] : [unavailable]),
+        "修改完成后，请在页面底部重新提交审核。",
+      ],
+      anchor: section?.anchor ?? null,
+    };
+  }
+  if (app.status === "APPROVED") {
+    return {
+      tone: "success",
+      title: "审核已通过",
+      lines: [...(note ? [note] : []), "客户工作区正在开通，开通完成后即可进入。"],
+      anchor: null,
+    };
+  }
+  if (app.status === "REJECTED") {
+    return {
+      tone: "error",
+      title: "申请未通过",
+      lines: [note ?? (review ? "如有疑问，请联系客服。" : unavailable), "此申请不能再修改；如需继续，请重新发起申请。"],
+      anchor: null,
+    };
+  }
+  return null;
+}
 export type Start = {
   applications: {
     applicationId: string;

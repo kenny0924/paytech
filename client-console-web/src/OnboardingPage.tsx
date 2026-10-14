@@ -9,8 +9,14 @@ import {
 import type { FormEvent, ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { RequestFailure } from "./auth.ts";
-import { changeCatalogField, catalogChoices } from "./catalog.ts";
+import {
+  changeCatalogField,
+  catalogChoices,
+  issuingCountryMode,
+} from "./catalog.ts";
 import type { FormOptions } from "./catalog.ts";
+import { describeIssue, readCheck } from "./submission.ts";
+import type { SubmissionCheck } from "./submission.ts";
 import type { createAuthClient } from "./auth.ts";
 import {
   base,
@@ -25,6 +31,7 @@ import {
   downloadUrl,
   statuses,
   scanLabels,
+  resultBanner,
 } from "./onboarding.ts";
 import type {
   Application,
@@ -63,12 +70,7 @@ const address: Field[] = [
 const identifier: Field[] = [
   ["identifier.identifierType", "证件 / 登记证明类型", "catalog", 64],
   ["identifier.identifierValue", "证件 / 注册编号", "text", 128],
-  [
-    "identifier.issuingCountry",
-    "签发国家 / 地区（由机构确定）",
-    "issuer-country",
-  ],
-  ["identifier.issuerScopeKey", "签发 / 登记机构", "catalog", 64],
+  ["identifier.issuingCountry", "签发国家 / 地区", "issuer-country"],
   ["identifier.validFrom", "有效期开始", "date"],
   ["identifier.validTo", "有效期结束（不含当日，无固定期限可留空）", "date"],
 ];
@@ -82,6 +84,11 @@ const business: Field[] = [
   ["contact.phone", "业务联系电话（含国际区号）", "tel", 32],
   ["business.businessDescription", "业务说明", "textarea", 2000],
 ];
+const fieldLabels: Record<string, string> = Object.fromEntries(
+  [...individual, ...organization, ...address, ...identifier, ...business].map(
+    ([key, label]) => [key, label],
+  ),
+);
 const countryCodes =
   "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW".split(
     " ",
@@ -104,7 +111,29 @@ const materialNames: Record<string, string> = {
   REGISTRATION_CERTIFICATE: "组织注册证明",
   ADDRESS_PROOF: "地址证明",
   PROOF_OF_ADDRESS: "地址证明",
+  OWNERSHIP_STRUCTURE: "股权 / 控制结构",
+  AUTHORIZATION_LETTER: "授权书",
+  SUPPORTING_DOCUMENT: "其他补充材料",
 };
+/** 审核结果：退回原因与定位分区、通过后开通中、最终拒绝；内容只来自公开说明。 */
+function ReviewResultBanner({ app }: { app: Application }) {
+  const banner = resultBanner(app);
+  if (!banner) return null;
+  return (
+    <div className={"result-banner " + banner.tone} role={banner.tone === "error" ? "alert" : "status"}>
+      <strong>{banner.title}</strong>
+      {banner.lines.map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+      {banner.anchor && (
+        <a className="secondary" href={"#" + banner.anchor}>
+          前往修改
+        </a>
+      )}
+    </div>
+  );
+}
+
 function Failure({ error }: { error: Error | null }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -124,6 +153,89 @@ function Failure({ error }: { error: Error | null }) {
       )}
     </div>
   ) : null;
+}
+function SubmissionPanel({
+  client,
+  app,
+  locked,
+  dirty,
+  subjectName,
+  submitted,
+}: {
+  client: Client;
+  app: Application;
+  locked: boolean;
+  dirty: boolean;
+  subjectName: (partyId: string) => string;
+  submitted: () => Promise<unknown>;
+}) {
+  const [check, setCheck] = useState<SubmissionCheck | null>(null),
+    [working, setWorking] = useState(false),
+    [error, setError] = useState<Error | null>(null);
+  const path = base + "/" + app.applicationId;
+  async function runCheck() {
+    setWorking(true);
+    setError(null);
+    try {
+      setCheck(readCheck(await client.request<unknown>(path + "/submission-check")));
+    } catch (failure) {
+      setCheck(null);
+      setError(failure instanceof Error ? failure : new Error("提交核对暂时不可用"));
+    } finally {
+      setWorking(false);
+    }
+  }
+  async function submit() {
+    if (!window.confirm("提交后，审核期间不能修改资料。确认提交审核？")) return;
+    setWorking(true);
+    setError(null);
+    try {
+      await client.request(path + "/submissions", { method: "POST" });
+      await submitted();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure : new Error("提交未完成"));
+      if (failure instanceof RequestFailure && failure.code === "SUBMISSION_INCOMPLETE") {
+        setWorking(false);
+        await runCheck();
+        return;
+      }
+    } finally {
+      setWorking(false);
+    }
+  }
+  const ctx = { app, labels: fieldLabels, subjectName, materialName: (type: string) => materialNames[type] ?? type };
+  return (
+    <section id="submission" className="form-section">
+      <h2>提交审核</h2>
+      <p>提交前先核对资料和材料。提交后，审核期间不能修改；材料是否充分由审核人员判断，可能会要求补充。</p>
+      <Failure error={error} />
+      {dirty && <p className="notice">请先保存当前修改，再核对或提交。</p>}
+      {check && check.ready && <p className="notice">资料和基础必需材料已齐全，可以提交。</p>}
+      {check && !check.ready && (
+        <div className="notice" role="status">
+          <strong>还有 {check.issues.length} 项需要处理</strong>
+          <ul>
+            {check.issues.map((issue) => {
+              const text = describeIssue(issue, ctx);
+              return (
+                <li key={issue.field}>
+                  {text.where}：{text.message}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+      <div className="inline-actions">
+        <button className="secondary" disabled={locked || dirty || working} onClick={() => void runCheck()}>
+          {working ? "正在处理…" : "提交前核对"}
+        </button>
+        <button disabled={locked || dirty || working || !check?.ready} onClick={() => void submit()}>
+          提交审核
+        </button>
+      </div>
+    </section>
+  );
 }
 function Shell({
   children,
@@ -158,12 +270,9 @@ function Shell({
   );
 }
 const FormCatalog = createContext<FormOptions | null>(null);
-function useFormCatalog(
-  client: Client,
-  type: Application["clientType"],
-  country: string,
-) {
-  const key = type + ":" + country;
+// 通用目录只按客户类型读取，不随国家变化。
+function useFormCatalog(client: Client, type: Application["clientType"]) {
+  const key = type;
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<{
     key: string;
@@ -175,15 +284,12 @@ function useFormCatalog(
     setState(null);
     client
       .request<FormOptions>(
-        "/onboarding/v1/form-options?clientType=" +
-          type +
-          (country ? "&countryCode=" + encodeURIComponent(country) : ""),
+        "/onboarding/v1/form-options?clientType=" + type,
       )
       .then((data) => {
         if (
           data.clientType !== type ||
-          (data.countryCode ?? "") !== country ||
-          !["AVAILABLE", "COUNTRY_REQUIRED", "UNAVAILABLE"].includes(
+          !["AVAILABLE", "UNAVAILABLE"].includes(
             data.catalogStatus,
           ) ||
           !Array.isArray(data.organizationTypes) ||
@@ -200,7 +306,7 @@ function useFormCatalog(
     return () => {
       current = false;
     };
-  }, [client, type, country, attempt]);
+  }, [client, type, attempt]);
   return {
     data: state?.key === key ? state.data : null,
     loading: !state || state.key !== key,
@@ -222,9 +328,7 @@ function CatalogNotice({
   if (catalog.data?.catalogStatus === "AVAILABLE") return null;
   return (
     <div className="notice" role="status">
-      {catalog.data?.catalogStatus === "COUNTRY_REQUIRED"
-        ? "选择注册国家 / 地区后，可查看适用的组织类型。"
-        : "部分表单选项暂未开放，已有资料会保留，其他内容可以继续保存。"}
+      部分表单选项暂未开放，已有资料会保留，其他内容可以继续保存。
       {catalog.error && <small>{catalog.error.message}</small>}
       <button
         type="button"
@@ -281,26 +385,19 @@ function Fields({
                 </option>
               ))}
             </select>
-          ) : kind === "issuer-country" ? (
-            <input
-              id={prefix + key}
-              readOnly
-              value={
-                values[key]
-                  ? (regionNames.of(values[key]) ?? values[key])
-                  : values["identifier.issuerScopeKey"] === "GLOBAL"
-                    ? "全球标识"
-                    : "请先选择签发 / 登记机构"
-              }
-            />
-          ) : kind === "country" || kind === "currency" ? (
+          ) : kind === "issuer-country" &&
+            issuingCountryMode(values, catalog) === "NONE" ? (
+            <input id={prefix + key} readOnly value="全球标识，无需签发国" />
+          ) : kind === "country" ||
+            kind === "issuer-country" ||
+            kind === "currency" ? (
             <select
               id={prefix + key}
               value={values[key] ?? ""}
               onChange={(event) => set(key, event.target.value)}
             >
               <option value="">请选择</option>
-              {(kind === "country"
+              {(kind !== "currency"
                 ? countries
                 : Intl.supportedValuesOf("currency").map((code) => [code, code])
               ).map(([code, name]) => (
@@ -347,15 +444,7 @@ function Profile({
   const [before, setBefore] = useState(() => flatten(app.values)),
     [values, setValues] = useState(before),
     [message, setMessage] = useState("");
-  const catalog = useFormCatalog(
-    client,
-    app.clientType,
-    values[
-      app.clientType === "ORGANIZATION"
-        ? "organization.incorporationCountry"
-        : "individual.residenceCountry"
-    ] ?? "",
-  );
+  const catalog = useFormCatalog(client, app.clientType);
   useEffect(() => {
     const next = flatten(app.values);
     if (JSON.stringify(next) !== JSON.stringify(before)) {
@@ -582,11 +671,7 @@ function PersonEditor({
       relationType: "",
       effectiveFrom: "",
     });
-  const catalog = useFormCatalog(
-    client,
-    "INDIVIDUAL",
-    values["individual.residenceCountry"] ?? "",
-  );
+  const catalog = useFormCatalog(client, "INDIVIDUAL");
   const dirty = patch(before, values).dirtyFields.length > 0;
   const exit = () => {
     if (!busy && (!dirty || window.confirm("放弃尚未保存的人员修改？")))
@@ -1189,9 +1274,12 @@ export function OnboardingPage({ client }: { client: Client }) {
         )}
         {app && (
           <>
-            {!app.editable && (
+            <ReviewResultBanner app={app} />
+            {!app.editable && !resultBanner(app) && (
               <p className="notice">
-                当前申请为只读状态。审核通过或最终拒绝后不能修改。
+                {["SUBMITTED", "UNDER_REVIEW"].includes(app.status)
+                  ? "资料已提交，正在审核中。审核期间不能修改。"
+                  : "当前申请为只读状态。审核通过或最终拒绝后不能修改。"}
               </p>
             )}
             <Profile
@@ -1321,7 +1409,9 @@ export function OnboardingPage({ client }: { client: Client }) {
                   </button>
                 )}
               </div>
-              <p>材料要求依据已保存的资料显示。文件通过安全扫描后才可使用。</p>
+              <p>
+                请先上传基础必需材料；材料是否充分由审核人员判断，可能会要求补充。文件通过安全扫描后才可使用。
+              </p>
               {app.materialSubjects.map((subject) => (
                 <div className="material-subject" key={subject.subjectPartyId}>
                   <h3>
@@ -1335,9 +1425,7 @@ export function OnboardingPage({ client }: { client: Client }) {
                   </h3>
                   {subject.requirementsStatus !== "AVAILABLE" ? (
                     <p className="notice">
-                      {subject.requirementsStatus === "COUNTRY_REQUIRED"
-                        ? "请填写并保存国家 / 地区，以读取材料要求。"
-                        : "材料要求暂时不可用，请稍后重新读取。"}
+                      材料要求暂时不可用，请稍后重新读取。
                     </p>
                   ) : (
                     subject.requirements.map((requirement) => (
@@ -1349,7 +1437,7 @@ export function OnboardingPage({ client }: { client: Client }) {
                           {materialNames[requirement.documentType] ??
                             requirement.documentType}
                           <small>
-                            {requirement.requiredFlag ? "必需材料" : "按需提供"}
+                            {requirement.requiredFlag ? "基础必需" : "按需提供"}
                           </small>
                         </span>
                         {app.editable && (
@@ -1423,6 +1511,21 @@ export function OnboardingPage({ client }: { client: Client }) {
                 重新读取材料状态
               </button>
             </section>
+            {app.editable && (
+              <SubmissionPanel
+                client={client}
+                key={app.applicationId + ":" + app.savedAt}
+                app={app}
+                locked={locked}
+                dirty={dirty}
+                subjectName={(partyId) => {
+                  if (partyId === app.subjectPartyId) return "主体";
+                  const person = app.people.find((p) => p.partyId === partyId);
+                  return person ? personName(person) : "人员";
+                }}
+                submitted={reload}
+              />
+            )}
           </>
         )}
         {app && editor?.kind === "person" && (

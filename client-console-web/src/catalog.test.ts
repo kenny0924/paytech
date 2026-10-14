@@ -1,35 +1,27 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { changeCatalogField, catalogChoices } from "./catalog.ts";
+import {
+  changeCatalogField,
+  catalogChoices,
+  issuingCountryMode,
+} from "./catalog.ts";
 import type { FormOptions } from "./catalog.ts";
 const options: FormOptions = {
   clientType: "ORGANIZATION",
-  countryCode: "AE",
   catalogStatus: "AVAILABLE",
   organizationTypes: [{ code: "FIXTURE_ORG", label: "合成组织" }],
   businessModels: [{ code: "FIXTURE_MODEL", label: "合成模式" }],
   identifierTypes: [
-    {
-      code: "FIXTURE_ID",
-      label: "合成证明",
-      issuers: [
-        {
-          scopeKey: "FIXTURE_GB_REGISTRY",
-          label: "合成机构",
-          issuingCountry: "GB",
-        },
-        { scopeKey: "GLOBAL", label: "合成全球机构", issuingCountry: null },
-      ],
-    },
+    { code: "FIXTURE_ID", label: "合成证明", issuingCountryMode: "REQUIRED" },
+    { code: "FIXTURE_GLOBAL", label: "合成全球标识", issuingCountryMode: "NONE" },
   ],
-  requirementsStatus: "COUNTRY_REQUIRED",
+  requirementsStatus: "AVAILABLE",
   requirements: [],
 };
-test("changing incorporation country clears only the dependent organization type", () => {
+test("changing incorporation country keeps the generic organization type", () => {
   const before = {
     "organization.incorporationCountry": "AE",
     "organization.organizationType": "FIXTURE_ORG",
-    "organization.legalName": "Fixture",
   };
   assert.deepEqual(
     changeCatalogField(
@@ -38,66 +30,52 @@ test("changing incorporation country clears only the dependent organization type
       "GB",
       options,
     ),
-    {
-      ...before,
-      "organization.incorporationCountry": "GB",
-      "organization.organizationType": "",
-    },
+    { ...before, "organization.incorporationCountry": "GB" },
   );
-  assert.deepEqual(
+});
+test("issuing country is chosen freely and cleared only for global identifiers", () => {
+  const before = {
+    "individual.residenceCountry": "AE",
+    "identifier.identifierType": "FIXTURE_ID",
+    "identifier.issuingCountry": "GB",
+  };
+  assert.equal(issuingCountryMode(before, options), "REQUIRED");
+  const global = changeCatalogField(
+    before,
+    "identifier.identifierType",
+    "FIXTURE_GLOBAL",
+    options,
+  );
+  assert.equal(global["identifier.issuingCountry"], "");
+  assert.equal(global["individual.residenceCountry"], "AE");
+  assert.equal(issuingCountryMode(global, options), "NONE");
+  const back = changeCatalogField(
+    { ...global, "identifier.issuingCountry": "" },
+    "identifier.identifierType",
+    "FIXTURE_ID",
+    options,
+  );
+  assert.equal(back["identifier.issuingCountry"], "");
+  assert.equal(
     changeCatalogField(
       before,
-      "organization.incorporationCountry",
-      "AE",
+      "identifier.identifierType",
+      "FIXTURE_ID",
       options,
     ),
     before,
   );
 });
-test("issuer selection derives exact country and never substitutes residence country", () => {
-  const before = {
-    "individual.residenceCountry": "AE",
-    "identifier.identifierType": "FIXTURE_ID",
-  };
-  const next = changeCatalogField(
-    before,
-    "identifier.issuerScopeKey",
-    "FIXTURE_GB_REGISTRY",
-    options,
-  );
-  assert.equal(next["identifier.issuingCountry"], "GB");
-  assert.equal(next["individual.residenceCountry"], "AE");
-  assert.equal(
-    changeCatalogField(next, "identifier.issuerScopeKey", "GLOBAL", options)[
-      "identifier.issuingCountry"
-    ],
-    "",
-  );
-  assert.equal(
-    changeCatalogField(next, "identifier.identifierType", "", options)[
-      "identifier.issuerScopeKey"
-    ],
-    "",
-  );
-  assert.equal(before["identifier.identifierType"], "FIXTURE_ID");
-});
 test("missing catalogs provide no invented choices and do not rewrite existing draft", () => {
   assert.deepEqual(catalogChoices("identifier.identifierType", {}, null), []);
+  assert.equal(issuingCountryMode({ "identifier.identifierType": "OLD" }, options), null);
   const before = {
-    "identifier.issuerScopeKey": "OLD_CODE",
+    "identifier.identifierType": "OLD_CODE",
     "identifier.issuingCountry": "GB",
     "individual.givenName": "Fixture",
   };
   assert.deepEqual(
-    changeCatalogField(before, "individual.givenName", "New", null),
-    { ...before, "individual.givenName": "New" },
-  );
-  assert.deepEqual(
-    catalogChoices(
-      "identifier.issuerScopeKey",
-      { "identifier.identifierType": "UNKNOWN" },
-      options,
-    ),
-    [],
+    changeCatalogField(before, "identifier.identifierType", "NEW_CODE", null),
+    { ...before, "identifier.identifierType": "NEW_CODE" },
   );
 });

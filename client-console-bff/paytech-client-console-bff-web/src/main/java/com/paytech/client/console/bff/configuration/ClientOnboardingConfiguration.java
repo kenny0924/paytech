@@ -7,6 +7,7 @@ import com.paytech.foundation.httpclient.api.*;
 import com.paytech.platform.support.api.enums.*;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
 import com.paytech.risk.api.compliance.MaterialRequirementsApi;
+import com.paytech.risk.api.compliance.ClientReviewResultApi;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -39,6 +40,12 @@ public class ClientOnboardingConfiguration {
     @Bean
     ClientDraftApi clientDraftApi(HttpServiceProxyFactory clientOnboardingCctFactory) {
         return clientOnboardingCctFactory.createClient(ClientDraftApi.class);
+    }
+
+    /** C14 正式提交。 */
+    @Bean
+    ClientSubmissionApi clientSubmissionApi(HttpServiceProxyFactory clientOnboardingCctFactory) {
+        return clientOnboardingCctFactory.createClient(ClientSubmissionApi.class);
     }
 
     /** C03 的 CCT 受控目录，使用同一严格私网传输。 */
@@ -85,6 +92,15 @@ public class ClientOnboardingConfiguration {
             transport(env, discovery, "risk", "risk-service", ""),
             options()
         ).createClient(MaterialRequirementsApi.class);
+    }
+
+    /** Risk 客户可见审核结果；只在 CCT 核对申请归属后调用。 */
+    @Bean
+    ClientReviewResultApi clientReviewResultApi(Environment env, ObjectProvider<LoadBalancerClient> discovery) {
+        return HttpServiceClientFactory.create(
+            transport(env, discovery, "risk", "risk-service", ""),
+            options()
+        ).createClient(ClientReviewResultApi.class);
     }
 
     /** 依赖失败保留 Cause，业务错误按明确合同投影。 */
