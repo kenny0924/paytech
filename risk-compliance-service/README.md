@@ -13,14 +13,14 @@ Maven 根项目为 `risk-service`。为保留现有 PDManer 生成路径、独�
 
 | 模块 | 职责 |
 |---|---|
-| risk-api | Risk 私网 `@HttpExchange` 合同：规则集、Candidate、流程、字典、配置查询、统一变量、出款资格与材料目录 |
-| risk-decision | 规则、Candidate、流程、字典、统一变量、静态校验与 Action 目录的 Processor、领域与持久化实现 |
-| risk-control | 名单、冷却、限额与出款资格控制；当前只有 RCO-I09 出款资格 Processor（Fail-Closed） |
+| risk-api | Risk 私网 `@HttpExchange` 合同：规则集、Candidate、执行发布、流程、字典、配置查询、统一变量、名单、支付评估、出款资格与材料目录 |
+| risk-decision | 规则、Candidate、执行发布与影子运行、流程、字典、统一变量、静态校验、Action 目录及支付评估运行期（决策引擎、实时累计与名单命中 Feature）的 Processor、领域与持久化实现 |
+| risk-control | 名单、冷却、限额与出款资格控制；当前有运营名单维护、名单命中查询与 RCO-I09 出款资格 Processor（Fail-Closed） |
 | risk-compliance | 尽职调查、资格与争议业务；当前提供通用材料目录读取 |
 | risk-web | 唯一 Spring Boot 入口，只承载 Controller、协议转换、异常转换与应用装配配置 |
 | risk-test | DB-free 合同/纯测试、真实 Loopback HTTP/MySQL、并发恢复与模块边界验证 |
 
-三个业务 JAR 不相互依赖；写接口与复杂查询的 Processor 位于各自 Owner 模块的 `service/processor`，继承 Foundation `AbstractProcessor` / `AbstractLockProcessor`，本地事务使用 `TransactionTemplate`。API 和业务模块已建立 `src/main/java` 根包与 `src/main/resources`，通过 `package-info.java` 说明模块职责，不创建空 Service、DTO、Mapper 或未来配置。API/业务模块保持普通 JAR；Web 同时生成普通 JAR 和可执行 `-exec.jar`；Test 不发布。
+业务 JAR 之间只有 `risk-decision → risk-control` 一条单向依赖（名单命中查询 `RiskListMembershipService` 与主体键规则），其余不相互依赖；写接口与复杂查询的 Processor 位于各自 Owner 模块的 `service/processor`，继承 Foundation `AbstractProcessor` / `AbstractLockProcessor`，本地事务使用 `TransactionTemplate`。API 和业务模块已建立 `src/main/java` 根包与 `src/main/resources`，通过 `package-info.java` 说明模块职责，不创建空 Service、DTO、Mapper 或未来配置。API/业务模块保持普通 JAR；Web 同时生成普通 JAR 和可执行 `-exec.jar`；Test 不发布。
 
 测试集中在 `risk-test/src/test/java`，测试资源位于 `risk-test/src/test/resources`；不为每个业务 JAR 重复建立测试工程。DB-free 测试不会连接业务库；真实 HTTP/Repository/MySQL 测试只可复用手工准备的仓库 `local-environment`，不得建表、迁移或 Seed。
 
@@ -80,6 +80,16 @@ Session、Vault/Consumer/网络原值、Secret、Credential 或完整 Payload。
 
 本期明确未实现或未接入：Operations UI/BFF、Gateway Target/Route、PLT-I02/Auth、Shadow、审批、激活、
 运行期 Decision Engine/Checkout 评估、后台恢复、MQ、部署。不得把工作区工件或 DB-free 测试外推为上述能力。
+
+## 支付反欺诈一期（2026-10-14）
+
+按[需求与设计](../requirements/20261014/risk-支付反欺诈一期/design.md)新增三组内部路由，均不经 Gateway、一期无页面：
+
+- `/payment-risk-assessment/v1/assessments`：Payment 每个支付尝试同步评估一次，返回 `ALLOW/REVIEW/DENY/FAILED/TIMED_OUT` 与认证要求；同一尝试同内容重放返回原结果，内容不同 409，本环境无生效发布 503 `PAYMENT_RISK_NOT_CONFIGURED`。请求体含消费者 IP 与卡指纹，日志为 metadata-only。
+- `/risk-lists/v1`：名单与成员维护（主体键规范化、响应脱敏）。
+- `/decision-releases/v1/executions`：执行发布创建、静态校验、回放式影子运行、TEST 一人激活与查询。
+
+运行环境由 `decision.runtime.environment`（环境变量 `RISK_DECISION_ENVIRONMENT`）决定，一期只允许激活 TEST 发布。影子运行经本地 `compensation_event`（`DECISION_SHADOW_RUN`）在事务外执行。
 
 ## RCO-I09 最小内部接口
 

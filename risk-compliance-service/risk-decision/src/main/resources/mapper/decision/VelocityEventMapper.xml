@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.VelocityEventMapper">
+    <sql id="columns">velocity_event_id AS velocityEventId, event_code AS eventCode, source_type AS sourceType, source_id AS sourceId, source_version AS sourceVersion, occurred_time AS occurredTime, amount AS amount, currency AS currency, event_hash AS eventHash, create_time AS createTime</sql>
+    <insert id="insert">INSERT INTO t_velocity_event(velocity_event_id, event_code, source_type, source_id, source_version, occurred_time, amount, currency, event_hash, create_time) VALUES(#{row.velocityEventId}, #{row.eventCode}, #{row.sourceType}, #{row.sourceId}, #{row.sourceVersion}, #{row.occurredTime}, #{row.amount}, #{row.currency}, #{row.eventHash}, #{row.createTime})</insert>
+    <insert id="insertBatch">INSERT INTO t_velocity_event(velocity_event_id, event_code, source_type, source_id, source_version, occurred_time, amount, currency, event_hash, create_time) VALUES <foreach collection="rows" item="row" separator=",">(#{row.velocityEventId}, #{row.eventCode}, #{row.sourceType}, #{row.sourceId}, #{row.sourceVersion}, #{row.occurredTime}, #{row.amount}, #{row.currency}, #{row.eventHash}, #{row.createTime})</foreach></insert>
+</mapper>
