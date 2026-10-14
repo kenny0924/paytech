@@ -36,7 +36,7 @@ import tools.jackson.databind.node.ObjectNode;
  * <li>参数校验：每个字段的缺失、格式、长度与范围由入口 Bean Validation 拒绝（422）并定位字段。</li>
  * <li>业务规则：检查点/来源矩阵、创建类版本、角色、signed BIGINT 与 inputHash 绑定在评估前拒绝（400）； sourceFactType
  * 与检查点一一对应，其改动先命中来源矩阵，不单列摘要绑定用例。</li>
- * <li>报文边界：无法解析的报文返回 400，非 JSON 媒体类型返回 415。</li>
+ * <li>报文边界：无法解析或含重复字段的报文返回 400，非 JSON 媒体类型返回 415。</li>
  *
  * @see ManualPayoutEligibilityApi#evaluate(ManualPayoutEligibilityRequestBody)
  */
@@ -232,7 +232,9 @@ class ManualPayoutEligibilityApiAutoTest extends MockTestBase {
             Arguments.of("未知字段", raw(mapper -> withField(mapper, "decision", "ALLOW"))),
             Arguments.of("sourceFactVersion 超出 int",
                 raw(mapper -> withRawField(mapper, "sourceFactVersion", "2147483648"))),
-            Arguments.of("sourceFactVersion 为字符串", raw(mapper -> withField(mapper, "sourceFactVersion", "one"))));
+            Arguments.of("sourceFactVersion 为字符串", raw(mapper -> withField(mapper, "sourceFactVersion", "one"))),
+            Arguments.of("重复字段同值", raw(mapper -> withDuplicateField(mapper, "currency", null))),
+            Arguments.of("重复字段异值", raw(mapper -> withDuplicateField(mapper, "commandKey", "\"other-command\""))));
     }
 
     /** 让参数化用例中的 Lambda 具备明确的目标类型。 */
@@ -261,6 +263,14 @@ class ManualPayoutEligibilityApiAutoTest extends MockTestBase {
         node.remove(name);
         String json = node.toString();
         return json.substring(0, json.length() - 1) + ",\"" + name + "\":" + rawValue + "}";
+    }
+
+    /** 合法 Client 创建请求末尾再写一次同名字段；rawValue 为 null 时重复原值。 */
+    private static String withDuplicateField(ObjectMapper mapper, String name, String rawValue) {
+        ObjectNode node = jsonNode(mapper);
+        String value = rawValue == null ? node.get(name).toString() : rawValue;
+        String json = node.toString();
+        return json.substring(0, json.length() - 1) + ",\"" + name + "\":" + value + "}";
     }
 
     private static ObjectNode jsonNode(ObjectMapper mapper) {
