@@ -4,7 +4,7 @@
 
 状态：已确认合同，研发中；实际实现与验证从当前台账读取。用户已接受[简化方案](./simplification-design.md)；本稿定义本期接口，不因合同确认推断注册或部署。方法与路径原清单见 [阶段 3 API inventory](./assets/stage3/api-operation-inventory.json)，已确认文件差异见[阶段 4 合同增量](./assets/stage4/file-operation-inventory-20260915.json)。
 
-本稿有 37 个外部业务操作（Client 28、Operations 9）及 6 个内部登记/恢复/只读授权操作；BFF 到 Owner 的同义转发不重复计数。沿用 Platform 的 Tenant Provision/Status、文件存储和授权能力，不把其既有内部操作再算作新业务 API。审核结果用 MQ 事实回传，不新增 BFF 跨库事务或同步回调写库入口。
+本稿有 38 个外部业务操作（Client 29、Operations 9；2026-10-13 新增 C16）及 6 个内部登记/恢复/只读授权操作；BFF 到 Owner 的同义转发不重复计数。沿用 Platform 的 Tenant Provision/Status、文件存储和授权能力，不把其既有内部操作再算作新业务 API。审核结果用 MQ 事实回传，不新增 BFF 跨库事务或同步回调写库入口。
 
 > **2026-09-15 响应决定：** C04/C06 返回固定 CommandReceipt，成功后 C05 查询最新资料。同键同参重放原回执和 HTTP 状态；详见[固定回执决定](./draft-command-response-proposal.md)。
 
@@ -14,7 +14,7 @@
 - Client BFF 只服务 `CLIENT/client-console/CUSTOMER`；Operations 的 Realm/Audience 和现有认证路径保持独立。Browser 不提交 accountId、tenantId、requestedBy、approvedBy 或 Owner 系统代码来决定权限。
 - 公共入口经 Gateway。BFF 的内部请求传真实上下文，Owner 再核对 Account/Member/申请/文件权限；公开请求中的同名 Header 必须被入口删除，不能据此建立信任。
 - 所有 ID 以无前导零十进制字符串传输；提交命令 ID/幂等键使用 UUID 字符串；金额和持股比例用十进制字符串，时间 UTC 六位微秒字符串，业务日期用 YYYY-MM-DD。
-- Client C04、C06—C14、F01/F02，以及 O03—O09 必须携带 `Idempotency-Key`（UUID）。内部提交的 submissionId 是 C14 的稳定命令身份。相同身份与同内容返回原结果，不同内容返回 409；超时后重试原键，不能自动换键。
+- Client C04、C06—C13、F01/F02，以及 O03—O09 必须携带 `Idempotency-Key`（UUID）。C14 由服务端生成 submissionId 并按申请状态防重，见 [C14 修订](./submission-contract-amendment.md)。相同身份与同内容返回原结果，不同内容返回 409；超时后重试原键，不能自动换键。
 - CCT 沿用本库 command_idempotency 业务语义，不在本期顺手迁移其他系统到 Foundation 命令幂等 JAR。请求摘要仅供防止同键异参，不能作为资料版本、页面冲突令牌或资料快照。
 - GET 不改状态；验证/重置邮件链接的 GET 只展示页面，最终用 POST 消费，避免邮件扫描器提前激活或重置。
 - Refresh Cookie 由 BFF 管理，名为 `__Secure-client-refresh`，HttpOnly、Secure、SameSite=Lax、host-only，Path=`/api/client/auth/v1`；写入与清理使用同一属性。Access Token 只在浏览器内存保存并用于 Authorization，浏览器不在 localStorage 保存访问/刷新 Token。写入校验固定部署 Origin，Refresh 单飞。敏感 Body 禁止普通请求/响应日志。
@@ -48,7 +48,8 @@
 | C11 | DELETE `/client-onboarding/v1/applications/{applicationId}/relations/{relationId}` | CCT | Empty → NoContent | 只移除本申请可编辑关系，不删 Party/旧审核事实 |
 | C12 | POST `/client-onboarding/v1/applications/{applicationId}/documents` | CCT | DocumentReference → DocumentCommandReceipt | 验证 File/Requirement/Subject 全部准确归属 |
 | C13 | DELETE `/client-onboarding/v1/applications/{applicationId}/documents/{documentId}` | CCT | Empty → NoContent | 仅当前可编辑材料引用；Platform 文件不在此删除 |
-| C14 | POST `/client-onboarding/v1/applications/{applicationId}/submissions` | CCT | Empty → Submission | 完成校验并锁定资料，登记 Risk 后续任务 |
+| C14 | POST `/client-onboarding/v1/applications/{applicationId}/submissions` | CCT | Empty → Submission | 完成校验并锁定资料，登记 Risk 后续任务；按状态防重，不要求 Idempotency-Key（[C14 修订](./submission-contract-amendment.md)） |
+| C16 | GET `/client-onboarding/v1/applications/{applicationId}/submission-check` | CCT | Empty → SubmissionCheck | 与 C14 相同的提交检查，只读，返回逐项问题 |
 | C15 | GET `/client-onboarding/v1/applications/{applicationId}/review-history` | Risk | PageQuery → ReviewHistory | 当前账号可见审核动作与任务，不提供 Profile 版本比较 |
 | F01 | POST `/onboarding-files/v1/uploads` | Platform + CCT 目标授权 | UploadStart → Upload | 核对本人当前可编辑申请，再由 Platform 唯一解析并核对对应 Tenant |
 | F02 | POST `/onboarding-files/v1/uploads/{uploadId}/completion` | Platform | Empty → FileCompletionReceipt | 由 Platform 查询对象存储确认真实字节和 Hash，不能相信浏览器声明完成 |
@@ -235,6 +236,8 @@ C05 的 people 为 partyId/editable/values（仅 individual/address/identifier�
 
 ## 10. C12/C13/C05 材料的 Owner 组件
 
+> **2026-10-13 修订：** 材料与表单目录已通用化，不再按国家区分；本节中关于国家映射、`countryCode`、`MATERIAL_COUNTRY_REQUIRED`、`COUNTRY_REQUIRED` 及签发机构的描述由[通用化差异稿](./generic-material-form-proposal.md)取代。
+
 `ClientDocumentApi` 沿用 CCT 的 BFF Caller、Account/Session 和 `onboarding.draft-enabled` 开关。C12 请求严格为 subjectPartyId、requirementCode、documentType、fileId；不接受客户端摘要、租户或存储坐标。主体只能是原申请主主体，或组织申请中仍有 DRAFT/ACTIVE 关系的可见人员。先在事务外核对 Platform 当前会话、Risk 真实要求和 Platform 原文件，最后在申请行锁内重新检查状态、主体、国家及幂等键，并原子保存引用和固定回执。
 
 国家映射暂按已告知的实现假设：个人及关联人员使用 `residenceCountry`，组织使用 `incorporationCountry`；用户尚未确认此口径，国籍仍保留为审核资料。没有国家不调用默认规则；正式规则配置前需确认适用口径。该选择不代表已批准任何国家材料政策。
@@ -259,6 +262,8 @@ F03 只读文件元数据，不触发扫描；F04 空 Body、逐次授权，仅�
 
 ## 11. 资料与材料页面的 BFF 投影边界
 
+> **2026-10-13 修订：** 材料与表单目录已通用化，不再按国家区分；本节中关于国家映射、`countryCode`、`MATERIAL_COUNTRY_REQUIRED`、`COUNTRY_REQUIRED` 及签发机构的描述由[通用化差异稿](./generic-material-form-proposal.md)取代。
+
 本节限定 C01/C03/C05 的资料与材料阶段投影；上文完整目标中的 workspace/currentReviewTask/提交就绪仍由各自后续用例提供，不能补造默认值。实际完成和验证状态只见 [CURRENT_IMPLEMENTATION](../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。本节不新增外部操作、资料版本或数据库表。
 
 - CCT `ClientOnboardingStartApi` 的 `GET /client-onboarding/v1/start` 只读当前账号最近申请。可信 Caller 为 `client-console-bff`，每次先验证真实 CLIENT Account/Session；不接受 Query/Body。响应 `applications` 每项为 applicationId/applicationNo/clientType/status/active/savedAt，活动申请优先、随后 applicationId 降序，最多 20 项；`hasMore` 明确表示历史截断。BFF 增加 `activeApplicationId`，进入或刷新页面不能隐式调用 C04。该导航投影暂不提供工作区切换。
@@ -276,6 +281,8 @@ Web 为一次写意图冻结 Body 和幂等键，网络/依赖失败只重试原
 
 
 ## 12. C03 受控表单目录
+
+> **2026-10-13 修订：** 材料与表单目录已通用化，不再按国家区分；本节中关于国家映射、`countryCode`、`MATERIAL_COUNTRY_REQUIRED`、`COUNTRY_REQUIRED` 及签发机构的描述由[通用化差异稿](./generic-material-form-proposal.md)取代。
 
 本节细化已批准 C03，不新增外部操作、资料版本或数据库表。CCT 通过 `ClientFormOptionsApi` 提供相同私网 GET 路径及 clientType/countryCode 参数；必须校验可信 BFF 调用方、当前账号和 CLIENT 会话。目录查询不创建申请或绑定永久身份键，不增加本地数据库事务。实际完成范围仍只见当前实施台账。
 

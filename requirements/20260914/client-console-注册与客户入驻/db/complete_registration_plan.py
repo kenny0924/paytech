@@ -6,9 +6,10 @@ HERE = Path(__file__).resolve().parent
 plan_path = HERE / 'registration-plan.json'
 plan = json.loads(plan_path.read_text())
 reason = 'Client onboarding initial registration; keep routes disabled pending acceptance'
-idempotent = {'C04', *('C%02d' % n for n in range(6, 15)),
+# C14 按申请状态防重，不转发 Idempotency-Key（2026-10-13 C14 修订）。
+idempotent = {'C04', *('C%02d' % n for n in range(6, 14)),
               *('O%02d' % n for n in range(3, 10))}
-queries = {'C03': ['clientType', 'countryCode'], 'C15': ['cursor', 'limit'],
+queries = {'C03': ['clientType'], 'C15': ['cursor', 'limit'],
            'O01': ['cursor', 'limit', 'status', 'applicationNo']}
 
 def pair(dimension, capacity, concurrency):
@@ -16,6 +17,14 @@ def pair(dimension, capacity, concurrency):
                  refillTokens=capacity, refillPeriodMillis=60000, concurrencyLimit=None),
             dict(ruleType='CONCURRENCY', dimension=dimension, capacity=None,
                  refillTokens=None, refillPeriodMillis=None, concurrencyLimit=concurrency)]
+
+# C16 提交前核对（2026-10-13 C14 修订）：在 C05 之后插入一次，重复运行保持幂等。
+if not any(r['operationId'] == 'C16' for r in plan['routes']):
+    base = next(r for r in plan['routes'] if r['operationId'] == 'C05')
+    c16 = dict(base, operationId='C16', routeCode='client-onboarding-c16',
+               externalPathTemplate='/api/client/onboarding/v1/applications/{applicationId}/submission-check',
+               downstreamPathTemplate='/client-onboarding/v1/applications/{applicationId}/submission-check')
+    plan['routes'].insert(plan['routes'].index(base) + 1, c16)
 
 for route in plan['routes']:
     op = route['operationId']

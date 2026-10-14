@@ -26,7 +26,9 @@ const organization=create('ORGANIZATION');organization.values={organization:{leg
 const person={partyId:'301',editable:true,values:{individual:{givenName:'测试',familyName:'人员',residenceCountry:'AE'}}};organization.people.push(person);organization.relations.push({relationId:'302',relatedPartyId:'301',relationType:'DIRECTOR',ownershipPercentage:null,effectiveFrom:'2026-01-01',effectiveTo:null,status:'DRAFT',editable:true});
 const individual=create('INDIVIDUAL');individual.values={individual:{givenName:'示例',familyName:'个人'}};individual.status='APPROVED';individual.editable=false;
 const requirement={requirementCode:'REGISTRATION',documentType:'REGISTRATION_CERTIFICATE',requiredFlag:true};
-function page(app){return {...app,materialSubjects:[{subjectPartyId:app.subjectPartyId,requirementsStatus:app.values[app.clientType==='ORGANIZATION'?'organization':'individual']?.[app.clientType==='ORGANIZATION'?'incorporationCountry':'residenceCountry']?'AVAILABLE':'COUNTRY_REQUIRED',requirements:[requirement]},...app.people.filter(p=>app.relations.some(r=>r.relatedPartyId===p.partyId&&r.status!=='REMOVED')).map(p=>({subjectPartyId:p.partyId,requirementsStatus:'AVAILABLE',requirements:[{requirementCode:'IDENTITY',documentType:'PASSPORT',requiredFlag:true}]}))]};}
+const individualRequirement={requirementCode:'IDENTITY',documentType:'IDENTITY_DOCUMENT',requiredFlag:true};
+const personRequirements=[individualRequirement,{requirementCode:'OTHER',documentType:'SUPPORTING_DOCUMENT',requiredFlag:false}];
+function page(app){return {...app,materialSubjects:[{subjectPartyId:app.subjectPartyId,qualificationType:app.clientType==='ORGANIZATION'?'ORGANIZATION_KYB':'INDIVIDUAL_KYC',requirementsStatus:'AVAILABLE',requirements:app.clientType==='ORGANIZATION'?[requirement]:personRequirements},...app.people.filter(p=>app.relations.some(r=>r.relatedPartyId===p.partyId&&r.status!=='REMOVED')).map(p=>({subjectPartyId:p.partyId,qualificationType:'RELATED_PERSON_KYC',requirementsStatus:'AVAILABLE',requirements:personRequirements}))]};}
 const server=http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1');const route=url.pathname;let bytes='';for await(const chunk of req){bytes+=chunk;if(bytes.length>524288){res.writeHead(413).end();return;}}
  const reply=(body,status=200)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','Referrer-Policy':'no-referrer'});res.end(status===204?'':JSON.stringify(body));};
@@ -57,12 +59,13 @@ const server=http.createServer(async(req,res)=>{
  }
  if((route.startsWith('/api/client/onboarding/')||route.startsWith('/api/client/onboarding-files/'))&&!accessSession(req))return problem(401,'请先登录');
  if(route==='/api/client/onboarding/v1/form-options'){
-  const type=url.searchParams.get('clientType'),country=url.searchParams.get('countryCode');
-  const organizationType={code:'SYNTHETIC_AE_ORG',label:'合成组织类型（仅测试）'};
-  return reply({clientType:type,countryCode:country,catalogStatus:type==='ORGANIZATION'?(country===null?'COUNTRY_REQUIRED':country==='AE'?'AVAILABLE':'UNAVAILABLE'):'AVAILABLE',
-   organizationTypes:type==='ORGANIZATION'&&country==='AE'?[organizationType]:[],businessModels:[{code:'SYNTHETIC_MODEL',label:'合成经营模式（仅测试）'}],
-   identifierTypes:[{code:'SYNTHETIC_ID',label:type==='ORGANIZATION'?'合成注册证明（仅测试）':'合成个人证明（仅测试）',issuers:[{scopeKey:'SYNTHETIC_GB_AUTHORITY',label:'合成英国签发机构',issuingCountry:'GB'},{scopeKey:'GLOBAL',label:'合成全球机构',issuingCountry:null}]}],
-   requirementsStatus:country?'AVAILABLE':'COUNTRY_REQUIRED',requirements:country?[requirement]:[]});
+  const type=url.searchParams.get('clientType');
+  if([...url.searchParams.keys()].some(k=>k!=='clientType'))return problem(400,'入驻查询参数无效');
+  const organizationType={code:'SYNTHETIC_ORG',label:'合成组织类型（仅测试）'};
+  return reply({clientType:type,catalogStatus:'AVAILABLE',
+   organizationTypes:type==='ORGANIZATION'?[organizationType]:[],businessModels:[{code:'SYNTHETIC_MODEL',label:'合成经营模式（仅测试）'}],
+   identifierTypes:[{code:'SYNTHETIC_ID',label:type==='ORGANIZATION'?'合成注册证明（仅测试）':'合成个人证明（仅测试）',issuingCountryMode:'REQUIRED'},{code:'SYNTHETIC_GLOBAL_ID',label:'合成全球标识（仅测试）',issuingCountryMode:'NONE'}],
+   requirementsStatus:'AVAILABLE',requirements:type==='ORGANIZATION'?[requirement]:personRequirements});
  }
  if(route==='/api/client/onboarding/v1/start')return reply({applications:[...applications.values()].map(a=>({applicationId:a.applicationId,applicationNo:a.applicationNo,clientType:a.clientType,status:a.status,active:a.editable})),hasMore:false,activeApplicationId:organization.applicationId});
  const parts=route.split('/');const app=applications.get(parts[6]);

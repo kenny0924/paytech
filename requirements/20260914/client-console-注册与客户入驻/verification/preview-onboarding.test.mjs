@@ -37,7 +37,7 @@ test('anonymous refresh, context, application reads and writes return 401',async
   for(const [method,path] of [
     ['POST','/api/client/auth/v1/refresh'],['GET','/api/client/auth/v1/context'],
     ['GET','/api/client/onboarding/v1/start'],['GET','/api/client/onboarding/v1/applications/100'],
-    ['GET','/api/client/onboarding/v1/form-options?clientType=ORGANIZATION&countryCode=AE'],
+    ['GET','/api/client/onboarding/v1/form-options?clientType=ORGANIZATION'],
     ['PATCH','/api/client/onboarding/v1/applications/100/draft'],['POST','/api/client/onboarding-files/v1/uploads']
   ]) {
     const response=await request(path,{method});

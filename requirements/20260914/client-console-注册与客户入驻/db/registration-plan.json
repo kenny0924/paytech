@@ -818,8 +818,7 @@
         }
       ],
       "queryParameterNames": [
-        "clientType",
-        "countryCode"
+        "clientType"
       ],
       "guardRules": [
         {
@@ -974,6 +973,81 @@
       "httpMethod": "GET",
       "externalPathTemplate": "/api/client/onboarding/v1/applications/{applicationId}",
       "downstreamPathTemplate": "/client-onboarding/v1/applications/{applicationId}",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 16384,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "C16",
+      "routeCode": "client-onboarding-c16",
+      "channel": "CLIENT",
+      "httpMethod": "GET",
+      "externalPathTemplate": "/api/client/onboarding/v1/applications/{applicationId}/submission-check",
+      "downstreamPathTemplate": "/client-onboarding/v1/applications/{applicationId}/submission-check",
       "targetCode": "client-console-bff",
       "securityProfileCode": "CLIENT_JWT",
       "authorizationMode": "HUMAN_AUTHENTICATED",
@@ -1835,14 +1909,6 @@
         {
           "headerName": "origin",
           "headerUse": "FORWARD_REQUEST"
-        },
-        {
-          "headerName": "idempotency-key",
-          "headerUse": "CORS_REQUEST_ALLOWED"
-        },
-        {
-          "headerName": "idempotency-key",
-          "headerUse": "FORWARD_REQUEST"
         }
       ],
       "queryParameterNames": [],
@@ -2335,10 +2401,11 @@
         }
       ],
       "queryParameterNames": [
-        "cursor",
-        "limit",
+        "page",
+        "size",
         "status",
-        "applicationNo"
+        "qualificationType",
+        "applicationId"
       ],
       "guardRules": [
         {

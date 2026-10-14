@@ -1,0 +1,25 @@
+{
+  "executedAt": "2026-10-13",
+  "authorization": "用户在 4b 确认中选择“授权执行（推荐）”：仅本机 127.0.0.1:13306/mor_risk 执行 risk-onboarding-alter.sql",
+  "target": "docker mor-local-mysql-1 / mor_risk / risk_app",
+  "sqlFile": "db/implementation/risk-onboarding-alter.sql",
+  "sqlSha256": "eb8c7dcbc4bfc1bf91549704d751264a1be6158cea4f9d049f9c30a2cf093b11",
+  "preflight": {
+    "generatorCheck": "pass",
+    "rows": {"t_due_diligence_case": 0, "t_dd_case_subject": 0, "t_qualification_decision": 0},
+    "t_dd_case_classification": "absent",
+    "otherConnectionsToMorRisk": 0,
+    "structureBackup": "scratchpad private directory (0700), SHOW CREATE TABLE for the 3 altered tables"
+  },
+  "result": {
+    "exitCode": 0,
+    "warnings": ["1681 Integer display width is deprecated (TINYINT(1) in approved schema)"],
+    "tablesInSchema": 81,
+    "verifiedAgainstSchemaSql": {
+      "tables": ["t_due_diligence_case", "t_dd_case_subject", "t_dd_case_dependency", "t_dd_party_snapshot", "t_dd_requirement", "t_dd_evidence_ref", "t_dd_check", "t_dd_case_state_change", "t_qualification_decision", "t_qualification_state_change", "t_dd_case_classification"],
+      "checks": "column name/type/nullability/order/comment and all secondary indexes",
+      "mismatches": 0
+    }
+  },
+  "notExecuted": "no DML, no other database, no environment other than local"
+}
