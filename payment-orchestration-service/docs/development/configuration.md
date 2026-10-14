@@ -25,7 +25,9 @@
 - 可审阅的[服务配置模板](../../config/nacos/payment-orchestration-service.yaml)包含当前 Payment 非敏感运行参数。模板使用本地地址，其他环境必须调整。
 - 加载入口为 [application.yml](../../paytech-payment-web/src/main/resources/application.yml) 的 `nacos` Profile，使用标准 `spring.config.import`；版本由项目 BOM 管理。参考 [Spring Cloud Alibaba 官方接入说明](https://sca.aliyun.com/docs/2025.x/user-guide/nacos/quick-start/)。
 
-本地默认不连接 Nacos，使用 `application.yml` 中的配置；启用方式：
+- **服务注册与发现（2026-10-14）：** Payment 依赖 `spring-cloud-starter-alibaba-nacos-discovery`，启动即按 `spring.cloud.nacos.discovery.server-addr`（`NACOS_SERVER_ADDR`，默认 `127.0.0.1:8848`）与 `namespace`（`NACOS_NAMESPACE`，默认 `mor-local`）注册 `payment-orchestration-service`，并经 Nacos 发现 Platform（`platform-support-service`）、Risk（`risk-service`）与 Vault（`vault-service`）。Platform 执行卡直付时回调 Payment 读卡接口，依赖该注册。与配置中心的 `nacos` Profile 相互独立；自动测试关闭 Nacos 发现与注册，外部服务由 simple discovery 指向测试 Mock HTTP 服务。
+
+本地默认不从 Nacos 加载配置，使用 `application.yml` 中的配置；启用方式：
 
 ```bash
 export SPRING_PROFILES_ACTIVE=nacos

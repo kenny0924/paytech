@@ -18,6 +18,8 @@
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-http-client-support</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-restclient</artifactId></dependency>
         <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-loadbalancer</artifactId></dependency>
+        <!-- 注册到 Nacos 并经 Nacos 发现 Platform 等内部服务（Platform 读卡回调需要发现 Payment）。 -->
+        <dependency><groupId>com.alibaba.cloud</groupId><artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId></dependency>
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>

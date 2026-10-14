@@ -31,6 +31,10 @@ spring:
       config:
         # 启用 nacos Profile 后，从配置中心加载服务配置。
         enabled: false
+      discovery:
+        # 自动测试不连接 Nacos，外部服务由 simple discovery 指向测试 Mock HTTP 服务。
+        enabled: false
+        register-enabled: false
   datasource:
     url: "jdbc:mysql://127.0.0.1:13306/mor_payment_channel_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
     username: payment_channel_test

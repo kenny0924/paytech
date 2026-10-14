@@ -12,6 +12,10 @@ spring:
       config:
         # 启用 nacos Profile 后，从配置中心加载服务配置。
         enabled: false
+      discovery:
+        # 注册本服务并发现 Platform、Vault 等内部服务；地址与命名空间由部署环境注入。
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
   datasource:
     url: "${MOR_PAYMENT_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_payment?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
     username: "${MOR_PAYMENT_DB_USERNAME:payment_app}"
