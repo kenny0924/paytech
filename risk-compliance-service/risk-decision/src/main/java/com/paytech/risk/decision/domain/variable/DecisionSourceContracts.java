@@ -21,12 +21,22 @@ public final class DecisionSourceContracts {
             new Field("client_id", DecisionValueType.STRING, true, DataClassification.INTERNAL,
                 Set.of(VariableUsage.ACTION_PARAMETER), null, null, "CLIENT_ID")
         )),
-        new Contract("RULE_SET_NODE_RESULT", 1, "CHECKOUT_PREPARE", VariableSource.NODE_OUTPUT, "RULE_SET", List.of(
-            new Field("matched", DecisionValueType.BOOLEAN, true, DataClassification.INTERNAL,
-                Set.of(VariableUsage.FLOW_CONDITION), null, null, null),
-            new Field("decision", DecisionValueType.STRING, false, DataClassification.INTERNAL,
-                Set.of(VariableUsage.FLOW_CONDITION), null, null, null)
-        ))
+        nodeResult("CHECKOUT_PREPARE"),
+        // 支付尝试评估的可配置输入；IP、卡指纹与 User-Agent 只供引擎计算累计与名单，不开放给规则字面量。
+        new Contract("PAYMENT_ATTEMPT", 1, "PAYMENT_ATTEMPT_RISK", VariableSource.INPUT, null, List.of(
+            new Field("client_id", DecisionValueType.STRING, true, DataClassification.INTERNAL, CONDITIONS, null, null,
+                "CLIENT_ID"),
+            input("entity_no", DecisionValueType.STRING, null, null, null),
+            input("payment_method_code", DecisionValueType.STRING, null, null, null),
+            input("capture_mode", DecisionValueType.STRING, null, null, null),
+            input("amount", DecisionValueType.NUMBER, NumericUnit.MONEY, "currency", null),
+            input("currency", DecisionValueType.STRING, null, null, "CURRENCY"),
+            input("industry_code", DecisionValueType.STRING, null, null, null),
+            input("mcc_code", DecisionValueType.STRING, null, null, null),
+            optional("consumer_country_code"),
+            optional("card_bin")
+        )),
+        nodeResult("PAYMENT_ATTEMPT_RISK")
     );
 
     /** 工程合同不可变且不依赖外部状态。 */
@@ -50,6 +60,20 @@ public final class DecisionSourceContracts {
     /** 构造真实输入字段的通用条件用途上限。 */
     static Field input(String key, DecisionValueType type, NumericUnit unit, String currencyField, String role) {
         return new Field(key, type, true, DataClassification.INTERNAL, CONDITIONS, unit, currencyField, role);
+    }
+
+    /** 可选的字符串输入，支付方未提供时为空。 */
+    static Field optional(String key) {
+        return new Field(key, DecisionValueType.STRING, false, DataClassification.INTERNAL, CONDITIONS, null, null, null);
+    }
+
+    /** 规则集节点结果合同；每个支持流程的决策点各有一份。 */
+    static Contract nodeResult(String pointCode) {
+        return new Contract("RULE_SET_NODE_RESULT", 1, pointCode, VariableSource.NODE_OUTPUT, "RULE_SET", List.of(
+            new Field("matched", DecisionValueType.BOOLEAN, true, DataClassification.INTERNAL,
+                Set.of(VariableUsage.FLOW_CONDITION), null, null, null),
+            new Field("decision", DecisionValueType.STRING, false, DataClassification.INTERNAL,
+                Set.of(VariableUsage.FLOW_CONDITION), null, null, null)));
     }
 
     /** 合同字段只描述来源能提供的事实，不携带变量管理值。 */

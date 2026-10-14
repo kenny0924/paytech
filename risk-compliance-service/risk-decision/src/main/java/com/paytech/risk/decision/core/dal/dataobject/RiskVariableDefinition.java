@@ -49,6 +49,9 @@ public class RiskVariableDefinition {
     /** 来源合同的准确版本；仅 INPUT 和 NODE_OUTPUT 非空，不取最新版本兜底。 */
     private Integer sourceContractVersion;
 
+    /** VELOCITY 与 LIST 来源创建时生成的不可变 Feature Version；其他来源为空。 */
+    private Long featureVersionId;
+
     /** 来源合同中的准确顶层字段键；仅 INPUT 和 NODE_OUTPUT 非空，不接受任意路径、SQL 或脚本。 */
     private String sourceField;
 
@@ -119,6 +122,8 @@ public class RiskVariableDefinition {
             VariableDefinitionValidator.validate(entry.definition());
             if (status == null || version <= 0 || createBy <= 0 || updateBy <= 0 || createTime == null || updateTime == null)
                 throw invalid("变量根元数据无效");
+            if (entry.definition().featureBacked() && featureVersionId == null)
+                throw invalid("Feature 变量缺少 Feature Version");
             if (!Objects.equals(currentValue(entry.definition(), entry.currentValue()), entry.currentValue()))
                 throw invalid("变量值未规范化");
         } catch (RiskVariableException failure) {

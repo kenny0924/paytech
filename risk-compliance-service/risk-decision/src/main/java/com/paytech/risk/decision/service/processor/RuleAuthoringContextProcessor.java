@@ -6,7 +6,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.rule.DecisionRuleSetAssembler;
 import com.paytech.risk.decision.domainservice.repository.DecisionRuleSetRepository;
 import com.paytech.risk.decision.domainservice.service.DecisionConfigurationNotFoundException;
@@ -26,14 +26,12 @@ public class RuleAuthoringContextProcessor extends AbstractProcessor<RuleAuthori
     private final DecisionRuleSetRepository repository;
     private final PlatformTransactionManager transactionManager;
     private final RuleSetConfigurationReader reader;
-    private final CheckoutPrepareAuthoringDescriptor descriptor;
 
     /** 工程目录与数据库动作必须一致才返回可配置能力。 */
     @Override
     protected RuleAuthoringView processRequest(RuleAuthoringContextRequest request) {
-        if (!"CHECKOUT_PREPARE".equals(request.getPointCode())) {
-            throw new DecisionConfigurationNotFoundException();
-        }
+        DecisionPointAuthoringDescriptor descriptor = DecisionPointAuthoringDescriptor.find(request.getPointCode())
+            .orElseThrow(DecisionConfigurationNotFoundException::new);
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         transaction.setReadOnly(true);
         transaction.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
@@ -41,7 +39,7 @@ public class RuleAuthoringContextProcessor extends AbstractProcessor<RuleAuthori
             var point = repository.findPointByCode(request.getPointCode())
                 .orElseThrow(DecisionConfigurationNotFoundException::new);
             assembler.verifyPoint(point);
-            reader.requireCatalog();
+            reader.requireCatalog(point.pointCode());
             return new RuleAuthoringView(descriptor, variableService.systemDefinitions(request.getPointCode()));
         });
     }

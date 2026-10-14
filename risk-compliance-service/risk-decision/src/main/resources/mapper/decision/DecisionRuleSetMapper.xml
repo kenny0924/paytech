@@ -462,6 +462,14 @@
         WHERE point_version_id = #{pointVersionId}
     </select>
 
+    <select id="selectPointVersionByNo" resultMap="DecisionPointVersionResultMap" useCache="false">
+        SELECT point_version_id, decision_point_id, version_no, input_contract_code, input_contract_version,
+               output_contract_code, default_decision, evaluation_strategy, failure_strategy, timeout_ms,
+               status, content_hash, create_time, update_time
+        FROM t_decision_point_version
+        WHERE decision_point_id = #{decisionPointId} AND version_no = #{versionNo}
+    </select>
+
     <select id="selectPointVersionsByIds" resultMap="DecisionPointVersionResultMap" useCache="false">
         SELECT point_version_id, decision_point_id, version_no, input_contract_code, input_contract_version,
                output_contract_code, default_decision, evaluation_strategy, failure_strategy, timeout_ms,

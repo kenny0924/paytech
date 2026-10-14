@@ -1,5 +1,6 @@
 package com.paytech.risk.decision.service.processor;
 
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
@@ -83,7 +84,7 @@ public class ValidateFlowProcessor extends AbstractProcessor<ValidateFlowRequest
         Graph ordered =
             new Graph(1, command.graph().nodes().stream().map(n -> normalizedNodes.get(n.nodeKey())).toList(),
                 checked.normalized().graph().edges());
-        List<Issue> issues = new ArrayList<>(references.validateForQuery(point.decisionPointId(), ordered, base));
+        List<Issue> issues = new ArrayList<>(references.validateForQuery(point.decisionPointId(), point.pointCode(), ordered, base));
         if (issues.isEmpty()) {
             issues.addAll(checkVariables(command.pointCode(), ordered).issues());
         }
@@ -97,7 +98,7 @@ public class ValidateFlowProcessor extends AbstractProcessor<ValidateFlowRequest
 
     /** 当前可编辑决策点由本库目录确认。 */
     private DecisionPoint point(String code) {
-        if (!"CHECKOUT_PREPARE".equals(code)) {
+        if (DecisionPointAuthoringDescriptor.find(code).isEmpty()) {
             throw new DecisionConfigurationNotFoundException();
         }
         DecisionPoint point = rules.findPointByCode(code).orElseThrow(DecisionConfigurationNotFoundException::new);

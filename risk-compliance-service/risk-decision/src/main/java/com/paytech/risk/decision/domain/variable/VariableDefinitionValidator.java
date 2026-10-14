@@ -41,6 +41,22 @@ public final class VariableDefinitionValidator {
         }
         if (d.sourceContractCode() != null || d.sourceContractVersion() != null || d.sourceField() != null
             || d.usages().contains(VariableUsage.ACTION_PARAMETER)) { throw invalid("常量和集合不允许来源映射或动作主体用途"); }
+        if (d.featureBacked()) { validateFeatureSource(d); return; }
+        if (d.featureVersionId() != null) { throw invalid("只有实时累计和名单命中变量关联 Feature Version"); }
+    }
+
+    /**
+     * 实时累计与名单命中变量只服务于有运行期的决策点，由 Feature 计算取值
+     *
+     * @param d 变量结构；Feature Version 在创建时由服务端分配，持久化后必须非空
+     */
+    static void validateFeatureSource(Definition d) {
+        var descriptor = d.pointCode() == null ? null
+            : com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.find(d.pointCode()).orElse(null);
+        if (descriptor == null || !descriptor.runtimeSupported()) { throw invalid("实时累计与名单命中变量必须属于支持运行期的决策点"); }
+        if (d.allowedValuesVariableCode() != null || d.formatCode() != VariableFormat.NONE) { throw invalid("Feature 变量不关联可选值且格式为 NONE"); }
+        if (d.sourceType() == VariableSource.LIST && d.valueType() != DecisionValueType.BOOLEAN) { throw invalid("名单命中变量必须为 BOOLEAN"); }
+        if (d.sourceType() == VariableSource.VELOCITY && d.valueType() != DecisionValueType.NUMBER) { throw invalid("实时累计变量必须为 NUMBER"); }
     }
 
     /** NUMBER 必须明确量纲；金额的固定币种和币种变量恰好选择一种。 */

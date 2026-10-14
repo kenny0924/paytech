@@ -13,7 +13,7 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.risk.decision.core.dal.dataobject.RuleRejectReason;
 import com.paytech.risk.decision.core.dal.dataobject.RuleSet;
 import com.paytech.risk.decision.core.dal.dataobject.RuleSetVersion;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.DictionaryStatus;
 import com.paytech.risk.decision.domain.enums.RuleSetManagementStatus;
 import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
@@ -34,14 +34,18 @@ public class DecisionFlowReferenceServiceImpl implements DecisionFlowReferenceSe
 
     /** 保存调用方已持有流程根锁，依次锁定本地引用后执行相同资格规则。 */
     @Override
-    public List<Issue> validateForSave(long pointId, Graph graph, Graph base) { return validate(pointId, graph, base, true); }
+    public List<Issue> validateForSave(long pointId, String pointCode, Graph graph, Graph base) {
+        return validate(pointId, pointCode, graph, base, true);
+    }
 
     /** 静态检查仅查询当前资格，不预留引用或版本。 */
     @Override
-    public List<Issue> validateForQuery(long pointId, Graph graph, Graph base) { return validate(pointId, graph, base, false); }
+    public List<Issue> validateForQuery(long pointId, String pointCode, Graph graph, Graph base) {
+        return validate(pointId, pointCode, graph, base, false);
+    }
 
     /** 共享保留项判定，读取策略由两个明确入口选择。 */
-    private List<Issue> validate(long pointId, Graph graph, Graph base, boolean lock) {
+    private List<Issue> validate(long pointId, String pointCode, Graph graph, Graph base, boolean lock) {
         Map<String, Node> previous = new HashMap<>();
         if (base != null) base.nodes().forEach(node -> previous.put(node.nodeKey(), node));
         List<Long> versionIds = graph.nodes().stream().filter(n -> "RULE_SET".equals(n.type()))
@@ -61,7 +65,7 @@ public class DecisionFlowReferenceServiceImpl implements DecisionFlowReferenceSe
         graph.nodes().stream().map(Node::reasonCode).filter(Objects::nonNull).distinct().sorted()
             .forEach(code -> repository.reason(code, lock).ifPresent(reason -> reasons.put(code, reason)));
         var issues = new ArrayList<Issue>();
-        var contract = CheckoutPrepareAuthoringDescriptor.v1().point();
+        var contract = DecisionPointAuthoringDescriptor.require(pointCode).point();
         for (int index = 0; index < graph.nodes().size(); index++) {
             Node node = graph.nodes().get(index);
             Node old = previous.get(node.nodeKey());

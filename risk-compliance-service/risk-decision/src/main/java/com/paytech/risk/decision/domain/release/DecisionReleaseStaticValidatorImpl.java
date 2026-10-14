@@ -1,7 +1,7 @@
 package com.paytech.risk.decision.domain.release;
 
 import com.paytech.foundation.jsoncanonicalization.api.JsonCanonicalizationException;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.PersistedActionVersion;
 import com.paytech.risk.decision.domain.enums.ActionCategory;
 import com.paytech.risk.decision.domain.enums.ComparisonOperator;
@@ -116,7 +116,7 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
         RiskDecisionCanonicalizerImpl canonicalizer = new RiskDecisionCanonicalizerImpl();
         String expectedRuleSetHash = canonicalizer.ruleSetVersion(closure.ruleSet()).sha256LowerHex();
         String expectedPointHash = canonicalizer.decisionPointVersion(closure.point()).sha256LowerHex();
-        CheckoutPrepareAuthoringDescriptor descriptor = CheckoutPrepareAuthoringDescriptor.v1();
+        DecisionPointAuthoringDescriptor descriptor = DecisionPointAuthoringDescriptor.checkoutPrepare();
         if (r.environmentCode() != DecisionEnvironment.TEST || r.releaseNo() <= 0) {
             add(out, "RELEASE_HEADER", "release", null, null, null);
         }
@@ -150,7 +150,7 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
         }
         if (closure.point().inputFields().size() != descriptor.fields().size() || r.inputFields().size() != descriptor.fields().size())
             add(out, "INPUT_FIELD_CLOSURE", "inputFields", null, null, null);
-        for (CheckoutPrepareAuthoringDescriptor.InputFieldDescriptor expected : descriptor.fields()) {
+        for (DecisionPointAuthoringDescriptor.InputFieldDescriptor expected : descriptor.fields()) {
             boolean pointMatch = closure.point().inputFields().stream().anyMatch(actual -> inputMatches(expected, actual));
             boolean releaseMatch = r.inputFields().stream().anyMatch(actual -> inputMatches(expected, actual)
                 && r.pointVersionId().equals(actual.pointVersionId()));
@@ -316,7 +316,7 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
         return literal == null ? NullValue.INSTANCE : new StringValue(literal);
     }
 
-    private static boolean inputMatches(CheckoutPrepareAuthoringDescriptor.InputFieldDescriptor expected,
+    private static boolean inputMatches(DecisionPointAuthoringDescriptor.InputFieldDescriptor expected,
                                         RiskDecisionCanonicalizer.InputFieldProjection actual) {
         return expected.fieldCode().equals(actual.fieldCode()) && expected.valueType() == actual.valueType()
             && expected.requiredFlag() == actual.requiredFlag()
@@ -325,7 +325,7 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
             && expected.actionParameterFlag() == actual.actionParameterFlag();
     }
 
-    private static boolean inputMatches(CheckoutPrepareAuthoringDescriptor.InputFieldDescriptor expected,
+    private static boolean inputMatches(DecisionPointAuthoringDescriptor.InputFieldDescriptor expected,
                                         ReleaseInputFieldProjection actual) {
         return expected.fieldCode().equals(actual.fieldCode()) && expected.valueType() == actual.valueType()
             && expected.requiredFlag() == actual.requiredFlag()
@@ -538,8 +538,8 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
     private static List<StaticViolation> handlerHash(DecisionReleaseClosure closure) {
         ArrayList<StaticViolation> out = new ArrayList<>();
         Map<String, PersistedActionVersion> persisted = new HashMap<>();
-        Map<String, CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor> builtIn = index(
-            CheckoutPrepareAuthoringDescriptor.v1().actions(), v -> v.actionCode() + ":" + v.versionNo());
+        Map<String, DecisionPointAuthoringDescriptor.DecisionActionDescriptor> builtIn = index(
+            DecisionPointAuthoringDescriptor.checkoutPrepare().actions(), v -> v.actionCode() + ":" + v.versionNo());
         Set<Long> persistedIds = new HashSet<>();
         Set<String> persistedKeys = new HashSet<>();
         for (PersistedActionVersion row : closure.persistedActions()) {
@@ -548,10 +548,10 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
                 add(out, "PERSISTED_ACTION_DUPLICATE", "persistedActions", null, null, row == null ? null : row.actionCode());
             } else {
                 persisted.put(Long.toString(row.actionVersionId()), row);
-                CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor expected = builtIn.get(
+                DecisionPointAuthoringDescriptor.DecisionActionDescriptor expected = builtIn.get(
                     row.actionCode() + ":" + row.versionNo());
                 if (expected == null || row.actionVersionId() != 240001L
-                    + CheckoutPrepareAuthoringDescriptor.v1().actions().indexOf(expected)
+                    + DecisionPointAuthoringDescriptor.checkoutPrepare().actions().indexOf(expected)
                     || row.status() != ConfigurationStatus.ACTIVE
                     || !expected.handlerCode().equals(row.handlerCode())
                     || !expected.implementationVersion().equals(row.implementationVersion())
@@ -567,7 +567,7 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
         }
         for (ReleaseActionVersionProjection action : closure.release().actionVersions()) {
             PersistedActionVersion row = persisted.get(action.actionVersionId());
-            CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor expected = builtIn.get(action.actionCode() + ":" + action.versionNo());
+            DecisionPointAuthoringDescriptor.DecisionActionDescriptor expected = builtIn.get(action.actionCode() + ":" + action.versionNo());
             boolean invalid = row == null || expected == null || row.status() != ConfigurationStatus.ACTIVE
                 || !action.actionCode().equals(row.actionCode()) || action.versionNo() != row.versionNo()
                 || !action.handlerCode().equals(row.handlerCode()) || !action.implementationVersion().equals(row.implementationVersion())

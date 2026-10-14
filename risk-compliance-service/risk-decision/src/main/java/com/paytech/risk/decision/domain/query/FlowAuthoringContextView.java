@@ -3,7 +3,7 @@ package com.paytech.risk.decision.domain.query;
 import java.util.Arrays;
 import java.util.List;
 
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.ComparisonOperator;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.VariableSource;
@@ -19,7 +19,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class FlowAuthoringContextView {
     /** 本期支持的准确输入合同。 */
-    private final CheckoutPrepareAuthoringDescriptor descriptor;
+    private final DecisionPointAuthoringDescriptor descriptor;
 
     /** 适用于流程条件的系统输入字段。 */
     private final List<Field> fields;
@@ -28,10 +28,11 @@ public class FlowAuthoringContextView {
     private final List<Field> nodeOutputs;
 
     /** 仅根据已读目录事实投影，类型级运算能力由 Owner 定义。 */
-    public static FlowAuthoringContextView from(List<RiskVariable.Entry> definitions) {
+    public static FlowAuthoringContextView from(DecisionPointAuthoringDescriptor descriptor,
+        List<RiskVariable.Entry> definitions) {
         List<RiskVariable.Entry> selected = definitions.stream()
             .filter(e -> e.definition().usages().contains(VariableUsage.FLOW_CONDITION)).toList();
-        return new FlowAuthoringContextView(CheckoutPrepareAuthoringDescriptor.v1(),
+        return new FlowAuthoringContextView(descriptor,
             selected.stream().filter(e -> e.definition().sourceType() == VariableSource.INPUT).map(FlowAuthoringContextView::field).toList(),
             selected.stream().filter(e -> e.definition().sourceType() == VariableSource.NODE_OUTPUT).map(FlowAuthoringContextView::field).toList());
     }

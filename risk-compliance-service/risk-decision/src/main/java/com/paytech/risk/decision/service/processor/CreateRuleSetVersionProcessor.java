@@ -18,6 +18,8 @@ import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.risk.decision.core.dal.dataobject.*;
+import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry;
+import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
 import com.paytech.risk.decision.domain.enums.VariableSource;
 import com.paytech.risk.decision.domain.enums.VariableUsage;
@@ -44,6 +46,7 @@ import lombok.AllArgsConstructor;
 public class CreateRuleSetVersionProcessor extends AbstractLockProcessor<CreateRuleSetVersionRequest, CreatedRuleSet> {
     private final Clock clock;
     private final RuleAstValidator astValidator;
+    private final DecisionActionRegistry actionRegistry;
     private final RiskVariableService variableService;
     private final DecisionRuleSetService ruleSetService;
     private final DecisionRuleSetAssembler assembler;
@@ -84,7 +87,7 @@ public class CreateRuleSetVersionProcessor extends AbstractLockProcessor<CreateR
         }
         ChangeReasonPolicy.normalize(normalized.changeReason());
         for (NormalizedRule rule : normalized.rules()) {
-            if (rule.action() != null && "DENY_CHECKOUT".equals(rule.action().actionCode())
+            if (rule.action() != null && actionRegistry.require(rule.action()).decisionCode() == DecisionValue.DENY
                 && (rule.reasonCode() == null || rule.reasonMessage() == null))
                 throw new BizCheckFailException("新保存的拒绝规则必须填写原因代码和文案");
         }
@@ -116,7 +119,7 @@ public class CreateRuleSetVersionProcessor extends AbstractLockProcessor<CreateR
             normalized.pointCode(), VariableUsage.RULE_CONDITION, null, definitions, members));
         dictionaryService.validateSelections(normalized,
             current == null ? null : ruleSetService.detailForPersistedReference(current.ruleSetVersionId()));
-        List<ActionVersion> catalog = reader.requireCatalog();
+        List<ActionVersion> catalog = reader.requireCatalog(point.pointCode());
         DecisionPointVersion currentCompanion = current != null && current.status() == RuleSetVersionStatus.DRAFT
             ? reader.lockAndReloadCompanion(point, current, false) : null;
         return assembler.createContext(normalized, point, management, current, currentCompanion, catalog,

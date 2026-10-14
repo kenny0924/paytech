@@ -116,6 +116,10 @@ public interface DecisionRuleSetMapper {
 
     List<RuleActionParameter> selectRuleActionParameters(@Param("ruleActionIds") List<Long> ruleActionIds);
 
+    /** 按决策点与版本号读取点版本。 */
+    DecisionPointVersion selectPointVersionByNo(@Param("decisionPointId") long decisionPointId,
+        @Param("versionNo") int versionNo);
+
     List<FeatureVersion> selectFeatureVersions(@Param("featureVersionIds") List<Long> featureVersionIds);
 
     List<FeatureDependency> selectFeatureDependencies(@Param("featureVersionIds") List<Long> featureVersionIds);

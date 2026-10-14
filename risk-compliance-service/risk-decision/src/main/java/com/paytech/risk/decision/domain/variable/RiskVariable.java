@@ -15,9 +15,31 @@ public final class RiskVariable {
     public record Definition(String variableCode, VariableSource sourceType, DecisionValueType valueType,
         String pointCode, String sourceContractCode, Integer sourceContractVersion, String sourceField,
         Set<VariableUsage> usages, boolean systemManaged, VariableFormat formatCode, NumericUnit numericUnit,
-        String currencyCode, String currencyVariableCode, String allowedValuesVariableCode) {
+        String currencyCode, String currencyVariableCode, String allowedValuesVariableCode, Long featureVersionId) {
         /** 防御性复制用途，防止共享元数据在校验后被调用方修改。 */
         public Definition { usages = Set.copyOf(usages); }
+
+        /** 不关联 Feature 的来源使用原结构。 */
+        public Definition(String variableCode, VariableSource sourceType, DecisionValueType valueType, String pointCode,
+            String sourceContractCode, Integer sourceContractVersion, String sourceField, Set<VariableUsage> usages,
+            boolean systemManaged, VariableFormat formatCode, NumericUnit numericUnit, String currencyCode,
+            String currencyVariableCode, String allowedValuesVariableCode) {
+            this(variableCode, sourceType, valueType, pointCode, sourceContractCode, sourceContractVersion, sourceField,
+                usages, systemManaged, formatCode, numericUnit, currencyCode, currencyVariableCode, allowedValuesVariableCode,
+                null);
+        }
+
+        /** 由实时累计或名单命中 Feature 计算取值。 */
+        public boolean featureBacked() {
+            return sourceType == VariableSource.VELOCITY || sourceType == VariableSource.LIST;
+        }
+
+        /** 创建时由服务端分配 Feature Version 后的结构。 */
+        public Definition withFeatureVersion(long id) {
+            return new Definition(variableCode, sourceType, valueType, pointCode, sourceContractCode, sourceContractVersion,
+                sourceField, usages, systemManaged, formatCode, numericUnit, currencyCode, currencyVariableCode,
+                allowedValuesVariableCode, id);
+        }
     }
 
     /** 当前常量仅为规范字符串或 Boolean；输入/输出从不伪造实际值。 */
@@ -34,9 +56,15 @@ public final class RiskVariable {
     /** 当前详情/目录需要的领域投影，不进入规则或流程内容摘要。 */
     public record View(Entry entry, Long memberCount, List<Member> previewMembers, AllowedValues allowedValues) { }
 
-    /** 新变量定义及初值，账号与时刻由可信入口另行提供。 */
+    /** 新变量定义及初值，账号与时刻由可信入口另行提供；VELOCITY 与 LIST 来源同时提交 Feature 参数。 */
     public record Create(Definition definition, String variableName, String description, Object currentValue,
-        VariableStatus status) { }
+        VariableStatus status, com.paytech.risk.decision.domain.feature.FeatureSpec feature) {
+        /** 非 Feature 来源的原结构。 */
+        public Create(Definition definition, String variableName, String description, Object currentValue,
+            VariableStatus status) {
+            this(definition, variableName, description, currentValue, status, null);
+        }
+    }
 
     /** 只允许修改展示文字、当前常量和可用状态。 */
     public record Update(long expectedVersion, String variableName, String description, Object currentValue,

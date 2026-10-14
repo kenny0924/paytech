@@ -1,5 +1,11 @@
 package com.paytech.risk.ext.rest.decision;
 
+import com.paytech.risk.api.decision.request.ListFeatureParameters;
+import com.paytech.risk.api.decision.request.VelocityFeatureParameters;
+import com.paytech.risk.control.domain.list.RiskSubjectType;
+import com.paytech.risk.decision.domain.enums.VelocityEventCode;
+import com.paytech.risk.decision.domain.enums.VelocityMetric;
+import com.paytech.risk.decision.domain.feature.FeatureSpec;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -122,7 +128,37 @@ public final class RiskVariableWireConverter {
             parse(NumericUnit.class, body.getNumericUnit()), body.getCurrencyCode(), body.getCurrencyVariableCode(),
             body.getAllowedValuesVariableCode());
         return new Create(definition, body.getVariableName(), body.getDescription(), body.getCurrentValue(),
-            parse(VariableStatus.class, body.getStatus()));
+            parse(VariableStatus.class, body.getStatus()), feature(body));
+    }
+
+    /**
+     * 转换 Feature 参数；两类参数至多出现一个，与来源类型的对应关系由 Owner 校验
+     *
+     * @param body 创建请求
+     * @return 实时累计或名单命中参数，均未提供时为空
+     */
+    static FeatureSpec feature(CreateVariableRequestBody body) {
+        if (body.getVelocity() != null && body.getList() != null) {
+            throw new InvalidParameterException("实时累计与名单命中参数不能同时提供");
+        }
+        VelocityFeatureParameters velocity = body.getVelocity();
+        if (velocity != null) {
+            return new FeatureSpec.Velocity(parseCode(VelocityEventCode.values(), velocity.getEventCode()),
+                parseCode(RiskSubjectType.values(), velocity.getAnchorSubjectType()),
+                parseCode(VelocityMetric.values(), velocity.getMetric()),
+                velocity.getDistinctSubjectType() == null ? null
+                    : parseCode(RiskSubjectType.values(), velocity.getDistinctSubjectType()),
+                velocity.getWindowSeconds(), velocity.getIncludeCurrent());
+        }
+        ListFeatureParameters list = body.getList();
+        return list == null ? null
+            : new FeatureSpec.ListMembership(list.getListCode(), parseCode(RiskSubjectType.values(), list.getSubjectType()));
+    }
+
+    /** 按稳定 Code 解析闭合枚举，未知值为参数错误。 */
+    static <E extends Enum<E> & com.paytech.foundation.common.enums.CodeEnum> E parseCode(E[] values, String code) {
+        return java.util.Arrays.stream(values).filter(value -> value.getCode().equals(code)).findFirst()
+            .orElseThrow(() -> new InvalidParameterException("Feature 参数取值无效: " + code));
     }
 
     /** 将更新 Body 及已解析版本转换为只含可变字段的 Owner 命令。 */

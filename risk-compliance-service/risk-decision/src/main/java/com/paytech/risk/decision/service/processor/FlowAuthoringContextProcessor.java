@@ -1,5 +1,6 @@
 package com.paytech.risk.decision.service.processor;
 
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -38,12 +39,13 @@ public class FlowAuthoringContextProcessor
     /** 组合该查询需要的真实记录与目录，不改变业务事实。 */
     private FlowAuthoringContextView read(FlowAuthoringContextRequest request) {
         DecisionPoint point = point(request.getPointCode() == null ? "CHECKOUT_PREPARE" : request.getPointCode());
-        return FlowAuthoringContextView.from(variables.systemDefinitions(point.pointCode()));
+        return FlowAuthoringContextView.from(DecisionPointAuthoringDescriptor.require(point.pointCode()),
+            variables.systemDefinitions(point.pointCode()));
     }
 
     /** 可配置决策点必须是本期支持且当前有效的目录项。 */
     private DecisionPoint point(String code) {
-        if (!"CHECKOUT_PREPARE".equals(code)) {
+        if (DecisionPointAuthoringDescriptor.find(code).isEmpty()) {
             throw new DecisionConfigurationNotFoundException();
         }
         DecisionPoint point = rules.findPointByCode(code).orElseThrow(DecisionConfigurationNotFoundException::new);

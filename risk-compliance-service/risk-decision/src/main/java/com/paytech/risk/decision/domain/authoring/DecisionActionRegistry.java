@@ -12,39 +12,60 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/** 首期 Handler 目录；未知或漂移的持久化目录一律 fail closed。 */
+/** 各决策点规则终态动作的 Handler 目录；未知或漂移的持久化目录一律 fail closed。 */
 public final class DecisionActionRegistry {
 
-    private static final DecisionActionRegistry V1 = new DecisionActionRegistry();
+    private static final DecisionActionRegistry INSTANCE = new DecisionActionRegistry();
 
-    private final List<CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor> actions;
-    private final Map<ActionKey, CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor> byKey;
+    private final Map<ActionKey, DecisionPointAuthoringDescriptor.DecisionActionDescriptor> byKey;
 
+    /** 汇总全部决策点的终态动作；动作编码全局唯一。 */
     private DecisionActionRegistry() {
-        actions = CheckoutPrepareAuthoringDescriptor.v1().actions();
-        Map<ActionKey, CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor> index = new HashMap<>();
-        actions.forEach(value -> index.put(new ActionKey(value.actionCode(), value.versionNo()), value));
+        Map<ActionKey, DecisionPointAuthoringDescriptor.DecisionActionDescriptor> index = new HashMap<>();
+        for (DecisionPointAuthoringDescriptor descriptor : DecisionPointAuthoringDescriptor.all()) {
+            descriptor.actions().forEach(value -> {
+                if (index.put(new ActionKey(value.actionCode(), value.versionNo()), value) != null) {
+                    throw new IllegalStateException("决策动作编码重复: " + value.actionCode());
+                }
+            });
+        }
         byKey = Map.copyOf(index);
     }
 
-    public static DecisionActionRegistry checkoutPrepareV1() {
-        return V1;
+    /** 进程内唯一目录。 */
+    public static DecisionActionRegistry instance() {
+        return INSTANCE;
     }
 
-    public List<CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor> authoringActions() {
-        return actions;
+    /** 结账决策点的规则终态动作，保持原创作目录顺序。 */
+    public List<DecisionPointAuthoringDescriptor.DecisionActionDescriptor> authoringActions() {
+        return DecisionPointAuthoringDescriptor.checkoutPrepare().actions();
     }
 
-    public CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor require(ActionKey key) {
-        CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor value = byKey.get(key);
+    /** 取已注册的终态动作；不区分决策点。 */
+    public DecisionPointAuthoringDescriptor.DecisionActionDescriptor require(ActionKey key) {
+        DecisionPointAuthoringDescriptor.DecisionActionDescriptor value = byKey.get(key);
         if (value == null) {
             throw new InvalidParameterException("不支持的决策动作版本");
         }
         return value;
     }
 
+    /** 结账决策点的持久化终态动作目录必须与内置 Handler 一致。 */
     public void verifyPersistedCatalog(List<PersistedActionVersion> persisted) {
+        verifyPersistedCatalog(DecisionPointAuthoringDescriptor.checkoutPrepare(), persisted);
+    }
+
+    /**
+     * 核对一个决策点的持久化终态动作目录
+     *
+     * @param descriptor 决策点合同
+     * @param persisted 按动作版本 ID 读取的持久化行
+     *         <li>数量、编码、Handler、摘要、合并策略、状态及连续 ID 任一漂移都视为数据损坏。</li>
+     */
+    public void verifyPersistedCatalog(DecisionPointAuthoringDescriptor descriptor, List<PersistedActionVersion> persisted) {
         Objects.requireNonNull(persisted, "persisted");
+        List<DecisionPointAuthoringDescriptor.DecisionActionDescriptor> actions = descriptor.actions();
         if (persisted.size() != actions.size()) {
             throw new IllegalStateException("持久化动作目录不完整");
         }
@@ -55,22 +76,27 @@ public final class DecisionActionRegistry {
                 || !seen.add(new ActionKey(row.actionCode(), row.versionNo()))) {
                 throw new IllegalStateException("持久化动作目录含重复或无效行");
             }
-            CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor expected = byKey.get(
+            DecisionPointAuthoringDescriptor.DecisionActionDescriptor expected = byKey.get(
                 new ActionKey(row.actionCode(), row.versionNo()));
-            if (expected == null
-                || !expected.handlerCode().equals(row.handlerCode())
-                || !expected.implementationVersion().equals(row.implementationVersion())
-                || !expected.implementationHash().equals(row.implementationHash())
-                || expected.actionCategory() != row.actionCategory()
-                || expected.terminalFlag() != row.terminalFlag()
-                || expected.decisionCode() != row.decisionCode()
-                || expected.mergePolicy() != row.mergePolicy()
-                || expected.shadowSupportedFlag() != row.shadowSupportedFlag()
-                || row.actionVersionId() != 240001L + actions.indexOf(expected)
+            if (expected == null || !actions.contains(expected) || drifted(expected, row)
+                || row.actionVersionId() != descriptor.firstActionVersionId() + actions.indexOf(expected)
                 || row.status() != ConfigurationStatus.ACTIVE) {
                 throw new IllegalStateException("持久化动作目录与内置 Handler 不一致");
             }
         }
+    }
+
+    /** 判断持久化行的执行协议是否偏离内置 Handler。 */
+    private static boolean drifted(DecisionPointAuthoringDescriptor.DecisionActionDescriptor expected,
+        PersistedActionVersion row) {
+        return !expected.handlerCode().equals(row.handlerCode())
+            || !expected.implementationVersion().equals(row.implementationVersion())
+            || !expected.implementationHash().equals(row.implementationHash())
+            || expected.actionCategory() != row.actionCategory()
+            || expected.terminalFlag() != row.terminalFlag()
+            || expected.decisionCode() != row.decisionCode()
+            || expected.mergePolicy() != row.mergePolicy()
+            || expected.shadowSupportedFlag() != row.shadowSupportedFlag();
     }
 
     public record ActionKey(String actionCode, int versionNo) {

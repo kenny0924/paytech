@@ -39,6 +39,8 @@ import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
 import com.paytech.risk.decision.domain.enums.StaticCheckCode;
 import com.paytech.risk.decision.domain.enums.StaticCheckSeverity;
 import com.paytech.risk.decision.domain.enums.StaticCheckStatus;
+import com.paytech.risk.decision.domain.enums.VelocityEventCode;
+import com.paytech.risk.decision.domain.enums.VelocityMetric;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.mybatis.spring.annotation.MapperScan;
 import org.mybatis.spring.boot.autoconfigure.ConfigurationCustomizer;
@@ -98,6 +100,8 @@ public class PersistenceConfiguration {
             registerCodeEnumHandler(registry, StaticCheckCode.class);
             registerCodeEnumHandler(registry, StaticCheckSeverity.class);
             registerCodeEnumHandler(registry, StaticCheckStatus.class);
+            registerCodeEnumHandler(registry, VelocityEventCode.class);
+            registerCodeEnumHandler(registry, VelocityMetric.class);
             registerCodeEnumHandler(registry, RiskSubjectType.class);
             registerCodeEnumHandler(registry, RiskListPurpose.class);
             registerCodeEnumHandler(registry, RiskListStatus.class);

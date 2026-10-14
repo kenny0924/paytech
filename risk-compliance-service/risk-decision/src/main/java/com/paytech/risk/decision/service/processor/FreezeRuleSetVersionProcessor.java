@@ -90,7 +90,7 @@ public class FreezeRuleSetVersionProcessor extends AbstractLockProcessor<FreezeR
             throw new BizCheckFailException("只有 DRAFT Rule Set Version 可以冻结");
         }
 
-        reader.requireCatalog();
+        reader.requireCatalog(point.pointCode());
         DecisionPointVersion companion = reader.lockAndReloadCompanion(point, target, true);
         FreezeRuleSetVersionContext context =
             new FreezeRuleSetVersionContext(management, target, companion, request.getActorAccountId(), commandTime);

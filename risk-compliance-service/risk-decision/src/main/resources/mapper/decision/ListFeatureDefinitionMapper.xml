@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.ListFeatureDefinitionMapper">
+    <sql id="columns">feature_version_id AS featureVersionId, list_id AS listId, subject_type AS subjectType, create_time AS createTime</sql>
+    <insert id="insert">INSERT INTO t_list_feature_definition(feature_version_id, list_id, subject_type, create_time) VALUES(#{row.featureVersionId}, #{row.listId}, #{row.subjectType}, #{row.createTime})</insert>
+    <select id="selectByIds" useCache="false" resultType="com.paytech.risk.decision.core.dal.dataobject.ListFeatureDefinition">SELECT <include refid="columns"/> FROM t_list_feature_definition WHERE feature_version_id IN <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach></select>
+</mapper>

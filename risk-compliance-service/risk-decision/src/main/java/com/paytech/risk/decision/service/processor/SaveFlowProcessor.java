@@ -14,7 +14,7 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.risk.decision.core.dal.dataobject.*;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.*;
 import com.paytech.risk.decision.domain.flow.*;
 import com.paytech.risk.decision.domain.flow.DecisionFlow.*;
@@ -95,7 +95,7 @@ public class SaveFlowProcessor extends AbstractLockProcessor<SaveFlowRequest, Sa
             : roots.lockById(located.flowId()).orElseThrow(() -> new ErrorException("已定位的流程根缺失"));
         DecisionFlowVersionRow oldVersion = verifyBase(command, previous);
         Graph base = baseGraph(command.pointCode(), previous, oldVersion);
-        List<Issue> issues = references.validateForSave(point.decisionPointId(), command.graph(), base);
+        List<Issue> issues = references.validateForSave(point.decisionPointId(), point.pointCode(), command.graph(), base);
         if (!issues.isEmpty()) {
             throw new DecisionFlowConfigurationException(Reason.REFERENCE_UNAVAILABLE, "规则版本或拒绝原因资格已变化，请重新选择", issues);
         }
@@ -113,7 +113,7 @@ public class SaveFlowProcessor extends AbstractLockProcessor<SaveFlowRequest, Sa
         long flowId = previous == null ? nextId() : previous.flowId();
         long versionId = nextId();
         int versionNo = oldVersion == null ? 1 : oldVersion.versionNo() + 1;
-        var contract = CheckoutPrepareAuthoringDescriptor.v1().point();
+        var contract = DecisionPointAuthoringDescriptor.require(point.pointCode()).point();
         var version = new DecisionFlowVersionRow(versionId, flowId, versionNo, command.flowName(),
             contract.inputContractCode(), contract.inputContractVersion(), actorId, command.changeReason(), time, time);
         var root = previous != null ? previous : new DecisionFlowRow(flowId, point.decisionPointId(),
@@ -137,7 +137,7 @@ public class SaveFlowProcessor extends AbstractLockProcessor<SaveFlowRequest, Sa
 
     /** 当前可编辑决策点由本库目录确认。 */
     private DecisionPoint point(String code) {
-        if (!"CHECKOUT_PREPARE".equals(code)) {
+        if (DecisionPointAuthoringDescriptor.find(code).isEmpty()) {
             throw new DecisionConfigurationNotFoundException();
         }
         DecisionPoint point = rules.findPointByCode(code).orElseThrow(DecisionConfigurationNotFoundException::new);

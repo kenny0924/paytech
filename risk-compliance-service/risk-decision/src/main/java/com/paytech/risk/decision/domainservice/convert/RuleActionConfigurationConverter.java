@@ -2,7 +2,7 @@ package com.paytech.risk.decision.domainservice.convert;
 
 import com.paytech.risk.decision.core.dal.dataobject.ActionParameterDefinition;
 import com.paytech.risk.decision.core.dal.dataobject.ActionVersion;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor.InputFieldDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.InputFieldDescriptor;
 import com.paytech.risk.decision.core.dal.dataobject.RuleAction;
 import com.paytech.risk.decision.core.dal.dataobject.RuleActionParameter;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.ActionKey;

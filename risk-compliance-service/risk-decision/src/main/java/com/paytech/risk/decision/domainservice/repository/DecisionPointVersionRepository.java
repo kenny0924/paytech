@@ -9,6 +9,8 @@ import com.paytech.risk.decision.core.dal.dataobject.DecisionPointVersion;
 public interface DecisionPointVersionRepository {
     /** 读取准确历史事实；绑定查询保留既有 201 条防超限边界。 */
     Optional<DecisionPointVersion> findById(long id);
+    /** 按决策点与版本号读取。 */
+    Optional<DecisionPointVersion> findByPointAndVersion(long decisionPointId, int versionNo);
     /** 批量读取准确 ID 对应的本表事实。 */
     List<DecisionPointVersion> findByIds(List<Long> ids);
 

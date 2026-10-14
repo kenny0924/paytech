@@ -30,8 +30,8 @@ import com.paytech.risk.decision.core.dal.dataobject.RuleNode;
 import com.paytech.risk.decision.core.dal.dataobject.RuleOperand;
 import com.paytech.risk.decision.core.dal.dataobject.RuleSet;
 import com.paytech.risk.decision.core.dal.dataobject.RuleSetVersion;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor.InputFieldDescriptor;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.InputFieldDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.ActionKey;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.PersistedActionVersion;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry;
@@ -101,13 +101,13 @@ public class DecisionRuleSetAssembler {
     private final DecisionActionRegistry actionRegistry;
     private final RiskDecisionCanonicalizer canonicalizer;
     private final DecisionIdentifierGenerator identifiers;
-    private final CheckoutPrepareAuthoringDescriptor descriptor;
 
     /** 在锁定版本与已核验目录上构造一次完整写入上下文，不查询数据库。 */
     public CreateRuleSetVersionContext createContext(NormalizedRuleSet normalized, DecisionPoint point,
         RuleSet management, RuleSetVersion current, DecisionPointVersion companion, List<ActionVersion> catalog,
         long actorAccountId, Instant commandTime) {
         int versionNo = nextRuleSetVersion(normalized, current);
+        DecisionPointAuthoringDescriptor descriptor = DecisionPointAuthoringDescriptor.require(point.pointCode());
         IdentifierScope scope = new IdentifierScope();
         long id = scope.next();
         MaterializedRules materialized = materializeRules(normalized, id, commandTime, scope,
@@ -139,7 +139,8 @@ public class DecisionRuleSetAssembler {
         DecisionPoint point = row.decisionPoint();
         DecisionPointRuleSet binding = row.companionBinding();
         verifyPoint(point);
-        descriptor.inputFields(point.pointCode(), root.inputContractCode(), root.inputContractVersion());
+        DecisionPointAuthoringDescriptor.require(point.pointCode())
+            .inputFields(point.pointCode(), root.inputContractCode(), root.inputContractVersion());
         if (root.ruleSetVersionId() <= 0 || root.decisionPointId() != point.decisionPointId()
             || (binding != null && (binding.bindingId() <= 0 || binding.ruleSetVersionId() != root.ruleSetVersionId()
             || binding.pointVersionId() <= 0 || binding.sequenceNo() != 1)) || root.versionNo() <= 0 || root.createdBy() <= 0
@@ -162,7 +163,8 @@ public class DecisionRuleSetAssembler {
     public DecisionRuleSetAggregate toAggregate(DecisionRuleSetRepository.DecisionRuleSetAggregate raw, boolean legacy) {
         try {
             verifyPoint(raw.decisionPoint());
-            List<InputFieldDescriptor> fields = descriptor.inputFields(raw.decisionPoint().pointCode(),
+            List<InputFieldDescriptor> fields = DecisionPointAuthoringDescriptor.require(raw.decisionPoint().pointCode())
+                .inputFields(raw.decisionPoint().pointCode(),
                 raw.ruleSetVersion().inputContractCode(), raw.ruleSetVersion().inputContractVersion());
             List<PersistedActionVersion> actions = raw.actionVersions().stream()
                 .map(this::toHistoricalReferencedRow).sorted(Comparator.comparing(PersistedActionVersion::actionCode)
@@ -437,7 +439,8 @@ public class DecisionRuleSetAssembler {
             try {
                 var expected = actionRegistry.require(new ActionKey(value.actionCode(), value.versionNo()));
                 PersistedActionVersion actual = toHistoricalReferencedRow(value);
-                long expectedId = 240001L + descriptor.actions().indexOf(expected);
+                var owner = DecisionPointAuthoringDescriptor.ownerOf(expected);
+                long expectedId = owner.firstActionVersionId() + owner.actions().indexOf(expected);
                 PersistedActionVersion expectedRow = new PersistedActionVersion(expectedId,
                     expected.actionCode(), expected.versionNo(), expected.handlerCode(),
                     expected.implementationVersion(), expected.implementationHash(), expected.actionCategory(),
@@ -685,11 +688,12 @@ public class DecisionRuleSetAssembler {
 
     /** 核对批准的决策事件点与工程目录。 */
     public void verifyPoint(DecisionPoint point) {
-        if (point.decisionPointId() <= 0 || !descriptor.point().pointCode().equals(point.pointCode())
+        var descriptor = DecisionPointAuthoringDescriptor.find(point.pointCode()).orElse(null);
+        if (descriptor == null || point.decisionPointId() <= 0
             || !descriptor.point().pointName().equals(point.pointName())
-            || point.businessDomain() != DecisionBusinessDomain.CHECKOUT
+            || !descriptor.point().businessDomain().equals(point.businessDomain().getCode())
             || point.status() != DecisionPointStatus.ACTIVE) {
-            throw corruption("CHECKOUT_PREPARE Decision Point Seed 漂移");
+            throw corruption("Decision Point Seed 漂移: " + point.pointCode());
         }
     }
 
@@ -703,6 +707,7 @@ public class DecisionRuleSetAssembler {
 
     /** 核验旧执行协议与批准合同及内容 Hash。 */
     private void verifyPointVersion(DecisionPointVersion point) {
+        var descriptor = DecisionPointAuthoringDescriptor.checkoutPrepare();
         if (point.pointVersionId() <= 0 || point.decisionPointId() <= 0 || point.versionNo() <= 0
             || !descriptor.point().inputContractCode().equals(point.inputContractCode())
             || descriptor.point().inputContractVersion() != point.inputContractVersion()
@@ -885,7 +890,7 @@ public class DecisionRuleSetAssembler {
 
     /** 组合当前格式允许引用的工程输入字段。 */
     private List<InputFieldDescriptor> inputFields(boolean additional) {
-        List<InputFieldDescriptor> result = new ArrayList<>(descriptor.fields());
+        List<InputFieldDescriptor> result = new ArrayList<>(DecisionPointAuthoringDescriptor.checkoutPrepare().fields());
         if (additional) result.addAll(RuleActionConfigurationCatalog.inputFields());
         return List.copyOf(result);
     }

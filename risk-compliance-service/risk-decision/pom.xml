@@ -23,11 +23,19 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
+            <artifactId>risk-control</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
             <artifactId>paytech-common-core</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-json-canonicalization</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compensation-event</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
@@ -40,6 +48,14 @@
         <dependency>
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

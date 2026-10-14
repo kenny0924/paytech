@@ -1,5 +1,6 @@
 package com.paytech.risk.decision.service.processor;
 
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -82,7 +83,7 @@ public class FlowListProcessor extends AbstractProcessor<FlowListRequest, Paging
 
     /** 可配置决策点必须是本期支持且当前有效的目录项。 */
     private DecisionPoint point(String code) {
-        if (!"CHECKOUT_PREPARE".equals(code)) { throw new DecisionConfigurationNotFoundException(); }
+        if (DecisionPointAuthoringDescriptor.find(code).isEmpty()) { throw new DecisionConfigurationNotFoundException(); }
         DecisionPoint point = rules.findPointByCode(code).orElseThrow(DecisionConfigurationNotFoundException::new);
         if (point.status() != DecisionPointStatus.ACTIVE) { throw new InvalidParameterException("决策点当前不可配置"); }
         return point;

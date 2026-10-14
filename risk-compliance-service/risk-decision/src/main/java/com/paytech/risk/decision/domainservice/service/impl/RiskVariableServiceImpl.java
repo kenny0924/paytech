@@ -38,6 +38,11 @@ public class RiskVariableServiceImpl implements RiskVariableService {
         return reader.lockDefinitions(codes);
     }
 
+    /** 运行期不加锁读取变量及依赖的当前定义。 */
+    @Override public Map<String, Entry> definitions(Set<String> codes) {
+        return reader.definitions(codes);
+    }
+
     /** 在现有快照/锁保护内读取集合的完整有界当前成员。 */
     @Override public List<Member> collection(Entry entry) {
         return reader.collection(entry);

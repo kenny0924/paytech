@@ -24,6 +24,9 @@ public class CreateVariableContext {
     /** 关联选项集合的当前读成员。 */
     private final List<RiskVariableMember> optionMembers;
 
+    /** 实时累计或名单命中变量的 Feature Version 与参数；其他来源为空。 */
+    private final com.paytech.risk.decision.domain.feature.FeatureRows feature;
+
     /** 新身份仅允许人工来源和非墓碑状态。 */
     public void verifyIntegrity() {
         root.verifyIntegrity();

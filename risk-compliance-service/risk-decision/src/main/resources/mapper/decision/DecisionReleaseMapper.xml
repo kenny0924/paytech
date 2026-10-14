@@ -35,6 +35,7 @@
         FROM t_decision_release dr
         JOIN t_decision_point dp ON dp.decision_point_id = dr.decision_point_id
         WHERE dr.environment_code = 'TEST'
+          AND dr.decision_flow_version_id IS NULL
         <if test="pointCode != null">
             AND dp.point_code = #{pointCode}
         </if>
@@ -49,6 +50,7 @@
                create_time, update_time
         FROM t_decision_release
         WHERE release_id = #{releaseId}
+          AND decision_flow_version_id IS NULL
     </select>
 
     <select id="lockRelease" resultMap="DecisionReleaseResultMap"
@@ -58,6 +60,7 @@
                create_time, update_time
         FROM t_decision_release
         WHERE release_id = #{releaseId}
+          AND decision_flow_version_id IS NULL
         FOR UPDATE
     </select>
 

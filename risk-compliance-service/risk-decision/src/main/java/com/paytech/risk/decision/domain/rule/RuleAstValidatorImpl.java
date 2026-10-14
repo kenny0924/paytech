@@ -2,8 +2,10 @@ package com.paytech.risk.decision.domain.rule;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor.InputFieldDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.ActionKey;
+import com.paytech.risk.decision.domain.enums.DecisionValue;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.InputFieldDescriptor;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry;
 import com.paytech.risk.decision.domain.authoring.RuleActionConfigurationCatalog;
 import com.paytech.risk.decision.domain.enums.ComparisonOperator;
@@ -36,21 +38,23 @@ public final class RuleAstValidatorImpl implements RuleAstValidator {
     private static final Set<DecisionValueType> ORDERED = Set.of(
         DecisionValueType.NUMBER, DecisionValueType.DATETIME, DecisionValueType.DURATION);
 
-    private final CheckoutPrepareAuthoringDescriptor descriptor;
     private final DecisionActionRegistry registry;
+    /** 旧 CONTEXT 操作数只属于结账原合同；统一变量格式经变量库解析字段。 */
     private final Map<String, InputFieldDescriptor> fields;
 
-    public RuleAstValidatorImpl(CheckoutPrepareAuthoringDescriptor descriptor, DecisionActionRegistry registry) {
-        this.descriptor = Objects.requireNonNull(descriptor);
+    /** 绑定终态动作目录，并索引结账旧格式可引用的输入字段。 */
+    public RuleAstValidatorImpl(DecisionActionRegistry registry) {
         this.registry = Objects.requireNonNull(registry);
         Map<String, InputFieldDescriptor> index = new HashMap<>();
-        descriptor.fields().forEach(field -> index.put(field.fieldCode(), field));
+        DecisionPointAuthoringDescriptor.checkoutPrepare().fields().forEach(field -> index.put(field.fieldCode(), field));
         fields = Map.copyOf(index);
     }
 
     @Override
     public NormalizedRuleSet validateAndNormalize(RuleSetDraft draft) {
-        if (draft == null || !descriptor.point().pointCode().equals(draft.pointCode())
+        DecisionPointAuthoringDescriptor descriptor = draft == null ? null
+            : DecisionPointAuthoringDescriptor.find(draft.pointCode()).orElse(null);
+        if (draft == null || descriptor == null
             || !validCode(draft.ruleSetCode()) || draft.rules() == null || draft.rules().isEmpty()
             || draft.rules().size() > 200
             || (draft.baseRuleSetVersionId() == null) != (draft.baseContentHash() == null)
@@ -60,6 +64,7 @@ public final class RuleAstValidatorImpl implements RuleAstValidator {
         }
         boolean variableFormat = "VARIABLE_REFERENCE".equals(draft.operandFormat());
         if (draft.operandFormat() != null && !variableFormat) { throw invalid("操作数格式不支持"); }
+        if (descriptor.runtimeSupported() && !variableFormat) { throw invalid("该决策点只接受统一变量格式"); }
         Set<String> codes = new HashSet<>();
         Set<Integer> priorities = new HashSet<>();
         long nodes = 0;
@@ -77,17 +82,15 @@ public final class RuleAstValidatorImpl implements RuleAstValidator {
                 operands += node.operands().size();
             }
             if (nodes > 2000 || operands > 10000) throw invalid("规则 AST 超出限制");
-            try {
-                if (rule.action() != null) registry.require(rule.action());
-            } catch (InvalidParameterException exception) {
-                throw business("决策动作未注册");
-            }
+            DecisionValue decision = terminalDecision(descriptor, rule.action());
             List<AdditionalAction> additional = RuleActionConfigurationCatalog.normalize(rule.additionalActions());
+            if (!descriptor.additionalActionsSupported() && additional != null && !additional.isEmpty())
+                throw business("当前决策点不支持附加动作");
             if (rule.action() == null && additional == null)
                 throw business("旧格式规则必须包含终态决定");
             if (additional == null && rule.reasonMessage() != null) throw invalid("旧请求不能携带新增文案");
             String message = rule.reasonMessage() == null ? null : ChangeReasonPolicy.normalize(rule.reasonMessage());
-            if (message != null && (rule.action() == null || !"DENY_CHECKOUT".equals(rule.action().actionCode())))
+            if (message != null && decision != DecisionValue.DENY)
                 throw business("拒绝文案只适用于拒绝规则");
             if (variableFormat && (additional == null || additional.stream().anyMatch(a -> a.subjectVariableCode() == null))) {
                 throw invalid("统一变量配置必须提供附加动作数组及显式主体变量");
@@ -106,6 +109,28 @@ public final class RuleAstValidatorImpl implements RuleAstValidator {
         return new NormalizedRuleSet(draft.pointCode(), draft.ruleSetCode(), text(draft.ruleSetName(), 255),
             draft.baseRuleSetVersionId(), draft.baseContentHash(), ChangeReasonPolicy.normalize(draft.changeReason()),
             normalized, draft.operandFormat());
+    }
+
+    /**
+     * 终态动作必须已注册且属于本决策点
+     *
+     * @param descriptor 决策点合同
+     * @param action 规则终态动作，可空
+     * @return 动作对应的业务决定；未配置终态动作时为空
+     */
+    private DecisionValue terminalDecision(DecisionPointAuthoringDescriptor descriptor, ActionKey action) {
+        if (action == null) {
+            return null;
+        }
+        try {
+            DecisionValue decision = registry.require(action).decisionCode();
+            if (!descriptor.ownsAction(action.actionCode(), action.versionNo())) {
+                throw business("决策动作不属于当前决策点");
+            }
+            return decision;
+        } catch (InvalidParameterException exception) {
+            throw business("决策动作未注册");
+        }
     }
 
     @Override
@@ -205,7 +230,7 @@ public final class RuleAstValidatorImpl implements RuleAstValidator {
 
     private NormalizedPredicate predicate(NodeDraft node) {
         ComparisonOperator operator = node.comparisonOperator();
-        if (!descriptor.operators().contains(operator)) throw business("操作符无效");
+        if (!DecisionPointAuthoringDescriptor.checkoutPrepare().operators().contains(operator)) throw business("操作符无效");
         List<OperandDraft> operands = new ArrayList<>(node.operands());
         if (operands.stream().anyMatch(v -> v != null && (v.variableCode() != null || v.numericUnit() != null
             || v.currencyCode() != null || v.currencyVariableCode() != null || v.sourceType() == OperandSource.VARIABLE)))

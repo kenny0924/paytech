@@ -20,6 +20,11 @@ public class DecisionPointVersionRepositoryImpl implements DecisionPointVersionR
     /** 只查询本表，历史解释由调用方负责。 */
     @Override
     public Optional<DecisionPointVersion> findById(long id) { return Optional.ofNullable(mapper.selectPointVersion(id)); }
+    /** 按决策点与版本号读取。 */
+    @Override
+    public Optional<DecisionPointVersion> findByPointAndVersion(long decisionPointId, int versionNo) {
+        return Optional.ofNullable(mapper.selectPointVersionByNo(decisionPointId, versionNo));
+    }
     /** 批量查询保留原 SQL 的坐标与稳定顺序。 */
     @Override
     public List<DecisionPointVersion> findByIds(List<Long> ids) {

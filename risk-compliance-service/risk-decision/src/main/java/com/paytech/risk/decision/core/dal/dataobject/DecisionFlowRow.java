@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.FlowStatus;
 import com.paytech.risk.decision.domainservice.service.DecisionConfigurationNotFoundException;
 import com.paytech.risk.decision.domainservice.service.DecisionFlowConfigurationException.Reason;
@@ -83,9 +84,16 @@ public class DecisionFlowRow {
             || flowCode == null || status == null || createTime == null || updateTime == null
             || value.flowVersionId() <= 0 || value.flowId() != flowId || value.versionNo() < 1
             || value.createdBy() <= 0 || value.createTime() == null || !value.createTime().equals(value.updateTime())
-            || !"ORDER_PREPARATION".equals(value.inputContractCode()) || value.inputContractVersion() != 4) {
+            || !registeredContract(value.inputContractCode(), value.inputContractVersion())) {
             throw new ErrorException("流程持久化配置不完整或身份不一致");
         }
+    }
+
+    /** 输入合同必须是某个已登记决策点的准确合同；所属决策点由流程图重建时再严格比对。 */
+    private static boolean registeredContract(String contractCode, int contractVersion) {
+        return DecisionPointAuthoringDescriptor.all().stream().map(DecisionPointAuthoringDescriptor::point)
+            .anyMatch(point -> point.inputContractCode().equals(contractCode)
+                && point.inputContractVersion() == contractVersion);
     }
 
     /** 当前指针、最高业务版本与整体删除审计必须一致。 */

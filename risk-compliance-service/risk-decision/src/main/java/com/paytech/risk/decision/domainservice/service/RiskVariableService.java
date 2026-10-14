@@ -18,6 +18,8 @@ public interface RiskVariableService {
     MemberPage members(String code, String pattern, int page, int size, Long expectedVersion, Instant valuesAsOf);
     /** 新配置保存时按编码排序共享锁定变量及依赖，返回真实当前定义。 */
     Map<String, Entry> lockDefinitions(Set<String> codes);
+    /** 运行期不加锁读取变量及依赖的当前定义；删除或缺失视为数据损坏。 */
+    Map<String, Entry> definitions(Set<String> codes);
     /** 在现有快照/锁保护内读取集合的完整有界当前成员。 */
     List<Member> collection(Entry entry);
     /** 已持有变量根共享锁后，以当前读获取同一根版本的成员，避免旧 MVCC 快照。 */

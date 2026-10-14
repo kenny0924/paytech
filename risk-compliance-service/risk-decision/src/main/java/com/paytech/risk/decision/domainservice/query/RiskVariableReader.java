@@ -79,6 +79,24 @@ public class RiskVariableReader {
         return Map.copyOf(result);
     }
 
+    /**
+     * 运行期按依赖闭包读取当前定义，不加锁
+     *
+     * @param codes 发布引用的变量编码
+     * @return 编码到当前定义；停用变量仍按原结构参与已发布规则，删除或缺失视为数据损坏
+     */
+    public Map<String, Entry> definitions(Set<String> codes) {
+        Map<String, Entry> result = new LinkedHashMap<>();
+        for (String code : closure(codes)) {
+            RiskVariableDefinition row = requiredRoot(code, null);
+            if (row.status() == VariableStatus.DELETED) {
+                throw new ErrorException("已发布规则引用的变量已删除: " + code);
+            }
+            result.put(code, RiskVariablePersistenceConverter.entry(row));
+        }
+        return Map.copyOf(result);
+    }
+
     /** 全部成员仍受一千条容量限制，不展开为规则内联 literal。 */
     public List<Member> collection(Entry entry) {
         return collection(entry, false);

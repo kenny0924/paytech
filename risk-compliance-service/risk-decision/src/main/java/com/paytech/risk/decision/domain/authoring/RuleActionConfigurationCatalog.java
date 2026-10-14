@@ -1,8 +1,8 @@
 package com.paytech.risk.decision.domain.authoring;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor.InputFieldDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.DecisionActionDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.InputFieldDescriptor;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.ActionKey;
 import com.paytech.risk.decision.domain.enums.ActionCategory;
 import com.paytech.risk.decision.domain.enums.ConfigurationStatus;
@@ -43,7 +43,7 @@ public final class RuleActionConfigurationCatalog {
     public static List<ConfigurationAction> actions() { return ACTIONS; }
 
     public static List<InputFieldDescriptor> inputFields() {
-        return CheckoutPrepareAuthoringDescriptor.v1().inputFields().stream()
+        return DecisionPointAuthoringDescriptor.checkoutPrepare().inputFields().stream()
             .filter(InputFieldDescriptor::actionParameterFlag).toList();
     }
 

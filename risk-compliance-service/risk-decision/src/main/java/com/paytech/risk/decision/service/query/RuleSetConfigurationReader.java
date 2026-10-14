@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.stream.LongStream;
 import org.springframework.stereotype.Component;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
@@ -17,6 +18,7 @@ import com.paytech.risk.decision.core.dal.dataobject.RuleSetVersion;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.ActionKey;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.PersistedActionVersion;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.authoring.RuleActionConfigurationCatalog;
 import com.paytech.risk.decision.domain.enums.ConfigurationStatus;
 import com.paytech.risk.decision.domain.enums.DecisionPointVersionStatus;
@@ -32,17 +34,24 @@ import lombok.AllArgsConstructor;
 @Component
 @AllArgsConstructor
 public class RuleSetConfigurationReader {
-    private static final List<Long> ACTION_VERSION_IDS = List.of(240001L, 240002L, 240003L);
     private final DecisionActionRegistry actionRegistry;
     private final DecisionRuleSetAssembler assembler;
     private final DecisionRuleSetRepository repository;
 
-    /** 读取并核验工程注册的完整持久化动作目录。 */
-    public List<ActionVersion> requireCatalog() {
+    /**
+     * 读取并核验一个决策点工程注册的完整持久化动作目录
+     *
+     * @param pointCode 决策点编码
+     * @return 该决策点的终态动作，及其开放的附加动作
+     */
+    public List<ActionVersion> requireCatalog(String pointCode) {
+        DecisionPointAuthoringDescriptor descriptor = DecisionPointAuthoringDescriptor.require(pointCode);
         try {
-            List<ActionVersion> catalog = repository.requireActionVersions(ACTION_VERSION_IDS);
-            repository.requireNoActionParameterDefinitions(ACTION_VERSION_IDS);
-            actionRegistry.verifyPersistedCatalog(catalog.stream().map(this::toActiveCatalogRow).toList());
+            List<Long> terminalIds = LongStream.range(0, descriptor.actions().size())
+                .map(index -> descriptor.firstActionVersionId() + index).boxed().toList();
+            List<ActionVersion> catalog = repository.requireActionVersions(terminalIds);
+            repository.requireNoActionParameterDefinitions(terminalIds);
+            actionRegistry.verifyPersistedCatalog(descriptor, catalog.stream().map(this::toActiveCatalogRow).toList());
             for (ActionVersion action : catalog) {
                 var expected = actionRegistry.require(new ActionKey(action.actionCode(), action.versionNo()));
                 if (!expected.actionName().equals(action.actionName())) {
@@ -50,6 +59,9 @@ public class RuleSetConfigurationReader {
                 }
             }
             List<ActionVersion> complete = new ArrayList<>(catalog);
+            if (!descriptor.additionalActionsSupported()) {
+                return List.copyOf(complete);
+            }
             List<Long> configuredIds = RuleActionConfigurationCatalog.actions().stream()
                 .map(RuleActionConfigurationCatalog.ConfigurationAction::actionVersionId).toList();
             List<ActionVersion> configured = repository.requireActionVersions(configuredIds);
@@ -95,6 +107,9 @@ public class RuleSetConfigurationReader {
                 || !lockedCompanion.equals(legacy.pointVersion()) || !lockedRuleSet.equals(legacy.ruleSetVersion()))
                 throw corruption("旧编排锁与完整历史组成不一致");
         }
+        // 运行期决策点的统一变量规则经执行发布运行，可以冻结；无终态动作的规则只表达“命中”，供流程连线判断。
+        if (forFreeze && DecisionPointAuthoringDescriptor.require(lockedPoint.pointCode()).runtimeSupported())
+            return lockedCompanion;
         if (forFreeze && VariableRuleConfiguration.CONTENT_FORMAT.equals(lockedRuleSet.contentFormat()))
             throw new BizCheckFailException("统一变量仅支持配置，当前版本不能冻结");
         if (forFreeze && aggregate.rules().stream().anyMatch(rule -> rule.action() == null

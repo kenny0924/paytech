@@ -25,7 +25,7 @@ import com.paytech.risk.decision.core.dal.dataobject.DecisionPointVersion;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionRelease;
 import com.paytech.risk.decision.core.dal.dataobject.ReleaseAuditEvent;
 import com.paytech.risk.decision.core.dal.dataobject.RuleSetVersion;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.ActionKey;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.PersistedActionVersion;
@@ -95,7 +95,7 @@ public class DecisionReleaseAssembler {
 
     private final DecisionActionRegistry registry;
     private final RiskDecisionCanonicalizer canonicalizer;
-    private final CheckoutPrepareAuthoringDescriptor descriptor;
+    private final DecisionPointAuthoringDescriptor descriptor;
 
     /** 从批量读取的发布根、决策点和绑定派生列表项。 */
     public ReleaseSummaryView summary(DecisionReleaseQueryViews.ReleaseSummaryView stored) {
@@ -393,7 +393,7 @@ public class DecisionReleaseAssembler {
     private void requireDescriptorPoint(DecisionRuleSetRepository.DecisionRuleSetAggregate composition) {
         DecisionPoint point = composition.decisionPoint();
         DecisionPointVersion version = composition.pointVersion();
-        CheckoutPrepareAuthoringDescriptor.DecisionPointDescriptor expected = descriptor.point();
+        DecisionPointAuthoringDescriptor.DecisionPointDescriptor expected = descriptor.point();
         if (!expected.pointCode().equals(point.pointCode()) || !expected.pointName().equals(point.pointName())
             || !expected.businessDomain().equals(point.businessDomain().getCode())
             || !expected.inputContractCode().equals(version.inputContractCode())

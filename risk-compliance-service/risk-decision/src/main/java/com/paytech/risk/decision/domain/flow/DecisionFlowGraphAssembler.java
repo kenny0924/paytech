@@ -12,6 +12,8 @@ import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowEdgeRow;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowNodeRow;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowRow;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowVersionRow;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.DecisionPointDescriptor;
 import com.paytech.risk.decision.domain.flow.DecisionFlow.Checked;
 import com.paytech.risk.decision.domain.flow.DecisionFlow.Edge;
 import com.paytech.risk.decision.domain.flow.DecisionFlow.Graph;
@@ -31,6 +33,11 @@ public class DecisionFlowGraphAssembler {
     public Graph assemble(String pointCode, DecisionFlowRow root, DecisionFlowVersionRow version,
         List<DecisionFlowNodeRow> rows, List<DecisionFlowEdgeRow> edgeRows) {
         root.verifyVersion(version);
+        DecisionPointDescriptor point = DecisionPointAuthoringDescriptor.require(pointCode).point();
+        if (!point.inputContractCode().equals(version.inputContractCode())
+            || point.inputContractVersion() != version.inputContractVersion()) {
+            throw corrupt();
+        }
         if (rows.size() > 50 || edgeRows.size() > 100) throw corrupt();
         Map<Long, String> keys = new HashMap<>();
         for (DecisionFlowNodeRow node : rows) {

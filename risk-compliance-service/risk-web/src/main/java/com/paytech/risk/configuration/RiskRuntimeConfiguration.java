@@ -3,8 +3,8 @@ package com.paytech.risk.configuration;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.id.SnowflakeIdGenerator;
 import com.paytech.risk.control.domainservice.port.ControlIdentifierGenerator;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizer;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizerImpl;
 import com.paytech.risk.decision.domain.release.DecisionReleaseStaticValidator;
@@ -25,21 +25,18 @@ import org.springframework.context.annotation.Configuration;
 public class RiskRuntimeConfiguration {
 
     @Bean
-    CheckoutPrepareAuthoringDescriptor checkoutPrepareAuthoringDescriptor() {
-        return CheckoutPrepareAuthoringDescriptor.v1();
+    DecisionPointAuthoringDescriptor decisionPointAuthoringDescriptor() {
+        return DecisionPointAuthoringDescriptor.checkoutPrepare();
     }
 
     @Bean
     DecisionActionRegistry decisionActionRegistry() {
-        return DecisionActionRegistry.checkoutPrepareV1();
+        return DecisionActionRegistry.instance();
     }
 
     @Bean
-    RuleAstValidator ruleAstValidator(
-        CheckoutPrepareAuthoringDescriptor descriptor,
-        DecisionActionRegistry registry
-    ) {
-        return new RuleAstValidatorImpl(descriptor, registry);
+    RuleAstValidator ruleAstValidator(DecisionActionRegistry registry) {
+        return new RuleAstValidatorImpl(registry);
     }
 
     @Bean

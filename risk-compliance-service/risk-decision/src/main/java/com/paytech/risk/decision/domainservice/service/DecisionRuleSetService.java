@@ -3,7 +3,7 @@ package com.paytech.risk.decision.domainservice.service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
 import com.paytech.risk.decision.domain.rule.DecisionRuleSetAggregate;
 
@@ -23,10 +23,10 @@ public interface DecisionRuleSetService {
     DecisionRuleSetAggregate detailForLegacyOrchestration(long ruleSetVersionId, long bindingId);
 
     /** 配置能力及已读取系统变量的展示投影。 */
-    record RuleAuthoringView(CheckoutPrepareAuthoringDescriptor descriptor,
+    record RuleAuthoringView(DecisionPointAuthoringDescriptor descriptor,
         List<com.paytech.risk.decision.domain.variable.RiskVariable.Entry> systemDefinitions) {
         /** 纯合同测试可显式传入空的数据库投影。 */
-        public RuleAuthoringView(CheckoutPrepareAuthoringDescriptor descriptor) { this(descriptor, List.of()); }
+        public RuleAuthoringView(DecisionPointAuthoringDescriptor descriptor) { this(descriptor, List.of()); }
         public RuleAuthoringView {
             Objects.requireNonNull(descriptor, "descriptor");
         }

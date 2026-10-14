@@ -22,9 +22,9 @@ import com.paytech.risk.api.decision.response.FreezeRuleSetVersionResponseBody;
 import com.paytech.risk.api.decision.response.RuleAuthoringContextResponseBody;
 import com.paytech.risk.api.decision.response.RuleSetDetailResponseBody;
 import com.paytech.risk.api.decision.response.RuleSetListItemResponseBody;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor.DecisionActionDescriptor;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor.InputFieldDescriptor;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.DecisionActionDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.InputFieldDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.ActionKey;
 import com.paytech.risk.decision.domain.authoring.RuleActionConfigurationCatalog;
 import com.paytech.risk.decision.domain.enums.ComparisonOperator;
@@ -123,7 +123,7 @@ final class DecisionRuleSetWireConverter {
 
     /** 将规则编排能力转换为 Authoring Context 响应。 */
     static RuleAuthoringContextResponseBody toResponse(RuleAuthoringView context) {
-        CheckoutPrepareAuthoringDescriptor descriptor = require(context, "authoringContext").descriptor();
+        DecisionPointAuthoringDescriptor descriptor = require(context, "authoringContext").descriptor();
         var point = descriptor.point();
         return new RuleAuthoringContextResponseBody("RISK_VARIABLE_AUTHORING",
             new DecisionPointDescriptorResponseBody(point.pointCode(), point.pointName(), point.businessDomain(),

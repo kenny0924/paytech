@@ -93,6 +93,20 @@ public class CreateVariableRequestBody {
         this.status = status;
     }
 
+    /**
+     * 实时累计参数
+     * <li>仅 sourceType=VELOCITY 必填，其他来源必须为空；创建后不可修改。</li>
+     */
+    @Valid
+    private VelocityFeatureParameters velocity;
+
+    /**
+     * 名单命中参数
+     * <li>仅 sourceType=LIST 必填，其他来源必须为空；创建后不可修改。</li>
+     */
+    @Valid
+    private ListFeatureParameters list;
+
     /** 读取永久唯一变量编码。 */
     public String getVariableCode() { return variableCode; }
 
@@ -194,4 +208,16 @@ public class CreateVariableRequestBody {
 
     /** 设置当前状态。 */
     public void setStatus(String status) { this.status = status; }
+
+    /** 读取实时累计参数。 */
+    public VelocityFeatureParameters getVelocity() { return velocity; }
+
+    /** 设置实时累计参数。 */
+    public void setVelocity(VelocityFeatureParameters velocity) { this.velocity = velocity; }
+
+    /** 读取名单命中参数。 */
+    public ListFeatureParameters getList() { return list; }
+
+    /** 设置名单命中参数。 */
+    public void setList(ListFeatureParameters list) { this.list = list; }
 }

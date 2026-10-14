@@ -24,7 +24,8 @@ public final class RiskVariablePersistenceConverter {
         if (row.actionParameterFlag()) { usages.add(VariableUsage.ACTION_PARAMETER); }
         Definition definition = new Definition(row.variableCode(), row.sourceType(), row.valueType(), row.pointCode(),
             row.sourceContractCode(), row.sourceContractVersion(), row.sourceField(), usages, row.systemManagedFlag(),
-            row.formatCode(), row.numericUnit(), row.currencyCode(), row.currencyVariableCode(), row.allowedValuesVariableCode());
+            row.formatCode(), row.numericUnit(), row.currencyCode(), row.currencyVariableCode(), row.allowedValuesVariableCode(),
+            row.featureVersionId());
         Object value = value(row.valueType(), row.stringValue(), row.numberValue(), row.booleanValue(), row.datetimeValue(),
             row.durationValue(), row.sourceType() == VariableSource.CONSTANT);
         return new Entry(definition, row.variableName(), row.description(), value, row.status(), row.version(),
@@ -36,7 +37,7 @@ public final class RiskVariablePersistenceConverter {
         Definition d = entry.definition();
         var values = typed(d.valueType(), entry.currentValue());
         return new RiskVariableDefinition(id, d.variableCode(), entry.variableName(), entry.description(), d.sourceType(),
-            d.valueType(), d.pointCode(), d.sourceContractCode(), d.sourceContractVersion(), d.sourceField(),
+            d.valueType(), d.pointCode(), d.sourceContractCode(), d.sourceContractVersion(), d.featureVersionId(), d.sourceField(),
             d.usages().contains(VariableUsage.RULE_CONDITION), d.usages().contains(VariableUsage.FLOW_CONDITION),
             d.usages().contains(VariableUsage.ACTION_PARAMETER), d.systemManaged(), d.formatCode(), d.numericUnit(),
             d.currencyCode(), d.currencyVariableCode(), d.allowedValuesVariableCode(), values.stringValue(), values.numberValue(),

@@ -1,37 +1,18 @@
 package com.paytech.risk.decision.domain.rule;
 
+import java.time.Instant;
+import java.util.*;
+
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.ActionKey;
-import com.paytech.risk.decision.domain.rule.RuleAstValidator.AdditionalAction;
-import com.paytech.risk.decision.domain.authoring.RuleActionConfigurationCatalog;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry.PersistedActionVersion;
-import com.paytech.risk.decision.domain.enums.ComparisonOperator;
-import com.paytech.risk.decision.domain.enums.DataClassification;
-import com.paytech.risk.decision.domain.enums.DecisionBusinessDomain;
-import com.paytech.risk.decision.domain.enums.DecisionPointStatus;
-import com.paytech.risk.decision.domain.enums.DecisionPointVersionStatus;
-import com.paytech.risk.decision.domain.enums.DecisionValueType;
-import com.paytech.risk.decision.domain.enums.GroupOperator;
-import com.paytech.risk.decision.domain.enums.NodeType;
-import com.paytech.risk.decision.domain.enums.OperandRole;
-import com.paytech.risk.decision.domain.enums.OperandSource;
-import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
+import com.paytech.risk.decision.domain.authoring.RuleActionConfigurationCatalog;
+import com.paytech.risk.decision.domain.enums.*;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizer.DecisionPointVersionProjection;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizer.RuleSetVersionProjection;
-import com.paytech.risk.decision.domain.rule.RuleAstValidator.BooleanLiteral;
-import com.paytech.risk.decision.domain.rule.RuleAstValidator.LiteralValue;
-import com.paytech.risk.decision.domain.rule.RuleAstValidator.NullLiteral;
-import com.paytech.risk.decision.domain.rule.RuleAstValidator.StringLiteral;
-import java.time.Instant;
-import com.paytech.risk.decision.domain.enums.NumericUnit;
-import com.paytech.risk.decision.domain.variable.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import com.paytech.risk.decision.domain.rule.RuleAstValidator.*;
+import com.paytech.risk.decision.domain.variable.VariableOperand;
+import com.paytech.risk.decision.domain.variable.VariableOperandJson;
+import com.paytech.risk.decision.domain.variable.VariableRuleConfiguration;
 
 /**
  * 一个规则版本的不可变内容与共享输入定义；companion 仅为已有旧编排的可选身份元数据。

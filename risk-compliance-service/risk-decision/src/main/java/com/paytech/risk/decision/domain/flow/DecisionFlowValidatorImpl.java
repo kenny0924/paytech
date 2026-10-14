@@ -12,7 +12,7 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.FailException;
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.ComparisonOperator;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.NodeType;
@@ -44,7 +44,7 @@ public final class DecisionFlowValidatorImpl implements DecisionFlowValidator {
             errors.add("INVALID_GRAPH", null, null, "graph", "请配置完整流程");
             return new Checked(command, errors.report());
         }
-        if (!"CHECKOUT_PREPARE".equals(command.pointCode()))
+        if (DecisionPointAuthoringDescriptor.find(command.pointCode()).isEmpty())
             errors.add("INVALID_POINT", null, null, "pointCode", "当前决策点不支持流程配置");
         if (!code(command.flowCode())) errors.add("INVALID_CODE", null, null, "flowCode", "流程编码格式无效");
         if ((command.baseFlowVersionId() == null) != (command.expectedVersion() == null))
@@ -229,7 +229,7 @@ public final class DecisionFlowValidatorImpl implements DecisionFlowValidator {
             return predicate;
         }
         if (!"CONTEXT".equals(predicate.sourceType())) throw new IllegalArgumentException();
-        var descriptor = CheckoutPrepareAuthoringDescriptor.v1().fields().stream()
+        var descriptor = DecisionPointAuthoringDescriptor.checkoutPrepare().fields().stream()
             .filter(f -> f.fieldCode().equals(predicate.fieldCode())).findFirst().orElseThrow(IllegalArgumentException::new);
         ComparisonOperator operator = java.util.Arrays.stream(ComparisonOperator.values())
             .filter(v -> v.getCode().equals(predicate.operator())).findFirst().orElseThrow(IllegalArgumentException::new);
