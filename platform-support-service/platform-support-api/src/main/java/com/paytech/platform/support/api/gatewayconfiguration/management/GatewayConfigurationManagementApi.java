@@ -39,7 +39,6 @@ public interface GatewayConfigurationManagementApi {
     GatewayTargetStatusResponseBody changeTargetStatus(
         @RequestHeader("X-Gateway-Actor-Subject") String actorAccountId,
         @RequestHeader("X-Gateway-Session-Id") String sessionId,
-        @RequestHeader("Idempotency-Key") String idempotencyKey,
         @PathVariable("targetServiceCode") String targetServiceCode,
         @Valid @RequestBody ChangeGatewayTargetStatusRequestBody request);
 
@@ -63,21 +62,19 @@ public interface GatewayConfigurationManagementApi {
     GatewayRouteStatusResponseBody changeRouteStatus(
         @RequestHeader("X-Gateway-Actor-Subject") String actorAccountId,
         @RequestHeader("X-Gateway-Session-Id") String sessionId,
-        @RequestHeader("Idempotency-Key") String idempotencyKey, @PathVariable("routeCode") String routeCode,
+        @PathVariable("routeCode") String routeCode,
         @Valid @RequestBody ChangeGatewayRouteStatusRequestBody request);
     /** 保存完整配置并返回当次稳定回执；不自动启用。 */
     @PostExchange("/target-services")
     ConfigurationMutationResponseBody createTarget(
         @RequestHeader("X-Gateway-Actor-Subject") String actor,
         @RequestHeader("X-Gateway-Session-Id") String session,
-        @RequestHeader("Idempotency-Key") String key,
         @Valid @RequestBody CreateGatewayTargetRequestBody request);
     /** 保存完整配置并返回当次稳定回执；不自动启用。 */
     @PutExchange("/target-services/{targetServiceCode}")
     ConfigurationMutationResponseBody updateTarget(
         @RequestHeader("X-Gateway-Actor-Subject") String actor,
         @RequestHeader("X-Gateway-Session-Id") String session,
-        @RequestHeader("Idempotency-Key") String key,
         @PathVariable("targetServiceCode") String targetServiceCode,
         @Valid @RequestBody UpdateGatewayTargetRequestBody request);
     /** 保存完整配置并返回当次稳定回执；不自动启用。 */
@@ -85,14 +82,12 @@ public interface GatewayConfigurationManagementApi {
     ConfigurationMutationResponseBody createRoute(
         @RequestHeader("X-Gateway-Actor-Subject") String actor,
         @RequestHeader("X-Gateway-Session-Id") String session,
-        @RequestHeader("Idempotency-Key") String key,
         @Valid @RequestBody CreateGatewayRouteRequestBody request);
     /** 保存完整配置并返回当次稳定回执；不自动启用。 */
     @PutExchange("/routes/{routeCode}")
     ConfigurationMutationResponseBody updateRoute(
         @RequestHeader("X-Gateway-Actor-Subject") String actor,
         @RequestHeader("X-Gateway-Session-Id") String session,
-        @RequestHeader("Idempotency-Key") String key,
         @PathVariable("routeCode") String routeCode,
         @Valid @RequestBody UpdateGatewayRouteRequestBody request);
     /** 已部署编译器支持的组合与限制。 */

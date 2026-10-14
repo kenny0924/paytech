@@ -70,12 +70,11 @@ public final class AuditModels {
         }
     }
     public record GatewayChange(Target target, String sessionId, StatusVersion before, StatusVersion after,
-        String reason, String idempotencyReference) {
+        String reason) {
         public GatewayChange {
             require(target != null && before != null && after != null);
             scalar(sessionId, 128);
             scalar(reason, 1000);
-            scalar(idempotencyReference, 128);
         }
     }
 

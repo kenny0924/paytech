@@ -28,7 +28,7 @@ public final class GatewayConfigurationManagementModels {
     public record TargetDetailQuery(String actorId, String sessionId, String targetServiceCode) {
     }
 
-    public record TargetStatusCommand(String actorId, String sessionId, String idempotencyKey,
+    public record TargetStatusCommand(String actorId, String sessionId,
         String targetServiceCode, String status, int expectedVersion, String reason) {
     }
 
@@ -39,7 +39,7 @@ public final class GatewayConfigurationManagementModels {
     public record RouteDetailQuery(String actorId, String sessionId, String routeCode) {
     }
 
-    public record RouteStatusCommand(String actorId, String sessionId, String idempotencyKey, String routeCode,
+    public record RouteStatusCommand(String actorId, String sessionId, String routeCode,
         String status, int expectedVersion, String reason) {
     }
 

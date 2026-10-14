@@ -46,7 +46,6 @@ import com.paytech.platform.support.accesscontrol.domainservice.repository.Gatew
 import com.paytech.platform.support.accesscontrol.domainservice.repository.GatewayConfigurationRepository;
 import com.paytech.platform.support.accesscontrol.domainservice.service.GatewayConfigurationManagementService;
 import com.paytech.platform.support.auditsecurity.domainservice.service.OperationsAuditService;
-import com.paytech.platform.support.accesscontrol.domain.operations.CommandIdempotencyContext;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsManagementPolicyService;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsManagementPolicyService.ManagementContext;
 
@@ -89,17 +88,11 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
     }
 
     @Override
-    public TargetStatusResult changeTargetStatus(TargetStatusCommand command, CommandIdempotencyContext idempotency) {
+    public TargetStatusResult changeTargetStatus(TargetStatusCommand command) {
         command = normalize(command);
         var actor = requireManagementPermission(command.actorId(), command.sessionId());
         String requiredCode = requiredCode(command.targetServiceCode(), "Target Service Code");
         GatewayConfigurationStatus next = requiredStatus(command.status());
-        String replay = idempotency.previous();
-        if (replay != null) {
-            var result = targetStatus(replay);
-            audit.suppressReplay();
-            return result;
-        }
         GatewayTargetManagement current = requireTarget(requiredCode);
         requireChange(current.status(), current.version(), next, command.expectedVersion());
         GatewayManagementProtection.requireStatusMutable(GatewayManagementProtection.protectedTarget(
@@ -119,9 +112,7 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
         audit.record(() -> new GatewayStatusChanged(auditCommand.actorId(), actor.member().tenantId(),
             new GatewayChange(new Target("GATEWAY_TARGET", current.targetServiceCode()), auditCommand.sessionId(),
                 new StatusVersion(current.status().getCode(), current.version()),
-                new StatusVersion(next.getCode(), response.version()), auditCommand.reason(),
-                idempotency.opaqueReference()), now));
-        idempotency.complete(responseReference(response), now);
+                new StatusVersion(next.getCode(), response.version()), auditCommand.reason()), now));
         return response;
     }
 
@@ -150,17 +141,11 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
     }
 
     @Override
-    public RouteStatusResult changeRouteStatus(RouteStatusCommand command, CommandIdempotencyContext idempotency) {
+    public RouteStatusResult changeRouteStatus(RouteStatusCommand command) {
         command = normalize(command);
         var actor = requireManagementPermission(command.actorId(), command.sessionId());
         String requiredCode = requiredCode(command.routeCode(), "Route Code");
         GatewayConfigurationStatus next = requiredStatus(command.status());
-        String replay = idempotency.previous();
-        if (replay != null) {
-            var result = routeStatus(replay);
-            audit.suppressReplay();
-            return result;
-        }
         GatewayRouteRoot current = gateway.routeRoot(requiredCode);
         if (current == null) {
             notFound("Route", requiredCode);
@@ -183,19 +168,14 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
         audit.record(() -> new GatewayStatusChanged(auditCommand.actorId(), actor.member().tenantId(),
             new GatewayChange(new Target("GATEWAY_ROUTE", current.routeCode()), auditCommand.sessionId(),
                 new StatusVersion(current.status().getCode(), current.version()),
-                new StatusVersion(next.getCode(), response.version()), auditCommand.reason(),
-                idempotency.opaqueReference()), now));
-        idempotency.complete(responseReference(response), now);
+                new StatusVersion(next.getCode(), response.version()), auditCommand.reason()), now));
         return response;
     }
 
-    /** 当前权限检查和幂等重放均在业务事务内，Hash 预处理在 Processor 完成。 */
+    /** 当前权限检查在业务事务内；重复创建由唯一编码拒绝，更新由版本 CAS 拒绝。 */
     @Override
-    public ConfigurationMutation saveTarget(String actorId, String session, TargetWrite command,
-        CommandIdempotencyContext idempotency) {
+    public ConfigurationMutation saveTarget(String actorId, String session, TargetWrite command) {
         var actor = requireManagementPermission(actorId, session);
-        String previous = idempotency.previous();
-        if (previous != null) return replayMutation(previous, "GATEWAY_TARGET", command.code());
         boolean create = command.expectedVersion() == 0;
         GatewayTargetManagement current = gateway.target(command.code());
         requireWriteVersion(create, current == null ? null : current.version(), command.expectedVersion(), "Target");
@@ -214,7 +194,7 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
             catalog.queryParameters(), catalog.guardRules()));
         if (!create && current.discoveryServiceName().equals(command.discoveryServiceName())) {
             return completeUnchanged(new ConfigurationMutation("GATEWAY_TARGET", id, command.code(), status,
-                current.version()), idempotency);
+                current.version()));
         }
         Instant now = now();
         int changed = create ? gateway.insertTarget(row, actor.account().id(), now)
@@ -227,17 +207,13 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
             new ConfigurationFieldChange(ConfigurationField.CHANNEL, current == null ? null : channel, channel),
             new ConfigurationFieldChange(ConfigurationField.STATUS, current == null ? null : status, status));
         recordConfiguration(actor, actorId, result, command.expectedVersion(), fields, command.reason(), now);
-        idempotency.complete(result.reference(), now);
         return result;
     }
 
     /** 全量候选编译与 Root/子项保存共享一个事务，禁用配置也不跳过校验。 */
     @Override
-    public ConfigurationMutation saveRoute(String actorId, String session, RouteWrite command,
-        CommandIdempotencyContext idempotency) {
+    public ConfigurationMutation saveRoute(String actorId, String session, RouteWrite command) {
         var actor = requireManagementPermission(actorId, session);
-        String previous = idempotency.previous();
-        if (previous != null) return replayMutation(previous, "GATEWAY_ROUTE", command.code());
         var config = command.configuration();
         var permission = config.permissionId() == null ? null : gateway.permissionIdentity(config.permissionId());
         boolean create = command.expectedVersion() == 0;
@@ -282,7 +258,7 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
         compileEditedCandidate(candidate);
         if (!create && config.equals(configuration(current))) {
             return completeUnchanged(new ConfigurationMutation("GATEWAY_ROUTE", id, command.code(), status,
-                current.route().version()), idempotency);
+                current.route().version()));
         }
         Instant now = now();
         int changed = create ? gateway.insertRoute(row, actor.account().id(), now)
@@ -293,7 +269,6 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
             create ? 1 : current.route().version() + 1);
         recordConfiguration(actor, actorId, result, command.expectedVersion(),
             routeChanges(current == null ? null : configuration(current), config), command.reason(), now);
-        idempotency.complete(result.reference(), now);
         return result;
     }
 
@@ -304,16 +279,8 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
         if (!create && (expected <= 0 || current != expected)) conflict();
     }
 
-    /** 重放和无变化保存不制造重复成功审计。 */
-    private ConfigurationMutation replayMutation(String reference, String type, String code) {
-        var result = ConfigurationMutation.restore(reference, type, code);
-        audit.suppressReplay();
-        return result;
-    }
-
-    /** 无变化命令仍固定回执，使以后重放不会读取新状态。 */
-    private ConfigurationMutation completeUnchanged(ConfigurationMutation result, CommandIdempotencyContext context) {
-        context.complete(result.reference(), now());
+    /** 无变化保存返回当前版本，不制造重复成功审计。 */
+    private ConfigurationMutation completeUnchanged(ConfigurationMutation result) {
         audit.suppressReplay();
         return result;
     }
@@ -521,47 +488,11 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
             route.createTime(), route.updateTime(), routeProtection(catalog, route.routeId()));
     }
 
-    private String responseReference(TargetStatusResult response) {
-        return String.join(",", response.targetServiceCode(), response.status().getCode(),
-            Integer.toString(response.version()));
-    }
-
-    private String responseReference(RouteStatusResult response) {
-        return String.join(",", response.routeCode(), response.status().getCode(),
-            Integer.toString(response.version()));
-    }
-
-    private TargetStatusResult targetStatus(String reference) {
-        String[] values = responseValues(reference);
-        return new TargetStatusResult(values[0], requiredStatus(values[1]), Integer.parseInt(values[2]));
-    }
-
-    private RouteStatusResult routeStatus(String reference) {
-        String[] values = responseValues(reference);
-        return new RouteStatusResult(values[0], requiredStatus(values[1]), Integer.parseInt(values[2]));
-    }
-
-    private String[] responseValues(String reference) {
-        String[] values = reference.split(",", -1);
-        if (values.length != 3 || !STABLE_CODE.matcher(values[0]).matches() || Arrays
-            .stream(GatewayConfigurationStatus.values()).noneMatch(status -> status.getCode().equals(values[1]))) {
-            throw new IllegalStateException("Gateway 配置命令幂等响应损坏");
-        }
-        try {
-            if (Integer.parseInt(values[2]) <= 0) {
-                throw new NumberFormatException();
-            }
-            return values;
-        } catch (NumberFormatException exception) {
-            throw new IllegalStateException("Gateway 配置命令幂等版本损坏", exception);
-        }
-    }
-
     private TargetStatusCommand normalize(TargetStatusCommand command) {
         if (command == null || command.expectedVersion() <= 0) {
             throw new InvalidParameterException("Target 状态命令及正版本不能为空");
         }
-        return new TargetStatusCommand(command.actorId(), command.sessionId(), command.idempotencyKey(),
+        return new TargetStatusCommand(command.actorId(), command.sessionId(), 
             command.targetServiceCode(), normalizeStatus(command.status()), command.expectedVersion(),
             normalizeReason(command.reason()));
     }
@@ -570,7 +501,7 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
         if (command == null || command.expectedVersion() <= 0) {
             throw new InvalidParameterException("Route 状态命令及正版本不能为空");
         }
-        return new RouteStatusCommand(command.actorId(), command.sessionId(), command.idempotencyKey(),
+        return new RouteStatusCommand(command.actorId(), command.sessionId(), 
             command.routeCode(), normalizeStatus(command.status()), command.expectedVersion(),
             normalizeReason(command.reason()));
     }

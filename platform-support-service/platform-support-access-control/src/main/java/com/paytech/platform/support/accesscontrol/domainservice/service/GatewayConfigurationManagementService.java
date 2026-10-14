@@ -13,7 +13,6 @@ import com.paytech.platform.support.accesscontrol.domain.gatewayconfiguration.Ga
 import com.paytech.platform.support.accesscontrol.domain.gatewayconfiguration.GatewayConfigurationManagementModels.TargetStatusCommand;
 import com.paytech.platform.support.accesscontrol.domain.gatewayconfiguration.GatewayConfigurationManagementModels.TargetStatusResult;
 import com.paytech.platform.support.accesscontrol.domain.gatewayconfiguration.GatewayConfigurationManagementModels.TargetSummaryResult;
-import com.paytech.platform.support.accesscontrol.domain.operations.CommandIdempotencyContext;
 import com.paytech.platform.support.accesscontrol.domain.gatewayconfiguration.GatewayConfigurationCommands.*;
 import com.paytech.platform.support.accesscontrol.domain.configurationmanagement.ConfigurationMutation;
 
@@ -24,21 +23,19 @@ public interface GatewayConfigurationManagementService {
 
     TargetDetailResult target(TargetDetailQuery query);
 
-    TargetStatusResult changeTargetStatus(TargetStatusCommand command, CommandIdempotencyContext idempotency);
+    TargetStatusResult changeTargetStatus(TargetStatusCommand command);
 
     Page<RouteSummaryResult> routes(RoutePageQuery query);
 
     RouteDetailResult route(RouteDetailQuery query);
 
-    RouteStatusResult changeRouteStatus(RouteStatusCommand command, CommandIdempotencyContext idempotency);
+    RouteStatusResult changeRouteStatus(RouteStatusCommand command);
 
     /** 保存 Target，创建时停用，更新保留状态与固定身份。 */
-    ConfigurationMutation saveTarget(String actor, String session, TargetWrite command,
-        CommandIdempotencyContext idempotency);
+    ConfigurationMutation saveTarget(String actor, String session, TargetWrite command);
 
     /** 保存 Route 完整聚合，任一校验或写入失败必须回滚。 */
-    ConfigurationMutation saveRoute(String actor, String session, RouteWrite command,
-        CommandIdempotencyContext idempotency);
+    ConfigurationMutation saveRoute(String actor, String session, RouteWrite command);
     /** 当前编译器能力，按查询权限保护。 */
     com.paytech.platform.support.accesscontrol.domain.gatewayconfiguration.GatewayConfigurationCapabilities.Capabilities
         capabilities(String actor, String session);

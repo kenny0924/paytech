@@ -47,9 +47,9 @@ public class GatewayConfigurationManagementController implements GatewayConfigur
     @Audit(action = "OPERATIONS_GATEWAY_TARGET_STATUS_CHANGE", resourceType = "GATEWAY_TARGET",
         resourceIdParameter = "targetServiceCode", fallbackResourceId = "INVALID_TARGET")
     @Override
-    public GatewayTargetStatusResponseBody changeTargetStatus(String actor, String session, String key,
+    public GatewayTargetStatusResponseBody changeTargetStatus(String actor, String session,
         String targetServiceCode, ChangeGatewayTargetStatusRequestBody body) {
-        return processor.changeTargetStatus(actor, session, key, targetServiceCode, body);
+        return processor.changeTargetStatus(actor, session, targetServiceCode, body);
     }
 
     @Audit(action = "OPERATIONS_GATEWAY_ROUTE_LIST", resourceType = "GATEWAY_ROUTE",
@@ -72,44 +72,44 @@ public class GatewayConfigurationManagementController implements GatewayConfigur
     @Audit(action = "OPERATIONS_GATEWAY_ROUTE_STATUS_CHANGE", resourceType = "GATEWAY_ROUTE",
         resourceIdParameter = "routeCode", fallbackResourceId = "INVALID_ROUTE")
     @Override
-    public GatewayRouteStatusResponseBody changeRouteStatus(String actor, String session, String key,
+    public GatewayRouteStatusResponseBody changeRouteStatus(String actor, String session,
         String routeCode, ChangeGatewayRouteStatusRequestBody body) {
-        return processor.changeRouteStatus(actor, session, key, routeCode, body);
+        return processor.changeRouteStatus(actor, session, routeCode, body);
     }
 
 
     /** 完整配置保存，仅转换协议并委托 Processor。 */
     @Audit(action = "OPERATIONS_GATEWAY_TARGET_CREATE", resourceType = "GATEWAY_TARGET", fallbackResourceId = "NEW_TARGET")
     @Override
-    public ConfigurationMutationResponseBody createTarget(String actor, String session, String key,
+    public ConfigurationMutationResponseBody createTarget(String actor, String session,
         CreateGatewayTargetRequestBody request) {
-        return processor.createTarget(actor, session, key, request);
+        return processor.createTarget(actor, session, request);
     }
 
     /** 完整配置保存，仅转换协议并委托 Processor。 */
     @Audit(action = "OPERATIONS_GATEWAY_TARGET_UPDATE", resourceType = "GATEWAY_TARGET",
         resourceIdParameter = "targetServiceCode", fallbackResourceId = "NEW_TARGET")
     @Override
-    public ConfigurationMutationResponseBody updateTarget(String actor, String session, String key,
+    public ConfigurationMutationResponseBody updateTarget(String actor, String session,
         String targetServiceCode, UpdateGatewayTargetRequestBody request) {
-        return processor.updateTarget(actor, session, key, targetServiceCode, request);
+        return processor.updateTarget(actor, session, targetServiceCode, request);
     }
 
     /** 完整配置保存，仅转换协议并委托 Processor。 */
     @Audit(action = "OPERATIONS_GATEWAY_ROUTE_CREATE", resourceType = "GATEWAY_ROUTE", fallbackResourceId = "NEW_ROUTE")
     @Override
-    public ConfigurationMutationResponseBody createRoute(String actor, String session, String key,
+    public ConfigurationMutationResponseBody createRoute(String actor, String session,
         CreateGatewayRouteRequestBody request) {
-        return processor.createRoute(actor, session, key, request);
+        return processor.createRoute(actor, session, request);
     }
 
     /** 完整配置保存，仅转换协议并委托 Processor。 */
     @Audit(action = "OPERATIONS_GATEWAY_ROUTE_UPDATE", resourceType = "GATEWAY_ROUTE",
         resourceIdParameter = "routeCode", fallbackResourceId = "NEW_ROUTE")
     @Override
-    public ConfigurationMutationResponseBody updateRoute(String actor, String session, String key,
+    public ConfigurationMutationResponseBody updateRoute(String actor, String session,
         String routeCode, UpdateGatewayRouteRequestBody request) {
-        return processor.updateRoute(actor, session, key, routeCode, request);
+        return processor.updateRoute(actor, session, routeCode, request);
     }
     /** 配置选项来自同一 Platform 编译器。 */
     @Audit(action = "OPERATIONS_GATEWAY_CAPABILITIES", resourceType = "GATEWAY_TARGET",

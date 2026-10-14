@@ -137,7 +137,6 @@ public final class OperationsAuditProjector {
         List<Attribute> attributes = new ArrayList<>();
         add(attributes, "reason", change.reason());
         add(attributes, "sessionId", change.sessionId());
-        add(attributes, "idempotencyKeyRef", change.idempotencyReference());
         add(attributes, "before.status", change.before().status());
         add(attributes, "before.version", Integer.toString(change.before().version()));
         add(attributes, "after.status", change.after().status());

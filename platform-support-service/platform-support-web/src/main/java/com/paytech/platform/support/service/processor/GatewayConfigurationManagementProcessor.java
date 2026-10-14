@@ -29,8 +29,6 @@ import com.paytech.platform.support.api.gatewayconfiguration.management.GatewayC
 import com.paytech.platform.support.accesscontrol.domain.gatewayconfiguration.GatewayConfigurationManagementModels.*;
 import com.paytech.platform.support.accesscontrol.domain.enums.GatewayConfigurationStatus;
 import com.paytech.platform.support.accesscontrol.domainservice.service.GatewayConfigurationManagementService;
-import com.paytech.platform.support.accesscontrol.integration.idempotency.OperationsCommandIdempotencyService;
-import com.paytech.platform.support.accesscontrol.domain.operations.CommandIdempotencyContext;
 
 import lombok.AllArgsConstructor;
 
@@ -40,10 +38,8 @@ import lombok.AllArgsConstructor;
 @ConditionalOnProperty(name = "operations.authentication.enabled", havingValue = "true")
 public class GatewayConfigurationManagementProcessor {
     private static final Pattern STABLE_CODE = Pattern.compile("[a-z][a-z0-9-]{2,127}");
-    private static final String IDEMPOTENCY_REFERENCE = "gateway-configuration-idempotency-reference-v1";
     private final OperationsTransactionExecutor transactions;
     private final GatewayConfigurationManagementService management;
-    private final OperationsCommandIdempotencyService idempotency;
 
     public PagingResponseBody<GatewayTargetSummaryResponseBody> targets(String actor, String session, int page,
         int size, String code, String channel, String status) {
@@ -56,12 +52,10 @@ public class GatewayConfigurationManagementProcessor {
     }
 
     @ResourceLock(prefix = "gateway-configuration:catalog")
-    public GatewayTargetStatusResponseBody changeTargetStatus(String actor, String session, String key, String code,
+    public GatewayTargetStatusResponseBody changeTargetStatus(String actor, String session, String code,
         ChangeGatewayTargetStatusRequestBody request) {
-        TargetStatusCommand command = normalize(targetCommand(actor, session, key, code, request));
-        CommandIdempotencyContext prepared = prepare(actor, "UPDATE_GATEWAY_TARGET_STATUS", key,
-            command.targetServiceCode(), command.status(), command.expectedVersion(), command.reason());
-        return transactionalCommand(() -> targetStatusBody(management.changeTargetStatus(command, prepared)));
+        TargetStatusCommand command = normalize(targetCommand(actor, session, code, request));
+        return transactionalCommand(() -> targetStatusBody(management.changeTargetStatus(command)));
     }
 
     public PagingResponseBody<GatewayRouteSummaryResponseBody> routes(String actor, String session, int page, int size,
@@ -75,12 +69,10 @@ public class GatewayConfigurationManagementProcessor {
     }
 
     @ResourceLock(prefix = "gateway-configuration:catalog")
-    public GatewayRouteStatusResponseBody changeRouteStatus(String actor, String session, String key, String code,
+    public GatewayRouteStatusResponseBody changeRouteStatus(String actor, String session, String code,
         ChangeGatewayRouteStatusRequestBody request) {
-        RouteStatusCommand command = normalize(routeCommand(actor, session, key, code, request));
-        CommandIdempotencyContext prepared = prepare(actor, "UPDATE_GATEWAY_ROUTE_STATUS", key,
-            command.routeCode(), command.status(), command.expectedVersion(), command.reason());
-        return transactionalCommand(() -> routeStatusBody(management.changeRouteStatus(command, prepared)));
+        RouteStatusCommand command = normalize(routeCommand(actor, session, code, request));
+        return transactionalCommand(() -> routeStatusBody(management.changeRouteStatus(command)));
     }
 
     private PagingResponseBody<GatewayTargetSummaryResponseBody> targetPage(Page<TargetSummaryResult> page) {
@@ -142,29 +134,23 @@ public class GatewayConfigurationManagementProcessor {
         return new GatewayRouteStatusResponseBody(result.routeCode(), result.status().getCode(), result.version());
     }
 
-    private TargetStatusCommand targetCommand(String actor, String session, String key, String code,
+    private TargetStatusCommand targetCommand(String actor, String session, String code,
         ChangeGatewayTargetStatusRequestBody request) {
-        return new TargetStatusCommand(actor, session, key, code, request == null ? null : request.status(),
+        return new TargetStatusCommand(actor, session, code, request == null ? null : request.status(),
             request == null ? 0 : request.expectedVersion(), request == null ? null : request.reason());
     }
 
-    private RouteStatusCommand routeCommand(String actor, String session, String key, String code,
+    private RouteStatusCommand routeCommand(String actor, String session, String code,
         ChangeGatewayRouteStatusRequestBody request) {
-        return new RouteStatusCommand(actor, session, key, code, request == null ? null : request.status(),
+        return new RouteStatusCommand(actor, session, code, request == null ? null : request.status(),
             request == null ? 0 : request.expectedVersion(), request == null ? null : request.reason());
-    }
-
-    private CommandIdempotencyContext prepare(String actor, String operation, String key, String code,
-        String status, int expectedVersion, String reason) {
-        return idempotency.prepare(actor, operation, key, "gateway-configuration-command-v1:" + operation,
-            List.of(code, status, expectedVersion, reason), IDEMPOTENCY_REFERENCE);
     }
 
     private TargetStatusCommand normalize(TargetStatusCommand command) {
         if (command == null || command.expectedVersion() <= 0) {
             throw new InvalidParameterException("Target 状态命令及正版本不能为空");
         }
-        return new TargetStatusCommand(command.actorId(), command.sessionId(), command.idempotencyKey(),
+        return new TargetStatusCommand(command.actorId(), command.sessionId(),
             requiredCode(command.targetServiceCode(), "Target Service Code"), requiredStatus(command.status()),
             command.expectedVersion(), reason(command.reason()));
     }
@@ -173,7 +159,7 @@ public class GatewayConfigurationManagementProcessor {
         if (command == null || command.expectedVersion() <= 0) {
             throw new InvalidParameterException("Route 状态命令及正版本不能为空");
         }
-        return new RouteStatusCommand(command.actorId(), command.sessionId(), command.idempotencyKey(),
+        return new RouteStatusCommand(command.actorId(), command.sessionId(),
             requiredCode(command.routeCode(), "Route Code"), requiredStatus(command.status()),
             command.expectedVersion(), reason(command.reason()));
     }
@@ -219,67 +205,54 @@ public class GatewayConfigurationManagementProcessor {
         return transactions.query(operation);
     }
 
-    /** 在资源锁内、事务外准备 Hash，避免 HMAC 远程调用进入数据库事务。 */
+    /** 创建在资源锁内执行；重复创建由唯一编码拒绝。 */
     @ResourceLock(prefix = "gateway-configuration:catalog")
-    public ConfigurationMutationResponseBody createTarget(String actor, String session, String key,
+    public ConfigurationMutationResponseBody createTarget(String actor, String session,
         CreateGatewayTargetRequestBody r) {
-        return saveTarget(actor, session, key, new TargetWrite(r.targetServiceCode(), r.channel(),
-            r.discoveryServiceName(), 0, r.reason()), "CREATE_GATEWAY_TARGET");
+        return saveTarget(actor, session, new TargetWrite(r.targetServiceCode(), r.channel(),
+            r.discoveryServiceName(), 0, r.reason()));
     }
 
     /** 更新身份来自 Path，版本必须为正数，不能隐式转为创建。 */
     @ResourceLock(prefix = "gateway-configuration:catalog")
-    public ConfigurationMutationResponseBody updateTarget(String actor, String session, String key, String code,
+    public ConfigurationMutationResponseBody updateTarget(String actor, String session, String code,
         UpdateGatewayTargetRequestBody r) {
         requireVersion(r.expectedVersion());
-        return saveTarget(actor, session, key, new TargetWrite(code, null, r.discoveryServiceName(),
-            r.expectedVersion(), r.reason()), "UPDATE_GATEWAY_TARGET");
+        return saveTarget(actor, session, new TargetWrite(code, null, r.discoveryServiceName(),
+            r.expectedVersion(), r.reason()));
     }
 
-    /** Route 的子项顺序先规范化，再计算幂等 Hash。 */
+    /** Route 子项按请求顺序规范化后保存。 */
     @ResourceLock(prefix = "gateway-configuration:catalog")
-    public ConfigurationMutationResponseBody createRoute(String actor, String session, String key,
+    public ConfigurationMutationResponseBody createRoute(String actor, String session,
         CreateGatewayRouteRequestBody r) {
-        return saveRoute(actor, session, key, new RouteWrite(r.routeCode(), r.channel(),
+        return saveRoute(actor, session, new RouteWrite(r.routeCode(), r.channel(),
             new RouteConfiguration(r.httpMethod(), r.externalPathTemplate(), r.downstreamPathTemplate(), r.targetServiceCode(), r.securityProfileCode(), r.authorizationMode(), permissionId(r.permissionId()), r.requiredScopeCode(), r.requestCookieMode(), r.responseCookieMode(), r.bodyLimitBytes(), r.bodyReceiveTimeoutMillis(), r.responseTimeoutMillis(),
             r.headers().stream().map(h -> new Header(h.headerName(), h.headerUse())).toList(),
             r.queryParameterNames(), r.guardRules().stream().map(g -> new Guard(g.ruleType(), g.dimension(),
-                g.capacity(), g.refillTokens(), g.refillPeriodMillis(), g.concurrencyLimit())).toList()), 0, r.reason()), "CREATE_GATEWAY_ROUTE");
+                g.capacity(), g.refillTokens(), g.refillPeriodMillis(), g.concurrencyLimit())).toList()), 0, r.reason()));
     }
 
     /** 固定 Channel 和状态从事务内当前记录取得。 */
     @ResourceLock(prefix = "gateway-configuration:catalog")
-    public ConfigurationMutationResponseBody updateRoute(String actor, String session, String key, String code,
+    public ConfigurationMutationResponseBody updateRoute(String actor, String session, String code,
         UpdateGatewayRouteRequestBody r) {
         requireVersion(r.expectedVersion());
-        return saveRoute(actor, session, key, new RouteWrite(code, null,
+        return saveRoute(actor, session, new RouteWrite(code, null,
             new RouteConfiguration(r.httpMethod(), r.externalPathTemplate(), r.downstreamPathTemplate(), r.targetServiceCode(), r.securityProfileCode(), r.authorizationMode(), permissionId(r.permissionId()), r.requiredScopeCode(), r.requestCookieMode(), r.responseCookieMode(), r.bodyLimitBytes(), r.bodyReceiveTimeoutMillis(), r.responseTimeoutMillis(),
             r.headers().stream().map(h -> new Header(h.headerName(), h.headerUse())).toList(),
             r.queryParameterNames(), r.guardRules().stream().map(g -> new Guard(g.ruleType(), g.dimension(),
-                g.capacity(), g.refillTokens(), g.refillPeriodMillis(), g.concurrencyLimit())).toList()), r.expectedVersion(), r.reason()), "UPDATE_GATEWAY_ROUTE");
+                g.capacity(), g.refillTokens(), g.refillPeriodMillis(), g.concurrencyLimit())).toList()), r.expectedVersion(), r.reason()));
     }
 
     /** 只在完成无外部调用的业务事务后返回 HTTP 回执。 */
-    private ConfigurationMutationResponseBody saveTarget(String actor, String session, String key,
-        TargetWrite command, String operation) {
-        var prepared = prepareConfiguration(actor, key, command, operation);
-        return transactionalCommand(() -> mutationBody(management.saveTarget(actor, session, command, prepared)));
+    private ConfigurationMutationResponseBody saveTarget(String actor, String session, TargetWrite command) {
+        return transactionalCommand(() -> mutationBody(management.saveTarget(actor, session, command)));
     }
 
     /** 和 Target 共用既有 Catalog 锁与候选事务边界。 */
-    private ConfigurationMutationResponseBody saveRoute(String actor, String session, String key,
-        RouteWrite command, String operation) {
-        var prepared = prepareConfiguration(actor, key, command, operation);
-        return transactionalCommand(() -> mutationBody(management.saveRoute(actor, session, command, prepared)));
-    }
-
-    /** 新操作类型与旧状态命令保持独立 Reader，不包含 Session 或 Token。 */
-    private CommandIdempotencyContext prepareConfiguration(String actor, String key, Object payload, String operation) {
-        if (key == null || !key.matches("[A-Za-z0-9_-]{16,128}")) {
-            throw new InvalidParameterException("Idempotency-Key 必须为 16 至 128 位字母、数字、下划线或连字符");
-        }
-        return idempotency.prepare(actor, operation, key, "configuration-command:" + operation,
-            List.of(payload), "configuration-mutation-reference");
+    private ConfigurationMutationResponseBody saveRoute(String actor, String session, RouteWrite command) {
+        return transactionalCommand(() -> mutationBody(management.saveRoute(actor, session, command)));
     }
 
     /** 数据库主键保持十进制字符串 Wire，不经过浮点数。 */
