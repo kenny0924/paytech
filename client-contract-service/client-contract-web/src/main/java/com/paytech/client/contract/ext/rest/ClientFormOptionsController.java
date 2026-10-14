@@ -15,16 +15,15 @@ import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
 public class ClientFormOptionsController implements ClientFormOptionsApi {
     private final ClientFormOptionsProcessor processor;
     /** 验证可信调用坐标后只转换 Owner 已确定的目录事实。 */
-    @Override public ClientFormOptionsResponseBody options(String caller,String account,String session,String type,String country) {
+    @Override public ClientFormOptionsResponseBody options(String caller,String account,String session,String type) {
         if(!"client-console-bff".equals(caller)) { throw new FailException(APPLICATION_NOT_FOUND); }
         long accountId,sessionId;
         try { accountId=ClientDraftCommand.id(account);sessionId=ClientDraftCommand.id(session); }
         catch(FailException invalid) { throw new FailException(CLIENT_SESSION_INVALID); }
-        var result=processor.options(accountId,sessionId,type,country);
-        return new ClientFormOptionsResponseBody(type,country,result.status().getCode(),
+        var result=processor.options(accountId,sessionId,type);
+        return new ClientFormOptionsResponseBody(type,result.status().getCode(),
             result.organizationTypes().stream().map(o -> new CatalogOptionResponseBody(o.code(),o.label())).toList(),
             result.businessModels().stream().map(o -> new CatalogOptionResponseBody(o.code(),o.label())).toList(),
-            result.identifierTypes().stream().map(o -> new IdentifierOptionResponseBody(o.code(),o.label(),
-                o.issuers().stream().map(i -> new IssuerOptionResponseBody(i.scopeKey(),i.label(),i.issuingCountry())).toList())).toList());
+            result.identifierTypes().stream().map(o -> new IdentifierOptionResponseBody(o.code(),o.label(),o.issuingCountryMode())).toList());
     }
 }

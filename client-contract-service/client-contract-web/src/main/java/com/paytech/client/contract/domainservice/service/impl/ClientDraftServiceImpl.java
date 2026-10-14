@@ -59,7 +59,13 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
     }
     public ClientDraftView read(long accountId,long applicationId) {
         requireTransaction();
-        var row=identity(applicationId,accountId,false);
+        return view(identity(applicationId,accountId,false),applicationId);
+    }
+    public ClientDraftView readForReview(long applicationId) {
+        requireTransaction();
+        return view(ClientDraftPolicy.requireValid(repository.reviewIdentity(applicationId)),applicationId);
+    }
+    private ClientDraftView view(ClientDraftIdentity row,long applicationId) {
         var persons=row.clientType()==ClientType.ORGANIZATION?people.people(row):List.<ClientPersonView>of();
         var relations=row.clientType()==ClientType.ORGANIZATION?people.relations(row):List.<ClientPartyRelation>of();
         var visibleIds=persons.stream().map(person -> person.identity().partyId()).collect(java.util.stream.Collectors.toSet());

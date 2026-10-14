@@ -41,7 +41,7 @@ public class ClientDocumentConfiguration {
         return new ClientMaterialAuthorityClient(risk,platform,clock);
     }
     /** 生产使用 Risk 服务发现，测试仅允许 auto 的随机 loopback 根路径。 */
-    private RestClient riskTransport(Environment env,ObjectProvider<LoadBalancerClient> discovery) {
+    static RestClient riskTransport(Environment env,ObjectProvider<LoadBalancerClient> discovery) {
         String url=env.getProperty("onboarding.risk-test-base-url","");var builder=RestClient.builder();
         if (url.isBlank()) {
             builder.baseUrl("http://risk-service").requestInterceptor((request,body,execution) -> {

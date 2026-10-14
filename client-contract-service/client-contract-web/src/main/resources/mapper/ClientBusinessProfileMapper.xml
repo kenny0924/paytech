@@ -17,4 +17,22 @@
         WHERE client_id = #{clientId}
         ORDER BY business_profile_id
     </select>
+    <select id="findClassificationProfile" resultType="com.paytech.client.contract.core.dal.dataobject.ClientClassificationProfile">
+        SELECT business_profile_id AS businessProfileId, client_id AS clientId, classification_case_id AS classificationCaseId,
+            classification_confirmed_by AS classificationConfirmedBy, classification_confirmed_time AS classificationConfirmedTime,
+            update_time AS updateTime
+        FROM t_client_business_profile WHERE client_id = #{clientId}
+    </select>
+    <update id="bindClassificationCase">
+        UPDATE t_client_business_profile
+        SET classification_case_id=#{caseId}, classification_confirmed_by=NULL, classification_confirmed_time=NULL, update_time=#{now}
+        WHERE business_profile_id=#{row.businessProfileId}
+          AND (classification_case_id IS NULL OR classification_case_id &lt;&gt; #{caseId} OR classification_confirmed_time IS NULL)
+    </update>
+    <update id="confirmClassification">
+        UPDATE t_client_business_profile
+        SET classification_confirmed_by=#{actorId}, classification_confirmed_time=#{now}, update_time=#{now}
+        WHERE business_profile_id=#{row.businessProfileId} AND classification_case_id=#{row.classificationCaseId}
+          AND classification_confirmed_time IS NULL
+    </update>
 </mapper>

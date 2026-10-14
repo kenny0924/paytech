@@ -87,6 +87,10 @@
                                         <include>com.xuxueli:xxl-job-core</include>
                                         <include>com.xuxueli:xxl-tool</include>
                                         <include>org.springframework.security:spring-security-crypto</include>
+                                        <!-- 2026-10-13 用户批准 Operations 审核结果走 RabbitMQ：CCT 只消费 Risk 审核结果，其他 MQ 用途仍禁止。 -->
+                                        <include>org.springframework.boot:spring-boot-starter-amqp</include>
+                                        <include>org.springframework.amqp:*</include>
+                                        <include>com.rabbitmq:*</include>
                                     </includes>
                                 </bannedDependencies>
                             </rules>

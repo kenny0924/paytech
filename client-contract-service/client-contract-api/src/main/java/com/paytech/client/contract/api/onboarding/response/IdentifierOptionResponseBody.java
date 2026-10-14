@@ -1,6 +1,5 @@
 package com.paytech.client.contract.api.onboarding.response;
 
-import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -14,6 +13,9 @@ public class IdentifierOptionResponseBody {
     private String code;
     /** 证件或登记类型展示名称。 */
     private String label;
-    /** 此类型允许的准确签发机构集合。 */
-    private List<IssuerOptionResponseBody> issuers;
+    /**
+     * 签发国要求
+     * <li>REQUIRED：须选择签发国；NONE：全球通用标识，无签发国。</li>
+     */
+    private String issuingCountryMode;
 }

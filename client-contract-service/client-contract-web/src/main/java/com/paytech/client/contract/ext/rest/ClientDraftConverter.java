@@ -65,7 +65,6 @@ public final class ClientDraftConverter {
         put(values,"address","countryCode",fields.addressCountryCode());
         put(values,"identifier","identifierType",fields.identifierIdentifierType());
         put(values,"identifier","issuingCountry",fields.identifierIssuingCountry());
-        put(values,"identifier","issuerScopeKey",fields.identifierIssuerScopeKey());
         put(values,"identifier","identifierValue",fields.identifierIdentifierValue());
         put(values,"identifier","validFrom",fields.identifierValidFrom());
         put(values,"identifier","validTo",fields.identifierValidTo());

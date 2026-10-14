@@ -23,7 +23,6 @@ public record ClientDraftFields(
     /** 当前 address.countryCode 值。 */ String addressCountryCode,
     /** 当前 identifier.identifierType 值。 */ String identifierIdentifierType,
     /** 当前 identifier.issuingCountry 值。 */ String identifierIssuingCountry,
-    /** 当前 identifier.issuerScopeKey 值。 */ String identifierIssuerScopeKey,
     /** 当前 identifier.identifierValue 值。 */ String identifierIdentifierValue,
     /** 当前 identifier.validFrom 值。 */ Instant identifierValidFrom,
     /** 当前 identifier.validTo 值。 */ Instant identifierValidTo,

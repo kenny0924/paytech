@@ -18,4 +18,24 @@ public class ClientBusinessClassificationRepositoryImpl implements ClientBusines
     public List<ClientBusinessClassification> findForCheckout(long clientId) {
         return List.copyOf(mapper.findForCheckout(clientId));
     }
+
+    /** 某经营资料的全部分类。 */
+    @Override
+    public List<com.paytech.client.contract.core.dal.dataobject.ClientClassification> findByProfile(long businessProfileId) {
+        return mapper.findByProfile(businessProfileId);
+    }
+
+    /** 删除某经营资料的全部分类。 */
+    @Override
+    public void deleteByProfile(long businessProfileId) {
+        mapper.deleteByProfile(businessProfileId);
+    }
+
+    /** 新增一条分类。 */
+    @Override
+    public void insert(com.paytech.client.contract.core.dal.dataobject.ClientClassification row) {
+        if (mapper.insert(row) != 1) {
+            throw new com.paytech.foundation.common.error.ErrorException("分类写入行数异常");
+        }
+    }
 }

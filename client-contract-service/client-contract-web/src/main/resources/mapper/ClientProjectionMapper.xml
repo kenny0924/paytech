@@ -21,4 +21,16 @@
     <select id="sourceAt" resultType="com.paytech.client.contract.core.dal.dataobject.ClientProjectionHistory">
         <include refid="Source"/> AND c.client_id=#{clientId} AND v.version_no=#{version}
     </select>
+    <select id="latest" resultType="com.paytech.client.contract.core.dal.dataobject.ClientProjectionHistory">
+        <include refid="Source"/> AND c.client_id=#{clientId} AND v.version_no=r.current_version
+    </select>
+    <insert id="insertVersion">
+        INSERT INTO t_business_change_version(change_version_id,history_id,version_no,operation_type,snapshot_format,snapshot_json,
+            create_by,create_time)
+        VALUES(#{row.changeVersionId},#{row.historyId},#{row.sourceVersion},'UPDATE','ENTITY_NO',#{snapshot},#{row.actorId},#{row.occurredAt})
+    </insert>
+    <update id="advanceRoot">
+        UPDATE t_business_change_record SET current_version=#{row.sourceVersion}, update_time=#{row.occurredAt}
+        WHERE history_id=#{row.historyId} AND current_version=#{row.sourceVersion} - 1
+    </update>
 </mapper>

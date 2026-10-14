@@ -22,6 +22,11 @@
     WHERE a.application_id=#{applicationId} AND a.requested_by_account_id=#{accountId}
     <if test="lock">FOR UPDATE</if>
   </select>
+  <!-- O02：Operations 按审核任务读取申请，不按申请账号过滤；调用方先核对任务归属。 -->
+  <select id="reviewIdentity" resultType="com.paytech.client.contract.core.dal.dataobject.ClientDraftIdentity">
+    <include refid="ApplicationIdentity"/>
+    WHERE a.application_id=#{applicationId}
+  </select>
   <select id="activeApplication" resultType="java.lang.Long">
     SELECT application_id FROM t_client_application WHERE requested_by_account_id=#{accountId} AND active_slot=1
   </select>
@@ -51,7 +56,6 @@
       a.country_code AS addressCountryCode,
       d.identifier_type AS identifierIdentifierType,
       d.issuing_country AS identifierIssuingCountry,
-      d.issuer_scope_key AS identifierIssuerScopeKey,
       d.identifier_value AS identifierIdentifierValue,
       d.valid_from AS identifierValidFrom,
       d.valid_to AS identifierValidTo,
@@ -126,7 +130,6 @@
   <update id="saveIdentifier">UPDATE t_party_profile_identifier SET update_time=#{now}
     <if test="changes.containsKey('identifier_identifierType')">,identifier_type=#{changes[identifier_identifierType],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('identifier_issuingCountry')">,issuing_country=#{changes[identifier_issuingCountry],jdbcType=VARCHAR}</if>
-    <if test="changes.containsKey('identifier_issuerScopeKey')">,issuer_scope_key=#{changes[identifier_issuerScopeKey],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('identifier_identifierValue')">,identifier_value=#{changes[identifier_identifierValue],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('identifier_validFrom')">,valid_from=#{changes[identifier_validFrom],jdbcType=TIMESTAMP}</if>
     <if test="changes.containsKey('identifier_validTo')">,valid_to=#{changes[identifier_validTo],jdbcType=TIMESTAMP}</if>

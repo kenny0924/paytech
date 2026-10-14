@@ -16,6 +16,8 @@ public final class ClientDraftRepositoryImpl implements ClientDraftRepository {
     private final IdGenerator ids;
     public ClientDraftRepositoryImpl(ClientDraftMapper mapper,IdGenerator ids) { this.mapper=mapper;this.ids=ids; }
     public ClientDraftIdentity identity(long id,long account,boolean lock) { return mapper.identity(id,account,lock); }
+    @Override
+    public ClientDraftIdentity reviewIdentity(long id) { return mapper.reviewIdentity(id); }
     /** 仅读取本账号摘要来源，不创建工作区或执行恢复。 */
     public List<ClientDraftIdentity> recentApplications(long accountId) { return mapper.recentApplications(accountId); }
     public Long activeApplication(long account) { return mapper.activeApplication(account); }

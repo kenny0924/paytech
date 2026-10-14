@@ -3,47 +3,47 @@ import java.util.*;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import com.paytech.client.contract.domain.enums.ClientType;
 /**
- * CCT 独占的表单目录。<li>默认无配置，不推断国家政策。</li>
+ * CCT 独占的通用表单目录。<li>不按国家区分组织类型或证件；签发国由客户从完整 ISO 国家中选择。</li>
  * <li>启动时冻结；修改后重启，不改变已保存资料。</li>
- * <li>每类最多 100 项，每种证件最多 50 个签发机构，总计最多 300 个。</li>
+ * <li>每类最多 100 项。</li>
  */
 @ConfigurationProperties("onboarding.form-catalog")
 public record ClientFormCatalogProperties(List<OrganizationType> organizationTypes,
-    List<BusinessModel> businessModels, List<IdentifierType> identifierTypes) {
+    List<BusinessModel> businessModels, List<IdentifierType> identifierTypes, List<Industry> industries) {
     /** 校验全部配置后冻结，避免半有效目录对外可用。 */
     public ClientFormCatalogProperties {
         organizationTypes=freeze(organizationTypes); businessModels=freeze(businessModels); identifierTypes=freeze(identifierTypes);
-        unique(organizationTypes.stream().map(v -> v.countryCode()+":"+v.code()).toList());
+        industries=freeze(industries);
+        unique(industries.stream().map(Industry::code).toList());
+        unique(organizationTypes.stream().map(OrganizationType::code).toList());
         unique(businessModels.stream().map(BusinessModel::code).toList());
         unique(identifierTypes.stream().map(IdentifierType::code).toList());
-        if(identifierTypes.stream().mapToInt(v -> v.issuers().size()).sum()>300) { throw invalid(); }
     }
-    /** 注册国目录明确法律形态，不从通用英文简称生成。 */
-    public record OrganizationType(String code,String label,String countryCode) {
+    /** 通用法律形态，不按注册国区分。 */
+    public record OrganizationType(String code,String label) {
         /** 拒绝不明确的组织类型定义。 */
-        public OrganizationType { text(code,64);text(label,128);country(countryCode); }
+        public OrganizationType { text(code,64);text(label,128); }
+    }
+    /** 运营审核时选择的通用行业；MCC 不建目录，只校验四位数字。 */
+    public record Industry(String code,String label) {
+        /** 拒绝不明确的行业定义。 */
+        public Industry { text(code,64);text(label,128); }
     }
     /** 经营模式不替代运营确认的行业或 MCC。 */
     public record BusinessModel(String code,String label,Set<ClientType> clientTypes) {
         /** 冻结适用客户类型。 */
         public BusinessModel { text(code,64);text(label,128);clientTypes=types(clientTypes); }
     }
-    /** 每种证件保留完整签发范围，不能按居住国裁剪。 */
-    public record IdentifierType(String code,String label,Set<ClientType> clientTypes,List<Issuer> issuers) {
-        /** 同类型同作用域只允许一个明确签发定义。 */
+    /**
+     * 通用证件类型。
+     * <li>issuingCountryMode=REQUIRED：须选择签发国（如护照、身份证）。</li>
+     * <li>issuingCountryMode=NONE：全球通用标识，无签发国（如 LEI）。</li>
+     */
+    public record IdentifierType(String code,String label,Set<ClientType> clientTypes,String issuingCountryMode) {
+        /** 拒绝不明确的证件定义。 */
         public IdentifierType {
-            text(code,64);text(label,128);clientTypes=types(clientTypes);issuers=freeze(issuers);
-            if(issuers.isEmpty() || issuers.size()>50) { throw invalid(); }
-            unique(issuers.stream().map(Issuer::scopeKey).toList());
-        }
-    }
-    /** GLOBAL 仅能由显式目录提供，浏览器不能据国家拼造作用域。 */
-    public record Issuer(String scopeKey,String label,String issuingCountry) {
-        /** 确保 GLOBAL 与国家签发两种范围互斥。 */
-        public Issuer {
-            text(scopeKey,64);text(label,128);
-            if("GLOBAL".equals(scopeKey)) { if(issuingCountry!=null) { throw invalid(); } }
-            else { country(issuingCountry); }
+            text(code,64);text(label,128);clientTypes=types(clientTypes);
+            if(!"REQUIRED".equals(issuingCountryMode) && !"NONE".equals(issuingCountryMode)) { throw invalid(); }
         }
     }
     /** 集合有界且不可变；空目录合法但查询时不可用。 */
@@ -64,8 +64,6 @@ public record ClientFormCatalogProperties(List<OrganizationType> organizationTyp
         if(value==null || value.isBlank() || !value.equals(value.strip()) || value.length()>max
             || value.codePoints().anyMatch(Character::isISOControl)) { throw invalid(); }
     }
-    /** 国家语法与现行字段合同保持一致，不声称该国家已经准入。 */
-    static void country(String value) { if(value==null || !value.matches("[A-Z]{2}")) { throw invalid(); } }
     /** 配置异常不输出完整配置值。 */
     static IllegalArgumentException invalid() { return new IllegalArgumentException("CCT 表单目录配置无效或重复"); }
 }

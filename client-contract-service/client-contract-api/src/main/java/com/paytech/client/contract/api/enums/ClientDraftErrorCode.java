@@ -6,8 +6,6 @@ public enum ClientDraftErrorCode implements CodeMessageEnum {
 
     DOCUMENT_ALREADY_EXISTS("DOCUMENT_ALREADY_EXISTS", "该材料引用已存在"),
 
-    MATERIAL_COUNTRY_REQUIRED("MATERIAL_COUNTRY_REQUIRED", "请先填写材料主体的国家"),
-
     MATERIAL_REQUIREMENT_INVALID("MATERIAL_REQUIREMENT_INVALID", "材料要求或类型不匹配"),
 
     MATERIAL_FILE_UNAVAILABLE("MATERIAL_FILE_UNAVAILABLE", "文件尚不可用于关联"),
@@ -36,11 +34,21 @@ public enum ClientDraftErrorCode implements CodeMessageEnum {
 
     APPLICATION_NOT_EDITABLE("APPLICATION_NOT_EDITABLE", "当前申请资料不可修改"),
 
+    IDENTITY_CONFLICT("IDENTITY_CONFLICT", "证件号码已被其他主体使用，请核对后联系客服"),
+
+    SUBMISSION_INCOMPLETE("SUBMISSION_INCOMPLETE", "资料或材料尚不完整，请按提交核对结果补全"),
+
     IDEMPOTENCY_CONFLICT("IDEMPOTENCY_CONFLICT", "同一命令键的请求内容不一致"),
 
     DRAFT_CONTEXT_INVALID("DRAFT_CONTEXT_INVALID", "申请资料关联不完整"),
 
-    ONBOARDING_DEPENDENCY_UNAVAILABLE("ONBOARDING_DEPENDENCY_UNAVAILABLE", "入驻依赖暂不可用");
+    ONBOARDING_DEPENDENCY_UNAVAILABLE("ONBOARDING_DEPENDENCY_UNAVAILABLE", "入驻依赖暂不可用"),
+
+    REVIEW_CASE_NOT_FOUND("REVIEW_CASE_NOT_FOUND", "审核任务不存在或不是申请的当前任务"),
+
+    CLASSIFICATION_INVALID("CLASSIFICATION_INVALID", "分类不符合目录或规则"),
+
+    CLASSIFICATION_CONFIRMED("CLASSIFICATION_CONFIRMED", "本任务分类已确认，不能修改");
     private final String code;
     private final String message;
     ClientDraftErrorCode(String code, String message) { this.code=code; this.message=message; }

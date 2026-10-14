@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.contract.core.dal.mapper.PartyProfileIdentifierMapper">
+  <select id="findByProfile" resultType="com.paytech.client.contract.core.dal.dataobject.PartyProfileIdentifier">
+    SELECT profile_identifier_id AS profileIdentifierId, profile_id AS profileId, identity_key_id AS identityKeyId,
+      issuer_scope_key AS issuerScopeKey
+    FROM t_party_profile_identifier WHERE profile_id=#{profileId}
+  </select>
+  <update id="bind">
+    UPDATE t_party_profile_identifier
+    SET identity_key_id=#{identityKeyId}, issuer_scope_key=#{issuerScopeKey}, update_time=#{now}
+    WHERE profile_identifier_id=#{identifier.profileIdentifierId}
+      AND <choose><when test="identifier.identityKeyId == null">identity_key_id IS NULL</when>
+      <otherwise>identity_key_id=#{identifier.identityKeyId}</otherwise></choose>
+  </update>
+</mapper>

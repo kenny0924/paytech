@@ -11,8 +11,6 @@ public interface ClientDocumentMapper {
     ClientApplicationDocument document(@Param("applicationId") long applicationId,@Param("id") long id);
     /** 删除关系后保留材料的读取范围，不授予资料编辑。 */
     boolean retainedSubject(@Param("applicationId") long applicationId,@Param("partyId") long partyId);
-    /** 仅在主体已获 CCT 授权后读取匹配国家。 */
-    String country(@Param("profileId") long profileId,@Param("organization") boolean organization);
     /** 原申请锁内保存准确文件与摘要。 */
     void insert(@Param("applicationId") long applicationId,@Param("document") ClientApplicationDocument document,@Param("now") Instant now);
     /** 移除引用，绝不操作 Platform。 */

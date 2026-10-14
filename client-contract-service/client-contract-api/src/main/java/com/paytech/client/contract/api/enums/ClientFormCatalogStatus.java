@@ -4,8 +4,6 @@ import com.paytech.foundation.common.enums.CodeEnum;
 public enum ClientFormCatalogStatus implements CodeEnum {
     AVAILABLE,
 
-    COUNTRY_REQUIRED,
-
     UNAVAILABLE;
     /** 返回跨服务稳定代码。 */
     @Override public String getCode() { return name(); }

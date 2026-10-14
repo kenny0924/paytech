@@ -2,7 +2,9 @@ package com.paytech.client.contract.integration;
 import java.time.Clock;
 import java.util.HashSet;
 import com.paytech.client.contract.api.onboarding.ClientDocumentModels.DocumentReferenceRequestBody;
+import com.paytech.client.contract.domain.onboarding.ClientDraftCommand;
 import com.paytech.client.contract.domain.onboarding.ClientMaterialTarget;
+import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileVerificationApi;
 import com.paytech.platform.support.api.enums.*;
@@ -18,24 +20,46 @@ public final class ClientMaterialAuthorityClient {
     /** 先读取真实材料要求，再校验原文件当前可用性；客户端 Hash 从不参与。 */
     public String verify(long accountId,ClientMaterialTarget target,DocumentReferenceRequestBody request) {
         if (org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()) throw new IllegalStateException("材料 Owner 调用不能位于数据库事务内");
+        boolean matched=requirements(target.qualificationType().getCode()).stream()
+            .anyMatch(item -> request.requirementCode().equals(item.requirementCode()) && request.documentType().equals(item.documentType()));
+        if (!matched) throw new FailException(MATERIAL_REQUIREMENT_INVALID);
+        return fileHash(accountId,target,ClientDraftCommand.id(request.fileId()));
+    }
+    /**
+     * 读取资格类型的通用材料要求；Risk 不可用或目录损坏时依赖不可用，不视为无需材料。
+     *
+     * @param qualificationType 资格类型代码
+     * @return 已校验的材料要求，至少一项
+     */
+    public java.util.List<RequirementBody> requirements(String qualificationType) {
         com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementsResponseBody requirements;
-        try { requirements=risk.read("client-contract-service",target.qualificationType().getCode(),target.countryCode()); }
+        try { requirements=risk.read("client-contract-service",qualificationType); }
         catch (RuntimeException unavailable) { throw unavailable(); }
         if (requirements==null || !id(requirements.programId()) || !id(requirements.programVersionId())
             || requirements.items()==null || requirements.items().isEmpty() || requirements.items().size()>1024) throw unavailable();
-        var codes=new HashSet<String>();boolean matched=false;
+        var codes=new HashSet<String>();
         for (var item:requirements.items()) {
             if (item==null || !code(item.requirementCode()) || !code(item.documentType()) || !codes.add(item.requirementCode())) throw unavailable();
-            if (request.requirementCode().equals(item.requirementCode()) && request.documentType().equals(item.documentType())) matched=true;
         }
-        if (!matched) throw new FailException(MATERIAL_REQUIREMENT_INVALID);
+        return requirements.items();
+    }
+    /**
+     * 核验原文件当前可用并返回 Platform 权威内容摘要。
+     *
+     * @param accountId 当前账号
+     * @param target 原申请与主体
+     * @param fileId Platform 文件
+     * @return 文件 SHA-256
+     *         <li>文件不存在 DOCUMENT_NOT_FOUND；扫描未通过或对象失效 MATERIAL_FILE_UNAVAILABLE；其他为依赖不可用。</li>
+     */
+    public String fileHash(long accountId,ClientMaterialTarget target,long fileId) {
         com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.VerificationResponseBody proof;
-        try { proof=platform.verify("client-contract-service",request.fileId(),Long.toString(target.applicationId()),Long.toString(target.subjectPartyId()),Long.toString(target.clientId()),Long.toString(accountId),OnboardingFilePurpose.ASSOCIATE.getCode()); }
+        try { proof=platform.verify("client-contract-service",Long.toString(fileId),Long.toString(target.applicationId()),Long.toString(target.subjectPartyId()),Long.toString(target.clientId()),Long.toString(accountId),OnboardingFilePurpose.ASSOCIATE.getCode()); }
         catch (FailException rejected) {
             if ("FILE_NOT_FOUND".equals(rejected.getCode())) throw new FailException(DOCUMENT_NOT_FOUND);
             throw unavailable();
         } catch (RuntimeException unavailable) { throw unavailable(); }
-        if (proof==null || !request.fileId().equals(proof.fileId()) || !id(proof.uploadId()) || !id(proof.sizeBytes())
+        if (proof==null || !Long.toString(fileId).equals(proof.fileId()) || !id(proof.uploadId()) || !id(proof.sizeBytes())
             || proof.contentHash()==null || !proof.contentHash().matches("[0-9a-f]{64}")
             || proof.mimeType()==null || proof.mimeType().isBlank() || proof.mimeType().length()>128
             || proof.scanStatus()==null || proof.objectStatus()==null || proof.checkedAt()==null

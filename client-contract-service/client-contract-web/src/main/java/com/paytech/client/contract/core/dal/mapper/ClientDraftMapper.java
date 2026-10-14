@@ -7,6 +7,7 @@ import com.paytech.client.contract.domain.onboarding.*;
 /** 草稿 SQL 只在 Mapper XML；调用方负责本地事务。 */
 public interface ClientDraftMapper {
     ClientDraftIdentity identity(@Param("applicationId") long applicationId, @Param("accountId") long accountId, @Param("lock") boolean lock);
+    ClientDraftIdentity reviewIdentity(@Param("applicationId") long applicationId);
     /** 活动申请优先的最近 21 项，用额外一项判断显示上限。 */
     List<ClientDraftIdentity> recentApplications(long accountId);
     Long activeApplication(long accountId);

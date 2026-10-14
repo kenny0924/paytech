@@ -10,6 +10,8 @@ public interface ClientDraftService {
     /** 同一账号可见的最近申请，返回内部身份供入口投影。 */
     java.util.List<com.paytech.client.contract.core.dal.dataobject.ClientDraftIdentity> recentApplications(long accountId);
     ClientDraftView read(long accountId,long applicationId);
+    /** O02：Operations 审核读取提交后的申请资料；调用方先核对审核任务归属，联系方式不 Reveal。 */
+    ClientDraftView readForReview(long applicationId);
     CommandReceiptResponseBody prepareSave(ClientDraftCommand command,long applicationId,ClientDraftPatch patch);
     CommandReceiptResponseBody save(ClientDraftCommand command,long applicationId,ClientDraftPatch patch,Map<String,ClientDraftContact> contacts);
 }

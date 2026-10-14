@@ -34,7 +34,6 @@ public final class ClientDraftPatch {
         Map.entry("address.countryCode", new Field(Kind.COUNTRY,2)),
         Map.entry("identifier.identifierType", new Field(Kind.TEXT,64)),
         Map.entry("identifier.issuingCountry", new Field(Kind.COUNTRY,2)),
-        Map.entry("identifier.issuerScopeKey", new Field(Kind.TEXT,64)),
         Map.entry("identifier.identifierValue", new Field(Kind.TEXT,128)),
         Map.entry("identifier.validFrom", new Field(Kind.BOUNDARY,10)),
         Map.entry("identifier.validTo", new Field(Kind.BOUNDARY,10)),

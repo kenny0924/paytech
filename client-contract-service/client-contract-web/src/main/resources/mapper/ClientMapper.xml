@@ -14,4 +14,7 @@
         WHERE client_id = #{clientId}
         ORDER BY client_id
     </select>
+    <update id="activate">
+        UPDATE t_client SET status='ACTIVE', update_time=#{now} WHERE client_id=#{clientId} AND status='PENDING'
+    </update>
 </mapper>

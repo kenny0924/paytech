@@ -16,4 +16,18 @@
         WHERE business_profile_id IN (SELECT business_profile_id FROM t_client_business_profile WHERE client_id = #{clientId})
         ORDER BY classification_id
     </select>
+    <select id="findByProfile" resultType="com.paytech.client.contract.core.dal.dataobject.ClientClassification">
+        SELECT classification_id AS classificationId, business_profile_id AS businessProfileId, industry_code AS industryCode,
+            mcc_code AS mccCode, primary_slot AS primarySlot, create_time AS createTime, update_time AS updateTime
+        FROM t_client_business_classification WHERE business_profile_id = #{businessProfileId} ORDER BY classification_id
+    </select>
+    <delete id="deleteByProfile">
+        DELETE FROM t_client_business_classification WHERE business_profile_id = #{businessProfileId}
+    </delete>
+    <insert id="insert">
+        INSERT INTO t_client_business_classification(classification_id, business_profile_id, industry_code, mcc_code, primary_slot,
+            create_time, update_time)
+        VALUES(#{row.classificationId}, #{row.businessProfileId}, #{row.industryCode}, #{row.mccCode}, #{row.primarySlot},
+            #{row.createTime}, #{row.updateTime})
+    </insert>
 </mapper>

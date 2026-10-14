@@ -28,21 +28,19 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
     @Override public DocumentCommandReceiptResponseBody previous(ClientDraftCommand command,long applicationId) {
         application(command.accountId(),applicationId,false);return replay(command,applicationId);
     }
-    /** 锁内重新派生主体和国家，不能把旧页面或被移除人员悄悄换到新目标。 */
+    /** 锁内重新派生主体和资格类型，不能把旧页面或被移除人员悄悄换到新目标。 */
     @Override public ClientMaterialTarget target(long accountId,long applicationId,long subjectPartyId,boolean lock) {
         var app=application(accountId,applicationId,lock);editable(app);
         boolean organization=app.partyId()==subjectPartyId && app.clientType()==ClientType.ORGANIZATION;
-        long profile=app.profileId();MaterialQualificationType qualification=organization?MaterialQualificationType.ORGANIZATION_KYB:MaterialQualificationType.INDIVIDUAL_KYC;
+        MaterialQualificationType qualification=organization?MaterialQualificationType.ORGANIZATION_KYB:MaterialQualificationType.INDIVIDUAL_KYC;
         if (app.partyId()!=subjectPartyId) {
             if (app.clientType()!=ClientType.ORGANIZATION) throw new FailException(PERSON_NOT_FOUND);
             var person=people.person(app,subjectPartyId,lock);
             if (person==null || people.relations(app).stream().noneMatch(relation -> relation.relatedPartyId()==subjectPartyId
                 && (relation.status()==PartyRelationStatus.DRAFT || relation.status()==PartyRelationStatus.ACTIVE))) throw new FailException(PERSON_NOT_FOUND);
-            profile=person.profileId();qualification=MaterialQualificationType.RELATED_PERSON_KYC;
+            qualification=MaterialQualificationType.RELATED_PERSON_KYC;
         }
-        String country=documents.country(profile,organization);
-        if (country==null || !country.matches("[A-Z]{2}")) throw new FailException(MATERIAL_COUNTRY_REQUIRED);
-        return new ClientMaterialTarget(applicationId,app.clientId(),subjectPartyId,qualification,country);
+        return new ClientMaterialTarget(applicationId,app.clientId(),subjectPartyId,qualification);
     }
     /** 原申请锁内再次校验本地目标；成功回执与引用共同提交。 */
     @Override public DocumentCommandReceiptResponseBody associate(ClientDraftCommand command,ClientMaterialTarget expected,DocumentReferenceRequestBody request,String hash) {

@@ -15,8 +15,6 @@ public final class ClientDocumentRepositoryImpl implements ClientDocumentReposit
     @Override public ClientApplicationDocument document(long applicationId,long id) { return mapper.document(applicationId,id); }
     /** 保留材料读取范围。 */
     @Override public boolean retainedSubject(long applicationId,long partyId) { return mapper.retainedSubject(applicationId,partyId); }
-    /** 查询已授权资料国家。 */
-    @Override public String country(long profileId,boolean organization) { return mapper.country(profileId,organization); }
     /** 保存准确文件摘要。 */
     @Override public void insert(long applicationId,ClientApplicationDocument document,Instant now) { mapper.insert(applicationId,document,now); }
     /** 只删除引用。 */

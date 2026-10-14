@@ -6,4 +6,11 @@ import com.paytech.client.contract.core.dal.dataobject.ClientProjectionHistory;
 public interface ClientProjectionRepository {
     ClientProjectionHistory source(long changeId);
     ClientProjectionHistory sourceAt(long clientId, int version);
+    /** 某 Client 当前最新的生命周期历史；不存在返回 null。 */
+    ClientProjectionHistory latest(long clientId);
+    /**
+     * 追加下一版生命周期历史并推进历史根
+     * <li>根已不是前一版本时抛出并发冲突，由外层事务回滚。</li>
+     */
+    void append(ClientProjectionHistory next, String snapshot);
 }
