@@ -1,6 +1,6 @@
 # Code-MoR 技术栈基线
 
-最后更新：2026-09-09
+最后更新：2026-10-14
 
 状态：Confirmed technology baseline。本文只定义产品、版本与技术边界；当前组件的实现、验证和部署状态统一见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
@@ -39,7 +39,7 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | 注册/配置客户端 | Nacos Client | 3.1.1 | 由 Spring Cloud Alibaba BOM 管理，不由服务单独指定 |
 | 注册/配置服务端 | Nacos Server | 3.1.2 | 暂不进入刚发布的 3.2 系列 |
 | Java 同步 Web 栈 | Spring MVC | Spring Boot 管理 | 六个核心 Java 服务与 BFF 默认使用 MVC |
-| Vault V1 Runtime | Go Server + Java `@HttpExchange` Client | Go 1.27.1；Java 25 | Go Server 是正式 V1 实现；当前只支持三表 Protect/Reveal，Java Client 供内部服务调用 |
+| Vault V1 Runtime | Go Server + Java `@HttpExchange` Client | Go 1.27.1；Java 25 | Go Server 是正式 V1 实现；当前只支持三表 Protect/Reveal，Java Client 供内部服务调用；Go 服务技术栈见 [§7.1](#71-go-服务技术栈) |
 | Gateway Web 栈 | Spring Cloud Gateway Server WebFlux | 5.0.3；Spring Cloud 2025.1.3 线 | Gateway 是 WebFlux 例外，不强行改成 MVC |
 | Gateway 资源服务器 | Spring Security OAuth2 Resource Server JWT | Spring Boot 4.0.8 BOM 管理 | Gateway 只验证 Access JWT 和 Channel/Actor 上下文，不实现账号密码登录 |
 | 内部同步调用 | Spring HTTP Service Client | Spring Framework 管理 | `@HttpExchange` + `RestClient` + LoadBalancer + Nacos；使用部署网络限制的私有 HTTP，不新增 Dubbo/OpenFeign 或应用证书 |
@@ -285,6 +285,26 @@ paytech-foundation/
 - MVC 服务默认使用 `RestClient`；确有流式或 Reactive 边界时才使用 `WebClient`。
 - Nacos 负责服务发现，Spring Cloud LoadBalancer 负责实例选择；服务间调用不得绕行外部 Gateway。
 - 不新增 Dubbo 或 OpenFeign 契约。
+
+### 7.1 Go 服务技术栈
+
+适用于 Vault Server 及今后新增的 Go 服务（2026-10-14 确认，评审稿见 [requirements/20261014/vault-service-Go技术栈与规范](../requirements/20261014/vault-service-Go技术栈与规范/proposal.md)）。目录采用 Kratos 工程布局（`server → service → biz ← data`），编码风格以 Uber Go Style Guide 为基线；分层、命名和测试规则见 [GO_DEVELOPMENT_CONVENTIONS.md](./GO_DEVELOPMENT_CONVENTIONS.md)。
+
+| 领域 | 选型 | 版本 | 约束 |
+|---|---|---|---|
+| 语言 | Go | 1.27.1 | `GOTOOLCHAIN=local`，不自动下载其他工具链 |
+| HTTP 框架 | Gin | v1.12.0 | `gin.New()`，不挂默认 Logger/Recovery；关闭尾斜杠与修正路径重定向，`UseRawPath`，不反转义路径 |
+| 请求校验 | go-playground/validator（经 Gin `binding`） | v10，随 Gin | DTO 用 `binding` 标签；需要严格 JSON（拒绝重复键、大小写别名）时先自行解析再校验 |
+| 数据访问 | sqlc + `database/sql` + go-sql-driver/mysql | sqlc v1.31.1；驱动 v1.10.1 | SQL 只写在 `internal/data/sqlc/queries/*.sql`，生成代码 `*.gen.go` 不手改；不使用 ORM |
+| 事务 | `database/sql` 显式事务 | 标准库 | 事务内只操作数据库，不调用网络依赖 |
+| 配置 | caarlos0/env | v11.4.1 | 标签声明环境变量，集中在 `internal/conf`；密钥类值转入私有字段并在格式化时脱敏，缺失或非法即启动失败 |
+| JSON 解码 | 标准库 `encoding/json/v2` | Go 1.27 | 请求体与策略文件严格解码：区分大小写、拒绝重复键/未知字段/非法 UTF-8/孤立代理/尾随内容 |
+| 主键 | sony/sonyflake v2 | v2.2.0 | 41 位毫秒时间（纪元 2025-01-01Z）+ 12 位序列 + 10 位机器号（5 位数据中心 + 5 位工作节点） |
+| 日志 | `log/slog`（JSON） | 标准库 | 只记录元信息；禁止记录 Token、明文、请求体、URL Query |
+| 观测 | Prometheus client_golang + OpenTelemetry | v1.24.1；v1.46.0 | 只采纳单个 `traceparent` |
+| 注册发现 | nacos-sdk-go | v2.3.5 | 官方 SDK 只做服务注册：启动时注册、停机时注销，断线重连由 SDK 负责；就绪检查不含注册状态；配置不从 Nacos 读取 |
+| 测试 | `testing` + `httptest` + testify | testify v1.12.1 | 入口测试经真实路由；不使用行为 Stub 框架 |
+| 静态检查 | golangci-lint | v2.14.0 | 规则集固定在服务根 `.golangci.yml`，`0 issues` 才能交付 |
 
 ## 8. Nacos 配置与注册中心
 

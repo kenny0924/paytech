@@ -119,6 +119,10 @@ try:
         fail('PREPARE: restore this repository Maven 3.9.16 wrapper.')
     if not shutil.which('git'):
         fail('PREPARE: git is required.')
+    sqlc = os.environ.get('SQLC_BIN') or shutil.which('sqlc')
+    golangci = os.environ.get('GOLANGCI_LINT_BIN') or shutil.which('golangci-lint')
+    if not sqlc or not golangci:
+        fail('PREPARE: provide sqlc v1.31.1 and golangci-lint v2.14.0 on PATH or SQLC_BIN/GOLANGCI_LINT_BIN; no tool installation is performed.')
     if shutil.disk_usage(root).free < 15 * 1024**3:
         fail('PREPARE: at least 15 GiB free disk is required; no user data is deleted.')
     password = required('VAULT_TEST_JDBC_PASSWORD')
@@ -138,13 +142,15 @@ try:
     maven = [str(root / 'mvnw'), '-B', '-ntp', '--no-snapshot-updates', '-Dmaven.repo.local=' + repository]
     if 'Apache Maven 3.9.16' not in run('maven-version', maven + ['--version'], 60, True):
         fail('PREPARE: Maven wrapper must run exactly Maven 3.9.16.')
-    run('mysql-schema-preflight', [go, 'test', './internal/persistence/mysql', '-run', '^TestIntegrationSchemaExactContract$', '-count=1', '-timeout=30s'], 90)
-    run('openapi-golden', [go, 'test', './internal/contract', './internal/domain', '-count=1', '-timeout=60s'], 180)
+    run('mysql-schema-preflight', [go, 'test', './internal/data', '-run', '^TestIntegrationSchemaTablesPresent$', '-count=1', '-timeout=30s'], 90)
+    run('openapi-golden', [go, 'test', './test/auto/contract', './test/auto/biz', '-count=1', '-timeout=60s'], 180)
     gofiles = [str(path.relative_to(root)) for path in root.rglob('*.go') if '.git' not in path.parts]
     gofmt = str(pathlib.Path(go).resolve().parent / 'gofmt')
     if run('gofmt', [gofmt, '-l'] + gofiles, 30, True).strip():
         fail('FAIL: gofmt changes are required; verification never edits source files.')
     print('PASS: gofmt', flush=True)
+    run('sqlc-diff', [sqlc, 'diff'], 60)
+    run('golangci-lint', [golangci, 'run', './...'], 300)
     run('go-vet', [go, 'vet', './...'])
     run('go-test', [go, 'test', './...', '-count=1', '-timeout=120s'])
     run('go-race', [go, 'test', '-race', './...', '-count=1', '-timeout=120s'])

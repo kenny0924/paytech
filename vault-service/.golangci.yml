@@ -1,0 +1,35 @@
+# Vault Go 静态检查规则集（golangci-lint v2）。规则说明见 agent-docs/GO_DEVELOPMENT_CONVENTIONS.md。
+version: "2"
+run:
+  tests: true
+linters:
+  default: standard            # errcheck、govet、ineffassign、staticcheck、unused
+  enable:
+    - bodyclose
+    - errorlint
+    - gocognit
+    - nestif
+    - funlen
+    - misspell
+    - unconvert
+  settings:
+    funlen:
+      lines: 40                 # 规范目标 30 行；留出声明与卫语句余量
+      statements: -1
+      ignore-comments: true
+    gocognit:
+      min-complexity: 20
+    nestif:
+      min-complexity: 4
+  exclusions:
+    generated: strict
+    rules:
+      - path: _test\.go
+        linters: [funlen, gocognit, nestif, errcheck, bodyclose]
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes: [github.com/paytech/vault-service]

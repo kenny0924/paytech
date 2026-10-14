@@ -16,6 +16,30 @@ POST /vault/v1/records/reveal
 旧 URL 不保留别名或重定向，返回 `404`；Client 与 Server 必须同步更新。Java 公共方法、
 请求/响应、幂等键、加密、三表数据及审计语义均不变，无需数据库迁移。
 
+## 代码结构
+
+技术栈见 [TECHNOLOGY_STACK.md §7.1](../agent-docs/TECHNOLOGY_STACK.md#71-go-服务技术栈)，分层与编码规范见 [GO_DEVELOPMENT_CONVENTIONS.md](../agent-docs/GO_DEVELOPMENT_CONVENTIONS.md)。
+
+```text
+cmd/vault-server/            进程入口
+api/openapi/                 OpenAPI 合同
+api/vault/v1/                请求/响应体（binding 校验标签）
+internal/server/             Gin 路由、公共头、Trace/指标、Problem 错误出口
+internal/service/            RecordService：Protect/Reveal 接口实现（严格 JSON、校验、转换）
+internal/biz/                ProtectUsecase、RevealUsecase、审计与加解密、领域对象、仓储与密钥端口
+internal/data/               仓储实现与事务；data/sqlc 为查询（queries/*.sql）与生成代码（*.gen.go，不手改）
+internal/conf/               配置读取与校验
+internal/bootstrap/          组合根：cmd 与自动测试共用的装配
+internal/pkg/                localaes、nacos、snowflake、observability、policy 技术组件
+test/auto/                   contract（OpenAPI 金样）、biz（用例）、conf、pkg/policy、ext/http（HTTP 入口测试，Snowflake 31/27）
+包内 *_test.go              仅保留必须访问未导出实现的白盒测试（事务故障、错误归类、严格 JSON 边界等）
+test/support/                测试 base、Builder、本地 Mocker、Checker、TestMapper、隔离标识
+```
+
+入口测试只需 `VAULT_TEST_DB_DSN`：`go test ./test/...`。每次运行使用独占的调用方/数据类型/请求 ID 前缀，结束后只删除本次运行的数据。
+
+修改 `internal/data/sqlc/queries/*.sql` 或 Schema 后，在本目录执行 `sqlc generate`；`./scripts/verify.sh` 以 `sqlc diff` 校验生成代码无漂移。
+
 ## Docker test deployment
 
 The current independent Docker test deployment is documented in
@@ -26,7 +50,7 @@ The auto-test contract below remains local-environment-only; never point its fix
 
 ## Automatic verification
 
-Prerequisites: Go **1.27.1** (`GO_BIN` or PATH), **JDK 25** (`JAVA_HOME`), this Maven **3.9.16** wrapper, Python 3 (portable bounded subprocess supervision), git, POSIX private-file permissions, and **15 GiB** free disk. **`VAULT_MAVEN_REPOSITORY` is required** and must be an absolute path to the prepared Maven cache. Before invoking Maven or any database/test gate, the script checks nonempty local `paytech-parent`/`paytech-dependencies` POMs and `paytech-common-core`/`paytech-http-problem` POMs and JARs at `com/paytech/<artifact>/1.0.0-SNAPSHOT`. Missing artifacts require a separate operator-approved Foundation build/install; verification neither fetches nor substitutes them. Every Maven command uses that exact repository and `--no-snapshot-updates`; private/global settings are not parsed or changed. Nothing installs or publishes artifacts, changes global settings, starts containers or prepares schema automatically.
+Prerequisites: Go **1.27.1** (`GO_BIN` or PATH), **sqlc v1.31.1** and **golangci-lint v2.14.0** (PATH or `SQLC_BIN` / `GOLANGCI_LINT_BIN`), **JDK 25** (`JAVA_HOME`), this Maven **3.9.16** wrapper, Python 3 (portable bounded subprocess supervision), git, POSIX private-file permissions, and **15 GiB** free disk. **`VAULT_MAVEN_REPOSITORY` is required** and must be an absolute path to the prepared Maven cache. Before invoking Maven or any database/test gate, the script checks nonempty local `paytech-parent`/`paytech-dependencies` POMs and `paytech-common-core`/`paytech-http-problem` POMs and JARs at `com/paytech/<artifact>/1.0.0-SNAPSHOT`. Missing artifacts require a separate operator-approved Foundation build/install; verification neither fetches nor substitutes them. Every Maven command uses that exact repository and `--no-snapshot-updates`; private/global settings are not parsed or changed. Nothing installs or publishes artifacts, changes global settings, starts containers or prepares schema automatically.
 
 The operator must first start the repository `local-environment` MySQL and manually apply the reviewed [schema](docs/database/sql/vault-schema.sql) to existing `mor_vault`. Never replay DDL against an already prepared schema. Exactly three tables are required; no Flyway, Liquibase, Testcontainers, seed or truncate exists. Tests use only `vault_app` at `127.0.0.1:13306/mor_vault`.
 
@@ -46,7 +70,7 @@ Tests and scripts do not read `.env.local`, Docker environment or credentials th
 ./scripts/verify.sh
 ```
 
-The gate checks versions/disk/schema, OpenAPI and golden fixtures, gofmt, vet, Go tests, race tests, actual server build, Maven `clean verify`, a quiet sensitive-canary scan and `git diff --check`. All subprocess waits are bounded; no GNU `timeout` is needed. Captured output is private and not echoed on failure. The script removes only its exact temporary directory after owned processes stop; it preserves source, Maven reports and user data. Maven reports retain safe test diagnostics. The test module skips install/deploy and contains no production classes.
+The gate checks versions/disk/schema, OpenAPI and golden fixtures, gofmt, `sqlc diff`, golangci-lint, vet, Go tests, race tests, actual server build, Maven `clean verify`, a quiet sensitive-canary scan and `git diff --check`. All subprocess waits are bounded; no GNU `timeout` is needed. Captured output is private and not echoed on failure. The script removes only its exact temporary directory after owned processes stop; it preserves source, Maven reports and user data. Maven reports retain safe test diagnostics. The test module skips install/deploy and contains no production classes.
 
 To rerun only acceptance after building an actual binary into an owned temporary directory, set `VAULT_TEST_SERVER_BINARY` to its absolute executable path and run:
 
@@ -73,4 +97,4 @@ Both `ALIBABA_CLOUD_ACCESS_KEY_ID` and `ALIBABA_CLOUD_ACCESS_KEY_SECRET` must be
 
 ## Server configuration
 
-The server reads `VAULT_RUNTIME_MODE=local|test`, `VAULT_HTTP_ADDRESS`, `VAULT_DB_DSN`, `VAULT_POLICY_FILE`, `VAULT_LOCAL_AES_ROOT_KEY` (base64 32 random bytes), `VAULT_LOCAL_AES_KEY_ID`, explicit `VAULT_SNOWFLAKE_DATACENTER_ID` / `VAULT_SNOWFLAKE_WORKER_ID`, and `VAULT_NACOS_ENABLED`. Enabled discovery additionally needs `VAULT_NACOS_SERVER_ADDRESS`, `NAMESPACE`, `GROUP`, `INSTANCE_IP`, `INSTANCE_PORT`, `USERNAME`, `PASSWORD` with the `VAULT_NACOS_` prefix. Use the [example policy](config/policy.example.json) only as a non-production format reference. Production mode rejects LOCAL AES. Standard OTLP exporter/sampling variables remain available; resource attributes must be empty. `/health/liveness` and `/health/readiness` are operational endpoints, not public business-client operations.
+The server reads `VAULT_RUNTIME_MODE=local|test`, `VAULT_HTTP_ADDRESS`, `VAULT_DB_DSN`, `VAULT_POLICY_FILE`, `VAULT_LOCAL_AES_ROOT_KEY` (base64 32 random bytes), `VAULT_LOCAL_AES_KEY_ID`, explicit `VAULT_SNOWFLAKE_DATACENTER_ID` / `VAULT_SNOWFLAKE_WORKER_ID`, and `VAULT_NACOS_ENABLED`. Enabled discovery additionally needs `VAULT_NACOS_SERVER_ADDRESS`, `NAMESPACE`, `GROUP`, `INSTANCE_IP`, `INSTANCE_PORT`, `USERNAME`, `PASSWORD` with the `VAULT_NACOS_` prefix. Use the [example policy](config/policy.example.json) only as a non-production format reference. Production mode rejects LOCAL AES. Nacos registration happens once at startup and is deregistered at shutdown; the SDK keeps the ephemeral instance alive and re-registers after reconnects, so readiness covers only MySQL and keys. Standard OTLP exporter/sampling variables remain available; resource attributes must be empty. `/health/liveness` and `/health/readiness` are operational endpoints, not public business-client operations.

@@ -1,0 +1,27 @@
+# sqlc 代码生成配置：SQL 只写在 internal/data/sqlc/queries，生成代码（*.gen.go）不手改。
+# 修改查询后在本目录执行 sqlc generate，版本见 agent-docs/GO_DEVELOPMENT_CONVENTIONS.md。
+version: "2"
+overrides:
+  go:
+    rename:
+      t_vault_record: VaultRecord
+      t_vault_protect_request: VaultProtectRequest
+      t_vault_access_event: VaultAccessEvent
+      wrapped_dek: WrappedDEK
+      kms_key_ref: KMSKeyRef
+    overrides:
+      - column: t_vault_record.value_fingerprint
+        go_type:
+          type: "[]byte"
+        nullable: true
+sql:
+  - engine: mysql
+    schema: docs/database/sql/vault-schema.sql
+    queries: internal/data/sqlc/queries
+    gen:
+      go:
+        package: sqlc
+        out: internal/data/sqlc
+        output_db_file_name: db.gen.go
+        output_models_file_name: models.gen.go
+        output_files_suffix: .gen
