@@ -1,0 +1,29 @@
+-- 本机全链路迁到 mor_platform_e2e 后，清空 mor_platform 中自动测试独占的表（与 PlatformDataCleaner.OWNED_TABLES 一致，
+-- 不含 Verify 四表与扫描策略表）。这些数据已完整复制到 mor_platform_e2e；执行后 Platform auto 测试才能在 mor_platform 运行。
+TRUNCATE TABLE t_auth_session;
+TRUNCATE TABLE t_refresh_token_generation;
+TRUNCATE TABLE t_authentication_challenge;
+TRUNCATE TABLE t_password_credential;
+TRUNCATE TABLE t_tenant_member_role;
+TRUNCATE TABLE t_tenant_member;
+TRUNCATE TABLE t_user_account;
+TRUNCATE TABLE t_role_permission;
+TRUNCATE TABLE t_role;
+TRUNCATE TABLE t_console_resource;
+TRUNCATE TABLE t_permission;
+TRUNCATE TABLE t_jwt_signing_key;
+TRUNCATE TABLE t_api_scope;
+TRUNCATE TABLE t_gateway_guard_rule;
+TRUNCATE TABLE t_gateway_route_header;
+TRUNCATE TABLE t_gateway_route_query_param;
+TRUNCATE TABLE t_gateway_route;
+TRUNCATE TABLE t_gateway_target;
+TRUNCATE TABLE t_command_idempotency;
+TRUNCATE TABLE t_file_scan_result;
+TRUNCATE TABLE t_file_owner_ref;
+TRUNCATE TABLE t_file_upload;
+TRUNCATE TABLE t_file_object;
+TRUNCATE TABLE t_security_event;
+TRUNCATE TABLE t_audit_event_attr;
+TRUNCATE TABLE t_audit_event;
+TRUNCATE TABLE t_audit_chain;

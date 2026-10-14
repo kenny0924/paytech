@@ -133,6 +133,8 @@ services:
       MINIO_ROOT_PASSWORD: ${MOR_MINIO_ROOT_PASSWORD:?set MOR_MINIO_ROOT_PASSWORD}
       MINIO_KMS_SECRET_KEY: ${MOR_MINIO_KMS_SECRET_KEY:?set MOR_MINIO_KMS_SECRET_KEY}
       MC_HOST_local: https://${MOR_MINIO_ROOT_USER}:${MOR_MINIO_ROOT_PASSWORD}@127.0.0.1:9000
+      # 浏览器按预签名地址直传/下载；只允许本机 Client 与 Operations 站点源。
+      MINIO_API_CORS_ALLOW_ORIGIN: ${MOR_MINIO_CORS_ALLOW_ORIGIN:-https://127.0.0.1:18443,https://127.0.0.1:18444}
       TZ: UTC
     command: [server, /data, --certs-dir, /certs, --address, ":9000", --console-address, ":9001"]
     ports:
@@ -165,6 +167,20 @@ services:
     entrypoint: [/bin/sh, /init/init.sh]
     volumes:
       - ./minio/init:/init:ro
+    networks: [mor]
+
+  mailpit:
+    profiles: [mail]
+    # 本机收信服务：接住 Platform 发出的验证/重置邮件，不向外投递。
+    image: axllent/mailpit@sha256:757f22b56c1da03570afdb3d259effe5091018008a81bbedc8158cee7e16fdbc
+    restart: "no"
+    environment:
+      MP_MAX_MESSAGES: "500"
+      TZ: UTC
+    ports:
+      - "127.0.0.1:11025:1025"
+      - "127.0.0.1:18025:8025"
+    mem_limit: 128m
     networks: [mor]
 
 networks:

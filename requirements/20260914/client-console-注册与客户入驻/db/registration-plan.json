@@ -2074,6 +2074,14 @@
         {
           "headerName": "origin",
           "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "FORWARD_REQUEST"
         }
       ],
       "queryParameterNames": [],
@@ -2160,6 +2168,14 @@
         },
         {
           "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "idempotency-key",
           "headerUse": "FORWARD_REQUEST"
         }
       ],

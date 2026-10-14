@@ -1,0 +1,58 @@
+# 本机全链路 Nginx：两个 HTTPS 站点，覆盖可信客户端 IP 与入口通道后转发 Gateway；页面转 Vite 开发服务器。
+# 由 run-service.sh nginx 以 __STATE__ 替换为 local-environment/e2e 的绝对路径后启动。
+worker_processes 1;
+pid __STATE__/nginx/nginx.pid;
+error_log __STATE__/logs/nginx-error.log warn;
+events { worker_connections 256; }
+http {
+  access_log __STATE__/logs/nginx-access.log;
+  client_body_temp_path __STATE__/nginx/tmp/body;
+  proxy_temp_path __STATE__/nginx/tmp/proxy;
+  fastcgi_temp_path __STATE__/nginx/tmp/fastcgi;
+  uwsgi_temp_path __STATE__/nginx/tmp/uwsgi;
+  scgi_temp_path __STATE__/nginx/tmp/scgi;
+  client_max_body_size 1m;
+  map $http_upgrade $connection_upgrade { default upgrade; '' close; }
+  ssl_certificate __STATE__/nginx/local.crt;
+  ssl_certificate_key __STATE__/nginx/local.key;
+
+  server {
+    listen 127.0.0.1:18443 ssl;
+    location /api/ {
+      proxy_pass http://127.0.0.1:18080;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Entry-Channel CLIENT;
+      proxy_set_header Forwarded "";
+      proxy_set_header X-Forwarded-For "";
+      proxy_set_header X-Forwarded-Host "";
+      proxy_set_header X-Forwarded-Proto "";
+      proxy_set_header X-Forwarded-Port "";
+    }
+    location / {
+      proxy_pass http://127.0.0.1:18302;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+    }
+  }
+
+  server {
+    listen 127.0.0.1:18444 ssl;
+    location /api/ {
+      proxy_pass http://127.0.0.1:18080;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Entry-Channel OPERATIONS;
+      proxy_set_header Forwarded "";
+      proxy_set_header X-Forwarded-For "";
+      proxy_set_header X-Forwarded-Host "";
+      proxy_set_header X-Forwarded-Proto "";
+      proxy_set_header X-Forwarded-Port "";
+    }
+    location / {
+      proxy_pass http://127.0.0.1:18301;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+    }
+  }
+}

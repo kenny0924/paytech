@@ -7,7 +7,8 @@ plan_path = HERE / 'registration-plan.json'
 plan = json.loads(plan_path.read_text())
 reason = 'Client onboarding initial registration; keep routes disabled pending acceptance'
 # C14 按申请状态防重，不转发 Idempotency-Key（2026-10-13 C14 修订）。
-idempotent = {'C04', *('C%02d' % n for n in range(6, 14)),
+# F01/F02 同样要求 Idempotency-Key（api-contract 第 1 节）；2026-10-14 本机验收发现漏登记后补齐。
+idempotent = {'C04', *('C%02d' % n for n in range(6, 14)), 'F01', 'F02',
               *('O%02d' % n for n in range(3, 10))}
 queries = {'C03': ['clientType'], 'C15': ['cursor', 'limit'],
            'O01': ['page', 'size', 'status', 'qualificationType', 'applicationId']}

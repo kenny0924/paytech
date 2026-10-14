@@ -1,0 +1,15 @@
+{
+  "policyVersion": "local-e2e-v1",
+  "dataTypes": {
+    "EMAIL_ADDRESS_V1": { "tokenMode": "STABLE" },
+    "PHONE_E164_V1": { "tokenMode": "STABLE" }
+  },
+  "rules": [
+    { "callerService": "platform-support-service", "action": "PROTECT", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["PLATFORM_LOGIN_EMAIL_V1"] },
+    { "callerService": "platform-support-service", "action": "REVEAL", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["PLATFORM_LOGIN_EMAIL_V1"] },
+    { "callerService": "client-contract-service", "action": "PROTECT", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
+    { "callerService": "client-contract-service", "action": "REVEAL", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
+    { "callerService": "client-contract-service", "action": "PROTECT", "dataType": "PHONE_E164_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
+    { "callerService": "client-contract-service", "action": "REVEAL", "dataType": "PHONE_E164_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] }
+  ]
+}
