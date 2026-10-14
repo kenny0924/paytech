@@ -1,9 +1,10 @@
 """Client 入驻 API 级端到端验收：经 Nginx HTTPS 入口走注册→资料→材料→提交→运营退回→（可选）重提批准。
 
-只通过 HTTP 入口（Client 18443、Operations 18444、Mailpit、MinIO 预签名地址）交互；不连数据库、不改配置。
+只通过 HTTP 入口（Client、Operations、Mailpit、MinIO 预签名地址）交互；不连数据库、不改配置。
+目标由 E2E_TARGET 选择（默认本机，test 为 mor-test），见 e2e_http.py。
 输出每步 PASS/FAIL 与关键证据（状态码、ID、Problem code、requestId）；不输出密码、令牌、Cookie 或完整预签名 URL。
 
-用法：python3 acceptance_flow.py [--approve]
+用法：[E2E_TARGET=test] python3 acceptance_flow.py [--approve]
 """
 import http.cookiejar
 import json
@@ -15,9 +16,8 @@ import urllib.parse
 import urllib.request
 import uuid
 
-from e2e_http import CLIENT, OPERATIONS, TLS, Failure, Operations, secrets
+from e2e_http import CLIENT, MAILPIT, OPERATIONS, TLS, Failure, Operations, secrets
 
-MAILPIT = "http://127.0.0.1:18025"
 PDF = (b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
        b"3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n")
 RESULTS = []
@@ -104,7 +104,7 @@ def verification_link(email):
 
 
 def presigned(method, url, headers=None, data=None):
-    """访问对象存储预签名地址；只用于本机自签名 MinIO。"""
+    """访问对象存储预签名地址（本机自签名或 test CA 签发的 MinIO）。"""
     host = urllib.parse.urlsplit(url).netloc
     request = urllib.request.Request(url, data=data, headers=headers or {}, method=method)
     try:

@@ -158,7 +158,11 @@ def unique_nginx_scalar(scope, name: str):
     return matches[0][0]
 
 
-def nginx_api_scopes(config: str):
+# Each public listener forwards its API paths to Gateway and owns exactly one trusted entry channel.
+ENTRY_CHANNEL_BY_LISTEN = {("8080",): "OPERATIONS", ("8443", "ssl"): "CLIENT"}
+
+
+def nginx_api_servers(config: str):
     root = parse_nginx(config)
     http = one_nginx_block(root, ("http",))
     servers = nginx_blocks(http, ("server",))
@@ -168,20 +172,47 @@ def nginx_api_scopes(config: str):
         if nginx_blocks(server, ("location", "=", "/api"))
         or nginx_blocks(server, ("location", "^~", "/api/"))
     ]
-    if len(candidates) != 1:
+    by_listen = {}
+    for server in candidates:
+        listens = [tuple(arguments) for arguments in nginx_directive_arguments(server, "listen")]
+        if len(listens) != 1 or listens[0] in by_listen:
+            raise AssertionError("expected each API server to declare one distinct listen directive")
+        by_listen[listens[0]] = server
+    if set(by_listen) != set(ENTRY_CHANNEL_BY_LISTEN):
         raise AssertionError(
-            "expected exactly one nginx server containing the API locations"
+            "expected exactly the Operations (8080) and Client (8443 ssl) nginx servers containing the API locations"
         )
-    server = candidates[0]
-    locations = {
-        "= /api": one_nginx_block(server, ("location", "=", "/api")),
-        "^~ /api/": one_nginx_block(server, ("location", "^~", "/api/")),
+    return {
+        ENTRY_CHANNEL_BY_LISTEN[listen]: (http, server, {
+            "= /api": one_nginx_block(server, ("location", "=", "/api")),
+            "^~ /api/": one_nginx_block(server, ("location", "^~", "/api/")),
+        })
+        for listen, server in by_listen.items()
     }
-    return http, server, locations
+
+
+def nginx_api_scopes(config: str):
+    """Yield (channel, http, server, locations) for every API server."""
+    for channel, (http, server, locations) in nginx_api_servers(config).items():
+        yield channel, http, server, locations
+
+
+def nginx_api_locations(config: str):
+    """Yield (channel, location name, location block) for every API location."""
+    for channel, _, _, locations in nginx_api_scopes(config):
+        for location_name, scope in locations.items():
+            yield channel, channel + " " + location_name, scope
 
 
 def nginx_api_effective_directives(config: str):
-    http, server, locations = nginx_api_scopes(config)
+    effective = {}
+    for channel, http, server, locations in nginx_api_scopes(config):
+        for location_name, values in nginx_server_effective_directives(http, server, locations).items():
+            effective[channel + " " + location_name] = values
+    return effective
+
+
+def nginx_server_effective_directives(http, server, locations):
     relevant = (
         "client_max_body_size",
         "proxy_read_timeout",
@@ -276,19 +307,15 @@ class NginxGatewayProblemBoundaryTest(unittest.TestCase):
             )
 
     def test_every_api_path_streams_to_gateway_instead_of_returning_edge_404(self):
-        _, _, locations = nginx_api_scopes(self.nginx)
-
-        for location_name, scope in locations.items():
+        for _, location_name, scope in nginx_api_locations(self.nginx):
             self.assertEqual(
                 "$gateway",
                 unique_nginx_scalar(scope, "proxy_pass"),
                 location_name,
             )
 
-    def test_every_operations_api_path_overwrites_the_trusted_entry_channel(self):
-        _, _, locations = nginx_api_scopes(self.nginx)
-
-        for location_name, scope in locations.items():
+    def test_every_api_path_overwrites_its_trusted_entry_channel(self):
+        for channel, location_name, scope in nginx_api_locations(self.nginx):
             assignments = [
                 arguments
                 for arguments in nginx_directive_arguments(
@@ -298,7 +325,7 @@ class NginxGatewayProblemBoundaryTest(unittest.TestCase):
                 and arguments[0].lower() == "x-entry-channel"
             ]
             self.assertEqual(
-                [("X-Entry-Channel", "OPERATIONS")],
+                [("X-Entry-Channel", channel)],
                 assignments,
                 location_name,
             )

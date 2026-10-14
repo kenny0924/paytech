@@ -19,6 +19,7 @@ KEY_ID = "test-local-aes-v1"
 VALUE = "synthetic-vault-deployment-value-v1"
 CALLER = "vault-test-smoke"
 PURPOSE = "TEST_DEPLOYMENT"
+POLICY_VERSION = json.loads((ROOT / "vault/policy.json").read_text(encoding="utf-8"))["policyVersion"]
 os.umask(0o077)
 
 
@@ -153,7 +154,7 @@ def smoke():
     for path in ("/internal/v1/vault/records:protect", "/internal/v1/vault/records:reveal", "/vault/v1/records:protect"):
         request(path, body, key="test-deployment-v1-legacy", status=404)
     audit = mysql("SELECT COUNT(*) FROM t_vault_access_event WHERE request_id='" + evidence_id + "' "
-                  "AND action='REVEAL' AND outcome='SUCCESS' AND policy_version='test-deployment-v1';")
+                  "AND action='REVEAL' AND outcome='SUCCESS' AND policy_version='" + POLICY_VERSION + "';")
     require(audit == "1", "Reveal success audit was not persisted exactly once.")
     logs = run([str(ROOT / "compose.sh"), "logs", "--no-color", "--since", started, "vault-service"])
     sensitive = [VALUE, token, first, second, key_values(ROOT / "private/vault.env")["VAULT_LOCAL_AES_ROOT_KEY"]]

@@ -12,10 +12,14 @@
 - 测试管理员：`operator@example.test`，密码见不提交的 [`private/access.md`](private/access.md)。Bootstrap 已通过真实 HTTP 流程永久停用，不再使用 `admin` 登录。
 - 按用户明确要求，test 使用 HTTP。Gateway/BFF 仅在单独 `test` Profile、显式 `OPERATIONS_TEST_HTTP_ENABLED=true` 且 Origin 为 `http://localhost:<端口>` 时允许此模式。
 - 请使用 `localhost` 入口，不要替换为局域网 IP 或其他域名。
+- Client Console（2026-10-14 客户入驻发布）：**https://localhost:28443**。Client 链路代码只接受 HTTPS，Nginx 使用 `private/tls/server.crt`（test 自有 CA 签发）。入驻材料直传 MinIO `https://minio.mor-test.localhost:29400`（Chrome 把 `*.localhost` 解析到本机；容器内由网络别名指向 MinIO），浏览器需信任 `private/test-ca.crt`。验证邮件进 Mailpit，不向外投递。发布清单与执行记录见 [客户入驻 release](../requirements/20260914/client-console-注册与客户入驻/release/release.md)；`deploy.sh` 尚未覆盖 CCT、Client BFF/Web、MinIO 与 Mailpit。
 
 | 服务 | 宿主机地址 |
 |---|---|
 | Operations HTTP | `http://localhost:28080` |
+| Client Console HTTPS | `https://localhost:28443` |
+| MinIO（预签名上传/下载） | `https://minio.mor-test.localhost:29400` |
+| Mailpit 网页 | `http://localhost:28025` |
 | MySQL | `127.0.0.1:23306` |
 | Redis | `127.0.0.1:26379` |
 | RabbitMQ AMQP | `127.0.0.1:25672` |
@@ -38,8 +42,9 @@ POST /vault/v1/records/reveal
 ```
 
 本次只部署 Vault，不替换 Platform 的 Vault Mock、不接生产 KMS、不发布 Java Client 到制品库。
-当前 [test policy](vault/policy.json) 只允许 `vault-test-smoke` / `vault-test-peer` 的合成测试值；
-`TEST_STABLE_V1` / `TEST_REFERENCE_V1` 不是业务数据类型。真实业务接入需另行定义其类型、调用者和用途授权。
+当前 [test policy](vault/policy.json)（`test-deployment-v2`）保留 `vault-test-smoke` / `vault-test-peer` 的合成测试值；
+`TEST_STABLE_V1` / `TEST_REFERENCE_V1` 不是业务数据类型。2026-10-14 客户入驻发布另授权 `EMAIL_ADDRESS_V1`、`PHONE_E164_V1`（STABLE）：
+Platform 登录邮箱 `PLATFORM_LOGIN_EMAIL_V1`，CCT 申请联系人 `CLIENT_ONBOARDING_CONTACT`，各含 PROTECT/REVEAL。
 
 单独准备或更新 Vault，不运行全应用构建脚本：
 

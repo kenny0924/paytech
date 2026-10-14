@@ -1,5 +1,12 @@
-"""本机全链路 HTTP 辅助：经 Nginx 访问运营站点 API，读取 local-environment/e2e/secrets.env，不打印私密值。"""
+"""全链路 HTTP 辅助：经 Nginx 访问 Client/运营站点 API，不打印私密值。
+
+默认目标是本机全链路（读取 local-environment/e2e/secrets.env）；设置 E2E_TARGET=test 时改为 mor-test
+（运营 http://localhost:28080、Client https://localhost:28443，用 test CA 校验证书，管理员凭据读 private/access.md）。
+"""
 import json
+import os
+import re
+import socket
 import ssl
 import time
 import urllib.error
@@ -8,16 +15,33 @@ import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[5]
-SECRETS = ROOT / "local-environment/e2e/secrets.env"
-OPERATIONS = "https://127.0.0.1:18444"
-CLIENT = "https://127.0.0.1:18443"
-# 本机自签名证书；只连接 127.0.0.1。
-TLS = ssl._create_unverified_context()
+TARGET = os.environ.get("E2E_TARGET", "local")
+if TARGET == "test":
+    OPERATIONS = "http://localhost:28080"
+    CLIENT = "https://localhost:28443"
+    MAILPIT = "http://localhost:28025"
+    TLS = ssl.create_default_context(cafile=str(ROOT / "test-environment/private/test-ca.crt"))
+    # macOS 系统解析器不解析 *.localhost（Chrome 内置解析）；MinIO 预签名地址 minio.mor-test.localhost 指向本机。
+    _resolve = socket.getaddrinfo
+    socket.getaddrinfo = lambda host, *rest, **kw: _resolve(
+        "127.0.0.1" if isinstance(host, str) and host.endswith(".localhost") else host, *rest, **kw)
+elif TARGET == "local":
+    OPERATIONS = "https://127.0.0.1:18444"
+    CLIENT = "https://127.0.0.1:18443"
+    MAILPIT = "http://127.0.0.1:18025"
+    # 本机自签名证书；只连接 127.0.0.1。
+    TLS = ssl._create_unverified_context()
+else:
+    raise SystemExit("E2E_TARGET 只支持 local 或 test")
 
 
 def secrets():
+    if TARGET == "test":
+        text = (ROOT / "test-environment/private/access.md").read_text()
+        return {"E2E_ADMIN_EMAIL": re.search(r"账号：(\S+)", text).group(1),
+                "E2E_ADMIN_PASSWORD": re.search(r"密码：(\S+)", text).group(1)}
     values = {}
-    for line in SECRETS.read_text().splitlines():
+    for line in (ROOT / "local-environment/e2e/secrets.env").read_text().splitlines():
         if "=" in line and not line.startswith("#"):
             key, value = line.split("=", 1)
             values[key.strip()] = value.strip()

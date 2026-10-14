@@ -21,6 +21,8 @@ READINESS_URLS = (
     "http://127.0.0.1:18106/platform-support/actuator/health/readiness",
     "http://127.0.0.1:19201/actuator/health/readiness",
     "http://127.0.0.1:19080/actuator/health/readiness",
+    "http://127.0.0.1:18101/actuator/health/readiness",
+    "http://127.0.0.1:19202/actuator/health/readiness",
 )
 
 
@@ -529,7 +531,7 @@ class JavaImageHealthProbeTest(unittest.TestCase):
                     )
                     self.assertTrue(probe_output.exists())
 
-    def test_all_four_java_healthchecks_use_fixed_probe_argv(self):
+    def test_all_java_healthchecks_use_fixed_probe_argv(self):
         compose_source = COMPOSE_APPLICATIONS.read_text(encoding="utf-8")
         healthcheck_argv = parse_compose_healthcheck_argv(compose_source)
 
@@ -540,6 +542,8 @@ class JavaImageHealthProbeTest(unittest.TestCase):
                     "platform-support-service",
                     "operations-console-bff",
                     "api-gateway",
+                    "client-contract-service",
+                    "client-console-bff",
                 ),
                 READINESS_URLS,
             )

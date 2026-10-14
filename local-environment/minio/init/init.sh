@@ -1,8 +1,8 @@
 #!/bin/sh
-# 本机 MinIO 初始化：两个版本化、SSE-S3 加密的存储桶及仅限这两个桶的 Platform 账号。可重复执行。
+# MinIO 初始化（本机与 mor-test 共用，test 以 MINIO_URL 指定地址）：两个版本化、SSE-S3 加密的存储桶及仅限这两个桶的 Platform 账号。可重复执行。
 set -eu
 mc() { /usr/bin/mc --insecure "$@"; }
-mc alias set local https://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null
+mc alias set local "${MINIO_URL:-https://minio:9000}" "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null
 for bucket in mor-platform-files mor-platform-files-test; do
   mc mb --ignore-existing "local/$bucket"
   mc version enable "local/$bucket"

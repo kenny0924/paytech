@@ -947,7 +947,7 @@ class RiskComposeContractTest(unittest.TestCase):
             self.assertIn(exact_line, risk)
         self.assertIn("jdbc:mysql://mysql:3306/mor_risk?", risk)
         self.assertEqual(
-            {"mysql", "redis", "nacos"},
+            {"mysql", "redis", "rabbitmq", "nacos"},
             set(
                 re.findall(
                     r"^      ([a-z0-9-]+): \{ condition: service_healthy \}$",

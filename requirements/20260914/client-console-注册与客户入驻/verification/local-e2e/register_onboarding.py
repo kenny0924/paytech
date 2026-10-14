@@ -6,12 +6,12 @@ import json
 import sys
 from pathlib import Path
 
-from e2e_http import Failure, Operations, secrets
+from e2e_http import TARGET, Failure, Operations, secrets
 
 HERE = Path(__file__).resolve().parent
 TEMPLATES = json.loads((HERE.parent.parent / "db/management-command-templates.json").read_text())["commands"]
 ADMIN_ROLE = "900000000000000510"
-REASON = "Client onboarding local e2e registration (authorized 2026-10-14)"
+REASON = f"Client onboarding {TARGET} registration (authorized 2026-10-14)"
 
 s = secrets()
 ops = Operations(s["E2E_ADMIN_EMAIL"], s["E2E_ADMIN_PASSWORD"])

@@ -86,9 +86,17 @@ services:
       RISK_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
       RISK_SNOWFLAKE_REGION_ID: "0"
       RISK_SNOWFLAKE_WORKER_ID: "25"
+      RISK_RABBITMQ_HOST: rabbitmq
+      RISK_RABBITMQ_PORT: "5672"
+      RISK_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      RISK_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      RISK_RABBITMQ_VHOST: /mor-test
+      ONBOARDING_REVIEW_ENABLED: "true"
+      ONBOARDING_MATERIALS_ENABLED: "true"
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
       nacos: { condition: service_healthy }
     healthcheck:
       test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18104/actuator/health/readiness]
@@ -106,7 +114,7 @@ services:
       context: ./artifacts
       dockerfile: ../java/Dockerfile
       args: { JAR_FILE: platform-support-service.jar }
-    env_file: [./private/platform.env]
+    env_file: [./private/platform.env, ./private/client-onboarding.env]
     environment:
       <<: *discovery
       SERVER_ADDRESS: 0.0.0.0
@@ -119,10 +127,36 @@ services:
       PLATFORM_SUPPORT_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
       OPERATIONS_AUTHENTICATION_ENABLED: "true"
       OPERATIONS_AUTHENTICATION_WORKER_ID: "20"
+      # Client 注册与入驻：CUSTOMER 签名/HMAC 材料来自 private/platform.env 的 CLIENT_LOCAL_*。
+      CLIENT_AUTHENTICATION_ENABLED: "true"
+      CLIENT_AUTHENTICATION_ISSUER: https://customer-auth.mor-test.local
+      CLIENT_AUTHENTICATION_MAIL_FROM: no-reply@mor-test.local
+      CLIENT_AUTHENTICATION_PUBLIC_ORIGIN: https://localhost:28443
+      TENANT_PROJECTION_ENABLED: "true"
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: "1025"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: "false"
+      FILES_ONBOARDING_ENABLED: "true"
+      FILES_ONBOARDING_STORAGE_PROVIDER: MINIO
+      FILES_ONBOARDING_STORAGE_CONTAINER_REF: mor-platform-files
+      FILES_ONBOARDING_SCAN_POLICY_CODE: CLIENT_ONBOARDING_FORMAT
+      FILES_ONBOARDING_MINIO_ENDPOINT: https://minio.mor-test.localhost:29400
+      FILES_ONBOARDING_MINIO_REGION: us-east-1
+      FILES_ONBOARDING_MINIO_ACCESS_KEY: ${MOR_MINIO_PLATFORM_ACCESS_KEY:?prepare test secrets}
+      FILES_ONBOARDING_MINIO_SECRET_KEY: ${MOR_MINIO_PLATFORM_SECRET_KEY:?prepare test secrets}
+      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: /run/mor-test/test-ca.crt
+      COMPENSATION_ENABLED: "true"
+      COMPENSATION_INSTANCE_ID: platform-test
+    volumes:
+      - ./private/test-ca.crt:/run/mor-test/test-ca.crt:ro
     depends_on:
       mysql: { condition: service_healthy }
       nacos: { condition: service_healthy }
       redis: { condition: service_healthy }
+      vault-service: { condition: service_healthy }
+      minio: { condition: service_healthy }
+      mailpit: { condition: service_started }
     healthcheck:
       test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18106/platform-support/actuator/health/readiness]
       interval: 10s
@@ -131,6 +165,71 @@ services:
       start_period: 40s
     networks:
       backend: { ipv4_address: 172.30.73.21 }
+
+  client-contract-service:
+    <<: *java
+    image: mor-test/client-contract-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: client-contract-service.jar }
+    environment:
+      <<: *discovery
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.26
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mor_cct?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: cct_app
+      SPRING_DATASOURCE_PASSWORD: ${MOR_CCT_DB_PASSWORD:?prepare test secrets}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SPRING_DATA_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      CCT_RABBITMQ_HOST: rabbitmq
+      CCT_RABBITMQ_PORT: "5672"
+      CCT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      CCT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      CCT_RABBITMQ_VHOST: /mor-test
+      ONBOARDING_DRAFT_ENABLED: "true"
+      ONBOARDING_RECOVERY_ENABLED: "true"
+      ONBOARDING_ID_DATACENTER: "0"
+      ONBOARDING_ID_WORKER: "26"
+      COMPENSATION_INSTANCE_ID: cct-test
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+      vault-service: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18101/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.26 }
+
+  client-console-bff:
+    <<: *java
+    image: mor-test/client-console-bff:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: client-console-bff.jar }
+    environment:
+      <<: *discovery
+      CLIENT_BFF_BIND_ADDRESS: 172.30.73.27
+      CLIENT_ONBOARDING_ENABLED: "true"
+      CLIENT_CONSOLE_ORIGIN: https://localhost:28443
+    depends_on:
+      platform-support-service: { condition: service_healthy }
+      client-contract-service: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19202/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      backend: { ipv4_address: 172.30.73.27 }
 
   operations-console-bff:
     <<: *java
@@ -175,6 +274,10 @@ services:
       OPERATIONS_GUARD_REDIS_NAMESPACE: test:api-gateway
       OPERATIONS_ACCESS_LOG_HMAC_VERSION: test-access-log-v1
       OPERATIONS_ACCESS_LOG_HMAC_MATERIAL: ${OPERATIONS_ACCESS_LOG_HMAC_MATERIAL:?prepare test secrets}
+      GATEWAY_CLIENT_ENABLED: "true"
+      GATEWAY_CLIENT_CONSOLE_ORIGIN: https://localhost:28443
+      GATEWAY_CLIENT_SECURITY_ISSUER: https://customer-auth.mor-test.local
+      GATEWAY_CLIENT_SECURITY_AUDIENCE: client-console
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: "6379"
       SPRING_DATA_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
@@ -182,6 +285,7 @@ services:
       redis: { condition: service_healthy }
       platform-support-service: { condition: service_healthy }
       operations-console-bff: { condition: service_healthy }
+      client-console-bff: { condition: service_healthy }
     healthcheck:
       test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19080/actuator/health/readiness]
       interval: 10s
@@ -209,6 +313,23 @@ services:
       retries: 6
     networks: [web]
 
+  client-console-web:
+    profiles: [applications]
+    image: mor-test/client-console-web:development
+    build: ../client-console-web
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64m
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/healthz]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    networks: [web]
+
   nginx:
     profiles: [applications]
     image: nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
@@ -220,12 +341,15 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     mem_limit: 64m
-    ports: ["127.0.0.1:28080:8080"]
+    # 28080 运营端（HTTP，沿用）；28443 客户端（HTTPS，test CA 签发的 localhost 证书）。
+    ports: ["127.0.0.1:28080:8080", "127.0.0.1:28443:8443"]
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./private/tls:/etc/nginx/tls:ro
     depends_on:
       api-gateway: { condition: service_healthy }
       operations-console-web: { condition: service_healthy }
+      client-console-web: { condition: service_healthy }
     healthcheck:
       test: [CMD, wget, -q, --spider, http://127.0.0.1:8080/healthz]
       interval: 10s

@@ -1,14 +1,22 @@
 {
-  "policyVersion": "test-deployment-v1",
+  "policyVersion": "test-deployment-v2",
   "dataTypes": {
     "TEST_STABLE_V1": { "tokenMode": "STABLE" },
-    "TEST_REFERENCE_V1": { "tokenMode": "REFERENCE" }
+    "TEST_REFERENCE_V1": { "tokenMode": "REFERENCE" },
+    "EMAIL_ADDRESS_V1": { "tokenMode": "STABLE" },
+    "PHONE_E164_V1": { "tokenMode": "STABLE" }
   },
   "rules": [
     { "callerService": "vault-test-smoke", "action": "PROTECT", "dataType": "TEST_STABLE_V1", "purposes": ["TEST_DEPLOYMENT"] },
     { "callerService": "vault-test-smoke", "action": "REVEAL", "dataType": "TEST_STABLE_V1", "purposes": ["TEST_DEPLOYMENT"] },
     { "callerService": "vault-test-peer", "action": "PROTECT", "dataType": "TEST_STABLE_V1", "purposes": ["TEST_DEPLOYMENT"] },
     { "callerService": "vault-test-smoke", "action": "PROTECT", "dataType": "TEST_REFERENCE_V1", "purposes": ["TEST_DEPLOYMENT"] },
-    { "callerService": "vault-test-smoke", "action": "REVEAL", "dataType": "TEST_REFERENCE_V1", "purposes": ["TEST_DEPLOYMENT"] }
+    { "callerService": "vault-test-smoke", "action": "REVEAL", "dataType": "TEST_REFERENCE_V1", "purposes": ["TEST_DEPLOYMENT"] },
+    { "callerService": "platform-support-service", "action": "PROTECT", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["PLATFORM_LOGIN_EMAIL_V1"] },
+    { "callerService": "platform-support-service", "action": "REVEAL", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["PLATFORM_LOGIN_EMAIL_V1"] },
+    { "callerService": "client-contract-service", "action": "PROTECT", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
+    { "callerService": "client-contract-service", "action": "REVEAL", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
+    { "callerService": "client-contract-service", "action": "PROTECT", "dataType": "PHONE_E164_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
+    { "callerService": "client-contract-service", "action": "REVEAL", "dataType": "PHONE_E164_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] }
   ]
 }

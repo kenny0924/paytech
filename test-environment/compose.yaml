@@ -124,6 +124,69 @@ services:
     mem_limit: 1024m
     networks: [backend]
 
+  minio:
+    profiles: [base]
+    # 入驻材料对象存储（与本机同一 Chainguard 摘要）。浏览器与容器内 Platform 共用同一地址
+    # https://minio.mor-test.localhost:29400：Chrome 把 *.localhost 解析到本机，容器内由网络别名指向本容器。
+    image: cgr.dev/chainguard/minio@sha256:2136d593beacf4461187035eca949fe49abd589d5079735025c711ca58fee0c8
+    restart: "no"
+    environment:
+      MINIO_ROOT_USER: ${MOR_MINIO_ROOT_USER:?prepare test secrets}
+      MINIO_ROOT_PASSWORD: ${MOR_MINIO_ROOT_PASSWORD:?prepare test secrets}
+      MINIO_KMS_SECRET_KEY: ${MOR_MINIO_KMS_SECRET_KEY:?prepare test secrets}
+      MC_HOST_local: https://${MOR_MINIO_ROOT_USER}:${MOR_MINIO_ROOT_PASSWORD}@127.0.0.1:29400
+      # 预签名直传/下载只允许客户端与运营站点源。
+      MINIO_API_CORS_ALLOW_ORIGIN: https://localhost:28443,http://localhost:28080
+      TZ: UTC
+    command: [server, /data, --certs-dir, /certs, --address, ":29400", --console-address, ":29401"]
+    ports:
+      - "127.0.0.1:29400:29400"
+    volumes:
+      - minio-data:/data
+      - ./private/minio-certs:/certs:ro
+    healthcheck:
+      test: [CMD, mc, ready, local, --insecure]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    mem_limit: 512m
+    networks:
+      backend:
+        ipv4_address: 172.30.73.28
+        aliases: [minio.mor-test.localhost]
+
+  minio-init:
+    profiles: [base]
+    image: cgr.dev/chainguard/minio@sha256:2136d593beacf4461187035eca949fe49abd589d5079735025c711ca58fee0c8
+    restart: "no"
+    depends_on:
+      minio: { condition: service_healthy }
+    environment:
+      MINIO_URL: https://minio.mor-test.localhost:29400
+      MINIO_ROOT_USER: ${MOR_MINIO_ROOT_USER:?prepare test secrets}
+      MINIO_ROOT_PASSWORD: ${MOR_MINIO_ROOT_PASSWORD:?prepare test secrets}
+      PLATFORM_ACCESS_KEY: ${MOR_MINIO_PLATFORM_ACCESS_KEY:?prepare test secrets}
+      PLATFORM_SECRET_KEY: ${MOR_MINIO_PLATFORM_SECRET_KEY:?prepare test secrets}
+    entrypoint: [/bin/sh, /init/init.sh]
+    volumes:
+      - ../local-environment/minio/init:/init:ro
+    networks: [backend]
+
+  mailpit:
+    profiles: [base]
+    # test 收信服务：接住 Platform 的验证/重置邮件，不向外投递；网页 http://localhost:28025。
+    image: axllent/mailpit@sha256:757f22b56c1da03570afdb3d259effe5091018008a81bbedc8158cee7e16fdbc
+    restart: "no"
+    environment:
+      MP_MAX_MESSAGES: "500"
+      TZ: UTC
+    ports:
+      - "127.0.0.1:28025:8025"
+    mem_limit: 128m
+    networks:
+      backend: { ipv4_address: 172.30.73.29 }
+
 networks:
   backend:
     name: mor-test-backend
@@ -146,3 +209,5 @@ volumes:
     name: mor-test-redis-data
   rabbitmq-data:
     name: mor-test-rabbitmq-data
+  minio-data:
+    name: mor-test-minio-data
