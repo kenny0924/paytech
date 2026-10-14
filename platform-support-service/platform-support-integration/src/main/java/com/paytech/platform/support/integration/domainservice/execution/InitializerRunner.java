@@ -14,7 +14,9 @@ import com.paytech.platform.support.integration.domain.execution.Deadline;
 import com.paytech.platform.support.integration.domain.execution.ExecutionContext;
 import com.paytech.platform.support.integration.domain.execution.ExecutionFlow;
 import com.paytech.platform.support.integration.domain.execution.ExecutionSnapshot;
+import com.paytech.platform.support.integration.domainservice.function.ChannelAccountConfigFunction;
 import com.paytech.platform.support.integration.domainservice.function.InitializerFunction;
+import com.paytech.platform.support.integration.domainservice.function.VerifyAccountConfigFunction;
 import com.paytech.platform.support.integration.domainservice.validator.ValueBindingValidator;
 
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import tools.jackson.databind.JsonNode;
  * <p>
  * 发生在第一个节点之前：required=true 的初始化项失败返回 503 INTEGRATION_INITIALIZATION_FAILED， 预算在执行前已耗尽返回 503
  * INTEGRATION_BUDGET_EXHAUSTED，均保证没有发出渠道请求； required=false 失败时 resources.&lt;id&gt; 不存在。日志只记初始化项 ID 与固定原因。
+ * 沙箱验证运行中 CHANNEL_ACCOUNT_CONFIG 改读验证账号，并在轨迹中记录每个初始化项的成败（不记内容）。
  */
 @Slf4j
 @Component
@@ -36,11 +39,13 @@ public class InitializerRunner {
     private final ValueResolver valueResolver;
     private final ValueBindingValidator bindings;
     private final Map<String, InitializerFunction> functions;
+    private final VerifyAccountConfigFunction verifyAccount;
 
     public InitializerRunner(ValueResolver valueResolver, ValueBindingValidator bindings,
-        List<InitializerFunction> functions) {
+        List<InitializerFunction> functions, VerifyAccountConfigFunction verifyAccount) {
         this.valueResolver = valueResolver;
         this.bindings = bindings;
+        this.verifyAccount = verifyAccount;
         this.functions =
             functions.stream().collect(Collectors.toUnmodifiableMap(InitializerFunction::code, Function.identity()));
     }
@@ -63,7 +68,14 @@ public class InitializerRunner {
             }
             try {
                 context.putResource(initializer.getId(), execute(initializer, context));
+                if (context.trace() != null) {
+                    context.trace().initializer(initializer.getId(), initializer.getFunction(), true, null);
+                }
             } catch (RuntimeException failure) {
+                if (context.trace() != null) {
+                    context.trace().initializer(initializer.getId(), initializer.getFunction(), false,
+                        FlowEngine.reason(failure));
+                }
                 log.warn("外部 API 初始化项失败 standardApiCode={} integrationCode={} initializerId={} required={} reason={}",
                     snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), initializer.getId(),
                     initializer.isRequired(), FlowEngine.reason(failure));
@@ -82,9 +94,19 @@ public class InitializerRunner {
         if (function == null) {
             throw new IllegalStateException("初始化函数未实现");
         }
+        var args = args(signature.getArgs(), initializer, context);
+        if (context.getVerification() != null && ChannelAccountConfigFunction.CODE.equals(initializer.getFunction())) {
+            return verifyAccount.apply(args, context.getVerification().getAccount());
+        }
+        return function.apply(args);
+    }
+
+    /** 按签名解析初始化参数；必填缺失即失败。 */
+    Map<String, Object> args(List<ParameterDeclaration> declarations, ExecutionFlow.Initializer initializer,
+        ExecutionContext context) {
         var environment = context.environment();
         var args = new LinkedHashMap<String, Object>();
-        for (ParameterDeclaration parameter : signature.getArgs()) {
+        for (ParameterDeclaration parameter : declarations) {
             JsonNode binding = initializer.getArgs().get(parameter.getName());
             String location = "initializers." + initializer.getId() + ".args." + parameter.getName();
             Object value = binding == null ? null : valueResolver.resolve(binding, environment, parameter.getDataType(),
@@ -96,7 +118,7 @@ public class InitializerRunner {
                 args.put(parameter.getName(), value);
             }
         }
-        return function.apply(args);
+        return args;
     }
 
     /** 依赖先于引用方，其余保持配置顺序；流程已通过无环校验。 */

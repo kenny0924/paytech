@@ -284,7 +284,8 @@ public final class ExternalApiContractConverter {
         }
         return new com.paytech.platform.support.api.externalapi.request.IntegrationEndpointBody(
             value.getEndpointCode(),
-            value.getBaseUrl());
+            value.getBaseUrl(),
+            value.getSandbox());
     }
 
     /** IntegrationEndpointDetail 逐字段转换；null 保持 null。 */
@@ -295,6 +296,7 @@ public final class ExternalApiContractConverter {
         return new com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationEndpointDetail(
             value.getEndpointCode(),
             value.getBaseUrl(),
+            value.isSandbox(),
             value.getReferencedApiCodes());
     }
 
@@ -600,5 +602,232 @@ public final class ExternalApiContractConverter {
         var result = new LinkedHashMap<String, List<T>>();
         values.forEach((key, items) -> result.put(key, list(items, converter)));
         return result;
+    }
+
+    // 渠道沙箱验证（V01～V14）
+
+    /** StartVerifyRunRequestBody 逐字段转换；null 保持 null。 */
+    public static com.paytech.platform.support.api.externalapi.request.StartVerifyRunRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.StartVerifyRunRequestBody value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.platform.support.api.externalapi.request.StartVerifyRunRequestBody(
+            value.getReason());
+    }
+
+    /** CreateVerifyAccountRequestBody 逐字段转换；null 保持 null。 */
+    public static com.paytech.platform.support.api.externalapi.request.CreateVerifyAccountRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.CreateVerifyAccountRequestBody value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.platform.support.api.externalapi.request.CreateVerifyAccountRequestBody(
+            value.getAccountCode(),
+            value.getAccountName(),
+            value.getChannelCode(),
+            value.getChannelAccountId(),
+            value.getEntityNo(),
+            value.getParameters(),
+            value.getCredentials(),
+            value.getReason());
+    }
+
+    /** UpdateVerifyAccountRequestBody 逐字段转换；null 保持 null。 */
+    public static com.paytech.platform.support.api.externalapi.request.UpdateVerifyAccountRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateVerifyAccountRequestBody value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.platform.support.api.externalapi.request.UpdateVerifyAccountRequestBody(
+            value.getAccountName(),
+            value.getChannelCode(),
+            value.getChannelAccountId(),
+            value.getEntityNo(),
+            value.getParameters(),
+            value.getCredentials(),
+            value.getExpectedVersion(),
+            value.getReason());
+    }
+
+    /** CreateVerifyCaseRequestBody 逐字段转换；null 保持 null。 */
+    public static com.paytech.platform.support.api.externalapi.request.CreateVerifyCaseRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.CreateVerifyCaseRequestBody value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.platform.support.api.externalapi.request.CreateVerifyCaseRequestBody(
+            value.getCaseCode(),
+            value.getCaseName(),
+            value.getDescription(),
+            value.getAccountCode(),
+            value.getSteps(),
+            value.getReason());
+    }
+
+    /** UpdateVerifyCaseRequestBody 逐字段转换；null 保持 null。 */
+    public static com.paytech.platform.support.api.externalapi.request.UpdateVerifyCaseRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateVerifyCaseRequestBody value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.platform.support.api.externalapi.request.UpdateVerifyCaseRequestBody(
+            value.getCaseName(),
+            value.getDescription(),
+            value.getAccountCode(),
+            value.getSteps(),
+            value.getExpectedVersion(),
+            value.getReason());
+    }
+
+    /** ValidateVerifyCaseRequestBody 逐字段转换；null 保持 null。 */
+    public static com.paytech.platform.support.api.externalapi.request.ValidateVerifyCaseRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.ValidateVerifyCaseRequestBody value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.platform.support.api.externalapi.request.ValidateVerifyCaseRequestBody(
+            value.getAccountCode(),
+            value.getSteps());
+    }
+
+    /** VerifyAccountSummary 逐字段转换；null 保持 null。 */
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyAccountSummary toBff(com.paytech.platform.support.api.externalapi.response.VerifyAccountSummary value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.externalapi.response.VerifyAccountSummary(
+            value.getAccountCode(),
+            value.getAccountName(),
+            value.getChannelCode(),
+            value.getChannelAccountId(),
+            value.getEntityNo(),
+            value.getVersion(),
+            value.getUpdateTime());
+    }
+
+    /** VerifyAccountResponseBody 逐字段转换；null 保持 null。 */
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyAccountResponseBody toBff(com.paytech.platform.support.api.externalapi.response.VerifyAccountResponseBody value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.externalapi.response.VerifyAccountResponseBody(
+            value.getAccountCode(),
+            value.getAccountName(),
+            value.getChannelCode(),
+            value.getChannelAccountId(),
+            value.getEntityNo(),
+            value.getParameters(),
+            value.getCredentials(),
+            value.getReferencedCaseCodes(),
+            value.getVersion(),
+            value.getCreateTime(),
+            value.getUpdateTime(),
+            value.getUpdatedBy());
+    }
+
+    /** VerifyRunBrief 逐字段转换；null 保持 null。 */
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunBrief toBff(com.paytech.platform.support.api.externalapi.response.VerifyRunBrief value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunBrief(
+            value.getRunCode(),
+            value.getRunStatus(),
+            value.getStartTime(),
+            value.getFinishTime());
+    }
+
+    /** VerifyCaseSummary 逐字段转换；null 保持 null。 */
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyCaseSummary toBff(com.paytech.platform.support.api.externalapi.response.VerifyCaseSummary value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.externalapi.response.VerifyCaseSummary(
+            value.getCaseCode(),
+            value.getCaseName(),
+            value.getAccountCode(),
+            value.getStandardApiCodes(),
+            value.getStepCount(),
+            value.getVerifyStatus(),
+            toBff(value.getLatestRun()),
+            value.getVersion(),
+            value.getUpdateTime());
+    }
+
+    /** VerifyCaseResponseBody 逐字段转换；null 保持 null。 */
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyCaseResponseBody toBff(com.paytech.platform.support.api.externalapi.response.VerifyCaseResponseBody value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.externalapi.response.VerifyCaseResponseBody(
+            value.getCaseCode(),
+            value.getCaseName(),
+            value.getDescription(),
+            value.getAccountCode(),
+            value.getSteps(),
+            value.getVerifyStatus(),
+            toBff(value.getLatestRun()),
+            value.getVersion(),
+            value.getCreateTime(),
+            value.getUpdateTime(),
+            value.getUpdatedBy());
+    }
+
+    /** VerifyRunStartResponseBody 逐字段转换；null 保持 null。 */
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunStartResponseBody toBff(com.paytech.platform.support.api.externalapi.response.VerifyRunStartResponseBody value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunStartResponseBody(
+            value.getRunCode(),
+            value.getRunStatus());
+    }
+
+    /** VerifyRunSummary 逐字段转换；null 保持 null。 */
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunSummary toBff(com.paytech.platform.support.api.externalapi.response.VerifyRunSummary value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunSummary(
+            value.getRunCode(),
+            value.getCaseCode(),
+            value.getCaseName(),
+            value.getRunStatus(),
+            value.getFailureSummary(),
+            value.getStartedBy(),
+            value.getStartTime(),
+            value.getFinishTime());
+    }
+
+    /** VerifyRunStepDetail 逐字段转换；null 保持 null。 */
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunStepDetail toBff(com.paytech.platform.support.api.externalapi.response.VerifyRunStepDetail value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunStepDetail(
+            value.getStepNo(),
+            value.getStepKey(),
+            value.getStandardApiCode(),
+            value.getStepStatus(),
+            value.getResolvedInput(),
+            value.getResult(),
+            value.getAssertions(),
+            value.getTrace(),
+            value.getElapsedMs());
+    }
+
+    /** VerifyRunResponseBody 逐字段转换；null 保持 null。 */
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunResponseBody toBff(com.paytech.platform.support.api.externalapi.response.VerifyRunResponseBody value) {
+        if (value == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunResponseBody(
+            value.getRunCode(),
+            value.getCaseCode(),
+            value.getRunStatus(),
+            value.getFailureSummary(),
+            value.getCaseSnapshot(),
+            value.getConfigVersions(),
+            value.getEndpoints(),
+            value.isStale(),
+            value.getStartedBy(),
+            value.getStartTime(),
+            value.getFinishTime(),
+            value.getSteps() == null ? null : value.getSteps().stream().map(ExternalApiContractConverter::toBff).toList());
     }
 }

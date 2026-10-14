@@ -1,0 +1,148 @@
+{
+ "date": "2026-10-14",
+ "integration": "PAYERMAX_MOCK",
+ "notSandbox": {
+  "runCode": "236033631112519680",
+  "runStatus": "FAILED",
+  "failureSummary": "步骤 query：execution 期望 EQUALS \"EXECUTED\"，实际 \"出站地址未标记沙箱，验证运行未发出请求: PAYERMAX_GATEWAY, 接入方: PAYERMAX_MOCK\"",
+  "sandboxEndpoints": [
+   false
+  ],
+  "steps": [
+   {
+    "stepKey": "query",
+    "stepStatus": "FAILED",
+    "result": {
+     "kind": "NOT_EXECUTED",
+     "error": "出站地址未标记沙箱，验证运行未发出请求: PAYERMAX_GATEWAY, 接入方: PAYERMAX_MOCK"
+    },
+    "assertions": [
+     [
+      "execution",
+      false
+     ]
+    ]
+   }
+  ]
+ },
+ "PAY_THEN_QUERY": {
+  "runCode": "236033631632613376",
+  "runStatus": "PASSED",
+  "failureSummary": null,
+  "sandboxEndpoints": [
+   true
+  ],
+  "steps": [
+   {
+    "stepKey": "pay",
+    "stepStatus": "PASSED",
+    "result": {
+     "kind": "EXECUTED",
+     "outputs": {
+      "nextAction": {
+       "type": "REDIRECT",
+       "redirectUrl": "https://cashier.local.invalid/checkout?token=mock-PMXV1199745865171"
+      },
+      "channelStatus": "PENDING",
+      "paymentStatus": "PENDING",
+      "channelTransactionRef": "TPMXV1199745865171"
+     },
+     "executeStatus": "SUCCESS"
+    },
+    "assertions": [
+     [
+      "executeStatus",
+      true
+     ],
+     [
+      "outputs.paymentStatus",
+      true
+     ],
+     [
+      "outputs.nextAction.redirectUrl",
+      true
+     ],
+     [
+      "outputs.channelTransactionRef",
+      true
+     ]
+    ]
+   },
+   {
+    "stepKey": "query",
+    "stepStatus": "PASSED",
+    "result": {
+     "kind": "EXECUTED",
+     "outputs": {
+      "amount": {
+       "value": "10",
+       "currency": "USD"
+      },
+      "channelStatus": "SUCCESS",
+      "paymentStatus": "SUCCEEDED",
+      "paymentMethodType": "CARD",
+      "channelTransactionRef": "TPMXV1199745865171"
+     },
+     "executeStatus": "SUCCESS"
+    },
+    "assertions": [
+     [
+      "executeStatus",
+      true
+     ],
+     [
+      "outputs.paymentStatus",
+      true
+     ],
+     [
+      "outputs.channelTransactionRef",
+      true
+     ]
+    ]
+   }
+  ]
+ },
+ "QUERY_NOT_FOUND": {
+  "runCode": "236033640470011904",
+  "runStatus": "PASSED",
+  "failureSummary": null,
+  "sandboxEndpoints": [
+   true
+  ],
+  "steps": [
+   {
+    "stepKey": "query",
+    "stepStatus": "PASSED",
+    "result": {
+     "kind": "EXECUTED",
+     "outputs": {
+      "failureCode": "ORDER_NOT_EXIST",
+      "paymentStatus": "NOT_FOUND",
+      "failureMessage": "The order does not exist."
+     },
+     "executeStatus": "FAIL"
+    },
+    "assertions": [
+     [
+      "executeStatus",
+      true
+     ],
+     [
+      "outputs.paymentStatus",
+      true
+     ],
+     [
+      "outputs.failureCode",
+      true
+     ]
+    ]
+   }
+  ]
+ },
+ "caseStatus": {
+  "PAY_THEN_QUERY": "PASSED",
+  "QUERY_NOT_FOUND": "PASSED"
+ },
+ "calls": 19,
+ "note": "PAY_THEN_QUERY_PENDING 为首次调试用例（合成渠道下单末位 5 返回 SYSTEM_ERROR），已经接口删除"
+}

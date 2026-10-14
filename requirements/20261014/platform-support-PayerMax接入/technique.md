@@ -214,6 +214,6 @@ PayerMax 流程只在 `data.status=PENDING` 且有 `redirectUrl` 时走 `created
 | T2 | 数字金额 | 原子 API 可选 `decimalEncoding: STRING/NUMBER`，默认 STRING；同时作用于请求编码与已声明 DECIMAL 的响应字段；需要改 Operations 编辑页 |
 | T3 | 下单 ERROR 是否接查询节点 | 不接；调用方稍后调用 `PAY_QUERY` |
 | T4 | 拒绝码划分 | 按第 4.4 节；`ORDER_REPEAT` 归 ERROR |
-| T5 | 验签范围 | HTTP 200 一律验签；UAT 实测后按需调整 |
+| T5 | 验签范围 | HTTP 200 一律验签；UAT 实测（2026-10-14）FAIL 响应也带 `sign` 并验签通过，保持不变 |
 | T6 | 标准 API 编码与字段 | **修订（2026-10-14）：** 不按接入形态区分，用 `PAY`、`PAY_QUERY`；输出 `paymentStatus` + 可选 `nextAction`（第 4.5 节）。字段仍为草案，Payment 接入时可改 |
 | T7 | 阶段 2 代码授权 | 授权修改 Platform `integration`、`api`、`test` 模块，以及 `operations-console-web/src/externalApi/` 下与 `decimalEncoding` 有关的文件；不含提交、推送、共享环境变更 |

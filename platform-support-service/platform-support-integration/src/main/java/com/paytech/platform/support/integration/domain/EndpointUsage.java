@@ -16,6 +16,9 @@ public class EndpointUsage {
     /** 基础地址。 */
     private final String baseUrl;
 
+    /** 是否沙箱地址。 */
+    private final boolean sandbox;
+
     /** 引用该地址的原子 API 编码，按编码排序。 */
     private final List<String> referencedApiCodes;
 }

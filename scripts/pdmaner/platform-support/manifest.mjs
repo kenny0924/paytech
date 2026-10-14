@@ -29,7 +29,7 @@ const expectedGroupSizes = Object.freeze({
   audit_security: 8,
   gateway_control: 6,
   reliability: 2,
-  integration: 6,
+  integration: 10,
 });
 
 export const EXPECTED_TABLE_TOTAL = Object.values(expectedGroupSizes)

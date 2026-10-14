@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.integration.core.dal.mapper.IntegrationVerifyRunMapper">
+    <sql id="columns">verify_run_id verifyRunId, verify_case_id verifyCaseId, integration_id integrationId, run_status runStatus, case_snapshot_json caseSnapshotJson, config_versions_json configVersionsJson, endpoints_json endpointsJson, failure_summary failureSummary, started_by startedBy, start_time startTime, finish_time finishTime, create_time createTime, update_time updateTime</sql>
+    <sql id="filter">WHERE integration_id=#{integrationId}<if test="verifyCaseId != null"> AND verify_case_id=#{verifyCaseId}</if></sql>
+    <select id="byId" resultType="com.paytech.platform.support.integration.core.dal.dataobject.IntegrationVerifyRun" useCache="false">
+        SELECT <include refid="columns"/> FROM t_integration_verify_run WHERE verify_run_id=#{verifyRunId}
+    </select>
+    <select id="list" resultType="com.paytech.platform.support.integration.core.dal.dataobject.IntegrationVerifyRun" useCache="false">
+        SELECT <include refid="columns"/> FROM t_integration_verify_run <include refid="filter"/>
+        ORDER BY start_time DESC, verify_run_id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long" useCache="false">SELECT COUNT(*) FROM t_integration_verify_run <include refid="filter"/></select>
+    <select id="latestByCases" resultType="com.paytech.platform.support.integration.core.dal.dataobject.IntegrationVerifyRun" useCache="false">
+        SELECT <include refid="columns"/> FROM (
+          SELECT r.*, ROW_NUMBER() OVER (PARTITION BY verify_case_id ORDER BY start_time DESC, verify_run_id DESC) rn
+          FROM t_integration_verify_run r WHERE verify_case_id IN
+          <foreach collection="verifyCaseIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ) latest WHERE rn=1
+    </select>
+    <select id="latestFinishedByCases" resultType="com.paytech.platform.support.integration.core.dal.dataobject.IntegrationVerifyRun" useCache="false">
+        SELECT <include refid="columns"/> FROM (
+          SELECT r.*, ROW_NUMBER() OVER (PARTITION BY verify_case_id ORDER BY start_time DESC, verify_run_id DESC) rn
+          FROM t_integration_verify_run r WHERE run_status &lt;&gt; 'RUNNING' AND verify_case_id IN
+          <foreach collection="verifyCaseIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ) latest WHERE rn=1
+    </select>
+    <insert id="insert">
+        INSERT INTO t_integration_verify_run(verify_run_id,verify_case_id,integration_id,run_status,case_snapshot_json,config_versions_json,endpoints_json,failure_summary,started_by,start_time,finish_time,create_time,update_time)
+        VALUES(#{row.verifyRunId},#{row.verifyCaseId},#{row.integrationId},#{row.runStatus},#{row.caseSnapshotJson},#{row.configVersionsJson},#{row.endpointsJson},#{row.failureSummary},#{row.startedBy},#{row.startTime},#{row.finishTime},#{row.createTime},#{row.updateTime})
+    </insert>
+    <update id="finish">
+        UPDATE t_integration_verify_run SET run_status=#{runStatus}, config_versions_json=#{configVersionsJson}, endpoints_json=#{endpointsJson},
+        failure_summary=#{failureSummary}, finish_time=#{finishTime}, update_time=#{finishTime}
+        WHERE verify_run_id=#{row.verifyRunId} AND run_status='RUNNING'
+    </update>
+</mapper>

@@ -64,8 +64,13 @@ public class ExternalApiMocker {
 
     /** 出站地址 DEMO_GATEWAY 指向指定基础地址的接入方，执行测试用它指向本机 Mock 渠道。 */
     public Integration integration(String code, String baseUrl) {
+        return integration(code, baseUrl, false);
+    }
+
+    /** 出站地址 DEMO_GATEWAY 指向指定基础地址并标记是否沙箱的接入方，沙箱验证测试使用。 */
+    public Integration integration(String code, String baseUrl, boolean sandbox) {
         Instant now = operations.now();
-        var endpoints = List.of(new EndpointDefinition(ExternalApiSamples.ENDPOINT, baseUrl));
+        var endpoints = List.of(new EndpointDefinition(ExternalApiSamples.ENDPOINT, baseUrl, sandbox));
         var row = new Integration(OperatorBuilder.nextId(), code, code + " 渠道", null, codec.endpointsJson(endpoints),
             1, CREATOR, CREATOR, now, now);
         integrations.insert(row);

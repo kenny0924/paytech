@@ -191,7 +191,7 @@ function structuralProjection(model) {
   };
 }
 
-test("Platform Support Manifest contains exactly 68 approved tables in eight groups", async () => {
+test("Platform Support Manifest contains exactly 72 approved tables in eight groups", async () => {
   const { TABLES, TABLE_GROUPS } = await import("./platform-support/manifest.mjs");
   assert.equal(Object.keys(APPROVED_TABLE_GROUPS).length, 8);
   assert.deepEqual(

@@ -234,7 +234,8 @@
           "baseUrl": "https://gateway.example.test/api",
           "referencedApiCodes": [
             "CREATE_ORDER"
-          ]
+          ],
+          "sandbox": false
         }
       ],
       "apiCount": 1,
@@ -1278,6 +1279,446 @@
           "stages": [
             "FLOW_INITIALIZER"
           ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "V01",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-accounts",
+    "query": "",
+    "routeCode": "operations-external-api-verify-account-list",
+    "request": null,
+    "response": [
+      {
+        "accountCode": "MAIN",
+        "accountName": "主账号",
+        "channelCode": "PAYERMAX",
+        "channelAccountId": "A1",
+        "entityNo": "E1",
+        "version": 1,
+        "updateTime": "2026-10-14T06:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "V02",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-accounts/MAIN",
+    "query": "",
+    "routeCode": "operations-external-api-verify-account-detail",
+    "request": null,
+    "response": {
+      "accountCode": "MAIN",
+      "accountName": "主账号",
+      "channelCode": "PAYERMAX",
+      "channelAccountId": "A1",
+      "entityNo": "E1",
+      "parameters": {
+        "appId": "app"
+      },
+      "credentials": {
+        "merchantPrivateKey": "k"
+      },
+      "referencedCaseCodes": [
+        "PAY_THEN_QUERY"
+      ],
+      "version": 1,
+      "createTime": "2026-10-14T06:00:00Z",
+      "updateTime": "2026-10-14T06:00:00Z",
+      "updatedBy": "10001"
+    }
+  },
+  {
+    "id": "V03",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-accounts",
+    "query": "",
+    "routeCode": "operations-external-api-verify-account-create",
+    "request": {
+      "accountCode": "MAIN",
+      "accountName": "主账号",
+      "channelCode": "PAYERMAX",
+      "channelAccountId": "A1",
+      "entityNo": "E1",
+      "parameters": {
+        "appId": "app"
+      },
+      "credentials": {
+        "merchantPrivateKey": "k"
+      },
+      "reason": "新增"
+    },
+    "response": {
+      "objectType": "INTEGRATION_VERIFY_ACCOUNT",
+      "objectCode": "DEMO/MAIN",
+      "version": 1
+    }
+  },
+  {
+    "id": "V04",
+    "method": "PUT",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-accounts/MAIN",
+    "query": "",
+    "routeCode": "operations-external-api-verify-account-update",
+    "request": {
+      "accountName": "主账号",
+      "channelCode": "PAYERMAX",
+      "channelAccountId": "A1",
+      "entityNo": "E1",
+      "parameters": {
+        "appId": "app"
+      },
+      "credentials": {
+        "merchantPrivateKey": "k"
+      },
+      "expectedVersion": 1,
+      "reason": "修改"
+    },
+    "response": {
+      "objectType": "INTEGRATION_VERIFY_ACCOUNT",
+      "objectCode": "DEMO/MAIN",
+      "version": 2
+    }
+  },
+  {
+    "id": "V05",
+    "method": "DELETE",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-accounts/MAIN",
+    "query": "",
+    "routeCode": "operations-external-api-verify-account-delete",
+    "request": {
+      "expectedVersion": 1,
+      "reason": "删除"
+    },
+    "response": {
+      "objectType": "INTEGRATION_VERIFY_ACCOUNT",
+      "objectCode": "DEMO/MAIN",
+      "version": 1
+    }
+  },
+  {
+    "id": "V06",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-cases",
+    "query": "?page=1&size=10&keyword=PAY",
+    "routeCode": "operations-external-api-verify-case-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "caseCode": "PAY_THEN_QUERY",
+          "caseName": "下单后查询",
+          "accountCode": "MAIN",
+          "standardApiCodes": [
+            "PAY"
+          ],
+          "stepCount": 1,
+          "verifyStatus": "PASSED",
+          "latestRun": {
+            "runCode": "900001",
+            "runStatus": "PASSED",
+            "startTime": "2026-10-14T06:00:00Z",
+            "finishTime": "2026-10-14T06:00:00Z"
+          },
+          "version": 1,
+          "updateTime": "2026-10-14T06:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "V07",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-cases/PAY_THEN_QUERY",
+    "query": "",
+    "routeCode": "operations-external-api-verify-case-detail",
+    "request": null,
+    "response": {
+      "caseCode": "PAY_THEN_QUERY",
+      "caseName": "下单后查询",
+      "description": null,
+      "accountCode": "MAIN",
+      "steps": [
+        {
+          "id": "pay",
+          "standardApiCode": "PAY",
+          "input": {
+            "payment": {
+              "attemptId": "VR${run.code}"
+            }
+          },
+          "expect": {
+            "executeStatus": "SUCCESS"
+          }
+        }
+      ],
+      "verifyStatus": "STALE",
+      "latestRun": {
+        "runCode": "900001",
+        "runStatus": "PASSED",
+        "startTime": "2026-10-14T06:00:00Z",
+        "finishTime": "2026-10-14T06:00:00Z"
+      },
+      "version": 2,
+      "createTime": "2026-10-14T06:00:00Z",
+      "updateTime": "2026-10-14T06:00:00Z",
+      "updatedBy": "10001"
+    }
+  },
+  {
+    "id": "V08",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-cases",
+    "query": "",
+    "routeCode": "operations-external-api-verify-case-create",
+    "request": {
+      "caseCode": "PAY_THEN_QUERY",
+      "caseName": "下单后查询",
+      "description": null,
+      "accountCode": "MAIN",
+      "steps": [
+        {
+          "id": "pay",
+          "standardApiCode": "PAY",
+          "input": {
+            "payment": {
+              "attemptId": "VR${run.code}"
+            }
+          },
+          "expect": {
+            "executeStatus": "SUCCESS"
+          }
+        }
+      ],
+      "reason": "新增"
+    },
+    "response": {
+      "objectType": "INTEGRATION_VERIFY_CASE",
+      "objectCode": "DEMO/PAY_THEN_QUERY",
+      "version": 1
+    }
+  },
+  {
+    "id": "V09",
+    "method": "PUT",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-cases/PAY_THEN_QUERY",
+    "query": "",
+    "routeCode": "operations-external-api-verify-case-update",
+    "request": {
+      "caseName": "下单后查询",
+      "description": null,
+      "accountCode": "MAIN",
+      "steps": [
+        {
+          "id": "pay",
+          "standardApiCode": "PAY",
+          "input": {
+            "payment": {
+              "attemptId": "VR${run.code}"
+            }
+          },
+          "expect": {
+            "executeStatus": "SUCCESS"
+          }
+        }
+      ],
+      "expectedVersion": 1,
+      "reason": "修改"
+    },
+    "response": {
+      "objectType": "INTEGRATION_VERIFY_CASE",
+      "objectCode": "DEMO/PAY_THEN_QUERY",
+      "version": 2
+    }
+  },
+  {
+    "id": "V10",
+    "method": "DELETE",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-cases/PAY_THEN_QUERY",
+    "query": "",
+    "routeCode": "operations-external-api-verify-case-delete",
+    "request": {
+      "expectedVersion": 2,
+      "reason": "删除"
+    },
+    "response": {
+      "objectType": "INTEGRATION_VERIFY_CASE",
+      "objectCode": "DEMO/PAY_THEN_QUERY",
+      "version": 2
+    }
+  },
+  {
+    "id": "V11",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-cases/validate",
+    "query": "",
+    "routeCode": "operations-external-api-verify-case-validate",
+    "request": {
+      "accountCode": "MAIN",
+      "steps": [
+        {
+          "id": "pay",
+          "standardApiCode": "PAY",
+          "input": {
+            "payment": {
+              "attemptId": "VR${run.code}"
+            }
+          },
+          "expect": {
+            "executeStatus": "SUCCESS"
+          }
+        }
+      ]
+    },
+    "response": {
+      "valid": false,
+      "issues": [
+        {
+          "severity": "ERROR",
+          "code": "OUTPUT_PATH_UNKNOWN",
+          "location": "steps[0].expect.outputs[0].path",
+          "message": "不是标准 API 的响应字段：x"
+        }
+      ]
+    }
+  },
+  {
+    "id": "V12",
+    "method": "POST",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-cases/PAY_THEN_QUERY/runs",
+    "query": "",
+    "routeCode": "operations-external-api-verify-run-start",
+    "request": {
+      "reason": "回归验证"
+    },
+    "response": {
+      "runCode": "900001",
+      "runStatus": "RUNNING"
+    }
+  },
+  {
+    "id": "V13",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-runs",
+    "query": "?caseCode=PAY_THEN_QUERY&page=1&size=10",
+    "routeCode": "operations-external-api-verify-run-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "runCode": "900001",
+          "caseCode": "PAY_THEN_QUERY",
+          "caseName": "下单后查询",
+          "runStatus": "FAILED",
+          "failureSummary": "步骤 pay：outputs.paymentStatus 期望 EQUALS \"PENDING\"，实际 \"FAILED\"",
+          "startedBy": "10001",
+          "startTime": "2026-10-14T06:00:00Z",
+          "finishTime": "2026-10-14T06:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "V14",
+    "method": "GET",
+    "path": "/external-api-admin/v1/integrations/DEMO/verify-runs/900001",
+    "query": "",
+    "routeCode": "operations-external-api-verify-run-detail",
+    "request": null,
+    "response": {
+      "runCode": "900001",
+      "caseCode": "PAY_THEN_QUERY",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "caseSnapshot": {
+        "caseVersion": 1,
+        "steps": [
+          {
+            "id": "pay",
+            "standardApiCode": "PAY",
+            "input": {
+              "payment": {
+                "attemptId": "VR${run.code}"
+              }
+            },
+            "expect": {
+              "executeStatus": "SUCCESS"
+            }
+          }
+        ]
+      },
+      "configVersions": {
+        "pay": {
+          "standardApi": 1,
+          "apis": {
+            "ORDER_AND_PAY": 2
+          }
+        }
+      },
+      "endpoints": [
+        {
+          "endpointCode": "PAYERMAX_GATEWAY",
+          "baseUrl": "https://pay-gate-uat.payermax.com/aggregate-pay/api/gateway",
+          "sandbox": true
+        }
+      ],
+      "stale": false,
+      "startedBy": "10001",
+      "startTime": "2026-10-14T06:00:00Z",
+      "finishTime": "2026-10-14T06:00:00Z",
+      "steps": [
+        {
+          "stepNo": 1,
+          "stepKey": "pay",
+          "standardApiCode": "PAY",
+          "stepStatus": "PASSED",
+          "resolvedInput": {
+            "payment": {
+              "attemptId": "VR900001"
+            }
+          },
+          "result": {
+            "kind": "EXECUTED",
+            "executeStatus": "SUCCESS",
+            "outputs": {
+              "paymentStatus": "PENDING"
+            }
+          },
+          "assertions": [
+            {
+              "target": "executeStatus",
+              "match": "EQUALS",
+              "expected": "SUCCESS",
+              "actual": "SUCCESS",
+              "passed": true
+            }
+          ],
+          "trace": {
+            "initializers": [],
+            "nodes": [
+              {
+                "id": "createOrder",
+                "exchange": {
+                  "request": {
+                    "method": "POST",
+                    "headers": {
+                      "sign": "abc"
+                    }
+                  }
+                }
+              }
+            ],
+            "returnId": "created"
+          },
+          "elapsedMs": 1830
         }
       ]
     }

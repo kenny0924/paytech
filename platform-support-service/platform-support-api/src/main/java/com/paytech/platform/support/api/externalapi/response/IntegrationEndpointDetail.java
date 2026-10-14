@@ -14,6 +14,9 @@ public class IntegrationEndpointDetail {
     /** 基础地址 */
     private final String baseUrl;
 
+    /** 是否沙箱地址 */
+    private final boolean sandbox;
+
     /**
      * 引用该地址的原子 API 编码
      * <li>按编码排序；非空时不能删除该地址。</li>
@@ -25,9 +28,11 @@ public class IntegrationEndpointDetail {
     public IntegrationEndpointDetail(
         @JsonProperty("endpointCode") String endpointCode,
         @JsonProperty("baseUrl") String baseUrl,
+        @JsonProperty("sandbox") boolean sandbox,
         @JsonProperty("referencedApiCodes") List<String> referencedApiCodes) {
         this.endpointCode = endpointCode;
         this.baseUrl = baseUrl;
+        this.sandbox = sandbox;
         this.referencedApiCodes = referencedApiCodes == null ? null : java.util.Collections.unmodifiableList(new java.util.ArrayList<>(referencedApiCodes));
     }
 
@@ -39,6 +44,11 @@ public class IntegrationEndpointDetail {
     /** 基础地址 */
     public String getBaseUrl() {
         return baseUrl;
+    }
+
+    /** 是否沙箱地址 */
+    public boolean isSandbox() {
+        return sandbox;
     }
 
     /** 引用该地址的原子 API 编码 */

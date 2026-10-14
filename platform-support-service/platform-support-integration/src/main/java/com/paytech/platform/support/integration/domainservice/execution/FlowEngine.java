@@ -82,6 +82,9 @@ public class FlowEngine {
             throw new ExecutionErrorException("连线目标不存在：" + returnId);
         }
         ExecutionResult result = mapReturn(target, snapshot.getOutputSchema(), context.environment());
+        if (context.trace() != null) {
+            context.trace().returned(returnId);
+        }
         log.info("外部 API 流程结束 standardApiCode={} integrationCode={} returnId={} executeStatus={}",
             snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), returnId,
             result.getExecuteStatus().getCode());
@@ -93,12 +96,18 @@ public class FlowEngine {
         NodeRunner runner) {
         long started = System.nanoTime();
         StepResult result;
+        String failure = null;
         try {
             result = runner.run(snapshot, node, context, deadline);
         } catch (RuntimeException exception) {
+            failure = reason(exception);
             log.warn("外部 API 节点异常 standardApiCode={} integrationCode={} nodeId={} reason={}",
-                snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), node.getId(), reason(exception));
+                snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), node.getId(), failure);
             result = StepResult.error();
+        }
+        if (context.trace() != null) {
+            context.trace().nodeResult(node.getId(), node.getIntegrationApi(), result.getExecuteStatus().getCode(),
+                failure, (System.nanoTime() - started) / 1_000_000L);
         }
         log.info("外部 API 节点结束 standardApiCode={} integrationCode={} nodeId={} executeStatus={} elapsedMs={}",
             snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), node.getId(),

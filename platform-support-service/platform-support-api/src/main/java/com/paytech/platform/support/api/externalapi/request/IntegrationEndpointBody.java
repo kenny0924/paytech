@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** 接入方在本环境的一个出站地址。 */
@@ -26,13 +27,27 @@ public class IntegrationEndpointBody {
     @Size(max = 512)
     private final String baseUrl;
 
+    /**
+     * 是否沙箱地址
+     * <li>可选，缺省为 false；只有沙箱地址允许沙箱验证运行。未填写时不写出，保持既有报文形状。</li>
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private final Boolean sandbox;
+
     /** 按 JSON 属性绑定，保留字段的可空语义。 */
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public IntegrationEndpointBody(
         @JsonProperty("endpointCode") String endpointCode,
-        @JsonProperty("baseUrl") String baseUrl) {
+        @JsonProperty("baseUrl") String baseUrl,
+        @JsonProperty("sandbox") Boolean sandbox) {
         this.endpointCode = endpointCode;
         this.baseUrl = baseUrl;
+        this.sandbox = sandbox;
+    }
+
+    /** 非沙箱地址。 */
+    public IntegrationEndpointBody(String endpointCode, String baseUrl) {
+        this(endpointCode, baseUrl, null);
     }
 
     /** 地址代码 */
@@ -43,5 +58,10 @@ public class IntegrationEndpointBody {
     /** 基础地址 */
     public String getBaseUrl() {
         return baseUrl;
+    }
+
+    /** 是否沙箱地址 */
+    public Boolean getSandbox() {
+        return sandbox;
     }
 }

@@ -66,3 +66,13 @@
 ## 6. 提交（2026-10-14）
 
 用户在查看本机配置后要求“代码提交”。阶段 1～3 的需求文档、Platform 引擎与测试、Operations 编辑页、harness 与回执按本任务范围本地提交到 `main`；不含其他会话的未提交改动，未推送。阶段 3 结果视同确认，阶段 4 待用户提供 UAT 账号文件。
+
+## 7. 阶段 4 调整（2026-10-14）
+
+用户不采用本地 UAT 账号文件，要求在 Operations 页面上完成验证。阶段 4 改由[渠道沙箱验证](../platform-support-渠道沙箱验证/requirement.md)功能完成：在页面录入 PayerMax UAT 账号与用例并运行，保存验证结果。本需求阶段 4 待该功能完成后执行。
+
+## 8. 阶段 4 结果：UAT（2026-10-14，经渠道沙箱验证）
+
+通过 Operations 渠道沙箱验证对 PayerMax UAT 运行（详见[沙箱验证交付记录](../platform-support-渠道沙箱验证/delivery.md)第 7 节、[回执](../platform-support-渠道沙箱验证/assets/stage5-uat-receipt.json)）：下单返回 `APPLY_SUCCESS`、可用的收银台地址与 PENDING，查询同一订单 PENDING，查询不存在订单 `ORDER_NOT_EXIST` → NOT_FOUND；PayerMax 对请求验签通过，Platform 对三个响应验签通过。
+- **T5 定论：** UAT 的 HTTP 200 FAIL 响应（`ORDER_NOT_EXIST`）同样带 `sign`，“HTTP 200 一律验签”保持不变。
+- **未完成：** 收银台付款后查询 `SUCCEEDED`（需求验收第 3 项后半），需人工付款。

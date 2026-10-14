@@ -43,9 +43,10 @@ public class PlatformDataCleaner implements Clear {
         "t_api_scope", "t_gateway_guard_rule", "t_gateway_route_header", "t_gateway_route_query_param",
         "t_gateway_route", "t_gateway_target", "t_command_idempotency",
         "t_file_scan_result", "t_file_owner_ref", "t_file_upload", "t_file_object", "t_security_event",
-        "t_audit_event_attr", "t_audit_event", "t_audit_chain", "t_api_field", "t_integration_standard_api",
-        "t_integration_script", "t_integration_api", "t_integration",
-        "t_standard_api");
+        "t_audit_event_attr", "t_audit_event", "t_audit_chain",
+        "t_integration_verify_run_step", "t_integration_verify_run", "t_integration_verify_case",
+        "t_integration_verify_account", "t_api_field", "t_integration_standard_api", "t_integration_script",
+        "t_integration_api", "t_integration", "t_standard_api");
 
     private static final Set<String> ALLOWED_DATABASES = Set.of("mor_platform");
 

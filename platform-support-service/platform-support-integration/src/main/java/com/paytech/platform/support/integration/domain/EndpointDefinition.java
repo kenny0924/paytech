@@ -13,4 +13,12 @@ public class EndpointDefinition {
 
     /** https 基础地址，可带路径前缀。 */
     private final String baseUrl;
+
+    /** 是否沙箱地址；只有沙箱地址允许沙箱验证运行。 */
+    private final boolean sandbox;
+
+    /** 非沙箱地址。 */
+    public EndpointDefinition(String endpointCode, String baseUrl) {
+        this(endpointCode, baseUrl, false);
+    }
 }

@@ -37,7 +37,7 @@ export interface StandardApiDetail {
   responseFields: ApiField[]; implementations: IntegrationReference[]; version: number; createTime: string;
   updateTime: string; updatedBy: string;
 }
-export interface Endpoint { endpointCode: string; baseUrl: string }
+export interface Endpoint { endpointCode: string; baseUrl: string; sandbox?: boolean }
 export interface EndpointDetail extends Endpoint { referencedApiCodes: string[] }
 export interface IntegrationSummary {
   integrationCode: string; integrationName: string; endpointCount: number; apiCount: number; scriptCount: number;
@@ -127,8 +127,10 @@ export function decodeIntegration(value: unknown, expectedCode: string): Integra
     && Array.isArray(v.endpoints) && count(v.apiCount) && count(v.scriptCount) && count(v.implementationCount)
     && version(v.version) && instant(v.createTime) && instant(v.updateTime) && typeof v.updatedBy === 'string');
   const endpoints = v.endpoints.map(item => {
-    require(item && text(item.endpointCode, 64) && text(item.baseUrl, 512) && codes(item.referencedApiCodes));
-    return { endpointCode: item.endpointCode, baseUrl: item.baseUrl, referencedApiCodes: [...item.referencedApiCodes] };
+    require(item && text(item.endpointCode, 64) && text(item.baseUrl, 512) && codes(item.referencedApiCodes)
+      && (item.sandbox === undefined || typeof item.sandbox === 'boolean'));
+    return { endpointCode: item.endpointCode, baseUrl: item.baseUrl, sandbox: item.sandbox === true,
+      referencedApiCodes: [...item.referencedApiCodes] };
   });
   return { integrationCode: v.integrationCode, integrationName: v.integrationName, description: v.description, endpoints,
     apiCount: v.apiCount, scriptCount: v.scriptCount, implementationCount: v.implementationCount, version: v.version,

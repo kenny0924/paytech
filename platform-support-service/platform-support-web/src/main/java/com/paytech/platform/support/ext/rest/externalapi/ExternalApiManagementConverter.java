@@ -163,7 +163,7 @@ public class ExternalApiManagementConverter {
     /** 接入方详情投影。 */
     public IntegrationResponseBody toIntegration(IntegrationDetailView view) {
         var endpoints = view.getEndpoints().stream().map(endpoint -> new IntegrationEndpointDetail(
-            endpoint.getEndpointCode(), endpoint.getBaseUrl(), endpoint.getReferencedApiCodes())).toList();
+            endpoint.getEndpointCode(), endpoint.getBaseUrl(), endpoint.isSandbox(), endpoint.getReferencedApiCodes())).toList();
         return new IntegrationResponseBody(view.getCode(), view.getName(), view.getDescription(), endpoints,
             view.getApiCount(), view.getScriptCount(), view.getImplementationCount(), view.getVersion(),
             view.getCreateTime(), view.getUpdateTime(), Long.toString(view.getUpdatedBy()));
@@ -322,7 +322,8 @@ public class ExternalApiManagementConverter {
 
     /** 出站地址转为领域定义，保持提交顺序。 */
     List<EndpointDefinition> endpoints(List<IntegrationEndpointBody> bodies) {
-        return bodies.stream().map(body -> new EndpointDefinition(body.getEndpointCode(), body.getBaseUrl())).toList();
+        return bodies.stream().map(body -> new EndpointDefinition(body.getEndpointCode(), body.getBaseUrl(),
+            Boolean.TRUE.equals(body.getSandbox()))).toList();
     }
 
     /** 字段定义投影为响应字段。 */

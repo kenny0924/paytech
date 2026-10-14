@@ -11,6 +11,18 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+<a id="channel-sandbox-verification-20261014"></a>
+
+## 渠道沙箱验证（2026-10-14）
+
+- **Designed：** [需求](../requirements/20261014/platform-support-渠道沙箱验证/requirement.md)、[技术方案](../requirements/20261014/platform-support-渠道沙箱验证/technique.md)与[决定](./decisions/2026-10-14-platform-integration-sandbox-verification.md)已确认：Operations 页面维护验证账号与多步骤用例，沙箱实测并保存脱敏报文证据；PayerMax UAT 为首批用例。
+- **阶段 2 Implemented / Verified（2026-10-14）：** Platform 模型增加四表（72 表、875 字段、120 唯一索引、95 访问索引、111 关系），[增量 SQL](../requirements/20261014/platform-support-渠道沙箱验证/db/ddl.sql) 已按授权在本机 `mor_platform` 与 `mor_platform_external_api` 执行并逐列核对；DataObject/Mapper/Repository 完成，`./mvnw -o -pl platform-support-test -am test` 352/352。共享环境未执行。
+- **阶段 3 Implemented / Verified（2026-10-14）：** 出站地址 `sandbox` 标记；执行引擎验证钩子（验证账号来源、脱敏轨迹、沙箱限定，正式调用不变）；用例校验、模板渲染、期望核对；V01～V14 管理接口与补偿任务异步执行（最多 2 次，中断记 INTERRUPTED 不重放）。`./mvnw -o -pl platform-support-test -am test` 413/413。部署前提：生产 `compensation.enabled` 默认关闭，未启用时发起运行返回 503，本需求未改生产配置。详见[交付记录](../requirements/20261014/platform-support-渠道沙箱验证/delivery.md)。
+- **阶段 4 Implemented / Verified（2026-10-14）：** BFF 透传 V01～V14（`ExternalApiBrowserAutoTest` 102/102）；Operations 接入方“验证”页签、验证账号/用例编辑页、运行详情与出站地址沙箱开关（`npm test` 983/983，`npm run build` 通过）；V12 增加运行原因。[注册 SQL](../requirements/20261014/platform-support-渠道沙箱验证/db/registration-dml.sql)（14 Route，DISABLED）未执行，页面未做浏览器实测。
+- **阶段 5 本机 Verified（2026-10-14）：** 注册与本机启用 SQL 仅在 `mor_platform_external_api` 执行（14 Route ACTIVE）；经真实入口对合成 PayerMax 跑通：未标沙箱时运行在发请求前失败，标记后两个用例 PASSED，证据不含私钥，[回执](../requirements/20261014/platform-support-渠道沙箱验证/assets/stage5-mock-receipt.json)；浏览器 8 页无错误。
+- **PayerMax UAT Verified（2026-10-14，本机）：** 接入方 `PAYERMAX`（UAT 地址标记沙箱）两个用例 PASSED：下单 → 查询 PENDING、查询不存在订单；请求与响应双向验签通过，[回执](../requirements/20261014/platform-support-渠道沙箱验证/assets/stage5-uat-receipt.json)。
+- **Pending：** 收银台付款后查询 SUCCEEDED（人工付款）；共享环境 SQL 未执行。阶段 2～5 已按用户要求本地提交（2026-10-14），未推送。
+
 <a id="payermax-integration-20261014"></a>
 
 ## PayerMax 收银台支付与交易查询接入（2026-10-14）
@@ -18,7 +30,7 @@
 - **Designed：** [需求](../requirements/20261014/platform-support-PayerMax接入/requirement.md)与[技术方案](../requirements/20261014/platform-support-PayerMax接入/technique.md)已确认：标准 API 不按接入形态区分，用 `PAY` / `PAY_QUERY`（草案）；PayerMax 只接收银台下单与交易查询，本机联调 UAT。
 - **阶段 2 Implemented / Verified（2026-10-14）：** Platform 执行引擎新增 `sealJsonBody`（锁定请求体并原样发送）、`rsaSha256Sign`、`requireRsaSha256Signature`、`nowRfc3339` 脚本函数与原子 API 可选 `decimalEncoding`（同步[原子 API 结构](../requirements/20260914/platform-support-外部API配置与执行/integration-api-definition-contract.md)）；Operations 原子 API 编辑页增加“小数格式”。JDK 25 `./mvnw -o -pl platform-support-test -am test` **349/349**，`operations-console-web` `npm test` 982/982 与 `npm run build` 通过，详见[交付记录](../requirements/20261014/platform-support-PayerMax接入/delivery.md)。
 - **阶段 3 Verified（2026-10-14，本机）：** [harness](../requirements/20261014/platform-support-PayerMax接入/assets/harness/README.md) 经 Web 代理 → Gateway → BFF → Platform 在独立库 `mor_platform_external_api` 保存 `PAY`、`PAY_QUERY` 与接入方 `PAYERMAX_MOCK` 全部配置（重跑按版本更新）；对本机合成 PayerMax（真实 SHA256withRSA）`verify_mock.py` 12 项 PASS，[回执](../requirements/20261014/platform-support-PayerMax接入/assets/stage3-receipt.json)。
-- **Pending：** 本机直连 PayerMax UAT 联调（阶段 4）；未执行共享环境 SQL，未改 Vault 策略或共享环境。阶段 1～3 已按用户要求本地提交（2026-10-14），未推送。
+- **阶段 4 Verified（2026-10-14）：** 经渠道沙箱验证对 UAT 跑通下单、查询 PENDING 与订单不存在，双向验签通过；FAIL 响应也带签名（T5 保持）。付款后 SUCCEEDED 待人工付款。未执行共享环境 SQL，未改 Vault 策略或共享环境。阶段 1～3 已按用户要求本地提交（2026-10-14），未推送。
 
 <a id="platform-standard-api-flow-20261013"></a>
 

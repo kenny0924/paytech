@@ -75,6 +75,11 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-vault-client</artifactId>
         </dependency>
+        <!-- 沙箱验证运行以本地补偿任务异步执行（requirements/20261014/platform-support-渠道沙箱验证）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compensation-event</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

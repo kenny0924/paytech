@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { flushSync } from 'react-dom';
-import { Alert, Button, Dropdown, Empty, Form, Input, Modal, Table, Tabs } from 'antd';
+import { Alert, App, Button, Dropdown, Empty, Form, Input, Modal, Switch, Table, Tabs } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError, session } from '../api/session';
 import type { ConsoleResource } from '../api/types';
@@ -26,12 +26,18 @@ import { decodeIntegrationApi } from '../externalApi/integrationApiModel';
 import { FlowEditor } from '../externalApi/FlowEditor';
 import { IntegrationApiEditor } from '../externalApi/IntegrationApiEditor';
 import { ScriptEditor } from '../externalApi/ScriptEditor';
+import { VerifyAccountEditor } from '../externalApi/verify/VerifyAccountEditor';
+import { VerifyCaseEditor } from '../externalApi/verify/VerifyCaseEditor';
+import { VerifyRunDetail } from '../externalApi/verify/VerifyRunDetail';
+import { VerifyTab } from '../externalApi/verify/VerifyTab';
+import { VerifyTag } from '../externalApi/verify/VerifyParts';
 import { ExternalApiFrame, Field, Mono, Note, PageHeader, Panel, ReadOnlyValue, counted, formatTime } from '../externalApi/ui';
 import type { Crumb } from '../externalApi/ui';
 
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
-type Tab = 'basic' | 'apis' | 'scripts' | 'implementations';
-const tabKeys: Tab[] = ['basic', 'apis', 'scripts', 'implementations'];
+type Tab = 'basic' | 'apis' | 'scripts' | 'implementations' | 'verify';
+const tabKeys: Tab[] = ['basic', 'apis', 'scripts', 'implementations', 'verify'];
+const verifyKinds = ['verify-accounts', 'verify-cases'];
 const childKinds = ['apis', 'scripts', 'implementations'];
 const summaryPage = (value: unknown) => decodePage(value, decodeIntegrationSummary, item => item.integrationCode);
 const rootCrumbs: Crumb[] = [{ label: '外部 API' }, { label: '接入方', to: integrationRoute }];
@@ -67,7 +73,8 @@ function scriptReferences(code: string, scriptCode: string) {
 const noReferences = () => Promise.resolve<Reference[]>([]);
 
 /**
- * 接入方：列表、新建（/new）、工作区（/:code?tab=）。原子 API、脚本与流程的编辑页位于 /:code/apis|scripts|implementations/:childCode。
+ * 接入方：列表、新建（/new）、工作区（/:code?tab=）。原子 API、脚本与流程的编辑页位于 /:code/apis|scripts|implementations/:childCode；
+ * 沙箱验证的账号与用例位于 /:code/verify-accounts|verify-cases/:code，运行详情位于 /:code/verify-runs/:runCode。
  */
 export function ExternalIntegrations(props: Props) {
   const location = useLocation();
@@ -82,6 +89,13 @@ export function ExternalIntegrations(props: Props) {
     if (parts[1] === 'apis') page = <IntegrationApiEditor key={location.pathname} {...props} integrationCode={parts[0]} apiCode={child} />;
     else if (parts[1] === 'scripts') page = <ScriptEditor key={location.pathname} {...props} integrationCode={parts[0]} scriptCode={child} />;
     else return <FlowEditor key={location.pathname + location.search} {...props} integrationCode={parts[0]} standardApiCode={parts[2]} />;
+  } else if (parts.length === 3 && verifyKinds.includes(parts[1]) && (parts[2] === 'new' || codePattern.test(parts[2]))) {
+    const child = parts[2] === 'new' ? null : parts[2];
+    page = parts[1] === 'verify-accounts'
+      ? <VerifyAccountEditor key={location.pathname} {...props} integrationCode={parts[0]} accountCode={child} />
+      : <VerifyCaseEditor key={location.pathname} {...props} integrationCode={parts[0]} caseCode={child} />;
+  } else if (parts.length === 3 && parts[1] === 'verify-runs' && /^[1-9][0-9]{0,18}$/.test(parts[2])) {
+    page = <VerifyRunDetail key={location.pathname} integrationCode={parts[0]} runCode={parts[2]} />;
   } else page = <LoadFailure failure={new ApiError(404, 'NOT_FOUND')} />;
   return <ExternalApiFrame>{page}</ExternalApiFrame>;
 }
@@ -157,7 +171,8 @@ function IntegrationWorkspace({ resources, onAuthorizationChanged, code }: Props
       onSaved={() => { detail.refresh(); void navigate(replaceQuery('', { tab: 'basic' }), { replace: true }); }} />;
   }
   const labels: Record<Tab, string> = { basic: '基本信息', apis: counted('原子 API', integration.apiCount),
-    scripts: counted('公共脚本', integration.scriptCount), implementations: counted('标准 API 实现', integration.implementationCount) };
+    scripts: counted('公共脚本', integration.scriptCount), implementations: counted('标准 API 实现', integration.implementationCount),
+    verify: '验证' };
   return <>
     <PageHeader crumbs={[...rootCrumbs, { label: code }]} title={integration.integrationName} code={code}
       readOnlyHint={!canManage ? noManage : undefined}
@@ -171,6 +186,7 @@ function IntegrationWorkspace({ resources, onAuthorizationChanged, code }: Props
       onAuthorizationChanged={onAuthorizationChanged} onChanged={detail.refresh} />}
     {tab === 'implementations' && <ImplementationTab code={code} canManage={canManage}
       onAuthorizationChanged={onAuthorizationChanged} onChanged={detail.refresh} />}
+    {tab === 'verify' && <VerifyTab key={location.search} code={code} canManage={canManage} onAuthorizationChanged={onAuthorizationChanged} />}
   </>;
 }
 
@@ -191,10 +207,12 @@ function IntegrationBasicView({ integration }: { integration: IntegrationDetail 
     <div className="xapi-table-wrap"><Table rowKey="endpointCode" pagination={false} dataSource={integration.endpoints} columns={[
       { title: '地址代码 endpointCode', width: 240, render: (_, row) => <Mono>{row.endpointCode}</Mono> },
       { title: '基础地址 baseUrl', ellipsis: true, render: (_, row) => <Mono>{row.baseUrl}</Mono> },
+      { title: '沙箱', width: 90, render: (_, row) => row.sandbox ? <VerifyTag label="沙箱" tone="success" /> : '—' },
       { title: '引用的原子 API', width: 320, render: (_, row) => briefList(row.referencedApiCodes) },
     ]} /></div>
     <Note items={['基础地址只允许 https（本机测试环境另允许 http），可带路径前缀，不能包含用户信息、查询串或片段；每个环境的数据库各自维护。',
-      '实际出站仍受部署网络白名单限制；地址不在白名单内时请求失败，不能用这里的配置绕过。', '被原子 API 引用的地址代码不能删除或改名。']} />
+      '实际出站仍受部署网络白名单限制；地址不在白名单内时请求失败，不能用这里的配置绕过。', '被原子 API 引用的地址代码不能删除或改名。',
+      '只有标记为“沙箱”的地址允许沙箱验证运行；把生产地址误标为沙箱会让验证运行产生真实交易。']} />
   </>;
 }
 
@@ -204,6 +222,7 @@ function IntegrationBasicForm({ detail, crumbs, onAuthorizationChanged, onSaved,
   detail?: IntegrationDetail; crumbs: Crumb[]; onAuthorizationChanged: () => void; onSaved: (code: string) => void; onReload?: () => void;
 }) {
   const [form] = Form.useForm<BasicValues>(); const editor = useEditorSave(onAuthorizationChanged); const copy = useCopyDraft();
+  const { modal } = App.useApp();
   const creating = !detail; const disabled = editor.saving; const leaving = useRef(false);
   const referenced = new Set(detail?.endpoints.filter(item => item.referencedApiCodes.length).map(item => item.endpointCode));
   const badRows = new Set(errorRows(editor.fieldErrors, 'endpoints'));
@@ -211,7 +230,8 @@ function IntegrationBasicForm({ detail, crumbs, onAuthorizationChanged, onSaved,
     const values = form.getFieldsValue(true) as BasicValues;
     const code = creating ? values.integrationCode : detail.integrationCode;
     const common = { integrationName: values.integrationName.trim(), description: values.description?.trim() || null,
-      endpoints: values.endpoints.map(item => ({ endpointCode: item.endpointCode.trim(), baseUrl: item.baseUrl.trim() })), reason };
+      endpoints: values.endpoints.map(item => ({ endpointCode: item.endpointCode.trim(), baseUrl: item.baseUrl.trim(),
+        ...(item.sandbox ? { sandbox: true } : {}) })), reason };
     const result = await editor.save(creating ? integrationPath : `${integrationPath}/${code}`, creating ? 'POST' : 'PUT',
       creating ? { integrationCode: code, ...common } : { ...common, expectedVersion: detail.version },
       value => decodeMutation(value, 'INTEGRATION', code));
@@ -231,8 +251,8 @@ function IntegrationBasicForm({ detail, crumbs, onAuthorizationChanged, onSaved,
       onReload={onReload} onCopy={() => copy(form.getFieldsValue(true))} />}
     <Form form={form} layout="vertical" requiredMark={false} disabled={disabled} onValuesChange={() => editor.setDirty(true)}
       initialValues={detail ? { integrationCode: detail.integrationCode, integrationName: detail.integrationName,
-        description: detail.description ?? '', endpoints: detail.endpoints.map(({ endpointCode, baseUrl }) => ({ endpointCode, baseUrl })) }
-        : { endpoints: [{ endpointCode: '', baseUrl: '' }] }}>
+        description: detail.description ?? '', endpoints: detail.endpoints.map(({ endpointCode, baseUrl, sandbox }) => ({ endpointCode, baseUrl, sandbox })) }
+        : { endpoints: [{ endpointCode: '', baseUrl: '', sandbox: false }] }}>
       <Panel title="基本信息"><div className="xapi-grid xapi-grid-3">
         <Form.Item name="integrationCode" label="编码（创建后只读）" style={{ marginBottom: 0 }}
           rules={[{ required: true, pattern: codePattern, message: '大写字母开头，包含大写字母、数字或下划线，最多 64 字符' }]}>
@@ -253,14 +273,23 @@ function IntegrationBasicForm({ detail, crumbs, onAuthorizationChanged, onSaved,
               <Form.Item name={[field.name, 'baseUrl']} label="基础地址" style={{ marginBottom: 0 }}
                 rules={[{ required: true, whitespace: true, message: '请填写基础地址' }]}>
                 <Input maxLength={512} className="xapi-mono-input" placeholder="https://..." /></Form.Item>
+              <Form.Item name={[field.name, 'sandbox']} label="沙箱" valuePropName="checked" style={{ marginBottom: 0 }}>
+                <Switch size="small" onChange={checked => {
+                  if (!checked) return;
+                  form.setFieldValue(['endpoints', field.name, 'sandbox'], false);
+                  modal.confirm({ title: '标记为沙箱地址？', centered: true, okText: '确认是沙箱', cancelText: '取消',
+                    content: '标记后，沙箱验证运行会真实调用这个地址。请确认它是渠道的沙箱 / 测试环境；把生产地址标记为沙箱会产生真实交易。',
+                    onOk: () => { form.setFieldValue(['endpoints', field.name, 'sandbox'], true); editor.setDirty(true); } });
+                }} /></Form.Item>
               <button type="button" className="xapi-link" disabled={locked || fields.length === 1 || disabled}
                 title={locked ? '仍被原子 API 引用' : undefined} onClick={() => remove(field.name)}>删除</button>
             </div>;
           })}
           <div><button type="button" className="xapi-link xapi-link-add" disabled={fields.length >= 16 || disabled}
-            onClick={() => add({ endpointCode: '', baseUrl: '' })}>添加出站地址</button></div>
+            onClick={() => add({ endpointCode: '', baseUrl: '', sandbox: false })}>添加出站地址</button></div>
         </>}</Form.List>
-        <Note items={['基础地址只允许 https（本机测试环境另允许 http），可带路径前缀，不能带查询串。', '被原子 API 引用的地址代码不能删除或改名。']} />
+        <Note items={['基础地址只允许 https（本机测试环境另允许 http），可带路径前缀，不能带查询串。', '被原子 API 引用的地址代码不能删除或改名。',
+          '打开“沙箱”前请确认是渠道的沙箱 / 测试环境；沙箱验证运行会真实调用这些地址。']} />
       </Panel>
     </Form>
     <ReasonDialog open={reasonFlow.open} saving={editor.saving} onCancel={reasonFlow.cancel} onConfirm={reason => void reasonFlow.confirm(reason)} />

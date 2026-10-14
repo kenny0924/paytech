@@ -44,7 +44,7 @@ public class GetIntegrationProcessor extends AbstractProcessor<GetExternalApiCon
             long id = row.getIntegrationId();
             List<IntegrationApiEndpoint> references = integrationApis.endpointReferences(id);
             var endpoints = codec.endpoints(row.getEndpoints()).stream()
-                .map(endpoint -> new EndpointUsage(endpoint.getEndpointCode(), endpoint.getBaseUrl(),
+                .map(endpoint -> new EndpointUsage(endpoint.getEndpointCode(), endpoint.getBaseUrl(), endpoint.isSandbox(),
                     references.stream().filter(item -> endpoint.getEndpointCode().equals(item.getEndpointCode()))
                         .map(IntegrationApiEndpoint::getApiCode).toList()))
                 .toList();

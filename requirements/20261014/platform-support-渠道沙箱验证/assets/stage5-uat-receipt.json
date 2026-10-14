@@ -1,0 +1,129 @@
+{
+ "date": "2026-10-14",
+ "integration": "PAYERMAX",
+ "endpoint": "https://pay-gate-uat.payermax.com/aggregate-pay/api/gateway (sandbox)",
+ "account": "UAT_MAIN（凭据明文仅存本机库，不在此回执）",
+ "cases": {
+  "UAT_PAY_THEN_QUERY": {
+   "verifyStatus": "PASSED",
+   "runCode": "236036439572340736",
+   "runStatus": "PASSED",
+   "steps": [
+    {
+     "stepKey": "pay",
+     "standardApi": "PAY",
+     "stepStatus": "PASSED",
+     "executeStatus": "SUCCESS",
+     "outputs": {
+      "channelStatus": "PENDING",
+      "paymentStatus": "PENDING",
+      "channelTransactionRef": "T2026101408038406462391"
+     },
+     "redirectUrlPresent": true,
+     "channel": [
+      {
+       "node": "createOrder",
+       "http": 200,
+       "code": "APPLY_SUCCESS",
+       "signHeader": true
+      }
+     ],
+     "assertions": [
+      {
+       "target": "executeStatus",
+       "passed": true
+      },
+      {
+       "target": "outputs.paymentStatus",
+       "passed": true
+      },
+      {
+       "target": "outputs.nextAction.redirectUrl",
+       "passed": true
+      },
+      {
+       "target": "outputs.channelTransactionRef",
+       "passed": true
+      }
+     ]
+    },
+    {
+     "stepKey": "query",
+     "standardApi": "PAY_QUERY",
+     "stepStatus": "PASSED",
+     "executeStatus": "SUCCESS",
+     "outputs": {
+      "amount": {
+       "value": "10",
+       "currency": "USD"
+      },
+      "channelStatus": "PENDING",
+      "paymentStatus": "PENDING",
+      "channelTransactionRef": "T2026101408038406462391"
+     },
+     "redirectUrlPresent": false,
+     "channel": [
+      {
+       "node": "queryOrder",
+       "http": 200,
+       "code": "APPLY_SUCCESS",
+       "signHeader": true
+      }
+     ],
+     "assertions": [
+      {
+       "target": "executeStatus",
+       "passed": true
+      },
+      {
+       "target": "outputs.paymentStatus",
+       "passed": true
+      },
+      {
+       "target": "outputs.channelTransactionRef",
+       "passed": true
+      }
+     ]
+    }
+   ]
+  },
+  "UAT_QUERY_NOT_FOUND": {
+   "verifyStatus": "PASSED",
+   "runCode": "236036448502013952",
+   "runStatus": "PASSED",
+   "steps": [
+    {
+     "stepKey": "query",
+     "standardApi": "PAY_QUERY",
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "outputs": {
+      "failureCode": "ORDER_NOT_EXIST",
+      "paymentStatus": "NOT_FOUND",
+      "failureMessage": "The order does not exist."
+     },
+     "redirectUrlPresent": false,
+     "channel": [
+      {
+       "node": "queryOrder",
+       "http": 200,
+       "code": "ORDER_NOT_EXIST",
+       "signHeader": true
+      }
+     ],
+     "assertions": [
+      {
+       "target": "executeStatus",
+       "passed": true
+      },
+      {
+       "target": "outputs.paymentStatus",
+       "passed": true
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "note": "响应验签由 PAYERMAX_VERIFY 在 Platform 执行；FAIL（ORDER_NOT_EXIST）响应同样带 sign 且验签通过（PayerMax 技术方案 T5）。"
+}

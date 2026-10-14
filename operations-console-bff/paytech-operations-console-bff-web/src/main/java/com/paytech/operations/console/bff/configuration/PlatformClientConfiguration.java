@@ -92,6 +92,12 @@ public class PlatformClientConfiguration {
         return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.externalapi.IntegrationScriptManagementApi.class);
     }
 
+    /** 渠道沙箱验证管理复用 Platform 私网发现与字段错误解码。 */
+    @Bean
+    com.paytech.platform.support.api.externalapi.IntegrationVerifyManagementApi integrationVerifyManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
+        return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.externalapi.IntegrationVerifyManagementApi.class);
+    }
+
     /** 外部 API 配置管理复用 Platform 私网发现与字段错误解码。 */
     @Bean
     com.paytech.platform.support.api.externalapi.IntegrationImplementationManagementApi integrationImplementationManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {

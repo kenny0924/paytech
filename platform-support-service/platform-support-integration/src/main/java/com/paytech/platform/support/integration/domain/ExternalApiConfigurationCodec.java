@@ -23,13 +23,16 @@ public class ExternalApiConfigurationCodec {
 
     private final ObjectMapper json;
 
-    /** 出站地址按保存顺序序列化为 [{endpointCode, baseUrl}]。 */
+    /** 出站地址按保存顺序序列化为 [{endpointCode, baseUrl, sandbox}]；sandbox 只在为 true 时写出。 */
     public String endpointsJson(List<EndpointDefinition> endpoints) {
-        var rows = new ArrayList<LinkedHashMap<String, String>>();
+        var rows = new ArrayList<LinkedHashMap<String, Object>>();
         for (var endpoint : endpoints) {
-            var row = new LinkedHashMap<String, String>();
+            var row = new LinkedHashMap<String, Object>();
             row.put("endpointCode", endpoint.getEndpointCode());
             row.put("baseUrl", endpoint.getBaseUrl());
+            if (endpoint.isSandbox()) {
+                row.put("sandbox", true);
+            }
             rows.add(row);
         }
         return json.writeValueAsString(rows);
@@ -45,10 +48,12 @@ public class ExternalApiConfigurationCodec {
         for (JsonNode node : root) {
             JsonNode code = node.get("endpointCode");
             JsonNode url = node.get("baseUrl");
-            if (code == null || url == null || !code.isString() || !url.isString()) {
+            JsonNode sandbox = node.get("sandbox");
+            if (code == null || url == null || !code.isString() || !url.isString()
+                || sandbox != null && !sandbox.isBoolean()) {
                 throw new ErrorException("接入方出站地址数据损坏");
             }
-            endpoints.add(new EndpointDefinition(code.asString(), url.asString()));
+            endpoints.add(new EndpointDefinition(code.asString(), url.asString(), sandbox != null && sandbox.booleanValue()));
         }
         return endpoints;
     }

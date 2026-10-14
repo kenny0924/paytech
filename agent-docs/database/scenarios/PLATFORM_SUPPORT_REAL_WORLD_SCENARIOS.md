@@ -185,6 +185,17 @@ Payment 校验冻结账号后调用 Platform 标准 API `PAY`，请求体带 `in
 | `t_integration_script` | `integration_script_id=820201，integration_id=820001，script_code=NI_SIGN，script_name=请求签名，execution_stage=REQUEST，parameter_definition=[{name:key,dataType:PROTECTED_HANDLE,required:true}]，source_code=functions.sign(params.key)，description=NULL，version=1，created_by=220001，updated_by=220001`；被 `CREATE_ORDER` 引用时不能删除。 |
 | `t_integration_standard_api` | `integration_standard_api_id=830001，integration_id=820001，standard_api_id=810001，flow_definition_json={timeoutMs:25000,entry:createPayment,nodes:2,returns:4}，version=4，created_by=220001，updated_by=220001`；`(integration_id,standard_api_id)` 唯一；删除后 Payment 调用得到保证未发送的 404。 |
 
+### 9.2 沙箱验证 4 表
+
+Operations 管理员在接入方 `PAYERMAX` 下维护验证账号与用例并发起运行；运行先以 RUNNING 落库和补偿任务，事务外按与正式执行相同的链路调用沙箱，结束时一次写入步骤与结论。账号只用于验证运行，正式执行仍从 Vault 读取；轨迹与脱敏报文只来自验证运行。设计见[渠道沙箱验证](../../../requirements/20261014/platform-support-渠道沙箱验证/technique.md)。
+
+| 物理表 | 代表性记录与判定 |
+| --- | --- |
+| `t_integration_verify_account` | `verify_account_id=840001，integration_id=820002，account_code=UAT_MAIN，account_name=PayerMax UAT 主账号，channel_code=PAYERMAX，channel_account_id=900000000000000002，entity_no=UAT01，parameters={appId:uat-app,merchantNo:SP0001,keyVersion:1,payermaxPublicKey:MIIB...}，credentials={merchantPrivateKey:MIIE...}，version=1，created_by=220001，updated_by=220001`；沙箱材料按用户决定明文保存，被用例引用时不能删除。 |
+| `t_integration_verify_case` | `verify_case_id=840101，integration_id=820002，case_code=PAY_THEN_QUERY，case_name=下单后查询为待支付，description=NULL，verify_account_id=840001，steps_json=[{id:pay,standardApiCode:PAY},{id:query,standardApiCode:PAY_QUERY}]，version=2，created_by=220001，updated_by=220001`；第二步以 `${steps.pay.input.payment.attemptId}` 引用前一步订单号。 |
+| `t_integration_verify_run` | `verify_run_id=840201，verify_case_id=840101，integration_id=820002，run_status=PASSED，case_snapshot_json={caseVersion:2,accountCode:UAT_MAIN,accountVersion:1}，config_versions_json={standardApis:{PAY:3,PAY_QUERY:2},integration:4}，endpoints_json=[{endpointCode:PAYERMAX_GATEWAY,sandbox:true}]，failure_summary=NULL，started_by=220001，start_time=2026-10-14T08:00:00Z，finish_time=2026-10-14T08:00:03Z`；之后任一引用配置版本变化即显示需重新验证。 |
+| `t_integration_verify_run_step` | `verify_run_step_id=840301，verify_run_id=840201，step_no=1，step_key=pay，standard_api_code=PAY，step_status=PASSED，resolved_input_json={payment:{attemptId:VR840201}}，result_json={kind:EXECUTED,executeStatus:SUCCESS}，assertions_json=[{path:paymentStatus,match:EQUALS,passed:true}]，trace_json={nodes:[{id:createOrder,executeStatus:SUCCESS,httpStatus:200}]}，elapsed_ms=1830`；运行结束时一次写入，认证类 Header 记为 [REDACTED]。 |
+
 ## 10. 失败关闭与最小数据清单
 
 - 不保存 Password 明文、Google authorization code、Access/Refresh/ID Token、OIDC client secret、KMS private key、Webhook signing secret 值、PAN 或 CVV。

@@ -140,7 +140,7 @@ textarea.xapi-code-editor, .xapi-code-editor textarea { background: #1f2430 !imp
 /* 接入方 */
 .xapi-section-title { font-size: 15px; margin: 0; }
 .xapi-gap-top { margin-top: 16px; }
-.xapi-endpoint-row { display: grid; grid-template-columns: 240px 1fr auto; gap: 12px; align-items: end; padding: 4px 0; }
+.xapi-endpoint-row { display: grid; grid-template-columns: 240px 1fr auto auto; gap: 12px; align-items: end; padding: 4px 0; }
 .xapi-choice-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 360px; overflow: auto; }
 .xapi-choice { display: flex; align-items: center; gap: 12px; text-align: left; padding: 10px 14px; border: 1px solid var(--xapi-border); border-radius: 6px; background: #fff; cursor: pointer; font: inherit; }
 .xapi-choice.is-selected { border-color: var(--xapi-primary); background: #f2f6ff; }
@@ -351,3 +351,30 @@ textarea.xapi-code-editor, .xapi-code-editor textarea { background: #1f2430 !imp
 .xapi-source-button { border: 0; cursor: pointer; }
 .xapi-source-button:hover { color: var(--xapi-primary); }
 .xapi-field > .ant-switch { align-self: flex-start; }
+
+/* 沙箱验证：状态标签、JSON 证据块、用例步骤与运行证据。 */
+.xapi-verify-tag { display: inline-block; font-size: 12px; line-height: 20px; padding: 0 8px; border-radius: 4px; white-space: nowrap; }
+.xapi-verify-tag-neutral { background: #eef1f6; color: var(--xapi-muted); }
+.xapi-verify-tag-running { background: #e9effc; color: var(--xapi-primary); }
+.xapi-verify-tag-success { background: #e8f6ec; color: #2f8a4c; }
+.xapi-verify-tag-error { background: #fdecec; color: #c93a3a; }
+.xapi-verify-tag-warning { background: #fff3e3; color: var(--xapi-orange); }
+.xapi-json-block { margin: 0; max-height: 360px; overflow: auto; padding: 10px 12px; background: var(--xapi-soft); border: 1px solid var(--xapi-border); border-radius: 5px; font-family: var(--xapi-mono); font-size: 12px; line-height: 18px; white-space: pre-wrap; word-break: break-all; }
+.xapi-verify-overview { display: flex; flex-direction: column; gap: 8px; }
+.xapi-verify-overview-item { display: flex; align-items: center; gap: 16px; padding: 8px 12px; border: 1px solid var(--xapi-line); border-radius: 5px; }
+.xapi-verify-counts { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.xapi-entry-row { display: grid; grid-template-columns: 240px 1fr auto; gap: 12px; align-items: end; padding: 4px 0; }
+.xapi-entry-list { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.xapi-entry-list > div { display: grid; grid-template-columns: 240px 1fr; gap: 12px; align-items: start; }
+.xapi-entry-list dd { margin: 0; min-width: 0; }
+.xapi-verify-step { border: 1px solid var(--xapi-border); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.xapi-verify-step-focused { border-color: var(--xapi-primary); box-shadow: 0 0 0 2px rgba(49, 93, 202, 0.12); }
+.xapi-verify-step-view { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.xapi-verify-expect-list { margin: 0; padding-left: 18px; line-height: 22px; }
+.xapi-verify-variables { margin: 0; padding-left: 18px; color: var(--xapi-muted); font-size: 12px; line-height: 22px; }
+.xapi-verify-exchange { display: flex; flex-direction: column; gap: 12px; }
+.xapi-verify-ok { color: #2f8a4c; }
+.xapi-verify-bad { color: #c93a3a; }
+@media (max-width: 900px) {
+  .xapi-verify-step-view, .xapi-entry-list > div, .xapi-entry-row { grid-template-columns: 1fr; }
+}

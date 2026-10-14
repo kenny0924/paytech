@@ -33,6 +33,8 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
   integration: Object.freeze([
     "t_standard_api", "t_api_field", "t_integration", "t_integration_api",
     "t_integration_script", "t_integration_standard_api",
+    "t_integration_verify_account", "t_integration_verify_case",
+    "t_integration_verify_run", "t_integration_verify_run_step",
   ]),
 });
 
@@ -44,10 +46,10 @@ export const EXPECTED_GROUP_SIZES = Object.freeze({
   audit_security: 8,
   gateway_control: 6,
   reliability: 2,
-  integration: 6,
+  integration: 10,
 });
 
-export const EXPECTED_TABLE_TOTAL = 68;
+export const EXPECTED_TABLE_TOTAL = 72;
 export const APPROVED_TABLES = Object.freeze(Object.values(APPROVED_TABLE_GROUPS).flat());
 
 export const APPROVED_DIAGRAMS = Object.freeze({
@@ -534,14 +536,14 @@ export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
 });
 
 export const EXPECTED_TOTALS = Object.freeze({
-  tables: 68,
-  fields: 824,
-  uniqueIndexes: 117,
-  accessIndexes: 92,
-  relations: 105,
+  tables: 72,
+  fields: 875,
+  uniqueIndexes: 120,
+  accessIndexes: 95,
+  relations: 111,
   oneToOneRelations: 6,
   diagramGroups: 8,
 });
 
-export const EXPECTED_MODEL_DIGEST = "7a14d2aac2d97404bc9c006b211b3132f100d7b522ae8a580370cdf41e927b31";
-export const EXPECTED_STRUCTURAL_DIGEST = "66c88ebd95f1d2c06cc76b87a508a7e1d29ab1f34a4926f350151eeb83bb7766";
+export const EXPECTED_MODEL_DIGEST = "b7b0bf92e23da77a16a39a99d7ddb581dc40ef872a58abc63c9355feeae40247";
+export const EXPECTED_STRUCTURAL_DIGEST = "be83e49b805c6c6f86a29c0efc3bf679c6bd54eb328e6d49aec3ab89a0301a3c";

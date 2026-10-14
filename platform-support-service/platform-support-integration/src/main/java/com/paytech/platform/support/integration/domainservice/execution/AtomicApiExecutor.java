@@ -6,6 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -18,6 +20,7 @@ import com.paytech.platform.support.integration.domain.execution.*;
 import com.paytech.platform.support.integration.domainservice.expression.ExpressionEngine;
 import com.paytech.platform.support.integration.domainservice.expression.ExpressionProfile;
 import com.paytech.platform.support.integration.ext.outbound.ChannelHttpClient;
+import com.paytech.platform.support.integration.ext.outbound.ChannelRequest;
 import com.paytech.platform.support.integration.ext.outbound.ChannelResponse;
 
 import lombok.AllArgsConstructor;
@@ -65,7 +68,8 @@ public class AtomicApiExecutor implements NodeRunner {
             castMap(request.get(HttpWork.REQUEST_HEADERS)), request.get(HttpWork.REQUEST_BODY),
             request.sealedJsonBody(), deadline);
         long started = System.nanoTime();
-        ChannelResponse response = httpClient.send(channelRequest);
+        ChannelResponse response = send(channelRequest, node.getId(), castMap(request.get(HttpWork.REQUEST_HEADERS)),
+            context.trace(), started);
         log.info("外部 API 渠道响应 standardApiCode={} integrationCode={} nodeId={} httpStatus={} elapsedMs={}",
             snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), node.getId(), response.getStatus(),
             (System.nanoTime() - started) / 1_000_000L);
@@ -73,6 +77,29 @@ public class AtomicApiExecutor implements NodeRunner {
             decode(api, response), new String(response.getBody(), StandardCharsets.UTF_8));
         runScripts(snapshot, api, ScriptExecutionStage.RESPONSE, params, received);
         return result(api, received, params);
+    }
+
+    /** 发送请求；沙箱验证运行同时记录脱敏后的渠道交换（无论成功或失败）。 */
+    ChannelResponse send(ChannelRequest request, String nodeId, Map<String, Object> headers, ExecutionTrace trace,
+        long started) {
+        if (trace == null) {
+            return httpClient.send(request);
+        }
+        var exchange = new ExecutionTrace.Exchange(request.getMethod(), request.getUri(), request.getHeaders(),
+            request.getBody());
+        Set<String> protectedHeaders = headers.entrySet().stream()
+            .filter(entry -> entry.getValue() instanceof ProtectedHandle).map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+        try {
+            ChannelResponse response = httpClient.send(request);
+            trace.exchange(nodeId, exchange, protectedHeaders, response.getStatus(), response.getHeaders(),
+                response.getBody(), (System.nanoTime() - started) / 1_000_000L, null);
+            return response;
+        } catch (RuntimeException failure) {
+            trace.exchange(nodeId, exchange, protectedHeaders, null, null, null,
+                (System.nanoTime() - started) / 1_000_000L, FlowEngine.reason(failure));
+            throw failure;
+        }
     }
 
     /** 状态规则决定分支，再校验响应字段并映射分支输出。 */

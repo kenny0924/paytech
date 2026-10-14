@@ -10,6 +10,7 @@ import java.util.Map;
  *
  * <p>
  * 只由执行器写入，只在本次调用内存中存在，不持久化。表达式只读取 {@link #environment()} 的投影。
+ * 沙箱验证运行另带 {@link VerificationScope}（验证账号与轨迹），不进入表达式环境；正式执行为 null。
  */
 public class ExecutionContext {
 
@@ -25,9 +26,25 @@ public class ExecutionContext {
     private final Map<String, Object> input;
     private final Map<String, Object> resources = new LinkedHashMap<>();
     private final Map<String, Object> steps = new LinkedHashMap<>();
+    private final VerificationScope verification;
 
     public ExecutionContext(Map<String, Object> input) {
+        this(input, null);
+    }
+
+    public ExecutionContext(Map<String, Object> input, VerificationScope verification) {
         this.input = input;
+        this.verification = verification;
+    }
+
+    /** 沙箱验证附加项；正式执行为 null。 */
+    public VerificationScope getVerification() {
+        return verification;
+    }
+
+    /** 沙箱验证轨迹；正式执行为 null。 */
+    public ExecutionTrace trace() {
+        return verification == null ? null : verification.getTrace();
     }
 
     /** 记录初始化项结果。 */

@@ -20,10 +20,11 @@ const expectedTables = [
   'authentication_challenge', 'file_upload', 'file_scan_policy', 'file_scan_requirement', 'file_object', 'file_owner_ref', 'file_scan_result',
   'audit_chain', 'audit_event', 'audit_event_attr', 'security_event', 'command_idempotency', 'compensation_event', 'console_resource',
   'standard_api', 'api_field', 'integration', 'integration_api', 'integration_script', 'integration_standard_api',
+  'integration_verify_account', 'integration_verify_case', 'integration_verify_run', 'integration_verify_run_step',
 ].map(name => `t_${name}`);
 const quote = value => `'${value.replaceAll("'", "''")}'`;
 
-test('only the 46 approved schema tables exist, without physical CHECK or foreign keys', () => {
+test('only the 50 approved schema tables exist, without physical CHECK or foreign keys', () => {
   assert.deepEqual(tables.map(table => table[1]).sort(), expectedTables.toSorted());
   assert.doesNotMatch(sql.replace(/^--.*$/gm, ''), /\bCHECK\s*\(|\bFOREIGN\s+KEY\b/i);
 });
@@ -144,6 +145,22 @@ test('External API configuration increment is the exact six-table current model'
   const created = [...increment.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
   assert.deepEqual(created.map(t => t[1]), ['t_standard_api', 't_api_field', 't_integration', 't_integration_api',
     't_integration_script', 't_integration_standard_api']);
-  for (const table of created) assert.equal(table[0], tables.find(t => t[1] === table[1])[0]);
+  // 2026-10-14 沙箱验证增量以 MODIFY COLUMN 更新了 t_integration.endpoints 的注释，其余内容仍须与当前 Schema 逐字一致。
+  const withoutEndpointsComment = text => text.replace(/^  `endpoints` JSON NOT NULL COMMENT '(?:[^']|'')*',$/m, '');
+  for (const table of created) {
+    assert.equal(withoutEndpointsComment(table[0]), withoutEndpointsComment(tables.find(t => t[1] === table[1])[0]));
+  }
   assert.doesNotMatch(increment.replace(/^--.*$/gm, ''), /\b(?:DROP|ALTER|DELETE|INSERT|UPDATE|CHECK|FOREIGN)\b/i);
+});
+
+test('Channel sandbox verification increment is the exact four-table current model plus the endpoints comment', () => {
+  const increment = readFileSync(new URL('../../requirements/20261014/platform-support-渠道沙箱验证/db/ddl.sql', import.meta.url), 'utf8');
+  const created = [...increment.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
+  assert.deepEqual(created.map(t => t[1]), ['t_integration_verify_account', 't_integration_verify_case',
+    't_integration_verify_run', 't_integration_verify_run_step']);
+  for (const table of created) assert.equal(table[0], tables.find(t => t[1] === table[1])[0]);
+  const endpoints = model.entities.find(e => e.defKey === 't_integration').fields.find(f => f.defKey === 'endpoints');
+  assert.ok(increment.includes(`ALTER TABLE \`t_integration\` MODIFY COLUMN \`endpoints\` JSON NOT NULL COMMENT ${quote(endpoints.comment)};`));
+  assert.doesNotMatch(increment.replace(/^--.*$/gm, '').replace(/^ALTER TABLE `t_integration` MODIFY COLUMN `endpoints`.*$/m, ''),
+    /\b(?:DROP|ALTER|DELETE|INSERT|UPDATE|CHECK|FOREIGN)\b/i);
 });

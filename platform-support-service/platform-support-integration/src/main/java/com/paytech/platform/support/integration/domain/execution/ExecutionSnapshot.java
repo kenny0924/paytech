@@ -1,6 +1,7 @@
 package com.paytech.platform.support.integration.domain.execution;
 
 import java.util.Map;
+import java.util.Set;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,4 +36,16 @@ public class ExecutionSnapshot {
 
     /** 接入方出站地址：地址代码 → 基础地址。 */
     private final Map<String, String> endpoints;
+
+    /** 标记为沙箱的地址代码。 */
+    private final Set<String> sandboxEndpoints;
+
+    /** 本次加载的配置版本：standardApi、integration、implementation 为单值，apis、scripts 按编码索引；沙箱验证作为证据保存。 */
+    private final Map<String, Object> configVersions;
+
+    /** 流程节点引用的原子 API 所用的地址代码。 */
+    public Set<String> usedEndpoints() {
+        return apis.values().stream().map(api -> api.getDefinition().path("transport").path("endpointCode").asString(""))
+            .collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
+    }
 }

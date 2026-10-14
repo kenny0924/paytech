@@ -124,7 +124,7 @@ public class ExecutionSnapshotLoader {
             .collect(Collectors.toSet());
         List<IntegrationScript> scripts = integrationScripts.allByIntegration(integration.getIntegrationId()).stream()
             .filter(script -> scriptCodes.contains(script.getScriptCode())).toList();
-        return new Rows(standardApi, integration, flow, apis, fieldRows, scripts);
+        return new Rows(standardApi, integration, implementation.getVersion(), flow, apis, fieldRows, scripts);
     }
 
     /** 事务外重新校验并组装快照。 */
@@ -165,7 +165,23 @@ public class ExecutionSnapshotLoader {
         return new ExecutionSnapshot(rows.standardApi.getStandardApiCode(), rows.integration.getIntegrationCode(),
             FieldSchema.of(request), FieldSchema.outputs(response), ExecutionFlow.from(rows.flow), Map.copyOf(apis),
             Map.copyOf(scripts), endpoints.stream().collect(
-                Collectors.toUnmodifiableMap(EndpointDefinition::getEndpointCode, EndpointDefinition::getBaseUrl)));
+                Collectors.toUnmodifiableMap(EndpointDefinition::getEndpointCode, EndpointDefinition::getBaseUrl)),
+            endpoints.stream().filter(EndpointDefinition::isSandbox).map(EndpointDefinition::getEndpointCode)
+                .collect(Collectors.toUnmodifiableSet()),
+            versions(rows));
+    }
+
+    /** 本次加载的各项配置版本，键顺序固定。 */
+    static Map<String, Object> versions(Rows rows) {
+        var result = new LinkedHashMap<String, Object>();
+        result.put("standardApi", rows.standardApi.getVersion());
+        result.put("integration", rows.integration.getVersion());
+        result.put("implementation", rows.implementationVersion);
+        result.put("apis", rows.apis.stream().collect(Collectors.toMap(IntegrationApi::getApiCode,
+            IntegrationApi::getVersion, (left, right) -> left, java.util.TreeMap::new)));
+        result.put("scripts", rows.scripts.stream().collect(Collectors.toMap(IntegrationScript::getScriptCode,
+            IntegrationScript::getVersion, (left, right) -> left, java.util.TreeMap::new)));
+        return java.util.Collections.unmodifiableMap(result);
     }
 
     /** 存在阻断问题时记录问题代码与位置（不含配置内容）并返回 500。 */
@@ -192,7 +208,8 @@ public class ExecutionSnapshotLoader {
     }
 
     /** 同一事务读取的配置行。 */
-    record Rows(StandardApi standardApi, Integration integration, JsonNode flow, List<IntegrationApi> apis,
+    record Rows(StandardApi standardApi, Integration integration, int implementationVersion, JsonNode flow,
+        List<IntegrationApi> apis,
         List<ApiField> fieldRows, List<IntegrationScript> scripts) {
     }
 }
