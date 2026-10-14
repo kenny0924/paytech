@@ -12,6 +12,8 @@ import com.paytech.risk.api.compliance.response.ClientReviewRequirementResponseB
 import com.paytech.risk.api.compliance.response.ClientReviewSubjectResponseBody;
 import com.paytech.risk.compliance.service.processor.response.ClientReviewCaseResponse;
 import com.paytech.risk.compliance.service.processor.response.ClientReviewCommandResponse;
+import com.paytech.risk.compliance.service.processor.response.ClientReviewResultResponse;
+import com.paytech.risk.api.compliance.response.ClientReviewResultResponseBody;
 
 /** Owner 审核结果到 Wire 的纯转换；ID 与版本一律十进制字符串。 */
 final class ClientReviewWireConverter {
@@ -94,6 +96,19 @@ final class ClientReviewWireConverter {
         body.setIndustryCode(source.getIndustryCode());
         body.setMccCode(source.getMccCode());
         body.setPrimary(source.isPrimary());
+        return body;
+    }
+
+    /** 客户可见审核结果。 */
+    static ClientReviewResultResponseBody result(ClientReviewResultResponse source) {
+        var body = new ClientReviewResultResponseBody();
+        body.setApplicationId(Long.toString(source.getApplicationId()));
+        body.setCaseId(Long.toString(source.getCaseId()));
+        body.setStatus(source.getStatus());
+        body.setOutcome(source.getOutcome());
+        body.setReturnSection(source.getReturnSection());
+        body.setPublicNote(source.getPublicNote());
+        body.setDecidedAt(time(source.getDecidedAt()));
         return body;
     }
 
