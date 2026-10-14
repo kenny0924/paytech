@@ -2,6 +2,7 @@ package com.paytech.risk.configuration;
 
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.id.SnowflakeIdGenerator;
+import com.paytech.risk.control.domainservice.port.ControlIdentifierGenerator;
 import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizer;
@@ -95,6 +96,17 @@ public class RiskRuntimeConfiguration {
      */
     @Bean
     ComplianceIdentifierGenerator complianceIdentifierGenerator(IdGenerator riskIdGenerator) {
+        return riskIdGenerator::nextId;
+    }
+
+    /**
+     * 控制模块标识端口，复用进程唯一的 Snowflake 生成器。
+     *
+     * @param riskIdGenerator 进程唯一的 Snowflake 生成器
+     * @return 控制标识生成端口
+     */
+    @Bean
+    ControlIdentifierGenerator controlIdentifierGenerator(IdGenerator riskIdGenerator) {
         return riskIdGenerator::nextId;
     }
 }

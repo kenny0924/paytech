@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.control.core.dal.mapper.RiskListMapper">
+    <sql id="columns">
+        list_id AS listId, list_code AS listCode, list_name AS listName, supported_subject_type AS supportedSubjectType,
+        matching_mode AS matchingMode, list_purpose AS listPurpose, status, version, create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+    <insert id="insert">
+        INSERT INTO t_risk_list(list_id, list_code, list_name, supported_subject_type, matching_mode, list_purpose, status,
+            version, create_time, update_time)
+        VALUES(#{row.listId}, #{row.listCode}, #{row.listName}, #{row.supportedSubjectType}, #{row.matchingMode},
+            #{row.listPurpose}, #{row.status}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="selectById" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.RiskList">
+        SELECT <include refid="columns"/> FROM t_risk_list WHERE list_id = #{listId}
+    </select>
+    <select id="selectByCode" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.RiskList">
+        SELECT <include refid="columns"/> FROM t_risk_list WHERE list_code = #{listCode}
+    </select>
+    <select id="selectPage" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.RiskList">
+        SELECT <include refid="columns"/> FROM t_risk_list ORDER BY list_code LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="count" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_risk_list
+    </select>
+</mapper>

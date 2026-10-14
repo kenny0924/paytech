@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.control.core.dal.mapper.RiskListEntryMapper">
+    <sql id="columns">
+        entry_id AS entryId, list_id AS listId, subject_type AS subjectType, subject_key AS subjectKey,
+        source_type AS sourceType, source_effect_id AS sourceEffectId, reason, created_by AS createdBy,
+        deactivated_by AS deactivatedBy, deactivated_reason AS deactivatedReason, status, active_slot AS activeSlot,
+        effective_from AS effectiveFrom, effective_to AS effectiveTo, supersedes_entry_id AS supersedesEntryId, version,
+        create_time AS createTime, update_time AS updateTime
+    </sql>
+    <sql id="filter">
+        WHERE list_id = #{listId}
+        <if test="subjectKey != null">AND subject_key = #{subjectKey}</if>
+        <if test="status != null">AND status = #{status}</if>
+    </sql>
+    <insert id="insert">
+        INSERT INTO t_risk_list_entry(entry_id, list_id, subject_type, subject_key, source_type, source_effect_id, reason,
+            created_by, deactivated_by, deactivated_reason, status, active_slot, effective_from, effective_to,
+            supersedes_entry_id, version, create_time, update_time)
+        VALUES(#{row.entryId}, #{row.listId}, #{row.subjectType}, #{row.subjectKey}, #{row.sourceType}, #{row.sourceEffectId},
+            #{row.reason}, #{row.createdBy}, #{row.deactivatedBy}, #{row.deactivatedReason}, #{row.status}, #{row.activeSlot},
+            #{row.effectiveFrom}, #{row.effectiveTo}, #{row.supersedesEntryId}, #{row.version}, #{row.createTime},
+            #{row.updateTime})
+    </insert>
+    <select id="selectById" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.RiskListEntry">
+        SELECT <include refid="columns"/> FROM t_risk_list_entry WHERE entry_id = #{entryId}
+    </select>
+    <select id="selectActive" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.RiskListEntry">
+        SELECT <include refid="columns"/> FROM t_risk_list_entry
+        WHERE list_id = #{listId} AND subject_type = #{subjectType} AND subject_key = #{subjectKey} AND active_slot = 1
+    </select>
+    <update id="close">
+        UPDATE t_risk_list_entry
+        SET status = #{status}, active_slot = NULL, deactivated_by = #{deactivatedBy},
+            deactivated_reason = #{deactivatedReason}, effective_to = #{effectiveTo}, version = version + 1,
+            update_time = #{now}
+        WHERE entry_id = #{row.entryId} AND version = #{row.version} AND status = 'ACTIVE'
+    </update>
+    <select id="countEffective" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_risk_list_entry
+        WHERE subject_type = #{subjectType} AND subject_key = #{subjectKey} AND list_id = #{listId}
+          AND effective_from &lt;= #{at} AND (effective_to IS NULL OR effective_to &gt; #{at})
+    </select>
+    <select id="selectPage" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.RiskListEntry">
+        SELECT <include refid="columns"/> FROM t_risk_list_entry <include refid="filter"/>
+        ORDER BY create_time DESC, entry_id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="count" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_risk_list_entry <include refid="filter"/>
+    </select>
+</mapper>

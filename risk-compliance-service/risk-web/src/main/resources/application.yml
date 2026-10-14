@@ -75,6 +75,8 @@ web:
       - /decision-releases
       - /decision-flows
       - /decision-variables
+      # 名单主体值含 IP、卡指纹等受限原值，只记元数据。
+      - /risk-lists
 
 management:
   endpoints:
