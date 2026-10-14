@@ -180,7 +180,7 @@ local-environment/
 └── mysql/init/
 ```
 
-当前目录只实现 `base` Profile；`scheduler`、`observability` 及其配置目录仍在后续按需创建。实际命令和安全边界见仓库根目录下的 [`local-environment/README.md`](../local-environment/README.md)。
+当前目录已实现 `base`、`storage`、`mail`、`scheduler` 与 `vault` Profile；`observability` 及其配置目录仍在后续按需创建。实际命令和安全边界见仓库根目录下的 [`local-environment/README.md`](../local-environment/README.md)。
 
 ### 7.1 `base` Profile
 
@@ -208,7 +208,14 @@ local-environment/
 
 该 Profile 用于多服务链路、消息重试和性能分析，不作为单服务日常启动条件。数据使用短保留期和有上限的本地卷。
 
-### 7.4 可选安全基础设施 Profile
+### 7.4 `vault` Profile（2026-10-14 获准）
+
+- 只含 Vault Server 一个容器（`mor-local/vault-service:development`，`FROM scratch`、非 root、只读根文件系统、去除全部 capability、内存上限 256MB），复用测试环境的 Dockerfile 与就绪探针；
+- 连接 `mysql:3306/mor_vault` 与 `nacos:8848`，端口只发布到 `127.0.0.1:18107`，在 Nacos `mor-local` 注册 `127.0.0.1:18107`，供宿主机上的 Java 服务发现；
+- LOCAL AES 根密钥、密钥引用与 Nacos 账号来自本机全链路材料，由 `local-environment/vault/vault.sh build` 写入不提交的 `vault/private/vault.env`（0600）；策略只读挂载 `vault/policy.local.json`；
+- 与宿主机进程方式（`run-service.sh vault`）互斥，同一时间只运行一种；不是生产 KMS，也不改变 Vault 的生产缺口。
+
+### 7.5 可选安全基础设施 Profile
 
 `mor-local` 不默认提供生产等价的 KMS、Secrets Manager 或 Object Storage。若某项已批准的 Vault/文件能力需要本地模拟器，应先定义威胁边界、持久卷、端口、测试用途和与生产差异，再显式增加独立 Profile；不得为了未来可能使用某个云厂商预装 LocalStack、MinIO 或 SoftHSM。Vault 当前实现和生产缺口见状态台账。
 

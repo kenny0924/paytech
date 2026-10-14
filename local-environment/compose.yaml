@@ -183,6 +183,56 @@ services:
     mem_limit: 128m
     networks: [mor]
 
+  vault-service:
+    # 本机 Vault（profile: vault）。镜像由 vault/build-image.sh 构建；私密值在 vault/private/vault.env（0600，不提交）。
+    profiles: [vault]
+    image: mor-local/vault-service:development
+    build:
+      context: ./vault/bin/image
+      dockerfile: ../../../../test-environment/vault/Dockerfile
+    user: "10001:10001"
+    restart: "no"
+    read_only: true
+    tmpfs: ["/tmp:size=64m,mode=1777"]
+    mem_limit: 256m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 30s
+    env_file:
+      - path: ./vault/private/vault.env
+        required: true
+    environment:
+      VAULT_RUNTIME_MODE: local
+      VAULT_HTTP_ADDRESS: 0.0.0.0:18107
+      VAULT_DB_DSN: vault_app:${MOR_VAULT_DB_PASSWORD:?set MOR_VAULT_DB_PASSWORD}@tcp(mysql:3306)/mor_vault?parseTime=true&loc=UTC
+      VAULT_POLICY_FILE: /app/policy.json
+      VAULT_SNOWFLAKE_DATACENTER_ID: "0"
+      VAULT_SNOWFLAKE_WORKER_ID: "7"
+      VAULT_NACOS_ENABLED: "true"
+      VAULT_NACOS_SERVER_ADDRESS: nacos:8848
+      VAULT_NACOS_NAMESPACE: mor-local
+      VAULT_NACOS_GROUP: DEFAULT_GROUP
+      # 宿主机上的 Java 服务经发布端口访问，故注册回环地址。
+      VAULT_NACOS_INSTANCE_IP: 127.0.0.1
+      VAULT_NACOS_INSTANCE_PORT: "18107"
+      OTEL_TRACES_EXPORTER: none
+      OTEL_RESOURCE_ATTRIBUTES: ""
+      TZ: UTC
+    ports:
+      - "127.0.0.1:18107:18107"
+    volumes:
+      - ./vault/policy.local.json:/app/policy.json:ro
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, /app/vault-probe]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks: [mor]
+
 networks:
   mor:
     name: mor-local-network

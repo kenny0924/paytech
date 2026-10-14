@@ -82,6 +82,25 @@ docker compose --env-file .env.local --profile storage run --rm minio-init   # i
 - If compose interpolation stops on `PAYTECH_REDIS_PASSWORD`, export it from your existing Redis password first; the
   storage profile does not touch Redis.
 
+## Vault profile
+
+The optional `vault` profile runs the Go Vault Server as a container (`mor-local/vault-service:development`, scratch image,
+non-root, read-only root filesystem, no capabilities). It replaces the host-process Vault started by
+`run-service.sh vault`; run only one of the two at a time because both bind `127.0.0.1:18107`.
+
+```bash
+GO_BIN=~/sdk/go1.27.1/bin/go ./vault/vault.sh build   # cross-compile linux/arm64, write vault/private/vault.env, build image
+./vault/vault.sh up                                    # start/recreate vault-service only (mysql and nacos must be running)
+./vault/vault.sh status
+./vault/vault.sh stop                                  # deregisters from Nacos on shutdown
+```
+
+- Uses `mor_vault` with `vault_app`, the local policy `vault/policy.local.json` (read-only mount) and the same LOCAL AES
+  key as the local full-chain material, so existing tokens remain readable.
+- Registers `vault-service` in Nacos `mor-local` as `127.0.0.1:18107` for host-run Java services.
+- `vault/private/vault.env` (0600, gitignored) holds only the AES root key, key ID and Nacos service account; it is never printed.
+- `vault.sh` fills `PAYTECH_REDIS_PASSWORD` from `MOR_REDIS_PASSWORD` for compose interpolation only; Redis is not touched.
+
 ## XXL-Job scheduler profile
 
 The scheduler profile adds only XXL-Job Admin `3.4.2`; it reuses this project's isolated MySQL and never reads a
