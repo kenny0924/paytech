@@ -7,7 +7,7 @@ import com.paytech.client.contract.integration.ClientDraftContactClient;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.vault.client.*;
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
-/** 不缓存原值或 Token；失败不绑定引用，重试复用同一逻辑 Protect 键。 */
+/** 不缓存原值或 Token；失败不绑定引用，重试复用同一逻辑 Protect 键。Email/Phone 按全系统 Data Type 目录使用 STABLE 模式。 */
 public final class ClientDraftContactClientImpl implements ClientDraftContactClient {
     private static final String PURPOSE="CLIENT_ONBOARDING_CONTACT";
     private final VaultClient vault;
@@ -23,7 +23,7 @@ public final class ClientDraftContactClientImpl implements ClientDraftContactCli
                 "operation",command.operation(),"command",command.key(),"hash",command.hash(),"field",field));
             try {
                 var token=vault.protect(new ProtectCommand(field.equals("email")?"EMAIL_ADDRESS_V1":"PHONE_E164_V1",
-                    TokenMode.REFERENCE,value,PURPOSE,key));
+                    TokenMode.STABLE,value,PURPOSE,key));
                 String mask=field.equals("email")?"***@"+value.substring(value.lastIndexOf('@')+1):"***"+value.substring(value.length()-4);
                 result.put(type,new ClientDraftContact(type,token.token(),mask));
             } catch (RuntimeException failure) { throw new ErrorException(ONBOARDING_DEPENDENCY_UNAVAILABLE); }

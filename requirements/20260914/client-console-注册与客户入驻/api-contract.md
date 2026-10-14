@@ -202,7 +202,7 @@ Processor 在 Redis 账号占位/申请资源锁内安排本地短事务；账�
 
 本期沿用 CCT t_command_idempotency：作用域 CLIENT_ACCOUNT:<accountId>，操作 CLIENT_APPLICATION_CREATE/CLIENT_DRAFT_SAVE，成功状态 SUCCEEDED，response_ref 为 CREATED/RESTORED/SAVED:<applicationId>，update_time 为首次完成时间。请求摘要对规范化字段、申请目标、账号及操作做带固定域的 JCS/SHA-256；不保存原表单。按既有 Application 类保留基线设置 90 天，不新增清理任务；已存在命令即使过期也按原引用重放，不自动创建替代申请。
 
-联系人使用现有 Vault V1 的 EMAIL_ADDRESS_V1/PHONE_E164_V1、REFERENCE 模式和 CLIENT_ONBOARDING_CONTACT 用途。未绑定的 Protect 结果不作为 CCT 已保存资料；不新增 Vault Bind/Retire 协议。正式环境的用途授权、私网发现及真实双 Owner 验证需单独完成。运行配置 `onboarding.draft-enabled` 默认关闭，并要求已有 CCT 数据源、恢复能力、Redis 和 Vault 配置；应用不创建或迁移业务表。当前实现与验收范围只见 [CURRENT_IMPLEMENTATION](../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
+联系人使用现有 Vault V1 的 EMAIL_ADDRESS_V1/PHONE_E164_V1、STABLE 模式和 CLIENT_ONBOARDING_CONTACT 用途（2026-10-14 用户确认：Vault 每个 Data Type 只允许一种 Token 模式，Platform 登录邮箱与 Commerce Consumer 已用 STABLE，CCT 由 REFERENCE 改为 STABLE 保持全系统一致；同值可被关联，访问仍受 Caller/Purpose 策略约束）。未绑定的 Protect 结果不作为 CCT 已保存资料；不新增 Vault Bind/Retire 协议。正式环境的用途授权、私网发现及真实双 Owner 验证需单独完成。运行配置 `onboarding.draft-enabled` 默认关闭，并要求已有 CCT 数据源、恢复能力、Redis 和 Vault 配置；应用不创建或迁移业务表。当前实现与验收范围只见 [CURRENT_IMPLEMENTATION](../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
 
 
 ## 8. C07—C11 的 CCT 私网组件
