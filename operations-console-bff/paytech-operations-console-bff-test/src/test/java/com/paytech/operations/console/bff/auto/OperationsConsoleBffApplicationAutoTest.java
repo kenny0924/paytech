@@ -275,7 +275,8 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /client-onboarding-admin/v1/cases/{caseId}/evidence/{evidenceId}/review",
             "POST /client-onboarding-admin/v1/cases/{caseId}/return",
             "POST /client-onboarding-admin/v1/cases/{caseId}/approval",
-            "POST /client-onboarding-admin/v1/cases/{caseId}/rejection"), routes);
+            "POST /client-onboarding-admin/v1/cases/{caseId}/rejection",
+            "POST /client-onboarding-admin/v1/cases/{caseId}/files/{fileId}/download"), routes);
 
         Path classes = webModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

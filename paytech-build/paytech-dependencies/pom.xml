@@ -35,10 +35,24 @@
         <java-json-canonicalization.version>1.1</java-json-canonicalization.version>
         <paytech.version>1.0.0-SNAPSHOT</paytech.version>
         <lang3.version>3.19.0</lang3.version>
+        <minio.version>8.5.17</minio.version>
+        <aws-sdk.version>2.31.50</aws-sdk.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws-sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>

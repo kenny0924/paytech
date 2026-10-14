@@ -250,6 +250,22 @@ Scope creation and update use `AbstractLockProcessor` with the shared logical ke
 and require restart to change. They are independent of the legacy annotation-lock properties.
 The unique Scope code and database row/version checks remain the final concurrency protection.
 
+## Onboarding file storage
+
+`files.onboarding.enabled=true` (requires CLIENT authentication, Redis coordination and compensation) also needs exactly
+one storage adapter, chosen by `files.onboarding.storage-provider`:
+
+| Provider | Properties | Use |
+|---|---|---|
+| `MINIO` | `files.onboarding.minio.endpoint` (HTTPS root), `region`, `access-key`, `secret-key`, optional `trusted-certificate` (PEM), `connect-timeout`, `read-timeout` | Local `storage` profile (`https://127.0.0.1:19400`) |
+| `S3` | `files.onboarding.s3.region`, optional `endpoint` (HTTPS), `path-style-access`, optional paired `access-key`/`secret-key` (otherwise the AWS default credential chain), `trusted-certificate`, timeouts | Production AWS S3 |
+
+`storage-container-ref` is the bucket; it must have versioning and default server-side encryption, and the browser
+origin must be allowed by bucket CORS for `PUT` with `Content-Type` and `If-None-Match`. Uploads are create-once and
+completion pins the single object version. `scan-policy-code` must name an ACTIVE `t_file_scan_policy`; the built-in
+`PLATFORM_FORMAT` scanner only re-checks digest, size and file signature (PDF/JPEG/PNG) — it is not malware scanning.
+Operations reviewers download through `POST /review-files/v1/files/{fileId}/download` (metadata-only logging).
+
 ## Health
 
 The same private HTTP listener exposes:

@@ -23,7 +23,18 @@ public class FileLifecycleServiceImpl implements FileLifecycleService {
     @Override public Owned read(long fileId,long accountId) {
         Long uploadId=repository.readUploadId(fileId,accountId);
         if (uploadId==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
-        var upload=owned(uploadId,accountId);
+        return owned(fileId,owned(uploadId,accountId));
+    }
+    /** 与 read 相同的入驻材料范围，仅去掉上传账号条件。 */
+    @Override public Owned readForReview(long fileId) {
+        Long uploadId=repository.readReviewUploadId(fileId);
+        if (uploadId==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
+        var row=uploads.find(uploadId);
+        if (row==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
+        return owned(fileId,owned(row,row.uploaderId()));
+    }
+    /** 组合文件事实与原上传目标；目标格式损坏时失败关闭。 */
+    private Owned owned(long fileId,Upload upload) {
         var row=repository.readFile(fileId);
         String[] target=upload.ownerRefId().split(":",-1);
         try {

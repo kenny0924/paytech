@@ -58,6 +58,13 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 default -> HttpStatus.CONFLICT;
             };
         }
+        if (errorCode instanceof com.paytech.platform.support.api.enums.OnboardingFileErrorCode file) {
+            return switch (file) {
+                case FILE_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case FILE_STATE_CONFLICT, FILE_TARGET_CONFLICT -> HttpStatus.CONFLICT;
+                default -> defaultStatus;
+            };
+        }
         if (errorCode instanceof com.paytech.client.contract.api.enums.ClientDraftErrorCode cct) {
             return switch (cct) {
                 case REVIEW_CASE_NOT_FOUND -> HttpStatus.NOT_FOUND;

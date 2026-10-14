@@ -10,7 +10,7 @@ reason = 'Client onboarding initial registration; keep routes disabled pending a
 idempotent = {'C04', *('C%02d' % n for n in range(6, 14)),
               *('O%02d' % n for n in range(3, 10))}
 queries = {'C03': ['clientType'], 'C15': ['cursor', 'limit'],
-           'O01': ['cursor', 'limit', 'status', 'applicationNo']}
+           'O01': ['page', 'size', 'status', 'qualificationType', 'applicationId']}
 
 def pair(dimension, capacity, concurrency):
     return [dict(ruleType='RATE_LIMIT', dimension=dimension, capacity=capacity,
@@ -25,6 +25,15 @@ if not any(r['operationId'] == 'C16' for r in plan['routes']):
                externalPathTemplate='/api/client/onboarding/v1/applications/{applicationId}/submission-check',
                downstreamPathTemplate='/client-onboarding/v1/applications/{applicationId}/submission-check')
     plan['routes'].insert(plan['routes'].index(base) + 1, c16)
+
+# O10 审核材料下载（2026-10-14 文件存储确认稿）：在 O09 之后插入一次，重复运行保持幂等。
+if not any(r['operationId'] == 'O10' for r in plan['routes']):
+    base = next(r for r in plan['routes'] if r['operationId'] == 'O02')
+    o10 = dict(base, operationId='O10', routeCode='client-onboarding-o10', httpMethod='POST', bodyLimitBytes=1024,
+               externalPathTemplate='/api/operations/client-onboarding-admin/v1/cases/{caseId}/files/{fileId}/download',
+               downstreamPathTemplate='/client-onboarding-admin/v1/cases/{caseId}/files/{fileId}/download')
+    o09 = next(r for r in plan['routes'] if r['operationId'] == 'O09')
+    plan['routes'].insert(plan['routes'].index(o09) + 1, o10)
 
 for route in plan['routes']:
     op = route['operationId']

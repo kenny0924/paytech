@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canApprove, classificationIssues, decodeCase, decodeCasePage, decodeCommand, decodeDetail } from './clientReview.ts';
+import { canApprove, classificationIssues, decodeCase, decodeCasePage, decodeCommand, decodeDetail, decodeFileDownload } from './clientReview.ts';
 
 const reviewCase = {
   caseId: '7001', caseNo: 'DD7001', applicationId: '8001', clientId: '8101', sourceSubmissionId: 'sub-1', qualificationType: 'ORGANIZATION_KYB',
@@ -53,4 +53,13 @@ test('classification draft checks', () => {
   assert.ok(classificationIssues([{ industryCode: 'RETAIL', mccCode: '54A1', primary: true }]).includes('MCC 必须是四位数字'));
   assert.ok(classificationIssues([{ industryCode: 'RETAIL', mccCode: '5411', primary: true }, { industryCode: 'RETAIL', mccCode: '5411', primary: false }])
     .includes('行业与 MCC 组合不能重复'));
+});
+
+test('file download grant must match the requested file and use HTTPS', () => {
+  const grant = { fileId: '9401', displayName: 'registration.pdf', mimeType: 'application/pdf', sizeBytes: '1024',
+    url: 'https://storage.local.test/obj?sig=1', expiresAt: '2026-10-14T00:01:00.123456Z' };
+  assert.equal(decodeFileDownload(grant, '9401').url, grant.url);
+  assert.throws(() => decodeFileDownload(grant, '9402'));
+  assert.throws(() => decodeFileDownload({ ...grant, url: 'http://storage.local.test/obj' }, '9401'));
+  assert.throws(() => decodeFileDownload({ ...grant, expiresAt: 'soon' }, '9401'));
 });

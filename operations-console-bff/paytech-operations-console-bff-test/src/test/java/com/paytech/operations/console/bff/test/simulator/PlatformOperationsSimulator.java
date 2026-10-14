@@ -136,7 +136,8 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("client-onboarding-o05", "900000000000041003"),
         Map.entry("client-onboarding-o07", "900000000000041004"),
         Map.entry("client-onboarding-o08", "900000000000041005"),
-        Map.entry("client-onboarding-o09", "900000000000041005"));
+        Map.entry("client-onboarding-o09", "900000000000041005"),
+        Map.entry("client-onboarding-o10", "900000000000041001"));
 
     // 这是 Platform Simulator 的当前目录事实；BFF 生产代码仍只传可信 Route Code。
     private static final Map<String, String> ROUTE_PERMISSIONS = Map.ofEntries(

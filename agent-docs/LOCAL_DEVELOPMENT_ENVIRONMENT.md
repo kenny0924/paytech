@@ -233,6 +233,8 @@ local-environment/
 | Loki | 3100 | 13100 | 本地日志后端 |
 | Tempo | 3200 | 13200 | 本地 Trace 后端 |
 | Alertmanager | 9093 | 19093 | 本地告警界面 |
+| MinIO S3 API（`storage` Profile，HTTPS） | 9000 | 19400 | Platform 入驻文件本机存储；自签名证书，仅绑定 `127.0.0.1` |
+| MinIO Console（`storage` Profile） | 9001 | 19401 | 本机存储管理界面 |
 
 ### 8.2 后端应用
 

@@ -123,6 +123,50 @@ services:
     mem_limit: 1024m
     networks: [mor]
 
+  minio:
+    profiles: [storage]
+    # 社区版官方镜像已下架；使用 Chainguard 源码构建镜像并按摘要固定（MinIO RELEASE.2026-09-22T19-25-18Z）。
+    image: cgr.dev/chainguard/minio@sha256:2136d593beacf4461187035eca949fe49abd589d5079735025c711ca58fee0c8
+    restart: "no"
+    environment:
+      MINIO_ROOT_USER: ${MOR_MINIO_ROOT_USER:?set MOR_MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MOR_MINIO_ROOT_PASSWORD:?set MOR_MINIO_ROOT_PASSWORD}
+      MINIO_KMS_SECRET_KEY: ${MOR_MINIO_KMS_SECRET_KEY:?set MOR_MINIO_KMS_SECRET_KEY}
+      MC_HOST_local: https://${MOR_MINIO_ROOT_USER}:${MOR_MINIO_ROOT_PASSWORD}@127.0.0.1:9000
+      TZ: UTC
+    command: [server, /data, --certs-dir, /certs, --address, ":9000", --console-address, ":9001"]
+    ports:
+      - "127.0.0.1:19400:9000"
+      - "127.0.0.1:19401:9001"
+    volumes:
+      - minio-data:/data
+      - ./minio/certs:/certs:ro
+    healthcheck:
+      test: [CMD, mc, ready, local, --insecure]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    mem_limit: 512m
+    networks: [mor]
+
+  minio-init:
+    profiles: [storage]
+    image: cgr.dev/chainguard/minio@sha256:2136d593beacf4461187035eca949fe49abd589d5079735025c711ca58fee0c8
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MOR_MINIO_ROOT_USER:?set MOR_MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MOR_MINIO_ROOT_PASSWORD:?set MOR_MINIO_ROOT_PASSWORD}
+      PLATFORM_ACCESS_KEY: ${MOR_MINIO_PLATFORM_ACCESS_KEY:?set MOR_MINIO_PLATFORM_ACCESS_KEY}
+      PLATFORM_SECRET_KEY: ${MOR_MINIO_PLATFORM_SECRET_KEY:?set MOR_MINIO_PLATFORM_SECRET_KEY}
+    entrypoint: [/bin/sh, /init/init.sh]
+    volumes:
+      - ./minio/init:/init:ro
+    networks: [mor]
+
 networks:
   mor:
     name: mor-local-network
@@ -134,3 +178,5 @@ volumes:
     name: mor-local-redis-data
   rabbitmq-data:
     name: mor-local-rabbitmq-data
+  minio-data:
+    name: mor-local-minio-data

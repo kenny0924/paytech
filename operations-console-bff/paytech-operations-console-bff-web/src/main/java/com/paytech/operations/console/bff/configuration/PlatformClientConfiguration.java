@@ -110,6 +110,15 @@ public class PlatformClientConfiguration {
         return operationsConfigurationPlatformProxyFactory.createClient(GatewayConfigurationManagementApi.class);
     }
 
+    /** 审核材料下载额外登记 Platform 文件错误码，其余沿用 Platform 发现与 Problem 解码。 */
+    @Bean
+    com.paytech.platform.support.api.reviewfiles.ReviewFileApi reviewFileApi(Environment environment,
+        PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl) {
+        return platformProxy(environment, discovery, testBaseUrl, false,
+            com.paytech.platform.support.api.enums.OnboardingFileErrorCode.values())
+            .createClient(com.paytech.platform.support.api.reviewfiles.ReviewFileApi.class);
+    }
+
     @Bean
     OperationsManagementApi operationsManagementApi(HttpServiceProxyFactory operationsPlatformProxyFactory) {
         return operationsPlatformProxyFactory.createClient(OperationsManagementApi.class);
@@ -139,7 +148,7 @@ public class PlatformClientConfiguration {
     }
 
     private HttpServiceProxyFactory platformProxy(Environment environment, PlatformDiscoveryInterceptor discovery,
-        String testBaseUrl, boolean configurationValidation) {
+        String testBaseUrl, boolean configurationValidation, CodeMessageEnum... extraErrors) {
         RestClient.Builder builder = RestClient.builder();
         if (testBaseUrl.isBlank()) {
             builder.baseUrl(PLATFORM_BASE_URL).requestInterceptor(discovery);
@@ -150,7 +159,8 @@ public class PlatformClientConfiguration {
         RestClient client = builder.requestFactory(requestFactory())
             .requestInterceptor(requestIdInterceptor()).build();
         CodeMessageEnum[] errors = Stream.concat(Arrays.stream(OperationsErrorCode.values()),
-            Arrays.stream(GatewayConfigurationErrorCode.values())).toArray(CodeMessageEnum[]::new);
+            Stream.concat(Arrays.stream(GatewayConfigurationErrorCode.values()), Arrays.stream(extraErrors)))
+            .toArray(CodeMessageEnum[]::new);
         HttpServiceClientOptions options = HttpServiceClientOptions.migrationWithLegacyErrorResponse()
             .withDependencyFailureMapper((kind, cause) -> switch (kind) {
                 case TIMEOUT -> new ErrorException(OperationsBffErrorCode.DEPENDENCY_TIMEOUT, null, cause);

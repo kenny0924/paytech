@@ -64,6 +64,7 @@
 | O07 | POST `/client-onboarding-admin/v1/cases/{caseId}/return` | Risk | ReturnForCorrection → CommandResult | 结束当前任务，发事实给 CCT 退回原申请 |
 | O08 | POST `/client-onboarding-admin/v1/cases/{caseId}/approval` | Risk | ReviewDecision → CommandResult | 分类、主/子任务、证据、检查全部满足后批准 |
 | O09 | POST `/client-onboarding-admin/v1/cases/{caseId}/rejection` | Risk | ReviewDecision → CommandResult | 最终拒绝；不能改回草稿 |
+| O10 | POST `/client-onboarding-admin/v1/cases/{caseId}/files/{fileId}/download` | Risk + Platform | Empty → ReviewFileDownload | 文件须属于该任务证据；Platform 重检运营权限与文件可用，签发最长 60 秒原版本下载地址，见[文件存储确认稿](./file-storage-adapter-proposal.md#7-实施补充2026-10-14) |
 | I01 | POST `/client-onboarding-review/v1/submissions` | CCT→Risk | ReviewSubmission → ReviewRegistration | 按提交命令身份幂等建立主/关联人任务 |
 | I02 | POST `/client-onboarding-review/v1/cases/{caseId}/classifications` | CCT→Risk | ConfirmedClassifications → CommandResult | 幂等接收同任务固定分类 |
 | I03 | GET `/client-onboarding-review/v1/submissions/{submissionId}` | CCT→Risk | Empty → ReviewRegistration | 登记结果未知时查询原任务，不造新任务 |

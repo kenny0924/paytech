@@ -1,0 +1,155 @@
+package com.paytech.platform.support.auto.ext.eventhandler.files;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.paytech.foundation.compensation.api.CompensationEvent;
+import com.paytech.foundation.compensation.api.CompensationEventRequest;
+import com.paytech.foundation.compensation.api.CompensationHandlerResult;
+import com.paytech.foundation.compensation.api.CompensationHandlerResult.Outcome;
+import com.paytech.platform.support.api.enums.FileObjectStatus;
+import com.paytech.platform.support.api.enums.FileScanStatus;
+import com.paytech.platform.support.filedocument.integration.scanning.FormatFileScanner;
+import com.paytech.platform.support.filedocument.integration.storage.minio.MinioFileStorage;
+import com.paytech.platform.support.service.handler.FileScanHandler;
+import com.paytech.platform.support.test.base.OnboardingFileTestBase;
+import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
+import com.paytech.platform.support.test.builder.OnboardingFileBuilder.Spec;
+import com.paytech.platform.support.test.mocker.local.OnboardingFileMocker.Policy;
+
+/**
+ * 文件扫描补偿入口：经真实 Handler、文件生命周期服务、Platform 格式检查器与 MinIO 准确版本读取，追加终局结果并推进扫描状态。
+ *
+ * @see FileScanHandler#handle(CompensationEvent)
+ */
+class FileScanHandlerTest extends OnboardingFileTestBase {
+
+    /** 格式检查器当前运行版本（生产常量为包内可见）。 */
+    private static final String FORMAT_RUNTIME_VERSION = "1";
+
+    private static final String UNAVAILABLE = "FILE_SCAN_UNAVAILABLE";
+
+    private static final String IDENTITY_INVALID = "FILE_SCAN_IDENTITY_INVALID";
+
+    @Autowired
+    private FileScanHandler handler;
+
+    private Policy policy;
+
+    /** 本类共用：只含 PLATFORM_FORMAT 要求、接受 FORMAT_VALID 的策略。 */
+    @BeforeEach
+    void setUpClassMocks() {
+        policy = fileMocker.formatPolicy();
+    }
+
+    /** 登记类型与实际文件头一致：结果 FORMAT_VALID，文件变为 AVAILABLE；重放不追加第二条结果。 */
+    @Test
+    void test_normalFlow() {
+        Spec spec = stored(material().build());
+
+        assertEquals(CompensationHandlerResult.success(), handle(spec.fileId()));
+
+        assertScan(spec, FileScanStatus.AVAILABLE, FormatFileScanner.VALID);
+        assertEquals(now(), instant(fileData.file(spec.fileId()).get("available_time")));
+        assertEquals(CompensationHandlerResult.success(), handle(spec.fileId()));
+        assertScan(spec, FileScanStatus.AVAILABLE, FormatFileScanner.VALID);
+    }
+
+    /** 登记为 PDF 但实际是 PNG：结果 FORMAT_INVALID 不在接受集合，FORMAT 要求使文件 REJECTED。 */
+    @Test
+    void test_businessRuleViolation() {
+        Spec spec = stored(material().bytes(OnboardingFileBuilder.PNG).build());
+
+        assertEquals(CompensationHandlerResult.success(), handle(spec.fileId()));
+
+        assertScan(spec, FileScanStatus.REJECTED, FormatFileScanner.INVALID);
+        assertNull(fileData.file(spec.fileId()).get("available_time"));
+    }
+
+    /** 登记版本在存储中不存在：可重试失败，不追加结果，文件停留在 SCANNING。 */
+    @Test
+    void test_noDataFound() {
+        Spec spec = fileMocker.file(material().version("missing-version").build());
+
+        assertRetryable(handle(spec.fileId()));
+
+        assertTrue(fileData.results(spec.fileId()).isEmpty(), "存储不可用时不能伪造结果");
+        assertEquals(FileScanStatus.SCANNING.getCode(), fileData.file(spec.fileId()).get("scan_status"));
+    }
+
+    /** 实际字节与登记摘要不符：可重试失败，不追加结果。 */
+    @Test
+    void test_contentHashMismatch() {
+        Spec spec = stored(material().contentHash(OnboardingFileBuilder.sha256(OnboardingFileBuilder.TEXT)).build());
+
+        assertRetryable(handle(spec.fileId()));
+
+        assertTrue(fileData.results(spec.fileId()).isEmpty());
+        assertEquals(FileScanStatus.SCANNING.getCode(), fileData.file(spec.fileId()).get("scan_status"));
+    }
+
+    /** 损坏的任务身份为终局失败，不读取文件。 */
+    @Test
+    void test_invalidParameter() {
+        Spec spec = stored(material().build());
+        CompensationEventRequest request = FileScanHandler.buildEvent(spec.fileId());
+
+        var malformedKey = handler.handle(new CompensationEvent(1L, "0" + spec.fileId(), request.eventType(),
+            request.subEventType(), null, 1));
+        var unexpectedPayload = handler.handle(new CompensationEvent(1L, request.eventKey(), request.eventType(),
+            request.subEventType(), "{}", 1));
+
+        assertAll(() -> assertEquals(Outcome.TERMINAL_FAILURE, malformedKey.outcome()),
+            () -> assertEquals(IDENTITY_INVALID, malformedKey.errorCode()),
+            () -> assertEquals(Outcome.TERMINAL_FAILURE, unexpectedPayload.outcome()),
+            () -> assertEquals(IDENTITY_INVALID, unexpectedPayload.errorCode()));
+        assertEquals(FileScanStatus.PENDING_SCAN.getCode(), fileData.file(spec.fileId()).get("scan_status"));
+        assertTrue(fileData.results(spec.fileId()).isEmpty());
+    }
+
+    /** 本例对象上待扫描的 PDF 材料，使用本类策略。 */
+    private OnboardingFileBuilder material() {
+        return material(MinioFileStorage.PROVIDER).policyId(policy.policyId()).scanStatus(FileScanStatus.PENDING_SCAN)
+            .objectStatus(FileObjectStatus.ACTIVE);
+    }
+
+    /** 以 Handler 事件工厂构造的正常补偿事件执行一次。 */
+    private CompensationHandlerResult handle(long fileId) {
+        CompensationEventRequest request = FileScanHandler.buildEvent(fileId);
+        return handler.handle(new CompensationEvent(1L, request.eventKey(), request.eventType(),
+            request.subEventType(), null, 1));
+    }
+
+    /** 依赖不可用：可重试，错误码稳定。 */
+    private void assertRetryable(CompensationHandlerResult result) {
+        assertAll(() -> assertEquals(Outcome.RETRYABLE_FAILURE, result.outcome()),
+            () -> assertEquals(UNAVAILABLE, result.errorCode()));
+    }
+
+    /** 文件终态与唯一一条第 1 次尝试的结果。 */
+    private void assertScan(Spec spec, FileScanStatus status, String resultCode) {
+        assertEquals(status.getCode(), fileData.file(spec.fileId()).get("scan_status"));
+        List<Map<String, Object>> results = fileData.results(spec.fileId());
+        assertEquals(1, results.size(), "每项要求只追加一条结果");
+        Map<String, Object> result = results.getFirst();
+        Instant scannedTime = instant(result.get("scanned_time"));
+        assertAll(() -> assertEquals(policy.requirementId(), ((Number) result.get("scan_requirement_id")).longValue()),
+            () -> assertEquals(policy.policyId(), ((Number) result.get("scan_policy_id")).longValue()),
+            () -> assertEquals(1, ((Number) result.get("attempt_no")).intValue()),
+            () -> assertEquals(FORMAT_RUNTIME_VERSION, result.get("scanner_runtime_version")),
+            () -> assertEquals(resultCode, result.get("result_code")),
+            () -> assertEquals(now(), scannedTime));
+    }
+
+    /** 数据库 UTC 微秒时间列读取为 Instant。 */
+    private static Instant instant(Object value) {
+        return value instanceof java.time.LocalDateTime local ? local.toInstant(java.time.ZoneOffset.UTC) : (Instant) value;
+    }
+}

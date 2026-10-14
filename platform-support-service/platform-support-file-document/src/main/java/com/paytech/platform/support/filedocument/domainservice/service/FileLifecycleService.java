@@ -6,6 +6,8 @@ import com.paytech.platform.support.filedocument.domain.file.FileModels.*;
 public interface FileLifecycleService {
     /** 返回准确原文件和上传绑定，不选择最新申请或修改扫描任务。 */
     Owned read(long fileId,long accountId);
+    /** 运营审核按文件身份读取原文件和上传绑定，不限定上传账号；权限由调用方先行确认。 */
+    Owned readForReview(long fileId);
 
     /** 读取原账号的原 Upload，不替换为最新申请。 */
     Upload owned(long uploadId,long accountId);

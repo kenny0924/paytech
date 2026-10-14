@@ -147,6 +147,14 @@ export function decodeCommand(value: unknown, caseId: string): Command {
   const v = value as Command; require(v && v.caseId === caseId && code(v.status));
   return { caseId: v.caseId, status: v.status };
 }
+export interface FileDownload { fileId: string; displayName: string; mimeType: string; url: string; expiresAt: string }
+/** 下载授权必须对应所点文件且为 HTTPS 地址；地址只用于本次跳转，不保存。 */
+export function decodeFileDownload(value: unknown, fileId: string): FileDownload {
+  const v = value as FileDownload;
+  require(v && v.fileId === fileId && text(v.displayName) && text(v.mimeType, 128) && instant(v.expiresAt)
+    && typeof v.url === 'string' && v.url.length <= 8192 && v.url.startsWith('https://'));
+  return { fileId: v.fileId, displayName: v.displayName, mimeType: v.mimeType, url: v.url, expiresAt: v.expiresAt };
+}
 /** 通过按钮只看 Risk 门禁：任务在进行且没有未满足项。 */
 export function canApprove(review: ReviewCase): boolean {
   return activeStatuses.includes(review.status) && review.approvalBlockers.length === 0;

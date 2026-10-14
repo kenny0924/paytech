@@ -25,6 +25,8 @@ class LocalMockEnvironmentInitializerTest {
 
     private static final String DATABASE_PASSWORD = "synthetic-platform-password";
     private static final String REDIS_PASSWORD = "synthetic-redis-password";
+    private static final String MINIO_ACCESS_KEY = "synthetic-file";
+    private static final String MINIO_SECRET_KEY = "synthetic-minio-secret-key";
     @TempDir
     Path workspace;
 
@@ -34,12 +36,18 @@ class LocalMockEnvironmentInitializerTest {
         writeEnvironment("MOR_MYSQL_ROOT_PASSWORD=unrelated-root-secret\n"
             + "MOR_CCT_DB_PASSWORD=unrelated-cct-secret\n"
             + "MOR_PLATFORM_DB_PASSWORD='" + DATABASE_PASSWORD + "'\n"
-            + "export PAYTECH_REDIS_PASSWORD=\"" + REDIS_PASSWORD + "\"\n");
+            + "export PAYTECH_REDIS_PASSWORD=\"" + REDIS_PASSWORD + "\"\n"
+            + "MOR_MINIO_PLATFORM_ACCESS_KEY=" + MINIO_ACCESS_KEY + "\n"
+            + "MOR_MINIO_PLATFORM_SECRET_KEY=" + MINIO_SECRET_KEY + "\n");
         try (var context = mockContext()) {
             new LocalMockEnvironmentInitializer(workspace).initialize(context);
             var environment = context.getEnvironment();
             assertAll(() -> assertEquals(DATABASE_PASSWORD, environment.getProperty("spring.datasource.password")),
                 () -> assertEquals(REDIS_PASSWORD, environment.getProperty("spring.data.redis.password")),
+                () -> assertEquals(MINIO_ACCESS_KEY, environment.getProperty("MOR_MINIO_PLATFORM_ACCESS_KEY")),
+                () -> assertEquals(MINIO_SECRET_KEY, environment.getProperty("MOR_MINIO_PLATFORM_SECRET_KEY")),
+                () -> assertEquals(workspace.resolve("local-environment").toAbsolutePath().normalize().toString(),
+                    environment.getProperty(LocalMockEnvironmentInitializer.LOCAL_ENVIRONMENT)),
                 () -> assertNull(environment.getProperty("MOR_MYSQL_ROOT_PASSWORD")),
                 () -> assertNull(environment.getProperty("MOR_CCT_DB_PASSWORD")));
         }

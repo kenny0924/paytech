@@ -2688,10 +2688,11 @@
           }
         ],
         "queryParameterNames": [
-          "cursor",
-          "limit",
+          "page",
+          "size",
           "status",
-          "applicationNo"
+          "qualificationType",
+          "applicationId"
         ],
         "guardRules": [
           {
@@ -3562,6 +3563,102 @@
       },
       "bindings": {
         "/permissionId": "permission:CLIENT_ONBOARDING_DECIDE"
+      },
+      "execute": false
+    },
+    {
+      "key": "O10",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-onboarding-o10",
+        "channel": "OPERATIONS",
+        "httpMethod": "POST",
+        "externalPathTemplate": "/api/operations/client-onboarding-admin/v1/cases/{caseId}/files/{fileId}/download",
+        "downstreamPathTemplate": "/client-onboarding-admin/v1/cases/{caseId}/files/{fileId}/download",
+        "securityProfileCode": "OPERATIONS_JWT",
+        "authorizationMode": "HUMAN_PERMISSION",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 1024,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "authorization",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "origin",
+            "headerUse": "FORWARD_REQUEST"
+          }
+        ],
+        "queryParameterNames": [],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 600,
+            "refillTokens": 600,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 50
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 10
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": 60,
+            "refillTokens": 60,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 5
+          }
+        ],
+        "targetServiceCode": "operations-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {
+        "/permissionId": "permission:CLIENT_ONBOARDING_REVIEW_READ"
       },
       "execute": false
     },

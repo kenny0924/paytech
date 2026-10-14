@@ -39,6 +39,23 @@ public class ClientReviewRiskClientImpl implements ClientReviewRiskClient {
         return response;
     }
 
+    /** 任意主体、任意材料要求下的证据文件；结构缺失视为没有证据。 */
+    @Override
+    public java.util.Set<String> evidenceFileIds(OperatorContext o, String caseId) {
+        var review = detail(o, caseId);
+        if (review.getSubjects() == null) {
+            return java.util.Set.of();
+        }
+        return review.getSubjects().stream()
+            .filter(subject -> subject.getRequirements() != null)
+            .flatMap(subject -> subject.getRequirements().stream())
+            .filter(requirement -> requirement.getEvidence() != null)
+            .flatMap(requirement -> requirement.getEvidence().stream())
+            .map(evidence -> evidence.getFileId())
+            .filter(java.util.Objects::nonNull)
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
     @Override
     public ClientReviewCommandResponseBody reviewEvidence(OperatorContext o, String caseId, String evidenceId,
         EvidenceReviewRequestBody request) {

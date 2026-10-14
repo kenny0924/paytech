@@ -14,12 +14,14 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.ClientReviewCctClient;
 import com.paytech.operations.console.bff.integration.ClientReviewRiskClient;
 import com.paytech.operations.console.bff.service.ClientReviewDetailsProcessor;
+import com.paytech.operations.console.bff.service.ClientReviewFileProcessor;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ClassificationSetRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.DecisionRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.EvidenceReviewRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ReturnRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ReviewCaseDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
+import com.paytech.platform.support.api.reviewfiles.response.ReviewFileDownloadResponseBody;
 import com.paytech.risk.api.compliance.response.ClientReviewCaseResponseBody;
 import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
 
@@ -30,8 +32,8 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 
 /**
- * O01—O05、O07—O09 Client 入驻审核；路由权限由 Gateway 路由码 + PLT-I02 统一授权
- * <li>O02 聚合 Risk 任务与 CCT 申请/分类，其余为单 Owner 转发。</li>
+ * O01—O05、O07—O10 Client 入驻审核；路由权限由 Gateway 路由码 + PLT-I02 统一授权
+ * <li>O02 聚合 Risk 任务与 CCT 申请/分类，O10 核对任务证据后由 Platform 签发下载，其余为单 Owner 转发。</li>
  * <li>Owner 按任务状态防重，不转发 Idempotency-Key；超时后页面用原请求重试。</li>
  */
 @RestController
@@ -44,6 +46,7 @@ public class ClientOnboardingReviewController {
     private final ClientReviewRiskClient risk;
     private final ClientReviewCctClient cct;
     private final ClientReviewDetailsProcessor details;
+    private final ClientReviewFileProcessor reviewFiles;
 
     /** O01 审核列表。 */
     @GetMapping("/cases")
@@ -101,5 +104,12 @@ public class ClientOnboardingReviewController {
     public ClientReviewCommandResponseBody reject(OperatorContext operator, @PathVariable @Pattern(regexp = ID) String caseId,
         @Valid @RequestBody DecisionRequestBody request) {
         return risk.reject(operator, caseId, request);
+    }
+
+    /** O10 下载任务证据中的材料，返回最长 60 秒的原版本地址。 */
+    @PostMapping("/cases/{caseId}/files/{fileId}/download")
+    public ReviewFileDownloadResponseBody downloadFile(OperatorContext operator, @PathVariable @Pattern(regexp = ID) String caseId,
+        @PathVariable @Pattern(regexp = ID) String fileId) {
+        return reviewFiles.download(operator, caseId, fileId);
     }
 }

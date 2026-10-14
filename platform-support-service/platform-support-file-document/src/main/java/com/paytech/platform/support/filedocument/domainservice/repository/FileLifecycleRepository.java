@@ -9,6 +9,8 @@ import com.paytech.platform.support.api.enums.FileScanStatus;
 public interface FileLifecycleRepository {
     /** 准确上传与 Owner 一致才提供读取入口。 */
     Long readUploadId(long fileId,long accountId);
+    /** 入驻材料范围内按文件读取原上传，不限定上传账号。 */
+    Long readReviewUploadId(long fileId);
     /** 文件当前状态的纯查询。 */
     FileObject readFile(long id);
 

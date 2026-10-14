@@ -18,6 +18,15 @@
  AND EXISTS(SELECT 1 FROM t_file_owner_ref o WHERE o.file_id=f.file_id AND o.owner_system=u.owner_system
  AND o.owner_type=u.owner_type AND o.owner_ref_id=u.owner_ref_id AND o.purpose_code='CLIENT_ONBOARDING_MATERIAL')
  </select>
+ <select id="readReviewUploadId" useCache="false" resultType="java.lang.Long">
+ SELECT u.upload_id FROM t_file_object f JOIN t_file_upload u ON u.upload_id=f.upload_id
+ WHERE f.file_id=#{fileId} AND f.creation_source='UPLOAD' AND u.status='COMPLETED'
+ AND u.owner_system='CCT' AND u.owner_type='CLIENT_APPLICATION_SUBJECT'
+ AND f.storage_provider=u.storage_provider AND f.storage_container_ref=u.storage_container_ref
+ AND f.storage_object_ref=u.storage_object_ref AND f.scan_policy_id=u.scan_policy_id
+ AND EXISTS(SELECT 1 FROM t_file_owner_ref o WHERE o.file_id=f.file_id AND o.owner_system=u.owner_system
+ AND o.owner_type=u.owner_type AND o.owner_ref_id=u.owner_ref_id AND o.purpose_code='CLIENT_ONBOARDING_MATERIAL')
+ </select>
  <select id="lockUpload" useCache="false" flushCache="true" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload">
  SELECT upload_id,tenant_id,uploader_id,owner_ref_id,display_name,expected_size,expected_mime,storage_provider,
  storage_container_ref AS container_ref,storage_object_ref AS object_ref,scan_policy_id,expires_time AS expires_at,status

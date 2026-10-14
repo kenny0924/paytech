@@ -46,6 +46,16 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
     private static final String CLASSIFICATION = "{\"caseId\":\"7001\",\"applicationId\":\"8001\",\"confirmed\":false,\"confirmedBy\":null,"
         + "\"confirmedAt\":null,\"items\":[{\"industryCode\":\"RETAIL\",\"mccCode\":\"5411\",\"primary\":true}]}";
     private static final String OPTIONS = "{\"industries\":[{\"code\":\"RETAIL\",\"label\":\"零售\"}]}";
+    private static final String FILE = "9001";
+    private static final String FILE_PATH = "/review-files/v1/files/" + FILE + "/download";
+    private static final String RISK_CASE_WITH_FILE = RISK_CASE.replace("\"subjects\":[]", "\"subjects\":[{\"caseId\":\"7001\","
+        + "\"caseStatus\":\"SUBMITTED\",\"partyId\":\"8201\",\"profileId\":\"8301\",\"roleType\":\"CLIENT\","
+        + "\"qualificationType\":\"ORGANIZATION_KYB\",\"dependencyTypes\":[],\"requirements\":[{\"requirementId\":\"8401\","
+        + "\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"required\":true,"
+        + "\"status\":\"SUBMITTED\",\"evidence\":[{\"evidenceId\":\"8501\",\"fileId\":\"" + FILE + "\",\"status\":\"PENDING\"}]}]}]");
+    private static final String DOWNLOAD = "{\"fileId\":\"" + FILE + "\",\"displayName\":\"registration.pdf\","
+        + "\"mimeType\":\"application/pdf\",\"sizeBytes\":\"1024\",\"url\":\"https://storage.local.test/obj?sig=1\","
+        + "\"expiresAt\":\"2026-10-14T00:01:00Z\"}";
     private static final String COMMAND = "{\"caseId\":\"7001\",\"status\":\"RETURNED\",\"accepted\":true,\"processing\":false}";
 
     @Autowired
@@ -227,6 +237,61 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
         assertEquals(502, response.statusCode(), response.body());
         assertFalse(response.body().contains("7002"));
         assertEquals(1, owners.requests().size());
+    }
+
+    /** O10 下载：文件属于任务证据时，Platform 以可信身份签发地址并原样返回。 */
+    @Test
+    void test_fileDownloadChecksCaseEvidence() throws Exception {
+        owners.reply("GET", ROOT + "/cases/" + CASE, 200, RISK_CASE_WITH_FILE);
+        platform.rawResponse(FILE_PATH, DOWNLOAD);
+
+        var response = send("POST", ROOT + "/cases/" + CASE + "/files/" + FILE + "/download", "client-onboarding-o10", null);
+
+        assertOk(response);
+        JsonNode body = JSON.readTree(response.body());
+        assertEquals(FILE, body.path("fileId").asString());
+        assertEquals("https://storage.local.test/obj?sig=1", body.path("url").asString());
+        var call = platform.requests().stream().filter(request -> request.path().equals(FILE_PATH)).toList();
+        assertEquals(1, call.size());
+        assertEquals("POST", call.getFirst().method());
+        assertEquals(RISK_ACCOUNT_ID, call.getFirst().headers().get("x-gateway-actor-subject").getFirst());
+        assertEquals(SESSION_ID, call.getFirst().headers().get("x-gateway-session-id").getFirst());
+        assertNull(call.getFirst().headers().get("idempotency-key"));
+        assertTrustedCalls();
+    }
+
+    /** 文件不在任务证据中：404 FILE_NOT_FOUND，不调用 Platform 签发。 */
+    @Test
+    void test_fileOutsideCaseIsNotFound() throws Exception {
+        owners.reply("GET", ROOT + "/cases/" + CASE, 200, RISK_CASE);
+
+        var response = send("POST", ROOT + "/cases/" + CASE + "/files/" + FILE + "/download", "client-onboarding-o10", null);
+
+        assertProblem(response, 404, "FILE_NOT_FOUND");
+        assertTrue(platform.requests().stream().noneMatch(request -> request.path().equals(FILE_PATH)));
+    }
+
+    /** Platform 拒绝（文件尚不可用）：保留 409 与错误码。 */
+    @Test
+    void test_fileStateConflictKeepsCode() throws Exception {
+        owners.reply("GET", ROOT + "/cases/" + CASE, 200, RISK_CASE_WITH_FILE);
+        platform.problem(FILE_PATH, 409, "FILE_STATE_CONFLICT");
+
+        var response = send("POST", ROOT + "/cases/" + CASE + "/files/" + FILE + "/download", "client-onboarding-o10", null);
+
+        assertProblem(response, 409, "FILE_STATE_CONFLICT");
+    }
+
+    /** Platform 返回其他文件的授权：上游响应无效 502，不外露地址。 */
+    @Test
+    void test_mismatchedFileResponseIsRejected() throws Exception {
+        owners.reply("GET", ROOT + "/cases/" + CASE, 200, RISK_CASE_WITH_FILE);
+        platform.rawResponse(FILE_PATH, DOWNLOAD.replace("\"fileId\":\"" + FILE + "\"", "\"fileId\":\"9002\""));
+
+        var response = send("POST", ROOT + "/cases/" + CASE + "/files/" + FILE + "/download", "client-onboarding-o10", null);
+
+        assertEquals(502, response.statusCode(), response.body());
+        assertFalse(response.body().contains("storage.local.test"));
     }
 
     private void detailOwners() {

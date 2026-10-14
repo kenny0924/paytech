@@ -12,6 +12,9 @@
   <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-autoconfigure</artifactId></dependency>
   <dependency><groupId>org.mybatis</groupId><artifactId>mybatis</artifactId></dependency>
   <dependency><groupId>tools.jackson.core</groupId><artifactId>jackson-databind</artifactId></dependency>
+  <dependency><groupId>io.minio</groupId><artifactId>minio</artifactId></dependency>
+  <dependency><groupId>software.amazon.awssdk</groupId><artifactId>s3</artifactId><exclusions><exclusion><groupId>software.amazon.awssdk</groupId><artifactId>apache-client</artifactId></exclusion><exclusion><groupId>software.amazon.awssdk</groupId><artifactId>netty-nio-client</artifactId></exclusion></exclusions></dependency>
+  <dependency><groupId>software.amazon.awssdk</groupId><artifactId>url-connection-client</artifactId></dependency>
   <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><optional>true</optional></dependency>
  </dependencies>
  <build><plugins><plugin>

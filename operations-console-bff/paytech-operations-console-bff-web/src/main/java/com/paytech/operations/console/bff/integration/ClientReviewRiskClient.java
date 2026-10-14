@@ -17,6 +17,9 @@ public interface ClientReviewRiskClient {
     /** O02 Risk 任务详情。 */
     ClientReviewCaseResponseBody detail(OperatorContext operator, String caseId);
 
+    /** O10 读取任务后返回其全部证据引用的文件标识。 */
+    java.util.Set<String> evidenceFileIds(OperatorContext operator, String caseId);
+
     /** O05 核验一份材料。 */
     ClientReviewCommandResponseBody reviewEvidence(OperatorContext operator, String caseId, String evidenceId,
         EvidenceReviewRequestBody request);

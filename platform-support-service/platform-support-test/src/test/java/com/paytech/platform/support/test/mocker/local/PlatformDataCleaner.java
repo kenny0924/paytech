@@ -27,6 +27,8 @@ import lombok.RequiredArgsConstructor;
  * 因此每例开始前要求这些表为空，确认后才在 AfterEach 整表回收。非空时拒绝运行，避免误删本地开发数据。
  * 外部 API 配置六表的编码同样全局唯一，且多数行由被测接口创建、无法预先登记，一并整表回收。
  * 租户、凭证与通知表仍由各自 Mocker 按本例标识回收。
+ * 文件扫描策略与要求可能存在已授权的本机开发配置（如 CLIENT_ONBOARDING_FORMAT），不纳入整表回收，
+ * 由 {@link OnboardingFileMocker} 按本例插入的标识回收。
  */
 @TestComponent
 @Order(Integer.MAX_VALUE)
@@ -40,9 +42,9 @@ public class PlatformDataCleaner implements Clear {
         "t_role_permission", "t_role", "t_console_resource", "t_permission", "t_jwt_signing_key",
         "t_api_scope", "t_gateway_guard_rule", "t_gateway_route_header", "t_gateway_route_query_param",
         "t_gateway_route", "t_gateway_target", "t_command_idempotency",
-        "t_file_scan_result", "t_file_scan_requirement", "t_file_owner_ref", "t_file_upload", "t_file_object",
-        "t_file_scan_policy", "t_security_event", "t_audit_event_attr", "t_audit_event", "t_audit_chain",
-        "t_api_field", "t_integration_standard_api", "t_integration_script", "t_integration_api", "t_integration",
+        "t_file_scan_result", "t_file_owner_ref", "t_file_upload", "t_file_object", "t_security_event",
+        "t_audit_event_attr", "t_audit_event", "t_audit_chain", "t_api_field", "t_integration_standard_api",
+        "t_integration_script", "t_integration_api", "t_integration",
         "t_standard_api");
 
     private static final Set<String> ALLOWED_DATABASES = Set.of("mor_platform");

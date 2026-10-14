@@ -46,6 +46,8 @@
 | 2026-10-13 | 开始 4b | “可以，继续做” | 开始 4b：完成本机 mor_risk 与 Vault 只读核对，生成 [Risk 本机迁移执行范围](./db/implementation/risk-onboarding-local-execution.md)；SQL 未执行，待精确授权；Vault 快照数据类型未配置，待用户决定 |
 | 2026-10-13 | 4b 决定 | 选择“授权执行（推荐）”“本期先不做快照”“由我继续（推荐）” | 执行本机 mor_risk 迁移（[回执](./assets/stage4/risk-onboarding-table-execution-20261013.json)）；实现 Risk I01 服务端，快照暂缓；Risk 重构会话确认由本会话实现。不含其他环境、入口启用、部署或提交 |
 | 2026-10-13 | Operations 审核方案 | “可以” | 形成 [Operations 审核实施方案](./operations-review-plan.md) 待审阅；前一轮关系映射与 409 限制视为接受。不含代码、SQL 或配置修改 |
+| 2026-10-14 | 收尾与提交 | “你做吧”“改成新规则，把授权的事都做了” | 修复 58 个过时测试、补 Platform 页面能力清单、Gateway 配置命令迁出 Idempotency-Key 并分系统提交（未推送）；注册登记因本机 Platform 无基础数据未执行 |
+| 2026-10-14 | 文件存储方案 | “做2个实现，一个MinIO存储实现，一个AWS的S3的存储实现，通过配置来决定当前环境使用哪个存储实现”；“病毒扫描暂时不用吧”；对[确认稿](./file-storage-adapter-proposal.md)回复“可以” | 实现 MinIO/S3 两个存储适配器与 Platform 内置格式检查、运营侧材料下载（O10）；本机新增 MinIO 容器并写入一条格式检查策略。生产须另加病毒扫描；不含部署或提交 |
 
 ## 3. 当前成果与待确认事项
 

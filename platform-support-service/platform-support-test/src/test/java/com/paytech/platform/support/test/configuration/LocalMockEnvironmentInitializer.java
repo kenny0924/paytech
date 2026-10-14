@@ -16,7 +16,14 @@ import org.springframework.core.env.MapPropertySource;
 /** Mock 测试启动时复用仓库本地连接配置，不修改进程环境或导入其他服务的秘密。 */
 public class LocalMockEnvironmentInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    private static final Set<String> CONNECTION_KEYS = Set.of("MOR_PLATFORM_DB_PASSWORD", "MOR_REDIS_PASSWORD", "PAYTECH_REDIS_PASSWORD");
+    private static final Set<String> CONNECTION_KEYS = Set.of("MOR_PLATFORM_DB_PASSWORD", "MOR_REDIS_PASSWORD", "PAYTECH_REDIS_PASSWORD",
+        "MOR_MINIO_PLATFORM_ACCESS_KEY", "MOR_MINIO_PLATFORM_SECRET_KEY");
+
+    /** MinIO 访问键最短 3 位，其余连接配置沿用 16 位下限。 */
+    private static final Set<String> SHORT_KEYS = Set.of("MOR_MINIO_PLATFORM_ACCESS_KEY");
+
+    /** 当前工作区 local-environment 的绝对路径，供证书等本地文件定位，不依赖启动目录。 */
+    public static final String LOCAL_ENVIRONMENT = "mor.local-environment";
     private final Path workspace;
 
     /** Spring 测试从编译产物或工作目录定位所属工作区，兼容 IDEA 与 Maven 的不同启动目录。 */
@@ -39,11 +46,31 @@ public class LocalMockEnvironmentInitializer implements ApplicationContextInitia
         if (root == null) {
             return;
         }
-        Map<String, Object> values = loadConnectionProperties(root.resolve("local-environment/.env.local"));
-        if (!values.isEmpty()) {
-            context.getEnvironment().getPropertySources()
-                .addLast(new MapPropertySource("platformMockLocalConnection", values));
+        context.getEnvironment().getPropertySources()
+            .addLast(new MapPropertySource("platformMockLocalConnection", localProperties(root)));
+    }
+
+    /** 定位当前工作区的 local-environment；找不到时返回 null，由调用方沿用默认配置。 */
+    public Path localEnvironment() {
+        Path root = workspace == null ? findWorkspace() : workspace;
+        return root == null ? null : root.resolve("local-environment");
+    }
+
+    /** 读取单个本地连接配置：显式环境变量与 JVM 配置优先，其次 .env.local；均缺失返回 null。 */
+    public String connectionValue(String key) {
+        String explicit = System.getProperty(key, System.getenv(key));
+        if (explicit != null && !explicit.isBlank()) {
+            return explicit;
         }
+        Path environment = localEnvironment();
+        return environment == null ? null : (String) loadConnectionProperties(environment.resolve(".env.local")).get(key);
+    }
+
+    /** 连接密码与 local-environment 路径一并作为最低优先级来源。 */
+    private Map<String, Object> localProperties(Path root) {
+        Map<String, Object> values = loadConnectionProperties(root.resolve("local-environment/.env.local"));
+        values.put(LOCAL_ENVIRONMENT, root.resolve("local-environment").toAbsolutePath().normalize().toString());
+        return values;
     }
 
     /** 优先选择当前测试类所属工作区，不把其他检出目录的凭据混入当前测试。 */
@@ -68,7 +95,7 @@ public class LocalMockEnvironmentInitializer implements ApplicationContextInitia
         return null;
     }
 
-    /** 只读取本服务数据库与 Redis 密码；文件不存在时沿用 YAML 的仓库默认配置。 */
+    /** 只读取本服务数据库、Redis 与 MinIO 账号配置；文件不存在时沿用 YAML 的仓库默认配置。 */
     private Map<String, Object> loadConnectionProperties(Path file) {
         Map<String, Object> values = new LinkedHashMap<>();
         if (!Files.exists(file)) {
@@ -102,7 +129,7 @@ public class LocalMockEnvironmentInitializer implements ApplicationContextInitia
             || (value.startsWith("'") && value.endsWith("'")))) {
             value = value.substring(1, value.length() - 1);
         }
-        if (!value.matches("[A-Za-z0-9._@%+=:-]{16,128}")) {
+        if (!value.matches("[A-Za-z0-9._@%+=:-]{" + (SHORT_KEYS.contains(key) ? 3 : 16) + ",128}")) {
             throw new IllegalStateException("local-environment/.env.local 的 " + key + " 不符合本地连接配置格式");
         }
         return value;

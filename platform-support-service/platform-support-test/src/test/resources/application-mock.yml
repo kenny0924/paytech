@@ -175,6 +175,7 @@ web:
     metadata-only-path-prefixes:
       - /internal/onboarding-files
       - /onboarding-files
+      - /review-files
       - /authentication
       - /authorization
       - /operations
@@ -226,12 +227,32 @@ tenant:
     enabled: true # CCT 来源投影写入口；依赖人工认证与 Redis 协调。
 files:
   onboarding:
+    # 共享 Mock 上下文保持关闭；文件测试由 OnboardingFileTestBase 在独立上下文开启并选择 MINIO 或 S3。
     enabled: false
-    storage-provider: "" # 启用上传时必填；本组没有文件消费者。
-    storage-container-ref: ""
-    scan-policy-code: ""
+    storage-provider: "" # MINIO | S3；启用时由文件测试基类注入。
+    storage-container-ref: mor-platform-files-test # 仓库 MinIO 的测试专用版本化 SSE-S3 存储桶。
+    scan-policy-code: "" # 仅上传开始使用；文件测试直接插入策略，不经过上传开始。
     upload-seconds: 900
     cct-test-base-url: "" # 既有受限直连字段；此处禁用，不连接外部系统。
+    # 仓库 local-environment 的 MinIO（profile storage）；凭据优先取环境变量，否则由 LocalMockEnvironmentInitializer 读取 .env.local。
+    minio:
+      endpoint: https://127.0.0.1:19400
+      region: us-east-1
+      access-key: "${MOR_MINIO_PLATFORM_ACCESS_KEY:}"
+      secret-key: "${MOR_MINIO_PLATFORM_SECRET_KEY:}"
+      trusted-certificate: "${mor.local-environment:${user.dir}/../../local-environment}/minio/certs/public.crt" # 本机自签名证书；路径由 LocalMockEnvironmentInitializer 按工作区定位。
+      connect-timeout: 2s
+      read-timeout: 10s
+    # 同一 MinIO 以 S3 兼容终端验证 AWS SDK 适配器：路径风格、静态凭据与私有证书。
+    s3:
+      region: us-east-1
+      endpoint: https://127.0.0.1:19400
+      path-style-access: true
+      access-key: "${MOR_MINIO_PLATFORM_ACCESS_KEY:}"
+      secret-key: "${MOR_MINIO_PLATFORM_SECRET_KEY:}"
+      trusted-certificate: "${mor.local-environment:${user.dir}/../../local-environment}/minio/certs/public.crt"
+      connect-timeout: 2s
+      read-timeout: 10s
 ps:
   access-control:
     lock-wait-time: 500ms # Scope 管理写接口锁预算。

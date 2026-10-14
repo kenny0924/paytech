@@ -108,6 +108,7 @@ web:
     metadata-only-path-prefixes:
       - /internal/onboarding-files
       - /onboarding-files
+      - /review-files
       - /authentication
       - /authorization
       - /operations

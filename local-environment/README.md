@@ -62,6 +62,26 @@ set +a
 
 Gateway tests must connect only to `127.0.0.1:16379`. Each Maven run uses a unique key namespace and deletes only that namespace with `SCAN`; tests must never run `KEYS *`, `FLUSHDB`, stop the Compose Redis, or use the unrelated host Redis on `6379`. Redis-unavailable tests point to an unused loopback port rather than disrupting this shared local container.
 
+## MinIO storage profile
+
+The optional `storage` profile runs MinIO for Platform onboarding file storage (`files.onboarding.storage-provider=MINIO`).
+The community MinIO images were withdrawn from Docker Hub/quay.io, so the image is Chainguard's source build pinned by
+digest. It serves HTTPS only, on loopback, with a local self-signed certificate.
+
+```bash
+sh minio/generate-certs.sh   # once; writes minio/certs/ (gitignored)
+docker compose --env-file .env.local --profile storage up -d minio
+docker compose --env-file .env.local --profile storage run --rm minio-init   # idempotent
+```
+
+- S3 API `https://127.0.0.1:19400` (region `us-east-1`), console `https://127.0.0.1:19401`.
+- `minio-init` creates the versioned, SSE-S3 encrypted buckets `mor-platform-files` (local runs) and
+  `mor-platform-files-test` (auto tests) and the `platform-files` user limited to those buckets.
+- Credentials: `MOR_MINIO_*` in `.env.local` (see `.env.example`). Java clients trust
+  `local-environment/minio/certs/public.crt`; a browser must trust it too before direct uploads work.
+- If compose interpolation stops on `PAYTECH_REDIS_PASSWORD`, export it from your existing Redis password first; the
+  storage profile does not touch Redis.
+
 ## XXL-Job scheduler profile
 
 The scheduler profile adds only XXL-Job Admin `3.4.2`; it reuses this project's isolated MySQL and never reads a

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Alert, Button, Descriptions, Form, Input, Modal, Radio, Select, Space, Table, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { ApiError, session } from '../api/session';
 import type { ConsoleResource } from '../api/types';
+import { useErrorNotification } from '../feedback/useErrorNotification';
 import { Loading, QueryFailure, date, useDetail } from '../tenantAccess/TenantAccessView';
-import { blockerLabels, canApprove, caseStatusLabels, classificationIssues, decodeClassificationSet, decodeCommand, decodeDetail, evidenceLabels,
+import { blockerLabels, canApprove, caseStatusLabels, classificationIssues, decodeClassificationSet, decodeCommand, decodeDetail, decodeFileDownload, evidenceLabels,
   fieldLabels, groupLabels, qualificationLabels, relationLabels, reviewApi, reviewRoute, roleLabels, sectionLabels, activeStatuses } from './clientReview';
 import type { Application, Classification, Evidence, Requirement, ReviewDetail, Subject } from './clientReview';
 
@@ -90,13 +92,13 @@ function MaterialsSection({ caseId, subjects, active, canReview, onAuthorization
   caseId: string; subjects: Subject[]; active: boolean; canReview: boolean; onAuthorizationChanged: () => void; onChanged: () => void;
 }) {
   const command = useReviewCommand(onAuthorizationChanged);
+  const download = useFileDownload(caseId, onAuthorizationChanged);
   async function review(evidenceId: string, outcome: 'ACCEPTED' | 'REJECTED') {
     const result = await command.run(`${reviewApi}/cases/${caseId}/evidence/${evidenceId}/review`, 'POST', { outcome },
       value => decodeCommand(value, caseId), outcome === 'ACCEPTED' ? '已接受该材料' : '已标记为未接受');
     if (result) onChanged();
   }
   return <section className="review-section"><h2>材料核验</h2>
-    <Alert showIcon type="info" title="文件内容查看暂未开放：Platform 尚无运营侧受控文件读取接口，此处只显示文件编号。" style={{ marginBottom: 12 }} />
     {command.failure?.status === 409 && <Alert showIcon type="warning" title="材料状态已变化，请刷新后核对。" style={{ marginBottom: 12 }} />}
     {subjects.map(subject => <div key={subject.caseId} className="review-subject">
       <div><strong>{roleLabels[subject.roleType] ?? subject.roleType}</strong> <span className="cell-meta">主体 {subject.partyId} · {qualificationLabels[subject.qualificationType] ?? subject.qualificationType}
@@ -106,7 +108,10 @@ function MaterialsSection({ caseId, subjects, active, canReview, onAuthorization
           ? [{ key: req.requirementId, req, evidence: null }] : req.evidence.map(evidence => ({ key: evidence.evidenceId, req, evidence })))}
         columns={[
           { title: '材料要求', render: (_, row) => <div>{row.req.requirementCode}{row.req.required && <Tag color="blue" style={{ marginLeft: 6 }}>必需</Tag>}<div className="cell-meta">{row.req.documentType}</div></div> },
-          { title: '文件', width: 200, render: (_, row) => row.evidence ? `文件 ${row.evidence.fileId}` : <span className="muted">未提交</span> },
+          { title: '文件', width: 200, render: (_, row) => row.evidence
+            ? <Button size="small" type="link" loading={download.pending === row.evidence.fileId}
+              onClick={() => void download.open(row.evidence!.fileId)}>下载文件 {row.evidence.fileId}</Button>
+            : <span className="muted">未提交</span> },
           { title: '核验结果', width: 120, render: (_, row) => row.evidence ? <Tag color={row.evidence.status === 'ACCEPTED' ? 'green' : row.evidence.status === 'REJECTED' ? 'red' : 'default'}>{evidenceLabels[row.evidence.status] ?? row.evidence.status}</Tag> : '—' },
           { title: '操作', width: 170, render: (_, row) => row.evidence && row.evidence.status === 'RECEIVED' && active && canReview
             ? <Space><Button size="small" loading={command.saving} onClick={() => void review(row.evidence!.evidenceId, 'ACCEPTED')}>接受</Button>
@@ -192,4 +197,28 @@ function DecisionModal({ caseId, decision, name, applicationNo, onClose, onDone,
         <Button type="primary" danger={decision === 'REJECT'} htmlType="submit" loading={command.saving}>{title}</Button></Space>
     </Form>
   </Modal>;
+}
+
+/**
+ * 审核材料下载：每次点击向 BFF 申请最长 60 秒的原版本地址，随即以附件方式下载；地址不保存、不展示。
+ * <li>403 刷新导航权限；文件尚不可用（409）等错误按统一提示展示。</li>
+ */
+function useFileDownload(caseId: string, onAuthorizationChanged: () => void) {
+  const notify = useErrorNotification();
+  const [pending, setPending] = useState<string>();
+  async function open(fileId: string) {
+    if (pending) return;
+    setPending(fileId);
+    try {
+      const grant = await session.request(`${reviewApi}/cases/${caseId}/files/${fileId}/download`, { method: 'POST' },
+        value => decodeFileDownload(value, fileId));
+      const link = document.createElement('a');
+      link.href = grant.url; link.rel = 'noopener noreferrer'; link.download = grant.displayName;
+      document.body.appendChild(link); link.click(); link.remove();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 403) onAuthorizationChanged();
+      notify(error, error instanceof ApiError && error.status === 409 ? '文件尚未通过检查，暂不可下载' : '文件下载未完成');
+    } finally { setPending(undefined); }
+  }
+  return { pending, open };
 }
