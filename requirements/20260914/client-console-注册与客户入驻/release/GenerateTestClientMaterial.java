@@ -15,8 +15,9 @@ import java.util.Base64;
 /**
  * mor-test 客户入驻一次性材料：CUSTOMER 签名私钥与 HMAC、MinIO root/KMS/Platform 访问密钥。
  * <p>
- * 唯一参数是 {@code test-environment/private}（必须已存在且权限 700）。写出三个 0600 文件，拒绝覆盖：
+ * 唯一参数是 {@code test-environment/private}（必须已存在且权限 700）。写出四个 0600 文件，拒绝覆盖：
  * {@code client-onboarding.env}（Platform 运行时读取）、{@code minio.env}（追加到 {@code .env.test} 供 Compose 插值）、
+ * {@code minio-kms.env}（MinIO 的 env_file：带 = 填充的 base64 不能经 compose.sh 逐行 read，否则末尾 = 被去掉）、
  * {@code client-onboarding-signing-key.sql}（只含 CUSTOMER 公钥 JWK）。不连接数据库、不打印私密值，现有 OPERATIONS 材料不动。
  */
 public final class GenerateTestClientMaterial {
@@ -51,10 +52,10 @@ public final class GenerateTestClientMaterial {
         String minioEnv = String.join("\n",
             "MOR_MINIO_ROOT_USER=mor-test-root",
             "MOR_MINIO_ROOT_PASSWORD=" + urlValue(24),
-            "MOR_MINIO_KMS_SECRET_KEY=mor-test-kms:" + Base64.getEncoder().encodeToString(bytes(32)),
             "MOR_MINIO_PLATFORM_ACCESS_KEY=platform-files-test",
             "MOR_MINIO_PLATFORM_SECRET_KEY=" + urlValue(24),
             "");
+        String kmsEnv = "MINIO_KMS_SECRET_KEY=mor-test-kms:" + Base64.getEncoder().encodeToString(bytes(32)) + "\n";
         String sql = """
             -- mor-test 客户入驻：CUSTOMER 签名公钥（只含公钥 JWK）。前置：本 ID 与 CUSTOMER 活动密钥均不存在。
             -- 回滚：DELETE FROM t_jwt_signing_key WHERE signing_key_id = %d;
@@ -68,8 +69,9 @@ public final class GenerateTestClientMaterial {
             """.formatted(SIGNING_KEY_ID, SIGNING_KEY_ID, sql(kid), sql("development:customer:" + kid), sql(jwk));
         write(directory.resolve("client-onboarding.env"), clientEnv);
         write(directory.resolve("minio.env"), minioEnv);
+        write(directory.resolve("minio-kms.env"), kmsEnv);
         write(directory.resolve("client-onboarding-signing-key.sql"), sql);
-        System.out.println("written: client-onboarding.env, minio.env, client-onboarding-signing-key.sql (kid " + kid + ")");
+        System.out.println("written: client-onboarding.env, minio.env, minio-kms.env, client-onboarding-signing-key.sql (kid " + kid + ")");
     }
 
     private static String urlValue(int length) {

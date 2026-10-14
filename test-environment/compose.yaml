@@ -130,10 +130,11 @@ services:
     # https://minio.mor-test.localhost:29400：Chrome 把 *.localhost 解析到本机，容器内由网络别名指向本容器。
     image: cgr.dev/chainguard/minio@sha256:2136d593beacf4461187035eca949fe49abd589d5079735025c711ca58fee0c8
     restart: "no"
+    # KMS 密钥为带 = 填充的 base64；compose.sh 逐行 read 会去掉末尾单个 =，因此经 env_file 直接传入。
+    env_file: [./private/minio-kms.env]
     environment:
       MINIO_ROOT_USER: ${MOR_MINIO_ROOT_USER:?prepare test secrets}
       MINIO_ROOT_PASSWORD: ${MOR_MINIO_ROOT_PASSWORD:?prepare test secrets}
-      MINIO_KMS_SECRET_KEY: ${MOR_MINIO_KMS_SECRET_KEY:?prepare test secrets}
       MC_HOST_local: https://${MOR_MINIO_ROOT_USER}:${MOR_MINIO_ROOT_PASSWORD}@127.0.0.1:29400
       # 预签名直传/下载只允许客户端与运营站点源。
       MINIO_API_CORS_ALLOW_ORIGIN: https://localhost:28443,http://localhost:28080
