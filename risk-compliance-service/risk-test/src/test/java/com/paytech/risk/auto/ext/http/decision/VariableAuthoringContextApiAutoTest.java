@@ -32,10 +32,16 @@ class VariableAuthoringContextApiAutoTest extends AbstractVariableApiTest {
         invoke(headers(), PATH).assertContext();
     }
 
-    /** 指定已支持决策点时只返回该点的来源合同，本期即全部两个合同。 */
+    /** 指定结账决策点时只返回该点的两个来源合同。 */
     @Test
     void test_normalFlow_supportedPoint() {
-        invoke(headers(), PATH + "?pointCode=CHECKOUT_PREPARE").assertContext();
+        invoke(headers(), PATH + "?pointCode=CHECKOUT_PREPARE").assertContext("CHECKOUT_PREPARE");
+    }
+
+    /** 指定支付决策点时只返回支付输入合同与支付节点结果合同。 */
+    @Test
+    void test_normalFlow_paymentPoint() {
+        invoke(headers(), PATH + "?pointCode=PAYMENT_ATTEMPT_RISK").assertContext("PAYMENT_ATTEMPT_RISK");
     }
 
     /** 查询串非法时在处理前拒绝。 */

@@ -1,0 +1,55 @@
+package com.paytech.risk.test.mocker.evaluation;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+
+import org.springframework.boot.test.context.TestComponent;
+
+import com.paytech.foundation.testsupport.api.Clear;
+import com.paytech.risk.test.mapper.evaluation.PaymentRiskTestMapper;
+
+/**
+ * 支付风控的本地数据 Mocker
+ * <li>插入历史累计事件，构造窗口与算法场景；Clear 清理评估、累计、名单、Feature、影子批次与支付决策点下测试创建的配置。</li>
+ * <li>经业务入口创建的数据同样由 Clear 统一回收，用例无需逐项登记。</li>
+ *
+ * @author Kenny
+ */
+@TestComponent
+public class PaymentRiskMocker implements Clear {
+    private final PaymentRiskTestMapper mapper;
+
+    public PaymentRiskMocker(PaymentRiskTestMapper mapper) {
+        this.mapper = mapper;
+    }
+
+    /**
+     * 插入一条历史累计事件
+     *
+     * @param eventCode 事件编码
+     * @param occurred 事件时间
+     * @param amount 金额
+     * @param currency 币种
+     * @param subjects 主体类型到规范化主体键
+     * @return 事件 ID
+     */
+    public long mockVelocityEvent(String eventCode, Instant occurred, String amount, String currency,
+        Map<String, String> subjects) {
+        long id = randomId();
+        mapper.insertVelocityEvent(id, eventCode, occurred, new BigDecimal(amount), currency, subjects, randomId());
+        return id;
+    }
+
+    /** 删除本测试环境的支付风控数据。 */
+    @Override
+    public void clear() {
+        mapper.deleteAll();
+    }
+
+    /** 15 位正整数 ID，远离 Snowflake 生成的生产 ID 区间。 */
+    private static long randomId() {
+        return ThreadLocalRandom.current().nextLong(100_000_000_000_000L, 900_000_000_000_000L);
+    }
+}

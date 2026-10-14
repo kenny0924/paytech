@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.paytech.risk.decision.domain.authoring.CheckoutPrepareAuthoringDescriptor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.*;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizer.*;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizerImpl;
@@ -271,8 +271,8 @@ public final class CandidateBuilder {
     }
 
     /** 内置 CHECKOUT_PREPARE 合同的全部输入字段。 */
-    public static List<CheckoutPrepareAuthoringDescriptor.InputFieldDescriptor> inputFields() {
-        return CheckoutPrepareAuthoringDescriptor.v1().fields();
+    public static List<DecisionPointAuthoringDescriptor.InputFieldDescriptor> inputFields() {
+        return DecisionPointAuthoringDescriptor.checkoutPrepare().fields();
     }
 
     /**
@@ -293,7 +293,7 @@ public final class CandidateBuilder {
 
     /** 唯一绑定该规则集版本的决策点版本内容摘要。 */
     public static String pointHash(int pointVersionNo, String ruleSetCode, int versionNo, String ruleSetHash) {
-        var point = CheckoutPrepareAuthoringDescriptor.v1().point();
+        var point = DecisionPointAuthoringDescriptor.checkoutPrepare().point();
         return new RiskDecisionCanonicalizerImpl().decisionPointVersion(new DecisionPointVersionProjection(POINT_CODE,
             DecisionBusinessDomain.CHECKOUT, pointVersionNo, point.inputContractCode(), point.inputContractVersion(),
             point.outputContractCode(), point.defaultDecision(), point.evaluationStrategy(), point.failureStrategy(),
@@ -307,7 +307,7 @@ public final class CandidateBuilder {
 
     /** 发布完整冻结组成的内容摘要。 */
     public static String releaseHash(CompositionFacts facts, long releaseId, int releaseNo) {
-        var point = CheckoutPrepareAuthoringDescriptor.v1().point();
+        var point = DecisionPointAuthoringDescriptor.checkoutPrepare().point();
         String pointId = Long.toString(DECISION_POINT_ID);
         String pointVersionId = id(facts.pointVersionId());
         String ruleId = id(facts.ruleId());

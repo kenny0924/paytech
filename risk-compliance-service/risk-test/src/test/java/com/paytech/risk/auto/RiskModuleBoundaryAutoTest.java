@@ -59,8 +59,10 @@ class RiskModuleBoundaryAutoTest {
                 Assertions.assertEquals(Set.of("paytech-common-core", "spring-web", "jakarta.validation-api"),
                     dependencies);
             } else if (module.equals("decision")) {
-                Assertions.assertEquals(Set.of("paytech-common-core", "paytech-json-canonicalization",
-                    "paytech-mybatis-support", "paytech-redis-starter", "mybatis", "spring-context", "spring-tx", "lombok",
+                // 2026-10-14 支付反欺诈一期：决策模块单向依赖 risk-control 的名单命中能力，影子回放使用补偿任务。
+                Assertions.assertEquals(Set.of("risk-control", "paytech-common-core", "paytech-json-canonicalization",
+                    "paytech-compensation-event", "paytech-mybatis-support", "paytech-redis-starter", "mybatis",
+                    "spring-boot", "jakarta.validation-api", "spring-context", "spring-tx", "lombok",
                     "jackson-databind"), dependencies);
                 Assertions.assertEquals(Set.of("provided"),
                     values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
@@ -70,7 +72,9 @@ class RiskModuleBoundaryAutoTest {
                 Assertions.assertEquals(Set.of("provided"),
                     values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
             } else if (module.equals("control")) {
-                Assertions.assertEquals(Set.of("paytech-common-core", "spring-context", "lombok"), dependencies);
+                // 2026-10-14 支付反欺诈一期：名单持久化与名单维护锁。
+                Assertions.assertEquals(Set.of("paytech-common-core", "paytech-redis-starter", "mybatis", "spring-context",
+                    "spring-tx", "lombok"), dependencies);
                 Assertions.assertEquals(Set.of("provided"),
                     values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
             } else {
@@ -145,7 +149,8 @@ class RiskModuleBoundaryAutoTest {
         MapperScan mapperScan = PersistenceConfiguration.class.getAnnotation(MapperScan.class);
         Assertions.assertNotNull(mapperScan);
         Assertions.assertEquals(Set.of("com.paytech.risk.decision.core.dal.mapper",
-            "com.paytech.risk.compliance.core.dal.mapper"), Set.of(mapperScan.basePackages()));
+            "com.paytech.risk.control.core.dal.mapper", "com.paytech.risk.compliance.core.dal.mapper"),
+            Set.of(mapperScan.basePackages()));
         Assertions.assertEquals("sqlSessionTemplate", mapperScan.sqlSessionTemplateRef());
 
         PersistenceConfiguration persistence = new PersistenceConfiguration();
@@ -214,7 +219,8 @@ class RiskModuleBoundaryAutoTest {
         }
         Assertions.assertEquals(Set.of("/internal/due-diligence/material-requirements", "/client-onboarding-review", "/client-onboarding-admin",
             "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows",
-            "/decision-variables"), metadataOnly);
+            "/decision-variables", "/risk-lists", "/payment-risk-assessment"), metadataOnly);
+        Assertions.assertEquals("${RISK_DECISION_ENVIRONMENT}", properties.getProperty("decision.runtime.environment"));
         Assertions.assertEquals("${RISK_SNOWFLAKE_REGION_ID}",
             properties.getProperty("decision.identifier.region-id"));
         Assertions.assertEquals("${RISK_SNOWFLAKE_WORKER_ID}",

@@ -37,6 +37,12 @@ import tools.jackson.databind.ObjectMapper;
 public final class VariableAuthoringContextResponseChecker
     extends AbstractHttpResponseChecker<VariableAuthoringContextResponseChecker> {
 
+    /** 结账准备决策点。 */
+    private static final String CHECKOUT = "CHECKOUT_PREPARE";
+
+    /** 支付尝试决策点。 */
+    private static final String PAYMENT = "PAYMENT_ATTEMPT_RISK";
+
     private final ObjectMapper mapper;
 
     public VariableAuthoringContextResponseChecker(EntityExchangeResult<byte[]> result, ObjectMapper mapper,
@@ -50,10 +56,19 @@ public final class VariableAuthoringContextResponseChecker
         return this;
     }
 
-    /** 返回完整编排能力：两个来源合同、全部来源/类型/格式/量纲及容量上限。 */
+    /** 不限决策点：返回结账与支付两个决策点的全部来源合同、全部来源/类型/格式/量纲及容量上限。 */
     public VariableAuthoringContextResponseChecker assertContext() {
+        return assertContext(null);
+    }
+
+    /**
+     * 返回编排能力
+     *
+     * @param pointCode 查询的决策点；为空时来源合同不按决策点过滤
+     */
+    public VariableAuthoringContextResponseChecker assertContext(String pointCode) {
         assertStatus(200);
-        JsonNode expected = mapper.valueToTree(expected());
+        JsonNode expected = mapper.valueToTree(expected(pointCode));
         JsonNode actual = body();
         assertAll(() -> assertEquals(expected.propertyNames(), actual.propertyNames(), "字段集合"),
             () -> assertEquals(expected.get("supportedPoints"), actual.get("supportedPoints"), "supportedPoints"),
@@ -66,11 +81,12 @@ public final class VariableAuthoringContextResponseChecker
         return this;
     }
 
-    private static Map<String, Object> expected() {
+    private static Map<String, Object> expected(String pointCode) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("supportedPoints", List.of(Map.of("pointCode", "CHECKOUT_PREPARE", "pointName", "CHECKOUT_PREPARE")));
+        body.put("supportedPoints", List.of(Map.of("pointCode", CHECKOUT, "pointName", CHECKOUT),
+            Map.of("pointCode", PAYMENT, "pointName", PAYMENT)));
         body.put("sources", Stream.of(VariableSource.INPUT, VariableSource.CONSTANT, VariableSource.COLLECTION,
-            VariableSource.NODE_OUTPUT).map(source -> Map.of("sourceType", source.getCode(),
+            VariableSource.NODE_OUTPUT, VariableSource.VELOCITY, VariableSource.LIST).map(source -> Map.of("sourceType", source.getCode(),
                 "createAllowed", source != VariableSource.NODE_OUTPUT)).toList());
         body.put("valueTypes", Stream.of(STRING, NUMBER, BOOLEAN, DATETIME, DURATION).map(DecisionValueType::getCode).toList());
         body.put("formatProfiles", List.of(format(VariableFormat.TEXT, "文本，保留大小写和前导零"),
@@ -80,7 +96,8 @@ public final class VariableAuthoringContextResponseChecker
             format(VariableFormat.NONE, "无字符串格式")));
         body.put("numericUnits", List.of(SCALAR.getCode(), MONEY.getCode()));
         body.put("limits", Map.of("memberCount", 1000, "memberBodyBytes", 65536, "literalSetCount", 100));
-        body.put("contracts", List.of(contract("ORDER_PREPARATION", 4, VariableSource.INPUT, null, List.of(
+        List<Map<String, Object>> contracts = new java.util.ArrayList<>(List.of(contract(CHECKOUT, "ORDER_PREPARATION", 4,
+            VariableSource.INPUT, null, List.of(
             condition("country_code", STRING, null, null, null), condition("locale", STRING, null, null, null),
             condition("industry_code", STRING, null, null, null), condition("mcc_code", STRING, null, null, null),
             condition("currency", STRING, null, null, "CURRENCY"),
@@ -89,22 +106,41 @@ public final class VariableAuthoringContextResponseChecker
             condition("net_amount", NUMBER, MONEY, "currency", null),
             condition("entity_source_type", STRING, null, null, null),
             field("client_id", STRING, true, List.of(ACTION_PARAMETER), null, null, "CLIENT_ID"))),
-            contract("RULE_SET_NODE_RESULT", 1, VariableSource.NODE_OUTPUT, "RULE_SET", List.of(
-                field("matched", BOOLEAN, true, List.of(FLOW_CONDITION), null, null, null),
-                field("decision", STRING, false, List.of(FLOW_CONDITION), null, null, null)))));
+            nodeResult(CHECKOUT)));
+        if (pointCode == null || PAYMENT.equals(pointCode)) {
+            contracts.add(contract(PAYMENT, "PAYMENT_ATTEMPT", 1, VariableSource.INPUT, null, List.of(
+                condition("client_id", STRING, null, null, "CLIENT_ID"), condition("entity_no", STRING, null, null, null),
+                condition("payment_method_code", STRING, null, null, null), condition("capture_mode", STRING, null, null, null),
+                condition("amount", NUMBER, MONEY, "currency", null), condition("currency", STRING, null, null, "CURRENCY"),
+                condition("industry_code", STRING, null, null, null), condition("mcc_code", STRING, null, null, null),
+                field("consumer_country_code", STRING, false, List.of(FLOW_CONDITION, RULE_CONDITION), null, null, null),
+                field("card_bin", STRING, false, List.of(FLOW_CONDITION, RULE_CONDITION), null, null, null))));
+            contracts.add(nodeResult(PAYMENT));
+        }
+        if (PAYMENT.equals(pointCode)) {
+            contracts.removeIf(contract -> CHECKOUT.equals(contract.get("pointCode")));
+        }
+        body.put("contracts", contracts);
         return body;
+    }
+
+    /** 规则集节点结果合同。 */
+    private static Map<String, Object> nodeResult(String pointCode) {
+        return contract(pointCode, "RULE_SET_NODE_RESULT", 1, VariableSource.NODE_OUTPUT, "RULE_SET", List.of(
+            field("matched", BOOLEAN, true, List.of(FLOW_CONDITION), null, null, null),
+            field("decision", STRING, false, List.of(FLOW_CONDITION), null, null, null)));
     }
 
     private static Map<String, Object> format(VariableFormat format, String label) {
         return Map.of("formatCode", format.getCode(), "label", label, "help", label);
     }
 
-    private static Map<String, Object> contract(String code, int version, VariableSource source, String nodeType,
-        List<Map<String, Object>> fields) {
+    private static Map<String, Object> contract(String pointCode, String code, int version, VariableSource source,
+        String nodeType, List<Map<String, Object>> fields) {
         Map<String, Object> contract = new LinkedHashMap<>();
         contract.put("contractCode", code);
         contract.put("contractVersion", version);
-        contract.put("pointCode", "CHECKOUT_PREPARE");
+        contract.put("pointCode", pointCode);
         contract.put("sourceType", source.getCode());
         contract.put("nodeType", nodeType);
         contract.put("fields", fields);

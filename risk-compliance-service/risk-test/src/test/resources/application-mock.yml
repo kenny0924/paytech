@@ -112,6 +112,8 @@ web:
       - /decision-releases
       - /decision-flows
       - /decision-variables
+      - /risk-lists
+      - /payment-risk-assessment
 
 # paytech-redis-starter
 redis:
@@ -171,6 +173,9 @@ decision:
     # Snowflake 区域与节点号；生产必须由部署注入，测试固定为 0。
     region-id: 0
     worker-id: 0
+  runtime:
+    # 本实例的发布环境 TEST 或 PRODUCTION；支付评估读取该环境的生效发布，执行发布只允许在 TEST 激活。生产必填，测试固定 TEST。
+    environment: TEST
 
 onboarding:
   review:

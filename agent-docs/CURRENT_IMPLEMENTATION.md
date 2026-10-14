@@ -13,6 +13,10 @@
 
 <a id="payby-integration-20261014"></a>
 
+## Risk 支付反欺诈一期（2026-10-14）
+
+- **Implemented / auto 已验证，未提交、未部署：** 按[需求](../requirements/20261014/risk-支付反欺诈一期/requirement.md)与[决定](./decisions/2026-10-14-risk-payment-fraud-phase1.md)在 risk-compliance-service 实现支付尝试评估（`PAYMENT_ATTEMPT_RISK`）、名单维护、实时累计与名单命中 Feature、执行发布（校验、回放式影子运行、TEST 一人激活）。Risk 模型 81 → 83 表；增量 SQL 经授权已在本机 `mor_risk` 执行并与 Schema 逐列核对一致。Risk 全量 auto **1969/1969**。Payment 尚未接入（接入清单见[设计第 14 节](../requirements/20261014/risk-支付反欺诈一期/design.md#14-交给-payment-的接入清单不在本会话范围)）；本机无生效支付发布时评估接口返回 503。实施修订与已知缺口见[设计第 16 节](../requirements/20261014/risk-支付反欺诈一期/design.md#16-阶段-4-实施修订2026-10-14)。
+
 ## PayBy（阿联酋）收款接入（2026-10-14）
 
 - **Designed：** [需求](../requirements/20261014/platform-support-PayBy接入/requirement.md)与[技术方案](../requirements/20261014/platform-support-PayBy接入/technique.md)经用户确认：接入方 `PAYBY` 实现 `PAY_QUERY`、`PAY_CANCEL`（新，草案）、`REFUND`、`REFUND_QUERY`、`BALANCE_QUERY`（新，草案）；`PAY` 以 DIRECTPAY 卡直付为主，所需卡字段加密、有效期格式与 3DS 表单托管写入[补充要求](../requirements/20261014/platform-support-PayBy接入/card-capability-addendum.md)，由卡直付会话评审实现。毫秒 `requestTime` 暂由签名脚本从 `nowRfc3339()` 换算（TODO 改注册函数）。

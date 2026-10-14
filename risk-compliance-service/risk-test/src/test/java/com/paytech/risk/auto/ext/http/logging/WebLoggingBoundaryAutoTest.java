@@ -27,7 +27,7 @@ import com.paytech.risk.test.probe.HttpLogProbe;
 
 /**
  * Risk HTTP 访问日志的敏感边界
- * <li>生产 application.yml 的 metadata-only 前缀清单完整：材料、Client 入驻审核与管理、五组决策配置入口。</li>
+ * <li>生产 application.yml 的 metadata-only 前缀清单完整：材料、Client 入驻审核与管理、五组决策配置入口、名单维护与支付评估。</li>
  * <li>mock Profile 实际生效的清单与生产一致，其余用例的日志行为即生产行为。</li>
  * <li>命中前缀的请求只记录方法、脱敏路径与状态，Query 与 Body 原值不进入日志；未命中前缀的请求照常记录 Query，证明 Probe 有效。</li>
  *
@@ -37,7 +37,7 @@ class WebLoggingBoundaryAutoTest extends MockTestBase {
     /** 请求体含个人信息、审核理由或决策配置原文的入口。 */
     private static final List<String> METADATA_ONLY_PREFIXES = List.of("/internal/due-diligence/material-requirements",
         "/client-onboarding-review", "/client-onboarding-admin", "/decision-dictionaries", "/decision-rule-sets",
-        "/decision-releases", "/decision-flows", "/decision-variables");
+        "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/payment-risk-assessment");
 
     @Autowired
     private WebLoggingProperties loggingProperties;
