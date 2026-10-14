@@ -1,10 +1,13 @@
 package com.paytech.operations.console.bff.test.simulator;
 
+import com.paytech.risk.api.decision.request.*;
+import com.paytech.risk.api.decision.response.*;
+
 import java.util.*;
 import tools.jackson.databind.json.JsonMapper;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.risk.api.decision.DecisionFlowModels.*;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleSetDetailResponseBody;
+import com.paytech.risk.api.decision.response.RuleSetDetailResponseBody;
 
 /** 外部 Risk 配置存储场景，保存和回放从请求及历史状态派生。 */
 final class RiskFlowScenario {
@@ -31,47 +34,50 @@ final class RiskFlowScenario {
             new com.paytech.risk.api.decision.RiskVariableModels.VariableQueryContext("CHECKOUT_PREPARE", "ORDER_PREPARATION", 4, "FLOW_CONDITION"));
         if (path.equals("flows/validate")) {
             var request = JSON.readValue(r.body(), SaveFlowRequestBody.class);
-            var issues = request.graph().nodes().stream().filter(n -> n.type().equals("END") && n.decisionCode() == null)
-                .map(n -> new Issue("END_DECISION_REQUIRED", n.nodeKey(), null, "graph.nodes[1].decisionCode", "请选择结束决定")).toList();
-            return new ValidationResponseBody(issues.isEmpty(), issues, false);
+            var issues = request.getGraph().getNodes().stream().filter(n -> n.getType().equals("END") && n.getDecisionCode() == null)
+                .map(n -> new Issue("END_DECISION_REQUIRED", n.getNodeKey(), null, "graph.nodes[1].decisionCode", "请选择结束决定")).toList();
+            var validation = new ValidateFlowResponseBody(); validation.setValid(issues.isEmpty()); validation.setIssues(issues); validation.setTruncated(false);
+            return validation;
         }
         if (path.equals("flows") && r.method().equals("POST")) {
-            String key = "SAVE:" + r.header("Idempotency-Key"); if (receipts.containsKey(key)) return receipts.get(key);
+            String key = "SAVE:" + actor + ":" + r.body(); if (receipts.containsKey(key)) return receipts.get(key);
             var request = JSON.readValue(r.body(), SaveFlowRequestBody.class); int no = versions.size() + 1;
             String id = Integer.toString(60000 + no);
-            versions.add(new FlowDetailResponseBody("50001", request.pointCode(), request.flowCode(), "CONFIGURABLE", id, no,
-                Integer.toString(no), id, no, request.flowName(), "ORDER_PREPARATION", 4, actor, time, request.changeReason(), request.graph(), List.of(), List.of(), time, List.of()));
-            var receipt = new SaveFlowResponseBody("50001", id, no, Integer.toString(no), actor, time); receipts.put(key, receipt); return receipt;
+            versions.add(new FlowDetailResponseBody("50001", request.getPointCode(), request.getFlowCode(), "CONFIGURABLE", id, no,
+                Integer.toString(no), id, no, request.getFlowName(), "ORDER_PREPARATION", 4, actor, time, request.getChangeReason(), request.getGraph(), List.of(), List.of(), time, List.of()));
+            var receipt = new SaveFlowResponseBody(); receipt.setFlowId("50001"); receipt.setFlowVersionId(id); receipt.setVersionNo(no);
+            receipt.setVersion(Integer.toString(no)); receipt.setSavedBy(actor); receipt.setSavedTime(time); receipts.put(key, receipt); return receipt;
         }
         if (path.equals("flows") && r.method().equals("GET")) {
             var items = new ArrayList<FlowListItemResponseBody>();
             if (!versions.isEmpty() && !deleted) { var head = versions.getLast();
-                items.add(new FlowListItemResponseBody(head.flowId(), head.pointCode(), head.flowCode(), head.flowName(), head.flowVersionId(),
-                    head.versionNo(), head.version(), 0, head.createdBy(), time)); }
+                items.add(new FlowListItemResponseBody(head.getFlowId(), head.getPointCode(), head.getFlowCode(), head.getFlowName(), head.getFlowVersionId(),
+                    head.getVersionNo(), head.getVersion(), 0, head.getCreatedBy(), time)); }
             return new PagingResponseBody<>(items, page, size, items.size());
         }
         if (r.method().equals("DELETE")) {
-            String key = "DELETE:" + r.header("Idempotency-Key"); if (receipts.containsKey(key)) return receipts.get(key);
-            deleted = true; var receipt = new DeleteFlowResponseBody("50001", "DELETED", Integer.toString(versions.size() + 1), actor, time);
+            String key = "DELETE:" + actor + ":" + r.path() + "?" + r.query(); if (receipts.containsKey(key)) return receipts.get(key);
+            deleted = true; var receipt = new DeleteFlowResponseBody(); receipt.setFlowId("50001"); receipt.setStatus("DELETED");
+            receipt.setVersion(Integer.toString(versions.size() + 1)); receipt.setDeletedBy(actor); receipt.setDeletedTime(time);
             receipts.put(key, receipt); return receipt;
         }
         if (path.endsWith("/versions")) {
-            int max = Integer.parseInt(query.get("maxVersionNo")); var items = versions.reversed().stream().filter(v -> v.versionNo() <= max)
-                .map(v -> new FlowHistoryItemResponseBody(v.flowVersionId(), v.versionNo(), v.flowName(), v.createdBy(), time, v.changeReason())).toList();
+            int max = Integer.parseInt(query.get("maxVersionNo")); var items = versions.reversed().stream().filter(v -> v.getVersionNo() <= max)
+                .map(v -> new FlowHistoryItemResponseBody(v.getFlowVersionId(), v.getVersionNo(), v.getFlowName(), v.getCreatedBy(), time, v.getChangeReason())).toList();
             return new PagingResponseBody<>(items.stream().skip((long)(page - 1) * size).limit(size).toList(), page, size, items.size());
         }
         if (path.equals("rule-set-reference")) return new RuleSetReferenceResponseBody(query.get("sourceType"), query.get("sourceVersionId"), query.get("nodeKey"), "CONFIGURABLE", rules);
         if (path.startsWith("legacy-point-versions/")) {
             var nodes = List.of(new Node("start", "START", "开始", new Position("0", "0"), null, null, null, null),
-                new Node("binding_1", "RULE_SET", "原规则", new Position("250", "0"), rules.ruleSetVersionId(), null, null, null),
+                new Node("binding_1", "RULE_SET", "原规则", new Position("250", "0"), rules.getRuleSetVersionId(), null, null, null),
                 new Node("end", "END", "原默认决定", new Position("500", "0"), null, "REVIEW", null, null));
             var edges = List.of(new Edge("first", "start", "binding_1", "UNCONDITIONAL", 0, "继续", null), new Edge("last", "binding_1", "end", "UNCONDITIONAL", 0, "继续", null));
             return new LegacyPointResponseBody("LEGACY_POINT", path.substring(path.lastIndexOf('/') + 1), "CHECKOUT_PREPARE", "结账准备", 1, "ORDER_PREPARATION", 4, "REVIEW", "FIRST_TERMINAL", "FAIL_CLOSED", nodes, edges,
-                List.of(new RuleSetReference("binding_1", "90001", rules.ruleSetCode(), rules.ruleSetName(), rules.ruleSetVersionId(), 1, 1, "CONFIGURABLE", "FROZEN")));
+                List.of(new RuleSetReference("binding_1", "90001", rules.getRuleSetCode(), rules.getRuleSetName(), rules.getRuleSetVersionId(), 1, 1, "CONFIGURABLE", "FROZEN")));
         }
-        var selected = path.contains("/versions/") ? versions.stream().filter(v -> path.endsWith("/" + v.flowVersionId())).findFirst().orElseThrow() : versions.getLast();
+        var selected = path.contains("/versions/") ? versions.stream().filter(v -> path.endsWith("/" + v.getFlowVersionId())).findFirst().orElseThrow() : versions.getLast();
         var head = versions.getLast();
-        return new FlowDetailResponseBody(selected.flowId(), selected.pointCode(), selected.flowCode(), deleted ? "DELETED" : "CONFIGURABLE", head.flowVersionId(), head.versionNo(),
-            Integer.toString(versions.size() + (deleted ? 1 : 0)), selected.flowVersionId(), selected.versionNo(), selected.flowName(), selected.inputContractCode(), selected.inputContractVersion(), selected.createdBy(), time, selected.changeReason(), selected.graph(), selected.ruleSetReferences(), List.of(), time, List.of());
+        return new FlowDetailResponseBody(selected.getFlowId(), selected.getPointCode(), selected.getFlowCode(), deleted ? "DELETED" : "CONFIGURABLE", head.getFlowVersionId(), head.getVersionNo(),
+            Integer.toString(versions.size() + (deleted ? 1 : 0)), selected.getFlowVersionId(), selected.getVersionNo(), selected.getFlowName(), selected.getInputContractCode(), selected.getInputContractVersion(), selected.getCreatedBy(), time, selected.getChangeReason(), selected.getGraph(), selected.getRuleSetReferences(), List.of(), time, List.of());
     }
 }

@@ -1,5 +1,8 @@
 package com.paytech.operations.console.bff.auto;
 
+import com.paytech.risk.api.decision.request.*;
+import com.paytech.risk.api.decision.response.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
@@ -76,7 +79,6 @@ class RiskClientConfigurationAutoTest {
     private static final String REQUEST_ID = "risk-client-request-1";
     private static final String ACTOR = "10001";
     private static final String SESSION = "session-10001";
-    private static final String KEY = "risk-command-key-1";
     private static final String OWNER_PACKAGE = "com/paytech/risk/api/";
     private static final String BFF_PACKAGE = "com/paytech/operations/console/bff/";
 
@@ -113,7 +115,7 @@ class RiskClientConfigurationAutoTest {
                     assertEquals(ACTOR, server.actor);
                     assertEquals(SESSION, server.session);
                     if (!sample.method().equals("GET")) {
-                        assertEquals(KEY, server.idempotencyKey);
+                        assertNull(server.idempotencyKey);
                         assertTrue(JSON.readTree(server.requestBody).isObject());
                     }
                     assertEquals(List.of(), server.unexpected);
@@ -172,9 +174,9 @@ class RiskClientConfigurationAutoTest {
             assertFalse(converter.canWrite(resolved.resolve(), MediaType.APPLICATION_JSON));
         }
         List<Type> rejected = new ArrayList<>(List.of(PagingResponseBody.class, Object.class, String.class,
-            DecisionRuleSetManagementModels.RuleRequestBody.class, DecisionRuleSetManagementModels.RuleSetListItemResponseBody.class, DecisionReleaseManagementModels.TestReleaseListItemResponseBody.class,
+            DecisionRuleSetManagementModels.RuleRequestBody.class, RuleSetListItemResponseBody.class, TestReleaseListItemResponseBody.class,
             new ParameterizedTypeReference<PagingResponseBody<String>>() {}.getType(),
-            new ParameterizedTypeReference<PagingResponseBody<? extends DecisionRuleSetManagementModels.RuleSetListItemResponseBody>>() {}.getType()));
+            new ParameterizedTypeReference<PagingResponseBody<? extends RuleSetListItemResponseBody>>() {}.getType()));
         for (Class<?> container : List.of(DecisionRuleSetManagementModels.class, DecisionReleaseManagementModels.class)) {
             Arrays.stream(container.getDeclaredClasses()).filter(type -> !allowed.contains(type)).forEach(rejected::add);
         }
@@ -301,7 +303,7 @@ class RiskClientConfigurationAutoTest {
                     () -> assertTrue(elapsed.compareTo(Duration.ofSeconds(3)) >= 0, elapsed.toString()),
                     () -> assertTrue(elapsed.compareTo(Duration.ofSeconds(7)) < 0, elapsed.toString()),
                     () -> assertEquals(1, server.calls.get()),
-                    () -> assertEquals(KEY, server.idempotencyKey),
+                    () -> assertNull(server.idempotencyKey),
                     () -> assertEquals(List.of(), server.unexpected));
                 assertSafeFailure(error);
             });
@@ -326,7 +328,7 @@ class RiskClientConfigurationAutoTest {
                     () -> assertTrue(hasCause(error, IOException.class)),
                     () -> assertFalse(hasReadTimeoutCause(error)),
                     () -> assertEquals(1, server.calls.get()),
-                    () -> assertEquals(KEY, server.idempotencyKey),
+                    () -> assertNull(server.idempotencyKey),
                     () -> assertEquals(List.of(), server.unexpected));
                 assertSafeFailure(error);
             });
@@ -360,7 +362,7 @@ class RiskClientConfigurationAutoTest {
                     context.getBean(DecisionReleaseManagementApi.class)));
                 assertEquals(CommonErrorCode.UPSTREAM_INVALID_RESPONSE, error.getErrorCode());
                 assertEquals(1, server.calls.get());
-                assertEquals(KEY, server.idempotencyKey);
+                assertNull(server.idempotencyKey);
                 assertEquals(List.of(), server.unexpected);
             });
         }
@@ -378,7 +380,7 @@ class RiskClientConfigurationAutoTest {
                 assertInstanceOf(ResourceAccessException.class, error.getCause());
                 assertFalse(hasReadTimeoutCause(error));
                 assertEquals(1, server.calls.get());
-                assertEquals(KEY, server.idempotencyKey);
+                assertNull(server.idempotencyKey);
                 assertEquals(List.of(), server.unexpected);
             });
         }
@@ -415,7 +417,7 @@ class RiskClientConfigurationAutoTest {
         var body = new PartialResponseStream(transport);
         var converter = new RiskOwnerResponseHttpMessageConverter();
         var error = assertThrows(ResourceAccessException.class, () -> converter.read(
-            ResolvableType.forClass(DecisionRuleSetManagementModels.RuleAuthoringContextResponseBody.class), new MockHttpInputMessage(body), Map.of()));
+            ResolvableType.forClass(RuleAuthoringContextResponseBody.class), new MockHttpInputMessage(body), Map.of()));
         assertSame(transport, error.getCause(), "只保留原始 I/O；不携带 Jackson 的原始 JSON 诊断");
         assertTrue(body.closed, "读取异常后仍必须关闭已创建 Parser 的响应流");
         assertSafeFailure(error);
@@ -426,7 +428,11 @@ class RiskClientConfigurationAutoTest {
         Path web = webModule();
         String adapter = BFF_PACKAGE + "integration/impl/RiskDecisionConfigurationClientImpl";
         Set<String> adapters = Set.of(adapter, BFF_PACKAGE + "integration/impl/RiskFlowClientImpl", BFF_PACKAGE + "integration/impl/RiskFlowConverter", BFF_PACKAGE + "integration/impl/RiskDictionaryClientImpl",
-            BFF_PACKAGE + "integration/impl/RiskConfigurationQueryClientImpl", BFF_PACKAGE + "integration/impl/RiskConfigurationConverter", BFF_PACKAGE + "integration/impl/RiskVariableClientImpl", BFF_PACKAGE + "integration/impl/RiskVariableConverter", BFF_PACKAGE + "integration/impl/RiskOperandConverter", BFF_PACKAGE + "integration/impl/RiskVariableResponsePolicy");
+            BFF_PACKAGE + "integration/impl/RiskConfigurationQueryClientImpl", BFF_PACKAGE + "integration/impl/RiskConfigurationConverter", BFF_PACKAGE + "integration/impl/RiskVariableClientImpl", BFF_PACKAGE + "integration/impl/RiskVariableConverter", BFF_PACKAGE + "integration/impl/RiskOperandConverter", BFF_PACKAGE + "integration/impl/RiskVariableResponsePolicy", BFF_PACKAGE + "integration/impl/ClientReviewRiskClientImpl");
+        // Client 入驻审核为简单转发：端口、页面模型与 Controller 只引用 Risk 审核响应 DTO，不调用 Owner 方法。
+        Set<String> reviewPassThrough = Set.of(BFF_PACKAGE + "integration/ClientReviewRiskClient",
+            BFF_PACKAGE + "service/model/ClientReviewModels", BFF_PACKAGE + "ext/rest/ClientOnboardingReviewController");
+        String reviewConfiguration = BFF_PACKAGE + "configuration/ClientReviewClientConfiguration";
         String configuration = BFF_PACKAGE + "configuration/RiskClientConfiguration";
         String resolver = BFF_PACKAGE + "configuration/OperationsErrorStatusResolver";
         Map<String, Set<String>> restricted = Map.of(
@@ -440,7 +446,10 @@ class RiskClientConfigurationAutoTest {
                 var matcher = imports.matcher(Files.readString(source));
                 while (matcher.find()) {
                     assertTrue(transport.contains(name) || adapters.contains(name)
-                        || restricted.getOrDefault(name, Set.of()).contains(matcher.group(1)), source.toString());
+                        || restricted.getOrDefault(name, Set.of()).contains(matcher.group(1))
+                        || reviewPassThrough.contains(name) && matcher.group(1).startsWith("com.paytech.risk.api.compliance.response.")
+                        || name.equals(reviewConfiguration) && Set.of("com.paytech.risk.api.compliance.ClientReviewAdminApi",
+                            "com.paytech.risk.api.enums.ClientReviewErrorCode").contains(matcher.group(1)), source.toString());
                 }
             }
         }
@@ -459,8 +468,11 @@ class RiskClientConfigurationAutoTest {
                             public void visitMethodInsn(int opcode, String owner, String method, String descriptor, boolean isInterface) {
                                 if (!owner.startsWith(OWNER_PACKAGE)) return;
                                 boolean errorEnum = owner.equals(OWNER_PACKAGE + "enums/RiskDecisionConfigurationErrorCode") || owner.equals(OWNER_PACKAGE + "enums/RiskVariableErrorCode");
+                                boolean reviewEnum = owner.equals(OWNER_PACKAGE + "enums/ClientReviewErrorCode");
                                 assertTrue(adapters.contains(caller)
                                     || (caller.equals(configuration) && errorEnum && method.equals("values"))
+                                    || (caller.equals(reviewConfiguration) && reviewEnum && method.equals("values"))
+                                    || (caller.equals(resolver) && reviewEnum)
                                     || (caller.equals(resolver) && errorEnum),
                                     caller + " invokes Owner " + owner + "." + method);
                             }
@@ -468,7 +480,8 @@ class RiskClientConfigurationAutoTest {
                             public void visitFieldInsn(int opcode, String owner, String field, String descriptor) {
                                 if (!owner.startsWith(OWNER_PACKAGE)) return;
                                 assertTrue(adapters.contains(caller) || (caller.equals(resolver)
-                                    && (owner.equals(OWNER_PACKAGE + "enums/RiskDecisionConfigurationErrorCode") || owner.equals(OWNER_PACKAGE + "enums/RiskVariableErrorCode"))),
+                                    && (owner.equals(OWNER_PACKAGE + "enums/RiskDecisionConfigurationErrorCode") || owner.equals(OWNER_PACKAGE + "enums/RiskVariableErrorCode")
+                                    || owner.equals(OWNER_PACKAGE + "enums/ClientReviewErrorCode"))),
                                     caller + " accesses Owner field " + owner + "." + field);
                             }
                         };
@@ -609,37 +622,37 @@ class RiskClientConfigurationAutoTest {
         return Stream.of(
             new SuccessCase("deleteRule", "DELETE", "/decision-rule-sets/v1/rule-sets/90001",
                 "{\"ruleSetId\":\"90001\",\"status\":\"DELETED\",\"version\":\"2\",\"deletedBy\":\"10001\",\"deletedTime\":\"" + TIME + "\"}",
-                DecisionRuleSetManagementModels.DeleteRuleSetResponseBody.class),
+                DeleteRuleSetResponseBody.class),
             new SuccessCase("authoring", "GET", "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE", authoring,
-                DecisionRuleSetManagementModels.RuleAuthoringContextResponseBody.class),
+                RuleAuthoringContextResponseBody.class),
             new SuccessCase("ruleList", "GET", "/decision-rule-sets/v1/rule-sets", page(append(item, "\"ruleSetId\":\"90001\",\"managementVersion\":\"1\",\"inUse\":false")),
-                new ParameterizedTypeReference<PagingResponseBody<DecisionRuleSetManagementModels.RuleSetListItemResponseBody>>() {}.getType()),
+                new ParameterizedTypeReference<PagingResponseBody<RuleSetListItemResponseBody>>() {}.getType()),
             new SuccessCase("ruleDetail", "GET", "/decision-rule-sets/v1/rule-sets/30001",
-                append(item, "\"rules\":[" + rule + "],\"operandFormat\":null,\"currentVariables\":[],\"valuesAsOf\":null,\"variableIssues\":[]"), DecisionRuleSetManagementModels.RuleSetDetailResponseBody.class),
+                append(item, "\"rules\":[" + rule + "],\"operandFormat\":null,\"currentVariables\":[],\"valuesAsOf\":null,\"variableIssues\":[]"), RuleSetDetailResponseBody.class),
             new SuccessCase("createRule", "POST", "/decision-rule-sets/v1/rule-sets",
                 "{\"ruleSetVersionId\":\"30001\",\"pointVersionId\":\"20001\",\"ruleSetCode\":\"DEFAULT_RULES\","
                     + "\"versionNo\":1,\"status\":\"DRAFT\",\"contentHash\":\"" + HASH + "\",\"createdBy\":\"10001\",\"createTime\":\"" + TIME + "\"}",
-                DecisionRuleSetManagementModels.CreateRuleSetVersionResponseBody.class),
+                CreateRuleSetVersionResponseBody.class),
             new SuccessCase("freezeRule", "POST", "/decision-rule-sets/v1/rule-sets/30001/freeze",
                 "{\"ruleSetVersionId\":\"30001\",\"pointVersionId\":\"20001\",\"ruleSetCode\":\"DEFAULT_RULES\","
                     + "\"versionNo\":1,\"status\":\"FROZEN\",\"contentHash\":\"" + HASH + "\",\"frozenBy\":\"10001\",\"frozenTime\":\"" + TIME + "\"}",
-                DecisionRuleSetManagementModels.FreezeRuleSetVersionResponseBody.class),
+                FreezeRuleSetVersionResponseBody.class),
             new SuccessCase("candidateList", "GET", "/decision-releases/v1/candidates", page(candidate),
-                new ParameterizedTypeReference<PagingResponseBody<DecisionReleaseManagementModels.TestReleaseListItemResponseBody>>() {}.getType()),
+                new ParameterizedTypeReference<PagingResponseBody<TestReleaseListItemResponseBody>>() {}.getType()),
             new SuccessCase("candidateDetail", "GET", "/decision-releases/v1/candidates/40001", append(candidate,
                 "\"waitingForShadow\":false,\"frozenComposition\":{\"decisionPointId\":\"10002\",\"pointCode\":\"CHECKOUT_PREPARE\","
                     + "\"pointVersionId\":\"20001\",\"pointVersionNo\":1,\"pointVersionContentHash\":\"" + HASH
                     + "\",\"ruleSetVersionId\":\"30001\",\"ruleSetCode\":\"DEFAULT_RULES\",\"ruleSetVersionNo\":1,\"ruleSetContentHash\":\"" + HASH
                     + "\"},\"stateChanges\":[" + append(state, "\"triggerId\":\"" + HASH + "\"")
                     + "],\"staticChecks\":[" + append(check, "\"auditEventId\":\"50002\",\"eventTime\":\"" + TIME + "\"") + "]"),
-                DecisionReleaseManagementModels.TestReleaseDetailResponseBody.class),
+                TestReleaseDetailResponseBody.class),
             new SuccessCase("createCandidate", "POST", "/decision-releases/v1/candidates",
                 append(candidate.replace(",\"allStaticChecksPassed\":null", ""), "\"initialStateChange\":" + state),
-                DecisionReleaseManagementModels.CreateTestReleaseResponseBody.class),
+                CreateTestReleaseResponseBody.class),
             new SuccessCase("validateCandidate", "POST", "/decision-releases/v1/candidates/40001/validate",
                 "{\"releaseId\":\"40001\",\"releaseNo\":1,\"environmentCode\":\"TEST\",\"status\":\"VALIDATING\",\"version\":2,"
                     + "\"contentHash\":\"" + HASH + "\",\"allStaticChecksPassed\":true,\"checks\":[" + check + "]}",
-                DecisionReleaseManagementModels.ValidateTestReleaseResponseBody.class));
+                ValidateTestReleaseResponseBody.class));
     }
 
     private static String page(String item) {
@@ -653,17 +666,17 @@ class RiskClientConfigurationAutoTest {
     private record SuccessCase(String name, String method, String path, String json, Type type) {
         Object invoke(DecisionRuleSetManagementApi rules, DecisionReleaseManagementApi releases) {
             return switch (name) {
-                case "deleteRule" -> rules.deleteRuleSet(ACTOR, SESSION, KEY, "90001", new DecisionRuleSetManagementModels.DeleteRuleSetRequestBody("1"));
+                case "deleteRule" -> rules.deleteRuleSet(ACTOR, SESSION, "90001", new DeleteRuleSetRequestBody("1"));
                 case "authoring" -> rules.getAuthoringContext(ACTOR, SESSION, "CHECKOUT_PREPARE");
                 case "ruleList" -> rules.listRuleSets(ACTOR, SESSION, 1, 10, "CHECKOUT_PREPARE", "DEFAULT_RULES", "DRAFT");
                 case "ruleDetail" -> rules.getRuleSet(ACTOR, SESSION, "30001");
-                case "createRule" -> rules.createRuleSetVersion(ACTOR, SESSION, KEY,
-                    new DecisionRuleSetManagementModels.CreateRuleSetVersionRequestBody("CHECKOUT_PREPARE", "DEFAULT_RULES", "规则集", null, null, "初始版本", List.of()));
-                case "freezeRule" -> rules.freezeRuleSetVersion(ACTOR, SESSION, KEY, "30001", new DecisionRuleSetManagementModels.FreezeRuleSetVersionRequestBody(HASH));
+                case "createRule" -> rules.createRuleSetVersion(ACTOR, SESSION,
+                    new CreateRuleSetVersionRequestBody("CHECKOUT_PREPARE", "DEFAULT_RULES", "规则集", null, null, "初始版本", List.of()));
+                case "freezeRule" -> rules.freezeRuleSetVersion(ACTOR, SESSION, "30001", new FreezeRuleSetVersionRequestBody(HASH));
                 case "candidateList" -> releases.listCandidates(ACTOR, SESSION, 1, 10, "CHECKOUT_PREPARE", "DRAFT");
                 case "candidateDetail" -> releases.getCandidate(ACTOR, SESSION, "40001");
-                case "createCandidate" -> releases.createCandidate(ACTOR, SESSION, KEY, new DecisionReleaseManagementModels.CreateTestReleaseRequestBody("30001", HASH));
-                case "validateCandidate" -> releases.validateCandidate(ACTOR, SESSION, KEY, "40001", new DecisionReleaseManagementModels.ValidateTestReleaseRequestBody(1));
+                case "createCandidate" -> releases.createCandidate(ACTOR, SESSION, new CreateTestReleaseRequestBody("30001", HASH));
+                case "validateCandidate" -> releases.validateCandidate(ACTOR, SESSION, "40001", new ValidateTestReleaseRequestBody(1));
                 default -> throw new IllegalArgumentException(name);
             };
         }

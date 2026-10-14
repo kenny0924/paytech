@@ -135,7 +135,8 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
         assertEquals(1, applicationContext.getBeansOfType(RiskDecisionConfigurationController.class).size(),
             "Risk 浏览器入口必须是唯一具体 Controller");
         assertEquals(List.of("/auth", "/authorization", "/iam", "/audit", "/gateway-admin", "/console-admin", "/permission-admin", "/api-credential-admin", "/api-scope-admin",
-                "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows", "/decision-variables", "/external-api-admin"),
+                "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows", "/decision-variables", "/external-api-admin",
+                "/client-onboarding-admin"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
         Set<String> routes = applicationContext.getBean(
@@ -266,7 +267,15 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "DELETE /decision-variables/v1/variables/{variableCode}",
             "GET /decision-variables/v1/variables/{variableCode}/members",
             "PUT /decision-variables/v1/variables/{variableCode}/members",
-            "GET /decision-variables/v1/variables/{variableCode}/references"), routes);
+            "GET /decision-variables/v1/variables/{variableCode}/references",
+            "GET /client-onboarding-admin/v1/cases",
+            "GET /client-onboarding-admin/v1/cases/{caseId}",
+            "PUT /client-onboarding-admin/v1/cases/{caseId}/classifications",
+            "POST /client-onboarding-admin/v1/cases/{caseId}/classification-confirmation",
+            "POST /client-onboarding-admin/v1/cases/{caseId}/evidence/{evidenceId}/review",
+            "POST /client-onboarding-admin/v1/cases/{caseId}/return",
+            "POST /client-onboarding-admin/v1/cases/{caseId}/approval",
+            "POST /client-onboarding-admin/v1/cases/{caseId}/rejection"), routes);
 
         Path classes = webModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

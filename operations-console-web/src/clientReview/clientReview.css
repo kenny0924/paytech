@@ -1,0 +1,10 @@
+.client-review-page .review-search { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)) auto; gap: 12px; align-items: end; }
+.client-review-page .review-section { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+.client-review-page .review-section h2 { font-size: 15px; margin: 0 0 12px; }
+.client-review-page .review-section h3 { font-size: 13px; margin: 12px 0 8px; color: #374151; }
+.client-review-page .review-blockers { margin: 0; padding-left: 18px; }
+.client-review-page .review-subject { border-top: 1px dashed #e5e7eb; padding-top: 12px; margin-top: 12px; }
+.client-review-page .review-subject:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+.client-review-page .review-classification-row { display: grid; grid-template-columns: 1fr 140px 110px 60px; gap: 8px; margin-bottom: 8px; align-items: center; }
+.client-review-page .review-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 900px) { .client-review-page .review-search { grid-template-columns: 1fr 1fr; } }

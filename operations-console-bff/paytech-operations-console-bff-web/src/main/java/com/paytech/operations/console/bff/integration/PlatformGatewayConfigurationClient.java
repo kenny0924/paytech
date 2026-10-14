@@ -12,7 +12,7 @@ public interface PlatformGatewayConfigurationClient {
 
     GatewayTargetResponseBody targetService(OperatorContext context, String targetServiceCode);
 
-    GatewayTargetStatusResponseBody changeTargetStatus(OperatorContext context, String idempotencyKey,
+    GatewayTargetStatusResponseBody changeTargetStatus(OperatorContext context,
                                                          String targetServiceCode,
                                                          ChangeGatewayTargetStatusRequestBody request);
 
@@ -21,20 +21,20 @@ public interface PlatformGatewayConfigurationClient {
 
     GatewayRouteResponseBody route(OperatorContext context, String routeCode);
 
-    GatewayRouteStatusResponseBody changeRouteStatus(OperatorContext context, String idempotencyKey,
+    GatewayRouteStatusResponseBody changeRouteStatus(OperatorContext context,
                                                        String routeCode, ChangeGatewayRouteStatusRequestBody request);
 
     /** 转发单个已授权配置操作。 */
-    ConfigurationMutationResponseBody createTarget(OperatorContext context, String key, CreateGatewayTargetRequestBody request);
+    ConfigurationMutationResponseBody createTarget(OperatorContext context, CreateGatewayTargetRequestBody request);
 
     /** 转发单个已授权配置操作。 */
-    ConfigurationMutationResponseBody updateTarget(OperatorContext context, String key, String targetServiceCode, UpdateGatewayTargetRequestBody request);
+    ConfigurationMutationResponseBody updateTarget(OperatorContext context, String targetServiceCode, UpdateGatewayTargetRequestBody request);
 
     /** 转发单个已授权配置操作。 */
-    ConfigurationMutationResponseBody createRoute(OperatorContext context, String key, CreateGatewayRouteRequestBody request);
+    ConfigurationMutationResponseBody createRoute(OperatorContext context, CreateGatewayRouteRequestBody request);
 
     /** 转发单个已授权配置操作。 */
-    ConfigurationMutationResponseBody updateRoute(OperatorContext context, String key, String routeCode, UpdateGatewayRouteRequestBody request);
+    ConfigurationMutationResponseBody updateRoute(OperatorContext context, String routeCode, UpdateGatewayRouteRequestBody request);
 
     /** 转发单个已授权配置操作。 */
     GatewayConfigurationCapabilitiesResponseBody capabilities(OperatorContext context);

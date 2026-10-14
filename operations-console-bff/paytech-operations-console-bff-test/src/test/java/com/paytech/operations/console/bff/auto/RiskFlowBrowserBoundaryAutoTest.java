@@ -41,8 +41,8 @@ class RiskFlowBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         success(send("DELETE", "flows/50001?expectedVersion=1", "delete", null, KEY));
         assertEquals(10, risk.requests().size()); assertEquals(10, platform.completedAuthorizationCount());
         for (var call : risk.requests()) { assertEquals(RISK_ACCOUNT_ID, call.header("X-Gateway-Actor-Subject")); assertEquals(SESSION_ID, call.header("X-Gateway-Session-Id")); assertEquals("rco17-browser", call.header("X-Request-Id")); }
-        var deletion = risk.requests().getLast(); assertEquals("", deletion.body()); assertEquals("expectedVersion=1", deletion.query()); assertEquals(KEY, deletion.header("Idempotency-Key"));
-        assertNull(risk.requests().get(1).header("Idempotency-Key"));
+        var deletion = risk.requests().getLast(); assertEquals("", deletion.body()); assertEquals("expectedVersion=1", deletion.query()); assertNull(deletion.header("Idempotency-Key"));
+        assertTrue(risk.requests().stream().allMatch(call -> call.header("Idempotency-Key") == null));
     }
     @Test void flowRuleReferenceAcceptsExplicitNullLegacyPointButRejectsMissingKey() throws Exception {
         risk.corruptWire(w -> ((ObjectNode) w.get("ruleSet")).putNull("pointVersionId"));
@@ -65,10 +65,9 @@ class RiskFlowBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         platform.grantPermissions("900000000000021101");
         assertEquals(403, send("DELETE", "flows/50001?expectedVersion=1", "delete", null, KEY).statusCode()); assertEquals(before, risk.requests().size());
     }
-    @Test void malformedBodiesQueriesAndKeysNeverReachOwner() throws Exception {
+    @Test void malformedBodiesAndQueriesNeverReachOwner() throws Exception {
         var body = (ObjectNode) JSON.readTree(draft()); body.put("viewport", "private");
         assertEquals(400, send("POST", "flows", "save", JSON.writeValueAsString(body), KEY).statusCode());
-        assertEquals(400, send("POST", "flows", "save", draft(), "short").statusCode());
         assertEquals(400, send("GET", "flows?pointCode=CHECKOUT_PREPARE&page=1&page=2", "list", null, null).statusCode());
         assertEquals(400, send("DELETE", "flows/50001?expectedVersion=1", "delete", "{}", KEY).statusCode());
         assertTrue(risk.requests().isEmpty());

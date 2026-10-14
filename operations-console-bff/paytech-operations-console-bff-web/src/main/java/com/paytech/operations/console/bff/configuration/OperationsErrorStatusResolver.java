@@ -51,6 +51,21 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case RISK_FLOW_CODE_EXISTS, RISK_FLOW_VERSION_CONFLICT, RISK_FLOW_DELETED, RISK_DICTIONARY_CODE_EXISTS, RISK_DICTIONARY_CHANGED, RISK_DICTIONARY_SELECTION_UNAVAILABLE, RISK_RULE_SET_IN_USE, RISK_RULE_SET_CHANGED, RISK_RULE_SET_DELETED -> HttpStatus.CONFLICT;
             };
         }
+        if (errorCode instanceof com.paytech.risk.api.enums.ClientReviewErrorCode review) {
+            return switch (review) {
+                case CLIENT_REVIEW_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case CLIENT_REVIEW_NOT_READY -> HttpStatus.UNPROCESSABLE_CONTENT;
+                default -> HttpStatus.CONFLICT;
+            };
+        }
+        if (errorCode instanceof com.paytech.client.contract.api.enums.ClientDraftErrorCode cct) {
+            return switch (cct) {
+                case REVIEW_CASE_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case CLASSIFICATION_INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
+                case CLASSIFICATION_CONFIRMED, APPLICATION_NOT_EDITABLE -> HttpStatus.CONFLICT;
+                default -> defaultStatus;
+            };
+        }
         return defaultStatus;
     }
 }

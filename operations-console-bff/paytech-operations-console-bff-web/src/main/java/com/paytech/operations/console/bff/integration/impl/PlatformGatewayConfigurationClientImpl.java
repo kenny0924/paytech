@@ -74,9 +74,9 @@ public final class PlatformGatewayConfigurationClientImpl implements PlatformGat
     }
 
     @Override
-    public GatewayTargetStatusResponseBody changeTargetStatus(OperatorContext context, String idempotencyKey,
+    public GatewayTargetStatusResponseBody changeTargetStatus(OperatorContext context,
         String targetServiceCode, ChangeGatewayTargetStatusRequestBody request) {
-        var result = management.changeTargetStatus(context.accountId(), context.sessionId(), idempotencyKey,
+        var result = management.changeTargetStatus(context.accountId(), context.sessionId(),
             targetServiceCode, new GatewayConfigurationModels.ChangeGatewayTargetStatusRequestBody(
                 request.status(), request.expectedVersion(), request.reason()));
         requireValidResponse(result != null && targetServiceCode.equals(result.targetServiceCode())
@@ -122,9 +122,9 @@ public final class PlatformGatewayConfigurationClientImpl implements PlatformGat
     }
 
     @Override
-    public GatewayRouteStatusResponseBody changeRouteStatus(OperatorContext context, String idempotencyKey,
+    public GatewayRouteStatusResponseBody changeRouteStatus(OperatorContext context,
         String routeCode, ChangeGatewayRouteStatusRequestBody request) {
-        var result = management.changeRouteStatus(context.accountId(), context.sessionId(), idempotencyKey, routeCode,
+        var result = management.changeRouteStatus(context.accountId(), context.sessionId(), routeCode,
             new GatewayConfigurationModels.ChangeGatewayRouteStatusRequestBody(
                 request.status(), request.expectedVersion(), request.reason()));
         requireValidResponse(result != null && routeCode.equals(result.routeCode())
@@ -288,51 +288,51 @@ public final class PlatformGatewayConfigurationClientImpl implements PlatformGat
         }
     }
 
-    /** 保留参数、当前身份和幂等 key，不增加业务事务。 */
+    /** 保留参数和当前身份，不转发 Idempotency-Key，不增加业务事务。 */
     @Override
-    public ConfigurationMutationResponseBody createTarget(OperatorContext context, String key, CreateGatewayTargetRequestBody request) {
+    public ConfigurationMutationResponseBody createTarget(OperatorContext context, CreateGatewayTargetRequestBody request) {
         try {
-            var result = management.createTarget(context.accountId(), context.sessionId(), key, ConfigurationContractConverter.toPlatform(request));
+            var result = management.createTarget(context.accountId(), context.sessionId(), ConfigurationContractConverter.toPlatform(request));
             return ConfigurationContractConverter.toBff(result);
         } catch (com.paytech.foundation.httpclient.api.HttpRequestValidationException failure) {
             throw ConfigurationValidationConverter.local(request, failure);
         }
     }
 
-    /** 保留参数、当前身份和幂等 key，不增加业务事务。 */
+    /** 保留参数和当前身份，不转发 Idempotency-Key，不增加业务事务。 */
     @Override
-    public ConfigurationMutationResponseBody updateTarget(OperatorContext context, String key, String targetServiceCode, UpdateGatewayTargetRequestBody request) {
+    public ConfigurationMutationResponseBody updateTarget(OperatorContext context, String targetServiceCode, UpdateGatewayTargetRequestBody request) {
         try {
-            var result = management.updateTarget(context.accountId(), context.sessionId(), key, targetServiceCode, ConfigurationContractConverter.toPlatform(request));
+            var result = management.updateTarget(context.accountId(), context.sessionId(), targetServiceCode, ConfigurationContractConverter.toPlatform(request));
             return ConfigurationContractConverter.toBff(result);
         } catch (com.paytech.foundation.httpclient.api.HttpRequestValidationException failure) {
             throw ConfigurationValidationConverter.local(request, failure);
         }
     }
 
-    /** 保留参数、当前身份和幂等 key，不增加业务事务。 */
+    /** 保留参数和当前身份，不转发 Idempotency-Key，不增加业务事务。 */
     @Override
-    public ConfigurationMutationResponseBody createRoute(OperatorContext context, String key, CreateGatewayRouteRequestBody request) {
+    public ConfigurationMutationResponseBody createRoute(OperatorContext context, CreateGatewayRouteRequestBody request) {
         try {
-            var result = management.createRoute(context.accountId(), context.sessionId(), key, ConfigurationContractConverter.toPlatform(request));
+            var result = management.createRoute(context.accountId(), context.sessionId(), ConfigurationContractConverter.toPlatform(request));
             return ConfigurationContractConverter.toBff(result);
         } catch (com.paytech.foundation.httpclient.api.HttpRequestValidationException failure) {
             throw ConfigurationValidationConverter.local(request, failure);
         }
     }
 
-    /** 保留参数、当前身份和幂等 key，不增加业务事务。 */
+    /** 保留参数和当前身份，不转发 Idempotency-Key，不增加业务事务。 */
     @Override
-    public ConfigurationMutationResponseBody updateRoute(OperatorContext context, String key, String routeCode, UpdateGatewayRouteRequestBody request) {
+    public ConfigurationMutationResponseBody updateRoute(OperatorContext context, String routeCode, UpdateGatewayRouteRequestBody request) {
         try {
-            var result = management.updateRoute(context.accountId(), context.sessionId(), key, routeCode, ConfigurationContractConverter.toPlatform(request));
+            var result = management.updateRoute(context.accountId(), context.sessionId(), routeCode, ConfigurationContractConverter.toPlatform(request));
             return ConfigurationContractConverter.toBff(result);
         } catch (com.paytech.foundation.httpclient.api.HttpRequestValidationException failure) {
             throw ConfigurationValidationConverter.local(request, failure);
         }
     }
 
-    /** 保留参数、当前身份和幂等 key，不增加业务事务。 */
+    /** 保留参数和当前身份，不转发 Idempotency-Key，不增加业务事务。 */
     @Override
     public GatewayConfigurationCapabilitiesResponseBody capabilities(OperatorContext context) {
         var result = management.capabilities(context.accountId(), context.sessionId());

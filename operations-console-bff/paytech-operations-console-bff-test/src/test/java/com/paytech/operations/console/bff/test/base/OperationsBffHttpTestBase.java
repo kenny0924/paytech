@@ -16,6 +16,8 @@ public abstract class OperationsBffHttpTestBase {
     static void platformAddress(DynamicPropertyRegistry registry) {
         registry.add("operations.platform-test-base-url", OperationsBffTestConfiguration.PLATFORM::baseUrl);
         registry.add("operations.risk-test-base-url", OperationsBffTestConfiguration.RISK::baseUrl);
+        registry.add("operations.client-review-risk-test-base-url", OperationsBffTestConfiguration.CLIENT_REVIEW::baseUrl);
+        registry.add("operations.cct-test-base-url", OperationsBffTestConfiguration.CLIENT_REVIEW::baseUrl);
         registry.add("operations.console-origin", () -> "https://operations-console.local.test");
     }
 }

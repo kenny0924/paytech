@@ -1,0 +1,167 @@
+import { ApiError } from '../api/session.ts';
+import type { PagingResponseBody } from '../api/types.ts';
+
+/** Client 入驻审核的 BFF 路径与页面模型；Owner 事实原样展示，通过资格只看 Risk 门禁。 */
+export const reviewApi = '/client-onboarding-admin/v1';
+export const reviewRoute = '/client-onboarding/reviews';
+
+export interface Evidence { evidenceId: string; fileId: string; status: string }
+export interface Requirement { requirementId: string; requirementCode: string; documentType: string; required: boolean; status: string; evidence: Evidence[] }
+export interface Subject { caseId: string; caseStatus: string; partyId: string; profileId: string; roleType: string; qualificationType: string; dependencyTypes: string[]; requirements: Requirement[] }
+export interface Classification { industryCode: string; mccCode: string; primary: boolean }
+export interface ReviewCase {
+  caseId: string; caseNo: string; applicationId: string; clientId: string; sourceSubmissionId: string; qualificationType: string;
+  status: string; version: string; submittedAt: string; decidedAt: string | null; publicNote: string | null; returnSection: string | null;
+  subjects: Subject[]; classifications: Classification[]; approvalBlockers: string[];
+}
+export interface Person { partyId: string; values: Record<string, Record<string, string | null>> }
+export interface Relation { relationId: string; relatedPartyId: string; relationType: string; ownershipPercentage: string | null; status: string }
+export interface DocumentRef { documentId: string; subjectPartyId: string; requirementCode: string; documentType: string; fileId: string; subjectInScope: boolean }
+export interface Application {
+  applicationId: string; applicationNo: string; clientId: string; clientType: string; subjectPartyId: string; status: string;
+  values: Record<string, Record<string, string | null>>; people: Person[]; relations: Relation[]; documents: DocumentRef[];
+}
+export interface ClassificationSet { caseId: string; applicationId: string; confirmed: boolean; confirmedBy: string | null; confirmedAt: string | null; items: Classification[] }
+export interface Option { code: string; label: string }
+export type Availability = 'AVAILABLE' | 'UNAVAILABLE';
+export interface ReviewDetail {
+  review: ReviewCase; applicationStatus: Availability; application: Application | null; classificationStatus: Availability;
+  classification: ClassificationSet | null; industriesStatus: Availability; industries: Option[];
+}
+export interface Command { caseId: string; status: string }
+
+export const caseStatusLabels: Record<string, string> = {
+  SUBMITTED: '待审核', IN_REVIEW: '审核中', RETURNED: '已退回', APPROVED: '已通过', REJECTED: '已拒绝', WITHDRAWN: '已撤回',
+};
+export const activeStatuses = ['SUBMITTED', 'IN_REVIEW'];
+export const qualificationLabels: Record<string, string> = {
+  INDIVIDUAL_KYC: '个人', ORGANIZATION_KYB: '组织', RELATED_PERSON_KYC: '关联人员',
+};
+export const roleLabels: Record<string, string> = { CLIENT: '申请主体', DIRECTOR: '董事', SIGNATORY: '授权签字人', UBO: '受益所有人' };
+export const evidenceLabels: Record<string, string> = { RECEIVED: '待核验', ACCEPTED: '已接受', REJECTED: '未接受' };
+export const blockerLabels: Record<string, string> = {
+  CASE_NOT_ACTIVE: '审核任务已结束', CHILD_CASE_NOT_ACTIVE: '有关联人员的审核已单独结束',
+  EVIDENCE_PENDING: '还有材料未核验', REQUIRED_MATERIAL_NOT_ACCEPTED: '有必需材料尚无已接受的证据',
+  CLASSIFICATION_NOT_RECEIVED: '行业与 MCC 尚未确认并交给 Risk',
+};
+export const sectionLabels: Record<string, string> = { BASIC: '基础资料', BUSINESS: '经营资料', PEOPLE: '相关人员', MATERIALS: '申请材料' };
+export const groupLabels: Record<string, string> = {
+  individual: '个人信息', organization: '组织信息', business: '经营信息', address: '地址', identifier: '证件',
+};
+export const fieldLabels: Record<string, string> = {
+  givenName: '名', middleName: '中间名', familyName: '姓', birthDate: '出生日期', nationalityCountry: '国籍', residenceCountry: '居住国家',
+  legalName: '法定名称', tradeName: '经营名称', incorporationCountry: '注册国家', organizationType: '组织类型', incorporationDate: '成立日期',
+  businessDescription: '业务描述', businessModelCode: '经营模式', currency: '币种', expectedTicket: '预计单笔金额', expectedVolume: '预计月交易额',
+  websiteUrl: '网站', countryCode: '国家', stateOrProvince: '州 / 省', city: '城市', postalCode: '邮编',
+  identifierType: '证件类型', identifierValue: '证件号码', issuingCountry: '签发国家', validFrom: '有效期起', validTo: '有效期止',
+};
+export const relationLabels: Record<string, string> = { DIRECTOR: '董事', SIGNATORY: '授权签字人', UBO: '受益所有人', OWNERSHIP: '持股 / 控制' };
+
+export const isId = (v: unknown): v is string => typeof v === 'string' && /^[1-9][0-9]{0,18}$/.test(v) && BigInt(v) <= 9223372036854775807n;
+const text = (v: unknown, max = 255): v is string => typeof v === 'string' && v.length <= max;
+const code = (v: unknown): v is string => typeof v === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(v);
+const nullable = (v: unknown, max = 1000) => v === null || text(v, max);
+const instant = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$/.test(v) && Number.isFinite(Date.parse(v));
+function require(valid: unknown): asserts valid { if (!valid) throw new ApiError(502, 'INVALID_RESPONSE'); }
+const list = (v: unknown, max = 1000): v is unknown[] => Array.isArray(v) && v.length <= max;
+
+function decodeEvidence(value: unknown): Evidence {
+  const v = value as Evidence; require(v && isId(v.evidenceId) && isId(v.fileId) && code(v.status));
+  return { evidenceId: v.evidenceId, fileId: v.fileId, status: v.status };
+}
+function decodeRequirement(value: unknown): Requirement {
+  const v = value as Requirement;
+  require(v && isId(v.requirementId) && code(v.requirementCode) && code(v.documentType) && typeof v.required === 'boolean' && code(v.status) && list(v.evidence));
+  return { requirementId: v.requirementId, requirementCode: v.requirementCode, documentType: v.documentType, required: v.required, status: v.status, evidence: v.evidence.map(decodeEvidence) };
+}
+function decodeSubject(value: unknown): Subject {
+  const v = value as Subject;
+  require(v && isId(v.caseId) && code(v.caseStatus) && isId(v.partyId) && isId(v.profileId) && code(v.roleType) && code(v.qualificationType)
+    && list(v.dependencyTypes, 16) && v.dependencyTypes.every(code) && list(v.requirements));
+  return { caseId: v.caseId, caseStatus: v.caseStatus, partyId: v.partyId, profileId: v.profileId, roleType: v.roleType,
+    qualificationType: v.qualificationType, dependencyTypes: [...v.dependencyTypes], requirements: v.requirements.map(decodeRequirement) };
+}
+function decodeClassification(value: unknown): Classification {
+  const v = value as Classification; require(v && code(v.industryCode) && typeof v.mccCode === 'string' && /^[0-9]{4}$/.test(v.mccCode) && typeof v.primary === 'boolean');
+  return { industryCode: v.industryCode, mccCode: v.mccCode, primary: v.primary };
+}
+/** Risk 任务摘要或详情；expectedId 时必须是请求的任务。 */
+export function decodeCase(value: unknown, expectedId?: string): ReviewCase {
+  const v = value as ReviewCase;
+  require(v && isId(v.caseId) && (!expectedId || v.caseId === expectedId) && text(v.caseNo, 64) && isId(v.applicationId) && isId(v.clientId)
+    && text(v.sourceSubmissionId, 64) && code(v.qualificationType) && code(v.status) && /^[1-9][0-9]{0,9}$/.test(v.version)
+    && instant(v.submittedAt) && (v.decidedAt === null || instant(v.decidedAt)) && nullable(v.publicNote)
+    && (v.returnSection === null || Object.hasOwn(sectionLabels, v.returnSection))
+    && list(v.subjects ?? [], 64) && list(v.classifications ?? [], 20) && list(v.approvalBlockers ?? [], 16));
+  return { caseId: v.caseId, caseNo: v.caseNo, applicationId: v.applicationId, clientId: v.clientId, sourceSubmissionId: v.sourceSubmissionId,
+    qualificationType: v.qualificationType, status: v.status, version: v.version, submittedAt: v.submittedAt, decidedAt: v.decidedAt,
+    publicNote: v.publicNote, returnSection: v.returnSection, subjects: (v.subjects ?? []).map(decodeSubject),
+    classifications: (v.classifications ?? []).map(decodeClassification), approvalBlockers: (v.approvalBlockers ?? []).map(b => { require(code(b)); return b; }) };
+}
+export function decodeCasePage(value: unknown): PagingResponseBody<ReviewCase> {
+  const v = value as PagingResponseBody<unknown>;
+  require(v && list(v.items, 100) && Number.isSafeInteger(v.total) && v.total >= 0 && Number.isInteger(v.page) && v.page >= 1 && Number.isInteger(v.size) && v.size >= 1 && v.size <= 100);
+  const items = v.items.map(item => decodeCase(item)); require(new Set(items.map(i => i.caseId)).size === items.length);
+  return { items, page: v.page, size: v.size, total: v.total };
+}
+function decodeValues(value: unknown): Record<string, Record<string, string | null>> {
+  require(value && typeof value === 'object' && !Array.isArray(value));
+  const result: Record<string, Record<string, string | null>> = {};
+  for (const [group, fields] of Object.entries(value as Record<string, unknown>)) {
+    require(fields && typeof fields === 'object' && !Array.isArray(fields));
+    result[group] = {};
+    for (const [field, raw] of Object.entries(fields as Record<string, unknown>)) { require(nullable(raw, 2000)); result[group][field] = raw as string | null; }
+  }
+  return result;
+}
+export function decodeApplication(value: unknown, applicationId: string): Application {
+  const v = value as Application;
+  require(v && v.applicationId === applicationId && text(v.applicationNo, 64) && isId(v.clientId) && code(v.clientType) && isId(v.subjectPartyId)
+    && code(v.status) && list(v.people, 64) && list(v.relations, 128) && list(v.documents, 256));
+  return { applicationId: v.applicationId, applicationNo: v.applicationNo, clientId: v.clientId, clientType: v.clientType, subjectPartyId: v.subjectPartyId,
+    status: v.status, values: decodeValues(v.values),
+    people: v.people.map(p => { require(p && isId(p.partyId)); return { partyId: p.partyId, values: decodeValues(p.values) }; }),
+    relations: v.relations.map(r => { require(r && isId(r.relationId) && isId(r.relatedPartyId) && code(r.relationType) && nullable(r.ownershipPercentage, 16) && code(r.status));
+      return { relationId: r.relationId, relatedPartyId: r.relatedPartyId, relationType: r.relationType, ownershipPercentage: r.ownershipPercentage, status: r.status }; }),
+    documents: v.documents.map(d => { require(d && isId(d.documentId) && isId(d.subjectPartyId) && code(d.requirementCode) && code(d.documentType) && isId(d.fileId) && typeof d.subjectInScope === 'boolean');
+      return { documentId: d.documentId, subjectPartyId: d.subjectPartyId, requirementCode: d.requirementCode, documentType: d.documentType, fileId: d.fileId, subjectInScope: d.subjectInScope }; }) };
+}
+export function decodeClassificationSet(value: unknown, caseId: string): ClassificationSet {
+  const v = value as ClassificationSet;
+  require(v && v.caseId === caseId && isId(v.applicationId) && typeof v.confirmed === 'boolean' && list(v.items, 20)
+    && (v.confirmed ? isId(v.confirmedBy) && instant(v.confirmedAt) : v.confirmedBy === null && v.confirmedAt === null));
+  return { caseId: v.caseId, applicationId: v.applicationId, confirmed: v.confirmed, confirmedBy: v.confirmedBy, confirmedAt: v.confirmedAt, items: v.items.map(decodeClassification) };
+}
+const availability = (v: unknown): v is Availability => v === 'AVAILABLE' || v === 'UNAVAILABLE';
+/** 详情：CCT 部分标为不可用时对应字段必须为空，不能当作“无数据”。 */
+export function decodeDetail(value: unknown, caseId: string): ReviewDetail {
+  const v = value as ReviewDetail;
+  require(v && availability(v.applicationStatus) && availability(v.classificationStatus) && availability(v.industriesStatus) && list(v.industries, 200)
+    && (v.applicationStatus === 'AVAILABLE') === (v.application !== null) && (v.classificationStatus === 'AVAILABLE') === (v.classification !== null));
+  const review = decodeCase(v.review, caseId);
+  return { review, applicationStatus: v.applicationStatus, application: v.application === null ? null : decodeApplication(v.application, review.applicationId),
+    classificationStatus: v.classificationStatus, classification: v.classification === null ? null : decodeClassificationSet(v.classification, caseId),
+    industriesStatus: v.industriesStatus, industries: v.industries.map(o => { require(o && code(o.code) && text(o.label, 128)); return { code: o.code, label: o.label }; }) };
+}
+export function decodeCommand(value: unknown, caseId: string): Command {
+  const v = value as Command; require(v && v.caseId === caseId && code(v.status));
+  return { caseId: v.caseId, status: v.status };
+}
+/** 通过按钮只看 Risk 门禁：任务在进行且没有未满足项。 */
+export function canApprove(review: ReviewCase): boolean {
+  return activeStatuses.includes(review.status) && review.approvalBlockers.length === 0;
+}
+/** 分类草稿的前端校验；最终以 CCT 为准。 */
+export function classificationIssues(items: Classification[]): string[] {
+  const issues: string[] = [];
+  if (items.length === 0) issues.push('至少添加一条分类');
+  if (items.length > 20) issues.push('最多 20 条分类');
+  if (items.filter(i => i.primary).length !== 1) issues.push('必须恰好有一个主要分类');
+  if (items.some(i => !/^[0-9]{4}$/.test(i.mccCode))) issues.push('MCC 必须是四位数字');
+  if (items.some(i => !i.industryCode)) issues.push('请选择行业');
+  if (new Set(items.map(i => `${i.industryCode}:${i.mccCode}`)).size !== items.length) issues.push('行业与 MCC 组合不能重复');
+  return issues;
+}
+export function filters(values: Record<string, string | undefined>): Record<string, string> {
+  return Object.fromEntries(Object.entries(values).filter(([, v]) => v?.trim()).map(([k, v]) => [k, v!.trim()]));
+}

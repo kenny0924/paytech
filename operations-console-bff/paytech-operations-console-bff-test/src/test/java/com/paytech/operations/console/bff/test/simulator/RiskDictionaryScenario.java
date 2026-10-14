@@ -1,9 +1,11 @@
 package com.paytech.operations.console.bff.test.simulator;
 
+import com.paytech.risk.api.decision.request.*;
+import com.paytech.risk.api.decision.response.*;
+
 import java.util.*;
 import tools.jackson.databind.json.JsonMapper;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.DecisionConfigurationQueryModels.*;
 
 /** 新字典和历史合同的有状态外部 Owner 场景，写入结果由当前版本计算。 */
 final class RiskDictionaryScenario {
@@ -22,8 +24,8 @@ final class RiskDictionaryScenario {
     Object dispatch(RiskDecisionConfigurationSimulator.Request request) {
         Map<String,String> query=new HashMap<>(); if(request.query()!=null) for(String pair:request.query().split("&")){String[] parts=pair.split("=",2);query.put(parts[0],java.net.URLDecoder.decode(parts[1],java.nio.charset.StandardCharsets.UTF_8));}
         int page=Integer.parseInt(query.getOrDefault("page","1"));int size=Integer.parseInt(query.getOrDefault("size","10"));
-        if(request.path().endsWith("/versions")) return new PagingResponseBody<>(List.of(new RuleSetHistoryItem("90001","30001","CHECKOUT_PREPARE","DEFAULT_RULES","规则集",1,"FROZEN",true,"10001","初始版本",RiskDecisionConfigurationSimulator.TIME)),page,size,1);
-        if(request.path().endsWith("/release-references")) return new RuleSetReleaseReferencesResponseBody("90001",false,new PagingResponseBody<>(List.of(new ReleaseReference("40001","REL-1","TEST","DRAFT","CHECKOUT_PREPARE","20001",1,"30001",1,null,null)),page,size,1));
+        if(request.path().endsWith("/versions")) return new PagingResponseBody<>(List.of(historyItem()),page,size,1);
+        if(request.path().endsWith("/release-references")) return releaseReferences(new PagingResponseBody<>(List.of(releaseReference()),page,size,1));
         String[] path=request.path().substring(DICTIONARIES.length()).split("/");boolean reason=path[0].equals("rejection-reasons");String codeKey=reason?"reasonCode":"tagCode";String dictionaryType=reason?"REJECTION_REASON":"SUBJECT_TAG";
         if(request.method().equals("GET")) {
             if(path.length==1){var items=entries.entrySet().stream().filter(e->e.getKey().startsWith(path[0]+":"))
@@ -41,5 +43,21 @@ final class RiskDictionaryScenario {
         else {entry.put("name",body.path("name").asString());entry.put("description",body.path("description").isNull()?null:body.path("description").asString());if(reason)entry.put("defaultMessage",body.path("defaultMessage").asString());}
         entry.put("version",Long.toString(version));entry.put("updatedBy",actor);entry.put("updateTime",RiskDecisionConfigurationSimulator.TIME);entries.put(key,entry);
         return Map.of("dictionaryType",dictionaryType,"code",code,"version",Long.toString(version),"status",entry.get("status"),"changedBy",actor,"changedTime",RiskDecisionConfigurationSimulator.TIME);
+    }
+    /** 构造规则集唯一历史版本。 */
+    private static RuleSetHistoryItemResponseBody historyItem() {
+        var item=new RuleSetHistoryItemResponseBody();item.setRuleSetId("90001");item.setRuleSetVersionId("30001");item.setPointCode("CHECKOUT_PREPARE");
+        item.setRuleSetCode("DEFAULT_RULES");item.setRuleSetName("规则集");item.setVersionNo(1);item.setStatus("FROZEN");item.setIsCurrent(true);
+        item.setCreatedBy("10001");item.setChangeReason("初始版本");item.setCreateTime(RiskDecisionConfigurationSimulator.TIME);return item;
+    }
+    /** 构造规则集唯一未生效发布引用。 */
+    private static RuleSetReleaseReferenceResponseBody releaseReference() {
+        var reference=new RuleSetReleaseReferenceResponseBody();reference.setReleaseId("40001");reference.setReleaseNo("REL-1");reference.setEnvironmentCode("TEST");
+        reference.setStatus("DRAFT");reference.setPointCode("CHECKOUT_PREPARE");reference.setPointVersionId("20001");reference.setPointVersionNo(1);
+        reference.setRuleSetVersionId("30001");reference.setVersionNo(1);reference.setActivatedTime(null);reference.setSupersededTime(null);return reference;
+    }
+    /** 构造未被活动发布使用的规则集引用分页。 */
+    private static RuleSetReleaseReferencesResponseBody releaseReferences(PagingResponseBody<RuleSetReleaseReferenceResponseBody> page) {
+        var references=new RuleSetReleaseReferencesResponseBody();references.setRuleSetId("90001");references.setInUse(false);references.setReferences(page);return references;
     }
 }

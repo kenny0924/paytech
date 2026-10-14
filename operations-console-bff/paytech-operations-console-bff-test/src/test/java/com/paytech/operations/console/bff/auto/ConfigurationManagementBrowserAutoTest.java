@@ -48,7 +48,9 @@ class ConfigurationManagementBrowserAutoTest extends OperationsBffHttpTestBase {
         assertEquals(ACCOUNT_ID, call.header("X-Gateway-Actor-Subject")); assertEquals(SESSION_ID, call.header("X-Gateway-Session-Id"));
         assertEquals("configuration-boundary-request", call.header("X-Request-Id"));
         assertNull(call.header("Authorization")); assertNull(call.header("Cookie"));
-        if (!c.path("request").isNull()) { assertEquals(KEY, call.header("Idempotency-Key")); assertEquals(c.path("request"), JSON.readTree(call.body())); }
+        if (!c.path("request").isNull()) {
+            assertNull(call.header("Idempotency-Key"));
+            assertEquals(c.path("request"), JSON.readTree(call.body())); }
         else if (!c.path("query").asString().isEmpty()) assertEquals(query(c.path("query").asString()), query(call.query()));
     }
 

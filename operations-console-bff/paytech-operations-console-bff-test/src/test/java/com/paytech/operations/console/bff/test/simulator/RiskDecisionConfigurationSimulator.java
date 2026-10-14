@@ -1,5 +1,8 @@
 package com.paytech.operations.console.bff.test.simulator;
 
+import com.paytech.risk.api.decision.request.*;
+import com.paytech.risk.api.decision.response.*;
+
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels;
 import com.paytech.risk.api.decision.DecisionReleaseManagementModels;
 import java.io.IOException;
@@ -43,7 +46,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
     private final List<Request> journal = new CopyOnWriteArrayList<>();
     private final List<String> unexpected = new CopyOnWriteArrayList<>();
     private final List<String> responses = new CopyOnWriteArrayList<>();
-    private final Map<String, DecisionRuleSetManagementModels.RuleSetDetailResponseBody> ruleSets = new LinkedHashMap<>();
+    private final Map<String, RuleSetDetailResponseBody> ruleSets = new LinkedHashMap<>();
     private final Map<String, RuleSetState> ruleRoots = new LinkedHashMap<>();
     private final Map<String, CandidateState> candidates = new LinkedHashMap<>();
     private final RiskVariableScenario variables = new RiskVariableScenario();
@@ -138,11 +141,11 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
     }
 
     public synchronized void addRuleSet(String id, String status) {
-        ruleSets.put(id, new DecisionRuleSetManagementModels.RuleSetDetailResponseBody(id, "20001", "CHECKOUT_PREPARE", id.equals("30001") ? "DEFAULT_RULES" : "RULES_" + id,
+        ruleSets.put(id, new RuleSetDetailResponseBody(id, "20001", "CHECKOUT_PREPARE", id.equals("30001") ? "DEFAULT_RULES" : "RULES_" + id,
             "规则集", 1, status, HASH, "10001", "初始版本", TIME,
             status.equals("FROZEN") ? "10001" : null, status.equals("FROZEN") ? TIME : null, sampleRules()));
         var rule = ruleSets.get(id);
-        ruleRoots.put(rule.ruleSetCode(), new RuleSetState(Long.toString(90001 + ruleRoots.size())));
+        ruleRoots.put(rule.getRuleSetCode(), new RuleSetState(Long.toString(90001 + ruleRoots.size())));
     }
 
     public synchronized void candidateState(String state) {
@@ -163,7 +166,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
             new DecisionRuleSetManagementModels.RuleActionRequestBody("ALLOW_CHECKOUT", 1), null, List.of()));
     }
 
-    public static DecisionRuleSetManagementModels.RuleAuthoringContextResponseBody authoring() {
+    public static RuleAuthoringContextResponseBody authoring() {
         var point = new DecisionRuleSetManagementModels.DecisionPointDescriptorResponseBody("CHECKOUT_PREPARE", "Checkout Prepare", "CHECKOUT",
             "ORDER_PREPARATION", 4, "RISK_DECISION_RESULT", "REVIEW", "FIRST_TERMINAL", "FAIL_CLOSED", 500, "ACTIVE");
         var fields = List.of(new DecisionRuleSetManagementModels.DecisionInputFieldDescriptorResponseBody("country_code", "STRING", true,
@@ -171,7 +174,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
             true, "INTERNAL", true, false, "REGISTERED_ORDER_AMOUNT"));
         var actions = List.of(action("ALLOW_CHECKOUT", "ALLOW"), action("DENY_CHECKOUT", "DENY"),
             action("REVIEW_CHECKOUT", "REVIEW"));
-        return new DecisionRuleSetManagementModels.RuleAuthoringContextResponseBody("RISK_VARIABLE_AUTHORING", point, fields,
+        return new RuleAuthoringContextResponseBody("RISK_VARIABLE_AUTHORING", point, fields,
             List.of("EQ", "NE", "GT", "GTE", "LT", "LTE", "IN", "NOT_IN", "BETWEEN", "IS_NULL", "IS_NOT_NULL"),
             actions, List.of(), List.of(), List.of(), List.of(), List.of(), "VARIABLE_REFERENCE",
             new com.paytech.risk.api.decision.RiskVariableModels.VariableQueryContext("CHECKOUT_PREPARE", "ORDER_PREPARATION", 4, "RULE_CONDITION"));
@@ -193,9 +196,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         journal.add(request);
         if (!known(request) || request.header("X-Gateway-Actor-Subject") == null
             || request.header("X-Gateway-Session-Id") == null || request.header("X-Request-Id") == null
-            || !request.method().equals("GET") && !request.path().startsWith("/decision-dictionaries/v1/")
-                && !request.path().startsWith("/decision-variables/v1/")
-                && !request.path().equals("/decision-flows/v1/flows/validate") && request.header("Idempotency-Key") == null) {
+            || request.header("Idempotency-Key") != null) {
             unexpected.add(request.method() + " " + request.path());
             sendProblem(exchange, 500, "SYSTEM_ERROR");
             return;
@@ -254,8 +255,8 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
             throw new IllegalStateException("Recovery timeout requires Validate command");
         String id = request.path().substring(CANDIDATES.length() + 1, request.path().length() - 9);
         CandidateState state = candidate(id);
-        var body = JSON.readValue(request.body(), DecisionReleaseManagementModels.ValidateTestReleaseRequestBody.class);
-        if (!state.state.equals("DRAFT") || body.expectedVersion() != state.version())
+        var body = JSON.readValue(request.body(), ValidateTestReleaseRequestBody.class);
+        if (!state.state.equals("DRAFT") || body.getExpectedVersion() != state.version())
             throw new IllegalStateException("Recovery timeout requires current DRAFT version");
         // Risk 已提交 STARTED，再丢失 HTTP 完成信号；查询必须保留 Owner 存储的原始 Actor。
         state.state = "RECOVERY";
@@ -273,12 +274,11 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
             if (path.startsWith(RULES)) return rule(path.substring(RULES.length() + 1));
             return candidate(path.substring(CANDIDATES.length() + 1)).detail();
         }
-        String key = request.header("X-Gateway-Actor-Subject") + ":" + request.method() + ":" + path + ":" + request.header("Idempotency-Key");
-        if (commands.containsKey(key)) {
-            var completed = commands.get(key);
-            if (!staleCommandReplay && !completed.body().equals(request.body())) {
-                throw new SemanticFailure(409, "CONCURRENT_REQUEST");
-            }
+        // Gateway 负责请求幂等，Risk 命令不携带 Idempotency-Key；同一操作者对同一资源的相同命令按原结果重放，
+        // 显式故障模式下即使请求体不同也重放旧结果。
+        String key = request.header("X-Gateway-Actor-Subject") + ":" + request.method() + ":" + path;
+        var completed = commands.get(key);
+        if (completed != null && (staleCommandReplay || completed.body().equals(request.body()))) {
             return completed.response();
         }
         Object result = command(request);
@@ -292,77 +292,77 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
             String id = r.path().substring(RULES.length() + 1);
             RuleSetState root = ruleRoots.values().stream().filter(value -> value.id.equals(id)).findFirst()
                 .orElseThrow(() -> new SemanticFailure(404, "RISK_DECISION_CONFIGURATION_NOT_FOUND"));
-            var body = JSON.readValue(r.body(), DecisionRuleSetManagementModels.DeleteRuleSetRequestBody.class);
+            var body = JSON.readValue(r.body(), DeleteRuleSetRequestBody.class);
             if (root.deleted) throw new SemanticFailure(409, "RISK_RULE_SET_DELETED");
-            if (root.version != Long.parseLong(body.expectedVersion())) throw new SemanticFailure(409, "RISK_RULE_SET_CHANGED");
+            if (root.version != Long.parseLong(body.getExpectedVersion())) throw new SemanticFailure(409, "RISK_RULE_SET_CHANGED");
             if (root.inUse) throw new SemanticFailure(409, "RISK_RULE_SET_IN_USE");
             root.deleted = true; root.version++;
-            return new DecisionRuleSetManagementModels.DeleteRuleSetResponseBody(id, "DELETED", Long.toString(root.version), actor, TIME);
+            return new DeleteRuleSetResponseBody(id, "DELETED", Long.toString(root.version), actor, TIME);
         }
         if (r.path().equals(RULES)) {
-            var body = JSON.readValue(r.body(), DecisionRuleSetManagementModels.CreateRuleSetVersionRequestBody.class);
-            for (var rule : body.rules()) {
-                if (rule.conditionNodes().stream().map(DecisionRuleSetManagementModels.ConditionNodeRequestBody::nodeKey).distinct().count()
-                    != rule.conditionNodes().size()) throw new SemanticFailure(400, "BUSINESS_CHECK_FAILED");
+            var body = JSON.readValue(r.body(), CreateRuleSetVersionRequestBody.class);
+            for (var rule : body.getRules()) {
+                if (rule.getConditionNodes().stream().map(DecisionRuleSetManagementModels.ConditionNodeRequestBody::getNodeKey).distinct().count()
+                    != rule.getConditionNodes().size()) throw new SemanticFailure(400, "BUSINESS_CHECK_FAILED");
             }
             String id = Long.toString(nextRule++);
-            RuleSetState root = ruleRoots.get(body.ruleSetCode());
+            RuleSetState root = ruleRoots.get(body.getRuleSetCode());
             if (root != null && root.deleted) throw new SemanticFailure(409, "RISK_RULE_SET_DELETED");
-            if (root == null) ruleRoots.put(body.ruleSetCode(), new RuleSetState(Long.toString(90001 + ruleRoots.size())));
+            if (root == null) ruleRoots.put(body.getRuleSetCode(), new RuleSetState(Long.toString(90001 + ruleRoots.size())));
             else root.version++;
-            ruleSets.put(id, new DecisionRuleSetManagementModels.RuleSetDetailResponseBody(id, "20002", body.pointCode(), body.ruleSetCode(),
-                body.ruleSetName(), 2, "DRAFT", HASH, actor, body.changeReason(), TIME, null, null, body.rules()));
-            return new DecisionRuleSetManagementModels.CreateRuleSetVersionResponseBody(id, "20002", body.ruleSetCode(), 2, "DRAFT", HASH, actor, TIME);
+            ruleSets.put(id, new RuleSetDetailResponseBody(id, "20002", body.getPointCode(), body.getRuleSetCode(),
+                body.getRuleSetName(), 2, "DRAFT", HASH, actor, body.getChangeReason(), TIME, null, null, body.getRules()));
+            return new CreateRuleSetVersionResponseBody(id, "20002", body.getRuleSetCode(), 2, "DRAFT", HASH, actor, TIME);
         }
         if (r.path().endsWith("/freeze")) {
             String id = r.path().substring(RULES.length() + 1, r.path().length() - 7);
             var old = rule(id);
-            var body = JSON.readValue(r.body(), DecisionRuleSetManagementModels.FreezeRuleSetVersionRequestBody.class);
-            if (!old.contentHash().equals(body.expectedContentHash())) throw new SemanticFailure(409, "CONCURRENT_REQUEST");
-            ruleRoots.get(old.ruleSetCode()).version++;
-            ruleSets.put(id, new DecisionRuleSetManagementModels.RuleSetDetailResponseBody(id, old.pointVersionId(), old.pointCode(), old.ruleSetCode(),
-                old.ruleSetName(), old.versionNo(), "FROZEN", old.contentHash(), old.createdBy(), old.changeReason(),
-                old.createTime(), actor, TIME, old.rules()));
-            return new DecisionRuleSetManagementModels.FreezeRuleSetVersionResponseBody(id, old.pointVersionId(), old.ruleSetCode(), old.versionNo(),
-                "FROZEN", old.contentHash(), actor, TIME);
+            var body = JSON.readValue(r.body(), FreezeRuleSetVersionRequestBody.class);
+            if (!old.getContentHash().equals(body.getExpectedContentHash())) throw new SemanticFailure(409, "CONCURRENT_REQUEST");
+            ruleRoots.get(old.getRuleSetCode()).version++;
+            ruleSets.put(id, new RuleSetDetailResponseBody(id, old.getPointVersionId(), old.getPointCode(), old.getRuleSetCode(),
+                old.getRuleSetName(), old.getVersionNo(), "FROZEN", old.getContentHash(), old.getCreatedBy(), old.getChangeReason(),
+                old.getCreateTime(), actor, TIME, old.getRules()));
+            return new FreezeRuleSetVersionResponseBody(id, old.getPointVersionId(), old.getRuleSetCode(), old.getVersionNo(),
+                "FROZEN", old.getContentHash(), actor, TIME);
         }
         if (r.path().equals(CANDIDATES)) {
-            var body = JSON.readValue(r.body(), DecisionReleaseManagementModels.CreateTestReleaseRequestBody.class);
-            var rule = rule(body.ruleSetVersionId());
-            if (!rule.status().equals("FROZEN") || !rule.contentHash().equals(body.expectedRuleSetContentHash())) {
+            var body = JSON.readValue(r.body(), CreateTestReleaseRequestBody.class);
+            var rule = rule(body.getRuleSetVersionId());
+            if (!rule.getStatus().equals("FROZEN") || !rule.getContentHash().equals(body.getExpectedRuleSetContentHash())) {
                 throw new SemanticFailure(400, "BUSINESS_CHECK_FAILED");
             }
             String id = Long.toString(nextRelease++);
-            var state = new CandidateState(id, 2, body.ruleSetVersionId(), actor, "DRAFT");
+            var state = new CandidateState(id, 2, body.getRuleSetVersionId(), actor, "DRAFT");
             candidates.put(id, state);
-            return new DecisionReleaseManagementModels.CreateTestReleaseResponseBody(id, 2, "10002", "CHECKOUT_PREPARE", "20001", state.ruleId,
+            return new CreateTestReleaseResponseBody(id, 2, "10002", "CHECKOUT_PREPARE", "20001", state.ruleId,
                 "TEST", "DRAFT", 1, HASH, actor, TIME, new DecisionReleaseManagementModels.InitialStateChangeResponseBody("50001", TIME, null,
                 "DRAFT", "CANDIDATE_CREATED", "OPERATIONS_COMMAND", actor, 1));
         }
         String id = r.path().substring(CANDIDATES.length() + 1, r.path().length() - 9);
         var state = candidate(id);
-        var body = JSON.readValue(r.body(), DecisionReleaseManagementModels.ValidateTestReleaseRequestBody.class);
+        var body = JSON.readValue(r.body(), ValidateTestReleaseRequestBody.class);
         // 显式故障模式返回旧的完整合法状态矩阵，供浏览器验证当前请求的 successor 关联。
-        if (body.expectedVersion() != 1 && !staleCommandReplay) throw new SemanticFailure(409, "CONCURRENT_REQUEST");
+        if (body.getExpectedVersion() != 1 && !staleCommandReplay) throw new SemanticFailure(409, "CONCURRENT_REQUEST");
         state.state = staticValidationFails ? "REJECTED" : "PASSED";
-        return new DecisionReleaseManagementModels.ValidateTestReleaseResponseBody(id, state.number, "TEST", state.status(), state.version(), HASH,
+        return new ValidateTestReleaseResponseBody(id, state.number, "TEST", state.status(), state.version(), HASH,
             !staticValidationFails, validationChecks(staticValidationFails));
     }
 
     private Object rulePage(Request request) {
         var q = query(request.query());
-        var heads = new LinkedHashMap<String, DecisionRuleSetManagementModels.RuleSetDetailResponseBody>();
-        ruleSets.values().forEach(rule -> heads.merge(rule.ruleSetCode(), rule, (left, right) ->
-            right.versionNo() >= left.versionNo() ? right : left));
-        var items = heads.values().stream().filter(r -> !ruleRoots.get(r.ruleSetCode()).deleted)
-            .filter(r -> matches(q, "pointCode", r.pointCode())
-            && matches(q, "ruleSetCode", r.ruleSetCode()) && matches(q, "status", r.status()))
-            .sorted(Comparator.comparing(DecisionRuleSetManagementModels.RuleSetDetailResponseBody::createTime).reversed()
-                .thenComparing(r -> new java.math.BigInteger(r.ruleSetVersionId()), Comparator.reverseOrder()))
-            .map(r -> new DecisionRuleSetManagementModels.RuleSetListItemResponseBody(r.ruleSetVersionId(), r.pointVersionId(), r.pointCode(),
-                r.ruleSetCode(), r.ruleSetName(), r.versionNo(), r.status(), r.contentHash(), r.createdBy(),
-                r.changeReason(), r.createTime(), r.frozenBy(), r.frozenTime(), ruleRoots.get(r.ruleSetCode()).id,
-                Long.toString(ruleRoots.get(r.ruleSetCode()).version), ruleRoots.get(r.ruleSetCode()).inUse)).toList();
+        var heads = new LinkedHashMap<String, RuleSetDetailResponseBody>();
+        ruleSets.values().forEach(rule -> heads.merge(rule.getRuleSetCode(), rule, (left, right) ->
+            right.getVersionNo() >= left.getVersionNo() ? right : left));
+        var items = heads.values().stream().filter(r -> !ruleRoots.get(r.getRuleSetCode()).deleted)
+            .filter(r -> matches(q, "pointCode", r.getPointCode())
+            && matches(q, "ruleSetCode", r.getRuleSetCode()) && matches(q, "status", r.getStatus()))
+            .sorted(Comparator.comparing(RuleSetDetailResponseBody::getCreateTime).reversed()
+                .thenComparing(r -> new java.math.BigInteger(r.getRuleSetVersionId()), Comparator.reverseOrder()))
+            .map(r -> new RuleSetListItemResponseBody(r.getRuleSetVersionId(), r.getPointVersionId(), r.getPointCode(),
+                r.getRuleSetCode(), r.getRuleSetName(), r.getVersionNo(), r.getStatus(), r.getContentHash(), r.getCreatedBy(),
+                r.getChangeReason(), r.getCreateTime(), r.getFrozenBy(), r.getFrozenTime(), ruleRoots.get(r.getRuleSetCode()).id,
+                Long.toString(ruleRoots.get(r.getRuleSetCode()).version), ruleRoots.get(r.getRuleSetCode()).inUse)).toList();
         return page(items, q);
     }
 
@@ -391,10 +391,10 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         private RuleSetState(String id) { this.id = id; }
     }
 
-    private DecisionRuleSetManagementModels.RuleSetDetailResponseBody rule(String id) {
+    private RuleSetDetailResponseBody rule(String id) {
         if (!ruleSets.containsKey(id)) throw new SemanticFailure(404, "RISK_DECISION_CONFIGURATION_NOT_FOUND");
         var rule = ruleSets.get(id);
-        if (ruleRoots.get(rule.ruleSetCode()).deleted) throw new SemanticFailure(404, "RISK_DECISION_CONFIGURATION_NOT_FOUND");
+        if (ruleRoots.get(rule.getRuleSetCode()).deleted) throw new SemanticFailure(404, "RISK_DECISION_CONFIGURATION_NOT_FOUND");
         return rule;
     }
 
@@ -439,12 +439,12 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         private String status() { return state.equals("PASSED") || state.equals("RECOVERY") ? "VALIDATING" : state; }
         private int version() { return state.equals("DRAFT") ? 1 : state.equals("REJECTED") ? 3 : 2; }
         private Boolean passed() { return state.equals("DRAFT") || state.equals("RECOVERY") ? null : state.equals("PASSED"); }
-        private DecisionReleaseManagementModels.TestReleaseListItemResponseBody item() {
-            return new DecisionReleaseManagementModels.TestReleaseListItemResponseBody(id, number, "10002", "CHECKOUT_PREPARE", "20001", ruleId,
+        private TestReleaseListItemResponseBody item() {
+            return new TestReleaseListItemResponseBody(id, number, "10002", "CHECKOUT_PREPARE", "20001", ruleId,
                 "TEST", status(), version(), HASH, actor, TIME, passed());
         }
 
-        private DecisionReleaseManagementModels.TestReleaseDetailResponseBody detail() {
+        private TestReleaseDetailResponseBody detail() {
             List<DecisionReleaseManagementModels.ReleaseStateChangeResponseBody> states = new ArrayList<>();
             states.add(stateChange(1, null, "DRAFT", "CANDIDATE_CREATED"));
             if (!state.equals("DRAFT")) states.add(stateChange(2, "DRAFT", "VALIDATING", "STATIC_VALIDATION_STARTED"));
@@ -452,9 +452,9 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
             List<DecisionReleaseManagementModels.ReleaseStaticCheckResponseBody> checks = new ArrayList<>();
             if (passed() != null) for (var check : validationChecks(!passed())) {
                 checks.add(new DecisionReleaseManagementModels.ReleaseStaticCheckResponseBody(Integer.toString(60001 + checks.size()), TIME,
-                    check.checkCode(), check.checkStatus(), check.severity(), check.errorCode(), check.errorSummary()));
+                    check.getCheckCode(), check.getCheckStatus(), check.getSeverity(), check.getErrorCode(), check.getErrorSummary()));
             }
-            return new DecisionReleaseManagementModels.TestReleaseDetailResponseBody(id, number, "10002", "CHECKOUT_PREPARE", "20001", ruleId,
+            return new TestReleaseDetailResponseBody(id, number, "10002", "CHECKOUT_PREPARE", "20001", ruleId,
                 "TEST", status(), version(), HASH, actor, TIME, passed(), state.equals("PASSED"),
                 new DecisionReleaseManagementModels.FrozenCompositionResponseBody("10002", "CHECKOUT_PREPARE", "20001", 1, HASH,
                     ruleId, "DEFAULT_RULES", 1, HASH), states, checks);

@@ -238,6 +238,29 @@ export const pageCapabilities = [
         "displayName": "维护配置"
       }
     ]
+  },
+  {
+    "componentKey": "OPERATIONS_CLIENT_ONBOARDING_REVIEW",
+    "displayName": "客户入驻审核",
+    "frontendRoute": "/client-onboarding/reviews",
+    "actions": [
+      {
+        "resourceCode": "CLIENT_ONBOARDING_CLASSIFY",
+        "displayName": "确认行业与 MCC"
+      },
+      {
+        "resourceCode": "CLIENT_ONBOARDING_REVIEW_EVIDENCE",
+        "displayName": "核验材料与检查"
+      },
+      {
+        "resourceCode": "CLIENT_ONBOARDING_RETURN",
+        "displayName": "退回修改"
+      },
+      {
+        "resourceCode": "CLIENT_ONBOARDING_DECIDE",
+        "displayName": "批准或最终拒绝"
+      }
+    ]
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

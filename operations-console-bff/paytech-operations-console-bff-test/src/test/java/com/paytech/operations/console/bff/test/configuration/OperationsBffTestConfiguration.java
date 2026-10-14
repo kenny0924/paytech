@@ -3,6 +3,7 @@ package com.paytech.operations.console.bff.test.configuration;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.paytech.operations.console.bff.test.simulator.ClientReviewOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator;
 import com.paytech.operations.console.bff.test.simulator.RiskDecisionConfigurationSimulator;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -14,6 +15,18 @@ public class OperationsBffTestConfiguration {
     private static final AtomicLong JOURNAL_SEQUENCE = new AtomicLong();
     public static final PlatformOperationsSimulator PLATFORM = new PlatformOperationsSimulator(JOURNAL_SEQUENCE);
     public static final RiskDecisionConfigurationSimulator RISK = riskSimulator();
+    public static final ClientReviewOwnerSimulator CLIENT_REVIEW = clientReviewSimulator();
+
+    @Bean(destroyMethod = "close")
+    ClientReviewOwnerSimulator clientReviewOwnerSimulator() { return CLIENT_REVIEW; }
+
+    private static ClientReviewOwnerSimulator clientReviewSimulator() {
+        try {
+            return new ClientReviewOwnerSimulator();
+        } catch (IOException exception) {
+            throw new IllegalStateException("无法启动入驻审核 Owner 本地 HTTP Simulator", exception);
+        }
+    }
 
     @Bean(destroyMethod = "close")
     PlatformOperationsSimulator platformOperationsSimulator() { return PLATFORM; }

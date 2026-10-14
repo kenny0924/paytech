@@ -8,6 +8,7 @@ import static com.paytech.operations.console.bff.test.simulator.PlatformOperatio
 import static com.paytech.operations.console.bff.test.simulator.RiskDecisionConfigurationSimulator.HASH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
@@ -142,7 +143,7 @@ class RiskDecisionConfigurationBrowserBoundaryAutoTest extends OperationsBffHttp
     }
 
     @Test
-    void test_saveForwardsExactTrustedContextKeyAndBodyOnce() throws Exception {
+    void test_saveForwardsExactTrustedContextAndBodyOnce() throws Exception {
         CreateRuleSetVersionRequestBody request = saveRequest();
         HttpResponse<String> response = send("POST", RULES, json.writeValueAsString(request),
             commandHeaders("operations-risk-rule-set-save", KEY));
@@ -157,19 +158,8 @@ class RiskDecisionConfigurationBrowserBoundaryAutoTest extends OperationsBffHttp
         assertEquals(RISK_ACCOUNT_ID, call.header("X-Gateway-Actor-Subject"));
         assertEquals(SESSION_ID, call.header("X-Gateway-Session-Id"));
         assertEquals(REQUEST_ID, call.header(RequestIdFilter.HEADER_NAME));
-        assertEquals(KEY, call.header("Idempotency-Key"));
+        assertNull(call.header("Idempotency-Key"));
         assertEquals(json.valueToTree(request), json.readTree(call.body()));
-    }
-
-    @Test
-    void test_nondeterministicValidateKeyFailsAfterAuthorizationWithoutRisk() throws Exception {
-        HttpResponse<String> response = send("POST", CANDIDATES + "/40001/validate", "{\"expectedVersion\":1}",
-            commandHeaders("operations-risk-test-candidate-validate", "random_valid_key_12345"));
-
-        assertProblem(json, response, 400, "INVALID_REQUEST", REQUEST_ID);
-        assertSingleAuthorization("operations-risk-test-candidate-validate");
-        assertEquals(1, platform.completedAuthorizationCount());
-        assertTrue(risk.requests().isEmpty());
     }
 
     @Test
@@ -451,29 +441,17 @@ class RiskDecisionConfigurationBrowserBoundaryAutoTest extends OperationsBffHttp
     @ParameterizedTest
     @MethodSource("posts")
     void eachPostRejectsProtectedProtocolErrorsOnlyAfterPlt(Endpoint endpoint) throws Exception {
-        for (String scenario : List.of("origin", "missing", "invalid", "non-json", "short-key", "format-key", "long-key")) {
+        for (String scenario : List.of("origin", "missing", "invalid", "non-json")) {
             resetScenario();
             Map<String, String> headers = headers(endpoint);
             if (scenario.equals("origin")) headers.put("Origin", "https://invalid.example.test");
             if (scenario.equals("missing")) headers.remove("Content-Type");
             if (scenario.equals("invalid")) headers.put("Content-Type", "not-a-media-type");
             if (scenario.equals("non-json")) headers.put("Content-Type", "text/plain");
-            if (scenario.equals("short-key")) headers.put("Idempotency-Key", "short");
-            if (scenario.equals("format-key")) headers.put("Idempotency-Key", "bad key with spaces");
-            if (scenario.equals("long-key")) headers.put("Idempotency-Key", "x".repeat(129));
             HttpResponse<String> response = send(endpoint.method(), endpoint.path(), body(endpoint), headers);
-            boolean key = scenario.endsWith("key");
-            assertLocalProblem(response, endpoint, key ? 400 : scenario.equals("origin") ? 403 : 415,
-                key ? "INVALID_REQUEST" : scenario.equals("origin") ? "OPERATIONS_ORIGIN_REJECTED" : "OPERATIONS_UNSUPPORTED_MEDIA_TYPE");
+            assertLocalProblem(response, endpoint, scenario.equals("origin") ? 403 : 415,
+                scenario.equals("origin") ? "OPERATIONS_ORIGIN_REJECTED" : "OPERATIONS_UNSUPPORTED_MEDIA_TYPE");
         }
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"random_valid_key_12345", "risk-validate-v1-40002-1", "risk-validate-v1-40001-2"})
-    void validateRejectsEveryDeterministicKeyMismatch(String key) throws Exception {
-        Endpoint endpoint = endpoint("validate");
-        HttpResponse<String> response = send(endpoint.method(), endpoint.path(), body(endpoint), commandHeaders(endpoint.route(), key));
-        assertLocalProblem(response, endpoint, 400, "INVALID_REQUEST");
     }
 
     @Test
@@ -872,7 +850,7 @@ class RiskDecisionConfigurationBrowserBoundaryAutoTest extends OperationsBffHttp
         assertSingleAuthorization(save.route());
         assertEquals(1, risk.requests().size());
         assertEquals(request, json.readTree(risk.requests().getFirst().body()));
-        assertEquals(headers(save).get("Idempotency-Key"), risk.requests().getFirst().header("Idempotency-Key"));
+        assertNull(risk.requests().getFirst().header("Idempotency-Key"));
         assertTrue(platform.requests().getFirst().sequence() < risk.requests().getFirst().sequence());
         resetScenario();
         rule.set("action", json.createObjectNode().put("actionCode", "DENY_CHECKOUT").put("actionVersionNo", 1));
@@ -952,7 +930,7 @@ class RiskDecisionConfigurationBrowserBoundaryAutoTest extends OperationsBffHttp
         assertEquals(RISK_ACCOUNT_ID, call.header("X-Gateway-Actor-Subject"));
         assertEquals(SESSION_ID, call.header("X-Gateway-Session-Id"));
         assertEquals(REQUEST_ID, call.header("X-Request-Id"));
-        assertEquals(headers(endpoint).get("Idempotency-Key"), call.header("Idempotency-Key"));
+        assertNull(call.header("Idempotency-Key"), "Gateway 负责请求幂等，BFF 不转发 Idempotency-Key");
         if (endpoint.post()) assertEquals(json.readTree(body(endpoint)), json.readTree(call.body()));
         else assertEquals("", call.body());
         assertEquals(endpoint.name().equals("rules") || endpoint.name().equals("candidates") ? "page=1&size=10" : null,

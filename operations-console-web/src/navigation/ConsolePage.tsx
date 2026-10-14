@@ -24,6 +24,7 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_PERMISSIONS: lazy(() => import('../pages/Permissions').then(m => ({ default: m.Permissions }))),
   OPERATIONS_EXTERNAL_STANDARD_APIS: lazy(() => import('../pages/ExternalStandardApis').then(m => ({ default: m.ExternalStandardApis }))),
   OPERATIONS_EXTERNAL_INTEGRATIONS: lazy(() => import('../pages/ExternalIntegrations').then(m => ({ default: m.ExternalIntegrations }))),
+  OPERATIONS_CLIENT_ONBOARDING_REVIEW: lazy(() => import('../pages/ClientOnboardingReview').then(m => ({ default: m.ClientOnboardingReview }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];

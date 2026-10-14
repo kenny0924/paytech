@@ -422,7 +422,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
     }
 
     @Test
-    void test_managementPreservesIdempotencyAndIdentityWithoutProxyingSensitiveHeaders() throws Exception {
+    void test_managementPreservesIdentityWithoutProxyingSensitiveHeaders() throws Exception {
         Map<String, String> headers = trustedHeaders("operations-account-create");
         headers.put("Idempotency-Key", "account-create-idempotency-10001");
         headers.put("Authorization", "Bearer raw-browser-access-secret");
@@ -441,7 +441,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         var call = platform.requests().getLast();
         assertEquals(ACCOUNT_ID, call.header("X-Gateway-Actor-Subject"));
         assertEquals(SESSION_ID, call.header("X-Gateway-Session-Id"));
-        assertEquals("account-create-idempotency-10001", call.header("Idempotency-Key"));
+        assertNull(call.header("Idempotency-Key"));
         assertEquals(REQUEST_ID, call.header("X-Request-Id"));
         assertNull(call.header("Authorization"));
         assertNull(call.header("Cookie"));
@@ -464,7 +464,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
     }
 
     @Test
-    void test_accountDeletionForwardsBothVersionsReasonAndKeyAsOneCommand() throws Exception {
+    void test_accountDeletionForwardsBothVersionsAndReasonAsOneCommand() throws Exception {
         prepareDeletableAccount();
         Map<String, String> headers = trustedHeaders("operations-account-delete");
         headers.put("Idempotency-Key", "account-delete-command-10001");
@@ -484,7 +484,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         RecordedRequest call = platform.requests().getLast();
         assertEquals("DELETE", call.method());
         assertEquals(json.readTree(body), json.readTree(call.body()));
-        assertEquals("account-delete-command-10001", call.header("Idempotency-Key"));
+        assertNull(call.header("Idempotency-Key"));
         assertEquals(ACCOUNT_ID, call.header("X-Gateway-Actor-Subject"));
         assertEquals(SESSION_ID, call.header("X-Gateway-Session-Id"));
         assertEquals(REQUEST_ID, call.header("X-Request-Id"));
@@ -541,15 +541,13 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
 
     @ParameterizedTest
     @CsvSource({"missing-origin,403,OPERATIONS_ORIGIN_REJECTED", "foreign-origin,403,OPERATIONS_ORIGIN_REJECTED",
-        "plain-text,415,OPERATIONS_UNSUPPORTED_MEDIA_TYPE", "malformed-json,400,INVALID_REQUEST", "missing-key,400,INVALID_REQUEST"})
-    void test_accountDeletionRequiresOriginJsonAndIdempotency(String invalid, int status, String code) throws Exception {
+        "plain-text,415,OPERATIONS_UNSUPPORTED_MEDIA_TYPE", "malformed-json,400,INVALID_REQUEST"})
+    void test_accountDeletionRequiresOriginAndJson(String invalid, int status, String code) throws Exception {
         Map<String, String> headers = trustedHeaders("operations-account-delete");
-        headers.put("Idempotency-Key", "account-delete-boundary-10001");
         switch (invalid) {
             case "missing-origin" -> headers.remove("Origin");
             case "foreign-origin" -> headers.put("Origin", "https://untrusted.example.test");
             case "plain-text" -> headers.put("Content-Type", "text/plain");
-            case "missing-key" -> headers.remove("Idempotency-Key");
         }
         String body = invalid.equals("malformed-json") ? "{" : protectedBody("DELETE", "/iam/v1/accounts/account_10001");
 
@@ -567,7 +565,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
     }
 
     @Test
-    void test_accountEnablementForwardsVersionReasonAndKeyAsOneCommand() throws Exception {
+    void test_accountEnablementForwardsVersionAndReasonAsOneCommand() throws Exception {
         prepareDisabledAccount();
         Map<String, String> headers = trustedHeaders("operations-account-enable");
         headers.put("Idempotency-Key", "account-enable-command-10001");
@@ -586,7 +584,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         RecordedRequest call = platform.requests().getLast();
         assertEquals("POST", call.method());
         assertEquals(json.readTree(body), json.readTree(call.body()));
-        assertEquals("account-enable-command-10001", call.header("Idempotency-Key"));
+        assertNull(call.header("Idempotency-Key"));
         assertEquals(ACCOUNT_ID, call.header("X-Gateway-Actor-Subject"));
         assertEquals(SESSION_ID, call.header("X-Gateway-Session-Id"));
         assertEquals(REQUEST_ID, call.header("X-Request-Id"));
@@ -616,17 +614,15 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
 
     @ParameterizedTest
     @ValueSource(strings = {"missing-version", "zero-version", "blank-reason", "long-reason",
-        "missing-key", "missing-origin", "plain-text"})
+        "missing-origin", "plain-text"})
     void test_invalidAccountEnablementStopsBeforePlatformCommand(String invalid) throws Exception {
         Map<String, Object> body = new LinkedHashMap<>(Map.of("expectedVersion", 3, "reason", "启用校验"));
         Map<String, String> headers = trustedHeaders("operations-account-enable");
-        headers.put("Idempotency-Key", "account-enable-invalid-10001");
         switch (invalid) {
             case "missing-version" -> body.remove("expectedVersion");
             case "zero-version" -> body.put("expectedVersion", 0);
             case "blank-reason" -> body.put("reason", " ");
             case "long-reason" -> body.put("reason", "长".repeat(501));
-            case "missing-key" -> headers.remove("Idempotency-Key");
             case "missing-origin" -> headers.remove("Origin");
             case "plain-text" -> headers.put("Content-Type", "text/plain");
         }
@@ -635,7 +631,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         HttpResponse<String> response = send("POST", "/iam/v1/accounts/account_10002/enable", json.writeValueAsString(body), headers);
 
         int status = invalid.equals("missing-origin") ? 403 : invalid.equals("plain-text") ? 415
-            : invalid.equals("missing-key") || invalid.equals("missing-version") ? 400 : 422;
+            : invalid.equals("missing-version") ? 400 : 422;
         String code = status == 403 ? "OPERATIONS_ORIGIN_REJECTED"
             : status == 415 ? "OPERATIONS_UNSUPPORTED_MEDIA_TYPE"
             : status == 422 ? "VALIDATION_ERROR" : "INVALID_REQUEST";
@@ -1209,7 +1205,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
     }
 
     @Test
-    void test_roleWritesForwardOneCommandWithOriginalKeyAndReturnFlatNewVersion() throws Exception {
+    void test_roleWritesForwardOneCommandAndReturnFlatNewVersion() throws Exception {
         Map<String, String> createHeaders = trustedHeaders("operations-role-create");
         createHeaders.put("Idempotency-Key", "role-create-command-10001");
         String create = json.writeValueAsString(Map.of("roleCode", "CUSTOM_READER", "roleName", "自定义审阅",
@@ -1231,8 +1227,8 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         assertEquals(List.of(AUTHORIZE_PATH, "/operations/v1/roles", AUTHORIZE_PATH, "/operations/v1/roles/role_20001"), calledPaths());
         var createCall = platform.requests().get(1);
         var updateCall = platform.requests().get(3);
-        assertEquals("role-create-command-10001", createCall.header("Idempotency-Key"));
-        assertEquals("role-update-command-10001", updateCall.header("Idempotency-Key"));
+        assertNull(createCall.header("Idempotency-Key"));
+        assertNull(updateCall.header("Idempotency-Key"));
         assertEquals(json.readTree(create), json.readTree(createCall.body()));
         assertEquals(json.readTree(update), json.readTree(updateCall.body()));
         assertEquals(ACCOUNT_ID, updateCall.header("X-Gateway-Actor-Subject"));
@@ -1241,22 +1237,8 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         assertNoSecretInLogs("自定义审阅", "清空权限测试");
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"POST", "PUT", "DELETE"})
-    void test_roleWritesRequireIdempotencyKeyBeforeCommand(String method) throws Exception {
-        String path = method.equals("POST") ? "/iam/v1/roles" : "/iam/v1/roles/role_10001";
-        HttpResponse<String> response = send(method, path, protectedBody(method, path),
-            trustedHeaders(switch (method) {
-                case "POST" -> "operations-role-create";
-                case "PUT" -> "operations-role-update";
-                default -> "operations-role-delete";
-            }));
-        assertError(response, 400, "INVALID_REQUEST");
-        assertEquals(List.of(AUTHORIZE_PATH), calledPaths());
-    }
-
     @Test
-    void test_roleDeletionForwardsVersionReasonAndIdempotencyAsOneCommand() throws Exception {
+    void test_roleDeletionForwardsVersionAndReasonAsOneCommand() throws Exception {
         platform.addRole(new RoleResponseBody("custom_1", "CUSTOM", "待删除角色", false, 3, List.of("p_read")));
         Map<String, String> headers = trustedHeaders("operations-role-delete");
         headers.put("Idempotency-Key", "role-delete-command-10001");
@@ -1273,7 +1255,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         RecordedRequest call = platform.requests().getLast();
         assertEquals("DELETE", call.method());
         assertEquals(json.readTree(body), json.readTree(call.body()));
-        assertEquals("role-delete-command-10001", call.header("Idempotency-Key"));
+        assertNull(call.header("Idempotency-Key"));
         assertEquals(ACCOUNT_ID, call.header("X-Gateway-Actor-Subject"));
         assertEquals(SESSION_ID, call.header("X-Gateway-Session-Id"));
         assertEquals(REQUEST_ID, call.header("X-Request-Id"));
@@ -1391,6 +1373,8 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         // 写请求在授权后故意停在参数校验，避免本测试修改角色或人员事实。
         if (method.equals("GET")) {
             assertEquals(200, allowed.statusCode(), allowed.body());
+        } else if (path.equals("/iam/v1/accounts") || path.equals("/iam/v1/roles")) {
+            assertError(allowed, 422, "VALIDATION_ERROR");
         } else {
             assertError(allowed, 400, "INVALID_REQUEST");
         }
@@ -1837,7 +1821,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
     }
 
     @Test
-    void test_gatewayRouteStatusForwardsOnePatchWithIdentityVersionReasonAndIdempotency() throws Exception {
+    void test_gatewayRouteStatusForwardsOnePatchWithIdentityVersionReasonWithoutIdempotencyKey() throws Exception {
         String upstreamPath = "/gateway-admin/v1/routes/operations-gateway-route-list/status";
         platform.rawResponse(upstreamPath,
             "{\"routeCode\":\"operations-gateway-route-list\",\"status\":\"DISABLED\",\"version\":4}");
@@ -1853,7 +1837,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         assertEquals(List.of(AUTHORIZE_PATH, upstreamPath), calledPaths());
         RecordedRequest call = platform.requests().getLast();
         assertEquals("PATCH", call.method());
-        assertEquals("gateway-route-status-command-10001", call.header("Idempotency-Key"));
+        assertNull(call.header("Idempotency-Key"));
         assertEquals(json.readTree(requestBody), json.readTree(call.body()));
         assertEquals(ACCOUNT_ID, call.header("X-Gateway-Actor-Subject"));
         assertEquals(SESSION_ID, call.header("X-Gateway-Session-Id"));

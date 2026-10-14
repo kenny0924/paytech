@@ -127,6 +127,17 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-risk-test-candidate-create", "900000000000000539"),
         Map.entry("operations-risk-test-candidate-validate", "900000000000000540"));
 
+    /** Client 入驻审核路由（registration-plan.json 的 O01—O09）到权限；权限 ID 为本 Simulator 的合成值。 */
+    public static final Map<String, String> CLIENT_REVIEW_ROUTE_PERMISSIONS = Map.ofEntries(
+        Map.entry("client-onboarding-o01", "900000000000041001"),
+        Map.entry("client-onboarding-o02", "900000000000041001"),
+        Map.entry("client-onboarding-o03", "900000000000041002"),
+        Map.entry("client-onboarding-o04", "900000000000041002"),
+        Map.entry("client-onboarding-o05", "900000000000041003"),
+        Map.entry("client-onboarding-o07", "900000000000041004"),
+        Map.entry("client-onboarding-o08", "900000000000041005"),
+        Map.entry("client-onboarding-o09", "900000000000041005"));
+
     // 这是 Platform Simulator 的当前目录事实；BFF 生产代码仍只传可信 Route Code。
     private static final Map<String, String> ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-account-create", ACCOUNT_CREATE_PERMISSION_ID),
@@ -209,6 +220,11 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         activeAccountId = actor;
         riskIdentity = true;
         grantedPermissions.addAll(RISK_ROUTE_PERMISSIONS.values());
+    }
+    /** 审核操作者：沿用数字 Risk 身份并授予全部入驻审核权限。 */
+    public synchronized void useClientReviewIdentity() {
+        useRiskIdentity();
+        grantedPermissions.addAll(CLIENT_REVIEW_ROUTE_PERMISSIONS.values());
     }
     public synchronized void disconnect() { disconnect = true; }
     public synchronized void fail(String path, int status, String code) {
@@ -365,6 +381,16 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
 
     private void authorize(HttpExchange exchange, String body) throws IOException {
         AuthorizationRequestBody request = json.readValue(body, AuthorizationRequestBody.class);
+        if (request.getRouteCode() != null && request.getRouteCode().startsWith("client-onboarding-")) {
+            String reviewPermission = CLIENT_REVIEW_ROUTE_PERMISSIONS.get(request.getRouteCode());
+            if (!riskIdentity || reviewPermission == null) {
+                unexpected(exchange, "未准备的入驻审核 Route Code 或身份");
+                return;
+            }
+            write(exchange, 200, new AuthorizationDecisionResponseBody(allowed && grantedPermissions.contains(reviewPermission)));
+            completedAuthorizationCount++;
+            return;
+        }
         if (request.getRouteCode() == null || !request.getRouteCode().startsWith("operations-")) {
             unexpected(exchange, "未识别的 Operations Route Code");
             return;

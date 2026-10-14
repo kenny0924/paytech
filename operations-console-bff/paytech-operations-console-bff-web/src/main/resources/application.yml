@@ -79,3 +79,5 @@ web:
       - /decision-flows
       - /decision-variables
       - /external-api-admin
+      # 审核详情含申请人个人资料，命令含内部理由与客户可见说明，只记元数据。
+      - /client-onboarding-admin

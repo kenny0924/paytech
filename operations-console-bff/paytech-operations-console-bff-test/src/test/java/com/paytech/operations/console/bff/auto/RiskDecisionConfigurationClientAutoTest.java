@@ -54,7 +54,6 @@ class RiskDecisionConfigurationClientAutoTest {
     private static final JsonMapper JSON = JsonMapper.builder().build();
     private static final OperatorContext OPERATOR = new OperatorContext("10001", "session-10001", "RISK_READ");
     private static final String REQUEST_ID = "risk-adapter-request";
-    private static final String KEY = "Original_Risk-Key_123";
     private static final String CANARY = "literal-strategy-canary-unsafe";
     private static final String RULE_PATH = "/decision-rule-sets/v1/rule-sets";
     private static final String CANDIDATE_PATH = "/decision-releases/v1/candidates";
@@ -104,16 +103,16 @@ class RiskDecisionConfigurationClientAutoTest {
     @Test
     void test_commandsChangeSimulatorStateAndReplayOriginalResult() throws Exception {
         withClient((server, client) -> {
-            var saved = client.createRuleSetVersion(OPERATOR, KEY, save());
+            var saved = client.createRuleSetVersion(OPERATOR, save());
             assertEquals("30002", saved.ruleSetVersionId());
-            assertEquals(saved, client.createRuleSetVersion(OPERATOR, KEY, save()));
+            assertEquals(saved, client.createRuleSetVersion(OPERATOR, save()));
             assertEquals("DRAFT", client.ruleSet(OPERATOR, "30002").status());
-            client.freezeRuleSetVersion(OPERATOR, "freeze_key_123456", "30002", new FreezeRuleSetVersionRequestBody(HASH));
+            client.freezeRuleSetVersion(OPERATOR, "30002", new FreezeRuleSetVersionRequestBody(HASH));
             assertEquals("FROZEN", client.ruleSet(OPERATOR, "30002").status());
-            var created = client.createCandidate(OPERATOR, "create_key_123456", new CreateTestCandidateRequestBody("30001", HASH));
+            var created = client.createCandidate(OPERATOR, new CreateTestCandidateRequestBody("30001", HASH));
             assertEquals("40002", created.releaseId());
             assertEquals("DRAFT", client.candidate(OPERATOR, "40002").status());
-            var validated = client.validateCandidate(OPERATOR, "risk-validate-v1-40002-1", "40002", new ValidateTestCandidateRequestBody(1));
+            var validated = client.validateCandidate(OPERATOR, "40002", new ValidateTestCandidateRequestBody(1));
             assertEquals("VALIDATING", validated.status());
             assertTrue(client.candidate(OPERATOR, "40002").waitingForShadow());
             assertEquals(9, server.requests().size());
@@ -215,7 +214,7 @@ class RiskDecisionConfigurationClientAutoTest {
     void test_validateResultMatrixAndCheckGrammar(boolean rejected, CapturedOutput output) throws Exception {
         withClient((server, client) -> {
             server.validationFails(rejected);
-            var valid = client.validateCandidate(OPERATOR, KEY, "40001", new ValidateTestCandidateRequestBody(1));
+            var valid = client.validateCandidate(OPERATOR, "40001", new ValidateTestCandidateRequestBody(1));
             assertEquals(rejected ? "REJECTED" : "VALIDATING", valid.status());
             assertEquals(rejected ? 3 : 2, valid.version());
             assertEquals(JSON.readTree(server.responses().getFirst()), JSON.readTree(JSON.writeValueAsString(valid)));
@@ -396,9 +395,9 @@ class RiskDecisionConfigurationClientAutoTest {
             for (int expected : List.of(2, Integer.MAX_VALUE)) for (boolean rejected : List.of(false, true)) {
                 server.reset(); server.validationFails(rejected);
                 // 模拟上游错误重放原成功响应；BFF 仍必须检查本次请求的 successor。
-                client.validateCandidate(OPERATOR, KEY, "40001", new ValidateTestCandidateRequestBody(1));
+                client.validateCandidate(OPERATOR, "40001", new ValidateTestCandidateRequestBody(1));
                 server.staleCommandReplay();
-                assertInvalid(() -> client.validateCandidate(OPERATOR, KEY, "40001", new ValidateTestCandidateRequestBody(expected)),
+                assertInvalid(() -> client.validateCandidate(OPERATOR, "40001", new ValidateTestCandidateRequestBody(expected)),
                     "successor " + expected + " rejected=" + rejected, output);
                 assertEquals(2, server.requests().size());
             }
@@ -436,7 +435,7 @@ class RiskDecisionConfigurationClientAutoTest {
             assertEquals(1, server.requests().size());
             assertEquals(RULE_PATH + "/777", server.requests().getFirst().path());
             server.reset();
-            var conflict = assertThrows(FailException.class, () -> client.freezeRuleSetVersion(OPERATOR, KEY, "30001",
+            var conflict = assertThrows(FailException.class, () -> client.freezeRuleSetVersion(OPERATOR, "30001",
                 new FreezeRuleSetVersionRequestBody("b".repeat(64))));
             assertEquals(CommonErrorCode.CONCURRENT_REQUEST, conflict.getErrorCode());
             assertEquals(1, server.requests().size());
@@ -584,7 +583,7 @@ class RiskDecisionConfigurationClientAutoTest {
                 rule.reasonCode(), nodes, rule.action());
             var duplicate = new CreateRuleSetVersionRequestBody(request.pointCode(), request.ruleSetCode(), request.ruleSetName(),
                 request.baseRuleSetVersionId(), request.baseContentHash(), request.changeReason(), List.of(duplicateRule));
-            var failure = assertThrows(FailException.class, () -> client.createRuleSetVersion(OPERATOR, KEY, duplicate));
+            var failure = assertThrows(FailException.class, () -> client.createRuleSetVersion(OPERATOR, duplicate));
             assertEquals(CommonErrorCode.BUSINESS_CHECK_FAILED, failure.getErrorCode());
             assertEquals(1, server.requests().size());
             assertEquals(JSON.valueToTree(duplicate), JSON.readTree(server.requests().getFirst().body()));
@@ -601,7 +600,7 @@ class RiskDecisionConfigurationClientAutoTest {
             for (String path : paths) {
                 server.reset(); server.validationFails(true);
                 server.corruptWire(root -> setAt(root, "/checks/2/errorSummary", "first=AST_TYPE_INVALID@" + path + "; violation_count=2147483647"));
-                var result = client.validateCandidate(OPERATOR, KEY, "40001", new ValidateTestCandidateRequestBody(1));
+                var result = client.validateCandidate(OPERATOR, "40001", new ValidateTestCandidateRequestBody(1));
                 assertTrue(result.checks().get(2).errorSummary().contains("@" + path + ";"));
             }
         });
@@ -666,16 +665,16 @@ class RiskDecisionConfigurationClientAutoTest {
 
     private static Object invoke(RiskDecisionConfigurationClient client, Operation operation) {
         return switch (operation) {
-            case DELETE -> client.deleteRuleSet(OPERATOR, KEY, "90001", new DeleteRuleSetRequestBody("1"));
+            case DELETE -> client.deleteRuleSet(OPERATOR, "90001", new DeleteRuleSetRequestBody("1"));
             case AUTHORING -> client.authoringContext(OPERATOR, "CHECKOUT_PREPARE");
             case RULE_LIST -> client.ruleSets(OPERATOR, 1, 10, new RuleSetQueryRequestBody("CHECKOUT_PREPARE", "DEFAULT_RULES", "FROZEN"));
             case RULE_DETAIL -> client.ruleSet(OPERATOR, "30001");
-            case SAVE -> client.createRuleSetVersion(OPERATOR, KEY, save());
-            case FREEZE -> client.freezeRuleSetVersion(OPERATOR, KEY, "30001", new FreezeRuleSetVersionRequestBody(HASH));
+            case SAVE -> client.createRuleSetVersion(OPERATOR, save());
+            case FREEZE -> client.freezeRuleSetVersion(OPERATOR, "30001", new FreezeRuleSetVersionRequestBody(HASH));
             case CANDIDATE_LIST -> client.candidates(OPERATOR, 1, 10, new CandidateQueryRequestBody("CHECKOUT_PREPARE", "DRAFT"));
             case CANDIDATE_DETAIL -> client.candidate(OPERATOR, "40001");
-            case CREATE -> client.createCandidate(OPERATOR, KEY, new CreateTestCandidateRequestBody("30001", HASH));
-            case VALIDATE -> client.validateCandidate(OPERATOR, KEY, "40001", new ValidateTestCandidateRequestBody(1));
+            case CREATE -> client.createCandidate(OPERATOR, new CreateTestCandidateRequestBody("30001", HASH));
+            case VALIDATE -> client.validateCandidate(OPERATOR, "40001", new ValidateTestCandidateRequestBody(1));
         };
     }
 
@@ -699,7 +698,8 @@ class RiskDecisionConfigurationClientAutoTest {
         assertEquals(REQUEST_ID, request.header("X-Request-Id"));
         boolean post = Set.of(Operation.SAVE, Operation.FREEZE, Operation.CREATE, Operation.VALIDATE, Operation.DELETE).contains(operation);
         assertEquals(operation == Operation.DELETE ? "DELETE" : post ? "POST" : "GET", request.method());
-        assertEquals(post ? KEY : null, request.header("Idempotency-Key"));
+        // Gateway 负责请求幂等，Risk 命令不得转发 Idempotency-Key。
+        assertNull(request.header("Idempotency-Key"));
         String path = switch (operation) {
             case DELETE -> RULE_PATH + "/90001";
             case AUTHORING -> "/decision-rule-sets/v1/authoring-context/CHECKOUT_PREPARE";

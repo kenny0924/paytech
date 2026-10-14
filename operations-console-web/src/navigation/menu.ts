@@ -49,6 +49,8 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
   switch (menu.componentKey) {
     case 'OPERATIONS_TENANT_ACCESS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:tenantId`, `${menu.frontendRoute}/:tenantId/members/:memberId`];
+    case 'OPERATIONS_CLIENT_ONBOARDING_REVIEW':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:caseId`];
     case 'OPERATIONS_EXTERNAL_STANDARD_APIS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:standardApiCode`];
     case 'OPERATIONS_EXTERNAL_INTEGRATIONS':
