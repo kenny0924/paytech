@@ -1,0 +1,23 @@
+# 客户入驻 mor-test 候选（2026-10-14）：从干净提交 7e9eddc 构建（CCT、Client BFF 因健康探针地址修复于 06f46b9 重建，JAR 相同），tag mor-test/<service>:client-onboarding-20261014，使用固定 image ID。
+# Gateway、运营 BFF 沿用渠道沙箱发布的 ba36b63 镜像（其后只有格式改动）；Vault 沿用原镜像，只换策略文件。
+# 渠道沙箱候选里 Gateway 的两项 Client 占位值已由 compose.applications.yaml 中的正式 Client 配置取代。
+services:
+  risk-service:
+    image: sha256:9f9f0141be7c8dc651fe284fbb0932e14168376d3b39ccfed1b0b964ec1f3eea
+  platform-support-service:
+    image: sha256:b211ce16f20fbc61da395a5d32bde6e74fe64a105ff674373b3e092114dcd211
+  client-contract-service:
+    image: sha256:193baf92c696b7af6e9bb6c573975c4160a46a49e9e400bee9be553b1e538b97
+  client-console-bff:
+    image: sha256:3a59ec79a5279353a8dd7684fb57de94c30bcd6dfaaae619ba0c3e6ad07f7b82
+  operations-console-web:
+    image: sha256:7455978ad8c673d2ec68e450d33d2a4e93a45c33c97dbd7b13682070472b6ad6
+  client-console-web:
+    image: sha256:040631caa3f4d054e732e4661b289b08fc462322c3387c2bc4ecfe986a2c1610
+  api-gateway:
+    image: sha256:1cddfeabbde15d8c5e1c6b6c3e4728991d5a21024e60ea0873532c6d81621812
+  operations-console-bff:
+    image: sha256:f73da2532d12d718c01afc513a9e98daf07797dd80e178157fc43f76f42696e6
+  vault-service:
+    # 沿用当前运行的 Vault 镜像（与 :development 标签不同），只换策略文件。
+    image: sha256:7906efea9f68f31148706d7a3decf16f89e117ea46079c09238c6c8daefc7bd3
