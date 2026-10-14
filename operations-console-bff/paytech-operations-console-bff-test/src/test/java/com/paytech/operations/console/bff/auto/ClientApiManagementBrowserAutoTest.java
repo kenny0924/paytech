@@ -1,18 +1,31 @@
 package com.paytech.operations.console.bff.auto;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.net.URI;
-import java.net.http.*;
-import java.util.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.*;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.*;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
+
 import com.paytech.operations.console.bff.test.base.OperationsBffHttpTestBase;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator;
+
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -21,13 +34,21 @@ class ClientApiManagementBrowserAutoTest extends OperationsBffHttpTestBase {
     private static final JsonMapper JSON = JsonMapper.builder().findAndAddModules().build();
     private static final HttpClient HTTP = HttpClient.newHttpClient();
     private static final String KEY = "client-api-boundary-command-001";
-    @Autowired private PlatformOperationsSimulator platform;
-    @LocalServerPort private int port;
+    @Autowired
+    private PlatformOperationsSimulator platform;
+    @LocalServerPort
+    private int port;
 
     /** 清理模拟 Owner 的请求和响应状态，保证每个用例独立。 */
-    @BeforeEach void reset() { platform.reset(); }
+    @BeforeEach
+    void reset() {
+        platform.reset();
+    }
     /** 核对 Owner 实际收到的身份、请求和查询参数。 */
-    @AfterEach void verify() { assertTrue(platform.unexpectedRequests().isEmpty(), platform.unexpectedRequests().toString()); }
+    @AfterEach
+    void verify() {
+        assertTrue(platform.unexpectedRequests().isEmpty(), platform.unexpectedRequests().toString());
+    }
 
     /** 从独立边界清单提供九个端点的协议场景。 */
     static Stream<JsonNode> endpoints() throws Exception {
@@ -36,7 +57,9 @@ class ClientApiManagementBrowserAutoTest extends OperationsBffHttpTestBase {
         }
     }
     /** 读取指定端点的独立请求和响应样例。 */
-    static JsonNode endpoint(String id) throws Exception { return endpoints().filter(c -> id.equals(c.path("id").asString())).findFirst().orElseThrow(); }
+    static JsonNode endpoint(String id) throws Exception {
+        return endpoints().filter(c -> id.equals(c.path("id").asString())).findFirst().orElseThrow();
+    }
 
     /** 逐端点验证身份、筛选、幂等键及命令正文的准确转发。 */
     @ParameterizedTest(name = "{index} Client API 合同")

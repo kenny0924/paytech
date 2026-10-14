@@ -1,5 +1,7 @@
 package com.paytech.platform.support.filedocument.integration.storage;
+
 import java.io.InputStream;
+
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
 /** 完成适配器必须以 uploadId 幂等固定原目标；同一 Upload 的恢复永远打开同一版本。
  * 版本化或 create-once finalization 必须先完成；迟到 PUT 不得改写返回流的对象版本。

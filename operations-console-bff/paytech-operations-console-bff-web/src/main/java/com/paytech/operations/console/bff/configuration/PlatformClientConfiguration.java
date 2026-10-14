@@ -27,9 +27,11 @@ import com.paytech.operations.console.bff.integration.PlatformDiscoveryIntercept
 import com.paytech.platform.support.api.authentication.OperationsAuthenticationApi;
 import com.paytech.platform.support.api.authorization.OperationsAuthorizationApi;
 import com.paytech.platform.support.api.enums.GatewayConfigurationErrorCode;
+import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
 import com.paytech.platform.support.api.enums.OperationsErrorCode;
 import com.paytech.platform.support.api.gatewayconfiguration.management.GatewayConfigurationManagementApi;
 import com.paytech.platform.support.api.operations.OperationsManagementApi;
+import com.paytech.platform.support.api.reviewfiles.ReviewFileApi;
 
 /** Platform HTTP 接口代理的单例注册，以及发现、超时和关联标识配置。 @author Codex */
 @Configuration(proxyBeanMethods = false)
@@ -118,11 +120,10 @@ public class PlatformClientConfiguration {
 
     /** 审核材料下载额外登记 Platform 文件错误码，其余沿用 Platform 发现与 Problem 解码。 */
     @Bean
-    com.paytech.platform.support.api.reviewfiles.ReviewFileApi reviewFileApi(Environment environment,
-        PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl) {
+    ReviewFileApi reviewFileApi(Environment environment, PlatformDiscoveryInterceptor discovery,
+        @Value("${operations.platform-test-base-url:}") String testBaseUrl) {
         return platformProxy(environment, discovery, testBaseUrl, false,
-            com.paytech.platform.support.api.enums.OnboardingFileErrorCode.values())
-            .createClient(com.paytech.platform.support.api.reviewfiles.ReviewFileApi.class);
+            OnboardingFileErrorCode.values()).createClient(ReviewFileApi.class);
     }
 
     @Bean

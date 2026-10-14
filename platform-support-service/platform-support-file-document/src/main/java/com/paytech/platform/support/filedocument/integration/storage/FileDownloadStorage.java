@@ -1,5 +1,7 @@
 package com.paytech.platform.support.filedocument.integration.storage;
+
 import java.time.Instant;
+
 import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 /** 下载供应商端口；生产供应商未选定时没有默认实现。 */
 public interface FileDownloadStorage {
