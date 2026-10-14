@@ -210,7 +210,9 @@ function useFileDownload(caseId: string, onAuthorizationChanged: () => void) {
     if (pending) return;
     setPending(fileId);
     try {
-      const grant = await session.request(`${reviewApi}/cases/${caseId}/files/${fileId}/download`, { method: 'POST' },
+      // 无请求体的 POST 仍按 BFF 写入口要求声明 JSON 内容类型。
+      const grant = await session.request(`${reviewApi}/cases/${caseId}/files/${fileId}/download`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' } },
         value => decodeFileDownload(value, fileId));
       const link = document.createElement('a');
       link.href = grant.url; link.rel = 'noopener noreferrer'; link.download = grant.displayName;
