@@ -5,8 +5,8 @@
         INSERT INTO t_channel_transaction_ref (channel_transaction_ref_id, payment_action_id, channel_id, mid_id,
             reference_type, external_transaction_id, original_channel_txn_ref_id, channel_event_time,
             amount, currency, create_time)
-        VALUES (#{channelTransactionRefId}, #{paymentActionId}, #{channelId}, #{midId}, #{referenceType},
+        VALUES (#{channelTransactionRefId}, #{paymentActionId}, #{channelId}, #{midId}, #{referenceType,javaType=com.paytech.payment.execution.core.action.ActionType,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
             #{externalTransactionId}, #{originalChannelTxnRefId,jdbcType=BIGINT},
-            #{channelEventTime,jdbcType=TIMESTAMP}, #{amount}, #{currency}, #{createTime})
+            #{channelEventTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{amount}, #{currency}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
     </insert>
 </mapper>

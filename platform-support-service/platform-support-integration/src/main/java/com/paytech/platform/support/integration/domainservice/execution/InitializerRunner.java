@@ -16,7 +16,9 @@ import com.paytech.platform.support.integration.domain.execution.ExecutionFlow;
 import com.paytech.platform.support.integration.domain.execution.ExecutionSnapshot;
 import com.paytech.platform.support.integration.domainservice.function.ChannelAccountConfigFunction;
 import com.paytech.platform.support.integration.domainservice.function.InitializerFunction;
+import com.paytech.platform.support.integration.domainservice.function.PaymentCardFunction;
 import com.paytech.platform.support.integration.domainservice.function.VerifyAccountConfigFunction;
+import com.paytech.platform.support.integration.domainservice.function.VerifyPaymentCardFunction;
 import com.paytech.platform.support.integration.domainservice.validator.ValueBindingValidator;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +30,7 @@ import tools.jackson.databind.JsonNode;
  * <p>
  * 发生在第一个节点之前：required=true 的初始化项失败返回 503 INTEGRATION_INITIALIZATION_FAILED， 预算在执行前已耗尽返回 503
  * INTEGRATION_BUDGET_EXHAUSTED，均保证没有发出渠道请求； required=false 失败时 resources.&lt;id&gt; 不存在。日志只记初始化项 ID 与固定原因。
- * 沙箱验证运行中 CHANNEL_ACCOUNT_CONFIG 改读验证账号，并在轨迹中记录每个初始化项的成败（不记内容）。
+ * 沙箱验证运行中 CHANNEL_ACCOUNT_CONFIG 改读验证账号、PAYMENT_CARD 改读验证账号测试卡，并在轨迹中记录每个初始化项的成败（不记内容）。
  */
 @Slf4j
 @Component
@@ -40,12 +42,15 @@ public class InitializerRunner {
     private final ValueBindingValidator bindings;
     private final Map<String, InitializerFunction> functions;
     private final VerifyAccountConfigFunction verifyAccount;
+    private final VerifyPaymentCardFunction verifyCard;
 
     public InitializerRunner(ValueResolver valueResolver, ValueBindingValidator bindings,
-        List<InitializerFunction> functions, VerifyAccountConfigFunction verifyAccount) {
+        List<InitializerFunction> functions, VerifyAccountConfigFunction verifyAccount,
+        VerifyPaymentCardFunction verifyCard) {
         this.valueResolver = valueResolver;
         this.bindings = bindings;
         this.verifyAccount = verifyAccount;
+        this.verifyCard = verifyCard;
         this.functions =
             functions.stream().collect(Collectors.toUnmodifiableMap(InitializerFunction::code, Function.identity()));
     }
@@ -97,6 +102,9 @@ public class InitializerRunner {
         var args = args(signature.getArgs(), initializer, context);
         if (context.getVerification() != null && ChannelAccountConfigFunction.CODE.equals(initializer.getFunction())) {
             return verifyAccount.apply(args, context.getVerification().getAccount());
+        }
+        if (context.getVerification() != null && PaymentCardFunction.CODE.equals(initializer.getFunction())) {
+            return verifyCard.apply(context.getVerification().getAccount());
         }
         return function.apply(args);
     }

@@ -32,6 +32,24 @@
 - **mor-test Deployed / Verified（2026-10-14）：** 按[发布清单](../requirements/20261014/platform-support-渠道沙箱验证/release/release.md)经用户批准执行（含外部 API 与 PayerMax 配置）：test `mor_platform` 补 25 表（与完整 Schema 一致）、登记 499 行、启用 52 行（ACTIVE 路由 149）；Gateway/Platform/BFF/Web 为 `ba36b63` 候选镜像，Platform `COMPENSATION_ENABLED=true`，Risk 未升级；16 个菜单页与 PayerMax UAT 两个用例通过。Gateway 因 Client 配置绑定缺陷暂用两项占位环境变量（Client 通道关闭），待修复后删除。见[执行记录](../requirements/20261014/platform-support-渠道沙箱验证/release/test-acceptance.md)。
 - **Pending：** 收银台付款后查询 SUCCEEDED（人工付款）；test 正式标准 API 执行需 Vault 渠道账号读取策略；其他共享环境未执行。阶段 2～5 已按用户要求本地提交（2026-10-14），未推送。
 
+<a id="payment-payermax-card-direct-20261014"></a>
+
+## Payment 经 Platform 对接 PayerMax 卡直付（2026-10-14）
+
+- **Designed：** [需求](../requirements/20261014/payment-PayerMax卡直付对接/requirement.md)与[技术方案](../requirements/20261014/payment-PayerMax卡直付对接/technique.md)已确认：卡支付走渠道服务端卡 API，不用渠道收银台；PCI DSS 认证为上生产前提。[卡数据决定](./decisions/2026-10-14-card-data-platform-execution.md)：服务间只传支付工具 Token，Platform 经 `PAYMENT_CARD` 向 Payment 读卡、只在内存中；风控本期 Mock，恢复本期不做。
+- **阶段 2 Implemented / Verified（2026-10-14，本机）：** Platform 卡值句柄、`cardFields`、`PAYMENT_CARD`、证据遮蔽与保存校验；Payment `ChannelCardMaterialApi` 合同（服务端未实现）；Operations 原子 API 编辑页保留并编辑 `cardFields`。`./mvnw -o -pl platform-support-test -am test` **424/424**，前端 `npm test` 990/990 与构建。本机 `PAYERMAX_MOCK`、`PAYERMAX` 的 `PAY` 改为卡直付（收银台版本删除）；沙箱验证合成渠道 7/7、PayerMax UAT 测试卡 4/4 PASSED（成功、3DS、处理中、被拒），日志与库中无卡值原值。详见[交付记录](../requirements/20261014/payment-PayerMax卡直付对接/delivery.md)第 6 节。
+- **阶段 3 Implemented / Verified（2026-10-14，本机测试库）：** T12 已确认（只传 IP/UA）。Payment：Channel 公开 `ExecuteChannelOperationProcessor`（校验冻结坐标、不 Reveal、调 Platform），Execution 端口由 Web 实现，Routing 改为纯选择，风控经 Risk 草案合同失败关闭，`PayActionActor` 经 Platform 执行并映射结果，读卡接口与 Card Mock（CVV 一次性），`PayResponse.nextAction`；修复 Execution Mapper 类型映射与完成态 SQL 两处既有缺陷。经授权在本机 `mor_payment_channel_test` 补建执行五表。Payment `auto` **64/64**（卡直付 8），Platform **424/424**。详见[交付记录](../requirements/20261014/payment-PayerMax卡直付对接/delivery.md)第 8 节。
+- **Pending：** 阶段 4 本机端到端（运行库建表待授权）；Risk 真实接口、恢复、AUTHORIZE/AUTHENTICATE；mor-test 仍为收银台版 `PAY`；未提交。
+
+<a id="payermax-refund-20261014"></a>
+
+## PayerMax 退款与退款查询（2026-10-14）
+
+- **Designed：** [需求](../requirements/20261014/platform-support-PayerMax退款/requirement.md)与[技术方案](../requirements/20261014/platform-support-PayerMax退款/technique.md)经用户确认（R1～R6 按建议）：标准 API `REFUND` / `REFUND_QUERY`（草案），PayerMax `/refund`、`/refundQuery` 外层 `version=1.1`；不改代码与数据库结构，只新增配置。
+- **阶段 2 Verified（2026-10-14，本机）：** [harness](../requirements/20261014/platform-support-PayerMax退款/assets/harness/README.md) 经 Web 代理 → Gateway → BFF → Platform 在 `mor_platform_external_api` 保存两个标准 API、`PAYERMAX_MOCK` 下两个原子 API 与两条流程（重跑按版本更新）；合成 PayerMax 增加退款接口，`verify_mock_refund.py` 14 项 PASS（受理三种状态、两类明确拒绝、`SYSTEM_ERROR` 与响应验签失败 → ERROR、查询三种状态与不存在、422/503 零渠道请求），[回执](../requirements/20261014/platform-support-PayerMax退款/assets/stage2-receipt.json)；原 `verify_mock.py` 12 项回归通过，日志无私钥。
+- **mor-test 配置 Deployed / UAT 部分 Verified（2026-10-14）：** 经用户要求经管理接口写入 test：标准 API `REFUND`、`REFUND_QUERY` 与接入方 `PAYERMAX` 的两个原子 API、两条流程（无镜像、SQL 或基础设施变更）。渠道沙箱验证对 UAT 运行 `UAT_REFUND_NOT_EXIST`、`UAT_REFUND_QUERY_NOT_FOUND` 均 PASSED，双向验签通过，`version=1.1` 被接受，见[交付记录](../requirements/20261014/platform-support-PayerMax退款/delivery.md)第 5 节。
+- **Pending：** 已付款订单退款与查询（UAT 待人工付款，订单已在 test 下单）；本机 `PAYERMAX` 接入方未写入退款配置；提交与推送未授权。
+
 <a id="payermax-integration-20261014"></a>
 
 ## PayerMax 收银台支付与交易查询接入（2026-10-14）

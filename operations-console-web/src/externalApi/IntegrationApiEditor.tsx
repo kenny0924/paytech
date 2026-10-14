@@ -221,6 +221,11 @@ function InterfaceTab({ creating, disabled, apiCode, setApiCode, apiName, setApi
           options={decimalEncodings.map(item => ({ value: item, label: item }))} onChange={decimalEncoding => update({ decimalEncoding })} />,
           draft.decimalEncoding, true)}</Field>
       </div>
+      <Field label="卡字段" hint="BODY 字符串字段；只能由读卡初始化项（PAYMENT_CARD）的卡值赋值，执行轨迹与验证证据中遮蔽">{value(<Select mode="multiple"
+        value={draft.cardFields} className="xapi-mono-input" placeholder="无"
+        options={requestFields.filter(field => field.fieldLocation === 'BODY' && field.dataType === 'STRING' && !field.fieldPath.includes('[]'))
+          .map(field => ({ value: `BODY:${field.fieldPath}`, label: `BODY:${field.fieldPath}` }))}
+        onChange={cardFields => update({ cardFields })} />, draft.cardFields.length ? draft.cardFields.join('、') : '无', true)}</Field>
       <Note items={['实际超时取配置值与流程剩余预算的较小者。不自动重试、不跟随重定向、不保存 Cookie；Host、Content-Length 等由系统处理，不能配置。']} />
     </Panel>
     {detail && <Panel title="被引用">

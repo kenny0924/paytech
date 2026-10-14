@@ -12,6 +12,8 @@ import com.paytech.foundation.testsupport.api.TestBase;
 import com.paytech.payment.PaymentApplication;
 import com.paytech.payment.test.configuration.ChannelTestConfiguration;
 import com.paytech.payment.test.mocker.ChannelDataMocker;
+import com.paytech.payment.test.mocker.PlatformMocker;
+import com.paytech.payment.test.mocker.RiskMocker;
 import com.paytech.payment.test.mocker.VaultMocker;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -33,6 +35,12 @@ public abstract class MockTestBase extends TestBase {
     @Autowired
     protected MockHttpServer mockHttpServer;
 
+    @Autowired
+    protected PlatformMocker platform;
+
+    @Autowired
+    protected RiskMocker risk;
+
     /** 全局初始化只核对空基线，不在前置阶段删除数据。 */
     @BeforeEach
     protected final void setUpGlobalMocks() {
@@ -44,7 +52,8 @@ public abstract class MockTestBase extends TestBase {
     @AfterEach
     protected final void tearDownGlobalMocks() {
         mockHttpServer.awaitIdle();
-        assertAll(vault::assertNoUnexpectedCalls, mockHttpServer::assertNoUnexpectedRequests,
+        assertAll(vault::assertNoUnexpectedCalls, platform::assertNoUnexpectedCalls, risk::assertNoUnexpectedCalls,
+            mockHttpServer::assertNoUnexpectedRequests,
             transactions::assertOutsideTransactions);
     }
 }

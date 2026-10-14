@@ -18,6 +18,7 @@ import com.paytech.payment.execution.core.action.flow.condition.AuthenticationRe
 import com.paytech.payment.execution.core.action.flow.condition.CaptureModeCondition;
 import com.paytech.payment.execution.core.action.flow.condition.RiskResultCondition;
 import com.paytech.payment.execution.domain.PayContext;
+import com.paytech.payment.execution.domainservice.repository.ChannelTransactionRefRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentActionRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentAttemptRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentIntentRepository;
@@ -28,9 +29,9 @@ public class CardPayFlow extends ActionFlow<PayContext> {
     /** 注册唯一的卡支付流程定义。 */
     public CardPayFlow(ActionFactory actionFactory, TransactionTemplate transactionTemplate,
         PaymentActionRepository paymentActionRepository, PaymentAttemptRepository paymentAttemptRepository, Clock clock,
-        PaymentIntentRepository intents) {
+        PaymentIntentRepository intents, ChannelTransactionRefRepository refs) {
         super(InstrumentType.CARD.getCode(), "PAY", PAY_RISK, defineTransitions(), actionFactory, transactionTemplate,
-            paymentActionRepository, paymentAttemptRepository, clock, intents);
+            paymentActionRepository, paymentAttemptRepository, clock, intents, refs);
     }
 
     /** 条件对象组合定义业务分支，Capture/Void 属于后续独立入口。 */

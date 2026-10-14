@@ -27,6 +27,7 @@ Card 模块属于 `payment-orchestration-service`，建议 Maven 名称为 `payt
 ## 3. 验收标准
 
 - CARD-01：PAN 仅随统一 Customer payments 请求交给 Payment Card 模块处理；Commerce、其他 Payment 通用命令/查询、现有非卡 Vault、日志/事件均无原始卡数据。模块表只由模块持久化接口访问，同进程部署不宣称隔离于 Payment 运行环境。
+  - **2026-10-14 修订（[卡数据经 Platform 渠道执行决定](../../../agent-docs/decisions/2026-10-14-card-data-platform-execution.md)）：** 渠道卡直付由 Platform 执行时，Platform 凭支付工具 Token 经 Card 读卡接口读取卡原值，只在本次执行内存中使用、不记录日志；其余位置的约束不变。
 - CARD-02：平台 Token 不编码 PAN，限定归属与用途；越权、失效、重复使用符合明确的令牌生命周期规则。
 - CARD-03：PAN 的存储、传输、密钥权限/轮换/备份恢复均有可验证设计；日志、追踪和错误也不泄漏 PAN。
 - CARD-04：CVV 不落任何持久介质；授权完成、超时或进程恢复不能通过重读已保存 CVV 自动重付。

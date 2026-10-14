@@ -31,7 +31,7 @@ public class ChannelDataMocker implements Clear {
         assertTrue(reusable, "测试库清理失败，须人工核查后重新运行");
         try {
             assertEquals("mor_payment_channel_test", mapper.databaseName());
-            assertEquals(0, mapper.countRows(), "专用库非空，不自动删除原有数据");
+            assertEquals(0, mapper.countRows() + mapper.countExecutionRows(), "专用库非空，不自动删除原有数据");
             cleanupOwned = true;
         } catch (org.springframework.dao.DataAccessException failure) {
             throw new AssertionError("请先人工审查并应用 paytech-payment-test/src/test/resources/init/ddl.sql 到 mor-local MySQL", failure);
@@ -53,6 +53,24 @@ public class ChannelDataMocker implements Clear {
         var mid = mid(channel.getChannelId(), account.getChannelAccountId(), "00001");
         var fixture = new Fixture(channel, account, mid);
         capability(fixture, "*", "*", "AED", "ACTION.PAY", true);
+        return fixture;
+    }
+
+    /** 为卡直付准备指定渠道编码与 OE 的启用三元组，以及 CARD 支付方式在该币种下的 PAY 能力。 */
+    public Fixture cardFixture(String channelCode, String entityNo, String currency) {
+        var now = Instant.parse("2026-09-21T00:00:00Z");
+        var channel = new PaymentChannel();
+        channel.setChannelId(ids.nextId());
+        channel.setChannelCode(channelCode);
+        channel.setChannelName("合成卡直付渠道");
+        channel.setChannelStatus(ChannelStatus.ACTIVE);
+        channel.setCreateTime(now);
+        channel.setUpdateTime(now);
+        mapper.insertPaymentChannel(channel);
+        var account = account(channel.getChannelId(), entityNo, "B".repeat(43));
+        var mid = mid(channel.getChannelId(), account.getChannelAccountId(), entityNo);
+        var fixture = new Fixture(channel, account, mid);
+        capability(fixture, "*", "*", currency, "ACTION.PAY", true);
         return fixture;
     }
 
@@ -135,9 +153,10 @@ public class ChannelDataMocker implements Clear {
         }
         assertEquals("mor_payment_channel_test", mapper.databaseName());
         try {
-            assertAll(mapper::clearDetails, mapper::clearCapabilities, mapper::clearMids,
-                mapper::clearAccounts, mapper::clearChannels);
-            assertEquals(0, mapper.countRows());
+            assertAll(mapper::clearTransactionRefs, mapper::clearActions, mapper::clearAttempts,
+                mapper::clearInstrumentTokens, mapper::clearIntents, mapper::clearDetails, mapper::clearCapabilities,
+                mapper::clearMids, mapper::clearAccounts, mapper::clearChannels);
+            assertEquals(0, mapper.countRows() + mapper.countExecutionRows());
             cleanupOwned = false;
         } catch (RuntimeException | AssertionError failure) {
             reusable = false;

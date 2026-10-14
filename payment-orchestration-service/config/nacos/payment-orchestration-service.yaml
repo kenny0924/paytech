@@ -47,6 +47,14 @@ payment:
   card:
     # 仅本地合成卡流程可显式开启。
     mock-enabled: false
+    # 合成卡 Mock 接受的测试卡号；只能配置渠道公布的测试卡。
+    mock-pans: [4111111111111111]
+  outbound:
+    # Platform 标准 API 执行与 Risk 支付评估（草案）的对方 context path 与读取超时；修改需重启。
+    platform-context-path: /platform-support
+    platform-read-timeout: 30s
+    risk-context-path: ""
+    risk-read-timeout: 3s
 
 vault:
   client:

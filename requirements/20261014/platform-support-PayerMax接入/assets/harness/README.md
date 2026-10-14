@@ -5,7 +5,7 @@
 | 文件 | 作用 |
 |---|---|
 | `start.py` | 启动 `payermax-mock`、`platform`、`bff`、`gateway`；Web 入口沿用[外部 API 2e 的 web.mjs](../../../20260914/platform-support-外部API配置与执行/assets/stage2e/harness/) |
-| `PayerMaxMock.java` | 本机合成 PayerMax：真实 SHA256withRSA 请求验签与响应签名，检查外层字段、`requestTime` 时效与金额为 JSON 数字；按订单号末位返回各场景；启动时生成两对合成密钥写入运行目录 |
+| `PayerMaxMock.java` | 本机合成 PayerMax：真实 SHA256withRSA 请求验签与响应签名，检查外层字段、`requestTime` 时效与金额为 JSON 数字；按订单号（退款按退款号）末位返回各场景；首次启动生成两对合成密钥写入运行目录，之后重启沿用密钥与端口。退款接口供 [PayerMax 退款 harness](../../../platform-support-PayerMax退款/assets/harness/README.md) 使用 |
 | `PlatformPayerMaxE2e.java` | 真实 Platform（测试装配的 Vault Mock，去掉测试固定时钟）；登记 mock 账号，若设置 `PAYERMAX_UAT_ACCOUNT_FILE` 另登记 uat 账号 |
 | `configure.py` | 保存或按版本更新标准 API `PAY`、`PAY_QUERY` 与一个接入方的全部配置（[技术方案第 4 节](../../technique.md#4-payermax-配置阶段-3)） |
 | `verify_mock.py` | 对 `PAYERMAX_MOCK` 跑全部场景并写回执 |

@@ -121,7 +121,10 @@ public class ExternalApiConfigurationCodec {
         for (String branch : List.of("SUCCESS", "FAIL")) {
             outputs.put(branch, declarations(definition.path("outputs").path(branch)));
         }
-        return new ApiContract(code, name, requestFields, fixedKeys, declarations(definition.path("params")), outputs);
+        var cardKeys = new java.util.LinkedHashSet<String>();
+        definition.path("cardFields").forEach(key -> cardKeys.add(key.asString("")));
+        return new ApiContract(code, name, requestFields, fixedKeys, declarations(definition.path("params")), outputs,
+            cardKeys);
     }
 
     /** 读取 [{name, dataType, required}] 形状的声明数组。 */

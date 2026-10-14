@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     seen = traffic()[before:]
     assert len(seen) == 9, seen
-    assert all(t['signatureValid'] and t['envelopeValid'] and t['requestTimeValid'] and t['totalAmountIsNumber'] for t in seen), seen
+    assert all(t['signatureValid'] and t['envelopeValid'] and t['requestTimeValid'] and t['amountValid'] for t in seen), seen
 
     for value in outcomes.values():
         redirect = value['outputs'].get('nextAction', {})

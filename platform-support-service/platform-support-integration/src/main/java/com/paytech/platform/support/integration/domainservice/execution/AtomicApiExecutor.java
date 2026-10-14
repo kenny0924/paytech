@@ -68,8 +68,10 @@ public class AtomicApiExecutor implements NodeRunner {
             castMap(request.get(HttpWork.REQUEST_HEADERS)), request.get(HttpWork.REQUEST_BODY),
             request.sealedJsonBody(), deadline);
         long started = System.nanoTime();
-        ChannelResponse response = send(channelRequest, node.getId(), castMap(request.get(HttpWork.REQUEST_HEADERS)),
-            context.trace(), started);
+        byte[] traceBody =
+            context.trace() == null ? null : traceBody(api, channelRequest, request.get(HttpWork.REQUEST_BODY));
+        ChannelResponse response = send(channelRequest, traceBody, node.getId(),
+            castMap(request.get(HttpWork.REQUEST_HEADERS)), context.trace(), started);
         log.info("外部 API 渠道响应 standardApiCode={} integrationCode={} nodeId={} httpStatus={} elapsedMs={}",
             snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), node.getId(), response.getStatus(),
             (System.nanoTime() - started) / 1_000_000L);
@@ -79,14 +81,18 @@ public class AtomicApiExecutor implements NodeRunner {
         return result(api, received, params);
     }
 
-    /** 发送请求；沙箱验证运行同时记录脱敏后的渠道交换（无论成功或失败）。 */
-    ChannelResponse send(ChannelRequest request, String nodeId, Map<String, Object> headers, ExecutionTrace trace,
-        long started) {
+    /** 执行轨迹记录的请求体：含卡值时用同一编码规则重新生成遮蔽副本，否则即发送字节。 */
+    byte[] traceBody(ExecutionApi api, ChannelRequest request, Object body) {
+        return JsonValues.containsCard(body) ? requestBuilder.maskedJsonBody(api, body) : request.getBody();
+    }
+
+    /** 发送请求；沙箱验证运行同时记录脱敏后的渠道交换（无论成功或失败），请求体卡值已遮蔽。 */
+    ChannelResponse send(ChannelRequest request, byte[] traceBody, String nodeId, Map<String, Object> headers,
+        ExecutionTrace trace, long started) {
         if (trace == null) {
             return httpClient.send(request);
         }
-        var exchange = new ExecutionTrace.Exchange(request.getMethod(), request.getUri(), request.getHeaders(),
-            request.getBody());
+        var exchange = new ExecutionTrace.Exchange(request.getMethod(), request.getUri(), request.getHeaders(), traceBody);
         Set<String> protectedHeaders = headers.entrySet().stream()
             .filter(entry -> entry.getValue() instanceof ProtectedHandle).map(Map.Entry::getKey)
             .collect(Collectors.toSet());

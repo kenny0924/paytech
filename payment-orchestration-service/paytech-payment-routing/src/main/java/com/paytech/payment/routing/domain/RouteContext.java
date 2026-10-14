@@ -30,4 +30,16 @@ public class RouteContext {
      * <li>AUTOMATIC：自动收款；MANUAL：授权后等待显式捕获。</li>
      */
     private String captureMode;
+
+    /**
+     * 消费者国家
+     * <li>ISO 3166-1 alpha-2，来自 Intent；参与 MID 能力匹配。</li>
+     */
+    private String countryCode;
+
+    /**
+     * 商户类别码
+     * <li>4 位数字，来自 Intent；参与 MID 能力匹配。</li>
+     */
+    private String mccCode;
 }

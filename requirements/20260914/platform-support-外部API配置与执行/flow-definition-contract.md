@@ -62,6 +62,7 @@
 - `required=true` 失败：结束调用，不执行任何节点，返回 503 Problem `INTEGRATION_INITIALIZATION_FAILED`（W2 确认，见[内部接口](./internal-api.md#32-problem没有发出任何渠道请求)）。
 - `required=false` 失败：`resources.<id>` 不存在，后续引用按第 5 节缺失规则处理。
 - 函数名、参数、返回描述与 Caller/Purpose 由注册目录提供；示例函数名只说明形状，不代表已注册（材料交接仍待定）。
+- **`PAYMENT_CARD`（2026-10-14，[PayerMax 卡直付对接](../../20261014/payment-PayerMax卡直付对接/technique.md#31-注册初始化函数-payment_card)）：** 参数 `paymentInstrumentToken`、`paymentAttemptId`；向 Payment 读卡接口读取卡数据，返回 `pan`、`expiryMonth`、`expiryYear`、`expiryYearShort`（两位年份）、`cardholderName`、`cvv`，全部为卡值句柄（类型 `CARD`），只在本次调用内存中。沙箱验证运行改读验证账号凭据中 `testCard.` 前缀的测试卡，不调用 Payment。
 
 ## 4. 节点、返回与连线
 
@@ -144,6 +145,7 @@
 4. **路径可用性：**
    - `input.*` 必须是标准 API 请求字段；
    - `resources.<id>.*` 必须是已声明初始化项的返回字段，且引用它的初始化项不能形成环；
+   - 卡值（返回类型 `CARD`）只能以 PATH `resources.<id>.<卡值>` 绑定原子 API `cardFields` 声明的卡字段；卡字段也只接受这种绑定（`CARD_BINDING_INVALID`），其他位置引用卡值为 `REFERENCE_NOT_ALLOWED`；
    - `steps.<id>.*` 只能在 `<id>` **必经**的位置引用：从 `entry` 到该节点、连线或出口的每条路径上都已执行过 `<id>`，否则拒绝（防止读取另一分支未执行的节点）。
 5. **覆盖：** 节点 `request` 与原子 API `fixedValues` 合起来覆盖每个必填请求字段，节点 `params` 覆盖每个必填调用参数；`SUCCESS`/`FAIL` 出口必须覆盖标准 API 全部必填响应字段。
 6. **表达式：** 在白名单剖面下编译；条件表达式可推导为布尔；类型能静态推导的做静态检查，其余标记“运行时校验”。

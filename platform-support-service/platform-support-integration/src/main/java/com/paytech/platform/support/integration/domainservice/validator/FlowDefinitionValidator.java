@@ -230,6 +230,10 @@ public class FlowDefinitionValidator {
                 state.issue("REQUEST_FIELD_FIXED", location + "." + raw, "该字段已有固定值，不能再由节点赋值");
             }
             assigned.add(key);
+            if (api.getCardFieldKeys().contains(key)) {
+                cardBinding(request.get(raw), location + "." + raw, state);
+                continue;
+            }
             bindings.validate(request.get(raw), location + "." + raw, true,
                 path -> state.nodeReference(path, nodeId, location + "." + raw), state.issues);
         }
@@ -276,6 +280,18 @@ public class FlowDefinitionValidator {
             || path.split("\\.").length != 4 || !state.initializerFunctions.containsKey(segment(path, 1))) {
             state.issue("HANDLE_BINDING_INVALID", location,
                 "受控句柄参数只能以 PATH 绑定 resources.<初始化项>.credentials.<名称>");
+        }
+    }
+
+    /** 卡字段（PayerMax 卡直付对接技术方案第 3.2 节）：只能以 PATH 绑定初始化项返回的卡值句柄 resources.&lt;id&gt;.&lt;卡值&gt;。 */
+    void cardBinding(JsonNode binding, String location, State state) {
+        String path = binding == null ? "" : binding.path("path").asString("");
+        boolean pathKind = binding != null && binding.isObject() && "PATH".equals(binding.path("kind").asString(""))
+            && binding.size() == 2;
+        var function = RegisteredFunctionCatalog.find(state.initializerFunctions.getOrDefault(segment(path, 1), ""));
+        if (!pathKind || !path.startsWith("resources.") || path.split("\\.").length != 3 || function.isEmpty()
+            || !RegisteredFunctionCatalog.CARD.equals(function.get().getReturnRoots().get(segment(path, 2)))) {
+            state.issue("CARD_BINDING_INVALID", location, "卡字段只能以 PATH 绑定 resources.<初始化项>.<卡值>");
         }
     }
 
@@ -500,6 +516,9 @@ public class FlowDefinitionValidator {
                 }
                 if (PROTECTED_HANDLE.equals(function.get().getReturnRoots().get(root)) && !allowCredentials) {
                     return "凭据只能以受控句柄传给原子 API 的 PROTECTED_HANDLE 参数";
+                }
+                if (RegisteredFunctionCatalog.CARD.equals(function.get().getReturnRoots().get(root))) {
+                    return "卡值只能以 PATH 赋给原子 API 的卡字段";
                 }
                 return null;
             }

@@ -1,0 +1,35 @@
+{
+  "params": [
+    {"name": "privateKey", "dataType": "PROTECTED_HANDLE", "required": true}
+  ],
+  "fixedValues": {
+    "BODY:version": {"kind": "EXPRESSION", "expression": "'1.5'"}
+  },
+  "transport": {
+    "protocol": "HTTP",
+    "method": "POST",
+    "endpointCode": "DEMO_GATEWAY",
+    "pathTemplate": "/orderAndPay",
+    "connectTimeoutMs": 2000,
+    "responseTimeoutMs": 10000
+  },
+  "requestEncoding": "JSON",
+  "responseDecoding": "JSON",
+  "decimalEncoding": "NUMBER",
+  "cardFields": ["BODY:data.card.number", "BODY:data.card.expMonth", "BODY:data.card.expYear", "BODY:data.card.cvv",
+    "BODY:data.card.holder"],
+  "scripts": [
+    {"id": "sign", "scriptCode": "RSA_SIGN", "stage": "REQUEST",
+     "params": {"privateKey": {"kind": "PATH", "path": "params.privateKey"}}}
+  ],
+  "statusRules": [
+    {"condition": "http.responseStatus == 200 && http.responseBody.code == 'APPLY_SUCCESS'", "executeStatus": "SUCCESS"}
+  ],
+  "outputs": {
+    "SUCCESS": [
+      {"name": "transactionRef", "dataType": "STRING", "required": true,
+       "value": {"kind": "PATH", "path": "http.responseBody.data.tradeToken"}}
+    ],
+    "FAIL": []
+  }
+}

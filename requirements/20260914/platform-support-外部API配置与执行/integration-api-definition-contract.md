@@ -40,6 +40,7 @@
 | `transport` | 是 | HTTP 传输（第 5 节） |
 | `requestEncoding` / `responseDecoding` | 是 | 报文编解码（第 5.2 节） |
 | `decimalEncoding` | 否 | 渠道报文中 DECIMAL 的 JSON 形式，`STRING`（缺省）或 `NUMBER`（第 5.2 节，2026-10-14 PayerMax 接入新增） |
+| `cardFields` | 否 | 卡字段键数组 `BODY:<path>`，最多 8 个（第 5.3 节，2026-10-14 PayerMax 卡直付新增） |
 | `scripts` | 是 | 有序脚本引用，可为空数组（第 6 节） |
 | `statusRules` | 是 | 执行状态判定（第 7 节） |
 | `outputs` | 是 | 按状态分支的输出映射（第 8 节） |
@@ -114,6 +115,13 @@
 不根据报文内容猜测格式；解码失败返回 `ERROR`。XML 等格式保留扩展位置，本期不支持（A5 已确认）。
 
 **`decimalEncoding`（2026-10-14，[PayerMax 接入](../../20261014/platform-support-PayerMax接入/technique.md#34-decimalencodingg4评审点-t2)）：** 可选，`STRING`（缺省）或 `NUMBER`。`NUMBER` 时 BODY 中的 DECIMAL 按原精度写成 JSON 数字（不用指数、不经浮点）；响应解码后、RESPONSE 脚本之前，已声明为 DECIMAL 的 BODY 响应字段（含 `[]` 数组路径）中的 JSON 整数转为十进制数。JSON 响应中的小数一律精确解析。只影响原子 API 与渠道之间的报文，标准 API 对内仍是十进制字符串。
+
+### 5.3 卡字段 cardFields（2026-10-14，[PayerMax 卡直付对接](../../20261014/payment-PayerMax卡直付对接/technique.md#3-platform-改动)）
+
+- 可选数组，元素为本 API 的 `BODY:<path>` 请求字段键：必须是 STRING 类型、路径不含 `[]`、没有固定值、不重复；有卡字段时 `requestEncoding` 必须是 `JSON`。
+- 卡字段只能由流程以 PATH 绑定初始化函数 `PAYMENT_CARD` 返回的卡值句柄；卡值句柄也不能写入其他字段、脚本参数、Header、出口或状态规则（流程结构第 6 节）。
+- 卡值只在 JSON 发送字节中展开（含 `sealJsonBody` 锁定的字节，签名覆盖原值）；REQUEST 脚本读取卡字段只得到不可读的句柄。
+- 沙箱验证证据中的请求体由同一编码规则重新生成遮蔽副本：卡号保留前 6 后 4，其他卡值为 `[CARD]`。
 
 ## 6. 脚本
 

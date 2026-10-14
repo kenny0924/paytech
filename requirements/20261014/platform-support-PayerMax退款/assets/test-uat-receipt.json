@@ -1,0 +1,210 @@
+{
+  "date": "2026-10-14",
+  "environment": "mor-test (http://localhost:28080)",
+  "integration": "PAYERMAX",
+  "channel": "PayerMax UAT (sandbox endpoint)",
+  "configure": [
+    {
+      "name": "login-admin",
+      "method": "POST",
+      "path": "/api/operations/auth/v1/login",
+      "status": 200
+    },
+    {
+      "name": "standard-api-REFUND-get",
+      "method": "GET",
+      "path": "/api/operations/external-api-admin/v1/standard-apis/REFUND",
+      "status": 404
+    },
+    {
+      "name": "standard-api-REFUND-create",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/standard-apis",
+      "status": 200
+    },
+    {
+      "name": "standard-api-REFUND_QUERY-get",
+      "method": "GET",
+      "path": "/api/operations/external-api-admin/v1/standard-apis/REFUND_QUERY",
+      "status": 404
+    },
+    {
+      "name": "standard-api-REFUND_QUERY-create",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/standard-apis",
+      "status": 200
+    },
+    {
+      "name": "api-REFUND-get",
+      "method": "GET",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/apis/REFUND",
+      "status": 404
+    },
+    {
+      "name": "api-REFUND-create",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/apis",
+      "status": 200
+    },
+    {
+      "name": "api-REFUND_QUERY-get",
+      "method": "GET",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/apis/REFUND_QUERY",
+      "status": 404
+    },
+    {
+      "name": "api-REFUND_QUERY-create",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/apis",
+      "status": 200
+    },
+    {
+      "name": "implementation-get-REFUND",
+      "method": "GET",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/REFUND",
+      "status": 404
+    },
+    {
+      "name": "implementation-validate-REFUND",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/validate",
+      "status": 200
+    },
+    {
+      "name": "implementation-REFUND-get",
+      "method": "GET",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/REFUND",
+      "status": 404
+    },
+    {
+      "name": "implementation-REFUND-create",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations",
+      "status": 200
+    },
+    {
+      "name": "implementation-get-REFUND_QUERY",
+      "method": "GET",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/REFUND_QUERY",
+      "status": 404
+    },
+    {
+      "name": "implementation-validate-REFUND_QUERY",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/validate",
+      "status": 200
+    },
+    {
+      "name": "implementation-REFUND_QUERY-get",
+      "method": "GET",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/REFUND_QUERY",
+      "status": 404
+    },
+    {
+      "name": "implementation-REFUND_QUERY-create",
+      "method": "POST",
+      "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations",
+      "status": 200
+    }
+  ],
+  "cases": {
+    "UAT_REFUND_NOT_EXIST": {
+      "runCode": "236101977149358080",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "refund",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "ORDER_NOT_EXIST",
+              "refundStatus": "FAILED",
+              "failureMessage": "The order does not exist."
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        }
+      ],
+      "exchanges": [
+        {
+          "node": "applyRefund",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "code": "ORDER_NOT_EXIST",
+            "msg": "The order does not exist.",
+            "status": null
+          }
+        }
+      ]
+    },
+    "UAT_REFUND_QUERY_NOT_FOUND": {
+      "runCode": "236101986158723072",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "query",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "ORDER_NOT_EXIST",
+              "refundStatus": "NOT_FOUND",
+              "failureMessage": "The orginal order does not exist."
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ]
+          ]
+        }
+      ],
+      "exchanges": [
+        {
+          "node": "queryRefund",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "code": "ORDER_NOT_EXIST",
+            "msg": "The orginal order does not exist.",
+            "status": null
+          }
+        }
+      ]
+    }
+  }
+}

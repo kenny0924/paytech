@@ -26,6 +26,10 @@ public class PayConverter {
         payMethod.setPaymentMethodCode(body.getPayMethod().getPaymentMethodCode());
         payMethod.setPaymentInstrumentToken(body.getPayMethod().getPaymentInstrumentToken());
         request.setPayMethod(payMethod);
+        request.setReturnUrl(body.getReturnUrl());
+        request.setConsumerReference(body.getConsumerReference());
+        request.setConsumerIpAddress(body.getConsumerIpAddress());
+        request.setConsumerUserAgent(body.getConsumerUserAgent());
         return request;
     }
 
@@ -34,6 +38,13 @@ public class PayConverter {
         PayResponseBody body = new PayResponseBody();
         body.setAttemptId(response.getAttemptId().toString());
         body.setStatus(response.getStatus().getCode());
+        if (response.getNextAction() != null) {
+            var nextAction = new PayResponseBody.NextAction();
+            nextAction.setType(response.getNextAction().getType().getCode());
+            nextAction.setRedirectUrl(response.getNextAction().getRedirectUrl());
+            nextAction.setExpiresAt(response.getNextAction().getExpiresAt().toString());
+            body.setNextAction(nextAction);
+        }
         return body;
     }
 

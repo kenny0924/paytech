@@ -25,7 +25,10 @@ class ChannelModuleBoundaryTest {
         "core.enums.CapabilityValueType", "service.processor.QueryMidCandidatesProcessor",
         "service.processor.GetChannelExecutionConfigProcessor",
         "service.processor.request.QueryMidCandidatesRequest", "service.processor.request.MidCriteria",
-        "service.processor.request.GetChannelExecutionConfigRequest");
+        "service.processor.request.GetChannelExecutionConfigRequest",
+        // 经 Platform 执行渠道操作（requirements/20261014/payment-PayerMax卡直付对接）。
+        "domain.ChannelOperationResult", "core.enums.ChannelOperationOutcome",
+        "service.processor.ExecuteChannelOperationProcessor", "service.processor.request.ExecuteChannelOperationRequest");
 
     /** Owner 不依赖其他 Payment 模块，消费者不得绕过窄公开合同访问实现或持久化。 */
     @Test

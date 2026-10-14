@@ -1,5 +1,8 @@
 package com.paytech.payment.test.dal;
 
+import java.util.List;
+import java.util.Map;
+
 import org.apache.ibatis.annotations.*;
 import com.paytech.payment.channel.core.dal.dataobject.*;
 
@@ -37,9 +40,53 @@ public interface ChannelTestMapper {
     @Select("SELECT DATABASE()")
     String databaseName();
 
-    /** 读取五表总行数，验证空基线及查询无新增副作用。 */
+    /** 读取渠道五表总行数，验证空基线及查询无新增副作用。 */
     @Select("SELECT (SELECT COUNT(*) FROM t_payment_channel) + (SELECT COUNT(*) FROM t_channel_account) + (SELECT COUNT(*) FROM t_channel_mid) + (SELECT COUNT(*) FROM t_mid_capability) + (SELECT COUNT(*) FROM t_mid_capability_detail)")
     int countRows();
+
+    /** 读取执行链路五表总行数。 */
+    @Select("SELECT (SELECT COUNT(*) FROM t_payment_intent) + (SELECT COUNT(*) FROM t_payment_attempt) + (SELECT COUNT(*) FROM t_payment_instrument_token) + (SELECT COUNT(*) FROM t_payment_action) + (SELECT COUNT(*) FROM t_channel_transaction_ref)")
+    int countExecutionRows();
+
+    /** 仅清理本测试库的渠道交易引用。 */
+    @Delete("DELETE FROM t_channel_transaction_ref")
+    void clearTransactionRefs();
+
+    /** 仅清理本测试库的支付动作。 */
+    @Delete("DELETE FROM t_payment_action")
+    void clearActions();
+
+    /** 仅清理本测试库的支付尝试。 */
+    @Delete("DELETE FROM t_payment_attempt")
+    void clearAttempts();
+
+    /** 仅清理本测试库的支付工具。 */
+    @Delete("DELETE FROM t_payment_instrument_token")
+    void clearInstrumentTokens();
+
+    /** 仅清理本测试库的支付意图。 */
+    @Delete("DELETE FROM t_payment_intent")
+    void clearIntents();
+
+    /** 支付尝试状态与当前动作。 */
+    @Select("SELECT attempt_status AS status, active_action_id AS activeActionId, channel_id AS channelId, mid_id AS midId FROM t_payment_attempt WHERE payment_attempt_id = #{attemptId}")
+    Map<String, Object> attempt(@Param("attemptId") long attemptId);
+
+    /** 支付意图状态与活动/成功尝试。 */
+    @Select("SELECT intent_status AS status, active_attempt_id AS activeAttemptId, successful_attempt_id AS successfulAttemptId FROM t_payment_intent WHERE payment_intent_id = #{intentId}")
+    Map<String, Object> intent(@Param("intentId") long intentId);
+
+    /** 某尝试的全部动作，按序号。 */
+    @Select("SELECT action_type AS type, action_status AS status, interaction_type AS interactionType, channel_response_code AS code, channel_response_msg AS message, risk_result AS riskResult FROM t_payment_action WHERE payment_attempt_id = #{attemptId} ORDER BY action_no")
+    List<Map<String, Object>> actions(@Param("attemptId") long attemptId);
+
+    /** 全部渠道交易引用的外部编号与类型。 */
+    @Select("SELECT reference_type AS type, external_transaction_id AS externalId, amount, currency FROM t_channel_transaction_ref")
+    List<Map<String, Object>> transactionRefs();
+
+    /** 执行链路各表的全部文本列拼接，用于检索不得落库的值。 */
+    @Select("SELECT CONCAT_WS('|', (SELECT GROUP_CONCAT(CONCAT_WS(',', channel_response_code, channel_response_msg)) FROM t_payment_action), (SELECT GROUP_CONCAT(CONCAT_WS(',', payment_instrument_token, instrument_ref)) FROM t_payment_instrument_token), (SELECT GROUP_CONCAT(external_transaction_id) FROM t_channel_transaction_ref))")
+    String executionText();
 
     /** 更新当前绑定以模拟真实换绑后的历史执行。 */
     @Update("UPDATE t_channel_mid SET channel_account_id = #{accountId} WHERE mid_id = #{midId}")

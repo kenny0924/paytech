@@ -19,6 +19,11 @@ spring:
           instances:
             vault-service:
               - uri: "${test.vault.base-url}"
+            # 同一独立 Mock HTTP 服务承载 Platform 标准 API 执行与 Risk 支付评估（草案）合同。
+            platform-support-service:
+              - uri: "${test.vault.base-url}"
+            risk-service:
+              - uri: "${test.vault.base-url}"
     loadbalancer:
       retry:
         enabled: false
@@ -89,10 +94,13 @@ payment:
       "[SECURITY.3DS_MODE]": { value-type: CODE, allowed-codes: [REQUIRED, SUPPORTED, UNSUPPORTED] }
   execution:
     # 必须显式配置有效窗口；零值仅禁用首次申请，不影响原工具重放。
-    instrument-preparation-window: PT0S
+    instrument-preparation-window: PT30M
   card:
-    # 仅用于本地合成卡；真实 Card 能力尚未接入。
-    mock-enabled: false
+    # 仅用于本地合成卡；真实 Card 能力尚未接入。卡直付执行测试需要申请合成卡工具。
+    mock-enabled: true
+  outbound:
+    platform-context-path: "" # 测试 Mock HTTP 服务无 Platform 的 /platform-support 前缀。
+    risk-context-path: ""
   identifier:
     region-id: 31
     worker-id: 30

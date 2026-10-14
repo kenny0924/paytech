@@ -109,3 +109,12 @@ test('decimalEncoding：缺省按 STRING 编辑且保存时省略，NUMBER 原�
   assert.deepEqual(Object.keys(back), ['params', 'fixedValues', 'transport', 'requestEncoding', 'responseDecoding', 'decimalEncoding', 'scripts', 'statusRules', 'outputs']);
   assert.equal(back.decimalEncoding, 'NUMBER');
 });
+
+test('cardFields：没有卡字段时保存省略，已有卡字段原样保留', () => {
+  assert.deepEqual(toDraft(definition).cardFields, []);
+  assert.equal('cardFields' in toDefinition(toDraft(definition)), false);
+  const cardFields = ['BODY:data.card.number', 'BODY:data.card.cvv'];
+  const back = toDefinition(toDraft({ ...definition, decimalEncoding: 'NUMBER', cardFields }));
+  assert.deepEqual(Object.keys(back), ['params', 'fixedValues', 'transport', 'requestEncoding', 'responseDecoding', 'decimalEncoding', 'cardFields', 'scripts', 'statusRules', 'outputs']);
+  assert.deepEqual(back.cardFields, cardFields);
+});

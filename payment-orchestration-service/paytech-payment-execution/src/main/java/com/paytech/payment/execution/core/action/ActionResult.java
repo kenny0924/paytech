@@ -46,6 +46,12 @@ public class ActionResult {
     /** 渠道结果时间 */
     private Instant channelResultTime;
 
+    /**
+     * 渠道交易编号
+     * <li>渠道已创建交易时返回（成功、待认证或已拒绝），与动作结果同事务保存为渠道交易引用。</li>
+     */
+    private String channelTransactionId;
+
     /** 构造未取得确定结果的动作回执。 */
     public static ActionResult unknown() {
         ActionResult result = new ActionResult();

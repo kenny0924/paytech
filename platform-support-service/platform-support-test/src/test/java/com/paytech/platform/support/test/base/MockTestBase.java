@@ -21,6 +21,7 @@ import com.paytech.platform.support.PlatformSupportTestApplication;
 import com.paytech.platform.support.core.audit.AuditDispatcher;
 import com.paytech.platform.support.test.configuration.LocalMockEnvironmentInitializer;
 import com.paytech.platform.support.test.mocker.external.ChannelAccountVaultMocker;
+import com.paytech.platform.support.test.mocker.external.PaymentCardMocker;
 import com.paytech.platform.support.test.mocker.external.ChannelMocker;
 import com.paytech.platform.support.test.mocker.external.LoginEmailVaultMocker;
 import com.paytech.platform.support.test.mocker.external.SmtpMockServer;
@@ -67,6 +68,9 @@ public abstract class MockTestBase extends TestBase {
     protected ChannelAccountVaultMocker channelAccountVault;
 
     @Autowired
+    protected PaymentCardMocker paymentCard;
+
+    @Autowired
     protected SmtpMockServer smtp;
 
     @Autowired
@@ -109,6 +113,7 @@ public abstract class MockTestBase extends TestBase {
         mockHttpServer.awaitIdle();
         assertAll(loginEmailVault::assertNoUnexpectedCalls, smtp::assertNoUnexpectedMail,
             channel::assertNoUnexpectedCalls, channelAccountVault::assertNoUnexpectedCalls,
+            paymentCard::assertNoUnexpectedCalls,
             mockHttpServer::assertNoUnexpectedRequests);
     }
 }

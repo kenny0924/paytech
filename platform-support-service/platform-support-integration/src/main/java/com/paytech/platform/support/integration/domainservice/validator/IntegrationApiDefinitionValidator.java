@@ -54,9 +54,12 @@ public class IntegrationApiDefinitionValidator {
 
     static final Set<String> TOP_LEVEL = Set.of("params", "fixedValues", "transport", "requestEncoding",
         "responseDecoding", "scripts", "statusRules", "outputs");
-    /** 可选顶层属性：decimalEncoding 缺省为 STRING。 */
+    /** 可选顶层属性：decimalEncoding 缺省为 STRING；cardFields 缺省为没有卡字段。 */
     static final Set<String> TOP_LEVEL_ALLOWED = Set.of("params", "fixedValues", "transport", "requestEncoding",
-        "responseDecoding", "decimalEncoding", "scripts", "statusRules", "outputs");
+        "responseDecoding", "decimalEncoding", "cardFields", "scripts", "statusRules", "outputs");
+
+    /** 卡字段上限。 */
+    public static final int MAX_CARD_FIELDS = 8;
     public static final Set<String> DECIMAL_ENCODINGS = Set.of("STRING", "NUMBER");
     static final Set<String> FIELD_TYPES = Set.of("STRING", "BOOLEAN", "INTEGER", "DECIMAL", "OBJECT", "ARRAY");
     public static final Set<String> METHODS = Set.of("GET", "POST", "PUT", "PATCH", "DELETE");
@@ -97,6 +100,7 @@ public class IntegrationApiDefinitionValidator {
         var fixedKeys = fixedValues(definition.get("fixedValues"), requestFields, issues);
         var transport = transport(definition.get("transport"), requestFields, endpointCodes, issues);
         encodings(definition, requestFields, issues);
+        cardFields(definition, requestFields, fixedKeys, issues);
         var scriptUses = scripts(definition.get("scripts"), params, scripts, issues);
         statusRules(definition.get("statusRules"), params, issues);
         var outputs = outputs(definition.get("outputs"), params, issues);
@@ -246,6 +250,35 @@ public class IntegrationApiDefinitionValidator {
             && !DECIMAL_ENCODINGS.contains(definition.path("decimalEncoding").asString(""))) {
             issues.add(new ValidationIssue("DECIMAL_ENCODING_INVALID", "definition.decimalEncoding",
                 "decimalEncoding 只允许 STRING、NUMBER"));
+        }
+    }
+
+    /**
+     * 卡字段（PayerMax 卡直付对接技术方案第 3.2 节）：只能是 JSON 编码下的 BODY 字符串字段（不含数组段），不能有固定值；
+     * 这些字段只接受卡值句柄，其他字段不能接收卡值。
+     */
+    void cardFields(JsonNode definition, List<FieldDefinition> requestFields, Set<String> fixedKeys,
+        List<ValidationIssue> issues) {
+        JsonNode node = definition.get("cardFields");
+        if (node == null || !array(node, "definition.cardFields", MAX_CARD_FIELDS, issues)) {
+            return;
+        }
+        if (!"JSON".equals(definition.path("requestEncoding").asString("")) && !node.isEmpty()) {
+            issues.add(new ValidationIssue("CARD_FIELD_ENCODING", "definition.cardFields", "卡字段只能用于 JSON 请求编码"));
+        }
+        var seen = new HashSet<String>();
+        for (int index = 0; index < node.size(); index++) {
+            String location = "definition.cardFields[" + index + "]";
+            String key = node.get(index).asString("");
+            var field = requestFields.stream().filter(item -> fieldKey(item).equals(key)).findFirst();
+            if (field.isEmpty() || field.get().getLocation() != ApiFieldLocation.BODY
+                || !"STRING".equals(field.get().getDataType().getCode()) || field.get().getPath().contains("[]")) {
+                issues.add(new ValidationIssue("CARD_FIELD_INVALID", location, "卡字段必须是本 API 的 BODY 字符串请求字段（不含数组段）"));
+            } else if (fixedKeys.contains(key)) {
+                issues.add(new ValidationIssue("CARD_FIELD_FIXED", location, "卡字段不能有固定值"));
+            } else if (!seen.add(key)) {
+                issues.add(new ValidationIssue("CARD_FIELD_DUPLICATED", location, "卡字段重复"));
+            }
         }
     }
 

@@ -1,0 +1,149 @@
+{
+  "date": "2026-10-14",
+  "mode": "uat",
+  "integration": "PAYERMAX",
+  "account": "UAT_MAIN",
+  "cases": {
+    "CARD_SUCCESS": {
+      "runCode": "236117106905702400",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "channelStatus": "SUCCESS",
+        "paymentStatus": "SUCCEEDED",
+        "channelTransactionRef": "T2026101413225806470466"
+      },
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ],
+        [
+          "returnId",
+          true
+        ],
+        [
+          "outputs.paymentStatus",
+          true
+        ],
+        [
+          "outputs.channelTransactionRef",
+          true
+        ],
+        [
+          "outputs.nextAction",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    },
+    "CARD_3DS": {
+      "runCode": "236117132755197952",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "nextAction": "[transient]",
+        "channelStatus": "PENDING",
+        "paymentStatus": "PENDING",
+        "channelTransactionRef": "T2026101413398006470486"
+      },
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ],
+        [
+          "returnId",
+          true
+        ],
+        [
+          "outputs.paymentStatus",
+          true
+        ],
+        [
+          "outputs.nextAction.type",
+          true
+        ],
+        [
+          "outputs.nextAction.redirectUrl",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    },
+    "CARD_PENDING": {
+      "runCode": "236117154594938880",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "channelStatus": "PENDING",
+        "paymentStatus": "PENDING",
+        "channelTransactionRef": "T2026101413416506470497"
+      },
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ],
+        [
+          "returnId",
+          true
+        ],
+        [
+          "outputs.paymentStatus",
+          true
+        ],
+        [
+          "outputs.nextAction",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    },
+    "CARD_DECLINED": {
+      "runCode": "236117180624789504",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "failureCode": "ISSUER_PAYMENT_REJECTED",
+        "channelStatus": "FAILED",
+        "paymentStatus": "FAILED",
+        "failureMessage": "Transaction failed at issuer end due to risk control. Please try using a different card or contact your issuer for more detail.",
+        "channelTransactionRef": "T2026101413467506470508"
+      },
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ],
+        [
+          "returnId",
+          true
+        ],
+        [
+          "outputs.paymentStatus",
+          true
+        ],
+        [
+          "outputs.channelTransactionRef",
+          true
+        ],
+        [
+          "outputs.failureCode",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    }
+  },
+  "status": "PASS",
+  "calls": 18
+}

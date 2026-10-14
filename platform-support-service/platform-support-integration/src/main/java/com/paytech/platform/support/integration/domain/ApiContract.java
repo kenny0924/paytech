@@ -29,4 +29,7 @@ public class ApiContract {
 
     /** SUCCESS、FAIL 两个分支的输出声明。 */
     private final Map<String, List<ParameterDeclaration>> outputs;
+
+    /** 卡字段键 BODY:&lt;path&gt;，只能由卡值句柄赋值。 */
+    private final Set<String> cardFieldKeys;
 }

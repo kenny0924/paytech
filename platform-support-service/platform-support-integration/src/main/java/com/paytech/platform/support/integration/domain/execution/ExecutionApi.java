@@ -1,6 +1,8 @@
 package com.paytech.platform.support.integration.domain.execution;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.paytech.platform.support.integration.domain.FieldDefinition;
 
@@ -29,5 +31,12 @@ public class ExecutionApi {
     /** decimalEncoding 为 NUMBER：与渠道往来的报文中 DECIMAL 是 JSON 数字（默认 STRING 为十进制字符串）。 */
     public boolean isDecimalAsNumber() {
         return "NUMBER".equals(definition.path("decimalEncoding").asString(""));
+    }
+
+    /** cardFields 声明的卡字段键 BODY:&lt;path&gt;；只能由卡值句柄赋值（PayerMax 卡直付对接技术方案第 3.2 节）。 */
+    public Set<String> cardFieldKeys() {
+        var keys = new LinkedHashSet<String>();
+        definition.path("cardFields").forEach(key -> keys.add(key.asString("")));
+        return keys;
     }
 }

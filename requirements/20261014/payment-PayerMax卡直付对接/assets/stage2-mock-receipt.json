@@ -1,0 +1,206 @@
+{
+  "date": "2026-10-14",
+  "mode": "mock",
+  "integration": "PAYERMAX_MOCK",
+  "account": "MOCK_CARD",
+  "cases": {
+    "CARD_SUCCESS": {
+      "runCode": "236116953952018432",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "channelStatus": "SUCCESS",
+        "paymentStatus": "SUCCEEDED",
+        "channelTransactionRef": "TPMXC820179256401"
+      },
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ],
+        [
+          "returnId",
+          true
+        ],
+        [
+          "outputs.paymentStatus",
+          true
+        ],
+        [
+          "outputs.channelTransactionRef",
+          true
+        ],
+        [
+          "outputs.nextAction",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    },
+    "CARD_3DS": {
+      "runCode": "236116963234013184",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "nextAction": "[transient]",
+        "channelStatus": "PENDING",
+        "paymentStatus": "PENDING",
+        "channelTransactionRef": "TPMXC760782489961"
+      },
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ],
+        [
+          "returnId",
+          true
+        ],
+        [
+          "outputs.paymentStatus",
+          true
+        ],
+        [
+          "outputs.nextAction.type",
+          true
+        ],
+        [
+          "outputs.nextAction.redirectUrl",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    },
+    "CARD_PENDING": {
+      "runCode": "236116980690706432",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "channelStatus": "PENDING",
+        "paymentStatus": "PENDING",
+        "channelTransactionRef": "TPMXC490784000781"
+      },
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ],
+        [
+          "returnId",
+          true
+        ],
+        [
+          "outputs.paymentStatus",
+          true
+        ],
+        [
+          "outputs.nextAction",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    },
+    "CARD_DECLINED": {
+      "runCode": "236117006649253888",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "failureCode": "ISSUER_PAYMENT_REJECTED",
+        "channelStatus": "FAILED",
+        "paymentStatus": "FAILED",
+        "failureMessage": "Transaction failed at issuer end due to risk control.",
+        "channelTransactionRef": "TPMXC527619784621"
+      },
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ],
+        [
+          "returnId",
+          true
+        ],
+        [
+          "outputs.paymentStatus",
+          true
+        ],
+        [
+          "outputs.channelTransactionRef",
+          true
+        ],
+        [
+          "outputs.failureCode",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    },
+    "CARD_REJECTED": {
+      "runCode": "236117028157644800",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "FAIL",
+      "outputs": {
+        "failureCode": "PARAMS_INVALID",
+        "paymentStatus": "FAILED",
+        "failureMessage": "subject is invalid"
+      },
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ],
+        [
+          "outputs.paymentStatus",
+          true
+        ],
+        [
+          "outputs.failureCode",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    },
+    "CARD_SYSTEM_ERROR": {
+      "runCode": "236117054107803648",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "ERROR",
+      "outputs": {},
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    },
+    "CARD_BAD_SIGNATURE": {
+      "runCode": "236117080036990976",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "executeStatus": "ERROR",
+      "outputs": {},
+      "assertions": [
+        [
+          "executeStatus",
+          true
+        ]
+      ],
+      "evidenceCardNumber": "444433******1111",
+      "evidenceCvv": "[CARD]"
+    }
+  },
+  "status": "PASS",
+  "calls": 32
+}

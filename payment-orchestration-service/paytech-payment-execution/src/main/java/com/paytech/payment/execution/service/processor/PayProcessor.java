@@ -23,7 +23,9 @@ import com.paytech.payment.execution.core.enums.AttemptStatus;
 import com.paytech.payment.execution.core.enums.CaptureMode;
 import com.paytech.payment.execution.core.enums.IntentStatus;
 import com.paytech.payment.execution.core.enums.PaymentErrorCode;
+import com.paytech.payment.execution.domain.PayChannelInput;
 import com.paytech.payment.execution.domain.PayContext;
+import com.paytech.payment.execution.integration.PaymentChannelClient;
 import com.paytech.payment.execution.domainservice.repository.PaymentAttemptRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentInstrumentTokenRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentIntentRepository;
@@ -43,6 +45,7 @@ import lombok.AllArgsConstructor;
 public class PayProcessor extends AbstractLockProcessor<PayRequest, PayResponse> {
     final Clock clock;
     final RouteService routeService;
+    final PaymentChannelClient paymentChannelClient;
     final ActionExecutionService actionExecutionService;
     final PaymentExecutionService paymentExecutionService;
     final PaymentIntentRepository paymentIntentRepository;
@@ -99,12 +102,15 @@ public class PayProcessor extends AbstractLockProcessor<PayRequest, PayResponse>
     PayContext buildPayContext(PaymentIntent intent, PayRequest request) {
         checkNewAttemptAllowed(intent);
         PaymentInstrumentToken token = getAndCheckPaymentInstrumentToken(intent, request);
-        return new PayContext(intent, buildPaymentAttempt(intent, token, request), token);
+        var context = new PayContext(intent, buildPaymentAttempt(intent, token, request), token);
+        context.setChannelInput(new PayChannelInput(request.getReturnUrl(), request.getConsumerReference(),
+            request.getConsumerIpAddress(), request.getConsumerUserAgent()));
+        return context;
     }
 
     /**
      * 选择并绑定渠道
-     * <li>仅新 Attempt 选路；路由完成后再进入本地保存事务。</li>
+     * <li>仅新 Attempt 选路；候选查询与选择都在本地保存事务之前完成。</li>
      */
     void route(PayContext context) {
         PaymentIntent intent = context.getIntent();
@@ -115,8 +121,10 @@ public class PayProcessor extends AbstractLockProcessor<PayRequest, PayResponse>
         routeContext.setAmount(Money.of(intent.getCurrency(), intent.getAmount()));
         routeContext.setPaymentMethodCode(attempt.getPaymentMethodCode());
         routeContext.setCaptureMode(attempt.getCaptureMode().getCode());
+        routeContext.setCountryCode(intent.getConsumerCountryCode());
+        routeContext.setMccCode(intent.getMccCode());
 
-        RouteResult result = routeService.route(routeContext);
+        RouteResult result = routeService.route(routeContext, paymentChannelClient.queryRouteCandidates(routeContext));
         attempt.setChannelId(result.getChannelId());
         attempt.setChannelAccountId(result.getChannelAccountId());
         attempt.setMidId(result.getMidId());
@@ -218,6 +226,7 @@ public class PayProcessor extends AbstractLockProcessor<PayRequest, PayResponse>
         PayResponse response = new PayResponse();
         response.setAttemptId(attempt.getPaymentAttemptId());
         response.setStatus(attempt.getAttemptStatus());
+        response.setNextAction(context.getNextAction());
         return response;
     }
 }

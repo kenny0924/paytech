@@ -34,6 +34,8 @@ export interface DefinitionDraft {
   requestEncoding: string;
   responseDecoding: string;
   decimalEncoding: string;
+  /** 卡字段键 BODY:<path>：只能由卡值句柄赋值，执行轨迹中遮蔽。 */
+  cardFields: string[];
   requestScripts: ScriptUse[];
   responseScripts: ScriptUse[];
   statusRules: StatusRule[];
@@ -66,7 +68,7 @@ export function decodeIntegrationApi(value: unknown, expectedCode: string): Inte
 
 /** 新建原子 API 的默认定义：HTTP POST、JSON 编解码、默认超时，其余为空。 */
 export function emptyDraft(endpointCode = ''): DefinitionDraft {
-  return { params: [], fixedValues: [], requestEncoding: 'JSON', responseDecoding: 'JSON', decimalEncoding: 'STRING', requestScripts: [], responseScripts: [],
+  return { params: [], fixedValues: [], requestEncoding: 'JSON', responseDecoding: 'JSON', decimalEncoding: 'STRING', cardFields: [], requestScripts: [], responseScripts: [],
     transport: { protocol: 'HTTP', method: 'POST', endpointCode, pathTemplate: '/', connectTimeoutMs: 2000, responseTimeoutMs: 10000 },
     statusRules: [], outputs: { SUCCESS: [], FAIL: [] } };
 }
@@ -87,6 +89,7 @@ export function toDraft(definition: unknown): DefinitionDraft {
     requestEncoding: typeof d.requestEncoding === 'string' ? d.requestEncoding : base.requestEncoding,
     responseDecoding: typeof d.responseDecoding === 'string' ? d.responseDecoding : base.responseDecoding,
     decimalEncoding: typeof d.decimalEncoding === 'string' ? d.decimalEncoding : base.decimalEncoding,
+    cardFields: array(d.cardFields).filter((key): key is string => typeof key === 'string'),
     requestScripts: uses.filter(use => use.stage === 'REQUEST'),
     responseScripts: uses.filter(use => use.stage === 'RESPONSE'),
     statusRules: array(d.statusRules) as StatusRule[],
@@ -94,7 +97,7 @@ export function toDraft(definition: unknown): DefinitionDraft {
   };
 }
 
-/** 编辑态转回定义 JSON：键顺序与合同一致，REQUEST 脚本在前；参数说明为空时省略，decimalEncoding 为默认 STRING 时省略。 */
+/** 编辑态转回定义 JSON：键顺序与合同一致，REQUEST 脚本在前；参数说明为空时省略，decimalEncoding 为默认 STRING 时省略，没有卡字段时省略 cardFields。 */
 export function toDefinition(draft: DefinitionDraft): Record<string, unknown> {
   return {
     params: draft.params.map(param => ({ name: param.name.trim(), dataType: param.dataType, required: param.required,
@@ -104,6 +107,7 @@ export function toDefinition(draft: DefinitionDraft): Record<string, unknown> {
     requestEncoding: draft.requestEncoding,
     responseDecoding: draft.responseDecoding,
     ...(draft.decimalEncoding !== 'STRING' ? { decimalEncoding: draft.decimalEncoding } : {}),
+    ...(draft.cardFields.length ? { cardFields: [...draft.cardFields] } : {}),
     scripts: [...draft.requestScripts.map(use => ({ ...use, stage: 'REQUEST' })), ...draft.responseScripts.map(use => ({ ...use, stage: 'RESPONSE' }))],
     statusRules: draft.statusRules.map(rule => ({ condition: rule.condition, executeStatus: rule.executeStatus })),
     outputs: { SUCCESS: draft.outputs.SUCCESS, FAIL: draft.outputs.FAIL },

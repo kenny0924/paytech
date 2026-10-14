@@ -12,8 +12,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.payment.execution.core.action.*;
+import com.paytech.payment.execution.core.dal.dataobject.ChannelTransactionRef;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAction;
 import com.paytech.payment.execution.core.enums.ActionStatus;
+import com.paytech.payment.execution.domainservice.repository.ChannelTransactionRefRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentActionRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentAttemptRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentIntentRepository;
@@ -40,13 +42,15 @@ public abstract class ActionFlow<T extends ActionContext> {
     /** 支付尝试与执行位 */
     final PaymentAttemptRepository attempts;
     final PaymentIntentRepository intents;
+    /** 渠道交易引用 */
+    final ChannelTransactionRefRepository refs;
     /** 业务时钟 */
     final Clock clock;
 
     /** 构造流程并检查节点引用，运行期间不修改定义。 */
     public ActionFlow(String instrumentType, String operation, ActionType start, List<ActionTransition<T>> transitions,
         ActionFactory actionFactory, TransactionTemplate transactionTemplate, PaymentActionRepository actions,
-        PaymentAttemptRepository attempts, Clock clock, PaymentIntentRepository intents) {
+        PaymentAttemptRepository attempts, Clock clock, PaymentIntentRepository intents, ChannelTransactionRefRepository refs) {
         this.instrumentType = Objects.requireNonNull(instrumentType, "支付工具类型必填");
         this.operation = Objects.requireNonNull(operation, "入口操作必填");
         this.start = Objects.requireNonNull(start, "开始动作必填");
@@ -57,6 +61,7 @@ public abstract class ActionFlow<T extends ActionContext> {
         this.attempts = attempts;
         this.clock = clock;
         this.intents = intents;
+        this.refs = refs;
         Set<ActionType> nodes = actionTypes();
         if (!nodes.contains(start) || this.transitions.stream()
             .anyMatch(rule -> rule.getToAction() != null && !nodes.contains(rule.getToAction()))) {
@@ -91,6 +96,7 @@ public abstract class ActionFlow<T extends ActionContext> {
         return transactionTemplate.execute(status -> {
             // 保存结果
             actions.saveResult(action, result);
+            saveChannelTransaction(context, action, result);
             if (action.isRunning()) {
                 return null;
             } else if (action.statusIn(ActionStatus.FAILED)) {
@@ -115,6 +121,25 @@ public abstract class ActionFlow<T extends ActionContext> {
             actor.doInTransaction(context, action);
             return nextAction;
         });
+    }
+
+    /** 渠道已创建交易时，在结果事务内保存渠道交易引用（冻结的渠道与 MID、本动作类型与金额）。 */
+    void saveChannelTransaction(T context, PaymentAction action, ActionResult result) {
+        if (result.getChannelTransactionId() == null) {
+            return;
+        }
+        var attempt = context.getAttempt();
+        var ref = new ChannelTransactionRef();
+        ref.setPaymentActionId(action.getPaymentActionId());
+        ref.setChannelId(attempt.getChannelId());
+        ref.setMidId(attempt.getMidId());
+        ref.setReferenceType(action.getActionType());
+        ref.setExternalTransactionId(result.getChannelTransactionId());
+        ref.setChannelEventTime(result.getChannelResultTime());
+        ref.setAmount(action.getAmount());
+        ref.setCurrency(action.getCurrency());
+        ref.setCreateTime(clock.instant().truncatedTo(ChronoUnit.MICROS));
+        refs.insertRef(ref);
     }
 
     /** 返回需要注册执行实现的全部节点。 */

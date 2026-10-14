@@ -1,6 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.payment.execution.core.dal.mapper.PaymentActionMapper">
+    <resultMap id="row" type="com.paytech.payment.execution.core.dal.dataobject.PaymentAction">
+        <result column="payment_action_id" property="paymentActionId"/>
+        <result column="payment_attempt_id" property="paymentAttemptId"/>
+        <result column="channel_refund_id" property="channelRefundId"/>
+        <result column="duplicate_payment_case_id" property="duplicatePaymentCaseId"/>
+        <result column="action_no" property="actionNo"/>
+        <result column="action_type" property="actionType" javaType="com.paytech.payment.execution.core.action.ActionType"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="action_status" property="actionStatus" javaType="com.paytech.payment.execution.core.enums.ActionStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="target_channel_txn_ref_id" property="targetChannelTxnRefId"/>
+        <result column="amount" property="amount"/>
+        <result column="currency" property="currency"/>
+        <result column="channel_idempotency_key" property="channelIdempotencyKey"/>
+        <result column="transaction_assessment_id" property="transactionAssessmentId"/>
+        <result column="risk_result" property="riskResult" javaType="com.paytech.payment.execution.core.enums.RiskResult"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="authentication_requirement" property="authenticationRequirement" javaType="com.paytech.payment.execution.core.enums.AuthenticationRequirement"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="interaction_type" property="interactionType" javaType="com.paytech.payment.execution.core.enums.InteractionType"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="interaction_expires_at" property="interactionExpiresAt" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="channel_response_code" property="channelResponseCode"/>
+        <result column="channel_response_msg" property="channelResponseMsg"/>
+        <result column="channel_result_time" property="channelResultTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
     <sql id="PaymentActionColumns">
         payment_action_id, payment_attempt_id, channel_refund_id, duplicate_payment_case_id, action_no,
         action_type, action_status, target_channel_txn_ref_id, amount, currency, channel_idempotency_key,
@@ -10,30 +39,30 @@
     <insert id="insertAction">
         INSERT INTO t_payment_action (<include refid="PaymentActionColumns"/>)
         VALUES (#{paymentActionId}, #{paymentAttemptId}, #{channelRefundId,jdbcType=BIGINT},
-            #{duplicatePaymentCaseId,jdbcType=BIGINT}, #{actionNo}, #{actionType}, #{actionStatus},
+            #{duplicatePaymentCaseId,jdbcType=BIGINT}, #{actionNo}, #{actionType,javaType=com.paytech.payment.execution.core.action.ActionType,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR}, #{actionStatus,javaType=com.paytech.payment.execution.core.enums.ActionStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
             #{targetChannelTxnRefId,jdbcType=BIGINT}, #{amount}, #{currency}, #{channelIdempotencyKey,jdbcType=VARCHAR},
-            #{transactionAssessmentId,jdbcType=BIGINT}, #{riskResult,jdbcType=VARCHAR},
-            #{authenticationRequirement,jdbcType=VARCHAR}, #{interactionType,jdbcType=VARCHAR},
-            #{interactionExpiresAt,jdbcType=TIMESTAMP}, #{channelResponseCode,jdbcType=VARCHAR},
-            #{channelResponseMsg,jdbcType=VARCHAR}, #{channelResultTime,jdbcType=TIMESTAMP},
-            #{version}, #{createTime}, #{updateTime})
+            #{transactionAssessmentId,jdbcType=BIGINT}, #{riskResult,javaType=com.paytech.payment.execution.core.enums.RiskResult,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            #{authenticationRequirement,javaType=com.paytech.payment.execution.core.enums.AuthenticationRequirement,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR}, #{interactionType,javaType=com.paytech.payment.execution.core.enums.InteractionType,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            #{interactionExpiresAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{channelResponseCode,jdbcType=VARCHAR},
+            #{channelResponseMsg,jdbcType=VARCHAR}, #{channelResultTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            #{version}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
     </insert>
     <update id="saveResult">
         UPDATE t_payment_action
-        SET action_status = #{result.status},
+        SET action_status = #{result.status,javaType=com.paytech.payment.execution.core.enums.ActionStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
             transaction_assessment_id = #{result.transactionAssessmentId,jdbcType=BIGINT},
-            risk_result = #{result.riskResult,jdbcType=VARCHAR},
-            authentication_requirement = #{result.authenticationRequirement,jdbcType=VARCHAR},
-            interaction_type = #{result.interactionType,jdbcType=VARCHAR},
-            interaction_expires_at = #{result.interactionExpiresAt,jdbcType=TIMESTAMP},
+            risk_result = #{result.riskResult,javaType=com.paytech.payment.execution.core.enums.RiskResult,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            authentication_requirement = #{result.authenticationRequirement,javaType=com.paytech.payment.execution.core.enums.AuthenticationRequirement,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            interaction_type = #{result.interactionType,javaType=com.paytech.payment.execution.core.enums.InteractionType,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            interaction_expires_at = #{result.interactionExpiresAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
             channel_response_code = #{result.channelResponseCode,jdbcType=VARCHAR},
             channel_response_msg = #{result.channelResponseMsg,jdbcType=VARCHAR},
-            channel_result_time = #{result.channelResultTime,jdbcType=TIMESTAMP},
-            version = version + 1, update_time = #{now}
+            channel_result_time = #{result.channelResultTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            version = version + 1, update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
         WHERE payment_action_id = #{action.paymentActionId} AND version = #{action.version}
-          AND action_status = #{action.actionStatus} AND action_status IN ('PROCESSING', 'UNKNOWN')
+          AND action_status = #{action.actionStatus,javaType=com.paytech.payment.execution.core.enums.ActionStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR} AND action_status IN ('PROCESSING', 'UNKNOWN')
     </update>
-    <select id="selectById" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentAction">
+    <select id="selectById" resultMap="row">
         SELECT <include refid="PaymentActionColumns"/>
         FROM t_payment_action WHERE payment_action_id = #{actionId}
     </select>

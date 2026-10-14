@@ -1,5 +1,8 @@
 package com.paytech.payment.routing.service;
 
+import java.util.List;
+
+import com.paytech.payment.routing.domain.RouteCandidate;
 import com.paytech.payment.routing.domain.RouteContext;
 import com.paytech.payment.routing.domain.RouteResult;
 
@@ -8,13 +11,15 @@ import com.paytech.payment.routing.domain.RouteResult;
  */
 public interface RouteService {
     /**
-     * 选择支付渠道
-     * <li>在指定 OE 内返回完整渠道、账户和 MID；无法选路时抛出异常。</li>
-     * <li>仅计算选择结果，不保存 Attempt 或发送支付。</li>
-     * 
+     * 在候选中选择支付渠道
+     * <li>候选由调用方在 Intent 冻结的 OE 内查询；本方法只做选择，不读取配置、不保存 Attempt 或发送支付。</li>
+     * <li>没有满足动作与金额能力的候选时抛出业务异常，不回退到其他 OE。</li>
+     *
      * @param context
      *            路由上下文
+     * @param candidates
+     *            按候选查询顺序排列的 MID 候选
      * @return 路由结果
      */
-    RouteResult route(RouteContext context);
+    RouteResult route(RouteContext context, List<RouteCandidate> candidates);
 }

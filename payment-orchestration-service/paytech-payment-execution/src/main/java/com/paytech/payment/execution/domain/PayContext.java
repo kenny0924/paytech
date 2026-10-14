@@ -36,6 +36,18 @@ public class PayContext implements ActionContext {
      */
     private PaymentInstrumentToken instToken;
 
+    /**
+     * 本次提交的渠道交互输入
+     * <li>回跳地址、付款人引用与消费者网络信息，只用于新提交的渠道请求；原提交重放为 null，不持久化。</li>
+     */
+    private PayChannelInput channelInput;
+
+    /**
+     * 渠道返回的交互指令
+     * <li>渠道动作执行中写入，供本次响应使用；不持久化。</li>
+     */
+    private PayNextAction nextAction;
+
     /** 当前工具类型对应的支付入口流程。 */
     public String actionFlowKey() {
         return instToken.getInstrumentType().getCode() + ":PAY";

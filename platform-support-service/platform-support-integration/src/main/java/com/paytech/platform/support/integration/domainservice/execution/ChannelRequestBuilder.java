@@ -18,6 +18,7 @@ import com.paytech.platform.support.api.enums.ApiFieldLocation;
 import com.paytech.platform.support.integration.core.configuration.ExternalApiExecutionProperties;
 import com.paytech.platform.support.integration.domain.FieldDefinition;
 import com.paytech.platform.support.integration.domain.execution.*;
+import com.paytech.platform.support.integration.domain.execution.JsonValues.CardRendering;
 import com.paytech.platform.support.integration.ext.outbound.ChannelRequest;
 
 import lombok.AllArgsConstructor;
@@ -27,7 +28,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 原子 API 请求组装与编码（原子 API 结构第 4、5、7 节）：fixedValues 与节点 request 按字段定义取值， 分到 HEADER（大小写不敏感）、QUERY、PATH（按单个路径段编码）与
- * BODY（按点分路径组装对象）； REQUEST 脚本之后按 requestEncoding 编码，拼出受控出站地址并计算超时。
+ * BODY（按点分路径组装对象）； REQUEST 脚本之后按 requestEncoding 编码，拼出受控出站地址并计算超时。 cardFields 声明的卡字段只接受卡值句柄，
+ * 只在 JSON 发送字节中展开为原值（PayerMax 卡直付对接技术方案第 3 节）。
  */
 @Component
 @AllArgsConstructor
@@ -53,6 +55,7 @@ public class ChannelRequestBuilder {
     public AssembledRequest assemble(ExecutionApi api, JsonNode request, Map<String, Object> environment) {
         Map<String, JsonNode> fixed = normalize(api.getDefinition().path("fixedValues"));
         Map<String, JsonNode> assigned = normalize(request);
+        var cardKeys = api.cardFieldKeys();
         var result = new AssembledRequest();
         for (FieldDefinition field : api.getRequestFields()) {
             String key = key(field.getLocation(), field.getPath());
@@ -64,8 +67,9 @@ public class ChannelRequestBuilder {
                 }
                 continue;
             }
-            Object value = valueResolver.resolve(binding, constant ? Map.of() : environment,
-                field.getDataType().getCode(), field.isRequired(), "request." + key);
+            String dataType = cardKeys.contains(key) ? ValueResolver.CARD : field.getDataType().getCode();
+            Object value = valueResolver.resolve(binding, constant ? Map.of() : environment, dataType, field.isRequired(),
+                "request." + key);
             if (value != null) {
                 result.put(field, value);
             }
@@ -126,7 +130,18 @@ public class ChannelRequestBuilder {
      * @return UTF-8 字节
      */
     public byte[] jsonBody(ExecutionApi api, Object body) {
-        return JSON.writeValueAsBytes(JsonValues.toJson(body, api.isDecimalAsNumber()));
+        return JSON.writeValueAsBytes(JsonValues.toJson(body, api.isDecimalAsNumber(), CardRendering.WIRE));
+    }
+
+    /**
+     * 与 {@link #jsonBody} 相同的编码，但卡值写成遮蔽文本；只用于执行轨迹与沙箱验证证据。
+     *
+     * @param api 原子 API 快照
+     * @param body 请求体
+     * @return UTF-8 字节
+     */
+    public byte[] maskedJsonBody(ExecutionApi api, Object body) {
+        return JSON.writeValueAsBytes(JsonValues.toJson(body, api.isDecimalAsNumber(), CardRendering.MASKED));
     }
 
     /** 锁定的 JSON 请求体原样发送；缺少 Content-Type 时补 application/json。 */

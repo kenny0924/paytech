@@ -1,0 +1,119 @@
+{
+  "timeoutMs": 20000,
+  "initializers": [
+    {
+      "id": "channelAccount",
+      "function": "CHANNEL_ACCOUNT_CONFIG",
+      "required": true,
+      "args": {
+        "vaultToken": {
+          "kind": "PATH",
+          "path": "input.paymentContext.vaultToken"
+        },
+        "channelCode": {
+          "kind": "EXPRESSION",
+          "expression": "'DEMO'"
+        },
+        "channelAccountId": {
+          "kind": "PATH",
+          "path": "input.paymentContext.attemptId"
+        },
+        "entityNo": {
+          "kind": "PATH",
+          "path": "input.paymentContext.attemptId"
+        }
+      }
+    },
+    {
+      "id": "card",
+      "function": "PAYMENT_CARD",
+      "required": true,
+      "args": {
+        "paymentInstrumentToken": {
+          "kind": "PATH",
+          "path": "input.paymentContext.instrumentToken"
+        },
+        "paymentAttemptId": {
+          "kind": "PATH",
+          "path": "input.paymentContext.attemptId"
+        }
+      }
+    }
+  ],
+  "entry": "call",
+  "nodes": [
+    {
+      "id": "call",
+      "integrationApi": "CALL",
+      "request": {
+        "BODY:data.outTradeNo": {
+          "kind": "PATH",
+          "path": "resources.card.pan"
+        },
+        "BODY:data.totalAmount": {
+          "kind": "PATH",
+          "path": "input.paymentContext.amount"
+        },
+        "BODY:data.card.number": {
+          "kind": "PATH",
+          "path": "input.paymentContext.instrumentToken"
+        },
+        "BODY:data.card.expMonth": {
+          "kind": "PATH",
+          "path": "resources.card.expiryMonth"
+        },
+        "BODY:data.card.expYear": {
+          "kind": "PATH",
+          "path": "resources.card.expiryYearShort"
+        },
+        "BODY:data.card.cvv": {
+          "kind": "PATH",
+          "path": "resources.card.cvv"
+        },
+        "BODY:data.card.holder": {
+          "kind": "PATH",
+          "path": "resources.card.cardholderName"
+        }
+      },
+      "params": {
+        "privateKey": {
+          "kind": "PATH",
+          "path": "resources.channelAccount.credentials.privateKey"
+        }
+      }
+    }
+  ],
+  "returns": [
+    {
+      "id": "created",
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "paymentStatus": {
+          "kind": "EXPRESSION",
+          "expression": "'SUCCEEDED'"
+        },
+        "transactionRef": {
+          "kind": "EXPRESSION",
+          "expression": "resources.card.cvv"
+        }
+      }
+    },
+    {
+      "id": "unknown",
+      "executeStatus": "ERROR"
+    }
+  ],
+  "edges": [
+    {
+      "from": "call",
+      "to": "created",
+      "condition": "steps.call.executeStatus == 'SUCCESS'",
+      "priority": 1
+    },
+    {
+      "from": "call",
+      "to": "unknown",
+      "default": true
+    }
+  ]
+}

@@ -63,7 +63,7 @@ Content-Type: application/json
 
 - 金额、64 位 ID、精确小数使用十进制字符串，时间使用 UTC ISO-8601，沿用项目第一方 JSON 规则。
 - 请求体最多 64 KiB。未声明的 `input` 字段拒绝，不静默丢弃。
-- `input` 不得包含原始卡数据、密钥或凭据明文；账号材料由初始化函数通过受控接口获取。
+- `input` 不得包含原始卡数据、密钥或凭据明文；账号材料由初始化函数通过受控接口获取。卡数据只以支付工具 Token 进入 `input`，由初始化函数 `PAYMENT_CARD` 向 Payment 读取，只存在于本次调用内存（2026-10-14，[卡数据决定](../../../agent-docs/decisions/2026-10-14-card-data-platform-execution.md)）。
 
 ## 3. 响应与 HTTP 状态
 

@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.payment.execution.core.dal.mapper.PaymentAttemptMapper">
+    <resultMap id="row" type="com.paytech.payment.execution.core.dal.dataobject.PaymentAttempt">
+        <result column="payment_attempt_id" property="paymentAttemptId"/>
+        <result column="payment_intent_id" property="paymentIntentId"/>
+        <result column="attempt_no" property="attemptNo"/>
+        <result column="source_submission_id" property="sourceSubmissionId"/>
+        <result column="payment_method_code" property="paymentMethodCode"/>
+        <result column="capture_mode" property="captureMode" javaType="com.paytech.payment.execution.core.enums.CaptureMode"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="payment_instrument_token_id" property="paymentInstrumentTokenId"/>
+        <result column="channel_id" property="channelId"/>
+        <result column="channel_account_id" property="channelAccountId"/>
+        <result column="mid_id" property="midId"/>
+        <result column="attempt_status" property="attemptStatus" javaType="com.paytech.payment.execution.core.enums.AttemptStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="active_action_id" property="activeActionId"/>
+        <result column="authorized_amount" property="authorizedAmount"/>
+        <result column="captured_amount" property="capturedAmount"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
 
     <sql id="PaymentAttemptColumns">
         payment_attempt_id, payment_intent_id, attempt_no, source_submission_id, payment_method_code, capture_mode,
@@ -10,7 +31,7 @@
 
     <update id="activateAction">
         UPDATE t_payment_attempt
-        SET active_action_id = #{actionId}, version = version + 1, update_time = #{now}
+        SET active_action_id = #{actionId}, version = version + 1, update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
         WHERE payment_attempt_id = #{attempt.paymentAttemptId} AND version = #{attempt.version}
         AND active_action_id IS NULL AND attempt_status = 'PROCESSING'
     </update>
@@ -24,7 +45,7 @@
             <otherwise>NULL</otherwise>
         </choose>
         ,
-        version = version + 1, update_time = #{now}
+        version = version + 1, update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
         WHERE payment_attempt_id = #{attempt.paymentAttemptId} AND version = #{attempt.version}
         AND active_action_id = #{actionId} AND attempt_status = 'PROCESSING'
     </update>
@@ -32,7 +53,7 @@
     <update id="updateToFail">
         UPDATE t_payment_attempt
         SET attempt_status = 'FAILED', active_action_id = NULL,
-        version = version + 1, update_time = #{now}
+        version = version + 1, update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
         WHERE payment_attempt_id = #{attempt.paymentAttemptId} AND version = #{attempt.version}
         AND active_action_id = #{activeActionId} AND attempt_status = 'PROCESSING'
     </update>
@@ -40,27 +61,29 @@
     <update id="authorizeCompleted">
         UPDATE t_payment_attempt
         SET authorized_amount = #{authorizedAmount}, active_action_id = NULL,
-        version = version + 1, update_time = #{now}
-        WHERE payment_attempt_id = #{paymentAttemptId} AND active_action_id = #{activeActionId}
-        AND attempt_status = #{oldStatus} AND version = #{version}
+        version = version + 1, update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE payment_attempt_id = #{paymentAttemptId}
+        AND <choose><when test="activeActionId == null">active_action_id IS NULL</when><otherwise>active_action_id = #{activeActionId}</otherwise></choose>
+        AND attempt_status = #{oldStatus,javaType=com.paytech.payment.execution.core.enums.AttemptStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR} AND version = #{version}
     </update>
 
     <update id="payCompleted">
         UPDATE t_payment_attempt
         SET authorized_amount = #{payAmount}, captured_amount = #{payAmount},
-        attempt_status = #{newStatus}, active_action_id = NULL,
-        version = version + 1, update_time = #{now}
-        WHERE payment_attempt_id = #{paymentAttemptId} AND active_action_id = #{activeActionId}
-        AND attempt_status = #{oldStatus} AND version = #{version}
+        attempt_status = #{newStatus,javaType=com.paytech.payment.execution.core.enums.AttemptStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR}, active_action_id = NULL,
+        version = version + 1, update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE payment_attempt_id = #{paymentAttemptId}
+        AND <choose><when test="activeActionId == null">active_action_id IS NULL</when><otherwise>active_action_id = #{activeActionId}</otherwise></choose>
+        AND attempt_status = #{oldStatus,javaType=com.paytech.payment.execution.core.enums.AttemptStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR} AND version = #{version}
     </update>
 
-    <select id="findAttemptBySubmission" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentAttempt">
+    <select id="findAttemptBySubmission" resultMap="row">
         SELECT <include refid="PaymentAttemptColumns"/>
         FROM t_payment_attempt
         WHERE source_submission_id = #{sourceSubmissionId}
     </select>
 
-    <select id="selectById" resultType="com.paytech.payment.execution.core.dal.dataobject.PaymentAttempt">
+    <select id="selectById" resultMap="row">
         SELECT <include refid="PaymentAttemptColumns"/>
         FROM t_payment_attempt
         WHERE payment_attempt_id = #{paymentAttemptId}
@@ -80,10 +103,10 @@
         )
         SELECT #{paymentAttemptId,jdbcType=BIGINT}, #{paymentIntentId,jdbcType=BIGINT},
         #{attemptNo,jdbcType=INTEGER}, #{sourceSubmissionId,jdbcType=BIGINT}, #{paymentMethodCode,jdbcType=VARCHAR},
-        #{captureMode,jdbcType=VARCHAR}, #{paymentInstrumentTokenId,jdbcType=BIGINT}, #{channelId,jdbcType=BIGINT},
-        #{channelAccountId,jdbcType=BIGINT}, #{midId,jdbcType=BIGINT}, #{attemptStatus,jdbcType=VARCHAR},
+        #{captureMode,javaType=com.paytech.payment.execution.core.enums.CaptureMode,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR}, #{paymentInstrumentTokenId,jdbcType=BIGINT}, #{channelId,jdbcType=BIGINT},
+        #{channelAccountId,jdbcType=BIGINT}, #{midId,jdbcType=BIGINT}, #{attemptStatus,javaType=com.paytech.payment.execution.core.enums.AttemptStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
         #{activeActionId,jdbcType=BIGINT}, #{authorizedAmount,jdbcType=DECIMAL}, #{capturedAmount,jdbcType=DECIMAL},
-        #{version,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}
+        #{version,jdbcType=BIGINT}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
         FROM t_payment_instrument_token token
         JOIN t_payment_intent intent ON intent.payment_intent_id = token.payment_intent_id
         WHERE token.payment_instrument_token_id = #{paymentInstrumentTokenId}

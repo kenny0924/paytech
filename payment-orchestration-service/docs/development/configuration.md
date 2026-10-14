@@ -9,6 +9,9 @@
 | `payment.execution.instrument-preparation-window` | [PaymentExecutionProperties](../../paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/configuration/PaymentExecutionProperties.java) | `PT0S`；Duration，例如 `PT5M`；零值或负值禁止新工具申请 | 每次新申请读取一次；不修改原 Token 到期时间，不阻止原提交重放 |
 | `payment.channel.capability-definitions` | [ChannelProperties](../../paytech-payment-channel/src/main/java/com/paytech/payment/channel/core/configuration/ChannelProperties.java) | 非空目录；每项 value-type 为 BOOLEAN / DECIMAL / CODE，CODE 提供 allowed-codes | 约束五表查询中的开放能力代码；初始目录见服务模板，类型变化须同步审查已有配置 |
 | `payment.card.mock-enabled` | [PaymentCardProperties](../../paytech-payment-card/src/main/java/com/paytech/payment/card/core/configuration/PaymentCardProperties.java) | `false`；仅允许本地合成卡 | Card 每次调用读取；关闭后合成卡申请、核对均不可用 |
+| `payment.card.mock-pans` | 同上 | `[4111111111111111]`；只能是渠道公布的测试卡号 | 仅 Mock 开启时生效；合成材料只在进程内存，CVV 领取一次即清除 |
+| `payment.outbound.platform-context-path` / `platform-read-timeout` | [PaymentOutboundProperties](../../paytech-payment-web/src/main/java/com/paytech/payment/configuration/PaymentOutboundProperties.java) | `/platform-support`、`30s`（须大于渠道流程预算） | 启动时创建客户端，修改需重启；超时按渠道结果未知处理 |
+| `payment.outbound.risk-context-path` / `risk-read-timeout` | 同上 | 空串、`3s` | 启动时创建客户端，修改需重启；Risk 合同为 Payment 草案，不可用时风控失败关闭 |
 | `payment.identifier.region-id` | [PaymentIdentifierProperties](../../paytech-payment-web/src/main/java/com/paytech/payment/configuration/PaymentIdentifierProperties.java) | 必填，0～31 | 创建 ID 生成器时读取，修改需重启 |
 | `payment.identifier.worker-id` | 同上 | 必填，0～31；同一区域每个实例唯一 | 由实例部署环境注入，修改需重启 |
 

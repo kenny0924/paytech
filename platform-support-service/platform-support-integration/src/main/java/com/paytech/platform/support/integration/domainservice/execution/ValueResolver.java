@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import com.paytech.platform.support.integration.domain.ParameterDeclaration;
 import com.paytech.platform.support.integration.domain.RegisteredFunctionCatalog;
 import com.paytech.platform.support.integration.domain.execution.ExecutionErrorException;
+import com.paytech.platform.support.integration.domain.execution.CardValue;
 import com.paytech.platform.support.integration.domain.execution.ProtectedHandle;
 import com.paytech.platform.support.integration.domainservice.expression.ExpressionEngine;
 import com.paytech.platform.support.integration.domainservice.expression.ExpressionProfile;
@@ -29,6 +30,9 @@ import tools.jackson.databind.JsonNode;
  */
 @Component
 public class ValueResolver {
+
+    /** 卡字段取值的目标类型：只接受卡值句柄（PayerMax 卡直付对接技术方案第 3.2 节）。 */
+    public static final String CARD = "CARD";
 
     /** FUNCTION 的 result 表达式中函数返回值的变量名。 */
     public static final String RESULT = "result";
@@ -138,7 +142,7 @@ public class ValueResolver {
         return evaluate(binding.path("result").asString(), resultEnvironment, location + ".result");
     }
 
-    /** 目标类型匹配：不做任何转换；整数只接受 Long/Integer，小数只接受 BigDecimal，受控句柄只接受句柄本身。 */
+    /** 目标类型匹配：不做任何转换；整数只接受 Long/Integer，小数只接受 BigDecimal，受控句柄与卡值只接受句柄本身。 */
     public static boolean matches(Object value, String dataType) {
         return switch (dataType) {
             case "STRING" -> value instanceof String;
@@ -148,6 +152,7 @@ public class ValueResolver {
             case "OBJECT" -> value instanceof Map<?, ?>;
             case "ARRAY" -> value instanceof List<?>;
             case "PROTECTED_HANDLE" -> value instanceof ProtectedHandle;
+            case CARD -> value instanceof CardValue;
             default -> false;
         };
     }

@@ -80,6 +80,12 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-compensation-event</artifactId>
         </dependency>
+        <!-- 卡直付执行时凭支付工具 Token 读取卡数据（requirements/20261014/payment-PayerMax卡直付对接）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-payment-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

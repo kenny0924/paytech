@@ -71,7 +71,7 @@ class FlowDefinitionValidatorTest {
             List.of(field(ApiFieldLocation.PATH, "outletRef"), field(ApiFieldLocation.HEADER, "X-Api-Version"),
                 field(ApiFieldLocation.BODY, "orderRef"), field(ApiFieldLocation.BODY, "amount")),
             Set.of("HEADER:x-api-version"), List.of(new ParameterDeclaration("signingKey", "PROTECTED_HANDLE", true)),
-            Map.of("SUCCESS", List.of(new ParameterDeclaration("transactionRef", "STRING", true))));
+            Map.of("SUCCESS", List.of(new ParameterDeclaration("transactionRef", "STRING", true))), Set.of());
         var request = List.of(new FieldDefinition(ApiFieldLocation.BODY, "paymentContext", "上下文",
             ApiFieldDataType.OBJECT, true, null), field("paymentContext.attemptId", true),
             field("paymentContext.amount", true), field("paymentContext.vaultToken", true));
@@ -104,7 +104,7 @@ class FlowDefinitionValidatorTest {
     /** 单个原子 API：请求只有 BODY id，SUCCESS 输出 value。 */
     private static Map<String, ApiContract> apis() {
         return Map.of("API", new ApiContract("API", "示例", List.of(field("id", true)), Set.of(), List.of(),
-            Map.of("SUCCESS", List.of(new ParameterDeclaration("value", "STRING", false)))));
+            Map.of("SUCCESS", List.of(new ParameterDeclaration("value", "STRING", false))), Set.of()));
     }
 
 

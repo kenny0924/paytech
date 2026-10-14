@@ -1,0 +1,305 @@
+{
+  "date": "2026-10-14",
+  "integration": "PAYERMAX_MOCK",
+  "status": "PASS",
+  "checks": 14,
+  "outcomes": {
+    "refund-accepted-pending": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "refundStatus": "PENDING",
+        "channelStatus": "REFUND_PENDING",
+        "channelRefundRef": "RRFD7821007561491"
+      }
+    },
+    "refund-accepted-succeeded": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "refundStatus": "SUCCEEDED",
+        "channelStatus": "REFUND_SUCCESS",
+        "channelRefundRef": "RRFD7821007561492"
+      }
+    },
+    "refund-accepted-failed": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "refundStatus": "FAILED",
+        "channelStatus": "REFUND_FAILED",
+        "channelRefundRef": "RRFD7821007561493"
+      }
+    },
+    "refund-rejected-not-supported": {
+      "executeStatus": "FAIL",
+      "outputs": {
+        "failureCode": "REFUND_FAILED",
+        "refundStatus": "FAILED",
+        "failureMessage": "The payment method does not support partial refund."
+      }
+    },
+    "refund-rejected-order-not-exist": {
+      "executeStatus": "FAIL",
+      "outputs": {
+        "failureCode": "ORDER_NOT_EXIST",
+        "refundStatus": "FAILED",
+        "failureMessage": "The orginal order does not exist."
+      }
+    },
+    "refund-system-error": {
+      "executeStatus": "ERROR",
+      "outputs": {}
+    },
+    "refund-bad-response-signature": {
+      "executeStatus": "ERROR",
+      "outputs": {}
+    },
+    "refund-without-reason": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "refundStatus": "PENDING",
+        "channelStatus": "REFUND_PENDING",
+        "channelRefundRef": "RRFD7821007561491"
+      }
+    },
+    "refund-query-pending": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "amount": {
+          "value": "5",
+          "currency": "USD"
+        },
+        "refundStatus": "PENDING",
+        "channelStatus": "REFUND_PENDING",
+        "channelRefundRef": "RRFD7821007561491"
+      }
+    },
+    "refund-query-succeeded": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "amount": {
+          "value": "5",
+          "currency": "USD"
+        },
+        "refundStatus": "SUCCEEDED",
+        "channelStatus": "REFUND_SUCCESS",
+        "channelRefundRef": "RRFD7821007561492"
+      }
+    },
+    "refund-query-failed": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "amount": {
+          "value": "5",
+          "currency": "USD"
+        },
+        "refundStatus": "FAILED",
+        "channelStatus": "REFUND_FAILED",
+        "failureMessage": "Refund rejected by issuer.",
+        "channelRefundRef": "RRFD7821007561493"
+      }
+    },
+    "refund-query-not-found": {
+      "executeStatus": "FAIL",
+      "outputs": {
+        "failureCode": "ORDER_NOT_EXIST",
+        "refundStatus": "NOT_FOUND",
+        "failureMessage": "The order does not exist."
+      }
+    }
+  },
+  "channelChecks": [
+    {
+      "operation": "refund",
+      "outcome": "1",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "refund",
+      "outcome": "2",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "refund",
+      "outcome": "3",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "refund",
+      "outcome": "4",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "REFUND_FAILED"
+    },
+    {
+      "operation": "refund",
+      "outcome": "5",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "ORDER_NOT_EXIST"
+    },
+    {
+      "operation": "refund",
+      "outcome": "6",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "SYSTEM_ERROR"
+    },
+    {
+      "operation": "refund",
+      "outcome": "7",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "refund",
+      "outcome": "1",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "refundQuery",
+      "outcome": "1",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "refundQuery",
+      "outcome": "2",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "refundQuery",
+      "outcome": "3",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "refundQuery",
+      "outcome": "9",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "amountValid": true,
+      "code": "ORDER_NOT_EXIST"
+    }
+  ],
+  "results": [
+    {
+      "name": "refund-invalid-input-422",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND/execute",
+      "status": 422
+    },
+    {
+      "name": "refund-account-mismatch-503",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND/execute",
+      "status": 503
+    },
+    {
+      "name": "refund-accepted-pending",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-accepted-succeeded",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-accepted-failed",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-rejected-not-supported",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-rejected-order-not-exist",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-system-error",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-bad-response-signature",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-without-reason",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-query-pending",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND_QUERY/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-query-succeeded",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND_QUERY/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-query-failed",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND_QUERY/execute",
+      "status": 200
+    },
+    {
+      "name": "refund-query-not-found",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/REFUND_QUERY/execute",
+      "status": 200
+    }
+  ]
+}

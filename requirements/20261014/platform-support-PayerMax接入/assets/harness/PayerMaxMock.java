@@ -23,6 +23,17 @@ import java.util.Base64;
  *
  * <p>按 outTradeNo 末位返回：下单 1 受理 PENDING、2 PARAMS_INVALID、3 SYSTEM_ERROR、4 受理但响应用错误私钥签名；
  * 查询 1 SUCCESS（整数金额）、5 PENDING、6 FAILED、7 CLOSED、9 ORDER_NOT_EXIST。日志只记路径、末位、验签与协议检查结果，不记报文。
+ *
+ * <p>退款（PayerMax 退款需求，外层 version 1.1）按 outRefundNo 末位返回：/refund 1 REFUND_PENDING、2 REFUND_SUCCESS、3 REFUND_FAILED（均为受理）、
+ * 4 REFUND_FAILED 错误码、5 ORDER_NOT_EXIST、6 SYSTEM_ERROR、7 受理但响应用错误私钥签名；/refundQuery 1 REFUND_PENDING、
+ * 2 REFUND_SUCCESS（整数金额）、3 REFUND_FAILED（带 resultMsg）、9 ORDER_NOT_EXIST。退款请求另检查 refundAmount 为 JSON 数字与必填字段。
+ *
+ * <p>卡直付（PayerMax 卡直付对接，integrate=Direct_Payment）：检查 paymentDetail.cardInfo 五个字段格式；outTradeNo 末位 2、3、4 同收银台下单，
+ * 其余按 subject 返回（与 UAT 规则一致）：FAILED → ISSUER_PAYMENT_REJECTED + FAILED（UAT 实测）、PENDING → PENDING、3DS → PENDING + redirectUrl、
+ * 其他 → SUCCESS。
+ * 日志只记卡字段是否有效，不记卡值。
+ *
+ * <p>运行目录已有密钥与端口文件时沿用（重启合成渠道不必重启 Platform 或修改出站地址）。
  */
 public class PayerMaxMock {
     static final JsonMapper JSON = JsonMapper.builder().build();
@@ -33,12 +44,25 @@ public class PayerMaxMock {
 
     public static void main(String[] args) throws Exception {
         runtime = Path.of(System.getenv("E2E_RUNTIME"));
-        merchant = keyPair(); payermax = keyPair(); wrong = keyPair();
-        ObjectNode keys = JSON.createObjectNode().put("appId", APP_ID).put("merchantNo", MERCHANT_NO).put("keyVersion", "1")
-            .put("merchantPrivateKey", b64(merchant.getPrivate().getEncoded()))
-            .put("payermaxPublicKey", b64(payermax.getPublic().getEncoded()));
-        write("payermax-mock-keys.json", keys.toString());
-        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        wrong = keyPair();
+        Path keyFile = runtime.resolve("payermax-mock-keys.json");
+        if (Files.exists(keyFile)) {
+            JsonNode saved = JSON.readTree(Files.readString(keyFile));
+            merchant = restore(saved.path("merchantPrivateKey").asString(), saved.path("merchantPublicKey").asString());
+            payermax = restore(saved.path("payermaxPrivateKey").asString(), saved.path("payermaxPublicKey").asString());
+        }
+        if (merchant == null || payermax == null) {
+            merchant = keyPair(); payermax = keyPair();
+            ObjectNode keys = JSON.createObjectNode().put("appId", APP_ID).put("merchantNo", MERCHANT_NO).put("keyVersion", "1")
+                .put("merchantPrivateKey", b64(merchant.getPrivate().getEncoded()))
+                .put("payermaxPublicKey", b64(payermax.getPublic().getEncoded()))
+                .put("merchantPublicKey", b64(merchant.getPublic().getEncoded()))
+                .put("payermaxPrivateKey", b64(payermax.getPrivate().getEncoded()));
+            write("payermax-mock-keys.json", keys.toString());
+        }
+        Path portFile = runtime.resolve("payermax-mock.json");
+        int port = Files.exists(portFile) ? JSON.readTree(Files.readString(portFile)).path("port").asInt(0) : 0;
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
         server.createContext("/aggregate-pay/api/gateway/", PayerMaxMock::handle);
         server.start();
         write("payermax-mock.json", "{\"port\":" + server.getAddress().getPort() + "}");
@@ -49,18 +73,37 @@ public class PayerMaxMock {
         String raw = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         boolean signed = verify(merchant.getPublic(), raw, exchange.getRequestHeaders().getFirst("sign"));
         JsonNode request = JSON.readTree(raw.isEmpty() ? "{}" : raw);
-        String order = request.path("data").path("outTradeNo").asString("");
+        boolean refundOperation = operation.startsWith("refund");
+        JsonNode requestData = request.path("data");
+        String order = requestData.path(refundOperation ? "outRefundNo" : "outTradeNo").asString("");
         String outcome = order.isEmpty() ? "" : order.substring(order.length() - 1);
-        boolean envelope = "1.5".equals(request.path("version").asString("")) && "1".equals(request.path("keyVersion").asString(""))
+        boolean envelope = (refundOperation ? "1.1" : "1.5").equals(request.path("version").asString(""))
+            && "1".equals(request.path("keyVersion").asString(""))
             && APP_ID.equals(request.path("appId").asString("")) && MERCHANT_NO.equals(request.path("merchantNo").asString(""));
         boolean timely = timely(request.path("requestTime").asString(""));
-        boolean amountNumber = !"orderAndPay".equals(operation) || request.path("data").path("totalAmount").isNumber();
+        boolean amountNumber = switch (operation) {
+            case "orderAndPay" -> requestData.path("totalAmount").isNumber() && (!direct(requestData) || card(requestData));
+            case "refund" -> requestData.path("refundAmount").isNumber() && !order.isEmpty() && !requestData.path("outTradeNo").asString("").isEmpty()
+                && !requestData.path("refundCurrency").asString("").isEmpty();
+            default -> true;
+        };
         ObjectNode reply = JSON.createObjectNode();
         PrivateKey signer = payermax.getPrivate();
         if (!signed) {
             reply.put("code", "SIGN_VERIFY_FAILED").put("msg", "The signature verify failed.");
         } else if (!envelope || !timely || !amountNumber) {
-            reply.put("code", "PARAMS_INVALID").put("msg", "envelope, requestTime or totalAmount is invalid");
+            reply.put("code", "PARAMS_INVALID").put("msg", "envelope, requestTime, amount or required field is invalid");
+        } else if ("orderAndPay".equals(operation) && direct(requestData) && !"2".equals(outcome) && !"3".equals(outcome)) {
+            String subject = requestData.path("subject").asString("");
+            String status = switch (subject) { case "FAILED" -> "FAILED"; case "PENDING", "3DS" -> "PENDING"; default -> "SUCCESS"; };
+            if ("FAILED".equals(status)) {
+                reply.put("code", "ISSUER_PAYMENT_REJECTED").put("msg", "Transaction failed at issuer end due to risk control.");
+            } else {
+                reply.put("code", "APPLY_SUCCESS").put("msg", "Success.");
+            }
+            ObjectNode data = reply.putObject("data").put("outTradeNo", order).put("tradeToken", "T" + order).put("status", status);
+            if ("3DS".equals(subject)) data.put("redirectUrl", "https://3ds.local.invalid/challenge?token=mock-" + order);
+            if ("4".equals(outcome)) signer = wrong.getPrivate();
         } else if ("orderAndPay".equals(operation)) {
             switch (outcome) {
                 case "1", "4" -> {
@@ -85,6 +128,29 @@ public class PayerMaxMock {
                 var details = data.putArray("paymentDetails");
                 if ("SUCCESS".equals(status)) details.addObject().put("paymentMethodType", "CARD").put("payAmount", 10).put("payCurrency", "USD");
             }
+        } else if ("refund".equals(operation)) {
+            switch (outcome) {
+                case "1", "2", "3", "7" -> {
+                    String status = switch (outcome) { case "2" -> "REFUND_SUCCESS"; case "3" -> "REFUND_FAILED"; default -> "REFUND_PENDING"; };
+                    reply.put("code", "APPLY_SUCCESS").put("msg", "Success.");
+                    reply.putObject("data").put("outRefundNo", order).put("tradeOrderNo", "T" + requestData.path("outTradeNo").asString())
+                        .put("refundTradeNo", "R" + order).put("status", status);
+                    if ("7".equals(outcome)) signer = wrong.getPrivate();
+                }
+                case "4" -> reply.put("code", "REFUND_FAILED").put("msg", "The payment method does not support partial refund.");
+                case "5" -> reply.put("code", "ORDER_NOT_EXIST").put("msg", "The orginal order does not exist.");
+                default -> reply.put("code", "SYSTEM_ERROR").put("msg", "System is busy, please try again later.");
+            }
+        } else if ("refundQuery".equals(operation)) {
+            if ("9".equals(outcome)) {
+                reply.put("code", "ORDER_NOT_EXIST").put("msg", "The order does not exist.");
+            } else {
+                String status = switch (outcome) { case "2" -> "REFUND_SUCCESS"; case "3" -> "REFUND_FAILED"; default -> "REFUND_PENDING"; };
+                reply.put("code", "APPLY_SUCCESS").put("msg", "Success.");
+                ObjectNode result = reply.putObject("data").put("outRefundNo", order).put("refundTradeNo", "R" + order)
+                    .put("refundAmount", 5).put("refundCurrency", "USD").put("outTradeNo", "P" + order).put("status", status);
+                if ("REFUND_FAILED".equals(status)) result.put("resultMsg", "Refund rejected by issuer.");
+            }
         } else {
             exchange.sendResponseHeaders(404, -1);
             return;
@@ -96,8 +162,23 @@ public class PayerMaxMock {
         exchange.getResponseBody().write(body);
         exchange.close();
         journal(JSON.createObjectNode().put("operation", operation).put("outcome", outcome).put("signatureValid", signed)
-            .put("envelopeValid", envelope).put("requestTimeValid", timely).put("totalAmountIsNumber", amountNumber)
+            .put("envelopeValid", envelope).put("direct", direct(requestData)).put("cardValid", !direct(requestData) || card(requestData)).put("requestTimeValid", timely).put("amountValid", amountNumber)
             .put("code", reply.path("code").asString()).toString());
+    }
+
+    static boolean direct(JsonNode data) {
+        return "Direct_Payment".equals(data.path("integrate").asString(""));
+    }
+
+    /** 卡直付的 CARD 支付方式与五个卡字段格式（两位年份）。 */
+    static boolean card(JsonNode data) {
+        JsonNode detail = data.path("paymentDetail");
+        JsonNode info = detail.path("cardInfo");
+        return "CARD".equals(detail.path("paymentMethodType").asString(""))
+            && info.path("cardIdentifierNo").asString("").matches("[0-9]{12,19}")
+            && info.path("cardExpirationMonth").asString("").matches("0[1-9]|1[0-2]")
+            && info.path("cardExpirationYear").asString("").matches("[0-9]{2}") && info.path("cvv").asString("").matches("[0-9]{3,4}")
+            && !info.path("cardHolderFullName").asString("").isBlank() && "WEB".equals(data.path("terminalType").asString(""));
     }
 
     static boolean timely(String text) {
@@ -107,6 +188,13 @@ public class PayerMaxMock {
         } catch (RuntimeException failure) {
             return false;
         }
+    }
+
+    static KeyPair restore(String privateKey, String publicKey) throws GeneralSecurityException {
+        if (privateKey.isEmpty() || publicKey.isEmpty()) return null;
+        KeyFactory factory = KeyFactory.getInstance("RSA");
+        return new KeyPair(factory.generatePublic(new java.security.spec.X509EncodedKeySpec(Base64.getDecoder().decode(publicKey))),
+            factory.generatePrivate(new java.security.spec.PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey))));
     }
 
     static KeyPair keyPair() throws GeneralSecurityException {
