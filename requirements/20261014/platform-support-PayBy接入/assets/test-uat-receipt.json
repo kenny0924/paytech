@@ -1,0 +1,229 @@
+{
+  "date": "2026-10-14",
+  "environment": "mor-test（http://localhost:28080，Nginx → Gateway → BFF → Platform）",
+  "integration": "PAYBY",
+  "endpoint": "https://uat.test2pay.com/sgs/api（sandbox=true）",
+  "account": "UAT_MAIN",
+  "cases": {
+    "UAT_PAY_QUERY_NOT_FOUND": {
+      "runCode": "236118279654031360",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "steps": [
+        {
+          "step": "query",
+          "stepStatus": "PASSED",
+          "executeStatus": "FAIL",
+          "outputs": {
+            "failureCode": "62004",
+            "paymentStatus": "NOT_FOUND",
+            "failureMessage": "MERCHANT_ORDER_NO_NOT_EXIST"
+          }
+        }
+      ],
+      "channel": [
+        {
+          "step": "query",
+          "applyStatus": "SUCCESS",
+          "code": "62004",
+          "status": null
+        }
+      ]
+    },
+    "UAT_CANCEL_NOT_FOUND": {
+      "runCode": "236118289430953984",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "steps": [
+        {
+          "step": "cancel",
+          "stepStatus": "PASSED",
+          "executeStatus": "FAIL",
+          "outputs": {
+            "failureCode": "62004",
+            "cancelStatus": "NOT_FOUND",
+            "failureMessage": "MERCHANT_ORDER_NO_NOT_EXIST"
+          }
+        }
+      ],
+      "channel": [
+        {
+          "step": "cancel",
+          "applyStatus": "SUCCESS",
+          "code": "62004",
+          "status": null
+        }
+      ]
+    },
+    "UAT_REFUND_NOT_EXIST": {
+      "runCode": "236118298289324032",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "steps": [
+        {
+          "step": "refund",
+          "stepStatus": "PASSED",
+          "executeStatus": "FAIL",
+          "outputs": {
+            "failureCode": "62004",
+            "refundStatus": "FAILED",
+            "failureMessage": "MERCHANT_ORDER_NO_NOT_EXIST"
+          }
+        }
+      ],
+      "channel": [
+        {
+          "step": "refund",
+          "applyStatus": "SUCCESS",
+          "code": "62004",
+          "status": null
+        }
+      ]
+    },
+    "UAT_REFUND_QUERY_NOT_FOUND": {
+      "runCode": "236118307344826368",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "steps": [
+        {
+          "step": "query",
+          "stepStatus": "PASSED",
+          "executeStatus": "FAIL",
+          "outputs": {
+            "failureCode": "62007",
+            "refundStatus": "NOT_FOUND",
+            "failureMessage": "REFUND_MERCHANT_ORDER_NO_NOT_EXIST"
+          }
+        }
+      ],
+      "channel": [
+        {
+          "step": "query",
+          "applyStatus": "SUCCESS",
+          "code": "62007",
+          "status": null
+        }
+      ]
+    },
+    "UAT_BALANCE_AED": {
+      "runCode": "236118316253528064",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "steps": [
+        {
+          "step": "balance",
+          "stepStatus": "PASSED",
+          "executeStatus": "SUCCESS",
+          "outputs": {
+            "available": {
+              "value": "669.91",
+              "currency": "AED"
+            }
+          }
+        }
+      ],
+      "channel": [
+        {
+          "step": "balance",
+          "applyStatus": "SUCCESS",
+          "code": "0",
+          "status": null
+        }
+      ]
+    },
+    "UAT_UNPAID_QUERY_CANCEL": {
+      "runCode": "236118202717913088",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "steps": [
+        {
+          "step": "query1",
+          "stepStatus": "PASSED",
+          "executeStatus": "SUCCESS",
+          "outputs": {
+            "amount": {
+              "value": "1.0",
+              "currency": "AED"
+            },
+            "channelStatus": "CREATED",
+            "paymentStatus": "PENDING"
+          }
+        },
+        {
+          "step": "refund",
+          "stepStatus": "PASSED",
+          "executeStatus": "FAIL",
+          "outputs": {
+            "failureCode": "62015",
+            "refundStatus": "FAILED",
+            "failureMessage": "ORDER_NOT_PAID"
+          }
+        },
+        {
+          "step": "cancel1",
+          "stepStatus": "PASSED",
+          "executeStatus": "SUCCESS",
+          "outputs": {
+            "cancelStatus": "CLOSED",
+            "channelStatus": "FAILURE"
+          }
+        },
+        {
+          "step": "cancel2",
+          "stepStatus": "PASSED",
+          "executeStatus": "SUCCESS",
+          "outputs": {
+            "cancelStatus": "CLOSED",
+            "channelStatus": "FAILURE"
+          }
+        },
+        {
+          "step": "query2",
+          "stepStatus": "PASSED",
+          "executeStatus": "SUCCESS",
+          "outputs": {
+            "amount": {
+              "value": "1.0",
+              "currency": "AED"
+            },
+            "channelStatus": "FAILURE",
+            "paymentStatus": "FAILED",
+            "failureMessage": "Order is cancelled"
+          }
+        }
+      ],
+      "channel": [
+        {
+          "step": "query1",
+          "applyStatus": "SUCCESS",
+          "code": "0",
+          "status": "CREATED"
+        },
+        {
+          "step": "refund",
+          "applyStatus": "SUCCESS",
+          "code": "62015",
+          "status": null
+        },
+        {
+          "step": "cancel1",
+          "applyStatus": "SUCCESS",
+          "code": "0",
+          "status": "FAILURE"
+        },
+        {
+          "step": "cancel2",
+          "applyStatus": "SUCCESS",
+          "code": "62002",
+          "status": null
+        },
+        {
+          "step": "query2",
+          "applyStatus": "SUCCESS",
+          "code": "0",
+          "status": "FAILURE"
+        }
+      ]
+    }
+  }
+}

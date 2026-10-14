@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+<a id="payby-integration-20261014"></a>
+
+## PayBy（阿联酋）收款接入（2026-10-14）
+
+- **Designed：** [需求](../requirements/20261014/platform-support-PayBy接入/requirement.md)与[技术方案](../requirements/20261014/platform-support-PayBy接入/technique.md)经用户确认：接入方 `PAYBY` 实现 `PAY_QUERY`、`PAY_CANCEL`（新，草案）、`REFUND`、`REFUND_QUERY`、`BALANCE_QUERY`（新，草案）；`PAY` 以 DIRECTPAY 卡直付为主，所需卡字段加密、有效期格式与 3DS 表单托管写入[补充要求](../requirements/20261014/platform-support-PayBy接入/card-capability-addendum.md)，由卡直付会话评审实现。毫秒 `requestTime` 暂由签名脚本从 `nowRfc3339()` 换算（TODO 改注册函数）。
+- **mor-test 配置 Deployed / UAT Verified（2026-10-14）：** 经管理接口写入上述两个标准 API、接入方（UAT 地址标记沙箱）、2 个脚本、5 个原子 API、5 条流程与验证账号 `UAT_MAIN`；无代码、镜像、SQL 或基础设施变更。渠道沙箱验证 6 个 UAT 用例 PASSED（不存在订单/退款、AED 余额、未付款订单查询→退款被拒→关单两次→已失败），双向验签通过，[回执](../requirements/20261014/platform-support-PayBy接入/assets/test-uat-receipt.json)。
+- **Pending：** DIRECTPAY `PAY` 依赖 Platform 卡能力合入并发布到 mor-test；已付款订单的退款与退款查询随卡直付验证；异步通知与 `revokeOrder` 不在范围；提交与推送未授权。
+
 <a id="channel-sandbox-verification-20261014"></a>
 
 ## 渠道沙箱验证（2026-10-14）
