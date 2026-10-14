@@ -1,0 +1,3 @@
+if (http.responseStatus == 200) {
+  requireRsaSha256Signature(params.publicKey, http.responseRaw, http.responseHeaders.sign);
+}

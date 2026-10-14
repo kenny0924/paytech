@@ -91,6 +91,7 @@ class ExternalApiEditorTest extends ExternalApiTestBase {
             () -> assertEquals(List.of("DELETE", "GET", "PATCH", "POST", "PUT"),
                 capabilities.getEnums().get("methods")),
             () -> assertEquals(List.of("SUCCESS", "FAIL", "ERROR"), capabilities.getEnums().get("returnStatuses")),
+            () -> assertEquals(List.of("NUMBER", "STRING"), capabilities.getEnums().get("decimalEncodings")),
             () -> assertEquals(65_536, capabilities.getLimits().get("jsonBytes")),
             () -> assertEquals(32_768, capabilities.getLimits().get("scriptSourceBytes")),
             () -> assertEquals(16, capabilities.getLimits().get("endpointsPerIntegration")),

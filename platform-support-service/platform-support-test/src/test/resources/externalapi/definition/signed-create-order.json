@@ -1,0 +1,42 @@
+{
+  "params": [
+    {"name": "privateKey", "dataType": "PROTECTED_HANDLE", "required": true},
+    {"name": "channelPublicKey", "dataType": "STRING", "required": true}
+  ],
+  "fixedValues": {
+    "BODY:version": {"kind": "EXPRESSION", "expression": "'1.5'"}
+  },
+  "transport": {
+    "protocol": "HTTP",
+    "method": "POST",
+    "endpointCode": "DEMO_GATEWAY",
+    "pathTemplate": "/orderAndPay",
+    "connectTimeoutMs": 2000,
+    "responseTimeoutMs": 10000
+  },
+  "requestEncoding": "JSON",
+  "responseDecoding": "JSON",
+  "decimalEncoding": "NUMBER",
+  "scripts": [
+    {"id": "sign", "scriptCode": "RSA_SIGN", "stage": "REQUEST",
+     "params": {"privateKey": {"kind": "PATH", "path": "params.privateKey"}}},
+    {"id": "verify", "scriptCode": "RSA_VERIFY", "stage": "RESPONSE",
+     "params": {"publicKey": {"kind": "PATH", "path": "params.channelPublicKey"}}}
+  ],
+  "statusRules": [
+    {"condition": "http.responseStatus == 200 && http.responseBody.code == 'APPLY_SUCCESS'", "executeStatus": "SUCCESS"},
+    {"condition": "http.responseStatus == 200 && http.responseBody.code == 'PARAMS_INVALID'", "executeStatus": "FAIL"}
+  ],
+  "outputs": {
+    "SUCCESS": [
+      {"name": "transactionRef", "dataType": "STRING", "required": true,
+       "value": {"kind": "PATH", "path": "http.responseBody.data.tradeToken"}},
+      {"name": "amount", "dataType": "DECIMAL", "required": true,
+       "value": {"kind": "PATH", "path": "http.responseBody.data.totalAmount"}}
+    ],
+    "FAIL": [
+      {"name": "errorCode", "dataType": "STRING", "required": true,
+       "value": {"kind": "PATH", "path": "http.responseBody.code"}}
+    ]
+  }
+}

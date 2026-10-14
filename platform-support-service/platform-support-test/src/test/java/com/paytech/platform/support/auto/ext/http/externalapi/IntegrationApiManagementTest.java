@@ -78,7 +78,7 @@ class IntegrationApiManagementTest extends ExternalApiTestBase {
             () -> assertEquals(0, page.items().getFirst().getResponseScriptCount()));
     }
 
-    /** 路径变量与 PATH 字段不对应、地址代码不存在、固定值字段未知、脚本阶段不符时一次返回全部位置，不落库。 */
+    /** 路径变量与 PATH 字段不对应、地址代码不存在、固定值字段未知、脚本阶段不符、小数格式非法时一次返回全部位置，不落库。 */
     @Test
     void test_invalidDefinition() {
         externalApi.signScript(demo, ScriptExecutionStage.RESPONSE);
@@ -88,14 +88,16 @@ class IntegrationApiManagementTest extends ExternalApiTestBase {
         transport.put("endpointCode", "MISSING_GATEWAY");
         ((ObjectNode)definition.get("fixedValues")).set("HEADER:X-Unknown",
             ExternalApiSamples.object("{\"kind\":\"EXPRESSION\",\"expression\":\"'x'\"}"));
+        definition.put("decimalEncoding", "FLOAT");
 
         var issues = issues(
             post(PATH + "/validate", admin, ExternalApiRequests.validateIntegrationApi("CREATE_ORDER", definition)));
         post(PATH, admin, ExternalApiRequests.createIntegrationApi("CREATE_ORDER", definition))
             .assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("definition.transport.pathTemplate")
-            .assertFieldError("definition.transport.endpointCode");
+            .assertFieldError("definition.transport.endpointCode").assertFieldError("definition.decimalEncoding");
 
-        assertEquals(List.of("ENDPOINT_NOT_FOUND@definition.transport.endpointCode",
+        assertEquals(List.of("DECIMAL_ENCODING_INVALID@definition.decimalEncoding",
+            "ENDPOINT_NOT_FOUND@definition.transport.endpointCode",
             "FIXED_VALUE_FIELD_UNKNOWN@definition.fixedValues.HEADER:X-Unknown",
             "PATH_VARIABLE_MISMATCH@definition.transport.pathTemplate",
             "SCRIPT_STAGE_MISMATCH@definition.scripts[0].stage"), issues);

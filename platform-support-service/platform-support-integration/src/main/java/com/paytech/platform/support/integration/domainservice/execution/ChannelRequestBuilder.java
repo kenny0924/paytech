@@ -21,6 +21,7 @@ import com.paytech.platform.support.integration.domain.execution.*;
 import com.paytech.platform.support.integration.ext.outbound.ChannelRequest;
 
 import lombok.AllArgsConstructor;
+import tools.jackson.core.StreamWriteFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -33,7 +34,7 @@ import tools.jackson.databind.json.JsonMapper;
 public class ChannelRequestBuilder {
 
     private static final Pattern PATH_VARIABLE = Pattern.compile("\\{([A-Za-z][A-Za-z0-9_]{0,63})}");
-    private static final JsonMapper JSON = JsonMapper.builder().build();
+    private static final JsonMapper JSON = JsonMapper.builder().enable(StreamWriteFeature.WRITE_BIGDECIMAL_AS_PLAIN).build();
 
     private final ValueResolver valueResolver;
     private final ExternalApiExecutionProperties properties;
@@ -95,16 +96,18 @@ public class ChannelRequestBuilder {
      *            REQUEST 脚本之后的请求 Header
      * @param body
      *            REQUEST 脚本之后的请求体
+     * @param sealedJsonBody
+     *            REQUEST 脚本以 sealJsonBody 锁定的请求体字节，未锁定为 null；锁定时原样发送
      * @param deadline
      *            流程剩余预算
      * @return 最终请求
      */
     public ChannelRequest build(ExecutionSnapshot snapshot, ExecutionApi api, AssembledRequest assembled,
-        Map<String, Object> headers, Object body, Deadline deadline) {
+        Map<String, Object> headers, Object body, byte[] sealedJsonBody, Deadline deadline) {
         JsonNode transport = api.getDefinition().path("transport");
         var finalHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
         headers.forEach((name, value) -> finalHeaders.put(name, headerText(name, value)));
-        byte[] bytes = encode(api.getDefinition().path("requestEncoding").asString(), body, finalHeaders);
+        byte[] bytes = sealedJsonBody != null ? sealed(sealedJsonBody, finalHeaders) : encode(api, body, finalHeaders);
         URI uri = uri(snapshot, transport, assembled);
         long remaining = deadline.remainingMillis();
         if (remaining <= 0) {
@@ -115,8 +118,26 @@ public class ChannelRequestBuilder {
             Duration.ofMillis(Math.min(transport.path("responseTimeoutMs").asLong(10000), remaining)));
     }
 
+    /**
+     * 按本原子 API 的 JSON 规则编码请求体：decimalEncoding 为 NUMBER 时 DECIMAL 写成 JSON 数字（不用指数），否则写成十进制字符串。
+     *
+     * @param api 原子 API 快照
+     * @param body 请求体
+     * @return UTF-8 字节
+     */
+    public byte[] jsonBody(ExecutionApi api, Object body) {
+        return JSON.writeValueAsBytes(JsonValues.toJson(body, api.isDecimalAsNumber()));
+    }
+
+    /** 锁定的 JSON 请求体原样发送；缺少 Content-Type 时补 application/json。 */
+    static byte[] sealed(byte[] sealedJsonBody, Map<String, String> headers) {
+        headers.putIfAbsent("Content-Type", "application/json");
+        return sealedJsonBody;
+    }
+
     /** JSON、FORM_URLENCODED 或无请求体；缺少 Content-Type 时按编码补默认值。 */
-    byte[] encode(String encoding, Object body, Map<String, String> headers) {
+    byte[] encode(ExecutionApi api, Object body, Map<String, String> headers) {
+        String encoding = api.getDefinition().path("requestEncoding").asString();
         boolean empty = body == null || body instanceof Map<?, ?> map && map.isEmpty();
         if ("NONE".equals(encoding) || empty) {
             if (!empty) {
@@ -129,7 +150,7 @@ public class ChannelRequestBuilder {
             return form(body).getBytes(StandardCharsets.UTF_8);
         }
         headers.putIfAbsent("Content-Type", "application/json");
-        return JSON.writeValueAsBytes(JsonValues.toJson(body));
+        return jsonBody(api, body);
     }
 
     /** 只接受一层标量对象。 */

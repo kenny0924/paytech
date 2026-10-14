@@ -1,0 +1,404 @@
+{
+  "date": "2026-10-14",
+  "integration": "PAYERMAX_MOCK",
+  "status": "PASS",
+  "checks": 12,
+  "outcomes": {
+    "pay-accepted": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "channelStatus": "PENDING",
+        "paymentStatus": "PENDING",
+        "nextAction": {
+          "type": "REDIRECT",
+          "redirectUrl": "[synthetic]"
+        },
+        "channelTransactionRef": "TPMX5806160870371"
+      }
+    },
+    "pay-rejected": {
+      "executeStatus": "FAIL",
+      "outputs": {
+        "failureCode": "PARAMS_INVALID",
+        "paymentStatus": "FAILED",
+        "failureMessage": "subject is invalid"
+      }
+    },
+    "pay-system-error": {
+      "executeStatus": "ERROR",
+      "outputs": {}
+    },
+    "pay-bad-response-signature": {
+      "executeStatus": "ERROR",
+      "outputs": {}
+    },
+    "query-success": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "amount": {
+          "value": "10",
+          "currency": "USD"
+        },
+        "channelStatus": "SUCCESS",
+        "paymentStatus": "SUCCEEDED",
+        "paymentMethodType": "CARD",
+        "channelTransactionRef": "TPMX5806160870371"
+      }
+    },
+    "query-pending": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "amount": {
+          "value": "10",
+          "currency": "USD"
+        },
+        "channelStatus": "PENDING",
+        "paymentStatus": "PENDING",
+        "channelTransactionRef": "TPMX5806160870375"
+      }
+    },
+    "query-failed": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "failureCode": "PAYMENT_FAILED",
+        "amount": {
+          "value": "10",
+          "currency": "USD"
+        },
+        "channelStatus": "FAILED",
+        "paymentStatus": "FAILED",
+        "failureMessage": "Transaction declined.",
+        "channelTransactionRef": "TPMX5806160870376"
+      }
+    },
+    "query-closed": {
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "amount": {
+          "value": "10",
+          "currency": "USD"
+        },
+        "channelStatus": "CLOSED",
+        "paymentStatus": "CLOSED",
+        "channelTransactionRef": "TPMX5806160870377"
+      }
+    },
+    "query-not-found": {
+      "executeStatus": "FAIL",
+      "outputs": {
+        "failureCode": "ORDER_NOT_EXIST",
+        "paymentStatus": "NOT_FOUND",
+        "failureMessage": "The order does not exist."
+      }
+    }
+  },
+  "channelChecks": [
+    {
+      "operation": "orderAndPay",
+      "outcome": "1",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "totalAmountIsNumber": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "orderAndPay",
+      "outcome": "2",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "totalAmountIsNumber": true,
+      "code": "PARAMS_INVALID"
+    },
+    {
+      "operation": "orderAndPay",
+      "outcome": "3",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "totalAmountIsNumber": true,
+      "code": "SYSTEM_ERROR"
+    },
+    {
+      "operation": "orderAndPay",
+      "outcome": "4",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "totalAmountIsNumber": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "orderQuery",
+      "outcome": "1",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "totalAmountIsNumber": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "orderQuery",
+      "outcome": "5",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "totalAmountIsNumber": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "orderQuery",
+      "outcome": "6",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "totalAmountIsNumber": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "orderQuery",
+      "outcome": "7",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "totalAmountIsNumber": true,
+      "code": "APPLY_SUCCESS"
+    },
+    {
+      "operation": "orderQuery",
+      "outcome": "9",
+      "signatureValid": true,
+      "envelopeValid": true,
+      "requestTimeValid": true,
+      "totalAmountIsNumber": true,
+      "code": "ORDER_NOT_EXIST"
+    }
+  ],
+  "results": [
+    {
+      "name": "pay-unknown-integration-404",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY/execute",
+      "status": 404
+    },
+    {
+      "name": "pay-invalid-input-422",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY/execute",
+      "status": 422
+    },
+    {
+      "name": "pay-account-mismatch-503",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY/execute",
+      "status": 503
+    },
+    {
+      "name": "pay-accepted",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY/execute",
+      "status": 200
+    },
+    {
+      "name": "pay-rejected",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY/execute",
+      "status": 200
+    },
+    {
+      "name": "pay-system-error",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY/execute",
+      "status": 200
+    },
+    {
+      "name": "pay-bad-response-signature",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY/execute",
+      "status": 200
+    },
+    {
+      "name": "query-success",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY_QUERY/execute",
+      "status": 200
+    },
+    {
+      "name": "query-pending",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY_QUERY/execute",
+      "status": 200
+    },
+    {
+      "name": "query-failed",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY_QUERY/execute",
+      "status": 200
+    },
+    {
+      "name": "query-closed",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY_QUERY/execute",
+      "status": 200
+    },
+    {
+      "name": "query-not-found",
+      "method": "POST",
+      "path": "[internal]/standard-apis/v1/PAY_QUERY/execute",
+      "status": 200
+    }
+  ],
+  "configure": {
+    "integration": "PAYERMAX_MOCK",
+    "firstRun": "9 项 create",
+    "rerun": "9 项 update（按版本，幂等）",
+    "calls": [
+      {
+        "name": "login-admin",
+        "method": "POST",
+        "path": "/api/operations/auth/v1/login",
+        "status": 200
+      },
+      {
+        "name": "standard-api-PAY-get",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/standard-apis/PAY",
+        "status": 200
+      },
+      {
+        "name": "standard-api-PAY-update",
+        "method": "PUT",
+        "path": "/api/operations/external-api-admin/v1/standard-apis/PAY",
+        "status": 200
+      },
+      {
+        "name": "standard-api-PAY_QUERY-get",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/standard-apis/PAY_QUERY",
+        "status": 200
+      },
+      {
+        "name": "standard-api-PAY_QUERY-update",
+        "method": "PUT",
+        "path": "/api/operations/external-api-admin/v1/standard-apis/PAY_QUERY",
+        "status": 200
+      },
+      {
+        "name": "integration-get",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK",
+        "status": 200
+      },
+      {
+        "name": "integration-update",
+        "method": "PUT",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK",
+        "status": 200
+      },
+      {
+        "name": "script-PAYERMAX_SIGN-get",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/scripts/PAYERMAX_SIGN",
+        "status": 200
+      },
+      {
+        "name": "script-PAYERMAX_SIGN-update",
+        "method": "PUT",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/scripts/PAYERMAX_SIGN",
+        "status": 200
+      },
+      {
+        "name": "script-PAYERMAX_VERIFY-get",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/scripts/PAYERMAX_VERIFY",
+        "status": 200
+      },
+      {
+        "name": "script-PAYERMAX_VERIFY-update",
+        "method": "PUT",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/scripts/PAYERMAX_VERIFY",
+        "status": 200
+      },
+      {
+        "name": "api-ORDER_AND_PAY-get",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/apis/ORDER_AND_PAY",
+        "status": 200
+      },
+      {
+        "name": "api-ORDER_AND_PAY-update",
+        "method": "PUT",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/apis/ORDER_AND_PAY",
+        "status": 200
+      },
+      {
+        "name": "api-ORDER_QUERY-get",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/apis/ORDER_QUERY",
+        "status": 200
+      },
+      {
+        "name": "api-ORDER_QUERY-update",
+        "method": "PUT",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/apis/ORDER_QUERY",
+        "status": 200
+      },
+      {
+        "name": "implementation-get-PAY",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/implementations/PAY",
+        "status": 200
+      },
+      {
+        "name": "implementation-validate-PAY",
+        "method": "POST",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/implementations/validate",
+        "status": 200
+      },
+      {
+        "name": "implementation-PAY-get",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/implementations/PAY",
+        "status": 200
+      },
+      {
+        "name": "implementation-PAY-update",
+        "method": "PUT",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/implementations/PAY",
+        "status": 200
+      },
+      {
+        "name": "implementation-get-PAY_QUERY",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/implementations/PAY_QUERY",
+        "status": 200
+      },
+      {
+        "name": "implementation-validate-PAY_QUERY",
+        "method": "POST",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/implementations/validate",
+        "status": 200
+      },
+      {
+        "name": "implementation-PAY_QUERY-get",
+        "method": "GET",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/implementations/PAY_QUERY",
+        "status": 200
+      },
+      {
+        "name": "implementation-PAY_QUERY-update",
+        "method": "PUT",
+        "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/implementations/PAY_QUERY",
+        "status": 200
+      }
+    ]
+  },
+  "logCheck": "Platform、BFF、Gateway、Web、合成 PayerMax 日志与调用记录均不含商户私钥",
+  "chain": {
+    "configuration": "Web 代理 → Gateway → BFF → Platform（Operations 管理接口）",
+    "execution": "直连 Platform 内部接口 POST /platform-support/standard-apis/v1/{code}/execute",
+    "vault": "测试装配 Vault Mock（CHANNEL_EXECUTION，合成 PAYERMAX 账号）",
+    "channel": "本机合成 PayerMax（PayerMaxMock.java，真实 SHA256withRSA）"
+  }
+}

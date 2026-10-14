@@ -56,17 +56,28 @@ public final class JsonValues {
      * @throws ExecutionErrorException 值不是可输出的 JSON 类型（例如受控句柄）
      */
     public static JsonNode toJson(Object value) {
+        return toJson(value, false);
+    }
+
+    /**
+     * 环境值转为 JSON；渠道报文要求时 BigDecimal 写成 JSON 数字（原样保留精度，不经浮点）。
+     *
+     * @param value 环境值
+     * @param decimalAsNumber BigDecimal 是否写成 JSON 数字
+     * @throws ExecutionErrorException 值不是可输出的 JSON 类型（例如受控句柄）
+     */
+    public static JsonNode toJson(Object value, boolean decimalAsNumber) {
         if (value == null) {
             return NODES.nullNode();
         }
         if (value instanceof Map<?, ?> map) {
             ObjectNode result = NODES.objectNode();
-            map.forEach((key, item) -> result.set(String.valueOf(key), toJson(item)));
+            map.forEach((key, item) -> result.set(String.valueOf(key), toJson(item, decimalAsNumber)));
             return result;
         }
         if (value instanceof List<?> list) {
             ArrayNode result = NODES.arrayNode();
-            list.forEach(item -> result.add(toJson(item)));
+            list.forEach(item -> result.add(toJson(item, decimalAsNumber)));
             return result;
         }
         if (value instanceof String text) {
@@ -82,7 +93,7 @@ public final class JsonValues {
             return NODES.numberNode(integer);
         }
         if (value instanceof BigDecimal decimal) {
-            return NODES.stringNode(decimal.toPlainString());
+            return decimalAsNumber ? NODES.numberNode(decimal) : NODES.stringNode(decimal.toPlainString());
         }
         throw new ExecutionErrorException("值不是可输出的 JSON 类型");
     }

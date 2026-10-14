@@ -1,0 +1,2 @@
+http.requestHeaders.sign = rsaSha256Sign(params.privateKey, sealJsonBody(http));
+json.set(http.requestBody, 'version', '9');

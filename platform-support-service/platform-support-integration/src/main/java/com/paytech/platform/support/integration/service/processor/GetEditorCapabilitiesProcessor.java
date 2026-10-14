@@ -54,6 +54,7 @@ public class GetEditorCapabilitiesProcessor extends AbstractProcessor<ExternalAp
         result.put("methods", IntegrationApiDefinitionValidator.METHODS.stream().sorted().toList());
         result.put("requestEncodings", List.of("JSON", "FORM_URLENCODED", "NONE"));
         result.put("responseDecodings", List.of("JSON", "NONE"));
+        result.put("decimalEncodings", IntegrationApiDefinitionValidator.DECIMAL_ENCODINGS.stream().sorted().toList());
         result.put("scriptStages", Arrays.stream(ScriptExecutionStage.values()).map(ScriptExecutionStage::getCode)
             .toList());
         result.put("returnStatuses", List.of("SUCCESS", "FAIL", "ERROR"));

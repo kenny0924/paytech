@@ -2,7 +2,14 @@ package com.paytech.platform.support.integration.domainservice.function;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
 import java.security.MessageDigest;
+import java.security.Signature;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.time.Clock;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -19,6 +26,7 @@ import com.googlecode.aviator.runtime.type.AviatorObject;
 import com.googlecode.aviator.runtime.type.AviatorRuntimeJavaType;
 import com.paytech.platform.support.integration.domain.execution.ExecutionErrorException;
 import com.paytech.platform.support.integration.domain.execution.ProtectedHandle;
+import com.paytech.platform.support.integration.domainservice.execution.HttpWork;
 
 /**
  * 公共脚本可调用的注册函数（研发计划第 3 步第 5 节）；签名登记在
@@ -26,6 +34,9 @@ import com.paytech.platform.support.integration.domain.execution.ProtectedHandle
  *
  * <p>认证函数返回受控句柄，赋给请求 Header 后由传输层在发送时取出明文，脚本读不到凭据；
  * 摘要与编码函数返回普通字符串。参数类型不符时抛出固定文字的异常，不带参数值。
+ *
+ * <p>对最终字节签名（原子 API 结构第 6 节）：sealJsonBody 锁定请求体并返回实际发送的文本，再交给签名函数；
+ * 验签函数失败即抛出异常（节点 ERROR），脚本不能吞掉验签失败。
  */
 public final class ScriptFunctions {
 
@@ -53,13 +64,34 @@ public final class ScriptFunctions {
     /** 按点分路径写入对象，缺少的中间对象自动创建。 */
     public static final String JSON_SET = "json.set";
 
+    /** 序列化并锁定 JSON 请求体，返回实际发送的文本。 */
+    public static final String SEAL_JSON_BODY = "sealJsonBody";
+
+    /** SHA256withRSA 签名，Base64。 */
+    public static final String RSA_SHA256_SIGN = "rsaSha256Sign";
+
+    /** SHA256withRSA 验签，失败即异常。 */
+    public static final String REQUIRE_RSA_SHA256_SIGNATURE = "requireRsaSha256Signature";
+
+    /** 当前 UTC 时间，RFC 3339 毫秒精度。 */
+    public static final String NOW_RFC3339 = "nowRfc3339";
+
+    private static final DateTimeFormatter RFC3339_MILLIS =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC);
+
     private ScriptFunctions() {
     }
 
-    /** 全部脚本函数的 Aviator 实现。 */
-    public static List<AviatorFunction> all() {
+    /**
+     * 全部脚本函数的 Aviator 实现。
+     *
+     * @param clock nowRfc3339 使用的时钟
+     * @return 函数实现
+     */
+    public static List<AviatorFunction> all(Clock clock) {
         return List.of(new BearerAuth(), new BasicAuth(), new HmacSha256(HMAC_SHA256_HEX, false),
-            new HmacSha256(HMAC_SHA256_BASE64, true), new Sha256Hex(), new Base64Encode(), new JsonGet(), new JsonSet());
+            new HmacSha256(HMAC_SHA256_BASE64, true), new Sha256Hex(), new Base64Encode(), new JsonGet(), new JsonSet(),
+            new SealJsonBody(), new RsaSha256Sign(), new RequireRsaSha256Signature(), new NowRfc3339(clock));
     }
 
     static ProtectedHandle handle(AviatorObject argument, Map<String, Object> env, String function) {
@@ -222,6 +254,92 @@ public final class ScriptFunctions {
             }
             current.put(segments[segments.length - 1], value.getValue(env));
             return AviatorRuntimeJavaType.valueOf(root);
+        }
+    }
+
+    static final class SealJsonBody extends AbstractFunction {
+        @Override
+        public String getName() {
+            return SEAL_JSON_BODY;
+        }
+
+        @Override
+        public AviatorObject call(Map<String, Object> env, AviatorObject http) {
+            if (!(http.getValue(env) instanceof HttpWork work)) {
+                throw new ExecutionErrorException(SEAL_JSON_BODY + " 的参数必须是 http 工作对象");
+            }
+            return AviatorRuntimeJavaType.valueOf(work.sealJsonBody());
+        }
+    }
+
+    static final class RsaSha256Sign extends AbstractFunction {
+        @Override
+        public String getName() {
+            return RSA_SHA256_SIGN;
+        }
+
+        @Override
+        public AviatorObject call(Map<String, Object> env, AviatorObject privateKey, AviatorObject message) {
+            byte[] data = text(message, env, RSA_SHA256_SIGN).getBytes(StandardCharsets.UTF_8);
+            byte[] signature = handle(privateKey, env, RSA_SHA256_SIGN).apply(key -> {
+                try {
+                    Signature signer = Signature.getInstance("SHA256withRSA");
+                    signer.initSign(KeyFactory.getInstance("RSA")
+                        .generatePrivate(new PKCS8EncodedKeySpec(Base64.getMimeDecoder().decode(key))));
+                    signer.update(data);
+                    return signer.sign();
+                } catch (GeneralSecurityException | IllegalArgumentException failure) {
+                    throw new ExecutionErrorException(RSA_SHA256_SIGN + " 签名失败");
+                }
+            });
+            return AviatorRuntimeJavaType.valueOf(Base64.getEncoder().encodeToString(signature));
+        }
+    }
+
+    static final class RequireRsaSha256Signature extends AbstractFunction {
+        @Override
+        public String getName() {
+            return REQUIRE_RSA_SHA256_SIGNATURE;
+        }
+
+        @Override
+        public AviatorObject call(Map<String, Object> env, AviatorObject publicKey, AviatorObject message,
+            AviatorObject signature) {
+            if (!(signature.getValue(env) instanceof String encoded) || encoded.isEmpty()) {
+                throw new ExecutionErrorException(REQUIRE_RSA_SHA256_SIGNATURE + " 缺少签名");
+            }
+            boolean valid;
+            try {
+                Signature verifier = Signature.getInstance("SHA256withRSA");
+                verifier.initVerify(KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(
+                    Base64.getMimeDecoder().decode(text(publicKey, env, REQUIRE_RSA_SHA256_SIGNATURE)))));
+                verifier.update(text(message, env, REQUIRE_RSA_SHA256_SIGNATURE).getBytes(StandardCharsets.UTF_8));
+                valid = verifier.verify(Base64.getDecoder().decode(encoded.strip()));
+            } catch (GeneralSecurityException | IllegalArgumentException failure) {
+                throw new ExecutionErrorException(REQUIRE_RSA_SHA256_SIGNATURE + " 验签失败");
+            }
+            if (!valid) {
+                throw new ExecutionErrorException(REQUIRE_RSA_SHA256_SIGNATURE + " 验签失败");
+            }
+            return AviatorRuntimeJavaType.valueOf(Boolean.TRUE);
+        }
+    }
+
+    static final class NowRfc3339 extends AbstractFunction {
+        private final Clock clock;
+
+        NowRfc3339(Clock clock) {
+            this.clock = clock;
+        }
+
+        @Override
+        public String getName() {
+            return NOW_RFC3339;
+        }
+
+        @Override
+        public AviatorObject call(Map<String, Object> env) {
+            return AviatorRuntimeJavaType.valueOf(RFC3339_MILLIS.format(clock.instant()));
         }
     }
 }

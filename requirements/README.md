@@ -56,6 +56,7 @@ requirements/
 
 | 登记目录 | 需求 | 主入口/Owner | 关联编号 | 材料 |
 |---|---|---|---|---|
+| `20261014` | PayerMax 收银台支付与交易查询接入（本机联调） | Platform Support / 外部 API 执行 | 引擎补签名字节锁定、RSA、协议时间、数字金额；标准 API `PAY`/`PAY_QUERY`；本机直连 PayerMax UAT | [需求](./20261014/platform-support-PayerMax接入/requirement.md) · [技术方案](./20261014/platform-support-PayerMax接入/technique.md) · [确认记录](./20261014/platform-support-PayerMax接入/delivery.md) |
 | `20261013` | 渠道 API 配置资料迁移 | Platform Support / 文档归属 | 2026-10-13 已执行资料迁移；代码与数据库不迁移 | [需求](./20261013/platform-support-渠道API配置资料迁移/requirement.md) · [资料盘点与方案](./20261013/platform-support-渠道API配置资料迁移/technique.md) · [确认记录](./20261013/platform-support-渠道API配置资料迁移/delivery.md) |
 | `20260921` | 渠道账号与 MID 能力查询 | Payment / Channel | 五表目标、能力主从及 value_type、支付体系与国家条件；移除健康状态，两个主链路查询；账号保护与精确接口合同待定 | [需求与字段](./20260921/payment-渠道账号与MID能力查询/requirement.md) · [技术与 SQL 变更](./20260921/payment-渠道账号与MID能力查询/technique.md) · [确认记录](./20260921/payment-渠道账号与MID能力查询/delivery.md) |
 | `20260920` | Delivery 领域规划 | Platform / Notification | 已确认七表与内部提交入口，首期仅 Email、Provider 先 Mock；查询草案暂缓细化，Operations 管理不纳入，Webhook 仅保留边界 | [需求](./20260920/platform-support-Delivery领域规划/requirement.md) · [领域规则](./20260920/platform-support-Delivery领域规划/technique.md) · [表结构](./20260920/platform-support-Delivery领域规划/data-design.md) · [内部接口](./20260920/platform-support-Delivery领域规划/api.md) · [确认记录](./20260920/platform-support-Delivery领域规划/delivery.md) |

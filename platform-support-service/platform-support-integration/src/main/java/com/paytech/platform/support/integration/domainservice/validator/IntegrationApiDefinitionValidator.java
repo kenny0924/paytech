@@ -54,6 +54,10 @@ public class IntegrationApiDefinitionValidator {
 
     static final Set<String> TOP_LEVEL = Set.of("params", "fixedValues", "transport", "requestEncoding",
         "responseDecoding", "scripts", "statusRules", "outputs");
+    /** 可选顶层属性：decimalEncoding 缺省为 STRING。 */
+    static final Set<String> TOP_LEVEL_ALLOWED = Set.of("params", "fixedValues", "transport", "requestEncoding",
+        "responseDecoding", "decimalEncoding", "scripts", "statusRules", "outputs");
+    public static final Set<String> DECIMAL_ENCODINGS = Set.of("STRING", "NUMBER");
     static final Set<String> FIELD_TYPES = Set.of("STRING", "BOOLEAN", "INTEGER", "DECIMAL", "OBJECT", "ARRAY");
     public static final Set<String> METHODS = Set.of("GET", "POST", "PUT", "PATCH", "DELETE");
     static final Set<String> HTTP_ROOTS = Set.of("http.responseStatus", "http.responseHeaders", "http.responseBody");
@@ -84,7 +88,7 @@ public class IntegrationApiDefinitionValidator {
             issues.add(new ValidationIssue("DEFINITION_INVALID", "definition", "definition 必须是对象"));
             return new Result(issues, null);
         }
-        requireKeys(definition, "definition", TOP_LEVEL, TOP_LEVEL, issues);
+        requireKeys(definition, "definition", TOP_LEVEL_ALLOWED, TOP_LEVEL, issues);
         String normalized = json.writeValueAsString(definition);
         if (normalized.getBytes(StandardCharsets.UTF_8).length > MAX_BYTES) {
             issues.add(new ValidationIssue("DEFINITION_TOO_LARGE", "definition", "定义序列化后不能超过 65536 字节"));
@@ -223,7 +227,7 @@ public class IntegrationApiDefinitionValidator {
         }
     }
 
-    /** 编解码取值；NONE 请求编码不允许 BODY 字段。 */
+    /** 编解码取值；NONE 请求编码不允许 BODY 字段；可选 decimalEncoding 决定渠道报文中 DECIMAL 的 JSON 形式。 */
     void encodings(JsonNode definition, List<FieldDefinition> requestFields, List<ValidationIssue> issues) {
         String request = definition.path("requestEncoding").asString("");
         if (!Set.of("JSON", "FORM_URLENCODED", "NONE").contains(request)) {
@@ -237,6 +241,11 @@ public class IntegrationApiDefinitionValidator {
         if (!Set.of("JSON", "NONE").contains(definition.path("responseDecoding").asString(""))) {
             issues.add(new ValidationIssue("DECODING_INVALID", "definition.responseDecoding",
                 "responseDecoding 只允许 JSON、NONE"));
+        }
+        if (definition.has("decimalEncoding")
+            && !DECIMAL_ENCODINGS.contains(definition.path("decimalEncoding").asString(""))) {
+            issues.add(new ValidationIssue("DECIMAL_ENCODING_INVALID", "definition.decimalEncoding",
+                "decimalEncoding 只允许 STRING、NUMBER"));
         }
     }
 

@@ -1,9 +1,11 @@
 package com.paytech.platform.support.integration.domainservice.expression;
 
+import java.time.Clock;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.googlecode.aviator.*;
@@ -38,9 +40,20 @@ public class ExpressionEngine {
 
     private final Map<ExpressionProfile, AviatorEvaluatorInstance> instances = new EnumMap<>(ExpressionProfile.class);
 
+    /** 只做编译校验或不依赖时间的场景：脚本函数使用系统 UTC 时钟。 */
     public ExpressionEngine() {
+        this(Clock.systemUTC());
+    }
+
+    /**
+     * 按应用时钟创建引擎。
+     *
+     * @param clock 脚本函数 nowRfc3339 使用的时钟
+     */
+    @Autowired
+    public ExpressionEngine(Clock clock) {
         for (ExpressionProfile profile : ExpressionProfile.values()) {
-            instances.put(profile, newInstance(profile));
+            instances.put(profile, newInstance(profile, clock));
         }
     }
 
@@ -82,7 +95,7 @@ public class ExpressionEngine {
     }
 
     /** 新建剖面实例：解释执行、无可用 Java 类、浮点字面量按十进制解析，注册脚本函数并移除白名单外的具名函数。 */
-    static AviatorEvaluatorInstance newInstance(ExpressionProfile profile) {
+    static AviatorEvaluatorInstance newInstance(ExpressionProfile profile, Clock clock) {
         AviatorEvaluatorInstance instance = AviatorEvaluator.newInstance(EvalMode.INTERPRETER);
         instance.setOption(Options.FEATURE_SET, profile.getFeatures());
         instance.setOption(Options.ALLOWED_CLASS_SET, Collections.emptySet());
@@ -94,7 +107,7 @@ public class ExpressionEngine {
         instance.setOption(Options.ALWAYS_PARSE_FLOATING_POINT_NUMBER_INTO_DECIMAL, true);
         instance.useLRUExpressionCache(CACHE_SIZE);
         if (profile == ExpressionProfile.SCRIPT) {
-            ScriptFunctions.all().forEach(instance::addFunction);
+            ScriptFunctions.all(clock).forEach(instance::addFunction);
         }
         List.copyOf(instance.getFuncMap().keySet()).stream().filter(name -> NAMED_FUNCTION.matcher(name).matches()
             && !profile.getFunctions().contains(name) && !COMPILER_FUNCTIONS.contains(name))

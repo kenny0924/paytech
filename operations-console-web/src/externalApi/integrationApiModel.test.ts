@@ -101,3 +101,11 @@ test('脚本可用对象按阶段区分读写', () => {
   assert.deepEqual(scriptObjects('REQUEST').filter(item => item.access === '读写').map(item => item.path), ['http.requestHeaders', 'http.requestBody']);
   assert.ok(scriptObjects('RESPONSE').some(item => item.path === 'http.responseStatus' && item.access === '只读'));
 });
+
+test('decimalEncoding：缺省按 STRING 编辑且保存时省略，NUMBER 原样保存', () => {
+  assert.equal(toDraft(definition).decimalEncoding, 'STRING');
+  assert.equal('decimalEncoding' in toDefinition(toDraft(definition)), false);
+  const back = toDefinition(toDraft({ ...definition, decimalEncoding: 'NUMBER' }));
+  assert.deepEqual(Object.keys(back), ['params', 'fixedValues', 'transport', 'requestEncoding', 'responseDecoding', 'decimalEncoding', 'scripts', 'statusRules', 'outputs']);
+  assert.equal(back.decimalEncoding, 'NUMBER');
+});

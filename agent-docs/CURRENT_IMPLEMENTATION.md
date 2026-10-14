@@ -11,6 +11,15 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+<a id="payermax-integration-20261014"></a>
+
+## PayerMax 收银台支付与交易查询接入（2026-10-14）
+
+- **Designed：** [需求](../requirements/20261014/platform-support-PayerMax接入/requirement.md)与[技术方案](../requirements/20261014/platform-support-PayerMax接入/technique.md)已确认：标准 API 不按接入形态区分，用 `PAY` / `PAY_QUERY`（草案）；PayerMax 只接收银台下单与交易查询，本机联调 UAT。
+- **阶段 2 Implemented / Verified（2026-10-14）：** Platform 执行引擎新增 `sealJsonBody`（锁定请求体并原样发送）、`rsaSha256Sign`、`requireRsaSha256Signature`、`nowRfc3339` 脚本函数与原子 API 可选 `decimalEncoding`（同步[原子 API 结构](../requirements/20260914/platform-support-外部API配置与执行/integration-api-definition-contract.md)）；Operations 原子 API 编辑页增加“小数格式”。JDK 25 `./mvnw -o -pl platform-support-test -am test` **349/349**，`operations-console-web` `npm test` 982/982 与 `npm run build` 通过，详见[交付记录](../requirements/20261014/platform-support-PayerMax接入/delivery.md)。
+- **阶段 3 Verified（2026-10-14，本机）：** [harness](../requirements/20261014/platform-support-PayerMax接入/assets/harness/README.md) 经 Web 代理 → Gateway → BFF → Platform 在独立库 `mor_platform_external_api` 保存 `PAY`、`PAY_QUERY` 与接入方 `PAYERMAX_MOCK` 全部配置（重跑按版本更新）；对本机合成 PayerMax（真实 SHA256withRSA）`verify_mock.py` 12 项 PASS，[回执](../requirements/20261014/platform-support-PayerMax接入/assets/stage3-receipt.json)。
+- **Pending：** 本机直连 PayerMax UAT 联调（阶段 4）；未执行共享环境 SQL，未改 Vault 策略或共享环境。阶段 1～3 已按用户要求本地提交（2026-10-14），未推送。
+
 <a id="platform-standard-api-flow-20261013"></a>
 
 ## Platform 外部 API 配置资料迁移与标准 API 流程设计（2026-10-13）

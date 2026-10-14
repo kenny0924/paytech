@@ -18,7 +18,7 @@ import {
 import type { ApiField, FieldDataType, FieldLocation, IntegrationDetail, IntegrationScriptSummary } from './externalApiModel';
 import {
   decodeIntegrationApi, emptyDraft, fieldKey, issueTab, methods, moveItem, nextScriptUseId, normalizeKey, paramTypes,
-  pathVariables, requestEncodings, responseDecodings, responseReadPaths, toDefinition, toDraft,
+  decimalEncodings, pathVariables, requestEncodings, responseDecodings, responseReadPaths, toDefinition, toDraft,
 } from './integrationApiModel';
 import type {
   Binding, DefinitionDraft, EditorTab, FixedValue, IntegrationApiDetail, OutputDeclaration, ParamDeclaration, ParamType, ScriptUse,
@@ -217,6 +217,9 @@ function InterfaceTab({ creating, disabled, apiCode, setApiCode, apiName, setApi
         <Field label="响应解码" hint="JSON / NONE（交给响应脚本）">{value(<Select value={draft.responseDecoding} className="xapi-mono-input"
           options={responseDecodings.map(item => ({ value: item, label: item }))} onChange={responseDecoding => update({ responseDecoding })} />,
           draft.responseDecoding, true)}</Field>
+        <Field label="小数格式" hint="渠道报文中 DECIMAL 字段：STRING 十进制字符串 / NUMBER JSON 数字">{value(<Select value={draft.decimalEncoding} className="xapi-mono-input"
+          options={decimalEncodings.map(item => ({ value: item, label: item }))} onChange={decimalEncoding => update({ decimalEncoding })} />,
+          draft.decimalEncoding, true)}</Field>
       </div>
       <Note items={['实际超时取配置值与流程剩余预算的较小者。不自动重试、不跟随重定向、不保存 Cookie；Host、Content-Length 等由系统处理，不能配置。']} />
     </Panel>

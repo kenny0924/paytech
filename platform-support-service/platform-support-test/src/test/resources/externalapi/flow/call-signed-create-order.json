@@ -1,0 +1,56 @@
+{
+  "timeoutMs": 20000,
+  "initializers": [
+    {
+      "id": "channelAccount",
+      "function": "CHANNEL_ACCOUNT_CONFIG",
+      "required": true,
+      "args": {
+        "vaultToken": {"kind": "PATH", "path": "input.paymentContext.vaultToken"},
+        "channelCode": {"kind": "EXPRESSION", "expression": "'DEMO'"},
+        "channelAccountId": {"kind": "PATH", "path": "input.paymentContext.attemptId"},
+        "entityNo": {"kind": "PATH", "path": "input.paymentContext.attemptId"}
+      }
+    }
+  ],
+  "entry": "call",
+  "nodes": [
+    {
+      "id": "call",
+      "integrationApi": "CALL",
+      "request": {
+        "BODY:data.outTradeNo": {"kind": "PATH", "path": "input.paymentContext.attemptId"},
+        "BODY:data.totalAmount": {"kind": "PATH", "path": "input.paymentContext.amount"}
+      },
+      "params": {
+        "privateKey": {"kind": "PATH", "path": "resources.channelAccount.credentials.privateKey"},
+        "channelPublicKey": {"kind": "PATH", "path": "resources.channelAccount.parameters.channelPublicKey"}
+      }
+    }
+  ],
+  "returns": [
+    {
+      "id": "created",
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "paymentStatus": {"kind": "EXPRESSION", "expression": "'PENDING'"},
+        "transactionRef": {"kind": "PATH", "path": "steps.call.outputs.transactionRef"},
+        "amount": {"kind": "PATH", "path": "steps.call.outputs.amount"}
+      }
+    },
+    {
+      "id": "rejected",
+      "executeStatus": "FAIL",
+      "outputs": {
+        "paymentStatus": {"kind": "EXPRESSION", "expression": "'REJECTED'"},
+        "failureCode": {"kind": "PATH", "path": "steps.call.outputs.errorCode"}
+      }
+    },
+    {"id": "unknown", "executeStatus": "ERROR"}
+  ],
+  "edges": [
+    {"from": "call", "to": "created", "condition": "steps.call.executeStatus == 'SUCCESS'", "priority": 1},
+    {"from": "call", "to": "rejected", "condition": "steps.call.executeStatus == 'FAIL'", "priority": 2},
+    {"from": "call", "to": "unknown", "default": true}
+  ]
+}

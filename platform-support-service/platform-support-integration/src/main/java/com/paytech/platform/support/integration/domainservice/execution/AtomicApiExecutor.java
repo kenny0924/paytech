@@ -1,11 +1,15 @@
 package com.paytech.platform.support.integration.domainservice.execution;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.platform.support.api.enums.ApiFieldDataType;
 import com.paytech.platform.support.api.enums.ApiFieldLocation;
 import com.paytech.platform.support.api.enums.ExecuteStatus;
 import com.paytech.platform.support.api.enums.ScriptExecutionStage;
@@ -20,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.StreamReadFeature;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -36,7 +41,8 @@ import tools.jackson.databind.json.JsonMapper;
 public class AtomicApiExecutor implements NodeRunner {
 
     private static final JsonMapper JSON = JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
-        .disable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION).build();
+        .disable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION).enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+        .build();
 
     private final ScriptRuntime scriptRuntime;
     private final ValueResolver valueResolver;
@@ -51,10 +57,13 @@ public class AtomicApiExecutor implements NodeRunner {
         Map<String, Object> environment = context.environment();
         Map<String, Object> params = params(api, node, environment);
         var assembled = requestBuilder.assemble(api, node.getRequest(), environment);
-        HttpWork request = HttpWork.request(assembled.getHeaders(), assembled.getBody());
+        HttpWork request = HttpWork.request(assembled.getHeaders(), assembled.getBody(),
+            "JSON".equals(api.getDefinition().path("requestEncoding").asString())
+                ? body -> requestBuilder.jsonBody(api, body) : null);
         runScripts(snapshot, api, ScriptExecutionStage.REQUEST, params, request);
         var channelRequest = requestBuilder.build(snapshot, api, assembled,
-            castMap(request.get(HttpWork.REQUEST_HEADERS)), request.get(HttpWork.REQUEST_BODY), deadline);
+            castMap(request.get(HttpWork.REQUEST_HEADERS)), request.get(HttpWork.REQUEST_BODY),
+            request.sealedJsonBody(), deadline);
         long started = System.nanoTime();
         ChannelResponse response = httpClient.send(channelRequest);
         log.info("外部 API 渠道响应 standardApiCode={} integrationCode={} nodeId={} httpStatus={} elapsedMs={}",
@@ -112,16 +121,66 @@ public class AtomicApiExecutor implements NodeRunner {
         }
     }
 
-    /** JSON 按严格规则解析（空响应体为 nil）；NONE 不解析，留给 RESPONSE 脚本。 */
+    /**
+     * JSON 按严格规则解析（空响应体为 nil，小数精确解析为 BigDecimal）；NONE 不解析，留给 RESPONSE 脚本。 decimalEncoding 为 NUMBER
+     * 时，已声明为 DECIMAL 的 BODY 响应字段中的 JSON 整数转为 BigDecimal。
+     */
     Object decode(ExecutionApi api, ChannelResponse response) {
         if (!"JSON".equals(api.getDefinition().path("responseDecoding").asString()) || response.getBody().length == 0) {
             return null;
         }
+        Object body;
         try {
-            return JsonValues.toJava(JSON.readTree(response.getBody()));
+            body = JsonValues.toJava(JSON.readTree(response.getBody()));
         } catch (JacksonException failure) {
             throw new ExecutionErrorException("渠道响应不是合法 JSON");
         }
+        if (api.isDecimalAsNumber()) {
+            api.getResponseFields().stream().filter(field -> field.getLocation() == ApiFieldLocation.BODY
+                && field.getDataType() == ApiFieldDataType.DECIMAL)
+                .forEach(field -> integerToDecimal(body, field.getPath().split("\\."), 0));
+        }
+        return body;
+    }
+
+    /** 沿字段路径（数组段以 [] 结尾）把末端的 JSON 整数改为 BigDecimal；路径不存在时不处理。 */
+    static void integerToDecimal(Object node, String[] segments, int index) {
+        if (!(node instanceof Map<?, ?> map)) {
+            return;
+        }
+        boolean array = segments[index].endsWith("[]");
+        String name = array ? segments[index].substring(0, segments[index].length() - 2) : segments[index];
+        boolean last = index == segments.length - 1;
+        Object value = map.get(name);
+        if (!array) {
+            if (!last) {
+                integerToDecimal(value, segments, index + 1);
+            } else if (decimal(value) != null) {
+                castMap(map).put(name, decimal(value));
+            }
+            return;
+        }
+        if (!(value instanceof List<?> items)) {
+            return;
+        }
+        @SuppressWarnings("unchecked")
+        List<Object> list = (List<Object>)items;
+        for (int position = 0; position < list.size(); position++) {
+            if (!last) {
+                integerToDecimal(list.get(position), segments, index + 1);
+            } else if (decimal(list.get(position)) != null) {
+                list.set(position, decimal(list.get(position)));
+            }
+        }
+    }
+
+    /** JSON 整数对应的 BigDecimal；不是整数为 null。 */
+    static BigDecimal decimal(Object value) {
+        return switch (value) {
+            case Long number -> BigDecimal.valueOf(number);
+            case BigInteger number -> new BigDecimal(number);
+            case null, default -> null;
+        };
     }
 
     /** 第一条为真的规则决定状态；全部为假为 ERROR；条件非布尔或异常同样为 ERROR。 */

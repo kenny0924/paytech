@@ -1,0 +1,2 @@
+json.set(http.requestBody, 'requestTime', nowRfc3339());
+http.requestHeaders.sign = rsaSha256Sign(params.privateKey, sealJsonBody(http));

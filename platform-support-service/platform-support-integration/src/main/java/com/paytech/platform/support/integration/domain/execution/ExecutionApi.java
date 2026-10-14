@@ -25,4 +25,9 @@ public class ExecutionApi {
 
     /** 响应字段。 */
     private final List<FieldDefinition> responseFields;
+
+    /** decimalEncoding 为 NUMBER：与渠道往来的报文中 DECIMAL 是 JSON 数字（默认 STRING 为十进制字符串）。 */
+    public boolean isDecimalAsNumber() {
+        return "NUMBER".equals(definition.path("decimalEncoding").asString(""));
+    }
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
  *
  * <p>CHANNEL_ACCOUNT_CONFIG 签名见材料交接第 4 节；MONEY_MINOR_UNITS 按币种精度把主单位金额精确换算为最小单位整数。
  * 脚本函数（研发计划第 3 步第 5 节）只能在公共脚本中调用：认证函数返回受控句柄，由传输层发送时取出明文。
+ * 签名字节锁定、RSA 与协议时间见 PayerMax 接入技术方案第 3 节（requirements/20261014/platform-support-PayerMax接入）。
  */
 public final class RegisteredFunctionCatalog {
 
@@ -47,7 +48,15 @@ public final class RegisteredFunctionCatalog {
         script("json.get", "按点分路径读取的值，不存在为 nil", new ParameterDeclaration("target", "OBJECT", true),
             new ParameterDeclaration("path", "STRING", true)),
         script("json.set", "OBJECT（写入后的 target）", new ParameterDeclaration("target", "OBJECT", true),
-            new ParameterDeclaration("path", "STRING", true), new ParameterDeclaration("value", "ANY", true)));
+            new ParameterDeclaration("path", "STRING", true), new ParameterDeclaration("value", "ANY", true)),
+        script("sealJsonBody", "STRING（锁定的请求体文本，即实际发送的字节；仅 JSON 编码的 REQUEST 阶段，锁定后请求体只读）",
+            new ParameterDeclaration("http", "OBJECT", true)),
+        script("rsaSha256Sign", "STRING（SHA256withRSA 签名的 Base64）", new ParameterDeclaration("privateKey", HANDLE, true),
+            new ParameterDeclaration("message", "STRING", true)),
+        script("requireRsaSha256Signature", "BOOLEAN（true；签名缺失或不匹配时节点 ERROR）",
+            new ParameterDeclaration("publicKey", "STRING", true), new ParameterDeclaration("message", "STRING", true),
+            new ParameterDeclaration("signature", "STRING", true)),
+        script("nowRfc3339", "STRING（当前 UTC 时间，yyyy-MM-dd'T'HH:mm:ss.SSS'Z'）"));
 
     private RegisteredFunctionCatalog() {
     }

@@ -39,6 +39,7 @@
 | `fixedValues` | 是 | 协议固定值，可为空对象（第 4 节） |
 | `transport` | 是 | HTTP 传输（第 5 节） |
 | `requestEncoding` / `responseDecoding` | 是 | 报文编解码（第 5.2 节） |
+| `decimalEncoding` | 否 | 渠道报文中 DECIMAL 的 JSON 形式，`STRING`（缺省）或 `NUMBER`（第 5.2 节，2026-10-14 PayerMax 接入新增） |
 | `scripts` | 是 | 有序脚本引用，可为空数组（第 6 节） |
 | `statusRules` | 是 | 执行状态判定（第 7 节） |
 | `outputs` | 是 | 按状态分支的输出映射（第 8 节） |
@@ -112,6 +113,8 @@
 
 不根据报文内容猜测格式；解码失败返回 `ERROR`。XML 等格式保留扩展位置，本期不支持（A5 已确认）。
 
+**`decimalEncoding`（2026-10-14，[PayerMax 接入](../../20261014/platform-support-PayerMax接入/technique.md#34-decimalencodingg4评审点-t2)）：** 可选，`STRING`（缺省）或 `NUMBER`。`NUMBER` 时 BODY 中的 DECIMAL 按原精度写成 JSON 数字（不用指数、不经浮点）；响应解码后、RESPONSE 脚本之前，已声明为 DECIMAL 的 BODY 响应字段（含 `[]` 数组路径）中的 JSON 整数转为十进制数。JSON 响应中的小数一律精确解析。只影响原子 API 与渠道之间的报文，标准 API 对内仍是十进制字符串。
+
 ## 6. 脚本
 
 ```json
@@ -125,7 +128,7 @@
 - 按数组顺序执行；`scriptCode` 必须是同一接入方的 `t_integration_script`，且其执行阶段与 `stage` 一致。
 - 脚本参数的取值只能引用 `params.*` 或常量，不能读流程的 `input`、`resources`、`steps`。
 - 读写权限沿用公共脚本设计：REQUEST 阶段读写 `http.requestHeaders`、`http.requestBody`；RESPONSE 阶段读写响应工作副本，只读已发送请求和状态码；响应验签读取原始响应字节。
-- 需要对最终字节签名时，由注册函数完成序列化并锁定请求体，锁定后不能再修改请求体；具体函数合同随注册目录定稿。
+- 需要对最终字节签名时，由注册函数完成序列化并锁定请求体，锁定后不能再修改请求体。**2026-10-14 定稿：** 脚本函数 `sealJsonBody(http)` 按本 API 的 JSON 规则（含 `decimalEncoding`）序列化当前请求体、锁定并返回实际发送的文本；只能在 `requestEncoding=JSON` 的 REQUEST 阶段调用一次，之后对 `http.requestBody` 的赋值或嵌套修改都使节点 ERROR，传输层原样发送锁定字节。配套函数 `rsaSha256Sign`、`requireRsaSha256Signature`、`nowRfc3339` 见[PayerMax 接入技术方案第 3 节](../../20261014/platform-support-PayerMax接入/technique.md#3-引擎补能力阶段-2)。
 
 ## 7. 执行顺序与状态规则
 

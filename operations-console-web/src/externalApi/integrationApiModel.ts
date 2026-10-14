@@ -14,6 +14,8 @@ export const paramTypes: ParamType[] = ['STRING', 'BOOLEAN', 'INTEGER', 'DECIMAL
 export const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 export const requestEncodings = ['JSON', 'FORM_URLENCODED', 'NONE'];
 export const responseDecodings = ['JSON', 'NONE'];
+/** 渠道报文中 DECIMAL 的 JSON 形式：STRING 为十进制字符串（默认），NUMBER 为 JSON 数字。 */
+export const decimalEncodings = ['STRING', 'NUMBER'];
 
 export interface ParamDeclaration { name: string; dataType: ParamType; required: boolean; description?: string | null }
 export interface FixedValue { key: string; expression: string }
@@ -31,6 +33,7 @@ export interface DefinitionDraft {
   transport: Transport;
   requestEncoding: string;
   responseDecoding: string;
+  decimalEncoding: string;
   requestScripts: ScriptUse[];
   responseScripts: ScriptUse[];
   statusRules: StatusRule[];
@@ -63,7 +66,7 @@ export function decodeIntegrationApi(value: unknown, expectedCode: string): Inte
 
 /** 新建原子 API 的默认定义：HTTP POST、JSON 编解码、默认超时，其余为空。 */
 export function emptyDraft(endpointCode = ''): DefinitionDraft {
-  return { params: [], fixedValues: [], requestEncoding: 'JSON', responseDecoding: 'JSON', requestScripts: [], responseScripts: [],
+  return { params: [], fixedValues: [], requestEncoding: 'JSON', responseDecoding: 'JSON', decimalEncoding: 'STRING', requestScripts: [], responseScripts: [],
     transport: { protocol: 'HTTP', method: 'POST', endpointCode, pathTemplate: '/', connectTimeoutMs: 2000, responseTimeoutMs: 10000 },
     statusRules: [], outputs: { SUCCESS: [], FAIL: [] } };
 }
@@ -83,6 +86,7 @@ export function toDraft(definition: unknown): DefinitionDraft {
     transport: { ...base.transport, ...transport } as Transport,
     requestEncoding: typeof d.requestEncoding === 'string' ? d.requestEncoding : base.requestEncoding,
     responseDecoding: typeof d.responseDecoding === 'string' ? d.responseDecoding : base.responseDecoding,
+    decimalEncoding: typeof d.decimalEncoding === 'string' ? d.decimalEncoding : base.decimalEncoding,
     requestScripts: uses.filter(use => use.stage === 'REQUEST'),
     responseScripts: uses.filter(use => use.stage === 'RESPONSE'),
     statusRules: array(d.statusRules) as StatusRule[],
@@ -90,7 +94,7 @@ export function toDraft(definition: unknown): DefinitionDraft {
   };
 }
 
-/** 编辑态转回定义 JSON：键顺序与合同一致，REQUEST 脚本在前；参数说明为空时省略。 */
+/** 编辑态转回定义 JSON：键顺序与合同一致，REQUEST 脚本在前；参数说明为空时省略，decimalEncoding 为默认 STRING 时省略。 */
 export function toDefinition(draft: DefinitionDraft): Record<string, unknown> {
   return {
     params: draft.params.map(param => ({ name: param.name.trim(), dataType: param.dataType, required: param.required,
@@ -99,6 +103,7 @@ export function toDefinition(draft: DefinitionDraft): Record<string, unknown> {
     transport: { ...draft.transport },
     requestEncoding: draft.requestEncoding,
     responseDecoding: draft.responseDecoding,
+    ...(draft.decimalEncoding !== 'STRING' ? { decimalEncoding: draft.decimalEncoding } : {}),
     scripts: [...draft.requestScripts.map(use => ({ ...use, stage: 'REQUEST' })), ...draft.responseScripts.map(use => ({ ...use, stage: 'RESPONSE' }))],
     statusRules: draft.statusRules.map(rule => ({ condition: rule.condition, executeStatus: rule.executeStatus })),
     outputs: { SUCCESS: draft.outputs.SUCCESS, FAIL: draft.outputs.FAIL },
