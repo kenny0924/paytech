@@ -1,5 +1,7 @@
 # Risk & Compliance 数据库设计规范
 
+> **2026-10-14 支付反欺诈一期后继：** [一期运行期决定](../decisions/2026-10-14-risk-payment-fraud-phase1.md) R1～R6 修订 3.3～3.6 及 4.2～4.4 中对应部分：新格式执行发布额外冻结决策流版本并按流程执行；一期只在 TEST 由一人激活（PRODUCTION 双人审批保留、未实现）；支付决策点版本暂不绑定 `RESERVE_LIMIT_GROUP`，累计限额以实时累计规则表达；新增运营参数化的实时累计、名单命中两个工程 Handler；交易评估按 Payment 实际可提供字段冻结；Payment 事件不再携带 Group ID。完整方案见[需求设计](../../requirements/20261014/risk-支付反欺诈一期/design.md)，实现与验证状态只见当前台账。
+
 > **Payment 风控步骤后继：** [RISK_CHECK 修订](../../requirements/20260913/payment-Execution设计/internal-risk-action-amendment.md)明确 Payment 记录原评估 Action 与结果，并以原 Attempt/请求身份向 Risk 恢复。Risk 保留一 Attempt 一次首次评估及原 Assessment/Group 关联；REVIEW/DENY 不放行，正式技术终态与 Payment 传输超时分开处理，不增加多检查点或 Risk 表。
 
 > **2026-09-14 Payment 限额关联后继：** [限额关联修订](../../requirements/20260913/payment-Execution设计/risk-limit-correlation-amendment.md)将新 Payment 事件的占用定位改为 Risk 本地 Attempt→Assessment→Group，取代下文要求 Payment 保存/传入 Group ID 的相关合同。Risk 自己的 Group ID 和限额状态规则继续有效，旧消息按兼容边界核验；当前实现和数据库状态见台账。
@@ -322,7 +324,7 @@ Finance 必须冻结完整 RCO-I09 返回，包括两个坐标、排序后的 Re
 
 Role Type 固定为 CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON；Role/Qualification 组合受上文矩阵约束。RELATED_PERSON 资格只在明确 Organization Case 上下文中有效，其 `role_id` 是 CCT Party ID，Dependency Child Case、Parent Case Subject Party 与 Qualification Decision 必须逐值一致。Case 内不保存 Case Type 或当前 Decision 指针，Screening Hit 内也不保存当前 Resolution 指针；局部最新事实由各自最大版本确定，只有 Role Qualification 保留跨 Case 的当前决定指针。
 
-### 4.2 Decision Point、Feature、Rule、Action 与 Release（19 张）
+### 4.2 Decision Point、Feature、Rule、Action 与 Release（19 张；2026-10-14 另增 2 张 Feature 参数表）
 
 2026-09-12 已确认的 [配置解耦修订](../../requirements/20260912/operations-console-决策流配置/simplification.md)覆盖本节普通规则配置的输入来源：规则版本直接记录准确输入合同，Context 条件/动作参数按该合同的 `field_code` 解释；共享工程目录拥有字段类型和用途。旧 Point Version、Input Field 快照及顺序绑定保留为历史发布、原顺序图和成功回放使用，不再随新规则保存复制。Feature、义务、限额和真实执行的其余设计不因本修订扩展或取消。迁移及验证状态见当前台账。
 
@@ -346,9 +348,16 @@ Role Type 固定为 CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON�
 | action_parameter_definition | Action 参数协议 | parameter_definition_id, action_version_id, parameter_code, value_type, required_flag, allowed_source_type, target_parameter_flag；参数编码唯一 |
 | rule_action | Rule 绑定的有序 Action | rule_action_id, rule_id, action_version_id, sequence_no；同 Rule sequence 唯一；一条 Rule 最多一个 Terminal |
 | rule_action_parameter | Action 参数绑定 | parameter_id, rule_action_id, parameter_definition_id, value_sequence, source_type, feature_version_id, field_code, string_value, number_value, boolean_value, datetime_value, duration_value；Context 使用所属规则版本准确合同的动作字段，Literal 的 field_code 为空；来源和值类型严格 XOR；rule_action+definition+value_sequence 唯一；普通及 Control 根参数固定 sequence=1，Settlement Scope 三维按连续 sequence 组成 Tuple |
-| decision_release | 一个环境的一份完整候选/生效快照 | release_id, release_no, decision_point_id, point_version_id, environment_code, status, active_slot, content_hash, created_by, activated_time, superseded_time, version；release_no 唯一；point+environment+active_slot 唯一 |
+| decision_release | 一个环境的一份完整候选/生效快照 | release_id, release_no, decision_point_id, point_version_id, decision_flow_version_id, environment_code, status, active_slot, content_hash, created_by, activated_time, superseded_time, version；release_no 唯一；point+environment+active_slot 唯一；decision_flow_version_id 为空表示旧格式发布，非空表示按冻结决策流执行的执行发布（2026-10-14 R1） |
 | release_audit_event | 类型化发布审计流 | audit_event_id, release_id, event_type, event_time；STATIC_CHECK 填 check_code, check_status, severity, error_code, error_summary；APPROVAL 填 shadow_run_id, approval_request_id, approval_status, reviewer_id, review_comment；STATE_CHANGE 填 from_status, to_status, reason_code, trigger_type, trigger_id, actor_id, aggregate_version；三类字段严格互斥且分别建立业务唯一键 |
 | release_shadow_run | 候选 Release 旁路批次与冻结质量汇总 | shadow_run_id, run_no, baseline_release_id, candidate_release_id, status, sample_target, sample_count, started_time, completed_time, allow_to_review_count, allow_to_deny_count, deny_to_allow_count, action_change_count, feature_missing_count, failed_count, timed_out_count, p95_millis, p99_millis, check_status, version；仅 COMPLETED 完整填写质量列；p99>=p95，sample_count<=sample_target |
+
+2026-10-14 R4 增加两张 Feature 参数表，与 `feature_version` 一对一、创建后不可修改；`risk_variable.feature_version_id` 在 VELOCITY/LIST 来源时必填：
+
+| 逻辑表 | 用途 | 关键字段与约束 |
+|---|---|---|
+| velocity_feature_definition | 实时累计 Feature 参数 | feature_version_id, event_code, anchor_subject_type, metric, distinct_subject_type, window_seconds, include_current；窗口为 [评估时间 - window, 评估时间)，只允许 600/3600/86400/604800 秒；distinct_subject_type 仅 DISTINCT_COUNT 必填且不同于锚定主体；include_current 仅评估事件的 COUNT/SUM_AMOUNT 允许 |
+| list_feature_definition | 名单命中 Feature 参数 | feature_version_id, list_id, subject_type；主体取值由类型对应的支付输入字段决定 |
 
 Operator 由引擎闭集注册，MVP 至少包含 EQ、NE、GT、GTE、LT、LTE、IN、NOT_IN、BETWEEN、IS_NULL、IS_NOT_NULL。Operator 必须声明适用 Value Type 和 Operand 数量，发布静态校验负责类型检查。
 
@@ -362,7 +371,7 @@ Operator 由引擎闭集注册，MVP 至少包含 EQ、NE、GT、GTE、LT、LTE�
 | evaluation_action_intent | 命中后原始 Action | intent_id, evaluation_id, source_type, rule_action_id, obligation_id, action_version_id, resolved_target_type, resolved_target_key, intent_sequence, merged_effect_id, status；RULE 只填 rule_action_id，并且所属 Rule Set 必须绑定 Evaluation 的准确 Point Version；OBLIGATION 只填 obligation_id、只能引用 Action 型义务且义务必须属于同一 Point Version；两类来源/序号分别唯一；MERGED 必须引用 Effect，其他状态不得引用 |
 | action_effect | 冲突合并后的最终 Action 与执行状态 | effect_id, evaluation_id, action_version_id, effect_mode, target_type, target_key, merge_policy, effect_hash, effect_status, idempotency_key, execution_type, execution_status, attempt_count, started_time, completed_time, last_error_code, last_error_summary；每个 Effect 至少一个 MERGED Intent，双方 Evaluation/Action/Target 一致且 merge_policy 等于 Action Version；`RISK_ACTION_EFFECT_V1` 只覆盖数据库可重算的冻结 Effect 身份与贡献者身份，REAL 幂等键固定为 `risk-action-effect:v1:<effect_hash>`；SIMULATED 的执行字段全部为空 |
 | `checkout_input_snapshot` | Checkout 事件专属不可变输入及稳定 Assessment | snapshot_id, evaluation_id, client_id, operating_entity_id, assignment_id, input_hash；冻结 Commerce 的 OrderPreparationContext：预分配 order_id/order_item_id、Client/OE/Source Tuple、国家/Locale、industry_code/mcc_code、税前金额与币种、V5 商业上下文的 Agreement/Scope、Partner 来源的 Platform Service Charge Scope/Party 及三份 Legal/Seller 证据；Risk 不消费 Finance Entity ID；Create Order 发生在消费者交互前，Consumer/Network Evidence 可空；Finance Tax Snapshot、最终金额和 `order_context_id` 尚未生成，禁止作为输入；input_hash 覆盖完整 Canonical 输入；Risk 不回查 Commerce；evaluation 唯一 |
-| transaction_risk_assessment | Payment Attempt 专属输入快照 | assessment_id, evaluation_id, payment_intent_id, payment_attempt_id, order_id, order_context_id, client_id, operating_entity_id, assignment_id, payment_method_code, amount, currency, industry_code, mcc_code, consumer_reference, consumer_email_vault_token, consumer_phone_vault_token, network_evidence_id, network_evidence_version, restricted_input_hash；payment_attempt、evaluation 分别唯一 |
+| transaction_risk_assessment | Payment Attempt 专属输入快照 | assessment_id, evaluation_id, payment_intent_id, payment_attempt_id, risk_action_id, order_id, client_id, entity_no, payment_method_code, capture_mode, amount, currency, industry_code, mcc_code, consumer_country_code, consumer_reference, consumer_email_vault_token, consumer_phone_vault_token, client_ip_address, user_agent, card_fingerprint, card_bin, authentication_requirement, stable_input_hash, restricted_input_hash；payment_attempt、evaluation 分别唯一；stable_input_hash 不含 IP/User-Agent，重放只比较它与 risk_action_id；邮箱/手机 Token 一期不写（2026-10-14 R5） |
 | settlement_risk_assessment | Manual Payout Eligibility 专属不可变输入与结果快照 | assessment_id, evaluation_id, checkpoint_type, role_type, role_id, operating_entity_id, gross_amount, currency, bank_country, source_fact_type, source_fact_id, source_fact_version, input_hash, eligibility_decision, required_amount, required_currency, control_set_hash；evaluation 唯一；checkpoint_type 等于 Decision Point.point_code，input_hash 等于 Evaluation.input_snapshot_hash；Payout 创建/最终审批只接受 PAYOUT，Execution 创建/外部提交只接受 PAYOUT_EXECUTION；结果四列只在 Eligibility 实际执行时成组冻结，Client 金额币种成对且同请求币种，Local Partner 两列均空 |
 
 `decision_point.business_domain` 与三类快照严格成矩阵：CHECKOUT/PAYMENT/SETTLEMENT 分别恰好一张 Checkout/Transaction/Settlement 行且另外两类为零；DUE_DILIGENCE/DISPUTE 三类均为零。Due Diligence 的正式决定通过 qualification_decision.decision_evaluation_id 追溯；Dispute Liability 通过 dispute_liability_decision.decision_evaluation_id 追溯，不为它们重复建立空壳 Assessment 表。
@@ -374,8 +383,8 @@ Operator 由引擎闭集注册，MVP 至少包含 EQ、NE、GT、GTE、LT、LTE�
 | 逻辑表 | 用途 | 关键字段与约束 |
 |---|---|---|
 | risk_restriction | Consumer 等主体的冷却/限制状态 | restriction_id, restriction_no, restriction_type, subject_type, subject_key, source_effect_id, status, effective_from, effective_to, supersedes_restriction_id, version；restriction_no 唯一；区间合法 |
-| risk_list | Risk 名单定义 | list_id, list_code, list_name, supported_subject_type, matching_mode, status, version；list_code 唯一；Matching Mode 由工程注册 |
-| risk_list_entry | 名单成员事实 | entry_id, list_id, subject_type, subject_key, source_effect_id, status, active_slot, effective_from, effective_to, supersedes_entry_id, version；仅 ACTIVE 写 active_slot=1，历史行写 NULL；同名单和主体一次最多一个 ACTIVE |
+| risk_list | Risk 名单定义 | list_id, list_code, list_name, supported_subject_type, list_purpose, matching_mode, status, version；list_code 唯一；Matching Mode 由工程注册；list_purpose 为 BLOCK/ALLOW，仅用于展示，命中后的处置由规则决定 |
+| risk_list_entry | 名单成员事实 | entry_id, list_id, subject_type, subject_key, source_type, source_effect_id, reason, created_by, deactivated_by, deactivated_reason, status, active_slot, effective_from, effective_to, supersedes_entry_id, version；仅 ACTIVE 写 active_slot=1，历史行写 NULL；同名单和主体一次最多一个 ACTIVE；source_type=ACTION 时 source_effect_id 必填，MANUAL 时为空且 created_by 必填；主体键按类型规范化（IPv6 取 /64） |
 | payment_attempt_fact | Payment Attempt 权威状态投影 | fact_id, payment_attempt_id, payment_intent_id, attempt_status, result_reason, limit_reservation_group_id, source_event_key, source_version, source_payload_hash, occurred_time, version；payment_attempt 唯一；来源版本单调 |
 | velocity_event | 可计数/计额的不可变风险事件 | velocity_event_id, event_code, source_type, source_id, source_version, occurred_time, amount, currency, event_hash；来源事件和 event_code 唯一 |
 | velocity_event_subject | 风险事件关联主体 | event_subject_id, velocity_event_id, subject_type, subject_key；event+subject_type+subject_key 唯一；索引 subject_type+subject_key+event_code+occurred_time |

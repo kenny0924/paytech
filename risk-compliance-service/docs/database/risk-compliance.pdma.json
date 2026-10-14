@@ -12620,6 +12620,632 @@
       "type": "P"
     },
     {
+      "id": "456FEC9B-97DE-55F3-9D19-9205B8115E9B",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_velocity_feature_definition",
+      "defName": "实时累计 Feature 定义",
+      "comment": "冻结一个实时累计 Feature Version 的事件、锚定主体、算法和窗口；创建后不可修改",
+      "properties": {
+        "logicalTableKey": "velocity_feature_definition",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "feature_version_id",
+          "defName": "Feature 版本标识",
+          "comment": "与所属 Feature Version 共享的主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "E8D5EF30-3C21-5F1E-BB50-684AD01609FC"
+        },
+        {
+          "defKey": "event_code",
+          "defName": "事件编码",
+          "comment": "事件编码的稳定业务代码。允许值：PAYMENT_ATTEMPT_ASSESSED、PAYMENT_ATTEMPT_REJECTED。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "7403CB1E-08A8-561E-A11D-2C79C441363A"
+        },
+        {
+          "defKey": "anchor_subject_type",
+          "defName": "锚定主体类型",
+          "comment": "锚定主体类型的稳定业务代码。允许值：CLIENT、OPERATING_ENTITY、CONSUMER、IP_ADDRESS、CARD_FINGERPRINT。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "2A767481-E574-5966-B00B-364887B3325B"
+        },
+        {
+          "defKey": "metric",
+          "defName": "累计算法",
+          "comment": "累计算法的稳定业务代码。允许值：COUNT、SUM_AMOUNT、DISTINCT_COUNT、LAST_AMOUNT、SECONDS_SINCE_LAST。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "51D01F74-2E9E-5B0B-864E-65E07FAFECBF"
+        },
+        {
+          "defKey": "distinct_subject_type",
+          "defName": "去重主体类型",
+          "comment": "去重主体类型的稳定业务代码。允许值：CLIENT、OPERATING_ENTITY、CONSUMER、IP_ADDRESS、CARD_FINGERPRINT。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "1D4EBDFD-63EE-52FA-ABE6-DCC321F1E363"
+        },
+        {
+          "defKey": "window_seconds",
+          "defName": "窗口秒数",
+          "comment": "窗口秒数的整数值。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "D1CAC7A6-D0EE-5580-A078-F436D463656C"
+        },
+        {
+          "defKey": "include_current",
+          "defName": "是否计入本次",
+          "comment": "是否计入本次，1 表示是，0 表示否。",
+          "type": "BOOLEAN",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "BD38B053-022B-5D4E-A476-B100681ABC49"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "4795D329-6B9A-51AF-A97B-D7C4A4D5A2C0"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "6601509C-F1C9-5407-8BEF-E989B40922E8",
+          "myField": "E8D5EF30-3C21-5F1E-BB50-684AD01609FC",
+          "refEntity": "3389BED9-8C77-5186-9517-F25080A4C030",
+          "refField": "ED2FD9F5-0683-5E0B-97A6-194395946BF8",
+          "myRows": "1",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [],
+      "type": "P"
+    },
+    {
+      "id": "A0D7740B-5E41-5632-9DBF-8F7EE5CF0027",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_list_feature_definition",
+      "defName": "名单命中 Feature 定义",
+      "comment": "冻结一个名单命中 Feature Version 的名单与主体类型，主体取值由类型对应的支付输入字段决定；创建后不可修改",
+      "properties": {
+        "logicalTableKey": "list_feature_definition",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "feature_version_id",
+          "defName": "Feature 版本标识",
+          "comment": "与所属 Feature Version 共享的主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "66CC8FC4-67B6-51B5-B61D-B38879FEA20C"
+        },
+        {
+          "defKey": "list_id",
+          "defName": "风险名单",
+          "comment": "风险名单的稳定业务标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "B3C7F125-2811-597A-A940-3B23FCDCE353"
+        },
+        {
+          "defKey": "subject_type",
+          "defName": "主体类型",
+          "comment": "主体类型的稳定业务代码。允许值：CLIENT、OPERATING_ENTITY、CONSUMER、IP_ADDRESS、CARD_FINGERPRINT、CARD_BIN。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B2A4D941-3A3D-5CDC-AD5A-5E570E71AED7"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "C125BFFD-B495-5232-B186-DECB855383E5"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "B8669B0F-B4A7-5CCD-A9ED-AE224930D6EB",
+          "myField": "66CC8FC4-67B6-51B5-B61D-B38879FEA20C",
+          "refEntity": "3389BED9-8C77-5186-9517-F25080A4C030",
+          "refField": "ED2FD9F5-0683-5E0B-97A6-194395946BF8",
+          "myRows": "1",
+          "refRows": "1",
+          "innerType": ""
+        },
+        {
+          "id": "39A69A85-3402-5960-B4D7-5BE2DDB06D70",
+          "myField": "B3C7F125-2811-597A-A940-3B23FCDCE353",
+          "refEntity": "D16318B7-1B77-5E31-9F8D-0EB0C0AF6A9D",
+          "refField": "E9C5F93A-196E-5699-A698-79213DFCE9E4",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "idx_list_feature_list",
+          "defName": "访问索引 list_id",
+          "unique": false,
+          "comment": "支持访问路径：list_id",
+          "fields": [
+            {
+              "fieldDefKey": "B3C7F125-2811-597A-A940-3B23FCDCE353",
+              "ascOrDesc": "A",
+              "id": "4A750F28-02D2-5F80-A706-CB3F6E634B53"
+            }
+          ],
+          "id": "8BB0D7E6-376C-5ABE-8C1A-F50D1E8B6E1B"
+        }
+      ],
+      "type": "P"
+    },
+    {
       "id": "F080F522-B682-58E4-A91E-235E00B768D1",
       "env": {
         "base": {
@@ -17093,6 +17719,24 @@
           "id": "7D31AC56-BD1E-5681-9681-9B2F6270F038"
         },
         {
+          "defKey": "decision_flow_version_id",
+          "defName": "决策流版本",
+          "comment": "决策流版本的稳定业务标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "8A210E7C-8E84-5091-BCAE-3AEEE9BBEAD6"
+        },
+        {
           "defKey": "environment_code",
           "defName": "环境编码",
           "comment": "环境编码的稳定业务代码。允许值：TEST、PRODUCTION。",
@@ -17291,6 +17935,15 @@
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
+        },
+        {
+          "id": "EF9F218A-4391-5EB6-BF75-5F0FE2852CC3",
+          "myField": "8A210E7C-8E84-5091-BCAE-3AEEE9BBEAD6",
+          "refEntity": "FEA83BAD-7B7E-5107-BC38-E240BAC3BCDC",
+          "refField": "4EC779CE-7F6D-551C-8AA0-47BECA5CDD7E",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
         }
       ],
       "indexes": [
@@ -17345,6 +17998,20 @@
             }
           ],
           "id": "E8032CB6-7E3B-5F32-9FA7-6802BE2F74C0"
+        },
+        {
+          "defKey": "idx_release_flow_ver",
+          "defName": "访问索引 decision_flow_version_id",
+          "unique": false,
+          "comment": "支持访问路径：decision_flow_version_id",
+          "fields": [
+            {
+              "fieldDefKey": "8A210E7C-8E84-5091-BCAE-3AEEE9BBEAD6",
+              "ascOrDesc": "A",
+              "id": "9C3606B4-B950-52E3-BD96-CB52A62ABBE7"
+            }
+          ],
+          "id": "2C5A0BC7-8B1C-5273-A7A7-D71FF6731983"
         }
       ],
       "type": "P"
@@ -20730,7 +21397,7 @@
         {
           "defKey": "source_type",
           "defName": "来源类型",
-          "comment": "来源类型，允许 INPUT、CONSTANT、COLLECTION、NODE_OUTPUT；创建后固定。允许值：INPUT、CONSTANT、COLLECTION、NODE_OUTPUT。",
+          "comment": "来源类型，允许 INPUT、CONSTANT、COLLECTION、NODE_OUTPUT、VELOCITY、LIST；创建后固定。允许值：INPUT、CONSTANT、COLLECTION、NODE_OUTPUT、VELOCITY、LIST。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -20822,6 +21489,24 @@
           "extProps": {},
           "domain": "",
           "id": "9AD4E37E-F93C-54C8-8DE5-7F86465FA82C"
+        },
+        {
+          "defKey": "feature_version_id",
+          "defName": "Feature 版本",
+          "comment": "VELOCITY 与 LIST 来源创建时生成的不可变 Feature Version；其他来源为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "DD25C388-59BC-5E70-8F34-8DFDDD920C75"
         },
         {
           "defKey": "source_field",
@@ -21235,6 +21920,15 @@
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
+        },
+        {
+          "id": "659C6961-891D-59EE-941D-BA1614388142",
+          "myField": "DD25C388-59BC-5E70-8F34-8DFDDD920C75",
+          "refEntity": "3389BED9-8C77-5186-9517-F25080A4C030",
+          "refField": "ED2FD9F5-0683-5E0B-97A6-194395946BF8",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
         }
       ],
       "indexes": [
@@ -21303,6 +21997,20 @@
             }
           ],
           "id": "FBA139B9-2D7D-5372-837C-64F0B8D42293"
+        },
+        {
+          "defKey": "idx_risk_variable_feature",
+          "defName": "访问索引 feature_version_id",
+          "unique": false,
+          "comment": "支持由 Feature Version 反查所属变量",
+          "fields": [
+            {
+              "fieldDefKey": "DD25C388-59BC-5E70-8F34-8DFDDD920C75",
+              "ascOrDesc": "A",
+              "id": "79709B01-4D9F-5506-B02D-D9BBD53745B5"
+            }
+          ],
+          "id": "495AE206-70FC-5275-B4F9-89935C4A3455"
         }
       ],
       "type": "P"
@@ -25797,7 +26505,7 @@
       },
       "defKey": "t_transaction_risk_assessment",
       "defName": "交易风险评估快照",
-      "comment": "冻结一个 Payment Attempt 使用的 Order Context、消费者与网络最小输入",
+      "comment": "冻结一个 Payment Attempt 风控评估使用的 Payment 最小输入、稳定输入摘要和认证要求",
       "properties": {
         "logicalTableKey": "transaction_risk_assessment",
         "compositeForeignKeys": []
@@ -26038,6 +26746,24 @@
           "id": "5956D34E-54EC-5298-861E-25580B03A7A6"
         },
         {
+          "defKey": "risk_action_id",
+          "defName": "Payment 风控 Action",
+          "comment": "Payment 风控 Action的稳定业务标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "0387525F-6757-5D8E-A6B1-7C880F43D517"
+        },
+        {
           "defKey": "order_id",
           "defName": "订单",
           "comment": "订单的稳定业务标识。",
@@ -26054,24 +26780,6 @@
           "extProps": {},
           "domain": "",
           "id": "64420DAF-435F-5656-A00C-95A7EF7AA826"
-        },
-        {
-          "defKey": "order_context_id",
-          "defName": "订单上下文",
-          "comment": "订单上下文的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "9D451FE8-A4E0-5310-A9E2-EFABC6C21E31"
         },
         {
           "defKey": "client_id",
@@ -26092,11 +26800,11 @@
           "id": "FA0CDAB3-96A5-54B6-96D3-37AF18657363"
         },
         {
-          "defKey": "operating_entity_id",
-          "defName": "经营主体",
-          "comment": "经营主体的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
+          "defKey": "entity_no",
+          "defName": "经营主体编号",
+          "comment": "Payment Intent 冻结的 Operating Entity 编号。取值来源：CCT Operating Entity；非固定枚举。",
+          "type": "CHAR",
+          "len": 5,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -26104,28 +26812,13 @@
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
           "domain": "",
-          "id": "F15956C7-0C33-54DA-BD74-2BA2F0D69DA8"
-        },
-        {
-          "defKey": "assignment_id",
-          "defName": "经营主体分配",
-          "comment": "经营主体分配的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "B0E2077E-F36A-51A9-B5CB-780168026516"
+          "id": "4912C318-620E-54D7-8DF0-EA7B24398AEC"
         },
         {
           "defKey": "payment_method_code",
@@ -26144,6 +26837,24 @@
           "extProps": {},
           "domain": "",
           "id": "D21A626D-34EB-5549-B166-54A1B7DF6A32"
+        },
+        {
+          "defKey": "capture_mode",
+          "defName": "捕获模式",
+          "comment": "捕获模式的稳定业务代码。允许值：AUTOMATIC、MANUAL。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "CC723D86-3445-5CB9-9646-6F931102D446"
         },
         {
           "defKey": "amount",
@@ -26202,7 +26913,7 @@
         {
           "defKey": "mcc_code",
           "defName": "MCC 行业码",
-          "comment": "Order Context 冻结且保留前导零的四位 MCC。取值来源：CCT 批准 MCC 目录；非固定枚举。",
+          "comment": "Payment Intent 冻结且保留前导零的四位 MCC。取值来源：CCT 批准 MCC 目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 4,
           "scale": "",
@@ -26216,6 +26927,24 @@
           "extProps": {},
           "domain": "",
           "id": "C078241E-A657-5A8B-B19F-314A0D86EC83"
+        },
+        {
+          "defKey": "consumer_country_code",
+          "defName": "消费者国家",
+          "comment": "Payment Intent 冻结的 ISO 3166-1 alpha-2 消费者国家；未提供时为空。取值来源：ISO 3166-1 alpha-2；非固定枚举。",
+          "type": "CHAR",
+          "len": 2,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {},
+          "domain": "",
+          "id": "396C3CC1-A245-5014-9ADB-FC6F270C149F"
         },
         {
           "defKey": "consumer_reference",
@@ -26272,29 +27001,110 @@
           "id": "FA92C1BB-DABB-5F1B-9C2E-405694D55B20"
         },
         {
-          "defKey": "network_evidence_id",
-          "defName": "网络证据",
-          "comment": "网络证据的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
+          "defKey": "client_ip_address",
+          "defName": "消费者 IP",
+          "comment": "首次评估冻结的消费者 IP 原值；受限字段，不进入日志、MQ 或稳定输入摘要。",
+          "type": "VARCHAR",
+          "len": 45,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
           "domain": "",
-          "id": "DCAAFCD3-81C8-5811-9A0A-789A7A579905"
+          "id": "BE99B8D9-C1D3-5307-8C2E-E5131A2EDBE9"
         },
         {
-          "defKey": "network_evidence_version",
-          "defName": "网络证据版本",
-          "comment": "网络证据版本的整数值。",
-          "type": "INT",
-          "len": "",
+          "defKey": "user_agent",
+          "defName": "浏览器标识",
+          "comment": "首次评估冻结的浏览器 User-Agent；仅记录，不参与规则或稳定输入摘要。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "018EB2B5-1E2B-5505-9C47-EF7325009AB8"
+        },
+        {
+          "defKey": "card_fingerprint",
+          "defName": "卡指纹",
+          "comment": "Payment Card 提供的跨交易稳定卡指纹；非卡支付为空。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "F0A6F432-63EA-5192-8AD9-FB1CEC543926"
+        },
+        {
+          "defKey": "card_bin",
+          "defName": "卡 BIN",
+          "comment": "卡号前 6 至 8 位数字；非卡支付为空。",
+          "type": "VARCHAR",
+          "len": 8,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "D7744375-9C0C-575C-A9BE-BF816455AD50"
+        },
+        {
+          "defKey": "authentication_requirement",
+          "defName": "认证要求",
+          "comment": "认证要求的稳定业务代码。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "F7B71C3B-E5E1-5671-BFB0-F71D635EAE77"
+        },
+        {
+          "defKey": "stable_input_hash",
+          "defName": "稳定输入哈希",
+          "comment": "稳定输入哈希的 SHA-256 小写十六进制值。",
+          "type": "CHAR",
+          "len": 64,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -26302,10 +27112,10 @@
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
           "extProps": {},
           "domain": "",
-          "id": "F35283B6-76CE-54C3-913B-59FC846A0486"
+          "id": "7C910174-C132-5150-B961-118C4F73799E"
         },
         {
           "defKey": "restricted_input_hash",
@@ -27695,7 +28505,7 @@
         {
           "defKey": "supported_subject_type",
           "defName": "支持主体类型",
-          "comment": "支持主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY。",
+          "comment": "支持主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY、CARD_FINGERPRINT、CARD_BIN。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -27727,6 +28537,24 @@
           "extProps": {},
           "domain": "",
           "id": "A287A187-4294-5FF6-9F05-5B3103B9F576"
+        },
+        {
+          "defKey": "list_purpose",
+          "defName": "名单用途",
+          "comment": "名单用途的稳定业务代码。允许值：BLOCK、ALLOW。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "68994B1A-CACD-52E5-A8AB-43BA22EBDE63"
         },
         {
           "defKey": "status",
@@ -27830,7 +28658,7 @@
       },
       "defKey": "t_risk_list_entry",
       "defName": "风险名单成员",
-      "comment": "保存名单内规范化主体的生效区间、来源 Action 和替代链",
+      "comment": "保存名单内规范化主体的生效区间、来源 Action 或人工维护记录和替代链",
       "properties": {
         "logicalTableKey": "risk_list_entry",
         "compositeForeignKeys": []
@@ -28037,7 +28865,7 @@
         {
           "defKey": "subject_type",
           "defName": "主体类型",
-          "comment": "主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY。",
+          "comment": "主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY、CARD_FINGERPRINT、CARD_BIN。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -28071,6 +28899,24 @@
           "id": "31D70F72-CAFD-5069-982D-D796E3A5BC53"
         },
         {
+          "defKey": "source_type",
+          "defName": "成员来源",
+          "comment": "成员来源的稳定业务代码。允许值：ACTION、MANUAL。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "3F09CCD3-57FA-5536-9950-5D092549A95B"
+        },
+        {
           "defKey": "source_effect_id",
           "defName": "来源 Action Effect",
           "comment": "来源 Action Effect的稳定业务标识。",
@@ -28078,7 +28924,7 @@
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -28087,6 +28933,78 @@
           "extProps": {},
           "domain": "",
           "id": "E144818B-AC13-57DE-B1D4-31C4F1F5A4B8"
+        },
+        {
+          "defKey": "reason",
+          "defName": "加入原因",
+          "comment": "加入原因的业务值。",
+          "type": "VARCHAR",
+          "len": 500,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "5B6C309D-1146-5521-8B07-D12DD7CBF300"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "人工添加人",
+          "comment": "人工添加人的稳定业务标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "0483137E-8469-57F5-9FE4-13376911C4CE"
+        },
+        {
+          "defKey": "deactivated_by",
+          "defName": "人工失效人",
+          "comment": "人工失效人的稳定业务标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "31B0AB81-4D28-5B79-AECB-C9B9193BFCC0"
+        },
+        {
+          "defKey": "deactivated_reason",
+          "defName": "失效原因",
+          "comment": "失效原因的业务值。",
+          "type": "VARCHAR",
+          "len": 500,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "BC62D35B-27F3-5E85-83DF-30EA931DD274"
         },
         {
           "defKey": "status",
@@ -29460,7 +30378,7 @@
         {
           "defKey": "subject_type",
           "defName": "主体类型",
-          "comment": "主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY。",
+          "comment": "主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY、CARD_FINGERPRINT、CARD_BIN。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -39616,11 +40534,41 @@
             }
           },
           {
-            "id": "451B2338-F309-5198-920C-3129A68CF1A0",
+            "id": "66D7C2D8-3E01-53D3-99EA-C5E7637D2B95",
             "shape": "table",
             "position": {
               "x": 860,
               "y": 798
+            },
+            "count": 0,
+            "originKey": "456FEC9B-97DE-55F3-9D19-9205B8115E9B",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 262
+            }
+          },
+          {
+            "id": "232AE933-FF77-5D55-8C7A-5FE94E747931",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 798
+            },
+            "count": 0,
+            "originKey": "A0D7740B-5E41-5632-9DBF-8F7EE5CF0027",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 220
+            }
+          },
+          {
+            "id": "451B2338-F309-5198-920C-3129A68CF1A0",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 1230
             },
             "count": 0,
             "originKey": "F080F522-B682-58E4-A91E-235E00B768D1",
@@ -39634,8 +40582,8 @@
             "id": "41AB22F7-04CB-5385-BE6B-1464C15F1F57",
             "shape": "table",
             "position": {
-              "x": 1290,
-              "y": 798
+              "x": 430,
+              "y": 1230
             },
             "count": 0,
             "originKey": "733C7530-CE31-523F-99E4-C6C2C1D312B7",
@@ -39649,8 +40597,8 @@
             "id": "6ABA391C-2E6F-518D-977F-BDFE0D61AD02",
             "shape": "table",
             "position": {
-              "x": 0,
-              "y": 1296
+              "x": 860,
+              "y": 1230
             },
             "count": 0,
             "originKey": "35ABAF0F-BC40-54DD-9BD3-E00098B8CA17",
@@ -39664,8 +40612,8 @@
             "id": "E7AC8FF0-388B-59FC-9AA7-7CA470B88FC2",
             "shape": "table",
             "position": {
-              "x": 430,
-              "y": 1296
+              "x": 1290,
+              "y": 1230
             },
             "count": 0,
             "originKey": "B024DA05-7C49-59C7-BFA8-F9457A614AC6",
@@ -39679,8 +40627,8 @@
             "id": "A21D9033-04C1-5445-A17D-DFE81C93B219",
             "shape": "table",
             "position": {
-              "x": 860,
-              "y": 1296
+              "x": 0,
+              "y": 1728
             },
             "count": 0,
             "originKey": "C230B1B7-DC87-5306-B7DF-365E018E0A5C",
@@ -39694,8 +40642,8 @@
             "id": "1196C92F-A4D0-5165-ABC2-B18937452331",
             "shape": "table",
             "position": {
-              "x": 1290,
-              "y": 1296
+              "x": 430,
+              "y": 1728
             },
             "count": 0,
             "originKey": "953B4CC3-53F9-5B6C-99F3-786C76376AA9",
@@ -39709,8 +40657,8 @@
             "id": "BB4C8DD9-DA21-5445-B0E6-0B4B82B68D62",
             "shape": "table",
             "position": {
-              "x": 0,
-              "y": 1860
+              "x": 860,
+              "y": 1728
             },
             "count": 0,
             "originKey": "6B90733E-2C12-5340-8EAF-C94406AF9123",
@@ -39724,8 +40672,8 @@
             "id": "61E7EA4A-1694-592D-8CD6-800FBB37F029",
             "shape": "table",
             "position": {
-              "x": 430,
-              "y": 1860
+              "x": 1290,
+              "y": 1728
             },
             "count": 0,
             "originKey": "8F294262-2547-501A-B928-8C9909A78A54",
@@ -39739,8 +40687,8 @@
             "id": "E57A6F6C-8FDB-5767-A98D-204CDEFAD492",
             "shape": "table",
             "position": {
-              "x": 860,
-              "y": 1860
+              "x": 0,
+              "y": 2292
             },
             "count": 0,
             "originKey": "0BB4AC80-83CD-5507-88D7-1E204881C6D5",
@@ -39754,23 +40702,23 @@
             "id": "E203D97C-8105-5AF8-A338-9EF2B631F07D",
             "shape": "table",
             "position": {
-              "x": 1290,
-              "y": 1860
+              "x": 430,
+              "y": 2292
             },
             "count": 0,
             "originKey": "39F07913-10A1-5BEC-A59F-3D0B5259804F",
             "type": "P",
             "size": {
               "width": 390,
-              "height": 394
+              "height": 416
             }
           },
           {
             "id": "4F255DA6-EF1C-55F8-96B5-C2EDEA775607",
             "shape": "table",
             "position": {
-              "x": 0,
-              "y": 2314
+              "x": 860,
+              "y": 2292
             },
             "count": 0,
             "originKey": "40012E6A-7A05-51A6-A671-4011B2C861F2",
@@ -39784,8 +40732,8 @@
             "id": "0453195D-BF18-5719-9799-69CE3B4589A4",
             "shape": "table",
             "position": {
-              "x": 430,
-              "y": 2314
+              "x": 1290,
+              "y": 2292
             },
             "count": 0,
             "originKey": "AA4A17EA-C355-577C-AFB8-9457BF084562",
@@ -39799,8 +40747,8 @@
             "id": "82EFBCA4-CFD2-5F37-BC94-8381B6AC2588",
             "shape": "table",
             "position": {
-              "x": 860,
-              "y": 2314
+              "x": 0,
+              "y": 2922
             },
             "count": 0,
             "originKey": "D9AAA950-28A6-55AC-B2C8-D7EE41EEE030",
@@ -39814,8 +40762,8 @@
             "id": "09B0B7EF-D348-56C0-95F4-9686EC07DAA1",
             "shape": "table",
             "position": {
-              "x": 1290,
-              "y": 2314
+              "x": 430,
+              "y": 2922
             },
             "count": 0,
             "originKey": "FEA83BAD-7B7E-5107-BC38-E240BAC3BCDC",
@@ -39829,8 +40777,8 @@
             "id": "A1534989-EDCE-5EDB-A606-38FAC8123754",
             "shape": "table",
             "position": {
-              "x": 0,
-              "y": 2944
+              "x": 860,
+              "y": 2922
             },
             "count": 0,
             "originKey": "95884D0D-8C04-5149-9037-B01DC6CD87BA",
@@ -39844,8 +40792,8 @@
             "id": "C267E3E8-36C0-5CA4-9B6D-7CF65985F9D1",
             "shape": "table",
             "position": {
-              "x": 430,
-              "y": 2944
+              "x": 1290,
+              "y": 2922
             },
             "count": 0,
             "originKey": "767938F7-02B1-5DBF-B8B1-457F522AF586",
@@ -39859,23 +40807,23 @@
             "id": "3A9DA6FD-9146-53BB-86B8-37B91F497A77",
             "shape": "table",
             "position": {
-              "x": 860,
-              "y": 2944
+              "x": 0,
+              "y": 3354
             },
             "count": 0,
             "originKey": "BD6A216C-D2F6-55B5-AD36-DAE49148CF9B",
             "type": "P",
             "size": {
               "width": 390,
-              "height": 746
+              "height": 768
             }
           },
           {
             "id": "67AB1AD7-5D52-5A1D-B322-E55E4A342210",
             "shape": "table",
             "position": {
-              "x": 1290,
-              "y": 2944
+              "x": 430,
+              "y": 3354
             },
             "count": 0,
             "originKey": "C24CB854-521C-5489-8812-BF7D80B50CCD",
@@ -39883,6 +40831,21 @@
             "size": {
               "width": 390,
               "height": 328
+            }
+          },
+          {
+            "id": "170D8BC1-9C99-5569-AA54-7F75FBA7632E",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 3354
+            },
+            "count": 0,
+            "originKey": "D16318B7-1B77-5E31-9F8D-0EB0C0AF6A9D",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 306
             }
           },
           {
@@ -40094,6 +41057,72 @@
             "target": {
               "cell": "F7654CF1-C65C-526E-802A-3958ECC874E3",
               "port": "ED2FD9F5-0683-5E0B-97A6-194395946BF8%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "B5A36936-1B6F-574E-913F-12CC3C0BE563",
+            "shape": "erdRelation",
+            "originKey": "6601509C-F1C9-5407-8BEF-E989B40922E8",
+            "source": {
+              "cell": "66D7C2D8-3E01-53D3-99EA-C5E7637D2B95",
+              "port": "E8D5EF30-3C21-5F1E-BB50-684AD01609FC%out"
+            },
+            "target": {
+              "cell": "F7654CF1-C65C-526E-802A-3958ECC874E3",
+              "port": "ED2FD9F5-0683-5E0B-97A6-194395946BF8%in"
+            },
+            "relation": "1:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "B58A6100-2410-5FAE-A26E-78E539717D78",
+            "shape": "erdRelation",
+            "originKey": "B8669B0F-B4A7-5CCD-A9ED-AE224930D6EB",
+            "source": {
+              "cell": "232AE933-FF77-5D55-8C7A-5FE94E747931",
+              "port": "66CC8FC4-67B6-51B5-B61D-B38879FEA20C%out"
+            },
+            "target": {
+              "cell": "F7654CF1-C65C-526E-802A-3958ECC874E3",
+              "port": "ED2FD9F5-0683-5E0B-97A6-194395946BF8%in"
+            },
+            "relation": "1:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "3F4E6A8F-17B6-5D2A-A9B2-D359B3FBA70B",
+            "shape": "erdRelation",
+            "originKey": "39A69A85-3402-5960-B4D7-5BE2DDB06D70",
+            "source": {
+              "cell": "232AE933-FF77-5D55-8C7A-5FE94E747931",
+              "port": "B3C7F125-2811-597A-A940-3B23FCDCE353%out"
+            },
+            "target": {
+              "cell": "170D8BC1-9C99-5569-AA54-7F75FBA7632E",
+              "port": "E9C5F93A-196E-5699-A698-79213DFCE9E4%in"
             },
             "relation": "n:1",
             "vertices": [],
@@ -40524,6 +41553,28 @@
             "isLock": true
           },
           {
+            "id": "37B404DE-89FC-5C69-928A-9569B6A1FD5E",
+            "shape": "erdRelation",
+            "originKey": "EF9F218A-4391-5EB6-BF75-5F0FE2852CC3",
+            "source": {
+              "cell": "E203D97C-8105-5AF8-A338-9EF2B631F07D",
+              "port": "8A210E7C-8E84-5091-BCAE-3AEEE9BBEAD6%out"
+            },
+            "target": {
+              "cell": "09B0B7EF-D348-56C0-95F4-9686EC07DAA1",
+              "port": "4EC779CE-7F6D-551C-8AA0-47BECA5CDD7E%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
             "id": "F2856715-713B-5FE0-8628-6260F65CD9DF",
             "shape": "erdRelation",
             "originKey": "48973113-29DE-5C81-81C8-046286DC17F2",
@@ -40854,6 +41905,28 @@
             "isLock": true
           },
           {
+            "id": "DACF2241-0CD3-57FC-907D-9671561D01D5",
+            "shape": "erdRelation",
+            "originKey": "659C6961-891D-59EE-941D-BA1614388142",
+            "source": {
+              "cell": "3A9DA6FD-9146-53BB-86B8-37B91F497A77",
+              "port": "DD25C388-59BC-5E70-8F34-8DFDDD920C75%out"
+            },
+            "target": {
+              "cell": "F7654CF1-C65C-526E-802A-3958ECC874E3",
+              "port": "ED2FD9F5-0683-5E0B-97A6-194395946BF8%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
             "id": "95DB8A13-3471-50B7-B944-6F74B97C8474",
             "shape": "erdRelation",
             "originKey": "8BF14992-0DF6-5847-BFFB-27F3435D4EF7",
@@ -40889,6 +41962,8 @@
           "t_decision_point_obligation",
           "t_feature_version",
           "t_feature_dependency",
+          "t_velocity_feature_definition",
+          "t_list_feature_definition",
           "t_rule_set",
           "t_rule_set_version",
           "t_risk_rule",
@@ -40908,7 +41983,9 @@
           "t_risk_variable",
           "t_risk_variable_member"
         ],
-        "referenceTables": []
+        "referenceTables": [
+          "t_risk_list"
+        ]
       },
       "id": "2B6DE8F5-DE32-58FD-9565-13FF97F5CEE4",
       "comment": "决策点与规则发布边界关系图"
@@ -41021,7 +42098,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 548
+              "height": 658
             }
           },
           {
@@ -41081,7 +42158,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 394
+              "height": 416
             }
           },
           {
@@ -41729,7 +42806,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 284
+              "height": 306
             }
           },
           {
@@ -41744,7 +42821,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 372
+              "height": 482
             }
           },
           {
@@ -41767,7 +42844,7 @@
             "shape": "table",
             "position": {
               "x": 0,
-              "y": 432
+              "y": 542
             },
             "count": 0,
             "originKey": "39620583-E902-5107-BFE6-96770A02229C",
@@ -41782,7 +42859,7 @@
             "shape": "table",
             "position": {
               "x": 430,
-              "y": 432
+              "y": 542
             },
             "count": 0,
             "originKey": "D40A996E-D620-59E0-8B3D-1D8EF10D0A86",
@@ -41797,7 +42874,7 @@
             "shape": "table",
             "position": {
               "x": 860,
-              "y": 432
+              "y": 542
             },
             "count": 0,
             "originKey": "8ADF0B5B-C081-50D1-8AF8-653C5A565DB0",
@@ -41812,7 +42889,7 @@
             "shape": "table",
             "position": {
               "x": 1290,
-              "y": 432
+              "y": 542
             },
             "count": 0,
             "originKey": "39F5A7A9-7298-518D-9F57-B7EF8835E9FA",
@@ -42163,7 +43240,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 548
+              "height": 658
             }
           },
           {
@@ -43224,7 +44301,7 @@
       "controlIntensity": "S",
       "applyObjectType": "P",
       "applyFieldType": "entity",
-      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_dd_program_requirement\",\"t_dd_program_check\",\"t_dd_program_screening\",\"t_dd_case_subject\",\"t_dd_case_classification\",\"t_dd_party_snapshot\",\"t_dd_check\",\"t_screening_resolution\",\"t_dd_case_state_change\",\"t_qualification_decision\",\"t_qualification_state_change\",\"t_decision_point_input_field\",\"t_decision_point_feature\",\"t_decision_point_rule_set\",\"t_decision_point_obligation\",\"t_feature_dependency\",\"t_action_parameter_definition\",\"t_rule_action\",\"t_release_audit_event\",\"t_evaluation_feature_result\",\"t_evaluation_rule_trace\",\"t_checkout_input_snapshot\",\"t_transaction_risk_assessment\",\"t_settlement_risk_assessment\",\"t_velocity_event\",\"t_velocity_event_subject\",\"t_decision_point_limit_binding\",\"t_limit_reservation\",\"t_limit_group_state_change\",\"t_limit_movement\",\"t_settlement_control_scope\",\"t_settle_control_state_change\",\"t_dispute_state_change\",\"t_dispute_evidence_ref\",\"t_dispute_outcome\",\"t_dispute_liability_decision\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
+      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_dd_program_requirement\",\"t_dd_program_check\",\"t_dd_program_screening\",\"t_dd_case_subject\",\"t_dd_case_classification\",\"t_dd_party_snapshot\",\"t_dd_check\",\"t_screening_resolution\",\"t_dd_case_state_change\",\"t_qualification_decision\",\"t_qualification_state_change\",\"t_decision_point_input_field\",\"t_decision_point_feature\",\"t_decision_point_rule_set\",\"t_decision_point_obligation\",\"t_feature_dependency\",\"t_velocity_feature_definition\",\"t_list_feature_definition\",\"t_action_parameter_definition\",\"t_rule_action\",\"t_release_audit_event\",\"t_evaluation_feature_result\",\"t_evaluation_rule_trace\",\"t_checkout_input_snapshot\",\"t_transaction_risk_assessment\",\"t_settlement_risk_assessment\",\"t_velocity_event\",\"t_velocity_event_subject\",\"t_decision_point_limit_binding\",\"t_limit_reservation\",\"t_limit_group_state_change\",\"t_limit_movement\",\"t_settlement_control_scope\",\"t_settle_control_state_change\",\"t_dispute_state_change\",\"t_dispute_evidence_ref\",\"t_dispute_outcome\",\"t_dispute_liability_decision\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
       "enable": true
     },
     {

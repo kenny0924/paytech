@@ -478,6 +478,27 @@ CREATE TABLE `t_feature_dependency` (
   KEY `idx_feature_dep_ver` (`dependency_feature_version_id`) COMMENT '支持访问路径：dependency_feature_version_id'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存一个 Feature Version 对其他 Feature Version 的有序显式依赖';
 
+CREATE TABLE `t_velocity_feature_definition` (
+  `feature_version_id` BIGINT NOT NULL COMMENT '与所属 Feature Version 共享的主键。',
+  `event_code` VARCHAR(64) NOT NULL COMMENT '事件编码的稳定业务代码。允许值：PAYMENT_ATTEMPT_ASSESSED、PAYMENT_ATTEMPT_REJECTED。',
+  `anchor_subject_type` VARCHAR(64) NOT NULL COMMENT '锚定主体类型的稳定业务代码。允许值：CLIENT、OPERATING_ENTITY、CONSUMER、IP_ADDRESS、CARD_FINGERPRINT。',
+  `metric` VARCHAR(64) NOT NULL COMMENT '累计算法的稳定业务代码。允许值：COUNT、SUM_AMOUNT、DISTINCT_COUNT、LAST_AMOUNT、SECONDS_SINCE_LAST。',
+  `distinct_subject_type` VARCHAR(64) NULL COMMENT '去重主体类型的稳定业务代码。允许值：CLIENT、OPERATING_ENTITY、CONSUMER、IP_ADDRESS、CARD_FINGERPRINT。',
+  `window_seconds` INT NOT NULL COMMENT '窗口秒数的整数值。',
+  `include_current` BOOLEAN NOT NULL COMMENT '是否计入本次，1 表示是，0 表示否。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`feature_version_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='冻结一个实时累计 Feature Version 的事件、锚定主体、算法和窗口；创建后不可修改';
+
+CREATE TABLE `t_list_feature_definition` (
+  `feature_version_id` BIGINT NOT NULL COMMENT '与所属 Feature Version 共享的主键。',
+  `list_id` BIGINT NOT NULL COMMENT '风险名单的稳定业务标识。',
+  `subject_type` VARCHAR(64) NOT NULL COMMENT '主体类型的稳定业务代码。允许值：CLIENT、OPERATING_ENTITY、CONSUMER、IP_ADDRESS、CARD_FINGERPRINT、CARD_BIN。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`feature_version_id`),
+  KEY `idx_list_feature_list` (`list_id`) COMMENT '支持访问路径：list_id'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='冻结一个名单命中 Feature Version 的名单与主体类型，主体取值由类型对应的支付输入字段决定；创建后不可修改';
+
 CREATE TABLE `t_rule_set` (
   `rule_set_id` BIGINT NOT NULL COMMENT '规则集整体管理身份，创建后不变；由服务侧 Snowflake 生成，历史回填使用单独审阅的身份映射。',
   `decision_point_id` BIGINT NOT NULL COMMENT '所属 Risk 决策点标识；与规则集编码共同确定创建后不可改变的业务身份。',
@@ -651,6 +672,7 @@ CREATE TABLE `t_decision_release` (
   `release_no` VARCHAR(64) NOT NULL COMMENT '发布编号的业务值。',
   `decision_point_id` BIGINT NOT NULL COMMENT '决策事件点的稳定业务标识。',
   `point_version_id` BIGINT NOT NULL COMMENT '事件点版本的稳定业务标识。',
+  `decision_flow_version_id` BIGINT NULL COMMENT '决策流版本的稳定业务标识。',
   `environment_code` VARCHAR(64) NOT NULL COMMENT '环境编码的稳定业务代码。允许值：TEST、PRODUCTION。',
   `status` VARCHAR(64) NOT NULL COMMENT '发布状态的稳定业务代码。允许值：DRAFT、VALIDATING、SHADOWING、REVIEW_PENDING、APPROVED、ACTIVE、SUPERSEDED、REJECTED。',
   `active_slot` BOOLEAN NULL COMMENT '活动发布占位，1 表示是，0 表示否，NULL 表示不适用。',
@@ -664,7 +686,8 @@ CREATE TABLE `t_decision_release` (
   PRIMARY KEY (`release_id`),
   UNIQUE KEY `uk_release_no` (`release_no`) COMMENT '保证业务唯一性：release_no',
   UNIQUE KEY `uk_release_active` (`decision_point_id`, `environment_code`, `active_slot`) COMMENT '保证业务唯一性：decision_point_id、environment_code、active_slot',
-  KEY `idx_release_point_ver` (`point_version_id`) COMMENT '支持访问路径：point_version_id'
+  KEY `idx_release_point_ver` (`point_version_id`) COMMENT '支持访问路径：point_version_id',
+  KEY `idx_release_flow_ver` (`decision_flow_version_id`) COMMENT '支持访问路径：decision_flow_version_id'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='冻结一个事件点和环境的完整候选或生效决策快照';
 
 CREATE TABLE `t_release_audit_event` (
@@ -799,11 +822,12 @@ CREATE TABLE `t_risk_variable` (
   `variable_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '全库唯一且创建后不可修改、不可复用的变量编码，格式为大写字母开头的大写字母数字下划线。取值来源：Risk 统一变量库；非固定枚举。',
   `variable_name` VARCHAR(255) NOT NULL COMMENT '运营展示名称，可修改；不参与规则或流程内容 Hash。',
   `description` VARCHAR(500) NULL COMMENT '变量用途的非敏感说明；未填写时为空。',
-  `source_type` VARCHAR(64) NOT NULL COMMENT '来源类型，允许 INPUT、CONSTANT、COLLECTION、NODE_OUTPUT；创建后固定。允许值：INPUT、CONSTANT、COLLECTION、NODE_OUTPUT。',
+  `source_type` VARCHAR(64) NOT NULL COMMENT '来源类型，允许 INPUT、CONSTANT、COLLECTION、NODE_OUTPUT、VELOCITY、LIST；创建后固定。允许值：INPUT、CONSTANT、COLLECTION、NODE_OUTPUT、VELOCITY、LIST。',
   `value_type` VARCHAR(64) NOT NULL COMMENT '标量类型或集合成员类型，允许 STRING、NUMBER、BOOLEAN、DATETIME、DURATION；创建后固定。允许值：STRING、NUMBER、BOOLEAN、DATETIME、DURATION。',
   `point_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '适用决策点；INPUT 和 NODE_OUTPUT 必填，常量和集合为空表示全部已支持决策点。取值来源：Risk 决策点目录；非固定枚举。',
   `source_contract_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'INPUT 的输入合同或 NODE_OUTPUT 的输出合同代码；其他来源为空。取值来源：Risk 精确输入或节点输出合同；非固定枚举。',
   `source_contract_version` INT NULL COMMENT '来源合同的准确版本；仅 INPUT 和 NODE_OUTPUT 非空，不取最新版本兜底。',
+  `feature_version_id` BIGINT NULL COMMENT 'VELOCITY 与 LIST 来源创建时生成的不可变 Feature Version；其他来源为空。',
   `source_field` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '来源合同中的准确顶层字段键；仅 INPUT 和 NODE_OUTPUT 非空，不接受任意路径、SQL 或脚本。',
   `rule_condition_flag` TINYINT(1) NOT NULL COMMENT '是否可用于规则条件；0 或 1，受来源合同允许用途约束。',
   `flow_condition_flag` TINYINT(1) NOT NULL COMMENT '是否可用于流程连线条件；0 或 1，节点输出仅当前规则集节点出线可用。',
@@ -829,7 +853,8 @@ CREATE TABLE `t_risk_variable` (
   UNIQUE KEY `uk_risk_variable_code` (`variable_code`) COMMENT '保证变量编码永久唯一',
   KEY `idx_risk_variable_filter` (`status`, `source_type`, `variable_code`) COMMENT '支持可用目录按状态和来源查询',
   KEY `idx_risk_variable_options` (`allowed_values_variable_code`) COMMENT '支持集合被用作可选值来源的反查',
-  KEY `idx_risk_variable_currency` (`currency_variable_code`) COMMENT '支持币种变量使用关系和删除保护'
+  KEY `idx_risk_variable_currency` (`currency_variable_code`) COMMENT '支持币种变量使用关系和删除保护',
+  KEY `idx_risk_variable_feature` (`feature_version_id`) COMMENT '支持由 Feature Version 反查所属变量'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='统一拥有风控变量定义、来源映射、适用范围及当前常量值；不保存变量历史或执行结果';
 
 CREATE TABLE `t_risk_variable_member` (
@@ -1032,21 +1057,26 @@ CREATE TABLE `t_transaction_risk_assessment` (
   `evaluation_id` BIGINT NOT NULL COMMENT '决策评估的稳定业务标识。',
   `payment_intent_id` BIGINT NOT NULL COMMENT '支付 Intent的稳定业务标识。',
   `payment_attempt_id` BIGINT NOT NULL COMMENT '支付 Attempt的稳定业务标识。',
+  `risk_action_id` BIGINT NOT NULL COMMENT 'Payment 风控 Action的稳定业务标识。',
   `order_id` BIGINT NOT NULL COMMENT '订单的稳定业务标识。',
-  `order_context_id` BIGINT NOT NULL COMMENT '订单上下文的稳定业务标识。',
   `client_id` BIGINT NOT NULL COMMENT 'Client 客户的稳定业务标识。',
-  `operating_entity_id` BIGINT NOT NULL COMMENT '经营主体的稳定业务标识。',
-  `assignment_id` BIGINT NOT NULL COMMENT '经营主体分配的稳定业务标识。',
+  `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'Payment Intent 冻结的 Operating Entity 编号。取值来源：CCT Operating Entity；非固定枚举。',
   `payment_method_code` VARCHAR(64) NOT NULL COMMENT '支付方式代码的稳定业务代码。取值来源：Payment Method Catalog；非固定枚举。',
+  `capture_mode` VARCHAR(64) NOT NULL COMMENT '捕获模式的稳定业务代码。允许值：AUTOMATIC、MANUAL。',
   `amount` DECIMAL(24,8) NOT NULL COMMENT '支付金额，精度为 24 位、小数位为 8 位。',
   `currency` CHAR(3) NOT NULL COMMENT 'ISO 4217 alpha-3 支付币种。取值来源：ISO 4217 alpha-3；非固定枚举。',
   `industry_code` VARCHAR(64) NOT NULL COMMENT '行业代码的稳定业务代码。取值来源：CCT 行业目录；非固定枚举。',
-  `mcc_code` VARCHAR(4) NOT NULL COMMENT 'Order Context 冻结且保留前导零的四位 MCC。取值来源：CCT 批准 MCC 目录；非固定枚举。',
+  `mcc_code` VARCHAR(4) NOT NULL COMMENT 'Payment Intent 冻结且保留前导零的四位 MCC。取值来源：CCT 批准 MCC 目录；非固定枚举。',
+  `consumer_country_code` CHAR(2) NULL COMMENT 'Payment Intent 冻结的 ISO 3166-1 alpha-2 消费者国家；未提供时为空。取值来源：ISO 3166-1 alpha-2；非固定枚举。',
   `consumer_reference` VARCHAR(128) NULL COMMENT '消费者引用的业务值。',
   `consumer_email_vault_token` VARCHAR(128) NULL COMMENT '消费者 Email Token的业务值。',
   `consumer_phone_vault_token` VARCHAR(128) NULL COMMENT '消费者 Phone Token的业务值。',
-  `network_evidence_id` BIGINT NOT NULL COMMENT '网络证据的稳定业务标识。',
-  `network_evidence_version` INT NOT NULL COMMENT '网络证据版本的整数值。',
+  `client_ip_address` VARCHAR(45) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '首次评估冻结的消费者 IP 原值；受限字段，不进入日志、MQ 或稳定输入摘要。',
+  `user_agent` VARCHAR(512) NULL COMMENT '首次评估冻结的浏览器 User-Agent；仅记录，不参与规则或稳定输入摘要。',
+  `card_fingerprint` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Payment Card 提供的跨交易稳定卡指纹；非卡支付为空。',
+  `card_bin` VARCHAR(8) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '卡号前 6 至 8 位数字；非卡支付为空。',
+  `authentication_requirement` VARCHAR(64) NULL COMMENT '认证要求的稳定业务代码。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED。',
+  `stable_input_hash` CHAR(64) NOT NULL COMMENT '稳定输入哈希的 SHA-256 小写十六进制值。',
   `restricted_input_hash` CHAR(64) NOT NULL COMMENT '受限输入哈希的 SHA-256 小写十六进制值。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。',
   PRIMARY KEY (`assessment_id`),
@@ -1054,7 +1084,7 @@ CREATE TABLE `t_transaction_risk_assessment` (
   UNIQUE KEY `uk_txn_risk_attempt` (`payment_attempt_id`) COMMENT '保证业务唯一性：payment_attempt_id',
   KEY `idx_txn_risk_order` (`order_id`) COMMENT '支持访问路径：order_id',
   KEY `idx_txn_risk_client` (`client_id`, `create_time`) COMMENT '支持访问路径：client_id、create_time'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='冻结一个 Payment Attempt 使用的 Order Context、消费者与网络最小输入';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='冻结一个 Payment Attempt 风控评估使用的 Payment 最小输入、稳定输入摘要和认证要求';
 
 CREATE TABLE `t_settlement_risk_assessment` (
   `assessment_id` BIGINT NOT NULL COMMENT '结算风险评估快照的稳定业务标识。',
@@ -1104,8 +1134,9 @@ CREATE TABLE `t_risk_list` (
   `list_id` BIGINT NOT NULL COMMENT '风险名单的稳定业务标识。',
   `list_code` VARCHAR(64) NOT NULL COMMENT '名单编码的稳定业务代码。取值来源：Risk & Compliance 受控代码目录；非固定枚举。',
   `list_name` VARCHAR(255) NOT NULL COMMENT '名单名称的业务值。',
-  `supported_subject_type` VARCHAR(64) NOT NULL COMMENT '支持主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY。',
+  `supported_subject_type` VARCHAR(64) NOT NULL COMMENT '支持主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY、CARD_FINGERPRINT、CARD_BIN。',
   `matching_mode` VARCHAR(64) NOT NULL COMMENT '匹配模式的稳定业务代码。取值来源：Risk 工程注册名单匹配模式目录；非固定枚举。',
+  `list_purpose` VARCHAR(64) NOT NULL COMMENT '名单用途的稳定业务代码。允许值：BLOCK、ALLOW。',
   `status` VARCHAR(64) NOT NULL COMMENT '名单状态的稳定业务代码。允许值：ACTIVE、INACTIVE。',
   `version` INT NOT NULL COMMENT '名单并发版本的整数值。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。',
@@ -1117,9 +1148,14 @@ CREATE TABLE `t_risk_list` (
 CREATE TABLE `t_risk_list_entry` (
   `entry_id` BIGINT NOT NULL COMMENT '风险名单成员的稳定业务标识。',
   `list_id` BIGINT NOT NULL COMMENT '风险名单的稳定业务标识。',
-  `subject_type` VARCHAR(64) NOT NULL COMMENT '主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY。',
+  `subject_type` VARCHAR(64) NOT NULL COMMENT '主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY、CARD_FINGERPRINT、CARD_BIN。',
   `subject_key` VARCHAR(256) NOT NULL COMMENT '规范化主体键的业务值。',
-  `source_effect_id` BIGINT NOT NULL COMMENT '来源 Action Effect的稳定业务标识。',
+  `source_type` VARCHAR(64) NOT NULL COMMENT '成员来源的稳定业务代码。允许值：ACTION、MANUAL。',
+  `source_effect_id` BIGINT NULL COMMENT '来源 Action Effect的稳定业务标识。',
+  `reason` VARCHAR(500) NULL COMMENT '加入原因的业务值。',
+  `created_by` BIGINT NULL COMMENT '人工添加人的稳定业务标识。',
+  `deactivated_by` BIGINT NULL COMMENT '人工失效人的稳定业务标识。',
+  `deactivated_reason` VARCHAR(500) NULL COMMENT '失效原因的业务值。',
   `status` VARCHAR(64) NOT NULL COMMENT '成员状态的稳定业务代码。允许值：ACTIVE、EXPIRED、RELEASED、SUPERSEDED。',
   `active_slot` BOOLEAN NULL COMMENT '当前生效槽位，1 表示是，0 表示否，NULL 表示不适用。',
   `effective_from` DATETIME(6) NOT NULL COMMENT '生效时间对应的 UTC 微秒时间。',
@@ -1133,7 +1169,7 @@ CREATE TABLE `t_risk_list_entry` (
   KEY `idx_list_entry_subject` (`subject_type`, `subject_key`, `effective_from`) COMMENT '支持访问路径：subject_type、subject_key、effective_from',
   KEY `idx_list_entry_effect` (`source_effect_id`) COMMENT '支持访问路径：source_effect_id',
   KEY `idx_list_entry_prev` (`supersedes_entry_id`) COMMENT '支持访问路径：supersedes_entry_id'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存名单内规范化主体的生效区间、来源 Action 和替代链';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存名单内规范化主体的生效区间、来源 Action 或人工维护记录和替代链';
 
 CREATE TABLE `t_payment_attempt_fact` (
   `fact_id` BIGINT NOT NULL COMMENT 'Payment Attempt 事实投影的稳定业务标识。',
@@ -1175,7 +1211,7 @@ CREATE TABLE `t_velocity_event` (
 CREATE TABLE `t_velocity_event_subject` (
   `event_subject_id` BIGINT NOT NULL COMMENT '风险事件主体关联的稳定业务标识。',
   `velocity_event_id` BIGINT NOT NULL COMMENT '风险频次事件的稳定业务标识。',
-  `subject_type` VARCHAR(64) NOT NULL COMMENT '主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY。',
+  `subject_type` VARCHAR(64) NOT NULL COMMENT '主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY、CARD_FINGERPRINT、CARD_BIN。',
   `subject_key` VARCHAR(256) NOT NULL COMMENT '规范化主体键的业务值。',
   `event_code` VARCHAR(64) NOT NULL COMMENT '冻结事件编码的稳定业务代码。取值来源：Risk Velocity 事件目录；非固定枚举。',
   `occurred_time` DATETIME(6) NOT NULL COMMENT '冻结事件发生时间对应的 UTC 微秒时间。',

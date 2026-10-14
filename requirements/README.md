@@ -56,6 +56,7 @@ requirements/
 
 | 登记目录 | 需求 | 主入口/Owner | 关联编号 | 材料 |
 |---|---|---|---|---|
+| `20261014` | 支付反欺诈一期 | Risk & Compliance / Payment 支付风控步骤 | 支付尝试运行期评估、实时累计、运营名单、3DS 认证要求、影子运行；阶段 1～3 已确认，阶段 4 研发完成待确认 | [需求](./20261014/risk-支付反欺诈一期/requirement.md) · [差异与影响](./20261014/risk-支付反欺诈一期/technique.md) · [方案设计](./20261014/risk-支付反欺诈一期/design.md) · [确认记录](./20261014/risk-支付反欺诈一期/delivery.md) |
 | `20261014` | 渠道标准 API 实现的沙箱验证与证据留存 | Platform Support / Operations Console | Operations 页面维护验证账号与多步骤用例，沙箱实测并保存脱敏报文证据与验证状态；PayerMax UAT 为首批用例 | [需求](./20261014/platform-support-渠道沙箱验证/requirement.md) · [技术方案](./20261014/platform-support-渠道沙箱验证/technique.md) · [确认记录](./20261014/platform-support-渠道沙箱验证/delivery.md) |
 | `20261014` | PayerMax 收银台支付与交易查询接入（本机联调） | Platform Support / 外部 API 执行 | 引擎补签名字节锁定、RSA、协议时间、数字金额；标准 API `PAY`/`PAY_QUERY`；本机直连 PayerMax UAT | [需求](./20261014/platform-support-PayerMax接入/requirement.md) · [技术方案](./20261014/platform-support-PayerMax接入/technique.md) · [确认记录](./20261014/platform-support-PayerMax接入/delivery.md) |
 | `20261013` | 渠道 API 配置资料迁移 | Platform Support / 文档归属 | 2026-10-13 已执行资料迁移；代码与数据库不迁移 | [需求](./20261013/platform-support-渠道API配置资料迁移/requirement.md) · [资料盘点与方案](./20261013/platform-support-渠道API配置资料迁移/technique.md) · [确认记录](./20261013/platform-support-渠道API配置资料迁移/delivery.md) |

@@ -16,6 +16,8 @@ import {
   uniqueIndex as uk,
 } from "../schema-dsl.mjs";
 
+const SUBJECT_TYPES = ["CONSUMER", "EMAIL_TOKEN", "PHONE_TOKEN", "IP_ADDRESS", "CLIENT", "OPERATING_ENTITY", "CARD_FINGERPRINT", "CARD_BIN"];
+
 export const TABLES = Object.freeze([
   defineTable({
     key: "risk_restriction",
@@ -53,8 +55,9 @@ export const TABLES = Object.freeze([
       pk("list_id", "风险名单标识", "风险名单的稳定业务标识"),
       code("list_code", "名单编码"),
       str("list_name", "名单名称"),
-      code("supported_subject_type", "支持主体类型", "NN", ["CONSUMER", "EMAIL_TOKEN", "PHONE_TOKEN", "IP_ADDRESS", "CLIENT", "OPERATING_ENTITY"]),
+      code("supported_subject_type", "支持主体类型", "NN", SUBJECT_TYPES),
       code("matching_mode", "匹配模式", "NN", null, "Risk 工程注册名单匹配模式目录"),
+      code("list_purpose", "名单用途", "NN", ["BLOCK", "ALLOW"]),
       code("status", "名单状态", "NN", ["ACTIVE", "INACTIVE"]),
       int("version", "名单并发版本"),
     ],
@@ -63,13 +66,18 @@ export const TABLES = Object.freeze([
   defineTable({
     key: "risk_list_entry",
     name: "风险名单成员",
-    comment: "保存名单内规范化主体的生效区间、来源 Action 和替代链",
+    comment: "保存名单内规范化主体的生效区间、来源 Action 或人工维护记录和替代链",
     fields: [
       pk("entry_id", "名单成员标识", "风险名单成员的稳定业务标识"),
       id("list_id", "风险名单"),
-      code("subject_type", "主体类型", "NN", ["CONSUMER", "EMAIL_TOKEN", "PHONE_TOKEN", "IP_ADDRESS", "CLIENT", "OPERATING_ENTITY"]),
+      code("subject_type", "主体类型", "NN", SUBJECT_TYPES),
       str("subject_key", "规范化主体键", "NN", 256),
-      id("source_effect_id", "来源 Action Effect"),
+      code("source_type", "成员来源", "NN", ["ACTION", "MANUAL"]),
+      id("source_effect_id", "来源 Action Effect", "N"),
+      str("reason", "加入原因", "N", 500),
+      id("created_by", "人工添加人", "N"),
+      id("deactivated_by", "人工失效人", "N"),
+      str("deactivated_reason", "失效原因", "N", 500),
       code("status", "成员状态", "NN", ["ACTIVE", "EXPIRED", "RELEASED", "SUPERSEDED"]),
       bool("active_slot", "当前生效槽位", "N", "仅当前 ACTIVE 成员写 1，历史成员写 NULL"),
       time("effective_from", "生效时间"),
@@ -143,7 +151,7 @@ export const TABLES = Object.freeze([
     fields: [
       pk("event_subject_id", "事件主体标识", "风险事件主体关联的稳定业务标识"),
       id("velocity_event_id", "风险频次事件"),
-      code("subject_type", "主体类型", "NN", ["CONSUMER", "EMAIL_TOKEN", "PHONE_TOKEN", "IP_ADDRESS", "CLIENT", "OPERATING_ENTITY"]),
+      code("subject_type", "主体类型", "NN", SUBJECT_TYPES),
       str("subject_key", "规范化主体键", "NN", 256),
       code("event_code", "冻结事件编码", "NN", null, "Risk Velocity 事件目录"),
       time("occurred_time", "冻结事件发生时间"),

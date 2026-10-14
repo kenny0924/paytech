@@ -38,6 +38,8 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_decision_point_obligation",
     "t_feature_version",
     "t_feature_dependency",
+    "t_velocity_feature_definition",
+    "t_list_feature_definition",
     "t_rule_set",
     "t_rule_set_version",
     "t_risk_rule",
@@ -112,23 +114,23 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "f169987a11a0f8e6e93fe189e95781a19fd4bb24d3c98037b1ff9b38dad55490";
-export const EXPECTED_STRUCTURAL_DIGEST = "f86a2a6aab85199c611ff353ad837cc4cd2da86e40fe539e8960834aa14196e1";
+export const EXPECTED_MODEL_DIGEST = "69ed138876308f816d96f52bd4efda63bade86b5968019b4e058b01611a814f9";
+export const EXPECTED_STRUCTURAL_DIGEST = "0f27bec17fba68f74ed15e6f36cd90015a9cd631e97ca8021c9f035da2b5a9f7";
 export const EXPECTED_CHECK_POLICY_DIGEST = "aa200f92b79ab33b36c8ed3310b76412d06b362d0e69b569b5f9957458c5d14f";
 
 export const EXPECTED_TOTALS = Object.freeze({
-  tables: 81,
-  fields: 1003,
+  tables: 83,
+  fields: 1028,
   uniqueIndexes: 119,
-  accessIndexes: 87,
-  relations: 127,
-  oneToOneRelations: 9,
+  accessIndexes: 90,
+  relations: 132,
+  oneToOneRelations: 11,
   diagramGroups: 8,
 });
 
 export const EXPECTED_GROUP_SIZES = Object.freeze({
   due_diligence: 20,
-  decision_engine: 28,
+  decision_engine: 30,
   evaluation: 8,
   risk_data: 6,
   limits: 7,
@@ -387,8 +389,9 @@ export const REQUIRED_FIELDS = Object.freeze({
     "operating_entity_id", "assignment_id", "industry_code", "mcc_code", "amount", "currency", "input_hash",
   ]),
   t_transaction_risk_assessment: Object.freeze([
-    "assessment_id", "evaluation_id", "payment_attempt_id", "order_context_id", "client_id",
-    "operating_entity_id", "payment_method_code", "amount", "currency", "restricted_input_hash",
+    "assessment_id", "evaluation_id", "payment_attempt_id", "risk_action_id", "client_id",
+    "entity_no", "payment_method_code", "amount", "currency", "authentication_requirement",
+    "stable_input_hash", "restricted_input_hash",
   ]),
   t_payment_attempt_fact: Object.freeze([
     "fact_id", "payment_attempt_id", "attempt_status", "limit_reservation_group_id",
