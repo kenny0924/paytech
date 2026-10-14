@@ -32,7 +32,6 @@ public class RegisterClientProcessor extends AbstractLockProcessor<ClientEmailRe
     private final OperationsAuditService audit;
     private final AuthenticationEmailSender emailSender;
     private final PlatformTransactionManager transactionManager;
-    final TransactionTemplate transaction;
     private final CustomerRegistrationService registration;
     private final ClientAuthenticationProperties properties;
     private final ClientEmailChallengePreparation preparation;
@@ -61,7 +60,7 @@ public class RegisterClientProcessor extends AbstractLockProcessor<ClientEmailRe
         }
         boolean committed;
         try {
-            committed = Boolean.TRUE.equals(transaction.execute(status -> {
+            committed = Boolean.TRUE.equals(transaction().execute(status -> {
                 audit.observeTransaction();
                 var context = preparation.currentIssue(plan);
                 if (context == null) {

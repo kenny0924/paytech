@@ -188,6 +188,10 @@ public interface OperationsTestMapper {
     @Select("SELECT * FROM t_user_account WHERE realm=#{realm} ORDER BY account_id")
     List<Map<String, Object>> accounts(String realm);
 
+    /** 读取账号的认证挑战（注册验证、密码重置）。 */
+    @Select("SELECT * FROM t_authentication_challenge WHERE account_id=#{accountId} ORDER BY challenge_id")
+    List<Map<String, Object>> challenges(long accountId);
+
     /** 读取账号的密码凭据。 */
     @Select("SELECT * FROM t_password_credential WHERE account_id=#{accountId}")
     Map<String, Object> password(long accountId);

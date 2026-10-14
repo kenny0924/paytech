@@ -20,7 +20,7 @@
         <include refid="FileReadCandidates"/>
     </select>
     <select id="fileAccount" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionAccount">
-        SELECT account_id,realm,account_type,status FROM t_user_account WHERE account_id=#{id}
+        SELECT account_id AS accountId,realm,account_type AS accountType,status FROM t_user_account WHERE account_id=#{id}
     </select>
     <select id="lockFileReadCandidates" flushCache="true" useCache="false"
         resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OnboardingTenantCandidate">
@@ -41,10 +41,12 @@
             AND r.system_role=1 AND r.role_code='TENANT_ONBOARDING_OWNER'
         ORDER BY t.tenant_id,m.member_id FOR UPDATE
     </select>
-    <sql id="ProjectionColumns">tenant_id, owner_ref_id, owner_status, source_version, source_payload_hash, version</sql>
+    <!-- 全局未开启下划线转驼峰；Lombok fluent DataObject 需显式别名。 -->
+    <sql id="ProjectionColumns">tenant_id AS tenantId, owner_ref_id AS ownerRefId, owner_status AS ownerStatus,
+        source_version AS sourceVersion, source_payload_hash AS sourcePayloadHash, version</sql>
     <select id="lockAccount" flushCache="true" useCache="false"
         resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionAccount">
-        SELECT account_id, realm, account_type, status FROM t_user_account WHERE account_id=#{id} FOR UPDATE
+        SELECT account_id AS accountId, realm, account_type AS accountType, status FROM t_user_account WHERE account_id=#{id} FOR UPDATE
     </select>
     <select id="find" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjection">
         SELECT <include refid="ProjectionColumns"/> FROM t_access_tenant
@@ -56,7 +58,7 @@
         WHERE tenant_type='CLIENT' AND owner_ref_id=#{ownerRefId} FOR UPDATE
     </select>
     <select id="owners" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionMember">
-        SELECT member_id, account_id FROM t_tenant_member WHERE tenant_id=#{tenantId} AND member_type='OWNER'
+        SELECT member_id AS memberId, account_id AS accountId FROM t_tenant_member WHERE tenant_id=#{tenantId} AND member_type='OWNER'
         ORDER BY member_id
     </select>
     <insert id="insertTenant">
