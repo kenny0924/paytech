@@ -44,8 +44,20 @@
 
 用户确认阶段 6（回复“可以”），执行阶段 7。
 
-## 8. 阶段 7 结果（2026-10-16，待确认）
+## 8. 阶段 7 结果（2026-10-16，已确认）
 
 [部署与验收记录](./release/test-acceptance.md)：备份后注册 32 行与激活（v27，路由 228 → 231）；BFF、Web 替换为候选镜像；合成评估 3 个；浏览器 17/17、回归 29/29；日志无受限原值；已清理。过程中 Client 入驻会话并行部署导致一次 503，已核对不影响本需求。
 
 **待提交差异：**operations-console-bff 21 个文件、operations-console-web 13 个文件（与部署镜像源码一致）；需求目录；`requirements/README.md` 与 `agent-docs/CURRENT_IMPLEMENTATION.md` 只提交本需求的行。
+
+## 9. 阶段 8 提交（2026-10-16，用户回复“可以”）
+
+- `7fc47d6` feat(operations): risk evaluation query page in the Operations console（BFF 21、Web 13、需求目录、README 本需求行，共 70 个文件）
+- `1cd5a2e` docs(operations): record risk evaluation query delivery in the ledger（CURRENT_IMPLEMENTATION 本需求一节）
+- 核对：`1cd5a2e` 的 operations-console-bff、operations-console-web 与 mor-test 部署镜像的构建源码逐文件一致；未纳入他人改动（含 `operations-console-web/docs/design.pen`）；未推送。
+
+## 10. 遗留
+
+- 解释编排在 BFF integration 层（受既有应用级测试的类名断言限制），如需按规范移入 service/Processor，需同时放宽该断言。
+- test 没有影子评估与带路径的拒绝评估，这两个页面场景只在本机验证。
+- 未建立只读权限的测试账号，权限拆分只验证了管理员与 PLT-I02 拒绝的自动测试。
