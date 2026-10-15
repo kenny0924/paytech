@@ -166,7 +166,7 @@ public final class DecisionFlowValidatorImpl implements DecisionFlowValidator {
          * @return 补齐后的输出；非放行结束节点或决策点无声明时原样返回
          */
         Map<String, String> outputsWithDefaults(Node node) {
-            if (!END.equals(node.type()) || !ALLOW.equals(node.decisionCode())) {
+            if (!END.equals(node.type()) || !OutputDescriptor.END_DECISION.getCode().equals(node.decisionCode())) {
                 return node.outputs();
             }
             DecisionPointAuthoringDescriptor descriptor = DecisionPointAuthoringDescriptor.find(command.pointCode())
@@ -235,7 +235,7 @@ public final class DecisionFlowValidatorImpl implements DecisionFlowValidator {
             if (node.outputs().isEmpty()) {
                 return;
             }
-            if (!ALLOW.equals(node.decisionCode())) {
+            if (!OutputDescriptor.END_DECISION.getCode().equals(node.decisionCode())) {
                 errors.add("INVALID_NODE_CONFIG", node.nodeKey(), null, field + ".outputs", "只有放行结束节点可以配置附加输出");
                 return;
             }

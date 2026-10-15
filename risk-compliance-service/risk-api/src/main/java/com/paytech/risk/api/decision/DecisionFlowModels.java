@@ -564,6 +564,99 @@ public final class DecisionFlowModels {
         public void setPointName(String pointName) { this.pointName = pointName; }
     }
 
+    /** 决策点声明的附加输出：编码、展示名称、可选值、默认值及可配置的结束决定。 */
+    public static final class OutputDeclaration {
+
+        /** 输出编码，如 AUTHENTICATION_REQUIREMENT。 */
+        private String outputCode;
+
+        /** 展示名称。 */
+        private String name;
+
+        /** 可选值，按展示顺序。 */
+        private List<OutputValue> allowedValues;
+
+        /** 放行结束节点未配置时保存的取值。 */
+        private String defaultValue;
+
+        /** 可配置该输出的结束决定，目前只有 ALLOW。 */
+        private List<String> allowedEndDecisions;
+
+        /** 供 JSON 属性绑定使用。 */
+        public OutputDeclaration() { }
+
+        /** 根据完整查询事实构造响应。 */
+        public OutputDeclaration(String outputCode, String name, List<OutputValue> allowedValues, String defaultValue,
+            List<String> allowedEndDecisions) {
+            this.outputCode = outputCode;
+            this.name = name;
+            this.allowedValues = allowedValues;
+            this.defaultValue = defaultValue;
+            this.allowedEndDecisions = allowedEndDecisions;
+        }
+
+        /** 返回输出编码。 */
+        public String getOutputCode() { return outputCode; }
+
+        /** 设置输出编码。 */
+        public void setOutputCode(String outputCode) { this.outputCode = outputCode; }
+
+        /** 返回展示名称。 */
+        public String getName() { return name; }
+
+        /** 设置展示名称。 */
+        public void setName(String name) { this.name = name; }
+
+        /** 返回可选值。 */
+        public List<OutputValue> getAllowedValues() { return allowedValues; }
+
+        /** 设置可选值。 */
+        public void setAllowedValues(List<OutputValue> allowedValues) { this.allowedValues = allowedValues; }
+
+        /** 返回默认值。 */
+        public String getDefaultValue() { return defaultValue; }
+
+        /** 设置默认值。 */
+        public void setDefaultValue(String defaultValue) { this.defaultValue = defaultValue; }
+
+        /** 返回可配置的结束决定。 */
+        public List<String> getAllowedEndDecisions() { return allowedEndDecisions; }
+
+        /** 设置可配置的结束决定。 */
+        public void setAllowedEndDecisions(List<String> allowedEndDecisions) { this.allowedEndDecisions = allowedEndDecisions; }
+    }
+
+    /** 附加输出的一个可选值。 */
+    public static final class OutputValue {
+
+        /** 取值编码。 */
+        private String value;
+
+        /** 展示名称。 */
+        private String name;
+
+        /** 供 JSON 属性绑定使用。 */
+        public OutputValue() { }
+
+        /** 根据完整查询事实构造响应。 */
+        public OutputValue(String value, String name) {
+            this.value = value;
+            this.name = name;
+        }
+
+        /** 返回取值编码。 */
+        public String getValue() { return value; }
+
+        /** 设置取值编码。 */
+        public void setValue(String value) { this.value = value; }
+
+        /** 返回展示名称。 */
+        public String getName() { return name; }
+
+        /** 设置展示名称。 */
+        public void setName(String name) { this.name = name; }
+    }
+
     /** 当前点可用于条件的字段及输入域，不包含任何运行原值。 */
     public static final class Field {
 

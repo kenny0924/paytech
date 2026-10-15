@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.ExecutionReleaseQueryMapper">
+    <sql id="filter">
+        WHERE dr.decision_point_id = #{decisionPointId} AND dr.decision_flow_version_id IS NOT NULL
+        <if test="status != null">AND dr.status = #{status}</if>
+    </sql>
+    <!-- 激活人取进入 ACTIVE 的状态审计；一次发布最多激活一次。 -->
+    <select id="selectPage" useCache="false" resultType="com.paytech.risk.decision.core.dal.dataobject.ExecutionReleaseSummary">
+        SELECT dr.release_id AS releaseId, dr.release_no AS releaseNo, dp.point_code AS pointCode,
+            dr.environment_code AS environmentCode, dr.status AS status, f.flow_id AS flowId, f.flow_code AS flowCode,
+            dr.decision_flow_version_id AS flowVersionId, fv.version_no AS flowVersionNo, dr.content_hash AS contentHash,
+            dr.created_by AS createdBy, dr.create_time AS createTime,
+            (SELECT a.actor_id FROM t_release_audit_event a WHERE a.release_id = dr.release_id
+                AND a.event_type = 'STATE_CHANGE' AND a.to_status = 'ACTIVE' ORDER BY a.event_time DESC LIMIT 1) AS activatedBy,
+            dr.activated_time AS activatedTime, dr.superseded_time AS supersededTime
+        FROM t_decision_release dr
+        JOIN t_decision_point dp ON dp.decision_point_id = dr.decision_point_id
+        JOIN t_decision_flow_version fv ON fv.flow_version_id = dr.decision_flow_version_id
+        JOIN t_decision_flow f ON f.flow_id = fv.flow_id
+        <include refid="filter"/>
+        ORDER BY dr.create_time DESC, dr.release_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="count" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_decision_release dr <include refid="filter"/>
+    </select>
+</mapper>

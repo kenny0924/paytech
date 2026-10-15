@@ -41,7 +41,7 @@ public class DecisionReleaseRequestConfiguration implements WebMvcConfigurer {
             .disable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION).build();
     }
 
-    /** 拒绝 Candidate 接口的未知、重复、空 Query 以及查询 Body。 */
+    /** 拒绝发布接口（Candidate 与执行发布）的未知、重复、空 Query 以及查询 Body。 */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new HandlerInterceptor() {
@@ -68,9 +68,9 @@ public class DecisionReleaseRequestConfiguration implements WebMvcConfigurer {
         builder.configureMessageConvertersList(list -> list.addFirst(new ReleaseRequestConverter(mapper)));
     }
 
-    /** 查询名单来自 DecisionReleaseManagementApi 声明；详情与两个写操作不接受 Query。 */
+    /** 查询名单来自 DecisionReleaseManagementApi 与 ExecutionReleaseManagementApi 的列表声明；详情与写操作不接受 Query。 */
     static Set<String> keys(String method, String path) {
-        if ("GET".equals(method) && path.endsWith("/candidates")) {
+        if ("GET".equals(method) && (path.endsWith("/candidates") || path.endsWith("/executions"))) {
             return Set.of("page", "size", "pointCode", "status");
         }
         return Set.of();

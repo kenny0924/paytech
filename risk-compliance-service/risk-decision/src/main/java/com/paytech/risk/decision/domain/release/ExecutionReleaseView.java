@@ -35,7 +35,7 @@ public record ExecutionReleaseView(long releaseId, String releaseNo, String poin
      * @param sampleCount 实际样本数
      * @param allowToReviewCount 放行变审核
      * @param allowToDenyCount 放行变拒绝
-     * @param denyToAllowCount 拒绝或审核变放行
+     * @param denyToAllowCount 拒绝变放行（审核变放行不计入）
      * @param actionChangeCount 认证要求变化
      * @param featureMissingCount Feature 无值
      * @param failedCount 候选执行失败

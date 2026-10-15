@@ -2,9 +2,11 @@ package com.paytech.risk.api.decision.response;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.paytech.risk.api.decision.DecisionFlowModels.Field;
 import com.paytech.risk.api.decision.DecisionFlowModels.Limits;
 import com.paytech.risk.api.decision.DecisionFlowModels.NodeOutput;
+import com.paytech.risk.api.decision.DecisionFlowModels.OutputDeclaration;
 import com.paytech.risk.api.decision.DecisionFlowModels.SupportedPoint;
 import com.paytech.risk.api.decision.RiskVariableModels;
 
@@ -43,6 +45,10 @@ public class FlowAuthoringContextResponseBody {
 
     /** 变量查询所需的决策点与用途。 */
     private RiskVariableModels.VariableQueryContext variableQueryContext;
+
+    /** 当前决策点声明、可由放行结束节点配置的附加输出；没有声明时不输出该键。 */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<OutputDeclaration> outputs;
 
     /** 供 JSON 属性绑定使用。 */
     public FlowAuthoringContextResponseBody() { }
@@ -127,4 +133,10 @@ public class FlowAuthoringContextResponseBody {
 
     /** 设置变量查询所需的决策点与用途。 */
     public void setVariableQueryContext(RiskVariableModels.VariableQueryContext variableQueryContext) { this.variableQueryContext = variableQueryContext; }
+
+    /** 返回附加输出声明。 */
+    public List<OutputDeclaration> getOutputs() { return outputs; }
+
+    /** 设置附加输出声明。 */
+    public void setOutputs(List<OutputDeclaration> outputs) { this.outputs = outputs; }
 }

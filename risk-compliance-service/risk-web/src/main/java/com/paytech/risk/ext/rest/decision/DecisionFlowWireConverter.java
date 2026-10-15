@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.risk.api.decision.DecisionFlowModels;
 import com.paytech.risk.api.decision.DecisionFlowModels.Condition;
 import com.paytech.risk.api.decision.DecisionFlowModels.Edge;
 import com.paytech.risk.api.decision.DecisionFlowModels.Expression;
@@ -33,6 +34,7 @@ import com.paytech.risk.api.decision.response.LegacyPointResponseBody;
 import com.paytech.risk.api.decision.response.RuleSetReferenceResponseBody;
 import com.paytech.risk.api.decision.response.SaveFlowResponseBody;
 import com.paytech.risk.api.decision.response.ValidateFlowResponseBody;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.flow.DecisionFlow;
 import com.paytech.risk.decision.domain.query.FlowAuthoringContextView;
 import com.paytech.risk.decision.domain.query.FlowDetailView;
@@ -175,7 +177,7 @@ final class DecisionFlowWireConverter {
     /** 仅将 Owner 已形成的能力投影转换为 HTTP 字段。 */
     static FlowAuthoringContextResponseBody authoring(FlowAuthoringContextView view) {
         var point = view.getDescriptor().point();
-        return new FlowAuthoringContextResponseBody(List.of(new SupportedPoint(point.pointCode(), point.pointName())),
+        FlowAuthoringContextResponseBody body = new FlowAuthoringContextResponseBody(List.of(new SupportedPoint(point.pointCode(), point.pointName())),
             point.pointCode(), point.inputContractCode(), point.inputContractVersion(), 1,
             view.getFields().stream().map(f -> new Field(f.getFieldCode(), f.getLabel(), f.getValueType(),
                 f.isRequired(), f.getOperators(), f.getLiteralDomain(), f.getVariableCode())).toList(),
@@ -183,6 +185,15 @@ final class DecisionFlowWireConverter {
                 f.isRequired(), f.getOperators(), f.getVariableCode())).toList(),
             new Limits(65536, 50, 100, 8192, 32, 8), "RISK_VARIABLE_AUTHORING", 2,
             new RiskVariableModels.VariableQueryContext(point.pointCode(), point.inputContractCode(), point.inputContractVersion(), "FLOW_CONDITION"));
+        body.setOutputs(view.getDescriptor().outputs().stream().map(DecisionFlowWireConverter::output).toList());
+        return body;
+    }
+
+    /** 决策点附加输出声明；可配置的结束决定与流程保存校验同源。 */
+    static DecisionFlowModels.OutputDeclaration output(DecisionPointAuthoringDescriptor.OutputDescriptor output) {
+        return new DecisionFlowModels.OutputDeclaration(output.outputCode(), output.name(),
+            output.values().stream().map(value -> new DecisionFlowModels.OutputValue(value.value(), value.name())).toList(),
+            output.defaultValue(), List.of(DecisionPointAuthoringDescriptor.OutputDescriptor.END_DECISION.getCode()));
     }
 
     private static Long id(String value) {

@@ -88,7 +88,7 @@
 - **验收：** 只读回归通过；业务验收 61 项全部通过；在用规则集删除返回 409；日志无受限原值；验收数据已清理，行数回到验收前。
 - **待提交：** `test-environment/compose.applications.yaml` 一行配置与本需求发布记录（不推送）。
 
-## 9. 阶段 8 交付归档（2026-10-15，待用户确认结束）
+## 9. 阶段 8 交付归档（2026-10-15，用户确认本次交付结束）
 
 **完成范围：** Risk 支付尝试风控（`PAYMENT_ATTEMPT_RISK`）：统一评估接口 `POST /risk-decisions/v1/evaluations`、名单与名单命中、实时累计 Feature、决策流与执行发布（校验、影子运行、激活与替代）、结束节点附加输出（认证要求）、失败即拒绝（FAILED/TIMED_OUT）、评估事实落库与重放；运营名单维护；规则集在用保护。风控标准目录与全部风控点接口映射。
 
@@ -117,8 +117,8 @@
 **恢复证据：** 备份 `~/Code-MoR-backups/20261015-risk-payment-fraud-test/20261015T062054Z/`；回退步骤与 [test-rollback.sql](./release/test-rollback.sql)（已演练）见 [release.md 第 7 节](./release/release.md#7-恢复)。
 
 **遗留事项：**
-1. Payment 接入统一评估接口（[设计第 14 节](./design.md#14-交给-payment-的接入清单不在本会话范围)、[修订第 6 节](./design-amendment-unified-evaluation.md)）——Payment 会话。
-2. 运营后台（BFF/页面）配置结束节点附加输出、管理支付规则与执行发布——Operations 会话。
+1. Payment 接入统一评估接口——Payment 会话，交接单 [handoff/payment.md](./handoff/payment.md)。
+2. 运营后台（BFF/页面）风控点切换、新变量来源、名单维护、结束节点附加输出、执行发布——Operations 会话，交接单 [handoff/operations.md](./handoff/operations.md)；Risk 侧前置：决策流创作上下文返回附加输出声明。
 3. test 支付决策点暂无生效发布，评估返回 503，需运营配置后激活。
 4. 查询风险决定（RCO-I06）与评估解释（RCO-I10）接口未实现。
 5. 规则集“发布引用”分页列表未纳入执行发布，需另行设计接口。

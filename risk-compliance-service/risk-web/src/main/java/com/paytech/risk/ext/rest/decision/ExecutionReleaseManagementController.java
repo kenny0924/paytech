@@ -3,23 +3,32 @@ package com.paytech.risk.ext.rest.decision;
 import static com.paytech.risk.service.convert.DecisionReleaseExceptionConverter.mapped;
 
 import java.time.Instant;
+import java.util.Arrays;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.foundation.web.paging.PagingRequestBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.risk.api.decision.ExecutionReleaseManagementApi;
 import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
 import com.paytech.risk.api.decision.request.StartShadowRunRequestBody;
+import com.paytech.risk.api.decision.response.ExecutionReleaseListItemResponseBody;
 import com.paytech.risk.api.decision.response.ExecutionReleaseResponseBody;
 import com.paytech.risk.api.decision.response.ShadowRun;
 import com.paytech.risk.api.decision.response.StaticCheck;
+import com.paytech.risk.decision.domain.enums.DecisionReleaseStatus;
+import com.paytech.risk.decision.domain.release.ExecutionReleasePageView;
 import com.paytech.risk.decision.domain.release.ExecutionReleaseView;
 import com.paytech.risk.decision.service.processor.ActivateExecutionReleaseProcessor;
 import com.paytech.risk.decision.service.processor.CreateExecutionReleaseProcessor;
 import com.paytech.risk.decision.service.processor.GetExecutionReleaseProcessor;
+import com.paytech.risk.decision.service.processor.ListExecutionReleasesProcessor;
 import com.paytech.risk.decision.service.processor.StartShadowRunProcessor;
 import com.paytech.risk.decision.service.processor.ValidateExecutionReleaseProcessor;
 import com.paytech.risk.decision.service.processor.request.CreateExecutionReleaseRequest;
 import com.paytech.risk.decision.service.processor.request.ExecutionReleaseCommandRequest;
+import com.paytech.risk.decision.service.processor.request.ListExecutionReleasesRequest;
 import com.paytech.risk.decision.service.processor.request.StartShadowRunRequest;
 import com.paytech.risk.service.request.RiskOperationRequestContextParser;
 
@@ -31,6 +40,7 @@ import lombok.AllArgsConstructor;
 public class ExecutionReleaseManagementController implements ExecutionReleaseManagementApi {
     private final RiskOperationRequestContextParser context;
     private final GetExecutionReleaseProcessor getProcessor;
+    private final ListExecutionReleasesProcessor listProcessor;
     private final StartShadowRunProcessor shadowProcessor;
     private final CreateExecutionReleaseProcessor createProcessor;
     private final ValidateExecutionReleaseProcessor validateProcessor;
@@ -45,6 +55,20 @@ public class ExecutionReleaseManagementController implements ExecutionReleaseMan
             context.parseRequiredUpperCode("pointCode", requestBody.getPointCode()),
             context.parsePositiveId("flowVersionId", requestBody.getFlowVersionId()));
         return toBody(mapped(() -> createProcessor.process(request)));
+    }
+
+    /** 分页查询执行发布；pointCode 必填，状态可选。 */
+    @Override
+    public PagingResponseBody<ExecutionReleaseListItemResponseBody> listExecutions(String actorAccountId,
+        String sessionId, Integer page, Integer size, String pointCode, String status) {
+        context.parse(actorAccountId, sessionId);
+        PagingRequestBody paging = PagingRequestBody.of(page, size);
+        var request = new ListExecutionReleasesRequest(paging.page(), paging.size(),
+            context.parseRequiredUpperCode("pointCode", pointCode),
+            parseStatus(context.parseOptionalUpperCode("status", status)));
+        ExecutionReleasePageView view = mapped(() -> listProcessor.process(request));
+        return new PagingResponseBody<>(view.items().stream().map(ExecutionReleaseManagementController::toBody).toList(),
+            view.page(), view.size(), view.total());
     }
 
     /** 查询执行发布。 */
@@ -79,6 +103,37 @@ public class ExecutionReleaseManagementController implements ExecutionReleaseMan
     ExecutionReleaseCommandRequest command(String actorAccountId, String sessionId, String releaseId) {
         var actor = context.parse(actorAccountId, sessionId);
         return new ExecutionReleaseCommandRequest(actor.actorAccountId(), context.parsePositiveId("releaseId", releaseId));
+    }
+
+    /** 状态筛选：空值不筛选，未知 Code 拒绝。 */
+    static DecisionReleaseStatus parseStatus(String value) {
+        if (value == null) {
+            return null;
+        }
+        return Arrays.stream(DecisionReleaseStatus.values()).filter(status -> status.getCode().equals(value)).findFirst()
+            .orElseThrow(() -> new InvalidParameterException("status 格式无效"));
+    }
+
+    /** 列表项转换；ID 与时间以字符串传输。 */
+    static ExecutionReleaseListItemResponseBody toBody(ExecutionReleasePageView.Item item) {
+        ExecutionReleaseListItemResponseBody body = new ExecutionReleaseListItemResponseBody();
+        body.setReleaseId(Long.toString(item.releaseId()));
+        body.setReleaseNo(item.releaseNo());
+        body.setPointCode(item.pointCode());
+        body.setEnvironment(item.environment());
+        body.setStatus(item.status());
+        body.setActive(item.active());
+        body.setFlowId(Long.toString(item.flowId()));
+        body.setFlowCode(item.flowCode());
+        body.setFlowVersionId(Long.toString(item.flowVersionId()));
+        body.setFlowVersionNo(item.flowVersionNo());
+        body.setContentHash(item.contentHash());
+        body.setCreatedBy(Long.toString(item.createdBy()));
+        body.setCreateTime(text(item.createTime()));
+        body.setActivatedBy(item.activatedBy() == null ? null : Long.toString(item.activatedBy()));
+        body.setActivatedTime(text(item.activatedTime()));
+        body.setSupersededTime(text(item.supersededTime()));
+        return body;
     }
 
     /** 查询结果转换；ID 与时间以字符串传输。 */

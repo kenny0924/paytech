@@ -3,12 +3,15 @@ package com.paytech.risk.api.decision;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
+import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
 import com.paytech.risk.api.decision.request.StartShadowRunRequestBody;
+import com.paytech.risk.api.decision.response.ExecutionReleaseListItemResponseBody;
 import com.paytech.risk.api.decision.response.ExecutionReleaseResponseBody;
 
 import jakarta.validation.Valid;
@@ -36,6 +39,27 @@ public interface ExecutionReleaseManagementApi {
         @RequestHeader("X-Gateway-Actor-Subject") String actorAccountId,
         @RequestHeader("X-Gateway-Session-Id") String sessionId,
         @Valid @RequestBody CreateExecutionReleaseRequestBody requestBody);
+
+    /**
+     * 分页查询执行发布
+     *
+     * @param actorAccountId Gateway 传入的可信操作者 Account ID
+     * @param sessionId Gateway 传入的可信会话标识
+     * @param page 页码，缺省为 1，范围为 1–100000
+     * @param size 每页条数，缺省为 10，只允许 10、20、50、100、200
+     * @param pointCode 决策点编码，必填；未登记返回 400
+     * @param status 可选发布状态编码，未知返回 400；ACTIVE 即当前生效发布
+     * @return 按创建时间、发布 ID 倒序的分页；只含经决策流的执行发布，不含结账测试候选。
+     *         <li>已替代的发布不能重新激活；回滚以其 flowVersionId 新建执行发布并走校验、影子运行、激活。</li>
+     */
+    @GetExchange("/executions")
+    PagingResponseBody<ExecutionReleaseListItemResponseBody> listExecutions(
+        @RequestHeader("X-Gateway-Actor-Subject") String actorAccountId,
+        @RequestHeader("X-Gateway-Session-Id") String sessionId,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size,
+        @RequestParam(value = "pointCode", required = false) String pointCode,
+        @RequestParam(value = "status", required = false) String status);
 
     /**
      * 查询执行发布

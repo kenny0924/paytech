@@ -7,6 +7,7 @@ import java.util.Optional;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.risk.decision.domain.enums.ActionCategory;
+import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
 import com.paytech.risk.decision.domain.enums.ComparisonOperator;
 import com.paytech.risk.decision.domain.enums.ConfigurationStatus;
 import com.paytech.risk.decision.domain.enums.DataClassification;
@@ -62,8 +63,10 @@ public final class DecisionPointAuthoringDescriptor {
                     "a4d4709e280ee2d8c2a4dcc5537e91318a16b2cd27ba41a10d70bdae25e85716"),
                 action("DENY_PAYMENT", "拒绝支付", "DECISION_DENY_V1", DecisionValue.DENY,
                     "8dc8b20590fa0d0c98732d332871901c568207ba9e346277668c9daab3a1e9b7")),
-            List.of(new OutputDescriptor(AUTHENTICATION_REQUIREMENT, List.of("NOT_REQUIRED", "THREE_DS_REQUIRED"),
-                "NOT_REQUIRED")),
+            List.of(new OutputDescriptor(AUTHENTICATION_REQUIREMENT, "认证要求",
+                List.of(new OutputValue(AuthenticationRequirement.NOT_REQUIRED.getCode(), "无需认证"),
+                    new OutputValue(AuthenticationRequirement.THREE_DS_REQUIRED.getCode(), "需要 3DS")),
+                AuthenticationRequirement.NOT_REQUIRED.getCode())),
             true);
 
     private static final List<DecisionPointAuthoringDescriptor> ALL = List.of(CHECKOUT_PREPARE, PAYMENT_ATTEMPT_RISK);
@@ -227,22 +230,50 @@ public final class DecisionPointAuthoringDescriptor {
     }
 
     /**
-     * 风控点附加输出声明
+     * 风控点附加输出声明；只能由放行结束节点配置
      *
      * @param outputCode
      *            输出编码
-     * @param allowedValues
-     *            允许取值，按展示顺序
+     * @param name
+     *            展示名称
+     * @param values
+     *            允许取值及展示名称，按展示顺序
      * @param defaultValue
-     *            放行结束节点未配置时的取值
+     *            放行结束节点未配置时的取值，保存流程时写入
      */
-    public record OutputDescriptor(String outputCode, List<String> allowedValues, String defaultValue) {
+    public record OutputDescriptor(String outputCode, String name, List<OutputValue> values, String defaultValue) {
+        /** 可配置附加输出的结束决定。 */
+        public static final DecisionValue END_DECISION = DecisionValue.ALLOW;
+
+        /** 校验默认值属于允许取值。 */
         public OutputDescriptor {
             Objects.requireNonNull(outputCode);
-            allowedValues = List.copyOf(allowedValues);
-            if (!allowedValues.contains(defaultValue)) {
+            Objects.requireNonNull(name);
+            values = List.copyOf(values);
+            if (values.stream().noneMatch(value -> value.value().equals(defaultValue))) {
                 throw new IllegalArgumentException("默认值必须在允许取值内: " + outputCode);
             }
+        }
+
+        /** 允许的取值编码，按展示顺序。 */
+        public List<String> allowedValues() {
+            return values.stream().map(OutputValue::value).toList();
+        }
+    }
+
+    /**
+     * 附加输出的一个取值
+     *
+     * @param value
+     *            取值编码
+     * @param name
+     *            展示名称
+     */
+    public record OutputValue(String value, String name) {
+        /** 编码与名称必填。 */
+        public OutputValue {
+            Objects.requireNonNull(value);
+            Objects.requireNonNull(name);
         }
     }
 

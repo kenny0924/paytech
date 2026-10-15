@@ -5,7 +5,9 @@ import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERR
 import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder.action;
 import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder.predicate;
 import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder.rule;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +27,7 @@ import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.risk.api.decision.DecisionFlowManagementApi;
 import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
 import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
+import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.test.base.AbstractPaymentRiskApiTest;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.NodeSpec;
@@ -37,6 +40,7 @@ import tools.jackson.databind.JsonNode;
 /**
  * 决策流结束节点附加输出：支付决策点声明认证要求输出，由放行结束节点配置
  * <li>正常流程：放行结束节点保存 AUTHENTICATION_REQUIREMENT 后，流程详情按节点返回输出；未配置的放行结束节点保存时补齐合同默认值；非放行节点不返回该字段。</li>
+ * <li>创作上下文：支付点返回附加输出声明（编码、名称、可选值与名称、默认值、只允许放行结束节点）；结账点没有声明时不输出该键。</li>
  * <li>参数：非放行结束节点或规则集节点配置输出、输出编码未声明、取值不允许返回 422 并指出字段；输出值不是字符串返回 400。</li>
  *
  * @see DecisionFlowManagementApi
@@ -73,6 +77,31 @@ class FlowEndOutputApiAutoTest extends AbstractPaymentRiskApiTest {
                 AuthenticationRequirement.NOT_REQUIRED.getCode()),
             "allow_3ds", Map.of(PaymentAttemptRiskInput.AUTHENTICATION_REQUIREMENT,
                 AuthenticationRequirement.THREE_DS_REQUIRED.getCode())), outputs);
+    }
+
+    /** 创作上下文按风控点返回附加输出声明。 */
+    @Test
+    void test_normalFlow_authoringContext() {
+        JsonNode payment = getOk("/decision-flows/v1/authoring-context?pointCode=" + PAYMENT);
+        JsonNode checkout = getOk("/decision-flows/v1/authoring-context?pointCode=CHECKOUT_PREPARE");
+
+        JsonNode output = payment.path("outputs").path(0);
+        assertAll("附加输出声明", () -> assertEquals(1, payment.path("outputs").size()),
+            () -> assertEquals(PaymentAttemptRiskInput.AUTHENTICATION_REQUIREMENT, output.path("outputCode").asString()),
+            () -> assertEquals("认证要求", output.path("name").asString()),
+            () -> assertEquals(AuthenticationRequirement.NOT_REQUIRED.getCode(), output.path("defaultValue").asString()),
+            () -> assertEquals(List.of(DecisionValue.ALLOW.getCode()),
+                List.of(output.path("allowedEndDecisions").path(0).asString())),
+            () -> assertEquals(Map.of(AuthenticationRequirement.NOT_REQUIRED.getCode(), "无需认证",
+                AuthenticationRequirement.THREE_DS_REQUIRED.getCode(), "需要 3DS"), values(output)),
+            () -> assertFalse(checkout.has("outputs"), "结账点没有声明时不输出该键"));
+    }
+
+    /** 声明中的可选值编码到名称。 */
+    private static Map<String, String> values(JsonNode output) {
+        Map<String, String> values = new TreeMap<>();
+        output.path("allowedValues").forEach(value -> values.put(value.path("value").asString(), value.path("name").asString()));
+        return values;
     }
 
     /** 输出配置不符合决策点合同。 */
