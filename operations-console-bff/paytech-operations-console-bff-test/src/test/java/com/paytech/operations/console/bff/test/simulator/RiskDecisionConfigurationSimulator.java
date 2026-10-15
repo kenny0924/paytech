@@ -53,6 +53,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
     private final RiskFlowScenario flow = new RiskFlowScenario();
     private final RiskDictionaryScenario dictionary = new RiskDictionaryScenario();
     private final RiskControlScenario control = new RiskControlScenario();
+    private final RiskEvaluationScenario evaluation = new RiskEvaluationScenario();
     private final Map<String, CompletedCommand> commands = new LinkedHashMap<>();
     private volatile Mode mode = Mode.SUCCESS;
     private volatile Consumer<ObjectNode> wireMutation = ignored -> {};
@@ -133,6 +134,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         dictionary.reset();
         flow.reset();
         control.reset();
+        evaluation.reset();
         ruleSets.clear();
         ruleRoots.clear();
         candidates.clear();
@@ -148,6 +150,18 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
             status.equals("FROZEN") ? "10001" : null, status.equals("FROZEN") ? TIME : null, sampleRules()));
         var rule = ruleSets.get(id);
         ruleRoots.put(rule.getRuleSetCode(), new RuleSetState(Long.toString(90001 + ruleRoots.size())));
+    }
+
+    /** 登记完整的规则集版本详情（含条件树与当前变量），供评估解释组装条件。 */
+    public synchronized void addRuleSet(RuleSetDetailResponseBody detail) {
+        ruleSets.put(detail.getRuleSetVersionId(), detail);
+        ruleRoots.putIfAbsent(detail.getRuleSetCode(), new RuleSetState(Long.toString(90001 + ruleRoots.size())));
+    }
+
+    /** 登记一条评估的结论与解释 DTO。 */
+    public synchronized void addEvaluation(com.paytech.risk.api.evaluation.response.EvaluationResponseBody summary,
+        com.paytech.risk.api.evaluation.response.EvaluationExplanationResponseBody explanation) {
+        evaluation.add(summary, explanation);
     }
 
     public synchronized void candidateState(String state) {
@@ -200,8 +214,11 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         Request request = new Request(exchange.getRequestMethod(), exchange.getRequestURI().getPath(),
             exchange.getRequestURI().getRawQuery(), Map.copyOf(headers), body, sequence);
         journal.add(request);
-        if (!known(request) || request.header("X-Gateway-Actor-Subject") == null
-            || request.header("X-Gateway-Session-Id") == null || request.header("X-Request-Id") == null
+        // 评估查询为内部直连，不得携带 Gateway 身份头；其他 Risk 管理接口必须携带。
+        boolean internal = evaluation.known(request.method(), request.path());
+        boolean identity = request.header("X-Gateway-Actor-Subject") != null && request.header("X-Gateway-Session-Id") != null;
+        boolean anyIdentity = request.header("X-Gateway-Actor-Subject") != null || request.header("X-Gateway-Session-Id") != null;
+        if (!known(request) || (internal ? anyIdentity : !identity) || request.header("X-Request-Id") == null
             || request.header("Idempotency-Key") != null) {
             unexpected.add(request.method() + " " + request.path());
             sendProblem(exchange, 500, "SYSTEM_ERROR");
@@ -249,6 +266,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         if (flow.known(r.method(), r.path())) return true;
         if (dictionary.known(r.method(), r.path())) return true;
         if (control.known(r.method(), r.path())) return true;
+        if (evaluation.known(r.method(), r.path())) return true;
         if (r.method().equals("GET")) return r.path().startsWith("/decision-rule-sets/v1/authoring-context/")
             || r.path().equals(RULES) || r.path().matches(RULES + "/[1-9][0-9]*")
             || r.path().equals(CANDIDATES) || r.path().matches(CANDIDATES + "/[1-9][0-9]*");
@@ -275,6 +293,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         if (flow.known(request.method(), path)) return flow.dispatch(request, ruleSets.get("30001"));
         if (dictionary.known(request.method(), path)) return dictionary.dispatch(request);
         if (control.known(request.method(), path)) return control.dispatch(request);
+        if (evaluation.known(request.method(), path)) return evaluation.dispatch(request);
         if (request.method().equals("GET")) {
             // 只有支付点返回支付目录；其他风控点保持结账目录，供“请求与回执风控点不一致”用例使用。
             if (path.equals("/decision-rule-sets/v1/authoring-context/PAYMENT_ATTEMPT_RISK")) return authoring("PAYMENT_ATTEMPT_RISK");

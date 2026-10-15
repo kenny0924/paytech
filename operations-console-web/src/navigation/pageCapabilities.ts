@@ -185,6 +185,12 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_RISK_EVALUATIONS",
+    "displayName": "评估查询",
+    "frontendRoute": "/risk/evaluations",
+    "actions": []
+  },
+  {
     "componentKey": "OPERATIONS_CONSOLE_RESOURCES",
     "displayName": "菜单资源",
     "frontendRoute": "/console-resources",

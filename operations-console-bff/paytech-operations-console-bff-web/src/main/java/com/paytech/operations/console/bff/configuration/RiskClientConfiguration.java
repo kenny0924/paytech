@@ -87,6 +87,12 @@ public class RiskClientConfiguration {
         return factory.createClient(com.paytech.risk.api.decision.ExecutionReleaseManagementApi.class);
     }
 
+    /** 评估结论与解释的只读查询；内部直连，不携带 Gateway 身份头。 */
+    @Bean
+    com.paytech.risk.api.evaluation.RiskEvaluationQueryApi riskEvaluationQueryApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
+        return operationsRiskProxyFactory.createClient(com.paytech.risk.api.evaluation.RiskEvaluationQueryApi.class);
+    }
+
     @Bean
     DecisionRuleSetManagementApi decisionRuleSetManagementApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
         return operationsRiskProxyFactory.createClient(DecisionRuleSetManagementApi.class);

@@ -60,6 +60,8 @@ import tools.jackson.databind.json.JsonMapper;
 public final class PlatformOperationsSimulator implements AutoCloseable {
     public static final String ACCOUNT_ID = "account_10001";
     public static final String RISK_ACCOUNT_ID = "10001";
+    /** 风控评估查询读权限（RISK_EVALUATION_READ）的合成 ID，与注册 DML 号段一致。 */
+    public static final String RISK_EVALUATION_READ_PERMISSION_ID = "900000000000111101";
     public static final String SESSION_ID = "session_10001";
     public static final String EMAIL = "sensitive.operator@example.test";
     public static final String PASSWORD = "sensitive-password-for-simulator";
@@ -136,7 +138,10 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-risk-execution-create", "900000000000101103"),
         Map.entry("operations-risk-execution-validate", "900000000000101103"),
         Map.entry("operations-risk-execution-shadow-run", "900000000000101103"),
-        Map.entry("operations-risk-execution-activate", "900000000000101104"));
+        Map.entry("operations-risk-execution-activate", "900000000000101104"),
+        Map.entry("operations-risk-evaluation-detail", RISK_EVALUATION_READ_PERMISSION_ID),
+        Map.entry("operations-risk-evaluation-find", RISK_EVALUATION_READ_PERMISSION_ID),
+        Map.entry("operations-risk-evaluation-explanation", RISK_EVALUATION_READ_PERMISSION_ID));
 
     /** Client 入驻审核路由（registration-plan.json 的 O01—O09）到权限；权限 ID 为本 Simulator 的合成值。 */
     public static final Map<String, String> CLIENT_REVIEW_ROUTE_PERMISSIONS = Map.ofEntries(

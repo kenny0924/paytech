@@ -137,6 +137,7 @@ final class RiskOwnerResponseShapeValidator {
         roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.RejectionReasonReferenceResponseBody>>() {}.getType(), page(reasonReference));
         addFlowRoots(roots);
         addControlRoots(roots);
+        addEvaluationRoots(roots);
         return Map.copyOf(roots);
     }
 
@@ -211,6 +212,40 @@ final class RiskOwnerResponseShapeValidator {
         roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.control.response.RiskListEntryResponseBody>>() {}.getType(), page(entry));
         roots.put(com.paytech.risk.api.decision.response.ExecutionReleaseResponseBody.class, release);
         roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.ExecutionReleaseListItemResponseBody>>() {}.getType(), page(item));
+    }
+
+    /**
+     * 评估结论与解释的响应字段集；只校验键集合与 JSON 类型，结论、模式等编码只校验为字符串
+     * <li>Risk 按 Jackson 默认输出全部键（含 null）；身份一致性由评估查询适配器核对。</li>
+     */
+    private static void addEvaluationRoots(Map<Type, Shape> roots) {
+        Shape stringMap = node -> {
+            if (!node.isObject()) return false;
+            for (var entry : node.properties()) {
+                if (!NULLABLE_TEXT.valid(entry.getValue())) return false;
+            }
+            return true;
+        };
+        roots.put(com.paytech.risk.api.evaluation.response.EvaluationResponseBody.class, object(
+            fields(TEXT, "evaluationId pointCode mode result evaluationTime"),
+            fields(NULLABLE_TEXT, "businessKey reasonCode reasonMessage failureCode releaseId environment flowId flowCode "
+                + "flowVersionId baselineEvaluationId shadowRunId"),
+            fields(INTEGER, "flowVersionNo elapsedMillis"), fields(BOOLEAN, "pathAvailable"), fields(stringMap, "outputs")));
+        Shape step = object(fields(INTEGER, "stepNo"), fields(TEXT, "nodeKey nodeType"),
+            fields(NULLABLE_TEXT, "nodeName ruleSetVersionId ruleSetCode decision exitEdgeKey exitEdgeName"),
+            fields(nullable(INTEGER), "ruleSetVersionNo"), fields(nullable(BOOLEAN), "matched reused"));
+        Shape predicate = object(fields(TEXT, "nodeId"), fields(BOOLEAN, "result"));
+        Shape rule = object(fields(TEXT, "ruleSetVersionId ruleId ruleCode"), fields(NULLABLE_TEXT, "ruleName action"),
+            fields(INTEGER, "priorityNo"), fields(BOOLEAN, "matched terminal"), fields(array(predicate), "predicates"));
+        Shape variable = object(fields(TEXT, "variableCode"),
+            fields(NULLABLE_TEXT, "variableName sourceType valueType value valueBasis technicalStatus failureCode"),
+            fields(nullable(array(TEXT)), "values"), fields(nullable(INTEGER), "elapsedMillis"));
+        Shape shadow = object(fields(TEXT, "evaluationId"), fields(NULLABLE_TEXT, "shadowRunId result severity"),
+            fields(BOOLEAN, "decisionChanged outputChanged"));
+        roots.put(com.paytech.risk.api.evaluation.response.EvaluationExplanationResponseBody.class, object(
+            fields(TEXT, "evaluationId"), fields(stringMap, "inputs"), fields(BOOLEAN, "pathAvailable"),
+            fields(array(step), "path"), fields(array(rule), "rules"), fields(array(variable), "variables"),
+            fields(array(shadow), "shadows")));
     }
 
     private static boolean flowExpression(JsonNode node, int depth, int[] count, int version) {

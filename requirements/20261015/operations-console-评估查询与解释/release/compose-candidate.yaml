@@ -1,0 +1,7 @@
+# 运营后台风控评估查询：候选镜像（HEAD 41235c6 + 本需求 34 个文件的差异构建，tag mor-test/<service>:candidate-rev-20261016），使用固定 image ID。
+# 叠加在 compose.yaml + compose.applications.yaml 之上；只换 Operations BFF 与 Web，配置不变。
+services:
+  operations-console-bff:
+    image: sha256:376b5b827945e9dcc0e566f36e211e7751566cb382e3f3a12632d06fba5ad22f
+  operations-console-web:
+    image: sha256:d37816c5ba8a69958724c61845e932e203bcf9f0a39cb71ff0a92df03e9346d7

@@ -19,6 +19,7 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_RISK_VARIABLES: lazy(() => import('../pages/RiskVariables').then(m => ({ default: m.RiskVariables }))),
   OPERATIONS_RISK_LISTS: lazy(() => import('../pages/RiskLists').then(m => ({ default: m.RiskLists }))),
   OPERATIONS_RISK_EXECUTION_RELEASES: lazy(() => import('../pages/RiskExecutionReleases').then(m => ({ default: m.RiskExecutionReleases }))),
+  OPERATIONS_RISK_EVALUATIONS: lazy(() => import('../pages/RiskEvaluations').then(m => ({ default: m.RiskEvaluations }))),
   OPERATIONS_CONSOLE_RESOURCES: lazy(() => import('../pages/ConsoleResources').then(m => ({ default: m.ConsoleResources }))),
   OPERATIONS_API_CREDENTIALS: lazy(() => import('../pages/ApiCredentials').then(m => ({ default: m.ApiCredentials }))),
   OPERATIONS_TENANT_ACCESS: lazy(() => import('../pages/TenantAccess').then(m => ({ default: m.TenantAccess }))),
