@@ -44,8 +44,21 @@
 
 用户 2026-10-15 确认发布清单及 D1、D2 按建议（回复“可以”），执行阶段 7。
 
-## 8. 阶段 7 结果（2026-10-15，待确认）
+## 8. 阶段 7 结果（2026-10-15，已确认）
 
 [部署与验收记录](./release/test-acceptance.md)：备份后在 test `mor_risk` 执行 ddl（85 表，与 Schema 一致），Risk 换为 image `727d51127e61`（约 24 秒，其他容器不变）；20 个只读接口回归一致；验收 34 项通过；日志无受限原值；合成数据已清理，临时代理已删除。
 
 **待提交差异：**`risk-compliance-service` 52 个文件（与部署镜像构建源码一致）；需求目录本身；`agent-docs/database/RISK_COMPLIANCE_DATABASE.md`、`agent-docs/RISK_CONTROL_STANDARDS.md`、`requirements-site/content/requirements.ts` 各自本需求的行；`requirements/README.md` 与 `agent-docs/CURRENT_IMPLEMENTATION.md` 只提交本需求的行。
+
+## 9. 阶段 8 提交（2026-10-15，用户回复“可以”）
+
+- `a55b3b1` feat(risk): evaluation decision and explanation queries（代码 52 + 需求目录 + 3 个文档 + README 本需求行，64 个文件）
+- `20dc65c` release(risk): deploy evaluation queries to mor-test（发布清单、验收记录与证据、清理 SQL、候选 Compose + CURRENT_IMPLEMENTATION 本需求一节）
+- 核对：`20dc65c` 的 `risk-compliance-service` 与 mor-test 部署镜像的构建源码逐文件一致；暂存区未夹带其他会话改动；未推送。
+
+## 10. 遗留
+
+- Operations 页面与 BFF 接入（[交接单](./handoff/operations.md)）。
+- 部署前写入的评估没有流程路径。
+- 常量与集合不随评估冻结，解释中按当前值显示。
+- 按影子批次列出样本、按订单列出评估：未做，需要时另提需求。
