@@ -10,7 +10,7 @@
 
 | 能力 | Method / Path | 当前状态 |
 |---|---|---|
-| submitNotification | SubmitNotificationProcessor.process | 当前模块内入口；不注册 HTTP Controller 或路由 |
+| submitNotification | SubmitNotificationProcessor.process；内部 HTTP `POST /notifications/v1/requests` | 模块内入口；2026-10-15 起另有内部 HTTP 入口（`NotificationCommandApi`，过渡信任，见[需求](../../20261015/platform-support-通知内部HTTP接口/requirement.md)与[方案](../../20261015/platform-support-通知内部HTTP接口/technique.md)），不注册 Gateway 路由 |
 | getNotification | GET /notifications/v1/requests/{requestId} | 用户已认可草案，随后要求查询接口暂不继续展开；第 3 节仅保留讨论结果 |
 | findNotificationBySource | 不冻结 | 暂不提供 |
 | listNotificationDeliveries | 不冻结 | 暂不提供 |

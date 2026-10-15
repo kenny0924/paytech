@@ -153,6 +153,15 @@
 - **其他检查：** `npm --prefix requirements-site test` **129/137** 通过，8 项失败涉及 Checkout 展示、Payment 退款合同、十路由、15 表模型/台账/隐私导航以及测试/写接口规范文字断言；这些失败指向本次未修改的合同或已有模型台账内容，未调整其断言。日志 `/tmp/commerce-get-order-by-client-id-site-tests.log`。
 - **边界：** 仅新增测试并更新 Commerce README、本台账。手工启动已有且停止的 `mor-local-mysql-1` 和 `mor-local-redis-1`，测试只准备/清理自有数据；现有本地 Redis 密码经环境变量注入，不输出或写入仓库。未修改生产代码、API、Foundation、表结构、DDL、POM 或配置；未运行 manual、真实 Owner 联调、提交、推送或部署。运行入口见 [Commerce README](../commerce-service/README.md#验证入口)。
 
+<a id="platform-notification-http-20261015"></a>
+
+## Platform 通知内部 HTTP 接口（2026-10-15，已本地提交）
+
+- **确认范围：** 见[需求](../requirements/20261015/platform-support-通知内部HTTP接口/requirement.md)与[方案](../requirements/20261015/platform-support-通知内部HTTP接口/technique.md)：为内部业务系统开放 PLT-I09 提交接口 `POST /platform-support/notifications/v1/requests`，沿用 Vault V1 过渡信任（私网 + `X-Caller-Service` + 部署配置白名单），取代 Delivery 规划"等强服务身份后开放"的决定；`source_system` 直接保存调用方服务名。
+- **Implemented：** `platform-support-api` 新增 `NotificationCommandApi` 与请求/响应 Body；Web 新增 `NotificationController`、`NotificationConverter`、`NotificationCallerProperties`（`notification.http.callers`，默认空即全部拒绝）和 `NotificationRequestConfiguration`（Body 1 MB 上限，解析错误不回显内容）；`/notifications` 加入只记元数据的日志前缀；模块请求 `sourceSystem` 改为服务名格式。无 DDL/DML，未注册 Gateway 路由。
+- **Verified：** JDK 25 全服务 `./mvnw -o verify` 测试 **543/543** 通过；`NotificationHttpApiTest` 9 例经真实 HTTP 覆盖放行、未授权调用方/模板、Body 中 `sourceSystem` 被忽略、409/跨调用方同 key、422/400/413、模板停用、Vault 不可达 503（`DEPENDENCY_UNAVAILABLE`），并断言响应与日志不含邮箱和参数值；`NotificationCallerPropertiesTest` 7 例。Delivery 模块指令 **96.30%**、分支 **90.34%**；新增 Web 类指令 95.35%、分支 96.88%。全服务 90% 聚合门禁仍为既有失败（指令 0.50、分支 0.33），未降低门槛。`requirements-site` 128/137，9 项失败与改动前相同。
+- **未完成 / 前提：** 没有业务系统接入调用；无状态查询接口；`X-Caller-Service` 可伪造，部署须保证 Platform 只在私网可达；上线前在部署配置登记调用方与模板。阶段 5：Reactor 打包与 exec/API JAR 内容检查通过，API JAR 无新增依赖。2026-10-15 已本地提交（未推送），未部署。
+
 <a id="platform-notification-ses-20261014"></a>
 
 ## Platform 普通邮件接入 Amazon SES（2026-10-14；2026-10-15 密钥管理变更，已本地提交）

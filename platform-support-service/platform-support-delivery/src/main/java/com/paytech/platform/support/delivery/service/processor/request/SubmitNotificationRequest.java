@@ -13,8 +13,11 @@ import lombok.Setter;
 @Setter
 public class SubmitNotificationRequest {
 
-    /** 可信模块调用方确定的来源系统，不是外部请求字段。 */
-    @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}")
+    /**
+     * 来源系统：调用方服务名，例如 payment-orchestration-service
+     * <li>模块内调用方自行确定；HTTP 入口取已通过白名单的 X-Caller-Service，不取自 Body</li>
+     */
+    @NotBlank @Pattern(regexp = "[a-z][a-z0-9-]{0,63}")
     private String sourceSystem;
 
     /** 调用方已授权的请求归属；平台通知为空。 */

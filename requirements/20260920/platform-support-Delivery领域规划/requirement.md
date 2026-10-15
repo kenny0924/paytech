@@ -10,7 +10,7 @@ Notification 位于 Platform Support 的 Delivery 模块中，统一承接 Email
 
 首期范围收窄为 Email，邮件 Provider 先使用 Mock；真实邮件供应商的选型和接入后续再定。SMS 保留在统一领域规划中，暂不实现。Mock 仅用于测试适配器，不在正式应用提供模拟成功，不发送真实邮件。认证邮件对接后续处理。
 
-首期同服务消费者使用模块公开 Processor；其他内部服务的 HTTP 接口待强服务身份合同确定后再开放，不信任自报 X-Caller-Service。Notification 不单独成为微服务，也不成为浏览器或外部 Client 的任意发信入口。
+首期同服务消费者使用模块公开 Processor；其他内部服务的 HTTP 接口待强服务身份合同确定后再开放，不信任自报 X-Caller-Service。（2026-10-15 修订：已按[通知内部 HTTP 接口需求](../../20261015/platform-support-通知内部HTTP接口/requirement.md)以过渡信任开放内部 HTTP 提交。）Notification 不单独成为微服务，也不成为浏览器或外部 Client 的任意发信入口。
 
 | 文档 | 唯一维护内容 |
 |---|---|

@@ -107,6 +107,7 @@ web:
   logging:
     metadata-only-path-prefixes:
       - /internal/onboarding-files
+      - /notifications
       - /onboarding-files
       - /review-files
       - /authentication
@@ -150,7 +151,7 @@ api-scope:
     lock-wait-time: 500ms
     lock-lease-time: 30s
 
-# 普通邮件只开放模块入口；启用时显式开启 compensation.enabled 并配置实际 Provider/Vault。
+# 普通邮件：模块入口与内部 HTTP（POST /notifications/v1/requests）；启用时显式开启 compensation.enabled 并配置实际 Provider/Vault。
 notification:
   enabled: false
   # worker-id: 独立启用通知时必须显式分配 0..31，不提供生产默认值。
@@ -170,3 +171,7 @@ notification:
     credential-token: ${NOTIFICATION_SES_CREDENTIAL_TOKEN:}
     connect-timeout: 2s
     read-timeout: 5s
+  # 内部 HTTP 调用方白名单：服务名 → 可用普通邮件模板编码。过渡信任，X-Caller-Service 可伪造，部署须限制私网访问。
+  # 默认为空，全部拒绝；例如 payment-orchestration-service: [PAYMENT_REFUND_SUCCEEDED_EMAIL]
+  http:
+    callers: {}

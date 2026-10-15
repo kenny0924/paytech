@@ -4,12 +4,16 @@ import java.util.List;
 import java.util.Map;
 import org.apache.ibatis.annotations.*;
 
-/** 测试专用 Fixture 和只读检查；只清理 NOTIFICATION_TEST 及保留测试配置身份。 */
+/** 测试专用 Fixture 和只读检查；只清理 notification-test 前缀来源及保留测试配置身份。 */
 public interface NotificationTestMapper {
 
     /** 检查新增表已手工准备。 */
-    @Select("SELECT COUNT(*) FROM t_notification_request WHERE source_system='NOTIFICATION_TEST'")
+    @Select("SELECT COUNT(*) FROM t_notification_request WHERE source_system LIKE 'notification-test%'")
     int requests();
+
+    /** 已受理请求的来源系统与租户，按来源排序。 */
+    @Select("SELECT source_system, source_event_key, tenant_id FROM t_notification_request WHERE source_system LIKE 'notification-test%' ORDER BY source_system")
+    List<Map<String, Object>> requestSources();
 
     /** 扫描器按类型领取任务，独占测试开始前不得已有其他通知任务。 */
     @Select("SELECT COUNT(*) FROM t_compensation_event WHERE event_type='NOTIFICATION_DELIVERY'")
@@ -62,7 +66,7 @@ public interface NotificationTestMapper {
     void useSes();
 
     /** 把本例全部尝试的开始时间前移，模拟安全窗口已过，不调整宿主时钟。 */
-    @Update("UPDATE t_notification_attempt a JOIN t_notification_delivery d ON d.delivery_id=a.delivery_id JOIN t_notification_request r ON r.request_id=d.request_id SET a.started_time=a.started_time - INTERVAL #{seconds} SECOND WHERE r.source_system='NOTIFICATION_TEST'")
+    @Update("UPDATE t_notification_attempt a JOIN t_notification_delivery d ON d.delivery_id=a.delivery_id JOIN t_notification_request r ON r.request_id=d.request_id SET a.started_time=a.started_time - INTERVAL #{seconds} SECOND WHERE r.source_system LIKE 'notification-test%'")
     void shiftAttemptsBack(@Param("seconds") long seconds);
 
     /** 模拟进程在外发后、回写前崩溃：仅最新尝试与投递回到 PROCESSING。 */
@@ -71,7 +75,7 @@ public interface NotificationTestMapper {
         JOIN t_notification_request r ON r.request_id=d.request_id
         SET a.status='PROCESSING',a.response_code=NULL,a.resolution_source=NULL,a.finished_time=NULL,
             d.status='PROCESSING',d.version=d.version+1
-        WHERE r.source_system='NOTIFICATION_TEST'
+        WHERE r.source_system LIKE 'notification-test%'
           AND a.attempt_id=(SELECT MAX(x.attempt_id) FROM (SELECT attempt_id,delivery_id FROM t_notification_attempt) x
                             WHERE x.delivery_id=a.delivery_id)
         """)
@@ -80,7 +84,7 @@ public interface NotificationTestMapper {
     /** 读取当前用例的 Delivery 状态，不输出 Token 或参数。 */
     @Select("""
         SELECT d.delivery_id,d.status,d.attempt_count,d.version,d.next_retry_time FROM t_notification_delivery d
-        JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST'
+        JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system LIKE 'notification-test%'
         ORDER BY d.delivery_id
         """)
     List<Map<String,Object>> deliveries();
@@ -90,25 +94,25 @@ public interface NotificationTestMapper {
         SELECT a.attempt_id,a.delivery_id,a.provider_id,a.provider_request_no,a.provider_message_id,a.status,
             a.response_code,a.resolution_source,a.resolution_code,a.resolved_time
         FROM t_notification_attempt a JOIN t_notification_delivery d ON d.delivery_id=a.delivery_id
-        JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST'
+        JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system LIKE 'notification-test%'
         ORDER BY a.attempt_id
         """)
     List<Map<String,Object>> attempts();
 
     /** 等待本例 afterCommit 异步完全落到可扫描或终态。 */
-    @Select("SELECT COUNT(*) FROM t_compensation_event WHERE event_type='NOTIFICATION_DELIVERY' AND event_key IN (SELECT CAST(d.delivery_id AS CHAR) FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST') AND execute_status IN ('INIT','PROCESSING')")
+    @Select("SELECT COUNT(*) FROM t_compensation_event WHERE event_type='NOTIFICATION_DELIVERY' AND event_key IN (SELECT CAST(d.delivery_id AS CHAR) FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system LIKE 'notification-test%') AND execute_status IN ('INIT','PROCESSING')")
     int activeTasks();
 
     /** 有恢复事实但不得携带 Payload。 */
-    @Select("SELECT event_key,payload_json,execute_status,execute_count,last_error_code FROM t_compensation_event WHERE event_type='NOTIFICATION_DELIVERY' AND event_key IN (SELECT CAST(d.delivery_id AS CHAR) FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST')")
+    @Select("SELECT event_key,payload_json,execute_status,execute_count,last_error_code FROM t_compensation_event WHERE event_type='NOTIFICATION_DELIVERY' AND event_key IN (SELECT CAST(d.delivery_id AS CHAR) FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system LIKE 'notification-test%')")
     List<Map<String,Object>> events();
 
     /** 测试时使本例等待任务立即到期；执行仍经过正式 Scanner。 */
-    @Update("UPDATE t_compensation_event SET next_execute_at=UTC_TIMESTAMP(6) WHERE event_type='NOTIFICATION_DELIVERY' AND event_key IN (SELECT CAST(d.delivery_id AS CHAR) FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST') AND execute_status='ERROR'")
+    @Update("UPDATE t_compensation_event SET next_execute_at=UTC_TIMESTAMP(6) WHERE event_type='NOTIFICATION_DELIVERY' AND event_key IN (SELECT CAST(d.delivery_id AS CHAR) FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system LIKE 'notification-test%') AND execute_status='ERROR'")
     void due();
 
     /** 模拟已到业务重试时间，不调整宿主机器时钟。 */
-    @Update("UPDATE t_notification_delivery SET next_retry_time=#{now} WHERE request_id IN (SELECT request_id FROM t_notification_request WHERE source_system='NOTIFICATION_TEST') AND status='RETRY_WAIT'")
+    @Update("UPDATE t_notification_delivery SET next_retry_time=#{now} WHERE request_id IN (SELECT request_id FROM t_notification_request WHERE source_system LIKE 'notification-test%') AND status='RETRY_WAIT'")
     void retryDue(@Param("now") java.time.Instant now);
 
     /** 模拟管理员更新当前文案。 */
@@ -136,19 +140,19 @@ public interface NotificationTestMapper {
     void disableProvider();
 
     /** 只删除本例持久化任务，先确保异步执行已经停止。 */
-    @Delete("DELETE FROM t_compensation_event WHERE event_type='NOTIFICATION_DELIVERY' AND event_key IN (SELECT CAST(d.delivery_id AS CHAR) FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST')")
+    @Delete("DELETE FROM t_compensation_event WHERE event_type='NOTIFICATION_DELIVERY' AND event_key IN (SELECT CAST(d.delivery_id AS CHAR) FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system LIKE 'notification-test%')")
     void clearEvents();
 
     /** 按业务来源清理本例尝试。 */
-    @Delete("DELETE a FROM t_notification_attempt a JOIN t_notification_delivery d ON d.delivery_id=a.delivery_id JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST'")
+    @Delete("DELETE a FROM t_notification_attempt a JOIN t_notification_delivery d ON d.delivery_id=a.delivery_id JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system LIKE 'notification-test%'")
     void clearAttempts();
 
     /** 按业务来源清理本例投递。 */
-    @Delete("DELETE d FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST'")
+    @Delete("DELETE d FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system LIKE 'notification-test%'")
     void clearDeliveries();
 
     /** 不清理其他调用方数据。 */
-    @Delete("DELETE FROM t_notification_request WHERE source_system='NOTIFICATION_TEST'")
+    @Delete("DELETE FROM t_notification_request WHERE source_system LIKE 'notification-test%'")
     void clearRequests();
 
     /** 清理本例路由。 */

@@ -18,6 +18,7 @@ public class NotificationVaultMock implements Clear {
     private int revealCalls;
     private int credentialRevealCalls;
     private int unexpected;
+    private boolean protectUnavailable;
 
     /** 明确准备每个合成邮箱的稳定 Token。 */
     public synchronized void allow(String email, String token) { tokens.put(email, token); values.put(token, email); }
@@ -25,6 +26,9 @@ public class NotificationVaultMock implements Clear {
     /** 仅已配置地址返回 Protect DTO。 */
     public synchronized String protect(String value) {
         protectCalls++;
+        if (protectUnavailable) {
+            throw com.paytech.foundation.testsupport.api.MockHttpFault.disconnect();
+        }
         if (!tokens.containsKey(value)) { unexpected++; throw new IllegalStateException("未配置邮件 Protect"); }
         return tokens.get(value);
     }
@@ -41,6 +45,12 @@ public class NotificationVaultMock implements Clear {
         credentials.put(token, value);
         credentialUnavailable = false;
     }
+
+    /** 之后的地址 Protect 断开连接，模拟受理时 Vault 不可达。 */
+    public synchronized void protectUnavailable() { protectUnavailable = true; }
+
+    /** 地址 Protect 次数。 */
+    public synchronized int protectCount() { return protectCalls; }
 
     /** 之后的凭据 Reveal 返回 503，模拟 Vault 暂不可用。 */
     public synchronized void credentialUnavailable() { credentialUnavailable = true; }
@@ -70,7 +80,7 @@ public class NotificationVaultMock implements Clear {
     /** 每例清理响应配置及计数。 */
     @Override
     public synchronized void clear() {
-        tokens.clear(); values.clear(); credentials.clear(); credentialUnavailable = false;
+        tokens.clear(); values.clear(); credentials.clear(); credentialUnavailable = false; protectUnavailable = false;
         protectCalls = 0; revealCalls = 0; credentialRevealCalls = 0; unexpected = 0;
     }
 }

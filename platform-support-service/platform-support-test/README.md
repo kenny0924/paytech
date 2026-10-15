@@ -42,18 +42,19 @@ JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw -pl platform-support-test -am \
 
 ## Notification 普通 Email
 
-入口测试通过模块公开 `SubmitNotificationProcessor.process`，不启动通知 HTTP API。测试使用真实 MySQL、正式 VaultClient、独立 Vault HTTP Mock 及测试制品内的 EmailProvider；SES 适配器经真实 AWS SDK 访问同一 Mock HTTP 服务的 `/ses` 前缀（`SesMockController` + `SesMocker`，不校验签名）；密钥对由 Vault Mock 按 `NOTIFICATION_DELIVERY` 返回合成值。auto 用例不会发送真实邮件。
+入口测试通过模块公开 `SubmitNotificationProcessor.process`；内部 HTTP 入口由 `auto/ext/http/notification/NotificationHttpApiTest` 经真实 HTTP 调用。测试使用真实 MySQL、正式 VaultClient、独立 Vault HTTP Mock 及测试制品内的 EmailProvider；SES 适配器经真实 AWS SDK 访问同一 Mock HTTP 服务的 `/ses` 前缀（`SesMockController` + `SesMocker`，不校验签名）；密钥对由 Vault Mock 按 `NOTIFICATION_DELIVERY` 返回合成值。auto 用例不会发送真实邮件。
 
 - 手工准备 `init/ddl.sql` 中的七张 Notification 表和公共 `t_compensation_event`，已有表不得重建；缺失时测试快速失败。
 - `NotificationFixture` 每例检查空任务基线及保留配置身份，再事务性准备模板、语言、账号和路由；等待真实 Dispatcher 停止后才清理。
-- 测试通知来源固定为 `NOTIFICATION_TEST`，配置 ID 保留 890001..890007（890007 为 SES 账号 `NOTIFICATION_TEST_SES`）；占用时拒绝继续，不覆盖既有数据。运行期间不要启动其他 Notification 扫描器。
+- 测试通知来源为调用方服务名格式 `notification-test`（HTTP 白名单另有 `notification-test-peer`，TestMapper 按 `notification-test` 前缀清理），配置 ID 保留 890001..890007（890007 为 SES 账号 `NOTIFICATION_TEST_SES`）；占用时拒绝继续，不覆盖既有数据。运行期间不要启动其他 Notification 扫描器。
 - 覆盖独立收件人、覆盖参数、重复邮箱拒绝、来源冲突、整单回滚、UNKNOWN 原发送查询、当前文案重试、发送上限及旧 Worker 回写保护。
 - `SesNotificationDeliveryTest` 覆盖 SES 请求字段、受理即完成、十类错误映射、备用账号、读超时/断连/5xx/缺 MessageId 的未知结果、Vault 凭据签名与 Vault 不可用/值不合法时不登记尝试、安全窗口重发（前移 `started_time` 越过窗口）、次数用尽终止及遗留 PROCESSING；`SesEmailConfigurationTest` 只装配配置类，验证开关与非法配置拒绝启动。
+- `NotificationHttpApiTest` 覆盖白名单放行与来源系统、缺少/未登记调用方及越权模板（不调 Vault、不落库）、Body 中 `sourceSystem` 被忽略、同调用方 409 与不同调用方同 key、422 字段错误、租户越界、1 MB 上限 413、模板停用及 Vault 不可达 503，并断言响应与日志不含邮箱和参数值；`NotificationCallerPropertiesTest` 覆盖白名单校验与通知关闭时不暴露入口。
 - `manual/notification/SesRealSendTest` 向真实 SES 发一封邮件，默认不运行：设置 `SES_MANUAL_REGION`、`SES_MANUAL_FROM`、`SES_MANUAL_TO` 及 AWS 默认凭据后执行 `./mvnw -pl platform-support-test -am -Pmanual-test -Dtest=SesRealSendTest -Dsurefire.failIfNoSpecifiedTests=false test`。
 
 ```bash
 JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw -pl platform-support-test -am \
-  -Dtest=NotificationInputTest,SubmitNotificationTest,NotificationDeliveryHandlerTest,SesNotificationDeliveryTest,SesEmailConfigurationTest \
+  -Dtest=NotificationInputTest,SubmitNotificationTest,NotificationHttpApiTest,NotificationCallerPropertiesTest,NotificationDeliveryHandlerTest,SesNotificationDeliveryTest,SesEmailConfigurationTest \
   -Dsurefire.failIfNoSpecifiedTests=false test
 ```
 

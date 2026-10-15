@@ -885,7 +885,7 @@ The approved API and incremental SQL are in [Client API delivery](../requirement
 
 ## Delivery / Notification 普通 Email 首期
 
-模块公开入口为 `platform-support-delivery` 的 `SubmitNotificationProcessor.process`，请求和响应使用模块合同；本期不开放 HTTP。
+模块公开入口为 `platform-support-delivery` 的 `SubmitNotificationProcessor.process`；其他内部服务经私网调用 `POST /platform-support/notifications/v1/requests`（`platform-support-api` 的 `NotificationCommandApi`），以 `X-Caller-Service` 识别调用方并按 `notification.http.callers`（服务名 → 可用模板，默认空即全部拒绝）放行，`source_system` 即调用方服务名。这是过渡信任：Header 可伪造，部署必须限制私网访问；Body 上限 1 MB，不经过 Gateway。
 支持一次 1..100 个独立邮箱、默认语言/参数及收件人覆盖、可靠发送和原发送查询；规范化后重复邮箱整单拒绝。
 正式默认 `notification.enabled=false`，没有生产 Mock Provider；开启需显式配置补偿执行、Vault 专用用途授权和账号适配器。
 首个真实账号适配器为 Amazon SES（`notification.ses.*`，默认关闭）：SES 不支持按请求号查询，普通通知按“至少发一次”处理——受理即 `SENT` 完成，结果未知时等待 `notification.unknown-resend-delay`（默认 10m）后在发送次数内重发。
