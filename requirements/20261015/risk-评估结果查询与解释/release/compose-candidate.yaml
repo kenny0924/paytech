@@ -1,0 +1,6 @@
+# 候选：本需求代码（HEAD 8d26229 的 risk-compliance-service + 本需求未提交改动，源码差异见 release.md）构建的 Risk 镜像
+# （tag mor-test/risk-service:evaluation-query-20261015，jar SHA-256 a845559f…46de6），使用固定 image ID。
+# 叠加在 test-environment 的 compose.yaml + compose.applications.yaml 之上；只换 Risk 镜像，配置不变。
+services:
+  risk-service:
+    image: sha256:727d51127e61a1e99847e86d7b822088b197cdeba3050d0b88ec84ab5ed786d3
