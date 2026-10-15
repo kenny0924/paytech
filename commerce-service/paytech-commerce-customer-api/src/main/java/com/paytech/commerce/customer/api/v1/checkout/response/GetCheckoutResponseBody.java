@@ -89,6 +89,47 @@ public class GetCheckoutResponseBody {
      */
     private Integer pollAfterMs;
 
+    /**
+     * 存卡选项。
+     * <li>available 为 true 时可在卡信息下方显示“保存卡以便下次使用”，默认不勾选。</li>
+     */
+    private CardSavingInfo cardSaving;
+
+    /**
+     * 当前消费者的已存卡。
+     * <li>只含 Token、后四位与有效期；不可存卡时为空列表。使用时须重新输入 CVV。</li>
+     */
+    private List<StoredCardInfo> storedCards;
+
+    /** 存卡选项。 */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CardSavingInfo {
+        /** 是否可以保存卡。 */
+        private boolean available;
+    }
+
+    /** 可选的已存卡。 */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class StoredCardInfo {
+        /** 已存卡 Token。 */
+        private String storedCardToken;
+
+        /** 卡号后四位。 */
+        private String last4;
+
+        /** 有效期月份，两位。 */
+        private String expiryMonth;
+
+        /** 有效期年份，四位。 */
+        private String expiryYear;
+    }
+
     /** 订单六项金额。 */
     @Getter
     @Setter

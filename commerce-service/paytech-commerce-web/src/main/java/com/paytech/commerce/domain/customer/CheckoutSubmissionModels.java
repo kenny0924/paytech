@@ -42,6 +42,40 @@ public final class CheckoutSubmissionModels {
         }
     }
 
+    /**
+     * 本次支付的卡来源：手输卡（可选择保存）或已存卡加本次 CVV；只在当前请求内存中传递
+     *
+     * @param card 手输卡；使用已存卡时为空
+     * @param storedCardToken 已存卡 Token；手输卡时为空
+     * @param storedCardCvv 使用已存卡时本次输入的 CVV
+     * @param customerId 已核对的订单 Customer；访客或未选择保存时为空
+     * @param saveCard 是否同意支付成功后保存手输卡
+     */
+    public record CardChoice(CardInput card, String storedCardToken, String storedCardCvv, Long customerId,
+        boolean saveCard) {
+        /** 不暴露卡输入、CVV 或已存卡 Token。 */
+        @Override
+        public String toString() {
+            return "CardChoice[REDACTED]";
+        }
+    }
+
+    /**
+     * 渠道执行所需的付款人信息；不持久化
+     *
+     * @param consumerReference 不透明付款人引用：有 Customer 时为其消费者引用，访客为订单级引用
+     * @param clientIp 可信连接的消费者 IP
+     * @param userAgent 消费者 User-Agent
+     * @param returnUrl 3DS 等交互后的回跳地址（本 Checkout 页面）
+     */
+    public record Payer(String consumerReference, String clientIp, String userAgent, String returnUrl) {
+        /** 不暴露受限的网络原值与引用。 */
+        @Override
+        public String toString() {
+            return "Payer[REDACTED]";
+        }
+    }
+
     /** 查询支付所需的最小归属；提交事实由 Payment 持有。 */
     public record PaymentReference(long submissionId, long orderId, long intentId) {
     }
@@ -77,7 +111,8 @@ public final class CheckoutSubmissionModels {
     }
 
     /** 通用支付只携带卡工具，原始卡输入不再传入后续支付步骤。 */
-    public record PaymentRequest(SubmissionReceipt receipt, long orderVersion, CardInstrument instrument) {
+    public record PaymentRequest(SubmissionReceipt receipt, long orderVersion, long clientId, CardInstrument instrument,
+        Payer payer) {
         /** 不暴露当前卡输入。 */
         @Override
         public String toString() {

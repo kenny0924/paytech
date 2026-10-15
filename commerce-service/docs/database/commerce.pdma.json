@@ -568,6 +568,24 @@
           "id": "08F807D2-2021-5C43-8FAE-874B8847F6CB"
         },
         {
+          "defKey": "customer_id",
+          "defName": "Customer 标识",
+          "comment": "建单时按 consumerReference 关联的 Customer；访客订单为 NULL，创建后不可修改。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "56B5554A-D546-5028-8D1E-6C7A4D34DA17"
+        },
+        {
           "defKey": "creation_mode",
           "defName": "创建接入方式",
           "comment": "服务端根据创建入口固定的订单接入方式，创建后不可修改；HOSTED_CHECKOUT为托管收银台，DIRECT_PAY为预留直接支付接入；已有订单及默认值为HOSTED_CHECKOUT。允许值：HOSTED_CHECKOUT、DIRECT_PAY。",
@@ -1021,7 +1039,17 @@
           "id": "3B444678-6100-55EB-964C-535252668D00"
         }
       ],
-      "correlations": [],
+      "correlations": [
+        {
+          "id": "2EFB5FD0-349C-58CA-8018-EB797AB7B118",
+          "myField": "56B5554A-D546-5028-8D1E-6C7A4D34DA17",
+          "refEntity": "0576AD8B-49A5-5547-BD75-5AA9D74B2274",
+          "refField": "5E5B92DB-20E4-52B6-8610-0DA9D06E63DC",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
       "indexes": [
         {
           "defKey": "uk_order_no",
@@ -1129,6 +1157,682 @@
           "id": "64040687-900E-5B84-A2CE-F1A2AB4F7AC6"
         }
       ],
+      "type": "P"
+    },
+    {
+      "id": "0576AD8B-49A5-5547-BD75-5AA9D74B2274",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_customer",
+      "defName": "Customer",
+      "comment": "Client 命名空间内的 Customer：身份只来自 Client 服务端传入的 consumer_reference，首期只保存身份与状态；删除不可撤销，同一引用再次使用时新建。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "customer_id",
+          "defName": "Customer 标识",
+          "comment": "Commerce Customer 的内部唯一标识，创建后不可修改；Payment 已存卡以此关联。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "5E5B92DB-20E4-52B6-8610-0DA9D06E63DC"
+        },
+        {
+          "defKey": "customer_no",
+          "defName": "Customer 编号",
+          "comment": "供 Client API 使用的不透明公开 Customer 编号，cus_ 前缀加随机串，创建后不可修改。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "BE1AB400-9664-518E-A20B-1BFFB0375266"
+        },
+        {
+          "defKey": "client_id",
+          "defName": "Client 标识",
+          "comment": "所属平台 Client 的内部唯一标识，创建后不可修改。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "3F276769-E880-50B6-956C-661BC75D6F9B"
+        },
+        {
+          "defKey": "consumer_reference",
+          "defName": "消费者引用",
+          "comment": "Client 命名空间内的不透明、非 PII 消费者引用原值，由 Client 服务端传入，创建后不可修改；不得为 Email、Phone、证件号等个人原值。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "4E52EE86-A59A-5739-B9BC-0F2F2B6BE62D"
+        },
+        {
+          "defKey": "active_reference",
+          "defName": "有效引用",
+          "comment": "有效时等于 consumer_reference，删除时置 NULL；与 client_id 组成唯一索引，保证同一引用同时最多一个有效 Customer。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "6CFDA0D3-E36A-5563-BF81-3D5CE17AED9C"
+        },
+        {
+          "defKey": "customer_status",
+          "defName": "Customer 状态",
+          "comment": "Customer 状态，删除不可撤销。允许值：ACTIVE、DELETED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "BF800F5F-F34E-5603-9778-406BCD31A75D"
+        },
+        {
+          "defKey": "deleted_time",
+          "defName": "删除时间",
+          "comment": "删除的 UTC 微秒精度时间；有效时为 NULL。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "32F57CBF-5A24-5DE3-88F1-CAA2ADC734DC"
+        },
+        {
+          "defKey": "version",
+          "defName": "版本",
+          "comment": "可变业务行并发更新使用的单调乐观锁版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "1BF8FCAE-5D79-5706-9B99-C64D7D57C577"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "数据库记录创建的 UTC 微秒精度时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "84338D61-EDDB-5998-808B-202DE46E3F55"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "数据库记录最近一次持久化更新的 UTC 微秒精度时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "1209CE63-7C68-5A0F-9669-ECCC86809267"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_customer_no",
+          "defName": "UK CUSTOMER NO",
+          "unique": true,
+          "comment": "唯一索引：customer_no",
+          "fields": [
+            {
+              "fieldDefKey": "BE1AB400-9664-518E-A20B-1BFFB0375266",
+              "ascOrDesc": "A",
+              "id": "4CABD56A-571D-5582-AB9A-D6C932F7E318"
+            }
+          ],
+          "id": "2C7D0247-D779-5E34-AF82-EB5FA455D103"
+        },
+        {
+          "defKey": "uk_customer_active_reference",
+          "defName": "UK CUSTOMER ACTIVE REFERENCE",
+          "unique": true,
+          "comment": "唯一索引：client_id、active_reference",
+          "fields": [
+            {
+              "fieldDefKey": "3F276769-E880-50B6-956C-661BC75D6F9B",
+              "ascOrDesc": "A",
+              "id": "F54DE713-69E3-5B6B-9E72-53CDE5FECC27"
+            },
+            {
+              "fieldDefKey": "6CFDA0D3-E36A-5563-BF81-3D5CE17AED9C",
+              "ascOrDesc": "A",
+              "id": "F6250E5F-5FF1-5B98-9500-BAD7A63F3EF8"
+            }
+          ],
+          "id": "257202FE-3749-5164-A133-5F79E2049FD2"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "1A821886-19AB-5FA1-AAAF-C942297031CA",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_client_stored_card_setting",
+      "defName": "Client 存卡开通",
+      "comment": "按 Client 开通存卡能力（CCT 暂无按 Client 配置落点时的 Commerce 本地配置）；首期由初始化 DML 或内部调用维护，运营页面后续提供。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "client_id",
+          "defName": "Client 标识",
+          "comment": "平台 Client 的内部唯一标识；每个 Client 至多一行，没有记录视为未开通。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "C3079BA3-1ABA-59E5-9681-B7F8A865F8FE"
+        },
+        {
+          "defKey": "stored_card_enabled",
+          "defName": "存卡开通",
+          "comment": "是否开通存卡与已存卡支付；1 开通，0 关闭。关闭后已存卡保留但不展示、不可使用。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "C27EDAA3-96AA-5B8F-9BB2-F2710142116F"
+        },
+        {
+          "defKey": "version",
+          "defName": "版本",
+          "comment": "可变业务行并发更新使用的单调乐观锁版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "F37F0C54-74D5-5E93-8351-DD22C1C1F67D"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "数据库记录创建的 UTC 微秒精度时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "76A1DE4E-E12F-5600-941E-CFD1E36C52E6"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "数据库记录最近一次持久化更新的 UTC 微秒精度时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "8DD1F15F-01D7-50B3-BC07-1975FCED3411"
+        }
+      ],
+      "correlations": [],
+      "indexes": [],
       "type": "P"
     },
     {
@@ -9165,6 +9869,84 @@
       },
       "id": "A7738912-F3AE-5CDA-A635-6514F3DE7595",
       "comment": "可靠执行 bounded-context view"
+    },
+    {
+      "defKey": "customer",
+      "defName": "Customer",
+      "relationType": "field",
+      "canvasData": {
+        "cells": [
+          {
+            "id": "28622466-6439-542D-832B-D31599C9A8DE",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "5182AEB1-A7BE-5154-83A0-CDC312B8817F",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 700
+            }
+          },
+          {
+            "id": "7B3B13CC-B429-5AC3-AB67-F8376BC27223",
+            "shape": "table",
+            "position": {
+              "x": 460,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "0576AD8B-49A5-5547-BD75-5AA9D74B2274",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 380
+            }
+          },
+          {
+            "id": "00E405AF-6DE6-50C3-85C4-45EA005F5939",
+            "shape": "erdRelation",
+            "originKey": "2EFB5FD0-349C-58CA-8018-EB797AB7B118",
+            "source": {
+              "cell": "28622466-6439-542D-832B-D31599C9A8DE",
+              "port": "56B5554A-D546-5028-8D1E-6C7A4D34DA17%out"
+            },
+            "target": {
+              "cell": "7B3B13CC-B429-5AC3-AB67-F8376BC27223",
+              "port": "5E5B92DB-20E4-52B6-8610-0DA9D06E63DC%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "AFC07C7E-5B3C-5F1E-B74A-14A164ACD639",
+            "shape": "table",
+            "position": {
+              "x": 460,
+              "y": 420
+            },
+            "count": 0,
+            "originKey": "1A821886-19AB-5FA1-AAAF-C942297031CA",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 188
+            }
+          }
+        ]
+      },
+      "id": "3E391BFF-1E0A-5B1D-852C-265DAE0DEA3F",
+      "comment": "Customer 与订单关联。"
     }
   ],
   "standardFields": [],

@@ -236,12 +236,15 @@ CCT 通过 Nacos 服务发现与 Spring Cloud LoadBalancer 调用，服务名为
 注册中心使用项目统一的 `NACOS_SERVER_ADDR` / `NACOS_NAMESPACE`。HTTP Service Group 不设置 `base-url`，
 Spring Cloud 以 Group 名作为服务 ID。连接/读取超时为 2/5 秒，LoadBalancer 与 HTTP 传输都禁止自动重试和重定向。
 Foundation Group Configurer 统一完成 Request ID 传播、Problem 解码及可选的严格 JSON 绑定/响应大小限制。
-`CctPrecheckConfiguration` 只声明接口和错误/响应策略，不实现 MDC、响应包装或自定义 JSON 解析。
-CCT 的日期、资格与原因一致性仍由业务适配器校验，不再叠加 `AbstractClientTemplate`；
-应用级禁重试传输集中在 `HttpClientConfiguration`。
-发现结果为空或连接失败返回依赖不可用。必须能解析本地或制品库中的 CCT API JAR。
+应用级禁重试传输集中在 `HttpClientConfiguration`。发现结果为空或连接失败返回依赖不可用。
 
-旧预检链 `CctPrecheckClientImpl → CheckoutEligibilityApi.precheck` 保留，但创建主链不再重复调用预检。当前由 `CheckoutCommercialPort` 返回完整 OE/商业/法律事实；新依赖暂固定 Mock，真实解析接入时继续复用上述 HTTP 与服务发现公共组件。创建初始化不使用请求幂等组件。
+旧预检链（`CctPrecheckClient` → `CheckoutEligibilityApi.precheck`）已删除：CCT 在合并单仓时已移除该接口，创建主链也早已不再调用（[Customer 与存卡支付](../requirements/20261015/commerce-Customer与存卡支付/delivery.md)阶段 4 记录）。当前由 `CheckoutCommercialPort` 返回完整 OE/商业/法律事实；新依赖暂固定 Mock，真实解析接入时继续复用上述 HTTP 与服务发现公共组件。创建初始化不使用请求幂等组件。
+
+## Customer 与已存卡
+
+按 [Customer 与存卡支付](../requirements/20261015/commerce-Customer与存卡支付/technique.md) §2.1–2.2：`t_customer` 以（`client_id`, `active_reference`）唯一保证同一引用同时最多一个有效 Customer，公开编号 `cus_` 前缀。Client API `/client-gateway-api/v1/customers` 提供创建（已存在返回 200）、按编号或引用查询、删除，以及 `/customers/{customerNo}/stored-cards` 列出与删除已存卡（经 Payment `StoredCardApi`，事务外调用）。删除 Customer 在同一事务登记 `STORED_CARD_INVALIDATION` 补偿任务，提交后调用 Payment 失效其已存卡。建单可带 `consumerReference`，在保存订单前关联或新建 Customer，订单记 `customer_id`；访客订单不建 Customer。引用只允许 `[A-Za-z0-9._:-]`，7～15 位纯数字视为电话号码拒绝（422）。
+
+结账存卡（§2.2、§2.5）：`t_client_stored_card_setting` 按 Client 开通（无记录为未开通）。`GET /customer-gateway-api/v1/checkouts/{token}` 在订单有有效 Customer 且已开通时返回 `cardSaving.available=true` 与已存卡；`POST .../payments` 接受手输卡（可带 `saveCard`）或 `storedCard{storedCardToken,cvv}`，无资格时 422 `STORED_CARD_NOT_AVAILABLE`。卡支付经 `CheckoutCardPaymentPortImpl` 调用 Payment pay（幂等键 `submission:<id>`、自动捕获、回跳本页面）；结账“查询支付提交”仍为占位，待 Payment 提供按来源提交查询。
 
 ## 构建与本地运行
 

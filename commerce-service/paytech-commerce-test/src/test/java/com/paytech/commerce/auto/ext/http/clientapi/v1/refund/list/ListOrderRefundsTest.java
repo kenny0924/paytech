@@ -360,7 +360,6 @@ class ListOrderRefundsTest extends MockTestBase {
         var result = httpTestInvoker.get(uri.buildAndExpand(orderNo).toUriString(),
             TestRequestHeaders.client(REQUEST_ID, client, credential));
         queryChecker.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
-        cctCheckoutMocker.assertNoCalls();
         return new ListOrderRefundsResponseChecker(result, objectMapper, REQUEST_ID);
     }
 

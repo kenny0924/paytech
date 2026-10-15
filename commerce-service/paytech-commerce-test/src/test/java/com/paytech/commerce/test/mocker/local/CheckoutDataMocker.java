@@ -14,6 +14,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.commerce.domainservice.port.CommerceIdentifierGenerator;
 import com.paytech.commerce.test.dal.CheckoutCreationTestMapper;
+import com.paytech.commerce.test.dal.CustomerTestMapper;
 import com.paytech.commerce.test.dal.RefundCreationTestMapper;
 import com.paytech.foundation.testsupport.api.Clear;
 
@@ -23,16 +24,19 @@ public final class CheckoutDataMocker implements Clear {
     private final long clientId = 900_000_000_000L + new SecureRandom().nextLong(100_000_000_000L) * 2;
     private final CheckoutCreationTestMapper mapper;
     private final RefundCreationTestMapper refundMapper;
+    private final CustomerTestMapper customerMapper;
     private final CommerceIdentifierGenerator identifiers;
     private final TransactionTemplate transaction;
     private final Set<Long> ownedOrderIds = new HashSet<>();
     private boolean reusable = true;
 
     /** 使用 Spring 的真实数据库事务；随机值仅作为本次运行的隔离身份。 */
-    public CheckoutDataMocker(CheckoutCreationTestMapper mapper, RefundCreationTestMapper refundMapper, CommerceIdentifierGenerator identifiers,
+    public CheckoutDataMocker(CheckoutCreationTestMapper mapper, RefundCreationTestMapper refundMapper,
+        CustomerTestMapper customerMapper, CommerceIdentifierGenerator identifiers,
         PlatformTransactionManager transactionManager) {
         this.mapper = mapper;
         this.refundMapper = refundMapper;
+        this.customerMapper = customerMapper;
         this.identifiers = identifiers;
         this.transaction = new TransactionTemplate(transactionManager);
     }
@@ -53,7 +57,9 @@ public final class CheckoutDataMocker implements Clear {
         try {
             mapper.checkCreationColumns();
             refundMapper.checkRefundTables();
+            customerMapper.checkCustomerTables();
             assertTrue(mapper.orderIds(clientId, otherClientId()).isEmpty(), "上例订单未清理");
+            assertTrue(customerMapper.customers(clientId, otherClientId()).isEmpty(), "上例 Customer 未清理");
             for (long orderId : ownedOrderIds) {
                 assertEquals(0, mapper.creationRows(orderId), "存在残留子行");
             }
@@ -108,7 +114,11 @@ public final class CheckoutDataMocker implements Clear {
                     mapper.deleteItems(orderId);
                     mapper.deleteOrder(orderId);
                 }
+                customerMapper.deleteTasks(clientId, otherClientId());
+                customerMapper.deleteCustomers(clientId, otherClientId());
+                customerMapper.deleteSettings(clientId, otherClientId());
             });
+            assertTrue(customerMapper.customers(clientId, otherClientId()).isEmpty(), "清理后仍存在 Customer");
             for (long orderId : ownedOrderIds) {
                 assertEquals(0, mapper.creationRows(orderId), "清理后仍存在本例数据");
                 assertTrue(refundMapper.refunds(orderId).isEmpty(), "清理后仍存在退款申请");

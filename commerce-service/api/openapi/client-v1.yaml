@@ -253,6 +253,122 @@ paths:
           $ref: '#/components/responses/RefundResponse'
         default:
           $ref: '#/components/responses/ProblemResponse'
+  /api/v1/customers:
+    post:
+      operationId: createCustomer
+      summary: 创建 Customer
+      description: 按 Client 命名空间内的 consumerReference 创建 Customer；该引用已有有效 Customer 时返回原 Customer（200）。consumerReference 只能用于 Client 系统中已认证的用户，访客不得传入；不得为 Email、Phone、证件号等个人原值，像电话号码的纯数字返回 422 INVALID_CONSUMER_REFERENCE。删除后同一引用再次创建会得到新的 Customer。
+      x-required-scope: customers.write
+      x-request-body-max-bytes: 1024
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomerResponse'
+        '201':
+          $ref: '#/components/responses/CustomerResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+    get:
+      operationId: getCustomerByReference
+      summary: 按消费者引用查询 Customer
+      description: 只返回有效 Customer；没有或属于其他 Client 时返回 404 CUSTOMER_NOT_FOUND。
+      x-required-scope: customers.read
+      x-request-body-max-bytes: 0
+      x-query-allowlist: [consumerReference]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: consumerReference
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ConsumerReference'
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomerResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/customers/{customerNo}:
+    get:
+      operationId: getCustomer
+      summary: 查询 Customer
+      description: 按公开编号查询，已删除的返回 DELETED 状态；未知或跨 Client 返回 404 CUSTOMER_NOT_FOUND。
+      x-required-scope: customers.read
+      x-request-body-max-bytes: 0
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CustomerNo'
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomerResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+    delete:
+      operationId: deleteCustomer
+      summary: 删除 Customer
+      description: 不可撤销；其全部已存卡随之失效（异步，Commerce 在此之前已不再展示或使用）。已删除的再次删除返回原删除结果。
+      x-required-scope: customers.write
+      x-request-body-max-bytes: 0
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CustomerNo'
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomerResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/customers/{customerNo}/stored-cards:
+    get:
+      operationId: listStoredCards
+      summary: 列出已存卡
+      description: 返回有效且未过期的已存卡，只含 Token、前 6 后 4 掩码卡号、有效期与保存时间；已删除的 Customer 返回空列表。已存卡只在消费者于 Hosted Checkout 支付成功并同意保存后产生。
+      x-required-scope: customers.read
+      x-request-body-max-bytes: 0
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CustomerNo'
+      responses:
+        '200':
+          $ref: '#/components/responses/StoredCardListResponse'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
+  /api/v1/customers/{customerNo}/stored-cards/{storedCardToken}:
+    delete:
+      operationId: deleteStoredCard
+      summary: 删除已存卡
+      description: 删除后不能再用于支付；已删除的再次删除同样返回 204。Customer 或已存卡不存在返回 404。
+      x-required-scope: customers.write
+      x-request-body-max-bytes: 0
+      x-query-allowlist: []
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CustomerNo'
+        - name: storedCardToken
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 64
+      responses:
+        '204':
+          description: Stored card deleted.
+        default:
+          $ref: '#/components/responses/ProblemResponse'
 components:
   securitySchemes:
     BearerAuth:
@@ -260,6 +376,14 @@ components:
       scheme: bearer
       bearerFormat: Client API Credential
   parameters:
+    CustomerNo:
+      name: customerNo
+      in: path
+      required: true
+      description: Opaque, case-sensitive Customer number.
+      schema:
+        type: string
+        maxLength: 64
     OrderNo:
       name: orderNo
       in: path
@@ -392,6 +516,24 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RefundableAmountResponse'
+    CustomerResponse:
+      description: Customer view.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Customer'
+    StoredCardListResponse:
+      description: Stored cards of one Customer.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StoredCardList'
     CreateRefundResponse:
       description: Immutable refund creation receipt.
       headers:
@@ -432,6 +574,62 @@ components:
           schema:
             $ref: '#/components/schemas/RefundListResponse'
   schemas:
+    ConsumerReference:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[A-Za-z0-9._:-]+$'
+      description: Opaque, non-PII consumer reference in the Client namespace; never an e-mail, phone number or government ID.
+    CreateCustomerRequest:
+      type: object
+      additionalProperties: true
+      required: [consumerReference]
+      properties:
+        consumerReference:
+          $ref: '#/components/schemas/ConsumerReference'
+    Customer:
+      type: object
+      required: [customerNo, consumerReference, status, createdAt]
+      properties:
+        customerNo:
+          type: string
+          maxLength: 64
+        consumerReference:
+          $ref: '#/components/schemas/ConsumerReference'
+        status:
+          type: string
+          enum: [ACTIVE, DELETED]
+        createdAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+    StoredCardList:
+      type: object
+      required: [storedCards]
+      properties:
+        storedCards:
+          type: array
+          items:
+            type: object
+            required: [storedCardToken, maskedPan, expiryMonth, expiryYear, createdAt]
+            properties:
+              storedCardToken:
+                type: string
+                maxLength: 64
+              maskedPan:
+                type: string
+                pattern: '^[0-9]{6}[*]{6}[0-9]{4}$'
+              expiryMonth:
+                type: string
+                pattern: '^(0[1-9]|1[0-2])$'
+              expiryYear:
+                type: string
+                pattern: '^[0-9]{4}$'
+              createdAt:
+                type: string
+                format: date-time
     ClientReference:
       type: string
       description: Case-sensitive printable-ASCII identifier supplied and maintained by the Client.
@@ -469,6 +667,9 @@ components:
         clientOrderId:
           $ref: '#/components/schemas/ClientReference'
           description: Permanent Client-scoped order identifier; it is not a transport idempotency key.
+        consumerReference:
+          $ref: '#/components/schemas/ConsumerReference'
+          description: 可选。订单关联该引用的有效 Customer，没有则新建；只能用于 Client 系统中已认证的用户，访客不得传入。
         currency:
           type: string
           description: 订单币种，使用大写 ISO 4217 代码；当前创建入口仅支持 USD，其他币种在预检和写入前拒绝。

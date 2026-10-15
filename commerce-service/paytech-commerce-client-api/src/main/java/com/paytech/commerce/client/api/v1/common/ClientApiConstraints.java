@@ -6,6 +6,12 @@ public final class ClientApiConstraints {
     /** Printable-ASCII, case-sensitive Client reference accepted at the external boundary. */
     public static final String CLIENT_REFERENCE = "^[!-~]+$";
 
+    /**
+     * Opaque Client-scoped consumer reference: letters, digits and {@code . _ : -} only, so e-mail addresses and
+     * phone numbers with {@code @} or {@code +} are rejected at the boundary.
+     */
+    public static final String CONSUMER_REFERENCE = "^[A-Za-z0-9._:-]+$";
+
     /** Three-letter uppercase ISO 4217 currency-code shape. */
     public static final String CURRENCY = "^[A-Z]{3}$";
 

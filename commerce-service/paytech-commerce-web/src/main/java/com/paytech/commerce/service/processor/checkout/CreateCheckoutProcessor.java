@@ -23,6 +23,7 @@ import com.paytech.commerce.domain.checkout.CheckoutInitializationContext;
 import com.paytech.commerce.domain.checkout.CheckoutPublicOrigin;
 import com.paytech.commerce.domain.checkout.CheckoutPublicToken;
 import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
+import com.paytech.commerce.domain.customer.ConsumerReferencePolicy;
 import com.paytech.commerce.domain.customer.CustomerCheckoutModels.InitializationRequest;
 import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
 import com.paytech.commerce.domain.enums.FundsAvailabilityStatus;
@@ -35,6 +36,7 @@ import com.paytech.commerce.domainservice.port.customer.CheckoutRiskPort;
 import com.paytech.commerce.domainservice.port.customer.CheckoutTaxPort;
 import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
 import com.paytech.commerce.domainservice.service.checkout.CheckoutCreationService;
+import com.paytech.commerce.domainservice.service.customer.CustomerService;
 import com.paytech.commerce.service.processor.checkout.request.CreateCheckoutRequest;
 import com.paytech.commerce.service.processor.checkout.response.CreateCheckoutResponse;
 import com.paytech.foundation.common.error.CommonErrorCode;
@@ -61,6 +63,7 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
     private final CheckoutCreationService checkoutCreationService;
     private final CommerceOrderRepository commerceOrderRepository;
     private final CommerceIdentifierGenerator identifierGenerator;
+    private final CustomerService customerService;
 
     /** 检查商品标识唯一性及金额关系；字段约束由 HTTP 入口和公共模板触发。 */
     @Override
@@ -70,6 +73,7 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
             throw new FailException(CommonErrorCode.VALIDATION_ERROR);
         }
         validateAmounts(request);
+        ConsumerReferencePolicy.requireOpaque(request.getConsumerReference());
     }
 
     /** 创建包含完整商业信息的订单和 Checkout 会话。 */
@@ -83,6 +87,9 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
 
         // 事务外初始化卖方、合同、税额和法律文件；尚不创建 Intent。
         initializeCheckout(context);
+
+        // 带消费者引用时关联或新建 Customer；Customer 可复用，订单保存失败时保留。
+        attachCustomer(context, request);
 
         // 保存上下文
         saveCreateCheckoutContext(context);
@@ -146,6 +153,17 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
         order.setRoundingAmount(amounts.roundingAmount());
         order.setTotalAmount(amounts.totalAmount());
         order.setOrderStatus(OrderStatus.OPEN);
+    }
+
+    /** 访客订单不建 Customer；有引用时取得有效 Customer 并写入订单。 */
+    void attachCustomer(CreateCheckoutContext context, CreateCheckoutRequest request) {
+        if (request.getConsumerReference() == null) {
+            return;
+        }
+        var order = context.getOrder();
+        var resolution = customerService.resolveActiveCustomer(order.getClientId(), request.getConsumerReference(),
+            order.getCreateTime());
+        order.setCustomerId(resolution.customer().getCustomerId());
     }
 
     /** 保存失败后事务已回滚；只有已存在同 Client 业务订单时才转换为业务冲突。 */

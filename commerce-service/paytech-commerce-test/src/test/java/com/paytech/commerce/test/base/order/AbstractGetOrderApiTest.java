@@ -51,7 +51,6 @@ public abstract class AbstractGetOrderApiTest extends MockTestBase {
             .buildAndExpand(orderNo).toUriString();
         var response = httpTestInvoker.get(path, TestRequestHeaders.client(REQUEST_ID, clientId, credentialId));
         orderChecker.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
-        cctCheckoutMocker.assertNoCalls();
         return new GetOrderResponseChecker(response, objectMapper, REQUEST_ID);
     }
 }

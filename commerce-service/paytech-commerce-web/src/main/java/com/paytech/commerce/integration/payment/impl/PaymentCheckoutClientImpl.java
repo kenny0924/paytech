@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.commerce.core.configuration.CommercePaymentProperties;
 import com.paytech.commerce.domain.checkout.CheckoutUpstreamProtocolException;
+import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardChoice;
 import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInput;
 import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInstrument;
 import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentReference;
@@ -62,20 +63,22 @@ public class PaymentCheckoutClientImpl implements PaymentCheckoutClient {
 
     /** 卡原值只发送到专用工具接口，返回瞬时 Token 供后续支付使用。 */
     @Override
-    public CardInstrument applyCardInstrument(long clientId, PaymentReference reference, CardInput card) {
-        var identity = card.identity();
-        var cardBody = new ApplyCardInstrumentRequestBody.Card();
-        cardBody.setPan(identity.pan());
-        cardBody.setExpiryMonth(identity.expiryMonth());
-        cardBody.setExpiryYear(identity.expiryYear());
-        cardBody.setCardholderName(identity.cardholderName());
-        cardBody.setCvv(card.cvv());
+    public CardInstrument applyCardInstrument(long clientId, PaymentReference reference, CardChoice choice) {
         var body = new ApplyCardInstrumentRequestBody();
         body.setClientId(Long.toString(clientId));
         body.setIntentId(Long.toString(reference.intentId()));
         body.setSourceSubmissionId(Long.toString(reference.submissionId()));
         body.setPaymentMethodCode(properties.getCardPaymentMethodCode());
-        body.setCard(cardBody);
+        body.setCustomerId(choice.customerId() == null ? null : Long.toString(choice.customerId()));
+        if (choice.storedCardToken() != null) {
+            var stored = new ApplyCardInstrumentRequestBody.StoredCard();
+            stored.setStoredCardToken(choice.storedCardToken());
+            stored.setCvv(choice.storedCardCvv());
+            body.setStoredCard(stored);
+        } else {
+            body.setCard(cardBody(choice.card()));
+            body.setSaveCard(choice.saveCard() ? Boolean.TRUE : null);
+        }
         var result = responseBody(instruments.applyCardInstrument(body));
         if (result.getPaymentInstrumentToken() == null || !result.getPaymentInstrumentToken().matches("[A-Za-z0-9_-]{43}")
             || result.getExpiresAt() == null
@@ -87,6 +90,18 @@ public class PaymentCheckoutClientImpl implements PaymentCheckoutClient {
         } catch (DateTimeException invalidTime) {
             throw new CheckoutUpstreamProtocolException("Payment 卡工具期限无效", invalidTime);
         }
+    }
+
+    /** 手输卡请求体。 */
+    static ApplyCardInstrumentRequestBody.Card cardBody(CardInput card) {
+        var identity = card.identity();
+        var cardBody = new ApplyCardInstrumentRequestBody.Card();
+        cardBody.setPan(identity.pan());
+        cardBody.setExpiryMonth(identity.expiryMonth());
+        cardBody.setExpiryYear(identity.expiryYear());
+        cardBody.setCardholderName(identity.cardholderName());
+        cardBody.setCvv(card.cvv());
+        return cardBody;
     }
 
     /** 两个接口均约定 HTTP 200 和非空 DTO，其他成功状态也不能视作有效创建。 */

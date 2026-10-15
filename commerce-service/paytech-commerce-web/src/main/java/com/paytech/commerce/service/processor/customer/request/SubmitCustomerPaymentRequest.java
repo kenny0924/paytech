@@ -25,10 +25,15 @@ public class SubmitCustomerPaymentRequest {
     @NotNull
     @AssertTrue
     private final Boolean confirmed;
-    /** 当前请求瞬时持有的卡输入。 */
+    /** 当前请求瞬时持有的手输卡输入；使用已存卡时为空。 */
     @Valid
-    @NotNull
     private final CardInput card;
+    /** 使用已存卡时的 Token；手输卡时为空。 */
+    private final String storedCardToken;
+    /** 使用已存卡时本次输入的 CVV；手输卡时为空。 */
+    private final String storedCardCvv;
+    /** 是否同意支付成功后保存手输卡。 */
+    private final boolean saveCard;
     /** 入站适配器从可信连接取得的网络证据。 */
     @NotNull
     private final NetworkEvidence evidence;

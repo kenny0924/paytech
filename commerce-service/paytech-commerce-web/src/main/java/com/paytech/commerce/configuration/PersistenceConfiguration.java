@@ -1,6 +1,7 @@
 package com.paytech.commerce.configuration;
 
 import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
+import com.paytech.commerce.domain.enums.CustomerStatus;
 import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
 import com.paytech.commerce.domain.enums.RefundStatus;
 import com.paytech.commerce.domain.enums.RefundRequestOrigin;
@@ -32,6 +33,8 @@ public class PersistenceConfiguration {
         return configuration -> {
             configuration.setUseGeneratedKeys(false);
             configuration.getTypeHandlerRegistry().register(RefundStatus.class, new CodeEnumTypeHandler<>(RefundStatus.class));
+            configuration.getTypeHandlerRegistry().register(CustomerStatus.class,
+                new CodeEnumTypeHandler<>(CustomerStatus.class));
             configuration.getTypeHandlerRegistry().register(RefundRequestOrigin.class, new CodeEnumTypeHandler<>(RefundRequestOrigin.class));
             configuration.getTypeHandlerRegistry().register(InstantTypeHandler.class);
             configuration.getTypeHandlerRegistry().register(OrderStatus.class,

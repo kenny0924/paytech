@@ -85,7 +85,7 @@
 | GET | `/api/v1/customers/{customerId}/stored-cards` | 有效且未删除的已存卡：`storedCardToken`、`maskedPan`、`expiryMonth`、`expiryYear`、`createdAt` |
 | DELETE | `/api/v1/customers/{customerId}/stored-cards/{storedCardToken}` | |
 
-`POST /api/v1/checkouts` 增加可选 `consumerReference`；订单查询响应增加 `customerId`（未关联时省略）。跨 Client 访问统一返回 404。
+`POST /api/v1/checkouts` 增加可选 `consumerReference`；跨 Client 访问统一返回 404。Customer 对外使用公开编号 `customerNo`（`cus_` 前缀），路径为 `/customers/{customerNo}`，不暴露内部主键（阶段 4 补充）。订单查询响应暂不增加 Customer 字段（阶段 4 偏离：现有订单查询为构造参数映射的只读视图，改动面大；结账流程所需的 `customer_id` 已在订单实体上）。
 
 **结账接口（Customer API）**
 
@@ -102,7 +102,7 @@
 |---|---|
 | 手输卡 | `POST /payment-instrument/v1/card-tokens`，Body 增加可选 `customerId`、`saveCard`（两者同时出现才保存） |
 | 已存卡 | 同一接口，`card` 与 `storedCard{storedCardToken, cvv}` 二选一，并带 `customerId` |
-| 支付 | `POST /payment-execution/v1/intents/{id}/pay`（G-01 接通） |
+| 支付 | `POST /payment-execution/v1/intents/{id}/pay`（G-01 接通，阶段 4 实现：`CheckoutCardPaymentPortImpl`，幂等键 `submission:<sourceSubmissionId>`、自动捕获、回跳本 Checkout 页面；付款人引用有 Customer 时为 `customerNo`、访客为 `orderNo`，不把 Client 原始引用交给渠道；3DS 动作标识使用尝试 ID） |
 | 列出 / 删除已存卡 | Payment 新增内部接口（§2.4） |
 
 `customerId` 是 Commerce 已核对过的订单 Customer；Payment 不接收、不保存 `consumer_reference`。
@@ -190,3 +190,9 @@ Commerce 本地表（§2.1）。建单不冻结开关；结账接口和提交支
 | D1 | 文档：Client API Route Manifest、结账设计稿 | C1、C2 |
 
 建议顺序：P1 与 C1 并行，再做 C2。
+
+## 6. 阶段 4 补充（2026-10-15）
+
+- 凭证表增加明文有效期（§2.4）；Customer 对外用 `customerNo`；订单查询暂不加 Customer 字段（§2.2）。
+- Commerce 结账“查询支付提交”仍为占位（固定返回处理中，代码标 `TODO by CLAUDE`）：Payment 尚无按来源提交查询原结果的接口，需在 Payment 另行补充。
+- 请求体上的 `@AssertTrue` 组合校验方法加 `@JsonIgnore`，避免被序列化为未知字段（Payment `ApplyCardInstrumentRequestBody`、Commerce `SubmitPaymentRequestBody`）。

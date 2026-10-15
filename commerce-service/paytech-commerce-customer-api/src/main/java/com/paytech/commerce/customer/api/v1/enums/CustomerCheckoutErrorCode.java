@@ -35,7 +35,10 @@ public enum CustomerCheckoutErrorCode implements CodeMessageEnum {
     PAYMENT_ALREADY_IN_PROGRESS("当前订单已有支付，请查询原结果", 409),
 
     /** 调用服务无权访问。 */
-    PAYMENT_ACCESS_DENIED("调用服务无权访问", 403);
+    PAYMENT_ACCESS_DENIED("调用服务无权访问", 403),
+
+    /** 订单没有有效 Customer 或 Client 未开通存卡，不能保存卡或使用已存卡。 */
+    STORED_CARD_NOT_AVAILABLE("当前不能保存卡或使用已存卡", 422);
     private final String message;
     private final int httpStatus;
 

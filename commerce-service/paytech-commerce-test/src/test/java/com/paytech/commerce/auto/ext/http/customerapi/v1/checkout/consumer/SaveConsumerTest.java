@@ -434,7 +434,6 @@ class SaveConsumerTest extends MockTestBase {
 
     /** 保存资料不触发商业准备、支付或取消。 */
     private void assertNoOtherExternalCalls() {
-        cctCheckoutMocker.assertNoCalls();
         preparationMocker.assertNoCalls();
         assertTrue(intents.calls().isEmpty());
         assertTrue(cards.calls().isEmpty());

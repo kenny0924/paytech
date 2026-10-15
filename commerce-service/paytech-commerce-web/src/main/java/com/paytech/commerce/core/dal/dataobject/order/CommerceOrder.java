@@ -29,6 +29,9 @@ public class CommerceOrder {
     /** Client 内永久唯一订单号。 */
     private String clientOrderId;
 
+    /** 建单时按消费者引用关联的 Customer；访客订单为空，创建后不可修改。 */
+    private Long customerId;
+
     /** 服务端根据创建入口固定的接入方式，不接受 Client 指定或后续修改。 */
     private OrderCreationMode creationMode;
 

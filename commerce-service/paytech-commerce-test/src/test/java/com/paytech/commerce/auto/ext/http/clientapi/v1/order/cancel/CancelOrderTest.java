@@ -452,7 +452,6 @@ class CancelOrderTest extends MockTestBase {
             snapshots.snapshot(checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId()).keySet(),
             "取消不得创建或删除订单");
         terminations.assertOutsideTransaction();
-        cctCheckoutMocker.assertNoCalls();
         preparationMocker.assertNoCalls();
         return new CancelOrderResponseChecker(result, objectMapper, REQUEST_ID);
     }

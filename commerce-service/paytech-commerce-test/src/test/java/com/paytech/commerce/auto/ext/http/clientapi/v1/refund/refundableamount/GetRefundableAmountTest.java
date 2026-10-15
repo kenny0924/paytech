@@ -305,7 +305,6 @@ class GetRefundableAmountTest extends MockTestBase {
             .buildAndExpand(orderNo).toUriString();
         var result = httpTestInvoker.get(uri, TestRequestHeaders.client(REQUEST_ID, client, credential));
         queryChecker.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
-        cctCheckoutMocker.assertNoCalls();
         preparationMocker.assertNoCalls();
         assertTrue(intentMocker.calls().isEmpty(), "查询不应创建 Intent");
         assertTrue(cardMocker.calls().isEmpty(), "查询不应提交支付");

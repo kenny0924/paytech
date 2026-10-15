@@ -67,6 +67,16 @@ public class CreateCheckoutRequestBody {
     @Size(min = 1, max = 100)
     private List<@NotNull @Valid CheckoutItemInfo> items;
 
+    /**
+     * 可选的 Client 命名空间内消费者引用；带上时订单关联该引用的有效 Customer，没有则新建。
+     * <li>只能用于 Client 系统中已认证的用户，访客不得传入；不得为 Email、Phone、证件号等个人原值。</li>
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonDeserialize(using = RejectExplicitNullDeserializer.class)
+    @Size(min = 1, max = 128)
+    @Pattern(regexp = ClientApiConstraints.CONSUMER_REFERENCE)
+    private String consumerReference;
+
     /** 商品信息。 */
     @Getter
     @Setter

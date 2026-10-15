@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.paytech.commerce.test.mocker.external.CheckoutCardMocker;
 import com.paytech.commerce.test.mocker.external.CheckoutIntentMocker;
+import com.paytech.payment.api.card.StoredCardApi;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.api.execution.request.*;
 import com.paytech.payment.api.execution.response.*;
@@ -20,12 +22,13 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class MockPaymentIntentApi implements PaymentIntentApi, WebMvcConfigurer {
     private final CheckoutIntentMocker mocker;
+    private final CheckoutCardMocker cards;
 
     /** 模拟提供方应用的 Context Path，接口内路径仍由正式 API 定义。 */
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
         configurer.addPathPrefix("/payment", type -> PaymentIntentApi.class.isAssignableFrom(type)
-            || PaymentInstrumentApi.class.isAssignableFrom(type));
+            || PaymentInstrumentApi.class.isAssignableFrom(type) || StoredCardApi.class.isAssignableFrom(type));
     }
 
     /** 仅创建接口在本次范围内，通过 DTO 配置响应。 */
@@ -49,9 +52,14 @@ public class MockPaymentIntentApi implements PaymentIntentApi, WebMvcConfigurer 
         throw new AssertionError("本例不允许调用 terminateIntent");
     }
 
-    /** 通用 pay 尚未对接，本例不可额外发送资金指令。 */
+    /** pay 由场景配置 DTO 或故障；HTTP 状态按 Payment 合同，处理中返回 202。 */
     @Override
     public ResponseEntity<PayResponseBody> pay(String intentId, String idempotencyKey, PayRequestBody body) {
-        throw new AssertionError("本例不允许调用 pay");
+        var request = (org.springframework.web.context.request.ServletRequestAttributes)
+            org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes();
+        request.getResponse().setHeader("X-Request-Id", "payment-test");
+        var response = cards.answer(intentId, idempotencyKey, body);
+        return "PROCESSING".equals(response.getStatus()) ? ResponseEntity.accepted().body(response)
+            : ResponseEntity.ok(response);
     }
 }

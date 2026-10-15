@@ -70,7 +70,6 @@ class OrderCancellationTransactionTest extends MockTestBase {
 
         snapshots.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
         terminations.assertNoCalls();
-        cctCheckoutMocker.assertNoCalls();
     }
 
     /** 会话最后一步 CAS 失败时回滚本次取消；之前独立提交的终止意图仍需保留。 */

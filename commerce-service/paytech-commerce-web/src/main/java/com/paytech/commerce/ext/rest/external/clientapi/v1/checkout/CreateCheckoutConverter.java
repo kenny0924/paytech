@@ -28,7 +28,7 @@ public final class CreateCheckoutConverter {
         CreateCheckoutRequestBody body) {
         return new CreateCheckoutRequest(clientId, body.getClientOrderId(), body.getCurrency(),
             body.getConsumerCountryCode(), body.getExpiresAt(),
-            body.getItems().stream().map(CreateCheckoutConverter::toRequestItem).toList());
+            body.getItems().stream().map(CreateCheckoutConverter::toRequestItem).toList(), body.getConsumerReference());
     }
 
     /** 将不可变创建回执映射为公开 Wire DTO。 */

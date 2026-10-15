@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
 import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
 import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContext;
+import com.paytech.commerce.core.dal.dataobject.customer.Customer;
 import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
 import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
 import com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode;
@@ -28,6 +29,7 @@ import com.paytech.commerce.domainservice.repository.order.OrderContextRepositor
 import com.paytech.commerce.domainservice.repository.order.OrderItemRepository;
 import com.paytech.commerce.domainservice.repository.order.OrderPaymentProjectionRepository;
 import com.paytech.commerce.integration.customer.CheckoutDocumentLinkClient;
+import com.paytech.commerce.integration.payment.PaymentStoredCardClient;
 import com.paytech.commerce.service.processor.customer.request.GetCheckoutRequest;
 import com.paytech.commerce.service.processor.customer.response.GetCheckoutResponse;
 import com.paytech.foundation.common.error.FailException;
@@ -51,6 +53,8 @@ public class GetCustomerCheckoutProcessor extends AbstractProcessor<GetCheckoutR
     private final ConsumerContextRepository consumerContextRepository;
     private final CheckoutDocumentLinkClient documents;
     private final OrderPaymentProjectionRepository orderPaymentProjectionRepository;
+    private final CardSavingEligibility cardSavingEligibility;
+    private final PaymentStoredCardClient storedCards;
 
     /** Token 的格式与校验码不合法时按原合同返回不存在，不发起数据库或外部查询。 */
     @Override
@@ -64,9 +68,11 @@ public class GetCustomerCheckoutProcessor extends AbstractProcessor<GetCheckoutR
     @Override
     protected GetCheckoutResponse processRequest(GetCheckoutRequest request) {
         var context = buildContext(request);
+        var customer = cardSavingEligibility.eligibleCustomer(context.getOrder());
+        var cards = storedCards(customer);
         if (unchanged(request.getCheckoutToken(), context)) {
             context.validateFrozen();
-            return processResponse(context, clock.instant());
+            return processResponse(context, clock.instant(), customer != null, cards);
         }
         throw new FailException(CommerceCheckoutErrorCode.IDEMPOTENCY_REQUEST_IN_PROGRESS);
     }
@@ -148,6 +154,18 @@ public class GetCustomerCheckoutProcessor extends AbstractProcessor<GetCheckoutR
         }
     }
 
+    /** 有资格时在事务外读取已存卡；Payment 暂不可用时降级为不展示，不影响结账。 */
+    List<PaymentStoredCardClient.StoredCard> storedCards(Customer customer) {
+        if (customer == null) {
+            return List.of();
+        }
+        try {
+            return storedCards.list(customer.getClientId(), customer.getCustomerId());
+        } catch (ServiceUnavailableException dependencyUnavailable) {
+            return List.of();
+        }
+    }
+
     /** 末尾只读取版本与原 Token 绑定，不重新读取商品、合同或消费者详情。 */
     boolean unchanged(String token, CheckoutQueryContext context) {
         var order = context.getOrder();
@@ -162,7 +180,8 @@ public class GetCustomerCheckoutProcessor extends AbstractProcessor<GetCheckoutR
     }
 
     /** 从同一上下文输出最小响应，不向 Controller 传递数据库对象或受保护引用。 */
-    GetCheckoutResponse processResponse(CheckoutQueryContext context, Instant now) {
+    GetCheckoutResponse processResponse(CheckoutQueryContext context, Instant now, boolean cardSavingAvailable,
+        List<PaymentStoredCardClient.StoredCard> cards) {
         var order = context.getOrder();
         var legal = context.getLegal();
         var amounts = new GetCheckoutResponse.Amounts(order.getMerchandiseAmount(), order.getDiscountAmount(),
@@ -181,6 +200,7 @@ public class GetCustomerCheckoutProcessor extends AbstractProcessor<GetCheckoutR
             legal == null ? "en" : legal.getLocale(), order.getExpiresAt(), amounts, items,
             context.getConsumer() != null, context.getDetails(), seller,
             legal == null ? null : legal.getConsumerContractId(), context.getLinks(),
-            context.getPaymentProjection() != null, context.getPayment(), actions, context.pollAfterMs(actions));
+            context.getPaymentProjection() != null, context.getPayment(), actions, context.pollAfterMs(actions),
+            cardSavingAvailable, cards);
     }
 }

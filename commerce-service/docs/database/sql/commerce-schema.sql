@@ -9,6 +9,7 @@ CREATE TABLE `t_commerce_order` (
   `order_no` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '供接口响应、业务查询与人工操作使用的唯一订单编号。',
   `client_id` BIGINT NOT NULL COMMENT '订单或退款请求所属平台 Client 的内部唯一标识。',
   `client_order_id` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'Client 在自身命名空间内提供且不可复用的稳定订单业务标识；不承担接口请求幂等职责。',
+  `customer_id` BIGINT NULL COMMENT '建单时按 consumerReference 关联的 Customer；访客订单为 NULL，创建后不可修改。',
   `creation_mode` VARCHAR(32) NOT NULL DEFAULT 'HOSTED_CHECKOUT' COMMENT '服务端根据创建入口固定的订单接入方式，创建后不可修改；HOSTED_CHECKOUT为托管收银台，DIRECT_PAY为预留直接支付接入；已有订单及默认值为HOSTED_CHECKOUT。允许值：HOSTED_CHECKOUT、DIRECT_PAY。',
   `consumer_country_code` CHAR(2) NULL COMMENT '基础创建时固定的消费者 ISO 3166-1 alpha-2 国家代码；NULL 仅用于历史订单读取旧创建快照。',
   `context_format` VARCHAR(32) NOT NULL COMMENT 'TERM_PRICE使用entityNo和条款版本；LEGACY_SCOPE保留历史身份及原Scope读取，不回写旧订单。允许值：TERM_PRICE、LEGACY_SCOPE。',
@@ -41,6 +42,31 @@ CREATE TABLE `t_commerce_order` (
   KEY `idx_order_partner_time` (`local_partner_id`, `create_time`, `order_id`) COMMENT '访问索引：local_partner_id、create_time、order_id',
   KEY `idx_order_expiry` (`order_status`, `expires_at`, `order_id`) COMMENT '访问索引：order_status、expires_at、order_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='基础创建时固定商品净额/币种/期限；支付准备选择提交后固定OE，Context建立时一次补齐税额和最终金额；context_format显式区分新旧流程，不延长到期或跨OE恢复。';
+
+CREATE TABLE `t_customer` (
+  `customer_id` BIGINT NOT NULL COMMENT 'Commerce Customer 的内部唯一标识，创建后不可修改；Payment 已存卡以此关联。',
+  `customer_no` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '供 Client API 使用的不透明公开 Customer 编号，cus_ 前缀加随机串，创建后不可修改。',
+  `client_id` BIGINT NOT NULL COMMENT '所属平台 Client 的内部唯一标识，创建后不可修改。',
+  `consumer_reference` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'Client 命名空间内的不透明、非 PII 消费者引用原值，由 Client 服务端传入，创建后不可修改；不得为 Email、Phone、证件号等个人原值。',
+  `active_reference` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '有效时等于 consumer_reference，删除时置 NULL；与 client_id 组成唯一索引，保证同一引用同时最多一个有效 Customer。',
+  `customer_status` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'Customer 状态，删除不可撤销。允许值：ACTIVE、DELETED。',
+  `deleted_time` DATETIME(6) NULL COMMENT '删除的 UTC 微秒精度时间；有效时为 NULL。',
+  `version` BIGINT NOT NULL COMMENT '可变业务行并发更新使用的单调乐观锁版本。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  PRIMARY KEY (`customer_id`),
+  UNIQUE KEY `uk_customer_no` (`customer_no`) COMMENT '唯一索引：customer_no',
+  UNIQUE KEY `uk_customer_active_reference` (`client_id`, `active_reference`) COMMENT '唯一索引：client_id、active_reference'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Client 命名空间内的 Customer：身份只来自 Client 服务端传入的 consumer_reference，首期只保存身份与状态；删除不可撤销，同一引用再次使用时新建。';
+
+CREATE TABLE `t_client_stored_card_setting` (
+  `client_id` BIGINT NOT NULL COMMENT '平台 Client 的内部唯一标识；每个 Client 至多一行，没有记录视为未开通。',
+  `stored_card_enabled` TINYINT(1) NOT NULL COMMENT '是否开通存卡与已存卡支付；1 开通，0 关闭。关闭后已存卡保留但不展示、不可使用。',
+  `version` BIGINT NOT NULL COMMENT '可变业务行并发更新使用的单调乐观锁版本。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  PRIMARY KEY (`client_id`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按 Client 开通存卡能力（CCT 暂无按 Client 配置落点时的 Commerce 本地配置）；首期由初始化 DML 或内部调用维护，运营页面后续提供。';
 
 CREATE TABLE `t_order_context` (
   `order_context_id` BIGINT NOT NULL COMMENT '订单创建时冻结外部商业、风控和税务证据引用的内部唯一标识。',

@@ -16,8 +16,10 @@ import com.paytech.commerce.core.dal.dataobject.customer.ConsumerAcceptance;
 import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContract;
 import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
 import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.commerce.domain.checkout.CheckoutPublicOrigin;
 import com.paytech.commerce.domain.checkout.CheckoutPublicToken;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInput;
+import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardChoice;
+import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.Payer;
 import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentRequest;
 import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentResult;
 import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.SubmissionReceipt;
@@ -34,12 +36,14 @@ import com.paytech.commerce.domainservice.repository.customer.CheckoutNetworkEvi
 import com.paytech.commerce.domainservice.repository.customer.ConsumerAcceptanceRepository;
 import com.paytech.commerce.domainservice.repository.customer.ConsumerContextRepository;
 import com.paytech.commerce.domainservice.repository.customer.ConsumerContractRepository;
+import com.paytech.commerce.domainservice.repository.customer.CustomerRepository;
 import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
 import com.paytech.commerce.domainservice.repository.order.OrderContextRepository;
 import com.paytech.commerce.domainservice.repository.order.OrderPaymentProjectionRepository;
 import com.paytech.commerce.domainservice.service.customer.CheckoutSubmissionService;
 import com.paytech.commerce.service.processor.customer.request.SubmitCustomerPaymentRequest;
 import com.paytech.commerce.service.processor.customer.response.CustomerPaymentResponse;
+import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
@@ -64,6 +68,8 @@ public class SubmitCustomerPaymentProcessor
     private final ConsumerAcceptanceRepository acceptanceRepository;
     private final OrderPaymentProjectionRepository paymentRepository;
     private final CheckoutNetworkEvidenceRepository evidenceRepository;
+    private final CardSavingEligibility cardSavingEligibility;
+    private final CustomerRepository customerRepository;
 
     /** 非 HTTP 调用同样执行字段约束；不访问数据库，不复制模板的事务检查。 */
     @Override
@@ -72,6 +78,10 @@ public class SubmitCustomerPaymentProcessor
             throw new FailException(CHECKOUT_NOT_FOUND);
         }
         request.getEvidence().validate();
+        if ((request.getCard() == null) == (request.getStoredCardToken() == null)
+            || (request.isSaveCard() && request.getStoredCardToken() != null)) {
+            throw new FailException(CommonErrorCode.VALIDATION_ERROR);
+        }
     }
 
     /** 锁前仅解析不可变订单身份；不使用公开 Token 作 Redis Key，锁内再读取业务状态。 */
@@ -90,6 +100,7 @@ public class SubmitCustomerPaymentProcessor
         var session = getAndCheckSession(request.getCheckoutToken());
         var order = getAndCheckOrder(session.getOrderId());
         checkNewSubmission(order, session);
+        var choice = buildCardChoice(request, order);
         var contract = getAndCheckContract(order, request.getConsumerContractId());
         var projection = getAndCheckPayment(order);
         var context = buildContext(request, order, session, contract, projection);
@@ -100,7 +111,32 @@ public class SubmitCustomerPaymentProcessor
             createIntent(context);
             submissions.bindPayment(context);
         }
-        return executePayment(context, request.getCard());
+        return executePayment(context, choice, buildPayer(request, context));
+    }
+
+    /** 保存卡或使用已存卡时必须有存卡资格；Customer 只在这两种情况下交给 Payment。 */
+    CardChoice buildCardChoice(SubmitCustomerPaymentRequest request, CommerceOrder order) {
+        if (!request.isSaveCard() && request.getStoredCardToken() == null) {
+            return new CardChoice(request.getCard(), null, null, null, false);
+        }
+        var customer = cardSavingEligibility.eligibleCustomer(order);
+        if (customer == null) {
+            throw new FailException(STORED_CARD_NOT_AVAILABLE);
+        }
+        return new CardChoice(request.getCard(), request.getStoredCardToken(), request.getStoredCardCvv(),
+            customer.getCustomerId(), request.isSaveCard());
+    }
+
+    /** 付款人引用不传 Client 原始引用：有 Customer 时用公开 Customer 编号，访客用订单号；回跳到本 Checkout 页面。 */
+    Payer buildPayer(SubmitCustomerPaymentRequest request, SubmitCustomerPaymentContext context) {
+        var order = context.getOrder();
+        var customer = order.getCustomerId() == null ? null : customerRepository.findById(order.getCustomerId());
+        var session = context.getSession();
+        var evidence = request.getEvidence();
+        String userAgent = evidence.userAgent() == null || evidence.userAgent().isBlank() ? null : evidence.userAgent();
+        return new Payer(customer == null ? order.getOrderNo() : customer.getCustomerNo(),
+            evidence.clientIpAddress(), userAgent,
+            new CheckoutPublicOrigin(session.getPublicOrigin()).checkoutUrl(session.getPublicToken()));
     }
 
     /** Token 只定位原会话，不加载订单关联聚合。 */
@@ -206,7 +242,7 @@ public class SubmitCustomerPaymentProcessor
     }
 
     /** 复用已提交的上下文和回写版本；到期判断只比较原期限，不重复查库。 */
-    CustomerPaymentResponse executePayment(SubmitCustomerPaymentContext context, CardInput card) {
+    CustomerPaymentResponse executePayment(SubmitCustomerPaymentContext context, CardChoice card, Payer payer) {
         var order = context.getOrder();
         order.checkExpiry(clock.instant());
         var receipt = context.submission();
@@ -214,7 +250,7 @@ public class SubmitCustomerPaymentProcessor
         var now = clock.instant();
         order.checkExpiry(now);
         instrument.checkUsable(now, order.getExpiresAt());
-        var request = new PaymentRequest(receipt, order.getVersion(), instrument);
+        var request = new PaymentRequest(receipt, order.getVersion(), order.getClientId(), instrument, payer);
         return processResponse(receipt, invokePayment(receipt, request));
     }
 

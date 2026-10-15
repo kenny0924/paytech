@@ -36,7 +36,10 @@ public final class GetCheckoutConverter {
                 item.getQuantity().stripTrailingZeros().toPlainString(), money(currency, item.getUnitAmount()),
                 money(currency, item.getDiscountAmount()), money(currency, item.getNetAmount()))).toList(),
             new ConsumerInfo(result.isConsumerPresent() ? "COMPLETE" : "MISSING", details(result.getConsumerDetails())),
-            seller(result.getSeller()), legal(result), payment(result), result.getAllowedActions(), result.getPollAfterMs());
+            seller(result.getSeller()), legal(result), payment(result), result.getAllowedActions(), result.getPollAfterMs(),
+            new CardSavingInfo(result.isCardSavingAvailable()),
+            result.getStoredCards().stream().map(card -> new StoredCardInfo(card.storedCardToken(), card.last4(),
+                card.expiryMonth(), card.expiryYear())).toList());
     }
 
     /** 原值只在查询结果已包含显式回填时输出。 */

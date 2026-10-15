@@ -368,7 +368,6 @@ class GetRefundByClientRefundIdTest extends MockTestBase {
         }).headers(headers -> headers.addAll(TestRequestHeaders.client(REQUEST_ID, clientId, credentialId))).exchange()
             .expectBody().returnResult();
         queryChecker.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
-        cctCheckoutMocker.assertNoCalls();
         preparationMocker.assertNoCalls();
         assertTrue(intentMocker.calls().isEmpty(), "查询不应创建 Intent");
         assertTrue(cardMocker.calls().isEmpty(), "查询不应提交支付");

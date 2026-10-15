@@ -1,5 +1,7 @@
 package com.paytech.payment.api.instrument.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMax;
@@ -62,12 +64,14 @@ public class ApplyCardInstrumentRequestBody {
     private Boolean saveCard;
 
     /** 手输卡与已存卡恰好提供一种。 */
+    @JsonIgnore
     @AssertTrue(message = "卡信息与已存卡必须且只能提供一种")
     public boolean isSingleCardSource() {
         return (card == null) != (storedCard == null);
     }
 
     /** 保存卡只用于手输卡，且必须关联 Customer；使用已存卡也必须关联 Customer。 */
+    @JsonIgnore
     @AssertTrue(message = "保存卡或使用已存卡必须提供 Customer ID，且已存卡不能再次保存")
     public boolean isCustomerConsistent() {
         boolean save = Boolean.TRUE.equals(saveCard);

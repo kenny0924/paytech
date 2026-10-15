@@ -37,6 +37,9 @@ public class CreateCheckoutRequest {
     /** 已完成字段校验的原顺序商品。 */
     private final List<Item> items;
 
+    /** 可选的 Client 命名空间内消费者引用；为空表示访客订单。 */
+    private final String consumerReference;
+
     /** 商品行标识按大小写敏感的原值判断，不能在同一订单内重复。 */
     public boolean hasDuplicateClientItemIds() {
         return items.stream().map(Item::getClientItemId).distinct().count() != items.size();

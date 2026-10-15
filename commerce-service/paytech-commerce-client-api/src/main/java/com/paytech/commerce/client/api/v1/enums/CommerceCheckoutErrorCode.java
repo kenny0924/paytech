@@ -56,7 +56,16 @@ public enum CommerceCheckoutErrorCode implements CodeMessageEnum {
     CLIENT_REFUND_ID_CONFLICT("CLIENT_REFUND_ID_CONFLICT", "Client Refund ID 已用于不同退款"),
 
     /** 包含在途预占后的退款额度不足。 */
-    REFUND_AMOUNT_EXCEEDS_REFUNDABLE("REFUND_AMOUNT_EXCEEDS_REFUNDABLE", "退款金额超过当前可退款金额");
+    REFUND_AMOUNT_EXCEEDS_REFUNDABLE("REFUND_AMOUNT_EXCEEDS_REFUNDABLE", "退款金额超过当前可退款金额"),
+
+    /** Customer is unknown or belongs to another Client. */
+    CUSTOMER_NOT_FOUND("CUSTOMER_NOT_FOUND", "Customer 不存在"),
+
+    /** Consumer reference looks like a personal raw value such as a phone number. */
+    INVALID_CONSUMER_REFERENCE("INVALID_CONSUMER_REFERENCE", "消费者引用不能是 Email、Phone 等个人原值"),
+
+    /** Stored card is unknown or belongs to another Customer. */
+    STORED_CARD_NOT_FOUND("STORED_CARD_NOT_FOUND", "已存卡不存在");
 
     private final String code;
     private final String message;

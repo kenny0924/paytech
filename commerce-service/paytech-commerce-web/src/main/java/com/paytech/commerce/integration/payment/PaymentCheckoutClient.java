@@ -2,7 +2,7 @@ package com.paytech.commerce.integration.payment;
 
 import com.paytech.commerce.domain.customer.CustomerCheckoutModels.IntentRequest;
 import com.paytech.commerce.domain.customer.CustomerCheckoutModels.IntentResult;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInput;
+import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardChoice;
 import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInstrument;
 import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentReference;
 
@@ -11,6 +11,6 @@ public interface PaymentCheckoutClient {
     /** 同一来源订单复用唯一 Intent，由 Payment 核对全部冻结事实。 */
     IntentResult createIntent(IntentRequest request);
 
-    /** 为本次 Client、Intent、来源提交申请工具，不持久化卡输入或工具 Token。 */
-    CardInstrument applyCardInstrument(long clientId, PaymentReference reference, CardInput card);
+    /** 为本次 Client、Intent、来源提交申请工具，不持久化卡输入或工具 Token；卡来源为手输卡或已存卡。 */
+    CardInstrument applyCardInstrument(long clientId, PaymentReference reference, CardChoice card);
 }

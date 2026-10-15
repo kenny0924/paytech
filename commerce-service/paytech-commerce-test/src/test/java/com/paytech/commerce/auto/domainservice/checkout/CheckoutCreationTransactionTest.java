@@ -45,7 +45,6 @@ class CheckoutCreationTransactionTest extends MockTestBase {
 
         checkoutChecker.assertCreationRowCount(context.getOrder().getOrderId(), 0);
         checkoutChecker.assertCreationRowCount(blockerId, 2);
-        cctCheckoutMocker.assertNoCalls();
     }
 
     /** 最后的合同 INSERT 失败，已写入的订单、商业上下文及法律事实整体回滚。 */
@@ -67,6 +66,5 @@ class CheckoutCreationTransactionTest extends MockTestBase {
         });
 
         checkoutChecker.assertCreationRowCount(context.getOrder().getOrderId(), 0);
-        cctCheckoutMocker.assertNoCalls();
     }
 }

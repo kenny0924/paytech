@@ -49,7 +49,6 @@ public abstract class AbstractCreateRefundApiTest extends MockTestBase {
         var before = refundChecker.unchangedFacts(fixture.getOrder().getOrderId());
         var result = httpTestInvoker.post(path, headers, body);
         assertEquals(before, refundChecker.unchangedFacts(fixture.getOrder().getOrderId()));
-        cctCheckoutMocker.assertNoCalls();
         return new CreateRefundResponseChecker(result, objectMapper, REQUEST_ID);
     }
 }

@@ -299,7 +299,6 @@ class GetRefundTest extends MockTestBase {
             .buildAndExpand(refundNo).toUriString();
         var result = httpTestInvoker.get(uri, TestRequestHeaders.client(REQUEST_ID, client, credential));
         queryChecker.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
-        cctCheckoutMocker.assertNoCalls();
         return new GetRefundResponseChecker(result, objectMapper, REQUEST_ID);
     }
 

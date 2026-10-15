@@ -21,7 +21,6 @@ import com.paytech.commerce.TestApplication;
 import com.paytech.commerce.test.checker.checkout.CheckoutCreationChecker;
 import com.paytech.commerce.test.checkout.AdjustableUtcClock;
 import com.paytech.commerce.test.checkout.CctTransactionProbe;
-import com.paytech.commerce.test.mocker.external.CctCheckoutMocker;
 import com.paytech.commerce.test.mocker.local.CheckoutDataMocker;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
@@ -58,9 +57,6 @@ public abstract class MockTestBase extends TestBase {
     protected CheckoutDataMocker checkoutDataMocker;
 
     @Autowired
-    protected CctCheckoutMocker cctCheckoutMocker;
-
-    @Autowired
     protected CheckoutCreationChecker checkoutChecker;
 
     @Autowired
@@ -81,7 +77,6 @@ public abstract class MockTestBase extends TestBase {
     protected final void setUpGlobalMocks() {
         Assertions.assertTrue(asynchronousWorkStopped, "前例异步处理未结束，禁止复用环境");
         checkoutDataMocker.beforeEach();
-        cctCheckoutMocker.assertEmpty();
         adjustableUtcClock.reset();
     }
 
@@ -97,7 +92,7 @@ public abstract class MockTestBase extends TestBase {
             asynchronousWorkStopped = false;
             throw failure;
         }
-        assertAll("检查外部 Mock 调用", preparationMocker::assertNoUnexpectedCalls, cctCheckoutMocker::assertNoUnexpectedCalls,
+        assertAll("检查外部 Mock 调用", preparationMocker::assertNoUnexpectedCalls,
             cctCheckoutMockServer::assertNoUnexpectedRequests);
     }
 

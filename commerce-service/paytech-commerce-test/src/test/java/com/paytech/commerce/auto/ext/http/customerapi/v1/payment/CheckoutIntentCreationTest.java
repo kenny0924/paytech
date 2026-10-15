@@ -69,17 +69,7 @@ class CheckoutIntentCreationTest extends MockTestBase {
         terminations.mockResult(orderId(), new PaymentTerminationClient.Result(orderId(), PaymentTerminationClient.Status.TERMINATED));
         mockIntent();
         instruments.mockResponse(PaymentResponseBuilder.builder().expiresAt(adjustableUtcClock.instant().plusSeconds(60)).build().instrument());
-        cards.mockResponse(
-                new com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentResult(
-                        0,
-                        0,
-                        0,
-                        "123456",
-                        "PROCESSING",
-                        "4242",
-                        null,
-                        null,
-                        adjustableUtcClock.instant()));
+        cards.mockResponse(CheckoutCardMocker.processing("123456"));
     }
 
     /** 创建响应只返回提供方定义的 ID 和状态。 */
@@ -117,9 +107,11 @@ class CheckoutIntentCreationTest extends MockTestBase {
             assertEquals(expectedCard.getCardholderName(), card.getCardholderName());
         });
         cards.observe(request -> {
-            assertEquals("t".repeat(43), request.instrument().token());
-            assertEquals("CARD_TEST", request.instrument().paymentMethodCode());
-            assertEquals(Long.toString(request.receipt().submissionId()), instruments.calls().getFirst().sourceSubmissionId());
+            assertEquals("t".repeat(43), request.getPayMethod().getPaymentInstrumentToken());
+            assertEquals("CARD_TEST", request.getPayMethod().getPaymentMethodCode());
+            assertEquals(request.getSourceSubmissionId(), instruments.calls().getFirst().sourceSubmissionId());
+            assertEquals("AUTOMATIC", request.getCaptureMode());
+            assertTrue(request.getReturnUrl().startsWith("https://"), "回跳到 Checkout 页面");
         });
         submit().assertProcessing();
         checker.assertAccepted(orderId(), true);
@@ -139,8 +131,8 @@ class CheckoutIntentCreationTest extends MockTestBase {
                 () -> assertEquals("US", input.getConsumerCountryCode()),
                 () -> assertNull(input.getPartnerShareVersionId()),
                 () -> assertNull(input.getPlatformChargeVersionId()));
-        assertEquals(List.of(false, false), paymentTransactions.transactionStates(), "Intent 和卡工具必须经过真实 HTTP 客户端且在事务外执行");
-        assertEquals(List.of(false), cards.transactions());
+        assertEquals(List.of(false, false, false), paymentTransactions.transactionStates(),
+            "Intent、卡工具与 pay 必须经过真实 HTTP 客户端且在事务外执行");
     }
 
     /** 验证 secondPaymentReusesIntentAndAcceptances 场景的支付边界。 */
@@ -315,9 +307,7 @@ class CheckoutIntentCreationTest extends MockTestBase {
     /** 验证 cardTimeoutReturnsSubmissionForQuery 场景的支付边界。 */
     @Test
     void test_cardTimeoutReturnsSubmissionForQuery() {
-        cards.mockFailure(
-                new ServiceUnavailableException(
-                        new java.net.SocketTimeoutException("mock card response lost")));
+        cards.mockFailure(MockHttpFault.disconnect());
         submit().assertProcessing();
         checker.assertAccepted(orderId(), true);
         assertEquals(1, cards.calls().size());

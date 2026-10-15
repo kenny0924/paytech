@@ -39,6 +39,7 @@
         <result column="order_no" property="orderNo" javaType="java.lang.String"/>
         <result column="client_id" property="clientId" javaType="_long"/>
         <result column="client_order_id" property="clientOrderId" javaType="java.lang.String"/>
+        <result column="customer_id" property="customerId" javaType="java.lang.Long"/>
         <result column="creation_mode" property="creationMode" javaType="com.paytech.commerce.client.api.v1.enums.OrderCreationMode"/>
         <result column="consumer_country_code" property="consumerCountryCode" javaType="java.lang.String"/>
         <result column="preparation_command_id" property="preparationCommandId" javaType="java.lang.Long"/>
@@ -64,13 +65,13 @@
         <result column="update_time" property="updateTime" javaType="java.time.Instant"/>
     </resultMap>
     <select id="findByOrderId" resultMap="CommerceOrder" useCache="false" flushCache="true">
-        SELECT order_id,order_no,client_id,client_order_id,creation_mode,consumer_country_code,preparation_command_id,
+        SELECT order_id,order_no,client_id,client_order_id,customer_id,creation_mode,consumer_country_code,preparation_command_id,
         termination_requested_at,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,merchandise_amount,discount_amount,net_amount,tax_amount,rounding_amount,
             total_amount,currency,order_status,expires_at,paid_at,cancelled_at,version,create_time,update_time
         FROM t_commerce_order WHERE order_id=#{orderId}
     </select>
     <select id="findByOrderNo" resultMap="CommerceOrder">
-        SELECT order_id,order_no,client_id,client_order_id,creation_mode,consumer_country_code,preparation_command_id,
+        SELECT order_id,order_no,client_id,client_order_id,customer_id,creation_mode,consumer_country_code,preparation_command_id,
         termination_requested_at,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,merchandise_amount,discount_amount,net_amount,tax_amount,rounding_amount,
         total_amount,currency,order_status,expires_at,paid_at,cancelled_at,version,create_time,update_time
         FROM t_commerce_order WHERE client_id=#{clientId} AND order_no=#{orderNo}
@@ -90,10 +91,10 @@
 
     <insert id="insert">
         INSERT INTO t_commerce_order
-        (order_id,order_no,client_id,client_order_id,creation_mode,consumer_country_code,context_format,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,tax_amount,rounding_amount,total_amount,
+        (order_id,order_no,client_id,client_order_id,customer_id,creation_mode,consumer_country_code,context_format,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,tax_amount,rounding_amount,total_amount,
             merchandise_amount,discount_amount,net_amount,currency,order_status,expires_at,version,create_time,update_time)
         SELECT
-        #{order.orderId},#{order.orderNo},#{order.clientId},#{order.clientOrderId},#{order.creationMode},#{order.consumerCountryCode},'TERM_PRICE',#{order.entityNo},#{order.entitySourceType},#{order.localPartnerId},#{order.industryCode},#{order.mccCode},#{order.taxAmount},#{order.roundingAmount},#{order.totalAmount},
+        #{order.orderId},#{order.orderNo},#{order.clientId},#{order.clientOrderId},#{order.customerId},#{order.creationMode},#{order.consumerCountryCode},'TERM_PRICE',#{order.entityNo},#{order.entitySourceType},#{order.localPartnerId},#{order.industryCode},#{order.mccCode},#{order.taxAmount},#{order.roundingAmount},#{order.totalAmount},
         #{order.merchandiseAmount},#{order.discountAmount},#{order.netAmount},#{order.currency},#{order.orderStatus},
             #{order.expiresAt},1,#{order.createTime},#{order.createTime}
         WHERE #{order.expiresAt} &gt; #{now}

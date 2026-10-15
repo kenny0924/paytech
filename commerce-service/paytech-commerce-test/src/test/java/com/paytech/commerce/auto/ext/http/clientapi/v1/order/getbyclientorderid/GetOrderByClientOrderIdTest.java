@@ -282,7 +282,6 @@ class GetOrderByClientOrderIdTest extends MockTestBase {
         }).headers(headers -> headers.addAll(TestRequestHeaders.client(REQUEST_ID, clientId, credentialId))).exchange()
             .expectBody().returnResult();
         orderChecker.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
-        cctCheckoutMocker.assertNoCalls();
         preparationMocker.assertNoCalls();
         return new GetOrderResponseChecker(result, objectMapper, REQUEST_ID);
     }

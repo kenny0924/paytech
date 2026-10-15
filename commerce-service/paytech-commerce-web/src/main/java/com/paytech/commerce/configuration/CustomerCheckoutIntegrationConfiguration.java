@@ -94,24 +94,4 @@ public class CustomerCheckoutIntegrationConfiguration {
             }
         };
     }
-
-    /** TODO(Payment Card)：接入统一 pay 与按来源提交查询；工具申请已使用正式客户端；本轮固定返回处理中，不模拟扣款成功。 */
-    @Bean
-    @ConditionalOnMissingBean(CheckoutCardPaymentPort.class)
-    CheckoutCardPaymentPort checkoutCardPaymentPort(Clock clock) {
-        return new CheckoutCardPaymentPort() {
-            /** TODO(Payment)：Intent 锁、来源提交去重、过期/取消栅栏及 Card/渠道执行。 */
-            public PaymentResult submit(PaymentRequest request) {
-                var ref = request.receipt().reference();
-                return new PaymentResult(ref.submissionId(), ref.orderId(), ref.intentId(),
-                    Long.toString(ref.submissionId()), "PROCESSING", "4242", null, null, clock.instant());
-            }
-
-            /** TODO(Payment)：只查同订单与 Intent 的原提交；未找到不视作无资金动作。 */
-            public PaymentResult query(PaymentReference reference) {
-                return new PaymentResult(reference.submissionId(), reference.orderId(), reference.intentId(),
-                    Long.toString(reference.submissionId()), "PROCESSING", "4242", null, null, clock.instant());
-            }
-        };
-    }
 }

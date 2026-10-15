@@ -1,5 +1,6 @@
 package com.paytech.commerce.service.processor.customer.response;
 
+import com.paytech.commerce.integration.payment.PaymentStoredCardClient;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -74,6 +75,12 @@ public class GetCheckoutResponse {
 
     /** 建议轮询毫秒数，不需轮询时为空。 */
     private final Integer pollAfterMs;
+
+    /** 当前是否可以勾选“保存卡”：订单有有效 Customer 且 Client 已开通存卡。 */
+    private final boolean cardSavingAvailable;
+
+    /** 可选的已存卡；不可存卡或 Payment 暂不可用时为空列表。 */
+    private final List<PaymentStoredCardClient.StoredCard> storedCards;
 
     /** 订单币种主单位金额，未确定的税额与总额保持为空。 */
     @Getter

@@ -32,13 +32,16 @@ final class CustomerPaymentConverter {
     static SubmitCustomerPaymentRequest request(String token, SubmitPaymentRequestBody body,
         HttpServletRequest http) {
         var card = body.getCard();
+        var stored = body.getStoredCard();
         var legal = body.getLegalConfirmation();
-        var identity = new CardIdentity(card.getPan(), card.getExpiryMonth(), card.getExpiryYear(),
-            card.getCardholderName());
+        CardInput cardInput = card == null ? null
+            : new CardInput(new CardIdentity(card.getPan(), card.getExpiryMonth(), card.getExpiryYear(),
+                card.getCardholderName()), card.getCvv());
         String userAgent = http.getHeader("User-Agent");
         var evidence = new NetworkEvidence(http.getRemoteAddr(), userAgent == null ? "" : userAgent, null);
         return new SubmitCustomerPaymentRequest(token, id(legal.getConsumerContractId()), legal.getConfirmed(),
-            new CardInput(identity, card.getCvv()), evidence, MDC.get(RequestIdFilter.MDC_KEY));
+            cardInput, stored == null ? null : stored.getStoredCardToken(), stored == null ? null : stored.getCvv(),
+            Boolean.TRUE.equals(body.getSaveCard()), evidence, MDC.get(RequestIdFilter.MDC_KEY));
     }
 
     /** ID 必须为范围内的规范正十进制，错误消息不回显输入。 */

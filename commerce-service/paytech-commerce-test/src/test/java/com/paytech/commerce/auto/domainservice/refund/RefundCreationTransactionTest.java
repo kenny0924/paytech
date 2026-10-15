@@ -62,7 +62,6 @@ class RefundCreationTransactionTest extends MockTestBase {
         });
         checker.assertRejected(context.getOrder().getOrderId(), before);
         checker.assertNoTask(no);
-        cctCheckoutMocker.assertNoCalls();
     }
 
     /** SQL 条件写失败发生在插入退款之后，退款行必须回滚，也不能留下任务。 */
@@ -77,6 +76,5 @@ class RefundCreationTransactionTest extends MockTestBase {
         checker.assertRejected(orderId, before);
         checker.assertPosition(orderId, "0", "0", 10);
         checker.assertNoTask(context.getRefund().getRefundRequestNo());
-        cctCheckoutMocker.assertNoCalls();
     }
 }
