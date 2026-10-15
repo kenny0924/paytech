@@ -17,18 +17,21 @@ import acceptance_flow as flow
 from acceptance_flow import Client, Stop, problem, record
 from e2e_http import ROOT, TARGET, Failure, Operations, secrets
 
-if TARGET != "local":
-    raise SystemExit("scenario_flow 只在本机全链路运行（需读 mor_cct 核对身份键）")
+if TARGET not in ("local", "test"):
+    raise SystemExit("scenario_flow 只支持本机全链路或 mor-test（需读 mor_cct 核对身份键）")
 
 
 def cct(statement):
-    """只读查询本机 mor_cct；密码从 .env.local 读取，不打印。"""
+    """只读查询 mor_cct：本机直连 13306，mor-test 经 mor-test-mysql-1 容器（2026-10-16）；密码不打印。"""
+    env_file = "test-environment/.env.test" if TARGET == "test" else "local-environment/.env.local"
     env = {}
-    for line in (ROOT / "local-environment/.env.local").read_text().splitlines():
+    for line in (ROOT / env_file).read_text().splitlines():
         if "=" in line and not line.startswith("#"):
             k, v = line.split("=", 1)
             env[k.strip()] = v.strip().strip('"')
-    result = subprocess.run(["mysql", "-h127.0.0.1", "-P13306", "-ucct_app", "-N", "-B", "mor_cct", "-e", statement],
+    command = (["docker", "exec", "-i", "-e", "MYSQL_PWD", "mor-test-mysql-1", "mysql"] if TARGET == "test"
+               else ["mysql", "-h127.0.0.1", "-P13306"])
+    result = subprocess.run(command + ["-ucct_app", "-N", "-B", "mor_cct", "-e", statement],
                             env={**os.environ, "MYSQL_PWD": env["MOR_CCT_DB_PASSWORD"]}, capture_output=True, text=True, check=True)
     return [row.split("\t") for row in result.stdout.splitlines() if row]
 
@@ -41,7 +44,8 @@ def identity_keys(party_id):
 def bound_key(party_id):
     rows = cct("SELECT d.identity_key_id FROM t_party_profile_identifier d JOIN t_party_profile p ON p.profile_id=d.profile_id "
                f"WHERE p.party_id={int(party_id)}")
-    return rows[0][0] if rows else None
+    # mysql -B 把空值输出为字符串 NULL。
+    return rows[0][0] if rows and rows[0][0] != "NULL" else None
 
 
 def new_account(label):

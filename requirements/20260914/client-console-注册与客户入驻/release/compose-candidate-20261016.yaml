@@ -1,0 +1,9 @@
+# 客户入驻收尾 mor-test 候选（2026-10-16）：从干净提交 21a1a51 构建（tag mor-test/<service>:client-onboarding-20261016），使用固定 image ID。
+# 只替换 CCT、Platform、Client BFF；Platform 在通知发送账号发布的 0301719 之上只多本次入驻上传改动。
+services:
+  client-contract-service:
+    image: sha256:5df2f3e0fbd690b72a2f7e6a641e11d7b076e66bbfa77f282bbede9b581c2271
+  platform-support-service:
+    image: sha256:b76d2b4e70105145512f474e3427217d4c3531a88825b316c8a90c1475f69121
+  client-console-bff:
+    image: sha256:e374b1aa714024378dd264d091d07e98fd5c3d6f774b484295364b61c66af218

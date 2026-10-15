@@ -97,11 +97,13 @@ class Operations:
 def mint_signup_link(email, since_utc):
     """本机兜底：Platform 认证邮件改经 Delivery（只有 SES 适配器）后本机收不到验证邮件。
 
-    仅 E2E_TARGET=local：在 mor_platform_e2e 找该邮箱（按脱敏值与创建时间）最新的 PENDING 注册挑战，
+    E2E_TARGET=local：在 mor_platform_e2e 找该邮箱（按脱敏值与创建时间）最新的 PENDING 注册挑战，
     用本机 CLIENT_LOCAL_HMAC_KEY_BASE64 为自生成的秘密重算 secret_hmac 并写回，返回 (challengeNo, secret)。
+    E2E_TARGET=test（2026-10-16）：同样处理 mor-test 的 mor_platform（经 mor-test-mysql-1 容器），
+    密钥取 test-environment/private/client-onboarding.env，数据库凭据取 test-environment/.env.test。
     HMAC 输入与 LocalHumanAuthenticationCryptography / ClientEmailChallengePolicy.proofInput 一致。不打印任何秘密。
     """
-    if TARGET != "local":
+    if TARGET not in ("local", "test"):
         return None, None
     import base64
     import hashlib
@@ -109,17 +111,27 @@ def mint_signup_link(email, since_utc):
     import secrets as pysecrets
     import subprocess
 
-    env = {}
-    for line in (ROOT / "local-environment/.env.local").read_text().splitlines():
-        if "=" in line and not line.startswith("#"):
-            key, value = line.split("=", 1)
-            env[key.strip()] = value.strip().strip('"')
-    local = secrets()
+    def read_env(path):
+        values = {}
+        for line in path.read_text().splitlines():
+            if "=" in line and not line.startswith("#"):
+                key, value = line.split("=", 1)
+                values[key.strip()] = value.strip().strip('"')
+        return values
+
+    if TARGET == "test":
+        env = read_env(ROOT / "test-environment/.env.test")
+        local = read_env(ROOT / "test-environment/private/client-onboarding.env")
+        command = ["docker", "exec", "-i", "-e", "MYSQL_PWD", "mor-test-mysql-1", "mysql", "-uplatform_app", "-N", "-B",
+                   "mor_platform"]
+    else:
+        env = read_env(ROOT / "local-environment/.env.local")
+        local = secrets()
+        command = ["mysql", "-h127.0.0.1", "-P13306", "-uplatform_app", "-N", "-B", "mor_platform_e2e"]
     masked = email[0] + "***@" + email.split("@", 1)[1]
 
     def sql(statement):
-        result = subprocess.run(["mysql", "-h127.0.0.1", "-P13306", "-uplatform_app", "-N", "-B", "mor_platform_e2e",
-                                 "-e", statement], env={**os.environ, "MYSQL_PWD": env["MOR_PLATFORM_DB_PASSWORD"]},
+        result = subprocess.run(command + ["-e", statement], env={**os.environ, "MYSQL_PWD": env["MOR_PLATFORM_DB_PASSWORD"]},
                                 capture_output=True, text=True, check=True)
         return [row.split("\t") for row in result.stdout.splitlines() if row]
 
