@@ -15,7 +15,7 @@
 
 ## Finance Accounting 账务内核第一批（2026-10-15）
 
-- **Implemented（未提交、未部署）：** 按[需求](../requirements/20261015/finance-账务内核/requirement.md)与[技术方案](../requirements/20261015/finance-账务内核/technique.md)，`paytech-finance-accounting` 实现 16 张表的 DataObject/Mapper/Repository、会计基础资料（财务主体、OE/FE 单币种账簿与序号行、按身份矩阵校验的统一账户、财务日历、FUTURE 到 OPEN 的期间）、`JournalPostingService` 单账簿过账内核（期间共享锁、账簿序号行排他锁、账户主键升序排他锁，余额版本 CAS），以及人工会计调整 Maker-Checker（RFC 8785 内容摘要 `CODE-MOR:FINANCE:MANUAL_ADJUSTMENT:1`，批准在一个本地事务内生成 MANUAL 指令并过账为 ADJUSTMENT Journal）。复核与期间创建使用 Foundation `AbstractLockProcessor`，Finance 因此新增 Redis、Snowflake 与 RFC 8785 依赖。Client/Partner 余额查询改为 `entityNo` 参数并读取新 Schema（不兼容变更，当时无 Gateway/BFF 消费者）；旧 `finance-balance-query-schema.sql` 已删除，新增 `finance-initial-data.sql`（USD 与 STANDARD 科目表 29 个核心科目）。
+- **Implemented（已本地提交 `e900c34`，未推送、未部署）：** 按[需求](../requirements/20261015/finance-账务内核/requirement.md)与[技术方案](../requirements/20261015/finance-账务内核/technique.md)，`paytech-finance-accounting` 实现 16 张表的 DataObject/Mapper/Repository、会计基础资料（财务主体、OE/FE 单币种账簿与序号行、按身份矩阵校验的统一账户、财务日历、FUTURE 到 OPEN 的期间）、`JournalPostingService` 单账簿过账内核（期间共享锁、账簿序号行排他锁、账户主键升序排他锁，余额版本 CAS），以及人工会计调整 Maker-Checker（RFC 8785 内容摘要 `CODE-MOR:FINANCE:MANUAL_ADJUSTMENT:1`，批准在一个本地事务内生成 MANUAL 指令并过账为 ADJUSTMENT Journal）。复核与期间创建使用 Foundation `AbstractLockProcessor`，Finance 因此新增 Redis、Snowflake 与 RFC 8785 依赖。Client/Partner 余额查询改为 `entityNo` 参数并读取新 Schema（不兼容变更，当时无 Gateway/BFF 消费者）；旧 `finance-balance-query-schema.sql` 已删除，新增 `finance-initial-data.sql`（USD 与 STANDARD 科目表 29 个核心科目）。
 - **本地数据库：** 用户授权后仅在 `mor-local-mysql-1`（`127.0.0.1:13306/mor_finance`）删除旧余额切片 3 张空表，执行完整 `finance-schema.sql`（84 表）与 `finance-initial-data.sql`；未操作 mor-test 或生产库。
 - **Verified：** finance-service JDK 25 `clean verify` **80/80**，0 失败/错误/跳过；测试复用正式启动类、`mock` Profile、本地 MySQL/Redis，覆盖并发过账序号与余额、同一调整只过账一次、锁内门禁失败整体回滚、Maker-Checker、重放与 Redis 锁冲突。JaCoCo（命令行执行，未加入构建门禁）：accounting/api/web 合计行 96.7%、分支 80.3%。`-exec.jar` 本地真实 HTTP 冒烟 13 步通过（建账、调整、审批过账、详情、余额与两个拒绝场景），冒烟数据已清理。`npm --prefix requirements-site test` 127/137，10 项失败均为本次未改动的既有文档断言。
 - **Pending：** 接口仅为 Finance 内部开发接口：Maker/Checker 由请求传入、OE 不向 CCT 核对、未接 Gateway 与统一身份；Redis 不可用的 503 路径未自动化；未实现交易经济、AUTO 记账、成熟、对账、出款、税务、关账/重开、账簿/账户停用与账本流水查询；本地 `mor_finance` 视为测试专用库（测试每例清空 16 张账务表的测试写入）。
@@ -24,7 +24,7 @@
 
 ## Finance 账本流水与账户查询（2026-10-15）
 
-- **Implemented（未提交、未部署）：** 按[需求](../requirements/20261015/finance-账本流水查询/requirement.md)与[技术方案](../requirements/20261015/finance-账本流水查询/technique.md)，Finance 新增 FIN-I05 内部只读接口 `LedgerBookQueryApi`：账簿分页、账户分页（余额投影）、账户流水分页（`balanceAfter` 由窗口函数对账户全量历史累计，日期过滤与翻页不改变累计起点）、分录详情（来源追溯到人工调整单号）。无表结构或 SQL 变更；不含 Operations BFF/页面与 Client 暴露。
+- **Implemented（已本地提交 `c542498`，未推送、未部署）：** 按[需求](../requirements/20261015/finance-账本流水查询/requirement.md)与[技术方案](../requirements/20261015/finance-账本流水查询/technique.md)，Finance 新增 FIN-I05 内部只读接口 `LedgerBookQueryApi`：账簿分页、账户分页（余额投影）、账户流水分页（`balanceAfter` 由窗口函数对账户全量历史累计，日期过滤与翻页不改变累计起点）、分录详情（来源追溯到人工调整单号）。无表结构或 SQL 变更；不含 Operations BFF/页面与 Client 暴露。
 - **Verified：** finance-service JDK 25 `clean verify` **96/96**（新增 16 个查询用例）；JaCoCo 命令行合计行 97.1%、分支 81.0%，新增查询代码行覆盖 100%。本地 `-exec.jar` 真实 HTTP 冒烟 9/9 通过，数据已清理。
 - **Pending：** 内部开发接口，未接 Gateway 与 Owner/OE 授权；累计余额对账户全量历史计算，高频账户需后续按期间余额截断。
 
