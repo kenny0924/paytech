@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, App, Button, Descriptions, Form, Input, Modal, Select, Space, Spin, Table, Tabs, Tag } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { session } from '../api/session';
@@ -196,7 +196,7 @@ function ContentTabs({ detail, canManage, onSaved, onAuthorizationChanged }: { d
 
 interface ContentValues { locale?: string; subjectTemplate: string; bodyTemplate: string; reason: string }
 
-/** 内容编辑与预览：停顿约 500ms 自动预览；保存前按发送规则由 Platform 校验，冲突时保留草稿。 */
+/** 内容编辑：点「预览」在弹窗中渲染当前草稿；保存前按发送规则由 Platform 校验，冲突时保留草稿。 */
 function ContentEditor({ detail, content, canManage, onDirty, onSaved, onAuthorizationChanged }: {
   detail: TemplateDetail; content: TemplateContent | null; canManage: boolean; onDirty: (dirty: boolean) => void;
   onSaved: (locale: string) => void; onAuthorizationChanged: () => void;
@@ -204,10 +204,9 @@ function ContentEditor({ detail, content, canManage, onDirty, onSaved, onAuthori
   const [form] = Form.useForm<ContentValues>(); const command = useNotificationCommand(onAuthorizationChanged, form);
   const subject = Form.useWatch('subjectTemplate', form) ?? content?.subjectTemplate ?? '';
   const body = Form.useWatch('bodyTemplate', form) ?? content?.bodyTemplate ?? '';
-  const [samples, setSamples] = useState<Record<string, string>>({});
+  const [samples, setSamples] = useState<Record<string, string>>({}); const [previewing, setPreviewing] = useState(false);
   const names = useMemo(() => placeholders(subject, body), [subject, body]);
   const missing = missingRequired(body, detail.requiredParameters);
-  const preview = usePreview(canManage, subject, body, samples);
   async function save(values: ContentValues) {
     const locale = content?.locale ?? values.locale!.trim();
     const result = await command.run(`${notificationAdminPath}/templates/${detail.templateCode}/contents/${encodeURIComponent(locale)}`, 'PUT', {
@@ -220,8 +219,7 @@ function ContentEditor({ detail, content, canManage, onDirty, onSaved, onAuthori
       description="你的草稿仍保留在编辑框中。重新加载会显示最新内容，可先复制草稿。"
       action={<Space orientation="vertical"><Button size="small" onClick={() => void navigator.clipboard?.writeText(`${subject}\n\n${body}`)}>复制我的草稿</Button>
         <Button size="small" type="primary" onClick={() => onSaved(content?.locale ?? '')}>重新加载</Button></Space>} />}
-    <div className="notification-split">
-      <Form form={form} layout="vertical" className="notification-form" disabled={!canManage || command.saving} onFinish={save}
+    <Form form={form} layout="vertical" disabled={!canManage || command.saving} onFinish={save}
         onValuesChange={() => onDirty(true)} initialValues={{ subjectTemplate: content?.subjectTemplate ?? '', bodyTemplate: content?.bodyTemplate ?? '', reason: '' }}>
         {!content && <Form.Item name="locale" label="语言" extra="BCP 47 语言标签，如 zh-CN、en-US" rules={[{ required: true, whitespace: true, message: '请填写语言' },
           { validator: async (_, value) => { if (value && detail.contents.some(c => c.locale.toLowerCase() === String(value).trim().toLowerCase())) throw new Error('该语言已存在'); } }]}>
@@ -237,41 +235,61 @@ function ContentEditor({ detail, content, canManage, onDirty, onSaved, onAuthori
           <span className="muted">语法 {'${name}'}；标题不可换行；正文最多 60000 字节</span></div>
         {canManage && <><Form.Item name="reason" label="修改原因" rules={[{ required: true, whitespace: true, message: '请填写原因' }]}>
           <Input maxLength={500} placeholder="必填" /></Form.Item>
-          <div className="configuration-actions"><Button disabled={command.saving} onClick={() => { form.resetFields(); onDirty(false); }}>放弃修改</Button>
+          <div className="configuration-actions"><Button disabled={command.saving || !subject.trim() || !body.trim()} onClick={() => setPreviewing(true)}>预览</Button>
+            <Button disabled={command.saving} onClick={() => { form.resetFields(); onDirty(false); }}>放弃修改</Button>
             <Button type="primary" htmlType="submit" loading={command.saving} disabled={command.conflict || missing.length > 0}>
               保存{content ? ` ${content.locale}` : ''}</Button></div></>}
-      </Form>
-      {canManage && <aside className="notification-preview"><h3>预览（不发送）</h3>
-        {names.map(name => <div key={name} className="notification-sample"><span className="muted">参数 {name}</span>
-          <Input size="small" maxLength={2048} value={samples[name] ?? ''} onChange={e => setSamples(s => ({ ...s, [name]: e.target.value }))} /></div>)}
-        <PreviewResult preview={preview} />
-      </aside>}
-    </div>
+    </Form>
+    {previewing && <PreviewModal subject={subject} body={body} names={names} samples={samples} onSamples={setSamples} onClose={() => setPreviewing(false)} />}
   </div>;
 }
 
-/** 编辑停顿约 500ms 后请求预览；输入为空时不请求。 */
-function usePreview(enabled: boolean, subject: string, body: string, samples: Record<string, string>) {
-  const [preview, setPreview] = useState<Preview | null>(null);
-  const parameters = useMemo(() => Object.fromEntries(Object.entries(samples).filter(([, v]) => v)), [samples]);
-  useEffect(() => {
-    if (!enabled || !subject || !body) { setPreview(null); return; }
-    const abort = new AbortController();
-    const timer = window.setTimeout(() => {
-      session.request(`${notificationAdminPath}/template-preview`, { method: 'POST', signal: abort.signal,
+/** 预览弹窗（不发送）：打开时按当前草稿渲染一次；修改示例参数后点「更新预览」重新渲染，示例参数在关闭后保留。 */
+function PreviewModal({ subject, body, names, samples, onSamples, onClose }: {
+  subject: string; body: string; names: string[]; samples: Record<string, string>;
+  onSamples: (update: (samples: Record<string, string>) => Record<string, string>) => void; onClose: () => void;
+}) {
+  const { preview, loading, render } = usePreview(subject, body);
+  const initial = useRef(samples);
+  useEffect(() => { void render(initial.current); }, [render]);
+  return <Modal open title="预览（不发送）" width={680} onCancel={onClose} destroyOnHidden footer={<Button onClick={onClose}>关闭</Button>}>
+    {names.length > 0 && <div className="notification-samples">
+      {names.map(name => <label key={name} className="notification-sample"><span className="muted">参数 {name}</span>
+        <Input size="small" maxLength={2048} value={samples[name] ?? ''} onChange={e => onSamples(s => ({ ...s, [name]: e.target.value }))} /></label>)}
+      <div><Button size="small" loading={loading} onClick={() => void render(samples)}>更新预览</Button></div>
+    </div>}
+    <Spin spinning={loading}><PreviewResult preview={preview} /></Spin>
+  </Modal>;
+}
+
+/** 按需请求预览：只发送已填写的示例参数；关闭弹窗后丢弃未返回的结果。 */
+function usePreview(subject: string, body: string) {
+  const notify = useErrorNotification();
+  const [preview, setPreview] = useState<Preview | null>(null); const [loading, setLoading] = useState(false);
+  const pending = useRef<AbortController | null>(null);
+  useEffect(() => () => pending.current?.abort(), []);
+  const render = useCallback(async (samples: Record<string, string>) => {
+    pending.current?.abort();
+    const abort = new AbortController(); pending.current = abort;
+    const parameters = Object.fromEntries(Object.entries(samples).filter(([, v]) => v));
+    setLoading(true);
+    try {
+      const value = await session.request(`${notificationAdminPath}/template-preview`, { method: 'POST', signal: abort.signal,
         headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
-        body: JSON.stringify({ subjectTemplate: subject, bodyTemplate: body, parameters }) }, decodePreview)
-        .then(value => { if (!abort.signal.aborted) setPreview(value); })
-        .catch(() => { if (!abort.signal.aborted) setPreview(null); });
-    }, 500);
-    return () => { window.clearTimeout(timer); abort.abort(); };
-  }, [enabled, subject, body, parameters]);
-  return preview;
+        body: JSON.stringify({ subjectTemplate: subject, bodyTemplate: body, parameters }) }, decodePreview);
+      if (!abort.signal.aborted) setPreview(value);
+    } catch (error) {
+      if (!abort.signal.aborted) { setPreview(null); notify(error, '预览失败'); }
+    } finally {
+      if (!abort.signal.aborted) setLoading(false);
+    }
+  }, [subject, body, notify]);
+  return { preview, loading, render };
 }
 
 /** 渲染后的标题与正文，以及未提供的参数。 */
 function PreviewResult({ preview }: { preview: Preview | null }) {
-  if (!preview) return <div className="muted">填写标题与正文后显示预览。</div>;
+  if (!preview) return <div className="notification-mail muted">暂无预览结果。</div>;
   return <><div className="notification-mail"><strong>{preview.subject}</strong><pre>{preview.body}</pre></div>
     <div className={preview.missingParameters.length ? 'notification-missing' : 'muted'}>
       未提供参数：{preview.missingParameters.length ? preview.missingParameters.join('、') : '无'}</div></>;

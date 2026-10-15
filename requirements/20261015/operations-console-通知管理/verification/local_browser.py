@@ -1,4 +1,4 @@
-"""阶段 5 浏览器验收（AC-10～AC-12）：经本机 Nginx 运营入口登录，逐页截图并走一遍内容编辑预览、冲突与启停确认。
+"""浏览器验收（AC-10～AC-12）：经运营入口登录，逐页截图并走一遍内容编辑、按钮预览、冲突与启停确认。
 
 前置：local_acceptance.py 已运行（存在 E2E_NOTIFY_ 模板与合成发送记录）。只连接本机；截图写入第一个参数指定的目录。
 用法：python3 -I local_browser.py <截图目录> <模板编码>
@@ -84,12 +84,18 @@ def main():
               page.locator(".ant-menu-item-selected", has_text="通知模板").count() > 0)
         body = page.get_by_label("正文模板")
         body.fill("订单 ${orderNo} 已付款，金额 ${amount}。")
-        page.locator(".notification-sample input").first.fill("O-9")
-        page.wait_for_timeout(1500)
-        preview = page.locator(".notification-mail").inner_text()
-        check("AC-11", "编辑停顿后自动预览，已填参数被替换", "O-9" in preview)
-        check("AC-11", "预览列出未提供的参数", "amount" in page.locator(".notification-preview").inner_text())
+        check("AC-11", "编辑区不再常驻预览，只有“预览”按钮", page.locator(".notification-mail").count() == 0 and button(page, "预览").count() == 1)
         shot(page, "03-template-detail-editing")
+        button(page, "预览").click()
+        dialog = page.get_by_role("dialog")
+        visible(dialog.locator(".notification-sample input"))
+        dialog.locator(".notification-sample input").first.fill("O-9")
+        button(page, "更新预览").click()
+        page.wait_for_timeout(1200)
+        check("AC-11", "点击预览后弹窗渲染，已填参数被替换", "O-9" in dialog.locator(".notification-mail").inner_text())
+        check("AC-11", "预览列出未提供的参数", "amount" in dialog.inner_text())
+        shot(page, "03b-preview-modal")
+        dialog.locator(".ant-modal-footer button").click()
 
         page.get_by_role("tab", name="+ 新增语言").click()
         check("AC-11", "有未保存修改时切换语言需确认", page.get_by_text("放弃未保存的修改？").count() > 0)
