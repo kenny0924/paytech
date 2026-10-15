@@ -7,6 +7,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.risk.decision.domain.runtime.PaymentRiskAssessmentContext;
 import com.paytech.risk.decision.domainservice.repository.DecisionEvaluationRepository;
 import com.paytech.risk.decision.domainservice.repository.EvaluationFeatureResultRepository;
+import com.paytech.risk.decision.domainservice.repository.EvaluationFlowTraceRepository;
 import com.paytech.risk.decision.domainservice.repository.EvaluationRuleTraceRepository;
 import com.paytech.risk.decision.domainservice.repository.TransactionRiskAssessmentRepository;
 import com.paytech.risk.decision.domainservice.repository.VelocityEventRepository;
@@ -19,6 +20,7 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class PaymentRiskAssessmentServiceImpl implements PaymentRiskAssessmentService {
+    private final EvaluationFlowTraceRepository flowTraces;
     private final EvaluationRuleTraceRepository traces;
     private final DecisionEvaluationRepository evaluations;
     private final VelocityEventRepository velocityEvents;
@@ -35,6 +37,7 @@ public class PaymentRiskAssessmentServiceImpl implements PaymentRiskAssessmentSe
             assessments.insert(context.getAssessment());
             featureResults.insertAll(context.getFeatureResults());
             traces.insertAll(context.getRuleTraces());
+            flowTraces.insertAll(context.getFlowTraces());
             velocityEvents.insertAll(context.getVelocityEvents());
             velocitySubjects.insertAll(context.getVelocitySubjects());
         });

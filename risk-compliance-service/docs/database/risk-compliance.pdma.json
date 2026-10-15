@@ -24678,6 +24678,423 @@
       "type": "P"
     },
     {
+      "id": "832A8AD6-C703-5D5A-88F8-9B04934B484C",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_evaluation_flow_trace",
+      "defName": "评估流程轨迹",
+      "comment": "按经过顺序保存一次评估实际经过的决策流节点、规则集节点结果与所走连线",
+      "properties": {
+        "logicalTableKey": "evaluation_flow_trace",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "trace_id",
+          "defName": "流程轨迹标识",
+          "comment": "评估流程轨迹的稳定业务标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "1C615547-0FFD-50D1-B51D-678AF2D81E07"
+        },
+        {
+          "defKey": "evaluation_id",
+          "defName": "决策评估",
+          "comment": "决策评估的稳定业务标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "89257DD5-BD0E-504D-9C93-73FC0D6E7B4F"
+        },
+        {
+          "defKey": "step_no",
+          "defName": "经过顺序",
+          "comment": "从 1 开始的节点经过顺序；开始节点为 1，结束节点为最后一行。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "BF84AE1C-E655-5784-BE83-AE547071C664"
+        },
+        {
+          "defKey": "node_key",
+          "defName": "节点键",
+          "comment": "评估所用决策流版本内的节点键；流程版本由评估的发布得出。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "640D6C5B-0A03-5035-B8E1-A1721BC8B9B2"
+        },
+        {
+          "defKey": "node_type",
+          "defName": "节点类型",
+          "comment": "节点业务类型。允许值：START、RULE_SET、END。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "079CF8FA-3CE0-5806-8741-0222FB1312CA"
+        },
+        {
+          "defKey": "rule_set_version_id",
+          "defName": "规则集版本标识",
+          "comment": "规则集节点引用的规则集版本；其他节点为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A3B06977-5A28-5EF7-B1C8-20A3E41A2B18"
+        },
+        {
+          "defKey": "matched_flag",
+          "defName": "是否命中",
+          "comment": "规则集节点是否有规则命中，1 表示是，0 表示否，NULL 表示不适用。",
+          "type": "BOOLEAN",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "FA9A4527-8036-5929-AD0E-3141D8877980"
+        },
+        {
+          "defKey": "node_decision",
+          "defName": "节点决定",
+          "comment": "规则集节点首个终态命中的决定或结束节点的结论；没有时为空。允许值：ALLOW、REVIEW、DENY。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "21499740-9B8E-52F1-A9DB-5F3DECA8B797"
+        },
+        {
+          "defKey": "reused_flag",
+          "defName": "是否复用",
+          "comment": "规则集节点是否复用同一规则集版本此前的执行结果，1 表示是，0 表示否，NULL 表示不适用。",
+          "type": "BOOLEAN",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "CB46298A-6843-5965-A5BA-0BA20FE0B23E"
+        },
+        {
+          "defKey": "exit_edge_key",
+          "defName": "出线键",
+          "comment": "离开本节点所走连线在流程版本内的键；结束节点为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "E36489E9-C4B3-51A6-AD72-050E3966BC48"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "D4146982-8C0E-554A-83EF-6FC374B7794D"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "A558FB40-3648-5714-AC0B-C322E6213C39",
+          "myField": "89257DD5-BD0E-504D-9C93-73FC0D6E7B4F",
+          "refEntity": "73E284F9-A3FA-5AA9-AF04-63CCA10EE536",
+          "refField": "15ABF43A-D300-50DA-8FA2-AAD7C2253ED5",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_eval_flow_trace_step",
+          "defName": "唯一索引 evaluation_id、step_no",
+          "unique": true,
+          "comment": "保证业务唯一性：evaluation_id、step_no",
+          "fields": [
+            {
+              "fieldDefKey": "89257DD5-BD0E-504D-9C93-73FC0D6E7B4F",
+              "ascOrDesc": "A",
+              "id": "59CC762F-2A05-529C-A6AF-D7569466D667"
+            },
+            {
+              "fieldDefKey": "BF84AE1C-E655-5784-BE83-AE547071C664",
+              "ascOrDesc": "A",
+              "id": "4DBFB5C9-00E7-5B00-999F-EEB1236FBBA5"
+            }
+          ],
+          "id": "3C316F0A-EC9A-54A4-944D-3A64D7264733"
+        }
+      ],
+      "type": "P"
+    },
+    {
       "id": "11B86402-37EE-5F1A-B03B-62F5F2B72199",
       "env": {
         "base": {
@@ -43144,6 +43561,43 @@
               "port": "15ABF43A-D300-50DA-8FA2-AAD7C2253ED5%in"
             },
             "relation": "1:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "A61198C3-31AF-5615-AFFD-0D32FCC8D04A",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 2872
+            },
+            "count": 0,
+            "originKey": "832A8AD6-C703-5D5A-88F8-9B04934B484C",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 328
+            }
+          },
+          {
+            "id": "260A677A-871E-5E10-9089-A81D90D993E4",
+            "shape": "erdRelation",
+            "originKey": "A558FB40-3648-5714-AC0B-C322E6213C39",
+            "source": {
+              "cell": "A61198C3-31AF-5615-AFFD-0D32FCC8D04A",
+              "port": "89257DD5-BD0E-504D-9C93-73FC0D6E7B4F%out"
+            },
+            "target": {
+              "cell": "60C2FD6F-F358-5A50-8BA4-7579C5531270",
+              "port": "15ABF43A-D300-50DA-8FA2-AAD7C2253ED5%in"
+            },
+            "relation": "n:1",
             "vertices": [],
             "fillColor": "#ACDAFC",
             "attrs": {

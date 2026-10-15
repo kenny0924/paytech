@@ -1,16 +1,15 @@
 package com.paytech.risk.decision.domainservice.service.impl;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.risk.decision.core.dal.dataobject.DecisionEvaluation;
-import com.paytech.risk.decision.core.dal.dataobject.EvaluationFeatureResult;
 import com.paytech.risk.decision.core.dal.dataobject.ReleaseShadowRun;
+import com.paytech.risk.decision.domain.runtime.ShadowSampleContext;
 import com.paytech.risk.decision.domainservice.repository.DecisionEvaluationRepository;
 import com.paytech.risk.decision.domainservice.repository.EvaluationFeatureResultRepository;
+import com.paytech.risk.decision.domainservice.repository.EvaluationFlowTraceRepository;
+import com.paytech.risk.decision.domainservice.repository.EvaluationRuleTraceRepository;
 import com.paytech.risk.decision.domainservice.repository.ReleaseShadowRunRepository;
 import com.paytech.risk.decision.domainservice.service.ShadowRunService;
 
@@ -23,14 +22,18 @@ public class ShadowRunServiceImpl implements ShadowRunService {
     private final ReleaseShadowRunRepository shadowRuns;
     private final DecisionEvaluationRepository evaluations;
     private final PlatformTransactionManager transactionManager;
+    private final EvaluationFlowTraceRepository flowTraces;
+    private final EvaluationRuleTraceRepository ruleTraces;
     private final EvaluationFeatureResultRepository featureResults;
 
-    /** 评估与 Feature 结果同一事务提交。 */
+    /** 评估先于依附它的 Feature 结果与轨迹写入，同一事务提交。 */
     @Override
-    public void saveSample(DecisionEvaluation evaluation, List<EvaluationFeatureResult> featureResults) {
+    public void saveSample(ShadowSampleContext context) {
         new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
-            evaluations.insert(evaluation);
-            this.featureResults.insertAll(featureResults);
+            evaluations.insert(context.getEvaluation());
+            featureResults.insertAll(context.getFeatureResults());
+            ruleTraces.insertAll(context.getRuleTraces());
+            flowTraces.insertAll(context.getFlowTraces());
         });
     }
 

@@ -11,6 +11,7 @@ import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.charset.StandardCharsets;
@@ -37,6 +38,7 @@ import com.paytech.risk.decision.domain.enums.DecisionEnvironment;
 import com.paytech.risk.decision.domain.enums.DecisionReleaseStatus;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.EvaluationMode;
+import com.paytech.risk.decision.domain.enums.RuleTraceType;
 import com.paytech.risk.decision.domain.enums.ShadowRunStatus;
 import com.paytech.risk.decision.domain.enums.StaticCheckCode;
 import com.paytech.risk.decision.domain.enums.StaticCheckStatus;
@@ -96,7 +98,7 @@ class ExecutionReleaseApiAutoTest extends AbstractPaymentRiskApiTest {
             AuthenticationRequirement.THREE_DS_REQUIRED.getCode());
     }
 
-    /** 已有生效发布：候选影子回放最近正式评估后激活，原发布被替代；影子样本不写交易评估，新评估按候选执行。 */
+    /** 已有生效发布：候选影子回放最近正式评估后激活，原发布被替代；影子样本不写交易评估但写规则与流程轨迹，新评估按候选执行。 */
     @Test
     void test_normalFlow_shadowAndSupersede() {
         long baseline = activeRelease(saveFlow(newCode("T_FLOW"), twoStageGraph(blockRuleSet, authRuleSet("500"), reason)));
@@ -117,7 +119,10 @@ class ExecutionReleaseApiAutoTest extends AbstractPaymentRiskApiTest {
             () -> assertEquals(3, samples.size()),
             () -> assertEquals(List.of(EvaluationMode.SHADOW.getCode()),
                 samples.stream().map(row -> row.get("evaluation_mode")).distinct().toList()),
-            () -> assertEquals(3, store.countPrimaryEvaluations(), "影子不新增正式评估"));
+            () -> assertEquals(3, store.countPrimaryEvaluations(), "影子不新增正式评估"),
+            () -> assertTrue(samples.stream().allMatch(row -> !store.flowTraces(id(row)).isEmpty()), "影子流程轨迹"),
+            () -> assertTrue(samples.stream().allMatch(row -> !store.traces(id(row), RuleTraceType.RULE.getCode()).isEmpty()),
+                "影子规则轨迹"));
         assess(PaymentRiskRequestBuilder.template().amount("100").build()).assertResult(DecisionValue.ALLOW.getCode(),
             AuthenticationRequirement.THREE_DS_REQUIRED.getCode());
     }
@@ -414,5 +419,10 @@ class ExecutionReleaseApiAutoTest extends AbstractPaymentRiskApiTest {
         body.setPointCode(pointCode);
         body.setFlowVersionId(Long.toString(flowVersionId));
         return body;
+    }
+
+    /** 评估行的 ID。 */
+    private static long id(Map<String, Object> evaluation) {
+        return ((Number)evaluation.get("evaluation_id")).longValue();
     }
 }

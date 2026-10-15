@@ -1,5 +1,6 @@
 package com.paytech.risk.configuration;
 
+import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.web.api.ApiErrorStatusResolver;
 import com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +14,9 @@ public class RiskApiErrorConfiguration {
     @Bean
     ApiErrorStatusResolver riskApiErrorStatusResolver() {
         return (errorCode, defaultStatus) -> {
+            if (errorCode == CommonErrorCode.NOT_FOUND) {
+                return HttpStatus.NOT_FOUND;
+            }
             if (errorCode instanceof com.paytech.risk.api.enums.RiskVariableErrorCode variable) {
                 return switch (variable) {
                     case INVALID_VARIABLE_DEFINITION, INVALID_OPERAND, LEGACY_AUTHORING_NOT_SUPPORTED -> HttpStatus.BAD_REQUEST;

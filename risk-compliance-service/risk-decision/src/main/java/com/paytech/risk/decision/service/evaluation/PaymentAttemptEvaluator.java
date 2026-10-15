@@ -5,8 +5,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
@@ -29,6 +31,7 @@ import com.paytech.risk.decision.service.processor.response.EvaluateDecisionResu
 import com.paytech.risk.decision.service.query.ActiveExecutionReleaseReader;
 import com.paytech.risk.decision.service.query.ExecutionSnapshotReader;
 import com.paytech.risk.decision.service.query.FeatureValueReader;
+import com.paytech.risk.decision.service.query.ShadowReplayReader;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -107,6 +110,48 @@ public class PaymentAttemptEvaluator implements DecisionPointEvaluator {
         return result(context.getAssessment(), context.getEvaluation());
     }
 
+    /** 按支付尝试查找正式评估。 */
+    @Override
+    public Optional<Long> findPrimaryEvaluationId(String businessKey) {
+        return assessments.findByAttempt(Long.parseLong(businessKey)).map(TransactionRiskAssessment::getEvaluationId);
+    }
+
+    /** 交易评估快照中的支付尝试、17 个输入字段与认证要求。 */
+    @Override
+    public EvaluationSubject subject(long primaryEvaluationId) {
+        TransactionRiskAssessment assessment = assessments.findByEvaluation(primaryEvaluationId)
+            .orElseThrow(() -> new ErrorException("正式评估缺少交易评估快照: " + primaryEvaluationId));
+        PaymentRiskInput input = ShadowReplayReader.input(assessment);
+        Map<String, String> outputs = assessment.getAuthenticationRequirement() == null ? Map.of()
+            : Map.of(DecisionPointAuthoringDescriptor.AUTHENTICATION_REQUIREMENT,
+                assessment.getAuthenticationRequirement().getCode());
+        return new EvaluationSubject(Long.toString(input.paymentAttemptId()), inputs(input), input.contractValues(),
+            outputs);
+    }
+
+    /** 统一评估请求的输入字段原值，按合同字段顺序。 */
+    static Map<String, String> inputs(PaymentRiskInput input) {
+        Map<String, String> values = new LinkedHashMap<>();
+        values.put("paymentIntentId", Long.toString(input.paymentIntentId()));
+        values.put("riskActionId", Long.toString(input.riskActionId()));
+        values.put("orderId", Long.toString(input.orderId()));
+        values.put("clientId", Long.toString(input.clientId()));
+        values.put("entityNo", input.entityNo());
+        values.put("paymentMethodCode", input.paymentMethodCode());
+        values.put("captureMode", input.captureMode());
+        values.put("amount", input.amount().stripTrailingZeros().toPlainString());
+        values.put("currency", input.currency());
+        values.put("industryCode", input.industryCode());
+        values.put("mccCode", input.mccCode());
+        values.put("consumerCountryCode", input.consumerCountryCode());
+        values.put("consumerReference", input.consumerReference());
+        values.put("clientIpAddress", input.clientIpAddress());
+        values.put("userAgent", input.userAgent());
+        values.put("cardFingerprint", input.cardFingerprint());
+        values.put("cardBin", input.cardBin());
+        return values;
+    }
+
     /** 已通过格式校验的输入转换为冻结输入。 */
     static PaymentRiskInput toInput(String businessKey, Map<String, String> inputs) {
         return new PaymentRiskInput(Long.parseLong(businessKey), Long.parseLong(inputs.get("paymentIntentId")),
@@ -129,24 +174,34 @@ public class PaymentAttemptEvaluator implements DecisionPointEvaluator {
         return result(existing, evaluation);
     }
 
-    /** 读取执行内容、计算 Feature 并执行流程；异常与超时转为技术终态。 */
+    /**
+     * 读取执行内容、计算 Feature 并执行流程；异常与超时转为技术终态
+     * <li>Feature 计算失败记 FEATURE_ERROR 并保留已完成结果与失败项；其他异常记 EVALUATION_ERROR 并保留已算出的 Feature。</li>
+     * <li>超时保留引擎结果，供解释过程；评估本身不给结论。</li>
+     */
     PaymentRiskFacts.Run execute(ExecutionRelease release, PaymentRiskInput input) {
         Instant started = now();
+        Map<Long, FeatureValue> values = null;
         try {
             ExecutionSnapshot snapshot = snapshots.read(release);
-            Map<Long, FeatureValue> values = features.read(snapshot, input, started);
+            values = features.read(snapshot, input, started);
             EngineOutcome outcome = DecisionEngine.evaluate(snapshot, input, values);
             Instant completed = now();
             if (Duration.between(started, completed).toMillis() > snapshot.timeoutMillis()) {
-                return new PaymentRiskFacts.Run(started, completed, TechnicalStatus.TIMED_OUT, EVALUATION_TIMEOUT, null,
-                    null);
+                return new PaymentRiskFacts.Run(started, completed, TechnicalStatus.TIMED_OUT, EVALUATION_TIMEOUT,
+                    outcome, values);
             }
             return new PaymentRiskFacts.Run(started, completed, TechnicalStatus.SUCCEEDED, null, outcome, values);
+        } catch (FeatureComputationException failure) {
+            log.error("支付风控 Feature 计算失败, paymentAttemptId={}, releaseId={}", input.paymentAttemptId(),
+                release.getReleaseId(), failure);
+            return new PaymentRiskFacts.Run(started, now(), TechnicalStatus.FAILED, FeatureComputationException.FEATURE_ERROR,
+                null, failure.results());
         } catch (RuntimeException failure) {
             // 技术失败是评估合同的一部分：记录为 FAILED 并返回，Payment 据此不放行。
             log.error("支付风控评估执行失败, paymentAttemptId={}, releaseId={}", input.paymentAttemptId(), release.getReleaseId(),
                 failure);
-            return new PaymentRiskFacts.Run(started, now(), TechnicalStatus.FAILED, EVALUATION_ERROR, null, null);
+            return new PaymentRiskFacts.Run(started, now(), TechnicalStatus.FAILED, EVALUATION_ERROR, null, values);
         }
     }
 

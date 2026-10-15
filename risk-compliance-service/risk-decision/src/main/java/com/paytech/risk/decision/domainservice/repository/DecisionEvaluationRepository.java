@@ -20,4 +20,7 @@ public interface DecisionEvaluationRepository {
 
     /** 读取一个影子批次的全部样本评估。 */
     List<DecisionEvaluation> findByShadowRun(long shadowRunId);
+
+    /** 读取以某正式评估为基线的影子评估，新评估在前，最多 limit 条。 */
+    List<DecisionEvaluation> findByBaseline(long baselineEvaluationId, int limit);
 }

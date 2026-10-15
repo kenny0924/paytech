@@ -21,7 +21,6 @@ import com.paytech.foundation.compensation.api.CompensationEventRequest;
 import com.paytech.foundation.compensation.api.CompensationExecutionPolicy;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionEvaluation;
-import com.paytech.risk.decision.core.dal.dataobject.EvaluationFeatureResult;
 import com.paytech.risk.decision.core.dal.dataobject.ReleaseShadowRun;
 import com.paytech.risk.decision.core.dal.dataobject.TransactionRiskAssessment;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
@@ -32,9 +31,11 @@ import com.paytech.risk.decision.domain.release.ShadowRunSummaries;
 import com.paytech.risk.decision.domain.runtime.DecisionEngine;
 import com.paytech.risk.decision.domain.runtime.EngineOutcome;
 import com.paytech.risk.decision.domain.runtime.ExecutionSnapshot;
+import com.paytech.risk.decision.domain.runtime.FeatureComputationException;
 import com.paytech.risk.decision.domain.runtime.FeatureValue;
 import com.paytech.risk.decision.domain.runtime.PaymentRiskFacts;
 import com.paytech.risk.decision.domain.runtime.PaymentRiskInput;
+import com.paytech.risk.decision.domain.runtime.ShadowSampleContext;
 import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
 import com.paytech.risk.decision.domainservice.service.ShadowRunService;
 import com.paytech.risk.decision.service.query.ExecutionSnapshotReader;
@@ -55,6 +56,12 @@ import lombok.extern.slf4j.Slf4j;
 public class ShadowRunHandler implements CompensationEventHandler {
     /** 事件类型。 */
     public static final String EVENT_TYPE = "DECISION_SHADOW_RUN";
+
+    /** 候选执行失败代码，与正式评估一致。 */
+    static final String EVALUATION_ERROR = "EVALUATION_ERROR";
+
+    /** 候选执行超时代码，与正式评估一致。 */
+    static final String EVALUATION_TIMEOUT = "EVALUATION_TIMEOUT";
 
     private final Clock clock;
     private final ShadowReplayReader reader;
@@ -133,44 +140,55 @@ public class ShadowRunHandler implements CompensationEventHandler {
         service.complete(run, expectedVersion);
     }
 
-    /** 回放一个样本；并发重复写入视为已完成。 */
+    /** 回放一个样本，保存结论、Feature 结果与轨迹；并发重复写入视为已完成。 */
     void saveSample(ReleaseShadowRun run, ExecutionSnapshot snapshot, DecisionEvaluation sample) {
         TransactionRiskAssessment assessment = reader.assessment(sample);
-        PaymentRiskInput input = ShadowReplayReader.input(assessment);
-        Instant started = now();
-        Map<Long, FeatureValue> values = null;
-        EngineOutcome outcome = null;
-        TechnicalStatus status = TechnicalStatus.SUCCEEDED;
+        PaymentRiskFacts.Run replay = replay(snapshot, ShadowReplayReader.input(assessment), sample.getEvaluationTime());
+        DecisionEvaluation row = shadowEvaluation(run, snapshot, sample, assessment, replay);
+        long evaluationId = row.getEvaluationId();
+        ShadowSampleContext context = new ShadowSampleContext(row,
+            PaymentRiskFacts.featureResults(evaluationId, replay, identifiers::nextIdentifier),
+            PaymentRiskFacts.ruleTraces(evaluationId, replay, identifiers::nextIdentifier),
+            PaymentRiskFacts.flowTraces(evaluationId, replay, identifiers::nextIdentifier));
         try {
-            values = features.read(snapshot, input, sample.getEvaluationTime());
-            outcome = DecisionEngine.evaluate(snapshot, input, values);
-        } catch (RuntimeException failure) {
-            // 候选执行失败是比较结果的一部分，记为 FAILED 样本。
-            status = TechnicalStatus.FAILED;
-        }
-        Instant completed = now();
-        if (status == TechnicalStatus.SUCCEEDED
-            && Duration.between(started, completed).toMillis() > snapshot.timeoutMillis()) {
-            status = TechnicalStatus.TIMED_OUT;
-        }
-        DecisionEvaluation row = shadowEvaluation(run, snapshot, sample, assessment, status, outcome, started, completed);
-        List<EvaluationFeatureResult> results = status == TechnicalStatus.SUCCEEDED
-            ? PaymentRiskFacts.shadowFeatureResults(row.getEvaluationId(), values, completed, identifiers::nextIdentifier)
-            : List.of();
-        try {
-            service.saveSample(row, results);
+            service.saveSample(context);
         } catch (ConcurrentRequestException alreadyReplayed) {
             log.info("影子样本已回放, shadowRunId={}, baselineEvaluationId={}", run.getShadowRunId(), sample.getEvaluationId());
         }
     }
 
-    /** 影子评估行；比较字段完整。 */
+    /**
+     * 以样本的原评估时间执行候选发布
+     * <li>候选执行失败是比较结果的一部分：Feature 失败记 FEATURE_ERROR，其他异常记 EVALUATION_ERROR，均保留已算出的 Feature。</li>
+     * <li>超过决策点超时记 TIMED_OUT，保留引擎结果供解释。</li>
+     */
+    PaymentRiskFacts.Run replay(ExecutionSnapshot snapshot, PaymentRiskInput input, Instant evaluationTime) {
+        Instant started = now();
+        Map<Long, FeatureValue> values = null;
+        try {
+            values = features.read(snapshot, input, evaluationTime);
+            EngineOutcome outcome = DecisionEngine.evaluate(snapshot, input, values);
+            Instant completed = now();
+            if (Duration.between(started, completed).toMillis() > snapshot.timeoutMillis()) {
+                return new PaymentRiskFacts.Run(started, completed, TechnicalStatus.TIMED_OUT, EVALUATION_TIMEOUT, outcome,
+                    values);
+            }
+            return new PaymentRiskFacts.Run(started, completed, TechnicalStatus.SUCCEEDED, null, outcome, values);
+        } catch (FeatureComputationException failure) {
+            return new PaymentRiskFacts.Run(started, now(), TechnicalStatus.FAILED,
+                FeatureComputationException.FEATURE_ERROR, null, failure.results());
+        } catch (RuntimeException failure) {
+            return new PaymentRiskFacts.Run(started, now(), TechnicalStatus.FAILED, EVALUATION_ERROR, null, values);
+        }
+    }
+
+    /** 影子评估行；比较字段完整，评估时间沿用样本以便按同一时刻比较。 */
     DecisionEvaluation shadowEvaluation(ReleaseShadowRun run, ExecutionSnapshot snapshot, DecisionEvaluation sample,
-        TransactionRiskAssessment assessment, TechnicalStatus status, EngineOutcome outcome, Instant started,
-        Instant completed) {
-        DecisionValue decision = status == TechnicalStatus.SUCCEEDED ? outcome.decision() : null;
-        boolean actionChanged = status == TechnicalStatus.SUCCEEDED
-            && !Objects.equals(PaymentRiskFacts.authentication(outcome), assessment.getAuthenticationRequirement());
+        TransactionRiskAssessment assessment, PaymentRiskFacts.Run replay) {
+        boolean succeeded = replay.status() == TechnicalStatus.SUCCEEDED;
+        DecisionValue decision = succeeded ? replay.outcome().decision() : null;
+        boolean actionChanged = succeeded
+            && !Objects.equals(PaymentRiskFacts.authentication(replay.outcome()), assessment.getAuthenticationRequirement());
         DecisionEvaluation row = new DecisionEvaluation();
         row.setEvaluationId(identifiers.nextIdentifier());
         row.setEvaluationRequestId("SHADOW:" + run.getShadowRunId() + ":" + sample.getEvaluationId());
@@ -179,23 +197,22 @@ public class ShadowRunHandler implements CompensationEventHandler {
         row.setReleaseId(run.getCandidateReleaseId());
         row.setEvaluationMode(EvaluationMode.SHADOW);
         row.setEvaluationTime(sample.getEvaluationTime());
-        row.setTechnicalStatus(status);
+        row.setTechnicalStatus(replay.status());
         row.setProposedDecision(decision);
         row.setBusinessDecision(decision);
-        row.setStartedTime(started);
-        row.setCompletedTime(completed);
-        row.setElapsedMillis((int)Duration.between(started, completed).toMillis());
+        row.setStartedTime(replay.evaluationTime());
+        row.setCompletedTime(replay.completedTime());
+        row.setElapsedMillis(replay.elapsedMillis());
         row.setInputSnapshotHash(sample.getInputSnapshotHash());
-        row.setFailureCode(status == TechnicalStatus.SUCCEEDED ? null
-            : status == TechnicalStatus.FAILED ? "EVALUATION_ERROR" : "EVALUATION_TIMEOUT");
+        row.setFailureCode(replay.failureCode());
         row.setShadowRunId(run.getShadowRunId());
         row.setBaselineEvaluationId(sample.getEvaluationId());
         row.setDecisionChangedFlag(decision != sample.getBusinessDecision());
         row.setActionChangedFlag(actionChanged);
         row.setComparisonSeverity(ShadowRunSummaries.severity(sample.getBusinessDecision(), decision, actionChanged));
-        row.setComparedTime(completed);
-        row.setCreateTime(completed);
-        row.setUpdateTime(completed);
+        row.setComparedTime(replay.completedTime());
+        row.setCreateTime(replay.completedTime());
+        row.setUpdateTime(replay.completedTime());
         return row;
     }
 

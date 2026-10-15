@@ -46,4 +46,10 @@ public class DecisionEvaluationRepositoryImpl implements DecisionEvaluationRepos
     public List<DecisionEvaluation> findByShadowRun(long shadowRunId) {
         return mapper.selectByShadowRun(shadowRunId);
     }
+
+    /** 读取以某正式评估为基线的影子评估，新评估在前。 */
+    @Override
+    public List<DecisionEvaluation> findByBaseline(long baselineEvaluationId, int limit) {
+        return mapper.selectByBaseline(baselineEvaluationId, limit);
+    }
 }

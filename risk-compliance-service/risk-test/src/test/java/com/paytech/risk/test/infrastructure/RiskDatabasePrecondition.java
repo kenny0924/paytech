@@ -18,7 +18,7 @@ public final class RiskDatabasePrecondition
     implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     /** Risk 当前获批物理模型中的表数。 */
-    public static final int EXPECTED_TABLE_COUNT = 84;
+    public static final int EXPECTED_TABLE_COUNT = 85;
 
     /**
      * 不包含凭据的本地数据库准备说明。
@@ -31,7 +31,7 @@ public final class RiskDatabasePrecondition
         + "< docs/database/sql/risk-compliance-schema.sql` 与 "
         + "`mysql -h 127.0.0.1 -P 13306 -u risk_app -p mor_risk "
         + "< docs/database/sql/risk-compliance-initial-data.sql`，最后通过 RISK_TEST_DB_PASSWORD "
-        + "或 MOR_RISK_DB_PASSWORD 注入密码。已有旧库按当前迁移记录应用所需增量；规则集根历史增量见 ../requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/；本轮字典增量见 ../requirements/20260911/operations-console-风控规则集历史与字典管理/db/risk-compliance-service/ddl.sql 与 dml.sql，必须人工备份审核后执行；禁止重跑全量初始化。决策流增量见 ../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/ddl.sql；仅增加四表，须经授权人工应用。规则输入解耦的三表增量见 ../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/local-application.md，需独立授权人工应用。统一变量增量见 ../requirements/20260912/operations-console-统一风控变量管理与条件编排/db/risk-compliance-service/local-application.md；新增两表、四张旧表中增加五列并调整四列注释及26行目录，须经本轮单独授权人工应用。支付反欺诈一期增量见 ../requirements/20261014/risk-支付反欺诈一期/db/ddl.sql 与 dml.sql；新增两表、改五表并初始化支付决策点、动作与变量，须经授权人工应用。已有表不得重跑完整 Schema。本轮还需要本机 Redis 16379，通过 RISK_TEST_REDIS_PASSWORD 或 MOR_REDIS_PASSWORD 注入凭据。测试不会启动容器、建表或灌入数据。";
+        + "或 MOR_RISK_DB_PASSWORD 注入密码。已有旧库按当前迁移记录应用所需增量；规则集根历史增量见 ../requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/；本轮字典增量见 ../requirements/20260911/operations-console-风控规则集历史与字典管理/db/risk-compliance-service/ddl.sql 与 dml.sql，必须人工备份审核后执行；禁止重跑全量初始化。决策流增量见 ../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/ddl.sql；仅增加四表，须经授权人工应用。规则输入解耦的三表增量见 ../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/local-application.md，需独立授权人工应用。统一变量增量见 ../requirements/20260912/operations-console-统一风控变量管理与条件编排/db/risk-compliance-service/local-application.md；新增两表、四张旧表中增加五列并调整四列注释及26行目录，须经本轮单独授权人工应用。支付反欺诈一期增量见 ../requirements/20261014/risk-支付反欺诈一期/db/ddl.sql 与 dml.sql；新增两表、改五表并初始化支付决策点、动作与变量，须经授权人工应用。评估流程轨迹增量见 ../requirements/20261015/risk-评估结果查询与解释/db/ddl.sql；只新增一表，须经授权人工应用。已有表不得重跑完整 Schema。本轮还需要本机 Redis 16379，通过 RISK_TEST_REDIS_PASSWORD 或 MOR_REDIS_PASSWORD 注入凭据。测试不会启动容器、建表或灌入数据。";
 
     private static final String LOOPBACK_URL =
         "jdbc:mysql://127.0.0.1:13306/mor_risk"
@@ -168,6 +168,8 @@ public final class RiskDatabasePrecondition
             require(countAction(connection, action) == 1L);
         }
         verifyPaymentFraudPhaseOne(connection);
+        require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+            + "AND table_name='t_evaluation_flow_trace'") == 11L);
     }
 
     /** 支付反欺诈一期的结构增量与支付决策点初始化目录。 */

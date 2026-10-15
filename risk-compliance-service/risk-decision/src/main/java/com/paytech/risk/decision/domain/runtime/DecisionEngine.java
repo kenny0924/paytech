@@ -12,6 +12,7 @@ import com.paytech.risk.decision.domain.flow.DecisionFlow;
 import com.paytech.risk.decision.domain.rule.DecisionRuleSetAggregate;
 import com.paytech.risk.decision.domain.rule.DecisionRuleSetAggregate.NodeView;
 import com.paytech.risk.decision.domain.rule.DecisionRuleSetAggregate.RuleView;
+import com.paytech.risk.decision.domain.runtime.EngineOutcome.FlowStep;
 import com.paytech.risk.decision.domain.runtime.EngineOutcome.PredicateTrace;
 import com.paytech.risk.decision.domain.runtime.EngineOutcome.RuleTrace;
 import com.paytech.risk.decision.domain.variable.RiskVariable;
@@ -32,6 +33,7 @@ public final class DecisionEngine {
     private final Map<Long, NodeResult> ruleSetResults = new HashMap<>();
     private final List<RuleTrace> ruleTraces = new ArrayList<>();
     private final List<PredicateTrace> predicateTraces = new ArrayList<>();
+    private final List<FlowStep> flowSteps = new ArrayList<>();
     private NodeResult currentNode;
 
     /** 绑定一次评估的输入；实例只能执行一次。 */
@@ -58,7 +60,7 @@ public final class DecisionEngine {
         return new DecisionEngine(snapshot, input, features).run();
     }
 
-    /** 从开始节点沿连线走到结束节点。 */
+    /** 从开始节点沿连线走到结束节点，并按经过顺序记录节点。 */
     EngineOutcome run() {
         Map<String, DecisionFlow.Node> nodes = new HashMap<>();
         snapshot.graph().nodes().forEach(node -> nodes.put(node.nodeKey(), node));
@@ -66,12 +68,17 @@ public final class DecisionEngine {
             .findFirst().orElseThrow(() -> new ErrorException("决策流缺少开始节点"));
         for (int step = 0; step < MAX_STEPS; step++) {
             if ("END".equals(node.type())) {
+                flowSteps.add(new FlowStep(node.nodeKey(), node.type(), null, null, node.decisionCode(), null, null));
                 return outcome(node);
             }
+            Boolean reused = null;
             if ("RULE_SET".equals(node.type())) {
+                reused = ruleSetResults.containsKey(node.ruleSetVersionId());
                 currentNode = ruleSetResults.computeIfAbsent(node.ruleSetVersionId(), this::runRuleSet);
             }
-            node = nodes.get(nextNodeKey(node));
+            DecisionFlow.Edge exit = exitEdge(node);
+            flowSteps.add(step(node, reused, exit));
+            node = nodes.get(exit.targetNodeKey());
             if (node == null) {
                 throw new ErrorException("决策流连线指向不存在的节点");
             }
@@ -79,27 +86,35 @@ public final class DecisionEngine {
         throw new ErrorException("决策流执行超过节点上限");
     }
 
+    /** 非结束节点的经过记录；规则集节点附带本节点结果。 */
+    FlowStep step(DecisionFlow.Node node, Boolean reused, DecisionFlow.Edge exit) {
+        if (reused == null) {
+            return new FlowStep(node.nodeKey(), node.type(), null, null, null, null, exit.edgeKey());
+        }
+        return new FlowStep(node.nodeKey(), node.type(), node.ruleSetVersionId(), currentNode.matched(),
+            currentNode.decision(), reused, exit.edgeKey());
+    }
+
     /** 由结束节点形成结论；放行时返回该节点冻结的附加输出（保存时已补齐默认值），其他结论没有输出。 */
     EngineOutcome outcome(DecisionFlow.Node end) {
         DecisionValue decision = DecisionValue.valueOf(end.decisionCode());
         Map<String, String> outputs = decision == DecisionValue.ALLOW ? end.outputs() : Map.of();
         return new EngineOutcome(decision, end.reasonCode(), Map.copyOf(outputs), List.copyOf(ruleTraces),
-            List.copyOf(predicateTraces));
+            List.copyOf(predicateTraces), List.copyOf(flowSteps));
     }
 
     /** 条件连线按优先级取首个成立的，否则走 ELSE；无条件连线直接走。 */
-    String nextNodeKey(DecisionFlow.Node node) {
+    DecisionFlow.Edge exitEdge(DecisionFlow.Node node) {
         List<DecisionFlow.Edge> edges =
             snapshot.graph().edges().stream().filter(edge -> edge.sourceNodeKey().equals(node.nodeKey())).toList();
         for (DecisionFlow.Edge edge : edges.stream().filter(edge -> "CONDITIONAL".equals(edge.type()))
             .sorted(Comparator.comparingInt(DecisionFlow.Edge::priority)).toList()) {
             if (matches(edge.condition().root())) {
-                return edge.targetNodeKey();
+                return edge;
             }
         }
         return edges.stream().filter(edge -> "ELSE".equals(edge.type()) || "UNCONDITIONAL".equals(edge.type()))
-            .findFirst().map(DecisionFlow.Edge::targetNodeKey)
-            .orElseThrow(() -> new ErrorException("决策流节点没有可用出口: " + node.nodeKey()));
+            .findFirst().orElseThrow(() -> new ErrorException("决策流节点没有可用出口: " + node.nodeKey()));
     }
 
     /** 连线条件只接受统一变量格式。 */

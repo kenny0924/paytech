@@ -63,8 +63,8 @@ Client 入驻现用专用路径 `/client-onboarding-review/v1`；是否收拢到
 
 | 用途 | 接口 | 接口状态 |
 |---|---|---|
-| 查询风险决定（RCO-I06） | `GET /risk-decisions/v1/evaluations/{evaluationId}` | 候选 |
-| 查询评估解释（RCO-I10） | `GET /risk-decisions/v1/evaluations/{evaluationId}/explanation` | 候选 |
+| 查询风险决定（RCO-I06） | `GET /risk-decisions/v1/evaluations/{evaluationId}`；按业务身份 `GET /risk-decisions/v1/evaluations?pointCode&businessKey`（[合同](../requirements/20261015/risk-评估结果查询与解释/design.md)） | 已确认 |
+| 查询评估解释（RCO-I10） | `GET /risk-decisions/v1/evaluations/{evaluationId}/explanation` | 已确认 |
 | 规则、流程、变量、发布、名单、字典配置（RCO-I12） | `/decision-rule-sets/v1`、`/decision-flows/v1`、`/decision-variables/v1`、`/decision-releases/v1`、`/risk-lists/v1`、`/decision-dictionaries/v1`，按 `pointCode` 区分风控点 | 已确认 |
 
 ## 2. 风险主体

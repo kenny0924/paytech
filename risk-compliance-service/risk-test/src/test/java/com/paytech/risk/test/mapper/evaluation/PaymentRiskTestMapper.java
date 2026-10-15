@@ -107,6 +107,27 @@ public class PaymentRiskTestMapper {
         return hits;
     }
 
+    /** 读取一次评估的流程轨迹，按经过顺序。 */
+    public List<Map<String, Object>> flowTraces(long evaluationId) {
+        return jdbc.queryForList("SELECT * FROM t_evaluation_flow_trace WHERE evaluation_id=? ORDER BY step_no",
+            evaluationId);
+    }
+
+    /** 删除一次评估的流程轨迹，构造本功能上线前的评估。 */
+    public void deleteFlowTraces(long evaluationId) {
+        jdbc.update("DELETE FROM t_evaluation_flow_trace WHERE evaluation_id=?", evaluationId);
+    }
+
+    /** 把名单状态改为未登记的值，构造名单命中 Feature 读取名单时的数据损坏。 */
+    public void updateListStatus(String listCode, String status) {
+        jdbc.update("UPDATE t_risk_list SET status=? WHERE list_code=?", status, listCode);
+    }
+
+    /** 直接改写数值常量的当前值，构造评估后常量变化。 */
+    public void updateConstantNumber(String variableCode, BigDecimal value) {
+        jdbc.update("UPDATE t_risk_variable SET number_value=? WHERE variable_code=?", value, variableCode);
+    }
+
     /** 读取一次评估的 Feature 结果。 */
     public List<Map<String, Object>> featureResults(long evaluationId) {
         return jdbc.queryForList("SELECT * FROM t_evaluation_feature_result WHERE evaluation_id=? "
@@ -194,6 +215,7 @@ public class PaymentRiskTestMapper {
     public void deleteAll() {
         jdbc.update("DELETE FROM t_evaluation_feature_result WHERE evaluation_id IN (" + PAYMENT_EVALUATIONS + ")");
         jdbc.update("DELETE FROM t_evaluation_rule_trace WHERE evaluation_id IN (" + PAYMENT_EVALUATIONS + ")");
+        jdbc.update("DELETE FROM t_evaluation_flow_trace WHERE evaluation_id IN (" + PAYMENT_EVALUATIONS + ")");
         jdbc.update("DELETE FROM t_transaction_risk_assessment");
         jdbc.update("DELETE FROM t_decision_evaluation WHERE decision_point_id=?", PAYMENT_POINT_ID);
         jdbc.update("DELETE FROM t_velocity_event_subject");

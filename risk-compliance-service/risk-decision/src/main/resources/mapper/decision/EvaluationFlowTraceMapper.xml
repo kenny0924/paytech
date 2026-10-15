@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.EvaluationFlowTraceMapper">
+    <sql id="columns">trace_id AS traceId, evaluation_id AS evaluationId, step_no AS stepNo, node_key AS nodeKey, node_type AS nodeType, rule_set_version_id AS ruleSetVersionId, matched_flag AS matchedFlag, node_decision AS nodeDecision, reused_flag AS reusedFlag, exit_edge_key AS exitEdgeKey, create_time AS createTime</sql>
+    <insert id="insertBatch">INSERT INTO t_evaluation_flow_trace(trace_id, evaluation_id, step_no, node_key, node_type, rule_set_version_id, matched_flag, node_decision, reused_flag, exit_edge_key, create_time) VALUES <foreach collection="rows" item="row" separator=",">(#{row.traceId}, #{row.evaluationId}, #{row.stepNo}, #{row.nodeKey}, #{row.nodeType}, #{row.ruleSetVersionId}, #{row.matchedFlag}, #{row.nodeDecision}, #{row.reusedFlag}, #{row.exitEdgeKey}, #{row.createTime})</foreach></insert>
+    <select id="selectByEvaluation" useCache="false" resultType="com.paytech.risk.decision.core.dal.dataobject.EvaluationFlowTrace">SELECT <include refid="columns"/> FROM t_evaluation_flow_trace WHERE evaluation_id = #{evaluationId} ORDER BY step_no</select>
+</mapper>

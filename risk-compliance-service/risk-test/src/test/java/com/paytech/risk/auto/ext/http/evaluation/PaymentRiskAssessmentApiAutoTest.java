@@ -33,7 +33,7 @@ import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker.Asses
 /**
  * 支付尝试风控评估：真实配置入口准备两段决策流并激活，再经支付评估入口执行
  * <li>拦截规则集：IP 命中黑名单拒绝；同卡 10 分钟内已有 2 次评估拒绝；金额超过 1000 审核。认证规则集：金额超过 500 要求 3DS。</li>
- * <li>正常流程：放行（无需认证）、放行并要求 3DS；落库评估、交易评估快照、Feature 结果、规则轨迹与累计事件。</li>
+ * <li>正常流程：放行（无需认证）、放行并要求 3DS；落库评估、交易评估快照、Feature 结果、规则轨迹、流程轨迹与累计事件。</li>
  * <li>业务规则：名单命中（含 IPv6 同 /64）、实时累计命中、金额审核；审核与拒绝写入拒绝事件。</li>
  * <li>重放：同一支付尝试同内容返回原结果且不重复写入；IP 与 User-Agent 变化不影响重放；风控 Action 或稳定输入变化返回 409。</li>
  * <li>并发：同一支付尝试同时提交多次，只形成一次评估与一组累计事件；成功响应返回同一结果，抢锁失败返回 409。</li>
@@ -99,6 +99,8 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
             () -> assertEquals(4, store.traces(assessed.evaluationId(), RuleTraceType.RULE.getCode()).size(), "规则轨迹"),
             () -> assertEquals(4, store.traces(assessed.evaluationId(), RuleTraceType.PREDICATE.getCode()).size(),
                 "谓词轨迹"),
+            () -> assertEquals(List.of("start", "block", "auth", "allow"), store.flowTraces(assessed.evaluationId())
+                .stream().map(row -> row.get("node_key")).toList(), "流程轨迹"),
             () -> assertEquals(List.of(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode()),
                 store.velocityEventCodes(store.assessmentIdOf(assessed.evaluationId()))),
             () -> assertEquals(

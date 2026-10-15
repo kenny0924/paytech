@@ -18,9 +18,11 @@ import com.paytech.risk.decision.domain.enums.DecisionValue;
  *            实际执行的规则，按执行顺序
  * @param predicateTraces
  *            实际求值的规则条件谓词，按执行顺序
+ * @param flowSteps
+ *            实际经过的流程节点，按经过顺序；最后一个为结束节点
  */
 public record EngineOutcome(DecisionValue decision, String reasonCode, Map<String, String> outputs,
-    List<RuleTrace> ruleTraces, List<PredicateTrace> predicateTraces) {
+    List<RuleTrace> ruleTraces, List<PredicateTrace> predicateTraces, List<FlowStep> flowSteps) {
 
     /**
      * 一条规则的执行结果
@@ -47,4 +49,25 @@ public record EngineOutcome(DecisionValue decision, String reasonCode, Map<Strin
      *            求值结果
      */
     public record PredicateTrace(long ruleId, long nodeId, boolean result) { }
+
+    /**
+     * 经过的一个流程节点
+     *
+     * @param nodeKey
+     *            流程版本内的节点键
+     * @param nodeType
+     *            节点类型：START、RULE_SET、END
+     * @param ruleSetVersionId
+     *            规则集节点引用的规则集版本；其他节点为空
+     * @param matched
+     *            规则集节点是否有规则命中；其他节点为空
+     * @param decision
+     *            规则集节点首个终态命中的决定（没有为空），或结束节点的结论
+     * @param reused
+     *            规则集节点是否复用了同一版本此前的结果；其他节点为空
+     * @param exitEdgeKey
+     *            离开本节点所走的连线；结束节点为空
+     */
+    public record FlowStep(String nodeKey, String nodeType, Long ruleSetVersionId, Boolean matched, String decision,
+        Boolean reused, String exitEdgeKey) { }
 }

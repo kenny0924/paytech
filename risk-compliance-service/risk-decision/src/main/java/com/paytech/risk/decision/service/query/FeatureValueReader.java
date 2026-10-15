@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import com.paytech.risk.decision.core.dal.dataobject.VelocityEvent;
 import com.paytech.risk.decision.core.dal.dataobject.VelocityFeatureDefinition;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.runtime.ExecutionSnapshot;
+import com.paytech.risk.decision.domain.runtime.FeatureComputationException;
 import com.paytech.risk.decision.domain.runtime.FeatureValue;
 import com.paytech.risk.decision.domain.runtime.PaymentRiskInput;
 import com.paytech.risk.decision.domainservice.repository.VelocityEventSubjectRepository;
@@ -25,7 +27,7 @@ import lombok.AllArgsConstructor;
 /**
  * 计算执行发布引用的全部 Feature
  * <li>实时累计窗口为 [评估时间 − 窗口, 评估时间)，以评估时间为锚点，回放时按原评估时间计算。</li>
- * <li>本次没有锚定主体时值为空，不算失败；数据库异常向上抛出，由调用方记为技术失败。</li>
+ * <li>本次没有锚定主体时值为空，不算失败；计算异常（如数据库异常）停止计算并带上已完成结果抛出，由调用方记为技术失败。</li>
  */
 @Component
 @AllArgsConstructor
@@ -43,24 +45,34 @@ public class FeatureValueReader {
      * @param at
      *            评估时间
      * @return 按 Feature Version 索引的结果，执行顺序先累计后名单，各自按 ID 升序
+     *         <li>某个 Feature 计算出错时停止，抛出 {@link FeatureComputationException}，携带已完成结果与失败项。</li>
      */
     public Map<Long, FeatureValue> read(ExecutionSnapshot snapshot, PaymentRiskInput input, Instant at) {
         Map<Long, FeatureValue> result = new HashMap<>();
         List<Long> velocityIds = new ArrayList<>(snapshot.velocityFeatures().keySet());
         velocityIds.sort(null);
         for (Long id : velocityIds) {
-            long started = System.nanoTime();
-            Object value = velocity(snapshot.velocityFeatures().get(id), input, at);
-            result.put(id, new FeatureValue(id, result.size() + 1, DecisionValueType.NUMBER, value, elapsed(started)));
+            compute(result, id, DecisionValueType.NUMBER, () -> velocity(snapshot.velocityFeatures().get(id), input, at));
         }
         List<Long> listIds = new ArrayList<>(snapshot.listFeatures().keySet());
         listIds.sort(null);
         for (Long id : listIds) {
-            long started = System.nanoTime();
-            Object value = membership(snapshot.listFeatures().get(id), input, at);
-            result.put(id, new FeatureValue(id, result.size() + 1, DecisionValueType.BOOLEAN, value, elapsed(started)));
+            compute(result, id, DecisionValueType.BOOLEAN, () -> membership(snapshot.listFeatures().get(id), input, at));
         }
         return result;
+    }
+
+    /** 计算一个 Feature 并按执行顺序登记；失败时登记失败项后携带全部结果抛出。 */
+    static void compute(Map<Long, FeatureValue> result, long id, DecisionValueType type, Supplier<Object> calculation) {
+        long started = System.nanoTime();
+        int sequence = result.size() + 1;
+        try {
+            result.put(id, new FeatureValue(id, sequence, type, calculation.get(), elapsed(started)));
+        } catch (RuntimeException failure) {
+            result.put(id, new FeatureValue(id, sequence, type, null, elapsed(started),
+                FeatureComputationException.FEATURE_ERROR));
+            throw new FeatureComputationException(result, failure);
+        }
     }
 
     /** 实时累计；数值统一为去尾零的十进制文本。 */

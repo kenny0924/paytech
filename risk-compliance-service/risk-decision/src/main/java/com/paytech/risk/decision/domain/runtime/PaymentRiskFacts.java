@@ -15,6 +15,7 @@ import com.paytech.risk.decision.domain.enums.*;
  * 由一次正式支付评估的输入、结果与时间构造需要保存的全部事实；纯内存构造
  * <li>稳定输入摘要只含 Payment 能重放的字段，IP 与 User-Agent 只进入受限输入摘要。</li>
  * <li>只有成功评估写入累计事件：每次写评估事件，结论为审核或拒绝时再写拒绝事件。</li>
+ * <li>失败与超时也保存已有的过程：已完成（含失败项）的 Feature 结果；引擎已执行完时的规则轨迹与流程轨迹。</li>
  */
 public final class PaymentRiskFacts {
     /** 稳定输入摘要合同。 */
@@ -72,18 +73,18 @@ public final class PaymentRiskFacts {
         String restrictedHash = RuntimeHashes.sha256(RESTRICTED_SCHEMA, restrictedFields(input));
         DecisionEvaluation evaluation = evaluation(evaluationId, input, release, run, restrictedHash);
         TransactionRiskAssessment assessment = assessment(assessmentId, evaluationId, input, run, restrictedHash);
-        if (run.status() != TechnicalStatus.SUCCEEDED) {
-            return new PaymentRiskAssessmentContext(evaluation, assessment, List.of(), List.of(), List.of(), List.of());
-        }
         List<VelocityEvent> events = new ArrayList<>();
         List<VelocityEventSubject> subjects = new ArrayList<>();
-        addEvent(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, assessmentId, input, run.evaluationTime(), ids, events, subjects);
-        if (run.outcome().decision() != DecisionValue.ALLOW) {
+        if (run.status() == TechnicalStatus.SUCCEEDED) {
+            addEvent(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, assessmentId, input, run.evaluationTime(), ids, events,
+                subjects);
+        }
+        if (run.status() == TechnicalStatus.SUCCEEDED && run.outcome().decision() != DecisionValue.ALLOW) {
             addEvent(VelocityEventCode.PAYMENT_ATTEMPT_REJECTED, assessmentId, input, run.evaluationTime(), ids, events,
                 subjects);
         }
         return new PaymentRiskAssessmentContext(evaluation, assessment, featureResults(evaluationId, run, ids),
-            ruleTraces(evaluationId, run, ids), events, subjects);
+            ruleTraces(evaluationId, run, ids), flowTraces(evaluationId, run, ids), events, subjects);
     }
 
     /**
@@ -155,8 +156,18 @@ public final class PaymentRiskFacts {
         return row;
     }
 
-    /** 每个 Feature 一行，按执行顺序。 */
-    static List<EvaluationFeatureResult> featureResults(long evaluationId, Run run, LongSupplier ids) {
+    /**
+     * Feature 结果行，按执行顺序；失败项记 FAILED 与失败代码
+     *
+     * @param evaluationId 评估 ID
+     * @param run 执行结果；没有算到 Feature 时为空集合
+     * @param ids 标识生成
+     * @return 结果行
+     */
+    public static List<EvaluationFeatureResult> featureResults(long evaluationId, Run run, LongSupplier ids) {
+        if (run.features() == null) {
+            return List.of();
+        }
         return run.features().values().stream().sorted(Comparator.comparingInt(FeatureValue::executionSequence))
             .map(value -> {
                 EvaluationFeatureResult row = new EvaluationFeatureResult();
@@ -164,33 +175,30 @@ public final class PaymentRiskFacts {
                 row.setEvaluationId(evaluationId);
                 row.setFeatureVersionId(value.featureVersionId());
                 row.setExecutionSequence(value.executionSequence());
-                row.setTechnicalStatus(TechnicalStatus.SUCCEEDED);
+                row.setTechnicalStatus(value.failed() ? TechnicalStatus.FAILED : TechnicalStatus.SUCCEEDED);
                 row.setValueType(value.valueType());
                 row.setNumberValue(value.valueType() == DecisionValueType.NUMBER && value.value() != null
                     ? new BigDecimal(value.value().toString()) : null);
                 row.setBooleanValue(value.valueType() == DecisionValueType.BOOLEAN ? (Boolean)value.value() : null);
                 row.setElapsedMillis(value.elapsedMillis());
+                row.setFailureCode(value.failureCode());
                 row.setCreateTime(run.completedTime());
                 return row;
             }).toList();
     }
 
     /**
-     * 影子评估的 Feature 结果
+     * 规则行与谓词行，各自从 1 编号
      *
-     * @param evaluationId 影子评估 ID
-     * @param values 候选计算的 Feature
-     * @param time 写入时间
+     * @param evaluationId 评估 ID
+     * @param run 执行结果；引擎未执行完时为空集合
      * @param ids 标识生成
-     * @return 按执行顺序的结果行
+     * @return 轨迹行
      */
-    public static List<EvaluationFeatureResult> shadowFeatureResults(long evaluationId, Map<Long, FeatureValue> values,
-        Instant time, LongSupplier ids) {
-        return featureResults(evaluationId, new Run(time, time, TechnicalStatus.SUCCEEDED, null, null, values), ids);
-    }
-
-    /** 规则行与谓词行各自从 1 编号。 */
-    static List<EvaluationRuleTrace> ruleTraces(long evaluationId, Run run, LongSupplier ids) {
+    public static List<EvaluationRuleTrace> ruleTraces(long evaluationId, Run run, LongSupplier ids) {
+        if (run.outcome() == null) {
+            return List.of();
+        }
         List<EvaluationRuleTrace> rows = new ArrayList<>();
         int sequence = 0;
         for (EngineOutcome.RuleTrace trace : run.outcome().ruleTraces()) {
@@ -207,6 +215,37 @@ public final class PaymentRiskFacts {
             row.setNodeId(trace.nodeId());
             row.setResultValue(trace.result());
             row.setPredicateResultSlot(Boolean.TRUE);
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    /**
+     * 流程轨迹行，按经过顺序从 1 编号
+     *
+     * @param evaluationId 评估 ID
+     * @param run 执行结果；引擎未执行完时为空集合
+     * @param ids 标识生成
+     * @return 轨迹行
+     */
+    public static List<EvaluationFlowTrace> flowTraces(long evaluationId, Run run, LongSupplier ids) {
+        if (run.outcome() == null) {
+            return List.of();
+        }
+        List<EvaluationFlowTrace> rows = new ArrayList<>();
+        for (EngineOutcome.FlowStep step : run.outcome().flowSteps()) {
+            EvaluationFlowTrace row = new EvaluationFlowTrace();
+            row.setTraceId(ids.getAsLong());
+            row.setEvaluationId(evaluationId);
+            row.setStepNo(rows.size() + 1);
+            row.setNodeKey(step.nodeKey());
+            row.setNodeType(FlowNodeType.valueOf(step.nodeType()));
+            row.setRuleSetVersionId(step.ruleSetVersionId());
+            row.setMatchedFlag(step.matched());
+            row.setNodeDecision(step.decision() == null ? null : DecisionValue.valueOf(step.decision()));
+            row.setReusedFlag(step.reused());
+            row.setExitEdgeKey(step.exitEdgeKey());
+            row.setCreateTime(run.completedTime());
             rows.add(row);
         }
         return rows;
@@ -305,9 +344,9 @@ public final class PaymentRiskFacts {
      * @param failureCode
      *            失败代码；成功时为空
      * @param outcome
-     *            引擎结论；技术失败时为空
+     *            引擎结论；引擎未执行完时为空，超时时保留
      * @param features
-     *            Feature 结果；技术失败时为空
+     *            Feature 结果（含失败项）；一个都没有算到时为空
      */
     public record Run(Instant evaluationTime, Instant completedTime, TechnicalStatus status, String failureCode,
         EngineOutcome outcome, Map<Long, FeatureValue> features) {

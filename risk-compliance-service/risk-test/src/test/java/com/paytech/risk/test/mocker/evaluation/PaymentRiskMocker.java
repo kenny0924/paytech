@@ -54,6 +54,21 @@ public class PaymentRiskMocker implements Clear {
         mapper.updatePointTimeoutMillis(-1);
     }
 
+    /** 删除评估的流程轨迹，使其等同本功能上线前写入的评估。 */
+    public void mockEvaluationWithoutPath(long evaluationId) {
+        mapper.deleteFlowTraces(evaluationId);
+    }
+
+    /** 名单状态改为未登记的值：引用该名单的名单命中 Feature 在计算时读取失败。 */
+    public void mockListCorrupted(String listCode) {
+        mapper.updateListStatus(listCode, "CORRUPTED");
+    }
+
+    /** 评估之后改写数值常量的当前值。 */
+    public void mockConstantChanged(String variableCode, String value) {
+        mapper.updateConstantNumber(variableCode, new BigDecimal(value));
+    }
+
     /** 恢复决策点超时并删除本测试环境的支付风控数据。 */
     @Override
     public void clear() {
