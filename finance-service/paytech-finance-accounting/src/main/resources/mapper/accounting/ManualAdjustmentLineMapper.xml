@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.ManualAdjustmentLineMapper">
+    <insert id="insertBatch">
+        INSERT INTO t_manual_adjustment_line (id, adjustment_id, line_no, account_id, entry_side, amount, line_description, create_time, update_time) VALUES
+        <foreach collection="lines" item="line" separator=",">(#{line.id}, #{line.adjustmentId}, #{line.lineNo}, #{line.accountId}, #{line.entrySide}, #{line.amount}, #{line.lineDescription}, #{line.createTime}, #{line.updateTime})</foreach>
+    </insert>
+
+    <select id="selectByAdjustment" resultType="com.paytech.finance.accounting.core.dal.dataobject.ManualAdjustmentLine">
+        SELECT id, adjustment_id, line_no, account_id, entry_side, amount, line_description, create_time, update_time FROM t_manual_adjustment_line WHERE adjustment_id = #{adjustmentId} ORDER BY line_no
+    </select>
+</mapper>

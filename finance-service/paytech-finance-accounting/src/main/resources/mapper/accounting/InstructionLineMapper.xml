@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.InstructionLineMapper">
+    <insert id="insertBatch">
+        INSERT INTO t_instruction_line (id, instruction_id, line_no, accounting_rule_line_id, manual_adjustment_line_id, account_id, entry_side, amount, create_time) VALUES
+        <foreach collection="lines" item="line" separator=",">(#{line.id}, #{line.instructionId}, #{line.lineNo}, #{line.accountingRuleLineId}, #{line.manualAdjustmentLineId}, #{line.accountId}, #{line.entrySide}, #{line.amount}, #{line.createTime})</foreach>
+    </insert>
+</mapper>

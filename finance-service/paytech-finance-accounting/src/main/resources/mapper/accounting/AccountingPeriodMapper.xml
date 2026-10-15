@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.AccountingPeriodMapper">
+    <insert id="insert">
+        INSERT INTO t_accounting_period (id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time)
+        VALUES (#{id}, #{calendarId}, #{fiscalYear}, #{periodNo}, #{startDate}, #{endDate}, #{status}, #{reopenCount}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.finance.accounting.core.dal.dataobject.AccountingPeriod">
+        SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period WHERE id = #{id}
+    </select>
+
+    <select id="selectByIdForShare" resultType="com.paytech.finance.accounting.core.dal.dataobject.AccountingPeriod">
+        SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period WHERE id = #{id} FOR SHARE
+    </select>
+
+    <select id="countOverlapping" resultType="int">
+        SELECT COUNT(*) FROM t_accounting_period
+        WHERE calendar_id = #{calendarId} AND start_date &lt;= #{endDate} AND end_date &gt;= #{startDate}
+        FOR SHARE
+    </select>
+
+    <update id="updateStatus">
+        UPDATE t_accounting_period SET status = #{status}, version = version + 1, update_time = #{now}
+        WHERE id = #{period.id} AND status = #{period.status} AND version = #{period.version}
+    </update>
+</mapper>

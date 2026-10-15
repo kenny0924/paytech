@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.FiscalCalendarMapper">
+    <insert id="insert">
+        INSERT INTO t_fiscal_calendar (id, entity_type, entity_id, calendar_code, timezone, year_start_month, version, create_time, update_time)
+        VALUES (#{id}, #{entityType}, #{entityId}, #{calendarCode}, #{timezone}, #{yearStartMonth}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.finance.accounting.core.dal.dataobject.FiscalCalendar">
+        SELECT id, entity_type, entity_id, calendar_code, timezone, year_start_month, version, create_time, update_time FROM t_fiscal_calendar WHERE id = #{id}
+    </select>
+
+    <select id="selectByIdForUpdate" resultType="com.paytech.finance.accounting.core.dal.dataobject.FiscalCalendar">
+        SELECT id, entity_type, entity_id, calendar_code, timezone, year_start_month, version, create_time, update_time FROM t_fiscal_calendar WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <select id="selectByEntity" resultType="com.paytech.finance.accounting.core.dal.dataobject.FiscalCalendar">
+        SELECT id, entity_type, entity_id, calendar_code, timezone, year_start_month, version, create_time, update_time FROM t_fiscal_calendar WHERE entity_type = #{entityType} AND entity_id = #{entityId}
+    </select>
+</mapper>

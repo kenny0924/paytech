@@ -9,19 +9,21 @@
 Path/Query，没有请求体。
 
 ```http
-GET /balances/v1/clients/1001?operatingEntityId=2001&currency=USD
-GET /balances/v1/partners/3001?operatingEntityId=2001&currency=USD
+GET /balances/v1/clients/1001?entityNo=AE001&currency=USD
+GET /balances/v1/partners/3001?entityNo=AE001&currency=USD
 ```
 
-每次只查询一个 Owner + Operating Entity + Currency，不允许省略 OE/币种后合计，也不查询平台 FE 利润。ID 必须是 BIGINT 范围内的
-正十进制字符串；币种必须是 JDK 识别的大写 ISO 4217 Code，且指定 OE/币种必须存在唯一账簿。
+每次只查询一个 Owner + Operating Entity + Currency，不允许省略 OE/币种后合计，也不查询平台 FE 利润。Owner ID 必须是 BIGINT 范围内的
+正十进制字符串；OE 使用 entityNo（两位国家码加 `001`—`999`，如 `AE001`），与账簿 `entity_id`、账户 `owner_id` 的字符串身份一致，
+不再接受旧的数字 `operatingEntityId`（2026-10-15 不兼容调整，当时无 Gateway Route 或 BFF 消费者）。币种必须是 JDK 识别的大写
+ISO 4217 Code，且指定 OE/币种必须存在账簿（唯一键保证唯一）。
 
 ## Client 响应示例
 
 ```json
 {
   "clientId": "1001",
-  "operatingEntityId": "2001",
+  "entityNo": "AE001",
   "currency": "USD",
   "pendingAmount": {"currency": "USD", "amount": "100"},
   "availableAmount": {"currency": "USD", "amount": "70"},
@@ -36,7 +38,7 @@ GET /balances/v1/partners/3001?operatingEntityId=2001&currency=USD
 ```json
 {
   "partnerId": "3001",
-  "operatingEntityId": "2001",
+  "entityNo": "AE001",
   "currency": "USD",
   "pendingAmount": {"currency": "USD", "amount": "10"},
   "availableAmount": {"currency": "USD", "amount": "20"},
@@ -51,7 +53,7 @@ GET /balances/v1/partners/3001?operatingEntityId=2001&currency=USD
 
 - Client 三种应付来自 CLIENT_PAYABLE 的 PENDING/AVAILABLE/LOCKED；保证金来自 CLIENT_SECURITY_DEPOSIT/NONE，追偿来自
   CLIENT_RECOVERY_RECEIVABLE/NONE。Partner 使用对应 PARTNER_PAYABLE 和 PARTNER_RECOVERY_RECEIVABLE/NONE。
-- 一次响应使用只读 Repeatable Read 事务，不混用变更前后余额；读取不修复、不创建账户，也不触发过账。
+- Owner 的全部账户在一条 SQL 中读取，同一语句天然使用一个一致快照，不混用变更前后余额；账簿身份创建后不可变，因此不另开只读事务。读取不修复、不创建账户，也不触发过账。
 - 指定 Owner 在有效账簿中尚未建立某个目标账户时，该分类返回同币种零；账簿不存在或不唯一、币种非法、数据库失败不能伪装成零。
 - 不过滤掉有余额的停用账户来伪造零余额；账户状态不改变既有账务事实。
 - 科目悬空、非叶子科目、账户与科目正常方向不一致、跨 Chart 或目标账户重复均 Fail-Closed，不返回可能错误的余额。
@@ -62,4 +64,4 @@ GET /balances/v1/partners/3001?operatingEntityId=2001&currency=USD
 
 - 接入统一入站安全上下文并执行 Owner/OE 资源授权；路径 ID 不是身份凭证。Client/Partner 只能读取获授权的自身数据，Operations 需要明确数据范围。
 - 验证敏感财务数据的访问审计和 metadata-only 日志策略，并由 Gateway/BFF 只暴露符合产品身份模型的入口。
-- 当前 SQL 是已批准 PDManer 的首个运行切片，由开发者人工执行；应用和自动测试都不会自动建表。
+- 数据库结构来自完整 `finance-schema.sql` 与 `finance-initial-data.sql`，由开发者人工执行；应用和自动测试都不会自动建表。

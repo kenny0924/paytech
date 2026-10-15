@@ -1,0 +1,5 @@
+-- 需求：Finance Accounting 账务内核（第一批）
+-- 性质：引用索引，不含可执行语句。
+-- 业务初始化 DML 唯一执行来源：finance-service/docs/database/sql/finance-initial-data.sql
+--   内容：t_currency_spec 1 行（USD）、t_chart_of_accounts 1 行（STANDARD）、t_chart_account 29 行。
+-- API Route / Permission / Console Resource 注册 DML：0（本期接口仅 Finance 内部开发使用，不接 Gateway）。

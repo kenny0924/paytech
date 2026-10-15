@@ -2,20 +2,31 @@ package com.paytech.finance.accounting.domain.model;
 
 import com.paytech.foundation.money.Money;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /** Local Partner 在一个经营主体币种账簿下的分类余额。 */
-public record PartnerBalance(
-    /** Local Partner 的跨系统稳定业务标识。 */
-    long partnerId,
-    /** 当前余额所属 Operating Entity 的稳定业务标识。 */
-    long operatingEntityId,
-    /** 当前账簿唯一使用的大写 ISO 4217 币种代码。 */
-    String currency,
-    /** 尚未达到结算成熟日的 Partner 应付余额。 */
-    Money pendingAmount,
-    /** 已成熟但不代表实时可出款资格的 Partner 应付余额。 */
-    Money availableAmount,
-    /** 已被有效业务用途锁定的 Partner 应付余额。 */
-    Money lockedAmount,
-    /** Partner 已确认但尚未收回的追偿应收余额。 */
-    Money recoveryReceivableAmount) {
+@Getter
+@Setter
+public class PartnerBalance {
+    /** Local Partner 规范十进制标识。 */
+    private String partnerId;
+
+    /** 余额所属 Operating Entity 的 entityNo。 */
+    private String entityNo;
+
+    /** 账簿币种。 */
+    private String currency;
+
+    /** PARTNER_PAYABLE/PENDING 余额。 */
+    private Money pendingAmount;
+
+    /** PARTNER_PAYABLE/AVAILABLE 余额。 */
+    private Money availableAmount;
+
+    /** PARTNER_PAYABLE/LOCKED 余额。 */
+    private Money lockedAmount;
+
+    /** PARTNER_RECOVERY_RECEIVABLE/NONE 余额。 */
+    private Money recoveryReceivableAmount;
 }

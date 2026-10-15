@@ -1,8 +1,0 @@
-spring:
-  datasource:
-    url: "${FINANCE_TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_finance?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
-    username: "${FINANCE_TEST_DB_USERNAME:finance_app}"
-    password: "${FINANCE_TEST_DB_PASSWORD:1f22a89fd7472c0d0b00813339c33ac0e4c06a4bf8e8bcc4}"
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  main:
-    banner-mode: "off"

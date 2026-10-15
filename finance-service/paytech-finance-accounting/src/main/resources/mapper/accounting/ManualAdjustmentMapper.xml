@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.ManualAdjustmentMapper">
+    <insert id="insert">
+        INSERT INTO t_manual_adjustment (id, adjustment_no, ledger_book_id, accounting_period_id, currency, reason_code, file_id, file_content_hash, total_debit, total_credit, content_hash, submitted_time, status, maker_id, version, create_time, update_time)
+        VALUES (#{id}, #{adjustmentNo}, #{ledgerBookId}, #{accountingPeriodId}, #{currency}, #{reasonCode}, #{fileId}, #{fileContentHash}, #{totalDebit}, #{totalCredit}, #{contentHash}, #{submittedTime}, #{status}, #{makerId}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.finance.accounting.core.dal.dataobject.ManualAdjustment">
+        SELECT id, adjustment_no, ledger_book_id, accounting_period_id, currency, reason_code, file_id, file_content_hash, total_debit, total_credit, content_hash, submitted_time, status, maker_id, version, create_time, update_time FROM t_manual_adjustment WHERE id = #{id}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE t_manual_adjustment SET status = #{status}, version = version + 1, update_time = #{now}
+        WHERE id = #{adjustment.id} AND status = #{adjustment.status} AND version = #{adjustment.version}
+    </update>
+</mapper>

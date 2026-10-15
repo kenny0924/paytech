@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.AccountMapper">
+    <insert id="insert">
+        INSERT INTO t_account (id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, debit_total, credit_total, net_balance, last_journal_sequence, balance_version, create_time, update_time)
+        VALUES (#{id}, #{ledgerBookId}, #{chartAccountId}, #{ownerType}, #{ownerId}, #{balanceBucket}, #{normalSide}, #{accountStatus}, #{debitTotal}, #{creditTotal}, #{netBalance}, #{lastJournalSequence}, #{balanceVersion}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.finance.accounting.core.dal.dataobject.Account">
+        SELECT id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, debit_total, credit_total, net_balance, last_journal_sequence, balance_version, create_time, update_time FROM t_account WHERE id = #{id}
+    </select>
+
+    <select id="selectByIdsForUpdate" resultType="com.paytech.finance.accounting.core.dal.dataobject.Account">
+        SELECT id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, debit_total, credit_total, net_balance, last_journal_sequence, balance_version, create_time, update_time FROM t_account WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id FOR UPDATE
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.finance.accounting.core.dal.dataobject.Account">
+        SELECT id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, debit_total, credit_total, net_balance, last_journal_sequence, balance_version, create_time, update_time FROM t_account WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id
+    </select>
+
+    <update id="applyPosting">
+        UPDATE t_account
+        SET debit_total = #{debitTotal}, credit_total = #{creditTotal}, net_balance = #{netBalance},
+            last_journal_sequence = #{journalSequence}, balance_version = balance_version + 1, update_time = #{now}
+        WHERE id = #{account.id} AND balance_version = #{account.balanceVersion}
+          AND last_journal_sequence &lt; #{journalSequence}
+    </update>
+
+    <select id="selectOwnerBalances" resultType="com.paytech.finance.accounting.domain.view.OwnerAccountBalanceView">
+        SELECT a.id account_id, c.account_code, a.balance_bucket, a.normal_side account_normal_side,
+               c.normal_side chart_normal_side, c.posting_allowed, c.chart_id account_chart_id, a.net_balance
+        FROM t_account a
+        LEFT JOIN t_chart_account c ON c.id = a.chart_account_id
+        WHERE a.ledger_book_id = #{ledgerBookId} AND a.owner_type = #{ownerType} AND a.owner_id = #{ownerId}
+        ORDER BY a.id
+    </select>
+</mapper>

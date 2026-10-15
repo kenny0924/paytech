@@ -1,0 +1,42 @@
+package com.paytech.finance.accounting.core.dal.mapper;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import com.paytech.finance.accounting.core.dal.dataobject.Account;
+import com.paytech.finance.accounting.core.enums.OwnerType;
+import com.paytech.finance.accounting.domain.view.OwnerAccountBalanceView;
+
+/** t_account：统一记账账户持久化。 */
+@Mapper
+public interface AccountMapper {
+
+    /** 插入一行。 */
+    int insert(Account record);
+
+    /** 按主键读取。 */
+    Account selectById(@Param("id") long id);
+
+    /** 按主键升序以排他锁读取一组账户，作为过账的账户锁顺序。 */
+    List<Account> selectByIdsForUpdate(@Param("ids") List<Long> ids);
+
+    /** 读取一组账户，用于提交前校验。 */
+    List<Account> selectByIds(@Param("ids") List<Long> ids);
+
+    /**
+     * 以余额版本 CAS 应用一条分录后的余额投影。
+     *
+     * @return 受影响行数
+     */
+    int applyPosting(@Param("account") Account account, @Param("debitTotal") BigDecimal debitTotal,
+        @Param("creditTotal") BigDecimal creditTotal, @Param("netBalance") BigDecimal netBalance,
+        @Param("journalSequence") long journalSequence, @Param("now") Instant now);
+
+    /** 读取 Owner 在一个账簿内的全部账户及其科目，用于分类余额查询。 */
+    List<OwnerAccountBalanceView> selectOwnerBalances(@Param("ledgerBookId") long ledgerBookId,
+        @Param("ownerType") OwnerType ownerType, @Param("ownerId") String ownerId);
+}

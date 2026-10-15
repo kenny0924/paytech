@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.ChartOfAccountsMapper">
+    <select id="selectByChartCode" resultType="com.paytech.finance.accounting.core.dal.dataobject.ChartOfAccounts">
+        SELECT id, chart_code, chart_name, status, create_time, update_time FROM t_chart_of_accounts WHERE chart_code = #{chartCode}
+    </select>
+</mapper>

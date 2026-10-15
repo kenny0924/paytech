@@ -72,9 +72,6 @@
                                         <exclude>org.liquibase:*</exclude>
                                         <exclude>com.alibaba.cloud:*</exclude>
                                         <exclude>com.alibaba.nacos:*</exclude>
-                                        <exclude>org.springframework.data:spring-data-redis</exclude>
-                                        <exclude>org.redisson:*</exclude>
-                                        <exclude>io.lettuce:*</exclude>
                                         <exclude>org.springframework.amqp:*</exclude>
                                         <exclude>com.rabbitmq:*</exclude>
                                         <exclude>com.xuxueli:*</exclude>

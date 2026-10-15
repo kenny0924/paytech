@@ -1,0 +1,81 @@
+# Finance 配置字段清单，同时作为 Mock 测试的可运行配置。
+# 只连接仓库 local-environment 的 Loopback MySQL/Redis；固定凭据为隔离本地测试账号，可用环境变量覆盖。
+
+# ==================== 中间件、框架与公共组件配置 ====================
+
+server:
+  address: 127.0.0.1
+  port: 0
+
+spring:
+  application:
+    name: finance-service
+  main:
+    banner-mode: "off"
+  jmx:
+    enabled: false
+  datasource:
+    url: "${FINANCE_TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_finance?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${FINANCE_TEST_DB_USERNAME:finance_app}"
+    password: "${FINANCE_TEST_DB_PASSWORD:1f22a89fd7472c0d0b00813339c33ac0e4c06a4bf8e8bcc4}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${FINANCE_TEST_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}"
+      connect-timeout: 2s
+      timeout: 2s
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-redis-starter
+redis:
+  # 测试专用 Key 前缀，与本地运行实例隔离；生产缺省使用 spring.application.name。
+  key-prefix: finance-mock
+  coordination:
+    enabled: true
+    threads: 4
+    netty-threads: 4
+
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# ==================== Finance 系统自定义配置 ====================
+
+finance:
+  identifier:
+    # Snowflake Region / Worker 标识；生产无默认值且必填，修改需重启。测试进程固定 0/0。
+    region-id: 0
+    worker-id: 0

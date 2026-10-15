@@ -1,0 +1,45 @@
+-- Code-MoR Finance initialization DML.
+-- Apply manually after finance-schema.sql; the application and auto tests never execute this file.
+-- Contents: USD currency rule, the standard chart of accounts and its 29 core posting accounts
+-- (agent-docs/database/FINANCE_DATABASE.md §4.1.1). Fixed IDs are reserved below 1,000,000 and never
+-- produced by the Snowflake generator. Re-running fails on primary/unique keys by design.
+SET NAMES utf8mb4;
+
+INSERT INTO `t_currency_spec` (`id`, `currency`, `minor_unit`, `rounding_mode`, `status`, `create_time`, `update_time`)
+VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+
+INSERT INTO `t_chart_of_accounts` (`id`, `chart_code`, `chart_name`, `status`, `create_time`, `update_time`)
+VALUES (2001, 'STANDARD', 'Code-MoR 标准会计科目表', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+
+INSERT INTO `t_chart_account`
+  (`id`, `chart_id`, `parent_account_id`, `account_code`, `account_name`, `account_class`, `normal_side`, `posting_allowed`, `create_time`, `update_time`)
+VALUES
+  (3001, 2001, NULL, 'CHANNEL_UNSETTLED_RECEIVABLE',  '渠道待清算应收',       'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3002, 2001, NULL, 'CHANNEL_SETTLEMENT_RECEIVABLE', '渠道结算应收',         'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3003, 2001, NULL, 'BANK_CASH',                     '银行现金',             'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3004, 2001, NULL, 'CLIENT_RECOVERY_RECEIVABLE',    'Client 追偿应收',      'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3005, 2001, NULL, 'PARTNER_RECOVERY_RECEIVABLE',   'Local Partner 追偿应收', 'ASSET',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3006, 2001, NULL, 'TAX_RECOVERABLE',               '可抵扣进项税',         'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3007, 2001, NULL, 'RECON_SUSPENSE_ASSET',          '对账悬挂资产',         'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3008, 2001, NULL, 'PLATFORM_SERVICE_RECEIVABLE',   '平台服务费应收',       'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3009, 2001, NULL, 'CLIENT_PAYABLE',                'Client 应付款',        'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3010, 2001, NULL, 'PARTNER_PAYABLE',               'Local Partner 应付款', 'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3011, 2001, NULL, 'CLIENT_SECURITY_DEPOSIT',       'Client 保证金',        'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3012, 2001, NULL, 'TAX_PAYABLE',                   '应交税费',             'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3013, 2001, NULL, 'CHANNEL_FEE_ACCRUAL',           '渠道费用预提',         'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3014, 2001, NULL, 'CHANNEL_UNSETTLED_PAYABLE',     '渠道待清算应付',       'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3015, 2001, NULL, 'CHANNEL_SETTLEMENT_PAYABLE',    '渠道结算应付',         'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3016, 2001, NULL, 'UNIDENTIFIED_CASH',             '待识别资金',           'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3017, 2001, NULL, 'CONSUMER_COMPENSATION_PAYABLE', 'Consumer 补偿应付',    'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3018, 2001, NULL, 'PLATFORM_SERVICE_PAYABLE',      '平台服务费应付',       'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3019, 2001, NULL, 'CAPITAL',                       '实收资本',             'EQUITY',    'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3020, 2001, NULL, 'CURRENT_PERIOD_RESULT',         '本期损益',             'EQUITY',    'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3021, 2001, NULL, 'RETAINED_EARNINGS',             '留存收益',             'EQUITY',    'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3022, 2001, NULL, 'OWNER_DISTRIBUTION',            '所有者分配',           'EQUITY',    'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3023, 2001, NULL, 'CLIENT_FEE_REVENUE',            'Client 手续费收入',    'REVENUE',   'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3024, 2001, NULL, 'PLATFORM_SERVICE_REVENUE',      '平台服务费收入',       'REVENUE',   'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3025, 2001, NULL, 'PLATFORM_SERVICE_FEE_EXPENSE',  '平台服务费费用',       'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3026, 2001, NULL, 'PARTNER_SHARE_EXPENSE',         'Local Partner 分润费用', 'EXPENSE', 'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3027, 2001, NULL, 'CHANNEL_FEE_EXPENSE',           '渠道成本',             'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3028, 2001, NULL, 'ROUNDING_ADJUSTMENT',           '舍入尾差',             'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3029, 2001, NULL, 'RECON_ADJUSTMENT_EXPENSE',      '对账调整损失',         'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));

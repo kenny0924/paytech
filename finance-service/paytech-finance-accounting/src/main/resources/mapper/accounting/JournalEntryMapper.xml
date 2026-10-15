@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.JournalEntryMapper">
+    <insert id="insert">
+        INSERT INTO t_journal_entry (id, ledger_book_id, accounting_period_id, instruction_id, journal_sequence, posting_date, entry_type, reversal_of_entry_id, create_time)
+        VALUES (#{id}, #{ledgerBookId}, #{accountingPeriodId}, #{instructionId}, #{journalSequence}, #{postingDate}, #{entryType}, #{reversalOfEntryId}, #{createTime})
+    </insert>
+
+    <select id="selectByInstruction" resultType="com.paytech.finance.accounting.core.dal.dataobject.JournalEntry">
+        SELECT id, ledger_book_id, accounting_period_id, instruction_id, journal_sequence, posting_date, entry_type, reversal_of_entry_id, create_time FROM t_journal_entry WHERE instruction_id = #{instructionId}
+    </select>
+</mapper>
