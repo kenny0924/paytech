@@ -24,7 +24,7 @@ import com.paytech.platform.support.test.mocker.external.ChannelAccountVaultMock
 import com.paytech.platform.support.test.mocker.external.PaymentCardMocker;
 import com.paytech.platform.support.test.mocker.external.ChannelMocker;
 import com.paytech.platform.support.test.mocker.external.LoginEmailVaultMocker;
-import com.paytech.platform.support.test.mocker.external.SmtpMockServer;
+import com.paytech.platform.support.test.mocker.external.SesMocker;
 import com.paytech.platform.support.test.mocker.local.ApiCredentialMocker;
 import com.paytech.platform.support.test.mocker.local.OperationsMocker;
 import com.paytech.platform.support.test.mocker.local.PlatformDataCleaner;
@@ -34,7 +34,7 @@ import tools.jackson.databind.ObjectMapper;
 
 /**
  * 服务级 Mock 入口测试基类：复用正式启动类，请求经过真实 Controller → Processor → Service →
- * Repository → Mapper → 本地 MySQL/Redis；外部依赖由独立 Mock HTTP 服务和本地 SMTP 返回配置 DTO。
+ * Repository → Mapper → 本地 MySQL/Redis；外部依赖（含 SES 发信）由独立 Mock HTTP 服务返回配置 DTO。
  *
  * <p>全局准备先检查数据与 Mock 空基线，再重建所有用例共用的 Operations 目录（内部租户、签名公钥、权限与内置角色）。
  * 全局后置先等待异步审计写完、检查意外外部调用，再由 {@link TestBase} 统一执行全部 {@code Clear}。
@@ -71,7 +71,7 @@ public abstract class MockTestBase extends TestBase {
     protected PaymentCardMocker paymentCard;
 
     @Autowired
-    protected SmtpMockServer smtp;
+    protected SesMocker ses;
 
     @Autowired
     protected MockHttpServer mockHttpServer;
@@ -96,11 +96,11 @@ public abstract class MockTestBase extends TestBase {
         platformDataCleaner.assertEmpty();
         operationsMocker.assertEmpty();
         loginEmailVault.assertEmpty();
-        smtp.assertEmpty();
+        ses.assertEmpty();
         operationsMocker.mockCatalog();
     }
 
-    /** 异步审计写完后才允许回收；再检查被业务捕获的意外外部调用和未断言邮件。 */
+    /** 异步审计写完后才允许回收；再检查被业务捕获的意外外部调用（含未配置的 SES 发信）。 */
     @AfterEach
     protected final void tearDownGlobalMocks() {
         try {
@@ -111,7 +111,7 @@ public abstract class MockTestBase extends TestBase {
             throw failure;
         }
         mockHttpServer.awaitIdle();
-        assertAll(loginEmailVault::assertNoUnexpectedCalls, smtp::assertNoUnexpectedMail,
+        assertAll(loginEmailVault::assertNoUnexpectedCalls, ses::assertNoUnexpectedCalls,
             channel::assertNoUnexpectedCalls, channelAccountVault::assertNoUnexpectedCalls,
             paymentCard::assertNoUnexpectedCalls,
             mockHttpServer::assertNoUnexpectedRequests);

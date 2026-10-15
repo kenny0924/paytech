@@ -1,5 +1,6 @@
 package com.paytech.platform.support.configuration;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,19 @@ public class NotificationCallerProperties {
         if (templates == null || !templates.contains(templateCode)) {
             throw new BizCheckFailException("调用方未获准使用该通知模板");
         }
+    }
+
+    /**
+     * 拒绝把只用于即时发送的模板授权给 HTTP 调用方。
+     *
+     * @param transientTemplates notification.transient-template-codes
+     */
+    public void rejectTemplates(Collection<String> transientTemplates) {
+        callers.forEach((caller, templates) -> {
+            if (templates.stream().anyMatch(transientTemplates::contains)) {
+                throw new IllegalArgumentException("notification.http.callers." + caller + " 不能使用即时发送模板");
+            }
+        });
     }
 
     /** 逐个调用方校验并转为不可变集合。 */

@@ -1,8 +1,11 @@
 package com.paytech.platform.support.delivery.core.configuration;
 
 import java.time.Duration;
+import java.util.HashSet;
+import java.util.List;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -40,6 +43,25 @@ public class NotificationProperties {
      */
     @NotNull
     private Duration unknownResendDelay = Duration.ofMinutes(10);
+
+    /**
+     * 只能经即时发送入口使用的模板编码（如认证邮件）
+     * <li>即时发送只接受集合内模板；普通通知提交与 HTTP 白名单不得使用集合内模板</li>
+     * <li>默认为空，即时发送全部拒绝</li>
+     */
+    @NotNull
+    private List<@NotNull @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String> transientTemplateCodes = List.of();
+
+    /** 模板是否只用于即时发送。 */
+    public boolean isTransientTemplate(String templateCode) {
+        return transientTemplateCodes.contains(templateCode);
+    }
+
+    /** 启动时拒绝重复编码，避免配置意图不清。 */
+    @jakarta.validation.constraints.AssertTrue(message = "即时发送模板编码不能重复")
+    public boolean isTransientTemplateCodesDistinct() {
+        return new HashSet<>(transientTemplateCodes).size() == transientTemplateCodes.size();
+    }
 
     /** 启动时拒绝零值和负值，防止发送重试形成忙循环。 */
     @jakarta.validation.constraints.AssertTrue(message = "通知重试间隔必须为正数")

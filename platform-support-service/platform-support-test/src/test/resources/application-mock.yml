@@ -67,18 +67,6 @@ spring:
       connect-timeout: 2s
       read-timeout: 5s
       redirects: dont-follow
-  mail:
-    host: 127.0.0.1
-    port: 1025 # 测试运行时由 SmtpMockServer 的随机端口覆盖。
-    username: ""
-    password: ""
-    properties:
-      "[mail.smtp.connectiontimeout]": 1000
-      "[mail.smtp.timeout]": 2000
-      "[mail.smtp.writetimeout]": 1000
-      # 正式配置要求 STARTTLS；Loopback 测试 SMTP 不提供 TLS，仅在 Mock 中关闭。
-      "[mail.smtp.starttls.enable]": false
-      "[mail.smtp.starttls.required]": false
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*Mapper.xml
@@ -113,8 +101,6 @@ management:
       access: read-only
   health:
     redis:
-      enabled: false
-    mail:
       enabled: false
     livenessstate:
       enabled: true
@@ -220,7 +206,6 @@ client:
     enabled: true
     issuer: https://client.example.test # 合成 issuer。
     worker-id: 29 # 仅 Operations 认证关闭时创建 Client 专用 Snowflake；Mock 中共用 Operations 生成器。
-    mail-from: noreply@example.test # 注册与重置邮件发件人。
     public-origin: https://client.example.test # 邮件链接站点。
     lock-wait-time: 500ms
     lock-lease-time: 30s
@@ -289,6 +274,10 @@ notification:
   retry-delay: 30s
   # 不支持查询的 Provider 结果未知后的安全重发窗口；测试通过前移尝试开始时间越过窗口，不改时钟。
   unknown-resend-delay: 10m
+  # 认证即时发送模板，与 NotificationTestMapper.authenticationTemplates 一致。
+  transient-template-codes:
+    - CLIENT_EMAIL_VERIFICATION
+    - CLIENT_PASSWORD_RESET
   # SES 适配器指向独立 Mock HTTP 服务的 /ses 前缀（SesMockController），真实 SDK 客户端与 SigV4 签名不变。
   ses:
     enabled: true

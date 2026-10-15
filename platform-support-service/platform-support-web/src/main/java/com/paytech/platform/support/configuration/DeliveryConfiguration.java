@@ -14,6 +14,11 @@ import com.paytech.foundation.id.SnowflakeIdGenerator;
 @EnableConfigurationProperties(NotificationCallerProperties.class)
 public class DeliveryConfiguration {
 
+    /** 即时发送模板不得出现在 HTTP 白名单中，冲突时拒绝启动。 */
+    public DeliveryConfiguration(NotificationProperties properties, NotificationCallerProperties callers) {
+        callers.rejectTemplates(properties.getTransientTemplateCodes());
+    }
+
     /** 同一应用只能有一个生成器；Worker 必须由部署显式分配，避免默认碰撞。 */
     @Bean
     @ConditionalOnProperty(name = {"operations.authentication.enabled", "client.authentication.enabled"},

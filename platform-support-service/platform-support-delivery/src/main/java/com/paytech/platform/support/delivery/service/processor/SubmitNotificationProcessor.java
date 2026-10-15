@@ -14,19 +14,19 @@ import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.platform.support.delivery.core.configuration.NotificationProperties;
 import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationDelivery;
 import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationRequest;
 import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationRoute;
 import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationTemplate;
-import com.paytech.platform.support.delivery.core.enums.NotificationConfigurationStatus;
 import com.paytech.platform.support.delivery.core.enums.NotificationDeliveryStatus;
-import com.paytech.platform.support.delivery.core.enums.NotificationMedium;
 import com.paytech.platform.support.delivery.domain.NotificationInput;
 import com.paytech.platform.support.delivery.domain.SubmitNotificationContext;
-import com.paytech.platform.support.delivery.domainservice.repository.*;
-import com.paytech.platform.support.delivery.integration.provider.EmailProviders;
+import com.paytech.platform.support.delivery.domainservice.repository.NotificationRequestRepository;
+import com.paytech.platform.support.delivery.domainservice.repository.NotificationTemplateContentRepository;
 import com.paytech.platform.support.delivery.integration.vault.NotificationAddressVault;
 import com.paytech.platform.support.delivery.service.NotificationAcceptanceService;
+import com.paytech.platform.support.delivery.service.NotificationConfigurationService;
 import com.paytech.platform.support.delivery.service.processor.request.SubmitNotificationRequest;
 import com.paytech.platform.support.delivery.service.processor.response.SubmitNotificationResponse;
 
@@ -41,13 +41,11 @@ public class SubmitNotificationProcessor
 
     private final Clock clock;
     private final IdGenerator ids;
-    private final EmailProviders adapters;
+    private final NotificationProperties properties;
     private final NotificationAcceptanceService service;
+    private final NotificationConfigurationService configuration;
     private final NotificationAddressVault vault;
-    private final NotificationRouteRepository routes;
     private final NotificationRequestRepository requests;
-    private final NotificationProviderRepository providers;
-    private final NotificationTemplateRepository templates;
     private final NotificationTemplateContentRepository contents;
 
     /** 公共父类完成基础字段校验；这里只补跨字段及规范化重复地址检查。 */
@@ -70,43 +68,19 @@ public class SubmitNotificationProcessor
         }
     }
 
-    /** 先检查全部输入与配置，事务外保护地址，再一次性保存与登记任务。 */
+    /** 先检查全部输入与配置，事务外保护地址，再一次性保存与登记任务；即时发送模板不经此入口。 */
     @Override
     protected SubmitNotificationResponse processRequest(SubmitNotificationRequest request) {
         if (requests.findSource(request.getSourceSystem(), request.getSourceEventKey()) != null) {
             throw new ConcurrentRequestException("该来源通知意图已经受理");
         }
-        var template = templates.findCode(request.getTemplateCode());
-        var route = validateConfiguration(template);
-        var context = buildContext(request, template, route);
+        if (properties.isTransientTemplate(request.getTemplateCode())) {
+            throw new BizCheckFailException("该模板只用于即时发送");
+        }
+        var routing = configuration.resolve(request.getTemplateCode());
+        var context = buildContext(request, routing.getTemplate(), routing.getRoute());
         service.accept(context);
         return new SubmitNotificationResponse(context.getRequest().getRequestId(), context.getDeliveries().size());
-    }
-
-    /** 主备账号都必须属于 EMAIL；缺少真实或测试适配器时不假装受理可执行通知。 */
-    NotificationRoute validateConfiguration(NotificationTemplate template) {
-        if (template == null || template.getMedium() != NotificationMedium.EMAIL
-            || template.getStatus() != NotificationConfigurationStatus.ACTIVE) {
-            throw new BizCheckFailException("普通邮件模板不存在或未启用");
-        }
-        var route = routes.findTemplate(template.getTemplateId());
-        if (route == null || route.getStatus() != NotificationConfigurationStatus.ACTIVE) {
-            throw new BizCheckFailException("邮件路由未启用");
-        }
-        validateProvider(route.getPrimaryProviderId());
-        if (route.getFallbackProviderId() != null)
-            validateProvider(route.getFallbackProviderId());
-        return route;
-    }
-
-    /** 校验实际发送账号和唯一适配器绑定。 */
-    void validateProvider(long providerId) {
-        var provider = providers.find(providerId);
-        if (provider == null || provider.getMedium() != NotificationMedium.EMAIL
-            || provider.getStatus() != NotificationConfigurationStatus.ACTIVE) {
-            throw new BizCheckFailException("邮件发送账号未启用");
-        }
-        adapters.require(provider.getProviderCode());
     }
 
     /** 检查每个收件人的当前语言及必要参数，任何一项失败都不会调用 Vault。 */

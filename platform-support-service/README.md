@@ -26,6 +26,10 @@ Client 认证 A01—A09 的编排入口位于 Access Control `service/processor`
 `ClientAuthenticationApi` 的请求和响应是 `api.authentication.request/response` 下的独立 class；Java 消费者须同步
 调整 import/getter 并重建，HTTP 路径和 JSON 字段保持不变。本地 Service 接收具名 Context，保存账号、挑战和会话事实；
 Vault、密码计算和令牌签名在写事务前完成，邮件在提交后发送。
+验证与重置邮件经 Delivery 即时发送（`SendTransientEmailProcessor`，模板 `CLIENT_EMAIL_VERIFICATION`/`CLIENT_PASSWORD_RESET`，
+固定 `zh-CN`），与普通通知共用 SES 发送账号；链接只在内存中使用，不落库、不重试，失败只计
+`client.authentication.email.delivery{result=failed,reason}` 并返回原受理结果。开启 `client.authentication.enabled`
+须同时开启 `notification.enabled`，否则启动失败；站点仍由 `client.authentication.public-origin` 绑定。
 八个写入口通过 `AbstractLockProcessor` 使用邮箱、账号或会话资源锁，读取 `client.authentication.lock-wait-time`
 （默认 `500ms`）和 `client.authentication.lock-lease-time`（默认 `30s`）；配置经启动校验，变更需重启。
 Tenant Projection 的双资源锁现由公共 Processor 模板处理，账号 Key 为 `lock:customer:account:{accountId}`。
@@ -891,10 +895,11 @@ The approved API and incremental SQL are in [Client API delivery](../requirement
 首个真实账号适配器为 Amazon SES（`notification.ses.*`，默认关闭）：SES 不支持按请求号查询，普通通知按“至少发一次”处理——受理即 `SENT` 完成，结果未知时等待 `notification.unknown-resend-delay`（默认 10m）后在发送次数内重发。
 单独启用通知需设置 `PLATFORM_SUPPORT_COMPENSATION_ENABLED=true`（默认跟随入驻文件开关），生产周期扫描另配 XXL-Job；SES 侧需已验证发件域名、解除沙箱并授予 `ses:SendEmail`。
 SES 使用 IAM 用户密钥：密钥对保存在 Vault（`NOTIFICATION_PROVIDER_CREDENTIAL_V1`），部署只配置其 Token `NOTIFICATION_SES_CREDENTIAL_TOKEN`，每次发送前以 `NOTIFICATION_DELIVERY` 读取、不缓存；换密钥即换 Token 并重启。
-普通邮件与认证邮件对接分期，Access Control 现有邮件入口未迁移，认证邮件不进入可恢复通知流程。
+认证邮件走模块入口 `SendTransientEmailProcessor`：只接受 `notification.transient-template-codes` 中的模板，渲染后经主账号发送一次，不写通知表、不登记补偿任务；这些模板不能经普通通知或 HTTP 白名单使用（白名单含即时模板时启动失败）。认证邮件模板、SES 账号 `SES_PRIMARY` 与路由见 `docs/database/sql/platform-support-initial-data.sql` 末尾独立块（未执行），部署需设 `NOTIFICATION_SES_PROVIDER_CODE=SES_PRIMARY`。
 
 [需求和配置合同](../requirements/20260920/platform-support-Delivery领域规划/technique.md)、
 [SES 接入方案](../requirements/20261014/platform-support-邮件AmazonSES接入/technique.md)、
+[认证邮件接入方案](../requirements/20261015/platform-support-认证邮件接入Delivery/technique.md)、
 [建表脚本](../requirements/20260920/platform-support-Delivery领域规划/db/notification-create.sql)、
 [测试说明](platform-support-test/README.md#notification-普通-email)及
 [实际状态](../agent-docs/CURRENT_IMPLEMENTATION.md#platform-delivery-domain-plan-20260920)分别维护对应事实。

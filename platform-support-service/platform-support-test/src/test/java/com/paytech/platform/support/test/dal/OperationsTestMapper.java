@@ -192,6 +192,10 @@ public interface OperationsTestMapper {
     @Select("SELECT * FROM t_authentication_challenge WHERE account_id=#{accountId} ORDER BY challenge_id")
     List<Map<String, Object>> challenges(long accountId);
 
+    /** 把账号全部认证挑战的创建时间前移，模拟重发冷却已过，不调整宿主时钟。 */
+    @Update("UPDATE t_authentication_challenge SET create_time=create_time - INTERVAL #{seconds} SECOND WHERE account_id=#{accountId}")
+    int backdateChallenges(@Param("accountId") long accountId, @Param("seconds") long seconds);
+
     /** 读取账号的密码凭据。 */
     @Select("SELECT * FROM t_password_credential WHERE account_id=#{accountId}")
     Map<String, Object> password(long accountId);

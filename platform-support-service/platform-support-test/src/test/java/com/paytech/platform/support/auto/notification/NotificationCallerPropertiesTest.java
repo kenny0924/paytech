@@ -16,6 +16,7 @@ import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.platform.support.configuration.DeliveryConfiguration;
 import com.paytech.platform.support.configuration.NotificationCallerProperties;
 import com.paytech.platform.support.configuration.NotificationRequestConfiguration;
+import com.paytech.platform.support.delivery.core.configuration.NotificationProperties;
 import com.paytech.platform.support.ext.rest.notification.NotificationController;
 
 /**
@@ -27,7 +28,7 @@ import com.paytech.platform.support.ext.rest.notification.NotificationController
 class NotificationCallerPropertiesTest {
 
     final ApplicationContextRunner runner = new ApplicationContextRunner()
-        .withUserConfiguration(DeliveryConfiguration.class)
+        .withUserConfiguration(DeliveryConfiguration.class, NotificationProperties.class)
         .withPropertyValues("notification.enabled=true", "operations.authentication.enabled=true");
 
     /** 合法白名单只放行已登记调用方的已登记模板；未配置时全部拒绝。 */
@@ -47,7 +48,7 @@ class NotificationCallerPropertiesTest {
             () -> context.getBean(NotificationCallerProperties.class).authorize("payment-orchestration-service", "X")));
     }
 
-    /** 非法服务名、模板编码、空列表或重复模板在启动时失败。 */
+    /** 非法服务名、模板编码、空列表、重复模板或授权即时发送模板在启动时失败。 */
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidSettings")
     void test_invalidConfigurationFailsStartup(String scenario, String[] settings) {
@@ -63,7 +64,9 @@ class NotificationCallerPropertiesTest {
             Arguments.of("模板编码小写", new String[] {key + "payment-service[0]=payment_email"}),
             Arguments.of("模板重复", new String[] {key + "payment-service[0]=PAYMENT_EMAIL",
                 key + "payment-service[1]=PAYMENT_EMAIL"}),
-            Arguments.of("空模板列表", new String[] {key + "payment-service="}));
+            Arguments.of("空模板列表", new String[] {key + "payment-service="}),
+            Arguments.of("使用即时发送模板", new String[] {key + "payment-service[0]=CLIENT_EMAIL_VERIFICATION",
+                "notification.transient-template-codes[0]=CLIENT_EMAIL_VERIFICATION"}));
     }
 
     /** 绑定器无法产生的空值（服务名、模板列表、模板编码）在直接构造时同样拒绝；空配置视为全部拒绝。 */

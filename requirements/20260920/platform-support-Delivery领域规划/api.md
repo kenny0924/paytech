@@ -10,6 +10,7 @@
 
 | 能力 | Method / Path | 当前状态 |
 |---|---|---|
+| sendTransientEmail | SendTransientEmailProcessor.process | 2026-10-15 新增模块内即时发送（认证邮件），不落库、不重试、无 HTTP 入口，见[认证邮件接入方案](../../20261015/platform-support-认证邮件接入Delivery/technique.md) |
 | submitNotification | SubmitNotificationProcessor.process；内部 HTTP `POST /notifications/v1/requests` | 模块内入口；2026-10-15 起另有内部 HTTP 入口（`NotificationCommandApi`，过渡信任，见[需求](../../20261015/platform-support-通知内部HTTP接口/requirement.md)与[方案](../../20261015/platform-support-通知内部HTTP接口/technique.md)），不注册 Gateway 路由 |
 | getNotification | GET /notifications/v1/requests/{requestId} | 用户已认可草案，随后要求查询接口暂不继续展开；第 3 节仅保留讨论结果 |
 | findNotificationBySource | 不冻结 | 暂不提供 |

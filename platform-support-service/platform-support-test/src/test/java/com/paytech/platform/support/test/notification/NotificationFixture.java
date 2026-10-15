@@ -17,6 +17,17 @@ import static org.junit.jupiter.api.Assertions.*;
 @RequiredArgsConstructor
 public class NotificationFixture implements Clear {
 
+    /** 认证即时发送模板主题与正文，与初始化 DML 一致。 */
+    public static final String VERIFICATION_SUBJECT = "PAYTECH · 验证您的邮箱";
+
+    public static final String VERIFICATION_BODY =
+        "验证您的邮箱\n\n请打开以下链接，并在页面中确认操作：\n${link}\n\n如果不是您发起的请求，请忽略此邮件。";
+
+    public static final String RESET_SUBJECT = "PAYTECH · 重置登录密码";
+
+    public static final String RESET_BODY =
+        "重置登录密码\n\n请打开以下链接，并在页面中确认操作：\n${link}\n\n如果不是您发起的请求，请忽略此邮件。";
+
     private final NotificationTestMapper mapper;
     private final PlatformTransactionManager transactionManager;
     private boolean used;
@@ -24,6 +35,17 @@ public class NotificationFixture implements Clear {
 
     /** 缺表快速失败，之后每例分别插入公共业务配置。 */
     public void prepare() {
+        assertEmptyEnvironment();
+        new TransactionTemplate(transactionManager).executeWithoutResult(tx -> {
+            mapper.template();
+            mapper.contents("通知 ${name}", "${notice}：${name}", "Hello ${name}", "${notice}: ${name}");
+            mapper.provider(); mapper.route();
+        });
+        used = true;
+    }
+
+    /** 缺表快速失败；通知事实与保留配置身份必须为空。 */
+    void assertEmptyEnvironment() {
         assertTrue(reusable, "通知测试后台未结束，环境不可复用");
         try {
             assertEquals(0, mapper.requests());
@@ -33,10 +55,16 @@ public class NotificationFixture implements Clear {
             throw new AssertionError("请手工准备 init/ddl.sql 中的七张 Notification 表及 t_compensation_event，再运行通知测试；测试不自动建表", unavailable);
         }
         assertEquals(0, mapper.reservedConfigurationCount(), "通知测试配置身份已被占用，请核对本地数据");
+    }
+
+    /** 认证邮件用例：只插入 SES 测试账号与两个认证模板，不插入普通通知模板。 */
+    public void prepareAuthentication() {
+        assertEmptyEnvironment();
         new TransactionTemplate(transactionManager).executeWithoutResult(tx -> {
-            mapper.template();
-            mapper.contents("通知 ${name}", "${notice}：${name}", "Hello ${name}", "${notice}: ${name}");
-            mapper.provider(); mapper.route();
+            mapper.sesProvider();
+            mapper.authenticationTemplates();
+            mapper.authenticationContents(VERIFICATION_SUBJECT, VERIFICATION_BODY, RESET_SUBJECT, RESET_BODY);
+            mapper.authenticationRoutes();
         });
         used = true;
     }

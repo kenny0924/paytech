@@ -96,7 +96,7 @@ RETURNED 是当前审核任务终态，同时终结仍活动的相关人子任�
 
 Platform 负责 CUSTOMER Realm + CLIENT Channel；认证 Challenge 使用既有 EMAIL_VERIFICATION/PASSWORD_RESET 用途，数据库只留 HMAC 校验材料，原始 Secret 不进数据库、通用补偿 Payload、日志或审计。
 
-首期采用认证服务提交 Challenge 后直接调用邮件投递适配器：原始 Secret 只在该次内存和受控邮件内容中存在。验证码链接拟有效 30 分钟，重置链接拟有效 20 分钟；重发冷却 60 秒，重发会使旧 Challenge 失效。投递失败或进程中断不回滚账号，也不宣称已送达；统一 202 表示受理，用户可重发并获取新链接。此方案明确不承诺旧秘密的后台耐久重投，避免为此新增密钥存储表。真实邮件通道与故障指标仍属于实施配置。
+首期采用认证服务提交 Challenge 后直接调用邮件投递适配器：原始 Secret 只在该次内存和受控邮件内容中存在。验证码链接拟有效 30 分钟，重置链接拟有效 20 分钟；重发冷却 60 秒，重发会使旧 Challenge 失效。投递失败或进程中断不回滚账号，也不宣称已送达；统一 202 表示受理，用户可重发并获取新链接。此方案明确不承诺旧秘密的后台耐久重投，避免为此新增密钥存储表。真实邮件通道与故障指标仍属于实施配置。（2026-10-15 修订：投递适配器改经 Platform Delivery 即时发送，使用 `CLIENT_EMAIL_VERIFICATION`/`CLIENT_PASSWORD_RESET` 模板与 SES 发送账号，SMTP 已移除；提交后发送一次、失败可重发的语义不变，见[认证邮件接入 Delivery](../../20261015/platform-support-认证邮件接入Delivery/requirement.md)。）
 
 验证/重置链接 GET 只显示页面，POST 单次消费。重置后撤销旧会话；验证成功仍用密码登录。Access Token 在浏览器内存，Refresh Token 仅在 BFF 的 HttpOnly/Secure Cookie；不修改现有 Operations 登录协议，不将其 Token Body 行为默认为新 Client Cookie 行为已存在。
 

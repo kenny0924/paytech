@@ -85,6 +85,11 @@ public class SesMocker implements Clear {
         return List.copyOf(requests);
     }
 
+    /** 每例开始前确认上例已清理。 */
+    public synchronized void assertEmpty() {
+        assertEquals(0, replies.size() + requests.size() + unexpected, "SES Mock 未清理");
+    }
+
     /** 每例结束检查没有未配置的 SES 请求。 */
     public synchronized void assertNoUnexpectedCalls() {
         assertEquals(0, unexpected, "存在未配置的 SES 请求");
@@ -124,6 +129,27 @@ public class SesMocker implements Clear {
         public String recipient() {
             var to = body.path("Destination").path("ToAddresses");
             return to.size() == 1 ? to.get(0).asString() : null;
+        }
+
+        /** 发件人。 */
+        public String from() {
+            return body.path("FromEmailAddress").asString();
+        }
+
+        /** 纯文本主题。 */
+        public String subject() {
+            return body.path("Content").path("Simple").path("Subject").path("Data").asString();
+        }
+
+        /** 纯文本正文。 */
+        public String text() {
+            return body.path("Content").path("Simple").path("Body").path("Text").path("Data").asString();
+        }
+
+        /** 诊断输出不打印收件人、正文或签名。 */
+        @Override
+        public String toString() {
+            return "Received[" + method + " " + path + "]";
         }
     }
 }

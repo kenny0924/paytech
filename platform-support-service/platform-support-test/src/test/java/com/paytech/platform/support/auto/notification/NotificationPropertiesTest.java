@@ -21,6 +21,7 @@ import com.paytech.platform.support.delivery.core.configuration.NotificationProp
  *
  * @see NotificationProperties#isRetryDelayPositive()
  * @see NotificationProperties#isUnknownResendDelayBounded()
+ * @see NotificationProperties#isTransientTemplateCodesDistinct()
  */
 class NotificationPropertiesTest {
 
@@ -37,13 +38,16 @@ class NotificationPropertiesTest {
             assertThat(properties.getMaximumSendAttempts()).isEqualTo(3);
             assertThat(properties.getRetryDelay()).isEqualTo(Duration.ofSeconds(30));
             assertThat(properties.getUnknownResendDelay()).isEqualTo(Duration.ofMinutes(10));
+            assertThat(properties.getTransientTemplateCodes()).isEmpty();
         });
     }
 
     /** 每组只设置一个非法值。 */
     @ParameterizedTest
     @ValueSource(strings = {"notification.retry-delay=0s", "notification.retry-delay=-1s",
-        "notification.unknown-resend-delay=30s", "notification.maximum-send-attempts=0"})
+        "notification.unknown-resend-delay=30s", "notification.maximum-send-attempts=0",
+        "notification.transient-template-codes=CLIENT_EMAIL_VERIFICATION,CLIENT_EMAIL_VERIFICATION",
+        "notification.transient-template-codes=client_email_verification"})
     void test_invalidValueFailsStartup(String setting) {
         runner.withPropertyValues(setting).run(context -> assertThat(context).hasFailed());
     }

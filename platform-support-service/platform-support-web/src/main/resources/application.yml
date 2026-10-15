@@ -4,13 +4,6 @@ server:
     context-path: /platform-support
 
 spring:
-  mail:
-    properties:
-      "[mail.smtp.connectiontimeout]": 1000
-      "[mail.smtp.timeout]": 2000
-      "[mail.smtp.writetimeout]": 1000
-      "[mail.smtp.starttls.enable]": true
-      "[mail.smtp.starttls.required]": true
   application:
     name: platform-support-service
   data:
@@ -152,6 +145,7 @@ api-scope:
     lock-lease-time: 30s
 
 # 普通邮件：模块入口与内部 HTTP（POST /notifications/v1/requests）；启用时显式开启 compensation.enabled 并配置实际 Provider/Vault。
+# Client 认证邮件经同一模块即时发送（SendTransientEmailProcessor），开启 client.authentication.enabled 时必须开启本模块。
 notification:
   enabled: false
   # worker-id: 独立启用通知时必须显式分配 0..31，不提供生产默认值。
@@ -159,6 +153,10 @@ notification:
   retry-delay: 30s
   # 仅不支持查询的 Provider（如 SES）：结果未知后至少等待该时长才重发，至少 1m。
   unknown-resend-delay: 10m
+  # 只能即时发送的模板（认证链接，不落库、不重试）；普通通知与 HTTP 白名单不能使用。
+  transient-template-codes:
+    - CLIENT_EMAIL_VERIFICATION
+    - CLIENT_PASSWORD_RESET
   # Amazon SES 发送账号；需同时启用 notification.enabled。IAM 用户密钥对保存在 Vault（NOTIFICATION_PROVIDER_CREDENTIAL_V1），
   # 这里只放其 Token，每次发送前以 NOTIFICATION_DELIVERY 用途 Reveal；Token 为空时走 AWS 默认凭据链。
   ses:

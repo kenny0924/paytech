@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.ibatis.annotations.*;
 
-/** 测试专用 Fixture 和只读检查；只清理 notification-test 前缀来源及保留测试配置身份。 */
+/** 测试专用 Fixture 和只读检查；只清理 notification-test 前缀来源及保留测试配置身份（含认证即时发送模板）。 */
 public interface NotificationTestMapper {
 
     /** 检查新增表已手工准备。 */
@@ -21,10 +21,13 @@ public interface NotificationTestMapper {
 
     /** Fixture 身份必须未被占用，避免失败后的清理删除原有配置。 */
     @Select("""
-        SELECT (SELECT COUNT(*) FROM t_notification_template WHERE template_id=890001 OR template_code='NOTIFICATION_TEST')
-             + (SELECT COUNT(*) FROM t_notification_template_content WHERE content_id IN (890002,890003) OR template_id=890001)
+        SELECT (SELECT COUNT(*) FROM t_notification_template WHERE template_id IN (890001,890011,890012)
+                    OR template_code IN ('NOTIFICATION_TEST','CLIENT_EMAIL_VERIFICATION','CLIENT_PASSWORD_RESET'))
+             + (SELECT COUNT(*) FROM t_notification_template_content WHERE content_id IN (890002,890003,890013,890014)
+                    OR template_id IN (890001,890011,890012))
              + (SELECT COUNT(*) FROM t_notification_provider WHERE provider_id IN (890004,890006,890007) OR provider_code IN ('NOTIFICATION_TEST_EMAIL','NOTIFICATION_TEST_FALLBACK','NOTIFICATION_TEST_SES'))
-             + (SELECT COUNT(*) FROM t_notification_route WHERE route_id=890005 OR notification_template_id=890001)
+             + (SELECT COUNT(*) FROM t_notification_route WHERE route_id IN (890005,890015,890016)
+                    OR notification_template_id IN (890001,890011,890012))
         """)
     int reservedConfigurationCount();
 
@@ -64,6 +67,48 @@ public interface NotificationTestMapper {
     /** 模拟管理员把主账号切换为 SES。 */
     @Update("UPDATE t_notification_route SET primary_provider_id=890007,version=version+1 WHERE route_id=890005")
     void useSes();
+
+    /** 插入两个认证即时发送模板；编码与 application-mock.yml 的 notification.transient-template-codes 一致。 */
+    @Insert("""
+        INSERT INTO t_notification_template VALUES
+        (890011,'CLIENT_EMAIL_VERIFICATION','EMAIL','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
+        (890012,'CLIENT_PASSWORD_RESET','EMAIL','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))
+        """)
+    void authenticationTemplates();
+
+    /** 插入两个认证模板的 zh-CN 内容。 */
+    @Insert("""
+        INSERT INTO t_notification_template_content VALUES
+        (890013,890011,'zh-CN',#{verificationSubject},#{verificationBody},1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
+        (890014,890012,'zh-CN',#{resetSubject},#{resetBody},1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))
+        """)
+    void authenticationContents(@Param("verificationSubject") String verificationSubject,
+        @Param("verificationBody") String verificationBody, @Param("resetSubject") String resetSubject,
+        @Param("resetBody") String resetBody);
+
+    /** 两个认证模板都只路由到 SES 测试账号。 */
+    @Insert("""
+        INSERT INTO t_notification_route VALUES
+        (890015,890011,890007,NULL,'ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
+        (890016,890012,890007,NULL,'ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))
+        """)
+    void authenticationRoutes();
+
+    /** 模拟管理员把注册验证模板的主账号切换为测试 Mock 账号（需先插入 890004）。 */
+    @Update("UPDATE t_notification_route SET primary_provider_id=890004,version=version+1 WHERE route_id=890015")
+    void useMockProviderForVerification();
+
+    /** 模拟管理员停用注册验证模板。 */
+    @Update("UPDATE t_notification_template SET status=#{status},version=version+1 WHERE template_id=890011")
+    void changeVerificationTemplate(@Param("status") String status);
+
+    /** 全部通知持久化事实（不按来源过滤），用于证明即时发送不落库。 */
+    @Select("""
+        SELECT (SELECT COUNT(*) FROM t_notification_request) + (SELECT COUNT(*) FROM t_notification_delivery)
+             + (SELECT COUNT(*) FROM t_notification_attempt)
+             + (SELECT COUNT(*) FROM t_compensation_event WHERE event_type='NOTIFICATION_DELIVERY')
+        """)
+    int persistedNotificationCount();
 
     /** 把本例全部尝试的开始时间前移，模拟安全窗口已过，不调整宿主时钟。 */
     @Update("UPDATE t_notification_attempt a JOIN t_notification_delivery d ON d.delivery_id=a.delivery_id JOIN t_notification_request r ON r.request_id=d.request_id SET a.started_time=a.started_time - INTERVAL #{seconds} SECOND WHERE r.source_system LIKE 'notification-test%'")
@@ -156,7 +201,7 @@ public interface NotificationTestMapper {
     void clearRequests();
 
     /** 清理本例路由。 */
-    @Delete("DELETE FROM t_notification_route WHERE route_id=890005")
+    @Delete("DELETE FROM t_notification_route WHERE route_id IN (890005,890015,890016)")
     void clearRoute();
 
     /** 清理本例账号。 */
@@ -164,10 +209,10 @@ public interface NotificationTestMapper {
     void clearProvider();
 
     /** 清理本例语言内容。 */
-    @Delete("DELETE FROM t_notification_template_content WHERE content_id IN (890002,890003)")
+    @Delete("DELETE FROM t_notification_template_content WHERE content_id IN (890002,890003,890013,890014)")
     void clearContents();
 
     /** 清理本例模板。 */
-    @Delete("DELETE FROM t_notification_template WHERE template_id=890001")
+    @Delete("DELETE FROM t_notification_template WHERE template_id IN (890001,890011,890012)")
     void clearTemplate();
 }

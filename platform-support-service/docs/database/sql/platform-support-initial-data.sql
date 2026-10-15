@@ -1710,3 +1710,55 @@ UPDATE t_role SET version=version+1 WHERE role_id=900000000000000510;
 --   public_jwk_schema_version,public_jwk_canonical_json,status,active_slot,not_before,version,create_time,update_time)
 -- VALUES(900000000000009003,'OPERATIONS','<kid>','RS256','development:operations:<kid>',1,
 --   '<operator-generated public JWK>','ACTIVE',1,UTC_TIMESTAMP(6),1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6));
+
+-- ---------------------------------------------------------------------------
+-- Client authentication email (2026-10-15, requirements/20261015/platform-support-认证邮件接入Delivery).
+-- Self-contained block: on an environment already initialized by the statements above, apply ONLY this block.
+-- Deployment must set NOTIFICATION_SES_PROVIDER_CODE=SES_PRIMARY and keep
+-- notification.transient-template-codes = [CLIENT_EMAIL_VERIFICATION, CLIENT_PASSWORD_RESET].
+-- ${link} is supplied in memory per send and is never stored. Rollback: delete the rows by the IDs below.
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @notification_initial_time = UTC_TIMESTAMP(6);
+SET @notification_ses_provider_id = 900000000000070001;
+SET @client_email_verification_template_id = 900000000000070011;
+SET @client_password_reset_template_id = 900000000000070012;
+
+INSERT INTO t_notification_provider (
+    provider_id, provider_code, medium, status, version, create_time, update_time
+) VALUES (
+    @notification_ses_provider_id, 'SES_PRIMARY', 'EMAIL', 'ACTIVE', 1,
+    @notification_initial_time, @notification_initial_time
+);
+
+INSERT INTO t_notification_template (
+    template_id, template_code, medium, status, version, create_time, update_time
+) VALUES
+    (@client_email_verification_template_id, 'CLIENT_EMAIL_VERIFICATION', 'EMAIL', 'ACTIVE', 1,
+        @notification_initial_time, @notification_initial_time),
+    (@client_password_reset_template_id, 'CLIENT_PASSWORD_RESET', 'EMAIL', 'ACTIVE', 1,
+        @notification_initial_time, @notification_initial_time);
+
+INSERT INTO t_notification_template_content (
+    content_id, template_id, locale, subject_template, body_template, version, create_time, update_time
+) VALUES
+    (900000000000070021, @client_email_verification_template_id, 'zh-CN', 'PAYTECH · 验证您的邮箱',
+        CONCAT('验证您的邮箱', CHAR(10), CHAR(10), '请打开以下链接，并在页面中确认操作：', CHAR(10), '${link}',
+            CHAR(10), CHAR(10), '如果不是您发起的请求，请忽略此邮件。'),
+        1, @notification_initial_time, @notification_initial_time),
+    (900000000000070022, @client_password_reset_template_id, 'zh-CN', 'PAYTECH · 重置登录密码',
+        CONCAT('重置登录密码', CHAR(10), CHAR(10), '请打开以下链接，并在页面中确认操作：', CHAR(10), '${link}',
+            CHAR(10), CHAR(10), '如果不是您发起的请求，请忽略此邮件。'),
+        1, @notification_initial_time, @notification_initial_time);
+
+INSERT INTO t_notification_route (
+    route_id, notification_template_id, primary_provider_id, fallback_provider_id, status, version,
+    create_time, update_time
+) VALUES
+    (900000000000070031, @client_email_verification_template_id, @notification_ses_provider_id, NULL, 'ACTIVE', 1,
+        @notification_initial_time, @notification_initial_time),
+    (900000000000070032, @client_password_reset_template_id, @notification_ses_provider_id, NULL, 'ACTIVE', 1,
+        @notification_initial_time, @notification_initial_time);
+
+COMMIT;

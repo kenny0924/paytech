@@ -63,6 +63,23 @@ public final class NotificationInput {
         return encoded;
     }
 
+    /**
+     * 即时发送的临时参数：只在内存中渲染一次，不持久化、不序列化
+     * <li>1 至 8 个键，键与普通参数格式相同，值非空、不超过 2048 字符且不含换行以外的控制字符</li>
+     * <li>不做普通参数的认证秘密键名检查：该检查防的是落库，这里本来就不落库</li>
+     *
+     * @return 不可变副本
+     */
+    public static Map<String, String> transientParameters(Map<String, String> values) {
+        if (values == null || values.isEmpty() || values.size() > 8 || values.entrySet().stream()
+            .anyMatch(e -> e.getKey() == null || !e.getKey().matches("[A-Za-z][A-Za-z0-9_]{0,63}")
+                || e.getValue() == null || e.getValue().isEmpty() || e.getValue().length() > 2048
+                || e.getValue().codePoints().anyMatch(c -> Character.isISOControl(c) && c != '\n'))) {
+            throw new InvalidParameterException("即时发送参数不合法");
+        }
+        return Map.copyOf(values);
+    }
+
     /** 同名覆盖为一层 Map 覆盖；输入没有对象、数组或 null 值。 */
     public static Map<String, String> merge(String defaults, String overrides) {
         Map<String, String> merged = new LinkedHashMap<>();

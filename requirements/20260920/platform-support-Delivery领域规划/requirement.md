@@ -8,7 +8,7 @@
 
 Notification 位于 Platform Support 的 Delivery 模块中，统一承接 Email、SMS 通知。OTP、邮箱验证、密码重置和普通业务通知共用通知能力；验证码生成、验证、失效、消费及密码修改仍由认证模块负责。
 
-首期范围收窄为 Email，邮件 Provider 先使用 Mock；真实邮件供应商的选型和接入后续再定。SMS 保留在统一领域规划中，暂不实现。Mock 仅用于测试适配器，不在正式应用提供模拟成功，不发送真实邮件。认证邮件对接后续处理。
+首期范围收窄为 Email，邮件 Provider 先使用 Mock；真实邮件供应商的选型和接入后续再定。SMS 保留在统一领域规划中，暂不实现。Mock 仅用于测试适配器，不在正式应用提供模拟成功，不发送真实邮件。认证邮件对接后续处理。（2026-10-15 修订：已按[认证邮件接入 Delivery 需求](../../20261015/platform-support-认证邮件接入Delivery/requirement.md)接入：Client 验证/重置邮件经 Delivery 即时发送入口 `SendTransientEmailProcessor` 使用模板与 SES 账号发送一次，链接不落库、不重投。）
 
 首期同服务消费者使用模块公开 Processor；其他内部服务的 HTTP 接口待强服务身份合同确定后再开放，不信任自报 X-Caller-Service。（2026-10-15 修订：已按[通知内部 HTTP 接口需求](../../20261015/platform-support-通知内部HTTP接口/requirement.md)以过渡信任开放内部 HTTP 提交。）Notification 不单独成为微服务，也不成为浏览器或外部 Client 的任意发信入口。
 
@@ -86,7 +86,7 @@ Notification 位于 Platform Support 的 Delivery 模块中，统一承接 Email
 
 | 编号 | 结论或待办 |
 |---|---|
-| Q-01 | 用户确认认证邮件后续对接；OTP、重置令牌等瞬时合同不属于普通参数接口 |
+| Q-01 | 用户确认认证邮件后续对接；OTP、重置令牌等瞬时合同不属于普通参数接口。2026-10-15 由[认证邮件接入 Delivery 需求](../../20261015/platform-support-认证邮件接入Delivery/requirement.md)细化：独立即时发送入口，临时参数只在内存渲染，不建发送记录；即时模板不能经普通通知使用 |
 | Q-02 | 用户确认重复邮箱拒绝，增加 (request_id, address_vault_token) 唯一保护 |
 | Q-03 | 用户确认只开放模块内调用。业务调用方先完成权限判断并生成来源/归属；不提供 Header 身份入口。输入限额及重复来源冲突见 technique.md 第 8 节 |
 | Q-04 | 本期采用公共补偿领取/超时与 Delivery version CAS，明确拒绝才能新建发送；预算和恢复规则见 technique.md 第 8 节 |

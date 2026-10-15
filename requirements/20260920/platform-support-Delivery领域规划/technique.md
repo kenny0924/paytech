@@ -6,6 +6,8 @@
 
 > **2026-10-14 修订：** 首个真实 Provider 为 Amazon SES（`integration/provider/ses`），用户确认普通通知接受“至少发一次”。Provider 通过 `supportsQuery()` 声明查询能力；不支持查询的 Provider 按 [2026-10-14 SES 接入方案](../../20261014/platform-support-邮件AmazonSES接入/technique.md) §3.3 执行：SENT 即完成，UNKNOWN 在安全窗口（默认 10 分钟）后于发送次数内重发，次数用尽终止任务待人工确认。支持查询的 Provider 继续适用本文原规则。下文第 6 节、第 8.2 节中“UNKNOWN 不能重发/不能换 Provider”“真实供应商必须可查询”的表述仅约束支持查询的 Provider。
 
+> **2026-10-15 修订（认证邮件）：** 认证临时秘密的瞬时合同按 [认证邮件接入方案](../../20261015/platform-support-认证邮件接入Delivery/technique.md) 落地：模块入口 `SendTransientEmailProcessor` 只接受 `notification.transient-template-codes` 中的模板，事务外读取模板/路由/主账号、Vault 凭据并调用 Provider 一次，不写通知表、补偿任务、日志；普通通知提交与 HTTP 白名单不能使用即时模板。下文"认证邮件对接后续"的表述由该方案取代。
+>
 > **2026-10-15 修订：** 内部 HTTP 提交 `POST /platform-support/notifications/v1/requests` 已开放，按 [通知内部 HTTP 接口需求](../../20261015/platform-support-通知内部HTTP接口/requirement.md)采用与 Vault V1 相同的过渡信任：私网部署限制 + `X-Caller-Service` + 部署配置白名单（服务名 → 可用模板）。`source_system` 直接保存调用方服务名（如 `payment-orchestration-service`），不取自 Body。下文"HTTP 待强服务身份后开放、不信任自报 X-Caller-Service"的表述由该需求取代；强服务身份到位后只替换身份识别层。
 
 首期仅处理 Email，Provider 的发送和结果查询先在外部调用边界使用 Mock，内部 Request / Delivery / Attempt 流程仍按本领域规则设计。Mock 用于开发验证，不连接真实邮件供应商，其模拟结果不代表真实投递；真实供应商选型与接入、SMS 实现后续再定。Mock 适配器仅位于测试模块；Vault 仍经正式 Client 调用独立 HTTP Mock。

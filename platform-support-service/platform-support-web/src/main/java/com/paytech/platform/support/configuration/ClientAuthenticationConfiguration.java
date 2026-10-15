@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.mail.javamail.JavaMailSender;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.id.SnowflakeIdGenerator;
 import com.paytech.platform.support.accesscontrol.domain.authentication.ClientEmailChallengePolicy;
@@ -15,7 +14,8 @@ import com.paytech.platform.support.accesscontrol.integration.signing.HumanAuthe
 import com.paytech.platform.support.accesscontrol.integration.signing.LocalHumanAuthenticationCryptography;
 import com.paytech.platform.support.accesscontrol.integration.vault.LoginEmailVault;
 import com.paytech.platform.support.accesscontrol.integration.vault.VaultLoginEmailVault;
-import com.paytech.platform.support.integration.mail.SmtpAuthenticationEmailSender;
+import com.paytech.platform.support.delivery.service.processor.SendTransientEmailProcessor;
+import com.paytech.platform.support.integration.mail.DeliveryAuthenticationEmailSender;
 import com.paytech.vault.client.VaultClient;
 import io.micrometer.core.instrument.MeterRegistry;
 import tools.jackson.databind.ObjectMapper;
@@ -33,6 +33,9 @@ public class ClientAuthenticationConfiguration {
         }
         if (!environment.getProperty("redis.coordination.enabled", Boolean.class, false)) {
             throw new IllegalStateException("Client 认证必须开启 redis.coordination.enabled 并配置本地 Redis");
+        }
+        if (!environment.getProperty("notification.enabled", Boolean.class, false)) {
+            throw new IllegalStateException("Client 认证邮件经 Delivery 发送，必须开启 notification.enabled 并配置发送账号");
         }
     }
 
@@ -53,12 +56,11 @@ public class ClientAuthenticationConfiguration {
             environment.getRequiredProperty("CLIENT_LOCAL_HMAC_KEY_VERSION", Integer.class), json, "CUSTOMER");
     }
 
-    /** 邮件走可替换 SMTP 端口，发件人与站点由部署配置绑定。 */
+    /** 认证邮件经 Delivery 即时发送；站点由部署配置绑定，发件人由发送账号决定。 */
     @Bean
-    AuthenticationEmailSender authenticationEmailSender(JavaMailSender mail, Environment environment,
-        OperationsPasswordPolicy passwords, MeterRegistry metrics) {
-        String from = passwords.canonicalEmail(environment.getRequiredProperty("client.authentication.mail-from"));
-        return new SmtpAuthenticationEmailSender(mail, from,
+    AuthenticationEmailSender authenticationEmailSender(SendTransientEmailProcessor processor, Environment environment,
+        MeterRegistry metrics) {
+        return new DeliveryAuthenticationEmailSender(processor,
             environment.getRequiredProperty("client.authentication.public-origin"), metrics);
     }
 

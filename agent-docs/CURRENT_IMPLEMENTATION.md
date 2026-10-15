@@ -153,6 +153,15 @@
 - **其他检查：** `npm --prefix requirements-site test` **129/137** 通过，8 项失败涉及 Checkout 展示、Payment 退款合同、十路由、15 表模型/台账/隐私导航以及测试/写接口规范文字断言；这些失败指向本次未修改的合同或已有模型台账内容，未调整其断言。日志 `/tmp/commerce-get-order-by-client-id-site-tests.log`。
 - **边界：** 仅新增测试并更新 Commerce README、本台账。手工启动已有且停止的 `mor-local-mysql-1` 和 `mor-local-redis-1`，测试只准备/清理自有数据；现有本地 Redis 密码经环境变量注入，不输出或写入仓库。未修改生产代码、API、Foundation、表结构、DDL、POM 或配置；未运行 manual、真实 Owner 联调、提交、推送或部署。运行入口见 [Commerce README](../commerce-service/README.md#验证入口)。
 
+<a id="platform-authentication-email-20261015"></a>
+
+## Platform Client 认证邮件接入 Delivery（2026-10-15，已提交，未推送）
+
+- **确认范围：** 见[需求](../requirements/20261015/platform-support-认证邮件接入Delivery/requirement.md)与[方案](../requirements/20261015/platform-support-认证邮件接入Delivery/technique.md)：Client 注册验证、重新发送验证、密码重置邮件改经 Delivery 模板与 SES 发送账号即时发送；不留发送记录；内容只做 `zh-CN`；删除 SMTP。
+- **Implemented：** Delivery 新增 `SendTransientEmailProcessor`（无事务、不写库、不重试、只用主账号）、`NotificationConfigurationService`（与普通通知共用配置检查）、`notification.transient-template-codes`（普通通知提交与 HTTP 白名单不能使用，白名单冲突启动失败）。Web 以 `DeliveryAuthenticationEmailSender` 取代 SMTP 适配器，失败计 `client.authentication.email.delivery{result=failed,reason}` 并保持原受理响应；Client 认证开启要求 `notification.enabled=true`。删除 `spring-boot-starter-mail`、`spring.mail.*`、`client.authentication.mail-from`。初始化 DML 末尾追加认证模板、`SES_PRIMARY` 账号与路由独立块，**未执行**。
+- **Verified：** JDK 25 全服务 `./mvnw -o verify` 测试 **589/589**；三个认证 HTTP 入口经真实 SES 适配器与测试 SES 端点验证邮件内容、链接可完成激活与重置、四类失败仍 202 且按原因计指标、通知表与补偿任务无记录、日志无秘密与邮箱。Delivery 指令 **96.39%**、分支 **90.49%**（改动前 96.30% / 90.34%）。全服务 90% 聚合门禁仍为既有失败（0.52 / 0.36），未降低门槛。`requirements-site` 128/137，9 项失败与改动前相同。
+- **未完成 / 前提：** 阶段 5 已完成 `clean verify` 与制品检查（exec jar 无邮件依赖与 SMTP 类，打包配置含即时模板）；未真实发信；上线需执行 DML 块、设置 `NOTIFICATION_SES_PROVIDER_CODE=SES_PRIMARY`、开启 Client 认证时同时开启 `notification.enabled`，并满足 SES 接入的上线前提。已提交到本地 main，未推送、未部署、未执行 SQL。
+
 <a id="platform-notification-http-20261015"></a>
 
 ## Platform 通知内部 HTTP 接口（2026-10-15，已本地提交）
