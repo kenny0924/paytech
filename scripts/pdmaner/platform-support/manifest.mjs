@@ -25,7 +25,7 @@ const expectedGroupSizes = Object.freeze({
   identity_access: 19,
   file_document: 12,
   notification: 7,
-  webhook: 8,
+  webhook: 5,
   audit_security: 8,
   gateway_control: 6,
   reliability: 2,

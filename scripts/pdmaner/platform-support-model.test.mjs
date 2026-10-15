@@ -219,7 +219,7 @@ test("Platform Support Manifest has the exact consumer-driven hash allowlist", a
       .map((field) => `${table.defKey}.${field.defKey}`))
     .sort();
   assert.deepEqual(actualHashFields, EXPECTED_HASH_FIELDS);
-  assert.equal(actualHashFields.length, 31);
+  assert.equal(actualHashFields.length, 28);
 });
 
 test("Platform Support tenant-owned roots reject obsolete ownership and version tables", async () => {
@@ -438,33 +438,29 @@ test("Platform Support Notification keeps seven ordinary-email tables and recipi
   assert.ok(fieldsOf("notification_request").includes("tenant_id"));
 });
 
-test("Platform Support Webhook uses tenant-owned revisions and direct replay deliveries", async () => {
+test("Platform Support Webhook keeps subscriptions on the endpoint and reuses compensation scheduling", async () => {
   const { TABLES } = await import("./platform-support/manifests/04-webhook.mjs");
   assert.deepEqual(TABLES.map((table) => table.defKey), [
-    "webhook_endpoint", "webhook_endpoint_revision", "webhook_endpoint_verification",
-    "webhook_signing_secret", "webhook_subscription", "webhook_event",
-    "webhook_delivery", "webhook_attempt",
+    "webhook_endpoint", "webhook_signing_secret", "webhook_event", "webhook_delivery", "webhook_attempt",
   ]);
 
   const tableByKey = new Map(TABLES.map((table) => [table.defKey, table]));
   const fieldsOf = (tableKey) => tableByKey.get(tableKey).fields.map((field) => field.defKey);
   assert.ok(fieldsOf("webhook_endpoint").includes("tenant_id"));
-  assert.equal(fieldsOf("webhook_endpoint").includes("current_ver_id"), false);
-  assert.ok(fieldsOf("webhook_endpoint_revision").includes("revision_no"));
-  assert.ok(fieldsOf("webhook_endpoint_revision").includes("active_slot"));
-  assert.equal(fieldsOf("webhook_endpoint_revision").includes("content_hash"), false);
+  assert.ok(fieldsOf("webhook_endpoint").includes("event_types"));
+  assert.equal(fieldsOf("webhook_endpoint").includes("url_vault_token"), false);
   assert.ok(fieldsOf("webhook_signing_secret").includes("rotation_no"));
-  assert.ok(fieldsOf("webhook_signing_secret").includes("secret_fingerprint"));
-  assert.equal(fieldsOf("webhook_subscription").includes("content_hash"), false);
+  assert.ok(fieldsOf("webhook_signing_secret").includes("valid_until"));
   assert.ok(fieldsOf("webhook_event").includes("tenant_id"));
   assert.ok(fieldsOf("webhook_delivery").includes("tenant_id"));
   assert.deepEqual(
-    ["replay_of_delivery_id", "generation_no", "requested_by", "replay_reason_code"]
-      .filter((field) => !fieldsOf("webhook_delivery").includes(field)),
+    ["next_retry_time", "lease_owner", "lease_until", "fencing_token", "generation_no"]
+      .filter((field) => fieldsOf("webhook_delivery").includes(field)),
     [],
   );
-  assert.equal(fieldsOf("webhook_attempt").includes("response_hash"), false);
+  assert.ok(fieldsOf("webhook_delivery").includes("replay_of_delivery_id"));
   assert.ok(fieldsOf("webhook_attempt").includes("signing_secret_id"));
+  assert.ok(fieldsOf("webhook_attempt").includes("grace_secret_id"));
   const webhookClientFields = TABLES.flatMap((table) => table.fields
     .filter((field) => field.defKey === "client_id")
     .map((field) => `${table.defKey}.${field.defKey}`));
@@ -712,9 +708,10 @@ test("Platform Support separates mutable lifecycle metadata from immutable facts
     "t_notification_route",
     "t_notification_template",
     "t_notification_attempt",
-    "t_webhook_endpoint_revision",
+    "t_webhook_endpoint",
     "t_webhook_signing_secret",
-    "t_webhook_subscription",
+    "t_webhook_delivery",
+    "t_webhook_attempt",
   ]) {
     const fields = new Set(byKey.get(tableKey)?.fields.map((field) => field.defKey));
     assert.ok(fields.has("status"), `${tableKey} 必须保存生命周期状态`);
@@ -725,7 +722,6 @@ test("Platform Support separates mutable lifecycle metadata from immutable facts
     "t_file_scan_result",
     "t_document_delivery",
     "t_webhook_event",
-    "t_webhook_attempt",
     "t_audit_event",
   ]) {
     const fields = new Set(byKey.get(tableKey)?.fields.map((field) => field.defKey));
@@ -745,7 +741,7 @@ test("Platform Support derives Integration Readiness without persisted evaluatio
   }
   for (const tableName of [
     "t_access_tenant", "t_api_credential", "t_api_credential_scope",
-    "t_webhook_endpoint_revision", "t_webhook_subscription",
+    "t_webhook_endpoint",
   ]) {
     assert.equal(names.has(tableName), true, `derived readiness requires ${tableName}`);
   }
@@ -861,15 +857,6 @@ test("Platform Support composite keys bind every security-sensitive identity and
     ["document_id", "tenant_id", "order_id", "consumer_ref_hash"],
   ]);
 
-
-  assert.deepEqual(tuple("fk_webhook_delivery_event"), [
-    ["webhook_event_id", "tenant_id", "event_type", "payload_schema_version"],
-    ["event_id", "tenant_id", "event_type", "payload_schema_version"],
-  ]);
-  assert.deepEqual(tuple("fk_webhook_delivery_sub"), [
-    ["subscription_id", "endpoint_id", "event_type", "payload_schema_version"],
-    ["subscription_id", "endpoint_id", "event_type", "payload_schema_version"],
-  ]);
 });
 
 test("Platform Support CHECK policy freezes critical single-row invariants", async () => {

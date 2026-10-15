@@ -18,6 +18,7 @@ export const TABLES = Object.freeze([
     ],
     indexes: [
       uniqueIndex("uk_notify_source", "source_system", "source_event_key"),
+      Object.freeze({...accessIndex("idx_notify_request_create_time", "create_time"), comment: "支持访问路径：create_time（运营按时间查询发送记录）"}),
     ],
     relations: [
       relation("tenant_id", "access_tenant", "tenant_id"),
@@ -113,12 +114,19 @@ export const TABLES = Object.freeze([
   defineTable({
     key: "notification_provider",
     name: "通知发送账号",
-    comment: "通知发送账号的当前权威事实；普通 Email 首期，不保存认证秘密或正文快照",
+    comment: "通知发送账号的当前权威事实；普通 Email 首期，密钥只保存其 Vault Token，不保存认证秘密或正文快照",
     fields: [
       field("provider_id", "BIGINT", "NN", "Provider 主键", "Provider 主键", {primaryKey: true}),
       field("provider_code", "VARCHAR(64)", "NN", "唯一编码，标识具体发送账号", "唯一编码，标识具体发送账号", {characterSet: "utf8mb4", collation: "utf8mb4_bin"}),
       field("medium", "VARCHAR(16)", "NN", "EMAIL 或 SMS", "EMAIL 或 SMS", {values: ["EMAIL", "SMS"]}),
+      // 2026-10-15 通知发送账号维护（requirements/20261015/operations-console-通知发送账号维护）。
+      field("provider_type", "VARCHAR(32)", "NN", "服务商类型", "服务商类型，由发送适配器声明，如 AMAZON_SES；创建后不可改", {source: "通知发送适配器声明的服务商类型"}),
       field("status", "VARCHAR(16)", "NN", "启用、停用", "启用、停用", {values: ["ACTIVE", "DISABLED"]}),
+      field("region", "VARCHAR(32)", "N", "服务商区域", "服务商区域，如 me-central-1；SES 必填", {}),
+      field("from_address", "VARCHAR(254)", "N", "发件地址", "发件地址，须为该区域已验证身份；SES 必填", {}),
+      field("configuration_set", "VARCHAR(64)", "N", "SES 配置集", "SES Configuration Set，可空", {}),
+      field("credential_vault_token", "VARCHAR(255)", "N", "密钥 Vault 引用", "NOTIFICATION_PROVIDER_CREDENTIAL_V1 密钥对的 Vault Token；为空表示未录入；只在发送前以 NOTIFICATION_DELIVERY Reveal，禁止日志与接口返回", {characterSet: "utf8mb4", collation: "utf8mb4_bin"}),
+      field("credential_update_time", "DATETIME(6)", "N", "密钥更新时间", "最近一次录入或更换密钥的 UTC 微秒时间", {}),
       field("version", "INT", "NN", "并发版本", "并发更新版本，初始为 1；不是历史修订号", {defaultValue: "1"}),
     ],
     indexes: [

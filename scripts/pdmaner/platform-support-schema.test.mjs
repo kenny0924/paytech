@@ -21,10 +21,11 @@ const expectedTables = [
   'audit_chain', 'audit_event', 'audit_event_attr', 'security_event', 'command_idempotency', 'compensation_event', 'console_resource',
   'standard_api', 'api_field', 'integration', 'integration_api', 'integration_script', 'integration_standard_api',
   'integration_verify_account', 'integration_verify_case', 'integration_verify_run', 'integration_verify_run_step',
+  'webhook_endpoint', 'webhook_signing_secret', 'webhook_event', 'webhook_delivery', 'webhook_attempt',
 ].map(name => `t_${name}`);
 const quote = value => `'${value.replaceAll("'", "''")}'`;
 
-test('only the 50 approved schema tables exist, without physical CHECK or foreign keys', () => {
+test('only the 55 approved schema tables exist, without physical CHECK or foreign keys', () => {
   assert.deepEqual(tables.map(table => table[1]).sort(), expectedTables.toSorted());
   assert.doesNotMatch(sql.replace(/^--.*$/gm, ''), /\bCHECK\s*\(|\bFOREIGN\s+KEY\b/i);
 });
@@ -163,4 +164,17 @@ test('Channel sandbox verification increment is the exact four-table current mod
   assert.ok(increment.includes(`ALTER TABLE \`t_integration\` MODIFY COLUMN \`endpoints\` JSON NOT NULL COMMENT ${quote(endpoints.comment)};`));
   assert.doesNotMatch(increment.replace(/^--.*$/gm, '').replace(/^ALTER TABLE `t_integration` MODIFY COLUMN `endpoints`.*$/m, ''),
     /\b(?:DROP|ALTER|DELETE|INSERT|UPDATE|CHECK|FOREIGN)\b/i);
+});
+
+test('Client Webhook increment is the exact five-table current model and test DDL agrees', () => {
+  const increment = readFileSync(new URL('docs/database/sql/changes/2026-10-15-webhook-delivery.sql', service), 'utf8');
+  const testDdl = readFileSync(new URL('platform-support-test/src/test/resources/init/ddl.sql', service), 'utf8');
+  const created = [...increment.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
+  assert.deepEqual(created.map(t => t[1]), ['t_webhook_endpoint', 't_webhook_signing_secret', 't_webhook_event',
+    't_webhook_delivery', 't_webhook_attempt']);
+  for (const table of created) {
+    assert.equal(table[0], tables.find(t => t[1] === table[1])[0]);
+    assert.ok(testDdl.includes(table[0]));
+  }
+  assert.doesNotMatch(increment.replace(/^--.*$/gm, ''), /\b(?:DROP|ALTER|DELETE|INSERT|UPDATE|CHECK|FOREIGN)\b/i);
 });

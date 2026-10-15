@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.delivery.core.dal.mapper.WebhookAttemptMapper">
+    <sql id="columns">attempt_id, delivery_id, attempt_no, request_url, signing_secret_id, grace_secret_id, status,
+        http_status, failure_code, duration_ms, started_time, finished_time, create_time, update_time</sql>
+    <resultMap id="record" type="com.paytech.platform.support.delivery.core.dal.dataobject.WebhookAttempt">
+        <id column="attempt_id" property="attemptId"/>
+        <result column="delivery_id" property="deliveryId"/>
+        <result column="attempt_no" property="attemptNo"/>
+        <result column="request_url" property="requestUrl"/>
+        <result column="signing_secret_id" property="signingSecretId"/>
+        <result column="grace_secret_id" property="graceSecretId"/>
+        <result column="status" property="status"/>
+        <result column="http_status" property="httpStatus"/>
+        <result column="failure_code" property="failureCode"/>
+        <result column="duration_ms" property="durationMs"/>
+        <result column="started_time" property="startedTime"/>
+        <result column="finished_time" property="finishedTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <select id="findDelivery" resultMap="record">SELECT <include refid="columns"/> FROM t_webhook_attempt
+        WHERE delivery_id = #{deliveryId} ORDER BY attempt_no
+    </select>
+    <select id="findProcessing" resultMap="record">SELECT <include refid="columns"/> FROM t_webhook_attempt
+        WHERE delivery_id = #{deliveryId} AND status = 'PROCESSING' ORDER BY attempt_no DESC LIMIT 1
+    </select>
+    <insert id="insert">INSERT INTO t_webhook_attempt (<include refid="columns"/>) VALUES (#{attemptId},
+        #{deliveryId}, #{attemptNo}, #{requestUrl}, #{signingSecretId}, #{graceSecretId}, #{status}, #{httpStatus},
+        #{failureCode}, #{durationMs}, #{startedTime}, #{finishedTime}, #{createTime}, #{updateTime})
+    </insert>
+    <update id="finish">
+        UPDATE t_webhook_attempt SET status = #{status}, http_status = #{httpStatus}, failure_code = #{failureCode},
+        duration_ms = #{durationMs}, finished_time = #{now}, update_time = #{now}
+        WHERE attempt_id = #{item.attemptId} AND status = 'PROCESSING'
+    </update>
+</mapper>

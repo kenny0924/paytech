@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.delivery.core.dal.mapper.WebhookEndpointMapper">
+    <sql id="columns">endpoint_id, tenant_id, url, event_types, status, version, create_time, update_time</sql>
+    <resultMap id="record" type="com.paytech.platform.support.delivery.core.dal.dataobject.WebhookEndpoint">
+        <id column="endpoint_id" property="endpointId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="url" property="url"/>
+        <result column="event_types" property="eventTypes"/>
+        <result column="status" property="status"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <select id="find" resultMap="record">SELECT <include refid="columns"/> FROM t_webhook_endpoint
+        WHERE endpoint_id = #{id}
+    </select>
+    <select id="findTenant" resultMap="record">SELECT <include refid="columns"/> FROM t_webhook_endpoint
+        WHERE tenant_id = #{tenantId} ORDER BY create_time, endpoint_id
+    </select>
+    <insert id="insert">INSERT INTO t_webhook_endpoint (<include refid="columns"/>) VALUES (#{endpointId},
+        #{tenantId}, #{url}, #{eventTypes}, #{status}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_webhook_endpoint SET url = #{url}, event_types = #{eventTypes}, version = version + 1,
+        update_time = #{now} WHERE endpoint_id = #{item.endpointId} AND version = #{item.version}
+    </update>
+    <update id="changeStatus">
+        UPDATE t_webhook_endpoint SET status = #{status}, version = version + 1, update_time = #{now}
+        WHERE endpoint_id = #{item.endpointId} AND version = #{item.version} AND status = #{item.status}
+    </update>
+</mapper>

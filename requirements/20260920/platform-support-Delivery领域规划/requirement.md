@@ -51,7 +51,7 @@ Notification 位于 Platform Support 的 Delivery 模块中，统一承接 Email
 | findNotificationBySource、listNotificationDeliveries、getDelivery | 暂不提供，不把讨论过的 Demo 当作当前合同 |
 | Operations 模板/内容/Provider/路由管理 | 单独处理，本轮不纳入 |
 | 取消、人工重试及人工刷新接口 | 后续单独讨论，不作为已批准接口 |
-| Webhook | 保留独立模块边界，不细化表、接口或执行流程 |
+| Webhook | 保留独立模块边界，不细化表、接口或执行流程（2026-10-15 由 [Webhook 投递需求](../../20261015/platform-support-Webhook投递/requirement.md)细化，与 Notification 不共用业务表） |
 | Provider Callback、Suppression | 从当前 Notification 方案移除 |
 | 历史模板版本、正文快照、统一投递期限、优先级、发送模式字段 | 不纳入当前模型 |
 | Java、Maven 模块、PDManer、建表 SQL、自动测试 | 进入实现范围；不自动执行 DDL |

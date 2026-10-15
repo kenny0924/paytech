@@ -165,6 +165,8 @@ Event 没有 `update_time`。
 
 ### 6.3 Webhook 与 Audit
 
+> **2026-10-15：** Webhook 物理结构已由 [Platform Webhook 投递决定](../../../agent-docs/decisions/2026-10-15-platform-webhook-delivery.md) 收敛为 5 表（Endpoint 含订阅、Signing Secret、Event、Delivery、Attempt），本文其余 Webhook 描述只作历史。
+
 - `t_webhook_endpoint_ver` 被语义更明确的 `t_webhook_endpoint_revision` 取代。
 - `t_webhook_secret_ver` 被语义更明确的 `t_webhook_signing_secret` 取代。
 - `t_webhook_sub_state_change`、`t_webhook_delivery_state_change`：当前状态 + Audit 足够。

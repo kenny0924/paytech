@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.delivery.core.dal.mapper.WebhookDeliveryMapper">
+    <sql id="columns">delivery_id, webhook_event_id, tenant_id, endpoint_id, event_type, status, attempt_count,
+        last_attempt_time, replay_of_delivery_id, requested_by, version, create_time, update_time</sql>
+    <resultMap id="record" type="com.paytech.platform.support.delivery.core.dal.dataobject.WebhookDelivery">
+        <id column="delivery_id" property="deliveryId"/>
+        <result column="webhook_event_id" property="webhookEventId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="endpoint_id" property="endpointId"/>
+        <result column="event_type" property="eventType"/>
+        <result column="status" property="status"/>
+        <result column="attempt_count" property="attemptCount"/>
+        <result column="last_attempt_time" property="lastAttemptTime"/>
+        <result column="replay_of_delivery_id" property="replayOfDeliveryId"/>
+        <result column="requested_by" property="requestedBy"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <resultMap id="summary" type="com.paytech.platform.support.delivery.domain.WebhookDeliverySummaryView">
+        <id column="delivery_id" property="deliveryId"/>
+        <result column="source_event_key" property="eventId"/>
+        <result column="event_type" property="eventType"/>
+        <result column="endpoint_id" property="endpointId"/>
+        <result column="status" property="status"/>
+        <result column="attempt_count" property="attemptCount"/>
+        <result column="last_attempt_time" property="lastAttemptTime"/>
+        <result column="replay_of_delivery_id" property="replayOfDeliveryId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+    <select id="find" resultMap="record">SELECT <include refid="columns"/> FROM t_webhook_delivery
+        WHERE delivery_id = #{id}
+    </select>
+    <select id="countEvent" resultType="int">SELECT COUNT(*) FROM t_webhook_delivery
+        WHERE webhook_event_id = #{eventId}
+    </select>
+    <insert id="insert">INSERT INTO t_webhook_delivery (<include refid="columns"/>) VALUES (#{deliveryId},
+        #{webhookEventId}, #{tenantId}, #{endpointId}, #{eventType}, #{status}, #{attemptCount}, #{lastAttemptTime},
+        #{replayOfDeliveryId}, #{requestedBy}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+    <update id="transition">
+        UPDATE t_webhook_delivery SET status = #{status}, attempt_count = #{attemptCount},
+        last_attempt_time = #{lastAttemptTime}, version = version + 1, update_time = #{now}
+        WHERE delivery_id = #{item.deliveryId} AND version = #{item.version} AND status = #{item.status}
+    </update>
+    <sql id="filter">
+        FROM t_webhook_delivery d JOIN t_webhook_event e ON e.event_id = d.webhook_event_id
+        WHERE d.tenant_id = #{filter.tenantId} AND d.create_time &gt;= #{filter.createdFrom}
+        AND d.create_time &lt; #{filter.createdTo}
+        <if test="filter.endpointId != null">AND d.endpoint_id = #{filter.endpointId}</if>
+        <if test="filter.eventType != null">AND d.event_type = #{filter.eventType}</if>
+        <if test="filter.status != null">AND d.status = #{filter.status}</if>
+        <if test="filter.eventId != null">AND e.source_event_key = #{filter.eventId}</if>
+    </sql>
+    <select id="page" resultMap="summary">SELECT d.delivery_id, e.source_event_key, d.event_type, d.endpoint_id,
+        d.status, d.attempt_count, d.last_attempt_time, d.replay_of_delivery_id, d.create_time
+        <include refid="filter"/> ORDER BY d.create_time DESC, d.delivery_id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long">SELECT COUNT(*) <include refid="filter"/></select>
+</mapper>

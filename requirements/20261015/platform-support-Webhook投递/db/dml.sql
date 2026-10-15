@@ -1,0 +1,4 @@
+-- 本文件仅为注释索引，不含可执行语句。
+-- 唯一执行来源：platform-support-service/docs/database/sql/platform-support-initial-data.sql 末尾
+--   “Client Webhook management permissions” 独立块（权限 2 行、角色授权 2 行，ID 9000000000000901xx/902xx）。
+-- 执行顺序：先 db/ddl.sql 指向的建表文件，再本块。业务 DML：0 行。

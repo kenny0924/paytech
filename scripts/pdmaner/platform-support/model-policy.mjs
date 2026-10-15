@@ -45,8 +45,7 @@ export const VAULT_REFERENCE_SETS = Object.freeze([
   Object.freeze({ table: "tenant_invitation", fields: Object.freeze(["invited_email_vault_token", "invited_email_masked"]) }),
   Object.freeze({ table: "email_otp_challenge", fields: Object.freeze(["email_vault_token", "email_blind_index", "email_blind_key_ver", "email_masked"]) }),
   Object.freeze({ table: "notification_delivery", fields: Object.freeze(["address_vault_token"]) }),
-  Object.freeze({ table: "webhook_endpoint_revision", fields: Object.freeze(["url_vault_token", "url_masked"]) }),
-  Object.freeze({ table: "webhook_event", fields: Object.freeze(["payload_vault_token"]) }),
+  Object.freeze({ table: "webhook_signing_secret", fields: Object.freeze(["secret_vault_token"]) }),
   Object.freeze({ table: "audit_event_attr", fields: Object.freeze(["value_vault_token", "value_masked"]) }),
 ]);
 
@@ -81,13 +80,6 @@ export const COMPOSITE_FK_CONTRACTS = Object.freeze([
   compositeFk("fk_document_grant_version", "t_document_access_grant", ["document_ver_id", "document_id"], "t_document_version", ["document_ver_id", "document_id"]),
   compositeFk("fk_document_grant_subject", "t_document_access_grant", ["document_id", "tenant_id", "order_id", "consumer_ref_hash"], "t_consumer_document", ["document_id", "tenant_id", "order_id", "consumer_ref_hash"]),
   compositeFk("fk_audit_integrity_file", "t_audit_integrity_point", ["file_id", "content_hash"], "t_file_object", ["file_id", "content_hash"]),
-  compositeFk("fk_webhook_delivery_event", "t_webhook_delivery", ["webhook_event_id", "tenant_id", "event_type", "payload_schema_version"], "t_webhook_event", ["event_id", "tenant_id", "event_type", "payload_schema_version"]),
-  compositeFk("fk_webhook_delivery_endpoint", "t_webhook_delivery", ["endpoint_id", "tenant_id"], "t_webhook_endpoint", ["endpoint_id", "tenant_id"]),
-  compositeFk("fk_webhook_delivery_revision", "t_webhook_delivery", ["endpoint_revision_id", "endpoint_id"], "t_webhook_endpoint_revision", ["endpoint_revision_id", "endpoint_id"]),
-  compositeFk("fk_webhook_delivery_sub", "t_webhook_delivery", ["subscription_id", "endpoint_id", "event_type", "payload_schema_version"], "t_webhook_subscription", ["subscription_id", "endpoint_id", "event_type", "payload_schema_version"]),
-  compositeFk("fk_webhook_delivery_replay", "t_webhook_delivery", ["replay_of_delivery_id", "tenant_id", "endpoint_id"], "t_webhook_delivery", ["delivery_id", "tenant_id", "endpoint_id"]),
-  compositeFk("fk_webhook_attempt_delivery", "t_webhook_attempt", ["delivery_id", "tenant_id", "endpoint_id"], "t_webhook_delivery", ["delivery_id", "tenant_id", "endpoint_id"]),
-  compositeFk("fk_webhook_attempt_secret", "t_webhook_attempt", ["signing_secret_id", "endpoint_id"], "t_webhook_signing_secret", ["signing_secret_id", "endpoint_id"]),
 ]);
 
 // The following cross-row rules remain locked-transaction invariants: ACTIVE HUMAN accounts retain one login method;
@@ -161,15 +153,6 @@ export const CHECK_CONTRACTS = Object.freeze({
   ck_notify_delivery_retry: "attempt_count>=0 AND version>0 AND ((status='RETRY_WAIT' AND next_retry_time IS NOT NULL) OR (status<>'RETRY_WAIT' AND next_retry_time IS NULL))",
   ck_notify_attempt_times: "finished_time IS NULL OR started_time<=finished_time",
   ck_notify_attempt_identity: "provider_request_no<>''",
-  ck_webhook_url_tuple: "url_vault_token IS NOT NULL AND url_masked IS NOT NULL AND host_name<>'' AND timeout_ms>0",
-  ck_webhook_revision_slot: "(status='ACTIVE' AND active_slot=1) OR (status IN ('DRAFT','PENDING_VERIFICATION','VERIFIED','SUSPENDED','RETIRED') AND active_slot IS NULL)",
-  ck_webhook_secret_slot: "(status='ACTIVE' AND signing_slot=1) OR (status IN ('SCHEDULED','RETIRED','REVOKED') AND signing_slot IS NULL)",
-  ck_webhook_sub_slot: "(status='ACTIVE' AND active_slot=1) OR (status IN ('DRAFT','SUSPENDED','RETIRED') AND active_slot IS NULL)",
-  ck_webhook_event_source: "source_system<>'' AND source_event_key<>'' AND payload_schema_version>0 AND payload_hash IS NOT NULL",
-  ck_webhook_payload_storage: "(payload_storage_mode='INLINE' AND payload_inline IS NOT NULL AND payload_vault_token IS NULL) OR (payload_storage_mode='VAULT_TOKEN' AND payload_inline IS NULL AND payload_vault_token IS NOT NULL)",
-  ck_webhook_delivery_generation: "(generation_no=0 AND replay_of_delivery_id IS NULL AND requested_by IS NULL AND replay_reason_code IS NULL) OR (generation_no>0 AND replay_of_delivery_id IS NOT NULL AND replay_of_delivery_id<>delivery_id AND requested_by IS NOT NULL AND replay_reason_code IS NOT NULL)",
-  ck_webhook_delivery_lease: "attempt_count>=0 AND version>0 AND ((status='RETRY_WAIT' AND next_retry_time IS NOT NULL) OR (status<>'RETRY_WAIT' AND next_retry_time IS NULL))",
-  ck_webhook_attempt_times: "finished_time IS NULL OR started_time<=finished_time",
   ck_audit_sequence: "sequence_no>0 AND canonical_version>0 AND schema_version>0 AND occurred_time<=received_time",
   ck_audit_attr_value: "(classification IN ('PUBLIC','INTERNAL') AND value_text IS NOT NULL AND value_vault_token IS NULL AND value_masked IS NULL) OR (classification IN ('CONFIDENTIAL','RESTRICTED') AND value_text IS NULL AND value_vault_token IS NOT NULL AND value_masked IS NOT NULL)",
   ck_audit_range: "sequence_from>0 AND sequence_from<=sequence_to",
@@ -180,7 +163,7 @@ export const CHECK_CONTRACTS = Object.freeze({
 });
 
 export const CHECK_BINDINGS = Object.freeze({
-  ck_positive_version: Object.freeze(["user_account", "password_credential", "federated_identity", "authentication_challenge", "auth_session", "refresh_token_generation", "jwt_signing_key", "tenant_invitation", "access_tenant", "tenant_member", "role", "permission", "tenant_member_role", "role_permission", "api_credential", "api_credential_scope", "email_otp_challenge", "file_upload", "file_scan_policy", "file_scan_requirement", "file_object", "document_template", "document_template_translation", "consumer_document", "document_version", "document_access_grant", "notification_provider", "notification_delivery", "notification_route", "notification_template", "notification_template_content", "webhook_endpoint", "webhook_endpoint_revision", "webhook_signing_secret", "webhook_subscription", "webhook_delivery", "audit_chain", "security_alert"]),
+  ck_positive_version: Object.freeze(["user_account", "password_credential", "federated_identity", "authentication_challenge", "auth_session", "refresh_token_generation", "jwt_signing_key", "tenant_invitation", "access_tenant", "tenant_member", "role", "permission", "tenant_member_role", "role_permission", "api_credential", "api_credential_scope", "email_otp_challenge", "file_upload", "file_scan_policy", "file_scan_requirement", "file_object", "document_template", "document_template_translation", "consumer_document", "document_version", "document_access_grant", "notification_provider", "notification_delivery", "notification_route", "notification_template", "notification_template_content", "webhook_endpoint", "webhook_signing_secret", "webhook_delivery", "audit_chain", "security_alert"]),
   ck_user_account_shape: Object.freeze(["user_account"]),
   ck_user_account_credential: Object.freeze(["user_account"]),
   ck_password_argon2: Object.freeze(["password_credential"]),
@@ -220,7 +203,7 @@ export const CHECK_BINDINGS = Object.freeze({
   ck_console_resource_shape: Object.freeze(["console_resource"]),
   ck_console_resource_status: Object.freeze(["console_resource"]),
   ck_console_resource_version: Object.freeze(["console_resource"]),
-  ck_effective_range: Object.freeze(["tenant_member_role", "api_credential_scope", "file_scan_policy", "webhook_signing_secret", "webhook_subscription"]),
+  ck_effective_range: Object.freeze(["tenant_member_role", "api_credential_scope", "file_scan_policy"]),
   ck_api_credential_verifier: Object.freeze(["api_credential"]),
   ck_otp_email_tuple: Object.freeze(["email_otp_challenge"]),
   ck_otp_active_slot: Object.freeze(["email_otp_challenge"]),
@@ -247,15 +230,6 @@ export const CHECK_BINDINGS = Object.freeze({
   ck_notify_delivery_retry: Object.freeze(["notification_delivery"]),
   ck_notify_attempt_times: Object.freeze(["notification_attempt"]),
   ck_notify_attempt_identity: Object.freeze(["notification_attempt"]),
-  ck_webhook_url_tuple: Object.freeze(["webhook_endpoint_revision"]),
-  ck_webhook_revision_slot: Object.freeze(["webhook_endpoint_revision"]),
-  ck_webhook_secret_slot: Object.freeze(["webhook_signing_secret"]),
-  ck_webhook_sub_slot: Object.freeze(["webhook_subscription"]),
-  ck_webhook_event_source: Object.freeze(["webhook_event"]),
-  ck_webhook_payload_storage: Object.freeze(["webhook_event"]),
-  ck_webhook_delivery_generation: Object.freeze(["webhook_delivery"]),
-  ck_webhook_delivery_lease: Object.freeze(["webhook_delivery"]),
-  ck_webhook_attempt_times: Object.freeze(["webhook_attempt"]),
   ck_audit_sequence: Object.freeze(["audit_event"]),
   ck_audit_attr_value: Object.freeze(["audit_event_attr"]),
   ck_audit_range: Object.freeze(["audit_integrity_point"]),

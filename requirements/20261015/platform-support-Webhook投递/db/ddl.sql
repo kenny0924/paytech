@@ -1,0 +1,5 @@
+-- 本文件仅为注释索引，不含可执行语句。
+-- 唯一执行来源：platform-support-service/docs/database/sql/changes/2026-10-15-webhook-delivery.sql
+--   目标库：Platform Support 库（本机 mor_platform）；内容：5 条 CREATE TABLE（t_webhook_endpoint、t_webhook_signing_secret、
+--   t_webhook_event、t_webhook_delivery、t_webhook_attempt）；回退见该文件头部。
+-- 完整快照：platform-support-service/docs/database/sql/platform-support-schema.sql 末尾同名 5 张表。

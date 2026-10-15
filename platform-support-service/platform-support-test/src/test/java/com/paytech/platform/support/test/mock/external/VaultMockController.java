@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.paytech.platform.support.test.mocker.external.ChannelAccountVaultMocker;
 import com.paytech.platform.support.test.mocker.external.LoginEmailVaultMocker;
 import com.paytech.platform.support.test.notification.NotificationVaultMock;
+import com.paytech.platform.support.test.webhook.WebhookVaultMock;
 import com.paytech.vault.client.internal.VaultHttpService;
 import com.paytech.vault.client.internal.wire.ProtectRequest;
 import com.paytech.vault.client.internal.wire.ProtectResponse;
@@ -28,15 +29,22 @@ public class VaultMockController implements VaultHttpService {
     private static final String NOTIFICATION_DELIVERY = "NOTIFICATION_DELIVERY";
     private static final String CREDENTIAL = "NOTIFICATION_PROVIDER_CREDENTIAL_V1";
     private static final String PROVIDER_SETUP = "NOTIFICATION_PROVIDER_SETUP";
+    private static final String WEBHOOK_SIGNING = "WEBHOOK_SIGNING";
+    private static final String WEBHOOK_SECRET = "WEBHOOK_SIGNING_SECRET_V1";
 
     private final NotificationVaultMock notification;
     private final LoginEmailVaultMocker login;
     private final ChannelAccountVaultMocker channelAccount;
+    private final WebhookVaultMock webhook;
 
     /** 只接受本服务的邮箱稳定 Token 与发送账号密钥 REFERENCE 用途，其他用途作为意外请求失败。 */
     @Override
     public ProtectResponse protect(String caller, String key, String requestId, ProtectRequest request) {
         require(CALLER.equals(caller));
+        if (WEBHOOK_SIGNING.equals(request.purpose())) {
+            require(WEBHOOK_SECRET.equals(request.dataType()) && "REFERENCE".equals(request.tokenMode()));
+            return new ProtectResponse(webhook.protect(request.value()));
+        }
         if (PROVIDER_SETUP.equals(request.purpose())) {
             require(CREDENTIAL.equals(request.dataType()) && "REFERENCE".equals(request.tokenMode()));
             return new ProtectResponse(notification.protectCredential(key, request.value()));
@@ -58,6 +66,7 @@ public class VaultMockController implements VaultHttpService {
             case LOGIN -> new RevealResponse(login.reveal(request.token()));
             case CHANNEL_EXECUTION -> new RevealResponse(channelAccount.reveal(request.token()));
             case NOTIFICATION_DELIVERY -> new RevealResponse(notification.revealCredential(request.token()));
+            case WEBHOOK_SIGNING -> new RevealResponse(webhook.reveal(request.token()));
             default -> throw new IllegalStateException("Vault Reveal 用途不匹配");
         };
     }

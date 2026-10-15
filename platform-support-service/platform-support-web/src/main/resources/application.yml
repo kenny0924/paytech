@@ -115,6 +115,7 @@ web:
       - /tenant-projections
       - /external-api-admin
       - /notification-admin
+      - /webhook-admin
 
 
 client:
@@ -171,5 +172,26 @@ notification:
     read-timeout: 5s
   # 内部 HTTP 调用方白名单：服务名 → 可用普通邮件模板编码。过渡信任，X-Caller-Service 可伪造，部署须限制私网访问。
   # 默认为空，全部拒绝；例如 payment-orchestration-service: [PAYMENT_REFUND_SUCCEEDED_EMAIL]
+  http:
+    callers: {}
+
+# Client Webhook 投递：内部 HTTP 受理（POST /webhooks/v1/events）、补偿投递与 Operations 管理（/webhook-admin/v1）。
+# 启用时须同时开启 compensation.enabled，并在 Vault 登记 WEBHOOK_SIGNING_SECRET_V1 与 WEBHOOK_SIGNING 用途的 Protect/Reveal 规则。
+webhook:
+  enabled: false
+  # worker-id: 通知与人工认证都关闭时必须显式分配 0..31，不提供生产默认值。
+  maximum-attempts: 10
+  connect-timeout: 5s
+  response-timeout: 10s
+  # 轮换时旧密钥继续参与签名的时长；“立即作废”不受此影响。
+  secret-grace-period: 1h
+  maximum-endpoints-per-client: 5
+  # 生产只允许 https，且不放行任何内网网段；不要在生产配置中修改这两项。
+  allowed-schemes: [https]
+  trusted-networks: []
+  management-lock-wait-time: 500ms
+  management-lock-lease-time: 30s
+  # 内部 HTTP 调用方白名单：服务名 → 可提交的事件类型。过渡信任，X-Caller-Service 可伪造，部署须限制私网访问。
+  # 默认为空，全部拒绝；例如 commerce-service: [order.paid, refund.succeeded]
   http:
     callers: {}

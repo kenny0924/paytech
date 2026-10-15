@@ -121,7 +121,7 @@ Client & Contract 的 Party Identity 首期只注册两个 Vault Data Type：`EM
 | PIN、PIN Block | 不进入 Code-MoR |
 | 支付卡有效期 | 由 Channel Token 和 Channel 侧支付工具生命周期管理 |
 | Channel Card Token 的 Detokenization 能力 | 由 Channel 管理；Payment 只保存 Channel Token 及批准的最小卡片描述元数据，后者仍按内部分类保护 |
-| Provider/API/Webhook Secret、私钥、证书私钥、数据库密码 | 默认 Secrets Manager/KMS；Payment 的 CHANNEL_ACCOUNT_CONFIG_V1 按顶部专项例外执行，其他业务库只保存 `secret_ref` |
+| Provider/API/Webhook Secret、私钥、证书私钥、数据库密码 | 默认 Secrets Manager/KMS；Payment 的 CHANNEL_ACCOUNT_CONFIG_V1 按顶部专项例外执行；Webhook 签名密钥按 [2026-10-15 决定](./decisions/2026-10-15-platform-webhook-delivery.md) 存 Vault（`WEBHOOK_SIGNING_SECRET_V1`）；其他业务库只保存 `secret_ref` |
 | 用户登录密码或可恢复密码 | 不进入 Vault、事件、日志或文件；内部 Operations 账号仅由 Platform Support 自有认证域保存批准的不可逆自适应校验值，Client/Partner/Consumer 的认证提供方仍待设计；任何可恢复密码均禁止保存 |
 | KMS 根密钥、KEK、HMAC Key 或明文 DEK | KMS/HSM；当前 Vault 数据库只保存非敏感 `kms_key_ref` 和 Wrapped DEK，不保存 Key Version 表/字段 |
 | KYC/KYB 文件、付款证据、合同文件和其他文件正文 | 加密对象存储；业务库保存 Platform `file_id + content_hash` |
@@ -764,7 +764,7 @@ Vault MVP 不建设通用 Inbox/Outbox。自身可靠后台任务统一使用 `c
 | Payment Orchestration | 原则上不托管卡或 Channel Token；确有非卡类 PII 时必须单独审批 Data Type/Field | Channel Token、Scheme、最多八位 BIN、Last4、Issuer Country、Channel Fingerprint 和支付事实 | PAN/CVV/磁道/PIN/卡有效期禁止进入 Vault；Channel Secret 进入 Secrets Manager |
 | Risk & Compliance | Due Diligence/KYC/KYB 等另有批准的敏感快照、Feature/Screening 明细 | Case/Assessment/Decision；同步接收的 Consumer Stable Token、Network Evidence 原值与批准维度；文件引用 | Consumer Profile Token 不进入 Risk；Consumer/Network Blind Index/Key Version/device identifier 均删除；同步受限输入不得进入 MQ、外部 API、普通日志或 BCR |
 | Finance | Tax Registration、Buyer Tax ID、Cash/Beneficiary Bank Account、IBAN、Beneficiary Name | Tax/Ledger/Balance/Settlement/Reconciliation 事实、必需 Token 与专项文档已证明需要的元数据、Last4/Fingerprint | Journal 不保存敏感明文；银行账号 Reveal 仅限受控财务 Purpose 和审批/工单场景 |
-| Platform Support | Email、Notification Address、Webhook URL、受限 Audit Attribute 等允许的非 Secret PII | IAM/Permission、Notification/Webhook/File/Audit 事实、必需 Token 与专项文档已证明需要的元数据 | API Key/OTP 只保存 Hash/HMAC；Webhook/API/Provider Secret 和私钥进入 Secrets Manager；文件正文进入对象存储 |
+| Platform Support | Email、Notification Address、受限 Audit Attribute 等允许的非 Secret PII | IAM/Permission、Notification/Webhook/File/Audit 事实、必需 Token 与专项文档已证明需要的元数据 | API Key/OTP 只保存 Hash/HMAC；API/Provider Secret 和私钥进入 Secrets Manager；文件正文进入对象存储；按 [2026-10-15 决定](./decisions/2026-10-15-platform-webhook-delivery.md)，Webhook 签名密钥存 Vault、Webhook URL 明文保存 |
 
 迁移六个数据库书面模型时，只有 Vault 实际托管的字段才从 `*_ciphertext + key_ref` 改为 Token；Blind Index/Key Version、Masked Value、Record Version 和 Metadata Hash 必须分别有真实消费者，不能机械补成完整 Tuple。以下内容不能机械迁移：
 

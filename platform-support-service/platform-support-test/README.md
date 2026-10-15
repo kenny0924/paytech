@@ -60,3 +60,12 @@ JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw -pl platform-support-test -am \
 ```
 
 真实 Provider、Vault Purpose 授权、强服务身份均不属于此 Mock 验证。实际结果见[当前台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-delivery-domain-plan-20260920)。
+
+## Client Webhook
+
+前置：在本机 `mor_platform` 手工执行 `docs/database/sql/changes/2026-10-15-webhook-delivery.sql`（五张 Webhook 表，测试不建表）。
+
+- 入口测试：`WebhookEventApiTest`（内部受理）、`WebhookDeliveryHandlerTest`（补偿 Handler，首次执行由提交后唤醒、后续经正式 Scanner）、`WebhookEndpointManagementTest` 与 `WebhookDeliveryManagementTest`（Operations 管理）。
+- 外部依赖：Client 接收端是独立 Mock HTTP 服务的 `/webhook-receiver/{name}`（`WebhookReceiverMocker` 按接收端配置状态码、延迟或断连）；签名密钥经正式 VaultClient 访问 `WebhookVaultMock`。验签由测试侧 `WebhookSignatures` 独立计算。
+- 数据：五张 Webhook 表由 `PlatformDataCleaner` 整表回收；`WebhookFixture` 只清理保留段租户（`88000000000007100x`）与 `WEBHOOK_DELIVERY` 补偿任务。测试配置把尝试上限降为 3、超时降为 1 秒，并只在本机放行 `http` 与 `127.0.0.1/32`。
+- 与其他 Platform 测试共用同一本地库，必须串行运行。

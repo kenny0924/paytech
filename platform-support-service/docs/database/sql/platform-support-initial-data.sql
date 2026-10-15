@@ -1956,6 +1956,28 @@ INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,cap
 COMMIT;
 
 -- ---------------------------------------------------------------------------
+-- Client Webhook management permissions (2026-10-15, requirements/20261015/platform-support-Webhook投递).
+-- Self-contained block: on an environment already initialized by the statements above, apply ONLY this block.
+-- Dormant like earlier Operations features: permissions ACTIVE, administrator grants REVOKED. Console menus, buttons
+-- and Gateway routes belong to the later Operations page requirement (reserved IDs 900000000000090300+).
+-- Rows: permission 2, role_permission 2 (4). Rollback: delete the rows by the 9000000000000901xx/902xx IDs below.
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @webhook_admin_time = UTC_TIMESTAMP(6);
+SET @webhook_admin_role_id = 900000000000000510;
+
+INSERT INTO t_permission (permission_id,permission_code,resource_type,action_code,risk_level,status,version,create_time,update_time) VALUES
+  (900000000000090101, 'WEBHOOK_READ', 'WEBHOOK', 'READ', 'LOW', 'ACTIVE', 1, @webhook_admin_time, @webhook_admin_time),
+  (900000000000090102, 'WEBHOOK_MANAGE', 'WEBHOOK', 'MANAGE', 'HIGH', 'ACTIVE', 1, @webhook_admin_time, @webhook_admin_time);
+
+INSERT INTO t_role_permission (role_permission_id,role_id,permission_id,status,version,create_time,update_time) VALUES
+  (900000000000090201, @webhook_admin_role_id, 900000000000090101, 'REVOKED', 1, @webhook_admin_time, @webhook_admin_time),
+  (900000000000090202, @webhook_admin_role_id, 900000000000090102, 'REVOKED', 1, @webhook_admin_time, @webhook_admin_time);
+
+COMMIT;
+
+-- ---------------------------------------------------------------------------
 -- Operations notification provider maintenance (2026-10-15, requirements/20261015/operations-console-通知发送账号维护).
 -- Self-contained block: on an environment already initialized by the statements above (including the
 -- notification management block), apply ONLY this block. Requires the t_notification_provider account columns

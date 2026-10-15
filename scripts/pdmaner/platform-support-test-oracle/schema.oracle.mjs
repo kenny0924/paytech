@@ -17,8 +17,7 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_notification_template", "t_notification_template_content", "t_notification_provider", "t_notification_route",
   ]),
   webhook: Object.freeze([
-    "t_webhook_endpoint", "t_webhook_endpoint_revision", "t_webhook_endpoint_verification",
-    "t_webhook_signing_secret", "t_webhook_subscription", "t_webhook_event",
+    "t_webhook_endpoint", "t_webhook_signing_secret", "t_webhook_event",
     "t_webhook_delivery", "t_webhook_attempt",
   ]),
   audit_security: Object.freeze([
@@ -42,14 +41,14 @@ export const EXPECTED_GROUP_SIZES = Object.freeze({
   identity_access: 19,
   file_document: 12,
   notification: 7,
-  webhook: 8,
+  webhook: 5,
   audit_security: 8,
   gateway_control: 6,
   reliability: 2,
   integration: 10,
 });
 
-export const EXPECTED_TABLE_TOTAL = 72;
+export const EXPECTED_TABLE_TOTAL = 69;
 export const APPROVED_TABLES = Object.freeze(Object.values(APPROVED_TABLE_GROUPS).flat());
 
 export const APPROVED_DIAGRAMS = Object.freeze({
@@ -262,7 +261,8 @@ export const REMOVED_PLATFORM_TABLES = Object.freeze([
   "t_document_state_change", "t_notification_provider_ver", "t_notification_recipient",
   "t_notification_message", "t_notification_template_ver", "t_notify_delivery_state_change",
   "t_webhook_endpoint_ver", "t_webhook_secret_ver", "t_webhook_sub_state_change",
-  "t_webhook_replay", "t_webhook_delivery_state_change", "t_audit_archive_batch",
+  "t_webhook_replay", "t_webhook_delivery_state_change", "t_webhook_endpoint_revision",
+  "t_webhook_endpoint_verification", "t_webhook_subscription", "t_audit_archive_batch",
   "t_gateway_policy", "t_gateway_policy_ver",
   "t_gateway_policy_binding", "t_gateway_policy_binding_ver", "t_gateway_selector",
   "t_gateway_release", "t_gateway_release_item", "t_gateway_release_approval",
@@ -309,9 +309,6 @@ export const EXPECTED_HASH_FIELDS = Object.freeze([
   "file_object.content_hash",
   "security_event.event_hash",
   "security_event.source_payload_hash",
-  "webhook_attempt.request_hash",
-  "webhook_endpoint_verification.challenge_hash",
-  "webhook_endpoint_verification.resolved_ip_hash",
   "webhook_event.payload_hash",
   "webhook_event.source_payload_hash",
 ]);
@@ -341,12 +338,11 @@ export const REQUIRED_FIELDS = Object.freeze({
   t_notification_request: Object.freeze(["tenant_id", "source_system", "source_event_key", "notification_template_id", "notification_route_id", "default_locale", "default_parameters"]),
   t_notification_delivery: Object.freeze(["request_id", "address_vault_token", "locale", "parameters", "status", "attempt_count", "next_retry_time", "version"]),
   t_notification_attempt: Object.freeze(["delivery_id", "provider_id", "provider_request_no", "provider_message_id", "status", "response_code", "resolution_source", "resolution_code", "started_time", "finished_time", "resolved_time", "update_time"]),
-  t_webhook_endpoint: Object.freeze(["tenant_id", "endpoint_code", "status", "version"]),
-  t_webhook_endpoint_revision: Object.freeze(["endpoint_id", "revision_no", "url_vault_token", "url_masked", "host_name", "status", "active_slot", "version"]),
-  t_webhook_signing_secret: Object.freeze(["endpoint_id", "rotation_no", "secret_ref", "secret_fingerprint", "status", "signing_slot", "version"]),
-  t_webhook_event: Object.freeze(["tenant_id", "source_payload_hash", "payload_storage_mode", "payload_inline", "payload_vault_token", "payload_schema_version", "payload_hash"]),
-  t_webhook_delivery: Object.freeze(["webhook_event_id", "tenant_id", "endpoint_id", "endpoint_revision_id", "subscription_id", "event_type", "payload_schema_version", "generation_no", "replay_of_delivery_id", "requested_by", "replay_reason_code", "lease_owner", "lease_until", "fencing_token", "version"]),
-  t_webhook_attempt: Object.freeze(["delivery_id", "tenant_id", "endpoint_id", "signing_secret_id", "request_hash", "result"]),
+  t_webhook_endpoint: Object.freeze(["tenant_id", "url", "event_types", "status", "version"]),
+  t_webhook_signing_secret: Object.freeze(["endpoint_id", "rotation_no", "secret_vault_token", "status", "signing_slot", "valid_until", "version"]),
+  t_webhook_event: Object.freeze(["tenant_id", "source_system", "source_event_key", "event_type", "payload_schema_version", "source_version", "source_payload_hash", "payload_hash", "payload"]),
+  t_webhook_delivery: Object.freeze(["webhook_event_id", "tenant_id", "endpoint_id", "event_type", "status", "attempt_count", "replay_of_delivery_id", "requested_by", "version"]),
+  t_webhook_attempt: Object.freeze(["delivery_id", "attempt_no", "request_url", "signing_secret_id", "grace_secret_id", "status", "started_time"]),
   t_audit_event_attr: Object.freeze(["value_text", "value_vault_token", "value_masked", "value_hash", "classification"]),
   t_compensation_event: Object.freeze(["lock_owner", "lock_until", "lock_version", "execute_status", "sub_event_type"]),
   t_command_idempotency: Object.freeze(["caller_scope", "operation_type", "idempotency_key", "request_hash", "response_ref", "status"]),
@@ -365,11 +361,11 @@ export const FORBIDDEN_FIELDS_BY_TABLE = Object.freeze({
   t_notification_request: Object.freeze(["client_id", "scope_key", "recipient_set_hash", "notification_type", "medium", "send_mode", "source_payload_hash"]),
   t_notification_delivery: Object.freeze(["recipient_id", "route_hash", "recipient_hash", "content_hash", "tenant_id", "lease_owner", "lease_until", "fencing_token", "address_blind_index", "address_masked", "message_vault_token"]),
   t_notification_attempt: Object.freeze(["provider_ver_id", "response_hash", "provider_request_key", "provider_code", "attempt_no", "request_hash", "result"]),
-  t_webhook_endpoint: Object.freeze(["client_id", "current_ver_id"]),
-  t_webhook_endpoint_revision: Object.freeze(["content_hash", "url_blind_index", "vault_record_version", "vault_metadata_hash"]),
-  t_webhook_event: Object.freeze(["client_id", "vault_record_version", "vault_metadata_hash"]),
-  t_webhook_delivery: Object.freeze(["client_id", "replay_request_id"]),
-  t_webhook_attempt: Object.freeze(["secret_ver_id", "response_hash"]),
+  t_webhook_endpoint: Object.freeze(["client_id", "current_ver_id", "endpoint_code", "url_vault_token", "url_masked"]),
+  t_webhook_signing_secret: Object.freeze(["secret_ref", "secret_fingerprint", "effective_from"]),
+  t_webhook_event: Object.freeze(["client_id", "payload_storage_mode", "payload_vault_token", "vault_record_version", "vault_metadata_hash"]),
+  t_webhook_delivery: Object.freeze(["client_id", "replay_request_id", "generation_no", "next_retry_time", "lease_owner", "lease_until", "fencing_token"]),
+  t_webhook_attempt: Object.freeze(["secret_ver_id", "response_hash", "request_hash", "fencing_token"]),
   t_audit_event_attr: Object.freeze(["value_blind_index", "value_blind_index_key_version", "vault_record_version", "vault_metadata_hash"]),
   t_compensation_event: Object.freeze(["version"]),
   t_command_idempotency: Object.freeze(["version", "response_hash"]),
@@ -399,13 +395,6 @@ export const REQUIRED_COMPOSITE_FKS = Object.freeze([
   Object.freeze({ name: "fk_document_grant_version", childTable: "t_document_access_grant", childFields: Object.freeze(["document_ver_id", "document_id"]), parentTable: "t_document_version", parentFields: Object.freeze(["document_ver_id", "document_id"]) }),
   Object.freeze({ name: "fk_document_grant_subject", childTable: "t_document_access_grant", childFields: Object.freeze(["document_id", "tenant_id", "order_id", "consumer_ref_hash"]), parentTable: "t_consumer_document", parentFields: Object.freeze(["document_id", "tenant_id", "order_id", "consumer_ref_hash"]) }),
   Object.freeze({ name: "fk_audit_integrity_file", childTable: "t_audit_integrity_point", childFields: Object.freeze(["file_id", "content_hash"]), parentTable: "t_file_object", parentFields: Object.freeze(["file_id", "content_hash"]) }),
-  Object.freeze({ name: "fk_webhook_delivery_event", childTable: "t_webhook_delivery", childFields: Object.freeze(["webhook_event_id", "tenant_id", "event_type", "payload_schema_version"]), parentTable: "t_webhook_event", parentFields: Object.freeze(["event_id", "tenant_id", "event_type", "payload_schema_version"]) }),
-  Object.freeze({ name: "fk_webhook_delivery_endpoint", childTable: "t_webhook_delivery", childFields: Object.freeze(["endpoint_id", "tenant_id"]), parentTable: "t_webhook_endpoint", parentFields: Object.freeze(["endpoint_id", "tenant_id"]) }),
-  Object.freeze({ name: "fk_webhook_delivery_revision", childTable: "t_webhook_delivery", childFields: Object.freeze(["endpoint_revision_id", "endpoint_id"]), parentTable: "t_webhook_endpoint_revision", parentFields: Object.freeze(["endpoint_revision_id", "endpoint_id"]) }),
-  Object.freeze({ name: "fk_webhook_delivery_sub", childTable: "t_webhook_delivery", childFields: Object.freeze(["subscription_id", "endpoint_id", "event_type", "payload_schema_version"]), parentTable: "t_webhook_subscription", parentFields: Object.freeze(["subscription_id", "endpoint_id", "event_type", "payload_schema_version"]) }),
-  Object.freeze({ name: "fk_webhook_delivery_replay", childTable: "t_webhook_delivery", childFields: Object.freeze(["replay_of_delivery_id", "tenant_id", "endpoint_id"]), parentTable: "t_webhook_delivery", parentFields: Object.freeze(["delivery_id", "tenant_id", "endpoint_id"]) }),
-  Object.freeze({ name: "fk_webhook_attempt_delivery", childTable: "t_webhook_attempt", childFields: Object.freeze(["delivery_id", "tenant_id", "endpoint_id"]), parentTable: "t_webhook_delivery", parentFields: Object.freeze(["delivery_id", "tenant_id", "endpoint_id"]) }),
-  Object.freeze({ name: "fk_webhook_attempt_secret", childTable: "t_webhook_attempt", childFields: Object.freeze(["signing_secret_id", "endpoint_id"]), parentTable: "t_webhook_signing_secret", parentFields: Object.freeze(["signing_secret_id", "endpoint_id"]) }),
 ]);
 
 export const APPROVED_SECRET_FIELD_NAMES = Object.freeze([
@@ -421,8 +410,8 @@ export function isForbiddenSecretField(fieldName) {
 }
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_CHECK_COUNT = 83;
-export const EXPECTED_CHECK_POLICY_DIGEST = "026f425c4a3ce14250746244d0b120d6e9e91e13eaa276aabfd710c6381036f1";
+export const EXPECTED_CHECK_COUNT = 74;
+export const EXPECTED_CHECK_POLICY_DIGEST = "0cb224915a3f6756beff312da2548876cdb3982d827e7e727865cdbf5d6902c0";
 
 export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
   ck_federated_provider: Object.freeze({
@@ -513,14 +502,6 @@ export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
     expression: "provider_request_no<>''",
     tables: Object.freeze(["notification_attempt"]),
   }),
-  ck_webhook_payload_storage: Object.freeze({
-    expression: "(payload_storage_mode='INLINE' AND payload_inline IS NOT NULL AND payload_vault_token IS NULL) OR (payload_storage_mode='VAULT_TOKEN' AND payload_inline IS NULL AND payload_vault_token IS NOT NULL)",
-    tables: Object.freeze(["webhook_event"]),
-  }),
-  ck_webhook_delivery_generation: Object.freeze({
-    expression: "(generation_no=0 AND replay_of_delivery_id IS NULL AND requested_by IS NULL AND replay_reason_code IS NULL) OR (generation_no>0 AND replay_of_delivery_id IS NOT NULL AND replay_of_delivery_id<>delivery_id AND requested_by IS NOT NULL AND replay_reason_code IS NOT NULL)",
-    tables: Object.freeze(["webhook_delivery"]),
-  }),
   ck_audit_attr_value: Object.freeze({
     expression: "(classification IN ('PUBLIC','INTERNAL') AND value_text IS NOT NULL AND value_vault_token IS NULL AND value_masked IS NULL) OR (classification IN ('CONFIDENTIAL','RESTRICTED') AND value_text IS NULL AND value_vault_token IS NOT NULL AND value_masked IS NOT NULL)",
     tables: Object.freeze(["audit_event_attr"]),
@@ -536,14 +517,14 @@ export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
 });
 
 export const EXPECTED_TOTALS = Object.freeze({
-  tables: 72,
-  fields: 875,
-  uniqueIndexes: 120,
-  accessIndexes: 95,
-  relations: 111,
+  tables: 69,
+  fields: 835,
+  uniqueIndexes: 105,
+  accessIndexes: 88,
+  relations: 101,
   oneToOneRelations: 6,
   diagramGroups: 8,
 });
 
-export const EXPECTED_MODEL_DIGEST = "b7b0bf92e23da77a16a39a99d7ddb581dc40ef872a58abc63c9355feeae40247";
-export const EXPECTED_STRUCTURAL_DIGEST = "be83e49b805c6c6f86a29c0efc3bf679c6bd54eb328e6d49aec3ab89a0301a3c";
+export const EXPECTED_MODEL_DIGEST = "b86b9e7adee6d3763c223bc5e83c22933acd2e94f48ff71872bfc66415560954";
+export const EXPECTED_STRUCTURAL_DIGEST = "62954ed62660ed3d3a89dca6f5af9719d613dc54d4b9c24adde346f640f6dfcd";

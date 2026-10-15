@@ -98,6 +98,15 @@ public sealed interface OperationsAuditFact permits OperationsAuditFact.Outcome,
 
         STATUS,
 
+        /** Webhook 端点地址。 */
+        ENDPOINT_URL,
+
+        /** Webhook 订阅事件类型，逗号分隔。 */
+        EVENT_TYPES,
+
+        /** Webhook 当前签名密钥序号；不记录密钥或 Token。 */
+        SIGNING_ROTATION,
+
         /** 外部 API 请求字段组的规范化 SHA-256 摘要。 */
         REQUEST_FIELDS_DIGEST,
 

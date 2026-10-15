@@ -906,3 +906,16 @@ Operations 通知管理（`/notification-admin/v1`，`NotificationManagementApi`
 [建表脚本](../requirements/20260920/platform-support-Delivery领域规划/db/notification-create.sql)、
 [测试说明](platform-support-test/README.md#notification-普通-email)及
 [实际状态](../agent-docs/CURRENT_IMPLEMENTATION.md#platform-delivery-domain-plan-20260920)分别维护对应事实。
+
+## Delivery / Client Webhook
+
+来源系统在本地事务提交后经私网调用 `POST /platform-support/webhooks/v1/events`（`platform-support-api` 的 `WebhookEventApi`）提交冻结的公开 Envelope；以 `X-Caller-Service` 识别调用方并按 `webhook.http.callers`（服务名 → 可提交的事件类型，默认空即全部拒绝）放行，`source_system` 即调用方服务名。这是与通知相同的过渡信任，部署必须限制私网访问；Body 上限 8 KiB，不经过 Gateway。
+Platform 重新按 RFC 8785 计算 `data.object` 与 Envelope 摘要并与请求核对；同一 `(Client, 调用方, eventId)` 内容相同返回 204，内容不同返回 409。受理事务按当前 ACTIVE 订阅生成投递并登记 `WEBHOOK_DELIVERY` 补偿任务，提交后执行。
+投递每次执行一次 HTTP：签名 Header `Code-MoR-Signature: t=…,v1=…`（轮换宽限期内带两个 `v1`），只连接 DNS 解析后校验为公网的地址、不跟随重定向；2xx 成功，其余按补偿退避重试，`webhook.maximum-attempts`（默认 10）用完记 DEAD。
+Operations 管理（`/webhook-admin/v1`，`WebhookManagementApi`，9 个接口）维护端点地址与订阅、轮换签名密钥（明文只返回一次）、发送测试事件、查询投递并 Replay；需同时开启 `operations.authentication.enabled` 与 `webhook.enabled`，整个前缀只记元数据日志。
+正式默认 `webhook.enabled=false`；开启需 `compensation.enabled=true`，并在 Vault 登记 `WEBHOOK_SIGNING_SECRET_V1` 与 `platform-support-service` 的 `WEBHOOK_SIGNING` PROTECT/REVEAL 规则；通知与人工认证都关闭时须配置 `webhook.worker-id`。`allowed-schemes` 与 `trusted-networks` 只在本机测试配置放开。
+
+[需求](../requirements/20261015/platform-support-Webhook投递/requirement.md)、
+[技术方案](../requirements/20261015/platform-support-Webhook投递/technique.md)、
+[决定](../agent-docs/decisions/2026-10-15-platform-webhook-delivery.md)、
+[建表脚本](docs/database/sql/changes/2026-10-15-webhook-delivery.sql)分别维护对应事实。

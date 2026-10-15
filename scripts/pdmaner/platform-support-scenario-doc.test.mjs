@@ -357,19 +357,16 @@ function assertDocumentVersionRecovery(rows) {
 
 function assertDirectWebhookReplay(rows) {
   const original = findScenarioRecord(rows, "t_webhook_delivery", (record) => (
-    record.get("generation_no") === "0"
-      && record.get("replay_of_delivery_id") === "NULL"
+    record.get("replay_of_delivery_id") === "NULL"
       && record.get("requested_by") === "NULL"
-      && record.get("replay_reason_code") === "NULL"
-  ), "场景缺少原始 Webhook Delivery generation 0");
+  ), "场景缺少原始 Webhook Delivery");
   findScenarioRecord(rows, "t_webhook_delivery", (record) => (
-    record.get("generation_no") === "1"
-      && record.get("replay_of_delivery_id") === original.get("delivery_id")
+    record.get("replay_of_delivery_id") === original.get("delivery_id")
       && isPresent(record.get("requested_by"))
-      && isPresent(record.get("replay_reason_code"))
+      && record.get("webhook_event_id") === original.get("webhook_event_id")
       && record.get("tenant_id") === original.get("tenant_id")
       && record.get("endpoint_id") === original.get("endpoint_id")
-  ), "Replay 必须直接创建同 Tenant/Endpoint 的新 Webhook Delivery");
+  ), "Replay 必须直接创建同 Event/Tenant/Endpoint 的新 Webhook Delivery");
 }
 
 function assertContextClaimMatrices(rows) {
@@ -761,7 +758,7 @@ test("Platform Support scenarios demonstrate approved failure and recovery paths
     "AVAILABLE → QUARANTINED", "Credit Note", "supersedes_version_id",
     "旧 ACTIVE Version", "原请求号查询", "UNKNOWN", "Replay",
     "replay_of_delivery_id", "DNS", "Challenge", "fencing_token",
-    "审计链不匹配", "INLINE", "VAULT_TOKEN", "lock_version",
+    "审计链不匹配", "规范字节", "宽限期", "lock_version",
     "Operations 连续 5 次 Password 失败锁定 30 分钟",
     "CUSTOMER Email 验证与 Password Reset",
     "Code/PKCE/state/nonce", "密封 Pending Binding Proof", "不自动绑定",
@@ -819,8 +816,7 @@ test("Platform Support scenarios freeze Tenant ownership and simplified lifecycl
   assert.deepEqual(apiCredentialTenantViolations(rows), []);
   for (const table of [
     "t_api_credential", "t_consumer_document", "t_notification_request",
-    "t_webhook_endpoint", "t_webhook_event",
-    "t_webhook_delivery", "t_webhook_attempt",
+    "t_webhook_endpoint", "t_webhook_event", "t_webhook_delivery",
   ]) {
     assert.ok(assignmentValues(rows, table, "tenant_id").some(isPresent), `${table} 缺少 Tenant 归属`);
   }

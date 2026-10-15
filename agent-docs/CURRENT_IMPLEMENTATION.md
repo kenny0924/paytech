@@ -13,6 +13,14 @@
 
 <a id="finance-accounting-kernel-20261015"></a>
 
+<a id="platform-webhook-delivery-20261015"></a>
+## Platform Client Webhook 投递（2026-10-15，阶段 5 本地完成，未提交、未部署）
+
+- **范围：** 内部受理 `POST /platform-support/webhooks/v1/events`（过渡信任 `X-Caller-Service` + `webhook.http.callers`）、补偿 Handler 签名投递（SSRF 防护、等比退避、上限后 DEAD）、Operations 管理 `/webhook-admin/v1` 9 个接口（端点、订阅、密钥轮换 1 小时双签宽限、测试事件、投递查询与 Replay）。PDManer 8 表收敛为 5 表；决定见 [2026-10-15 Platform Webhook 投递决定](./decisions/2026-10-15-platform-webhook-delivery.md)，需求与方案见 [requirements/20261015/platform-support-Webhook投递](../requirements/20261015/platform-support-Webhook投递/requirement.md)。
+- **数据库：** 仅本机 `mor_platform` 执行 `docs/database/sql/changes/2026-10-15-webhook-delivery.sql`（5 表、56 字段）；权限注册 DML（`9000000000000901xx/902xx`）未在任何库执行。其他环境未执行。
+- **验证：** JDK 25 本机 `./mvnw -o verify`，Platform 测试 **647/647** 通过，其中 Webhook 4 个入口测试类 28 例；Webhook 相关 119 个类指令 91.91%、行 90.78%、分支 67.63%。全服务聚合 90% 覆盖率门禁仍为既有未达标（本次 Phase A 指令 58%、分支 39%）。PDManer 模型/Schema/场景测试 52/54，2 项为改动前既有失败。
+- **未完成：** Vault 未登记 `WEBHOOK_SIGNING_SECRET_V1` 与 `WEBHOOK_SIGNING` 规则；Commerce 生产端（冻结快照并调用受理接口）、Operations BFF/页面与 Gateway 路由注册、Readiness 的 Webhook 条件均未实现；未提交、未部署。
+
 ## Finance Accounting 账务内核第一批（2026-10-15）
 
 - **Implemented（已本地提交 `e900c34`，未推送、未部署）：** 按[需求](../requirements/20261015/finance-账务内核/requirement.md)与[技术方案](../requirements/20261015/finance-账务内核/technique.md)，`paytech-finance-accounting` 实现 16 张表的 DataObject/Mapper/Repository、会计基础资料（财务主体、OE/FE 单币种账簿与序号行、按身份矩阵校验的统一账户、财务日历、FUTURE 到 OPEN 的期间）、`JournalPostingService` 单账簿过账内核（期间共享锁、账簿序号行排他锁、账户主键升序排他锁，余额版本 CAS），以及人工会计调整 Maker-Checker（RFC 8785 内容摘要 `CODE-MOR:FINANCE:MANUAL_ADJUSTMENT:1`，批准在一个本地事务内生成 MANUAL 指令并过账为 ADJUSTMENT Journal）。复核与期间创建使用 Foundation `AbstractLockProcessor`，Finance 因此新增 Redis、Snowflake 与 RFC 8785 依赖。Client/Partner 余额查询改为 `entityNo` 参数并读取新 Schema（不兼容变更，当时无 Gateway/BFF 消费者）；旧 `finance-balance-query-schema.sql` 已删除，新增 `finance-initial-data.sql`（USD 与 STANDARD 科目表 29 个核心科目）。

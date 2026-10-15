@@ -986,6 +986,8 @@ Cache-Control: no-store
 
 ## 13. Client Webhook
 
+> **2026-10-15：** 13.5 的传输方式（改为 Platform 内部 HTTP 同步受理）与 13.6 的单签名限制（轮换 1 小时宽限内双签）已由 [Platform Webhook 投递决定](../../../agent-docs/decisions/2026-10-15-platform-webhook-delivery.md) 取代；事件内容与摘要合同不变，本节正文由 Commerce 生产端需求同步。
+
 ### 13.1 事件目录
 
 V1 只发送业务结果：

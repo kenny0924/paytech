@@ -39,7 +39,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 - 文件上传、对象存储引用、扫描策略/要求/结果和 Owner 引用；
 - Consumer Document、Document Version、Delivery 与 Access Grant；
 - Notification Provider、Template、Route、Request、Delivery、Attempt、Callback 与 Suppression；
-- Webhook Endpoint、Revision、Verification、Signing Secret 引用、Subscription、Event、Delivery 与 Attempt；
+- Webhook Endpoint（含订阅事件类型）、Signing Secret 引用、Event、Delivery 与 Attempt（2026-10-15 后继合同见第 9 节）；
 - Audit Hash Chain、完整性点、Security Event/Alert；
 - 六类外部 HTTP 入口的受控 Target、Route、Header/Query Allowlist、全局 Guard 参数，以及 Operations/Client/Partner Console Resource；
 - 本服务的 Compensation Event 与 Command Idempotency。
@@ -62,7 +62,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 | 身份、授权与接入 | 18 | `t_user_account`、`t_password_credential`、`t_federated_identity`、`t_access_tenant`、`t_tenant_member`、`t_tenant_invitation`、`t_authentication_challenge`、`t_auth_session`、`t_refresh_token_generation`、`t_jwt_signing_key`、`t_role`、`t_permission`、`t_tenant_member_role`、`t_role_permission`、`t_api_credential`、`t_api_credential_scope`、`t_email_otp_challenge`、`t_email_otp_attempt` |
 | 文件与消费者文档 | 12 | `t_file_upload`、`t_file_scan_policy`、`t_file_scan_requirement`、`t_file_object`、`t_file_owner_ref`、`t_file_scan_result`、`t_document_template`、`t_document_template_translation`、`t_consumer_document`、`t_document_version`、`t_document_delivery`、`t_document_access_grant` |
 | 通知与 Email | 9 | `t_notification_provider`、`t_notification_request`、`t_notification_delivery`、`t_notification_attempt`、`t_notification_route`、`t_notification_provider_callback`、`t_notification_suppression`、`t_notification_template`、`t_notify_template_translation` |
-| Client Webhook | 8 | `t_webhook_endpoint`、`t_webhook_endpoint_revision`、`t_webhook_endpoint_verification`、`t_webhook_signing_secret`、`t_webhook_subscription`、`t_webhook_event`、`t_webhook_delivery`、`t_webhook_attempt` |
+| Client Webhook | 5 | `t_webhook_endpoint`、`t_webhook_signing_secret`、`t_webhook_event`、`t_webhook_delivery`、`t_webhook_attempt`（2026-10-15 由 8 表收敛，见第 9 节） |
 | 审计与安全 | 8 | `t_audit_chain`、`t_audit_event`、`t_audit_event_attr`、`t_audit_integrity_point`、`t_security_event`、`t_security_alert`、`t_security_alert_event`、`t_security_alert_action` |
 | 公共 API 控制面 | 6 | `t_gateway_target`、`t_gateway_route`、`t_gateway_route_header`、`t_gateway_route_query_param`、`t_gateway_guard_rule`、`t_console_resource` |
 | 可靠执行 | 2 | `t_compensation_event`、`t_command_idempotency` |
@@ -86,16 +86,14 @@ Integration 按顶部专项决定管理受控出站 API 定义；除此之外，
 
 - File Scan Policy；
 - Document Template 与 Translation；
-- Notification Provider、Route、Template 与 Translation；
-- Webhook Subscription。
+- Notification Provider、Route、Template 与 Translation。
 
 业务键 + `revision_no` 唯一；ACTIVE 行使用 `active_slot=1` 的条件唯一语义。DRAFT 可编辑，ACTIVE 内容冻结，后续修改创建新 Revision。`version` 是该行并发 CAS，不是业务 Revision 号。
 
 必须独立保留的历史只有：
 
 - Document Version：真实可下载文件、模板/翻译、Renderer、替代链与活动 Slot；
-- Webhook Endpoint Revision：每个 URL Vault Token 的独立验证和历史投递锚点；
-- Webhook Signing Secret：轮换窗口、Secret Ref 与历史 Attempt 验签/签名锚点。
+- Webhook Signing Secret：轮换宽限、Vault 引用与历史 Attempt 签名锚点（端点 URL 不保留修订历史，Attempt 记录实际请求地址）。
 
 ### 4.3 敏感数据
 
@@ -114,7 +112,7 @@ Integration 按顶部专项决定管理受控出站 API 定义；除此之外，
 | 来源投影/认证/业务 OTP | `access_tenant.source_payload_hash`、`authentication_challenge.active_scope_hash`、`email_otp_challenge.subject_ref_hash`、`email_otp_challenge.context_ref_hash`、`email_otp_attempt.ip_hash`、`email_otp_attempt.device_hash` |
 | File/Document | `file_object.content_hash`、`consumer_document.commerce_source_payload_hash`、`consumer_document.fiscal_source_payload_hash`、`consumer_document.consumer_ref_hash`、`document_access_grant.consumer_ref_hash` |
 | Notification | `notification_request.source_payload_hash`、`notification_attempt.request_hash`、`notification_provider_callback.payload_hash` |
-| Webhook | `webhook_endpoint_verification.challenge_hash`、`webhook_endpoint_verification.resolved_ip_hash`、`webhook_event.source_payload_hash`、`webhook_event.payload_hash`、`webhook_attempt.request_hash` |
+| Webhook | `webhook_event.source_payload_hash`、`webhook_event.payload_hash` |
 | Audit/Security | `audit_chain.previous_partition_hash`、`audit_chain.last_event_hash`、`audit_event.previous_event_hash`、`audit_event.attribute_root_hash`、`audit_event.event_hash`、`audit_event.source_payload_hash`、`audit_event.payload_hash`、`audit_event_attr.value_hash`、`audit_integrity_point.start_event_hash`、`audit_integrity_point.end_event_hash`、`audit_integrity_point.root_hash`、`audit_integrity_point.content_hash`、`security_event.source_payload_hash`、`security_event.event_hash` |
 | 可靠执行 | `command_idempotency.request_hash` |
 
@@ -167,8 +165,8 @@ Readiness 不是持久化业务事实。PLT-I13 在一个一致查询快照内�
 1. 精确 Access Tenant 存在，Owner 与 Security 状态都允许；
 2. 至少一个目标 ACTIVE API Credential 未过期；
 3. Credential 拥有调用场景要求的全部 ACTIVE Scope；
-4. 要求 Webhook 时，存在 VERIFIED/ACTIVE Endpoint Revision；
-5. 所需 Event Type/Schema 存在唯一 ACTIVE Subscription；
+4. 要求 Webhook 时，存在订阅了所需事件类型的 ACTIVE Endpoint（Readiness 的 Webhook 条件尚未接入，见第 9 节）；
+5. （2026-10-15 起订阅并入 Endpoint，本条由第 4 条覆盖）；
 6. 缺少必需 Credential/Scope/Webhook 事实返回 `NOT_READY`；Owner 或 Security 限制返回 `RESTRICTED`；歧义、数据不一致、超时或数据库错误返回技术依赖失败，全部 Fail-Closed。
 
 当前只支持 CLIENT Tenant。成功业务响应仅包含 `status=READY | NOT_READY | RESTRICTED`、`checked_at`，并仅在非 READY 时包含稳定 `reason_code`；技术依赖失败不返回业务状态。响应不返回 Tenant/Credential/Webhook 资源 ID，也不存在 Evaluation ID/No、Current Pointer、Requirement Config、Version、Hash、证据快照或 Readiness Changed Event。
@@ -219,13 +217,14 @@ Notification 现行事实、七表字段、事务与恢复规则由 [Delivery �
 
 ## 9. Client Webhook
 
-- Endpoint 是稳定 Tenant Root；URL 每次变化创建新的 Endpoint Revision 与 Verification，不原地修改历史 Revision。
-- Revision 激活前必须执行 DNS、公网地址、Redirect 和 Challenge 验证；私网、Loopback、Link-local、DNS Rebinding 或 Challenge 不匹配全部 Fail-Closed。
-- Signing Secret 只保存 Secrets/KMS Ref 与 Fingerprint。Rotation 以独立历史行和活动 Signing Slot 表达；Attempt 冻结实际 Secret ID。
-- Subscription 以 Endpoint + Event Type + Revision + Payload Schema 定义活动窗口。
-- Event 属于 Tenant，按来源键/版本/Payload Hash 防冲突。对外冻结 Payload 使用 `INLINE` 或专属 `VAULT_TOKEN` 严格 XOR；Retry/Replay 不回源重建。
-- Delivery 显式冻结 `event_type`，并以复合 FK 锁定 Event Tenant/Event Type/Schema、Endpoint Tenant、Endpoint Revision 和 Subscription Endpoint/Event Type/Schema，禁止把某 Event 投递给只订阅另一 Event Type 的 Subscription。原始 `generation_no=0`；人工 Replay 直接创建新 Delivery，以 `replay_of_delivery_id + generation_no + requested_by + reason` 保留来源，不建立单独 Replay Root。
-- Attempt 使用同 Tenant/Endpoint 复合 FK、Lease/Fencing 和 Request Hash。旧 Worker 的 Fencing Token 不能提交新 Lease 的结果；`UNKNOWN` 不能直接宣告失败或成功。
+> **2026-10-15 后继合同：** 以 [Webhook 投递需求](../../requirements/20261015/platform-support-Webhook投递/requirement.md)、[技术方案](../../requirements/20261015/platform-support-Webhook投递/technique.md)与 [Platform Webhook 投递决定](../decisions/2026-10-15-platform-webhook-delivery.md)为准；此前 8 表的 Revision、Verification、Subscription、Payload Vault 存储与 Lease/Fencing 描述只作历史。
+
+- Endpoint 是 CLIENT Tenant 下的稳定根，直接保存 HTTPS URL 明文与订阅事件类型数组；每个 Client 最多 5 个，由 Operations 代配置。
+- 地址保存与每次发送都解析 DNS，全部地址必须是公网地址；私网、Loopback、Link-local、保留地址 Fail-Closed，连接只使用本次校验过的地址，不跟随重定向。不做 Challenge 握手。
+- Signing Secret 值保存在 Vault（`WEBHOOK_SIGNING_SECRET_V1`，REFERENCE），本库只存 Token；同一 Endpoint 只有一把 ACTIVE，轮换后旧密钥默认 1 小时内仍参与签名（双 `v1`），立即作废时宽限为 0。
+- Event 属于 Tenant，按 `(tenant_id, source_event_key, source_system)` 唯一；同来源身份内容不同 Fail-Closed。冻结 Envelope 只以 JSON 保存，发送前重新做 RFC 8785 规范化并核对 `payload_hash`；Retry/Replay 不回源重建。
+- Delivery 按受理时的 ACTIVE 订阅生成；人工 Replay 直接创建新 Delivery，以 `replay_of_delivery_id + requested_by` 保留来源。重试节奏与执行租约由公共 `compensation_event` 承担，投递版本 CAS 保护结果回写。
+- Attempt 在发送前登记为 PROCESSING，冻结请求地址、主签名密钥与宽限密钥；超时、断连按失败重试（Client 按 eventId 去重），不做结果查询。
 
 ## 10. Audit 与 Security
 
@@ -252,8 +251,8 @@ Notification 现行事实、七表字段、事务与恢复规则由 [Delivery �
 | File | PENDING_SCAN → AVAILABLE | 显式重扫可 AVAILABLE → QUARANTINED/UNAVAILABLE |
 | Consumer Document | WAITING_* → READY_TO_RENDER → RENDERING → GENERATED | 同键不同 Payload 进入 CONFLICT；新 Version 失败保留旧 ACTIVE Version |
 | Notification | CREATED → PROCESSING → SENT/DELIVERED | UNKNOWN 先查询 Provider；晚到 COMPLAINT/HARD_BOUNCE 优先 |
-| Webhook Revision | DRAFT → PENDING_VERIFICATION → VERIFIED → ACTIVE | DNS/Challenge/Redirect 不安全则 SUSPENDED，不激活 |
-| Webhook Delivery | CREATED → PROCESSING → SUCCEEDED/RETRY_WAIT/DEAD | Replay 生成号冲突拒绝；旧 Fencing Token 拒绝提交 |
+| Webhook Endpoint | ACTIVE ↔ DISABLED | 地址解析到非公网拒绝保存；停用后未完成的 Delivery 取出时 CANCELLED |
+| Webhook Delivery | CREATED → PROCESSING → SUCCEEDED/RETRY_WAIT/DEAD/CANCELLED | 尝试次数用尽记 DEAD；旧版本 CAS 拒绝提交；Replay 新建 Delivery |
 | Audit Chain | OPEN → SEALED | Hash/序号/签名不匹配拒绝 Seal 并产生 Security Event |
 | Gateway Target/Route | ACTIVE ↔ DISABLED | Target DISABLED 时全部子 Route 从下一份 Snapshot 排除；任何 Target 身份/发现名、Path、Profile/Mode、Permission/Scope 或限制校验失败都拒绝整份候选 Snapshot |
 
@@ -266,7 +265,7 @@ Notification 现行事实、七表字段、事务与恢复规则由 [Delivery �
 | PLT-I03 | Credential JOIN 同一 ACTIVE CLIENT Tenant 并校验 PHC，只返回该 Credential 的 ACTIVE Scope 与可信 `tenant_id + tenant_type=CLIENT + owner_ref_id + credential_id`；调用方不得覆盖 Owner，也不得从 Key Prefix 推断 |
 | PLT-I04 | 普通 Tenant Context 保存/读取 File；入驻时 BFF 用 Account Context + `requested_by_account_id`，Platform 唯一解析 PENDING Tenant/Member/Onboarding Role 后写入受控 File ID、Content Hash 与 Scan Status |
 | PLT-I05 / PLT-I06 | 写入与授权查询统一 Audit，不接收敏感明文 |
-| PLT-I07 / PLT-I08 | 管理 Webhook Subscription，查询 Delivery/Attempt 最终状态 |
+| PLT-I07 / PLT-I08 | 2026-10-15 起：来源系统经内部 HTTP `POST /webhooks/v1/events` 提交冻结事件；Operations 经 `/webhook-admin/v1` 维护 Endpoint/订阅/密钥、查询 Delivery/Attempt 并 Replay |
 | PLT-I09 | 创建 Tenant-owned、可追踪 Notification Request/Delivery |
 | PLT-I10 / PLT-I14 | 幂等生成、授权查询 Receipt/Invoice/Credit Note 及 Version/Correction |
 | PLT-I11 | 创建/验证业务 Email OTP，不作为登录 MFA |
@@ -286,7 +285,7 @@ Platform 可发布 `WebhookDelivered`、`WebhookFailed`、`NotificationSent`、`
 5. 所有外部 HTTP API 进入一个全局 Route Catalog，内部调用绕过 Gateway；Platform 保存六表当前配置，Gateway 保存不可变 Runtime Snapshot，Limiter Counter/Lease 在 Redis。
 6. 同来源键/版本、不同 Payload Hash 是冲突，不得覆盖既有业务事实。
 7. ACTIVE Revision/Version 使用可执行唯一键/Slot；新版本失败不破坏旧活动事实。
-8. Webhook Worker 保留 Lease + 单调 Fencing Token；Notification 使用第 8 节后继合同的公共 Claim/Lease 与 Delivery version CAS。
+8. Webhook 与 Notification 都使用公共补偿任务的 Claim/Lease 与 Delivery version CAS，不另设 Lease/Fencing 列。
 9. File/Audit 完整性只使用有消费者的 Hash；重复 Hash 不取代 File/Document/Event 业务身份。
 10. 所有跨库引用都无物理 FK；所有本库复合所有权关系必须有父唯一键与子左前缀索引，Session/Invitation、Document、Notification 和 Webhook 不得只按单列 ID 形成跨所有者绑定。
 11. Secret/Token/Card 敏感明文不入库、日志、事件、文件或普通响应。

@@ -16816,6 +16816,20 @@
           "id": "80411EEC-981A-5C57-BE86-6AA741675EE7"
         },
         {
+          "defKey": "idx_notify_request_create_time",
+          "defName": "访问索引 create_time",
+          "unique": false,
+          "comment": "支持访问路径：create_time（运营按时间查询发送记录）",
+          "fields": [
+            {
+              "fieldDefKey": "7CCA0CDB-B1C5-595F-AD72-F59DB732A690",
+              "ascOrDesc": "A",
+              "id": "E3EFDEFC-B3A0-5BDD-A3EB-6C4A44F2E0F7"
+            }
+          ],
+          "id": "60647839-0B6B-52F6-88A7-98C90C53D3C9"
+        },
+        {
           "defKey": "idx_notification_tenant_id",
           "defName": "访问索引 tenant_id",
           "unique": false,
@@ -16856,20 +16870,6 @@
             }
           ],
           "id": "F1A927D8-6824-5552-BB6D-5826C4FD7632"
-        },
-        {
-          "defKey": "idx_notify_request_create_time",
-          "defName": "访问索引 create_time",
-          "unique": false,
-          "comment": "支持访问路径：create_time（运营按时间查询发送记录）",
-          "fields": [
-            {
-              "fieldDefKey": "7CCA0CDB-B1C5-595F-AD72-F59DB732A690",
-              "ascOrDesc": "A",
-              "id": "4309CE7D-172D-460F-804B-B0B452791851"
-            }
-          ],
-          "id": "9DC80E1E-3152-4C8A-A181-45A4A5C11D70"
         }
       ],
       "type": "P"
@@ -19334,7 +19334,7 @@
       },
       "defKey": "t_webhook_endpoint",
       "defName": "Webhook 端点",
-      "comment": "保存访问租户内 Webhook Endpoint 的稳定身份与安全状态；URL 历史由端点修订独立保存",
+      "comment": "CLIENT 租户的 Webhook 接收地址与订阅事件类型；每个 Client 最多 5 个，由运营代配置",
       "properties": {
         "logicalTableKey": "webhook_endpoint",
         "compositeForeignKeys": []
@@ -19504,8 +19504,8 @@
       "fields": [
         {
           "defKey": "endpoint_id",
-          "defName": "Webhook 端点标识",
-          "comment": "Webhook 端点的稳定业务标识。",
+          "defName": "端点主键",
+          "comment": "Webhook 端点主键。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -19522,8 +19522,8 @@
         },
         {
           "defKey": "tenant_id",
-          "defName": "访问租户",
-          "comment": "访问租户的稳定业务标识。",
+          "defName": "归属租户",
+          "comment": "端点所属的 CLIENT Access Tenant。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -19539,11 +19539,11 @@
           "id": "4DCB1A83-24D3-562A-B32C-2F91F9CEDA8D"
         },
         {
-          "defKey": "endpoint_code",
-          "defName": "Webhook 端点代码",
-          "comment": "Webhook 端点代码的业务值。",
+          "defKey": "url",
+          "defName": "接收地址",
+          "comment": "Client 的 HTTPS 接收地址明文；不含 userinfo 与 fragment，修改后下一次尝试即使用新地址。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 1000,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -19552,16 +19552,37 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
+          "domain": "",
+          "id": "8F208E03-2648-5521-8232-0DBB284B8902"
+        },
+        {
+          "defKey": "event_types",
+          "defName": "订阅事件类型",
+          "comment": "订阅的公开事件类型字符串数组，非空且不重复；取消订阅后尚未完成的投递被取消。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "A074F831-919A-5D10-A3A6-34CF83FDCF0F"
+          "id": "D89523FC-A47A-5BC7-BBA4-458A6A2FAF17"
         },
         {
           "defKey": "status",
-          "defName": "Webhook 端点状态",
-          "comment": "Webhook 端点状态的稳定业务代码。允许值：ACTIVE、SUSPENDED、DISABLED。",
+          "defName": "端点状态",
+          "comment": "端点状态；停用后不再生成新投递，未完成的投递被取出时取消。允许值：ACTIVE、DISABLED。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 32,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -19576,15 +19597,15 @@
         },
         {
           "defKey": "version",
-          "defName": "Webhook 端点并发版本",
-          "comment": "Webhook 端点并发版本的整数值。",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1。",
           "type": "INT",
           "len": "",
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "1",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
@@ -19642,902 +19663,18 @@
       ],
       "indexes": [
         {
-          "defKey": "uk_webhook_endpoint",
-          "defName": "唯一索引 tenant_id、endpoint_code",
-          "unique": true,
-          "comment": "保证业务唯一性：tenant_id、endpoint_code",
+          "defKey": "idx_webhook_endpoint_tenant",
+          "defName": "访问索引 tenant_id",
+          "unique": false,
+          "comment": "支持访问路径：tenant_id",
           "fields": [
             {
               "fieldDefKey": "4DCB1A83-24D3-562A-B32C-2F91F9CEDA8D",
               "ascOrDesc": "A",
-              "id": "5B5CD087-BD29-509F-94A3-53AA971B64CF"
-            },
-            {
-              "fieldDefKey": "A074F831-919A-5D10-A3A6-34CF83FDCF0F",
-              "ascOrDesc": "A",
-              "id": "F5A32F34-0D5C-54A0-A0B7-43D3A7629ECD"
+              "id": "A4296887-FF8B-5E88-8B17-4B6859086B2D"
             }
           ],
-          "id": "067D7ED9-A362-559D-91FE-AB9F264AD300"
-        },
-        {
-          "defKey": "uk_webhook_endpoint_owner",
-          "defName": "唯一索引 endpoint_id、tenant_id",
-          "unique": true,
-          "comment": "保证业务唯一性：endpoint_id、tenant_id",
-          "fields": [
-            {
-              "fieldDefKey": "0E6C4505-7284-5617-A43D-8D4356C3BF54",
-              "ascOrDesc": "A",
-              "id": "2FC04664-3A59-5623-B07A-9865489BA6BF"
-            },
-            {
-              "fieldDefKey": "4DCB1A83-24D3-562A-B32C-2F91F9CEDA8D",
-              "ascOrDesc": "A",
-              "id": "D96A0905-3608-58AA-A85C-B861DD25B794"
-            }
-          ],
-          "id": "9FB25718-F5A5-55C3-8450-D7D714F27B79"
-        }
-      ],
-      "type": "P"
-    },
-    {
-      "id": "02D3C6A8-2EE7-5A25-872D-AAC8687BB90E",
-      "env": {
-        "base": {
-          "nameSpace": "",
-          "codeRoot": ""
-        }
-      },
-      "defKey": "t_webhook_endpoint_revision",
-      "defName": "Webhook 端点修订",
-      "comment": "保存受 Vault 保护的 HTTPS URL、主机名、超时和独立 DNS、SSRF、Challenge 验证生命周期",
-      "properties": {
-        "logicalTableKey": "webhook_endpoint_revision",
-        "compositeForeignKeys": []
-      },
-      "sysProps": {
-        "nameTemplate": "{defKey}[{defName}]"
-      },
-      "notes": {},
-      "headers": [
-        {
-          "refKey": "defKey",
-          "hideInGraph": false,
-          "value": "字段代码",
-          "freeze": false
-        },
-        {
-          "refKey": "defName",
-          "hideInGraph": false,
-          "value": "显示名称",
-          "freeze": false
-        },
-        {
-          "refKey": "primaryKey",
-          "hideInGraph": false,
-          "value": "主键",
-          "freeze": false
-        },
-        {
-          "refKey": "notNull",
-          "hideInGraph": true,
-          "value": "不为空",
-          "freeze": false
-        },
-        {
-          "refKey": "autoIncrement",
-          "hideInGraph": true,
-          "value": "自增",
-          "freeze": false
-        },
-        {
-          "refKey": "domain",
-          "hideInGraph": true,
-          "value": "数据域",
-          "freeze": false
-        },
-        {
-          "refKey": "type",
-          "hideInGraph": false,
-          "value": "数据类型",
-          "freeze": false
-        },
-        {
-          "refKey": "len",
-          "hideInGraph": false,
-          "value": "长度",
-          "freeze": false
-        },
-        {
-          "refKey": "scale",
-          "hideInGraph": false,
-          "value": "小数位数",
-          "freeze": false
-        },
-        {
-          "refKey": "comment",
-          "hideInGraph": true,
-          "value": "说明",
-          "freeze": false
-        },
-        {
-          "refKey": "refDict",
-          "hideInGraph": true,
-          "value": "数据字典",
-          "freeze": false
-        },
-        {
-          "refKey": "defaultValue",
-          "hideInGraph": true,
-          "value": "默认值",
-          "freeze": false
-        },
-        {
-          "refKey": "isStandard",
-          "hideInGraph": false,
-          "value": "标准字段",
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "uiHint",
-          "hideInGraph": true,
-          "value": "UI建议",
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "extProps",
-          "hideInGraph": true,
-          "value": "拓展属性",
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "attr1",
-          "value": "属性1",
-          "hideInGraph": true,
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "attr2",
-          "value": "属性2",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr3",
-          "value": "属性3",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr4",
-          "value": "属性4",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr5",
-          "value": "属性5",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr6",
-          "value": "属性6",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr7",
-          "value": "属性7",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr8",
-          "value": "属性8",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr9",
-          "value": "属性9",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        }
-      ],
-      "fields": [
-        {
-          "defKey": "endpoint_revision_id",
-          "defName": "Webhook 端点修订标识",
-          "comment": "Webhook 端点修订的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": true,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "FD713C18-65BD-5549-8842-C33C2B84BE2E"
-        },
-        {
-          "defKey": "endpoint_id",
-          "defName": "Webhook 端点",
-          "comment": "Webhook 端点的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "8A173F27-18EC-5176-A6C4-31F92426ED3B"
-        },
-        {
-          "defKey": "revision_no",
-          "defName": "Webhook 端点修订号",
-          "comment": "Webhook 端点修订号的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "4C00B849-F8CE-5864-9190-D49E4FD1FB06"
-        },
-        {
-          "defKey": "url_vault_token",
-          "defName": "Webhook 地址 Vault Token",
-          "comment": "Webhook 地址 Vault Token的业务值。",
-          "type": "VARCHAR",
-          "len": 255,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "6FFB3FEC-F152-5E59-8985-CD00F8984078"
-        },
-        {
-          "defKey": "url_masked",
-          "defName": "Webhook URL 脱敏值",
-          "comment": "Webhook URL 脱敏值的业务值。",
-          "type": "VARCHAR",
-          "len": 1000,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "3BA4D62C-F5ED-546C-9C31-58924CCE439D"
-        },
-        {
-          "defKey": "host_name",
-          "defName": "Webhook 公开主机名",
-          "comment": "Webhook 公开主机名的业务值。",
-          "type": "VARCHAR",
-          "len": 255,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "B3D5E72B-16A0-5C18-BC3E-AC0D8BF6878B"
-        },
-        {
-          "defKey": "timeout_ms",
-          "defName": "Webhook 超时毫秒数",
-          "comment": "Webhook 超时毫秒数的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "7433E69A-F415-5C69-BD17-DE894873844D"
-        },
-        {
-          "defKey": "status",
-          "defName": "Webhook 端点修订状态",
-          "comment": "Webhook 端点修订状态的稳定业务代码。允许值：DRAFT、PENDING_VERIFICATION、VERIFIED、ACTIVE、SUSPENDED、RETIRED。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "078F366A-C50D-59B6-ADF8-971E2D92E721"
-        },
-        {
-          "defKey": "active_slot",
-          "defName": "活动端点修订占位",
-          "comment": "活动端点修订占位的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "D9202B96-E0BB-5622-8048-90F7E26EF683"
-        },
-        {
-          "defKey": "version",
-          "defName": "Webhook 端点修订并发版本",
-          "comment": "Webhook 端点修订并发版本的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "6B4B2608-A53E-5D0C-A443-6FCB73E0B50D"
-        },
-        {
-          "defKey": "create_time",
-          "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "9E93B084-A62E-5CFF-86D2-4DB1AB548CAF"
-        },
-        {
-          "defKey": "update_time",
-          "defName": "更新时间",
-          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "ECBE85D2-0C2B-5754-9599-733B3968584F"
-        }
-      ],
-      "correlations": [
-        {
-          "id": "B5864743-BA18-5B86-AD76-FF047D801FA8",
-          "myField": "8A173F27-18EC-5176-A6C4-31F92426ED3B",
-          "refEntity": "D437ECB2-8F7D-5CEB-AE27-DB74EA1ACB73",
-          "refField": "0E6C4505-7284-5617-A43D-8D4356C3BF54",
-          "myRows": "n",
-          "refRows": "1",
-          "innerType": ""
-        }
-      ],
-      "indexes": [
-        {
-          "defKey": "uk_endpoint_revision",
-          "defName": "唯一索引 endpoint_id、revision_no",
-          "unique": true,
-          "comment": "保证业务唯一性：endpoint_id、revision_no",
-          "fields": [
-            {
-              "fieldDefKey": "8A173F27-18EC-5176-A6C4-31F92426ED3B",
-              "ascOrDesc": "A",
-              "id": "07BC7931-F825-559F-B085-15116B842D60"
-            },
-            {
-              "fieldDefKey": "4C00B849-F8CE-5864-9190-D49E4FD1FB06",
-              "ascOrDesc": "A",
-              "id": "64A84D18-505C-58D8-A544-82CB0A1E4FD1"
-            }
-          ],
-          "id": "0E5C007E-FF97-5DF1-BED2-CD1A2C6773F1"
-        },
-        {
-          "defKey": "uk_endpoint_revision_active",
-          "defName": "唯一索引 endpoint_id、active_slot",
-          "unique": true,
-          "comment": "保证业务唯一性：endpoint_id、active_slot",
-          "fields": [
-            {
-              "fieldDefKey": "8A173F27-18EC-5176-A6C4-31F92426ED3B",
-              "ascOrDesc": "A",
-              "id": "F085DE8C-AA90-5171-9831-BCC15A53A5CA"
-            },
-            {
-              "fieldDefKey": "D9202B96-E0BB-5622-8048-90F7E26EF683",
-              "ascOrDesc": "A",
-              "id": "020F8A06-6485-5D9D-A03D-841895580886"
-            }
-          ],
-          "id": "16C36EA1-65D6-5E83-93E2-59A8E439A934"
-        },
-        {
-          "defKey": "uk_endpoint_revision_owner",
-          "defName": "唯一索引 endpoint_revision_id、endpoint_id",
-          "unique": true,
-          "comment": "保证业务唯一性：endpoint_revision_id、endpoint_id",
-          "fields": [
-            {
-              "fieldDefKey": "FD713C18-65BD-5549-8842-C33C2B84BE2E",
-              "ascOrDesc": "A",
-              "id": "DE268ECF-BCE9-5D5C-B86E-A9FE7E9EAFC8"
-            },
-            {
-              "fieldDefKey": "8A173F27-18EC-5176-A6C4-31F92426ED3B",
-              "ascOrDesc": "A",
-              "id": "A1B18998-9B2C-5F7C-97E4-85B05DDB920E"
-            }
-          ],
-          "id": "50690623-75CB-5535-9F2C-60DCD1BF1154"
-        }
-      ],
-      "type": "P"
-    },
-    {
-      "id": "90AA9E89-E710-5F7A-B702-B8658E4CE9F7",
-      "env": {
-        "base": {
-          "nameSpace": "",
-          "codeRoot": ""
-        }
-      },
-      "defKey": "t_webhook_endpoint_verification",
-      "defName": "Webhook 端点验证",
-      "comment": "追加保存端点修订的 DNS、SSRF 与 Challenge 验证尝试",
-      "properties": {
-        "logicalTableKey": "webhook_endpoint_verification",
-        "compositeForeignKeys": []
-      },
-      "sysProps": {
-        "nameTemplate": "{defKey}[{defName}]"
-      },
-      "notes": {},
-      "headers": [
-        {
-          "refKey": "defKey",
-          "hideInGraph": false,
-          "value": "字段代码",
-          "freeze": false
-        },
-        {
-          "refKey": "defName",
-          "hideInGraph": false,
-          "value": "显示名称",
-          "freeze": false
-        },
-        {
-          "refKey": "primaryKey",
-          "hideInGraph": false,
-          "value": "主键",
-          "freeze": false
-        },
-        {
-          "refKey": "notNull",
-          "hideInGraph": true,
-          "value": "不为空",
-          "freeze": false
-        },
-        {
-          "refKey": "autoIncrement",
-          "hideInGraph": true,
-          "value": "自增",
-          "freeze": false
-        },
-        {
-          "refKey": "domain",
-          "hideInGraph": true,
-          "value": "数据域",
-          "freeze": false
-        },
-        {
-          "refKey": "type",
-          "hideInGraph": false,
-          "value": "数据类型",
-          "freeze": false
-        },
-        {
-          "refKey": "len",
-          "hideInGraph": false,
-          "value": "长度",
-          "freeze": false
-        },
-        {
-          "refKey": "scale",
-          "hideInGraph": false,
-          "value": "小数位数",
-          "freeze": false
-        },
-        {
-          "refKey": "comment",
-          "hideInGraph": true,
-          "value": "说明",
-          "freeze": false
-        },
-        {
-          "refKey": "refDict",
-          "hideInGraph": true,
-          "value": "数据字典",
-          "freeze": false
-        },
-        {
-          "refKey": "defaultValue",
-          "hideInGraph": true,
-          "value": "默认值",
-          "freeze": false
-        },
-        {
-          "refKey": "isStandard",
-          "hideInGraph": false,
-          "value": "标准字段",
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "uiHint",
-          "hideInGraph": true,
-          "value": "UI建议",
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "extProps",
-          "hideInGraph": true,
-          "value": "拓展属性",
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "attr1",
-          "value": "属性1",
-          "hideInGraph": true,
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "attr2",
-          "value": "属性2",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr3",
-          "value": "属性3",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr4",
-          "value": "属性4",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr5",
-          "value": "属性5",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr6",
-          "value": "属性6",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr7",
-          "value": "属性7",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr8",
-          "value": "属性8",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr9",
-          "value": "属性9",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        }
-      ],
-      "fields": [
-        {
-          "defKey": "verification_id",
-          "defName": "Webhook 验证标识",
-          "comment": "Webhook 端点验证的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": true,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "C3C7276B-1865-5385-B44B-F382D4F861F4"
-        },
-        {
-          "defKey": "endpoint_revision_id",
-          "defName": "Webhook 端点修订",
-          "comment": "Webhook 端点修订的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "BF960B4E-35C6-518E-AC65-7C51E53A7D21"
-        },
-        {
-          "defKey": "verification_no",
-          "defName": "Webhook 验证序号",
-          "comment": "Webhook 验证序号的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "3CD9AE0E-DC1A-531D-8EFF-FC922E30396E"
-        },
-        {
-          "defKey": "challenge_hash",
-          "defName": "Webhook Challenge 哈希",
-          "comment": "Webhook Challenge 哈希的 SHA-256 小写十六进制值。",
-          "type": "CHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
-          "extProps": {},
-          "domain": "",
-          "id": "7D955D69-9FF3-50EA-8C6C-528D6D10BADD"
-        },
-        {
-          "defKey": "resolved_ip_hash",
-          "defName": "解析网络地址哈希",
-          "comment": "解析网络地址哈希的 SHA-256 小写十六进制值。",
-          "type": "CHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
-          "extProps": {},
-          "domain": "",
-          "id": "DE0F4E0B-BEBB-5F25-8A0D-F8BB1165521A"
-        },
-        {
-          "defKey": "http_status",
-          "defName": "Webhook 验证响应状态",
-          "comment": "Webhook 验证响应状态的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "203D48FF-A13E-5BC8-ABE6-52E06F1F2528"
-        },
-        {
-          "defKey": "result",
-          "defName": "Webhook 验证结果",
-          "comment": "Webhook 验证结果的稳定业务代码。允许值：PASSED、FAILED、BLOCKED。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "CCFE3752-EF4D-5DBA-80C7-BC823008E318"
-        },
-        {
-          "defKey": "failure_code",
-          "defName": "Webhook 验证失败代码",
-          "comment": "Webhook 验证失败代码的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "A8A035EC-48A1-56D5-85A8-F1C2EDA91F24"
-        },
-        {
-          "defKey": "verified_time",
-          "defName": "Webhook 验证完成时间",
-          "comment": "Webhook 验证完成时间对应的 UTC 微秒时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "624BA083-D1A9-5BAD-B348-B88179C2AF92"
-        },
-        {
-          "defKey": "create_time",
-          "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "53819DB0-2FE9-5DA1-8309-71D9C599A357"
-        }
-      ],
-      "correlations": [
-        {
-          "id": "E50CBBCF-BF5E-56F4-96DE-0982060B62A6",
-          "myField": "BF960B4E-35C6-518E-AC65-7C51E53A7D21",
-          "refEntity": "02D3C6A8-2EE7-5A25-872D-AAC8687BB90E",
-          "refField": "FD713C18-65BD-5549-8842-C33C2B84BE2E",
-          "myRows": "n",
-          "refRows": "1",
-          "innerType": ""
-        }
-      ],
-      "indexes": [
-        {
-          "defKey": "uk_endpoint_verify",
-          "defName": "唯一索引 endpoint_revision_id、verification_no",
-          "unique": true,
-          "comment": "保证业务唯一性：endpoint_revision_id、verification_no",
-          "fields": [
-            {
-              "fieldDefKey": "BF960B4E-35C6-518E-AC65-7C51E53A7D21",
-              "ascOrDesc": "A",
-              "id": "AE815C99-B55F-559D-AF04-FFAEFFB7FD5A"
-            },
-            {
-              "fieldDefKey": "3CD9AE0E-DC1A-531D-8EFF-FC922E30396E",
-              "ascOrDesc": "A",
-              "id": "F1406330-6EF9-5743-9AB2-472DA3B5DC5E"
-            }
-          ],
-          "id": "C0E05D55-B627-5CC7-A1AC-BCDDC2134087"
+          "id": "AEA0E97D-5D86-596C-BA12-8F36D79280CA"
         }
       ],
       "type": "P"
@@ -20552,7 +19689,7 @@
       },
       "defKey": "t_webhook_signing_secret",
       "defName": "Webhook 签名密钥",
-      "comment": "保存独立于 URL 修订轮换的 Webhook 签名 Secret 外部引用、非秘密指纹和有效期",
+      "comment": "端点签名密钥的 Vault 引用与轮换宽限；同一端点同时只有一把 ACTIVE，宽限内的 RETIRED 密钥也参与签名",
       "properties": {
         "logicalTableKey": "webhook_signing_secret",
         "compositeForeignKeys": []
@@ -20722,8 +19859,8 @@
       "fields": [
         {
           "defKey": "signing_secret_id",
-          "defName": "Webhook 签名密钥标识",
-          "comment": "Webhook 签名密钥的稳定业务标识。",
+          "defName": "签名密钥主键",
+          "comment": "Webhook 签名密钥主键。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -20740,8 +19877,8 @@
         },
         {
           "defKey": "endpoint_id",
-          "defName": "Webhook 端点",
-          "comment": "Webhook 端点的稳定业务标识。",
+          "defName": "所属端点",
+          "comment": "所属 Webhook 端点。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -20758,8 +19895,8 @@
         },
         {
           "defKey": "rotation_no",
-          "defName": "Webhook 密钥轮换号",
-          "comment": "Webhook 密钥轮换号的整数值。",
+          "defName": "轮换序号",
+          "comment": "端点内第几把密钥，从 1 开始。",
           "type": "INT",
           "len": "",
           "scale": "",
@@ -20775,9 +19912,9 @@
           "id": "F8179FBE-FE3A-504C-A4E2-8C6075A93845"
         },
         {
-          "defKey": "secret_ref",
-          "defName": "Webhook 签名密钥引用",
-          "comment": "Webhook 签名密钥引用的业务值。",
+          "defKey": "secret_vault_token",
+          "defName": "密钥 Vault 引用",
+          "comment": "WEBHOOK_SIGNING_SECRET_V1 的 REFERENCE Token；Purpose 为 WEBHOOK_SIGNING；仅发送前 Reveal，禁止日志及补偿 Payload。",
           "type": "VARCHAR",
           "len": 255,
           "scale": "",
@@ -20788,70 +19925,19 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
           "domain": "",
-          "id": "00E5AEC2-7099-5822-A5EC-A191CC53C5D3"
-        },
-        {
-          "defKey": "secret_fingerprint",
-          "defName": "Webhook 密钥指纹",
-          "comment": "Webhook 密钥指纹的 SHA-256 小写十六进制值。",
-          "type": "CHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
-          "extProps": {},
-          "domain": "",
-          "id": "BD559A03-FA36-5D7D-85B3-4596E5A461DA"
-        },
-        {
-          "defKey": "effective_from",
-          "defName": "密钥生效开始时间",
-          "comment": "密钥生效开始时间对应的 UTC 微秒时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "07FF1699-5A5F-5A8F-B80C-6135DACFB083"
-        },
-        {
-          "defKey": "effective_to",
-          "defName": "密钥生效结束时间",
-          "comment": "密钥生效结束时间对应的 UTC 微秒时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "FACD865D-7469-599C-A7B2-B1C4EFA519DC"
+          "id": "F6D0486E-6658-5324-A30E-237433859EB4"
         },
         {
           "defKey": "status",
-          "defName": "Webhook 密钥状态",
-          "comment": "Webhook 密钥状态的稳定业务代码。允许值：SCHEDULED、ACTIVE、RETIRED、REVOKED。",
+          "defName": "密钥状态",
+          "comment": "密钥状态；轮换后旧密钥变为 RETIRED。允许值：ACTIVE、RETIRED。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 32,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -20866,8 +19952,8 @@
         },
         {
           "defKey": "signing_slot",
-          "defName": "当前签名密钥占位",
-          "comment": "当前签名密钥占位的整数值。",
+          "defName": "当前密钥占位",
+          "comment": "ACTIVE 时为 1，否则为空；与端点组成唯一键，保证同时只有一把 ACTIVE。",
           "type": "INT",
           "len": "",
           "scale": "",
@@ -20883,16 +19969,34 @@
           "id": "974002AA-ACBF-5606-8FF6-2B8808C99E65"
         },
         {
+          "defKey": "valid_until",
+          "defName": "签名截止时间",
+          "comment": "RETIRED 后仍参与签名的 UTC 截止时间：宽限轮换为轮换时间加 1 小时，立即作废为轮换时间；ACTIVE 时为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "ADAB12A1-95CE-58AB-B1F1-A22ABC1D9829"
+        },
+        {
           "defKey": "version",
-          "defName": "Webhook 签名密钥并发版本",
-          "comment": "Webhook 签名密钥并发版本的整数值。",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1。",
           "type": "INT",
           "len": "",
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "1",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
@@ -20986,544 +20090,6 @@
             }
           ],
           "id": "81390234-DAE7-597F-8ACE-279370A34957"
-        },
-        {
-          "defKey": "uk_webhook_secret_owner",
-          "defName": "唯一索引 signing_secret_id、endpoint_id",
-          "unique": true,
-          "comment": "保证业务唯一性：signing_secret_id、endpoint_id",
-          "fields": [
-            {
-              "fieldDefKey": "D42DA7AC-1A7B-5A2A-BB8B-C100B0F5F407",
-              "ascOrDesc": "A",
-              "id": "624594E4-1171-5F46-9898-F38484D57C8F"
-            },
-            {
-              "fieldDefKey": "9C584C87-F083-59EB-B00D-23BDCDBBA79B",
-              "ascOrDesc": "A",
-              "id": "6EE29224-E664-58DA-9B80-A96A76E3FD7A"
-            }
-          ],
-          "id": "674A93BE-907A-5B47-98A9-9AC4C1EA8719"
-        }
-      ],
-      "type": "P"
-    },
-    {
-      "id": "D65BE028-3285-5829-8055-36FCF7A0D075",
-      "env": {
-        "base": {
-          "nameSpace": "",
-          "codeRoot": ""
-        }
-      },
-      "defKey": "t_webhook_subscription",
-      "defName": "Webhook 订阅修订",
-      "comment": "一行保存 Endpoint、Event Type 和外部 Payload Schema 的订阅修订；激活后内容冻结",
-      "properties": {
-        "logicalTableKey": "webhook_subscription",
-        "compositeForeignKeys": []
-      },
-      "sysProps": {
-        "nameTemplate": "{defKey}[{defName}]"
-      },
-      "notes": {},
-      "headers": [
-        {
-          "refKey": "defKey",
-          "hideInGraph": false,
-          "value": "字段代码",
-          "freeze": false
-        },
-        {
-          "refKey": "defName",
-          "hideInGraph": false,
-          "value": "显示名称",
-          "freeze": false
-        },
-        {
-          "refKey": "primaryKey",
-          "hideInGraph": false,
-          "value": "主键",
-          "freeze": false
-        },
-        {
-          "refKey": "notNull",
-          "hideInGraph": true,
-          "value": "不为空",
-          "freeze": false
-        },
-        {
-          "refKey": "autoIncrement",
-          "hideInGraph": true,
-          "value": "自增",
-          "freeze": false
-        },
-        {
-          "refKey": "domain",
-          "hideInGraph": true,
-          "value": "数据域",
-          "freeze": false
-        },
-        {
-          "refKey": "type",
-          "hideInGraph": false,
-          "value": "数据类型",
-          "freeze": false
-        },
-        {
-          "refKey": "len",
-          "hideInGraph": false,
-          "value": "长度",
-          "freeze": false
-        },
-        {
-          "refKey": "scale",
-          "hideInGraph": false,
-          "value": "小数位数",
-          "freeze": false
-        },
-        {
-          "refKey": "comment",
-          "hideInGraph": true,
-          "value": "说明",
-          "freeze": false
-        },
-        {
-          "refKey": "refDict",
-          "hideInGraph": true,
-          "value": "数据字典",
-          "freeze": false
-        },
-        {
-          "refKey": "defaultValue",
-          "hideInGraph": true,
-          "value": "默认值",
-          "freeze": false
-        },
-        {
-          "refKey": "isStandard",
-          "hideInGraph": false,
-          "value": "标准字段",
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "uiHint",
-          "hideInGraph": true,
-          "value": "UI建议",
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "extProps",
-          "hideInGraph": true,
-          "value": "拓展属性",
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "attr1",
-          "value": "属性1",
-          "hideInGraph": true,
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "attr2",
-          "value": "属性2",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr3",
-          "value": "属性3",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr4",
-          "value": "属性4",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr5",
-          "value": "属性5",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr6",
-          "value": "属性6",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr7",
-          "value": "属性7",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr8",
-          "value": "属性8",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr9",
-          "value": "属性9",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        }
-      ],
-      "fields": [
-        {
-          "defKey": "subscription_id",
-          "defName": "Webhook 订阅标识",
-          "comment": "Webhook 订阅修订的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": true,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "0863B7AD-6C1B-5E68-8809-3495E9554BDF"
-        },
-        {
-          "defKey": "subscription_no",
-          "defName": "Webhook 订阅编号",
-          "comment": "Webhook 订阅编号的业务值。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "87274873-0A80-598E-8B1E-2871227FCBCE"
-        },
-        {
-          "defKey": "endpoint_id",
-          "defName": "Webhook 端点",
-          "comment": "Webhook 端点的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "41C0B238-93C3-5179-A0FF-0C83954EB315"
-        },
-        {
-          "defKey": "event_type",
-          "defName": "Webhook 事件类型",
-          "comment": "Webhook 事件类型的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "2FD4D77B-C4F0-5F7B-95BD-19553EB3DAE9"
-        },
-        {
-          "defKey": "revision_no",
-          "defName": "Webhook 订阅修订号",
-          "comment": "Webhook 订阅修订号的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "AED539D5-B912-534B-B928-098A5E9D1F84"
-        },
-        {
-          "defKey": "payload_schema_version",
-          "defName": "Webhook 载荷结构版本",
-          "comment": "Webhook 载荷结构版本的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "BCA07575-B716-5F00-9864-154BD93836C5"
-        },
-        {
-          "defKey": "effective_from",
-          "defName": "订阅生效开始时间",
-          "comment": "订阅生效开始时间对应的 UTC 微秒时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "B59511C3-EBBF-5224-BCA0-2C005826FC13"
-        },
-        {
-          "defKey": "effective_to",
-          "defName": "订阅生效结束时间",
-          "comment": "订阅生效结束时间对应的 UTC 微秒时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "EF36C1D4-B237-5B69-B2E4-B66EC0C5AE34"
-        },
-        {
-          "defKey": "status",
-          "defName": "Webhook 订阅状态",
-          "comment": "Webhook 订阅状态的稳定业务代码。允许值：DRAFT、ACTIVE、SUSPENDED、RETIRED。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "B5FC598E-F6BC-5B7F-B3C5-A0E81C1FBFA9"
-        },
-        {
-          "defKey": "active_slot",
-          "defName": "活动订阅占位",
-          "comment": "活动订阅占位的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "6F3E9F59-4281-5C83-B130-34FC18D1A864"
-        },
-        {
-          "defKey": "version",
-          "defName": "Webhook 订阅并发版本",
-          "comment": "Webhook 订阅并发版本的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "68A13126-2304-5464-AB7B-5BB0E8D9D2E1"
-        },
-        {
-          "defKey": "create_time",
-          "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "BDF886C5-033D-504C-918C-D897039F006E"
-        },
-        {
-          "defKey": "update_time",
-          "defName": "更新时间",
-          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "C48D5184-DA7B-5D86-8151-F618369FE692"
-        }
-      ],
-      "correlations": [
-        {
-          "id": "57FC16BC-174A-53D8-A15C-5C3B86978E55",
-          "myField": "41C0B238-93C3-5179-A0FF-0C83954EB315",
-          "refEntity": "D437ECB2-8F7D-5CEB-AE27-DB74EA1ACB73",
-          "refField": "0E6C4505-7284-5617-A43D-8D4356C3BF54",
-          "myRows": "n",
-          "refRows": "1",
-          "innerType": ""
-        }
-      ],
-      "indexes": [
-        {
-          "defKey": "uk_webhook_sub_no",
-          "defName": "唯一索引 subscription_no",
-          "unique": true,
-          "comment": "保证业务唯一性：subscription_no",
-          "fields": [
-            {
-              "fieldDefKey": "87274873-0A80-598E-8B1E-2871227FCBCE",
-              "ascOrDesc": "A",
-              "id": "90F799BA-648A-5B80-A5A8-8FC3F8F2AEA1"
-            }
-          ],
-          "id": "C0BFB31F-7AB5-5DBD-BCFE-9F8AC0B69CA6"
-        },
-        {
-          "defKey": "uk_webhook_sub_revision",
-          "defName": "唯一索引 endpoint_id、event_type、revision_no",
-          "unique": true,
-          "comment": "保证业务唯一性：endpoint_id、event_type、revision_no",
-          "fields": [
-            {
-              "fieldDefKey": "41C0B238-93C3-5179-A0FF-0C83954EB315",
-              "ascOrDesc": "A",
-              "id": "88A147A2-44B2-5155-BC92-8D55E6D0F894"
-            },
-            {
-              "fieldDefKey": "2FD4D77B-C4F0-5F7B-95BD-19553EB3DAE9",
-              "ascOrDesc": "A",
-              "id": "71E45A9A-C519-5D8F-8505-05ACF682EA32"
-            },
-            {
-              "fieldDefKey": "AED539D5-B912-534B-B928-098A5E9D1F84",
-              "ascOrDesc": "A",
-              "id": "1BB7AAE9-1904-596B-AD71-96D1A12F31A3"
-            }
-          ],
-          "id": "46309642-4532-5E09-BACB-9BFAF2943397"
-        },
-        {
-          "defKey": "uk_webhook_sub_active",
-          "defName": "唯一索引 endpoint_id、event_type、active_slot",
-          "unique": true,
-          "comment": "保证业务唯一性：endpoint_id、event_type、active_slot",
-          "fields": [
-            {
-              "fieldDefKey": "41C0B238-93C3-5179-A0FF-0C83954EB315",
-              "ascOrDesc": "A",
-              "id": "1D96F8F7-BF89-542B-A682-310D36BE8A90"
-            },
-            {
-              "fieldDefKey": "2FD4D77B-C4F0-5F7B-95BD-19553EB3DAE9",
-              "ascOrDesc": "A",
-              "id": "A2DF1828-9A24-54E9-A07D-CB612BFA2659"
-            },
-            {
-              "fieldDefKey": "6F3E9F59-4281-5C83-B130-34FC18D1A864",
-              "ascOrDesc": "A",
-              "id": "0524FC54-4CED-5AF4-AC52-95ACAFFE113A"
-            }
-          ],
-          "id": "963FE27E-BAA1-5E71-99D1-C1A3CCDE657D"
-        },
-        {
-          "defKey": "uk_webhook_sub_owner",
-          "defName": "唯一索引 subscription_id、endpoint_id、event_type、payload_schema_version",
-          "unique": true,
-          "comment": "保证业务唯一性：subscription_id、endpoint_id、event_type、payload_schema_version",
-          "fields": [
-            {
-              "fieldDefKey": "0863B7AD-6C1B-5E68-8809-3495E9554BDF",
-              "ascOrDesc": "A",
-              "id": "3EE43335-25E2-5FD3-AA54-7A9C035AF745"
-            },
-            {
-              "fieldDefKey": "41C0B238-93C3-5179-A0FF-0C83954EB315",
-              "ascOrDesc": "A",
-              "id": "E0FB63F2-E49B-5DF8-AE42-33DCF584D6D7"
-            },
-            {
-              "fieldDefKey": "2FD4D77B-C4F0-5F7B-95BD-19553EB3DAE9",
-              "ascOrDesc": "A",
-              "id": "FA87EA97-FA62-5FF1-92E8-436705463920"
-            },
-            {
-              "fieldDefKey": "BCA07575-B716-5F00-9864-154BD93836C5",
-              "ascOrDesc": "A",
-              "id": "678310D8-FFB8-571D-9FCA-840054D38899"
-            }
-          ],
-          "id": "7A95B1A4-0544-52DB-A818-0ADED7D76EB1"
         }
       ],
       "type": "P"
@@ -21537,8 +20103,8 @@
         }
       },
       "defKey": "t_webhook_event",
-      "defName": "Webhook 冻结事件",
-      "comment": "保存面向一个访问租户和外部 Schema 的来源信封与可恢复冻结载荷",
+      "defName": "Webhook 事件",
+      "comment": "来源系统提交的冻结公开事件；受理后不可变，Retry 与 Replay 发送同一 Envelope",
       "properties": {
         "logicalTableKey": "webhook_event",
         "compositeForeignKeys": []
@@ -21708,8 +20274,8 @@
       "fields": [
         {
           "defKey": "event_id",
-          "defName": "Webhook 事件标识",
-          "comment": "Webhook 冻结事件的稳定业务标识。",
+          "defName": "事件主键",
+          "comment": "Platform 内部事件主键，不作为公开 eventId。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -21726,8 +20292,8 @@
         },
         {
           "defKey": "tenant_id",
-          "defName": "访问租户",
-          "comment": "访问租户的稳定业务标识。",
+          "defName": "归属租户",
+          "comment": "按来源 Client 解析得到的 CLIENT Access Tenant。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -21745,7 +20311,7 @@
         {
           "defKey": "source_system",
           "defName": "来源系统",
-          "comment": "来源系统的稳定业务代码。取值来源：Code-MoR 系统代码目录；非固定枚举。",
+          "comment": "通过白名单的调用方服务名。取值来源：内部 HTTP 调用方服务名白名单；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -21756,14 +20322,17 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
           "domain": "",
           "id": "E95462D2-3B04-51D5-9C2A-17AA49C47B88"
         },
         {
           "defKey": "source_event_key",
-          "defName": "来源事件键",
-          "comment": "来源事件键的业务值。",
+          "defName": "公开事件标识",
+          "comment": "来源冻结的公开 eventId；同一 Client 与来源系统内永久唯一。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -21774,14 +20343,56 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
           "domain": "",
           "id": "E69025D6-46F2-5F4B-86B9-EB4BCBFBA58E"
         },
         {
+          "defKey": "event_type",
+          "defName": "事件类型",
+          "comment": "公开事件类型。取值来源：Webhook 公开事件类型目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
+          "domain": "",
+          "id": "24177513-C986-5F2E-9F02-F8B2DB87BA75"
+        },
+        {
+          "defKey": "payload_schema_version",
+          "defName": "载荷结构版本",
+          "comment": "Envelope 的 schemaVersion。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "30A8E829-68A5-5175-8434-EF55C7E0A630"
+        },
+        {
           "defKey": "source_version",
-          "defName": "来源版本",
-          "comment": "来源版本的整数值。",
+          "defName": "来源资源版本",
+          "comment": "来源资源版本；只用于重复提交比较。",
           "type": "INT",
           "len": "",
           "scale": "",
@@ -21798,8 +20409,8 @@
         },
         {
           "defKey": "source_payload_hash",
-          "defName": "来源载荷哈希",
-          "comment": "来源载荷哈希的 SHA-256 小写十六进制值。",
+          "defName": "对象摘要",
+          "comment": "data.object 的 RFC 8785 规范字节 SHA-256 小写十六进制。",
           "type": "CHAR",
           "len": 64,
           "scale": "",
@@ -21815,99 +20426,9 @@
           "id": "E51559F8-EE15-5FD2-8F84-9E297021C8DF"
         },
         {
-          "defKey": "event_type",
-          "defName": "Webhook 事件类型",
-          "comment": "Webhook 事件类型的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "24177513-C986-5F2E-9F02-F8B2DB87BA75"
-        },
-        {
-          "defKey": "payload_schema_version",
-          "defName": "Webhook 载荷结构版本",
-          "comment": "Webhook 载荷结构版本的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "30A8E829-68A5-5175-8434-EF55C7E0A630"
-        },
-        {
-          "defKey": "payload_storage_mode",
-          "defName": "Webhook 载荷存储模式",
-          "comment": "Webhook 载荷存储模式的稳定业务代码。允许值：INLINE、VAULT_TOKEN。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "3010DA43-3E65-52AA-AF6D-19334E5FBEB6"
-        },
-        {
-          "defKey": "payload_inline",
-          "defName": "Webhook 非敏感冻结载荷",
-          "comment": "Webhook 非敏感冻结载荷的有界版本化 JSON 内容。",
-          "type": "JSON",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
-          "extProps": {},
-          "domain": "",
-          "id": "5FC2EFBA-AA01-5A5D-AC8F-D80FBB898D14"
-        },
-        {
-          "defKey": "payload_vault_token",
-          "defName": "Webhook 载荷 Vault Token",
-          "comment": "Webhook 载荷 Vault Token的业务值。",
-          "type": "VARCHAR",
-          "len": 255,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "41715314-2866-56C7-A496-26B221445953"
-        },
-        {
           "defKey": "payload_hash",
-          "defName": "Webhook 冻结载荷哈希",
-          "comment": "Webhook 冻结载荷哈希的 SHA-256 小写十六进制值。",
+          "defName": "信封摘要",
+          "comment": "完整 Envelope 的 RFC 8785 规范字节 SHA-256 小写十六进制；每次发送前用于校验重新规范化的字节。",
           "type": "CHAR",
           "len": 64,
           "scale": "",
@@ -21921,6 +20442,24 @@
           "extProps": {},
           "domain": "",
           "id": "F0EBA95C-D06A-557C-8811-32561A6333D1"
+        },
+        {
+          "defKey": "payload",
+          "defName": "冻结信封",
+          "comment": "冻结的公开 Envelope；不含 Token、PII 或内部标识，规范化后不超过 4096 字节。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "2CD6FFE0-D53B-5890-8B8E-243C13887753"
         },
         {
           "defKey": "create_time",
@@ -21954,67 +20493,28 @@
       ],
       "indexes": [
         {
-          "defKey": "uk_webhook_event",
-          "defName": "唯一索引 tenant_id、source_system、source_event_key、event_type、payload_schema_version",
+          "defKey": "uk_webhook_event_source",
+          "defName": "唯一索引 tenant_id、source_event_key、source_system",
           "unique": true,
-          "comment": "保证业务唯一性：tenant_id、source_system、source_event_key、event_type、payload_schema_version",
+          "comment": "保证业务唯一性：tenant_id、source_event_key、source_system",
           "fields": [
             {
               "fieldDefKey": "0B284823-7988-5283-9581-E407325262EB",
               "ascOrDesc": "A",
-              "id": "114CA817-F0A4-55C0-9DDB-C6A0E011D3DB"
-            },
-            {
-              "fieldDefKey": "E95462D2-3B04-51D5-9C2A-17AA49C47B88",
-              "ascOrDesc": "A",
-              "id": "37C27654-E235-59DF-B214-FED60DB95575"
+              "id": "13FDF195-A82F-5B1A-9911-6E7D489C7E01"
             },
             {
               "fieldDefKey": "E69025D6-46F2-5F4B-86B9-EB4BCBFBA58E",
               "ascOrDesc": "A",
-              "id": "F9C0957C-4917-5B30-A1AB-AEE6A9E593AC"
+              "id": "D084C4E4-42DA-5A2F-A198-03653D83DF57"
             },
             {
-              "fieldDefKey": "24177513-C986-5F2E-9F02-F8B2DB87BA75",
+              "fieldDefKey": "E95462D2-3B04-51D5-9C2A-17AA49C47B88",
               "ascOrDesc": "A",
-              "id": "DB58E36B-E89C-5E75-BF76-4941F8752BBB"
-            },
-            {
-              "fieldDefKey": "30A8E829-68A5-5175-8434-EF55C7E0A630",
-              "ascOrDesc": "A",
-              "id": "CCDF0D9F-A76F-5E67-B72E-B386B8C8F63B"
+              "id": "9507A47B-C980-584D-BC04-A96BE34EBD91"
             }
           ],
-          "id": "A06F1D8C-4236-558C-A6FE-7384945B71C9"
-        },
-        {
-          "defKey": "uk_webhook_event_owner",
-          "defName": "唯一索引 event_id、tenant_id、event_type、payload_schema_version",
-          "unique": true,
-          "comment": "保证业务唯一性：event_id、tenant_id、event_type、payload_schema_version",
-          "fields": [
-            {
-              "fieldDefKey": "09BB70D5-AB63-5B7F-890B-97B2667CE055",
-              "ascOrDesc": "A",
-              "id": "34EE7158-DF6A-5AA0-A6FC-4DE1283BD081"
-            },
-            {
-              "fieldDefKey": "0B284823-7988-5283-9581-E407325262EB",
-              "ascOrDesc": "A",
-              "id": "91782972-25A5-54A6-B375-74A070AEF916"
-            },
-            {
-              "fieldDefKey": "24177513-C986-5F2E-9F02-F8B2DB87BA75",
-              "ascOrDesc": "A",
-              "id": "0286B547-1974-5393-9C70-38603A1ED1E2"
-            },
-            {
-              "fieldDefKey": "30A8E829-68A5-5175-8434-EF55C7E0A630",
-              "ascOrDesc": "A",
-              "id": "895ADBAE-920C-542C-B686-9BDC6123D7B6"
-            }
-          ],
-          "id": "520930D8-F506-5AA1-A23F-9840A0731432"
+          "id": "D11307CE-FDD7-54FD-8D56-1BEE76C58BA1"
         }
       ],
       "type": "P"
@@ -22029,86 +20529,10 @@
       },
       "defKey": "t_webhook_delivery",
       "defName": "Webhook 投递",
-      "comment": "保存同租户事件到精确端点修订和订阅修订的原始或直接 Replay 投递及 Lease Fencing 状态",
+      "comment": "一个事件到一个端点的投递，含原始投递与人工 Replay；重试节奏与执行租约由补偿任务承担",
       "properties": {
         "logicalTableKey": "webhook_delivery",
-        "compositeForeignKeys": [
-          {
-            "name": "fk_webhook_delivery_event",
-            "childTable": "t_webhook_delivery",
-            "childFields": [
-              "webhook_event_id",
-              "tenant_id",
-              "event_type",
-              "payload_schema_version"
-            ],
-            "parentTable": "t_webhook_event",
-            "parentFields": [
-              "event_id",
-              "tenant_id",
-              "event_type",
-              "payload_schema_version"
-            ]
-          },
-          {
-            "name": "fk_webhook_delivery_endpoint",
-            "childTable": "t_webhook_delivery",
-            "childFields": [
-              "endpoint_id",
-              "tenant_id"
-            ],
-            "parentTable": "t_webhook_endpoint",
-            "parentFields": [
-              "endpoint_id",
-              "tenant_id"
-            ]
-          },
-          {
-            "name": "fk_webhook_delivery_revision",
-            "childTable": "t_webhook_delivery",
-            "childFields": [
-              "endpoint_revision_id",
-              "endpoint_id"
-            ],
-            "parentTable": "t_webhook_endpoint_revision",
-            "parentFields": [
-              "endpoint_revision_id",
-              "endpoint_id"
-            ]
-          },
-          {
-            "name": "fk_webhook_delivery_sub",
-            "childTable": "t_webhook_delivery",
-            "childFields": [
-              "subscription_id",
-              "endpoint_id",
-              "event_type",
-              "payload_schema_version"
-            ],
-            "parentTable": "t_webhook_subscription",
-            "parentFields": [
-              "subscription_id",
-              "endpoint_id",
-              "event_type",
-              "payload_schema_version"
-            ]
-          },
-          {
-            "name": "fk_webhook_delivery_replay",
-            "childTable": "t_webhook_delivery",
-            "childFields": [
-              "replay_of_delivery_id",
-              "tenant_id",
-              "endpoint_id"
-            ],
-            "parentTable": "t_webhook_delivery",
-            "parentFields": [
-              "delivery_id",
-              "tenant_id",
-              "endpoint_id"
-            ]
-          }
-        ]
+        "compositeForeignKeys": []
       },
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -22275,8 +20699,8 @@
       "fields": [
         {
           "defKey": "delivery_id",
-          "defName": "Webhook 投递标识",
-          "comment": "Webhook 投递的稳定业务标识。",
+          "defName": "投递主键",
+          "comment": "Webhook 投递主键；也是补偿任务的事件键。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -22293,8 +20717,8 @@
         },
         {
           "defKey": "webhook_event_id",
-          "defName": "Webhook 事件",
-          "comment": "Webhook 事件的稳定业务标识。",
+          "defName": "所属事件",
+          "comment": "所属 Webhook 事件。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -22311,8 +20735,8 @@
         },
         {
           "defKey": "tenant_id",
-          "defName": "访问租户",
-          "comment": "访问租户的稳定业务标识。",
+          "defName": "归属租户",
+          "comment": "与事件、端点相同的 CLIENT Access Tenant；用于列表查询。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -22329,8 +20753,8 @@
         },
         {
           "defKey": "endpoint_id",
-          "defName": "Webhook 端点",
-          "comment": "Webhook 端点的稳定业务标识。",
+          "defName": "目标端点",
+          "comment": "投递目标端点。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -22346,45 +20770,9 @@
           "id": "D535D803-61FF-5A84-BEC0-BDB54E2A990B"
         },
         {
-          "defKey": "endpoint_revision_id",
-          "defName": "Webhook 端点修订",
-          "comment": "Webhook 端点修订的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "A376FF0C-934F-5365-B5D0-5A07C69A773D"
-        },
-        {
-          "defKey": "subscription_id",
-          "defName": "Webhook 订阅",
-          "comment": "Webhook 订阅的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "89E493A1-CDBA-5FEA-980A-1F63396BA3A7"
-        },
-        {
           "defKey": "event_type",
-          "defName": "Webhook 事件类型",
-          "comment": "Webhook 事件类型的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。",
+          "defName": "事件类型",
+          "comment": "冗余事件类型，用于列表筛选与订阅复核。取值来源：Webhook 公开事件类型目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -22395,16 +20783,19 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
           "domain": "",
           "id": "8759A3FF-1BA0-587B-851D-CB7F210155E6"
         },
         {
-          "defKey": "payload_schema_version",
-          "defName": "Webhook 载荷结构版本",
-          "comment": "Webhook 载荷结构版本的整数值。",
-          "type": "INT",
-          "len": "",
+          "defKey": "status",
+          "defName": "投递状态",
+          "comment": "投递状态；SUCCEEDED、DEAD、CANCELLED 为终态。允许值：CREATED、PROCESSING、RETRY_WAIT、SUCCEEDED、DEAD、CANCELLED。",
+          "type": "VARCHAR",
+          "len": 32,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -22412,33 +20803,51 @@
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "7252498C-361E-5794-8A98-348DF047DD3C"
+          "id": "74D206E3-6114-51CE-863A-BCBE04837E00"
         },
         {
-          "defKey": "generation_no",
-          "defName": "Webhook 投递代次",
-          "comment": "Webhook 投递代次的整数值。",
+          "defKey": "attempt_count",
+          "defName": "尝试次数",
+          "comment": "已创建的尝试数量，初始为 0。",
           "type": "INT",
           "len": "",
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "0",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
           "extProps": {},
           "domain": "",
-          "id": "D44115CF-7943-5FC8-84A7-5241D4A168DB"
+          "id": "2F0BC687-42B6-58BE-A273-C66A27465F27"
+        },
+        {
+          "defKey": "last_attempt_time",
+          "defName": "最近尝试时间",
+          "comment": "最近一次尝试开始的 UTC 微秒时间；尚未尝试时为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "CE4F496B-970E-550C-8F4C-290C20415336"
         },
         {
           "defKey": "replay_of_delivery_id",
-          "defName": "Replay 原投递",
-          "comment": "Replay 原投递的稳定业务标识。",
+          "defName": "Replay 来源投递",
+          "comment": "人工 Replay 时指向原投递；原始投递为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -22455,8 +20864,8 @@
         },
         {
           "defKey": "requested_by",
-          "defName": "Replay 请求人",
-          "comment": "Replay 请求人的稳定业务标识。",
+          "defName": "Replay 操作人",
+          "comment": "人工 Replay 的 Operations 账号；原始投递为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -22472,142 +20881,16 @@
           "id": "B846C510-CBB6-5552-A7A7-EC30974D5160"
         },
         {
-          "defKey": "replay_reason_code",
-          "defName": "Replay 原因",
-          "comment": "Replay 原因的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "21D77AFE-FD2A-53A2-9AFC-E20C2AB252DF"
-        },
-        {
-          "defKey": "status",
-          "defName": "Webhook 投递状态",
-          "comment": "Webhook 投递状态的稳定业务代码。允许值：CREATED、PROCESSING、RETRY_WAIT、SUCCEEDED、DEAD、CANCELLED。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "74D206E3-6114-51CE-863A-BCBE04837E00"
-        },
-        {
-          "defKey": "next_retry_time",
-          "defName": "下次重试时间",
-          "comment": "下次重试时间对应的 UTC 微秒时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "0347025F-61CE-5E53-88F3-12D0E65C98BF"
-        },
-        {
-          "defKey": "attempt_count",
-          "defName": "Webhook 投递尝试次数",
-          "comment": "Webhook 投递尝试次数的整数值。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "2F0BC687-42B6-58BE-A273-C66A27465F27"
-        },
-        {
-          "defKey": "lease_owner",
-          "defName": "租约持有者",
-          "comment": "租约持有者的业务值。",
-          "type": "VARCHAR",
-          "len": 128,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "4B97E281-3F9F-5A75-AE11-3317B3665B77"
-        },
-        {
-          "defKey": "lease_until",
-          "defName": "租约截止时间",
-          "comment": "租约截止时间对应的 UTC 微秒时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "10FB9513-6926-50DF-92A9-F300297BDE04"
-        },
-        {
-          "defKey": "fencing_token",
-          "defName": "围栏令牌",
-          "comment": "围栏令牌的长整数值。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "12CD0B4A-B4AB-5389-AA2C-36537DDFA90A"
-        },
-        {
           "defKey": "version",
-          "defName": "Webhook 投递并发版本",
-          "comment": "Webhook 投递并发版本的整数值。",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1。",
           "type": "INT",
           "len": "",
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "1",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
@@ -22679,247 +20962,28 @@
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
-        },
-        {
-          "id": "F8DBDD6C-9758-5366-8637-E3670A5A1F3D",
-          "myField": "A376FF0C-934F-5365-B5D0-5A07C69A773D",
-          "refEntity": "02D3C6A8-2EE7-5A25-872D-AAC8687BB90E",
-          "refField": "FD713C18-65BD-5549-8842-C33C2B84BE2E",
-          "myRows": "n",
-          "refRows": "1",
-          "innerType": ""
-        },
-        {
-          "id": "9ECE0F53-DCCC-5EF9-9FE6-E5CE619A7A95",
-          "myField": "89E493A1-CDBA-5FEA-980A-1F63396BA3A7",
-          "refEntity": "D65BE028-3285-5829-8055-36FCF7A0D075",
-          "refField": "0863B7AD-6C1B-5E68-8809-3495E9554BDF",
-          "myRows": "n",
-          "refRows": "1",
-          "innerType": ""
-        },
-        {
-          "id": "5EA9743A-8B5F-5F0A-B64C-BC482B6D8C30",
-          "myField": "4E041C01-CB4C-5923-A76A-F50C68EB6527",
-          "refEntity": "668F3EF6-1779-53CA-967A-F8E1D7611467",
-          "refField": "2527B154-5160-5435-9A89-AA2C11A146D9",
-          "myRows": "n",
-          "refRows": "1",
-          "innerType": ""
-        },
-        {
-          "id": "71954518-6327-59C1-91D9-2C507DC090FB",
-          "myField": "B846C510-CBB6-5552-A7A7-EC30974D5160",
-          "refEntity": "677B1152-0ECC-56EB-81C5-5615075AAFBE",
-          "refField": "13E1FF0A-9A70-5AD4-A8A9-BD4A526CC62E",
-          "myRows": "n",
-          "refRows": "1",
-          "innerType": ""
         }
       ],
       "indexes": [
         {
-          "defKey": "uk_webhook_delivery",
-          "defName": "唯一索引 webhook_event_id、endpoint_revision_id、subscription_id、generation_no",
-          "unique": true,
-          "comment": "保证业务唯一性：webhook_event_id、endpoint_revision_id、subscription_id、generation_no",
-          "fields": [
-            {
-              "fieldDefKey": "5A0A55B0-17BB-5C9B-A3C1-830442FF7F60",
-              "ascOrDesc": "A",
-              "id": "7A9ABDFE-BA95-5AA9-8594-A6919BB46A2F"
-            },
-            {
-              "fieldDefKey": "A376FF0C-934F-5365-B5D0-5A07C69A773D",
-              "ascOrDesc": "A",
-              "id": "0BD6501F-C4CE-5356-B741-73DA0F72DCBD"
-            },
-            {
-              "fieldDefKey": "89E493A1-CDBA-5FEA-980A-1F63396BA3A7",
-              "ascOrDesc": "A",
-              "id": "74A0FEAD-47FE-5AEA-B874-1A5AE6FE39BC"
-            },
-            {
-              "fieldDefKey": "D44115CF-7943-5FC8-84A7-5241D4A168DB",
-              "ascOrDesc": "A",
-              "id": "4C4B09D6-93F0-5BAA-A965-134A8B5C2D54"
-            }
-          ],
-          "id": "C42414F6-8242-5AC0-B6E8-7985C3E0A768"
-        },
-        {
-          "defKey": "uk_webhook_delivery_owner",
-          "defName": "唯一索引 delivery_id、tenant_id、endpoint_id",
-          "unique": true,
-          "comment": "保证业务唯一性：delivery_id、tenant_id、endpoint_id",
-          "fields": [
-            {
-              "fieldDefKey": "2527B154-5160-5435-9A89-AA2C11A146D9",
-              "ascOrDesc": "A",
-              "id": "81C2A2FA-2A50-5718-A956-016D0500B27A"
-            },
-            {
-              "fieldDefKey": "BF1D41E2-3662-5BB9-BCEC-D3AB13243542",
-              "ascOrDesc": "A",
-              "id": "5FAF9818-D58D-5BC5-A66C-B9188472D91C"
-            },
-            {
-              "fieldDefKey": "D535D803-61FF-5A84-BEC0-BDB54E2A990B",
-              "ascOrDesc": "A",
-              "id": "46C22377-4DAB-5469-AD79-147F19E6E0BD"
-            }
-          ],
-          "id": "AB0341AA-4F5F-5264-A38F-ED54FB9F6F8E"
-        },
-        {
           "defKey": "idx_webhook_delivery_event",
-          "defName": "访问索引 webhook_event_id、tenant_id、event_type、payload_schema_version",
+          "defName": "访问索引 webhook_event_id",
           "unique": false,
-          "comment": "支持访问路径：webhook_event_id、tenant_id、event_type、payload_schema_version",
+          "comment": "支持访问路径：webhook_event_id",
           "fields": [
             {
               "fieldDefKey": "5A0A55B0-17BB-5C9B-A3C1-830442FF7F60",
               "ascOrDesc": "A",
               "id": "4D510FDD-0A5A-5067-88A2-4146116662C8"
-            },
-            {
-              "fieldDefKey": "BF1D41E2-3662-5BB9-BCEC-D3AB13243542",
-              "ascOrDesc": "A",
-              "id": "AEC05BB1-8FE3-5DD0-A73B-D46373335910"
-            },
-            {
-              "fieldDefKey": "8759A3FF-1BA0-587B-851D-CB7F210155E6",
-              "ascOrDesc": "A",
-              "id": "ECD1AC0E-C16D-535D-841D-882FD4AD5577"
-            },
-            {
-              "fieldDefKey": "7252498C-361E-5794-8A98-348DF047DD3C",
-              "ascOrDesc": "A",
-              "id": "EA30BAC3-FA41-56A6-9409-8FD588718BC4"
             }
           ],
           "id": "9DE85DD3-D043-556F-9414-D9826346DFF8"
         },
         {
-          "defKey": "idx_webhook_delivery_endpoint",
-          "defName": "访问索引 endpoint_id、tenant_id",
-          "unique": false,
-          "comment": "支持访问路径：endpoint_id、tenant_id",
-          "fields": [
-            {
-              "fieldDefKey": "D535D803-61FF-5A84-BEC0-BDB54E2A990B",
-              "ascOrDesc": "A",
-              "id": "31DE070A-F2F0-59EE-AD3A-7E405375088A"
-            },
-            {
-              "fieldDefKey": "BF1D41E2-3662-5BB9-BCEC-D3AB13243542",
-              "ascOrDesc": "A",
-              "id": "0D114C54-5B3C-5EB1-B883-8B814FE1ADA7"
-            }
-          ],
-          "id": "48C5A1E9-5F99-5D9C-839C-9BFFFDEDD1F1"
-        },
-        {
-          "defKey": "idx_webhook_delivery_revision",
-          "defName": "访问索引 endpoint_revision_id、endpoint_id",
-          "unique": false,
-          "comment": "支持访问路径：endpoint_revision_id、endpoint_id",
-          "fields": [
-            {
-              "fieldDefKey": "A376FF0C-934F-5365-B5D0-5A07C69A773D",
-              "ascOrDesc": "A",
-              "id": "CF5CB263-B9F2-5678-835B-C84E9EC95C74"
-            },
-            {
-              "fieldDefKey": "D535D803-61FF-5A84-BEC0-BDB54E2A990B",
-              "ascOrDesc": "A",
-              "id": "73378541-0070-53DC-886B-DDB1B6EF5935"
-            }
-          ],
-          "id": "3AD7422B-2914-5C8C-8B64-1172643324A5"
-        },
-        {
-          "defKey": "idx_webhook_delivery_sub",
-          "defName": "访问索引 subscription_id、endpoint_id、event_type、payload_schema_version",
-          "unique": false,
-          "comment": "支持访问路径：subscription_id、endpoint_id、event_type、payload_schema_version",
-          "fields": [
-            {
-              "fieldDefKey": "89E493A1-CDBA-5FEA-980A-1F63396BA3A7",
-              "ascOrDesc": "A",
-              "id": "0DC7A9C2-1691-5901-9CB3-032FA410CA8D"
-            },
-            {
-              "fieldDefKey": "D535D803-61FF-5A84-BEC0-BDB54E2A990B",
-              "ascOrDesc": "A",
-              "id": "A5016150-5BAB-50E8-AFF7-B8EFFE77E066"
-            },
-            {
-              "fieldDefKey": "8759A3FF-1BA0-587B-851D-CB7F210155E6",
-              "ascOrDesc": "A",
-              "id": "E1102F88-B5A1-5B33-A3CB-DA2FD4CB2269"
-            },
-            {
-              "fieldDefKey": "7252498C-361E-5794-8A98-348DF047DD3C",
-              "ascOrDesc": "A",
-              "id": "CA441E69-CC64-58C6-9044-8E69581502B1"
-            }
-          ],
-          "id": "2A15BB13-B614-5C7B-8744-E86C2028EF94"
-        },
-        {
-          "defKey": "idx_webhook_delivery_replay",
-          "defName": "访问索引 replay_of_delivery_id、tenant_id、endpoint_id",
-          "unique": false,
-          "comment": "支持访问路径：replay_of_delivery_id、tenant_id、endpoint_id",
-          "fields": [
-            {
-              "fieldDefKey": "4E041C01-CB4C-5923-A76A-F50C68EB6527",
-              "ascOrDesc": "A",
-              "id": "55A14A8D-456C-5C0C-B390-C32E09E58DF3"
-            },
-            {
-              "fieldDefKey": "BF1D41E2-3662-5BB9-BCEC-D3AB13243542",
-              "ascOrDesc": "A",
-              "id": "B6DE574C-43B6-5EA9-8B0E-24BA7735ADDE"
-            },
-            {
-              "fieldDefKey": "D535D803-61FF-5A84-BEC0-BDB54E2A990B",
-              "ascOrDesc": "A",
-              "id": "81A50E3E-D6F0-5EC0-BF90-C8C8AEF6E006"
-            }
-          ],
-          "id": "F2744EF2-736F-5249-B988-3A64D7ECD2B9"
-        },
-        {
-          "defKey": "idx_webhook_delivery_claim",
-          "defName": "访问索引 status、next_retry_time、lease_until",
-          "unique": false,
-          "comment": "支持访问路径：status、next_retry_time、lease_until",
-          "fields": [
-            {
-              "fieldDefKey": "74D206E3-6114-51CE-863A-BCBE04837E00",
-              "ascOrDesc": "A",
-              "id": "9667E389-456D-5B48-BAA9-88251BE97C22"
-            },
-            {
-              "fieldDefKey": "0347025F-61CE-5E53-88F3-12D0E65C98BF",
-              "ascOrDesc": "A",
-              "id": "2E496264-19F8-5C98-B910-7F7B1E11372B"
-            },
-            {
-              "fieldDefKey": "10FB9513-6926-50DF-92A9-F300297BDE04",
-              "ascOrDesc": "A",
-              "id": "6321B2FC-39FE-5747-BBD0-5D62681CE48D"
-            }
-          ],
-          "id": "0B0239AD-8D12-530C-94A2-F8F7461732F5"
-        },
-        {
           "defKey": "idx_webhook_delivery_tenant",
-          "defName": "访问索引 tenant_id、status",
+          "defName": "访问索引 tenant_id、create_time",
           "unique": false,
-          "comment": "支持访问路径：tenant_id、status",
+          "comment": "支持访问路径：tenant_id、create_time",
           "fields": [
             {
               "fieldDefKey": "BF1D41E2-3662-5BB9-BCEC-D3AB13243542",
@@ -22927,26 +20991,31 @@
               "id": "489BF32C-0CB7-5801-88C5-9FE8A8A6E7A2"
             },
             {
-              "fieldDefKey": "74D206E3-6114-51CE-863A-BCBE04837E00",
+              "fieldDefKey": "F2ADA0FF-D2A5-5A7E-91C0-51D222445C2B",
               "ascOrDesc": "A",
-              "id": "664821BE-E2C9-55C6-8AEE-13EE93DB49B7"
+              "id": "4608D065-FBBA-5974-845B-C3E8D713A141"
             }
           ],
           "id": "0830A9B8-120A-5A09-B938-E55D85E94126"
         },
         {
-          "defKey": "idx_webhook_deli_requested_by",
-          "defName": "访问索引 requested_by",
+          "defKey": "idx_webhook_delivery_endpoint",
+          "defName": "访问索引 endpoint_id、create_time",
           "unique": false,
-          "comment": "支持访问路径：requested_by",
+          "comment": "支持访问路径：endpoint_id、create_time",
           "fields": [
             {
-              "fieldDefKey": "B846C510-CBB6-5552-A7A7-EC30974D5160",
+              "fieldDefKey": "D535D803-61FF-5A84-BEC0-BDB54E2A990B",
               "ascOrDesc": "A",
-              "id": "B04A9D6E-B875-536B-B47C-6D2B6C5BB9E7"
+              "id": "31DE070A-F2F0-59EE-AD3A-7E405375088A"
+            },
+            {
+              "fieldDefKey": "F2ADA0FF-D2A5-5A7E-91C0-51D222445C2B",
+              "ascOrDesc": "A",
+              "id": "3748968C-1D3A-51A7-A52C-EE39535A278C"
             }
           ],
-          "id": "57E79B00-BD5E-50B5-B899-907F99CCBD98"
+          "id": "48C5A1E9-5F99-5D9C-839C-9BFFFDEDD1F1"
         }
       ],
       "type": "P"
@@ -22961,39 +21030,10 @@
       },
       "defKey": "t_webhook_attempt",
       "defName": "Webhook 投递尝试",
-      "comment": "追加保存每次使用精确签名密钥轮换行的 HTTP 调用请求摘要、结果和围栏令牌",
+      "comment": "每次 HTTP 投递尝试的地址、签名密钥与结果；发送前登记为 PROCESSING，结束后写入结果",
       "properties": {
         "logicalTableKey": "webhook_attempt",
-        "compositeForeignKeys": [
-          {
-            "name": "fk_webhook_attempt_delivery",
-            "childTable": "t_webhook_attempt",
-            "childFields": [
-              "delivery_id",
-              "tenant_id",
-              "endpoint_id"
-            ],
-            "parentTable": "t_webhook_delivery",
-            "parentFields": [
-              "delivery_id",
-              "tenant_id",
-              "endpoint_id"
-            ]
-          },
-          {
-            "name": "fk_webhook_attempt_secret",
-            "childTable": "t_webhook_attempt",
-            "childFields": [
-              "signing_secret_id",
-              "endpoint_id"
-            ],
-            "parentTable": "t_webhook_signing_secret",
-            "parentFields": [
-              "signing_secret_id",
-              "endpoint_id"
-            ]
-          }
-        ]
+        "compositeForeignKeys": []
       },
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -23160,8 +21200,8 @@
       "fields": [
         {
           "defKey": "attempt_id",
-          "defName": "Webhook 尝试标识",
-          "comment": "Webhook 投递尝试的稳定业务标识。",
+          "defName": "尝试主键",
+          "comment": "Webhook 投递尝试主键。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -23178,8 +21218,8 @@
         },
         {
           "defKey": "delivery_id",
-          "defName": "Webhook 投递",
-          "comment": "Webhook 投递的稳定业务标识。",
+          "defName": "所属投递",
+          "comment": "所属 Webhook 投递。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -23195,45 +21235,9 @@
           "id": "7FC46D2A-D7B4-50DD-9D75-A2B37092AB9E"
         },
         {
-          "defKey": "tenant_id",
-          "defName": "访问租户",
-          "comment": "访问租户的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "C4295156-6AA3-5A15-AC5A-D77A574E5AA4"
-        },
-        {
-          "defKey": "endpoint_id",
-          "defName": "Webhook 端点",
-          "comment": "Webhook 端点的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "4AD99CA6-6FDA-52CF-B5AD-CF8090B788DB"
-        },
-        {
           "defKey": "attempt_no",
-          "defName": "Webhook 尝试序号",
-          "comment": "Webhook 尝试序号的整数值。",
+          "defName": "尝试序号",
+          "comment": "投递内的尝试序号，从 1 开始。",
           "type": "INT",
           "len": "",
           "scale": "",
@@ -23249,9 +21253,30 @@
           "id": "C1770E50-AD2F-5D40-AE4D-5E7CBBE2D943"
         },
         {
+          "defKey": "request_url",
+          "defName": "请求地址",
+          "comment": "本次实际请求的端点地址。",
+          "type": "VARCHAR",
+          "len": 1000,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
+          "domain": "",
+          "id": "4C07BA37-2C12-58B1-8BC0-90F4EF249CF5"
+        },
+        {
           "defKey": "signing_secret_id",
-          "defName": "Webhook 签名密钥",
-          "comment": "Webhook 签名密钥的稳定业务标识。",
+          "defName": "主签名密钥",
+          "comment": "本次签名使用的 ACTIVE 密钥。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -23267,14 +21292,14 @@
           "id": "5A3D3E4B-496B-5874-AF21-FE52EC3542E0"
         },
         {
-          "defKey": "fencing_token",
-          "defName": "围栏令牌",
-          "comment": "围栏令牌的长整数值。",
+          "defKey": "grace_secret_id",
+          "defName": "宽限签名密钥",
+          "comment": "宽限期内参与签名的 RETIRED 密钥；无宽限时为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -23282,14 +21307,14 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "917D8278-E64A-5CBA-AEBF-38BDCC8705D5"
+          "id": "7175662A-6844-5366-86A9-DE12808FD674"
         },
         {
-          "defKey": "request_key",
-          "defName": "Webhook 请求键",
-          "comment": "Webhook 请求键的业务值。",
+          "defKey": "status",
+          "defName": "尝试状态",
+          "comment": "尝试状态；PROCESSING 遗留表示发送中断，恢复时记为 FAILED。允许值：PROCESSING、SUCCEEDED、FAILED。",
           "type": "VARCHAR",
-          "len": 128,
+          "len": 32,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -23300,30 +21325,12 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "B731FF13-E03D-594C-B271-F8DAD264C38B"
+          "id": "7A6F1CB0-6AE6-53C0-B733-95538D0B2495"
         },
         {
-          "defKey": "request_hash",
-          "defName": "Webhook 请求哈希",
-          "comment": "Webhook 请求哈希的 SHA-256 小写十六进制值。",
-          "type": "CHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
-          "extProps": {},
-          "domain": "",
-          "id": "2783E1D0-6EDB-5EAF-9F7A-2088734D824E"
-        },
-        {
-          "defKey": "response_code",
-          "defName": "Webhook 响应状态",
-          "comment": "Webhook 响应状态的整数值。",
+          "defKey": "http_status",
+          "defName": "响应状态码",
+          "comment": "收到响应时的 HTTP 状态码。",
           "type": "INT",
           "len": "",
           "scale": "",
@@ -23336,17 +21343,17 @@
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
           "extProps": {},
           "domain": "",
-          "id": "8E077346-6141-5DA0-943A-4E12D4879DCD"
+          "id": "0EA92794-CB20-51CB-A74F-699A107711FF"
         },
         {
-          "defKey": "result",
-          "defName": "Webhook 尝试结果",
-          "comment": "Webhook 尝试结果的稳定业务代码。允许值：SUCCEEDED、RETRYABLE、REJECTED、UNKNOWN。",
+          "defKey": "failure_code",
+          "defName": "失败代码",
+          "comment": "失败原因代码；成功时为空。允许值：HTTP_STATUS、TIMEOUT、CONNECT_FAILED、TLS_FAILED、DNS_FAILED、BLOCKED_ADDRESS、INTERRUPTED。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -23354,12 +21361,30 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "F74581D2-D67B-5FF0-A559-5683CCA9FB61"
+          "id": "AC1F223B-72E9-52B9-9BFD-3FE7A94F3165"
+        },
+        {
+          "defKey": "duration_ms",
+          "defName": "耗时毫秒",
+          "comment": "从发出请求到结束的毫秒数；未完成时为空。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "E0150884-9D44-590F-B997-0472DBCD8979"
         },
         {
           "defKey": "started_time",
-          "defName": "尝试开始时间",
-          "comment": "尝试开始时间对应的 UTC 微秒时间。",
+          "defName": "开始时间",
+          "comment": "尝试开始的 UTC 微秒时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -23376,8 +21401,8 @@
         },
         {
           "defKey": "finished_time",
-          "defName": "尝试结束时间",
-          "comment": "尝试结束时间对应的 UTC 微秒时间。",
+          "defName": "结束时间",
+          "comment": "尝试结束的 UTC 微秒时间；PROCESSING 时为空。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -23409,6 +21434,24 @@
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "E6940FFB-2A3E-55EC-BCD8-F090D5613B96"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "D90B5812-9C29-5D33-9FA3-4D767BAD9673"
         }
       ],
       "correlations": [
@@ -23420,38 +21463,11 @@
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
-        },
-        {
-          "id": "0C5405E0-2639-566F-8703-D7D626A7A4AF",
-          "myField": "C4295156-6AA3-5A15-AC5A-D77A574E5AA4",
-          "refEntity": "4D93B5E9-A715-5801-81C9-8B9BDEA68DA3",
-          "refField": "37D97703-3C12-5482-A3BA-52F63FC7BD2A",
-          "myRows": "n",
-          "refRows": "1",
-          "innerType": ""
-        },
-        {
-          "id": "90F862D8-680D-5E19-B687-D3CD9FDF569B",
-          "myField": "4AD99CA6-6FDA-52CF-B5AD-CF8090B788DB",
-          "refEntity": "D437ECB2-8F7D-5CEB-AE27-DB74EA1ACB73",
-          "refField": "0E6C4505-7284-5617-A43D-8D4356C3BF54",
-          "myRows": "n",
-          "refRows": "1",
-          "innerType": ""
-        },
-        {
-          "id": "EAD27489-3E98-51EA-A880-AD40EBD24B9E",
-          "myField": "5A3D3E4B-496B-5874-AF21-FE52EC3542E0",
-          "refEntity": "5800D012-C737-57A9-B4E8-B2F7A967D8F7",
-          "refField": "D42DA7AC-1A7B-5A2A-BB8B-C100B0F5F407",
-          "myRows": "n",
-          "refRows": "1",
-          "innerType": ""
         }
       ],
       "indexes": [
         {
-          "defKey": "uk_webhook_attempt",
+          "defKey": "uk_webhook_attempt_no",
           "defName": "唯一索引 delivery_id、attempt_no",
           "unique": true,
           "comment": "保证业务唯一性：delivery_id、attempt_no",
@@ -23459,105 +21475,15 @@
             {
               "fieldDefKey": "7FC46D2A-D7B4-50DD-9D75-A2B37092AB9E",
               "ascOrDesc": "A",
-              "id": "87D20CC2-C781-57AF-885D-ED0C16F559F7"
+              "id": "2D1DF8F8-FD24-5FC9-8CF4-84AEFB11B305"
             },
             {
               "fieldDefKey": "C1770E50-AD2F-5D40-AE4D-5E7CBBE2D943",
               "ascOrDesc": "A",
-              "id": "0A7724AA-CEBD-5690-8AD8-AD6BCE5FD52E"
+              "id": "DE377945-8B81-58EC-9DCA-DBD43F112A13"
             }
           ],
-          "id": "CB5B3ECE-0CDE-5026-B768-153471F35B17"
-        },
-        {
-          "defKey": "uk_webhook_request",
-          "defName": "唯一索引 delivery_id、request_key",
-          "unique": true,
-          "comment": "保证业务唯一性：delivery_id、request_key",
-          "fields": [
-            {
-              "fieldDefKey": "7FC46D2A-D7B4-50DD-9D75-A2B37092AB9E",
-              "ascOrDesc": "A",
-              "id": "5094C84E-EB98-532E-9477-E31BFD01DA20"
-            },
-            {
-              "fieldDefKey": "B731FF13-E03D-594C-B271-F8DAD264C38B",
-              "ascOrDesc": "A",
-              "id": "E7B5AEB9-0997-538D-99EA-D65FAF17B2B9"
-            }
-          ],
-          "id": "89D2B3FB-03BE-5CE2-880D-094D1AA02E9D"
-        },
-        {
-          "defKey": "idx_webhook_attempt_delivery",
-          "defName": "访问索引 delivery_id、tenant_id、endpoint_id",
-          "unique": false,
-          "comment": "支持访问路径：delivery_id、tenant_id、endpoint_id",
-          "fields": [
-            {
-              "fieldDefKey": "7FC46D2A-D7B4-50DD-9D75-A2B37092AB9E",
-              "ascOrDesc": "A",
-              "id": "0E9FCFEA-E94F-58F0-8A54-133C14AB5C60"
-            },
-            {
-              "fieldDefKey": "C4295156-6AA3-5A15-AC5A-D77A574E5AA4",
-              "ascOrDesc": "A",
-              "id": "953259C9-2289-5D32-A489-19978FE9024A"
-            },
-            {
-              "fieldDefKey": "4AD99CA6-6FDA-52CF-B5AD-CF8090B788DB",
-              "ascOrDesc": "A",
-              "id": "D3608483-842F-571D-9C25-E99294F3E2B6"
-            }
-          ],
-          "id": "42CAFD91-E6F8-5AC9-866D-B0DC6E4505B3"
-        },
-        {
-          "defKey": "idx_webhook_attempt_secret",
-          "defName": "访问索引 signing_secret_id、endpoint_id",
-          "unique": false,
-          "comment": "支持访问路径：signing_secret_id、endpoint_id",
-          "fields": [
-            {
-              "fieldDefKey": "5A3D3E4B-496B-5874-AF21-FE52EC3542E0",
-              "ascOrDesc": "A",
-              "id": "DB1789E6-644E-57B3-909E-69C1177CB76C"
-            },
-            {
-              "fieldDefKey": "4AD99CA6-6FDA-52CF-B5AD-CF8090B788DB",
-              "ascOrDesc": "A",
-              "id": "3A2522F4-8F1B-5286-B391-C033FB750AAC"
-            }
-          ],
-          "id": "196CC1DB-72B8-537D-AB91-396FDD3A351F"
-        },
-        {
-          "defKey": "idx_webhook_attempt_tenant_id",
-          "defName": "访问索引 tenant_id",
-          "unique": false,
-          "comment": "支持访问路径：tenant_id",
-          "fields": [
-            {
-              "fieldDefKey": "C4295156-6AA3-5A15-AC5A-D77A574E5AA4",
-              "ascOrDesc": "A",
-              "id": "C957A29D-F37F-5F05-9C47-3535C3787374"
-            }
-          ],
-          "id": "D3DAE7D2-05BE-548F-B71A-C427F0938482"
-        },
-        {
-          "defKey": "idx_webhook_attempt_endpoint_id",
-          "defName": "访问索引 endpoint_id",
-          "unique": false,
-          "comment": "支持访问路径：endpoint_id",
-          "fields": [
-            {
-              "fieldDefKey": "4AD99CA6-6FDA-52CF-B5AD-CF8090B788DB",
-              "ascOrDesc": "A",
-              "id": "BBBF2A96-20DF-5734-9EFA-CB419622AFF6"
-            }
-          ],
-          "id": "547B1A31-60AC-59E3-92D6-35B12A2CD063"
+          "id": "BD97CB8D-38C5-5851-9554-50D365DE3335"
         }
       ],
       "type": "P"
@@ -37174,7 +35100,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 240
+              "height": 372
             }
           },
           {
@@ -37464,44 +35390,14 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 240
-            }
-          },
-          {
-            "id": "DC157852-1C3C-586F-A362-20053ABF7E6B",
-            "shape": "table",
-            "position": {
-              "x": 430,
-              "y": 0
-            },
-            "count": 0,
-            "originKey": "02D3C6A8-2EE7-5A25-872D-AAC8687BB90E",
-            "type": "P",
-            "size": {
-              "width": 390,
-              "height": 350
-            }
-          },
-          {
-            "id": "1395DB75-B868-56F6-943B-4CC81C3A27B7",
-            "shape": "table",
-            "position": {
-              "x": 860,
-              "y": 0
-            },
-            "count": 0,
-            "originKey": "90AA9E89-E710-5F7A-B702-B8658E4CE9F7",
-            "type": "P",
-            "size": {
-              "width": 390,
-              "height": 306
+              "height": 262
             }
           },
           {
             "id": "1D6E400F-B8E8-5DE6-908B-0603309571B6",
             "shape": "table",
             "position": {
-              "x": 1290,
+              "x": 430,
               "y": 0
             },
             "count": 0,
@@ -37509,33 +35405,33 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 350
-            }
-          },
-          {
-            "id": "AC9B4FF3-E1FB-526C-B774-E1AE14F400D9",
-            "shape": "table",
-            "position": {
-              "x": 0,
-              "y": 410
-            },
-            "count": 0,
-            "originKey": "D65BE028-3285-5829-8055-36FCF7A0D075",
-            "type": "P",
-            "size": {
-              "width": 390,
-              "height": 372
+              "height": 306
             }
           },
           {
             "id": "DFF4FF4F-C9BA-59E5-BAF6-D8F1695A24AA",
             "shape": "table",
             "position": {
-              "x": 430,
-              "y": 410
+              "x": 860,
+              "y": 0
             },
             "count": 0,
             "originKey": "12E460A8-6428-53D7-82E8-7E0E01CB5908",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 328
+            }
+          },
+          {
+            "id": "F579B9DB-66A9-5865-950F-C559E5A0B88C",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "668F3EF6-1779-53CA-967A-F8E1D7611467",
             "type": "P",
             "size": {
               "width": 390,
@@ -37543,26 +35439,11 @@
             }
           },
           {
-            "id": "F579B9DB-66A9-5865-950F-C559E5A0B88C",
-            "shape": "table",
-            "position": {
-              "x": 860,
-              "y": 410
-            },
-            "count": 0,
-            "originKey": "668F3EF6-1779-53CA-967A-F8E1D7611467",
-            "type": "P",
-            "size": {
-              "width": 390,
-              "height": 548
-            }
-          },
-          {
             "id": "D2B7E9A8-D485-5FC9-8AC4-4AEFBB53DB17",
             "shape": "table",
             "position": {
-              "x": 1290,
-              "y": 410
+              "x": 0,
+              "y": 432
             },
             "count": 0,
             "originKey": "565171B1-EE18-5B1C-AA01-C74E759A879A",
@@ -37576,8 +35457,8 @@
             "id": "C31C6227-17E3-55DB-90C4-130F77B3BB6E",
             "shape": "table",
             "position": {
-              "x": 0,
-              "y": 1018
+              "x": 430,
+              "y": 432
             },
             "count": 0,
             "originKey": "4D93B5E9-A715-5801-81C9-8B9BDEA68DA3",
@@ -37585,21 +35466,6 @@
             "size": {
               "width": 390,
               "height": 328
-            }
-          },
-          {
-            "id": "93996822-686F-5E32-8948-4BA3374ED341",
-            "shape": "table",
-            "position": {
-              "x": 430,
-              "y": 1018
-            },
-            "count": 0,
-            "originKey": "677B1152-0ECC-56EB-81C5-5615075AAFBE",
-            "type": "P",
-            "size": {
-              "width": 390,
-              "height": 438
             }
           },
           {
@@ -37625,78 +35491,12 @@
             "isLock": true
           },
           {
-            "id": "0D0705A7-FC3D-5AD8-AE18-B16BFCEF26C1",
-            "shape": "erdRelation",
-            "originKey": "B5864743-BA18-5B86-AD76-FF047D801FA8",
-            "source": {
-              "cell": "DC157852-1C3C-586F-A362-20053ABF7E6B",
-              "port": "8A173F27-18EC-5176-A6C4-31F92426ED3B%out"
-            },
-            "target": {
-              "cell": "B0E99079-40F4-5EC0-B147-6526586158DA",
-              "port": "0E6C4505-7284-5617-A43D-8D4356C3BF54%in"
-            },
-            "relation": "n:1",
-            "vertices": [],
-            "fillColor": "#ACDAFC",
-            "attrs": {
-              "line": {
-                "strokeDasharray": ""
-              }
-            },
-            "isLock": true
-          },
-          {
-            "id": "D2020BBD-37D3-5788-BF5B-33EE716BE4D7",
-            "shape": "erdRelation",
-            "originKey": "E50CBBCF-BF5E-56F4-96DE-0982060B62A6",
-            "source": {
-              "cell": "1395DB75-B868-56F6-943B-4CC81C3A27B7",
-              "port": "BF960B4E-35C6-518E-AC65-7C51E53A7D21%out"
-            },
-            "target": {
-              "cell": "DC157852-1C3C-586F-A362-20053ABF7E6B",
-              "port": "FD713C18-65BD-5549-8842-C33C2B84BE2E%in"
-            },
-            "relation": "n:1",
-            "vertices": [],
-            "fillColor": "#ACDAFC",
-            "attrs": {
-              "line": {
-                "strokeDasharray": ""
-              }
-            },
-            "isLock": true
-          },
-          {
             "id": "CB1805F8-ABE1-54A9-A854-7AF52CA4E379",
             "shape": "erdRelation",
             "originKey": "E95227BC-8E5B-5117-8F48-44E8CA434AE4",
             "source": {
               "cell": "1D6E400F-B8E8-5DE6-908B-0603309571B6",
               "port": "9C584C87-F083-59EB-B00D-23BDCDBBA79B%out"
-            },
-            "target": {
-              "cell": "B0E99079-40F4-5EC0-B147-6526586158DA",
-              "port": "0E6C4505-7284-5617-A43D-8D4356C3BF54%in"
-            },
-            "relation": "n:1",
-            "vertices": [],
-            "fillColor": "#ACDAFC",
-            "attrs": {
-              "line": {
-                "strokeDasharray": ""
-              }
-            },
-            "isLock": true
-          },
-          {
-            "id": "27227771-DABD-5B62-988A-39EA0BAEF46D",
-            "shape": "erdRelation",
-            "originKey": "57FC16BC-174A-53D8-A15C-5C3B86978E55",
-            "source": {
-              "cell": "AC9B4FF3-E1FB-526C-B774-E1AE14F400D9",
-              "port": "41C0B238-93C3-5179-A0FF-0C83954EB315%out"
             },
             "target": {
               "cell": "B0E99079-40F4-5EC0-B147-6526586158DA",
@@ -37801,94 +35601,6 @@
             "isLock": true
           },
           {
-            "id": "63CE8E42-796C-5BFF-914D-A82DE7FD3372",
-            "shape": "erdRelation",
-            "originKey": "F8DBDD6C-9758-5366-8637-E3670A5A1F3D",
-            "source": {
-              "cell": "F579B9DB-66A9-5865-950F-C559E5A0B88C",
-              "port": "A376FF0C-934F-5365-B5D0-5A07C69A773D%out"
-            },
-            "target": {
-              "cell": "DC157852-1C3C-586F-A362-20053ABF7E6B",
-              "port": "FD713C18-65BD-5549-8842-C33C2B84BE2E%in"
-            },
-            "relation": "n:1",
-            "vertices": [],
-            "fillColor": "#ACDAFC",
-            "attrs": {
-              "line": {
-                "strokeDasharray": ""
-              }
-            },
-            "isLock": true
-          },
-          {
-            "id": "6214A9D7-B885-53EC-BC6E-625203E903CC",
-            "shape": "erdRelation",
-            "originKey": "9ECE0F53-DCCC-5EF9-9FE6-E5CE619A7A95",
-            "source": {
-              "cell": "F579B9DB-66A9-5865-950F-C559E5A0B88C",
-              "port": "89E493A1-CDBA-5FEA-980A-1F63396BA3A7%out"
-            },
-            "target": {
-              "cell": "AC9B4FF3-E1FB-526C-B774-E1AE14F400D9",
-              "port": "0863B7AD-6C1B-5E68-8809-3495E9554BDF%in"
-            },
-            "relation": "n:1",
-            "vertices": [],
-            "fillColor": "#ACDAFC",
-            "attrs": {
-              "line": {
-                "strokeDasharray": ""
-              }
-            },
-            "isLock": true
-          },
-          {
-            "id": "49E919E1-6459-5321-994E-DA0BDD85353F",
-            "shape": "erdRelation",
-            "originKey": "5EA9743A-8B5F-5F0A-B64C-BC482B6D8C30",
-            "source": {
-              "cell": "F579B9DB-66A9-5865-950F-C559E5A0B88C",
-              "port": "4E041C01-CB4C-5923-A76A-F50C68EB6527%out"
-            },
-            "target": {
-              "cell": "F579B9DB-66A9-5865-950F-C559E5A0B88C",
-              "port": "2527B154-5160-5435-9A89-AA2C11A146D9%in"
-            },
-            "relation": "n:1",
-            "vertices": [],
-            "fillColor": "#ACDAFC",
-            "attrs": {
-              "line": {
-                "strokeDasharray": ""
-              }
-            },
-            "isLock": true
-          },
-          {
-            "id": "0698C408-F5AB-5F7F-AE18-6B01E231AA76",
-            "shape": "erdRelation",
-            "originKey": "71954518-6327-59C1-91D9-2C507DC090FB",
-            "source": {
-              "cell": "F579B9DB-66A9-5865-950F-C559E5A0B88C",
-              "port": "B846C510-CBB6-5552-A7A7-EC30974D5160%out"
-            },
-            "target": {
-              "cell": "93996822-686F-5E32-8948-4BA3374ED341",
-              "port": "13E1FF0A-9A70-5AD4-A8A9-BD4A526CC62E%in"
-            },
-            "relation": "n:1",
-            "vertices": [],
-            "fillColor": "#ACDAFC",
-            "attrs": {
-              "line": {
-                "strokeDasharray": ""
-              }
-            },
-            "isLock": true
-          },
-          {
             "id": "DE5DFA07-6BEC-5BAD-B422-A7716F24640F",
             "shape": "erdRelation",
             "originKey": "6E505143-9635-5D13-AC81-0D6E12F2F4AE",
@@ -37909,89 +35621,19 @@
               }
             },
             "isLock": true
-          },
-          {
-            "id": "02E7C75B-30C8-50E7-BCE6-39D81A7BD5B0",
-            "shape": "erdRelation",
-            "originKey": "0C5405E0-2639-566F-8703-D7D626A7A4AF",
-            "source": {
-              "cell": "D2B7E9A8-D485-5FC9-8AC4-4AEFBB53DB17",
-              "port": "C4295156-6AA3-5A15-AC5A-D77A574E5AA4%out"
-            },
-            "target": {
-              "cell": "C31C6227-17E3-55DB-90C4-130F77B3BB6E",
-              "port": "37D97703-3C12-5482-A3BA-52F63FC7BD2A%in"
-            },
-            "relation": "n:1",
-            "vertices": [],
-            "fillColor": "#ACDAFC",
-            "attrs": {
-              "line": {
-                "strokeDasharray": ""
-              }
-            },
-            "isLock": true
-          },
-          {
-            "id": "411D0F94-8734-5848-88A9-08748056D7BD",
-            "shape": "erdRelation",
-            "originKey": "90F862D8-680D-5E19-B687-D3CD9FDF569B",
-            "source": {
-              "cell": "D2B7E9A8-D485-5FC9-8AC4-4AEFBB53DB17",
-              "port": "4AD99CA6-6FDA-52CF-B5AD-CF8090B788DB%out"
-            },
-            "target": {
-              "cell": "B0E99079-40F4-5EC0-B147-6526586158DA",
-              "port": "0E6C4505-7284-5617-A43D-8D4356C3BF54%in"
-            },
-            "relation": "n:1",
-            "vertices": [],
-            "fillColor": "#ACDAFC",
-            "attrs": {
-              "line": {
-                "strokeDasharray": ""
-              }
-            },
-            "isLock": true
-          },
-          {
-            "id": "09F8FC2F-C7D6-576B-8505-0B1024D20EB4",
-            "shape": "erdRelation",
-            "originKey": "EAD27489-3E98-51EA-A880-AD40EBD24B9E",
-            "source": {
-              "cell": "D2B7E9A8-D485-5FC9-8AC4-4AEFBB53DB17",
-              "port": "5A3D3E4B-496B-5874-AF21-FE52EC3542E0%out"
-            },
-            "target": {
-              "cell": "1D6E400F-B8E8-5DE6-908B-0603309571B6",
-              "port": "D42DA7AC-1A7B-5A2A-BB8B-C100B0F5F407%in"
-            },
-            "relation": "n:1",
-            "vertices": [],
-            "fillColor": "#ACDAFC",
-            "attrs": {
-              "line": {
-                "strokeDasharray": ""
-              }
-            },
-            "isLock": true
           }
         ]
       },
       "properties": {
         "primaryTables": [
           "t_webhook_endpoint",
-          "t_webhook_endpoint_revision",
-          "t_webhook_endpoint_verification",
           "t_webhook_signing_secret",
-          "t_webhook_subscription",
           "t_webhook_event",
           "t_webhook_delivery",
           "t_webhook_attempt"
         ],
         "referenceTables": [
-          "t_access_tenant",
-          "t_user_account"
+          "t_access_tenant"
         ]
       },
       "id": "B4CE6069-F1BF-578F-B8FD-9E614C465F38",
@@ -39349,7 +36991,7 @@
       "controlIntensity": "S",
       "applyObjectType": "P",
       "applyFieldType": "entity",
-      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_email_otp_attempt\",\"t_file_owner_ref\",\"t_file_scan_result\",\"t_document_delivery\",\"t_webhook_endpoint_verification\",\"t_webhook_event\",\"t_webhook_attempt\",\"t_audit_event\",\"t_audit_event_attr\",\"t_audit_integrity_point\",\"t_security_event\",\"t_security_alert_event\",\"t_security_alert_action\",\"t_integration_verify_run_step\"].includes(data.entity.defKey); let custom=[\"t_gateway_route_header\",\"t_gateway_route_query_param\",\"t_gateway_guard_rule\"].includes(data.entity.defKey); return custom ? !actual.includes('create_time') && !actual.includes('update_time') : actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
+      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_email_otp_attempt\",\"t_file_owner_ref\",\"t_file_scan_result\",\"t_document_delivery\",\"t_webhook_event\",\"t_audit_event\",\"t_audit_event_attr\",\"t_audit_integrity_point\",\"t_security_event\",\"t_security_alert_event\",\"t_security_alert_action\",\"t_integration_verify_run_step\"].includes(data.entity.defKey); let custom=[\"t_gateway_route_header\",\"t_gateway_route_query_param\",\"t_gateway_guard_rule\"].includes(data.entity.defKey); return custom ? !actual.includes('create_time') && !actual.includes('update_time') : actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
       "enable": true
     },
     {

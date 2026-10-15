@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.delivery.core.dal.mapper.WebhookEventMapper">
+    <sql id="columns">event_id, tenant_id, source_system, source_event_key, event_type, payload_schema_version,
+        source_version, source_payload_hash, payload_hash, payload, create_time</sql>
+    <resultMap id="record" type="com.paytech.platform.support.delivery.core.dal.dataobject.WebhookEvent">
+        <id column="event_id" property="eventId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="source_system" property="sourceSystem"/>
+        <result column="source_event_key" property="sourceEventKey"/>
+        <result column="event_type" property="eventType"/>
+        <result column="payload_schema_version" property="payloadSchemaVersion"/>
+        <result column="source_version" property="sourceVersion"/>
+        <result column="source_payload_hash" property="sourcePayloadHash"/>
+        <result column="payload_hash" property="payloadHash"/>
+        <result column="payload" property="payload"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+    <select id="find" resultMap="record">SELECT <include refid="columns"/> FROM t_webhook_event
+        WHERE event_id = #{id}
+    </select>
+    <select id="findSource" resultMap="record">SELECT <include refid="columns"/> FROM t_webhook_event
+        WHERE tenant_id = #{tenantId} AND source_event_key = #{sourceEventKey} AND source_system = #{sourceSystem}
+    </select>
+    <insert id="insert">INSERT INTO t_webhook_event (<include refid="columns"/>) VALUES (#{eventId}, #{tenantId},
+        #{sourceSystem}, #{sourceEventKey}, #{eventType}, #{payloadSchemaVersion}, #{sourceVersion},
+        #{sourcePayloadHash}, #{payloadHash}, #{payload}, #{createTime})
+    </insert>
+</mapper>
