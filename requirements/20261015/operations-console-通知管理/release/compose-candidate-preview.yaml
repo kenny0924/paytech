@@ -1,0 +1,5 @@
+# 预览改为按钮 + 弹窗：从干净提交 88a7807 构建的 Operations Web（tag mor-test/operations-console-web:notification-preview-20261015）。
+# 叠加在 compose.yaml + compose.applications.yaml + Vault 值格式需求的 compose-candidate.yaml 之后，只覆盖 Web 镜像。
+services:
+  operations-console-web:
+    image: sha256:e5df9ddcac1fa2ca27903b0b6c01a0793f67010c97e10d8e3d05e703ac04de3d

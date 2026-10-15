@@ -78,3 +78,18 @@ test 一直没有部署本需求：`mor_platform` 没有通知管理的权限、
 | 清理 | 合成账号、记录与验收新建的 `E2E_NOTIFY_*` 模板及其内容、路由已删除；通知请求 / 投递 / 尝试表为 0；保留 D3 的认证邮件初始化数据；审计事件为追加记录，保留 |
 
 **当前 test 状态：** Platform `f84a012`（`493026bf…`），BFF / Web 为 Vault 值格式需求发布的 `994d5b0` 镜像（含通知管理）；运营后台可见「通知管理」菜单。test 的注册验证、找回密码邮件不再进入 Mailpit（未配置 SES，发送失败只计指标）。回退按第 6 节，Platform 回退镜像 `d5794c9c…` 需配合备份中的 Compose 副本。
+
+## 8. 追加发布：预览改为按钮 + 弹窗（2026-10-15）
+
+用户回复"提交并部署test"。只替换 Operations Web，Platform、BFF、数据库不动。
+
+| 步骤 | 结果 |
+|---|---|
+| 提交 | `88a7807`（`994d5b0..88a7807` 的 Web 改动只有本次）；`design.pen` 未保存，未包含 |
+| 构建 | 干净 worktree `88a7807`，lock 文件与主工作区一致，`npm run build`；镜像 `mor-test/operations-console-web:notification-preview-20261015` = `sha256:e5df9ddc…ac04de3d`（arm64） |
+| 替换 | 替换前 Web 为 `7e369f33…`；用 [compose-candidate-preview.yaml](./compose-candidate-preview.yaml) 叠加在 Vault 值格式需求的 compose-candidate.yaml 之后，`up -d --no-deps --no-build --pull never --wait operations-console-web`：18:34:18Z 开始，18:34:29Z healthy；入口 `index.html` 引用新构建资源 |
+| 验收 | 接口 **22/22**、浏览器 **17/17**（含"编辑区只有预览按钮""点击后弹窗渲染"，截图 03、03b 已更新）；只读回归 **28 页**无 ≥400 请求、无控制台错误；Web、BFF、Platform、Gateway 日志无合成参数值与 Token |
+| 过程问题 | 第一次执行时 SQL 包装脚本只读标准输入，fixture 以参数传入而未执行，接口验收在配置路由处失败两次，留下 2 个 `E2E_NOTIFY_ORDER_*` 模板（无路由、无记录）；改为标准输入执行 fixture 后通过，统一由清理脚本删除 |
+| 清理 | `acceptance-cleanup-local.sql` 后：E2E 模板 0；模板 2、账号 1、路由 2、内容 2；请求 / 投递 / 尝试 0 |
+| 回退 | 用 Vault 值格式需求的 compose-candidate.yaml（不叠加本文件）重新 `up` Web，回到 `7e369f33…` |
+
