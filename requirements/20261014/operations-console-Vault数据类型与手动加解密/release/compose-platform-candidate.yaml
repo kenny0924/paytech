@@ -1,0 +1,5 @@
+# 候选：从干净提交 84b3174 构建的 Platform（tag mor-test/platform-support-service:vault-login-20261015），固定 image ID。
+# 叠加在 test-environment 的 compose.yaml + compose.applications.yaml 之上；配置不变，只换镜像。回退镜像 sha256:b211ce16…dcd211。
+services:
+  platform-support-service:
+    image: sha256:d5794c9ce648dd9a8ccf11986c34aa89c99e301a412c41b3519a8956e95bd566
