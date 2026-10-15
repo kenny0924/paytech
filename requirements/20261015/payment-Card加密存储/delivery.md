@@ -7,7 +7,7 @@
 | 1. 需求评审与范围确认 | 已确认（第 2 版：卡模型分层） |
 | 2+3. 现状差异与方案设计 | 已确认（第 3 版） |
 | 4. 研发实现 | 已确认（第 3 版） |
-| 5. 综合验证与本地验收 | 已完成；真实 Vault 联调待本机注册后补做 |
+| 5. 综合验证与本地验收 | 已完成（含本机真实 Vault 联调） |
 | 6–7. test 发布准备与部署 | 不适用：Payment 尚未部署到 mor-test |
 | 8. 提交 | 已本地提交（不推送、不部署） |
 
@@ -25,10 +25,11 @@
 | 2026-10-15 | 2+3 | “可以，继续吧”（方案第 3 版及本机删旧表、建三表） | 阶段 4 按第 3 版返工 |
 | 2026-10-15 | 4 | “继续” | 进入阶段 5；本机 Vault 注册未获单独授权，不做真实 Vault 联调 |
 | 2026-10-15 | 5 | “要做，要提交”（真实 Vault 联调、提交） | 本机 Vault 注册被会话的自动权限检查拦截，注册脚本交用户执行；先本地提交本需求范围的改动 |
+| 2026-10-15 | 5 | “继续执行” | 执行本机 Vault 注册脚本并联调，结果补记后再次本地提交 |
 
 ## 当前阶段与下一确认点
 
-已本地提交（提交说明含本需求目录名），未推送、未部署。真实 Vault 联调待用户在本机 Vault 执行注册脚本后补做，结果另行记录。
+已本地提交（提交说明含本需求目录名），未推送、未部署。本机 Vault 已注册并完成联调。
 
 ## 阶段 4 证据（2026-10-15，第 3 版）
 
@@ -94,7 +95,8 @@
 |---|---|
 | Payment `./mvnw -o verify`（阶段 4 末次） | 108/108 通过；本机库与 Redis 无残留 |
 | `npm --prefix requirements-site test` | 137 项：128 通过、9 失败。9 项失败与本需求开始前的基线（同一工作区更早一次运行）名称完全一致，涉及 Commerce、Gateway、台账快照、测试规范等，与本需求无关 |
-| 真实 Vault 联调 | 未做：用户已授权，但本会话对本机 Vault 管理接口的写入被自动权限检查拦截；注册由用户执行后补做。`auto` 测试经真实 Vault 客户端访问 Vault 测试 HTTP 服务 |
+| 本机 Vault 注册 | 经用户授权，以管理接口在本机 Vault（127.0.0.1:18107）新建数据类型 `PAYMENT_CARD_DEK`（REFERENCE、SECRET、人工加解密关闭）与两条访问规则（Protect/`CARD_STORAGE`、Reveal/`CARD_USE`），策略版本 8 → 11；未触碰 mor-test |
+| 真实 Vault 联调 | 以 `payment-orchestration-service` 身份按 `CardKeyClientImpl` 的参数直接调用 Vault Protect/Reveal 一把随机测试 DEK，7 项全部通过：Protect 200；Token 为 43 位 Base64URL（与 `dek_vault_token CHAR(43)` 一致）；同幂等键重放返回同一 Token；`CARD_USE` Reveal 取回原 32 字节 DEK；Reveal 用 `CARD_STORAGE`、Protect 用 `CARD_USE` 均 403 `ACCESS_DENIED`；另一把 DEK 得到不同 Token。未整应用启动（本机缺 Nacos 账号），Java `VaultClient` 到真实 Vault 的链路未覆盖，该链路由 `auto` 测试经 Vault 测试 HTTP 服务验证。联调留下 2 条测试 DEK 记录（Vault 不提供删除） |
 | Redis 不可用分支 | 未验证：共享本地环境中不能停 Redis |
 | 进程重启后读卡 | 未单独测试：Card 没有进程内状态，读卡只依赖数据库、Vault、Redis |
 
