@@ -42,7 +42,7 @@ POST /vault/v1/records/reveal
 ```
 
 本次只部署 Vault，不替换 Platform 的 Vault Mock、不接生产 KMS、不发布 Java Client 到制品库。
-访问策略只从数据库读取（初始化 [dml-test.sql](../requirements/20261014/operations-console-Vault数据类型与手动加解密/db/vault/dml-test.sql)，需单独授权执行）；[policy.json](vault/policy.json)（`test-deployment-v2`）仅作转写来源，不再被读取。该策略保留 `vault-test-smoke` / `vault-test-peer` 的合成测试值；
+访问策略只从数据库读取（初始化 [dml-test.sql](../requirements/20261014/operations-console-Vault数据类型与手动加解密/db/vault/dml-test.sql)，2026-10-15 已执行，见[发布记录](../requirements/20261014/operations-console-Vault数据类型与手动加解密/release/release.md)；策略此后由 Operations“数据保护”页面维护）；[policy.json](vault/policy.json)（`test-deployment-v2`）仅作转写来源，不再被读取。该策略保留 `vault-test-smoke` / `vault-test-peer` 的合成测试值；
 `TEST_STABLE_V1` / `TEST_REFERENCE_V1` 不是业务数据类型。2026-10-14 客户入驻发布另授权 `EMAIL_ADDRESS_V1`、`PHONE_E164_V1`（STABLE）：
 Platform 登录邮箱 `PLATFORM_LOGIN_EMAIL_V1`，CCT 申请联系人 `CLIENT_ONBOARDING_CONTACT`，各含 PROTECT/REVEAL。
 
@@ -62,6 +62,8 @@ GO_BIN=/path/to/prepared/go1.27.1/bin/go ./test-environment/scripts/build-vault.
 ./test-environment/compose.sh up -d --no-deps --no-build --wait --wait-timeout 90 vault-service
 python3 test-environment/scripts/vault.py smoke
 ```
+
+> 当前 Platform 镜像已不含 curl，`vault.py smoke` 原样运行会在 Nacos 检查后失败；2026-10-15 发布改用接入 `mor-test-backend` 的临时 curl 容器执行同一检查（见上面发布记录第 4 节），脚本待修正。
 
 构建仅使用已缓存依赖离线编译 Linux ARM64 静态二进制，再封装为 scratch 镜像，不下载基础镜像或修改 Go 服务。
 容器以 `10001:10001` 运行，只读根目录、移除 Capabilities，SDK 临时文件限定在 64 MiB `/tmp` tmpfs。

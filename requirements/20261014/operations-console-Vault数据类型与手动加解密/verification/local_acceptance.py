@@ -1,9 +1,13 @@
-"""阶段 5 本机全链路验收：经 Nginx 运营入口逐项走 AC-1～AC-9、AC-11（AC-10 另做浏览器验收）。
+"""全链路验收：经 Nginx 运营入口逐项走 AC-1～AC-9、AC-11（AC-10 另做浏览器验收）。
 
-只连接本机；不打印 Token、原值与凭据，只输出断言结果。测试数据编码以 E2E_S5_ 开头，结束后另行清理。
+默认目标本机；E2E_TARGET=test 时走 mor-test（运营 http://localhost:28080），业务服务对 Vault 的调用
+经接入 mor-test-backend 网络的临时 curl 探针容器发出（test Vault 无宿主机端口）。
+不打印 Token、原值与凭据，只输出断言结果。测试数据编码以 E2E_S5_ 开头，结束后另行清理。
 用法：python3 -I local_acceptance.py
 """
 import json
+import os
+import subprocess
 import sys
 import time
 import urllib.error
@@ -37,16 +41,33 @@ def status_of(fn):
             return failure.status, {}
 
 
+TEST_PROBE = ["docker", "run", "--rm", "-i", "--network", "mor-test-backend",
+              "nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c"]
+
+
 def vault_business(path, caller, body, key=False):
     headers = {"Content-Type": "application/json", "X-Caller-Service": caller}
     if key:
         headers["Idempotency-Key"] = str(uuid.uuid4())
+    if os.environ.get("E2E_TARGET") == "test":
+        return vault_business_in_test(path, headers, body)
     request = urllib.request.Request(VAULT + path, json.dumps(body).encode(), headers, method="POST")
     try:
         with urllib.request.urlopen(request, timeout=10) as response:
             return response.status, json.loads(response.read())
     except urllib.error.HTTPError as failure:
         return failure.code, json.loads(failure.read() or b"{}")
+
+
+def vault_business_in_test(path, headers, body):
+    """经临时探针容器调用 test Vault；请求体从标准输入传入，不出现在命令行。"""
+    arguments = TEST_PROBE + ["curl", "--silent", "--max-time", "15", "--write-out", "\n%{http_code}", "--request", "POST",
+                              "--data-binary", "@-", "http://vault-service:18107" + path]
+    for name, value in headers.items():
+        arguments[len(TEST_PROBE) + 1:len(TEST_PROBE) + 1] = ["--header", f"{name}: {value}"]
+    result = subprocess.run(arguments, input=json.dumps(body), capture_output=True, text=True, timeout=60)
+    text, _, status = result.stdout.rpartition("\n")
+    return int(status or 0), json.loads(text or "{}")
 
 
 def wait_until(probe, seconds=30):

@@ -18,5 +18,6 @@
 | 2026-10-15 | 5 本机联调 | 重建本机 Docker Vault；`mor_platform_e2e` 执行注册 DML（174 行，试跑回滚核对后提交）与 [activation-local.sql](./db/platform-support-service/activation-local.sql)（13/11/6/1 行）；Operations BFF 新 jar 重启。经 Nginx 运营入口：[API 验收](./verification/local_acceptance.py) 27 项（AC-1～9、11）、[浏览器验收](./verification/local_browser.py) 19 项（AC-10）全部通过；临时撤销密钥类授权时密钥路由被 Gateway 403、普通路由不受影响，已恢复。发现并修正：本机 SQL 以 latin1 客户端执行导致中文乱码（4 张表注释、11 个菜单名、初始化理由），就地修正并在 SQL 文件头注明 utf8mb4；“操作人”列加宽以显示完整账号 ID。测试数据已清理，`mor_vault` 回到初始化数据 | 待确认 |
 | 2026-10-15 | 5 本机联调 | 按用户试用反馈调整页面：删除数据类型页顶部提示；手动加密完成后不再换页，Token 显示在表单下方并可复制；手动解密结果并入同一卡片（遮罩、显示/隐藏、复制、清除、30 秒倒计时）。Web 测试 996、浏览器验收 19 项通过 | 已完成 |
 | 2026-10-15 | 5 本机联调 | 用户确认审计只在 Vault 本地、暂不转发 Platform 集中审计，写入决定记录第 7 条；用户回复“提交吧”，阶段 5 确认并提交（未推送）。下一步：mor-test 执行 DDL/DML、注册激活与部署（阶段 6/7，需另行授权） | **已确认** |
+| 2026-10-15 | 6/7 mor-test 发布 | 用户授权“可以”、拦截后“放行”。按[发布记录](./release/release.md)：备份后 `mor_vault` 执行 DDL 与 dml-test，`mor_platform` 登记 174 行并[启用](./release/test-activate.sql)；Vault、BFF、Web 从 `34ecac9` 干净构建（BFF 与 risk-api 等接口模块同 reactor，避开他人未提交 SNAPSHOT）并替换。Vault 烟测（临时 curl 探针）、API 验收 27 项、浏览器 19 项、23 页面回归通过，验收数据已清理。偏差：BFF 首个镜像误用过期健康探针，重建后 healthy；`vault.py smoke` 因 Platform 镜像无 curl 需改探针（遗留） | 待确认 |
 
 当前实现与部署状态只见 [CURRENT_IMPLEMENTATION.md](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。

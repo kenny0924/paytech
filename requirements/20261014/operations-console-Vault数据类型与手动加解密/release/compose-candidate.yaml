@@ -1,0 +1,10 @@
+# 候选：从干净提交 34ecac9 构建的三个镜像（tag mor-test/<service>:vault-admin-20261015），使用固定 image ID。
+# 叠加在 test-environment 的 compose.yaml + compose.applications.yaml 之上；配置与当前仓库一致，只换镜像。
+# Vault 不再挂载 policy.json、不设 VAULT_POLICY_FILE，加入 VAULT_ADMIN_CALLERS（见 compose.applications.yaml）。
+services:
+  vault-service:
+    image: sha256:9842248f5faaebfdd15d994740d592adebf083febbab5ff74bd8f9d8adbd0c67
+  operations-console-bff:
+    image: sha256:eb67cff179539d6bab724eb5de86bff3d24da4e1fbafcddffe42c712f0834354
+  operations-console-web:
+    image: sha256:9f8c27cb267e7f9f8db5a726ba9addf31f11138a964a4f1c496ea8bc2198821b
