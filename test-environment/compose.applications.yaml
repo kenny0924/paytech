@@ -89,6 +89,7 @@ services:
       RISK_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
       RISK_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
       RISK_RABBITMQ_VHOST: /mor-test
+      RISK_DECISION_ENVIRONMENT: TEST
       ONBOARDING_REVIEW_ENABLED: "true"
       ONBOARDING_MATERIALS_ENABLED: "true"
     depends_on:

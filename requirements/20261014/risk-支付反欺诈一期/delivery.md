@@ -70,3 +70,20 @@
 - **新增测试：** 评估超时（TIMED_OUT）与同一支付尝试并发评估，各连续 5 次通过。
 - **验证：** Risk 全量 auto **1991/1991**；Risk PDManer 17 项既有失败不变；支付运行期相关类 JaCoCo 行 94.7% / 分支 80.1%。
 - **确认后修复（2026-10-15，用户回复“可以”）：** 规则集删除改为同时检查生效中或影子中的执行发布经决策流的引用（409 `RISK_RULE_SET_IN_USE`，列表 `inUse` 同步）；同时修复既有缺陷——旧发布引用查询与损坏发布计数把执行发布误判为损坏，支付点有生效执行发布时规则集删除、列表、版本历史与发布引用查询返回 500。Risk 全量 auto **1992/1992**。发布引用分页列表纳入执行发布需另行设计；其余遗留见报告第 5 节。
+
+## 7. 阶段 6 test 发布准备（2026-10-15，已确认）
+
+用户回复“提交，然后进入阶段 6”。阶段 5 已提交 `06025a2`（不推送）。发布清单见 [release/release.md](./release/release.md)（评审稿），未执行任何 test 变更。
+
+- **只读核对：** test Risk 为提交 `7e9eddc` 的旧镜像；`mor_risk` 81 表，差异恰为本需求 DDL 范围，数据前置条件满足；新代码必填配置 `RISK_DECISION_ENVIRONMENT` 在 test Compose 中缺失。
+- **制品：** 从 `06025a2` 干净导出构建候选镜像 `mor-test/risk-service:payment-fraud-20261015`（`e0b7a8d484eb`），并在本机以该镜像重跑完整链路验收 61 项通过。
+- **SQL 演练：** 一次性 MySQL 容器载入 test 结构后执行 ddl/dml，与正式 Schema 逐项一致；清理与回退 SQL 回到发布前结构逐项一致。
+- **待决定：** D1 验收数据清理或保留；D2 Compose 永久补配置；D3 临时代理作为验收入口。
+
+## 8. 阶段 7 test 部署与环境验收（2026-10-15，待确认）
+
+用户确认发布清单，D1～D3 按建议（回复“可以”）。执行与验收见 [release/test-acceptance.md](./release/test-acceptance.md)。
+
+- **部署：** 备份后停 Risk（约 73 秒），test `mor_risk` 执行 ddl/dml，结构与正式 Schema 逐项一致（84 表）；Compose 补 `RISK_DECISION_ENVIRONMENT: TEST`；Risk 换为候选镜像 `e0b7a8d484eb`（提交 `06025a2`），其余 15 个容器不变。
+- **验收：** 只读回归通过；业务验收 61 项全部通过；在用规则集删除返回 409；日志无受限原值；验收数据已清理，行数回到验收前。
+- **待提交：** `test-environment/compose.applications.yaml` 一行配置与本需求发布记录（不推送）。
