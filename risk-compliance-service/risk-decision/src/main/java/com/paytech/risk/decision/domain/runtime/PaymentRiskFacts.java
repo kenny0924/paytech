@@ -3,29 +3,13 @@ package com.paytech.risk.decision.domain.runtime;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.LongSupplier;
 
 import com.paytech.risk.control.domain.list.RiskSubjectType;
-import com.paytech.risk.decision.core.dal.dataobject.DecisionEvaluation;
-import com.paytech.risk.decision.core.dal.dataobject.EvaluationFeatureResult;
-import com.paytech.risk.decision.core.dal.dataobject.EvaluationRuleTrace;
-import com.paytech.risk.decision.core.dal.dataobject.ExecutionRelease;
-import com.paytech.risk.decision.core.dal.dataobject.TransactionRiskAssessment;
-import com.paytech.risk.decision.core.dal.dataobject.VelocityEvent;
-import com.paytech.risk.decision.core.dal.dataobject.VelocityEventSubject;
+import com.paytech.risk.decision.core.dal.dataobject.*;
 import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
-import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
-import com.paytech.risk.decision.domain.enums.DecisionValue;
-import com.paytech.risk.decision.domain.enums.DecisionValueType;
-import com.paytech.risk.decision.domain.enums.EvaluationMode;
-import com.paytech.risk.decision.domain.enums.RuleTraceType;
-import com.paytech.risk.decision.domain.enums.TechnicalStatus;
-import com.paytech.risk.decision.domain.enums.VelocityEventCode;
+import com.paytech.risk.decision.domain.enums.*;
 
 /**
  * 由一次正式支付评估的输入、结果与时间构造需要保存的全部事实；纯内存构造
@@ -71,10 +55,14 @@ public final class PaymentRiskFacts {
     /**
      * 构造需要保存的事实
      *
-     * @param input 冻结输入
-     * @param release 执行发布
-     * @param run 执行结果、时间与技术状态
-     * @param ids 标识生成
+     * @param input
+     *            冻结输入
+     * @param release
+     *            执行发布
+     * @param run
+     *            执行结果、时间与技术状态
+     * @param ids
+     *            标识生成
      * @return 评估上下文
      */
     public static PaymentRiskAssessmentContext build(PaymentRiskInput input, ExecutionRelease release, Run run,
@@ -101,7 +89,8 @@ public final class PaymentRiskFacts {
     /**
      * 支付决策点的认证要求输出
      *
-     * @param outcome 引擎结论
+     * @param outcome
+     *            引擎结论
      * @return 放行时按结束节点输出解析的认证要求；其他结论为空
      */
     public static AuthenticationRequirement authentication(EngineOutcome outcome) {
@@ -158,7 +147,8 @@ public final class PaymentRiskFacts {
         row.setUserAgent(input.userAgent());
         row.setCardFingerprint(input.cardFingerprint());
         row.setCardBin(input.cardBin());
-        row.setAuthenticationRequirement(run.status() == TechnicalStatus.SUCCEEDED ? authentication(run.outcome()) : null);
+        row.setAuthenticationRequirement(
+            run.status() == TechnicalStatus.SUCCEEDED ? authentication(run.outcome()) : null);
         row.setStableInputHash(stableHash(input));
         row.setRestrictedInputHash(restrictedHash);
         row.setCreateTime(run.completedTime());
@@ -306,12 +296,18 @@ public final class PaymentRiskFacts {
     /**
      * 一次执行的结果与时间
      *
-     * @param evaluationTime 评估时间锚点，即开始时间
-     * @param completedTime 完成时间
-     * @param status 技术状态
-     * @param failureCode 失败代码；成功时为空
-     * @param outcome 引擎结论；技术失败时为空
-     * @param features Feature 结果；技术失败时为空
+     * @param evaluationTime
+     *            评估时间锚点，即开始时间
+     * @param completedTime
+     *            完成时间
+     * @param status
+     *            技术状态
+     * @param failureCode
+     *            失败代码；成功时为空
+     * @param outcome
+     *            引擎结论；技术失败时为空
+     * @param features
+     *            Feature 结果；技术失败时为空
      */
     public record Run(Instant evaluationTime, Instant completedTime, TechnicalStatus status, String failureCode,
         EngineOutcome outcome, Map<Long, FeatureValue> features) {
