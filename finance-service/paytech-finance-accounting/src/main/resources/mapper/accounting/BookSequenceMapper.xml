@@ -14,4 +14,8 @@
         UPDATE t_book_sequence SET next_value = next_value + 1, update_time = #{now}
         WHERE id = #{sequence.id} AND next_value = #{sequence.nextValue}
     </update>
+
+    <select id="selectByLedgerBookForShare" resultType="com.paytech.finance.accounting.core.dal.dataobject.BookSequence">
+        SELECT id, ledger_book_id, next_value, create_time, update_time FROM t_book_sequence WHERE ledger_book_id = #{ledgerBookId} FOR SHARE
+    </select>
 </mapper>

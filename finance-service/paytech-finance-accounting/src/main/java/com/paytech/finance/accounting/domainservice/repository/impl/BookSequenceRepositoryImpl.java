@@ -43,6 +43,12 @@ public class BookSequenceRepositoryImpl implements BookSequenceRepository {
         sequence.setUpdateTime(now);
     }
 
+    /** 以共享锁读取账簿序号行；必须在事务内调用。 */
+    @Override
+    public BookSequence lockSharedByLedgerBook(long ledgerBookId) {
+        return mapper.selectByLedgerBookForShare(ledgerBookId);
+    }
+
     /** 当前 UTC 时间，截断到数据库支持的微秒精度。 */
     private Instant now() {
         return clock.instant().truncatedTo(ChronoUnit.MICROS);

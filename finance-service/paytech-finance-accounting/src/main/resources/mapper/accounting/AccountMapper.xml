@@ -62,4 +62,21 @@
         <if test="query.ownerId != null">AND a.owner_id = #{query.ownerId}</if>
         <if test="query.balanceBucket != null">AND a.balance_bucket = #{query.balanceBucket}</if>
     </select>
+
+    <select id="selectProjectionChecks" resultType="com.paytech.finance.accounting.domain.view.AccountProjectionCheckView">
+        SELECT a.id account_id, a.normal_side, a.debit_total, a.credit_total, a.net_balance,
+               COALESCE(j.journal_debit, 0) journal_debit, COALESCE(j.journal_credit, 0) journal_credit
+        FROM t_account a
+        LEFT JOIN (
+            SELECT l.account_id,
+                   SUM(CASE WHEN l.entry_side = 'DEBIT' THEN l.amount ELSE 0 END) journal_debit,
+                   SUM(CASE WHEN l.entry_side = 'CREDIT' THEN l.amount ELSE 0 END) journal_credit
+            FROM t_journal_line l
+            JOIN t_journal_entry e ON e.id = l.journal_entry_id
+            WHERE e.ledger_book_id = #{ledgerBookId} AND e.journal_sequence &lt;= #{asOfSequence}
+            GROUP BY l.account_id
+        ) j ON j.account_id = a.id
+        WHERE a.ledger_book_id = #{ledgerBookId}
+        ORDER BY a.id
+    </select>
 </mapper>

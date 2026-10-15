@@ -28,6 +28,14 @@
 - **Verified：** finance-service JDK 25 `clean verify` **80/80**，0 失败/错误/跳过；测试复用正式启动类、`mock` Profile、本地 MySQL/Redis，覆盖并发过账序号与余额、同一调整只过账一次、锁内门禁失败整体回滚、Maker-Checker、重放与 Redis 锁冲突。JaCoCo（命令行执行，未加入构建门禁）：accounting/api/web 合计行 96.7%、分支 80.3%。`-exec.jar` 本地真实 HTTP 冒烟 13 步通过（建账、调整、审批过账、详情、余额与两个拒绝场景），冒烟数据已清理。`npm --prefix requirements-site test` 127/137，10 项失败均为本次未改动的既有文档断言。
 - **Pending：** 接口仅为 Finance 内部开发接口：Maker/Checker 由请求传入、OE 不向 CCT 核对、未接 Gateway 与统一身份；Redis 不可用的 503 路径未自动化；未实现交易经济、AUTO 记账、成熟、对账、出款、税务、关账/重开、账簿/账户停用与账本流水查询；本地 `mor_finance` 视为测试专用库（测试每例清空 16 张账务表的测试写入）。
 
+<a id="finance-trial-balance-20261016"></a>
+
+## Finance 试算平衡与期间余额（2026-10-16）
+
+- **Implemented（未提交、未部署）：** 按[需求](../requirements/20261016/finance-试算平衡/requirement.md)与[技术方案](../requirements/20261016/finance-试算平衡/technique.md)，Finance 新增内部 `TrialBalanceApi`：按账簿 + 期间执行试算（序号行共享锁取一致水位，按科目汇总期初/本期借贷/期末有符号余额，期末余额拆分借贷合计，账户投影与 Journal 重算核对，`GENERAL_LEDGER_MISMATCH` 记录为 OPEN 异常，RFC 8785 `CODE-MOR:FINANCE:TRIAL_BALANCE:1` 内容摘要），成功试算按水位条件刷新 `ledger_period_balance`；试算列表与详情查询；`JournalPostingServiceImpl` 通配符 import 清理。复用已存在的 4 张表，无 SQL 变更。生产代码与测试由两个并行 agent 实现、主会话合并核对。
+- **Verified：** finance-service JDK 25 `clean verify` **109/109**（新增 13 个试算用例，含序号行锁等待的双连接测试）；JaCoCo 命令行合计行 97.4%、分支 82.2%。本地 `-exec.jar` 真实 HTTP 冒烟 8/8 通过，数据已清理。
+- **Pending：** 异常只记录不处置（Maker-Checker 解决与投影重建随期间关账实现）；往来、渠道、对账类异常待交易经济与 Treasury；内部开发接口，未接 Gateway 与授权；试算汇总全量 Journal，后续可用上一期间余额作起点。
+
 <a id="finance-ledger-query-20261015"></a>
 
 ## Finance 账本流水与账户查询（2026-10-15）
@@ -615,7 +623,7 @@
 | CCT | 单份主资料、人员/关系、材料引用、只读申请导航与恢复，见 [Client 切片](#client-console-onboarding-20260914) | 2026-09-16 clean verify 140/140（13 Suite）；真实 MySQL/Redis，外围 HTTP Simulator；38 表夹具回收 | 应用未部署，Client 入口关闭 | 正式提交、永久身份绑定、Risk/Operations 审核和真实 Owner 联调待完成 |
 | Commerce | 15 表/249 字段目标模型；本期新增 Customer 三操作及 Payment 内部四操作，准备时冻结 OE/合同/税事实并创建 Intent，见 [COM-CUSTOMER-01](#commerce-customer-20260912)；基础创建仍只做预检 | JDK 25 `clean verify` 331/331，0 失败/错误/跳过；真实本地 MySQL/HTTP、按需顺序查询与独立 Handler 恢复验证；JaCoCo 行覆盖率 91.78%（3027/3298）；模型沿用上一轮 17/17 | 应用未部署；获授权本机三表增量 SQL 已执行，本地 Mock 启动入口已验证并关闭 | 本机保留旧列的兼容结构不等于目标新库 Schema；新 Owner 端口为 Mock + TODO，真实跨服务、支付成功事实消费、晚到定价、Payment Card、公共路由及前端联调未完成 |
 | Payment | 27 表/345 字段模型；Channel 五表与两个公开查询见[本地实现](#channel-account-mid-query-requirement-20260921)，Execution 另见[本地切片](#payment-execution-implementation) | Channel JDK 25 clean verify 56 项、模型 18 项通过；专项范围与覆盖率见下方 | 未部署；仅初始化 mor_payment_channel_test，既有业务库未迁移 | Routing 占位消费者、真实渠道、共享库迁移及真实 Vault 策略仍待接入 |
-| Finance | 84 表/1,109 字段目标模型、完整人工 Schema 与初始化 DML；Accounting 第一批账务内核（基础资料、过账内核、人工调整 Maker-Checker）、entityNo 余额查询与 FIN-I05 账本查询已实现，见 [账务内核](#finance-accounting-kernel-20261015)、[账本查询](#finance-ledger-query-20261015) | 2026-10-15 JDK 25 `clean verify` 96/96，本地 MySQL/Redis；`-exec.jar` 本地 HTTP 冒烟通过 | 未部署；本地 `mor_finance` 已执行完整 Schema | 交易经济、AUTO 记账、成熟、对账、出款、税务与关账未实现；接口未接统一身份与 Gateway；手工缴税异常分支待专项模型闭合 |
+| Finance | 84 表/1,109 字段目标模型、完整人工 Schema 与初始化 DML；Accounting 第一批账务内核（基础资料、过账内核、人工调整 Maker-Checker）、entityNo 余额查询、FIN-I05 账本查询与试算平衡已实现，见 [账务内核](#finance-accounting-kernel-20261015)、[账本查询](#finance-ledger-query-20261015)、[试算平衡](#finance-trial-balance-20261016) | 2026-10-15 JDK 25 `clean verify` 109/109，本地 MySQL/Redis；`-exec.jar` 本地 HTTP 冒烟通过 | 未部署；本地 `mor_finance` 已执行完整 Schema | 交易经济、AUTO 记账、成熟、对账、出款、税务与关账未实现；接口未接统一身份与 Gateway；手工缴税异常分支待专项模型闭合 |
 | Risk & Compliance | 71 表/九路由配置切片；本次原 V1 增加可空终态、冷却/主体标签参数、手工拒绝文案、Risk-owned 主体绑定与显式历史格式兼容，见第 15 节 | 2026-09-11 JDK 25 `clean verify` 155/155，含真实本地 MySQL/随机端口 HTTP、旧 Hash Golden 和配置冻结门禁；模型/Schema 189/189 | 2026-09-12 RCO-17 已部署本机 `mor-test`，实际 78 表；四表及三表精简、历史回填与兼容比对完成，见 [RCO-17](#rco17-test-20260912) | Risk 配置的真实 Nginx/Gateway/BFF/Risk HTTP 链已验收；PDManer 人工 Review、其他环境/生产仍待完成；运行期评估和真实动作不在本期范围；全局 COMP-01/DB-01/Vault V1 Gate 保持 |
 | `mor-local` | 仓库提供 MySQL、Redis、RabbitMQ、Nacos 等本地依赖的手工环境 | 当前本机运行状态应按 [`LOCAL_DEVELOPMENT_ENVIRONMENT.md`](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 的命令即时核对 | 仅本机开发环境 | 自动测试只能复用该环境，不得自行拉起替代容器或连接真实业务环境 |
 | `mor-test` | 独立 Docker 测试拓扑当前为 11 个容器、61 条 ACTIVE Operations Route、35 个 ACTIVE Console Resource；RCO-17 证据见下，浏览器入口为 `http://localhost:28080` | 已记录真实登录/IAM/审计/Refresh/Logout、Gateway 控制面启停/幂等/版本冲突/Snapshot 恢复与 Vault 合成 smoke | 本机独立测试环境；Gateway 控制面与 Risk V1 配置入口已部署，11 个容器健康 | 不是 Maven `auto`、覆盖率或生产证据；生产部署仍未声明 |

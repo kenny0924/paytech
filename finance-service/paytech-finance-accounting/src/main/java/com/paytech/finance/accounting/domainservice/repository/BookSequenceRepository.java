@@ -13,4 +13,7 @@ public interface BookSequenceRepository {
 
     /** 把已锁定的序号推进一位，成功后同步原对象。 */
     void advance(BookSequence sequence);
+
+    /** 以共享锁读取账簿序号行；必须在事务内调用。 */
+    BookSequence lockSharedByLedgerBook(long ledgerBookId);
 }

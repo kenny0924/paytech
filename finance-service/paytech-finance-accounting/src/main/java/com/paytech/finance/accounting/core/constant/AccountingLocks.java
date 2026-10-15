@@ -15,4 +15,9 @@ public final class AccountingLocks {
     public static String fiscalCalendar(long fiscalCalendarId) {
         return "fiscal-calendar:" + fiscalCalendarId;
     }
+
+    /** 同一账簿同一期间执行试算的资源锁。 */
+    public static String trialBalance(long ledgerBookId, long periodId) {
+        return "trial-balance:" + ledgerBookId + ":" + periodId;
+    }
 }

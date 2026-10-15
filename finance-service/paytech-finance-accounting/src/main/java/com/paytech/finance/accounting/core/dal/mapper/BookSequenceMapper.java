@@ -23,4 +23,7 @@ public interface BookSequenceMapper {
      * @return 受影响行数
      */
     int advance(@Param("sequence") BookSequence sequence, @Param("now") Instant now);
+
+    /** 以共享锁读取账簿序号行：等待在途过账提交，同时允许其他读取者。 */
+    BookSequence selectByLedgerBookForShare(@Param("ledgerBookId") long ledgerBookId);
 }

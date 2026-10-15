@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Param;
 import com.paytech.finance.accounting.core.dal.dataobject.JournalLine;
 import com.paytech.finance.accounting.domain.view.AccountJournalLineView;
 import com.paytech.finance.accounting.domain.view.JournalEntryDetailView;
+import com.paytech.finance.accounting.domain.view.TrialBalanceAggregateView;
 
 /** t_journal_line：会计分录行持久化（只追加）。 */
 @Mapper
@@ -31,4 +32,8 @@ public interface JournalLineMapper {
 
     /** 读取一条分录的全部行及其账户科目与核算对象，按行号升序。 */
     List<JournalEntryDetailView.Line> selectEntryLines(@Param("journalEntryId") long journalEntryId);
+
+    /** 按科目汇总水位内、过账日不晚于期间结束的分录：期初有符号累计与本期借贷发生额；全零科目不返回。 */
+    List<TrialBalanceAggregateView> selectTrialAggregates(@Param("ledgerBookId") long ledgerBookId,
+        @Param("asOfSequence") long asOfSequence, @Param("start") LocalDate start, @Param("end") LocalDate end);
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import com.paytech.finance.accounting.core.dal.dataobject.Account;
 import com.paytech.finance.accounting.core.enums.OwnerType;
 import com.paytech.finance.accounting.domain.AccountQuery;
+import com.paytech.finance.accounting.domain.view.AccountProjectionCheckView;
 import com.paytech.finance.accounting.domain.view.AccountView;
 import com.paytech.finance.accounting.domain.view.OwnerAccountBalanceView;
 
@@ -35,4 +36,7 @@ public interface AccountRepository {
 
     /** 统计符合过滤条件的账户数量。 */
     long countPage(AccountQuery query);
+
+    /** 读取账户投影与水位内分录合计的对照。 */
+    List<AccountProjectionCheckView> findProjectionChecks(long ledgerBookId, long asOfSequence);
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import com.paytech.finance.accounting.core.dal.dataobject.JournalLine;
 import com.paytech.finance.accounting.domain.view.AccountJournalLineView;
 import com.paytech.finance.accounting.domain.view.JournalEntryDetailView;
+import com.paytech.finance.accounting.domain.view.TrialBalanceAggregateView;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 
 /** t_JournalLine：会计分录行追加。 */
@@ -22,4 +23,7 @@ public interface JournalLineRepository {
 
     /** 读取一条分录的全部行及账户科目与核算对象。 */
     List<JournalEntryDetailView.Line> findEntryLines(long journalEntryId);
+
+    /** 按科目汇总试算所需的期初与本期发生额。 */
+    List<TrialBalanceAggregateView> findTrialAggregates(long ledgerBookId, long asOfSequence, LocalDate start, LocalDate end);
 }

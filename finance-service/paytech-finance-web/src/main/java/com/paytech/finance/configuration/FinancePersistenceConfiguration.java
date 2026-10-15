@@ -22,6 +22,10 @@ import com.paytech.finance.accounting.core.enums.NormalSide;
 import com.paytech.finance.accounting.core.enums.OwnerType;
 import com.paytech.finance.accounting.core.enums.PeriodStatus;
 import com.paytech.finance.accounting.core.enums.ReferenceDataStatus;
+import com.paytech.finance.accounting.core.enums.TrialBalanceStatus;
+import com.paytech.finance.accounting.core.enums.TrialExceptionStatus;
+import com.paytech.finance.accounting.core.enums.TrialExceptionType;
+import com.paytech.finance.accounting.core.enums.TrialReferenceType;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
 import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
 
@@ -58,6 +62,10 @@ public class FinancePersistenceConfiguration {
             registry.register(OwnerType.class, new CodeEnumTypeHandler<>(OwnerType.class));
             registry.register(PeriodStatus.class, new CodeEnumTypeHandler<>(PeriodStatus.class));
             registry.register(ReferenceDataStatus.class, new CodeEnumTypeHandler<>(ReferenceDataStatus.class));
+            registry.register(TrialReferenceType.class, new CodeEnumTypeHandler<>(TrialReferenceType.class));
+            registry.register(TrialExceptionType.class, new CodeEnumTypeHandler<>(TrialExceptionType.class));
+            registry.register(TrialExceptionStatus.class, new CodeEnumTypeHandler<>(TrialExceptionStatus.class));
+            registry.register(TrialBalanceStatus.class, new CodeEnumTypeHandler<>(TrialBalanceStatus.class));
         };
     }
 }

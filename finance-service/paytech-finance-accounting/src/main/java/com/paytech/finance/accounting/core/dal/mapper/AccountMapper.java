@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import com.paytech.finance.accounting.core.dal.dataobject.Account;
 import com.paytech.finance.accounting.core.enums.OwnerType;
 import com.paytech.finance.accounting.domain.AccountQuery;
+import com.paytech.finance.accounting.domain.view.AccountProjectionCheckView;
 import com.paytech.finance.accounting.domain.view.AccountView;
 import com.paytech.finance.accounting.domain.view.OwnerAccountBalanceView;
 
@@ -48,4 +49,8 @@ public interface AccountMapper {
 
     /** 统计符合过滤条件的账户数量。 */
     long countPage(@Param("query") AccountQuery query);
+
+    /** 读取账簿内全部账户的余额投影与水位内全量分录借贷合计。 */
+    List<AccountProjectionCheckView> selectProjectionChecks(@Param("ledgerBookId") long ledgerBookId,
+        @Param("asOfSequence") long asOfSequence);
 }

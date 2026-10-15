@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.TrialBalanceExceptionMapper">
+    <insert id="insertBatch">
+        INSERT INTO t_trial_balance_exception (id, run_id, exception_type, reference_type, reference_id, difference_amount, status, resolution_type, resolution_ref_id, resolution_content_hash, resolution_maker_id, resolution_checker_id, resolution_time, create_time, update_time) VALUES
+        <foreach collection="rows" item="row" separator=",">(#{row.id}, #{row.runId}, #{row.exceptionType}, #{row.referenceType}, #{row.referenceId}, #{row.differenceAmount}, #{row.status}, #{row.resolutionType}, #{row.resolutionRefId}, #{row.resolutionContentHash}, #{row.resolutionMakerId}, #{row.resolutionCheckerId}, #{row.resolutionTime}, #{row.createTime}, #{row.updateTime})</foreach>
+    </insert>
+
+    <select id="selectViews" resultType="com.paytech.finance.accounting.domain.view.TrialBalanceFindingView">
+        SELECT exception_type, reference_type, reference_id, difference_amount, status
+        FROM t_trial_balance_exception WHERE run_id = #{runId}
+        ORDER BY exception_type, reference_type, reference_id
+    </select>
+</mapper>

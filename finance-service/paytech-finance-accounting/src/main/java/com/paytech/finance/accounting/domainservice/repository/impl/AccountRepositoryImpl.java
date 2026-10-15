@@ -13,6 +13,7 @@ import com.paytech.finance.accounting.core.dal.dataobject.Account;
 import com.paytech.finance.accounting.core.dal.mapper.AccountMapper;
 import com.paytech.finance.accounting.core.enums.OwnerType;
 import com.paytech.finance.accounting.domain.AccountQuery;
+import com.paytech.finance.accounting.domain.view.AccountProjectionCheckView;
 import com.paytech.finance.accounting.domain.view.AccountView;
 import com.paytech.finance.accounting.domain.view.OwnerAccountBalanceView;
 import com.paytech.finance.accounting.domainservice.repository.AccountRepository;
@@ -83,6 +84,12 @@ public class AccountRepositoryImpl implements AccountRepository {
     @Override
     public long countPage(AccountQuery query) {
         return mapper.countPage(query);
+    }
+
+    /** 读取账户投影与水位内分录合计的对照。 */
+    @Override
+    public List<AccountProjectionCheckView> findProjectionChecks(long ledgerBookId, long asOfSequence) {
+        return mapper.selectProjectionChecks(ledgerBookId, asOfSequence);
     }
 
     /** 当前 UTC 时间，截断到数据库支持的微秒精度。 */

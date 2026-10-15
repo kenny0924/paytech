@@ -9,6 +9,7 @@ import com.paytech.finance.accounting.core.dal.dataobject.JournalLine;
 import com.paytech.finance.accounting.core.dal.mapper.JournalLineMapper;
 import com.paytech.finance.accounting.domain.view.AccountJournalLineView;
 import com.paytech.finance.accounting.domain.view.JournalEntryDetailView;
+import com.paytech.finance.accounting.domain.view.TrialBalanceAggregateView;
 import com.paytech.finance.accounting.domainservice.repository.JournalLineRepository;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 
@@ -42,5 +43,11 @@ public class JournalLineRepositoryImpl implements JournalLineRepository {
     @Override
     public List<JournalEntryDetailView.Line> findEntryLines(long journalEntryId) {
         return mapper.selectEntryLines(journalEntryId);
+    }
+
+    /** 按科目汇总试算所需的期初与本期发生额。 */
+    @Override
+    public List<TrialBalanceAggregateView> findTrialAggregates(long ledgerBookId, long asOfSequence, LocalDate start, LocalDate end) {
+        return mapper.selectTrialAggregates(ledgerBookId, asOfSequence, start, end);
     }
 }

@@ -28,7 +28,11 @@ public interface AccountingTestMapper {
 
     /** 统计 16 张 Accounting 表中测试可写入的行数，按表返回。 */
     @Select("""
-        SELECT 't_finance_entity' t, COUNT(*) c FROM t_finance_entity UNION ALL
+        SELECT 't_ledger_period_balance' t, COUNT(*) c FROM t_ledger_period_balance UNION ALL
+        SELECT 't_trial_balance_exception', COUNT(*) FROM t_trial_balance_exception UNION ALL
+        SELECT 't_trial_balance_line', COUNT(*) FROM t_trial_balance_line UNION ALL
+        SELECT 't_trial_balance_run', COUNT(*) FROM t_trial_balance_run UNION ALL
+        SELECT 't_finance_entity', COUNT(*) FROM t_finance_entity UNION ALL
         SELECT 't_ledger_book', COUNT(*) FROM t_ledger_book UNION ALL
         SELECT 't_book_sequence', COUNT(*) FROM t_book_sequence UNION ALL
         SELECT 't_account', COUNT(*) FROM t_account UNION ALL
@@ -109,4 +113,29 @@ public interface AccountingTestMapper {
     /** 统计调整的审批记录数。 */
     @Select("SELECT COUNT(*) FROM t_adjustment_approval WHERE adjustment_id = #{adjustmentId}")
     int countApprovals(@Param("adjustmentId") long adjustmentId);
+
+    /** 直接篡改账户净余额投影，构造总账投影漂移场景。 */
+    @Update("UPDATE t_account SET net_balance = #{netBalance} WHERE id = #{id}")
+    void updateAccountNetBalance(@Param("id") long id, @Param("netBalance") String netBalance);
+
+    /** 读取账簿在期间内的期间余额投影，按科目主键升序。 */
+    @Select("SELECT chart_account_id, opening_balance, period_debit, period_credit, closing_balance, as_of_sequence, "
+        + "trial_balance_run_id FROM t_ledger_period_balance WHERE period_id = #{periodId} "
+        + "AND ledger_book_id = #{ledgerBookId} ORDER BY chart_account_id")
+    List<Map<String, Object>> selectPeriodBalances(@Param("periodId") long periodId,
+        @Param("ledgerBookId") long ledgerBookId);
+
+    /** 把期间余额投影的水位改为指定值，构造“已有更高水位”场景。 */
+    @Update("UPDATE t_ledger_period_balance SET as_of_sequence = #{asOfSequence} WHERE period_id = #{periodId} "
+        + "AND ledger_book_id = #{ledgerBookId}")
+    void updatePeriodBalanceSequence(@Param("periodId") long periodId, @Param("ledgerBookId") long ledgerBookId,
+        @Param("asOfSequence") long asOfSequence);
+
+    /** 统计账簿的试算次数。 */
+    @Select("SELECT COUNT(*) FROM t_trial_balance_run WHERE ledger_book_id = #{ledgerBookId}")
+    int countTrialRuns(@Param("ledgerBookId") long ledgerBookId);
+
+    /** 在调用方事务内排他锁定账簿序号行，模拟在途过账。 */
+    @Select("SELECT next_value FROM t_book_sequence WHERE ledger_book_id = #{ledgerBookId} FOR UPDATE")
+    long lockBookSequence(@Param("ledgerBookId") long ledgerBookId);
 }
