@@ -215,7 +215,36 @@ public final class RiskVariableModels {
         String currencyVariableCode,
         String allowedValuesVariableCode,
         Object currentValue,
-        @NotBlank String status) { }
+        @NotBlank String status,
+        @Valid VelocityParameters velocity,
+        @Valid ListParameters list) {
+        /** 字段、常量、集合来源不带累计与名单参数。 */
+        public CreateVariableRequestBody(String variableCode, String variableName, String description, String sourceType,
+            String valueType, String pointCode, String sourceContractCode, Integer sourceContractVersion, String sourceField,
+            List<String> usages, String formatCode, String numericUnit, String currencyCode, String currencyVariableCode,
+            String allowedValuesVariableCode, Object currentValue, String status) {
+            this(variableCode, variableName, description, sourceType, valueType, pointCode, sourceContractCode,
+                sourceContractVersion, sourceField, usages, formatCode, numericUnit, currencyCode, currencyVariableCode,
+                allowedValuesVariableCode, currentValue, status, null, null);
+        }
+    }
+
+    /**
+     * 实时累计参数：仅 sourceType=VELOCITY 时填写，创建后不可修改。
+     * <li>事件、主体、算法、窗口的可用组合由 Risk 校验；distinctSubjectType 只用于 DISTINCT_COUNT，其余为 null。</li>
+     */
+    public record VelocityParameters(
+        @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String eventCode,
+        @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String anchorSubjectType,
+        @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String metric,
+        @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String distinctSubjectType,
+        @NotNull @Positive Integer windowSeconds,
+        @NotNull Boolean includeCurrent) { }
+
+    /** 名单命中参数：仅 sourceType=LIST 时填写，创建后不可修改。 */
+    public record ListParameters(
+        @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String listCode,
+        @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String subjectType) { }
 
     /** 使用期望根版本维护当前值，禁止提交结构字段。 */
     public record UpdateVariableRequestBody(

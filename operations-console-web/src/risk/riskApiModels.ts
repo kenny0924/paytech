@@ -12,7 +12,7 @@ export interface RuleOperand { operandRole: 'LEFT' | 'RIGHT'; valueSequence: num
 export interface RuleConditionNode { nodeKey: string; parentNodeKey: string | null; sequenceNo: number; nodeType: 'GROUP' | 'PREDICATE'; groupOperator: 'AND' | 'OR' | 'NOT' | null; comparisonOperator: OperatorCode | null; operands: readonly RuleOperand[]; }
 export interface RuleAction { actionCode: string; actionVersionNo: number; }
 export interface RuleDefinition { ruleCode: string; ruleName: string; priorityNo: number; enabledFlag: boolean; reasonCode: string | null; conditionNodes: readonly RuleConditionNode[]; action: RuleAction | null; reasonMessage: string | null; additionalActions: readonly AdditionalAction[]; }
-export interface CreateRuleSetVersionRequest { operandFormat?: string; pointCode: 'CHECKOUT_PREPARE'; ruleSetCode: string; ruleSetName: string; baseRuleSetVersionId: string | null; baseContentHash: string | null; changeReason: string; rules: readonly RuleDefinition[]; }
+export interface CreateRuleSetVersionRequest { operandFormat?: string; pointCode: string; ruleSetCode: string; ruleSetName: string; baseRuleSetVersionId: string | null; baseContentHash: string | null; changeReason: string; rules: readonly RuleDefinition[]; }
 export interface FreezeRuleSetVersionRequest { expectedContentHash: string; }
 export interface CreateTestCandidateRequest { ruleSetVersionId: string; expectedRuleSetContentHash: string; }
 export interface ValidateTestCandidateRequest { expectedVersion: number; }

@@ -2,6 +2,7 @@ import { VariableProjectionPanel } from './VariableControls';
 import { useEffect, useState } from 'react';
 import { Button, Descriptions, Modal, Tag, Tooltip, Typography } from 'antd';
 import type { RuleSetEditorModel, EditorCondition } from './ruleBuilder';
+import { terminalActionLabels } from './ruleBuilder';
 import type { RuleSetDetail } from './riskApiModels';
 import { ConditionView, formatRiskTime, ruleSetStatusLabels } from './RuleSetDetails';
 import { CHECKOUT_PREPARE_AUTHORING_V1 as catalog } from './riskAuthoringCatalog';
@@ -12,7 +13,7 @@ export function ReadRuleSetWorkspace({editor,base}:{editor:RuleSetEditorModel;ba
   const [selectedId,setSelectedId]=useState(editor.rules[0]?.id);const [collapsed,setCollapsed]=useState(false);const [basic,setBasic]=useState(false);
   useEffect(()=>{const query=window.matchMedia('(max-width: 1024px)');const sync=()=>{if(query.matches)setCollapsed(true);};sync();query.addEventListener('change',sync);return()=>query.removeEventListener('change',sync);},[]);
   const selected=editor.rules.find(row=>row.id===selectedId)??editor.rules[0];
-  const decision=(code:string)=>({ALLOW_CHECKOUT:'PASS',REVIEW_CHECKOUT:'REVIEW',DENY_CHECKOUT:'REJECT'}[code]??'未配置动作');
+  const decision=(code:string)=>terminalActionLabels[code]??'未配置动作';
   return <section className="risk-editor risk-editor-workspace" aria-label="规则集只读详情">
     <header className="risk-workspace-header">
       <div className="risk-editor-heading"><div className="risk-title-line"><h2>{editor.ruleSetName}</h2><Tag>只读</Tag>{base&&<Tag>#{base.versionNo} · {ruleSetStatusLabels[base.status]}</Tag>}</div><Button onClick={()=>setBasic(true)}>基本信息</Button></div>

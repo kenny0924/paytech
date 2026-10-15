@@ -136,6 +136,7 @@ final class RiskOwnerResponseShapeValidator {
             fields(nullable(INTEGER), "versionNo actionSequenceNo flowVersionNo"), fields(BOOLEAN, "isCurrentConfiguration"), fields(array(TEXT), "activeEnvironments"));
         roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.RejectionReasonReferenceResponseBody>>() {}.getType(), page(reasonReference));
         addFlowRoots(roots);
+        addControlRoots(roots);
         return Map.copyOf(roots);
     }
 
@@ -144,8 +145,16 @@ final class RiskOwnerResponseShapeValidator {
         Shape condition = node -> node.isObject() && node.propertyNames().equals(java.util.Set.of("schemaVersion", "root"))
             && INTEGER.valid(node.get("schemaVersion")) && java.util.Set.of(1, 2).contains(node.get("schemaVersion").intValue())
             && flowExpression(node.get("root"), 1, new int[]{0}, node.get("schemaVersion").intValue());
-        Shape node = object(fields(TEXT, "nodeKey type name"), fields(position, "position"),
-            fields(NULLABLE_TEXT, "ruleSetVersionId decisionCode reasonCode reasonMessage"));
+        // 放行结束节点的附加输出由 Risk 以 NON_EMPTY 输出：存在时为 1..8 项编码到取值的映射。
+        Shape outputMap = value -> {
+            if (!value.isObject() || value.isEmpty() || value.size() > 8) return false;
+            for (var entry : value.properties()) {
+                if (!entry.getKey().matches("[A-Z][A-Z0-9_]{0,63}") || !entry.getValue().isString()) return false;
+            }
+            return true;
+        };
+        Shape node = objectWithOptional(combine(fields(TEXT, "nodeKey type name"), fields(position, "position"),
+            fields(NULLABLE_TEXT, "ruleSetVersionId decisionCode reasonCode reasonMessage")), fields(outputMap, "outputs"));
         Shape edge = object(fields(TEXT, "edgeKey sourceNodeKey targetNodeKey type name"), fields(INTEGER, "priority"), fields(nullable(condition), "condition"));
         Shape graph = object(fields(INTEGER, "schemaVersion"), fields(array(node), "nodes"), fields(array(edge), "edges"));
         Shape reference = object(fields(TEXT, "nodeKey ruleSetId ruleSetCode ruleSetName ruleSetVersionId ruleSetStatus versionStatus"),
@@ -157,12 +166,15 @@ final class RiskOwnerResponseShapeValidator {
             fields(array(RiskVariableResponseShape::summary), "currentVariables"), fields(array(RiskVariableResponseShape::issue), "variableIssues"));
         Shape fields = object(fields(TEXT, "fieldCode label valueType literalDomain variableCode"), fields(BOOLEAN, "required"), fields(array(TEXT), "operators"));
         Shape output = object(fields(TEXT, "nodeType fieldCode label valueType variableCode"), fields(BOOLEAN, "required"), fields(array(TEXT), "operators"));
+        Shape declaration = object(fields(TEXT, "outputCode name defaultValue"),
+            fields(array(object(fields(TEXT, "value name"))), "allowedValues"), fields(array(TEXT), "allowedEndDecisions"));
         roots.put(com.paytech.risk.api.decision.response.FlowAuthoringContextResponseBody.class,
-            object(fields(array(object(fields(TEXT, "pointCode pointName"))), "supportedPoints"),
+            objectWithOptional(combine(fields(array(object(fields(TEXT, "pointCode pointName"))), "supportedPoints"),
                 fields(TEXT, "pointCode inputContractCode"), fields(INTEGER, "inputContractVersion graphSchemaVersion"), fields(array(fields), "fields"), fields(array(output), "nodeOutputs"),
                 fields(object(fields(INTEGER, "bodyBytes nodes edges conditionBytes conditionNodes conditionDepth")), "limits"),
                 fields(TEXT, "descriptorCode"), fields(INTEGER, "conditionSchemaVersion"),
-                fields(RiskVariableResponseShape::queryContext, "variableQueryContext")));
+                fields(RiskVariableResponseShape::queryContext, "variableQueryContext")),
+                fields(value -> value.isArray() && !value.isEmpty() && array(declaration).valid(value), "outputs")));
         roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.FlowListItemResponseBody>>() {}.getType(), page(item));
         roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.FlowHistoryItemResponseBody>>() {}.getType(), page(history));
         roots.put(com.paytech.risk.api.decision.response.FlowDetailResponseBody.class, detail);
@@ -177,6 +189,28 @@ final class RiskOwnerResponseShapeValidator {
         roots.put(com.paytech.risk.api.decision.response.LegacyPointResponseBody.class,
             object(fields(TEXT, "sourceType pointVersionId pointCode pointName inputContractCode defaultDecision evaluationStrategy failureStrategy"),
                 fields(INTEGER, "versionNo inputContractVersion"), fields(array(node), "nodes"), fields(array(edge), "edges"), fields(array(reference), "ruleSetReferences")));
+    }
+
+    /** 名单与执行发布的精确响应字段集；状态等编码只校验为字符串，由页面容错未知值。 */
+    private static void addControlRoots(Map<Type, Shape> roots) {
+        Shape list = object(fields(TEXT, "listId listCode listName subjectType purpose"), fields(BOOLEAN, "active"));
+        Shape entry = object(fields(TEXT, "entryId listId subjectType maskedSubjectKey sourceType status effectiveFrom reason createTime"),
+            fields(NULLABLE_TEXT, "effectiveTo createdBy deactivatedBy deactivatedReason"));
+        Shape check = object(fields(TEXT, "checkCode checkStatus"), fields(NULLABLE_TEXT, "errorCode errorSummary"));
+        Shape shadow = object(fields(TEXT, "shadowRunId baselineReleaseId status"), fields(INTEGER, "sampleTarget sampleCount"),
+            fields(nullable(INTEGER), "allowToReviewCount allowToDenyCount denyToAllowCount actionChangeCount featureMissingCount "
+                + "failedCount timedOutCount p95Millis p99Millis"), fields(NULLABLE_TEXT, "checkStatus"));
+        Shape release = object(fields(TEXT, "releaseId releaseNo pointCode flowVersionId environment status contentHash"),
+            fields(INTEGER, "version"), fields(NULLABLE_TEXT, "activatedTime supersededTime"), fields(array(check), "checks"),
+            fields(nullable(shadow), "shadowRun"));
+        Shape item = object(fields(TEXT, "releaseId releaseNo pointCode environment status flowId flowCode flowVersionId contentHash createdBy createTime"),
+            fields(BOOLEAN, "active"), fields(INTEGER, "flowVersionNo"), fields(NULLABLE_TEXT, "activatedBy activatedTime supersededTime"));
+        roots.put(com.paytech.risk.api.control.response.RiskListResponseBody.class, list);
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.control.response.RiskListResponseBody>>() {}.getType(), page(list));
+        roots.put(com.paytech.risk.api.control.response.RiskListEntryResponseBody.class, entry);
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.control.response.RiskListEntryResponseBody>>() {}.getType(), page(entry));
+        roots.put(com.paytech.risk.api.decision.response.ExecutionReleaseResponseBody.class, release);
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.ExecutionReleaseListItemResponseBody>>() {}.getType(), page(item));
     }
 
     private static boolean flowExpression(JsonNode node, int depth, int[] count, int version) {
@@ -232,6 +266,23 @@ final class RiskOwnerResponseShapeValidator {
             if (!node.isObject() || !node.propertyNames().equals(properties.keySet())) return false;
             for (var property : properties.entrySet()) {
                 if (!property.getValue().valid(node.get(property.getKey()))) return false;
+            }
+            return true;
+        };
+    }
+
+    /** 必填属性集合精确匹配，可选属性（Owner 以 NON_EMPTY 输出）存在时才校验；不接受其他属性。 */
+    private static Shape objectWithOptional(Map<String, Shape> required, Map<String, Shape> optional) {
+        return node -> {
+            if (!node.isObject()) return false;
+            for (String name : node.propertyNames()) {
+                if (!required.containsKey(name) && !optional.containsKey(name)) return false;
+            }
+            for (var property : required.entrySet()) {
+                if (!node.has(property.getKey()) || !property.getValue().valid(node.get(property.getKey()))) return false;
+            }
+            for (var property : optional.entrySet()) {
+                if (node.has(property.getKey()) && !property.getValue().valid(node.get(property.getKey()))) return false;
             }
             return true;
         };

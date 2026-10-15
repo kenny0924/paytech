@@ -55,6 +55,8 @@ OperationsRequestInterceptor（可信身份 → 当前 PLT-I02 完成 → Origin
 
 ### Risk 配置适配边界
 
+名单维护与执行发布的现行合同见[需求技术方案](../requirements/20261015/operations-console-支付风控配置接入/technique.md)第 8 节：`RiskListController`（`/risk-lists/v1/lists`，5 个）与 `RiskExecutionReleaseController`（`/decision-releases/v1/executions`，6 个）只委托 `RiskListClient`、`RiskExecutionReleaseClient`，由 `RiskControlConverter` 逐字段转换、`RiskControlResponsePolicy` 核对回执身份与分页；状态编码不做闭合枚举。名单成员只返回 Risk 的脱敏主体键，`/risk-lists` 只记元数据日志。校验与激活为无 Body 的 JSON POST。
+
 `RiskDecisionConfigurationController` 的具体 Handler 只使用本地 `RiskRuleSetModels`、`RiskTestCandidateModels` 和唯一 `RiskDecisionConfigurationClient` Port。唯一实现 `RiskDecisionConfigurationClientImpl` 显式逐字段转换 Owner 请求/响应；不创建 Risk Processor、业务 Service、Repository、数据库或恢复状态缓存。
 
 `RiskClientConfiguration` 使用独立 `operationsRiskProxyFactory` 和 `risk-service` Discovery，分别注册一个 `DecisionRuleSetManagementApi` 和 `DecisionReleaseManagementApi` 代理，不复用 Platform 工厂或拦截器。私网 Base URL 固定为 `http://risk-service`，连接超时 2 秒、Socket Read 超时 4 秒，禁止跟随 Redirect，使用 Foundation `HttpServiceClientOptions.strict()`，不接受旧四字段错误体。仅 `auto` Profile 可配置严格 Loopback 的 `operations.risk-test-base-url`。每个成功入口只调用一次 Risk，写命令最多一次传输且无应用自动重试；这不承诺 URLConnection 对早期失败的幂等读永不发生底层重试。

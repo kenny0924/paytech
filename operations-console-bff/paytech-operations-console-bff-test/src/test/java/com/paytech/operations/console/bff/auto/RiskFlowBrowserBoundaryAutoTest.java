@@ -106,6 +106,33 @@ class RiskFlowBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         assertEquals(1, risk.requests().size());
     }
 
+    @Test void allowEndOutputsRoundTripAndPaymentContextDeclaresThem() throws Exception {
+        var checkout = JSON.readTree(send("GET", "authoring-context?pointCode=CHECKOUT_PREPARE", "authoring-context", null, null).body());
+        assertFalse(checkout.has("outputs"));
+        var payment = send("GET", "authoring-context?pointCode=PAYMENT_ATTEMPT_RISK", "authoring-context", null, null); success(payment);
+        var declaration = JSON.readTree(payment.body()).path("outputs").get(0);
+        assertEquals("AUTHENTICATION_REQUIREMENT", declaration.path("outputCode").asString());
+        assertEquals("NOT_REQUIRED", declaration.path("defaultValue").asString());
+        assertEquals(2, declaration.path("allowedValues").size());
+
+        var body = (ObjectNode) JSON.readTree(draft()); body.put("pointCode", "PAYMENT_ATTEMPT_RISK");
+        var end = (ObjectNode) body.path("graph").path("nodes").get(1); end.put("decisionCode", "ALLOW");
+        end.putObject("outputs").put("AUTHENTICATION_REQUIREMENT", "THREE_DS_REQUIRED");
+        success(send("POST", "flows", "save", JSON.writeValueAsString(body), null));
+        assertEquals("THREE_DS_REQUIRED", JSON.readTree(risk.requests().getLast().body()).at("/graph/nodes/1/outputs/AUTHENTICATION_REQUIREMENT").asString());
+        var detail = JSON.readTree(send("GET", "flows/50001", "detail", null, null).body());
+        assertEquals("THREE_DS_REQUIRED", detail.at("/graph/nodes/1/outputs/AUTHENTICATION_REQUIREMENT").asString());
+        assertFalse(detail.at("/graph/nodes/0").has("outputs"));
+
+        end.putObject("outputs").put("authentication", "THREE_DS_REQUIRED");
+        assertEquals(400, send("POST", "flows", "save", JSON.writeValueAsString(body), null).statusCode());
+        end.putObject("outputs").put("AUTHENTICATION_REQUIREMENT", true);
+        assertEquals(400, send("POST", "flows/validate", "validate", JSON.writeValueAsString(body), null).statusCode());
+        risk.corruptWire(w -> ((ObjectNode) w.at("/graph/nodes/1")).putObject("outputs"));
+        assertEquals(502, send("GET", "flows/50001", "detail", null, null).statusCode());
+        assertEquals(5, risk.requests().size());
+    }
+
     private static String draft() { return """
         {"pointCode":"CHECKOUT_PREPARE","flowCode":"FLOW","flowName":"流程","baseFlowVersionId":null,"expectedVersion":null,"changeReason":"初始配置","graph":{"schemaVersion":1,"nodes":[
         {"nodeKey":"start","type":"START","name":"开始","position":{"x":"0","y":"0"},"ruleSetVersionId":null,"decisionCode":null,"reasonCode":null,"reasonMessage":null},

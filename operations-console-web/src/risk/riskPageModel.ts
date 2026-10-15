@@ -108,7 +108,7 @@ export function commandFailureMessage(result: Exclude<RiskCommandResult, { kind:
     case 403: return '操作权限已变化，正在刷新权限。当前内容已保留。';
     case 404: return '该详情已失效，请刷新列表后重新选择。';
     case 409:
-      if (result.code === 'RISK_RULE_SET_IN_USE') return '规则集正在使用，不能删除。';
+      if (result.code === 'RISK_RULE_SET_IN_USE') return '规则集正在使用，不能删除：被生效中或影子运行中的执行发布引用，请先在【执行发布】中替换。';
       if (result.code === 'RISK_RULE_SET_CHANGED') return '规则集已被更新，请刷新列表后重新确认。';
       if (result.code === 'RISK_RULE_SET_DELETED') return '规则集已被删除，编码仍保留，请刷新列表。';
       return '版本或状态已变化。当前内容已保留，请主动刷新事实后确认下一步。';

@@ -1,8 +1,10 @@
 package com.paytech.operations.console.bff.service.model;
 
 import java.util.List;
+import java.util.Map;
 import com.paytech.operations.console.bff.service.model.RiskRuleSetModels.OperandRequestBody;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.paytech.operations.console.bff.service.model.RiskRuleSetModels.RuleSetDetailResponseBody;
@@ -27,10 +29,20 @@ public final class RiskFlowModels {
     /** 坐标为有符号整数字符串，范围 -100000..100000，不接受 -0。 */
     public record Position(@NotNull String x, @NotNull String y) { }
 
-    /** START/RULE_SET/END 的精确配置；不适用字段必须显式为 null。 */
+    /**
+     * START/RULE_SET/END 的精确配置；不适用字段必须显式为 null。
+     * <li>outputs 为放行结束节点的附加输出（编码 → 取值，如 AUTHENTICATION_REQUIREMENT=THREE_DS_REQUIRED），未配置时省略；编码与取值由 Risk 按决策点合同校验。</li>
+     */
     public record Node(@NotNull String nodeKey, @NotNull String type, @NotNull String name,
         @NotNull @Valid Position position, String ruleSetVersionId, String decisionCode,
-        String reasonCode, String reasonMessage) { }
+        String reasonCode, String reasonMessage,
+        @JsonInclude(JsonInclude.Include.NON_EMPTY) @Size(max = 8) Map<String, String> outputs) {
+        /** 无附加输出的节点，结账流程与历史版本沿用此形状。 */
+        public Node(String nodeKey, String type, String name, Position position, String ruleSetVersionId,
+            String decisionCode, String reasonCode, String reasonMessage) {
+            this(nodeKey, type, name, position, ruleSetVersionId, decisionCode, reasonCode, reasonMessage, null);
+        }
+    }
 
     /** 显式出线顺序；仅 CONDITIONAL 的 condition 非空。 */
     public record Edge(@NotNull String edgeKey, @NotNull String sourceNodeKey, @NotNull String targetNodeKey,
@@ -79,18 +91,37 @@ public final class RiskFlowModels {
         }
     }
 
+    /** 附加输出的一个可选值及展示名称。 */
+    public record OutputValue(String value, String name) { }
+
+    /** 决策点声明的附加输出：编码、名称、可选值、默认值及可配置的结束决定（目前只有 ALLOW）。 */
+    public record OutputDeclaration(String outputCode, String name, List<OutputValue> allowedValues,
+        String defaultValue, List<String> allowedEndDecisions) { }
+
     /** Body/图/单条件树的同时生效上限，字节数均为 UTF-8。 */
     public record Limits(int bodyBytes, int nodes, int edges, int conditionBytes, int conditionNodes,
         int conditionDepth) { }
 
-    /** 本期配置能力目录，不表示执行器已就绪。 */
+    /**
+     * 配置能力目录，不表示执行器已就绪。
+     * <li>outputs 为当前决策点声明的附加输出；没有声明（如结账点）时省略。</li>
+     */
     public record FlowAuthoringContextResponseBody(List<SupportedPoint> supportedPoints, String pointCode,
         String inputContractCode, int inputContractVersion, int graphSchemaVersion, List<Field> fields,
         List<NodeOutput> nodeOutputs, Limits limits, String descriptorCode, int conditionSchemaVersion,
-        RiskVariableModels.VariableQueryContext variableQueryContext) {
+        RiskVariableModels.VariableQueryContext variableQueryContext,
+        @JsonInclude(JsonInclude.Include.NON_EMPTY) List<OutputDeclaration> outputs) {
         public FlowAuthoringContextResponseBody(List<SupportedPoint> supportedPoints, String pointCode, String inputContractCode,
             int inputContractVersion, int graphSchemaVersion, List<Field> fields, List<NodeOutput> nodeOutputs, Limits limits) {
-            this(supportedPoints, pointCode, inputContractCode, inputContractVersion, graphSchemaVersion, fields, nodeOutputs, limits, null, 1, null);
+            this(supportedPoints, pointCode, inputContractCode, inputContractVersion, graphSchemaVersion, fields, nodeOutputs, limits, null, 1, null, null);
+        }
+
+        /** 没有附加输出声明的目录。 */
+        public FlowAuthoringContextResponseBody(List<SupportedPoint> supportedPoints, String pointCode, String inputContractCode,
+            int inputContractVersion, int graphSchemaVersion, List<Field> fields, List<NodeOutput> nodeOutputs, Limits limits,
+            String descriptorCode, int conditionSchemaVersion, RiskVariableModels.VariableQueryContext variableQueryContext) {
+            this(supportedPoints, pointCode, inputContractCode, inputContractVersion, graphSchemaVersion, fields, nodeOutputs, limits,
+                descriptorCode, conditionSchemaVersion, variableQueryContext, null);
         }
     }
 

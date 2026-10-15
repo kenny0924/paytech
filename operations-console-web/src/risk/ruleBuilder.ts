@@ -28,7 +28,7 @@ export interface EditorAdditionalAction {
 }
 
 export interface RuleSetEditorModel {
-  pointCode: 'CHECKOUT_PREPARE';
+  pointCode: string;
   ruleSetCode: string;
   ruleSetName: string;
   changeReason: string;
@@ -43,6 +43,10 @@ const stringOperators = Object.freeze(numberOperators.filter(operator => !['GT',
 const codePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
 
 function fail(message: string): never { throw new Error(message); }
+/** 终态动作在编辑器中的简称；未知动作回退为目录名称或编码。 */
+export const terminalActionLabels: Record<string, string> = { ALLOW_CHECKOUT: 'PASS', REVIEW_CHECKOUT: 'REVIEW', DENY_CHECKOUT: 'REJECT', ALLOW_PAYMENT: 'PASS', REVIEW_PAYMENT: 'REVIEW', DENY_PAYMENT: 'REJECT' };
+/** 拒绝类终态动作（如 DENY_CHECKOUT、DENY_PAYMENT）需要原因编码和拒绝文案。 */
+export function isDenyAction(actionCode: string | null | undefined): boolean { return !!actionCode && actionCode.startsWith('DENY_'); }
 
 function matches(value: unknown, pattern: RegExp): value is string {
   // A JavaScript $ can also match before a final newline; the complete token must match.
@@ -214,7 +218,7 @@ function conditionToWire(condition: EditorCondition, budget: StructureBudget): R
 }
 
 export function editorToCreateRequest(editor: RuleSetEditorModel, base: RuleSetBase, catalog: AuthoringCatalog = CHECKOUT_PREPARE_AUTHORING_V1): CreateRuleSetVersionRequest {
-  if (editor.pointCode !== 'CHECKOUT_PREPARE') return fail('当前仅支持结账准备规则。');
+  if (editor.pointCode !== 'CHECKOUT_PREPARE' && catalog.operandFormat !== 'VARIABLE_REFERENCE') return fail('该风控点只支持统一变量格式的规则，请刷新编辑目录。');
   if (base !== null && (!base || !matches(base.ruleSetVersionId, /^[1-9][0-9]{0,29}$/)
     || !matches(base.contentHash, /^[0-9a-f]{64}$/))) return fail('基础版本信息无效，请重新读取版本。');
   if (!Array.isArray(editor.rules) || editor.rules.length < 1 || editor.rules.length > 200) return fail('规则集须包含 1–200 条规则。');
@@ -234,8 +238,8 @@ export function editorToCreateRequest(editor: RuleSetEditorModel, base: RuleSetB
     if (typeof rule.reasonCode !== 'string') return fail('原因编码必须使用文本。');
     const additionalActions = additionalToWire(rule.additionalActions ?? [], catalog);
     const reasonMessage = rule.reasonMessage?.trim() ? canonicalText(rule.reasonMessage, 500, '拒绝文案须为 1–500 个字符。') : null;
-    if (rule.actionCode === 'DENY_CHECKOUT' && (!rule.reasonCode || !reasonMessage)) return fail('拒绝规则须手工填写原因编码和拒绝文案。');
-    if (rule.actionCode !== 'DENY_CHECKOUT' && reasonMessage) return fail('只有拒绝规则可以填写拒绝文案。');
+    if (isDenyAction(rule.actionCode) && (!rule.reasonCode || !reasonMessage)) return fail('拒绝规则须手工填写原因编码和拒绝文案。');
+    if (!isDenyAction(rule.actionCode) && reasonMessage) return fail('只有拒绝规则可以填写拒绝文案。');
     return { ruleCode, ruleName: canonicalText(rule.ruleName, 255, '规则名称须为 1–255 个字符。'),
       priorityNo: (index + 1) * 10, enabledFlag: rule.enabled, reasonCode: rule.reasonCode.trim() === '' ? null : code(rule.reasonCode),
       conditionNodes: conditionToWire(rule.condition, budget), action: rule.actionCode ? { actionCode: rule.actionCode, actionVersionNo: rule.actionVersionNo } : null,

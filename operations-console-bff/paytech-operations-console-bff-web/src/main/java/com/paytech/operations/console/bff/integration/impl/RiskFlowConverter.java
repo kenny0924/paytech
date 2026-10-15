@@ -1,5 +1,7 @@
 package com.paytech.operations.console.bff.integration.impl;
 
+import java.util.Map;
+
 import com.paytech.risk.api.decision.DecisionFlowModels;
 import com.paytech.operations.console.bff.service.model.RiskFlowModels;
 
@@ -28,7 +30,7 @@ final class RiskFlowConverter {
         if (r == null) return null;
         return new RiskFlowModels.Node(r.getNodeKey(), r.getType(), r.getName(),
             local(r.getPosition()), r.getRuleSetVersionId(), r.getDecisionCode(),
-            r.getReasonCode(), r.getReasonMessage());
+            r.getReasonCode(), r.getReasonMessage(), r.getOutputs() == null ? null : Map.copyOf(r.getOutputs()));
     }
 
     static RiskFlowModels.Edge local(DecisionFlowModels.Edge r) {
@@ -87,7 +89,15 @@ final class RiskFlowConverter {
         return new RiskFlowModels.FlowAuthoringContextResponseBody(r.getSupportedPoints().stream().map(RiskFlowConverter::local).toList(), r.getPointCode(), r.getInputContractCode(),
             r.getInputContractVersion(), r.getGraphSchemaVersion(), r.getFields().stream().map(RiskFlowConverter::local).toList(),
             r.getNodeOutputs().stream().map(RiskFlowConverter::local).toList(), local(r.getLimits()),
-            r.getDescriptorCode(), r.getConditionSchemaVersion(), RiskVariableConverter.local(r.getVariableQueryContext()));
+            r.getDescriptorCode(), r.getConditionSchemaVersion(), RiskVariableConverter.local(r.getVariableQueryContext()),
+            r.getOutputs() == null ? null : r.getOutputs().stream().map(RiskFlowConverter::local).toList());
+    }
+
+    static RiskFlowModels.OutputDeclaration local(DecisionFlowModels.OutputDeclaration r) {
+        if (r == null) return null;
+        return new RiskFlowModels.OutputDeclaration(r.getOutputCode(), r.getName(),
+            r.getAllowedValues().stream().map(v -> new RiskFlowModels.OutputValue(v.getValue(), v.getName())).toList(),
+            r.getDefaultValue(), r.getAllowedEndDecisions());
     }
 
     static RiskFlowModels.FlowListItemResponseBody local(com.paytech.risk.api.decision.response.FlowListItemResponseBody r) {
@@ -193,9 +203,11 @@ final class RiskFlowConverter {
 
     static DecisionFlowModels.Node owner(RiskFlowModels.Node r) {
         if (r == null) return null;
-        return new DecisionFlowModels.Node(r.nodeKey(), r.type(), r.name(),
+        var node = new DecisionFlowModels.Node(r.nodeKey(), r.type(), r.name(),
             owner(r.position()), r.ruleSetVersionId(), r.decisionCode(),
             r.reasonCode(), r.reasonMessage());
+        node.setOutputs(r.outputs());
+        return node;
     }
 
     static DecisionFlowModels.Edge owner(RiskFlowModels.Edge r) {

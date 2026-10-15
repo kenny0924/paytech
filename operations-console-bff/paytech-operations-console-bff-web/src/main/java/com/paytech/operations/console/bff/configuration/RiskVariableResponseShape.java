@@ -84,7 +84,7 @@ final class RiskVariableResponseShape {
                     throw new IllegalArgumentException("变量响应日期无效");
                 }
             }
-            if (name.equals("sourceType")) require(Set.of("INPUT", "CONSTANT", "COLLECTION", "NODE_OUTPUT").contains(text));
+            if (name.equals("sourceType")) require(Set.of("INPUT", "CONSTANT", "COLLECTION", "NODE_OUTPUT", "VELOCITY", "LIST").contains(text));
             if (name.equals("valueType")) require(Set.of("STRING", "NUMBER", "BOOLEAN", "DATETIME", "DURATION").contains(text));
             if (name.equals("status")) require(Set.of("ACTIVE", "DISABLED", "DELETED").contains(text));
             if (name.equals("numericUnit")) require(Set.of("SCALAR", "MONEY").contains(text));

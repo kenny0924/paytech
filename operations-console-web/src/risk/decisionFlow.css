@@ -7,3 +7,5 @@
 .flow-footer{display:flex;align-items:center;justify-content:space-between;padding:17px 24px;border-top:1px solid #e4e9f3;gap:20px;font-size:12px;color:#7b8ca9}.flow-footer>.ant-space{flex-wrap:wrap;justify-content:flex-end}.flow-validation{padding:12px 20px;background:#fffaf0;max-height:190px;overflow:auto}.flow-validation>.ant-btn{display:block;white-space:normal;text-align:left;height:auto;min-height:28px;margin-top:4px;font-size:12px}.flow-workspace>.ant-alert{margin:0 20px 12px}
 @media(max-width:1150px){.flow-properties{flex-basis:310px;padding:16px}.flow-canvas-toolbar span{display:none}.flow-heading-row{align-items:flex-start;flex-wrap:wrap}.flow-node{width:230px}.flow-workspace-actions{flex-wrap:wrap}}
 @media(max-width:760px){.flow-workspace-body{flex-direction:column}.flow-properties{flex:auto;border-left:0;border-top:1px solid #e4e9f3;max-height:none}.flow-canvas{flex:none;height:520px}.flow-workspace-heading{padding:18px}.flow-footer{align-items:flex-start;flex-direction:column}.flow-condition-group .ant-space{flex-wrap:wrap}}
+
+.flow-node-3ds{margin-left:4px;font-weight:700}

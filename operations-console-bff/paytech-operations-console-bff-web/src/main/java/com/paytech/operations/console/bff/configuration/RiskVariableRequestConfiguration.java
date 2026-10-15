@@ -83,6 +83,12 @@ public class RiskVariableRequestConfiguration implements WebMvcConfigurer {
             if (bytes.length > limit) { throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE); }
             try (var parser = getMapper().createParser(bytes)) {
                 JsonNode tree = getMapper().readTree(parser);
+                // 实时累计、名单命中参数为本期新增键，旧客户端省略时按 null 处理，其余键仍要求完整。
+                if (type.resolve() == CreateVariableRequestBody.class && tree instanceof tools.jackson.databind.node.ObjectNode object) {
+                    for (String key : List.of("velocity", "list")) {
+                        if (!object.has(key)) { object.putNull(key); }
+                    }
+                }
                 validateRecord(tree, type.resolve());
                 if (parser.nextToken() != null) { throw new IllegalArgumentException(); }
                 return getMapper().treeToValue(tree, type.resolve());
@@ -107,6 +113,9 @@ public class RiskVariableRequestConfiguration implements WebMvcConfigurer {
                 if (component.getType() == String.class && !value.isString()) { throw new IllegalArgumentException(); }
                 if (component.getType() == Integer.class && (!value.isIntegralNumber() || !value.canConvertToInt())) { throw new IllegalArgumentException(); }
                 if (component.getType() == Object.class && !value.isString() && !value.isBoolean()) { throw new IllegalArgumentException(); }
+                if (component.getType() == Boolean.class && !value.isBoolean()) { throw new IllegalArgumentException(); }
+                // 实时累计、名单命中参数为嵌套 record，同样要求完整键与严格标量。
+                if (component.getType().isRecord()) { validateRecord(value, component.getType()); }
                 if (component.getType() == List.class) { validateList(component.getName(), value); }
             }
         }

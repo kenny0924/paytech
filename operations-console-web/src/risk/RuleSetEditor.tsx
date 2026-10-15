@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Alert, App, Button, Dropdown, Form, Input, Modal, Radio, Space, Switch, Tag, Tooltip } from 'antd';
 import type { RuleSetDetail } from './riskApiModels';
-import { editorToCreateRequest } from './ruleBuilder';
+import { editorToCreateRequest, isDenyAction, terminalActionLabels } from './ruleBuilder';
 import type { EditorRule, RuleSetBase, RuleSetEditorModel } from './ruleBuilder';
 import type { AuthoringCatalog } from './riskAuthoringCatalog';
 import { saveSizeState, utf8ByteLength } from './riskCommands';
@@ -13,7 +13,7 @@ import { riskFieldErrorLabel } from './riskPageModel';
 import { AdditionalActionEditor } from './AdditionalActionEditor';
 import { conditionCount } from './ruleEditorPresentation';
 
-const decisionLabels: Record<string, string> = { ALLOW_CHECKOUT: 'PASS', REVIEW_CHECKOUT: 'REVIEW', DENY_CHECKOUT: 'REJECT' };
+const decisionLabels = terminalActionLabels;
 
 export function RuleSetEditor({ mode = 'edit', detail, editor, base, catalog, disabled, commandPending, saving, dirty = true, fieldErrors, onChange, onSave }: {
   mode?: 'read' | 'edit'; detail?: RuleSetDetail; editor: RuleSetEditorModel; base: RuleSetBase; catalog: AuthoringCatalog; disabled: boolean; commandPending: boolean; saving: boolean; dirty?: boolean;
@@ -103,9 +103,9 @@ export function RuleSetEditor({ mode = 'edit', detail, editor, base, catalog, di
           <ConditionBuilder key={`condition-${selected.id}`} condition={selected.condition} catalog={catalog} disabled={disabled} onChange={condition => updateRule({ condition })} />
           <div className="risk-decision-options"><strong>命中后的动作（可选）</strong><Radio.Group aria-label={`规则 ${selectedIndex + 1} 执行动作`} value={selected.actionCode} disabled={disabled}
             options={[...catalog.actions.map(action => ({ value: action.actionCode, label: decisionLabels[action.actionCode] ?? action.label })), { value: '', label: '不配置最终决定' }]}
-            onChange={event => updateRule({ actionCode: event.target.value, actionVersionNo: 1, reasonMessage: event.target.value === 'DENY_CHECKOUT' ? selected.reasonMessage : '' })} /></div>
+            onChange={event => updateRule({ actionCode: event.target.value, actionVersionNo: 1, reasonMessage: isDenyAction(event.target.value) ? selected.reasonMessage : '' })} /></div>
           <p className="risk-help">未配置动作时，提供命中结果，由流程连线决定下一步。节点处理结果可用于后续连线条件，流程在结束节点终止。</p>
-          {selected.actionCode === 'DENY_CHECKOUT' && <Form layout="vertical" requiredMark={false} className="risk-reject-panel">
+          {isDenyAction(selected.actionCode) && <Form layout="vertical" requiredMark={false} className="risk-reject-panel">
             <div className="risk-reject-fields"><Form.Item label="拒绝原因 *" extra="从启用目录选择；旧项保留原代码与文案。"><DictionarySelect kind="rejection-reasons" label={`规则 ${selectedIndex + 1} 原因编码`}
                 values={[selected.reasonCode]} disabled={disabled} onChange={(values, next, previous) => {
                   if (!next || values[0] === selected.reasonCode) return;
@@ -139,7 +139,7 @@ export function RuleSetEditor({ mode = 'edit', detail, editor, base, catalog, di
     <Modal title="规则基本信息" open={ruleInfoOpen && !!selected} onCancel={() => setRuleInfoOpen(false)} footer={<Button type="primary" onClick={() => setRuleInfoOpen(false)}>完成编辑</Button>}>
       {selected && <Form layout="vertical" requiredMark={false}><Form.Item label="规则名称 *"><Input aria-label={`规则 ${selectedIndex + 1} 名称`} value={selected.ruleName} disabled={disabled} maxLength={255} autoComplete="off" onChange={event => updateRule({ ruleName: event.target.value })} /></Form.Item>
         <Form.Item label="规则编码 *" extra="大写字母、数字或下划线，以字母开头。"><Input aria-label={`规则 ${selectedIndex + 1} 编码`} value={selected.ruleCode} disabled={disabled} maxLength={64} autoComplete="off" onChange={event => updateRule({ ruleCode: event.target.value })} /></Form.Item>
-        {selected.actionCode !== 'DENY_CHECKOUT' && <Form.Item label="原因编码（可选）"><Input aria-label={`规则 ${selectedIndex + 1} 原因编码`} value={selected.reasonCode} disabled={disabled} maxLength={64} autoComplete="off" onChange={event => updateRule({ reasonCode: event.target.value })} /></Form.Item>}</Form>}
+        {!isDenyAction(selected.actionCode) && <Form.Item label="原因编码（可选）"><Input aria-label={`规则 ${selectedIndex + 1} 原因编码`} value={selected.reasonCode} disabled={disabled} maxLength={64} autoComplete="off" onChange={event => updateRule({ reasonCode: event.target.value })} /></Form.Item>}</Form>}
     </Modal>
   </section>;
 }

@@ -11,6 +11,10 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## Operations 接入支付风控配置与执行发布（2026-10-15）
+
+- **Implemented / mor-test 已部署并验收（已本地提交，未推送）：** 按[需求](../requirements/20261015/operations-console-支付风控配置接入/requirement.md)与[方案](../requirements/20261015/operations-console-支付风控配置接入/technique.md)，Operations BFF 以 risk-api `b26e857` 编译：决策流节点与创作上下文接受可选 `outputs`，变量创建支持 `VELOCITY`/`LIST` 参数（旧请求可省略），新增名单 5 个、执行发布 6 个转发接口，`/risk-lists` 只记元数据日志。Web 规则集可切换风控点（支付点用统一变量目录），决策流放行结束节点配置认证要求（读上下文声明，缺失时支付点回退两个固定值），变量新增实时累计/名单命中表单，新增“风控名单”“执行发布”两页。验证：BFF `verify` 1298/1298，Web 1012/1012 与生产构建通过。阶段 5 本机全链路（Nginx→Gateway→BFF→Risk）接口 44/44、浏览器 26/26 通过，修复 5 个缺陷后 BFF `verify` 1299/1299、Web 1014/1014；Platform 注册 SQL 修正为 150 行（补写路由请求头），已在本机 `mor_platform_e2e` 执行并激活。2026-10-15 mor-test：BFF 镜像 `68e939f5…`、Web 镜像 `5fb6911b…`（`132c982` 加本需求未提交改动构建），`mor_platform` 执行注册 150 行并激活（PLATFORM_ADMIN v24）；经 `http://localhost:28080` 接口 44/44、浏览器 27/27、25 页只读回归通过，合成数据已清理（`mor_risk` 84 表行数与备份一致）；支付点联调基线（`PAY_ATTEMPT_FLOW`，发布 R-11 ACTIVE：3DS 门槛 500、审核 5000 USD、同卡 1 小时 ≥5 次拒绝、黑名单卡拒绝）保留供 Payment 联调，test 中 Payment 未部署。详见[阶段 5 报告](../requirements/20261015/operations-console-支付风控配置接入/verification/stage5-local-acceptance.md)与[发布记录](../requirements/20261015/operations-console-支付风控配置接入/release/release.md)。
+
 <a id="payby-integration-20261014"></a>
 
 ## Risk 支付反欺诈一期（2026-10-14）

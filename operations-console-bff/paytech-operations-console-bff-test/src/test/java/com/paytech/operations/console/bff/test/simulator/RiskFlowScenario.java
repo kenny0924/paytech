@@ -26,6 +26,17 @@ final class RiskFlowScenario {
         int page = Integer.parseInt(query.getOrDefault("page", "1")), size = Integer.parseInt(query.getOrDefault("size", "10"));
         String path = r.path().substring(ROOT.length()), actor = r.header("X-Gateway-Actor-Subject");
         String time = RiskDecisionConfigurationSimulator.TIME;
+        if (path.equals("authoring-context") && "PAYMENT_ATTEMPT_RISK".equals(query.get("pointCode"))) {
+            // 支付点声明认证要求附加输出；结账点不输出 outputs 键。
+            var context = new FlowAuthoringContextResponseBody(
+                List.of(new SupportedPoint("CHECKOUT_PREPARE", "结账准备"), new SupportedPoint("PAYMENT_ATTEMPT_RISK", "支付尝试")),
+                "PAYMENT_ATTEMPT_RISK", "PAYMENT_ATTEMPT", 1, 1, List.of(), List.of(), new Limits(65536, 50, 100, 8192, 32, 8),
+                "RISK_VARIABLE_AUTHORING", 2,
+                new com.paytech.risk.api.decision.RiskVariableModels.VariableQueryContext("PAYMENT_ATTEMPT_RISK", "PAYMENT_ATTEMPT", 1, "FLOW_CONDITION"));
+            context.setOutputs(List.of(new OutputDeclaration("AUTHENTICATION_REQUIREMENT", "认证要求",
+                List.of(new OutputValue("NOT_REQUIRED", "无需认证"), new OutputValue("THREE_DS_REQUIRED", "需要 3DS")), "NOT_REQUIRED", List.of("ALLOW"))));
+            return context;
+        }
         if (path.equals("authoring-context")) return new FlowAuthoringContextResponseBody(
             List.of(new SupportedPoint("CHECKOUT_PREPARE", "结账准备")), "CHECKOUT_PREPARE", "ORDER_PREPARATION", 4, 1,
             List.of(new Field("country_code", "国家", "STRING", true, List.of("EQ", "NE"), "UPPER_ALPHA_2", "REGISTERED_COUNTRY")),

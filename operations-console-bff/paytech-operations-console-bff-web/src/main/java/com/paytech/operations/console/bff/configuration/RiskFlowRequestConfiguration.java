@@ -106,7 +106,10 @@ public class RiskFlowRequestConfiguration implements WebMvcConfigurer {
             JsonNode graph = value.get("graph"); keys(graph, "schemaVersion", "nodes", "edges"); integer(graph.get("schemaVersion"));
             array(graph.get("nodes")); array(graph.get("edges"));
             for (JsonNode node : graph.get("nodes")) {
-                keys(node, "nodeKey", "type", "name", "position", "ruleSetVersionId", "decisionCode", "reasonCode", "reasonMessage");
+                if (node != null && node.has("outputs")) {
+                    outputs(node.get("outputs"));
+                    keys(node, "nodeKey", "type", "name", "position", "ruleSetVersionId", "decisionCode", "reasonCode", "reasonMessage", "outputs");
+                } else keys(node, "nodeKey", "type", "name", "position", "ruleSetVersionId", "decisionCode", "reasonCode", "reasonMessage");
                 for (String field : Set.of("nodeKey", "type", "name")) text(node.get(field), false);
                 for (String field : Set.of("ruleSetVersionId", "decisionCode", "reasonCode", "reasonMessage")) text(node.get(field), true);
                 keys(node.get("position"), "x", "y");
@@ -146,6 +149,14 @@ public class RiskFlowRequestConfiguration implements WebMvcConfigurer {
                 text(node.get("operator"), false); array(node.get("values"));
                 for (JsonNode value : node.get("values")) if (!value.isString() && !value.isBoolean()) throw new IllegalArgumentException();
             } else throw new IllegalArgumentException();
+        }
+
+        /** 附加输出只接受编码到取值的字符串映射，最多 8 项；可用编码与取值由 Risk 按决策点合同判断。 */
+        private static void outputs(JsonNode node) {
+            if (node == null || !node.isObject() || node.size() > 8) throw new IllegalArgumentException();
+            for (var entry : node.properties()) {
+                if (!entry.getKey().matches("[A-Z][A-Z0-9_]{0,63}") || !entry.getValue().isString()) throw new IllegalArgumentException();
+            }
         }
 
         private static void keys(JsonNode node, String... keys) {

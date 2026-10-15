@@ -404,13 +404,9 @@ public final class RiskDecisionConfigurationClientImpl implements RiskDecisionCo
                 }
                 equal("DECISION", a.actionCategory()); equal("MOST_RESTRICTIVE", a.mergePolicy()); equal("ACTIVE", a.status());
                 require(a.terminalFlag() && a.shadowSupportedFlag());
-                String decision = switch (a.actionCode()) {
-                    case "ALLOW_CHECKOUT" -> "ALLOW";
-                    case "REVIEW_CHECKOUT" -> "REVIEW";
-                    case "DENY_CHECKOUT" -> "DENY";
-                    default -> null;
-                };
-                require(decision != null); equal(decision, a.decisionCode());
+                // 终态动作按风控点命名（ALLOW_CHECKOUT、DENY_PAYMENT 等），编码前缀须与其决定一致。
+                String decision = a.actionCode().substring(0, Math.max(a.actionCode().indexOf('_'), 0));
+                oneOf(decision, Set.of("ALLOW", "REVIEW", "DENY")); equal(decision, a.decisionCode());
             }
             ordered(actions, Comparator.comparing(DecisionActionDescriptorResponseBody::actionCode)
                 .thenComparingInt(DecisionActionDescriptorResponseBody::versionNo));

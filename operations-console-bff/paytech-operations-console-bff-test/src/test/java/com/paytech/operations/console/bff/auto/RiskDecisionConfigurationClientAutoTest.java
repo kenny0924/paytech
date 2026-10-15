@@ -246,6 +246,7 @@ class RiskDecisionConfigurationClientAutoTest {
                 mutations.add(set("action " + name, "/actions/0/" + name, "OTHER"));
             }
             mutations.add(set("decision wrong pair", "/actions/0/decisionCode", "DENY"));
+            mutations.add(set("action code without decision prefix", "/actions/0/actionCode", "AALLOW_CHECKOUT"));
             for (String name : List.of("terminalFlag", "shadowSupportedFlag")) mutations.add(set(name, "/actions/0/" + name, false));
             for (String name : List.of("handlerCode", "implementationVersion", "implementationHash")) {
                 mutations.add(set(name + " blank", "/actions/0/" + name, " "));

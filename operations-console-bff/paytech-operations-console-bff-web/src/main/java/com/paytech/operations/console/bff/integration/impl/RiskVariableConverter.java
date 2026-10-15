@@ -128,7 +128,30 @@ final class RiskVariableConverter {
     /** 转换 CreateVariableRequestBody，保留 null 与准确 Wire 值。 */
     static com.paytech.risk.api.decision.request.CreateVariableRequestBody owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.CreateVariableRequestBody r) {
         if (r == null) return null;
-        return new com.paytech.risk.api.decision.request.CreateVariableRequestBody(r.variableCode(), r.variableName(), r.description(), r.sourceType(), r.valueType(), r.pointCode(), r.sourceContractCode(), r.sourceContractVersion(), r.sourceField(), r.usages(), r.formatCode(), r.numericUnit(), r.currencyCode(), r.currencyVariableCode(), r.allowedValuesVariableCode(), r.currentValue(), r.status());
+        var value = new com.paytech.risk.api.decision.request.CreateVariableRequestBody(r.variableCode(), r.variableName(), r.description(), r.sourceType(), r.valueType(), r.pointCode(), r.sourceContractCode(), r.sourceContractVersion(), r.sourceField(), r.usages(), r.formatCode(), r.numericUnit(), r.currencyCode(), r.currencyVariableCode(), r.allowedValuesVariableCode(), r.currentValue(), r.status());
+        value.setVelocity(owner(r.velocity()));
+        value.setList(owner(r.list()));
+        return value;
+    }
+    /** 转换实时累计参数；非累计来源为 null。 */
+    static com.paytech.risk.api.decision.request.VelocityFeatureParameters owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.VelocityParameters r) {
+        if (r == null) return null;
+        var value = new com.paytech.risk.api.decision.request.VelocityFeatureParameters();
+        value.setEventCode(r.eventCode());
+        value.setAnchorSubjectType(r.anchorSubjectType());
+        value.setMetric(r.metric());
+        value.setDistinctSubjectType(r.distinctSubjectType());
+        value.setWindowSeconds(r.windowSeconds());
+        value.setIncludeCurrent(Boolean.TRUE.equals(r.includeCurrent()));
+        return value;
+    }
+    /** 转换名单命中参数；非名单来源为 null。 */
+    static com.paytech.risk.api.decision.request.ListFeatureParameters owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.ListParameters r) {
+        if (r == null) return null;
+        var value = new com.paytech.risk.api.decision.request.ListFeatureParameters();
+        value.setListCode(r.listCode());
+        value.setSubjectType(r.subjectType());
+        return value;
     }
     /** 转换 UpdateVariableRequestBody，保留 null 与准确 Wire 值。 */
     static com.paytech.risk.api.decision.request.UpdateVariableRequestBody owner(com.paytech.operations.console.bff.service.model.RiskVariableModels.UpdateVariableRequestBody r) {

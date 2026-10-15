@@ -428,7 +428,8 @@ class RiskClientConfigurationAutoTest {
         Path web = webModule();
         String adapter = BFF_PACKAGE + "integration/impl/RiskDecisionConfigurationClientImpl";
         Set<String> adapters = Set.of(adapter, BFF_PACKAGE + "integration/impl/RiskFlowClientImpl", BFF_PACKAGE + "integration/impl/RiskFlowConverter", BFF_PACKAGE + "integration/impl/RiskDictionaryClientImpl",
-            BFF_PACKAGE + "integration/impl/RiskConfigurationQueryClientImpl", BFF_PACKAGE + "integration/impl/RiskConfigurationConverter", BFF_PACKAGE + "integration/impl/RiskVariableClientImpl", BFF_PACKAGE + "integration/impl/RiskVariableConverter", BFF_PACKAGE + "integration/impl/RiskOperandConverter", BFF_PACKAGE + "integration/impl/RiskVariableResponsePolicy", BFF_PACKAGE + "integration/impl/ClientReviewRiskClientImpl");
+            BFF_PACKAGE + "integration/impl/RiskConfigurationQueryClientImpl", BFF_PACKAGE + "integration/impl/RiskConfigurationConverter", BFF_PACKAGE + "integration/impl/RiskVariableClientImpl", BFF_PACKAGE + "integration/impl/RiskVariableConverter", BFF_PACKAGE + "integration/impl/RiskOperandConverter", BFF_PACKAGE + "integration/impl/RiskVariableResponsePolicy", BFF_PACKAGE + "integration/impl/ClientReviewRiskClientImpl",
+            BFF_PACKAGE + "integration/impl/RiskListClientImpl", BFF_PACKAGE + "integration/impl/RiskExecutionReleaseClientImpl", BFF_PACKAGE + "integration/impl/RiskControlConverter");
         // Client 入驻审核为简单转发：端口、页面模型与 Controller 只引用 Risk 审核响应 DTO，不调用 Owner 方法。
         Set<String> reviewPassThrough = Set.of(BFF_PACKAGE + "integration/ClientReviewRiskClient",
             BFF_PACKAGE + "service/model/ClientReviewModels", BFF_PACKAGE + "ext/rest/ClientOnboardingReviewController");

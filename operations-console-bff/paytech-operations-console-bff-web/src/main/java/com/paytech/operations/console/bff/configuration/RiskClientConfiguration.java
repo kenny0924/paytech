@@ -73,6 +73,20 @@ public class RiskClientConfiguration {
         return factory.createClient(com.paytech.risk.api.decision.RiskVariableApi.class);
     }
 
+    /** 名单维护；写入字段错误沿用页面 Body 路径投影。 */
+    @Bean
+    com.paytech.risk.api.control.RiskListManagementApi riskListManagementApi(
+        @org.springframework.beans.factory.annotation.Qualifier("operationsRiskFlowProxyFactory") HttpServiceProxyFactory factory) {
+        return factory.createClient(com.paytech.risk.api.control.RiskListManagementApi.class);
+    }
+
+    /** 执行发布；写入字段错误沿用页面 Body 路径投影。 */
+    @Bean
+    com.paytech.risk.api.decision.ExecutionReleaseManagementApi executionReleaseManagementApi(
+        @org.springframework.beans.factory.annotation.Qualifier("operationsRiskFlowProxyFactory") HttpServiceProxyFactory factory) {
+        return factory.createClient(com.paytech.risk.api.decision.ExecutionReleaseManagementApi.class);
+    }
+
     @Bean
     DecisionRuleSetManagementApi decisionRuleSetManagementApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
         return operationsRiskProxyFactory.createClient(DecisionRuleSetManagementApi.class);

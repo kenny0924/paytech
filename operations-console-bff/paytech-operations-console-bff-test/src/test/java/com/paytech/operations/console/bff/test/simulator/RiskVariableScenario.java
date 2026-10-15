@@ -27,7 +27,7 @@ final class RiskVariableScenario {
         var q = query(request.query());
         if (path.equals("/authoring-context")) return JSON.readTree("""
             {"supportedPoints":[{"pointCode":"CHECKOUT_PREPARE","pointName":"结账准备"}],
-             "sources":[{"sourceType":"CONSTANT","createAllowed":true},{"sourceType":"COLLECTION","createAllowed":true}],
+             "sources":[{"sourceType":"CONSTANT","createAllowed":true},{"sourceType":"COLLECTION","createAllowed":true},{"sourceType":"VELOCITY","createAllowed":true},{"sourceType":"LIST","createAllowed":true}],
              "valueTypes":["STRING","NUMBER","BOOLEAN","DATETIME","DURATION"],
              "formatProfiles":[{"formatCode":"TEXT","label":"文本","help":"保留原值"},{"formatCode":"NONE","label":"无","help":"类型约束"}],
              "numericUnits":["SCALAR","MONEY"],"limits":{"memberCount":1000,"memberBodyBytes":65536,"literalSetCount":100},"contracts":[]}
@@ -35,6 +35,8 @@ final class RiskVariableScenario {
         if (path.equals("/variables") && request.method().equals("POST")) {
             var root = (ObjectNode) JSON.readTree(request.body()); String code = root.path("variableCode").asString();
             if (entries.containsKey(code)) throw new RiskDecisionConfigurationSimulator.SemanticFailure(409, "VARIABLE_CODE_EXISTS");
+            // Risk 详情不回显实时累计、名单命中的创建参数。
+            root.remove(List.of("velocity", "list"));
             root.put("version", "1").put("systemManaged", false).put("createBy", request.header("X-Gateway-Actor-Subject"))
                 .put("updateBy", request.header("X-Gateway-Actor-Subject")).put("createTime", TIME).put("updateTime", TIME).put("valuesAsOf", TIME);
             root.putNull("allowedValues"); root.putArray("previewMembers");

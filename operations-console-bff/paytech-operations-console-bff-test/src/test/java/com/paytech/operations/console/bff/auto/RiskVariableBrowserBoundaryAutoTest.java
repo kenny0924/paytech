@@ -108,6 +108,32 @@ class RiskVariableBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         assertFalse(response.body().contains("privateOwnerState"));
     }
 
+    @Test void velocityAndListSourcesForwardParametersAndReadBackWithoutEcho() throws Exception {
+        String velocity = """
+            {"variableCode":"CARD_ASSESSED_COUNT_10M","variableName":"同卡 10 分钟评估次数","description":null,"sourceType":"VELOCITY","valueType":"NUMBER",
+             "pointCode":"PAYMENT_ATTEMPT_RISK","sourceContractCode":null,"sourceContractVersion":null,"sourceField":null,"usages":["RULE_CONDITION","FLOW_CONDITION"],
+             "formatCode":"NONE","numericUnit":"SCALAR","currencyCode":null,"currencyVariableCode":null,"allowedValuesVariableCode":null,"currentValue":null,"status":"ACTIVE",
+             "velocity":{"eventCode":"PAYMENT_ATTEMPT_ASSESSED","anchorSubjectType":"CARD_FINGERPRINT","metric":"COUNT","distinctSubjectType":null,"windowSeconds":600,"includeCurrent":false},
+             "list":null}
+            """;
+        var created = send("POST", "variables", "create", velocity, null); ok(created, 201);
+        assertEquals("VELOCITY", JSON.readTree(created.body()).path("sourceType").asString());
+        var forwarded = JSON.readTree(risk.requests().getLast().body());
+        assertEquals("CARD_FINGERPRINT", forwarded.path("velocity").path("anchorSubjectType").asString());
+        assertEquals(600, forwarded.path("velocity").path("windowSeconds").asInt());
+        assertTrue(forwarded.path("list").isNull());
+        var list = ((ObjectNode) JSON.readTree(velocity)).put("variableCode", "IP_IN_BLOCK_LIST").put("sourceType", "LIST").put("valueType", "BOOLEAN").putNull("numericUnit");
+        list.putNull("velocity"); list.putObject("list").put("listCode", "BLOCK_IP").put("subjectType", "IP_ADDRESS");
+        ok(send("POST", "variables", "create", JSON.writeValueAsString(list), null), 201);
+        assertEquals("BLOCK_IP", JSON.readTree(risk.requests().getLast().body()).path("list").path("listCode").asString());
+        ok(send("GET", "variables?page=1&size=20", "list", null, null), 200);
+        var broken = (ObjectNode) JSON.readTree(velocity); ((ObjectNode) broken.get("velocity")).put("windowSeconds", "600");
+        ok(send("POST", "variables", "create", JSON.writeValueAsString(broken), null), 400);
+        ((ObjectNode) broken.get("velocity")).put("windowSeconds", 600).put("hidden", true);
+        ok(send("POST", "variables", "create", JSON.writeValueAsString(broken), null), 400);
+        assertEquals(3, risk.requests().size());
+    }
+
     private static void ok(HttpResponse<String> r, int status) { assertEquals(status, r.statusCode(), r.body()); }
     private static String draft() { return """
         {"variableCode":"TEST_COLLECTION","variableName":"集合","description":null,"sourceType":"COLLECTION","valueType":"STRING","pointCode":null,

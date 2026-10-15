@@ -103,13 +103,13 @@ function RiskRuleConfigurationView({ resources, onAuthorizationChanged, navigati
     setNotice(''); setFailure(value => value?.kind === 'UNKNOWN_RESULT' ? value : null);
   }
   useEffect(() => {
-    if (!['list', 'edit', 'create'].includes(navigation.view)) return;
+    if (!['list', 'detail', 'edit', 'create'].includes(navigation.view)) return;
     const controller = new AbortController();
-    riskDecisionApi.authoringContext('CHECKOUT_PREPARE', controller.signal)
+    riskDecisionApi.authoringContext(navigation.filters.pointCode ?? 'CHECKOUT_PREPARE', controller.signal)
       .then(value => { if (!controller.signal.aborted) setCatalog(matchAuthoringContext(value)); })
       .catch(error => { if (!controller.signal.aborted) { setCatalog({ editable: false, reason: '编辑目录暂不可用，请刷新后重试。' }); readFailure(error); } });
     return () => controller.abort();
-  }, [revision, navigation.view]);
+  }, [revision, navigation.view, navigation.filters.pointCode]);
   useEffect(() => {
     if (!['detail', 'edit', 'create'].includes(navigation.view) || !navigation.selectedRuleSetCode || current.current.editor) return;
     const controller = new AbortController(); setDetailLoading(true);
@@ -123,7 +123,7 @@ function RiskRuleConfigurationView({ resources, onAuthorizationChanged, navigati
           setDetail(head); update(value => ({ ...value, selectedRuleSetVersionId: head!.ruleSetVersionId }));
         } else {
           const editor = head ? { ...detailToEditor(await ruleForVariableEditing(head,await riskDecisionApi.authoringContext(head.pointCode,controller.signal),controller.signal)), changeReason: '' }
-            : { pointCode: 'CHECKOUT_PREPARE' as const, ruleSetCode: code, ruleSetName: '', changeReason: '', rules: [] };
+            : { pointCode: navigation.filters.pointCode ?? 'CHECKOUT_PREPARE', ruleSetCode: code, ruleSetName: '', changeReason: '', rules: [] };
           if(controller.signal.aborted)return;
           setBaseDetail(head); setEditorBaseline(JSON.stringify(editor));
           update(value => ({ ...value, editor }));
@@ -163,11 +163,12 @@ function RiskRuleConfigurationView({ resources, onAuthorizationChanged, navigati
     setBusy(true); setNotice(''); setFailure(null); pendingTarget.current = null; headRequest.current?.abort();
     const controller = new AbortController(); headRequest.current = controller;
     try {
-      const observed = await loadObservedRuleSetHead(riskDecisionApi, 'CHECKOUT_PREPARE', newCode.trim(), controller.signal);
+      const pointCode = navigation.filters.pointCode ?? 'CHECKOUT_PREPARE';
+      const observed = await loadObservedRuleSetHead(riskDecisionApi, pointCode, newCode.trim(), controller.signal);
       requireUnusedRuleSetCode(observed);
       if (controller.signal.aborted || commandChangeBlocked()) return;
       setNewCodeOpen(false);
-      onNavigate({ ...withRiskView(navigation, 'create', newCode.trim()), filters: { ...navigation.filters, pointCode: 'CHECKOUT_PREPARE' } });
+      onNavigate({ ...withRiskView(navigation, 'create', newCode.trim()), filters: { ...navigation.filters, pointCode } });
     } catch (error) { if (!controller.signal.aborted) readFailure(error); }
     finally { if (!controller.signal.aborted) setBusy(false); }
   }
@@ -278,7 +279,7 @@ function RiskRuleConfigurationView({ resources, onAuthorizationChanged, navigati
     {!state.confirmation && navigation.view !== 'detail' && failureAlert}
     {['list', 'edit', 'create'].includes(navigation.view) && !catalog.editable && <Alert type="warning" title={catalog.reason} action={<Button onClick={() => setRevision(value => value + 1)}>刷新目录</Button>} />}
     {['history','version','references'].includes(navigation.view) ? <RuleSetExplorer navigation={navigation} onNavigate={onNavigate} onAuthorizationChanged={onAuthorizationChanged} />
-      : navigation.view === 'detail' ? <>{failureAlert}{detailLoading ? <Spin /> : detail ? <RuleSetEditor mode="read" detail={detail} editor={detailToEditor(detail)} base={detail} catalog={CHECKOUT_PREPARE_AUTHORING_V1} disabled commandPending={false} saving={false} fieldErrors={[]} onChange={() => {}} onSave={() => {}} />
+      : navigation.view === 'detail' ? <>{failureAlert}{detailLoading ? <Spin /> : detail ? <RuleSetEditor mode="read" detail={detail} editor={detailToEditor(detail)} base={detail} catalog={catalog.editable ? catalog.catalog : CHECKOUT_PREPARE_AUTHORING_V1} disabled commandPending={false} saving={false} fieldErrors={[]} onChange={() => {}} onSave={() => {}} />
         : <Space><Button onClick={() => setRevision(value => value + 1)}>重试加载详情</Button></Space>}</>
       : editing ? state.editor ? <RuleSetEditor editor={state.editor} base={baseDetail} catalog={catalog.editable ? catalog.catalog : CHECKOUT_PREPARE_AUTHORING_V1}
       disabled={busy || !catalog.editable || !hasRiskAction(resources, 'SAVE')} commandPending={!!state.pendingCommand} saving={busy} dirty={editorDirty} fieldErrors={state.fieldErrors}

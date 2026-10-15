@@ -130,6 +130,19 @@ class RiskDecisionConfigurationBrowserBoundaryAutoTest extends OperationsBffHttp
     }
 
     @Test
+    void test_paymentPointAuthoringContextAcceptsPaymentTerminalActions() throws Exception {
+        HttpResponse<String> response = send("GET", "/decision-rule-sets/v1/authoring-context/PAYMENT_ATTEMPT_RISK",
+            null, trustedHeaders("operations-risk-rule-authoring-context"));
+
+        assertEquals(200, response.statusCode(), response.body());
+        assertEquals("/decision-rule-sets/v1/authoring-context/PAYMENT_ATTEMPT_RISK", risk.requests().getFirst().path());
+        var body = json.readTree(response.body());
+        assertEquals("PAYMENT_ATTEMPT_RISK", body.at("/point/pointCode").asString());
+        assertEquals(List.of("ALLOW_PAYMENT", "DENY_PAYMENT", "REVIEW_PAYMENT"),
+            body.path("actions").valueStream().map(action -> action.path("actionCode").asString()).toList());
+    }
+
+    @Test
     void test_deniedAuthoringContextStopsBeforeRisk() throws Exception {
         platform.allow(false);
 

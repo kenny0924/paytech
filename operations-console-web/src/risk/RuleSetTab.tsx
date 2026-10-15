@@ -9,6 +9,7 @@ import { ruleSetCodeError } from './riskNavigation';
 import { hasRiskAction } from './riskPageModel';
 import { decodeRuleSetPage } from './riskResponseValidation';
 import { formatRiskTime, ruleSetStatusLabels } from './RuleSetDetails';
+import { useRiskPoints } from './riskPoints';
 
 export function RuleSetTab({ revision, disabled, navigation, resources, canEdit, onNavigate, onSelect, onEdit, onDelete, onHistory, onReferences, onFreeze, onReadFailure }: {
   revision: number; disabled: boolean; navigation: RiskNavigation; resources: readonly ConsoleResource[]; canEdit: boolean;
@@ -17,6 +18,7 @@ export function RuleSetTab({ revision, disabled, navigation, resources, canEdit,
   onEdit: (row: RuleSetListItem) => void; onDelete: (row: RuleSetListItem) => void; onReadFailure: () => void;
 }) {
   const [form] = Form.useForm();
+  const points = useRiskPoints();
   const invalidQuery = !!ruleSetCodeError(navigation.filters.ruleSetCode ?? '');
   const { data, loading, error, refresh, applyFilters, pagination } = usePaging<RuleSetListItem>(
     '/decision-rule-sets/v1/rule-sets', decodeRuleSetPage, navigation.filters, {
@@ -42,9 +44,10 @@ export function RuleSetTab({ revision, disabled, navigation, resources, canEdit,
   }, [data, loading, error, invalidQuery, navigation, onNavigate]);
   return <section className="table-panel">
     <Form form={form} layout="inline" className="risk-filters" initialValues={navigation.filters}
-      onFinish={(values: RuleSetFilters) => applyFilters({ pointCode: values.pointCode || 'CHECKOUT_PREPARE',
+      onFinish={(values: RuleSetFilters) => applyFilters({ pointCode: values.pointCode || navigation.filters.pointCode || 'CHECKOUT_PREPARE',
         ...(values.ruleSetCode?.trim() ? { ruleSetCode: values.ruleSetCode.trim() } : {}), ...(values.status ? { status: values.status } : {}) })}>
-      <Form.Item label="决策点" name="pointCode"><Select options={[{ value: 'CHECKOUT_PREPARE', label: '结账准备' }]} /></Form.Item>
+      <Form.Item label="风控点" name="pointCode"><Select aria-label="风控点" style={{ width: 160 }} disabled={disabled} options={points.map(p => ({ value: p.pointCode, label: p.pointName }))}
+        onChange={pointCode => applyFilters({ pointCode })} /></Form.Item>
       <Form.Item label="规则集编码" name="ruleSetCode" rules={[{ validator: (_, value: string | undefined) => {
         const message = ruleSetCodeError(value ?? ''); return message ? Promise.reject(new Error(message)) : Promise.resolve();
       } }]}><Input autoComplete="off" /></Form.Item>

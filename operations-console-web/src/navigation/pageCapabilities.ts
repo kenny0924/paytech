@@ -159,6 +159,32 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_RISK_LISTS",
+    "displayName": "风控名单",
+    "frontendRoute": "/risk/lists",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_LIST_MANAGE",
+        "displayName": "维护名单"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_RISK_EXECUTION_RELEASES",
+    "displayName": "执行发布",
+    "frontendRoute": "/risk/execution-releases",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_EXECUTION_RELEASE_PREPARE",
+        "displayName": "创建与校验发布"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_EXECUTION_RELEASE_ACTIVATE",
+        "displayName": "激活发布"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_CONSOLE_RESOURCES",
     "displayName": "菜单资源",
     "frontendRoute": "/console-resources",

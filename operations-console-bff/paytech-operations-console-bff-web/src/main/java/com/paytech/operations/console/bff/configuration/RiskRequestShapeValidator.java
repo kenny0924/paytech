@@ -53,7 +53,17 @@ final class RiskRequestShapeValidator {
         FreezeRuleSetVersionRequestBody.class, object(fields(TEXT, "expectedContentHash")),
         DeleteRuleSetRequestBody.class, object(fields(TEXT, "expectedVersion")),
         CreateTestCandidateRequestBody.class, object(fields(TEXT, "ruleSetVersionId expectedRuleSetContentHash")),
-        ValidateTestCandidateRequestBody.class, object(fields(INTEGER, "expectedVersion")));
+        ValidateTestCandidateRequestBody.class, object(fields(INTEGER, "expectedVersion")),
+        com.paytech.operations.console.bff.service.model.risklist.CreateRiskListRequestBody.class,
+        object(fields(TEXT, "listCode listName subjectType purpose")),
+        com.paytech.operations.console.bff.service.model.risklist.AddRiskListEntryRequestBody.class,
+        object(fields(TEXT, "subjectValue effectiveFrom effectiveTo reason")),
+        com.paytech.operations.console.bff.service.model.risklist.DeactivateRiskListEntryRequestBody.class,
+        object(fields(TEXT, "reason")),
+        com.paytech.operations.console.bff.service.model.riskrelease.CreateExecutionReleaseRequestBody.class,
+        object(fields(TEXT, "pointCode flowVersionId")),
+        com.paytech.operations.console.bff.service.model.riskrelease.StartShadowRunRequestBody.class,
+        object(fields(INTEGER, "sampleTarget")));
 
     boolean supports(ResolvableType type) {
         return ROOTS.containsKey(type.getType());

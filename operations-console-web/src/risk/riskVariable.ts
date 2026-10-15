@@ -2,7 +2,7 @@ import { session } from '../api/session.ts';
 import type { RequestClient } from '../api/session.ts';
 import type { ValueType, RuleOperand, OperatorCode } from './riskApiModels.ts';
 
-export type VariableSource = 'INPUT' | 'CONSTANT' | 'COLLECTION' | 'NODE_OUTPUT';
+export type VariableSource = 'INPUT' | 'CONSTANT' | 'COLLECTION' | 'NODE_OUTPUT' | 'VELOCITY' | 'LIST';
 export type VariableUsage = 'RULE_CONDITION' | 'FLOW_CONDITION' | 'ACTION_PARAMETER';
 export type VariableStatus = 'ACTIVE' | 'DISABLED' | 'DELETED';
 export type NumericUnit = 'SCALAR' | 'MONEY';
@@ -29,11 +29,55 @@ export interface VariableReferences { items: VariableReference[]; nextCursor: st
 export interface VariableField { fieldKey: string; valueType: ValueType; required: boolean; dataClassification: string; allowedUsages: VariableUsage[]; numericUnit: NumericUnit | null; currencyFieldKey: string | null; semanticRole: string | null }
 export interface VariableContract { contractCode: string; contractVersion: number; pointCode: string | null; sourceType: VariableSource; nodeType: string | null; fields: VariableField[] }
 export interface VariableContext { supportedPoints: { pointCode: string; pointName: string }[]; sources: { sourceType: VariableSource; createAllowed: boolean }[]; valueTypes: ValueType[]; formatProfiles: { formatCode: string; label: string; help: string }[]; numericUnits: NumericUnit[]; limits: { memberCount: number; memberBodyBytes: number; literalSetCount: number }; contracts: VariableContract[] }
-export interface CreateVariable { variableCode: string; variableName: string; description: string | null; sourceType: VariableSource; valueType: ValueType; pointCode: string | null; sourceContractCode: string | null; sourceContractVersion: number | null; sourceField: string | null; usages: VariableUsage[]; formatCode: string; numericUnit: NumericUnit | null; currencyCode: string | null; currencyVariableCode: string | null; allowedValuesVariableCode: string | null; currentValue: string | boolean | null; status: 'ACTIVE' | 'DISABLED' }
+export interface CreateVariable { variableCode: string; variableName: string; description: string | null; sourceType: VariableSource; valueType: ValueType; pointCode: string | null; sourceContractCode: string | null; sourceContractVersion: number | null; sourceField: string | null; usages: VariableUsage[]; formatCode: string; numericUnit: NumericUnit | null; currencyCode: string | null; currencyVariableCode: string | null; allowedValuesVariableCode: string | null; currentValue: string | boolean | null; status: 'ACTIVE' | 'DISABLED' ; velocity?: VelocityParameters | null; list?: ListParameters | null }
 export interface UpdateVariable { expectedVersion: string; variableName: string; description: string | null; currentValue: string | boolean | null; status: 'ACTIVE' | 'DISABLED' }
 export interface VariableOperand extends RuleOperand { sourceType: 'VARIABLE' | 'LITERAL'; variableCode: string | null; numericUnit: NumericUnit | null; currencyCode: string | null; currencyVariableCode: string | null }
 export type VariableFilters = Partial<Record<'keyword' | 'sourceType' | 'valueType' | 'status' | 'pointCode' | 'usage' | 'nodeType' | 'codes' | 'page' | 'size', string | number>>;
-export const variableSourceLabels: Record<VariableSource, string> = { INPUT: '字段变量', CONSTANT: '常量变量', COLLECTION: '集合变量', NODE_OUTPUT: '节点输出' };
+export const variableSourceLabels: Record<VariableSource, string> = { INPUT: '字段变量', CONSTANT: '常量变量', COLLECTION: '集合变量', NODE_OUTPUT: '节点输出', VELOCITY: '实时累计', LIST: '名单命中' };
+/** 实时累计参数，创建后不可修改；distinctSubjectType 只用于 DISTINCT_COUNT。 */
+export interface VelocityParameters { eventCode: string; anchorSubjectType: string; metric: string; distinctSubjectType: string | null; windowSeconds: number; includeCurrent: boolean }
+/** 名单命中参数，创建后不可修改；主体类型随名单。 */
+export interface ListParameters { listCode: string; subjectType: string }
+/** 实时累计与名单命中只属于支持运行期的风控点；Risk 不提供可选值目录，按《风控标准目录》第 2～4 节固定。 */
+export const FEATURE_POINT = 'PAYMENT_ATTEMPT_RISK';
+export const PAYMENT_CURRENCY_VARIABLE = 'PAY_INPUT_CURRENCY';
+export const velocityEvents = [{ value: 'PAYMENT_ATTEMPT_ASSESSED', label: '支付尝试评估' }, { value: 'PAYMENT_ATTEMPT_REJECTED', label: '支付尝试被拦截（审核或拒绝）' }] as const;
+export const riskSubjects = [{ value: 'CLIENT', label: 'Client' }, { value: 'OPERATING_ENTITY', label: '运营主体' }, { value: 'CONSUMER', label: '消费者' }, { value: 'IP_ADDRESS', label: 'IP 地址' }, { value: 'CARD_FINGERPRINT', label: '卡指纹' }, { value: 'CARD_BIN', label: '卡 BIN' }] as const;
+export const velocitySubjects = riskSubjects.filter(s => s.value !== 'CARD_BIN');
+export const velocityMetrics = [{ value: 'COUNT', label: '次数' }, { value: 'SUM_AMOUNT', label: '金额合计' }, { value: 'DISTINCT_COUNT', label: '不同主体数' }, { value: 'LAST_AMOUNT', label: '最近一次金额' }, { value: 'SECONDS_SINCE_LAST', label: '距上次秒数' }] as const;
+export const velocityWindows = [{ value: 600, label: '10 分钟' }, { value: 3600, label: '1 小时' }, { value: 86400, label: '1 天' }, { value: 604800, label: '7 天' }] as const;
+const label = (items: readonly { value: string | number; label: string }[], value: string | number | null) => items.find(i => i.value === value)?.label ?? String(value ?? '');
+/** 金额合计、最近一次金额为金额量纲，其余为普通数值。 */
+export function velocityIsMoney(metric: string): boolean { return metric === 'SUM_AMOUNT' || metric === 'LAST_AMOUNT'; }
+/** 只有评估事件的次数与金额合计可计入本次。 */
+export function velocityAllowsCurrent(p: Pick<VelocityParameters, 'eventCode' | 'metric'>): boolean { return p.eventCode === 'PAYMENT_ATTEMPT_ASSESSED' && (p.metric === 'COUNT' || p.metric === 'SUM_AMOUNT'); }
+/** 修正互相依赖的参数：非 DISTINCT_COUNT 清空去重主体，不可计入本次时取消勾选。 */
+export function normalizeVelocity(p: VelocityParameters): VelocityParameters {
+  const distinct = p.metric === 'DISTINCT_COUNT' ? (p.distinctSubjectType === p.anchorSubjectType ? null : p.distinctSubjectType) : null;
+  return { ...p, distinctSubjectType: distinct, includeCurrent: velocityAllowsCurrent(p) && p.includeCurrent };
+}
+/** 页面校验：缺少参数时返回原因，Risk 仍做最终校验。 */
+export function velocityProblem(p: VelocityParameters): string | null {
+  if (!p.eventCode || !p.anchorSubjectType || !p.metric || !p.windowSeconds) return '请完整填写统计参数';
+  if (p.metric === 'DISTINCT_COUNT' && !p.distinctSubjectType) return '不同主体数需要选择去重主体';
+  return null;
+}
+/** 口径预览，例如“同一卡指纹 10 分钟内的支付尝试评估次数（不含本次）”。 */
+export function velocityPreview(p: VelocityParameters): string {
+  const metric = p.metric === 'DISTINCT_COUNT' ? `不同${label(riskSubjects, p.distinctSubjectType)}数` : label(velocityMetrics, p.metric);
+  const current = velocityAllowsCurrent(p) ? (p.includeCurrent ? '（含本次）' : '（不含本次）') : '';
+  return `同一${label(riskSubjects, p.anchorSubjectType)} ${label(velocityWindows, p.windowSeconds)}内的${label(velocityEvents, p.eventCode)}${metric}${current}`;
+}
+/** 实时累计变量的派生结构字段：数值、格式 NONE、金额类绑定支付币种变量。 */
+export function velocityDerived(p: VelocityParameters): Pick<CreateVariable, 'sourceType' | 'valueType' | 'pointCode' | 'formatCode' | 'numericUnit' | 'currencyCode' | 'currencyVariableCode' | 'allowedValuesVariableCode' | 'currentValue' | 'sourceContractCode' | 'sourceContractVersion' | 'sourceField'> {
+  const money = velocityIsMoney(p.metric);
+  return { sourceType: 'VELOCITY', valueType: 'NUMBER', pointCode: FEATURE_POINT, formatCode: 'NONE', numericUnit: money ? 'MONEY' : 'SCALAR', currencyCode: null, currencyVariableCode: money ? PAYMENT_CURRENCY_VARIABLE : null, allowedValuesVariableCode: null, currentValue: null, sourceContractCode: null, sourceContractVersion: null, sourceField: null };
+}
+/** 名单命中变量的派生结构字段：布尔、格式 NONE。 */
+export function listDerived(): Pick<CreateVariable, 'sourceType' | 'valueType' | 'pointCode' | 'formatCode' | 'numericUnit' | 'currencyCode' | 'currencyVariableCode' | 'allowedValuesVariableCode' | 'currentValue' | 'sourceContractCode' | 'sourceContractVersion' | 'sourceField'> {
+  return { sourceType: 'LIST', valueType: 'BOOLEAN', pointCode: FEATURE_POINT, formatCode: 'NONE', numericUnit: null, currencyCode: null, currencyVariableCode: null, allowedValuesVariableCode: null, currentValue: null, sourceContractCode: null, sourceContractVersion: null, sourceField: null };
+}
+export function subjectLabel(value: string): string { return label(riskSubjects, value); }
 export const variableTypeLabels: Record<ValueType, string> = { STRING: '文本', NUMBER: '数值', BOOLEAN: '布尔', DATETIME: '时间', DURATION: '时长' };
 export const usageLabels: Record<VariableUsage, string> = { RULE_CONDITION: '规则条件', FLOW_CONDITION: '流程条件', ACTION_PARAMETER: '动作主体' };
 export const operatorLabels: Record<OperatorCode, string> = { EQ: '等于', NE: '不等于', GT: '大于', GTE: '大于等于', LT: '小于', LTE: '小于等于', IN: '属于', NOT_IN: '不属于', BETWEEN: '介于', IS_NULL: '为空', IS_NOT_NULL: '不为空' };
@@ -47,7 +91,7 @@ function scalar(v: unknown): string | boolean { check(typeof v === 'string' || t
 function array<T>(v: unknown, decode: (v: unknown) => T, max = 1000): T[] { check(Array.isArray(v) && v.length <= max); return v.map(decode); }
 function nil<T>(v: unknown, decode: (v: unknown) => T): T | null { return v === null ? null : decode(v); }
 function one<T extends string>(v: unknown, values: readonly T[]): T { check(typeof v === 'string' && values.includes(v as T)); return v as T; }
-const sources = ['INPUT','CONSTANT','COLLECTION','NODE_OUTPUT'] as const, types = ['STRING','NUMBER','BOOLEAN','DATETIME','DURATION'] as const, usages = ['RULE_CONDITION','FLOW_CONDITION','ACTION_PARAMETER'] as const;
+const sources = ['INPUT','CONSTANT','COLLECTION','NODE_OUTPUT','VELOCITY','LIST'] as const, types = ['STRING','NUMBER','BOOLEAN','DATETIME','DURATION'] as const, usages = ['RULE_CONDITION','FLOW_CONDITION','ACTION_PARAMETER'] as const;
 function code(v: unknown): string { const s=text(v); check(/^[A-Z][A-Z0-9_]{0,63}$/.test(s)); return s; }
 function id(v: unknown): string { const s=text(v); check(/^[1-9][0-9]{0,18}$/.test(s) && BigInt(s) <= 9223372036854775807n); return s; }
 function validUtcTime(s: string): boolean {
@@ -88,7 +132,7 @@ export function createVariableApi(client:RequestClient=session) {return {
   context:(signal?:AbortSignal)=>client.request(root+'/authoring-context',{signal},decodeContext),
   list:(filters:VariableFilters={},signal?:AbortSignal)=>client.request(root+'/variables'+query(filters),{signal},decodeVariablePage),
   detail:(variableCode:string,signal?:AbortSignal)=>client.request(root+'/variables/'+enc(variableCode),{signal},v=>{const r=decodeVariableDetail(v);check(r.variableCode===variableCode);return r;}),
-  create:(body:CreateVariable)=>client.request(root+'/variables',write('POST',body),v=>{const r=decodeVariableDetail(v);check(r.variableCode===body.variableCode&&r.version==='1');return r;}),
+  create:(body:CreateVariable)=>client.request(root+'/variables',write('POST',{...body,velocity:body.velocity??null,list:body.list??null}),v=>{const r=decodeVariableDetail(v);check(r.variableCode===body.variableCode&&r.version==='1');return r;}),
   update:(variableCode:string,body:UpdateVariable)=>client.request(root+'/variables/'+enc(variableCode),write('PUT',body),v=>{const r=decodeVariableDetail(v);check(r.variableCode===variableCode&&BigInt(r.version)===BigInt(body.expectedVersion)+1n);return r;}),
   remove:(variableCode:string,expectedVersion:string)=>client.request(root+'/variables/'+enc(variableCode)+query({expectedVersion}),{method:'DELETE'},v=>{const r=record(v,'variableCode status version');check(r.variableCode===variableCode&&r.status==='DELETED'&&BigInt(id(r.version))===BigInt(expectedVersion)+1n);return {variableCode,status:'DELETED' as const,version:id(r.version)};}),
   members:(variableCode:string,page=1,keyword='',expectedVersion?:string,signal?:AbortSignal)=>client.request(root+'/variables/'+enc(variableCode)+'/members'+query({page,size:100,keyword,expectedVersion}),{signal},v=>{const r=decodeMembers(v);check(r.variableCode===variableCode&&r.page===page&&(!expectedVersion||r.version===expectedVersion));return r;}),

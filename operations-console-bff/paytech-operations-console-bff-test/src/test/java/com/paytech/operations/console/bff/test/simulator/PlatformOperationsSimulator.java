@@ -125,7 +125,18 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-risk-test-candidate-list", "900000000000000536"),
         Map.entry("operations-risk-test-candidate-detail", "900000000000000536"),
         Map.entry("operations-risk-test-candidate-create", "900000000000000539"),
-        Map.entry("operations-risk-test-candidate-validate", "900000000000000540"));
+        Map.entry("operations-risk-test-candidate-validate", "900000000000000540"),
+        Map.entry("operations-risk-list-list", "900000000000101101"),
+        Map.entry("operations-risk-list-entries", "900000000000101101"),
+        Map.entry("operations-risk-list-create", "900000000000101102"),
+        Map.entry("operations-risk-list-entry-add", "900000000000101102"),
+        Map.entry("operations-risk-list-entry-deactivate", "900000000000101102"),
+        Map.entry("operations-risk-execution-list", "900000000000000536"),
+        Map.entry("operations-risk-execution-detail", "900000000000000536"),
+        Map.entry("operations-risk-execution-create", "900000000000101103"),
+        Map.entry("operations-risk-execution-validate", "900000000000101103"),
+        Map.entry("operations-risk-execution-shadow-run", "900000000000101103"),
+        Map.entry("operations-risk-execution-activate", "900000000000101104"));
 
     /** Client 入驻审核路由（registration-plan.json 的 O01—O09）到权限；权限 ID 为本 Simulator 的合成值。 */
     public static final Map<String, String> CLIENT_REVIEW_ROUTE_PERMISSIONS = Map.ofEntries(

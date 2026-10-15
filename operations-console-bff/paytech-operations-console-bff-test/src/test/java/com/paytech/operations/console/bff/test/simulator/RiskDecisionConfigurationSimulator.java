@@ -52,6 +52,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
     private final RiskVariableScenario variables = new RiskVariableScenario();
     private final RiskFlowScenario flow = new RiskFlowScenario();
     private final RiskDictionaryScenario dictionary = new RiskDictionaryScenario();
+    private final RiskControlScenario control = new RiskControlScenario();
     private final Map<String, CompletedCommand> commands = new LinkedHashMap<>();
     private volatile Mode mode = Mode.SUCCESS;
     private volatile Consumer<ObjectNode> wireMutation = ignored -> {};
@@ -131,6 +132,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         variables.reset();
         dictionary.reset();
         flow.reset();
+        control.reset();
         ruleSets.clear();
         ruleRoots.clear();
         candidates.clear();
@@ -166,18 +168,22 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
             new DecisionRuleSetManagementModels.RuleActionRequestBody("ALLOW_CHECKOUT", 1), null, List.of()));
     }
 
-    public static RuleAuthoringContextResponseBody authoring() {
-        var point = new DecisionRuleSetManagementModels.DecisionPointDescriptorResponseBody("CHECKOUT_PREPARE", "Checkout Prepare", "CHECKOUT",
+    public static RuleAuthoringContextResponseBody authoring() { return authoring("CHECKOUT_PREPARE"); }
+
+    /** 支付点的终态动作以 _PAYMENT 结尾，其余目录与结账点一致。 */
+    public static RuleAuthoringContextResponseBody authoring(String pointCode) {
+        String suffix = pointCode.equals("PAYMENT_ATTEMPT_RISK") ? "_PAYMENT" : "_CHECKOUT";
+        var point = new DecisionRuleSetManagementModels.DecisionPointDescriptorResponseBody(pointCode, "Checkout Prepare", "CHECKOUT",
             "ORDER_PREPARATION", 4, "RISK_DECISION_RESULT", "REVIEW", "FIRST_TERMINAL", "FAIL_CLOSED", 500, "ACTIVE");
         var fields = List.of(new DecisionRuleSetManagementModels.DecisionInputFieldDescriptorResponseBody("country_code", "STRING", true,
             "INTERNAL", true, false, "REGISTERED_COUNTRY"), new DecisionRuleSetManagementModels.DecisionInputFieldDescriptorResponseBody("order_amount", "NUMBER",
             true, "INTERNAL", true, false, "REGISTERED_ORDER_AMOUNT"));
-        var actions = List.of(action("ALLOW_CHECKOUT", "ALLOW"), action("DENY_CHECKOUT", "DENY"),
-            action("REVIEW_CHECKOUT", "REVIEW"));
+        var actions = List.of(action("ALLOW" + suffix, "ALLOW"), action("DENY" + suffix, "DENY"),
+            action("REVIEW" + suffix, "REVIEW"));
         return new RuleAuthoringContextResponseBody("RISK_VARIABLE_AUTHORING", point, fields,
             List.of("EQ", "NE", "GT", "GTE", "LT", "LTE", "IN", "NOT_IN", "BETWEEN", "IS_NULL", "IS_NOT_NULL"),
             actions, List.of(), List.of(), List.of(), List.of(), List.of(), "VARIABLE_REFERENCE",
-            new com.paytech.risk.api.decision.RiskVariableModels.VariableQueryContext("CHECKOUT_PREPARE", "ORDER_PREPARATION", 4, "RULE_CONDITION"));
+            new com.paytech.risk.api.decision.RiskVariableModels.VariableQueryContext(pointCode, "ORDER_PREPARATION", 4, "RULE_CONDITION"));
     }
 
     private static DecisionRuleSetManagementModels.DecisionActionDescriptorResponseBody action(String code, String decision) {
@@ -242,6 +248,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         if (variables.known(r.method(), r.path())) return true;
         if (flow.known(r.method(), r.path())) return true;
         if (dictionary.known(r.method(), r.path())) return true;
+        if (control.known(r.method(), r.path())) return true;
         if (r.method().equals("GET")) return r.path().startsWith("/decision-rule-sets/v1/authoring-context/")
             || r.path().equals(RULES) || r.path().matches(RULES + "/[1-9][0-9]*")
             || r.path().equals(CANDIDATES) || r.path().matches(CANDIDATES + "/[1-9][0-9]*");
@@ -267,7 +274,10 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         if (variables.known(request.method(), path)) return variables.dispatch(request);
         if (flow.known(request.method(), path)) return flow.dispatch(request, ruleSets.get("30001"));
         if (dictionary.known(request.method(), path)) return dictionary.dispatch(request);
+        if (control.known(request.method(), path)) return control.dispatch(request);
         if (request.method().equals("GET")) {
+            // 只有支付点返回支付目录；其他风控点保持结账目录，供“请求与回执风控点不一致”用例使用。
+            if (path.equals("/decision-rule-sets/v1/authoring-context/PAYMENT_ATTEMPT_RISK")) return authoring("PAYMENT_ATTEMPT_RISK");
             if (path.startsWith("/decision-rule-sets/v1/authoring-context/")) return authoring();
             if (path.equals(RULES)) return rulePage(request);
             if (path.equals(CANDIDATES)) return candidatePage(request);
