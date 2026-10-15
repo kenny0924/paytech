@@ -44,6 +44,11 @@ public class MockEmailProvider implements EmailProvider, Clear {
         sends.put(email, queue);
     }
 
+    /** 直接配置一条完整结果，用于验证 Handler 对不合法供应商证据的处理。 */
+    public synchronized void expectSendResult(String email, EmailProviderResult result) {
+        sends.computeIfAbsent(email, key -> new ArrayDeque<>()).add(result);
+    }
+
     /** 原操作查询独立配置；NOT_FOUND 等模糊结果应使用 UNKNOWN。 */
     public synchronized void expectQuery(String requestNo, EmailProviderResult.Outcome outcome) {
         queries.put(requestNo, new EmailProviderResult(outcome, null, outcome.getCode()));

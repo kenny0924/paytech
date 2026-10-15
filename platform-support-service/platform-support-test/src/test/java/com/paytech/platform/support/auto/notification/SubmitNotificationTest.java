@@ -4,14 +4,25 @@ import static com.paytech.platform.support.delivery.integration.provider.EmailPr
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.ConcurrentRequestException;
+import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.FailException;
+import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.platform.support.delivery.core.enums.NotificationConfigurationStatus;
+import com.paytech.platform.support.delivery.core.enums.NotificationMedium;
+import com.paytech.platform.support.test.dal.NotificationTestMapper;
 import com.paytech.platform.support.delivery.service.processor.SubmitNotificationProcessor;
 import com.paytech.platform.support.delivery.service.processor.request.SubmitNotificationRequest;
 import com.paytech.platform.support.test.base.NotificationTestBase;
@@ -128,6 +139,60 @@ class SubmitNotificationTest extends NotificationTestBase {
         assertThrows(RuntimeException.class, () -> new TransactionTemplate(transactionManager)
             .execute(status -> processor.process(NotificationRequestBuilder.template())));
         assertEquals(0, mapper.requests());
+        vault.assertNoCalls();
+    }
+
+    /** 模板、路由或主账号未启用或不是 EMAIL 时整单拒绝，不调用 Vault、不落库。 */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("unusableConfigurations")
+    void rejectsUnusableConfiguration(String scenario, Consumer<NotificationTestMapper> change) {
+        change.accept(mapper);
+        assertThrows(BizCheckFailException.class, () -> processor.process(NotificationRequestBuilder.template()));
+        assertEquals(0, mapper.requests());
+        vault.assertNoCalls();
+    }
+
+    /** 每组只让一项配置不可用。 */
+    static Stream<Arguments> unusableConfigurations() {
+        String active = NotificationConfigurationStatus.ACTIVE.getCode();
+        String disabled = NotificationConfigurationStatus.DISABLED.getCode();
+        String email = NotificationMedium.EMAIL.getCode();
+        String sms = NotificationMedium.SMS.getCode();
+        return Stream.of(
+            Arguments.of("模板停用", (Consumer<NotificationTestMapper>) m -> m.changeTemplate(disabled, email)),
+            Arguments.of("模板为短信", (Consumer<NotificationTestMapper>) m -> m.changeTemplate(active, sms)),
+            Arguments.of("路由停用", (Consumer<NotificationTestMapper>) m -> m.changeRoute(disabled)),
+            Arguments.of("路由缺失", (Consumer<NotificationTestMapper>) NotificationTestMapper::clearRoute),
+            Arguments.of("账号停用", (Consumer<NotificationTestMapper>) m -> m.changeProvider(disabled, email)),
+            Arguments.of("账号为短信", (Consumer<NotificationTestMapper>) m -> m.changeProvider(active, sms)));
+    }
+
+    /** 账号编码没有对应适配器时失败关闭，不假装受理可执行通知。 */
+    @Test
+    void rejectsProviderWithoutAdapter() {
+        mapper.changeProviderCode("NOTIFICATION_TEST_NO_ADAPTER");
+        assertThrows(com.paytech.foundation.common.error.ServiceUnavailableException.class,
+            () -> processor.process(NotificationRequestBuilder.template()));
+        assertEquals(0, mapper.requests());
+        vault.assertNoCalls();
+    }
+
+    /** 模板编码不存在时拒绝。 */
+    @Test
+    void rejectsUnknownTemplate() {
+        var request = NotificationRequestBuilder.template();
+        request.setTemplateCode("NOTIFICATION_TEST_MISSING");
+        assertThrows(BizCheckFailException.class, () -> processor.process(request));
+        vault.assertNoCalls();
+    }
+
+    /** 来源业务标识带首尾空白或控制字符时拒绝。 */
+    @ParameterizedTest
+    @ValueSource(strings = {" maintenance-001", "maintenance\u0001001"})
+    void rejectsMalformedSourceEventKey(String sourceEventKey) {
+        var request = NotificationRequestBuilder.template();
+        request.setSourceEventKey(sourceEventKey);
+        assertThrows(InvalidParameterException.class, () -> processor.process(request));
         vault.assertNoCalls();
     }
 }

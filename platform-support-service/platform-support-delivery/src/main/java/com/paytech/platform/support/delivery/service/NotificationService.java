@@ -23,4 +23,13 @@ public interface NotificationService {
 
     /** 配置或参数已经明确不允许新发送；没有新 Attempt。 */
     void failBeforeSend(NotificationExecutionContext context, Instant now);
+
+    /**
+     * 不支持查询的 Provider 在安全窗口后放弃确认原发送
+     *
+     * @param context 当前为 PROCESSING 或 UNKNOWN 的投递及其最新尝试
+     * @param resend true 时 Delivery 转 RETRY_WAIT 并立即可发；false 时保持 UNKNOWN，仅收敛遗留 PROCESSING
+     * @param now 当前 UTC 时间
+     */
+    void releaseUnknown(NotificationExecutionContext context, boolean resend, Instant now);
 }

@@ -888,9 +888,13 @@ The approved API and incremental SQL are in [Client API delivery](../requirement
 模块公开入口为 `platform-support-delivery` 的 `SubmitNotificationProcessor.process`，请求和响应使用模块合同；本期不开放 HTTP。
 支持一次 1..100 个独立邮箱、默认语言/参数及收件人覆盖、可靠发送和原发送查询；规范化后重复邮箱整单拒绝。
 正式默认 `notification.enabled=false`，没有生产 Mock Provider；开启需显式配置补偿执行、Vault 专用用途授权和账号适配器。
-普通邮件与认证邮件对接分期，Access Control 现有邮件入口未迁移。
+首个真实账号适配器为 Amazon SES（`notification.ses.*`，默认关闭）：SES 不支持按请求号查询，普通通知按“至少发一次”处理——受理即 `SENT` 完成，结果未知时等待 `notification.unknown-resend-delay`（默认 10m）后在发送次数内重发。
+单独启用通知需设置 `PLATFORM_SUPPORT_COMPENSATION_ENABLED=true`（默认跟随入驻文件开关），生产周期扫描另配 XXL-Job；SES 侧需已验证发件域名、解除沙箱并授予 `ses:SendEmail`。
+SES 使用 IAM 用户密钥：密钥对保存在 Vault（`NOTIFICATION_PROVIDER_CREDENTIAL_V1`），部署只配置其 Token `NOTIFICATION_SES_CREDENTIAL_TOKEN`，每次发送前以 `NOTIFICATION_DELIVERY` 读取、不缓存；换密钥即换 Token 并重启。
+普通邮件与认证邮件对接分期，Access Control 现有邮件入口未迁移，认证邮件不进入可恢复通知流程。
 
 [需求和配置合同](../requirements/20260920/platform-support-Delivery领域规划/technique.md)、
+[SES 接入方案](../requirements/20261014/platform-support-邮件AmazonSES接入/technique.md)、
 [建表脚本](../requirements/20260920/platform-support-Delivery领域规划/db/notification-create.sql)、
 [测试说明](platform-support-test/README.md#notification-普通-email)及
 [实际状态](../agent-docs/CURRENT_IMPLEMENTATION.md#platform-delivery-domain-plan-20260920)分别维护对应事实。

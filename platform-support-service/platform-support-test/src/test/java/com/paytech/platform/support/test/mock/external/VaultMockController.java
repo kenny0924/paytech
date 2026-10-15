@@ -25,6 +25,7 @@ public class VaultMockController implements VaultHttpService {
     private static final String NOTIFICATION = "PLATFORM_NOTIFICATION_EMAIL_V1";
     private static final String LOGIN = "PLATFORM_LOGIN_EMAIL_V1";
     private static final String CHANNEL_EXECUTION = "CHANNEL_EXECUTION";
+    private static final String NOTIFICATION_DELIVERY = "NOTIFICATION_DELIVERY";
 
     private final NotificationVaultMock notification;
     private final LoginEmailVaultMocker login;
@@ -41,7 +42,7 @@ public class VaultMockController implements VaultHttpService {
         };
     }
 
-    /** 只读取本服务已批准的邮箱用途与渠道账号执行用途，不伪造其他 Vault 能力。 */
+    /** 只读取本服务已批准的邮箱、渠道账号执行与通知发送账号凭据用途，不伪造其他 Vault 能力。 */
     @Override
     public RevealResponse reveal(String caller, String requestId, RevealRequest request) {
         require(CALLER.equals(caller));
@@ -49,6 +50,7 @@ public class VaultMockController implements VaultHttpService {
             case NOTIFICATION -> new RevealResponse(notification.reveal(request.token()));
             case LOGIN -> new RevealResponse(login.reveal(request.token()));
             case CHANNEL_EXECUTION -> new RevealResponse(channelAccount.reveal(request.token()));
+            case NOTIFICATION_DELIVERY -> new RevealResponse(notification.revealCredential(request.token()));
             default -> throw new IllegalStateException("Vault Reveal 用途不匹配");
         };
     }

@@ -4,6 +4,8 @@
 
 字段以 [data-design.md](./data-design.md) 为准，模块合同与暂缓接口以 [api.md](./api.md) 为准；未决项统一维护在[需求第 6 节](./requirement.md#open-items)。本文不扩展实现或部署授权。
 
+> **2026-10-14 修订：** 首个真实 Provider 为 Amazon SES（`integration/provider/ses`），用户确认普通通知接受“至少发一次”。Provider 通过 `supportsQuery()` 声明查询能力；不支持查询的 Provider 按 [2026-10-14 SES 接入方案](../../20261014/platform-support-邮件AmazonSES接入/technique.md) §3.3 执行：SENT 即完成，UNKNOWN 在安全窗口（默认 10 分钟）后于发送次数内重发，次数用尽终止任务待人工确认。支持查询的 Provider 继续适用本文原规则。下文第 6 节、第 8.2 节中“UNKNOWN 不能重发/不能换 Provider”“真实供应商必须可查询”的表述仅约束支持查询的 Provider。
+
 首期仅处理 Email，Provider 的发送和结果查询先在外部调用边界使用 Mock，内部 Request / Delivery / Attempt 流程仍按本领域规则设计。Mock 用于开发验证，不连接真实邮件供应商，其模拟结果不代表真实投递；真实供应商选型与接入、SMS 实现后续再定。Mock 适配器仅位于测试模块；Vault 仍经正式 Client 调用独立 HTTP Mock。
 
 ## 1. 模块职责
@@ -110,7 +112,9 @@ Provider 请求号必须在外发前保存。超时、断连或进程在可能�
 
 查询使用原 provider_id、provider_request_no，必要时使用原 provider_message_id；不创建新 Attempt，也不增加 attempt_count。结果确认更新 resolution_source、resolution_code 及适用的 resolved_time。
 
-复用服务级 compensation_event 登记与唤醒查询，查询次数/下次执行时间由公共机制维护。补偿任务耗尽或标记失败不改变 UNKNOWN 的业务事实。不支持充分查询的 Provider 不能被假定可自动恢复；人工处置接口本轮不设计。
+复用服务级 compensation_event 登记与唤醒查询，查询次数/下次执行时间由公共机制维护。补偿任务耗尽或标记失败不改变 UNKNOWN 的业务事实。不支持查询的 Provider 不靠查询恢复，而是按 [2026-10-14 SES 接入方案](../../20261014/platform-support-邮件AmazonSES接入/technique.md) §3.3 在安全窗口后重发（至少发一次）；人工处置接口本轮不设计。
+
+当前尝试指投递最新一次 Attempt（按 attempt_id 最大）；窗口重发后更早的 UNKNOWN 尝试只作历史，不再被查询或接管。
 
 任务只携带业务 ID 等最小身份，不保存地址、正文、OTP 或 Vault Token。公共 Claim/Lease、重入、任务超时以及领域状态/CAS 要共同防止重复外发和旧执行者覆盖；具体执行与接管规则见第 8 节，不向领域表加入另一套 Lease/Fencing 字段。
 
@@ -149,7 +153,7 @@ Provider 请求号必须在外发前保存。超时、断连或进程在可能�
 - NotificationService 专职读取本库一致性快照、准备发送/查询与保存结果，不反向依赖 Registrar，不调用 Vault/Provider；Handler 负责事务外步骤。
 - 创建 Attempt 前 CAS Delivery 的 version/status，成功后才增加计数、插入 Attempt；结果回写先 CAS 同一个 Delivery，再更新 Attempt，一起回滚。上下文对象仅在 SQL 成功后同步更新。
 - 查询接管推进 Delivery version，遗留 PROCESSING 转 UNKNOWN，并继续原账号/请求号。旧发送响应不再持有版本，不能覆盖新查询结果；该 CAS 冲突由 Handler 映射为可恢复结果，下一轮只读取新的权威事实。已 ACCEPTED 的 Attempt 查询仍未知时保留 SENT/ACCEPTED。
-- CAS 防止重复领取造成两次新 Attempt，并保护本地回写；它不承诺对外绝对 exactly-once。真实供应商必须保证原请求身份可查询，且 RETRYABLE_REJECTED 表示原请求永久关闭、不可能随后受理。单纯 NOT_FOUND、超时或中断一律 UNKNOWN，不能启用备用发送。
+- CAS 防止重复领取造成两次新 Attempt，并保护本地回写；它不承诺对外绝对 exactly-once。支持查询的供应商必须保证原请求身份可查询，且 RETRYABLE_REJECTED 表示原请求永久关闭、不可能随后受理。单纯 NOT_FOUND、超时或中断一律 UNKNOWN，不能启用备用发送。
 - 默认最多 3 次实际发送，明确拒绝后至少等待 30 秒；重试使用当前配置，存在备用 Provider 时选择备用，否则继续主 Provider。框架每任务最多执行 24 次（包含发送、查询和技术恢复），单次 20 秒，退避 30 秒至 15 分钟、倍数 2、抖动 0.2。耗尽只停止自动任务；保留 UNKNOWN/SENT，最后一次执行崩溃还可能保留 PROCESSING，不能伪称确定失败。监控复用公共补偿失败指标，人工恢复接口后续处理。
 
 ### 8.3 配置与真实接入前提
@@ -157,7 +161,8 @@ Provider 请求号必须在外发前保存。超时、断连或进程在可能�
 - `notification.enabled` 正式默认 false；启用还需 `compensation.enabled=true`、Vault 连接和精确绑定 providerCode 的 EmailProvider 适配器。无适配器时拒绝受理，不注入生产 Mock。周期恢复复用公共 XXL-Job 扫描器，生产调度需单独配置；测试通过正式 Scanner 显式触发到期扫描。
 - 配置统一使用 NotificationProperties；maximum-send-attempts、retry-delay 为类型化执行配置。人工认证均关闭时，通知独立启用需显式分配 `notification.worker-id`（0..31）；否则复用认证的应用级唯一 IdGenerator。
 - Vault 使用 `EMAIL_ADDRESS_V1 / STABLE / PLATFORM_NOTIFICATION_EMAIL_V1`。该 Purpose 不复用登录授权；代码声明不等于 Vault 已注册或已允许调用。Token 不进入日志或补偿 Payload。
-- 首期测试在 EmailProvider 边界显式返回模拟证据，尚无真实供应商 HTTP 协议；不声称测试验证过供应商真实线缆协议。
+- 测试 Mock Provider 在 EmailProvider 边界显式返回模拟证据；SES 适配器经真实 AWS SDK 访问测试 HTTP 终端（SesMockController），真实 SES 只由 manual 用例验证。
+- SES 账号配置为 `notification.ses.*`（`enabled`、`provider-code`、`region`、`from-address`、`configuration-set`、`endpoint`、`credential-token` 与超时；密钥对在 Vault，每次发送前经 `EmailProvider.prepare()` 读取），需同时开启 `notification.enabled`；生产凭据走默认凭据链。窗口为 `notification.unknown-resend-delay`。补偿开关为 `compensation.enabled: ${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${files.onboarding.enabled:false}}`，单独启用通知需显式设置该变量。
 - 手工建表入口见 [notification-create.sql](./db/notification-create.sql)。脚本仅用于没有同名 Notification 表的库，不自动迁移旧九表。公共 t_compensation_event 是前置依赖，复用[正式 Schema](../../../platform-support-service/docs/database/sql/platform-support-schema.sql)中的已有定义，不创建专属任务表。正式初始化 DML 待业务配置确认；测试 Fixture 按例准备/清理自身配置，不由应用启动建表或 Seed。
 - Document Delivery 的通知租户一致性应沿 Delivery → Request 校验；旧 `(notification_delivery_id, tenant_id)` 复合关系不再适用于七表目标。其业务接入尚不属于本期，不能只凭单列 ID 授权。
 

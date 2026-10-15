@@ -30,10 +30,10 @@ public class NotificationAttemptRepositoryImpl implements NotificationAttemptRep
         if (mapper.insert(item) != 1) throw new ErrorException("通知事实插入失败");
     }
 
-    /** 读取尚未明确失败的尝试；由用例验证唯一性。 */
+    /** 读取投递最新一次发送尝试，没有时返回空；更早的 UNKNOWN 尝试只作历史。 */
     @Override
-    public java.util.List<NotificationAttempt> findOpen(long deliveryId) {
-        return mapper.findOpen(deliveryId);
+    public NotificationAttempt findCurrent(long deliveryId) {
+        return mapper.findCurrent(deliveryId);
     }
 
     /** 与 Delivery 版本更新处于同一事务，成功后同步原尝试。 */

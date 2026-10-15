@@ -14,8 +14,8 @@ public interface NotificationAttemptMapper {
     /** 插入新事实；唯一约束冲突使整个受理事务回滚。 */
     int insert(NotificationAttempt item);
 
-    /** 读取尚未明确失败的尝试；由用例验证唯一性。 */
-    java.util.List<NotificationAttempt> findOpen(@Param("deliveryId") long deliveryId);
+    /** 读取投递最新一次发送尝试，没有时返回空；更早的 UNKNOWN 尝试只作历史。 */
+    NotificationAttempt findCurrent(@Param("deliveryId") long deliveryId);
 
     /** 与 Delivery 版本更新处于同一事务，成功后同步原尝试。 */
     int resolve(@Param("item") NotificationAttempt item, @Param("status") NotificationAttemptStatus status, @Param("messageId") String messageId, @Param("code") String code, @Param("source") NotificationResolutionSource source, @Param("now") Instant now);

@@ -19,7 +19,7 @@ public interface NotificationTestMapper {
     @Select("""
         SELECT (SELECT COUNT(*) FROM t_notification_template WHERE template_id=890001 OR template_code='NOTIFICATION_TEST')
              + (SELECT COUNT(*) FROM t_notification_template_content WHERE content_id IN (890002,890003) OR template_id=890001)
-             + (SELECT COUNT(*) FROM t_notification_provider WHERE provider_id IN (890004,890006) OR provider_code IN ('NOTIFICATION_TEST_EMAIL','NOTIFICATION_TEST_FALLBACK'))
+             + (SELECT COUNT(*) FROM t_notification_provider WHERE provider_id IN (890004,890006,890007) OR provider_code IN ('NOTIFICATION_TEST_EMAIL','NOTIFICATION_TEST_FALLBACK','NOTIFICATION_TEST_SES'))
              + (SELECT COUNT(*) FROM t_notification_route WHERE route_id=890005 OR notification_template_id=890001)
         """)
     int reservedConfigurationCount();
@@ -53,6 +53,30 @@ public interface NotificationTestMapper {
     @Update("UPDATE t_notification_route SET fallback_provider_id=890006,version=version+1 WHERE route_id=890005")
     void useFallback();
 
+    /** 插入 SES 测试账号；编码与 application-mock.yml 的 notification.ses.provider-code 一致。 */
+    @Insert("INSERT INTO t_notification_provider VALUES(890007,'NOTIFICATION_TEST_SES','EMAIL','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")
+    void sesProvider();
+
+    /** 模拟管理员把主账号切换为 SES。 */
+    @Update("UPDATE t_notification_route SET primary_provider_id=890007,version=version+1 WHERE route_id=890005")
+    void useSes();
+
+    /** 把本例全部尝试的开始时间前移，模拟安全窗口已过，不调整宿主时钟。 */
+    @Update("UPDATE t_notification_attempt a JOIN t_notification_delivery d ON d.delivery_id=a.delivery_id JOIN t_notification_request r ON r.request_id=d.request_id SET a.started_time=a.started_time - INTERVAL #{seconds} SECOND WHERE r.source_system='NOTIFICATION_TEST'")
+    void shiftAttemptsBack(@Param("seconds") long seconds);
+
+    /** 模拟进程在外发后、回写前崩溃：仅最新尝试与投递回到 PROCESSING。 */
+    @Update("""
+        UPDATE t_notification_attempt a JOIN t_notification_delivery d ON d.delivery_id=a.delivery_id
+        JOIN t_notification_request r ON r.request_id=d.request_id
+        SET a.status='PROCESSING',a.response_code=NULL,a.resolution_source=NULL,a.finished_time=NULL,
+            d.status='PROCESSING',d.version=d.version+1
+        WHERE r.source_system='NOTIFICATION_TEST'
+          AND a.attempt_id=(SELECT MAX(x.attempt_id) FROM (SELECT attempt_id,delivery_id FROM t_notification_attempt) x
+                            WHERE x.delivery_id=a.delivery_id)
+        """)
+    void interruptSend();
+
     /** 读取当前用例的 Delivery 状态，不输出 Token 或参数。 */
     @Select("""
         SELECT d.delivery_id,d.status,d.attempt_count,d.version,d.next_retry_time FROM t_notification_delivery d
@@ -63,7 +87,8 @@ public interface NotificationTestMapper {
 
     /** 读取发送身份与结果。 */
     @Select("""
-        SELECT a.attempt_id,a.delivery_id,a.provider_id,a.provider_request_no,a.status,a.resolution_source
+        SELECT a.attempt_id,a.delivery_id,a.provider_id,a.provider_request_no,a.provider_message_id,a.status,
+            a.response_code,a.resolution_source,a.resolution_code,a.resolved_time
         FROM t_notification_attempt a JOIN t_notification_delivery d ON d.delivery_id=a.delivery_id
         JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST'
         ORDER BY a.attempt_id
@@ -75,7 +100,7 @@ public interface NotificationTestMapper {
     int activeTasks();
 
     /** 有恢复事实但不得携带 Payload。 */
-    @Select("SELECT event_key,payload_json,execute_status,execute_count FROM t_compensation_event WHERE event_type='NOTIFICATION_DELIVERY' AND event_key IN (SELECT CAST(d.delivery_id AS CHAR) FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST')")
+    @Select("SELECT event_key,payload_json,execute_status,execute_count,last_error_code FROM t_compensation_event WHERE event_type='NOTIFICATION_DELIVERY' AND event_key IN (SELECT CAST(d.delivery_id AS CHAR) FROM t_notification_delivery d JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system='NOTIFICATION_TEST')")
     List<Map<String,Object>> events();
 
     /** 测试时使本例等待任务立即到期；执行仍经过正式 Scanner。 */
@@ -89,6 +114,22 @@ public interface NotificationTestMapper {
     /** 模拟管理员更新当前文案。 */
     @Update("UPDATE t_notification_template_content SET body_template=#{body},version=version+1 WHERE content_id=890002")
     void changeContent(@Param("body") String body);
+
+    /** 模拟管理员修改模板的状态或媒介。 */
+    @Update("UPDATE t_notification_template SET status=#{status},medium=#{medium},version=version+1 WHERE template_id=890001")
+    void changeTemplate(@Param("status") String status, @Param("medium") String medium);
+
+    /** 模拟管理员修改路由状态。 */
+    @Update("UPDATE t_notification_route SET status=#{status},version=version+1 WHERE route_id=890005")
+    void changeRoute(@Param("status") String status);
+
+    /** 模拟管理员修改主测试账号的状态或媒介。 */
+    @Update("UPDATE t_notification_provider SET status=#{status},medium=#{medium},version=version+1 WHERE provider_id=890004")
+    void changeProvider(@Param("status") String status, @Param("medium") String medium);
+
+    /** 模拟账号编码改为没有适配器的值。 */
+    @Update("UPDATE t_notification_provider SET provider_code=#{code},version=version+1 WHERE provider_id=890004")
+    void changeProviderCode(@Param("code") String code);
 
     /** 停用当前账号仍允许查询历史尝试。 */
     @Update("UPDATE t_notification_provider SET status='DISABLED',version=version+1 WHERE provider_id=890004")
@@ -115,7 +156,7 @@ public interface NotificationTestMapper {
     void clearRoute();
 
     /** 清理本例账号。 */
-    @Delete("DELETE FROM t_notification_provider WHERE provider_id IN (890004,890006)")
+    @Delete("DELETE FROM t_notification_provider WHERE provider_id IN (890004,890006,890007)")
     void clearProvider();
 
     /** 清理本例语言内容。 */

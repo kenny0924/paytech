@@ -3,15 +3,25 @@ package com.paytech.platform.support.auto.notification;
 import static com.paytech.platform.support.delivery.integration.provider.EmailProviderResult.Outcome.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.compensation.api.CompensationEvent;
-import com.paytech.foundation.compensation.api.CompensationEventScanner;
+import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult;
-import com.paytech.foundation.compensation.api.CompensationScanRequest;
+import com.paytech.platform.support.delivery.core.enums.NotificationConfigurationStatus;
+import com.paytech.platform.support.delivery.core.enums.NotificationDeliveryStatus;
+import com.paytech.platform.support.delivery.core.enums.NotificationMedium;
+import com.paytech.platform.support.delivery.integration.provider.EmailProviderResult;
+import com.paytech.platform.support.test.dal.NotificationTestMapper;
 import com.paytech.platform.support.delivery.ext.eventhandler.NotificationDeliveryHandler;
 import com.paytech.platform.support.delivery.service.processor.SubmitNotificationProcessor;
 import com.paytech.platform.support.test.base.NotificationTestBase;
@@ -24,9 +34,8 @@ import com.paytech.platform.support.test.builder.NotificationRequestBuilder;
 class NotificationDeliveryHandlerTest extends NotificationTestBase {
 
     @Autowired SubmitNotificationProcessor processor;
-    @Autowired CompensationEventScanner scanner;
-    @Autowired NotificationDeliveryHandler handler;
     @Autowired java.time.Clock clock;
+    @Autowired PlatformTransactionManager transactionManager;
 
     /** UNKNOWN 查询继续原请求号，账号停用不影响恢复，不创建第二次发送。 */
     @Test
@@ -179,17 +188,112 @@ class NotificationDeliveryHandlerTest extends NotificationTestBase {
         assertTrue(mapper.events().isEmpty());
     }
 
-    /** 只改变本例任务到期时间，后续 Claim、Handler 与完成回写全部走生产实现。 */
-    void scanDue() {
-        var previous = mapper.events();
-        assertEquals(1, previous.size());
-        int executeCount = ((Number) previous.getFirst().get("execute_count")).intValue();
-        mapper.due();
-        scanner.scan(new CompensationScanRequest(100, 0, 1, Set.of(handler.eventType())));
-        org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(10)).until(() -> {
-            var current = mapper.events();
-            return current.isEmpty() || ((Number) current.getFirst().get("execute_count")).intValue() > executeCount;
-        });
+    /** 携带 Payload、非正数、非数字或超出 long 范围的任务身份直接终止，不读取业务数据。 */
+    @ParameterizedTest
+    @MethodSource("invalidEvents")
+    void invalidEventIdentityTerminates(String eventKey, String payloadJson) {
+        var result = handler.handle(new CompensationEvent(1, eventKey, handler.eventType(), "-", payloadJson, 1));
+        assertEquals(CompensationHandlerResult.Outcome.TERMINAL_FAILURE, result.outcome());
+        assertEquals("NOTIFICATION_EVENT_INVALID", result.errorCode());
+        assertTrue(provider.calls().isEmpty());
+    }
+
+    /** 每组只破坏一项任务身份。 */
+    static Stream<Arguments> invalidEvents() {
+        return Stream.of(Arguments.of("1", "{}"), Arguments.of("0", null), Arguments.of("abc", null),
+            Arguments.of("9999999999999999999", null));
+    }
+
+    /** 事件工厂拒绝非正数投递标识；执行入口拒绝调用方已有事务。 */
+    @Test
+    void rejectsInvalidFactoryInputAndCallerTransaction() {
+        assertThrows(IllegalArgumentException.class, () -> NotificationDeliveryHandler.buildEvent(0));
+        var event = new CompensationEvent(1, "1", handler.eventType(), "-", null, 1);
+        assertThrows(ErrorException.class,
+            () -> new TransactionTemplate(transactionManager).execute(status -> handler.handle(event)));
+    }
+
+    /** 供应商返回的结果码、MessageId 不合法或缺失时一律视为未知，不保存可疑证据。 */
+    @ParameterizedTest
+    @MethodSource("malformedResults")
+    void malformedProviderEvidenceIsUnknown(EmailProviderResult result) {
+        provider.expectSendResult("alice@example.com", result);
+        processor.process(NotificationRequestBuilder.template());
         fixture.awaitIdle();
+        assertEquals(NotificationDeliveryStatus.UNKNOWN.getCode(), mapper.deliveries().getFirst().get("status"));
+        assertEquals("RESULT_UNKNOWN", mapper.attempts().getFirst().get("response_code"));
+        assertNull(mapper.attempts().getFirst().get("provider_message_id"));
+    }
+
+    /** 缺少 Outcome 或结果码、结果码格式错误、MessageId 空白/超长/含控制字符。 */
+    static Stream<EmailProviderResult> malformedResults() {
+        return Stream.of(new EmailProviderResult(null, null, "CODE"),
+            new EmailProviderResult(ACCEPTED, "m-1", null), new EmailProviderResult(ACCEPTED, "m-1", "lower"),
+            new EmailProviderResult(ACCEPTED, " ", "ACCEPTED"), new EmailProviderResult(ACCEPTED, "m".repeat(256), "ACCEPTED"),
+            new EmailProviderResult(ACCEPTED, "m\u0001", "ACCEPTED"));
+    }
+
+    /** 供应商确认无法投递时直接结束为 FAILED，不再重试。 */
+    @Test
+    void undeliverableFailsWithoutRetry() {
+        provider.expectSend("alice@example.com", UNDELIVERABLE);
+        processor.process(NotificationRequestBuilder.template());
+        fixture.awaitIdle();
+        assertEquals(NotificationDeliveryStatus.FAILED.getCode(), mapper.deliveries().getFirst().get("status"));
+        assertTrue(mapper.events().isEmpty());
+        String id = mapper.deliveries().getFirst().get("delivery_id").toString();
+        assertEquals(CompensationHandlerResult.Outcome.SUCCESS,
+            handler.handle(new CompensationEvent(1, id, handler.eventType(), "-", null, 2)).outcome());
+        assertEquals(1, provider.calls().size());
+    }
+
+    /** 支持查询的账号在发送次数用尽后仍为 UNKNOWN 时继续只查询原请求，不终止任务、不重发。 */
+    @Test
+    void queryCapableUnknownAtAttemptLimitKeepsQuerying() {
+        provider.expectSend("alice@example.com", RETRYABLE_REJECTED, RETRYABLE_REJECTED, UNKNOWN);
+        processor.process(NotificationRequestBuilder.template());
+        fixture.awaitIdle();
+        for (int retry = 0; retry < 2; retry++) {
+            mapper.retryDue(clock.instant());
+            scanDue();
+        }
+        provider.expectQuery(provider.calls().getLast().getRequestNo(), UNKNOWN);
+        scanDue();
+        assertEquals(NotificationDeliveryStatus.UNKNOWN.getCode(), mapper.deliveries().getFirst().get("status"));
+        assertEquals(3, provider.calls().size());
+        assertEquals(1, provider.queryCalls().size());
+        assertEquals(1, mapper.events().size());
+        assertNotEquals("NOTIFICATION_UNKNOWN_EXHAUSTED", mapper.events().getFirst().get("last_error_code"));
+    }
+
+    /** 等待重试期间模板、路由或账号变为不可用时，本地确定失败，不创建新尝试。 */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("configurationDrift")
+    void unusableConfigurationBeforeRetryFails(String scenario, Consumer<NotificationTestMapper> change) {
+        provider.expectSend("alice@example.com", RETRYABLE_REJECTED);
+        processor.process(NotificationRequestBuilder.template());
+        fixture.awaitIdle();
+        change.accept(mapper);
+        mapper.retryDue(clock.instant());
+        scanDue();
+        assertEquals(NotificationDeliveryStatus.FAILED.getCode(), mapper.deliveries().getFirst().get("status"));
+        assertEquals(1, mapper.attempts().size());
+        assertTrue(mapper.events().isEmpty());
+    }
+
+    /** 每组只让一项当前配置不可用。 */
+    static Stream<Arguments> configurationDrift() {
+        String active = NotificationConfigurationStatus.ACTIVE.getCode();
+        String disabled = NotificationConfigurationStatus.DISABLED.getCode();
+        String email = NotificationMedium.EMAIL.getCode();
+        String sms = NotificationMedium.SMS.getCode();
+        return Stream.of(
+            Arguments.of("模板停用", (Consumer<NotificationTestMapper>) m -> m.changeTemplate(disabled, email)),
+            Arguments.of("模板为短信", (Consumer<NotificationTestMapper>) m -> m.changeTemplate(active, sms)),
+            Arguments.of("路由停用", (Consumer<NotificationTestMapper>) m -> m.changeRoute(disabled)),
+            Arguments.of("路由缺失", (Consumer<NotificationTestMapper>) NotificationTestMapper::clearRoute),
+            Arguments.of("语言内容缺失", (Consumer<NotificationTestMapper>) NotificationTestMapper::clearContents),
+            Arguments.of("账号停用", (Consumer<NotificationTestMapper>) m -> m.changeProvider(disabled, email)),
+            Arguments.of("账号为短信", (Consumer<NotificationTestMapper>) m -> m.changeProvider(active, sms)));
     }
 }

@@ -64,10 +64,10 @@ public class NotificationServiceImpl implements NotificationService {
                     delivery.getLocale() == null ? request.getDefaultLocale() : delivery.getLocale());
                 return new NotificationExecutionContext(request, delivery, null, template, content, route, provider);
             }
-            var openAttempts = attempts.findOpen(deliveryId);
-            if (openAttempts.size() != 1)
-                throw new ErrorException("通知原发送尝试不唯一");
-            var attempt = openAttempts.getFirst();
+            var attempt = attempts.findCurrent(deliveryId);
+            if (attempt == null || attempt.getStatus() == NotificationAttemptStatus.FAILED) {
+                throw new ErrorException("通知当前发送尝试缺失或与投递状态不一致");
+            }
             var provider = providers.find(attempt.getProviderId());
             if (provider == null)
                 throw new ErrorException("通知原发送账号缺失");
@@ -149,6 +149,29 @@ public class NotificationServiceImpl implements NotificationService {
             throw new ErrorException("不能将未决外发按本地失败结束");
         transaction(false).executeWithoutResult(tx -> deliveries.transition(context.getDelivery(),
             NotificationDeliveryStatus.FAILED, context.getDelivery().getAttemptCount(), null, now));
+    }
+
+    /**
+     * 不支持查询的 Provider 在安全窗口后放弃确认原发送。
+     * <li>遗留 PROCESSING 尝试按发送中断记为 UNKNOWN，不写确认时间</li>
+     * <li>resend 时 Delivery 版本推进到 RETRY_WAIT 且立即可发，旧执行者的晚回写被版本拒绝</li>
+     */
+    @Override
+    public void releaseUnknown(NotificationExecutionContext context, boolean resend, Instant now) {
+        var delivery = context.getDelivery();
+        var attempt = context.getAttempt();
+        boolean interrupted = attempt.getStatus() == NotificationAttemptStatus.PROCESSING;
+        if (!resend && !interrupted) {
+            return;
+        }
+        transaction(false).executeWithoutResult(tx -> {
+            var state = resend ? NotificationDeliveryStatus.RETRY_WAIT : NotificationDeliveryStatus.UNKNOWN;
+            deliveries.transition(delivery, state, delivery.getAttemptCount(), resend ? now : null, now);
+            if (interrupted) {
+                attempts.resolve(attempt, NotificationAttemptStatus.UNKNOWN, null, "SEND_INTERRUPTED",
+                    NotificationResolutionSource.SEND_RESPONSE, now);
+            }
+        });
     }
 
     /** 读写模板独立创建，不改变宿主公共只读事务 Bean 的属性。 */

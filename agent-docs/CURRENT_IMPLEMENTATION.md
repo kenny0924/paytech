@@ -152,6 +152,16 @@
 - **其他检查：** `npm --prefix requirements-site test` **129/137** 通过，8 项失败涉及 Checkout 展示、Payment 退款合同、十路由、15 表模型/台账/隐私导航以及测试/写接口规范文字断言；这些失败指向本次未修改的合同或已有模型台账内容，未调整其断言。日志 `/tmp/commerce-get-order-by-client-id-site-tests.log`。
 - **边界：** 仅新增测试并更新 Commerce README、本台账。手工启动已有且停止的 `mor-local-mysql-1` 和 `mor-local-redis-1`，测试只准备/清理自有数据；现有本地 Redis 密码经环境变量注入，不输出或写入仓库。未修改生产代码、API、Foundation、表结构、DDL、POM 或配置；未运行 manual、真实 Owner 联调、提交、推送或部署。运行入口见 [Commerce README](../commerce-service/README.md#验证入口)。
 
+<a id="platform-notification-ses-20261014"></a>
+
+## Platform 普通邮件接入 Amazon SES（2026-10-14；2026-10-15 密钥管理变更，已本地提交）
+
+- **确认范围：** 见[需求](../requirements/20261014/platform-support-邮件AmazonSES接入/requirement.md)与[方案](../requirements/20261014/platform-support-邮件AmazonSES接入/technique.md)：首个真实 EmailProvider 为 SES v2；普通通知改为至少发一次；不改表、无 SQL、无 HTTP 接口。
+- **Implemented：** Delivery 模块新增 `integration/provider/ses`（Properties/Configuration/Provider，关闭 SDK 重试、十类错误映射）；`EmailProvider.supportsQuery()`；Handler 对不支持查询的 Provider 受理即完成、UNKNOWN 在 `notification.unknown-resend-delay`（默认 10m）后于次数内重发、次数用尽终止为 `NOTIFICATION_UNKNOWN_EXHAUSTED`；当前尝试改按最新 Attempt 读取。`compensation.enabled` 改为 `${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${files.onboarding.enabled:false}}`。正式默认 `notification.ses.enabled=false`。
+- **Verified：** JDK 25 全服务 `./mvnw -o verify` 测试 **518/518** 通过（0 失败/错误/跳过）。其中通知相关 6 类 **114** 例：SES 经真实 SDK 访问 `SesMockController`；Delivery 模块指令 **96.61%（2678/2772）**、分支 **90.95%（362/398）**。全服务 90% 聚合门禁仍失败（指令 0.49、分支 0.33），为既有缺口，未降低门槛或排除生产类。manual `SesRealSendTest` 已验证 `-Pmanual-test` 能选中并在缺环境变量时失败提示，**未连真实 SES 执行**。
+- **2026-10-15 密钥管理变更：** IAM 用户密钥对存 Vault（`NOTIFICATION_PROVIDER_CREDENTIAL_V1`），配置只放 Token `notification.ses.credential-token`，删除 access-key/secret-key；`EmailProvider.prepare()` 在登记尝试前以 `NOTIFICATION_DELIVERY` Reveal、不缓存、只给该次请求签名；凭据类 SES 错误改为可重试 `SES_CREDENTIAL_REJECTED`。全服务 `./mvnw -o verify` **527/527** 通过；通知 6 类 **123** 例；Delivery 指令 **96.30%**、分支 **90.34%**；全服务门禁仍为既有失败（0.49/0.33）。**Vault 策略尚未变更**（数据类型与规则清单见方案 §8.1），test/生产环境未配置。
+- **未完成 / 前提：** 未接 SES 投递事件回调；无正式模板/账号/路由 DML；无业务调用方或 HTTP 入口；认证邮件未迁移。上线需 AWS 账号、`me-central-1` 已验证发件域名、解除沙箱、`ses:SendEmail` 权限、Vault `PLATFORM_NOTIFICATION_EMAIL_V1` 授权及 XXL-Job 扫描调度。2026-10-15 已本地提交（未推送），未部署。
+
 <a id="platform-delivery-domain-plan-20260920"></a>
 
 ## Platform Delivery 普通 Email 首期（2026-09-21）

@@ -33,9 +33,23 @@ public class NotificationProperties {
     @NotNull
     private Duration retryDelay = Duration.ofSeconds(30);
 
+    /**
+     * 结果未知后的安全重发窗口
+     * <li>仅用于不支持查询的 Provider：从该次尝试开始时间起算，窗口内不重发，之后新建尝试</li>
+     * <li>默认 10 分钟，至少 1 分钟；须远大于供应商调用超时，降低“已受理但未收到响应”时的重复概率</li>
+     */
+    @NotNull
+    private Duration unknownResendDelay = Duration.ofMinutes(10);
+
     /** 启动时拒绝零值和负值，防止发送重试形成忙循环。 */
     @jakarta.validation.constraints.AssertTrue(message = "通知重试间隔必须为正数")
     public boolean isRetryDelayPositive() {
         return retryDelay != null && !retryDelay.isZero() && !retryDelay.isNegative();
+    }
+
+    /** 启动时拒绝过短窗口，避免调用仍在进行时即判定可重发。 */
+    @jakarta.validation.constraints.AssertTrue(message = "通知未知结果重发窗口不能短于 1 分钟")
+    public boolean isUnknownResendDelayBounded() {
+        return unknownResendDelay != null && unknownResendDelay.compareTo(Duration.ofMinutes(1)) >= 0;
     }
 }
