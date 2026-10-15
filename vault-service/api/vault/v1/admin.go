@@ -5,11 +5,13 @@ import (
 	"time"
 )
 
-// DataTypeBody 是数据类型目录条目。
+// DataTypeBody 是数据类型目录条目；valuePattern 只在值格式为 REGEX 时出现。
 type DataTypeBody struct {
 	DataTypeCode         string    `json:"dataTypeCode"`
 	TokenMode            string    `json:"tokenMode"`
 	DataClass            string    `json:"dataClass"`
+	ValueFormat          string    `json:"valueFormat"`
+	ValuePattern         string    `json:"valuePattern,omitempty"`
 	Description          string    `json:"description"`
 	ManualProtectEnabled bool      `json:"manualProtectEnabled"`
 	ManualRevealEnabled  bool      `json:"manualRevealEnabled"`
@@ -24,26 +26,36 @@ type DataTypeListResponseBody struct {
 	Items                []DataTypeBody `json:"items"`
 }
 
-// CreateDataTypeRequestBody 新建数据类型；新建后状态为 ACTIVE。
+// CreateDataTypeRequestBody 新建数据类型；新建后状态为 ACTIVE，未指定值格式时为 TEXT。
+//
+// 值格式与正则的组合、正则编译和样例由用例校验；样例只用于本次校验，不落库、不进变更快照。
 type CreateDataTypeRequestBody struct {
-	DataTypeCode         *string `json:"dataTypeCode" binding:"required,vault_code"`
-	TokenMode            *string `json:"tokenMode" binding:"required,oneof=REFERENCE STABLE"`
-	DataClass            *string `json:"dataClass" binding:"required,oneof=STANDARD SECRET"`
-	Description          *string `json:"description" binding:"required,min=1,max=256"`
-	ManualProtectEnabled *bool   `json:"manualProtectEnabled" binding:"required"`
-	ManualRevealEnabled  *bool   `json:"manualRevealEnabled" binding:"required"`
-	Reason               *string `json:"reason" binding:"required,min=1,max=500"`
+	DataTypeCode         *string  `json:"dataTypeCode" binding:"required,vault_code"`
+	TokenMode            *string  `json:"tokenMode" binding:"required,oneof=REFERENCE STABLE"`
+	DataClass            *string  `json:"dataClass" binding:"required,oneof=STANDARD SECRET"`
+	ValueFormat          *string  `json:"valueFormat" binding:"omitempty,oneof=TEXT JSON REGEX"`
+	ValuePattern         *string  `json:"valuePattern"`
+	SampleValues         []string `json:"sampleValues" binding:"omitempty,dive,max=4096"`
+	Description          *string  `json:"description" binding:"required,min=1,max=256"`
+	ManualProtectEnabled *bool    `json:"manualProtectEnabled" binding:"required"`
+	ManualRevealEnabled  *bool    `json:"manualRevealEnabled" binding:"required"`
+	Reason               *string  `json:"reason" binding:"required,min=1,max=500"`
 }
 
 // UpdateDataTypeRequestBody 修改数据类型；编码与 Token 模式不可修改。
+//
+// 不带 valueFormat 时值格式与正则保持不变（兼容未升级的调用方）；带上时两者一起替换。
 type UpdateDataTypeRequestBody struct {
-	ExpectedVersion      *int    `json:"expectedVersion" binding:"required,min=1"`
-	DataClass            *string `json:"dataClass" binding:"required,oneof=STANDARD SECRET"`
-	Description          *string `json:"description" binding:"required,min=1,max=256"`
-	ManualProtectEnabled *bool   `json:"manualProtectEnabled" binding:"required"`
-	ManualRevealEnabled  *bool   `json:"manualRevealEnabled" binding:"required"`
-	Status               *string `json:"status" binding:"required,oneof=ACTIVE DISABLED"`
-	Reason               *string `json:"reason" binding:"required,min=1,max=500"`
+	ExpectedVersion      *int     `json:"expectedVersion" binding:"required,min=1"`
+	DataClass            *string  `json:"dataClass" binding:"required,oneof=STANDARD SECRET"`
+	ValueFormat          *string  `json:"valueFormat" binding:"omitempty,oneof=TEXT JSON REGEX"`
+	ValuePattern         *string  `json:"valuePattern"`
+	SampleValues         []string `json:"sampleValues" binding:"omitempty,dive,max=4096"`
+	Description          *string  `json:"description" binding:"required,min=1,max=256"`
+	ManualProtectEnabled *bool    `json:"manualProtectEnabled" binding:"required"`
+	ManualRevealEnabled  *bool    `json:"manualRevealEnabled" binding:"required"`
+	Status               *string  `json:"status" binding:"required,oneof=ACTIVE DISABLED"`
+	Reason               *string  `json:"reason" binding:"required,min=1,max=500"`
 }
 
 // DataTypeResponseBody 是维护后的数据类型与新策略版本。

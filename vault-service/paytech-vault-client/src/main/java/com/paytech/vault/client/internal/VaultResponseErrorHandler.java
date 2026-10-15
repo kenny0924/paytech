@@ -190,7 +190,11 @@ public final class VaultResponseErrorHandler {
             case 400 -> code == VaultClientErrorCode.INVALID_REQUEST
                     || code == VaultClientErrorCode.VALUE_TOO_LARGE
                     || code == VaultClientErrorCode.UNSUPPORTED_DATA_TYPE
-                    || code == VaultClientErrorCode.TOKEN_MODE_NOT_ALLOWED;
+                    || code == VaultClientErrorCode.TOKEN_MODE_NOT_ALLOWED
+                    || code == VaultClientErrorCode.VALUE_NOT_JSON_OBJECT
+                    || code == VaultClientErrorCode.VALUE_PATTERN_MISMATCH
+                    || code == VaultClientErrorCode.VALUE_PATTERN_INVALID
+                    || code == VaultClientErrorCode.SAMPLE_VALUE_INVALID;
             case 403 -> code == VaultClientErrorCode.ACCESS_DENIED;
             case 404 -> code == VaultClientErrorCode.TOKEN_NOT_FOUND
                     || code == VaultClientErrorCode.POLICY_ENTRY_NOT_FOUND;

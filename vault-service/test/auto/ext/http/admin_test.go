@@ -57,7 +57,7 @@ func TestAdmin_newDataTypeAndRuleTakeEffectThenDisable(t *testing.T) {
 
 	var detail v1.PolicyChangeBody
 	env.Invoke(t, builder.Admin(env.ID, http.MethodGet, "/policy-changes/"+strconv.Itoa(changes.Items[0].PolicyVersionNo), nil).Build()).JSON(&detail)
-	assert.JSONEq(t, `{"dataTypeCode":"`+code+`","tokenMode":"REFERENCE","dataClass":"STANDARD","description":"新增备注","manualProtectEnabled":false,"manualRevealEnabled":false,"status":"ACTIVE"}`, string(detail.BeforeSnapshot))
+	assert.JSONEq(t, `{"dataTypeCode":"`+code+`","tokenMode":"REFERENCE","dataClass":"STANDARD","description":"新增备注","manualProtectEnabled":false,"manualRevealEnabled":false,"status":"ACTIVE","valueFormat":"TEXT"}`, string(detail.BeforeSnapshot))
 	assert.Contains(t, string(detail.AfterSnapshot), `"status":"DISABLED"`)
 }
 

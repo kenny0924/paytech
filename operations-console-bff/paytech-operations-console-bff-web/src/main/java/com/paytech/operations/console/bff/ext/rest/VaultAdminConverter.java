@@ -35,6 +35,9 @@ final class VaultAdminConverter {
         vault.setTokenMode(body.getTokenMode());
         vault.setDataClass(body.getDataClass());
         vault.setDescription(body.getDescription());
+        vault.setValueFormat(body.getValueFormat());
+        vault.setValuePattern(body.getValuePattern());
+        vault.setSampleValues(body.getSampleValues());
         vault.setManualProtectEnabled(body.getManualProtectEnabled());
         vault.setManualRevealEnabled(body.getManualRevealEnabled());
         vault.setReason(body.getReason());
@@ -47,6 +50,9 @@ final class VaultAdminConverter {
         vault.setExpectedVersion(body.getExpectedVersion());
         vault.setDataClass(body.getDataClass());
         vault.setDescription(body.getDescription());
+        vault.setValueFormat(body.getValueFormat());
+        vault.setValuePattern(body.getValuePattern());
+        vault.setSampleValues(body.getSampleValues());
         vault.setManualProtectEnabled(body.getManualProtectEnabled());
         vault.setManualRevealEnabled(body.getManualRevealEnabled());
         vault.setStatus(body.getStatus());

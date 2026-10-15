@@ -1,5 +1,7 @@
 package com.paytech.vault.client.admin.request;
 
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,6 +28,29 @@ public class UpdateDataTypeRequestBody {
      * <li>1..256 个字符。</li>
      */
     private String description;
+
+    /**
+     * 值格式
+     * <li>TEXT、JSON 或 REGEX。</li>
+     * <li>省略时值格式与正则都保持不变；携带时与 valuePattern 一起整体替换。</li>
+     * <li>只对之后的写入生效，已加密记录不重新校验。</li>
+     */
+    private String valueFormat;
+
+    /**
+     * 正则
+     * <li>结果为 REGEX 时必填，其余格式必须为空；valueFormat 省略时忽略本字段。</li>
+     * <li>1..256 个字符，Go RE2 语法；Vault 自动包成 ^(?:…)$ 按整值匹配，保存时编译失败即拒绝。</li>
+     */
+    private String valuePattern;
+
+    /**
+     * 测试样例
+     * <li>最多 5 个，每个不超过 4096 个字符；只用于本次保存校验，不落库、不进策略变更记录。</li>
+     * <li>结果为 REGEX 且从其他格式切换过来或正则有变化时至少 1 个，且必须全部通过正则。</li>
+     * <li>其他情况可省略；携带时同样按结果值格式逐个校验。</li>
+     */
+    private List<String> sampleValues;
 
     /**
      * 是否允许运营人工加密

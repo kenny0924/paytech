@@ -10,3 +10,6 @@
 @media (max-width: 1100px) { .vault-search { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 650px) { .vault-search { grid-template-columns: 1fr; } }
 .vault-result-item { margin: 24px 0 0; }
+.vault-pattern { display: block; max-width: 100%; margin-top: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.vault-pattern-input, .vault-format-pattern { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.vault-sample-row { margin-bottom: 8px; }

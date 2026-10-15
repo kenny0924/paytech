@@ -81,6 +81,8 @@ export const ALLOWED_FIELDS_BY_TABLE = Object.freeze({
     "data_type_code",
     "token_mode",
     "data_class",
+    "value_format",
+    "value_pattern",
     "description",
     "manual_protect_enabled",
     "manual_reveal_enabled",
@@ -178,6 +180,12 @@ export const APPROVED_SENSITIVE_FIELDS = Object.freeze({
   kms_key_ref: "vault_record",
 });
 
+// APPROVED_DEFAULT_VALUES 是批准的字段默认值；其余字段必须无默认值。
+// value_format 默认 TEXT：发布窗口内旧版 Vault 新建数据类型时不写该列，默认值使其行为与升级前一致。
+export const APPROVED_DEFAULT_VALUES = Object.freeze({
+  "vault_data_type.value_format": "'TEXT'",
+});
+
 export const ASCII_BINARY_FIELDS = Object.freeze([
   "token",
   "data_type",
@@ -194,6 +202,7 @@ export const ASCII_BINARY_FIELDS = Object.freeze([
   "ticket_ref",
   "data_type_code",
   "data_class",
+  "value_format",
   "status",
   "purpose_code",
   "change_type",

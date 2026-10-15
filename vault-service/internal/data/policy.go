@@ -156,12 +156,12 @@ func (t *txRepository) FindDataTypeForUpdate(ctx context.Context, code string) (
 // InsertDataType 新增数据类型，版本从 1 开始。
 func (t *txRepository) InsertDataType(ctx context.Context, id int64, d biz.DataType, now time.Time) error {
 	return classify(t.queries.InsertDataType(ctx, sqlc.InsertDataTypeParams{DataTypeID: id, DataTypeCode: d.Code, TokenMode: string(d.TokenMode), DataClass: string(d.Class),
-		Description: d.Description, ManualProtectEnabled: d.ManualProtect, ManualRevealEnabled: d.ManualReveal, Status: string(d.Status), Version: 1, CreateTime: utc(now), UpdateTime: utc(now)}))
+		ValueFormat: string(d.ValueFormat), ValuePattern: nullable(d.ValuePattern), Description: d.Description, ManualProtectEnabled: d.ManualProtect, ManualRevealEnabled: d.ManualReveal, Status: string(d.Status), Version: 1, CreateTime: utc(now), UpdateTime: utc(now)}))
 }
 
 // UpdateDataType 按乐观锁更新可变字段。
 func (t *txRepository) UpdateDataType(ctx context.Context, d biz.DataType, expectedVersion int, now time.Time) (bool, error) {
-	affected, err := t.queries.UpdateDataType(ctx, sqlc.UpdateDataTypeParams{DataClass: string(d.Class), Description: d.Description, ManualProtectEnabled: d.ManualProtect,
+	affected, err := t.queries.UpdateDataType(ctx, sqlc.UpdateDataTypeParams{DataClass: string(d.Class), ValueFormat: string(d.ValueFormat), ValuePattern: nullable(d.ValuePattern), Description: d.Description, ManualProtectEnabled: d.ManualProtect,
 		ManualRevealEnabled: d.ManualReveal, Status: string(d.Status), UpdateTime: utc(now), DataTypeCode: d.Code, Version: int32(expectedVersion)})
 	return affected == 1, classify(err)
 }
@@ -209,8 +209,14 @@ func (t *txRepository) InsertPolicyChange(ctx context.Context, id int64, c biz.P
 }
 
 func toDataType(row sqlc.VaultDataType) biz.DataType {
-	return biz.DataType{Code: row.DataTypeCode, TokenMode: biz.TokenMode(row.TokenMode), Class: biz.DataClass(row.DataClass), Description: row.Description,
+	return biz.DataType{Code: row.DataTypeCode, TokenMode: biz.TokenMode(row.TokenMode), Class: biz.DataClass(row.DataClass),
+		ValueFormat: biz.ValueFormat(row.ValueFormat), ValuePattern: row.ValuePattern.String, Description: row.Description,
 		ManualProtect: row.ManualProtectEnabled, ManualReveal: row.ManualRevealEnabled, Status: biz.EntryStatus(row.Status), Version: int(row.Version), UpdateTime: row.UpdateTime}
+}
+
+// nullable 把空串映射为 NULL：只有 REGEX 类型保存正则。
+func nullable(value string) sql.NullString {
+	return sql.NullString{String: value, Valid: value != ""}
 }
 
 func toAccessRule(row sqlc.VaultAccessRule) biz.AccessRule {

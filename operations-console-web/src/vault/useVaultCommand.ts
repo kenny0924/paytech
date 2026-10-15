@@ -2,10 +2,10 @@ import { useRef, useState } from 'react';
 import type { FormInstance } from 'antd';
 import { ApiError } from '../api/session';
 import { useErrorNotification } from '../feedback/useErrorNotification';
-import { vaultCommand } from './vault';
+import { vaultCommand, withValueFormatMessage } from './vault';
 
 /**
- * Vault 管理写请求：单飞、403 刷新授权、409 标记冲突、字段错误回填表单。
+ * Vault 管理写请求：单飞、403 刷新授权、409 标记冲突、字段错误回填表单；值格式错误码显示固定中文说明。
  * 不发送 Idempotency-Key；人工加密的防重由 submissionId 承担。
  */
 export function useVaultCommand(onAuthorizationChanged: () => void, form?: FormInstance) {
@@ -24,7 +24,7 @@ export function useVaultCommand(onAuthorizationChanged: () => void, form?: FormI
         if (error.status === 409) setConflict(true);
         if (form && error.fieldErrors.length) form.setFields(error.fieldErrors.map(item => ({ name: item.field, errors: [item.message] })));
       }
-      notify(error, failureTitle);
+      notify(withValueFormatMessage(error), failureTitle);
       return null;
     } finally { busy.current = false; setSaving(false); }
   }

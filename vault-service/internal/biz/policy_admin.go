@@ -24,6 +24,9 @@ type PolicyActor struct {
 }
 
 // UpdateDataTypeInput 是数据类型可变字段；编码与 Token 模式不可修改。
+//
+// ValueFormat 为空表示不修改值格式与正则（兼容未升级的调用方）；非空时值格式与正则一起替换。
+// SampleValues 只用于本次校验，不落库、不进变更快照。
 type UpdateDataTypeInput struct {
 	Code            string
 	ExpectedVersion int
@@ -32,6 +35,9 @@ type UpdateDataTypeInput struct {
 	ManualProtect   bool
 	ManualReveal    bool
 	Status          EntryStatus
+	ValueFormat     ValueFormat
+	ValuePattern    string
+	SampleValues    []string
 }
 
 // UpdateAccessRuleInput 只允许启停规则。
@@ -69,10 +75,16 @@ func (u *PolicyAdminUsecase) ListDataTypes(ctx context.Context) ([]DataType, int
 	return dataTypes, version, nil
 }
 
-// CreateDataType 新建数据类型。
-func (u *PolicyAdminUsecase) CreateDataType(ctx context.Context, actor PolicyActor, in DataType) (DataType, int, error) {
+// CreateDataType 新建数据类型；未指定值格式时为 TEXT。样例只用于本次校验，不落库。
+func (u *PolicyAdminUsecase) CreateDataType(ctx context.Context, actor PolicyActor, in DataType, samples []string) (DataType, int, error) {
 	in.Status = ActiveStatus
+	if in.ValueFormat == "" {
+		in.ValueFormat = TextFormat
+	}
 	if err := validateDataType(in); err != nil {
+		return DataType{}, 0, err
+	}
+	if err := validateValueRule(in, samples, in.ValueFormat == RegexFormat); err != nil {
 		return DataType{}, 0, err
 	}
 	var created DataType
@@ -101,7 +113,13 @@ func (u *PolicyAdminUsecase) UpdateDataType(ctx context.Context, actor PolicyAct
 		}
 		updated = current
 		updated.Class, updated.Description, updated.ManualProtect, updated.ManualReveal, updated.Status = in.Class, in.Description, in.ManualProtect, in.ManualReveal, in.Status
+		if in.ValueFormat != "" {
+			updated.ValueFormat, updated.ValuePattern = in.ValueFormat, in.ValuePattern
+		}
 		if err := validateDataType(updated); err != nil {
+			return PolicyChange{}, err
+		}
+		if err := validateValueRule(updated, in.SampleValues, patternChanged(current, updated)); err != nil {
 			return PolicyChange{}, err
 		}
 		if ok, err := tx.UpdateDataType(ctx, updated, in.ExpectedVersion, now); err != nil || !ok {
@@ -293,6 +311,20 @@ func validateDataType(d DataType) error {
 	return nil
 }
 
+// validateValueRule 编译值格式与正则并用样例验证；samplesRequired 时至少一个样例。
+func validateValueRule(d DataType, samples []string, samplesRequired bool) error {
+	rule, err := CompileValueRule(d.ValueFormat, d.ValuePattern)
+	if err != nil {
+		return err
+	}
+	return rule.CheckSamples(samples, samplesRequired)
+}
+
+// patternChanged 判断修改后是否需要样例：结果为 REGEX，且由其他格式切换而来或正则有变化。
+func patternChanged(before, after DataType) bool {
+	return after.ValueFormat == RegexFormat && (before.ValueFormat != RegexFormat || before.ValuePattern != after.ValuePattern)
+}
+
 // validateActor 校验操作人、请求 ID 与变更理由。
 func validateActor(actor PolicyActor) error {
 	reason := strings.TrimSpace(actor.Reason)
@@ -369,6 +401,8 @@ type dataTypeView struct {
 	ManualProtectEnabled bool   `json:"manualProtectEnabled"`
 	ManualRevealEnabled  bool   `json:"manualRevealEnabled"`
 	Status               string `json:"status"`
+	ValueFormat          string `json:"valueFormat"`
+	ValuePattern         string `json:"valuePattern,omitempty"`
 }
 
 type ruleView struct {
@@ -380,7 +414,7 @@ type ruleView struct {
 }
 
 func dataTypeSnapshot(d DataType) dataTypeView {
-	return dataTypeView{d.Code, string(d.TokenMode), string(d.Class), d.Description, d.ManualProtect, d.ManualReveal, string(d.Status)}
+	return dataTypeView{d.Code, string(d.TokenMode), string(d.Class), d.Description, d.ManualProtect, d.ManualReveal, string(d.Status), string(d.ValueFormat), d.ValuePattern}
 }
 
 func ruleSnapshot(r AccessRule) ruleView {

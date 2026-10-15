@@ -35,6 +35,19 @@ public class DataType {
     private String description;
 
     /**
+     * 值格式
+     * <li>TEXT 不限格式；JSON 必须是 JSON 对象；REGEX 按 valuePattern 整值匹配。</li>
+     * <li>Protect 与人工加密写入时由 Vault 校验，不影响已加密记录的 Reveal。</li>
+     */
+    private String valueFormat;
+
+    /**
+     * 正则
+     * <li>Go RE2 语法，按整值匹配；仅 valueFormat 为 REGEX 时出现，其余格式为 null。</li>
+     */
+    private String valuePattern;
+
+    /**
      * 是否允许运营人工加密
      */
     private boolean manualProtectEnabled;

@@ -8,7 +8,12 @@ export const vaultAdminPath = '/vault-admin/v1';
 export interface VaultDataType {
   dataTypeCode: string; tokenMode: 'REFERENCE' | 'STABLE'; dataClass: 'STANDARD' | 'SECRET'; description: string;
   manualProtectEnabled: boolean; manualRevealEnabled: boolean; status: 'ACTIVE' | 'DISABLED'; version: number; updateTime: string;
+  /** 值格式；旧响应缺失时按 TEXT。 */
+  valueFormat: VaultValueFormat;
+  /** 正则（整值匹配），仅 REGEX 时出现。 */
+  valuePattern?: string;
 }
+export type VaultValueFormat = 'TEXT' | 'JSON' | 'REGEX';
 export interface VaultDataTypeList { currentPolicyVersion: number; items: VaultDataType[] }
 export interface VaultDataTypeMutation { dataType: VaultDataType; policyVersion: number }
 export interface VaultAccessRule {
@@ -27,6 +32,11 @@ export interface VaultManualEvent {
 
 export const tokenModeLabels: Record<string, string> = { REFERENCE: '每次新 Token', STABLE: '同值同 Token' };
 export const dataClassLabels: Record<string, string> = { STANDARD: '普通敏感', SECRET: '密钥' };
+export const valueFormatLabels: Record<string, string> = { TEXT: '不限格式', JSON: 'JSON 对象', REGEX: '正则' };
+export const valueFormatOptions: { value: VaultValueFormat; label: string; description: string }[] = [
+  { value: 'TEXT', label: valueFormatLabels.TEXT, description: '不限格式' }, { value: 'JSON', label: valueFormatLabels.JSON, description: '必须是 JSON 对象' },
+  { value: 'REGEX', label: valueFormatLabels.REGEX, description: '按正则整值匹配' },
+];
 export const statusLabels: Record<string, string> = { ACTIVE: '启用', DISABLED: '停用' };
 export const actionLabels: Record<string, string> = { PROTECT: '加密', REVEAL: '解密' };
 export const outcomeLabels: Record<string, string> = { SUCCESS: '成功', DENIED: '拒绝', FAILED: '失败' };
@@ -41,6 +51,12 @@ export const reasonCodeLabels: Record<string, string> = {
 export const snapshotFieldLabels: Record<string, string> = {
   dataTypeCode: '编码', tokenMode: 'Token 模式', dataClass: '数据级别', description: '用途说明', manualProtectEnabled: '允许人工加密',
   manualRevealEnabled: '允许人工解密', status: '状态', callerService: '调用服务', action: '动作', purposeCode: '用途',
+  valueFormat: '值格式', valuePattern: '正则',
+};
+/** Vault 值格式相关错误码的固定说明；不回显原值、样例或正则编译器报错。 */
+export const valueFormatErrorMessages: Record<string, string> = {
+  VALUE_NOT_JSON_OBJECT: '值不是合法的JSON对象', VALUE_PATTERN_MISMATCH: '值不符合数据类型的正则',
+  VALUE_PATTERN_INVALID: '值格式与正则的组合无效或正则无法编译', SAMPLE_VALUE_INVALID: '测试样例缺失或不符合值格式',
 };
 
 export const codePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
@@ -53,25 +69,60 @@ export const revealVisibleSeconds = 30;
 const version = (v: unknown) => Number.isInteger(v) && Number(v) > 0 && Number(v) <= 2147483647;
 const invalid = () => new ApiError(502, 'INVALID_RESPONSE');
 
-/** 校验数据类型条目的必要字段。 */
+/** 校验数据类型条目的必要字段；值格式缺失视为 TEXT，正则缺失或为 null（BFF 序列化空字段的方式）视为无，REGEX 必须带正则。 */
 function isDataType(v: VaultDataType | undefined): boolean {
   return !!v && codePattern.test(v.dataTypeCode) && ['REFERENCE', 'STABLE'].includes(v.tokenMode)
     && ['STANDARD', 'SECRET'].includes(v.dataClass) && ['ACTIVE', 'DISABLED'].includes(v.status)
-    && typeof v.manualProtectEnabled === 'boolean' && typeof v.manualRevealEnabled === 'boolean' && version(v.version);
+    && typeof v.manualProtectEnabled === 'boolean' && typeof v.manualRevealEnabled === 'boolean' && version(v.version)
+    && (v.valueFormat === undefined || ['TEXT', 'JSON', 'REGEX'].includes(v.valueFormat))
+    && (v.valuePattern == null || typeof v.valuePattern === 'string') && (v.valueFormat !== 'REGEX' || typeof v.valuePattern === 'string');
 }
+const withValueFormat = ({ valuePattern, ...v }: VaultDataType): VaultDataType => ({ ...v, valueFormat: v.valueFormat ?? 'TEXT', ...(valuePattern == null ? {} : { valuePattern }) });
 
 /** 数据类型列表响应。 */
 export function decodeDataTypeList(value: unknown): VaultDataTypeList {
   const v = value as VaultDataTypeList;
   if (!v || !Number.isInteger(v.currentPolicyVersion) || !Array.isArray(v.items) || !v.items.every(isDataType)) throw invalid();
-  return v;
+  return { ...v, items: v.items.map(withValueFormat) };
 }
 
 /** 数据类型保存结果；编码必须与提交一致。 */
 export function decodeDataTypeMutation(value: unknown, expectedCode: string): VaultDataTypeMutation {
   const v = value as VaultDataTypeMutation;
   if (!v || !isDataType(v.dataType) || v.dataType.dataTypeCode !== expectedCode || !version(v.policyVersion)) throw invalid();
-  return v;
+  return { ...v, dataType: withValueFormat(v.dataType) };
+}
+
+/**
+ * 保存时是否必须带测试样例：结果为 REGEX，且属于新建、从其他格式切换过来或正则有变化。
+ */
+export function sampleValuesRequired(previous: VaultDataType | null, valueFormat: VaultValueFormat, valuePattern: string | undefined): boolean {
+  if (valueFormat !== 'REGEX') return false;
+  if (!previous || previous.valueFormat !== 'REGEX') return true;
+  return previous.valuePattern !== valuePattern;
+}
+
+/** 数据类型保存请求中的值格式部分：总带 valueFormat；仅 REGEX 带正则，样例非空时才带（空输入框忽略）。 */
+export function valueFormatBody(valueFormat: VaultValueFormat, valuePattern: string | undefined, sampleValues: readonly (string | undefined)[] | undefined) {
+  if (valueFormat !== 'REGEX') return { valueFormat };
+  const samples = (sampleValues ?? []).filter((sample): sample is string => typeof sample === 'string' && sample !== '');
+  return { valueFormat, valuePattern, ...(samples.length ? { sampleValues: samples } : {}) };
+}
+
+/** 前端预检：整个值是 JSON 对象（根为 {}，不能是数组或 null）；重复键由 Vault 判断。 */
+export function isJsonObjectText(text: string): boolean {
+  try {
+    const parsed: unknown = JSON.parse(text);
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed);
+  } catch { return false; }
+}
+
+/** 值格式错误码换成固定中文说明，其余错误原样返回。 */
+export function withValueFormatMessage(error: unknown): unknown {
+  if (!(error instanceof ApiError) || !valueFormatErrorMessages[error.code]) return error;
+  const replaced = new ApiError(error.status, error.code, error.requestId, undefined, error.fieldErrors);
+  replaced.message = valueFormatErrorMessages[error.code];
+  return replaced;
 }
 
 /** 访问规则保存结果。 */

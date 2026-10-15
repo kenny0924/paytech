@@ -7,11 +7,12 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
 const findDataTypeForUpdate = `-- name: FindDataTypeForUpdate :one
-SELECT data_type_id, data_type_code, token_mode, data_class, description, manual_protect_enabled, manual_reveal_enabled, status, version, create_time, update_time
+SELECT data_type_id, data_type_code, token_mode, data_class, value_format, value_pattern, description, manual_protect_enabled, manual_reveal_enabled, status, version, create_time, update_time
 FROM t_vault_data_type
 WHERE data_type_code = ?
 FOR UPDATE
@@ -25,6 +26,8 @@ func (q *Queries) FindDataTypeForUpdate(ctx context.Context, dataTypeCode string
 		&i.DataTypeCode,
 		&i.TokenMode,
 		&i.DataClass,
+		&i.ValueFormat,
+		&i.ValuePattern,
 		&i.Description,
 		&i.ManualProtectEnabled,
 		&i.ManualRevealEnabled,
@@ -37,8 +40,8 @@ func (q *Queries) FindDataTypeForUpdate(ctx context.Context, dataTypeCode string
 }
 
 const insertDataType = `-- name: InsertDataType :exec
-INSERT INTO t_vault_data_type (data_type_id, data_type_code, token_mode, data_class, description, manual_protect_enabled, manual_reveal_enabled, status, version, create_time, update_time)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO t_vault_data_type (data_type_id, data_type_code, token_mode, data_class, value_format, value_pattern, description, manual_protect_enabled, manual_reveal_enabled, status, version, create_time, update_time)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertDataTypeParams struct {
@@ -46,6 +49,8 @@ type InsertDataTypeParams struct {
 	DataTypeCode         string
 	TokenMode            string
 	DataClass            string
+	ValueFormat          string
+	ValuePattern         sql.NullString
 	Description          string
 	ManualProtectEnabled bool
 	ManualRevealEnabled  bool
@@ -61,6 +66,8 @@ func (q *Queries) InsertDataType(ctx context.Context, arg InsertDataTypeParams) 
 		arg.DataTypeCode,
 		arg.TokenMode,
 		arg.DataClass,
+		arg.ValueFormat,
+		arg.ValuePattern,
 		arg.Description,
 		arg.ManualProtectEnabled,
 		arg.ManualRevealEnabled,
@@ -73,7 +80,7 @@ func (q *Queries) InsertDataType(ctx context.Context, arg InsertDataTypeParams) 
 }
 
 const listDataTypes = `-- name: ListDataTypes :many
-SELECT data_type_id, data_type_code, token_mode, data_class, description, manual_protect_enabled, manual_reveal_enabled, status, version, create_time, update_time
+SELECT data_type_id, data_type_code, token_mode, data_class, value_format, value_pattern, description, manual_protect_enabled, manual_reveal_enabled, status, version, create_time, update_time
 FROM t_vault_data_type
 ORDER BY data_type_code
 `
@@ -92,6 +99,8 @@ func (q *Queries) ListDataTypes(ctx context.Context) ([]VaultDataType, error) {
 			&i.DataTypeCode,
 			&i.TokenMode,
 			&i.DataClass,
+			&i.ValueFormat,
+			&i.ValuePattern,
 			&i.Description,
 			&i.ManualProtectEnabled,
 			&i.ManualRevealEnabled,
@@ -115,12 +124,14 @@ func (q *Queries) ListDataTypes(ctx context.Context) ([]VaultDataType, error) {
 
 const updateDataType = `-- name: UpdateDataType :execrows
 UPDATE t_vault_data_type
-SET data_class = ?, description = ?, manual_protect_enabled = ?, manual_reveal_enabled = ?, status = ?, version = version + 1, update_time = ?
+SET data_class = ?, value_format = ?, value_pattern = ?, description = ?, manual_protect_enabled = ?, manual_reveal_enabled = ?, status = ?, version = version + 1, update_time = ?
 WHERE data_type_code = ? AND version = ?
 `
 
 type UpdateDataTypeParams struct {
 	DataClass            string
+	ValueFormat          string
+	ValuePattern         sql.NullString
 	Description          string
 	ManualProtectEnabled bool
 	ManualRevealEnabled  bool
@@ -133,6 +144,8 @@ type UpdateDataTypeParams struct {
 func (q *Queries) UpdateDataType(ctx context.Context, arg UpdateDataTypeParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, updateDataType,
 		arg.DataClass,
+		arg.ValueFormat,
+		arg.ValuePattern,
 		arg.Description,
 		arg.ManualProtectEnabled,
 		arg.ManualRevealEnabled,

@@ -14,6 +14,7 @@ import {
   ALLOWED_INDEX_SIGNATURES,
   ALLOWED_RELATION_SIGNATURES,
   ALLOWED_TABLE_KEYS,
+  APPROVED_DEFAULT_VALUES,
   APPROVED_SENSITIVE_FIELDS,
   ASCII_BINARY_FIELDS,
   CHECK_BINDINGS,
@@ -370,7 +371,7 @@ export function validateVaultManifest() {
     invariant(JSON.stringify(actualAudit) === JSON.stringify(expectedAudit), `审计时间结构错误：${tableSpec.defKey}`);
     for (const fieldSpec of tableSpec.fields) {
       invariant(!FORBIDDEN_FIELD_PATTERN.test(fieldSpec.defKey), `出现禁止字段：${tableSpec.defKey}.${fieldSpec.defKey}`);
-      invariant(fieldSpec.defaultValue === "", `字段必须显式无默认值：${tableSpec.defKey}.${fieldSpec.defKey}`);
+      invariant(fieldSpec.defaultValue === (APPROVED_DEFAULT_VALUES[`${tableSpec.defKey}.${fieldSpec.defKey}`] ?? ""), `字段默认值偏离批准清单：${tableSpec.defKey}.${fieldSpec.defKey}`);
       if (APPROVED_BINARY_FIELDS.has(fieldSpec.defKey)) {
         invariant(APPROVED_SENSITIVE_FIELDS[fieldSpec.defKey] === tableSpec.defKey, `密码学字段出现在未批准表中：${tableSpec.defKey}.${fieldSpec.defKey}`);
       }

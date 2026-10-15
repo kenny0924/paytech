@@ -76,6 +76,10 @@ type VaultDataType struct {
 	TokenMode string
 	// 数据级别 STANDARD 普通敏感 / SECRET 密钥
 	DataClass string
+	// 值格式 TEXT 不限 / JSON JSON 对象 / REGEX 按正则整值匹配
+	ValueFormat string
+	// 值格式为 REGEX 时的 RE2 正则（不含首尾锚点，按整值匹配）；其余格式为空
+	ValuePattern sql.NullString
 	// 用途说明
 	Description string
 	// 是否允许运营人工加密

@@ -23,6 +23,10 @@ const (
 	PolicyVersionConflict  ErrorCode = "POLICY_VERSION_CONFLICT"
 	PolicyEntryExists      ErrorCode = "POLICY_ENTRY_EXISTS"
 	PolicyEntryNotFound    ErrorCode = "POLICY_ENTRY_NOT_FOUND"
+	ValueNotJSONObject     ErrorCode = "VALUE_NOT_JSON_OBJECT"
+	ValuePatternMismatch   ErrorCode = "VALUE_PATTERN_MISMATCH"
+	ValuePatternInvalid    ErrorCode = "VALUE_PATTERN_INVALID"
+	SampleValueInvalid     ErrorCode = "SAMPLE_VALUE_INVALID"
 )
 
 // ServiceError 是携带稳定错误码的领域错误，Error() 只返回安全的本地说明。
@@ -77,7 +81,7 @@ func Sanitize(err error) error {
 func OutcomeForCode(code ErrorCode) Outcome {
 	switch code {
 	case InvalidRequest, ValueTooLarge, UnsupportedDataType, TokenModeNotAllowed, AccessDenied, TokenNotFound, IdempotencyKeyConflict,
-		PolicyVersionConflict, PolicyEntryExists, PolicyEntryNotFound:
+		PolicyVersionConflict, PolicyEntryExists, PolicyEntryNotFound, ValueNotJSONObject, ValuePatternMismatch, ValuePatternInvalid, SampleValueInvalid:
 		return Denied
 	default:
 		return Failed
@@ -99,4 +103,8 @@ var safeMessages = map[ErrorCode]string{
 	PolicyVersionConflict:  "策略已被他人修改，请刷新后重试",
 	PolicyEntryExists:      "策略条目已存在",
 	PolicyEntryNotFound:    "策略条目不存在",
+	ValueNotJSONObject:     "值不是合法的JSON对象",
+	ValuePatternMismatch:   "值不符合数据类型的正则",
+	ValuePatternInvalid:    "值格式与正则的组合无效或正则无法编译",
+	SampleValueInvalid:     "测试样例缺失或不符合值格式",
 }

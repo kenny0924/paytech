@@ -95,6 +95,9 @@ export const TABLES = Object.freeze([
       asciiField("data_type_code", "VARCHAR(64)", "NN", "数据类型编码", "全局唯一的通用数据类型编码，创建后不可修改"),
       asciiField("token_mode", "VARCHAR(16)", "NN", "令牌模式", "该数据类型的令牌身份模式 REFERENCE 或 STABLE，创建后不可修改"),
       asciiField("data_class", "VARCHAR(16)", "NN", "数据级别", "数据级别 STANDARD 普通敏感或 SECRET 密钥，决定人工操作所需权限"),
+      field("value_format", "VARCHAR(16)", "NN", "值格式", "数据类型接收的值格式 TEXT 不限、JSON 须为 JSON 对象、REGEX 按正则整值匹配；默认 TEXT 兼容未写入该列的旧版本",
+        { defaultValue: "'TEXT'", characterSet: "ascii", collation: "ascii_bin" }),
+      field("value_pattern", "VARCHAR(256)", "N", "值正则", "值格式为 REGEX 时的 RE2 正则，不含首尾锚点并按整值匹配；其余格式为空"),
       field("description", "VARCHAR(256)", "NN", "用途说明", "供运营理解该数据类型用途的中文说明，不含受保护值"),
       field("manual_protect_enabled", "TINYINT(1)", "NN", "允许人工加密", "是否允许运营在控制台人工加密该类型的值"),
       field("manual_reveal_enabled", "TINYINT(1)", "NN", "允许人工解密", "是否允许运营在控制台人工解密该类型的值"),
@@ -152,7 +155,7 @@ export const RELATIONS = Object.freeze(TABLES.flatMap((tableSpec) => tableSpec.r
 
 export const EXPECTED_MODEL_TOTALS = Object.freeze({
   tables: 6,
-  fields: 64,
+  fields: 66,
   uniqueIndexes: 6,
   accessIndexes: 7,
   relations: 2,

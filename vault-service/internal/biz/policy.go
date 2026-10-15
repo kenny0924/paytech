@@ -38,10 +38,14 @@ var ManualReasonCodes = map[string]bool{
 }
 
 // DataType 是数据类型目录条目。编码与 Token 模式创建后不可修改。
+//
+// ValuePattern 只在 ValueFormat 为 REGEX 时非空，保存为不含首尾锚点的 RE2 正则。
 type DataType struct {
 	Code          string
 	TokenMode     TokenMode
 	Class         DataClass
+	ValueFormat   ValueFormat
+	ValuePattern  string
 	Description   string
 	ManualProtect bool
 	ManualReveal  bool

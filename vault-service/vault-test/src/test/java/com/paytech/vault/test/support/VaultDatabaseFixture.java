@@ -54,7 +54,7 @@ public final class VaultDatabaseFixture implements AutoCloseable {
 
     private void validateSchema() {
         assertEquals(6, count("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()"));
-        assertEquals(64, count("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE()"));
+        assertEquals(66, count("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE()"));
         for (String table : List.of("t_vault_record", "t_vault_protect_request", "t_vault_access_event",
                 "t_vault_data_type", "t_vault_access_rule", "t_vault_policy_change")) {
             count("SELECT COUNT(*) FROM " + table + " WHERE 1=0");

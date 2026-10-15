@@ -16,13 +16,14 @@ import com.paytech.vault.client.VaultClientErrorCode;
 import com.paytech.vault.client.admin.VaultAdminClient;
 import com.paytech.vault.client.admin.VaultAdminClient.AccessRuleFilter;
 import com.paytech.vault.client.admin.VaultAdminClient.ManualEventFilter;
+import com.paytech.vault.client.admin.request.CreateDataTypeRequestBody;
 import com.paytech.vault.client.admin.request.ManualProtectRequestBody;
 import com.paytech.vault.client.admin.request.ManualRevealRequestBody;
 import com.paytech.vault.client.admin.request.UpdateDataTypeRequestBody;
 import com.paytech.vault.client.test.ClientContext;
 import com.paytech.vault.client.test.VaultSimulator;
 
-/** 管理接口客户端：开关、协议头、路径与查询参数、成功响应校验、新错误码映射。 */
+/** 管理接口客户端：开关、协议头、路径与查询参数、成功响应校验、值格式字段往返、新错误码映射。 */
 class VaultAdminClientHttpTest {
     private static final String TOKEN = VaultClientSafetyTest.TOKEN;
     private static final String OPERATOR = "operator-42";
@@ -135,6 +136,68 @@ class VaultAdminClientHttpTest {
     }
 
     @Test
+    void test_dataTypeValueFormatFieldsRoundTrip() throws Exception {
+        try (var simulator = new VaultSimulator()) {
+            simulator.respond(200, dataTypeResponse("\"valueFormat\":\"REGEX\",\"valuePattern\":\"\\\\+[1-9][0-9]{7,14}\""));
+            simulator.respond(200, dataTypeResponse("\"valueFormat\":\"JSON\""));
+            adminContext(simulator).run(context -> {
+                var client = context.getBean(VaultAdminClient.class);
+                var create = new CreateDataTypeRequestBody();
+                create.setDataTypeCode("PHONE_E164_V1");
+                create.setValueFormat("REGEX");
+                create.setValuePattern("\\+[1-9][0-9]{7,14}");
+                create.setSampleValues(List.of("+971500000001"));
+                var created = client.createDataType(OPERATOR, create).getDataType();
+                assertThat(created.getValueFormat()).isEqualTo("REGEX");
+                assertThat(created.getValuePattern()).isEqualTo("\\+[1-9][0-9]{7,14}");
+
+                var update = new UpdateDataTypeRequestBody();
+                update.setExpectedVersion(1);
+                update.setValueFormat("JSON");
+                var updated = client.updateDataType(OPERATOR, "PHONE_E164_V1", update).getDataType();
+                assertThat(updated.getValueFormat()).isEqualTo("JSON");
+                assertThat(updated.getValuePattern()).isNull();
+            });
+            assertThat(simulator.requests.get(0).body())
+                .contains("\"valueFormat\":\"REGEX\"", "\"valuePattern\":\"\\\\+[1-9][0-9]{7,14}\"",
+                    "\"sampleValues\":[\"+971500000001\"]");
+            assertThat(simulator.requests.get(1).body()).contains("\"valueFormat\":\"JSON\"");
+        }
+    }
+
+    @Test
+    void test_valueFormatErrorCodesMapToBadRequestFailures() throws Exception {
+        var codes = List.of(VaultClientErrorCode.VALUE_PATTERN_INVALID, VaultClientErrorCode.SAMPLE_VALUE_INVALID,
+            VaultClientErrorCode.VALUE_NOT_JSON_OBJECT, VaultClientErrorCode.VALUE_PATTERN_MISMATCH);
+        try (var simulator = new VaultSimulator()) {
+            for (int index = 0; index < codes.size(); index++) {
+                String requestId = "f-" + index;
+                simulator.respond(400, problem(400, "Bad Request", codes.get(index).getCode(), requestId), PROBLEM,
+                    List.of(requestId));
+            }
+            simulator.respond(409, problem(409, "Conflict", VaultClientErrorCode.VALUE_PATTERN_MISMATCH.getCode(), "f-9"),
+                PROBLEM, List.of("f-9"));
+            adminContext(simulator).run(context -> {
+                var client = context.getBean(VaultAdminClient.class);
+                for (int index = 0; index < codes.size(); index++) {
+                    String requestId = "f-" + index;
+                    var expected = codes.get(index);
+                    var rejected = catchThrowableOfType(FailException.class,
+                        () -> withRequestId(requestId, () -> client.manualProtect(OPERATOR, "submission-" + requestId,
+                            new ManualProtectRequestBody())));
+                    assertThat(rejected.getCode()).isEqualTo(expected.getCode());
+                    assertThat(rejected.getMessage()).startsWith(expected.getMessage()).doesNotContain("safe detail");
+                }
+                var mismatch = catchThrowableOfType(ErrorException.class,
+                    () -> withRequestId("f-9", () -> client.manualProtect(OPERATOR, "submission-f-9",
+                        new ManualProtectRequestBody())));
+                assertThat(mismatch.getErrorCode()).isSameAs(CommonErrorCode.UPSTREAM_INVALID_RESPONSE);
+            });
+            assertThat(simulator.requests).hasSize(codes.size() + 1);
+        }
+    }
+
+    @Test
     void test_invalidLocalInputIsRejectedWithoutRequest() throws Exception {
         try (var simulator = new VaultSimulator()) {
             adminContext(simulator).run(context -> {
@@ -156,6 +219,13 @@ class VaultAdminClientHttpTest {
         VaultSimulator simulator) {
         return ClientContext.direct(simulator).withPropertyValues("spring.application.name=operations-console-bff",
             "vault.client.admin-enabled=true");
+    }
+
+    private static String dataTypeResponse(String formatMembers) {
+        return "{\"dataType\":{\"dataTypeCode\":\"PHONE_E164_V1\",\"tokenMode\":\"STABLE\",\"dataClass\":\"STANDARD\","
+            + "\"description\":\"synthetic\"," + formatMembers + ",\"manualProtectEnabled\":false,"
+            + "\"manualRevealEnabled\":false,\"status\":\"ACTIVE\",\"version\":2,\"updateTime\":\"" + TIMESTAMP
+            + "\"},\"policyVersion\":5}";
     }
 
     private static ManualRevealRequestBody revealBody() {

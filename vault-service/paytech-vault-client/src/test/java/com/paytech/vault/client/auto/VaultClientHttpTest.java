@@ -289,6 +289,8 @@ class VaultClientHttpTest {
                     {400, "VALUE_TOO_LARGE", FailException.class},
                     {400, "UNSUPPORTED_DATA_TYPE", FailException.class},
                     {400, "TOKEN_MODE_NOT_ALLOWED", FailException.class},
+                    {400, "VALUE_NOT_JSON_OBJECT", FailException.class},
+                    {400, "VALUE_PATTERN_MISMATCH", FailException.class},
                     {403, "ACCESS_DENIED", FailException.class},
                     {404, "TOKEN_NOT_FOUND", FailException.class},
                     {409, "IDEMPOTENCY_KEY_CONFLICT", FailException.class},

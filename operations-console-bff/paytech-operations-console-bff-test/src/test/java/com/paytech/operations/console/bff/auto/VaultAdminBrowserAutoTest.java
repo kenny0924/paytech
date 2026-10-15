@@ -26,13 +26,14 @@ import org.springframework.test.context.DynamicPropertySource;
 import com.paytech.operations.console.bff.test.base.OperationsBffHttpTestBase;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator;
 import com.paytech.operations.console.bff.test.simulator.VaultAdminSimulator;
+import com.paytech.vault.client.VaultClientErrorCode;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 浏览器到真实 BFF 与真实 VaultAdminClient：可信操作人转发、路由决定数据级别、提交 ID 幂等键、分页校验、
- * Vault 错误码状态映射及敏感值不进日志。
+ * 值格式字段转发与形状校验、Vault 错误码状态映射及敏感值与测试样例不进日志。
  *
  * <p>Vault 客户端的测试直连地址只在 unittest Profile 下允许，因此本类在 auto 之外叠加该 Profile。
  *
@@ -46,6 +47,7 @@ class VaultAdminBrowserAutoTest extends OperationsBffHttpTestBase {
     private static final String REQUEST_ID = "vault-admin-request-1";
     private static final String TOKEN = "AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-abcde";
     private static final String SECRET_VALUE = "synthetic-channel-secret-canary";
+    private static final String SAMPLE_VALUE = "+971500000099";
     private static final VaultAdminSimulator VAULT = start();
 
     @Autowired
@@ -75,7 +77,8 @@ class VaultAdminBrowserAutoTest extends OperationsBffHttpTestBase {
     @Test
     void test_listDataTypesForwardsOperatorAndPassesResponseThrough() throws Exception {
         String vaultBody = "{\"currentPolicyVersion\":3,\"items\":[{\"dataTypeCode\":\"EMAIL_ADDRESS_V1\",\"tokenMode\":\"STABLE\","
-            + "\"dataClass\":\"STANDARD\",\"description\":\"邮箱\",\"manualProtectEnabled\":false,\"manualRevealEnabled\":true,"
+            + "\"dataClass\":\"STANDARD\",\"description\":\"邮箱\",\"valueFormat\":\"REGEX\",\"valuePattern\":\"[^\\\\s@]+@[^\\\\s@]+\","
+            + "\"manualProtectEnabled\":false,\"manualRevealEnabled\":true,"
             + "\"status\":\"ACTIVE\",\"version\":2,\"updateTime\":\"2026-10-15T01:02:03.000004Z\"}]}";
         VAULT.reply("GET", "/vault/v1/admin/data-types", vaultBody);
 
@@ -93,18 +96,99 @@ class VaultAdminBrowserAutoTest extends OperationsBffHttpTestBase {
     }
 
     @Test
-    void test_createDataTypeForwardsValidatedBody() throws Exception {
-        VAULT.reply("POST", "/vault/v1/admin/data-types", "{\"dataType\":{\"dataTypeCode\":\"CHANNEL_ACCOUNT_CONFIG_V1\","
-            + "\"tokenMode\":\"REFERENCE\",\"dataClass\":\"SECRET\",\"description\":\"渠道账号\",\"manualProtectEnabled\":true,"
+    void test_createDataTypeForwardsValidatedBody(CapturedOutput output) throws Exception {
+        VAULT.reply("POST", "/vault/v1/admin/data-types", "{\"dataType\":{\"dataTypeCode\":\"PHONE_E164_V1\","
+            + "\"tokenMode\":\"STABLE\",\"dataClass\":\"STANDARD\",\"description\":\"手机号\",\"valueFormat\":\"REGEX\","
+            + "\"valuePattern\":\"\\\\+[1-9][0-9]{7,14}\",\"manualProtectEnabled\":true,"
             + "\"manualRevealEnabled\":true,\"status\":\"ACTIVE\",\"version\":1,\"updateTime\":\"2026-10-15T01:02:03Z\"},\"policyVersion\":4}");
-        String body = "{\"dataTypeCode\":\"CHANNEL_ACCOUNT_CONFIG_V1\",\"tokenMode\":\"REFERENCE\",\"dataClass\":\"SECRET\","
-            + "\"description\":\"渠道账号\",\"manualProtectEnabled\":true,\"manualRevealEnabled\":true,\"reason\":\"接入渠道\"}";
+        String body = "{\"dataTypeCode\":\"PHONE_E164_V1\",\"tokenMode\":\"STABLE\",\"dataClass\":\"STANDARD\","
+            + "\"description\":\"手机号\",\"valueFormat\":\"REGEX\",\"valuePattern\":\"\\\\+[1-9][0-9]{7,14}\","
+            + "\"sampleValues\":[\"" + SAMPLE_VALUE + "\"],\"manualProtectEnabled\":true,\"manualRevealEnabled\":true,"
+            + "\"reason\":\"接入手机号\"}";
 
         var response = send("POST", "/vault-admin/v1/data-types", "operations-vault-create-data-type", body);
 
         assertEquals(200, response.statusCode(), response.body());
-        assertEquals(4, JSON.readTree(response.body()).path("policyVersion").asInt());
+        JsonNode result = JSON.readTree(response.body());
+        assertEquals(4, result.path("policyVersion").asInt());
+        assertEquals("REGEX", result.path("dataType").path("valueFormat").asString());
+        assertEquals("\\+[1-9][0-9]{7,14}", result.path("dataType").path("valuePattern").asString());
         assertEquals(JSON.readTree(body), JSON.readTree(VAULT.requests().getFirst().body()));
+        assertFalse(output.getAll().contains(SAMPLE_VALUE), "测试样例不得进入日志");
+    }
+
+    @Test
+    void test_updateDataTypeForwardsValueFormat() throws Exception {
+        VAULT.reply("PUT", "/vault/v1/admin/data-types/CHANNEL_ACCOUNT_CONFIG_V1", "{\"dataType\":{"
+            + "\"dataTypeCode\":\"CHANNEL_ACCOUNT_CONFIG_V1\",\"tokenMode\":\"REFERENCE\",\"dataClass\":\"SECRET\","
+            + "\"description\":\"渠道账号\",\"valueFormat\":\"JSON\",\"manualProtectEnabled\":true,"
+            + "\"manualRevealEnabled\":true,\"status\":\"ACTIVE\",\"version\":3,\"updateTime\":\"2026-10-15T01:02:03Z\"},\"policyVersion\":6}");
+        String body = "{\"expectedVersion\":2,\"dataClass\":\"SECRET\",\"description\":\"渠道账号\",\"valueFormat\":\"JSON\","
+            + "\"manualProtectEnabled\":true,\"manualRevealEnabled\":true,\"status\":\"ACTIVE\",\"reason\":\"限制为 JSON 对象\"}";
+
+        var response = send("PUT", "/vault-admin/v1/data-types/CHANNEL_ACCOUNT_CONFIG_V1", "operations-vault-update-data-type",
+            body);
+
+        assertEquals(200, response.statusCode(), response.body());
+        JsonNode dataType = JSON.readTree(response.body()).path("dataType");
+        assertEquals("JSON", dataType.path("valueFormat").asString());
+        assertFalse(dataType.has("valuePattern") && !dataType.get("valuePattern").isNull(), "JSON 格式不返回正则");
+        JsonNode forwarded = JSON.readTree(VAULT.requests().getFirst().body());
+        assertEquals("JSON", forwarded.path("valueFormat").asString());
+        assertTrue(forwarded.path("valuePattern").isMissingNode() || forwarded.get("valuePattern").isNull());
+        assertTrue(forwarded.path("sampleValues").isMissingNode() || forwarded.get("sampleValues").isNull());
+    }
+
+    @Test
+    void test_invalidValueFormatShapeDoesNotCallVault() throws Exception {
+        String base = "{\"dataTypeCode\":\"PHONE_E164_V1\",\"tokenMode\":\"STABLE\",\"dataClass\":\"STANDARD\","
+            + "\"description\":\"手机号\",\"manualProtectEnabled\":true,\"manualRevealEnabled\":true,\"reason\":\"接入\",";
+        String unknownFormat = base + "\"valueFormat\":\"EMAIL\"}";
+        String longPattern = base + "\"valueFormat\":\"REGEX\",\"valuePattern\":\"" + "a".repeat(257) + "\"}";
+        String tooManySamples = base + "\"valueFormat\":\"REGEX\",\"valuePattern\":\"a+\",\"sampleValues\":"
+            + "[\"a\",\"a\",\"a\",\"a\",\"a\",\"a\"]}";
+        String longSample = base + "\"valueFormat\":\"REGEX\",\"valuePattern\":\"a+\",\"sampleValues\":[\""
+            + "a".repeat(4097) + "\"]}";
+
+        for (String body : List.of(unknownFormat, longPattern, tooManySamples, longSample)) {
+            var response = send("POST", "/vault-admin/v1/data-types", "operations-vault-create-data-type", body);
+            assertProblem(response, 422, "VALIDATION_ERROR");
+        }
+        assertTrue(VAULT.requests().isEmpty(), "形状校验失败不得调用 Vault");
+    }
+
+    @Test
+    void test_valueFormatErrorCodesReturnBadRequest(CapturedOutput output) throws Exception {
+        VAULT.problem("POST", "/vault/v1/admin/manual/protect", 400, VaultClientErrorCode.VALUE_PATTERN_MISMATCH.getCode());
+        VAULT.problem("POST", "/vault/v1/admin/data-types", 400, VaultClientErrorCode.SAMPLE_VALUE_INVALID.getCode());
+        VAULT.problem("PUT", "/vault/v1/admin/data-types/PHONE_E164_V1", 400,
+            VaultClientErrorCode.VALUE_PATTERN_INVALID.getCode());
+        String protect = "{\"submissionId\":\"submission-002\",\"dataTypeCode\":\"PHONE_E164_V1\",\"value\":\""
+            + SECRET_VALUE + "\",\"reasonCode\":\"DATA_REPAIR\",\"ticketRef\":\"OPS-3\"}";
+        String create = "{\"dataTypeCode\":\"PHONE_E164_V1\",\"tokenMode\":\"STABLE\",\"dataClass\":\"STANDARD\","
+            + "\"description\":\"手机号\",\"valueFormat\":\"REGEX\",\"valuePattern\":\"[0-9]+\",\"sampleValues\":[\""
+            + SAMPLE_VALUE + "\"],\"manualProtectEnabled\":true,\"manualRevealEnabled\":true,\"reason\":\"接入\"}";
+        String update = "{\"expectedVersion\":1,\"dataClass\":\"STANDARD\",\"description\":\"手机号\",\"valueFormat\":\"TEXT\","
+            + "\"valuePattern\":\"[0-9]+\",\"manualProtectEnabled\":true,\"manualRevealEnabled\":true,\"status\":\"ACTIVE\","
+            + "\"reason\":\"调整\"}";
+
+        var mismatch = send("POST", "/vault-admin/v1/manual/protect", "operations-vault-manual-protect", protect);
+        // 两个人工加密路由调用同一个 Vault 路径，改配下一次响应。
+        VAULT.problem("POST", "/vault/v1/admin/manual/protect", 400, VaultClientErrorCode.VALUE_NOT_JSON_OBJECT.getCode());
+        var notJson = send("POST", "/vault-admin/v1/manual/secret-protect", "operations-vault-manual-secret-protect",
+            protect);
+        var sample = send("POST", "/vault-admin/v1/data-types", "operations-vault-create-data-type", create);
+        var pattern = send("PUT", "/vault-admin/v1/data-types/PHONE_E164_V1", "operations-vault-update-data-type", update);
+
+        assertValueFormatProblem(mismatch, VaultClientErrorCode.VALUE_PATTERN_MISMATCH);
+        assertValueFormatProblem(notJson, VaultClientErrorCode.VALUE_NOT_JSON_OBJECT);
+        assertValueFormatProblem(sample, VaultClientErrorCode.SAMPLE_VALUE_INVALID);
+        assertValueFormatProblem(pattern, VaultClientErrorCode.VALUE_PATTERN_INVALID);
+        for (var response : List.of(mismatch, notJson, sample)) {
+            assertFalse(response.body().contains(SECRET_VALUE) || response.body().contains(SAMPLE_VALUE), "错误响应不得回显原值或样例");
+        }
+        assertFalse(output.getAll().contains(SECRET_VALUE), "原值不得进入日志");
+        assertFalse(output.getAll().contains(SAMPLE_VALUE), "测试样例不得进入日志");
     }
 
     @Test
@@ -188,6 +272,11 @@ class VaultAdminBrowserAutoTest extends OperationsBffHttpTestBase {
         assertProblem(conflict, 409, "POLICY_VERSION_CONFLICT");
         assertProblem(denied, 403, "ACCESS_DENIED");
         assertProblem(missing, 404, "POLICY_ENTRY_NOT_FOUND");
+    }
+
+    private static void assertValueFormatProblem(HttpResponse<String> response, VaultClientErrorCode code) {
+        assertProblem(response, 400, code.getCode());
+        assertTrue(JSON.readTree(response.body()).path("detail").asString().startsWith(code.getMessage()), response.body());
     }
 
     private static void assertProblem(HttpResponse<String> response, int status, String code) {

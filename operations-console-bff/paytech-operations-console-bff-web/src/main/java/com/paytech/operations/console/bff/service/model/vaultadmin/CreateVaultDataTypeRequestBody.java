@@ -1,5 +1,7 @@
 package com.paytech.operations.console.bff.service.model.vaultadmin;
 
+import java.util.List;
+
 import jakarta.validation.constraints.*;
 
 import lombok.Getter;
@@ -42,6 +44,30 @@ public class CreateVaultDataTypeRequestBody {
     @NotBlank(message = "用途说明必填")
     @Size(max = 256, message = "用途说明不超过 256 个字符")
     private String description;
+
+    /**
+     * 值格式
+     * <li>TEXT 不限格式；JSON 必须是 JSON 对象；REGEX 按正则整值匹配。</li>
+     * <li>可省略，省略时 Vault 按 TEXT 处理。</li>
+     */
+    @Pattern(regexp = "TEXT|JSON|REGEX", message = "值格式只能为 TEXT、JSON 或 REGEX")
+    private String valueFormat;
+
+    /**
+     * 正则
+     * <li>仅值格式为 REGEX 时填写；Go RE2 语法，按整值匹配，无需写 ^ $。</li>
+     * <li>格式与正则的组合是否合法、能否编译由 Vault 校验。</li>
+     */
+    @Size(max = 256, message = "正则不超过 256 个字符")
+    private String valuePattern;
+
+    /**
+     * 测试样例
+     * <li>最多 5 个，每个不超过 4096 个字符；只用于本次保存校验，不落库，不写日志。</li>
+     * <li>是否必填及是否通过由 Vault 按值格式与正则校验。</li>
+     */
+    @Size(max = 5, message = "测试样例最多 5 个")
+    private List<@NotNull(message = "测试样例不能为空") @Size(max = 4096, message = "测试样例不超过 4096 个字符") String> sampleValues;
 
     /**
      * 是否允许运营人工加密

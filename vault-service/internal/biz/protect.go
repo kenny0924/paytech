@@ -21,7 +21,7 @@ type protectDecision struct {
 
 // ProtectUsecase 处理 Protect：按幂等键创建或复用记录并返回 Token。
 //
-// 流程：校验与策略 → 事务外计算 HMAC → 本地事务（锁幂等键 → 复用或新建记录 → 写请求映射与成功审计）。
+// 流程：校验与策略 → 值格式校验 → 事务外计算 HMAC → 本地事务（锁幂等键 → 复用或新建记录 → 写请求映射与成功审计）。
 // 并发唯一冲突与锁竞争在上限内整体重试；提交结果未知、回滚失败与审计失败为终态，不重试也不重复审计。
 type ProtectUsecase struct {
 	store  Store
@@ -44,6 +44,10 @@ func (p *ProtectUsecase) Process(ctx context.Context, a Attempt, in ProtectInput
 		return ProtectResult{}, p.audit.RecordFailure(ctx, proj, err)
 	}
 	if err := p.authorize(a, in, &proj); err != nil {
+		return ProtectResult{}, p.audit.RecordFailure(ctx, proj, err)
+	}
+	// 先校验值格式再计算 HMAC 和查幂等键：不符合当前约束的值（含幂等重放）一律拒绝，不生成记录。
+	if err := p.policy.CheckValue(in.DataType, in.Value); err != nil {
 		return ProtectResult{}, p.audit.RecordFailure(ctx, proj, err)
 	}
 	material, err := p.cipher.ProtectMaterial(ctx, a.Caller, in)

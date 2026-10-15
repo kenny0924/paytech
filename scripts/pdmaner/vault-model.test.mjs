@@ -82,6 +82,8 @@ data_type_id BIGINT NN
 data_type_code VARCHAR(64) NN
 token_mode VARCHAR(16) NN
 data_class VARCHAR(16) NN
+value_format VARCHAR(16) NN
+value_pattern VARCHAR(256) N
 description VARCHAR(256) NN
 manual_protect_enabled TINYINT(1) NN
 manual_reveal_enabled TINYINT(1) NN
@@ -328,8 +330,8 @@ test("approved Vault field manifest independently freezes the exact six-table ca
   assert.deepEqual(approvedTables.map((table) => table.defKey), expectedTableOrder);
   assert.equal(
     approvedTables.flatMap((table) => table.fields).length,
-    64,
-    "批准候选字段清单实算必须为 64",
+    66,
+    "批准候选字段清单实算必须为 66",
   );
   assert.equal(parseApprovedIndexes().size, 6);
   assert.equal(parseApprovedRelations().length, 2);
@@ -350,7 +352,7 @@ test("Vault PDManer contract has every planned design artifact", () => {
   );
 });
 
-task2ArtifactTest("model has the exact ordered six-table, 64-field contract", () => {
+task2ArtifactTest("model has the exact ordered six-table, 66-field contract", () => {
   const model = readModel();
   const approvedTables = parseApprovedFieldManifest();
   assert.deepEqual(model.entities.map((entity) => entity.defKey), expectedTableOrder);
@@ -372,7 +374,7 @@ task2ArtifactTest("model has the exact ordered six-table, 64-field contract", ()
   }
   assert.deepEqual(modelTotals(model), {
     tables: 6,
-    fields: 64,
+    fields: 66,
     uniqueIndexes: 6,
     accessIndexes: 7,
     relations: 2,
@@ -419,7 +421,9 @@ task2ArtifactTest("model excludes unsafe fields and confines approved cryptograp
     for (const field of entity.fields) {
       assert.doesNotMatch(field.defKey, forbiddenFieldPattern, `${entity.defKey}.${field.defKey}`);
       assert.equal(field.autoIncrement, false, `${entity.defKey}.${field.defKey} 不得自增`);
-      assert.equal(field.defaultValue, "", `${entity.defKey}.${field.defKey} 必须显式无默认值`);
+      // 只有 value_format 批准默认 TEXT（发布窗口内旧版 Vault 不写该列）；其余字段无默认值。
+      const approvedDefault = entity.defKey === "t_vault_data_type" && field.defKey === "value_format" ? "'TEXT'" : "";
+      assert.equal(field.defaultValue, approvedDefault, `${entity.defKey}.${field.defKey} 默认值偏离批准清单`);
       if (Object.hasOwn(approvedSensitiveFields, field.defKey)) {
         assert.equal(
           entity.defKey,

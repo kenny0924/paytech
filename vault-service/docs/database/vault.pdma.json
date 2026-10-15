@@ -1918,6 +1918,45 @@
           "id": "B5DBC198-0BCF-5B83-B432-7F005791F0B4"
         },
         {
+          "defKey": "value_format",
+          "defName": "值格式",
+          "comment": "数据类型接收的值格式 TEXT 不限、JSON 须为 JSON 对象、REGEX 按正则整值匹配；默认 TEXT 兼容未写入该列的旧版本。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'TEXT'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "49F3DF16-1842-53FE-894B-ED83B9405F09"
+        },
+        {
+          "defKey": "value_pattern",
+          "defName": "值正则",
+          "comment": "值格式为 REGEX 时的 RE2 正则，不含首尾锚点并按整值匹配；其余格式为空。",
+          "type": "VARCHAR",
+          "len": 256,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "9B22C920-8E0E-50A8-9B00-3AAEA256CEA5"
+        },
+        {
           "defKey": "description",
           "defName": "用途说明",
           "comment": "供运营理解该数据类型用途的中文说明，不含受保护值。",
@@ -3101,7 +3140,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 328
+              "height": 372
             }
           },
           {

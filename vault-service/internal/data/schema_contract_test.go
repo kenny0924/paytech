@@ -21,7 +21,7 @@ func TestSchemaMatchesApprovedContract(t *testing.T) {
 	schema := loadSchema(t, "../../docs/database/sql/vault-schema.sql")
 	assertContract(t, schema, schemaContract{
 		tables:        6,
-		fields:        64,
+		fields:        66,
 		uniqueIndexes: 6,
 		accessIndexes: 7,
 		foreignKeys:   2,
@@ -30,7 +30,7 @@ func TestSchemaMatchesApprovedContract(t *testing.T) {
 	assertTableColumns(t, schema, "t_vault_record", 11)
 	assertTableColumns(t, schema, "t_vault_protect_request", 7)
 	assertTableColumns(t, schema, "t_vault_access_event", 15)
-	assertTableColumns(t, schema, "t_vault_data_type", 11)
+	assertTableColumns(t, schema, "t_vault_data_type", 13)
 	assertTableColumns(t, schema, "t_vault_access_rule", 9)
 	assertTableColumns(t, schema, "t_vault_policy_change", 11)
 	assertContains(t, schema,
@@ -56,8 +56,8 @@ func TestSchemaMatchesApprovedContract(t *testing.T) {
 		"ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 		"CHARACTER SET ascii COLLATE ascii_bin",
 	)
-	if actual := strings.Count(schema, "CHARACTER SET ascii COLLATE ascii_bin"); actual != 28 {
-		t.Fatalf("ascii_bin machine identifier columns = %d, want 28", actual)
+	if actual := strings.Count(schema, "CHARACTER SET ascii COLLATE ascii_bin"); actual != 29 {
+		t.Fatalf("ascii_bin machine identifier columns = %d, want 29", actual)
 	}
 }
 

@@ -64,6 +64,8 @@ CREATE TABLE t_vault_data_type (
   data_type_code VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '数据类型编码，创建后不可修改',
   token_mode VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'Token 模式 REFERENCE/STABLE，创建后不可修改',
   data_class VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '数据级别 STANDARD 普通敏感 / SECRET 密钥',
+  value_format VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'TEXT' COMMENT '值格式 TEXT 不限 / JSON JSON 对象 / REGEX 按正则整值匹配',
+  value_pattern VARCHAR(256) NULL COMMENT '值格式为 REGEX 时的 RE2 正则（不含首尾锚点，按整值匹配）；其余格式为空',
   description VARCHAR(256) NOT NULL COMMENT '用途说明',
   manual_protect_enabled TINYINT(1) NOT NULL COMMENT '是否允许运营人工加密',
   manual_reveal_enabled TINYINT(1) NOT NULL COMMENT '是否允许运营人工解密',

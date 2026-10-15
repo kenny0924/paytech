@@ -139,3 +139,33 @@ func waitFor(t *testing.T, condition func() bool) {
 		time.Sleep(5 * time.Millisecond)
 	}
 }
+
+func TestBuildCompilesValueRulesAndFailsClosedOnBrokenPattern(t *testing.T) {
+	s := policy.Build(biz.PolicyState{Version: 3, DataTypes: []biz.DataType{
+		{Code: "PHONE", TokenMode: biz.Stable, Status: biz.ActiveStatus, ValueFormat: biz.RegexFormat, ValuePattern: `\+[1-9][0-9]{7,14}`},
+		{Code: "CONFIG", TokenMode: biz.Reference, Status: biz.ActiveStatus, ValueFormat: biz.JSONFormat},
+		{Code: "LEGACY", TokenMode: biz.Reference, Status: biz.ActiveStatus},
+		{Code: "BROKEN", TokenMode: biz.Reference, Status: biz.ActiveStatus, ValueFormat: biz.RegexFormat, ValuePattern: "("},
+		{Code: "OFF", TokenMode: biz.Reference, Status: biz.DisabledStatus, ValueFormat: biz.TextFormat},
+	}})
+	checks := []struct {
+		dataType string
+		value    string
+		code     biz.ErrorCode
+	}{
+		{"PHONE", "+8613800138000", ""},
+		{"PHONE", "13800138000", biz.ValuePatternMismatch},
+		{"CONFIG", `{"k":"v"}`, ""},
+		{"CONFIG", `[1]`, biz.ValueNotJSONObject},
+		{"LEGACY", "anything", ""},
+		{"BROKEN", "(", biz.InternalError},
+		{"OFF", "x", biz.UnsupportedDataType},
+		{"MISSING", "x", biz.UnsupportedDataType},
+	}
+	for _, c := range checks {
+		err := s.CheckValue(c.dataType, []byte(c.value))
+		if c.code == "" && err != nil || c.code != "" && biz.CodeOf(err) != c.code {
+			t.Fatalf("CheckValue(%s, %q) = %v, want %q", c.dataType, c.value, err, c.code)
+		}
+	}
+}

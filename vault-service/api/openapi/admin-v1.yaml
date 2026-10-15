@@ -487,7 +487,7 @@ components:
     DataType:
       type: object
       additionalProperties: false
-      required: [dataTypeCode, tokenMode, dataClass, description, manualProtectEnabled, manualRevealEnabled, status, version, updateTime]
+      required: [dataTypeCode, tokenMode, dataClass, valueFormat, description, manualProtectEnabled, manualRevealEnabled, status, version, updateTime]
       properties:
         dataTypeCode:
           $ref: '#/components/schemas/UppercaseCode'
@@ -495,6 +495,10 @@ components:
           $ref: '#/components/schemas/TokenMode'
         dataClass:
           $ref: '#/components/schemas/DataClass'
+        valueFormat:
+          $ref: '#/components/schemas/ValueFormat'
+        valuePattern:
+          $ref: '#/components/schemas/ValuePattern'
         description:
           type: string
         manualProtectEnabled:
@@ -512,6 +516,9 @@ components:
     CreateDataTypeRequest:
       type: object
       additionalProperties: false
+      description: >-
+        Creates an ACTIVE data type. valueFormat defaults to TEXT. valuePattern is required for REGEX and forbidden otherwise.
+        sampleValues are required (at least one) for REGEX and are validated, then discarded: never stored, logged or included in snapshots.
       required: [dataTypeCode, tokenMode, dataClass, description, manualProtectEnabled, manualRevealEnabled, reason]
       properties:
         dataTypeCode:
@@ -520,6 +527,12 @@ components:
           $ref: '#/components/schemas/TokenMode'
         dataClass:
           $ref: '#/components/schemas/DataClass'
+        valueFormat:
+          $ref: '#/components/schemas/ValueFormat'
+        valuePattern:
+          $ref: '#/components/schemas/ValuePattern'
+        sampleValues:
+          $ref: '#/components/schemas/SampleValues'
         description:
           type: string
           minLength: 1
@@ -533,6 +546,10 @@ components:
     UpdateDataTypeRequest:
       type: object
       additionalProperties: false
+      description: >-
+        Omitting valueFormat keeps the current format and pattern (compatible with callers that predate it);
+        sending it replaces both. sampleValues are required when the result is REGEX and the format switched to REGEX
+        or the pattern changed; they are validated, then discarded. Changes apply only to later writes.
       required: [expectedVersion, dataClass, description, manualProtectEnabled, manualRevealEnabled, status, reason]
       properties:
         expectedVersion:
@@ -540,6 +557,12 @@ components:
           minimum: 1
         dataClass:
           $ref: '#/components/schemas/DataClass'
+        valueFormat:
+          $ref: '#/components/schemas/ValueFormat'
+        valuePattern:
+          $ref: '#/components/schemas/ValuePattern'
+        sampleValues:
+          $ref: '#/components/schemas/SampleValues'
         description:
           type: string
           minLength: 1
@@ -552,6 +575,21 @@ components:
           $ref: '#/components/schemas/EntryStatus'
         reason:
           $ref: '#/components/schemas/Reason'
+    ValueFormat:
+      type: string
+      enum: [TEXT, JSON, REGEX]
+      description: TEXT accepts any value; JSON requires a single JSON object; REGEX requires a whole-value match of valuePattern.
+    ValuePattern:
+      type: string
+      minLength: 1
+      maxLength: 256
+      description: RE2 pattern without anchors, matched against the whole value; present only for REGEX.
+    SampleValues:
+      type: array
+      maxItems: 5
+      items:
+        type: string
+        maxLength: 4096
     DataTypeListResponse:
       type: object
       additionalProperties: false
@@ -815,7 +853,7 @@ components:
           properties:
             title: {const: Bad Request}
             code:
-              enum: [INVALID_REQUEST, VALUE_TOO_LARGE, UNSUPPORTED_DATA_TYPE]
+              enum: [INVALID_REQUEST, VALUE_TOO_LARGE, UNSUPPORTED_DATA_TYPE, VALUE_NOT_JSON_OBJECT, VALUE_PATTERN_MISMATCH, VALUE_PATTERN_INVALID, SAMPLE_VALUE_INVALID]
     ErrorAccessDenied:
       allOf:
         - $ref: '#/components/schemas/ErrorResponse'

@@ -8,6 +8,11 @@ paths:
     post:
       operationId: protectVaultRecord
       summary: Protect a UTF-8 value and return its opaque Vault Token.
+      description: >-
+        The value must satisfy the data type's value format before any record is created:
+        TEXT accepts any value, JSON requires a single JSON object (no duplicate keys, no trailing content),
+        REGEX requires a whole-value match of the configured RE2 pattern. Vault validates but never normalizes.
+        The check also applies to an idempotent replay, so a replay whose value no longer satisfies the current format is rejected.
       x-max-raw-body-bytes: 262144
       parameters:
         - $ref: '#/components/parameters/XCallerService'
@@ -23,7 +28,7 @@ paths:
         '200':
           $ref: '#/components/responses/ProtectSuccess'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/ProtectBadRequest'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '405':
@@ -188,6 +193,8 @@ components:
             - VALUE_TOO_LARGE
             - UNSUPPORTED_DATA_TYPE
             - TOKEN_MODE_NOT_ALLOWED
+            - VALUE_NOT_JSON_OBJECT
+            - VALUE_PATTERN_MISMATCH
             - ACCESS_DENIED
             - TOKEN_NOT_FOUND
             - METHOD_NOT_ALLOWED
@@ -221,6 +228,22 @@ components:
             title: {const: Bad Request}
             code: {const: VALUE_TOO_LARGE}
             detail: {const: 值超过32KiB限制}
+    ErrorValueNotJSONObject:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Bad Request}
+            code: {const: VALUE_NOT_JSON_OBJECT}
+            detail: {const: 值不是合法的JSON对象}
+    ErrorValuePatternMismatch:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Bad Request}
+            code: {const: VALUE_PATTERN_MISMATCH}
+            detail: {const: 值不符合数据类型的正则}
     ErrorUnsupportedDataType:
       allOf:
         - $ref: '#/components/schemas/ErrorResponse'
@@ -307,6 +330,14 @@ components:
         - $ref: '#/components/schemas/ErrorValueTooLarge'
         - $ref: '#/components/schemas/ErrorUnsupportedDataType'
         - $ref: '#/components/schemas/ErrorTokenModeNotAllowed'
+    ProtectErrorBadRequest:
+      oneOf:
+        - $ref: '#/components/schemas/ErrorInvalidRequest'
+        - $ref: '#/components/schemas/ErrorValueTooLarge'
+        - $ref: '#/components/schemas/ErrorUnsupportedDataType'
+        - $ref: '#/components/schemas/ErrorTokenModeNotAllowed'
+        - $ref: '#/components/schemas/ErrorValueNotJSONObject'
+        - $ref: '#/components/schemas/ErrorValuePatternMismatch'
     ErrorInternalFailure:
       oneOf:
         - $ref: '#/components/schemas/ErrorIntegrityCheckFailed'
@@ -345,6 +376,17 @@ components:
             $ref: '#/components/schemas/RevealResponse'
     BadRequest:
       $ref: '#/components/responses/ErrorBadRequest'
+    ProtectBadRequest:
+      description: A stable 400 Protect error response, including value format violations.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProtectErrorBadRequest'
     AccessDenied:
       $ref: '#/components/responses/ErrorAccessDenied'
     TokenNotFound:

@@ -21,6 +21,7 @@ type Loader interface {
 type Snapshot struct {
 	version   string
 	dataTypes map[string]biz.DataType
+	rules     map[string]biz.ValueRule
 	decisions map[decisionKey]struct{}
 }
 
@@ -36,11 +37,13 @@ func Build(state biz.PolicyState) *Snapshot {
 	s := &Snapshot{
 		version:   biz.PolicyVersionLabel(state.Version),
 		dataTypes: make(map[string]biz.DataType, len(state.DataTypes)),
+		rules:     make(map[string]biz.ValueRule, len(state.DataTypes)),
 		decisions: make(map[decisionKey]struct{}, len(state.Rules)),
 	}
 	for _, dataType := range state.DataTypes {
 		if dataType.Status == biz.ActiveStatus {
 			s.dataTypes[dataType.Code] = dataType
+			s.rules[dataType.Code] = compileRule(dataType)
 		}
 	}
 	for _, rule := range state.Rules {
@@ -70,6 +73,29 @@ func (s *Snapshot) Version() string { return s.version }
 func (s *Snapshot) DataType(code string) (biz.DataType, bool) {
 	d, ok := s.dataTypes[code]
 	return d, ok
+}
+
+// CheckValue 按快照中预编译的取值规则校验原值。
+func (s *Snapshot) CheckValue(dataType string, value []byte) error {
+	rule, ok := s.rules[dataType]
+	if !ok {
+		return biz.NewError(biz.UnsupportedDataType)
+	}
+	return rule.Check(value)
+}
+
+// compileRule 编译数据类型的取值规则；库中规则无法编译（保存时已校验，正常不会发生）时返回零值规则，
+// 该类型的 Protect 一律失败关闭，其他类型不受影响。未设置值格式等同列默认值 TEXT。
+func compileRule(dataType biz.DataType) biz.ValueRule {
+	format := dataType.ValueFormat
+	if format == "" {
+		format = biz.TextFormat
+	}
+	rule, err := biz.CompileValueRule(format, dataType.ValuePattern)
+	if err != nil {
+		return biz.ValueRule{}
+	}
+	return rule
 }
 
 // Refresher 持有当前快照并定时全量刷新；对外以 biz.Authorizer 使用。
@@ -153,3 +179,8 @@ func (r *Refresher) Version() string { return r.snapshot().Version() }
 
 // DataType 委托当前快照。
 func (r *Refresher) DataType(code string) (biz.DataType, bool) { return r.snapshot().DataType(code) }
+
+// CheckValue 委托当前快照。
+func (r *Refresher) CheckValue(dataType string, value []byte) error {
+	return r.snapshot().CheckValue(dataType, value)
+}

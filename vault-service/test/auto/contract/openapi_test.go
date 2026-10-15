@@ -191,7 +191,7 @@ func requireProblemSchema(t *testing.T, document *openapi3.T) {
 		t.Fatal("Problem detail must be a non-empty string")
 	}
 	codeSchema := schema.Properties["code"].Value
-	if codeSchema.Pattern != `^[A-Z][A-Z0-9_]{0,63}$` || len(codeSchema.Enum) != 12 {
+	if codeSchema.Pattern != `^[A-Z][A-Z0-9_]{0,63}$` || len(codeSchema.Enum) != 14 {
 		t.Fatalf("Problem code constraints = pattern %q enum %v", codeSchema.Pattern, codeSchema.Enum)
 	}
 	requestIDSchema := schema.Properties["requestId"].Value
@@ -299,7 +299,13 @@ func requireErrorResponseMappings(t *testing.T, document *openapi3.T) {
 				}
 				t.Fatalf("%s %s is missing", path, status)
 			}
-			requireErrorVariants(t, response, cloneErrorCodes(codes), status)
+			expected := cloneErrorCodes(codes)
+			if status == "400" && path == "/vault/v1/records/protect" {
+				// 只有 Protect 校验值格式。
+				expected["VALUE_NOT_JSON_OBJECT"] = "值不是合法的JSON对象"
+				expected["VALUE_PATTERN_MISMATCH"] = "值不符合数据类型的正则"
+			}
+			requireErrorVariants(t, response, expected, status)
 		}
 	}
 }

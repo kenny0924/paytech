@@ -42,6 +42,19 @@ func TestAdminOpenAPIRequestBodiesAreStrict(t *testing.T) {
 	requireObjectSchema(t, document, "ManualEvent", []string{"requestId", "actorId", "action", "dataTypeCode", "reasonCode", "ticketRef", "outcome", "resultCode", "createTime"})
 	requireUTF8ByteLimit(t, document, "ManualProtectRequest", "value", 32768)
 	requireEnum(t, document, "UpdateDataTypeRequest", "status", "ACTIVE", "DISABLED")
+	requireObjectSchema(t, document, "DataType", []string{"dataTypeCode", "tokenMode", "dataClass", "valueFormat", "description", "manualProtectEnabled", "manualRevealEnabled", "status", "version", "updateTime"})
+	for _, name := range []string{"CreateDataTypeRequest", "UpdateDataTypeRequest"} {
+		properties := document.Components.Schemas[name].Value.Properties
+		if properties["valueFormat"] == nil || properties["valuePattern"] == nil || properties["sampleValues"] == nil {
+			t.Fatalf("%s must accept valueFormat, valuePattern and sampleValues", name)
+		}
+	}
+	requireEnumValues(t, document.Components.Schemas["ValueFormat"].Value.Enum, "TEXT", "JSON", "REGEX")
+	for _, name := range []string{"DataType", "PolicyChange"} {
+		if schema := document.Components.Schemas[name]; schema != nil && schema.Value.Properties["sampleValues"] != nil {
+			t.Fatalf("%s must never expose sampleValues", name)
+		}
+	}
 
 	update := document.Components.Schemas["UpdateDataTypeRequest"].Value
 	if update.Properties["tokenMode"] != nil || update.Properties["dataTypeCode"] != nil {
@@ -56,4 +69,16 @@ func TestAdminOpenAPIRequestBodiesAreStrict(t *testing.T) {
 	manual := requireOperation(t, document, "/vault/v1/admin/manual/protect", "post")
 	requireHeader(t, manual, "Idempotency-Key", true)
 	requireResponses(t, manual, "200", "400", "403", "409", "500", "503")
+}
+
+func requireEnumValues(t *testing.T, actual []any, expected ...string) {
+	t.Helper()
+	if len(actual) != len(expected) {
+		t.Fatalf("enum = %v, want %v", actual, expected)
+	}
+	for i, value := range expected {
+		if actual[i] != value {
+			t.Fatalf("enum = %v, want %v", actual, expected)
+		}
+	}
 }

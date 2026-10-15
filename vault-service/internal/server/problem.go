@@ -33,7 +33,8 @@ type problemBody struct {
 // statusFor 把错误码映射为 HTTP 状态码。
 func statusFor(code biz.ErrorCode) int {
 	switch code {
-	case biz.InvalidRequest, biz.ValueTooLarge, biz.UnsupportedDataType, biz.TokenModeNotAllowed:
+	case biz.InvalidRequest, biz.ValueTooLarge, biz.UnsupportedDataType, biz.TokenModeNotAllowed,
+		biz.ValueNotJSONObject, biz.ValuePatternMismatch, biz.ValuePatternInvalid, biz.SampleValueInvalid:
 		return http.StatusBadRequest
 	case biz.AccessDenied:
 		return http.StatusForbidden

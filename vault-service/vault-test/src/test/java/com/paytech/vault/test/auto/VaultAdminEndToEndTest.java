@@ -71,6 +71,55 @@ class VaultAdminEndToEndTest {
         }
     }
 
+    @Test
+    void test_valueFormatRoundTripAndManualProtectValidation() throws Exception {
+        try (var database = new VaultDatabaseFixture(); var server = GoVaultProcess.start(database)) {
+            String dataType = database.type("ADMIN_PHONE");
+            server.withAdminClient(admin -> {
+                var body = createType(dataType);
+                body.setValueFormat("REGEX");
+                body.setValuePattern("\\+[1-9][0-9]{7,14}");
+                body.setSampleValues(List.of("+971500000001"));
+                var created = database.call(() -> admin.createDataType(database.operator(), body));
+                assertEquals("REGEX", created.getDataType().getValueFormat());
+                assertEquals("\\+[1-9][0-9]{7,14}", created.getDataType().getValuePattern());
+
+                // 客户端对未设置的 valueFormat/valuePattern/sampleValues 发送 null：Vault 视为未传，保持原格式。
+                var legacy = new UpdateDataTypeRequestBody();
+                legacy.setExpectedVersion(1);
+                legacy.setDataClass("STANDARD");
+                legacy.setDescription("vault-test admin legacy");
+                legacy.setManualProtectEnabled(true);
+                legacy.setManualRevealEnabled(true);
+                legacy.setStatus("ACTIVE");
+                legacy.setReason("e2e");
+                var kept = database.call(() -> admin.updateDataType(database.operator(), dataType, legacy));
+                assertEquals("REGEX", kept.getDataType().getValueFormat());
+                assertEquals("\\+[1-9][0-9]{7,14}", kept.getDataType().getValuePattern());
+
+                var switched = new UpdateDataTypeRequestBody();
+                switched.setExpectedVersion(2);
+                switched.setDataClass("STANDARD");
+                switched.setDescription("vault-test admin");
+                switched.setManualProtectEnabled(true);
+                switched.setManualRevealEnabled(true);
+                switched.setStatus("ACTIVE");
+                switched.setReason("e2e");
+                switched.setValueFormat("REGEX");
+                switched.setValuePattern("[0-9]{4}");
+                VaultResponseChecker.failure("SAMPLE_VALUE_INVALID",
+                    () -> database.call(() -> admin.updateDataType(database.operator(), dataType, switched)));
+            });
+
+            // 新类型在下一次刷新后生效；不符合正则的人工加密被拒绝，符合的成功。
+            server.withAdminClient(admin -> await().atMost(Duration.ofSeconds(3)).pollInterval(Duration.ofMillis(100))
+                .ignoreException(FailException.class).untilAsserted(() -> database.remember(new ProtectResult(database.call(() -> admin.manualProtect(
+                    database.operator(), database.key("format-ok"), manualProtect(dataType, "+971500000002"))).getToken()))));
+            server.withAdminClient(admin -> VaultResponseChecker.failure("VALUE_PATTERN_MISMATCH",
+                () -> database.call(() -> admin.manualProtect(database.operator(), database.key("format-bad"), manualProtect(dataType, "971500000002")))));
+        }
+    }
+
     private static CreateDataTypeRequestBody createType(String code) {
         var body = new CreateDataTypeRequestBody();
         body.setDataTypeCode(code);

@@ -26,6 +26,9 @@ type Authorizer interface {
 
 	// DataType 返回 ACTIVE 数据类型；不存在或已停用返回 false。
 	DataType(code string) (DataType, bool)
+
+	// CheckValue 按数据类型的值格式校验原值；类型不存在返回 UNSUPPORTED_DATA_TYPE。
+	CheckValue(dataType string, value []byte) error
 }
 
 // validateProtect 校验 Protect 输入格式；值超限单独返回 VALUE_TOO_LARGE。

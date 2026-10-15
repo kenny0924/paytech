@@ -15,7 +15,7 @@ import (
 // PolicyAdmin 是策略维护与审计查询用例。
 type PolicyAdmin interface {
 	ListDataTypes(ctx context.Context) ([]biz.DataType, int, error)
-	CreateDataType(ctx context.Context, actor biz.PolicyActor, in biz.DataType) (biz.DataType, int, error)
+	CreateDataType(ctx context.Context, actor biz.PolicyActor, in biz.DataType, samples []string) (biz.DataType, int, error)
 	UpdateDataType(ctx context.Context, actor biz.PolicyActor, in biz.UpdateDataTypeInput) (biz.DataType, int, error)
 	ListAccessRules(ctx context.Context, filter biz.AccessRuleFilter) (biz.Page[biz.AccessRule], error)
 	CreateAccessRule(ctx context.Context, actor biz.PolicyActor, in biz.AccessRule) (biz.AccessRule, int, error)
@@ -69,8 +69,8 @@ func (s *AdminService) CreateDataType(c *gin.Context, actor biz.PolicyActor) err
 	}
 	actor.Reason = *body.Reason
 	in := biz.DataType{Code: *body.DataTypeCode, TokenMode: biz.TokenMode(*body.TokenMode), Class: biz.DataClass(*body.DataClass), Description: *body.Description,
-		ManualProtect: *body.ManualProtectEnabled, ManualReveal: *body.ManualRevealEnabled}
-	created, version, err := s.policy.CreateDataType(c.Request.Context(), actor, in)
+		ManualProtect: *body.ManualProtectEnabled, ManualReveal: *body.ManualRevealEnabled, ValueFormat: biz.ValueFormat(text(body.ValueFormat)), ValuePattern: text(body.ValuePattern)}
+	created, version, err := s.policy.CreateDataType(c.Request.Context(), actor, in, body.SampleValues)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,8 @@ func (s *AdminService) UpdateDataType(c *gin.Context, actor biz.PolicyActor) err
 	}
 	actor.Reason = *body.Reason
 	in := biz.UpdateDataTypeInput{Code: c.Param("dataTypeCode"), ExpectedVersion: *body.ExpectedVersion, Class: biz.DataClass(*body.DataClass), Description: *body.Description,
-		ManualProtect: *body.ManualProtectEnabled, ManualReveal: *body.ManualRevealEnabled, Status: biz.EntryStatus(*body.Status)}
+		ManualProtect: *body.ManualProtectEnabled, ManualReveal: *body.ManualRevealEnabled, Status: biz.EntryStatus(*body.Status),
+		ValueFormat: biz.ValueFormat(text(body.ValueFormat)), ValuePattern: text(body.ValuePattern), SampleValues: body.SampleValues}
 	if !biz.IsCode(in.Code) {
 		return biz.NewError(biz.InvalidRequest)
 	}
@@ -338,7 +339,8 @@ func timeQuery(c *gin.Context, name string) (time.Time, error) {
 }
 
 func dataTypeBody(d biz.DataType) v1.DataTypeBody {
-	return v1.DataTypeBody{DataTypeCode: d.Code, TokenMode: string(d.TokenMode), DataClass: string(d.Class), Description: d.Description, ManualProtectEnabled: d.ManualProtect,
+	return v1.DataTypeBody{DataTypeCode: d.Code, TokenMode: string(d.TokenMode), DataClass: string(d.Class), ValueFormat: string(d.ValueFormat), ValuePattern: d.ValuePattern,
+		Description: d.Description, ManualProtectEnabled: d.ManualProtect,
 		ManualRevealEnabled: d.ManualReveal, Status: string(d.Status), Version: d.Version, UpdateTime: d.UpdateTime.UTC()}
 }
 

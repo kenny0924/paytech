@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { ApiError } from '../api/session.ts';
 import {
-  decodeDataTypeList, decodeDataTypeMutation, decodeProtect, decodeReveal, manualDataTypes, manualEventFilters, manualPath, snapshotRows,
-  ticketPattern,
+  decodeDataTypeList, decodeDataTypeMutation, decodeProtect, decodeReveal, isJsonObjectText, manualDataTypes, manualEventFilters, manualPath,
+  sampleValuesRequired, snapshotRows, ticketPattern, valueFormatBody, withValueFormatMessage,
 } from './vault.ts';
 import type { VaultDataType } from './vault.ts';
 
 const type = (code: string, overrides: Partial<VaultDataType> = {}): VaultDataType => ({
   dataTypeCode: code, tokenMode: 'STABLE', dataClass: 'STANDARD', description: 'd', manualProtectEnabled: true,
-  manualRevealEnabled: true, status: 'ACTIVE', version: 1, updateTime: '2026-10-15T00:00:00Z', ...overrides,
+  manualRevealEnabled: true, status: 'ACTIVE', version: 1, updateTime: '2026-10-15T00:00:00Z', valueFormat: 'TEXT', ...overrides,
 });
 
 test('manual data types hide SECRET without secret permission and respect switches and status', () => {
@@ -55,4 +56,52 @@ test('manual event filters convert the time range and trim values', () => {
   assert.ok(filters.from < filters.to);
   assert.throws(() => manualEventFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-02T00:00:00', end: '2026-10-01T00:00:00' } }));
   assert.deepEqual(manualEventFilters({}), {});
+});
+
+test('data type decoders default a missing value format to TEXT and reject unknown formats', () => {
+  const { valueFormat: _omitted, ...legacy } = type('A_V1');
+  assert.equal(decodeDataTypeList({ currentPolicyVersion: 2, items: [legacy] }).items[0].valueFormat, 'TEXT');
+  assert.equal(decodeDataTypeMutation({ dataType: legacy, policyVersion: 3 }, 'A_V1').dataType.valueFormat, 'TEXT');
+  const regex = decodeDataTypeList({ currentPolicyVersion: 2, items: [type('B_V1', { valueFormat: 'REGEX', valuePattern: '[0-9]+' })] }).items[0];
+  assert.deepEqual([regex.valueFormat, regex.valuePattern], ['REGEX', '[0-9]+']);
+  assert.throws(() => decodeDataTypeList({ currentPolicyVersion: 2, items: [{ ...type('A_V1'), valueFormat: 'XML' }] }));
+  assert.throws(() => decodeDataTypeList({ currentPolicyVersion: 2, items: [type('A_V1', { valueFormat: 'REGEX' })] }));
+  assert.throws(() => decodeDataTypeList({ currentPolicyVersion: 2, items: [{ ...type('A_V1'), valuePattern: 1 }] }));
+  // BFF 把空正则序列化为 null：视为无正则，解码后不保留该字段。
+  const nullPattern = decodeDataTypeList({ currentPolicyVersion: 2, items: [{ ...type('A_V1'), valuePattern: null }] }).items[0];
+  assert.equal('valuePattern' in nullPattern, false);
+  assert.throws(() => decodeDataTypeList({ currentPolicyVersion: 2, items: [type('A_V1', { valueFormat: 'REGEX', valuePattern: null as unknown as string })] }));
+});
+
+test('samples are required only when the result is REGEX and new, switched or the pattern changed', () => {
+  const regex = type('A_V1', { valueFormat: 'REGEX', valuePattern: '[0-9]+' });
+  assert.equal(sampleValuesRequired(null, 'REGEX', '[0-9]+'), true);
+  assert.equal(sampleValuesRequired(null, 'TEXT', undefined), false);
+  assert.equal(sampleValuesRequired(type('A_V1'), 'REGEX', '[0-9]+'), true);
+  assert.equal(sampleValuesRequired(regex, 'REGEX', '[0-9]+'), false);
+  assert.equal(sampleValuesRequired(regex, 'REGEX', '[0-9]{2}'), true);
+  assert.equal(sampleValuesRequired(regex, 'JSON', undefined), false);
+});
+
+test('value format body sends pattern and non-empty samples only for REGEX', () => {
+  assert.deepEqual(valueFormatBody('JSON', '[0-9]+', ['1']), { valueFormat: 'JSON' });
+  assert.deepEqual(valueFormatBody('REGEX', '[0-9]+', ['', undefined]), { valueFormat: 'REGEX', valuePattern: '[0-9]+' });
+  assert.deepEqual(valueFormatBody('REGEX', '[0-9]+', [' 1', '', '22']), { valueFormat: 'REGEX', valuePattern: '[0-9]+', sampleValues: [' 1', '22'] });
+});
+
+test('JSON precheck requires an object root', () => {
+  assert.ok(isJsonObjectText('{"a":{"b":[1]}}'));
+  assert.ok(isJsonObjectText(' {} '));
+  for (const text of ['[]', 'null', '"x"', '1', '{"a":1} x', '{a:1}', '']) assert.ok(!isJsonObjectText(text), text);
+});
+
+test('value format error codes show fixed messages without echoing the response detail', () => {
+  const mapped = withValueFormatMessage(new ApiError(400, 'VALUE_PATTERN_MISMATCH', 'req-1', 'raw value 13800000000')) as ApiError;
+  assert.deepEqual([mapped.message, mapped.code, mapped.requestId, mapped.status], ['值不符合数据类型的正则', 'VALUE_PATTERN_MISMATCH', 'req-1', 400]);
+  const other = new ApiError(409, 'VERSION_CONFLICT');
+  assert.equal(withValueFormatMessage(other), other);
+});
+
+test('snapshot rows label value format fields', () => {
+  assert.deepEqual(snapshotRows({ valueFormat: 'TEXT' }, { valueFormat: 'REGEX', valuePattern: '[0-9]+' }).map(r => r.label), ['值格式', '正则']);
 });

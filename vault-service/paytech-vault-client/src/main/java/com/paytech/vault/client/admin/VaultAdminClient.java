@@ -43,6 +43,7 @@ public interface VaultAdminClient {
      * @param operatorId 当前运营账号 ID
      * @param body 新建内容
      * @return 保存后的数据类型与新策略版本；编码已存在时抛出 POLICY_ENTRY_EXISTS
+     *         <li>值格式与正则组合无效时抛出 VALUE_PATTERN_INVALID，样例缺失或不通过时抛出 SAMPLE_VALUE_INVALID。</li>
      */
     DataTypeResponseBody createDataType(String operatorId, CreateDataTypeRequestBody body);
 
@@ -53,6 +54,7 @@ public interface VaultAdminClient {
      * @param dataTypeCode 数据类型编码
      * @param body 修改内容
      * @return 保存后的数据类型与新策略版本；版本过期时抛出 POLICY_VERSION_CONFLICT
+     *         <li>值格式与正则组合无效时抛出 VALUE_PATTERN_INVALID，样例缺失或不通过时抛出 SAMPLE_VALUE_INVALID。</li>
      */
     DataTypeResponseBody updateDataType(String operatorId, String dataTypeCode, UpdateDataTypeRequestBody body);
 
@@ -128,6 +130,7 @@ public interface VaultAdminClient {
      * @param submissionId 页面提交 ID，作为 Vault 的 Idempotency-Key；同一提交重放返回同一 Token
      * @param body 加密内容与本次路由允许的数据级别
      * @return Token，只向操作人展示一次
+     *         <li>原值不符合数据类型的值格式时抛出 VALUE_NOT_JSON_OBJECT 或 VALUE_PATTERN_MISMATCH。</li>
      */
     ManualProtectResponseBody manualProtect(String operatorId, String submissionId, ManualProtectRequestBody body);
 
