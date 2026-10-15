@@ -117,13 +117,12 @@ def main():
         if row.get_by_text("本环境未启用该服务商").count():
             check("AC-14", "本环境未启用服务商时「测试发送」不可用", test_send.is_disabled())
         else:
+            # 合成数据不调用真实服务商：只核对弹窗内容，不点发送
             test_send.click()
             dialog = page.get_by_role("dialog")
-            dialog.get_by_label("收件邮箱").fill("ops@example.com")
-            dialog.get_by_label("原因").fill("浏览器验收")
-            button(dialog, "发送").click()
-            check("AC-14", "测试发送后在弹窗内显示结果", visible(dialog.locator(".ant-alert")))
-            shot(page, "06-test-send")
+            check("AC-14", "测试发送弹窗说明不生成发送记录、只记审计",
+                  visible(dialog.get_by_label("收件邮箱")) and visible(dialog.get_by_text("不生成发送记录")))
+            shot(page, "06-test-send-dialog")
             button(dialog.locator(".ant-modal-footer"), "关闭").click()
 
         # 启用

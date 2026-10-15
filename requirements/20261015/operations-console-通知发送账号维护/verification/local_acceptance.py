@@ -113,10 +113,12 @@ def main():
     enabled = send("PATCH", f"{path}/status", {"status": "ACTIVE", "expectedVersion": 3, "reason": "阶段 5 联调"})
     check("AC-05", "配置完整后可以启用", enabled["version"] == 4 and item()["status"] == "ACTIVE")
 
-    # AC-08 测试发送：本机未启用 SES 适配器，按合同返回 503
-    code, body = status_of(lambda: send("POST", f"{path}/test-send", {"email": "ops@example.com", "reason": "阶段 5 联调"}))
-    check("AC-08", f"本机未启用 SES 时测试发送返回 503（{code} {body.get('code')}）",
-          code == 503 and item()["adapterConfigured"] is False)
+    # AC-08 测试发送：未启用 SES 的环境按合同返回 503；已启用时合成数据不调用 SES（只核对适配器已注册）
+    if item()["adapterConfigured"]:
+        check("AC-08", "本环境已注册 SES 适配器（合成数据不调用 SES，真实发送待录入真实账号后验证）", True)
+    else:
+        code, body = status_of(lambda: send("POST", f"{path}/test-send", {"email": "ops@example.com", "reason": "阶段 5 联调"}))
+        check("AC-08", f"未启用 SES 时测试发送返回 503（{code} {body.get('code')}）", code == 503)
 
     # AC-10 审计
     def audited():

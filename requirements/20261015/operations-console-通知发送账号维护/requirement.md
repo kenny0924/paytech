@@ -1,6 +1,6 @@
 # Operations 通知发送账号维护需求
 
-> 状态：阶段 1 已确认（2026-10-15，Q-01～Q-10 全部按建议），阶段 2 已确认（[analysis.md](./analysis.md)），阶段 3 已确认（[technique.md](./technique.md)），阶段 4 已确认，阶段 5 已完成待确认。确认记录见 [delivery.md](./delivery.md)。
+> 状态：阶段 1 已确认（2026-10-15，Q-01～Q-10 全部按建议），阶段 2 已确认（[analysis.md](./analysis.md)），阶段 3 已确认（[technique.md](./technique.md)），阶段 1—5 已确认，已提交 `0301719`（未推送）；阶段 6—7 已部署 mor-test，待确认。确认记录见 [delivery.md](./delivery.md)。
 
 ## 1. 背景与来源
 

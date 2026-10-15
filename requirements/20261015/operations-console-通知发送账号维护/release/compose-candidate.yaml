@@ -1,0 +1,9 @@
+# 通知发送账号维护：从干净提交 0301719 构建的三个镜像（tag mor-test/<service>:notification-provider-20261015），使用固定 image ID。
+# 叠加在 compose.yaml + compose.applications.yaml + Vault 值格式需求的 compose-candidate.yaml 之后。
+services:
+  platform-support-service:
+    image: sha256:070ccc410ffb06d7d7fca141d9059576d18926b1b60e79650762c4134c536888
+  operations-console-bff:
+    image: sha256:ae568bd0dacda69faeccac76c70c4d7f5bb34d38be109ca673cc0d45b80566c1
+  operations-console-web:
+    image: sha256:6854f89078cc3a7889a3702afe744a3847e5e67955a68246befd0e63cc0e7cb7

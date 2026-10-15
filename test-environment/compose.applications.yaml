@@ -130,9 +130,10 @@ services:
       CLIENT_AUTHENTICATION_ENABLED: "true"
       CLIENT_AUTHENTICATION_ISSUER: https://customer-auth.mor-test.local
       CLIENT_AUTHENTICATION_PUBLIC_ORIGIN: https://localhost:28443
-      # 认证邮件经 Delivery 发送（SMTP 已移除），开启 Client 认证须开启通知；test 未配置 SES，认证邮件发送失败只计指标。
+      # 认证邮件经 Delivery 发送（SMTP 已移除），开启 Client 认证须开启通知。
+      # SES 适配器已开启；账号的区域、发件地址与密钥在运营后台维护，SES_PRIMARY 录入发件地址与密钥前认证邮件发送失败只计指标。
       NOTIFICATION_ENABLED: "true"
-      NOTIFICATION_SES_ENABLED: "false"
+      NOTIFICATION_SES_ENABLED: "true"
       TENANT_PROJECTION_ENABLED: "true"
       FILES_ONBOARDING_ENABLED: "true"
       FILES_ONBOARDING_STORAGE_PROVIDER: MINIO

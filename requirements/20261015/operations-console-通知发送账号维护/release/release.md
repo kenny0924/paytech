@@ -1,6 +1,6 @@
-# Operations 通知发送账号维护：mor-test 发布清单（评审稿）
+# Operations 通知发送账号维护：mor-test 发布记录
 
-阶段 6 发布准备，只读核对已完成（2026-10-15），**尚未执行任何 test 变更**。
+阶段 6/7。用户 2026-10-15 回复"可以"（D1 A、D2 A）后于 2026-10-16（UTC 2026-10-15 晚）执行，结果见第 6 节。当前状态以 [CURRENT_IMPLEMENTATION.md](../../../../agent-docs/CURRENT_IMPLEMENTATION.md) 为准。
 
 **本次：mor-test 的 Platform、Operations BFF、Operations Web 换成「当前 main + 本需求」构建的镜像；`mor_platform` 加 6 列、补 `SES_PRIMARY` 类型与区域（1 行）、登记 56 行并启用；`mor_vault` 加 1 条规则；Platform 的 Compose 开启 SES 适配器；经 `http://localhost:28080` 验收后清理验收数据。**
 
@@ -59,4 +59,18 @@
 
 ## 6. 执行记录
 
-（待执行）
+| 步骤 | 结果 |
+|---|---|
+| 提交（D1 A） | 本地提交 `0301719`（108 个文件，只含本需求；其他会话的 Webhook、风控评估查询等未提交改动未纳入；未推送）。提交前 Payment 会话把 `4304340` 拆成 `35f0554`、`c542498`，本提交在其上 |
+| 1 复核 | 三个运行镜像与第 2 节一致；冲突仍为 0 |
+| 2 备份 | `~/Code-MoR-backups/20261015-notification-provider-test/20261015T195944Z/`（0700/0600，SHA256SUMS）：`mor_platform` 账号表与 6 张登记表数据、`mor_vault` 规则与策略变更表、Compose 副本、三个容器 inspect |
+| 3 构建 | 干净 worktree `0301719`，Platform、BFF 与依赖 API 同 reactor 离线打包；Platform jar SHA-256 前缀 `35e5d947`、BFF `ca24e88c`；Web 构建 lock 与主工作区一致；健康探针现编译。镜像 `notification-provider-20261015`：Platform `sha256:070ccc41…`、BFF `sha256:ae568bd0…`、Web `sha256:6854f890…`，ID 见 [compose-candidate.yaml](./compose-candidate.yaml)；制品在 `test-environment/artifacts/notification-provider-20261015/`（已忽略） |
+| 4 数据库 | DDL 完成；DML 试跑 1 → 回滚，正式 1 行（`SES_PRIMARY` → `AMAZON_SES` / `me-central-1`，v2；DML 文件不含 COMMIT，第一次正式执行因未提交而回滚，随后显式 COMMIT）；注册块试跑 56 → 回滚 0 → 正式 56，按钮中文名正常 |
+| 5 Vault | 经管理接口新增 `platform-support-service / PROTECT / NOTIFICATION_PROVIDER_CREDENTIAL_V1 / NOTIFICATION_PROVIDER_SETUP`，策略版本 11 → 12 |
+| 6 Platform | Compose `NOTIFICATION_SES_ENABLED` 改为 `"true"` 并更新注释；20:02:24Z 开始，20:02:49Z healthy（中断约 25 秒），启动日志无 ERROR |
+| 7 BFF / Web | BFF 20:02:55Z–20:03:12Z、Web 20:03:12Z–20:03:24Z，均 healthy；入口 `index.html` 引用新构建 `index-CVn1yT7u.js` |
+| 8 启用 | [test-activate.sql](./test-activate.sql) 试跑回滚后提交：路由 4、按钮 2、授权 1、角色 1；PLATFORM_ADMIN v26；ACTIVE 路由 224 → 228 |
+| 9 验收（D2 A） | 接口 **14/14**（录入密钥经真实 Vault Protect；SES 适配器已注册，合成数据不调用 SES）；浏览器 **11/11**（[截图](../assets/stage7/)，测试发送只核对弹窗不发送）；只读回归 **28 页**无 ≥400 请求、无控制台错误；Platform、BFF、Gateway、Nginx 自验收开始的日志无合成密钥，Platform 无 ERROR |
+| 10 清理 | 删除 `E2E_PROV_` 账号 2 个；账号表只剩 `SES_PRIMARY`（AMAZON_SES、me-central-1、无发件地址与密钥、ACTIVE）；审计事件与 Vault 合成密文保留 |
+
+**当前 test 状态：** Platform / BFF / Web 为 `0301719` 镜像，SES 适配器已开启；运营后台「发送账号」可新建、编辑、录入密钥与测试发送。`SES_PRIMARY` 录入真实发件地址与密钥（并在 SES 侧完成发件身份验证）后，注册验证与找回密码邮件即可发出；在此之前与部署前一样发送失败只计指标。回退按第 5 节：Platform `493026bf…` 需配合备份中的 Compose 副本，BFF `aa546ee6…`、Web `e5df9ddc…`。

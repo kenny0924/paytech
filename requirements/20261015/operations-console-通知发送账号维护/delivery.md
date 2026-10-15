@@ -9,8 +9,8 @@
 | 3. 方案、接口与数据设计 | 已确认（[technique.md](./technique.md)、[db](./db/platform-support-service/)、Pencil 07 改造 + 07b～07e） |
 | 4. 研发实现 | 已确认（见下方阶段 4 记录） |
 | 5. 综合验证与本地验收 | 已确认 |
-| 6–7. test 发布准备与部署 | 阶段 6 [发布清单](./release/release.md) 已确认，阶段 7 执行中 |
-| 8. 代码提交与交付归档 | 未开始，提交单独授权 |
+| 6–7. test 发布准备与部署 | 已完成并确认，见 [发布记录](./release/release.md) |
+| 8. 代码提交与交付归档 | 需求代码 `0301719`；发布记录随后提交；未推送 |
 
 ## 确认记录
 
@@ -25,6 +25,8 @@
 | 2026-10-15 | 4→5 | "继续"：确认阶段 4；授权本机 `mor_platform_e2e` 执行 DDL、SES_PRIMARY 补数据、注册与本机启用 SQL，本机 Vault 加 Protect 规则，重新打包重启本机 Platform / BFF，插入合成数据验收并清理 | 阶段 5 本机综合验证 |
 | 2026-10-15 | 5→6 | 回复"1"：确认阶段 5，选择部署到 mor-test | 阶段 6 发布准备：只读核对与发布清单，不执行 test 变更 |
 | 2026-10-15 | 6→7 | "可以"：确认发布清单；D1 A（先本地提交本需求，再从该提交构建；不推送）、D2 A（合成数据验收不调用 SES） | 本地提交本需求；执行阶段 7 的 mor-test 备份、构建、SQL、Vault 规则、Compose 修改与镜像替换、验收与清理；不碰生产 |
+| 2026-10-16 | 7 | 执行：本地提交 `0301719`，备份、构建、DDL / DML / 注册 56 行、Vault 规则、Compose 开启 SES、替换 Platform / BFF / Web、启用 4/2/1/1；接口 14/14、浏览器 11/11、回归 28 页、日志无泄露；验收数据已清理 | 待确认；Compose 修改与发布记录待提交（需授权） |
+| 2026-10-16 | 7→8 | "提交"：确认阶段 7；授权本地提交 Compose 修改、发布记录、阶段 7 截图、验收脚本调整与状态文档 | 本地提交；不推送 |
 ## 阶段 4 研发记录（2026-10-15）
 
 **改动范围**：Platform（API 4 个新接口 + 列表字段、Delivery 适配器按类型注册与 SES 按账号发送、4 个 Web Processor 与 2 个 Delivery 公开 Processor、审计字段、配置收敛）、BFF（4 个转发 + 模型）、Web（发送账号页改造、3 个弹窗）、SQL（schema / PDManer / 测试 DDL / changes / 初始化 DML 的 `SES_PRIMARY` 与 56 行注册块）、文档（[Vault 决定](../../../agent-docs/decisions/2026-10-15-platform-notification-credential-protect.md)、Vault 架构例外、Platform README、SES 需求取代说明）。实现偏差见 [technique.md 第 7 节](./technique.md#7-实现偏差阶段-4)。
