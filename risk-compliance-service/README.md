@@ -85,7 +85,7 @@ Session、Vault/Consumer/网络原值、Secret、Credential 或完整 Payload。
 
 按[需求与设计](../requirements/20261014/risk-支付反欺诈一期/design.md)新增三组内部路由，均不经 Gateway、一期无页面：
 
-- `/payment-risk-assessment/v1/assessments`：Payment 每个支付尝试同步评估一次，返回 `ALLOW/REVIEW/DENY/FAILED/TIMED_OUT` 与认证要求；同一尝试同内容重放返回原结果，内容不同 409，本环境无生效发布 503 `PAYMENT_RISK_NOT_CONFIGURED`。请求体含消费者 IP 与卡指纹，日志为 metadata-only。
+- `/risk-decisions/v1/evaluations`：同步风控点统一评估接口，按 `pointCode` 与输入合同版本区分（当前只登记支付尝试 `PAYMENT_ATTEMPT_RISK` v1，调用方用 `PaymentAttemptRiskInput` 构造请求）。同一业务身份同内容重放返回原结论，内容不同 409；输入不符合合同 422 并指出字段；本环境无生效发布 503 `RISK_DECISION_NOT_CONFIGURED`。认证要求等附加输出由放行结束节点配置。请求含消费者 IP 与卡指纹，日志为 metadata-only。
 - `/risk-lists/v1`：名单与成员维护（主体键规范化、响应脱敏）。
 - `/decision-releases/v1/executions`：执行发布创建、静态校验、回放式影子运行、TEST 一人激活与查询。
 

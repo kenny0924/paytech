@@ -37,11 +37,6 @@ public final class DecisionActionRegistry {
         return INSTANCE;
     }
 
-    /** 结账决策点的规则终态动作，保持原创作目录顺序。 */
-    public List<DecisionPointAuthoringDescriptor.DecisionActionDescriptor> authoringActions() {
-        return DecisionPointAuthoringDescriptor.checkoutPrepare().actions();
-    }
-
     /** 取已注册的终态动作；不区分决策点。 */
     public DecisionPointAuthoringDescriptor.DecisionActionDescriptor require(ActionKey key) {
         DecisionPointAuthoringDescriptor.DecisionActionDescriptor value = byKey.get(key);
@@ -49,11 +44,6 @@ public final class DecisionActionRegistry {
             throw new InvalidParameterException("不支持的决策动作版本");
         }
         return value;
-    }
-
-    /** 结账决策点的持久化终态动作目录必须与内置 Handler 一致。 */
-    public void verifyPersistedCatalog(List<PersistedActionVersion> persisted) {
-        verifyPersistedCatalog(DecisionPointAuthoringDescriptor.checkoutPrepare(), persisted);
     }
 
     /**

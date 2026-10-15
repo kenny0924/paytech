@@ -1,7 +1,10 @@
 package com.paytech.risk.decision.domain.flow;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.paytech.risk.decision.domain.rule.RuleAstValidator.LiteralValue;
 
@@ -18,9 +21,19 @@ public final class DecisionFlow {
         public Graph { nodes = List.copyOf(nodes); edges = List.copyOf(edges); }
     }
 
-    /** 节点配置；布局坐标为整数像素，终态只适用于 END。 */
+    /** 节点配置；布局坐标为整数像素，终态与附加输出只适用于 END，输出按编码排序。 */
     public record Node(String nodeKey, String type, String name, int x, int y, Long ruleSetVersionId,
-        String decisionCode, String reasonCode, String reasonMessage) { }
+        String decisionCode, String reasonCode, String reasonMessage, Map<String, String> outputs) {
+        public Node {
+            outputs = outputs == null ? Map.of() : Collections.unmodifiableMap(new TreeMap<>(outputs));
+        }
+
+        /** 不配置附加输出的节点。 */
+        public Node(String nodeKey, String type, String name, int x, int y, Long ruleSetVersionId,
+            String decisionCode, String reasonCode, String reasonMessage) {
+            this(nodeKey, type, name, x, y, ruleSetVersionId, decisionCode, reasonCode, reasonMessage, Map.of());
+        }
+    }
 
     /** 同源条件线按 priority 排序；ELSE/无条件为零且 condition 为空。 */
     public record Edge(String edgeKey, String sourceNodeKey, String targetNodeKey, String type,

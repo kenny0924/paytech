@@ -219,7 +219,7 @@ class RiskModuleBoundaryAutoTest {
         }
         Assertions.assertEquals(Set.of("/internal/due-diligence/material-requirements", "/client-onboarding-review", "/client-onboarding-admin",
             "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows",
-            "/decision-variables", "/risk-lists", "/payment-risk-assessment"), metadataOnly);
+            "/decision-variables", "/risk-lists", "/risk-decisions"), metadataOnly);
         Assertions.assertEquals("${RISK_DECISION_ENVIRONMENT}", properties.getProperty("decision.runtime.environment"));
         Assertions.assertEquals("${RISK_SNOWFLAKE_REGION_ID}",
             properties.getProperty("decision.identifier.region-id"));

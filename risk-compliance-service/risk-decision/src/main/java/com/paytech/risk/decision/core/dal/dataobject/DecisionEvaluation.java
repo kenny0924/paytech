@@ -1,9 +1,10 @@
 package com.paytech.risk.decision.core.dal.dataobject;
 
+import java.time.Instant;
+
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.EvaluationMode;
 import com.paytech.risk.decision.domain.enums.TechnicalStatus;
-import java.time.Instant;
 
 import lombok.Data;
 

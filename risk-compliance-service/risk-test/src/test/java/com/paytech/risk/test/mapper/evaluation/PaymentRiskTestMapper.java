@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -57,6 +58,13 @@ public class PaymentRiskTestMapper {
         return rows.isEmpty() ? null : rows.getFirst();
     }
 
+    /** 正式评估对应的交易评估 ID。 */
+    public long assessmentIdOf(long evaluationId) {
+        Long id = jdbc.queryForObject("SELECT assessment_id FROM t_transaction_risk_assessment WHERE evaluation_id=?",
+            Long.class, evaluationId);
+        return id == null ? 0 : id;
+    }
+
     /** 读取评估。 */
     public Map<String, Object> evaluation(long evaluationId) {
         List<Map<String, Object>> rows = jdbc.queryForList("SELECT * FROM t_decision_evaluation WHERE evaluation_id=?",
@@ -68,6 +76,15 @@ public class PaymentRiskTestMapper {
     public List<Map<String, Object>> traces(long evaluationId, String traceType) {
         return jdbc.queryForList("SELECT * FROM t_evaluation_rule_trace WHERE evaluation_id=? AND trace_type=? "
             + "ORDER BY execution_sequence", evaluationId, traceType);
+    }
+
+    /** 读取一次评估中各规则的命中结果，按规则编码。 */
+    public Map<String, Boolean> ruleHits(long evaluationId) {
+        Map<String, Boolean> hits = new TreeMap<>();
+        jdbc.query("SELECT r.rule_code, t.result_value FROM t_evaluation_rule_trace t JOIN t_risk_rule r "
+            + "ON r.rule_id=t.rule_id WHERE t.evaluation_id=? AND t.trace_type='RULE'",
+            rs -> { hits.put(rs.getString(1), rs.getBoolean(2)); }, evaluationId);
+        return hits;
     }
 
     /** 读取一次评估的 Feature 结果。 */
@@ -111,6 +128,13 @@ public class PaymentRiskTestMapper {
     public List<Map<String, Object>> shadowSamples(long shadowRunId) {
         return jdbc.queryForList("SELECT * FROM t_decision_evaluation WHERE shadow_run_id=? ORDER BY evaluation_id",
             shadowRunId);
+    }
+
+    /** 读取影子批次补偿任务最近一次可重试失败的错误代码；尚未失败时为空。 */
+    public String shadowRunRetryError(long shadowRunId) {
+        List<String> codes = jdbc.queryForList("SELECT last_error_code FROM t_compensation_event WHERE event_type="
+            + "'DECISION_SHADOW_RUN' AND event_key=? AND execute_status='ERROR'", String.class, Long.toString(shadowRunId));
+        return codes.isEmpty() ? null : codes.getFirst();
     }
 
     /** 读取名单成员行。 */
@@ -174,6 +198,7 @@ public class PaymentRiskTestMapper {
 
     /** 支付决策点的流程及其版本、节点、连线。 */
     private void deleteFlows() {
+        jdbc.update("DELETE FROM t_decision_flow_end_output WHERE flow_version_id IN (" + PAYMENT_FLOW_VERSION_IDS + ")");
         jdbc.update("DELETE FROM t_decision_flow_edge WHERE flow_version_id IN (" + PAYMENT_FLOW_VERSION_IDS + ")");
         jdbc.update("DELETE FROM t_decision_flow_node WHERE flow_version_id IN (" + PAYMENT_FLOW_VERSION_IDS + ")");
         jdbc.update("DELETE FROM t_decision_flow_version WHERE flow_id IN (SELECT flow_id FROM t_decision_flow "

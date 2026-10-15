@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.paytech.risk.decision.domain.flow.DeleteFlowContext;
 import com.paytech.risk.decision.domain.flow.SaveFlowContext;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowEdgeRepository;
+import com.paytech.risk.decision.domainservice.repository.DecisionFlowEndOutputRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowNodeRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowRootRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowVersionRepository;
@@ -17,6 +18,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class DecisionFlowManagementServiceImpl implements DecisionFlowManagementService {
     private final DecisionFlowEdgeRepository edges;
+    private final DecisionFlowEndOutputRepository outputs;
     private final DecisionFlowNodeRepository nodes;
     private final DecisionFlowRootRepository roots;
     private final DecisionFlowVersionRepository versions;
@@ -28,6 +30,7 @@ public class DecisionFlowManagementServiceImpl implements DecisionFlowManagement
         versions.insert(context.getVersion());
         context.getNodes().forEach(nodes::insert);
         context.getEdges().forEach(edges::insert);
+        context.getOutputs().forEach(outputs::insert);
         if (!context.isNewFlow()) { roots.advance(context.getRoot(), context.getVersion()); }
     }
 

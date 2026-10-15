@@ -23,6 +23,7 @@ import com.paytech.risk.decision.domain.query.FlowDetailView;
 import com.paytech.risk.decision.domain.variable.VariableFlowConfiguration;
 import com.paytech.risk.decision.domain.variable.VariableRuleConfiguration;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowEdgeRepository;
+import com.paytech.risk.decision.domainservice.repository.DecisionFlowEndOutputRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowNodeRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowRootRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowVersionRepository;
@@ -44,6 +45,7 @@ public class FlowDetailProcessor extends AbstractProcessor<FlowDetailRequest, Fl
     private final DecisionRuleSetService ruleService;
     private final DecisionRuleSetRepository rules;
     private final DecisionFlowEdgeRepository edges;
+    private final DecisionFlowEndOutputRepository outputs;
     private final DecisionFlowGraphAssembler assembler;
     private final DecisionFlowNodeRepository nodes;
     private final DecisionFlowRootRepository roots;
@@ -74,7 +76,8 @@ public class FlowDetailProcessor extends AbstractProcessor<FlowDetailRequest, Fl
         DecisionPoint point = rules.findPoint(root.decisionPointId())
             .orElseThrow(() -> new ErrorException("流程持久化配置不完整或身份不一致"));
         var graph = assembler.assemble(point.pointCode(), root, selected,
-            nodes.findByVersion(selected.flowVersionId()), edges.findByVersion(selected.flowVersionId()));
+            nodes.findByVersion(selected.flowVersionId()), edges.findByVersion(selected.flowVersionId()),
+            outputs.findByVersion(selected.flowVersionId()));
         DecisionFlowVersionRow version = selected;
         List<Reference> refs = graph.nodes().stream().filter(n -> "RULE_SET".equals(n.type()))
             .map(n -> references.describe(n.nodeKey(), n.ruleSetVersionId(), point.decisionPointId(),

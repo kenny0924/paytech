@@ -1,11 +1,14 @@
 package com.paytech.risk.decision.domainservice.repository.impl;
 
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
 import com.paytech.risk.decision.core.dal.dataobject.EvaluationFeatureResult;
 import com.paytech.risk.decision.core.dal.mapper.EvaluationFeatureResultMapper;
 import com.paytech.risk.decision.domainservice.repository.EvaluationFeatureResultRepository;
-import java.util.List;
+
 import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 /** 评估 Feature 结果持久化。 */
 @Repository

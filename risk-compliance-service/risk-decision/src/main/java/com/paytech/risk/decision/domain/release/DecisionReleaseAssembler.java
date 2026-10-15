@@ -75,6 +75,9 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class DecisionReleaseAssembler {
     private static final String CHECKOUT_PREPARE = "CHECKOUT_PREPARE";
+
+    /** 旧候选发布只服务结账决策点。 */
+    private static final DecisionPointAuthoringDescriptor DESCRIPTOR = DecisionPointAuthoringDescriptor.checkoutPrepare();
     private static final String OPERATIONS_COMMAND = "OPERATIONS_COMMAND";
     private static final List<StaticCheckCode> CHECK_ORDER = List.of(
         StaticCheckCode.REFERENCE_INTEGRITY,
@@ -95,7 +98,6 @@ public class DecisionReleaseAssembler {
 
     private final DecisionActionRegistry registry;
     private final RiskDecisionCanonicalizer canonicalizer;
-    private final DecisionPointAuthoringDescriptor descriptor;
 
     /** 从批量读取的发布根、决策点和绑定派生列表项。 */
     public ReleaseSummaryView summary(DecisionReleaseQueryViews.ReleaseSummaryView stored) {
@@ -342,7 +344,7 @@ public class DecisionReleaseAssembler {
     /** 首次创建必须具备完整且 ACTIVE 的内置 Action 目录。 */
     public List<PersistedActionVersion> verifiedPersistedCatalog(List<PersistedActionVersion> persisted) {
         try {
-            registry.verifyPersistedCatalog(persisted);
+            registry.verifyPersistedCatalog(DESCRIPTOR, persisted);
         } catch (RuntimeException exception) {
             throw corruption("持久化 Action 目录与内置 Handler 漂移", exception);
         }
@@ -366,7 +368,7 @@ public class DecisionReleaseAssembler {
         try {
             var expected = registry.require(new ActionKey(value.actionCode(), value.versionNo()));
             PersistedActionVersion actual = persistedAction(value, ConfigurationStatus.ACTIVE);
-            long expectedId = 240001L + descriptor.actions().indexOf(expected);
+            long expectedId = DESCRIPTOR.firstActionVersionId() + DESCRIPTOR.actions().indexOf(expected);
             PersistedActionVersion expectedRow = new PersistedActionVersion(expectedId,
                 expected.actionCode(), expected.versionNo(), expected.handlerCode(),
                 expected.implementationVersion(), expected.implementationHash(), expected.actionCategory(),
@@ -393,7 +395,7 @@ public class DecisionReleaseAssembler {
     private void requireDescriptorPoint(DecisionRuleSetRepository.DecisionRuleSetAggregate composition) {
         DecisionPoint point = composition.decisionPoint();
         DecisionPointVersion version = composition.pointVersion();
-        DecisionPointAuthoringDescriptor.DecisionPointDescriptor expected = descriptor.point();
+        DecisionPointAuthoringDescriptor.DecisionPointDescriptor expected = DESCRIPTOR.point();
         if (!expected.pointCode().equals(point.pointCode()) || !expected.pointName().equals(point.pointName())
             || !expected.businessDomain().equals(point.businessDomain().getCode())
             || !expected.inputContractCode().equals(version.inputContractCode())
@@ -406,7 +408,7 @@ public class DecisionReleaseAssembler {
             || compositionFieldsInvalid(point, version)) {
             throw corruption("CHECKOUT_PREPARE Point 目录与内置合同漂移");
         }
-        if (composition.inputFields().size() != descriptor.fields().size()) {
+        if (composition.inputFields().size() != DESCRIPTOR.fields().size()) {
             throw corruption("CHECKOUT_PREPARE Input Field 目录数量漂移");
         }
         Map<String, DecisionPointInputField> actualFields = new HashMap<>();
@@ -416,7 +418,7 @@ public class DecisionReleaseAssembler {
                 throw corruption("CHECKOUT_PREPARE Input Field 目录坐标损坏");
             }
         }
-        descriptor.fields().forEach(expectedField -> {
+        DESCRIPTOR.fields().forEach(expectedField -> {
             DecisionPointInputField actual = actualFields.get(expectedField.fieldCode());
             if (actual == null || actual.valueType() != expectedField.valueType()
                 || actual.requiredFlag() != expectedField.requiredFlag()

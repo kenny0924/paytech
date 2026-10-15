@@ -109,7 +109,13 @@ public class DecisionFlowRequestConfiguration implements WebMvcConfigurer {
             JsonNode graph = value.get("graph"); keys(graph, "schemaVersion", "nodes", "edges"); integer(graph.get("schemaVersion"));
             array(graph.get("nodes")); array(graph.get("edges"));
             for (JsonNode node : graph.get("nodes")) {
-                keys(node, "nodeKey", "type", "name", "position", "ruleSetVersionId", "decisionCode", "reasonCode", "reasonMessage");
+                if (node.has("outputs")) {
+                    keys(node, "nodeKey", "type", "name", "position", "ruleSetVersionId", "decisionCode", "reasonCode", "reasonMessage",
+                        "outputs");
+                    outputs(node.get("outputs"));
+                } else {
+                    keys(node, "nodeKey", "type", "name", "position", "ruleSetVersionId", "decisionCode", "reasonCode", "reasonMessage");
+                }
                 for (String field : Set.of("nodeKey", "type", "name")) text(node.get(field), false);
                 for (String field : Set.of("ruleSetVersionId", "decisionCode", "reasonCode", "reasonMessage")) text(node.get(field), true);
                 keys(node.get("position"), "x", "y");
@@ -153,6 +159,14 @@ public class DecisionFlowRequestConfiguration implements WebMvcConfigurer {
         }
 
         private static void array(JsonNode node) { if (node == null || !node.isArray()) throw new IllegalArgumentException(); }
+
+        /** 附加输出为最多 16 项的字符串对象；编码与取值的业务合法性由流程校验按决策点合同判断。 */
+        private static void outputs(JsonNode node) {
+            if (node == null || !node.isObject() || node.size() > 16) {
+                throw new IllegalArgumentException();
+            }
+            node.values().forEach(value -> text(value, false));
+        }
 
         private static void integer(JsonNode node) {
             if (node == null || !node.isIntegralNumber() || !node.canConvertToInt()) throw new IllegalArgumentException();

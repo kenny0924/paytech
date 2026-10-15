@@ -21142,6 +21142,356 @@
       "type": "P"
     },
     {
+      "id": "AFC0F0AD-B1C4-5FF9-8130-86CC01E4CD4F",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_decision_flow_end_output",
+      "defName": "决策流结束节点输出",
+      "comment": "保存放行结束节点配置的附加输出；编码与取值由决策点合同声明，创建后不可修改",
+      "properties": {
+        "logicalTableKey": "decision_flow_end_output",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "output_id",
+          "defName": "输出标识",
+          "comment": "Risk 服务侧 Snowflake 生成的结束节点输出行身份。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "604D49D5-26C8-52AC-8D38-B4FDEB9405D2"
+        },
+        {
+          "defKey": "flow_version_id",
+          "defName": "流程版本标识",
+          "comment": "所属不可变流程版本；与结束节点同属此版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "67E6D4FD-783B-53CF-A178-4A0A0EFD4EF3"
+        },
+        {
+          "defKey": "node_id",
+          "defName": "结束节点标识",
+          "comment": "本库同一流程版本的放行结束节点。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "D9C4A353-5CC0-5400-8975-AB4F1B9F7557"
+        },
+        {
+          "defKey": "output_code",
+          "defName": "输出编码",
+          "comment": "决策点合同声明的附加输出编码，如 AUTHENTICATION_REQUIREMENT。取值来源：决策点工程合同的附加输出声明；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "DF1C1495-E52C-5FC6-AB2E-EA0C6CFEE1C9"
+        },
+        {
+          "defKey": "output_value",
+          "defName": "输出取值",
+          "comment": "该输出在决策点合同中允许的取值，如 THREE_DS_REQUIRED；由应用按合同校验。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "D31A2F4A-EDD1-5B15-ACD5-9F12E784BD2A"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "本行在 Risk 数据库中创建的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "F7423117-E1AF-5AF1-AE5E-16022758BAA2"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "2AB823E5-1A67-5554-A37A-817FEB5E05B9",
+          "myField": "67E6D4FD-783B-53CF-A178-4A0A0EFD4EF3",
+          "refEntity": "FEA83BAD-7B7E-5107-BC38-E240BAC3BCDC",
+          "refField": "4EC779CE-7F6D-551C-8AA0-47BECA5CDD7E",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        },
+        {
+          "id": "71A12A0B-60EE-5501-8927-FCF0D97DFDAE",
+          "myField": "D9C4A353-5CC0-5400-8975-AB4F1B9F7557",
+          "refEntity": "95884D0D-8C04-5149-9037-B01DC6CD87BA",
+          "refField": "DD8F9065-D861-503E-968F-77D213434723",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_flow_end_output",
+          "defName": "唯一索引 node_id、output_code",
+          "unique": true,
+          "comment": "保证业务唯一性：node_id、output_code",
+          "fields": [
+            {
+              "fieldDefKey": "D9C4A353-5CC0-5400-8975-AB4F1B9F7557",
+              "ascOrDesc": "A",
+              "id": "BF387397-B1BE-5CC3-A9E4-53291A2A7BFA"
+            },
+            {
+              "fieldDefKey": "DF1C1495-E52C-5FC6-AB2E-EA0C6CFEE1C9",
+              "ascOrDesc": "A",
+              "id": "FC475FA7-1F39-59A9-89B4-17F9B9D51566"
+            }
+          ],
+          "id": "63AE0497-6B34-5C54-81CE-096DCA4761D9"
+        },
+        {
+          "defKey": "idx_flow_end_output_version",
+          "defName": "访问索引 flow_version_id",
+          "unique": false,
+          "comment": "支持访问路径：flow_version_id",
+          "fields": [
+            {
+              "fieldDefKey": "67E6D4FD-783B-53CF-A178-4A0A0EFD4EF3",
+              "ascOrDesc": "A",
+              "id": "70164B31-0E4D-55C6-903E-68E40429CC0D"
+            }
+          ],
+          "id": "916E4FED-C6F7-51DF-A4AA-794A55CBBC63"
+        }
+      ],
+      "type": "P"
+    },
+    {
       "id": "BD6A216C-D2F6-55B5-AD36-DAE49148CF9B",
       "env": {
         "base": {
@@ -40804,10 +41154,25 @@
             }
           },
           {
-            "id": "3A9DA6FD-9146-53BB-86B8-37B91F497A77",
+            "id": "5AD0D49A-21A6-5A0C-A807-E12441F1006C",
             "shape": "table",
             "position": {
               "x": 0,
+              "y": 3354
+            },
+            "count": 0,
+            "originKey": "AFC0F0AD-B1C4-5FF9-8130-86CC01E4CD4F",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 220
+            }
+          },
+          {
+            "id": "3A9DA6FD-9146-53BB-86B8-37B91F497A77",
+            "shape": "table",
+            "position": {
+              "x": 430,
               "y": 3354
             },
             "count": 0,
@@ -40822,7 +41187,7 @@
             "id": "67AB1AD7-5D52-5A1D-B322-E55E4A342210",
             "shape": "table",
             "position": {
-              "x": 430,
+              "x": 860,
               "y": 3354
             },
             "count": 0,
@@ -40837,7 +41202,7 @@
             "id": "170D8BC1-9C99-5569-AA54-7F75FBA7632E",
             "shape": "table",
             "position": {
-              "x": 860,
+              "x": 1290,
               "y": 3354
             },
             "count": 0,
@@ -41861,6 +42226,50 @@
             "isLock": true
           },
           {
+            "id": "9B7314CA-71BF-5FA6-9F74-005B8E2D5289",
+            "shape": "erdRelation",
+            "originKey": "2AB823E5-1A67-5554-A37A-817FEB5E05B9",
+            "source": {
+              "cell": "5AD0D49A-21A6-5A0C-A807-E12441F1006C",
+              "port": "67E6D4FD-783B-53CF-A178-4A0A0EFD4EF3%out"
+            },
+            "target": {
+              "cell": "09B0B7EF-D348-56C0-95F4-9686EC07DAA1",
+              "port": "4EC779CE-7F6D-551C-8AA0-47BECA5CDD7E%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "D15027AA-1022-523C-A9D0-74243C68E417",
+            "shape": "erdRelation",
+            "originKey": "71A12A0B-60EE-5501-8927-FCF0D97DFDAE",
+            "source": {
+              "cell": "5AD0D49A-21A6-5A0C-A807-E12441F1006C",
+              "port": "D9C4A353-5CC0-5400-8975-AB4F1B9F7557%out"
+            },
+            "target": {
+              "cell": "A1534989-EDCE-5EDB-A606-38FAC8123754",
+              "port": "DD8F9065-D861-503E-968F-77D213434723%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
             "id": "9A6B1F1D-0518-512E-B619-5076C43FCD8D",
             "shape": "erdRelation",
             "originKey": "1E725894-D0E1-5310-92B0-F7C00C2AAA22",
@@ -41980,6 +42389,7 @@
           "t_decision_flow_version",
           "t_decision_flow_node",
           "t_decision_flow_edge",
+          "t_decision_flow_end_output",
           "t_risk_variable",
           "t_risk_variable_member"
         ],

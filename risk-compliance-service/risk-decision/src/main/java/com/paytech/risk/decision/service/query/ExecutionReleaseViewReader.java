@@ -30,7 +30,8 @@ public class ExecutionReleaseViewReader {
     /**
      * 构造查询结果
      *
-     * @param release 执行发布
+     * @param release
+     *            执行发布
      * @return 发布、按固定顺序的静态校验与最近影子运行
      */
     public ExecutionReleaseView read(ExecutionRelease release) {

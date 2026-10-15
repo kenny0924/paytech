@@ -37,7 +37,7 @@ class WebLoggingBoundaryAutoTest extends MockTestBase {
     /** 请求体含个人信息、审核理由或决策配置原文的入口。 */
     private static final List<String> METADATA_ONLY_PREFIXES = List.of("/internal/due-diligence/material-requirements",
         "/client-onboarding-review", "/client-onboarding-admin", "/decision-dictionaries", "/decision-rule-sets",
-        "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/payment-risk-assessment");
+        "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/risk-decisions");
 
     @Autowired
     private WebLoggingProperties loggingProperties;

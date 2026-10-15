@@ -24,6 +24,7 @@ import com.paytech.risk.decision.domain.query.FlowRuleSetReferenceView;
 import com.paytech.risk.decision.domain.query.LegacyPointFlowContext;
 import com.paytech.risk.decision.domain.variable.VariableRuleConfiguration;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowEdgeRepository;
+import com.paytech.risk.decision.domainservice.repository.DecisionFlowEndOutputRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowNodeRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowRootRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionFlowVersionRepository;
@@ -47,6 +48,7 @@ public class FlowRuleSetReferenceProcessor extends AbstractProcessor<FlowRuleSet
     private final DecisionRuleSetService ruleService;
     private final DecisionRuleSetRepository rules;
     private final DecisionFlowEdgeRepository edges;
+    private final DecisionFlowEndOutputRepository outputs;
     private final DecisionFlowGraphAssembler assembler;
     private final DecisionFlowNodeRepository nodes;
     private final DecisionFlowRootRepository roots;
@@ -88,7 +90,8 @@ public class FlowRuleSetReferenceProcessor extends AbstractProcessor<FlowRuleSet
         DecisionPoint point = rules.findPoint(root.decisionPointId())
             .orElseThrow(() -> new ErrorException("流程持久化配置不完整或身份不一致"));
         var graph = assembler.assemble(point.pointCode(), root, version,
-            nodes.findByVersion(version.flowVersionId()), edges.findByVersion(version.flowVersionId()));
+            nodes.findByVersion(version.flowVersionId()), edges.findByVersion(version.flowVersionId()),
+            outputs.findByVersion(version.flowVersionId()));
         Node node = graph.nodes().stream().filter(n -> n.nodeKey().equals(request.getNodeKey()) && "RULE_SET".equals(n.type()))
             .findFirst().orElseThrow(DecisionConfigurationNotFoundException::new);
         references.describe(node.nodeKey(), node.ruleSetVersionId(), root.decisionPointId(), version.inputContractCode(), version.inputContractVersion());

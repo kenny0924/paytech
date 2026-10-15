@@ -59,7 +59,7 @@ public final class ShadowRunSummaries {
             DecisionValue after = sample.getBusinessDecision();
             allowToReview += before == DecisionValue.ALLOW && after == DecisionValue.REVIEW ? 1 : 0;
             allowToDeny += before == DecisionValue.ALLOW && after == DecisionValue.DENY ? 1 : 0;
-            denyToAllow += before != DecisionValue.ALLOW && after == DecisionValue.ALLOW ? 1 : 0;
+            denyToAllow += before == DecisionValue.DENY && after == DecisionValue.ALLOW ? 1 : 0;
         }
         int failed = count(samples, TechnicalStatus.FAILED);
         int timedOut = count(samples, TechnicalStatus.TIMED_OUT);

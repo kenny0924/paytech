@@ -3,6 +3,7 @@ package com.paytech.risk.decision.domain.flow;
 import java.util.List;
 
 import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowEdgeRow;
+import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowEndOutput;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowNodeRow;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowRow;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowVersionRow;
@@ -24,6 +25,8 @@ public class SaveFlowContext {
     private final List<DecisionFlowNodeRow> nodes;
     /** 本次版本的全部连线。 */
     private final List<DecisionFlowEdgeRow> edges;
+    /** 本次版本放行结束节点的附加输出。 */
+    private final List<DecisionFlowEndOutput> outputs;
 
     /** 缺少旧版本仅表示首次创建永久流程身份。 */
     public boolean isNewFlow() { return previousVersion == null; }

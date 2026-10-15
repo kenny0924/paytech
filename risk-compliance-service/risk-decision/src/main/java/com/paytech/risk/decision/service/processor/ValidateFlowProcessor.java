@@ -43,6 +43,7 @@ public class ValidateFlowProcessor extends AbstractProcessor<ValidateFlowRequest
     private final DecisionRuleSetService ruleService;
     private final DecisionRuleSetRepository rules;
     private final DecisionFlowEdgeRepository edges;
+    private final DecisionFlowEndOutputRepository outputs;
     private final DecisionFlowGraphAssembler assembler;
     private final DecisionFlowNodeRepository nodes;
     private final DecisionFlowRootRepository roots;
@@ -125,7 +126,8 @@ public class ValidateFlowProcessor extends AbstractProcessor<ValidateFlowRequest
     /** 仅从真实基准版本读取保存图，已退休选择的沿用资格不由客户端声明。 */
     private Graph baseGraph(String pointCode, DecisionFlowRow root, DecisionFlowVersionRow head) {
         return root == null ? null : assembler.assemble(pointCode, root, head,
-            nodes.findByVersion(head.flowVersionId()), edges.findByVersion(head.flowVersionId()));
+            nodes.findByVersion(head.flowVersionId()), edges.findByVersion(head.flowVersionId()),
+            outputs.findByVersion(head.flowVersionId()));
     }
 
     /** 读取准确规则版本，随后由调用方按用途读取或锁定变量目录。 */

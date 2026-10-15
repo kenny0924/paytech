@@ -141,14 +141,14 @@ function structuralProjection(model) {
   };
 }
 
-test("Risk test-owned Oracle freezes exactly 83 approved tables in eight groups", () => {
+test("Risk test-owned Oracle freezes exactly 84 approved tables in eight groups", () => {
   assert.equal(Object.keys(APPROVED_TABLE_GROUPS).length, 8);
   assert.deepEqual(
     Object.fromEntries(Object.entries(APPROVED_TABLE_GROUPS).map(([key, tables]) => [key, tables.length])),
     EXPECTED_GROUP_SIZES,
   );
-  assert.equal(APPROVED_TABLES.length, 83);
-  assert.equal(new Set(APPROVED_TABLES).size, 83);
+  assert.equal(APPROVED_TABLES.length, 84);
+  assert.equal(new Set(APPROVED_TABLES).size, 84);
   assert.ok(APPROVED_TABLES.every((table) => /^t_[a-z][a-z0-9_]*$/u.test(table)));
   assert.ok(APPROVED_TABLES.every((table) => table.length <= 32));
   assert.ok(FORBIDDEN_TABLES.every((table) => !APPROVED_TABLES.includes(table)));
@@ -203,7 +203,7 @@ test("Risk model matches the independent totals and structural digest", () => {
 test("Risk model has the exact approved table set and eight diagram groups", () => {
   const model = readModel();
   assert.deepEqual(model.entities.map((entity) => entity.defKey).sort(), [...APPROVED_TABLES].sort());
-  assert.equal(modelTotals(model).tables, 83);
+  assert.equal(modelTotals(model).tables, 84);
   assert.equal(modelTotals(model).diagramGroups, 8);
   assert.deepEqual(
     Object.fromEntries(model.diagrams.map((diagram) => [diagram.defKey, diagram.defName])),
@@ -717,8 +717,8 @@ test("Risk model persists the exact same-case composite foreign-key contracts", 
 test("Risk diagrams draw each local relation once and every table owns one primary group", () => {
   const model = readModel();
   const primaryTables = model.diagrams.flatMap((diagram) => diagram.properties.primaryTables);
-  assert.equal(primaryTables.length, 83);
-  assert.equal(new Set(primaryTables).size, 83);
+  assert.equal(primaryTables.length, 84);
+  assert.equal(new Set(primaryTables).size, 84);
   assert.deepEqual([...primaryTables].sort(), [...APPROVED_TABLES].sort());
   const relationCount = model.entities.flatMap((entity) => entity.correlations).length;
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)

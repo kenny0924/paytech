@@ -91,3 +91,18 @@ ALTER TABLE `t_risk_list_entry` COMMENT='保存名单内规范化主体的生效
 -- 6. 风险事件主体增加卡维度。
 ALTER TABLE `t_velocity_event_subject`
   MODIFY COLUMN `subject_type` VARCHAR(64) NOT NULL COMMENT '主体类型的稳定业务代码。允许值：CONSUMER、EMAIL_TOKEN、PHONE_TOKEN、IP_ADDRESS、CLIENT、OPERATING_ENTITY、CARD_FINGERPRINT、CARD_BIN。';
+
+-- =====================================================================
+-- 修订（2026-10-15，统一评估接口与可配置输出，见 ../design-amendment-unified-evaluation.md）
+-- 7. 放行结束节点的附加输出（如认证要求）。回滚：DROP TABLE `t_decision_flow_end_output`。
+CREATE TABLE `t_decision_flow_end_output` (
+  `output_id` BIGINT NOT NULL COMMENT 'Risk 服务侧 Snowflake 生成的结束节点输出行身份。',
+  `flow_version_id` BIGINT NOT NULL COMMENT '所属不可变流程版本；与结束节点同属此版本。',
+  `node_id` BIGINT NOT NULL COMMENT '本库同一流程版本的放行结束节点。',
+  `output_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '决策点合同声明的附加输出编码，如 AUTHENTICATION_REQUIREMENT。取值来源：决策点工程合同的附加输出声明；非固定枚举。',
+  `output_value` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '该输出在决策点合同中允许的取值，如 THREE_DS_REQUIRED；由应用按合同校验。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '本行在 Risk 数据库中创建的 UTC 微秒时间。',
+  PRIMARY KEY (`output_id`),
+  UNIQUE KEY `uk_flow_end_output` (`node_id`, `output_code`) COMMENT '保证业务唯一性：node_id、output_code',
+  KEY `idx_flow_end_output_version` (`flow_version_id`) COMMENT '支持访问路径：flow_version_id'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存放行结束节点配置的附加输出；编码与取值由决策点合同声明，创建后不可修改';

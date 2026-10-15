@@ -97,6 +97,7 @@ public class FlowTestMapper {
 
     /** 按编码删除决策点下流程的全部版本明细与根。 */
     public void deleteFlowByCode(String flowCode) {
+        jdbc.update("DELETE FROM t_decision_flow_end_output WHERE flow_version_id IN (" + VERSION_IDS + ")", flowCode);
         jdbc.update("DELETE FROM t_decision_flow_edge WHERE flow_version_id IN (" + VERSION_IDS + ")", flowCode);
         jdbc.update("DELETE FROM t_decision_flow_node WHERE flow_version_id IN (" + VERSION_IDS + ")", flowCode);
         jdbc.update("DELETE FROM t_decision_flow_version WHERE flow_id IN (" + FLOW_IDS + ")", flowCode);

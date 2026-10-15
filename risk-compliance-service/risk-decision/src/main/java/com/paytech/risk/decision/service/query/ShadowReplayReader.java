@@ -6,17 +6,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.risk.decision.core.dal.dataobject.DecisionEvaluation;
-import com.paytech.risk.decision.core.dal.dataobject.EvaluationFeatureResult;
-import com.paytech.risk.decision.core.dal.dataobject.ExecutionRelease;
-import com.paytech.risk.decision.core.dal.dataobject.ReleaseShadowRun;
-import com.paytech.risk.decision.core.dal.dataobject.TransactionRiskAssessment;
+import com.paytech.risk.decision.core.dal.dataobject.*;
 import com.paytech.risk.decision.domain.runtime.PaymentRiskInput;
-import com.paytech.risk.decision.domainservice.repository.DecisionEvaluationRepository;
-import com.paytech.risk.decision.domainservice.repository.EvaluationFeatureResultRepository;
-import com.paytech.risk.decision.domainservice.repository.ExecutionReleaseRepository;
-import com.paytech.risk.decision.domainservice.repository.ReleaseShadowRunRepository;
-import com.paytech.risk.decision.domainservice.repository.TransactionRiskAssessmentRepository;
+import com.paytech.risk.decision.domainservice.repository.*;
 
 import lombok.AllArgsConstructor;
 

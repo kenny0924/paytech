@@ -163,13 +163,25 @@ public final class ExecutionReleaseContent {
             : failed(StaticCheckCode.ACTION_PARAMETERS, "规则包含本决策点不支持的附加动作");
     }
 
-    /** 每个结束节点都给出业务决定。 */
+    /** 每个结束节点都给出业务决定，放行结束节点带齐决策点声明的附加输出。 */
     static StaticCheckResult terminalAction(ExecutionSnapshot snapshot) {
         boolean decided = snapshot.graph().nodes().stream().filter(node -> "END".equals(node.type()))
             .allMatch(node -> node.decisionCode() != null);
         boolean hasEnd = snapshot.graph().nodes().stream().map(DecisionFlow.Node::type).anyMatch("END"::equals);
-        return decided && hasEnd ? passed(StaticCheckCode.TERMINAL_ACTION)
-            : failed(StaticCheckCode.TERMINAL_ACTION, "流程结束节点必须给出业务决定");
+        if (!decided || !hasEnd) {
+            return failed(StaticCheckCode.TERMINAL_ACTION, "流程结束节点必须给出业务决定");
+        }
+        return allowOutputsComplete(snapshot) ? passed(StaticCheckCode.TERMINAL_ACTION)
+            : failed(StaticCheckCode.TERMINAL_ACTION, "放行结束节点缺少附加输出，请重新保存流程");
+    }
+
+    /** 放行结束节点包含决策点声明的全部附加输出编码；运行期不再补默认值。 */
+    static boolean allowOutputsComplete(ExecutionSnapshot snapshot) {
+        List<String> declared = snapshot.descriptor().outputs().stream()
+            .map(DecisionPointAuthoringDescriptor.OutputDescriptor::outputCode).toList();
+        return snapshot.graph().nodes().stream()
+            .filter(node -> "END".equals(node.type()) && "ALLOW".equals(node.decisionCode()))
+            .allMatch(node -> node.outputs().keySet().containsAll(declared));
     }
 
     /** 通过。 */

@@ -1,22 +1,13 @@
 package com.paytech.risk.decision.service.query;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowRow;
-import com.paytech.risk.decision.core.dal.dataobject.DecisionFlowVersionRow;
-import com.paytech.risk.decision.core.dal.dataobject.DecisionPoint;
-import com.paytech.risk.decision.core.dal.dataobject.ExecutionRelease;
-import com.paytech.risk.decision.core.dal.dataobject.ListFeatureDefinition;
-import com.paytech.risk.decision.core.dal.dataobject.VelocityFeatureDefinition;
+import com.paytech.risk.decision.core.dal.dataobject.*;
 import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.VariableSource;
 import com.paytech.risk.decision.domain.flow.DecisionFlow;
@@ -26,13 +17,7 @@ import com.paytech.risk.decision.domain.runtime.ExecutionSnapshot;
 import com.paytech.risk.decision.domain.variable.RiskVariable;
 import com.paytech.risk.decision.domain.variable.VariableFlowConfiguration;
 import com.paytech.risk.decision.domain.variable.VariableRuleConfiguration;
-import com.paytech.risk.decision.domainservice.repository.DecisionFlowEdgeRepository;
-import com.paytech.risk.decision.domainservice.repository.DecisionFlowNodeRepository;
-import com.paytech.risk.decision.domainservice.repository.DecisionFlowRootRepository;
-import com.paytech.risk.decision.domainservice.repository.DecisionFlowVersionRepository;
-import com.paytech.risk.decision.domainservice.repository.DecisionRuleSetRepository;
-import com.paytech.risk.decision.domainservice.repository.ListFeatureDefinitionRepository;
-import com.paytech.risk.decision.domainservice.repository.VelocityFeatureDefinitionRepository;
+import com.paytech.risk.decision.domainservice.repository.*;
 import com.paytech.risk.decision.domainservice.service.DecisionRuleSetService;
 import com.paytech.risk.decision.domainservice.service.RiskVariableService;
 
@@ -53,7 +38,9 @@ public class ExecutionSnapshotReader {
     private final DecisionFlowRootRepository flowRoots;
     private final DecisionFlowNodeRepository flowNodes;
     private final DecisionFlowEdgeRepository flowEdges;
+    private final DecisionFlowEndOutputRepository flowOutputs;
     private final DecisionFlowVersionRepository flowVersions;
+    private final DecisionPointVersionRepository pointVersions;
     private final ListFeatureDefinitionRepository listFeatures;
     private final VelocityFeatureDefinitionRepository velocityFeatures;
 
@@ -68,10 +55,13 @@ public class ExecutionSnapshotReader {
         DecisionPoint point = rules.findPoint(release.getDecisionPointId())
             .orElseThrow(() -> new ErrorException("发布的决策点不存在: " + release.getReleaseId()));
         DecisionPointAuthoringDescriptor descriptor = DecisionPointAuthoringDescriptor.require(point.pointCode());
+        DecisionPointVersion pointVersion = pointVersions.findById(release.getPointVersionId())
+            .filter(value -> value.decisionPointId() == point.decisionPointId())
+            .orElseThrow(() -> new ErrorException("发布的决策点版本不存在或不属于该决策点: " + release.getReleaseId()));
         DecisionFlow.Graph graph = graph(point.pointCode(), release.getDecisionFlowVersionId());
         Map<Long, DecisionRuleSetAggregate> ruleSetsByVersion = ruleSets(graph, point.decisionPointId());
         Map<String, RiskVariable.Entry> entries = variables.definitions(references(graph, ruleSetsByVersion.values()));
-        return new ExecutionSnapshot(release, descriptor, graph, ruleSetsByVersion, entries, collections(entries),
+        return new ExecutionSnapshot(release, descriptor, pointVersion.timeoutMillis(), graph, ruleSetsByVersion, entries, collections(entries),
             velocity(entries), lists(entries));
     }
 
@@ -82,7 +72,7 @@ public class ExecutionSnapshotReader {
         DecisionFlowRow root = flowRoots.findById(version.flowId())
             .orElseThrow(() -> new ErrorException("发布的决策流不存在: " + version.flowId()));
         return assembler.assemble(pointCode, root, version, flowNodes.findByVersion(flowVersionId),
-            flowEdges.findByVersion(flowVersionId));
+            flowEdges.findByVersion(flowVersionId), flowOutputs.findByVersion(flowVersionId));
     }
 
     /** 流程引用的规则集版本必须属于同一决策点。 */

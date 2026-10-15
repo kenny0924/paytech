@@ -20,8 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
+import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
 import com.paytech.risk.api.decision.ExecutionReleaseManagementApi;
 import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
+import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
 import com.paytech.risk.api.decision.request.StartShadowRunRequestBody;
 import com.paytech.risk.control.core.enums.RiskListPurpose;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
@@ -113,6 +115,31 @@ class ExecutionReleaseApiAutoTest extends AbstractPaymentRiskApiTest {
             AuthenticationRequirement.THREE_DS_REQUIRED.getCode());
     }
 
+    /** 影子汇总按结论变化分类：放行转审核、放行转拒绝、拒绝转放行各一；审核转放行不计入拒绝转放行。 */
+    @Test
+    void test_normalFlow_shadowDecisionChanges() {
+        long baselineBlock = frozenRuleSet(RuleSetCreateRequestBuilder.template(newCode("T_BLOCK")).pointCode(POINT)
+            .rules(amountRule("HUGE_AMOUNT", 10, "DENY_PAYMENT", "GT", "2000"),
+                amountRule("LARGE_AMOUNT", 20, "REVIEW_PAYMENT", "GT", "1000"))
+            .build());
+        long baseline = activeRelease(saveFlow(newCode("T_FLOW"),
+            twoStageGraph(baselineBlock, authRuleSet("500"), reason)));
+        for (String amount : List.of("100", "600", "1500", "2500")) {
+            assess(PaymentRiskRequestBuilder.template().amount(amount).build());
+        }
+        long candidateBlock = frozenRuleSet(RuleSetCreateRequestBuilder.template(newCode("T_BLOCK")).pointCode(POINT)
+            .rules(amountRule("SMALL_AMOUNT", 10, "REVIEW_PAYMENT", "LT", "200"),
+                amountRule("MID_AMOUNT", 20, "DENY_PAYMENT", "LT", "1000"))
+            .build());
+        long candidate = validatedRelease(saveFlow(newCode("T_FLOW"),
+            twoStageGraph(candidateBlock, authRuleSet("100000"), reason)));
+
+        shadow(candidate, 10);
+
+        awaitShadowRun(candidate).assertDecisionChanges(1, 1, 1).assertShadowRun(baseline, 4,
+            StaticCheckStatus.PASSED.getCode());
+    }
+
     /** 重复校验返回当前结果，不重新检查。 */
     @Test
     void test_edgeCase_validateTwice() {
@@ -160,6 +187,44 @@ class ExecutionReleaseApiAutoTest extends AbstractPaymentRiskApiTest {
         command(releaseId, "activate").assertProblem(400, BUSINESS_CHECK_FAILED.getCode());
     }
 
+    /** 流程引用尚未冻结的规则集版本：校验只拒绝引用完整性一项。 */
+    @Test
+    void test_businessRuleViolation_draftRuleSet() {
+        String draft = postOk("/decision-rule-sets/v1/rule-sets", RuleSetCreateRequestBuilder.template(newCode("T_DRAFT"))
+            .pointCode(POINT).rules(amountRule("LARGE_AMOUNT", 10, "REVIEW_PAYMENT", "GT", "1000")).build())
+            .path("ruleSetVersionId").asString();
+        long releaseId = create(saveFlow(newCode("T_FLOW"),
+            twoStageGraph(Long.parseLong(draft), authRuleSet("500"), reason)))
+            .assertRelease(DecisionReleaseStatus.DRAFT.getCode(), POINT, TEST);
+
+        command(releaseId, "validate").assertChecks(List.of(StaticCheckCode.REFERENCE_INTEGRITY))
+            .assertRelease(DecisionReleaseStatus.REJECTED.getCode(), POINT, TEST);
+    }
+
+    /** 影子运行时候选内容已无法读取：批次保持运行中并登记可重试失败，候选不能激活。 */
+    @Test
+    void test_businessRuleViolation_shadowUnreadable() {
+        activeRelease(saveFlow(newCode("T_FLOW"), twoStageGraph(blockRuleSet, authRuleSet("500"), reason)));
+        assess(PaymentRiskRequestBuilder.template().build());
+        String constant = newCode("T_LIMIT");
+        CreateVariableRequestBody variable = featureVariable(constant, "CONSTANT", "NUMBER");
+        variable.setNumericUnit("SCALAR");
+        variable.setCurrentValue("1000");
+        postOk("/decision-variables/v1/variables", variable);
+        long block = frozenRuleSet(RuleSetCreateRequestBuilder.template(newCode("T_BLOCK")).pointCode(POINT)
+            .rules(rule("OVER_LIMIT", "OVER_LIMIT", 10, action("REVIEW_PAYMENT"), predicate("root", null, 1, "GT",
+                variableOperand(constant, "NUMBER"), scalar("2000"))))
+            .build());
+        long candidate = validatedRelease(saveFlow(newCode("T_FLOW"), twoStageGraph(block, authRuleSet("500"), reason)));
+        store.markVariableDeleted(constant);
+
+        long shadowRunId = Long.parseLong(shadow(candidate, 10).shadowRunId());
+
+        awaitRetryError(shadowRunId);
+        assertEquals(ShadowRunStatus.RUNNING.getCode(), get(candidate).shadowRunStatus());
+        command(candidate, "activate").assertProblem(400, BUSINESS_CHECK_FAILED.getCode());
+    }
+
     /** 决策点不支持执行发布、流程版本不存在或属于其他决策点。 */
     @Test
     void test_invalidParameter() {
@@ -192,10 +257,17 @@ class ExecutionReleaseApiAutoTest extends AbstractPaymentRiskApiTest {
         shadow(missing, 10).assertProblem(404, RISK_DECISION_CONFIGURATION_NOT_FOUND.getCode());
     }
 
+    /** 金额与阈值比较命中即给出终态动作的规则；拒绝动作附原因编码。 */
+    private RuleRequestBody amountRule(String code, int priority, String actionCode, String operator, String amount) {
+        boolean deny = "DENY_PAYMENT".equals(actionCode);
+        return rule(code, code, priority, deny ? reason : null, deny ? "支付被风控拒绝" : null, action(actionCode),
+            List.of(), predicate("root", null, 1, operator, variableOperand("PAY_INPUT_AMOUNT", "NUMBER"), money(amount)));
+    }
+
     /** 金额超过阈值时要求 3DS 的认证规则集。 */
     private long authRuleSet(String threshold) {
         return frozenRuleSet(RuleSetCreateRequestBuilder.template(newCode("T_AUTH")).pointCode(POINT)
-            .rules(rule("THREE_DS_AMOUNT", "3DS amount", 10, action("ALLOW_PAYMENT_WITH_THREE_DS"),
+            .rules(rule("THREE_DS_AMOUNT", "3DS amount", 10, action("ALLOW_PAYMENT"),
                 predicate("root", null, 1, "GT", variableOperand("PAY_INPUT_AMOUNT", "NUMBER"), money(threshold))))
             .build());
     }
@@ -218,6 +290,23 @@ class ExecutionReleaseApiAutoTest extends AbstractPaymentRiskApiTest {
                 fail("等待影子回放被中断");
             }
         }
+    }
+
+    /** 等待影子批次补偿任务登记一次可重试失败。 */
+    private void awaitRetryError(long shadowRunId) {
+        long deadline = System.currentTimeMillis() + SHADOW_WAIT_MILLIS;
+        while (store.shadowRunRetryError(shadowRunId) == null) {
+            if (System.currentTimeMillis() > deadline) {
+                fail("影子批次未登记可重试失败: " + shadowRunId);
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                fail("等待影子批次失败被中断");
+            }
+        }
+        assertEquals("SHADOW_RUN_INCOMPLETE", store.shadowRunRetryError(shadowRunId));
     }
 
     /** 创建执行发布。 */

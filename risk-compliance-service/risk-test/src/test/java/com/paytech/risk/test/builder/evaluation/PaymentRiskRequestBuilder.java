@@ -1,105 +1,115 @@
 package com.paytech.risk.test.builder.evaluation;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.paytech.risk.api.evaluation.request.PaymentRiskAssessmentRequestBody;
+import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
 
 /**
- * 支付尝试风控评估请求的测试 Builder
- * <li>{@link #template()} 为一笔合法卡支付：随机支付尝试身份，USD 100，带消费者引用、IPv4、卡指纹与 BIN。</li>
- * <li>字段可显式设为 null 或非法值，{@link #build()} 不修复。</li>
+ * 支付尝试风控点统一评估请求的测试 Builder
+ * <li>{@link #template()} 为一笔合法卡支付：随机支付尝试身份（业务身份），USD 100，带消费者引用、IPv4、卡指纹与 BIN。</li>
+ * <li>字段可显式设为 null（省略）或非法值，{@link #build()} 不修复；返回的请求 inputs 可直接修改以构造重放差异。</li>
  *
  * @author Kenny
  */
 public final class PaymentRiskRequestBuilder {
-    private final PaymentRiskAssessmentRequestBody body = new PaymentRiskAssessmentRequestBody();
+    private final Map<String, String> inputs = new LinkedHashMap<>();
+
+    private String paymentAttemptId;
 
     private PaymentRiskRequestBuilder() { }
 
     /** 一笔合法卡支付。 */
     public static PaymentRiskRequestBuilder template() {
         PaymentRiskRequestBuilder builder = new PaymentRiskRequestBuilder();
-        PaymentRiskAssessmentRequestBody body = builder.body;
-        body.setPaymentAttemptId(randomId());
-        body.setPaymentIntentId(randomId());
-        body.setRiskActionId(randomId());
-        body.setOrderId(randomId());
-        body.setClientId("800001");
-        body.setEntityNo("AE001");
-        body.setPaymentMethodCode("CARD_VISA");
-        body.setCaptureMode("AUTOMATIC");
-        body.setAmount("100.00");
-        body.setCurrency("USD");
-        body.setIndustryCode("DIGITAL_GOODS");
-        body.setMccCode("5816");
-        body.setConsumerCountryCode("AE");
-        body.setConsumerReference("consumer-001");
-        body.setClientIpAddress("203.0.113.10");
-        body.setUserAgent("Mozilla/5.0 risk-test");
-        body.setCardFingerprint("fp_card_" + randomId());
-        body.setCardBin("411111");
+        builder.paymentAttemptId = randomId();
+        builder.inputs.putAll(new PaymentAttemptRiskInput(randomId(), randomId(), randomId(), "800001", "AE001",
+            "CARD_VISA", "AUTOMATIC", "100.00", "USD", "DIGITAL_GOODS", "5816", "AE", "consumer-001", "203.0.113.10",
+            "Mozilla/5.0 risk-test", "fp_card_" + randomId(), "411111").inputs());
         return builder;
     }
 
-    /** 新的支付尝试，其余字段保持。 */
+    /** 新的支付尝试与风控 Action，其余字段保持。 */
     public PaymentRiskRequestBuilder newAttempt() {
-        body.setPaymentAttemptId(randomId());
-        body.setRiskActionId(randomId());
-        return this;
+        paymentAttemptId = randomId();
+        return input("riskActionId", randomId());
     }
 
+    /** 支付尝试 ID（业务身份）。 */
     public PaymentRiskRequestBuilder paymentAttemptId(String value) {
-        body.setPaymentAttemptId(value);
+        paymentAttemptId = value;
         return this;
     }
 
+    /** 风控 Action ID。 */
     public PaymentRiskRequestBuilder riskActionId(String value) {
-        body.setRiskActionId(value);
-        return this;
+        return input("riskActionId", value);
     }
 
+    /** Operating Entity 编号。 */
     public PaymentRiskRequestBuilder entityNo(String value) {
-        body.setEntityNo(value);
-        return this;
+        return input("entityNo", value);
     }
 
+    /** 金额。 */
     public PaymentRiskRequestBuilder amount(String value) {
-        body.setAmount(value);
-        return this;
+        return input("amount", value);
     }
 
+    /** 币种。 */
     public PaymentRiskRequestBuilder currency(String value) {
-        body.setCurrency(value);
-        return this;
+        return input("currency", value);
     }
 
+    /** 消费者 IP。 */
     public PaymentRiskRequestBuilder clientIpAddress(String value) {
-        body.setClientIpAddress(value);
-        return this;
+        return input("clientIpAddress", value);
     }
 
+    /** User-Agent。 */
     public PaymentRiskRequestBuilder userAgent(String value) {
-        body.setUserAgent(value);
-        return this;
+        return input("userAgent", value);
     }
 
+    /** 卡指纹。 */
     public PaymentRiskRequestBuilder cardFingerprint(String value) {
-        body.setCardFingerprint(value);
-        return this;
+        return input("cardFingerprint", value);
     }
 
+    /** 卡 BIN；传 null 表示非卡或未知。 */
+    public PaymentRiskRequestBuilder cardBin(String value) {
+        return input("cardBin", value);
+    }
+
+    /** 消费者引用。 */
     public PaymentRiskRequestBuilder consumerReference(String value) {
-        body.setConsumerReference(value);
-        return this;
+        return input("consumerReference", value);
     }
 
+    /** MCC。 */
     public PaymentRiskRequestBuilder mccCode(String value) {
-        body.setMccCode(value);
+        return input("mccCode", value);
+    }
+
+    /** 任意输入字段，含合同外字段；null 表示省略。 */
+    public PaymentRiskRequestBuilder input(String key, String value) {
+        if (value == null) {
+            inputs.remove(key);
+        } else {
+            inputs.put(key, value);
+        }
         return this;
     }
 
-    /** 当前请求；返回同一对象，便于重放同一请求。 */
-    public PaymentRiskAssessmentRequestBody build() {
+    /** 新的统一评估请求；inputs 为可修改副本。 */
+    public EvaluateDecisionRequestBody build() {
+        EvaluateDecisionRequestBody body = new EvaluateDecisionRequestBody();
+        body.setPointCode(PaymentAttemptRiskInput.POINT_CODE);
+        body.setContractVersion(PaymentAttemptRiskInput.CONTRACT_VERSION);
+        body.setBusinessKey(paymentAttemptId);
+        body.setInputs(new LinkedHashMap<>(inputs));
         return body;
     }
 

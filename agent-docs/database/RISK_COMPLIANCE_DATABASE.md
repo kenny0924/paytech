@@ -1,6 +1,6 @@
 # Risk & Compliance 数据库设计规范
 
-> **2026-10-14 支付反欺诈一期后继：** [一期运行期决定](../decisions/2026-10-14-risk-payment-fraud-phase1.md) R1～R6 修订 3.3～3.6 及 4.2～4.4 中对应部分：新格式执行发布额外冻结决策流版本并按流程执行；一期只在 TEST 由一人激活（PRODUCTION 双人审批保留、未实现）；支付决策点版本暂不绑定 `RESERVE_LIMIT_GROUP`，累计限额以实时累计规则表达；新增运营参数化的实时累计、名单命中两个工程 Handler；交易评估按 Payment 实际可提供字段冻结；Payment 事件不再携带 Group ID。完整方案见[需求设计](../../requirements/20261014/risk-支付反欺诈一期/design.md)，实现与验证状态只见当前台账。
+> **2026-10-14 支付反欺诈一期后继：** [一期运行期决定](../decisions/2026-10-14-risk-payment-fraud-phase1.md) R1～R6 修订 3.3～3.6 及 4.2～4.4 中对应部分：新格式执行发布额外冻结决策流版本并按流程执行；一期只在 TEST 由一人激活（PRODUCTION 双人审批保留、未实现）；支付决策点版本暂不绑定 `RESERVE_LIMIT_GROUP`，累计限额以实时累计规则表达；新增运营参数化的实时累计、名单命中两个工程 Handler；交易评估按 Payment 实际可提供字段冻结；Payment 事件不再携带 Group ID。2026-10-15 R7、R8 将同步评估统一为一个接口，认证要求改由放行结束节点输出配置。完整方案见[需求设计](../../requirements/20261014/risk-支付反欺诈一期/design.md)与[修订设计](../../requirements/20261014/risk-支付反欺诈一期/design-amendment-unified-evaluation.md)，实现与验证状态只见当前台账。
 
 > **Payment 风控步骤后继：** [RISK_CHECK 修订](../../requirements/20260913/payment-Execution设计/internal-risk-action-amendment.md)明确 Payment 记录原评估 Action 与结果，并以原 Attempt/请求身份向 Risk 恢复。Risk 保留一 Attempt 一次首次评估及原 Assessment/Group 关联；REVIEW/DENY 不放行，正式技术终态与 Payment 传输超时分开处理，不增加多检查点或 Risk 表。
 
@@ -324,7 +324,7 @@ Finance 必须冻结完整 RCO-I09 返回，包括两个坐标、排序后的 Re
 
 Role Type 固定为 CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON；Role/Qualification 组合受上文矩阵约束。RELATED_PERSON 资格只在明确 Organization Case 上下文中有效，其 `role_id` 是 CCT Party ID，Dependency Child Case、Parent Case Subject Party 与 Qualification Decision 必须逐值一致。Case 内不保存 Case Type 或当前 Decision 指针，Screening Hit 内也不保存当前 Resolution 指针；局部最新事实由各自最大版本确定，只有 Role Qualification 保留跨 Case 的当前决定指针。
 
-### 4.2 Decision Point、Feature、Rule、Action 与 Release（19 张；2026-10-14 另增 2 张 Feature 参数表）
+### 4.2 Decision Point、Feature、Rule、Action 与 Release（19 张；2026-10-14 另增 2 张 Feature 参数表，2026-10-15 另增 1 张结束节点输出表）
 
 2026-09-12 已确认的 [配置解耦修订](../../requirements/20260912/operations-console-决策流配置/simplification.md)覆盖本节普通规则配置的输入来源：规则版本直接记录准确输入合同，Context 条件/动作参数按该合同的 `field_code` 解释；共享工程目录拥有字段类型和用途。旧 Point Version、Input Field 快照及顺序绑定保留为历史发布、原顺序图和成功回放使用，不再随新规则保存复制。Feature、义务、限额和真实执行的其余设计不因本修订扩展或取消。迁移及验证状态见当前台账。
 
@@ -351,6 +351,8 @@ Role Type 固定为 CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、RELATED_PERSON�
 | decision_release | 一个环境的一份完整候选/生效快照 | release_id, release_no, decision_point_id, point_version_id, decision_flow_version_id, environment_code, status, active_slot, content_hash, created_by, activated_time, superseded_time, version；release_no 唯一；point+environment+active_slot 唯一；decision_flow_version_id 为空表示旧格式发布，非空表示按冻结决策流执行的执行发布（2026-10-14 R1） |
 | release_audit_event | 类型化发布审计流 | audit_event_id, release_id, event_type, event_time；STATIC_CHECK 填 check_code, check_status, severity, error_code, error_summary；APPROVAL 填 shadow_run_id, approval_request_id, approval_status, reviewer_id, review_comment；STATE_CHANGE 填 from_status, to_status, reason_code, trigger_type, trigger_id, actor_id, aggregate_version；三类字段严格互斥且分别建立业务唯一键 |
 | release_shadow_run | 候选 Release 旁路批次与冻结质量汇总 | shadow_run_id, run_no, baseline_release_id, candidate_release_id, status, sample_target, sample_count, started_time, completed_time, allow_to_review_count, allow_to_deny_count, deny_to_allow_count, action_change_count, feature_missing_count, failed_count, timed_out_count, p95_millis, p99_millis, check_status, version；仅 COMPLETED 完整填写质量列；p99>=p95，sample_count<=sample_target |
+
+2026-10-15 R8 增加 `decision_flow_end_output`（放行结束节点的附加输出：flow_version_id、node_id、output_code、output_value；node_id + output_code 唯一，编码与取值由决策点合同声明，创建后不可修改），取代以规则动作表达 3DS 认证要求。
 
 2026-10-14 R4 增加两张 Feature 参数表，与 `feature_version` 一对一、创建后不可修改；`risk_variable.feature_version_id` 在 VELOCITY/LIST 来源时必填：
 

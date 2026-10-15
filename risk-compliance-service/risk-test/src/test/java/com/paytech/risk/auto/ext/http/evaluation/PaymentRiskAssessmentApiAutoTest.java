@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
-import com.paytech.risk.api.evaluation.PaymentRiskAssessmentApi;
-import com.paytech.risk.api.evaluation.request.PaymentRiskAssessmentRequestBody;
+import com.paytech.risk.api.evaluation.RiskDecisionApi;
+import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.*;
 import com.paytech.risk.test.base.AbstractPaymentRiskApiTest;
@@ -28,7 +28,7 @@ import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker.Asses
  * <li>业务规则：名单命中（含 IPv6 同 /64）、实时累计命中、金额审核；审核与拒绝写入拒绝事件。</li>
  * <li>重放：同一支付尝试同内容返回原结果且不重复写入；IP 与 User-Agent 变化不影响重放；风控 Action 或稳定输入变化返回 409。</li>
  *
- * @see PaymentRiskAssessmentApi#assess(PaymentRiskAssessmentRequestBody)
+ * @see RiskDecisionApi#evaluate(EvaluateDecisionRequestBody)
  */
 class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
     private String blockedIpList;
@@ -54,7 +54,7 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
                     predicate("root", null, 1, "GT", variableOperand("PAY_INPUT_AMOUNT", "NUMBER"), money("1000"))))
             .build());
         long auth = frozenRuleSet(RuleSetCreateRequestBuilder.template(newCode("T_AUTH")).pointCode(PAYMENT)
-            .rules(rule("THREE_DS_AMOUNT", "3DS amount", 10, action("ALLOW_PAYMENT_WITH_THREE_DS"),
+            .rules(rule("THREE_DS_AMOUNT", "3DS amount", 10, action("ALLOW_PAYMENT"),
                 predicate("root", null, 1, "GT", variableOperand("PAY_INPUT_AMOUNT", "NUMBER"), money("500"))))
             .build());
         activeRelease(saveFlow(newCode("T_FLOW"), twoStageGraph(block, auth, reason)));
@@ -63,23 +63,23 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
     /** 未命中任何规则：放行且无需认证；评估、快照、Feature 结果、规则轨迹与评估事件完整落库。 */
     @Test
     void test_normalFlow() {
-        PaymentRiskAssessmentRequestBody request = PaymentRiskRequestBuilder.template().build();
+        EvaluateDecisionRequestBody request = PaymentRiskRequestBuilder.template().build();
 
         Assessed assessed = assess(request).assertResult(DecisionValue.ALLOW.getCode(),
             AuthenticationRequirement.NOT_REQUIRED.getCode());
 
         Map<String, Object> evaluation = store.evaluation(assessed.evaluationId());
-        Map<String, Object> assessment = store.assessment(Long.parseLong(request.getPaymentAttemptId()));
+        Map<String, Object> assessment = store.assessment(Long.parseLong(request.getBusinessKey()));
         assertAll("落库事实", () -> assertEquals(EvaluationMode.PRIMARY.getCode(), evaluation.get("evaluation_mode")),
             () -> assertEquals(TechnicalStatus.SUCCEEDED.getCode(), evaluation.get("technical_status")),
             () -> assertEquals(DecisionValue.ALLOW.getCode(), evaluation.get("business_decision")),
-            () -> assertEquals("PAYMENT_ATTEMPT_RISK:" + request.getPaymentAttemptId(),
+            () -> assertEquals("PAYMENT_ATTEMPT_RISK:" + request.getBusinessKey(),
                 evaluation.get("evaluation_request_id")),
-            () -> assertEquals(assessed.assessmentId(), ((Number)assessment.get("assessment_id")).longValue()),
-            () -> assertEquals(request.getEntityNo(), assessment.get("entity_no")),
+            () -> assertEquals(store.assessmentIdOf(assessed.evaluationId()), ((Number)assessment.get("assessment_id")).longValue()),
+            () -> assertEquals(request.getInputs().get("entityNo"), assessment.get("entity_no")),
             () -> assertEquals(0, new BigDecimal("100").compareTo((BigDecimal)assessment.get("amount"))),
-            () -> assertEquals(request.getClientIpAddress(), assessment.get("client_ip_address")),
-            () -> assertEquals(request.getCardBin(), assessment.get("card_bin")),
+            () -> assertEquals(request.getInputs().get("clientIpAddress"), assessment.get("client_ip_address")),
+            () -> assertEquals(request.getInputs().get("cardBin"), assessment.get("card_bin")),
             () -> assertEquals(AuthenticationRequirement.NOT_REQUIRED.getCode(),
                 assessment.get("authentication_requirement")),
             () -> assertEquals(2, store.featureResults(assessed.evaluationId()).size(), "Feature 结果"),
@@ -87,48 +87,48 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
             () -> assertEquals(4, store.traces(assessed.evaluationId(), RuleTraceType.PREDICATE.getCode()).size(),
                 "谓词轨迹"),
             () -> assertEquals(List.of(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode()),
-                store.velocityEventCodes(assessed.assessmentId())),
+                store.velocityEventCodes(store.assessmentIdOf(assessed.evaluationId()))),
             () -> assertEquals(
                 List.of(RiskSubjectType.CARD_FINGERPRINT.getCode(), RiskSubjectType.CLIENT.getCode(),
                     RiskSubjectType.CONSUMER.getCode(), RiskSubjectType.IP_ADDRESS.getCode(),
                     RiskSubjectType.OPERATING_ENTITY.getCode()),
-                store.velocitySubjects(assessed.assessmentId(), VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode())
+                store.velocitySubjects(store.assessmentIdOf(assessed.evaluationId()), VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode())
                     .stream().map(row -> row.get("subject_type")).toList()));
     }
 
     /** 认证规则集命中：放行并要求 3DS。 */
     @Test
     void test_normalFlow_threeDs() {
-        PaymentRiskAssessmentRequestBody request = PaymentRiskRequestBuilder.template().amount("600").build();
+        EvaluateDecisionRequestBody request = PaymentRiskRequestBuilder.template().amount("600").build();
 
         Assessed assessed = assess(request).assertResult(DecisionValue.ALLOW.getCode(),
             AuthenticationRequirement.THREE_DS_REQUIRED.getCode());
 
         assertEquals(AuthenticationRequirement.THREE_DS_REQUIRED.getCode(),
-            store.assessment(Long.parseLong(request.getPaymentAttemptId())).get("authentication_requirement"));
+            store.assessment(Long.parseLong(request.getBusinessKey())).get("authentication_requirement"));
         assertEquals(List.of(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode()),
-            store.velocityEventCodes(assessed.assessmentId()));
+            store.velocityEventCodes(store.assessmentIdOf(assessed.evaluationId())));
     }
 
     /** 金额超过阈值：审核，不给认证要求，同时写入拒绝事件；认证规则集不执行。 */
     @Test
     void test_businessRuleViolation_review() {
-        PaymentRiskAssessmentRequestBody request = PaymentRiskRequestBuilder.template().amount("1500").build();
+        EvaluateDecisionRequestBody request = PaymentRiskRequestBuilder.template().amount("1500").build();
 
         Assessed assessed = assess(request).assertResult(DecisionValue.REVIEW.getCode(), null);
 
         assertAll(
             () -> assertNull(
-                store.assessment(Long.parseLong(request.getPaymentAttemptId())).get("authentication_requirement")),
+                store.assessment(Long.parseLong(request.getBusinessKey())).get("authentication_requirement")),
             () -> assertEquals(
                 List.of(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode(),
                     VelocityEventCode.PAYMENT_ATTEMPT_REJECTED.getCode()),
-                store.velocityEventCodes(assessed.assessmentId())),
+                store.velocityEventCodes(store.assessmentIdOf(assessed.evaluationId()))),
             () -> assertEquals(3, store.traces(assessed.evaluationId(), RuleTraceType.RULE.getCode()).size(),
                 "只执行拦截规则集"));
     }
 
-    /** IP 命中黑名单：拒绝；IPv6 同一 /64 网段的其他地址同样命中。 */
+    /** IP 命中黑名单：拒绝；IPv6 同一 /64 网段的其他地址同样命中；本次没有 IP 时不命中。 */
     @Test
     void test_businessRuleViolation_blockedIp() {
         addListEntry(blockedIpList, "203.0.113.10");
@@ -138,6 +138,8 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
         assess(PaymentRiskRequestBuilder.template().clientIpAddress("2001:db8:abcd:12:ffff::9").build())
             .assertResult(DecisionValue.DENY.getCode(), null);
         assess(PaymentRiskRequestBuilder.template().clientIpAddress("203.0.113.11").build())
+            .assertResult(DecisionValue.ALLOW.getCode(), AuthenticationRequirement.NOT_REQUIRED.getCode());
+        assess(PaymentRiskRequestBuilder.template().clientIpAddress(null).build())
             .assertResult(DecisionValue.ALLOW.getCode(), AuthenticationRequirement.NOT_REQUIRED.getCode());
     }
 
@@ -158,31 +160,31 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
     /** 同一支付尝试重放：返回原评估，不新增评估与累计事件；IP 与 User-Agent 变化不参与比较。 */
     @Test
     void test_edgeCase_replay() {
-        PaymentRiskAssessmentRequestBody request = PaymentRiskRequestBuilder.template().build();
+        EvaluateDecisionRequestBody request = PaymentRiskRequestBuilder.template().build();
         Assessed first = assess(request).assertResult(DecisionValue.ALLOW.getCode(),
             AuthenticationRequirement.NOT_REQUIRED.getCode());
 
-        request.setClientIpAddress("198.51.100.7");
-        request.setUserAgent("another-agent");
+        request.getInputs().put("clientIpAddress", "198.51.100.7");
+        request.getInputs().put("userAgent", "another-agent");
         Assessed replayed = assess(request).assertResult(DecisionValue.ALLOW.getCode(),
             AuthenticationRequirement.NOT_REQUIRED.getCode());
 
         assertAll(() -> assertEquals(first, replayed), () -> assertEquals(1, store.countPrimaryEvaluations()),
-            () -> assertEquals(1, store.velocityEventCodes(first.assessmentId()).size()),
+            () -> assertEquals(1, store.velocityEventCodes(store.assessmentIdOf(first.evaluationId())).size()),
             () -> assertEquals("203.0.113.10",
-                store.assessment(Long.parseLong(request.getPaymentAttemptId())).get("client_ip_address"),
+                store.assessment(Long.parseLong(request.getBusinessKey())).get("client_ip_address"),
                 "首次冻结的 IP 不变"));
     }
 
     /** 同一支付尝试换风控 Action 或改稳定输入：409，原评估不变。 */
     @Test
     void test_businessRuleViolation_replayConflict() {
-        PaymentRiskAssessmentRequestBody request = PaymentRiskRequestBuilder.template().build();
+        EvaluateDecisionRequestBody request = PaymentRiskRequestBuilder.template().build();
         assess(request).assertResult(DecisionValue.ALLOW.getCode(), AuthenticationRequirement.NOT_REQUIRED.getCode());
 
-        assess(PaymentRiskRequestBuilder.template().paymentAttemptId(request.getPaymentAttemptId()).build())
+        assess(PaymentRiskRequestBuilder.template().paymentAttemptId(request.getBusinessKey()).build())
             .assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST.getCode());
-        request.setAmount("100.01");
+        request.getInputs().put("amount", "100.01");
         assess(request).assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST.getCode());
 
         assertEquals(1, store.countPrimaryEvaluations());

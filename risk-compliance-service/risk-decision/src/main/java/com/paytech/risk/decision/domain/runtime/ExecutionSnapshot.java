@@ -18,7 +18,9 @@ import com.paytech.risk.decision.domain.variable.RiskVariable;
  * @param release
  *            执行发布
  * @param descriptor
- *            决策点合同
+ *            决策点合同；只用于发布校验，引擎执行不读取
+ * @param timeoutMillis
+ *            冻结的决策点版本超时毫秒数
  * @param graph
  *            冻结的决策流
  * @param ruleSets
@@ -33,7 +35,7 @@ import com.paytech.risk.decision.domain.variable.RiskVariable;
  *            名单命中 Feature 参数，按 Feature Version 索引
  */
 public record ExecutionSnapshot(ExecutionRelease release, DecisionPointAuthoringDescriptor descriptor,
-    DecisionFlow.Graph graph, Map<Long, DecisionRuleSetAggregate> ruleSets, Map<String, RiskVariable.Entry> variables,
+    int timeoutMillis, DecisionFlow.Graph graph, Map<Long, DecisionRuleSetAggregate> ruleSets, Map<String, RiskVariable.Entry> variables,
     Map<String, List<Object>> collections, Map<Long, VelocityFeatureDefinition> velocityFeatures,
     Map<Long, ListFeatureDefinition> listFeatures) {
 

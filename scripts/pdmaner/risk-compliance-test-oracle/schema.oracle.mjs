@@ -28,6 +28,7 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_decision_flow_version",
     "t_decision_flow_node",
     "t_decision_flow_edge",
+    "t_decision_flow_end_output",
     "t_rule_reject_reason",
     "t_rule_subject_tag",
     "t_decision_point",
@@ -114,23 +115,23 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "69ed138876308f816d96f52bd4efda63bade86b5968019b4e058b01611a814f9";
-export const EXPECTED_STRUCTURAL_DIGEST = "0f27bec17fba68f74ed15e6f36cd90015a9cd631e97ca8021c9f035da2b5a9f7";
+export const EXPECTED_MODEL_DIGEST = "ee99e5493fcd7844a88e72e01729f8ad0e67b9f65ad41cafaa2f010211c44994";
+export const EXPECTED_STRUCTURAL_DIGEST = "ddc0ca59701c4b21ed01892a9328352c4485827c179af7686eb075cea734a24b";
 export const EXPECTED_CHECK_POLICY_DIGEST = "aa200f92b79ab33b36c8ed3310b76412d06b362d0e69b569b5f9957458c5d14f";
 
 export const EXPECTED_TOTALS = Object.freeze({
-  tables: 83,
-  fields: 1028,
-  uniqueIndexes: 119,
-  accessIndexes: 90,
-  relations: 132,
+  tables: 84,
+  fields: 1034,
+  uniqueIndexes: 120,
+  accessIndexes: 91,
+  relations: 134,
   oneToOneRelations: 11,
   diagramGroups: 8,
 });
 
 export const EXPECTED_GROUP_SIZES = Object.freeze({
   due_diligence: 20,
-  decision_engine: 30,
+  decision_engine: 31,
   evaluation: 8,
   risk_data: 6,
   limits: 7,

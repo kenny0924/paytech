@@ -1,7 +1,9 @@
 package com.paytech.risk.api.decision;
 
 import java.util.List;
+import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
@@ -160,6 +162,13 @@ public final class DecisionFlowModels {
          */
         private String reasonMessage;
 
+        /**
+         * 附加输出。
+         * <li>仅 ALLOW 结束节点使用，编码与取值由决策点合同声明（如 AUTHENTICATION_REQUIREMENT=THREE_DS_REQUIRED）；未配置时省略。</li>
+         */
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        private Map<String, String> outputs;
+
         /** 供 JSON 普通属性绑定创建实例。 */
         public Node() { }
 
@@ -174,6 +183,12 @@ public final class DecisionFlowModels {
             this.reasonCode = reasonCode;
             this.reasonMessage = reasonMessage;
         }
+
+        /** 返回附加输出；未配置时为空。 */
+        public Map<String, String> getOutputs() { return outputs; }
+
+        /** 设置附加输出。 */
+        public void setOutputs(Map<String, String> outputs) { this.outputs = outputs; }
 
         /** 返回稳定节点键。 */
         public String getNodeKey() { return nodeKey; }

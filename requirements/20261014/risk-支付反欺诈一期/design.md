@@ -55,6 +55,8 @@ Payment PAY_RISK
 
 ## 2. 支付评估接口（risk-api）
 
+> **2026-10-15 已由[统一评估接口修订](./design-amendment-unified-evaluation.md)取代：**接口改为 `POST /risk-decisions/v1/evaluations`，响应为 `evaluationId`、`result` 与 `outputs`。下文保留作为一期原设计记录；身份、重放、409、503、FAILED/TIMED_OUT 语义不变。
+
 ```java
 @HttpExchange("/payment-risk-assessment/v1")
 public interface PaymentRiskAssessmentApi {
@@ -116,6 +118,8 @@ public interface PaymentRiskAssessmentApi {
 - 特征**计算失败**（不同于取值为空）→ 整次评估 FAILED（fail-closed）。
 
 ### 3.5 动作与认证要求
+
+> **2026-10-15 已由[统一评估接口修订](./design-amendment-unified-evaluation.md)第 4 节取代：**删除 `ALLOW_PAYMENT_WITH_THREE_DS`，认证要求由放行结束节点配置的附加输出决定，引擎不再识别 3DS。
 - 支付决策点的规则终态动作为四个：`ALLOW_PAYMENT`、`ALLOW_PAYMENT_WITH_THREE_DS`（决定 ALLOW 且要求 3DS）、`REVIEW_PAYMENT`、`DENY_PAYMENT`。一期不开放附加动作；冷却、打标签等仅配置动作不允许出现在支付规则中。
 - 阶段 4 实施修订（2026-10-14）：原稿的非终态附加动作 `REQUIRE_THREE_DS` 改为终态动作。现有附加动作模型强制主体/取值参数且只允许配置、不允许冻结，改造风险大；终态动作复用已有规则动作、冻结与发布链路。运营把 3DS 规则放在流程中独立的“认证要求”规则集节点即可，效果相同。
 - 最终决定为 ALLOW，且实际经过的规则集节点中有命中规则的终态动作为 `ALLOW_PAYMENT_WITH_THREE_DS` → `THREE_DS_REQUIRED`；否则 `NOT_REQUIRED`。REVIEW/DENY 时认证要求为空。
@@ -257,6 +261,8 @@ public interface PaymentRiskAssessmentApi {
 
 ## 14. 交给 Payment 的接入清单（不在本会话范围）
 
+> 第 1、5 项按[修订第 6 节](./design-amendment-unified-evaluation.md#6-对-payment-接入清单的影响)调整：调用 `RiskDecisionApi`，以 `PaymentAttemptRiskInput` 构造请求，保存 `evaluationId`、`result` 与 `outputs.AUTHENTICATION_REQUIREMENT`。
+
 1. 用 `risk-api` 的 `PaymentRiskAssessmentApi` 替换自写草案客户端，补齐第 2 节请求字段。
 2. Card 提供跨交易稳定的 `cardFingerprint`（平台密钥下的 PAN 摘要）与 `cardBin`；非卡方式传空。
 3. DENY/REVIEW → Attempt FAILED、Intent 释放（修复当前停在 PROCESSING 的缺陷）；FAILED/TIMED_OUT/400/409/422/`PAYMENT_RISK_NOT_CONFIGURED` → FAILED。
@@ -294,4 +300,5 @@ public interface PaymentRiskAssessmentApi {
 已知缺口（一期不处理）：
 - 删除规则集时不检查其冻结版本是否被生效的执行发布引用；运营删除后，下次评估返回 FAILED（fail-closed），需新建发布恢复。
 - 未自动化覆盖 TIMED_OUT（500 毫秒超时难以在测试中稳定制造）与同一 Attempt 并发评估。
+- 运行期分支覆盖 76.7%（行 94.0%），剩余为数据损坏防御分支与影子补偿任务异常路径，见[交付记录 5.1](./delivery.md#51-补测2026-10-14用户指出决策引擎覆盖率不足后你改吧)。
 

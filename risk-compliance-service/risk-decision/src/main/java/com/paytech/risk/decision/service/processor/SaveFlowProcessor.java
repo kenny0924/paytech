@@ -41,6 +41,7 @@ public class SaveFlowProcessor extends AbstractLockProcessor<SaveFlowRequest, Sa
     private final DecisionRuleSetService ruleService;
     private final DecisionRuleSetRepository rules;
     private final DecisionFlowEdgeRepository edges;
+    private final DecisionFlowEndOutputRepository outputs;
     private final DecisionFlowGraphAssembler assembler;
     private final DecisionFlowNodeRepository nodes;
     private final DecisionFlowRootRepository roots;
@@ -132,7 +133,23 @@ public class SaveFlowProcessor extends AbstractLockProcessor<SaveFlowRequest, Sa
                 nodeIds.get(e.targetNodeKey()), FlowEdgeType.valueOf(e.type()), e.priority(), e.name(),
                 codec.conditionJson(e.condition()), time, time))
             .toList();
-        return new SaveFlowContext(root, oldVersion, version, nodes, edges);
+        List<DecisionFlowEndOutput> outputs = configuredGraph.nodes().stream()
+            .flatMap(n -> n.outputs().entrySet().stream().map(o -> endOutput(versionId, nodeIds.get(n.nodeKey()), o.getKey(),
+                o.getValue(), time)))
+            .toList();
+        return new SaveFlowContext(root, oldVersion, version, nodes, edges, outputs);
+    }
+
+    /** 一项结束节点输出的不可变行。 */
+    private DecisionFlowEndOutput endOutput(long versionId, long nodeId, String code, String value, Instant time) {
+        DecisionFlowEndOutput row = new DecisionFlowEndOutput();
+        row.setOutputId(nextId());
+        row.setFlowVersionId(versionId);
+        row.setNodeId(nodeId);
+        row.setOutputCode(code);
+        row.setOutputValue(value);
+        row.setCreateTime(time);
+        return row;
     }
 
     /** 当前可编辑决策点由本库目录确认。 */
@@ -167,7 +184,8 @@ public class SaveFlowProcessor extends AbstractLockProcessor<SaveFlowRequest, Sa
     /** 仅从真实基准版本读取保存图，已退休选择的沿用资格不由客户端声明。 */
     private Graph baseGraph(String pointCode, DecisionFlowRow root, DecisionFlowVersionRow head) {
         return root == null ? null : assembler.assemble(pointCode, root, head,
-            nodes.findByVersion(head.flowVersionId()), edges.findByVersion(head.flowVersionId()));
+            nodes.findByVersion(head.flowVersionId()), edges.findByVersion(head.flowVersionId()),
+            outputs.findByVersion(head.flowVersionId()));
     }
 
     /** 读取准确规则版本，随后由调用方按用途读取或锁定变量目录。 */

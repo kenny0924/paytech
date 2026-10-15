@@ -817,6 +817,18 @@ CREATE TABLE `t_decision_flow_edge` (
   UNIQUE KEY `uk_flow_edge_order` (`flow_version_id`, `source_node_id`, `priority_no`) COMMENT '保证业务唯一性：flow_version_id、source_node_id、priority_no'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存版本内节点连线、显式出口顺序及受控条件树；一条连线一个条件，不保存求值结果';
 
+CREATE TABLE `t_decision_flow_end_output` (
+  `output_id` BIGINT NOT NULL COMMENT 'Risk 服务侧 Snowflake 生成的结束节点输出行身份。',
+  `flow_version_id` BIGINT NOT NULL COMMENT '所属不可变流程版本；与结束节点同属此版本。',
+  `node_id` BIGINT NOT NULL COMMENT '本库同一流程版本的放行结束节点。',
+  `output_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '决策点合同声明的附加输出编码，如 AUTHENTICATION_REQUIREMENT。取值来源：决策点工程合同的附加输出声明；非固定枚举。',
+  `output_value` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '该输出在决策点合同中允许的取值，如 THREE_DS_REQUIRED；由应用按合同校验。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '本行在 Risk 数据库中创建的 UTC 微秒时间。',
+  PRIMARY KEY (`output_id`),
+  UNIQUE KEY `uk_flow_end_output` (`node_id`, `output_code`) COMMENT '保证业务唯一性：node_id、output_code',
+  KEY `idx_flow_end_output_version` (`flow_version_id`) COMMENT '支持访问路径：flow_version_id'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存放行结束节点配置的附加输出；编码与取值由决策点合同声明，创建后不可修改';
+
 CREATE TABLE `t_risk_variable` (
   `variable_id` BIGINT NOT NULL COMMENT '变量的稳定标识，由 Risk 分配；不作为共享值版本。',
   `variable_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '全库唯一且创建后不可修改、不可复用的变量编码，格式为大写字母开头的大写字母数字下划线。取值来源：Risk 统一变量库；非固定枚举。',

@@ -4,7 +4,6 @@ import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.id.SnowflakeIdGenerator;
 import com.paytech.risk.control.domainservice.port.ControlIdentifierGenerator;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry;
-import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizer;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizerImpl;
 import com.paytech.risk.decision.domain.release.DecisionReleaseStaticValidator;
@@ -23,11 +22,6 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration(proxyBeanMethods = false)
 public class RiskRuntimeConfiguration {
-
-    @Bean
-    DecisionPointAuthoringDescriptor decisionPointAuthoringDescriptor() {
-        return DecisionPointAuthoringDescriptor.checkoutPrepare();
-    }
 
     @Bean
     DecisionActionRegistry decisionActionRegistry() {

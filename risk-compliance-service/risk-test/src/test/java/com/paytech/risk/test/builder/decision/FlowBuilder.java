@@ -3,6 +3,7 @@ package com.paytech.risk.test.builder.decision;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.FlowEdgeType;
@@ -41,9 +42,18 @@ public final class FlowBuilder {
             + "\"valueType\":\"BOOLEAN\",\"variableCode\":null}],\"operator\":\"EQ\"},\"schemaVersion\":2}";
     }
 
-    /** 一个配置节点；不适用字段为 null。 */
+    /** 一个配置节点；不适用字段为 null，附加输出只用于放行结束节点。 */
     public record NodeSpec(String nodeKey, FlowNodeType type, String name, int x, int y, Long ruleSetVersionId,
-        DecisionValue decision, String reasonCode, String reasonMessage) {
+        DecisionValue decision, String reasonCode, String reasonMessage, Map<String, String> outputs) {
+        public NodeSpec {
+            outputs = outputs == null ? Map.of() : Map.copyOf(outputs);
+        }
+
+        /** 不配置附加输出的节点。 */
+        public NodeSpec(String nodeKey, FlowNodeType type, String name, int x, int y, Long ruleSetVersionId,
+            DecisionValue decision, String reasonCode, String reasonMessage) {
+            this(nodeKey, type, name, x, y, ruleSetVersionId, decision, reasonCode, reasonMessage, Map.of());
+        }
     }
 
     /** 一条连线；仅 CONDITIONAL 携带规范化条件 JSON。 */

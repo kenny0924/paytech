@@ -113,7 +113,7 @@ web:
       - /decision-flows
       - /decision-variables
       - /risk-lists
-      - /payment-risk-assessment
+      - /risk-decisions
 
 # paytech-redis-starter
 redis:

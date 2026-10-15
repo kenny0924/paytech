@@ -18,7 +18,7 @@ public final class RiskDatabasePrecondition
     implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     /** Risk 当前获批物理模型中的表数。 */
-    public static final int EXPECTED_TABLE_COUNT = 83;
+    public static final int EXPECTED_TABLE_COUNT = 84;
 
     /**
      * 不包含凭据的本地数据库准备说明。
@@ -143,7 +143,7 @@ public final class RiskDatabasePrecondition
             + "AND table_name='t_command_idempotency' AND column_name='idempotency_key' "
             + "AND character_set_name='ascii' AND collation_name='ascii_bin'") == 1L);
         require("REPEATABLE-READ".equals(text(connection, "SELECT @@transaction_isolation")));
-        require(count(connection, "SELECT COUNT(*) FROM t_action_version") == ACTIONS.size() + 2 + 4);
+        require(count(connection, "SELECT COUNT(*) FROM t_action_version") == ACTIONS.size() + 2 + 3);
         require(count(connection, "SELECT COUNT(*) FROM t_action_version WHERE action_version_id IN (240004,240005) "
             + "AND status='CONFIGURATION_ONLY' AND handler_code IS NULL AND implementation_version IS NULL "
             + "AND implementation_hash IS NULL AND terminal_flag=0") == 2);
@@ -182,8 +182,11 @@ public final class RiskDatabasePrecondition
             + "AND point_code='PAYMENT_ATTEMPT_RISK' AND business_domain='PAYMENT' AND status='ACTIVE'") == 1L);
         require(count(connection, "SELECT COUNT(*) FROM t_decision_point_version WHERE point_version_id=220002 "
             + "AND status='FROZEN'") == 1L);
-        require(count(connection, "SELECT COUNT(*) FROM t_action_version WHERE action_version_id BETWEEN 240006 AND 240009 "
-            + "AND status='ACTIVE' AND terminal_flag=1") == 4L);
+        require(count(connection, "SELECT COUNT(*) FROM t_action_version WHERE action_version_id BETWEEN 240006 AND 240008 "
+            + "AND status='ACTIVE' AND terminal_flag=1 AND action_code IN ('ALLOW_PAYMENT','REVIEW_PAYMENT','DENY_PAYMENT')") == 3L);
+        require(count(connection, "SELECT COUNT(*) FROM t_action_version WHERE action_code='ALLOW_PAYMENT_WITH_THREE_DS'") == 0L);
+        require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+            + "AND table_name='t_decision_flow_end_output'") == 6L);
         require(count(connection, "SELECT COUNT(*) FROM t_risk_variable WHERE variable_id BETWEEN 900000000000093001 AND 900000000000093013") == 13L);
         require(count(connection, "SELECT COUNT(*) FROM t_risk_variable_member WHERE member_id BETWEEN 900000000000094001 AND 900000000000094003") == 3L);
     }

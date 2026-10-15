@@ -15,7 +15,7 @@
 
 ## Risk 支付反欺诈一期（2026-10-14）
 
-- **Implemented / auto 已验证，未提交、未部署：** 按[需求](../requirements/20261014/risk-支付反欺诈一期/requirement.md)与[决定](./decisions/2026-10-14-risk-payment-fraud-phase1.md)在 risk-compliance-service 实现支付尝试评估（`PAYMENT_ATTEMPT_RISK`）、名单维护、实时累计与名单命中 Feature、执行发布（校验、回放式影子运行、TEST 一人激活）。Risk 模型 81 → 83 表；增量 SQL 经授权已在本机 `mor_risk` 执行并与 Schema 逐列核对一致。Risk 全量 auto **1969/1969**。Payment 尚未接入（接入清单见[设计第 14 节](../requirements/20261014/risk-支付反欺诈一期/design.md#14-交给-payment-的接入清单不在本会话范围)）；本机无生效支付发布时评估接口返回 503。实施修订与已知缺口见[设计第 16 节](../requirements/20261014/risk-支付反欺诈一期/design.md#16-阶段-4-实施修订2026-10-14)。
+- **Implemented / auto 已验证，一期主体与修订均已本地提交（未推送），未部署：** 按[需求](../requirements/20261014/risk-支付反欺诈一期/requirement.md)与[决定](./decisions/2026-10-14-risk-payment-fraud-phase1.md)在 risk-compliance-service 实现支付尝试评估（`PAYMENT_ATTEMPT_RISK`）、名单维护、实时累计与名单命中 Feature、执行发布（校验、回放式影子运行、TEST 一人激活）。Risk 模型 81 → 84 表；增量 SQL 经授权已在本机 `mor_risk` 执行并与 Schema 逐列核对一致。2026-10-15 按[修订](../requirements/20261014/risk-支付反欺诈一期/design-amendment-unified-evaluation.md)改为统一评估接口 `/risk-decisions/v1/evaluations`，认证要求改由放行结束节点输出配置（新增 `t_decision_flow_end_output`，删除 3DS 专用动作）。Risk 全量 auto **1989/1989**。Payment 尚未接入（接入清单见[设计第 14 节](../requirements/20261014/risk-支付反欺诈一期/design.md#14-交给-payment-的接入清单不在本会话范围)）；本机无生效支付发布时评估接口返回 503 `RISK_DECISION_NOT_CONFIGURED`。实施修订与已知缺口见[设计第 16 节](../requirements/20261014/risk-支付反欺诈一期/design.md#16-阶段-4-实施修订2026-10-14)。
 
 ## PayBy（阿联酋）收款接入（2026-10-14）
 

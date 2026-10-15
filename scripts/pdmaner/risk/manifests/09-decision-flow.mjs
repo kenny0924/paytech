@@ -98,4 +98,23 @@ export const TABLES = Object.freeze([
       relation("target_node_id", "decision_flow_node", "node_id", "n:1"),
     ],
   }),
+  defineTable({
+    key: "decision_flow_end_output", name: "决策流结束节点输出", comment: "保存放行结束节点配置的附加输出；编码与取值由决策点合同声明，创建后不可修改", audit: "custom",
+    fields: [
+      field("output_id", "BIGINT", "NN", "输出标识", "Risk 服务侧 Snowflake 生成的结束节点输出行身份。", {"primaryKey": true}),
+      field("flow_version_id", "BIGINT", "NN", "流程版本标识", "所属不可变流程版本；与结束节点同属此版本。", {}),
+      field("node_id", "BIGINT", "NN", "结束节点标识", "本库同一流程版本的放行结束节点。", {}),
+      field("output_code", "VARCHAR(64)", "NN", "输出编码", "决策点合同声明的附加输出编码，如 AUTHENTICATION_REQUIREMENT。", {"characterSet": "ascii", "collation": "ascii_bin", "source": "决策点工程合同的附加输出声明"}),
+      field("output_value", "VARCHAR(64)", "NN", "输出取值", "该输出在决策点合同中允许的取值，如 THREE_DS_REQUIRED；由应用按合同校验。", {"characterSet": "ascii", "collation": "ascii_bin"}),
+      field("create_time", "DATETIME(6)", "NN", "创建时间", "本行在 Risk 数据库中创建的 UTC 微秒时间。", {}),
+    ],
+    indexes: [
+      { ...uniqueIndex("uk_flow_end_output", "node_id", "output_code"), comment: "保证业务唯一性：node_id、output_code" },
+      { ...accessIndex("idx_flow_end_output_version", "flow_version_id"), comment: "支持访问路径：flow_version_id" },
+    ],
+    relations: [
+      relation("flow_version_id", "decision_flow_version", "flow_version_id", "n:1"),
+      relation("node_id", "decision_flow_node", "node_id", "n:1"),
+    ],
+  }),
 ]);

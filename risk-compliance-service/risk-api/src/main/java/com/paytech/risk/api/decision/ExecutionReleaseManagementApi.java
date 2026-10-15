@@ -23,9 +23,12 @@ public interface ExecutionReleaseManagementApi {
     /**
      * 创建执行发布
      *
-     * @param actorAccountId Gateway 传入的可信操作者 Account ID，作为创建人保存
-     * @param sessionId Gateway 传入的可信会话标识
-     * @param requestBody 决策点与决策流版本
+     * @param actorAccountId
+     *            Gateway 传入的可信操作者 Account ID，作为创建人保存
+     * @param sessionId
+     *            Gateway 传入的可信会话标识
+     * @param requestBody
+     *            决策点与决策流版本
      * @return DRAFT/version=1 的 TEST 发布；每次有效调用新建发布。决策点不支持执行发布或流程不属于该点返回 400
      */
     @PostExchange("/executions")

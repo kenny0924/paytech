@@ -2,13 +2,27 @@ package com.paytech.risk.decision.domain.authoring;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
-import com.paytech.risk.decision.domain.enums.*;
+import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.risk.decision.domain.enums.ActionCategory;
+import com.paytech.risk.decision.domain.enums.ComparisonOperator;
+import com.paytech.risk.decision.domain.enums.ConfigurationStatus;
+import com.paytech.risk.decision.domain.enums.DataClassification;
+import com.paytech.risk.decision.domain.enums.DecisionValue;
+import com.paytech.risk.decision.domain.enums.DecisionValueType;
+import com.paytech.risk.decision.domain.enums.EvaluationStrategy;
+import com.paytech.risk.decision.domain.enums.FailureStrategy;
+import com.paytech.risk.decision.domain.enums.MergePolicy;
+import com.paytech.risk.decision.domain.enums.VariableSource;
+import com.paytech.risk.decision.domain.enums.VariableUsage;
+import com.paytech.risk.decision.domain.variable.DecisionSourceContracts;
 
 /**
  * 工程注册的决策点创作合同：输入字段、运算符和规则终态动作。
  * <li>结账（CHECKOUT_PREPARE）保持原合同、动作 ID 与 Handler 摘要不变，只有配置能力，没有运行期执行。</li>
- * <li>支付尝试（PAYMENT_ATTEMPT_RISK）只接受统一变量格式，规则可冻结并经执行发布运行；一期不开放附加动作。</li>
+ * <li>支付尝试（PAYMENT_ATTEMPT_RISK）只接受统一变量格式，规则可冻结并经执行发布运行；一期不开放附加动作；认证要求是附加输出，由放行结束节点配置。</li>
  */
 public final class DecisionPointAuthoringDescriptor {
 
@@ -16,6 +30,9 @@ public final class DecisionPointAuthoringDescriptor {
         List.of(ComparisonOperator.EQ, ComparisonOperator.NE, ComparisonOperator.GT, ComparisonOperator.GTE,
             ComparisonOperator.LT, ComparisonOperator.LTE, ComparisonOperator.IN, ComparisonOperator.NOT_IN,
             ComparisonOperator.BETWEEN, ComparisonOperator.IS_NULL, ComparisonOperator.IS_NOT_NULL);
+
+    /** 支付决策点的认证要求输出编码。 */
+    public static final String AUTHENTICATION_REQUIREMENT = "AUTHENTICATION_REQUIREMENT";
 
     private static final DecisionPointAuthoringDescriptor CHECKOUT_PREPARE =
         new DecisionPointAuthoringDescriptor(
@@ -30,7 +47,7 @@ public final class DecisionPointAuthoringDescriptor {
                     "a4d4709e280ee2d8c2a4dcc5537e91318a16b2cd27ba41a10d70bdae25e85716"),
                 action("DENY_CHECKOUT", "Deny Checkout", "DECISION_DENY_V1", DecisionValue.DENY,
                     "8dc8b20590fa0d0c98732d332871901c568207ba9e346277668c9daab3a1e9b7")),
-            null, false);
+            List.of(), false);
 
     private static final DecisionPointAuthoringDescriptor PAYMENT_ATTEMPT_RISK =
         new DecisionPointAuthoringDescriptor(
@@ -41,13 +58,13 @@ public final class DecisionPointAuthoringDescriptor {
             List.of(
                 action("ALLOW_PAYMENT", "放行支付", "DECISION_ALLOW_V1", DecisionValue.ALLOW,
                     "185de7185670a27961afb0eade21b87fd99cc9677542ef5eaf6bb5c0806ceaa1"),
-                action("ALLOW_PAYMENT_WITH_THREE_DS", "放行并要求 3DS", "DECISION_ALLOW_THREE_DS_V1", DecisionValue.ALLOW,
-                    "85a417f2c0707035b33042b325297669e9eb950c930e0d3940bbbc89d4781e85"),
                 action("REVIEW_PAYMENT", "人工审核", "DECISION_REVIEW_V1", DecisionValue.REVIEW,
                     "a4d4709e280ee2d8c2a4dcc5537e91318a16b2cd27ba41a10d70bdae25e85716"),
                 action("DENY_PAYMENT", "拒绝支付", "DECISION_DENY_V1", DecisionValue.DENY,
                     "8dc8b20590fa0d0c98732d332871901c568207ba9e346277668c9daab3a1e9b7")),
-            "ALLOW_PAYMENT_WITH_THREE_DS", true);
+            List.of(new OutputDescriptor(AUTHENTICATION_REQUIREMENT, List.of("NOT_REQUIRED", "THREE_DS_REQUIRED"),
+                "NOT_REQUIRED")),
+            true);
 
     private static final List<DecisionPointAuthoringDescriptor> ALL = List.of(CHECKOUT_PREPARE, PAYMENT_ATTEMPT_RISK);
 
@@ -56,26 +73,26 @@ public final class DecisionPointAuthoringDescriptor {
     private final long firstActionVersionId;
     private final List<InputFieldDescriptor> fields;
     private final List<DecisionActionDescriptor> actions;
-    private final String threeDsActionCode;
+    private final List<OutputDescriptor> outputs;
     private final boolean runtimeSupported;
 
     /** 由工程合同构造；输入字段取自同一决策点的准确输入合同。 */
     private DecisionPointAuthoringDescriptor(String descriptorCode, DecisionPointDescriptor point,
-        long firstActionVersionId, List<DecisionActionDescriptor> actions, String threeDsActionCode,
+        long firstActionVersionId, List<DecisionActionDescriptor> actions, List<OutputDescriptor> outputs,
         boolean runtimeSupported) {
         this.descriptorCode = descriptorCode;
         this.point = point;
         this.firstActionVersionId = firstActionVersionId;
         this.actions = List.copyOf(actions);
-        this.threeDsActionCode = threeDsActionCode;
+        this.outputs = List.copyOf(outputs);
         this.runtimeSupported = runtimeSupported;
-        this.fields = com.paytech.risk.decision.domain.variable.DecisionSourceContracts.all().stream()
-            .filter(c -> c.sourceType() == com.paytech.risk.decision.domain.enums.VariableSource.INPUT
+        this.fields = DecisionSourceContracts.all().stream()
+            .filter(c -> c.sourceType() == VariableSource.INPUT
                 && c.pointCode().equals(point.pointCode()) && c.contractCode().equals(point.inputContractCode())
                 && c.contractVersion() == point.inputContractVersion()).findFirst().orElseThrow().fields().stream()
             .map(f -> new InputFieldDescriptor(f.fieldKey(), f.valueType(), f.required(), f.dataClassification(),
-                f.allowedUsages().contains(com.paytech.risk.decision.domain.enums.VariableUsage.RULE_CONDITION),
-                f.allowedUsages().contains(com.paytech.risk.decision.domain.enums.VariableUsage.ACTION_PARAMETER))).toList();
+                f.allowedUsages().contains(VariableUsage.RULE_CONDITION),
+                f.allowedUsages().contains(VariableUsage.ACTION_PARAMETER))).toList();
     }
 
     /** 结账准备决策点的原合同。 */
@@ -94,14 +111,14 @@ public final class DecisionPointAuthoringDescriptor {
     }
 
     /** 按决策点编码取准确合同；未注册时返回空，由调用方决定错误语义。 */
-    public static java.util.Optional<DecisionPointAuthoringDescriptor> find(String pointCode) {
+    public static Optional<DecisionPointAuthoringDescriptor> find(String pointCode) {
         return ALL.stream().filter(value -> value.point.pointCode().equals(pointCode)).findFirst();
     }
 
     /** 按决策点编码取准确合同；未注册时视为参数错误。 */
     public static DecisionPointAuthoringDescriptor require(String pointCode) {
         return find(pointCode).orElseThrow(
-            () -> new com.paytech.foundation.common.error.InvalidParameterException("决策点尚未支持: " + pointCode));
+            () -> new InvalidParameterException("决策点尚未支持: " + pointCode));
     }
 
     /** 取拥有该终态动作的决策点合同；动作未注册属于工程错误。 */
@@ -129,9 +146,14 @@ public final class DecisionPointAuthoringDescriptor {
         return !runtimeSupported;
     }
 
-    /** 终态动作是否在放行同时要求 3DS 认证。 */
-    public boolean requiresThreeDs(String actionCode) {
-        return threeDsActionCode != null && threeDsActionCode.equals(actionCode);
+    /** 该决策点声明的附加输出，按注册顺序；由放行结束节点配置取值。 */
+    public List<OutputDescriptor> outputs() {
+        return outputs;
+    }
+
+    /** 按输出编码取声明；未声明时返回空。 */
+    public Optional<OutputDescriptor> output(String outputCode) {
+        return outputs.stream().filter(value -> value.outputCode().equals(outputCode)).findFirst();
     }
 
     /** 终态动作是否属于本决策点。 */
@@ -152,7 +174,7 @@ public final class DecisionPointAuthoringDescriptor {
     public List<InputFieldDescriptor> inputFields(String pointCode, String contractCode, int contractVersion) {
         if (!point.pointCode().equals(pointCode) || !point.inputContractCode().equals(contractCode)
             || point.inputContractVersion() != contractVersion) {
-            throw new com.paytech.foundation.common.error.ErrorException("规则输入合同未登记");
+            throw new ErrorException("规则输入合同未登记");
         }
         return fields;
     }
@@ -168,10 +190,6 @@ public final class DecisionPointAuthoringDescriptor {
 
     public List<DecisionActionDescriptor> actions() {
         return actions;
-    }
-
-    private static InputFieldDescriptor field(String code, DecisionValueType type) {
-        return new InputFieldDescriptor(code, type, true, DataClassification.INTERNAL, true, false);
     }
 
     private static DecisionActionDescriptor action(
@@ -205,6 +223,26 @@ public final class DecisionPointAuthoringDescriptor {
             Objects.requireNonNull(evaluationStrategy);
             Objects.requireNonNull(failureStrategy);
             Objects.requireNonNull(status);
+        }
+    }
+
+    /**
+     * 风控点附加输出声明
+     *
+     * @param outputCode
+     *            输出编码
+     * @param allowedValues
+     *            允许取值，按展示顺序
+     * @param defaultValue
+     *            放行结束节点未配置时的取值
+     */
+    public record OutputDescriptor(String outputCode, List<String> allowedValues, String defaultValue) {
+        public OutputDescriptor {
+            Objects.requireNonNull(outputCode);
+            allowedValues = List.copyOf(allowedValues);
+            if (!allowedValues.contains(defaultValue)) {
+                throw new IllegalArgumentException("默认值必须在允许取值内: " + outputCode);
+            }
         }
     }
 

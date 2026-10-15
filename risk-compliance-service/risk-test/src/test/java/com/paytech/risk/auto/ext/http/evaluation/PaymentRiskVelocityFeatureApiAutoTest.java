@@ -12,8 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
-import com.paytech.risk.api.evaluation.PaymentRiskAssessmentApi;
-import com.paytech.risk.api.evaluation.request.PaymentRiskAssessmentRequestBody;
+import com.paytech.risk.api.evaluation.RiskDecisionApi;
+import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
@@ -27,10 +27,10 @@ import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker.Asses
 /**
  * 实时累计 Feature 的窗口与算法：经真实评估入口计算，按落库的 Feature 结果核对
  * <li>窗口为 [评估时间 - 窗口, 评估时间)：窗口内 10 秒的历史计入，窗口外 10 秒的不计入。</li>
- * <li>计数、计入本次的计数、按支付币种的金额合计、按 IP 去重计数、最近一次金额、距最近一次秒数、拒绝事件计数。</li>
+ * <li>计数、计入本次的计数、按支付币种的金额合计（含计入本次）、按 IP 去重计数、最近一次金额、距最近一次秒数、拒绝事件计数。</li>
  * <li>本次没有锚定主体（无卡指纹）时累计值为空。</li>
  *
- * @see PaymentRiskAssessmentApi#assess(PaymentRiskAssessmentRequestBody)
+ * @see RiskDecisionApi#evaluate(EvaluateDecisionRequestBody)
  */
 class PaymentRiskVelocityFeatureApiAutoTest extends AbstractPaymentRiskApiTest {
     /** 历史事件锚定的卡指纹。 */
@@ -41,7 +41,7 @@ class PaymentRiskVelocityFeatureApiAutoTest extends AbstractPaymentRiskApiTest {
 
     private final Map<String, String> variables = new LinkedHashMap<>();
 
-    /** 每例创建七个累计变量、引用它们的规则集与生效发布。 */
+    /** 每例创建八个累计变量、引用它们的规则集与生效发布。 */
     @BeforeEach
     void setUpClassMocks() {
         String assessed = VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode();
@@ -50,6 +50,7 @@ class PaymentRiskVelocityFeatureApiAutoTest extends AbstractPaymentRiskApiTest {
         velocity("count10m", assessed, card, VelocityMetric.COUNT, null, 600, false);
         velocity("countWithCurrent", assessed, card, VelocityMetric.COUNT, null, 600, true);
         velocity("sum1d", assessed, card, VelocityMetric.SUM_AMOUNT, null, 86_400, false);
+        velocity("sumWithCurrent1d", assessed, card, VelocityMetric.SUM_AMOUNT, null, 86_400, true);
         velocity("distinctIp1h", assessed, card, VelocityMetric.DISTINCT_COUNT, RiskSubjectType.IP_ADDRESS, 3600,
             false);
         velocity("lastAmount1h", assessed, card, VelocityMetric.LAST_AMOUNT, null, 3600, false);
@@ -59,7 +60,7 @@ class PaymentRiskVelocityFeatureApiAutoTest extends AbstractPaymentRiskApiTest {
         List<RuleRequestBody> rules = new ArrayList<>();
         int priority = 10;
         for (Map.Entry<String, String> variable : variables.entrySet()) {
-            boolean money = variable.getKey().equals("sum1d") || variable.getKey().equals("lastAmount1h");
+            boolean money = variable.getKey().startsWith("sum") || variable.getKey().equals("lastAmount1h");
             rules.add(rule(variable.getKey().toUpperCase(), variable.getKey(), priority, action("REVIEW_PAYMENT"),
                 predicate("root", null, 1, "GTE", variableOperand(variable.getValue(), "NUMBER"),
                     money ? money("1000000") : scalar("1000000"))));
@@ -69,7 +70,7 @@ class PaymentRiskVelocityFeatureApiAutoTest extends AbstractPaymentRiskApiTest {
         long block = frozenRuleSet(RuleSetCreateRequestBuilder.template(newCode("T_BLOCK")).pointCode(PAYMENT)
             .rules(rules.toArray(RuleRequestBody[]::new)).build());
         long auth = frozenRuleSet(RuleSetCreateRequestBuilder.template(newCode("T_AUTH")).pointCode(PAYMENT)
-            .rules(rule("THREE_DS_AMOUNT", "3DS amount", 10, action("ALLOW_PAYMENT_WITH_THREE_DS"),
+            .rules(rule("THREE_DS_AMOUNT", "3DS amount", 10, action("ALLOW_PAYMENT"),
                 predicate("root", null, 1, "GT", variableOperand("PAY_INPUT_AMOUNT", "NUMBER"), money("500"))))
             .build());
         activeRelease(saveFlow(newCode("T_FLOW"), twoStageGraph(block, auth, reason)));
@@ -94,6 +95,7 @@ class PaymentRiskVelocityFeatureApiAutoTest extends AbstractPaymentRiskApiTest {
             () -> assertEquals(0, new BigDecimal("2").compareTo(values.get("count10m")), "10 分钟窗口只含 60 秒、590 秒两笔"),
             () -> assertEquals(0, new BigDecimal("3").compareTo(values.get("countWithCurrent")), "计入本次"),
             () -> assertEquals(0, new BigDecimal("70").compareTo(values.get("sum1d")), "只合计 USD 且不含 1 天外"),
+            () -> assertEquals(0, new BigDecimal("170").compareTo(values.get("sumWithCurrent1d")), "合计计入本次 100"),
             () -> assertEquals(0, new BigDecimal("3").compareTo(values.get("distinctIp1h")), "1 小时内三个 IP"),
             () -> assertEquals(0, new BigDecimal("10").compareTo(values.get("lastAmount1h")), "最近一次金额"),
             () -> assertTrue(
@@ -149,7 +151,7 @@ class PaymentRiskVelocityFeatureApiAutoTest extends AbstractPaymentRiskApiTest {
     }
 
     /** 放行评估后按变量名读取本次落库的累计值。 */
-    private Map<String, BigDecimal> assessValues(PaymentRiskAssessmentRequestBody request) {
+    private Map<String, BigDecimal> assessValues(EvaluateDecisionRequestBody request) {
         Assessed assessed = assess(request).assertResult(DecisionValue.ALLOW.getCode(),
             AuthenticationRequirement.NOT_REQUIRED.getCode());
         Map<Long, BigDecimal> byFeature = new HashMap<>();

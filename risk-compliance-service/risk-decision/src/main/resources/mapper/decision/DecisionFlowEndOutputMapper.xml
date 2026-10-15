@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.DecisionFlowEndOutputMapper">
+    <sql id="columns">output_id AS outputId, flow_version_id AS flowVersionId, node_id AS nodeId, output_code AS outputCode, output_value AS outputValue, create_time AS createTime</sql>
+    <insert id="insert">INSERT INTO t_decision_flow_end_output(output_id, flow_version_id, node_id, output_code, output_value, create_time) VALUES(#{row.outputId}, #{row.flowVersionId}, #{row.nodeId}, #{row.outputCode}, #{row.outputValue}, #{row.createTime})</insert>
+    <select id="selectByVersion" useCache="false" resultType="com.paytech.risk.decision.core.dal.dataobject.DecisionFlowEndOutput">SELECT <include refid="columns"/> FROM t_decision_flow_end_output WHERE flow_version_id = #{flowVersionId} ORDER BY node_id, output_code LIMIT 501</select>
+</mapper>

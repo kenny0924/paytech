@@ -55,7 +55,7 @@ final class DecisionFlowWireConverter {
             id(value.getExpectedVersion()), value.getChangeReason(), new DecisionFlow.Graph(value.getGraph().getSchemaVersion(),
                 value.getGraph().getNodes().stream().map(n -> new DecisionFlow.Node(n.getNodeKey(), n.getType(), n.getName(),
                     coordinate(n.getPosition().getX()), coordinate(n.getPosition().getY()), id(n.getRuleSetVersionId()), n.getDecisionCode(),
-                    n.getReasonCode(), n.getReasonMessage())).toList(), value.getGraph().getEdges().stream().map(e -> new DecisionFlow.Edge(
+                    n.getReasonCode(), n.getReasonMessage(), n.getOutputs())).toList(), value.getGraph().getEdges().stream().map(e -> new DecisionFlow.Edge(
                     e.getEdgeKey(), e.getSourceNodeKey(), e.getTargetNodeKey(), e.getType(), e.getPriority(), e.getName(), condition(e.getCondition()))).toList()));
     }
 
@@ -82,8 +82,10 @@ final class DecisionFlowWireConverter {
     }
 
     static Node node(DecisionFlow.Node n) {
-        return new Node(n.nodeKey(), n.type(), n.name(), new Position(Integer.toString(n.x()), Integer.toString(n.y())),
+        Node node = new Node(n.nodeKey(), n.type(), n.name(), new Position(Integer.toString(n.x()), Integer.toString(n.y())),
             n.ruleSetVersionId() == null ? null : n.ruleSetVersionId().toString(), n.decisionCode(), n.reasonCode(), n.reasonMessage());
+        node.setOutputs(n.outputs().isEmpty() ? null : n.outputs());
+        return node;
     }
 
     static Edge edge(DecisionFlow.Edge e) {

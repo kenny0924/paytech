@@ -18,6 +18,8 @@ import com.paytech.risk.decision.core.dal.dataobject.ExecutionRelease;
 import com.paytech.risk.decision.core.dal.dataobject.TransactionRiskAssessment;
 import com.paytech.risk.decision.core.dal.dataobject.VelocityEvent;
 import com.paytech.risk.decision.core.dal.dataobject.VelocityEventSubject;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
+import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.EvaluationMode;
@@ -96,6 +98,17 @@ public final class PaymentRiskFacts {
             ruleTraces(evaluationId, run, ids), events, subjects);
     }
 
+    /**
+     * 支付决策点的认证要求输出
+     *
+     * @param outcome 引擎结论
+     * @return 放行时按结束节点输出解析的认证要求；其他结论为空
+     */
+    public static AuthenticationRequirement authentication(EngineOutcome outcome) {
+        String value = outcome.outputs().get(DecisionPointAuthoringDescriptor.AUTHENTICATION_REQUIREMENT);
+        return value == null ? null : AuthenticationRequirement.valueOf(value);
+    }
+
     /** 评估行；技术失败时两个决定为空并记录失败代码。 */
     static DecisionEvaluation evaluation(long evaluationId, PaymentRiskInput input, ExecutionRelease release, Run run,
         String inputHash) {
@@ -145,8 +158,7 @@ public final class PaymentRiskFacts {
         row.setUserAgent(input.userAgent());
         row.setCardFingerprint(input.cardFingerprint());
         row.setCardBin(input.cardBin());
-        row.setAuthenticationRequirement(run.status() == TechnicalStatus.SUCCEEDED
-            ? run.outcome().authenticationRequirement() : null);
+        row.setAuthenticationRequirement(run.status() == TechnicalStatus.SUCCEEDED ? authentication(run.outcome()) : null);
         row.setStableInputHash(stableHash(input));
         row.setRestrictedInputHash(restrictedHash);
         row.setCreateTime(run.completedTime());

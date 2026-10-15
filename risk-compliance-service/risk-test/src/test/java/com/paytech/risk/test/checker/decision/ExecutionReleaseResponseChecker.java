@@ -105,6 +105,13 @@ public final class ExecutionReleaseResponseChecker extends AbstractHttpResponseC
         return this;
     }
 
+    /** 当前影子批次 ID；没有批次时为空。 */
+    public String shadowRunId() {
+        assertStatus(200);
+        JsonNode run = body().path("shadowRun");
+        return run.isNull() || run.isMissingNode() ? null : run.path("shadowRunId").asString();
+    }
+
     /** 当前影子批次状态；没有批次时为空。 */
     public String shadowRunStatus() {
         JsonNode run = body().path("shadowRun");
@@ -130,5 +137,22 @@ public final class ExecutionReleaseResponseChecker extends AbstractHttpResponseC
             () -> assertEquals(0, run.path("timedOutCount").asInt(), "timedOutCount"),
             () -> assertEquals(checkStatus, run.path("checkStatus").asString(), "checkStatus"));
         return Long.parseLong(run.path("shadowRunId").asString());
+    }
+
+    /**
+     * 影子批次的结论变化计数
+     *
+     * @param allowToReview 放行转审核
+     * @param allowToDeny 放行转拒绝
+     * @param denyToAllow 拒绝转放行（审核转放行不计入）
+     * @return 当前 Checker
+     */
+    public ExecutionReleaseResponseChecker assertDecisionChanges(int allowToReview, int allowToDeny, int denyToAllow) {
+        JsonNode run = body().path("shadowRun");
+        assertAll("结论变化",
+            () -> assertEquals(allowToReview, run.path("allowToReviewCount").asInt(), "allowToReviewCount"),
+            () -> assertEquals(allowToDeny, run.path("allowToDenyCount").asInt(), "allowToDenyCount"),
+            () -> assertEquals(denyToAllow, run.path("denyToAllowCount").asInt(), "denyToAllowCount"));
+        return this;
     }
 }

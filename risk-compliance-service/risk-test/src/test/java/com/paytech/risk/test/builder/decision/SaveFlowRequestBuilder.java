@@ -110,10 +110,12 @@ public final class SaveFlowRequestBuilder {
     }
 
     private static Node node(NodeSpec node) {
-        return new Node(node.nodeKey(), node.type().getCode(), node.name(),
+        Node value = new Node(node.nodeKey(), node.type().getCode(), node.name(),
             new Position(Integer.toString(node.x()), Integer.toString(node.y())),
             node.ruleSetVersionId() == null ? null : node.ruleSetVersionId().toString(),
             node.decision() == null ? null : node.decision().getCode(), node.reasonCode(), node.reasonMessage());
+        value.setOutputs(node.outputs().isEmpty() ? null : node.outputs());
+        return value;
     }
 
     private static Edge edge(EdgeSpec edge) {

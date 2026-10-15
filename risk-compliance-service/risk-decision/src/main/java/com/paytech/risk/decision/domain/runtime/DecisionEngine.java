@@ -5,7 +5,6 @@ import java.util.function.Function;
 
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry;
-import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.NodeType;
 import com.paytech.risk.decision.domain.enums.NumericUnit;
@@ -34,7 +33,6 @@ public final class DecisionEngine {
     private final List<RuleTrace> ruleTraces = new ArrayList<>();
     private final List<PredicateTrace> predicateTraces = new ArrayList<>();
     private NodeResult currentNode;
-    private boolean threeDsHit;
 
     /** 绑定一次评估的输入；实例只能执行一次。 */
     private DecisionEngine(ExecutionSnapshot snapshot, PaymentRiskInput input, Map<Long, FeatureValue> features) {
@@ -81,12 +79,11 @@ public final class DecisionEngine {
         throw new ErrorException("决策流执行超过节点上限");
     }
 
-    /** 由结束节点形成结论；放行时根据经过的规则决定认证要求。 */
+    /** 由结束节点形成结论；放行时返回该节点冻结的附加输出（保存时已补齐默认值），其他结论没有输出。 */
     EngineOutcome outcome(DecisionFlow.Node end) {
         DecisionValue decision = DecisionValue.valueOf(end.decisionCode());
-        AuthenticationRequirement authentication = decision != DecisionValue.ALLOW ? null
-            : threeDsHit ? AuthenticationRequirement.THREE_DS_REQUIRED : AuthenticationRequirement.NOT_REQUIRED;
-        return new EngineOutcome(decision, end.reasonCode(), authentication, List.copyOf(ruleTraces),
+        Map<String, String> outputs = decision == DecisionValue.ALLOW ? end.outputs() : Map.of();
+        return new EngineOutcome(decision, end.reasonCode(), Map.copyOf(outputs), List.copyOf(ruleTraces),
             List.copyOf(predicateTraces));
     }
 
@@ -134,7 +131,6 @@ public final class DecisionEngine {
             ruleTraces.add(new RuleTrace(ruleSetVersionId, rule.ruleId(), hit, terminal));
             matched |= hit;
             if (terminal) {
-                threeDsHit |= snapshot.descriptor().requiresThreeDs(rule.action().action().actionCode());
                 return new NodeResult(true,
                     DecisionActionRegistry.instance().require(rule.action().action()).decisionCode().getCode());
             }

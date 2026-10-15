@@ -78,9 +78,9 @@ web:
       - /decision-releases
       - /decision-flows
       - /decision-variables
-      # 名单主体值与支付评估输入含 IP、卡指纹等受限原值，只记元数据。
+      # 名单主体值与统一评估输入含 IP、卡指纹等受限原值，只记元数据。
       - /risk-lists
-      - /payment-risk-assessment
+      - /risk-decisions
 
 management:
   endpoints:

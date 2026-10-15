@@ -150,7 +150,7 @@ public class ShadowRunHandler implements CompensationEventHandler {
         }
         Instant completed = now();
         if (status == TechnicalStatus.SUCCEEDED
-            && Duration.between(started, completed).toMillis() > snapshot.descriptor().point().timeoutMillis()) {
+            && Duration.between(started, completed).toMillis() > snapshot.timeoutMillis()) {
             status = TechnicalStatus.TIMED_OUT;
         }
         DecisionEvaluation row = shadowEvaluation(run, snapshot, sample, assessment, status, outcome, started, completed);
@@ -170,7 +170,7 @@ public class ShadowRunHandler implements CompensationEventHandler {
         Instant completed) {
         DecisionValue decision = status == TechnicalStatus.SUCCEEDED ? outcome.decision() : null;
         boolean actionChanged = status == TechnicalStatus.SUCCEEDED
-            && !Objects.equals(outcome.authenticationRequirement(), assessment.getAuthenticationRequirement());
+            && !Objects.equals(PaymentRiskFacts.authentication(outcome), assessment.getAuthenticationRequirement());
         DecisionEvaluation row = new DecisionEvaluation();
         row.setEvaluationId(identifiers.nextIdentifier());
         row.setEvaluationRequestId("SHADOW:" + run.getShadowRunId() + ":" + sample.getEvaluationId());

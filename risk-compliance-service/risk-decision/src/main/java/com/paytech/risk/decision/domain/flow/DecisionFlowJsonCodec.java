@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.springframework.stereotype.Component;
 import tools.jackson.core.StreamReadFeature;
@@ -125,15 +126,23 @@ public final class DecisionFlowJsonCodec {
     }
 
     private Object graph(Graph graph) {
-        return object("schemaVersion", graph.schemaVersion(), "nodes", graph.nodes().stream().map(n ->
-            object("nodeKey", n.nodeKey(), "type", n.type(), "name", n.name(),
-                "position", object("x", Integer.toString(n.x()), "y", Integer.toString(n.y())),
-                "ruleSetVersionId", id(n.ruleSetVersionId()), "decisionCode", n.decisionCode(),
-                "reasonCode", n.reasonCode(), "reasonMessage", n.reasonMessage())).toList(),
+        return object("schemaVersion", graph.schemaVersion(), "nodes", graph.nodes().stream().map(this::node).toList(),
             "edges", graph.edges().stream().map(e -> object("edgeKey", e.edgeKey(), "sourceNodeKey", e.sourceNodeKey(),
                 "targetNodeKey", e.targetNodeKey(), "type", e.type(), "priority", e.priority(), "name", e.name(),
                 "condition", e.condition() == null ? null : object("schemaVersion", e.condition().schemaVersion(),
                     "root", expression(e.condition().root())))).toList());
+    }
+
+    /** 节点投影；没有附加输出时不出现 outputs 键，保持既有流程的摘要不变。 */
+    private Object node(Node n) {
+        Map<String, Object> value = object("nodeKey", n.nodeKey(), "type", n.type(), "name", n.name(),
+            "position", object("x", Integer.toString(n.x()), "y", Integer.toString(n.y())),
+            "ruleSetVersionId", id(n.ruleSetVersionId()), "decisionCode", n.decisionCode(),
+            "reasonCode", n.reasonCode(), "reasonMessage", n.reasonMessage());
+        if (!n.outputs().isEmpty()) {
+            value.put("outputs", new TreeMap<>(n.outputs()));
+        }
+        return value;
     }
 
     private Object expression(Expression expression) {
