@@ -6,7 +6,7 @@ server:
 
 spring:
   config:
-    # 复用仓库已启动的本地 Redis 凭据；不要求 IDE 另行设置环境变量。
+    # 复用仓库已启动的本地 Redis、RabbitMQ 凭据；不要求 IDE 另行设置环境变量。
     import:
       - "optional:file:../../local-environment/.env.local[.properties]"
       - "optional:file:../local-environment/.env.local[.properties]"
@@ -54,6 +54,18 @@ spring:
       password: "${MOR_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:local-redis-change-me-2026}}"
       connect-timeout: 2s
       timeout: 2s
+  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量，不写默认值。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${MOR_RABBITMQ_USER}"
+    password: "${MOR_RABBITMQ_PASSWORD}"
+    virtual-host: "${MOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
   jmx:
     enabled: false
 
@@ -83,6 +95,29 @@ redis:
     resource-lock:
       wait-time: 500ms
       lease-time: 30s
+
+# paytech-compensation-event：本地补偿任务，事务内登记、提交后执行。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识；测试固定值。
+  instance-id: payment-mock
+  # 单次 Claim 的租约时长。
+  lease-duration: 2m
+  # 兜底扫描单批条数。
+  scanner-batch-size: 100
+  coordinator:
+    core-size: 10
+    maximum-size: 20
+    queue-capacity: 80
+    keep-alive: 60s
+  handler:
+    maximum-concurrency: 20
+
+# paytech-xxl-job-starter（随 compensation-event 引入）：测试不连接调度中心。
+xxl:
+  job:
+    executor:
+      enabled: false
 
 payment:
   channel:

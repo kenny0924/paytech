@@ -1,5 +1,7 @@
 package com.paytech.payment.execution.domainservice.repository.impl;
 
+import java.util.List;
+
 import org.springframework.stereotype.Repository;
 
 import com.paytech.foundation.common.error.ConcurrentRequestException;
@@ -24,5 +26,11 @@ public class ChannelTransactionRefRepositoryImpl implements ChannelTransactionRe
         if (channelTransactionRefMapper.insertRef(ref) != 1) {
             throw new ConcurrentRequestException("渠道交易引用未能保存");
         }
+    }
+
+    /** 按原业务动作读取资金引用。 */
+    @Override
+    public List<ChannelTransactionRef> findByAction(long actionId) {
+        return channelTransactionRefMapper.selectByAction(actionId);
     }
 }

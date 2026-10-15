@@ -65,4 +65,15 @@ public class OrderRefundPositionRepositoryImpl implements OrderRefundPositionRep
         position.setVersion(position.getVersion() + 1);
         position.setUpdateTime(now);
     }
+
+    /** 行数确认后同步基数与版本；失败由调用方事务整体回滚。 */
+    @Override
+    public void establishBase(OrderRefundPosition position, BigDecimal amount, Instant now) {
+        if (mapper.establishBase(position, amount, now) != 1) {
+            throw new ConcurrentRequestException("支付成功时退款金额位置已改变");
+        }
+        position.setRefundableBaseAmount(amount);
+        position.setVersion(position.getVersion() + 1);
+        position.setUpdateTime(now);
+    }
 }

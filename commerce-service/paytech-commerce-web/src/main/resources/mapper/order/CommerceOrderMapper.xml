@@ -104,6 +104,11 @@
         WHERE order_id=#{order.orderId} AND client_id=#{order.clientId} AND version=#{order.version}
         AND order_status IN ('CREATED','OPEN') AND termination_requested_at IS NULL
     </update>
+    <update id="markPaid">
+        UPDATE t_commerce_order SET order_status='PAID',paid_at=#{paidAt},version=version+1,update_time=#{now}
+        WHERE order_id=#{order.orderId} AND client_id=#{order.clientId} AND version=#{order.version}
+            AND order_status='OPEN' AND paid_at IS NULL
+    </update>
     <update id="cancel">
         UPDATE t_commerce_order SET order_status='CANCELLED',status_reason_code='CLIENT_REQUESTED',
         cancelled_at=#{now},version=version+1,update_time=#{now}

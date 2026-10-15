@@ -44,9 +44,17 @@ public interface ChannelTestMapper {
     @Select("SELECT (SELECT COUNT(*) FROM t_payment_channel) + (SELECT COUNT(*) FROM t_channel_account) + (SELECT COUNT(*) FROM t_channel_mid) + (SELECT COUNT(*) FROM t_mid_capability) + (SELECT COUNT(*) FROM t_mid_capability_detail)")
     int countRows();
 
-    /** 读取执行链路五表与卡四表总行数。 */
-    @Select("SELECT (SELECT COUNT(*) FROM t_payment_intent) + (SELECT COUNT(*) FROM t_payment_attempt) + (SELECT COUNT(*) FROM t_payment_instrument_token) + (SELECT COUNT(*) FROM t_payment_action) + (SELECT COUNT(*) FROM t_channel_transaction_ref) + (SELECT COUNT(*) FROM t_payment_card) + (SELECT COUNT(*) FROM t_payment_card_credential) + (SELECT COUNT(*) FROM t_payment_card_instrument) + (SELECT COUNT(*) FROM t_payment_stored_card)")
+    /** 读取执行链路五表、卡四表与补偿任务表总行数。 */
+    @Select("SELECT (SELECT COUNT(*) FROM t_payment_intent) + (SELECT COUNT(*) FROM t_payment_attempt) + (SELECT COUNT(*) FROM t_payment_instrument_token) + (SELECT COUNT(*) FROM t_payment_action) + (SELECT COUNT(*) FROM t_channel_transaction_ref) + (SELECT COUNT(*) FROM t_payment_card) + (SELECT COUNT(*) FROM t_payment_card_credential) + (SELECT COUNT(*) FROM t_payment_card_instrument) + (SELECT COUNT(*) FROM t_payment_stored_card) + (SELECT COUNT(*) FROM t_compensation_event)")
     int countExecutionRows();
+
+    /** 仅清理本测试库的补偿任务；须在异步发布结束后执行。 */
+    @Delete("DELETE FROM t_compensation_event")
+    void clearCompensationEvents();
+
+    /** 某类型、某事件键的补偿任务执行状态。 */
+    @Select("SELECT execute_status AS status, sub_event_type AS subEventType, payload_json AS payload FROM t_compensation_event WHERE event_type = #{eventType} AND event_key = #{eventKey}")
+    List<Map<String, Object>> compensationEvents(@Param("eventType") String eventType, @Param("eventKey") String eventKey);
 
     /** 仅清理本测试库的渠道交易引用。 */
     @Delete("DELETE FROM t_channel_transaction_ref")
@@ -108,8 +116,8 @@ public interface ChannelTestMapper {
     @Delete("DELETE FROM t_payment_intent")
     void clearIntents();
 
-    /** 支付尝试状态与当前动作。 */
-    @Select("SELECT attempt_status AS status, active_action_id AS activeActionId, channel_id AS channelId, mid_id AS midId FROM t_payment_attempt WHERE payment_attempt_id = #{attemptId}")
+    /** 支付尝试状态、当前动作、渠道坐标与版本。 */
+    @Select("SELECT attempt_status AS status, active_action_id AS activeActionId, channel_id AS channelId, channel_account_id AS channelAccountId, mid_id AS midId, version FROM t_payment_attempt WHERE payment_attempt_id = #{attemptId}")
     Map<String, Object> attempt(@Param("attemptId") long attemptId);
 
     /** 支付意图状态与活动/成功尝试。 */

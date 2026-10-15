@@ -10,12 +10,15 @@
         <result column="captured_amount" property="capturedAmount" javaType="java.math.BigDecimal"/>
         <result column="currency" property="currency" javaType="java.lang.String"/>
         <result column="intent_source_version" property="intentSourceVersion"/>
+        <result column="last_attempt_event_key" property="lastAttemptEventKey" javaType="java.lang.String"/>
+        <result column="last_attempt_payload_hash" property="lastAttemptPayloadHash" javaType="java.lang.String"/>
         <result column="create_time" property="createTime"/>
         <result column="version" property="version" javaType="_long"/>
     </resultMap>
     <select id="findByOrderId" resultMap="OrderPaymentProjection">
         SELECT order_payment_projection_id,order_id,payment_intent_id,intent_status,successful_attempt_id,
-            captured_amount,currency,version,intent_source_version,create_time
+            captured_amount,currency,version,intent_source_version,last_attempt_event_key,last_attempt_payload_hash,
+            create_time
         FROM t_order_payment_projection WHERE order_id=#{orderId}
     </select>
     <select id="findVersionByOrderId" resultType="java.lang.Long" useCache="false" flushCache="true">
@@ -27,4 +30,15 @@
         VALUES (#{orderPaymentProjectionId},#{orderId},#{paymentIntentId},#{intentStatus},#{intentSourceVersion},
             #{capturedAmount},#{currency},#{createTime},#{version},#{createTime},#{createTime})
     </insert>
+    <update id="recordSucceeded">
+        UPDATE t_order_payment_projection SET intent_status='SUCCEEDED',active_attempt_id=NULL,
+            last_attempt_id=#{attemptId},last_attempt_status='SUCCEEDED',successful_attempt_id=#{attemptId},
+            captured_amount=#{capturedAmount},attempt_source_version=#{sourceVersion},
+            last_intent_event_key=#{eventKey},last_intent_payload_hash=#{payloadHash},
+            last_attempt_event_key=#{eventKey},last_attempt_payload_hash=#{payloadHash},
+            last_event_time=#{eventTime},version=version+1,update_time=#{now}
+        WHERE order_payment_projection_id=#{payment.orderPaymentProjectionId} AND order_id=#{payment.orderId}
+            AND payment_intent_id=#{payment.paymentIntentId} AND version=#{payment.version}
+            AND successful_attempt_id IS NULL AND intent_status &lt;&gt; 'SUCCEEDED'
+    </update>
 </mapper>

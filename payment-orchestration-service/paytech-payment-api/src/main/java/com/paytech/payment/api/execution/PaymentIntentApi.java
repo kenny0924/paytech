@@ -14,6 +14,7 @@ import com.paytech.payment.api.execution.request.PayRequestBody;
 import com.paytech.payment.api.execution.request.TerminateIntentRequestBody;
 import com.paytech.payment.api.execution.response.CreateIntentResponseBody;
 import com.paytech.payment.api.execution.response.GetIntentResponseBody;
+import com.paytech.payment.api.execution.response.GetSubmissionResponseBody;
 import com.paytech.payment.api.execution.response.PayResponseBody;
 import com.paytech.payment.api.execution.response.TerminateIntentResponseBody;
 
@@ -52,6 +53,31 @@ public interface PaymentIntentApi {
         @PathVariable("intentId") @NotBlank(message = "支付意图 ID 必填") @Pattern(regexp = "[1-9][0-9]{0,18}",
             message = "支付意图 ID 必须为无前导零的正整数字符串") @DecimalMax(value = "9223372036854775807",
                 message = "支付意图 ID 超出有效范围") String intentId,
+        @RequestParam("clientId") @NotBlank(message = "Client ID 必填") @Pattern(regexp = "[1-9][0-9]{0,18}",
+            message = "Client ID 必须为无前导零的正整数字符串") @DecimalMax(value = "9223372036854775807",
+                message = "Client ID 超出有效范围") String clientId);
+
+    /**
+     * 按来源提交查询原支付结果（EX-I06）
+     *
+     * @param intentId
+     *            支付意图 ID，正十进制 long 字符串，无前导零
+     * @param sourceSubmissionId
+     *            来源提交 ID，格式同上
+     * @param clientId
+     *            Client ID，格式同上；必须与 Intent 归属一致
+     * @return 原支付尝试的状态、已捕获金额、可选交互与失败代码
+     *         <li>查询成功返回 200；Intent 不存在或不属于当前 Client、该提交没有支付尝试（含只申请了工具）或不属于该 Intent 返回 404。</li>
+     *         <li>不返回 3DS 跳转地址。</li>
+     */
+    @GetExchange("/intents/{intentId}/submissions/{sourceSubmissionId}")
+    ResponseEntity<GetSubmissionResponseBody> getSubmission(
+        @PathVariable("intentId") @NotBlank(message = "支付意图 ID 必填") @Pattern(regexp = "[1-9][0-9]{0,18}",
+            message = "支付意图 ID 必须为无前导零的正整数字符串") @DecimalMax(value = "9223372036854775807",
+                message = "支付意图 ID 超出有效范围") String intentId,
+        @PathVariable("sourceSubmissionId") @NotBlank(message = "来源提交 ID 必填") @Pattern(regexp = "[1-9][0-9]{0,18}",
+            message = "来源提交 ID 必须为无前导零的正整数字符串") @DecimalMax(value = "9223372036854775807",
+                message = "来源提交 ID 超出有效范围") String sourceSubmissionId,
         @RequestParam("clientId") @NotBlank(message = "Client ID 必填") @Pattern(regexp = "[1-9][0-9]{0,18}",
             message = "Client ID 必须为无前导零的正整数字符串") @DecimalMax(value = "9223372036854775807",
                 message = "Client ID 超出有效范围") String clientId);

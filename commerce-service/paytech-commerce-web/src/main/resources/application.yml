@@ -56,6 +56,14 @@ spring:
   sql:
     init:
       mode: never
+  # Payment 支付结果消费（cg_commerce_payment_result）；凭据只从环境变量注入。
+  rabbitmq:
+    host: "${COMMERCE_RABBITMQ_HOST:127.0.0.1}"
+    port: "${COMMERCE_RABBITMQ_PORT:5672}"
+    username: "${COMMERCE_RABBITMQ_USERNAME:}"
+    password: "${COMMERCE_RABBITMQ_PASSWORD:}"
+    virtual-host: "${COMMERCE_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
   jmx:
     enabled: false
 

@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.payment.execution.core.dal.mapper.ChannelTransactionRefMapper">
+    <resultMap id="row" type="com.paytech.payment.execution.core.dal.dataobject.ChannelTransactionRef">
+        <result column="channel_transaction_ref_id" property="channelTransactionRefId"/>
+        <result column="payment_action_id" property="paymentActionId"/>
+        <result column="channel_id" property="channelId"/>
+        <result column="mid_id" property="midId"/>
+        <result column="reference_type" property="referenceType" javaType="com.paytech.payment.execution.core.action.ActionType"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="external_transaction_id" property="externalTransactionId"/>
+        <result column="original_channel_txn_ref_id" property="originalChannelTxnRefId"/>
+        <result column="channel_event_time" property="channelEventTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="amount" property="amount"/>
+        <result column="currency" property="currency"/>
+        <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
     <insert id="insertRef">
         INSERT INTO t_channel_transaction_ref (channel_transaction_ref_id, payment_action_id, channel_id, mid_id,
             reference_type, external_transaction_id, original_channel_txn_ref_id, channel_event_time,
@@ -9,4 +23,10 @@
             #{externalTransactionId}, #{originalChannelTxnRefId,jdbcType=BIGINT},
             #{channelEventTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{amount}, #{currency}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
     </insert>
+    <select id="selectByAction" resultMap="row">
+        SELECT channel_transaction_ref_id, payment_action_id, channel_id, mid_id, reference_type, external_transaction_id,
+            original_channel_txn_ref_id, channel_event_time, amount, currency, create_time
+        FROM t_channel_transaction_ref WHERE payment_action_id = #{actionId}
+        ORDER BY channel_transaction_ref_id
+    </select>
 </mapper>

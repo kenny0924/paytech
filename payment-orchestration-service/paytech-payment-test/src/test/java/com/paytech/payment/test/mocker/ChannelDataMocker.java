@@ -170,7 +170,7 @@ public class ChannelDataMocker implements Clear {
         assertEquals("mor_payment_channel_test", mapper.databaseName());
         try {
             clearSecurityCodes();
-            assertAll(mapper::clearTransactionRefs, mapper::clearActions, mapper::clearAttempts,
+            assertAll(mapper::clearCompensationEvents, mapper::clearTransactionRefs, mapper::clearActions, mapper::clearAttempts,
                 mapper::clearInstrumentTokens, mapper::clearStoredCards, mapper::clearCardInstruments,
                 mapper::clearCardCredentials, mapper::clearCards, mapper::clearIntents, mapper::clearDetails, mapper::clearCapabilities,
                 mapper::clearMids, mapper::clearAccounts, mapper::clearChannels);

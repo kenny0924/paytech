@@ -35,6 +35,18 @@ spring:
       password: "${MOR_REDIS_PASSWORD:}"
       connect-timeout: 2s
       timeout: 2s
+  rabbitmq:
+    host: "${PAYMENT_RABBITMQ_HOST:127.0.0.1}"
+    port: "${PAYMENT_RABBITMQ_PORT:5672}"
+    username: "${PAYMENT_RABBITMQ_USERNAME:}"
+    password: "${PAYMENT_RABBITMQ_PASSWORD:}"
+    virtual-host: "${PAYMENT_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    # 发布确认与不可路由退回：PaymentSucceeded 补偿 Handler 等待 Broker 确认后才算发布成功。
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
   jmx:
     enabled: false
 
@@ -50,6 +62,10 @@ web:
 
 mybatis:
   mapper-locations: "classpath*:mapper/**/*.xml"
+
+# paytech-compensation-event：支付成功事务内登记发布任务，提交后执行；XXL-Job 兜底唤醒沿用组件默认。
+compensation:
+  enabled: true
 
 redis:
   coordination:

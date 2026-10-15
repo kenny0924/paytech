@@ -50,6 +50,10 @@ Windows 使用 `mvnw.cmd` 并设置对应 `JAVA_HOME`。测试实现及验证范
 
 创建 Intent 使用 `POST /payment/payment-execution/v1/intents`，请求字段及重放语义见[创建接口合同](../requirements/20260913/payment-Execution设计/create-intent-amendment.md)。按来源类型与来源 ID 防重，无额外幂等 Header；仅写 Intent，返回 `intentId/status`。入口沿用公共锁模板、完整 Context 与 Service 本地事务，未接入自动到期推进或 Commerce 真实调用。
 
+按来源提交查询原支付结果（EX-I06）使用 `GET /payment/payment-execution/v1/intents/{intentId}/submissions/{sourceSubmissionId}?clientId=101`，返回尝试 ID、支付方式、尝试状态、按币种精度的已捕获金额与币种；仅处理中且交互未过期时返回交互类型与截止时间（不返回 3DS 跳转地址），仅失败时返回最后动作的渠道失败码。Intent 不存在或跨 Client、该提交没有支付尝试（含只申请了工具）或属于其他 Intent 返回 404。见[技术方案](../requirements/20261015/payment-支付结果查询与回传/technique.md) §2.1。
+
+卡支付成功时，PAY 动作的成功事务内登记 `PAYMENT_SUCCEEDED` 补偿任务（`t_compensation_event`，事件键为尝试 ID），提交后由 `PaymentSucceededHandler` 从尝试、意图、成功 PAY 动作与渠道交易引用重建事件，经 RabbitMQ 发布到 `topic_payment_result` / `payment.succeeded.v1`，收到 Broker 确认才删除任务。运行需 RabbitMQ（`PAYMENT_RABBITMQ_*`，见[配置清单](docs/development/configuration.md)）及 Payment 库中的 `t_compensation_event`。支付失败、处理中与授权不发布。
+
 终止 Intent 使用 `POST /payment/payment-execution/v1/intents/{intentId}/terminate`，Body 为 `clientId/reason`，无需幂等 Header，返回 `intentId/status/decision`。与 pay 共用 Intent 资源锁；安全终止只更新 Intent，已取消/过期直接返回，活动尝试返回 PENDING，授权等待返回 REVERSAL_REQUIRED，已收款返回 ALREADY_PAID；正常业务结果统一使用 HTTP 200，由上游判断 decision。完整边界见[终止接口合同](../requirements/20260913/payment-Execution设计/terminate-intent-amendment.md)；不自动撤销授权、退款或后台重试。
 
 `applyCardInstrument` 使用 `POST /payment/payment-instrument/v1/card-tokens`，完整请求和重放规则见[工具申请合同](../requirements/20260913/payment-Execution设计/apply-card-instrument-amendment.md)。来源提交范围一致时返回原 Token 和到期时间；新申请由 Processor 开启一个事务，依次调用 CardService 的本地申请和 Execution Service 的工具绑定保存，不创建 Attempt 或 Action。两个 Service 不互相调用，Execution Service 的该方法直接参与外层事务。新申请在事务前由 Card 的 `PrepareCardInstrumentProcessor` 准备：按卡指纹查卡，已有则经 Vault 取回 DEK，没有则生成 DEK 交 Vault 并保存卡；按（卡、凭证摘要）查或建卡凭证；加密 CVV 存 Redis。卡与凭证单条插入、自动提交，事务内只插入卡交易工具。原提交重放由 `CheckCardInstrumentProcessor` 比较卡指纹与凭证摘要，不访问 Vault。详见[Card 加密存储方案](../requirements/20261015/payment-Card加密存储/technique.md)。
@@ -60,7 +64,7 @@ Windows 使用 `mvnw.cmd` 并设置对应 `JAVA_HOME`。测试实现及验证范
 
 新 Attempt 在 Context 构建后调用 RouteService，再把渠道三元组随受理事务保存，状态仍为 PROCESSING。按本期用户要求，RouteServiceImpl 暂时固定返回合成 Channel/Account/MID `9001/9002/9003`，没有校验真实渠道配置或可用性；接通真实资金前必须替换该 Mock。保存上下文后单独创建 PROCESSING 状态的 PAY_RISK 并绑定 Attempt 的执行位，再通过 ActionFactory 取得实现并直接执行。PAY_RISK 调用 Risk 统一评估（[需求](../requirements/20261015/payment-接入Risk统一评估/technique.md)）：放行按认证要求进入 AUTHENTICATE、AUTHORIZE 或 PAY，其他结论或未取得结论时 Attempt 失败并释放 Intent；认证与授权能力目前明确返回未接入，原 Action 保持 UNKNOWN。真实选路、选择证据与 Owner 调用仍为 TODO。调用需要预先存在有效且匹配的 Intent 和交易级工具 Token。
 
-ActionExecutionService 通过 ActionFlowFactory 选择 CARD:PAY；ActionFlow 调用 Actor，统一保存结果并推进下一步。Actor 异常转为 UNKNOWN，保存成功后 pay 返回 202 / PROCESSING。动作定义和事务顺序见 [Action Flow 修订](../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)。动作执行不登记补偿事件；创建和后继切换使用 active_action_id 与版本条件更新，等待或未知结果保留原执行位。回调和恢复入口仍待后续接入。旧动作名称切换见[迁移约束](../requirements/20260913/payment-Execution设计/db/card-pay-action-migration.md)。
+ActionExecutionService 通过 ActionFlowFactory 选择 CARD:PAY；ActionFlow 调用 Actor，统一保存结果并推进下一步。Actor 异常转为 UNKNOWN，保存成功后 pay 返回 202 / PROCESSING。动作定义和事务顺序见 [Action Flow 修订](../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)。除收款成功登记 PaymentSucceeded 发布任务外，动作执行不登记补偿事件；创建和后继切换使用 active_action_id 与版本条件更新，等待或未知结果保留原执行位。回调和恢复入口仍待后续接入。旧动作名称切换见[迁移约束](../requirements/20260913/payment-Execution设计/db/card-pay-action-migration.md)。
 
 `/payment/actuator/health` 及其 `/liveness`、`/readiness` 子路径提供进程与依赖健康信息，不能证明支付链路已经完成验收。统一 Request ID、Problem 错误体与元信息访问日志由 Foundation 提供；请求 Body、Token、查询参数和交互地址不记录到普通日志。
 
@@ -68,7 +72,7 @@ ActionExecutionService 通过 ActionFlowFactory 选择 CARD:PAY；ActionFlow 调
 
 [实施合同](../requirements/20260921/payment-渠道账号与MID能力查询/implementation-contract.md)定义 `QueryMidCandidatesProcessor` 和 `GetChannelExecutionConfigProcessor` 的内部 `process` 入口。前者输出指定 OE 的候选三元组与能力；后者在核验冻结身份后，通过事务外 Vault Reveal 返回受控账号配置。无 HTTP 路由、运营 CRUD 或交易流水。现有 Routing 占位逻辑仍需单独接入。
 
-测试依赖仓库 mor-local MySQL/Redis。先人工审查 [隔离库 DDL](paytech-payment-test/src/test/resources/init/ddl.sql)，仅初始化 `mor_payment_channel_test` 及受限账号；应用和测试不会自行创建或迁移表。测试读取本机 local-environment/.env.local 的 Redis 凭据，只有空基线才接管并清理本例 Fixture；发现非空数据会拒绝运行。
+测试依赖仓库 mor-local MySQL/Redis/RabbitMQ（RabbitMQ 凭据与 vhost 读取 local-environment/.env.local 的 `MOR_RABBITMQ_*`）。先人工审查 [隔离库 DDL](paytech-payment-test/src/test/resources/init/ddl.sql)，仅初始化 `mor_payment_channel_test` 及受限账号；应用和测试不会自行创建或迁移表。测试读取本机 local-environment/.env.local 的 Redis 凭据，只有空基线才接管并清理本例 Fixture；发现非空数据会拒绝运行。
 
 使用上述 JDK 25 环境执行：
 

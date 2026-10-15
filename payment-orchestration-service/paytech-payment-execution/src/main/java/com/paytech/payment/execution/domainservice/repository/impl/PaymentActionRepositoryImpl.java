@@ -56,4 +56,10 @@ public class PaymentActionRepositoryImpl implements PaymentActionRepository {
     public PaymentAction selectById(Long activeActionId) {
         return paymentActionMapper.selectById(activeActionId);
     }
+
+    /** 按动作序号读取最后一个动作。 */
+    @Override
+    public PaymentAction findLatestByAttempt(long attemptId) {
+        return paymentActionMapper.selectLatestByAttempt(attemptId);
+    }
 }

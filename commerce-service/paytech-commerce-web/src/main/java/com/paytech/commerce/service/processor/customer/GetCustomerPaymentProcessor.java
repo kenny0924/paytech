@@ -21,6 +21,7 @@ import com.paytech.commerce.service.processor.customer.request.GetCustomerPaymen
 import com.paytech.commerce.service.processor.customer.response.CustomerPaymentResponse;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.processor.AbstractProcessor;
 
 import lombok.AllArgsConstructor;
@@ -86,14 +87,23 @@ public class GetCustomerPaymentProcessor
         return projection;
     }
 
-    /** 只读查询同订单、Intent 和提交编号的结果；未找到不推断为支付失败。 */
+    /**
+     * 只读查询同订单、Intent 和提交编号的结果
+     * <li>Payment 未找到时返回 PAYMENT_SUBMISSION_NOT_FOUND，不推断为支付失败。</li>
+     * <li>Payment 不可用时与提交响应未知相同降级：返回空结果，由响应保持处理中并继续轮询。</li>
+     */
     PaymentResult queryPayment(CustomerPaymentQueryContext context) {
         var reference = context.paymentReference();
-        var result = payment.query(reference);
+        PaymentResult result;
+        try {
+            result = payment.query(context.getOrder().getClientId(), reference);
+        } catch (ServiceUnavailableException unavailable) {
+            return null;
+        }
         if (result == null) {
             throw new FailException(PAYMENT_SUBMISSION_NOT_FOUND);
         }
-        result.validate(reference, clock.instant());
+        result.validateQueried(reference, clock.instant());
         return result;
     }
 

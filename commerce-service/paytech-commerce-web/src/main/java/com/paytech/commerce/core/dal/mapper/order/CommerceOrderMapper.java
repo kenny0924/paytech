@@ -40,6 +40,9 @@ public interface CommerceOrderMapper {
     /** 在原版本和允许状态下写入终止意图。 */
     int requestTermination(@Param("order") CommerceOrder order, @Param("now") Instant now);
 
+    /** 以订单版本将 OPEN 订单推进为 PAID。 */
+    int markPaid(@Param("order") CommerceOrder order, @Param("paidAt") Instant paidAt, @Param("now") Instant now);
+
     /** 仅在未支付且已请求终止时确认订单取消。 */
     int cancel(@Param("order") CommerceOrder order, @Param("payment") OrderPaymentProjection payment,
         @Param("localOnly") boolean localOnly,

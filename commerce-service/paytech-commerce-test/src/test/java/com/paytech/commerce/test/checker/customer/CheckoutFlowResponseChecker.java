@@ -51,4 +51,9 @@ public class CheckoutFlowResponseChecker
         assertNotNull(body.getSubmissionId());
         return this;
     }
+
+    /** 读取支付提交响应体，供调用方逐项断言。 */
+    public PaymentSubmissionResponseBody paymentBody() {
+        return mapper.readValue(result.getResponseBody(), PaymentSubmissionResponseBody.class);
+    }
 }

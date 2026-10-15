@@ -66,4 +66,9 @@
         SELECT <include refid="PaymentActionColumns"/>
         FROM t_payment_action WHERE payment_action_id = #{actionId}
     </select>
+    <select id="selectLatestByAttempt" resultMap="row">
+        SELECT <include refid="PaymentActionColumns"/>
+        FROM t_payment_action WHERE payment_attempt_id = #{attemptId}
+        ORDER BY action_no DESC LIMIT 1
+    </select>
 </mapper>

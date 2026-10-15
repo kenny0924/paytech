@@ -52,6 +52,12 @@
                     AND p.captured_amount=#{position.refundableBaseAmount}
             )
     </update>
+    <update id="establishBase">
+        UPDATE t_order_refund_position SET refundable_base_amount=#{amount},version=version+1,update_time=#{now}
+        WHERE order_refund_position_id=#{position.orderRefundPositionId} AND order_id=#{position.orderId}
+            AND version=#{position.version} AND currency=#{position.currency}
+            AND refundable_base_amount=0 AND reserved_amount=0 AND refunded_amount=0
+    </update>
     <update id="settle">
         UPDATE t_order_refund_position SET reserved_amount=reserved_amount-#{amount},
             <if test="success">refunded_amount=refunded_amount+#{amount},</if>

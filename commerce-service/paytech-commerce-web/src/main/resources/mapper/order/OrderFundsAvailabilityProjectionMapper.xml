@@ -15,4 +15,9 @@
         )
     </insert>
 
+    <update id="markPending">
+        UPDATE t_order_funds_availability_projection SET funds_availability_status='PENDING',
+            as_of=GREATEST(as_of,#{asOf}),version=version+1,update_time=#{now}
+        WHERE order_id=#{orderId} AND funds_availability_status='NOT_APPLICABLE'
+    </update>
 </mapper>

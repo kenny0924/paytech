@@ -76,6 +76,18 @@ spring:
   sql:
     init:
       mode: never
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${COMMERCE_TEST_RABBITMQ_USERNAME:${MOR_RABBITMQ_USER:}}"
+    password: "${COMMERCE_TEST_RABBITMQ_PASSWORD:${MOR_RABBITMQ_PASSWORD:}}"
+    virtual-host: "${COMMERCE_TEST_RABBITMQ_VHOST:${MOR_RABBITMQ_VHOST:/mor-local}}"
+    connection-timeout: 2s
+    # 测试作为 Payment 发布支付结果时等待 Broker 确认。
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
 
 mybatis:
   mapper-locations: "classpath*:mapper/**/*.xml"

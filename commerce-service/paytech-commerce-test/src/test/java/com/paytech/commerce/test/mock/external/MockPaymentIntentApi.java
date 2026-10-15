@@ -8,6 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.paytech.commerce.test.mocker.external.CheckoutCardMocker;
 import com.paytech.commerce.test.mocker.external.CheckoutIntentMocker;
+import com.paytech.commerce.test.mocker.external.PaymentSubmissionMocker;
 import com.paytech.payment.api.card.StoredCardApi;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.api.execution.request.*;
@@ -23,6 +24,7 @@ import lombok.AllArgsConstructor;
 public class MockPaymentIntentApi implements PaymentIntentApi, WebMvcConfigurer {
     private final CheckoutIntentMocker mocker;
     private final CheckoutCardMocker cards;
+    private final PaymentSubmissionMocker submissions;
 
     /** 模拟提供方应用的 Context Path，接口内路径仍由正式 API 定义。 */
     @Override
@@ -61,5 +63,15 @@ public class MockPaymentIntentApi implements PaymentIntentApi, WebMvcConfigurer 
         var response = cards.answer(intentId, idempotencyKey, body);
         return "PROCESSING".equals(response.getStatus()) ? ResponseEntity.accepted().body(response)
             : ResponseEntity.ok(response);
+    }
+
+    /** EX-I06 由场景配置 DTO、404 或故障。 */
+    @Override
+    public ResponseEntity<GetSubmissionResponseBody> getSubmission(String intentId, String sourceSubmissionId,
+        String clientId) {
+        var request = (org.springframework.web.context.request.ServletRequestAttributes)
+            org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes();
+        request.getResponse().setHeader("X-Request-Id", "payment-test");
+        return ResponseEntity.ok(submissions.answer(intentId, sourceSubmissionId, clientId));
     }
 }

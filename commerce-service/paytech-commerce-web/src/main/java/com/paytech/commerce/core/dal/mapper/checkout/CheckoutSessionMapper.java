@@ -25,6 +25,10 @@ public interface CheckoutSessionMapper {
 
     int insert(CheckoutSession session);
 
+    /** 与订单支付成功共用事务，以会话版本和未终结状态完成 Session。 */
+    int complete(@Param("session") CheckoutSession session, @Param("completedAt") Instant completedAt,
+        @Param("now") Instant now);
+
     /** 与 Order 取消共用事务，以会话版本和原状态关闭 Session。 */
     int cancel(@Param("session") CheckoutSession session, @Param("now") Instant now);
 

@@ -39,6 +39,18 @@ public class OrderPaymentProjection {
     /** 已消费的 Payment 来源事件版本；创建响应不含版本，未消费事件时为 0。 */
     private long intentSourceVersion;
 
+    /**
+     * 最近处理的支付尝试事件幂等键
+     * <li>尚未消费任何尝试事件时为空。</li>
+     */
+    private String lastAttemptEventKey;
+
+    /**
+     * 最近处理的支付尝试事件载荷 SHA-256
+     * <li>64 位小写十六进制，不含算法前缀；与事件键同时为空或同时存在。</li>
+     */
+    private String lastAttemptPayloadHash;
+
     /** 首次绑定时间。 */
     private java.time.Instant createTime;
 

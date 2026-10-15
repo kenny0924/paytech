@@ -130,8 +130,24 @@ public final class CheckoutSubmissionModels {
         private static final Set<String> STATUSES = Arrays.stream(CustomerPaymentStatus.values())
             .map(CustomerPaymentStatus::getCode).collect(Collectors.toUnmodifiableSet());
 
-        /** 校验当前结果归属和公开字段；外部返回值不能跨订单或伪造受控状态。 */
+        /** 校验 pay 响应的归属和公开字段；3DS 动作必须携带当次跳转地址。 */
         public void validate(PaymentReference reference, Instant now) {
+            validateFacts(reference);
+            if (nextAction != null) {
+                validateAction(now, true);
+            }
+        }
+
+        /** 校验按来源提交查询的结果；Payment 查询不再返回 3DS 跳转地址，动作可以没有地址。 */
+        public void validateQueried(PaymentReference reference, Instant now) {
+            validateFacts(reference);
+            if (nextAction != null) {
+                validateAction(now, false);
+            }
+        }
+
+        /** 外部返回值不能跨订单或伪造受控状态。 */
+        void validateFacts(PaymentReference reference) {
             if (submissionId != reference.submissionId() || orderId != reference.orderId()
                 || intentId != reference.intentId() || status == null || !STATUSES.contains(status)
                 || observedAt == null || (attemptId != null && !attemptId.matches("[1-9][0-9]{0,18}"))
@@ -139,18 +155,26 @@ public final class CheckoutSubmissionModels {
                 || (failureCode != null && !failureCode.matches("[A-Z][A-Z0-9_]{0,63}"))) {
                 throw new CheckoutUpstreamProtocolException("Payment 原提交结果无效");
             }
-            if (nextAction != null) {
-                validateAction(now);
-            }
         }
 
-        /** 3DS 指令仅允许原动作的未过期 HTTPS 地址，不由 Commerce 抓取或持久化。 */
-        void validateAction(Instant now) {
+        /**
+         * 3DS 指令仅允许原动作的未过期 HTTPS 地址，不由 Commerce 抓取或持久化
+         *
+         * @param now 当前时间
+         * @param redirectRequired pay 响应为 true；查询结果为 false，此时无地址合法，有地址仍按同一规则校验
+         */
+        void validateAction(Instant now, boolean redirectRequired) {
             if (!CustomerPaymentStatus.REQUIRES_ACTION.getCode().equals(status)
                 || !"THREE_DS_CHALLENGE".equals(nextAction.type()) || nextAction.actionId() == null
-                || !nextAction.actionId().matches("[1-9][0-9]{0,18}") || nextAction.redirectUrl() == null
-                || nextAction.redirectUrl().length() > 4096
+                || !nextAction.actionId().matches("[1-9][0-9]{0,18}")
+                || (redirectRequired && nextAction.redirectUrl() == null)
                 || (nextAction.expiresAt() != null && !nextAction.expiresAt().isAfter(now))) {
+                throw new CheckoutUpstreamProtocolException("Payment 3DS 动作无效");
+            }
+            if (nextAction.redirectUrl() == null) {
+                return;
+            }
+            if (nextAction.redirectUrl().length() > 4096) {
                 throw new CheckoutUpstreamProtocolException("Payment 3DS 动作无效");
             }
             try {

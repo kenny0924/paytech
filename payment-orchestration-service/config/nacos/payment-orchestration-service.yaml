@@ -21,6 +21,20 @@ spring:
       port: 16379
       connect-timeout: 2s
       timeout: 2s
+  # PaymentSucceeded 发布；账号密码由 PAYMENT_RABBITMQ_USERNAME / PAYMENT_RABBITMQ_PASSWORD 提供，不写入模板。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    virtual-host: /mor-local
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+
+# 本地补偿任务（事务内登记、提交后发布）；进程参数启动时读取，修改需重启。
+compensation:
+  enabled: true
 
 redis:
   coordination:

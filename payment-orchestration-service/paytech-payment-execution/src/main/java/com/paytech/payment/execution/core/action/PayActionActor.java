@@ -10,6 +10,7 @@ import java.util.Currency;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 import com.paytech.payment.card.service.CardService;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAction;
 import com.paytech.payment.execution.core.enums.ActionStatus;
@@ -20,6 +21,7 @@ import com.paytech.payment.execution.domain.*;
 import com.paytech.payment.execution.domainservice.repository.PaymentAttemptRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentIntentRepository;
 import com.paytech.payment.execution.integration.PaymentChannelClient;
+import com.paytech.payment.execution.service.handler.PaymentSucceededHandler;
 
 /**
  * 直接收款（PayerMax 卡直付对接技术方案第 5 节）：经 Channel 端口以冻结坐标调用 Platform 标准 API PAY，卡只以支付工具 Token 传递。
@@ -39,14 +41,16 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
     private final Clock clock;
     private final PaymentChannelClient paymentChannelClient;
     private final CardService cardService;
+    private final CompensationEventRegistrar events;
 
-    /** 注入 Channel 端口、收款结果持久化与 Card 本地能力。 */
+    /** 注入 Channel 端口、收款结果持久化、Card 本地能力与补偿任务登记。 */
     public PayActionActor(PaymentIntentRepository intents, PaymentAttemptRepository attempts, Clock clock,
-        PaymentChannelClient paymentChannelClient, CardService cardService) {
+        PaymentChannelClient paymentChannelClient, CardService cardService, CompensationEventRegistrar events) {
         super(intents, attempts);
         this.clock = clock;
         this.paymentChannelClient = paymentChannelClient;
         this.cardService = cardService;
+        this.events = events;
     }
 
     /** 返回动作代码。 */
@@ -74,6 +78,7 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
 
     /**
      * 收款成功后完成 Attempt 和 Intent；卡工具同事务交 Card 标记凭证已验证并按同意存卡（只写本库）。
+     * <li>同事务登记 PaymentSucceeded 发布任务，提交后由补偿 Handler 发布；事务回滚时任务一并回滚。</li>
      */
     @Override
     public void doInTransaction(ActionContext context, PaymentAction action) {
@@ -85,6 +90,7 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
         if (instToken.getInstrumentType() == InstrumentType.CARD) {
             cardService.paymentSucceeded(instToken.getInstrumentRef());
         }
+        events.register(PaymentSucceededHandler.buildEvent(attempt.getPaymentAttemptId()));
     }
 
     /** 以冻结坐标与新支付维度组装渠道动作；输入不含卡值。 */
@@ -125,7 +131,7 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
     }
 
     /** 金额按币种精度写成主单位十进制字符串（如 AED 10.00）；超出币种精度时拒绝，不舍入。 */
-    static String amountText(BigDecimal amount, String currency) {
+    public static String amountText(BigDecimal amount, String currency) {
         int digits = Currency.getInstance(currency).getDefaultFractionDigits();
         return amount.setScale(Math.max(digits, 0), RoundingMode.UNNECESSARY).toPlainString();
     }

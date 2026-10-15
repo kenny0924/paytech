@@ -106,4 +106,15 @@ public class CommerceOrderRepositoryImpl implements CommerceOrderRepository {
         order.setUpdateTime(now);
     }
 
+    /** 行数确认后同步原订单；失败由调用方事务整体回滚。 */
+    @Override
+    public void markPaid(CommerceOrder order, Instant paidAt, Instant now) {
+        if (commerceOrderMapper.markPaid(order, paidAt, now) != 1) {
+            throw new ConcurrentRequestException("支付成功时订单已改变");
+        }
+        order.setOrderStatus(OrderStatus.PAID);
+        order.setPaidAt(paidAt);
+        order.setVersion(order.getVersion() + 1);
+        order.setUpdateTime(now);
+    }
 }

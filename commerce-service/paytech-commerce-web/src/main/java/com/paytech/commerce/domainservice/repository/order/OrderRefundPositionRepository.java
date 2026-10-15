@@ -24,4 +24,7 @@ public interface OrderRefundPositionRepository {
 
     /** 终态消费或释放预占，成功后同步原位置对象。 */
     void settle(OrderRefundPosition position, BigDecimal amount, boolean success, Instant now);
+
+    /** 支付成功时设置可退款基数；要求原版本且尚无预占或退款，成功后同步原位置对象。 */
+    void establishBase(OrderRefundPosition position, BigDecimal amount, Instant now);
 }

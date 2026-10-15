@@ -104,6 +104,11 @@
                                         <include>io.lettuce:lettuce-core</include>
                                         <!-- Spring Cloud Commons uses crypto utilities, not a Security filter chain. -->
                                         <include>org.springframework.security:spring-security-crypto</include>
+                                        <!-- 2026-10-15 用户批准 Commerce 消费 Payment 支付结果：仅允许 Starter 及其 RabbitMQ 客户端，其他 AMQP/MQ 直连依赖仍禁止。 -->
+                                        <include>org.springframework.boot:spring-boot-starter-amqp</include>
+                                        <include>org.springframework.amqp:spring-amqp</include>
+                                        <include>org.springframework.amqp:spring-rabbit</include>
+                                        <include>com.rabbitmq:amqp-client</include>
                                     </includes>
                                 </bannedDependencies>
                             </rules>

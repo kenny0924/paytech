@@ -45,6 +45,9 @@ export NACOS_GROUP=DEFAULT_GROUP
 | `server.*` | Spring Boot | 地址、端口、Context Path | 修改后重启 |
 | `spring.datasource.*` | Spring Boot / Hikari | 数据源地址、账号、连接和校验超时 | 修改后重启 |
 | `spring.data.redis.*` | Spring Boot / Lettuce | Redis 地址、端口、连接和命令超时 | 修改后重启 |
+| `spring.rabbitmq.*` | Spring Boot / Spring AMQP | 地址（`PAYMENT_RABBITMQ_HOST`，默认 `127.0.0.1`）、端口（`PAYMENT_RABBITMQ_PORT`，默认 `5672`）、vhost（`PAYMENT_RABBITMQ_VHOST`，默认 `/mor-local`）、连接超时 2s；`publisher-confirm-type: correlated`、`publisher-returns: true`、`template.mandatory: true` 为固定值 | 修改后重启。PaymentSucceeded 发布到 Durable Topic `topic_payment_result`（路由键 `payment.succeeded.v1`，Exchange 由 Payment 声明），等待 Broker 确认 10 秒，未确认或被退回按发布失败重试 |
+| `compensation.*` | Foundation Compensation Event | `enabled: true`；其余 instance-id、lease-duration、scanner-batch-size、coordinator、handler 使用组件默认值 | 启动时构造执行器，修改需重启。`PAYMENT_SUCCEEDED` Handler 每次 20 秒、最多 12 次、5 秒起指数退避至 30 分钟；失败到上限保留 FAILED 记录待人工处理 |
+| `xxl.job.*` | Foundation XXL-Job Starter | 未配置，执行器默认关闭 | 补偿任务的兜底扫描需要部署环境另行开启并配置调度中心；关闭时依靠事务提交后唤醒，进程在提交后、发布前退出的任务需人工或开启 XXL-Job 后恢复 |
 | `redis.coordination.*` | Foundation Redis Starter | 资源锁开关、等待时间、租约 | 修改后重启，不承诺公共组件支持热更新 |
 | `vault.client.*` | Vault Java Client | caller-service、service-id、connect-timeout、read-timeout | 通过私有 HTTP 读取账号 JSON，客户端配置修改按重启生效处理 |
 | `mybatis.*` | MyBatis Starter | Mapper 扫描位置 | 应用固定配置 |
@@ -64,6 +67,7 @@ Nacos 内容进入 Spring Environment 不代表所有组件都能动态重建。
 |---|---|
 | `MOR_PAYMENT_DB_PASSWORD` | 数据库密码 |
 | `MOR_REDIS_PASSWORD` | Redis 密码 |
+| `PAYMENT_RABBITMQ_USERNAME`、`PAYMENT_RABBITMQ_PASSWORD` | RabbitMQ 账号密码（缺省为空） |
 | `NACOS_USERNAME`、`NACOS_PASSWORD` | Nacos 认证 |
 | `PAYMENT_SNOWFLAKE_REGION_ID`、`PAYMENT_SNOWFLAKE_WORKER_ID` | 实例 ID 坐标，防止多个实例共用一个节点编号 |
 

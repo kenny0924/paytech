@@ -42,4 +42,6 @@ public interface CommerceOrderRepository {
      */
     void cancel(CommerceOrder order, OrderPaymentProjection payment, boolean localOnly, Instant now);
 
+    /** 以订单版本将 OPEN 订单推进为 PAID，成功后同步状态、支付时刻与版本。 */
+    void markPaid(CommerceOrder order, Instant paidAt, Instant now);
 }

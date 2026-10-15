@@ -25,6 +25,10 @@ public interface OrderRefundPositionMapper {
         @Param("payment") OrderPaymentProjection payment, @Param("amount") BigDecimal amount,
         @Param("now") Instant now);
 
+    /** 支付成功时以版本和未使用条件设置可退款基数。 */
+    int establishBase(@Param("position") OrderRefundPosition position, @Param("amount") BigDecimal amount,
+        @Param("now") Instant now);
+
     /** 条件消费或释放已预占的金额。 */
     int settle(@Param("position") OrderRefundPosition position, @Param("amount") BigDecimal amount,
         @Param("success") boolean success, @Param("now") Instant now);

@@ -19,4 +19,7 @@ public interface PaymentActionMapper {
 
     /** 按主键读取原动作。 */
     PaymentAction selectById(@Param("actionId") Long actionId);
+
+    /** 按动作序号读取尝试的最后一个动作。 */
+    PaymentAction selectLatestByAttempt(@Param("attemptId") long attemptId);
 }

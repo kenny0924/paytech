@@ -1,10 +1,15 @@
 package com.paytech.commerce.domainservice.repository.order;
 
-import com.paytech.foundation.common.error.ErrorException;
+import java.math.BigDecimal;
+import java.time.Instant;
+
 import org.springframework.stereotype.Repository;
 
 import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
 import com.paytech.commerce.core.dal.mapper.order.OrderPaymentProjectionMapper;
+import com.paytech.commerce.domain.enums.PaymentIntentStatus;
+import com.paytech.foundation.common.error.ConcurrentRequestException;
+import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;
 
@@ -31,5 +36,21 @@ public class OrderPaymentProjectionRepositoryImpl implements OrderPaymentProject
         if (orderPaymentProjectionMapper.insert(payment) != 1) {
             throw new ErrorException("Intent 关联未成功保存");
         }
+    }
+
+    /** 行数确认后同步投影状态、成功尝试、金额、事件幂等事实与版本。 */
+    @Override
+    public void recordSucceeded(OrderPaymentProjection payment, long attemptId, BigDecimal capturedAmount,
+        String eventKey, String payloadHash, long sourceVersion, Instant eventTime, Instant now) {
+        if (orderPaymentProjectionMapper.recordSucceeded(payment, attemptId, capturedAmount, eventKey, payloadHash,
+            sourceVersion, eventTime, now) != 1) {
+            throw new ConcurrentRequestException("订单支付投影已改变");
+        }
+        payment.setIntentStatus(PaymentIntentStatus.SUCCEEDED);
+        payment.setSuccessfulAttemptId(attemptId);
+        payment.setCapturedAmount(capturedAmount);
+        payment.setLastAttemptEventKey(eventKey);
+        payment.setLastAttemptPayloadHash(payloadHash);
+        payment.setVersion(payment.getVersion() + 1);
     }
 }

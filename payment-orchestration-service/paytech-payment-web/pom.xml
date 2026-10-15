@@ -57,6 +57,11 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
+        <!-- PaymentSucceeded 经 RabbitMQ 发布（requirements/20261015/payment-支付结果查询与回传）。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-redis-starter</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-snowflake-id</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-mybatis-support</artifactId></dependency>
