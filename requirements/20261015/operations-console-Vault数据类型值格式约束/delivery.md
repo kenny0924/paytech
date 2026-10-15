@@ -14,5 +14,8 @@
 | 2026-10-15 | 5 本机联调 | 重建本机 Docker Vault、重打包并重启 Operations BFF（Web 为 Vite 热更新）。[API 验收](./verification/value_format_acceptance.py)：A 段 20 项（临时 `E2E_VF_*` 类型：维护规则、写入校验、生效时间 3.6～5.6 秒），清理后（30/56/8/2/6/12 行，计数核对后提交）记录数与策略版本回到 A 段前；B 段 13 项：经管理接口为 4 个现有类型设置值格式（策略版本 12～15），设置前后同一邮箱的 STABLE Token 不变、存量 Token 可解密，CCT 联系人（含 Unicode 域名）、Platform 登录、渠道账号配置与 SES 凭据读取回归通过，回归数据已清理（52/44/7）。[浏览器验收](./verification/value_format_browser.py) 14 项（AC-9～12）。发现并修正：BFF 把空正则序列化为 `null`，Web 原校验会把所有非 REGEX 类型判为无效响应（已改为 `null` 视为无并补测试）；列表加列后“更新时间”被固定列遮挡（收紧列宽）。Web 全量 1025 通过、构建通过；Vault 与 BFF 日志未出现验收原值、样例 | 待确认 |
 | 2026-10-15 | 5 本机联调 | 用户回复“继续” | **已确认** |
 | 2026-10-15 | 6 test 发布准备 | [发布清单](./release/release.md)：只读核对 test（Vault `9842248f`/`34ecac9`，BFF `68e939f5`、Web `5fb6911b`/`d02c7dd`，`mor_vault` 6 类型 11 列、策略版本 7）；候选为 `34ecac9`/`d02c7dd` 加本需求，需先本地提交后从干净 worktree 构建；顺序 DDL → Vault → BFF → Web → 设格式，验收 A/B 段、浏览器与日志检查，回退按镜像逆序 | 待确认 |
+| 2026-10-15 | 6/7 test 发布 | 用户回复“继续”：确认阶段 6，授权本地提交与 test 执行。提交 `974cc50`（前次 Platform 发布文档）、`994d5b0`（本需求），未推送。按[发布清单](./release/release.md)：备份、干净构建、DDL、替换 Vault/BFF/Web（Vault 不可用约 6 秒、运营端约 30 秒）；A 段 20、B 段 13、浏览器 11（1 项因 test 未开人工加密跳过，由 API 覆盖）全部通过，4 个类型已设格式（版本 8～11），验收数据已清理；页面回归中 2 页因另一会话同时替换 test Platform 短暂 503，重测通过。CURRENT_IMPLEMENTATION Vault V1 行已更新 | 待确认 |
+| 2026-10-15 | 6/7 test 发布 | 用户回复“继续” | **已确认** |
+| 2026-10-15 | 8 提交归档 | 发布记录、候选 Compose、交付记录、README 本需求行、CURRENT_IMPLEMENTATION Vault V1 行一并本地提交（未推送）。遗留：CCT `@Email` 比正则宽（R2）；三方 Unicode 域名邮箱规范化不一致（R5）；CCT、Platform 等随下次发布升级 Java 客户端（R1）；`test-environment/scripts/vault.py smoke` 仍依赖 Platform 容器内 curl | **完成** |
 
 当前实现与部署状态只见 [CURRENT_IMPLEMENTATION.md](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。

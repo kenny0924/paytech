@@ -1,6 +1,6 @@
-# Vault 数据类型值格式约束：mor-test 发布清单（阶段 6 评审稿）
+# Vault 数据类型值格式约束：mor-test 发布清单与执行记录
 
-只读核对时间：2026-10-15。执行需另行授权，执行记录写在文末。当前状态以 [CURRENT_IMPLEMENTATION.md](../../../../agent-docs/CURRENT_IMPLEMENTATION.md) 为准。
+只读核对时间：2026-10-15。用户回复“继续”授权本地提交与第 4 节执行（2026-10-15），执行记录写在文末。当前状态以 [CURRENT_IMPLEMENTATION.md](../../../../agent-docs/CURRENT_IMPLEMENTATION.md) 为准。
 
 **本次变更：**
 - 在 test 的 `mor_vault` 执行 [DDL](../db/vault/ddl.sql)。
@@ -79,6 +79,19 @@ CCT、Platform 不需要发布：它们写入的都是规范值，满足新格�
 1. 在本地提交本需求的改动（只提交本需求的文件，不推送）。
 2. 按第 4 节在 mor-test 执行：备份、构建、DDL、替换三个应用、设置 4 个类型的格式、验收和清理。
 
-## 7. 执行记录
+## 7. 执行记录（2026-10-15，UTC）
 
-（待执行）
+| 步骤 | 结果 |
+|---|---|
+| 提交 | `974cc50`（前次 Platform 发布文档，单独提交）、`994d5b0`（本需求）；未推送。README 只暂存本需求一行 |
+| 核对 | 三个运行镜像、6 类型 11 列、策略版本 7，与第 2 节一致 |
+| 备份 | `~/Code-MoR-backups/20261015-vault-value-format-test/20261015T180546Z/mor_vault-policy.sql`（SHA-256 `a7d346f2…`） |
+| 构建 | 干净 worktree `994d5b0`（构建后已删除）。Vault linux/arm64 → `sha256:42d1f5d6…3982121f`；BFF 与 4 个依赖模块同 reactor 离线构建，jar SHA-256 `8ddc14a5…8276712`，镜像 `sha256:aa546ee6…1116f7`；Web 同 worktree 构建（lock 文件与 `d02c7dd` 一致），镜像 `sha256:7e369f33…3ae751`。见 [compose-candidate.yaml](./compose-candidate.yaml) |
+| DDL | 18:06Z 执行；2 列、中文注释正常、6 行 TEXT；旧 Vault 保持 healthy |
+| 替换 Vault | 18:07:18～18:07:24Z（约 6 秒）healthy；`vault.py smoke`（临时 curl 探针容器）全部通过 |
+| 替换 BFF / Web | BFF 18:07:46～18:08:04Z、Web 至 18:08:15Z，healthy；`index.html` 引用的资源与构建产物一致 |
+| A 段 | 20/20 通过（生效 3.0～7.1 秒）；清理 7/22/4/1/3/6 行（计数核对后 COMMIT），策略版本回到 7、记录回到 8 |
+| B 段 | 13/13 通过；4 个类型设置为策略版本 8～11；回归数据按时间窗口清理 28/22/7 行，记录回到 8 |
+| 浏览器 | 11 项通过、1 项跳过：test 的 `EMAIL_ADDRESS_V1` 未开启人工加密，REGEX 人工加密拒绝由 A 段 API 覆盖 |
+| 页面回归 | 25 个页面；首轮 2 页 503，原因是另一会话在 18:12:02Z 替换了 test Platform（新镜像 `493026bf…`），BFF 短暂找不到 Platform 实例；15 秒后重测这 2 页及登录均正常 |
+| 日志 | Vault、BFF、Gateway 中无验收原值与样例 |

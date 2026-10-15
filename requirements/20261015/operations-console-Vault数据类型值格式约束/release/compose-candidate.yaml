@@ -1,0 +1,10 @@
+# 候选：从干净提交 994d5b0 构建的三个镜像（tag mor-test/<service>:candidate-vf-20261015），使用固定 image ID。
+# 叠加在 test-environment 的 compose.yaml + compose.applications.yaml 之上；配置与当前仓库一致，只换镜像。
+# Vault 来源 34ecac9 + 本需求；BFF/Web 来源 d02c7dd + 本需求（BFF 与 paytech-vault-client、risk-api、platform-support-api、client-contract-api 同 reactor 离线构建）。
+services:
+  vault-service:
+    image: sha256:42d1f5d6a67c0aa775a4d68af298cfe9a67424d39413676e3454e9dd3982121f
+  operations-console-bff:
+    image: sha256:aa546ee6411c4470b0c5dc8594522cc84aac19d4c2e4891545fa9759b81116f7
+  operations-console-web:
+    image: sha256:7e369f33942114c151d346c3af28dde028b66d4a0ecf8f92e550b4af1e3ae751
