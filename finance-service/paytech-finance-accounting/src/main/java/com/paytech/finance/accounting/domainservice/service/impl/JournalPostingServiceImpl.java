@@ -12,31 +12,10 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import com.paytech.finance.accounting.core.dal.dataobject.Account;
-import com.paytech.finance.accounting.core.dal.dataobject.AccountingInstruction;
-import com.paytech.finance.accounting.core.dal.dataobject.AccountingPeriod;
-import com.paytech.finance.accounting.core.dal.dataobject.BookSequence;
-import com.paytech.finance.accounting.core.dal.dataobject.FiscalCalendar;
-import com.paytech.finance.accounting.core.dal.dataobject.InstructionLine;
-import com.paytech.finance.accounting.core.dal.dataobject.JournalEntry;
-import com.paytech.finance.accounting.core.dal.dataobject.JournalLine;
-import com.paytech.finance.accounting.core.dal.dataobject.LedgerBook;
-import com.paytech.finance.accounting.core.enums.AccountStatus;
-import com.paytech.finance.accounting.core.enums.BookStatus;
-import com.paytech.finance.accounting.core.enums.EntrySide;
-import com.paytech.finance.accounting.core.enums.InstructionStatus;
-import com.paytech.finance.accounting.core.enums.NormalSide;
-import com.paytech.finance.accounting.core.enums.PeriodStatus;
+import com.paytech.finance.accounting.core.dal.dataobject.*;
+import com.paytech.finance.accounting.core.enums.*;
 import com.paytech.finance.accounting.domain.JournalPostingContext;
-import com.paytech.finance.accounting.domainservice.repository.AccountRepository;
-import com.paytech.finance.accounting.domainservice.repository.AccountingInstructionRepository;
-import com.paytech.finance.accounting.domainservice.repository.AccountingPeriodRepository;
-import com.paytech.finance.accounting.domainservice.repository.BookSequenceRepository;
-import com.paytech.finance.accounting.domainservice.repository.CurrencySpecRepository;
-import com.paytech.finance.accounting.domainservice.repository.FiscalCalendarRepository;
-import com.paytech.finance.accounting.domainservice.repository.JournalEntryRepository;
-import com.paytech.finance.accounting.domainservice.repository.JournalLineRepository;
-import com.paytech.finance.accounting.domainservice.repository.LedgerBookRepository;
+import com.paytech.finance.accounting.domainservice.repository.*;
 import com.paytech.finance.accounting.domainservice.service.JournalPostingService;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
@@ -198,7 +177,8 @@ public class JournalPostingServiceImpl implements JournalPostingService {
             Account account = accounts.get(accountId);
             BigDecimal debit = account.getDebitTotal().add(sum(lines, accountId, EntrySide.DEBIT));
             BigDecimal credit = account.getCreditTotal().add(sum(lines, accountId, EntrySide.CREDIT));
-            BigDecimal net = account.getNormalSide() == NormalSide.DEBIT ? debit.subtract(credit) : credit.subtract(debit);
+            BigDecimal net =
+                account.getNormalSide() == NormalSide.DEBIT ? debit.subtract(credit) : credit.subtract(debit);
             accountRepository.applyPosting(account, debit, credit, net, journalSequence);
         }
     }

@@ -1,11 +1,14 @@
 package com.paytech.finance.accounting.core.dal.mapper;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.paytech.finance.accounting.core.dal.dataobject.JournalLine;
+import com.paytech.finance.accounting.domain.view.AccountJournalLineView;
+import com.paytech.finance.accounting.domain.view.JournalEntryDetailView;
 
 /** t_journal_line：会计分录行持久化（只追加）。 */
 @Mapper
@@ -13,4 +16,19 @@ public interface JournalLineMapper {
 
     /** 批量插入分录行。 */
     int insertBatch(@Param("lines") List<JournalLine> lines);
+
+    /**
+     * 分页读取账户流水；累计余额在日期过滤与分页之前对账户全量历史计算
+     *
+     * @return 按分录序号、行号升序的流水
+     */
+    List<AccountJournalLineView> selectAccountLines(@Param("accountId") long accountId, @Param("from") LocalDate from,
+        @Param("to") LocalDate to, @Param("size") int size, @Param("offset") int offset);
+
+    /** 统计账户在日期区间内的流水行数。 */
+    long countAccountLines(@Param("accountId") long accountId, @Param("from") LocalDate from,
+        @Param("to") LocalDate to);
+
+    /** 读取一条分录的全部行及其账户科目与核算对象，按行号升序。 */
+    List<JournalEntryDetailView.Line> selectEntryLines(@Param("journalEntryId") long journalEntryId);
 }

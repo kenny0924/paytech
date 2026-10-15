@@ -9,6 +9,8 @@ import org.apache.ibatis.annotations.Param;
 
 import com.paytech.finance.accounting.core.dal.dataobject.Account;
 import com.paytech.finance.accounting.core.enums.OwnerType;
+import com.paytech.finance.accounting.domain.AccountQuery;
+import com.paytech.finance.accounting.domain.view.AccountView;
 import com.paytech.finance.accounting.domain.view.OwnerAccountBalanceView;
 
 /** t_account：统一记账账户持久化。 */
@@ -39,4 +41,11 @@ public interface AccountMapper {
     /** 读取 Owner 在一个账簿内的全部账户及其科目，用于分类余额查询。 */
     List<OwnerAccountBalanceView> selectOwnerBalances(@Param("ledgerBookId") long ledgerBookId,
         @Param("ownerType") OwnerType ownerType, @Param("ownerId") String ownerId);
+
+    /** 按过滤条件分页读取账簿内账户及其科目代码，按科目、核算对象、余额桶与主键排序。 */
+    List<AccountView> selectPage(@Param("query") AccountQuery query, @Param("size") int size,
+        @Param("offset") int offset);
+
+    /** 统计符合过滤条件的账户数量。 */
+    long countPage(@Param("query") AccountQuery query);
 }

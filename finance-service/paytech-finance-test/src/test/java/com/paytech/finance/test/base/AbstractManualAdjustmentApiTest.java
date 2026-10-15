@@ -56,6 +56,12 @@ public abstract class AbstractManualAdjustmentApiTest extends MockTestBase {
         return post(PATH, builder.build()).assertSuccess(201);
     }
 
+    /** 提交一笔调整并由模板复核人批准过账，返回批准响应。 */
+    protected FinanceResponseChecker posted(SubmitManualAdjustmentRequestBuilder builder) {
+        var submit = submitted(builder);
+        return approve(submit.id("manualAdjustmentId"), CHECKER_ID, submit.text("contentHash")).assertSuccess(200);
+    }
+
     /** 以指定复核人和摘要批准。 */
     protected FinanceResponseChecker approve(long adjustmentId, String checkerId, String contentHash) {
         return post(PATH + "/" + adjustmentId + "/approve", review(checkerId, contentHash));

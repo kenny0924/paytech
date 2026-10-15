@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import com.paytech.finance.accounting.core.dal.dataobject.JournalEntry;
 import com.paytech.finance.accounting.core.dal.mapper.JournalEntryMapper;
+import com.paytech.finance.accounting.domain.view.JournalEntryDetailView;
 import com.paytech.finance.accounting.domainservice.repository.JournalEntryRepository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 
@@ -26,6 +27,12 @@ public class JournalEntryRepositoryImpl implements JournalEntryRepository {
     @Override
     public JournalEntry findByInstruction(long instructionId) {
         return mapper.selectByInstruction(instructionId);
+    }
+
+    /** 读取分录头及来源，不存在返回空。 */
+    @Override
+    public JournalEntryDetailView findDetail(long journalEntryId) {
+        return mapper.selectDetail(journalEntryId);
     }
 
     /** 执行插入，唯一键冲突说明同一命令已被并发处理。 */

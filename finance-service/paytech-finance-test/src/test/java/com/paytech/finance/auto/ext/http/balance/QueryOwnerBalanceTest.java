@@ -12,7 +12,6 @@ import com.paytech.finance.api.balance.BalanceQueryApi;
 import com.paytech.finance.api.balance.response.ClientBalanceResponseBody;
 import com.paytech.finance.api.balance.response.PartnerBalanceResponseBody;
 import com.paytech.finance.test.base.AbstractManualAdjustmentApiTest;
-import com.paytech.finance.test.builder.SubmitManualAdjustmentRequestBuilder;
 import com.paytech.foundation.money.Money;
 
 /**
@@ -70,11 +69,5 @@ class QueryOwnerBalanceTest extends AbstractManualAdjustmentApiTest {
     void test_invalidParameter() {
         get("/balances/v1/clients/1001?entityNo=ae001&currency=USD").assertStatus(400);
         get("/balances/v1/clients/1001?operatingEntityId=2001&currency=USD").assertStatus(400);
-    }
-
-    /** 提交并批准一笔调整。 */
-    void posted(SubmitManualAdjustmentRequestBuilder builder) {
-        var submit = submitted(builder);
-        approve(submit.id("manualAdjustmentId"), CHECKER_ID, submit.text("contentHash")).assertSuccess(200);
     }
 }

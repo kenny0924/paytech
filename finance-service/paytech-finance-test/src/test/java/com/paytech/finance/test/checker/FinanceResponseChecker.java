@@ -3,12 +3,16 @@ package com.paytech.finance.test.checker;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
 
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /** Finance HTTP 响应断言：复用公共状态、Request ID 与 Problem 检查，补充 JSON 字段读取和业务拒绝断言。 */
@@ -72,6 +76,16 @@ public final class FinanceResponseChecker extends AbstractHttpResponseChecker<Fi
     /** 读取长整型 ID 字段。 */
     public long id(String field) {
         return Long.parseLong(text(field));
+    }
+
+    /** 断言分页结果的页码、条数与总数，返回当前页 items。 */
+    public List<JsonNode> assertPage(int page, int size, long total) {
+        assertEquals(page, body().path("page").asInt(), "page");
+        assertEquals(size, body().path("size").asInt(), "size");
+        assertEquals(total, body().path("total").asLong(), "total");
+        List<JsonNode> items = new ArrayList<>();
+        body().path("items").forEach(items::add);
+        return items;
     }
 
     /** 按响应类型反序列化成功响应。 */

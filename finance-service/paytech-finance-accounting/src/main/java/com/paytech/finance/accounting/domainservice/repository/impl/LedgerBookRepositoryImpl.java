@@ -1,11 +1,15 @@
 package com.paytech.finance.accounting.domainservice.repository.impl;
 
+import java.util.List;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
 import com.paytech.finance.accounting.core.dal.dataobject.LedgerBook;
 import com.paytech.finance.accounting.core.dal.mapper.LedgerBookMapper;
 import com.paytech.finance.accounting.core.enums.LedgerEntityType;
+import com.paytech.finance.accounting.domain.LedgerBookQuery;
+import com.paytech.finance.accounting.domain.view.LedgerBookView;
 import com.paytech.finance.accounting.domainservice.repository.LedgerBookRepository;
 import com.paytech.foundation.common.error.BizCheckFailException;
 
@@ -33,6 +37,18 @@ public class LedgerBookRepositoryImpl implements LedgerBookRepository {
     @Override
     public LedgerBook findByEntity(LedgerEntityType entityType, String entityId, String currency) {
         return mapper.selectByEntity(entityType, entityId, currency);
+    }
+
+    /** 按过滤条件分页读取账簿，按主键升序。 */
+    @Override
+    public List<LedgerBookView> findPage(LedgerBookQuery query) {
+        return mapper.selectPage(query, query.getPaging().size(), query.getPaging().offset());
+    }
+
+    /** 统计符合过滤条件的账簿数量。 */
+    @Override
+    public long countPage(LedgerBookQuery query) {
+        return mapper.countPage(query);
     }
 
     /** 执行插入，业务唯一键冲突时转换为带上下文的业务拒绝。 */

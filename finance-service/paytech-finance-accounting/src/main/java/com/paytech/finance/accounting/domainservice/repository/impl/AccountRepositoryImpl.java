@@ -12,6 +12,8 @@ import org.springframework.stereotype.Repository;
 import com.paytech.finance.accounting.core.dal.dataobject.Account;
 import com.paytech.finance.accounting.core.dal.mapper.AccountMapper;
 import com.paytech.finance.accounting.core.enums.OwnerType;
+import com.paytech.finance.accounting.domain.AccountQuery;
+import com.paytech.finance.accounting.domain.view.AccountView;
 import com.paytech.finance.accounting.domain.view.OwnerAccountBalanceView;
 import com.paytech.finance.accounting.domainservice.repository.AccountRepository;
 import com.paytech.foundation.common.error.BizCheckFailException;
@@ -69,6 +71,18 @@ public class AccountRepositoryImpl implements AccountRepository {
     @Override
     public List<OwnerAccountBalanceView> findOwnerBalances(long ledgerBookId, OwnerType ownerType, String ownerId) {
         return mapper.selectOwnerBalances(ledgerBookId, ownerType, ownerId);
+    }
+
+    /** 按过滤条件分页读取账簿内账户及科目代码。 */
+    @Override
+    public List<AccountView> findPage(AccountQuery query) {
+        return mapper.selectPage(query, query.getPaging().size(), query.getPaging().offset());
+    }
+
+    /** 统计符合过滤条件的账户数量。 */
+    @Override
+    public long countPage(AccountQuery query) {
+        return mapper.countPage(query);
     }
 
     /** 当前 UTC 时间，截断到数据库支持的微秒精度。 */

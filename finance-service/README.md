@@ -1,7 +1,8 @@
 # Finance Spring Boot 工程
 
 六模块 Maven 工程已初始化。Accounting 第一批账务内核已实现：会计基础资料（财务主体、账簿、统一账户、财务日历与期间）、
-单账簿 Journal 过账内核，以及人工会计调整 Maker-Checker；Client/Partner 余额查询已迁移到新 Schema 的 entityNo 身份。
+单账簿 Journal 过账内核，人工会计调整 Maker-Checker，以及 FIN-I05 账本查询（账簿/账户分页、带累计余额的账户流水、分录详情）；
+Client/Partner 余额查询已迁移到新 Schema 的 entityNo 身份。
 交易经济、AUTO 记账、成熟、对账、出款、税务与关账仍未实现。需求与设计见
 [账务内核需求](../requirements/20261015/finance-账务内核/requirement.md)、[技术方案](../requirements/20261015/finance-账务内核/technique.md)，
 余额语义见 [余额查询接口](docs/balance-query-api.md)。
@@ -10,7 +11,7 @@
 
 | 目录                         | 职责                                |
 |----------------------------|-----------------------------------|
-| paytech-finance-api        | 内部 HTTP 契约：会计基础资料、人工调整、余额查询 |
+| paytech-finance-api        | 内部 HTTP 契约：会计基础资料、人工调整、账本查询、余额查询 |
 | paytech-finance-accounting | 账簿/账户/期间、Journal 过账内核、人工调整、余额查询；未来承载经济计算与关账 |
 | paytech-finance-treasury   | Provider/银行对账、手工出款                |
 | paytech-finance-tax        | 税务计算、单据、申报与缴税                     |
@@ -68,5 +69,5 @@ Filter/Advice。接入任何敏感业务 API 前，必须按专项契约配置�
 人工调整的 Maker/Checker 由请求传入，OE 只校验 entityNo 格式而不向 CCT 核对，均不能直接发布给 Client、Partner 或 Operations。
 父工程 Enforcer 继续阻止未批准基础设施（本期已批准 Redis 资源锁）；后续业务切片必须同步更新依赖边界和真实链路测试。
 
-不提供期间关账/重开、账簿或账户停用、账簿/账户列表与账本流水查询。PDManer 未改动；代码不代表旧 Finance 补偿契约、税款事后登记或
+不提供期间关账/重开、账簿或账户停用。账户流水的累计余额对账户全量历史计算，高频账户历史变长后需按期间余额截断。PDManer 未改动；代码不代表旧 Finance 补偿契约、税款事后登记或
 全资源锁矩阵已完成收口。
