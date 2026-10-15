@@ -80,10 +80,48 @@
 - **SQL 演练：** 一次性 MySQL 容器载入 test 结构后执行 ddl/dml，与正式 Schema 逐项一致；清理与回退 SQL 回到发布前结构逐项一致。
 - **待决定：** D1 验收数据清理或保留；D2 Compose 永久补配置；D3 临时代理作为验收入口。
 
-## 8. 阶段 7 test 部署与环境验收（2026-10-15，待确认）
+## 8. 阶段 7 test 部署与环境验收（2026-10-15，已确认）
 
 用户确认发布清单，D1～D3 按建议（回复“可以”）。执行与验收见 [release/test-acceptance.md](./release/test-acceptance.md)。
 
 - **部署：** 备份后停 Risk（约 73 秒），test `mor_risk` 执行 ddl/dml，结构与正式 Schema 逐项一致（84 表）；Compose 补 `RISK_DECISION_ENVIRONMENT: TEST`；Risk 换为候选镜像 `e0b7a8d484eb`（提交 `06025a2`），其余 15 个容器不变。
 - **验收：** 只读回归通过；业务验收 61 项全部通过；在用规则集删除返回 409；日志无受限原值；验收数据已清理，行数回到验收前。
 - **待提交：** `test-environment/compose.applications.yaml` 一行配置与本需求发布记录（不推送）。
+
+## 9. 阶段 8 交付归档（2026-10-15，待用户确认结束）
+
+**完成范围：** Risk 支付尝试风控（`PAYMENT_ATTEMPT_RISK`）：统一评估接口 `POST /risk-decisions/v1/evaluations`、名单与名单命中、实时累计 Feature、决策流与执行发布（校验、影子运行、激活与替代）、结束节点附加输出（认证要求）、失败即拒绝（FAILED/TIMED_OUT）、评估事实落库与重放；运营名单维护；规则集在用保护。风控标准目录与全部风控点接口映射。
+
+**关键决定：** 一期设计 R1～R6；修订 R7 统一评估接口、R8 认证要求改由放行结束节点输出配置并停用 3DS 专用动作（[修订设计](./design-amendment-unified-evaluation.md)）；附加输出默认值在保存流程时写入并随发布冻结，评估超时取冻结的决策点版本；授权结果回流需求暂缓。
+
+**提交（均在 main，本地，未推送）：**
+
+| 提交 | 内容 |
+|---|---|
+| `9d973db` | 需求、设计与数据库模型 |
+| `fbde4a5` | risk-control 运营名单 |
+| `6144ec5` | 按决策点注册创作合同、Feature 变量 |
+| `e944be3` | 支付评估与执行发布 |
+| `8756ed7` | 入口测试 |
+| `85a94d5` | 风控标准目录；授权结果回流暂缓 |
+| `4f50b8d` | 统一评估接口、结束节点输出、校验器重构 |
+| `8a61195` | 用户提交的 `PaymentRiskFacts` 重构 |
+| `25dbf91` | 风控点与接口映射 |
+| `06025a2` | 阶段 5 验收、超时与并发测试、规则集在用保护及发布引用 500 修复 |
+| `502a213` | mor-test 发布记录、Compose 配置 |
+
+**验证证据：** Risk 全量 auto 1992/1992；支付运行期相关类 JaCoCo 行 94.7% / 分支 80.1%；本机打包 jar 与候选镜像各完成真实 HTTP 链路验收 61 项（[阶段 5 报告](./verification/stage5-local-acceptance.md)）；mor-test 业务验收 61 项（[部署与验收记录](./release/test-acceptance.md)）。Risk PDManer 17 项既有失败不变。
+
+**部署与数据库：** mor-test Risk 镜像 `e0b7a8d484eb`（`06025a2`）；test `mor_risk` 执行 [ddl.sql](./db/ddl.sql)、[dml.sql](./db/dml.sql)，84 表与正式 Schema 一致；本机 `mor_risk` 已同步执行。生产未部署。
+
+**恢复证据：** 备份 `~/Code-MoR-backups/20261015-risk-payment-fraud-test/20261015T062054Z/`；回退步骤与 [test-rollback.sql](./release/test-rollback.sql)（已演练）见 [release.md 第 7 节](./release/release.md#7-恢复)。
+
+**遗留事项：**
+1. Payment 接入统一评估接口（[设计第 14 节](./design.md#14-交给-payment-的接入清单不在本会话范围)、[修订第 6 节](./design-amendment-unified-evaluation.md)）——Payment 会话。
+2. 运营后台（BFF/页面）配置结束节点附加输出、管理支付规则与执行发布——Operations 会话。
+3. test 支付决策点暂无生效发布，评估返回 503，需运营配置后激活。
+4. 查询风险决定（RCO-I06）与评估解释（RCO-I10）接口未实现。
+5. 规则集“发布引用”分页列表未纳入执行发布，需另行设计接口。
+6. AC-4 白名单放宽与 AC-9 累计金额、多卡关联未作为规则真实命中测试；结账旧格式条件分支、影子补偿任务异常分支覆盖不足。
+7. 授权结果回流需求暂缓（卡测试按授权失败计数依赖它）；出款资格与结账准备尚未接入统一接口。
+8. 本机 `mor_risk` 争议 4 表仍为 `provider_*` 旧列名（test 已改名），属既有本机差异。
