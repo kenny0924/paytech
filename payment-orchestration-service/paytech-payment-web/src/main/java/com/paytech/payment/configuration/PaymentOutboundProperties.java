@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
-/** Execution 出站依赖（Platform 标准 API、Risk 支付评估）的私网地址与超时；修改需重启。 */
+/** Execution 出站依赖（Platform 标准 API、Risk 统一评估）的私网地址与超时；修改需重启。 */
 @Data
 @Validated
 @ConfigurationProperties(prefix = "payment.outbound")
@@ -32,13 +32,16 @@ public class PaymentOutboundProperties {
 
     /**
      * Risk 服务的应用 context path
-     * <li>请求地址为 http://risk-service{本值}/risk-assessment/v1/...；默认空串。</li>
+     * <li>请求地址为 http://risk-service{本值}/risk-decisions/v1/evaluations；Risk 无 context path，默认空串。</li>
      */
     @NotNull
     @Pattern(regexp = "|/[A-Za-z0-9._~-]+(/[A-Za-z0-9._~-]+)*")
     private String riskContextPath = "";
 
-    /** Risk 支付评估的读取超时；超时按风控不可用失败关闭。 */
+    /**
+     * Risk 统一评估的读取超时
+     * <li>默认 1 秒（Risk 计算超时为 500 毫秒）；超时后用同一请求重试一次，仍超时则失败关闭，最坏约两倍本值。</li>
+     */
     @NotNull
-    private Duration riskReadTimeout = Duration.ofSeconds(3);
+    private Duration riskReadTimeout = Duration.ofSeconds(1);
 }

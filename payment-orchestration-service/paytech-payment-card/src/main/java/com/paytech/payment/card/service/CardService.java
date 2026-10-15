@@ -1,6 +1,7 @@
 package com.paytech.payment.card.service;
 
 import com.paytech.payment.card.domain.CardInstrumentContext;
+import com.paytech.payment.card.domain.CardRiskAttributes;
 import com.paytech.payment.card.domain.ChannelCardMaterial;
 
 /** Card 受控用卡能力 */
@@ -24,4 +25,14 @@ public interface CardService {
      * @return 卡材料
      */
     ChannelCardMaterial claimChannelMaterial(String instrumentRef);
+
+    /**
+     * 读取支付风控评估所需的卡属性
+     * <li>不访问数据库或外部依赖，不领取 CVV，不改变卡材料。</li>
+     * <li>卡材料不存在或已过期时返回 null，由调用方省略这两个可选输入；后续资金动作领取材料时按原规则失败。</li>
+     *
+     * @param instrumentRef Card 工具引用
+     * @return BIN 与卡指纹，或 null
+     */
+    CardRiskAttributes riskAttributes(String instrumentRef);
 }

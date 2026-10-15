@@ -6,16 +6,19 @@ import com.paytech.payment.execution.core.enums.RiskResult;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/** 支付风控结论。 */
+/** Risk 已落库的支付风控评估结论。 */
 @Getter
 @AllArgsConstructor
 public class PaymentRiskResult {
-    /** 风控评估标识 */
-    private final Long transactionAssessmentId;
+    /** Risk 评估 ID（evaluationId） */
+    private final Long evaluationId;
 
-    /** 风控结论 */
+    /** 评估结论：ALLOW、REVIEW、DENY 或技术终态 FAILED、TIMED_OUT */
     private final RiskResult riskResult;
 
-    /** 认证要求 */
+    /**
+     * 认证要求
+     * <li>仅 ALLOW 时有值，其他结论为空。</li>
+     */
     private final AuthenticationRequirement authenticationRequirement;
 }

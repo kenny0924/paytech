@@ -49,12 +49,14 @@ payment:
     mock-enabled: false
     # 合成卡 Mock 接受的测试卡号；只能配置渠道公布的测试卡。
     mock-pans: [4111111111111111]
+    # 启用 Mock 时必填的合成卡指纹 HMAC 密钥；不写入模板，由环境变量 PAYMENT_CARD_MOCK_FINGERPRINT_KEY 提供。
   outbound:
-    # Platform 标准 API 执行与 Risk 支付评估（草案）的对方 context path 与读取超时；修改需重启。
+    # Platform 标准 API 执行与 Risk 统一评估的对方 context path 与读取超时；修改需重启。
     platform-context-path: /platform-support
     platform-read-timeout: 30s
     risk-context-path: ""
-    risk-read-timeout: 3s
+    # Risk 读超时后用同一请求重试一次，仍失败则风控失败关闭。
+    risk-read-timeout: 1s
 
 vault:
   client:

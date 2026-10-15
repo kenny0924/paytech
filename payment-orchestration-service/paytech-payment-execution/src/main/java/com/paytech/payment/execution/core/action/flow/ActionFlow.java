@@ -100,14 +100,16 @@ public abstract class ActionFlow<T extends ActionContext> {
             if (action.isRunning()) {
                 return null;
             } else if (action.statusIn(ActionStatus.FAILED)) {
-                // 失败，attempt也失败
-                attempts.updateToFail(context.getAttempt());
-                // 处理intent
-                intents.releaseAttempt(context.getIntent());
+                failAttempt(context);
                 return null;
             }
             assert action.statusIn(ActionStatus.SUCCEEDED);
             ActionTransition<T> transition = next(context, action);
+            if (transition.isAttemptFailed()) {
+                // 动作成功但业务结果不允许继续
+                failAttempt(context);
+                return null;
+            }
             PaymentAction nextAction = null;
             if (transition.getToAction() == null) {
                 attempts.actionSuccess(context.getAttempt(), null);
@@ -121,6 +123,12 @@ public abstract class ActionFlow<T extends ActionContext> {
             actor.doInTransaction(context, action);
             return nextAction;
         });
+    }
+
+    /** 在结果事务内将 Attempt 置为失败并释放 Intent 的活动尝试。 */
+    void failAttempt(T context) {
+        attempts.updateToFail(context.getAttempt());
+        intents.releaseAttempt(context.getIntent());
     }
 
     /** 渠道已创建交易时，在结果事务内保存渠道交易引用（冻结的渠道与 MID、本动作类型与金额）。 */

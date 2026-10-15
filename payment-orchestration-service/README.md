@@ -54,9 +54,9 @@ Windows 使用 `mvnw.cmd` 并设置对应 `JAVA_HOME`。测试实现及验证范
 
 `applyCardInstrument` 使用 `POST /payment/payment-instrument/v1/card-tokens`，完整请求和重放规则见[工具申请合同](../requirements/20260913/payment-Execution设计/apply-card-instrument-amendment.md)。来源提交范围一致时返回原 Token 和到期时间；新申请由 Processor 开启一个事务，依次调用 CardService 的本地申请和 Execution Service 的工具绑定保存，不创建 Attempt 或 Action。两个 Service 不互相调用，Execution Service 的该方法直接参与外层事务。Card 仍是无外部访问的本地 Mock；未来外部准备由 Card Processor 在事务外完成。
 
-本地合成流程需显式设置 `PAYMENT_CARD_MOCK_ENABLED=true` 和正的 `PAYMENT_INSTRUMENT_PREPARATION_WINDOW`（ISO 8601 Duration，例如 `PT5M`）。默认关闭 Mock，窗口默认 `PT0S` 不接受新申请。Mock 仅接受 `CARD_TEST`、公开测试卡号 `4111111111111111`、有效期 `12/2030`、姓名 `MOCK CARD`；安全码按接口格式传入合成值。它不保存 PAN/CVV、不准备真实用卡材料，真实 Card 尚未接入；不要使用真实卡输入。
+本地合成流程需显式设置 `PAYMENT_CARD_MOCK_ENABLED=true`、合成测试值 `PAYMENT_CARD_MOCK_FINGERPRINT_KEY`（风控卡指纹的 HMAC 密钥，缺失则启动失败）和正的 `PAYMENT_INSTRUMENT_PREPARATION_WINDOW`（ISO 8601 Duration，例如 `PT5M`）。默认关闭 Mock，窗口默认 `PT0S` 不接受新申请。Mock 仅接受 `CARD_TEST`、公开测试卡号 `4111111111111111`、有效期 `12/2030`、姓名 `MOCK CARD`；安全码按接口格式传入合成值。它不保存 PAN/CVV、不准备真实用卡材料，真实 Card 尚未接入；不要使用真实卡输入。
 
-新 Attempt 在 Context 构建后调用 RouteService，再把渠道三元组随受理事务保存，状态仍为 PROCESSING。按本期用户要求，RouteServiceImpl 暂时固定返回合成 Channel/Account/MID `9001/9002/9003`，没有校验真实渠道配置或可用性；接通真实资金前必须替换该 Mock。保存上下文后单独创建 PROCESSING 状态的 PAY_RISK 并绑定 Attempt 的执行位，再通过 ActionFactory 取得实现并直接执行；Risk、认证和资金能力目前明确返回未接入，原 Action 保持 UNKNOWN。真实选路、选择证据与 Owner 调用仍为 TODO。调用需要预先存在有效且匹配的 Intent 和交易级工具 Token。
+新 Attempt 在 Context 构建后调用 RouteService，再把渠道三元组随受理事务保存，状态仍为 PROCESSING。按本期用户要求，RouteServiceImpl 暂时固定返回合成 Channel/Account/MID `9001/9002/9003`，没有校验真实渠道配置或可用性；接通真实资金前必须替换该 Mock。保存上下文后单独创建 PROCESSING 状态的 PAY_RISK 并绑定 Attempt 的执行位，再通过 ActionFactory 取得实现并直接执行。PAY_RISK 调用 Risk 统一评估（[需求](../requirements/20261015/payment-接入Risk统一评估/technique.md)）：放行按认证要求进入 AUTHENTICATE、AUTHORIZE 或 PAY，其他结论或未取得结论时 Attempt 失败并释放 Intent；认证与授权能力目前明确返回未接入，原 Action 保持 UNKNOWN。真实选路、选择证据与 Owner 调用仍为 TODO。调用需要预先存在有效且匹配的 Intent 和交易级工具 Token。
 
 ActionExecutionService 通过 ActionFlowFactory 选择 CARD:PAY；ActionFlow 调用 Actor，统一保存结果并推进下一步。Actor 异常转为 UNKNOWN，保存成功后 pay 返回 202 / PROCESSING。动作定义和事务顺序见 [Action Flow 修订](../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)。动作执行不登记补偿事件；创建和后继切换使用 active_action_id 与版本条件更新，等待或未知结果保留原执行位。回调和恢复入口仍待后续接入。旧动作名称切换见[迁移约束](../requirements/20260913/payment-Execution设计/db/card-pay-action-migration.md)。
 

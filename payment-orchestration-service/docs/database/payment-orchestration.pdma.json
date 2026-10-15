@@ -6602,7 +6602,7 @@
         {
           "defKey": "transaction_assessment_id",
           "defName": "交易风控评估标识",
-          "comment": "Risk 返回的原交易评估稳定标识；仅 PAY_RISK 可填，取得可信原评估身份前为空，已知后不可替换；渠道动作为空。",
+          "comment": "Risk 统一评估返回的评估 ID（evaluationId）；仅 PAY_RISK 取得结论后填写，已知后不可替换；渠道动作为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",

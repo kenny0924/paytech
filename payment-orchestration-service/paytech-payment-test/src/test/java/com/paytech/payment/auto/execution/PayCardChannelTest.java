@@ -2,21 +2,12 @@ package com.paytech.payment.auto.execution;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.paytech.foundation.testsupport.api.MockHttpFault;
@@ -28,8 +19,7 @@ import com.paytech.payment.execution.core.enums.AuthenticationRequirement;
 import com.paytech.payment.execution.core.enums.InteractionType;
 import com.paytech.payment.execution.core.enums.IntentStatus;
 import com.paytech.payment.execution.core.enums.RiskResult;
-import com.paytech.payment.test.base.MockTestBase;
-import com.paytech.payment.test.dal.ChannelTestMapper;
+import com.paytech.payment.test.base.AbstractPayCardTest;
 import com.paytech.payment.test.mocker.ChannelDataMocker.Fixture;
 
 /**
@@ -37,35 +27,22 @@ import com.paytech.payment.test.mocker.ChannelDataMocker.Fixture;
  * 以真实客户端调用 Risk 与 Platform 的测试 HTTP 服务。Platform 测试服务像真实 Platform 一样回调 Payment 读卡接口取得卡数据。
  *
  * <p>
- * 覆盖：成功、3DS 待认证（临时交互指令不落库）、发卡行拒绝、结果未知、Platform 保证未发出请求、风控不可用失败关闭、原提交重放不再执行，
- * 以及读卡接口的调用方与执行状态约束。卡号为公开测试卡号，属合成数据。
+ * 覆盖：成功、3DS 待认证（临时交互指令不落库）、发卡行拒绝、结果未知、Platform 保证未发出请求、原提交重放不再执行，
+ * 以及读卡接口的调用方与执行状态约束。卡号为公开测试卡号，属合成数据。风控各结论与故障见 {@link PayRiskEvaluationTest}。
  *
  * @see PaymentIntentApi#pay(String, String, com.paytech.payment.api.execution.request.PayRequestBody)
  */
-class PayCardChannelTest extends MockTestBase {
-    private static final String CLIENT_ID = "101";
-    private static final String ENTITY_NO = "AE001";
+class PayCardChannelTest extends AbstractPayCardTest {
     private static final String CHANNEL_CODE = "PAYERMAX";
-    private static final String PAN = "4111111111111111";
-    private static final String CVV = "737";
-    private static final String RETURN_URL = "https://merchant.local.invalid/return";
     private static final String REDIRECT_URL = "https://3ds.local.invalid/challenge?token=transient-3ds";
 
-    @LocalServerPort
-    private int port;
-
-    @Autowired
-    private ChannelTestMapper mapper;
-
     private Fixture fixture;
-    private RestClient client;
 
     /** 本类公共：PAYERMAX 渠道三元组（AE001、AED、CARD PAY 能力）与风控通过。 */
     @BeforeEach
     void setUpClassMocks() {
-        fixture = data.cardFixture(CHANNEL_CODE, ENTITY_NO, "AED");
-        client = RestClient.create("http://127.0.0.1:" + port + "/payment");
-        risk.respond(RiskResult.ALLOW.getCode(), AuthenticationRequirement.NOT_REQUIRED.getCode());
+        fixture = data.cardFixture(CHANNEL_CODE, ENTITY_NO, CURRENCY);
+        risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
     }
 
     /** 成功：Platform 收到冻结账号身份与支付工具 Token（无卡值），读卡取得卡号与一次性 CVV；Attempt、Intent 成功并保存渠道交易引用。 */
@@ -88,9 +65,9 @@ class PayCardChannelTest extends MockTestBase {
             () -> assertEquals(ENTITY_NO, input.path("channelAccount").path("entityNo").asString()),
             () -> assertEquals(paid.token, input.path("card").path("token").asString()),
             () -> assertEquals("10.00", input.path("payment").path("amount").path("value").asString()),
-            () -> assertEquals("AE", input.path("payment").path("country").asString()),
+            () -> assertEquals(COUNTRY_CODE, input.path("payment").path("country").asString()),
             () -> assertEquals(RETURN_URL, input.path("payment").path("returnUrl").asString()),
-            () -> assertEquals("203.0.113.10", input.path("payment").path("clientIp").asString()),
+            () -> assertEquals(CONSUMER_IP, input.path("payment").path("clientIp").asString()),
             () -> assertFalse(input.toString().contains(PAN), "Platform 输入包含卡号"),
             () -> assertEquals("1111/true", call.revealed(), "读卡取得卡号与 CVV"),
             () -> assertEquals(List.of(String.valueOf(attemptId(response))), risk.attempts()));
@@ -176,22 +153,6 @@ class PayCardChannelTest extends MockTestBase {
             () -> assertEquals("INTEGRATION_INITIALIZATION_FAILED", mapper.actions(attemptId).get(1).get("code")));
     }
 
-    /** 风控不可用：失败关闭，只有风控动作且失败，Platform 未被调用。 */
-    @Test
-    void test_riskUnavailable() {
-        risk.fail(MockHttpFault.json(503, Map.of("type", "about:blank", "title", "Service Unavailable",
-            "detail", "Risk 不可用", "code", "SERVICE_UNAVAILABLE")));
-
-        var response = newPayment().pay();
-
-        long attemptId = attemptId(response);
-        assertAll(() -> assertEquals(AttemptStatus.FAILED.getCode(), response.getBody().get("status")),
-            () -> assertEquals(List.of(ActionType.PAY_RISK.getCode()),
-                mapper.actions(attemptId).stream().map(row -> row.get("type")).toList()),
-            () -> assertEquals("RISK_UNAVAILABLE", mapper.actions(attemptId).getFirst().get("code")),
-            () -> assertTrue(platform.calls().isEmpty()));
-    }
-
     /** 原提交重放：返回原终态，不再评估风险或调用渠道。 */
     @Test
     void test_replayDoesNotExecuteAgain() {
@@ -221,76 +182,12 @@ class PayCardChannelTest extends MockTestBase {
     /** 以给定调用方直接调用读卡接口，返回 HTTP 状态。 */
     int reveal(String caller, String token, long attemptId) {
         try {
-            return client.post().uri("/payment-card/v1/channel-card-materials/reveal").header("X-Caller-Service", caller)
+            return client().post().uri("/payment-card/v1/channel-card-materials/reveal").header("X-Caller-Service", caller)
                 .contentType(MediaType.APPLICATION_JSON).body(Map.of("paymentInstrumentToken", token, "paymentAttemptId",
                     String.valueOf(attemptId), "purpose", "CHANNEL_EXECUTION"))
                 .retrieve().toBodilessEntity().getStatusCode().value();
         } catch (RestClientResponseException failure) {
             return failure.getStatusCode().value();
-        }
-    }
-
-    /** 新建 Intent 并申请合成卡工具。 */
-    Payment newPayment() {
-        long submissionId = ThreadLocalRandom.current().nextLong(1_000_000L, 9_000_000_000L);
-        var intent = new LinkedHashMap<String, Object>();
-        intent.put("clientId", CLIENT_ID);
-        intent.put("sourceType", "COMMERCE_ORDER");
-        intent.put("sourceId", String.valueOf(submissionId));
-        intent.put("entityNo", ENTITY_NO);
-        intent.put("clientPricingVersionId", "1");
-        intent.put("industryCode", "DIGITAL_GOODS");
-        intent.put("mccCode", "5734");
-        intent.put("consumerCountryCode", "AE");
-        intent.put("amount", "10.00");
-        intent.put("currency", "AED");
-        intent.put("expiresAt", Instant.now().plus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS).toString());
-        String intentId = String.valueOf(post("/payment-execution/v1/intents", intent, Map.of()).getBody().get("intentId"));
-        var card = Map.of("pan", PAN, "expiryMonth", "12", "expiryYear", "2030", "cardholderName", "TEST CARDHOLDER",
-            "cvv", CVV);
-        var tokenBody = post("/payment-instrument/v1/card-tokens", Map.of("clientId", CLIENT_ID, "intentId", intentId,
-            "sourceSubmissionId", String.valueOf(submissionId), "paymentMethodCode", "CARD", "card", card), Map.of())
-            .getBody();
-        return new Payment(Long.parseLong(intentId), submissionId, (String)tokenBody.get("paymentInstrumentToken"));
-    }
-
-    /** 发送 JSON POST，返回响应（4xx/5xx 使测试失败）。 */
-    ResponseEntity<Map<String, Object>> post(String path, Object body, Map<String, String> headers) {
-        return client.post().uri(path).contentType(MediaType.APPLICATION_JSON)
-            .headers(target -> headers.forEach(target::add)).body(body).retrieve()
-            .toEntity(new ParameterizedTypeReference<>() {});
-    }
-
-    /** 响应中的支付尝试 ID。 */
-    static long attemptId(ResponseEntity<Map<String, Object>> response) {
-        return Long.parseLong((String)response.getBody().get("attemptId"));
-    }
-
-    /** 一次支付提交的身份：Intent、来源提交与支付工具 Token。 */
-    final class Payment {
-        final long intentId;
-        final long submissionId;
-        final String token;
-
-        Payment(long intentId, long submissionId, String token) {
-            this.intentId = intentId;
-            this.submissionId = submissionId;
-            this.token = token;
-        }
-
-        /** 提交 pay；同一对象重复调用即原提交重放。 */
-        ResponseEntity<Map<String, Object>> pay() {
-            var body = new LinkedHashMap<String, Object>();
-            body.put("clientId", CLIENT_ID);
-            body.put("sourceSubmissionId", String.valueOf(submissionId));
-            body.put("captureMode", "AUTOMATIC");
-            body.put("payMethod", Map.of("paymentMethodCode", "CARD", "paymentInstrumentToken", token));
-            body.put("returnUrl", RETURN_URL);
-            body.put("consumerReference", "payer-ref-001");
-            body.put("consumerIpAddress", "203.0.113.10");
-            body.put("consumerUserAgent", "Mozilla/5.0 (auto test)");
-            return post("/payment-execution/v1/intents/" + intentId + "/pay", body,
-                Map.of("Idempotency-Key", "submission:" + submissionId));
         }
     }
 }

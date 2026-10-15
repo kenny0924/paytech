@@ -19,7 +19,7 @@ spring:
           instances:
             vault-service:
               - uri: "${test.vault.base-url}"
-            # 同一独立 Mock HTTP 服务承载 Platform 标准 API 执行与 Risk 支付评估（草案）合同。
+            # 同一独立 Mock HTTP 服务承载 Platform 标准 API 执行与 Risk 统一评估合同。
             platform-support-service:
               - uri: "${test.vault.base-url}"
             risk-service:
@@ -102,9 +102,16 @@ payment:
   card:
     # 仅用于本地合成卡；真实 Card 能力尚未接入。卡直付执行测试需要申请合成卡工具。
     mock-enabled: true
+    # 合成卡接受的测试卡号（默认值）。
+    mock-pans: [4111111111111111]
+    # 合成卡指纹的 HMAC 密钥；启用 Mock 时必填，仅为测试合成值。
+    mock-fingerprint-key: payment-auto-test-fingerprint-key
   outbound:
     platform-context-path: "" # 测试 Mock HTTP 服务无 Platform 的 /platform-support 前缀。
+    platform-read-timeout: 30s
     risk-context-path: ""
+    # 生产默认 1s；测试缩短以便用 Mock 延迟验证读超时后重试一次。
+    risk-read-timeout: 500ms
   identifier:
     region-id: 31
     worker-id: 30

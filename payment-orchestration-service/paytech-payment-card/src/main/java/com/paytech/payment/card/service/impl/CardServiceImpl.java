@@ -1,36 +1,43 @@
 package com.paytech.payment.card.service.impl;
 
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import lombok.RequiredArgsConstructor;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.springframework.stereotype.Service;
-import com.paytech.foundation.common.error.BizCheckFailException;
-import com.paytech.foundation.common.error.CommonErrorCode;
-import com.paytech.foundation.common.error.ConcurrentRequestException;
-import com.paytech.foundation.common.error.FailException;
+
+import com.paytech.foundation.common.error.*;
 import com.paytech.payment.card.core.configuration.PaymentCardProperties;
 import com.paytech.payment.card.domain.CardInstrumentContext;
+import com.paytech.payment.card.domain.CardRiskAttributes;
 import com.paytech.payment.card.domain.ChannelCardMaterial;
 import com.paytech.payment.card.service.CardService;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Card 本地合成替身，仅接受配置的测试卡号（payment.card.mock-pans）。
  *
  * <p>
- * 合成卡材料只保存在本进程内存（按工具引用，带工具期限），不写库、不记录日志；渠道执行领取时 CVV 一次性清除。 真实 Card 的加密存储与 CVV 暂存介质仍待接入；
- * 未启用 Mock 时全部能力不可用。
+ * 合成卡材料只保存在本进程内存（按工具引用，带工具期限），不写库、不记录日志；渠道执行领取时 CVV 一次性清除。 真实 Card 的加密存储与 CVV 暂存介质仍待接入； 未启用 Mock 时全部能力不可用。
  */
 @Service
 @RequiredArgsConstructor
 public class CardServiceImpl implements CardService {
+    private static final String FINGERPRINT_ALGORITHM = "HmacSHA256";
+
     private final Clock clock;
     private final PaymentCardProperties properties;
     /** 合成卡材料，按工具引用；进程重启即丢失，与真实 CVV 暂存同样不可重建。 */
@@ -52,7 +59,9 @@ public class CardServiceImpl implements CardService {
         if (context.getExpiresAt().isAfter(cardExpiresAt)) {
             context.setExpiresAt(cardExpiresAt);
         }
-        materials.put(context.getInstrumentRef(), new MockMaterial(context.getCard(), context.getExpiresAt()));
+        var riskAttributes = computeRiskAttributes(context.getCard().getPan());
+        materials.put(context.getInstrumentRef(),
+            new MockMaterial(context.getCard(), context.getExpiresAt(), riskAttributes));
     }
 
     /** 本地核对原合成卡身份，不续期或准备新材料 */
@@ -85,6 +94,35 @@ public class CardServiceImpl implements CardService {
             card.getCardholderName(), cvv);
     }
 
+    /** 读取合成材料保存的风控卡属性；材料不存在或已过期时返回 null，不领取 CVV */
+    @Override
+    public CardRiskAttributes riskAttributes(String instrumentRef) {
+        requireMockEnabled();
+        var stored = materials.get(instrumentRef);
+        if (stored == null || !stored.expiresAt().isAfter(clock.instant())) {
+            return null;
+        }
+        return stored.riskAttributes();
+    }
+
+    /**
+     * 由合成卡号计算风控卡属性
+     * <li>BIN：16 位及以上卡号取前 8 位，否则取前 6 位。</li>
+     * <li>指纹：以配置的合成密钥对卡号做 HMAC-SHA256，小写十六进制；同一卡号跨交易稳定，不能反推卡号。</li>
+     */
+    CardRiskAttributes computeRiskAttributes(String pan) {
+        String bin = pan.substring(0, pan.length() >= 16 ? 8 : 6);
+        try {
+            Mac mac = Mac.getInstance(FINGERPRINT_ALGORITHM);
+            mac.init(new SecretKeySpec(properties.getMockFingerprintKey().getBytes(StandardCharsets.UTF_8),
+                FINGERPRINT_ALGORITHM));
+            return new CardRiskAttributes(bin,
+                HexFormat.of().formatHex(mac.doFinal(pan.getBytes(StandardCharsets.US_ASCII))));
+        } catch (GeneralSecurityException unavailable) {
+            throw new ErrorException("合成卡指纹计算不可用", unavailable);
+        }
+    }
+
     /** 未接入真实 Card 时，必须显式启用合成替身 */
     private void requireMockEnabled() {
         if (!properties.isMockEnabled()) {
@@ -101,13 +139,14 @@ public class CardServiceImpl implements CardService {
 
     /** 卡有效期月份最后一微秒（UTC） */
     private static Instant cardExpiresAt(CardInstrumentContext.CardInput card) {
-        return YearMonth.of(Integer.parseInt(card.getExpiryYear()), Integer.parseInt(card.getExpiryMonth())).plusMonths(1)
-            .atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant().minus(1, ChronoUnit.MICROS);
+        return YearMonth.of(Integer.parseInt(card.getExpiryYear()), Integer.parseInt(card.getExpiryMonth()))
+            .plusMonths(1).atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant().minus(1, ChronoUnit.MICROS);
     }
 
     /** 合成引用只由原提交范围构成，不包含卡原值 */
     private String mockReference(CardInstrumentContext context) {
-        return "mock-card:" + context.getClientId() + ":" + context.getIntentId() + ":" + context.getSourceSubmissionId();
+        return "mock-card:" + context.getClientId() + ":" + context.getIntentId() + ":"
+            + context.getSourceSubmissionId();
     }
 
     /** 内存中的合成材料；CVV 原子清除。 */
@@ -115,9 +154,10 @@ public class CardServiceImpl implements CardService {
         private final CardInstrumentContext.CardInput card;
         private final Instant expiresAt;
         private final AtomicReference<String> cvv;
+        private final CardRiskAttributes riskAttributes;
 
-        /** 复制卡输入，避免调用方后续修改影响暂存。 */
-        MockMaterial(CardInstrumentContext.CardInput input, Instant expiresAt) {
+        /** 复制卡输入，避免调用方后续修改影响暂存；风控卡属性在申请时计算一次。 */
+        MockMaterial(CardInstrumentContext.CardInput input, Instant expiresAt, CardRiskAttributes riskAttributes) {
             var copy = new CardInstrumentContext.CardInput();
             copy.setPan(input.getPan());
             copy.setExpiryMonth(input.getExpiryMonth());
@@ -126,11 +166,13 @@ public class CardServiceImpl implements CardService {
             this.card = copy;
             this.expiresAt = expiresAt;
             this.cvv = new AtomicReference<>(input.getCvv());
+            this.riskAttributes = riskAttributes;
         }
 
         /** 卡号、有效期与持卡人相同（不比较 CVV）。 */
         boolean sameIdentity(CardInstrumentContext.CardInput other) {
-            return other != null && card.getPan().equals(other.getPan()) && card.getExpiryMonth().equals(other.getExpiryMonth())
+            return other != null && card.getPan().equals(other.getPan())
+                && card.getExpiryMonth().equals(other.getExpiryMonth())
                 && card.getExpiryYear().equals(other.getExpiryYear())
                 && card.getCardholderName().equals(other.getCardholderName());
         }
@@ -143,6 +185,11 @@ public class CardServiceImpl implements CardService {
         /** 不含 CVV 的卡输入。 */
         CardInstrumentContext.CardInput card() {
             return card;
+        }
+
+        /** 申请时计算的风控卡属性。 */
+        CardRiskAttributes riskAttributes() {
+            return riskAttributes;
         }
 
         /** 材料期限，等于工具期限。 */

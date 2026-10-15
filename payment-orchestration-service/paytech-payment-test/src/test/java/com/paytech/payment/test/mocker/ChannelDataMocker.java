@@ -129,6 +129,19 @@ public class ChannelDataMocker implements Clear {
         mapper.insertMidCapabilityDetail(detail);
     }
 
+    /** 在已有条件组上增加一个布尔能力明细，复用已有组而不制造重复唯一键。 */
+    public void capabilityDetail(Fixture fixture, String code, boolean enabled) {
+        var detail = new MidCapabilityDetail();
+        detail.setMidCapabilityDetailId(ids.nextId());
+        detail.setMidCapabilityId(mapper.capabilityId(fixture.getMid().getMidId()));
+        detail.setCapabilityCode(code);
+        detail.setValueType(CapabilityValueType.BOOLEAN);
+        detail.setBooleanValue(enabled ? 1 : 0);
+        detail.setCreateTime(fixture.getMid().getCreateTime());
+        detail.setUpdateTime(detail.getCreateTime());
+        mapper.insertMidCapabilityDetail(detail);
+    }
+
     /** 在明确币种条件下增加精确金额上下限，复用已有组而不制造重复唯一键。 */
     public void amountBounds(Fixture fixture, BigDecimal minimum, BigDecimal maximum) {
         long scopeId = mapper.capabilityId(fixture.getMid().getMidId());

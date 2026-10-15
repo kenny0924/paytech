@@ -15,12 +15,12 @@ import org.springframework.web.client.RestClient;
 
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
-import com.paytech.payment.integration.risk.PaymentRiskAssessmentApi;
 import com.paytech.platform.support.api.enums.StandardApiExecutionErrorCode;
 import com.paytech.platform.support.api.standardapi.StandardApiCommandApi;
+import com.paytech.risk.api.evaluation.RiskDecisionApi;
 
 /**
- * Execution 出站 HTTP 客户端：经私网服务发现调用 Platform 标准 API 与 Risk 支付评估，不跟随重定向、不自动重试。
+ * Execution 出站 HTTP 客户端：经私网服务发现调用 Platform 标准 API 与 Risk 统一评估，不跟随重定向、不自动重试。
  * <li>出站客户端不记录报文；Platform 执行可能已发出渠道请求，超时由调用方按结果未知处理。</li>
  */
 @Configuration(proxyBeanMethods = false)
@@ -41,13 +41,16 @@ public class PaymentOutboundConfiguration {
             .createClient(StandardApiCommandApi.class);
     }
 
-    /** Risk 支付评估客户端（合同草案）。 */
+    /**
+     * Risk 统一评估客户端。
+     * <li>503 RISK_DECISION_NOT_CONFIGURED 与其他 5xx 一样按依赖不可用抛出，无需注册合同错误码。</li>
+     */
     @Bean
-    PaymentRiskAssessmentApi paymentRiskAssessmentApi(RestClient.Builder builder,
-        ObjectProvider<LoadBalancerClient> discovery, PaymentOutboundProperties properties) {
+    RiskDecisionApi riskDecisionApi(RestClient.Builder builder, ObjectProvider<LoadBalancerClient> discovery,
+        PaymentOutboundProperties properties) {
         RestClient client = client(builder, discovery, RISK_SERVICE, properties.getRiskContextPath(), properties.getRiskReadTimeout());
         return HttpServiceClientFactory.create(client, HttpServiceClientOptions.strict().withStrictJsonResponses(8192))
-            .createClient(PaymentRiskAssessmentApi.class);
+            .createClient(RiskDecisionApi.class);
     }
 
     /** 基于应用的 RestClient.Builder（保留公共观测定制）：服务发现选择实例，地址带对方应用 context path；连接 2 秒。 */

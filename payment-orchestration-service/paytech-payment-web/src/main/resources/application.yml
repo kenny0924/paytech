@@ -76,6 +76,8 @@ payment:
   card:
     # 仅用于本地合成卡；真实 Card 能力尚未接入。
     mock-enabled: "${PAYMENT_CARD_MOCK_ENABLED:false}"
+    # 合成卡指纹的 HMAC 密钥；启用 Mock 时必填（缺失则启动失败），只配置合成测试值。
+    mock-fingerprint-key: "${PAYMENT_CARD_MOCK_FINGERPRINT_KEY:}"
   identifier:
     region-id: "${PAYMENT_SNOWFLAKE_REGION_ID}"
     worker-id: "${PAYMENT_SNOWFLAKE_WORKER_ID}"

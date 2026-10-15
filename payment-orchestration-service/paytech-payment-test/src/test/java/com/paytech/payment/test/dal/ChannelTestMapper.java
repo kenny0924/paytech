@@ -77,7 +77,7 @@ public interface ChannelTestMapper {
     Map<String, Object> intent(@Param("intentId") long intentId);
 
     /** 某尝试的全部动作，按序号。 */
-    @Select("SELECT action_type AS type, action_status AS status, interaction_type AS interactionType, channel_response_code AS code, channel_response_msg AS message, risk_result AS riskResult FROM t_payment_action WHERE payment_attempt_id = #{attemptId} ORDER BY action_no")
+    @Select("SELECT payment_action_id AS actionId, action_type AS type, action_status AS status, interaction_type AS interactionType, channel_response_code AS code, channel_response_msg AS message, risk_result AS riskResult, transaction_assessment_id AS evaluationId, authentication_requirement AS authentication FROM t_payment_action WHERE payment_attempt_id = #{attemptId} ORDER BY action_no")
     List<Map<String, Object>> actions(@Param("attemptId") long attemptId);
 
     /** 全部渠道交易引用的外部编号与类型。 */

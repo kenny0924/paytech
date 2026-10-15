@@ -34,20 +34,19 @@ public class CardPayFlow extends ActionFlow<PayContext> {
             paymentActionRepository, paymentAttemptRepository, clock, intents, refs);
     }
 
-    /** 条件对象组合定义业务分支，Capture/Void 属于后续独立入口。 */
+    /** 条件对象组合定义业务分支；风控评估完成但未放行时 Attempt 失败，Capture/Void 属于后续独立入口。 */
     static List<ActionTransition<PayContext>> defineTransitions() {
         var succeeded = new ActionStatusCondition(ActionStatus.SUCCEEDED);
         var failed = new ActionStatusCondition(ActionStatus.FAILED);
         var allowed = succeeded.and(new RiskResultCondition(RiskResult.ALLOW));
-        var rejected =
-            succeeded.and(new RiskResultCondition(RiskResult.DENY).or(new RiskResultCondition(RiskResult.REVIEW)));
+        var notAllowed = succeeded.and(new RiskResultCondition(RiskResult.ALLOW).negate());
         var authentication = new AuthenticationRequiredCondition();
         var manual = new CaptureModeCondition(CaptureMode.MANUAL);
         var automatic = new CaptureModeCondition(CaptureMode.AUTOMATIC);
         return List.of(ActionTransition.next(PAY_RISK, allowed.and(authentication), AUTHENTICATE),
             ActionTransition.next(PAY_RISK, allowed.and(authentication.negate()).and(manual), AUTHORIZE),
             ActionTransition.next(PAY_RISK, allowed.and(authentication.negate()).and(automatic), PAY),
-            ActionTransition.end(PAY_RISK, rejected.or(failed)),
+            ActionTransition.fail(PAY_RISK, notAllowed), ActionTransition.end(PAY_RISK, failed),
             ActionTransition.next(AUTHENTICATE, succeeded.and(manual), AUTHORIZE),
             ActionTransition.next(AUTHENTICATE, succeeded.and(automatic), PAY),
             ActionTransition.end(AUTHENTICATE, failed), ActionTransition.end(AUTHORIZE, succeeded.or(failed)),
