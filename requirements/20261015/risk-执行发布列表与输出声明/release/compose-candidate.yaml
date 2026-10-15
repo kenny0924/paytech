@@ -1,0 +1,6 @@
+# 候选：从提交 b26e857 的 risk-compliance-service 干净导出（git archive）构建的 Risk 镜像
+# （tag mor-test/risk-service:release-list-20261015，jar SHA-256 a3d5ca4b…736b），使用固定 image ID。
+# 叠加在 test-environment 的 compose.yaml + compose.applications.yaml 之上；只换 Risk 镜像，配置不变，没有 SQL。
+services:
+  risk-service:
+    image: sha256:fcfc9457dab627439e2590ff5a67d91d182e5e02d2e610a19b61370c95a7ea15
