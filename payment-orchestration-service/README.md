@@ -11,10 +11,10 @@
 | `paytech-payment-web` | 唯一启动入口、REST Controller、协议转换和基础配置 |
 | `paytech-payment-routing` | RouteService 接口与当前 Mock 选路 |
 | `paytech-payment-channel` | Channel/Account/MID/Capability/Detail 五表所有权与两个公开查询；渠道操作和恢复执行另行接入 |
-| `paytech-payment-card` | CardService 与显式启用的合成卡 Mock，真实受控卡管理待接入 |
+| `paytech-payment-card` | 卡加密存储（卡按卡号唯一、卡凭证、卡交易工具三层；每张卡一把 DEK，由 Vault 托管）、按明文卡号定位、CVV 的 Redis 一次性暂存、读卡与风控卡属性 |
 | `paytech-payment-test` | 独立测试模块；正式应用入口、真实本地数据库、外部 HTTP DTO Mock 与架构门禁 |
 
-Web 依赖 API、Execution 和 Card 的协议转换类型；Execution 通过公开的 RouteService、CardService 单向依赖 Routing、Card，Web 同时装配 Channel；Channel 不依赖其他 Payment 模块。模块共用一个应用进程、Payment 数据库和事务管理器，Routing/Card 不反向依赖 Execution，也不接收其 DataObject。卡输入仅经过专用申请请求交给 Card，通用 pay、Execution Context 和仓储不接收卡原值。数据库设计文件不参与应用启动，不自动建表或初始化。pay 使用 Attempt 的 `source_submission_id` 唯一索引防重，重复请求核对原提交内容后返回当前状态，规则见 [pay 阅读说明](docs/pay-interface-walkthrough.md)。Payment 不再依赖 Foundation 命令幂等组件。
+Web 依赖 API、Execution 和 Card 的协议转换类型；Execution 通过公开的 RouteService、CardService 及 Card 公开 Processor 单向依赖 Routing、Card，Web 同时装配 Channel；Channel 不依赖其他 Payment 模块。模块共用一个应用进程、Payment 数据库和事务管理器，Routing/Card 不反向依赖 Execution，也不接收其 DataObject。卡输入仅经过专用申请请求交给 Card，通用 pay、Execution Context 和仓储不接收卡原值。数据库设计文件不参与应用启动，不自动建表或初始化。pay 使用 Attempt 的 `source_submission_id` 唯一索引防重，重复请求核对原提交内容后返回当前状态，规则见 [pay 阅读说明](docs/pay-interface-walkthrough.md)。Payment 不再依赖 Foundation 命令幂等组件。
 
 ## 构建
 
@@ -52,9 +52,9 @@ Windows 使用 `mvnw.cmd` 并设置对应 `JAVA_HOME`。测试实现及验证范
 
 终止 Intent 使用 `POST /payment/payment-execution/v1/intents/{intentId}/terminate`，Body 为 `clientId/reason`，无需幂等 Header，返回 `intentId/status/decision`。与 pay 共用 Intent 资源锁；安全终止只更新 Intent，已取消/过期直接返回，活动尝试返回 PENDING，授权等待返回 REVERSAL_REQUIRED，已收款返回 ALREADY_PAID；正常业务结果统一使用 HTTP 200，由上游判断 decision。完整边界见[终止接口合同](../requirements/20260913/payment-Execution设计/terminate-intent-amendment.md)；不自动撤销授权、退款或后台重试。
 
-`applyCardInstrument` 使用 `POST /payment/payment-instrument/v1/card-tokens`，完整请求和重放规则见[工具申请合同](../requirements/20260913/payment-Execution设计/apply-card-instrument-amendment.md)。来源提交范围一致时返回原 Token 和到期时间；新申请由 Processor 开启一个事务，依次调用 CardService 的本地申请和 Execution Service 的工具绑定保存，不创建 Attempt 或 Action。两个 Service 不互相调用，Execution Service 的该方法直接参与外层事务。Card 仍是无外部访问的本地 Mock；未来外部准备由 Card Processor 在事务外完成。
+`applyCardInstrument` 使用 `POST /payment/payment-instrument/v1/card-tokens`，完整请求和重放规则见[工具申请合同](../requirements/20260913/payment-Execution设计/apply-card-instrument-amendment.md)。来源提交范围一致时返回原 Token 和到期时间；新申请由 Processor 开启一个事务，依次调用 CardService 的本地申请和 Execution Service 的工具绑定保存，不创建 Attempt 或 Action。两个 Service 不互相调用，Execution Service 的该方法直接参与外层事务。新申请在事务前由 Card 的 `PrepareCardInstrumentProcessor` 准备：按卡指纹查卡，已有则经 Vault 取回 DEK，没有则生成 DEK 交 Vault 并保存卡；按（卡、凭证摘要）查或建卡凭证；加密 CVV 存 Redis。卡与凭证单条插入、自动提交，事务内只插入卡交易工具。原提交重放由 `CheckCardInstrumentProcessor` 比较卡指纹与凭证摘要，不访问 Vault。详见[Card 加密存储方案](../requirements/20261015/payment-Card加密存储/technique.md)。
 
-本地合成流程需显式设置 `PAYMENT_CARD_MOCK_ENABLED=true`、合成测试值 `PAYMENT_CARD_MOCK_FINGERPRINT_KEY`（风控卡指纹的 HMAC 密钥，缺失则启动失败）和正的 `PAYMENT_INSTRUMENT_PREPARATION_WINDOW`（ISO 8601 Duration，例如 `PT5M`）。默认关闭 Mock，窗口默认 `PT0S` 不接受新申请。Mock 仅接受 `CARD_TEST`、公开测试卡号 `4111111111111111`、有效期 `12/2030`、姓名 `MOCK CARD`；安全码按接口格式传入合成值。它不保存 PAN/CVV、不准备真实用卡材料，真实 Card 尚未接入；不要使用真实卡输入。
+本地运行需设置 `PAYMENT_CARD_FINGERPRINT_KEY`（卡指纹 HMAC 密钥，Base64、解码后至少 32 字节，缺失则启动失败）和正的 `PAYMENT_INSTRUMENT_PREPARATION_WINDOW`（ISO 8601 Duration，例如 `PT5M`；默认 `PT0S` 不接受新申请），并在所连 Vault 注册数据类型 `PAYMENT_CARD_DEK` 及 Payment 的 `CARD_STORAGE` Protect、`CARD_USE` Reveal 访问规则。卡号须通过 Luhn 校验；卡号以本卡 DEK 加密存入 `t_payment_card`（按卡指纹唯一，BIN 按卡号长度存 8 或 6 位），有效期与持卡人加密存入 `t_payment_card_credential`，每笔交易一条 `t_payment_card_instrument`；CVV 加密后按交易工具只在 Redis 暂存到工具期限、领取一次即删除。
 
 新 Attempt 在 Context 构建后调用 RouteService，再把渠道三元组随受理事务保存，状态仍为 PROCESSING。按本期用户要求，RouteServiceImpl 暂时固定返回合成 Channel/Account/MID `9001/9002/9003`，没有校验真实渠道配置或可用性；接通真实资金前必须替换该 Mock。保存上下文后单独创建 PROCESSING 状态的 PAY_RISK 并绑定 Attempt 的执行位，再通过 ActionFactory 取得实现并直接执行。PAY_RISK 调用 Risk 统一评估（[需求](../requirements/20261015/payment-接入Risk统一评估/technique.md)）：放行按认证要求进入 AUTHENTICATE、AUTHORIZE 或 PAY，其他结论或未取得结论时 Attempt 失败并释放 Intent；认证与授权能力目前明确返回未接入，原 Action 保持 UNKNOWN。真实选路、选择证据与 Owner 调用仍为 TODO。调用需要预先存在有效且匹配的 Intent 和交易级工具 Token。
 

@@ -8,9 +8,7 @@
 |---|---|---|---|
 | `payment.execution.instrument-preparation-window` | [PaymentExecutionProperties](../../paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/configuration/PaymentExecutionProperties.java) | `PT0S`；Duration，例如 `PT5M`；零值或负值禁止新工具申请 | 每次新申请读取一次；不修改原 Token 到期时间，不阻止原提交重放 |
 | `payment.channel.capability-definitions` | [ChannelProperties](../../paytech-payment-channel/src/main/java/com/paytech/payment/channel/core/configuration/ChannelProperties.java) | 非空目录；每项 value-type 为 BOOLEAN / DECIMAL / CODE，CODE 提供 allowed-codes | 约束五表查询中的开放能力代码；初始目录见服务模板，类型变化须同步审查已有配置 |
-| `payment.card.mock-enabled` | [PaymentCardProperties](../../paytech-payment-card/src/main/java/com/paytech/payment/card/core/configuration/PaymentCardProperties.java) | `false`；仅允许本地合成卡 | Card 每次调用读取；关闭后合成卡申请、核对均不可用 |
-| `payment.card.mock-pans` | 同上 | `[4111111111111111]`；只能是渠道公布的测试卡号 | 仅 Mock 开启时生效；合成材料只在进程内存，CVV 领取一次即清除 |
-| `payment.card.mock-fingerprint-key` | 同上 | 无默认值；Mock 开启时必填，缺失则启动失败；环境变量 `PAYMENT_CARD_MOCK_FINGERPRINT_KEY` | 合成卡风控指纹（HMAC-SHA256）的密钥，只配置合成测试值，不写入模板；修改后同一测试卡指纹变化 |
+| `payment.card.fingerprint-key` | [PaymentCardProperties](../../paytech-payment-card/src/main/java/com/paytech/payment/card/core/configuration/PaymentCardProperties.java) | 无默认值；必填，Base64 且解码后至少 32 字节，否则启动失败；环境变量 `PAYMENT_CARD_FINGERPRINT_KEY` | 卡指纹与卡凭证摘要（HMAC-SHA256）密钥，启动时读取；不写入模板或 Nacos。单一密钥、不可轮换：卡按指纹唯一、按卡号定位都依赖它，更换后已存的卡与凭证都无法再匹配。每张卡的数据加密密钥由 Vault 托管（[决定](../../../agent-docs/decisions/2026-10-15-vault-payment-card-dek.md)），不在本服务配置 |
 | `payment.outbound.platform-context-path` / `platform-read-timeout` | [PaymentOutboundProperties](../../paytech-payment-web/src/main/java/com/paytech/payment/configuration/PaymentOutboundProperties.java) | `/platform-support`、`30s`（须大于渠道流程预算） | 启动时创建客户端，修改需重启；超时按渠道结果未知处理 |
 | `payment.outbound.risk-context-path` / `risk-read-timeout` | 同上 | 空串、`1s` | 启动时创建客户端，修改需重启；调用 Risk 统一评估 `/risk-decisions/v1/evaluations`，409、超时与 5xx 用同一请求重试一次，仍失败则风控失败关闭（[需求](../../../requirements/20261015/payment-接入Risk统一评估/technique.md)） |
 | `payment.identifier.region-id` | [PaymentIdentifierProperties](../../paytech-payment-web/src/main/java/com/paytech/payment/configuration/PaymentIdentifierProperties.java) | 必填，0～31 | 创建 ID 生成器时读取，修改需重启 |
@@ -69,7 +67,7 @@ Nacos 内容进入 Spring Environment 不代表所有组件都能动态重建。
 | `NACOS_USERNAME`、`NACOS_PASSWORD` | Nacos 认证 |
 | `PAYMENT_SNOWFLAKE_REGION_ID`、`PAYMENT_SNOWFLAKE_WORKER_ID` | 实例 ID 坐标，防止多个实例共用一个节点编号 |
 
-`MOR_PAYMENT_DB_URL`、`MOR_PAYMENT_DB_USERNAME`、`MOR_REDIS_HOST`、`MOR_REDIS_PORT`、`PAYMENT_INSTRUMENT_PREPARATION_WINDOW`、`PAYMENT_CARD_MOCK_ENABLED`、`PAYMENT_CARD_MOCK_FINGERPRINT_KEY` 继续作为本地配置的环境变量入口。启用 Nacos 后，由导入配置中的同名属性覆盖这些本地默认值；不要同时把它们作为两个运行配置源维护。
+`MOR_PAYMENT_DB_URL`、`MOR_PAYMENT_DB_USERNAME`、`MOR_REDIS_HOST`、`MOR_REDIS_PORT`、`PAYMENT_INSTRUMENT_PREPARATION_WINDOW`、`PAYMENT_CARD_FINGERPRINT_KEY` 继续作为本地配置的环境变量入口。启用 Nacos 后，由导入配置中的同名属性覆盖这些本地默认值；不要同时把它们作为两个运行配置源维护。
 
 应用不接入真实 KMS、Channel 或 Card 存储时，不预留其凭据和参数。
 

@@ -2,7 +2,11 @@ package com.paytech.payment.test.mocker;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +32,7 @@ import tools.jackson.databind.json.JsonMapper;
  *
  * <p>
  * 与真实 Platform 一样，收到含 card.token 的请求时先经真实 HTTP 回调 Payment 读卡接口（Caller platform-support-service），
- * 只记录读卡结果的卡号末四位与 CVV 是否存在，不保存卡值；读卡失败时按真实 Platform 返回 503 INTEGRATION_INITIALIZATION_FAILED。
+ * 只记录读卡结果的卡号末四位与 CVV 是否存在，以及全部卡值的 SHA-256 摘要（供核对与申请时一致），不保存卡值；读卡失败时按真实 Platform 返回 503 INTEGRATION_INITIALIZATION_FAILED。
  */
 @TestComponent
 @RequiredArgsConstructor
@@ -55,10 +59,10 @@ public class PlatformMocker implements Clear {
 
     /** HTTP Mock 实际调用此处：先读卡，再按配置响应。 */
     public ExecuteStandardApiResponseBody execute(String standardApiCode, ExecuteStandardApiRequestBody body) {
-        String revealed = revealCard(body.getInput());
+        var revealed = revealCard(body.getInput());
         synchronized (this) {
-            calls.add(new Call(standardApiCode, body.getIntegrationCode(), body.getInput(), revealed));
-            if (revealed != null && revealed.startsWith("REJECTED")) {
+            calls.add(new Call(standardApiCode, body.getIntegrationCode(), body.getInput(), revealed[0], revealed[1]));
+            if (revealed[0] != null && revealed[0].startsWith("REJECTED")) {
                 throw MockHttpFault.json(503, Map.of("type", "about:blank", "title", "Service Unavailable",
                     "detail", "外部 API 初始化失败", "code", "INTEGRATION_INITIALIZATION_FAILED"));
             }
@@ -73,10 +77,14 @@ public class PlatformMocker implements Clear {
         }
     }
 
-    /** 按真实 Platform 的 PAYMENT_CARD 初始化读卡；返回“末四位/CVV 是否存在”或拒绝状态码。 */
-    String revealCard(JsonNode input) {
+    /**
+     * 按真实 Platform 的 PAYMENT_CARD 初始化读卡
+     *
+     * @return [“末四位/CVV 是否存在”或拒绝状态码, 卡值摘要]；请求不含 card.token 时均为 null
+     */
+    String[] revealCard(JsonNode input) {
         if (!input.path("card").path("token").isString()) {
-            return null;
+            return new String[2];
         }
         var request = new RevealChannelCardMaterialRequestBody();
         request.setPaymentInstrumentToken(input.path("card").path("token").asString());
@@ -88,9 +96,23 @@ public class PlatformMocker implements Clear {
                     + "/payment/payment-card/v1/channel-card-materials/reveal")
                 .header("X-Caller-Service", "platform-support-service").contentType(MediaType.APPLICATION_JSON)
                 .body(request).retrieve().body(RevealChannelCardMaterialResponseBody.class);
-            return card.getPan().substring(card.getPan().length() - 4) + "/" + (card.getCvv() != null);
+            return new String[] {card.getPan().substring(card.getPan().length() - 4) + "/" + (card.getCvv() != null),
+                materialDigest(card.getPan(), card.getExpiryMonth(), card.getExpiryYear(), card.getCardholderName(),
+                    card.getCvv())};
         } catch (RestClientResponseException rejected) {
-            return "REJECTED " + rejected.getStatusCode().value();
+            return new String[] {"REJECTED " + rejected.getStatusCode().value(), null};
+        }
+    }
+
+    /** 卡号、有效期、持卡人与 CVV 的 SHA-256 十六进制摘要；测试用同一方法计算期望值。 */
+    public static String materialDigest(String pan, String expiryMonth, String expiryYear, String cardholderName,
+        String cvv) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(
+                String.join("|", pan, expiryMonth, expiryYear, cardholderName, cvv).getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException unavailable) {
+            throw new IllegalStateException(unavailable);
         }
     }
 
@@ -118,7 +140,8 @@ public class PlatformMocker implements Clear {
         unexpected = 0;
     }
 
-    /** 一次执行请求：标准 API、接入方、输入与读卡结果摘要。 */
-    public record Call(String standardApiCode, String integrationCode, JsonNode input, String revealed) {
+    /** 一次执行请求：标准 API、接入方、输入、读卡结果摘要与卡值摘要。 */
+    public record Call(String standardApiCode, String integrationCode, JsonNode input, String revealed,
+        String materialDigest) {
     }
 }

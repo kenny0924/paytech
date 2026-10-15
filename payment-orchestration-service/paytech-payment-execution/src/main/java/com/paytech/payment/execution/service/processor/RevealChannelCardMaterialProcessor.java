@@ -9,7 +9,7 @@ import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.payment.card.domain.ChannelCardMaterial;
-import com.paytech.payment.card.service.CardService;
+import com.paytech.payment.card.service.processor.ClaimChannelCardMaterialProcessor;
 import com.paytech.payment.execution.core.action.ActionType;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAction;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAttempt;
@@ -27,7 +27,7 @@ import lombok.AllArgsConstructor;
  * 渠道执行读卡（卡数据经 Platform 渠道执行决定，2026-10-14）：Platform 执行支付类标准 API 时凭支付工具 Token 读取卡数据。
  *
  * <p>
- * Execution 核对 Token 与支付尝试的绑定，且该尝试当前正在执行 PAY 或 AUTHORIZE 资金动作；之后由 Card 领取材料，CVV 一次性清除。 不写数据库、不加 Intent
+ * Execution 核对 Token 与支付尝试的绑定，且该尝试当前正在执行 PAY 或 AUTHORIZE 资金动作；之后由 Card 领取 Processor 读库、经 Vault 取回本卡 DEK 解密，并一次性领取 Redis 中的 CVV。 不写数据库、不加 Intent
  * 锁（调用发生在 pay 持有 Intent 锁期间）；响应含卡原值，入口日志只记元数据。
  */
 @Component
@@ -37,7 +37,7 @@ public class RevealChannelCardMaterialProcessor
     /** 唯一允许的调用方。 */
     static final String CALLER = "platform-support-service";
 
-    final CardService cardService;
+    final ClaimChannelCardMaterialProcessor claimChannelCardMaterialProcessor;
     final PaymentActionRepository paymentActionRepository;
     final PaymentAttemptRepository paymentAttemptRepository;
     final PaymentInstrumentTokenRepository paymentInstrumentTokenRepository;
@@ -63,7 +63,7 @@ public class RevealChannelCardMaterialProcessor
         if (token.getRevokedAt() != null || !isExecutingFundAction(attempt)) {
             throw new BizCheckFailException("支付尝试当前不允许用卡: " + attempt.getPaymentAttemptId());
         }
-        return cardService.claimChannelMaterial(token.getInstrumentRef());
+        return claimChannelCardMaterialProcessor.process(token.getInstrumentRef());
     }
 
     /** 尝试处理中，且当前动作是正在执行的 PAY 或 AUTHORIZE。 */

@@ -18,7 +18,8 @@ import tools.jackson.databind.cfg.CoercionInputShape;
 
 /** 支付受理所需的基础组件集中装配，不加入尚无消费者的下游依赖。 */
 @Configuration(proxyBeanMethods = false)
-@MapperScan({"com.paytech.payment.execution.core.dal.mapper", "com.paytech.payment.channel.core.dal.mapper"})
+@MapperScan({"com.paytech.payment.execution.core.dal.mapper", "com.paytech.payment.channel.core.dal.mapper",
+    "com.paytech.payment.card.core.dal.mapper"})
 public class PaymentConfiguration {
     /** 为实际 Repository 提供已配置的正式 ID 生成器，不使用测试专用替身。 */
     @Bean

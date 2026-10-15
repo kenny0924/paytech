@@ -33,6 +33,9 @@ public abstract class AbstractPayCardTest extends MockTestBase {
     protected static final String PAYMENT_METHOD_CODE = "CARD";
     protected static final String PAN = "4111111111111111";
     protected static final String CVV = "737";
+    protected static final String EXPIRY_MONTH = "12";
+    protected static final String EXPIRY_YEAR = "2030";
+    protected static final String CARDHOLDER_NAME = "TEST CARDHOLDER";
     protected static final String RETURN_URL = "https://merchant.local.invalid/return";
     protected static final String CONSUMER_REFERENCE = "payer-ref-001";
     protected static final String CONSUMER_IP = "203.0.113.10";
@@ -46,11 +49,23 @@ public abstract class AbstractPayCardTest extends MockTestBase {
 
     /** 指向本服务真实 HTTP 入口的客户端。 */
     protected RestClient client() {
-        return RestClient.create("http://127.0.0.1:" + port + "/payment");
+        return RestClient.create(baseUrl());
+    }
+
+    /** 本服务真实 HTTP 入口的根地址。 */
+    protected String baseUrl() {
+        return "http://127.0.0.1:" + port + "/payment";
     }
 
     /** 新建 Intent 并申请合成卡工具；来源订单 ID 与来源提交 ID 相同。 */
     protected Payment newPayment() {
+        Payment intent = newIntent();
+        return new Payment(intent.intentId, intent.submissionId,
+            applyCard(String.valueOf(intent.intentId), intent.submissionId));
+    }
+
+    /** 只新建 Intent，不申请卡工具；返回的支付提交尚无支付工具 Token。 */
+    protected Payment newIntent() {
         long submissionId = ThreadLocalRandom.current().nextLong(1_000_000L, 9_000_000_000L);
         var intent = new LinkedHashMap<String, Object>();
         intent.put("clientId", CLIENT_ID);
@@ -65,13 +80,13 @@ public abstract class AbstractPayCardTest extends MockTestBase {
         intent.put("currency", CURRENCY);
         intent.put("expiresAt", Instant.now().plus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS).toString());
         String intentId = String.valueOf(post("/payment-execution/v1/intents", intent, Map.of()).getBody().get("intentId"));
-        return new Payment(Long.parseLong(intentId), submissionId, applyCard(intentId, submissionId));
+        return new Payment(Long.parseLong(intentId), submissionId, null);
     }
 
     /** 为同一 Intent 的新来源提交申请合成卡工具，返回支付工具 Token。 */
     protected String applyCard(String intentId, long submissionId) {
-        var card = Map.of("pan", PAN, "expiryMonth", "12", "expiryYear", "2030", "cardholderName", "TEST CARDHOLDER",
-            "cvv", CVV);
+        var card = Map.of("pan", PAN, "expiryMonth", EXPIRY_MONTH, "expiryYear", EXPIRY_YEAR, "cardholderName",
+            CARDHOLDER_NAME, "cvv", CVV);
         return (String)post("/payment-instrument/v1/card-tokens", Map.of("clientId", CLIENT_ID, "intentId", intentId,
             "sourceSubmissionId", String.valueOf(submissionId), "paymentMethodCode", PAYMENT_METHOD_CODE, "card", card),
             Map.of()).getBody().get("paymentInstrumentToken");

@@ -44,8 +44,8 @@ public interface ChannelTestMapper {
     @Select("SELECT (SELECT COUNT(*) FROM t_payment_channel) + (SELECT COUNT(*) FROM t_channel_account) + (SELECT COUNT(*) FROM t_channel_mid) + (SELECT COUNT(*) FROM t_mid_capability) + (SELECT COUNT(*) FROM t_mid_capability_detail)")
     int countRows();
 
-    /** 读取执行链路五表总行数。 */
-    @Select("SELECT (SELECT COUNT(*) FROM t_payment_intent) + (SELECT COUNT(*) FROM t_payment_attempt) + (SELECT COUNT(*) FROM t_payment_instrument_token) + (SELECT COUNT(*) FROM t_payment_action) + (SELECT COUNT(*) FROM t_channel_transaction_ref)")
+    /** 读取执行链路五表与卡三表总行数。 */
+    @Select("SELECT (SELECT COUNT(*) FROM t_payment_intent) + (SELECT COUNT(*) FROM t_payment_attempt) + (SELECT COUNT(*) FROM t_payment_instrument_token) + (SELECT COUNT(*) FROM t_payment_action) + (SELECT COUNT(*) FROM t_channel_transaction_ref) + (SELECT COUNT(*) FROM t_payment_card) + (SELECT COUNT(*) FROM t_payment_card_credential) + (SELECT COUNT(*) FROM t_payment_card_instrument)")
     int countExecutionRows();
 
     /** 仅清理本测试库的渠道交易引用。 */
@@ -63,6 +63,38 @@ public interface ChannelTestMapper {
     /** 仅清理本测试库的支付工具。 */
     @Delete("DELETE FROM t_payment_instrument_token")
     void clearInstrumentTokens();
+
+    /** 仅清理本测试库的卡交易工具。 */
+    @Delete("DELETE FROM t_payment_card_instrument")
+    void clearCardInstruments();
+
+    /** 仅清理本测试库的卡凭证。 */
+    @Delete("DELETE FROM t_payment_card_credential")
+    void clearCardCredentials();
+
+    /** 仅清理本测试库的卡。 */
+    @Delete("DELETE FROM t_payment_card")
+    void clearCards();
+
+    /** 本测试库全部卡交易工具 ID，用于清理对应的 Redis CVV。 */
+    @Select("SELECT payment_card_instrument_id FROM t_payment_card_instrument")
+    List<Long> cardInstrumentIds();
+
+    /** 全部卡，按创建先后排列。 */
+    @Select("SELECT payment_card_id AS paymentCardId, card_fingerprint AS cardFingerprint, card_bin AS cardBin, pan_last4 AS panLast4, encrypted_pan AS encryptedPan, dek_vault_token AS dekVaultToken FROM t_payment_card ORDER BY create_time, payment_card_id")
+    List<Map<String, Object>> cards();
+
+    /** 全部卡凭证，按创建先后排列。 */
+    @Select("SELECT payment_card_credential_id AS credentialId, payment_card_id AS paymentCardId, credential_digest AS credentialDigest, encrypted_details AS encryptedDetails FROM t_payment_card_credential ORDER BY create_time, payment_card_credential_id")
+    List<Map<String, Object>> cardCredentials();
+
+    /** 全部卡交易工具，按创建先后排列。 */
+    @Select("SELECT payment_card_instrument_id AS instrumentId, payment_card_credential_id AS credentialId, client_id AS clientId FROM t_payment_card_instrument ORDER BY create_time, payment_card_instrument_id")
+    List<Map<String, Object>> cardInstruments();
+
+    /** 本测试库全部工具 Token 与工具引用。 */
+    @Select("SELECT payment_instrument_token AS token, instrument_ref AS instrumentRef, expires_at AS expiresAt FROM t_payment_instrument_token")
+    List<Map<String, Object>> instrumentTokens();
 
     /** 仅清理本测试库的支付意图。 */
     @Delete("DELETE FROM t_payment_intent")
@@ -85,7 +117,7 @@ public interface ChannelTestMapper {
     List<Map<String, Object>> transactionRefs();
 
     /** 执行链路各表的全部文本列拼接，用于检索不得落库的值。 */
-    @Select("SELECT CONCAT_WS('|', (SELECT GROUP_CONCAT(CONCAT_WS(',', channel_response_code, channel_response_msg)) FROM t_payment_action), (SELECT GROUP_CONCAT(CONCAT_WS(',', payment_instrument_token, instrument_ref)) FROM t_payment_instrument_token), (SELECT GROUP_CONCAT(external_transaction_id) FROM t_channel_transaction_ref))")
+    @Select("SELECT CONCAT_WS('|', (SELECT GROUP_CONCAT(CONCAT_WS(',', channel_response_code, channel_response_msg)) FROM t_payment_action), (SELECT GROUP_CONCAT(CONCAT_WS(',', payment_instrument_token, instrument_ref)) FROM t_payment_instrument_token), (SELECT GROUP_CONCAT(external_transaction_id) FROM t_channel_transaction_ref), (SELECT GROUP_CONCAT(CONCAT_WS(',', card_bin, pan_last4, card_fingerprint, dek_vault_token)) FROM t_payment_card), (SELECT GROUP_CONCAT(credential_digest) FROM t_payment_card_credential))")
     String executionText();
 
     /** 更新当前绑定以模拟真实换绑后的历史执行。 */

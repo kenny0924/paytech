@@ -28,10 +28,9 @@ public class MockVaultController implements VaultHttpService {
         return vault.reveal(caller, request.token(), request.purpose());
     }
 
-    /** 本次只读查询不应发送 Protect。 */
+    /** 只有卡 DEK 托管会发送 Protect，其余调用由 Mocker 记为意外。 */
     @Override
     public ProtectResponse protect(String caller, String key, String requestId, ProtectRequest request) {
-        vault.unexpectedProtect();
-        throw new AssertionError("unexpected protect");
+        return vault.protect(caller, key, request);
     }
 }

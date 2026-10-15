@@ -18,6 +18,8 @@
 
 > **2026-09-21 Payment 账号专项例外：** 用户明确批准 CHANNEL_ACCOUNT_CONFIG_V1 托管渠道账号 JSON（含渠道 API 凭据）。具体 Owner Schema、REFERENCE Token、Caller/Purpose 与受控读取边界见[Channel 决定](./decisions/2026-09-21-channel-account-mid-capability-queries.md)及其实施合同。2026-10-13 [Platform 读取决定](./decisions/2026-10-13-platform-channel-account-reveal.md)为该类型增加 Caller `platform-support-service`（仅 `CHANNEL_EXECUTION` Reveal）。下文 Secrets Manager-only 规则仅在这个账号类型范围内被取代；卡数据、登录密码、根密钥及其他系统 Secret 的禁止边界不变。策略部署与真实环境接入状态只见当前台账。
 
+> **2026-10-15 Payment 卡数据密钥例外：** 用户明确批准数据类型 `PAYMENT_CARD_DEK` 托管 Payment 每张卡的数据加密密钥（DEK），仅 `payment-orchestration-service` 以 `CARD_STORAGE` Protect、`CARD_USE` Reveal，人工加解密关闭；Vault 仍不接收卡号、CVV 等卡原值。下文“明文 DEK 归 KMS/HSM”的规则仅在这个数据类型范围内被取代。详见[决定](./decisions/2026-10-15-vault-payment-card-dek.md)。
+
 ## 1. 文档目的
 
 本文保存 Code-MoR 集中式 Vault Service 的长期职责边界、安全控制和历史设计背景。涉及当前 API、Trust、Token、数据模型、幂等或审计时必须先读取上方当前 V1 权威，并只把本文未被取代的安全边界作为约束。后续涉及以下任务时必须先读取本文：

@@ -2,14 +2,12 @@ package com.paytech.payment.card.domain;
 
 import java.time.Instant;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 /** Card 工具处理上下文，不进入 Execution 持久化层 */
 @Getter
 @Setter
-@AllArgsConstructor
 public class CardInstrumentContext {
     /** Client ID */
     private Long clientId;
@@ -31,6 +29,21 @@ public class CardInstrumentContext {
 
     /** 工具期限上限，Card 可以缩短，不能延长 */
     private Instant expiresAt;
+
+    /** 新申请在事务外准备的卡交易工具，由 Card 在调用方事务内保存；原提交为空 */
+    private PreparedInstrument preparedInstrument;
+
+    /** 构造本次卡工具处理上下文；准备结果由 Card 填写 */
+    public CardInstrumentContext(Long clientId, Long intentId, Long sourceSubmissionId, String paymentMethodCode,
+        CardInput card, String instrumentRef, Instant expiresAt) {
+        this.clientId = clientId;
+        this.intentId = intentId;
+        this.sourceSubmissionId = sourceSubmissionId;
+        this.paymentMethodCode = paymentMethodCode;
+        this.card = card;
+        this.instrumentRef = instrumentRef;
+        this.expiresAt = expiresAt;
+    }
 
     /** 卡输入，只在本次调用中传递 */
     @Getter

@@ -1,7 +1,6 @@
 package com.paytech.payment.card.core.configuration;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Base64;
 
 import lombok.Data;
 import lombok.ToString;
@@ -14,32 +13,43 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 @ConfigurationProperties(prefix = "payment.card")
 public class PaymentCardProperties implements InitializingBean {
-    /**
-     * 启用合成卡 Mock
-     * <li>默认关闭；仅用于本地合成卡流程</li>
-     */
-    private boolean mockEnabled;
+    /** 指纹密钥解码后的最小字节数。 */
+    static final int MIN_FINGERPRINT_KEY_BYTES = 32;
 
     /**
-     * 合成卡 Mock 接受的测试卡号
-     * <li>仅在 mockEnabled 时生效；只能配置渠道公布的测试卡号，不得配置真实卡。</li>
-     * <li>默认只有 4111111111111111；本机联调可加入渠道 UAT 测试卡。</li>
-     */
-    private List<String> mockPans = new ArrayList<>(List.of("4111111111111111"));
-
-    /**
-     * 合成卡指纹的 HMAC-SHA256 密钥
-     * <li>mockEnabled 时必填，缺失则启动失败；只用于合成卡，不是真实 Card 的指纹密钥。</li>
-     * <li>同一环境保持不变，修改后同一测试卡的指纹随之变化；只配置合成测试值，不得使用真实密钥。</li>
+     * 卡指纹与卡凭证摘要的 HMAC-SHA256 密钥，Base64 编码
+     * <li>必填，解码后至少 32 字节；缺失或无效时启动失败。</li>
+     * <li>单一密钥、不可轮换：卡按指纹唯一、按卡号定位都依赖它，更换后已存的卡与凭证都无法再匹配。</li>
+     * <li>只经环境变量注入，不写入 Nacos 或版本库。</li>
      */
     @ToString.Exclude
-    private String mockFingerprintKey;
+    private String fingerprintKey;
 
-    /** 启用合成卡时必须配置指纹密钥，不以默认值掩盖缺失。 */
+    /** 启动时校验指纹密钥，不以默认值掩盖缺失。 */
     @Override
     public void afterPropertiesSet() {
-        if (mockEnabled && (mockFingerprintKey == null || mockFingerprintKey.isBlank())) {
-            throw new IllegalArgumentException("payment.card.mock-fingerprint-key 未配置");
+        fingerprintKeyBytes();
+    }
+
+    /**
+     * 解码指纹密钥
+     *
+     * @return 密钥字节，每次返回新数组
+     * @throws IllegalArgumentException 未配置、不是 Base64 或长度不足
+     */
+    public byte[] fingerprintKeyBytes() {
+        if (fingerprintKey == null || fingerprintKey.isBlank()) {
+            throw new IllegalArgumentException("payment.card.fingerprint-key 未配置");
         }
+        byte[] key;
+        try {
+            key = Base64.getDecoder().decode(fingerprintKey);
+        } catch (IllegalArgumentException invalid) {
+            throw new IllegalArgumentException("payment.card.fingerprint-key 不是有效的 Base64");
+        }
+        if (key.length < MIN_FINGERPRINT_KEY_BYTES) {
+            throw new IllegalArgumentException("payment.card.fingerprint-key 解码后不足 32 字节");
+        }
+        return key;
     }
 }

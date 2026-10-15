@@ -6,10 +6,12 @@ import java.time.Instant;
 import java.math.BigDecimal;
 
 import org.springframework.boot.test.context.TestComponent;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.payment.channel.core.dal.dataobject.*;
+import com.paytech.payment.card.integration.impl.CardSecurityCodeClientImpl;
 import com.paytech.payment.channel.core.enums.*;
 import com.paytech.payment.test.dal.ChannelTestMapper;
 
@@ -23,6 +25,7 @@ import lombok.Getter;
 public class ChannelDataMocker implements Clear {
     private final IdGenerator ids;
     private final ChannelTestMapper mapper;
+    private final StringRedisTemplate redis;
     private boolean reusable = true;
     private boolean cleanupOwned;
 
@@ -166,14 +169,23 @@ public class ChannelDataMocker implements Clear {
         }
         assertEquals("mor_payment_channel_test", mapper.databaseName());
         try {
+            clearSecurityCodes();
             assertAll(mapper::clearTransactionRefs, mapper::clearActions, mapper::clearAttempts,
-                mapper::clearInstrumentTokens, mapper::clearIntents, mapper::clearDetails, mapper::clearCapabilities,
+                mapper::clearInstrumentTokens, mapper::clearCardInstruments, mapper::clearCardCredentials,
+                mapper::clearCards, mapper::clearIntents, mapper::clearDetails, mapper::clearCapabilities,
                 mapper::clearMids, mapper::clearAccounts, mapper::clearChannels);
             assertEquals(0, mapper.countRows() + mapper.countExecutionRows());
             cleanupOwned = false;
         } catch (RuntimeException | AssertionError failure) {
             reusable = false;
             throw failure;
+        }
+    }
+
+    /** 按本库卡交易工具删除 Redis 中未领取的 CVV；先于卡表清理。 */
+    void clearSecurityCodes() {
+        for (Long paymentCardInstrumentId : mapper.cardInstrumentIds()) {
+            redis.delete(CardSecurityCodeClientImpl.key(paymentCardInstrumentId));
         }
     }
 

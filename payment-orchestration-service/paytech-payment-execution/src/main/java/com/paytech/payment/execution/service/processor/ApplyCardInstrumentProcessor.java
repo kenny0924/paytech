@@ -14,6 +14,8 @@ import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.payment.card.domain.CardInstrumentContext;
 import com.paytech.payment.card.service.CardService;
+import com.paytech.payment.card.service.processor.CheckCardInstrumentProcessor;
+import com.paytech.payment.card.service.processor.PrepareCardInstrumentProcessor;
 import com.paytech.payment.execution.core.configuration.PaymentExecutionProperties;
 import com.paytech.payment.execution.core.constant.Locks;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentInstrumentToken;
@@ -41,6 +43,8 @@ public class ApplyCardInstrumentProcessor
     private final PaymentExecutionProperties properties;
     private final TransactionTemplate transactionTemplate;
     private final CardService cardService;
+    private final PrepareCardInstrumentProcessor prepareCardInstrumentProcessor;
+    private final CheckCardInstrumentProcessor checkCardInstrumentProcessor;
     private final PaymentExecutionService paymentExecutionService;
     private final PaymentIntentRepository paymentIntentRepository;
     private final PaymentAttemptRepository paymentAttemptRepository;
@@ -81,7 +85,7 @@ public class ApplyCardInstrumentProcessor
         return intent;
     }
 
-    /** 查询原工具并核对卡身份 */
+    /** 查询原工具，并由 Card 在事务外核对卡身份 */
     ApplyCardInstrumentContext checkAndGetContext(PaymentIntent intent, ApplyCardInstrumentRequest request) {
         PaymentInstrumentToken token = paymentInstrumentTokenRepository.findTokenBySubmission(intent.getClientId(),
             intent.getPaymentIntentId(), request.getSourceSubmissionId());
@@ -92,7 +96,7 @@ public class ApplyCardInstrumentProcessor
             || !Objects.equals(token.getPaymentMethodCode(), request.getPaymentMethodCode())) {
             throw new ConcurrentRequestException("原提交不可更换支付方式或工具类型");
         }
-        cardService.checkInstrument(buildCardContext(request, token));
+        checkCardInstrumentProcessor.process(buildCardContext(request, token));
         return new ApplyCardInstrumentContext(intent, token);
     }
 
@@ -134,10 +138,14 @@ public class ApplyCardInstrumentProcessor
         }
     }
 
-    /** 同一事务调用 Card 和 Execution 的本地保存能力 */
+    /**
+     * 事务外由 Card 准备卡记录，再在同一事务调用 Card 和 Execution 的本地保存能力
+     * <li>Card 准备访问 Vault 与 Redis，必须在事务前完成；准备失败则不保存、不返回 Token。</li>
+     * <li>事务失败时 Card 准备留下的 CVV 到期删除，Vault 中的 DEK 作为无引用残留保留。</li>
+     */
     void saveContext(ApplyCardInstrumentContext context, ApplyCardInstrumentRequest request) {
         PaymentInstrumentToken token = context.getInstrumentToken();
-        CardInstrumentContext cardContext = buildCardContext(request, token);
+        CardInstrumentContext cardContext = prepareCardInstrumentProcessor.process(buildCardContext(request, token));
         transactionTemplate.executeWithoutResult(status -> {
             cardService.applyInstrument(cardContext);
             bindCardInstrument(token, cardContext);
