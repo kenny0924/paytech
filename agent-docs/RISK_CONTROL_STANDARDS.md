@@ -16,21 +16,56 @@
 
 ## 1. 风控点
 
-风控点是“在某个业务时刻做一次风险决定”。每个风控点必须定义：编码、领域、触发时机、同步/异步、输入合同、允许结果、默认结果、失败策略、超时、调用方。
+风控点是“在某个业务时刻做一次风险决定”。每个风控点必须定义：编码、领域、触发时机、同步/异步、输入合同、允许结果、默认结果、失败策略、超时、调用方与接口。
 
-| 编码 | 领域 | 触发时机 | 方式 | 失败策略 | 状态 |
-|---|---|---|---|---|---|
-| CLIENT_ONBOARDING | AML | Client 提交入驻资料 | 异步，人工审核 | 不通过 | 已确认 |
-| CHECKOUT_PREPARE | FRAUD | Commerce 支付准备 | 同步 | FAIL_CLOSED | 已确认（仅配置，运行期未实现） |
-| PAYMENT_ATTEMPT_RISK | FRAUD | Payment 每个支付尝试提交渠道前 | 同步，500 毫秒 | FAIL_CLOSED | 已确认 |
-| PAYOUT_CREATION / PAYOUT_FINAL_APPROVAL / PAYOUT_EXECUTION_CREATION / PAYOUT_EXTERNAL_SUBMISSION | CREDIT、AML | 手工出款四个节点 | 同步 | FAIL_CLOSED | 已确认（设计） |
-| CLIENT_PROFILE_CHANGE | AML、CREDIT | Client 变更收款账户、受益人、网站或主营业务 | 异步 | 变更不生效 | 候选 |
-| REFUND_REQUEST | FRAUD、AML | Client 或运营发起退款 | 同步 | 待定 | 候选 |
-| CLIENT_MONITORING | CREDIT、AML | 定时按 Client 汇总 | 批量 | 不处置，下次重试 | 候选 |
+“状态”指风控点本身；“接口状态”指下表接口路径：**已确认**＝已有确认的接口合同；**候选**＝本文给出的预期路径，由对应需求阶段 3 确认或改定后写回。是否已实现、部署只见 CURRENT_IMPLEMENTATION。
 
-同步风控点共用统一评估接口 `POST /risk-decisions/v1/evaluations`（[R7](./decisions/2026-10-14-risk-payment-fraud-phase1.md)），按风控点编码与输入合同版本区分；新增同步风控点只登记输入合同、附加输出与评估器，不新增接口。异步人工审核（入驻）与批量监控不走该接口。
+### 1.1 同步决策点
+
+同步风控点共用统一评估接口 `POST /risk-decisions/v1/evaluations`（[R7](./decisions/2026-10-14-risk-payment-fraud-phase1.md)），请求以 `pointCode + contractVersion` 选择输入合同，`businessKey` 为该点的业务身份；新增同步风控点只登记输入合同、附加输出与评估器，不新增接口。
+
+| 编码 | 领域 | 触发时机 | 调用方 | 失败策略 | 接口 | 业务身份 | 状态 | 接口状态 |
+|---|---|---|---|---|---|---|---|---|
+| CHECKOUT_PREPARE（RCO-I03） | FRAUD | Commerce 支付准备，正式订单落库前 | Commerce | FAIL_CLOSED | `POST /risk-decisions/v1/evaluations` | 预分配 `order_id` | 已确认 | 候选（R7 方向已确认；输入合同扁平化与旧候选发布迁移待其需求确定） |
+| PAYMENT_ATTEMPT_RISK（RCO-I04） | FRAUD | Payment 每个支付尝试提交渠道前；同步，500 毫秒 | Payment | FAIL_CLOSED | `POST /risk-decisions/v1/evaluations` | `payment_attempt_id` | 已确认 | 已确认 |
+| PAYOUT_CREATION（RCO-I09） | CREDIT、AML | 创建手工出款 | Finance | FAIL_CLOSED | 现为 `POST /manual-payout-eligibility/v1/evaluations`；运行期实现时迁入统一接口并废弃该专用接口 | `payout_id` | 已确认（设计） | 已确认（专用接口）；迁移后路径候选 |
+| PAYOUT_FINAL_APPROVAL（RCO-I09） | CREDIT、AML | 出款最终 Finance 审批 | Finance | FAIL_CLOSED | 同上 | `payout_id` + 版本 | 已确认（设计） | 同上 |
+| PAYOUT_EXECUTION_CREATION（RCO-I09） | CREDIT、AML | 创建出款执行 | Finance | FAIL_CLOSED | 同上 | `execution_id` | 已确认（设计） | 同上 |
+| PAYOUT_EXTERNAL_SUBMISSION（RCO-I09） | CREDIT、AML | 每次实际提交银行 | Finance | FAIL_CLOSED | 同上 | `execution_id` + 版本 | 已确认（设计） | 同上 |
+| REFUND_REQUEST | FRAUD、AML | Client 或运营发起退款，Commerce 调 Payment 退款前 | Commerce | 待定 | `POST /risk-decisions/v1/evaluations` | `refund_request_id` | 候选 | 候选 |
+
+需求目录 RCO-I02“检查业务是否允许交易”不单设风控点，建议并入 CHECKOUT_PREPARE（候选）。
+
+### 1.2 异步审核（尽调案件）
+
+以案件为中心、最终由人决定，规则结果只作建议；正式结论是不可变的资格决定（`qualification_decision`），不走统一评估接口。
+
+| 编码 / 资格类型 | 领域 | 触发时机 | 调用方 | 失败策略 | 接口 | 状态 | 接口状态 |
+|---|---|---|---|---|---|---|---|
+| CLIENT_ONBOARDING：CLIENT + INDIVIDUAL_KYC / ORGANIZATION_KYB，关联人 RELATED_PERSON_KYC（RCO-I11、RCO-I01） | AML | Client 提交入驻资料 | CCT、运营后台 | 不通过 | 提交 `POST /client-onboarding-review/v1/submissions`；补充分类 `POST /client-onboarding-review/v1/cases/{caseId}/classifications`；结果 `GET /client-onboarding-review/v1/applications/{applicationId}/result`；材料要求 `GET /internal/due-diligence/material-requirements`；运营审核 `/client-onboarding-admin/v1/cases…`（列表、详情、证据审核、退回、通过、拒绝） | 已确认 | 已确认 |
+| OPERATING_ENTITY + ENTITY_UNDERWRITING（RCO-I11） | AML、CREDIT | Operating Entity 提交申请 | CCT | 不通过 | `POST /due-diligence/v1/cases`（`sourceNamespace=CCT_OPERATING_ENTITY_APPLICATION`）；结果 `GET /due-diligence/v1/applications/{applicationId}/result` | 已确认（设计） | 候选 |
+| LOCAL_PARTNER + PARTNER_DUE_DILIGENCE（RCO-I11） | AML | Local Partner 提交申请 | CCT | 不通过 | 同上（`sourceNamespace=CCT_LOCAL_PARTNER_APPLICATION`） | 已确认（设计） | 候选 |
+| CLIENT_PROFILE_CHANGE | AML、CREDIT | Client 变更收款账户、受益人、网站或主营业务 | CCT | 变更不生效 | `POST /due-diligence/v1/cases`（来源为资料变更）；结果同上 | 候选 | 候选 |
+| CONTINUOUS_REVIEW（周期复审） | AML | 资格按复审频率到期 | Risk 定时任务 | 资格到期按规则处理 | 无对外接口：定时任务创建复审案件，结果以资格事件发布 | 已确认（设计） | 候选 |
+
+Client 入驻现用专用路径 `/client-onboarding-review/v1`；是否收拢到通用尽调入口 `/due-diligence/v1`，在 Operating Entity 或 Local Partner 尽调立项时决定。
+
+### 1.3 事件驱动与批量
+
+| 编码 | 领域 | 触发 | 失败策略 | 接口 | 状态 | 接口状态 |
+|---|---|---|---|---|---|---|
+| DISPUTE_LIABILITY（拒付责任判定） | CREDIT | Payment 发布的拒付开启、结果事件 | 规则建议或人工判定，二者择一 | 消费 MQ `DisputeOpened`、拒付结果事件；补交证据 `POST /disputes/v1/cases/{caseId}/evidence`（RCO-I07）；查询 `GET /disputes/v1/cases/{caseId}`（RCO-I08） | 已确认（设计）；编码候选 | 候选 |
+| CLIENT_MONITORING | CREDIT、AML | 定时按 Client 汇总 | 不处置，下次重试 | Risk 定时任务；结果以风险等级变化事件发布；运营查询 `GET /client-risk-monitoring/v1/clients/{clientId}` | 候选 | 候选 |
 
 授权结果、退款成功、拒付等**不是风控点**，不做决定，只作为风险事件（第 3 节）喂给特征与监控。
+
+### 1.4 共用接口
+
+| 用途 | 接口 | 接口状态 |
+|---|---|---|
+| 查询风险决定（RCO-I06） | `GET /risk-decisions/v1/evaluations/{evaluationId}` | 候选 |
+| 查询评估解释（RCO-I10） | `GET /risk-decisions/v1/evaluations/{evaluationId}/explanation` | 候选 |
+| 规则、流程、变量、发布、名单、字典配置（RCO-I12） | `/decision-rule-sets/v1`、`/decision-flows/v1`、`/decision-variables/v1`、`/decision-releases/v1`、`/risk-lists/v1`、`/decision-dictionaries/v1`，按 `pointCode` 区分风控点 | 已确认 |
 
 ## 2. 风险主体
 
