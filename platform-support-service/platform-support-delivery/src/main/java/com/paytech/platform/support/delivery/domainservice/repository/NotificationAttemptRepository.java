@@ -1,7 +1,9 @@
 package com.paytech.platform.support.delivery.domainservice.repository;
 
-import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationAttempt;
 import java.time.Instant;
+import java.util.List;
+
+import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationAttempt;
 import com.paytech.platform.support.delivery.core.enums.*;
 
 /** NotificationAttempt 单表仓储。 */
@@ -9,6 +11,9 @@ public interface NotificationAttemptRepository {
 
     /** 读取本表的准确身份，缺失返回空。 */
     NotificationAttempt find(long id);
+
+    /** 按投递、尝试身份升序读取一组投递的全部尝试；空集合直接返回空列表。 */
+    List<NotificationAttempt> findDeliveries(List<Long> deliveryIds);
 
     /** 插入新事实；唯一约束冲突使整个受理事务回滚。 */
     void insert(NotificationAttempt item);

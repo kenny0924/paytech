@@ -33,6 +33,9 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_VAULT_MANUAL_PROTECT: lazy(() => import('../pages/VaultManualProtect').then(m => ({ default: m.VaultManualProtect }))),
   OPERATIONS_VAULT_MANUAL_REVEAL: lazy(() => import('../pages/VaultManualReveal').then(m => ({ default: m.VaultManualReveal }))),
   OPERATIONS_VAULT_MANUAL_EVENTS: lazy(() => import('../pages/VaultManualEvents').then(m => ({ default: m.VaultManualEvents }))),
+  OPERATIONS_NOTIFICATION_TEMPLATES: lazy(() => import('../pages/NotificationTemplates').then(m => ({ default: m.NotificationTemplates }))),
+  OPERATIONS_NOTIFICATION_PROVIDERS: lazy(() => import('../pages/NotificationProviders').then(m => ({ default: m.NotificationProviders }))),
+  OPERATIONS_NOTIFICATION_RECORDS: lazy(() => import('../pages/NotificationRecords').then(m => ({ default: m.NotificationRecords }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];

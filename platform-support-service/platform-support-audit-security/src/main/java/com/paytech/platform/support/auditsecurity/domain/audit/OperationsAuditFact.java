@@ -117,7 +117,22 @@ public sealed interface OperationsAuditFact permits OperationsAuditFact.Outcome,
         SOURCE_DIGEST,
 
         /** 公共脚本执行阶段。 */
-        EXECUTION_STAGE
+        EXECUTION_STAGE,
+
+        /** 通知语言内容的语言。 */
+        LOCALE,
+
+        /** 通知标题模板的 SHA-256 摘要。 */
+        SUBJECT_DIGEST,
+
+        /** 通知正文模板的 SHA-256 摘要。 */
+        BODY_DIGEST,
+
+        /** 通知路由主账号编码。 */
+        PRIMARY_PROVIDER,
+
+        /** 通知路由备用账号编码。 */
+        FALLBACK_PROVIDER
     }
 
     /** 集合使用规范化指纹，防止完整子集合突破既有审计属性容量。 */

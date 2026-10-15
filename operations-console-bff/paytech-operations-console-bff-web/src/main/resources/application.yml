@@ -92,3 +92,5 @@ web:
       - /client-onboarding-admin
       # 人工加/解密请求与响应含原值或 Token，只记元数据。
       - /vault-admin
+      # 通知模板正文与预览示例参数可能含业务文案或样例值，只记元数据。
+      - /notification-admin

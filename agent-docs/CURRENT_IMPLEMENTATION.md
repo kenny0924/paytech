@@ -158,6 +158,16 @@
 - **其他检查：** `npm --prefix requirements-site test` **129/137** 通过，8 项失败涉及 Checkout 展示、Payment 退款合同、十路由、15 表模型/台账/隐私导航以及测试/写接口规范文字断言；这些失败指向本次未修改的合同或已有模型台账内容，未调整其断言。日志 `/tmp/commerce-get-order-by-client-id-site-tests.log`。
 - **边界：** 仅新增测试并更新 Commerce README、本台账。手工启动已有且停止的 `mor-local-mysql-1` 和 `mor-local-redis-1`，测试只准备/清理自有数据；现有本地 Redis 密码经环境变量注入，不输出或写入仓库。未修改生产代码、API、Foundation、表结构、DDL、POM 或配置；未运行 manual、真实 Owner 联调、提交、推送或部署。运行入口见 [Commerce README](../commerce-service/README.md#验证入口)。
 
+<a id="operations-notification-admin-20261015"></a>
+
+## Operations 通知管理（2026-10-15，本机全链路已验收，已本地提交）
+
+- **确认范围：** 见[需求](../requirements/20261015/operations-console-通知管理/requirement.md)、[现状分析](../requirements/20261015/operations-console-通知管理/analysis.md)与[方案](../requirements/20261015/operations-console-通知管理/technique.md)；Pencil 10 个画板在 `operations-console-web/docs/design.pen`（「通知管理 ·」前缀）。
+- **Implemented：** Platform `NotificationManagementApi`（`/notification-admin/v1`，12 个接口）、Web 管理 Processor（鉴权、锁、事务、`ConfigurationChanged` 审计）、Delivery `NotificationManagementService` / `NotificationRecordQueryService`；7 个通知仓储不再依赖 `notification.enabled`；审计字段新增 `LOCALE`、`SUBJECT_DIGEST`、`BODY_DIGEST`、`PRIMARY_PROVIDER`、`FALLBACK_PROVIDER`。BFF `NotificationManagementController` 简单转发；Web 新增通知模板、发送账号、发送记录 3 个页面。
+- **Verified：** Platform `./mvnw -o clean verify` **617/617**（全服务 90% 聚合门禁仍为既有失败 0.54/0.37）；Delivery 模块指令 96.78%、分支 90.83%（改动前 96.39%/90.49%）。BFF `clean verify` **1331/1331** 通过。Web `npm test` 1019/1019、`npm run build` 通过。
+- **本机全链路（阶段 5）：** `mor_platform_e2e` 已执行索引 DDL、注册 DML（160 行，ID `900000000000086xxx`～`89xxx`）与 [本机启用 SQL](../requirements/20261015/operations-console-通知管理/db/platform-support-service/activation-local.sql)；本机 `run-service.sh` 的 Platform 改为 `--notification.enabled=true`（删除 SMTP 参数）。经运营入口接口验收 22/22、浏览器验收 16/16，验收数据已清理。
+- **未完成 / 前提：** mor-test 与其他环境未执行 DDL / DML；本机未配置 SES，未真实发信；`design.pen` 未保存未提交；未推送、未部署。
+
 <a id="platform-authentication-email-20261015"></a>
 
 ## Platform Client 认证邮件接入 Delivery（2026-10-15，已提交，未推送）

@@ -52,6 +52,12 @@ public class PlatformClientConfiguration {
         return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.apicredentialmanagement.ApiCredentialManagementApi.class);
     }
 
+    /** 通知管理合同复用当前发现和 Problem 解码。 */
+    @Bean
+    com.paytech.platform.support.api.notificationmanagement.NotificationManagementApi notificationManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
+        return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.notificationmanagement.NotificationManagementApi.class);
+    }
+
     /** 管理合同复用当前发现和 Problem 解码。 */
     @Bean
     com.paytech.platform.support.api.apiscopemanagement.ApiScopeManagementApi apiScopeManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {

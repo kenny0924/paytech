@@ -1,0 +1,286 @@
+[
+  {
+    "id": "N01",
+    "method": "GET",
+    "path": "/notification-admin/v1/templates",
+    "query": "?page=1&size=10&keyword=REFUND&status=ACTIVE",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "templateCode": "PAYMENT_REFUND_SUCCEEDED_EMAIL",
+          "medium": "EMAIL",
+          "status": "ACTIVE",
+          "locales": [
+            "en-US",
+            "zh-CN"
+          ],
+          "transientTemplate": false,
+          "routeStatus": "ACTIVE",
+          "version": 3,
+          "updateTime": "2026-10-15T08:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-notification-n01"
+  },
+  {
+    "id": "N02",
+    "method": "GET",
+    "path": "/notification-admin/v1/templates/CLIENT_PASSWORD_RESET",
+    "query": "",
+    "request": null,
+    "response": {
+      "templateCode": "CLIENT_PASSWORD_RESET",
+      "medium": "EMAIL",
+      "status": "ACTIVE",
+      "transientTemplate": true,
+      "requiredParameters": [
+        "link"
+      ],
+      "version": 1,
+      "updateTime": "2026-10-15T08:00:00Z",
+      "contents": [
+        {
+          "locale": "zh-CN",
+          "subjectTemplate": "重置密码",
+          "bodyTemplate": "请打开 ${link}",
+          "version": 1,
+          "updateTime": "2026-10-15T08:00:00Z"
+        }
+      ],
+      "route": {
+        "primaryProviderCode": "SES_PRIMARY",
+        "fallbackProviderCode": null,
+        "status": "ACTIVE",
+        "version": 1,
+        "updateTime": "2026-10-15T08:00:00Z"
+      }
+    },
+    "routeCode": "operations-notification-n02"
+  },
+  {
+    "id": "N03",
+    "method": "POST",
+    "path": "/notification-admin/v1/templates",
+    "query": "",
+    "request": {
+      "templateCode": "ORDER_PAID_EMAIL",
+      "reason": "新增付款通知"
+    },
+    "response": {
+      "code": "ORDER_PAID_EMAIL",
+      "version": 1
+    },
+    "routeCode": "operations-notification-n03"
+  },
+  {
+    "id": "N04",
+    "method": "PATCH",
+    "path": "/notification-admin/v1/templates/ORDER_PAID_EMAIL/status",
+    "query": "",
+    "request": {
+      "status": "ACTIVE",
+      "expectedVersion": 1,
+      "reason": "上线"
+    },
+    "response": {
+      "code": "ORDER_PAID_EMAIL",
+      "version": 2
+    },
+    "routeCode": "operations-notification-n04"
+  },
+  {
+    "id": "N05",
+    "method": "PUT",
+    "path": "/notification-admin/v1/templates/ORDER_PAID_EMAIL/contents/zh-CN",
+    "query": "",
+    "request": {
+      "subjectTemplate": "付款成功",
+      "bodyTemplate": "订单 ${orderNo} 已付款。",
+      "expectedVersion": 0,
+      "reason": "新增中文"
+    },
+    "response": {
+      "code": "zh-CN",
+      "version": 1
+    },
+    "routeCode": "operations-notification-n05"
+  },
+  {
+    "id": "N06",
+    "method": "POST",
+    "path": "/notification-admin/v1/template-preview",
+    "query": "",
+    "request": {
+      "subjectTemplate": "退款 ${refundNo}",
+      "bodyTemplate": "金额 ${amount}",
+      "parameters": {
+        "refundNo": "R-1"
+      }
+    },
+    "response": {
+      "subject": "退款 R-1",
+      "body": "金额 ${amount}",
+      "missingParameters": [
+        "amount"
+      ]
+    },
+    "routeCode": "operations-notification-n06"
+  },
+  {
+    "id": "N07",
+    "method": "PUT",
+    "path": "/notification-admin/v1/templates/ORDER_PAID_EMAIL/route",
+    "query": "",
+    "request": {
+      "primaryProviderCode": "SES_PRIMARY",
+      "fallbackProviderCode": null,
+      "expectedVersion": 0,
+      "reason": "配置路由"
+    },
+    "response": {
+      "code": "ORDER_PAID_EMAIL",
+      "version": 1
+    },
+    "routeCode": "operations-notification-n07"
+  },
+  {
+    "id": "N08",
+    "method": "PATCH",
+    "path": "/notification-admin/v1/templates/ORDER_PAID_EMAIL/route/status",
+    "query": "",
+    "request": {
+      "status": "DISABLED",
+      "expectedVersion": 1,
+      "reason": "暂停"
+    },
+    "response": {
+      "code": "ORDER_PAID_EMAIL",
+      "version": 2
+    },
+    "routeCode": "operations-notification-n08"
+  },
+  {
+    "id": "N09",
+    "method": "GET",
+    "path": "/notification-admin/v1/providers",
+    "query": "?page=1&size=10",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "providerCode": "SES_PRIMARY",
+          "medium": "EMAIL",
+          "status": "ACTIVE",
+          "adapterConfigured": true,
+          "version": 1,
+          "updateTime": "2026-10-15T08:00:00Z",
+          "references": [
+            {
+              "templateCode": "CLIENT_PASSWORD_RESET",
+              "role": "PRIMARY",
+              "routeStatus": "ACTIVE"
+            }
+          ]
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-notification-n09"
+  },
+  {
+    "id": "N10",
+    "method": "PATCH",
+    "path": "/notification-admin/v1/providers/SES_PRIMARY/status",
+    "query": "",
+    "request": {
+      "status": "DISABLED",
+      "expectedVersion": 1,
+      "reason": "切换账号"
+    },
+    "response": {
+      "code": "SES_PRIMARY",
+      "version": 2
+    },
+    "routeCode": "operations-notification-n10"
+  },
+  {
+    "id": "N11",
+    "method": "GET",
+    "path": "/notification-admin/v1/requests",
+    "query": "?page=1&size=20&createdFrom=2026-10-08T00:00:00Z&createdTo=2026-10-15T00:00:00Z&sourceSystem=payment-orchestration-service&sourceEventKey=refund:R-1&templateCode=PAYMENT_REFUND_SUCCEEDED_EMAIL&deliveryStatus=FAILED",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "requestId": "880000000000000001",
+          "sourceSystem": "payment-orchestration-service",
+          "sourceEventKey": "refund:R-1",
+          "templateCode": "PAYMENT_REFUND_SUCCEEDED_EMAIL",
+          "tenantId": null,
+          "defaultLocale": "zh-CN",
+          "deliveryCount": 1,
+          "statusCounts": {
+            "FAILED": 1
+          },
+          "createTime": "2026-10-15T08:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 20,
+      "total": 1
+    },
+    "routeCode": "operations-notification-n11"
+  },
+  {
+    "id": "N12",
+    "method": "GET",
+    "path": "/notification-admin/v1/requests/880000000000000001",
+    "query": "",
+    "request": null,
+    "response": {
+      "requestId": "880000000000000001",
+      "sourceSystem": "payment-orchestration-service",
+      "sourceEventKey": "refund:R-1",
+      "templateCode": "PAYMENT_REFUND_SUCCEEDED_EMAIL",
+      "tenantId": null,
+      "defaultLocale": "zh-CN",
+      "parameterKeys": [
+        "refundNo"
+      ],
+      "routeId": "880000000000000009",
+      "createTime": "2026-10-15T08:00:00Z",
+      "deliveries": [
+        {
+          "deliveryId": "880000000000000002",
+          "locale": null,
+          "parameterKeys": [],
+          "status": "FAILED",
+          "attemptCount": 1,
+          "nextRetryTime": null,
+          "updateTime": "2026-10-15T08:00:00Z",
+          "attempts": [
+            {
+              "attemptId": "880000000000000003",
+              "providerCode": "SES_PRIMARY",
+              "status": "FAILED",
+              "responseCode": "REJECTED",
+              "resolutionSource": "SEND_RESPONSE",
+              "resolutionCode": null,
+              "startedTime": "2026-10-15T08:00:00Z",
+              "finishedTime": "2026-10-15T08:00:00Z",
+              "resolvedTime": "2026-10-15T08:00:00Z"
+            }
+          ]
+        }
+      ]
+    },
+    "routeCode": "operations-notification-n12"
+  }
+]

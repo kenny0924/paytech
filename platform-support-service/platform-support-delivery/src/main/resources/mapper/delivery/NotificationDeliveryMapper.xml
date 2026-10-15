@@ -18,6 +18,12 @@
         status, attempt_count, next_retry_time, version, create_time, update_time FROM t_notification_delivery WHERE
         delivery_id = #{id}
     </select>
+    <select id="findRequests" resultMap="record">SELECT delivery_id, request_id, address_vault_token, locale,
+        parameters, status, attempt_count, next_retry_time, version, create_time, update_time
+        FROM t_notification_delivery WHERE request_id IN
+        <foreach collection="requestIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY request_id, delivery_id
+    </select>
     <insert id="insert">INSERT INTO t_notification_delivery (delivery_id, request_id, address_vault_token, locale,
         parameters, status, attempt_count, next_retry_time, version, create_time, update_time) VALUES (#{deliveryId},
         #{requestId}, #{addressVaultToken}, #{locale}, #{parameters}, #{status}, #{attemptCount}, #{nextRetryTime},

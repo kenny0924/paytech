@@ -11,6 +11,32 @@
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
-    <select id="find" resultMap="record">SELECT route_id, notification_template_id, primary_provider_id, fallback_provider_id, status, version, create_time, update_time FROM t_notification_route WHERE route_id = #{id}</select>
-    <select id="findTemplate" resultMap="record">SELECT route_id, notification_template_id, primary_provider_id, fallback_provider_id, status, version, create_time, update_time FROM t_notification_route WHERE notification_template_id = #{templateId}</select>
+    <sql id="columns">route_id, notification_template_id, primary_provider_id, fallback_provider_id, status, version, create_time, update_time</sql>
+    <select id="find" resultMap="record">SELECT <include refid="columns"/> FROM t_notification_route WHERE route_id = #{id}</select>
+    <select id="findTemplate" resultMap="record">SELECT <include refid="columns"/> FROM t_notification_route WHERE notification_template_id = #{templateId}</select>
+    <select id="findTemplates" resultMap="record">
+        SELECT <include refid="columns"/> FROM t_notification_route WHERE notification_template_id IN
+        <foreach collection="templateIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+    <select id="findProviders" resultMap="record">
+        SELECT <include refid="columns"/> FROM t_notification_route WHERE primary_provider_id IN
+        <foreach collection="providerIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        OR fallback_provider_id IN
+        <foreach collection="providerIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY route_id
+    </select>
+    <insert id="insert">
+        INSERT INTO t_notification_route (route_id, notification_template_id, primary_provider_id,
+        fallback_provider_id, status, version, create_time, update_time) VALUES (#{routeId},
+        #{notificationTemplateId}, #{primaryProviderId}, #{fallbackProviderId}, #{status}, #{version}, #{createTime},
+        #{updateTime})
+    </insert>
+    <update id="changeProviders">
+        UPDATE t_notification_route SET primary_provider_id = #{primary}, fallback_provider_id = #{fallback},
+        version = version + 1, update_time = #{now} WHERE route_id = #{item.routeId} AND version = #{item.version}
+    </update>
+    <update id="changeStatus">
+        UPDATE t_notification_route SET status = #{status}, version = version + 1, update_time = #{now}
+        WHERE route_id = #{item.routeId} AND version = #{item.version} AND status = #{item.status}
+    </update>
 </mapper>

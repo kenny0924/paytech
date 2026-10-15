@@ -11,6 +11,22 @@
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
-    <select id="find" resultMap="record">SELECT content_id, template_id, locale, subject_template, body_template, version, create_time, update_time FROM t_notification_template_content WHERE content_id = #{id}</select>
-    <select id="findLocale" resultMap="record">SELECT content_id, template_id, locale, subject_template, body_template, version, create_time, update_time FROM t_notification_template_content WHERE template_id = #{templateId} AND locale = #{locale}</select>
+    <sql id="columns">content_id, template_id, locale, subject_template, body_template, version, create_time, update_time</sql>
+    <select id="find" resultMap="record">SELECT <include refid="columns"/> FROM t_notification_template_content WHERE content_id = #{id}</select>
+    <select id="findLocale" resultMap="record">SELECT <include refid="columns"/> FROM t_notification_template_content WHERE template_id = #{templateId} AND locale = #{locale}</select>
+    <select id="findTemplates" resultMap="record">
+        SELECT <include refid="columns"/> FROM t_notification_template_content WHERE template_id IN
+        <foreach collection="templateIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY template_id, locale
+    </select>
+    <select id="countTemplate" resultType="long">SELECT COUNT(*) FROM t_notification_template_content WHERE template_id = #{templateId}</select>
+    <insert id="insert">
+        INSERT INTO t_notification_template_content (content_id, template_id, locale, subject_template, body_template,
+        version, create_time, update_time) VALUES (#{contentId}, #{templateId}, #{locale}, #{subjectTemplate},
+        #{bodyTemplate}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_notification_template_content SET subject_template = #{subject}, body_template = #{body},
+        version = version + 1, update_time = #{now} WHERE content_id = #{item.contentId} AND version = #{item.version}
+    </update>
 </mapper>

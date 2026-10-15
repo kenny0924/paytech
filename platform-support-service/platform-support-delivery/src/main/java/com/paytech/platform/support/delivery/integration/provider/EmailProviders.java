@@ -25,4 +25,9 @@ public class EmailProviders {
         }
         return matches.getFirst();
     }
+
+    /** 是否恰有一个适配器绑定该账号，供运营页面展示，不抛出不可用。 */
+    public boolean isConfigured(String providerCode) {
+        return providers.stream().filter(p -> providerCode.equals(p.providerCode())).count() == 1;
+    }
 }

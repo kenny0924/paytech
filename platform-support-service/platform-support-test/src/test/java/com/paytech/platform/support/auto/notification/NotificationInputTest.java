@@ -3,6 +3,7 @@ package com.paytech.platform.support.auto.notification;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -26,6 +27,10 @@ import com.paytech.platform.support.delivery.domain.NotificationInput;
  * @see NotificationInput#parameters(Map)
  * @see NotificationInput#merge(String, String)
  * @see NotificationInput#render(String, String, Map)
+ * @see NotificationInput#contentIssues(String, String, java.util.List)
+ * @see NotificationInput#preview(String, String, Map)
+ * @see NotificationInput#placeholders(String)
+ * @see NotificationInput#parameterKeys(String)
  */
 class NotificationInputTest {
 
@@ -121,5 +126,44 @@ class NotificationInputTest {
             Arguments.of("x".repeat(256), "Body", none), Arguments.of("${name}", "Body", Map.of("name", "A\nB")),
             Arguments.of("Subject", "${name}", Map.of("name", "x".repeat(65536))),
             Arguments.of("Subject", "x".repeat(65536), none), Arguments.of("${a.b} ${name}", "Body", Map.of("name", "A")));
+    }
+
+    /** 运营保存内容时按字段给出问题：标题与正文各自独立检查，必需占位符缺失单独提示。 */
+    @ParameterizedTest
+    @MethodSource("contentIssues")
+    void test_contentIssues(String subject, String body, List<String> fields) {
+        var issues = NotificationInput.contentIssues(subject, body, List.of("link"));
+        assertEquals(fields, issues.stream().map(i -> i.getField()).toList());
+        issues.forEach(i -> assertFalse(i.getMessage().isBlank()));
+    }
+
+    /** 每组只破坏一处，或同时破坏标题与正文。 */
+    static Stream<Arguments> contentIssues() {
+        return Stream.of(Arguments.of("重置 ${name}", "打开 ${link}", List.of()),
+            Arguments.of(null, "打开 ${link}", List.of("subjectTemplate")),
+            Arguments.of(" ", "打开 ${link}", List.of("subjectTemplate")),
+            Arguments.of("a\rb", "打开 ${link}", List.of("subjectTemplate")),
+            Arguments.of("字".repeat(400), "打开 ${link}", List.of("subjectTemplate")),
+            Arguments.of("重置 ${", "打开 ${link}", List.of("subjectTemplate")),
+            Arguments.of("重置", null, List.of("bodyTemplate")),
+            Arguments.of("重置", " ", List.of("bodyTemplate")),
+            Arguments.of("重置", "x".repeat(60001), List.of("bodyTemplate")),
+            Arguments.of("重置", "${link} ${", List.of("bodyTemplate")),
+            Arguments.of("重置", "请联系客服", List.of("bodyTemplate")),
+            Arguments.of("", "", List.of("subjectTemplate", "bodyTemplate")));
+    }
+
+    /** 预览替换已提供参数，缺失的原样保留并去重列出；参数值中的占位符不再解释。 */
+    @Test
+    void test_previewKeepsMissingPlaceholders() {
+        var preview = NotificationInput.preview("退款 ${refundNo}", "${refundNo} 金额 ${amount}，${amount}",
+            Map.of("refundNo", "${amount}"));
+        assertEquals("退款 ${amount}", preview.getSubject());
+        assertEquals("${amount} 金额 ${amount}，${amount}", preview.getBody());
+        assertEquals(List.of("amount"), preview.getMissingParameters());
+        assertEquals(List.of("a", "b"), NotificationInput.placeholders("${a}${b}${a}"));
+        assertThrows(BizCheckFailException.class, () -> NotificationInput.placeholders("${a} ${"));
+        assertEquals(List.of(), NotificationInput.parameterKeys(null));
+        assertEquals(List.of("amount", "name"), NotificationInput.parameterKeys("{\"name\":\"A\",\"amount\":\"1\"}"));
     }
 }

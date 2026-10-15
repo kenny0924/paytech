@@ -53,7 +53,9 @@ public final class OperationsCatalog {
         new Permission(900000000000061102L, "TENANT_ACCESS_MANAGE", "ACCESS_TENANT", "MANAGE", "HIGH", false),
         new Permission(900000000000061103L, "TENANT_MEMBER_READ", "TENANT_MEMBER", "READ", "LOW", false),
         new Permission(900000000000071101L, "EXTERNAL_API_READ", "EXTERNAL_API", "READ", "LOW", false),
-        new Permission(900000000000071102L, "EXTERNAL_API_MANAGE", "EXTERNAL_API", "MANAGE", "HIGH", false));
+        new Permission(900000000000071102L, "EXTERNAL_API_MANAGE", "EXTERNAL_API", "MANAGE", "HIGH", false),
+        new Permission(900000000000086101L, "NOTIFICATION_READ", "NOTIFICATION", "READ", "LOW", false),
+        new Permission(900000000000086102L, "NOTIFICATION_MANAGE", "NOTIFICATION", "MANAGE", "HIGH", false));
 
     private OperationsCatalog() {
     }

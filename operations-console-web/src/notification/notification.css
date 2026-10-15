@@ -1,0 +1,26 @@
+.notification-page .notification-search { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 16px; align-items: end; }
+.notification-page .notification-search .configuration-actions { margin-bottom: 24px; }
+.notification-page .notification-search .notification-time { grid-column: span 2; }
+.notification-page .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.notification-page .clickable-row { cursor: pointer; }
+.notification-note { background: #f8fafc; border-radius: 6px; padding: 10px 16px; color: rgba(0, 0, 0, 0.55); font-size: 12px; margin: 12px 0; }
+.notification-hint { margin-bottom: 16px; }
+.notification-card { border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px 18px; margin-bottom: 16px; background: #fff; }
+.notification-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.notification-card-head h2 { font-size: 15px; margin: 0; }
+.notification-split { display: flex; gap: 20px; align-items: flex-start; }
+.notification-form { flex: 1; min-width: 0; }
+.notification-preview { width: 420px; flex: none; background: #f8fafc; border-radius: 6px; padding: 16px; }
+.notification-preview h3 { font-size: 14px; margin: 0 0 12px; }
+.notification-sample { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.notification-mail { background: #fff; border: 1px solid #e5e7eb; border-radius: 5px; padding: 12px; margin: 8px 0; }
+.notification-mail pre { white-space: pre-wrap; word-break: break-word; font-family: inherit; margin: 8px 0 0; }
+.notification-missing { color: #b45309; }
+.notification-slots { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 16px; }
+.notification-refs { display: flex; flex-direction: column; gap: 2px; }
+.notification-impact { margin: 6px 0; padding-left: 18px; }
+.notification-subtitle { font-size: 14px; margin: 16px 0 8px; }
+.notification-delivery { border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px 14px; margin-bottom: 12px; }
+.notification-delivery-head { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; }
+.notification-attempt { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #f8fafc; border-radius: 5px; padding: 6px 10px; margin-top: 8px; font-size: 12px; }
+@media (max-width: 960px) { .notification-split { flex-direction: column; } .notification-preview { width: 100%; } }

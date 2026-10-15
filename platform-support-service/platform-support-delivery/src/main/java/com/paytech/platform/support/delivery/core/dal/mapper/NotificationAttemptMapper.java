@@ -1,15 +1,21 @@
 package com.paytech.platform.support.delivery.core.dal.mapper;
 
-import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationAttempt;
 import java.time.Instant;
-import com.paytech.platform.support.delivery.core.enums.*;
+import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
+
+import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationAttempt;
+import com.paytech.platform.support.delivery.core.enums.*;
 
 /** 通知单表 SQL 绑定。 */
 public interface NotificationAttemptMapper {
 
     /** 读取本表的准确身份，缺失返回空。 */
     NotificationAttempt find(@Param("id") long id);
+
+    /** 按投递、尝试身份升序读取一组投递的全部尝试。 */
+    List<NotificationAttempt> findDeliveries(@Param("deliveryIds") List<Long> deliveryIds);
 
     /** 插入新事实；唯一约束冲突使整个受理事务回滚。 */
     int insert(NotificationAttempt item);

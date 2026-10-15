@@ -1,0 +1,55 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {
+  attentionStatus, decodeMutation, decodeProvider, decodeRequestDetail, decodeTemplateDetail, decodeTemplateSummary,
+  missingRequired, notificationCommand, placeholders, recordFilters,
+} from './notification.ts';
+
+const time = '2026-10-15T08:00:00Z';
+
+test('占位符按出现顺序去重，忽略格式不合法的写法', () => {
+  assert.deepEqual(placeholders('退款 ${refundNo}', '${name} ${refundNo} ${1bad} ${amount}'), ['refundNo', 'name', 'amount']);
+  assert.deepEqual(missingRequired('请打开 ${lnk}', ['link']), ['link']);
+  assert.deepEqual(missingRequired('请打开 ${link}', ['link']), []);
+});
+
+test('列表状态取最需要关注的投递状态', () => {
+  assert.equal(attentionStatus({ SENT: 1, RETRY_WAIT: 1 }), 'RETRY_WAIT');
+  assert.equal(attentionStatus({ DELIVERED: 2, FAILED: 1 }), 'FAILED');
+  assert.equal(attentionStatus({}), null);
+});
+
+test('发送记录筛选默认最近 7 天，转 UTC，拒绝超过 31 天或倒置的范围', () => {
+  const now = new Date('2026-10-15T10:00:00');
+  const filters = recordFilters({ sourceSystem: ' payment ', deliveryStatus: 'FAILED', templateCode: '' }, now);
+  assert.equal(filters.sourceSystem, 'payment'); assert.equal(filters.deliveryStatus, 'FAILED'); assert.equal(filters.templateCode, undefined);
+  assert.equal(new Date(filters.createdTo).getTime() - new Date(filters.createdFrom).getTime(), 7 * 86_400_000);
+  assert.throws(() => recordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-08-01T00:00:00', end: '2026-10-01T00:00:00' } }, now), /31 天/);
+  assert.throws(() => recordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-02T00:00:00', end: '2026-10-01T00:00:00' } }, now), /晚于/);
+  assert.throws(() => recordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-02T00:00:00' } }, now), /完整/);
+});
+
+test('同一目标与正文重试复用 Idempotency-Key，改草稿换新 Key', () => {
+  const first = notificationCommand('/t', 'PUT', { a: 1 });
+  assert.equal(notificationCommand('/t', 'PUT', { a: 1 }, first).key, first.key);
+  assert.notEqual(notificationCommand('/t', 'PUT', { a: 2 }, first).key, first.key);
+});
+
+test('解码器拒绝缺字段、编码不一致或非法状态', () => {
+  const summary = { templateCode: 'NOTIFICATION_TEST', medium: 'EMAIL', status: 'ACTIVE', locales: ['zh-CN'], transientTemplate: false,
+    routeStatus: null, version: 1, updateTime: time };
+  assert.equal(decodeTemplateSummary(summary).templateCode, 'NOTIFICATION_TEST');
+  assert.throws(() => decodeTemplateSummary({ ...summary, status: 'PAUSED' }));
+  const detail = { ...summary, requiredParameters: ['link'], contents: [{ locale: 'zh-CN', subjectTemplate: 's', bodyTemplate: '${link}', version: 1, updateTime: time }],
+    route: { primaryProviderCode: 'SES', fallbackProviderCode: null, status: 'ACTIVE', version: 1, updateTime: time } };
+  assert.equal(decodeTemplateDetail(detail, 'NOTIFICATION_TEST').route?.primaryProviderCode, 'SES');
+  assert.throws(() => decodeTemplateDetail(detail, 'OTHER'));
+  assert.throws(() => decodeMutation({ code: 'A', version: 0 }, 'A'));
+  assert.throws(() => decodeMutation({ code: 'B', version: 2 }, 'A'));
+  assert.equal(decodeMutation({ code: 'zh-CN', version: 2 }).version, 2);
+  assert.throws(() => decodeProvider({ providerCode: 'SES', medium: 'EMAIL', status: 'ACTIVE', adapterConfigured: 'yes', version: 1, updateTime: time, references: [] }));
+  const record = { requestId: '1', parameterKeys: [], deliveries: [{ deliveryId: '2', locale: null, parameterKeys: [], status: 'SENT', attemptCount: 1,
+    nextRetryTime: null, updateTime: time, attempts: [{ attemptId: '3', status: 'ACCEPTED', startedTime: time }] }] };
+  assert.equal(decodeRequestDetail(record, '1').deliveries.length, 1);
+  assert.throws(() => decodeRequestDetail(record, '9'));
+});

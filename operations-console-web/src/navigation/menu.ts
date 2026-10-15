@@ -51,6 +51,8 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
       return [menu.frontendRoute, `${menu.frontendRoute}/:tenantId`, `${menu.frontendRoute}/:tenantId/members/:memberId`];
     case 'OPERATIONS_CLIENT_ONBOARDING_REVIEW':
       return [menu.frontendRoute, `${menu.frontendRoute}/:caseId`];
+    case 'OPERATIONS_NOTIFICATION_TEMPLATES':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:templateCode`];
     case 'OPERATIONS_EXTERNAL_STANDARD_APIS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:standardApiCode`];
     case 'OPERATIONS_EXTERNAL_INTEGRATIONS':

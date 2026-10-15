@@ -1,19 +1,22 @@
 package com.paytech.platform.support.delivery.domainservice.repository.impl;
 
-import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationAttempt;
 import java.time.Instant;
-import com.paytech.platform.support.delivery.core.enums.*;
-import com.paytech.platform.support.delivery.core.dal.mapper.NotificationAttemptMapper;
-import com.paytech.platform.support.delivery.domainservice.repository.NotificationAttemptRepository;
-import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.foundation.common.error.ConcurrentRequestException;
+import java.util.List;
+
 import org.springframework.stereotype.Repository;
+
+import com.paytech.foundation.common.error.ConcurrentRequestException;
+import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationAttempt;
+import com.paytech.platform.support.delivery.core.dal.mapper.NotificationAttemptMapper;
+import com.paytech.platform.support.delivery.core.enums.*;
+import com.paytech.platform.support.delivery.domainservice.repository.NotificationAttemptRepository;
+
 import lombok.RequiredArgsConstructor;
 
-/** 单表访问及写入行数保护，不自行创建事务。 */
+/** 单表访问及写入行数保护，不自行创建事务；只读写本库，不依赖 notification.enabled。 */
 @Repository
 @RequiredArgsConstructor
-@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "notification.enabled", havingValue = "true")
 public class NotificationAttemptRepositoryImpl implements NotificationAttemptRepository {
 
     private final NotificationAttemptMapper mapper;
@@ -22,6 +25,15 @@ public class NotificationAttemptRepositoryImpl implements NotificationAttemptRep
     @Override
     public NotificationAttempt find(long id) {
         return mapper.find(id);
+    }
+
+    /** 按投递、尝试身份升序读取一组投递的全部尝试；空集合直接返回空列表。 */
+    @Override
+    public List<NotificationAttempt> findDeliveries(List<Long> deliveryIds) {
+        if (deliveryIds.isEmpty()) {
+            return List.of();
+        }
+        return mapper.findDeliveries(deliveryIds);
     }
 
     /** 插入新事实；唯一约束冲突使整个受理事务回滚。 */

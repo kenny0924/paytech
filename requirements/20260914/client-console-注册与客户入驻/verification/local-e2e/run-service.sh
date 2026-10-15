@@ -23,6 +23,7 @@ NACOS=(--spring.cloud.nacos.discovery.server-addr=127.0.0.1:8848 --spring.cloud.
 # 密码经环境变量传入 Spring，避免出现在进程参数中。
 export SPRING_CLOUD_NACOS_DISCOVERY_PASSWORD="$E2E_NACOS_PASSWORD"
 # Platform 使用独立库 mor_platform_e2e：mor_platform 留给 auto 测试（测试要求其独占表为空）。
+# 2026-10-15 起认证邮件经 Delivery 发送（SMTP 已移除），开启 Client 认证须同时开启 notification.enabled；本机未配置 SES，认证邮件发送失败只计指标。
 MYSQL="jdbc:mysql://127.0.0.1:13306"
 
 launch() {
@@ -55,10 +56,8 @@ case "${1:-}" in
         --spring.profiles.active=local "${NACOS[@]}" \
         --operations.authentication.enabled=true --operations.authentication.worker-id=1 \
         --client.authentication.enabled=true --client.authentication.worker-id=2 \
-        --client.authentication.issuer="$CLIENT_ISSUER" --client.authentication.mail-from=no-reply@mor.local.test \
-        --client.authentication.public-origin="$CLIENT_ORIGIN" \
-        --spring.mail.host=127.0.0.1 --spring.mail.port=11025 \
-        '--spring.mail.properties[mail.smtp.starttls.enable]=false' '--spring.mail.properties[mail.smtp.starttls.required]=false' \
+        --client.authentication.issuer="$CLIENT_ISSUER" --client.authentication.public-origin="$CLIENT_ORIGIN" \
+        --notification.enabled=true \
         --compensation.instance-id=platform-local-e2e --tenant.projection.enabled=true \
         --files.onboarding.enabled=true --files.onboarding.storage-provider=MINIO \
         --files.onboarding.storage-container-ref=mor-platform-files --files.onboarding.scan-policy-code=CLIENT_ONBOARDING_FORMAT \

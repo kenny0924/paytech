@@ -60,7 +60,8 @@ class OperationsHttpBodyNamingAutoTest {
         com.paytech.operations.console.bff.ext.rest.IntegrationApiManagementController.class,
         com.paytech.operations.console.bff.ext.rest.IntegrationScriptManagementController.class,
         com.paytech.operations.console.bff.ext.rest.IntegrationImplementationManagementController.class,
-        com.paytech.operations.console.bff.ext.rest.ExternalApiEditorController.class})
+        com.paytech.operations.console.bff.ext.rest.ExternalApiEditorController.class,
+        com.paytech.operations.console.bff.ext.rest.NotificationManagementController.class})
     void test_httpBodyTypesUseExplicitRequestAndResponseSuffixes(Class<?> contract) {
         if (contract.isInterface()) {
             assertEquals(0, contract.getDeclaredClasses().length,

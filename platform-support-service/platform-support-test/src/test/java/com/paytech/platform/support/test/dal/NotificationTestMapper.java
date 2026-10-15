@@ -25,7 +25,9 @@ public interface NotificationTestMapper {
                     OR template_code IN ('NOTIFICATION_TEST','CLIENT_EMAIL_VERIFICATION','CLIENT_PASSWORD_RESET'))
              + (SELECT COUNT(*) FROM t_notification_template_content WHERE content_id IN (890002,890003,890013,890014)
                     OR template_id IN (890001,890011,890012))
-             + (SELECT COUNT(*) FROM t_notification_provider WHERE provider_id IN (890004,890006,890007) OR provider_code IN ('NOTIFICATION_TEST_EMAIL','NOTIFICATION_TEST_FALLBACK','NOTIFICATION_TEST_SES'))
+             + (SELECT COUNT(*) FROM t_notification_template WHERE template_code LIKE 'NOTIFICATION!_ADMIN!_%' ESCAPE '!')
+             + (SELECT COUNT(*) FROM t_notification_provider WHERE provider_id IN (890004,890006,890007,890008)
+                    OR provider_code IN ('NOTIFICATION_TEST_EMAIL','NOTIFICATION_TEST_FALLBACK','NOTIFICATION_TEST_SES','NOTIFICATION_ADMIN_UNBOUND'))
              + (SELECT COUNT(*) FROM t_notification_route WHERE route_id IN (890005,890015,890016)
                     OR notification_template_id IN (890001,890011,890012))
         """)
@@ -201,18 +203,82 @@ public interface NotificationTestMapper {
     void clearRequests();
 
     /** 清理本例路由。 */
-    @Delete("DELETE FROM t_notification_route WHERE route_id IN (890005,890015,890016)")
+    @Delete("DELETE FROM t_notification_route WHERE route_id IN (890005,890015,890016) OR notification_template_id IN (890001,890011,890012)")
     void clearRoute();
 
     /** 清理本例账号。 */
-    @Delete("DELETE FROM t_notification_provider WHERE provider_id IN (890004,890006,890007)")
+    @Delete("DELETE FROM t_notification_provider WHERE provider_id IN (890004,890006,890007,890008)")
     void clearProvider();
 
     /** 清理本例语言内容。 */
-    @Delete("DELETE FROM t_notification_template_content WHERE content_id IN (890002,890003,890013,890014)")
+    @Delete("DELETE FROM t_notification_template_content WHERE content_id IN (890002,890003,890013,890014) OR template_id IN (890001,890011,890012)")
     void clearContents();
 
     /** 清理本例模板。 */
     @Delete("DELETE FROM t_notification_template WHERE template_id IN (890001,890011,890012)")
     void clearTemplate();
+
+    /** 没有发送适配器的停用账号，供"本环境已配置"为否的展示。 */
+    @Insert("INSERT INTO t_notification_provider VALUES(890008,'NOTIFICATION_ADMIN_UNBOUND','EMAIL','DISABLED',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")
+    void unboundProvider();
+
+    /** 一条普通通知发送记录：默认参数含 name、amount，两个收件人；邮箱只有合成 Token。 */
+    @Insert("""
+        INSERT INTO t_notification_request VALUES
+        (890021,NULL,'notification-test-admin','refund:R-0001',890001,'zh-CN','{"name":"Alice","amount":"10.00"}',890005,#{created},#{created})
+        """)
+    void recordRequest(@Param("created") java.time.Instant created);
+
+    /** 第一个收件人已发送；第二个收件人覆盖语言与参数、等待重试。 */
+    @Insert("""
+        INSERT INTO t_notification_delivery VALUES
+        (890022,890021,'vlt_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',NULL,NULL,'SENT',1,NULL,2,#{created},#{created}),
+        (890023,890021,'vlt_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb','en-US','{"name":"Bob"}','RETRY_WAIT',2,#{created},3,#{created},#{created})
+        """)
+    void recordDeliveries(@Param("created") java.time.Instant created);
+
+    /** 三次尝试：一次受理，两次被拒（第二次走备用账号）。 */
+    @Insert("""
+        INSERT INTO t_notification_attempt VALUES
+        (890024,890022,890004,'admin-test-req-1','admin-test-msg-1','ACCEPTED','ACCEPTED','SEND_RESPONSE',NULL,#{created},#{created},#{created},#{created},#{created}),
+        (890025,890023,890004,'admin-test-req-2',NULL,'FAILED','THROTTLED','SEND_RESPONSE',NULL,#{created},#{created},#{created},#{created},#{created}),
+        (890026,890023,890006,'admin-test-req-3',NULL,'FAILED','THROTTLED','SEND_RESPONSE',NULL,#{created},#{created},#{created},#{created},#{created})
+        """)
+    void recordAttempts(@Param("created") java.time.Instant created);
+
+    /** 当前模板状态与版本。 */
+    @Select("SELECT status, version FROM t_notification_template WHERE template_code=#{code}")
+    Map<String, Object> templateState(@Param("code") String code);
+
+    /** 当前语言内容。 */
+    @Select("""
+        SELECT c.subject_template, c.body_template, c.version FROM t_notification_template_content c
+        JOIN t_notification_template t ON t.template_id=c.template_id WHERE t.template_code=#{code} AND c.locale=#{locale}
+        """)
+    Map<String, Object> contentState(@Param("code") String code, @Param("locale") String locale);
+
+    /** 当前路由，账号以编码表示。 */
+    @Select("""
+        SELECT p.provider_code AS primary_code, f.provider_code AS fallback_code, r.status, r.version
+        FROM t_notification_route r JOIN t_notification_template t ON t.template_id=r.notification_template_id
+        JOIN t_notification_provider p ON p.provider_id=r.primary_provider_id
+        LEFT JOIN t_notification_provider f ON f.provider_id=r.fallback_provider_id WHERE t.template_code=#{code}
+        """)
+    Map<String, Object> routeState(@Param("code") String code);
+
+    /** 当前账号状态与版本。 */
+    @Select("SELECT status, version FROM t_notification_provider WHERE provider_code=#{code}")
+    Map<String, Object> providerState(@Param("code") String code);
+
+    /** 清理管理接口新建模板的语言内容。 */
+    @Delete("DELETE c FROM t_notification_template_content c JOIN t_notification_template t ON t.template_id=c.template_id WHERE t.template_code LIKE 'NOTIFICATION!_ADMIN!_%' ESCAPE '!'")
+    void clearAdminContents();
+
+    /** 清理管理接口新建模板的路由。 */
+    @Delete("DELETE r FROM t_notification_route r JOIN t_notification_template t ON t.template_id=r.notification_template_id WHERE t.template_code LIKE 'NOTIFICATION!_ADMIN!_%' ESCAPE '!'")
+    void clearAdminRoutes();
+
+    /** 清理管理接口新建的模板。 */
+    @Delete("DELETE FROM t_notification_template WHERE template_code LIKE 'NOTIFICATION!_ADMIN!_%' ESCAPE '!'")
+    void clearAdminTemplates();
 }

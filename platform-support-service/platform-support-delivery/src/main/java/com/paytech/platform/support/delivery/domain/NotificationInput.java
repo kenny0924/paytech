@@ -2,7 +2,10 @@ package com.paytech.platform.support.delivery.domain;
 
 import java.nio.charset.StandardCharsets;
 import java.util.IllformedLocaleException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -20,6 +23,15 @@ public final class NotificationInput {
     private static final Pattern SLOT = Pattern.compile("\\$\\{([A-Za-z][A-Za-z0-9_]{0,63})}");
     private static final Pattern RESERVED = Pattern.compile(
         ".*(?:password|secret|token|otp|verificationcode|resetlink|verificationlink).*", Pattern.CASE_INSENSITIVE);
+
+    /** 即时发送模板正文必须包含的链接参数名。 */
+    public static final String TRANSIENT_LINK_PARAMETER = "link";
+
+    /** 运营维护的标题模板上限（UTF-8 字节）；渲染后仍按发送规则限制 255 字符。 */
+    static final int SUBJECT_TEMPLATE_MAX_BYTES = 1024;
+
+    /** 运营维护的正文模板上限（UTF-8 字节），使保存请求不超过 Gateway 64 KiB 请求体上限。 */
+    static final int BODY_TEMPLATE_MAX_BYTES = 60000;
 
     /** 工具无实例。 */
     private NotificationInput() {}
@@ -80,6 +92,15 @@ public final class NotificationInput {
         return Map.copyOf(values);
     }
 
+    /** 已持久化参数 JSON 的名称，升序；空值返回空列表，不暴露参数值。 */
+    public static List<String> parameterKeys(String parameters) {
+        if (parameters == null) {
+            return List.of();
+        }
+        return JSON.readValue(parameters, new TypeReference<Map<String, String>>() {}).keySet().stream().sorted()
+            .toList();
+    }
+
     /** 同名覆盖为一层 Map 覆盖；输入没有对象、数组或 null 值。 */
     public static Map<String, String> merge(String defaults, String overrides) {
         Map<String, String> merged = new LinkedHashMap<>();
@@ -127,5 +148,117 @@ public final class NotificationInput {
         if (tail.contains("${"))
             throw new BizCheckFailException("模板占位符格式不合法");
         return result.append(tail).toString();
+    }
+
+    /**
+     * 按出现顺序列出模板中的占位符名称（去重）
+     * <li>占位符外出现残缺的 ${ 时拒绝，与发送时的渲染规则一致</li>
+     */
+    public static List<String> placeholders(String template) {
+        var matcher = SLOT.matcher(template);
+        var names = new LinkedHashSet<String>();
+        int position = 0;
+        while (matcher.find()) {
+            if (template.substring(position, matcher.start()).contains("${")) {
+                throw new BizCheckFailException("模板占位符格式不合法");
+            }
+            names.add(matcher.group(1));
+            position = matcher.end();
+        }
+        if (template.substring(position).contains("${")) {
+            throw new BizCheckFailException("模板占位符格式不合法");
+        }
+        return List.copyOf(names);
+    }
+
+    /**
+     * 运营保存语言内容前的检查，规则与发送时相同
+     *
+     * @param requiredParameters 正文必须包含的占位符，普通模板为空
+     * @return 字段问题；为空表示可保存
+     */
+    public static List<NotificationTemplateIssue> contentIssues(String subject, String body,
+        List<String> requiredParameters) {
+        var issues = new ArrayList<NotificationTemplateIssue>();
+        String subjectIssue = subjectIssue(subject);
+        if (subjectIssue != null) {
+            issues.add(new NotificationTemplateIssue("subjectTemplate", subjectIssue));
+        }
+        String bodyIssue = bodyIssue(body, requiredParameters);
+        if (bodyIssue != null) {
+            issues.add(new NotificationTemplateIssue("bodyTemplate", bodyIssue));
+        }
+        return issues;
+    }
+
+    /** 标题非空、不换行、不超过字节上限且占位符合法；无问题返回空。 */
+    static String subjectIssue(String subject) {
+        if (subject == null || subject.isBlank()) {
+            return "标题模板不能为空";
+        }
+        if (subject.indexOf('\r') >= 0 || subject.indexOf('\n') >= 0) {
+            return "标题模板不能换行";
+        }
+        if (subject.getBytes(StandardCharsets.UTF_8).length > SUBJECT_TEMPLATE_MAX_BYTES) {
+            return "标题模板不能超过 " + SUBJECT_TEMPLATE_MAX_BYTES + " 字节";
+        }
+        return placeholderIssue(subject);
+    }
+
+    /** 正文非空、不超过字节上限、占位符合法且包含必需参数；无问题返回空。 */
+    static String bodyIssue(String body, List<String> requiredParameters) {
+        if (body == null || body.isBlank()) {
+            return "正文模板不能为空";
+        }
+        if (body.getBytes(StandardCharsets.UTF_8).length > BODY_TEMPLATE_MAX_BYTES) {
+            return "正文模板不能超过 " + BODY_TEMPLATE_MAX_BYTES + " 字节";
+        }
+        String issue = placeholderIssue(body);
+        if (issue != null) {
+            return issue;
+        }
+        var present = placeholders(body);
+        var missing = requiredParameters.stream().filter(name -> !present.contains(name)).toList();
+        if (!missing.isEmpty()) {
+            return "认证邮件模板正文必须包含 ${" + String.join("}、${", missing) + "}";
+        }
+        return null;
+    }
+
+    /** 占位符格式问题的说明；合法返回空。 */
+    static String placeholderIssue(String template) {
+        try {
+            placeholders(template);
+            return null;
+        } catch (BizCheckFailException invalid) {
+            return "占位符格式不合法，只能使用 ${名称}，名称以字母开头、由字母数字下划线组成";
+        }
+    }
+
+    /**
+     * 预览渲染：只替换已提供的参数，缺少的占位符原样保留并列出
+     * <li>不校验长度与换行，保存时另行检查；不调用 Vault 或供应商</li>
+     */
+    public static NotificationPreview preview(String subject, String body, Map<String, String> parameters) {
+        var missing = new LinkedHashSet<String>();
+        String title = lenientSubstitute(subject, parameters, missing);
+        String content = lenientSubstitute(body, parameters, missing);
+        return new NotificationPreview(title, content, List.copyOf(missing));
+    }
+
+    /** 替换已提供的参数，缺失名称写入 missing；参数值中的占位符不重新解释。 */
+    static String lenientSubstitute(String template, Map<String, String> parameters, LinkedHashSet<String> missing) {
+        var matcher = SLOT.matcher(template);
+        StringBuilder result = new StringBuilder();
+        while (matcher.find()) {
+            String value = parameters.get(matcher.group(1));
+            if (value == null) {
+                missing.add(matcher.group(1));
+            }
+            matcher.appendReplacement(result, java.util.regex.Matcher.quoteReplacement(
+                value == null ? matcher.group() : value));
+        }
+        matcher.appendTail(result);
+        return result.toString();
     }
 }

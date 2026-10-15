@@ -17,7 +17,7 @@
 | listNotificationDeliveries | 不冻结 | 暂不提供 |
 | getDelivery | 不冻结 | 暂不提供 |
 | 取消、人工重试、主动刷新等操作 | 不冻结 | 后续单独讨论 |
-| 模板、语言内容、Provider、路由管理 | 不在本文定义 | Operations 管理能力单独规划 |
+| 模板、语言内容、Provider、路由管理 | 不在本文定义 | 2026-10-15 由 [Operations 通知管理](../../20261015/operations-console-通知管理/technique.md) 提供 `/notification-admin/v1` 管理接口与发送记录只读查询（Platform 管理入口，不属于本文的模块接口） |
 
 不因记录 getNotification 草案而恢复其他查询。提交响应不增加曾建议的 deliveryIds；也不为已暂缓的列表接口加入 address_masked。
 

@@ -22,7 +22,7 @@ export function SidebarMenu({ tree, pathname, collapsed, onNavigate }: {
   const [openKeys, setOpenKeys] = useState<string[]>([]);
   const [popupKeys, setPopupKeys] = useState<string[]>([]);
   const pages = menuPages(tree);
-  const selected = pages.find(page => page.frontendRoute === pathname || page.componentKey === 'OPERATIONS_TENANT_ACCESS' && pathname.startsWith(`${page.frontendRoute}/`));
+  const selected = pages.find(page => page.frontendRoute === pathname || ['OPERATIONS_TENANT_ACCESS', 'OPERATIONS_NOTIFICATION_TEMPLATES'].includes(page.componentKey ?? '') && pathname.startsWith(`${page.frontendRoute}/`));
   useEffect(() => {
     setOpenKeys(previous => [...new Set([...previous, ...menuAncestors(tree, pathname)])]);
   }, [tree, pathname]);

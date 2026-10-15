@@ -1,6 +1,7 @@
 package com.paytech.platform.support.delivery.domainservice.repository.impl;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
@@ -13,11 +14,9 @@ import com.paytech.platform.support.delivery.domainservice.repository.Notificati
 
 import lombok.RequiredArgsConstructor;
 
-/** 单表访问及写入行数保护，不自行创建事务。 */
+/** 单表访问及写入行数保护，不自行创建事务；只读写本库，不依赖 notification.enabled。 */
 @Repository
 @RequiredArgsConstructor
-@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "notification.enabled",
-    havingValue = "true")
 public class NotificationDeliveryRepositoryImpl implements NotificationDeliveryRepository {
 
     private final NotificationDeliveryMapper mapper;
@@ -26,6 +25,15 @@ public class NotificationDeliveryRepositoryImpl implements NotificationDeliveryR
     @Override
     public NotificationDelivery find(long id) {
         return mapper.find(id);
+    }
+
+    /** 按投递身份升序读取一组请求的全部投递；空集合直接返回空列表。 */
+    @Override
+    public List<NotificationDelivery> findRequests(List<Long> requestIds) {
+        if (requestIds.isEmpty()) {
+            return List.of();
+        }
+        return mapper.findRequests(requestIds);
     }
 
     /** 插入新事实；唯一约束冲突使整个受理事务回滚。 */

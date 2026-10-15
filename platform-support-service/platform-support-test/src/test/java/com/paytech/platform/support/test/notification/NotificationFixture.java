@@ -69,6 +69,31 @@ public class NotificationFixture implements Clear {
         used = true;
     }
 
+    /**
+     * 通知管理用例：普通模板（中英文）、三个有适配器的账号、一个无适配器账号，以及两个认证模板及其路由
+     * <li>管理接口新建的模板编码以 NOTIFICATION_ADMIN_ 开头，统一清理</li>
+     */
+    public void prepareManagement() {
+        assertEmptyEnvironment();
+        new TransactionTemplate(transactionManager).executeWithoutResult(tx -> {
+            mapper.template();
+            mapper.contents("通知 ${name}", "${notice}：${name}", "Hello ${name}", "${notice}: ${name}");
+            mapper.provider(); mapper.route(); mapper.fallbackProvider(); mapper.unboundProvider();
+            mapper.sesProvider();
+            mapper.authenticationTemplates();
+            mapper.authenticationContents(VERIFICATION_SUBJECT, VERIFICATION_BODY, RESET_SUBJECT, RESET_BODY);
+            mapper.authenticationRoutes();
+        });
+        used = true;
+    }
+
+    /** 插入一条普通通知发送记录（请求、两个投递、三次尝试），不经过发送链路。 */
+    public void prepareRecord(java.time.Instant created) {
+        new TransactionTemplate(transactionManager).executeWithoutResult(tx -> {
+            mapper.recordRequest(created); mapper.recordDeliveries(created); mapper.recordAttempts(created);
+        });
+    }
+
     /** 等待实际 Dispatcher 的写回结束，再允许断言或清理。 */
     public void awaitIdle() {
         if (!used) return;
@@ -87,6 +112,7 @@ public class NotificationFixture implements Clear {
         awaitIdle();
         try {
             mapper.clearEvents(); mapper.clearAttempts(); mapper.clearDeliveries(); mapper.clearRequests();
+            mapper.clearAdminContents(); mapper.clearAdminRoutes(); mapper.clearAdminTemplates();
             mapper.clearRoute(); mapper.clearProvider(); mapper.clearContents(); mapper.clearTemplate();
             used = false;
         } catch (RuntimeException failure) { reusable = false; throw failure; }

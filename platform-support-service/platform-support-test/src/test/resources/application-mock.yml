@@ -175,6 +175,7 @@ web:
       - /api-credentials
       - /tenant-projections
       - /external-api-admin
+      - /notification-admin
 
 # 人工认证、管理接口与租户投影在 Mock 中全部启用；本地密钥为仓库隔离的合成测试值。
 operations:
@@ -274,6 +275,10 @@ notification:
   retry-delay: 30s
   # 不支持查询的 Provider 结果未知后的安全重发窗口；测试通过前移尝试开始时间越过窗口，不改时钟。
   unknown-resend-delay: 10m
+  # Operations 通知管理写入的资源锁（模板、语言内容、路由按模板编码，账号按账号编码）；不依赖 notification.enabled。
+  management:
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
   # 认证即时发送模板，与 NotificationTestMapper.authenticationTemplates 一致。
   transient-template-codes:
     - CLIENT_EMAIL_VERIFICATION

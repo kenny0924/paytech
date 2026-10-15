@@ -136,7 +136,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "Risk 浏览器入口必须是唯一具体 Controller");
         assertEquals(List.of("/auth", "/authorization", "/iam", "/audit", "/gateway-admin", "/console-admin", "/permission-admin", "/api-credential-admin", "/api-scope-admin",
                 "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/external-api-admin",
-                "/client-onboarding-admin", "/vault-admin"),
+                "/client-onboarding-admin", "/vault-admin", "/notification-admin"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
         Set<String> routes = applicationContext.getBean(
@@ -307,7 +307,14 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "PUT /vault-admin/v1/access-rules/{accessRuleId}", "GET /vault-admin/v1/policy-changes",
             "GET /vault-admin/v1/policy-changes/{policyVersionNo}", "POST /vault-admin/v1/manual/protect",
             "POST /vault-admin/v1/manual/secret-protect", "POST /vault-admin/v1/manual/reveal",
-            "POST /vault-admin/v1/manual/secret-reveal", "GET /vault-admin/v1/manual-events"), routes);
+            "POST /vault-admin/v1/manual/secret-reveal", "GET /vault-admin/v1/manual-events",
+            "GET /notification-admin/v1/templates", "GET /notification-admin/v1/templates/{templateCode}",
+            "POST /notification-admin/v1/templates", "PATCH /notification-admin/v1/templates/{templateCode}/status",
+            "PUT /notification-admin/v1/templates/{templateCode}/contents/{locale}",
+            "POST /notification-admin/v1/template-preview", "PUT /notification-admin/v1/templates/{templateCode}/route",
+            "PATCH /notification-admin/v1/templates/{templateCode}/route/status",
+            "GET /notification-admin/v1/providers", "PATCH /notification-admin/v1/providers/{providerCode}/status",
+            "GET /notification-admin/v1/requests", "GET /notification-admin/v1/requests/{requestId}"), routes);
 
         Path classes = webModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

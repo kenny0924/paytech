@@ -343,6 +343,34 @@ export const pageCapabilities = [
     "displayName": "人工操作记录",
     "frontendRoute": "/vault/manual-events",
     "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_NOTIFICATION_TEMPLATES",
+    "displayName": "通知模板",
+    "frontendRoute": "/notification-templates",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_NOTIFICATION_TEMPLATE_MANAGE",
+        "displayName": "维护模板"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_NOTIFICATION_PROVIDERS",
+    "displayName": "发送账号",
+    "frontendRoute": "/notification-providers",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_NOTIFICATION_PROVIDER_MANAGE",
+        "displayName": "启停账号"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_NOTIFICATION_RECORDS",
+    "displayName": "发送记录",
+    "frontendRoute": "/notification-records",
+    "actions": []
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

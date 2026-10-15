@@ -10,5 +10,19 @@
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
-    <select id="find" resultMap="record">SELECT provider_id, provider_code, medium, status, version, create_time, update_time FROM t_notification_provider WHERE provider_id = #{id}</select>
+    <sql id="columns">provider_id, provider_code, medium, status, version, create_time, update_time</sql>
+    <select id="find" resultMap="record">SELECT <include refid="columns"/> FROM t_notification_provider WHERE provider_id = #{id}</select>
+    <select id="findCode" resultMap="record">SELECT <include refid="columns"/> FROM t_notification_provider WHERE provider_code = #{code}</select>
+    <select id="findIds" resultMap="record">
+        SELECT <include refid="columns"/> FROM t_notification_provider WHERE provider_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+    <select id="page" resultMap="record">
+        SELECT <include refid="columns"/> FROM t_notification_provider ORDER BY provider_code LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long">SELECT COUNT(*) FROM t_notification_provider</select>
+    <update id="changeStatus">
+        UPDATE t_notification_provider SET status = #{status}, version = version + 1, update_time = #{now}
+        WHERE provider_id = #{item.providerId} AND version = #{item.version} AND status = #{item.status}
+    </update>
 </mapper>

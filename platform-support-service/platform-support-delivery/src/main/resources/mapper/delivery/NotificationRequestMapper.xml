@@ -26,4 +26,18 @@
         notification_template_id, default_locale, default_parameters, notification_route_id, create_time, update_time
         FROM t_notification_request WHERE source_system = #{sourceSystem} AND source_event_key = #{sourceEventKey}
     </select>
+    <sql id="filter">
+        WHERE r.create_time &gt;= #{filter.createdFrom} AND r.create_time &lt; #{filter.createdTo}
+        <if test="filter.sourceSystem != null">AND r.source_system = #{filter.sourceSystem}</if>
+        <if test="filter.sourceEventKey != null">AND r.source_event_key = #{filter.sourceEventKey}</if>
+        <if test="filter.templateId != null">AND r.notification_template_id = #{filter.templateId}</if>
+        <if test="filter.deliveryStatus != null">AND EXISTS (SELECT 1 FROM t_notification_delivery d
+            WHERE d.request_id = r.request_id AND d.status = #{filter.deliveryStatus})</if>
+    </sql>
+    <select id="page" resultMap="record">SELECT r.request_id, r.tenant_id, r.source_system, r.source_event_key,
+        r.notification_template_id, r.default_locale, r.default_parameters, r.notification_route_id, r.create_time,
+        r.update_time FROM t_notification_request r <include refid="filter"/>
+        ORDER BY r.create_time DESC, r.request_id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long">SELECT COUNT(*) FROM t_notification_request r <include refid="filter"/></select>
 </mapper>

@@ -9,6 +9,7 @@ import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.platform.support.accesscontrol.domain.authentication.ClientEmailChallengePolicy.LinkMaterial;
 import com.paytech.platform.support.accesscontrol.domain.enums.ClientChallengePurpose;
 import com.paytech.platform.support.accesscontrol.integration.mail.AuthenticationEmailSender;
+import com.paytech.platform.support.delivery.domain.NotificationInput;
 import com.paytech.platform.support.delivery.integration.provider.EmailProviderResult.Outcome;
 import com.paytech.platform.support.delivery.service.processor.SendTransientEmailProcessor;
 import com.paytech.platform.support.delivery.service.processor.request.SendTransientEmailRequest;
@@ -62,7 +63,7 @@ public final class DeliveryAuthenticationEmailSender implements AuthenticationEm
         request.setTemplateCode(signUp ? VERIFICATION_TEMPLATE : PASSWORD_RESET_TEMPLATE);
         request.setEmail(canonicalEmail);
         request.setLocale(LOCALE);
-        request.setParameters(Map.of("link", publicOrigin + (signUp ? "/verify-email" : "/reset-password")
+        request.setParameters(Map.of(NotificationInput.TRANSIENT_LINK_PARAMETER, publicOrigin + (signUp ? "/verify-email" : "/reset-password")
             + "#challengeNo=" + link.challengeNo() + "&secret=" + link.secret()));
         String failure;
         try {

@@ -895,11 +895,13 @@ The approved API and incremental SQL are in [Client API delivery](../requirement
 首个真实账号适配器为 Amazon SES（`notification.ses.*`，默认关闭）：SES 不支持按请求号查询，普通通知按“至少发一次”处理——受理即 `SENT` 完成，结果未知时等待 `notification.unknown-resend-delay`（默认 10m）后在发送次数内重发。
 单独启用通知需设置 `PLATFORM_SUPPORT_COMPENSATION_ENABLED=true`（默认跟随入驻文件开关），生产周期扫描另配 XXL-Job；SES 侧需已验证发件域名、解除沙箱并授予 `ses:SendEmail`。
 SES 使用 IAM 用户密钥：密钥对保存在 Vault（`NOTIFICATION_PROVIDER_CREDENTIAL_V1`），部署只配置其 Token `NOTIFICATION_SES_CREDENTIAL_TOKEN`，每次发送前以 `NOTIFICATION_DELIVERY` 读取、不缓存；换密钥即换 Token 并重启。
+Operations 通知管理（`/notification-admin/v1`，`NotificationManagementApi`，12 个接口）维护模板、语言内容、路由与账号启停，并只读查询普通通知发送记录；随 `operations.authentication.enabled` 启用，不依赖 `notification.enabled`（Delivery 仓储不再按发送开关装配）。读需要 `NOTIFICATION_READ`、写需要 `NOTIFICATION_MANAGE`；写入带 `expectedVersion` 与原因，同一事务内重检权限、写入并记 `ConfigurationChanged` 审计（正文只记 SHA-256 摘要）；内容按发送规则校验，问题以 422 定位到 `subjectTemplate`/`bodyTemplate`；资源锁 `notification.management.*`（模板、内容、路由按模板编码，账号按账号编码）。发送记录不返回邮箱、Vault Token、参数值与供应商流水号；按时间查询依赖 `idx_notify_request_create_time`（`docs/database/sql/changes/2026-10-15-notification-request-create-time-index.sql`，未执行）；菜单、权限与 Gateway 路由注册见初始化 DML 末尾独立块（未执行）。
 认证邮件走模块入口 `SendTransientEmailProcessor`：只接受 `notification.transient-template-codes` 中的模板，渲染后经主账号发送一次，不写通知表、不登记补偿任务；这些模板不能经普通通知或 HTTP 白名单使用（白名单含即时模板时启动失败）。认证邮件模板、SES 账号 `SES_PRIMARY` 与路由见 `docs/database/sql/platform-support-initial-data.sql` 末尾独立块（未执行），部署需设 `NOTIFICATION_SES_PROVIDER_CODE=SES_PRIMARY`。
 
 [需求和配置合同](../requirements/20260920/platform-support-Delivery领域规划/technique.md)、
 [SES 接入方案](../requirements/20261014/platform-support-邮件AmazonSES接入/technique.md)、
 [认证邮件接入方案](../requirements/20261015/platform-support-认证邮件接入Delivery/technique.md)、
+[Operations 通知管理方案](../requirements/20261015/operations-console-通知管理/technique.md)、
 [建表脚本](../requirements/20260920/platform-support-Delivery领域规划/db/notification-create.sql)、
 [测试说明](platform-support-test/README.md#notification-普通-email)及
 [实际状态](../agent-docs/CURRENT_IMPLEMENTATION.md#platform-delivery-domain-plan-20260920)分别维护对应事实。

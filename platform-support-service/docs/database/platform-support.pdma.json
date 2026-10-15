@@ -16856,6 +16856,20 @@
             }
           ],
           "id": "F1A927D8-6824-5552-BB6D-5826C4FD7632"
+        },
+        {
+          "defKey": "idx_notify_request_create_time",
+          "defName": "访问索引 create_time",
+          "unique": false,
+          "comment": "支持访问路径：create_time（运营按时间查询发送记录）",
+          "fields": [
+            {
+              "fieldDefKey": "7CCA0CDB-B1C5-595F-AD72-F59DB732A690",
+              "ascOrDesc": "A",
+              "id": "4309CE7D-172D-460F-804B-B0B452791851"
+            }
+          ],
+          "id": "9DC80E1E-3152-4C8A-A181-45A4A5C11D70"
         }
       ],
       "type": "P"

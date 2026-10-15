@@ -114,6 +114,7 @@ web:
       - /api-credentials
       - /tenant-projections
       - /external-api-admin
+      - /notification-admin
 
 
 client:
@@ -153,6 +154,10 @@ notification:
   retry-delay: 30s
   # 仅不支持查询的 Provider（如 SES）：结果未知后至少等待该时长才重发，至少 1m。
   unknown-resend-delay: 10m
+  # Operations 通知管理写入的资源锁（模板、语言内容、路由按模板编码，账号按账号编码）；不依赖 notification.enabled。
+  management:
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
   # 只能即时发送的模板（认证链接，不落库、不重试）；普通通知与 HTTP 白名单不能使用。
   transient-template-codes:
     - CLIENT_EMAIL_VERIFICATION
