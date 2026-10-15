@@ -43,7 +43,7 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 浏览器经真实 BFF 与 HttpExchange 转发通知管理的 12 个端点；Platform 由 Simulator 承担会话授权与响应。
+ * 浏览器经真实 BFF 与 HttpExchange 转发通知管理的 16 个端点；Platform 由 Simulator 承担会话授权与响应。
  *
  * @see NotificationManagementController
  */

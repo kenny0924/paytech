@@ -10,6 +10,22 @@ export const notificationAdminPath = '/notification-admin/v1';
 export const templateRoute = '/notification-templates';
 export const manageTemplates = 'OPERATIONS_NOTIFICATION_TEMPLATE_MANAGE';
 export const manageProviders = 'OPERATIONS_NOTIFICATION_PROVIDER_MANAGE';
+/** 新建、编辑发送账号的按钮资源。 */
+export const editProviders = 'OPERATIONS_NOTIFICATION_PROVIDER_EDIT';
+/** 录入密钥与测试发送的按钮资源。 */
+export const credentialProviders = 'OPERATIONS_NOTIFICATION_PROVIDER_CREDENTIAL';
+/** 本期可新建的服务商类型。 */
+export const providerTypeLabels: Record<string, string> = { AMAZON_SES: 'Amazon SES' };
+/** 缺失配置字段的显示名。 */
+export const missingConfigurationLabels: Record<string, string> = { region: '区域', fromAddress: '发件地址', credential: '密钥' };
+/** 区域格式，与 Platform 一致，如 me-central-1。 */
+export const regionPattern = /^[a-z]{2}(-[a-z]+)+-[0-9]{1,2}$/;
+/** Configuration Set 格式，可空。 */
+export const configurationSetPattern = /^[A-Za-z0-9_-]{1,64}$/;
+/** Access Key ID 格式。 */
+export const accessKeyPattern = /^[A-Z0-9]{16,128}$/;
+/** Secret Access Key 格式：可见 ASCII，无空白。 */
+export const secretKeyPattern = /^[\x21-\x7E]{1,128}$/;
 /** 发送记录单次查询的最长跨度（天），与 Platform 一致。 */
 export const maxRecordDays = 31;
 
@@ -28,8 +44,9 @@ export interface Mutation { code: string; version: number }
 export interface Preview { subject: string; body: string; missingParameters: string[] }
 export interface ProviderReference { templateCode: string; role: 'PRIMARY' | 'FALLBACK'; routeStatus: ConfigStatus }
 export interface ProviderSummary {
-  providerCode: string; medium: string; status: ConfigStatus; adapterConfigured: boolean; version: number; updateTime: string;
-  references: ProviderReference[];
+  providerCode: string; medium: string; providerType: string; status: ConfigStatus; region: string | null; fromAddress: string | null;
+  configurationSet: string | null; credentialConfigured: boolean; credentialUpdateTime: string | null; missingConfiguration: string[];
+  adapterConfigured: boolean; version: number; updateTime: string; references: ProviderReference[];
 }
 export interface RequestSummary {
   requestId: string; sourceSystem: string; sourceEventKey: string; templateCode: string | null; tenantId: string | null;
@@ -123,12 +140,24 @@ export function decodePreview(value: unknown): Preview {
   return v;
 }
 
+/** 测试发送结果；ACCEPTED 只表示服务商受理。 */
+export interface TestSendResult { outcome: 'ACCEPTED' | 'REJECTED' | 'UNKNOWN'; resultCode: string }
+
 /** 校验发送账号列表项。 */
 export function decodeProvider(value: unknown): ProviderSummary {
   const v = value as ProviderSummary;
-  require(!!v && codePattern.test(v.providerCode) && configStatus(v.status) && typeof v.adapterConfigured === 'boolean'
+  require(!!v && codePattern.test(v.providerCode) && text(v.providerType) && configStatus(v.status) && optionalText(v.region)
+    && optionalText(v.fromAddress) && optionalText(v.configurationSet) && typeof v.credentialConfigured === 'boolean'
+    && optionalText(v.credentialUpdateTime) && strings(v.missingConfiguration) && typeof v.adapterConfigured === 'boolean'
     && version(v.version) && Array.isArray(v.references)
     && v.references.every(r => text(r.templateCode) && (r.role === 'PRIMARY' || r.role === 'FALLBACK') && configStatus(r.routeStatus)));
+  return v;
+}
+
+/** 校验测试发送结果。 */
+export function decodeTestSend(value: unknown): TestSendResult {
+  const v = value as TestSendResult;
+  require(!!v && (v.outcome === 'ACCEPTED' || v.outcome === 'REJECTED' || v.outcome === 'UNKNOWN') && codePattern.test(v.resultCode));
   return v;
 }
 

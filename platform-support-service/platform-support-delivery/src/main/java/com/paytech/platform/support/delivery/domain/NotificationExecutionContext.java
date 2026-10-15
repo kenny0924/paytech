@@ -31,14 +31,14 @@ public class NotificationExecutionContext {
             || delivery.getStatus() == NotificationDeliveryStatus.FAILED;
     }
 
-    /** 当前配置不能追溯改变原发送查询，只约束新发送。 */
+    /** 当前配置不能追溯改变原发送查询，只约束新发送；发送账号须启用且配置完整。 */
     public NotificationMessage render() {
         if (template == null || template.getStatus() != NotificationConfigurationStatus.ACTIVE
             || template.getMedium() != NotificationMedium.EMAIL || content == null
             || route == null || route.getStatus() != NotificationConfigurationStatus.ACTIVE
             || !route.getNotificationTemplateId().equals(request.getNotificationTemplateId())
             || provider == null || provider.getStatus() != NotificationConfigurationStatus.ACTIVE
-            || provider.getMedium() != NotificationMedium.EMAIL) {
+            || provider.getMedium() != NotificationMedium.EMAIL || !provider.missingConfiguration().isEmpty()) {
             throw new BizCheckFailException("通知当前模板、语言、路由或发送账号不可用");
         }
         return NotificationInput.render(content.getSubjectTemplate(), content.getBodyTemplate(),

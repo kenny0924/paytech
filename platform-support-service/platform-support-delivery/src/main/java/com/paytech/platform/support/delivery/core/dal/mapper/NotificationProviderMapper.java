@@ -29,4 +29,16 @@ public interface NotificationProviderMapper {
     /** 按原版本切换启停状态。 */
     int changeStatus(@Param("item") NotificationProvider item,
         @Param("status") NotificationConfigurationStatus status, @Param("now") Instant now);
+
+    /** 插入新账号。 */
+    int insert(@Param("item") NotificationProvider item);
+
+    /** 按原版本修改区域、发件地址与 Configuration Set。 */
+    int updateConfiguration(@Param("item") NotificationProvider item, @Param("region") String region,
+        @Param("fromAddress") String fromAddress, @Param("configurationSet") String configurationSet,
+        @Param("now") Instant now);
+
+    /** 按原版本替换密钥 Token 与更换时间。 */
+    int replaceCredential(@Param("item") NotificationProvider item, @Param("token") String token,
+        @Param("now") Instant now);
 }

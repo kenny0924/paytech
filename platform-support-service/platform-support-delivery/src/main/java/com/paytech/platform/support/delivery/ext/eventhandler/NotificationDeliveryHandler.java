@@ -118,7 +118,7 @@ public class NotificationDeliveryHandler implements CompensationEventHandler {
             send(context);
             return context;
         }
-        var provider = providers.require(context.getProvider().getProviderCode());
+        var provider = providers.require(context.getProvider());
         if (provider.supportsQuery()) {
             query(context, provider);
             return context;
@@ -152,7 +152,7 @@ public class NotificationDeliveryHandler implements CompensationEventHandler {
             return true;
         }
         return context.getDelivery().getStatus() == NotificationDeliveryStatus.SENT
-            && !providers.require(context.getProvider().getProviderCode()).supportsQuery();
+            && !providers.require(context.getProvider()).supportsQuery();
     }
 
     /** 不支持查询的 Provider：结果未知、发送次数已满且最新尝试已过安全窗口，自动处理到此为止。 */
@@ -162,7 +162,7 @@ public class NotificationDeliveryHandler implements CompensationEventHandler {
             || delivery.getAttemptCount() < properties.getMaximumSendAttempts()) {
             return false;
         }
-        return !providers.require(context.getProvider().getProviderCode()).supportsQuery()
+        return !providers.require(context.getProvider()).supportsQuery()
             && unknownWindowElapsed(context, now());
     }
 
@@ -184,8 +184,8 @@ public class NotificationDeliveryHandler implements CompensationEventHandler {
             service.failBeforeSend(context, now());
             return;
         }
-        var provider = providers.require(context.getProvider().getProviderCode());
-        var sender = provider.prepare();
+        var provider = providers.require(context.getProvider());
+        var sender = provider.prepare(context.getProvider());
         String email = NotificationInput.canonicalEmail(vault.reveal(delivery.getAddressVaultToken()));
         var attempt = new NotificationAttempt();
         attempt.setAttemptId(ids.nextId());
@@ -220,7 +220,8 @@ public class NotificationDeliveryHandler implements CompensationEventHandler {
         service.beginQuery(context, now());
         EmailProviderResult result;
         try {
-            result = validResult(provider.query(attempt.getProviderRequestNo(), attempt.getProviderMessageId()));
+            result = validResult(provider.query(context.getProvider(), attempt.getProviderRequestNo(),
+                attempt.getProviderMessageId()));
         } catch (RuntimeException uncertain) {
             result = unknown();
         }

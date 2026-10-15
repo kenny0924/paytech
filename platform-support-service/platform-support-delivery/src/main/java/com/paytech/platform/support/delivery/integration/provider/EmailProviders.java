@@ -6,10 +6,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.ServiceUnavailableException;
+import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationProvider;
 
 import lombok.RequiredArgsConstructor;
 
-/** 精确账号绑定；无适配器时失败关闭，不创建生产模拟实现。 */
+/** 按服务商类型精确选择适配器；无适配器时失败关闭，不创建生产模拟实现。 */
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "notification.enabled", havingValue = "true")
@@ -17,17 +18,17 @@ public class EmailProviders {
 
     private final List<EmailProvider> providers;
 
-    /** 同一账号必须恰有一个适配器，不能回退到任意可用 Provider。 */
-    public EmailProvider require(String providerCode) {
-        var matches = providers.stream().filter(p -> providerCode.equals(p.providerCode())).toList();
+    /** 账号类型必须恰有一个适配器，不能回退到任意可用适配器。 */
+    public EmailProvider require(NotificationProvider account) {
+        var matches = providers.stream().filter(p -> p.providerType().equals(account.getProviderType())).toList();
         if (matches.size() != 1) {
             throw new ServiceUnavailableException();
         }
         return matches.getFirst();
     }
 
-    /** 是否恰有一个适配器绑定该账号，供运营页面展示，不抛出不可用。 */
-    public boolean isConfigured(String providerCode) {
-        return providers.stream().filter(p -> providerCode.equals(p.providerCode())).count() == 1;
+    /** 本环境是否恰有一个该类型的适配器，供运营页面展示，不抛出不可用。 */
+    public boolean isRegistered(String providerType) {
+        return providers.stream().filter(p -> p.providerType().equals(providerType)).count() == 1;
     }
 }

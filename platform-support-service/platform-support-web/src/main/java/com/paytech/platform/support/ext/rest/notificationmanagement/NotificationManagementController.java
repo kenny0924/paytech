@@ -6,6 +6,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.NotificationManagementApi;
 import com.paytech.platform.support.api.notificationmanagement.request.ChangeNotificationStatusRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.CreateNotificationProviderRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.ReplaceNotificationCredentialRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.TestSendNotificationProviderRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.UpdateNotificationProviderRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.CreateNotificationTemplateRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.PreviewNotificationContentRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.SaveNotificationContentRequestBody;
@@ -13,12 +17,14 @@ import com.paytech.platform.support.api.notificationmanagement.request.SaveNotif
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationMutationResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationPreviewResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationProviderResponseBody;
+import com.paytech.platform.support.api.notificationmanagement.response.NotificationProviderTestSendResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationRequestDetailResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationRequestSummaryResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationTemplateDetailResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationTemplateSummaryResponseBody;
 import com.paytech.platform.support.ext.rest.audit.Audit;
 import com.paytech.platform.support.service.processor.notification.ChangeNotificationProviderStatusProcessor;
+import com.paytech.platform.support.service.processor.notification.CreateNotificationProviderProcessor;
 import com.paytech.platform.support.service.processor.notification.ChangeNotificationRouteStatusProcessor;
 import com.paytech.platform.support.service.processor.notification.ChangeNotificationTemplateStatusProcessor;
 import com.paytech.platform.support.service.processor.notification.CreateNotificationTemplateProcessor;
@@ -29,7 +35,10 @@ import com.paytech.platform.support.service.processor.notification.ListNotificat
 import com.paytech.platform.support.service.processor.notification.ListNotificationTemplatesProcessor;
 import com.paytech.platform.support.service.processor.notification.PreviewNotificationContentProcessor;
 import com.paytech.platform.support.service.processor.notification.SaveNotificationContentProcessor;
+import com.paytech.platform.support.service.processor.notification.ReplaceNotificationCredentialProcessor;
 import com.paytech.platform.support.service.processor.notification.SaveNotificationRouteProcessor;
+import com.paytech.platform.support.service.processor.notification.TestSendNotificationProviderProcessor;
+import com.paytech.platform.support.service.processor.notification.UpdateNotificationProviderProcessor;
 
 import lombok.AllArgsConstructor;
 
@@ -52,6 +61,10 @@ public class NotificationManagementController implements NotificationManagementA
     private final ChangeNotificationRouteStatusProcessor changeRouteStatus;
     private final ChangeNotificationTemplateStatusProcessor changeTemplateStatus;
     private final ChangeNotificationProviderStatusProcessor changeProviderStatus;
+    private final CreateNotificationProviderProcessor createProvider;
+    private final UpdateNotificationProviderProcessor updateProvider;
+    private final TestSendNotificationProviderProcessor testSend;
+    private final ReplaceNotificationCredentialProcessor replaceCredential;
 
     /** 模板分页查询。 */
     @Audit(action = "OPERATIONS_NOTIFICATION_TEMPLATES", resourceType = "NOTIFICATION_TEMPLATE",
@@ -146,6 +159,48 @@ public class NotificationManagementController implements NotificationManagementA
         Integer page, Integer size) {
         return listProviders.process(converter.toProvidersRequest(actor, session, page, size))
             .map(converter::toProvider);
+    }
+
+    /** 新建发送账号。 */
+    @Audit(action = "OPERATIONS_NOTIFICATION_PROVIDER_CREATE", resourceType = "NOTIFICATION_PROVIDER",
+        fallbackResourceId = "NOTIFICATION_PROVIDER_CATALOG", recordSuccess = true)
+    @Override
+    public NotificationMutationResponseBody createProvider(String actor, String session,
+        CreateNotificationProviderRequestBody request) {
+        return converter.toMutation(createProvider.process(converter.toCreateProviderRequest(actor, session, request)));
+    }
+
+    /** 修改发送账号。 */
+    @Audit(action = "OPERATIONS_NOTIFICATION_PROVIDER_UPDATE", resourceType = "NOTIFICATION_PROVIDER",
+        fallbackResourceId = "NOTIFICATION_PROVIDER_CATALOG", recordSuccess = true,
+        resourceIdParameter = "providerCode")
+    @Override
+    public NotificationMutationResponseBody updateProvider(String actor, String session, String providerCode,
+        UpdateNotificationProviderRequestBody request) {
+        return converter.toMutation(updateProvider.process(converter.toUpdateProviderRequest(actor, session,
+            providerCode, request)));
+    }
+
+    /** 录入或更换发送账号密钥。 */
+    @Audit(action = "OPERATIONS_NOTIFICATION_PROVIDER_CREDENTIAL_REPLACE", resourceType = "NOTIFICATION_PROVIDER",
+        fallbackResourceId = "NOTIFICATION_PROVIDER_CATALOG", recordSuccess = true,
+        resourceIdParameter = "providerCode")
+    @Override
+    public NotificationMutationResponseBody replaceProviderCredential(String actor, String session,
+        String providerCode, ReplaceNotificationCredentialRequestBody request) {
+        return converter.toMutation(replaceCredential.process(converter.toCredentialRequest(actor, session,
+            providerCode, request)));
+    }
+
+    /** 发送账号测试发送。 */
+    @Audit(action = "OPERATIONS_NOTIFICATION_PROVIDER_TEST_SEND", resourceType = "NOTIFICATION_PROVIDER",
+        fallbackResourceId = "NOTIFICATION_PROVIDER_CATALOG", recordSuccess = true,
+        resourceIdParameter = "providerCode")
+    @Override
+    public NotificationProviderTestSendResponseBody testSendProvider(String actor, String session,
+        String providerCode, TestSendNotificationProviderRequestBody request) {
+        return converter.toTestSend(testSend.process(converter.toTestSendRequest(actor, session, providerCode,
+            request)));
     }
 
     /** 启停发送账号。 */

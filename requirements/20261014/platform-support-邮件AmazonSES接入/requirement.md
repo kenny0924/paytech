@@ -73,6 +73,8 @@
 
 ## 6.1 变更记录（2026-10-15）
 
+> 2026-10-15 部分取代：账号的区域、发件地址、Configuration Set 与密钥 Token 已移入 `t_notification_provider` 并在运营后台维护，默认凭据链删除，见[通知发送账号维护](../../20261015/operations-console-通知发送账号维护/requirement.md)与[决定](../../../agent-docs/decisions/2026-10-15-platform-notification-credential-protect.md)。
+
 用户决定：SES 使用 **IAM 用户密钥**，密钥对保存在 Vault，Platform 只在部署配置 `notification.ses.credential-token` 中保存 Vault Token；暂不新增统一的非支付外部账号表，也不改 `t_notification_provider`。由此：
 
 - 删除 `notification.ses.access-key` / `secret-key`；Token 为空时走 AWS 默认凭据链（本机与 manual 用 `AWS_PROFILE` 等）。

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  attentionStatus, decodeMutation, decodeProvider, decodeRequestDetail, decodeTemplateDetail, decodeTemplateSummary,
+  accessKeyPattern, attentionStatus, decodeMutation, decodeProvider, decodeRequestDetail, decodeTemplateDetail,
+  decodeTemplateSummary, decodeTestSend, regionPattern, secretKeyPattern,
   missingRequired, notificationCommand, placeholders, recordFilters,
 } from './notification.ts';
 
@@ -47,7 +48,19 @@ test('解码器拒绝缺字段、编码不一致或非法状态', () => {
   assert.throws(() => decodeMutation({ code: 'A', version: 0 }, 'A'));
   assert.throws(() => decodeMutation({ code: 'B', version: 2 }, 'A'));
   assert.equal(decodeMutation({ code: 'zh-CN', version: 2 }).version, 2);
-  assert.throws(() => decodeProvider({ providerCode: 'SES', medium: 'EMAIL', status: 'ACTIVE', adapterConfigured: 'yes', version: 1, updateTime: time, references: [] }));
+  const provider = { providerCode: 'SES', medium: 'EMAIL', providerType: 'AMAZON_SES', status: 'ACTIVE', region: 'me-central-1',
+    fromAddress: null, configurationSet: null, credentialConfigured: false, credentialUpdateTime: null,
+    missingConfiguration: ['fromAddress', 'credential'], adapterConfigured: true, version: 1, updateTime: time, references: [] };
+  assert.deepEqual(decodeProvider(provider).missingConfiguration, ['fromAddress', 'credential']);
+  assert.throws(() => decodeProvider({ ...provider, adapterConfigured: 'yes' }));
+  assert.throws(() => decodeProvider({ ...provider, missingConfiguration: null }));
+  assert.throws(() => decodeProvider({ ...provider, credentialConfigured: undefined }));
+  assert.equal(decodeTestSend({ outcome: 'REJECTED', resultCode: 'SES_CREDENTIAL_REJECTED' }).outcome, 'REJECTED');
+  assert.throws(() => decodeTestSend({ outcome: 'SENT', resultCode: 'SES_ACCEPTED' }));
+  assert.throws(() => decodeTestSend({ outcome: 'ACCEPTED', resultCode: 'bad code' }));
+  assert.ok(regionPattern.test('me-central-1') && !regionPattern.test('Middle East'));
+  assert.ok(accessKeyPattern.test('AKIASYNTHETIC0000001') && !accessKeyPattern.test('akia'));
+  assert.ok(secretKeyPattern.test('abc/DEF+123') && !secretKeyPattern.test('has space'));
   const record = { requestId: '1', parameterKeys: [], deliveries: [{ deliveryId: '2', locale: null, parameterKeys: [], status: 'SENT', attemptCount: 1,
     nextRetryTime: null, updateTime: time, attempts: [{ attemptId: '3', status: 'ACCEPTED', startedTime: time }] }] };
   assert.equal(decodeRequestDetail(record, '1').deliveries.length, 1);

@@ -54,8 +54,8 @@ public class SendTransientEmailProcessor
         }
         var routing = configuration.resolve(request.getTemplateCode());
         var message = render(request, routing);
-        var provider = adapters.require(routing.getPrimaryProvider().getProviderCode());
-        var sender = provider.prepare();
+        var provider = adapters.require(routing.getPrimaryProvider());
+        var sender = provider.prepare(routing.getPrimaryProvider());
         var providerRequest = new EmailProviderRequest(provider.requestNo(ids.nextId()),
             NotificationInput.canonicalEmail(request.getEmail()), message.getSubject(), message.getBody());
         return response(sender.send(providerRequest));

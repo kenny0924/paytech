@@ -3,9 +3,10 @@
 -- 编码以 E2E_ 开头，来源系统 e2e-notification-admin；验收后执行 acceptance-cleanup-local.sql 删除。
 START TRANSACTION;
 SET @ntf_e2e_time = UTC_TIMESTAMP(6);
-INSERT INTO t_notification_provider VALUES
- (980000000000001001,'E2E_NOTIFY_EMAIL','EMAIL','ACTIVE',1,@ntf_e2e_time,@ntf_e2e_time),
- (980000000000001002,'E2E_NOTIFY_OFF','EMAIL','DISABLED',1,@ntf_e2e_time,@ntf_e2e_time);
+-- 2026-10-15 起账号表含类型、区域、发件地址与密钥 Token（通知发送账号维护）；合成账号用未注册类型、配置不完整。
+INSERT INTO t_notification_provider (provider_id, provider_code, medium, provider_type, status, version, create_time, update_time) VALUES
+ (980000000000001001,'E2E_NOTIFY_EMAIL','EMAIL','E2E_UNREGISTERED','ACTIVE',1,@ntf_e2e_time,@ntf_e2e_time),
+ (980000000000001002,'E2E_NOTIFY_OFF','EMAIL','E2E_UNREGISTERED','DISABLED',1,@ntf_e2e_time,@ntf_e2e_time);
 INSERT INTO t_notification_template VALUES
  (980000000000001011,'E2E_NOTIFY_RECORD','EMAIL','DISABLED',1,@ntf_e2e_time,@ntf_e2e_time);
 INSERT INTO t_notification_request VALUES

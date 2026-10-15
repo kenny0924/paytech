@@ -14,17 +14,22 @@ import org.springframework.web.bind.annotation.RestController;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.PlatformNotificationManagementClient;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.ChangeNotificationStatusRequestBody;
+import com.paytech.operations.console.bff.service.model.NotificationManagementModels.CreateNotificationProviderRequestBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.CreateNotificationTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationMutationResponseBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationPreviewResponseBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationProviderSummary;
+import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationProviderTestSendResponseBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationRequestDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationRequestSummary;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationTemplateDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationTemplateSummary;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.PreviewNotificationContentRequestBody;
+import com.paytech.operations.console.bff.service.model.NotificationManagementModels.ReplaceNotificationCredentialRequestBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.SaveNotificationContentRequestBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.SaveNotificationRouteRequestBody;
+import com.paytech.operations.console.bff.service.model.NotificationManagementModels.TestSendNotificationProviderRequestBody;
+import com.paytech.operations.console.bff.service.model.NotificationManagementModels.UpdateNotificationProviderRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
 import jakarta.validation.Valid;
@@ -116,6 +121,37 @@ public class NotificationManagementController {
         @PathVariable("providerCode") String providerCode,
         @Valid @RequestBody ChangeNotificationStatusRequestBody request) {
         return client.changeProviderStatus(context, providerCode, request);
+    }
+
+    /** 新建发送账号。 */
+    @PostMapping("/providers")
+    public NotificationMutationResponseBody createProvider(OperatorContext context,
+        @Valid @RequestBody CreateNotificationProviderRequestBody request) {
+        return client.createProvider(context, request);
+    }
+
+    /** 修改发送账号。 */
+    @PutMapping("/providers/{providerCode}")
+    public NotificationMutationResponseBody updateProvider(OperatorContext context,
+        @PathVariable("providerCode") String providerCode,
+        @Valid @RequestBody UpdateNotificationProviderRequestBody request) {
+        return client.updateProvider(context, providerCode, request);
+    }
+
+    /** 录入或更换发送账号密钥。 */
+    @PutMapping("/providers/{providerCode}/credential")
+    public NotificationMutationResponseBody replaceProviderCredential(OperatorContext context,
+        @PathVariable("providerCode") String providerCode,
+        @Valid @RequestBody ReplaceNotificationCredentialRequestBody request) {
+        return client.replaceProviderCredential(context, providerCode, request);
+    }
+
+    /** 发送账号测试发送。 */
+    @PostMapping("/providers/{providerCode}/test-send")
+    public NotificationProviderTestSendResponseBody testSendProvider(OperatorContext context,
+        @PathVariable("providerCode") String providerCode,
+        @Valid @RequestBody TestSendNotificationProviderRequestBody request) {
+        return client.testSendProvider(context, providerCode, request);
     }
 
     /** 发送记录分页查询。 */

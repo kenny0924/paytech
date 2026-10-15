@@ -1714,7 +1714,8 @@ UPDATE t_role SET version=version+1 WHERE role_id=900000000000000510;
 -- ---------------------------------------------------------------------------
 -- Client authentication email (2026-10-15, requirements/20261015/platform-support-认证邮件接入Delivery).
 -- Self-contained block: on an environment already initialized by the statements above, apply ONLY this block.
--- Deployment must set NOTIFICATION_SES_PROVIDER_CODE=SES_PRIMARY and keep
+-- SES_PRIMARY is created with its region only: the sender address and the IAM key pair are entered in the
+-- Operations console (requirements/20261015/operations-console-通知发送账号维护). Keep
 -- notification.transient-template-codes = [CLIENT_EMAIL_VERIFICATION, CLIENT_PASSWORD_RESET].
 -- ${link} is supplied in memory per send and is never stored. Rollback: delete the rows by the IDs below.
 -- ---------------------------------------------------------------------------
@@ -1726,9 +1727,9 @@ SET @client_email_verification_template_id = 900000000000070011;
 SET @client_password_reset_template_id = 900000000000070012;
 
 INSERT INTO t_notification_provider (
-    provider_id, provider_code, medium, status, version, create_time, update_time
+    provider_id, provider_code, medium, provider_type, status, region, version, create_time, update_time
 ) VALUES (
-    @notification_ses_provider_id, 'SES_PRIMARY', 'EMAIL', 'ACTIVE', 1,
+    @notification_ses_provider_id, 'SES_PRIMARY', 'EMAIL', 'AMAZON_SES', 'ACTIVE', 'me-central-1', 1,
     @notification_initial_time, @notification_initial_time
 );
 
@@ -1951,5 +1952,92 @@ INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,cap
   (900000000000089070, 900000000000086012, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
   (900000000000089071, 900000000000086012, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
   (900000000000089072, 900000000000086012, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
+
+COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- Operations notification provider maintenance (2026-10-15, requirements/20261015/operations-console-通知发送账号维护).
+-- Self-contained block: on an environment already initialized by the statements above (including the
+-- notification management block), apply ONLY this block. Requires the t_notification_provider account columns
+-- (docs/database/sql/changes/2026-10-15-notification-provider-account-fields.sql).
+-- Dormant: permission ACTIVE, administrator grant REVOKED, buttons/routes DISABLED; activate separately.
+-- Create/update reuse NOTIFICATION_MANAGE; credential replacement and test send need NOTIFICATION_CREDENTIAL_MANAGE.
+-- Rows: permission 1, role_permission 1, console_resource 2, gateway_route 4, route_header 24, guard_rule 24 (56).
+-- Rollback: delete the rows by the 900000000000096xxx IDs below.
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @provider_admin_time = UTC_TIMESTAMP(6);
+SET @provider_admin_actor_id = 1;
+SET @provider_admin_target_id = 900000000000000001;
+SET @provider_admin_role_id = 900000000000000510;
+
+INSERT INTO t_permission (permission_id,permission_code,resource_type,action_code,risk_level,status,version,create_time,update_time) VALUES
+  (900000000000096101, 'NOTIFICATION_CREDENTIAL_MANAGE', 'NOTIFICATION', 'CREDENTIAL_MANAGE', 'HIGH', 'ACTIVE', 1, @provider_admin_time, @provider_admin_time);
+
+INSERT INTO t_role_permission (role_permission_id,role_id,permission_id,status,version,create_time,update_time) VALUES
+  (900000000000096201, @provider_admin_role_id, 900000000000096101, 'REVOKED', 1, @provider_admin_time, @provider_admin_time);
+
+INSERT INTO t_console_resource (resource_id,resource_code,channel,resource_type,parent_resource_id,display_name,frontend_route,component_key,permission_id,sort_order,status,version,create_time,update_time) VALUES
+  (900000000000096301, 'OPERATIONS_NOTIFICATION_PROVIDER_EDIT', 'OPERATIONS', 'BUTTON', 900000000000086303, '维护账号', NULL, NULL, 900000000000086102, 20, 'DISABLED', 1, @provider_admin_time, @provider_admin_time),
+  (900000000000096302, 'OPERATIONS_NOTIFICATION_PROVIDER_CREDENTIAL', 'OPERATIONS', 'BUTTON', 900000000000086303, '密钥与测试发送', NULL, NULL, 900000000000096101, 30, 'DISABLED', 1, @provider_admin_time, @provider_admin_time);
+
+INSERT INTO t_gateway_route (route_id, route_code, channel, http_method, external_path_template, downstream_path_template, target_id, security_profile_code, authorization_mode, permission_id, required_scope_code, request_cookie_mode, response_cookie_mode, body_limit_bytes, body_receive_timeout_millis, response_timeout_millis, status, version, created_by, updated_by, create_time, update_time) VALUES
+  (900000000000096001, 'operations-notification-create-provider', 'OPERATIONS', 'POST', '/api/operations/notification-admin/v1/providers', '/notification-admin/v1/providers', @provider_admin_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000086102, NULL, 'DROP', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @provider_admin_actor_id, @provider_admin_actor_id, @provider_admin_time, @provider_admin_time),
+  (900000000000096002, 'operations-notification-update-provider', 'OPERATIONS', 'PUT', '/api/operations/notification-admin/v1/providers/{providerCode}', '/notification-admin/v1/providers/{providerCode}', @provider_admin_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000086102, NULL, 'DROP', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @provider_admin_actor_id, @provider_admin_actor_id, @provider_admin_time, @provider_admin_time),
+  (900000000000096003, 'operations-notification-provider-credential', 'OPERATIONS', 'PUT', '/api/operations/notification-admin/v1/providers/{providerCode}/credential', '/notification-admin/v1/providers/{providerCode}/credential', @provider_admin_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000096101, NULL, 'DROP', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @provider_admin_actor_id, @provider_admin_actor_id, @provider_admin_time, @provider_admin_time),
+  (900000000000096004, 'operations-notification-provider-test-send', 'OPERATIONS', 'POST', '/api/operations/notification-admin/v1/providers/{providerCode}/test-send', '/notification-admin/v1/providers/{providerCode}/test-send', @provider_admin_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000096101, NULL, 'DROP', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @provider_admin_actor_id, @provider_admin_actor_id, @provider_admin_time, @provider_admin_time);
+
+INSERT INTO t_gateway_route_header (route_header_id,route_id,header_name,header_use) VALUES
+  (900000000000096401, 900000000000096001, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096402, 900000000000096001, 'origin', 'FORWARD_REQUEST'),
+  (900000000000096403, 900000000000096001, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096404, 900000000000096001, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000096405, 900000000000096001, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096406, 900000000000096001, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000096407, 900000000000096002, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096408, 900000000000096002, 'origin', 'FORWARD_REQUEST'),
+  (900000000000096409, 900000000000096002, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096410, 900000000000096002, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000096411, 900000000000096002, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096412, 900000000000096002, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000096413, 900000000000096003, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096414, 900000000000096003, 'origin', 'FORWARD_REQUEST'),
+  (900000000000096415, 900000000000096003, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096416, 900000000000096003, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000096417, 900000000000096003, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096418, 900000000000096003, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000096419, 900000000000096004, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096420, 900000000000096004, 'origin', 'FORWARD_REQUEST'),
+  (900000000000096421, 900000000000096004, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096422, 900000000000096004, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000096423, 900000000000096004, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000096424, 900000000000096004, 'idempotency-key', 'FORWARD_REQUEST');
+
+INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,capacity,refill_tokens,refill_period_millis,concurrency_limit) VALUES
+  (900000000000096501, 900000000000096001, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000096502, 900000000000096001, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000096503, 900000000000096001, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000096504, 900000000000096001, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000096505, 900000000000096001, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000096506, 900000000000096001, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000096507, 900000000000096002, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000096508, 900000000000096002, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000096509, 900000000000096002, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000096510, 900000000000096002, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000096511, 900000000000096002, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000096512, 900000000000096002, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000096513, 900000000000096003, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000096514, 900000000000096003, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000096515, 900000000000096003, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000096516, 900000000000096003, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000096517, 900000000000096003, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000096518, 900000000000096003, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000096519, 900000000000096004, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000096520, 900000000000096004, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000096521, 900000000000096004, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000096522, 900000000000096004, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000096523, 900000000000096004, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 5, 5, 60000, NULL),
+  (900000000000096524, 900000000000096004, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
 
 COMMIT;

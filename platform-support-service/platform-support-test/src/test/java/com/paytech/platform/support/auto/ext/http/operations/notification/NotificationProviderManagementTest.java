@@ -15,19 +15,20 @@ import com.paytech.platform.support.api.notificationmanagement.NotificationManag
 import com.paytech.platform.support.api.notificationmanagement.request.ChangeNotificationStatusRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationMutationResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationProviderResponseBody;
+import com.paytech.platform.support.delivery.core.constant.NotificationProviderTypes;
 import com.paytech.platform.support.test.base.NotificationManagementTestBase;
 
 import tools.jackson.core.type.TypeReference;
 
 /**
- * 发送账号：列表展示本环境是否已配置适配器与路由引用，启停按版本保护；不返回发件地址与凭据。
+ * 发送账号：列表展示类型、区域、发件地址、配置完整情况、适配器注册与路由引用，启停按版本保护；不返回密钥 Token。
  *
  * @see NotificationManagementApi#providers(String, String, Integer, Integer)
  * @see NotificationManagementApi#changeProviderStatus(String, String, String, ChangeNotificationStatusRequestBody)
  */
 class NotificationProviderManagementTest extends NotificationManagementTestBase {
 
-    /** 按编码排序；无适配器的账号为未配置；引用按主备区分。 */
+    /** 按编码排序；未注册类型的账号适配器为否、配置不完整；引用按主备区分；不返回 Token。 */
     @Test
     void test_listProviders() {
         mapper.useFallback();
@@ -41,12 +42,19 @@ class NotificationProviderManagementTest extends NotificationManagementTestBase 
         var email = page.items().get(1);
         var ses = page.items().get(3);
         assertAll(() -> assertFalse(unbound.isAdapterConfigured()), () -> assertEquals("DISABLED", unbound.getStatus()),
+            () -> assertEquals(List.of("region", "fromAddress", "credential"), unbound.getMissingConfiguration()),
+            () -> assertFalse(unbound.isCredentialConfigured()),
+            () -> assertEquals(NotificationProviderTypes.AMAZON_SES, ses.getProviderType()),
+            () -> assertEquals("me-central-1", ses.getRegion()),
+            () -> assertEquals("noreply@example.com", ses.getFromAddress()),
+            () -> assertEquals("notification-test", ses.getConfigurationSet()),
+            () -> assertTrue(ses.isCredentialConfigured()), () -> assertEquals(List.of(), ses.getMissingConfiguration()),
             () -> assertTrue(email.isAdapterConfigured()), () -> assertTrue(ses.isAdapterConfigured()),
             () -> assertEquals(List.of("NOTIFICATION_TEST:PRIMARY"), refs(email)),
             () -> assertEquals(List.of("CLIENT_EMAIL_VERIFICATION:PRIMARY", "CLIENT_PASSWORD_RESET:PRIMARY"),
                 refs(ses).stream().sorted().toList()),
             () -> assertEquals(List.of("NOTIFICATION_TEST:FALLBACK"), refs(page.items().get(2))));
-        assertFalse(response.text().contains("noreply@example.com"), "不应返回发件地址");
+        assertFalse(response.text().contains("vlt_"), "不应返回密钥 Token");
         get(BASE + "/providers", viewer).assertProblem(403, "OPERATIONS_PERMISSION_DENIED");
     }
 

@@ -5,12 +5,21 @@
         <id column="provider_id" property="providerId"/>
         <result column="provider_code" property="providerCode"/>
         <result column="medium" property="medium"/>
+        <result column="provider_type" property="providerType"/>
         <result column="status" property="status"/>
+        <result column="region" property="region"/>
+        <result column="from_address" property="fromAddress"/>
+        <result column="configuration_set" property="configurationSet"/>
+        <result column="credential_vault_token" property="credentialVaultToken"/>
+        <result column="credential_update_time" property="credentialUpdateTime"/>
         <result column="version" property="version"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
-    <sql id="columns">provider_id, provider_code, medium, status, version, create_time, update_time</sql>
+    <sql id="columns">
+        provider_id, provider_code, medium, provider_type, status, region, from_address, configuration_set,
+        credential_vault_token, credential_update_time, version, create_time, update_time
+    </sql>
     <select id="find" resultMap="record">SELECT <include refid="columns"/> FROM t_notification_provider WHERE provider_id = #{id}</select>
     <select id="findCode" resultMap="record">SELECT <include refid="columns"/> FROM t_notification_provider WHERE provider_code = #{code}</select>
     <select id="findIds" resultMap="record">
@@ -24,5 +33,26 @@
     <update id="changeStatus">
         UPDATE t_notification_provider SET status = #{status}, version = version + 1, update_time = #{now}
         WHERE provider_id = #{item.providerId} AND version = #{item.version} AND status = #{item.status}
+    </update>
+    <insert id="insert">
+        INSERT INTO t_notification_provider (
+            provider_id, provider_code, medium, provider_type, status, region, from_address, configuration_set,
+            credential_vault_token, credential_update_time, version, create_time, update_time
+        ) VALUES (
+            #{item.providerId}, #{item.providerCode}, #{item.medium}, #{item.providerType}, #{item.status},
+            #{item.region}, #{item.fromAddress}, #{item.configurationSet}, #{item.credentialVaultToken},
+            #{item.credentialUpdateTime}, #{item.version}, #{item.createTime}, #{item.updateTime}
+        )
+    </insert>
+    <update id="updateConfiguration">
+        UPDATE t_notification_provider
+        SET region = #{region}, from_address = #{fromAddress}, configuration_set = #{configurationSet},
+            version = version + 1, update_time = #{now}
+        WHERE provider_id = #{item.providerId} AND version = #{item.version}
+    </update>
+    <update id="replaceCredential">
+        UPDATE t_notification_provider
+        SET credential_vault_token = #{token}, credential_update_time = #{now}, version = version + 1, update_time = #{now}
+        WHERE provider_id = #{item.providerId} AND version = #{item.version}
     </update>
 </mapper>

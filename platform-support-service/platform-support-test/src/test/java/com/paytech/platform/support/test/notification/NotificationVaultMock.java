@@ -1,6 +1,8 @@
 package com.paytech.platform.support.test.notification;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import com.paytech.foundation.testsupport.api.Clear;
 import org.springframework.boot.test.context.TestComponent;
@@ -19,6 +21,10 @@ public class NotificationVaultMock implements Clear {
     private int credentialRevealCalls;
     private int unexpected;
     private boolean protectUnavailable;
+    private String credentialToken;
+    private Integer credentialProtectStatus;
+    private final List<String> protectedCredentials = new ArrayList<>();
+    private final List<String> credentialKeys = new ArrayList<>();
 
     /** 明确准备每个合成邮箱的稳定 Token。 */
     public synchronized void allow(String email, String token) { tokens.put(email, token); values.put(token, email); }
@@ -65,6 +71,34 @@ public class NotificationVaultMock implements Clear {
         return credentials.get(token);
     }
 
+    /** 下一次发送账号密钥 Protect 返回该合成 Token。 */
+    public synchronized void expectCredentialProtect(String token) {
+        credentialToken = token;
+        credentialProtectStatus = null;
+    }
+
+    /** 之后的密钥 Protect 返回该 HTTP 状态（如 403 未授权、503 不可用），不计意外调用。 */
+    public synchronized void credentialProtectFails(int status) { credentialProtectStatus = status; }
+
+    /** 密钥 Protect：记录合成密钥 JSON 与幂等键供断言；未配置时作为意外调用失败。 */
+    public synchronized String protectCredential(String key, String value) {
+        if (credentialProtectStatus != null) {
+            throw com.paytech.foundation.testsupport.api.MockHttpFault.raw(credentialProtectStatus, "{}");
+        }
+        if (credentialToken == null) { unexpected++; throw new IllegalStateException("未配置密钥 Protect"); }
+        protectedCredentials.add(value);
+        credentialKeys.add(key);
+        String token = credentialToken;
+        credentialToken = null;
+        return token;
+    }
+
+    /** 已 Protect 的合成密钥 JSON，按调用顺序。 */
+    public synchronized List<String> protectedCredentials() { return List.copyOf(protectedCredentials); }
+
+    /** 密钥 Protect 使用的幂等键，按调用顺序。 */
+    public synchronized List<String> credentialProtectKeys() { return List.copyOf(credentialKeys); }
+
     /** 凭据 Reveal 次数，与地址 Reveal 分开计数。 */
     public synchronized int credentialRevealCount() { return credentialRevealCalls; }
 
@@ -81,6 +115,7 @@ public class NotificationVaultMock implements Clear {
     @Override
     public synchronized void clear() {
         tokens.clear(); values.clear(); credentials.clear(); credentialUnavailable = false; protectUnavailable = false;
+        credentialToken = null; credentialProtectStatus = null; protectedCredentials.clear(); credentialKeys.clear();
         protectCalls = 0; revealCalls = 0; credentialRevealCalls = 0; unexpected = 0;
     }
 }

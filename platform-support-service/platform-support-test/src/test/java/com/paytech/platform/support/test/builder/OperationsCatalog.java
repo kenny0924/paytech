@@ -55,7 +55,9 @@ public final class OperationsCatalog {
         new Permission(900000000000071101L, "EXTERNAL_API_READ", "EXTERNAL_API", "READ", "LOW", false),
         new Permission(900000000000071102L, "EXTERNAL_API_MANAGE", "EXTERNAL_API", "MANAGE", "HIGH", false),
         new Permission(900000000000086101L, "NOTIFICATION_READ", "NOTIFICATION", "READ", "LOW", false),
-        new Permission(900000000000086102L, "NOTIFICATION_MANAGE", "NOTIFICATION", "MANAGE", "HIGH", false));
+        new Permission(900000000000086102L, "NOTIFICATION_MANAGE", "NOTIFICATION", "MANAGE", "HIGH", false),
+        new Permission(900000000000096101L, "NOTIFICATION_CREDENTIAL_MANAGE", "NOTIFICATION", "CREDENTIAL_MANAGE", "HIGH",
+            false));
 
     private OperationsCatalog() {
     }

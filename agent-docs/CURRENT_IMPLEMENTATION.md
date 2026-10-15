@@ -184,6 +184,14 @@
 
 <a id="operations-notification-admin-20261015"></a>
 
+## Operations 通知发送账号维护（2026-10-15，本机全链路已验收，未提交）
+
+- **范围：** 发送账号的类型、区域、发件地址、Configuration Set 与密钥 Vault Token 入库（`t_notification_provider` +6 列），运营后台新建 / 编辑 / 录入或更换密钥（只写不读，Platform 以 `NOTIFICATION_PROVIDER_SETUP` Protect）/ 测试发送；适配器按类型注册、SES 客户端按区域复用，删除默认凭据链；部署配置只保留 `notification.ses.enabled`、`endpoint` 与超时。见[需求](../requirements/20261015/operations-console-通知发送账号维护/requirement.md)、[方案](../requirements/20261015/operations-console-通知发送账号维护/technique.md)、[Vault 决定](./decisions/2026-10-15-platform-notification-credential-protect.md)。
+- **验证：** Platform `verify` 619/619（隔离工作区；全服务聚合覆盖率门禁仍为既有未达标）、Delivery 覆盖率 95.96% / 89.74%；BFF 47/47；Web 1025/1025、build 通过。详见[交付记录](../requirements/20261015/operations-console-通知发送账号维护/delivery.md)。
+- **本机：** `mor_platform`（auto）与 `mor_platform_e2e` 已执行 DDL；e2e 另执行注册块 56 行与[本机启用](../requirements/20261015/operations-console-通知发送账号维护/db/platform-support-service/activation-local.sql)；本机 Vault 已加 PROTECT 规则（策略 16）。经运营入口接口验收 15/15、浏览器 11/11，验收数据已清理。
+- **mor-test：** 未执行 DDL / DML / 注册 DML，Vault 规则未添加，未部署。
+- **未完成 / 前提：** 浏览器联调与本机全链路（阶段 5）；mor-test 需同时开启 `NOTIFICATION_SES_ENABLED=true` 并在页面录入 `SES_PRIMARY` 的发件地址与真实密钥；未提交、未推送、未部署。
+
 ## Operations 通知管理（2026-10-15，已本地提交，mor-test 已部署）
 
 - **确认范围：** 见[需求](../requirements/20261015/operations-console-通知管理/requirement.md)、[现状分析](../requirements/20261015/operations-console-通知管理/analysis.md)与[方案](../requirements/20261015/operations-console-通知管理/technique.md)；Pencil 10 个画板在 `operations-console-web/docs/design.pen`（「通知管理 ·」前缀）。

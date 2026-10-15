@@ -23,6 +23,7 @@ import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.delivery.core.configuration.NotificationProperties;
+import com.paytech.platform.support.delivery.core.constant.NotificationProviderTypes;
 import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationProvider;
 import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationRoute;
 import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationTemplate;
@@ -42,7 +43,9 @@ import com.paytech.platform.support.delivery.domain.NotificationRouteItem;
 import com.paytech.platform.support.delivery.domain.NotificationTemplateDetailView;
 import com.paytech.platform.support.delivery.domain.NotificationTemplateIssue;
 import com.paytech.platform.support.delivery.domain.NotificationTemplateSummary;
+import com.paytech.platform.support.delivery.domain.ReplaceNotificationCredentialCommand;
 import com.paytech.platform.support.delivery.domain.SaveNotificationContentCommand;
+import com.paytech.platform.support.delivery.domain.SaveNotificationProviderCommand;
 import com.paytech.platform.support.delivery.domain.SaveNotificationRouteCommand;
 import com.paytech.platform.support.delivery.domainservice.repository.NotificationProviderRepository;
 import com.paytech.platform.support.delivery.domainservice.repository.NotificationRouteRepository;
@@ -61,6 +64,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "operations.authentication.enabled", havingValue = "true")
 public class NotificationManagementServiceImpl implements NotificationManagementService {
+
+    /** 首次录入密钥的审计值。 */
+    static final String CREDENTIAL_SET = "SET";
+
+    /** 更换已有密钥的审计值。 */
+    static final String CREDENTIAL_REPLACED = "REPLACED";
 
     private final IdGenerator ids;
     private final NotificationProperties properties;
@@ -285,8 +294,10 @@ public class NotificationManagementServiceImpl implements NotificationManagement
             .collect(Collectors.toMap(NotificationTemplate::getTemplateId, NotificationTemplate::getTemplateCode));
         EmailProviders registry = adapters.getIfAvailable();
         var items = rows.stream().map(p -> new NotificationProviderView(p.getProviderCode(), p.getMedium(),
-            p.getStatus(), registry != null && registry.isConfigured(p.getProviderCode()), p.getVersion(),
-            p.getUpdateTime(), references(p.getProviderId(), routeRows, templateCodes))).toList();
+            p.getProviderType(), p.getStatus(), p.getRegion(), p.getFromAddress(), p.getConfigurationSet(),
+            p.getCredentialVaultToken() != null, p.getCredentialUpdateTime(), p.missingConfiguration(),
+            registry != null && registry.isRegistered(p.getProviderType()), p.getVersion(), p.getUpdateTime(),
+            references(p.getProviderId(), routeRows, templateCodes))).toList();
         return new PagingResponseBody<>(items, paging.page(), paging.size(), providers.count());
     }
 
@@ -306,20 +317,112 @@ public class NotificationManagementServiceImpl implements NotificationManagement
         return references;
     }
 
-    /** 启停发送账号；不检查引用，由调用方提示影响。 */
+    /** 启停发送账号；启用时要求配置完整，不检查引用，由调用方提示影响。 */
     @Override
     public NotificationConfigurationChange changeProviderStatus(ChangeNotificationStatusCommand command) {
-        NotificationProvider provider = providers.findCode(command.getCode());
-        if (provider == null) {
-            throw new FailException(CommonErrorCode.NOT_FOUND);
-        }
+        NotificationProvider provider = requireProvider(command.getCode());
         requireVersion(provider.getVersion(), command.getExpectedVersion());
         requireStatusChange(provider.getStatus(), command.getStatus());
+        var missing = provider.missingConfiguration();
+        if (command.getStatus() == NotificationConfigurationStatus.ACTIVE && !missing.isEmpty()) {
+            throw new BizCheckFailException("账号配置不完整，缺少: " + String.join("、", missing));
+        }
         int beforeVersion = provider.getVersion();
         String before = provider.getStatus().getCode();
         providers.changeStatus(provider, command.getStatus(), command.getNow());
         return new NotificationConfigurationChange(command.getCode(), beforeVersion, provider.getVersion(),
             List.of(change(NotificationAuditField.STATUS, before, command.getStatus().getCode())));
+    }
+
+    /** 新建停用状态的发送账号；介质由类型决定，本期类型都是 EMAIL。 */
+    @Override
+    public NotificationConfigurationChange createProvider(SaveNotificationProviderCommand command) {
+        if (!NotificationProviderTypes.CREATABLE.contains(command.getProviderType())) {
+            throw new BizCheckFailException("不支持的服务商类型: " + command.getProviderType());
+        }
+        if (providers.findCode(command.getProviderCode()) != null) {
+            throw new BizCheckFailException("账号编码已存在: " + command.getProviderCode());
+        }
+        var provider = new NotificationProvider();
+        provider.setProviderId(ids.nextId());
+        provider.setProviderCode(command.getProviderCode());
+        provider.setMedium(NotificationMedium.EMAIL);
+        provider.setProviderType(command.getProviderType());
+        provider.setStatus(NotificationConfigurationStatus.DISABLED);
+        provider.setRegion(command.getRegion());
+        provider.setFromAddress(NotificationInput.canonicalEmail(command.getFromAddress()));
+        provider.setConfigurationSet(blankToNull(command.getConfigurationSet()));
+        provider.setVersion(1);
+        provider.setCreateTime(command.getNow());
+        provider.setUpdateTime(command.getNow());
+        providers.insert(provider);
+        return new NotificationConfigurationChange(command.getProviderCode(), 0, 1,
+            List.of(change(NotificationAuditField.CODE, null, provider.getProviderCode()),
+                change(NotificationAuditField.PROVIDER_TYPE, null, provider.getProviderType()),
+                change(NotificationAuditField.REGION, null, provider.getRegion()),
+                change(NotificationAuditField.FROM_ADDRESS, null, provider.getFromAddress()),
+                change(NotificationAuditField.CONFIGURATION_SET, null, provider.getConfigurationSet()),
+                change(NotificationAuditField.STATUS, null, provider.getStatus().getCode())));
+    }
+
+    /** 按版本修改账号的区域、发件地址与 Configuration Set；审计记录前后值。 */
+    @Override
+    public NotificationConfigurationChange updateProvider(SaveNotificationProviderCommand command) {
+        NotificationProvider provider = requireProvider(command.getProviderCode());
+        requireVersion(provider.getVersion(), command.getExpectedVersion());
+        int beforeVersion = provider.getVersion();
+        String fromAddress = NotificationInput.canonicalEmail(command.getFromAddress());
+        String configurationSet = blankToNull(command.getConfigurationSet());
+        var changes = List.of(change(NotificationAuditField.REGION, provider.getRegion(), command.getRegion()),
+            change(NotificationAuditField.FROM_ADDRESS, provider.getFromAddress(), fromAddress),
+            change(NotificationAuditField.CONFIGURATION_SET, provider.getConfigurationSet(), configurationSet));
+        providers.updateConfiguration(provider, command.getRegion(), fromAddress, configurationSet, command.getNow());
+        return new NotificationConfigurationChange(command.getProviderCode(), beforeVersion, provider.getVersion(),
+            changes);
+    }
+
+    /** 更换密钥前检查账号存在且版本一致。 */
+    @Override
+    public long requireCredentialReplaceable(String providerCode, int expectedVersion) {
+        NotificationProvider provider = requireProvider(providerCode);
+        requireVersion(provider.getVersion(), expectedVersion);
+        return provider.getProviderId();
+    }
+
+    /** 以新 Token 替换密钥；版本在 Vault 写入期间变化时返回并发冲突，新密文不再被引用。 */
+    @Override
+    public NotificationConfigurationChange replaceCredential(ReplaceNotificationCredentialCommand command) {
+        NotificationProvider provider = requireProvider(command.getProviderCode());
+        requireVersion(provider.getVersion(), command.getExpectedVersion());
+        int beforeVersion = provider.getVersion();
+        String before = provider.getCredentialVaultToken() == null ? null : CREDENTIAL_SET;
+        String after = before == null ? CREDENTIAL_SET : CREDENTIAL_REPLACED;
+        providers.replaceCredential(provider, command.getCredentialToken(), command.getNow());
+        return new NotificationConfigurationChange(command.getProviderCode(), beforeVersion, provider.getVersion(),
+            List.of(change(NotificationAuditField.CREDENTIAL, before, after)));
+    }
+
+    /** 测试发送只追加审计，账号版本不变。 */
+    @Override
+    public NotificationConfigurationChange testSendRecord(String providerCode, String recipient, String resultCode) {
+        NotificationProvider provider = requireProvider(providerCode);
+        return new NotificationConfigurationChange(providerCode, provider.getVersion(), provider.getVersion(),
+            List.of(change(NotificationAuditField.TEST_RECIPIENT_DIGEST, null, digest(recipient)),
+                change(NotificationAuditField.TEST_RESULT, null, resultCode)));
+    }
+
+    /** 账号不存在返回 NOT_FOUND。 */
+    NotificationProvider requireProvider(String providerCode) {
+        NotificationProvider provider = providers.findCode(providerCode);
+        if (provider == null) {
+            throw new FailException(CommonErrorCode.NOT_FOUND);
+        }
+        return provider;
+    }
+
+    /** 空白视为未填写。 */
+    static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
     }
 
     /** 模板不存在返回 NOT_FOUND。 */

@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
+import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.compensation.api.CompensationEvent;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult;
 import com.paytech.foundation.compensation.model.CompensationEventStatus;
@@ -56,7 +57,7 @@ class SesNotificationDeliveryTest extends NotificationTestBase {
 
     static final long FALLBACK_PROVIDER_ID = 890006L;
 
-    /** 与 application-mock.yml 的 notification.ses.credential-token 一致。 */
+    /** 与 NotificationTestMapper.sesProvider 写入账号表的密钥 Token 一致。 */
     static final String CREDENTIAL_TOKEN = "vlt_sesCredentialTokenForLoopbackMock000000";
 
     /** Vault 中合成密钥对的 Access Key 与 Secret；Secret 用于验证不进入日志。 */
@@ -98,6 +99,8 @@ class SesNotificationDeliveryTest extends NotificationTestBase {
         assertEquals(1, vault.credentialRevealCount(), "每次发送前读取一次凭据");
         assertTrue(onlyRequest().headers().get("authorization").contains("Credential=" + VAULT_ACCESS_KEY + "/"),
             "必须使用 Vault 中的 Access Key 签名");
+        assertTrue(onlyRequest().headers().get("authorization").contains("/me-central-1/ses/aws4_request"),
+            "按账号区域签名");
         assertFalse(output.getAll().contains(VAULT_SECRET_MARKER), "密钥不得进入日志");
         assertFalse(output.getAll().contains(CREDENTIAL_TOKEN), "凭据 Token 不得进入日志");
     }
@@ -119,6 +122,38 @@ class SesNotificationDeliveryTest extends NotificationTestBase {
 
         assertDelivery(NotificationDeliveryStatus.SENT, 1);
         assertTrue(mapper.events().isEmpty());
+    }
+
+    /** 主账号未录入密钥（配置不完整）时受理即拒绝：不落库、不读 Vault、不调用 SES。 */
+    @Test
+    void test_accountWithoutCredentialRejectedAtSubmit() {
+        mapper.clearSesCredential();
+
+        var failure = assertThrows(BizCheckFailException.class,
+            () -> processor.process(NotificationRequestBuilder.template()));
+
+        assertEquals("邮件发送账号配置不完整", failure.getMessage());
+        assertTrue(mapper.deliveries().isEmpty());
+        assertEquals(0, vault.credentialRevealCount());
+        assertTrue(ses.requests().isEmpty());
+    }
+
+    /** 受理后账号密钥被移除：发送时失败关闭为 FAILED，不登记尝试、不读 Vault、不调用 SES，任务结束。 */
+    @Test
+    void test_accountLosesCredentialFailsClosed() {
+        vault.credentialUnavailable();
+        processor.process(NotificationRequestBuilder.template());
+        fixture.awaitIdle();
+        assertDelivery(NotificationDeliveryStatus.PENDING, 0);
+        int reveals = vault.credentialRevealCount();
+
+        mapper.clearSesCredential();
+        scanDue();
+
+        assertDelivery(NotificationDeliveryStatus.FAILED, 0);
+        assertEquals(reveals, vault.credentialRevealCount(), "配置不完整时不再读取 Vault");
+        assertTrue(ses.requests().isEmpty());
+        assertTrue(mapper.events().isEmpty(), "失败关闭后任务结束");
     }
 
     /** Vault 中的值不是合法密钥对时失败关闭：不登记尝试、不调用 SES，值不进入日志。 */

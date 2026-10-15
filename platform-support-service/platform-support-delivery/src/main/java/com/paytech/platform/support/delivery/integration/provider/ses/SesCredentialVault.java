@@ -26,10 +26,14 @@ public class SesCredentialVault {
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
     private final VaultClient client;
-    private final String token;
 
-    /** 读取并解析密钥对，返回只用于本次请求的凭据；Vault 失败原样上抛，值格式不符时失败关闭。 */
-    public AwsCredentialsProvider reveal() {
+    /**
+     * 读取并解析账号的密钥对，返回只用于本次请求的凭据
+     * <li>Vault 失败原样上抛，值格式不符时失败关闭</li>
+     *
+     * @param token 账号的密钥 Token
+     */
+    public AwsCredentialsProvider reveal(String token) {
         String value = client.reveal(new RevealQuery(token, PURPOSE)).value();
         JsonNode node;
         try {

@@ -2,6 +2,7 @@ package com.paytech.platform.support.test.notification;
 
 import org.springframework.boot.test.context.TestComponent;
 
+import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationProvider;
 import com.paytech.platform.support.delivery.integration.provider.EmailProvider;
 import com.paytech.platform.support.delivery.integration.provider.EmailProviderRequest;
 import com.paytech.platform.support.delivery.integration.provider.EmailProviderResult;
@@ -15,10 +16,13 @@ public class FallbackEmailProvider implements EmailProvider {
 
     private final MockEmailProvider responses;
 
-    /** 独立账号编码，不作为生产默认配置。 */
+    /** 测试类型，与 NotificationTestMapper 写入的备用账号类型一致。 */
+    public static final String TYPE = "TEST_EMAIL_FALLBACK";
+
+    /** 独立的测试类型，不作为生产默认配置。 */
     @Override
-    public String providerCode() {
-        return "NOTIFICATION_TEST_FALLBACK";
+    public String providerType() {
+        return TYPE;
     }
 
     /** 故意使用不同请求号规则，证明恢复身份由 Provider 生成。 */
@@ -29,13 +33,13 @@ public class FallbackEmailProvider implements EmailProvider {
 
     /** 只消费当前用例为此收件人预置的下一条响应。 */
     @Override
-    public EmailProviderResult send(EmailProviderRequest request) {
-        return responses.send(request);
+    public EmailProviderResult send(NotificationProvider account, EmailProviderRequest request) {
+        return responses.send(account, request);
     }
 
     /** 查询继续使用本账号原请求号。 */
     @Override
-    public EmailProviderResult query(String requestNo, String messageId) {
-        return responses.query(requestNo, messageId);
+    public EmailProviderResult query(NotificationProvider account, String requestNo, String messageId) {
+        return responses.query(account, requestNo, messageId);
     }
 }

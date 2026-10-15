@@ -4,6 +4,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.foundation.common.error.ServiceUnavailableException;
+import com.paytech.platform.support.delivery.core.constant.NotificationProviderTypes;
+import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationProvider;
 import com.paytech.platform.support.delivery.integration.provider.EmailProvider;
 import com.paytech.platform.support.delivery.integration.provider.EmailProviderRequest;
 import com.paytech.platform.support.delivery.integration.provider.EmailProviderResult;
@@ -19,7 +22,7 @@ import software.amazon.awssdk.services.sesv2.model.*;
 /**
  * Amazon SES v2 发送适配器；SES 不支持按我方请求号查询，按至少发一次处理。
  * <li>每次只发一个收件人的纯文本邮件，请求号以 EmailTag 携带，供后续事件回调关联</li>
- * <li>配置 Vault 凭据时在 prepare 中逐次读取，只用于该次请求签名；未配置时使用客户端默认凭据链</li>
+ * <li>账号的区域、发件地址与 Configuration Set 随调用传入；密钥在 prepare 中从 Vault 逐次读取，只用于该次请求签名</li>
  * <li>只返回有界结果码；收件人、正文和 SES 原始错误文字不进入结果、异常或日志</li>
  */
 @RequiredArgsConstructor
@@ -33,16 +36,13 @@ public class SesEmailProvider implements EmailProvider {
         "SignatureDoesNotMatch", "InvalidSignatureException", "IncompleteSignature", "MissingAuthenticationToken",
         "ExpiredTokenException", "AccessDeniedException");
 
-    private final SesV2Client client;
-    private final SesEmailProperties properties;
-
-    /** Vault 凭据读取器；为空时使用客户端默认凭据链。 */
+    private final SesClients clients;
     private final SesCredentialVault credentials;
 
-    /** 发送账号编码来自部署配置。 */
+    /** Amazon SES。 */
     @Override
-    public String providerCode() {
-        return properties.getProviderCode();
+    public String providerType() {
+        return NotificationProviderTypes.AMAZON_SES;
     }
 
     /** SES 没有按客户端请求号查询结果的接口。 */
@@ -59,27 +59,34 @@ public class SesEmailProvider implements EmailProvider {
 
     /** 读取本次凭据后发送；直接调用时同样先读取凭据。 */
     @Override
-    public EmailProviderResult send(EmailProviderRequest request) {
-        return prepare().send(request);
+    public EmailProviderResult send(NotificationProvider account, EmailProviderRequest request) {
+        return prepare(account).send(request);
     }
 
-    /** 事务外从 Vault 读取本次凭据；Vault 不可用或值不合法时抛出，调用方此时尚未登记尝试。 */
+    /**
+     * 事务外从 Vault 读取账号密钥，返回只用于本次的发送器
+     * <li>账号配置不完整、Vault 不可用或值不合法时抛出，调用方此时尚未登记尝试</li>
+     */
     @Override
-    public EmailSender prepare() {
-        AwsCredentialsProvider override = credentials == null ? null : credentials.reveal();
-        return request -> send(request, override);
+    public EmailSender prepare(NotificationProvider account) {
+        if (!account.missingConfiguration().isEmpty()) {
+            throw new ServiceUnavailableException();
+        }
+        AwsCredentialsProvider credential = credentials.reveal(account.getCredentialVaultToken());
+        SesV2Client client = clients.client(account.getRegion());
+        return request -> send(client, sendEmailRequest(account, request, credential));
     }
 
     /**
      * 调用 SendEmail 一次，不重试。
      *
-     * @param request 单收件人纯文本邮件
-     * @param override 本次请求的凭据；为空时使用客户端默认凭据链
+     * @param client 账号区域的客户端
+     * @param request 已带本次凭据的请求
      * @return 受理带 MessageId；SES 明确拒绝按错误类型分类；网络/超时/5xx/缺少 MessageId 为 UNKNOWN
      */
-    EmailProviderResult send(EmailProviderRequest request, AwsCredentialsProvider override) {
+    EmailProviderResult send(SesV2Client client, SendEmailRequest request) {
         try {
-            String messageId = client.sendEmail(sendEmailRequest(request, override)).messageId();
+            String messageId = client.sendEmail(request).messageId();
             if (messageId == null || messageId.isBlank()) {
                 return result(Outcome.UNKNOWN, "SES_RESULT_UNKNOWN");
             }
@@ -94,25 +101,23 @@ public class SesEmailProvider implements EmailProvider {
 
     /** 不支持查询；状态机只在 supportsQuery 为 true 时调用，到达这里说明调用方违反合同。 */
     @Override
-    public EmailProviderResult query(String requestNo, String messageId) {
+    public EmailProviderResult query(NotificationProvider account, String requestNo, String messageId) {
         throw new ErrorException("SES 不支持按原请求查询发送结果");
     }
 
-    /** 构造 SendEmail 请求：单一收件人、UTF-8 纯文本、可选 Configuration Set、请求号标签及本次凭据。 */
-    SendEmailRequest sendEmailRequest(EmailProviderRequest request, AwsCredentialsProvider override) {
+    /** 构造 SendEmail 请求：账号发件地址、单一收件人、UTF-8 纯文本、可选 Configuration Set、请求号标签及本次凭据。 */
+    static SendEmailRequest sendEmailRequest(NotificationProvider account, EmailProviderRequest request,
+        AwsCredentialsProvider credential) {
         String charset = StandardCharsets.UTF_8.name();
         var message = Message.builder().subject(Content.builder().data(request.getSubject()).charset(charset).build())
             .body(Body.builder().text(Content.builder().data(request.getBody()).charset(charset).build()).build())
             .build();
-        var builder = SendEmailRequest.builder().fromEmailAddress(properties.getFromAddress())
+        return SendEmailRequest.builder().fromEmailAddress(account.getFromAddress())
             .destination(Destination.builder().toAddresses(request.getEmail()).build())
             .content(EmailContent.builder().simple(message).build())
-            .configurationSetName(properties.getConfigurationSet())
-            .emailTags(MessageTag.builder().name(REQUEST_NO_TAG).value(request.getRequestNo()).build());
-        if (override != null) {
-            builder.overrideConfiguration(config -> config.credentialsProvider(override));
-        }
-        return builder.build();
+            .configurationSetName(account.getConfigurationSet())
+            .emailTags(MessageTag.builder().name(REQUEST_NO_TAG).value(request.getRequestNo()).build())
+            .overrideConfiguration(config -> config.credentialsProvider(credential)).build();
     }
 
     /**

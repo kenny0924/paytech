@@ -175,9 +175,16 @@
         {
           "providerCode": "SES_PRIMARY",
           "medium": "EMAIL",
+          "providerType": "AMAZON_SES",
           "status": "ACTIVE",
+          "region": "me-central-1",
+          "fromAddress": "no-reply@paytech.example",
+          "configurationSet": null,
+          "credentialConfigured": true,
+          "credentialUpdateTime": "2026-10-15T08:00:00Z",
+          "missingConfiguration": [],
           "adapterConfigured": true,
-          "version": 1,
+          "version": 3,
           "updateTime": "2026-10-15T08:00:00Z",
           "references": [
             {
@@ -282,5 +289,74 @@
       ]
     },
     "routeCode": "operations-notification-n12"
+  },
+  {
+    "id": "N13",
+    "method": "POST",
+    "path": "/notification-admin/v1/providers",
+    "query": "",
+    "request": {
+      "providerCode": "SES_BACKUP",
+      "providerType": "AMAZON_SES",
+      "region": "eu-west-1",
+      "fromAddress": "no-reply@paytech.example",
+      "configurationSet": null,
+      "reason": "新增备用区域账号"
+    },
+    "response": {
+      "code": "SES_BACKUP",
+      "version": 1
+    },
+    "routeCode": "operations-notification-n13"
+  },
+  {
+    "id": "N14",
+    "method": "PUT",
+    "path": "/notification-admin/v1/providers/SES_BACKUP",
+    "query": "",
+    "request": {
+      "region": "eu-west-1",
+      "fromAddress": "ops@paytech.example",
+      "configurationSet": "prod-events",
+      "expectedVersion": 1,
+      "reason": "更换发件地址"
+    },
+    "response": {
+      "code": "SES_BACKUP",
+      "version": 2
+    },
+    "routeCode": "operations-notification-n14"
+  },
+  {
+    "id": "N15",
+    "method": "PUT",
+    "path": "/notification-admin/v1/providers/SES_BACKUP/credential",
+    "query": "",
+    "request": {
+      "accessKeyId": "AKIASYNTHETIC0000001",
+      "secretAccessKey": "SYNTHETIC-SECRET/abc+123",
+      "expectedVersion": 2,
+      "reason": "轮换密钥"
+    },
+    "response": {
+      "code": "SES_BACKUP",
+      "version": 3
+    },
+    "routeCode": "operations-notification-n15"
+  },
+  {
+    "id": "N16",
+    "method": "POST",
+    "path": "/notification-admin/v1/providers/SES_BACKUP/test-send",
+    "query": "",
+    "request": {
+      "email": "ops@paytech.example",
+      "reason": "验证新密钥"
+    },
+    "response": {
+      "outcome": "ACCEPTED",
+      "resultCode": "SES_ACCEPTED"
+    },
+    "routeCode": "operations-notification-n16"
   }
 ]

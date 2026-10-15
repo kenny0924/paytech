@@ -314,6 +314,9 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /notification-admin/v1/template-preview", "PUT /notification-admin/v1/templates/{templateCode}/route",
             "PATCH /notification-admin/v1/templates/{templateCode}/route/status",
             "GET /notification-admin/v1/providers", "PATCH /notification-admin/v1/providers/{providerCode}/status",
+            "POST /notification-admin/v1/providers", "PUT /notification-admin/v1/providers/{providerCode}",
+            "PUT /notification-admin/v1/providers/{providerCode}/credential",
+            "POST /notification-admin/v1/providers/{providerCode}/test-send",
             "GET /notification-admin/v1/requests", "GET /notification-admin/v1/requests/{requestId}"), routes);
 
         Path classes = webModule().resolve("target/classes/com/paytech/operations/console/bff");

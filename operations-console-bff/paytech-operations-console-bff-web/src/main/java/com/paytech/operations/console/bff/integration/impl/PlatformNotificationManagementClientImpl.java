@@ -11,17 +11,22 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.ClientApiContractConverter;
 import com.paytech.operations.console.bff.integration.PlatformNotificationManagementClient;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.ChangeNotificationStatusRequestBody;
+import com.paytech.operations.console.bff.service.model.NotificationManagementModels.CreateNotificationProviderRequestBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.CreateNotificationTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationMutationResponseBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationPreviewResponseBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationProviderSummary;
+import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationProviderTestSendResponseBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationRequestDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationRequestSummary;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationTemplateDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.NotificationTemplateSummary;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.PreviewNotificationContentRequestBody;
+import com.paytech.operations.console.bff.service.model.NotificationManagementModels.ReplaceNotificationCredentialRequestBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.SaveNotificationContentRequestBody;
 import com.paytech.operations.console.bff.service.model.NotificationManagementModels.SaveNotificationRouteRequestBody;
+import com.paytech.operations.console.bff.service.model.NotificationManagementModels.TestSendNotificationProviderRequestBody;
+import com.paytech.operations.console.bff.service.model.NotificationManagementModels.UpdateNotificationProviderRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.platform.support.api.notificationmanagement.NotificationManagementApi;
 
@@ -145,6 +150,49 @@ public class PlatformNotificationManagementClientImpl implements PlatformNotific
             providerCode, platformStatus(request)));
         ClientApiContractConverter.sameIdentity(providerCode, mapped.code());
         return mapped;
+    }
+
+    /** 新建发送账号；返回的编码必须与请求一致。 */
+    @Override
+    public NotificationMutationResponseBody createProvider(OperatorContext context,
+        CreateNotificationProviderRequestBody request) {
+        var mapped = write(request, () -> api.createProvider(context.accountId(), context.sessionId(),
+            convert(request, com.paytech.platform.support.api.notificationmanagement.request.CreateNotificationProviderRequestBody.class)));
+        ClientApiContractConverter.sameIdentity(request.providerCode(), mapped.code());
+        return mapped;
+    }
+
+    /** 修改发送账号。 */
+    @Override
+    public NotificationMutationResponseBody updateProvider(OperatorContext context, String providerCode,
+        UpdateNotificationProviderRequestBody request) {
+        var mapped = write(request, () -> api.updateProvider(context.accountId(), context.sessionId(), providerCode,
+            convert(request, com.paytech.platform.support.api.notificationmanagement.request.UpdateNotificationProviderRequestBody.class)));
+        ClientApiContractConverter.sameIdentity(providerCode, mapped.code());
+        return mapped;
+    }
+
+    /** 录入或更换密钥；密钥只在本次转发的内存中。 */
+    @Override
+    public NotificationMutationResponseBody replaceProviderCredential(OperatorContext context, String providerCode,
+        ReplaceNotificationCredentialRequestBody request) {
+        var mapped = write(request, () -> api.replaceProviderCredential(context.accountId(), context.sessionId(),
+            providerCode, convert(request, com.paytech.platform.support.api.notificationmanagement.request.ReplaceNotificationCredentialRequestBody.class)));
+        ClientApiContractConverter.sameIdentity(providerCode, mapped.code());
+        return mapped;
+    }
+
+    /** 测试发送。 */
+    @Override
+    public NotificationProviderTestSendResponseBody testSendProvider(OperatorContext context, String providerCode,
+        TestSendNotificationProviderRequestBody request) {
+        try {
+            return convert(api.testSendProvider(context.accountId(), context.sessionId(), providerCode,
+                convert(request, com.paytech.platform.support.api.notificationmanagement.request.TestSendNotificationProviderRequestBody.class)),
+                NotificationProviderTestSendResponseBody.class);
+        } catch (HttpRequestValidationException failure) {
+            throw ConfigurationValidationConverter.local(request, failure);
+        }
     }
 
     /** 发送记录分页。 */

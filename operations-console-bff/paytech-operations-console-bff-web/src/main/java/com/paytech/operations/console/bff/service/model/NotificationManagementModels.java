@@ -88,17 +88,32 @@ public final class NotificationManagementModels {
      */
     public record ProviderReferenceItem(String templateCode, String role, String routeStatus) {}
 
-    /** 发送账号列表项。
+    /** 发送账号列表项；不含密钥及其 Token。
      * @param providerCode 账号编码。
      * @param medium 介质。
+     * @param providerType 服务商类型，如 AMAZON_SES。
      * @param status 账号状态。
-     * @param adapterConfigured 本环境是否已配置发送适配器。
+     * @param region 服务商区域，未填写为 null。
+     * @param fromAddress 发件地址，未填写为 null。
+     * @param configurationSet Configuration Set，未配置为 null。
+     * @param credentialConfigured 是否已录入密钥。
+     * @param credentialUpdateTime 最近一次录入或更换密钥的时间，UTC；未录入为 null。
+     * @param missingConfiguration 缺失的发送配置（region、fromAddress、credential），空数组表示配置完整。
+     * @param adapterConfigured 本环境是否注册了该类型的发送适配器。
      * @param version 账号版本。
      * @param updateTime 更新时间，UTC。
      * @param references 引用该账号的路由。
      */
-    public record NotificationProviderSummary(String providerCode, String medium, String status,
-        boolean adapterConfigured, int version, Instant updateTime, List<ProviderReferenceItem> references) {}
+    public record NotificationProviderSummary(String providerCode, String medium, String providerType, String status,
+        String region, String fromAddress, String configurationSet, boolean credentialConfigured,
+        Instant credentialUpdateTime, List<String> missingConfiguration, boolean adapterConfigured, int version,
+        Instant updateTime, List<ProviderReferenceItem> references) {}
+
+    /** 测试发送结果。
+     * @param outcome ACCEPTED、REJECTED 或 UNKNOWN；ACCEPTED 只表示服务商受理。
+     * @param resultCode 有界结果码。
+     */
+    public record NotificationProviderTestSendResponseBody(String outcome, String resultCode) {}
 
     /** 发送记录列表项。
      * @param requestId 请求 ID。
@@ -166,6 +181,70 @@ public final class NotificationManagementModels {
     public record CreateNotificationTemplateRequestBody(
         @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String templateCode,
         @NotBlank @Size(max = 500) String reason) {}
+
+    /** 新建发送账号。
+     * @param providerCode 账号编码，创建后不可改。
+     * @param providerType 服务商类型，本期只有 AMAZON_SES。
+     * @param region 服务商区域，如 me-central-1。
+     * @param fromAddress 发件地址。
+     * @param configurationSet Configuration Set，可空。
+     * @param reason 操作原因。
+     */
+    public record CreateNotificationProviderRequestBody(
+        @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String providerCode,
+        @NotBlank @Pattern(regexp = "AMAZON_SES") String providerType,
+        @NotBlank @Size(max = 32) @Pattern(regexp = "[a-z]{2}(-[a-z]+)+-[0-9]{1,2}") String region,
+        @NotBlank @Size(max = 254) String fromAddress,
+        @Pattern(regexp = "|[A-Za-z0-9_-]{1,64}") String configurationSet,
+        @NotBlank @Size(max = 500) String reason) {}
+
+    /** 修改发送账号的区域、发件地址与 Configuration Set。
+     * @param region 服务商区域。
+     * @param fromAddress 发件地址。
+     * @param configurationSet Configuration Set，可空。
+     * @param expectedVersion 当前版本。
+     * @param reason 操作原因。
+     */
+    public record UpdateNotificationProviderRequestBody(
+        @NotBlank @Size(max = 32) @Pattern(regexp = "[a-z]{2}(-[a-z]+)+-[0-9]{1,2}") String region,
+        @NotBlank @Size(max = 254) String fromAddress,
+        @Pattern(regexp = "|[A-Za-z0-9_-]{1,64}") String configurationSet,
+        @Positive int expectedVersion,
+        @NotBlank @Size(max = 500) String reason) {}
+
+    /** 录入或更换发送账号密钥；字符串形式不含密钥。
+     * @param accessKeyId Access Key ID。
+     * @param secretAccessKey Secret Access Key。
+     * @param expectedVersion 当前版本。
+     * @param reason 操作原因。
+     */
+    public record ReplaceNotificationCredentialRequestBody(
+        @NotBlank @Pattern(regexp = "[A-Z0-9]{16,128}") String accessKeyId,
+        @NotBlank @Pattern(regexp = "[\\x21-\\x7E]{1,128}") String secretAccessKey,
+        @Positive int expectedVersion,
+        @NotBlank @Size(max = 500) String reason) {
+
+        /** 不输出密钥。 */
+        @Override
+        public String toString() {
+            return "ReplaceNotificationCredentialRequestBody[expectedVersion=" + expectedVersion + "]";
+        }
+    }
+
+    /** 发送账号测试发送；字符串形式不含收件邮箱。
+     * @param email 测试收件邮箱。
+     * @param reason 操作原因。
+     */
+    public record TestSendNotificationProviderRequestBody(
+        @NotBlank @Size(max = 254) String email,
+        @NotBlank @Size(max = 500) String reason) {
+
+        /** 不输出收件邮箱。 */
+        @Override
+        public String toString() {
+            return "TestSendNotificationProviderRequestBody";
+        }
+    }
 
     /** 启停模板、路由或发送账号。
      * @param status 目标状态 ACTIVE 或 DISABLED。

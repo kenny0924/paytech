@@ -26,15 +26,22 @@ public class VaultMockController implements VaultHttpService {
     private static final String LOGIN = "PLATFORM_LOGIN_EMAIL_V1";
     private static final String CHANNEL_EXECUTION = "CHANNEL_EXECUTION";
     private static final String NOTIFICATION_DELIVERY = "NOTIFICATION_DELIVERY";
+    private static final String CREDENTIAL = "NOTIFICATION_PROVIDER_CREDENTIAL_V1";
+    private static final String PROVIDER_SETUP = "NOTIFICATION_PROVIDER_SETUP";
 
     private final NotificationVaultMock notification;
     private final LoginEmailVaultMocker login;
     private final ChannelAccountVaultMocker channelAccount;
 
-    /** 只接受本服务的邮箱稳定 Token 用途，其他用途作为意外请求失败。 */
+    /** 只接受本服务的邮箱稳定 Token 与发送账号密钥 REFERENCE 用途，其他用途作为意外请求失败。 */
     @Override
     public ProtectResponse protect(String caller, String key, String requestId, ProtectRequest request) {
-        require(CALLER.equals(caller) && EMAIL.equals(request.dataType()) && "STABLE".equals(request.tokenMode()));
+        require(CALLER.equals(caller));
+        if (PROVIDER_SETUP.equals(request.purpose())) {
+            require(CREDENTIAL.equals(request.dataType()) && "REFERENCE".equals(request.tokenMode()));
+            return new ProtectResponse(notification.protectCredential(key, request.value()));
+        }
+        require(EMAIL.equals(request.dataType()) && "STABLE".equals(request.tokenMode()));
         return switch (request.purpose()) {
             case NOTIFICATION -> new ProtectResponse(notification.protect(request.value()));
             case LOGIN -> new ProtectResponse(login.protect(request.value()));

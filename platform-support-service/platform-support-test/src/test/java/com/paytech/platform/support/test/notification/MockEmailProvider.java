@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.TestComponent;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.paytech.foundation.testsupport.api.Clear;
+import com.paytech.platform.support.delivery.core.dal.dataobject.NotificationProvider;
 import com.paytech.platform.support.delivery.integration.provider.EmailProvider;
 import com.paytech.platform.support.delivery.integration.provider.EmailProviderRequest;
 import com.paytech.platform.support.delivery.integration.provider.EmailProviderResult;
@@ -17,6 +18,9 @@ import com.paytech.platform.support.delivery.integration.provider.EmailProviderR
 @TestComponent
 public class MockEmailProvider implements EmailProvider, Clear {
 
+    /** 测试适配器类型，与 NotificationTestMapper 写入的账号类型一致。 */
+    public static final String TYPE = "TEST_EMAIL";
+
     private final Map<String, Deque<EmailProviderResult>> sends = new HashMap<>();
     private final Map<String, EmailProviderResult> queries = new HashMap<>();
     private final List<EmailProviderRequest> calls = new ArrayList<>();
@@ -24,10 +28,10 @@ public class MockEmailProvider implements EmailProvider, Clear {
     private int unexpected;
     private SendPause nextSendPause;
 
-    /** 此编码只由测试 Fixture 创建，不写入正式初始化 DML。 */
+    /** 测试类型只由测试 Fixture 写入账号表，生产代码与初始化 DML 不出现。 */
     @Override
-    public String providerCode() {
-        return "NOTIFICATION_TEST_EMAIL";
+    public String providerType() {
+        return TYPE;
     }
 
     /** Mock 合同使用稳定原 Attempt 身份作为请求号。 */
@@ -56,7 +60,7 @@ public class MockEmailProvider implements EmailProvider, Clear {
 
     /** 保存仅含合成测试值的瞬时请求记录，并证明发送发生在事务外。 */
     @Override
-    public EmailProviderResult send(EmailProviderRequest request) {
+    public EmailProviderResult send(NotificationProvider account, EmailProviderRequest request) {
         EmailProviderResult result;
         SendPause pause;
         synchronized (this) {
@@ -114,7 +118,7 @@ public class MockEmailProvider implements EmailProvider, Clear {
 
     /** 查询原请求号且不发送邮件。 */
     @Override
-    public synchronized EmailProviderResult query(String requestNo, String messageId) {
+    public synchronized EmailProviderResult query(NotificationProvider account, String requestNo, String messageId) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             unexpected++;
             throw new IllegalStateException("事务内邮件查询");

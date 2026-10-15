@@ -737,13 +737,19 @@ CREATE TABLE `t_notification_provider` (
   `provider_id` BIGINT NOT NULL COMMENT 'Provider 主键。',
   `provider_code` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '唯一编码，标识具体发送账号。',
   `medium` VARCHAR(16) NOT NULL COMMENT 'EMAIL 或 SMS。允许值：EMAIL、SMS。',
+  `provider_type` VARCHAR(32) NOT NULL COMMENT '服务商类型，由发送适配器声明，如 AMAZON_SES；创建后不可改。取值来源：通知发送适配器声明的服务商类型；非固定枚举。',
   `status` VARCHAR(16) NOT NULL COMMENT '启用、停用。允许值：ACTIVE、DISABLED。',
+  `region` VARCHAR(32) NULL COMMENT '服务商区域，如 me-central-1；SES 必填。',
+  `from_address` VARCHAR(254) NULL COMMENT '发件地址，须为该区域已验证身份；SES 必填。',
+  `configuration_set` VARCHAR(64) NULL COMMENT 'SES Configuration Set，可空。',
+  `credential_vault_token` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL COMMENT 'NOTIFICATION_PROVIDER_CREDENTIAL_V1 密钥对的 Vault Token；为空表示未录入；只在发送前以 NOTIFICATION_DELIVERY Reveal，禁止日志与接口返回。',
+  `credential_update_time` DATETIME(6) NULL COMMENT '最近一次录入或更换密钥的 UTC 微秒时间。',
   `version` INT NOT NULL DEFAULT 1 COMMENT '并发更新版本，初始为 1；不是历史修订号。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`provider_id`),
   UNIQUE KEY `uk_notify_provider_code` (`provider_code`) COMMENT '保证业务唯一性：provider_code'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='通知发送账号的当前权威事实；普通 Email 首期，不保存认证秘密或正文快照';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='通知发送账号的当前权威事实；普通 Email 首期，密钥只保存其 Vault Token，不保存认证秘密或正文快照';
 
 CREATE TABLE `t_notification_route` (
   `route_id` BIGINT NOT NULL COMMENT '路由主键。',

@@ -45,14 +45,17 @@ public class NotificationConfigurationServiceImpl implements NotificationConfigu
         return new NotificationRouting(template, route, primary);
     }
 
-    /** 校验实际发送账号和唯一适配器绑定。 */
+    /** 校验实际发送账号启用、配置完整且本环境有唯一该类型适配器。 */
     NotificationProvider requireProvider(long providerId) {
         var provider = providers.find(providerId);
         if (provider == null || provider.getMedium() != NotificationMedium.EMAIL
             || provider.getStatus() != NotificationConfigurationStatus.ACTIVE) {
             throw new BizCheckFailException("邮件发送账号未启用");
         }
-        adapters.require(provider.getProviderCode());
+        if (!provider.missingConfiguration().isEmpty()) {
+            throw new BizCheckFailException("邮件发送账号配置不完整");
+        }
+        adapters.require(provider);
         return provider;
     }
 }

@@ -167,10 +167,10 @@ class SubmitNotificationTest extends NotificationTestBase {
             Arguments.of("账号为短信", (Consumer<NotificationTestMapper>) m -> m.changeProvider(active, sms)));
     }
 
-    /** 账号编码没有对应适配器时失败关闭，不假装受理可执行通知。 */
+    /** 账号类型没有对应适配器时失败关闭，不假装受理可执行通知。 */
     @Test
     void rejectsProviderWithoutAdapter() {
-        mapper.changeProviderCode("NOTIFICATION_TEST_NO_ADAPTER");
+        mapper.changeProviderType("UNREGISTERED_TEST");
         assertThrows(com.paytech.foundation.common.error.ServiceUnavailableException.class,
             () -> processor.process(NotificationRequestBuilder.template()));
         assertEquals(0, mapper.requests());

@@ -284,14 +284,10 @@ notification:
     - CLIENT_EMAIL_VERIFICATION
     - CLIENT_PASSWORD_RESET
   # SES 适配器指向独立 Mock HTTP 服务的 /ses 前缀（SesMockController），真实 SDK 客户端与 SigV4 签名不变。
+  # 账号的区域、发件地址与合成密钥 Token 由 NotificationTestMapper.sesProvider 写入账号表；路由默认仍指向 Mock Provider。
   ses:
     enabled: true
-    provider-code: NOTIFICATION_TEST_SES # 与 NotificationTestMapper.sesProvider 一致；路由默认仍指向 Mock Provider。
-    region: me-central-1
-    from-address: noreply@example.com
-    configuration-set: notification-test
-    endpoint: "${test.mock-http.base-url}/ses" # 运行时由 EnableMockHttpServer 注入；生产为空走区域终端。
-    credential-token: vlt_sesCredentialTokenForLoopbackMock000000 # 合成 Token；Vault Mock 按 NOTIFICATION_DELIVERY 返回合成密钥对，SES Mock 不校验签名。
+    endpoint: "${test.mock-http.base-url}/ses" # 运行时由 EnableMockHttpServer 注入，对全部账号生效；生产为空走区域终端。
     connect-timeout: 1s
     read-timeout: 1s # 生产默认 5s；测试用最小值缩短超时用例。
   # 内部 HTTP 白名单：两个测试调用方共用测试模板（NotificationRequestBuilder 常量），TestMapper 按 notification-test 前缀清理。

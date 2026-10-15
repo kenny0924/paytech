@@ -162,16 +162,11 @@ notification:
   transient-template-codes:
     - CLIENT_EMAIL_VERIFICATION
     - CLIENT_PASSWORD_RESET
-  # Amazon SES 发送账号；需同时启用 notification.enabled。IAM 用户密钥对保存在 Vault（NOTIFICATION_PROVIDER_CREDENTIAL_V1），
-  # 这里只放其 Token，每次发送前以 NOTIFICATION_DELIVERY 用途 Reveal；Token 为空时走 AWS 默认凭据链。
+  # Amazon SES 适配器（类型 AMAZON_SES）；需同时启用 notification.enabled，并配置 VaultClient。
+  # 账号的区域、发件地址、Configuration Set 与密钥在运营后台维护（t_notification_provider，密钥存 Vault），这里只有环境级参数。
   ses:
     enabled: ${NOTIFICATION_SES_ENABLED:false}
-    provider-code: ${NOTIFICATION_SES_PROVIDER_CODE:}
-    region: ${NOTIFICATION_SES_REGION:me-central-1}
-    from-address: ${NOTIFICATION_SES_FROM_ADDRESS:}
-    configuration-set: ${NOTIFICATION_SES_CONFIGURATION_SET:}
-    # endpoint: 可选 HTTPS 终端覆盖（如 VPC 终端），默认区域终端。
-    credential-token: ${NOTIFICATION_SES_CREDENTIAL_TOKEN:}
+    # endpoint: 可选 HTTPS 终端覆盖（如 VPC 终端），对全部账号生效，默认使用账号区域的终端。
     connect-timeout: 2s
     read-timeout: 5s
   # 内部 HTTP 调用方白名单：服务名 → 可用普通邮件模板编码。过渡信任，X-Caller-Service 可伪造，部署须限制私网访问。

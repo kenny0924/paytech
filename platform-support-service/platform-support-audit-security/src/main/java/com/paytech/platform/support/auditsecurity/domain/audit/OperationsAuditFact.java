@@ -132,7 +132,28 @@ public sealed interface OperationsAuditFact permits OperationsAuditFact.Outcome,
         PRIMARY_PROVIDER,
 
         /** 通知路由备用账号编码。 */
-        FALLBACK_PROVIDER
+        FALLBACK_PROVIDER,
+
+        /** 通知发送账号的服务商类型。 */
+        PROVIDER_TYPE,
+
+        /** 通知发送账号的服务商区域。 */
+        REGION,
+
+        /** 通知发送账号的发件地址。 */
+        FROM_ADDRESS,
+
+        /** 通知发送账号的 SES Configuration Set。 */
+        CONFIGURATION_SET,
+
+        /** 通知发送账号密钥：只记 SET / REPLACED，不记录 Token 或密钥。 */
+        CREDENTIAL,
+
+        /** 通知发送账号测试发送的有界结果码。 */
+        TEST_RESULT,
+
+        /** 通知发送账号测试收件邮箱的 SHA-256 摘要。 */
+        TEST_RECIPIENT_DIGEST
     }
 
     /** 集合使用规范化指纹，防止完整子集合突破既有审计属性容量。 */

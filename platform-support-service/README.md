@@ -892,16 +892,17 @@ The approved API and incremental SQL are in [Client API delivery](../requirement
 模块公开入口为 `platform-support-delivery` 的 `SubmitNotificationProcessor.process`；其他内部服务经私网调用 `POST /platform-support/notifications/v1/requests`（`platform-support-api` 的 `NotificationCommandApi`），以 `X-Caller-Service` 识别调用方并按 `notification.http.callers`（服务名 → 可用模板，默认空即全部拒绝）放行，`source_system` 即调用方服务名。这是过渡信任：Header 可伪造，部署必须限制私网访问；Body 上限 1 MB，不经过 Gateway。
 支持一次 1..100 个独立邮箱、默认语言/参数及收件人覆盖、可靠发送和原发送查询；规范化后重复邮箱整单拒绝。
 正式默认 `notification.enabled=false`，没有生产 Mock Provider；开启需显式配置补偿执行、Vault 专用用途授权和账号适配器。
-首个真实账号适配器为 Amazon SES（`notification.ses.*`，默认关闭）：SES 不支持按请求号查询，普通通知按“至少发一次”处理——受理即 `SENT` 完成，结果未知时等待 `notification.unknown-resend-delay`（默认 10m）后在发送次数内重发。
+首个真实账号适配器为 Amazon SES（类型 `AMAZON_SES`，`notification.ses.enabled` 默认关闭）：SES 不支持按请求号查询，普通通知按“至少发一次”处理——受理即 `SENT` 完成，结果未知时等待 `notification.unknown-resend-delay`（默认 10m）后在发送次数内重发。
 单独启用通知需设置 `PLATFORM_SUPPORT_COMPENSATION_ENABLED=true`（默认跟随入驻文件开关），生产周期扫描另配 XXL-Job；SES 侧需已验证发件域名、解除沙箱并授予 `ses:SendEmail`。
-SES 使用 IAM 用户密钥：密钥对保存在 Vault（`NOTIFICATION_PROVIDER_CREDENTIAL_V1`），部署只配置其 Token `NOTIFICATION_SES_CREDENTIAL_TOKEN`，每次发送前以 `NOTIFICATION_DELIVERY` 读取、不缓存；换密钥即换 Token 并重启。
+发送账号是数据：`t_notification_provider` 保存服务商类型、区域、发件地址、Configuration Set 与密钥的 Vault Token（`NOTIFICATION_PROVIDER_CREDENTIAL_V1`），由运营后台维护（`/notification-admin/v1/providers`：新建、编辑、录入 / 更换密钥、测试发送）；适配器按类型注册、按区域复用 SES 客户端，每次发送前以 `NOTIFICATION_DELIVERY` 读取该账号密钥、不缓存，修改即对之后的发送生效，无需重启。部署配置只保留 `notification.ses.enabled`、`endpoint` 与超时；没有默认凭据链。录入密钥需要 Vault 规则 `platform-support-service / PROTECT / NOTIFICATION_PROVIDER_CREDENTIAL_V1 / NOTIFICATION_PROVIDER_SETUP`（[决定](../agent-docs/decisions/2026-10-15-platform-notification-credential-protect.md)）。换密钥流程：AWS 新建第二把密钥 → 页面更换密钥 → 测试发送成功 → AWS 停用旧密钥。
 Operations 通知管理（`/notification-admin/v1`，`NotificationManagementApi`，12 个接口）维护模板、语言内容、路由与账号启停，并只读查询普通通知发送记录；随 `operations.authentication.enabled` 启用，不依赖 `notification.enabled`（Delivery 仓储不再按发送开关装配）。读需要 `NOTIFICATION_READ`、写需要 `NOTIFICATION_MANAGE`；写入带 `expectedVersion` 与原因，同一事务内重检权限、写入并记 `ConfigurationChanged` 审计（正文只记 SHA-256 摘要）；内容按发送规则校验，问题以 422 定位到 `subjectTemplate`/`bodyTemplate`；资源锁 `notification.management.*`（模板、内容、路由按模板编码，账号按账号编码）。发送记录不返回邮箱、Vault Token、参数值与供应商流水号；按时间查询依赖 `idx_notify_request_create_time`（`docs/database/sql/changes/2026-10-15-notification-request-create-time-index.sql`，未执行）；菜单、权限与 Gateway 路由注册见初始化 DML 末尾独立块（未执行）。
-认证邮件走模块入口 `SendTransientEmailProcessor`：只接受 `notification.transient-template-codes` 中的模板，渲染后经主账号发送一次，不写通知表、不登记补偿任务；这些模板不能经普通通知或 HTTP 白名单使用（白名单含即时模板时启动失败）。认证邮件模板、SES 账号 `SES_PRIMARY` 与路由见 `docs/database/sql/platform-support-initial-data.sql` 末尾独立块（未执行），部署需设 `NOTIFICATION_SES_PROVIDER_CODE=SES_PRIMARY`。
+认证邮件走模块入口 `SendTransientEmailProcessor`：只接受 `notification.transient-template-codes` 中的模板，渲染后经主账号发送一次，不写通知表、不登记补偿任务；这些模板不能经普通通知或 HTTP 白名单使用（白名单含即时模板时启动失败）。认证邮件模板、SES 账号 `SES_PRIMARY` 与路由见 `docs/database/sql/platform-support-initial-data.sql` 末尾独立块（未执行），`SES_PRIMARY` 只带区域，发件地址与密钥在运营后台录入后才能发信。
 
 [需求和配置合同](../requirements/20260920/platform-support-Delivery领域规划/technique.md)、
 [SES 接入方案](../requirements/20261014/platform-support-邮件AmazonSES接入/technique.md)、
 [认证邮件接入方案](../requirements/20261015/platform-support-认证邮件接入Delivery/technique.md)、
 [Operations 通知管理方案](../requirements/20261015/operations-console-通知管理/technique.md)、
+[发送账号维护方案](../requirements/20261015/operations-console-通知发送账号维护/technique.md)、
 [建表脚本](../requirements/20260920/platform-support-Delivery领域规划/db/notification-create.sql)、
 [测试说明](platform-support-test/README.md#notification-普通-email)及
 [实际状态](../agent-docs/CURRENT_IMPLEMENTATION.md#platform-delivery-domain-plan-20260920)分别维护对应事实。

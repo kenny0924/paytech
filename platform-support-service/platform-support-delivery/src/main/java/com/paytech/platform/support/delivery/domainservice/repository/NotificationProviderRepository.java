@@ -26,4 +26,14 @@ public interface NotificationProviderRepository {
 
     /** 按原版本和原状态切换启停；成功后同步原对象。 */
     void changeStatus(NotificationProvider item, NotificationConfigurationStatus status, Instant now);
+
+    /** 插入新账号；编码重复由唯一索引拒绝。 */
+    void insert(NotificationProvider item);
+
+    /** 按原版本修改区域、发件地址与 Configuration Set；成功后同步原对象。 */
+    void updateConfiguration(NotificationProvider item, String region, String fromAddress, String configurationSet,
+        Instant now);
+
+    /** 按原版本替换密钥 Token；成功后同步原对象。 */
+    void replaceCredential(NotificationProvider item, String token, Instant now);
 }

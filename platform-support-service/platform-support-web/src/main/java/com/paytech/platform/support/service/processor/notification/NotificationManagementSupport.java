@@ -44,6 +44,33 @@ public class NotificationManagementSupport {
     private final NotificationManagementProperties properties;
     private final OperationsManagementPolicyService policy;
 
+    /** 事务外步骤之前的鉴权：只读事务内重检会话与权限，不绑定审计。 */
+    void requirePermission(String actor, String session, String permission) {
+        precheck(actor, session, permission, () -> null);
+    }
+
+    /**
+     * 事务外步骤之前的检查：只读事务内重检会话、权限并执行查询
+     * <li>审计只绑定本请求最后的写事务，本检查事务不登记审计，避免一次请求混合两个审计事务</li>
+     *
+     * @param permission 所需权限
+     */
+    <T> T precheck(String actor, String session, String permission, Supplier<T> query) {
+        return readOnly().execute(status -> {
+            policy.requirePermission(actor, session, permission);
+            return query.get();
+        });
+    }
+
+    /** 只读、可重复读、15 秒超时的事务模板。 */
+    TransactionTemplate readOnly() {
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        transaction.setReadOnly(true);
+        transaction.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+        transaction.setTimeout(15);
+        return transaction;
+    }
+
     /** 模板及其语言内容、路由共用一把锁，避免启用模板与修改内容、路由交叉。 */
     static String templateLockKey(String templateCode) {
         return "notification-template:" + templateCode;
@@ -70,44 +97,46 @@ public class NotificationManagementSupport {
      * @param permission 所需权限
      */
     <T> T read(String actor, String session, String permission, Supplier<T> query) {
-        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
-        transaction.setReadOnly(true);
-        transaction.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-        transaction.setTimeout(15);
-        return transaction.execute(status -> {
+        return readOnly().execute(status -> {
             audit.observeTransaction();
             policy.requirePermission(actor, session, permission);
             return query.get();
         });
     }
 
+    /** 以维护权限写入，见带权限参数的重载。 */
+    NotificationConfigurationChange write(String actor, String session, String targetType, String targetCode,
+        String reason, Function<Instant, NotificationConfigurationChange> write) {
+        return write(actor, session, NotificationManagementPermissions.MANAGE, targetType, targetCode, reason, write);
+    }
+
     /**
-     * 写入：同一事务内重检管理权限、调用 Delivery 写入并记录配置审计
+     * 写入：同一事务内重检所需权限、调用 Delivery 写入并记录配置审计
      *
+     * @param permission 所需权限
      * @param targetType 审计对象类型
      * @param targetCode 审计对象编码
      * @param write 以本次写入时间执行 Delivery 写入，返回字段差异
      * @return Delivery 写入结果
      */
-    NotificationConfigurationChange write(String actor, String session, String targetType, String targetCode,
-        String reason, Function<Instant, NotificationConfigurationChange> write) {
+    NotificationConfigurationChange write(String actor, String session, String permission, String targetType,
+        String targetCode, String reason, Function<Instant, NotificationConfigurationChange> write) {
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         transaction.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
         transaction.setTimeout(15);
         try {
-            return transaction.execute(status -> writeWithinTransaction(actor, session, targetType, targetCode,
-                reason, write));
+            return transaction.execute(status -> writeWithinTransaction(actor, session, permission, targetType,
+                targetCode, reason, write));
         } catch (ConcurrencyFailureException failure) {
             throw new ConcurrentRequestException("发生并发修改，请刷新后重试", failure);
         }
     }
 
     /** 授权、写入与审计事实；审计在写入成功后冻结差异。 */
-    NotificationConfigurationChange writeWithinTransaction(String actor, String session, String targetType,
-        String targetCode, String reason, Function<Instant, NotificationConfigurationChange> write) {
+    NotificationConfigurationChange writeWithinTransaction(String actor, String session, String permission,
+        String targetType, String targetCode, String reason, Function<Instant, NotificationConfigurationChange> write) {
         audit.observeTransaction();
-        var context = policy.authorizeManagement(actor, session, null, List.of(), null, null, false,
-            NotificationManagementPermissions.MANAGE);
+        var context = policy.authorizeManagement(actor, session, null, List.of(), null, null, false, permission);
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         NotificationConfigurationChange change = write.apply(now);
         var fact = new ConfigurationChanged(new Identity(actor, context.member().tenantId()),

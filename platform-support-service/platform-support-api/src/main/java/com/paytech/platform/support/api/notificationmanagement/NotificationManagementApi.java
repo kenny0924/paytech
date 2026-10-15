@@ -12,13 +12,18 @@ import org.springframework.web.service.annotation.PutExchange;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.request.ChangeNotificationStatusRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.CreateNotificationProviderRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.CreateNotificationTemplateRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.PreviewNotificationContentRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.ReplaceNotificationCredentialRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.SaveNotificationContentRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.SaveNotificationRouteRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.TestSendNotificationProviderRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.UpdateNotificationProviderRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationMutationResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationPreviewResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationProviderResponseBody;
+import com.paytech.platform.support.api.notificationmanagement.response.NotificationProviderTestSendResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationRequestDetailResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationRequestSummaryResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationTemplateDetailResponseBody;
@@ -28,7 +33,8 @@ import jakarta.validation.Valid;
 
 /**
  * Operations 维护通知模板、语言内容、路由与发送账号，查询普通通知发送记录
- * <li>每次调用重检普通 Operations 会话；读需要 NOTIFICATION_READ，写需要 NOTIFICATION_MANAGE</li>
+ * <li>每次调用重检普通 Operations 会话；读需要 NOTIFICATION_READ，写需要 NOTIFICATION_MANAGE，
+ * 发送账号密钥与测试发送需要 NOTIFICATION_CREDENTIAL_MANAGE</li>
  * <li>写请求带 expectedVersion 与 reason，版本不符返回 409，每次写入记 Platform 审计；请求幂等归 Gateway</li>
  * <li>修改立即作用于之后的发送；不提供删除</li>
  */
@@ -157,7 +163,7 @@ public interface NotificationManagementApi {
      * @param session 当前普通 Operations 会话
      * @param page 页码，默认 1
      * @param size 每页条数，默认 10，仅允许 10、20、50、100
-     * @return 账号列表，不含发件地址、区域与凭据
+     * @return 账号列表，含区域、发件地址与配置完整情况，不含密钥
      */
     @GetExchange("/providers")
     PagingResponseBody<NotificationProviderResponseBody> providers(
@@ -167,7 +173,64 @@ public interface NotificationManagementApi {
         @RequestParam(value = "size", required = false) Integer size);
 
     /**
-     * 启用或停用发送账号；不检查引用，停用后引用它的路由将无法发送
+     * 新建停用状态的发送账号
+     *
+     * @param actor 可信 Operations 账号标识
+     * @param session 当前普通 Operations 会话
+     * @param request 编码、类型、区域、发件地址、Configuration Set 与原因；编码已存在返回 400
+     * @return 账号编码与版本 1
+     */
+    @PostExchange("/providers")
+    NotificationMutationResponseBody createProvider(@RequestHeader("X-Gateway-Actor-Subject") String actor,
+        @RequestHeader("X-Gateway-Session-Id") String session,
+        @Valid @RequestBody CreateNotificationProviderRequestBody request);
+
+    /**
+     * 修改发送账号的区域、发件地址与 Configuration Set；立即作用于之后的发送
+     *
+     * @param actor 可信 Operations 账号标识
+     * @param session 当前普通 Operations 会话
+     * @param providerCode 精确账号编码，不存在返回 404
+     * @param request 新配置、当前版本与原因
+     * @return 账号编码与新版本
+     */
+    @PutExchange("/providers/{providerCode}")
+    NotificationMutationResponseBody updateProvider(@RequestHeader("X-Gateway-Actor-Subject") String actor,
+        @RequestHeader("X-Gateway-Session-Id") String session, @PathVariable("providerCode") String providerCode,
+        @Valid @RequestBody UpdateNotificationProviderRequestBody request);
+
+    /**
+     * 录入或更换发送账号的密钥；密钥存入 Vault，账号只保存其 Token
+     * <li>Vault 不可用或未授权返回 503，账号不变；任何响应、日志与审计都不含密钥与 Token</li>
+     *
+     * @param actor 可信 Operations 账号标识
+     * @param session 当前普通 Operations 会话
+     * @param providerCode 精确账号编码，不存在返回 404
+     * @param request 密钥对、当前版本与原因
+     * @return 账号编码与新版本
+     */
+    @PutExchange("/providers/{providerCode}/credential")
+    NotificationMutationResponseBody replaceProviderCredential(@RequestHeader("X-Gateway-Actor-Subject") String actor,
+        @RequestHeader("X-Gateway-Session-Id") String session, @PathVariable("providerCode") String providerCode,
+        @Valid @RequestBody ReplaceNotificationCredentialRequestBody request);
+
+    /**
+     * 用指定账号向一个邮箱发送固定内容的测试邮件；不生成发送记录，只记审计
+     * <li>账号无需启用，但配置须完整；本环境未开启发送或未启用该服务商返回 503</li>
+     *
+     * @param actor 可信 Operations 账号标识
+     * @param session 当前普通 Operations 会话
+     * @param providerCode 精确账号编码，不存在返回 404
+     * @param request 收件邮箱与原因
+     * @return 服务商结果分类与结果码
+     */
+    @PostExchange("/providers/{providerCode}/test-send")
+    NotificationProviderTestSendResponseBody testSendProvider(@RequestHeader("X-Gateway-Actor-Subject") String actor,
+        @RequestHeader("X-Gateway-Session-Id") String session, @PathVariable("providerCode") String providerCode,
+        @Valid @RequestBody TestSendNotificationProviderRequestBody request);
+
+    /**
+     * 启用或停用发送账号；启用要求配置完整，不检查引用，停用后引用它的路由将无法发送
      *
      * @param actor 可信 Operations 账号标识
      * @param session 当前普通 Operations 会话

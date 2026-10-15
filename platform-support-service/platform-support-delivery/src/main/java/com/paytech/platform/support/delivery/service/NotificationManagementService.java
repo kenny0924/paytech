@@ -14,7 +14,9 @@ import com.paytech.platform.support.delivery.domain.NotificationProviderView;
 import com.paytech.platform.support.delivery.domain.NotificationTemplateDetailView;
 import com.paytech.platform.support.delivery.domain.NotificationTemplateIssue;
 import com.paytech.platform.support.delivery.domain.NotificationTemplateSummary;
+import com.paytech.platform.support.delivery.domain.ReplaceNotificationCredentialCommand;
 import com.paytech.platform.support.delivery.domain.SaveNotificationContentCommand;
+import com.paytech.platform.support.delivery.domain.SaveNotificationProviderCommand;
 import com.paytech.platform.support.delivery.domain.SaveNotificationRouteCommand;
 
 /**
@@ -64,6 +66,30 @@ public interface NotificationManagementService {
     /** 按编码升序分页查询发送账号及其路由引用。 */
     PagingResponseBody<NotificationProviderView> providers(PagingRequestBody paging);
 
-    /** 启停发送账号；不检查引用，由调用方提示影响。 */
+    /** 启停发送账号；启用时要求配置完整，不检查引用，由调用方提示影响。 */
     NotificationConfigurationChange changeProviderStatus(ChangeNotificationStatusCommand command);
+
+    /** 新建停用状态的发送账号；编码已存在或类型不可新建时拒绝。 */
+    NotificationConfigurationChange createProvider(SaveNotificationProviderCommand command);
+
+    /** 按版本修改账号的区域、发件地址与 Configuration Set；类型与编码不可改。 */
+    NotificationConfigurationChange updateProvider(SaveNotificationProviderCommand command);
+
+    /**
+     * 更换密钥前检查账号存在且版本一致
+     *
+     * @return 账号身份，供调用方生成 Vault 幂等键
+     */
+    long requireCredentialReplaceable(String providerCode, int expectedVersion);
+
+    /** 以已存入 Vault 的新 Token 替换密钥；审计只记 SET 或 REPLACED。 */
+    NotificationConfigurationChange replaceCredential(ReplaceNotificationCredentialCommand command);
+
+    /**
+     * 测试发送的审计差异，不修改账号
+     *
+     * @param recipient 已规范化的测试收件邮箱，审计只记摘要
+     * @param resultCode 有界结果码
+     */
+    NotificationConfigurationChange testSendRecord(String providerCode, String recipient, String resultCode);
 }

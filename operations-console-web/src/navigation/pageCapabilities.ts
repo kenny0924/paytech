@@ -363,6 +363,14 @@ export const pageCapabilities = [
       {
         "resourceCode": "OPERATIONS_NOTIFICATION_PROVIDER_MANAGE",
         "displayName": "启停账号"
+      },
+      {
+        "resourceCode": "OPERATIONS_NOTIFICATION_PROVIDER_EDIT",
+        "displayName": "维护账号"
+      },
+      {
+        "resourceCode": "OPERATIONS_NOTIFICATION_PROVIDER_CREDENTIAL",
+        "displayName": "密钥与测试发送"
       }
     ]
   },

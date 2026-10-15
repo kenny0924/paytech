@@ -15,15 +15,20 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.platform.support.accesscontrol.domain.apimanagement.ClientApiManagementInputs;
 import com.paytech.platform.support.accesscontrol.domain.configurationmanagement.ConfigurationInputs;
 import com.paytech.platform.support.api.notificationmanagement.request.ChangeNotificationStatusRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.CreateNotificationProviderRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.CreateNotificationTemplateRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.PreviewNotificationContentRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.ReplaceNotificationCredentialRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.SaveNotificationContentRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.request.SaveNotificationRouteRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.TestSendNotificationProviderRequestBody;
+import com.paytech.platform.support.api.notificationmanagement.request.UpdateNotificationProviderRequestBody;
 import com.paytech.platform.support.api.notificationmanagement.response.AttemptItem;
 import com.paytech.platform.support.api.notificationmanagement.response.DeliveryItem;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationMutationResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationPreviewResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationProviderResponseBody;
+import com.paytech.platform.support.api.notificationmanagement.response.NotificationProviderTestSendResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationRequestDetailResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationRequestSummaryResponseBody;
 import com.paytech.platform.support.api.notificationmanagement.response.NotificationTemplateDetailResponseBody;
@@ -44,6 +49,7 @@ import com.paytech.platform.support.delivery.domain.NotificationRequestFilter;
 import com.paytech.platform.support.delivery.domain.NotificationRequestSummaryView;
 import com.paytech.platform.support.delivery.domain.NotificationTemplateDetailView;
 import com.paytech.platform.support.delivery.domain.NotificationTemplateSummary;
+import com.paytech.platform.support.delivery.service.processor.response.SendProviderTestEmailResponse;
 import com.paytech.platform.support.service.processor.notification.request.ChangeNotificationStatusRequest;
 import com.paytech.platform.support.service.processor.notification.request.CreateNotificationTemplateRequest;
 import com.paytech.platform.support.service.processor.notification.request.GetNotificationRequestRequest;
@@ -52,8 +58,11 @@ import com.paytech.platform.support.service.processor.notification.request.ListN
 import com.paytech.platform.support.service.processor.notification.request.ListNotificationRequestsRequest;
 import com.paytech.platform.support.service.processor.notification.request.ListNotificationTemplatesRequest;
 import com.paytech.platform.support.service.processor.notification.request.PreviewNotificationContentRequest;
+import com.paytech.platform.support.service.processor.notification.request.ReplaceNotificationCredentialRequest;
 import com.paytech.platform.support.service.processor.notification.request.SaveNotificationContentRequest;
+import com.paytech.platform.support.service.processor.notification.request.SaveNotificationProviderRequest;
 import com.paytech.platform.support.service.processor.notification.request.SaveNotificationRouteRequest;
+import com.paytech.platform.support.service.processor.notification.request.TestSendNotificationProviderRequest;
 
 /** 通知管理的协议解析与投影；不访问数据库，ID 按十进制字符串输出。 */
 @Component
@@ -176,13 +185,56 @@ public class NotificationManagementConverter {
             preview.getMissingParameters());
     }
 
-    /** 账号投影，不含发件地址、区域与凭据。 */
+    /** 账号投影，不含密钥 Token。 */
     public NotificationProviderResponseBody toProvider(NotificationProviderView view) {
         var references = view.getReferences().stream().map(r -> new ProviderReferenceItem(r.getTemplateCode(),
             r.getRole(), r.getRouteStatus().getCode())).toList();
         return new NotificationProviderResponseBody(view.getProviderCode(), view.getMedium().getCode(),
-            view.getStatus().getCode(), view.isAdapterConfigured(), view.getVersion(), view.getUpdateTime(),
+            view.getProviderType(), view.getStatus().getCode(), view.getRegion(), view.getFromAddress(),
+            view.getConfigurationSet(), view.isCredentialConfigured(), view.getCredentialUpdateTime(),
+            view.getMissingConfiguration(), view.isAdapterConfigured(), view.getVersion(), view.getUpdateTime(),
             references);
+    }
+
+    /** 新建账号；编码按配置编码规则校验，其余字段已由 Body 注解约束。 */
+    public SaveNotificationProviderRequest toCreateProviderRequest(String actor, String session,
+        CreateNotificationProviderRequestBody body) {
+        return new SaveNotificationProviderRequest(actor, session, ConfigurationInputs.code(body.getProviderCode(), 64),
+            body.getProviderType(), body.getRegion(), body.getFromAddress(), body.getConfigurationSet(), 0,
+            ConfigurationInputs.text(body.getReason(), 500, "reason"));
+    }
+
+    /** 修改账号；类型不可改。 */
+    public SaveNotificationProviderRequest toUpdateProviderRequest(String actor, String session, String providerCode,
+        UpdateNotificationProviderRequestBody body) {
+        return new SaveNotificationProviderRequest(actor, session, ConfigurationInputs.code(providerCode, 64), null,
+            body.getRegion(), body.getFromAddress(), body.getConfigurationSet(), body.getExpectedVersion(),
+            ConfigurationInputs.text(body.getReason(), 500, "reason"));
+    }
+
+    /** 录入或更换密钥。 */
+    public ReplaceNotificationCredentialRequest toCredentialRequest(String actor, String session,
+        String providerCode, ReplaceNotificationCredentialRequestBody body) {
+        return new ReplaceNotificationCredentialRequest(actor, session, ConfigurationInputs.code(providerCode, 64),
+            body.getAccessKeyId(), body.getSecretAccessKey(), body.getExpectedVersion(),
+            ConfigurationInputs.text(body.getReason(), 500, "reason"));
+    }
+
+    /** 测试发送。 */
+    public TestSendNotificationProviderRequest toTestSendRequest(String actor, String session, String providerCode,
+        TestSendNotificationProviderRequestBody body) {
+        return new TestSendNotificationProviderRequest(actor, session, ConfigurationInputs.code(providerCode, 64),
+            body.getEmail(), ConfigurationInputs.text(body.getReason(), 500, "reason"));
+    }
+
+    /** 测试发送结果：服务商分类归并为已受理、被拒绝与未知三类。 */
+    public NotificationProviderTestSendResponseBody toTestSend(SendProviderTestEmailResponse response) {
+        String outcome = switch (response.getOutcome()) {
+            case ACCEPTED, DELIVERED -> "ACCEPTED";
+            case RETRYABLE_REJECTED, REJECTED, UNDELIVERABLE -> "REJECTED";
+            case UNKNOWN -> "UNKNOWN";
+        };
+        return new NotificationProviderTestSendResponseBody(outcome, response.getCode());
     }
 
     /** 记录列表投影；状态计数键为投递状态编码。 */

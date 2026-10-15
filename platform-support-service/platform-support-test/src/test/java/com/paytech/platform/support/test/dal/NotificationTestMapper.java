@@ -27,7 +27,8 @@ public interface NotificationTestMapper {
                     OR template_id IN (890001,890011,890012))
              + (SELECT COUNT(*) FROM t_notification_template WHERE template_code LIKE 'NOTIFICATION!_ADMIN!_%' ESCAPE '!')
              + (SELECT COUNT(*) FROM t_notification_provider WHERE provider_id IN (890004,890006,890007,890008)
-                    OR provider_code IN ('NOTIFICATION_TEST_EMAIL','NOTIFICATION_TEST_FALLBACK','NOTIFICATION_TEST_SES','NOTIFICATION_ADMIN_UNBOUND'))
+                    OR provider_code IN ('NOTIFICATION_TEST_EMAIL','NOTIFICATION_TEST_FALLBACK','NOTIFICATION_TEST_SES')
+                    OR provider_code LIKE 'NOTIFICATION!_ADMIN!_%' ESCAPE '!')
              + (SELECT COUNT(*) FROM t_notification_route WHERE route_id IN (890005,890015,890016)
                     OR notification_template_id IN (890001,890011,890012))
         """)
@@ -46,8 +47,8 @@ public interface NotificationTestMapper {
     void contents(@Param("subjectZh") String subjectZh, @Param("bodyZh") String bodyZh,
         @Param("subjectEn") String subjectEn, @Param("bodyEn") String bodyEn);
 
-    /** 插入当前测试账号和路由。 */
-    @Insert("INSERT INTO t_notification_provider VALUES(890004,'NOTIFICATION_TEST_EMAIL','EMAIL','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")
+    /** 插入当前测试账号：测试类型、配置完整（合成 Token，测试适配器不读取）。 */
+    @Insert("INSERT INTO t_notification_provider(provider_id,provider_code,medium,provider_type,status,region,from_address,configuration_set,credential_vault_token,credential_update_time,version,create_time,update_time) VALUES(890004,'NOTIFICATION_TEST_EMAIL','EMAIL','TEST_EMAIL','ACTIVE','me-central-1','noreply@example.com',NULL,'vlt_testEmailCredentialTokenForLoopback0000',UTC_TIMESTAMP(6),1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")
     void provider();
 
     /** 路由仅指向测试账号，没有真实外发。 */
@@ -55,20 +56,24 @@ public interface NotificationTestMapper {
     void route();
 
     /** 当前用例额外配置一个不同请求号协议的备用账号。 */
-    @Insert("INSERT INTO t_notification_provider VALUES(890006,'NOTIFICATION_TEST_FALLBACK','EMAIL','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")
+    @Insert("INSERT INTO t_notification_provider(provider_id,provider_code,medium,provider_type,status,region,from_address,configuration_set,credential_vault_token,credential_update_time,version,create_time,update_time) VALUES(890006,'NOTIFICATION_TEST_FALLBACK','EMAIL','TEST_EMAIL_FALLBACK','ACTIVE','me-central-1','noreply@example.com',NULL,'vlt_testFallbackCredentialTokenForLoopback0',UTC_TIMESTAMP(6),1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")
     void fallbackProvider();
 
     /** 模拟管理员设置主备路由。 */
     @Update("UPDATE t_notification_route SET fallback_provider_id=890006,version=version+1 WHERE route_id=890005")
     void useFallback();
 
-    /** 插入 SES 测试账号；编码与 application-mock.yml 的 notification.ses.provider-code 一致。 */
-    @Insert("INSERT INTO t_notification_provider VALUES(890007,'NOTIFICATION_TEST_SES','EMAIL','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")
+    /** 插入 SES 测试账号；合成 Token 由 Vault Mock 按 NOTIFICATION_DELIVERY 返回合成密钥对。 */
+    @Insert("INSERT INTO t_notification_provider(provider_id,provider_code,medium,provider_type,status,region,from_address,configuration_set,credential_vault_token,credential_update_time,version,create_time,update_time) VALUES(890007,'NOTIFICATION_TEST_SES','EMAIL','AMAZON_SES','ACTIVE','me-central-1','noreply@example.com','notification-test','vlt_sesCredentialTokenForLoopbackMock000000',UTC_TIMESTAMP(6),1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")
     void sesProvider();
 
     /** 模拟管理员把主账号切换为 SES。 */
     @Update("UPDATE t_notification_route SET primary_provider_id=890007,version=version+1 WHERE route_id=890005")
     void useSes();
+
+    /** 模拟 SES 测试账号的密钥被移除（配置不完整）。 */
+    @Update("UPDATE t_notification_provider SET credential_vault_token=NULL,version=version+1 WHERE provider_id=890007")
+    void clearSesCredential();
 
     /** 插入两个认证即时发送模板；编码与 application-mock.yml 的 notification.transient-template-codes 一致。 */
     @Insert("""
@@ -178,9 +183,9 @@ public interface NotificationTestMapper {
     @Update("UPDATE t_notification_provider SET status=#{status},medium=#{medium},version=version+1 WHERE provider_id=890004")
     void changeProvider(@Param("status") String status, @Param("medium") String medium);
 
-    /** 模拟账号编码改为没有适配器的值。 */
-    @Update("UPDATE t_notification_provider SET provider_code=#{code},version=version+1 WHERE provider_id=890004")
-    void changeProviderCode(@Param("code") String code);
+    /** 把测试账号改为本环境没有适配器的服务商类型。 */
+    @Update("UPDATE t_notification_provider SET provider_type=#{type},version=version+1 WHERE provider_id=890004")
+    void changeProviderType(@Param("type") String type);
 
     /** 停用当前账号仍允许查询历史尝试。 */
     @Update("UPDATE t_notification_provider SET status='DISABLED',version=version+1 WHERE provider_id=890004")
@@ -206,8 +211,8 @@ public interface NotificationTestMapper {
     @Delete("DELETE FROM t_notification_route WHERE route_id IN (890005,890015,890016) OR notification_template_id IN (890001,890011,890012)")
     void clearRoute();
 
-    /** 清理本例账号。 */
-    @Delete("DELETE FROM t_notification_provider WHERE provider_id IN (890004,890006,890007,890008)")
+    /** 清理本例账号及管理接口新建的账号。 */
+    @Delete("DELETE FROM t_notification_provider WHERE provider_id IN (890004,890006,890007,890008) OR provider_code LIKE 'NOTIFICATION!_ADMIN!_%' ESCAPE '!'")
     void clearProvider();
 
     /** 清理本例语言内容。 */
@@ -218,8 +223,8 @@ public interface NotificationTestMapper {
     @Delete("DELETE FROM t_notification_template WHERE template_id IN (890001,890011,890012)")
     void clearTemplate();
 
-    /** 没有发送适配器的停用账号，供"本环境已配置"为否的展示。 */
-    @Insert("INSERT INTO t_notification_provider VALUES(890008,'NOTIFICATION_ADMIN_UNBOUND','EMAIL','DISABLED',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")
+    /** 未注册类型、配置不完整的停用账号，供"适配器未注册""配置不完整"的展示。 */
+    @Insert("INSERT INTO t_notification_provider(provider_id,provider_code,medium,provider_type,status,region,from_address,configuration_set,credential_vault_token,credential_update_time,version,create_time,update_time) VALUES(890008,'NOTIFICATION_ADMIN_UNBOUND','EMAIL','UNREGISTERED_TEST','DISABLED',NULL,NULL,NULL,NULL,NULL,1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")
     void unboundProvider();
 
     /** 一条普通通知发送记录：默认参数含 name、amount，两个收件人；邮箱只有合成 Token。 */
@@ -266,8 +271,11 @@ public interface NotificationTestMapper {
         """)
     Map<String, Object> routeState(@Param("code") String code);
 
-    /** 当前账号状态与版本。 */
-    @Select("SELECT status, version FROM t_notification_provider WHERE provider_code=#{code}")
+    /** 当前账号状态、版本与配置。 */
+    @Select("""
+        SELECT status, version, provider_type, region, from_address, configuration_set, credential_vault_token,
+               credential_update_time FROM t_notification_provider WHERE provider_code=#{code}
+        """)
     Map<String, Object> providerState(@Param("code") String code);
 
     /** 清理管理接口新建模板的语言内容。 */
