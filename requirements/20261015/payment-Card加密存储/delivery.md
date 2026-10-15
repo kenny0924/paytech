@@ -26,6 +26,7 @@
 | 2026-10-15 | 4 | “继续” | 进入阶段 5；本机 Vault 注册未获单独授权，不做真实 Vault 联调 |
 | 2026-10-15 | 5 | “要做，要提交”（真实 Vault 联调、提交） | 本机 Vault 注册被会话的自动权限检查拦截，注册脚本交用户执行；先本地提交本需求范围的改动 |
 | 2026-10-15 | 5 | “继续执行” | 执行本机 Vault 注册脚本并联调，结果补记后再次本地提交 |
+| 2026-10-15 | 5 | “做1”（整应用与真实 Vault 联调） | 本机启动 Payment 联调，结果补记后本地提交 |
 
 ## 当前阶段与下一确认点
 
@@ -96,7 +97,8 @@
 | Payment `./mvnw -o verify`（阶段 4 末次） | 108/108 通过；本机库与 Redis 无残留 |
 | `npm --prefix requirements-site test` | 137 项：128 通过、9 失败。9 项失败与本需求开始前的基线（同一工作区更早一次运行）名称完全一致，涉及 Commerce、Gateway、台账快照、测试规范等，与本需求无关 |
 | 本机 Vault 注册 | 经用户授权，以管理接口在本机 Vault（127.0.0.1:18107）新建数据类型 `PAYMENT_CARD_DEK`（REFERENCE、SECRET、人工加解密关闭）与两条访问规则（Protect/`CARD_STORAGE`、Reveal/`CARD_USE`），策略版本 8 → 11；未触碰 mor-test |
-| 真实 Vault 联调 | 以 `payment-orchestration-service` 身份按 `CardKeyClientImpl` 的参数直接调用 Vault Protect/Reveal 一把随机测试 DEK，7 项全部通过：Protect 200；Token 为 43 位 Base64URL（与 `dek_vault_token CHAR(43)` 一致）；同幂等键重放返回同一 Token；`CARD_USE` Reveal 取回原 32 字节 DEK；Reveal 用 `CARD_STORAGE`、Protect 用 `CARD_USE` 均 403 `ACCESS_DENIED`；另一把 DEK 得到不同 Token。未整应用启动（本机缺 Nacos 账号），Java `VaultClient` 到真实 Vault 的链路未覆盖，该链路由 `auto` 测试经 Vault 测试 HTTP 服务验证。联调留下 2 条测试 DEK 记录（Vault 不提供删除） |
+| 真实 Vault 联调 | 以 `payment-orchestration-service` 身份按 `CardKeyClientImpl` 的参数直接调用 Vault Protect/Reveal 一把随机测试 DEK，7 项全部通过：Protect 200；Token 为 43 位 Base64URL（与 `dek_vault_token CHAR(43)` 一致）；同幂等键重放返回同一 Token；`CARD_USE` Reveal 取回原 32 字节 DEK；Reveal 用 `CARD_STORAGE`、Protect 用 `CARD_USE` 均 403 `ACCESS_DENIED`；另一把 DEK 得到不同 Token。联调留下测试 DEK 记录（Vault 不提供删除） |
+| 整应用联调 | 本机启动 Payment 可执行 JAR（关闭 Nacos，Vault 经 simple discovery 指向 127.0.0.1:18107，数据库为当前结构的测试库 `mor_payment_channel_test` 与测试账号，指纹密钥为本次随机值），经真实 HTTP 入口：两个 Intent 用同一张公开测试卡申请、原提交重放、第三个 Intent 换有效期，均 200，重放返回原 Token。落库：卡 1（BIN `41111111`、后四位 `1111`、Token 43 位、卡号密文 47 字节且不含明文）、凭证 2（不含持卡人明文）、交易工具 3、Redis CVV 3。Vault 审计：本次 Payment 产生 Protect/`CARD_STORAGE` 1 次、Reveal/`CARD_USE` 2 次，重放未访问 Vault。Payment 日志无 ERROR，不含卡号与持卡人。结束后停止应用并清空本次写入的测试库行与 Redis CVV。读卡接口需 pay 链路（Risk、Platform）未在此覆盖，其 Reveal 路径与申请共用同一 `CardKeyClient` |
 | Redis 不可用分支 | 未验证：共享本地环境中不能停 Redis |
 | 进程重启后读卡 | 未单独测试：Card 没有进程内状态，读卡只依赖数据库、Vault、Redis |
 
