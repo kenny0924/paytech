@@ -8,6 +8,7 @@ import java.util.Arrays;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.restclient.autoconfigure.RestClientAutoConfiguration;
@@ -23,8 +24,11 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import com.paytech.vault.client.VaultClient;
+import com.paytech.vault.client.admin.VaultAdminClient;
 import com.paytech.vault.client.internal.BoundedResponseBody;
+import com.paytech.vault.client.internal.DefaultVaultAdminClient;
 import com.paytech.vault.client.internal.DefaultVaultClient;
+import com.paytech.vault.client.internal.VaultAdminHttpService;
 import com.paytech.vault.client.internal.VaultHttpService;
 import com.paytech.vault.client.internal.VaultRequestHeaders;
 
@@ -103,6 +107,7 @@ public class VaultClientAutoConfiguration {
             headers.remove("X-Caller-Service");
             headers.remove("Idempotency-Key");
             headers.remove("X-Request-Id");
+            headers.remove("X-Operator-Id");
         });
         builder.configureMessageConverters(converters -> converters.disableDefaults()
             .withJsonConverter(new JacksonJsonHttpMessageConverter(JsonMapper.builder().build())));
@@ -127,14 +132,36 @@ public class VaultClientAutoConfiguration {
         RestClient.Builder managedBuilder, ObjectProvider<LoadBalancerClient> loadBalancer,
         @Qualifier("vaultClientHttpTransport") HttpClient transport) {
         String caller = resolveCaller(properties, environment);
+        var service = createService(VaultHttpService.class, caller, properties, environment, managedBuilder,
+            loadBalancer, transport);
+        return new DefaultVaultClient(caller, service);
+    }
+
+    /**
+     * 管理接口客户端，仅在 {@code vault.client.admin-enabled=true} 时创建（Operations BFF）；
+     * 与业务客户端共用同一套调用者、目标、超时、有界读取与错误转换约束。
+     */
+    @Bean
+    @ConditionalOnBooleanProperty("vault.client.admin-enabled")
+    VaultAdminClient vaultAdminClient(VaultClientProperties properties, Environment environment,
+        RestClient.Builder managedBuilder, ObjectProvider<LoadBalancerClient> loadBalancer,
+        @Qualifier("vaultClientHttpTransport") HttpClient transport) {
+        String caller = resolveCaller(properties, environment);
+        return new DefaultVaultAdminClient(createService(VaultAdminHttpService.class, caller, properties, environment,
+            managedBuilder, loadBalancer, transport));
+    }
+
+    /** 按 Vault 安全传输约束构建指定 HTTP 契约的代理。 */
+    private static <T> T createService(Class<T> type, String caller, VaultClientProperties properties,
+        Environment environment, RestClient.Builder managedBuilder, ObjectProvider<LoadBalancerClient> loadBalancer,
+        HttpClient transport) {
         String baseUrl = resolveBaseUrl(properties, environment);
         var requestHeaders = new VaultRequestHeaders(caller);
         RestClient.Builder builder = createClientBuilder(managedBuilder, transport, properties.readTimeout(), baseUrl);
         configureProtocol(builder);
         configureInterceptors(builder, requestHeaders, properties, loadBalancer);
-        var service = HttpServiceProxyFactory.builderFor(RestClientAdapter.create(builder.build()))
-            .customArgumentResolver(requestHeaders).build().createClient(VaultHttpService.class);
-        return new DefaultVaultClient(caller, service);
+        return HttpServiceProxyFactory.builderFor(RestClientAdapter.create(builder.build()))
+            .customArgumentResolver(requestHeaders).build().createClient(type);
     }
 
     private static IllegalArgumentException invalidConfiguration() {

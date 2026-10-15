@@ -89,6 +89,8 @@ func (m *memoryStore) InTransaction(ctx context.Context, fn func(biz.TxStore) er
 }
 
 type memoryTx struct {
+	// PolicyTxRepository 未实现：用例测试不涉及策略维护，误调用即 panic。
+	biz.PolicyTxRepository
 	records  map[int64]biz.Record
 	requests map[string]biz.ProtectRequest
 	events   []biz.AccessEvent
@@ -206,11 +208,33 @@ func (k *keyBoundary) observeTransaction() {
 }
 func testPolicy(t *testing.T, reference, stable, caller string) biz.Authorizer {
 	t.Helper()
-	p, err := policy.Load(bytes.NewBufferString(fmt.Sprintf(`{"policyVersion":"test-v1","dataTypes":{"%s":{"tokenMode":"REFERENCE"},"%s":{"tokenMode":"STABLE"}},"rules":[{"callerService":"%s","action":"PROTECT","dataType":"%s","purposes":["TEST","OTHER"]},{"callerService":"%s","action":"PROTECT","dataType":"%s","purposes":["TEST","OTHER"]},{"callerService":"%s","action":"REVEAL","dataType":"%s","purposes":["TEST"]},{"callerService":"%s","action":"REVEAL","dataType":"%s","purposes":["TEST"]},{"callerService":"other-service","action":"PROTECT","dataType":"%s","purposes":["TEST"]}]}`, reference, stable, caller, reference, caller, stable, caller, reference, caller, stable, stable)))
-	if err != nil {
-		t.Fatal(err)
+	return buildPolicy(
+		map[string]biz.TokenMode{reference: biz.Reference, stable: biz.Stable},
+		rule(caller, biz.ProtectAction, reference, "TEST", "OTHER"), rule(caller, biz.ProtectAction, stable, "TEST", "OTHER"),
+		rule(caller, biz.RevealAction, reference, "TEST"), rule(caller, biz.RevealAction, stable, "TEST"),
+		rule("other-service", biz.ProtectAction, stable, "TEST"),
+	)
+}
+
+// buildPolicy 按数据类型与规则组装策略快照（版本 1）。
+func buildPolicy(types map[string]biz.TokenMode, rules ...[]biz.AccessRule) biz.Authorizer {
+	state := biz.PolicyState{Version: 1}
+	for code, mode := range types {
+		state.DataTypes = append(state.DataTypes, biz.DataType{Code: code, TokenMode: mode, Class: biz.StandardClass, Status: biz.ActiveStatus})
 	}
-	return p
+	for _, group := range rules {
+		state.Rules = append(state.Rules, group...)
+	}
+	return policy.Build(state)
+}
+
+// rule 生成一组同调用方、动作、数据类型的规则，每个用途一条。
+func rule(caller string, action biz.Action, dataType string, purposes ...string) []biz.AccessRule {
+	var rules []biz.AccessRule
+	for _, purpose := range purposes {
+		rules = append(rules, biz.AccessRule{Caller: caller, Action: action, DataTypeCode: dataType, Purpose: purpose, Status: biz.ActiveStatus})
+	}
+	return rules
 }
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
@@ -265,7 +289,7 @@ func TestReferenceReplayConflictAndAudit(t *testing.T) {
 		t.Fatal("atomic replay/conflict cardinalities differ")
 	}
 	for i, e := range f.store.events {
-		if e.RequestID != fmt.Sprintf("request-%d", i+1) || e.RecordID == nil || e.PolicyVersion == nil || *e.PolicyVersion != "test-v1" || e.TraceID == nil || e.DataType == nil || e.Purpose == nil || e.Action != biz.ProtectAction {
+		if e.RequestID != fmt.Sprintf("request-%d", i+1) || e.RecordID == nil || e.PolicyVersion == nil || *e.PolicyVersion != "db-1" || e.TraceID == nil || e.DataType == nil || e.Purpose == nil || e.Action != biz.ProtectAction {
 			t.Fatal("incomplete audit projection")
 		}
 	}
@@ -623,10 +647,7 @@ func TestSameStableValueDifferentDataTypeDoesNotConverge(t *testing.T) {
 	f := newFixture(t)
 	in := input(biz.Stable)
 	token := protect(t, f, attempt(1), in)
-	p, err := policy.Load(bytes.NewBufferString(`{"policyVersion":"test-v1","dataTypes":{"SECOND_STABLE":{"tokenMode":"STABLE"}},"rules":[{"callerService":"test-service","action":"PROTECT","dataType":"SECOND_STABLE","purposes":["TEST"]}]}`))
-	if err != nil {
-		t.Fatal(err)
-	}
+	p := buildPolicy(map[string]biz.TokenMode{"SECOND_STABLE": biz.Stable}, rule("test-service", biz.ProtectAction, "SECOND_STABLE", "TEST"))
 	ids := &sequenceIDs{}
 	ids.value.Store(1000)
 	s := newTestService(f.store, f.keys, ids, p, bytes.NewReader(bytes.Repeat([]byte{99}, 128)), time.Now)

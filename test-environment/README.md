@@ -42,7 +42,7 @@ POST /vault/v1/records/reveal
 ```
 
 本次只部署 Vault，不替换 Platform 的 Vault Mock、不接生产 KMS、不发布 Java Client 到制品库。
-当前 [test policy](vault/policy.json)（`test-deployment-v2`）保留 `vault-test-smoke` / `vault-test-peer` 的合成测试值；
+访问策略只从数据库读取（初始化 [dml-test.sql](../requirements/20261014/operations-console-Vault数据类型与手动加解密/db/vault/dml-test.sql)，需单独授权执行）；[policy.json](vault/policy.json)（`test-deployment-v2`）仅作转写来源，不再被读取。该策略保留 `vault-test-smoke` / `vault-test-peer` 的合成测试值；
 `TEST_STABLE_V1` / `TEST_REFERENCE_V1` 不是业务数据类型。2026-10-14 客户入驻发布另授权 `EMAIL_ADDRESS_V1`、`PHONE_E164_V1`（STABLE）：
 Platform 登录邮箱 `PLATFORM_LOGIN_EMAIL_V1`，CCT 申请联系人 `CLIENT_ONBOARDING_CONTACT`，各含 PROTECT/REVEAL。
 
@@ -53,8 +53,10 @@ Platform 登录邮箱 `PLATFORM_LOGIN_EMAIL_V1`，CCT 申请联系人 `CLIENT_ON
 python3 test-environment/scripts/vault.py prepare
 
 # 显式操作员动作：先审阅 vault-service/docs/database/sql/vault-schema.sql。
-# 仅空 mor-test/mor_vault 应用三条 CREATE TABLE；已有三表不重放，部分结构拒绝。
+# 仅空 mor-test/mor_vault 应用六条 CREATE TABLE；已有表不重放，部分结构拒绝。
 python3 test-environment/scripts/vault.py initialize
+# 已有三表的 mor-test 升级：先单独授权执行该需求的 db/vault/ddl.sql，再执行 dml-test.sql；
+# 空库初始化后同样须执行 dml-test.sql，否则 Vault 无访问规则，smoke 的 Protect 全部被拒绝。
 
 GO_BIN=/path/to/prepared/go1.27.1/bin/go ./test-environment/scripts/build-vault.sh
 ./test-environment/compose.sh up -d --no-deps --no-build --wait --wait-timeout 90 vault-service

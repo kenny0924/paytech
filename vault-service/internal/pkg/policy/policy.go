@@ -1,147 +1,155 @@
+// Package policy 提供 biz.Authorizer 的实现：从数据库读取的策略快照，按固定间隔全量刷新。
+//
+// 快照只包含 ACTIVE 数据类型与引用 ACTIVE 数据类型的 ACTIVE 规则；刷新失败时保留上一份快照。
 package policy
 
 import (
-	"encoding/json/v2"
-	"io"
-	"regexp"
+	"context"
+	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/paytech/vault-service/internal/biz"
 )
 
-const maxPolicyBytes = 1 << 20
+// Loader 一致性读取当前策略，由 data.Store 实现。
+type Loader interface {
+	LoadPolicy(ctx context.Context) (biz.PolicyState, error)
+}
 
-var (
-	callerPattern  = regexp.MustCompile(`^[a-z][a-z0-9-]{0,127}$`)
-	codePattern    = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,63}$`)
-	versionPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
-)
-
-type Policy struct {
+// Snapshot 是某一时刻编译好的不可变策略。
+type Snapshot struct {
 	version   string
-	dataTypes map[string]biz.TokenMode
+	dataTypes map[string]biz.DataType
 	decisions map[decisionKey]struct{}
 }
 
 type decisionKey struct {
-	Caller   string
-	Action   biz.Action
-	DataType string
-	Purpose  string
+	caller   string
+	action   biz.Action
+	dataType string
+	purpose  string
 }
 
-type policyDocument struct {
-	PolicyVersion string                    `json:"policyVersion"`
-	DataTypes     map[string]dataTypePolicy `json:"dataTypes"`
-	Rules         []rule                    `json:"rules"`
-}
-
-type dataTypePolicy struct {
-	TokenMode biz.TokenMode `json:"tokenMode"`
-}
-
-type rule struct {
-	CallerService string     `json:"callerService"`
-	Action        biz.Action `json:"action"`
-	DataType      string     `json:"dataType"`
-	Purposes      []string   `json:"purposes"`
-}
-
-func Load(reader io.Reader) (*Policy, error) {
-	if reader == nil {
-		return nil, loadError()
+// Build 由数据库状态编译快照；忽略引用了非 ACTIVE 数据类型的规则。
+func Build(state biz.PolicyState) *Snapshot {
+	s := &Snapshot{
+		version:   biz.PolicyVersionLabel(state.Version),
+		dataTypes: make(map[string]biz.DataType, len(state.DataTypes)),
+		decisions: make(map[decisionKey]struct{}, len(state.Rules)),
 	}
-	raw, err := io.ReadAll(io.LimitReader(reader, maxPolicyBytes+1))
-	if err != nil || len(raw) > maxPolicyBytes {
-		return nil, loadError()
+	for _, dataType := range state.DataTypes {
+		if dataType.Status == biz.ActiveStatus {
+			s.dataTypes[dataType.Code] = dataType
+		}
 	}
-	// encoding/json/v2 默认区分大小写、拒绝重复键（含 dataTypes 动态键）、非法 UTF-8 与尾随内容；
-	// RejectUnknownMembers 拒绝固定结构中的未知字段。
-	var document policyDocument
-	if json.Unmarshal(raw, &document, json.RejectUnknownMembers(true)) != nil {
-		return nil, loadError()
+	for _, rule := range state.Rules {
+		if _, ok := s.dataTypes[rule.DataTypeCode]; ok && rule.Status == biz.ActiveStatus {
+			s.decisions[decisionKey{rule.Caller, rule.Action, rule.DataTypeCode, rule.Purpose}] = struct{}{}
+		}
 	}
-	return compile(document)
+	return s
 }
 
-func (p *Policy) DataTypeMode(dataType string) (biz.TokenMode, bool) {
-	if p == nil {
-		return "", false
-	}
-	mode, ok := p.dataTypes[dataType]
-	return mode, ok
+// DataTypeMode 返回 ACTIVE 数据类型的 Token 模式。
+func (s *Snapshot) DataTypeMode(dataType string) (biz.TokenMode, bool) {
+	d, ok := s.dataTypes[dataType]
+	return d.TokenMode, ok
 }
 
-func (p *Policy) Authorize(caller string, action biz.Action, dataType, purpose string) bool {
-	if p == nil {
-		return false
-	}
-	_, ok := p.decisions[decisionKey{caller, action, dataType, purpose}]
+// Authorize 判断服务访问规则是否允许。
+func (s *Snapshot) Authorize(caller string, action biz.Action, dataType, purpose string) bool {
+	_, ok := s.decisions[decisionKey{caller, action, dataType, purpose}]
 	return ok
 }
 
-func (p *Policy) Version() string {
-	if p == nil {
-		return ""
-	}
-	return p.version
+// Version 返回快照对应的策略版本标识。
+func (s *Snapshot) Version() string { return s.version }
+
+// DataType 返回 ACTIVE 数据类型。
+func (s *Snapshot) DataType(code string) (biz.DataType, bool) {
+	d, ok := s.dataTypes[code]
+	return d, ok
 }
 
-func compile(document policyDocument) (*Policy, error) {
-	if !versionPattern.MatchString(document.PolicyVersion) || len(document.DataTypes) == 0 || document.Rules == nil {
-		return nil, loadError()
-	}
-	compiled := &Policy{
-		version:   document.PolicyVersion,
-		dataTypes: make(map[string]biz.TokenMode, len(document.DataTypes)),
-		decisions: make(map[decisionKey]struct{}),
-	}
-	if err := compiled.compileDataTypes(document.DataTypes); err != nil {
-		return nil, err
-	}
-	for _, rule := range document.Rules {
-		if err := compiled.addRuleDecisions(rule); err != nil {
-			return nil, err
-		}
-	}
-	return compiled, nil
+// Refresher 持有当前快照并定时全量刷新；对外以 biz.Authorizer 使用。
+type Refresher struct {
+	loader   Loader
+	interval time.Duration
+	onError  func()
+	current  atomic.Pointer[Snapshot]
+	stop     chan struct{}
+	done     chan struct{}
+	once     sync.Once
 }
 
-func (p *Policy) compileDataTypes(definitions map[string]dataTypePolicy) error {
-	for dataType, definition := range definitions {
-		if !codePattern.MatchString(dataType) || !validTokenMode(definition.TokenMode) {
-			return loadError()
-		}
-		p.dataTypes[dataType] = definition.TokenMode
+// NewRefresher 创建刷新器；onError 在刷新失败时调用（只记录固定诊断，不含原因）。
+func NewRefresher(loader Loader, interval time.Duration, onError func()) *Refresher {
+	return &Refresher{loader: loader, interval: interval, onError: onError, stop: make(chan struct{}), done: make(chan struct{})}
+}
+
+// Start 同步加载一次（失败即返回错误，调用方应拒绝启动），然后在后台定时刷新。
+func (r *Refresher) Start(ctx context.Context) error {
+	if err := r.Refresh(ctx); err != nil {
+		return err
 	}
+	go r.loop()
 	return nil
 }
 
-func (p *Policy) addRuleDecisions(rule rule) error {
-	if !callerPattern.MatchString(rule.CallerService) || !validAction(rule.Action) || !codePattern.MatchString(rule.DataType) || len(rule.Purposes) == 0 {
-		return loadError()
+// Refresh 立即全量读取并替换快照；失败时保留上一份快照。
+func (r *Refresher) Refresh(ctx context.Context) error {
+	state, err := r.loader.LoadPolicy(ctx)
+	if err != nil {
+		return biz.NewError(biz.DependencyUnavailable)
 	}
-	if _, exists := p.dataTypes[rule.DataType]; !exists {
-		return loadError()
-	}
-	for _, purpose := range rule.Purposes {
-		if !codePattern.MatchString(purpose) {
-			return loadError()
-		}
-		key := decisionKey{rule.CallerService, rule.Action, rule.DataType, purpose}
-		if _, duplicate := p.decisions[key]; duplicate {
-			return loadError()
-		}
-		p.decisions[key] = struct{}{}
-	}
+	r.current.Store(Build(state))
 	return nil
 }
 
-func validAction(action biz.Action) bool {
-	return action == biz.ProtectAction || action == biz.RevealAction
+// Close 停止后台刷新并等待其退出。
+func (r *Refresher) Close() {
+	r.once.Do(func() { close(r.stop) })
+	<-r.done
 }
 
-func validTokenMode(mode biz.TokenMode) bool {
-	return mode == biz.Reference || mode == biz.Stable
+func (r *Refresher) loop() {
+	defer close(r.done)
+	ticker := time.NewTicker(r.interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-r.stop:
+			return
+		case <-ticker.C:
+			ctx, cancel := context.WithTimeout(context.Background(), r.interval)
+			if r.Refresh(ctx) != nil && r.onError != nil {
+				r.onError()
+			}
+			cancel()
+		}
+	}
 }
 
-func loadError() error { return biz.NewError(biz.InternalError) }
+func (r *Refresher) snapshot() *Snapshot {
+	if s := r.current.Load(); s != nil {
+		return s
+	}
+	return Build(biz.PolicyState{})
+}
+
+// DataTypeMode 委托当前快照。
+func (r *Refresher) DataTypeMode(dataType string) (biz.TokenMode, bool) {
+	return r.snapshot().DataTypeMode(dataType)
+}
+
+// Authorize 委托当前快照。
+func (r *Refresher) Authorize(caller string, action biz.Action, dataType, purpose string) bool {
+	return r.snapshot().Authorize(caller, action, dataType, purpose)
+}
+
+// Version 委托当前快照。
+func (r *Refresher) Version() string { return r.snapshot().Version() }
+
+// DataType 委托当前快照。
+func (r *Refresher) DataType(code string) (biz.DataType, bool) { return r.snapshot().DataType(code) }

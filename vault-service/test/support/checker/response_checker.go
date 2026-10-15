@@ -87,6 +87,14 @@ func (c *ResponseChecker) RevealedValue(want string) *ResponseChecker {
 	return c
 }
 
+// JSON 断言 200 并把正文解码到 target。
+func (c *ResponseChecker) JSON(target any) *ResponseChecker {
+	c.t.Helper()
+	c.Success()
+	require.NoError(c.t, json.Unmarshal(c.Body, target), "响应不是 JSON：%s", c.Body)
+	return c
+}
+
 // BodyContains 断言响应正文包含片段（用于非 JSON 的指标端点）。
 func (c *ResponseChecker) BodyContains(fragment string) *ResponseChecker {
 	c.t.Helper()

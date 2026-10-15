@@ -34,12 +34,21 @@ func (r *RevealUsecase) Process(ctx context.Context, a Attempt, in RevealInput) 
 	}
 	p.RecordID = &record.ID
 	p.DataType = &record.DataType
-	allowed := r.policy.Authorize(a.Caller, RevealAction, record.DataType, in.Purpose)
+	allowed := r.allowed(a, record, in)
 	withPolicyVersion(&p, r.policy)
 	if !allowed {
 		return RevealResult{}, r.audit.RecordFailure(ctx, p, NewError(AccessDenied))
 	}
 	return r.reveal(ctx, p, record)
+}
+
+// allowed 服务调用按访问规则授权；人工操作按数据类型开关与数据级别授权（类型停用即拒绝）。
+func (r *RevealUsecase) allowed(a Attempt, record Record, in RevealInput) bool {
+	if a.Manual == nil {
+		return r.policy.Authorize(a.Caller, RevealAction, record.DataType, in.Purpose)
+	}
+	dataType, ok := r.policy.DataType(record.DataType)
+	return ok && dataType.ManualReveal && a.Manual.Allows(dataType.Class)
 }
 
 // reveal 解密并先写成功审计；任一步失败都清零明文。
@@ -53,5 +62,5 @@ func (r *RevealUsecase) reveal(ctx context.Context, p AuditProjection, record Re
 		Wipe(plaintext)
 		return RevealResult{}, err
 	}
-	return RevealResult{Value: plaintext}, nil
+	return RevealResult{Value: plaintext, DataType: record.DataType}, nil
 }

@@ -19,7 +19,7 @@ class VaultClientSafetyTest {
                 new ProtectRequest("EMAIL_ADDRESS_V1", "STABLE", VALUE, "CHECKOUT_CONTACT"),
                 new ProtectResponse(TOKEN), new RevealRequest(TOKEN, "CHECKOUT_CONTACT"), new RevealResponse(VALUE),
                 new ErrorResponse("INVALID_REQUEST", VALUE, KEY, TOKEN),
-                new com.paytech.vault.client.autoconfigure.VaultClientProperties(VALUE, TOKEN, null, null, KEY)};
+                new com.paytech.vault.client.autoconfigure.VaultClientProperties(VALUE, TOKEN, null, null, KEY, false)};
         for (Object value : values) {
             assertThat(value.toString()).doesNotContain(TOKEN, VALUE, KEY);
         }

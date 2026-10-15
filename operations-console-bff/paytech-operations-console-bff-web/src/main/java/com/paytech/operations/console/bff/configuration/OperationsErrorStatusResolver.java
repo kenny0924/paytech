@@ -25,6 +25,14 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 default -> HttpStatus.CONFLICT;
             };
         }
+        if (errorCode instanceof com.paytech.vault.client.VaultClientErrorCode vault) {
+            return switch (vault) {
+                case ACCESS_DENIED -> HttpStatus.FORBIDDEN;
+                case TOKEN_NOT_FOUND, POLICY_ENTRY_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case IDEMPOTENCY_KEY_CONFLICT, POLICY_VERSION_CONFLICT, POLICY_ENTRY_EXISTS -> HttpStatus.CONFLICT;
+                default -> defaultStatus;
+            };
+        }
         if (errorCode instanceof OperationsBffErrorCode browserCode) {
             return switch (browserCode) {
                 case ORIGIN_REJECTED -> HttpStatus.FORBIDDEN;

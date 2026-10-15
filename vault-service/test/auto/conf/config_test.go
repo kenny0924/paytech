@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/paytech/vault-service/internal/biz"
 	"github.com/paytech/vault-service/internal/conf"
@@ -15,6 +16,9 @@ func TestLoadParsesApprovedEnvironment(t *testing.T) {
 	got, err := conf.Load(env.Get)
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
+	}
+	if len(got.AdminCallers) != 1 || got.AdminCallers[0] != "operations-console-bff" || got.PolicyRefreshInterval != 10*time.Second {
+		t.Fatalf("Load() admin/refresh defaults = %v %v", got.AdminCallers, got.PolicyRefreshInterval)
 	}
 	if got.HTTPAddress != "127.0.0.1:18107" || got.Nacos.Group != "DEFAULT_GROUP" {
 		t.Fatalf("Load() defaults = %#v", got)
@@ -42,7 +46,11 @@ func TestLoadRejectsInvalidRequiredConfiguration(t *testing.T) {
 		mutate func(environment)
 	}{
 		{"missing DSN", func(env environment) { delete(env, "VAULT_DB_DSN") }},
-		{"missing policy", func(env environment) { delete(env, "VAULT_POLICY_FILE") }},
+		{"empty admin callers", func(env environment) { env["VAULT_ADMIN_CALLERS"] = "," }},
+		{"invalid admin caller", func(env environment) { env["VAULT_ADMIN_CALLERS"] = "operations-console-bff,BAD" }},
+		{"refresh interval too short", func(env environment) { env["VAULT_POLICY_REFRESH_INTERVAL"] = "10ms" }},
+		{"refresh interval too long", func(env environment) { env["VAULT_POLICY_REFRESH_INTERVAL"] = "6m" }},
+		{"invalid refresh interval", func(env environment) { env["VAULT_POLICY_REFRESH_INTERVAL"] = "soon" }},
 		{"missing root key", func(env environment) { delete(env, "VAULT_LOCAL_AES_ROOT_KEY") }},
 		{"invalid base64 root key", func(env environment) { env["VAULT_LOCAL_AES_ROOT_KEY"] = "***" }},
 		{"short root key", func(env environment) {
@@ -216,7 +224,6 @@ func validEnvironment(runtimeMode string) environment {
 	return environment{
 		"VAULT_RUNTIME_MODE":            runtimeMode,
 		"VAULT_DB_DSN":                  "vault:password@tcp(127.0.0.1:3306)/vault",
-		"VAULT_POLICY_FILE":             "/safe/policy.json",
 		"VAULT_LOCAL_AES_ROOT_KEY":      base64.StdEncoding.EncodeToString(make([]byte, 32)),
 		"VAULT_LOCAL_AES_KEY_ID":        "local-key-1",
 		"VAULT_SNOWFLAKE_DATACENTER_ID": "0",

@@ -17,19 +17,22 @@ type schemaContract struct {
 	checks        int
 }
 
-func TestSchemaMatchesApprovedThreeTableContract(t *testing.T) {
+func TestSchemaMatchesApprovedContract(t *testing.T) {
 	schema := loadSchema(t, "../../docs/database/sql/vault-schema.sql")
 	assertContract(t, schema, schemaContract{
-		tables:        3,
-		fields:        30,
-		uniqueIndexes: 3,
-		accessIndexes: 4,
+		tables:        6,
+		fields:        64,
+		uniqueIndexes: 6,
+		accessIndexes: 7,
 		foreignKeys:   2,
 		checks:        4,
 	})
 	assertTableColumns(t, schema, "t_vault_record", 11)
 	assertTableColumns(t, schema, "t_vault_protect_request", 7)
-	assertTableColumns(t, schema, "t_vault_access_event", 12)
+	assertTableColumns(t, schema, "t_vault_access_event", 15)
+	assertTableColumns(t, schema, "t_vault_data_type", 11)
+	assertTableColumns(t, schema, "t_vault_access_rule", 9)
+	assertTableColumns(t, schema, "t_vault_policy_change", 11)
 	assertContains(t, schema,
 		"UNIQUE KEY uk_vault_record_token (token)",
 		"UNIQUE KEY uk_vault_record_stable (data_type, value_fingerprint)",
@@ -38,6 +41,12 @@ func TestSchemaMatchesApprovedThreeTableContract(t *testing.T) {
 		"KEY idx_vault_access_record (record_id, create_time)",
 		"KEY idx_vault_access_caller (caller_service, create_time)",
 		"KEY idx_vault_access_request (request_id)",
+		"KEY idx_vault_access_actor (actor_id, create_time)",
+		"UNIQUE KEY uk_vault_data_type_code (data_type_code)",
+		"UNIQUE KEY uk_vault_access_rule (caller_service, action, data_type_code, purpose_code)",
+		"KEY idx_vault_access_rule_type (data_type_code)",
+		"UNIQUE KEY uk_vault_policy_version (policy_version_no)",
+		"KEY idx_vault_policy_change_target (target_type, target_key, create_time)",
 		"CONSTRAINT fk_vault_protect_record FOREIGN KEY (record_id)",
 		"CONSTRAINT fk_vault_access_record FOREIGN KEY (record_id)",
 		"CONSTRAINT ck_vault_record_mode CHECK (token_mode IN ('REFERENCE','STABLE'))",
@@ -47,8 +56,8 @@ func TestSchemaMatchesApprovedThreeTableContract(t *testing.T) {
 		"ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 		"CHARACTER SET ascii COLLATE ascii_bin",
 	)
-	if actual := strings.Count(schema, "CHARACTER SET ascii COLLATE ascii_bin"); actual != 12 {
-		t.Fatalf("ascii_bin machine identifier columns = %d, want 12", actual)
+	if actual := strings.Count(schema, "CHARACTER SET ascii COLLATE ascii_bin"); actual != 28 {
+		t.Fatalf("ascii_bin machine identifier columns = %d, want 28", actual)
 	}
 }
 
@@ -86,7 +95,7 @@ func assertTableColumns(t *testing.T, schema, tableName string, want int) {
 	fields := 0
 	for _, line := range strings.Split(matches[1], "\n") {
 		trimmed := strings.TrimSpace(line)
-		if regexp.MustCompile(`^[a-z][a-z0-9_]* (BIGINT|VARCHAR|BINARY|BLOB|DATETIME)`).MatchString(trimmed) {
+		if regexp.MustCompile(`^[a-z][a-z0-9_]* (BIGINT|VARCHAR|BINARY|BLOB|DATETIME|TINYINT|INT|JSON)`).MatchString(trimmed) {
 			fields++
 		}
 	}
@@ -97,7 +106,7 @@ func assertTableColumns(t *testing.T, schema, tableName string, want int) {
 
 func countFields(schema string) int {
 	count := 0
-	for _, tableName := range []string{"t_vault_record", "t_vault_protect_request", "t_vault_access_event"} {
+	for _, tableName := range []string{"t_vault_record", "t_vault_protect_request", "t_vault_access_event", "t_vault_data_type", "t_vault_access_rule", "t_vault_policy_change"} {
 		pattern := regexp.MustCompile(`(?s)CREATE TABLE ` + regexp.QuoteMeta(tableName) + ` \((.*?)\) ENGINE=InnoDB`)
 		matches := pattern.FindStringSubmatch(schema)
 		if len(matches) != 2 {
@@ -105,7 +114,7 @@ func countFields(schema string) int {
 		}
 		for _, line := range strings.Split(matches[1], "\n") {
 			trimmed := strings.TrimSpace(line)
-			if regexp.MustCompile(`^[a-z][a-z0-9_]* (BIGINT|VARCHAR|BINARY|BLOB|DATETIME)`).MatchString(trimmed) {
+			if regexp.MustCompile(`^[a-z][a-z0-9_]* (BIGINT|VARCHAR|BINARY|BLOB|DATETIME|TINYINT|INT|JSON)`).MatchString(trimmed) {
 				count++
 			}
 		}

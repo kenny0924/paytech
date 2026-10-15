@@ -17,10 +17,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *            必填读取超时，大于零且不超过 30 秒；正亚毫秒值向上取整
  * @param baseUrl
  *            仅 test/unittest Profile 可显式配置的私有 HTTP 根地址，不得同时显式配置 service-id
+ * @param adminEnabled
+ *            是否创建 VaultAdminClient；默认 false，只有 Vault 的管理调用方（Operations BFF）开启
  */
 @ConfigurationProperties("vault.client")
 public record VaultClientProperties(String callerService, String serviceId, Duration connectTimeout,
-                                    Duration readTimeout, String baseUrl) {
+                                    Duration readTimeout, String baseUrl, boolean adminEnabled) {
     @Override
     public String toString() {
         return "VaultClientProperties[redacted]";

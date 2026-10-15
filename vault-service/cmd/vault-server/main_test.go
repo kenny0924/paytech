@@ -222,5 +222,5 @@ func TestRunCleanupBoundsBlockingCloseWithRemainingDeadline(t *testing.T) {
 }
 
 func testConfigValues(address string) map[string]string {
-	return map[string]string{"VAULT_RUNTIME_MODE": "test", "VAULT_HTTP_ADDRESS": address, "VAULT_DB_DSN": "TEST-DSN-CANARY", "VAULT_POLICY_FILE": "unused", "VAULT_LOCAL_AES_ROOT_KEY": base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{7}, 32)), "VAULT_LOCAL_AES_KEY_ID": "test", "VAULT_SNOWFLAKE_DATACENTER_ID": "31", "VAULT_SNOWFLAKE_WORKER_ID": "29", "VAULT_NACOS_ENABLED": "false", "OTEL_TRACES_EXPORTER": "none"}
+	return map[string]string{"VAULT_RUNTIME_MODE": "test", "VAULT_HTTP_ADDRESS": address, "VAULT_DB_DSN": "TEST-DSN-CANARY", "VAULT_LOCAL_AES_ROOT_KEY": base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{7}, 32)), "VAULT_LOCAL_AES_KEY_ID": "test", "VAULT_SNOWFLAKE_DATACENTER_ID": "31", "VAULT_SNOWFLAKE_WORKER_ID": "29", "VAULT_NACOS_ENABLED": "false", "OTEL_TRACES_EXPORTER": "none"}
 }

@@ -1,15 +1,23 @@
 # Vault — local/test Go server and Java client
 
-This repository implements only generic Protect/Reveal, LOCAL AES, the reviewed three-table MySQL model, optional Nacos Discovery and the public `paytech-vault-client`. It is not production KMS, strong service authentication or a deployed business integration. Private HTTP, spoofable `X-Caller-Service` and a static allowlist are the accepted V1 trust boundary. No PAN/CVV/track/expiry/PIN, secrets or private keys are legitimate Values. Retention, destruction and production compliance remain unimplemented; PDManer in-app review remains pending.
+This repository implements only generic Protect/Reveal, the Operations admin API (data types, access rules, manual Protect/Reveal), LOCAL AES, the reviewed six-table MySQL model, optional Nacos Discovery and the public `paytech-vault-client`. It is not production KMS, strong service authentication or a deployed business integration. Private HTTP, spoofable `X-Caller-Service` and a database-held allowlist are the accepted V1 trust boundary. No PAN/CVV/track/expiry/PIN, secrets or private keys are legitimate Values. Retention, destruction and production compliance remain unimplemented; PDManer in-app review remains pending.
 
 ## HTTP 契约
 
-当前仅提供以下两个业务接口，完整协议见 [OpenAPI](api/openapi/v1.yaml)：
+业务服务只使用以下两个接口，完整协议见 [OpenAPI](api/openapi/v1.yaml)：
 
 ```text
 POST /vault/v1/records/protect
 POST /vault/v1/records/reveal
 ```
+
+`/vault/v1/admin/**` 只接受 `VAULT_ADMIN_CALLERS`（默认 `operations-console-bff`）并要求 `X-Operator-Id`：
+维护数据类型与访问规则、查询策略变更与人工操作审计、人工加/解密（用途固定 `OPERATIONS_MANUAL`），
+协议见 [管理接口 OpenAPI](api/openapi/admin-v1.yaml)。
+
+访问策略（数据类型 + 访问规则）只存于数据库三张策略表，各环境用初始化 DML 写入，Vault 启动时必须读取成功，
+之后按 `VAULT_POLICY_REFRESH_INTERVAL`（默认 10 秒）全量刷新；刷新失败保留上一份快照并计入指标。
+审计中的策略版本记为 `db-<版本号>`。决定见 [2026-10-14 决定](../agent-docs/decisions/2026-10-14-vault-policy-and-manual-access.md)。
 
 `/vault` 表达系统边界，后续路径表达版本和能力；Java `@HttpExchange` 统一声明系统前缀，
 各方法只声明能力路径。接口不使用 `/internal` 前缀或冒号动作后缀，仍仅供私网内部服务调用。
@@ -25,12 +33,12 @@ cmd/vault-server/            进程入口
 api/openapi/                 OpenAPI 合同
 api/vault/v1/                请求/响应体（binding 校验标签）
 internal/server/             Gin 路由、公共头、Trace/指标、Problem 错误出口
-internal/service/            RecordService：Protect/Reveal 接口实现（严格 JSON、校验、转换）
-internal/biz/                ProtectUsecase、RevealUsecase、审计与加解密、领域对象、仓储与密钥端口
+internal/service/            RecordService：Protect/Reveal；AdminService：策略维护、审计查询与人工加/解密
+internal/biz/                ProtectUsecase、RevealUsecase、PolicyAdminUsecase、审计与加解密、领域对象、仓储与密钥端口
 internal/data/               仓储实现与事务；data/sqlc 为查询（queries/*.sql）与生成代码（*.gen.go，不手改）
 internal/conf/               配置读取与校验
 internal/bootstrap/          组合根：cmd 与自动测试共用的装配
-internal/pkg/                localaes、nacos、snowflake、observability、policy 技术组件
+internal/pkg/                localaes、nacos、snowflake、observability、policy（数据库策略快照与定时刷新）技术组件
 test/auto/                   contract（OpenAPI 金样）、biz（用例）、conf、pkg/policy、ext/http（HTTP 入口测试，Snowflake 31/27）
 包内 *_test.go              仅保留必须访问未导出实现的白盒测试（事务故障、错误归类、严格 JSON 边界等）
 test/support/                测试 base、Builder、本地 Mocker、Checker、TestMapper、隔离标识
@@ -97,4 +105,4 @@ Both `ALIBABA_CLOUD_ACCESS_KEY_ID` and `ALIBABA_CLOUD_ACCESS_KEY_SECRET` must be
 
 ## Server configuration
 
-The server reads `VAULT_RUNTIME_MODE=local|test`, `VAULT_HTTP_ADDRESS`, `VAULT_DB_DSN`, `VAULT_POLICY_FILE`, `VAULT_LOCAL_AES_ROOT_KEY` (base64 32 random bytes), `VAULT_LOCAL_AES_KEY_ID`, explicit `VAULT_SNOWFLAKE_DATACENTER_ID` / `VAULT_SNOWFLAKE_WORKER_ID`, and `VAULT_NACOS_ENABLED`. Enabled discovery additionally needs `VAULT_NACOS_SERVER_ADDRESS`, `NAMESPACE`, `GROUP`, `INSTANCE_IP`, `INSTANCE_PORT`, `USERNAME`, `PASSWORD` with the `VAULT_NACOS_` prefix. Use the [example policy](config/policy.example.json) only as a non-production format reference. Production mode rejects LOCAL AES. Nacos registration happens once at startup and is deregistered at shutdown; the SDK keeps the ephemeral instance alive and re-registers after reconnects, so readiness covers only MySQL and keys. Standard OTLP exporter/sampling variables remain available; resource attributes must be empty. `/health/liveness` and `/health/readiness` are operational endpoints, not public business-client operations.
+The server reads `VAULT_RUNTIME_MODE=local|test`, `VAULT_HTTP_ADDRESS`, `VAULT_DB_DSN`, optional `VAULT_ADMIN_CALLERS` (comma-separated, default `operations-console-bff`) and `VAULT_POLICY_REFRESH_INTERVAL` (100ms–5m, default 10s), `VAULT_LOCAL_AES_ROOT_KEY` (base64 32 random bytes), `VAULT_LOCAL_AES_KEY_ID`, explicit `VAULT_SNOWFLAKE_DATACENTER_ID` / `VAULT_SNOWFLAKE_WORKER_ID`, and `VAULT_NACOS_ENABLED`. Enabled discovery additionally needs `VAULT_NACOS_SERVER_ADDRESS`, `NAMESPACE`, `GROUP`, `INSTANCE_IP`, `INSTANCE_PORT`, `USERNAME`, `PASSWORD` with the `VAULT_NACOS_` prefix. There is no policy file: the access policy is read only from the database. Production mode rejects LOCAL AES. Nacos registration happens once at startup and is deregistered at shutdown; the SDK keeps the ephemeral instance alive and re-registers after reconnects, so readiness covers only MySQL and keys. Standard OTLP exporter/sampling variables remain available; resource attributes must be empty. `/health/liveness` and `/health/readiness` are operational endpoints, not public business-client operations.

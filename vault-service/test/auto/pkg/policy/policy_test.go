@@ -1,148 +1,141 @@
 package policy_test
 
 import (
-	"bytes"
-	"os"
-	"path/filepath"
-	"strings"
+	"context"
+	"errors"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/paytech/vault-service/internal/biz"
 	"github.com/paytech/vault-service/internal/pkg/policy"
 )
 
-func TestLoadRejectsCaseAliasedFields(t *testing.T) {
-	const canonical = `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[{"callerService":"test-caller","action":"REVEAL","dataType":"EMAIL","purposes":["TEST"]}]}`
-	for _, field := range []struct{ name, member string }{
-		{"policyVersion", `"policyVersion":"v1"`},
-		{"dataTypes", `"dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}}`},
-		{"rules", `"rules":[{"callerService":"test-caller","action":"REVEAL","dataType":"EMAIL","purposes":["TEST"]}]`},
-		{"tokenMode", `"tokenMode":"REFERENCE"`},
-		{"callerService", `"callerService":"test-caller"`},
-		{"action", `"action":"REVEAL"`},
-		{"dataType", `"dataType":"EMAIL"`},
-		{"purposes", `"purposes":["TEST"]`},
-	} {
-		alias := strings.Replace(field.member, field.name, strings.ToUpper(field.name[:1])+field.name[1:], 1)
-		for name, replacement := range map[string]string{
-			"alias-only": alias, "alias-last": field.member + "," + alias, "alias-first": alias + "," + field.member,
-		} {
-			t.Run(field.name+"/"+name, func(t *testing.T) {
-				_, err := policy.Load(strings.NewReader(strings.Replace(canonical, field.member, replacement, 1)))
-				if err == nil || biz.CodeOf(err) != biz.InternalError {
-					t.Fatalf("aliased field accepted: %v", err)
-				}
-			})
+func state(version int) biz.PolicyState {
+	return biz.PolicyState{
+		Version: version,
+		DataTypes: []biz.DataType{
+			{Code: "EMAIL", TokenMode: biz.Stable, Class: biz.StandardClass, ManualReveal: true, Status: biz.ActiveStatus},
+			{Code: "OLD", TokenMode: biz.Reference, Class: biz.StandardClass, Status: biz.DisabledStatus},
+		},
+		Rules: []biz.AccessRule{
+			{Caller: "commerce-service", Action: biz.ProtectAction, DataTypeCode: "EMAIL", Purpose: "CHECKOUT", Status: biz.ActiveStatus},
+			{Caller: "commerce-service", Action: biz.RevealAction, DataTypeCode: "EMAIL", Purpose: "CHECKOUT", Status: biz.DisabledStatus},
+			{Caller: "commerce-service", Action: biz.ProtectAction, DataTypeCode: "OLD", Purpose: "CHECKOUT", Status: biz.ActiveStatus},
+		},
+	}
+}
+
+func TestBuildKeepsOnlyActiveTypesAndRules(t *testing.T) {
+	s := policy.Build(state(7))
+	if s.Version() != "db-7" {
+		t.Fatalf("version label = %q", s.Version())
+	}
+	if mode, ok := s.DataTypeMode("EMAIL"); !ok || mode != biz.Stable {
+		t.Fatal("active data type missing")
+	}
+	if _, ok := s.DataType("OLD"); ok {
+		t.Fatal("disabled data type must not be visible")
+	}
+	if !s.Authorize("commerce-service", biz.ProtectAction, "EMAIL", "CHECKOUT") {
+		t.Fatal("active rule not authorized")
+	}
+	for _, denied := range []struct {
+		action   biz.Action
+		dataType string
+	}{{biz.RevealAction, "EMAIL"}, {biz.ProtectAction, "OLD"}} {
+		if s.Authorize("commerce-service", denied.action, denied.dataType, "CHECKOUT") {
+			t.Fatalf("disabled rule or rule of disabled type authorized: %v", denied)
 		}
 	}
-}
-
-func TestLoadRejectsAliasOverwritesAndEscapedDuplicates(t *testing.T) {
-	for name, document := range map[string]string{
-		"root-overwrite":         `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[],"Rules":[{"callerService":"test-caller","action":"REVEAL","dataType":"EMAIL","purposes":["TEST"]}]}`,
-		"version-overwrite":      `{"policyVersion":"!","PolicyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[]}`,
-		"mode-overwrite":         `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"INVALID","TokenMode":"REFERENCE"}},"rules":[]}`,
-		"mode-alias-overwrite":   `{"policyVersion":"v1","dataTypes":{"EMAIL":{"TokenMode":"INVALID","tokenMode":"REFERENCE"}},"rules":[]}`,
-		"action-overwrite":       `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[{"callerService":"test-caller","action":"DELETE","Action":"REVEAL","dataType":"EMAIL","purposes":["TEST"]}]}`,
-		"action-alias-overwrite": `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[{"callerService":"test-caller","Action":"DELETE","action":"REVEAL","dataType":"EMAIL","purposes":["TEST"]}]}`,
-		"escaped-root":           `{"policyVersion":"v1","policy\u0056ersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[]}`,
-		"escaped-type":           `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"},"\u0045MAIL":{"tokenMode":"STABLE"}},"rules":[]}`,
-		"escaped-mode":           `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"STABLE","token\u004dode":"REFERENCE"}},"rules":[]}`,
-		"escaped-rule":           `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[{"callerService":"test-caller","action":"PROTECT","\u0061ction":"REVEAL","dataType":"EMAIL","purposes":["TEST"]}]}`,
-	} {
-		t.Run(name, func(t *testing.T) {
-			if _, err := policy.Load(strings.NewReader(document)); err == nil || biz.CodeOf(err) != biz.InternalError {
-				t.Fatalf("ambiguous policy accepted: %v", err)
-			}
-		})
+	if s.Authorize("other-service", biz.ProtectAction, "EMAIL", "CHECKOUT") || s.Authorize("commerce-service", biz.ProtectAction, "EMAIL", "OTHER") {
+		t.Fatal("unregistered caller or purpose authorized")
 	}
 }
 
-func TestLoadAuthorizesOnlyExactDeclaredDecision(t *testing.T) {
-	contents, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "testdata", "policy", "valid.json"))
-	if err != nil {
+func TestEmptyPolicyDeniesEverything(t *testing.T) {
+	s := policy.Build(biz.PolicyState{})
+	if s.Version() != "db-0" || s.Authorize("commerce-service", biz.ProtectAction, "EMAIL", "CHECKOUT") {
+		t.Fatal("empty policy must deny")
+	}
+}
+
+type loader struct {
+	mu    sync.Mutex
+	state biz.PolicyState
+	err   error
+	calls atomic.Int32
+}
+
+func (l *loader) LoadPolicy(context.Context) (biz.PolicyState, error) {
+	l.calls.Add(1)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.state, l.err
+}
+
+func (l *loader) set(state biz.PolicyState, err error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.state, l.err = state, err
+}
+
+func TestRefresherStartFailsWithoutInitialPolicy(t *testing.T) {
+	r := policy.NewRefresher(&loader{err: errors.New("SECRET-DB")}, time.Hour, nil)
+	if err := r.Start(context.Background()); err == nil || biz.CodeOf(err) != biz.DependencyUnavailable {
+		t.Fatalf("start must fail closed with a safe error: %v", err)
+	}
+}
+
+func TestRefresherPicksUpChangesAndKeepsLastSnapshotOnFailure(t *testing.T) {
+	l := &loader{state: state(1)}
+	var failures atomic.Int32
+	r := policy.NewRefresher(l, 20*time.Millisecond, func() { failures.Add(1) })
+	if err := r.Start(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	loaded, err := policy.Load(bytes.NewReader(contents))
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+	defer r.Close()
+	if r.Version() != "db-1" || !r.Authorize("commerce-service", biz.ProtectAction, "EMAIL", "CHECKOUT") {
+		t.Fatal("initial snapshot not active")
 	}
-	if got, ok := loaded.DataTypeMode("EMAIL_ADDRESS_V1"); !ok || got != biz.Stable {
-		t.Fatalf("DataTypeMode() = %q, %t", got, ok)
+
+	next := state(2)
+	next.Rules = nil
+	l.set(next, nil)
+	waitFor(t, func() bool { return r.Version() == "db-2" })
+	if r.Authorize("commerce-service", biz.ProtectAction, "EMAIL", "CHECKOUT") {
+		t.Fatal("removed rule still authorized after refresh")
 	}
-	if _, ok := loaded.DataTypeMode("email_address_v1"); ok {
-		t.Fatal("DataTypeMode() normalized a dynamic Data Type key")
-	}
-	if !loaded.Authorize("test-caller", biz.ProtectAction, "EMAIL_ADDRESS_V1", "CHECKOUT_CONTACT") {
-		t.Fatal("Authorize() denied declared decision")
-	}
-	if loaded.Authorize("test-caller", biz.RevealAction, "EMAIL_ADDRESS_V1", "CHECKOUT_CONTACT") ||
-		loaded.Authorize("other-service", biz.ProtectAction, "EMAIL_ADDRESS_V1", "CHECKOUT_CONTACT") ||
-		loaded.Authorize("test-caller", biz.ProtectAction, "EMAIL_ADDRESS_V1", "OTHER_PURPOSE") {
-		t.Fatal("Authorize() did not default deny unmatched decisions")
-	}
-	if loaded.Version() != "test-v1" {
-		t.Fatalf("Version() = %q", loaded.Version())
+
+	l.set(biz.PolicyState{}, errors.New("SECRET-DB"))
+	waitFor(t, func() bool { return failures.Load() > 0 })
+	if r.Version() != "db-2" {
+		t.Fatal("failed refresh replaced the last good snapshot")
 	}
 }
 
-func TestLoadRejectsMalformedOrAmbiguousPolicy(t *testing.T) {
-	cases := []struct {
-		name string
-		json string
-	}{
-		{"missing rules", `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}}}`},
-		{"null rules", `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":null}`},
-		{"duplicate top-level field", `{"policyVersion":"v1","policyVersion":"v2","dataTypes":{},"rules":[]}`},
-		{"duplicate data type", `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"},"EMAIL":{"tokenMode":"STABLE"}},"rules":[]}`},
-		{"unknown field", `{"policyVersion":"v1","dataTypes":{},"rules":[],"extra":true}`},
-		{"trailing JSON", `{"policyVersion":"v1","dataTypes":{},"rules":[]} {}`},
-		{"empty data types", `{"policyVersion":"v1","dataTypes":{},"rules":[]}`},
-		{"unknown token mode", `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"OTHER"}},"rules":[]}`},
-		{"unknown action", `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[{"callerService":"commerce-service","action":"DELETE","dataType":"EMAIL","purposes":["CONTACT"]}]}`},
-		{"empty purpose", `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[{"callerService":"commerce-service","action":"PROTECT","dataType":"EMAIL","purposes":[""]}]}`},
-		{"unregistered data type", `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[{"callerService":"commerce-service","action":"PROTECT","dataType":"PHONE","purposes":["CONTACT"]}]}`},
-		{"duplicate purpose", `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[{"callerService":"commerce-service","action":"PROTECT","dataType":"EMAIL","purposes":["CONTACT","CONTACT"]}]}`},
-		{"duplicate decision", `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[{"callerService":"commerce-service","action":"PROTECT","dataType":"EMAIL","purposes":["CONTACT"]},{"callerService":"commerce-service","action":"PROTECT","dataType":"EMAIL","purposes":["CONTACT"]}]}`},
+func TestRefresherCloseStopsBackgroundRefresh(t *testing.T) {
+	l := &loader{state: state(1)}
+	r := policy.NewRefresher(l, 10*time.Millisecond, nil)
+	if err := r.Start(context.Background()); err != nil {
+		t.Fatal(err)
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if _, err := policy.Load(bytes.NewBufferString(tc.json)); err == nil || biz.CodeOf(err) != biz.InternalError {
-				t.Fatalf("Load() error code = %s, error = %v", biz.CodeOf(err), err)
-			}
-		})
+	r.Close()
+	after := l.calls.Load()
+	time.Sleep(50 * time.Millisecond)
+	if l.calls.Load() != after {
+		t.Fatal("refresh continued after Close")
 	}
 }
 
-func TestLoadRejectsInvalidUTF8(t *testing.T) {
-	invalid := append([]byte(`{"policyVersion":"v1","dataTypes":{},"rules":[]}`), 0xff)
-	if _, err := policy.Load(bytes.NewReader(invalid)); err == nil || biz.CodeOf(err) != biz.InternalError {
-		t.Fatalf("Load() error code = %s, error = %v", biz.CodeOf(err), err)
-	}
-}
-
-func TestLoadAllowsExplicitEmptyRules(t *testing.T) {
-	loaded, err := policy.Load(bytes.NewBufferString(`{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[]}`))
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-	if loaded.Authorize("test-caller", biz.ProtectAction, "EMAIL", "CONTACT") {
-		t.Fatal("Authorize() allowed an explicit deny-all policy")
-	}
-}
-
-func TestLoadCompilesEachDeclaredPurpose(t *testing.T) {
-	const document = `{"policyVersion":"v1","dataTypes":{"EMAIL":{"tokenMode":"REFERENCE"}},"rules":[{"callerService":"test-caller","action":"PROTECT","dataType":"EMAIL","purposes":["CONTACT","SUPPORT"]}]}`
-	loaded, err := policy.Load(strings.NewReader(document))
-	if err != nil {
-		t.Fatal("Load() rejected distinct purposes in one rule")
-	}
-	for _, purpose := range []string{"CONTACT", "SUPPORT"} {
-		if !loaded.Authorize("test-caller", biz.ProtectAction, "EMAIL", purpose) {
-			t.Fatal("Authorize() denied a declared purpose")
+func waitFor(t *testing.T, condition func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for !condition() {
+		if time.Now().After(deadline) {
+			t.Fatal("condition not reached within 2s")
 		}
-	}
-	if loaded.Authorize("test-caller", biz.ProtectAction, "EMAIL", "OTHER") {
-		t.Fatal("Authorize() allowed an undeclared purpose")
+		time.Sleep(5 * time.Millisecond)
 	}
 }

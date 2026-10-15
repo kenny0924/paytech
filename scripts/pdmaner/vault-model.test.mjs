@@ -65,6 +65,7 @@ access_event_id BIGINT NN
 request_id VARCHAR(64) NN
 trace_id VARCHAR(64) N
 caller_service VARCHAR(128) NN
+actor_id VARCHAR(64) N
 action VARCHAR(16) NN
 data_type VARCHAR(64) N
 purpose VARCHAR(64) N
@@ -72,6 +73,45 @@ record_id BIGINT N
 outcome VARCHAR(16) NN
 result_code VARCHAR(64) NN
 policy_version VARCHAR(64) N
+reason_code VARCHAR(64) N
+ticket_ref VARCHAR(64) N
+create_time DATETIME(6) NN
+
+[t_vault_data_type]
+data_type_id BIGINT NN
+data_type_code VARCHAR(64) NN
+token_mode VARCHAR(16) NN
+data_class VARCHAR(16) NN
+description VARCHAR(256) NN
+manual_protect_enabled TINYINT(1) NN
+manual_reveal_enabled TINYINT(1) NN
+status VARCHAR(16) NN
+version INT NN
+create_time DATETIME(6) NN
+update_time DATETIME(6) NN
+
+[t_vault_access_rule]
+access_rule_id BIGINT NN
+caller_service VARCHAR(128) NN
+action VARCHAR(16) NN
+data_type_code VARCHAR(64) NN
+purpose_code VARCHAR(64) NN
+status VARCHAR(16) NN
+version INT NN
+create_time DATETIME(6) NN
+update_time DATETIME(6) NN
+
+[t_vault_policy_change]
+policy_change_id BIGINT NN
+policy_version_no INT NN
+change_type VARCHAR(32) NN
+target_type VARCHAR(16) NN
+target_key VARCHAR(256) NN
+before_snapshot JSON N
+after_snapshot JSON NN
+reason VARCHAR(500) NN
+actor_id VARCHAR(64) NN
+request_id VARCHAR(64) NN
 create_time DATETIME(6) NN
 `;
 
@@ -86,6 +126,15 @@ t_vault_access_event
 IDX idx_vault_access_record(record_id,create_time)
 IDX idx_vault_access_caller(caller_service,create_time)
 IDX idx_vault_access_request(request_id)
+IDX idx_vault_access_actor(actor_id,create_time)
+t_vault_data_type
+UK uk_vault_data_type_code(data_type_code)
+t_vault_access_rule
+UK uk_vault_access_rule(caller_service,action,data_type_code,purpose_code)
+IDX idx_vault_access_rule_type(data_type_code)
+t_vault_policy_change
+UK uk_vault_policy_version(policy_version_no)
+IDX idx_vault_policy_change_target(target_type,target_key,create_time)
 `;
 
 const APPROVED_RELATION_MANIFEST = String.raw`
@@ -97,8 +146,11 @@ const expectedTableOrder = Object.freeze([
   "t_vault_record",
   "t_vault_protect_request",
   "t_vault_access_event",
+  "t_vault_data_type",
+  "t_vault_access_rule",
+  "t_vault_policy_change",
 ]);
-const forbiddenFieldPattern = /environment|tenant|binding|resource|plaintext|raw_value|masked|blind_index|key_version|algorithm|status|expiry|shard|bucket|compensation|payload_json/u;
+const forbiddenFieldPattern = /environment|tenant|binding|resource|plaintext|raw_value|masked|blind_index|key_version|algorithm|expiry|shard|bucket|compensation|payload_json/u;
 const approvedSensitiveFields = Object.freeze({
   value_fingerprint: "t_vault_record",
   request_hash: "t_vault_protect_request",
@@ -271,15 +323,15 @@ function physicalDecisionsTest(name, fn) {
   test(name, { skip: !physicalDecisionsReady }, fn);
 }
 
-test("approved Vault field manifest independently freezes the exact three-table candidate", () => {
+test("approved Vault field manifest independently freezes the exact six-table candidate", () => {
   const approvedTables = parseApprovedFieldManifest();
   assert.deepEqual(approvedTables.map((table) => table.defKey), expectedTableOrder);
   assert.equal(
     approvedTables.flatMap((table) => table.fields).length,
-    30,
-    "批准候选字段清单实算必须为 30",
+    64,
+    "批准候选字段清单实算必须为 64",
   );
-  assert.equal(parseApprovedIndexes().size, 3);
+  assert.equal(parseApprovedIndexes().size, 6);
   assert.equal(parseApprovedRelations().length, 2);
 });
 
@@ -298,7 +350,7 @@ test("Vault PDManer contract has every planned design artifact", () => {
   );
 });
 
-task2ArtifactTest("model has the exact ordered three-table, 30-field contract", () => {
+task2ArtifactTest("model has the exact ordered six-table, 64-field contract", () => {
   const model = readModel();
   const approvedTables = parseApprovedFieldManifest();
   assert.deepEqual(model.entities.map((entity) => entity.defKey), expectedTableOrder);
@@ -319,16 +371,16 @@ task2ArtifactTest("model has the exact ordered three-table, 30-field contract", 
     );
   }
   assert.deepEqual(modelTotals(model), {
-    tables: 3,
-    fields: 30,
-    uniqueIndexes: 3,
-    accessIndexes: 4,
+    tables: 6,
+    fields: 64,
+    uniqueIndexes: 6,
+    accessIndexes: 7,
     relations: 2,
     diagramGroups: 1,
   });
 });
 
-task2ArtifactTest("model freezes the exact three UK and four IDX field orders", () => {
+task2ArtifactTest("model freezes the exact six UK and seven IDX field orders", () => {
   const expectedIndexes = parseApprovedIndexes();
   for (const entity of readModel().entities) {
     const fields = fieldById(entity);
@@ -400,7 +452,7 @@ task2ArtifactTest("model is credential-free, has the exact vault_core diagram, a
     .map((cell) => [cell.id, cell]));
   assert.deepEqual(
     [...tableCellsById.values()].map((cell) => entitiesById.get(cell.originKey).defKey),
-    ["t_vault_record", "t_vault_protect_request", "t_vault_access_event"],
+    expectedTableOrder,
   );
   const correlationIds = model.entities.flatMap((entity) => entity.correlations.map((relation) => relation.id));
   const relationCells = diagram.canvasData.cells.filter((cell) => cell.shape === "erdRelation");

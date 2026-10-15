@@ -1,6 +1,6 @@
 {
   "name": "Code-MoR Vault Database V1",
-  "describe": "基于批准的 Vault V1 三表物理清单确定性生成的 PDManer 模型",
+  "describe": "基于批准的 Vault V1 六表物理清单（核心三表与策略三表）确定性生成的 PDManer 模型",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",
@@ -1348,6 +1348,27 @@
           "id": "B14D4022-427B-59AE-ACC4-0B11704DB0A9"
         },
         {
+          "defKey": "actor_id",
+          "defName": "操作人",
+          "comment": "运营人工加解密的运营账号标识，服务调用为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "3F8D9E09-0BD1-54C4-AC85-BBB55F49F91E"
+        },
+        {
           "defKey": "action",
           "defName": "访问动作",
           "comment": "本次尝试的动作，受 CHECK 契约限制为 PROTECT 或 REVEAL。",
@@ -1473,7 +1494,7 @@
         {
           "defKey": "policy_version",
           "defName": "策略版本",
-          "comment": "成功匹配静态访问策略时采用的可选策略版本。",
+          "comment": "授权判断时采用的数据库策略版本标识。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -1490,6 +1511,48 @@
           },
           "domain": "",
           "id": "7BB55781-47B4-5539-879A-FBA623EEC722"
+        },
+        {
+          "defKey": "reason_code",
+          "defName": "理由码",
+          "comment": "运营人工加解密选择的固定理由码，服务调用为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "8310C712-04AE-5DF7-B3F8-139C0390D2C5"
+        },
+        {
+          "defKey": "ticket_ref",
+          "defName": "工单号",
+          "comment": "运营人工加解密关联的工单号，服务调用为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "2F9ADCAA-C5DA-5713-951F-21FB482C6FAD"
         },
         {
           "defKey": "create_time",
@@ -1573,6 +1636,1266 @@
             }
           ],
           "id": "6CA9D9AE-A0FB-51CB-BA2B-2AD88A04AAC0"
+        },
+        {
+          "defKey": "idx_vault_access_actor",
+          "defName": "访问索引 actor_id、create_time",
+          "unique": false,
+          "comment": "支持访问路径：actor_id、create_time",
+          "fields": [
+            {
+              "fieldDefKey": "3F8D9E09-0BD1-54C4-AC85-BBB55F49F91E",
+              "ascOrDesc": "A",
+              "id": "8E46FBCF-0EC8-5E6E-97D0-85F63E52197D"
+            },
+            {
+              "fieldDefKey": "37643BF9-D44E-5204-A609-07DBC3ED6C46",
+              "ascOrDesc": "A",
+              "id": "16EEA58D-360D-56AE-B9F6-58559700B5BF"
+            }
+          ],
+          "id": "E087EC66-B3BC-5D99-A669-2A0D7DCBB502"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "82FBBB70-FA24-51EA-AE02-E17230614E58",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_vault_data_type",
+      "defName": "Vault 数据类型",
+      "comment": "Vault 数据类型目录：Token 模式、数据级别与人工加解密开关，编码与 Token 模式创建后不可修改，只停用不删除",
+      "properties": {
+        "logicalTableKey": "vault_data_type"
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "data_type_id",
+          "defName": "数据类型标识",
+          "comment": "服务侧生成的 Snowflake 数据类型主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "5900EA4E-8F92-59A3-B79C-3A69D546DA21"
+        },
+        {
+          "defKey": "data_type_code",
+          "defName": "数据类型编码",
+          "comment": "全局唯一的通用数据类型编码，创建后不可修改。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "91F5FEFE-5423-5F72-AC75-0A2D2FA1EF1C"
+        },
+        {
+          "defKey": "token_mode",
+          "defName": "令牌模式",
+          "comment": "该数据类型的令牌身份模式 REFERENCE 或 STABLE，创建后不可修改。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "DA99C916-6C1B-51EE-88CC-6E0324B2DA9B"
+        },
+        {
+          "defKey": "data_class",
+          "defName": "数据级别",
+          "comment": "数据级别 STANDARD 普通敏感或 SECRET 密钥，决定人工操作所需权限。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "B5DBC198-0BCF-5B83-B432-7F005791F0B4"
+        },
+        {
+          "defKey": "description",
+          "defName": "用途说明",
+          "comment": "供运营理解该数据类型用途的中文说明，不含受保护值。",
+          "type": "VARCHAR",
+          "len": 256,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "A0C6C179-F14B-5CCB-AAF3-11A5400A8D8E"
+        },
+        {
+          "defKey": "manual_protect_enabled",
+          "defName": "允许人工加密",
+          "comment": "是否允许运营在控制台人工加密该类型的值。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "F337D715-66DC-5DB9-9236-9A0039EB7D88"
+        },
+        {
+          "defKey": "manual_reveal_enabled",
+          "defName": "允许人工解密",
+          "comment": "是否允许运营在控制台人工解密该类型的值。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "9988EEA0-BF8C-528B-ACD9-93C800150BCC"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "comment": "数据类型状态 ACTIVE 或 DISABLED，只停用不删除。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "2A79B983-662E-5625-B2C6-68850A012615"
+        },
+        {
+          "defKey": "version",
+          "defName": "乐观锁版本",
+          "comment": "每次修改递增的乐观锁版本号。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "6BC8F04B-6CFA-4995-98D3-318F5CDD774E",
+          "id": "FD8ED290-8733-5AF2-9412-CA7301B4CF0C"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Vault 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "EA2D21C8-F93D-5E98-8A56-F3CE1BAFBD71"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "3545469F-A8F5-5DD0-A6A5-F484011DD08E"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_vault_data_type_code",
+          "defName": "唯一索引 data_type_code",
+          "unique": true,
+          "comment": "保证业务唯一性：data_type_code",
+          "fields": [
+            {
+              "fieldDefKey": "91F5FEFE-5423-5F72-AC75-0A2D2FA1EF1C",
+              "ascOrDesc": "A",
+              "id": "F3A69BB7-82B9-5567-9BE5-1F70BB845003"
+            }
+          ],
+          "id": "0F44BF84-36BE-5B77-BE01-9A4E9B8C5337"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "2EC55632-BE1A-51BB-861A-A65334B21017",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_vault_access_rule",
+      "defName": "Vault 访问规则",
+      "comment": "服务访问规则：调用服务、动作、数据类型与访问用途的允许组合，只停用不删除",
+      "properties": {
+        "logicalTableKey": "vault_access_rule"
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "access_rule_id",
+          "defName": "访问规则标识",
+          "comment": "服务侧生成的 Snowflake 访问规则主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "0C9E64FD-42AB-5404-8505-86067E062280"
+        },
+        {
+          "defKey": "caller_service",
+          "defName": "调用服务",
+          "comment": "被授权的内部调用服务代码。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "D0412440-FFCB-5022-8676-DD11AD302FC4"
+        },
+        {
+          "defKey": "action",
+          "defName": "访问动作",
+          "comment": "被授权的动作 PROTECT 或 REVEAL。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "7296D5E1-2CFD-51A4-A871-B98D802B34FC"
+        },
+        {
+          "defKey": "data_type_code",
+          "defName": "数据类型编码",
+          "comment": "被授权的数据类型编码，由应用校验其存在。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "13F8D575-241F-51AE-81AC-610BF3683004"
+        },
+        {
+          "defKey": "purpose_code",
+          "defName": "访问用途",
+          "comment": "被授权的访问用途编码，OPERATIONS_MANUAL 为人工操作保留值。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "161249FC-3F27-5EFB-B22B-7C01D7A8EF28"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "comment": "访问规则状态 ACTIVE 或 DISABLED，只停用不删除。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "AC008224-8471-5CBF-9F59-F20BEB6B0D56"
+        },
+        {
+          "defKey": "version",
+          "defName": "乐观锁版本",
+          "comment": "每次修改递增的乐观锁版本号。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "6BC8F04B-6CFA-4995-98D3-318F5CDD774E",
+          "id": "CDFA850C-F23F-5F94-8D71-0C79A63351E2"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Vault 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "CC540B5E-78B5-5400-BA50-EEEF05F4044C"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "E69814D3-74D6-5EF4-90AA-57015116C611"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_vault_access_rule",
+          "defName": "唯一索引 caller_service、action、data_type_code、purpose_code",
+          "unique": true,
+          "comment": "保证业务唯一性：caller_service、action、data_type_code、purpose_code",
+          "fields": [
+            {
+              "fieldDefKey": "D0412440-FFCB-5022-8676-DD11AD302FC4",
+              "ascOrDesc": "A",
+              "id": "E5A7A527-32A8-510A-9704-B53C69A0CD0D"
+            },
+            {
+              "fieldDefKey": "7296D5E1-2CFD-51A4-A871-B98D802B34FC",
+              "ascOrDesc": "A",
+              "id": "63F28E15-B6F4-5261-81A7-61CA8F4A2755"
+            },
+            {
+              "fieldDefKey": "13F8D575-241F-51AE-81AC-610BF3683004",
+              "ascOrDesc": "A",
+              "id": "A2D8C30B-369A-5777-A1AC-C39F5CFA1CE2"
+            },
+            {
+              "fieldDefKey": "161249FC-3F27-5EFB-B22B-7C01D7A8EF28",
+              "ascOrDesc": "A",
+              "id": "08B92903-51D1-5546-980F-D2C928E6079E"
+            }
+          ],
+          "id": "419BE26C-E3FD-5E54-828A-A252B41724C0"
+        },
+        {
+          "defKey": "idx_vault_access_rule_type",
+          "defName": "访问索引 data_type_code",
+          "unique": false,
+          "comment": "支持访问路径：data_type_code",
+          "fields": [
+            {
+              "fieldDefKey": "13F8D575-241F-51AE-81AC-610BF3683004",
+              "ascOrDesc": "A",
+              "id": "FA649D42-ABBB-53AF-986D-674CA456A59A"
+            }
+          ],
+          "id": "441D1430-CB02-5954-929F-19CAA6A9801D"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "7BEA077E-1303-5CFC-BC6B-A27FD2AEB180",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_vault_policy_change",
+      "defName": "Vault 策略变更",
+      "comment": "追加保存每次数据类型或访问规则变更，每条记录对应一个单调递增的策略版本，快照不含任何受保护值",
+      "properties": {
+        "logicalTableKey": "vault_policy_change"
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "policy_change_id",
+          "defName": "策略变更标识",
+          "comment": "服务侧生成的 Snowflake 策略变更主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "0B2783E2-1915-566D-A728-124B6CE8D571"
+        },
+        {
+          "defKey": "policy_version_no",
+          "defName": "策略版本号",
+          "comment": "本次变更后的策略版本号，单调递增。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "6BC8F04B-6CFA-4995-98D3-318F5CDD774E",
+          "id": "850BD886-FBF1-5D93-80A6-939DB3CACB96"
+        },
+        {
+          "defKey": "change_type",
+          "defName": "变更类型",
+          "comment": "变更类型 SEED、DATA_TYPE_CREATE、DATA_TYPE_UPDATE、RULE_CREATE 或 RULE_UPDATE。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "F88C65C7-0F52-5F07-98C7-12855F8C0D99"
+        },
+        {
+          "defKey": "target_type",
+          "defName": "对象类型",
+          "comment": "变更对象类型 POLICY、DATA_TYPE 或 ACCESS_RULE。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "6AED73AB-BA34-5E2E-9D84-27EF2FE5FED3"
+        },
+        {
+          "defKey": "target_key",
+          "defName": "对象标识",
+          "comment": "变更对象标识：数据类型编码或访问规则四元组。",
+          "type": "VARCHAR",
+          "len": 256,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "AABDFA0E-BDEA-55CB-9002-ECB386153A7E"
+        },
+        {
+          "defKey": "before_snapshot",
+          "defName": "变更前快照",
+          "comment": "变更前的对象元数据，新建时为空，不含任何受保护值。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "7CA00354-23CE-5376-9182-F0368A3D06A9"
+        },
+        {
+          "defKey": "after_snapshot",
+          "defName": "变更后快照",
+          "comment": "变更后的对象元数据，不含任何受保护值。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "D972E67E-25B4-5562-8A68-241E1BA423DF"
+        },
+        {
+          "defKey": "reason",
+          "defName": "变更理由",
+          "comment": "操作人填写的变更理由。",
+          "type": "VARCHAR",
+          "len": 500,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "19D07356-ED03-5860-8AE2-5827AD412390"
+        },
+        {
+          "defKey": "actor_id",
+          "defName": "操作人",
+          "comment": "发起变更的运营账号标识，初始化数据为 SYSTEM。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "BB22E8AA-753D-5A3D-831F-4C7DCE8E6E00"
+        },
+        {
+          "defKey": "request_id",
+          "defName": "请求标识",
+          "comment": "发起变更的内部 HTTP 请求追踪标识。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "FAE92475-9202-5129-B84E-DD12E54CCA52"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Vault 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "AE4F9231-DD15-52BA-AAC6-DC135C111688"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_vault_policy_version",
+          "defName": "唯一索引 policy_version_no",
+          "unique": true,
+          "comment": "保证业务唯一性：policy_version_no",
+          "fields": [
+            {
+              "fieldDefKey": "850BD886-FBF1-5D93-80A6-939DB3CACB96",
+              "ascOrDesc": "A",
+              "id": "3661D664-AF0D-5CD3-BB66-25C44A19997A"
+            }
+          ],
+          "id": "E9C0F722-D3F8-559C-83B2-C5B90F1960B6"
+        },
+        {
+          "defKey": "idx_vault_policy_change_target",
+          "defName": "访问索引 target_type、target_key、create_time",
+          "unique": false,
+          "comment": "支持访问路径：target_type、target_key、create_time",
+          "fields": [
+            {
+              "fieldDefKey": "6AED73AB-BA34-5E2E-9D84-27EF2FE5FED3",
+              "ascOrDesc": "A",
+              "id": "CE75D1C0-6111-5951-AA9C-F1ECECC1F465"
+            },
+            {
+              "fieldDefKey": "AABDFA0E-BDEA-55CB-9002-ECB386153A7E",
+              "ascOrDesc": "A",
+              "id": "D78691BF-3781-5441-B3AE-9904583D3E9F"
+            },
+            {
+              "fieldDefKey": "AE4F9231-DD15-52BA-AAC6-DC135C111688",
+              "ascOrDesc": "A",
+              "id": "D5420CC1-C63C-5460-8E77-BE9CA0BE5EFF"
+            }
+          ],
+          "id": "591F5DAD-DDB9-5872-A415-E986077264A1"
         }
       ],
       "type": "P"
@@ -1763,7 +3086,52 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 350
+              "height": 416
+            }
+          },
+          {
+            "id": "A0F62FA4-618C-5AAD-9CA3-727ADB1C20E3",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 420
+            },
+            "count": 0,
+            "originKey": "82FBBB70-FA24-51EA-AE02-E17230614E58",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 328
+            }
+          },
+          {
+            "id": "69A8030C-E014-5580-88F1-00BA171411A4",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 420
+            },
+            "count": 0,
+            "originKey": "2EC55632-BE1A-51BB-861A-A65334B21017",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 284
+            }
+          },
+          {
+            "id": "9E45D771-AB76-59E8-BAFE-026682E1AF2F",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 420
+            },
+            "count": 0,
+            "originKey": "7BEA077E-1303-5CFC-BC6B-A27FD2AEB180",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 328
             }
           },
           {
@@ -1816,7 +3184,10 @@
         "primaryTables": [
           "t_vault_record",
           "t_vault_protect_request",
-          "t_vault_access_event"
+          "t_vault_access_event",
+          "t_vault_data_type",
+          "t_vault_access_rule",
+          "t_vault_policy_change"
         ],
         "referenceTables": []
       },
@@ -1970,12 +3341,12 @@
     },
     {
       "id": "0B2F0BD2-3B84-4AB1-BA29-9DE9620AF608",
-      "defName": "可变表使用创建和更新时间，不可变访问事件只保留创建时间",
+      "defName": "可变表使用创建和更新时间，不可变访问事件与策略变更只保留创建时间",
       "intro": "",
       "controlIntensity": "S",
       "applyObjectType": "P",
       "applyFieldType": "entity",
-      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=data.entity.defKey==='t_vault_access_event'; return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
+      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=['t_vault_access_event','t_vault_policy_change'].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
       "enable": true
     },
     {
@@ -1985,7 +3356,7 @@
       "controlIntensity": "S",
       "applyObjectType": "P",
       "applyFieldType": "field",
-      "programCode": "if(data.entity.defKey==='t_vault_access_event' && data.field.defKey==='action'){return true;}\nlet sysWords = \"action,add,aggregate,all,alter,after,and,as,asc,avg,avg_row_length,auto_increment,between,bigint,bit,binary,blob,bool,both,by,cascade,case,char,character,change,check,checksum,column,columns,comment,constraint,create,cross,current_date,current_time,current_timestamp,data,database,databases,date,datetime,day,day_hour,day_minute,day_second,dayofmonth,dayofweek,dayofyear,dec,decimal,default,delayed,delay_key_write,delete,desc,describe,distinct,distinctrow,double,drop,end,else,escape,escaped,enclosed,enum,explain,exists,fields,file,first,float,float4,float8,flush,foreign,from,for,full,function,global,grant,grants,group,having,heap,high_priority,hour,hour_minute,hour_second,hosts,identified,ignore,in,index,infile,inner,insert,insert_id,int,integer,interval,int1,int2,int3,int4,int8,into,if,is,isam,join,key,keys,kill,last_insert_id,leading,left,length,like,lines,limit,load,local,lock,logs,long,longblob,longtext,low_priority,max,max_rows,match,mediumblob,mediumtext,mediumint,middleint,min_rows,minute,minute_second,modify,month,monthname,myisam,natural,numeric,no,not,null,on,optimize,option,optionally,or,order,outer,outfile,pack_keys,partial,password,precision,primary,procedure,process,processlist,privileges,read,real,references,reload,regexp,rename,replace,restrict,returns,revoke,rlike,row,rows,second,select,set,show,shutdown,smallint,soname,sql_big_tables,sql_big_selects,sql_low_priority_updates,sql_log_off,sql_log_update,sql_select_limit,sql_small_result,sql_big_result,sql_warnings,straight_join,starting,status,string,table,tables,temporary,terminated,text,then,time,timestamp,tinyblob,tinytext,tinyint,trailing,to,type,use,using,unique,unlock,unsigned,update,usage,values,varchar,variables,varying,varbinary,with,write,when,where,year,year_month,zerofill\".split(\",\");\nreturn sysWords.indexOf(data.field.defKey.toLowerCase())<0;",
+      "programCode": "let approvedWords={'t_vault_access_event':['action'],'t_vault_access_rule':['action','status'],'t_vault_data_type':['status']}; if((approvedWords[data.entity.defKey]||[]).includes(data.field.defKey)){return true;}\nlet sysWords = \"action,add,aggregate,all,alter,after,and,as,asc,avg,avg_row_length,auto_increment,between,bigint,bit,binary,blob,bool,both,by,cascade,case,char,character,change,check,checksum,column,columns,comment,constraint,create,cross,current_date,current_time,current_timestamp,data,database,databases,date,datetime,day,day_hour,day_minute,day_second,dayofmonth,dayofweek,dayofyear,dec,decimal,default,delayed,delay_key_write,delete,desc,describe,distinct,distinctrow,double,drop,end,else,escape,escaped,enclosed,enum,explain,exists,fields,file,first,float,float4,float8,flush,foreign,from,for,full,function,global,grant,grants,group,having,heap,high_priority,hour,hour_minute,hour_second,hosts,identified,ignore,in,index,infile,inner,insert,insert_id,int,integer,interval,int1,int2,int3,int4,int8,into,if,is,isam,join,key,keys,kill,last_insert_id,leading,left,length,like,lines,limit,load,local,lock,logs,long,longblob,longtext,low_priority,max,max_rows,match,mediumblob,mediumtext,mediumint,middleint,min_rows,minute,minute_second,modify,month,monthname,myisam,natural,numeric,no,not,null,on,optimize,option,optionally,or,order,outer,outfile,pack_keys,partial,password,precision,primary,procedure,process,processlist,privileges,read,real,references,reload,regexp,rename,replace,restrict,returns,revoke,rlike,row,rows,second,select,set,show,shutdown,smallint,soname,sql_big_tables,sql_big_selects,sql_low_priority_updates,sql_log_off,sql_log_update,sql_select_limit,sql_small_result,sql_big_result,sql_warnings,straight_join,starting,status,string,table,tables,temporary,terminated,text,then,time,timestamp,tinyblob,tinytext,tinyint,trailing,to,type,use,using,unique,unlock,unsigned,update,usage,values,varchar,variables,varying,varbinary,with,write,when,where,year,year_month,zerofill\".split(\",\");\nreturn sysWords.indexOf(data.field.defKey.toLowerCase())<0;",
       "enable": true
     },
     {

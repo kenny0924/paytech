@@ -20,6 +20,9 @@ const (
 	InternalError          ErrorCode = "INTERNAL_ERROR"
 	DependencyUnavailable  ErrorCode = "DEPENDENCY_UNAVAILABLE"
 	AuditUnavailable       ErrorCode = "AUDIT_UNAVAILABLE"
+	PolicyVersionConflict  ErrorCode = "POLICY_VERSION_CONFLICT"
+	PolicyEntryExists      ErrorCode = "POLICY_ENTRY_EXISTS"
+	PolicyEntryNotFound    ErrorCode = "POLICY_ENTRY_NOT_FOUND"
 )
 
 // ServiceError 是携带稳定错误码的领域错误，Error() 只返回安全的本地说明。
@@ -73,7 +76,8 @@ func Sanitize(err error) error {
 // OutcomeForCode 把错误码归类为审计结果：调用方可纠正的为 DENIED，其余为 FAILED。
 func OutcomeForCode(code ErrorCode) Outcome {
 	switch code {
-	case InvalidRequest, ValueTooLarge, UnsupportedDataType, TokenModeNotAllowed, AccessDenied, TokenNotFound, IdempotencyKeyConflict:
+	case InvalidRequest, ValueTooLarge, UnsupportedDataType, TokenModeNotAllowed, AccessDenied, TokenNotFound, IdempotencyKeyConflict,
+		PolicyVersionConflict, PolicyEntryExists, PolicyEntryNotFound:
 		return Denied
 	default:
 		return Failed
@@ -92,4 +96,7 @@ var safeMessages = map[ErrorCode]string{
 	InternalError:          "服务内部错误",
 	DependencyUnavailable:  "依赖服务暂不可用",
 	AuditUnavailable:       "访问审计不可用",
+	PolicyVersionConflict:  "策略已被他人修改，请刷新后重试",
+	PolicyEntryExists:      "策略条目已存在",
+	PolicyEntryNotFound:    "策略条目不存在",
 }

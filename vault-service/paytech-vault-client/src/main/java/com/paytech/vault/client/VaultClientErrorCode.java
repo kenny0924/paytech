@@ -17,7 +17,10 @@ public enum VaultClientErrorCode implements CodeMessageEnum {
     INTEGRITY_CHECK_FAILED("INTEGRITY_CHECK_FAILED", "完整性校验失败"),
     INTERNAL_ERROR("INTERNAL_ERROR", "服务内部错误"),
     DEPENDENCY_UNAVAILABLE("DEPENDENCY_UNAVAILABLE", "依赖服务暂不可用"),
-    AUDIT_UNAVAILABLE("AUDIT_UNAVAILABLE", "访问审计不可用");
+    AUDIT_UNAVAILABLE("AUDIT_UNAVAILABLE", "访问审计不可用"),
+    POLICY_VERSION_CONFLICT("POLICY_VERSION_CONFLICT", "策略已被他人修改，请刷新后重试"),
+    POLICY_ENTRY_EXISTS("POLICY_ENTRY_EXISTS", "策略条目已存在"),
+    POLICY_ENTRY_NOT_FOUND("POLICY_ENTRY_NOT_FOUND", "策略条目不存在");
 
     private final String code;
     private final String message;

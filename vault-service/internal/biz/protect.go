@@ -55,6 +55,9 @@ func (p *ProtectUsecase) Process(ctx context.Context, a Attempt, in ProtectInput
 
 // authorize 校验数据类型登记、Token 模式与调用方授权，并记录策略版本。
 func (p *ProtectUsecase) authorize(a Attempt, in ProtectInput, proj *AuditProjection) error {
+	if a.Manual != nil {
+		return p.authorizeManual(a, in, proj)
+	}
 	mode, registered := p.policy.DataTypeMode(in.DataType)
 	withPolicyVersion(proj, p.policy)
 	if !registered {
@@ -64,6 +67,31 @@ func (p *ProtectUsecase) authorize(a Attempt, in ProtectInput, proj *AuditProjec
 		return NewError(TokenModeNotAllowed)
 	}
 	if !p.policy.Authorize(a.Caller, ProtectAction, in.DataType, in.Purpose) {
+		return NewError(AccessDenied)
+	}
+	return nil
+}
+
+// ProcessManual 执行运营人工加密：Token 模式取自数据类型，用途固定为 OPERATIONS_MANUAL。
+func (p *ProtectUsecase) ProcessManual(ctx context.Context, a Attempt, in ProtectInput) (ProtectResult, error) {
+	if a.Manual == nil {
+		return ProtectResult{}, NewError(InternalError)
+	}
+	in.Purpose = OperationsManualPurpose
+	if dataType, ok := p.policy.DataType(in.DataType); ok {
+		in.TokenMode = dataType.TokenMode
+	}
+	return p.Process(ctx, a, in)
+}
+
+// authorizeManual 人工加密授权：数据类型 ACTIVE、开启人工加密、数据级别在本次路由允许范围内。
+func (p *ProtectUsecase) authorizeManual(a Attempt, in ProtectInput, proj *AuditProjection) error {
+	dataType, ok := p.policy.DataType(in.DataType)
+	withPolicyVersion(proj, p.policy)
+	if !ok {
+		return NewError(UnsupportedDataType)
+	}
+	if !dataType.ManualProtect || !a.Manual.Allows(dataType.Class) {
 		return NewError(AccessDenied)
 	}
 	return nil

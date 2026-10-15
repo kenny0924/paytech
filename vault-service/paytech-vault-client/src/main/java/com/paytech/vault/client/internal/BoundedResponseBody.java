@@ -109,8 +109,13 @@ public final class BoundedResponseBody implements ClientHttpRequestInterceptor {
     }
 
     private static void validateSuccess(HttpRequest request, ClientHttpResponse response, JsonNode parsed) {
+        String path = request.getURI().getPath();
+        if (path.startsWith(VaultRequestHeaders.ADMIN_PATH_PREFIX)) {
+            validateAdminSuccess(request, response, parsed, path);
+            return;
+        }
         String requestId = request.getHeaders().getFirst("X-Request-Id");
-        String field = request.getURI().getPath().equals("/vault/v1/records/protect") ? "token" : "value";
+        String field = path.equals("/vault/v1/records/protect") ? "token" : "value";
         if (!hasExactJsonContentType(response.getHeaders()) || parsed == null || !parsed.isObject()
                 || !Set.copyOf(parsed.propertyNames()).equals(Set.of(field)) || !parsed.get(field).isString()) {
             throw VaultResponseErrorHandler.invalidResponse(requestId);
@@ -121,6 +126,34 @@ public final class BoundedResponseBody implements ClientHttpRequestInterceptor {
         } catch (RuntimeException ignored) {
             throw VaultResponseErrorHandler.invalidResponse(requestId);
         }
+    }
+
+    /**
+     * 管理接口成功响应：JSON 对象；人工加/解密额外校验 Token 或原值，其余字段由 Jackson 按类型绑定。
+     */
+    private static void validateAdminSuccess(HttpRequest request, ClientHttpResponse response, JsonNode parsed,
+            String path) {
+        String requestId = request.getHeaders().getFirst("X-Request-Id");
+        if (!hasExactJsonContentType(response.getHeaders()) || parsed == null || !parsed.isObject()) {
+            throw VaultResponseErrorHandler.invalidResponse(requestId);
+        }
+        try {
+            if (path.equals("/vault/v1/admin/manual/protect")) {
+                require(Set.copyOf(parsed.propertyNames()).equals(Set.of("token")) && parsed.get("token").isString());
+                VaultValidation.token(parsed.get("token").stringValue());
+            } else if (path.equals("/vault/v1/admin/manual/reveal")) {
+                require(Set.copyOf(parsed.propertyNames()).equals(Set.of("dataTypeCode", "value"))
+                        && parsed.get("dataTypeCode").isString() && parsed.get("value").isString());
+                VaultValidation.code(parsed.get("dataTypeCode").stringValue());
+                VaultValidation.value(parsed.get("value").stringValue());
+            }
+        } catch (RuntimeException ignored) {
+            throw VaultResponseErrorHandler.invalidResponse(requestId);
+        }
+    }
+
+    private static void require(boolean condition) {
+        if (!condition) throw new IllegalArgumentException("invalid Vault admin response");
     }
 
     private static boolean hasExactJsonContentType(HttpHeaders headers) {

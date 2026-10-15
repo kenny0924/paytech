@@ -81,7 +81,10 @@ type observedStore struct {
 	store biz.Store
 	r     *Runtime
 }
+
+// observedTx 只为业务读写记 Span；策略维护方法经嵌入直接委托。
 type observedTx struct {
+	biz.TxStore
 	tx biz.TxStore
 	r  *Runtime
 }
@@ -102,7 +105,7 @@ func (s *observedStore) FindRecordByToken(ctx context.Context, token string) (re
 func (s *observedStore) InTransaction(ctx context.Context, fn func(biz.TxStore) error) (err error) {
 	ctx, end := s.r.observe(ctx, "TRANSACTION", false)
 	defer func() { end(err) }()
-	return s.store.InTransaction(ctx, func(tx biz.TxStore) error { return fn(&observedTx{tx, s.r}) })
+	return s.store.InTransaction(ctx, func(tx biz.TxStore) error { return fn(&observedTx{tx, tx, s.r}) })
 }
 func (s *observedTx) FindProtectRequestForUpdate(ctx context.Context, caller, key string) (record biz.ProtectRequest, found bool, err error) {
 	ctx, end := s.r.observe(ctx, "FIND_PROTECT_REQUEST", false)

@@ -186,7 +186,7 @@ func TestIntegrationConcurrentProtectConvergence(t *testing.T) {
 			}
 			f.assertCounts(t, 1, requests, 32)
 			for n := range 32 {
-				if f.count(t, "SELECT COUNT(*) FROM t_vault_access_event WHERE caller_service=? AND request_id=? AND action='PROTECT' AND outcome='SUCCESS' AND result_code='SUCCESS' AND policy_version='test-v1' AND record_id IS NOT NULL AND data_type=? AND purpose='TEST'", f.caller, fmt.Sprintf("request-%d", n), f.input(mode).DataType) != 1 {
+				if f.count(t, "SELECT COUNT(*) FROM t_vault_access_event WHERE caller_service=? AND request_id=? AND action='PROTECT' AND outcome='SUCCESS' AND result_code='SUCCESS' AND policy_version='db-1' AND record_id IS NOT NULL AND data_type=? AND purpose='TEST'", f.caller, fmt.Sprintf("request-%d", n), f.input(mode).DataType) != 1 {
 					t.Fatal("attempt did not produce exactly one complete success audit")
 				}
 			}

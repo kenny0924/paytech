@@ -74,9 +74,9 @@ func (t *txRepository) InsertProtectRequest(ctx context.Context, p biz.ProtectRe
 // InsertAccessEvent 追加访问审计事件。
 func (t *txRepository) InsertAccessEvent(ctx context.Context, e biz.AccessEvent) error {
 	return classify(t.queries.InsertAccessEvent(ctx, sqlc.InsertAccessEventParams{
-		AccessEventID: e.ID, RequestID: e.RequestID, TraceID: nullString(e.TraceID), CallerService: e.Caller, Action: string(e.Action),
+		AccessEventID: e.ID, RequestID: e.RequestID, TraceID: nullString(e.TraceID), CallerService: e.Caller, ActorID: nullString(e.ActorID), Action: string(e.Action),
 		DataType: nullString(e.DataType), Purpose: nullString(e.Purpose), RecordID: nullInt64(e.RecordID), Outcome: string(e.Outcome),
-		ResultCode: e.ResultCode, PolicyVersion: nullString(e.PolicyVersion), CreateTime: utc(e.CreateTime),
+		ResultCode: e.ResultCode, PolicyVersion: nullString(e.PolicyVersion), ReasonCode: nullString(e.ReasonCode), TicketRef: nullString(e.TicketRef), CreateTime: utc(e.CreateTime),
 	}))
 }
 

@@ -261,6 +261,62 @@ export const pageCapabilities = [
         "displayName": "批准或最终拒绝"
       }
     ]
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_DATA_TYPES",
+    "displayName": "数据类型",
+    "frontendRoute": "/vault/data-types",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_VAULT_DATA_TYPE_MANAGE",
+        "displayName": "维护数据类型"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_ACCESS_RULES",
+    "displayName": "访问规则",
+    "frontendRoute": "/vault/access-rules",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_VAULT_ACCESS_RULE_MANAGE",
+        "displayName": "维护访问规则"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_POLICY_CHANGES",
+    "displayName": "策略变更记录",
+    "frontendRoute": "/vault/policy-changes",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_MANUAL_PROTECT",
+    "displayName": "手动加密",
+    "frontendRoute": "/vault/manual-protect",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_VAULT_SECRET_PROTECT",
+        "displayName": "加密密钥类数据"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_MANUAL_REVEAL",
+    "displayName": "手动解密",
+    "frontendRoute": "/vault/manual-reveal",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_VAULT_SECRET_REVEAL",
+        "displayName": "解密密钥类数据"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_MANUAL_EVENTS",
+    "displayName": "人工操作记录",
+    "frontendRoute": "/vault/manual-events",
+    "actions": []
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

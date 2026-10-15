@@ -26,7 +26,7 @@ func TestProtect_referenceValueStoredAndAudited(t *testing.T) {
 	checker.Records(t, env.Mapper).ProtectRequests(env.ID.Caller, record.RecordID)
 	checker.AccessEvent(t, env.Mapper, request.RequestID()).
 		Result(biz.ProtectAction, biz.Success, "SUCCESS").Caller(env.ID.Caller).
-		DataType(env.ID.ReferenceType).Purpose(fixture.Purpose).Record(record.RecordID).PolicyVersion(env.ID.PolicyVersion())
+		DataType(env.ID.ReferenceType).Purpose(fixture.Purpose).Record(record.RecordID).PolicyVersion(checker.AnyPolicyVersion)
 	checker.Logs(t, env.Logs.String()).NotLeaking("note-canary-001", token)
 }
 
@@ -102,7 +102,7 @@ func TestProtect_policyRejectionsAreAuditedWithoutStoring(t *testing.T) {
 
 			checker.Records(t, env.Mapper).Count(env.ID.StableType, 0).Count(env.ID.ReferenceType, 0).ProtectRequests(env.ID.Caller)
 			checker.AccessEvent(t, env.Mapper, request.RequestID()).
-				Result(biz.ProtectAction, biz.Denied, string(tc.code)).DataType(tc.dataType(env.ID)).Record(0).PolicyVersion(env.ID.PolicyVersion())
+				Result(biz.ProtectAction, biz.Denied, string(tc.code)).DataType(tc.dataType(env.ID)).Record(0).PolicyVersion(checker.AnyPolicyVersion)
 		})
 	}
 }

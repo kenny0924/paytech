@@ -108,3 +108,6 @@ func (d diagnosticSink) Info(int, string, ...any)       { d.logger.Warn("telemet
 func (d diagnosticSink) Error(error, string, ...any)    { d.logger.Error("telemetry_diagnostic") }
 func (d diagnosticSink) WithValues(...any) logr.LogSink { return d }
 func (d diagnosticSink) WithName(string) logr.LogSink   { return d }
+
+// PolicyRefreshFailed 记录一次策略刷新失败；只写固定诊断，不含原因与查询内容。
+func (r *Runtime) PolicyRefreshFailed() { r.logger.Error("policy_refresh_failed") }

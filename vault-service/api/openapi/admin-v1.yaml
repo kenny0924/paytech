@@ -1,0 +1,1011 @@
+openapi: 3.1.0
+info:
+  title: Vault internal admin API
+  version: 1.0.0
+  description: >-
+    Internal-only API for the Operations Console BFF. It maintains the Vault data-type catalog and service access
+    rules (saved changes take effect after the next policy refresh, 10 seconds by default), lists policy changes and
+    manual-operation audit events, and performs operator-initiated manual protect/reveal. Only callers listed in
+    VAULT_ADMIN_CALLERS are accepted; every request carries the operator account ID.
+paths:
+  /vault/v1/admin/data-types:
+    get:
+      operationId: listVaultDataTypes
+      summary: List all data types with the current policy version.
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - $ref: '#/components/parameters/XRequestId'
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/EntryStatus'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataTypeList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+    post:
+      operationId: createVaultDataType
+      summary: Create an ACTIVE data type; the code and token mode are immutable afterwards.
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - $ref: '#/components/parameters/XRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataTypeRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataTypeChanged'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '409':
+          $ref: '#/components/responses/PolicyConflict'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /vault/v1/admin/data-types/{dataTypeCode}:
+    put:
+      operationId: updateVaultDataType
+      summary: Update class, description, manual switches or status under optimistic version control.
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - $ref: '#/components/parameters/XRequestId'
+        - name: dataTypeCode
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UppercaseCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataTypeRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataTypeChanged'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/PolicyEntryNotFound'
+        '409':
+          $ref: '#/components/responses/PolicyConflict'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /vault/v1/admin/access-rules:
+    get:
+      operationId: listVaultAccessRules
+      summary: Page service access rules.
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - $ref: '#/components/parameters/XRequestId'
+        - name: dataTypeCode
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/UppercaseCode'
+        - name: callerService
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/CallerService'
+        - name: action
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Action'
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/EntryStatus'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          $ref: '#/components/responses/AccessRulePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+    post:
+      operationId: createVaultAccessRule
+      summary: Create an ACTIVE service access rule; OPERATIONS_MANUAL is a reserved purpose.
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - $ref: '#/components/parameters/XRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccessRuleRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AccessRuleChanged'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/PolicyEntryNotFound'
+        '409':
+          $ref: '#/components/responses/PolicyConflict'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /vault/v1/admin/access-rules/{accessRuleId}:
+    put:
+      operationId: updateVaultAccessRule
+      summary: Enable or disable a service access rule under optimistic version control.
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - $ref: '#/components/parameters/XRequestId'
+        - name: accessRuleId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Int64String'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccessRuleRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AccessRuleChanged'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/PolicyEntryNotFound'
+        '409':
+          $ref: '#/components/responses/PolicyConflict'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /vault/v1/admin/policy-changes:
+    get:
+      operationId: listVaultPolicyChanges
+      summary: Page policy changes in descending version order (snapshots omitted).
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - $ref: '#/components/parameters/XRequestId'
+        - name: targetType
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TargetType'
+        - name: targetKey
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 256
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          $ref: '#/components/responses/PolicyChangePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /vault/v1/admin/policy-changes/{policyVersionNo}:
+    get:
+      operationId: getVaultPolicyChange
+      summary: Read one policy change with before/after metadata snapshots.
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - $ref: '#/components/parameters/XRequestId'
+        - name: policyVersionNo
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          $ref: '#/components/responses/PolicyChangeDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/PolicyEntryNotFound'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /vault/v1/admin/manual-events:
+    get:
+      operationId: listVaultManualEvents
+      summary: Page manual-operation audit events; tokens and values are never returned.
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - $ref: '#/components/parameters/XRequestId'
+        - name: actorId
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/OperatorId'
+        - name: action
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Action'
+        - name: dataTypeCode
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/UppercaseCode'
+        - name: from
+          in: query
+          required: false
+          description: Inclusive RFC 3339 lower bound of the event time.
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          description: Exclusive RFC 3339 upper bound of the event time.
+          schema:
+            type: string
+            format: date-time
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          $ref: '#/components/responses/ManualEventPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /vault/v1/admin/manual/protect:
+    post:
+      operationId: manualProtectVaultRecord
+      summary: Operator-initiated protect with purpose OPERATIONS_MANUAL; the token mode comes from the data type.
+      x-max-raw-body-bytes: 262144
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: The BFF forwards the page submissionId; a replay returns the original token.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 128
+            pattern: '^[A-Za-z0-9._~-]+$'
+        - $ref: '#/components/parameters/XRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualProtectRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ManualProtectSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /vault/v1/admin/manual/reveal:
+    post:
+      operationId: manualRevealVaultRecord
+      summary: Operator-initiated reveal; allowed when the data type enables manual reveal and its class is permitted.
+      x-max-raw-body-bytes: 262144
+      parameters:
+        - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/XOperatorId'
+        - $ref: '#/components/parameters/XRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualRevealRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ManualRevealSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/TokenNotFound'
+        '500':
+          $ref: '#/components/responses/InternalFailure'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+components:
+  parameters:
+    XCallerService:
+      name: X-Caller-Service
+      in: header
+      required: true
+      description: Must be one of the deployment-configured admin callers (VAULT_ADMIN_CALLERS).
+      schema:
+        $ref: '#/components/schemas/CallerService'
+    XOperatorId:
+      name: X-Operator-Id
+      in: header
+      required: true
+      description: Operations account ID filled by the BFF from the trusted gateway context; recorded in every audit row.
+      schema:
+        $ref: '#/components/schemas/OperatorId'
+    XRequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      description: A single valid value is preserved; missing, repeated, or invalid values are replaced by a server-generated value.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100000
+        default: 1
+    Size:
+      name: size
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 10
+  headers:
+    XRequestId:
+      required: true
+      description: The effective request correlation ID preserved or generated by Vault.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'
+    CacheControlNoStore:
+      required: true
+      schema:
+        type: string
+        enum: [no-store]
+  schemas:
+    UppercaseCode:
+      type: string
+      minLength: 1
+      maxLength: 64
+      pattern: '^[A-Z][A-Z0-9_]*$'
+    CallerService:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[a-z][a-z0-9-]*$'
+    OperatorId:
+      type: string
+      pattern: '^[A-Za-z0-9._-]{1,64}$'
+    Int64String:
+      type: string
+      description: 64-bit integer transported as a decimal string.
+      pattern: '^[1-9][0-9]{0,18}$'
+    Token:
+      type: string
+      minLength: 43
+      maxLength: 43
+      pattern: '^[A-Za-z0-9_-]{43}$'
+    TokenMode:
+      type: string
+      enum: [REFERENCE, STABLE]
+    DataClass:
+      type: string
+      enum: [STANDARD, SECRET]
+    EntryStatus:
+      type: string
+      enum: [ACTIVE, DISABLED]
+    Action:
+      type: string
+      enum: [PROTECT, REVEAL]
+    TargetType:
+      type: string
+      enum: [POLICY, DATA_TYPE, ACCESS_RULE]
+    Reason:
+      type: string
+      minLength: 1
+      maxLength: 500
+      description: Change reason, at most 500 characters.
+    ReasonCode:
+      type: string
+      enum: [CUSTOMER_VERIFICATION, DATA_REPAIR, CHANNEL_CONFIGURATION, INCIDENT_INVESTIGATION, OTHER]
+    TicketRef:
+      type: string
+      pattern: '^[A-Za-z0-9._#-]{1,64}$'
+    AllowedDataClasses:
+      type: array
+      description: Classes permitted by the BFF route; the ordinary route sends [STANDARD], the secret route [STANDARD, SECRET].
+      minItems: 1
+      maxItems: 2
+      items:
+        $ref: '#/components/schemas/DataClass'
+    DataType:
+      type: object
+      additionalProperties: false
+      required: [dataTypeCode, tokenMode, dataClass, description, manualProtectEnabled, manualRevealEnabled, status, version, updateTime]
+      properties:
+        dataTypeCode:
+          $ref: '#/components/schemas/UppercaseCode'
+        tokenMode:
+          $ref: '#/components/schemas/TokenMode'
+        dataClass:
+          $ref: '#/components/schemas/DataClass'
+        description:
+          type: string
+        manualProtectEnabled:
+          type: boolean
+        manualRevealEnabled:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/EntryStatus'
+        version:
+          type: integer
+          minimum: 1
+        updateTime:
+          type: string
+          format: date-time
+    CreateDataTypeRequest:
+      type: object
+      additionalProperties: false
+      required: [dataTypeCode, tokenMode, dataClass, description, manualProtectEnabled, manualRevealEnabled, reason]
+      properties:
+        dataTypeCode:
+          $ref: '#/components/schemas/UppercaseCode'
+        tokenMode:
+          $ref: '#/components/schemas/TokenMode'
+        dataClass:
+          $ref: '#/components/schemas/DataClass'
+        description:
+          type: string
+          minLength: 1
+          maxLength: 256
+        manualProtectEnabled:
+          type: boolean
+        manualRevealEnabled:
+          type: boolean
+        reason:
+          $ref: '#/components/schemas/Reason'
+    UpdateDataTypeRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, dataClass, description, manualProtectEnabled, manualRevealEnabled, status, reason]
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        dataClass:
+          $ref: '#/components/schemas/DataClass'
+        description:
+          type: string
+          minLength: 1
+          maxLength: 256
+        manualProtectEnabled:
+          type: boolean
+        manualRevealEnabled:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/EntryStatus'
+        reason:
+          $ref: '#/components/schemas/Reason'
+    DataTypeListResponse:
+      type: object
+      additionalProperties: false
+      required: [currentPolicyVersion, items]
+      properties:
+        currentPolicyVersion:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataType'
+    DataTypeChangedResponse:
+      type: object
+      additionalProperties: false
+      required: [dataType, policyVersion]
+      properties:
+        dataType:
+          $ref: '#/components/schemas/DataType'
+        policyVersion:
+          type: integer
+          minimum: 1
+    AccessRule:
+      type: object
+      additionalProperties: false
+      required: [accessRuleId, callerService, action, dataTypeCode, purposeCode, status, version, updateTime]
+      properties:
+        accessRuleId:
+          $ref: '#/components/schemas/Int64String'
+        callerService:
+          $ref: '#/components/schemas/CallerService'
+        action:
+          $ref: '#/components/schemas/Action'
+        dataTypeCode:
+          $ref: '#/components/schemas/UppercaseCode'
+        purposeCode:
+          $ref: '#/components/schemas/UppercaseCode'
+        status:
+          $ref: '#/components/schemas/EntryStatus'
+        version:
+          type: integer
+          minimum: 1
+        updateTime:
+          type: string
+          format: date-time
+    CreateAccessRuleRequest:
+      type: object
+      additionalProperties: false
+      required: [callerService, action, dataTypeCode, purposeCode, reason]
+      properties:
+        callerService:
+          $ref: '#/components/schemas/CallerService'
+        action:
+          $ref: '#/components/schemas/Action'
+        dataTypeCode:
+          $ref: '#/components/schemas/UppercaseCode'
+        purposeCode:
+          $ref: '#/components/schemas/UppercaseCode'
+        reason:
+          $ref: '#/components/schemas/Reason'
+    UpdateAccessRuleRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, status, reason]
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/EntryStatus'
+        reason:
+          $ref: '#/components/schemas/Reason'
+    AccessRulePageResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, size, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessRule'
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+          format: int64
+    AccessRuleChangedResponse:
+      type: object
+      additionalProperties: false
+      required: [accessRule, policyVersion]
+      properties:
+        accessRule:
+          $ref: '#/components/schemas/AccessRule'
+        policyVersion:
+          type: integer
+          minimum: 1
+    PolicyChange:
+      type: object
+      additionalProperties: false
+      required: [policyVersionNo, changeType, targetType, targetKey, actorId, reason, createTime]
+      properties:
+        policyVersionNo:
+          type: integer
+          minimum: 1
+        changeType:
+          type: string
+          enum: [SEED, DATA_TYPE_CREATE, DATA_TYPE_UPDATE, RULE_CREATE, RULE_UPDATE]
+        targetType:
+          $ref: '#/components/schemas/TargetType'
+        targetKey:
+          type: string
+        actorId:
+          type: string
+        reason:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+        beforeSnapshot:
+          description: Object metadata before the change; absent for creation and in list results. Never contains protected values.
+          type: object
+        afterSnapshot:
+          description: Object metadata after the change; absent in list results. Never contains protected values.
+          type: object
+    PolicyChangePageResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, size, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyChange'
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+          format: int64
+    ManualEvent:
+      type: object
+      additionalProperties: false
+      required: [requestId, actorId, action, dataTypeCode, reasonCode, ticketRef, outcome, resultCode, createTime]
+      properties:
+        requestId:
+          type: string
+        actorId:
+          $ref: '#/components/schemas/OperatorId'
+        action:
+          $ref: '#/components/schemas/Action'
+        dataTypeCode:
+          type: string
+          description: Empty when the request failed before the data type was known.
+        reasonCode:
+          type: string
+        ticketRef:
+          type: string
+        outcome:
+          type: string
+          enum: [SUCCESS, DENIED, FAILED]
+        resultCode:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+    ManualEventPageResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, size, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ManualEvent'
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+          format: int64
+    ManualProtectRequest:
+      type: object
+      additionalProperties: false
+      required: [dataTypeCode, value, reasonCode, ticketRef, allowedDataClasses]
+      properties:
+        dataTypeCode:
+          $ref: '#/components/schemas/UppercaseCode'
+        value:
+          type: string
+          description: A UTF-8 string whose encoded byte length is at most 32 KiB.
+          x-max-utf8-bytes: 32768
+        reasonCode:
+          $ref: '#/components/schemas/ReasonCode'
+        ticketRef:
+          $ref: '#/components/schemas/TicketRef'
+        allowedDataClasses:
+          $ref: '#/components/schemas/AllowedDataClasses'
+    ManualProtectResponse:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token:
+          $ref: '#/components/schemas/Token'
+    ManualRevealRequest:
+      type: object
+      additionalProperties: false
+      required: [token, reasonCode, ticketRef, allowedDataClasses]
+      properties:
+        token:
+          $ref: '#/components/schemas/Token'
+        reasonCode:
+          $ref: '#/components/schemas/ReasonCode'
+        ticketRef:
+          $ref: '#/components/schemas/TicketRef'
+        allowedDataClasses:
+          $ref: '#/components/schemas/AllowedDataClasses'
+    ManualRevealResponse:
+      type: object
+      additionalProperties: false
+      required: [dataTypeCode, value]
+      properties:
+        dataTypeCode:
+          $ref: '#/components/schemas/UppercaseCode'
+        value:
+          type: string
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [type, title, detail, code, requestId, timestamp]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          const: about:blank
+        title:
+          type: string
+        detail:
+          type: string
+          minLength: 1
+        code:
+          type: string
+          pattern: '^[A-Z][A-Z0-9_]{0,63}$'
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'
+        timestamp:
+          type: string
+          format: date-time
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\.[0-9]{6}Z$'
+    ErrorBadRequest:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Bad Request}
+            code:
+              enum: [INVALID_REQUEST, VALUE_TOO_LARGE, UNSUPPORTED_DATA_TYPE]
+    ErrorAccessDenied:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Forbidden}
+            code: {const: ACCESS_DENIED}
+            detail: {const: 访问被拒绝}
+    ErrorTokenNotFound:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Not Found}
+            code: {const: TOKEN_NOT_FOUND}
+            detail: {const: Token不存在}
+    ErrorPolicyEntryNotFound:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Not Found}
+            code: {const: POLICY_ENTRY_NOT_FOUND}
+            detail: {const: 策略条目不存在}
+    ErrorPolicyConflict:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Conflict}
+            code:
+              enum: [POLICY_VERSION_CONFLICT, POLICY_ENTRY_EXISTS]
+    ErrorIdempotencyConflict:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Conflict}
+            code: {const: IDEMPOTENCY_KEY_CONFLICT}
+            detail: {const: 幂等键已被不同请求使用}
+    ErrorInternalFailure:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Internal Server Error}
+            code:
+              enum: [INTEGRITY_CHECK_FAILED, INTERNAL_ERROR]
+    ErrorServiceUnavailable:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Service Unavailable}
+            code:
+              enum: [DEPENDENCY_UNAVAILABLE, AUDIT_UNAVAILABLE]
+  responses:
+    DataTypeList:
+      description: Data types and the current policy version.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/DataTypeListResponse'}
+    DataTypeChanged:
+      description: The saved data type and the new policy version.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/DataTypeChangedResponse'}
+    AccessRulePage:
+      description: A page of access rules.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/AccessRulePageResponse'}
+    AccessRuleChanged:
+      description: The saved access rule and the new policy version.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/AccessRuleChangedResponse'}
+    PolicyChangePage:
+      description: A page of policy changes without snapshots.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/PolicyChangePageResponse'}
+    PolicyChangeDetail:
+      description: One policy change with snapshots.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/PolicyChange'}
+    ManualEventPage:
+      description: A page of manual-operation audit events.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ManualEventPageResponse'}
+    ManualProtectSuccess:
+      description: The token, to be shown to the operator once.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ManualProtectResponse'}
+    ManualRevealSuccess:
+      description: The revealed value; the page hides it automatically after 30 seconds.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ManualRevealResponse'}
+    BadRequest:
+      description: A stable 400 Vault error response.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ErrorBadRequest'}
+    AccessDenied:
+      description: Caller is not an admin caller, or the manual operation is not permitted.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ErrorAccessDenied'}
+    TokenNotFound:
+      description: A stable 404 Vault error response.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ErrorTokenNotFound'}
+    PolicyEntryNotFound:
+      description: The data type, access rule or policy change does not exist.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ErrorPolicyEntryNotFound'}
+    PolicyConflict:
+      description: Stale expectedVersion or a duplicate data type / access rule.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ErrorPolicyConflict'}
+    IdempotencyConflict:
+      description: The Idempotency-Key was used by a different request.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ErrorIdempotencyConflict'}
+    InternalFailure:
+      description: A stable 500 Vault error response.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ErrorInternalFailure'}
+    DependencyUnavailable:
+      description: A stable 503 Vault error response.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ErrorServiceUnavailable'}

@@ -23,6 +23,8 @@ import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.restclient.autoconfigure.RestClientAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
+import com.paytech.vault.client.admin.VaultAdminClient;
+
 import com.paytech.vault.client.ProtectResult;
 import com.paytech.vault.client.VaultClient;
 import com.paytech.vault.client.autoconfigure.VaultClientAutoConfiguration;
@@ -86,26 +88,13 @@ public final class GoVaultProcess implements AutoCloseable {
         environment.put("VAULT_SNOWFLAKE_DATACENTER_ID", "31");
         environment.put("VAULT_SNOWFLAKE_WORKER_ID", "28");
         environment.put("VAULT_NACOS_ENABLED", Boolean.toString(!nacos.isEmpty()));
+        // 调用方 b 兼作管理调用方，其审计与幂等记录仍在夹具的清理归属内；短刷新间隔让策略变更尽快生效。
+        environment.put("VAULT_ADMIN_CALLERS", database.caller("b"));
+        environment.put("VAULT_POLICY_REFRESH_INTERVAL", "200ms");
         environment.put("TMPDIR", directory.toString());
         environment.putAll(nacos);
         if (nacos.containsKey("VAULT_NACOS_PASSWORD")) secrets.add(nacos.get("VAULT_NACOS_PASSWORD"));
-        Path policy = privateFile("policy.json");
-        Files.writeString(policy, policy());
-        environment.put("VAULT_POLICY_FILE", policy.toString());
-    }
-
-    private String policy() {
-        var rules = new ArrayList<Map<String, Object>>();
-        for (String suffix : List.of("a", "b")) {
-            for (String action : List.of("PROTECT", "REVEAL")) {
-                for (String type : List.of("REFERENCE_VALUE", "STABLE_VALUE", "OTHER_VALUE")) {
-                    rules.add(Map.of("callerService", database.caller(suffix), "action", action, "dataType", type, "purposes", List.of("TEST")));
-                }
-            }
-        }
-        return JsonMapper.builder().build().writeValueAsString(Map.of("policyVersion", "e2e-v1", "rules", rules,
-                "dataTypes", Map.of("REFERENCE_VALUE", Map.of("tokenMode", "REFERENCE"),
-                        "STABLE_VALUE", Map.of("tokenMode", "STABLE"), "OTHER_VALUE", Map.of("tokenMode", "STABLE"))));
+        database.seedPolicy();
     }
 
     private Path privateFile(String name) throws IOException {
@@ -143,8 +132,22 @@ public final class GoVaultProcess implements AutoCloseable {
                 });
     }
 
+    @FunctionalInterface public interface AdminScenario { void accept(VaultAdminClient client) throws Exception; }
+
+    /** 以管理调用方（调用方 b）开启 VaultAdminClient 并执行场景。 */
+    public void withAdminClient(AdminScenario operation) {
+        new ApplicationContextRunner().withConfiguration(AutoConfigurations.of(RestClientAutoConfiguration.class, VaultClientAutoConfiguration.class))
+                .withPropertyValues("spring.application.name=" + database.caller("b"), "spring.profiles.active=test",
+                        "vault.client.base-url=" + url(), "vault.client.connect-timeout=1s", "vault.client.read-timeout=5s",
+                        "vault.client.admin-enabled=true")
+                .run(context -> {
+                    assertNull(context.getStartupFailure(), "真实管理客户端自动配置失败");
+                    operation.accept(context.getBean(VaultAdminClient.class));
+                });
+    }
+
     public void assertRawBodyBoundary(VaultDatabaseFixture database) throws Exception {
-        String json = "{\"dataType\":\"REFERENCE_VALUE\",\"tokenMode\":\"REFERENCE\",\"value\":\"\",\"purpose\":\"TEST\"}";
+        String json = "{\"dataType\":\"" + database.type("REFERENCE_VALUE") + "\",\"tokenMode\":\"REFERENCE\",\"value\":\"\",\"purpose\":\"TEST\"}";
         try (var client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).build()) {
             for (int size : new int[]{262144, 262145}) {
                 var request = HttpRequest.newBuilder(URI.create(url() + "/vault/v1/records/protect"))

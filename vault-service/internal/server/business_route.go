@@ -15,10 +15,13 @@ import (
 // businessHandler 是 service 层的接口方法；返回的错误由 businessRoute 统一映射为 Problem。
 type businessHandler func(c *gin.Context, call *service.Call) error
 
+// headerCheck 是公共头之外的附加校验（如管理调用方）；失败同样独立审计一次。
+type headerCheck func(h http.Header, call *service.Call) error
+
 // businessRoute 把业务接口包装为路由：提取 Trace、开启观测、校验公共头、统一写错误并记录指标（≈ 拦截器 + @ControllerAdvice）。
 //
 // 公共头校验失败在此独立审计一次；进入用例后的审计由 biz 负责，这里不再重复审计。
-func (r *router) businessRoute(action biz.Action, handle businessHandler) gin.HandlerFunc {
+func (r *router) businessRoute(action biz.Action, handle businessHandler, checks ...headerCheck) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, finish := r.observe(c.Request, action)
 		c.Request = c.Request.WithContext(ctx)
@@ -27,6 +30,11 @@ func (r *router) businessRoute(action biz.Action, handle businessHandler) gin.Ha
 		defer func() { finish(call.Projection, status, time.Since(start)) }()
 
 		err := validateHeaders(c.Request.Header, action)
+		for _, check := range checks {
+			if err == nil {
+				err = check(c.Request.Header, call)
+			}
+		}
 		if err == nil {
 			err = handle(c, call)
 		} else {

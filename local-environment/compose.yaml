@@ -205,7 +205,7 @@ services:
       VAULT_RUNTIME_MODE: local
       VAULT_HTTP_ADDRESS: 0.0.0.0:18107
       VAULT_DB_DSN: vault_app:${MOR_VAULT_DB_PASSWORD:?set MOR_VAULT_DB_PASSWORD}@tcp(mysql:3306)/mor_vault?parseTime=true&loc=UTC
-      VAULT_POLICY_FILE: /app/policy.json
+      VAULT_ADMIN_CALLERS: operations-console-bff
       VAULT_SNOWFLAKE_DATACENTER_ID: "0"
       VAULT_SNOWFLAKE_WORKER_ID: "7"
       VAULT_NACOS_ENABLED: "true"
@@ -220,8 +220,6 @@ services:
       TZ: UTC
     ports:
       - "127.0.0.1:18107:18107"
-    volumes:
-      - ./vault/policy.local.json:/app/policy.json:ro
     depends_on:
       mysql: { condition: service_healthy }
       nacos: { condition: service_healthy }

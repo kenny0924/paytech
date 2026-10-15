@@ -42,6 +42,18 @@ type Identity struct {
 	// UnregisteredType 未在策略中登记。
 	UnregisteredType string
 
+	// ManualType 是普通敏感级别、开启人工加/解密的数据类型。
+	ManualType string
+
+	// SecretType 是密钥级别、开启人工加/解密的数据类型。
+	SecretType string
+
+	// AdminCaller 是本次运行的管理调用方（相当于 operations-console-bff）。
+	AdminCaller string
+
+	// Operator 是人工操作与策略维护的运营账号 ID。
+	Operator string
+
 	sequence atomic.Int64
 }
 
@@ -61,6 +73,10 @@ func NewIdentity() *Identity {
 		StableType:       "AUTO_" + upper + "_EMAIL",
 		ReferenceType:    "AUTO_" + upper + "_NOTE",
 		UnregisteredType: "AUTO_" + upper + "_UNKNOWN",
+		ManualType:       "AUTO_" + upper + "_PHONE",
+		SecretType:       "AUTO_" + upper + "_SECRET",
+		AdminCaller:      "auto-" + run + "-ops-bff",
+		Operator:         "auto-" + run + "-operator",
 	}
 }
 
@@ -77,5 +93,5 @@ func (i *Identity) NextIdempotencyKey() string {
 	return fmt.Sprintf("%skey-%d", i.Prefix(), i.sequence.Add(1))
 }
 
-// DataTypes 返回本次运行登记过的数据类型。
-func (i *Identity) DataTypes() []string { return []string{i.StableType, i.ReferenceType} }
+// TypePrefix 是本次运行全部数据类型编码的前缀（策略维护场景新建的类型也使用它）。
+func (i *Identity) TypePrefix() string { return "AUTO_" + strings.ToUpper(i.RunID) + "_" }

@@ -7,10 +7,18 @@ overrides:
       t_vault_record: VaultRecord
       t_vault_protect_request: VaultProtectRequest
       t_vault_access_event: VaultAccessEvent
+      t_vault_data_type: VaultDataType
+      t_vault_access_rule: VaultAccessRule
+      t_vault_policy_change: VaultPolicyChange
       wrapped_dek: WrappedDEK
       kms_key_ref: KMSKeyRef
     overrides:
       - column: t_vault_record.value_fingerprint
+        go_type:
+          type: "[]byte"
+        nullable: true
+      # 新建记录没有变更前快照：可空 JSON 用 []byte 接收 NULL（json.RawMessage 无法 Scan NULL）。
+      - column: t_vault_policy_change.before_snapshot
         go_type:
           type: "[]byte"
         nullable: true

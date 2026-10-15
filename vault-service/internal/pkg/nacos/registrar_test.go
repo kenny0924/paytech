@@ -78,7 +78,7 @@ func TestSDKConstructionUsesPrivatePathsCredentialsAndNoopLogger(t *testing.T) {
 	t.Setenv("ALIBABA_CLOUD_ACCESS_KEY_ID", "")
 	t.Setenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET", "")
 	values := map[string]string{
-		"VAULT_RUNTIME_MODE": "test", "VAULT_DB_DSN": "synthetic", "VAULT_POLICY_FILE": "synthetic.json",
+		"VAULT_RUNTIME_MODE": "test", "VAULT_DB_DSN": "synthetic",
 		"VAULT_LOCAL_AES_ROOT_KEY": base64.StdEncoding.EncodeToString(make([]byte, 32)), "VAULT_LOCAL_AES_KEY_ID": "test-key",
 		"VAULT_SNOWFLAKE_DATACENTER_ID": "0", "VAULT_SNOWFLAKE_WORKER_ID": "1", "VAULT_NACOS_ENABLED": "true",
 		"VAULT_NACOS_SERVER_ADDRESS": "127.0.0.1:8848", "VAULT_NACOS_NAMESPACE": "mor-local", "VAULT_NACOS_GROUP": "vault-group",

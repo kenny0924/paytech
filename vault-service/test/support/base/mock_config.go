@@ -1,17 +1,24 @@
 package base
 
-// mockConfig 是自动测试的完整配置清单（对应 Java application-mock.yml）：列出 internal/config 读取的全部键。
+import "time"
+
+// PolicyRefreshInterval 是测试中 Vault 从数据库刷新策略的间隔。
+const PolicyRefreshInterval = 100 * time.Millisecond
+
+// mockConfig 是自动测试的完整配置清单（对应 Java application-mock.yml）：列出 internal/conf 读取的全部键。
 //
-// 动态值来源：VAULT_DB_DSN ← 环境变量 VAULT_TEST_DB_DSN；VAULT_POLICY_FILE ← 本次生成的临时策略；
-// VAULT_LOCAL_AES_ROOT_KEY ← 本次随机生成。其余为固定值。
-func mockConfig(dsn, policyFile, rootKey string) map[string]string {
+// 动态值来源：VAULT_DB_DSN ← 环境变量 VAULT_TEST_DB_DSN；VAULT_ADMIN_CALLERS ← 本次运行的管理调用方；
+// VAULT_LOCAL_AES_ROOT_KEY ← 本次随机生成。策略不来自文件，由 TestMapper 在启动前写入数据库。其余为固定值。
+func mockConfig(dsn, adminCaller, rootKey string) map[string]string {
 	return map[string]string{
 		// 运行模式：test 允许 LOCAL AES；production 会拒绝启动。
 		"VAULT_RUNTIME_MODE": "test",
 		// 必须是合法地址；测试不监听该端口，由 httptest 承载同一 Handler。
 		"VAULT_HTTP_ADDRESS": "127.0.0.1:19127",
 		"VAULT_DB_DSN":       dsn,
-		"VAULT_POLICY_FILE":  policyFile,
+		// 管理接口只接受本次运行的管理调用方；策略每 100 毫秒从数据库刷新一次。
+		"VAULT_ADMIN_CALLERS":           adminCaller,
+		"VAULT_POLICY_REFRESH_INTERVAL": PolicyRefreshInterval.String(),
 		// LOCAL AES 根密钥（base64 的 32 字节）与非敏感密钥引用。
 		"VAULT_LOCAL_AES_ROOT_KEY": rootKey,
 		"VAULT_LOCAL_AES_KEY_ID":   "auto-test",

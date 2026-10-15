@@ -11,9 +11,43 @@ import (
 	"time"
 )
 
+const countManualEvents = `-- name: CountManualEvents :one
+SELECT COUNT(*)
+FROM t_vault_access_event
+WHERE actor_id IS NOT NULL
+  AND (? = '' OR actor_id = ?)
+  AND (? = '' OR action = ?)
+  AND (? = '' OR data_type = ?)
+  AND create_time >= ? AND create_time < ?
+`
+
+type CountManualEventsParams struct {
+	ActorID  sql.NullString
+	Action   string
+	DataType sql.NullString
+	FromTime time.Time
+	ToTime   time.Time
+}
+
+func (q *Queries) CountManualEvents(ctx context.Context, arg CountManualEventsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countManualEvents,
+		arg.ActorID,
+		arg.ActorID,
+		arg.Action,
+		arg.Action,
+		arg.DataType,
+		arg.DataType,
+		arg.FromTime,
+		arg.ToTime,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const insertAccessEvent = `-- name: InsertAccessEvent :exec
-INSERT INTO t_vault_access_event (access_event_id, request_id, trace_id, caller_service, action, data_type, purpose, record_id, outcome, result_code, policy_version, create_time)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO t_vault_access_event (access_event_id, request_id, trace_id, caller_service, actor_id, action, data_type, purpose, record_id, outcome, result_code, policy_version, reason_code, ticket_ref, create_time)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertAccessEventParams struct {
@@ -21,6 +55,7 @@ type InsertAccessEventParams struct {
 	RequestID     string
 	TraceID       sql.NullString
 	CallerService string
+	ActorID       sql.NullString
 	Action        string
 	DataType      sql.NullString
 	Purpose       sql.NullString
@@ -28,6 +63,8 @@ type InsertAccessEventParams struct {
 	Outcome       string
 	ResultCode    string
 	PolicyVersion sql.NullString
+	ReasonCode    sql.NullString
+	TicketRef     sql.NullString
 	CreateTime    time.Time
 }
 
@@ -37,6 +74,7 @@ func (q *Queries) InsertAccessEvent(ctx context.Context, arg InsertAccessEventPa
 		arg.RequestID,
 		arg.TraceID,
 		arg.CallerService,
+		arg.ActorID,
 		arg.Action,
 		arg.DataType,
 		arg.Purpose,
@@ -44,7 +82,89 @@ func (q *Queries) InsertAccessEvent(ctx context.Context, arg InsertAccessEventPa
 		arg.Outcome,
 		arg.ResultCode,
 		arg.PolicyVersion,
+		arg.ReasonCode,
+		arg.TicketRef,
 		arg.CreateTime,
 	)
 	return err
+}
+
+const listManualEvents = `-- name: ListManualEvents :many
+SELECT access_event_id, request_id, actor_id, action, data_type, outcome, result_code, reason_code, ticket_ref, create_time
+FROM t_vault_access_event
+WHERE actor_id IS NOT NULL
+  AND (? = '' OR actor_id = ?)
+  AND (? = '' OR action = ?)
+  AND (? = '' OR data_type = ?)
+  AND create_time >= ? AND create_time < ?
+ORDER BY create_time DESC, access_event_id DESC
+LIMIT ? OFFSET ?
+`
+
+type ListManualEventsParams struct {
+	ActorID  sql.NullString
+	Action   string
+	DataType sql.NullString
+	FromTime time.Time
+	ToTime   time.Time
+	Limit    int32
+	Offset   int32
+}
+
+type ListManualEventsRow struct {
+	AccessEventID int64
+	RequestID     string
+	ActorID       sql.NullString
+	Action        string
+	DataType      sql.NullString
+	Outcome       string
+	ResultCode    string
+	ReasonCode    sql.NullString
+	TicketRef     sql.NullString
+	CreateTime    time.Time
+}
+
+func (q *Queries) ListManualEvents(ctx context.Context, arg ListManualEventsParams) ([]ListManualEventsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listManualEvents,
+		arg.ActorID,
+		arg.ActorID,
+		arg.Action,
+		arg.Action,
+		arg.DataType,
+		arg.DataType,
+		arg.FromTime,
+		arg.ToTime,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListManualEventsRow
+	for rows.Next() {
+		var i ListManualEventsRow
+		if err := rows.Scan(
+			&i.AccessEventID,
+			&i.RequestID,
+			&i.ActorID,
+			&i.Action,
+			&i.DataType,
+			&i.Outcome,
+			&i.ResultCode,
+			&i.ReasonCode,
+			&i.TicketRef,
+			&i.CreateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/paytech/vault-service/internal/biz"
 )
 
-var indexSuffix = regexp.MustCompile(`for key '(?:[a-zA-Z0-9_]+\.)?(uk_vault_record_token|uk_vault_record_stable|uk_vault_protect_request)'$`)
+var indexSuffix = regexp.MustCompile(`for key '(?:[a-zA-Z0-9_]+\.)?(uk_vault_record_token|uk_vault_record_stable|uk_vault_protect_request|uk_vault_data_type_code|uk_vault_access_rule|uk_vault_policy_version)'$`)
 
 // classify 把驱动错误归类为可重试竞争、已知唯一冲突或安全的领域错误，不外泄驱动原文。
 func classify(err error) error {

@@ -17,7 +17,12 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public final class VaultRequestHeaders implements HttpServiceArgumentResolver {
     private static final String ATTRIBUTE_PREFIX = VaultRequestHeaders.class.getName() + ".";
-    private static final Set<String> OWNED_HEADERS = Set.of("X-Caller-Service", "X-Request-Id", "Idempotency-Key");
+    private static final Set<String> OWNED_HEADERS = Set.of("X-Caller-Service", "X-Request-Id", "Idempotency-Key",
+            "X-Operator-Id");
+    /** 管理接口路径前缀；只有这些请求携带操作人。 */
+    static final String ADMIN_PATH_PREFIX = "/vault/v1/admin/";
+    /** 需要幂等键的写路径：服务加密与人工加密。 */
+    private static final Set<String> IDEMPOTENT_PATHS = Set.of("/vault/v1/records/protect", "/vault/v1/admin/manual/protect");
     private final String caller;
 
     @Override
@@ -35,8 +40,13 @@ public final class VaultRequestHeaders implements HttpServiceArgumentResolver {
         headers.set("X-Caller-Service", caller);
         headers.set("X-Request-Id", originalValue(request, "X-Request-Id"));
         headers.remove("Idempotency-Key");
-        if (request.getURI().getPath().equals("/vault/v1/records/protect")) {
+        headers.remove("X-Operator-Id");
+        String path = request.getURI().getPath();
+        if (IDEMPOTENT_PATHS.contains(path)) {
             headers.set("Idempotency-Key", originalValue(request, "Idempotency-Key"));
+        }
+        if (path.startsWith(ADMIN_PATH_PREFIX)) {
+            headers.set("X-Operator-Id", originalValue(request, "X-Operator-Id"));
         }
     }
 

@@ -53,17 +53,22 @@ public final class VaultDatabaseFixture implements AutoCloseable {
     }
 
     private void validateSchema() {
-        assertEquals(3, count("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()"));
-        assertEquals(30, count("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE()"));
-        for (String table : List.of("t_vault_record", "t_vault_protect_request", "t_vault_access_event")) {
+        assertEquals(6, count("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()"));
+        assertEquals(64, count("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE()"));
+        for (String table : List.of("t_vault_record", "t_vault_protect_request", "t_vault_access_event",
+                "t_vault_data_type", "t_vault_access_rule", "t_vault_policy_change")) {
             count("SELECT COUNT(*) FROM " + table + " WHERE 1=0");
         }
     }
 
     public String caller(String suffix) { return prefix + "-" + suffix; }
+    /** 本次运行专属的数据类型编码，避免与共享库中的其他策略冲突。 */
+    public String type(String base) { return "E2E_" + prefix.substring(4).toUpperCase(Locale.ROOT) + "_" + base; }
     public String key(String suffix) { return prefix + "-" + suffix; }
     public String requestId() { return key("r" + attempts.incrementAndGet()); }
     public String canary() { return "VAULT-E2E-SENSITIVE-CANARY-" + prefix; }
+    /** 本次运行的运营账号 ID；策略变更按它清理。 */
+    public String operator() { return prefix + "-op"; }
     public Set<String> sensitiveValues() { return Set.copyOf(sensitive); }
     public void remember(ProtectResult result) { sensitive.add(result.token()); }
     public void preserveRows() { preserveRows = true; }
@@ -112,6 +117,34 @@ public final class VaultDatabaseFixture implements AutoCloseable {
         return statement;
     }
 
+    /** 在 Go 进程启动前写入本次运行的数据类型与规则（Vault 只从数据库读取策略）。 */
+    void seedPolicy() {
+        try {
+            connection.setAutoCommit(false);
+            var types = Map.of("REFERENCE_VALUE", "REFERENCE", "STABLE_VALUE", "STABLE", "OTHER_VALUE", "STABLE");
+            for (var type : types.entrySet()) {
+                delete("INSERT INTO t_vault_data_type (data_type_id,data_type_code,token_mode,data_class,description,manual_protect_enabled,"
+                        + "manual_reveal_enabled,status,version,create_time,update_time) VALUES (?,?,?,'STANDARD','vault-test',0,0,'ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",
+                        randomId(), type(type.getKey()), type.getValue());
+            }
+            for (String suffix : List.of("a", "b")) {
+                for (String action : List.of("PROTECT", "REVEAL")) {
+                    for (String type : types.keySet()) {
+                        delete("INSERT INTO t_vault_access_rule (access_rule_id,caller_service,action,data_type_code,purpose_code,status,version,"
+                                + "create_time,update_time) VALUES (?,?,?,?,'TEST','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",
+                                randomId(), caller(suffix), action, type(type));
+                    }
+                }
+            }
+            connection.commit();
+        } catch (SQLException exception) {
+            try { connection.rollback(); } catch (SQLException ignored) { /* 关闭连接释放失败事务。 */ }
+            throw new AssertionError("写入本次运行的 Vault 策略失败；请确认已执行策略表 DDL");
+        }
+    }
+
+    private static long randomId() { return java.util.concurrent.ThreadLocalRandom.current().nextLong(1L << 40, Long.MAX_VALUE); }
+
     @Override public void close() {
         if (closed) return;
         closed = true;
@@ -121,6 +154,9 @@ public final class VaultDatabaseFixture implements AutoCloseable {
             var candidates = candidates(); // 删除请求前冻结 ID + 不可变 Token，绝不只按 Snowflake ID 清理。
             delete("DELETE FROM t_vault_access_event WHERE " + OWN_EVENT, ownership());
             delete("DELETE FROM t_vault_protect_request WHERE " + OWN_REQUEST, ownership());
+            delete("DELETE FROM t_vault_access_rule WHERE caller_service IN (?, ?)", caller("a"), caller("b"));
+            delete("DELETE FROM t_vault_policy_change WHERE actor_id = ?", operator());
+            delete("DELETE FROM t_vault_data_type WHERE data_type_code LIKE ?", type("%"));
             for (var candidate : candidates.entrySet()) {
                 delete("DELETE FROM t_vault_record WHERE record_id=? AND token=?"
                         + " AND NOT EXISTS (SELECT 1 FROM t_vault_protect_request p WHERE p.record_id=t_vault_record.record_id)"

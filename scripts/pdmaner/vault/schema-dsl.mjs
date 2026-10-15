@@ -22,12 +22,15 @@ function parseType(typeToken) {
     len: match[2] === undefined ? "" : Number(match[2]),
     scale: match[3] === undefined ? "" : Number(match[3]),
   };
-  invariant(["BIGINT", "VARCHAR", "BINARY", "BLOB", "DATETIME"].includes(parsedType.type), `Vault DSL 不支持字段类型：${typeToken}`);
-  if (["BIGINT", "BLOB"].includes(parsedType.type)) {
+  invariant(["BIGINT", "INT", "TINYINT", "VARCHAR", "BINARY", "BLOB", "JSON", "DATETIME"].includes(parsedType.type), `Vault DSL 不支持字段类型：${typeToken}`);
+  if (["BIGINT", "INT", "BLOB", "JSON"].includes(parsedType.type)) {
     invariant(parsedType.len === "" && parsedType.scale === "", `${parsedType.type} 不允许长度或精度：${typeToken}`);
   }
   if (["VARCHAR", "BINARY"].includes(parsedType.type)) {
     invariant(Number.isInteger(parsedType.len) && parsedType.len > 0 && parsedType.scale === "", `${parsedType.type} 必须声明正整数长度：${typeToken}`);
+  }
+  if (parsedType.type === "TINYINT") {
+    invariant(parsedType.len === 1 && parsedType.scale === "", `Vault 布尔开关必须使用 TINYINT(1)：${typeToken}`);
   }
   if (parsedType.type === "DATETIME") {
     invariant(parsedType.len === 6 && parsedType.scale === "", `Vault 时刻必须使用 DATETIME(6)：${typeToken}`);

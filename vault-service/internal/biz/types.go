@@ -42,7 +42,8 @@ type RevealInput struct {
 }
 
 type RevealResult struct {
-	Value []byte
+	Value    []byte
+	DataType string
 }
 
 type Record struct {
@@ -81,6 +82,9 @@ type AccessEvent struct {
 	Outcome       Outcome
 	ResultCode    string
 	PolicyVersion *string
+	ActorID       *string
+	ReasonCode    *string
+	TicketRef     *string
 	CreateTime    time.Time
 }
 
@@ -95,6 +99,9 @@ type AuditProjection struct {
 	Outcome       Outcome
 	ResultCode    string
 	PolicyVersion *string
+	ActorID       *string
+	ReasonCode    *string
+	TicketRef     *string
 }
 
 // Attempt 是一次 HTTP 业务尝试的关联信息，由接入层构造。
@@ -103,4 +110,7 @@ type Attempt struct {
 	TraceID   string
 	Caller    string
 	Action    Action
+
+	// Manual 非空表示运营人工操作：按数据类型开关与数据级别授权，不走服务访问规则。
+	Manual *ManualContext
 }

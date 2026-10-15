@@ -25,6 +25,12 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_EXTERNAL_STANDARD_APIS: lazy(() => import('../pages/ExternalStandardApis').then(m => ({ default: m.ExternalStandardApis }))),
   OPERATIONS_EXTERNAL_INTEGRATIONS: lazy(() => import('../pages/ExternalIntegrations').then(m => ({ default: m.ExternalIntegrations }))),
   OPERATIONS_CLIENT_ONBOARDING_REVIEW: lazy(() => import('../pages/ClientOnboardingReview').then(m => ({ default: m.ClientOnboardingReview }))),
+  OPERATIONS_VAULT_DATA_TYPES: lazy(() => import('../pages/VaultDataTypes').then(m => ({ default: m.VaultDataTypes }))),
+  OPERATIONS_VAULT_ACCESS_RULES: lazy(() => import('../pages/VaultAccessRules').then(m => ({ default: m.VaultAccessRules }))),
+  OPERATIONS_VAULT_POLICY_CHANGES: lazy(() => import('../pages/VaultPolicyChanges').then(m => ({ default: m.VaultPolicyChanges }))),
+  OPERATIONS_VAULT_MANUAL_PROTECT: lazy(() => import('../pages/VaultManualProtect').then(m => ({ default: m.VaultManualProtect }))),
+  OPERATIONS_VAULT_MANUAL_REVEAL: lazy(() => import('../pages/VaultManualReveal').then(m => ({ default: m.VaultManualReveal }))),
+  OPERATIONS_VAULT_MANUAL_EVENTS: lazy(() => import('../pages/VaultManualEvents').then(m => ({ default: m.VaultManualEvents }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];

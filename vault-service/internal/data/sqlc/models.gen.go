@@ -6,6 +6,7 @@ package sqlc
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 )
 
@@ -19,6 +20,8 @@ type VaultAccessEvent struct {
 	TraceID sql.NullString
 	// 发起访问的调用服务名
 	CallerService string
+	// 人工操作的运营账号 ID；服务调用为空
+	ActorID sql.NullString
 	// 实际命中的 Vault 操作
 	Action string
 	// 已安全解析的数据类型代码
@@ -31,9 +34,87 @@ type VaultAccessEvent struct {
 	Outcome string
 	// 稳定结果代码
 	ResultCode string
-	// 生效静态 Allowlist 的版本
+	// 生效策略的版本
 	PolicyVersion sql.NullString
+	// 人工操作理由码
+	ReasonCode sql.NullString
+	// 人工操作关联工单号
+	TicketRef sql.NullString
 	// 访问事件创建的 UTC 时刻
+	CreateTime time.Time
+}
+
+// Vault 服务访问规则（caller × action × data type × purpose）
+type VaultAccessRule struct {
+	// 访问规则服务侧 Snowflake 主键
+	AccessRuleID int64
+	// 调用服务名
+	CallerService string
+	// 动作 PROTECT/REVEAL
+	Action string
+	// 数据类型编码
+	DataTypeCode string
+	// 访问用途编码
+	PurposeCode string
+	// 状态 ACTIVE/DISABLED
+	Status string
+	// 乐观锁版本
+	Version int32
+	// 创建的 UTC 时刻
+	CreateTime time.Time
+	// 最后更新的 UTC 时刻
+	UpdateTime time.Time
+}
+
+// Vault 数据类型目录
+type VaultDataType struct {
+	// 数据类型服务侧 Snowflake 主键
+	DataTypeID int64
+	// 数据类型编码，创建后不可修改
+	DataTypeCode string
+	// Token 模式 REFERENCE/STABLE，创建后不可修改
+	TokenMode string
+	// 数据级别 STANDARD 普通敏感 / SECRET 密钥
+	DataClass string
+	// 用途说明
+	Description string
+	// 是否允许运营人工加密
+	ManualProtectEnabled bool
+	// 是否允许运营人工解密
+	ManualRevealEnabled bool
+	// 状态 ACTIVE/DISABLED；只停用不删除
+	Status string
+	// 乐观锁版本
+	Version int32
+	// 创建的 UTC 时刻
+	CreateTime time.Time
+	// 最后更新的 UTC 时刻
+	UpdateTime time.Time
+}
+
+// Vault 策略变更记录（每次变更一个版本）
+type VaultPolicyChange struct {
+	// 策略变更服务侧 Snowflake 主键
+	PolicyChangeID int64
+	// 变更后的策略版本号，单调递增
+	PolicyVersionNo int32
+	// 变更类型 SEED/DATA_TYPE_CREATE/DATA_TYPE_UPDATE/RULE_CREATE/RULE_UPDATE
+	ChangeType string
+	// 对象类型 POLICY/DATA_TYPE/ACCESS_RULE
+	TargetType string
+	// 对象标识：数据类型编码或规则四元组
+	TargetKey string
+	// 变更前对象元数据（不含任何受保护值）
+	BeforeSnapshot []byte
+	// 变更后对象元数据（不含任何受保护值）
+	AfterSnapshot json.RawMessage
+	// 变更理由
+	Reason string
+	// 操作人账号 ID；初始化数据为 SYSTEM
+	ActorID string
+	// 请求关联标识
+	RequestID string
+	// 变更的 UTC 时刻
 	CreateTime time.Time
 }
 

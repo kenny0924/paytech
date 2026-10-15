@@ -57,6 +57,13 @@ management:
     readinessstate:
       enabled: true
 
+vault:
+  client:
+    # Vault 以 VAULT_ADMIN_CALLERS 只接受 operations-console-bff 的管理请求；业务 VaultClient 本 BFF 不使用。
+    admin-enabled: true
+    connect-timeout: 2s
+    read-timeout: 5s
+
 operations:
   console-origin: ${OPERATIONS_CONSOLE_ORIGIN:https://operations-console.local.test}
   test-http-enabled: ${OPERATIONS_TEST_HTTP_ENABLED:false}
@@ -81,3 +88,5 @@ web:
       - /external-api-admin
       # 审核详情含申请人个人资料，命令含内部理由与客户可见说明，只记元数据。
       - /client-onboarding-admin
+      # 人工加/解密请求与响应含原值或 Token，只记元数据。
+      - /vault-admin

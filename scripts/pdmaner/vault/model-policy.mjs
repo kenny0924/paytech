@@ -20,6 +20,9 @@ export const DIAGRAM_GROUPS = Object.freeze([
       "vault_record",
       "vault_protect_request",
       "vault_access_event",
+      "vault_data_type",
+      "vault_access_rule",
+      "vault_policy_change",
     ]),
   }),
 ]);
@@ -28,6 +31,9 @@ export const ALLOWED_TABLE_KEYS = Object.freeze([
   "vault_record",
   "vault_protect_request",
   "vault_access_event",
+  "vault_data_type",
+  "vault_access_rule",
+  "vault_policy_change",
 ]);
 
 export const ALLOWED_FIELDS_BY_TABLE = Object.freeze({
@@ -58,6 +64,7 @@ export const ALLOWED_FIELDS_BY_TABLE = Object.freeze({
     "request_id",
     "trace_id",
     "caller_service",
+    "actor_id",
     "action",
     "data_type",
     "purpose",
@@ -65,6 +72,45 @@ export const ALLOWED_FIELDS_BY_TABLE = Object.freeze({
     "outcome",
     "result_code",
     "policy_version",
+    "reason_code",
+    "ticket_ref",
+    "create_time",
+  ]),
+  vault_data_type: Object.freeze([
+    "data_type_id",
+    "data_type_code",
+    "token_mode",
+    "data_class",
+    "description",
+    "manual_protect_enabled",
+    "manual_reveal_enabled",
+    "status",
+    "version",
+    "create_time",
+    "update_time",
+  ]),
+  vault_access_rule: Object.freeze([
+    "access_rule_id",
+    "caller_service",
+    "action",
+    "data_type_code",
+    "purpose_code",
+    "status",
+    "version",
+    "create_time",
+    "update_time",
+  ]),
+  vault_policy_change: Object.freeze([
+    "policy_change_id",
+    "policy_version_no",
+    "change_type",
+    "target_type",
+    "target_key",
+    "before_snapshot",
+    "after_snapshot",
+    "reason",
+    "actor_id",
+    "request_id",
     "create_time",
   ]),
 });
@@ -82,6 +128,18 @@ export const ALLOWED_INDEX_SIGNATURES = Object.freeze({
     "IDX|idx_vault_access_record|record_id,create_time",
     "IDX|idx_vault_access_caller|caller_service,create_time",
     "IDX|idx_vault_access_request|request_id",
+    "IDX|idx_vault_access_actor|actor_id,create_time",
+  ]),
+  vault_data_type: Object.freeze([
+    "UK|uk_vault_data_type_code|data_type_code",
+  ]),
+  vault_access_rule: Object.freeze([
+    "UK|uk_vault_access_rule|caller_service,action,data_type_code,purpose_code",
+    "IDX|idx_vault_access_rule_type|data_type_code",
+  ]),
+  vault_policy_change: Object.freeze([
+    "UK|uk_vault_policy_version|policy_version_no",
+    "IDX|idx_vault_policy_change_target|target_type,target_key,create_time",
   ]),
 });
 
@@ -106,8 +164,9 @@ export const FORBIDDEN_TABLE_KEYS = Object.freeze([
   "platform_audit_event",
 ]);
 
+// status 已从禁止模式移除：2026-10-14 决定为策略表批准了“只停用不删除”的状态字段；核心三表仍由字段白名单锁定。
 export const FORBIDDEN_FIELD_PATTERN = Object.freeze(
-  /environment|tenant|binding|resource|plaintext|raw_value|masked|blind_index|key_version|algorithm|status|expiry|shard|bucket|compensation|payload_json/u,
+  /environment|tenant|binding|resource|plaintext|raw_value|masked|blind_index|key_version|algorithm|expiry|shard|bucket|compensation|payload_json/u,
 );
 
 export const APPROVED_SENSITIVE_FIELDS = Object.freeze({
@@ -130,4 +189,14 @@ export const ASCII_BINARY_FIELDS = Object.freeze([
   "outcome",
   "result_code",
   "policy_version",
+  "actor_id",
+  "reason_code",
+  "ticket_ref",
+  "data_type_code",
+  "data_class",
+  "status",
+  "purpose_code",
+  "change_type",
+  "target_type",
+  "target_key",
 ]);

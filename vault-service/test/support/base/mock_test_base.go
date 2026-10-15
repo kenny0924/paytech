@@ -3,6 +3,7 @@ package base
 import (
 	"context"
 	"testing"
+	"time"
 )
 
 // Setup 是每个用例的全局准备：确认环境可复用且本次运行数据为空，并登记全局清理。
@@ -32,10 +33,15 @@ func (e *Environment) assertEmpty(t *testing.T) {
 	}
 }
 
-// clearAfterEach 删除本次运行的全部数据并清空日志；失败时标记环境不可复用。
+// clearAfterEach 删除本次运行的数据并恢复初始策略、清空日志；用例改过策略时等待一个刷新周期，
+// 保证下一个用例看到的是初始策略。失败时标记环境不可复用。
 func (e *Environment) clearAfterEach(t *testing.T) {
 	e.Logs.Reset()
-	if err := e.Mapper.DeleteOwned(context.Background()); err != nil {
+	changed, err := e.Mapper.ResetOwned(context.Background(), e.ID.SeedDataTypes(), e.ID.SeedRules())
+	if err == nil && changed {
+		time.Sleep(3 * PolicyRefreshInterval)
+	}
+	if err != nil {
 		e.mu.Lock()
 		e.unusable = true
 		e.mu.Unlock()

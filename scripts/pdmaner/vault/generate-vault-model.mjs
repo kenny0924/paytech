@@ -103,7 +103,7 @@ function setMapping(mapping, mysqlType, javaType, mybatisType) {
 function normalizeTemplate(template) {
   const model = clone(template);
   model.name = "Code-MoR Vault Database V1";
-  model.describe = "基于批准的 Vault V1 三表物理清单确定性生成的 PDManer 模型";
+  model.describe = "基于批准的 Vault V1 六表物理清单（核心三表与策略三表）确定性生成的 PDManer 模型";
   model.dbConn = [];
   model.dbConns = [];
   model.profile.default.dbConn = "";
@@ -165,13 +165,13 @@ function normalizeTemplate(template) {
 
   const auditRule = namingRules.get("0B2F0BD2-3B84-4AB1-BA29-9DE9620AF608");
   if (auditRule) {
-    auditRule.defName = "可变表使用创建和更新时间，不可变访问事件只保留创建时间";
-    auditRule.programCode = "let actual=data.entity.fields.map(field=>field.defKey); let immutable=data.entity.defKey==='t_vault_access_event'; return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));";
+    auditRule.defName = "可变表使用创建和更新时间，不可变访问事件与策略变更只保留创建时间";
+    auditRule.programCode = "let actual=data.entity.fields.map(field=>field.defKey); let immutable=['t_vault_access_event','t_vault_policy_change'].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));";
   }
 
   const fieldReservedRule = namingRules.get("BEC54F19-52D5-4882-BCE1-4439785F8001");
   if (fieldReservedRule) {
-    fieldReservedRule.programCode = `if(data.entity.defKey==='t_vault_access_event' && data.field.defKey==='action'){return true;}\n${fieldReservedRule.programCode}`;
+    fieldReservedRule.programCode = `let approvedWords={'t_vault_access_event':['action'],'t_vault_access_rule':['action','status'],'t_vault_data_type':['status']}; if((approvedWords[data.entity.defKey]||[]).includes(data.field.defKey)){return true;}\n${fieldReservedRule.programCode}`;
   }
 
   const timeRule = namingRules.get("D330BCC3-DBAB-4677-8C5A-A301003A5878");
@@ -203,8 +203,11 @@ function baseTypeFor(fieldSpec, typeIds, domainIds) {
   else if (fieldSpec.type === "VARCHAR") mapping.baseType = typeIds.string;
   else if (fieldSpec.type === "DATETIME") mapping.baseType = typeIds.date;
   else if (fieldSpec.type === "BINARY" || fieldSpec.type === "BLOB") mapping.baseType = typeIds.bytes;
+  else if (fieldSpec.type === "INT" || fieldSpec.type === "TINYINT") mapping.baseType = typeIds.int;
+  else if (fieldSpec.type === "JSON") mapping.baseType = typeIds.largeText;
   else invariant(false, `不支持的 Vault 字段类型：${fieldSpec.type}`);
   if (fieldSpec.type === "DATETIME") mapping.domain = domainIds.DateTime;
+  if (fieldSpec.type === "INT") mapping.domain = domainIds.Int;
   return mapping;
 }
 
@@ -307,7 +310,7 @@ function buildDiagrams(entities) {
       return {
         id: stableUuid(`diagram/${group.defKey}/table/${tableKey}`),
         shape: "table",
-        position: { x: position * 430, y: 0 },
+        position: { x: (position % 3) * 430, y: Math.floor(position / 3) * 420 },
         count: 0,
         originKey: entity.id,
         type: "P",

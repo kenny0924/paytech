@@ -8,7 +8,6 @@ import (
 	"crypto/rand"
 	"io"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/paytech/vault-service/internal/biz"
@@ -36,14 +35,12 @@ type App struct {
 	Server       *http.Server
 	Store        io.Closer
 	Registration Registration
+	// Policy 是策略定时刷新器；停机时先于数据库关闭。
+	Policy interface{ Close() }
 }
 
-// Assemble 按依赖顺序组装进程：策略 → 密钥 → 数据库 → ID → 注册 → HTTP；任一步失败都释放已建资源。
+// Assemble 按依赖顺序组装进程：密钥 → 数据库 → 策略 → ID → 注册 → HTTP；任一步失败都释放已建资源。
 func Assemble(ctx context.Context, cfg conf.Config, obs *observability.Runtime) (*App, error) {
-	permissions, err := loadPolicy(cfg.PolicyFile)
-	if err != nil {
-		return nil, err
-	}
 	keys, err := openKeys(cfg)
 	if err != nil {
 		return nil, err
@@ -60,6 +57,12 @@ func Assemble(ctx context.Context, cfg conf.Config, obs *observability.Runtime) 
 			_ = app.Close()
 		}
 	}()
+	refresher := policy.NewRefresher(store, cfg.PolicyRefreshInterval, obs.PolicyRefreshFailed)
+	if err := refresher.Start(ctx); err != nil {
+		// 启动时必须读到一次策略（库可为空），否则拒绝启动。
+		return nil, err
+	}
+	app.Policy = refresher
 	ids, err := snowflake.NewGenerator(uint8(cfg.SnowflakeDatacenterID), uint8(cfg.SnowflakeWorkerID))
 	if err != nil {
 		return nil, biz.NewError(biz.InternalError)
@@ -70,19 +73,9 @@ func Assemble(ctx context.Context, cfg conf.Config, obs *observability.Runtime) 
 	if app.Registration, err = startRegistration(ctx, cfg.Nacos); err != nil {
 		return nil, err
 	}
-	app.Server = NewHTTPServer(cfg.HTTPAddress, newHandler(obs, store, keys, ids, permissions), obs)
+	app.Server = NewHTTPServer(cfg.HTTPAddress, newHandler(obs, store, keys, ids, refresher, cfg.AdminCallers), obs)
 	success = true
 	return app, nil
-}
-
-// loadPolicy 读取静态 Allowlist 策略文件。
-func loadPolicy(path string) (*policy.Policy, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, biz.NewError(biz.InternalError)
-	}
-	defer func() { _ = file.Close() }()
-	return policy.Load(file)
 }
 
 // openKeys 用配置中的根密钥创建 LOCAL AES 密钥服务，并清零本地副本。
@@ -93,20 +86,20 @@ func openKeys(cfg conf.Config) (*localaes.Provider, error) {
 }
 
 // newHandler 按 data → biz → service → server 组装 HTTP Handler；存储与密钥经观测包装。
-func newHandler(obs *observability.Runtime, store *data.Store, keys *localaes.Provider, ids *snowflake.Generator, permissions *policy.Policy) http.Handler {
+func newHandler(obs *observability.Runtime, store *data.Store, keys *localaes.Provider, ids *snowflake.Generator, permissions biz.Authorizer, adminCallers []string) http.Handler {
 	observedStore, observedKeys := obs.ObserveStore(store), obs.ObserveKeys(keys)
 	audit := biz.NewAccessAuditService(observedStore, ids, time.Now)
 	cipher := biz.NewRecordCipherService(observedKeys, ids, rand.Reader, time.Now)
-	records := service.NewRecordService(
-		biz.NewProtectUsecase(observedStore, audit, cipher, permissions, ids, time.Now),
-		biz.NewRevealUsecase(observedStore, audit, cipher, permissions),
-		audit,
-	)
+	protect := biz.NewProtectUsecase(observedStore, audit, cipher, permissions, ids, time.Now)
+	reveal := biz.NewRevealUsecase(observedStore, audit, cipher, permissions)
+	admin := biz.NewPolicyAdminUsecase(observedStore, store, ids, time.Now)
 	return server.New(server.Dependencies{
-		Records:  records,
-		Observer: obs,
-		Metrics:  obs.MetricsHandler(),
-		Ready:    readiness(observedStore, observedKeys),
+		Records:      service.NewRecordService(protect, reveal, audit),
+		Admin:        service.NewAdminService(admin, protect, reveal, audit),
+		AdminCallers: adminCallers,
+		Observer:     obs,
+		Metrics:      obs.MetricsHandler(),
+		Ready:        readiness(observedStore, observedKeys),
 	})
 }
 
@@ -143,6 +136,9 @@ func (a *App) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), ShutdownTimeout)
 	defer cancel()
 	var failed bool
+	if a.Policy != nil {
+		a.Policy.Close()
+	}
 	if a.Registration != nil {
 		failed = awaitClose(ctx, func() error { return a.Registration.Close(ctx) }) != nil
 	}

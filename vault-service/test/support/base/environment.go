@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -67,7 +66,7 @@ func Run(m *testing.M) int {
 	return code
 }
 
-// start 生成本次运行的策略与密钥，按正式装配启动 Vault，并以 httptest 承载同一 Handler。
+// start 生成本次运行的密钥，把初始策略写入数据库后按正式装配启动 Vault，并以 httptest 承载同一 Handler。
 func start() (*Environment, error) {
 	dsn := os.Getenv("VAULT_TEST_DB_DSN")
 	if dsn == "" {
@@ -81,20 +80,33 @@ func start() (*Environment, error) {
 	if env.dir, err = os.MkdirTemp("", "vault-auto-"); err != nil {
 		return nil, err
 	}
-	policyFile := filepath.Join(env.dir, "policy.json")
-	if err = os.WriteFile(policyFile, env.ID.PolicyJSON(), 0o600); err != nil {
+	if err = env.openDatabase(); err != nil {
 		return nil, err
 	}
-	if err = env.assemble(policyFile); err != nil {
+	if _, err = env.Mapper.ResetOwned(context.Background(), env.ID.SeedDataTypes(), env.ID.SeedRules()); err != nil {
+		_ = env.stop()
+		return nil, fmt.Errorf("写入初始策略失败（请先执行策略表 DDL）")
+	}
+	if err = env.assemble(); err != nil {
 		_ = env.stop()
 		return nil, err
 	}
 	return env, nil
 }
 
+// openDatabase 打开测试专用连接（TestMapper 使用）。
+func (e *Environment) openDatabase() error {
+	var err error
+	if e.db, err = sql.Open("mysql", e.dsn); err != nil {
+		return err
+	}
+	e.Mapper = dal.NewTestMapper(e.db, e.ID)
+	return nil
+}
+
 // assemble 加载完整测试配置并调用正式装配。
-func (e *Environment) assemble(policyFile string) error {
-	values := mockConfig(e.dsn, policyFile, base64.StdEncoding.EncodeToString(e.rootKey))
+func (e *Environment) assemble() error {
+	values := mockConfig(e.dsn, e.ID.AdminCaller, base64.StdEncoding.EncodeToString(e.rootKey))
 	cfg, err := conf.Load(func(key string) string { return values[key] })
 	if err != nil {
 		return fmt.Errorf("测试配置无效")
@@ -109,10 +121,6 @@ func (e *Environment) assemble(policyFile string) error {
 	}
 	e.server = httptest.NewServer(e.app.Server.Handler)
 	e.URL = e.server.URL
-	if e.db, err = sql.Open("mysql", e.dsn); err != nil {
-		return err
-	}
-	e.Mapper = dal.NewTestMapper(e.db, e.ID)
 	return nil
 }
 

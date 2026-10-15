@@ -118,11 +118,29 @@ func (c *AccessEventChecker) Record(want int64) *AccessEventChecker {
 	return c
 }
 
+// AnyPolicyVersion 表示已查询策略：版本为数据库策略标识 db-<版本号>（共享库的全局版本，不预测具体数值）。
+const AnyPolicyVersion = "db-*"
+
 // PolicyVersion 断言策略版本；空串表示未查询策略。
 func (c *AccessEventChecker) PolicyVersion(want string) *AccessEventChecker {
 	c.t.Helper()
+	if want == AnyPolicyVersion {
+		assert.True(c.t, c.row.PolicyVersion.Valid, "应记录策略版本")
+		assert.Regexp(c.t, `^db-\d+$`, c.row.PolicyVersion.String)
+		return c
+	}
 	assert.Equal(c.t, want, c.row.PolicyVersion.String)
 	assert.Equal(c.t, want != "", c.row.PolicyVersion.Valid)
+	return c
+}
+
+// Manual 断言人工操作的操作人、理由码与工单号；空串表示服务调用（三列为空）。
+func (c *AccessEventChecker) Manual(actorID, reasonCode, ticketRef string) *AccessEventChecker {
+	c.t.Helper()
+	assert.Equal(c.t, actorID, c.row.ActorID.String)
+	assert.Equal(c.t, actorID != "", c.row.ActorID.Valid)
+	assert.Equal(c.t, reasonCode, c.row.ReasonCode.String)
+	assert.Equal(c.t, ticketRef, c.row.TicketRef.String)
 	return c
 }
 

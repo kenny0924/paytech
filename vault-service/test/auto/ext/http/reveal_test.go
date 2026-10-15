@@ -43,7 +43,7 @@ func TestReveal_returnsProtectedValueAndAuditsFirst(t *testing.T) {
 
 			checker.AccessEvent(t, c.env.Mapper, request.RequestID()).
 				Result(biz.RevealAction, biz.Success, "SUCCESS").Caller(c.env.ID.Caller).
-				DataType(dataType).Purpose(fixture.Purpose).Record(recordID).PolicyVersion(c.env.ID.PolicyVersion())
+				DataType(dataType).Purpose(fixture.Purpose).Record(recordID).PolicyVersion(checker.AnyPolicyVersion)
 			checker.Logs(t, c.env.Logs.String()).NotLeaking(value, token)
 		})
 	}
@@ -80,7 +80,7 @@ func TestReveal_unauthorizedAccessIsDeniedWithoutValue(t *testing.T) {
 
 			checker.AccessEvent(t, c.env.Mapper, request.RequestID()).
 				Result(biz.RevealAction, biz.Denied, string(biz.AccessDenied)).
-				DataType(c.env.ID.StableType).Record(recordID).PolicyVersion(c.env.ID.PolicyVersion())
+				DataType(c.env.ID.StableType).Record(recordID).PolicyVersion(checker.AnyPolicyVersion)
 			checker.Logs(t, c.env.Logs.String()).NotLeaking("bob@example.com")
 		})
 	}

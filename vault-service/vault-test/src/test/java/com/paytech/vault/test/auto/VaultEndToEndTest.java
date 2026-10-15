@@ -53,7 +53,7 @@ class VaultEndToEndTest {
     void test_nodeLeaseSpansStoppedChildAndDatabaseCleanup() throws Exception {
         try (var database = new VaultDatabaseFixture(); var server = GoVaultProcess.start(database)) {
             server.withClient("a", client -> database.remember(database.call(() -> client.protect(
-                    database.command("lease", "REFERENCE_VALUE", TokenMode.REFERENCE, database.canary())))));
+                    database.command("lease", database.type("REFERENCE_VALUE"), TokenMode.REFERENCE, database.canary())))));
             server.close();
             database.assertCounts(1, 1, 1);
             assertThrows(BindException.class, () -> {
@@ -73,7 +73,7 @@ class VaultEndToEndTest {
         assertThrows(IllegalStateException.class, () -> {
             try (var database = new VaultDatabaseFixture(); var server = GoVaultProcess.start(database)) {
                 server.withClient("a", client -> database.remember(database.call(() -> client.protect(
-                        database.command("failure-cleanup", "REFERENCE_VALUE", TokenMode.REFERENCE, database.canary())))));
+                        database.command("failure-cleanup", database.type("REFERENCE_VALUE"), TokenMode.REFERENCE, database.canary())))));
                 server.close();
                 database.assertCounts(1, 1, 1);
                 assertThrows(BindException.class, () -> {
@@ -125,12 +125,12 @@ class VaultEndToEndTest {
     void test_referenceReplayConflictAndRevealAudit() throws Exception {
         try (var database = new VaultDatabaseFixture(); var server = GoVaultProcess.start(database)) {
             server.withClient("a", client -> {
-                var command = database.command("reference", "REFERENCE_VALUE", TokenMode.REFERENCE, database.canary());
+                var command = database.command("reference", database.type("REFERENCE_VALUE"), TokenMode.REFERENCE, database.canary());
                 var first = database.call(() -> client.protect(command));
                 database.remember(first);
                 VaultResponseChecker.sameToken(first, database.call(() -> client.protect(command)));
                 VaultResponseChecker.failure("IDEMPOTENCY_KEY_CONFLICT", () -> database.call(() -> client.protect(
-                        database.command("reference", "REFERENCE_VALUE", TokenMode.REFERENCE, database.canary() + "changed"))));
+                        database.command("reference", database.type("REFERENCE_VALUE"), TokenMode.REFERENCE, database.canary() + "changed"))));
                 VaultResponseChecker.value(database.canary(), database.call(() -> client.reveal(new RevealQuery(first.token(), "TEST"))));
                 database.assertCounts(1, 1, 4);
                 database.assertAudit("PROTECT", "SUCCESS", "SUCCESS", 2);
@@ -147,14 +147,14 @@ class VaultEndToEndTest {
             for (String caller : new String[]{"a", "b"}) {
                 server.withClient(caller, client -> {
                     var result = database.call(() -> client.protect(database.command("stable-" + caller,
-                            "STABLE_VALUE", TokenMode.STABLE, database.canary())));
+                            database.type("STABLE_VALUE"), TokenMode.STABLE, database.canary())));
                     database.remember(result);
                     results.add(result);
                 });
             }
             VaultResponseChecker.sameToken(results.getFirst(), results.getLast());
             server.withClient("a", client -> {
-                var other = database.call(() -> client.protect(database.command("other-type", "OTHER_VALUE", TokenMode.STABLE, database.canary())));
+                var other = database.call(() -> client.protect(database.command("other-type", database.type("OTHER_VALUE"), TokenMode.STABLE, database.canary())));
                 database.remember(other);
                 assertFalse(results.getFirst().token().equals(other.token()), "不同 Data Type 必须隔离 Token");
                 database.assertCounts(2, 3, 3);
@@ -168,7 +168,7 @@ class VaultEndToEndTest {
             server.withClient("a", client -> {
                 VaultResponseChecker.failure("TOKEN_NOT_FOUND", () -> database.call(() -> client.reveal(new RevealQuery("A".repeat(43), "TEST"))));
                 VaultResponseChecker.failure("ACCESS_DENIED", () -> database.call(() -> client.protect(
-                        new ProtectCommand("REFERENCE_VALUE", TokenMode.REFERENCE, database.canary(), "DENIED", database.key("deny")))));
+                        new ProtectCommand(database.type("REFERENCE_VALUE"), TokenMode.REFERENCE, database.canary(), "DENIED", database.key("deny")))));
                 database.assertCounts(0, 0, 2);
                 database.assertAudit("REVEAL", "DENIED", "TOKEN_NOT_FOUND", 1);
                 database.assertAudit("PROTECT", "DENIED", "ACCESS_DENIED", 1);
@@ -181,7 +181,7 @@ class VaultEndToEndTest {
         try (var database = new VaultDatabaseFixture(); var server = GoVaultProcess.start(database)) {
             server.withClient("a", client -> {
                 String maximum = "é".repeat(16384);
-                var result = database.call(() -> client.protect(database.command("maximum", "REFERENCE_VALUE", TokenMode.REFERENCE, maximum)));
+                var result = database.call(() -> client.protect(database.command("maximum", database.type("REFERENCE_VALUE"), TokenMode.REFERENCE, maximum)));
                 database.remember(result);
                 VaultResponseChecker.value(maximum, database.call(() -> client.reveal(new RevealQuery(result.token(), "TEST"))));
             });
@@ -202,7 +202,7 @@ class VaultEndToEndTest {
                     try {
                         for (int index = 0; index < 6; index++) {
                             String key = mode == TokenMode.REFERENCE ? "race-reference" : "race-stable-" + index;
-                            String type = mode == TokenMode.REFERENCE ? "REFERENCE_VALUE" : "STABLE_VALUE";
+                            String type = mode == TokenMode.REFERENCE ? database.type("REFERENCE_VALUE") : database.type("STABLE_VALUE");
                             futures.add(executor.submit(() -> {
                                 assertTrue(gate.await(5, TimeUnit.SECONDS), "并发请求未释放");
                                 return database.call(() -> client.protect(database.command(key, type, mode, database.canary())));

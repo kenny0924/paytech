@@ -5,6 +5,7 @@ import (
 	jsonv2 "encoding/json/v2"
 	"io"
 	"net/http"
+	"regexp"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -14,17 +15,22 @@ import (
 	"github.com/paytech/vault-service/internal/biz"
 )
 
+// ticketPattern 是人工操作工单号格式。
+var ticketPattern = regexp.MustCompile(`^[A-Za-z0-9._#-]{1,64}$`)
+
 // maxBodyBytes 是请求体原始字节上限，超限即停止读取。
 const maxBodyBytes = 256 * 1024
 
 var registerOnce sync.Once
 
-// registerValidations 向 Gin 校验器登记 Vault 自定义规则：vault_code、vault_token。
+// registerValidations 向 Gin 校验器登记 Vault 自定义规则：vault_code、vault_token、vault_caller、vault_ticket。
 func registerValidations() {
 	registerOnce.Do(func() {
 		engine := binding.Validator.Engine().(*validator.Validate)
 		_ = engine.RegisterValidation("vault_code", func(fl validator.FieldLevel) bool { return biz.IsCode(fl.Field().String()) })
 		_ = engine.RegisterValidation("vault_token", func(fl validator.FieldLevel) bool { return biz.IsToken(fl.Field().String()) })
+		_ = engine.RegisterValidation("vault_caller", func(fl validator.FieldLevel) bool { return biz.IsCaller(fl.Field().String()) })
+		_ = engine.RegisterValidation("vault_ticket", func(fl validator.FieldLevel) bool { return ticketPattern.MatchString(fl.Field().String()) })
 	})
 }
 

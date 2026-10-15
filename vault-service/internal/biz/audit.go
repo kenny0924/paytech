@@ -35,8 +35,19 @@ func NewProjection(a Attempt, action Action, dataType, purpose string) AuditProj
 	if IsTraceID(a.TraceID) {
 		p.TraceID = &a.TraceID
 	}
+	if a.Manual != nil {
+		p.ActorID, p.ReasonCode, p.TicketRef = optional(a.Manual.ActorID), optional(a.Manual.ReasonCode), optional(a.Manual.TicketRef)
+	}
 	p.SetFields(dataType, purpose)
 	return p
+}
+
+// optional 把空串转为 nil，非空串转为指针。
+func optional(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
 }
 
 // SetFields 记录格式合法的数据类型与用途；非法或空值不入审计。
@@ -63,7 +74,7 @@ func (s *AccessAuditService) Append(ctx context.Context, tx TxStore, p AuditProj
 	if err != nil {
 		return ErrAuditWrite
 	}
-	event := AccessEvent{ID: id, RequestID: p.RequestID, TraceID: p.TraceID, Caller: p.Caller, Action: p.Action, DataType: p.DataType, Purpose: p.Purpose, RecordID: p.RecordID, Outcome: p.Outcome, ResultCode: p.ResultCode, PolicyVersion: p.PolicyVersion, CreateTime: s.clock().UTC()}
+	event := AccessEvent{ID: id, RequestID: p.RequestID, TraceID: p.TraceID, Caller: p.Caller, Action: p.Action, DataType: p.DataType, Purpose: p.Purpose, RecordID: p.RecordID, Outcome: p.Outcome, ResultCode: p.ResultCode, PolicyVersion: p.PolicyVersion, ActorID: p.ActorID, ReasonCode: p.ReasonCode, TicketRef: p.TicketRef, CreateTime: s.clock().UTC()}
 	if tx.InsertAccessEvent(ctx, event) != nil {
 		return ErrAuditWrite
 	}

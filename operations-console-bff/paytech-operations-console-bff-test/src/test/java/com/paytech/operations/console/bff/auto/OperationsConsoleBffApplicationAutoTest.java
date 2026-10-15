@@ -136,7 +136,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "Risk 浏览器入口必须是唯一具体 Controller");
         assertEquals(List.of("/auth", "/authorization", "/iam", "/audit", "/gateway-admin", "/console-admin", "/permission-admin", "/api-credential-admin", "/api-scope-admin",
                 "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows", "/decision-variables", "/external-api-admin",
-                "/client-onboarding-admin"),
+                "/client-onboarding-admin", "/vault-admin"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
         Set<String> routes = applicationContext.getBean(
@@ -290,7 +290,13 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /client-onboarding-admin/v1/cases/{caseId}/return",
             "POST /client-onboarding-admin/v1/cases/{caseId}/approval",
             "POST /client-onboarding-admin/v1/cases/{caseId}/rejection",
-            "POST /client-onboarding-admin/v1/cases/{caseId}/files/{fileId}/download"), routes);
+            "POST /client-onboarding-admin/v1/cases/{caseId}/files/{fileId}/download",
+            "GET /vault-admin/v1/data-types", "POST /vault-admin/v1/data-types", "PUT /vault-admin/v1/data-types/{dataTypeCode}",
+            "GET /vault-admin/v1/access-rules", "POST /vault-admin/v1/access-rules",
+            "PUT /vault-admin/v1/access-rules/{accessRuleId}", "GET /vault-admin/v1/policy-changes",
+            "GET /vault-admin/v1/policy-changes/{policyVersionNo}", "POST /vault-admin/v1/manual/protect",
+            "POST /vault-admin/v1/manual/secret-protect", "POST /vault-admin/v1/manual/reveal",
+            "POST /vault-admin/v1/manual/secret-reveal", "GET /vault-admin/v1/manual-events"), routes);
 
         Path classes = webModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

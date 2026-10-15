@@ -26,6 +26,7 @@ type TxStore interface {
 	RecordTxRepository
 	ProtectRequestTxRepository
 	AccessEventTxRepository
+	PolicyTxRepository
 }
 
 // RecordTxRepository 访问 t_vault_record。
@@ -64,6 +65,12 @@ const (
 	DuplicateStable DuplicateKind = "uk_vault_record_stable"
 
 	DuplicateProtectRequest DuplicateKind = "uk_vault_protect_request"
+
+	DuplicateDataType DuplicateKind = "uk_vault_data_type_code"
+
+	DuplicateAccessRule DuplicateKind = "uk_vault_access_rule"
+
+	DuplicatePolicyVersion DuplicateKind = "uk_vault_policy_version"
 )
 
 // DuplicateError 表示命中已知唯一索引，Kind 指明索引。

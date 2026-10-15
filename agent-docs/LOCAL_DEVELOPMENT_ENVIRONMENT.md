@@ -212,7 +212,7 @@ local-environment/
 
 - 只含 Vault Server 一个容器（`mor-local/vault-service:development`，`FROM scratch`、非 root、只读根文件系统、去除全部 capability、内存上限 256MB），复用测试环境的 Dockerfile 与就绪探针；
 - 连接 `mysql:3306/mor_vault` 与 `nacos:8848`，端口只发布到 `127.0.0.1:18107`，在 Nacos `mor-local` 注册 `127.0.0.1:18107`，供宿主机上的 Java 服务发现；
-- LOCAL AES 根密钥、密钥引用与 Nacos 账号来自本机全链路材料，由 `local-environment/vault/vault.sh build` 写入不提交的 `vault/private/vault.env`（0600）；策略只读挂载 `vault/policy.local.json`；
+- LOCAL AES 根密钥、密钥引用与 Nacos 账号来自本机全链路材料，由 `local-environment/vault/vault.sh build` 写入不提交的 `vault/private/vault.env`（0600）；访问策略只从 `mor_vault` 策略表读取（[dml-local.sql](../requirements/20261014/operations-console-Vault数据类型与手动加解密/db/vault/dml-local.sql) 初始化），`vault/policy.local.json` 仅作转写来源、不再读取；管理调用方 `VAULT_ADMIN_CALLERS=operations-console-bff`；
 - 与宿主机进程方式（`run-service.sh vault`）互斥，同一时间只运行一种；不是生产 KMS，也不改变 Vault 的生产缺口。
 
 ### 7.5 可选安全基础设施 Profile

@@ -37,9 +37,9 @@ func statusFor(code biz.ErrorCode) int {
 		return http.StatusBadRequest
 	case biz.AccessDenied:
 		return http.StatusForbidden
-	case biz.TokenNotFound:
+	case biz.TokenNotFound, biz.PolicyEntryNotFound:
 		return http.StatusNotFound
-	case biz.IdempotencyKeyConflict:
+	case biz.IdempotencyKeyConflict, biz.PolicyVersionConflict, biz.PolicyEntryExists:
 		return http.StatusConflict
 	case biz.DependencyUnavailable, biz.AuditUnavailable:
 		return http.StatusServiceUnavailable

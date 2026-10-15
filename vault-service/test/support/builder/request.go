@@ -48,6 +48,33 @@ func RevealTemplate(id *fixture.Identity, token string) *RequestBuilder {
 	return b
 }
 
+// Admin 返回发往 /vault/v1/admin 的管理请求：管理调用方 + 操作人；body 为 nil 时为无正文请求。
+func Admin(id *fixture.Identity, method, path string, body map[string]any) *RequestBuilder {
+	b := newBuilder(id, "/vault/v1/admin"+path)
+	b.request.Method = method
+	b.request.Header.Set("X-Caller-Service", id.AdminCaller)
+	b.request.Header.Set("X-Operator-Id", id.Operator)
+	b.fields = body
+	if body == nil {
+		b.request.Header.Del("Content-Type")
+	}
+	return b
+}
+
+// ManualProtect 返回人工加密请求（默认只允许普通敏感级别）。
+func ManualProtect(id *fixture.Identity, dataType, value string) *RequestBuilder {
+	b := Admin(id, http.MethodPost, "/manual/protect", map[string]any{"dataTypeCode": dataType, "value": value, "reasonCode": "DATA_REPAIR",
+		"ticketRef": "OPS-1001", "allowedDataClasses": []string{"STANDARD"}})
+	b.request.Header.Set("Idempotency-Key", id.NextIdempotencyKey())
+	return b
+}
+
+// ManualReveal 返回人工解密请求（默认只允许普通敏感级别）。
+func ManualReveal(id *fixture.Identity, token string) *RequestBuilder {
+	return Admin(id, http.MethodPost, "/manual/reveal", map[string]any{"token": token, "reasonCode": "CUSTOMER_VERIFICATION",
+		"ticketRef": "OPS-1002", "allowedDataClasses": []string{"STANDARD"}})
+}
+
 // Get 返回技术端点的 GET 请求。
 func Get(id *fixture.Identity, path string) *RequestBuilder {
 	b := newBuilder(id, path)

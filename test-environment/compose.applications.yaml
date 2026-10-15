@@ -39,7 +39,7 @@ services:
       VAULT_RUNTIME_MODE: test
       VAULT_HTTP_ADDRESS: 0.0.0.0:18107
       VAULT_DB_DSN: vault_app:${MOR_VAULT_DB_PASSWORD:?prepare test secrets}@tcp(mysql:3306)/mor_vault?parseTime=true&loc=UTC
-      VAULT_POLICY_FILE: /app/policy.json
+      VAULT_ADMIN_CALLERS: operations-console-bff
       VAULT_SNOWFLAKE_DATACENTER_ID: "0"
       VAULT_SNOWFLAKE_WORKER_ID: "24"
       VAULT_NACOS_ENABLED: "true"
@@ -53,8 +53,6 @@ services:
       OTEL_TRACES_EXPORTER: none
       OTEL_RESOURCE_ATTRIBUTES: ""
       TZ: UTC
-    volumes:
-      - ./vault/policy.json:/app/policy.json:ro
     depends_on:
       mysql: { condition: service_healthy }
       nacos: { condition: service_healthy }

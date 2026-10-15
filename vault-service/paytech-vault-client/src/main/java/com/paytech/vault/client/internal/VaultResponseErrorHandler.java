@@ -192,8 +192,11 @@ public final class VaultResponseErrorHandler {
                     || code == VaultClientErrorCode.UNSUPPORTED_DATA_TYPE
                     || code == VaultClientErrorCode.TOKEN_MODE_NOT_ALLOWED;
             case 403 -> code == VaultClientErrorCode.ACCESS_DENIED;
-            case 404 -> code == VaultClientErrorCode.TOKEN_NOT_FOUND;
-            case 409 -> code == VaultClientErrorCode.IDEMPOTENCY_KEY_CONFLICT;
+            case 404 -> code == VaultClientErrorCode.TOKEN_NOT_FOUND
+                    || code == VaultClientErrorCode.POLICY_ENTRY_NOT_FOUND;
+            case 409 -> code == VaultClientErrorCode.IDEMPOTENCY_KEY_CONFLICT
+                    || code == VaultClientErrorCode.POLICY_VERSION_CONFLICT
+                    || code == VaultClientErrorCode.POLICY_ENTRY_EXISTS;
             case 500 -> code == VaultClientErrorCode.INTEGRITY_CHECK_FAILED
                     || code == VaultClientErrorCode.INTERNAL_ERROR;
             case 503 -> code == VaultClientErrorCode.DEPENDENCY_UNAVAILABLE

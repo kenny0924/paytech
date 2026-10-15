@@ -95,7 +95,9 @@ GO_BIN=~/sdk/go1.27.1/bin/go ./vault/vault.sh build   # cross-compile linux/arm6
 ./vault/vault.sh stop                                  # deregisters from Nacos on shutdown
 ```
 
-- Uses `mor_vault` with `vault_app`, the local policy `vault/policy.local.json` (read-only mount) and the same LOCAL AES
+- Uses `mor_vault` with `vault_app`, reads the access policy only from the database (initialized by the
+  [local DML](../requirements/20261014/operations-console-Vault数据类型与手动加解密/db/vault/dml-local.sql);
+  `vault/policy.local.json` is kept only as its transcription source and is no longer read), and the same LOCAL AES
   key as the local full-chain material, so existing tokens remain readable.
 - Registers `vault-service` in Nacos `mor-local` as `127.0.0.1:18107` for host-run Java services.
 - `vault/private/vault.env` (0600, gitignored) holds only the AES root key, key ID and Nacos service account; it is never printed.

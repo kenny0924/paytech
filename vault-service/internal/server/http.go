@@ -27,11 +27,15 @@ type Observer interface {
 
 // Dependencies 是接入层依赖；Metrics 为空时不暴露 /metrics。
 type Dependencies struct {
-	Records  *service.RecordService
-	Observer Observer
-	Metrics  http.Handler
-	Ready    func(context.Context) error
-	Now      func() time.Time
+	Records *service.RecordService
+	// Admin 为空时不登记 /vault/v1/admin 管理接口。
+	Admin *service.AdminService
+	// AdminCallers 是允许调用管理接口的服务名（部署配置）。
+	AdminCallers []string
+	Observer     Observer
+	Metrics      http.Handler
+	Ready        func(context.Context) error
+	Now          func() time.Time
 }
 
 // router 持有依赖与 Problem 写出器，路由方法挂在它上面。
@@ -56,6 +60,9 @@ func New(deps Dependencies) http.Handler {
 	records := engine.Group("/vault/v1/records")
 	records.POST("/protect", r.businessRoute(biz.ProtectAction, deps.Records.Protect))
 	records.POST("/reveal", r.businessRoute(biz.RevealAction, deps.Records.Reveal))
+	if deps.Admin != nil {
+		r.registerAdmin(engine.Group("/vault/v1/admin"), deps.Admin)
+	}
 
 	engine.GET("/health/liveness", r.liveness)
 	engine.GET("/health/readiness", r.readiness)

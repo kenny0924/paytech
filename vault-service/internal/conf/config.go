@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/caarlos0/env/v11"
 
@@ -19,8 +20,11 @@ var keyIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
 type Config struct {
 	RuntimeMode           string
 	HTTPAddress           string
-	PolicyFile            string
 	SnowflakeDatacenterID int64
+	// AdminCallers 是允许调用 /vault/v1/admin 管理接口的服务名；只能由部署配置设置。
+	AdminCallers []string
+	// PolicyRefreshInterval 是从数据库全量刷新策略的间隔。
+	PolicyRefreshInterval time.Duration
 	SnowflakeWorkerID     int64
 	Nacos                 NacosConfig
 	databaseDSN           secret
@@ -71,7 +75,8 @@ func (secret) GoString() string { return "[REDACTED]" }
 type environment struct {
 	RuntimeMode           string           `env:"VAULT_RUNTIME_MODE,required"`
 	HTTPAddress           string           `env:"VAULT_HTTP_ADDRESS" envDefault:"127.0.0.1:18107"`
-	PolicyFile            string           `env:"VAULT_POLICY_FILE,required"`
+	AdminCallers          []string         `env:"VAULT_ADMIN_CALLERS" envDefault:"operations-console-bff" envSeparator:","`
+	PolicyRefreshInterval time.Duration    `env:"VAULT_POLICY_REFRESH_INTERVAL" envDefault:"10s"`
 	DatabaseDSN           string           `env:"VAULT_DB_DSN,required"`
 	LocalAESRootKey       string           `env:"VAULT_LOCAL_AES_ROOT_KEY,required"`
 	LocalAESKeyID         string           `env:"VAULT_LOCAL_AES_KEY_ID,required"`
@@ -134,7 +139,7 @@ func (e environment) toConfig() (Config, error) {
 		return Config{}, fmt.Errorf("invalid configuration")
 	}
 	config := Config{
-		RuntimeMode: e.RuntimeMode, HTTPAddress: e.HTTPAddress, PolicyFile: e.PolicyFile,
+		RuntimeMode: e.RuntimeMode, HTTPAddress: e.HTTPAddress, AdminCallers: e.AdminCallers, PolicyRefreshInterval: e.PolicyRefreshInterval,
 		SnowflakeDatacenterID: int64(e.SnowflakeDatacenterID), SnowflakeWorkerID: int64(e.SnowflakeWorkerID),
 		databaseDSN: secret(e.DatabaseDSN), localAESRootKey: secret(rootKey), localAESKeyID: e.LocalAESKeyID,
 	}
@@ -158,10 +163,11 @@ func (n nacosEnvironment) toConfig() (NacosConfig, error) {
 	return config, nil
 }
 
-// validateBaseConfig 校验运行模式、监听地址、策略文件、DSN 与密钥引用；production 拒绝 LOCAL AES。
+// validateBaseConfig 校验运行模式、监听地址、管理调用方、策略刷新间隔、DSN 与密钥引用；production 拒绝 LOCAL AES。
 func validateBaseConfig(config Config) error {
 	if !validRuntimeMode(config.RuntimeMode) || !validAddress(config.HTTPAddress) ||
-		config.PolicyFile == "" || len(config.databaseDSN) == 0 || !keyIDPattern.MatchString(config.localAESKeyID) {
+		!validAdminCallers(config.AdminCallers) || config.PolicyRefreshInterval < 100*time.Millisecond || config.PolicyRefreshInterval > 5*time.Minute ||
+		len(config.databaseDSN) == 0 || !keyIDPattern.MatchString(config.localAESKeyID) {
 		return startupError()
 	}
 	if config.RuntimeMode == "production" {
@@ -203,3 +209,16 @@ func validAddress(address string) bool {
 }
 
 func startupError() error { return biz.NewError(biz.InternalError) }
+
+// validAdminCallers 要求至少一个且全部为合法服务名。
+func validAdminCallers(callers []string) bool {
+	if len(callers) == 0 {
+		return false
+	}
+	for _, caller := range callers {
+		if !biz.IsCaller(caller) {
+			return false
+		}
+	}
+	return true
+}
