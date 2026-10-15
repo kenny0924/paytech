@@ -19,5 +19,6 @@
 | 2026-10-15 | 5 本机联调 | 按用户试用反馈调整页面：删除数据类型页顶部提示；手动加密完成后不再换页，Token 显示在表单下方并可复制；手动解密结果并入同一卡片（遮罩、显示/隐藏、复制、清除、30 秒倒计时）。Web 测试 996、浏览器验收 19 项通过 | 已完成 |
 | 2026-10-15 | 5 本机联调 | 用户确认审计只在 Vault 本地、暂不转发 Platform 集中审计，写入决定记录第 7 条；用户回复“提交吧”，阶段 5 确认并提交（未推送）。下一步：mor-test 执行 DDL/DML、注册激活与部署（阶段 6/7，需另行授权） | **已确认** |
 | 2026-10-15 | 6/7 mor-test 发布 | 用户授权“可以”、拦截后“放行”。按[发布记录](./release/release.md)：备份后 `mor_vault` 执行 DDL 与 dml-test，`mor_platform` 登记 174 行并[启用](./release/test-activate.sql)；Vault、BFF、Web 从 `34ecac9` 干净构建（BFF 与 risk-api 等接口模块同 reactor，避开他人未提交 SNAPSHOT）并替换。Vault 烟测（临时 curl 探针）、API 验收 27 项、浏览器 19 项、23 页面回归通过，验收数据已清理。偏差：BFF 首个镜像误用过期健康探针，重建后 healthy；`vault.py smoke` 因 Platform 镜像无 curl 需改探针（遗留） | 待确认 |
+| 2026-10-15 | 后续：Platform 对接 | 用户要求“接口先对接、维护 local 规则，Vault 不允许 mock，除非单元测试”：删除 Platform 生产代码中的 `LocalLoginEmailVault`，Operations 登录邮箱统一走 VaultClient（自动测试仍用 HTTP Simulator）；本机经运营入口新增 2 个数据类型、4 条规则（版本 8），以 platform-support-service 身份实测解密/加密与越权拒绝通过。mor-test 未动：下次发布 Platform 前须迁移 29 个 `mock_` 邮箱 Token 并补 4 条规则 | 待确认 |
 
 当前实现与部署状态只见 [CURRENT_IMPLEMENTATION.md](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。

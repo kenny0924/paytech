@@ -12,7 +12,6 @@ import com.paytech.foundation.id.SnowflakeIdGenerator;
 import com.paytech.platform.support.accesscontrol.domain.authentication.OperationsPasswordPolicy;
 import com.paytech.platform.support.accesscontrol.integration.signing.LocalOperationsTokenCryptography;
 import com.paytech.platform.support.accesscontrol.integration.signing.OperationsTokenCryptography;
-import com.paytech.platform.support.accesscontrol.integration.vault.LocalLoginEmailVault;
 import com.paytech.platform.support.accesscontrol.integration.vault.LoginEmailVault;
 import com.paytech.platform.support.accesscontrol.integration.vault.VaultLoginEmailVault;
 import com.paytech.vault.client.VaultClient;
@@ -36,11 +35,10 @@ public class OperationsAuthenticationConfiguration {
         return new OperationsPasswordPolicy();
     }
 
+    /** 所有环境都经正式 VaultClient 访问 Vault；自动测试使用受控 HTTP Simulator，不在生产代码中保留 Vault Mock。 */
     @Bean
-    LoginEmailVault loginEmailVault(Environment environment, VaultClient client) {
-        boolean isolatedTest = Arrays.stream(environment.getActiveProfiles())
-            .anyMatch(profile -> profile.equals("auto") || profile.equals("test"));
-        return isolatedTest ? new LocalLoginEmailVault() : new VaultLoginEmailVault(client);
+    LoginEmailVault loginEmailVault(VaultClient client) {
+        return new VaultLoginEmailVault(client);
     }
 
     @Bean
