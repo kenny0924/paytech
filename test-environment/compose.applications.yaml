@@ -129,13 +129,11 @@ services:
       # Client 注册与入驻：CUSTOMER 签名/HMAC 材料来自 private/platform.env 的 CLIENT_LOCAL_*。
       CLIENT_AUTHENTICATION_ENABLED: "true"
       CLIENT_AUTHENTICATION_ISSUER: https://customer-auth.mor-test.local
-      CLIENT_AUTHENTICATION_MAIL_FROM: no-reply@mor-test.local
       CLIENT_AUTHENTICATION_PUBLIC_ORIGIN: https://localhost:28443
+      # 认证邮件经 Delivery 发送（SMTP 已移除），开启 Client 认证须开启通知；test 未配置 SES，认证邮件发送失败只计指标。
+      NOTIFICATION_ENABLED: "true"
+      NOTIFICATION_SES_ENABLED: "false"
       TENANT_PROJECTION_ENABLED: "true"
-      SPRING_MAIL_HOST: mailpit
-      SPRING_MAIL_PORT: "1025"
-      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "false"
-      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: "false"
       FILES_ONBOARDING_ENABLED: "true"
       FILES_ONBOARDING_STORAGE_PROVIDER: MINIO
       FILES_ONBOARDING_STORAGE_CONTAINER_REF: mor-platform-files
