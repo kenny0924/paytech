@@ -42,6 +42,10 @@
 
 - **Implemented / auto 已验证，已部署 mor-test（代码尚未提交）：** 按[需求](../requirements/20261015/risk-评估结果查询与解释/requirement.md)与[方案](../requirements/20261015/risk-评估结果查询与解释/design.md)新增 `RiskEvaluationQueryApi`：`GET /risk-decisions/v1/evaluations/{id}`、按 `pointCode+businessKey` 查正式评估（RCO-I06），`GET …/{id}/explanation`（RCO-I10：输入原值、流程路径、规则与谓词结果、变量取值、影子比较）。评估与影子回放新增写入 `t_evaluation_flow_trace`（Risk 模型 84 → 85 表），超时与 Feature 失败（`FEATURE_ERROR`）保留过程记录，影子补写规则轨迹。本机 `mor_risk` 经授权已建表；Risk 全量 auto **2022/2022**；阶段 5 打包 jar 真实 HTTP 71 项通过、评估耗时与基线持平（[报告](../requirements/20261015/risk-评估结果查询与解释/verification/stage5-local-acceptance.md)）。2026-10-15 mor-test：执行 ddl（85 表）、Risk 换为 image `727d51127e61`，20 个只读接口回归一致，验收 34 项通过，合成数据已清理（[部署记录](../requirements/20261015/risk-评估结果查询与解释/release/test-acceptance.md)）。部署前写入的评估路径不可用；Operations 页面与 BFF 未接入（[交接单](../requirements/20261015/risk-评估结果查询与解释/handoff/operations.md)）。
 
+## 运营后台风控评估查询（2026-10-15）
+
+- **Implemented / mor-test 已部署（代码尚未提交）：** 按[需求](../requirements/20261015/operations-console-评估查询与解释/requirement.md)与[方案](../requirements/20261015/operations-console-评估查询与解释/design.md)，Operations BFF 接入 Risk `RiskEvaluationQueryApi` 三个 GET（按评估 ID、按支付尝试、评估解释），用规则集版本详情组装条件树；Web 新增“风控管理 ▸ 评估查询”页（结论、路径、规则与条件、变量、输入、影子评估）。权限 `RISK_EVALUATION_READ` 与 3 条路由经 Platform 注册（32 行）。验证：BFF `verify` 1349/1349、Web 1043/1043；本机全链路浏览器 22/22（[报告](../requirements/20261015/operations-console-评估查询与解释/verification/stage5-local-acceptance.md)）；mor-test BFF `376b5b827945`、Web `d37816c5ba8a`，注册与激活（PLATFORM_ADMIN v27），浏览器 17/17、29 页回归通过，合成数据已清理（[记录](../requirements/20261015/operations-console-评估查询与解释/release/test-acceptance.md)）。
+
 ## PayBy（阿联酋）收款接入（2026-10-14）
 
 - **Designed：** [需求](../requirements/20261014/platform-support-PayBy接入/requirement.md)与[技术方案](../requirements/20261014/platform-support-PayBy接入/technique.md)经用户确认：接入方 `PAYBY` 实现 `PAY_QUERY`、`PAY_CANCEL`（新，草案）、`REFUND`、`REFUND_QUERY`、`BALANCE_QUERY`（新，草案）；`PAY` 以 DIRECTPAY 卡直付为主，所需卡字段加密、有效期格式与 3DS 表单托管写入[补充要求](../requirements/20261014/platform-support-PayBy接入/card-capability-addendum.md)，由卡直付会话评审实现。毫秒 `requestTime` 暂由签名脚本从 `nowRfc3339()` 换算（TODO 改注册函数）。
