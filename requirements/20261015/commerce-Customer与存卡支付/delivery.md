@@ -33,7 +33,7 @@
 
 ## 当前阶段与下一确认点
 
-P1、C1、C2 已本地提交（提交说明含本需求目录名），未推送、未部署；跨服务整链联调进行中。
+P1、C1、C2 已本地提交（`cbb3de5`、`9653d81`；本记录随后单独提交），未推送、未部署。跨服务整链联调因外部前提暂停，见下方说明；后续需求已登记在下方。
 
 ## 阶段 4 证据：P1 Payment（2026-10-15）
 
@@ -178,3 +178,24 @@ AC-01～AC-04、AC-09、AC-13、AC-15～17 属于 Commerce 或结账页，未在
 1. Payment 库执行 [db/payment/ddl.sql](./db/payment/ddl.sql)；Commerce 库依次执行 [db/commerce/ddl.sql](./db/commerce/ddl.sql)、[db/commerce/ddl-stored-card-setting.sql](./db/commerce/ddl-stored-card-setting.sql)。
 2. 按需为 Client 插入 `t_client_stored_card_setting`（`stored_card_enabled=1`），需各环境另行授权。
 3. Client API 新增路由的 Gateway 注册随 Commerce Client API 整体开放另行处理（当前 Commerce Client API 均未注册）。
+
+## 跨服务整链联调（2026-10-15，暂停）
+
+用户选择做整链联调。核查后暂停，原因是走通“支付成功→生成已存卡”需要两项超出本次授权的动作：
+
+1. 本机 Risk 的支付决策点没有生效发布，Payment 按设计失败关闭（此前联调返回 `RISK_DECISION_NOT_CONFIGURED`）；要走通需在 Risk 库发布支付风控规则（写入 Risk 数据）。
+2. Platform 的标准 API PAY 会真实调用 PayerMax 沙箱（对外发送请求，含测试卡数据）。
+
+两项都授权后可继续；否则以两边 auto 测试的分段覆盖为准。
+
+## 后续需求（已登记，未开始）
+
+| 编号 | 内容 | 主要系统 | 来源 |
+|---|---|---|---|
+| F-01 | Payment 提供按来源提交查询原支付结果的接口；Commerce 结账“查询支付提交”改为真实查询（去掉占位） | Payment、Commerce | 阶段 4 C2 遗留 |
+| F-02 | 支付成功（及失败、取消）结果回传 Commerce，推进订单状态 | Payment、Commerce | 阶段 4 C2 遗留 |
+| F-03 | 运营后台维护 Client 存卡开通（替代直接写 `t_client_stored_card_setting`） | Operations、Commerce | G-03 |
+| F-04 | 订单查询响应增加 Customer（`customerNo`） | Commerce | 阶段 4 C1 偏离 |
+| F-05 | 结账页存卡与已存卡选择的页面（AC-15～17） | checkout-web | G-02 |
+| F-06 | 已存卡用于商户发起扣款（MIT）、订阅；渠道存卡交易标识与网络交易 ID | Payment、Platform、Commerce | 需求“明确不做” |
+| F-07 | BIN 库（卡组、卡类型、发卡国）与定价使用卡要素 | Payment、CCT | 需求“明确不做” |
