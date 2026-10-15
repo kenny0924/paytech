@@ -1,5 +1,7 @@
 package com.paytech.payment.card.domainservice.repository.impl;
 
+import java.time.Instant;
+
 import org.springframework.stereotype.Repository;
 
 import com.paytech.foundation.common.error.ErrorException;
@@ -20,6 +22,18 @@ public class PaymentCardCredentialRepositoryImpl implements PaymentCardCredentia
     public void insertCredential(PaymentCardCredential credential) {
         if (paymentCardCredentialMapper.insertCredential(credential) != 1) {
             throw new ErrorException("卡凭证保存失败: " + credential.getPaymentCardCredentialId());
+        }
+    }
+
+    /** 条件更新只在未验证时生效；成功后同步对象。 */
+    @Override
+    public void markVerified(PaymentCardCredential credential, Instant verifiedTime) {
+        if (credential.getVerifiedTime() != null) {
+            return;
+        }
+        if (paymentCardCredentialMapper.markVerified(credential.getPaymentCardCredentialId(), verifiedTime) == 1) {
+            credential.setVerifiedTime(verifiedTime);
+            credential.setUpdateTime(verifiedTime);
         }
     }
 

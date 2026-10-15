@@ -21,8 +21,17 @@ public class CardInstrumentContext {
     /** 精确支付方式代码 */
     private String paymentMethodCode;
 
-    /** 本次卡输入 */
+    /** 本次卡输入；用已存卡时只含 CVV */
     private CardInput card;
+
+    /** 用已存卡支付时的对外已存卡 Token；手输卡为空 */
+    private String storedCardToken;
+
+    /** 本次支付关联的 Commerce Customer；访客支付为空 */
+    private Long customerId;
+
+    /** 消费者是否同意支付成功后保存卡；只用于手输卡且必须有 Customer */
+    private boolean saveCard;
 
     /** Card 稳定记录引用，申请成功后填写，重放时传原值 */
     private String instrumentRef;

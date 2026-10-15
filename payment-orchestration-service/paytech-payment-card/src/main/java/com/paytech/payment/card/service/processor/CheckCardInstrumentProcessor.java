@@ -1,5 +1,7 @@
 package com.paytech.payment.card.service.processor;
 
+import java.util.Objects;
+
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.ConcurrentRequestException;
@@ -8,7 +10,10 @@ import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.payment.card.core.crypto.CardCipher;
 import com.paytech.payment.card.domain.CardInstrumentContext;
 import com.paytech.payment.card.domain.CardInstrumentContext.CardInput;
+import com.paytech.payment.card.core.dal.dataobject.PaymentCardInstrument;
+import com.paytech.payment.card.core.dal.dataobject.PaymentStoredCard;
 import com.paytech.payment.card.domain.CardInstrumentRecord;
+import com.paytech.payment.card.domainservice.repository.PaymentStoredCardRepository;
 import com.paytech.payment.card.service.CardStorageService;
 
 import lombok.AllArgsConstructor;
@@ -18,13 +23,14 @@ import lombok.AllArgsConstructor;
  *
  * <p>
  * 读取原交易工具及其凭证与卡 → 用本次输入计算卡指纹与凭证摘要 → 与记录比较（不比较 CVV）。不同则拒绝更换；不访问 Vault、不重新准备材料、不续期、不触碰 Redis 中的 CVV。
- * 原交易工具缺失属于数据问题，不当作新申请。
+ * 原交易工具缺失属于数据问题，不当作新申请。Customer 与是否保存也必须与原提交一致；用已存卡时比较已存卡，手输卡时比较指纹与凭证摘要。
  */
 @Component
 @AllArgsConstructor
 public class CheckCardInstrumentProcessor extends AbstractProcessor<CardInstrumentContext, CardInstrumentContext> {
     private final CardCipher cardCipher;
     private final CardStorageService cardStorageService;
+    private final PaymentStoredCardRepository paymentStoredCardRepository;
 
     /** 重放必须带原工具引用与本次卡输入。 */
     @Override
@@ -40,11 +46,28 @@ public class CheckCardInstrumentProcessor extends AbstractProcessor<CardInstrume
         if (record == null) {
             throw new ErrorException("原卡交易工具不存在");
         }
-        CardInput card = context.getCard();
-        if (!cardCipher.fingerprint(card.getPan()).equals(record.card().getCardFingerprint())
-            || !cardCipher.credentialDigest(card).equals(record.credential().getCredentialDigest())) {
+        if (!sameIntent(record.instrument(), context) || !sameCard(record, context)) {
             throw new ConcurrentRequestException("原提交不可更换卡工具");
         }
         return context;
+    }
+
+    /** Customer 与是否保存与原提交一致。 */
+    static boolean sameIntent(PaymentCardInstrument instrument, CardInstrumentContext context) {
+        return Objects.equals(instrument.getCustomerId(), context.getCustomerId())
+            && instrument.isSaveRequested() == context.isSaveCard();
+    }
+
+    /** 已存卡比较已存卡身份；手输卡比较卡指纹与凭证摘要。 */
+    boolean sameCard(CardInstrumentRecord record, CardInstrumentContext context) {
+        Long originalStoredCardId = record.instrument().getPaymentStoredCardId();
+        if (context.getStoredCardToken() != null) {
+            PaymentStoredCard storedCard = paymentStoredCardRepository.findByToken(context.getStoredCardToken());
+            return storedCard != null && storedCard.getPaymentStoredCardId().equals(originalStoredCardId);
+        }
+        CardInput card = context.getCard();
+        return originalStoredCardId == null
+            && cardCipher.fingerprint(card.getPan()).equals(record.card().getCardFingerprint())
+            && cardCipher.credentialDigest(card).equals(record.credential().getCredentialDigest());
     }
 }

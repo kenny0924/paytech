@@ -17,6 +17,9 @@ public class PreparedInstrument {
     /** 本次使用的卡凭证 ID */
     private final long paymentCardCredentialId;
 
+    /** 用已存卡支付时的已存卡 ID；手输卡为空 */
+    private final Long paymentStoredCardId;
+
     @Override
     public String toString() {
         return "PreparedInstrument[" + paymentCardInstrumentId + "]";

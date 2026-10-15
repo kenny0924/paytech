@@ -166,8 +166,13 @@ public class ApplyCardInstrumentProcessor
 
     /** Card 只接收自己的领域参数 */
     CardInstrumentContext buildCardContext(ApplyCardInstrumentRequest request, PaymentInstrumentToken token) {
-        return new CardInstrumentContext(token.getClientId(), token.getPaymentIntentId(), token.getSourceSubmissionId(),
-            token.getPaymentMethodCode(), request.getCard(), token.getInstrumentRef(), token.getExpiresAt());
+        CardInstrumentContext cardContext = new CardInstrumentContext(token.getClientId(), token.getPaymentIntentId(),
+            token.getSourceSubmissionId(), token.getPaymentMethodCode(), request.getCard(), token.getInstrumentRef(),
+            token.getExpiresAt());
+        cardContext.setStoredCardToken(request.getStoredCardToken());
+        cardContext.setCustomerId(request.getCustomerId());
+        cardContext.setSaveCard(request.isSaveCard());
+        return cardContext;
     }
 
     /** 生成不包含业务身份的随机 Token */

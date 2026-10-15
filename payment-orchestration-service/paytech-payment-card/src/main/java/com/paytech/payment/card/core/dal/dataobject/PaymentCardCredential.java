@@ -21,6 +21,15 @@ public class PaymentCardCredential {
     /** 本卡 DEK 加密的有效期与持卡人原值。 */
     private byte[] encryptedDetails;
 
+    /** 有效期月份，两位。 */
+    private String expiryMonth;
+
+    /** 有效期年份，四位。 */
+    private String expiryYear;
+
+    /** 首次支付成功时间；为空表示未验证。 */
+    private Instant verifiedTime;
+
     /** 创建时间。 */
     private Instant createTime;
 

@@ -6825,6 +6825,66 @@
           "id": "09831DEE-E260-5C97-BC93-441ED2C0CAAA"
         },
         {
+          "defKey": "expiry_month",
+          "defName": "有效期月份",
+          "comment": "卡有效期月份（两位）；与已加密卡号分开保存，用于已存卡展示与过期判断，不含卡号。",
+          "type": "CHAR",
+          "len": 2,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "D73FCEB5-91B1-5BB6-A922-7598B1D1B99C"
+        },
+        {
+          "defKey": "expiry_year",
+          "defName": "有效期年份",
+          "comment": "卡有效期年份（四位）；用于已存卡展示与过期判断。",
+          "type": "CHAR",
+          "len": 4,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "913A49E5-2982-5B0A-8A36-2778F6C2C436"
+        },
+        {
+          "defKey": "verified_time",
+          "defName": "验证时间",
+          "comment": "首次以该凭证支付成功的 UTC 微秒精度时间；NULL 表示未验证，只有已验证凭证可用于存卡。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "4B5D9564-312F-5FB9-AD60-32FDDCE96B9A"
+        },
+        {
           "defKey": "create_time",
           "defName": "创建时间",
           "comment": "应用写入的卡凭证创建 UTC 微秒精度时间。",
@@ -7125,6 +7185,60 @@
           "id": "F16EF2C7-3CB7-5F39-BC94-1B6292252F27"
         },
         {
+          "defKey": "customer_id",
+          "defName": "Customer 标识",
+          "comment": "本次支付关联的 Commerce Customer 标识；访客支付为 NULL。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "C5A59AEA-B569-5328-8B62-DC90A76D09C2"
+        },
+        {
+          "defKey": "save_requested",
+          "defName": "同意保存",
+          "comment": "消费者是否同意本次支付成功后保存卡；1 表示同意，仅在有 customer_id 时为 1。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "0D90D1ED-E96F-5783-A283-F726EB3A48E6"
+        },
+        {
+          "defKey": "payment_stored_card_id",
+          "defName": "已存卡标识",
+          "comment": "用已存卡支付时指向的已存卡；手输卡为 NULL。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "5B3B84A4-423D-521C-BDB2-3605312A5ACA"
+        },
+        {
           "defKey": "create_time",
           "defName": "创建时间",
           "comment": "应用写入的卡交易工具创建 UTC 微秒精度时间。",
@@ -7170,9 +7284,514 @@
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
+        },
+        {
+          "id": "411B7F33-5883-5C60-BB16-06DC907C7315",
+          "myField": "5B3B84A4-423D-521C-BDB2-3605312A5ACA",
+          "refEntity": "1B2EADCA-5285-5E4B-ACAD-6FEC6267A53D",
+          "refField": "D22568EA-CA8A-5D1E-A9CA-1B426BE1CBCB",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
         }
       ],
       "indexes": [],
+      "type": "P"
+    },
+    {
+      "id": "1B2EADCA-5285-5E4B-ACAD-6FEC6267A53D",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_payment_stored_card",
+      "defName": "已存卡",
+      "comment": "Commerce Customer 名下的已存卡：指向卡与当前已验证凭证，带消费者同意时间；删除只置状态。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "payment_stored_card_id",
+          "defName": "已存卡标识",
+          "comment": "已存卡的 Snowflake 内部主键，创建后不可修改。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "D22568EA-CA8A-5D1E-A9CA-1B426BE1CBCB"
+        },
+        {
+          "defKey": "stored_card_token",
+          "defName": "已存卡 Token",
+          "comment": "对外已存卡 Token：sc_ 前缀加随机串，按 Client 生成、不可推算；不含卡号、指纹或内部 ID。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "A6609129-7107-5C05-8DAA-43DCE72E80EF"
+        },
+        {
+          "defKey": "client_id",
+          "defName": "Client 标识",
+          "comment": "所属 CCT Client 稳定标识，创建后不可修改。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "FDDDFA81-8EEE-591A-AEA6-DBE8B0CBFBC1"
+        },
+        {
+          "defKey": "customer_id",
+          "defName": "Customer 标识",
+          "comment": "所属 Commerce Customer 标识，创建后不可修改；Payment 不保存 consumer_reference。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "440879F3-E0CB-5D76-8893-195DB0FCD8E5"
+        },
+        {
+          "defKey": "payment_card_id",
+          "defName": "卡标识",
+          "comment": "已存的卡（按卡号唯一的那层），创建后不可修改。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "7FEE0ADE-E7AE-5E32-A48F-0D88DEC1E60B"
+        },
+        {
+          "defKey": "active_card_id",
+          "defName": "有效卡标识",
+          "comment": "有效时等于 payment_card_id，删除时置 NULL；与 client_id、customer_id 组成唯一索引，保证同一 Customer 同一张卡最多一条有效已存卡。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "0AAE470C-010C-5C57-ADF1-BD5DF8DBD8A1"
+        },
+        {
+          "defKey": "payment_card_credential_id",
+          "defName": "卡凭证标识",
+          "comment": "当前使用的已验证卡凭证；同卡以新有效期再次保存时更新。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "9E95C598-75D0-5596-BB1A-23AA400EF808"
+        },
+        {
+          "defKey": "stored_card_status",
+          "defName": "已存卡状态",
+          "comment": "已存卡状态。允许值：ACTIVE、DELETED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "8150398A-3903-5E3F-8B2B-B58EB474E304"
+        },
+        {
+          "defKey": "consent_time",
+          "defName": "同意时间",
+          "comment": "消费者最近一次同意保存的 UTC 微秒精度时间（支付成功时记录）。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "AD85A83F-4FFC-53D7-B8FC-90681CFD8908"
+        },
+        {
+          "defKey": "source_card_instrument_id",
+          "defName": "来源交易工具",
+          "comment": "首次保存来源的卡交易工具，可追溯到支付意图与来源订单。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "02C23EFC-B53C-5988-8C13-FE2EFDDACF5C"
+        },
+        {
+          "defKey": "deleted_time",
+          "defName": "删除时间",
+          "comment": "删除或按 Customer 失效的 UTC 微秒精度时间；有效时为 NULL。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "38E4508E-4149-5093-BA70-26625BD08726"
+        },
+        {
+          "defKey": "version",
+          "defName": "版本",
+          "comment": "可变业务行并发更新使用的单调乐观锁版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "CF31F765-DE9E-58F4-B078-360F757D2781"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "应用写入的已存卡创建 UTC 微秒精度时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "8197495C-4229-5339-AD83-10358A4E89B9"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "应用写入的已存卡最近有效更新 UTC 微秒精度时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "B03AF296-F545-5B0F-8286-ACF0B311621F"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "90A2448D-6587-56D1-A737-8157199F83AC",
+          "myField": "7FEE0ADE-E7AE-5E32-A48F-0D88DEC1E60B",
+          "refEntity": "37D9F753-B2A5-5209-A4D1-F5FF399157D2",
+          "refField": "D32E4946-21C1-5DBB-9D99-A626CCCF79CC",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        },
+        {
+          "id": "F4CADE16-5E1F-530F-B314-630AF7C5E42D",
+          "myField": "9E95C598-75D0-5596-BB1A-23AA400EF808",
+          "refEntity": "2F0E9F96-8C5C-5038-B10F-547CFF8852BE",
+          "refField": "08AD78F2-9741-502A-9DAE-69283F37A0E9",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_payment_stored_card_token",
+          "defName": "UK PAYMENT STORED CARD TOKEN",
+          "unique": true,
+          "comment": "唯一索引：stored_card_token",
+          "fields": [
+            {
+              "fieldDefKey": "A6609129-7107-5C05-8DAA-43DCE72E80EF",
+              "ascOrDesc": "A",
+              "id": "07CAC990-7B0F-5E38-8CB1-338BBC15DBFC"
+            }
+          ],
+          "id": "0D93E74A-D0FE-511E-8664-8DC422268691"
+        },
+        {
+          "defKey": "uk_payment_stored_card_active",
+          "defName": "UK PAYMENT STORED CARD ACTIVE",
+          "unique": true,
+          "comment": "唯一索引：client_id、customer_id、active_card_id",
+          "fields": [
+            {
+              "fieldDefKey": "FDDDFA81-8EEE-591A-AEA6-DBE8B0CBFBC1",
+              "ascOrDesc": "A",
+              "id": "E1A3F49C-9BD8-53F8-A4F3-5EE6C7D77920"
+            },
+            {
+              "fieldDefKey": "440879F3-E0CB-5D76-8893-195DB0FCD8E5",
+              "ascOrDesc": "A",
+              "id": "07076DF2-32BA-51C6-8FD5-E284591FD27E"
+            },
+            {
+              "fieldDefKey": "0AAE470C-010C-5C57-ADF1-BD5DF8DBD8A1",
+              "ascOrDesc": "A",
+              "id": "AC54140C-A042-57D0-83A7-CFECEF6AF6CC"
+            }
+          ],
+          "id": "84E61839-5EA1-585C-BCEA-64C312EC1823"
+        }
+      ],
       "type": "P"
     },
     {
@@ -16860,7 +17479,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 220
+              "height": 316
             }
           },
           {
@@ -16875,7 +17494,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 188
+              "height": 284
             }
           },
           {
@@ -16921,11 +17540,92 @@
               }
             },
             "isLock": true
+          },
+          {
+            "id": "9C2EFB16-B0F2-5BC9-BA4D-3D73A05ED41C",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 360
+            },
+            "count": 0,
+            "originKey": "1B2EADCA-5285-5E4B-ACAD-6FEC6267A53D",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 476
+            }
+          },
+          {
+            "id": "DD9449CB-7E0B-5B97-BC87-2758A8ACB4AC",
+            "shape": "erdRelation",
+            "originKey": "90A2448D-6587-56D1-A737-8157199F83AC",
+            "source": {
+              "cell": "9C2EFB16-B0F2-5BC9-BA4D-3D73A05ED41C",
+              "port": "7FEE0ADE-E7AE-5E32-A48F-0D88DEC1E60B%out"
+            },
+            "target": {
+              "cell": "BBEB52CA-B3C5-57E7-9BA6-C7A6285B9B7E",
+              "port": "D32E4946-21C1-5DBB-9D99-A626CCCF79CC%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "1718A6D8-6C9F-5A5C-85C6-D55123E470B6",
+            "shape": "erdRelation",
+            "originKey": "F4CADE16-5E1F-530F-B314-630AF7C5E42D",
+            "source": {
+              "cell": "9C2EFB16-B0F2-5BC9-BA4D-3D73A05ED41C",
+              "port": "9E95C598-75D0-5596-BB1A-23AA400EF808%out"
+            },
+            "target": {
+              "cell": "30055197-F48D-5A17-91E4-433C0351EE24",
+              "port": "08AD78F2-9741-502A-9DAE-69283F37A0E9%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "FBA07410-327E-5C5F-A246-1A4052AD6964",
+            "shape": "erdRelation",
+            "originKey": "411B7F33-5883-5C60-BB16-06DC907C7315",
+            "source": {
+              "cell": "2A105B81-17D8-56E7-B31B-AF0C03873650",
+              "port": "5B3B84A4-423D-521C-BDB2-3605312A5ACA%out"
+            },
+            "target": {
+              "cell": "9C2EFB16-B0F2-5BC9-BA4D-3D73A05ED41C",
+              "port": "D22568EA-CA8A-5D1E-A9CA-1B426BE1CBCB%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
           }
         ]
       },
       "id": "E1E7FDB7-EF31-5F77-9521-AB41693C22B8",
-      "comment": "Card 模块的卡、卡凭证与卡交易工具。"
+      "comment": "Card 模块的卡、卡凭证、卡交易工具与已存卡。"
     }
   ],
   "standardFields": [],

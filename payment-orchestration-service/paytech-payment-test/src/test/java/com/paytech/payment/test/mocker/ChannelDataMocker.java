@@ -171,8 +171,8 @@ public class ChannelDataMocker implements Clear {
         try {
             clearSecurityCodes();
             assertAll(mapper::clearTransactionRefs, mapper::clearActions, mapper::clearAttempts,
-                mapper::clearInstrumentTokens, mapper::clearCardInstruments, mapper::clearCardCredentials,
-                mapper::clearCards, mapper::clearIntents, mapper::clearDetails, mapper::clearCapabilities,
+                mapper::clearInstrumentTokens, mapper::clearStoredCards, mapper::clearCardInstruments,
+                mapper::clearCardCredentials, mapper::clearCards, mapper::clearIntents, mapper::clearDetails, mapper::clearCapabilities,
                 mapper::clearMids, mapper::clearAccounts, mapper::clearChannels);
             assertEquals(0, mapper.countRows() + mapper.countExecutionRows());
             cleanupOwned = false;

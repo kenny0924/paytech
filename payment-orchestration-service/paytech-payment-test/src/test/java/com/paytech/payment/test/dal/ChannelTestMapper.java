@@ -44,8 +44,8 @@ public interface ChannelTestMapper {
     @Select("SELECT (SELECT COUNT(*) FROM t_payment_channel) + (SELECT COUNT(*) FROM t_channel_account) + (SELECT COUNT(*) FROM t_channel_mid) + (SELECT COUNT(*) FROM t_mid_capability) + (SELECT COUNT(*) FROM t_mid_capability_detail)")
     int countRows();
 
-    /** 读取执行链路五表与卡三表总行数。 */
-    @Select("SELECT (SELECT COUNT(*) FROM t_payment_intent) + (SELECT COUNT(*) FROM t_payment_attempt) + (SELECT COUNT(*) FROM t_payment_instrument_token) + (SELECT COUNT(*) FROM t_payment_action) + (SELECT COUNT(*) FROM t_channel_transaction_ref) + (SELECT COUNT(*) FROM t_payment_card) + (SELECT COUNT(*) FROM t_payment_card_credential) + (SELECT COUNT(*) FROM t_payment_card_instrument)")
+    /** 读取执行链路五表与卡四表总行数。 */
+    @Select("SELECT (SELECT COUNT(*) FROM t_payment_intent) + (SELECT COUNT(*) FROM t_payment_attempt) + (SELECT COUNT(*) FROM t_payment_instrument_token) + (SELECT COUNT(*) FROM t_payment_action) + (SELECT COUNT(*) FROM t_channel_transaction_ref) + (SELECT COUNT(*) FROM t_payment_card) + (SELECT COUNT(*) FROM t_payment_card_credential) + (SELECT COUNT(*) FROM t_payment_card_instrument) + (SELECT COUNT(*) FROM t_payment_stored_card)")
     int countExecutionRows();
 
     /** 仅清理本测试库的渠道交易引用。 */
@@ -63,6 +63,14 @@ public interface ChannelTestMapper {
     /** 仅清理本测试库的支付工具。 */
     @Delete("DELETE FROM t_payment_instrument_token")
     void clearInstrumentTokens();
+
+    /** 仅清理本测试库的已存卡。 */
+    @Delete("DELETE FROM t_payment_stored_card")
+    void clearStoredCards();
+
+    /** 全部已存卡，按创建先后排列。 */
+    @Select("SELECT payment_stored_card_id AS storedCardId, stored_card_token AS token, client_id AS clientId, customer_id AS customerId, payment_card_id AS paymentCardId, payment_card_credential_id AS credentialId, stored_card_status AS status, source_card_instrument_id AS sourceInstrumentId, consent_time AS consentTime FROM t_payment_stored_card ORDER BY create_time, payment_stored_card_id")
+    List<Map<String, Object>> storedCards();
 
     /** 仅清理本测试库的卡交易工具。 */
     @Delete("DELETE FROM t_payment_card_instrument")
@@ -85,11 +93,11 @@ public interface ChannelTestMapper {
     List<Map<String, Object>> cards();
 
     /** 全部卡凭证，按创建先后排列。 */
-    @Select("SELECT payment_card_credential_id AS credentialId, payment_card_id AS paymentCardId, credential_digest AS credentialDigest, encrypted_details AS encryptedDetails FROM t_payment_card_credential ORDER BY create_time, payment_card_credential_id")
+    @Select("SELECT payment_card_credential_id AS credentialId, payment_card_id AS paymentCardId, credential_digest AS credentialDigest, encrypted_details AS encryptedDetails, expiry_month AS expiryMonth, expiry_year AS expiryYear, verified_time AS verifiedTime FROM t_payment_card_credential ORDER BY create_time, payment_card_credential_id")
     List<Map<String, Object>> cardCredentials();
 
     /** 全部卡交易工具，按创建先后排列。 */
-    @Select("SELECT payment_card_instrument_id AS instrumentId, payment_card_credential_id AS credentialId, client_id AS clientId FROM t_payment_card_instrument ORDER BY create_time, payment_card_instrument_id")
+    @Select("SELECT payment_card_instrument_id AS instrumentId, payment_card_credential_id AS credentialId, client_id AS clientId, customer_id AS customerId, save_requested AS saveRequested, payment_stored_card_id AS storedCardId FROM t_payment_card_instrument ORDER BY create_time, payment_card_instrument_id")
     List<Map<String, Object>> cardInstruments();
 
     /** 本测试库全部工具 Token 与工具引用。 */

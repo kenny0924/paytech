@@ -18,6 +18,15 @@ public class PaymentCardInstrument {
     /** Client 标识。 */
     private Long clientId;
 
+    /** 关联的 Commerce Customer 标识；访客支付为空。 */
+    private Long customerId;
+
+    /** 消费者是否同意支付成功后保存卡。 */
+    private boolean saveRequested;
+
+    /** 用已存卡支付时指向的已存卡；手输卡为空。 */
+    private Long paymentStoredCardId;
+
     /** 创建时间。 */
     private Instant createTime;
 

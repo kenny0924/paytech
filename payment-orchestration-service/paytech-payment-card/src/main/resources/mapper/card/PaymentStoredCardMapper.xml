@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.payment.card.core.dal.mapper.PaymentStoredCardMapper">
+    <resultMap id="row" type="com.paytech.payment.card.core.dal.dataobject.PaymentStoredCard">
+        <id column="payment_stored_card_id" property="paymentStoredCardId"/>
+        <result column="stored_card_token" property="storedCardToken"/>
+        <result column="client_id" property="clientId"/>
+        <result column="customer_id" property="customerId"/>
+        <result column="payment_card_id" property="paymentCardId"/>
+        <result column="active_card_id" property="activeCardId"/>
+        <result column="payment_card_credential_id" property="paymentCardCredentialId"/>
+        <result column="stored_card_status" property="storedCardStatus" javaType="com.paytech.payment.card.core.enums.StoredCardStatus" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="consent_time" property="consentTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="source_card_instrument_id" property="sourceCardInstrumentId"/>
+        <result column="deleted_time" property="deletedTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+
+    <sql id="PaymentStoredCardColumns">
+        payment_stored_card_id, stored_card_token, client_id, customer_id, payment_card_id, active_card_id,
+        payment_card_credential_id, stored_card_status, consent_time, source_card_instrument_id, deleted_time, version,
+        create_time, update_time
+    </sql>
+
+    <insert id="insertStoredCard">
+        INSERT INTO t_payment_stored_card (<include refid="PaymentStoredCardColumns"/>)
+        VALUES (#{paymentStoredCardId}, #{storedCardToken}, #{clientId}, #{customerId}, #{paymentCardId}, #{activeCardId},
+            #{paymentCardCredentialId},
+            #{storedCardStatus,javaType=com.paytech.payment.card.core.enums.StoredCardStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            #{consentTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{sourceCardInstrumentId},
+            #{deletedTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{version},
+            #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="findByToken" resultMap="row">
+        SELECT <include refid="PaymentStoredCardColumns"/>
+        FROM t_payment_stored_card
+        WHERE stored_card_token = #{storedCardToken}
+    </select>
+
+    <select id="findActive" resultMap="row">
+        SELECT <include refid="PaymentStoredCardColumns"/>
+        FROM t_payment_stored_card
+        WHERE client_id = #{clientId}
+          AND customer_id = #{customerId}
+          AND active_card_id = #{paymentCardId}
+    </select>
+
+    <select id="lockActive" resultMap="row">
+        SELECT <include refid="PaymentStoredCardColumns"/>
+        FROM t_payment_stored_card
+        WHERE client_id = #{clientId}
+          AND customer_id = #{customerId}
+          AND active_card_id = #{paymentCardId}
+        FOR UPDATE
+    </select>
+
+    <select id="listActive" resultMap="row">
+        SELECT <include refid="PaymentStoredCardColumns"/>
+        FROM t_payment_stored_card
+        WHERE client_id = #{clientId}
+          AND customer_id = #{customerId}
+          AND active_card_id IS NOT NULL
+        ORDER BY create_time, payment_stored_card_id
+    </select>
+
+    <update id="updateCredential">
+        UPDATE t_payment_stored_card
+        SET payment_card_credential_id = #{paymentCardCredentialId},
+            consent_time = #{consentTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            version = version + 1,
+            update_time = #{consentTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE payment_stored_card_id = #{paymentStoredCardId}
+          AND stored_card_status = 'ACTIVE'
+    </update>
+
+    <update id="markDeleted">
+        UPDATE t_payment_stored_card
+        SET stored_card_status = 'DELETED',
+            active_card_id = NULL,
+            deleted_time = #{deletedTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            version = version + 1,
+            update_time = #{deletedTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE payment_stored_card_id = #{paymentStoredCardId}
+          AND stored_card_status = 'ACTIVE'
+          AND version = #{version}
+    </update>
+
+    <update id="invalidateCustomer">
+        UPDATE t_payment_stored_card
+        SET stored_card_status = 'DELETED',
+            active_card_id = NULL,
+            deleted_time = #{deletedTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            version = version + 1,
+            update_time = #{deletedTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE client_id = #{clientId}
+          AND customer_id = #{customerId}
+          AND stored_card_status = 'ACTIVE'
+    </update>
+</mapper>

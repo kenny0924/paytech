@@ -26,4 +26,13 @@ public interface CardService {
      * @return BIN 与卡指纹，或 null
      */
     CardRiskAttributes riskAttributes(String instrumentRef);
+
+    /**
+     * 卡支付成功后的本地处理
+     * <li>参与调用方的成功事务，只写 Card 自己的表，不访问外部依赖。</li>
+     * <li>本次凭证首次成功时标记已验证；交易工具同意保存且有 Customer 时，生成已存卡，或把该 Customer 已有的同卡已存卡更新为本次凭证。</li>
+     *
+     * @param instrumentRef Card 工具引用
+     */
+    void paymentSucceeded(String instrumentRef);
 }

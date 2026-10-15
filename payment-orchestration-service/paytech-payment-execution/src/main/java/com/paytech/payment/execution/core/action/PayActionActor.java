@@ -10,8 +10,10 @@ import java.util.Currency;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.payment.card.service.CardService;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAction;
 import com.paytech.payment.execution.core.enums.ActionStatus;
+import com.paytech.payment.execution.core.enums.InstrumentType;
 import com.paytech.payment.execution.core.enums.IntentStatus;
 import com.paytech.payment.execution.core.enums.InteractionType;
 import com.paytech.payment.execution.domain.*;
@@ -36,13 +38,15 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
 
     private final Clock clock;
     private final PaymentChannelClient paymentChannelClient;
+    private final CardService cardService;
 
-    /** 注入 Channel 端口与收款结果持久化能力。 */
+    /** 注入 Channel 端口、收款结果持久化与 Card 本地能力。 */
     public PayActionActor(PaymentIntentRepository intents, PaymentAttemptRepository attempts, Clock clock,
-        PaymentChannelClient paymentChannelClient) {
+        PaymentChannelClient paymentChannelClient, CardService cardService) {
         super(intents, attempts);
         this.clock = clock;
         this.paymentChannelClient = paymentChannelClient;
+        this.cardService = cardService;
     }
 
     /** 返回动作代码。 */
@@ -68,13 +72,19 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
         };
     }
 
-    /** 收款成功后完成 Attempt 和 Intent。 */
+    /**
+     * 收款成功后完成 Attempt 和 Intent；卡工具同事务交 Card 标记凭证已验证并按同意存卡（只写本库）。
+     */
     @Override
     public void doInTransaction(ActionContext context, PaymentAction action) {
         assert action.statusIn(ActionStatus.SUCCEEDED);
         var attempt = context.getAttempt();
         attempts.payCompleted(attempt, action.getAmount());
         intents.attemptSucceed(context.getIntent(), attempt.getPaymentAttemptId(), IntentStatus.SUCCEEDED);
+        var instToken = ((PayContext)context).getInstToken();
+        if (instToken.getInstrumentType() == InstrumentType.CARD) {
+            cardService.paymentSucceeded(instToken.getInstrumentRef());
+        }
     }
 
     /** 以冻结坐标与新支付维度组装渠道动作；输入不含卡值。 */

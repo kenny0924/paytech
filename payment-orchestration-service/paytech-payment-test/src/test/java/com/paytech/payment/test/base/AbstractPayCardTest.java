@@ -60,15 +60,20 @@ public abstract class AbstractPayCardTest extends MockTestBase {
     /** 新建 Intent 并申请合成卡工具；来源订单 ID 与来源提交 ID 相同。 */
     protected Payment newPayment() {
         Payment intent = newIntent();
-        return new Payment(intent.intentId, intent.submissionId,
+        return new Payment(CLIENT_ID, intent.intentId, intent.submissionId,
             applyCard(String.valueOf(intent.intentId), intent.submissionId));
     }
 
     /** 只新建 Intent，不申请卡工具；返回的支付提交尚无支付工具 Token。 */
     protected Payment newIntent() {
+        return newIntent(CLIENT_ID);
+    }
+
+    /** 为指定 Client 新建 Intent，不申请卡工具。 */
+    protected Payment newIntent(String clientId) {
         long submissionId = ThreadLocalRandom.current().nextLong(1_000_000L, 9_000_000_000L);
         var intent = new LinkedHashMap<String, Object>();
-        intent.put("clientId", CLIENT_ID);
+        intent.put("clientId", clientId);
         intent.put("sourceType", "COMMERCE_ORDER");
         intent.put("sourceId", String.valueOf(submissionId));
         intent.put("entityNo", ENTITY_NO);
@@ -80,7 +85,7 @@ public abstract class AbstractPayCardTest extends MockTestBase {
         intent.put("currency", CURRENCY);
         intent.put("expiresAt", Instant.now().plus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS).toString());
         String intentId = String.valueOf(post("/payment-execution/v1/intents", intent, Map.of()).getBody().get("intentId"));
-        return new Payment(Long.parseLong(intentId), submissionId, null);
+        return new Payment(clientId, Long.parseLong(intentId), submissionId, null);
     }
 
     /** 为同一 Intent 的新来源提交申请合成卡工具，返回支付工具 Token。 */
@@ -90,6 +95,11 @@ public abstract class AbstractPayCardTest extends MockTestBase {
         return (String)post("/payment-instrument/v1/card-tokens", Map.of("clientId", CLIENT_ID, "intentId", intentId,
             "sourceSubmissionId", String.valueOf(submissionId), "paymentMethodCode", PAYMENT_METHOD_CODE, "card", card),
             Map.of()).getBody().get("paymentInstrumentToken");
+    }
+
+    /** 在已建 Intent 的提交上附上自行申请的工具 Token，供子类提交 pay。 */
+    protected Payment payment(Payment intent, String token) {
+        return new Payment(intent.clientId, intent.intentId, intent.submissionId, token);
     }
 
     /** 发送 JSON POST，返回响应（4xx/5xx 使测试失败）。 */
@@ -106,11 +116,13 @@ public abstract class AbstractPayCardTest extends MockTestBase {
 
     /** 一次支付提交的身份：Intent、来源提交与支付工具 Token。 */
     protected final class Payment {
+        public final String clientId;
         public final long intentId;
         public final long submissionId;
         public final String token;
 
-        Payment(long intentId, long submissionId, String token) {
+        Payment(String clientId, long intentId, long submissionId, String token) {
+            this.clientId = clientId;
             this.intentId = intentId;
             this.submissionId = submissionId;
             this.token = token;
@@ -124,7 +136,7 @@ public abstract class AbstractPayCardTest extends MockTestBase {
         /** 以指定捕获模式提交 pay。 */
         public ResponseEntity<Map<String, Object>> pay(CaptureMode captureMode) {
             var body = new LinkedHashMap<String, Object>();
-            body.put("clientId", CLIENT_ID);
+            body.put("clientId", clientId);
             body.put("sourceSubmissionId", String.valueOf(submissionId));
             body.put("captureMode", captureMode.getCode());
             body.put("payMethod", Map.of("paymentMethodCode", PAYMENT_METHOD_CODE, "paymentInstrumentToken", token));
@@ -139,7 +151,7 @@ public abstract class AbstractPayCardTest extends MockTestBase {
         /** 同一 Intent 用新的来源提交与新工具再次支付（前一 Attempt 已结束）。 */
         public Payment retry() {
             long next = submissionId + 1;
-            return new Payment(intentId, next, applyCard(String.valueOf(intentId), next));
+            return new Payment(clientId, intentId, next, applyCard(String.valueOf(intentId), next));
         }
     }
 }

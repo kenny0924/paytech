@@ -18,6 +18,13 @@ public class ApplyCardInstrumentConverter {
         request.setIntentId(Long.valueOf(body.getIntentId()));
         request.setSourceSubmissionId(Long.valueOf(body.getSourceSubmissionId()));
         request.setPaymentMethodCode(body.getPaymentMethodCode());
+        request.setCustomerId(body.getCustomerId() == null ? null : Long.valueOf(body.getCustomerId()));
+        request.setSaveCard(Boolean.TRUE.equals(body.getSaveCard()));
+        if (body.getStoredCard() != null) {
+            request.setStoredCardToken(body.getStoredCard().getStoredCardToken());
+            request.setCard(storedCardInput(body.getStoredCard()));
+            return request;
+        }
         CardInput card = new CardInput();
         card.setPan(body.getCard().getPan());
         card.setExpiryMonth(body.getCard().getExpiryMonth());
@@ -26,6 +33,13 @@ public class ApplyCardInstrumentConverter {
         card.setCvv(body.getCard().getCvv());
         request.setCard(card);
         return request;
+    }
+
+    /** 用已存卡时卡输入只含本次 CVV。 */
+    static CardInput storedCardInput(ApplyCardInstrumentRequestBody.StoredCard storedCard) {
+        CardInput card = new CardInput();
+        card.setCvv(storedCard.getCvv());
+        return card;
     }
 
     /** 转换响应 */

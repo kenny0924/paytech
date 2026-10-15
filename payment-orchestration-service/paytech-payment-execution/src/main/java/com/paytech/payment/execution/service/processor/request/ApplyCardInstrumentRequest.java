@@ -21,8 +21,17 @@ public class ApplyCardInstrumentRequest {
     /** 精确支付方式代码 */
     private String paymentMethodCode;
 
-    /** Card 拥有的临时卡输入，不进入 Execution Context 或仓储 */
+    /** Card 拥有的临时卡输入，不进入 Execution Context 或仓储；用已存卡时只含 CVV */
     private CardInput card;
+
+    /** 用已存卡时的对外已存卡 Token；手输卡为空 */
+    private String storedCardToken;
+
+    /** Commerce Customer ID；访客支付为空 */
+    private Long customerId;
+
+    /** 消费者是否同意支付成功后保存卡 */
+    private boolean saveCard;
 
     @Override
     public String toString() {
