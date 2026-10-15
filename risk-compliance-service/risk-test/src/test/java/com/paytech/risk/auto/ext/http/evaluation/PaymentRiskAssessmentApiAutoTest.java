@@ -4,8 +4,16 @@ import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +27,7 @@ import com.paytech.risk.decision.domain.enums.*;
 import com.paytech.risk.test.base.AbstractPaymentRiskApiTest;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.builder.evaluation.PaymentRiskRequestBuilder;
+import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker;
 import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker.Assessed;
 
 /**
@@ -27,10 +36,14 @@ import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker.Asses
  * <li>正常流程：放行（无需认证）、放行并要求 3DS；落库评估、交易评估快照、Feature 结果、规则轨迹与累计事件。</li>
  * <li>业务规则：名单命中（含 IPv6 同 /64）、实时累计命中、金额审核；审核与拒绝写入拒绝事件。</li>
  * <li>重放：同一支付尝试同内容返回原结果且不重复写入；IP 与 User-Agent 变化不影响重放；风控 Action 或稳定输入变化返回 409。</li>
+ * <li>并发：同一支付尝试同时提交多次，只形成一次评估与一组累计事件；成功响应返回同一结果，抢锁失败返回 409。</li>
  *
  * @see RiskDecisionApi#evaluate(EvaluateDecisionRequestBody)
  */
 class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
+    /** 同一支付尝试的并发请求数。 */
+    private static final int CONCURRENCY = 6;
+
     private String blockedIpList;
 
     /** 每例按真实配置入口准备名单、变量、两个冻结规则集、决策流和生效发布。 */
@@ -188,6 +201,43 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
         assess(request).assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST.getCode());
 
         assertEquals(1, store.countPrimaryEvaluations());
+    }
+
+    /** 同一支付尝试并发评估：一次评估、一组累计事件，成功响应结果一致。 */
+    @Test
+    void test_edgeCase_concurrentSameAttempt() throws Exception {
+        EvaluateDecisionRequestBody request = PaymentRiskRequestBuilder.template().build();
+        CyclicBarrier ready = new CyclicBarrier(CONCURRENCY);
+        ExecutorService pool = Executors.newFixedThreadPool(CONCURRENCY);
+        List<PaymentRiskResponseChecker> responses = new ArrayList<>();
+        try {
+            List<Future<PaymentRiskResponseChecker>> calls = new ArrayList<>();
+            for (int i = 0; i < CONCURRENCY; i++) {
+                calls.add(pool.submit(() -> {
+                    ready.await(10, TimeUnit.SECONDS);
+                    return assess(request);
+                }));
+            }
+            for (Future<PaymentRiskResponseChecker> call : calls) {
+                responses.add(call.get(30, TimeUnit.SECONDS));
+            }
+        } finally {
+            pool.shutdownNow();
+        }
+
+        Set<Long> evaluationIds = new HashSet<>();
+        for (PaymentRiskResponseChecker response : responses) {
+            if (response.status() == 409) {
+                response.assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST.getCode());
+                continue;
+            }
+            evaluationIds.add(response.assertResult(DecisionValue.ALLOW.getCode(),
+                AuthenticationRequirement.NOT_REQUIRED.getCode()).evaluationId());
+        }
+        assertEquals(1, evaluationIds.size(), "成功响应的评估 ID");
+        assertEquals(1, store.countPrimaryEvaluations());
+        assertEquals(List.of(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode()),
+            store.velocityEventCodes(store.assessmentIdOf(evaluationIds.iterator().next())));
     }
 
     /** 拒绝规则：命中即结束本规则集，附原因编码与文案。 */

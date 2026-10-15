@@ -64,14 +64,15 @@
     <select id="releaseCount" resultType="long">
         SELECT COUNT(DISTINCT dr.release_id, rv.rule_set_version_id) <include refid="ReleaseJoin"/><include refid="ReleaseFilter"/>
     </select>
-    <!-- 先检查同事件点真实闭包，LEFT JOIN 保留断边，不能把损坏关系过滤成空图。 -->
+    <!-- 先检查同事件点真实闭包，LEFT JOIN 保留断边，不能把损坏关系过滤成空图；只看旧候选发布，执行发布经决策流引用、没有决策点版本绑定。 -->
     <select id="brokenReleaseCount" resultType="long">
         SELECT COUNT(*) FROM t_decision_release dr
         LEFT JOIN t_decision_point_version pv ON pv.point_version_id = dr.point_version_id
         LEFT JOIN t_decision_point_rule_set b ON b.point_version_id = dr.point_version_id
         LEFT JOIN t_rule_set_version rv ON rv.rule_set_version_id = b.rule_set_version_id
         LEFT JOIN t_rule_set rs ON rs.decision_point_id = rv.decision_point_id AND rs.rule_set_code = rv.rule_set_code
-        WHERE (dr.decision_point_id = #{pointId} OR rv.decision_point_id = #{pointId})
+        WHERE dr.decision_flow_version_id IS NULL
+          AND (dr.decision_point_id = #{pointId} OR rv.decision_point_id = #{pointId})
           AND (pv.point_version_id IS NULL OR b.binding_id IS NULL OR rv.rule_set_version_id IS NULL
             OR rs.rule_set_id IS NULL OR dr.decision_point_id != pv.decision_point_id OR dr.decision_point_id != rv.decision_point_id
             OR pv.status != 'FROZEN' OR rv.status != 'FROZEN'

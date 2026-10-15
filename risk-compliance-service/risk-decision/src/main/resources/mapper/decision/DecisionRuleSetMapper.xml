@@ -817,12 +817,25 @@
         LEFT JOIN t_decision_point_rule_set b ON b.point_version_id = dr.point_version_id
         LEFT JOIN t_rule_set_version rv ON rv.rule_set_version_id = b.rule_set_version_id
         LEFT JOIN t_rule_set rs ON rs.decision_point_id = rv.decision_point_id AND rs.rule_set_code = rv.rule_set_code
-        WHERE (dr.status = 'ACTIVE' OR dr.active_slot IS NOT NULL)
+        WHERE dr.decision_flow_version_id IS NULL
+          AND (dr.status = 'ACTIVE' OR dr.active_slot IS NOT NULL)
           AND (dr.decision_point_id IN
             <foreach collection="pointIds" item="id" open="(" separator="," close=")">#{id}</foreach>
             OR rs.rule_set_id IN
             <foreach collection="ruleSetIds" item="id" open="(" separator="," close=")">#{id}</foreach>)
         ORDER BY dr.release_id, b.binding_id
+        <if test="lock">FOR SHARE</if>
+    </select>
+    <select id="selectFlowReleaseRuleSetIds" resultType="long" useCache="false" flushCache="true">
+        SELECT rs.rule_set_id
+        FROM t_decision_release dr
+        JOIN t_decision_flow_node n ON n.flow_version_id = dr.decision_flow_version_id AND n.node_type = 'RULE_SET'
+        JOIN t_rule_set_version rv ON rv.rule_set_version_id = n.rule_set_version_id
+        JOIN t_rule_set rs ON rs.decision_point_id = rv.decision_point_id AND rs.rule_set_code = rv.rule_set_code
+        WHERE dr.decision_flow_version_id IS NOT NULL
+          AND (dr.status IN ('ACTIVE', 'SHADOWING') OR dr.active_slot IS NOT NULL)
+          AND rs.rule_set_id IN
+            <foreach collection="ruleSetIds" item="id" open="(" separator="," close=")">#{id}</foreach>
         <if test="lock">FOR SHARE</if>
     </select>
     <select id="countMalformedRuleSets" resultType="long" useCache="false">

@@ -3,6 +3,7 @@ package com.paytech.risk.decision.domainservice.repository;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import com.paytech.risk.decision.core.dal.dataobject.ActionParameterDefinition;
 import com.paytech.risk.decision.core.dal.dataobject.ActionVersion;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionPoint;
@@ -37,6 +38,9 @@ public interface DecisionRuleSetRepository {
 
     /** 批量读取指定根相关活动引用，缺失关系不得被连接过滤。 */
     List<RuleSetReleaseReference> releaseReferences(List<Long> pointIds, List<Long> ruleSetIds, boolean lock);
+
+    /** 被生效中或影子中的执行发布经决策流引用的规则集根 ID；写路径以锁定读读取当前事实。 */
+    Set<Long> flowReleaseRuleSetIds(List<Long> ruleSetIds, boolean lock);
 
     /** 只读取不变事件点坐标，准备锁键时不加载规则或动作闭包。 */
     Optional<DecisionPoint> findPoint(long decisionPointId);

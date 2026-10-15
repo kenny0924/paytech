@@ -4,6 +4,7 @@ import static com.paytech.foundation.common.error.CommonErrorCode.BUSINESS_CHECK
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
 import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
+import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_RULE_SET_IN_USE;
 import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder.action;
 import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder.predicate;
 import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder.rule;
@@ -12,12 +13,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
@@ -40,10 +45,12 @@ import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.builder.evaluation.PaymentRiskRequestBuilder;
 import com.paytech.risk.test.checker.decision.ExecutionReleaseResponseChecker;
 
+import tools.jackson.databind.JsonNode;
+
 /**
  * 支付决策点执行发布：创建、静态校验、影子运行与激活
  * <li>正常流程：首个发布校验通过后由一人直接激活；已有生效发布时，候选须完成影子回放（最近的正式评估）且技术门槛通过才能激活，原发布被替代，新评估按候选执行。</li>
- * <li>业务规则：未校验的发布不能影子运行或激活；无生效发布时不能影子运行；未完成影子运行不能替代生效发布；引用损坏的发布八项检查全部失败、被拒绝且不能激活。</li>
+ * <li>业务规则：生效中或影子中的执行发布经决策流引用的规则集不能删除，发布被替代后可删除；未校验的发布不能影子运行或激活；无生效发布时不能影子运行；未完成影子运行不能替代生效发布；引用损坏的发布八项检查全部失败、被拒绝且不能激活。</li>
  * <li>参数：决策点不支持执行发布、流程版本不存在返回 400；字段缺失或越界返回 422；发布 ID 非法返回 400。</li>
  * <li>无数据：发布不存在返回 404。</li>
  *
@@ -262,6 +269,67 @@ class ExecutionReleaseApiAutoTest extends AbstractPaymentRiskApiTest {
         boolean deny = "DENY_PAYMENT".equals(actionCode);
         return rule(code, code, priority, deny ? reason : null, deny ? "支付被风控拒绝" : null, action(actionCode),
             List.of(), predicate("root", null, 1, operator, variableOperand("PAY_INPUT_AMOUNT", "NUMBER"), money(amount)));
+    }
+
+    /** 规则集被生效中或影子中的执行发布引用时返回 409 IN_USE；原发布被替代后，其独有的规则集可以删除。 */
+    @Test
+    void test_businessRuleViolation_ruleSetInUse() {
+        long baselineAuth = authRuleSet("500");
+        long baseline = activeRelease(saveFlow(newCode("T_FLOW"), twoStageGraph(blockRuleSet, baselineAuth, reason)));
+        assess(PaymentRiskRequestBuilder.template().amount("600").build());
+        long candidateAuth = authRuleSet("50");
+        long candidate = validatedRelease(saveFlow(newCode("T_FLOW"),
+            twoStageGraph(blockRuleSet, candidateAuth, reason)));
+
+        assertDeleteRejected(baselineAuth);
+        assertDeleteRejected(candidateAuth);
+        assertDeleteRejected(blockRuleSet);
+        assertManagementQueries(baselineAuth, true);
+
+        shadow(candidate, 10).assertRelease(DecisionReleaseStatus.SHADOWING.getCode(), POINT, TEST);
+        awaitShadowRun(candidate).assertShadowRun(baseline, 1, StaticCheckStatus.PASSED.getCode());
+        command(candidate, "activate").assertRelease(DecisionReleaseStatus.ACTIVE.getCode(), POINT, TEST);
+
+        assertManagementQueries(baselineAuth, false);
+        assertEquals(200, deleteRuleSet(baselineAuth).getStatus().value(), "被替代发布独有的规则集可删除");
+        assertDeleteRejected(candidateAuth);
+        assertDeleteRejected(blockRuleSet);
+    }
+
+    /** 存在执行发布时规则集列表、版本历史与发布引用查询正常返回，列表按执行发布引用标记是否在用。 */
+    private void assertManagementQueries(long ruleSetVersionId, boolean inUse) {
+        Map<String, Object> root = store.ruleSetRoot(ruleSetVersionId);
+        String rules = "/decision-rule-sets/v1/rule-sets";
+        JsonNode list = getOk(rules + "?pointCode=" + POINT + "&ruleSetCode=" + root.get("rule_set_code"));
+        assertEquals(inUse, list.path("items").path(0).path("inUse").asBoolean(), "列表在用标记");
+        getOk(rules + "/" + root.get("rule_set_id") + "/versions?maxVersionNo=1");
+        getOk(rules + "/" + root.get("rule_set_id") + "/release-references");
+    }
+
+    /** GET 并要求 200。 */
+    private JsonNode getOk(String path) {
+        var result = http.get(path, headers());
+        assertEquals(200, result.getStatus().value(), path);
+        return objectMapper.readTree(result.getResponseBody());
+    }
+
+    /** 删除规则集被拒绝为正在使用，管理根不变。 */
+    private void assertDeleteRejected(long ruleSetVersionId) {
+        Map<String, Object> before = store.ruleSetRoot(ruleSetVersionId);
+        EntityExchangeResult<byte[]> result = deleteRuleSet(ruleSetVersionId);
+
+        assertEquals(409, result.getStatus().value(), "删除在用规则集");
+        assertEquals(RISK_RULE_SET_IN_USE.getCode(), objectMapper.readTree(result.getResponseBody()).path("code").asString());
+        assertEquals(before, store.ruleSetRoot(ruleSetVersionId));
+    }
+
+    /** 按当前管理版本整体删除规则集版本所属的规则集。 */
+    private EntityExchangeResult<byte[]> deleteRuleSet(long ruleSetVersionId) {
+        Map<String, Object> root = store.ruleSetRoot(ruleSetVersionId);
+        HttpHeaders headers = headers();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return http.exchange(HttpMethod.DELETE, "/decision-rule-sets/v1/rule-sets/" + root.get("rule_set_id"), headers,
+            ("{\"expectedVersion\":\"" + root.get("version") + "\"}").getBytes(StandardCharsets.UTF_8));
     }
 
     /** 金额超过阈值时要求 3DS 的认证规则集。 */

@@ -13,6 +13,7 @@ import com.paytech.risk.test.mapper.evaluation.PaymentRiskTestMapper;
 /**
  * 支付风控的本地数据 Mocker
  * <li>插入历史累计事件，构造窗口与算法场景；Clear 清理评估、累计、名单、Feature、影子批次与支付决策点下测试创建的配置。</li>
+ * <li>可把决策点版本超时改为 -1 强制每次评估超时；Clear 先恢复原超时。</li>
  * <li>经业务入口创建的数据同样由 Clear 统一回收，用例无需逐项登记。</li>
  *
  * @author Kenny
@@ -20,6 +21,9 @@ import com.paytech.risk.test.mapper.evaluation.PaymentRiskTestMapper;
 @TestComponent
 public class PaymentRiskMocker implements Clear {
     private final PaymentRiskTestMapper mapper;
+
+    /** 被改写前的决策点超时；为空表示未改写。 */
+    private Integer originalTimeoutMillis;
 
     public PaymentRiskMocker(PaymentRiskTestMapper mapper) {
         this.mapper = mapper;
@@ -42,9 +46,21 @@ public class PaymentRiskMocker implements Clear {
         return id;
     }
 
-    /** 删除本测试环境的支付风控数据。 */
+    /** 支付决策点版本超时改为 -1：任何耗时都超过上限，评估确定记为 TIMED_OUT。 */
+    public void mockEvaluationTimeout() {
+        if (originalTimeoutMillis == null) {
+            originalTimeoutMillis = mapper.pointTimeoutMillis();
+        }
+        mapper.updatePointTimeoutMillis(-1);
+    }
+
+    /** 恢复决策点超时并删除本测试环境的支付风控数据。 */
     @Override
     public void clear() {
+        if (originalTimeoutMillis != null) {
+            mapper.updatePointTimeoutMillis(originalTimeoutMillis);
+            originalTimeoutMillis = null;
+        }
         mapper.deleteAll();
     }
 

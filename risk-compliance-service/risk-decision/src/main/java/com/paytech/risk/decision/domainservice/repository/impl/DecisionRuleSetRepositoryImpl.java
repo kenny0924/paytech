@@ -53,6 +53,15 @@ public class DecisionRuleSetRepositoryImpl implements DecisionRuleSetRepository 
         return safe(mapper.selectReleaseReferences(pointIds, ruleSetIds, lock), "活动发布配置引用");
     }
 
+    /** 只按调用方给定的根过滤，无根时不查询。 */
+    @Override
+    public Set<Long> flowReleaseRuleSetIds(List<Long> ruleSetIds, boolean lock) {
+        if (ruleSetIds.isEmpty()) {
+            return Set.of();
+        }
+        return Set.copyOf(mapper.selectFlowReleaseRuleSetIds(ruleSetIds, lock));
+    }
+
     /** 沿用事件点主键索引定位锁资源，不重新解释配置内容。 */
     @Override
     public Optional<DecisionPoint> findPoint(long decisionPointId) {

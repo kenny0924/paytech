@@ -77,7 +77,7 @@ public class RuleSetConfigurationReader {
         }
     }
 
-    /** 核验活动发布引用后返回确实在用的整体根。 */
+    /** 核验活动发布引用后返回确实在用的整体根：旧候选发布的决策点版本绑定，以及生效中或影子中的执行发布经决策流的引用。 */
     public Set<Long> usedRuleSets(List<RuleSet> roots, boolean lock) {
         if (roots.isEmpty()) return Set.of();
         List<Long> ids = roots.stream().map(RuleSet::getRuleSetId).distinct().toList();
@@ -87,6 +87,8 @@ public class RuleSetConfigurationReader {
             ref.verifyIntegrity();
             if (ids.contains(ref.getRuleSetId())) used.add(ref.getRuleSetId());
         }
+        // 执行发布不绑定决策点版本，而是经决策流节点引用规则集版本。
+        used.addAll(repository.flowReleaseRuleSetIds(ids, lock));
         return Set.copyOf(used);
     }
 

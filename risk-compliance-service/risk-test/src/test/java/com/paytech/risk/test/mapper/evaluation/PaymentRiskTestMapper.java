@@ -51,6 +51,26 @@ public class PaymentRiskTestMapper {
         }
     }
 
+    /** 规则集版本所属管理根的 ID、编码与管理版本。 */
+    public Map<String, Object> ruleSetRoot(long ruleSetVersionId) {
+        return jdbc.queryForMap("SELECT rs.rule_set_id, rs.rule_set_code, rs.version FROM t_rule_set rs JOIN t_rule_set_version v "
+            + "ON v.decision_point_id=rs.decision_point_id AND v.rule_set_code=rs.rule_set_code "
+            + "WHERE v.rule_set_version_id=?", ruleSetVersionId);
+    }
+
+    /** 支付决策点冻结版本的超时毫秒数。 */
+    public int pointTimeoutMillis() {
+        Integer value = jdbc.queryForObject("SELECT timeout_ms FROM t_decision_point_version WHERE decision_point_id=?",
+            Integer.class, PAYMENT_POINT_ID);
+        return value == null ? 0 : value;
+    }
+
+    /** 改写支付决策点冻结版本的超时毫秒数，用于构造评估超时；由 Mocker 清理时恢复原值。 */
+    public void updatePointTimeoutMillis(int timeoutMillis) {
+        jdbc.update("UPDATE t_decision_point_version SET timeout_ms=? WHERE decision_point_id=?", timeoutMillis,
+            PAYMENT_POINT_ID);
+    }
+
     /** 读取支付尝试的交易评估快照。 */
     public Map<String, Object> assessment(long paymentAttemptId) {
         List<Map<String, Object>> rows = jdbc.queryForList(

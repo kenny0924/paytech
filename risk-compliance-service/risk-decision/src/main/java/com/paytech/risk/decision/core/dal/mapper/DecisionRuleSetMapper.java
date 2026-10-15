@@ -35,9 +35,12 @@ public interface DecisionRuleSetMapper {
     int deleteRuleSet(@Param("value") RuleSet value, @Param("actorId") long actorId,
         @Param("triggerId") String triggerId, @Param("time") Instant time);
 
-    /** 读取活动引用与异常槽位；写路径使用当前锁定读而非事务旧快照。 */
+    /** 读取旧候选发布的活动引用与异常槽位；写路径使用当前锁定读而非事务旧快照。 */
     List<RuleSetReleaseReference> selectReleaseReferences(@Param("pointIds") List<Long> pointIds,
         @Param("ruleSetIds") List<Long> ruleSetIds, @Param("lock") boolean lock);
+
+    /** 被生效中或影子中的执行发布经决策流节点引用的规则集根 ID，可重复。 */
+    List<Long> selectFlowReleaseRuleSetIds(@Param("ruleSetIds") List<Long> ruleSetIds, @Param("lock") boolean lock);
 
 
     int insertRuleActionParameters(@Param("values") List<RuleActionParameter> values);
