@@ -108,6 +108,11 @@ public class OnboardingApplicationMocker implements Clear {
         return new ReviewFixture(app, submissionId, caseId, ClientProjectionSnapshot.read(stored).payloadHash());
     }
 
+    /** 登记经 HTTP 新建的申请，随本例一起清理。 */
+    public void track(long applicationId) {
+        applications.add(applicationId);
+    }
+
     /** 插入主体与申请。 */
     ApplicationFixture application(long accountId, boolean organization) {
         long applicationId = nextId(), clientId = nextId(), partyId = nextId(), profileId = nextId();

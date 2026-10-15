@@ -7,6 +7,7 @@ import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
 import com.paytech.platform.support.filedocument.domain.enums.*;
 import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.api.enums.FileObjectStatus;
+import com.paytech.platform.support.filedocument.domain.file.UploadModels.Completed;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.*;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.*;
@@ -50,6 +51,17 @@ public class FileLifecycleServiceImpl implements FileLifecycleService {
         var upload=owned(repository.lockUpload(uploadId),accountId);
         if (upload.tenantId()!=tenantId) throw new FailException(OnboardingFileErrorCode.FILE_TARGET_CONFLICT);
         return upload;
+    }
+    /** 调用者已锁定原 Upload；完成状态与文件在同一事务写入，二者必须同时存在。 */
+    @Override public Completed completedFile(Upload upload) {
+        if (upload.status()!=FileUploadStatus.COMPLETED) {
+            return null;
+        }
+        var file=repository.completedFile(upload.uploadId());
+        if (file==null) {
+            throw new ServiceUnavailableException();
+        }
+        return new Completed(file.fileId(),file.completedAt());
     }
     /** 只有原授权有效期内的新完成请求可以登记。 */
     @Override public void requireOpen(Upload upload,Instant now) {

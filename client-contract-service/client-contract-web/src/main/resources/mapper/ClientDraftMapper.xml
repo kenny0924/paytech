@@ -27,13 +27,22 @@
     <include refid="ApplicationIdentity"/>
     WHERE a.application_id=#{applicationId}
   </select>
+  <!-- 重新申请：本账号最近一份同类型、已被拒绝且 Client 仍未激活的申请。 -->
+  <select id="rejectedApplication" resultType="com.paytech.client.contract.core.dal.dataobject.ClientDraftIdentity">
+    <include refid="ApplicationIdentity"/>
+    WHERE a.requested_by_account_id=#{accountId} AND a.status='REJECTED' AND c.status='PENDING' AND p.party_type=#{clientType}
+    ORDER BY a.application_id DESC LIMIT 1
+  </select>
+  <insert id="insertReapplication">INSERT INTO t_client_application(application_id,application_no,client_id,requested_by_account_id,
+    status,active_slot,qualification_type,create_time,update_time)
+    SELECT #{applicationId},#{applicationNo},client_id,requested_by_account_id,'DRAFT',1,qualification_type,#{now},#{now}
+    FROM t_client_application WHERE application_id=#{rejectedId} AND status='REJECTED'</insert>
+  <update id="moveDraftProfiles">UPDATE t_party_profile SET draft_application_id=#{applicationId},update_time=#{now}
+    WHERE draft_application_id=#{rejectedId} AND approved_time IS NULL</update>
+  <update id="moveDraftRelations">UPDATE t_party_relation SET client_application_id=#{applicationId},update_time=#{now}
+    WHERE client_application_id=#{rejectedId} AND status='DRAFT'</update>
   <select id="activeApplication" resultType="java.lang.Long">
     SELECT application_id FROM t_client_application WHERE requested_by_account_id=#{accountId} AND active_slot=1
-  </select>
-  <select id="command" resultType="com.paytech.client.contract.core.dal.dataobject.ClientDraftCommandRecord">
-    SELECT request_hash AS requestHash,response_ref AS responseRef,status,update_time AS completedAt
-    FROM t_command_idempotency WHERE caller_scope=#{command.scope} AND operation_type=#{command.operation}
-      AND idempotency_key=#{command.key}
   </select>
   <select id="fields" resultType="com.paytech.client.contract.core.dal.dataobject.ClientDraftFields">
     SELECT p.profile_id AS profileId,
@@ -77,7 +86,6 @@
     FROM t_party_contact WHERE profile_id=#{profileId} AND contact_type IN ('EMAIL','PHONE')
   </select>
   <select id="identifiers" resultType="int">SELECT COUNT(*) FROM t_party_profile_identifier WHERE profile_id=#{profileId}</select>
-  <select id="boundIdentifiers" resultType="int">SELECT COUNT(*) FROM t_party_profile_identifier WHERE profile_id=#{profileId} AND identity_key_id IS NOT NULL</select>
   <insert id="insertParty">INSERT INTO t_party(party_id,party_no,party_type,create_time,update_time)
     VALUES(#{partyId},#{partyNo},#{type},#{now},#{now})</insert>
   <insert id="insertClient">INSERT INTO t_client(client_id,client_no,party_id,status,create_time,update_time)
@@ -101,9 +109,6 @@
   <insert id="insertHistory">INSERT INTO t_business_change_version(change_version_id,history_id,version_no,operation_type,
     snapshot_format,snapshot_json,create_by,create_time)
     VALUES(#{row.changeId},#{row.historyId},1,'CREATE','ENTITY_NO',#{snapshot},#{row.accountId},#{row.now})</insert>
-  <insert id="insertReceipt">INSERT INTO t_command_idempotency(idempotency_id,caller_scope,operation_type,idempotency_key,
-    request_hash,response_ref,status,expire_time,create_time,update_time)
-    VALUES(#{id},#{command.scope},#{command.operation},#{command.key},#{command.hash},#{responseRef},'SUCCEEDED',#{expiry},#{now},#{now})</insert>
   <update id="saveIndividual">UPDATE t_individual_profile SET update_time=#{now}
     <if test="changes.containsKey('individual_givenName')">,given_name=#{changes[individual_givenName],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('individual_middleName')">,middle_name=#{changes[individual_middleName],jdbcType=VARCHAR}</if>
@@ -127,6 +132,8 @@
     <if test="changes.containsKey('address_postalCode')">,postal_code=#{changes[address_postalCode],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('address_countryCode')">,country_code=#{changes[address_countryCode],jdbcType=VARCHAR}</if>
     WHERE profile_id=#{profileId} AND address_type=#{addressType}</update>
+  <update id="unbindIdentifier">UPDATE t_party_profile_identifier SET identity_key_id=NULL,update_time=#{now}
+    WHERE profile_id=#{profileId} AND identity_key_id IS NOT NULL</update>
   <update id="saveIdentifier">UPDATE t_party_profile_identifier SET update_time=#{now}
     <if test="changes.containsKey('identifier_identifierType')">,identifier_type=#{changes[identifier_identifierType],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('identifier_issuingCountry')">,issuing_country=#{changes[identifier_issuingCountry],jdbcType=VARCHAR}</if>

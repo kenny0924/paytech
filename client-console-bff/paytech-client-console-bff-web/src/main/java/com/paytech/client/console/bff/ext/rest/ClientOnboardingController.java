@@ -44,15 +44,14 @@ public class ClientOnboardingController {
         return queries.options(request, clientType);
     }
 
-    /** 创建及恢复保持 CCT 的 201/200 与原命令身份。 */
+    /** 创建及恢复保持 CCT 的 201/200。 */
     @PostMapping("/applications")
     public ResponseEntity<CommandReceiptResponseBody> create(
         HttpServletRequest request,
-        @RequestHeader("Idempotency-Key") String key,
         @RequestBody StartApplicationRequestBody body
     ) {
         var actor = sessions.identity(request);
-        var result = drafts.create("client-console-bff", actor[0], actor[1], key, body);
+        var result = drafts.create("client-console-bff", actor[0], actor[1], body);
         return ResponseEntity.status(result.getStatusCode()).body(result.getBody());
     }
 
@@ -67,11 +66,10 @@ public class ClientOnboardingController {
     public CommandReceiptResponseBody save(
         HttpServletRequest request,
         @PathVariable String app,
-        @RequestHeader("Idempotency-Key") String key,
         @RequestBody DraftPatchRequestBody body
     ) {
         var actor = sessions.identity(request);
-        return drafts.save("client-console-bff", actor[0], actor[1], app, key, body);
+        return drafts.save("client-console-bff", actor[0], actor[1], app, body);
     }
 
     /** 个人资料及首条关系由 CCT 原子创建。 */
@@ -79,11 +77,10 @@ public class ClientOnboardingController {
     public ResponseEntity<PeopleCommandReceiptResponseBody> person(
         HttpServletRequest request,
         @PathVariable String app,
-        @RequestHeader("Idempotency-Key") String key,
         @RequestBody CreatePersonRequestBody body
     ) {
         var actor = sessions.identity(request);
-        var result = people.createPerson("client-console-bff", actor[0], actor[1], app, key, body);
+        var result = people.createPerson("client-console-bff", actor[0], actor[1], app, body);
         return ResponseEntity.status(result.getStatusCode()).body(result.getBody());
     }
 
@@ -93,11 +90,10 @@ public class ClientOnboardingController {
         HttpServletRequest request,
         @PathVariable String app,
         @PathVariable String party,
-        @RequestHeader("Idempotency-Key") String key,
         @RequestBody DraftPatchRequestBody body
     ) {
         var actor = sessions.identity(request);
-        return people.savePerson("client-console-bff", actor[0], actor[1], app, party, key, body);
+        return people.savePerson("client-console-bff", actor[0], actor[1], app, party, body);
     }
 
     /** 同一人员追加关系，不创建另一个账号。 */
@@ -105,11 +101,10 @@ public class ClientOnboardingController {
     public ResponseEntity<PeopleCommandReceiptResponseBody> relation(
         HttpServletRequest request,
         @PathVariable String app,
-        @RequestHeader("Idempotency-Key") String key,
         @RequestBody CreateRelationRequestBody body
     ) {
         var actor = sessions.identity(request);
-        var result = people.createRelation("client-console-bff", actor[0], actor[1], app, key, body);
+        var result = people.createRelation("client-console-bff", actor[0], actor[1], app, body);
         return ResponseEntity.status(result.getStatusCode()).body(result.getBody());
     }
 
@@ -119,11 +114,10 @@ public class ClientOnboardingController {
         HttpServletRequest request,
         @PathVariable String app,
         @PathVariable String relation,
-        @RequestHeader("Idempotency-Key") String key,
         @RequestBody RelationPatchRequestBody body
     ) {
         var actor = sessions.identity(request);
-        return people.saveRelation("client-console-bff", actor[0], actor[1], app, relation, key, body);
+        return people.saveRelation("client-console-bff", actor[0], actor[1], app, relation, body);
     }
 
     /** 删除只移除原申请关系，响应保持 204。 */
@@ -132,11 +126,10 @@ public class ClientOnboardingController {
     public void removeRelation(
         HttpServletRequest request,
         @PathVariable String app,
-        @PathVariable String relation,
-        @RequestHeader("Idempotency-Key") String key
+        @PathVariable String relation
     ) {
         var actor = sessions.identity(request);
-        people.removeRelation("client-console-bff", actor[0], actor[1], app, relation, key, null);
+        people.removeRelation("client-console-bff", actor[0], actor[1], app, relation, null);
     }
 
     /** 材料关联的当前要求及文件证明由 CCT 核验。 */
@@ -144,15 +137,14 @@ public class ClientOnboardingController {
     public ResponseEntity<DocumentCommandReceiptResponseBody> associate(
         HttpServletRequest request,
         @PathVariable String app,
-        @RequestHeader("Idempotency-Key") String key,
         @RequestBody DocumentReferenceRequestBody body
     ) {
         var actor = sessions.identity(request);
-        var result = documents.associate("client-console-bff", actor[0], actor[1], app, key, body);
+        var result = documents.associate("client-console-bff", actor[0], actor[1], app, body);
         return ResponseEntity.status(result.getStatusCode()).body(result.getBody());
     }
 
-    /** C14 正式提交；Body 为空，不要求 Idempotency-Key，重复提交由 CCT 按申请状态返回原提交。 */
+    /** C14 正式提交；Body 为空，重复提交由 CCT 按申请状态返回原提交。 */
     @PostMapping("/applications/{app}/submissions")
     public ResponseEntity<SubmissionResponseBody> submit(HttpServletRequest request, @PathVariable String app) {
         var actor = sessions.identity(request);
@@ -174,10 +166,9 @@ public class ClientOnboardingController {
     public void removeDocument(
         HttpServletRequest request,
         @PathVariable String app,
-        @PathVariable String document,
-        @RequestHeader("Idempotency-Key") String key
+        @PathVariable String document
     ) {
         var actor = sessions.identity(request);
-        documents.remove("client-console-bff", actor[0], actor[1], app, document, key);
+        documents.remove("client-console-bff", actor[0], actor[1], app, document);
     }
 }

@@ -11,7 +11,7 @@ public final class ClientDocumentModels {
      */
     public record DocumentReferenceRequestBody(String subjectPartyId,String requirementCode,String documentType,String fileId) {}
     /**
-     * @param commandId 原命令 UUID
+     * @param commandId 已停用，恒为空；请求幂等由 Gateway 处理
      * @param applicationId 原申请
      * @param documentId 唯一材料引用
      * @param subjectPartyId 原主体

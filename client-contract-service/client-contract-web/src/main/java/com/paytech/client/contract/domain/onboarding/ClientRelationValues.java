@@ -68,4 +68,11 @@ public record ClientRelationValues(PartyRelationType relationType,BigDecimal own
     public static String decimal(BigDecimal value) { return value==null?null:value.stripTrailingZeros().toPlainString(); }
     private static Instant instant(String value) { return value==null?null:LocalDate.parse(value).atStartOfDay().toInstant(ZoneOffset.UTC); }
     private static FailException invalid() { return new FailException(INVALID_DRAFT); }
+    /** 与已保存关系的类型、持股比例和有效期是否完全相同；比例按数值比较。 */
+    public boolean matches(com.paytech.client.contract.core.dal.dataobject.ClientPartyRelation existing) {
+        return relationType==existing.relationType()
+            && (ownershipPercentage==null ? existing.ownershipPercentage()==null
+                : existing.ownershipPercentage()!=null && ownershipPercentage.compareTo(existing.ownershipPercentage())==0)
+            && java.util.Objects.equals(effectiveFrom,existing.effectiveFrom()) && java.util.Objects.equals(effectiveTo,existing.effectiveTo());
+    }
 }

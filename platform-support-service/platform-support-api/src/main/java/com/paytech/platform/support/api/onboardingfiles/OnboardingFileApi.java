@@ -22,20 +22,17 @@ public interface OnboardingFileApi {
         @RequestHeader("X-Gateway-Session-Id") String sessionId,@PathVariable("fileId") String fileId);
 
     /**
-     * 固定原申请和主体，保存后签发临时上传授权；原键重放只续签剩余有效时间。
+     * 固定原申请和主体，保存后签发临时上传授权；每次请求新建上传，HTTP 请求幂等由 Gateway 处理。
      * @param accountId Gateway/BFF 验证后的账号标识，Platform 仍核验真实会话
      * @param sessionId 当前 CLIENT 会话标识
-     * @param key UUID 格式命令身份
      * @param request 声明文件元数据和准确目标
      * @return 稳定上传身份及受控 PUT 授权；HTTP 201
      */
     @PostExchange("/uploads")
     UploadResponseBody start(@RequestHeader("X-Gateway-Actor-Subject") String accountId,
-        @RequestHeader("X-Gateway-Session-Id") String sessionId,
-        @RequestHeader("Idempotency-Key") String key, @RequestBody StartUploadRequestBody request);
-    /** 沿原 Upload 完成登记；Body 必须为空，固定回执不包含当前扫描状态。 */
+        @RequestHeader("X-Gateway-Session-Id") String sessionId, @RequestBody StartUploadRequestBody request);
+    /** 沿原 Upload 完成登记；Body 必须为空；同一 Upload 已完成时返回原文件，回执不包含当前扫描状态。 */
     @PostExchange("/uploads/{uploadId}/completion")
     FileCompletionReceipt complete(@RequestHeader("X-Gateway-Actor-Subject") String accountId,
-        @RequestHeader("X-Gateway-Session-Id") String sessionId,@RequestHeader("Idempotency-Key") String key,
-        @PathVariable("uploadId") String uploadId);
+        @RequestHeader("X-Gateway-Session-Id") String sessionId,@PathVariable("uploadId") String uploadId);
 }

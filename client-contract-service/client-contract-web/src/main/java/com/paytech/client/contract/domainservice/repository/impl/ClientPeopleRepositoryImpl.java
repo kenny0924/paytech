@@ -34,7 +34,9 @@ public final class ClientPeopleRepositoryImpl implements ClientPeopleRepository 
         if (has(changes,"individual")) one(drafts.saveIndividual(person.profileId(),changes,now));
         if (has(changes,"address")) one(drafts.saveAddress(person.profileId(),"RESIDENTIAL",changes,now));
         if (has(changes,"identifier")) {
-            if (drafts.identifiers(person.profileId())!=1 || drafts.boundIdentifiers(person.profileId())!=0) throw new FailException(PERSON_NOT_EDITABLE);
+            if (drafts.identifiers(person.profileId())!=1) throw new FailException(PERSON_NOT_EDITABLE);
+            // 退回后改证件：先解绑旧身份键，重提时按新号码重新绑定（同号码复用原键）。
+            drafts.unbindIdentifier(person.profileId(),now);
             one(drafts.saveIdentifier(person.profileId(),changes,now));
         }
         one(drafts.touchProfile(person.profileId(),now));
@@ -42,7 +44,6 @@ public final class ClientPeopleRepositoryImpl implements ClientPeopleRepository 
     public void createRelation(ClientDraftIdentity application,long id,long partyId,ClientRelationValues values,Instant now) { people.insertRelation(application,id,partyId,values,now); }
     public void saveRelation(ClientDraftIdentity application,long id,ClientRelationValues values,Instant now) { one(people.saveRelation(application,id,values,now)); }
     public void removeRelation(ClientDraftIdentity application,long id) { one(people.removeRelation(application,id)); }
-    public void receipt(long id,ClientDraftCommand command,String reference,Instant now) { drafts.insertReceipt(id,command,reference,now,now.plus(Duration.ofDays(90))); }
     public void touch(ClientDraftIdentity application,Instant now) { one(drafts.touchApplication(application.applicationId(),now)); }
     private static boolean has(Map<String,Object> values,String group) { return values.keySet().stream().anyMatch(key -> key.startsWith(group+"_")); }
     private static void one(int count) { if (count!=1) throw new ErrorException(DRAFT_CONTEXT_INVALID); }

@@ -12,15 +12,15 @@ public final class ClientDraftContactClientImpl implements ClientDraftContactCli
     private static final String PURPOSE="CLIENT_ONBOARDING_CONTACT";
     private final VaultClient vault;
     public ClientDraftContactClientImpl(VaultClient vault) { this.vault=vault; }
-    public Map<String,ClientDraftContact> protect(ClientDraftCommand command,ClientDraftPatch patch) {
+    public Map<String,ClientDraftContact> protect(ClientDraftPatch patch) {
         outsideTransaction();
         Map<String,ClientDraftContact> result=new LinkedHashMap<>();
         for (String field:List.of("email","phone")) {
             if (!patch.values().containsKey("contact."+field)) continue;
             String value=patch.values().get("contact."+field),type=field.toUpperCase(Locale.ROOT);
             if (value==null) { result.put(type,null);continue; }
-            String key=ClientDraftCommand.digest(Map.of("domain","CCT_CONTACT_PROTECT_1","scope",command.scope(),
-                "operation",command.operation(),"command",command.key(),"hash",command.hash(),"field",field));
+            // 每次保存使用随机 Vault 操作键：STABLE 模式下同值仍得到同一 Token；不用联系方式原值派生键，避免把可撞库的摘要交给 Vault。
+            String key=UUID.randomUUID().toString();
             try {
                 var token=vault.protect(new ProtectCommand(field.equals("email")?"EMAIL_ADDRESS_V1":"PHONE_E164_V1",
                     TokenMode.STABLE,value,PURPOSE,key));

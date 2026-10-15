@@ -234,7 +234,7 @@ class ClientOnboardingHttpAutoTest {
         }
         assertEquals(2, CALLS.size());
         for (var call : CALLS) {
-            assertEquals(KEY, call.key());
+            assertNull(call.key(), "请求幂等归 Gateway，BFF 不转发 Idempotency-Key");
             assertEquals("1", call.account());
             assertEquals("2", call.session());
             assertEquals(body, call.body());

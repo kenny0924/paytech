@@ -76,7 +76,7 @@ public final class OnboardingFileModels {
         @Override public String toString() { return "UploadResponseBody[REDACTED]"; }
     }
     /**
-     * @param commandId 原命令身份
+     * @param commandId 完成操作身份，等于 uploadId（一次上传只产生一个文件）；保留字段以兼容既有合同
      * @param uploadId 原上传
      * @param fileId 唯一文件
      * @param completedAt 首次成功时间

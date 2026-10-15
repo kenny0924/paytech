@@ -1,4 +1,4 @@
-"""把已登记路由的请求头与最新生成的登记模板对齐（2026-10-14：F01/F02 补 idempotency-key）。
+"""把已登记路由的请求头与最新生成的登记模板对齐（2026-10-14：F01/F02 补 idempotency-key；2026-10-15：请求幂等迁移，idempotency-key 只允许 CORS、不再转发）。
 
 只更新 Header 集合不一致的 CLIENT/OPERATIONS 入驻路由；其余字段按模板原样提交，保持状态不变。
 """
@@ -9,7 +9,7 @@ from e2e_http import Operations, secrets
 
 HERE = Path(__file__).resolve().parent
 TEMPLATES = json.loads((HERE.parent.parent / "db/management-command-templates.json").read_text())["commands"]
-REASON = "Sync route headers with corrected registration plan (F01/F02 idempotency-key)"
+REASON = "Sync route headers: 2026-10-15 idempotency migration, idempotency-key CORS only, not forwarded"
 
 s = secrets()
 ops = Operations(s["E2E_ADMIN_EMAIL"], s["E2E_ADMIN_PASSWORD"])

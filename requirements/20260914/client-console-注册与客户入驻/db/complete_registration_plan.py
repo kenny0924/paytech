@@ -49,8 +49,8 @@ for route in plan['routes']:
                     for use in ['CORS_REQUEST_ALLOWED', 'FORWARD_REQUEST']]
         headers.append(dict(headerName='origin', headerUse='FORWARD_REQUEST'))
     if op in idempotent:
-        headers += [dict(headerName='idempotency-key', headerUse=use)
-                    for use in ['CORS_REQUEST_ALLOWED', 'FORWARD_REQUEST']]
+        # 2026-10-15 请求幂等迁移：Key 由 Gateway 处理，只允许浏览器携带，不再转发给 BFF 和下游。
+        headers.append(dict(headerName='idempotency-key', headerUse='CORS_REQUEST_ALLOWED'))
     route['headers'] = headers
     route['queryParameterNames'] = queries.get(op, [])
     public = route['securityProfileCode'] == 'PUBLIC'

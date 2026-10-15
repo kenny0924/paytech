@@ -21,7 +21,19 @@ public final class ClientDraftRepositoryImpl implements ClientDraftRepository {
     /** 仅读取本账号摘要来源，不创建工作区或执行恢复。 */
     public List<ClientDraftIdentity> recentApplications(long accountId) { return mapper.recentApplications(accountId); }
     public Long activeApplication(long account) { return mapper.activeApplication(account); }
-    public ClientDraftCommandRecord command(ClientDraftCommand command) { return mapper.command(command); }
+    /** 只查本账号同类型、Client 未激活的最近一份被拒申请。 */
+    public ClientDraftIdentity rejectedApplication(long account,ClientType type) { return mapper.rejectedApplication(account,type.getCode()); }
+    /**
+     * 复用原 Client 重新申请
+     * <li>主体资料必须仍归被拒申请编辑，否则数据不一致；新申请沿用同一 Party，重提时复用已有身份键。</li>
+     * <li>材料文件在 Platform 按申请归属，不带入，由客户在新申请重新上传。</li>
+     */
+    public void reapply(ClientDraftIdentity rejected,long applicationId,Instant now) {
+        if (!Long.valueOf(rejected.applicationId()).equals(rejected.draftApplicationId())) throw new ErrorException(DRAFT_CONTEXT_INVALID);
+        one(mapper.insertReapplication(applicationId,"CA-"+applicationId,rejected.applicationId(),now));
+        if (mapper.moveDraftProfiles(rejected.applicationId(),applicationId,now)<1) throw new ErrorException(DRAFT_CONTEXT_INVALID);
+        mapper.moveDraftRelations(rejected.applicationId(),applicationId,now);
+    }
     public ClientDraftFields fields(ClientDraftIdentity row) {
         if (mapper.identifiers(row.profileId())!=1) throw new ErrorException(DRAFT_CONTEXT_INVALID);
         var fields=mapper.fields(row.profileId(),row.clientId(),addressType(row));
@@ -35,10 +47,6 @@ public final class ClientDraftRepositoryImpl implements ClientDraftRepository {
         mapper.insertBusiness(row);mapper.insertAddress(row);mapper.insertIdentifier(row);
         mapper.insertHistoryRoot(row);mapper.insertHistory(row,snapshot);
     }
-    public void receipt(long id,ClientDraftCommand command,long application,String operation,Instant now) {
-        // 本切片不清理命令记录；已存在的原命令即使超出保留窗口也不能重新创建申请。
-        mapper.insertReceipt(id,command,operation+":"+application,now,now.plus(Duration.ofDays(90)));
-    }
     public void save(ClientDraftIdentity row,ClientDraftPatch patch,Map<String,ClientDraftContact> contacts,Instant now) {
         Map<String,Object> changes=patch.databaseValues();
         if (has(changes,"individual")) one(mapper.saveIndividual(row.profileId(),changes,now));
@@ -46,8 +54,9 @@ public final class ClientDraftRepositoryImpl implements ClientDraftRepository {
         if (has(changes,"business")) one(mapper.saveBusiness(row.clientId(),changes,now));
         if (has(changes,"address")) one(mapper.saveAddress(row.profileId(),addressType(row),changes,now));
         if (has(changes,"identifier")) {
-            if (mapper.identifiers(row.profileId())!=1 || mapper.boundIdentifiers(row.profileId())!=0)
-                throw new FailException(APPLICATION_NOT_EDITABLE);
+            if (mapper.identifiers(row.profileId())!=1) throw new FailException(APPLICATION_NOT_EDITABLE);
+            // 退回后改证件：先解绑旧身份键，重提时按新号码重新绑定（同号码复用原键）。
+            mapper.unbindIdentifier(row.profileId(),now);
             one(mapper.saveIdentifier(row.profileId(),changes,now));
         }
         for (var entry:contacts.entrySet()) {

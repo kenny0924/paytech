@@ -24,22 +24,20 @@ public class ClientOnboardingFileController {
     @ResponseStatus(HttpStatus.CREATED)
     public UploadResponseBody start(
         HttpServletRequest request,
-        @RequestHeader("Idempotency-Key") String key,
         @Valid @RequestBody StartUploadRequestBody body
     ) {
         var actor = sessions.identity(request);
-        return files.start(actor[0], actor[1], key, body);
+        return files.start(actor[0], actor[1], body);
     }
 
-    /** 空 Body 和原键完成原 Upload。 */
+    /** 空 Body 完成原 Upload；同一 Upload 已完成时由 Platform 返回原文件。 */
     @PostMapping("/uploads/{upload}/completion")
     public FileCompletionReceipt complete(
         HttpServletRequest request,
-        @PathVariable String upload,
-        @RequestHeader("Idempotency-Key") String key
+        @PathVariable String upload
     ) {
         var actor = sessions.identity(request);
-        return files.complete(actor[0], actor[1], key, upload);
+        return files.complete(actor[0], actor[1], upload);
     }
 
     /** GET 不驱动扫描。 */

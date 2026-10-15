@@ -14,15 +14,15 @@ import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
 public class ClientDraftController implements ClientDraftApi {
     private final ClientDraftProcessor processor;
     public ClientDraftController(ClientDraftProcessor processor) { this.processor=processor; }
-    public ResponseEntity<CommandReceiptResponseBody> create(String caller,String accountId,String sessionId,String key,StartApplicationRequestBody request) {
-        caller(caller);var receipt=processor.create(account(accountId),account(sessionId),key,request);
+    public ResponseEntity<CommandReceiptResponseBody> create(String caller,String accountId,String sessionId,StartApplicationRequestBody request) {
+        caller(caller);var receipt=processor.create(account(accountId),account(sessionId),request);
         return ResponseEntity.status("CREATED".equals(receipt.operation())?201:200).body(receipt);
     }
     public ClientDraftResponseBody read(String caller,String accountId,String sessionId,String applicationId) {
         caller(caller);return processor.read(account(accountId),account(sessionId),ClientDraftCommand.id(applicationId));
     }
-    public CommandReceiptResponseBody save(String caller,String accountId,String sessionId,String applicationId,String key,DraftPatchRequestBody request) {
-        caller(caller);return processor.save(account(accountId),account(sessionId),ClientDraftCommand.id(applicationId),key,request);
+    public CommandReceiptResponseBody save(String caller,String accountId,String sessionId,String applicationId,DraftPatchRequestBody request) {
+        caller(caller);return processor.save(account(accountId),account(sessionId),ClientDraftCommand.id(applicationId),request);
     }
     private static void caller(String caller) { if (!"client-console-bff".equals(caller)) throw new FailException(APPLICATION_NOT_FOUND); }
     private static long account(String value) {

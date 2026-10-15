@@ -92,3 +92,51 @@ class Operations:
 
     def send(self, method, path, body=None, key=True):
         return call(OPERATIONS, "/api/operations" + path, method, body, self.token, key)
+
+
+def mint_signup_link(email, since_utc):
+    """本机兜底：Platform 认证邮件改经 Delivery（只有 SES 适配器）后本机收不到验证邮件。
+
+    仅 E2E_TARGET=local：在 mor_platform_e2e 找该邮箱（按脱敏值与创建时间）最新的 PENDING 注册挑战，
+    用本机 CLIENT_LOCAL_HMAC_KEY_BASE64 为自生成的秘密重算 secret_hmac 并写回，返回 (challengeNo, secret)。
+    HMAC 输入与 LocalHumanAuthenticationCryptography / ClientEmailChallengePolicy.proofInput 一致。不打印任何秘密。
+    """
+    if TARGET != "local":
+        return None, None
+    import base64
+    import hashlib
+    import hmac
+    import secrets as pysecrets
+    import subprocess
+
+    env = {}
+    for line in (ROOT / "local-environment/.env.local").read_text().splitlines():
+        if "=" in line and not line.startswith("#"):
+            key, value = line.split("=", 1)
+            env[key.strip()] = value.strip().strip('"')
+    local = secrets()
+    masked = email[0] + "***@" + email.split("@", 1)[1]
+
+    def sql(statement):
+        result = subprocess.run(["mysql", "-h127.0.0.1", "-P13306", "-uplatform_app", "-N", "-B", "mor_platform_e2e",
+                                 "-e", statement], env={**os.environ, "MYSQL_PWD": env["MOR_PLATFORM_DB_PASSWORD"]},
+                                capture_output=True, text=True, check=True)
+        return [row.split("\t") for row in result.stdout.splitlines() if row]
+
+    rows = sql("SELECT challenge_id,challenge_no,active_scope_hash FROM t_authentication_challenge "
+               f"WHERE realm='CUSTOMER' AND purpose='SIGN_UP_EMAIL' AND status='PENDING' AND email_masked='{masked}' "
+               f"AND create_time>='{since_utc}' ORDER BY create_time DESC LIMIT 1")
+    if not rows:
+        return None, None
+    challenge_id, challenge_no, scope_hash = rows[0]
+    secret = base64.urlsafe_b64encode(pysecrets.token_bytes(32)).decode().rstrip("=")
+
+    def tuple_(*values):
+        return "".join(f"{len(v.encode())}:{v}" for v in values)
+
+    proof = tuple_("CUSTOMER-EMAIL-CHALLENGE", challenge_no, "SIGN_UP_EMAIL", scope_hash, secret)
+    digest = hmac.new(base64.b64decode(local["CLIENT_LOCAL_HMAC_KEY_BASE64"]),
+                      ("client-email-challenge-v1" + "\\0" + proof).encode(), hashlib.sha256).hexdigest()
+    sql(f"UPDATE t_authentication_challenge SET secret_hmac='{digest}' WHERE challenge_id={int(challenge_id)} "
+        "AND status='PENDING'")
+    return challenge_no, secret

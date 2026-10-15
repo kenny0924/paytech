@@ -1,6 +1,6 @@
 # 入驻材料与表单通用化：合同差异稿
 
-状态：**已确认（2026-10-13 用户回复“按照你的建议来”）**，第 4.2、5、6 节按建议值生效；经营模式列表由实现补充，见第 11 节。本稿不批准材料初始化 SQL 的执行、入口启用或部署。实现与验证状态只见[实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
+状态：**已确认（2026-10-13 用户回复“按照你的建议来”）**，第 4.2、5、6 节按建议值生效；经营模式列表由实现补充，2026-10-15 用户确认，见第 11 节。本稿不批准材料初始化 SQL 的执行、入口启用或部署。实现与验证状态只见[实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
 
 ## 1. 来源与决定
 
@@ -116,8 +116,8 @@
 
 ## 11. 确认结果
 
-1. 第 4.2 节材料目录与基础必需项：按建议确认。初始化 SQL 已生成：[执行文件](./db/implementation/risk-generic-materials-init.sql)（由 [生成器](./db/implementation/generate-risk-generic-materials.py) 输出，`--check` 可复核），**尚未执行**，需单独授权；执行人须先设置真实审批人 `@approved_by`。
-2. 第 5 节组织类型、证件类型：按建议确认。经营模式本稿未给建议，实现采用通用列表 PHYSICAL_GOODS / DIGITAL_GOODS / SERVICES / SUBSCRIPTION / MARKETPLACE（仅组织）/ OTHER，**待用户复核**。
+1. 第 4.2 节材料目录与基础必需项：按建议确认。初始化 SQL 已生成：[执行文件](./db/implementation/risk-generic-materials-init.sql)（由 [生成器](./db/implementation/generate-risk-generic-materials.py) 输出，`--check` 可复核），2026-10-14 经授权已在本机与 mor-test 执行，见[执行范围](./db/implementation/risk-generic-materials-local-execution.md)。
+2. 第 5 节组织类型、证件类型：按建议确认。经营模式本稿未给建议，实现采用通用列表 PHYSICAL_GOODS / DIGITAL_GOODS / SERVICES / SUBSCRIPTION / MARKETPLACE（仅组织）/ OTHER，2026-10-15 用户复核确认。
 3. 第 6 节规范化规则：按建议确认，在 C14 正式提交时实现。
 4. 第 8 节列注释：本稿没有给出建议，**本期未修改**（不改不影响行为），等后续 ALTER 授权时一并处理。
 5. 实现时一并删除 C03 路由 Query 白名单中的 `countryCode`（`db/complete_registration_plan.py` 重新生成，仅两处差异）。

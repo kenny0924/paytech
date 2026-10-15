@@ -75,16 +75,6 @@ public class ClientOnboardingWebConfiguration implements WebMvcConfigurer {
                         if (empty && request.getInputStream().read() != -1) {
                             throw new InvalidParameterException("当前操作不接受 Body");
                         }
-                        // C14 按申请状态防重，不要求 Idempotency-Key。
-                        if (!Set.of("GET", "HEAD").contains(method) && !path.endsWith("/download") && !submission) {
-                            var keys = Collections.list(request.getHeaders("Idempotency-Key"));
-                            if (
-                                keys.size() != 1 ||
-                                !keys.getFirst().matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
-                            ) {
-                                throw new InvalidParameterException("命令身份格式无效");
-                            }
-                        }
                         return true;
                     }
                 }

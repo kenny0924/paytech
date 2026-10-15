@@ -75,3 +75,14 @@
 | A9 | 经管理接口将 39 路由、5 页面、目标置 DISABLED，5 权限置 INACTIVE |
 
 停止进程：`local-environment/e2e/*.pid` 中各 PID；Nginx 用 `nginx -s stop -c local-environment/e2e/nginx/nginx.conf -p local-environment/e2e/nginx`。
+
+## 2d. 请求幂等迁移后的真实进程联调（2026-10-15 夜，用户：“继续做，多agent”）
+
+- **重建与重启**：以当前工作区 JDK 25 离线构建 CCT、Platform、Client BFF 的 exec JAR（Platform 工作区含另一会话未提交的通知/Webhook 改动；`install` 在 platform-support-test 覆盖率门禁处失败仅因跳过测试，web JAR 已生成）。停止并按 `run-service.sh` 重启 platform、cct（旧 pid 83734）、client-bff，三者健康；Gateway、Risk、Operations BFF 未重启。
+- **路由同步**：`sync_route_headers.py`（REASON 已注明 2026-10-15 请求幂等迁移）更新 18 条入驻路由（C04、C06—C13、F01、F02、O03—O09），`idempotency-key` 只保留 CORS 允许、不再转发；Gateway Snapshot 刷新成功（routeCount=157）。
+- **验证邮件**：Platform 认证邮件已改经 Delivery（另一会话进行中的改动），本机只有 SES 适配器、未配置，Mailpit 收不到。`e2e_http.mint_signup_link` 作为本机兜底：在 `mor_platform_e2e` 为该邮箱最新 PENDING 注册挑战按本机 `CLIENT_LOCAL_HMAC_KEY_BASE64` 重算 `secret_hmac`（只本机、只 PENDING 行），`acceptance_flow.py` 在 10 秒内收不到邮件时使用。
+- **原 38 步验收**：`acceptance_flow.py --approve` 全部 PASS（39 项，含联系邮箱/电话经 CCT→Vault 随机操作键保存、F01/F02 不带转发 Key、退回后重提与批准）。
+- **新增 `scenario_flow.py`**（场景 A 退回改证件重提；场景 B 组织重复写 + 拒绝后重新申请）。23:50 起另一会话用其 worktree（`127a8113/scratchpad/wt-prov`，HEAD + 其改动，不含本次迁移）构建的 Platform 替换了本机 e2e Platform（pid 64323），等待 10 分钟未恢复。该构建 F01 仍要求 `Idempotency-Key`，经新 BFF 返回 400（Platform 日志 `MissingRequestHeaderException`）。因此：
+  - PASS：注册/验证/登录、个人与组织资料保存（含 Vault）、C07 新增人员、**C09 同内容重复返回同一 relationId、不同内容 409 `RELATION_ALREADY_EXISTS`、C11 重复删除 204/204**。
+  - 未能执行（被上述 Platform 替换阻塞）：场景 A 全部提交后步骤、F02 重复完成、C12 重复关联、C13 重复删除、拒绝后重新申请。未停止对方进程。
+- **本机遗留数据**：`acceptance-20261015234607/234810@example.test`、`scenario-ret-*`/`scenario-org-*` 账号及其申请（一份已批准个人申请、两个 DRAFT 申请）、MinIO 中验收 PDF；均为本机测试数据，未清理。

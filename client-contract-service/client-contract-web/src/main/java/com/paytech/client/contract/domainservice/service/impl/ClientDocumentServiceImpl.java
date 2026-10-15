@@ -24,10 +24,6 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
     public ClientDocumentServiceImpl(ClientDraftRepository drafts,ClientPeopleRepository people,ClientDocumentRepository documents,IdGenerator ids,Clock clock) {
         this.drafts=drafts;this.people=people;this.documents=documents;this.ids=ids;this.clock=clock;
     }
-    /** 原申请归属先于原命令回执；不因引用已删除或申请已终态重新执行。 */
-    @Override public DocumentCommandReceiptResponseBody previous(ClientDraftCommand command,long applicationId) {
-        application(command.accountId(),applicationId,false);return replay(command,applicationId);
-    }
     /** 锁内重新派生主体和资格类型，不能把旧页面或被移除人员悄悄换到新目标。 */
     @Override public ClientMaterialTarget target(long accountId,long applicationId,long subjectPartyId,boolean lock) {
         var app=application(accountId,applicationId,lock);editable(app);
@@ -42,42 +38,41 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
         }
         return new ClientMaterialTarget(applicationId,app.clientId(),subjectPartyId,qualification);
     }
-    /** 原申请锁内再次校验本地目标；成功回执与引用共同提交。 */
+    /** 原申请锁内再次校验本地目标；同一申请、主体、要求、类型和文件已关联时返回原引用。 */
     @Override public DocumentCommandReceiptResponseBody associate(ClientDraftCommand command,ClientMaterialTarget expected,DocumentReferenceRequestBody request,String hash) {
         requireTransaction();var app=application(command.accountId(),expected.applicationId(),true);
-        var previous=replay(command,app.applicationId());if (previous!=null) return previous;
         var current=target(command.accountId(),expected.applicationId(),expected.subjectPartyId(),true);
         if (!expected.equals(current)) throw new FailException(MATERIAL_CONTEXT_CHANGED);
         var now=clock.instant().truncatedTo(ChronoUnit.MICROS);
-        var document=new ClientApplicationDocument(ids.nextId(),current.subjectPartyId(),request.requirementCode(),request.documentType(),ClientDraftCommand.id(request.fileId()),hash);
+        long fileId=ClientDraftCommand.id(request.fileId());
+        var same=sameDocument(app.applicationId(),current.subjectPartyId(),request,fileId);
+        if (same!=null) {
+            return receipt(command,app.applicationId(),same,now);
+        }
+        var document=new ClientApplicationDocument(ids.nextId(),current.subjectPartyId(),request.requirementCode(),request.documentType(),fileId,hash);
         documents.insert(app.applicationId(),document,now);people.touch(app,now);
-        people.receipt(ids.nextId(),command,reference(document),now);
         return receipt(command,app.applicationId(),document,now);
     }
-    /** 删除后旧键重放 204，新键访问同一已不存在引用返回 404。 */
+    /** 本申请下已不存在的引用视为已删除，不改动申请。 */
     @Override public void remove(ClientDraftCommand command,long applicationId,long documentId) {
         requireTransaction();var app=application(command.accountId(),applicationId,true);
-        if (replay(command,applicationId)!=null) return;
         editable(app);var document=documents.document(applicationId,documentId);
-        if (document==null) throw new FailException(DOCUMENT_NOT_FOUND);
+        if (document==null) {
+            return;
+        }
         if (documents.remove(applicationId,documentId)!=1) throw new FailException(MATERIAL_CONTEXT_CHANGED);
-        var now=clock.instant().truncatedTo(ChronoUnit.MICROS);people.touch(app,now);people.receipt(ids.nextId(),command,reference(document),now);
+        var now=clock.instant().truncatedTo(ChronoUnit.MICROS);people.touch(app,now);
     }
-    /** 命令操作和请求摘要都绑定原资源，不能挪用到另一个申请。 */
-    private DocumentCommandReceiptResponseBody replay(ClientDraftCommand command,long applicationId) {
-        var record=drafts.command(command);if (record==null) return null;
-        if (!command.hash().equals(record.requestHash())) throw new FailException(IDEMPOTENCY_CONFLICT);
-        if (!"SUCCEEDED".equals(record.status()) || record.responseRef()==null || record.completedAt()==null) throw new ErrorException(DRAFT_CONTEXT_INVALID);
-        String[] parts=record.responseRef().split(":",-1);
-        if (parts.length!=4 || !"D".equals(parts[0])) throw new ErrorException(DRAFT_CONTEXT_INVALID);
-        try { return receipt(command,applicationId,new ClientApplicationDocument(ClientDraftCommand.id(parts[1]),ClientDraftCommand.id(parts[2]),null,null,ClientDraftCommand.id(parts[3]),null),record.completedAt()); }
-        catch (FailException invalid) { throw new ErrorException(DRAFT_CONTEXT_INVALID); }
+    /** 当前申请下相同主体、要求、类型和文件的已有引用；没有为空。 */
+    private ClientApplicationDocument sameDocument(long applicationId,long subjectPartyId,DocumentReferenceRequestBody request,long fileId) {
+        return documents.documents(applicationId).stream()
+            .filter(document -> document.subjectPartyId()==subjectPartyId && document.fileId()==fileId
+                && request.requirementCode().equals(document.requirementCode()) && request.documentType().equals(document.documentType()))
+            .findFirst().orElse(null);
     }
-    /** 只保存重放所需固定坐标；D + 三个有符号 BIGINT 最多 61 字符，适配既有 64 字符字段。 */
-    private String reference(ClientApplicationDocument document) { return "D:"+document.documentId()+":"+document.subjectPartyId()+":"+document.fileId(); }
-    /** 协议回执中的时间始终为首次成功的 UTC 微秒。 */
+    /** 协议回执中的时间为本次处理的 UTC 微秒；commandId 已停用，恒为空。 */
     private DocumentCommandReceiptResponseBody receipt(ClientDraftCommand command,long app,ClientApplicationDocument document,Instant time) {
-        return new DocumentCommandReceiptResponseBody(command.key(),Long.toString(app),Long.toString(document.documentId()),Long.toString(document.subjectPartyId()),Long.toString(document.fileId()),
+        return new DocumentCommandReceiptResponseBody(null,Long.toString(app),Long.toString(document.documentId()),Long.toString(document.subjectPartyId()),Long.toString(document.fileId()),
             "CLIENT_DOCUMENT_ASSOCIATE".equals(command.operation())?"ASSOCIATED":"REMOVED",new DateTimeFormatterBuilder().appendInstant(6).toFormatter().format(time));
     }
     /** 读取与写入都核验准确原申请，不用最新申请替换。 */

@@ -1,5 +1,6 @@
 package com.paytech.platform.support.filedocument.domainservice.service;
 import java.time.Instant;
+import com.paytech.platform.support.filedocument.domain.file.UploadModels.Completed;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.*;
 /** 文件 Owner 发布的同步能力；调用者持有本地短事务。 */
@@ -13,6 +14,8 @@ public interface FileLifecycleService {
     Upload owned(long uploadId,long accountId);
     /** 锁定并校验冻结目标，允许先检查原命令回执。 */
     Upload lockOwned(long uploadId,long accountId,long tenantId);
+    /** 已完成 Upload 产生的唯一文件，供重复完成返回原结果；未完成为空，已完成却缺文件视为数据不一致。 */
+    Completed completedFile(Upload upload);
     /** 新完成操作只允许有效且未完成的 Upload。 */
     void requireOpen(Upload upload,Instant now);
     /** 原子创建 File、Owner 并关闭原 Upload。 */

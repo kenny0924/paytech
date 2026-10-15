@@ -1,6 +1,5 @@
 package com.paytech.platform.support.ext.rest.files;
 
-import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -24,13 +23,11 @@ public class OnboardingFileController implements OnboardingFileApi {
     private final OnboardingUploadProcessor processor;
     /** 先校验协议形状，再交给完整用例。 */
     @Override @ResponseStatus(HttpStatus.CREATED)
-    public UploadResponseBody start(String accountId,String sessionId,String key,StartUploadRequestBody request) {
+    public UploadResponseBody start(String accountId,String sessionId,StartUploadRequestBody request) {
         if (!validator.validate(request).isEmpty()) throw new InvalidParameterException("上传请求字段缺失或格式错误");
         long account; long session;
         try { account=id(accountId); session=id(sessionId); }
         catch (InvalidParameterException invalid) { throw new FailException(ClientAuthenticationErrorCode.CLIENT_SESSION_INVALID); }
-        try { if (key==null || !UUID.fromString(key).toString().equals(key)) throw new IllegalArgumentException(); }
-        catch (IllegalArgumentException invalid) { throw new InvalidParameterException("Idempotency-Key 必须为规范 UUID"); }
         String name=request.filename();
         if (name.codePointCount(0,name.length())>255) throw new InvalidParameterException("文件名最多 255 个字符");
         name=name.replace('\\','/');
@@ -38,17 +35,15 @@ public class OnboardingFileController implements OnboardingFileApi {
         if (name.isBlank() || name.equals(".") || name.equals("..")) throw new InvalidParameterException("文件展示名无效");
         if (!request.mimeType().matches("[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*"))
             throw new InvalidParameterException("mimeType 必须为规范媒体类型");
-        return processor.start(account,session,key,account + ":" + key,new Start(id(request.applicationId()),id(request.subjectPartyId()),
-            name,request.mimeType(),id(request.sizeBytes())));
+        var start=new Start(id(request.applicationId()),id(request.subjectPartyId()),name,request.mimeType(),id(request.sizeBytes()));
+        return processor.start(account,session,account+":"+start.applicationId()+":"+start.subjectPartyId(),start);
     }
     /** 完成接口不接受浏览器自报 Hash 或任何 Body。 */
-    @Override public FileCompletionReceipt complete(String accountId,String sessionId,String key,String uploadId) {
+    @Override public FileCompletionReceipt complete(String accountId,String sessionId,String uploadId) {
         long account;long session;
         try { account=id(accountId);session=id(sessionId); }
         catch (InvalidParameterException invalid) { throw new FailException(ClientAuthenticationErrorCode.CLIENT_SESSION_INVALID); }
-        try { if (key==null || !UUID.fromString(key).toString().equals(key)) throw new IllegalArgumentException(); }
-        catch (IllegalArgumentException invalid) { throw new InvalidParameterException("Idempotency-Key 必须为规范 UUID"); }
-        return completion.complete(account,session,key,id(uploadId));
+        return completion.complete(account,session,id(uploadId));
     }
     /** 查询入口只解析身份，资源与会话由用例重新核验。 */
     @Override public FileResponseBody read(String accountId,String sessionId,String fileId) {

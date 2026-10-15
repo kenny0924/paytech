@@ -1,6 +1,6 @@
 # Risk 通用材料程序：本机执行范围（待授权）
 
-**状态：未执行。** 本文件只定义精确执行范围，需用户对本范围单独回复确认后才可执行。依据见[通用化差异稿](../../generic-material-form-proposal.md#4-材料目录risk)。
+**状态：已执行（2026-10-14）。** 本机 `mor_risk` 见[本机全链路记录](../../verification/local-e2e-execution.md) A7（`@approved_by=236033080844881920`）；mor-test 见[发布记录](../../release/test-acceptance.md)（`@approved_by=221546852372267008`）。以下为当时批准的执行范围。依据见[通用化差异稿](../../generic-material-form-proposal.md#4-材料目录risk)。
 
 - 精确目标：`127.0.0.1:13306/mor_risk`，仅写入 `t_dd_program`、`t_dd_program_version`、`t_dd_program_requirement` 三张既有表，不做 DDL。
 - 执行文件：[risk-generic-materials-init.sql](./risk-generic-materials-init.sql)，由 [generate-risk-generic-materials.py](./generate-risk-generic-materials.py) 生成；`python3 -I generate-risk-generic-materials.py --check` 复核一致。

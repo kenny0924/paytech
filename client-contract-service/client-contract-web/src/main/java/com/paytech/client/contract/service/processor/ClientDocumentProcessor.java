@@ -1,5 +1,4 @@
 package com.paytech.client.contract.service.processor;
-import java.util.Map;
 import java.util.function.Supplier;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -10,7 +9,7 @@ import com.paytech.client.contract.domain.onboarding.*;
 import com.paytech.client.contract.domainservice.service.ClientDocumentService;
 import com.paytech.client.contract.integration.*;
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
-/** 外部证据读取在事务外；最终短事务重新检查原申请、主体关系、国家及幂等回执。 */
+/** 外部证据读取在事务外；最终短事务重新检查原申请、主体关系和已有同一关联。 */
 public class ClientDocumentProcessor {
     private final ClientDocumentService service;
     private final ClientDraftAccountClient accounts;
@@ -22,12 +21,11 @@ public class ClientDocumentProcessor {
     }
     /** 实际资源是原申请；行锁和唯一键在 Redis Lease 失效后仍保护材料集合。 */
     @ResourceLock(prefix="client-onboarding:application",key="#applicationId")
-    public DocumentCommandReceiptResponseBody associate(long accountId,long sessionId,long applicationId,String key,DocumentReferenceRequestBody request) {
+    public DocumentCommandReceiptResponseBody associate(long accountId,long sessionId,long applicationId,DocumentReferenceRequestBody request) {
         accounts.authorize(accountId,sessionId);
         if (request==null || !code(request.requirementCode()) || !code(request.documentType())) throw new FailException(INVALID_DRAFT);
         long subject=ClientDraftCommand.id(request.subjectPartyId());ClientDraftCommand.id(request.fileId());
-        var command=ClientDraftCommand.of(accountId,"CLIENT_DOCUMENT_ASSOCIATE",key,Map.of("applicationId",Long.toString(applicationId),"subjectPartyId",request.subjectPartyId(),"requirementCode",request.requirementCode(),"documentType",request.documentType(),"fileId",request.fileId()));
-        var previous=reads.execute(tx -> service.previous(command,applicationId));if (previous!=null) return previous;
+        var command=ClientDraftCommand.of(accountId,"CLIENT_DOCUMENT_ASSOCIATE");
         var target=reads.execute(tx -> service.target(accountId,applicationId,subject,false));
         String hash=authority.verify(accountId,target,request);
         accounts.authorize(accountId,sessionId);
@@ -35,22 +33,20 @@ public class ClientDocumentProcessor {
     }
     /** 删除只调用 Platform 会话校验，不删除 File 或修改其扫描状态。 */
     @ResourceLock(prefix="client-onboarding:application",key="#applicationId")
-    public void remove(long accountId,long sessionId,long applicationId,long documentId,String key) {
+    public void remove(long accountId,long sessionId,long applicationId,long documentId) {
         accounts.authorize(accountId,sessionId);
-        var command=ClientDraftCommand.of(accountId,"CLIENT_DOCUMENT_REMOVE",key,Map.of("applicationId",Long.toString(applicationId),"documentId",Long.toString(documentId)));
+        var command=ClientDraftCommand.of(accountId,"CLIENT_DOCUMENT_REMOVE");
         transaction(() -> { service.remove(command,applicationId,documentId);return null; });
     }
     /** 代码形状只是协议校验，合法组合仍必须来自 Risk。 */
     private boolean code(String value) { return value!=null && value.matches("[A-Z][A-Z0-9_]{0,63}"); }
-    /** 唯一键冲突回滚整个事务；原命令竞争可恢复，重复引用明确冲突。 */
+    /** 唯一键冲突回滚整个事务；申请锁失效时的并发同一关联明确冲突。 */
     private <T> T transaction(Supplier<T> action) {
-        for (int attempt=0;;attempt++) {
-            try { return writes.execute(tx -> action.get()); }
-            catch (DuplicateKeyException collision) {
-                String reason=collision.getMostSpecificCause().getMessage();
-                if (reason!=null && reason.contains("uk_app_doc_client")) throw new FailException(DOCUMENT_ALREADY_EXISTS);
-                if (attempt>=2 || reason==null || !reason.contains("uk_command_idem")) throw collision;
-            }
+        try { return writes.execute(tx -> action.get()); }
+        catch (DuplicateKeyException collision) {
+            String reason=collision.getMostSpecificCause().getMessage();
+            if (reason!=null && reason.contains("uk_app_doc_client")) throw new FailException(DOCUMENT_ALREADY_EXISTS);
+            throw collision;
         }
     }
 }

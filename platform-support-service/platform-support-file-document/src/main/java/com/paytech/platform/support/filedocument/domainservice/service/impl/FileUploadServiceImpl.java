@@ -20,16 +20,6 @@ import tools.jackson.databind.ObjectMapper;
 public class FileUploadServiceImpl implements FileUploadService {
     private final ObjectMapper json;
     private final FileUploadRepository repository;
-    /** 旧键不为已完成或失效的目标重新开放写入权限。 */
-    @Override public Upload resume(long id, long accountId, long tenantId, Start start, Instant now) {
-        var value = repository.find(id);
-        if (value == null || value.uploaderId() != accountId || value.tenantId() != tenantId
-            || !value.ownerRefId().equals(start.applicationId() + ":" + start.subjectPartyId()))
-            throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
-        if (!(value.status() == FileUploadStatus.CREATED || value.status() == FileUploadStatus.UPLOADING) || !now.isBefore(value.expiresAt()))
-            throw new FailException(OnboardingFileErrorCode.FILE_STATE_CONFLICT);
-        return result(value);
-    }
     /** Scan Policy 结构损坏与未配置都不能被当作允许任意文件。 */
     @Override public Upload create(long id, long accountId, long tenantId, Start start, String policyCode,
         String provider, String container, Instant now, Instant expiresAt) {

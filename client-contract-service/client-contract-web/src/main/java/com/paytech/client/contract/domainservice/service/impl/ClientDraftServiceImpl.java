@@ -29,16 +29,17 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
     }
     public CommandReceiptResponseBody create(ClientDraftCommand command,ClientType type) {
         requireTransaction();
-        var replay=replay(command);
-        if (replay!=null) return replay;
+        // 已有未完成申请时恢复原申请：同一请求重复到达也落在这里。
         Long existing=repository.activeApplication(command.accountId());
         if (existing!=null) {
             var row=identity(existing,command.accountId(),true);
             if (row.activeSlot()==null) throw new ErrorException(DRAFT_CONTEXT_INVALID);
             if (row.clientType()!=type) throw new FailException(ACTIVE_APPLICATION_TYPE_MISMATCH);
-            Instant now=now();
-            repository.receipt(ids.nextId(),command,row.applicationId(),"RESTORED",now);
-            return receipt(command.key(),row,"RESTORED",now);
+            return receipt(row,"RESTORED",now());
+        }
+        var rejected=repository.rejectedApplication(command.accountId(),type);
+        if (rejected!=null) {
+            return reapply(command,rejected);
         }
         Instant now=now();
         var creation=new ClientDraftCreation(ids.nextId(),ids.nextId(),ids.nextId(),ids.nextId(),ids.nextId(),ids.nextId(),
@@ -49,9 +50,8 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
         String snapshot=ClientProjectionSnapshot.snapshot(history,ClientStatus.PENDING,
             Long.toString(creation.commandRecordId()),"CLIENT_CREATED");
         repository.create(creation,snapshot);
-        repository.receipt(creation.commandRecordId(),command,creation.applicationId(),"CREATED",now);
         events.register(ClientTenantProjectionHandler.buildEvent(creation.changeId()));
-        return receipt(command.key(),identity(creation.applicationId(),command.accountId(),false),"CREATED",now);
+        return receipt(identity(creation.applicationId(),command.accountId(),false),"CREATED",now);
     }
     /** 原账号条件由同库查询执行，返回前验证每个身份绑定完整。 */
     public List<ClientDraftIdentity> recentApplications(long accountId) {
@@ -72,46 +72,34 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
         if (relations.stream().anyMatch(relation -> !visibleIds.contains(relation.relatedPartyId()))) throw new ErrorException(DRAFT_CONTEXT_INVALID);
         return new ClientDraftView(row,repository.fields(row),repository.contacts(row.profileId()),persons,relations,documents.documents(applicationId));
     }
-    public CommandReceiptResponseBody prepareSave(ClientDraftCommand command,long applicationId,ClientDraftPatch patch) {
+    public void prepareSave(ClientDraftCommand command,long applicationId,ClientDraftPatch patch) {
         requireTransaction();
-        var replay=replay(command);
-        if (replay!=null) return replay;
         var row=identity(applicationId,command.accountId(),false);
         editable(row);patch.requireType(row.clientType());
-        return null;
     }
     public CommandReceiptResponseBody save(ClientDraftCommand command,long applicationId,ClientDraftPatch patch,
         Map<String,ClientDraftContact> contacts) {
         requireTransaction();
-        var replay=replay(command);
-        if (replay!=null) return replay;
         var row=identity(applicationId,command.accountId(),true);
         editable(row);patch.requireType(row.clientType());
         Instant now=now();
         repository.save(row,patch,contacts,now);
-        repository.receipt(ids.nextId(),command,row.applicationId(),"SAVED",now);
-        return receipt(command.key(),row,"SAVED",now);
+        return receipt(row,"SAVED",now);
+    }
+    /** 同类型被拒后重新申请：沿用原 Client、Party 与工作区，不新建 Client，也不再投影 Platform。 */
+    private CommandReceiptResponseBody reapply(ClientDraftCommand command,ClientDraftIdentity rejected) {
+        Instant now=now();
+        long applicationId=ids.nextId();
+        repository.reapply(rejected,applicationId,now);
+        return receipt(identity(applicationId,command.accountId(),false),"CREATED",now);
     }
     private ClientDraftIdentity identity(long applicationId,long accountId,boolean lock) {
         return ClientDraftPolicy.requireValid(repository.identity(applicationId,accountId,lock));
     }
     private void editable(ClientDraftIdentity row) { if (!ClientDraftPolicy.isEditable(row)) throw new FailException(APPLICATION_NOT_EDITABLE); }
-    private CommandReceiptResponseBody replay(ClientDraftCommand command) {
-        var record=repository.command(command);
-        if (record==null) return null;
-        if (!command.hash().equals(record.requestHash())) throw new FailException(IDEMPOTENCY_CONFLICT);
-        if (!"SUCCEEDED".equals(record.status()) || record.responseRef()==null || record.completedAt()==null)
-            throw new ErrorException(DRAFT_CONTEXT_INVALID);
-        String[] parts=record.responseRef().split(":",-1);
-        Set<String> operations="CLIENT_APPLICATION_CREATE".equals(command.operation())?Set.of("CREATED","RESTORED"):Set.of("SAVED");
-        if (parts.length!=2 || !operations.contains(parts[0])) throw new ErrorException(DRAFT_CONTEXT_INVALID);
-        long application;
-        try { application=ClientDraftCommand.id(parts[1]); }
-        catch (FailException malformed) { throw new ErrorException(DRAFT_CONTEXT_INVALID); }
-        return receipt(command.key(),identity(application,command.accountId(),false),parts[0],record.completedAt());
-    }
-    private CommandReceiptResponseBody receipt(String key,ClientDraftIdentity row,String operation,Instant time) {
-        return new CommandReceiptResponseBody(key,Long.toString(row.applicationId()),row.applicationNo(),Long.toString(row.clientId()),
+    /** commandId 已停用，恒为空；请求幂等由 Gateway 处理。 */
+    private CommandReceiptResponseBody receipt(ClientDraftIdentity row,String operation,Instant time) {
+        return new CommandReceiptResponseBody(null,Long.toString(row.applicationId()),row.applicationNo(),Long.toString(row.clientId()),
             row.clientType().getCode(),operation,new DateTimeFormatterBuilder().appendInstant(6).toFormatter().format(time));
     }
     private static void requireTransaction() {

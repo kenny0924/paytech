@@ -15,6 +15,8 @@ public interface FileLifecycleMapper {
     /** 文件当前状态的纯查询。 */
     FileObject readFile(@Param("id") long id);
 
+    /** 上传已产生的唯一文件；未完成为空。 */
+    CompletedUploadFile completedFile(@Param("uploadId") long uploadId);
     /** 当前读锁住原 Upload。 */
     FileUpload lockUpload(@Param("id") long id);
     /** 锁住文件，防止失去 Lease 的旧工作者覆盖新事实。 */

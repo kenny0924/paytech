@@ -1,5 +1,4 @@
 package com.paytech.client.contract.service.processor;
-import java.util.Map;
 import java.util.function.Supplier;
 import jakarta.validation.Validator;
 import org.springframework.dao.DuplicateKeyException;
@@ -23,53 +22,51 @@ public class ClientPeopleProcessor {
         this.service=service;this.accounts=accounts;this.validator=validator;this.writes=writes;
     }
     @ResourceLock(prefix="client-onboarding:application",key="#applicationId")
-    public PeopleCommandReceiptResponseBody createPerson(long accountId,long sessionId,long applicationId,String key,CreatePersonRequestBody request) {
+    public PeopleCommandReceiptResponseBody createPerson(long accountId,long sessionId,long applicationId,CreatePersonRequestBody request) {
         accounts.authorize(accountId,sessionId);if (request==null) throw new FailException(INVALID_DRAFT);
         var person=person(request.person());var relation=ClientRelationValues.create(request.relation());
-        var command=command(accountId,applicationId,CREATE_PERSON,key,Map.of("person",person.values(),"relation",relation.normalized()));
+        var command=command(accountId,CREATE_PERSON);
         return transaction(() -> service.createPerson(command,applicationId,person,relation));
     }
     @ResourceLock(prefix="client-onboarding:application",key="#applicationId")
     @ResourceLock(prefix="cct:party",key="#partyId")
-    public PeopleCommandReceiptResponseBody savePerson(long accountId,long sessionId,long applicationId,long partyId,String key,DraftPatchRequestBody request) {
+    public PeopleCommandReceiptResponseBody savePerson(long accountId,long sessionId,long applicationId,long partyId,DraftPatchRequestBody request) {
         accounts.authorize(accountId,sessionId);var person=person(request);
-        var command=command(accountId,applicationId,SAVE_PERSON,key,Map.of("partyId",Long.toString(partyId),"person",person.values()));
+        var command=command(accountId,SAVE_PERSON);
         return transaction(() -> service.savePerson(command,applicationId,partyId,person));
     }
     @ResourceLock(prefix="client-onboarding:application",key="#applicationId")
     @ResourceLock(prefix="cct:party",key="#partyId")
-    public PeopleCommandReceiptResponseBody createRelation(long accountId,long sessionId,long applicationId,long partyId,String key,RelationFields request) {
+    public PeopleCommandReceiptResponseBody createRelation(long accountId,long sessionId,long applicationId,long partyId,RelationFields request) {
         accounts.authorize(accountId,sessionId);var relation=ClientRelationValues.create(request);
-        var command=command(accountId,applicationId,CREATE_RELATION,key,Map.of("partyId",Long.toString(partyId),"relation",relation.normalized()));
+        var command=command(accountId,CREATE_RELATION);
         return transaction(() -> service.createRelation(command,applicationId,partyId,relation));
     }
     @ResourceLock(prefix="client-onboarding:application",key="#applicationId")
-    public PeopleCommandReceiptResponseBody saveRelation(long accountId,long sessionId,long applicationId,long relationId,String key,RelationPatchRequestBody request) {
+    public PeopleCommandReceiptResponseBody saveRelation(long accountId,long sessionId,long applicationId,long relationId,RelationPatchRequestBody request) {
         accounts.authorize(accountId,sessionId);var patch=ClientRelationValues.patch(request);
-        var command=command(accountId,applicationId,SAVE_RELATION,key,Map.of("relationId",Long.toString(relationId),"fields",patch));
+        var command=command(accountId,SAVE_RELATION);
         return transaction(() -> service.saveRelation(command,applicationId,relationId,patch));
     }
     @ResourceLock(prefix="client-onboarding:application",key="#applicationId")
-    public void removeRelation(long accountId,long sessionId,long applicationId,long relationId,String key) {
+    public void removeRelation(long accountId,long sessionId,long applicationId,long relationId) {
         accounts.authorize(accountId,sessionId);
-        var command=command(accountId,applicationId,REMOVE_RELATION,key,Map.of("relationId",Long.toString(relationId)));
+        var command=command(accountId,REMOVE_RELATION);
         transaction(() -> { service.removeRelation(command,applicationId,relationId);return null; });
     }
     private ClientDraftPatch person(DraftPatchRequestBody request) {
         var person=ClientDraftPatch.normalize(request,validator);person.requirePerson();return person;
     }
-    private ClientDraftCommand command(long account,long application,ClientPeopleOperation operation,String key,Map<String,?> body) {
-        return ClientDraftCommand.of(account,operation.getCode(),key,Map.of("applicationId",Long.toString(application),"body",body));
+    private ClientDraftCommand command(long account,ClientPeopleOperation operation) {
+        return ClientDraftCommand.of(account,operation.getCode());
     }
+    /** 申请锁失效时的并发同一关系由唯一键回滚并明确冲突。 */
     private <T> T transaction(Supplier<T> action) {
-        for (int attempt=0; ; attempt++) {
-            try { return writes.execute(tx -> action.get()); }
-            catch (DuplicateKeyException collision) {
-                String reason=collision.getMostSpecificCause().getMessage();
-                if (reason!=null && reason.contains("uk_party_relation_identity")) throw new FailException(RELATION_ALREADY_EXISTS);
-                if (attempt>=2 || reason==null || !reason.contains("uk_command_idem")) throw collision;
-                // 跨申请竞争相同命令键时，先回滚整个事务，再读取原回执或返回请求冲突。
-            }
+        try { return writes.execute(tx -> action.get()); }
+        catch (DuplicateKeyException collision) {
+            String reason=collision.getMostSpecificCause().getMessage();
+            if (reason!=null && reason.contains("uk_party_relation_identity")) throw new FailException(RELATION_ALREADY_EXISTS);
+            throw collision;
         }
     }
 }

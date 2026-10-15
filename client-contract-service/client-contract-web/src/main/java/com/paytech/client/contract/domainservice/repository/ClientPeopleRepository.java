@@ -15,6 +15,5 @@ public interface ClientPeopleRepository {
     void createRelation(ClientDraftIdentity application,long id,long partyId,ClientRelationValues values,Instant now);
     void saveRelation(ClientDraftIdentity application,long id,ClientRelationValues values,Instant now);
     void removeRelation(ClientDraftIdentity application,long id);
-    void receipt(long id,ClientDraftCommand command,String reference,Instant now);
     void touch(ClientDraftIdentity application,Instant now);
 }

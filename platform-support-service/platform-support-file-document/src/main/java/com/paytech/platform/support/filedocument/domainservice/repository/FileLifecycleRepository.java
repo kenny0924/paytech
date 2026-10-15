@@ -14,6 +14,8 @@ public interface FileLifecycleRepository {
     /** 文件当前状态的纯查询。 */
     FileObject readFile(long id);
 
+    /** 上传已产生的唯一文件；未完成为空。 */
+    CompletedUploadFile completedFile(long uploadId);
     /** 当前读锁住原 Upload。 */
     FileUpload lockUpload(long id);
     /** 锁住文件，防止失去 Lease 的旧工作者覆盖新事实。 */

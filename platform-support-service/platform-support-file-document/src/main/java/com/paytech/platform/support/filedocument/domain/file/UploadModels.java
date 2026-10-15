@@ -20,6 +20,8 @@ public final class UploadModels {
         /** 不在普通日志中暴露展示名或存储坐标。 */
         @Override public String toString() { return "Upload[" + uploadId + "]"; }
     }
+    /** 已完成上传产生的唯一文件及其登记时间。 */
+    public record Completed(long fileId, Instant completedAt) {}
     /** 仅回传给已授权浏览器的短期 PUT 权限；不落库或通用审计。 */
     public record Grant(String url, Map<String, String> headers, Instant expiresAt) {
         /** 冻结适配器输出，避免调用后被更改。 */

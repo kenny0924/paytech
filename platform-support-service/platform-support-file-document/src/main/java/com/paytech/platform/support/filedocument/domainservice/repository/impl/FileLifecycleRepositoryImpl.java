@@ -19,6 +19,8 @@ public class FileLifecycleRepositoryImpl implements FileLifecycleRepository {
  /** 查询文件当前事实，不驱动扫描。 */
  @Override public FileObject readFile(long id) { return mapper.readFile(id); }
 
+ /** 查询上传已产生的文件。 */
+ @Override public CompletedUploadFile completedFile(long uploadId) { return mapper.completedFile(uploadId); }
  /** 通过同库 Mapper 执行 lockUpload。 */
  @Override public FileUpload lockUpload(long id) { return mapper.lockUpload(id); }
  /** 通过同库 Mapper 执行 lockFile。 */

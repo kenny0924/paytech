@@ -11,7 +11,7 @@ public interface ClientDraftApi {
         @RequestHeader("X-Caller-Service") String caller,
         @RequestHeader("X-Gateway-Actor-Subject") String accountId,
         @RequestHeader("X-Gateway-Session-Id") String sessionId,
-        @RequestHeader("Idempotency-Key") String commandId, @RequestBody StartApplicationRequestBody request);
+        @RequestBody StartApplicationRequestBody request);
     @GetExchange("/{applicationId}")
     ClientDraftResponseBody read(@RequestHeader("X-Caller-Service") String caller,
         @RequestHeader("X-Gateway-Actor-Subject") String accountId,
@@ -20,5 +20,5 @@ public interface ClientDraftApi {
     CommandReceiptResponseBody save(@RequestHeader("X-Caller-Service") String caller,
         @RequestHeader("X-Gateway-Actor-Subject") String accountId,
         @RequestHeader("X-Gateway-Session-Id") String sessionId, @PathVariable String applicationId,
-        @RequestHeader("Idempotency-Key") String commandId, @RequestBody DraftPatchRequestBody request);
+        @RequestBody DraftPatchRequestBody request);
 }

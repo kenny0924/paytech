@@ -38,8 +38,6 @@ public enum ClientDraftErrorCode implements CodeMessageEnum {
 
     SUBMISSION_INCOMPLETE("SUBMISSION_INCOMPLETE", "资料或材料尚不完整，请按提交核对结果补全"),
 
-    IDEMPOTENCY_CONFLICT("IDEMPOTENCY_CONFLICT", "同一命令键的请求内容不一致"),
-
     DRAFT_CONTEXT_INVALID("DRAFT_CONTEXT_INVALID", "申请资料关联不完整"),
 
     ONBOARDING_DEPENDENCY_UNAVAILABLE("ONBOARDING_DEPENDENCY_UNAVAILABLE", "入驻依赖暂不可用"),

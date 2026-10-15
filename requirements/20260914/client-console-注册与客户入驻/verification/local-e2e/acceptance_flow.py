@@ -16,7 +16,7 @@ import urllib.parse
 import urllib.request
 import uuid
 
-from e2e_http import CLIENT, MAILPIT, OPERATIONS, TLS, Failure, Operations, secrets
+from e2e_http import CLIENT, MAILPIT, OPERATIONS, TLS, Failure, Operations, mint_signup_link, secrets
 
 PDF = (b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
        b"3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n")
@@ -88,10 +88,10 @@ def mailpit(path):
         return json.loads(response.read().decode())
 
 
-def verification_link(email):
+def verification_link(email, attempts=30):
     """在 Mailpit 中按收件人找到验证邮件，从链接片段读取 challengeNo/secret。"""
     query = urllib.parse.quote(f'to:"{email}"')
-    for _ in range(30):
+    for _ in range(attempts):
         found = mailpit(f"/api/v1/search?query={query}&limit=5").get("messages") or []
         for message in found:
             detail = mailpit(f"/api/v1/message/{message['ID']}")
@@ -116,10 +116,15 @@ def presigned(method, url, headers=None, data=None):
 
 # ---------------------------------------------------------------- 1. 注册与登录
 def register_and_login(client, email, password):
+    since = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(time.time() - 5))
     status, reply = client.call("/auth/v1/register", "POST", {"email": email, "password": password}, auth=False)
     record("A01 注册", status == 202 and reply.get("accepted") is True, f"HTTP {status} {reply}")
-    message_id, challenge, secret = verification_link(email)
-    record("Mailpit 验证邮件", bool(challenge), f"messageId={message_id} challengeNo={challenge}")
+    message_id, challenge, secret = verification_link(email, 10)
+    if not challenge:
+        # 2026-10-15：Platform 认证邮件改经 Delivery（本机无 SES），收不到邮件时在本机库铸造已知秘密。
+        challenge, secret = mint_signup_link(email, since)
+        message_id = "minted-locally"
+    record("验证链接（Mailpit 或本机铸造）", bool(challenge), f"messageId={message_id} challengeNo={challenge}")
     status, reply = client.call("/auth/v1/email-verifications", "POST", {"challengeNo": challenge, "secret": secret}, auth=False)
     record("A03 邮箱验证", status == 200 and reply.get("verified") is True, f"HTTP {status} {reply}")
     status, grant = client.call("/auth/v1/login", "POST", {"email": email, "password": password}, auth=False)

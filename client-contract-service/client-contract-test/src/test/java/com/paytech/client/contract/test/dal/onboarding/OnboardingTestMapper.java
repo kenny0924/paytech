@@ -219,6 +219,22 @@ public class OnboardingTestMapper {
         jdbc.update("DELETE FROM t_party WHERE party_id IN " + parties);
     }
 
+    /** 资料当前由哪份申请编辑。 */
+    public Long draftApplication(long profileId) {
+        return jdbc.queryForObject("SELECT draft_application_id FROM t_party_profile WHERE profile_id=?", Long.class, profileId);
+    }
+
+    /** 关系当前所属申请。 */
+    public Long relationApplication(long relationId) {
+        return jdbc.queryForObject("SELECT client_application_id FROM t_party_relation WHERE relation_id=?", Long.class, relationId);
+    }
+
+    /** 申请下的材料引用数量。 */
+    public int documentCount(long applicationId) {
+        return jdbc.queryForObject("SELECT COUNT(*) FROM t_application_document WHERE client_application_id=?", Integer.class,
+            applicationId);
+    }
+
     /** 已插入夹具数量，用于检查空基线。 */
     public int count(Collection<Long> partyIds) {
         return jdbc.queryForObject("SELECT COUNT(*) FROM t_party WHERE party_id IN " + in(partyIds), Integer.class);
