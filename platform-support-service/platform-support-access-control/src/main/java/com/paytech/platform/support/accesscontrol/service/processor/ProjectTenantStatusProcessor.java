@@ -14,6 +14,8 @@ import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperti
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionGrant;
 import com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionRole;
+import com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionRolePermission;
+import com.paytech.platform.support.accesscontrol.domain.clientdeveloper.ClientDeveloperPermissions;
 import com.paytech.platform.support.accesscontrol.domain.enums.OperationsTenantOwnerStatus;
 import com.paytech.platform.support.accesscontrol.domain.tenantaccess.ProjectTenantStatusContext;
 import com.paytech.platform.support.accesscontrol.domain.tenantaccess.TenantProjectionAuditFacts;
@@ -81,17 +83,25 @@ public class ProjectTenantStatusProcessor
         var now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         TenantProjectionRole ownerRole = null;
         TenantProjectionGrant ownerGrant = null;
+        List<TenantProjectionRolePermission> ownerPermissions = List.of();
         if (request.getOwnerStatus() == OperationsTenantOwnerStatus.ACTIVE
             && roles.ownerRole(tenant.tenantId()) == null) {
             ownerRole = new TenantProjectionRole(ids.nextId(), tenant.tenantId(), "TENANT_OWNER");
             ownerGrant =
                 new TenantProjectionGrant(ids.nextId(), tenant.tenantId(), member.memberId(), ownerRole.roleId());
+            ownerPermissions = ownerPermissions(ownerRole.roleId());
         }
         var context = new ProjectTenantStatusContext(tenant, member, request.getSourceVersion(),
-            request.getPayloadHash(), request.getOwnerStatus(), ownerRole, ownerGrant, now);
+            request.getPayloadHash(), request.getOwnerStatus(), ownerRole, ownerGrant, ownerPermissions, now);
         service.projectStatus(context);
         var result = support.result(context.getTenant(), context.getMember());
         audit.record(() -> TenantProjectionAuditFacts.projected(result, false, context.activatesOwner(), now));
         return result;
+    }
+
+    /** 正式 OWNER 默认获得工作区开发者权限；权限目录中缺失或停用的编码不授予。 */
+    List<TenantProjectionRolePermission> ownerPermissions(long roleId) {
+        return roles.activePermissionIds(ClientDeveloperPermissions.OWNER_DEFAULTS).stream()
+            .map(permissionId -> new TenantProjectionRolePermission(ids.nextId(), roleId, permissionId)).toList();
     }
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.ClientPermissionMapper">
+    <select id="granted" resultType="java.lang.String" useCache="false">
+        SELECT DISTINCT p.permission_code
+        FROM t_tenant_member_role g
+        JOIN t_role r ON r.role_id=g.role_id AND r.tenant_id=g.tenant_id
+        JOIN t_role_permission rp ON rp.role_id=r.role_id
+        JOIN t_permission p ON p.permission_id=rp.permission_id
+        WHERE g.tenant_member_id=#{memberId} AND g.tenant_id=#{tenantId} AND g.status='ACTIVE'
+            AND g.role_scope_key=CAST(g.tenant_id AS CHAR)
+            AND g.effective_from &lt;= #{now} AND (g.effective_to IS NULL OR g.effective_to &gt; #{now})
+            AND r.tenant_scope='TENANT' AND r.scope_key=g.role_scope_key AND r.status='ACTIVE'
+            AND rp.status='ACTIVE' AND p.status='ACTIVE'
+            AND p.permission_code IN
+            <foreach collection="codes" item="code" open="(" separator="," close=")">#{code}</foreach>
+    </select>
+</mapper>

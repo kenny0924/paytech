@@ -7707,6 +7707,24 @@
           "id": "4147CA9E-BA9E-5260-8CFA-116E91893FCB"
         },
         {
+          "defKey": "credential_name",
+          "defName": "凭证显示名称",
+          "comment": "客户为凭证填写的显示名称；历史凭证为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "FC6E000A-D061-4E05-980D-41E9EF0B0973"
+        },
+        {
           "defKey": "key_verifier_phc",
           "defName": "密钥 PHC 校验值",
           "comment": "密钥 PHC 校验值的业务值。",

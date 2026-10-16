@@ -113,6 +113,13 @@ public class OnboardingApplicationMocker implements Clear {
         applications.add(applicationId);
     }
 
+    /** 完整申请并置为已批准、Client 激活。 */
+    public ApplicationFixture approved(long accountId, boolean organization) {
+        ApplicationFixture app = application(accountId, organization);
+        mapper.approve(app.applicationId(), app.clientId(), now());
+        return app;
+    }
+
     /** 插入主体与申请。 */
     ApplicationFixture application(long accountId, boolean organization) {
         long applicationId = nextId(), clientId = nextId(), partyId = nextId(), profileId = nextId();

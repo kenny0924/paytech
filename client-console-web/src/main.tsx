@@ -5,6 +5,7 @@ import { createAuthClient, readEmailLink, RequestFailure } from './auth.ts';
 import type { AccountContext } from './auth.ts';
 import './style.css';
 import {OnboardingPage} from './OnboardingPage.tsx';
+import {WorkspacePage} from './WorkspacePage.tsx';
 import {LoginForm} from './LoginForm.tsx';
 import {TextField, focusField} from './TextField.tsx';
 import {authIssues, authFailure} from './auth-form.ts';
@@ -130,6 +131,9 @@ function AccountPage() {
 function App(){return <BrowserRouter><Routes>
   {([['/login','login'],['/register','register'],['/forgot-password','forgot'],['/reset-password','reset'],['/verify-email','verify'],['/check-email','sent']] as const).map(([path,kind])=><Route key={path} path={path} element={<AuthPage key={kind} kind={kind}/>}/>)}
   <Route path="/onboarding" element={<OnboardingPage client={client}/>}/><Route path="/onboarding/applications/:applicationId" element={<OnboardingPage client={client}/>}/>
+  <Route path="/workspace" element={<WorkspacePage client={client}/>}/>
+  <Route path="/workspace/developer/api-keys" element={<WorkspacePage key="api-keys" client={client} section="api-keys"/>}/>
+  <Route path="/workspace/developer/webhooks" element={<WorkspacePage key="webhooks" client={client} section="webhooks"/>}/>
   <Route path="/account" element={<AccountPage/>}/><Route path="*" element={<Navigate to="/login" replace/>}/>
 </Routes></BrowserRouter>;}
 const root = createRoot(document.getElementById('root')!);

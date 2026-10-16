@@ -10,11 +10,15 @@ import com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode;
 public class ClientErrorStatusResolver implements ApiErrorStatusResolver {
     @Override public HttpStatus resolve(CodeMessageEnum code,HttpStatus fallback) {
         if(code instanceof ClientAuthenticationErrorCode value) {
-            return value==ClientAuthenticationErrorCode.CLIENT_EMAIL_LINK_INVALID?HttpStatus.UNPROCESSABLE_CONTENT:HttpStatus.UNAUTHORIZED;
+            return switch(value) {
+                case CLIENT_EMAIL_LINK_INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
+                case CLIENT_WORKSPACE_UNAVAILABLE, CLIENT_PERMISSION_DENIED -> HttpStatus.FORBIDDEN;
+                default -> HttpStatus.UNAUTHORIZED;
+            };
         }
         if(code instanceof ClientBffErrorCode value) {
             return switch(value) {
-                case ORIGIN_REJECTED -> HttpStatus.FORBIDDEN;
+                case ORIGIN_REJECTED, WORKSPACE_CONTEXT_REQUIRED -> HttpStatus.FORBIDDEN;
                 case UNSUPPORTED_MEDIA_TYPE -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
                 case DEPENDENCY_TIMEOUT -> HttpStatus.GATEWAY_TIMEOUT;
                 case DEPENDENCY_UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
@@ -35,6 +39,10 @@ public class ClientErrorStatusResolver implements ApiErrorStatusResolver {
                 case "FILE_POLICY_REJECTED" -> HttpStatus.UNPROCESSABLE_CONTENT;
                 default -> HttpStatus.CONFLICT;
             };
+        }
+        if(code==com.paytech.foundation.common.error.CommonErrorCode.NOT_FOUND) {
+            // Platform 对其他工作区或不存在的凭证、端点、投递统一返回 NOT_FOUND，浏览器保持 404。
+            return HttpStatus.NOT_FOUND;
         }
         return fallback;
     }

@@ -40,6 +40,10 @@ public class ClientDraftConfiguration {
     @Bean public ClientFormOptionsProcessor clientFormOptionsProcessor(ClientDraftAccountClient accounts,ClientFormCatalogService catalog) {
         return new ClientFormOptionsProcessor(accounts,catalog);
     }
+    /** 工作区摘要复用真实 Platform 会话验证，只读不开事务。 */
+    @Bean public ClientWorkspaceProcessor clientWorkspaceProcessor(ClientDraftAccountClient accounts,ClientApplicationRepository applications) {
+        return new ClientWorkspaceProcessor(accounts,applications);
+    }
     @Bean public ClientDraftRepository clientDraftRepository(SqlSessionFactory factory,IdGenerator ids,Environment environment) {
         if (!environment.getProperty("onboarding.recovery-enabled",Boolean.class,false)
             || !environment.getProperty("redis.coordination.enabled",Boolean.class,false))

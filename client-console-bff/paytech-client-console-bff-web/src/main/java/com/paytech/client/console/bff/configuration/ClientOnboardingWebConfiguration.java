@@ -79,6 +79,6 @@ public class ClientOnboardingWebConfiguration implements WebMvcConfigurer {
                     }
                 }
             )
-            .addPathPatterns("/client-onboarding/**", "/onboarding-files/**");
+            .addPathPatterns("/client-onboarding/**", "/onboarding-files/**", "/client-workspace/**");
     }
 }

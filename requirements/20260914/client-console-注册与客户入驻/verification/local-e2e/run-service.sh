@@ -36,7 +36,14 @@ launch() {
   echo "$name 已启动 (pid $!)，日志 $LOGS/$name.log"
 }
 
-jar() { ls "$ROOT/$1"/target/*-exec.jar | head -1; }
+# E2E_JAR_DIR 可指向预先复制的制品目录，避免源码重新构建影响运行中的进程。
+jar() {
+  if [[ -n "${E2E_JAR_DIR:-}" ]]; then
+    local copied; copied=$(ls "$E2E_JAR_DIR/$(basename "$1")"-*-exec.jar 2>/dev/null | head -1)
+    if [[ -n "$copied" ]]; then echo "$copied"; return; fi
+  fi
+  ls "$ROOT/$1"/target/*-exec.jar | head -1
+}
 
 case "${1:-}" in
   vault)
@@ -59,6 +66,10 @@ case "${1:-}" in
         --client.authentication.issuer="$CLIENT_ISSUER" --client.authentication.public-origin="$CLIENT_ORIGIN" \
         --notification.enabled=true \
         --compensation.instance-id=platform-local-e2e --tenant.projection.enabled=true \
+        `# 2026-10-16 接入自助本机验收：开启 Webhook 投递；仅本机放行 http 与 127.0.0.1 测试接收端（生产保持 https、无内网放行）。` \
+        --webhook.enabled=true --webhook.allowed-schemes=https,http --webhook.trusted-networks=127.0.0.1/32 \
+        `# 本机验收用调用方白名单：模拟 Commerce 提交 order.paid 以生成投递记录。` \
+        --webhook.http.callers.commerce-service=order.paid \
         --files.onboarding.enabled=true --files.onboarding.storage-provider=MINIO \
         --files.onboarding.storage-container-ref=mor-platform-files --files.onboarding.scan-policy-code=CLIENT_ONBOARDING_FORMAT \
         --files.onboarding.minio.endpoint=https://127.0.0.1:19400 --files.onboarding.minio.region=us-east-1 \

@@ -18,6 +18,7 @@ import com.paytech.platform.support.api.authentication.response.AccountContextRe
 import com.paytech.platform.support.api.authentication.response.AuthenticationResponseBody;
 import com.paytech.platform.support.api.authentication.request.LoginRequestBody;
 import com.paytech.platform.support.api.authentication.request.RefreshRequestBody;
+import com.paytech.platform.support.api.authentication.request.WorkspaceContextRequestBody;
 import com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode;
 
 import jakarta.servlet.http.Cookie;
@@ -55,6 +56,20 @@ public class ClientSessionProcessor {
             }
         }
         clear(response);
+    }
+
+    /** C02：当前会话与 Cookie 由 Platform 核对后切换到成员所在工作区，替换 Cookie。 */
+    public TokenGrantResponseBody selectWorkspace(HttpServletRequest request, HttpServletResponse response, String memberId) {
+        String[] identity = identity(request);
+        return grant(platform.selectWorkspace(identity[0], identity[1],
+            new WorkspaceContextRequestBody(refreshCookie(request), memberId)), response);
+    }
+
+    /** W01：切回账号上下文，同样新建会话并替换 Cookie。 */
+    public TokenGrantResponseBody selectAccountContext(HttpServletRequest request, HttpServletResponse response) {
+        String[] identity = identity(request);
+        return grant(platform.selectAccountContext(identity[0], identity[1], new RefreshRequestBody(refreshCookie(request))),
+            response);
     }
 
     /** 每次回读真实会话状态，不从 JWT 自行推导账号可操作范围。 */

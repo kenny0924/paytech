@@ -43,6 +43,10 @@ public class PlatformApiErrorConfiguration {
                 || errorCode == com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode.CLIENT_SESSION_INVALID) {
                 return HttpStatus.UNAUTHORIZED;
             }
+            if (errorCode == com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode.CLIENT_WORKSPACE_UNAVAILABLE
+                || errorCode == com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode.CLIENT_PERMISSION_DENIED) {
+                return HttpStatus.FORBIDDEN;
+            }
             if (errorCode == ApiCredentialErrorCode.API_CREDENTIAL_AUTHENTICATION_FAILED) {
                 return HttpStatus.UNAUTHORIZED;
             }

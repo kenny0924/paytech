@@ -16,6 +16,8 @@ import {
 } from "./catalog.ts";
 import type { FormOptions } from "./catalog.ts";
 import { describeIssue, readCheck } from "./submission.ts";
+import { clientTypeLabels, fallbackText, readWorkspaces, workspaceName } from "./workspace.ts";
+import type { Workspaces } from "./workspace.ts";
 import type { SubmissionCheck } from "./submission.ts";
 import type { createAuthClient } from "./auth.ts";
 import {
@@ -115,9 +117,11 @@ const materialNames: Record<string, string> = {
   AUTHORIZATION_LETTER: "授权书",
   SUPPORTING_DOCUMENT: "其他补充材料",
 };
-/** 审核结果：退回原因与定位分区、通过后开通中、最终拒绝；内容只来自公开说明。 */
-function ReviewResultBanner({ app }: { app: Application }) {
-  const banner = resultBanner(app);
+/** 审核结果：退回原因与定位分区、通过后开通中或进入工作区、最终拒绝；内容只来自公开说明。 */
+function ReviewResultBanner({ app, workspaces, enter, entering }: {
+  app: Application; workspaces: Workspaces | null; enter: (memberId: string) => void; entering: boolean;
+}) {
+  const banner = resultBanner(app, workspaces);
   if (!banner) return null;
   return (
     <div className={"result-banner " + banner.tone} role={banner.tone === "error" ? "alert" : "status"}>
@@ -130,7 +134,41 @@ function ReviewResultBanner({ app }: { app: Application }) {
           前往修改
         </a>
       )}
+      {banner.enterMemberId && (
+        <button className="secondary" disabled={entering} onClick={() => enter(banner.enterMemberId!)}>
+          {entering ? "正在进入…" : "进入工作区"}
+        </button>
+      )}
     </div>
+  );
+}
+/** 开始页“我的工作区”：可访问项可进入，受限项只显示公开原因；读取失败不影响入驻申请。 */
+function WorkspaceList({ workspaces, entering, enter }: {
+  workspaces: Workspaces; entering: string | null; enter: (memberId: string) => void;
+}) {
+  return (
+    <section className="workspace-list" aria-labelledby="workspace-heading">
+      <h2 id="workspace-heading">我的工作区</h2>
+      {workspaces.status === "UNAVAILABLE" && <p className="notice">工作区暂时无法读取，请稍后刷新页面。</p>}
+      {workspaces.status === "AVAILABLE" && workspaces.items.length === 0 && (
+        <p className="workspace-empty">审核通过后，您的工作区会显示在这里。</p>
+      )}
+      {workspaces.items.map((item) => (
+        <div className={"workspace-row" + (item.state === "RESTRICTED" ? " restricted" : "")} key={item.memberId}>
+          <div>
+            <strong>{workspaceName(item)}</strong>
+            <small>{(clientTypeLabels[item.clientType] ?? item.clientType) + " · " + item.clientNo}{item.current ? " · 当前工作区" : ""}</small>
+          </div>
+          {item.state === "ACCESSIBLE" ? (
+            <button className="secondary" disabled={entering !== null} onClick={() => enter(item.memberId)}>
+              {entering === item.memberId ? "正在进入…" : "进入工作区"}
+            </button>
+          ) : (
+            <span className="workspace-reason">{item.reasonText ?? "工作区暂时不可访问"}</span>
+          )}
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -962,7 +1000,10 @@ export function OnboardingPage({ client }: { client: Client }) {
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [dirty, setDirty] = useState(false),
-    [pending, setPending] = useState(false);
+    [pending, setPending] = useState(false),
+    [workspaces, setWorkspaces] = useState<Workspaces | null>(null),
+    [entering, setEntering] = useState<string | null>(null),
+    [notice] = useState(() => fallbackText(client.takeFallback()));
   const command = useRef<ReturnType<typeof createCommand> | null>(null),
     guard = useRef(false);
   const [editor, setEditor] = useState<{
@@ -1012,7 +1053,10 @@ export function OnboardingPage({ client }: { client: Client }) {
       .then((value) => {
         if (alive) {
           if (applicationId) setApp(value as Application);
-          else setStart(value as Start);
+          else {
+            setStart(value as Start);
+            setWorkspaces(readWorkspaces((value as Start).workspaces));
+          }
         }
       })
       .catch((failure) => {
@@ -1025,6 +1069,38 @@ export function OnboardingPage({ client }: { client: Client }) {
       alive = false;
     };
   }, [applicationId]);
+  // 审核通过的申请页需要工作区状态，才能判断显示“进入工作区”还是“正在开通”。
+  useEffect(() => {
+    if (!app || app.status !== "APPROVED") return;
+    let alive = true;
+    client.request<Start>("/onboarding/v1/start").then((value) => {
+      if (alive) setWorkspaces(readWorkspaces(value.workspaces));
+    }).catch(() => {
+      if (alive) setWorkspaces(null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [app?.applicationId, app?.status]);
+  /** 进入工作区；失败留在当前页并重新读取工作区状态（不能强行进入）。 */
+  async function enterWorkspace(memberId: string) {
+    if (entering) return;
+    setEntering(memberId);
+    setError(null);
+    try {
+      await client.selectWorkspace(memberId);
+      navigate("/workspace");
+    } catch (failure) {
+      fail(failure);
+      try {
+        setWorkspaces(readWorkspaces((await client.request<Start>("/onboarding/v1/start")).workspaces));
+      } catch {
+        setWorkspaces({ status: "UNAVAILABLE", items: [] });
+      }
+    } finally {
+      setEntering(null);
+    }
+  }
   const locked = busy || pending;
   async function execute(
     path: string,
@@ -1168,12 +1244,12 @@ export function OnboardingPage({ client }: { client: Client }) {
               {app
                 ? (app.clientType === "ORGANIZATION" ? "组织" : "个人") +
                   "入驻申请"
-                : "我的入驻申请"}
+                : "我的工作区与申请"}
             </h1>
             <p>
               {app
                 ? "填写后可保存，稍后继续补充资料。"
-                : "选择适合您的客户身份，开始填写入驻资料。"}
+                : "进入已开通的工作区，或继续您的入驻申请。"}
             </p>
           </div>
           {app && (
@@ -1222,8 +1298,11 @@ export function OnboardingPage({ client }: { client: Client }) {
             重新读取
           </button>
         )}
+        {notice && !app && <p className="notice" role="status">{notice}</p>}
         {start && (
           <>
+            {workspaces && <WorkspaceList workspaces={workspaces} entering={entering} enter={(id) => void enterWorkspace(id)} />}
+            <h2 className="section-title">我的入驻申请</h2>
             <div className="application-list">
               {start.applications.map((row) => (
                 <Link
@@ -1274,7 +1353,7 @@ export function OnboardingPage({ client }: { client: Client }) {
         )}
         {app && (
           <>
-            <ReviewResultBanner app={app} />
+            <ReviewResultBanner app={app} workspaces={workspaces} enter={(id) => void enterWorkspace(id)} entering={entering !== null} />
             {!app.editable && !resultBanner(app) && (
               <p className="notice">
                 {["SUBMITTED", "UNDER_REVIEW"].includes(app.status)

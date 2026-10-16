@@ -35,6 +35,7 @@ public class OnboardingOwnerMocker implements Clear {
     }
 
     private final Map<String, String> sessions = new HashMap<>();
+    private final Map<String, String[]> tenantSessions = new HashMap<>();
     private final Map<String, Object> requirements = new HashMap<>();
     private final Map<String, Object> files = new HashMap<>();
     private Object review;
@@ -48,6 +49,12 @@ public class OnboardingOwnerMocker implements Clear {
     /** 当前账号会话有效。 */
     public synchronized void mockSession(long accountId, long sessionId) {
         sessions.put(Long.toString(accountId), Long.toString(sessionId));
+    }
+
+    /** 当前账号的租户上下文会话有效；Platform 返回 TENANT 上下文。 */
+    public synchronized void mockTenantSession(long accountId, long sessionId, long tenantId, long memberId) {
+        sessions.put(Long.toString(accountId), Long.toString(sessionId));
+        tenantSessions.put(Long.toString(accountId), new String[] {Long.toString(tenantId), Long.toString(memberId)});
     }
 
     /** 某资格类型的通用材料要求。 */
@@ -148,6 +155,10 @@ public class OnboardingOwnerMocker implements Clear {
         if (!sessionId.equals(sessions.get(accountId))) {
             return null;
         }
+        String[] tenant = tenantSessions.get(accountId);
+        if (tenant != null) {
+            return new AccountContextResponseBody(accountId, sessionId, "f***@example.test", true, "TENANT", tenant[0], tenant[1], List.of());
+        }
         return new AccountContextResponseBody(accountId, sessionId, "f***@example.test", true, "ACCOUNT", null, null, List.of());
     }
 
@@ -198,6 +209,7 @@ public class OnboardingOwnerMocker implements Clear {
     @Override
     public synchronized void clear() {
         sessions.clear();
+        tenantSessions.clear();
         requirements.clear();
         files.clear();
         review = null;

@@ -2062,4 +2062,12 @@ INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,cap
   (900000000000096523, 900000000000096004, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 5, 5, 60000, NULL),
   (900000000000096524, 900000000000096004, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
 
+
+-- Client Console 接入自助（2026-10-16）：CLIENT 工作区开发者权限；首次 ACTIVE 投影时授予该工作区 TENANT_OWNER 角色。
+INSERT INTO t_permission (permission_id,permission_code,resource_type,action_code,risk_level,status,version,create_time,update_time) VALUES
+  (900000000000058101, 'CLIENT_API_CREDENTIAL_READ', 'CLIENT_API_CREDENTIAL', 'READ', 'LOW', 'ACTIVE', 1, @platform_initial_time, @platform_initial_time),
+  (900000000000058102, 'CLIENT_API_CREDENTIAL_MANAGE', 'CLIENT_API_CREDENTIAL', 'MANAGE', 'CRITICAL', 'ACTIVE', 1, @platform_initial_time, @platform_initial_time),
+  (900000000000058103, 'CLIENT_WEBHOOK_READ', 'CLIENT_WEBHOOK', 'READ', 'LOW', 'ACTIVE', 1, @platform_initial_time, @platform_initial_time),
+  (900000000000058104, 'CLIENT_WEBHOOK_MANAGE', 'CLIENT_WEBHOOK', 'MANAGE', 'HIGH', 'ACTIVE', 1, @platform_initial_time, @platform_initial_time);
+
 COMMIT;

@@ -11,7 +11,8 @@ public final class ClientAuthenticationPlans {
         /** 不打印会话秘密。 */
         @Override public String toString() { return "Tokens[REDACTED]"; }
     }
-    public record Issue(long accountId, long sessionId, int accountEpoch, int credentialVersion,
+    public record Issue(long accountId, long sessionId, String contextType, Long tenantId, Long memberId,
+        int accountEpoch, int credentialVersion,
         Instant issuedTime, Instant idleExpireTime, Instant absoluteExpireTime, int generation,
         long refreshId, String refreshLookup, String refreshHmac, int refreshKeyVersion,
         long signingKeyId, int signingKeyVersion, Tokens tokens) {
@@ -25,9 +26,17 @@ public final class ClientAuthenticationPlans {
     }
     public record RefreshIdentity(long accountId, long sessionId, String lookup) {}
     public record RefreshPlan(long accountId, long sessionId, String lookup, String computedHmac,
-        int keyVersion, int expectedSessionVersion, Issue issue) {
+        int keyVersion, int expectedSessionVersion, Issue issue, Issue fallback) {
         /** 不打印 HMAC 或令牌。 */
         @Override public String toString() { return "RefreshPlan[REDACTED]"; }
+    }
+    /**
+     * 切换上下文的准备结果
+     * <li>memberId 为空表示返回账号上下文；否则为进入的目标成员及其租户。</li>
+     */
+    public record SwitchPlan(LogoutProof proof, Long memberId, Long tenantId, Issue issue) {
+        /** 不打印秘密校验材料或待签发令牌。 */
+        @Override public String toString() { return "SwitchPlan[REDACTED]"; }
     }
     public record LogoutProof(long accountId, long sessionId, String lookup, String computedHmac, int keyVersion) {
         /** 不打印秘密校验材料。 */

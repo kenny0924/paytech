@@ -36,6 +36,9 @@ public class ProjectTenantStatusContext {
     /** 正式 OWNER 首次授予，与 ownerRole 同时存在或同时为空。 */
     private final TenantProjectionGrant ownerGrant;
 
+    /** 正式 OWNER 角色首次获得的默认权限（如工作区开发者权限）；非首次为空列表。 */
+    private final java.util.List<com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionRolePermission> ownerPermissions;
+
     /** 本次状态及角色变更的统一 UTC 微秒时间。 */
     private final Instant updateTime;
 

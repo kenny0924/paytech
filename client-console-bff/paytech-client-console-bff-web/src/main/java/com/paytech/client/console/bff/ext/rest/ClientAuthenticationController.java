@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import com.paytech.client.console.bff.service.model.ClientBrowserModels.TokenGrantResponseBody;
+import com.paytech.client.console.bff.service.model.ClientBrowserModels.WorkspaceSelectRequestBody;
 import com.paytech.client.console.bff.service.processor.ClientSessionProcessor;
 import com.paytech.platform.support.api.authentication.ClientAuthenticationApi;
 import com.paytech.platform.support.api.authentication.request.*;
@@ -16,7 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 
-/** Client 浏览器九个认证操作，公开路由由 Gateway 显式注册。 */
+/** Client 浏览器认证与上下文切换操作，公开路由由 Gateway 显式注册。 */
 @RestController
 @RequestMapping("/client-auth/v1")
 public class ClientAuthenticationController {
@@ -81,6 +82,20 @@ public class ClientAuthenticationController {
     public void logout(@RequestBody @Size(max = 0) Map<String, Object> body, HttpServletRequest request,
         HttpServletResponse response) {
         sessions.logout(request, response);
+    }
+
+    /** C02 进入工作区：浏览器只提交成员 ID，归属与状态由 Platform 判定。 */
+    @PostMapping("/workspace-context")
+    public TokenGrantResponseBody selectWorkspace(@Valid @RequestBody WorkspaceSelectRequestBody body,
+        HttpServletRequest request, HttpServletResponse response) {
+        return sessions.selectWorkspace(request, response, body.memberId());
+    }
+
+    /** W01 返回账号上下文。 */
+    @PostMapping("/account-context")
+    public TokenGrantResponseBody selectAccountContext(@RequestBody @Size(max = 0) Map<String, Object> body,
+        HttpServletRequest request, HttpServletResponse response) {
+        return sessions.selectAccountContext(request, response);
     }
 
     /** 当前状态来自 Platform 实时回读。 */

@@ -24,7 +24,7 @@ public interface CustomerAuthenticationMapper {
     int passwordFailure(@Param("accountId") long accountId, @Param("expectedVersion") int expectedVersion, @Param("now") Instant now);
     /** 成功登录按当前账号快照清除失败计数。 */
     int passwordSuccess(@Param("accountId") long accountId, @Param("expectedVersion") int expectedVersion, @Param("credentialVersion") int credentialVersion, @Param("epoch") int epoch, @Param("now") Instant now);
-    /** 保存新 CLIENT 账号上下文会话。 */
+    /** 保存新 CLIENT 会话；上下文、租户与成员取自签发准备结果。 */
     int insertSession(@Param("issue") Issue issue);
     /** 保存唯一活动刷新代，只保存 HMAC。 */
     int insertRefresh(@Param("issue") Issue issue);

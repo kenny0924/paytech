@@ -56,6 +56,8 @@ requirements/
 
 | 登记目录 | 需求 | 主入口/Owner | 关联编号 | 材料 |
 |---|---|---|---|---|
+| `20261016` | Client Console 接入自助（API 凭证与 Webhook） | Client Console / Platform Access Control、Delivery Webhook、Client BFF | 工作区内自助创建 / 轮换 / 撤销 API 凭证（密钥只显示一次），自助管理 Webhook 端点、密钥、测试事件与投递重发；CLIENT 权限判断底座；用户夜间授权推进至本机验证 | [需求](./20261016/client-console-接入自助/requirement.md) · [技术方案](./20261016/client-console-接入自助/technique.md) · [确认记录](./20261016/client-console-接入自助/delivery.md) |
+| `20261016` | Client Console 租户与工作区 | Client Console / Platform Access Control、Client BFF | 我的工作区列表、进入/切换工作区（PLT-I16 / C02 租户上下文）、工作区首页与外壳；阶段 1—3 已确认，阶段 4 研发中 | [需求](./20261016/client-console-租户与工作区/requirement.md) · [技术方案](./20261016/client-console-租户与工作区/technique.md) · [确认记录](./20261016/client-console-租户与工作区/delivery.md) |
 | `20261014` | 普通邮件接入 Amazon SES | Platform Support / Notification | 首个真实 EmailProvider（SES v2）；普通通知改为至少发一次、Provider 查询可选；阶段 1—5 已确认，已本地提交（未推送、未部署） | [需求](./20261014/platform-support-邮件AmazonSES接入/requirement.md) · [技术方案](./20261014/platform-support-邮件AmazonSES接入/technique.md) · [确认记录](./20261014/platform-support-邮件AmazonSES接入/delivery.md) |
 | `20261016` | Finance 试算平衡与期间余额 | Finance / Accounting | 按账簿+期间+水位试算（期初/本期/期末、借贷合计、总账异常），刷新期间余额投影；顺带清理通配符 import；阶段 1—4 已确认；阶段 5 本地验收 109/109 与 HTTP 冒烟通过，待确认结束（未提交） | [需求](./20261016/finance-试算平衡/requirement.md) · [技术方案](./20261016/finance-试算平衡/technique.md) · [确认记录](./20261016/finance-试算平衡/delivery.md) |
 | `20261015` | Finance 账本流水与账户查询 | Finance / Accounting | FIN-I05 内部查询：账簿列表、账户列表、带累计余额的账户流水、分录详情；阶段 1—5 已确认；已本地提交 `c542498`（未推送、未部署） | [需求](./20261015/finance-账本流水查询/requirement.md) · [技术方案](./20261015/finance-账本流水查询/technique.md) · [确认记录](./20261015/finance-账本流水查询/delivery.md) |

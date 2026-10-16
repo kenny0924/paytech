@@ -17,7 +17,7 @@ public final class AccountContextResponseBody {
     /** 邮箱是否已验证。 */
     private final boolean emailVerified;
 
-    /** 上下文代码；当前为 ACCOUNT。 */
+    /** 上下文代码：ACCOUNT 或 TENANT。 */
     private final String contextType;
 
     /** 租户编号；ACCOUNT 上下文为空。 */
@@ -29,6 +29,15 @@ public final class AccountContextResponseBody {
     /** 当前允许的动作代码；不可修改。 */
     private final java.util.List<String> allowedActions;
 
+    /** 刷新时工作区失效而降级为账号上下文的公开原因码；其他情况为空。 */
+    private final String fallbackReason;
+
+    /** 无降级原因的上下文；保持既有调用方构造方式。 */
+    public AccountContextResponseBody(String accountId, String sessionId, String emailMasked, boolean emailVerified,
+        String contextType, String tenantId, String memberId, java.util.List<String> allowedActions) {
+        this(accountId, sessionId, emailMasked, emailVerified, contextType, tenantId, memberId, allowedActions, null);
+    }
+
     /** 绑定协议字段，不输出任何凭据。 */
     @JsonCreator
     public AccountContextResponseBody(
@@ -39,7 +48,8 @@ public final class AccountContextResponseBody {
         @JsonProperty("contextType") String contextType,
         @JsonProperty("tenantId") String tenantId,
         @JsonProperty("memberId") String memberId,
-        @JsonProperty("allowedActions") java.util.List<String> allowedActions) {
+        @JsonProperty("allowedActions") java.util.List<String> allowedActions,
+        @JsonProperty("fallbackReason") String fallbackReason) {
         this.accountId = accountId;
         this.sessionId = sessionId;
         this.emailMasked = emailMasked;
@@ -48,6 +58,7 @@ public final class AccountContextResponseBody {
         this.tenantId = tenantId;
         this.memberId = memberId;
         this.allowedActions = java.util.List.copyOf(allowedActions);
+        this.fallbackReason = fallbackReason;
     }
 
     /** 返回账号编号。 */
@@ -62,7 +73,7 @@ public final class AccountContextResponseBody {
     /** 返回邮箱是否已验证。 */
     public boolean isEmailVerified() { return emailVerified; }
 
-    /** 返回上下文代码；当前为 ACCOUNT。 */
+    /** 返回上下文代码：ACCOUNT 或 TENANT。 */
     public String getContextType() { return contextType; }
 
     /** 返回租户编号；ACCOUNT 上下文为空。 */
@@ -73,6 +84,9 @@ public final class AccountContextResponseBody {
 
     /** 返回当前允许的动作代码；不可修改。 */
     public java.util.List<String> getAllowedActions() { return allowedActions; }
+
+    /** 返回刷新降级的公开原因码；未降级为空。 */
+    public String getFallbackReason() { return fallbackReason; }
 
     /** 避免诊断输出泄露认证材料。 */
     @Override

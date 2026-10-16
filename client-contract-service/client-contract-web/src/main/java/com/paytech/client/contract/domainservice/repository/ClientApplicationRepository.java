@@ -2,8 +2,10 @@ package com.paytech.client.contract.domainservice.repository;
 
 import com.paytech.client.contract.domain.enums.ClientApplicationStatus;
 import java.time.Instant;
+import java.util.List;
 
 import com.paytech.client.contract.core.dal.dataobject.ClientApplicationSubmission;
+import com.paytech.client.contract.core.dal.dataobject.ClientWorkspaceSummary;
 
 /** t_client_application 的提交与审核登记持久化。 */
 public interface ClientApplicationRepository {
@@ -37,4 +39,7 @@ public interface ClientApplicationRepository {
      * <li>RETURNED 保留未完成名额；APPROVED/REJECTED 释放名额。状态已变化时抛出并发冲突。</li>
      */
     void concludeReview(ClientApplicationSubmission application, ClientApplicationStatus status, Long decisionId, Instant now);
+
+    /** 本账号作为申请人且存在 APPROVED 申请的 Client 摘要；其余 ID 不返回。 */
+    List<ClientWorkspaceSummary> findApprovedSummaries(long accountId, List<Long> clientIds);
 }

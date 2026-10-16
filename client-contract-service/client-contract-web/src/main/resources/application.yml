@@ -122,6 +122,8 @@ web:
       - /internal/client-onboarding
       # O02 申请资料读取返回申请人个人资料；分类命令记录操作者，只记元数据。
       - /client-onboarding-admin
+      # 工作区摘要返回客户名称，只记元数据。
+      - /client-workspace
 redis:
   coordination:
     enabled: ${onboarding.draft-enabled:false}

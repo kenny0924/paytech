@@ -11,14 +11,18 @@ import com.paytech.platform.support.api.authentication.request.EmailRequestBody;
 import com.paytech.platform.support.api.authentication.request.RefreshRequestBody;
 import com.paytech.platform.support.api.authentication.request.LoginRequestBody;
 import com.paytech.platform.support.api.authentication.request.LinkRequestBody;
+import com.paytech.platform.support.api.authentication.request.WorkspaceContextRequestBody;
 import com.paytech.platform.support.api.authentication.response.VerificationResponseBody;
 import com.paytech.platform.support.api.authentication.response.AcceptedResponseBody;
 import com.paytech.platform.support.api.authentication.response.AccountContextResponseBody;
 import com.paytech.platform.support.api.authentication.response.AuthenticationResponseBody;
+import com.paytech.platform.support.api.authentication.response.ClientWorkspacesResponseBody;
 import com.paytech.platform.support.accesscontrol.service.processor.RegisterClientProcessor;
 import com.paytech.platform.support.accesscontrol.service.processor.LogoutClientProcessor;
 import com.paytech.platform.support.accesscontrol.service.processor.RequestClientPasswordResetProcessor;
 import com.paytech.platform.support.accesscontrol.service.processor.GetClientAccountContextProcessor;
+import com.paytech.platform.support.accesscontrol.service.processor.GetClientWorkspacesProcessor;
+import com.paytech.platform.support.accesscontrol.service.processor.SwitchClientContextProcessor;
 import com.paytech.platform.support.accesscontrol.service.processor.LoginClientProcessor;
 import com.paytech.platform.support.accesscontrol.service.processor.ResetClientPasswordProcessor;
 import com.paytech.platform.support.accesscontrol.service.processor.RequestClientEmailVerificationProcessor;
@@ -40,6 +44,8 @@ public class ClientAuthenticationController implements ClientAuthenticationApi {
     private final ResetClientPasswordProcessor resetClientPasswordProcessor;
     private final RefreshClientSessionProcessor refreshClientSessionProcessor;
     private final GetClientAccountContextProcessor getClientAccountContextProcessor;
+    private final GetClientWorkspacesProcessor getClientWorkspacesProcessor;
+    private final SwitchClientContextProcessor switchClientContextProcessor;
     private final RequestClientPasswordResetProcessor requestClientPasswordResetProcessor;
     private final RequestClientEmailVerificationProcessor requestClientEmailVerificationProcessor;
 
@@ -112,5 +118,25 @@ public class ClientAuthenticationController implements ClientAuthenticationApi {
     @Override
     public AccountContextResponseBody context(String accountId, String sessionId) {
         return converter.account(getClientAccountContextProcessor.process(converter.context(accountId, sessionId)));
+    }
+
+    /** 适配 workspaces 的认证协议及响应状态。 */
+    @Override
+    public ClientWorkspacesResponseBody workspaces(String accountId, String sessionId) {
+        return converter.workspaces(getClientWorkspacesProcessor.process(converter.context(accountId, sessionId)));
+    }
+
+    /** 适配 selectWorkspace 的认证协议及响应状态。 */
+    @Override
+    @Audit(action = "CLIENT_WORKSPACE_SELECT", resourceType = "AUTH_SESSION")
+    public AuthenticationResponseBody selectWorkspace(String accountId, String sessionId, WorkspaceContextRequestBody request) {
+        return converter.tokens(switchClientContextProcessor.process(converter.workspace(accountId, sessionId, request)));
+    }
+
+    /** 适配 selectAccountContext 的认证协议及响应状态。 */
+    @Override
+    @Audit(action = "CLIENT_ACCOUNT_CONTEXT_SELECT", resourceType = "AUTH_SESSION")
+    public AuthenticationResponseBody selectAccountContext(String accountId, String sessionId, RefreshRequestBody request) {
+        return converter.tokens(switchClientContextProcessor.process(converter.accountContext(accountId, sessionId, request)));
     }
 }

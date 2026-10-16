@@ -171,6 +171,8 @@ web:
       - /console-admin
       - /permission-admin
       - /api-credential-admin
+      - /client-api-credentials
+      - /client-webhooks
       - /api-scope-admin
       - /api-credentials
       - /tenant-projections

@@ -30,7 +30,7 @@ public class ClientSessionRepositoryImpl implements ClientSessionRepository {
         return authentication.lockSession(sessionId);
     }
 
-    /** 保存新的 CLIENT 账号上下文会话。 */
+    /** 保存新的 CLIENT 账号或租户上下文会话。 */
     @Override
     public void insertSession(Issue issue) {
         changed(authentication.insertSession(issue));

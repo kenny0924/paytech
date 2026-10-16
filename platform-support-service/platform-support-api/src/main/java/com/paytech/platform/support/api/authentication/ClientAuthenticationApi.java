@@ -10,6 +10,7 @@ import com.paytech.platform.support.api.authentication.request.*;
 import com.paytech.platform.support.api.authentication.response.AcceptedResponseBody;
 import com.paytech.platform.support.api.authentication.response.AccountContextResponseBody;
 import com.paytech.platform.support.api.authentication.response.AuthenticationResponseBody;
+import com.paytech.platform.support.api.authentication.response.ClientWorkspacesResponseBody;
 import com.paytech.platform.support.api.authentication.response.VerificationResponseBody;
 
 import jakarta.validation.Valid;
@@ -112,4 +113,51 @@ public interface ClientAuthenticationApi {
     @GetExchange("/context")
     AccountContextResponseBody context(@RequestHeader("X-Gateway-Actor-Subject") String accountId,
         @RequestHeader("X-Gateway-Session-Id") String sessionId);
+
+    /**
+     * 查询当前账号作为成员的 CLIENT 工作区（PLT-I16 选择前的候选）。
+     * <li>不含来源状态为 PENDING 的租户；运营填写的内部暂停理由不返回。</li>
+     * <li>账号与租户上下文均可调用；会话无效返回 CLIENT_SESSION_INVALID。</li>
+     *
+     * @param accountId
+     *            可信账号编号
+     * @param sessionId
+     *            可信会话编号
+     * @return 工作区列表
+     */
+    @GetExchange("/workspaces")
+    ClientWorkspacesResponseBody workspaces(@RequestHeader("X-Gateway-Actor-Subject") String accountId,
+        @RequestHeader("X-Gateway-Session-Id") String sessionId);
+
+    /**
+     * 进入工作区（PLT-I16）：新建租户上下文会话，撤销当前会话及其刷新代，签发新令牌。
+     * <li>成员不存在、不属于本账号、未激活或租户不可访问时统一返回 CLIENT_WORKSPACE_UNAVAILABLE（403）。</li>
+     * <li>新会话的绝对到期时间沿用当前会话。</li>
+     *
+     * @param accountId
+     *            可信账号编号
+     * @param sessionId
+     *            可信会话编号
+     * @param request
+     *            Cookie 中的刷新令牌与成员编号；秘密字段禁止日志
+     * @return 租户上下文令牌
+     */
+    @PostExchange("/workspace-context")
+    AuthenticationResponseBody selectWorkspace(@RequestHeader("X-Gateway-Actor-Subject") String accountId,
+        @RequestHeader("X-Gateway-Session-Id") String sessionId, @Valid @RequestBody WorkspaceContextRequestBody request);
+
+    /**
+     * 返回账号上下文：新建账号上下文会话，撤销当前会话及其刷新代，签发新令牌。
+     *
+     * @param accountId
+     *            可信账号编号
+     * @param sessionId
+     *            可信会话编号
+     * @param request
+     *            Cookie 中的刷新令牌；秘密字段禁止日志
+     * @return 账号上下文令牌
+     */
+    @PostExchange("/account-context")
+    AuthenticationResponseBody selectAccountContext(@RequestHeader("X-Gateway-Actor-Subject") String accountId,
+        @RequestHeader("X-Gateway-Session-Id") String sessionId, @Valid @RequestBody RefreshRequestBody request);
 }

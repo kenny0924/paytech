@@ -1,6 +1,10 @@
 package com.paytech.platform.support.accesscontrol.domainservice.service;
 
+import java.util.List;
+
+import com.paytech.platform.support.accesscontrol.domain.authentication.ClientWorkspaceView;
 import com.paytech.platform.support.accesscontrol.domain.authentication.LoginClientContext;
+import com.paytech.platform.support.accesscontrol.domain.authentication.SwitchClientContext;
 import com.paytech.platform.support.accesscontrol.domain.authentication.ClientAccountView;
 import com.paytech.platform.support.accesscontrol.domain.authentication.RefreshClientContext;
 import com.paytech.platform.support.accesscontrol.domain.authentication.LogoutClientContext;
@@ -19,6 +23,14 @@ public interface CustomerAuthenticationService {
     void invalidate(RefreshClientContext context);
     /** 退出当前会话；已结束会话保持原终态。 */
     void logout(LogoutClientContext context);
-    /** 供现有跨模块消费者读取当前有效的账号上下文。 */
+    /** 供现有跨模块消费者读取当前有效的账号上下文；租户上下文会话视为无效。 */
     ClientAccountView context(long accountId, long sessionId);
+    /** 读取当前有效的账号或租户上下文；租户上下文按当前成员与租户重证。 */
+    ClientAccountView currentContext(long accountId, long sessionId);
+    /** 当前会话有效时读取账号在非 PENDING CLIENT 租户中的工作区。 */
+    List<ClientWorkspaceView> workspaces(long accountId, long sessionId);
+    /** 撤销当前会话及其刷新代，保存切换后的新会话与首个刷新代。 */
+    void switchContext(SwitchClientContext context);
+    /** 撤销已失效的租户会话及其刷新代，保存降级后的账号上下文会话。 */
+    void fallback(RefreshClientContext context);
 }

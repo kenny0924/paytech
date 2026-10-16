@@ -1,0 +1,204 @@
+/** 工作区首页返回的开发者权限能力；未授予的项不出现。 */
+export type Capability = "API_CREDENTIAL_READ" | "API_CREDENTIAL_MANAGE" | "WEBHOOK_READ" | "WEBHOOK_MANAGE";
+export const capabilityCodes: readonly Capability[] = ["API_CREDENTIAL_READ", "API_CREDENTIAL_MANAGE", "WEBHOOK_READ", "WEBHOOK_MANAGE"];
+
+/** 只保留已知能力码；未知值不参与菜单判断。 */
+export function readCapabilities(value: unknown): Capability[] {
+  if (!Array.isArray(value)) return [];
+  return capabilityCodes.filter((code) => value.includes(code));
+}
+
+export type DeveloperMenuItem = { key: "api-keys" | "webhooks"; label: string; path: string };
+/** 开发者分组：有读或写权限即显示对应菜单；都没有时整组不显示。 */
+export function developerMenu(capabilities: readonly Capability[]): DeveloperMenuItem[] {
+  const items: DeveloperMenuItem[] = [];
+  if (capabilities.includes("API_CREDENTIAL_READ") || capabilities.includes("API_CREDENTIAL_MANAGE")) {
+    items.push({ key: "api-keys", label: "API 凭证", path: "/workspace/developer/api-keys" });
+  }
+  if (capabilities.includes("WEBHOOK_READ") || capabilities.includes("WEBHOOK_MANAGE")) {
+    items.push({ key: "webhooks", label: "Webhook", path: "/workspace/developer/webhooks" });
+  }
+  return items;
+}
+
+/** API 凭证摘要；列表与详情都不含密钥或校验值。 */
+export type Credential = {
+  credentialId: string;
+  name: string | null;
+  keyPrefix: string;
+  status: string;
+  scopeCodes: string[];
+  createdAt: string;
+  expiresAt: string;
+  rotatedFromId: string | null;
+  version: number;
+};
+export type Scope = { scopeCode: string; displayName: string | null; description: string | null };
+
+export const validityOptions = [30, 90, 180, 365] as const;
+export const defaultValidityDays = 365;
+export const graceOptions: readonly { minutes: number; label: string }[] = [
+  { minutes: 0, label: "立即失效" },
+  { minutes: 60, label: "1 小时后失效" },
+  { minutes: 1440, label: "24 小时后失效" },
+  { minutes: 10080, label: "7 天后失效" },
+];
+export const defaultGraceMinutes = 1440;
+export const credentialStatusLabels: Record<string, string> = { ACTIVE: "有效", REVOKED: "已撤销", EXPIRED: "已到期" };
+
+/** 凭证名称：去首尾空白后 1—64 字符，不允许控制字符。 */
+export function credentialNameIssue(name: string): string | null {
+  const value = name.trim();
+  if (!value) return "请填写凭证名称";
+  if (Array.from(value).length > 64) return "名称不能超过 64 个字符";
+  if (/[\u0000-\u001f\u007f]/.test(value)) return "名称不能包含控制字符";
+  return null;
+}
+
+/** 创建凭证表单校验；返回字段到提示的映射，空对象表示可以提交。 */
+export function credentialFormIssues(form: { name: string; scopeCodes: string[]; validityDays: number }, catalog: readonly string[]) {
+  const issues: Record<string, string> = {};
+  const name = credentialNameIssue(form.name);
+  if (name) issues.name = name;
+  if (form.scopeCodes.length === 0) issues.scopeCodes = "至少选择一个权限范围";
+  else if (form.scopeCodes.length > 64) issues.scopeCodes = "权限范围过多";
+  else if (new Set(form.scopeCodes).size !== form.scopeCodes.length || form.scopeCodes.some((code) => !catalog.includes(code))) {
+    issues.scopeCodes = "权限范围无效，请重新选择";
+  }
+  if (!validityOptions.includes(form.validityDays as (typeof validityOptions)[number])) issues.validityDays = "请选择有效期";
+  return issues;
+}
+
+/** 列表只读校验：任一项字段异常时整体视为读取失败。 */
+export function readCredentials(value: unknown): Credential[] | null {
+  const items = (value as { items?: unknown } | null)?.items;
+  if (!Array.isArray(items)) return null;
+  const result: Credential[] = [];
+  for (const raw of items) {
+    const c = raw as Partial<Credential> | null;
+    if (!c || typeof c.credentialId !== "string" || typeof c.keyPrefix !== "string" || typeof c.status !== "string"
+      || !Array.isArray(c.scopeCodes) || typeof c.expiresAt !== "string" || typeof c.version !== "number") return null;
+    result.push({
+      credentialId: c.credentialId, name: typeof c.name === "string" ? c.name : null, keyPrefix: c.keyPrefix, status: c.status,
+      scopeCodes: c.scopeCodes.filter((code): code is string => typeof code === "string"),
+      createdAt: typeof c.createdAt === "string" ? c.createdAt : "", expiresAt: c.expiresAt,
+      rotatedFromId: typeof c.rotatedFromId === "string" ? c.rotatedFromId : null, version: c.version,
+    });
+  }
+  return result;
+}
+
+/**
+ * 一次性密钥弹窗的关闭规则
+ * <li>必须勾选“我已安全保存”才能关闭；Esc、点遮罩同样受此限制。</li>
+ */
+export function canCloseSecret(acknowledged: boolean): boolean {
+  return acknowledged;
+}
+
+/** 从创建 / 轮换响应中取出一次性密钥；格式不符时视为响应异常。 */
+export function readSecret(value: unknown, field: "secret" | "signingSecret"): string | null {
+  const secret = (value as Record<string, unknown> | null)?.[field];
+  return typeof secret === "string" && secret.length >= 16 && secret.length <= 256 && !/\s/.test(secret) ? secret : null;
+}
+
+export type WebhookEventType = { code: string; label: string };
+export const webhookEventTypes: readonly WebhookEventType[] = [
+  { code: "order.paid", label: "订单已支付" },
+  { code: "order.cancelled", label: "订单已取消" },
+  { code: "order.expired", label: "订单已过期" },
+  { code: "order.funds_available", label: "订单资金可用" },
+  { code: "refund.created", label: "退款已创建" },
+  { code: "refund.succeeded", label: "退款成功" },
+  { code: "refund.failed", label: "退款失败" },
+  { code: "refund.cancelled", label: "退款已取消" },
+];
+export const endpointStatusLabels: Record<string, string> = { ACTIVE: "启用", DISABLED: "已停用" };
+export const deliveryStatusLabels: Record<string, string> = {
+  CREATED: "待发送", PROCESSING: "发送中", RETRY_WAIT: "等待重试", SUCCEEDED: "成功", DEAD: "已放弃", CANCELLED: "已取消",
+};
+export const failureLabels: Record<string, string> = {
+  HTTP_STATUS: "对方返回非 2xx", TIMEOUT: "超时", CONNECT_FAILED: "无法连接", TLS_FAILED: "TLS 握手失败",
+  DNS_FAILED: "域名解析失败", BLOCKED_ADDRESS: "地址不允许", INTERRUPTED: "发送中断",
+};
+export const maxEndpoints = 5;
+/** Platform 只允许重发已结束的投递（成功、放弃、已取消）；进行中或等待重试的不能重发。 */
+export const replayableDeliveryStatuses: readonly string[] = ["SUCCEEDED", "DEAD", "CANCELLED"];
+export function canReplay(status: string | null | undefined): boolean {
+  return !!status && replayableDeliveryStatuses.includes(status);
+}
+/** 重发被业务拒绝时的说明：上游业务原因不会经 BFF 透传，按 Platform 规则给出可能原因。 */
+export const replayRejectedText = "当前不能重新发送：投递尚未结束，或端点已停用、已不再订阅该事件类型。";
+
+/** Webhook 地址的前端预检：只做明显错误提示，SSRF 等规则以服务端为准。 */
+export function endpointUrlIssue(url: string): string | null {
+  const value = url.trim();
+  if (!value) return "请填写接收地址";
+  if (value.length > 2048) return "地址过长";
+  let parsed: URL;
+  try { parsed = new URL(value); } catch { return "地址格式不正确"; }
+  if (parsed.protocol !== "https:") return "地址必须使用 HTTPS";
+  if (parsed.username || parsed.password) return "地址不能包含账号或密码";
+  if (parsed.hash) return "地址不能包含 # 片段";
+  return null;
+}
+
+/** 端点表单校验：地址与至少一个已知事件。 */
+export function endpointFormIssues(form: { url: string; eventTypes: string[] }) {
+  const issues: Record<string, string> = {};
+  const url = endpointUrlIssue(form.url);
+  if (url) issues.url = url;
+  const known = webhookEventTypes.map((event) => event.code);
+  if (form.eventTypes.length === 0) issues.eventTypes = "至少订阅一种事件";
+  else if (new Set(form.eventTypes).size !== form.eventTypes.length || form.eventTypes.some((code) => !known.includes(code))) {
+    issues.eventTypes = "事件类型无效";
+  }
+  return issues;
+}
+
+export type Endpoint = {
+  endpointId: string; url: string; eventTypes: string[]; status: string; version: number;
+  createTime: string | null; rotationNo: number | null; previousValidUntil: string | null;
+};
+/** 端点列表校验。 */
+export function readEndpoints(value: unknown): Endpoint[] | null {
+  const items = (value as { items?: unknown } | null)?.items;
+  if (!Array.isArray(items)) return null;
+  const result: Endpoint[] = [];
+  for (const raw of items) {
+    const e = raw as Record<string, unknown> | null;
+    if (!e || typeof e.endpointId !== "string" || typeof e.url !== "string" || !Array.isArray(e.eventTypes)
+      || typeof e.status !== "string" || typeof e.version !== "number") return null;
+    const secret = e.signingSecret as Record<string, unknown> | null | undefined;
+    result.push({
+      endpointId: e.endpointId, url: e.url, eventTypes: e.eventTypes.filter((t): t is string => typeof t === "string"),
+      status: e.status, version: e.version, createTime: typeof e.createTime === "string" ? e.createTime : null,
+      rotationNo: typeof secret?.rotationNo === "number" ? secret.rotationNo : null,
+      previousValidUntil: typeof secret?.previousValidUntil === "string" ? secret.previousValidUntil : null,
+    });
+  }
+  return result;
+}
+
+export type DeliveryFilter = { endpointId: string; eventType: string; status: string; from: string; to: string; page: number; size: number };
+export const emptyDeliveryFilter: DeliveryFilter = { endpointId: "", eventType: "", status: "", from: "", to: "", page: 1, size: 20 };
+/** 投递查询参数：只带有值的条件，时间转为 UTC ISO，size 上限 50。 */
+export function deliveryQuery(filter: DeliveryFilter): string {
+  const params = new URLSearchParams();
+  if (filter.endpointId) params.set("endpointId", filter.endpointId);
+  if (filter.eventType) params.set("eventType", filter.eventType);
+  if (filter.status) params.set("status", filter.status);
+  for (const key of ["from", "to"] as const) {
+    const time = Date.parse(filter[key]);
+    if (filter[key] && Number.isFinite(time)) params.set(key, new Date(time).toISOString());
+  }
+  params.set("page", String(Math.max(1, Math.trunc(filter.page))));
+  params.set("size", String(Math.min(50, Math.max(1, Math.trunc(filter.size)))));
+  return params.toString();
+}
+
+/** 本地时间显示；无效值显示破折号。 */
+export function displayTime(value: string | null | undefined): string {
+  if (!value || !Number.isFinite(Date.parse(value))) return "—";
+  return new Date(value).toLocaleString("zh-CN", { hour12: false });
+}

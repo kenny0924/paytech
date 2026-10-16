@@ -10,7 +10,9 @@ public enum ClientBffErrorCode implements CodeMessageEnum {
 
     DEPENDENCY_TIMEOUT("DEPENDENCY_TIMEOUT", "依赖服务响应超时，请稍后重试"),
 
-    DEPENDENCY_UNAVAILABLE("DEPENDENCY_UNAVAILABLE", "依赖服务暂时不可用，请稍后重试");
+    DEPENDENCY_UNAVAILABLE("DEPENDENCY_UNAVAILABLE", "依赖服务暂时不可用，请稍后重试"),
+
+    WORKSPACE_CONTEXT_REQUIRED("CLIENT_WORKSPACE_CONTEXT_REQUIRED", "请先进入工作区");
 
     private final String code;
     private final String message;

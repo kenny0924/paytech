@@ -7,4 +7,7 @@ public final class ClientBrowserModels {
     public record TokenGrantResponseBody(AccountContextResponseBody context,String accessToken,String expiresAt) {
         @Override public String toString() { return "TokenGrantResponseBody[REDACTED]"; }
     }
+    /** C02 进入工作区：只提交成员 ID，Tenant 由 Platform 从真实成员解析。 */
+    public record WorkspaceSelectRequestBody(
+        @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Pattern(regexp="[1-9][0-9]{0,18}") String memberId) {}
 }

@@ -107,6 +107,14 @@ public class OnboardingTestMapper {
             applicationId);
     }
 
+    /** 申请置为已批准并释放名额，Client 激活；与审核结果落地后的事实一致。 */
+    public void approve(long applicationId, long clientId, Instant now) {
+        var at = Timestamp.from(now);
+        jdbc.update("UPDATE t_client_application SET status='APPROVED', active_slot=NULL, update_time=? WHERE application_id=?", at,
+            applicationId);
+        jdbc.update("UPDATE t_client SET status='ACTIVE', update_time=? WHERE client_id=?", at, clientId);
+    }
+
     /** 插入 Client 生命周期历史根与第一版（CREATE）。 */
     public void insertClientHistory(long historyId, long changeVersionId, long clientId, long accountId, String snapshot, Instant now) {
         var at = Timestamp.from(now);

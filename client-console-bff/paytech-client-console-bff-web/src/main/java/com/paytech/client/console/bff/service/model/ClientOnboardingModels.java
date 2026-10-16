@@ -17,7 +17,8 @@ public final class ClientOnboardingModels {
     public record StartResponseBody(
         List<ApplicationSummary> applications,
         boolean hasMore,
-        String activeApplicationId
+        String activeApplicationId,
+        ClientWorkspaceModels.WorkspaceList workspaces
     ) {}
 
     /** unavailable 不得解释为无需材料；材料按资格类型通用，不按国家区分。 */

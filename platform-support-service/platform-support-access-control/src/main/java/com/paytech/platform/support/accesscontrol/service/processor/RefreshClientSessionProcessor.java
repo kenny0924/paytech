@@ -53,7 +53,10 @@ public class RefreshClientSessionProcessor extends AbstractLockProcessor<ClientR
             Math.toIntExact(properties.getLockLeaseTime().toMillis()));
     }
 
-    /** 正确旧代重用先提交撤销，再返回失效；新令牌只在轮换事务提交后返回。 */
+    /**
+     * 正确旧代重用先提交撤销，再返回失效；新令牌只在轮换事务提交后返回。
+     * <li>租户会话绑定的成员或租户已不可访问而账号仍有效时，撤销租户会话并改签账号上下文，响应携带公开原因码。</li>
+     */
     @Override
     protected Tokens processWithinLock(ClientRefreshRequest request) {
         RefreshPlan plan = preparation.prepareRefresh(request.getIdentity(), request.getRefreshToken());
@@ -67,6 +70,12 @@ public class RefreshClientSessionProcessor extends AbstractLockProcessor<ClientR
                 authentication.compromise(context);
                 recordOutcome(context, Result.DENIED, "REFRESH_REUSE", true);
                 return null;
+            }
+            if (preparation.fallbackRefresh(context)) {
+                preparation.requireCurrentSigningKey(plan.fallback(), context.getNow());
+                authentication.fallback(context);
+                recordOutcome(context, Result.SUCCEEDED, "CONTEXT_FALLBACK", true);
+                return plan.fallback().tokens();
             }
             if (!preparation.validRefresh(context)) {
                 authentication.invalidate(context);

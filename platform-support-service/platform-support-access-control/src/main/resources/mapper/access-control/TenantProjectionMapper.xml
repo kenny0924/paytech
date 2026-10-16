@@ -85,6 +85,15 @@
         SELECT role_id FROM t_role WHERE tenant_scope='TENANT' AND tenant_id=#{tenantId}
             AND scope_key=CAST(#{tenantId} AS CHAR) AND role_code='TENANT_OWNER' AND system_role=1
     </select>
+    <select id="activePermissionIds" resultType="java.lang.Long" useCache="false">
+        SELECT permission_id FROM t_permission WHERE status='ACTIVE' AND permission_code IN
+        <foreach collection="codes" item="code" open="(" separator="," close=")">#{code}</foreach>
+        ORDER BY permission_id
+    </select>
+    <insert id="insertRolePermission">
+        INSERT INTO t_role_permission(role_permission_id,role_id,permission_id,status,version,create_time,update_time)
+        VALUES(#{id},#{roleId},#{permissionId},'ACTIVE',1,#{now},#{now})
+    </insert>
     <update id="revokeOnboarding">
         UPDATE t_tenant_member_role g JOIN t_role r ON g.role_id=r.role_id
         SET g.status='REVOKED',g.effective_to=#{now},g.version=g.version+1,g.update_time=#{now}

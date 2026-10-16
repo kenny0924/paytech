@@ -1,5 +1,7 @@
 import { RequestFailure } from "./auth.ts";
 import type { ApiOptions, ApiRequest } from "./auth.ts";
+import { enterableWorkspace } from "./workspace.ts";
+import type { Workspaces } from "./workspace.ts";
 export type Values = Record<string, Record<string, string | null>>;
 export type Flat = Record<string, string>;
 export type Requirement = {
@@ -30,6 +32,7 @@ export type Person = { partyId: string; editable: boolean; values: Values };
 export type Application = {
   applicationId: string;
   applicationNo: string;
+  clientId?: string;
   subjectPartyId: string;
   clientType: "INDIVIDUAL" | "ORGANIZATION";
   status: string;
@@ -75,12 +78,15 @@ export type ResultBanner = {
   title: string;
   lines: string[];
   anchor: string | null;
+  /** 审核通过且工作区已可访问时，可直接进入的成员；否则为空。 */
+  enterMemberId?: string | null;
 };
 /**
- * 审核结果提示；只用 CCT 状态与 Risk 公开说明，不推断工作区已可用
+ * 审核结果提示；只用 CCT 状态与 Risk 公开说明，工作区是否可进入只看服务端返回的工作区状态
  * <li>结果读取失败时给出通用说明，不把未知错误当成审核原因。</li>
  */
-export function resultBanner(app: Pick<Application, "status" | "reviewStatus" | "review">): ResultBanner | null {
+export function resultBanner(app: Pick<Application, "status" | "reviewStatus" | "review" | "clientId">,
+  workspaces: Workspaces | null = null): ResultBanner | null {
   const review = app.reviewStatus === "AVAILABLE" && app.review?.outcome === app.status ? app.review : null;
   const note = review?.publicNote?.trim() || null;
   const unavailable = "审核说明暂时无法读取，请稍后刷新页面。";
@@ -98,11 +104,13 @@ export function resultBanner(app: Pick<Application, "status" | "reviewStatus" | 
     };
   }
   if (app.status === "APPROVED") {
+    const entry = enterableWorkspace(app.clientId, workspaces);
     return {
       tone: "success",
       title: "审核已通过",
-      lines: [...(note ? [note] : []), "客户工作区正在开通，开通完成后即可进入。"],
+      lines: [...(note ? [note] : []), entry ? "客户工作区已开通，可以进入。" : "客户工作区正在开通，开通完成后即可进入。"],
       anchor: null,
+      enterMemberId: entry?.memberId ?? null,
     };
   }
   if (app.status === "REJECTED") {
@@ -116,6 +124,7 @@ export function resultBanner(app: Pick<Application, "status" | "reviewStatus" | 
   return null;
 }
 export type Start = {
+  workspaces?: unknown;
   applications: {
     applicationId: string;
     applicationNo: string;

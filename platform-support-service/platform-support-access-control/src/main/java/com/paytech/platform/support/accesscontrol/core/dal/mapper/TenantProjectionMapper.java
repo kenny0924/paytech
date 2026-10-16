@@ -55,4 +55,11 @@ public interface TenantProjectionMapper {
 
     /** 同时校验来源序号和本地并发版本，且不修改 security_status。 */
     int updateStatus(@Param("id") long id, @Param("version") int version, @Param("previousSourceVersion") int previousSourceVersion, @Param("sourceVersion") int sourceVersion, @Param("hash") String hash, @Param("status") OperationsTenantOwnerStatus status, @Param("now") Instant now);
+
+    /** 按编码读取当前 ACTIVE 的权限主键，用于首次 OWNER 授权。 */
+    java.util.List<Long> activePermissionIds(@Param("codes") java.util.Collection<String> codes);
+
+    /** 为正式 OWNER 角色写入一项 ACTIVE 权限。 */
+    int insertRolePermission(@Param("id") long id, @Param("roleId") long roleId, @Param("permissionId") long permissionId,
+        @Param("now") Instant now);
 }

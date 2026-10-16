@@ -223,6 +223,7 @@ CREATE TABLE `t_api_credential` (
   `credential_id` BIGINT NOT NULL COMMENT '客户端接口凭证的稳定业务标识。',
   `tenant_id` BIGINT NOT NULL COMMENT '访问租户的稳定业务标识。',
   `key_prefix` VARCHAR(32) NOT NULL COMMENT '密钥前缀的业务值。',
+  `credential_name` VARCHAR(64) NULL COMMENT '客户为凭证填写的显示名称；历史凭证为空。',
   `key_verifier_phc` VARCHAR(512) NOT NULL COMMENT '密钥 PHC 校验值的业务值。',
   `expires_time` DATETIME(6) NOT NULL COMMENT '凭证到期时间对应的 UTC 微秒时间。',
   `status` VARCHAR(64) NOT NULL COMMENT '凭证状态的稳定业务代码。允许值：ACTIVE、REVOKED、EXPIRED。',

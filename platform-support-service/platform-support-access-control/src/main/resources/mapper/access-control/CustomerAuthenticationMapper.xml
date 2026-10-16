@@ -66,7 +66,8 @@
         INSERT INTO t_auth_session(session_id, account_id, realm, channel, context_type, tenant_id, tenant_member_id,
         authentication_method, account_auth_epoch, credential_version_snapshot, issued_time, last_reauthenticated_time,
         last_activity_time, idle_expire_time, absolute_expire_time, current_generation_no, status, version, create_time, update_time)
-        VALUES(#{issue.sessionId}, #{issue.accountId}, 'CUSTOMER', 'CLIENT', 'ACCOUNT', NULL, NULL, 'PASSWORD',
+        VALUES(#{issue.sessionId}, #{issue.accountId}, 'CUSTOMER', 'CLIENT', #{issue.contextType},
+        #{issue.tenantId,jdbcType=BIGINT}, #{issue.memberId,jdbcType=BIGINT}, 'PASSWORD',
         #{issue.accountEpoch}, #{issue.credentialVersion}, #{issue.issuedTime}, #{issue.issuedTime}, #{issue.issuedTime},
         #{issue.idleExpireTime}, #{issue.absoluteExpireTime}, #{issue.generation}, 'ACTIVE', 1, #{issue.issuedTime}, #{issue.issuedTime})
     </insert>

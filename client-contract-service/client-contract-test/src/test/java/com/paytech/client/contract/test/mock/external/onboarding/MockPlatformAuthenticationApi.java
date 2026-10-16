@@ -15,9 +15,11 @@ import com.paytech.platform.support.api.authentication.request.LoginRequestBody;
 import com.paytech.platform.support.api.authentication.request.PasswordResetRequestBody;
 import com.paytech.platform.support.api.authentication.request.RefreshRequestBody;
 import com.paytech.platform.support.api.authentication.request.RegisterRequestBody;
+import com.paytech.platform.support.api.authentication.request.WorkspaceContextRequestBody;
 import com.paytech.platform.support.api.authentication.response.AcceptedResponseBody;
 import com.paytech.platform.support.api.authentication.response.AccountContextResponseBody;
 import com.paytech.platform.support.api.authentication.response.AuthenticationResponseBody;
+import com.paytech.platform.support.api.authentication.response.ClientWorkspacesResponseBody;
 import com.paytech.platform.support.api.authentication.response.VerificationResponseBody;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileVerificationApi;
 
@@ -45,6 +47,21 @@ public class MockPlatformAuthenticationApi implements ClientAuthenticationApi, W
     public AccountContextResponseBody context(String accountId, String sessionId) {
         requestId();
         return required(mocker.context(accountId, sessionId));
+    }
+
+    @Override
+    public ClientWorkspacesResponseBody workspaces(String accountId, String sessionId) {
+        throw unexpected();
+    }
+
+    @Override
+    public AuthenticationResponseBody selectWorkspace(String accountId, String sessionId, WorkspaceContextRequestBody request) {
+        throw unexpected();
+    }
+
+    @Override
+    public AuthenticationResponseBody selectAccountContext(String accountId, String sessionId, RefreshRequestBody request) {
+        throw unexpected();
     }
 
     @Override

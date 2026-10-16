@@ -1,10 +1,12 @@
 export type AccountContext = {
   accountId: string; sessionId: string; emailMasked: string; emailVerified: boolean;
   contextType: 'ACCOUNT' | 'TENANT'; tenantId: string | null; memberId: string | null; allowedActions: string[];
+  /** 租户会话刷新时工作区或成员已失效、改签账号上下文的公开原因码；其余情况为空。 */
+  fallbackReason?: string | null;
 };
 export type Grant = { context: AccountContext; accessToken: string; expiresAt: string };
 export type EmailLink = { challengeNo: string; secret: string };
-export type ApiOptions = { method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'; body?: unknown; key?: string; signal?: AbortSignal };
+export type ApiOptions = { method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; body?: unknown; key?: string; signal?: AbortSignal };
 export type ApiRequest = <T>(path: string, options?: ApiOptions) => Promise<T>;
 type SessionLock = <T>(action: () => Promise<T>) => Promise<T>;
 const browserSessionLock: SessionLock = action => typeof navigator !== 'undefined' && navigator.locks
@@ -39,10 +41,11 @@ function validGrant(value: unknown): value is Grant {
     && /^[1-9][0-9]*$/.test(c.sessionId) && typeof c.emailMasked === 'string' && c.emailVerified === true
     && ['ACCOUNT', 'TENANT'].includes(c.contextType) && Array.isArray(c.allowedActions)
     && c.allowedActions.every(a => typeof a === 'string')
+    && (c.fallbackReason === undefined || c.fallbackReason === null || (typeof c.fallbackReason === 'string' && /^[A-Z_]{1,64}$/.test(c.fallbackReason)))
     && (c.contextType === 'ACCOUNT' ? c.tenantId === null && c.memberId === null : !!c.tenantId && !!c.memberId);
 }
 export function createAuthClient(transport: typeof fetch = fetch, sessionLock: SessionLock = browserSessionLock) {
-  let active: Grant | null = null, generation = 0, flight: Promise<Grant | null> | null = null;
+  let active: Grant | null = null, generation = 0, flight: Promise<Grant | null> | null = null, fallback: string | null = null;
   const listeners = new Set<() => void>();
   const publish = () => listeners.forEach(listener => listener());
   const clear = () => { generation++; active = null; publish(); };
@@ -58,7 +61,7 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
         body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store', redirect: 'error',
       });
       // HttpOnly Cookie 跨标签共享，所有会更换它的请求使用同一 Origin 锁。
-      response = await (['login', 'refresh', 'logout'].includes(path) ? sessionLock(send) : send());
+      response = await (['login', 'refresh', 'logout', 'workspace-context', 'account-context'].includes(path) ? sessionLock(send) : send());
     } catch { throw new RequestFailure(0, '网络连接失败，请检查连接后重试'); }
     if (response.status === 204) return undefined as T;
     let value: unknown;
@@ -80,6 +83,7 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
     flight = call<unknown>('refresh', {}).then(value => {
       if (!validGrant(value)) throw new RequestFailure(502, '登录状态响应异常，请重新登录');
       if (started !== generation) return null;
+      if (value.context.fallbackReason) fallback = value.context.fallbackReason;
       active = value; publish(); return active;
     }).catch(error => {
       if (started === generation && error instanceof RequestFailure && error.status === 401) clear();
@@ -87,10 +91,26 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
     }).finally(() => { flight = null; });
     return flight;
   }
+  /**
+   * 切换账号 / 工作区上下文：先使进行中的请求失效，再用新 Grant 整体替换
+   * <li>旧 Refresh Cookie 由服务端在同一响应中替换；失败时保留原 Grant，由页面重新读取列表。</li>
+   */
+  async function switchContext(path: 'workspace-context' | 'account-context', body: Record<string, string>) {
+    if (!active || Date.parse(active.expiresAt) <= Date.now() + 30_000) await restore();
+    const started = ++generation;
+    const value = await call<unknown>(path, body, true);
+    if (!validGrant(value)) throw new RequestFailure(502, '登录状态响应异常，请重新登录');
+    if (started === generation) { active = value; publish(); }
+    return value.context;
+  }
   return {
     call, restore, clear, current: () => active,
+    selectWorkspace: (memberId: string) => switchContext('workspace-context', {memberId}),
+    backToAccount: () => switchContext('account-context', {}),
+    /** 读取并清除最近一次刷新降级的原因码，供开始页提示一次。 */
+    takeFallback: () => { const reason = fallback; fallback = null; return reason; },
     async request<T>(path: string, options: ApiOptions = {}): Promise<T> {
-      if (!/^\/(onboarding|onboarding-files)\/v1\//.test(path) || /[\\#]/.test(path) || path.includes('..')) throw new Error('请求路径无效');
+      if (!/^\/(onboarding|onboarding-files|workspace|developer)\/v1\//.test(path) || /[\\#]/.test(path) || path.includes('..')) throw new Error('请求路径无效');
       const started = generation, expectedAccount = active?.context.accountId;
       if (!active || Date.parse(active.expiresAt) <= Date.now() + 30_000) await restore();
       if (!active || started !== generation || (expectedAccount && active.context.accountId !== expectedAccount)) throw new RequestFailure(401, '登录账号已变更，请重新登录');

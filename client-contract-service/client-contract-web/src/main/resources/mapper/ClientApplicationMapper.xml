@@ -39,4 +39,22 @@
     WHERE application_id=#{row.applicationId} AND status='UNDER_REVIEW'
       AND current_submission_id=#{row.currentSubmissionId} AND due_diligence_case_id=#{row.dueDiligenceCaseId}
   </update>
+  <!-- 工作区摘要：只组合展示字段，不读取证件、地址或联系方式；approvedAt 取最近一份 APPROVED 申请结论后的 update_time。 -->
+  <select id="findApprovedSummaries" resultType="com.paytech.client.contract.core.dal.dataobject.ClientWorkspaceSummary">
+    SELECT c.client_id AS clientId, c.client_no AS clientNo, p.party_type AS clientType, c.status AS clientStatus,
+      o.legal_name AS legalName, i.given_name AS givenName, i.family_name AS familyName,
+      o.incorporation_country AS incorporationCountry, i.residence_country AS residenceCountry,
+      b.business_model_code AS businessModelCode, approved.approvedAt
+    FROM (SELECT client_id, MAX(update_time) AS approvedAt FROM t_client_application
+          WHERE requested_by_account_id=#{accountId} AND status='APPROVED'
+            AND client_id IN <foreach collection="clientIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+          GROUP BY client_id) approved
+    JOIN t_client c ON c.client_id=approved.client_id
+    JOIN t_party p ON p.party_id=c.party_id
+    LEFT JOIN t_party_profile f ON f.party_id=p.party_id
+    LEFT JOIN t_organization_profile o ON o.profile_id=f.profile_id
+    LEFT JOIN t_individual_profile i ON i.profile_id=f.profile_id
+    LEFT JOIN t_client_business_profile b ON b.client_id=c.client_id
+    ORDER BY c.client_id
+  </select>
 </mapper>

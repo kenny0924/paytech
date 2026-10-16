@@ -121,7 +121,7 @@ async function login(page, email, password) {
   await page.getByLabel('密码', { exact: true }).fill(password);
   await page.getByRole('button', { name: '登录' }).click();
   await page.waitForURL(/\/onboarding/, { timeout: 20000 });
-  await page.getByRole('heading', { name: '我的入驻申请' }).waitFor({ timeout: 20000 });
+  await page.getByRole('heading', { name: '我的工作区与申请' }).waitFor({ timeout: 20000 });
   await step(page, '客户登录', true, page.url());
 }
 

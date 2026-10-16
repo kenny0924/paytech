@@ -33,6 +33,7 @@ public class ClientOnboardingProcessor {
     private final MaterialRequirementsApi risk;
     private final ClientOnboardingStartApi applications;
     private final ClientReviewResultApi reviews;
+    private final ClientWorkspaceProcessor workspaces;
 
     /** 有客户可见审核结果的 CCT 状态。 */
     static final Set<String> REVIEWED = Set.of("RETURNED", "APPROVED", "REJECTED");
@@ -40,7 +41,7 @@ public class ClientOnboardingProcessor {
     /** Risk 退回合同允许的分区。 */
     static final Set<String> RETURN_SECTIONS = Set.of("BASIC", "BUSINESS", "PEOPLE", "MATERIALS");
 
-    /** GET 只导航既有申请，不以读取页面触发创建。 */
+    /** GET 只导航既有申请并列出本账号工作区，不以读取页面触发创建。 */
     public StartResponseBody start(HttpServletRequest request) {
         var identity = sessions.identity(request);
         sessions.context(request);
@@ -56,11 +57,13 @@ public class ClientOnboardingProcessor {
         if (active.size() > 1) {
             throw new ServiceUnavailableException();
         }
+        var workspaceList = workspaces.list(request, identity);
         sessions.context(request);
         return new StartResponseBody(
             result.applications(),
             result.hasMore(),
-            active.isEmpty() ? null : active.getFirst().applicationId()
+            active.isEmpty() ? null : active.getFirst().applicationId(),
+            workspaceList
         );
     }
 

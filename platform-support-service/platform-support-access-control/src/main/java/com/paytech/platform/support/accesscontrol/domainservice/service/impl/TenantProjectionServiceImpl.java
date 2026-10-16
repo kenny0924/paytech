@@ -37,6 +37,7 @@ public class TenantProjectionServiceImpl implements TenantProjectionService {
             grants.revokeOnboarding(context.getTenant().tenantId(), context.getMember().memberId(), context.getUpdateTime());
             roles.insert(context.getOwnerRole(), context.getUpdateTime());
             grants.insert(context.getOwnerGrant(), context.getUpdateTime());
+            context.getOwnerPermissions().forEach(permission -> roles.insertPermission(permission, context.getUpdateTime()));
         }
         tenants.update(context.getTenant(), context.getSourceVersion(), context.getPayloadHash(),
             context.getOwnerStatus(), context.getUpdateTime());

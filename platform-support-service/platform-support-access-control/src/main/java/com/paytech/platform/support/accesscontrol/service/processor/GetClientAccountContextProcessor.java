@@ -28,7 +28,7 @@ public class GetClientAccountContextProcessor extends AbstractProcessor<ClientCo
         query.setReadOnly(true);
         query.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
         query.setTimeout(15);
-        return query.execute(status -> authentication.context(request.getAccountId(), request.getSessionId()));
+        return query.execute(status -> authentication.currentContext(request.getAccountId(), request.getSessionId()));
     }
 
 }

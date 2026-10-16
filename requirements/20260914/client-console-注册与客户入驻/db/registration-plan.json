@@ -281,7 +281,7 @@
       "authorizationMode": "PUBLIC",
       "permissionCode": null,
       "requestCookieMode": "REQUIRE_PROFILE_COOKIE",
-      "responseCookieMode": "ISSUE_ONLY",
+      "responseCookieMode": "ISSUE_OR_CLEAR",
       "bodyLimitBytes": 16384,
       "status": "DISABLED",
       "bodyReceiveTimeoutMillis": 5000,
@@ -713,7 +713,7 @@
       "channel": "CLIENT",
       "httpMethod": "POST",
       "externalPathTemplate": "/api/client/auth/v1/workspace-context",
-      "downstreamPathTemplate": "/client-onboarding/v1/workspace-context",
+      "downstreamPathTemplate": "/client-auth/v1/workspace-context",
       "targetCode": "client-console-bff",
       "securityProfileCode": "CLIENT_JWT",
       "authorizationMode": "HUMAN_AUTHENTICATED",
@@ -740,6 +740,1447 @@
         {
           "headerName": "origin",
           "headerUse": "FORWARD_REQUEST"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "W01",
+      "routeCode": "client-onboarding-w01",
+      "channel": "CLIENT",
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/client/auth/v1/account-context",
+      "downstreamPathTemplate": "/client-auth/v1/account-context",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "REQUIRE_PROFILE_COOKIE",
+      "responseCookieMode": "ISSUE_ONLY",
+      "bodyLimitBytes": 16384,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "W02",
+      "routeCode": "client-onboarding-w02",
+      "channel": "CLIENT",
+      "httpMethod": "GET",
+      "externalPathTemplate": "/api/client/workspace/v1/home",
+      "downstreamPathTemplate": "/client-workspace/v1/home",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 16384,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D01",
+      "routeCode": "client-developer-d01",
+      "channel": "CLIENT",
+      "httpMethod": "GET",
+      "externalPathTemplate": "/api/client/developer/v1/credentials",
+      "downstreamPathTemplate": "/client-developer/v1/credentials",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 16384,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [
+        "status"
+      ],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D02",
+      "routeCode": "client-developer-d02",
+      "channel": "CLIENT",
+      "httpMethod": "GET",
+      "externalPathTemplate": "/api/client/developer/v1/credentials/{credentialId}",
+      "downstreamPathTemplate": "/client-developer/v1/credentials/{credentialId}",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 16384,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D03",
+      "routeCode": "client-developer-d03",
+      "channel": "CLIENT",
+      "httpMethod": "GET",
+      "externalPathTemplate": "/api/client/developer/v1/scopes",
+      "downstreamPathTemplate": "/client-developer/v1/scopes",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 16384,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D04",
+      "routeCode": "client-developer-d04",
+      "channel": "CLIENT",
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/client/developer/v1/credentials",
+      "downstreamPathTemplate": "/client-developer/v1/credentials",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 4096,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D05",
+      "routeCode": "client-developer-d05",
+      "channel": "CLIENT",
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/client/developer/v1/credentials/{credentialId}/rotation",
+      "downstreamPathTemplate": "/client-developer/v1/credentials/{credentialId}/rotation",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 1024,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D06",
+      "routeCode": "client-developer-d06",
+      "channel": "CLIENT",
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/client/developer/v1/credentials/{credentialId}/revocation",
+      "downstreamPathTemplate": "/client-developer/v1/credentials/{credentialId}/revocation",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 1024,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D07",
+      "routeCode": "client-developer-d07",
+      "channel": "CLIENT",
+      "httpMethod": "GET",
+      "externalPathTemplate": "/api/client/developer/v1/webhook-endpoints",
+      "downstreamPathTemplate": "/client-developer/v1/webhook-endpoints",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 16384,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D08",
+      "routeCode": "client-developer-d08",
+      "channel": "CLIENT",
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/client/developer/v1/webhook-endpoints",
+      "downstreamPathTemplate": "/client-developer/v1/webhook-endpoints",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 8192,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D09",
+      "routeCode": "client-developer-d09",
+      "channel": "CLIENT",
+      "httpMethod": "PUT",
+      "externalPathTemplate": "/api/client/developer/v1/webhook-endpoints/{endpointId}",
+      "downstreamPathTemplate": "/client-developer/v1/webhook-endpoints/{endpointId}",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 8192,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D10",
+      "routeCode": "client-developer-d10",
+      "channel": "CLIENT",
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/client/developer/v1/webhook-endpoints/{endpointId}/status",
+      "downstreamPathTemplate": "/client-developer/v1/webhook-endpoints/{endpointId}/status",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 1024,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D11",
+      "routeCode": "client-developer-d11",
+      "channel": "CLIENT",
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/client/developer/v1/webhook-endpoints/{endpointId}/secret-rotation",
+      "downstreamPathTemplate": "/client-developer/v1/webhook-endpoints/{endpointId}/secret-rotation",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 1024,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D12",
+      "routeCode": "client-developer-d12",
+      "channel": "CLIENT",
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/client/developer/v1/webhook-endpoints/{endpointId}/test-events",
+      "downstreamPathTemplate": "/client-developer/v1/webhook-endpoints/{endpointId}/test-events",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 1024,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D13",
+      "routeCode": "client-developer-d13",
+      "channel": "CLIENT",
+      "httpMethod": "GET",
+      "externalPathTemplate": "/api/client/developer/v1/webhook-deliveries",
+      "downstreamPathTemplate": "/client-developer/v1/webhook-deliveries",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 16384,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [
+        "endpointId",
+        "eventType",
+        "status",
+        "from",
+        "to",
+        "page",
+        "size"
+      ],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D14",
+      "routeCode": "client-developer-d14",
+      "channel": "CLIENT",
+      "httpMethod": "GET",
+      "externalPathTemplate": "/api/client/developer/v1/webhook-deliveries/{deliveryId}",
+      "downstreamPathTemplate": "/client-developer/v1/webhook-deliveries/{deliveryId}",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 16384,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        }
+      ],
+      "queryParameterNames": [],
+      "guardRules": [
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "SHARED_ROUTE",
+          "capacity": 600,
+          "refillTokens": 600,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "SHARED_ROUTE",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 50
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "CLIENT_IP",
+          "capacity": 120,
+          "refillTokens": 120,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "CLIENT_IP",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 10
+        },
+        {
+          "ruleType": "RATE_LIMIT",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": 60,
+          "refillTokens": 60,
+          "refillPeriodMillis": 60000,
+          "concurrencyLimit": null
+        },
+        {
+          "ruleType": "CONCURRENCY",
+          "dimension": "AUTHENTICATED_PRINCIPAL",
+          "capacity": null,
+          "refillTokens": null,
+          "refillPeriodMillis": null,
+          "concurrencyLimit": 5
+        }
+      ]
+    },
+    {
+      "operationId": "D15",
+      "routeCode": "client-developer-d15",
+      "channel": "CLIENT",
+      "httpMethod": "POST",
+      "externalPathTemplate": "/api/client/developer/v1/webhook-deliveries/{deliveryId}/replay",
+      "downstreamPathTemplate": "/client-developer/v1/webhook-deliveries/{deliveryId}/replay",
+      "targetCode": "client-console-bff",
+      "securityProfileCode": "CLIENT_JWT",
+      "authorizationMode": "HUMAN_AUTHENTICATED",
+      "permissionCode": null,
+      "requestCookieMode": "DROP",
+      "responseCookieMode": "NONE",
+      "bodyLimitBytes": 1024,
+      "status": "DISABLED",
+      "bodyReceiveTimeoutMillis": 5000,
+      "responseTimeoutMillis": 10000,
+      "headers": [
+        {
+          "headerName": "authorization",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "CORS_REQUEST_ALLOWED"
+        },
+        {
+          "headerName": "content-type",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "origin",
+          "headerUse": "FORWARD_REQUEST"
+        },
+        {
+          "headerName": "idempotency-key",
+          "headerUse": "CORS_REQUEST_ALLOWED"
         }
       ],
       "queryParameterNames": [],

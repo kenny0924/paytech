@@ -1,8 +1,10 @@
 package com.paytech.client.contract.domainservice.repository.impl;
 
 import java.time.Instant;
+import java.util.List;
 
 import com.paytech.client.contract.core.dal.dataobject.ClientApplicationSubmission;
+import com.paytech.client.contract.core.dal.dataobject.ClientWorkspaceSummary;
 import com.paytech.client.contract.core.dal.mapper.ClientApplicationMapper;
 import com.paytech.client.contract.domain.enums.ClientApplicationStatus;
 import com.paytech.client.contract.domainservice.repository.ClientApplicationRepository;
@@ -73,5 +75,11 @@ public class ClientApplicationRepositoryImpl implements ClientApplicationReposit
         application.setStatus(status);
         application.setQualificationDecisionId(decisionId);
         application.setUpdateTime(now);
+    }
+
+    /** 只读组合查询。 */
+    @Override
+    public List<ClientWorkspaceSummary> findApprovedSummaries(long accountId, List<Long> clientIds) {
+        return mapper.findApprovedSummaries(accountId, clientIds);
     }
 }

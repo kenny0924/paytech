@@ -13,7 +13,7 @@ public interface ClientSessionRepository {
     /** 锁定 CLIENT 会话并刷新查询缓存。 */
     ClientSession lockSession(long sessionId);
 
-    /** 保存新的 CLIENT 账号上下文会话。 */
+    /** 保存新的 CLIENT 账号或租户上下文会话。 */
     void insertSession(Issue issue);
 
     /** 按原版本推进会话当前刷新代与空闲期限。 */

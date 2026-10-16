@@ -77,7 +77,8 @@ public class ClientTokenPreparation {
         }
         String jwt = crypto.sign(key.keyRef(), key.kid(), key.publicJwk(), json.writeValueAsString(claims));
         var response = new Tokens(context, jwt, expires, raw, absolute);
-        return new Issue(context.accountId(), context.sessionId(), epoch, credentialVersion, now,
+        return new Issue(context.accountId(), context.sessionId(), context.contextType(), context.tenantId(),
+            context.memberId(), epoch, credentialVersion, now,
             ClientSessionRules.idleExpiry(now, absolute), absolute, generation, ids.nextId(),
             ClientSessionRules.lookup(raw), hmac.digest(), hmac.keyVersion(), key.id(), key.version(), response);
     }

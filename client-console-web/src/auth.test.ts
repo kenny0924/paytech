@@ -85,3 +85,61 @@ test('anonymous session restoration fails before any onboarding data request',as
  assert.equal(client.current(),null);
  assert.deepEqual(paths,['/api/client/auth/v1/refresh']);
 });
+
+const tenantContext={accountId:'1',sessionId:'5',emailMasked:'a***@example.test',emailVerified:true,contextType:'TENANT',tenantId:'7',memberId:'8',allowedActions:['WORKSPACE','SELECT_WORKSPACE','ACCOUNT_CONTEXT','LOGOUT']};
+const accountContext={accountId:'1',sessionId:'2',emailMasked:'a***@example.test',emailVerified:true,contextType:'ACCOUNT',tenantId:null,memberId:null,allowedActions:['ONBOARDING','SELECT_WORKSPACE','LOGOUT']};
+test('selecting a workspace replaces the grant, sends only memberId and uses the session lock',async()=>{
+ const sent:{url:string;init:RequestInit}[]=[];let locked=0;
+ const lock=<T>(action:()=>Promise<T>)=>{locked++;return action();};
+ const client=createAuthClient(async(input,init)=>{sent.push({url:String(input),init:init!});
+  return String(input).endsWith('/refresh')?Response.json({context:accountContext,accessToken:'account',expiresAt:'2099-01-01T00:00:00.000000Z'})
+   :Response.json({context:tenantContext,accessToken:'tenant',expiresAt:'2099-01-01T00:00:00.000000Z'});},lock);
+ await client.restore();
+ const context=await client.selectWorkspace('8');
+ assert.equal(context.contextType,'TENANT');assert.equal(client.current()?.accessToken,'tenant');
+ const call=sent.at(-1)!;
+ assert.equal(call.url,'/api/client/auth/v1/workspace-context');
+ assert.equal(call.init.body,JSON.stringify({memberId:'8'}));
+ assert.equal(new Headers(call.init.headers).get('Authorization'),'Bearer account');
+ assert.equal(locked,2);
+});
+test('switching context invalidates in-flight business requests',async()=>{
+ let release:((response:Response)=>void)|undefined;
+ const client=createAuthClient(async(input)=>{const url=String(input);
+  if(url.endsWith('/refresh'))return Response.json({context:accountContext,accessToken:'account',expiresAt:'2099-01-01T00:00:00.000000Z'});
+  if(url.endsWith('/workspace-context'))return Response.json({context:tenantContext,accessToken:'tenant',expiresAt:'2099-01-01T00:00:00.000000Z'});
+  return new Promise<Response>(resolve=>{release=resolve;});});
+ await client.restore();
+ const pending=client.request('/onboarding/v1/start');
+ await client.selectWorkspace('8');
+ release!(Response.json({applications:[]}));
+ await assert.rejects(pending,/登录账号已变更/);
+});
+test('back to account returns an account grant; failed switch keeps the original grant',async()=>{
+
+ const client=createAuthClient(async(input)=>{const url=String(input);
+  if(url.endsWith('/refresh'))return Response.json({context:tenantContext,accessToken:'tenant',expiresAt:'2099-01-01T00:00:00.000000Z'});
+  if(url.endsWith('/workspace-context'))return Response.json({code:'CLIENT_WORKSPACE_UNAVAILABLE',detail:'工作区暂时不可访问'},{status:403});
+  return Response.json({context:accountContext,accessToken:'account',expiresAt:'2099-01-01T00:00:00.000000Z'});});
+ await client.restore();
+ await assert.rejects(client.selectWorkspace('9'),(error:unknown)=>error instanceof Error&&'code' in error&&error.code==='CLIENT_WORKSPACE_UNAVAILABLE');
+ assert.equal(client.current()?.accessToken,'tenant');
+ const context=await client.backToAccount();
+ assert.equal(context.contextType,'ACCOUNT');assert.equal(client.current()?.accessToken,'account');
+});
+test('refresh fallback to account context is surfaced once',async()=>{
+ const client=createAuthClient(async()=>Response.json({context:{...accountContext,fallbackReason:'TENANT_SUSPENDED'},accessToken:'account',expiresAt:'2099-01-01T00:00:00.000000Z'}));
+ await client.restore();
+ assert.equal(client.current()?.context.contextType,'ACCOUNT');
+ assert.equal(client.takeFallback(),'TENANT_SUSPENDED');
+ assert.equal(client.takeFallback(),null);
+});
+test('workspace paths are allowed and malformed fallback reasons are rejected',async()=>{
+ const urls:string[]=[];
+ const client=createAuthClient(async(input)=>{urls.push(String(input));
+  return String(input).endsWith('/refresh')?Response.json({context:tenantContext,accessToken:'tenant',expiresAt:'2099-01-01T00:00:00.000000Z'}):Response.json({});});
+ await client.request('/workspace/v1/home');
+ assert.ok(urls.includes('/api/client/workspace/v1/home'));
+ const bad=createAuthClient(async()=>Response.json({context:{...accountContext,fallbackReason:'<script>'},accessToken:'x',expiresAt:'2099-01-01T00:00:00.000000Z'}));
+ await assert.rejects(bad.restore(),/登录状态响应异常/);
+});

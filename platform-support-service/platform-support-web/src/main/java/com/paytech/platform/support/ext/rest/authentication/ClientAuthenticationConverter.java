@@ -1,5 +1,6 @@
 package com.paytech.platform.support.ext.rest.authentication;
 
+import java.util.List;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 
@@ -8,12 +9,15 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.platform.support.accesscontrol.domain.authentication.ClientAccountView;
+import com.paytech.platform.support.accesscontrol.domain.authentication.ClientWorkspaceView;
 import com.paytech.platform.support.accesscontrol.domain.authentication.ClientAuthenticationPlans.Tokens;
 import com.paytech.platform.support.accesscontrol.service.processor.request.*;
 import com.paytech.platform.support.api.authentication.request.*;
 import com.paytech.platform.support.api.authentication.response.AcceptedResponseBody;
 import com.paytech.platform.support.api.authentication.response.AccountContextResponseBody;
 import com.paytech.platform.support.api.authentication.response.AuthenticationResponseBody;
+import com.paytech.platform.support.api.authentication.response.ClientWorkspaceResponseBody;
+import com.paytech.platform.support.api.authentication.response.ClientWorkspacesResponseBody;
 import com.paytech.platform.support.api.authentication.response.VerificationResponseBody;
 import com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode;
 
@@ -57,6 +61,32 @@ public class ClientAuthenticationConverter {
         return new ClientLogoutRequest(id(accountId), id(sessionId), body.getRefreshToken());
     }
 
+    /** 进入工作区：可信账号、会话、Cookie 原值与浏览器选择的成员编号。 */
+    ClientSwitchRequest workspace(String accountId, String sessionId, WorkspaceContextRequestBody body) {
+        return new ClientSwitchRequest(id(accountId), id(sessionId), body.getRefreshToken(), member(body.getMemberId()));
+    }
+
+    /** 超出 BIGINT 的成员编号不可能存在，按工作区不可进入处理。 */
+    long member(String value) {
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException invalid) {
+            throw new FailException(ClientAuthenticationErrorCode.CLIENT_WORKSPACE_UNAVAILABLE);
+        }
+    }
+
+    /** 返回账号上下文：可信账号、会话与 Cookie 原值，无目标成员。 */
+    ClientSwitchRequest accountContext(String accountId, String sessionId, RefreshRequestBody body) {
+        return new ClientSwitchRequest(id(accountId), id(sessionId), body.getRefreshToken(), null);
+    }
+
+    /** 工作区列表只投影编号与状态代码。 */
+    ClientWorkspacesResponseBody workspaces(List<ClientWorkspaceView> views) {
+        return new ClientWorkspacesResponseBody(views.stream().map(view -> new ClientWorkspaceResponseBody(
+            Long.toString(view.memberId()), Long.toString(view.tenantId()), Long.toString(view.clientId()),
+            view.ownerStatus(), view.securityStatus(), view.memberStatus(), view.accessible(), view.reasonCode())).toList());
+    }
+
     /** 解析当前账号上下文的可信标识。 */
     ClientContextRequest context(String accountId, String sessionId) {
         return new ClientContextRequest(id(accountId), id(sessionId));
@@ -86,7 +116,8 @@ public class ClientAuthenticationConverter {
         return new AccountContextResponseBody(Long.toString(context.accountId()), Long.toString(context.sessionId()),
             context.emailMasked(), context.emailVerified(), context.contextType(),
             context.tenantId() == null ? null : context.tenantId().toString(),
-            context.memberId() == null ? null : context.memberId().toString(), context.allowedActions());
+            context.memberId() == null ? null : context.memberId().toString(), context.allowedActions(),
+            context.fallbackReason());
     }
 
     /** 可信数字标识必须规范且可被本库 BIGINT 表达。 */

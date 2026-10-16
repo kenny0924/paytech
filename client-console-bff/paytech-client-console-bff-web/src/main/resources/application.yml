@@ -69,3 +69,5 @@ web:
       - /client-auth
       - /client-onboarding
       - /onboarding-files
+      - /client-workspace
+      - /client-developer

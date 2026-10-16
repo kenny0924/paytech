@@ -2,6 +2,7 @@ package com.paytech.client.console.bff.configuration;
 
 import com.paytech.client.contract.api.enums.ClientDraftErrorCode;
 import com.paytech.client.contract.api.onboarding.*;
+import com.paytech.client.contract.api.workspace.ClientWorkspaceApi;
 import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.httpclient.api.*;
 import com.paytech.platform.support.api.enums.*;
@@ -58,6 +59,12 @@ public class ClientOnboardingConfiguration {
     @Bean
     ClientOnboardingStartApi clientOnboardingStartApi(HttpServiceProxyFactory clientOnboardingCctFactory) {
         return clientOnboardingCctFactory.createClient(ClientOnboardingStartApi.class);
+    }
+
+    /** 工作区名称与已批准资料摘要；只返回本账号已批准的 Client。 */
+    @Bean
+    ClientWorkspaceApi clientWorkspaceApi(HttpServiceProxyFactory clientOnboardingCctFactory) {
+        return clientOnboardingCctFactory.createClient(ClientWorkspaceApi.class);
     }
 
     /** C07—C11 委托唯一业务 Owner。 */

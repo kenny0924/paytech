@@ -2,10 +2,12 @@ package com.paytech.client.contract.core.dal.mapper;
 
 import com.paytech.client.contract.domain.enums.ClientApplicationStatus;
 import java.time.Instant;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
 import com.paytech.client.contract.core.dal.dataobject.ClientApplicationSubmission;
+import com.paytech.client.contract.core.dal.dataobject.ClientWorkspaceSummary;
 
 /** t_client_application 的提交与审核登记 SQL；业务 SQL 位于 XML。 */
 public interface ClientApplicationMapper {
@@ -31,4 +33,7 @@ public interface ClientApplicationMapper {
     /** 同一提交、同一任务的 UNDER_REVIEW 条件结束审核，返回影响行数。 */
     int concludeReview(@Param("row") ClientApplicationSubmission row, @Param("status") ClientApplicationStatus status,
         @Param("decisionId") Long decisionId, @Param("release") boolean release, @Param("now") Instant now);
+
+    /** 本账号作为申请人且存在 APPROVED 申请的 Client 摘要，按 Client ID 升序。 */
+    List<ClientWorkspaceSummary> findApprovedSummaries(@Param("accountId") long accountId, @Param("clientIds") List<Long> clientIds);
 }

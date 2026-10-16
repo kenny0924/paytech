@@ -11,7 +11,24 @@ reason = 'Client onboarding initial registration; keep routes disabled pending a
 idempotent = {'C04', *('C%02d' % n for n in range(6, 14)), 'F01', 'F02',
               *('O%02d' % n for n in range(3, 10))}
 queries = {'C03': ['clientType'], 'C15': ['cursor', 'limit'],
-           'O01': ['page', 'size', 'status', 'qualificationType', 'applicationId']}
+           'O01': ['page', 'size', 'status', 'qualificationType', 'applicationId'],
+           'D01': ['status'], 'D13': ['endpointId', 'eventType', 'status', 'from', 'to', 'page', 'size']}
+
+# 2026-10-16 接入自助：工作区“开发者”接口（API 凭证 6、Webhook 9），租户上下文与权限由 BFF 调 Platform 判断。
+developer = [
+    ('D01', 'GET', '/credentials', 0), ('D02', 'GET', '/credentials/{credentialId}', 0),
+    ('D03', 'GET', '/scopes', 0), ('D04', 'POST', '/credentials', 4096),
+    ('D05', 'POST', '/credentials/{credentialId}/rotation', 1024),
+    ('D06', 'POST', '/credentials/{credentialId}/revocation', 1024),
+    ('D07', 'GET', '/webhook-endpoints', 0), ('D08', 'POST', '/webhook-endpoints', 8192),
+    ('D09', 'PUT', '/webhook-endpoints/{endpointId}', 8192),
+    ('D10', 'POST', '/webhook-endpoints/{endpointId}/status', 1024),
+    ('D11', 'POST', '/webhook-endpoints/{endpointId}/secret-rotation', 1024),
+    ('D12', 'POST', '/webhook-endpoints/{endpointId}/test-events', 1024),
+    ('D13', 'GET', '/webhook-deliveries', 0), ('D14', 'GET', '/webhook-deliveries/{deliveryId}', 0),
+    ('D15', 'POST', '/webhook-deliveries/{deliveryId}/replay', 1024),
+]
+idempotent |= {op for op, method, _, _ in developer if method != 'GET'}
 
 def pair(dimension, capacity, concurrency):
     return [dict(ruleType='RATE_LIMIT', dimension=dimension, capacity=capacity,
@@ -35,6 +52,38 @@ if not any(r['operationId'] == 'O10' for r in plan['routes']):
                downstreamPathTemplate='/client-onboarding-admin/v1/cases/{caseId}/files/{fileId}/download')
     o09 = next(r for r in plan['routes'] if r['operationId'] == 'O09')
     plan['routes'].insert(plan['routes'].index(o09) + 1, o10)
+
+# 租户与工作区（2026-10-16，requirements/20261016/client-console-租户与工作区 第 8 节）：
+# C02 下游改到认证路径；A05 刷新失败允许清 Cookie；新增 W01 返回账号、W02 工作区首页，重复运行保持幂等。
+for route in plan['routes']:
+    if route['operationId'] == 'C02':
+        route['downstreamPathTemplate'] = '/client-auth/v1/workspace-context'
+    if route['operationId'] == 'A05':
+        route['responseCookieMode'] = 'ISSUE_OR_CLEAR'
+if not any(r['operationId'] == 'W01' for r in plan['routes']):
+    base = next(r for r in plan['routes'] if r['operationId'] == 'A06')
+    w01 = dict(base, operationId='W01', routeCode='client-onboarding-w01', responseCookieMode='ISSUE_ONLY',
+               externalPathTemplate='/api/client/auth/v1/account-context',
+               downstreamPathTemplate='/client-auth/v1/account-context')
+    c02 = next(r for r in plan['routes'] if r['operationId'] == 'C02')
+    plan['routes'].insert(plan['routes'].index(c02) + 1, w01)
+if not any(r['operationId'] == 'W02' for r in plan['routes']):
+    base = next(r for r in plan['routes'] if r['operationId'] == 'C01')
+    w02 = dict(base, operationId='W02', routeCode='client-onboarding-w02',
+               externalPathTemplate='/api/client/workspace/v1/home',
+               downstreamPathTemplate='/client-workspace/v1/home')
+    w01 = next(r for r in plan['routes'] if r['operationId'] == 'W01')
+    plan['routes'].insert(plan['routes'].index(w01) + 1, w02)
+
+if not any(r['operationId'] == 'D01' for r in plan['routes']):
+    base = next(r for r in plan['routes'] if r['operationId'] == 'C01')
+    anchor = next(r for r in plan['routes'] if r['operationId'] == 'W02')
+    at = plan['routes'].index(anchor) + 1
+    for offset, (op, method, path, limit) in enumerate(developer):
+        plan['routes'].insert(at + offset, dict(base, operationId=op, routeCode='client-developer-' + op.lower(),
+            httpMethod=method, bodyLimitBytes=limit or base['bodyLimitBytes'],
+            externalPathTemplate='/api/client/developer/v1' + path,
+            downstreamPathTemplate='/client-developer/v1' + path))
 
 for route in plan['routes']:
     op = route['operationId']
