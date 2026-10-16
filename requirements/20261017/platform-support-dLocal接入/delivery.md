@@ -5,8 +5,8 @@
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 1 | 需求与接入设计：[需求](./requirement.md)、[技术方案](./technique.md)；沙箱直连探测 | **已确认**（2026-10-17） |
-| 2 | mor-test 配置与全部沙箱用例（含强制付款的已付款链路）；其他渠道回归 | **已交付，待确认** |
-| 3 | 文档回写与提交 | 待定 |
+| 2 | mor-test 配置与全部沙箱用例（含强制付款的已付款链路）；其他渠道回归 | **已确认**（2026-10-17） |
+| 3 | 文档回写与提交 | **已完成**（提交 `ee8ec88`，未推送） |
 
 ## 2. 阶段 1 结果（2026-10-17）
 
@@ -35,3 +35,10 @@
 - **测试单：** 两轮 `SBX_PAY_PENDING_CANCEL` 的订单已撤销（`CANCELLED`），已付款链路订单为 `PAID` 且退款 `SUCCESS`，均为终态，无需清理。
 - **回归：** PayBy 5 个 UAT 用例、PayerMax 4 个 UAT 用例（含下单后查询）、Alipay+ 3 个不需付款用例全部 PASSED。
 - **未执行：** `CURRENT_IMPLEMENTATION.md` 回写与提交（阶段 3）。
+
+## 5. 阶段 3（2026-10-17）
+
+- **授权：** 用户“可以”（阶段 2 通过，回写并提交，不推送）。
+- **回写：** `CURRENT_IMPLEMENTATION.md` 新增 dLocal 小节（Designed、mor-test 配置 Deployed / Sandbox Verified）。
+- **提交：** `ee8ec88`（私有暂存区，只含本需求目录与 `CURRENT_IMPLEMENTATION.md` 的 dLocal 小节；该文件中其他会话的未提交改动保留在工作区）；暂存差异经值比对不含凭据。未推送。
+- **验证：** `npm --prefix requirements-site test` 127 通过、10 失败，失败项与改动前相同（Commerce、Payment、开发规范等既有文档断言），与本需求无关。
