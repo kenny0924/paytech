@@ -72,6 +72,25 @@ public class AccountingPeriodRepositoryImpl implements AccountingPeriodRepositor
         return mapper.selectFirstUnclosedBefore(calendarId, startDate);
     }
 
+    /** 读取同一日历中开始晚于给定日期且已关闭、关账中或重开中的最早期间，不存在返回空。 */
+    @Override
+    public AccountingPeriod findFirstClosedAfter(long calendarId, LocalDate startDate) {
+        return mapper.selectFirstClosedAfter(calendarId, startDate);
+    }
+
+    /** 重开完成：REOPENING → OPEN 且重开次数加一，成功后同步原对象。 */
+    @Override
+    public void completeReopen(AccountingPeriod period) {
+        Instant now = now();
+        if (mapper.completeReopen(period, now) != 1) {
+            throw new ConcurrentRequestException("会计期间状态已变化: " + period.getId());
+        }
+        period.setStatus(PeriodStatus.OPEN);
+        period.setReopenCount(period.getReopenCount() + 1);
+        period.setVersion(period.getVersion() + 1);
+        period.setUpdateTime(now);
+    }
+
     /** 读取日历中包含给定日期的期间，不存在返回空。 */
     @Override
     public AccountingPeriod findByCalendarAndDate(long calendarId, LocalDate date) {

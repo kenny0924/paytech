@@ -1,6 +1,7 @@
 package com.paytech.finance.accounting.core.dal.mapper;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -14,4 +15,7 @@ public interface CloseAccountRuleMapper {
     /** 读取指定时点对某来源科目生效的结转规则。 */
     CloseAccountRule selectEffective(@Param("chartId") long chartId,
         @Param("sourceAccountId") long sourceAccountId, @Param("at") Instant at);
+
+    /** 读取指定时点在科目表内生效的全部结转规则，按来源科目升序。 */
+    List<CloseAccountRule> selectAllEffective(@Param("chartId") long chartId, @Param("at") Instant at);
 }

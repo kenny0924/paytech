@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import com.paytech.finance.accounting.core.dal.dataobject.PeriodClose;
 import com.paytech.finance.accounting.core.dal.mapper.PeriodCloseMapper;
 import com.paytech.finance.accounting.core.enums.PeriodCloseStatus;
+import com.paytech.finance.accounting.core.enums.PeriodCloseType;
 import com.paytech.finance.accounting.domain.view.PeriodCloseView;
 import com.paytech.finance.accounting.domainservice.repository.PeriodCloseRepository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
@@ -44,6 +45,18 @@ public class PeriodCloseRepositoryImpl implements PeriodCloseRepository {
     @Override
     public PeriodClose findByPeriodAndNo(long periodId, int closeNo) {
         return mapper.selectByPeriodAndNo(periodId, closeNo);
+    }
+
+    /** 按主键读取流程根，不存在返回空。 */
+    @Override
+    public PeriodClose findById(long id) {
+        return mapper.selectById(id);
+    }
+
+    /** 读取期间内指定类型序号最大的流程根，不存在返回空。 */
+    @Override
+    public PeriodClose findLatestByType(long periodId, PeriodCloseType closeType) {
+        return mapper.selectLatestByType(periodId, closeType);
     }
 
     /** 按原状态与版本迁移状态并写入活动槽、摘要与复核人，成功后同步原对象。 */

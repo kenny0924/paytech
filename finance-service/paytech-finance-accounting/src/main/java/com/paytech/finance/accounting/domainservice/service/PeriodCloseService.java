@@ -1,6 +1,7 @@
 package com.paytech.finance.accounting.domainservice.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.paytech.finance.accounting.core.dal.dataobject.Account;
 import com.paytech.finance.accounting.core.dal.dataobject.AccountingInstruction;
@@ -10,13 +11,14 @@ import com.paytech.finance.accounting.core.dal.dataobject.InstructionLine;
 import com.paytech.finance.accounting.core.dal.dataobject.LedgerBook;
 import com.paytech.finance.accounting.core.dal.dataobject.PeriodCloseBook;
 import com.paytech.finance.accounting.domain.PeriodCloseContext;
+import com.paytech.finance.accounting.domain.PeriodReopenContext;
 import com.paytech.finance.accounting.domain.view.PeriodCloseDetailView;
 import com.paytech.finance.accounting.domain.view.PeriodCloseView;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 
 /**
- * 期间关账流程的本地保存、状态迁移与查询
+ * 期间关账与重开流程的本地保存、状态迁移与查询
  * <li>步骤执行由 Processor 编排；本服务只负责关账表与期间状态的原子写入，以及关账检查所需的读取。</li>
  * <li>锁顺序：期间行（排他）→ 各账簿序号行（共享，按账簿主键升序）。</li>
  */
@@ -61,6 +63,37 @@ public interface PeriodCloseService {
 
     /** 驳回：一个事务内写 Checker 记录、流程 REJECTED 并释放活动槽、期间 CLOSING → OPEN。 */
     void reject(PeriodCloseContext context, CloseApproval checkerApproval);
+
+    /**
+     * 规划重开冲回：读取原关账各账簿结转指令的行并逐行借贷互换、金额不变
+     *
+     * @param reopensCloseId 原关账流程主键
+     * @return 账簿主键（升序）→ 冲回行；原关账无结转指令的账簿为空列表
+     */
+    Map<Long, List<InstructionLine>> planReopenReversal(long reopensCloseId);
+
+    /**
+     * 发起重开：一个事务内锁期间并复验 CLOSED、分配序号并插入流程根（占用活动槽）、期间 CLOSED → REOPENING、
+     * 按账簿主键升序以共享锁冻结水位、插入账簿证据与 3 个步骤、步骤 1—2 置 SUCCEEDED、
+     * 冻结重开摘要使流程进入 PENDING_CHECK，并写入带同一摘要的 Maker 记录
+     * <li>同一期间已有活动流程时按并发冲突拒绝。</li>
+     */
+    void startReopen(PeriodReopenContext context, CloseApproval makerApproval);
+
+    /** 重开批准：排他锁期间并确认仍处于 REOPENING；必须加入调用方事务，且先于冲回过账调用。 */
+    void lockReopeningPeriod(PeriodReopenContext context);
+
+    /** 重开账簿冲回完成：记录冲回指令（无冲回行时为空）并置 FINALIZED，水位保持冻结值；必须加入调用方事务。 */
+    void finalizeReopenBook(PeriodCloseBook book, Long instructionId);
+
+    /**
+     * 完成重开：步骤 3 SUCCEEDED、写 Checker 记录、流程 COMPLETED 并释放活动槽、期间 REOPENING → OPEN 且重开次数加一
+     * <li>必须加入调用方事务，与冲回过账一起提交或回滚。</li>
+     */
+    void completeReopen(PeriodReopenContext context, CloseApproval checkerApproval, String postSummary);
+
+    /** 驳回重开：一个事务内写 Checker 记录、步骤 3 SKIPPED、流程 REJECTED 并释放活动槽、期间 REOPENING → CLOSED，不生成分录。 */
+    void rejectReopen(PeriodCloseContext context, CloseApproval checkerApproval);
 
     /** 读取期间与序号对应的流程（含账簿证据与步骤），不存在时业务拒绝。 */
     PeriodCloseContext loadForReview(long periodId, int closeNo);

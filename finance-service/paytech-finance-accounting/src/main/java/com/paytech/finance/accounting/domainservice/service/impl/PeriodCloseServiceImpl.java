@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -32,6 +33,9 @@ import com.paytech.finance.accounting.core.enums.PeriodCloseStatus;
 import com.paytech.finance.accounting.core.enums.PeriodStatus;
 import com.paytech.finance.accounting.domain.PeriodCloseContentHash;
 import com.paytech.finance.accounting.domain.PeriodCloseContext;
+import com.paytech.finance.accounting.domain.PeriodReopenContentHash;
+import com.paytech.finance.accounting.domain.PeriodReopenContext;
+import com.paytech.finance.accounting.domain.PeriodReopenPlan;
 import com.paytech.finance.accounting.domain.view.PeriodCloseDetailView;
 import com.paytech.finance.accounting.domain.view.PeriodCloseView;
 import com.paytech.finance.accounting.domainservice.repository.AccountRepository;
@@ -54,7 +58,7 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 
 import lombok.AllArgsConstructor;
 
-/** 关账流程的本地保存与查询；所有状态迁移带期望旧状态与版本。 */
+/** 关账与重开流程的本地保存与查询；所有状态迁移带期望旧状态与版本。 */
 @Service
 @AllArgsConstructor
 public class PeriodCloseServiceImpl implements PeriodCloseService {
@@ -93,7 +97,7 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
             periodCloseBookRepository.insertBatch(context.getCloseBooks());
             closeStepRepository.insertBatch(context.getSteps());
             closeStepRepository.complete(context.step(CloseStepType.LOCK_SEQUENCE), CloseStepStatus.SUCCEEDED,
-                PeriodCloseContentHash.sha256(watermarkSummary(context)));
+                PeriodCloseContentHash.sha256(watermarkSummary(context.getCloseBooks())));
         });
     }
 
@@ -116,9 +120,9 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
     }
 
     /** 步骤 1 的结果摘要文本：按账簿主键升序的水位。 */
-    String watermarkSummary(PeriodCloseContext context) {
+    String watermarkSummary(List<PeriodCloseBook> closeBooks) {
         StringBuilder summary = new StringBuilder("LOCK_SEQUENCE");
-        context.getCloseBooks().forEach(book -> summary.append('|').append(book.getLedgerBookId()).append('=')
+        closeBooks.forEach(book -> summary.append('|').append(book.getLedgerBookId()).append('=')
             .append(book.getAsOfSequence()));
         return summary.toString();
     }
@@ -234,6 +238,104 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
                 context.getClose().getCloseHash(), checkerApproval.getActorId());
             accountingPeriodRepository.updateStatus(context.getPeriod(), PeriodStatus.OPEN);
         });
+    }
+
+    /** 原结转指令行不可变，按账簿主键升序逐个反向。 */
+    @Override
+    public Map<Long, List<InstructionLine>> planReopenReversal(long reopensCloseId) {
+        Map<Long, List<InstructionLine>> plan = new TreeMap<>();
+        for (PeriodCloseBook book : periodCloseBookRepository.findByClose(reopensCloseId)) {
+            Long instructionId = book.getPostingInstructionId();
+            plan.put(book.getLedgerBookId(), instructionId == null ? List.of()
+                : PeriodReopenPlan.reverse(instructionLineRepository.findByInstruction(instructionId)));
+        }
+        return plan;
+    }
+
+    /** 期间 CLOSED → REOPENING、流程登记、水位冻结、步骤 1—2 与摘要冻结同一事务提交。 */
+    @Override
+    public void startReopen(PeriodReopenContext context, CloseApproval makerApproval) {
+        transactionTemplate.executeWithoutResult(status -> {
+            AccountingPeriod period = lockPeriod(context.getPeriod().getId());
+            if (period.getStatus() != PeriodStatus.CLOSED) {
+                throw new BizCheckFailException("只有 CLOSED 期间可以发起重开: " + period.getId() + ", 状态 "
+                    + period.getStatus().getCode());
+            }
+            insertReopen(context);
+            freezeReopen(context, makerApproval);
+        });
+    }
+
+    /** 插入重开流程根、迁移期间、冻结水位，插入账簿证据与步骤并完成步骤 1—2。 */
+    void insertReopen(PeriodReopenContext context) {
+        context.getClose().setCloseNo(periodCloseRepository.nextCloseNo(context.getPeriod().getId()));
+        periodCloseRepository.insert(context.getClose());
+        accountingPeriodRepository.updateStatus(context.getPeriod(), PeriodStatus.REOPENING);
+        for (PeriodCloseBook book : context.getCloseBooks()) {
+            book.setAsOfSequence(lockWatermark(book.getLedgerBookId()));
+        }
+        periodCloseBookRepository.insertBatch(context.getCloseBooks());
+        closeStepRepository.insertBatch(context.getSteps());
+        closeStepRepository.complete(context.step(CloseStepType.LOCK_SEQUENCE), CloseStepStatus.SUCCEEDED,
+            PeriodCloseContentHash.sha256(watermarkSummary(context.getCloseBooks())));
+        closeStepRepository.complete(context.step(CloseStepType.PLAN_REOPEN_REVERSAL), CloseStepStatus.SUCCEEDED,
+            PeriodCloseContentHash.sha256(PeriodReopenContentHash.planText(context.getReversalLines())));
+    }
+
+    /** 冻结重开摘要：流程 RUNNING → PENDING_CHECK（活动槽保持占用），Maker 记录确认同一摘要。 */
+    void freezeReopen(PeriodReopenContext context, CloseApproval makerApproval) {
+        String closeHash = PeriodReopenContentHash.compute(context);
+        periodCloseRepository.updateStatus(context.getClose(), PeriodCloseStatus.PENDING_CHECK, ACTIVE_SLOT, closeHash,
+            null);
+        makerApproval.setApprovedCloseHash(closeHash);
+        closeApprovalRepository.insert(makerApproval);
+    }
+
+    /** 锁后当前读复验 REOPENING；期间状态与上下文不一致视为系统错误。 */
+    @Override
+    public void lockReopeningPeriod(PeriodReopenContext context) {
+        requireTransaction();
+        requireReopening(lockPeriod(context.getPeriod().getId()));
+    }
+
+    /** 只允许 LOCKED 且尚无冲回指令的账簿证据被冻结。 */
+    @Override
+    public void finalizeReopenBook(PeriodCloseBook book, Long instructionId) {
+        requireTransaction();
+        periodCloseBookRepository.finalizeReopenBook(book, instructionId);
+    }
+
+    /** 步骤、审批记录、流程终态与期间重开计数一起写入调用方事务。 */
+    @Override
+    public void completeReopen(PeriodReopenContext context, CloseApproval checkerApproval, String postSummary) {
+        requireTransaction();
+        closeStepRepository.complete(context.step(CloseStepType.POST_REOPEN_REVERSAL), CloseStepStatus.SUCCEEDED,
+            PeriodCloseContentHash.sha256(postSummary));
+        closeApprovalRepository.insert(checkerApproval);
+        periodCloseRepository.updateStatus(context.getClose(), PeriodCloseStatus.COMPLETED, null,
+            context.getClose().getCloseHash(), checkerApproval.getActorId());
+        accountingPeriodRepository.completeReopen(context.getPeriod());
+    }
+
+    /** 驳回记录、步骤跳过、流程终态与期间回到 CLOSED 同一事务。 */
+    @Override
+    public void rejectReopen(PeriodCloseContext context, CloseApproval checkerApproval) {
+        transactionTemplate.executeWithoutResult(status -> {
+            requireReopening(lockPeriod(context.getPeriod().getId()));
+            closeApprovalRepository.insert(checkerApproval);
+            closeStepRepository.complete(context.step(CloseStepType.POST_REOPEN_REVERSAL), CloseStepStatus.SKIPPED, null);
+            periodCloseRepository.updateStatus(context.getClose(), PeriodCloseStatus.REJECTED, null,
+                context.getClose().getCloseHash(), checkerApproval.getActorId());
+            accountingPeriodRepository.updateStatus(context.getPeriod(), PeriodStatus.CLOSED);
+        });
+    }
+
+    /** 待审批的重开流程所在期间必须处于 REOPENING。 */
+    void requireReopening(AccountingPeriod period) {
+        if (period.getStatus() != PeriodStatus.REOPENING) {
+            throw new ErrorException("待审批重开流程的期间不在 REOPENING: " + period.getId() + ", 状态 "
+                + period.getStatus().getCode());
+        }
     }
 
     /** 复核只需要期间、流程根、账簿证据与步骤。 */

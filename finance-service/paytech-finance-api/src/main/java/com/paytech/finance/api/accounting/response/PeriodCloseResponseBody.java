@@ -51,6 +51,24 @@ public class PeriodCloseResponseBody {
      */
     private String failedStepType;
 
+    /**
+     * 重开所引用原关账流程的期间内序号
+     * <li>仅 REOPEN 流程有值，CLOSE 流程为空。</li>
+     */
+    private String reopensCloseNo;
+
+    /**
+     * 重开原因代码
+     * <li>仅 REOPEN 流程有值，CLOSE 流程为空。</li>
+     */
+    private String reopenReasonCode;
+
+    /**
+     * 重开申请编号
+     * <li>仅 REOPEN 流程有值，CLOSE 流程为空。</li>
+     */
+    private String reopenRequestRef;
+
     /** 创建时间（UTC）。 */
     private Instant createTime;
 }

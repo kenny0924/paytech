@@ -13,4 +13,7 @@ public interface InstructionLineMapper {
 
     /** 批量插入指令行。 */
     int insertBatch(@Param("lines") List<InstructionLine> lines);
+
+    /** 按行号升序读取指令的全部行。 */
+    List<InstructionLine> selectByInstruction(@Param("instructionId") long instructionId);
 }

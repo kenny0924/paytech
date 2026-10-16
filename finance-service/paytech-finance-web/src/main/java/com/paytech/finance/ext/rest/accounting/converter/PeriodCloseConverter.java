@@ -6,13 +6,15 @@ import com.paytech.finance.accounting.domain.view.PeriodCloseDetailView;
 import com.paytech.finance.accounting.domain.view.PeriodCloseView;
 import com.paytech.finance.accounting.service.processor.request.ReviewPeriodCloseRequest;
 import com.paytech.finance.accounting.service.processor.request.StartPeriodCloseRequest;
+import com.paytech.finance.accounting.service.processor.request.StartPeriodReopenRequest;
 import com.paytech.finance.api.accounting.request.ReviewPeriodCloseRequestBody;
 import com.paytech.finance.api.accounting.request.StartPeriodCloseRequestBody;
+import com.paytech.finance.api.accounting.request.StartPeriodReopenRequestBody;
 import com.paytech.finance.api.accounting.response.PeriodCloseDetailResponseBody;
 import com.paytech.finance.api.accounting.response.PeriodCloseResponseBody;
 import com.paytech.foundation.common.enums.CodeEnum;
 
-/** 期间关账接口的 Wire 模型与内部请求/View 转换；ID 与序号输出为字符串。 */
+/** 期间关账与重开接口的 Wire 模型与内部请求/View 转换；ID 与序号输出为字符串。 */
 @Component
 public class PeriodCloseConverter {
 
@@ -21,6 +23,16 @@ public class PeriodCloseConverter {
         StartPeriodCloseRequest request = new StartPeriodCloseRequest();
         request.setPeriodId(Long.valueOf(periodId));
         request.setMakerId(Long.valueOf(body.getMakerId()));
+        return request;
+    }
+
+    /** 转换发起重开请求；原因代码合法性由 Processor 校验。 */
+    public StartPeriodReopenRequest toRequest(String periodId, StartPeriodReopenRequestBody body) {
+        StartPeriodReopenRequest request = new StartPeriodReopenRequest();
+        request.setPeriodId(Long.valueOf(periodId));
+        request.setMakerId(Long.valueOf(body.getMakerId()));
+        request.setReasonCode(body.getReasonCode());
+        request.setRequestRef(body.getRequestRef());
         return request;
     }
 
@@ -46,6 +58,9 @@ public class PeriodCloseConverter {
         body.setCheckerId(text(view.getCheckerId()));
         body.setCloseHash(view.getCloseHash());
         body.setFailedStepType(CodeEnum.defaultCode(view.getFailedStepType()));
+        body.setReopensCloseNo(view.getReopensCloseNo() == null ? null : view.getReopensCloseNo().toString());
+        body.setReopenReasonCode(view.getReopenReasonCode());
+        body.setReopenRequestRef(view.getReopenRequestRef());
         body.setCreateTime(view.getCreateTime());
         return body;
     }
@@ -63,6 +78,9 @@ public class PeriodCloseConverter {
         body.setCheckerId(summary.getCheckerId());
         body.setCloseHash(summary.getCloseHash());
         body.setFailedStepType(summary.getFailedStepType());
+        body.setReopensCloseNo(summary.getReopensCloseNo());
+        body.setReopenReasonCode(summary.getReopenReasonCode());
+        body.setReopenRequestRef(summary.getReopenRequestRef());
         body.setCreateTime(summary.getCreateTime());
         body.setSteps(view.getSteps().stream().map(this::toStepBody).toList());
         body.setBooks(view.getBooks().stream().map(this::toBookBody).toList());

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.paytech.finance.accounting.core.dal.dataobject.PeriodClose;
 import com.paytech.finance.accounting.core.enums.PeriodCloseStatus;
+import com.paytech.finance.accounting.core.enums.PeriodCloseType;
 import com.paytech.finance.accounting.domain.view.PeriodCloseView;
 
 /** t_period_close：关账/重开流程根读写与关账前置检查。 */
@@ -17,6 +18,12 @@ public interface PeriodCloseRepository {
 
     /** 按期间与序号读取流程根，不存在返回空。 */
     PeriodClose findByPeriodAndNo(long periodId, int closeNo);
+
+    /** 按主键读取流程根，不存在返回空。 */
+    PeriodClose findById(long id);
+
+    /** 读取期间内指定类型序号最大的流程根，不存在返回空。 */
+    PeriodClose findLatestByType(long periodId, PeriodCloseType closeType);
 
     /** 按原状态与版本迁移状态并写入活动槽、摘要与复核人，成功后同步原对象。 */
     void updateStatus(PeriodClose close, PeriodCloseStatus status, Integer activeSlot, String closeHash, Long checkerId);

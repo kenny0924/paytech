@@ -1,5 +1,6 @@
 package com.paytech.finance.accounting.core.dal.mapper;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -41,4 +42,8 @@ public interface JournalLineMapper {
     /** 损益结转：账簿内收入/费用科目下每个账户在期间内、水位以内的借贷发生额，按账户主键升序。 */
     List<ProfitCloseBalanceView> selectProfitCloseBalances(@Param("ledgerBookId") long ledgerBookId,
         @Param("asOfSequence") long asOfSequence, @Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    /** 年末结转：账户在水位以内、过账日不晚于截止日的贷减借累计额；无流水为零。 */
+    BigDecimal selectCreditNetUpTo(@Param("accountId") long accountId, @Param("asOfSequence") long asOfSequence,
+        @Param("end") LocalDate end);
 }

@@ -49,6 +49,24 @@ public class PeriodCloseView {
      */
     private CloseStepType failedStepType;
 
+    /**
+     * 重开所引用原关账流程的期间内序号
+     * <li>CLOSE 流程为空。</li>
+     */
+    private Integer reopensCloseNo;
+
+    /**
+     * 重开原因代码
+     * <li>CLOSE 流程为空。</li>
+     */
+    private String reopenReasonCode;
+
+    /**
+     * 重开申请编号
+     * <li>CLOSE 流程为空。</li>
+     */
+    private String reopenRequestRef;
+
     /** 创建时间。 */
     private Instant createTime;
 }

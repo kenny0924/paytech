@@ -77,4 +77,11 @@
         GROUP BY a.id, a.chart_account_id
         ORDER BY a.id
     </select>
+
+    <select id="selectCreditNetUpTo" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(CASE WHEN l.entry_side = 'CREDIT' THEN l.amount ELSE -l.amount END), 0)
+        FROM t_journal_line l
+        JOIN t_journal_entry e ON e.id = l.journal_entry_id
+        WHERE l.account_id = #{accountId} AND e.journal_sequence &lt;= #{asOfSequence} AND e.posting_date &lt;= #{end}
+    </select>
 </mapper>

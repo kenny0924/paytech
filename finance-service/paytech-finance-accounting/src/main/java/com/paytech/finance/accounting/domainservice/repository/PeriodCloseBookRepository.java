@@ -19,6 +19,9 @@ public interface PeriodCloseBookRepository {
     /** 冻结最终试算并置为 FINALIZED，成功后同步原对象。 */
     void finalizeBook(PeriodCloseBook book, long finalTrialRunId);
 
+    /** 重开账簿记录冲回指令（可为空）并置为 FINALIZED，成功后同步原对象。 */
+    void finalizeReopenBook(PeriodCloseBook book, Long instructionId);
+
     /** 统计不满足最终冻结条件的账簿数。 */
     long countInvalidFinalBooks(long periodCloseId);
 }

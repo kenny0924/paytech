@@ -21,6 +21,11 @@
         WHERE id = #{book.id} AND status = 'LOCKED'
     </update>
 
+    <update id="finalizeReopenBook">
+        UPDATE t_period_close_book SET posting_instruction_id = #{instructionId}, status = 'FINALIZED', update_time = #{now}
+        WHERE id = #{book.id} AND status = 'LOCKED' AND posting_instruction_id IS NULL
+    </update>
+
     <select id="countInvalidFinalBooks" resultType="long">
         SELECT COUNT(*) FROM t_period_close_book b
         LEFT JOIN t_trial_balance_run r ON r.id = b.final_trial_run_id

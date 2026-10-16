@@ -14,6 +14,16 @@
         SELECT id, period_id, close_no, close_type, reopens_close_id, reopen_reason_code, reopen_request_ref, status, active_slot, maker_id, checker_id, close_hash, version, create_time, update_time FROM t_period_close WHERE period_id = #{periodId} AND close_no = #{closeNo}
     </select>
 
+    <select id="selectById" resultType="com.paytech.finance.accounting.core.dal.dataobject.PeriodClose">
+        SELECT id, period_id, close_no, close_type, reopens_close_id, reopen_reason_code, reopen_request_ref, status, active_slot, maker_id, checker_id, close_hash, version, create_time, update_time FROM t_period_close WHERE id = #{id}
+    </select>
+
+    <select id="selectLatestByType" resultType="com.paytech.finance.accounting.core.dal.dataobject.PeriodClose">
+        SELECT id, period_id, close_no, close_type, reopens_close_id, reopen_reason_code, reopen_request_ref, status, active_slot, maker_id, checker_id, close_hash, version, create_time, update_time FROM t_period_close WHERE period_id = #{periodId} AND close_type = #{closeType}
+        ORDER BY close_no DESC
+        LIMIT 1
+    </select>
+
     <update id="updateStatus">
         UPDATE t_period_close
         SET status = #{status}, active_slot = #{activeSlot}, close_hash = #{closeHash}, checker_id = #{checkerId},
@@ -23,15 +33,19 @@
 
     <select id="selectView" resultType="com.paytech.finance.accounting.domain.view.PeriodCloseView">
         SELECT c.id period_close_id, c.period_id, c.close_no, c.close_type, c.status, c.maker_id, c.checker_id, c.close_hash, c.create_time,
+               o.close_no reopens_close_no, c.reopen_reason_code, c.reopen_request_ref,
                (SELECT s.step_type FROM t_close_step s WHERE s.period_close_id = c.id AND s.status = 'FAILED' ORDER BY s.step_no LIMIT 1) failed_step_type
         FROM t_period_close c
+        LEFT JOIN t_period_close o ON o.id = c.reopens_close_id
         WHERE c.period_id = #{periodId} AND c.close_no = #{closeNo}
     </select>
 
     <select id="selectViewPage" resultType="com.paytech.finance.accounting.domain.view.PeriodCloseView">
         SELECT c.id period_close_id, c.period_id, c.close_no, c.close_type, c.status, c.maker_id, c.checker_id, c.close_hash, c.create_time,
+               o.close_no reopens_close_no, c.reopen_reason_code, c.reopen_request_ref,
                (SELECT s.step_type FROM t_close_step s WHERE s.period_close_id = c.id AND s.status = 'FAILED' ORDER BY s.step_no LIMIT 1) failed_step_type
         FROM t_period_close c
+        LEFT JOIN t_period_close o ON o.id = c.reopens_close_id
         WHERE c.period_id = #{periodId}
         ORDER BY c.close_no DESC
         LIMIT #{size} OFFSET #{offset}

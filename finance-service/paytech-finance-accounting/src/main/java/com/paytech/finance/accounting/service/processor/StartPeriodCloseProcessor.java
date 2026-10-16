@@ -1,13 +1,16 @@
 package com.paytech.finance.accounting.service.processor;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -67,7 +70,7 @@ import lombok.AllArgsConstructor;
  * 发起期间关账并同步执行 7 个固定步骤
  * <li>事务前：期间存在且 OPEN、同日历更早期间全部 CLOSED（按顺序关账）、枚举期间主体的全部账簿。</li>
  * <li>步骤 1 在一个事务内推进 CLOSING、占用活动槽并冻结水位；步骤 2—7 各自短事务，任一步失败即流程 FAILED、期间回到 OPEN。</li>
- * <li>步骤 6 的损益结转在一个事务内生成 AUTO 指令（来源 FINANCE / PERIOD_CLOSE:{关账ID}:{账簿ID}，无规则 Bundle）并以 CLOSING 分录过账；本期无收入费用的账簿不生成指令。</li>
+ * <li>步骤 6 的损益结转在一个事务内生成 AUTO 指令（来源 FINANCE / PERIOD_CLOSE:{关账ID}:{账簿ID}，无规则 Bundle）并以 CLOSING 分录过账；财年最后期间同一指令追加本期损益转入留存收益的两行；没有任何结转行的账簿不生成指令。</li>
  * <li>全部通过后冻结 close_hash，流程进入 PENDING_CHECK，并写入 Maker 记录。</li>
  * <li>与审批、驳回共用期间资源锁；数据库期间行锁、活动槽唯一键与状态 CAS 仍是最终防线。</li>
  */
@@ -141,9 +144,9 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
         PeriodClose close = buildClose(period, makerId, now);
         List<PeriodCloseBook> closeBooks = books.stream().map(book -> buildCloseBook(close, book, now)).toList();
         List<CloseStep> steps = new ArrayList<>();
-        CloseStepType[] types = CloseStepType.values();
-        for (int i = 0; i < types.length; i++) {
-            steps.add(buildStep(close, i + 1, types[i], now));
+        List<CloseStepType> types = CloseStepType.closeSteps();
+        for (int i = 0; i < types.size(); i++) {
+            steps.add(buildStep(close, i + 1, types.get(i), now));
         }
         return new PeriodCloseContext(period, books, minorUnits, close, closeBooks, steps);
     }
@@ -271,22 +274,48 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
         return new StepOutcome(passed, summary.toString());
     }
 
-    /** 步骤 6：逐账簿损益结转；缺少结转规则时失败。 */
+    /** 步骤 6：逐账簿损益结转，财年最后期间另结转本期损益至留存收益；缺少或冲突的结转规则时失败。 */
     StepOutcome postProfitClose(PeriodCloseContext context) {
+        boolean yearEnd = isFiscalYearEnd(context.getPeriod());
         StringBuilder summary = new StringBuilder("POST_PROFIT_CLOSE");
         for (LedgerBook book : context.getBooks()) {
             PeriodCloseBook closeBook = context.closeBook(book.getId());
             List<ProfitCloseBalanceView> balances = journalLineRepository.findProfitCloseBalances(book.getId(),
                 closeBook.getAsOfSequence(), context.getPeriod().getStartDate(), context.getPeriod().getEndDate());
             Map<Long, Long> resultChartBySource = resultChartBySource(context, book, balances);
-            if (resultChartBySource == null) {
+            Map<Long, Long> retainedChartByResult = yearEnd ? retainedChartByResult(context, book) : Map.of();
+            if (resultChartBySource == null || retainedChartByResult == null) {
                 return new StepOutcome(false, summary.append('|').append(book.getId()).append("=MISSING_CLOSE_RULE").toString());
             }
-            Long instructionId = transactionTemplate.execute(
-                status -> postBookProfitClose(context, book, closeBook, balances, resultChartBySource));
+            Long instructionId = transactionTemplate.execute(status -> postBookProfitClose(context, book, closeBook,
+                balances, resultChartBySource, retainedChartByResult));
             summary.append('|').append(book.getId()).append('=').append(instructionId == null ? "NONE" : instructionId);
         }
         return new StepOutcome(true, summary.toString());
+    }
+
+    /** 财年最后期间：期间结束日的次日是财年起始月的 1 日。 */
+    boolean isFiscalYearEnd(AccountingPeriod period) {
+        FiscalCalendar calendar = fiscalCalendarRepository.findById(period.getCalendarId());
+        LocalDate nextDay = period.getEndDate().plusDays(1);
+        return nextDay.getDayOfMonth() == 1 && nextDay.getMonthValue() == calendar.getYearStartMonth();
+    }
+
+    /**
+     * 年末结转映射：期间结束日生效的全部规则中，本期损益科目 → 留存收益科目
+     *
+     * @return 按本期损益科目升序的映射；同一本期损益科目映射到多个留存收益科目时返回空
+     */
+    Map<Long, Long> retainedChartByResult(PeriodCloseContext context, LedgerBook book) {
+        Instant at = context.getPeriod().getEndDate().atStartOfDay(ZoneOffset.UTC).toInstant();
+        Map<Long, Long> result = new TreeMap<>();
+        for (CloseAccountRule rule : closeAccountRuleRepository.findAllEffective(book.getChartId(), at)) {
+            Long existing = result.putIfAbsent(rule.getCurrentResultAccountId(), rule.getRetainedEarningsAccountId());
+            if (existing != null && !existing.equals(rule.getRetainedEarningsAccountId())) {
+                return null;
+            }
+        }
+        return result;
     }
 
     /** 每个来源科目在期间结束日生效的结转规则的本期损益科目；任一缺失返回空。 */
@@ -306,16 +335,17 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
     }
 
     /**
-     * 一个事务内：确保本期损益账户、计算结转行、保存 AUTO 指令、以 CLOSING 分录过账并推进账簿证据水位
+     * 一个事务内：确保本期损益账户、计算结转行（年末含转入留存收益行）、保存 AUTO 指令、以 CLOSING 分录过账并推进账簿证据水位
      *
-     * @return 结转指令主键；本期无收入费用净额时为空
+     * @return 结转指令主键；没有任何结转行时为空
      */
     Long postBookProfitClose(PeriodCloseContext context, LedgerBook book, PeriodCloseBook closeBook,
-        List<ProfitCloseBalanceView> balances, Map<Long, Long> resultChartBySource) {
+        List<ProfitCloseBalanceView> balances, Map<Long, Long> resultChartBySource, Map<Long, Long> retainedChartByResult) {
         Map<Long, Long> resultAccountBySource = new HashMap<>();
         resultChartBySource.forEach((source, resultChart) -> resultAccountBySource.put(source,
             periodCloseService.ensureResultAccount(book, resultChart).getId()));
-        List<ProfitClosePlan.Line> planned = ProfitClosePlan.lines(balances, resultAccountBySource);
+        List<ProfitClosePlan.Line> planned = new ArrayList<>(ProfitClosePlan.lines(balances, resultAccountBySource));
+        planned.addAll(retainedEarningsLines(context, book, closeBook, planned, retainedChartByResult));
         if (planned.isEmpty()) {
             return null;
         }
@@ -326,6 +356,26 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
             context.getPeriod().getId(), context.getPeriod().getEndDate(), JournalEntryType.CLOSING));
         periodCloseService.recordProfitClosePosting(closeBook, entry.getJournalSequence(), instruction.getId());
         return instruction.getId();
+    }
+
+    /**
+     * 年末转入留存收益行：本期损益账户截至锁定水位的贷减借结余加本次结转行的净影响，非零时生成两行
+     * <li>本期损益与留存收益账户均为账簿主体的 NONE 账户，不存在时按身份矩阵创建。</li>
+     */
+    List<ProfitClosePlan.Line> retainedEarningsLines(PeriodCloseContext context, LedgerBook book,
+        PeriodCloseBook closeBook, List<ProfitClosePlan.Line> planned, Map<Long, Long> retainedChartByResult) {
+        List<ProfitClosePlan.Line> lines = new ArrayList<>();
+        retainedChartByResult.forEach((resultChart, retainedChart) -> {
+            long resultAccountId = periodCloseService.ensureResultAccount(book, resultChart).getId();
+            BigDecimal balance = journalLineRepository.findCreditNetUpTo(resultAccountId, closeBook.getAsOfSequence(),
+                context.getPeriod().getEndDate()).add(ProfitClosePlan.creditNet(planned, resultAccountId));
+            if (balance.signum() == 0) {
+                return;
+            }
+            long retainedAccountId = periodCloseService.ensureResultAccount(book, retainedChart).getId();
+            lines.addAll(ProfitClosePlan.retainedEarningsLines(resultAccountId, retainedAccountId, balance));
+        });
+        return lines;
     }
 
     /** 系统关账 AUTO 指令：来源 FINANCE、事件键 PERIOD_CLOSE:{关账ID}:{账簿ID}、无规则 Bundle，输入摘要覆盖结转行。 */

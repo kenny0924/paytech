@@ -12,6 +12,7 @@ import com.paytech.finance.accounting.core.dal.dataobject.PeriodClose;
 import com.paytech.finance.accounting.core.enums.ApprovalDecision;
 import com.paytech.finance.accounting.core.enums.ApprovalRole;
 import com.paytech.finance.accounting.core.enums.PeriodCloseStatus;
+import com.paytech.finance.accounting.core.enums.PeriodCloseType;
 import com.paytech.finance.accounting.domain.PeriodCloseContext;
 import com.paytech.finance.accounting.domain.view.PeriodCloseView;
 import com.paytech.finance.accounting.domainservice.service.PeriodCloseService;
@@ -23,7 +24,9 @@ import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import lombok.AllArgsConstructor;
 
 /**
- * 驳回期间关账：流程 REJECTED、释放活动槽、期间 CLOSING → OPEN；已过账的结转分录保留
+ * 驳回关账或重开流程，按流程类型分派
+ * <li>CLOSE：流程 REJECTED、释放活动槽、期间 CLOSING → OPEN；已过账的结转分录保留。</li>
+ * <li>REOPEN：流程 REJECTED、释放活动槽、步骤 3 SKIPPED、期间 REOPENING → CLOSED；不生成指令或分录，原关账可再次被重开。</li>
  * <li>与发起关账共用期间资源锁；流程状态 CAS 与期间行锁仍是最终防线。</li>
  */
 @Component
@@ -33,7 +36,7 @@ public class RejectPeriodCloseProcessor extends AbstractLockProcessor<ReviewPeri
     private final IdGenerator idGenerator;
     private final PeriodCloseService periodCloseService;
 
-    /** 与同一期间的发起关账共用资源锁，未取得立即返回并发冲突。 */
+    /** 与同一期间的发起关账、发起重开共用资源锁，未取得立即返回并发冲突。 */
     @Override
     protected LockCommand lockCommand(ReviewPeriodCloseRequest request) {
         return LockCommand.tryLock(AccountingLocks.periodClose(request.getPeriodId()));
@@ -43,7 +46,12 @@ public class RejectPeriodCloseProcessor extends AbstractLockProcessor<ReviewPeri
     protected PeriodCloseView processWithinLock(ReviewPeriodCloseRequest request) {
         PeriodCloseContext context = periodCloseService.loadForReview(request.getPeriodId(), request.getCloseNo());
         checkReviewable(context.getClose(), request);
-        periodCloseService.reject(context, buildApproval(context.getClose(), request.getCheckerId()));
+        CloseApproval approval = buildApproval(context.getClose(), request.getCheckerId());
+        if (context.getClose().getCloseType() == PeriodCloseType.REOPEN) {
+            periodCloseService.rejectReopen(context, approval);
+        } else {
+            periodCloseService.reject(context, approval);
+        }
         return periodCloseService.getClose(request.getPeriodId(), request.getCloseNo()).getSummary();
     }
 

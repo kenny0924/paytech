@@ -18,6 +18,7 @@ import lombok.Getter;
  * <li>每个收入/费用账户按本期借贷净额反向冲为零：借方余额记贷、贷方余额记借。</li>
  * <li>按结转规则把各来源账户的借减贷净额汇总到目标本期损益账户：合计为正记借（亏损），为负记贷（利润）。</li>
  * <li>净额为零的账户与目标不生成行；结果为空表示本期无需结转。</li>
+ * <li>财年最后期间另按本期损益账户累计结余生成转入留存收益的两行。</li>
  */
 public final class ProfitClosePlan {
 
@@ -52,6 +53,39 @@ public final class ProfitClosePlan {
             }
         });
         return lines;
+    }
+
+    /**
+     * 本次结转行对某账户的贷减借净影响
+     *
+     * @param planned 已计算的结转行
+     * @param accountId 账户主键
+     * @return 贷方为正、借方为负的净额
+     */
+    public static BigDecimal creditNet(List<Line> planned, long accountId) {
+        return planned.stream().filter(line -> line.getAccountId() == accountId)
+            .map(line -> line.getEntrySide() == EntrySide.CREDIT ? line.getAmount() : line.getAmount().negate())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * 年末把本期损益账户结余转入留存收益
+     * <li>贷方结余（盈利）：借本期损益、贷留存收益；借方结余（亏损）相反；金额取绝对值。</li>
+     * <li>结余为零返回空。</li>
+     *
+     * @param resultAccountId 本期损益账户主键
+     * @param retainedAccountId 留存收益账户主键
+     * @param creditBalance 本期损益账户贷减借结余（含本次结转行）
+     * @return 先本期损益、后留存收益的两行，或空
+     */
+    public static List<Line> retainedEarningsLines(long resultAccountId, long retainedAccountId, BigDecimal creditBalance) {
+        if (creditBalance.signum() == 0) {
+            return List.of();
+        }
+        EntrySide resultSide = creditBalance.signum() > 0 ? EntrySide.DEBIT : EntrySide.CREDIT;
+        EntrySide retainedSide = resultSide == EntrySide.DEBIT ? EntrySide.CREDIT : EntrySide.DEBIT;
+        BigDecimal amount = creditBalance.abs();
+        return List.of(new Line(resultAccountId, resultSide, amount), new Line(retainedAccountId, retainedSide, amount));
     }
 
     /** 一条结转行。 */

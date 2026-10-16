@@ -290,4 +290,12 @@ public interface AccountingTestMapper {
         + "AND a.owner_type = #{ownerType} AND a.owner_id = #{ownerId} AND a.balance_bucket = #{bucket}")
     Long selectBucketAccountId(@Param("ledgerBookId") long ledgerBookId, @Param("accountCode") String accountCode,
         @Param("ownerType") String ownerType, @Param("ownerId") String ownerId, @Param("bucket") String bucket);
+
+    /** 读取期间重开次数。 */
+    @Select("SELECT reopen_count FROM t_accounting_period WHERE id = #{id}")
+    int selectPeriodReopenCount(@Param("id") long id);
+
+    /** 直接改变日历财年起始月，构造“当前期间为财年最后期间”或“非年末期间”场景（日历无修改入口）。 */
+    @Update("UPDATE t_fiscal_calendar SET year_start_month = #{yearStartMonth} WHERE id = #{id}")
+    void updateCalendarYearStartMonth(@Param("id") long id, @Param("yearStartMonth") int yearStartMonth);
 }

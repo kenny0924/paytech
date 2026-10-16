@@ -8,4 +8,11 @@
         ORDER BY effective_from DESC
         LIMIT 1
     </select>
+
+    <select id="selectAllEffective" resultType="com.paytech.finance.accounting.core.dal.dataobject.CloseAccountRule">
+        SELECT id, chart_id, source_account_id, current_result_account_id, retained_earnings_account_id, effective_from, effective_to, create_time FROM t_close_account_rule
+        WHERE chart_id = #{chartId} AND effective_from &lt;= #{at}
+          AND (effective_to IS NULL OR effective_to &gt; #{at})
+        ORDER BY source_account_id, effective_from DESC
+    </select>
 </mapper>

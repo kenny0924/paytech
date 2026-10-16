@@ -36,6 +36,18 @@
         LIMIT 1
     </select>
 
+    <select id="selectFirstClosedAfter" resultType="com.paytech.finance.accounting.core.dal.dataobject.AccountingPeriod">
+        SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period
+        WHERE calendar_id = #{calendarId} AND start_date &gt; #{startDate} AND status IN ('CLOSED', 'CLOSING', 'REOPENING')
+        ORDER BY start_date
+        LIMIT 1
+    </select>
+
+    <update id="completeReopen">
+        UPDATE t_accounting_period SET status = 'OPEN', reopen_count = reopen_count + 1, version = version + 1, update_time = #{now}
+        WHERE id = #{period.id} AND status = 'REOPENING' AND version = #{period.version}
+    </update>
+
     <select id="selectByCalendarAndDate" resultType="com.paytech.finance.accounting.core.dal.dataobject.AccountingPeriod">
         SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period
         WHERE calendar_id = #{calendarId} AND start_date &lt;= #{date} AND end_date &gt;= #{date}

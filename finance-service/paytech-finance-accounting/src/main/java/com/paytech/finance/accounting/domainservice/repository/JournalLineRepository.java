@@ -1,5 +1,6 @@
 package com.paytech.finance.accounting.domainservice.repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -30,4 +31,7 @@ public interface JournalLineRepository {
 
     /** 读取账簿内收入/费用账户在期间内的借贷发生额。 */
     List<ProfitCloseBalanceView> findProfitCloseBalances(long ledgerBookId, long asOfSequence, LocalDate start, LocalDate end);
+
+    /** 读取账户在水位以内、过账日不晚于截止日的贷减借累计额，无流水为零。 */
+    BigDecimal findCreditNetUpTo(long accountId, long asOfSequence, LocalDate end);
 }

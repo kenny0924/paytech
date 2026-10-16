@@ -1,6 +1,8 @@
 package com.paytech.finance.test.base;
 
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.BeforeEach;
 
 import com.paytech.finance.api.accounting.request.StartPeriodCloseRequestBody;
@@ -36,13 +38,25 @@ public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmen
 
     protected long expenseAccountId;
 
-    /** 每例准备账簿主体的收入与费用账户。 */
+    /** 每例准备账簿主体的收入与费用账户，并把当月期间设为非年末期间，使结果不随运行月份变化；年末用例自行改为年末。 */
     @BeforeEach
     void setUpPeriodCloseMocks() {
+        makeCurrentPeriodNotYearEnd();
         revenueAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), REVENUE_CODE, OwnerType.OPERATING_ENTITY,
             ledger.getEntityNo(), BalanceBucket.NONE);
         expenseAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), EXPENSE_CODE, OwnerType.OPERATING_ENTITY,
             ledger.getEntityNo(), BalanceBucket.NONE);
+    }
+
+    /** 让当月期间成为财年最后期间：财年起始月为下月。 */
+    protected void makeCurrentPeriodYearEnd() {
+        testMapper.updateCalendarYearStartMonth(ledger.getFiscalCalendarId(),
+            LocalDate.now().plusMonths(1).getMonthValue());
+    }
+
+    /** 让当月期间不是财年最后期间：财年起始月为当月。 */
+    protected void makeCurrentPeriodNotYearEnd() {
+        testMapper.updateCalendarYearStartMonth(ledger.getFiscalCalendarId(), LocalDate.now().getMonthValue());
     }
 
     /** 当月期间确认收入：Dr 实收资本 / Cr 收入。 */

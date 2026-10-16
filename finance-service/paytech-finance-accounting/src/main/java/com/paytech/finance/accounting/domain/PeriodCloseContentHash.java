@@ -75,8 +75,13 @@ public final class PeriodCloseContentHash {
 
     /** 写出流程头字段并保持对象打开。 */
     static void writeHeader(JsonGenerator generator, PeriodClose close) {
+        writeHeader(generator, close, SCHEMA);
+    }
+
+    /** 按给定摘要版本写出流程头字段并保持对象打开；重开摘要复用同一组头字段。 */
+    static void writeHeader(JsonGenerator generator, PeriodClose close, String schema) {
         generator.writeStartObject();
-        generator.writeStringProperty("schema", SCHEMA);
+        generator.writeStringProperty("schema", schema);
         generator.writeStringProperty("periodCloseId", String.valueOf(close.getId()));
         generator.writeStringProperty("periodId", String.valueOf(close.getPeriodId()));
         generator.writeStringProperty("closeNo", String.valueOf(close.getCloseNo()));

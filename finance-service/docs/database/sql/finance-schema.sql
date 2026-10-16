@@ -1631,7 +1631,7 @@ CREATE TABLE `t_period_close` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_period_close` (`period_id`, `close_no`) COMMENT '保证业务唯一性：period_id、close_no',
   UNIQUE KEY `uk_period_close_active` (`period_id`, `active_slot`) COMMENT '保证业务唯一性：period_id、active_slot',
-  UNIQUE KEY `uk_period_reopen_target` (`reopens_close_id`) COMMENT '保证业务唯一性：reopens_close_id',
+  KEY `idx_period_reopen_target` (`reopens_close_id`) COMMENT '支持访问路径：reopens_close_id',
   KEY `idx_period_close_status` (`status`, `create_time`) COMMENT '支持访问路径：status、create_time'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='控制会计期间关账或重开流程、活动槽、试算水位和固定双人审批内容';
 
@@ -1657,7 +1657,7 @@ CREATE TABLE `t_close_step` (
   `id` BIGINT NOT NULL COMMENT '关账执行步骤的 Snowflake 主键。',
   `period_close_id` BIGINT NOT NULL COMMENT '该步骤所属的本库关账或重开流程。',
   `step_no` INTEGER NOT NULL COMMENT '同一流程内按固定定义连续递增的步骤序号。',
-  `step_type` VARCHAR(64) NOT NULL COMMENT '关账流程中的固定执行步骤。允许值：LOCK_SEQUENCE、CHECK_ASYNC_AND_JOURNAL、RECONCILE_ACCOUNT_BALANCES、GENERATE_TRIAL_BALANCE、RESOLVE_EXCEPTIONS、POST_PROFIT_CLOSE、FINAL_TRIAL_BALANCE。',
+  `step_type` VARCHAR(64) NOT NULL COMMENT '关账或重开流程中的固定执行步骤。允许值：LOCK_SEQUENCE、CHECK_ASYNC_AND_JOURNAL、RECONCILE_ACCOUNT_BALANCES、GENERATE_TRIAL_BALANCE、RESOLVE_EXCEPTIONS、POST_PROFIT_CLOSE、FINAL_TRIAL_BALANCE、PLAN_REOPEN_REVERSAL、POST_REOPEN_REVERSAL。',
   `status` VARCHAR(64) NOT NULL COMMENT '关账步骤当前执行状态。允许值：PENDING、RUNNING、SUCCEEDED、FAILED、SKIPPED。',
   `result_hash` CHAR(64) NULL COMMENT '本步骤输入和确定性结果的 Canonical SHA-256 哈希。',
   `completed_time` DATETIME(6) NULL COMMENT '步骤进入成功、失败或跳过终态的 UTC 微秒时间。',

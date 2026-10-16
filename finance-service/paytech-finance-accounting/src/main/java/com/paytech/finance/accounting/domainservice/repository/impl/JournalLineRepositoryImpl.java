@@ -1,5 +1,6 @@
 package com.paytech.finance.accounting.domainservice.repository.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -56,5 +57,11 @@ public class JournalLineRepositoryImpl implements JournalLineRepository {
     @Override
     public List<ProfitCloseBalanceView> findProfitCloseBalances(long ledgerBookId, long asOfSequence, LocalDate start, LocalDate end) {
         return mapper.selectProfitCloseBalances(ledgerBookId, asOfSequence, start, end);
+    }
+
+    /** 读取账户在水位以内、过账日不晚于截止日的贷减借累计额，无流水为零。 */
+    @Override
+    public BigDecimal findCreditNetUpTo(long accountId, long asOfSequence, LocalDate end) {
+        return mapper.selectCreditNetUpTo(accountId, asOfSequence, end);
     }
 }

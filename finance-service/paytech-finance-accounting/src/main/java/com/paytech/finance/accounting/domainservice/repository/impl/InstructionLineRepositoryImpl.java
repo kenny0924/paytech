@@ -21,4 +21,10 @@ public class InstructionLineRepositoryImpl implements InstructionLineRepository 
     public void insertBatch(List<InstructionLine> lines) {
         mapper.insertBatch(lines);
     }
+
+    /** 按行号升序读取指令的全部行。 */
+    @Override
+    public List<InstructionLine> findByInstruction(long instructionId) {
+        return mapper.selectByInstruction(instructionId);
+    }
 }

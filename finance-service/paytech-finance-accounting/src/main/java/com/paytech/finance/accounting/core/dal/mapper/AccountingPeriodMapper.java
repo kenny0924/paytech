@@ -40,6 +40,16 @@ public interface AccountingPeriodMapper {
     /** 读取同一日历中结束日期早于给定日期且未 CLOSED 的最早期间。 */
     AccountingPeriod selectFirstUnclosedBefore(@Param("calendarId") long calendarId, @Param("startDate") LocalDate startDate);
 
+    /** 读取同一日历中开始日期晚于给定日期且处于 CLOSED、CLOSING 或 REOPENING 的最早期间。 */
+    AccountingPeriod selectFirstClosedAfter(@Param("calendarId") long calendarId, @Param("startDate") LocalDate startDate);
+
+    /**
+     * 重开完成：期间 REOPENING → OPEN 且重开次数加一，按期望版本条件更新
+     *
+     * @return 受影响行数
+     */
+    int completeReopen(@Param("period") AccountingPeriod period, @Param("now") Instant now);
+
     /** 读取日历中包含给定日期的期间。 */
     AccountingPeriod selectByCalendarAndDate(@Param("calendarId") long calendarId, @Param("date") LocalDate date);
 }

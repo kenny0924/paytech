@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Param;
 
 import com.paytech.finance.accounting.core.dal.dataobject.PeriodClose;
 import com.paytech.finance.accounting.core.enums.PeriodCloseStatus;
+import com.paytech.finance.accounting.core.enums.PeriodCloseType;
 import com.paytech.finance.accounting.domain.view.PeriodCloseView;
 
 /** t_period_close：关账/重开流程根持久化与关账前置检查查询。 */
@@ -22,6 +23,12 @@ public interface PeriodCloseMapper {
 
     /** 按期间与序号读取流程根。 */
     PeriodClose selectByPeriodAndNo(@Param("periodId") long periodId, @Param("closeNo") int closeNo);
+
+    /** 按主键读取流程根。 */
+    PeriodClose selectById(@Param("id") long id);
+
+    /** 读取期间内指定类型序号最大的流程根。 */
+    PeriodClose selectLatestByType(@Param("periodId") long periodId, @Param("closeType") PeriodCloseType closeType);
 
     /**
      * 按期望状态与版本迁移流程状态，同时写入活动槽、关账摘要与复核人

@@ -58,6 +58,18 @@ public class PeriodCloseBookRepositoryImpl implements PeriodCloseBookRepository 
         book.setUpdateTime(now);
     }
 
+    /** 重开账簿记录冲回指令（可为空）并置为 FINALIZED，成功后同步原对象。 */
+    @Override
+    public void finalizeReopenBook(PeriodCloseBook book, Long instructionId) {
+        Instant now = now();
+        if (mapper.finalizeReopenBook(book, instructionId, now) != 1) {
+            throw new ConcurrentRequestException("重开账簿证据状态已变化: " + book.getId());
+        }
+        book.setPostingInstructionId(instructionId);
+        book.setStatus(CloseBookStatus.FINALIZED);
+        book.setUpdateTime(now);
+    }
+
     /** 统计不满足最终冻结条件的账簿数。 */
     @Override
     public long countInvalidFinalBooks(long periodCloseId) {

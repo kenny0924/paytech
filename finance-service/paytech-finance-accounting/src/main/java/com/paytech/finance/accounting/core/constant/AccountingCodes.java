@@ -11,6 +11,9 @@ public final class AccountingCodes {
     /** 期间关账损益结转生成的记账指令类型。 */
     public static final String PERIOD_PROFIT_CLOSE_INSTRUCTION = "PERIOD_PROFIT_CLOSE";
 
+    /** 期间重开冲回原损益结转生成的记账指令类型。 */
+    public static final String PERIOD_PROFIT_REOPEN_INSTRUCTION = "PERIOD_PROFIT_REOPEN";
+
     /** Finance 自身作为自动指令来源系统时使用的系统代码。 */
     public static final String FINANCE_SOURCE_SYSTEM = "FINANCE";
 
