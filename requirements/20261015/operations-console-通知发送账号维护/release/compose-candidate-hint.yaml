@@ -1,0 +1,5 @@
+# 测试发送结果码提示（提交 20677f2，干净导出构建，tag mor-test/operations-console-web:notification-hint-20261016）。
+# 只替换 Operations Web；叠加在 compose.yaml + compose.applications.yaml 之上（compose.sh 已包含）。
+services:
+  operations-console-web:
+    image: sha256:3dc13acd07b00c3ca437c6f282e40325682ddcd36bc2eb9e3f8259c143b66161
