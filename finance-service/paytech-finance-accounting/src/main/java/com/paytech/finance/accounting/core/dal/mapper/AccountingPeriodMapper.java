@@ -39,4 +39,7 @@ public interface AccountingPeriodMapper {
 
     /** 读取同一日历中结束日期早于给定日期且未 CLOSED 的最早期间。 */
     AccountingPeriod selectFirstUnclosedBefore(@Param("calendarId") long calendarId, @Param("startDate") LocalDate startDate);
+
+    /** 读取日历中包含给定日期的期间。 */
+    AccountingPeriod selectByCalendarAndDate(@Param("calendarId") long calendarId, @Param("date") LocalDate date);
 }

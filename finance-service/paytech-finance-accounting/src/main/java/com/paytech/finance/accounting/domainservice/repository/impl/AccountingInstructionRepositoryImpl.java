@@ -66,4 +66,10 @@ public class AccountingInstructionRepositoryImpl implements AccountingInstructio
             throw new ConcurrentRequestException(message, e);
         }
     }
+
+    /** 交易经济结果已生成的全部 AUTO 指令，按账簿、主键升序；没有时返回空列表。 */
+    @Override
+    public List<AccountingInstruction> findByEconomics(long transactionEconomicsId) {
+        return mapper.selectAutoByEconomics(transactionEconomicsId);
+    }
 }

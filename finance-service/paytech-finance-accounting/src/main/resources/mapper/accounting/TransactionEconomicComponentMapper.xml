@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.TransactionEconomicComponentMapper">
+    <select id="selectByEconomics" resultType="com.paytech.finance.accounting.core.dal.dataobject.TransactionEconomicComponent">
+        SELECT id, transaction_economics_id, component_no, component_type, party_type, party_id, tax_line_id, basis_amount, rate_value, raw_amount, posted_amount, effect_direction, source_rule_type, source_rule_version_id, source_price_id, source_profile_code, source_band_evidence, source_rule_scope_id, source_rule_component_id, source_component_code, source_trigger_code, source_calculation_base, source_rate, source_fixed_amount, source_currency, source_min_amount, source_max_amount, source_rule_content_hash, calculation_method, rounding_mode, create_time FROM t_transaction_economic_component
+        WHERE transaction_economics_id = #{transactionEconomicsId}
+        ORDER BY component_no
+    </select>
+</mapper>

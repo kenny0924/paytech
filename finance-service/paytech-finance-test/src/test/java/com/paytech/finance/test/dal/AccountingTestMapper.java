@@ -14,9 +14,13 @@ import org.apache.ibatis.annotations.Update;
 import com.paytech.finance.accounting.core.dal.dataobject.Account;
 import com.paytech.finance.accounting.core.dal.dataobject.AccountingInstruction;
 import com.paytech.finance.accounting.core.dal.dataobject.CurrencySpec;
+import com.paytech.finance.accounting.core.dal.dataobject.InstructionLine;
 import com.paytech.finance.accounting.core.dal.dataobject.JournalEntry;
 import com.paytech.finance.accounting.core.dal.dataobject.JournalLine;
 import com.paytech.finance.accounting.core.dal.dataobject.ManualAdjustment;
+import com.paytech.finance.test.dal.row.ChannelAccountRow;
+import com.paytech.finance.test.dal.row.EconomicComponentRow;
+import com.paytech.finance.test.dal.row.TransactionEconomicsRow;
 
 /**
  * Accounting 测试专用读写：前置状态构造、只读断言与全局清理
@@ -50,6 +54,12 @@ public interface AccountingTestMapper {
         SELECT 't_manual_adjustment', COUNT(*) FROM t_manual_adjustment UNION ALL
         SELECT 't_manual_adjustment_line', COUNT(*) FROM t_manual_adjustment_line UNION ALL
         SELECT 't_adjustment_approval', COUNT(*) FROM t_adjustment_approval UNION ALL
+        SELECT 't_transaction_economic_component', COUNT(*) FROM t_transaction_economic_component UNION ALL
+        SELECT 't_transaction_economics', COUNT(*) FROM t_transaction_economics UNION ALL
+        SELECT 't_channel_account', COUNT(*) FROM t_channel_account UNION ALL
+        SELECT 't_accounting_rule_line', COUNT(*) FROM t_accounting_rule_line WHERE id >= 1000000 UNION ALL
+        SELECT 't_accounting_rule_bundle_ver', COUNT(*) FROM t_accounting_rule_bundle_ver WHERE id >= 1000000 UNION ALL
+        SELECT 't_accounting_rule_bundle', COUNT(*) FROM t_accounting_rule_bundle WHERE id >= 1000000 UNION ALL
         SELECT 't_currency_spec', COUNT(*) FROM t_currency_spec WHERE id >= 1000000 UNION ALL
         SELECT 't_chart_of_accounts', COUNT(*) FROM t_chart_of_accounts WHERE id >= 1000000 UNION ALL
         SELECT 't_chart_account', COUNT(*) FROM t_chart_account WHERE id >= 1000000
@@ -59,7 +69,10 @@ public interface AccountingTestMapper {
     /** 统计初始化 DML 的保留行数，用于确认本地库已执行 finance-initial-data.sql。 */
     @Select("SELECT (SELECT COUNT(*) FROM t_currency_spec WHERE id < 1000000) "
         + "+ (SELECT COUNT(*) FROM t_chart_of_accounts WHERE id < 1000000) "
-        + "+ (SELECT COUNT(*) FROM t_chart_account WHERE id < 1000000)")
+        + "+ (SELECT COUNT(*) FROM t_chart_account WHERE id < 1000000) "
+        + "+ (SELECT COUNT(*) FROM t_accounting_rule_bundle WHERE id < 1000000) "
+        + "+ (SELECT COUNT(*) FROM t_accounting_rule_bundle_ver WHERE id < 1000000) "
+        + "+ (SELECT COUNT(*) FROM t_accounting_rule_line WHERE id < 1000000)")
     int countReservedRows();
 
     /** 删除一张测试可写表的全部行；表名只来自清理组件的固定清单。 */
@@ -186,4 +199,95 @@ public interface AccountingTestMapper {
     /** 统计期间的关账流程数。 */
     @Select("SELECT COUNT(*) FROM t_period_close WHERE period_id = #{periodId}")
     int countPeriodCloses(@Param("periodId") long periodId);
+
+    /** 统计初始化 DML 预置的 STANDARD_TRANSACTION Bundle 与第 1 版是否仍处于初始状态（是返回 1）。 */
+    @Select("SELECT COUNT(*) FROM t_accounting_rule_bundle b JOIN t_accounting_rule_bundle_ver v ON v.id = b.current_ver_id "
+        + "WHERE b.id = 5001 AND b.status = 'ACTIVE' AND b.current_ver_id = 5101 AND b.version = 0 "
+        + "AND v.status = 'ACTIVE' AND v.effective_to IS NULL")
+    int countInitialRuleBaseline();
+
+    /** 把 Bundle 5001 恢复为初始化状态：ACTIVE、当前版本 5101、乐观锁版本 0。 */
+    @Update("UPDATE t_accounting_rule_bundle SET status = 'ACTIVE', current_ver_id = 5101, version = 0 WHERE id = 5001")
+    void restoreInitialRuleBundle();
+
+    /** 把版本 5101 恢复为初始化状态：ACTIVE 且未失效。 */
+    @Update("UPDATE t_accounting_rule_bundle_ver SET status = 'ACTIVE', effective_to = NULL WHERE id = 5101")
+    void restoreInitialRuleVersion();
+
+    /** 直接改变规则版本状态，构造“无生效 Bundle 版本”场景；清理组件恢复初始化行。 */
+    @Update("UPDATE t_accounting_rule_bundle_ver SET status = #{status} WHERE id = #{id}")
+    void updateRuleVersionStatus(@Param("id") long id, @Param("status") String status);
+
+    /** 直接清空 Bundle 当前版本指针，构造“无当前版本”场景；清理组件恢复初始化行。 */
+    @Update("UPDATE t_accounting_rule_bundle SET current_ver_id = NULL WHERE id = #{id}")
+    void clearRuleBundleCurrentVersion(@Param("id") long id);
+
+    /** 读取规则版本当前状态码。 */
+    @Select("SELECT status FROM t_accounting_rule_bundle_ver WHERE id = #{id}")
+    String selectRuleVersionStatus(@Param("id") long id);
+
+    /** 读取 Bundle 当前版本指针与乐观锁版本。 */
+    @Select("SELECT current_ver_id, version FROM t_accounting_rule_bundle WHERE id = #{id}")
+    Map<String, Object> selectRuleBundlePointer(@Param("id") long id);
+
+    /** 统计规则版本的规则行数。 */
+    @Select("SELECT COUNT(*) FROM t_accounting_rule_line WHERE bundle_ver_id = #{bundleVerId}")
+    int countRuleLines(@Param("bundleVerId") long bundleVerId);
+
+    /** 插入交易经济结果夹具。 */
+    @Insert("INSERT INTO t_transaction_economics (id, economics_type, source_system, source_event_key, source_version, "
+        + "source_payload_hash, order_id, order_context_id, context_format, commercial_context_time, tax_snapshot_id, "
+        + "payment_intent_id, payment_attempt_id, payment_succeeded_time, client_id, entity_no, local_partner_id, "
+        + "consumer_country_code, payment_method, industry_code, mcc_code, client_agreement_id, partner_agreement_oe_id, "
+        + "finance_entity_id, currency, gross_amount, create_time) VALUES (#{id}, #{economicsType}, #{sourceSystem}, "
+        + "#{sourceEventKey}, #{sourceVersion}, #{sourcePayloadHash}, #{orderId}, #{orderContextId}, #{contextFormat}, "
+        + "#{commercialContextTime}, #{taxSnapshotId}, #{paymentIntentId}, #{paymentAttemptId}, #{paymentSucceededTime}, "
+        + "#{clientId}, #{entityNo}, #{localPartnerId}, #{consumerCountryCode}, #{paymentMethod}, #{industryCode}, "
+        + "#{mccCode}, #{clientAgreementId}, #{partnerAgreementOeId}, #{financeEntityId}, #{currency}, #{grossAmount}, "
+        + "#{createTime})")
+    void insertTransactionEconomics(TransactionEconomicsRow row);
+
+    /** 插入交易经济组件夹具。 */
+    @Insert("INSERT INTO t_transaction_economic_component (id, transaction_economics_id, component_no, component_type, "
+        + "party_type, party_id, basis_amount, raw_amount, posted_amount, effect_direction, source_rule_type, "
+        + "source_rule_version_id, source_component_code, source_trigger_code, source_calculation_base, "
+        + "calculation_method, rounding_mode, create_time) VALUES (#{id}, #{transactionEconomicsId}, #{componentNo}, "
+        + "#{componentType}, #{partyType}, #{partyId}, #{basisAmount}, #{rawAmount}, #{postedAmount}, "
+        + "#{effectDirection}, #{sourceRuleType}, #{sourceRuleVersionId}, #{sourceComponentCode}, "
+        + "#{sourceTriggerCode}, #{sourceCalculationBase}, #{calculationMethod}, #{roundingMode}, #{createTime})")
+    void insertEconomicComponent(EconomicComponentRow row);
+
+    /** 插入 Finance 渠道清算账户夹具。 */
+    @Insert("INSERT INTO t_channel_account (id, channel_id, mid_id, entity_no, currency, status, create_time, "
+        + "update_time) VALUES (#{id}, #{channelId}, #{midId}, #{entityNo}, #{currency}, #{status}, #{createTime}, "
+        + "#{updateTime})")
+    void insertChannelAccount(ChannelAccountRow row);
+
+    /** 读取交易经济结果生成的全部指令，按账簿主键、指令类型升序。 */
+    @Select("SELECT * FROM t_accounting_instruction WHERE transaction_economics_id = #{transactionEconomicsId} "
+        + "ORDER BY ledger_book_id, instruction_type")
+    List<AccountingInstruction> selectEconomicsInstructions(@Param("transactionEconomicsId") long transactionEconomicsId);
+
+    /** 读取指令全部指令行，按行号升序。 */
+    @Select("SELECT * FROM t_instruction_line WHERE instruction_id = #{instructionId} ORDER BY line_no")
+    List<InstructionLine> selectInstructionLines(@Param("instructionId") long instructionId);
+
+    /** 统计全部记账指令数，用于整体回滚断言。 */
+    @Select("SELECT COUNT(*) FROM t_accounting_instruction")
+    int countAllInstructions();
+
+    /** 统计全部分录头数，用于整体回滚断言。 */
+    @Select("SELECT COUNT(*) FROM t_journal_entry")
+    int countAllJournalEntries();
+
+    /** 统计全部账户数，用于整体回滚后确认自动建户也已撤销。 */
+    @Select("SELECT COUNT(*) FROM t_account")
+    int countAllAccounts();
+
+    /** 按账簿、科目代码、核算对象与余额桶读取账户主键，不存在返回空。 */
+    @Select("SELECT a.id FROM t_account a JOIN t_chart_account c ON c.id = a.chart_account_id "
+        + "WHERE a.ledger_book_id = #{ledgerBookId} AND c.account_code = #{accountCode} "
+        + "AND a.owner_type = #{ownerType} AND a.owner_id = #{ownerId} AND a.balance_bucket = #{bucket}")
+    Long selectBucketAccountId(@Param("ledgerBookId") long ledgerBookId, @Param("accountCode") String accountCode,
+        @Param("ownerType") String ownerType, @Param("ownerId") String ownerId, @Param("bucket") String bucket);
 }

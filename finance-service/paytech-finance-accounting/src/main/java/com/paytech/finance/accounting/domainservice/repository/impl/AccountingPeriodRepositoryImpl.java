@@ -72,6 +72,12 @@ public class AccountingPeriodRepositoryImpl implements AccountingPeriodRepositor
         return mapper.selectFirstUnclosedBefore(calendarId, startDate);
     }
 
+    /** 读取日历中包含给定日期的期间，不存在返回空。 */
+    @Override
+    public AccountingPeriod findByCalendarAndDate(long calendarId, LocalDate date) {
+        return mapper.selectByCalendarAndDate(calendarId, date);
+    }
+
     /** 当前 UTC 时间，截断到数据库支持的微秒精度。 */
     private Instant now() {
         return clock.instant().truncatedTo(ChronoUnit.MICROS);

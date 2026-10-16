@@ -72,12 +72,22 @@ public class LedgerMocker {
 
     /** 插入 OE 账簿（序号从 1 开始）、日历及一个覆盖今天的 OPEN 期间。 */
     public LedgerFixture mockOperatingEntityLedger(String entityNo, String currency) {
-        long calendarId = mockCalendar(LedgerEntityType.OPERATING_ENTITY, entityNo);
+        return mockEntityLedger(LedgerEntityType.OPERATING_ENTITY, entityNo, currency);
+    }
+
+    /** 插入 Finance Entity 账簿、日历及一个覆盖今天的 OPEN 期间；主体标识为财务主体主键十进制字符串。 */
+    public LedgerFixture mockFinanceEntityLedger(long financeEntityId, String currency) {
+        return mockEntityLedger(LedgerEntityType.FINANCE_ENTITY, String.valueOf(financeEntityId), currency);
+    }
+
+    /** 插入主体账簿（序号从 1 开始）、日历及一个覆盖今天的 OPEN 期间。 */
+    LedgerFixture mockEntityLedger(LedgerEntityType entityType, String entityId, String currency) {
+        long calendarId = mockCalendar(entityType, entityId);
         LocalDate today = LocalDate.now();
         long periodId = mockPeriod(calendarId, today.getYear(), today.getMonthValue(), today.withDayOfMonth(1),
             today.withDayOfMonth(today.lengthOfMonth()), PeriodStatus.OPEN);
-        long bookId = mockBook(LedgerEntityType.OPERATING_ENTITY, entityNo, currency, STANDARD_CHART_ID);
-        return new LedgerFixture(bookId, calendarId, periodId, entityNo, currency);
+        long bookId = mockBook(entityType, entityId, currency, STANDARD_CHART_ID);
+        return new LedgerFixture(bookId, calendarId, periodId, entityId, currency);
     }
 
     /** 插入 OPEN 账簿及其序号行。 */

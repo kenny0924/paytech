@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.AccountingRuleBundleMapper">
+    <select id="selectByCode" resultType="com.paytech.finance.accounting.core.dal.dataobject.AccountingRuleBundle">
+        SELECT id, bundle_code, current_ver_id, status, version, create_time, update_time FROM t_accounting_rule_bundle WHERE bundle_code = #{bundleCode}
+    </select>
+
+    <select id="selectByCodeForUpdate" resultType="com.paytech.finance.accounting.core.dal.dataobject.AccountingRuleBundle">
+        SELECT id, bundle_code, current_ver_id, status, version, create_time, update_time FROM t_accounting_rule_bundle WHERE bundle_code = #{bundleCode} FOR UPDATE
+    </select>
+
+    <update id="updateCurrentVersion">
+        UPDATE t_accounting_rule_bundle
+        SET current_ver_id = #{currentVerId}, version = version + 1, update_time = #{now}
+        WHERE id = #{bundle.id} AND version = #{bundle.version}
+    </update>
+</mapper>

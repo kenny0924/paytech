@@ -14,6 +14,9 @@ public final class AccountingCodes {
     /** Finance 自身作为自动指令来源系统时使用的系统代码。 */
     public static final String FINANCE_SOURCE_SYSTEM = "FINANCE";
 
+    /** 自动记账规则行科目校验使用的标准科目表代码。 */
+    public static final String STANDARD_CHART_CODE = "STANDARD";
+
     /** 账簿序号行的首个可分配值。 */
     public static final long FIRST_JOURNAL_SEQUENCE = 1L;
 

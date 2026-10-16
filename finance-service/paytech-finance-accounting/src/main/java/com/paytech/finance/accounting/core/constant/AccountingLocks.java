@@ -26,6 +26,11 @@ public final class AccountingLocks {
         return "period-close:" + periodId;
     }
 
+    /** 同一自动记账规则集的版本创建、提交、批准与驳回共用的资源锁。 */
+    public static String accountingRuleBundle(String bundleCode) {
+        return "accounting-rule-bundle:" + bundleCode;
+    }
+
     /** 同一试算异常处置（发起与批准投影重建）共用的资源锁。 */
     public static String trialException(long exceptionId) {
         return "trial-exception:" + exceptionId;

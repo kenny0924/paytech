@@ -13,6 +13,7 @@ import com.paytech.finance.test.checker.LedgerChecker;
 import com.paytech.finance.test.clear.FinanceDataCleaner;
 import com.paytech.finance.test.clear.FinanceRedisCleaner;
 import com.paytech.finance.test.mocker.local.LedgerMocker;
+import com.paytech.finance.test.mocker.local.TransactionEconomicsMocker;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.TestBase;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
@@ -28,7 +29,8 @@ import tools.jackson.databind.ObjectMapper;
 @ActiveProfiles("mock")
 @AutoConfigureRestTestClient
 @SpringBootTest(classes = FinanceApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({FinanceDataCleaner.class, FinanceRedisCleaner.class, LedgerMocker.class, LedgerChecker.class})
+@Import({FinanceDataCleaner.class, FinanceRedisCleaner.class, LedgerMocker.class, LedgerChecker.class,
+    TransactionEconomicsMocker.class})
 public abstract class MockTestBase extends TestBase {
     /** 所有测试请求使用的 Request ID。 */
     protected static final String REQUEST_ID = "Finance.Test_01";

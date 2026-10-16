@@ -19,4 +19,7 @@ public interface AccountingInstructionRepository {
 
     /** 统计账簿中尚未过账的指令。 */
     long countPendingByBooks(List<Long> bookIds);
+
+    /** 交易经济结果已生成的全部 AUTO 指令，按账簿、主键升序；没有时返回空列表。 */
+    List<AccountingInstruction> findByEconomics(long transactionEconomicsId);
 }

@@ -35,4 +35,9 @@
         ORDER BY start_date
         LIMIT 1
     </select>
+
+    <select id="selectByCalendarAndDate" resultType="com.paytech.finance.accounting.core.dal.dataobject.AccountingPeriod">
+        SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period
+        WHERE calendar_id = #{calendarId} AND start_date &lt;= #{date} AND end_date &gt;= #{date}
+    </select>
 </mapper>

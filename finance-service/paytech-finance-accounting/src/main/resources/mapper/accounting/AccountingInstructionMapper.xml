@@ -24,4 +24,10 @@
         WHERE status IN ('RECEIVED', 'VALIDATING', 'VALIDATED') AND ledger_book_id IN
         <foreach collection="bookIds" item="id" open="(" separator="," close=")">#{id}</foreach>
     </select>
+
+    <select id="selectAutoByEconomics" resultType="com.paytech.finance.accounting.core.dal.dataobject.AccountingInstruction">
+        SELECT id, ledger_book_id, instruction_type, origin_type, source_system, source_event_key, source_version, source_payload_hash, transaction_economics_id, manual_adjustment_id, accounting_rule_bundle_ver_id, input_hash, status, maker_id, checker_id, version, create_time, update_time FROM t_accounting_instruction
+        WHERE transaction_economics_id = #{transactionEconomicsId} AND origin_type = 'AUTO'
+        ORDER BY ledger_book_id, id
+    </select>
 </mapper>

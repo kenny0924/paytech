@@ -28,4 +28,7 @@ public interface AccountingPeriodRepository {
 
     /** 读取同一日历中早于给定日期且未关闭的最早期间，不存在返回空。 */
     AccountingPeriod findFirstUnclosedBefore(long calendarId, LocalDate startDate);
+
+    /** 读取日历中包含给定日期的期间，不存在返回空。 */
+    AccountingPeriod findByCalendarAndDate(long calendarId, LocalDate date);
 }
