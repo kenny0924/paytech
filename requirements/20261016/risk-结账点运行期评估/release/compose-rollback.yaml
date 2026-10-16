@@ -1,0 +1,4 @@
+# 回退：部署前的 Risk 镜像（评估结果查询与解释，2026-10-15），固定 image ID。须先执行 dml-rollback.sql（见 release.md 第 7 节）。
+services:
+  risk-service:
+    image: sha256:727d51127e61a1e99847e86d7b822088b197cdeba3050d0b88ec84ab5ed786d3

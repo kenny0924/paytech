@@ -1173,7 +1173,7 @@ Cancel Processor 在事务外调用 PAY-I12，在确定 `TERMINATED` 后才以�
 6. Gateway Client API 通用前置按其独立计划达到 integration-ready。
 7. Foundation MVC 提供经批准的 Client API RFC 9457 输出策略；Commerce 不得用本地 `@RestControllerAdvice` 或本地 Problem 类型绕开共享 `GlobalExceptionHandler`。旧四字段 `{code,message,requestId,timestamp}` 错误体不能用于本外部协议。
 
-2026-09-07 已批准一个窄的本地首片例外：先实现 Create/Get Checkout，由 Commerce 定义 CCT、Risk、Finance、Payment 最小 `*Client` 应用端口并提供确定性 Local Mock。Mock 只有在显式 `commerce.integrations.mode=local-mock` 且 Active Profile 包含 `local`、`auto` 或 `test` 时才可装配；默认 `disabled` 调用失败关闭，非本地 Profile 误启 Mock 必须启动失败。此例外只验证本地编排、幂等、恢复和 HTTP 合同，不是 Owner wire 合同、生产降级或真实集成；替换点只保留一条明确 TODO。Risk `DENY` 返回稳定 `422 CHECKOUT_NOT_ELIGIBLE`，两种处理中错误按第 12 节返回受控 `Retry-After`。
+2026-09-07 已批准一个窄的本地首片例外：先实现 Create/Get Checkout，由 Commerce 定义 CCT、Risk、Finance、Payment 最小 `*Client` 应用端口并提供确定性 Local Mock。Mock 只有在显式 `commerce.integrations.mode=local-mock` 且 Active Profile 包含 `local`、`auto` 或 `test` 时才可装配；默认 `disabled` 调用失败关闭，非本地 Profile 误启 Mock 必须启动失败。此例外只验证本地编排、幂等、恢复和 HTTP 合同，不是 Owner wire 合同、生产降级或真实集成；替换点只保留一条明确 TODO。Risk `DENY` 返回稳定 `422 CHECKOUT_NOT_ELIGIBLE`，两种处理中错误按第 12 节返回受控 `Retry-After`。真实 Risk 接入后的结论与错误映射见 [结账点运行期评估](../../../requirements/20261016/risk-结账点运行期评估/design.md) 第 2.2 节（`REVIEW` 同样返回 422，结果未知重试一次后 503）。
 
 本地首片不创建或激活 Gateway Target/Route、Nginx Location、`checkout-web` 或 Consumer `/c/{token}` 页面。它可以返回并冻结合同形式的 Checkout URL，但在页面与公共链路就绪前不得称为可访问或端到端可用。除上述例外外，不得在 Commerce 复制其他 Owner 的 wire DTO、手写未批准 URI、直读其他数据库或用临时匿名/静态旁路代替这些合同。
 

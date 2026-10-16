@@ -26,7 +26,7 @@
 
 | 编码 | 领域 | 触发时机 | 调用方 | 失败策略 | 接口 | 业务身份 | 状态 | 接口状态 |
 |---|---|---|---|---|---|---|---|---|
-| CHECKOUT_PREPARE（RCO-I03） | FRAUD | Commerce 支付准备，正式订单落库前 | Commerce | FAIL_CLOSED | `POST /risk-decisions/v1/evaluations` | 预分配 `order_id` | 已确认 | 候选（R7 方向已确认；输入合同扁平化与旧候选发布迁移待其需求确定） |
+| CHECKOUT_PREPARE（RCO-I03） | FRAUD | Commerce 支付准备，正式订单落库前 | Commerce | FAIL_CLOSED | `POST /risk-decisions/v1/evaluations` | 预分配 `order_id` | 已确认 | 已实现（本机，待部署）：输入合同 `ORDER_PREPARATION` v5，v4 只读；见[结账点运行期评估](../requirements/20261016/risk-结账点运行期评估/design.md) |
 | PAYMENT_ATTEMPT_RISK（RCO-I04） | FRAUD | Payment 每个支付尝试提交渠道前；同步，500 毫秒 | Payment | FAIL_CLOSED | `POST /risk-decisions/v1/evaluations` | `payment_attempt_id` | 已确认 | 已确认 |
 | PAYOUT_CREATION（RCO-I09） | CREDIT、AML | 创建手工出款 | Finance | FAIL_CLOSED | 现为 `POST /manual-payout-eligibility/v1/evaluations`；运行期实现时迁入统一接口并废弃该专用接口 | `payout_id` | 已确认（设计） | 已确认（专用接口）；迁移后路径候选 |
 | PAYOUT_FINAL_APPROVAL（RCO-I09） | CREDIT、AML | 出款最终 Finance 审批 | Finance | FAIL_CLOSED | 同上 | `payout_id` + 版本 | 已确认（设计） | 同上 |

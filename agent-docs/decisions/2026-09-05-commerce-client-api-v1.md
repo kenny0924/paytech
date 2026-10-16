@@ -140,6 +140,7 @@ Commerce Client API 的调用者是 Client 自己的服务端，不是 Consumer 
 - CCT、Risk、Finance、Payment 各由 Commerce 定义一个最小 `*Client` 应用端口；在真实 Owner `@HttpExchange` 合同发布前，可提供确定性 `LocalMock*Client`，但只能在 Active Profile 包含 `local`、`auto` 或 `test` 且显式选择 `local-mock` 时装配。默认模式为 `disabled`，调用稳定返回依赖不可用，非本地 Profile 误启 Mock 必须启动失败。
 - Local Mock 只证明本地编排和恢复合同，不得复制 Owner wire DTO、手写未来 URI、冒充真实跨系统集成或作为生产降级。真实 Owner 合同替换点只保留一条明确 TODO。
 - Risk Local Mock 的 `DENY` 收敛为 `422 CHECKOUT_NOT_ELIGIBLE`；暂态结果保持命令可恢复，不封存为永久失败。
+- 2026-10-16 [结账点运行期评估](../../requirements/20261016/risk-结账点运行期评估/design.md)接入真实 Risk 统一评估（`CHECKOUT_PREPARE` v5）后：`DENY` 与 `REVIEW` 都返回 `422 CHECKOUT_NOT_ELIGIBLE`；超时、连接失败、5xx 或 409 用同一订单 ID 与输入重试一次，仍未知或 Risk 返回 `FAILED/TIMED_OUT` 时返回 `503 DEPENDENCY_UNAVAILABLE`；Risk 的 400/422 或不合协议的响应返回 `502 UPSTREAM_PROTOCOL_ERROR`。以上均不落订单。
 - 该切片不授权创建或启用 Gateway Target/Route、Nginx Location、`checkout-web` 或对 Consumer 可达的 `/c/{token}`。本地 `201` 中的 Checkout URL 只验证冻结合同，不能据此宣称端到端可用。
 
 ## 3. 明确不做
