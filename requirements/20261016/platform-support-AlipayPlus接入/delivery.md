@@ -5,7 +5,7 @@
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 1 | 需求与接入设计：[需求](./requirement.md)、[技术方案](./technique.md)；沙箱直连探测 | **已确认**（2026-10-16） |
-| 2 | 引擎补函数（技术方案 T1） | **已交付，待确认**；提交与发布未授权 |
+| 2 | 引擎补函数（技术方案 T1） | **已交付并发布 mor-test，待确认**（提交 `59459ba`，未推送） |
 | 3 | mor-test 配置与不需付款的用例 | 待定 |
 | 4 | 已付款链路（用户付款） | 待定 |
 
@@ -36,4 +36,15 @@
   - `ExternalApiEditorTest` 期望的非脚本函数目录加入 `MONEY_MAJOR_UNITS`。
 - **验证：** `./mvnw -o test -pl platform-support-test -am`，`auto.ext.http.standardapi`、`auto.ext.http.externalapi`、`auto.domain` 三个包共 125 个测试通过。未跑整个模块（工作区内有其他会话未提交的 Client 测试）。
 - **发现：** 标准 API 的 DECIMAL 输入进入流程后是数值，`MONEY_MINOR_UNITS` 需要 `str(...)` 转换，阶段 3 配置照此书写。
-- **未执行：** 未提交、未发布、未改 mor-test。
+- **未执行（交付时）：** 未提交、未发布、未改 mor-test。
+
+## 5. 阶段 2 提交与发布（2026-10-16）
+
+- **授权：** 用户“授权”（提交与发布）、“你执行吧”（执行 Platform 替换）。
+- **提交：** `59459ba` feat(platform): urlEncode/urlDecode and MONEY_MAJOR_UNITS for Alipay+ integration（16 个文件，私有暂存区提交，只含本任务改动）；未推送。
+- **构建：** 在 `59459ba` 的干净 worktree 离线打包 `platform-support-web`（跳过测试，测试已在阶段 2 跑过），jar SHA-256 前缀 `f8c8288690ddcce8`，确认包含 3 个新函数类；镜像 `mor-test/platform-support-service:alipay-plus-20261016` = `sha256:ee17f35adfb9c9b6f097573e5682280e69acc5f758ce3fc0f4752b4b613a3de7`。
+- **差异：** 发布前运行的 `63ae4cde…`（Webhook 发布，构建自 `3cbbfce`）到 `59459ba`，Platform 只差本次 3 个函数；无 SQL、无配置变更。
+- **备份：** `~/Code-MoR-backups/20261016-alipay-plus-platform/20261016T065022Z/`（Compose 文件、容器 inspect、SHA256SUMS）。
+- **发布：** `./test-environment/compose.sh -f "$PWD/requirements/20261016/platform-support-AlipayPlus接入/release/compose-candidate.yaml" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 platform-support-service`（[compose-candidate.yaml](./release/compose-candidate.yaml) 只替换 Platform 镜像；`compose.sh` 已自带 `compose.yaml` 与 `compose.applications.yaml`，重复传入会因 `security_opt` 重复而校验失败）。07:50:18Z 启动，healthy，镜像核对为 `ee17f35a…`；启动日志无 ERROR，仅常规 BeanPostProcessor WARN；其余 mor-test 容器状态不变。
+- **回归：** PayBy UAT（[uat_cases.py](../../20261014/platform-support-PayBy接入/assets/harness/uat_cases.py)）5 个不依赖已有订单的用例全部 PASSED（`62004`×3、`62007`、余额查询 `0`），带签名响应验签通过；`UAT_UNPAID_QUERY_CANCEL` 需要新建未付款订单，本次未跑。
+- **回退：** 把覆盖文件换成 [Webhook 发布的 compose-candidate.yaml](../../20261015/platform-support-Webhook投递/release/compose-candidate.yaml)（`63ae4cde…`）后执行同一命令。

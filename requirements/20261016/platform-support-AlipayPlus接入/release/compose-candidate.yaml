@@ -1,0 +1,5 @@
+# Alipay+ 接入阶段 2：从干净提交 59459ba 构建的 Platform 镜像（tag mor-test/platform-support-service:alipay-plus-20261016），使用固定 image ID。
+# 叠加在 compose.yaml + compose.applications.yaml 之后，只替换 Platform；回退用 Webhook 发布的 compose-candidate.yaml（63ae4cde…）。
+services:
+  platform-support-service:
+    image: sha256:ee17f35adfb9c9b6f097573e5682280e69acc5f758ce3fc0f4752b4b613a3de7
