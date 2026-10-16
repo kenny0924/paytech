@@ -23,13 +23,16 @@ import com.paytech.risk.decision.domain.enums.NumericUnit;
 import com.paytech.risk.decision.domain.enums.VariableFormat;
 import com.paytech.risk.decision.domain.enums.VariableSource;
 import com.paytech.risk.decision.domain.enums.VariableUsage;
+import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
  * 变量编排能力的 HTTP 响应 Checker
- * <li>期望值是本期已接通的工程合同：CHECKOUT_PREPARE 的 ORDER_PREPARATION v4 输入及 RULE_SET_NODE_RESULT v1 节点输出。</li>
+ * <li>期望值是已接通的工程合同：CHECKOUT_PREPARE 的 ORDER_PREPARATION v5 输入（v4 旧合同只读，不在目录中）及 RULE_SET_NODE_RESULT v1 节点输出，
+ * 支付尝试的 PAYMENT_ATTEMPT v1 输入与节点输出。</li>
+ * <li>指定结账决策点时可创建来源不含实时累计与名单命中（结账不计算 Feature）。</li>
  * <li>整份响应按 JSON 树精确比较，字段、顺序与类型均不得偏离。</li>
  *
  * @author Kenny
@@ -86,8 +89,8 @@ public final class VariableAuthoringContextResponseChecker
         body.put("supportedPoints", List.of(Map.of("pointCode", CHECKOUT, "pointName", CHECKOUT),
             Map.of("pointCode", PAYMENT, "pointName", PAYMENT)));
         body.put("sources", Stream.of(VariableSource.INPUT, VariableSource.CONSTANT, VariableSource.COLLECTION,
-            VariableSource.NODE_OUTPUT, VariableSource.VELOCITY, VariableSource.LIST).map(source -> Map.of("sourceType", source.getCode(),
-                "createAllowed", source != VariableSource.NODE_OUTPUT)).toList());
+            VariableSource.NODE_OUTPUT, VariableSource.VELOCITY, VariableSource.LIST).map(source -> Map.of("sourceType",
+                source.getCode(), "createAllowed", createAllowed(source, pointCode))).toList());
         body.put("valueTypes", Stream.of(STRING, NUMBER, BOOLEAN, DATETIME, DURATION).map(DecisionValueType::getCode).toList());
         body.put("formatProfiles", List.of(format(VariableFormat.TEXT, "文本，保留大小写和前导零"),
             format(VariableFormat.UPPER_ALPHA_2, "两位大写字母"), format(VariableFormat.UPPER_ALPHA_3, "三位大写字母"),
@@ -96,16 +99,19 @@ public final class VariableAuthoringContextResponseChecker
             format(VariableFormat.NONE, "无字符串格式")));
         body.put("numericUnits", List.of(SCALAR.getCode(), MONEY.getCode()));
         body.put("limits", Map.of("memberCount", 1000, "memberBodyBytes", 65536, "literalSetCount", 100));
-        List<Map<String, Object>> contracts = new java.util.ArrayList<>(List.of(contract(CHECKOUT, "ORDER_PREPARATION", 4,
-            VariableSource.INPUT, null, List.of(
-            condition("country_code", STRING, null, null, null), condition("locale", STRING, null, null, null),
-            condition("industry_code", STRING, null, null, null), condition("mcc_code", STRING, null, null, null),
+        List<Map<String, Object>> contracts = new java.util.ArrayList<>(List.of(contract(CHECKOUT, RuleSetBuilder.INPUT_CONTRACT_CODE,
+            RuleSetBuilder.CURRENT_CONTRACT_VERSION, VariableSource.INPUT, null, List.of(
+            field("client_id", STRING, true, List.of(ACTION_PARAMETER, FLOW_CONDITION, RULE_CONDITION), null, null,
+                "CLIENT_ID"),
+            condition("entity_no", STRING, null, null, null), condition("entity_source_type", STRING, null, null, null),
+            field("local_partner_id", STRING, false, List.of(FLOW_CONDITION, RULE_CONDITION), null, null, null),
+            condition("consumer_country_code", STRING, null, null, null),
             condition("currency", STRING, null, null, "CURRENCY"),
             condition("merchandise_amount", NUMBER, MONEY, "currency", null),
             condition("discount_amount", NUMBER, MONEY, "currency", null),
             condition("net_amount", NUMBER, MONEY, "currency", null),
-            condition("entity_source_type", STRING, null, null, null),
-            field("client_id", STRING, true, List.of(ACTION_PARAMETER), null, null, "CLIENT_ID"))),
+            condition("industry_code", STRING, null, null, null), condition("mcc_code", STRING, null, null, null),
+            condition("line_count", NUMBER, SCALAR, null, null))),
             nodeResult(CHECKOUT)));
         if (pointCode == null || PAYMENT.equals(pointCode)) {
             contracts.add(contract(PAYMENT, "PAYMENT_ATTEMPT", 1, VariableSource.INPUT, null, List.of(
@@ -122,6 +128,14 @@ public final class VariableAuthoringContextResponseChecker
         }
         body.put("contracts", contracts);
         return body;
+    }
+
+    /** 运营可创建的来源：节点输出只由工程登记；结账不支持实时累计与名单命中。 */
+    private static boolean createAllowed(VariableSource source, String pointCode) {
+        if (source == VariableSource.NODE_OUTPUT) {
+            return false;
+        }
+        return !CHECKOUT.equals(pointCode) || source != VariableSource.VELOCITY && source != VariableSource.LIST;
     }
 
     /** 规则集节点结果合同。 */

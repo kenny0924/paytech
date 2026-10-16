@@ -105,7 +105,7 @@ public final class DecisionFlowJsonCodec {
             if (!"matched".equals(field) || !Set.of("EQ", "NE").contains(operator) || values.size() != 1
                 || !(values.getFirst() instanceof BooleanLiteral)) throw new IllegalArgumentException();
         } else if (!"CONTEXT".equals(type)
-            || com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.checkoutPrepare().fields().stream().noneMatch(f -> f.fieldCode().equals(field))) {
+            || com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().fields().stream().noneMatch(f -> f.fieldCode().equals(field))) {
             throw new IllegalArgumentException();
         }
         int required = comparison == com.paytech.risk.decision.domain.enums.ComparisonOperator.BETWEEN ? 2

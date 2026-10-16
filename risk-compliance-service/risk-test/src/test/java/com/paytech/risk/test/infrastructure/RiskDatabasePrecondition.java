@@ -31,7 +31,7 @@ public final class RiskDatabasePrecondition
         + "< docs/database/sql/risk-compliance-schema.sql` 与 "
         + "`mysql -h 127.0.0.1 -P 13306 -u risk_app -p mor_risk "
         + "< docs/database/sql/risk-compliance-initial-data.sql`，最后通过 RISK_TEST_DB_PASSWORD "
-        + "或 MOR_RISK_DB_PASSWORD 注入密码。已有旧库按当前迁移记录应用所需增量；规则集根历史增量见 ../requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/；本轮字典增量见 ../requirements/20260911/operations-console-风控规则集历史与字典管理/db/risk-compliance-service/ddl.sql 与 dml.sql，必须人工备份审核后执行；禁止重跑全量初始化。决策流增量见 ../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/ddl.sql；仅增加四表，须经授权人工应用。规则输入解耦的三表增量见 ../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/local-application.md，需独立授权人工应用。统一变量增量见 ../requirements/20260912/operations-console-统一风控变量管理与条件编排/db/risk-compliance-service/local-application.md；新增两表、四张旧表中增加五列并调整四列注释及26行目录，须经本轮单独授权人工应用。支付反欺诈一期增量见 ../requirements/20261014/risk-支付反欺诈一期/db/ddl.sql 与 dml.sql；新增两表、改五表并初始化支付决策点、动作与变量，须经授权人工应用。评估流程轨迹增量见 ../requirements/20261015/risk-评估结果查询与解释/db/ddl.sql；只新增一表，须经授权人工应用。已有表不得重跑完整 Schema。本轮还需要本机 Redis 16379，通过 RISK_TEST_REDIS_PASSWORD 或 MOR_REDIS_PASSWORD 注入凭据。测试不会启动容器、建表或灌入数据。";
+        + "或 MOR_RISK_DB_PASSWORD 注入密码。已有旧库按当前迁移记录应用所需增量；规则集根历史增量见 ../requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/；本轮字典增量见 ../requirements/20260911/operations-console-风控规则集历史与字典管理/db/risk-compliance-service/ddl.sql 与 dml.sql，必须人工备份审核后执行；禁止重跑全量初始化。决策流增量见 ../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/ddl.sql；仅增加四表，须经授权人工应用。规则输入解耦的三表增量见 ../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/local-application.md，需独立授权人工应用。统一变量增量见 ../requirements/20260912/operations-console-统一风控变量管理与条件编排/db/risk-compliance-service/local-application.md；新增两表、四张旧表中增加五列并调整四列注释及26行目录，须经本轮单独授权人工应用。支付反欺诈一期增量见 ../requirements/20261014/risk-支付反欺诈一期/db/ddl.sql 与 dml.sql；新增两表、改五表并初始化支付决策点、动作与变量，须经授权人工应用。评估流程轨迹增量见 ../requirements/20261015/risk-评估结果查询与解释/db/ddl.sql；只新增一表，须经授权人工应用。结账点运行期评估增量见 ../requirements/20261016/risk-结账点运行期评估/db/ddl.sql 与 dml.sql；重建结账输入快照表、结账变量迁到 ORDER_PREPARATION v5 并初始化结账运行期点版本，须经授权人工应用。已有表不得重跑完整 Schema。本轮还需要本机 Redis 16379，通过 RISK_TEST_REDIS_PASSWORD 或 MOR_REDIS_PASSWORD 注入凭据。测试不会启动容器、建表或灌入数据。";
 
     private static final String LOOPBACK_URL =
         "jdbc:mysql://127.0.0.1:13306/mor_risk"
@@ -162,7 +162,7 @@ public final class RiskDatabasePrecondition
         require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
             + "AND ((table_name='t_rule_operand' AND column_name IN ('variable_code','numeric_unit','currency_code','currency_variable_code')) "
             + "OR (table_name='t_rule_action_parameter' AND column_name='variable_code'))") == 5L);
-        require(count(connection, "SELECT COUNT(*) FROM t_risk_variable WHERE variable_id BETWEEN 900000000000091001 AND 900000000000091017") == 17L);
+        require(count(connection, "SELECT COUNT(*) FROM t_risk_variable WHERE variable_id BETWEEN 900000000000091001 AND 900000000000091020") == 20L);
         require(count(connection, "SELECT COUNT(*) FROM t_risk_variable_member WHERE member_id BETWEEN 900000000000092001 AND 900000000000092009") == 9L);
         for (ActionCatalogEntry action : ACTIONS) {
             require(countAction(connection, action) == 1L);
@@ -170,6 +170,20 @@ public final class RiskDatabasePrecondition
         verifyPaymentFraudPhaseOne(connection);
         require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
             + "AND table_name='t_evaluation_flow_trace'") == 11L);
+        verifyCheckoutRuntime(connection);
+    }
+
+    /** 结账点运行期评估的快照表结构、v5 结账变量与结账运行期点版本。 */
+    private static void verifyCheckoutRuntime(Connection connection) throws SQLException {
+        require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+            + "AND table_name='t_checkout_input_snapshot'") == 17L);
+        require(count(connection, "SELECT COUNT(*) FROM t_risk_variable WHERE variable_id BETWEEN 900000000000091001 "
+            + "AND 900000000000091020 AND point_code='CHECKOUT_PREPARE' AND source_contract_code='ORDER_PREPARATION' "
+            + "AND source_contract_version=5") == 12L);
+        require(count(connection, "SELECT COUNT(*) FROM t_risk_variable WHERE variable_id=900000000000091002 "
+            + "AND source_contract_version=4 AND status='DISABLED'") == 1L);
+        require(count(connection, "SELECT COUNT(*) FROM t_decision_point_version WHERE point_version_id=220001 "
+            + "AND decision_point_id=210001 AND version_no=100 AND input_contract_version=5 AND status='FROZEN'") == 1L);
     }
 
     /** 支付反欺诈一期的结构增量与支付决策点初始化目录。 */

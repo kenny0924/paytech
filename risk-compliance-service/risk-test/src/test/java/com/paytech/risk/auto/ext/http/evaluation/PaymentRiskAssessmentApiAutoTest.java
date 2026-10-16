@@ -27,8 +27,8 @@ import com.paytech.risk.decision.domain.enums.*;
 import com.paytech.risk.test.base.AbstractPaymentRiskApiTest;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.builder.evaluation.PaymentRiskRequestBuilder;
-import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker;
-import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker.Assessed;
+import com.paytech.risk.test.checker.evaluation.EvaluationResponseChecker;
+import com.paytech.risk.test.checker.evaluation.EvaluationResponseChecker.Assessed;
 
 /**
  * 支付尝试风控评估：真实配置入口准备两段决策流并激活，再经支付评估入口执行
@@ -211,16 +211,16 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
         EvaluateDecisionRequestBody request = PaymentRiskRequestBuilder.template().build();
         CyclicBarrier ready = new CyclicBarrier(CONCURRENCY);
         ExecutorService pool = Executors.newFixedThreadPool(CONCURRENCY);
-        List<PaymentRiskResponseChecker> responses = new ArrayList<>();
+        List<EvaluationResponseChecker> responses = new ArrayList<>();
         try {
-            List<Future<PaymentRiskResponseChecker>> calls = new ArrayList<>();
+            List<Future<EvaluationResponseChecker>> calls = new ArrayList<>();
             for (int i = 0; i < CONCURRENCY; i++) {
                 calls.add(pool.submit(() -> {
                     ready.await(10, TimeUnit.SECONDS);
                     return assess(request);
                 }));
             }
-            for (Future<PaymentRiskResponseChecker> call : calls) {
+            for (Future<EvaluationResponseChecker> call : calls) {
                 responses.add(call.get(30, TimeUnit.SECONDS));
             }
         } finally {
@@ -228,7 +228,7 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
         }
 
         Set<Long> evaluationIds = new HashSet<>();
-        for (PaymentRiskResponseChecker response : responses) {
+        for (EvaluationResponseChecker response : responses) {
             if (response.status() == 409) {
                 response.assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST.getCode());
                 continue;

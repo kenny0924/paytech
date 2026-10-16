@@ -21,6 +21,7 @@ import com.paytech.risk.api.decision.RiskVariableApi;
 import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
 import com.paytech.risk.api.decision.request.ListFeatureParameters;
 import com.paytech.risk.api.decision.request.VelocityFeatureParameters;
+import com.paytech.risk.api.evaluation.request.CheckoutPrepareRiskInput;
 import com.paytech.risk.control.core.enums.RiskListPurpose;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.ExecutionVersionStatus;
@@ -33,7 +34,8 @@ import com.paytech.risk.test.checker.decision.VariableDetailResponseChecker;
 /**
  * 创建 Feature 变量：运营经变量创建入口配置实时累计与名单命中参数，随不可变 Feature Version 保存
  * <li>正常流程：计数、去重计数、金额合计（计入本次）的累计变量与名单命中变量各生成一个生效 Feature Version 及参数行。</li>
- * <li>参数：窗口不在允许集合、去重主体与算法不匹配或等于锚定主体、拒绝事件计入本次、量纲与算法不一致、来源与参数不匹配、名单不存在或主体类型不一致返回 400，且不写 Feature Version。</li>
+ * <li>参数：窗口不在允许集合、去重主体与算法不匹配或等于锚定主体、拒绝事件计入本次、量纲与算法不一致、来源与参数不匹配、名单不存在或主体类型不一致、
+ * 决策点不计算 Feature（结账）返回 400，且不写 Feature Version。</li>
  *
  * @see RiskVariableApi
  */
@@ -152,6 +154,15 @@ class FeatureVariableCreateApiAutoTest extends AbstractPaymentRiskApiTest {
                 body.setNumericUnit(null);
                 body.setVelocity(null);
                 body.setList(listParameters("{list}", RiskSubjectType.CARD_BIN));
+            })),
+            Arguments.of("结账决策点不支持实时累计", change(body -> body.setPointCode(CheckoutPrepareRiskInput.POINT_CODE))),
+            Arguments.of("结账决策点不支持名单命中", change(body -> {
+                body.setSourceType("LIST");
+                body.setValueType("BOOLEAN");
+                body.setNumericUnit(null);
+                body.setVelocity(null);
+                body.setList(listParameters("{list}", RiskSubjectType.IP_ADDRESS));
+                body.setPointCode(CheckoutPrepareRiskInput.POINT_CODE);
             })));
     }
 

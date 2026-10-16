@@ -150,7 +150,7 @@ Feature 结果写入专用结果表；Rule 与 Predicate 可解释结果统一�
 
 ## 8. 输入快照与受限数据
 
-`t_checkout_input_snapshot` 冻结 Create Order 前的 OrderPreparationContext：预分配 Order/Item、Client/OE/Assignment/Source、Country/Locale、Industry/MCC、税前金额币种、CCT V5 Agreement/Scope、Partner 来源的 Platform Service Charge Scope/Party、三份 Legal、Seller Disclosure 和 Commercial Context Hash；Risk 不消费 Finance Entity ID。Finance Tax Snapshot、最终含税金额和 `order_context_id` 尚未产生，不得伪造为输入。
+`t_checkout_input_snapshot`（2026-10-16 按 [结账点运行期评估](../../../requirements/20261016/risk-结账点运行期评估/design.md) 重建为 17 列）冻结一次 `CHECKOUT_PREPARE` 正式评估使用的 `ORDER_PREPARATION v5` 输入：Commerce 预分配订单 ID（业务身份）、Client、经营主体编号与来源、Local Partner（仅 PARTNER 来源）、消费者国家、币种、商品/折扣/净额、行业、MCC、明细行数与稳定输入摘要；与通用 `t_decision_evaluation` 共同构成结账评估事实，不另建评估表。消费者、网络证据、协议与文件、Finance 税额及 Finance Entity ID 均不进入结账输入。
 
 Checkout 在消费者交互前执行，因此 Consumer Reference、Email/Phone Stable Token 和网络证据允许为空；一旦存在则按受限字段保存。Risk 不保存 Consumer Profile Token，也不建立 Device Identifier。`t_transaction_risk_assessment` 精确冻结 Payment Attempt 的 Order Context、支付方式、金额币种、行业/MCC、Consumer Token 和 Network Evidence ID/Version；不得回查当前 Commerce 改写历史。
 

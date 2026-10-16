@@ -177,7 +177,7 @@ final class DecisionFlowConditionNormalizer {
 
     /** 结账输入字段条件交给规则 AST 校验，取其规范化后的右值。 */
     private Predicate contextPredicate(Predicate predicate) {
-        InputFieldDescriptor field = DecisionPointAuthoringDescriptor.checkoutPrepare().fields().stream()
+        InputFieldDescriptor field = DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().fields().stream()
             .filter(value -> value.fieldCode().equals(predicate.fieldCode())).findFirst()
             .orElseThrow(IllegalArgumentException::new);
         ComparisonOperator operator = Arrays.stream(ComparisonOperator.values())

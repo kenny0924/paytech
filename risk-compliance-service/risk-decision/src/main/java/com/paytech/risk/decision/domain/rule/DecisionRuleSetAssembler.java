@@ -707,7 +707,7 @@ public class DecisionRuleSetAssembler {
 
     /** 核验旧执行协议与批准合同及内容 Hash。 */
     private void verifyPointVersion(DecisionPointVersion point) {
-        var descriptor = DecisionPointAuthoringDescriptor.checkoutPrepare();
+        var descriptor = DecisionPointAuthoringDescriptor.legacyCheckoutPrepare();
         if (point.pointVersionId() <= 0 || point.decisionPointId() <= 0 || point.versionNo() <= 0
             || !descriptor.point().inputContractCode().equals(point.inputContractCode())
             || descriptor.point().inputContractVersion() != point.inputContractVersion()
@@ -890,7 +890,7 @@ public class DecisionRuleSetAssembler {
 
     /** 组合当前格式允许引用的工程输入字段。 */
     private List<InputFieldDescriptor> inputFields(boolean additional) {
-        List<InputFieldDescriptor> result = new ArrayList<>(DecisionPointAuthoringDescriptor.checkoutPrepare().fields());
+        List<InputFieldDescriptor> result = new ArrayList<>(DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().fields());
         if (additional) result.addAll(RuleActionConfigurationCatalog.inputFields());
         return List.copyOf(result);
     }

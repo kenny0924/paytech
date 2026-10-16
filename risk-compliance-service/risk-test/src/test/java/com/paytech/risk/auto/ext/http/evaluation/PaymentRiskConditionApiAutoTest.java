@@ -35,7 +35,7 @@ import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.NodeSpec;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.builder.evaluation.PaymentRiskRequestBuilder;
-import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker.Assessed;
+import com.paytech.risk.test.checker.evaluation.EvaluationResponseChecker.Assessed;
 
 /**
  * 运行期条件求值：经真实配置入口保存规则与流程，经支付评估入口执行，按规则轨迹逐条核对命中

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.NumericUnit;
 import com.paytech.risk.decision.domain.enums.VariableFormat;
@@ -17,7 +18,8 @@ import com.paytech.risk.decision.service.processor.request.VariableAuthoringCont
 
 /**
  * 返回工程已接通的变量编排能力，无数据库或外部调用
- * <li>按决策点精确筛选来源合同，不以最新版本或固定变量名单替代变量库。</li>
+ * <li>按决策点精确筛选来源合同，不以最新版本或固定变量名单替代变量库；旧合同只读，不进入目录。</li>
+ * <li>指定决策点不支持 Feature 计算时（如结账），可创建来源不列出实时累计与名单命中。</li>
  */
 @Component
 public class VariableAuthoringContextProcessor extends AbstractProcessor<VariableAuthoringContextRequest, VariableAuthoringCapabilities> {
@@ -43,10 +45,23 @@ public class VariableAuthoringContextProcessor extends AbstractProcessor<Variabl
     protected VariableAuthoringCapabilities processRequest(VariableAuthoringContextRequest request) {
         String point = request.getPointCode();
         var points = DecisionSourceContracts.all().stream().map(DecisionSourceContracts.Contract::pointCode).distinct().toList();
-        var contracts = DecisionSourceContracts.all().stream().filter(c -> point == null || point.equals(c.pointCode())).toList();
-        var creatable = Arrays.stream(VariableSource.values()).filter(source -> source != VariableSource.NODE_OUTPUT).toList();
+        var contracts = DecisionSourceContracts.all().stream()
+            .filter(c -> !c.legacy() && (point == null || point.equals(c.pointCode()))).toList();
+        var creatable = Arrays.stream(VariableSource.values()).filter(source -> creatable(source, point)).toList();
         return new VariableAuthoringCapabilities(points, contracts, List.of(VariableSource.values()), creatable,
             List.of(DecisionValueType.values()), List.of(VariableFormat.values()), List.of(NumericUnit.values()),
             MEMBER_LIMIT, MEMBER_BODY_BYTES, LITERAL_SET_LIMIT);
+    }
+
+    /** 运营可创建的来源：节点输出只由工程登记；指定决策点不支持 Feature 计算时排除实时累计与名单命中。 */
+    static boolean creatable(VariableSource source, String point) {
+        if (source == VariableSource.NODE_OUTPUT) {
+            return false;
+        }
+        if (point == null || source != VariableSource.VELOCITY && source != VariableSource.LIST) {
+            return true;
+        }
+        return DecisionPointAuthoringDescriptor.find(point)
+            .map(DecisionPointAuthoringDescriptor::featureVariablesSupported).orElse(false);
     }
 }

@@ -22,7 +22,7 @@ import com.paytech.risk.decision.domain.enums.VelocityMetric;
 import com.paytech.risk.test.base.AbstractPaymentRiskApiTest;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.builder.evaluation.PaymentRiskRequestBuilder;
-import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker.Assessed;
+import com.paytech.risk.test.checker.evaluation.EvaluationResponseChecker.Assessed;
 
 /**
  * 实时累计 Feature 的窗口与算法：经真实评估入口计算，按落库的 Feature 结果核对

@@ -134,9 +134,9 @@ public final class FlowBuilder {
         }
     }
 
-    /** 一个版本的保存事实。 */
+    /** 一个版本的保存事实；输入合同版本默认结账旧合同 v4，与旧格式规则集夹具一致。 */
     public record VersionSpec(int versionNo, String flowName, String changeReason, long createdBy, Instant createTime,
-        GraphSpec graph) {
+        GraphSpec graph, int inputContractVersion) {
     }
 
     private final List<GraphSpec> graphs;
@@ -148,6 +148,8 @@ public final class FlowBuilder {
     private boolean deleted;
 
     private Instant updateTime;
+
+    private int inputContractVersion = RuleSetBuilder.LEGACY_CONTRACT_VERSION;
 
     private FlowBuilder(List<GraphSpec> graphs) {
         this.graphs = graphs;
@@ -185,6 +187,12 @@ public final class FlowBuilder {
         return this;
     }
 
+    /** 全部版本使用指定输入合同版本，如引用当前合同统一变量规则集的流程。 */
+    public FlowBuilder inputContractVersion(int version) {
+        this.inputContractVersion = version;
+        return this;
+    }
+
     /** 指定管理根的最后更新时间，用于列表排序。 */
     public FlowBuilder updateTime(Instant time) {
         this.updateTime = time;
@@ -202,7 +210,7 @@ public final class FlowBuilder {
             int versionNo = firstVersionNo + i;
             String name = i == graphs.size() - 1 && currentName != null ? currentName : "Checkout flow v" + versionNo;
             versions.add(new VersionSpec(versionNo, name, "flow change " + versionNo, 70000L + i + 1,
-                BASE_TIME.plusSeconds(3600L * (i + 1)).plusNanos(1000L * (i + 1)), graphs.get(i)));
+                BASE_TIME.plusSeconds(3600L * (i + 1)).plusNanos(1000L * (i + 1)), graphs.get(i), inputContractVersion));
         }
         return versions;
     }

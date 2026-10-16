@@ -27,14 +27,22 @@ public class FlowAuthoringContextView {
     /** 适用于流程条件的节点输出字段。 */
     private final List<Field> nodeOutputs;
 
-    /** 仅根据已读目录事实投影，类型级运算能力由 Owner 定义。 */
+    /** 仅根据已读目录事实投影，类型级运算能力由 Owner 定义；输入变量只列当前输入合同，旧合同变量只读不再列出。 */
     public static FlowAuthoringContextView from(DecisionPointAuthoringDescriptor descriptor,
         List<RiskVariable.Entry> definitions) {
         List<RiskVariable.Entry> selected = definitions.stream()
             .filter(e -> e.definition().usages().contains(VariableUsage.FLOW_CONDITION)).toList();
         return new FlowAuthoringContextView(descriptor,
-            selected.stream().filter(e -> e.definition().sourceType() == VariableSource.INPUT).map(FlowAuthoringContextView::field).toList(),
+            selected.stream().filter(e -> e.definition().sourceType() == VariableSource.INPUT)
+                .filter(e -> currentContract(descriptor, e.definition())).map(FlowAuthoringContextView::field).toList(),
             selected.stream().filter(e -> e.definition().sourceType() == VariableSource.NODE_OUTPUT).map(FlowAuthoringContextView::field).toList());
+    }
+
+    /** 输入变量的来源合同是否为决策点当前输入合同。 */
+    private static boolean currentContract(DecisionPointAuthoringDescriptor descriptor, RiskVariable.Definition definition) {
+        var point = descriptor.point();
+        return point.inputContractCode().equals(definition.sourceContractCode())
+            && Integer.valueOf(point.inputContractVersion()).equals(definition.sourceContractVersion());
     }
 
     /** 来源合同定义必填性；变量目录拥有名称、类型、格式与编码。 */

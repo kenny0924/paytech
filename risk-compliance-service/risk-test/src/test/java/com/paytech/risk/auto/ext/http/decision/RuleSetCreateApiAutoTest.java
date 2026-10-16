@@ -33,6 +33,7 @@ import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequest
 import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
 import com.paytech.risk.api.enums.RiskVariableErrorCode;
 import com.paytech.risk.decision.domain.enums.ComparisonOperator;
+import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.DictionaryStatus;
 import com.paytech.risk.decision.domain.enums.GroupOperator;
@@ -46,7 +47,6 @@ import com.paytech.risk.test.checker.decision.RuleSetStoreChecker;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker.ExpectedAction;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker.ExpectedNode;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker.ExpectedOperand;
-import com.paytech.risk.test.checker.decision.RuleSetStoreChecker.ExpectedParameter;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker.ExpectedRule;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker.Snapshot;
 import com.paytech.risk.test.mocker.decision.RuleSetMocker;
@@ -55,8 +55,9 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
 /**
  * 保存规则集新 DRAFT 版本的业务结果
  * <li>正常流程：首个版本创建管理根；基于当前草稿保存时退役原草稿，基于冻结版本保存时保留冻结；完整规则闭包按优先级与先序持久化。</li>
- * <li>变量引用：变量不存在、不适用于条件位置、类型或量纲不符、超出可选集合、动作主体不合格时按变量错误码拒绝。</li>
- * <li>字典引用：拒绝原因或主体标签未登记、已停用时拒绝（409）。</li>
+ * <li>变量引用：变量不存在、不适用于条件位置、类型或量纲不符、超出可选集合时按变量错误码拒绝。</li>
+ * <li>附加动作：结账已接入运行期，冷却与打标签等附加动作不再开放，保存时拒绝（400）。</li>
+ * <li>字典引用：拒绝原因未登记、已停用时拒绝（409）。</li>
  * <li>版本冲突：已存在编码未带基准、基准不是当前版本或内容摘要不符、基准不存在、资源锁被占用时返回并发冲突（409）；已删除编码不可复活（409）。</li>
  * <li>失败关闭：动作目录漂移、管理根当前指针损坏时返回 500。所有拒绝都不改写任何持久化事实。</li>
  *
@@ -72,8 +73,6 @@ class RuleSetCreateApiAutoTest extends MockTestBase {
     private static final long REVIEW_ID = 240002L;
 
     private static final long DENY_ID = 240003L;
-
-    private static final long COOLDOWN_ID = 240004L;
 
     @Autowired
     private RuleSetMocker ruleSets;
@@ -142,8 +141,8 @@ class RuleSetCreateApiAutoTest extends MockTestBase {
             List.of(), group("all", null, 1, "AND"),
             predicate("country", "all", 1, "IN", variable("LEFT", 1, "INPUT_COUNTRY_CODE", "STRING"),
                 literal("RIGHT", 1, "STRING", "AE"), literal("RIGHT", 2, "STRING", "SA")),
-            predicate("locale", "all", 2, "IS_NOT_NULL", variable("LEFT", 1, "INPUT_LOCALE", "STRING")));
-        var review = rule("MCC_REVIEW", "MCC review", 5, null, null, action(REVIEW), List.of(cooldown(1, "60000")),
+            predicate("entity", "all", 2, "IS_NOT_NULL", variable("LEFT", 1, "INPUT_ENTITY_NO", "STRING")));
+        var review = rule("MCC_REVIEW", "MCC review", 5, null, null, action(REVIEW), List.of(),
             predicate("mcc", null, 1, "EQ", variable("LEFT", 1, "INPUT_MCC_CODE", "STRING"),
                 literal("RIGHT", 1, "STRING", "5411")));
 
@@ -158,15 +157,12 @@ class RuleSetCreateApiAutoTest extends MockTestBase {
             new ExpectedRule("MCC_REVIEW", "MCC review", 5, true, null, null,
                 List.of(predicateNode(-1, 1, ComparisonOperator.EQ, variableOperand("INPUT_MCC_CODE"),
                     stringOperand(1, "5411"))),
-                List.of(new ExpectedAction(COOLDOWN_ID, 1, CLIENT_TARGET, List.of(
-                    new ExpectedParameter(2400041L, 1, OperandSource.VARIABLE.getCode(), CLIENT_VARIABLE, null, null),
-                    new ExpectedParameter(2400042L, 1, OperandSource.LITERAL.getCode(), null, 60000L, null))),
-                    new ExpectedAction(REVIEW_ID, 2, null, List.of()))),
+                List.of(new ExpectedAction(REVIEW_ID, 1, null, List.of()))),
             new ExpectedRule("COUNTRY_DENY", "Country deny", 20, true, reasonCode, "Blocked country",
                 List.of(new ExpectedNode(-1, NodeType.GROUP.getCode(), GroupOperator.AND.getCode(), null, 1, List.of()),
                     predicateNode(0, 1, ComparisonOperator.IN, variableOperand("INPUT_COUNTRY_CODE"),
                         stringOperand(1, "AE"), stringOperand(2, "SA")),
-                    predicateNode(0, 2, ComparisonOperator.IS_NOT_NULL, variableOperand("INPUT_LOCALE"))),
+                    predicateNode(0, 2, ComparisonOperator.IS_NOT_NULL, variableOperand("INPUT_ENTITY_NO"))),
                 List.of(new ExpectedAction(DENY_ID, 1, null, List.of()))));
     }
 
@@ -182,20 +178,31 @@ class RuleSetCreateApiAutoTest extends MockTestBase {
         store.assertNothingWritten(ruleSetCode);
     }
 
-    /** 拒绝原因与主体标签必须是已登记且启用的字典项。 */
+    /** 拒绝原因必须是已登记且启用的字典项。 */
     @ParameterizedTest(name = "{0}")
     @MethodSource("dictionaryViolations")
-    void test_businessRuleViolation_dictionarySelection(String scenario, DictionaryStatus reasonStatus,
-        boolean withTag) {
+    void test_businessRuleViolation_dictionarySelection(String scenario, DictionaryStatus reasonStatus) {
         String code = ruleSets.newRuleSetCode();
         String reasonCode = reasonStatus == null ? "MOCK_UNREGISTERED_REASON"
             : ruleSets.mockRejectionReason(reasonStatus);
-        var deny = rule("COUNTRY_DENY", "Country deny", 10, reasonCode, "Blocked country", action(DENY),
-            withTag ? List.of(tag(1, "MOCK_UNREGISTERED_TAG")) : List.of(),
+        var deny = rule("COUNTRY_DENY", "Country deny", 10, reasonCode, "Blocked country", action(DENY), List.of(),
             predicate("root", null, 1, "EQ", variable("LEFT", 1, "INPUT_COUNTRY_CODE", "STRING"),
                 literal("RIGHT", 1, "STRING", "AE")));
 
         invoke(template(code).rules(deny).build()).assertProblem(409, RISK_DICTIONARY_SELECTION_UNAVAILABLE.getCode());
+
+        store.assertNothingWritten(code);
+    }
+
+    /** 结账运行期不开放附加动作：带冷却或打标签的规则保存时拒绝，不写入任何事实。 */
+    @Test
+    void test_businessRuleViolation_additionalActionNotSupported() {
+        String code = ruleSets.newRuleSetCode();
+
+        invoke(template(code).rules(withAction(cooldownOf(CLIENT_VARIABLE))).build()).assertProblem(400,
+            BUSINESS_CHECK_FAILED.getCode());
+        invoke(template(code).rules(withAction(tag(1, "MOCK_TAG"))).build()).assertProblem(400,
+            BUSINESS_CHECK_FAILED.getCode());
 
         store.assertNothingWritten(code);
     }
@@ -295,7 +302,8 @@ class RuleSetCreateApiAutoTest extends MockTestBase {
                 variable("LEFT", 1, "MOCK_UNKNOWN_VARIABLE", "STRING"), literal("RIGHT", 1, "STRING", "AE"))), 404,
                 VARIABLE_NOT_FOUND),
             violation("变量不允许用于规则条件", code -> template(code).rules(condition("EQ",
-                variable("LEFT", 1, CLIENT_VARIABLE, "STRING"), literal("RIGHT", 1, "STRING", "1001"))), 409,
+                variable("LEFT", 1, "NODE_DECISION", "STRING"), literal("RIGHT", 1, "STRING", DecisionValue.ALLOW.getCode()))),
+                409,
                 VARIABLE_SCOPE_MISMATCH),
             violation("声明类型与变量库不一致", code -> template(code).rules(condition("EQ",
                 variable("LEFT", 1, "INPUT_COUNTRY_CODE", "NUMBER"), literal("RIGHT", 1, "NUMBER", "1"))), 409,
@@ -305,18 +313,11 @@ class RuleSetCreateApiAutoTest extends MockTestBase {
                 VARIABLE_UNIT_MISMATCH),
             violation("比较值不属于变量可选集合", code -> template(code).rules(condition("EQ",
                 variable("LEFT", 1, "INPUT_ENTITY_SOURCE_TYPE", "STRING"), literal("RIGHT", 1, "STRING", "OTHER"))),
-                409, VARIABLE_DOMAIN_MISMATCH),
-            violation("动作主体变量不存在",
-                code -> template(code).rules(withAction(cooldownOf("MOCK_UNKNOWN_SUBJECT"))), 404, VARIABLE_NOT_FOUND),
-            violation("动作主体变量不能作动作参数",
-                code -> template(code).rules(withAction(cooldownOf("INPUT_COUNTRY_CODE"))), 409,
-                VARIABLE_SCOPE_MISMATCH));
+                409, VARIABLE_DOMAIN_MISMATCH));
     }
 
     static Stream<Arguments> dictionaryViolations() {
-        return Stream.of(Arguments.of("拒绝原因未登记", null, false),
-            Arguments.of("拒绝原因已停用", DictionaryStatus.DISABLED, false),
-            Arguments.of("主体标签未登记", DictionaryStatus.ACTIVE, true));
+        return Stream.of(Arguments.of("拒绝原因未登记", null), Arguments.of("拒绝原因已停用", DictionaryStatus.DISABLED));
     }
 
     static Stream<Arguments> staleBases() {

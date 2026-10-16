@@ -138,7 +138,7 @@ public class RuleSetStoreChecker {
             () -> assertEquals(versionId, ((Number)row.get("rule_set_version_id")).longValue()),
             () -> assertEquals(RuleSetBuilder.DECISION_POINT_ID, ((Number)row.get("decision_point_id")).longValue()),
             () -> assertEquals(INPUT_CONTRACT, row.get("input_contract_code")),
-            () -> assertEquals(4, ((Number)row.get("input_contract_version")).intValue()),
+            () -> assertEquals(RuleSetBuilder.CURRENT_CONTRACT_VERSION, ((Number)row.get("input_contract_version")).intValue()),
             () -> assertEquals(after.ruleSetCode(), row.get("rule_set_code")),
             () -> assertEquals(ruleSetName, row.get("rule_set_name")),
             () -> assertEquals(RuleSetVersionStatus.DRAFT.getCode(), row.get("status")),

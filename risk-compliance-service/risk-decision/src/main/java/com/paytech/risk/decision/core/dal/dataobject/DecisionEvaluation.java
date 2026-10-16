@@ -16,7 +16,7 @@ public class DecisionEvaluation {
 
     /**
      * 评估请求身份
-     * <li>正式支付评估为 PAYMENT_ATTEMPT_RISK:{paymentAttemptId}；影子评估为 SHADOW:{shadowRunId}:{baselineEvaluationId}。</li>
+     * <li>正式支付评估为 PAYMENT_ATTEMPT_RISK:{paymentAttemptId}，正式结账评估为 CHECKOUT_PREPARE:{orderId}；影子评估为 SHADOW:{shadowRunId}:{baselineEvaluationId}。</li>
      */
     private String evaluationRequestId;
 

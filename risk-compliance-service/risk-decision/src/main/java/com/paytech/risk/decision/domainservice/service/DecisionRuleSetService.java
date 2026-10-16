@@ -22,13 +22,41 @@ public interface DecisionRuleSetService {
     /** 旧多绑定点的顺序编排引用读取准确版本，该绑定不视为规则版本的 Companion。 */
     DecisionRuleSetAggregate detailForLegacyOrchestration(long ruleSetVersionId, long bindingId);
 
-    /** 配置能力及已读取系统变量的展示投影。 */
+    /**
+     * 配置能力及已读取系统变量的展示投影
+     *
+     * @param descriptor 决策点合同
+     * @param inputVariables 当前输入合同的系统输入变量，按来源字段排序；旧合同变量只读，不在其中
+     * @param configurationActions 该决策点开放的仅配置附加动作；运行期决策点为空
+     */
     record RuleAuthoringView(DecisionPointAuthoringDescriptor descriptor,
-        List<com.paytech.risk.decision.domain.variable.RiskVariable.Entry> systemDefinitions) {
-        /** 纯合同测试可显式传入空的数据库投影。 */
-        public RuleAuthoringView(DecisionPointAuthoringDescriptor descriptor) { this(descriptor, List.of()); }
+        List<com.paytech.risk.decision.domain.variable.RiskVariable.Entry> inputVariables,
+        List<com.paytech.risk.decision.domain.authoring.RuleActionConfigurationCatalog.ConfigurationAction> configurationActions) {
         public RuleAuthoringView {
             Objects.requireNonNull(descriptor, "descriptor");
+            inputVariables = List.copyOf(inputVariables);
+            configurationActions = List.copyOf(configurationActions);
+        }
+
+        /**
+         * 由决策点合同与已读取的系统变量构造编排能力
+         *
+         * @param descriptor 决策点合同
+         * @param systemDefinitions 该决策点的全部系统变量
+         * @return 只含当前输入合同输入变量与该点开放附加动作的投影
+         */
+        public static RuleAuthoringView from(DecisionPointAuthoringDescriptor descriptor,
+            List<com.paytech.risk.decision.domain.variable.RiskVariable.Entry> systemDefinitions) {
+            var point = descriptor.point();
+            var inputs = systemDefinitions.stream()
+                .filter(e -> e.definition().sourceType() == com.paytech.risk.decision.domain.enums.VariableSource.INPUT)
+                .filter(e -> point.inputContractCode().equals(e.definition().sourceContractCode())
+                    && Integer.valueOf(point.inputContractVersion()).equals(e.definition().sourceContractVersion()))
+                .sorted(java.util.Comparator.comparing(e -> e.definition().sourceField())).toList();
+            var actions = descriptor.additionalActionsSupported()
+                ? com.paytech.risk.decision.domain.authoring.RuleActionConfigurationCatalog.actions()
+                : List.<com.paytech.risk.decision.domain.authoring.RuleActionConfigurationCatalog.ConfigurationAction>of();
+            return new RuleAuthoringView(descriptor, inputs, actions);
         }
     }
 

@@ -23,6 +23,7 @@ import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 import com.paytech.risk.api.decision.DecisionFlowQueryApi;
 import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 import com.paytech.risk.test.checker.decision.LegacyPointResponseChecker;
 import com.paytech.risk.test.mapper.decision.FlowTestMapper;
 import com.paytech.risk.test.mocker.decision.FlowMocker;
@@ -117,7 +118,7 @@ class LegacyPointApiAutoTest extends MockTestBase {
     void test_businessRuleViolation_contractMismatch() {
         MockedRuleSet ruleSet = ruleSets.mock(versions(FROZEN));
         MockedLegacyPoint point = flows.mockLegacyPoint(ruleSet.version(1));
-        flowTestMapper.updateRuleSetContract(ruleSet.currentVersionId(), 5);
+        flowTestMapper.updateRuleSetContract(ruleSet.currentVersionId(), RuleSetBuilder.UNREGISTERED_CONTRACT_VERSION);
 
         read(point.pointVersionId()).assertProblem(500, INTERNAL_ERROR.getCode());
     }

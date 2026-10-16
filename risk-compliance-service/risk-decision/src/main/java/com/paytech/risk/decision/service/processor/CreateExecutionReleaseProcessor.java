@@ -37,16 +37,13 @@ import lombok.AllArgsConstructor;
 
 /**
  * 创建冻结决策流的执行发布（TEST，DRAFT）
- * <li>决策点必须支持运行期；决策流须属于该点且未删除；点版本须为冻结的工程合同。</li>
+ * <li>决策点必须支持运行期；决策流须属于该点、未删除且使用该点当前输入合同；点版本须为冻结的工程合同，版本号由决策点合同登记。</li>
  * <li>每次调用新建一个发布；内容摘要覆盖点版本、流程图、规则集版本与 Feature Version。</li>
  */
 @Component
 @AllArgsConstructor
 public class CreateExecutionReleaseProcessor
     extends AbstractLockProcessor<CreateExecutionReleaseRequest, ExecutionReleaseView> {
-    /** 执行发布使用的决策点版本号。 */
-    static final int POINT_VERSION_NO = 1;
-
     private final Clock clock;
     private final DecisionRuleSetRepository points;
     private final ExecutionSnapshotReader snapshots;
@@ -74,7 +71,7 @@ public class CreateExecutionReleaseProcessor
         DecisionPoint point = points.findPointByCode(request.getPointCode())
             .orElseThrow(() -> new ErrorException("决策点未初始化: " + request.getPointCode()));
         DecisionPointVersion pointVersion = requirePointVersion(descriptor, point);
-        requireFlow(point, request.getFlowVersionId());
+        requireFlow(descriptor, point, request.getFlowVersionId());
 
         // 构造发布并保存
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
@@ -86,18 +83,19 @@ public class CreateExecutionReleaseProcessor
 
     /** 点版本必须是冻结的工程合同，摘要与描述一致。 */
     DecisionPointVersion requirePointVersion(DecisionPointAuthoringDescriptor descriptor, DecisionPoint point) {
-        DecisionPointVersion version = pointVersions.findByPointAndVersion(point.decisionPointId(), POINT_VERSION_NO)
+        int versionNo = descriptor.runtimePointVersionNo();
+        DecisionPointVersion version = pointVersions.findByPointAndVersion(point.decisionPointId(), versionNo)
             .orElseThrow(() -> new ErrorException("决策点版本未初始化: " + point.pointCode()));
         String expected = canonicalizer.decisionPointVersion(ExecutionReleaseContent.pointVersion(descriptor,
-            POINT_VERSION_NO)).sha256LowerHex();
+            versionNo)).sha256LowerHex();
         if (version.status() != DecisionPointVersionStatus.FROZEN || !expected.equals(version.contentHash())) {
             throw new ErrorException("决策点版本与工程合同不一致: " + point.pointCode());
         }
         return version;
     }
 
-    /** 决策流版本须属于该决策点且流程未删除。 */
-    void requireFlow(DecisionPoint point, long flowVersionId) {
+    /** 决策流版本须属于该决策点、流程未删除，且使用决策点当前输入合同（旧合同流程只读，须重新保存）。 */
+    void requireFlow(DecisionPointAuthoringDescriptor descriptor, DecisionPoint point, long flowVersionId) {
         DecisionFlowVersionRow version = flowVersions.findById(flowVersionId)
             .orElseThrow(() -> new BizCheckFailException("决策流版本不存在: " + flowVersionId));
         DecisionFlowRow root = flowRoots.findById(version.flowId())
@@ -107,6 +105,10 @@ public class CreateExecutionReleaseProcessor
         }
         if (root.status() != FlowStatus.CONFIGURABLE) {
             throw new BizCheckFailException("决策流已删除: " + flowVersionId);
+        }
+        if (!descriptor.point().inputContractCode().equals(version.inputContractCode())
+            || descriptor.point().inputContractVersion() != version.inputContractVersion()) {
+            throw new BizCheckFailException("决策流版本使用旧输入合同，请重新保存后发布: " + flowVersionId);
         }
     }
 

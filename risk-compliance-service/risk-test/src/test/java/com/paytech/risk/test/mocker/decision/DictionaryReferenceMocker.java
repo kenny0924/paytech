@@ -167,7 +167,8 @@ public class DictionaryReferenceMocker implements Clear {
             long versionId = randomId();
             String flowName = "Mock flow v" + versionNo;
             flowVersionIds.add(versionId);
-            mapper.insertFlowVersion(versionId, flowId, versionNo, flowName, FLOW_TIME);
+            mapper.insertFlowVersion(versionId, flowId, versionNo, flowName, FLOW_TIME,
+                RuleSetBuilder.LEGACY_CONTRACT_VERSION);
             versions.add(new MockedFlowVersion(versionId, versionNo, flowName));
         }
         flowIds.add(flowId);

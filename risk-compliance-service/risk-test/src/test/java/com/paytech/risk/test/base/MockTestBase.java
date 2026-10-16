@@ -1,6 +1,8 @@
 package com.paytech.risk.test.base;
 
+import com.paytech.risk.test.mapper.evaluation.CheckoutRiskTestMapper;
 import com.paytech.risk.test.mapper.evaluation.PaymentRiskTestMapper;
+import com.paytech.risk.test.mocker.evaluation.CheckoutRiskMocker;
 import com.paytech.risk.test.mocker.evaluation.PaymentRiskMocker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -59,7 +61,7 @@ import tools.jackson.databind.ObjectMapper;
     DictionaryReferenceMocker.class, DictionaryRecordChecker.class,
     VariableTestMapper.class, VariableMocker.class, VariableDataChecker.class,
     ClientReviewTestMapper.class, ClientReviewMocker.class, ClientReviewStoreChecker.class, ClientReviewResultProbe.class,
-    PaymentRiskTestMapper.class, PaymentRiskMocker.class})
+    PaymentRiskTestMapper.class, PaymentRiskMocker.class, CheckoutRiskTestMapper.class, CheckoutRiskMocker.class})
 public abstract class MockTestBase extends TestBase {
     @Autowired
     protected HttpTestInvoker http;

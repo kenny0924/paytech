@@ -19,7 +19,7 @@ import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.runtime.ExecutionSnapshot;
 import com.paytech.risk.decision.domain.runtime.FeatureComputationException;
 import com.paytech.risk.decision.domain.runtime.FeatureValue;
-import com.paytech.risk.decision.domain.runtime.PaymentRiskInput;
+import com.paytech.risk.decision.domain.runtime.RuntimeRiskInput;
 import com.paytech.risk.decision.domainservice.repository.VelocityEventSubjectRepository;
 
 import lombok.AllArgsConstructor;
@@ -47,7 +47,7 @@ public class FeatureValueReader {
      * @return 按 Feature Version 索引的结果，执行顺序先累计后名单，各自按 ID 升序
      *         <li>某个 Feature 计算出错时停止，抛出 {@link FeatureComputationException}，携带已完成结果与失败项。</li>
      */
-    public Map<Long, FeatureValue> read(ExecutionSnapshot snapshot, PaymentRiskInput input, Instant at) {
+    public Map<Long, FeatureValue> read(ExecutionSnapshot snapshot, RuntimeRiskInput input, Instant at) {
         Map<Long, FeatureValue> result = new HashMap<>();
         List<Long> velocityIds = new ArrayList<>(snapshot.velocityFeatures().keySet());
         velocityIds.sort(null);
@@ -76,7 +76,7 @@ public class FeatureValueReader {
     }
 
     /** 实时累计；数值统一为去尾零的十进制文本。 */
-    Object velocity(VelocityFeatureDefinition definition, PaymentRiskInput input, Instant at) {
+    Object velocity(VelocityFeatureDefinition definition, RuntimeRiskInput input, Instant at) {
         String key = input.subjectKey(definition.getAnchorSubjectType());
         if (key == null) {
             return null;
@@ -106,7 +106,7 @@ public class FeatureValueReader {
     }
 
     /** 名单命中；本次没有该主体时为 false。 */
-    Object membership(ListFeatureDefinition definition, PaymentRiskInput input, Instant at) {
+    Object membership(ListFeatureDefinition definition, RuntimeRiskInput input, Instant at) {
         String key = input.subjectKey(definition.getSubjectType());
         return key != null && lists.isMember(definition.getListId(), definition.getSubjectType(), key, at);
     }

@@ -152,7 +152,8 @@ public class VariableMocker implements Clear {
         mapper.insertFlow(flowId, RuleSetBuilder.DECISION_POINT_ID, flowCode, versionIds[1], status);
         for (int index = 0; index < 2; index++) {
             flowVersionIds.add(versionIds[index]);
-            mapper.insertFlowVersion(versionIds[index], flowId, index + 1, "Mock flow v" + (index + 1));
+            mapper.insertFlowVersion(versionIds[index], flowId, index + 1, "Mock flow v" + (index + 1),
+                RuleSetBuilder.LEGACY_CONTRACT_VERSION);
         }
         int versionNo = inHistoryVersion ? 1 : 2;
         long edgeId = nextEdgeId();
@@ -171,7 +172,7 @@ public class VariableMocker implements Clear {
         flowIds.add(flowId);
         flowVersionIds.add(versionId);
         mapper.insertFlow(flowId, RuleSetBuilder.DECISION_POINT_ID, "MOCK_FLOW_" + flowId, versionId, FlowStatus.CONFIGURABLE);
-        mapper.insertFlowVersion(versionId, flowId, 1, "Mock flow v1");
+        mapper.insertFlowVersion(versionId, flowId, 1, "Mock flow v1", RuleSetBuilder.LEGACY_CONTRACT_VERSION);
         mapper.insertFlowEdge(nextEdgeId(), versionId, "edge_other", FlowEdgeType.CONDITIONAL, 1,
             condition("INPUT_CURRENCY"));
     }
@@ -183,7 +184,7 @@ public class VariableMocker implements Clear {
         flowIds.add(flowId);
         flowVersionIds.add(versionId);
         mapper.insertFlow(flowId, RuleSetBuilder.DECISION_POINT_ID, "MOCK_FLOW_" + flowId, versionId, FlowStatus.CONFIGURABLE);
-        mapper.insertFlowVersion(versionId, flowId, 1, "Mock flow v1");
+        mapper.insertFlowVersion(versionId, flowId, 1, "Mock flow v1", RuleSetBuilder.LEGACY_CONTRACT_VERSION);
         long first = nextEdgeId();
         nextEdgeId += count - 1;
         mapper.insertFlowEdges(first, versionId, count, condition("INPUT_CURRENCY"));
@@ -196,7 +197,7 @@ public class VariableMocker implements Clear {
         flowIds.add(flowId);
         flowVersionIds.add(versionId);
         mapper.insertFlow(flowId, RuleSetBuilder.DECISION_POINT_ID, "MOCK_FLOW_" + flowId, versionId, FlowStatus.CONFIGURABLE);
-        mapper.insertFlowVersion(versionId, flowId, 1, "Mock flow v1");
+        mapper.insertFlowVersion(versionId, flowId, 1, "Mock flow v1", RuleSetBuilder.LEGACY_CONTRACT_VERSION);
         mapper.insertFlowEdge(nextEdgeId(), versionId, "edge_broken", FlowEdgeType.CONDITIONAL, 1, "{\"schemaVersion\":9}");
     }
 

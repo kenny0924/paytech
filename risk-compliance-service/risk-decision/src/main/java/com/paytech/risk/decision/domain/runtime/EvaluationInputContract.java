@@ -12,6 +12,7 @@ import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescript
 /**
  * 风控点统一评估的输入合同：业务身份格式与逐字段规则，由工程登记
  * <li>只做格式层校验；字段语义（如 IP 字面量）由风控点评估器构造输入时再校验。</li>
+ * <li>使用 {@link #POSITIVE_ID} 的业务身份与字段另校验不超过 BIGINT 上限，超限与格式不符同样报告为违规，不进入数字转换。</li>
  * <li>规则可引用的输入字段登记在决策点合同中；构造时核对每个都在本合同内且必填一致，漂移即启动失败。</li>
  *
  * @param pointCode
@@ -25,6 +26,9 @@ import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescript
  */
 public record EvaluationInputContract(String pointCode, int contractVersion, Pattern businessKeyPattern,
     List<Field> fields) {
+
+    /** 正整数标识格式；按此格式登记的业务身份与字段还须不超过 BIGINT 上限。 */
+    public static final Pattern POSITIVE_ID = Pattern.compile("[1-9][0-9]{0,18}");
 
     public EvaluationInputContract {
         Objects.requireNonNull(pointCode);
@@ -103,7 +107,7 @@ public record EvaluationInputContract(String pointCode, int contractVersion, Pat
      */
     public List<Violation> violations(String businessKey, Map<String, String> inputs) {
         List<Violation> result = new ArrayList<>();
-        if (businessKey == null || !businessKeyPattern.matcher(businessKey).matches()) {
+        if (!validBusinessKey(businessKey)) {
             result.add(new Violation("businessKey", "业务身份格式无效"));
         }
         List<String> known = fields.stream().map(Field::key).toList();
@@ -117,11 +121,28 @@ public record EvaluationInputContract(String pointCode, int contractVersion, Pat
                 }
                 continue;
             }
-            if (value.length() > field.maxLength()
-                || field.pattern() != null && !field.pattern().matcher(value).matches()) {
+            if (value.length() > field.maxLength() || field.pattern() != null && !matches(field.pattern(), value)) {
                 result.add(new Violation("inputs." + field.key(), "格式无效"));
             }
         }
         return result;
+    }
+
+    /**
+     * 业务身份是否符合本合同，供评估与按业务身份查询共用
+     *
+     * @param businessKey 业务身份；为空视为不符合
+     * @return 格式符合且（正整数标识时）不超过 BIGINT 上限
+     */
+    public boolean validBusinessKey(String businessKey) {
+        return businessKey != null && matches(businessKeyPattern, businessKey);
+    }
+
+    /** 格式匹配；正整数标识另须能转换为 long。 */
+    static boolean matches(Pattern pattern, String value) {
+        if (!pattern.matcher(value).matches()) {
+            return false;
+        }
+        return pattern != POSITIVE_ID || value.length() < 19 || value.compareTo(Long.toString(Long.MAX_VALUE)) <= 0;
     }
 }

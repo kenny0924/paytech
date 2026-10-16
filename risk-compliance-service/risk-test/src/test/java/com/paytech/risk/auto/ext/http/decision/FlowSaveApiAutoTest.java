@@ -49,6 +49,7 @@ import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.builder.decision.FlowBuilder.EdgeSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.NodeSpec;
+import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 import com.paytech.risk.test.builder.decision.SaveFlowRequestBuilder;
 import com.paytech.risk.test.checker.decision.FlowStoreChecker;
 import com.paytech.risk.test.checker.decision.FlowStoreChecker.ExpectedRoot;
@@ -77,6 +78,9 @@ import tools.jackson.databind.node.ObjectNode;
  * @see DecisionFlowManagementApi#save(String, String, com.paytech.risk.api.decision.request.SaveFlowRequestBody)
  */
 class FlowSaveApiAutoTest extends MockTestBase {
+    /** 新保存的流程使用结账当前输入合同，只能引用同合同的规则集版本。 */
+    private static final int CURRENT_CONTRACT = RuleSetBuilder.CURRENT_CONTRACT_VERSION;
+
     private static final String PATH = "/decision-flows/v1/flows";
 
     private static final long ACTOR = 70001L;
@@ -109,7 +113,7 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 编辑当前版本：保留原流程身份与历史，新增下一版本并推进根指针、修订号与更新时间。 */
     @Test
     void test_normalFlow_edit() {
-        MockedFlow flow = flows.mock(FlowBuilder.versions(2));
+        MockedFlow flow = flows.mock(FlowBuilder.versions(2).inputContractVersion(CURRENT_CONTRACT));
         SaveFlowRequestBuilder request = SaveFlowRequestBuilder.template(flow.flowCode())
             .base(flow.current().flowVersionId(), flow.version()).flowName("Edited flow").changeReason("Second edit")
             .graph(GraphSpec.direct(DecisionValue.REVIEW));
@@ -126,7 +130,7 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 规则集节点、统一变量条件出口与 ELSE 出口原样落库，条件以规范 JSON 存储。 */
     @Test
     void test_normalFlow_ruleSetAndCondition() {
-        MockedRuleSet ruleSet = ruleSets.mock(versions(FROZEN, DRAFT));
+        MockedRuleSet ruleSet = ruleSets.mock(versions(FROZEN, DRAFT).variableReference());
         String code = flows.newFlowCode();
         SaveFlowRequestBuilder request = SaveFlowRequestBuilder.template(code)
             .graph(GraphSpec.branching(ruleSet.version(1).ruleSetVersionId()));
@@ -156,10 +160,10 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 基准版本已引用的退休规则版本与停用原因在文案不变时可继续保存。 */
     @Test
     void test_normalFlow_retainedReferences() {
-        MockedRuleSet ruleSet = ruleSets.mock(versions(RETIRED, FROZEN));
+        MockedRuleSet ruleSet = ruleSets.mock(versions(RETIRED, FROZEN).variableReference());
         String reason = flows.mockReason(DictionaryStatus.DISABLED);
         GraphSpec graph = ruleThenDeny(ruleSet.version(1).ruleSetVersionId(), reason, "Retained message");
-        MockedFlow flow = flows.mock(FlowBuilder.versions(graph));
+        MockedFlow flow = flows.mock(FlowBuilder.versions(graph).inputContractVersion(CURRENT_CONTRACT));
         SaveFlowRequestBuilder request = SaveFlowRequestBuilder.template(flow.flowCode())
             .base(flow.current().flowVersionId(), flow.version()).graph(graph);
         Instant before = now();
@@ -288,7 +292,7 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 条件引用不存在的变量时按条件图定位，不写入。 */
     @Test
     void test_invalidParameter_unknownVariable() {
-        MockedRuleSet ruleSet = ruleSets.mock(versions(DRAFT));
+        MockedRuleSet ruleSet = ruleSets.mock(versions(DRAFT).variableReference());
         String code = flows.newFlowCode();
 
         save(SaveFlowRequestBuilder.template(code).graph(GraphSpec.branching(ruleSet.currentVersionId(),
@@ -301,8 +305,8 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 新建已存在的编码（含已删除流程的编码）冲突，原流程不变。 */
     @Test
     void test_businessRuleViolation_codeExists() {
-        MockedFlow flow = flows.mock(FlowBuilder.versions(1));
-        MockedFlow deleted = flows.mock(FlowBuilder.versions(2).deleted());
+        MockedFlow flow = flows.mock(FlowBuilder.versions(1).inputContractVersion(CURRENT_CONTRACT));
+        MockedFlow deleted = flows.mock(FlowBuilder.versions(2).deleted().inputContractVersion(CURRENT_CONTRACT));
 
         save(SaveFlowRequestBuilder.template(flow.flowCode())).assertProblem(409, RISK_FLOW_CODE_EXISTS.getCode());
         save(SaveFlowRequestBuilder.template(deleted.flowCode())).assertProblem(409, RISK_FLOW_CODE_EXISTS.getCode());
@@ -314,7 +318,7 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 过期的根修订号或基准版本冲突，原流程不变。 */
     @Test
     void test_businessRuleViolation_staleBase() {
-        MockedFlow flow = flows.mock(FlowBuilder.versions(2));
+        MockedFlow flow = flows.mock(FlowBuilder.versions(2).inputContractVersion(CURRENT_CONTRACT));
 
         save(SaveFlowRequestBuilder.template(flow.flowCode()).base(flow.current().flowVersionId(), 1))
             .assertProblem(409, RISK_FLOW_VERSION_CONFLICT.getCode());
@@ -327,7 +331,7 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 已整体删除的流程不再产生新版本。 */
     @Test
     void test_businessRuleViolation_deletedFlow() {
-        MockedFlow flow = flows.mock(FlowBuilder.versions(1).deleted());
+        MockedFlow flow = flows.mock(FlowBuilder.versions(1).deleted().inputContractVersion(CURRENT_CONTRACT));
 
         save(SaveFlowRequestBuilder.template(flow.flowCode()).base(flow.current().flowVersionId(), flow.version()))
             .assertProblem(409, RISK_FLOW_DELETED.getCode());
@@ -338,7 +342,7 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 当前业务版本号已达到整数上限时不能再保存。 */
     @Test
     void test_businessRuleViolation_versionNoLimit() {
-        MockedFlow flow = flows.mock(FlowBuilder.versions(1).firstVersionNo(Integer.MAX_VALUE));
+        MockedFlow flow = flows.mock(FlowBuilder.versions(1).firstVersionNo(Integer.MAX_VALUE).inputContractVersion(CURRENT_CONTRACT));
 
         save(SaveFlowRequestBuilder.template(flow.flowCode()).base(flow.current().flowVersionId(), flow.version()))
             .assertProblem(409, RISK_FLOW_VERSION_CONFLICT.getCode());
@@ -349,10 +353,10 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 新选择的规则版本不可用（已退休、已删除规则集、合同不符、不存在）。 */
     @Test
     void test_businessRuleViolation_referenceUnavailable() {
-        MockedRuleSet retired = ruleSets.mock(versions(RETIRED, FROZEN));
-        MockedRuleSet deleted = ruleSets.mock(versions(FROZEN).deleted());
-        MockedRuleSet mismatched = ruleSets.mock(versions(DRAFT));
-        flowTestMapper.updateRuleSetContract(mismatched.currentVersionId(), 5);
+        MockedRuleSet retired = ruleSets.mock(versions(RETIRED, FROZEN).variableReference());
+        MockedRuleSet deleted = ruleSets.mock(versions(FROZEN).variableReference().deleted());
+        MockedRuleSet mismatched = ruleSets.mock(versions(DRAFT).variableReference());
+        flowTestMapper.updateRuleSetContract(mismatched.currentVersionId(), RuleSetBuilder.UNREGISTERED_CONTRACT_VERSION);
         String code = flows.newFlowCode();
 
         for (long versionId : new long[] {retired.version(1).ruleSetVersionId(), deleted.currentVersionId(),
@@ -368,7 +372,7 @@ class FlowSaveApiAutoTest extends MockTestBase {
     @Test
     void test_businessRuleViolation_reasonUnavailable() {
         String disabled = flows.mockReason(DictionaryStatus.DISABLED);
-        MockedFlow flow = flows.mock(FlowBuilder.versions(GraphSpec.deny(disabled, "Original message")));
+        MockedFlow flow = flows.mock(FlowBuilder.versions(GraphSpec.deny(disabled, "Original message")).inputContractVersion(CURRENT_CONTRACT));
         String code = flows.newFlowCode();
 
         save(SaveFlowRequestBuilder.template(code).graph(GraphSpec.deny(disabled, "Message"))).assertProblem(422,
@@ -386,7 +390,7 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 旧 schemaVersion=1 条件不能作为新内容保存。 */
     @Test
     void test_businessRuleViolation_legacyCondition() {
-        MockedRuleSet ruleSet = ruleSets.mock(versions(DRAFT));
+        MockedRuleSet ruleSet = ruleSets.mock(versions(DRAFT).variableReference());
         String code = flows.newFlowCode();
 
         save(SaveFlowRequestBuilder.template(code).graph(GraphSpec.branching(ruleSet.currentVersionId(),
@@ -409,7 +413,7 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 基准流程的根修订号与当前版本不一致时失败关闭。 */
     @Test
     void test_businessRuleViolation_corruptedBase() {
-        MockedFlow flow = flows.mock(FlowBuilder.versions(1));
+        MockedFlow flow = flows.mock(FlowBuilder.versions(1).inputContractVersion(CURRENT_CONTRACT));
         flows.corruptRootVersion(flow);
 
         save(SaveFlowRequestBuilder.template(flow.flowCode()).base(flow.current().flowVersionId(), flow.version() + 5))
@@ -421,7 +425,7 @@ class FlowSaveApiAutoTest extends MockTestBase {
     /** 同一基准的两次并发编辑只有一次成功，另一项冲突，根只推进一次且没有孤儿版本。 */
     @Test
     void test_edgeCase_concurrentEdits() throws Exception {
-        MockedFlow flow = flows.mock(FlowBuilder.versions(1));
+        MockedFlow flow = flows.mock(FlowBuilder.versions(1).inputContractVersion(CURRENT_CONTRACT));
         CyclicBarrier ready = new CyclicBarrier(2);
         List<CompletableFuture<SaveFlowResponseChecker>> results = new ArrayList<>();
         for (String name : List.of("Left edit", "Right edit")) {
@@ -508,10 +512,10 @@ class FlowSaveApiAutoTest extends MockTestBase {
         return Arguments.of(scenario, mutation);
     }
 
-    /** 本次保存产生的版本事实：保存人、保存时间与请求中的名称、说明和完整图。 */
+    /** 本次保存产生的版本事实：保存人、保存时间与请求中的名称、说明和完整图；新版本使用当前输入合同。 */
     private static ExpectedVersion created(Saved saved, int versionNo, SaveFlowRequestBuilder request) {
         return new ExpectedVersion(saved.flowVersionId(), versionNo, request.flowName(), ACTOR,
-            request.changeReason(), saved.savedTime(), request.graphSpec());
+            request.changeReason(), saved.savedTime(), request.graphSpec(), CURRENT_CONTRACT);
     }
 
     /** 开始 → 规则集节点 → 拒绝结束。 */

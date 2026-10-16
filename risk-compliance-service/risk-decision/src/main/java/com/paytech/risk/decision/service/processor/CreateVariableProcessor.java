@@ -22,6 +22,7 @@ import com.paytech.risk.decision.domain.variable.RiskVariable.Definition;
 import com.paytech.risk.decision.domain.enums.VariableSource;
 import com.paytech.risk.decision.domain.enums.VariableStatus;
 import com.paytech.risk.decision.domain.variable.CreateVariableContext;
+import com.paytech.risk.decision.domain.variable.DecisionSourceContracts;
 import com.paytech.risk.decision.domain.variable.RiskVariable.Create;
 import com.paytech.risk.decision.domain.variable.RiskVariable.Entry;
 import com.paytech.risk.decision.domain.variable.VariableDefinitionValidator;
@@ -58,6 +59,11 @@ public class CreateVariableProcessor extends AbstractLockProcessor<CreateVariabl
         VariableDefinitionValidator.validate(command.definition());
         if (command.definition().systemManaged() || command.definition().sourceType() == VariableSource.NODE_OUTPUT) {
             throw failure(SYSTEM_VARIABLE_READ_ONLY, "系统定义和节点输出只能由工程合同登记");
+        }
+        // 旧输入合同只供已有变量读取；放在创建入口而非结构校验器，读取旧变量时的完整性复核不受影响。
+        if (command.definition().sourceType() == VariableSource.INPUT
+            && DecisionSourceContracts.find(command.definition()).legacy()) {
+            throw invalid("旧输入合同只读，不能新建变量");
         }
         if (command.status() == null || command.status() == VariableStatus.DELETED) {
             throw invalid("创建状态只能为 ACTIVE 或 DISABLED");

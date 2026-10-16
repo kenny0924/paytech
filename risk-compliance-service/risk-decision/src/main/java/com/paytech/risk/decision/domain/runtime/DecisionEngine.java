@@ -37,7 +37,7 @@ public final class DecisionEngine {
     private NodeResult currentNode;
 
     /** 绑定一次评估的输入；实例只能执行一次。 */
-    private DecisionEngine(ExecutionSnapshot snapshot, PaymentRiskInput input, Map<Long, FeatureValue> features) {
+    private DecisionEngine(ExecutionSnapshot snapshot, RuntimeRiskInput input, Map<Long, FeatureValue> features) {
         this.snapshot = snapshot;
         this.inputs = input.contractValues();
         this.features = features;
@@ -55,7 +55,7 @@ public final class DecisionEngine {
      * @return 结论与轨迹
      *         <li>流程损坏、引用缺失等异常以系统错误抛出，由调用方记为技术失败。</li>
      */
-    public static EngineOutcome evaluate(ExecutionSnapshot snapshot, PaymentRiskInput input,
+    public static EngineOutcome evaluate(ExecutionSnapshot snapshot, RuntimeRiskInput input,
         Map<Long, FeatureValue> features) {
         return new DecisionEngine(snapshot, input, features).run();
     }

@@ -116,7 +116,7 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
         RiskDecisionCanonicalizerImpl canonicalizer = new RiskDecisionCanonicalizerImpl();
         String expectedRuleSetHash = canonicalizer.ruleSetVersion(closure.ruleSet()).sha256LowerHex();
         String expectedPointHash = canonicalizer.decisionPointVersion(closure.point()).sha256LowerHex();
-        DecisionPointAuthoringDescriptor descriptor = DecisionPointAuthoringDescriptor.checkoutPrepare();
+        DecisionPointAuthoringDescriptor descriptor = DecisionPointAuthoringDescriptor.legacyCheckoutPrepare();
         if (r.environmentCode() != DecisionEnvironment.TEST || r.releaseNo() <= 0) {
             add(out, "RELEASE_HEADER", "release", null, null, null);
         }
@@ -539,7 +539,7 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
         ArrayList<StaticViolation> out = new ArrayList<>();
         Map<String, PersistedActionVersion> persisted = new HashMap<>();
         Map<String, DecisionPointAuthoringDescriptor.DecisionActionDescriptor> builtIn = index(
-            DecisionPointAuthoringDescriptor.checkoutPrepare().actions(), v -> v.actionCode() + ":" + v.versionNo());
+            DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().actions(), v -> v.actionCode() + ":" + v.versionNo());
         Set<Long> persistedIds = new HashSet<>();
         Set<String> persistedKeys = new HashSet<>();
         for (PersistedActionVersion row : closure.persistedActions()) {
@@ -551,7 +551,7 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
                 DecisionPointAuthoringDescriptor.DecisionActionDescriptor expected = builtIn.get(
                     row.actionCode() + ":" + row.versionNo());
                 if (expected == null || row.actionVersionId() != 240001L
-                    + DecisionPointAuthoringDescriptor.checkoutPrepare().actions().indexOf(expected)
+                    + DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().actions().indexOf(expected)
                     || row.status() != ConfigurationStatus.ACTIVE
                     || !expected.handlerCode().equals(row.handlerCode())
                     || !expected.implementationVersion().equals(row.implementationVersion())

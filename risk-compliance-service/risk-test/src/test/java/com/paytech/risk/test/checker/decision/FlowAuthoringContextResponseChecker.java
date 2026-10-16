@@ -58,8 +58,8 @@ public final class FlowAuthoringContextResponseChecker
             () -> assertEquals(RuleSetBuilder.POINT_CODE, text(points.path(0).path("pointCode"))),
             () -> assertEquals("Checkout Prepare", text(points.path(0).path("pointName"))),
             () -> assertEquals(RuleSetBuilder.POINT_CODE, text(body.path("pointCode"))),
-            () -> assertEquals("ORDER_PREPARATION", text(body.path("inputContractCode"))),
-            () -> assertEquals(4, body.path("inputContractVersion").asInt()),
+            () -> assertEquals(RuleSetBuilder.INPUT_CONTRACT_CODE, text(body.path("inputContractCode"))),
+            () -> assertEquals(RuleSetBuilder.CURRENT_CONTRACT_VERSION, body.path("inputContractVersion").asInt()),
             () -> assertEquals(1, body.path("graphSchemaVersion").asInt()),
             () -> assertEquals(65536, limits.path("bodyBytes").asInt()),
             () -> assertEquals(50, limits.path("nodes").asInt()),
@@ -70,8 +70,8 @@ public final class FlowAuthoringContextResponseChecker
             () -> assertEquals("RISK_VARIABLE_AUTHORING", text(body.path("descriptorCode"))),
             () -> assertEquals(2, body.path("conditionSchemaVersion").asInt()),
             () -> assertEquals(RuleSetBuilder.POINT_CODE, text(query.path("pointCode"))),
-            () -> assertEquals("ORDER_PREPARATION", text(query.path("inputContractCode"))),
-            () -> assertEquals(4, query.path("inputContractVersion").asInt()),
+            () -> assertEquals(RuleSetBuilder.INPUT_CONTRACT_CODE, text(query.path("inputContractCode"))),
+            () -> assertEquals(RuleSetBuilder.CURRENT_CONTRACT_VERSION, query.path("inputContractVersion").asInt()),
             () -> assertEquals("FLOW_CONDITION", text(query.path("usage"))));
         assertItems(body.path("fields"), fields, true);
         assertItems(body.path("nodeOutputs"), outputs, false);

@@ -155,7 +155,7 @@ public final class ExecutionReleaseContent {
         return passed(StaticCheckCode.HANDLER_HASH);
     }
 
-    /** 支付决策点一期不开放附加动作。 */
+    /** 运行期决策点不开放附加动作。 */
     static StaticCheckResult actionParameters(ExecutionSnapshot snapshot) {
         boolean none = snapshot.ruleSets().values().stream().flatMap(set -> set.rules().stream())
             .allMatch(rule -> rule.additionalActions().isEmpty());

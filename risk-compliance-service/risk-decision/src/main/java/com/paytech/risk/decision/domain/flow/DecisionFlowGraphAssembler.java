@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.risk.decision.core.dal.dataobject.*;
 import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
-import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.DecisionPointDescriptor;
 import com.paytech.risk.decision.domain.flow.DecisionFlow.*;
 
 import lombok.AllArgsConstructor;
@@ -42,9 +41,9 @@ public class DecisionFlowGraphAssembler {
     public Graph assemble(String pointCode, DecisionFlowRow root, DecisionFlowVersionRow version,
         List<DecisionFlowNodeRow> rows, List<DecisionFlowEdgeRow> edgeRows, List<DecisionFlowEndOutput> outputRows) {
         root.verifyVersion(version);
-        DecisionPointDescriptor point = DecisionPointAuthoringDescriptor.require(pointCode).point();
-        if (!point.inputContractCode().equals(version.inputContractCode())
-            || point.inputContractVersion() != version.inputContractVersion()) {
+        // 当前合同与登记的旧合同都可读取；执行发布另行要求当前合同。
+        if (!DecisionPointAuthoringDescriptor.require(pointCode)
+            .readsContract(version.inputContractCode(), version.inputContractVersion())) {
             throw corrupt();
         }
         if (rows.size() > 50 || edgeRows.size() > 100) throw corrupt();

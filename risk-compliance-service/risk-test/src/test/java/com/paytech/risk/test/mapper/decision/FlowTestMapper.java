@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.paytech.risk.decision.domain.enums.DictionaryStatus;
 import com.paytech.risk.decision.domain.enums.FlowStatus;
+import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 
 /**
  * 决策流四表、拒绝原因、旧点绑定与变量别名的测试 SQL
@@ -67,13 +68,13 @@ public class FlowTestMapper {
             ts(createTime), ts(updateTime));
     }
 
-    /** 插入 ORDER_PREPARATION v4 合同下的不可变版本，更新时间等于创建时间。 */
+    /** 插入 ORDER_PREPARATION 指定版本合同下的不可变版本，更新时间等于创建时间。 */
     public void insertVersion(long versionId, long flowId, int versionNo, String flowName, long createdBy,
-        String changeReason, Instant time) {
+        String changeReason, Instant time, int inputContractVersion) {
         jdbc.update("INSERT INTO t_decision_flow_version(flow_version_id,flow_id,version_no,flow_name,"
             + "input_contract_code,input_contract_version,created_by,change_reason,create_time,update_time) "
-            + "VALUES(?,?,?,?,'ORDER_PREPARATION',4,?,?,?,?)", versionId, flowId, versionNo, flowName, createdBy,
-            changeReason, ts(time), ts(time));
+            + "VALUES(?,?,?,?,'ORDER_PREPARATION',?,?,?,?,?)", versionId, flowId, versionNo, flowName,
+            inputContractVersion, createdBy, changeReason, ts(time), ts(time));
     }
 
     /** 插入版本节点，审计时间与版本一致。 */
@@ -233,15 +234,16 @@ public class FlowTestMapper {
             (rs, i) -> instant(rs, "update_time"), variableCode);
     }
 
-    /** 插入 country_code 的系统输入变量别名。 */
+    /** 插入当前合同 consumer_country_code 的系统输入变量别名。 */
     public void insertInputAlias(long variableId, String variableCode, String variableName, boolean flowCondition,
         String status) {
         jdbc.update("INSERT INTO t_risk_variable(variable_id,variable_code,variable_name,description,source_type,"
             + "value_type,point_code,source_contract_code,source_contract_version,source_field,rule_condition_flag,"
             + "flow_condition_flag,action_parameter_flag,system_managed_flag,format_code,status,version,create_by,"
             + "update_by,create_time,update_time) VALUES(?,?,?,NULL,'INPUT','STRING','CHECKOUT_PREPARE',"
-            + "'ORDER_PREPARATION',4,'country_code',1,?,0,1,'UPPER_ALPHA_2',?,1,1,1,UTC_TIMESTAMP(6),"
-            + "UTC_TIMESTAMP(6))", variableId, variableCode, variableName, flowCondition ? 1 : 0, status);
+            + "'ORDER_PREPARATION',?,'consumer_country_code',1,?,0,1,'UPPER_ALPHA_2',?,1,1,1,UTC_TIMESTAMP(6),"
+            + "UTC_TIMESTAMP(6))", variableId, variableCode, variableName, RuleSetBuilder.CURRENT_CONTRACT_VERSION,
+            flowCondition ? 1 : 0, status);
     }
 
     /** 删除变量。 */

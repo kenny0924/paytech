@@ -50,7 +50,7 @@ import com.paytech.risk.control.domain.list.RiskSubjectType;
 public record PaymentRiskInput(long paymentAttemptId, long paymentIntentId, long riskActionId, long orderId,
     long clientId, String entityNo, String paymentMethodCode, String captureMode, BigDecimal amount, String currency,
     String industryCode, String mccCode, String consumerCountryCode, String consumerReference, String clientIpAddress,
-    String userAgent, String cardFingerprint, String cardBin) {
+    String userAgent, String cardFingerprint, String cardBin) implements RuntimeRiskInput {
 
     /** HTTP 合同只限制 IP 长度；在进入评估前按名单同一规则解析，非法字面量以参数错误拒绝，不产生评估。 */
     public PaymentRiskInput {
@@ -64,6 +64,7 @@ public record PaymentRiskInput(long paymentAttemptId, long paymentIntentId, long
      *
      * @return 字段键到规范值；金额为去尾零的十进制文本，缺省的可选字段不出现
      */
+    @Override
     public Map<String, Object> contractValues() {
         Map<String, Object> values = new LinkedHashMap<>();
         values.put("client_id", Long.toString(clientId));
@@ -86,6 +87,7 @@ public record PaymentRiskInput(long paymentAttemptId, long paymentIntentId, long
      *            主体类型
      * @return 规范化主体键；本次没有该主体时为空
      */
+    @Override
     public String subjectKey(RiskSubjectType type) {
         String raw = switch (type) {
             case CLIENT -> Long.toString(clientId);

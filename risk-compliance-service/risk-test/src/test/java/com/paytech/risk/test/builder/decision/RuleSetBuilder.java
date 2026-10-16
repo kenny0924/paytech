@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.*;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizerImpl;
 import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizer.*;
@@ -17,6 +18,7 @@ import com.paytech.risk.decision.domain.hash.RiskDecisionCanonicalizer.*;
  * <li>版本按序号 1..N 排列，最后一个版本为根的当前配置指针。</li>
  * <li>默认每个版本带同一条最小规则 {@link #MINIMAL_RULE}：country_code 非空即 ALLOW_CHECKOUT，满足闭包完整性；
  * {@link #variableReference()} 改用统一变量格式的 {@link #VARIABLE_RULE}。</li>
+ * <li>输入合同版本：旧格式为结账旧合同 v4，统一变量格式为当前合同 v5；可用 {@link #inputContractVersion(int)} 构造历史 v4 统一变量版本。</li>
  * <li>内容摘要由生产 Canonicalizer 按同一规则投影计算，仅用于准备合法夹具；断言不使用该算法。</li>
  *
  * @author Kenny
@@ -26,6 +28,21 @@ public final class RuleSetBuilder {
     public static final long DECISION_POINT_ID = 210001L;
 
     public static final String POINT_CODE = "CHECKOUT_PREPARE";
+
+    /** 结账输入合同编码。 */
+    public static final String INPUT_CONTRACT_CODE =
+        DecisionPointAuthoringDescriptor.checkoutPrepare().point().inputContractCode();
+
+    /** 结账当前输入合同版本（ORDER_PREPARATION v5）。 */
+    public static final int CURRENT_CONTRACT_VERSION =
+        DecisionPointAuthoringDescriptor.checkoutPrepare().point().inputContractVersion();
+
+    /** 结账旧输入合同版本（ORDER_PREPARATION v4），只读。 */
+    public static final int LEGACY_CONTRACT_VERSION =
+        DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().point().inputContractVersion();
+
+    /** 任何决策点都未登记的输入合同版本，用于构造合同不一致或损坏。 */
+    public static final int UNREGISTERED_CONTRACT_VERSION = 99;
 
     /** 旧格式内容合同。 */
     public static final String LEGACY_FORMAT = "LEGACY";
@@ -50,6 +67,8 @@ public final class RuleSetBuilder {
 
     private boolean variableReference;
 
+    private Integer inputContractVersion;
+
     private Instant baseTime = BASE_TIME;
 
     private RuleSetBuilder() {}
@@ -71,6 +90,20 @@ public final class RuleSetBuilder {
     public RuleSetBuilder variableReference() {
         this.variableReference = true;
         return this;
+    }
+
+    /** 指定版本行的输入合同版本，用于构造旧合同下保存的统一变量版本。 */
+    public RuleSetBuilder inputContractVersion(int version) {
+        this.inputContractVersion = version;
+        return this;
+    }
+
+    /** 版本行 input_contract_version：显式指定值，否则旧格式为旧合同、统一变量格式为当前合同。 */
+    public int inputContractVersion() {
+        if (inputContractVersion != null) {
+            return inputContractVersion;
+        }
+        return variableReference ? CURRENT_CONTRACT_VERSION : LEGACY_CONTRACT_VERSION;
     }
 
     /** 以指定时间作为版本时间基准，用于控制跨规则集的创建时间先后。 */

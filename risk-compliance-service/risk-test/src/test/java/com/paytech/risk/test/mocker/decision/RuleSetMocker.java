@@ -113,7 +113,7 @@ public class RuleSetMocker implements Clear {
             String contentHash = builder.contentHashOf(code, spec.ruleSetName(), versionNo);
             mapper.insertVersion(versionId, RuleSetBuilder.DECISION_POINT_ID, code, spec.ruleSetName(), versionNo,
                 spec.status(), contentHash, spec.createdBy(), spec.changeReason(), spec.createTime(),
-                builder.contentFormat());
+                builder.contentFormat(), builder.inputContractVersion());
             long ruleId = randomId();
             if (builder.isVariableReference()) {
                 mapper.insertVariableRule(ruleId, versionId, RuleSetBuilder.ALLOW_ACTION_VERSION_ID);

@@ -35,7 +35,6 @@ import com.paytech.risk.decision.domain.enums.NumericUnit;
 import com.paytech.risk.decision.domain.enums.OperandRole;
 import com.paytech.risk.decision.domain.enums.OperandSource;
 import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
-import com.paytech.risk.decision.domain.enums.VariableSource;
 import com.paytech.risk.decision.domain.enums.VariableUsage;
 import com.paytech.risk.decision.domain.rule.ChangeReasonPolicy;
 import com.paytech.risk.decision.domain.rule.DecisionRuleSetAggregate.NodeView;
@@ -121,7 +120,7 @@ final class DecisionRuleSetWireConverter {
             value.getVariableCode(), value.getNumericUnit() == null ? null : NumericUnit.valueOf(value.getNumericUnit()), value.getCurrencyCode(), value.getCurrencyVariableCode());
     }
 
-    /** 将规则编排能力转换为 Authoring Context 响应。 */
+    /** 将规则编排能力转换为 Authoring Context 响应；输入变量与附加动作已由 Owner 按决策点筛选。 */
     static RuleAuthoringContextResponseBody toResponse(RuleAuthoringView context) {
         DecisionPointAuthoringDescriptor descriptor = require(context, "authoringContext").descriptor();
         var point = descriptor.point();
@@ -130,15 +129,13 @@ final class DecisionRuleSetWireConverter {
                 point.inputContractCode(), point.inputContractVersion(), point.outputContractCode(),
                 point.defaultDecision().getCode(), point.evaluationStrategy().getCode(),
                 point.failureStrategy().getCode(), point.timeoutMillis(), point.status().getCode()),
-            context.systemDefinitions().stream().filter(e -> e.definition().sourceType() == VariableSource.INPUT)
-                .sorted(Comparator.comparing(e -> e.definition().sourceField()))
-                .map(DecisionRuleSetWireConverter::systemInput).toList(),
+            context.inputVariables().stream().map(DecisionRuleSetWireConverter::systemInput).toList(),
             descriptor.operators().stream().map(ComparisonOperator::getCode).toList(),
-            java.util.stream.Stream.concat(descriptor.actions().stream(), RuleActionConfigurationCatalog.actions().stream()
+            java.util.stream.Stream.concat(descriptor.actions().stream(), context.configurationActions().stream()
                 .map(RuleActionConfigurationCatalog.ConfigurationAction::descriptor)).sorted(Comparator.comparing(DecisionActionDescriptor::actionCode)
                 .thenComparingInt(DecisionActionDescriptor::versionNo))
                 .map(DecisionRuleSetWireConverter::toResponse).toList(),
-            List.of(), parameterDescriptors(), List.of(), List.of(), RuleActionConfigurationCatalog.targetBindings().stream()
+            List.of(), parameterDescriptors(context.configurationActions()), List.of(), List.of(), RuleActionConfigurationCatalog.targetBindings().stream()
                 .map(target -> new TargetBindingDescriptor(target.bindingCode(), target.displayName(), target.subjectType(),
                     List.of(), target.subjectType() + "_ID")).toList(), VariableRuleConfiguration.OPERAND_FORMAT,
                 new RiskVariableModels.VariableQueryContext(point.pointCode(), point.inputContractCode(), point.inputContractVersion(), "RULE_CONDITION"));
@@ -154,9 +151,10 @@ final class DecisionRuleSetWireConverter {
             d.usages().contains(VariableUsage.ACTION_PARAMETER), d.variableCode());
     }
 
-    /** 动作参数的固定描述，供编排页面展示。 */
-    private static List<ActionParameterDescriptor> parameterDescriptors() {
-        return RuleActionConfigurationCatalog.actions().stream().flatMap(action -> java.util.stream.Stream.of(
+    /** 开放附加动作的参数固定描述，供编排页面展示。 */
+    private static List<ActionParameterDescriptor> parameterDescriptors(
+        List<RuleActionConfigurationCatalog.ConfigurationAction> actions) {
+        return actions.stream().flatMap(action -> java.util.stream.Stream.of(
             new ActionParameterDescriptor(action.descriptor().actionCode(), action.descriptor().versionNo(), "SUBJECT_ID", "STRING",
                 true, "VARIABLE", true, 1, null, null, null),
             new ActionParameterDescriptor(action.descriptor().actionCode(), action.descriptor().versionNo(), action.parameterCode(),

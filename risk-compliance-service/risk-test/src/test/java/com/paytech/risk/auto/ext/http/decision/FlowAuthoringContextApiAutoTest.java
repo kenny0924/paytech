@@ -43,14 +43,17 @@ class FlowAuthoringContextApiAutoTest extends MockTestBase {
     private static final List<String> ORDERED_OPERATORS = List.of("EQ", "NE", "GT", "GTE", "LT", "LTE", "IN",
         "NOT_IN", "BETWEEN", "IS_NULL", "IS_NOT_NULL");
 
-    /** 种子目录中可用于流程条件的系统输入（INPUT_CLIENT_ID 只用于动作参数，不在其中）。 */
+    /** 种子目录中当前合同（ORDER_PREPARATION v5）可用于流程条件的系统输入，按变量编码排序；旧合同的 INPUT_LOCALE 不在其中。 */
     private static final List<ExpectedField> SEED_FIELDS = List.of(
-        input("country_code", "国家/地区", "STRING", "UPPER_ALPHA_2", "INPUT_COUNTRY_CODE"),
+        input("client_id", "Client 标识", "STRING", "POSITIVE_ID", "INPUT_CLIENT_ID"),
+        input("consumer_country_code", "国家/地区", "STRING", "UPPER_ALPHA_2", "INPUT_COUNTRY_CODE"),
         input("currency", "币种", "STRING", "UPPER_ALPHA_3", "INPUT_CURRENCY"),
         input("discount_amount", "折扣金额", "NUMBER", "NONE", "INPUT_DISCOUNT_AMOUNT"),
+        input("entity_no", "经营主体编号", "STRING", "TEXT", "INPUT_ENTITY_NO"),
         input("entity_source_type", "实体来源", "STRING", "TOKEN", "INPUT_ENTITY_SOURCE_TYPE"),
         input("industry_code", "行业代码", "STRING", "TOKEN", "INPUT_INDUSTRY_CODE"),
-        input("locale", "语言地区", "STRING", "BCP47", "INPUT_LOCALE"),
+        input("line_count", "明细行数", "NUMBER", "NONE", "INPUT_LINE_COUNT"),
+        optionalInput("local_partner_id", "Local Partner 标识", "STRING", "POSITIVE_ID", "INPUT_LOCAL_PARTNER_ID"),
         input("mcc_code", "MCC", "STRING", "DIGITS_4", "INPUT_MCC_CODE"),
         input("merchandise_amount", "商品金额", "NUMBER", "NONE", "INPUT_MERCHANDISE_AMOUNT"),
         input("net_amount", "实付金额", "NUMBER", "NONE", "INPUT_NET_AMOUNT"));
@@ -85,8 +88,8 @@ class FlowAuthoringContextApiAutoTest extends MockTestBase {
         flows.mockInputAlias("Alias rule only", false, VariableStatus.ACTIVE);
         flows.mockInputAlias("Alias deleted", true, VariableStatus.DELETED);
         List<ExpectedField> expected = new ArrayList<>(SEED_FIELDS);
-        expected.add(input("country_code", "Alias active", "STRING", "UPPER_ALPHA_2", active));
-        expected.add(input("country_code", "Alias disabled", "STRING", "UPPER_ALPHA_2", disabled));
+        expected.add(input("consumer_country_code", "Alias active", "STRING", "UPPER_ALPHA_2", active));
+        expected.add(input("consumer_country_code", "Alias disabled", "STRING", "UPPER_ALPHA_2", disabled));
         expected.sort(Comparator.comparing(ExpectedField::variableCode));
 
         read("").assertCatalog(expected, SEED_OUTPUTS);
@@ -133,6 +136,13 @@ class FlowAuthoringContextApiAutoTest extends MockTestBase {
     private static ExpectedField input(String fieldCode, String label, String valueType, String literalDomain,
         String variableCode) {
         return new ExpectedField(null, fieldCode, label, valueType, true,
+            "NUMBER".equals(valueType) ? ORDERED_OPERATORS : TEXT_OPERATORS, literalDomain, variableCode);
+    }
+
+    /** 合同中可选的输入字段，如仅 PARTNER 来源才有的 Local Partner。 */
+    private static ExpectedField optionalInput(String fieldCode, String label, String valueType, String literalDomain,
+        String variableCode) {
+        return new ExpectedField(null, fieldCode, label, valueType, false,
             "NUMBER".equals(valueType) ? ORDERED_OPERATORS : TEXT_OPERATORS, literalDomain, variableCode);
     }
 

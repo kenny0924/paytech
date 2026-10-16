@@ -80,7 +80,7 @@ public class EvaluationReader {
      */
     public EvaluationView primary(String pointCode, String businessKey) {
         DecisionPointEvaluator evaluator = evaluator(pointCode);
-        if (!evaluator.contract().businessKeyPattern().matcher(businessKey).matches()) {
+        if (!evaluator.contract().validBusinessKey(businessKey)) {
             throw new InvalidParameterException("业务身份格式不符合风控点合同: " + pointCode);
         }
         long evaluationId = evaluator.findPrimaryEvaluationId(businessKey)

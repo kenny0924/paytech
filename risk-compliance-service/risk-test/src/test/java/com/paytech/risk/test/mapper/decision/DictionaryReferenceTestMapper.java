@@ -61,12 +61,13 @@ public class DictionaryReferenceTestMapper {
             ts(time));
     }
 
-    /** 插入不可变决策流版本头。 */
-    public void insertFlowVersion(long flowVersionId, long flowId, int versionNo, String flowName, Instant time) {
+    /** 插入指定 ORDER_PREPARATION 合同版本下的不可变决策流版本头。 */
+    public void insertFlowVersion(long flowVersionId, long flowId, int versionNo, String flowName, Instant time,
+        int inputContractVersion) {
         jdbc.update("INSERT INTO t_decision_flow_version(flow_version_id,flow_id,version_no,flow_name,"
             + "input_contract_code,input_contract_version,created_by,change_reason,create_time,update_time) "
-            + "VALUES(?,?,?,?,'ORDER_PREPARATION',4,70001,'mock flow change',?,?)", flowVersionId, flowId, versionNo,
-            flowName, ts(time), ts(time));
+            + "VALUES(?,?,?,?,'ORDER_PREPARATION',?,70001,'mock flow change',?,?)", flowVersionId, flowId, versionNo,
+            flowName, inputContractVersion, ts(time), ts(time));
     }
 
     /** 插入结束节点，原因与文案按给定值保存。 */

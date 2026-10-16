@@ -33,6 +33,7 @@ import com.paytech.risk.api.decision.RiskVariableApi;
 import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
 import com.paytech.risk.decision.domain.enums.VariableStatus;
 import com.paytech.risk.test.base.AbstractVariableApiTest;
+import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 import com.paytech.risk.test.builder.decision.VariableBuilder;
 import com.paytech.risk.test.builder.decision.VariableRequestBuilder;
 import com.paytech.risk.test.checker.decision.VariableDetailResponseChecker;
@@ -386,6 +387,8 @@ class VariableCreateApiAutoTest extends AbstractVariableApiTest {
             definition("DURATION 溢出", code -> request(code, VariableBuilder.constant(DURATION, NONE,
                 "9223372036854775808"))),
             definition("输入合同版本不存在", code -> input(code).sourceContractVersion(3)),
+            definition("旧输入合同只读", code -> request(code, VariableBuilder.input("country_code", STRING, UPPER_ALPHA_2))
+                .sourceContractVersion(RuleSetBuilder.LEGACY_CONTRACT_VERSION)),
             definition("输入字段不在合同中", code -> input(code).sourceField("card_bin")),
             definition("输入字段类型不符", code -> input(code).valueType("NUMBER").formatCode("NONE").numericUnit("SCALAR")),
             definition("输入用途超出合同", code -> input(code).usages(List.of("ACTION_PARAMETER"))),

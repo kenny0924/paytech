@@ -36,6 +36,7 @@ import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.builder.decision.FlowBuilder.EdgeSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.NodeSpec;
+import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 import com.paytech.risk.test.builder.decision.SaveFlowRequestBuilder;
 import com.paytech.risk.test.checker.decision.FlowStoreChecker;
 import com.paytech.risk.test.checker.decision.ValidateFlowResponseChecker;
@@ -61,6 +62,9 @@ import tools.jackson.databind.node.ObjectNode;
  * @see DecisionFlowManagementApi#validate(String, String, com.paytech.risk.api.decision.request.SaveFlowRequestBody)
  */
 class FlowValidateApiAutoTest extends MockTestBase {
+    /** 新保存的流程使用结账当前输入合同，只能引用同合同的规则集版本。 */
+    private static final int CURRENT_CONTRACT = RuleSetBuilder.CURRENT_CONTRACT_VERSION;
+
     private static final String PATH = "/decision-flows/v1/flows/validate";
 
     private static final String TEXT_MESSAGE = "文本不能为空、首尾不能有空白且须满足长度和内容约束";
@@ -94,8 +98,8 @@ class FlowValidateApiAutoTest extends MockTestBase {
     /** 引用规则集与统一变量条件、基于当前版本的编辑均通过，原流程不变。 */
     @Test
     void test_normalFlow_editWithReferencesAndCondition() {
-        MockedRuleSet ruleSet = ruleSets.mock(versions(FROZEN, DRAFT));
-        MockedFlow flow = flows.mock(FlowBuilder.versions(2));
+        MockedRuleSet ruleSet = ruleSets.mock(versions(FROZEN, DRAFT).variableReference());
+        MockedFlow flow = flows.mock(FlowBuilder.versions(2).inputContractVersion(CURRENT_CONTRACT));
 
         validate(SaveFlowRequestBuilder.template(flow.flowCode()).base(flow.current().flowVersionId(), flow.version())
             .graph(GraphSpec.branching(ruleSet.version(1).ruleSetVersionId()))).assertValid();
@@ -106,10 +110,10 @@ class FlowValidateApiAutoTest extends MockTestBase {
     /** 基准版本已引用的退休规则版本与停用原因（文案不变）可继续保留。 */
     @Test
     void test_normalFlow_retainedReferences() {
-        MockedRuleSet ruleSet = ruleSets.mock(versions(RETIRED, FROZEN));
+        MockedRuleSet ruleSet = ruleSets.mock(versions(RETIRED, FROZEN).variableReference());
         String reason = flows.mockReason(DictionaryStatus.DISABLED);
         GraphSpec graph = ruleThenDeny(ruleSet.version(1).ruleSetVersionId(), reason, "Retained message");
-        MockedFlow flow = flows.mock(FlowBuilder.versions(graph));
+        MockedFlow flow = flows.mock(FlowBuilder.versions(graph).inputContractVersion(CURRENT_CONTRACT));
 
         validate(SaveFlowRequestBuilder.template(flow.flowCode()).base(flow.current().flowVersionId(), flow.version())
             .graph(graph)).assertValid();
@@ -136,11 +140,11 @@ class FlowValidateApiAutoTest extends MockTestBase {
     /** 新选择的规则版本：已退休、不存在、所属规则集已删除或输入合同不符均按节点位置报告。 */
     @Test
     void test_businessRuleViolation_referenceUnavailable() {
-        MockedRuleSet retired = ruleSets.mock(versions(RETIRED, FROZEN));
-        MockedRuleSet deleted = ruleSets.mock(versions(FROZEN).deleted());
-        MockedRuleSet mismatched = ruleSets.mock(versions(DRAFT));
-        MockedRuleSet usable = ruleSets.mock(versions(FROZEN));
-        flowTestMapper.updateRuleSetContract(mismatched.currentVersionId(), 5);
+        MockedRuleSet retired = ruleSets.mock(versions(RETIRED, FROZEN).variableReference());
+        MockedRuleSet deleted = ruleSets.mock(versions(FROZEN).variableReference().deleted());
+        MockedRuleSet mismatched = ruleSets.mock(versions(DRAFT).variableReference());
+        MockedRuleSet usable = ruleSets.mock(versions(FROZEN).variableReference());
+        flowTestMapper.updateRuleSetContract(mismatched.currentVersionId(), RuleSetBuilder.UNREGISTERED_CONTRACT_VERSION);
         GraphSpec graph = GraphSpec.through(retired.version(1).ruleSetVersionId(), 999_999_999_999_999_999L,
             deleted.currentVersionId(), mismatched.currentVersionId(), usable.currentVersionId());
 
@@ -152,7 +156,7 @@ class FlowValidateApiAutoTest extends MockTestBase {
     @Test
     void test_businessRuleViolation_reasonUnavailable() {
         String disabled = flows.mockReason(DictionaryStatus.DISABLED);
-        MockedFlow flow = flows.mock(FlowBuilder.versions(GraphSpec.deny(disabled, "Original message")));
+        MockedFlow flow = flows.mock(FlowBuilder.versions(GraphSpec.deny(disabled, "Original message")).inputContractVersion(CURRENT_CONTRACT));
 
         validate(SaveFlowRequestBuilder.template(flows.newFlowCode()).graph(GraphSpec.deny(disabled, "Message")))
             .assertIssues(reason());
@@ -174,8 +178,8 @@ class FlowValidateApiAutoTest extends MockTestBase {
     /** 编辑基准冲突：新建已存在（含已删除）的编码、过期修订号或基准版本、已删除流程。 */
     @Test
     void test_businessRuleViolation_baseConflict() {
-        MockedFlow flow = flows.mock(FlowBuilder.versions(2));
-        MockedFlow deleted = flows.mock(FlowBuilder.versions(1).deleted());
+        MockedFlow flow = flows.mock(FlowBuilder.versions(2).inputContractVersion(CURRENT_CONTRACT));
+        MockedFlow deleted = flows.mock(FlowBuilder.versions(1).deleted().inputContractVersion(CURRENT_CONTRACT));
         String exists = "流程编码已存在，删除后也不能复用";
         String stale = "流程当前版本已变化，请重新载入后编辑";
 
@@ -194,7 +198,7 @@ class FlowValidateApiAutoTest extends MockTestBase {
     /** 旧 schemaVersion=1 条件结构合法，但不能作为新内容保存。 */
     @Test
     void test_businessRuleViolation_legacyCondition() {
-        MockedRuleSet ruleSet = ruleSets.mock(versions(DRAFT));
+        MockedRuleSet ruleSet = ruleSets.mock(versions(DRAFT).variableReference());
 
         validate(SaveFlowRequestBuilder.template(flows.newFlowCode())
             .graph(GraphSpec.branching(ruleSet.currentVersionId(), FlowBuilder.LEGACY_MATCHED_CONDITION_JSON)))
@@ -205,7 +209,7 @@ class FlowValidateApiAutoTest extends MockTestBase {
     /** 条件引用不存在的变量时报告目录问题。 */
     @Test
     void test_businessRuleViolation_unknownVariable() {
-        MockedRuleSet ruleSet = ruleSets.mock(versions(DRAFT));
+        MockedRuleSet ruleSet = ruleSets.mock(versions(DRAFT).variableReference());
 
         validate(SaveFlowRequestBuilder.template(flows.newFlowCode()).graph(GraphSpec.branching(
             ruleSet.currentVersionId(), FlowBuilder.variableCondition("MOCK_UNKNOWN_VARIABLE"))))

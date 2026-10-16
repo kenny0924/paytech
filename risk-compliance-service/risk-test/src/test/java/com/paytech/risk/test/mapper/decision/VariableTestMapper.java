@@ -123,11 +123,13 @@ public class VariableTestMapper {
             currentVersionId, status.getCode());
     }
 
-    /** 插入流程版本头。 */
-    public void insertFlowVersion(long flowVersionId, long flowId, int versionNo, String flowName) {
+    /** 插入指定 ORDER_PREPARATION 合同版本下的流程版本头。 */
+    public void insertFlowVersion(long flowVersionId, long flowId, int versionNo, String flowName,
+        int inputContractVersion) {
         jdbc.update("INSERT INTO t_decision_flow_version(flow_version_id,flow_id,version_no,flow_name,input_contract_code,"
-            + "input_contract_version,created_by,change_reason,create_time,update_time) VALUES(?,?,?,?,'ORDER_PREPARATION',4,"
-            + "70001,'mock',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))", flowVersionId, flowId, versionNo, flowName);
+            + "input_contract_version,created_by,change_reason,create_time,update_time) VALUES(?,?,?,?,'ORDER_PREPARATION',?,"
+            + "70001,'mock',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))", flowVersionId, flowId, versionNo, flowName,
+            inputContractVersion);
     }
 
     /** 插入流程连线；条件 JSON 为已持久化的规范内容。 */

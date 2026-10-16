@@ -41,7 +41,8 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedVersion;
  * <li>正常流程：内容摘要一致的当前旧格式草稿变为 FROZEN 并写入冻结证据，管理根版本递增；更早版本不变。</li>
  * <li>未找到：版本不存在返回 404。</li>
  * <li>参数：路径版本 ID、expectedContentHash 的缺失、格式与报文形状非法时拒绝（400/422/415）。</li>
- * <li>业务规则：摘要不符或目标不是当前版本返回并发冲突（409）；已冻结、统一变量格式不可冻结（400）；已删除规则集（409）；资源锁被占用（409）。</li>
+ * <li>运行期：结账已接入运行期，当前合同的统一变量草稿同样可以冻结。</li>
+ * <li>业务规则：摘要不符或目标不是当前版本返回并发冲突（409）；已冻结不可再冻结（400）；已删除规则集（409）；资源锁被占用（409）。</li>
  * <li>失败关闭：内容摘要与闭包不符、动作目录漂移、管理根指针损坏时返回 500。所有拒绝都不改写持久化事实。</li>
  *
  * @see DecisionRuleSetManagementApi#freezeRuleSetVersion(String, String, String, FreezeRuleSetVersionRequestBody)
@@ -147,12 +148,23 @@ class RuleSetFreezeApiAutoTest extends MockTestBase {
         store.assertUnchanged(before);
     }
 
-    /** 当前版本已冻结或为统一变量格式时不可冻结。 */
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("notFreezable")
-    void test_businessRuleViolation_notFreezable(String scenario, boolean variableReference) {
-        MockedRuleSet ruleSet = ruleSets.mock(variableReference ? versions(DRAFT).variableReference()
-            : versions(FROZEN));
+    /** 结账运行期：当前合同的统一变量草稿可以冻结，供执行发布引用。 */
+    @Test
+    void test_normalFlow_variableReference() {
+        MockedRuleSet ruleSet = ruleSets.mock(versions(DRAFT).variableReference());
+        Snapshot before = store.snapshot(ruleSet.ruleSetCode());
+
+        RuleSetCommandResponseChecker response = freeze(ruleSet.version(1), ruleSet.version(1).contentHash())
+            .assertFrozen(ruleSet.ruleSetCode(), ruleSet.version(1).ruleSetVersionId(), 1,
+                ruleSet.version(1).contentHash(), ACTOR);
+
+        assertFrozen(before, ruleSet, 1, response.commandTime());
+    }
+
+    /** 当前版本已冻结时不可再冻结。 */
+    @Test
+    void test_businessRuleViolation_notFreezable() {
+        MockedRuleSet ruleSet = ruleSets.mock(versions(FROZEN));
         Snapshot before = store.snapshot(ruleSet.ruleSetCode());
 
         freeze(ruleSet.current(), ruleSet.current().contentHash()).assertProblem(400,
@@ -221,10 +233,6 @@ class RuleSetFreezeApiAutoTest extends MockTestBase {
         return Stream.of(Arguments.of("缺少 expectedContentHash", "{}"), Arguments.of("非法 JSON", "{\"expected"),
             Arguments.of("空报文", ""), Arguments.of("顶层为数组", "[]"),
             Arguments.of("未知字段", "{\"expectedContentHash\":\"" + "a".repeat(64) + "\",\"status\":\"FROZEN\"}"));
-    }
-
-    static Stream<Arguments> notFreezable() {
-        return Stream.of(Arguments.of("当前版本已冻结", false), Arguments.of("统一变量格式仅支持配置", true));
     }
 
     static Stream<Arguments> corruptions() {

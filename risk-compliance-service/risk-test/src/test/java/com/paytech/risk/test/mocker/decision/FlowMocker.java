@@ -91,7 +91,7 @@ public class FlowMocker implements Clear {
         for (VersionSpec spec : specs) {
             long versionId = randomId();
             mapper.insertVersion(versionId, flowId, spec.versionNo(), spec.flowName(), spec.createdBy(),
-                spec.changeReason(), spec.createTime());
+                spec.changeReason(), spec.createTime(), spec.inputContractVersion());
             versions.add(new MockedFlowVersion(versionId, spec, insertGraph(versionId, spec)));
         }
         VersionSpec head = specs.getLast();
@@ -146,7 +146,7 @@ public class FlowMocker implements Clear {
         return new MockedLegacyPoint(pointVersionId, versionNo, List.copyOf(bindingIds), List.of(ruleSetVersions));
     }
 
-    /** 插入 country_code 的系统输入变量别名，返回变量编码。 */
+    /** 插入当前合同 consumer_country_code 的系统输入变量别名，返回变量编码。 */
     public String mockInputAlias(String name, boolean flowCondition, VariableStatus status) {
         long variableId = randomId();
         String code = "MOCK_FLOW_ALIAS_" + variableId;
@@ -170,7 +170,7 @@ public class FlowMocker implements Clear {
 
     /** 版本输入合同被改写，构造版本归属损坏。 */
     public void corruptVersionContract(MockedFlowVersion version) {
-        mapper.updateVersionContract(version.flowVersionId(), 5);
+        mapper.updateVersionContract(version.flowVersionId(), RuleSetBuilder.UNREGISTERED_CONTRACT_VERSION);
     }
 
     /** 连线条件存储内容被改写为不可读格式。 */

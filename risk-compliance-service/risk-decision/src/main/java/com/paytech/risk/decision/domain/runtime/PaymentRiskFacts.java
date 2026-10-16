@@ -1,7 +1,5 @@
 package com.paytech.risk.decision.domain.runtime;
 
-import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.LongSupplier;
@@ -15,7 +13,7 @@ import com.paytech.risk.decision.domain.enums.*;
  * 由一次正式支付评估的输入、结果与时间构造需要保存的全部事实；纯内存构造
  * <li>稳定输入摘要只含 Payment 能重放的字段，IP 与 User-Agent 只进入受限输入摘要。</li>
  * <li>只有成功评估写入累计事件：每次写评估事件，结论为审核或拒绝时再写拒绝事件。</li>
- * <li>失败与超时也保存已有的过程：已完成（含失败项）的 Feature 结果；引擎已执行完时的规则轨迹与流程轨迹。</li>
+ * <li>评估行、Feature 结果与轨迹由 {@link RuntimeEvaluationFacts} 构造，与其他运行期风控点一致。</li>
  */
 public final class PaymentRiskFacts {
     /** 稳定输入摘要合同。 */
@@ -66,12 +64,13 @@ public final class PaymentRiskFacts {
      *            标识生成
      * @return 评估上下文
      */
-    public static PaymentRiskAssessmentContext build(PaymentRiskInput input, ExecutionRelease release, Run run,
-        LongSupplier ids) {
+    public static PaymentRiskAssessmentContext build(PaymentRiskInput input, ExecutionRelease release,
+        RuntimeEvaluationFacts.Run run, LongSupplier ids) {
         long evaluationId = ids.getAsLong();
         long assessmentId = ids.getAsLong();
         String restrictedHash = RuntimeHashes.sha256(RESTRICTED_SCHEMA, restrictedFields(input));
-        DecisionEvaluation evaluation = evaluation(evaluationId, input, release, run, restrictedHash);
+        DecisionEvaluation evaluation = RuntimeEvaluationFacts.primaryEvaluation(evaluationId,
+            requestId(input.paymentAttemptId()), release, run, restrictedHash);
         TransactionRiskAssessment assessment = assessment(assessmentId, evaluationId, input, run, restrictedHash);
         List<VelocityEvent> events = new ArrayList<>();
         List<VelocityEventSubject> subjects = new ArrayList<>();
@@ -83,8 +82,10 @@ public final class PaymentRiskFacts {
             addEvent(VelocityEventCode.PAYMENT_ATTEMPT_REJECTED, assessmentId, input, run.evaluationTime(), ids, events,
                 subjects);
         }
-        return new PaymentRiskAssessmentContext(evaluation, assessment, featureResults(evaluationId, run, ids),
-            ruleTraces(evaluationId, run, ids), flowTraces(evaluationId, run, ids), events, subjects);
+        return new PaymentRiskAssessmentContext(evaluation, assessment,
+            RuntimeEvaluationFacts.featureResults(evaluationId, run, ids),
+            RuntimeEvaluationFacts.ruleTraces(evaluationId, run, ids),
+            RuntimeEvaluationFacts.flowTraces(evaluationId, run, ids), events, subjects);
     }
 
     /**
@@ -99,34 +100,9 @@ public final class PaymentRiskFacts {
         return value == null ? null : AuthenticationRequirement.valueOf(value);
     }
 
-    /** 评估行；技术失败时两个决定为空并记录失败代码。 */
-    static DecisionEvaluation evaluation(long evaluationId, PaymentRiskInput input, ExecutionRelease release, Run run,
-        String inputHash) {
-        DecisionEvaluation row = new DecisionEvaluation();
-        row.setEvaluationId(evaluationId);
-        row.setEvaluationRequestId(requestId(input.paymentAttemptId()));
-        row.setDecisionPointId(release.getDecisionPointId());
-        row.setPointVersionId(release.getPointVersionId());
-        row.setReleaseId(release.getReleaseId());
-        row.setEvaluationMode(EvaluationMode.PRIMARY);
-        row.setEvaluationTime(run.evaluationTime());
-        row.setTechnicalStatus(run.status());
-        DecisionValue decision = run.status() == TechnicalStatus.SUCCEEDED ? run.outcome().decision() : null;
-        row.setProposedDecision(decision);
-        row.setBusinessDecision(decision);
-        row.setStartedTime(run.evaluationTime());
-        row.setCompletedTime(run.completedTime());
-        row.setElapsedMillis(run.elapsedMillis());
-        row.setInputSnapshotHash(inputHash);
-        row.setFailureCode(run.failureCode());
-        row.setCreateTime(run.completedTime());
-        row.setUpdateTime(run.completedTime());
-        return row;
-    }
-
     /** 交易评估快照；认证要求仅放行时非空。 */
-    static TransactionRiskAssessment assessment(long assessmentId, long evaluationId, PaymentRiskInput input, Run run,
-        String restrictedHash) {
+    static TransactionRiskAssessment assessment(long assessmentId, long evaluationId, PaymentRiskInput input,
+        RuntimeEvaluationFacts.Run run, String restrictedHash) {
         TransactionRiskAssessment row = new TransactionRiskAssessment();
         row.setAssessmentId(assessmentId);
         row.setEvaluationId(evaluationId);
@@ -152,114 +128,6 @@ public final class PaymentRiskFacts {
             run.status() == TechnicalStatus.SUCCEEDED ? authentication(run.outcome()) : null);
         row.setStableInputHash(stableHash(input));
         row.setRestrictedInputHash(restrictedHash);
-        row.setCreateTime(run.completedTime());
-        return row;
-    }
-
-    /**
-     * Feature 结果行，按执行顺序；失败项记 FAILED 与失败代码
-     *
-     * @param evaluationId 评估 ID
-     * @param run 执行结果；没有算到 Feature 时为空集合
-     * @param ids 标识生成
-     * @return 结果行
-     */
-    public static List<EvaluationFeatureResult> featureResults(long evaluationId, Run run, LongSupplier ids) {
-        if (run.features() == null) {
-            return List.of();
-        }
-        return run.features().values().stream().sorted(Comparator.comparingInt(FeatureValue::executionSequence))
-            .map(value -> {
-                EvaluationFeatureResult row = new EvaluationFeatureResult();
-                row.setResultId(ids.getAsLong());
-                row.setEvaluationId(evaluationId);
-                row.setFeatureVersionId(value.featureVersionId());
-                row.setExecutionSequence(value.executionSequence());
-                row.setTechnicalStatus(value.failed() ? TechnicalStatus.FAILED : TechnicalStatus.SUCCEEDED);
-                row.setValueType(value.valueType());
-                row.setNumberValue(value.valueType() == DecisionValueType.NUMBER && value.value() != null
-                    ? new BigDecimal(value.value().toString()) : null);
-                row.setBooleanValue(value.valueType() == DecisionValueType.BOOLEAN ? (Boolean)value.value() : null);
-                row.setElapsedMillis(value.elapsedMillis());
-                row.setFailureCode(value.failureCode());
-                row.setCreateTime(run.completedTime());
-                return row;
-            }).toList();
-    }
-
-    /**
-     * 规则行与谓词行，各自从 1 编号
-     *
-     * @param evaluationId 评估 ID
-     * @param run 执行结果；引擎未执行完时为空集合
-     * @param ids 标识生成
-     * @return 轨迹行
-     */
-    public static List<EvaluationRuleTrace> ruleTraces(long evaluationId, Run run, LongSupplier ids) {
-        if (run.outcome() == null) {
-            return List.of();
-        }
-        List<EvaluationRuleTrace> rows = new ArrayList<>();
-        int sequence = 0;
-        for (EngineOutcome.RuleTrace trace : run.outcome().ruleTraces()) {
-            EvaluationRuleTrace row = trace(evaluationId, RuleTraceType.RULE, trace.ruleId(), ++sequence, run, ids);
-            row.setRuleSetVersionId(trace.ruleSetVersionId());
-            row.setResultValue(trace.matched());
-            row.setTerminalFlag(trace.terminal());
-            row.setRuleResultSlot(Boolean.TRUE);
-            rows.add(row);
-        }
-        sequence = 0;
-        for (EngineOutcome.PredicateTrace trace : run.outcome().predicateTraces()) {
-            EvaluationRuleTrace row = trace(evaluationId, RuleTraceType.PREDICATE, trace.ruleId(), ++sequence, run, ids);
-            row.setNodeId(trace.nodeId());
-            row.setResultValue(trace.result());
-            row.setPredicateResultSlot(Boolean.TRUE);
-            rows.add(row);
-        }
-        return rows;
-    }
-
-    /**
-     * 流程轨迹行，按经过顺序从 1 编号
-     *
-     * @param evaluationId 评估 ID
-     * @param run 执行结果；引擎未执行完时为空集合
-     * @param ids 标识生成
-     * @return 轨迹行
-     */
-    public static List<EvaluationFlowTrace> flowTraces(long evaluationId, Run run, LongSupplier ids) {
-        if (run.outcome() == null) {
-            return List.of();
-        }
-        List<EvaluationFlowTrace> rows = new ArrayList<>();
-        for (EngineOutcome.FlowStep step : run.outcome().flowSteps()) {
-            EvaluationFlowTrace row = new EvaluationFlowTrace();
-            row.setTraceId(ids.getAsLong());
-            row.setEvaluationId(evaluationId);
-            row.setStepNo(rows.size() + 1);
-            row.setNodeKey(step.nodeKey());
-            row.setNodeType(FlowNodeType.valueOf(step.nodeType()));
-            row.setRuleSetVersionId(step.ruleSetVersionId());
-            row.setMatchedFlag(step.matched());
-            row.setNodeDecision(step.decision() == null ? null : DecisionValue.valueOf(step.decision()));
-            row.setReusedFlag(step.reused());
-            row.setExitEdgeKey(step.exitEdgeKey());
-            row.setCreateTime(run.completedTime());
-            rows.add(row);
-        }
-        return rows;
-    }
-
-    /** 轨迹公共字段。 */
-    static EvaluationRuleTrace trace(long evaluationId, RuleTraceType type, long ruleId, int sequence, Run run,
-        LongSupplier ids) {
-        EvaluationRuleTrace row = new EvaluationRuleTrace();
-        row.setTraceId(ids.getAsLong());
-        row.setEvaluationId(evaluationId);
-        row.setTraceType(type);
-        row.setRuleId(ruleId);
-        row.setExecutionSequence(sequence);
         row.setCreateTime(run.completedTime());
         return row;
     }
@@ -330,29 +198,5 @@ public final class PaymentRiskFacts {
         values.put("clientIpAddress", input.clientIpAddress());
         values.put("userAgent", input.userAgent());
         return values;
-    }
-
-    /**
-     * 一次执行的结果与时间
-     *
-     * @param evaluationTime
-     *            评估时间锚点，即开始时间
-     * @param completedTime
-     *            完成时间
-     * @param status
-     *            技术状态
-     * @param failureCode
-     *            失败代码；成功时为空
-     * @param outcome
-     *            引擎结论；引擎未执行完时为空，超时时保留
-     * @param features
-     *            Feature 结果（含失败项）；一个都没有算到时为空
-     */
-    public record Run(Instant evaluationTime, Instant completedTime, TechnicalStatus status, String failureCode,
-        EngineOutcome outcome, Map<Long, FeatureValue> features) {
-        /** 执行耗时毫秒。 */
-        public int elapsedMillis() {
-            return (int)Duration.between(evaluationTime, completedTime).toMillis();
-        }
     }
 }

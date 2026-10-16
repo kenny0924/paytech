@@ -27,6 +27,7 @@ import com.paytech.risk.api.decision.DecisionFlowQueryApi;
 import com.paytech.risk.test.base.MockTestBase;
 import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
+import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 import com.paytech.risk.test.checker.decision.FlowRuleSetReferenceResponseChecker;
 import com.paytech.risk.test.checker.decision.FlowRuleSetReferenceResponseChecker.ExpectedSource;
 import com.paytech.risk.test.mapper.decision.FlowTestMapper;
@@ -179,7 +180,7 @@ class FlowRuleSetReferenceApiAutoTest extends MockTestBase {
     void test_businessRuleViolation_contractMismatch() {
         MockedRuleSet ruleSet = ruleSets.mock(versions(DRAFT));
         MockedFlow flow = flows.mock(FlowBuilder.versions(GraphSpec.through(ruleSet.currentVersionId())));
-        flowTestMapper.updateRuleSetContract(ruleSet.currentVersionId(), 5);
+        flowTestMapper.updateRuleSetContract(ruleSet.currentVersionId(), RuleSetBuilder.UNREGISTERED_CONTRACT_VERSION);
 
         read("FLOW_VERSION", flow.current().flowVersionId(), "rules_1").assertProblem(500, INTERNAL_ERROR.getCode());
     }

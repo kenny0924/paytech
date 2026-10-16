@@ -89,11 +89,10 @@ public class DecisionFlowRow {
         }
     }
 
-    /** 输入合同必须是某个已登记决策点的准确合同；所属决策点由流程图重建时再严格比对。 */
+    /** 输入合同必须是某个已登记决策点可读取的准确合同（含旧合同）；所属决策点由流程图重建时再严格比对。 */
     private static boolean registeredContract(String contractCode, int contractVersion) {
-        return DecisionPointAuthoringDescriptor.all().stream().map(DecisionPointAuthoringDescriptor::point)
-            .anyMatch(point -> point.inputContractCode().equals(contractCode)
-                && point.inputContractVersion() == contractVersion);
+        return DecisionPointAuthoringDescriptor.all().stream()
+            .anyMatch(descriptor -> descriptor.readsContract(contractCode, contractVersion));
     }
 
     /** 当前指针、最高业务版本与整体删除审计必须一致。 */

@@ -4,7 +4,6 @@ import static com.paytech.foundation.common.error.CommonErrorCode.BUSINESS_CHECK
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.RiskVariableErrorCode.LEGACY_AUTHORING_NOT_SUPPORTED;
 import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -87,7 +86,7 @@ class RuleSetCreateInputApiAutoTest extends MockTestBase {
         store.assertNothingWritten(code);
     }
 
-    /** 未声明 VARIABLE_REFERENCE 的旧格式保存不再支持。 */
+    /** 未声明 VARIABLE_REFERENCE 的旧格式保存不再支持：结账已是运行期决策点，在 AST 入口即按参数错误拒绝。 */
     @Test
     void test_invalidParameter_legacyAuthoring() {
         String code = ruleSets.newRuleSetCode();
@@ -96,7 +95,7 @@ class RuleSetCreateInputApiAutoTest extends MockTestBase {
             List.of(predicate("root", null, 1, "IS_NOT_NULL", context)), action(ALLOW));
 
         invoke(json(template(code).operandFormat(null).rules(legacyRule).build())).assertProblem(400,
-            LEGACY_AUTHORING_NOT_SUPPORTED.name());
+            INVALID_REQUEST.getCode());
         // 旧格式请求混入统一变量操作数时在 AST 入口即被拒绝。
         invoke(json(template(code).operandFormat(null).build())).assertProblem(400, INVALID_REQUEST.getCode());
 

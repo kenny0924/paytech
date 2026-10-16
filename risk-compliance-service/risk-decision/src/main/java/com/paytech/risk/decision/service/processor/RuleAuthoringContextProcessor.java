@@ -40,7 +40,7 @@ public class RuleAuthoringContextProcessor extends AbstractProcessor<RuleAuthori
                 .orElseThrow(DecisionConfigurationNotFoundException::new);
             assembler.verifyPoint(point);
             reader.requireCatalog(point.pointCode());
-            return new RuleAuthoringView(descriptor, variableService.systemDefinitions(request.getPointCode()));
+            return RuleAuthoringView.from(descriptor, variableService.systemDefinitions(request.getPointCode()));
         });
     }
 }

@@ -15,6 +15,7 @@ import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.builder.decision.FlowBuilder.EdgeSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.NodeSpec;
+import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 import com.paytech.risk.test.mapper.decision.FlowTestMapper;
 import com.paytech.risk.test.mapper.decision.FlowTestMapper.EdgeRow;
 import com.paytech.risk.test.mapper.decision.FlowTestMapper.NodeRow;
@@ -45,14 +46,14 @@ public class FlowStoreChecker {
 
     /** 期望的版本事实及其完整配置图。 */
     public record ExpectedVersion(long flowVersionId, int versionNo, String flowName, long createdBy,
-        String changeReason, Instant createTime, GraphSpec graph) {
+        String changeReason, Instant createTime, GraphSpec graph, int inputContractVersion) {
     }
 
     /** 插入版本的原始事实。 */
     public static ExpectedVersion inserted(MockedFlowVersion version) {
         return new ExpectedVersion(version.flowVersionId(), version.versionNo(), version.spec().flowName(),
             version.spec().createdBy(), version.spec().changeReason(), version.spec().createTime(),
-            version.spec().graph());
+            version.spec().graph(), version.spec().inputContractVersion());
     }
 
     /** 根与全部版本（按版本号升序）逐字段一致。 */
@@ -96,8 +97,8 @@ public class FlowStoreChecker {
             () -> assertEquals(flowId, actual.flowId(), "flowId"),
             () -> assertEquals(expected.versionNo(), actual.versionNo(), "versionNo"),
             () -> assertEquals(expected.flowName(), actual.flowName(), "flowName"),
-            () -> assertEquals("ORDER_PREPARATION", actual.inputContractCode(), "inputContractCode"),
-            () -> assertEquals(4, actual.inputContractVersion(), "inputContractVersion"),
+            () -> assertEquals(RuleSetBuilder.INPUT_CONTRACT_CODE, actual.inputContractCode(), "inputContractCode"),
+            () -> assertEquals(expected.inputContractVersion(), actual.inputContractVersion(), "inputContractVersion"),
             () -> assertEquals(expected.createdBy(), actual.createdBy(), "createdBy"),
             () -> assertEquals(expected.changeReason(), actual.changeReason(), "changeReason"),
             () -> assertEquals(expected.createTime(), actual.createTime(), "createTime"),

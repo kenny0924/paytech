@@ -8,7 +8,8 @@ import java.util.Set;
 public final class DecisionSourceContracts {
     private static final Set<VariableUsage> CONDITIONS = Set.of(VariableUsage.RULE_CONDITION, VariableUsage.FLOW_CONDITION);
     private static final List<Contract> CONTRACTS = List.of(
-        new Contract("ORDER_PREPARATION", 4, "CHECKOUT_PREPARE", VariableSource.INPUT, null, List.of(
+        // 结账旧合同只供已有变量、规则集与流程读取：不在目录中出现，也不能新建变量。
+        new Contract("ORDER_PREPARATION", 4, "CHECKOUT_PREPARE", VariableSource.INPUT, null, true, List.of(
             input("country_code", DecisionValueType.STRING, null, null, null),
             input("locale", DecisionValueType.STRING, null, null, null),
             input("industry_code", DecisionValueType.STRING, null, null, null),
@@ -21,9 +22,26 @@ public final class DecisionSourceContracts {
             new Field("client_id", DecisionValueType.STRING, true, DataClassification.INTERNAL,
                 Set.of(VariableUsage.ACTION_PARAMETER), null, null, "CLIENT_ID")
         )),
+        // 结账当前合同：Commerce 创建结账、订单落库前已有的订单与商业事实；client_id 保留动作参数用途以便旧配置规则集可读。
+        new Contract("ORDER_PREPARATION", 5, "CHECKOUT_PREPARE", VariableSource.INPUT, null, false, List.of(
+            new Field("client_id", DecisionValueType.STRING, true, DataClassification.INTERNAL,
+                Set.of(VariableUsage.RULE_CONDITION, VariableUsage.FLOW_CONDITION, VariableUsage.ACTION_PARAMETER), null,
+                null, "CLIENT_ID"),
+            input("entity_no", DecisionValueType.STRING, null, null, null),
+            input("entity_source_type", DecisionValueType.STRING, null, null, null),
+            optional("local_partner_id"),
+            input("consumer_country_code", DecisionValueType.STRING, null, null, null),
+            input("currency", DecisionValueType.STRING, null, null, "CURRENCY"),
+            input("merchandise_amount", DecisionValueType.NUMBER, NumericUnit.MONEY, "currency", null),
+            input("discount_amount", DecisionValueType.NUMBER, NumericUnit.MONEY, "currency", null),
+            input("net_amount", DecisionValueType.NUMBER, NumericUnit.MONEY, "currency", null),
+            input("industry_code", DecisionValueType.STRING, null, null, null),
+            input("mcc_code", DecisionValueType.STRING, null, null, null),
+            input("line_count", DecisionValueType.NUMBER, NumericUnit.SCALAR, null, null)
+        )),
         nodeResult("CHECKOUT_PREPARE"),
         // 支付尝试评估的可配置输入；IP、卡指纹与 User-Agent 只供引擎计算累计与名单，不开放给规则字面量。
-        new Contract("PAYMENT_ATTEMPT", 1, "PAYMENT_ATTEMPT_RISK", VariableSource.INPUT, null, List.of(
+        new Contract("PAYMENT_ATTEMPT", 1, "PAYMENT_ATTEMPT_RISK", VariableSource.INPUT, null, false, List.of(
             new Field("client_id", DecisionValueType.STRING, true, DataClassification.INTERNAL, CONDITIONS, null, null,
                 "CLIENT_ID"),
             input("entity_no", DecisionValueType.STRING, null, null, null),
@@ -69,7 +87,7 @@ public final class DecisionSourceContracts {
 
     /** 规则集节点结果合同；每个支持流程的决策点各有一份。 */
     static Contract nodeResult(String pointCode) {
-        return new Contract("RULE_SET_NODE_RESULT", 1, pointCode, VariableSource.NODE_OUTPUT, "RULE_SET", List.of(
+        return new Contract("RULE_SET_NODE_RESULT", 1, pointCode, VariableSource.NODE_OUTPUT, "RULE_SET", false, List.of(
             new Field("matched", DecisionValueType.BOOLEAN, true, DataClassification.INTERNAL,
                 Set.of(VariableUsage.FLOW_CONDITION), null, null, null),
             new Field("decision", DecisionValueType.STRING, false, DataClassification.INTERNAL,
@@ -80,7 +98,10 @@ public final class DecisionSourceContracts {
     public record Field(String fieldKey, DecisionValueType valueType, boolean required, DataClassification dataClassification,
         Set<VariableUsage> allowedUsages, NumericUnit numericUnit, String currencyFieldKey, String semanticRole) { }
 
-    /** 当前节点结果合同只是配置边界，本期不构造或执行结果。 */
+    /**
+     * 一份准确的取数合同
+     * <li>旧合同（legacy）只用于读取已有变量与配置，不进入创作目录，不能新建变量。</li>
+     */
     public record Contract(String contractCode, int contractVersion, String pointCode, VariableSource sourceType,
-        String nodeType, List<Field> fields) { }
+        String nodeType, boolean legacy, List<Field> fields) { }
 }

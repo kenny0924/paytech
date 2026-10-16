@@ -270,9 +270,9 @@ public final class CandidateBuilder {
             MINIMAL_RULE.action());
     }
 
-    /** 内置 CHECKOUT_PREPARE 合同的全部输入字段。 */
+    /** 内置 CHECKOUT_PREPARE 旧合同（ORDER_PREPARATION v4）的全部规则输入字段；旧候选发布只按旧合同组成。 */
     public static List<DecisionPointAuthoringDescriptor.InputFieldDescriptor> inputFields() {
-        return DecisionPointAuthoringDescriptor.checkoutPrepare().fields();
+        return DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().fields();
     }
 
     /**
@@ -293,7 +293,7 @@ public final class CandidateBuilder {
 
     /** 唯一绑定该规则集版本的决策点版本内容摘要。 */
     public static String pointHash(int pointVersionNo, String ruleSetCode, int versionNo, String ruleSetHash) {
-        var point = DecisionPointAuthoringDescriptor.checkoutPrepare().point();
+        var point = DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().point();
         return new RiskDecisionCanonicalizerImpl().decisionPointVersion(new DecisionPointVersionProjection(POINT_CODE,
             DecisionBusinessDomain.CHECKOUT, pointVersionNo, point.inputContractCode(), point.inputContractVersion(),
             point.outputContractCode(), point.defaultDecision(), point.evaluationStrategy(), point.failureStrategy(),
@@ -307,7 +307,7 @@ public final class CandidateBuilder {
 
     /** 发布完整冻结组成的内容摘要。 */
     public static String releaseHash(CompositionFacts facts, long releaseId, int releaseNo) {
-        var point = DecisionPointAuthoringDescriptor.checkoutPrepare().point();
+        var point = DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().point();
         String pointId = Long.toString(DECISION_POINT_ID);
         String pointVersionId = id(facts.pointVersionId());
         String ruleId = id(facts.ruleId());

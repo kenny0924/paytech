@@ -77,7 +77,7 @@ public class DecisionReleaseAssembler {
     private static final String CHECKOUT_PREPARE = "CHECKOUT_PREPARE";
 
     /** 旧候选发布只服务结账决策点。 */
-    private static final DecisionPointAuthoringDescriptor DESCRIPTOR = DecisionPointAuthoringDescriptor.checkoutPrepare();
+    private static final DecisionPointAuthoringDescriptor DESCRIPTOR = DecisionPointAuthoringDescriptor.legacyCheckoutPrepare();
     private static final String OPERATIONS_COMMAND = "OPERATIONS_COMMAND";
     private static final List<StaticCheckCode> CHECK_ORDER = List.of(
         StaticCheckCode.REFERENCE_INTEGRITY,

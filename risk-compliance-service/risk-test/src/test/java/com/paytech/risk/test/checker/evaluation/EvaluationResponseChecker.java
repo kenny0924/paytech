@@ -16,12 +16,12 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * 支付尝试风控点统一评估的 HTTP 响应 Checker
- * <li>核对评估结论与附加输出（认证要求），返回服务端生成的评估 ID 供落库核对。</li>
+ * 同步风控点统一评估的 HTTP 响应 Checker
+ * <li>核对评估结论与附加输出（支付为认证要求，结账没有附加输出），返回服务端生成的评估 ID 供落库核对。</li>
  *
  * @author Kenny
  */
-public final class PaymentRiskResponseChecker extends AbstractHttpResponseChecker<PaymentRiskResponseChecker> {
+public final class EvaluationResponseChecker extends AbstractHttpResponseChecker<EvaluationResponseChecker> {
 
     /**
      * 评估身份
@@ -30,13 +30,23 @@ public final class PaymentRiskResponseChecker extends AbstractHttpResponseChecke
      */
     public record Assessed(long evaluationId) { }
 
-    public PaymentRiskResponseChecker(EntityExchangeResult<byte[]> result, ObjectMapper mapper, String requestId) {
+    public EvaluationResponseChecker(EntityExchangeResult<byte[]> result, ObjectMapper mapper, String requestId) {
         super(result, mapper, requestId);
     }
 
     @Override
-    protected PaymentRiskResponseChecker self() {
+    protected EvaluationResponseChecker self() {
         return this;
+    }
+
+    /**
+     * 200 响应：结论符合期望且没有附加输出（结账评估、支付非放行或技术失败）
+     *
+     * @param result 期望结论 Code
+     * @return 评估身份
+     */
+    public Assessed assertResult(String result) {
+        return assertResult(result, null);
     }
 
     /**

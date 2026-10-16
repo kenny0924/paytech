@@ -49,7 +49,7 @@ import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.NodeSpec;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.builder.evaluation.PaymentRiskRequestBuilder;
-import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker;
+import com.paytech.risk.test.checker.evaluation.EvaluationResponseChecker;
 import com.paytech.risk.test.probe.HttpLogProbe;
 
 import tools.jackson.databind.JsonNode;
@@ -338,7 +338,8 @@ class EvaluationQueryApiAutoTest extends AbstractPaymentRiskApiTest {
     @ValueSource(strings = {"/abc", "/0", "/99999999999999999999", "/1?probe=x", "/1/explanation?probe=x",
         "?pointCode=PAYMENT_ATTEMPT_RISK", "?businessKey=1", "?pointCode=UNKNOWN_POINT&businessKey=1",
         "?pointCode=payment&businessKey=1", "?pointCode=PAYMENT_ATTEMPT_RISK&businessKey=abc",
-        "?pointCode=PAYMENT_ATTEMPT_RISK&businessKey=1&probe=x", "?pointCode=PAYMENT_ATTEMPT_RISK&businessKey="})
+        "?pointCode=PAYMENT_ATTEMPT_RISK&businessKey=1&probe=x", "?pointCode=PAYMENT_ATTEMPT_RISK&businessKey=",
+        "?pointCode=PAYMENT_ATTEMPT_RISK&businessKey=9223372036854775808"})
     void test_invalidParameter(String suffix) {
         assertProblem(EVALUATIONS + suffix, 400, INVALID_REQUEST.getCode());
     }
@@ -421,7 +422,7 @@ class EvaluationQueryApiAutoTest extends AbstractPaymentRiskApiTest {
     /** 断言 Problem 状态与错误码。 */
     private void assertProblem(String path, int status, String code) {
         HttpHeaders headers = internalHeaders();
-        new PaymentRiskResponseChecker(http.get(path, headers), objectMapper, headers.getFirst(ApiHeaderNames.REQUEST_ID))
+        new EvaluationResponseChecker(http.get(path, headers), objectMapper, headers.getFirst(ApiHeaderNames.REQUEST_ID))
             .assertProblem(status, code);
     }
 

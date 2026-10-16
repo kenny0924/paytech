@@ -45,4 +45,13 @@ public interface DecisionPointEvaluator {
      *         <li>正式评估缺少本点的输入快照属于数据损坏，以系统错误抛出。</li>
      */
     EvaluationSubject subject(long primaryEvaluationId);
+
+    /**
+     * 影子回放用的冻结输入与已保存输出
+     *
+     * @param primaryEvaluationId 本风控点的正式评估 ID
+     * @return 冻结输入与输出
+     *         <li>正式评估缺少本点的输入快照属于数据损坏，以系统错误抛出。</li>
+     */
+    ReplaySample replaySample(long primaryEvaluationId);
 }

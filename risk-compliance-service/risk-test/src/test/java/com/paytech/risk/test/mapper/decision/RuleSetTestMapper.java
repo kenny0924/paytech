@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import com.paytech.risk.decision.domain.enums.DecisionEnvironment;
 import com.paytech.risk.decision.domain.enums.DecisionReleaseStatus;
 import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
+import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 
 /**
  * 规则集、版本、决策点版本、绑定与发布记录的测试 SQL
@@ -50,19 +51,19 @@ public class RuleSetTestMapper {
     public void insertVersion(long versionId, long pointId, String ruleSetCode, String ruleSetName, int versionNo,
         RuleSetVersionStatus status, String contentHash, long createdBy, String changeReason, Instant createTime) {
         insertVersion(versionId, pointId, ruleSetCode, ruleSetName, versionNo, status, contentHash, createdBy,
-            changeReason, createTime, "LEGACY");
+            changeReason, createTime, RuleSetBuilder.LEGACY_FORMAT, RuleSetBuilder.LEGACY_CONTRACT_VERSION);
     }
 
-    /** 插入指定内容格式的规则集版本；FROZEN 时写入冻结证据，其他状态为空。 */
+    /** 插入指定内容格式与输入合同版本的规则集版本；FROZEN 时写入冻结证据，其他状态为空。 */
     public void insertVersion(long versionId, long pointId, String ruleSetCode, String ruleSetName, int versionNo,
         RuleSetVersionStatus status, String contentHash, long createdBy, String changeReason, Instant createTime,
-        String contentFormat) {
+        String contentFormat, int inputContractVersion) {
         boolean frozen = status == RuleSetVersionStatus.FROZEN;
         jdbc.update("INSERT INTO t_rule_set_version(rule_set_version_id,decision_point_id,input_contract_code,"
             + "input_contract_version,rule_set_code,rule_set_name,version_no,status,content_hash,content_format,"
             + "created_by,change_reason,frozen_by,frozen_time,create_time,update_time) "
-            + "VALUES(?,?,'ORDER_PREPARATION',4,?,?,?,?,?,?,?,?,?,?,?,?)", versionId, pointId, ruleSetCode,
-            ruleSetName, versionNo, status.getCode(), contentHash, contentFormat, createdBy, changeReason,
+            + "VALUES(?,?,'ORDER_PREPARATION',?,?,?,?,?,?,?,?,?,?,?,?,?)", versionId, pointId, inputContractVersion,
+            ruleSetCode, ruleSetName, versionNo, status.getCode(), contentHash, contentFormat, createdBy, changeReason,
             frozen ? createdBy : null, frozen ? ts(createTime) : null, ts(createTime), ts(createTime));
     }
 

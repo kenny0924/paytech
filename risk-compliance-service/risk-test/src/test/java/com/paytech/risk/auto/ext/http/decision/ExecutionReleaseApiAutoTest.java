@@ -31,6 +31,7 @@ import com.paytech.risk.api.decision.ExecutionReleaseManagementApi;
 import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
 import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
 import com.paytech.risk.api.decision.request.StartShadowRunRequestBody;
+import com.paytech.risk.api.evaluation.request.CheckoutPrepareRiskInput;
 import com.paytech.risk.control.core.enums.RiskListPurpose;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
@@ -53,7 +54,7 @@ import tools.jackson.databind.JsonNode;
  * 支付决策点执行发布：创建、静态校验、影子运行与激活
  * <li>正常流程：首个发布校验通过后由一人直接激活；已有生效发布时，候选须完成影子回放（最近的正式评估）且技术门槛通过才能激活，原发布被替代，新评估按候选执行。</li>
  * <li>业务规则：生效中或影子中的执行发布经决策流引用的规则集不能删除，发布被替代后可删除；未校验的发布不能影子运行或激活；无生效发布时不能影子运行；未完成影子运行不能替代生效发布；引用损坏的发布八项检查全部失败、被拒绝且不能激活。</li>
- * <li>参数：决策点不支持执行发布、流程版本不存在返回 400；字段缺失或越界返回 422；发布 ID 非法返回 400。</li>
+ * <li>参数：决策点不支持执行发布、流程版本不存在或属于其他决策点返回 400；字段缺失或越界返回 422；发布 ID 非法返回 400。</li>
  * <li>无数据：发布不存在返回 404。</li>
  *
  * @see ExecutionReleaseManagementApi
@@ -242,7 +243,9 @@ class ExecutionReleaseApiAutoTest extends AbstractPaymentRiskApiTest {
     void test_invalidParameter() {
         long flow = saveFlow(newCode("T_FLOW"), twoStageGraph(blockRuleSet, authRuleSet("500"), reason));
 
-        post(EXECUTIONS, createBody("CHECKOUT_PREPARE", flow)).assertProblem(400, BUSINESS_CHECK_FAILED.getCode());
+        post(EXECUTIONS, createBody("PAYOUT_CREATION", flow)).assertProblem(400, BUSINESS_CHECK_FAILED.getCode());
+        post(EXECUTIONS, createBody(CheckoutPrepareRiskInput.POINT_CODE, flow)).assertProblem(400,
+            BUSINESS_CHECK_FAILED.getCode());
         post(EXECUTIONS, createBody(POINT, 9876543210L)).assertProblem(400, BUSINESS_CHECK_FAILED.getCode());
         get("abc").assertProblem(400, INVALID_REQUEST.getCode());
     }

@@ -29,12 +29,12 @@ import com.paytech.risk.decision.domain.runtime.EvaluationInputContract.Field;
 import com.paytech.risk.test.base.AbstractPaymentRiskApiTest;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.builder.evaluation.PaymentRiskRequestBuilder;
-import com.paytech.risk.test.checker.evaluation.PaymentRiskResponseChecker.Assessed;
+import com.paytech.risk.test.checker.evaluation.EvaluationResponseChecker.Assessed;
 
 /**
  * 支付尝试风控评估的可用性与输入边界
  * <li>无数据：本环境没有生效发布返回 503 RISK_DECISION_NOT_CONFIGURED，不写评估。</li>
- * <li>参数：业务身份或输入字段缺失、未知、格式不符返回 422 并指出字段；风控点或合同版本未登记、IP 不是合法字面量返回 400；均先于发布查询，不写评估。</li>
+ * <li>参数：业务身份或输入字段缺失、未知、格式不符或标识超过 BIGINT 上限返回 422 并指出字段；风控点或合同版本未登记、IP 不是合法字面量返回 400；均先于发布查询，不写评估。</li>
  * <li>合同一致：评估合同漏登规则输入字段或必填不一致时无法构造，工程漂移在启动时暴露。</li>
  * <li>超时：执行耗时超过冻结的决策点版本超时记为 TIMED_OUT 并落库，不写累计事件；重放返回原结果。</li>
  * <li>技术失败：生效发布引用的变量损坏时返回 FAILED 并落库失败评估，不写累计事件；同一支付尝试重放返回原失败结果。</li>
@@ -166,6 +166,10 @@ class PaymentRiskAssessmentAvailabilityApiAutoTest extends AbstractPaymentRiskAp
     static Stream<Arguments> contractViolations() {
         return Stream.of(Arguments.of("缺少支付尝试", "businessKey", change(builder -> builder.paymentAttemptId(null))),
             Arguments.of("支付尝试非正整数", "businessKey", change(builder -> builder.paymentAttemptId("0"))),
+            Arguments.of("支付尝试超过 BIGINT 上限", "businessKey",
+                change(builder -> builder.paymentAttemptId("9223372036854775808"))),
+            Arguments.of("风控 Action 超过 BIGINT 上限", "inputs.riskActionId",
+                change(builder -> builder.riskActionId("9999999999999999999"))),
             Arguments.of("缺少金额", "inputs.amount", change(builder -> builder.amount(null))),
             Arguments.of("未知字段", "inputs.deviceId", change(builder -> builder.input("deviceId", "d-1"))),
             Arguments.of("风控 Action 非数字", "inputs.riskActionId", change(builder -> builder.riskActionId("abc"))),

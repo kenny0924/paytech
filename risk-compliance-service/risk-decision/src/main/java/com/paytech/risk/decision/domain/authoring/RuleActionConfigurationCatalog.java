@@ -43,7 +43,7 @@ public final class RuleActionConfigurationCatalog {
     public static List<ConfigurationAction> actions() { return ACTIONS; }
 
     public static List<InputFieldDescriptor> inputFields() {
-        return DecisionPointAuthoringDescriptor.checkoutPrepare().inputFields().stream()
+        return DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().inputFields().stream()
             .filter(InputFieldDescriptor::actionParameterFlag).toList();
     }
 

@@ -46,7 +46,7 @@ public final class RuleAstValidatorImpl implements RuleAstValidator {
     public RuleAstValidatorImpl(DecisionActionRegistry registry) {
         this.registry = Objects.requireNonNull(registry);
         Map<String, InputFieldDescriptor> index = new HashMap<>();
-        DecisionPointAuthoringDescriptor.checkoutPrepare().fields().forEach(field -> index.put(field.fieldCode(), field));
+        DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().fields().forEach(field -> index.put(field.fieldCode(), field));
         fields = Map.copyOf(index);
     }
 
@@ -230,7 +230,9 @@ public final class RuleAstValidatorImpl implements RuleAstValidator {
 
     private NormalizedPredicate predicate(NodeDraft node) {
         ComparisonOperator operator = node.comparisonOperator();
-        if (!DecisionPointAuthoringDescriptor.checkoutPrepare().operators().contains(operator)) throw business("操作符无效");
+        if (!DecisionPointAuthoringDescriptor.legacyCheckoutPrepare().operators().contains(operator)) {
+            throw business("操作符无效");
+        }
         List<OperandDraft> operands = new ArrayList<>(node.operands());
         if (operands.stream().anyMatch(v -> v != null && (v.variableCode() != null || v.numericUnit() != null
             || v.currencyCode() != null || v.currencyVariableCode() != null || v.sourceType() == OperandSource.VARIABLE)))

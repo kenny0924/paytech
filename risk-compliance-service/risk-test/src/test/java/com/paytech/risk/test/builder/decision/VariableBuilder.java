@@ -29,7 +29,7 @@ public final class VariableBuilder {
     /** 种子数据中唯一已支持的决策点。 */
     public static final String POINT_CODE = "CHECKOUT_PREPARE";
 
-    /** 种子数据中 ORDER_PREPARATION v4 的币种输入变量。 */
+    /** 种子数据中 ORDER_PREPARATION 当前合同（v5）的币种输入变量。 */
     public static final String INPUT_CURRENCY = "INPUT_CURRENCY";
 
     /** 夹具创建时间，UTC 微秒精度。 */
@@ -124,24 +124,24 @@ public final class VariableBuilder {
         return collection(DecisionValueType.STRING, VariableFormat.TEXT);
     }
 
-    /** ORDER_PREPARATION v4 指定字段的输入别名。 */
+    /** ORDER_PREPARATION 当前合同（v5）指定字段的输入别名。 */
     public static VariableBuilder input(String field, DecisionValueType type, VariableFormat format) {
         VariableBuilder builder = new VariableBuilder();
         builder.sourceType = VariableSource.INPUT;
         builder.valueType = type;
         builder.formatCode = format;
         builder.sourceContractCode = "ORDER_PREPARATION";
-        builder.sourceContractVersion = 4;
+        builder.sourceContractVersion = RuleSetBuilder.CURRENT_CONTRACT_VERSION;
         builder.sourceField = field;
         return builder;
     }
 
-    /** ORDER_PREPARATION v4 的国家输入别名。 */
+    /** ORDER_PREPARATION 当前合同的消费者国家输入别名。 */
     public static VariableBuilder countryInput() {
-        return input("country_code", DecisionValueType.STRING, VariableFormat.UPPER_ALPHA_2);
+        return input("consumer_country_code", DecisionValueType.STRING, VariableFormat.UPPER_ALPHA_2);
     }
 
-    /** ORDER_PREPARATION v4 的币种输入别名，可作为金额的币种来源。 */
+    /** ORDER_PREPARATION 当前合同的币种输入别名，可作为金额的币种来源。 */
     public static VariableBuilder currencyInput() {
         return input("currency", DecisionValueType.STRING, VariableFormat.UPPER_ALPHA_3);
     }

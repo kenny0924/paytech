@@ -1,6 +1,9 @@
 package com.paytech.risk.decision.domain.authoring;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -22,7 +25,8 @@ import com.paytech.risk.decision.domain.variable.DecisionSourceContracts;
 
 /**
  * 工程注册的决策点创作合同：输入字段、运算符和规则终态动作。
- * <li>结账（CHECKOUT_PREPARE）保持原合同、动作 ID 与 Handler 摘要不变，只有配置能力，没有运行期执行。</li>
+ * <li>结账（CHECKOUT_PREPARE）当前合同为 ORDER_PREPARATION v5，只接受统一变量格式，规则可冻结并经执行发布运行；不开放附加动作与实时累计/名单变量；v4 只供已有规则集与流程读取。</li>
+ * <li>结账旧合同（v4，{@link #legacyCheckoutPrepare()}）只服务旧格式规则、旧候选发布与流程 schemaVersion 1 的解释，不进入 {@link #all()}。</li>
  * <li>支付尝试（PAYMENT_ATTEMPT_RISK）只接受统一变量格式，规则可冻结并经执行发布运行；一期不开放附加动作；认证要求是附加输出，由放行结束节点配置。</li>
  */
 public final class DecisionPointAuthoringDescriptor {
@@ -35,20 +39,27 @@ public final class DecisionPointAuthoringDescriptor {
     /** 支付决策点的认证要求输出编码。 */
     public static final String AUTHENTICATION_REQUIREMENT = "AUTHENTICATION_REQUIREMENT";
 
+    /** 结账终态动作；当前合同与旧合同共用同一组动作版本。 */
+    private static final List<DecisionActionDescriptor> CHECKOUT_ACTIONS = List.of(
+        action("ALLOW_CHECKOUT", "Allow Checkout", "DECISION_ALLOW_V1", DecisionValue.ALLOW,
+            "185de7185670a27961afb0eade21b87fd99cc9677542ef5eaf6bb5c0806ceaa1"),
+        action("REVIEW_CHECKOUT", "Review Checkout", "DECISION_REVIEW_V1", DecisionValue.REVIEW,
+            "a4d4709e280ee2d8c2a4dcc5537e91318a16b2cd27ba41a10d70bdae25e85716"),
+        action("DENY_CHECKOUT", "Deny Checkout", "DECISION_DENY_V1", DecisionValue.DENY,
+            "8dc8b20590fa0d0c98732d332871901c568207ba9e346277668c9daab3a1e9b7"));
+
+    /** 结账运行期点版本号；mor-test 已有旧 companion 点版本 1～33，取各环境都未使用的固定值。 */
+    static final int CHECKOUT_RUNTIME_POINT_VERSION_NO = 100;
+
     private static final DecisionPointAuthoringDescriptor CHECKOUT_PREPARE =
         new DecisionPointAuthoringDescriptor(
-            "CHECKOUT_PREPARE_AUTHORING_V1", new DecisionPointDescriptor("CHECKOUT_PREPARE", "Checkout Prepare",
-                "CHECKOUT", "ORDER_PREPARATION", 4, "RISK_DECISION_RESULT", DecisionValue.REVIEW,
-                EvaluationStrategy.FIRST_TERMINAL, FailureStrategy.FAIL_CLOSED, 500, ConfigurationStatus.ACTIVE),
-            240001L,
-            List.of(
-                action("ALLOW_CHECKOUT", "Allow Checkout", "DECISION_ALLOW_V1", DecisionValue.ALLOW,
-                    "185de7185670a27961afb0eade21b87fd99cc9677542ef5eaf6bb5c0806ceaa1"),
-                action("REVIEW_CHECKOUT", "Review Checkout", "DECISION_REVIEW_V1", DecisionValue.REVIEW,
-                    "a4d4709e280ee2d8c2a4dcc5537e91318a16b2cd27ba41a10d70bdae25e85716"),
-                action("DENY_CHECKOUT", "Deny Checkout", "DECISION_DENY_V1", DecisionValue.DENY,
-                    "8dc8b20590fa0d0c98732d332871901c568207ba9e346277668c9daab3a1e9b7")),
-            List.of(), false);
+            "CHECKOUT_PREPARE_AUTHORING_V2", checkoutPoint(5), 240001L, CHECKOUT_ACTIONS, List.of(),
+            new RuntimeCapabilities(true, false, CHECKOUT_RUNTIME_POINT_VERSION_NO), List.of(5, 4));
+
+    private static final DecisionPointAuthoringDescriptor LEGACY_CHECKOUT_PREPARE =
+        new DecisionPointAuthoringDescriptor(
+            "CHECKOUT_PREPARE_AUTHORING_V1", checkoutPoint(4), 240001L, CHECKOUT_ACTIONS, List.of(),
+            new RuntimeCapabilities(false, false, 0), List.of(4));
 
     private static final DecisionPointAuthoringDescriptor PAYMENT_ATTEMPT_RISK =
         new DecisionPointAuthoringDescriptor(
@@ -67,7 +78,7 @@ public final class DecisionPointAuthoringDescriptor {
                 List.of(new OutputValue(AuthenticationRequirement.NOT_REQUIRED.getCode(), "无需认证"),
                     new OutputValue(AuthenticationRequirement.THREE_DS_REQUIRED.getCode(), "需要 3DS")),
                 AuthenticationRequirement.NOT_REQUIRED.getCode())),
-            true);
+            new RuntimeCapabilities(true, true, 1), List.of(1));
 
     private static final List<DecisionPointAuthoringDescriptor> ALL = List.of(CHECKOUT_PREPARE, PAYMENT_ATTEMPT_RISK);
 
@@ -77,30 +88,61 @@ public final class DecisionPointAuthoringDescriptor {
     private final List<InputFieldDescriptor> fields;
     private final List<DecisionActionDescriptor> actions;
     private final List<OutputDescriptor> outputs;
-    private final boolean runtimeSupported;
+    private final RuntimeCapabilities runtime;
+    private final Map<Integer, List<InputFieldDescriptor>> readableFields;
 
-    /** 由工程合同构造；输入字段取自同一决策点的准确输入合同。 */
+    /**
+     * 由工程合同构造；输入字段取自同一决策点的准确输入合同
+     *
+     * @param readableVersions 可读取的输入合同版本，首个为当前合同
+     */
     private DecisionPointAuthoringDescriptor(String descriptorCode, DecisionPointDescriptor point,
         long firstActionVersionId, List<DecisionActionDescriptor> actions, List<OutputDescriptor> outputs,
-        boolean runtimeSupported) {
+        RuntimeCapabilities runtime, List<Integer> readableVersions) {
+        if (readableVersions.getFirst() != point.inputContractVersion()) {
+            throw new IllegalStateException("可读合同的首个版本必须是当前合同: " + point.pointCode());
+        }
         this.descriptorCode = descriptorCode;
         this.point = point;
         this.firstActionVersionId = firstActionVersionId;
         this.actions = List.copyOf(actions);
         this.outputs = List.copyOf(outputs);
-        this.runtimeSupported = runtimeSupported;
-        this.fields = DecisionSourceContracts.all().stream()
+        this.runtime = runtime;
+        Map<Integer, List<InputFieldDescriptor>> fieldsByVersion = new LinkedHashMap<>();
+        readableVersions.forEach(version -> fieldsByVersion.put(version, contractFields(point, version)));
+        this.readableFields = Collections.unmodifiableMap(fieldsByVersion);
+        this.fields = readableFields.get(point.inputContractVersion());
+    }
+
+    /** 同一决策点某一版本输入合同的字段目录。 */
+    private static List<InputFieldDescriptor> contractFields(DecisionPointDescriptor point, int contractVersion) {
+        return DecisionSourceContracts.all().stream()
             .filter(c -> c.sourceType() == VariableSource.INPUT
                 && c.pointCode().equals(point.pointCode()) && c.contractCode().equals(point.inputContractCode())
-                && c.contractVersion() == point.inputContractVersion()).findFirst().orElseThrow().fields().stream()
+                && c.contractVersion() == contractVersion).findFirst().orElseThrow().fields().stream()
             .map(f -> new InputFieldDescriptor(f.fieldKey(), f.valueType(), f.required(), f.dataClassification(),
                 f.allowedUsages().contains(VariableUsage.RULE_CONDITION),
                 f.allowedUsages().contains(VariableUsage.ACTION_PARAMETER))).toList();
     }
 
-    /** 结账准备决策点的原合同。 */
+    /** 结账决策点在指定输入合同版本下的点合同；其余属性两个版本相同。 */
+    private static DecisionPointDescriptor checkoutPoint(int contractVersion) {
+        return new DecisionPointDescriptor("CHECKOUT_PREPARE", "Checkout Prepare", "CHECKOUT", "ORDER_PREPARATION",
+            contractVersion, "RISK_DECISION_RESULT", DecisionValue.REVIEW, EvaluationStrategy.FIRST_TERMINAL,
+            FailureStrategy.FAIL_CLOSED, 500, ConfigurationStatus.ACTIVE);
+    }
+
+    /** 结账准备决策点的当前合同（ORDER_PREPARATION v5，运行期）。 */
     public static DecisionPointAuthoringDescriptor checkoutPrepare() {
         return CHECKOUT_PREPARE;
+    }
+
+    /**
+     * 结账准备决策点的旧合同（ORDER_PREPARATION v4，仅配置）
+     * <li>只供旧格式规则、旧候选发布与流程 schemaVersion 1 的解释使用，行为与本需求前的结账合同完全相同；不进入 {@link #all()}。</li>
+     */
+    public static DecisionPointAuthoringDescriptor legacyCheckoutPrepare() {
+        return LEGACY_CHECKOUT_PREPARE;
     }
 
     /** 支付尝试风控决策点合同。 */
@@ -141,12 +183,30 @@ public final class DecisionPointAuthoringDescriptor {
 
     /** 该决策点规则是否经执行发布在运行期执行；为 false 时规则只允许配置。 */
     public boolean runtimeSupported() {
-        return runtimeSupported;
+        return runtime.supported();
     }
 
     /** 该决策点是否开放冷却、打标签等附加动作配置。 */
     public boolean additionalActionsSupported() {
-        return !runtimeSupported;
+        return !runtime.supported();
+    }
+
+    /** 该决策点是否允许实时累计与名单命中变量；只有运行期计算这两类 Feature 的决策点为 true。 */
+    public boolean featureVariablesSupported() {
+        return runtime.featureVariablesSupported();
+    }
+
+    /** 执行发布引用的冻结决策点版本号；不支持运行期的决策点没有该版本。 */
+    public int runtimePointVersionNo() {
+        if (!runtime.supported()) {
+            throw new IllegalStateException("决策点不支持运行期: " + point.pointCode());
+        }
+        return runtime.pointVersionNo();
+    }
+
+    /** 该决策点是否可读取指定输入合同；当前合同与登记的旧合同都可读取。 */
+    public boolean readsContract(String contractCode, int contractVersion) {
+        return point.inputContractCode().equals(contractCode) && readableFields.containsKey(contractVersion);
     }
 
     /** 该决策点声明的附加输出，按注册顺序；由放行结束节点配置取值。 */
@@ -173,13 +233,12 @@ public final class DecisionPointAuthoringDescriptor {
         return fields.stream().filter(InputFieldDescriptor::ruleReferenceFlag).toList();
     }
 
-    /** 按准确输入合同解释历史和新配置，不使用最新版本兜底。 */
+    /** 按准确输入合同解释历史和新配置，不使用最新版本兜底；旧合同返回其原字段目录。 */
     public List<InputFieldDescriptor> inputFields(String pointCode, String contractCode, int contractVersion) {
-        if (!point.pointCode().equals(pointCode) || !point.inputContractCode().equals(contractCode)
-            || point.inputContractVersion() != contractVersion) {
+        if (!point.pointCode().equals(pointCode) || !readsContract(contractCode, contractVersion)) {
             throw new ErrorException("规则输入合同未登记");
         }
-        return fields;
+        return readableFields.get(contractVersion);
     }
 
     /** 当前创作合同的完整输入目录，包含仅动作可用字段。 */
@@ -276,6 +335,15 @@ public final class DecisionPointAuthoringDescriptor {
             Objects.requireNonNull(name);
         }
     }
+
+    /**
+     * 决策点运行期能力
+     *
+     * @param supported 规则是否经执行发布在运行期执行
+     * @param featureVariablesSupported 是否允许实时累计与名单命中变量
+     * @param pointVersionNo 执行发布引用的冻结决策点版本号；不支持运行期时为 0
+     */
+    private record RuntimeCapabilities(boolean supported, boolean featureVariablesSupported, int pointVersionNo) { }
 
     public record InputFieldDescriptor(
         String fieldCode,
