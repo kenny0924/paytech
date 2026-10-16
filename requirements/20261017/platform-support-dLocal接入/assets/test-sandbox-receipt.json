@@ -1,0 +1,803 @@
+{
+  "date": "2026-10-17",
+  "environment": "mor-test",
+  "integration": "DLOCAL",
+  "account": "SBX_MAIN",
+  "note": "回执不含凭据、跳转 URL 与渠道单号；已付款链路的 PAID 与退款 SUCCESS 由 harness 直连 dLocal 沙箱工具强制",
+  "cases": {
+    "SBX_PAY_QUERY_NOT_FOUND": {
+      "runCode": "236950341961203712",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "query",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "4000",
+              "paymentStatus": "NOT_FOUND",
+              "failureMessage": "Payment not found"
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.paymentStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        }
+      ],
+      "attemptIds": [
+        "DLVNONE143979375736"
+      ],
+      "exchanges": [
+        {
+          "step": "query",
+          "node": "getOrder",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 404,
+          "error": null,
+          "channel": {
+            "status": null,
+            "code": 4000
+          }
+        }
+      ]
+    },
+    "SBX_REFUND_NOT_EXIST": {
+      "runCode": "236950351176089600",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "refund",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "4000",
+              "refundStatus": "FAILED",
+              "failureMessage": "Payment not found"
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        }
+      ],
+      "attemptIds": [
+        "DLVNONE306501085479"
+      ],
+      "exchanges": [
+        {
+          "step": "refund",
+          "node": "getOrder",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 404,
+          "error": null,
+          "channel": {
+            "status": null,
+            "code": 4000
+          }
+        }
+      ]
+    },
+    "SBX_REFUND_QUERY_NOT_FOUND": {
+      "runCode": "236950360290312192",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "query",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "4000",
+              "refundStatus": "NOT_FOUND",
+              "failureMessage": "Payment not found"
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        }
+      ],
+      "attemptIds": [
+        "DLVNONE155155109923"
+      ],
+      "exchanges": [
+        {
+          "step": "query",
+          "node": "getOrder",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 404,
+          "error": null,
+          "channel": {
+            "status": null,
+            "code": 4000
+          }
+        }
+      ]
+    },
+    "SBX_PAY_PENDING_CANCEL": {
+      "runCode": "236950395765735424",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "pay",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "nextAction": {
+                "type": "REDIRECT",
+                "redirectUrl": "[omitted]"
+              },
+              "channelStatus": "PENDING",
+              "paymentStatus": "PENDING",
+              "channelTransactionRef": "[omitted]"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.paymentStatus",
+              true
+            ],
+            [
+              "outputs.nextAction.type",
+              true
+            ],
+            [
+              "outputs.nextAction.redirectUrl",
+              true
+            ],
+            [
+              "outputs.channelTransactionRef",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "query",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "amount": {
+                "value": "1.00",
+                "currency": "USD"
+              },
+              "channelStatus": "PENDING",
+              "paymentStatus": "PENDING",
+              "channelTransactionRef": "[omitted]"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.paymentStatus",
+              true
+            ],
+            [
+              "outputs.channelTransactionRef",
+              true
+            ],
+            [
+              "outputs.amount.value",
+              true
+            ],
+            [
+              "outputs.amount.currency",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "refund",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "5002",
+              "refundStatus": "FAILED",
+              "failureMessage": "Invalid transaction status"
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "refundQuery",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "REFUND_NOT_EXIST",
+              "refundStatus": "NOT_FOUND",
+              "failureMessage": "Refund not found"
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "cancel",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "cancelStatus": "CLOSED",
+              "channelStatus": "CANCELLED"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.cancelStatus",
+              true
+            ],
+            [
+              "outputs.channelStatus",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "cancelAgain",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "cancelStatus": "CLOSED",
+              "channelStatus": "CANCELLED"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.cancelStatus",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "queryClosed",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "amount": {
+                "value": "1.00",
+                "currency": "USD"
+              },
+              "failureCode": "CANCELLED",
+              "channelStatus": "CANCELLED",
+              "paymentStatus": "FAILED",
+              "failureMessage": "The payment was cancelled.",
+              "channelTransactionRef": "[omitted]"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.paymentStatus",
+              true
+            ],
+            [
+              "outputs.channelStatus",
+              true
+            ]
+          ]
+        }
+      ],
+      "attemptIds": [
+        "DLV744087054628"
+      ],
+      "exchanges": [
+        {
+          "step": "pay",
+          "node": "createPayment",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PENDING",
+            "code": null
+          }
+        },
+        {
+          "step": "query",
+          "node": "getOrder",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PENDING",
+            "code": null
+          }
+        },
+        {
+          "step": "refund",
+          "node": "getOrder",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PENDING",
+            "code": null
+          }
+        },
+        {
+          "step": "refund",
+          "node": "createRefund",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 400,
+          "error": null,
+          "channel": {
+            "status": null,
+            "code": 5002
+          }
+        },
+        {
+          "step": "refundQuery",
+          "node": "getOrder",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PENDING",
+            "code": null
+          }
+        },
+        {
+          "step": "refundQuery",
+          "node": "getRefunds",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PENDING",
+            "code": null
+          }
+        },
+        {
+          "step": "cancel",
+          "node": "getOrder",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PENDING",
+            "code": null
+          }
+        },
+        {
+          "step": "cancel",
+          "node": "cancelPayment",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "CANCELLED",
+            "code": null
+          }
+        },
+        {
+          "step": "cancelAgain",
+          "node": "getOrder",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "CANCELLED",
+            "code": null
+          }
+        },
+        {
+          "step": "queryClosed",
+          "node": "getOrder",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "CANCELLED",
+            "code": null
+          }
+        }
+      ]
+    },
+    "SBX_PAID_ORDER": {
+      "runCode": "236950410777149440",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "pay",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "nextAction": {
+                "type": "REDIRECT",
+                "redirectUrl": "[omitted]"
+              },
+              "channelStatus": "PENDING",
+              "paymentStatus": "PENDING",
+              "channelTransactionRef": "[omitted]"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.paymentStatus",
+              true
+            ],
+            [
+              "outputs.nextAction.type",
+              true
+            ],
+            [
+              "outputs.nextAction.redirectUrl",
+              true
+            ],
+            [
+              "outputs.channelTransactionRef",
+              true
+            ]
+          ]
+        }
+      ],
+      "attemptIds": [
+        "DLV936443721677"
+      ],
+      "exchanges": [
+        {
+          "step": "pay",
+          "node": "createPayment",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PENDING",
+            "code": null
+          }
+        }
+      ]
+    },
+    "SBX_PAID_REFUND": {
+      "runCode": "236950452518862848",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "query",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "amount": {
+                "value": "1.00",
+                "currency": "USD"
+              },
+              "channelStatus": "PAID",
+              "paymentStatus": "SUCCEEDED",
+              "channelTransactionRef": "[omitted]"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.paymentStatus",
+              true
+            ],
+            [
+              "outputs.amount.value",
+              true
+            ],
+            [
+              "outputs.amount.currency",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "cancel",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "PAID",
+              "cancelStatus": "ALREADY_PAID",
+              "channelStatus": "PAID"
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.cancelStatus",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "refund",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "refundStatus": "PROCESSING",
+              "channelStatus": "PENDING",
+              "channelRefundRef": "[omitted]"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.channelRefundRef",
+              true
+            ]
+          ]
+        }
+      ],
+      "attemptIds": [
+        "DLV936443721677"
+      ],
+      "exchanges": [
+        {
+          "step": "query",
+          "node": "getOrder",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PAID",
+            "code": null
+          }
+        },
+        {
+          "step": "cancel",
+          "node": "getOrder",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PAID",
+            "code": null
+          }
+        },
+        {
+          "step": "refund",
+          "node": "getOrder",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PAID",
+            "code": null
+          }
+        },
+        {
+          "step": "refund",
+          "node": "createRefund",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PENDING",
+            "code": null
+          }
+        }
+      ]
+    },
+    "SBX_PAID_REFUND_QUERY": {
+      "runCode": "236950487251894272",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "refundQuery",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "refundStatus": "SUCCEEDED",
+              "channelStatus": "SUCCESS",
+              "channelRefundRef": "[omitted]"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.channelStatus",
+              true
+            ],
+            [
+              "outputs.channelRefundRef",
+              true
+            ]
+          ]
+        }
+      ],
+      "attemptIds": [
+        "DLV936443721677"
+      ],
+      "exchanges": [
+        {
+          "step": "refundQuery",
+          "node": "getOrder",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PAID",
+            "code": null
+          }
+        },
+        {
+          "step": "refundQuery",
+          "node": "getRefunds",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "status": "PAID",
+            "code": null
+          }
+        }
+      ]
+    }
+  }
+}

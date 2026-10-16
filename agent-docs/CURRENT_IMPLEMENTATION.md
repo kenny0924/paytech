@@ -84,6 +84,13 @@
 
 - **Implemented / mor-test 已部署（代码尚未提交）：** 按[需求](../requirements/20261015/operations-console-评估查询与解释/requirement.md)与[方案](../requirements/20261015/operations-console-评估查询与解释/design.md)，Operations BFF 接入 Risk `RiskEvaluationQueryApi` 三个 GET（按评估 ID、按支付尝试、评估解释），用规则集版本详情组装条件树；Web 新增“风控管理 ▸ 评估查询”页（结论、路径、规则与条件、变量、输入、影子评估）。权限 `RISK_EVALUATION_READ` 与 3 条路由经 Platform 注册（32 行）。验证：BFF `verify` 1349/1349、Web 1043/1043；本机全链路浏览器 22/22（[报告](../requirements/20261015/operations-console-评估查询与解释/verification/stage5-local-acceptance.md)）；mor-test BFF `376b5b827945`、Web `d37816c5ba8a`，注册与激活（PLATFORM_ADMIN v27），浏览器 17/17、29 页回归通过，合成数据已清理（[记录](../requirements/20261015/operations-console-评估查询与解释/release/test-acceptance.md)）。
 
+<a id="dlocal-integration-20261017"></a>
+
+## dLocal 收款接入（2026-10-17）
+
+- **Designed：** [需求](../requirements/20261017/platform-support-dLocal接入/requirement.md)与[技术方案](../requirements/20261017/platform-support-dLocal接入/technique.md)经用户确认：接入方 `DLOCAL` 以托管跳转（REDIRECT，空 `payer`）实现 `PAY`、`PAY_QUERY`、`PAY_CANCEL`（只撤销待付款单）、`REFUND`、`REFUND_QUERY`；退款与退款查询先按我方单号取 dLocal `payment_id`，退款查询沿用可选 `refund.paymentAttemptId` 并在 `refunds[]` 中匹配；退款不输出金额（渠道按本地币种返回）。现有引擎函数够用，不改代码与标准 API。卡、Nequi/SPEI、SmartPix 代扣与回调不在范围。
+- **mor-test 配置 Deployed / Sandbox Verified（2026-10-17）：** 经管理接口写入接入方 `DLOCAL`（沙箱地址）、4 个脚本、5 个原子 API、5 条流程与验证账号 `SBX_MAIN`；无代码、SQL 变更。7 个用例 PASSED，含已付款链路（harness 直连 dLocal 沙箱工具强制 `PAID` 与退款 `SUCCESS`），[回执](../requirements/20261017/platform-support-dLocal接入/assets/test-sandbox-receipt.json)；PayBy、PayerMax、Alipay+ 回归 PASSED。测试单均为终态。详见[交付记录](../requirements/20261017/platform-support-dLocal接入/delivery.md)。
+
 <a id="alipay-plus-integration-20261016"></a>
 
 ## Alipay+ 收款接入（2026-10-16）
