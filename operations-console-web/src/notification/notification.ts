@@ -143,6 +143,30 @@ export function decodePreview(value: unknown): Preview {
 /** 测试发送结果；ACCEPTED 只表示服务商受理。 */
 export interface TestSendResult { outcome: 'ACCEPTED' | 'REJECTED' | 'UNKNOWN'; resultCode: string }
 
+/** 测试发送结果码对应的处理建议；未列出的结果码按结果类型给通用建议。 */
+const testSendHints: Record<string, string> = {
+  SES_CREDENTIAL_REJECTED: '密钥无效、已停用，或 IAM 策略未授予 ses:SendEmail。沙箱期间策略须同时覆盖收件人身份（如 identity/*）；修改 IAM 策略后约 1–2 分钟生效。',
+  SES_SENDER_NOT_VERIFIED: '发件地址所在域名未在该区域的 SES 中验证，请核对区域与发件地址。',
+  SES_MESSAGE_REJECTED: 'SES 拒绝了这封邮件。账户仍在沙箱时，收件邮箱须先在 SES 中验证。',
+  SES_CONFIGURATION_NOT_FOUND: '填写的 Configuration Set 在该区域不存在，请核对或清空。',
+  SES_QUOTA_EXCEEDED: '已达到 SES 发送配额（沙箱为每天 200 封），请稍后再试或申请提高配额。',
+  SES_THROTTLED: '发送过快被 SES 限流，请稍后再试。',
+  SES_ACCOUNT_PAUSED: 'SES 账户发送已暂停，请在 AWS 控制台查看账户状态。',
+  SES_ACCOUNT_SUSPENDED: 'SES 账户已被暂停，请在 AWS 控制台查看账户状态。',
+  SES_BAD_REQUEST: 'SES 认为请求无效，请核对发件地址与收件邮箱。',
+};
+
+const outcomeHints: Record<TestSendResult['outcome'], string> = {
+  ACCEPTED: '服务商已接受发送请求；是否送达以收件箱为准。',
+  REJECTED: '请根据结果码检查区域、发件地址、密钥或 IAM 权限。',
+  UNKNOWN: '请求可能已发出，请查看收件箱后再决定是否重试。',
+};
+
+/** 测试发送结果的处理建议。 */
+export function testSendHint(result: TestSendResult): string {
+  return result.outcome === 'ACCEPTED' ? outcomeHints.ACCEPTED : testSendHints[result.resultCode] ?? outcomeHints[result.outcome];
+}
+
 /** 校验发送账号列表项。 */
 export function decodeProvider(value: unknown): ProviderSummary {
   const v = value as ProviderSummary;

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   accessKeyPattern, attentionStatus, decodeMutation, decodeProvider, decodeRequestDetail, decodeTemplateDetail,
-  decodeTemplateSummary, decodeTestSend, regionPattern, secretKeyPattern,
+  decodeTemplateSummary, decodeTestSend, regionPattern, secretKeyPattern, testSendHint,
   missingRequired, notificationCommand, placeholders, recordFilters,
 } from './notification.ts';
 
@@ -57,6 +57,11 @@ test('解码器拒绝缺字段、编码不一致或非法状态', () => {
   assert.throws(() => decodeProvider({ ...provider, credentialConfigured: undefined }));
   assert.equal(decodeTestSend({ outcome: 'REJECTED', resultCode: 'SES_CREDENTIAL_REJECTED' }).outcome, 'REJECTED');
   assert.throws(() => decodeTestSend({ outcome: 'SENT', resultCode: 'SES_ACCEPTED' }));
+  assert.match(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_CREDENTIAL_REJECTED' }), /IAM 策略/);
+  assert.match(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_MESSAGE_REJECTED' }), /沙箱/);
+  assert.match(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_CLIENT_ERROR' }), /IAM 权限/);
+  assert.match(testSendHint({ outcome: 'UNKNOWN', resultCode: 'TIMEOUT' }), /查看收件箱/);
+  assert.match(testSendHint({ outcome: 'ACCEPTED', resultCode: 'SES_ACCEPTED' }), /已接受/);
   assert.throws(() => decodeTestSend({ outcome: 'ACCEPTED', resultCode: 'bad code' }));
   assert.ok(regionPattern.test('me-central-1') && !regionPattern.test('Middle East'));
   assert.ok(accessKeyPattern.test('AKIASYNTHETIC0000001') && !accessKeyPattern.test('akia'));

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert, Button, Form, Input, Modal, Select } from 'antd';
 import {
   accessKeyPattern, codePattern, configurationSetPattern, decodeMutation, decodeTestSend, notificationAdminPath, providerTypeLabels,
-  regionPattern, secretKeyPattern,
+  regionPattern, secretKeyPattern, testSendHint,
 } from './notification';
 import type { Mutation, ProviderSummary, TestSendResult } from './notification';
 import { useNotificationCommand } from './useNotificationCommand';
@@ -97,10 +97,10 @@ export function CredentialModal({ provider, onClose, onDone, onAuthorizationChan
   </Modal>;
 }
 
-const outcomeLabels: Record<TestSendResult['outcome'], { type: 'success' | 'error' | 'warning'; text: string; note: string }> = {
-  ACCEPTED: { type: 'success', text: '已受理', note: '服务商已接受发送请求；是否送达以收件箱为准。' },
-  REJECTED: { type: 'error', text: '被拒绝', note: '请根据结果码检查区域、发件地址或密钥。' },
-  UNKNOWN: { type: 'warning', text: '结果未知', note: '请求可能已发出，请查看收件箱后再决定是否重试。' },
+const outcomeLabels: Record<TestSendResult['outcome'], { type: 'success' | 'error' | 'warning'; text: string }> = {
+  ACCEPTED: { type: 'success', text: '已受理' },
+  REJECTED: { type: 'error', text: '被拒绝' },
+  UNKNOWN: { type: 'warning', text: '结果未知' },
 };
 
 /** 测试发送：用该账号的区域、发件地址与密钥发一封固定内容的邮件，结果显示在弹窗内，不生成发送记录。 */
@@ -128,6 +128,6 @@ export function TestSendModal({ provider, onClose, onAuthorizationChanged }: {
       <Form.Item name="reason" label="原因" rules={[{ required: true, whitespace: true, message: '请填写原因' }]}>
         <Input maxLength={500} /></Form.Item>
     </Form>
-    {result && label && <Alert type={label.type} showIcon title={`${label.text} · ${result.resultCode}`} description={label.note} />}
+    {result && label && <Alert type={label.type} showIcon title={`${label.text} · ${result.resultCode}`} description={testSendHint(result)} />}
   </Modal>;
 }
