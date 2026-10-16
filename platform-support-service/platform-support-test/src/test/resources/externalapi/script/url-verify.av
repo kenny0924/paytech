@@ -1,0 +1,9 @@
+let header = seq.get(http.responseHeaders, 'signature');
+if (http.responseStatus == 200 && header != nil) {
+  let start = string.indexOf(header, 'signature=');
+  let signature = urlDecode(string.substring(header, start + 10));
+  let content = 'POST ' + params.path + '\n' + seq.get(http.responseHeaders, 'client-id') + '.'
+    + seq.get(http.responseHeaders, 'response-time') + '.' + http.responseRaw;
+  requireRsaSha256Signature(params.publicKey, content, signature);
+  http.responseBody.verified = true;
+}

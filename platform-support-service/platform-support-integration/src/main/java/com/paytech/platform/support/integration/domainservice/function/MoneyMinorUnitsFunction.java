@@ -48,8 +48,8 @@ public class MoneyMinorUnitsFunction implements PureFunction {
         return new BigDecimal(text);
     }
 
-    /** 已知且有小数单位定义的 ISO 4217 币种的小数位数。 */
-    int fractionDigits(Object value) {
+    /** 已知且有小数单位定义的 ISO 4217 币种的小数位数；MONEY_MAJOR_UNITS 共用。 */
+    static int fractionDigits(Object value) {
         if (!(value instanceof String code) || !CURRENCY.matcher(code).matches()) {
             throw new ExecutionErrorException("币种必须是三位大写字母");
         }

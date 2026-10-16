@@ -1,0 +1,60 @@
+{
+  "timeoutMs": 20000,
+  "initializers": [
+    {
+      "id": "channelAccount",
+      "function": "CHANNEL_ACCOUNT_CONFIG",
+      "required": true,
+      "args": {
+        "vaultToken": {"kind": "PATH", "path": "input.paymentContext.vaultToken"},
+        "channelCode": {"kind": "EXPRESSION", "expression": "'DEMO'"},
+        "channelAccountId": {"kind": "PATH", "path": "input.paymentContext.attemptId"},
+        "entityNo": {"kind": "PATH", "path": "input.paymentContext.attemptId"}
+      }
+    }
+  ],
+  "entry": "call",
+  "nodes": [
+    {
+      "id": "call",
+      "integrationApi": "CALL",
+      "request": {
+        "BODY:paymentRequestId": {"kind": "PATH", "path": "input.paymentContext.attemptId"},
+        "BODY:paymentAmount.currency": {"kind": "PATH", "path": "input.paymentContext.currency"},
+        "BODY:paymentAmount.value": {"kind": "FUNCTION", "function": "MONEY_MINOR_UNITS", "result": "str(result)",
+          "args": {"amount": {"kind": "EXPRESSION", "expression": "str(input.paymentContext.amount)"},
+                   "currency": {"kind": "PATH", "path": "input.paymentContext.currency"}}}
+      },
+      "params": {
+        "privateKey": {"kind": "PATH", "path": "resources.channelAccount.credentials.privateKey"},
+        "clientId": {"kind": "PATH", "path": "resources.channelAccount.parameters.clientId"},
+        "channelPublicKey": {"kind": "PATH", "path": "resources.channelAccount.parameters.channelPublicKey"}
+      }
+    }
+  ],
+  "returns": [
+    {
+      "id": "created",
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "paymentStatus": {"kind": "EXPRESSION", "expression": "'PENDING'"},
+        "transactionRef": {"kind": "PATH", "path": "steps.call.outputs.paymentId"},
+        "amount": {"kind": "PATH", "path": "steps.call.outputs.amount"}
+      }
+    },
+    {
+      "id": "rejected",
+      "executeStatus": "FAIL",
+      "outputs": {
+        "paymentStatus": {"kind": "EXPRESSION", "expression": "'REJECTED'"},
+        "failureCode": {"kind": "PATH", "path": "steps.call.outputs.errorCode"}
+      }
+    },
+    {"id": "unknown", "executeStatus": "ERROR"}
+  ],
+  "edges": [
+    {"from": "call", "to": "created", "condition": "steps.call.executeStatus == 'SUCCESS'", "priority": 1},
+    {"from": "call", "to": "rejected", "condition": "steps.call.executeStatus == 'FAIL'", "priority": 2},
+    {"from": "call", "to": "unknown", "default": true}
+  ]
+}

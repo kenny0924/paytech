@@ -1,0 +1,5 @@
+let requestTime = nowRfc3339();
+seq.put(http.requestHeaders, 'Client-Id', params.clientId);
+seq.put(http.requestHeaders, 'Request-Time', requestTime);
+let content = 'POST ' + params.path + '\n' + params.clientId + '.' + requestTime + '.' + sealJsonBody(http);
+http.requestHeaders.Signature = 'algorithm=RSA256, keyVersion=0, signature=' + urlEncode(rsaSha256Sign(params.privateKey, content));

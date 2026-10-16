@@ -17,12 +17,13 @@ import com.paytech.platform.support.integration.domain.execution.FieldSchema;
 import com.paytech.platform.support.integration.domain.execution.FieldSchemaViolation;
 import com.paytech.platform.support.integration.domainservice.execution.ValueResolver;
 import com.paytech.platform.support.integration.domainservice.expression.ExpressionEngine;
+import com.paytech.platform.support.integration.domainservice.function.MoneyMajorUnitsFunction;
 import com.paytech.platform.support.integration.domainservice.function.MoneyMinorUnitsFunction;
 import com.paytech.platform.support.test.builder.ExternalApiSamples;
 
 /**
  * 执行取值规则（流程结构第 5 节）：标准 API 输入按字段结构校验并转换，取值绑定的缺失、null、类型与精度规则，
- * 以及 MONEY_MINOR_UNITS 的无损换算。直接调用公开的结构、取值器与函数，不经过 HTTP。
+ * 以及 MONEY_MINOR_UNITS、MONEY_MAJOR_UNITS 的无损换算。直接调用公开的结构、取值器与函数，不经过 HTTP。
  *
  * @see FieldSchema#fromJson(tools.jackson.databind.JsonNode, String)
  * @see ValueResolver#resolve(tools.jackson.databind.JsonNode, Map, String, boolean, String)
@@ -34,7 +35,7 @@ class ExecutionValueTest {
     private static final String DECIMAL = ApiFieldDataType.DECIMAL.getCode();
 
     private final ValueResolver resolver = new ValueResolver(new ExpressionEngine(),
-        List.of(new MoneyMinorUnitsFunction()));
+        List.of(new MoneyMinorUnitsFunction(), new MoneyMajorUnitsFunction()));
 
     /** 输入结构：DECIMAL 字符串转为十进制，INTEGER 为 64 位整数，未声明字段、缺少必填、null 与格式不符都被拒绝。 */
     @Test
@@ -104,6 +105,29 @@ class ExecutionValueTest {
             assertThrows(ExecutionErrorException.class, () -> minorUnits(invalid[0], invalid[1]),
                 () -> String.join(" ", invalid));
         }
+    }
+
+    /** MONEY_MAJOR_UNITS：最小单位整数字符串按币种精度转为主单位，小数位数等于币种精度；非整数、符号、未知币种一律 ERROR。 */
+    @Test
+    void test_moneyMajorUnits() {
+        assertEquals(new BigDecimal("10.50"), majorUnits("1050", "USD"));
+        assertEquals(new BigDecimal("0.00"), majorUnits("0", "USD"));
+        assertEquals(new BigDecimal("1000"), majorUnits("1000", "JPY"));
+        assertEquals(new BigDecimal("10.500"), majorUnits("10500", "KWD"));
+        for (String[] invalid : List.of(new String[] {"10.5", "USD"}, new String[] {"-1", "USD"},
+            new String[] {"+1", "USD"}, new String[] {"01", "USD"}, new String[] {"1e3", "USD"},
+            new String[] {"100", "XYZ"}, new String[] {"100", "usd"})) {
+            assertThrows(ExecutionErrorException.class, () -> majorUnits(invalid[0], invalid[1]),
+                () -> String.join(" ", invalid));
+        }
+    }
+
+    private Object majorUnits(String amount, String currency) {
+        Map<String, Object> environment = Map.of("input", Map.of("amount", amount, "currency", currency));
+        return resolve("""
+            {"kind":"FUNCTION","function":"%s","args":{
+              "amount":{"kind":"PATH","path":"input.amount"},"currency":{"kind":"PATH","path":"input.currency"}},
+             "result":"result"}""".formatted(MoneyMajorUnitsFunction.CODE), environment, DECIMAL, true);
     }
 
     private Object minorUnits(String amount, String currency) {

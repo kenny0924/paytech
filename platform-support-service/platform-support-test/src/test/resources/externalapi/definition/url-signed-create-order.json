@@ -1,0 +1,45 @@
+{
+  "params": [
+    {"name": "privateKey", "dataType": "PROTECTED_HANDLE", "required": true},
+    {"name": "clientId", "dataType": "STRING", "required": true},
+    {"name": "channelPublicKey", "dataType": "STRING", "required": true}
+  ],
+  "fixedValues": {},
+  "transport": {
+    "protocol": "HTTP",
+    "method": "POST",
+    "endpointCode": "DEMO_GATEWAY",
+    "pathTemplate": "/payments/pay",
+    "connectTimeoutMs": 2000,
+    "responseTimeoutMs": 10000
+  },
+  "requestEncoding": "JSON",
+  "responseDecoding": "JSON",
+  "scripts": [
+    {"id": "sign", "scriptCode": "URL_SIGN", "stage": "REQUEST",
+     "params": {"privateKey": {"kind": "PATH", "path": "params.privateKey"},
+                "clientId": {"kind": "PATH", "path": "params.clientId"},
+                "path": {"kind": "EXPRESSION", "expression": "'/aps/api/v1/payments/pay'"}}},
+    {"id": "verify", "scriptCode": "URL_VERIFY", "stage": "RESPONSE",
+     "params": {"publicKey": {"kind": "PATH", "path": "params.channelPublicKey"},
+                "path": {"kind": "EXPRESSION", "expression": "'/aps/api/v1/payments/pay'"}}}
+  ],
+  "statusRules": [
+    {"condition": "http.responseBody.verified == true && http.responseBody.result.resultStatus == 'U'", "executeStatus": "SUCCESS"},
+    {"condition": "http.responseBody.verified == true && http.responseBody.result.resultStatus == 'F'", "executeStatus": "FAIL"}
+  ],
+  "outputs": {
+    "SUCCESS": [
+      {"name": "paymentId", "dataType": "STRING", "required": true,
+       "value": {"kind": "PATH", "path": "http.responseBody.paymentId"}},
+      {"name": "amount", "dataType": "DECIMAL", "required": true,
+       "value": {"kind": "FUNCTION", "function": "MONEY_MAJOR_UNITS", "result": "result",
+                 "args": {"amount": {"kind": "PATH", "path": "http.responseBody.paymentAmount.value"},
+                          "currency": {"kind": "PATH", "path": "http.responseBody.paymentAmount.currency"}}}}
+    ],
+    "FAIL": [
+      {"name": "errorCode", "dataType": "STRING", "required": true,
+       "value": {"kind": "PATH", "path": "http.responseBody.result.resultCode"}}
+    ]
+  }
+}

@@ -99,6 +99,7 @@ class ExternalApiEditorTest extends ExternalApiTestBase {
             () -> assertEquals(16, capabilities.getLimits().get("flowNodes")),
             () -> assertEquals(
                 List.of("CHANNEL_ACCOUNT_CONFIG:INITIALIZER:[FLOW_INITIALIZER]",
+                    "MONEY_MAJOR_UNITS:PURE:[FLOW_NODE, FLOW_RETURN, API_OUTPUT]",
                     "MONEY_MINOR_UNITS:PURE:[FLOW_NODE, FLOW_RETURN, API_OUTPUT]",
                     "PAYMENT_CARD:INITIALIZER:[FLOW_INITIALIZER]"),
                 functions.stream().filter(item -> !RegisteredFunctionCatalog.SCRIPT.equals(item.getKind()))

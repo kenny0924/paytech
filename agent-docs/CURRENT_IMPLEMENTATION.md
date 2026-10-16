@@ -62,6 +62,14 @@
 
 - **Implemented / mor-test 已部署（代码尚未提交）：** 按[需求](../requirements/20261015/operations-console-评估查询与解释/requirement.md)与[方案](../requirements/20261015/operations-console-评估查询与解释/design.md)，Operations BFF 接入 Risk `RiskEvaluationQueryApi` 三个 GET（按评估 ID、按支付尝试、评估解释），用规则集版本详情组装条件树；Web 新增“风控管理 ▸ 评估查询”页（结论、路径、规则与条件、变量、输入、影子评估）。权限 `RISK_EVALUATION_READ` 与 3 条路由经 Platform 注册（32 行）。验证：BFF `verify` 1349/1349、Web 1043/1043；本机全链路浏览器 22/22（[报告](../requirements/20261015/operations-console-评估查询与解释/verification/stage5-local-acceptance.md)）；mor-test BFF `376b5b827945`、Web `d37816c5ba8a`，注册与激活（PLATFORM_ADMIN v27），浏览器 17/17、29 页回归通过，合成数据已清理（[记录](../requirements/20261015/operations-console-评估查询与解释/release/test-acceptance.md)）。
 
+<a id="alipay-plus-integration-20261016"></a>
+
+## Alipay+ 收款接入（2026-10-16）
+
+- **Designed：** [需求](../requirements/20261016/platform-support-AlipayPlus接入/requirement.md)与[技术方案](../requirements/20261016/platform-support-AlipayPlus接入/technique.md)经用户确认：接入方 `ALIPAY_PLUS` 实现 `PAY`（收银台，REDIRECT `normalUrl`）、`PAY_QUERY`、`REFUND`、`REFUND_QUERY`；`PAY` 增加可选 `payment.paymentMethodType`、`REFUND_QUERY` 增加可选 `refund.paymentAttemptId`；`cancelPayment` 有冲正语义不接。沙箱直连探测 7 笔测试单均已关单。
+- **Implemented / Verified（本机，代码尚未提交）：** 引擎新增脚本函数 `urlEncode`、`urlDecode` 与纯函数 `MONEY_MAJOR_UNITS`；`auto` 测试含 URL 编码签名与验签的完整 HTTP 链路（`StandardApiUrlSignedChannelTest`），外部 API 相关 125 个测试通过。
+- **Pending：** 提交、Platform 发布 mor-test、mor-test 配置与沙箱用例、用户付款后的已付款链路，各自待授权。
+
 ## PayBy（阿联酋）收款接入（2026-10-14）
 
 - **Designed：** [需求](../requirements/20261014/platform-support-PayBy接入/requirement.md)与[技术方案](../requirements/20261014/platform-support-PayBy接入/technique.md)经用户确认：接入方 `PAYBY` 实现 `PAY_QUERY`、`PAY_CANCEL`（新，草案）、`REFUND`、`REFUND_QUERY`、`BALANCE_QUERY`（新，草案）；`PAY` 以 DIRECTPAY 卡直付为主，所需卡字段加密、有效期格式与 3DS 表单托管写入[补充要求](../requirements/20261014/platform-support-PayBy接入/card-capability-addendum.md)，由卡直付会话评审实现。毫秒 `requestTime` 暂由签名脚本从 `nowRfc3339()` 换算（TODO 改注册函数）。

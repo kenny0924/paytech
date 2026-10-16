@@ -48,7 +48,8 @@ class ScriptSigningFunctionsTest {
     /** 新函数登记在注册函数目录并对脚本剖面开放，只读剖面不可调用。 */
     @Test
     void test_catalog() {
-        for (String name : List.of("sealJsonBody", "rsaSha256Sign", "requireRsaSha256Signature", "nowRfc3339")) {
+        for (String name : List.of("sealJsonBody", "rsaSha256Sign", "requireRsaSha256Signature", "nowRfc3339", "urlEncode",
+            "urlDecode")) {
             assertTrue(RegisteredFunctionCatalog.codes(RegisteredFunctionCatalog.SCRIPT).contains(name), name);
             assertTrue(ExpressionProfile.SCRIPT.getFunctions().contains(name), name);
             assertFalse(ExpressionProfile.READ_ONLY.getFunctions().contains(name), name);
@@ -126,11 +127,36 @@ class ScriptSigningFunctionsTest {
             midnight.compile(ExpressionProfile.SCRIPT, "nowRfc3339()").execute(new HashMap<>()));
     }
 
+    /** urlEncode：RFC 3986 unreserved 之外按 UTF-8 百分号编码（大写十六进制），空格不变成 +；与 urlDecode 往返一致。 */
+    @Test
+    void test_urlEncode() {
+        assertEquals("a%2Bb%2Fc%3D%3D", script("urlEncode('a+b/c==')"));
+        assertEquals("AZaz09-._~%20%25%E4%B8%AD%F0%9F%98%80", script("urlEncode('AZaz09-._~ %中😀')"));
+        assertEquals("", script("urlEncode('')"));
+        String signature = sign("{\"ok\":true}");
+        assertEquals(signature, script("urlDecode(urlEncode('" + signature + "'))"));
+        assertThrows(RuntimeException.class, () -> script("urlEncode(1)"));
+    }
+
+    /** urlDecode：大小写十六进制都可解码，+ 保持原样；截断、非十六进制与非法 UTF-8 序列一律失败。 */
+    @Test
+    void test_urlDecode() {
+        assertEquals("a+b/c==", script("urlDecode('a+b%2fc%3D%3d')"));
+        assertEquals("中 😀", script("urlDecode('%E4%B8%AD%20😀')"));
+        for (String invalid : List.of("%", "%2", "abc%G1", "%FF", "%E4%B8")) {
+            assertThrows(RuntimeException.class, () -> script("urlDecode('" + invalid + "')"), invalid);
+        }
+    }
+
     /** 金额为 10.00 的 JSON 请求体，锁定时按 JSON 数字编码。 */
     private static HttpWork request() {
         var body = new LinkedHashMap<String, Object>();
         body.put("data", new LinkedHashMap<>(Map.of("amount", new BigDecimal("10.00"))));
         return HttpWork.request(Map.of(), body, value -> JSON.writeValueAsBytes(JsonValues.toJson(value, true)));
+    }
+
+    private Object script(String source) {
+        return engine.compile(ExpressionProfile.SCRIPT, source).execute(env(request(), Map.of()));
     }
 
     private void run(String source, HttpWork http) {

@@ -46,6 +46,9 @@ public final class RegisteredFunctionCatalog {
         new RegisteredFunction("MONEY_MINOR_UNITS", PURE,
             List.of(new ParameterDeclaration("amount", "STRING", true), new ParameterDeclaration("currency", "STRING", true)),
             "INTEGER", Map.of()),
+        new RegisteredFunction("MONEY_MAJOR_UNITS", PURE,
+            List.of(new ParameterDeclaration("amount", "STRING", true), new ParameterDeclaration("currency", "STRING", true)),
+            "DECIMAL（主单位，小数位数等于币种精度）", Map.of()),
         script("bearerAuth", "PROTECTED_HANDLE（Bearer 认证 Header 值）", new ParameterDeclaration("token", HANDLE, true)),
         script("basicAuth", "PROTECTED_HANDLE（Basic 认证 Header 值）", new ParameterDeclaration("username", HANDLE, true),
             new ParameterDeclaration("password", HANDLE, true)),
@@ -66,7 +69,11 @@ public final class RegisteredFunctionCatalog {
         script("requireRsaSha256Signature", "BOOLEAN（true；签名缺失或不匹配时节点 ERROR）",
             new ParameterDeclaration("publicKey", "STRING", true), new ParameterDeclaration("message", "STRING", true),
             new ParameterDeclaration("signature", "STRING", true)),
-        script("nowRfc3339", "STRING（当前 UTC 时间，yyyy-MM-dd'T'HH:mm:ss.SSS'Z'）"));
+        script("nowRfc3339", "STRING（当前 UTC 时间，yyyy-MM-dd'T'HH:mm:ss.SSS'Z'）"),
+        script("urlEncode", "STRING（RFC 3986：A-Za-z0-9-._~ 以外按 UTF-8 百分号编码，大写十六进制）",
+            new ParameterDeclaration("value", "STRING", true)),
+        script("urlDecode", "STRING（百分号解码为 UTF-8；+ 保持原样；非法序列时节点 ERROR）",
+            new ParameterDeclaration("value", "STRING", true)));
 
     private RegisteredFunctionCatalog() {
     }

@@ -1,5 +1,9 @@
 package com.paytech.platform.support.integration.domainservice.function;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -76,6 +80,12 @@ public final class ScriptFunctions {
     /** 当前 UTC 时间，RFC 3339 毫秒精度。 */
     public static final String NOW_RFC3339 = "nowRfc3339";
 
+    /** RFC 3986 百分号编码，unreserved 字符保持原样。 */
+    public static final String URL_ENCODE = "urlEncode";
+
+    /** 百分号解码，+ 保持原样。 */
+    public static final String URL_DECODE = "urlDecode";
+
     private static final DateTimeFormatter RFC3339_MILLIS =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC);
 
@@ -91,7 +101,8 @@ public final class ScriptFunctions {
     public static List<AviatorFunction> all(Clock clock) {
         return List.of(new BearerAuth(), new BasicAuth(), new HmacSha256(HMAC_SHA256_HEX, false),
             new HmacSha256(HMAC_SHA256_BASE64, true), new Sha256Hex(), new Base64Encode(), new JsonGet(), new JsonSet(),
-            new SealJsonBody(), new RsaSha256Sign(), new RequireRsaSha256Signature(), new NowRfc3339(clock));
+            new SealJsonBody(), new RsaSha256Sign(), new RequireRsaSha256Signature(), new NowRfc3339(clock), new UrlEncode(),
+            new UrlDecode());
     }
 
     static ProtectedHandle handle(AviatorObject argument, Map<String, Object> env, String function) {
@@ -340,6 +351,72 @@ public final class ScriptFunctions {
         @Override
         public AviatorObject call(Map<String, Object> env) {
             return AviatorRuntimeJavaType.valueOf(RFC3339_MILLIS.format(clock.instant()));
+        }
+    }
+
+    static final class UrlEncode extends AbstractFunction {
+        private static final String UNRESERVED =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+
+        @Override
+        public String getName() {
+            return URL_ENCODE;
+        }
+
+        @Override
+        public AviatorObject call(Map<String, Object> env, AviatorObject value) {
+            var encoded = new StringBuilder();
+            for (byte item : text(value, env, URL_ENCODE).getBytes(StandardCharsets.UTF_8)) {
+                if (UNRESERVED.indexOf(item) >= 0) {
+                    encoded.append((char)item);
+                    continue;
+                }
+                encoded.append('%').append(HexFormat.of().withUpperCase().toHexDigits(item));
+            }
+            return AviatorRuntimeJavaType.valueOf(encoded.toString());
+        }
+    }
+
+    static final class UrlDecode extends AbstractFunction {
+        @Override
+        public String getName() {
+            return URL_DECODE;
+        }
+
+        @Override
+        public AviatorObject call(Map<String, Object> env, AviatorObject value) {
+            String text = text(value, env, URL_DECODE);
+            var bytes = new ByteArrayOutputStream();
+            int index = 0;
+            while (index < text.length()) {
+                int current = text.codePointAt(index);
+                if (current != '%') {
+                    bytes.writeBytes(Character.toString(current).getBytes(StandardCharsets.UTF_8));
+                    index += Character.charCount(current);
+                    continue;
+                }
+                bytes.write(hexByte(text, index + 1));
+                index += 3;
+            }
+            return AviatorRuntimeJavaType.valueOf(utf8(bytes.toByteArray()));
+        }
+
+        /** % 之后的两位十六进制。 */
+        private static int hexByte(String text, int start) {
+            if (start + 2 > text.length() || !HexFormat.isHexDigit(text.charAt(start))
+                || !HexFormat.isHexDigit(text.charAt(start + 1))) {
+                throw new ExecutionErrorException(URL_DECODE + " 的百分号序列不合法");
+            }
+            return HexFormat.fromHexDigits(text, start, start + 2);
+        }
+
+        private static String utf8(byte[] bytes) {
+            try {
+                return StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(bytes)).toString();
+            } catch (CharacterCodingException failure) {
+                throw new ExecutionErrorException(URL_DECODE + " 的结果不是合法 UTF-8");
+            }
         }
     }
 }
