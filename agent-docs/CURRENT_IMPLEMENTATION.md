@@ -652,20 +652,22 @@
 
 <a id="client-console-developer-20261016"></a>
 
-## Client Console 接入自助：API 凭证与 Webhook（2026-10-16）
+## Client Console 接入自助：API 凭证与 Webhook（2026-10-16，已本地提交 `9ae668a`，未推送；2026-10-16 已部署 mor-test）
 
-- **Implemented / 本机验证（未提交、未部署；用户夜间授权推进，决定待复核）：** 按[需求](../requirements/20261016/client-console-接入自助/requirement.md)与[技术方案](../requirements/20261016/client-console-接入自助/technique.md)：Platform 新增 CLIENT 权限判断 `POST /authorization/v1/client/authorize`、客户侧 API 凭证 `/client-api-credentials/v1`（创建 / 轮换 / 撤销 / 列表 / 详情 / Scope 目录；密钥 `ck-` 前缀 + 256 位 secret，Argon2id，只返回一次；有效凭证上限 10）、客户侧 Webhook `/client-webhooks/v1`（9 个操作，按 ID 校验租户归属，客户视图脱敏）；首次 ACTIVE 投影授予 OWNER 4 个开发者权限；`t_api_credential.credential_name`。Client BFF `/client-developer/v1` 15 个转发、租户上下文与权限拦截、no-store、W02 `capabilities`。Client Web 开发者分组、API 凭证页、Webhook 页、一次性密钥弹窗。登记计划新增 D01—D15。
+- **mor-test 部署（2026-10-16）：** 与租户与工作区合并发布，CCT / Platform / Client BFF / Client Web 镜像 `client-console-20261016`；`mor_platform` 执行 `credential_name` DDL 与 OWNER 权限补录（4 权限、8 授权）；启用 D01—D15、W01、W02，更新 C02、A05；test `developer_flow.py` 78/78（不向外网推送，Webhook 送达、投递、重发未在 test 验证）。见[发布记录](../requirements/20261016/client-console-接入自助/release/release-20261016.md)。夜间决定待用户复核。
+- **Implemented / 本机验证（用户夜间授权推进）：** 按[需求](../requirements/20261016/client-console-接入自助/requirement.md)与[技术方案](../requirements/20261016/client-console-接入自助/technique.md)：Platform 新增 CLIENT 权限判断 `POST /authorization/v1/client/authorize`、客户侧 API 凭证 `/client-api-credentials/v1`（创建 / 轮换 / 撤销 / 列表 / 详情 / Scope 目录；密钥 `ck-` 前缀 + 256 位 secret，Argon2id，只返回一次；有效凭证上限 10）、客户侧 Webhook `/client-webhooks/v1`（9 个操作，按 ID 校验租户归属，客户视图脱敏）；首次 ACTIVE 投影授予 OWNER 4 个开发者权限；`t_api_credential.credential_name`。Client BFF `/client-developer/v1` 15 个转发、租户上下文与权限拦截、no-store、W02 `capabilities`。Client Web 开发者分组、API 凭证页、Webhook 页、一次性密钥弹窗。登记计划新增 D01—D15。
 - **数据库：** DDL 增量 [`db/ddl.sql`](../requirements/20261016/client-console-接入自助/db/ddl.sql) 已在本机 `mor_platform`、`mor_platform_e2e` 执行；补录 DML [`db/dml.sql`](../requirements/20261016/client-console-接入自助/db/dml.sql) 仅在 `mor_platform_e2e` 执行；本机 Vault 登记 `WEBHOOK_SIGNING_SECRET_V1` 与 Platform PROTECT/REVEAL 规则；本机 `mor_platform_e2e` 执行 Webhook 建表 SQL。mor-test 均未执行。
 - **验证：** Platform 全量测试 662/662（verify 被全库覆盖率门禁拦截，指令约 62%、分支约 43%，既有状况）；修复后相关类 14/14；Client BFF 57/57；Web 49/49 与构建；本机全链路 `developer_flow.py` 83/83、`developer_browser.mjs` 12/12。凭证可用性经 PLT-I03 私网校验接口验证（本机未登记 Client API 业务路由）；浏览器无法覆盖“重发已结束投递”（本机无可信 HTTPS 接收端、无 XXL-Job），由接口验收覆盖。
 - **已知限制：** 无 step-up 二次认证与邮件通知；并发冲到凭证上限未单测；Commerce 尚未产生业务事件；上游业务错误原因未经公共 HTTP 客户端透传到 BFF。
 
 <a id="client-console-workspace-20261016"></a>
 
-## Client Console 租户与工作区（2026-10-16）
+## Client Console 租户与工作区（2026-10-16，已本地提交 `9ae668a`，未推送；2026-10-16 已部署 mor-test）
 
-- **Implemented / 本机验证（未提交、未部署）：** 按[需求](../requirements/20261016/client-console-租户与工作区/requirement.md)与[技术方案](../requirements/20261016/client-console-租户与工作区/technique.md)：Platform `ClientAuthenticationApi` 新增 `GET /workspaces`、`POST /workspace-context`、`POST /account-context`，会话支持 CLIENT 租户上下文，租户会话在查询与刷新时重验成员与租户，失效且账号有效时刷新降级为账号上下文并返回 `fallbackReason`；CCT `GET /client-workspace/v1/client-summaries`；Client BFF C02 / W01 / W02 与 C01 `workspaces` 聚合；Client Web 开始页“我的工作区”、`/workspace` 侧边栏外壳与首页。路由登记计划：C02 下游改为 `/client-auth/v1/workspace-context`、A05 响应 Cookie `ISSUE_OR_CLEAR`（修复刷新失败清 Cookie 被 Gateway 判非法）、新增 W01 / W02；本机已登记。
+- **mor-test 部署（2026-10-16）：** 与接入自助合并发布（见其[发布记录](../requirements/20261016/client-console-接入自助/release/release-20261016.md)）；test `workspace_flow.py` 53/53。
+- **Implemented / 本机验证：** 按[需求](../requirements/20261016/client-console-租户与工作区/requirement.md)与[技术方案](../requirements/20261016/client-console-租户与工作区/technique.md)：Platform `ClientAuthenticationApi` 新增 `GET /workspaces`、`POST /workspace-context`、`POST /account-context`，会话支持 CLIENT 租户上下文，租户会话在查询与刷新时重验成员与租户，失效且账号有效时刷新降级为账号上下文并返回 `fallbackReason`；CCT `GET /client-workspace/v1/client-summaries`；Client BFF C02 / W01 / W02 与 C01 `workspaces` 聚合；Client Web 开始页“我的工作区”、`/workspace` 侧边栏外壳与首页。路由登记计划：C02 下游改为 `/client-auth/v1/workspace-context`、A05 响应 Cookie `ISSUE_OR_CLEAR`（修复刷新失败清 Cookie 被 Gateway 判非法）、新增 W01 / W02；本机已登记。
 - **验证：** Platform 全量测试 651/651（verify 被全库覆盖率门禁拦截：指令约 60%、分支约 42%，为既有状况，未与改动前对照）；CCT 51/51；Client BFF 47/47；Web 43/43 与构建；本机全链路 `workspace_flow.py` 53/53、无头浏览器 `workspace_browser.mjs` 10/10。暂停 / 恢复租户直接改本机 `mor_platform_e2e`（本机运营租户路由未启用）。未覆盖：审核通过但投影未完成（AC-03）、并发切换 409。
-- **待办：** 提交、mor-test 发布（含 4 条路由变更）需用户授权。
+- **待办：** 推送需用户授权；test 浏览器验收未做。
 
 <a id="client-console-onboarding-20260914"></a>
 

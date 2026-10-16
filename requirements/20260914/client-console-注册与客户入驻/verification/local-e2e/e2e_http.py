@@ -109,31 +109,10 @@ def mint_signup_link(email, since_utc):
     import hashlib
     import hmac
     import secrets as pysecrets
-    import subprocess
 
-    def read_env(path):
-        values = {}
-        for line in path.read_text().splitlines():
-            if "=" in line and not line.startswith("#"):
-                key, value = line.split("=", 1)
-                values[key.strip()] = value.strip().strip('"')
-        return values
-
-    if TARGET == "test":
-        env = read_env(ROOT / "test-environment/.env.test")
-        local = read_env(ROOT / "test-environment/private/client-onboarding.env")
-        command = ["docker", "exec", "-i", "-e", "MYSQL_PWD", "mor-test-mysql-1", "mysql", "-uplatform_app", "-N", "-B",
-                   "mor_platform"]
-    else:
-        env = read_env(ROOT / "local-environment/.env.local")
-        local = secrets()
-        command = ["mysql", "-h127.0.0.1", "-P13306", "-uplatform_app", "-N", "-B", "mor_platform_e2e"]
     masked = email[0] + "***@" + email.split("@", 1)[1]
-
-    def sql(statement):
-        result = subprocess.run(command + ["-e", statement], env={**os.environ, "MYSQL_PWD": env["MOR_PLATFORM_DB_PASSWORD"]},
-                                capture_output=True, text=True, check=True)
-        return [row.split("\t") for row in result.stdout.splitlines() if row]
+    local = read_env(ROOT / "test-environment/private/client-onboarding.env") if TARGET == "test" else secrets()
+    sql = platform_sql
 
     rows = sql("SELECT challenge_id,challenge_no,active_scope_hash FROM t_authentication_challenge "
                f"WHERE realm='CUSTOMER' AND purpose='SIGN_UP_EMAIL' AND status='PENDING' AND email_masked='{masked}' "
@@ -152,3 +131,77 @@ def mint_signup_link(email, since_utc):
     sql(f"UPDATE t_authentication_challenge SET secret_hmac='{digest}' WHERE challenge_id={int(challenge_id)} "
         "AND status='PENDING'")
     return challenge_no, secret
+
+
+def read_env(path):
+    values = {}
+    for line in path.read_text().splitlines():
+        if "=" in line and not line.startswith("#"):
+            key, value = line.split("=", 1)
+            values[key.strip()] = value.strip().strip('"')
+    return values
+
+
+def platform_sql(statement):
+    """以 platform_app 执行 Platform 库语句并返回行：本机 mor_platform_e2e；mor-test 经 mor-test-mysql-1 的 mor_platform。
+
+    只供验收夹具使用；密码经环境变量传入，不打印。
+    """
+    import subprocess
+    if TARGET == "test":
+        env = read_env(ROOT / "test-environment/.env.test")
+        command = ["docker", "exec", "-i", "-e", "MYSQL_PWD", "mor-test-mysql-1", "mysql", "-uplatform_app", "-N", "-B",
+                   "--default-character-set=utf8mb4", "mor_platform"]
+    else:
+        env = read_env(ROOT / "local-environment/.env.local")
+        command = ["mysql", "-h127.0.0.1", "-P13306", "-uplatform_app", "-N", "-B", "--default-character-set=utf8mb4",
+                   "mor_platform_e2e"]
+    result = subprocess.run(command + ["-e", statement], env={**os.environ, "MYSQL_PWD": env["MOR_PLATFORM_DB_PASSWORD"]},
+                            capture_output=True, text=True, check=True)
+    return [row.split("\t") for row in result.stdout.splitlines() if row]
+
+
+PLATFORM_IMAGE = os.environ.get("E2E_PLATFORM_IMAGE", "mor-test/platform-support-service:client-console-20261016")
+
+
+def platform_call(method, path, headers=None, body=None):
+    """调用 Platform 私网接口（如 PLT-I03、Webhook 受理），返回 (status, text)。
+
+    本机直连 127.0.0.1:18106；mor-test 的 Platform 没有宿主机端口，用 Platform 镜像起一次性容器接入
+    mor-test-backend，运行 PrivateHttpProbe（请求经 stdin 传入，凭证不出现在命令行参数）。
+    """
+    if TARGET != "test":
+        data = body.encode() if body is not None else (b"" if method == "POST" else None)
+        request = urllib.request.Request("http://127.0.0.1:18106/platform-support" + path, data=data,
+                                         headers=headers or {}, method=method)
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                return response.status, response.read().decode()
+        except urllib.error.HTTPError as failure:
+            return failure.code, failure.read().decode()
+    import subprocess
+    probe = _probe_classes()
+    lines = [method, "http://platform-support-service:18106/platform-support" + path]
+    lines += [f"{k}: {v}" for k, v in (headers or {}).items()]
+    payload = "\n".join(lines) + "\n\n" + (body or "")
+    result = subprocess.run(["docker", "run", "--rm", "-i", "--network", "mor-test-backend", "--entrypoint", "java",
+                             "-v", f"{probe}:/probe:ro", PLATFORM_IMAGE, "-cp", "/probe", "PrivateHttpProbe"],
+                            input=payload, capture_output=True, text=True, timeout=60, check=True)
+    status, _, text = result.stdout.partition("\n")
+    return int(status), text
+
+
+_PROBE_DIR = None
+
+
+def _probe_classes():
+    global _PROBE_DIR
+    if _PROBE_DIR is None:
+        import subprocess
+        import tempfile
+        _PROBE_DIR = tempfile.mkdtemp(prefix="e2e-probe-")
+        javac = os.path.join(os.environ.get("E2E_JDK25_HOME", "/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home"), "bin/javac")
+        subprocess.run([javac, "--release", "25", "-d", _PROBE_DIR, str(Path(__file__).resolve().parent / "PrivateHttpProbe.java")],
+                       check=True)
+        os.chmod(_PROBE_DIR, 0o755)
+    return _PROBE_DIR

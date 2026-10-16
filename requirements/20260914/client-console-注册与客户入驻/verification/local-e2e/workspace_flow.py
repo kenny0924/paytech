@@ -88,22 +88,14 @@ def wait_accessible(client, client_id, seconds=60):
 
 
 def change_security(ops, tenant_id, status):
-    """测试夹具：本机运营租户访问路由未启用（DISABLED），直接更新本机 mor_platform_e2e 的安全状态与版本。
+    """测试夹具：运营租户访问路由在本机未启用（DISABLED），直接更新 Platform 库该租户的安全状态与版本。
 
-    只改该租户一行；其余链路（刷新、上下文、C01、C02）仍经真实入口。密码只经环境变量传入。
+    只改该租户一行；其余链路（刷新、上下文、C01、C02）仍经真实入口。本机 mor_platform_e2e，mor-test 为 mor_platform。
     """
-    import subprocess
-    from e2e_http import ROOT
-    env = {}
-    for line in (ROOT / "local-environment/.env.local").read_text().splitlines():
-        if "=" in line and not line.startswith("#"):
-            k, v = line.split("=", 1)
-            env[k.strip()] = v.strip().strip('"')
-    statement = (f"UPDATE t_access_tenant SET security_status='{status}', version=version+1, update_time=UTC_TIMESTAMP(6) "
-                 f"WHERE tenant_id={int(tenant_id)} AND tenant_type='CLIENT'; SELECT ROW_COUNT();")
-    result = subprocess.run(["mysql", "-h127.0.0.1", "-P13306", "-uplatform_app", "-N", "-B", "mor_platform_e2e", "-e", statement],
-                            env={**os.environ, "MYSQL_PWD": env["MOR_PLATFORM_DB_PASSWORD"]}, capture_output=True, text=True, check=True)
-    record(f"夹具：安全状态 → {status}", result.stdout.strip().endswith("1"), f"tenantId={tenant_id} rows={result.stdout.strip()}")
+    from e2e_http import platform_sql
+    rows = platform_sql(f"UPDATE t_access_tenant SET security_status='{status}', version=version+1, update_time=UTC_TIMESTAMP(6) "
+                        f"WHERE tenant_id={int(tenant_id)} AND tenant_type='CLIENT'; SELECT ROW_COUNT();")
+    record(f"夹具：安全状态 → {status}", rows and rows[-1][0] == "1", f"tenantId={tenant_id} rows={rows}")
 
 
 def main():

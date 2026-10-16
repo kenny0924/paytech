@@ -5,8 +5,10 @@
   → 立即轮换（旧失效）→ 宽限轮换（新旧都可用）→ 撤销 → 上限 10 → 跨工作区 404 → 账号上下文 403
   → Webhook：本机接收端、创建端点（一次性密钥）、测试事件、签名校验、投递列表 / 详情（无运营字段）、重发、停用、跨工作区 404。
 本机没有登记 Client API（凭证认证）路由，凭证可用性直接调用 Gateway 认证时使用的 Platform PLT-I03 私网接口验证。
+E2E_TARGET=test（2026-10-16 发布验收）：Platform 私网接口经一次性探针容器调用；test 只允许可解析到公网的 HTTPS 端点，
+为不向外网真实推送，端点用 IANA 保留域名 example.com，不发测试事件与业务事件（不验证送达、签名、投递详情与重发）。
 输出每步 PASS/FAIL 与证据；不输出密码、令牌、Cookie、凭证或签名密钥。
-用法：python3 developer_flow.py
+用法：python3 developer_flow.py（mor-test：E2E_TARGET=test python3 developer_flow.py）
 """
 import hashlib
 import hmac
@@ -19,9 +21,8 @@ import urllib.request
 
 import workspace_flow as ws_flow
 from acceptance_flow import RESULTS, Client, Stop, problem, record
-from e2e_http import CLIENT, Failure
+from e2e_http import CLIENT, TARGET, Failure, platform_call, platform_sql
 
-PLATFORM = "http://127.0.0.1:18106/platform-support"
 DEV = "/developer/v1"
 
 
@@ -46,13 +47,9 @@ def raw(client, path, method="GET", body=None):
 
 def validate(secret):
     """调用 Gateway 认证使用的 PLT-I03 私网接口，返回 (status, body)。"""
-    request = urllib.request.Request(PLATFORM + "/api-credentials/v1/validate", method="POST",
-                                     headers={"X-Platform-Api-Credential": secret, "Accept": "application/json"})
-    try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            return response.status, json.loads(response.read().decode())
-    except urllib.error.HTTPError as failure:
-        return failure.code, None
+    status, text = platform_call("POST", "/api-credentials/v1/validate",
+                                 {"X-Platform-Api-Credential": secret, "Accept": "application/json"})
+    return status, (json.loads(text) if status == 200 and text else None)
 
 
 def enter(client, client_id):
@@ -99,23 +96,13 @@ def signature_ok(request, secret):
 
 
 def ensure_scope():
-    """测试夹具：本机未登记运营 Scope 管理路由，直接在 mor_platform_e2e 写入一条 V1 Scope 目录（存在则不动）。"""
-    import os
-    import subprocess
-    from e2e_http import ROOT
-    env = {}
-    for line in (ROOT / "local-environment/.env.local").read_text().splitlines():
-        if "=" in line and not line.startswith("#"):
-            k, v = line.split("=", 1)
-            env[k.strip()] = v.strip().strip('"')
-    statement = ("INSERT INTO t_api_scope(api_scope_id,scope_code,display_name,description,version,create_time,update_time) "
-                 "SELECT 9300000000000001,'orders.read','查询订单','Client API V1：查询订单（本机验收夹具）',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) "
-                 "FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_api_scope WHERE scope_code='orders.read'); "
-                 "SELECT COUNT(*) FROM t_api_scope WHERE scope_code='orders.read';")
-    result = subprocess.run(["mysql", "-h127.0.0.1", "-P13306", "-uplatform_app", "-N", "-B", "--default-character-set=utf8mb4",
-                             "mor_platform_e2e", "-e", statement],
-                            env={**os.environ, "MYSQL_PWD": env["MOR_PLATFORM_DB_PASSWORD"]}, capture_output=True, text=True, check=True)
-    record("夹具：Scope 目录 orders.read", result.stdout.strip().endswith("1"), f"rows={result.stdout.strip()}")
+    """测试夹具：直接在 Platform 库写入一条 V1 Scope 目录 orders.read（存在则不动）；本机 mor_platform_e2e，test 为 mor_platform。"""
+    rows = platform_sql(
+        "INSERT INTO t_api_scope(api_scope_id,scope_code,display_name,description,version,create_time,update_time) "
+        "SELECT 9300000000000001,'orders.read','查询订单','Client API V1：查询订单（验收夹具）',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) "
+        "FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_api_scope WHERE scope_code='orders.read'); "
+        "SELECT COUNT(*) FROM t_api_scope WHERE scope_code='orders.read';")
+    record("夹具：Scope 目录 orders.read", rows and rows[-1][0] == "1", f"rows={rows}")
 
 
 def credentials_flow(client, tenant_id, data):
@@ -187,13 +174,9 @@ def submit_event(client_id):
                 "data": {"object": obj}}
     body = {"clientId": str(client_id), "sourceVersion": 5, "sourcePayloadHash": hashlib.sha256(canonical(obj)).hexdigest(),
             "payloadHash": hashlib.sha256(canonical(envelope)).hexdigest(), "envelope": envelope}
-    request = urllib.request.Request(PLATFORM + "/webhooks/v1/events", data=json.dumps(body).encode(), method="POST",
-                                     headers={"X-Caller-Service": "commerce-service", "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            return response.status, event_id
-    except urllib.error.HTTPError as failure:
-        return failure.code, failure.read().decode()[:300]
+    status, text = platform_call("POST", "/webhooks/v1/events",
+                                 {"X-Caller-Service": "commerce-service", "Content-Type": "application/json"}, json.dumps(body))
+    return status, (event_id if status == 204 else text[:300])
 
 
 def webhook_flow(client, data):
@@ -261,11 +244,41 @@ def webhook_flow(client, data):
     receiver.server.shutdown()
 
 
+def webhook_flow_test(client, data):
+    """mor-test：客户自助保存时解析主机名并拒绝内网地址；端点用 IANA 保留域名 example.com，不发测试事件与业务事件，不向外网推送。"""
+    for name, url in (("无法解析的主机名", "https://receiver.code-mor.invalid/hook"), ("内网地址", "https://10.0.0.1/hook"),
+                      ("非 HTTPS", "http://example.com/hook")):
+        status, _, body = raw(client, DEV + "/webhook-endpoints", "POST", {"url": url, "eventTypes": ["order.paid"]})
+        record(f"AC-07 拒绝{name}", 400 <= status < 500, f"HTTP {status} code={(body or {}).get('code')}")
+    status, headers, created = raw(client, DEV + "/webhook-endpoints", "POST",
+                                   {"url": "https://example.com/code-mor-acceptance", "eventTypes": ["order.paid", "refund.succeeded"]})
+    secret = (created or {}).get("signingSecret") or ""
+    endpoint_id = (created or {}).get("endpointId")
+    record("AC-07 新建端点（一次性密钥、no-store）", status == 201 and secret.startswith("whsec_") and "no-store" in (headers.get("Cache-Control") or ""),
+           f"HTTP {status} endpointId={endpoint_id} code={(created or {}).get('code')} cacheControl={headers.get('Cache-Control')}")
+    if not endpoint_id:
+        raise Stop("端点未创建")
+    data["endpointId"] = endpoint_id
+    status, endpoints = client.call(DEV + "/webhook-endpoints")
+    record("F-06 端点列表不含密钥", status == 200 and secret not in json.dumps(endpoints),
+           f"HTTP {status} items={len(endpoints.get('items') or [])}")
+    current = next(e for e in endpoints["items"] if e["endpointId"] == endpoint_id)
+    client.call(DEV + f"/webhook-endpoints/{endpoint_id}/status", "POST", {"status": "DISABLED", "expectedVersion": current["version"]})
+    status, endpoints = client.call(DEV + "/webhook-endpoints")
+    current = next(e for e in endpoints["items"] if e["endpointId"] == endpoint_id)
+    record("F-06 停用端点", current.get("status") == "DISABLED", f"status={current.get('status')}")
+    status, page = client.call(DEV + f"/webhook-deliveries?endpointId={endpoint_id}")
+    record("F-08 投递列表（无投递）", status == 200 and not (page or {}).get("items"), f"HTTP {status} items={len((page or {}).get('items') or [])}")
+
+
 def cross_tenant(data):
     stamp = time.strftime("%Y%m%d%H%M%S") + "x"
     other, _, app = ws_flow.approved_client(stamp)
     enter(other, app["clientId"])
-    for name, path in (("凭证", f"/credentials/{data['credentialId']}"), ("投递", f"/webhook-deliveries/{data['deliveryId']}")):
+    checks = [("凭证", f"/credentials/{data['credentialId']}")]
+    if data.get("deliveryId"):
+        checks.append(("投递", f"/webhook-deliveries/{data['deliveryId']}"))
+    for name, path in checks:
         status, _, body = raw(other, DEV + path)
         record(f"AC-06/08 跨工作区读取{name} 404", status == 404, f"HTTP {status} code={(body or {}).get('code')}")
     status, _, body = raw(other, DEV + f"/webhook-endpoints/{data['endpointId']}/status", "POST", {"status": "ACTIVE", "expectedVersion": 1})
@@ -286,7 +299,7 @@ def main():
         data["clientId"] = app["clientId"]
         record("进入工作区", context.get("contextType") == "TENANT", f"tenantId={context.get('tenantId')}")
         credentials_flow(client, context["tenantId"], data)
-        webhook_flow(client, data)
+        (webhook_flow_test if TARGET == "test" else webhook_flow)(client, data)
         cross_tenant(data)
     except Stop as stop:
         print(f"中止于：{stop}")

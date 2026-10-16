@@ -1,0 +1,11 @@
+# Client Console 租户与工作区 + 接入自助 mor-test 候选（2026-10-16）：从干净提交 9ae668a 构建（tag mor-test/<service>:client-console-20261016），使用固定 image ID。
+# 9ae668a 包含 59459ba（Alipay+ 函数）与 ee469e0（Webhook 投递），不撤回 test 现有功能；环境变量沿用工作区 compose.applications.yaml。
+services:
+  client-contract-service:
+    image: sha256:ba062888b857dc8d5050a2af58d3b75d14088c0b1d13ced75bcbcf38a4b5de42
+  platform-support-service:
+    image: sha256:86819a6e497e2a7ecb4d8afcaf37711f8baa8ac0fb374303344d2d358d2741b1
+  client-console-bff:
+    image: sha256:d66a33c6bea3f6ecfb997a444c5cea42e5a758707096c53c9bdac882b28c5c95
+  client-console-web:
+    image: sha256:48c112d5dda3df11fa50526dc2aabbd91d12d78cb29ffddad72e4737d1d695ea
