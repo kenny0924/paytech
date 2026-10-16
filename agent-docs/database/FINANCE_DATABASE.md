@@ -321,6 +321,8 @@ Canonical 化与 Hash 规则固定为：
 | `manual_adjustment_line` | 审批前冻结的人工调整借贷明细 | `adjustment_id`、`line_no`、`account_id`、`entry_side`、`amount`、`line_description` | `uk_manual_adj_line(adjustment_id,line_no)`；金额大于零；至少两行；只能使用 Header 账簿下状态可用的统一账户；SUBMITTED 后不可变 |
 | `adjustment_approval` | 人工调整 Maker-Checker 记录 | `adjustment_id`、`approval_role`、`actor_id`、`decision`、`approved_content_hash`、`decision_time` | `uk_adj_approval(adjustment_id,approval_role)`；角色为 `MAKER/CHECKER`；两人必须不同；批准 Hash 必须等于 Adjustment `content_hash` |
 
+**系统关账/重开指令例外（2026-10-16 决定，见 [期间关账需求](../../requirements/20261016/finance-期间关账/requirement.md) D2）：** 期间关账损益结转与重开冲回由 Finance 自身生成，不来自规则 Bundle。此类指令 `origin_type=AUTO`、`source_system=FINANCE`、`source_event_key=PERIOD_CLOSE:{period_close_id}:{ledger_book_id}`（重开时为 `PERIOD_REOPEN:...`）、`instruction_type=PERIOD_PROFIT_CLOSE`，`accounting_rule_bundle_ver_id` 为空，`input_hash` 覆盖按顺序的结转行；其他 AUTO 指令仍必须冻结已批准 Bundle Version。
+
 Accounting Rule Line 不再保存 Content Hash，因此发布流程必须直接冻结行集：只有所属 Bundle Version 仍为 `DRAFT` 时，服务才可在锁定 Bundle 与 Version 的受控事务中追加 Rule Line；提交 `PENDING_APPROVAL` 的同一事务必须校验并冻结按 `instruction_type + line_no` 排序的完整行集。Version 一旦离开 `DRAFT`，禁止继续 `INSERT`，既有 Rule Line 从创建起始终禁止 `UPDATE/DELETE`；Checker 只能审批这一冻结集合，任何修正都必须在同一 Bundle 下新建 Version 和全新的规则行集合。
 
 Journal Posting 必须在一个本地事务内完成：按固定锁顺序锁定 Instruction、Book/Period 和该 Book 唯一 `book_sequence` 行，锁后重新校验 Book/Period 仍允许普通过账；以 `SELECT ... FOR UPDATE` 分配 Journal Sequence，再写 Entry/Line、按 `balance_version + last_journal_sequence` 更新 `account` 余额投影并登记对应 `compensation_event`。任何一步失败时 Journal、Sequence 和余额更新整体回滚；已经提交的 Journal 序号不可复用，回滚事务中未提交的候选序号随 Sequence 更新一起回滚。Account 按 ID 升序锁定，并在锁后重新校验 `account_status=ACTIVE`；每条 Line 可按借方或贷方进入账户，但余额投影必须使用账户已冻结的 `normal_side` 计算。交易金额由 Transaction Economic Component 先行按已冻结费率和舍入参数计算；AUTO Instruction 的固定解释器只按 Bundle Version 和 `amount_source_code` 取得已计算金额，再用 Rule Line 的 Owner Role、Account Code、Balance Bucket 和 Entry Side 生成指令行。同一金额来源可生成多行，但必须按账簿和币种平衡；相同 Bundle Version 与 Input Hash 必须重放出完全相同的 Line。V1 不加载数据库 SQL、脚本、外部规则文件或通用条件 DSL。MANUAL Instruction 的每一行必须与已批准 `manual_adjustment_line` 的账户、方向和金额完全一致，并通过账户所属账簿确认 Header Book 与币种；Instruction 重建的 Content Hash 必须与申请和审批 Hash 相同；驳回后如需改动必须新建 Adjustment。余额重建从 Journal 重算 `debit_total/credit_total/net_balance/last_journal_sequence`，再以旧 `balance_version` 做 CAS 并单调加一；不能从 Journal 推导或重置并发版本，也不改变账户身份、`normal_side` 和状态字段。
@@ -503,6 +505,8 @@ RCO-I09 必须在 Payout 创建、最终 Finance 审批、Execution 创建和外
 6. 追加损益结转 Instruction；
 7. 每个账簿重新试算、冻结 Final Trial Run 与 CLOSING/REOPENING Instruction，全部进入 FINALIZED 后生成不可变 `close_hash`，写入前再次校验活动槽；
 8. Checker 仅可批准相同 `close_hash`，审批、全部 Book Scope 完整性复验、期间 CLOSED/OPEN、流程终态和活动槽释放在同一事务完成。
+
+**关账补充约定（2026-10-16 决定 D3、D4）：** 期间内没有任何收入/费用净额的账簿不生成结转指令，其 `period_close_book.posting_instruction_id` 为空；FINALIZED 仍要求成功的 Final Trial 且水位一致。`period_close.close_hash` 在 CREATED/RUNNING/FAILED 时为空，进入 PENDING_CHECK 时冻结并在之后不可变。关账必须按期间顺序进行：同一日历中更早的期间全部 CLOSED 后才能发起（D1）。
 
 Trial Line 只持久化可过账叶子科目；父科目仅由查询向上汇总，期初为零且水位内无发生额的叶子科目可以不持久化。每行 `opening_balance/closing_balance` 继续按科目 `normal_side` 保存有符号余额：DEBIT 正余额计入 Run `total_debit`、DEBIT 负余额按绝对值计入 `total_credit`，CREDIT 正余额计入 `total_credit`、CREDIT 负余额按绝对值计入 `total_debit`。`period_debit/period_credit` 只是本期发生额，不参与替代期末借贷余额合计。
 

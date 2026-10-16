@@ -19,4 +19,15 @@
         LEFT JOIN t_manual_adjustment m ON m.id = i.manual_adjustment_id
         WHERE e.id = #{journalEntryId}
     </select>
+
+    <select id="countUnbalancedInPeriod" resultType="long">
+        SELECT COUNT(*) FROM t_journal_entry e
+        LEFT JOIN (
+            SELECT journal_entry_id, COUNT(*) line_count,
+                   SUM(CASE WHEN entry_side = 'DEBIT' THEN amount ELSE -amount END) net
+            FROM t_journal_line GROUP BY journal_entry_id
+        ) s ON s.journal_entry_id = e.id
+        WHERE e.accounting_period_id = #{periodId} AND (s.line_count IS NULL OR s.net &lt;&gt; 0) AND e.ledger_book_id IN
+        <foreach collection="bookIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
 </mapper>

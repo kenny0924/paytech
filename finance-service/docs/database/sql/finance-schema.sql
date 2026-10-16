@@ -1624,7 +1624,7 @@ CREATE TABLE `t_period_close` (
   `active_slot` TINYINT NULL COMMENT '流程非终态时固定为 1，终态后必须固定为 NULL。',
   `maker_id` BIGINT NOT NULL COMMENT 'Platform 身份系统中的关账或重开提交人标识。',
   `checker_id` BIGINT NULL COMMENT 'Platform 身份系统中的独立关账或重开复核人标识。',
-  `close_hash` CHAR(64) NOT NULL COMMENT '流程头、全部账簿范围、步骤、试算、异常解决和结转指令的 Canonical SHA-256 哈希。',
+  `close_hash` CHAR(64) NULL COMMENT '流程进入 PENDING_CHECK 时冻结的流程头、全部账簿范围、步骤、试算、异常解决和结转指令的 Canonical SHA-256 哈希；CREATED/RUNNING/FAILED 时为空。',
   `version` BIGINT NOT NULL DEFAULT 0 COMMENT '关账或重开聚合根条件更新使用的乐观锁版本。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',

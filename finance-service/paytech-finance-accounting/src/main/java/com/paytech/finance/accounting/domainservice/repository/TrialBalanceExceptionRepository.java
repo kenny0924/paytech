@@ -2,6 +2,7 @@ package com.paytech.finance.accounting.domainservice.repository;
 
 import java.util.List;
 
+import com.paytech.finance.accounting.core.enums.TrialExceptionStatus;
 import com.paytech.finance.accounting.core.dal.dataobject.TrialBalanceException;
 import com.paytech.finance.accounting.domain.view.TrialBalanceFindingView;
 
@@ -13,4 +14,16 @@ public interface TrialBalanceExceptionRepository {
 
     /** 读取一次试算的全部异常。 */
     List<TrialBalanceFindingView> findViews(long runId);
+
+    /** 按主键读取异常，不存在返回空。 */
+    TrialBalanceException findById(long id);
+
+    /** 统计一次试算中仍为 OPEN 或 UNDER_REVIEW 的异常。 */
+    long countUnresolvedByRun(long runId);
+
+    /**
+     * 以原状态为条件写入调用方已在对象上设置的解决字段并迁移到新状态，成功后同步原对象。
+     * <li>原状态已变化时以并发冲突失败。</li>
+     */
+    void updateResolution(TrialBalanceException exception, TrialExceptionStatus status);
 }

@@ -3,6 +3,8 @@ package com.paytech.finance.accounting.domainservice.repository;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.paytech.finance.accounting.domain.view.AccountJournalTotalsView;
+import com.paytech.finance.accounting.core.enums.BalanceBucket;
 import com.paytech.finance.accounting.core.dal.dataobject.Account;
 import com.paytech.finance.accounting.core.enums.OwnerType;
 import com.paytech.finance.accounting.domain.AccountQuery;
@@ -39,4 +41,17 @@ public interface AccountRepository {
 
     /** 读取账户投影与水位内分录合计的对照。 */
     List<AccountProjectionCheckView> findProjectionChecks(long ledgerBookId, long asOfSequence);
+
+    /** 按账户身份唯一键读取，不存在返回空。 */
+    Account findByIdentity(long ledgerBookId, long chartAccountId, OwnerType ownerType, String ownerId, BalanceBucket bucket);
+
+    /** 以排他锁读取一个账户；必须在事务内调用。 */
+    Account lockById(long id);
+
+    /** 从账户全部分录行重算借贷累计与最后分录序号。 */
+    AccountJournalTotalsView findJournalTotals(long accountId);
+
+    /** 以余额版本 CAS 写入重建后的投影，成功后同步原对象；版本不符时失败。 */
+    void rebuildProjection(Account account, BigDecimal debitTotal, BigDecimal creditTotal, BigDecimal netBalance,
+        long lastJournalSequence);
 }

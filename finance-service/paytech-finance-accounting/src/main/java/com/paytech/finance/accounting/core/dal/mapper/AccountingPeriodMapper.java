@@ -33,4 +33,10 @@ public interface AccountingPeriodMapper {
      */
     int updateStatus(@Param("period") AccountingPeriod period, @Param("status") PeriodStatus status,
         @Param("now") Instant now);
+
+    /** 以排他锁读取期间；关账推进状态时使用，与过账的共享锁互斥。 */
+    AccountingPeriod selectByIdForUpdate(@Param("id") long id);
+
+    /** 读取同一日历中结束日期早于给定日期且未 CLOSED 的最早期间。 */
+    AccountingPeriod selectFirstUnclosedBefore(@Param("calendarId") long calendarId, @Param("startDate") LocalDate startDate);
 }

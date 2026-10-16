@@ -9,6 +9,7 @@ import com.paytech.finance.accounting.core.dal.dataobject.JournalLine;
 import com.paytech.finance.accounting.core.dal.mapper.JournalLineMapper;
 import com.paytech.finance.accounting.domain.view.AccountJournalLineView;
 import com.paytech.finance.accounting.domain.view.JournalEntryDetailView;
+import com.paytech.finance.accounting.domain.view.ProfitCloseBalanceView;
 import com.paytech.finance.accounting.domain.view.TrialBalanceAggregateView;
 import com.paytech.finance.accounting.domainservice.repository.JournalLineRepository;
 import com.paytech.foundation.web.paging.PagingRequestBody;
@@ -49,5 +50,11 @@ public class JournalLineRepositoryImpl implements JournalLineRepository {
     @Override
     public List<TrialBalanceAggregateView> findTrialAggregates(long ledgerBookId, long asOfSequence, LocalDate start, LocalDate end) {
         return mapper.selectTrialAggregates(ledgerBookId, asOfSequence, start, end);
+    }
+
+    /** 读取账簿内收入/费用账户在期间内的借贷发生额。 */
+    @Override
+    public List<ProfitCloseBalanceView> findProfitCloseBalances(long ledgerBookId, long asOfSequence, LocalDate start, LocalDate end) {
+        return mapper.selectProfitCloseBalances(ledgerBookId, asOfSequence, start, end);
     }
 }

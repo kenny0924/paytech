@@ -1,5 +1,6 @@
 package com.paytech.finance.test.dal;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +29,11 @@ public interface AccountingTestMapper {
 
     /** 统计 16 张 Accounting 表中测试可写入的行数，按表返回。 */
     @Select("""
-        SELECT 't_ledger_period_balance' t, COUNT(*) c FROM t_ledger_period_balance UNION ALL
+        SELECT 't_close_approval' t, COUNT(*) c FROM t_close_approval UNION ALL
+        SELECT 't_close_step', COUNT(*) FROM t_close_step UNION ALL
+        SELECT 't_period_close_book', COUNT(*) FROM t_period_close_book UNION ALL
+        SELECT 't_period_close', COUNT(*) FROM t_period_close UNION ALL
+        SELECT 't_ledger_period_balance', COUNT(*) FROM t_ledger_period_balance UNION ALL
         SELECT 't_trial_balance_exception', COUNT(*) FROM t_trial_balance_exception UNION ALL
         SELECT 't_trial_balance_line', COUNT(*) FROM t_trial_balance_line UNION ALL
         SELECT 't_trial_balance_run', COUNT(*) FROM t_trial_balance_run UNION ALL
@@ -138,4 +143,47 @@ public interface AccountingTestMapper {
     /** 在调用方事务内排他锁定账簿序号行，模拟在途过账。 */
     @Select("SELECT next_value FROM t_book_sequence WHERE ledger_book_id = #{ledgerBookId} FOR UPDATE")
     long lockBookSequence(@Param("ledgerBookId") long ledgerBookId);
+
+    /** 读取期间当前状态码。 */
+    @Select("SELECT status FROM t_accounting_period WHERE id = #{id}")
+    String selectPeriodStatus(@Param("id") long id);
+
+    /** 读取账户当前净余额。 */
+    @Select("SELECT net_balance FROM t_account WHERE id = #{id}")
+    BigDecimal selectAccountNetBalance(@Param("id") long id);
+
+    /** 按账簿、科目代码、核算对象读取账户主键，不存在返回空。 */
+    @Select("SELECT a.id FROM t_account a JOIN t_chart_account c ON c.id = a.chart_account_id "
+        + "WHERE a.ledger_book_id = #{ledgerBookId} AND c.account_code = #{accountCode} "
+        + "AND a.owner_type = #{ownerType} AND a.owner_id = #{ownerId} AND a.balance_bucket = 'NONE'")
+    Long selectAccountId(@Param("ledgerBookId") long ledgerBookId, @Param("accountCode") String accountCode,
+        @Param("ownerType") String ownerType, @Param("ownerId") String ownerId);
+
+    /** 读取引用指定账户的全部试算异常主键，按创建顺序。 */
+    @Select("SELECT id FROM t_trial_balance_exception WHERE reference_type = 'ACCOUNT' AND reference_id = #{accountId} "
+        + "ORDER BY create_time, id")
+    List<Long> selectAccountExceptionIds(@Param("accountId") long accountId);
+
+    /** 读取试算异常当前状态码。 */
+    @Select("SELECT status FROM t_trial_balance_exception WHERE id = #{id}")
+    String selectExceptionStatus(@Param("id") long id);
+
+    /** 统计账簿内指定指令类型的指令数。 */
+    @Select("SELECT COUNT(*) FROM t_accounting_instruction WHERE ledger_book_id = #{ledgerBookId} "
+        + "AND instruction_type = #{instructionType}")
+    int countInstructions(@Param("ledgerBookId") long ledgerBookId, @Param("instructionType") String instructionType);
+
+    /** 读取指令对应的分录头。 */
+    @Select("SELECT * FROM t_journal_entry WHERE instruction_id = #{instructionId}")
+    JournalEntry selectJournalEntryByInstruction(@Param("instructionId") long instructionId);
+
+    /** 插入一条 VALIDATED 但未过账的人工指令，用于制造关账完整性检查失败。 */
+    @Insert("INSERT INTO t_accounting_instruction (id, ledger_book_id, instruction_type, origin_type, status, version, "
+        + "create_time, update_time) VALUES (#{id}, #{ledgerBookId}, 'MANUAL_ADJUSTMENT', 'MANUAL', 'VALIDATED', 0, "
+        + "UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))")
+    void insertPendingInstruction(@Param("id") long id, @Param("ledgerBookId") long ledgerBookId);
+
+    /** 统计期间的关账流程数。 */
+    @Select("SELECT COUNT(*) FROM t_period_close WHERE period_id = #{periodId}")
+    int countPeriodCloses(@Param("periodId") long periodId);
 }

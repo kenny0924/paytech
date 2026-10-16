@@ -1,5 +1,7 @@
 package com.paytech.finance.accounting.domainservice.repository;
 
+import java.util.List;
+
 import com.paytech.finance.accounting.core.dal.dataobject.AccountingInstruction;
 import com.paytech.finance.accounting.core.enums.InstructionStatus;
 
@@ -14,4 +16,7 @@ public interface AccountingInstructionRepository {
 
     /** 按原状态与版本迁移指令状态，成功后同步原对象。 */
     void updateStatus(AccountingInstruction instruction, InstructionStatus status);
+
+    /** 统计账簿中尚未过账的指令。 */
+    long countPendingByBooks(List<Long> bookIds);
 }

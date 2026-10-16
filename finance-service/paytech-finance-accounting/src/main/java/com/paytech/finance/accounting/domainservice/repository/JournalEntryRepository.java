@@ -1,5 +1,7 @@
 package com.paytech.finance.accounting.domainservice.repository;
 
+import java.util.List;
+
 import com.paytech.finance.accounting.core.dal.dataobject.JournalEntry;
 import com.paytech.finance.accounting.domain.view.JournalEntryDetailView;
 
@@ -14,4 +16,7 @@ public interface JournalEntryRepository {
 
     /** 读取分录头及来源，不存在返回空。 */
     JournalEntryDetailView findDetail(long journalEntryId);
+
+    /** 统计期间内借贷不平或无行的分录。 */
+    long countUnbalancedInPeriod(long periodId, List<Long> bookIds);
 }

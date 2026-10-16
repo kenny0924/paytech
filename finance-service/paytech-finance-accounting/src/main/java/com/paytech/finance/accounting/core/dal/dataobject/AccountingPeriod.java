@@ -66,4 +66,14 @@ public class AccountingPeriod {
      * 该可变记录最后一次持久化更新的 UTC 微秒时间
      */
     private Instant updateTime;
+
+    /** 判断期间当前状态是否属于给定状态之一。 */
+    public boolean statusIn(PeriodStatus... statuses) {
+        for (PeriodStatus candidate : statuses) {
+            if (status == candidate) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

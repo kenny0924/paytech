@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.CloseStepMapper">
+    <insert id="insertBatch">
+        INSERT INTO t_close_step (id, period_close_id, step_no, step_type, status, result_hash, completed_time, create_time, update_time) VALUES
+        <foreach collection="rows" item="row" separator=",">(#{row.id}, #{row.periodCloseId}, #{row.stepNo}, #{row.stepType}, #{row.status}, #{row.resultHash}, #{row.completedTime}, #{row.createTime}, #{row.updateTime})</foreach>
+    </insert>
+
+    <select id="selectByClose" resultType="com.paytech.finance.accounting.core.dal.dataobject.CloseStep">
+        SELECT id, period_close_id, step_no, step_type, status, result_hash, completed_time, create_time, update_time FROM t_close_step WHERE period_close_id = #{periodCloseId} ORDER BY step_no
+    </select>
+
+    <update id="updateStatus">
+        UPDATE t_close_step SET status = #{status}, result_hash = #{resultHash}, completed_time = #{now}, update_time = #{now}
+        WHERE id = #{step.id} AND status = #{step.status}
+    </update>
+</mapper>

@@ -88,6 +88,11 @@ public final class FinanceResponseChecker extends AbstractHttpResponseChecker<Fi
         return items;
     }
 
+    /** 读取完整 JSON 响应体，用于嵌套集合断言。 */
+    public JsonNode json() {
+        return body();
+    }
+
     /** 按响应类型反序列化成功响应。 */
     public <T> T as(Class<T> type) {
         return mapper.readValue(result.getResponseBody(), type);

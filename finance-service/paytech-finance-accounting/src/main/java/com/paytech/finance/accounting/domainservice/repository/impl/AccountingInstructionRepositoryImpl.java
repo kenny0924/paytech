@@ -3,6 +3,7 @@ package com.paytech.finance.accounting.domainservice.repository.impl;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
@@ -44,6 +45,12 @@ public class AccountingInstructionRepositoryImpl implements AccountingInstructio
         instruction.setStatus(status);
         instruction.setVersion(instruction.getVersion() + 1);
         instruction.setUpdateTime(now);
+    }
+
+    /** 统计账簿中尚未过账的指令。 */
+    @Override
+    public long countPendingByBooks(List<Long> bookIds) {
+        return mapper.countPendingByBooks(bookIds);
     }
 
     /** 当前 UTC 时间，截断到数据库支持的微秒精度。 */

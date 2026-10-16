@@ -36,4 +36,8 @@
             <if test="query.currency != null">AND b.currency = #{query.currency}</if>
         </where>
     </select>
+
+    <select id="selectAllByEntity" resultType="com.paytech.finance.accounting.core.dal.dataobject.LedgerBook">
+        SELECT id, entity_type, entity_id, currency, chart_id, book_status, version, create_time, update_time FROM t_ledger_book WHERE entity_type = #{entityType} AND entity_id = #{entityId} ORDER BY id
+    </select>
 </mapper>

@@ -6,10 +6,13 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.paytech.finance.accounting.core.dal.dataobject.Account;
 import com.paytech.finance.accounting.core.dal.dataobject.AccountingPeriod;
 import com.paytech.finance.accounting.core.dal.dataobject.BookSequence;
 import com.paytech.finance.accounting.core.dal.dataobject.LedgerBook;
@@ -74,17 +77,41 @@ public class TrialBalanceServiceImpl implements TrialBalanceService {
     /** 全部步骤在一个事务内完成，任一步失败整体回滚。 */
     @Override
     public void run(TrialBalanceContext context) {
-        transactionTemplate.executeWithoutResult(status -> {
-            Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
-            long asOfSequence = lockWatermark(context.getBook().getId());
-            AccountingPeriod period = context.getPeriod();
-            List<TrialBalanceAggregateView> aggregates = journalLineRepository.findTrialAggregates(
-                context.getBook().getId(), asOfSequence, period.getStartDate(), period.getEndDate());
-            List<TrialBalanceLine> lines = buildLines(context, aggregates, now);
-            List<TrialBalanceException> exceptions = projectionExceptions(context, asOfSequence, now);
-            TrialBalanceRun run = buildRun(context, asOfSequence, aggregates, lines, exceptions, now);
-            saveRun(context, run, lines, exceptions);
-        });
+        transactionTemplate.executeWithoutResult(
+            status -> execute(context, lockWatermark(context.getBook().getId()), false));
+    }
+
+    /** 与 run 相同的计算，只是水位由调用方给出，并排除水位之后已有过账的账户的投影核对。 */
+    @Override
+    public void runAt(TrialBalanceContext context, long asOfSequence) {
+        transactionTemplate.executeWithoutResult(status -> execute(context, asOfSequence, true));
+    }
+
+    /** 聚合科目余额、核对账户投影、计算合计与异常并保存终态；必须在事务内调用。 */
+    void execute(TrialBalanceContext context, long asOfSequence, boolean skipAdvancedAccounts) {
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        AccountingPeriod period = context.getPeriod();
+        List<TrialBalanceAggregateView> aggregates = journalLineRepository.findTrialAggregates(
+            context.getBook().getId(), asOfSequence, period.getStartDate(), period.getEndDate());
+        List<TrialBalanceLine> lines = buildLines(context, aggregates, now);
+        List<TrialBalanceException> exceptions = projectionExceptions(context, asOfSequence, now);
+        if (skipAdvancedAccounts) {
+            exceptions = excludeAdvancedAccounts(exceptions, asOfSequence);
+        }
+        TrialBalanceRun run = buildRun(context, asOfSequence, aggregates, lines, exceptions, now);
+        saveRun(context, run, lines, exceptions);
+    }
+
+    /** 去掉最后过账序号已超过水位的账户异常：其投影包含水位之后的分录，无法在该水位比较。 */
+    List<TrialBalanceException> excludeAdvancedAccounts(List<TrialBalanceException> exceptions, long asOfSequence) {
+        List<Long> accountIds = exceptions.stream().map(TrialBalanceException::getReferenceId).toList();
+        if (accountIds.isEmpty()) {
+            return exceptions;
+        }
+        Set<Long> advanced = accountRepository.findByIds(accountIds).stream()
+            .filter(account -> account.getLastJournalSequence() > asOfSequence).map(Account::getId)
+            .collect(Collectors.toSet());
+        return new ArrayList<>(exceptions.stream().filter(e -> !advanced.contains(e.getReferenceId())).toList());
     }
 
     /** 以共享锁读取账簿序号行，水位为下一可分配序号减一。 */

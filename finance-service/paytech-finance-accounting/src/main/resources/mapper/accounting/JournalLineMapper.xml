@@ -63,4 +63,18 @@
         WHERE t.opening_balance &lt;&gt; 0 OR t.period_debit &lt;&gt; 0 OR t.period_credit &lt;&gt; 0
         ORDER BY t.chart_account_id
     </select>
+
+    <select id="selectProfitCloseBalances" resultType="com.paytech.finance.accounting.domain.view.ProfitCloseBalanceView">
+        SELECT a.id account_id, a.chart_account_id,
+               SUM(CASE WHEN l.entry_side = 'DEBIT' THEN l.amount ELSE 0 END) period_debit,
+               SUM(CASE WHEN l.entry_side = 'CREDIT' THEN l.amount ELSE 0 END) period_credit
+        FROM t_journal_line l
+        JOIN t_journal_entry e ON e.id = l.journal_entry_id
+        JOIN t_account a ON a.id = l.account_id
+        JOIN t_chart_account c ON c.id = a.chart_account_id
+        WHERE e.ledger_book_id = #{ledgerBookId} AND e.journal_sequence &lt;= #{asOfSequence}
+          AND e.posting_date BETWEEN #{start} AND #{end} AND c.account_class IN ('REVENUE', 'EXPENSE')
+        GROUP BY a.id, a.chart_account_id
+        ORDER BY a.id
+    </select>
 </mapper>

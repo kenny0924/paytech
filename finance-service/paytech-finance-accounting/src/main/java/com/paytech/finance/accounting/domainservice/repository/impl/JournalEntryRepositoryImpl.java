@@ -1,5 +1,7 @@
 package com.paytech.finance.accounting.domainservice.repository.impl;
 
+import java.util.List;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
@@ -33,6 +35,12 @@ public class JournalEntryRepositoryImpl implements JournalEntryRepository {
     @Override
     public JournalEntryDetailView findDetail(long journalEntryId) {
         return mapper.selectDetail(journalEntryId);
+    }
+
+    /** 统计期间内借贷不平或无行的分录。 */
+    @Override
+    public long countUnbalancedInPeriod(long periodId, List<Long> bookIds) {
+        return mapper.countUnbalancedInPeriod(periodId, bookIds);
     }
 
     /** 执行插入，唯一键冲突说明同一命令已被并发处理。 */

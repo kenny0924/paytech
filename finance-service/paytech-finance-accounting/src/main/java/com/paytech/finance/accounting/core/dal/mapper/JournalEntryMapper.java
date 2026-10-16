@@ -1,5 +1,7 @@
 package com.paytech.finance.accounting.core.dal.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,4 +20,7 @@ public interface JournalEntryMapper {
 
     /** 读取分录头及其来源指令与人工调整单号，不存在返回空。 */
     JournalEntryDetailView selectDetail(@Param("journalEntryId") long journalEntryId);
+
+    /** 关账步骤 2：统计期间内借贷不平或没有分录行的分录。 */
+    long countUnbalancedInPeriod(@Param("periodId") long periodId, @Param("bookIds") List<Long> bookIds);
 }

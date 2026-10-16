@@ -30,4 +30,7 @@ public interface LedgerBookMapper {
 
     /** 统计符合过滤条件的账簿数量。 */
     long countPage(@Param("query") LedgerBookQuery query);
+
+    /** 按主键升序读取主体的全部币种账簿。 */
+    List<LedgerBook> selectAllByEntity(@Param("entityType") LedgerEntityType entityType, @Param("entityId") String entityId);
 }

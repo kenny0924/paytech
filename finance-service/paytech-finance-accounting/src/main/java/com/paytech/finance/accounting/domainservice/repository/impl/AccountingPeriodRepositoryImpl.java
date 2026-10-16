@@ -60,6 +60,18 @@ public class AccountingPeriodRepositoryImpl implements AccountingPeriodRepositor
         period.setUpdateTime(now);
     }
 
+    /** 以排他锁读取期间；必须在事务内调用。 */
+    @Override
+    public AccountingPeriod lockById(long id) {
+        return mapper.selectByIdForUpdate(id);
+    }
+
+    /** 读取同一日历中早于给定日期且未关闭的最早期间，不存在返回空。 */
+    @Override
+    public AccountingPeriod findFirstUnclosedBefore(long calendarId, LocalDate startDate) {
+        return mapper.selectFirstUnclosedBefore(calendarId, startDate);
+    }
+
     /** 当前 UTC 时间，截断到数据库支持的微秒精度。 */
     private Instant now() {
         return clock.instant().truncatedTo(ChronoUnit.MICROS);

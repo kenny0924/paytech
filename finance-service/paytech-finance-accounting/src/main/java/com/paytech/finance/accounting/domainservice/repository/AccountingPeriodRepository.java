@@ -22,4 +22,10 @@ public interface AccountingPeriodRepository {
 
     /** 按原状态与版本迁移期间状态，成功后同步原对象。 */
     void updateStatus(AccountingPeriod period, PeriodStatus status);
+
+    /** 以排他锁读取期间；必须在事务内调用。 */
+    AccountingPeriod lockById(long id);
+
+    /** 读取同一日历中早于给定日期且未关闭的最早期间，不存在返回空。 */
+    AccountingPeriod findFirstUnclosedBefore(long calendarId, LocalDate startDate);
 }

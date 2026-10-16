@@ -24,4 +24,7 @@ public interface LedgerBookRepository {
 
     /** 统计符合过滤条件的账簿数量。 */
     long countPage(LedgerBookQuery query);
+
+    /** 按主键升序读取主体的全部币种账簿。 */
+    List<LedgerBook> findAllByEntity(LedgerEntityType entityType, String entityId);
 }

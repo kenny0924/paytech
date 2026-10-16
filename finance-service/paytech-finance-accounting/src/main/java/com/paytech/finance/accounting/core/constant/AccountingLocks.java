@@ -20,4 +20,14 @@ public final class AccountingLocks {
     public static String trialBalance(long ledgerBookId, long periodId) {
         return "trial-balance:" + ledgerBookId + ":" + periodId;
     }
+
+    /** 同一期间关账发起、审批与驳回共用的资源锁。 */
+    public static String periodClose(long periodId) {
+        return "period-close:" + periodId;
+    }
+
+    /** 同一试算异常处置（发起与批准投影重建）共用的资源锁。 */
+    public static String trialException(long exceptionId) {
+        return "trial-exception:" + exceptionId;
+    }
 }

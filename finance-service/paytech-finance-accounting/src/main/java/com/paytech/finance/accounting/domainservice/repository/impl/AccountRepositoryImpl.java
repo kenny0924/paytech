@@ -9,6 +9,8 @@ import java.util.List;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
+import com.paytech.finance.accounting.domain.view.AccountJournalTotalsView;
+import com.paytech.finance.accounting.core.enums.BalanceBucket;
 import com.paytech.finance.accounting.core.dal.dataobject.Account;
 import com.paytech.finance.accounting.core.dal.mapper.AccountMapper;
 import com.paytech.finance.accounting.core.enums.OwnerType;
@@ -90,6 +92,41 @@ public class AccountRepositoryImpl implements AccountRepository {
     @Override
     public List<AccountProjectionCheckView> findProjectionChecks(long ledgerBookId, long asOfSequence) {
         return mapper.selectProjectionChecks(ledgerBookId, asOfSequence);
+    }
+
+    /** 按账户身份唯一键读取，不存在返回空。 */
+    @Override
+    public Account findByIdentity(long ledgerBookId, long chartAccountId, OwnerType ownerType, String ownerId,
+        BalanceBucket bucket) {
+        return mapper.selectByIdentity(ledgerBookId, chartAccountId, ownerType, ownerId, bucket);
+    }
+
+    /** 以排他锁读取一个账户；必须在事务内调用。 */
+    @Override
+    public Account lockById(long id) {
+        return mapper.selectByIdForUpdate(id);
+    }
+
+    /** 从账户全部分录行重算借贷累计与最后分录序号。 */
+    @Override
+    public AccountJournalTotalsView findJournalTotals(long accountId) {
+        return mapper.selectJournalTotals(accountId);
+    }
+
+    /** 以余额版本 CAS 写入重建后的投影，成功后同步原对象；版本不符时失败。 */
+    @Override
+    public void rebuildProjection(Account account, BigDecimal debitTotal, BigDecimal creditTotal,
+        BigDecimal netBalance, long lastJournalSequence) {
+        Instant now = now();
+        if (mapper.rebuildProjection(account, debitTotal, creditTotal, netBalance, lastJournalSequence, now) != 1) {
+            throw new ConcurrentRequestException("账户余额已被并发更新: " + account.getId());
+        }
+        account.setDebitTotal(debitTotal);
+        account.setCreditTotal(creditTotal);
+        account.setNetBalance(netBalance);
+        account.setLastJournalSequence(lastJournalSequence);
+        account.setBalanceVersion(account.getBalanceVersion() + 1);
+        account.setUpdateTime(now);
     }
 
     /** 当前 UTC 时间，截断到数据库支持的微秒精度。 */

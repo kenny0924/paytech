@@ -24,4 +24,15 @@
         UPDATE t_accounting_period SET status = #{status}, version = version + 1, update_time = #{now}
         WHERE id = #{period.id} AND status = #{period.status} AND version = #{period.version}
     </update>
+
+    <select id="selectByIdForUpdate" resultType="com.paytech.finance.accounting.core.dal.dataobject.AccountingPeriod">
+        SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <select id="selectFirstUnclosedBefore" resultType="com.paytech.finance.accounting.core.dal.dataobject.AccountingPeriod">
+        SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period
+        WHERE calendar_id = #{calendarId} AND end_date &lt; #{startDate} AND status &lt;&gt; 'CLOSED'
+        ORDER BY start_date
+        LIMIT 1
+    </select>
 </mapper>

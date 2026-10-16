@@ -20,6 +20,16 @@ public interface TrialBalanceService {
      */
     void run(TrialBalanceContext context);
 
+    /**
+     * 按调用方给定的水位执行试算（关账流程使用）
+     * <li>水位必须是调用方已确认全部提交的序号，本方法不再加序号行锁。</li>
+     * <li>账户投影核对跳过最后序号已超过该水位的账户：它们已包含水位之后其他期间的过账，无法在此水位比较。</li>
+     *
+     * @param context 已校验的账簿、期间与币种精度
+     * @param asOfSequence 试算纳入的最大分录序号
+     */
+    void runAt(TrialBalanceContext context, long asOfSequence);
+
     /** 读取账簿与期间，均存在时返回账簿；不存在时业务拒绝。 */
     LedgerBook getBook(long ledgerBookId);
 

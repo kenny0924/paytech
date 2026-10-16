@@ -25,6 +25,7 @@ import com.paytech.finance.accounting.core.enums.AccountStatus;
 import com.paytech.finance.accounting.core.enums.BookStatus;
 import com.paytech.finance.accounting.core.enums.EntrySide;
 import com.paytech.finance.accounting.core.enums.InstructionStatus;
+import com.paytech.finance.accounting.core.enums.JournalEntryType;
 import com.paytech.finance.accounting.core.enums.NormalSide;
 import com.paytech.finance.accounting.core.enums.PeriodStatus;
 import com.paytech.finance.accounting.domain.JournalPostingContext;
@@ -86,9 +87,7 @@ public class JournalPostingServiceImpl implements JournalPostingService {
         if (period == null) {
             throw new BizCheckFailException("会计期间不存在: " + context.getAccountingPeriodId());
         }
-        if (period.getStatus() != PeriodStatus.OPEN) {
-            throw new BizCheckFailException("会计期间未开放: " + period.getId() + ", 状态 " + period.getStatus().getCode());
-        }
+        checkPeriodStatus(period, context.getEntryType());
         if (context.getPostingDate().isBefore(period.getStartDate())
             || context.getPostingDate().isAfter(period.getEndDate())) {
             throw new BizCheckFailException("过账日期不在会计期间内: " + context.getPostingDate() + ", 期间 " + period.getId());
@@ -99,6 +98,21 @@ public class JournalPostingServiceImpl implements JournalPostingService {
         }
         checkSameEntity(book, fiscalCalendarRepository.findById(period.getCalendarId()), period.getId());
         return book;
+    }
+
+    /**
+     * 期间状态门禁
+     * <li>普通分录只允许 OPEN 期间；关账/重开流程自己的 CLOSING/REOPENING 分录只允许期间处于 CLOSING/REOPENING。</li>
+     */
+    void checkPeriodStatus(AccountingPeriod period, JournalEntryType entryType) {
+        boolean closeEntry = entryType == JournalEntryType.CLOSING || entryType == JournalEntryType.REOPENING;
+        if (!closeEntry && period.getStatus() != PeriodStatus.OPEN) {
+            throw new BizCheckFailException("会计期间未开放: " + period.getId() + ", 状态 " + period.getStatus().getCode());
+        }
+        if (closeEntry && !period.statusIn(PeriodStatus.CLOSING, PeriodStatus.REOPENING)) {
+            throw new BizCheckFailException("会计期间不在关账或重开流程中: " + period.getId() + ", 状态 "
+                + period.getStatus().getCode());
+        }
     }
 
     /** 期间所属日历必须属于账簿主体。 */

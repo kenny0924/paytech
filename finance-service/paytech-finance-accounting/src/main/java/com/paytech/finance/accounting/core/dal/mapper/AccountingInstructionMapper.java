@@ -1,6 +1,7 @@
 package com.paytech.finance.accounting.core.dal.mapper;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -28,4 +29,7 @@ public interface AccountingInstructionMapper {
      */
     int updateStatus(@Param("instruction") AccountingInstruction instruction, @Param("status") InstructionStatus status,
         @Param("now") Instant now);
+
+    /** 关账步骤 2：统计账簿中仍处于 RECEIVED/VALIDATING/VALIDATED 的指令。 */
+    long countPendingByBooks(@Param("bookIds") List<Long> bookIds);
 }

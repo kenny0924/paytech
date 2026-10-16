@@ -51,6 +51,12 @@ public class LedgerBookRepositoryImpl implements LedgerBookRepository {
         return mapper.countPage(query);
     }
 
+    /** 按主键升序读取主体的全部币种账簿。 */
+    @Override
+    public List<LedgerBook> findAllByEntity(LedgerEntityType entityType, String entityId) {
+        return mapper.selectAllByEntity(entityType, entityId);
+    }
+
     /** 执行插入，业务唯一键冲突时转换为带上下文的业务拒绝。 */
     private void insertUnique(Runnable insert, String message) {
         try {

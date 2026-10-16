@@ -1,6 +1,7 @@
 -- Code-MoR Finance initialization DML.
 -- Apply manually after finance-schema.sql; the application and auto tests never execute this file.
--- Contents: USD currency rule, the standard chart of accounts and its 29 core posting accounts
+-- Contents: USD currency rule, the standard chart of accounts and its 29 core posting accounts,
+-- and the period-close transfer rules of every REVENUE/EXPENSE leaf account
 -- (agent-docs/database/FINANCE_DATABASE.md §4.1.1). Fixed IDs are reserved below 1,000,000 and never
 -- produced by the Snowflake generator. Re-running fails on primary/unique keys by design.
 SET NAMES utf8mb4;
@@ -43,3 +44,15 @@ VALUES
   (3027, 2001, NULL, 'CHANNEL_FEE_EXPENSE',           '渠道成本',             'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
   (3028, 2001, NULL, 'ROUNDING_ADJUSTMENT',           '舍入尾差',             'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
   (3029, 2001, NULL, 'RECON_ADJUSTMENT_EXPENSE',      '对账调整损失',         'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+
+-- Period close: every REVENUE/EXPENSE leaf of STANDARD -> CURRENT_PERIOD_RESULT (3020) / RETAINED_EARNINGS (3021).
+INSERT INTO `t_close_account_rule`
+  (`id`, `chart_id`, `source_account_id`, `current_result_account_id`, `retained_earnings_account_id`, `effective_from`, `effective_to`, `create_time`)
+VALUES
+  (4001, 2001, 3023, 3020, 3021, '2000-01-01 00:00:00.000000', NULL, UTC_TIMESTAMP(6)),
+  (4002, 2001, 3024, 3020, 3021, '2000-01-01 00:00:00.000000', NULL, UTC_TIMESTAMP(6)),
+  (4003, 2001, 3025, 3020, 3021, '2000-01-01 00:00:00.000000', NULL, UTC_TIMESTAMP(6)),
+  (4004, 2001, 3026, 3020, 3021, '2000-01-01 00:00:00.000000', NULL, UTC_TIMESTAMP(6)),
+  (4005, 2001, 3027, 3020, 3021, '2000-01-01 00:00:00.000000', NULL, UTC_TIMESTAMP(6)),
+  (4006, 2001, 3028, 3020, 3021, '2000-01-01 00:00:00.000000', NULL, UTC_TIMESTAMP(6)),
+  (4007, 2001, 3029, 3020, 3021, '2000-01-01 00:00:00.000000', NULL, UTC_TIMESTAMP(6));
