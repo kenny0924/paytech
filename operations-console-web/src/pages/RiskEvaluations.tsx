@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { Alert, Button, Descriptions, Empty, Form, Input, Select, Skeleton, Space, Table, Tabs, Tag, Tooltip } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/session';
-import { KNOWN_POINTS, pointName } from '../risk/riskPoints';
-import { PAYMENT_ATTEMPT_POINT, riskEvaluationApi } from '../risk/riskEvaluationApi';
+import { hasAuthenticationOutput, KNOWN_POINTS, pointName } from '../risk/riskPoints';
+import { QUERY_POINTS, riskEvaluationApi } from '../risk/riskEvaluationApi';
 import {
-  authenticationLabel, changedLabel, conclusionTitle, conditionLines, CURRENT_VALUE_NOTE, evaluationQuerySearch, exitEdgeLabel, failureLabel, formatUtc, groupRules,
+  authenticationLabel, businessKeyLabel, changedLabel, conclusionTitle, conditionLines, CURRENT_VALUE_NOTE, evaluationQuerySearch, exitEdgeLabel, failureLabel, formatUtc, groupRules,
   ID_FORMAT_MESSAGE, inputRows, isCurrentValue, isShadow, modeLabel, nodeTypeLabel, normalizeId, NOT_PROVIDED, parseEvaluationQuery, PATH_UNAVAILABLE, predicateMark,
   queryTypeLabels, resultColor, resultLabel, ruleOutcome, stepName, stepSummary, variableBasisText, variableFailed, variableNameLookup, variableSourceLabel, variableTypeLabel, variableValueText,
 } from '../risk/riskEvaluation';
@@ -20,7 +20,7 @@ const notFound = (e: unknown) => e instanceof ApiError && e.status === 404;
 
 type Outcome = { state: 'idle' | 'invalid' | 'loading' | 'notFound' } | { state: 'error'; message: string } | { state: 'ready'; evaluation: Evaluation; explanation: EvaluationExplanation | null; explanationError: string };
 
-/** 风控评估查询与解释：按支付尝试 ID 或评估 ID 查看结论、路径、规则条件、变量、输入与影子评估；查询条件只保存在地址栏。 */
+/** 风控评估查询与解释：按支付尝试 ID、订单 ID 或评估 ID 查看结论、路径、规则条件、变量、输入与影子评估；查询条件只保存在地址栏。 */
 export function RiskEvaluations({ onAuthorizationChanged }: { onAuthorizationChanged: () => void }) {
   const location = useLocation(), navigate = useNavigate();
   const query = parseEvaluationQuery(location.search);
@@ -37,7 +37,7 @@ export function RiskEvaluations({ onAuthorizationChanged }: { onAuthorizationCha
   }, [query.type, validId, revision]);
   async function load(kind: EvaluationQueryType, id: string, signal: AbortSignal): Promise<Outcome> {
     let evaluation: Evaluation;
-    try { evaluation = kind === 'attempt' ? await riskEvaluationApi.find(PAYMENT_ATTEMPT_POINT, id, signal) : await riskEvaluationApi.get(id, signal); }
+    try { evaluation = kind === 'evaluation' ? await riskEvaluationApi.get(id, signal) : await riskEvaluationApi.find(QUERY_POINTS[kind], id, signal); }
     catch (e) { return failed(e); }
     try { return { state: 'ready', evaluation, explanation: await riskEvaluationApi.explanation(evaluation.evaluationId, signal), explanationError: '' }; }
     catch (e) { if (e instanceof ApiError && e.status === 403) onAuthorizationChanged(); return { state: 'ready', evaluation, explanation: null, explanationError: errorText(e) }; }
@@ -55,14 +55,14 @@ export function RiskEvaluations({ onAuthorizationChanged }: { onAuthorizationCha
   }
   const loading = outcome.state === 'loading';
   return <div className="variable-page evaluation-page">
-    <div className="page-heading"><div><h1>评估查询</h1><p className="cell-meta">输入支付尝试 ID 或评估 ID，查看风控结论及其解释。</p></div></div>
+    <div className="page-heading"><div><h1>评估查询</h1><p className="cell-meta">输入支付尝试 ID、订单 ID 或评估 ID，查看风控结论及其解释。</p></div></div>
     <Form layout="inline" className="evaluation-query" onFinish={submit}>
       <Form.Item><Select aria-label="查询类型" style={{ width: 140 }} value={type} options={Object.entries(queryTypeLabels).map(([value, label]) => ({ value, label }))} onChange={setType} /></Form.Item>
       <Form.Item validateStatus={draftError ? 'error' : undefined} help={draftError || undefined}>
         <Input aria-label={queryTypeLabels[type]} style={{ width: 320 }} value={draft} maxLength={19} allowClear placeholder={`请输入${queryTypeLabels[type]}`} onChange={e => { setDraft(e.target.value); setDraftError(''); }} /></Form.Item>
       <Form.Item><Button type="primary" htmlType="submit" disabled={loading}>查询</Button></Form.Item>
     </Form>
-    {outcome.state === 'idle' && <p className="cell-meta evaluation-hint">输入支付尝试 ID 或评估 ID</p>}
+    {outcome.state === 'idle' && <p className="cell-meta evaluation-hint">输入支付尝试 ID、订单 ID 或评估 ID</p>}
     {outcome.state === 'loading' && <section className="evaluation-card"><Skeleton active paragraph={{ rows: 6 }} /></section>}
     {outcome.state === 'notFound' && <section className="evaluation-card"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="没有找到该评估" /></section>}
     {outcome.state === 'error' && <Alert type="error" showIcon title={outcome.message} action={<Button onClick={() => setRevision(r => r + 1)}>重试</Button>} />}
@@ -80,8 +80,8 @@ function EvaluationResultView({ evaluation, explanation, explanationError, onOpe
       { key: 'path', label: '路径', children: <PathPanel explanation={explanation} /> },
       { key: 'rules', label: '规则与条件', children: <RulesPanel explanation={explanation} /> },
       { key: 'variables', label: '变量', children: <VariablesPanel variables={explanation.variables} /> },
-      { key: 'inputs', label: '输入', children: <InputsPanel inputs={explanation.inputs} /> },
-      ...(shadow ? [] : [{ key: 'shadows', label: `影子评估 (${explanation.shadows.length})`, children: <ShadowsPanel shadows={explanation.shadows} onOpen={onOpen} /> }]),
+      { key: 'inputs', label: '输入', children: <InputsPanel inputs={explanation.inputs} pointCode={evaluation.pointCode} /> },
+      ...(shadow ? [] : [{ key: 'shadows', label: `影子评估 (${explanation.shadows.length})`, children: <ShadowsPanel shadows={explanation.shadows} authentication={hasAuthenticationOutput(evaluation.pointCode)} onOpen={onOpen} /> }]),
     ]} />}
   </>;
 }
@@ -97,8 +97,8 @@ function ConclusionCard({ evaluation, onOpen }: { evaluation: Evaluation; onOpen
     </div>
     <Descriptions size="small" column={{ xs: 1, md: 2, xl: 3 }} items={[
       { key: 'point', label: '风控点', children: `${pointName(KNOWN_POINTS, evaluation.pointCode)}（${evaluation.pointCode}）` },
-      { key: 'business', label: evaluation.pointCode === PAYMENT_ATTEMPT_POINT ? '支付尝试' : '业务身份', children: evaluation.businessKey },
-      { key: 'authentication', label: '认证要求', children: authentication ?? '—' },
+      { key: 'business', label: businessKeyLabel(evaluation.pointCode), children: evaluation.businessKey },
+      ...(hasAuthenticationOutput(evaluation.pointCode) ? [{ key: 'authentication', label: '认证要求', children: authentication ?? '—' }] : []),
       { key: 'release', label: '发布', children: `${evaluation.releaseId} · ${evaluation.environment}` },
       { key: 'flow', label: '流程', children: `${evaluation.flowCode} v${evaluation.flowVersionNo}` },
       { key: 'time', label: '评估时间', children: formatUtc(evaluation.evaluationTime) },
@@ -166,21 +166,21 @@ function VariablesPanel({ variables }: { variables: VariableItem[] }) {
   </section>;
 }
 
-function InputsPanel({ inputs }: { inputs: Record<string, string | null> }) {
+function InputsPanel({ inputs, pointCode }: { inputs: Record<string, string | null>; pointCode: string }) {
   return <section className="evaluation-card"><h3>输入（评估时冻结）</h3>
-    <Descriptions size="small" bordered column={{ xs: 1, md: 2, xl: 3 }} items={inputRows(inputs).map(row => ({
+    <Descriptions size="small" bordered column={{ xs: 1, md: 2, xl: 3 }} items={inputRows(inputs, pointCode).map(row => ({
       key: row.key, label: row.label, children: row.value === null ? <span className="evaluation-missing">{NOT_PROVIDED}</span> : <span className="evaluation-value">{row.value}</span>,
     }))} /></section>;
 }
 
-function ShadowsPanel({ shadows, onOpen }: { shadows: ShadowItem[]; onOpen: (id: string) => void }) {
+function ShadowsPanel({ shadows, authentication, onOpen }: { shadows: ShadowItem[]; authentication: boolean; onOpen: (id: string) => void }) {
   return <section className="table-panel"><Table<ShadowItem> rowKey="evaluationId" size="small" pagination={false} dataSource={shadows} locale={{ emptyText: '没有以该评估为基线的影子评估' }}
     columns={[
       { title: '评估 ID', dataIndex: 'evaluationId' },
       { title: '批次', dataIndex: 'shadowRunId' },
       { title: '结论', render: (_, s) => <Tag color={resultColor(s.result)}>{resultLabel(s.result)}</Tag> },
       { title: '结论变化', render: (_, s) => <span className={s.decisionChanged ? 'evaluation-changed' : undefined}>{changedLabel(s.decisionChanged)}</span> },
-      { title: '认证要求变化', render: (_, s) => <span className={s.outputChanged ? 'evaluation-changed' : undefined}>{changedLabel(s.outputChanged)}</span> },
+      ...(authentication ? [{ title: '认证要求变化', render: (_: unknown, s: ShadowItem) => <span className={s.outputChanged ? 'evaluation-changed' : undefined}>{changedLabel(s.outputChanged)}</span> }] : []),
       { title: '严重程度', render: (_, s) => s.severity ?? '—' },
       { title: '操作', render: (_, s) => <Button type="link" onClick={() => onOpen(s.evaluationId)}>查看</Button> },
     ]} /></section>;

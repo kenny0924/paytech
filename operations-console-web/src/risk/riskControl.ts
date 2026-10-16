@@ -22,8 +22,8 @@ export const listPurposeLabels: Record<RiskList['purpose'], string> = { BLOCK: '
 export const entryStatusLabels: Record<string, string> = { ACTIVE: '生效中', EXPIRED: '已过期', RELEASED: '已失效', SUPERSEDED: '已替代' };
 export const releaseStatusLabels: Record<string, string> = { DRAFT: '草稿', VALIDATING: '校验中', SHADOWING: '待激活', REJECTED: '校验未通过', ACTIVE: '生效中', SUPERSEDED: '已替代' };
 export const checkLabels: Record<string, string> = { REFERENCE_INTEGRITY: '引用完整性', AST_SHAPE: '条件结构', AST_TYPES: '条件类型', FEATURE_DEPENDENCY: '特征依赖', HANDLER_HASH: '处理器摘要', ACTION_PARAMETERS: '动作参数', TERMINAL_ACTION: '终态动作（含认证要求输出）', SYSTEM_OBLIGATION: '系统义务' };
-/** 支持执行发布的风控点；Risk 未在目录中声明该能力，结账点运行期未接入（创建返回 400）。 */
-export const EXECUTION_POINTS = ['PAYMENT_ATTEMPT_RISK'];
+/** 支持执行发布的风控点；Risk 目录未下发运行期能力标记，由此常量控制入口，未列出的点由 Risk 返回 400。支付排第一，作为默认点。 */
+export const EXECUTION_POINTS = ['PAYMENT_ATTEMPT_RISK', 'CHECKOUT_PREPARE'];
 export const SHADOW_SAMPLE_DEFAULT = 200;
 export const SHADOW_SAMPLE_MAX = 2000;
 

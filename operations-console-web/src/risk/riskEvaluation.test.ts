@@ -2,14 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   authenticationLabel, conclusionTitle, plainDecimal, conditionLines, decodeEvaluation, decodeExplanation, evaluationQuerySearch, exitEdgeLabel, failureLabel, formatUtc, groupRules,
-  INPUT_FIELDS, inputRows, isCurrentValue, normalizeId, NOT_PROVIDED, parseEvaluationQuery, PATH_UNAVAILABLE, predicateMark, predicateText, resultColor, resultLabel,
+  businessKeyLabel, CHECKOUT_INPUT_FIELDS, inputFieldsOf, inputRows, PAYMENT_INPUT_FIELDS, isCurrentValue, normalizeId, NOT_PROVIDED, parseEvaluationQuery, PATH_UNAVAILABLE, predicateMark, predicateText, resultColor, resultLabel,
   ruleOutcome, stepName, stepSummary, variableBasisText, variableNameLookup, variableValueText,
 } from './riskEvaluation.ts';
 import type { ConditionNode } from './riskEvaluation.ts';
-import { evaluationWire, explanationWire } from './riskEvaluationFixtures.ts';
+import { checkoutExplanationWire, evaluationWire, explanationWire } from './riskEvaluationFixtures.ts';
 
-test('URL 查询条件：类型只认 attempt/evaluation，ID 去空白；写回地址只含类型与 ID', () => {
+test('URL 查询条件：类型只认 attempt/order/evaluation，ID 去空白；写回地址只含类型与 ID', () => {
   assert.deepEqual(parseEvaluationQuery('?type=evaluation&id=%20236600000000000001%20'), { type: 'evaluation', id: '236600000000000001' });
+  assert.deepEqual(parseEvaluationQuery('?type=order&id=991016000000000123'), { type: 'order', id: '991016000000000123' });
+  assert.deepEqual(parseEvaluationQuery(evaluationQuerySearch({ type: 'order', id: '991016000000000123' })), { type: 'order', id: '991016000000000123' });
   assert.deepEqual(parseEvaluationQuery('?type=other&id=12'), { type: 'attempt', id: '12' });
   assert.deepEqual(parseEvaluationQuery(''), { type: 'attempt', id: '' });
   assert.equal(evaluationQuerySearch({ type: 'attempt', id: '991015000000000002' }), '?type=attempt&id=991015000000000002');
@@ -110,15 +112,36 @@ test('变量：CURRENT 标注当前值，Feature 失败显示失败码且取值�
 });
 
 test('输入：17 个字段按合同顺序，缺失、null 与空串都显示为未提供', () => {
-  assert.equal(INPUT_FIELDS.length, 17);
-  const rows = inputRows(decodeExplanation(explanationWire).inputs);
+  assert.equal(PAYMENT_INPUT_FIELDS.length, 17);
+  assert.equal(inputFieldsOf('PAYMENT_ATTEMPT_RISK'), PAYMENT_INPUT_FIELDS);
+  const rows = inputRows(decodeExplanation(explanationWire).inputs, 'PAYMENT_ATTEMPT_RISK');
   assert.equal(rows.length, 17);
   assert.equal(rows.find(r => r.key === 'clientIpAddress')!.value, '203.0.113.9');
   assert.equal(rows.find(r => r.key === 'consumerReference')!.value, null);
   assert.equal(rows.find(r => r.key === 'cardBin')!.value, null);
   assert.equal(rows.find(r => r.key === 'userAgent')!.value, null);
   assert.equal(NOT_PROVIDED, '未提供');
-  assert.equal(inputRows({ newField: 'x' }).at(-1)!.label, 'newField', 'Risk 新增字段按原键追加');
+  assert.equal(inputRows({ newField: 'x' }, 'PAYMENT_ATTEMPT_RISK').at(-1)!.label, 'newField', 'Risk 新增字段按原键追加');
+});
+
+test('输入：结账准备 12 个字段按合同顺序，非 PARTNER 来源的 Local Partner 显示未提供；未知风控点全部按原键显示', () => {
+  assert.deepEqual(CHECKOUT_INPUT_FIELDS.map(f => f.key), ['clientId', 'entityNo', 'entitySourceType', 'localPartnerId', 'consumerCountryCode', 'currency',
+    'merchandiseAmount', 'discountAmount', 'netAmount', 'industryCode', 'mccCode', 'lineCount']);
+  assert.deepEqual(CHECKOUT_INPUT_FIELDS.map(f => f.label), ['Client', '运营主体', '主体来源', 'Local Partner', '消费者国家', '币种', '商品金额', '折扣金额', '净额', '行业', 'MCC', '明细行数']);
+  const rows = inputRows(decodeExplanation(checkoutExplanationWire).inputs, 'CHECKOUT_PREPARE');
+  assert.equal(rows.length, 12);
+  assert.equal(rows.find(r => r.key === 'localPartnerId')!.value, null);
+  assert.equal(rows.find(r => r.key === 'netAmount')!.label, '净额');
+  assert.equal(rows.find(r => r.key === 'lineCount')!.value, '3');
+  assert.ok(!rows.some(r => r.key === 'paymentIntentId'), '结账不显示支付字段');
+  assert.deepEqual(inputFieldsOf('UNKNOWN_POINT'), []);
+  assert.deepEqual(inputRows({ a: '1', b: null }, 'UNKNOWN_POINT'), [{ key: 'a', label: 'a', value: '1' }, { key: 'b', label: 'b', value: null }]);
+});
+
+test('业务身份标签按风控点：支付尝试 / 订单 / 业务身份', () => {
+  assert.equal(businessKeyLabel('PAYMENT_ATTEMPT_RISK'), '支付尝试');
+  assert.equal(businessKeyLabel('CHECKOUT_PREPARE'), '订单');
+  assert.equal(businessKeyLabel('UNKNOWN_POINT'), '业务身份');
 });
 
 test('解释解码：条件不可用的规则不带条件树；影子评估列表与变化标记保留', () => {

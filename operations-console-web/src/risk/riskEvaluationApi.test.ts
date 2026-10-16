@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRiskEvaluationApi, PAYMENT_ATTEMPT_POINT } from './riskEvaluationApi.ts';
-import { evaluationWire, explanationWire } from './riskEvaluationFixtures.ts';
+import { CHECKOUT_PREPARE_POINT, createRiskEvaluationApi, PAYMENT_ATTEMPT_POINT, QUERY_POINTS } from './riskEvaluationApi.ts';
+import { checkoutEvaluationWire, evaluationWire, explanationWire } from './riskEvaluationFixtures.ts';
 import { ApiError } from '../api/session.ts';
 import type { RequestClient } from '../api/session.ts';
 
@@ -34,6 +34,17 @@ test('按支付尝试查正式评估：只带 pointCode 与 businessKey，回执
   await assert.rejects(api.find(PAYMENT_ATTEMPT_POINT, '991015000000000003'));
   await assert.rejects(client({ ...evaluationWire, mode: 'SHADOW' }).api.find(PAYMENT_ATTEMPT_POINT, '991015000000000002'));
   await assert.rejects(client(evaluationWire).api.find('CHECKOUT_PREPARE', '991015000000000002'));
+});
+
+test('按订单查结账准备正式评估：查询类型 order 对应 CHECKOUT_PREPARE，回执风控点与订单 ID 必须一致', async () => {
+  assert.deepEqual(QUERY_POINTS, { attempt: PAYMENT_ATTEMPT_POINT, order: CHECKOUT_PREPARE_POINT });
+  const { calls, api } = client(checkoutEvaluationWire);
+  const result = await api.find(QUERY_POINTS.order, '991016000000000123');
+  assert.equal(result.evaluationId, '236600000000000201');
+  assert.deepEqual(result.outputs, {});
+  assert.equal(calls[0]!.path, '/risk-decisions/v1/evaluations?pointCode=CHECKOUT_PREPARE&businessKey=991016000000000123');
+  await assert.rejects(api.find(CHECKOUT_PREPARE_POINT, '991016000000000124'));
+  await assert.rejects(client(checkoutEvaluationWire).api.find(PAYMENT_ATTEMPT_POINT, '991016000000000123'));
 });
 
 test('评估解释：路径为 /explanation，回执评估 ID 必须一致，条件树与受限输入原样解码', async () => {

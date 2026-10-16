@@ -4,6 +4,9 @@ import { createVariableApi } from './riskVariable.ts';
 export interface RiskPoint { pointCode: string; pointName: string }
 /** 已知风控点的中文名；目录读取失败时也作为下拉兜底。 */
 export const KNOWN_POINTS: readonly RiskPoint[] = [{ pointCode: 'CHECKOUT_PREPARE', pointName: '结账准备' }, { pointCode: 'PAYMENT_ATTEMPT_RISK', pointName: '支付尝试' }];
+/** 有认证要求（3DS）输出的风控点；执行发布与评估查询据此显示认证相关指标。 */
+export const AUTHENTICATION_OUTPUT_POINTS: readonly string[] = ['PAYMENT_ATTEMPT_RISK'];
+export function hasAuthenticationOutput(pointCode: string): boolean { return AUTHENTICATION_OUTPUT_POINTS.includes(pointCode); }
 export function pointName(points: readonly RiskPoint[], pointCode: string): string { return points.find(p => p.pointCode === pointCode)?.pointName ?? pointCode; }
 
 /**

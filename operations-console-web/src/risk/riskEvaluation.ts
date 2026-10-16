@@ -2,8 +2,8 @@ import { invariant } from './riskDictionary.ts';
 import { nodeLabels, PAYMENT_OUTPUT_FALLBACK } from './decisionFlow.ts';
 import { operatorLabels, variableSourceLabels, variableTypeLabels } from './riskVariable.ts';
 
-/** 评估查询方式：按支付尝试 ID 查正式评估，或直接按评估 ID 查。 */
-export type EvaluationQueryType = 'attempt' | 'evaluation';
+/** 评估查询方式：按支付尝试 ID 或订单 ID 查正式评估，或直接按评估 ID 查。 */
+export type EvaluationQueryType = 'attempt' | 'order' | 'evaluation';
 export type EvaluationResult = 'ALLOW' | 'REVIEW' | 'DENY' | 'FAILED' | 'TIMED_OUT';
 export type PredicateResult = boolean | null;
 
@@ -130,13 +130,14 @@ export function decodeExplanation(v: unknown): EvaluationExplanation {
 
 /* ---------- 查询条件 ---------- */
 export interface EvaluationQuery { type: EvaluationQueryType; id: string }
-export const queryTypeLabels: Record<EvaluationQueryType, string> = { attempt: '支付尝试 ID', evaluation: '评估 ID' };
+export const queryTypeLabels: Record<EvaluationQueryType, string> = { attempt: '支付尝试 ID', order: '订单 ID', evaluation: '评估 ID' };
 export const ID_FORMAT_MESSAGE = '请输入 1～19 位数字';
 
 /** 地址栏查询条件；未知类型按支付尝试处理，ID 原样保留（由 normalizeId 判断格式）。 */
 export function parseEvaluationQuery(search: string): EvaluationQuery {
   const q = new URLSearchParams(search);
-  return { type: q.get('type') === 'evaluation' ? 'evaluation' : 'attempt', id: (q.get('id') ?? '').trim() };
+  const type = q.get('type');
+  return { type: type === 'evaluation' || type === 'order' ? type : 'attempt', id: (q.get('id') ?? '').trim() };
 }
 export function evaluationQuerySearch(query: EvaluationQuery): string {
   return `?${new URLSearchParams({ type: query.type, id: query.id })}`;
@@ -295,8 +296,9 @@ export function variableSourceLabel(sourceType: string): string { return (variab
 export function variableTypeLabel(valueType: string): string { return (variableTypeLabels as Record<string, string>)[valueType] ?? valueType; }
 
 /* ---------- 输入 ---------- */
+export type InputField = { key: string; label: string };
 /** 支付尝试输入快照的 17 个字段（顺序同 Risk 输入合同）。 */
-export const INPUT_FIELDS: readonly { key: string; label: string }[] = [
+export const PAYMENT_INPUT_FIELDS: readonly InputField[] = [
   { key: 'paymentIntentId', label: '支付 Intent' }, { key: 'riskActionId', label: '风控 Action' }, { key: 'orderId', label: '订单' },
   { key: 'clientId', label: 'Client' }, { key: 'entityNo', label: '运营主体' }, { key: 'paymentMethodCode', label: '支付方式' },
   { key: 'captureMode', label: '捕获方式' }, { key: 'amount', label: '金额' }, { key: 'currency', label: '币种' },
@@ -304,11 +306,25 @@ export const INPUT_FIELDS: readonly { key: string; label: string }[] = [
   { key: 'consumerReference', label: '消费者引用' }, { key: 'clientIpAddress', label: 'IP' }, { key: 'userAgent', label: 'User-Agent' },
   { key: 'cardFingerprint', label: '卡指纹' }, { key: 'cardBin', label: '卡 BIN' },
 ];
+/** 结账准备输入快照的 12 个字段（顺序同 Risk 结账输入合同 v5）；订单 ID 是业务身份，显示在结论卡片中。 */
+export const CHECKOUT_INPUT_FIELDS: readonly InputField[] = [
+  { key: 'clientId', label: 'Client' }, { key: 'entityNo', label: '运营主体' }, { key: 'entitySourceType', label: '主体来源' },
+  { key: 'localPartnerId', label: 'Local Partner' }, { key: 'consumerCountryCode', label: '消费者国家' }, { key: 'currency', label: '币种' },
+  { key: 'merchandiseAmount', label: '商品金额' }, { key: 'discountAmount', label: '折扣金额' }, { key: 'netAmount', label: '净额' },
+  { key: 'industryCode', label: '行业' }, { key: 'mccCode', label: 'MCC' }, { key: 'lineCount', label: '明细行数' },
+];
+const POINT_INPUT_FIELDS: Record<string, readonly InputField[]> = { PAYMENT_ATTEMPT_RISK: PAYMENT_INPUT_FIELDS, CHECKOUT_PREPARE: CHECKOUT_INPUT_FIELDS };
+/** 风控点的已知输入字段；未知风控点没有已知字段，全部按原键显示。 */
+export function inputFieldsOf(pointCode: string): readonly InputField[] { return POINT_INPUT_FIELDS[pointCode] ?? []; }
+const BUSINESS_KEY_LABELS: Record<string, string> = { PAYMENT_ATTEMPT_RISK: '支付尝试', CHECKOUT_PREPARE: '订单' };
+/** 结论卡片中业务身份的标签；未知风控点显示“业务身份”。 */
+export function businessKeyLabel(pointCode: string): string { return BUSINESS_KEY_LABELS[pointCode] ?? '业务身份'; }
 export const NOT_PROVIDED = '未提供';
-/** 17 个已知字段在前，Risk 新增的未知字段按原键追加在后；空值为 null（页面显示“未提供”）。 */
-export function inputRows(inputs: Record<string, string | null>): { key: string; label: string; value: string | null }[] {
-  const known = INPUT_FIELDS.map(f => ({ ...f, value: inputs[f.key] || null }));
-  const extra = Object.keys(inputs).filter(k => !INPUT_FIELDS.some(f => f.key === k)).map(k => ({ key: k, label: k, value: inputs[k] || null }));
+/** 该点已知字段在前，Risk 新增的未知字段按原键追加在后；空值为 null（页面显示“未提供”）。 */
+export function inputRows(inputs: Record<string, string | null>, pointCode: string): { key: string; label: string; value: string | null }[] {
+  const fields = inputFieldsOf(pointCode);
+  const known = fields.map(f => ({ ...f, value: inputs[f.key] || null }));
+  const extra = Object.keys(inputs).filter(k => !fields.some(f => f.key === k)).map(k => ({ key: k, label: k, value: inputs[k] || null }));
   return [...known, ...extra];
 }
 

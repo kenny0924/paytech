@@ -50,3 +50,17 @@ export const explanationWire = {
   ],
   shadows: [{ evaluationId: '236600000000000007', shadowRunId: '236600000000000100', result: 'ALLOW', decisionChanged: false, outputChanged: true, severity: 'LOW' }],
 };
+
+/** 结账准备评估：没有认证要求输出，业务身份为订单 ID；输入为结账合同 v5 的 12 个字段（非 PARTNER 来源无 Local Partner）。 */
+export const checkoutEvaluationWire = {
+  ...evaluationWire, evaluationId: '236600000000000201', pointCode: 'CHECKOUT_PREPARE', businessKey: '991016000000000123', result: 'DENY',
+  reasonCode: 'HIGH_RISK_COUNTRY', reasonMessage: '高风险国家', outputs: {}, flowCode: 'CHECKOUT_FLOW', flowVersionNo: 2,
+};
+export const checkoutExplanationWire = {
+  ...explanationWire, evaluationId: '236600000000000201',
+  inputs: {
+    clientId: '235900000000000104', entityNo: 'AE001', entitySourceType: 'PLATFORM', localPartnerId: null, consumerCountryCode: 'AE', currency: 'USD',
+    merchandiseAmount: '120', discountAmount: '20', netAmount: '100', industryCode: 'GAMING', mccCode: '5816', lineCount: '3',
+  },
+  shadows: [{ evaluationId: '236600000000000207', shadowRunId: '236600000000000300', result: 'DENY', decisionChanged: false, outputChanged: false, severity: null }],
+};

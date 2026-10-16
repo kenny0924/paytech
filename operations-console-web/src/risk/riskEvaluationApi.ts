@@ -5,6 +5,9 @@ import { decodeEvaluation, decodeExplanation } from './riskEvaluation.ts';
 import type { Evaluation, EvaluationExplanation } from './riskEvaluation.ts';
 
 export const PAYMENT_ATTEMPT_POINT = 'PAYMENT_ATTEMPT_RISK';
+export const CHECKOUT_PREPARE_POINT = 'CHECKOUT_PREPARE';
+/** 按业务身份查询时，查询类型对应的风控点（支付尝试 ID → 支付尝试，订单 ID → 结账准备）。 */
+export const QUERY_POINTS = { attempt: PAYMENT_ATTEMPT_POINT, order: CHECKOUT_PREPARE_POINT } as const;
 const root = '/risk-decisions/v1/evaluations';
 const enc = encodeURIComponent;
 

@@ -37,6 +37,15 @@ export function AdditionalActionEditor({ actions, catalog, disabled, onChange }:
     const action = catalog.additionalActions.find(item => item.actionCode === code);
     return action?.actionCategory === 'RESTRICTION' ? '冷却主体' : action?.actionCategory === 'TAG' ? '添加风险标签' : action?.actionName ?? code;
   };
+  // 目录没有附加动作表示该风控点运行期不支持：无已有动作时整块不显示，有已有动作（旧版本）时只允许删除
+  const unsupported = !catalog.additionalActions.length;
+  if (unsupported && !actions.length) return null;
+  if (unsupported) return <section aria-label="附加动作" className="risk-additional-actions">
+    <div className="risk-additional-heading"><h4>附加动作 <span>{actions.length}</span></h4></div>
+    <p className="risk-help">该风控点运行期不支持附加动作，请移除后再保存。</p>
+    {actions.map((action, index) => <div key={action.id} className="risk-action-panel"><div className="risk-action-heading"><span><small>{String(index + 1).padStart(2, '0')}</small>{actionName(action.actionCode)}</span>
+      <Button type="text" aria-label={`移除附加动作 ${index + 1}`} disabled={disabled} onClick={() => onChange(actions.filter((_, position) => position !== index))}>×</Button></div></div>)}
+  </section>;
   return <section aria-label="附加动作" className="risk-additional-actions">
     <div className="risk-additional-heading"><h4>附加动作 <span>{actions.length || ''}</span></h4>
       <Dropdown trigger={['click']} menu={{ items: catalog.additionalActions.map(action => ({ key: action.actionCode, label: actionName(action.actionCode) })), onClick: ({ key }) => add(key) }}>

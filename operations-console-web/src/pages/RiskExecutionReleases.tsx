@@ -8,7 +8,7 @@ import { decisionFlowApi } from '../risk/decisionFlowApi';
 import type { FlowHistory, FlowSummary } from '../risk/decisionFlow';
 import { activationNeedsAcknowledgement, checkLabels, EXECUTION_POINTS, executionReleaseApi, hasResource, releaseActions, releaseStatusLabels, SHADOW_SAMPLE_DEFAULT, SHADOW_SAMPLE_MAX, shadowRunning, statusLabel } from '../risk/riskControl';
 import type { ExecutionRelease, ExecutionReleaseItem, ShadowRun } from '../risk/riskControl';
-import { pointName, useRiskPoints } from '../risk/riskPoints';
+import { hasAuthenticationOutput, pointName, useRiskPoints } from '../risk/riskPoints';
 import '../risk/riskExecution.css';
 
 const PREPARE = 'OPERATIONS_RISK_EXECUTION_RELEASE_PREPARE';
@@ -61,12 +61,12 @@ function ReleaseList({ pointCode, canPrepare, onPoint, onOpen, onFailure }: { po
       <Space><Select aria-label="风控点" style={{ width: 200 }} value={pointCode} options={points.map(p => ({ value: p.pointCode, label: `风控点：${p.pointName}` }))} onChange={onPoint} />
         <Button onClick={() => setRevision(r => r + 1)} loading={loading} disabled={!supported}>刷新</Button>
         {canPrepare && <Button type="primary" disabled={!supported} onClick={() => setCreating(true)}>＋ 新建发布</Button>}</Space></div>
-    {!supported ? <Alert type="info" showIcon title={`${pointName(points, pointCode)}暂不支持执行发布（运行期尚未接入），请切换到支付尝试。`} /> : <>
+    {!supported ? <Alert type="info" showIcon title={`${pointName(points, pointCode)}暂不支持执行发布（Risk 尚未接入该点的运行期评估）。`} /> : <>
       {error && <Alert type="error" showIcon title={error} />}
       {active ? <section className="execution-active"><strong>当前生效：R-{active.releaseNo} · {active.flowCode} #{active.flowVersionNo}</strong>
         <span className="cell-meta">{pointName(points, pointCode)} · {active.environment} · 激活人 {active.activatedBy ?? '—'} · {formatRiskTime(active.activatedTime)} · 内容摘要 {active.contentHash.slice(0, 4)}…{active.contentHash.slice(-4)}</span>
         <Button type="link" onClick={() => onOpen(active.releaseId)}>查看详情</Button></section>
-        : !loading && <Alert type="warning" showIcon title="当前没有生效发布，该风控点的评估将返回“未配置”（503）。" />}
+        : !loading && <Alert type="warning" showIcon title={`当前没有生效发布，该风控点的评估将返回“未配置”（503）${pointCode === 'CHECKOUT_PREPARE' ? '，Commerce 创建结账会全部失败，请先激活基线发布' : ''}。`} />}
       <section className="table-panel">
         <Form layout="inline" className="risk-filters"><Form.Item label="状态"><Select aria-label="发布状态" style={{ width: 160 }} value={status} options={[{ value: '', label: '全部' }, ...Object.entries(releaseStatusLabels).map(([value, label]) => ({ value, label }))]} onChange={value => { setStatus(value); setPaging(p => ({ ...p, page: 1 })); }} /></Form.Item></Form>
         <Table<ExecutionReleaseItem> rowKey="releaseId" loading={loading} dataSource={data?.items ?? []} locale={{ emptyText: error ? '发布加载失败' : '暂无执行发布' }}
@@ -199,7 +199,7 @@ function ShadowCard({ release, hasActive, pollExpired }: { release: ExecutionRel
     {pollExpired && <Alert type="warning" showIcon title="影子运行仍在进行，已停止自动刷新，可稍后手动刷新。" />}
     <div className="execution-metrics">
       <Metric label="拒绝 → 放行" value={run.denyToAllowCount} highlight hint="原本拒绝或审核、新版本放行" />
-      <Metric label="认证要求变化" value={run.actionChangeCount} highlight hint="放行时 3DS 要求与基线不同" />
+      {hasAuthenticationOutput(release.pointCode) && <Metric label="认证要求变化" value={run.actionChangeCount} highlight hint="放行时 3DS 要求与基线不同" />}
       <Metric label="放行 → 审核" value={run.allowToReviewCount} />
       <Metric label="放行 → 拒绝" value={run.allowToDenyCount} />
     </div>
@@ -212,11 +212,11 @@ function ActivateModal({ release, active, onClose, onConfirm }: { release: Execu
   const needs = activationNeedsAcknowledgement(release, !!active), run = release.shadowRun;
   return <Modal open title={`激活执行发布 R-${release.releaseNo}`} okText="确认激活" cancelText="取消" okButtonProps={{ danger: true, disabled: needs && !acknowledged }} confirmLoading={busy}
     onOk={async () => { setBusy(true); try { await onConfirm(); } finally { setBusy(false); } }} onCancel={onClose} destroyOnHidden>
-    {active ? <Alert type="warning" showIcon title={`激活后立即替换当前生效发布 R-${active.releaseNo}（${active.flowCode} #${active.flowVersionNo}），对新的支付评估生效。`} />
+    {active ? <Alert type="warning" showIcon title={`激活后立即替换当前生效发布 R-${active.releaseNo}（${active.flowCode} #${active.flowVersionNo}），对该风控点新的评估生效。`} />
       : <Alert type="warning" showIcon title="这是该风控点的首个发布，没有影子对比，激活后立即对评估生效。" />}
     {active && run && <><div className="execution-metrics execution-confirm-metrics">
       <Metric label="拒绝 → 放行" value={run.denyToAllowCount} highlight hint="原本拒绝或审核、新版本放行" />
-      <Metric label="认证要求变化" value={run.actionChangeCount} highlight hint="3DS 要求与基线不同" />
+      {hasAuthenticationOutput(release.pointCode) && <Metric label="认证要求变化" value={run.actionChangeCount} highlight hint="3DS 要求与基线不同" />}
     </div><p className="cell-meta">放行→审核 {run.allowToReviewCount ?? '—'} · 放行→拒绝 {run.allowToDenyCount ?? '—'} · 特征缺失 {run.featureMissingCount ?? '—'} · 失败 {run.failedCount ?? '—'} · 超时 {run.timedOutCount ?? '—'} · 样本 {run.sampleCount} · P99 {run.p99Millis ?? '—'} ms</p></>}
     {needs && <Checkbox checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)}>{active ? '我已查看影子差异并确认激活' : '我已确认首个发布没有影子对比'}</Checkbox>}
   </Modal>;

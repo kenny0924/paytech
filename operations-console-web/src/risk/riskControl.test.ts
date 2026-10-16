@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { activationNeedsAcknowledgement, createExecutionReleaseApi, createRiskListApi, decodeExecutionItem, decodeExecutionRelease, decodeRiskListEntry, entryFilters, releaseActions, releaseStatusLabels, statusLabel } from './riskControl.ts';
+import { activationNeedsAcknowledgement, createExecutionReleaseApi, EXECUTION_POINTS, createRiskListApi, decodeExecutionItem, decodeExecutionRelease, decodeRiskListEntry, entryFilters, releaseActions, releaseStatusLabels, statusLabel } from './riskControl.ts';
 import type { ExecutionRelease } from './riskControl.ts';
 import type { RequestClient } from '../api/session.ts';
 import { ApiError } from '../api/session.ts';
@@ -50,6 +50,12 @@ test('activation acknowledgement is required for first release and for deny-to-a
   assert.equal(activationNeedsAcknowledgement(release(completed), true), false);
   assert.equal(activationNeedsAcknowledgement(release({ ...completed, denyToAllowCount: 1 }), true), true);
   assert.equal(activationNeedsAcknowledgement(release({ ...completed, actionChangeCount: 7 }), true), true);
+});
+
+test('执行发布支持支付尝试与结账准备，支付排第一作为默认点；结账影子无认证变化且无拒绝转放行时不需确认', () => {
+  assert.deepEqual(EXECUTION_POINTS, ['PAYMENT_ATTEMPT_RISK', 'CHECKOUT_PREPARE']);
+  const checkout = decodeExecutionRelease({ ...releaseWire, pointCode: 'CHECKOUT_PREPARE', shadowRun: { ...completed, denyToAllowCount: 0, actionChangeCount: 0 } });
+  assert.equal(activationNeedsAcknowledgement(checkout, true), false);
 });
 
 test('subject value filter is trimmed and empty filters are omitted', () => {
