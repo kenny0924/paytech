@@ -74,3 +74,5 @@
 | 10 清理 | 删除 `E2E_PROV_` 账号 2 个；账号表只剩 `SES_PRIMARY`（AMAZON_SES、me-central-1、无发件地址与密钥、ACTIVE）；审计事件与 Vault 合成密文保留 |
 
 **当前 test 状态：** Platform / BFF / Web 为 `0301719` 镜像，SES 适配器已开启；运营后台「发送账号」可新建、编辑、录入密钥与测试发送。`SES_PRIMARY` 录入真实发件地址与密钥（并在 SES 侧完成发件身份验证）后，注册验证与找回密码邮件即可发出；在此之前与部署前一样发送失败只计指标。回退按第 5 节：Platform `493026bf…` 需配合备份中的 Compose 副本，BFF `aa546ee6…`、Web `e5df9ddc…`。
+
+**真实发信（2026-10-16）：** 用户在 AWS SES `ap-southeast-1` 验证域名 `payorigo.com`（Easy DKIM，Cloudflare DNS），创建只含 `ses:SendEmail` 的 IAM 用户；经运营后台把 `SES_PRIMARY` 改为 `ap-southeast-1` / `noreply@payorigo.com`（v4）并录入密钥（19:43:14Z，经 Vault Protect）；19:44:48Z 测试发送 `SUCCEEDED`，用户确认收到邮件；Platform 无 ERROR。SES 账户仍在沙箱（只能发给已验证地址、200 封/天），生产访问获批前普通用户收不到认证邮件；获批后可把 IAM 策略收窄到 `identity/payorigo.com`。
