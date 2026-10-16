@@ -69,7 +69,8 @@
 - **Designed：** [需求](../requirements/20261016/platform-support-AlipayPlus接入/requirement.md)与[技术方案](../requirements/20261016/platform-support-AlipayPlus接入/technique.md)经用户确认：接入方 `ALIPAY_PLUS` 实现 `PAY`（收银台，REDIRECT `normalUrl`）、`PAY_QUERY`、`REFUND`、`REFUND_QUERY`；`PAY` 增加可选 `payment.paymentMethodType`、`REFUND_QUERY` 增加可选 `refund.paymentAttemptId`；`cancelPayment` 有冲正语义不接。沙箱直连探测 7 笔测试单均已关单。
 - **Implemented / Verified：** 引擎新增脚本函数 `urlEncode`、`urlDecode` 与纯函数 `MONEY_MAJOR_UNITS`；`auto` 测试含 URL 编码签名与验签的完整 HTTP 链路（`StandardApiUrlSignedChannelTest`），外部 API 相关 125 个测试通过。提交 `59459ba`（未推送）。
 - **Platform mor-test Deployed（2026-10-16）：** 镜像 `alipay-plus-20261016`（`ee17f35a…`，构建自 `59459ba`）替换 Webhook 版 `63ae4cde…`，healthy、启动日志无 ERROR；无 SQL 与配置变更。PayBy 5 个 UAT 用例回归 PASSED。发布、备份与回退见[交付记录](../requirements/20261016/platform-support-AlipayPlus接入/delivery.md)。
-- **Pending：** mor-test 的 `ALIPAY_PLUS` 配置与沙箱用例、用户付款后的已付款链路，待阶段确认。
+- **mor-test 配置 Deployed / Sandbox Verified（2026-10-16）：** 经管理接口给 `PAY`、`REFUND_QUERY` 追加可选字段，写入接入方 `ALIPAY_PLUS`（沙箱地址）、3 个脚本、4 个原子 API、4 条流程与验证账号 `SBX_MAIN`；无代码、SQL 变更。4 个不需付款的用例 PASSED，渠道应答全部验签通过，[回执](../requirements/20261016/platform-support-AlipayPlus接入/assets/test-sandbox-receipt.json)；PayBy、PayerMax UAT 回归 PASSED。
+- **Pending：** 用户付款后的已付款链路（查询成功、部分退款、退款查询）；通知、授权代扣不在范围。
 
 ## PayBy（阿联酋）收款接入（2026-10-14）
 

@@ -1,0 +1,357 @@
+{
+  "SBX_PAY_QUERY_NOT_FOUND": {
+    "runCode": "236759472553410560",
+    "runStatus": "PASSED",
+    "failureSummary": null,
+    "sandboxEndpoints": [
+      true
+    ],
+    "steps": [
+      {
+        "stepKey": "query",
+        "stepStatus": "PASSED",
+        "result": {
+          "kind": "EXECUTED",
+          "outputs": {
+            "failureCode": "ORDER_NOT_EXIST",
+            "paymentStatus": "NOT_FOUND",
+            "failureMessage": "Order does not exist."
+          },
+          "executeStatus": "FAIL"
+        },
+        "assertions": [
+          [
+            "executeStatus",
+            true
+          ],
+          [
+            "outputs.paymentStatus",
+            true
+          ],
+          [
+            "outputs.failureCode",
+            true
+          ]
+        ]
+      }
+    ],
+    "exchanges": [
+      {
+        "step": "query",
+        "node": "queryPayment",
+        "executeStatus": "FAIL",
+        "reason": null,
+        "http": 200,
+        "error": null,
+        "channel": {
+          "result": "F",
+          "code": "ORDER_NOT_EXIST",
+          "paymentResult": null
+        }
+      }
+    ]
+  },
+  "SBX_REFUND_NOT_EXIST": {
+    "runCode": "236759481470500864",
+    "runStatus": "PASSED",
+    "failureSummary": null,
+    "sandboxEndpoints": [
+      true
+    ],
+    "steps": [
+      {
+        "stepKey": "refund",
+        "stepStatus": "PASSED",
+        "result": {
+          "kind": "EXECUTED",
+          "outputs": {
+            "failureCode": "ORDER_NOT_EXIST",
+            "refundStatus": "FAILED",
+            "failureMessage": "Order does not exist."
+          },
+          "executeStatus": "FAIL"
+        },
+        "assertions": [
+          [
+            "executeStatus",
+            true
+          ],
+          [
+            "outputs.refundStatus",
+            true
+          ],
+          [
+            "outputs.failureCode",
+            true
+          ]
+        ]
+      }
+    ],
+    "exchanges": [
+      {
+        "step": "refund",
+        "node": "applyRefund",
+        "executeStatus": "FAIL",
+        "reason": null,
+        "http": 200,
+        "error": null,
+        "channel": {
+          "result": "F",
+          "code": "ORDER_NOT_EXIST",
+          "paymentResult": null
+        }
+      }
+    ]
+  },
+  "SBX_REFUND_QUERY_NOT_FOUND": {
+    "runCode": "236759490383396864",
+    "runStatus": "PASSED",
+    "failureSummary": null,
+    "sandboxEndpoints": [
+      true
+    ],
+    "steps": [
+      {
+        "stepKey": "query",
+        "stepStatus": "PASSED",
+        "result": {
+          "kind": "EXECUTED",
+          "outputs": {
+            "failureCode": "ORDER_NOT_EXIST",
+            "refundStatus": "NOT_FOUND",
+            "failureMessage": "Order does not exist."
+          },
+          "executeStatus": "FAIL"
+        },
+        "assertions": [
+          [
+            "executeStatus",
+            true
+          ],
+          [
+            "outputs.refundStatus",
+            true
+          ],
+          [
+            "outputs.failureCode",
+            true
+          ]
+        ]
+      }
+    ],
+    "exchanges": [
+      {
+        "step": "query",
+        "node": "queryRefund",
+        "executeStatus": "FAIL",
+        "reason": null,
+        "http": 200,
+        "error": null,
+        "channel": {
+          "result": "F",
+          "code": "ORDER_NOT_EXIST",
+          "paymentResult": null
+        }
+      }
+    ]
+  },
+  "SBX_PAY_PENDING": {
+    "runCode": "236759499417927680",
+    "runStatus": "PASSED",
+    "failureSummary": null,
+    "sandboxEndpoints": [
+      true
+    ],
+    "steps": [
+      {
+        "stepKey": "pay",
+        "stepStatus": "PASSED",
+        "result": {
+          "kind": "EXECUTED",
+          "outputs": {
+            "nextAction": {
+              "type": "REDIRECT",
+              "redirectUrl": "[omitted]"
+            },
+            "channelStatus": "U",
+            "paymentStatus": "PENDING",
+            "channelTransactionRef": "[omitted]"
+          },
+          "executeStatus": "SUCCESS"
+        },
+        "assertions": [
+          [
+            "executeStatus",
+            true
+          ],
+          [
+            "outputs.paymentStatus",
+            true
+          ],
+          [
+            "outputs.nextAction.type",
+            true
+          ],
+          [
+            "outputs.nextAction.redirectUrl",
+            true
+          ],
+          [
+            "outputs.channelTransactionRef",
+            true
+          ]
+        ]
+      },
+      {
+        "stepKey": "query",
+        "stepStatus": "PASSED",
+        "result": {
+          "kind": "EXECUTED",
+          "outputs": {
+            "amount": {
+              "value": "1.00",
+              "currency": "USD"
+            },
+            "channelStatus": "U",
+            "paymentStatus": "PENDING",
+            "channelTransactionRef": "[omitted]"
+          },
+          "executeStatus": "SUCCESS"
+        },
+        "assertions": [
+          [
+            "executeStatus",
+            true
+          ],
+          [
+            "outputs.paymentStatus",
+            true
+          ],
+          [
+            "outputs.channelTransactionRef",
+            true
+          ],
+          [
+            "outputs.amount.value",
+            true
+          ],
+          [
+            "outputs.amount.currency",
+            true
+          ]
+        ]
+      },
+      {
+        "stepKey": "refund",
+        "stepStatus": "PASSED",
+        "result": {
+          "kind": "EXECUTED",
+          "outputs": {
+            "failureCode": "INVALID_ORDER_STATUS",
+            "refundStatus": "FAILED",
+            "failureMessage": "Order status invalid"
+          },
+          "executeStatus": "FAIL"
+        },
+        "assertions": [
+          [
+            "executeStatus",
+            true
+          ],
+          [
+            "outputs.refundStatus",
+            true
+          ],
+          [
+            "outputs.failureCode",
+            true
+          ]
+        ]
+      },
+      {
+        "stepKey": "refundQuery",
+        "stepStatus": "PASSED",
+        "result": {
+          "kind": "EXECUTED",
+          "outputs": {
+            "failureCode": "REFUND_NOT_EXIST",
+            "refundStatus": "NOT_FOUND",
+            "failureMessage": "Refund transaction not found"
+          },
+          "executeStatus": "FAIL"
+        },
+        "assertions": [
+          [
+            "executeStatus",
+            true
+          ],
+          [
+            "outputs.refundStatus",
+            true
+          ],
+          [
+            "outputs.failureCode",
+            true
+          ]
+        ]
+      }
+    ],
+    "attemptIds": [
+      "APV604644663392"
+    ],
+    "exchanges": [
+      {
+        "step": "pay",
+        "node": "createPayment",
+        "executeStatus": "SUCCESS",
+        "reason": null,
+        "http": 200,
+        "error": null,
+        "channel": {
+          "result": "U",
+          "code": "PAYMENT_IN_PROCESS",
+          "paymentResult": null
+        }
+      },
+      {
+        "step": "query",
+        "node": "queryPayment",
+        "executeStatus": "SUCCESS",
+        "reason": null,
+        "http": 200,
+        "error": null,
+        "channel": {
+          "result": "S",
+          "code": "SUCCESS",
+          "paymentResult": "U"
+        }
+      },
+      {
+        "step": "refund",
+        "node": "applyRefund",
+        "executeStatus": "FAIL",
+        "reason": null,
+        "http": 200,
+        "error": null,
+        "channel": {
+          "result": "F",
+          "code": "INVALID_ORDER_STATUS",
+          "paymentResult": null
+        }
+      },
+      {
+        "step": "refundQuery",
+        "node": "queryRefund",
+        "executeStatus": "FAIL",
+        "reason": null,
+        "http": 200,
+        "error": null,
+        "channel": {
+          "result": "S",
+          "code": "SUCCESS",
+          "paymentResult": "U"
+        }
+      }
+    ]
+  }
+}

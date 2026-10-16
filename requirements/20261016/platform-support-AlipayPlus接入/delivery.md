@@ -5,8 +5,8 @@
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 1 | 需求与接入设计：[需求](./requirement.md)、[技术方案](./technique.md)；沙箱直连探测 | **已确认**（2026-10-16） |
-| 2 | 引擎补函数（技术方案 T1） | **已交付并发布 mor-test，待确认**（提交 `59459ba`，未推送） |
-| 3 | mor-test 配置与不需付款的用例 | 待定 |
+| 2 | 引擎补函数（技术方案 T1） | **已交付并发布 mor-test**（提交 `59459ba`，未推送）；用户“可以”进入阶段 3 |
+| 3 | mor-test 配置与不需付款的用例 | **已交付，待确认** |
 | 4 | 已付款链路（用户付款） | 待定 |
 
 ## 2. 阶段 1 结果（2026-10-16）
@@ -48,3 +48,22 @@
 - **发布：** `./test-environment/compose.sh -f "$PWD/requirements/20261016/platform-support-AlipayPlus接入/release/compose-candidate.yaml" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 platform-support-service`（[compose-candidate.yaml](./release/compose-candidate.yaml) 只替换 Platform 镜像；`compose.sh` 已自带 `compose.yaml` 与 `compose.applications.yaml`，重复传入会因 `security_opt` 重复而校验失败）。07:50:18Z 启动，healthy，镜像核对为 `ee17f35a…`；启动日志无 ERROR，仅常规 BeanPostProcessor WARN；其余 mor-test 容器状态不变。
 - **回归：** PayBy UAT（[uat_cases.py](../../20261014/platform-support-PayBy接入/assets/harness/uat_cases.py)）5 个不依赖已有订单的用例全部 PASSED（`62004`×3、`62007`、余额查询 `0`），带签名响应验签通过；`UAT_UNPAID_QUERY_CANCEL` 需要新建未付款订单，本次未跑。
 - **回退：** 把覆盖文件换成 [Webhook 发布的 compose-candidate.yaml](../../20261015/platform-support-Webhook投递/release/compose-candidate.yaml)（`63ae4cde…`）后执行同一命令。
+
+## 6. 阶段 3 结果（2026-10-16）
+
+- **确认：** 用户“可以”（阶段 2 通过，开始阶段 3）。
+- **写入**（[configure.py](./assets/harness/configure.py)，经 Nginx → Gateway → BFF → Platform 管理接口）：
+  - 标准 API：`PAY` 追加可选 `payment.paymentMethodType`，`REFUND_QUERY` 追加可选 `refund.paymentAttemptId`（各升一版，其余字段原样）。
+  - 接入方 `ALIPAY_PLUS`，出站地址 `ALIPAY_PLUS_OPEN` = `https://open-sea.alipayplus.com`（标记沙箱）。
+  - 脚本 `ALIPAY_PLUS_SIGN`、`ALIPAY_PLUS_VERIFY`（带签名的 200 应答验签后写 `verified` 标记，状态规则都要求该标记，未签名应答落到 ERROR，T6）、`ALIPAY_PLUS_PICK_REFUND`。
+  - 原子 API `PAY_CASHIER`、`INQUIRY_PAYMENT`、`INQUIRY_REFUND`、`REFUND`；流程 `PAY`、`PAY_QUERY`、`REFUND`、`REFUND_QUERY`，全部校验通过。
+- **与技术方案的差异：** 只读表达式不支持 Lambda，无法在输出里按条件取数组元素。因此退款查询没有复用 `INQUIRY_PAYMENT`，改为单独的原子 API `INQUIRY_REFUND`（同一路径），并增加 RESPONSE 脚本 `ALIPAY_PLUS_PICK_REFUND`，用有界 `for` 在 `transactions[]` 中按 `transactionType=REFUND` 与退款单号取记录。原单存在但没有该退款时返回 `FAIL`、`REFUND_NOT_EXIST`，流程映射为 `NOT_FOUND`。
+- **用例**（[sandbox_cases.py](./assets/harness/sandbox_cases.py)，验证账号 `SBX_MAIN`，材料从对接包读取，不打印）全部 PASSED：
+  - `SBX_PAY_QUERY_NOT_FOUND`、`SBX_REFUND_NOT_EXIST`、`SBX_REFUND_QUERY_NOT_FOUND`：渠道 `F ORDER_NOT_EXIST` → `FAIL`，分别为 `NOT_FOUND`、`FAILED`、`NOT_FOUND`。
+  - `SBX_PAY_PENDING`：USD 1.00 / `ALIPAY_CN` 下单 `U PAYMENT_IN_PROCESS` → `PENDING` + `REDIRECT`；查询 `paymentResult U` → `PENDING`，金额经 `MONEY_MAJOR_UNITS` 为 `1.00 USD`；退款 `F INVALID_ORDER_STATUS` → `FAILED`；退款查询 → `NOT_FOUND`/`REFUND_NOT_EXIST`。
+  - 所有 SUCCESS/FAIL 判定都要求验签标记，即每个渠道应答都带签名且验签通过。
+  - 回执：[test-sandbox-receipt.json](./assets/test-sandbox-receipt.json)（不含密钥、收银台 URL、渠道单号）。
+- **修正：** 首轮退款查询“找不到退款”的 `failureMessage` 透传了渠道的 `Success`，改为 `Refund transaction not found` 后重新保存并重跑 4 个用例。
+- **测试单清理：** 两轮 `SBX_PAY_PENDING` 留下的 `APV607038372777`、`APV604644663392` 已直连 `cancelPayment`（不经 Platform），查询确认 `ORDER_IS_CLOSED`。
+- **回归：** PayBy 5 个 UAT 用例与 PayerMax 4 个 UAT 用例（含下单后查询）全部 PASSED；PayerMax 两个因标准 API 升版标为 STALE 的用例已重跑恢复。
+- **未执行：** 未付款链路以外的场景（阶段 4）；未改代码、SQL；未提交。

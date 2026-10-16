@@ -96,6 +96,8 @@ POST、连接 2000 ms / 响应 10000 ms、JSON；脚本 `ALIPAY_PLUS_SIGN` → `
 
 `REFUND_QUERY` 复用 `INQUIRY_PAYMENT`，输出声明 `transactions[]`。
 
+> 阶段 3 实施调整：只读表达式不支持按条件取数组元素，退款查询改为单独的原子 API `INQUIRY_REFUND`（同一路径）加 RESPONSE 脚本 `ALIPAY_PLUS_PICK_REFUND` 匹配 `transactions[]`，见[交付记录](./delivery.md)第 6 节。
+
 ### 5.4 流程输出
 
 | 标准 API | 映射 |
