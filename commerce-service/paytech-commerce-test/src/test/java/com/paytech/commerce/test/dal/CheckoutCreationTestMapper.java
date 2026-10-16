@@ -31,6 +31,10 @@ public interface CheckoutCreationTestMapper {
     @ResultMap("com.paytech.commerce.core.dal.mapper.checkout.BasicCheckoutMapper.Item")
     List<OrderItem> items(long orderId);
 
+    /** 订单上下文冻结的 Risk 结账评估 ID。 */
+    @Select("SELECT risk_checkout_assessment_id FROM t_order_context WHERE order_id=#{orderId}")
+    Long riskCheckoutAssessmentId(long orderId);
+
     /** 一笔创建只允许一条 Checkout 会话。 */
     @Select("SELECT * FROM t_checkout_session WHERE order_id=#{orderId}")
     @ResultMap("com.paytech.commerce.core.dal.mapper.checkout.CheckoutSessionMapper.CheckoutSession")

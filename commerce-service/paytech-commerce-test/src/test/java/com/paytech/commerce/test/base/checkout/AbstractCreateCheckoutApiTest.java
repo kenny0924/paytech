@@ -5,6 +5,7 @@ import java.time.Instant;
 import com.paytech.commerce.test.base.MockTestBase;
 import com.paytech.commerce.test.builder.external.CommercialFactsBuilder;
 import com.paytech.commerce.test.checker.checkout.CreateCheckoutResponseChecker;
+import com.paytech.commerce.test.mocker.external.CheckoutRiskMocker;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
@@ -14,9 +15,10 @@ public abstract class AbstractCreateCheckoutApiTest extends MockTestBase {
     protected static final String CLIENT_ORDER_ID = "checkout-main";
     protected static final Instant NOW = Instant.parse("2026-09-08T00:00:00Z");
 
-    /** 由各场景类的 BeforeEach 调用，每例重新配置本 Client 的 USD/US 预检 DTO。 */
+    /** 由各场景类的 BeforeEach 调用，每例重新配置本 Client 的 USD/US 预检 DTO 与 Risk 默认放行。 */
     protected final void mockDefaultPreparation() {
         preparationMocker.mockFacts(clientId(), "US", "USD", CommercialFactsBuilder.template().build());
+        riskMocker.allow(CheckoutRiskMocker.DEFAULT_EVALUATION_ID);
     }
 
     /** 调用经过真实 Controller，不直接调用 Processor 或 Service 代替入口。 */

@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import com.paytech.commerce.client.api.v1.checkout.ClientCheckoutApi;
 import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody;
 import com.paytech.commerce.test.base.checkout.AbstractCreateCheckoutApiTest;
+import com.paytech.commerce.test.mocker.external.CheckoutRiskMocker;
 
 /**
  * 创建成功、金额计算、合法边界与扩展字段。
@@ -38,7 +39,9 @@ class CreateCheckoutSuccessTest extends AbstractCreateCheckoutApiTest {
         checkoutChecker.assertCreated(clientId(), CLIENT_ORDER_ID, response.orderNo(), NOW, NOW.plusSeconds(1800));
         checkoutChecker.assertCheckoutUrl(clientId(), CLIENT_ORDER_ID, response.checkoutUrl());
         checkoutChecker.assertOrderCount(clientId(), otherClientId(), 1);
+        checkoutChecker.assertRiskAssessment(clientId(), CLIENT_ORDER_ID, CheckoutRiskMocker.DEFAULT_EVALUATION_ID);
         preparationMocker.assertCalls(clientId(), 1);
+        riskMocker.assertCalls(1);
         assertEquals(List.of(false), preparationMocker.transactionStates());
     }
 

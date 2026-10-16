@@ -67,6 +67,12 @@ public final class CustomerCheckoutModels {
         /** 本次商业事实时间。 */
         private final Instant contextTime;
 
+        /** 优惠前商品总额。 */
+        private final BigDecimal merchandiseAmount;
+
+        /** 商品优惠总额，无折扣为 0。 */
+        private final BigDecimal discountAmount;
+
         /** 税前净额。 */
         private final BigDecimal netAmount;
 

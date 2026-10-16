@@ -131,12 +131,12 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
         }
     }
 
-    /** 所有 Owner 调用在保存前完成；本次按批准的固定 Mock 返回初始化结果。 */
+    /** 所有 Owner 调用在保存前完成；Risk 经正式客户端评估，其余 Owner 仍按批准的固定 Mock 返回初始化结果。 */
     void initializeCheckout(CreateCheckoutContext context) {
         var order = context.getOrder();
         var input = new InitializationRequest(order.getOrderId(), order.getOrderNo(), order.getClientId(),
-            order.getConsumerCountryCode(), order.getCurrency(), order.getCreateTime(), order.getNetAmount(),
-            context.getItems());
+            order.getConsumerCountryCode(), order.getCurrency(), order.getCreateTime(), order.getMerchandiseAmount(),
+            order.getDiscountAmount(), order.getNetAmount(), context.getItems());
         var facts = commercial.resolve(input);
         CheckoutInitializationContext.validateCommercial(facts);
         var riskId = risk.assess(input, facts);

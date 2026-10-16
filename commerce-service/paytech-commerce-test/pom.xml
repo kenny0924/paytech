@@ -27,6 +27,10 @@
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-payment-api</artifactId>
             </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>risk-api</artifactId>
+            </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-test-support</artifactId>

@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.commerce.client.api.v1.checkout.ClientCheckoutApi;
 import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.commerce.domain.enums.RiskDecisionResult;
 import com.paytech.commerce.test.base.checkout.AbstractCreateCheckoutApiTest;
 import com.paytech.commerce.test.dal.CustomerTestMapper;
+import com.paytech.commerce.test.mocker.external.CheckoutRiskMocker;
 
 /**
  * 建单关联 Customer（需求 20261015 commerce-Customer与存卡支付，AC-02、AC-03）：经真实创建入口与 MySQL。
@@ -41,6 +43,19 @@ class CreateCheckoutCustomerTest extends AbstractCreateCheckoutApiTest {
             () -> assertEquals(((Number)customers.getFirst().get("customerId")).longValue(), first),
             () -> assertEquals(first, customerMapper.orderCustomerId(clientId(), "order-2")),
             () -> assertNull(customerMapper.orderCustomerId(clientId(), "order-3")));
+    }
+
+    /** Risk 拒绝时在关联 Customer 之前失败：422，不建订单也不建 Customer。 */
+    @Test
+    void test_riskDeniedWithoutCustomer() {
+        riskMocker.replies(CheckoutRiskMocker.result(RiskDecisionResult.DENY, 7201L));
+
+        var response = invoke(template().consumerReference("user-1").build());
+
+        response.assertProblem(422, CommerceCheckoutErrorCode.CHECKOUT_NOT_ELIGIBLE.getCode());
+        assertAll(() -> assertTrue(customerMapper.customers(clientId(), otherClientId()).isEmpty()),
+            () -> checkoutChecker.assertOrderCount(clientId(), otherClientId(), 0));
+        riskMocker.assertCalls(1);
     }
 
     /** 像电话的引用 422，不建订单也不建 Customer。 */

@@ -108,6 +108,14 @@ public final class CheckoutCreationChecker {
         assertEquals(session.getPublicOrigin() + "/c/" + session.getPublicToken(), checkoutUrl);
     }
 
+    /** 订单上下文冻结的 Risk 评估 ID 与期望一致；返回订单 ID 供核对评估业务身份。 */
+    public long assertRiskAssessment(long clientId, String clientOrderId, long evaluationId) {
+        var order = mapper.order(clientId, clientOrderId);
+        assertNotNull(order, "订单应已提交");
+        assertEquals(evaluationId, mapper.riskCheckoutAssessmentId(order.getOrderId()), "冻结的 Risk 评估 ID");
+        return order.getOrderId();
+    }
+
     /** 失败用例不能产生订单。 */
     public void assertAbsent(long clientId, String clientOrderId) {
         assertNull(mapper.order(clientId, clientOrderId), "不应写入订单");

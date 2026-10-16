@@ -46,13 +46,6 @@ public class CustomerCheckoutIntegrationConfiguration {
             .privacyNotice(new FileRef(203L, 303L, "c".repeat(64))).build();
     }
 
-    /** TODO(Risk)：接入批准的准确 OE 资格评估，本轮固定返回评估引用，接入时必须验证真实决定。 */
-    @Bean
-    @ConditionalOnMissingBean(CheckoutRiskPort.class)
-    CheckoutRiskPort checkoutRiskPort() {
-        return (request, facts) -> request.getOrderId();
-    }
-
     /** TODO(Finance)：接入按原订单身份冻结的 Tax Snapshot。 */
     @Bean
     @ConditionalOnMissingBean(CheckoutTaxPort.class)

@@ -56,7 +56,7 @@ HTTP 接口均已删除。
 |-------------------------|---------------------------------------------------------------|
 | ConsumerProtectionPort  | Vault 稳定 Email Protect、独立 Profile Protect/Reveal；按真实用途与保留策略接入 |
 | CheckoutCommercialPort  | CCT 准确候选、Source、Scope、合同、Term Version 与法律事实                   |
-| CheckoutRiskPort        | 当前原订单/OE 的真实允许评估；不得默认 ALLOW                                   |
+| CheckoutRiskPort        | 已接入 Risk `RiskDecisionApi`（CHECKOUT_PREPARE v5，`CheckoutRiskPortImpl`），见[结账点运行期评估](../../../../requirements/20261016/risk-结账点运行期评估/design.md) |
 | CheckoutTaxPort         | Finance 原幂等 Tax Snapshot 及逐行事实                                |
 | CheckoutDocumentPort    | Platform 不可变合同生成与受控原文件链接                                      |
 | CheckoutCardPaymentPort | 当前卡提交、Intent 业务防重、按来源提交编号查询当前结果与受限 3DS 动作 |

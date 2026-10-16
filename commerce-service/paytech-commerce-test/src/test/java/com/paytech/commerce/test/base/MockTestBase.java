@@ -1,6 +1,7 @@
 package com.paytech.commerce.test.base;
 
 import com.paytech.commerce.test.mocker.external.CheckoutCommercialMocker;
+import com.paytech.commerce.test.mocker.external.CheckoutRiskMocker;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.awaitility.Awaitility.await;
 
@@ -66,6 +67,9 @@ public abstract class MockTestBase extends TestBase {
     protected CheckoutCommercialMocker preparationMocker;
 
     @Autowired
+    protected CheckoutRiskMocker riskMocker;
+
+    @Autowired
     private CompensationEventDispatcher compensationDispatcher;
 
     @Autowired
@@ -93,7 +97,7 @@ public abstract class MockTestBase extends TestBase {
             throw failure;
         }
         assertAll("检查外部 Mock 调用", preparationMocker::assertNoUnexpectedCalls,
-            cctCheckoutMockServer::assertNoUnexpectedRequests);
+            riskMocker::assertNoUnexpectedCalls, cctCheckoutMockServer::assertNoUnexpectedRequests);
     }
 
     /** 异步无法停止时保留现场，防止公共清理之后仍被后台请求回写。 */

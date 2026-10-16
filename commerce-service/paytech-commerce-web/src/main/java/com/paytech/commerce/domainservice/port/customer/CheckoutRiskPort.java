@@ -2,8 +2,8 @@ package com.paytech.commerce.domainservice.port.customer;
 
 import com.paytech.commerce.domain.customer.CustomerCheckoutModels.*;
 
-/** Customer 依赖的窄 Owner 边界；实际 Wire 接入在后续阶段完成。 */
+/** 结账风控的窄 Owner 边界，由 Risk 统一评估（CHECKOUT_PREPARE）实现。 */
 public interface CheckoutRiskPort {
-    /** 事务外取得真正允许当前准确 OE/消费者组合的评估 ID；拒绝时抛业务错误。 */
+    /** 事务外取得放行当前订单的评估 ID；未放行时抛业务错误，结果未知或依赖不可用时抛系统错误。 */
     long assess(InitializationRequest request, CommercialFacts facts);
 }
