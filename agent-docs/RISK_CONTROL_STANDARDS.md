@@ -26,7 +26,7 @@
 
 | 编码 | 领域 | 触发时机 | 调用方 | 失败策略 | 接口 | 业务身份 | 状态 | 接口状态 |
 |---|---|---|---|---|---|---|---|---|
-| CHECKOUT_PREPARE（RCO-I03） | FRAUD | Commerce 支付准备，正式订单落库前 | Commerce | FAIL_CLOSED | `POST /risk-decisions/v1/evaluations` | 预分配 `order_id` | 已确认 | 已实现（本机，待部署）：输入合同 `ORDER_PREPARATION` v5，v4 只读；见[结账点运行期评估](../requirements/20261016/risk-结账点运行期评估/design.md) |
+| CHECKOUT_PREPARE（RCO-I03） | FRAUD | Commerce 支付准备，正式订单落库前 | Commerce | FAIL_CLOSED | `POST /risk-decisions/v1/evaluations` | 预分配 `order_id` | 已确认 | 已实现（mor-test 已部署）：输入合同 `ORDER_PREPARATION` v5，v4 只读，见[结账点运行期评估](../requirements/20261016/risk-结账点运行期评估/design.md)；写入累计事件，开放 Client / 运营主体的实时累计与名单变量，见[结账点实时累计](../requirements/20261017/risk-结账点实时累计/design.md) |
 | PAYMENT_ATTEMPT_RISK（RCO-I04） | FRAUD | Payment 每个支付尝试提交渠道前；同步，500 毫秒 | Payment | FAIL_CLOSED | `POST /risk-decisions/v1/evaluations` | `payment_attempt_id` | 已确认 | 已确认 |
 | PAYOUT_CREATION（RCO-I09） | CREDIT、AML | 创建手工出款 | Finance | FAIL_CLOSED | 现为 `POST /manual-payout-eligibility/v1/evaluations`；运行期实现时迁入统一接口并废弃该专用接口 | `payout_id` | 已确认（设计） | 已确认（专用接口）；迁移后路径候选 |
 | PAYOUT_FINAL_APPROVAL（RCO-I09） | CREDIT、AML | 出款最终 Finance 审批 | Finance | FAIL_CLOSED | 同上 | `payout_id` + 版本 | 已确认（设计） | 同上 |
@@ -87,12 +87,14 @@ Client 入驻现用专用路径 `/client-onboarding-review/v1`；是否收拢到
 
 ## 3. 风险事件
 
-风险事件是全部累计特征与监控的唯一数据来源，写入 Risk 本地 `t_velocity_event` 及其主体。每个事件统一包含：事件编码、来源系统、来源 ID 与版本、发生时间、金额与币种（可空）、关联主体列表。事件只追加、不修改；同一来源 ID + 事件编码只记一次。
+风险事件是全部累计特征与监控的唯一数据来源，写入 Risk 本地 `t_velocity_event` 及其主体。事件编码归属风控点，变量只能统计本点事件，可选主体按风控点声明。每个事件统一包含：事件编码、来源系统、来源 ID 与版本、发生时间、金额与币种（可空）、关联主体列表。事件只追加、不修改；同一来源 ID + 事件编码只记一次。
 
 | 事件 | 来源 | 发生时机 | 用途 | 状态 |
 |---|---|---|---|---|
 | PAYMENT_ATTEMPT_ASSESSED | Risk | 支付尝试评估成功 | 评估次数、金额累计 | 已确认 |
 | PAYMENT_ATTEMPT_REJECTED | Risk | 评估结果为 REVIEW 或 DENY | 风控拦截次数 | 已确认 |
+| CHECKOUT_ASSESSED | Risk | 结账评估成功（主体 Client、运营主体；金额为税前净额） | 结账评估次数、净额累计 | 已确认 |
+| CHECKOUT_REJECTED | Risk | 结账评估结果为 REVIEW 或 DENY | 结账拦截次数 | 已确认 |
 | PAYMENT_AUTHORIZED | Payment | 渠道授权（或直接扣款）成功 | 成交、授权率 | 候选（授权结果回流需求，暂缓） |
 | PAYMENT_DECLINED | Payment | 渠道明确拒绝授权 | 卡测试、授权拒绝率 | 候选（授权结果回流需求，暂缓） |
 | PAYMENT_CAPTURED | Payment | 请款成功 | 实际成交额 | 候选 |
@@ -133,6 +135,7 @@ Client 入驻现用专用路径 `/client-onboarding-review/v1`；是否收拢到
 | 算法 | COUNT、SUM_AMOUNT、DISTINCT_COUNT、LAST_AMOUNT、SECONDS_SINCE_LAST | 已确认 |
 | 算法 | RATE（两类事件计数之比，如拒绝/尝试、拒付/成交） | 候选 |
 | 窗口口径 | [评估时间 − 窗口, 评估时间)；金额只合计同币种 | 已确认 |
+| 低基数主体限制 | Client、运营主体：次数、最近金额、距上次秒数窗口最长 1 天，金额合计最长 1 小时，不支持去重数（单个 Feature 200 ms 上限；见[结账点实时累计](../requirements/20261017/risk-结账点实时累计/technique.md)第 4 节）；更长窗口待小时预聚合 | 已确认 |
 
 游戏行业首批特征库（候选，作为模板随需求确认）：
 

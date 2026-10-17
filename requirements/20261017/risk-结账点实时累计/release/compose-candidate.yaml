@@ -1,0 +1,10 @@
+# 候选：本需求构建的三个镜像（tag checkout-velocity-20261017），使用固定 image ID（2026-10-17 构建）。
+# 源码：干净 worktree @ HEAD（含 14381f9）+ 仅本需求未提交差异；BFF 与 platform-support-api 同 reactor 构建。
+# 叠加在 test-environment 的 compose.yaml + compose.applications.yaml 之上；只换镜像，配置不变。
+services:
+  risk-service:
+    image: sha256:725f7d12aef46b68e828267adbabed26ef76d5e78000f8bb1b2e47c9c5c66a3b
+  operations-console-bff:
+    image: sha256:4b702a37c151c8afe03d86ddd2ffa7c5841460ba32d7ab38a16f0dd704b9cdf9
+  operations-console-web:
+    image: sha256:03668fd01a22781a614109b0a58355df84919c15588ab1d48b539d08c36b1360

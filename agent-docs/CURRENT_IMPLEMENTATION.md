@@ -108,6 +108,12 @@
 - **数据库与部署：**本机 `mor_risk` 与 mor-test `mor_risk` 经授权执行 [ddl](../requirements/20261016/risk-结账点运行期评估/db/ddl.sql)、[dml](../requirements/20261016/risk-结账点运行期评估/db/dml.sql)（均先备份）。mor-test Risk 换为 image `8e26b91b519c`，27 个只读接口回归一致，结账默认放行基线已激活，验收合成数据已清理（[记录](../requirements/20261016/risk-结账点运行期评估/release/test-acceptance.md)）；test 已有结账执行发布，旧镜像 `727d51127e61` 不可再回退。mor-test 未部署 Commerce 与 Operations Web 本次改动。
 - **遗留：**本机跑 Risk 自动测试会清掉结账执行发布，之后需重建基线；Commerce CCT 不可用路径仍返回 `SERVICE_UNAVAILABLE`（不在 Client API 合同表中）；规则配置页冻结前检查比 Risk 严（支付点既有）。
 
+## Risk 结账点实时累计（2026-10-17，已本地提交，未推送；Risk、Operations BFF、Operations Web 已部署 mor-test）
+
+- **Implemented / auto 已验证：**按[需求](../requirements/20261017/risk-结账点实时累计/requirement.md)与[方案](../requirements/20261017/risk-结账点实时累计/design.md)，结账评估成功时同一事务写入 `CHECKOUT_ASSESSED`（非放行另写 `CHECKOUT_REJECTED`），主体为 Client 与运营主体，来源 `CHECKOUT_INPUT_SNAPSHOT` + 快照 ID；事件构造与支付共用（支付事件摘要不变）。事件编码归属风控点，描述符按点声明累计与名单主体，结账开放实时累计与名单变量；Client、运营主体限制指标与窗口（创建时校验，历史变量不复核）。变量创作上下文新增 `featureCatalogs`，Operations BFF 透传、Web 变量页按点读取。窗口查询索引追加 `velocity_event_id`，金额合计与最近一次固定查询计划。Risk auto 2083/2083，BFF 1379/1379，Web 1067/1067。
+- **数据库与部署：**本机与 mor-test `mor_risk` 经授权执行 [ddl](../requirements/20261017/risk-结账点实时累计/db/ddl.sql)（2 条注释、1 个索引，先备份）。mor-test Risk `725f7d12aef4`、BFF `4b702a37c151`、Web `03668fd01a22`（构建自 `14381f9` + 本需求改动，Web 随带上线上一需求 `87fd57f`），回归与验收通过、验收数据已清理，test 无结账 Feature 变量（[记录](../requirements/20261017/risk-结账点实时累计/release/test-acceptance.md)）；结账生效发布为同一基线流程版本的 `237117104682274816`。
+- **遗留：**Client、运营主体 24 小时 / 7 天金额合计与去重数需小时预聚合（后续需求）；累计事件无保留期清理；本机保留的结账基线流程会使 Risk 全量测试流程计数多 1，跑全量前需先处理。
+
 ## Risk 评估结果查询与解释（2026-10-15）
 
 - **Implemented / auto 已验证，已部署 mor-test（代码尚未提交）：** 按[需求](../requirements/20261015/risk-评估结果查询与解释/requirement.md)与[方案](../requirements/20261015/risk-评估结果查询与解释/design.md)新增 `RiskEvaluationQueryApi`：`GET /risk-decisions/v1/evaluations/{id}`、按 `pointCode+businessKey` 查正式评估（RCO-I06），`GET …/{id}/explanation`（RCO-I10：输入原值、流程路径、规则与谓词结果、变量取值、影子比较）。评估与影子回放新增写入 `t_evaluation_flow_trace`（Risk 模型 84 → 85 表），超时与 Feature 失败（`FEATURE_ERROR`）保留过程记录，影子补写规则轨迹。本机 `mor_risk` 经授权已建表；Risk 全量 auto **2022/2022**；阶段 5 打包 jar 真实 HTTP 71 项通过、评估耗时与基线持平（[报告](../requirements/20261015/risk-评估结果查询与解释/verification/stage5-local-acceptance.md)）。2026-10-15 mor-test：执行 ddl（85 表）、Risk 换为 image `727d51127e61`，20 个只读接口回归一致，验收 34 项通过，合成数据已清理（[部署记录](../requirements/20261015/risk-评估结果查询与解释/release/test-acceptance.md)）。部署前写入的评估路径不可用；Operations 页面与 BFF 未接入（[交接单](../requirements/20261015/risk-评估结果查询与解释/handoff/operations.md)）。

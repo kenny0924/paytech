@@ -1,0 +1,10 @@
+# 回退：本需求发布前 mor-test 运行的三个镜像（2026-10-17 只读核对）。
+# Risk：checkout-runtime-20261017；Ops BFF / Web：webhook-errcode-20261017。
+# 叠加在 test-environment 的 compose.yaml + compose.applications.yaml 之上；三者须一起回退（变量上下文严格形状互相依赖）。
+services:
+  risk-service:
+    image: sha256:8e26b91b519c8c69b00c7e8c264b23b5e80a37c53fdff94a8f596e742e6ddfe6
+  operations-console-bff:
+    image: sha256:aec81706d50eb3c625c53617479e1aa187a5133bdba620cbddd6fa81dfcc8df4
+  operations-console-web:
+    image: sha256:04f9f7d1f684ba0c865b288f4f356f291e5e5c91ad48149fc76be2647be135e7
