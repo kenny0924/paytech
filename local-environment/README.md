@@ -229,8 +229,16 @@ Measured on 2026-10-17 on the Apple M4 Pro / Docker Desktop 15.84 GiB machine, w
 | `flink-taskmanager` | 504 MiB / 1.25 GiB |
 | Total | about 2.7 GiB (limits 4.75 GiB) |
 
-Images add about 5.3 GB of disk (Doris FE 1.5 GB, BE 3.2 GB, Flink CDC image 0.66 GB). Do not run analytics alongside
-the `mor-test` environment and the full base profile unless Docker has that much free memory.
+Disk: the images are 5.9 GB compressed (Doris BE 3.2 GB, FE 1.5 GB, Flink 0.58 GB, local Flink CDC layer 0.08 GB),
+but Docker Desktop's image store keeps compressed and unpacked layers, so `docker image ls` reports about 17 GB and
+`docker system df` grew by about 14 GB on this machine. Check `df -h /` first; `LOCAL_DEVELOPMENT_ENVIRONMENT.md`
+asks for at least 15 GiB free after `base`. Do not run analytics alongside the `mor-test` environment and the full base
+profile unless Docker has the memory above free. Removing the images afterwards (re-pulled on the next build/start):
+
+```bash
+docker image rm mor-local/flink-cdc:1.20.5-cdc3.7.0 flink:1.20.5-scala_2.12-java17 \
+  apache/doris:be-3.0.8 apache/doris:fe-3.0.8
+```
 
 The BE runs with `SKIP_CHECK_ULIMIT=true` because Docker Desktop's VM keeps `vm.max_map_count` at 262144 (Doris
 production requires 2000000). This is a local single-node setting, not a deployment baseline.
