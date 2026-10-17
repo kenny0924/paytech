@@ -34,6 +34,6 @@ public interface ClientApplicationMapper {
     int concludeReview(@Param("row") ClientApplicationSubmission row, @Param("status") ClientApplicationStatus status,
         @Param("decisionId") Long decisionId, @Param("release") boolean release, @Param("now") Instant now);
 
-    /** 本账号作为申请人且存在 APPROVED 申请的 Client 摘要，按 Client ID 升序。 */
-    List<ClientWorkspaceSummary> findApprovedSummaries(@Param("accountId") long accountId, @Param("clientIds") List<Long> clientIds);
+    /** 存在 APPROVED 申请的 Client 摘要，按 Client ID 升序；成员关系由调用方依据 Platform 事实决定。 */
+    List<ClientWorkspaceSummary> findApprovedSummaries(@Param("clientIds") List<Long> clientIds);
 }

@@ -49,6 +49,38 @@ public final class ClientEmailChallengePolicy {
         }
     }
 
+    /**
+     * 邀请接受挑战的范围：只绑定邀请，不绑定账号或邮箱
+     * <li>同一邀请任一时刻只有一条活动挑战；重发先替代旧挑战再写入新挑战。</li>
+     */
+    public String invitationScopeHash(long invitationId) {
+        if (invitationId <= 0) {
+            throw new IllegalArgumentException("邀请挑战范围缺少邀请标识");
+        }
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(
+                tuple("CLIENT-INVITATION-SCOPE", Long.toString(invitationId)).getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 不可用", exception);
+        }
+    }
+
+    /**
+     * 只判断链接秘密本身是否正确，不判断挑战是否仍可消费
+     * <li>用于邀请预览：已接受、已撤销或已到期的邀请仍需凭正确链接显示其状态。</li>
+     * <li>尝试次数用尽后一律视为不正确。</li>
+     */
+    public boolean matchesSecret(ChallengeState state, String computedHmac, int keyVersion) {
+        if (state == null || state.maxAttempts() != 5 || state.usedAttempts() < 0
+            || state.usedAttempts() >= state.maxAttempts() || keyVersion <= 0 || state.keyVersion() != keyVersion
+            || computedHmac == null || !computedHmac.matches(DIGEST_PATTERN) || state.secretHmac() == null
+            || !state.secretHmac().matches(DIGEST_PATTERN)) {
+            return false;
+        }
+        return MessageDigest.isEqual(state.secretHmac().getBytes(StandardCharsets.US_ASCII),
+            computedHmac.getBytes(StandardCharsets.US_ASCII));
+    }
+
     /** HMAC 同时绑定查找标识、用途、账号范围和秘密，禁止跨接口消费。 */
     public String proofInput(String challengeNo, ClientChallengePurpose purpose, String scopeHash, String secret) {
         if (!validLink(challengeNo, secret) || purpose == null || scopeHash == null

@@ -29,6 +29,9 @@ public final class DeliveryAuthenticationEmailSender implements AuthenticationEm
     /** 密码重置邮件模板。 */
     public static final String PASSWORD_RESET_TEMPLATE = "CLIENT_PASSWORD_RESET";
 
+    /** 工作区邀请邮件模板。 */
+    public static final String INVITATION_TEMPLATE = "CLIENT_TENANT_INVITATION";
+
     /** 注册请求暂无语言字段，首期固定中文。 */
     public static final String LOCALE = "zh-CN";
 
@@ -58,12 +61,11 @@ public final class DeliveryAuthenticationEmailSender implements AuthenticationEm
     /** 按用途选择模板与页面路径，只发送一次。 */
     @Override
     public void send(String canonicalEmail, ClientChallengePurpose purpose, LinkMaterial link) {
-        boolean signUp = purpose == ClientChallengePurpose.SIGN_UP_EMAIL;
         var request = new SendTransientEmailRequest();
-        request.setTemplateCode(signUp ? VERIFICATION_TEMPLATE : PASSWORD_RESET_TEMPLATE);
+        request.setTemplateCode(template(purpose));
         request.setEmail(canonicalEmail);
         request.setLocale(LOCALE);
-        request.setParameters(Map.of(NotificationInput.TRANSIENT_LINK_PARAMETER, publicOrigin + (signUp ? "/verify-email" : "/reset-password")
+        request.setParameters(Map.of(NotificationInput.TRANSIENT_LINK_PARAMETER, publicOrigin + page(purpose)
             + "#challengeNo=" + link.challengeNo() + "&secret=" + link.secret()));
         String failure;
         try {
@@ -80,6 +82,24 @@ public final class DeliveryAuthenticationEmailSender implements AuthenticationEm
         }
         metrics.counter(METRIC, "result", "failed", "reason", failure).increment();
         throw new ServiceUnavailableException();
+    }
+
+    /** 用途对应的即时发送模板；未支持的用途属于编程错误。 */
+    static String template(ClientChallengePurpose purpose) {
+        return switch (purpose) {
+            case SIGN_UP_EMAIL -> VERIFICATION_TEMPLATE;
+            case PASSWORD_RESET -> PASSWORD_RESET_TEMPLATE;
+            case TENANT_INVITATION_ACCEPT -> INVITATION_TEMPLATE;
+        };
+    }
+
+    /** 用途对应的站内页面路径。 */
+    static String page(ClientChallengePurpose purpose) {
+        return switch (purpose) {
+            case SIGN_UP_EMAIL -> "/verify-email";
+            case PASSWORD_RESET -> "/reset-password";
+            case TENANT_INVITATION_ACCEPT -> "/invitations/accept";
+        };
     }
 
     /** 供应商受理为成功；其余结果给出有界原因。 */

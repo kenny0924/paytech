@@ -195,7 +195,7 @@ class ClientWorkspaceHttpAutoTest {
         assertEquals("{\"workspace\":{\"clientId\":\"20\",\"clientNo\":\"CL-20\",\"displayName\":\"Example Trading LLC\","
             + "\"clientType\":\"ORGANIZATION\",\"clientStatus\":\"ACTIVE\"},\"profile\":{\"country\":\"AE\","
             + "\"businessModelCode\":\"DIGITAL_GOODS\",\"approvedAt\":\"2026-10-16T08:00:00.000000Z\"},"
-            + "\"notice\":\"PAYMENTS_NOT_YET_ENABLED\",\"capabilities\":[\"API_CREDENTIAL_READ\",\"WEBHOOK_READ\"]}", result.body());
+            + "\"notice\":\"PAYMENTS_NOT_YET_ENABLED\",\"capabilities\":[\"API_CREDENTIAL_READ\",\"WEBHOOK_READ\",\"TEAM_READ\"]}", result.body());
         var summaries = CALLS.stream().filter(c -> c.path().endsWith("/client-summaries")).findFirst().orElseThrow();
         assertEquals("clientId=20", summaries.query());
     }
@@ -283,7 +283,7 @@ class ClientWorkspaceHttpAutoTest {
         } else if (path.endsWith("/authentication/v1/client/refresh")) {
             body = grant("ACCOUNT", mode.equals("fallback") ? "TENANT_SUSPENDED" : null);
         } else if (path.endsWith("/authorization/v1/client/authorize")) {
-            body = "{\"granted\":[\"CLIENT_WEBHOOK_READ\",\"CLIENT_API_CREDENTIAL_READ\"]}";
+            body = "{\"granted\":[\"CLIENT_WEBHOOK_READ\",\"CLIENT_API_CREDENTIAL_READ\",\"CLIENT_TEAM_READ\"]}";
         } else if (path.endsWith("/client-summaries")) {
             if (mode.equals("cct-down")) {
                 problem(exchange, 503, "Service Unavailable", "ONBOARDING_DEPENDENCY_UNAVAILABLE");

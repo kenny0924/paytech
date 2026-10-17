@@ -1,6 +1,8 @@
-/** 工作区首页返回的开发者权限能力；未授予的项不出现。 */
-export type Capability = "API_CREDENTIAL_READ" | "API_CREDENTIAL_MANAGE" | "WEBHOOK_READ" | "WEBHOOK_MANAGE";
-export const capabilityCodes: readonly Capability[] = ["API_CREDENTIAL_READ", "API_CREDENTIAL_MANAGE", "WEBHOOK_READ", "WEBHOOK_MANAGE"];
+/** 工作区首页返回的权限能力（开发者与团队）；未授予的项不出现。 */
+export type Capability = "API_CREDENTIAL_READ" | "API_CREDENTIAL_MANAGE" | "WEBHOOK_READ" | "WEBHOOK_MANAGE" | "TEAM_READ" | "TEAM_MANAGE";
+export const capabilityCodes: readonly Capability[] = [
+  "API_CREDENTIAL_READ", "API_CREDENTIAL_MANAGE", "WEBHOOK_READ", "WEBHOOK_MANAGE", "TEAM_READ", "TEAM_MANAGE",
+];
 
 /** 只保留已知能力码；未知值不参与菜单判断。 */
 export function readCapabilities(value: unknown): Capability[] {

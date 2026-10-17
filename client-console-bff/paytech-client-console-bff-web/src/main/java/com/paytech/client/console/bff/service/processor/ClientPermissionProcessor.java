@@ -41,7 +41,7 @@ public class ClientPermissionProcessor {
 
     /**
      * 工作区首页的页面能力
-     * <li>会话失效照常抛出；其他失败返回空能力，页面只隐藏开发者菜单。</li>
+     * <li>会话失效照常抛出；其他失败返回空能力，页面只隐藏开发者与团队菜单。</li>
      */
     public List<String> capabilities(String[] identity) {
         try {
@@ -70,13 +70,15 @@ public class ClientPermissionProcessor {
         }
     }
 
-    /** 固定的四项开发者能力。 */
+    /** 固定的开发者与团队能力。 */
     private static Map<String, String> capabilities() {
         var map = new LinkedHashMap<String, String>();
         map.put("API_CREDENTIAL_READ", "CLIENT_API_CREDENTIAL_READ");
         map.put("API_CREDENTIAL_MANAGE", "CLIENT_API_CREDENTIAL_MANAGE");
         map.put("WEBHOOK_READ", "CLIENT_WEBHOOK_READ");
         map.put("WEBHOOK_MANAGE", "CLIENT_WEBHOOK_MANAGE");
+        map.put("TEAM_READ", "CLIENT_TEAM_READ");
+        map.put("TEAM_MANAGE", "CLIENT_TEAM_MANAGE");
         return Collections.unmodifiableMap(map);
     }
 }

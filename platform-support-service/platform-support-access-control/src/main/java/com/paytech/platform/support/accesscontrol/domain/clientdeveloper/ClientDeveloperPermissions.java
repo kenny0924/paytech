@@ -2,7 +2,7 @@ package com.paytech.platform.support.accesscontrol.domain.clientdeveloper;
 
 import java.util.List;
 
-/** CLIENT 工作区开发者能力的权限码；首次 ACTIVE 投影时授予工作区 TENANT_OWNER 角色。 */
+/** CLIENT 工作区开发者能力的权限码；各系统角色的授予矩阵见 ClientTeamPermissions。 */
 public final class ClientDeveloperPermissions {
 
     /** 查看本工作区 API 凭证。 */
@@ -17,7 +17,7 @@ public final class ClientDeveloperPermissions {
     /** 维护本工作区 Webhook 端点、密钥、测试事件与重发。 */
     public static final String WEBHOOK_MANAGE = "CLIENT_WEBHOOK_MANAGE";
 
-    /** 工作区 OWNER 默认拥有的全部开发者权限。 */
+    /** 全部开发者权限（所有者与管理员拥有）。 */
     public static final List<String> OWNER_DEFAULTS = List.of(API_CREDENTIAL_READ, API_CREDENTIAL_MANAGE, WEBHOOK_READ,
         WEBHOOK_MANAGE);
 

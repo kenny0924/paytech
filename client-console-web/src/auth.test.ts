@@ -143,3 +143,22 @@ test('workspace paths are allowed and malformed fallback reasons are rejected',a
  const bad=createAuthClient(async()=>Response.json({context:{...accountContext,fallbackReason:'<script>'},accessToken:'x',expiresAt:'2099-01-01T00:00:00.000000Z'}));
  await assert.rejects(bad.restore(),/登录状态响应异常/);
 });
+test('team and invitation paths use the protected helper and preview is sent without credentials',async()=>{
+ const calls:{url:string;init:RequestInit}[]=[];
+ const client=createAuthClient(async(input,init)=>{calls.push({url:String(input),init:init!});
+  return String(input).endsWith('/refresh')?Response.json({context:tenantContext,accessToken:'tenant',expiresAt:'2099-01-01T00:00:00.000000Z'}):Response.json({items:[]});});
+ await client.request('/team/v1/members?page=1&size=20');
+ await client.request('/invitations/v1/details',{method:'POST',body:{challengeNo:'c',secret:'s'}});
+ const team=calls.find(call=>call.url==='/api/client/team/v1/members?page=1&size=20');
+ assert.equal(new Headers(team!.init.headers).get('Authorization'),'Bearer tenant');
+ assert.ok(calls.some(call=>call.url==='/api/client/invitations/v1/details'));
+ const anonymous=createAuthClient(async(input,init)=>{calls.push({url:String(input),init:init!});return Response.json({emailMasked:'d***@example.test'});});
+ calls.length=0;
+ await anonymous.publicRequest('/invitations/v1/preview',{challengeNo:'c',secret:'s'});
+ assert.deepEqual(calls.map(call=>call.url),['/api/client/invitations/v1/preview']);
+ assert.equal(new Headers(calls[0].init.headers).get('Authorization'),null);
+ assert.equal(calls[0].init.method,'POST');
+ assert.equal(calls[0].init.body,JSON.stringify({challengeNo:'c',secret:'s'}));
+ assert.throws(()=>anonymous.publicRequest('/invitations/v1/acceptance' as '/invitations/v1/preview',{}),/请求路径无效/);
+ await assert.rejects(client.request('/invitations-admin/v1/x'),/请求路径无效/);
+});

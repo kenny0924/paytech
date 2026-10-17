@@ -2230,3 +2230,45 @@ INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,cap
   (900000000000090760, 900000000000090410, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
 
 COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- Client Console team members and invitations (2026-10-17, requirements/20261017/client-console-团队成员与邀请).
+-- Self-contained block: on an environment already initialized by the statements above, apply ONLY this block.
+-- Requires the Client authentication email block (SES_PRIMARY, 900000000000070001).
+-- Team permissions are granted per tenant by the first ACTIVE projection (four system roles, ClientTeamPermissions);
+-- already-activated tenants are backfilled by the requirement's db/dml.sql, not here.
+-- Keep notification.transient-template-codes including CLIENT_TENANT_INVITATION. ${link} is supplied in memory.
+-- Rollback: delete the rows by the IDs below.
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @client_team_initial_time = UTC_TIMESTAMP(6);
+SET @client_tenant_invitation_template_id = 900000000000070013;
+
+INSERT INTO t_permission (permission_id,permission_code,resource_type,action_code,risk_level,status,version,create_time,update_time) VALUES
+  (900000000000058105, 'CLIENT_TEAM_READ', 'CLIENT_TEAM', 'READ', 'LOW', 'ACTIVE', 1, @client_team_initial_time, @client_team_initial_time),
+  (900000000000058106, 'CLIENT_TEAM_MANAGE', 'CLIENT_TEAM', 'MANAGE', 'HIGH', 'ACTIVE', 1, @client_team_initial_time, @client_team_initial_time);
+
+INSERT INTO t_notification_template (
+    template_id, template_code, medium, status, version, create_time, update_time
+) VALUES
+    (@client_tenant_invitation_template_id, 'CLIENT_TENANT_INVITATION', 'EMAIL', 'ACTIVE', 1,
+        @client_team_initial_time, @client_team_initial_time);
+
+INSERT INTO t_notification_template_content (
+    content_id, template_id, locale, subject_template, body_template, version, create_time, update_time
+) VALUES
+    (900000000000070023, @client_tenant_invitation_template_id, 'zh-CN', 'PAYTECH · 邀请您加入工作区',
+        CONCAT('邀请您加入工作区', CHAR(10), CHAR(10), '您被邀请加入一个 PAYTECH Client 工作区。请打开以下链接，',
+            '使用收到本邮件的邮箱登录或注册后接受邀请：', CHAR(10), '${link}', CHAR(10), CHAR(10),
+            '邀请 7 天内有效。如果您不认识发起人，请忽略此邮件。'),
+        1, @client_team_initial_time, @client_team_initial_time);
+
+INSERT INTO t_notification_route (
+    route_id, notification_template_id, primary_provider_id, fallback_provider_id, status, version,
+    create_time, update_time
+) VALUES
+    (900000000000070033, @client_tenant_invitation_template_id, 900000000000070001, NULL, 'ACTIVE', 1,
+        @client_team_initial_time, @client_team_initial_time);
+
+COMMIT;

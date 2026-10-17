@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 
 import com.paytech.foundation.web.api.ApiErrorStatusResolver;
 import com.paytech.platform.support.api.enums.ApiCredentialErrorCode;
+import com.paytech.platform.support.api.enums.ClientTeamErrorCode;
 import com.paytech.platform.support.api.enums.GatewayConfigurationErrorCode;
 import com.paytech.platform.support.api.enums.OperationsErrorCode;
 import com.paytech.platform.support.api.enums.StandardApiExecutionErrorCode;
@@ -46,6 +47,14 @@ public class PlatformApiErrorConfiguration {
             if (errorCode == com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode.CLIENT_WORKSPACE_UNAVAILABLE
                 || errorCode == com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode.CLIENT_PERMISSION_DENIED) {
                 return HttpStatus.FORBIDDEN;
+            }
+            if (errorCode instanceof ClientTeamErrorCode teamError) {
+                return switch (teamError) {
+                    case CLIENT_INVITATION_INVALID -> HttpStatus.NOT_FOUND;
+                    case CLIENT_INVITATION_EMAIL_MISMATCH -> HttpStatus.FORBIDDEN;
+                    case CLIENT_INVITATION_CLOSED, CLIENT_INVITATION_DUPLICATE, CLIENT_INVITATION_LIMIT_REACHED,
+                        CLIENT_MEMBER_EXISTS, CLIENT_MEMBER_PROTECTED -> HttpStatus.CONFLICT;
+                };
             }
             if (errorCode == ApiCredentialErrorCode.API_CREDENTIAL_AUTHENTICATION_FAILED) {
                 return HttpStatus.UNAUTHORIZED;

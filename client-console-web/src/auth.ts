@@ -110,7 +110,7 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
     /** 读取并清除最近一次刷新降级的原因码，供开始页提示一次。 */
     takeFallback: () => { const reason = fallback; fallback = null; return reason; },
     async request<T>(path: string, options: ApiOptions = {}): Promise<T> {
-      if (!/^\/(onboarding|onboarding-files|workspace|developer)\/v1\//.test(path) || /[\\#]/.test(path) || path.includes('..')) throw new Error('请求路径无效');
+      if (!/^\/(onboarding|onboarding-files|workspace|developer|team|invitations)\/v1\//.test(path) || /[\\#]/.test(path) || path.includes('..')) throw new Error('请求路径无效');
       const started = generation, expectedAccount = active?.context.accountId;
       if (!active || Date.parse(active.expiresAt) <= Date.now() + 30_000) await restore();
       if (!active || started !== generation || (expectedAccount && active.context.accountId !== expectedAccount)) throw new RequestFailure(401, '登录账号已变更，请重新登录');
@@ -125,6 +125,14 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
       }
       if (started !== generation) throw new RequestFailure(401, '登录账号已变更，请重新读取资料');
       return result;
+    },
+    /**
+     * 公开接口（不带登录凭证、不刷新会话）
+     * <li>只允许邀请预览这一条固定路径。</li>
+     */
+    publicRequest<T>(path: '/invitations/v1/preview', body: unknown): Promise<T> {
+      if (path !== '/invitations/v1/preview') throw new Error('请求路径无效');
+      return call<T>(path, body, false, {method: 'POST', body});
     },
     subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; },
     async login(email: string, password: string) {

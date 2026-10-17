@@ -33,7 +33,8 @@ public class ClientRequestInterceptor implements HandlerInterceptor {
         }
         boolean emptyCommand=request.getRequestURI().startsWith("/client-onboarding/") && ("DELETE".equals(request.getMethod()) || request.getRequestURI().endsWith("/submissions"))
             || request.getRequestURI().startsWith("/onboarding-files/") && (request.getRequestURI().endsWith("/completion") || request.getRequestURI().endsWith("/download"))
-            || request.getRequestURI().startsWith("/client-developer/") && (request.getRequestURI().endsWith("/test-events") || request.getRequestURI().endsWith("/replay"));
+            || request.getRequestURI().startsWith("/client-developer/") && (request.getRequestURI().endsWith("/test-events") || request.getRequestURI().endsWith("/replay"))
+            || request.getRequestURI().startsWith("/client-team/") && (request.getRequestURI().endsWith("/resend") || request.getRequestURI().endsWith("/revocation") || request.getRequestURI().endsWith("/removal"));
         if(!read && !emptyCommand) {
             try {
                 if(request.getContentType()==null || !MediaType.APPLICATION_JSON.isCompatibleWith(MediaType.parseMediaType(request.getContentType()))) {

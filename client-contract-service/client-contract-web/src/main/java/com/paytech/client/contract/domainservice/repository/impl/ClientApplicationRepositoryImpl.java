@@ -79,7 +79,7 @@ public class ClientApplicationRepositoryImpl implements ClientApplicationReposit
 
     /** 只读组合查询。 */
     @Override
-    public List<ClientWorkspaceSummary> findApprovedSummaries(long accountId, List<Long> clientIds) {
-        return mapper.findApprovedSummaries(accountId, clientIds);
+    public List<ClientWorkspaceSummary> findApprovedSummaries(List<Long> clientIds) {
+        return mapper.findApprovedSummaries(clientIds);
     }
 }

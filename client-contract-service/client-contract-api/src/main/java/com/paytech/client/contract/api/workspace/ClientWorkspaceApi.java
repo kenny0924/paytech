@@ -12,7 +12,8 @@ import com.paytech.client.contract.api.workspace.response.ClientSummariesRespons
 public interface ClientWorkspaceApi {
     /**
      * 按 Client ID 批量读取已批准客户摘要
-     * <li>只返回当前账号作为申请人、且存在 APPROVED 申请的 Client；其余 ID 静默省略，不区分不存在或无权。</li>
+     * <li>只返回存在 APPROVED 申请的 Client；其余 ID 静默省略，不区分不存在或未批准。</li>
+     * <li>clientIds 由 Client BFF 从 Platform 当前账号的成员列表取得，CCT 不判断成员关系。</li>
      * <li>不返回证件号、地址或联系方式。</li>
      *
      * @param caller 私网调用方，必须为 client-console-bff

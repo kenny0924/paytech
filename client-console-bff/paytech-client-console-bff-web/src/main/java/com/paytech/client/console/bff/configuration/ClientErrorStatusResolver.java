@@ -5,6 +5,7 @@ import com.paytech.foundation.common.enums.CodeMessageEnum;
 import com.paytech.foundation.web.api.ApiErrorStatusResolver;
 import com.paytech.client.console.bff.domain.enums.ClientBffErrorCode;
 import com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode;
+import com.paytech.platform.support.api.enums.ClientTeamErrorCode;
 /** 错误体由 Foundation 输出，本地只声明状态映射。 */
 @Component
 public class ClientErrorStatusResolver implements ApiErrorStatusResolver {
@@ -18,10 +19,19 @@ public class ClientErrorStatusResolver implements ApiErrorStatusResolver {
         }
         if(code instanceof ClientBffErrorCode value) {
             return switch(value) {
-                case ORIGIN_REJECTED, WORKSPACE_CONTEXT_REQUIRED -> HttpStatus.FORBIDDEN;
+                case ORIGIN_REJECTED, WORKSPACE_CONTEXT_REQUIRED, ACCOUNT_CONTEXT_REQUIRED -> HttpStatus.FORBIDDEN;
                 case UNSUPPORTED_MEDIA_TYPE -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
                 case DEPENDENCY_TIMEOUT -> HttpStatus.GATEWAY_TIMEOUT;
                 case DEPENDENCY_UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
+            };
+        }
+        if(code instanceof ClientTeamErrorCode value) {
+            // 与 Platform 团队与邀请合同一致；链接无效不区分原因，统一 404。
+            return switch(value) {
+                case CLIENT_INVITATION_INVALID -> HttpStatus.NOT_FOUND;
+                case CLIENT_INVITATION_EMAIL_MISMATCH -> HttpStatus.FORBIDDEN;
+                case CLIENT_INVITATION_CLOSED, CLIENT_INVITATION_DUPLICATE, CLIENT_INVITATION_LIMIT_REACHED,
+                    CLIENT_MEMBER_EXISTS, CLIENT_MEMBER_PROTECTED -> HttpStatus.CONFLICT;
             };
         }
         if(code instanceof com.paytech.client.contract.api.enums.ClientDraftErrorCode) {
@@ -41,7 +51,7 @@ public class ClientErrorStatusResolver implements ApiErrorStatusResolver {
             };
         }
         if(code==com.paytech.foundation.common.error.CommonErrorCode.NOT_FOUND) {
-            // Platform 对其他工作区或不存在的凭证、端点、投递统一返回 NOT_FOUND，浏览器保持 404。
+            // Platform 对其他工作区或不存在的凭证、端点、投递、成员、邀请统一返回 NOT_FOUND，浏览器保持 404。
             return HttpStatus.NOT_FOUND;
         }
         return fallback;

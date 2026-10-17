@@ -73,7 +73,8 @@
     <insert id="insertRole">
         INSERT INTO t_role(role_id,tenant_scope,tenant_id,scope_key,role_code,role_name,status,system_role,version,create_time,update_time)
         VALUES(#{id},'TENANT',#{tenantId},CAST(#{tenantId} AS CHAR),#{code},
-            CASE WHEN #{code}='TENANT_ONBOARDING_OWNER' THEN '入驻申请负责人' ELSE '客户工作区负责人' END,
+            CASE #{code} WHEN 'TENANT_ONBOARDING_OWNER' THEN '入驻申请负责人' WHEN 'TENANT_ADMIN' THEN '管理员'
+                WHEN 'TENANT_DEVELOPER' THEN '开发者' WHEN 'TENANT_VIEWER' THEN '只读成员' ELSE '客户工作区负责人' END,
             'ACTIVE',1,1,#{now},#{now})
     </insert>
     <insert id="insertGrant">

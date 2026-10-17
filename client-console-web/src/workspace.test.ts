@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { enterableWorkspace, fallbackText, readHome, readWorkspaces, workspaceName } from "./workspace.ts";
+import { enterableWorkspace, fallbackText, readHome, readWorkspaces, workspaceName, workspaceSubtitle } from "./workspace.ts";
 import { resultBanner } from "./onboarding.ts";
 
 const item = { memberId: "11", clientId: "21", clientNo: "CL-21", displayName: "Example Trading LLC", clientType: "ORGANIZATION",
@@ -22,6 +22,19 @@ test("empty, unavailable, missing or malformed workspaces never break the applic
     { status: "AVAILABLE", items: [{ ...item, memberId: "x" }] }, { status: "AVAILABLE", items: [{ ...item, state: "OPEN" }] }]) {
     assert.deepEqual(readWorkspaces(value), { status: "UNAVAILABLE", items: [] });
   }
+});
+
+test("an item missing CCT summary degrades alone instead of hiding the whole list", () => {
+  const list = readWorkspaces({ status: "AVAILABLE", items: [item,
+    { ...item, memberId: "13", clientId: "23", clientNo: null, displayName: null, clientType: null },
+    { ...item, memberId: "14", clientId: "24", clientNo: "CL-24", displayName: null, clientType: undefined }] });
+  assert.equal(list.status, "AVAILABLE");
+  assert.equal(list.items.length, 3);
+  assert.equal(workspaceName(list.items[1]), "名称暂不可用");
+  assert.equal(workspaceSubtitle(list.items[1]), "");
+  assert.equal(workspaceName(list.items[2]), "CL-24");
+  assert.equal(workspaceSubtitle(list.items[2]), "CL-24");
+  assert.equal(workspaceSubtitle(list.items[0]), "组织 · CL-21");
 });
 
 test("fallback reason maps to public text and unknown codes stay generic", () => {
@@ -52,5 +65,8 @@ test("home response is validated before rendering", () => {
   assert.equal(home?.workspace.displayName, null);
   assert.equal(home?.profile.country, "AE");
   assert.equal(readHome({ workspace: { clientId: "bad" }, profile: {} }), null);
+  const partial = readHome({ workspace: { clientId: "21", clientNo: null, displayName: null, clientType: null, clientStatus: null }, profile: {} });
+  assert.equal(partial?.workspace.clientNo, null);
+  assert.equal(partial && workspaceName(partial.workspace), "名称暂不可用");
   assert.equal(readHome(null), null);
 });

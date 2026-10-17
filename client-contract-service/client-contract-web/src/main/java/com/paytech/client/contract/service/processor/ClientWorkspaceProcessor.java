@@ -12,7 +12,8 @@ import lombok.AllArgsConstructor;
 
 /**
  * Client Console 工作区摘要的只读查询
- * <li>先经 Platform 实时核验当前会话（账号或租户上下文），再按“本账号为申请人且已批准”过滤，不信任调用方给出的归属。</li>
+ * <li>先经 Platform 实时核验当前会话（账号或租户上下文），再返回其中存在 APPROVED 申请的 Client。</li>
+ * <li>clientIds 由 Client BFF 从 Platform 当前账号的成员列表取得；CCT 不判断成员关系，被邀请成员与申请人同样可读。</li>
  * <li>普通只读组合查询，不开启事务；Platform 调用不得位于数据库事务内。</li>
  */
 @AllArgsConstructor
@@ -26,13 +27,13 @@ public class ClientWorkspaceProcessor {
      * @param accountId 当前账号
      * @param sessionId 当前会话
      * @param clientIds 已校验的 1—50 个不重复 Client ID
-     * @return 可见 Client 的摘要，按 Client ID 升序；其余 ID 静默省略
+     * @return 已批准 Client 的摘要，按 Client ID 升序；其余 ID 静默省略
      */
     public List<ClientWorkspaceSummary> summaries(long accountId, long sessionId, List<Long> clientIds) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             throw new IllegalStateException("工作区摘要查询不能加入已有事务");
         }
         accounts.authorize(accountId, sessionId);
-        return applications.findApprovedSummaries(accountId, clientIds);
+        return applications.findApprovedSummaries(clientIds);
     }
 }

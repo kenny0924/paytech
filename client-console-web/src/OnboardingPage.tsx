@@ -16,7 +16,7 @@ import {
 } from "./catalog.ts";
 import type { FormOptions } from "./catalog.ts";
 import { describeIssue, readCheck } from "./submission.ts";
-import { clientTypeLabels, fallbackText, readWorkspaces, workspaceName } from "./workspace.ts";
+import { fallbackText, readWorkspaces, workspaceName, workspaceSubtitle } from "./workspace.ts";
 import type { Workspaces } from "./workspace.ts";
 import type { SubmissionCheck } from "./submission.ts";
 import type { createAuthClient } from "./auth.ts";
@@ -157,7 +157,7 @@ function WorkspaceList({ workspaces, entering, enter }: {
         <div className={"workspace-row" + (item.state === "RESTRICTED" ? " restricted" : "")} key={item.memberId}>
           <div>
             <strong>{workspaceName(item)}</strong>
-            <small>{(clientTypeLabels[item.clientType] ?? item.clientType) + " · " + item.clientNo}{item.current ? " · 当前工作区" : ""}</small>
+            <small>{[workspaceSubtitle(item), item.current ? "当前工作区" : ""].filter(Boolean).join(" · ")}</small>
           </div>
           {item.state === "ACCESSIBLE" ? (
             <button className="secondary" disabled={entering !== null} onClick={() => enter(item.memberId)}>

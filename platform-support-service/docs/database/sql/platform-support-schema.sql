@@ -506,6 +506,33 @@ CREATE TABLE `t_authentication_challenge` (
   KEY `idx_authenticati_supersedes_cha` (`supersedes_challenge_id`) COMMENT '支持访问路径：supersedes_challenge_id'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存注册、密码重置、邮箱变更或租户邀请接受的一次性认证挑战 HMAC，不复用业务邮箱验证码';
 
+CREATE TABLE `t_tenant_invitation` (
+  `invitation_id` BIGINT NOT NULL COMMENT '租户成员邀请的稳定业务标识。',
+  `invitation_no` VARCHAR(64) NOT NULL COMMENT '租户邀请编号的业务值。',
+  `tenant_id` BIGINT NOT NULL COMMENT '访问租户的稳定业务标识。',
+  `invited_email_vault_token` VARCHAR(255) NOT NULL COMMENT '受邀邮箱 Vault Token的业务值。',
+  `invited_email_masked` VARCHAR(255) NOT NULL COMMENT '受邀邮箱脱敏值的业务值。',
+  `member_type` VARCHAR(64) NOT NULL COMMENT '受邀成员类型的稳定业务代码。允许值：OWNER、ADMIN、MEMBER。',
+  `initial_role_id` BIGINT NOT NULL COMMENT '初始角色的稳定业务标识。',
+  `invited_by_member_id` BIGINT NOT NULL COMMENT '邀请发起成员的稳定业务标识。',
+  `expires_time` DATETIME(6) NOT NULL COMMENT '邀请到期时间对应的 UTC 微秒时间。',
+  `status` VARCHAR(64) NOT NULL COMMENT '租户邀请状态的稳定业务代码。允许值：PENDING、ACCEPTED、EXPIRED、REVOKED、SUPERSEDED。',
+  `active_slot` INT NULL COMMENT '活动邀请占位的整数值。',
+  `accepted_account_id` BIGINT NULL COMMENT '接受账号的稳定业务标识。',
+  `accepted_member_id` BIGINT NULL COMMENT '接受成员的稳定业务标识。',
+  `accepted_time` DATETIME(6) NULL COMMENT '接受时间对应的 UTC 微秒时间。',
+  `version` INT NOT NULL COMMENT '租户邀请并发版本的整数值。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`invitation_id`),
+  UNIQUE KEY `uk_tenant_invitation_no` (`invitation_no`) COMMENT '保证业务唯一性：invitation_no',
+  UNIQUE KEY `uk_tenant_invite_active` (`tenant_id`, `invited_email_vault_token`, `active_slot`) COMMENT '保证业务唯一性：tenant_id、invited_email_vault_token、active_slot',
+  KEY `idx_invite_inviter` (`invited_by_member_id`, `tenant_id`) COMMENT '支持访问路径：invited_by_member_id、tenant_id',
+  KEY `idx_invite_accepted_member` (`accepted_member_id`, `tenant_id`, `accepted_account_id`) COMMENT '支持访问路径：accepted_member_id、tenant_id、accepted_account_id',
+  KEY `idx_tenant_invit_initial_role_i` (`initial_role_id`) COMMENT '支持访问路径：initial_role_id',
+  KEY `idx_tenant_invit_accepted_accou` (`accepted_account_id`) COMMENT '支持访问路径：accepted_account_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存租户邀请的目标邮箱、成员类型、单个初始角色和接受结果；初始角色同租户且当前有效由锁定事务校验';
+
 CREATE TABLE `t_file_upload` (
   `upload_id` BIGINT NOT NULL COMMENT '文件上传会话的稳定业务标识。',
   `tenant_id` BIGINT NOT NULL COMMENT '访问租户的稳定业务标识。',

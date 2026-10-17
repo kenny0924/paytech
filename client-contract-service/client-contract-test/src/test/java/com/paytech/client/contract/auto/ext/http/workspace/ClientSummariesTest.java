@@ -17,7 +17,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * 工作区摘要：只返回本账号为申请人且已批准的 Client，其余静默省略；参数与调用方校验。
+ * 工作区摘要：返回已批准的 Client（不判断申请人或成员关系），其余静默省略；参数与调用方校验。
  *
  * @see com.paytech.client.contract.api.workspace.ClientWorkspaceApi#summaries(String, String, String, List)
  */
@@ -54,21 +54,32 @@ class ClientSummariesTest extends OnboardingMockTestBase {
         assertTrue(items.get(0).path("clientId").asLong() < items.get(1).path("clientId").asLong());
     }
 
-    /** 他人已批准、本人未批准、不存在的 ID 都静默省略，不区分原因。 */
+    /** 未批准、不存在的 ID 静默省略，不区分原因。 */
     @Test
     void test_noDataFound() {
         var own = applications.approved(ACCOUNT_ID, true);
         var draft = applications.organization(ACCOUNT_ID + 1);
-        var foreign = applications.approved(ACCOUNT_ID + 2, false);
 
-        var result = summaries("client-console-bff", ACCOUNT_ID, own.clientId(), draft.clientId(), foreign.clientId(),
-            applications.nextId());
+        var result = summaries("client-console-bff", ACCOUNT_ID, own.clientId(), draft.clientId(), applications.nextId());
 
         assertEquals(200, result.getStatus().value());
         var items = body(result).path("items");
         assertEquals(1, items.size());
         assertEquals(Long.toString(own.clientId()), items.get(0).path("clientId").asString());
         assertEquals(0, body(summaries("client-console-bff", ACCOUNT_ID, draft.clientId())).path("items").size());
+    }
+
+    /** 被邀请成员（非申请人）读取 BFF 按 Platform 成员列表传入的已批准 Client，同样返回摘要。 */
+    @Test
+    void test_nonApplicantMember() {
+        var invited = applications.approved(ACCOUNT_ID + 2, false);
+
+        var result = summaries("client-console-bff", ACCOUNT_ID, invited.clientId());
+
+        assertEquals(200, result.getStatus().value(), body(result).toString());
+        var items = body(result).path("items");
+        assertEquals(1, items.size());
+        assertEquals(ClientType.INDIVIDUAL.getCode(), item(items, invited.clientId()).path("clientType").asString());
     }
 
     /** 租户上下文会话同样可读。 */

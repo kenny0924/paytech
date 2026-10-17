@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiKeysPanel, WebhooksPanel } from "./DeveloperPages.tsx";
+import { TeamPanel } from "./TeamPage.tsx";
+import { teamAccess } from "./team.ts";
 import { developerMenu } from "./developer.ts";
 import { RequestFailure } from "./auth.ts";
 import type { createAuthClient } from "./auth.ts";
 import {
   businessModelLabels,
   clientStatusLabels,
-  clientTypeLabels,
   homeNotices,
   readHome,
   workspaceName,
+  workspaceSubtitle,
 } from "./workspace.ts";
 import type { WorkspaceHome } from "./workspace.ts";
 
@@ -27,7 +29,7 @@ function date(value: string | null): string {
  * <li>账号上下文访问或服务端要求租户上下文时回到开始页；会话失效回登录。</li>
  * <li>切换工作区回到开始页列表重新选择；返回账号新建账号上下文后回到入驻申请。</li>
  */
-export function WorkspacePage({ client, section = "home" }: { client: Client; section?: "home" | "api-keys" | "webhooks" }) {
+export function WorkspacePage({ client, section = "home" }: { client: Client; section?: "home" | "api-keys" | "webhooks" | "team" }) {
   const navigate = useNavigate();
   const grant = useSyncExternalStore(client.subscribe, client.current);
   const [home, setHome] = useState<WorkspaceHome | null>(null),
@@ -100,20 +102,25 @@ export function WorkspacePage({ client, section = "home" }: { client: Client; se
   const name = home ? workspaceName(home.workspace) : "工作区";
   const capabilities = home?.capabilities ?? [];
   const menu = developerMenu(capabilities);
-  const allowed = section === "home" || menu.some((item) => item.key === section);
+  const team = teamAccess(capabilities);
+  const allowed = section === "home" || (section === "team" ? team.visible : menu.some((item) => item.key === section));
+  const subtitle = home ? workspaceSubtitle(home.workspace) : "";
   return (
     <div className="workspace-shell">
       <aside className={"workspace-side" + (menuOpen ? " open" : "")}>
         <div className="workspace-identity">
           <span className="console-brand">PAYTECH</span>
           <strong title={name}>{name}</strong>
-          {home && <small>{(clientTypeLabels[home.workspace.clientType] ?? home.workspace.clientType) + " · " + home.workspace.clientNo}</small>}
+          {home && subtitle && <small>{subtitle}</small>}
           <button className="secondary workspace-menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
             菜单
           </button>
         </div>
         <nav className="workspace-nav" aria-label="工作区导航">
           <Link to="/workspace" aria-current={section === "home" ? "page" : undefined} onClick={() => setMenuOpen(false)}>工作区首页</Link>
+          {team.visible && (
+            <Link to="/workspace/team" aria-current={section === "team" ? "page" : undefined} onClick={() => setMenuOpen(false)}>团队</Link>
+          )}
           {menu.length > 0 && <span className="nav-group">开发者</span>}
           {menu.map((item) => (
             <Link key={item.key} to={item.path} aria-current={section === item.key ? "page" : undefined} onClick={() => setMenuOpen(false)}>
@@ -142,14 +149,17 @@ export function WorkspacePage({ client, section = "home" }: { client: Client; se
         {home && section !== "home" && !allowed && <p className="notice error" role="alert">您没有访问该页面的权限。</p>}
         {home && section === "api-keys" && allowed && <ApiKeysPanel client={client} canManage={capabilities.includes("API_CREDENTIAL_MANAGE")} />}
         {home && section === "webhooks" && allowed && <WebhooksPanel client={client} canManage={capabilities.includes("WEBHOOK_MANAGE")} />}
+        {home && section === "team" && allowed && <TeamPanel client={client} canManage={team.canManage} />}
         {home && section === "home" && (
           <>
             <div className="page-heading">
               <div>
                 <h1>{name}</h1>
-                <p>{(clientTypeLabels[home.workspace.clientType] ?? home.workspace.clientType) + " · " + home.workspace.clientNo}</p>
+                {subtitle && <p>{subtitle}</p>}
               </div>
-              <span className="status">{clientStatusLabels[home.workspace.clientStatus] ?? home.workspace.clientStatus}</span>
+              {home.workspace.clientStatus && (
+                <span className="status">{clientStatusLabels[home.workspace.clientStatus] ?? home.workspace.clientStatus}</span>
+              )}
             </div>
             <p className="notice" role="note">
               {(home.notice && homeNotices[home.notice]) ?? "进入工作区不代表已开通收款。"}

@@ -15,8 +15,13 @@ import com.paytech.client.console.bff.integration.PlatformDiscoveryInterceptor;
 import com.paytech.platform.support.api.authentication.ClientAuthenticationApi;
 import com.paytech.platform.support.api.authorization.ClientAuthorizationApi;
 import com.paytech.platform.support.api.clientapicredential.ClientApiCredentialApi;
+import com.paytech.platform.support.api.clientinvitation.ClientInvitationApi;
+import com.paytech.platform.support.api.clientteam.ClientTeamApi;
 import com.paytech.platform.support.api.clientwebhook.ClientWebhookApi;
 import com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode;
+import com.paytech.platform.support.api.enums.ClientTeamErrorCode;
+import com.paytech.foundation.common.enums.CodeMessageEnum;
+import java.util.stream.Stream;
 
 /** 复用 Platform 私网发现与公共严格 Problem 解码；连接不持有业务状态。 */
 @Configuration(proxyBeanMethods=false)
@@ -45,8 +50,32 @@ public class PlatformClientConfiguration {
         return create(env, discovery, testUrl, ClientWebhookApi.class);
     }
 
-    /** 同一套发现、超时与严格 Problem 解码创建 Platform 接口代理。 */
+    /** 工作区团队成员与邀请管理。 */
+    @Bean ClientTeamApi clientTeamApi(Environment env, PlatformDiscoveryInterceptor discovery,
+        @Value("${client.platform-test-base-url:}") String testUrl) {
+        return create(env, discovery, testUrl, ClientTeamApi.class, teamErrors());
+    }
+
+    /** 被邀请人预览、详情与接受邀请。 */
+    @Bean ClientInvitationApi clientInvitationApi(Environment env, PlatformDiscoveryInterceptor discovery,
+        @Value("${client.platform-test-base-url:}") String testUrl) {
+        return create(env, discovery, testUrl, ClientInvitationApi.class, teamErrors());
+    }
+
+    /** 团队与邀请接口同时使用认证类与团队类错误码（会话、权限、工作区不可用沿用认证类）。 */
+    static CodeMessageEnum[] teamErrors() {
+        return Stream.concat(Stream.of(ClientAuthenticationErrorCode.values()), Stream.of(ClientTeamErrorCode.values()))
+            .toArray(CodeMessageEnum[]::new);
+    }
+
+    /** 只注册认证类错误码的 Platform 接口代理。 */
     static <T> T create(Environment env, PlatformDiscoveryInterceptor discovery, String testUrl, Class<T> type) {
+        return create(env, discovery, testUrl, type, ClientAuthenticationErrorCode.values());
+    }
+
+    /** 同一套发现、超时与严格 Problem 解码创建 Platform 接口代理；contractErrors 为该接口发布的业务错误码。 */
+    static <T> T create(Environment env, PlatformDiscoveryInterceptor discovery, String testUrl, Class<T> type,
+        CodeMessageEnum... contractErrors) {
         RestClient.Builder builder=RestClient.builder();
         if(testUrl.isBlank()) {
             builder.baseUrl("http://platform-support-service/platform-support").requestInterceptor(discovery);
@@ -68,6 +97,6 @@ public class PlatformClientConfiguration {
                 case UNAVAILABLE -> new ServiceUnavailableException(ClientBffErrorCode.DEPENDENCY_UNAVAILABLE,cause);
             });
         return HttpServiceClientFactory.create(builder.requestFactory(factory).build(),options,
-            ClientAuthenticationErrorCode.values()).createClient(type);
+            contractErrors).createClient(type);
     }
 }

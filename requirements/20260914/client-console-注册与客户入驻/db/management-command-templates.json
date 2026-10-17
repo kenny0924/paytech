@@ -2516,6 +2516,933 @@
       "execute": false
     },
     {
+      "key": "T01",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-team-t01",
+        "channel": "CLIENT",
+        "httpMethod": "GET",
+        "externalPathTemplate": "/api/client/team/v1/members",
+        "downstreamPathTemplate": "/client-team/v1/members",
+        "securityProfileCode": "CLIENT_JWT",
+        "authorizationMode": "HUMAN_AUTHENTICATED",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 16384,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "authorization",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          }
+        ],
+        "queryParameterNames": [
+          "page",
+          "size"
+        ],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 600,
+            "refillTokens": 600,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 50
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 10
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": 60,
+            "refillTokens": 60,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 5
+          }
+        ],
+        "targetServiceCode": "client-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {},
+      "execute": false
+    },
+    {
+      "key": "T02",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-team-t02",
+        "channel": "CLIENT",
+        "httpMethod": "GET",
+        "externalPathTemplate": "/api/client/team/v1/invitations",
+        "downstreamPathTemplate": "/client-team/v1/invitations",
+        "securityProfileCode": "CLIENT_JWT",
+        "authorizationMode": "HUMAN_AUTHENTICATED",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 16384,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "authorization",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          }
+        ],
+        "queryParameterNames": [
+          "status",
+          "page",
+          "size"
+        ],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 600,
+            "refillTokens": 600,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 50
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 10
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": 60,
+            "refillTokens": 60,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 5
+          }
+        ],
+        "targetServiceCode": "client-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {},
+      "execute": false
+    },
+    {
+      "key": "T03",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-team-t03",
+        "channel": "CLIENT",
+        "httpMethod": "POST",
+        "externalPathTemplate": "/api/client/team/v1/invitations",
+        "downstreamPathTemplate": "/client-team/v1/invitations",
+        "securityProfileCode": "CLIENT_JWT",
+        "authorizationMode": "HUMAN_AUTHENTICATED",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 4096,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "authorization",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "origin",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "idempotency-key",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          }
+        ],
+        "queryParameterNames": [],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 600,
+            "refillTokens": 600,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 50
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 10
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": 60,
+            "refillTokens": 60,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 5
+          }
+        ],
+        "targetServiceCode": "client-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {},
+      "execute": false
+    },
+    {
+      "key": "T04",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-team-t04",
+        "channel": "CLIENT",
+        "httpMethod": "POST",
+        "externalPathTemplate": "/api/client/team/v1/invitations/{invitationId}/resend",
+        "downstreamPathTemplate": "/client-team/v1/invitations/{invitationId}/resend",
+        "securityProfileCode": "CLIENT_JWT",
+        "authorizationMode": "HUMAN_AUTHENTICATED",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 1024,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "authorization",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "origin",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "idempotency-key",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          }
+        ],
+        "queryParameterNames": [],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 600,
+            "refillTokens": 600,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 50
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 10
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": 60,
+            "refillTokens": 60,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 5
+          }
+        ],
+        "targetServiceCode": "client-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {},
+      "execute": false
+    },
+    {
+      "key": "T05",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-team-t05",
+        "channel": "CLIENT",
+        "httpMethod": "POST",
+        "externalPathTemplate": "/api/client/team/v1/invitations/{invitationId}/revocation",
+        "downstreamPathTemplate": "/client-team/v1/invitations/{invitationId}/revocation",
+        "securityProfileCode": "CLIENT_JWT",
+        "authorizationMode": "HUMAN_AUTHENTICATED",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 1024,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "authorization",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "origin",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "idempotency-key",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          }
+        ],
+        "queryParameterNames": [],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 600,
+            "refillTokens": 600,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 50
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 10
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": 60,
+            "refillTokens": 60,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 5
+          }
+        ],
+        "targetServiceCode": "client-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {},
+      "execute": false
+    },
+    {
+      "key": "T06",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-team-t06",
+        "channel": "CLIENT",
+        "httpMethod": "POST",
+        "externalPathTemplate": "/api/client/team/v1/members/{memberId}/role",
+        "downstreamPathTemplate": "/client-team/v1/members/{memberId}/role",
+        "securityProfileCode": "CLIENT_JWT",
+        "authorizationMode": "HUMAN_AUTHENTICATED",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 1024,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "authorization",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "origin",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "idempotency-key",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          }
+        ],
+        "queryParameterNames": [],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 600,
+            "refillTokens": 600,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 50
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 10
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": 60,
+            "refillTokens": 60,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 5
+          }
+        ],
+        "targetServiceCode": "client-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {},
+      "execute": false
+    },
+    {
+      "key": "T07",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-team-t07",
+        "channel": "CLIENT",
+        "httpMethod": "POST",
+        "externalPathTemplate": "/api/client/team/v1/members/{memberId}/removal",
+        "downstreamPathTemplate": "/client-team/v1/members/{memberId}/removal",
+        "securityProfileCode": "CLIENT_JWT",
+        "authorizationMode": "HUMAN_AUTHENTICATED",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 1024,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "authorization",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "origin",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "idempotency-key",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          }
+        ],
+        "queryParameterNames": [],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 600,
+            "refillTokens": 600,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 50
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 10
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": 60,
+            "refillTokens": 60,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 5
+          }
+        ],
+        "targetServiceCode": "client-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {},
+      "execute": false
+    },
+    {
+      "key": "I01",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-invitation-i01",
+        "channel": "CLIENT",
+        "httpMethod": "POST",
+        "externalPathTemplate": "/api/client/invitations/v1/preview",
+        "downstreamPathTemplate": "/client-invitations/v1/preview",
+        "securityProfileCode": "PUBLIC",
+        "authorizationMode": "PUBLIC",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 1024,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "content-type",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "origin",
+            "headerUse": "FORWARD_REQUEST"
+          }
+        ],
+        "queryParameterNames": [],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 20
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 12,
+            "refillTokens": 12,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 3
+          }
+        ],
+        "targetServiceCode": "client-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {},
+      "execute": false
+    },
+    {
+      "key": "I02",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-invitation-i02",
+        "channel": "CLIENT",
+        "httpMethod": "POST",
+        "externalPathTemplate": "/api/client/invitations/v1/details",
+        "downstreamPathTemplate": "/client-invitations/v1/details",
+        "securityProfileCode": "CLIENT_JWT",
+        "authorizationMode": "HUMAN_AUTHENTICATED",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 1024,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "authorization",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "origin",
+            "headerUse": "FORWARD_REQUEST"
+          }
+        ],
+        "queryParameterNames": [],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 600,
+            "refillTokens": 600,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 50
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 10
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": 60,
+            "refillTokens": 60,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 5
+          }
+        ],
+        "targetServiceCode": "client-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {},
+      "execute": false
+    },
+    {
+      "key": "I03",
+      "method": "POST",
+      "ownerPath": "/gateway-admin/v1/routes",
+      "body": {
+        "routeCode": "client-invitation-i03",
+        "channel": "CLIENT",
+        "httpMethod": "POST",
+        "externalPathTemplate": "/api/client/invitations/v1/acceptance",
+        "downstreamPathTemplate": "/client-invitations/v1/acceptance",
+        "securityProfileCode": "CLIENT_JWT",
+        "authorizationMode": "HUMAN_AUTHENTICATED",
+        "requestCookieMode": "DROP",
+        "responseCookieMode": "NONE",
+        "bodyLimitBytes": 1024,
+        "bodyReceiveTimeoutMillis": 5000,
+        "responseTimeoutMillis": 10000,
+        "headers": [
+          {
+            "headerName": "authorization",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          },
+          {
+            "headerName": "content-type",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "origin",
+            "headerUse": "FORWARD_REQUEST"
+          },
+          {
+            "headerName": "idempotency-key",
+            "headerUse": "CORS_REQUEST_ALLOWED"
+          }
+        ],
+        "queryParameterNames": [],
+        "guardRules": [
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "SHARED_ROUTE",
+            "capacity": 600,
+            "refillTokens": 600,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "SHARED_ROUTE",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 50
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "CLIENT_IP",
+            "capacity": 120,
+            "refillTokens": 120,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "CLIENT_IP",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 10
+          },
+          {
+            "ruleType": "RATE_LIMIT",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": 60,
+            "refillTokens": 60,
+            "refillPeriodMillis": 60000,
+            "concurrencyLimit": null
+          },
+          {
+            "ruleType": "CONCURRENCY",
+            "dimension": "AUTHENTICATED_PRINCIPAL",
+            "capacity": null,
+            "refillTokens": null,
+            "refillPeriodMillis": null,
+            "concurrencyLimit": 5
+          }
+        ],
+        "targetServiceCode": "client-console-bff",
+        "permissionId": null,
+        "requiredScopeCode": null,
+        "reason": "Client onboarding initial registration; keep routes disabled pending acceptance"
+      },
+      "bindings": {},
+      "execute": false
+    },
+    {
       "key": "C03",
       "method": "POST",
       "ownerPath": "/gateway-admin/v1/routes",

@@ -173,6 +173,8 @@ web:
       - /api-credential-admin
       - /client-api-credentials
       - /client-webhooks
+      - /client-team
+      - /client-invitations
       - /api-scope-admin
       - /api-credentials
       - /tenant-projections
@@ -286,6 +288,7 @@ notification:
   transient-template-codes:
     - CLIENT_EMAIL_VERIFICATION
     - CLIENT_PASSWORD_RESET
+    - CLIENT_TENANT_INVITATION
   # SES 适配器指向独立 Mock HTTP 服务的 /ses 前缀（SesMockController），真实 SDK 客户端与 SigV4 签名不变。
   # 账号的区域、发件地址与合成密钥 Token 由 NotificationTestMapper.sesProvider 写入账号表；路由默认仍指向 Mock Provider。
   ses:

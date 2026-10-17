@@ -9,11 +9,17 @@ import {WorkspacePage} from './WorkspacePage.tsx';
 import {LoginForm} from './LoginForm.tsx';
 import {TextField, focusField} from './TextField.tsx';
 import {authIssues, authFailure} from './auth-form.ts';
+import {InvitationPage} from './InvitationPage.tsx';
+import {afterLoginPath, captureInvitationLink, invitationAcceptPath} from './invitation.ts';
 import type {AuthKind, AuthIssues} from './auth-form.ts';
 
 const client = createAuthClient();
-const emailLink = readEmailLink(window.location.hash);
-// 链接秘密只留在本页内存；刷新页面需重新打开原邮件。
+function sessionStore(): Storage | null { try { return window.sessionStorage; } catch { return null; } }
+const store = sessionStore();
+// 邀请链接须在清理 URL 前读取，存入本标签页 sessionStorage，供登录 / 注册往返后继续接受。
+const invitationLink = captureInvitationLink(window.location.pathname, window.location.hash, store);
+// 其他邮件链接秘密只留在本页内存；刷新页面需重新打开原邮件。
+const emailLink = invitationLink ? null : readEmailLink(window.location.hash);
 if (window.location.hash || window.location.search) window.history.replaceState(null, '', window.location.pathname);
 type Kind = AuthKind;
 const content: Record<Kind, [string, string]> = {
@@ -86,7 +92,7 @@ function AuthPage({kind}: {kind: Kind}) {
   return <main className="auth-shell"><section className="auth" aria-labelledby="page-title">
     <Link className="brand" to="/login" aria-label="PAYTECH 首页">PAYTECH</Link>
     <header><h1 id="page-title">{title}</h1><p>{intro}</p></header>
-    {kind === 'login' ? <LoginForm login={client.login} onSuccess={()=>navigate('/onboarding', {replace:true})}/> : finished ? <div className="result"><div className="check" aria-hidden="true">✓</div>
+    {kind === 'login' ? <LoginForm login={client.login} onSuccess={()=>navigate(afterLoginPath(store), {replace:true})}/> : finished ? <div className="result"><div className="check" aria-hidden="true">✓</div>
       {kind === 'register' ? <><Link className="primary link-button" to="/check-email">重新发送验证邮件</Link><Link to="/login">返回登录</Link></> : <Link className="primary link-button" to="/login">前往登录</Link>}
     </div> : linkMissing ? <div className="result"><p className="notice">链接缺失或无效，请重新申请邮件并打开其中的链接。</p>
       <Link className="primary link-button" to={kind === 'verify' ? '/check-email' : '/forgot-password'}>重新申请邮件</Link></div> :
@@ -134,6 +140,8 @@ function App(){return <BrowserRouter><Routes>
   <Route path="/workspace" element={<WorkspacePage client={client}/>}/>
   <Route path="/workspace/developer/api-keys" element={<WorkspacePage key="api-keys" client={client} section="api-keys"/>}/>
   <Route path="/workspace/developer/webhooks" element={<WorkspacePage key="webhooks" client={client} section="webhooks"/>}/>
+  <Route path="/workspace/team" element={<WorkspacePage key="team" client={client} section="team"/>}/>
+  <Route path={invitationAcceptPath} element={<InvitationPage client={client} store={store} memoryLink={invitationLink}/>}/>
   <Route path="/account" element={<AccountPage/>}/><Route path="*" element={<Navigate to="/login" replace/>}/>
 </Routes></BrowserRouter>;}
 const root = createRoot(document.getElementById('root')!);

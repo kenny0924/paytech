@@ -39,14 +39,15 @@
     WHERE application_id=#{row.applicationId} AND status='UNDER_REVIEW'
       AND current_submission_id=#{row.currentSubmissionId} AND due_diligence_case_id=#{row.dueDiligenceCaseId}
   </update>
-  <!-- 工作区摘要：只组合展示字段，不读取证件、地址或联系方式；approvedAt 取最近一份 APPROVED 申请结论后的 update_time。 -->
+  <!-- 工作区摘要：只组合展示字段，不读取证件、地址或联系方式；approvedAt 取最近一份 APPROVED 申请结论后的 update_time。
+       clientIds 由 Client BFF 从 Platform 当前账号的成员列表取得，CCT 不判断成员关系，只要求存在 APPROVED 申请。 -->
   <select id="findApprovedSummaries" resultType="com.paytech.client.contract.core.dal.dataobject.ClientWorkspaceSummary">
     SELECT c.client_id AS clientId, c.client_no AS clientNo, p.party_type AS clientType, c.status AS clientStatus,
       o.legal_name AS legalName, i.given_name AS givenName, i.family_name AS familyName,
       o.incorporation_country AS incorporationCountry, i.residence_country AS residenceCountry,
       b.business_model_code AS businessModelCode, approved.approvedAt
     FROM (SELECT client_id, MAX(update_time) AS approvedAt FROM t_client_application
-          WHERE requested_by_account_id=#{accountId} AND status='APPROVED'
+          WHERE status='APPROVED'
             AND client_id IN <foreach collection="clientIds" item="id" open="(" separator="," close=")">#{id}</foreach>
           GROUP BY client_id) approved
     JOIN t_client c ON c.client_id=approved.client_id

@@ -28,7 +28,7 @@ public class ClientMemberRepositoryImpl implements ClientMemberRepository {
         return mapper.lockMember(memberId);
     }
 
-    /** 读取账号在非 PENDING CLIENT 租户中的成员。 */
+    /** 读取账号在非 PENDING CLIENT 租户中未被移除（非 REVOKED）的成员。 */
     @Override
     public List<ClientMember> members(long accountId) {
         return mapper.members(accountId);

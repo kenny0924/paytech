@@ -14,6 +14,6 @@ public interface ClientMemberMapper {
     /** 以共享锁读取指定成员及其租户，阻止并发状态变更越过本次校验。 */
     ClientMember lockMember(@Param("memberId") long memberId);
 
-    /** 读取账号在非 PENDING CLIENT 租户中的成员，按租户编号升序，最多 50 项。 */
+    /** 读取账号在非 PENDING CLIENT 租户中未被移除（非 REVOKED）的成员，按租户编号升序，最多 50 项。 */
     List<ClientMember> members(@Param("accountId") long accountId);
 }

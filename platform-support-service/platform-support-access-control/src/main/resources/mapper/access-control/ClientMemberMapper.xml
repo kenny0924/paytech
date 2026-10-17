@@ -22,7 +22,7 @@
     </select>
     <select id="members" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.ClientMember">
         SELECT <include refid="MemberColumns"/> <include refid="MemberScope"/>
-        WHERE m.account_id=#{accountId} AND t.owner_status&lt;&gt;'PENDING'
+        WHERE m.account_id=#{accountId} AND t.owner_status&lt;&gt;'PENDING' AND m.status&lt;&gt;'REVOKED'
         ORDER BY t.tenant_id
         LIMIT 50
     </select>

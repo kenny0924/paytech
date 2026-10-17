@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.ClientTeamMapper">
+    <!-- 全局未开启下划线转驼峰；Lombok fluent DataObject 需显式别名。 -->
+    <sql id="MemberColumns">
+        m.member_id memberId, m.tenant_id tenantId, m.account_id accountId, m.member_type memberType, m.status,
+        m.invited_by invitedBy, a.email_masked emailMasked, m.version, m.create_time createTime
+    </sql>
+    <sql id="MemberScope">
+        FROM t_tenant_member m
+        JOIN t_access_tenant t ON t.tenant_id=m.tenant_id AND t.tenant_type='CLIENT'
+        JOIN t_user_account a ON a.account_id=m.account_id AND a.realm='CUSTOMER' AND a.account_type='HUMAN'
+    </sql>
+    <sql id="InvitationColumns">
+        invitation_id invitationId, invitation_no invitationNo, tenant_id tenantId,
+        invited_email_vault_token invitedEmailToken, invited_email_masked invitedEmailMasked, member_type memberType,
+        initial_role_id initialRoleId, invited_by_member_id invitedByMemberId, expires_time expiresTime, status,
+        active_slot activeSlot, accepted_account_id acceptedAccountId, accepted_member_id acceptedMemberId,
+        accepted_time acceptedTime, version, create_time createTime
+    </sql>
+    <sql id="ChallengeColumns">
+        challenge_id id, challenge_no challengeNo, tenant_invitation_id invitationId, email_vault_token emailToken,
+        email_masked emailMasked, active_scope_hash scopeHash, secret_hmac secretHmac, hmac_key_version keyVersion,
+        expires_time expiresTime, max_attempts maxAttempts, used_attempts usedAttempts, status,
+        supersedes_challenge_id supersedesId, version, create_time createTime
+    </sql>
+    <sql id="ChallengeScope">
+        realm='CUSTOMER' AND purpose='TENANT_INVITATION_ACCEPT' AND account_id IS NULL AND tenant_invitation_id IS NOT NULL
+    </sql>
+    <sql id="InvitationFilter">
+        WHERE i.tenant_id=#{tenantId}
+        <choose>
+            <when test="status eq 'PENDING'">AND i.status='PENDING' AND i.expires_time &gt; #{now}</when>
+            <when test="status eq 'EXPIRED'">AND (i.status='EXPIRED' OR (i.status='PENDING' AND i.expires_time &lt;= #{now}))</when>
+            <otherwise>AND i.status=#{status}</otherwise>
+        </choose>
+    </sql>
+
+    <select id="members" useCache="false" resultType="com.paytech.platform.support.accesscontrol.domain.clientteam.TeamMemberView">
+        SELECT m.member_id memberId, m.account_id accountId, a.email_masked emailMasked, m.member_type memberType,
+            (SELECT r.role_code FROM t_tenant_member_role g JOIN t_role r ON r.role_id=g.role_id AND r.tenant_id=g.tenant_id
+             WHERE g.tenant_member_id=m.member_id AND g.tenant_id=m.tenant_id AND g.status='ACTIVE'
+                AND g.role_scope_key=CAST(g.tenant_id AS CHAR)
+                AND g.effective_from &lt;= #{now} AND (g.effective_to IS NULL OR g.effective_to &gt; #{now})
+                AND r.tenant_scope='TENANT' AND r.scope_key=g.role_scope_key AND r.status='ACTIVE'
+             ORDER BY g.effective_from DESC, g.tenant_member_role_id DESC LIMIT 1) roleCode,
+            m.status, m.create_time joinedAt
+        <include refid="MemberScope"/>
+        WHERE m.tenant_id=#{tenantId} AND m.status='ACTIVE'
+        ORDER BY CASE WHEN m.member_type='OWNER' THEN 0 ELSE 1 END, m.create_time, m.member_id
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="countMembers" useCache="false" resultType="long">
+        SELECT COUNT(*) <include refid="MemberScope"/> WHERE m.tenant_id=#{tenantId} AND m.status='ACTIVE'
+    </select>
+    <select id="member" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TeamMember">
+        SELECT <include refid="MemberColumns"/> <include refid="MemberScope"/>
+        WHERE m.tenant_id=#{tenantId} AND m.member_id=#{memberId}
+    </select>
+    <select id="lockMember" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TeamMember">
+        SELECT <include refid="MemberColumns"/> <include refid="MemberScope"/>
+        WHERE m.tenant_id=#{tenantId} AND m.member_id=#{memberId}
+        FOR UPDATE OF m
+    </select>
+    <select id="memberByAccount" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TeamMember">
+        SELECT <include refid="MemberColumns"/> <include refid="MemberScope"/>
+        WHERE m.tenant_id=#{tenantId} AND m.account_id=#{accountId}
+    </select>
+    <select id="lockMemberByAccount" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TeamMember">
+        SELECT <include refid="MemberColumns"/> <include refid="MemberScope"/>
+        WHERE m.tenant_id=#{tenantId} AND m.account_id=#{accountId}
+        FOR UPDATE OF m
+    </select>
+    <select id="countActiveMembersByEmail" flushCache="true" useCache="false" resultType="int">
+        SELECT COUNT(*) <include refid="MemberScope"/>
+        WHERE m.tenant_id=#{tenantId} AND m.status='ACTIVE' AND a.email_vault_token=#{emailToken}
+    </select>
+    <insert id="insertMember">
+        INSERT INTO t_tenant_member(member_id,tenant_id,account_id,member_type,status,invited_by,version,create_time,update_time)
+        VALUES(#{member.memberId},#{member.tenantId},#{member.accountId},#{member.memberType},'ACTIVE',#{member.invitedBy},
+            1,#{now},#{now})
+    </insert>
+    <update id="changeMemberType">
+        UPDATE t_tenant_member SET member_type=#{memberType}, version=version+1, update_time=#{now}
+        WHERE member_id=#{memberId} AND version=#{version} AND status='ACTIVE' AND member_type&lt;&gt;'OWNER'
+    </update>
+    <update id="revokeMember">
+        UPDATE t_tenant_member SET status='REVOKED', version=version+1, update_time=#{now}
+        WHERE member_id=#{memberId} AND version=#{version} AND status='ACTIVE' AND member_type&lt;&gt;'OWNER'
+    </update>
+    <update id="restoreMember">
+        UPDATE t_tenant_member SET status='ACTIVE', member_type=#{memberType}, invited_by=#{invitedBy},
+            version=version+1, update_time=#{now}
+        WHERE member_id=#{memberId} AND version=#{version} AND status='REVOKED' AND member_type&lt;&gt;'OWNER'
+    </update>
+
+    <select id="lockActiveGrants" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TeamMemberGrant">
+        SELECT g.tenant_member_role_id grantId, g.tenant_member_id memberId, g.tenant_id tenantId, g.role_id roleId,
+            r.role_code roleCode, g.effective_from effectiveFrom, g.granted_by grantedBy, g.status, g.version
+        FROM t_tenant_member_role g JOIN t_role r ON r.role_id=g.role_id AND r.tenant_id=g.tenant_id
+        WHERE g.tenant_id=#{tenantId} AND g.tenant_member_id=#{memberId} AND g.status='ACTIVE'
+        ORDER BY g.effective_from, g.tenant_member_role_id
+        FOR UPDATE OF g
+    </select>
+    <update id="revokeGrant">
+        UPDATE t_tenant_member_role SET status='REVOKED', effective_to=#{now}, version=version+1, update_time=#{now}
+        WHERE tenant_member_role_id=#{grantId} AND version=#{version} AND status='ACTIVE'
+    </update>
+    <insert id="insertGrant">
+        INSERT INTO t_tenant_member_role(tenant_member_role_id,tenant_member_id,tenant_id,role_id,role_scope_key,
+            effective_from,effective_to,granted_by,status,version,create_time,update_time)
+        VALUES(#{grant.grantId},#{grant.memberId},#{grant.tenantId},#{grant.roleId},CAST(#{grant.tenantId} AS CHAR),
+            #{grant.effectiveFrom},NULL,#{grant.grantedBy},'ACTIVE',1,#{now},#{now})
+    </insert>
+
+    <select id="systemRole" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TeamRole">
+        SELECT role_id roleId, tenant_id tenantId, role_code roleCode, status FROM t_role
+        WHERE tenant_scope='TENANT' AND tenant_id=#{tenantId} AND scope_key=CAST(#{tenantId} AS CHAR)
+            AND role_code=#{roleCode} AND system_role=1
+    </select>
+    <select id="role" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TeamRole">
+        SELECT role_id roleId, tenant_id tenantId, role_code roleCode, status FROM t_role
+        WHERE tenant_scope='TENANT' AND tenant_id=#{tenantId} AND scope_key=CAST(#{tenantId} AS CHAR)
+            AND role_id=#{roleId} AND system_role=1
+    </select>
+    <select id="tenant" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TeamTenant">
+        SELECT tenant_id tenantId, owner_ref_id clientId, owner_status ownerStatus, security_status securityStatus
+        FROM t_access_tenant WHERE tenant_id=#{tenantId} AND tenant_type='CLIENT'
+    </select>
+
+    <select id="invitations" useCache="false" resultType="com.paytech.platform.support.accesscontrol.domain.clientteam.TenantInvitationView">
+        SELECT i.invitation_id invitationId, i.invited_email_masked emailMasked, r.role_code roleCode, i.status,
+            i.expires_time expiresTime, a.email_masked invitedByEmailMasked, i.create_time createTime
+        FROM t_tenant_invitation i
+        JOIN t_role r ON r.role_id=i.initial_role_id AND r.tenant_id=i.tenant_id
+        LEFT JOIN t_tenant_member im ON im.member_id=i.invited_by_member_id AND im.tenant_id=i.tenant_id
+        LEFT JOIN t_user_account a ON a.account_id=im.account_id
+        <include refid="InvitationFilter"/>
+        ORDER BY i.create_time DESC, i.invitation_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="countInvitations" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_tenant_invitation i <include refid="InvitationFilter"/>
+    </select>
+    <select id="countPendingInvitations" flushCache="true" useCache="false" resultType="int">
+        SELECT COUNT(*) FROM t_tenant_invitation
+        WHERE tenant_id=#{tenantId} AND status='PENDING' AND expires_time &gt; #{now}
+    </select>
+    <select id="invitation" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantInvitation">
+        SELECT <include refid="InvitationColumns"/> FROM t_tenant_invitation
+        WHERE tenant_id=#{tenantId} AND invitation_id=#{invitationId}
+    </select>
+    <select id="invitationById" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantInvitation">
+        SELECT <include refid="InvitationColumns"/> FROM t_tenant_invitation WHERE invitation_id=#{invitationId}
+    </select>
+    <select id="lockInvitation" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantInvitation">
+        SELECT <include refid="InvitationColumns"/> FROM t_tenant_invitation WHERE invitation_id=#{invitationId} FOR UPDATE
+    </select>
+    <select id="lockActiveInvitation" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantInvitation">
+        SELECT <include refid="InvitationColumns"/> FROM t_tenant_invitation
+        WHERE tenant_id=#{tenantId} AND invited_email_vault_token=#{emailToken} AND active_slot=1 FOR UPDATE
+    </select>
+    <insert id="insertInvitation">
+        INSERT INTO t_tenant_invitation(invitation_id,invitation_no,tenant_id,invited_email_vault_token,
+            invited_email_masked,member_type,initial_role_id,invited_by_member_id,expires_time,status,active_slot,
+            accepted_account_id,accepted_member_id,accepted_time,version,create_time,update_time)
+        VALUES(#{invitation.invitationId},#{invitation.invitationNo},#{invitation.tenantId},
+            #{invitation.invitedEmailToken},#{invitation.invitedEmailMasked},#{invitation.memberType},
+            #{invitation.initialRoleId},#{invitation.invitedByMemberId},#{invitation.expiresTime},'PENDING',1,
+            NULL,NULL,NULL,1,#{now},#{now})
+    </insert>
+    <update id="expireInvitation">
+        UPDATE t_tenant_invitation SET status='EXPIRED', active_slot=NULL, version=version+1, update_time=#{now}
+        WHERE invitation_id=#{invitationId} AND version=#{version} AND status='PENDING' AND expires_time &lt;= #{now}
+    </update>
+    <update id="renewInvitation">
+        UPDATE t_tenant_invitation SET expires_time=#{expiresTime}, version=version+1, update_time=#{now}
+        WHERE invitation_id=#{invitationId} AND version=#{version} AND status='PENDING' AND active_slot=1
+    </update>
+    <update id="revokeInvitation">
+        UPDATE t_tenant_invitation SET status='REVOKED', active_slot=NULL, version=version+1, update_time=#{now}
+        WHERE invitation_id=#{invitationId} AND version=#{version} AND status='PENDING'
+    </update>
+    <update id="acceptInvitation">
+        UPDATE t_tenant_invitation SET status='ACCEPTED', active_slot=NULL, accepted_account_id=#{accountId},
+            accepted_member_id=#{memberId}, accepted_time=#{now}, version=version+1, update_time=#{now}
+        WHERE invitation_id=#{invitationId} AND version=#{version} AND status='PENDING' AND expires_time &gt; #{now}
+    </update>
+
+    <select id="challenge" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.InvitationChallenge">
+        SELECT <include refid="ChallengeColumns"/> FROM t_authentication_challenge
+        WHERE <include refid="ChallengeScope"/> AND challenge_no=#{challengeNo}
+    </select>
+    <select id="lockChallenge" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.InvitationChallenge">
+        SELECT <include refid="ChallengeColumns"/> FROM t_authentication_challenge
+        WHERE <include refid="ChallengeScope"/> AND challenge_id=#{challengeId} FOR UPDATE
+    </select>
+    <select id="lockActiveChallenge" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.InvitationChallenge">
+        SELECT <include refid="ChallengeColumns"/> FROM t_authentication_challenge
+        WHERE <include refid="ChallengeScope"/> AND tenant_invitation_id=#{invitationId} AND status='PENDING'
+            AND active_slot=1 FOR UPDATE
+    </select>
+    <insert id="insertChallenge">
+        INSERT INTO t_authentication_challenge
+        (challenge_id, challenge_no, realm, purpose, account_id, tenant_invitation_id, email_vault_token, email_masked,
+         active_scope_hash, secret_hmac, hmac_key_version, expires_time, max_attempts, used_attempts, status, active_slot,
+         consumed_time, supersedes_challenge_id, version, create_time, update_time)
+        VALUES (#{challenge.id}, #{challenge.challengeNo}, 'CUSTOMER', 'TENANT_INVITATION_ACCEPT', NULL,
+                #{challenge.invitationId}, #{challenge.emailToken}, #{challenge.emailMasked}, #{challenge.scopeHash},
+                #{challenge.secretHmac}, #{challenge.keyVersion}, #{challenge.expiresTime}, 5, 0, 'PENDING', 1, NULL,
+                #{challenge.supersedesId}, 1, #{challenge.createTime}, #{challenge.createTime})
+    </insert>
+    <update id="supersedeChallenge">
+        UPDATE t_authentication_challenge SET status='SUPERSEDED', active_slot=NULL, version=version+1, update_time=#{now}
+        WHERE challenge_id=#{challengeId} AND <include refid="ChallengeScope"/> AND status='PENDING' AND active_slot=1
+            AND version=#{version}
+    </update>
+    <update id="revokeChallenge">
+        UPDATE t_authentication_challenge SET status='REVOKED', active_slot=NULL, version=version+1, update_time=#{now}
+        WHERE challenge_id=#{challengeId} AND <include refid="ChallengeScope"/> AND status='PENDING' AND active_slot=1
+            AND version=#{version}
+    </update>
+    <update id="consumeChallenge">
+        UPDATE t_authentication_challenge SET status='CONSUMED', active_slot=NULL, consumed_time=#{now},
+            version=version+1, update_time=#{now}
+        WHERE challenge_id=#{challengeId} AND <include refid="ChallengeScope"/> AND version=#{version}
+            AND status='PENDING' AND active_slot=1 AND expires_time&gt;#{now} AND max_attempts=5
+            AND used_attempts&lt;max_attempts
+    </update>
+    <update id="failChallenge">
+        UPDATE t_authentication_challenge
+        SET status=CASE WHEN expires_time&lt;=#{now} THEN 'EXPIRED'
+                        WHEN used_attempts+1&gt;=max_attempts THEN 'REVOKED' ELSE 'PENDING' END,
+            active_slot=CASE WHEN expires_time&lt;=#{now} OR used_attempts+1&gt;=max_attempts THEN NULL ELSE 1 END,
+            used_attempts=LEAST(used_attempts+1,max_attempts), version=version+1, update_time=#{now}
+        WHERE challenge_id=#{challengeId} AND <include refid="ChallengeScope"/> AND version=#{version}
+            AND status='PENDING' AND active_slot=1
+    </update>
+</mapper>

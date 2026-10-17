@@ -12,7 +12,10 @@ public enum ClientBffErrorCode implements CodeMessageEnum {
 
     DEPENDENCY_UNAVAILABLE("DEPENDENCY_UNAVAILABLE", "依赖服务暂时不可用，请稍后重试"),
 
-    WORKSPACE_CONTEXT_REQUIRED("CLIENT_WORKSPACE_CONTEXT_REQUIRED", "请先进入工作区");
+    WORKSPACE_CONTEXT_REQUIRED("CLIENT_WORKSPACE_CONTEXT_REQUIRED", "请先进入工作区"),
+
+    /** 邀请详情与接受只在账号上下文可用；租户上下文需先切回账号（W01）。 */
+    ACCOUNT_CONTEXT_REQUIRED("CLIENT_ACCOUNT_CONTEXT_REQUIRED", "请先返回“我的工作区”再处理邀请");
 
     private final String code;
     private final String message;

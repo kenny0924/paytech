@@ -12,6 +12,6 @@ public interface ClientMemberRepository {
     /** 在事务中以共享锁读取指定成员及其租户；不存在为空。 */
     ClientMember lockMember(long memberId);
 
-    /** 读取账号在非 PENDING CLIENT 租户中的成员。 */
+    /** 读取账号在非 PENDING CLIENT 租户中未被移除（非 REVOKED）的成员。 */
     List<ClientMember> members(long accountId);
 }

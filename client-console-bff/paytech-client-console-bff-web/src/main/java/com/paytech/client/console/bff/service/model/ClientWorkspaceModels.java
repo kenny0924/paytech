@@ -38,7 +38,7 @@ public final class ClientWorkspaceModels {
      * 工作区首页
      *
      * @param notice 固定提示进入工作区不代表已开通收款
-     * @param capabilities 当前成员被授予的开发者能力（API_CREDENTIAL_READ/MANAGE、WEBHOOK_READ/MANAGE），用于显示菜单
+     * @param capabilities 当前成员被授予的页面能力（API_CREDENTIAL_READ/MANAGE、WEBHOOK_READ/MANAGE、TEAM_READ/MANAGE），用于显示菜单与按钮
      */
     public record WorkspaceHomeResponseBody(HomeWorkspace workspace, HomeProfile profile, String notice,
         List<String> capabilities) {}

@@ -38,7 +38,8 @@ public class PlatformDataCleaner implements Clear {
 
     /** 测试独占的表；顺序为子表在前，便于定位残留。 */
     public static final List<String> OWNED_TABLES = List.of(
-        "t_auth_session", "t_refresh_token_generation", "t_authentication_challenge", "t_password_credential",
+        "t_auth_session", "t_refresh_token_generation", "t_authentication_challenge", "t_tenant_invitation",
+        "t_password_credential",
         "t_tenant_member_role", "t_tenant_member", "t_user_account",
         "t_role_permission", "t_role", "t_console_resource", "t_permission", "t_jwt_signing_key",
         "t_api_scope", "t_gateway_guard_rule", "t_gateway_route_header", "t_gateway_route_query_param",

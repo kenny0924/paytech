@@ -9,10 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 
-import com.paytech.platform.support.accesscontrol.domain.clientdeveloper.ClientDeveloperPermissions;
+import com.paytech.platform.support.accesscontrol.domain.clientteam.ClientTeamPermissions;
 import com.paytech.platform.support.accesscontrol.domain.enums.AccessTenantType;
 import com.paytech.platform.support.accesscontrol.domain.enums.AuthenticationRealm;
 import com.paytech.platform.support.accesscontrol.domain.enums.OperationsTenantOwnerStatus;
+import com.paytech.platform.support.api.enums.ClientTeamRole;
 import com.paytech.platform.support.api.enums.OperationsAccountStatus;
 import com.paytech.platform.support.api.enums.OperationsAccountType;
 import com.paytech.platform.support.api.enums.TenantProjectionErrorCode;
@@ -24,6 +25,7 @@ import com.paytech.platform.support.test.base.OperationsApiTestBase;
 import com.paytech.platform.support.test.builder.OperatorBuilder;
 import com.paytech.platform.support.test.checker.PlatformResponseChecker;
 import com.paytech.platform.support.test.dal.ClientDeveloperTestMapper;
+import com.paytech.platform.support.test.dal.ClientTeamTestMapper;
 import com.paytech.platform.support.test.mocker.local.ClientWorkspaceMocker;
 
 /**
@@ -43,6 +45,9 @@ class ClientTenantProvisionTest extends OperationsApiTestBase {
 
     @Autowired
     ClientDeveloperTestMapper developerData;
+
+    @Autowired
+    ClientTeamTestMapper teamData;
 
     /** 有效 CUSTOMER 申请人：创建 PENDING Tenant，来源查询读回同一投影，同内容重放返回原结果。 */
     @Test
@@ -68,7 +73,10 @@ class ClientTenantProvisionTest extends OperationsApiTestBase {
         }
     }
 
-    /** 首次投影为 ACTIVE 时，正式 OWNER 角色获得权限目录中现有的工作区开发者权限；同版本重放不重复授予。 */
+    /**
+     * 首次投影为 ACTIVE 时，一同创建 OWNER、管理员、开发者、只读成员四个系统角色，按固定矩阵获得权限目录中现有的权限；
+     * 同版本重放不重复创建或授予。
+     */
     @Test
     void test_activationGrantsDeveloperPermissions() {
         workspaces.permissions();
@@ -83,8 +91,13 @@ class ClientTenantProvisionTest extends OperationsApiTestBase {
             anonymous(HttpMethod.POST, PATH + "/status", status).assertOk();
             anonymous(HttpMethod.POST, PATH + "/status", status).assertOk();
 
-            assertEquals(ClientDeveloperPermissions.OWNER_DEFAULTS.stream().sorted().toList(),
+            var expected = new java.util.ArrayList<java.util.Map<String, Object>>();
+            java.util.Arrays.stream(ClientTeamRole.values()).sorted(java.util.Comparator.comparing(ClientTeamRole::getCode))
+                .forEach(role -> ClientTeamPermissions.of(role).stream().sorted().forEach(code -> expected.add(
+                    java.util.Map.of("role_code", role.getCode(), "permission_code", code))));
+            assertEquals(ClientTeamPermissions.of(ClientTeamRole.TENANT_OWNER).stream().sorted().toList(),
                 developerData.ownerPermissions(tenantId));
+            assertEquals(expected, teamData.systemRolePermissions(tenantId));
         } finally {
             operationsData.deleteTenant(tenantId);
         }

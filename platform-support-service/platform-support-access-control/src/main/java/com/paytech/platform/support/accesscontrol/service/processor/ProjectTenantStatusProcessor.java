@@ -3,6 +3,8 @@ package com.paytech.platform.support.accesscontrol.service.processor;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,7 +17,8 @@ import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionGrant;
 import com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionRole;
 import com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionRolePermission;
-import com.paytech.platform.support.accesscontrol.domain.clientdeveloper.ClientDeveloperPermissions;
+import com.paytech.platform.support.accesscontrol.domain.clientteam.ClientTeamPermissions;
+import com.paytech.platform.support.accesscontrol.domain.clientteam.ClientTeamRules;
 import com.paytech.platform.support.accesscontrol.domain.enums.OperationsTenantOwnerStatus;
 import com.paytech.platform.support.accesscontrol.domain.tenantaccess.ProjectTenantStatusContext;
 import com.paytech.platform.support.accesscontrol.domain.tenantaccess.TenantProjectionAuditFacts;
@@ -24,12 +27,13 @@ import com.paytech.platform.support.accesscontrol.domainservice.repository.Tenan
 import com.paytech.platform.support.accesscontrol.domainservice.repository.TenantProjectionTenantRepository;
 import com.paytech.platform.support.accesscontrol.domainservice.service.TenantProjectionService;
 import com.paytech.platform.support.accesscontrol.service.processor.request.ProjectTenantStatusRequest;
+import com.paytech.platform.support.api.enums.ClientTeamRole;
 import com.paytech.platform.support.api.enums.TenantProjectionErrorCode;
 import com.paytech.platform.support.auditsecurity.domainservice.service.OperationsAuditService;
 
 import lombok.AllArgsConstructor;
 
-/** 顺序投影 Client 生命周期，首次 ACTIVE 原子切换 OWNER 角色。 */
+/** 顺序投影 Client 生命周期，首次 ACTIVE 原子切换 OWNER 角色，并一同创建管理员、开发者、只读成员系统角色及其权限。 */
 @Component
 @AllArgsConstructor
 @ConditionalOnProperty(name = "tenant.projection.enabled", havingValue = "true")
@@ -83,25 +87,39 @@ public class ProjectTenantStatusProcessor
         var now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         TenantProjectionRole ownerRole = null;
         TenantProjectionGrant ownerGrant = null;
-        List<TenantProjectionRolePermission> ownerPermissions = List.of();
+        List<TenantProjectionRole> teamRoles = List.of();
+        List<TenantProjectionRolePermission> rolePermissions = List.of();
         if (request.getOwnerStatus() == OperationsTenantOwnerStatus.ACTIVE
             && roles.ownerRole(tenant.tenantId()) == null) {
-            ownerRole = new TenantProjectionRole(ids.nextId(), tenant.tenantId(), "TENANT_OWNER");
+            ownerRole = new TenantProjectionRole(ids.nextId(), tenant.tenantId(), ClientTeamRole.TENANT_OWNER.getCode());
             ownerGrant =
                 new TenantProjectionGrant(ids.nextId(), tenant.tenantId(), member.memberId(), ownerRole.roleId());
-            ownerPermissions = ownerPermissions(ownerRole.roleId());
+            teamRoles = teamRoles(tenant.tenantId());
+            rolePermissions = rolePermissions(ownerRole, teamRoles);
         }
         var context = new ProjectTenantStatusContext(tenant, member, request.getSourceVersion(),
-            request.getPayloadHash(), request.getOwnerStatus(), ownerRole, ownerGrant, ownerPermissions, now);
+            request.getPayloadHash(), request.getOwnerStatus(), ownerRole, ownerGrant, teamRoles, rolePermissions, now);
         service.projectStatus(context);
         var result = support.result(context.getTenant(), context.getMember());
         audit.record(() -> TenantProjectionAuditFacts.projected(result, false, context.activatesOwner(), now));
         return result;
     }
 
-    /** 正式 OWNER 默认获得工作区开发者权限；权限目录中缺失或停用的编码不授予。 */
-    List<TenantProjectionRolePermission> ownerPermissions(long roleId) {
-        return roles.activePermissionIds(ClientDeveloperPermissions.OWNER_DEFAULTS).stream()
-            .map(permissionId -> new TenantProjectionRolePermission(ids.nextId(), roleId, permissionId)).toList();
+    /** 与 OWNER 同时创建的三个可邀请系统角色。 */
+    List<TenantProjectionRole> teamRoles(long tenantId) {
+        return Arrays.stream(ClientTeamRole.values()).filter(ClientTeamRole::isAssignable)
+            .map(role -> new TenantProjectionRole(ids.nextId(), tenantId, role.getCode())).toList();
+    }
+
+    /** 四个系统角色按固定矩阵获得权限；权限目录中缺失或停用的编码不授予。 */
+    List<TenantProjectionRolePermission> rolePermissions(TenantProjectionRole ownerRole,
+        List<TenantProjectionRole> teamRoles) {
+        var all = new ArrayList<TenantProjectionRole>();
+        all.add(ownerRole);
+        all.addAll(teamRoles);
+        return all.stream().flatMap(role -> roles.activePermissionIds(
+                ClientTeamPermissions.of(ClientTeamRules.systemRole(role.roleCode()))).stream()
+            .map(permissionId -> new TenantProjectionRolePermission(ids.nextId(), role.roleId(), permissionId)))
+            .toList();
     }
 }

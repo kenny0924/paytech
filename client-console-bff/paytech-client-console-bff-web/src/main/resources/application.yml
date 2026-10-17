@@ -71,3 +71,5 @@ web:
       - /onboarding-files
       - /client-workspace
       - /client-developer
+      - /client-team
+      - /client-invitations

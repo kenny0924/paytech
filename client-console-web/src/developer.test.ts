@@ -22,6 +22,8 @@ test("capabilities drive the developer menu and unknown codes are ignored", () =
   assert.deepEqual(developerMenu(readCapabilities(["API_CREDENTIAL_READ", "BOGUS"])).map((i) => i.key), ["api-keys"]);
   assert.deepEqual(developerMenu(readCapabilities(["WEBHOOK_MANAGE"])).map((i) => i.path), ["/workspace/developer/webhooks"]);
   assert.deepEqual(readCapabilities("API_CREDENTIAL_READ"), []);
+  assert.deepEqual(readCapabilities(["TEAM_MANAGE", "TEAM_READ", "TEAM_OWNER"]), ["TEAM_READ", "TEAM_MANAGE"]);
+  assert.deepEqual(developerMenu(readCapabilities(["TEAM_READ", "TEAM_MANAGE"])), []);
   const home = readHome({ workspace: { clientId: "1", clientNo: "CL-1", displayName: null, clientType: "INDIVIDUAL", clientStatus: "ACTIVE" },
     profile: {}, notice: null, capabilities: ["WEBHOOK_READ"] });
   assert.deepEqual(home?.capabilities, ["WEBHOOK_READ"]);

@@ -4,9 +4,10 @@ import type { Capability } from "./developer.ts";
 export type WorkspaceItem = {
   memberId: string;
   clientId: string;
-  clientNo: string;
+  /** CCT 摘要缺失时为空，只降级该项显示。 */
+  clientNo: string | null;
   displayName: string | null;
-  clientType: string;
+  clientType: string | null;
   state: "ACCESSIBLE" | "RESTRICTED";
   reasonText: string | null;
   current: boolean;
@@ -14,10 +15,11 @@ export type WorkspaceItem = {
 export type Workspaces = { status: "AVAILABLE" | "UNAVAILABLE"; items: WorkspaceItem[] };
 /** 工作区首页；只含已批准资料摘要，不含收款、余额或邀请信息。 */
 export type WorkspaceHome = {
-  workspace: { clientId: string; clientNo: string; displayName: string | null; clientType: string; clientStatus: string };
+  /** CCT 未返回已批准资料时只有 clientId，其余为空。 */
+  workspace: { clientId: string; clientNo: string | null; displayName: string | null; clientType: string | null; clientStatus: string | null };
   profile: { country: string | null; businessModelCode: string | null; approvedAt: string | null };
   notice: string | null;
-  /** 开发者权限能力；旧版 BFF 不返回时为空。 */
+  /** 开发者与团队权限能力；旧版 BFF 不返回时为空。 */
   capabilities: Capability[];
 };
 
@@ -26,7 +28,8 @@ const unavailable: Workspaces = { status: "UNAVAILABLE", items: [] };
 
 /**
  * 校验 C01 返回的工作区区域
- * <li>字段缺失或格式不符时整体按“暂时无法读取”处理，不展示部分可疑数据。</li>
+ * <li>成员或 Client ID、状态格式不符时整体按“暂时无法读取”处理，不展示部分可疑数据。</li>
+ * <li>单项缺少客户编号、名称或类型（CCT 摘要缺失）时只降级该项，不影响其他工作区。</li>
  * <li>缺少该字段（旧版 BFF）同样视为不可用，不影响入驻申请列表。</li>
  */
 export function readWorkspaces(value: unknown): Workspaces {
@@ -38,21 +41,28 @@ export function readWorkspaces(value: unknown): Workspaces {
   for (const raw of v.items) {
     const i = raw as Partial<WorkspaceItem> | null;
     if (!i || typeof i !== "object" || !id.test(String(i.memberId)) || !id.test(String(i.clientId))
-      || typeof i.clientNo !== "string" || typeof i.clientType !== "string"
       || (i.state !== "ACCESSIBLE" && i.state !== "RESTRICTED")
-      || !(i.displayName === null || typeof i.displayName === "string")
       || !(i.reasonText === null || i.reasonText === undefined || typeof i.reasonText === "string")) {
       return unavailable;
     }
-    items.push({ memberId: i.memberId!, clientId: i.clientId!, clientNo: i.clientNo, displayName: i.displayName ?? null,
-      clientType: i.clientType, state: i.state, reasonText: i.reasonText ?? null, current: i.current === true });
+    items.push({ memberId: i.memberId!, clientId: i.clientId!, clientNo: optionalText(i.clientNo), displayName: optionalText(i.displayName),
+      clientType: optionalText(i.clientType), state: i.state, reasonText: i.reasonText ?? null, current: i.current === true });
   }
   return { status: "AVAILABLE", items };
 }
 
-/** 工作区显示名称：CCT 已批准名称，读取不到时用客户编号。 */
-export function workspaceName(item: { displayName: string | null; clientNo: string }): string {
-  return item.displayName?.trim() || item.clientNo;
+function optionalText(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+/** 工作区显示名称：CCT 已批准名称，读取不到时用客户编号，都没有时显示固定提示。 */
+export function workspaceName(item: { displayName: string | null; clientNo: string | null }): string {
+  return item.displayName?.trim() || item.clientNo || "名称暂不可用";
+}
+
+/** 名称下方的说明行：类型 · 编号，缺失的部分省略。 */
+export function workspaceSubtitle(item: { clientType: string | null; clientNo: string | null }): string {
+  return [item.clientType ? clientTypeLabels[item.clientType] ?? item.clientType : null, item.clientNo].filter(Boolean).join(" · ");
 }
 
 export const clientTypeLabels: Record<string, string> = { INDIVIDUAL: "个人", ORGANIZATION: "组织" };
@@ -80,16 +90,15 @@ export function enterableWorkspace(clientId: string | undefined, workspaces: Wor
   return workspaces.items.find((item) => item.clientId === clientId && item.state === "ACCESSIBLE") ?? null;
 }
 
-/** 首页响应的最小校验；不合格时按读取失败处理。 */
+/** 首页响应的最小校验；只要求 clientId，资料缺失时按项降级显示；不合格时按读取失败处理。 */
 export function readHome(value: unknown): WorkspaceHome | null {
   const v = value as WorkspaceHome | null;
   if (!v || typeof v !== "object" || !v.workspace || !v.profile) return null;
   const w = v.workspace;
-  if (!id.test(String(w.clientId)) || typeof w.clientNo !== "string" || typeof w.clientType !== "string"
-    || typeof w.clientStatus !== "string") return null;
+  if (!id.test(String(w.clientId))) return null;
   return {
-    workspace: { clientId: w.clientId, clientNo: w.clientNo, displayName: typeof w.displayName === "string" ? w.displayName : null,
-      clientType: w.clientType, clientStatus: w.clientStatus },
+    workspace: { clientId: w.clientId, clientNo: optionalText(w.clientNo), displayName: optionalText(w.displayName),
+      clientType: optionalText(w.clientType), clientStatus: optionalText(w.clientStatus) },
     profile: {
       country: typeof v.profile.country === "string" ? v.profile.country : null,
       businessModelCode: typeof v.profile.businessModelCode === "string" ? v.profile.businessModelCode : null,

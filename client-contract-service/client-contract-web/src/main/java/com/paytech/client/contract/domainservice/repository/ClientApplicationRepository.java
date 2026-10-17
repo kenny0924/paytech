@@ -40,6 +40,6 @@ public interface ClientApplicationRepository {
      */
     void concludeReview(ClientApplicationSubmission application, ClientApplicationStatus status, Long decisionId, Instant now);
 
-    /** 本账号作为申请人且存在 APPROVED 申请的 Client 摘要；其余 ID 不返回。 */
-    List<ClientWorkspaceSummary> findApprovedSummaries(long accountId, List<Long> clientIds);
+    /** 存在 APPROVED 申请的 Client 摘要；其余 ID 不返回，不判断成员关系。 */
+    List<ClientWorkspaceSummary> findApprovedSummaries(List<Long> clientIds);
 }

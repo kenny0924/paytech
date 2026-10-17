@@ -70,6 +70,7 @@ public class PersistenceConfiguration {
         registry.register(com.paytech.platform.support.accesscontrol.domain.enums.TenantRoleScope.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.accesscontrol.domain.enums.TenantRoleStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.accesscontrol.domain.enums.TenantGrantStatus.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.accesscontrol.domain.enums.TenantInvitationStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.accesscontrol.domain.enums.RolePermissionStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.accesscontrol.domain.enums.PermissionStatus.class, CodeEnumTypeHandler.class);
 

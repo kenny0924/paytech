@@ -112,6 +112,8 @@ web:
       - /api-credential-admin
       - /client-api-credentials
       - /client-webhooks
+      - /client-team
+      - /client-invitations
       - /api-scope-admin
       - /api-credentials
       - /tenant-projections
@@ -165,6 +167,7 @@ notification:
   transient-template-codes:
     - CLIENT_EMAIL_VERIFICATION
     - CLIENT_PASSWORD_RESET
+    - CLIENT_TENANT_INVITATION
   # Amazon SES 适配器（类型 AMAZON_SES）；需同时启用 notification.enabled，并配置 VaultClient。
   # 账号的区域、发件地址、Configuration Set 与密钥在运营后台维护（t_notification_provider，密钥存 Vault），这里只有环境级参数。
   ses:

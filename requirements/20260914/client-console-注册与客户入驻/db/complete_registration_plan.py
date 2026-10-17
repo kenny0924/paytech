@@ -30,6 +30,18 @@ developer = [
 ]
 idempotent |= {op for op, method, _, _ in developer if method != 'GET'}
 
+# 2026-10-17 团队成员与邀请（requirements/20261017/client-console-团队成员与邀请 第 8 节）：
+# 团队 T01—T07 租户上下文、权限由 BFF 调 Platform 判断；邀请 I01 预览公开，I02 详情、I03 接受为账号上下文。
+team = [
+    ('T01', 'GET', '/members', 0), ('T02', 'GET', '/invitations', 0), ('T03', 'POST', '/invitations', 4096),
+    ('T04', 'POST', '/invitations/{invitationId}/resend', 1024),
+    ('T05', 'POST', '/invitations/{invitationId}/revocation', 1024),
+    ('T06', 'POST', '/members/{memberId}/role', 1024), ('T07', 'POST', '/members/{memberId}/removal', 1024),
+]
+invitation = [('I01', 'A03', '/preview'), ('I02', 'C01', '/details'), ('I03', 'C01', '/acceptance')]
+idempotent |= {op for op, method, _, _ in team if method != 'GET'} | {'I03'}
+queries.update(T01=['page', 'size'], T02=['status', 'page', 'size'])
+
 def pair(dimension, capacity, concurrency):
     return [dict(ruleType='RATE_LIMIT', dimension=dimension, capacity=capacity,
                  refillTokens=capacity, refillPeriodMillis=60000, concurrencyLimit=None),
@@ -84,6 +96,22 @@ if not any(r['operationId'] == 'D01' for r in plan['routes']):
             httpMethod=method, bodyLimitBytes=limit or base['bodyLimitBytes'],
             externalPathTemplate='/api/client/developer/v1' + path,
             downstreamPathTemplate='/client-developer/v1' + path))
+
+if not any(r['operationId'] == 'T01' for r in plan['routes']):
+    base = next(r for r in plan['routes'] if r['operationId'] == 'C01')
+    at = plan['routes'].index(next(r for r in plan['routes'] if r['operationId'] == 'D15')) + 1
+    for offset, (op, method, path, limit) in enumerate(team):
+        plan['routes'].insert(at + offset, dict(base, operationId=op, routeCode='client-team-' + op.lower(),
+            httpMethod=method, bodyLimitBytes=limit or base['bodyLimitBytes'],
+            externalPathTemplate='/api/client/team/v1' + path, downstreamPathTemplate='/client-team/v1' + path))
+if not any(r['operationId'] == 'I01' for r in plan['routes']):
+    at = plan['routes'].index(next(r for r in plan['routes'] if r['operationId'] == 'T07')) + 1
+    for offset, (op, base_op, path) in enumerate(invitation):
+        base = next(r for r in plan['routes'] if r['operationId'] == base_op)
+        plan['routes'].insert(at + offset, dict(base, operationId=op, routeCode='client-invitation-' + op.lower(),
+            httpMethod='POST', bodyLimitBytes=1024,
+            externalPathTemplate='/api/client/invitations/v1' + path,
+            downstreamPathTemplate='/client-invitations/v1' + path))
 
 for route in plan['routes']:
     op = route['operationId']
