@@ -1,0 +1,6 @@
+# SES 投递事件验收专用：临时登记内部通知调用方 e2esesevents，只允许模板 E2E_SES_EVT_TEST。
+# 叠加在 compose-candidate.yaml 之后，只在验收期间使用；验收结束后不带本文件重启 Platform 即撤销。
+services:
+  platform-support-service:
+    environment:
+      NOTIFICATION_HTTP_CALLERS_E2ESESEVENTS: E2E_SES_EVT_TEST

@@ -1,0 +1,9 @@
+# SES 投递事件：从干净提交 6461091（含 b0c8b0e、69d868e、762b785、2c144d3）构建的三个镜像（tag mor-test/<service>:ses-events-20261017），使用固定 image ID。
+# 用法：./test-environment/compose.sh -f "$PWD/requirements/20261017/platform-support-SES投递事件/release/compose-candidate.yaml" up -d --no-deps --no-build --pull never --wait <service>
+services:
+  platform-support-service:
+    image: sha256:5906497424cefd67b7a510f25829a752e722116771666eac6157eefc12b2adfa
+  operations-console-bff:
+    image: sha256:6cf936536f7bff2e6aa115d9eb46c0f164bfb4b60a3b5a275322a8c79bcd95bc
+  operations-console-web:
+    image: sha256:26be835c66cec3e7d2069edf37f544c28db021d5bb507095e409caee722d9119

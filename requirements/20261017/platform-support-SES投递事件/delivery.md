@@ -9,8 +9,8 @@
 | 3. 方案、接口与数据设计 | 已确认（[technique.md](./technique.md)、[ddl.sql](./db/platform-support-service/ddl.sql)） |
 | 4. 研发实现 | 已确认（见下方阶段 4 记录；偏差见 technique.md 第 7 节；分支覆盖率低于基线 0.41 个百分点，未要求补齐） |
 | 5. 综合验证与本地验收 | 已确认（见下方阶段 5 记录） |
-| 6–7. test 发布准备与部署 | 6 已确认（[release/release.md](./release/release.md)，D1 A、D2 A）；7 进行中 |
-| 8. 代码提交与交付归档 | 未开始 |
+| 6–7. test 发布准备与部署 | 已确认（D1 A、D2 A；[release/release.md](./release/release.md) 第 7 节：真实链路 8/8、页面 5/5） |
+| 8. 代码提交与交付归档 | 完成（代码 `762b785`；发布与归档提交见下方阶段 8 记录） |
 
 ## 确认记录
 
@@ -23,6 +23,7 @@
 | 2026-10-17 | 4→5 | "继续"：确认阶段 4 结果与偏差；同意按所列范围进入阶段 5。随后选择"等 Webhook 会话用完再换"本机 Platform、BFF | 阶段 5：本机重新打包并重启 Platform、BFF、Web，开启事件拉取；在 `mor_platform_e2e` 写入合成事件数据验收页面，结束后清理；不碰 test 环境、不提交 |
 | 2026-10-17 | 5→6 | "进入"：确认阶段 5 | 阶段 6 发布准备：只读核对 mor-test 与发布清单，不执行 test 变更 |
 | 2026-10-17 | 6→7 | "继续"：确认发布清单，D1、D2 按建议（A、A） | 阶段 7：等 Risk、Gateway 幂等会话发布并提交后，本地提交本需求（不推送）；备份、构建、`mor_platform` DDL、Compose 开启事件拉取、同批替换 Platform / BFF / Web；拿到队列 URL 后配置 `SES_PRIMARY`；临时调用方 + 模拟地址验收后清理；不碰生产 |
+| 2026-10-17 | 7→8 | "可以"：确认阶段 7；授权本地提交 Compose 修改、发布记录、test 验收脚本与截图、交付记录与台账 | 本地提交；不推送 |
 
 ## 阶段 4 研发记录（2026-10-17）
 
@@ -50,6 +51,13 @@
 - **清理**：执行 [acceptance-cleanup-local.sql](./db/platform-support-service/acceptance-cleanup-local.sql) 后，`E2E_SES` 账号、合成记录与模板均为 0。审计事件按约定保留；LIVE 账号的合成密钥留在本机 Vault（假值）。Platform 已按标准参数重启（事件拉取、SES 发信关闭），包仍用本次构建，与 BFF 配套。
 - **未覆盖**：真实 SES → SNS → SQS 链路（送达、退信、投诉事件真正到达并回写），要等阶段 6–7 在 mor-test 配好 AWS 资源后验收。
 
+## 阶段 8 归档记录（2026-10-17）
+
+- **代码提交：** `762b785`（阶段 7 前按 D1 A 经私有索引提交，80 个文件，只含本需求）。该提交已随 Client Console 会话推送 `84e2c4c` 时进入 `origin/main`（非本会话推送）。
+- **归档提交：** Compose 事件开关、发布记录与 test 覆盖文件、test 验收脚本与截图、交付记录、`agent-docs/CURRENT_IMPLEMENTATION.md` 台账，本地提交，不推送。
+
 ## 遗留项
 
-无。
+- SES 账户仍在沙箱：mor-test 普通收件人收不到认证 / 邀请邮件；如需真实投递，需在 SES 申请生产访问。
+- 生产环境上线须按发布清单第 3 节另建 AWS 资源，且发信策略同时放行默认 Configuration Set。
+- Delivery 分支覆盖率比基线低 0.41 个百分点（防御分支），未补。

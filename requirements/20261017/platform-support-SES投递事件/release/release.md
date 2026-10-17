@@ -40,7 +40,7 @@
    - Event types 只勾 **Deliveries**、**Hard bounces**（控制台叫 Bounces）、**Complaints**、**Rejects**；
    - Destination 选 **Amazon SNS**，主题选 `mor-test-ses-events`；
    - 保存。
-7. **设为域名默认**：SES → Identities → `payorigo.com` → Configuration set（或 Default configuration set）→ Edit → 勾选使用默认 Configuration Set，选 `mor-test-events` → Save。之后从这个域名发出的所有邮件（含认证邮件、测试发送）都会产生事件；认证邮件和测试发送的事件对不上发送尝试，Platform 只计数后删除（F-06）。
+7. **设为域名默认**（**注意**：发信 IAM 策略若已收窄到 `identity/<域名>`，须在 Resource 中同时加入 `arn:aws:ses:<区域>:<账号ID>:configuration-set/<名称>`，否则设为默认后全部发信被拒，见第 7 节）：SES → Identities → `payorigo.com` → Configuration set（或 Default configuration set）→ Edit → 勾选使用默认 Configuration Set，选 `mor-test-events` → Save。之后从这个域名发出的所有邮件（含认证邮件、测试发送）都会产生事件；认证邮件和测试发送的事件对不上发送尝试，Platform 只计数后删除（F-06）。
 8. **给 IAM 用户加权限**：IAM → Users → Platform 发信用的那个用户 → Add permissions → Create inline policy → JSON，填入（把 `<账号ID>` 换成 12 位账号 ID）：
 
    ```json
@@ -91,4 +91,21 @@
 
 ## 7. 执行记录
 
-（阶段 7 填写）
+| 步骤 | 结果 |
+|---|---|
+| 协调 | Gateway 幂等会话（code-mor-76）提交 `b0c8b0e` 并在 mor-test 执行其 `idempotency_mode` DDL（07:41Z），自行替换 Gateway、Commerce；约定 Platform / BFF / Web 由本会话从含三方提交的 HEAD 一次替换。Risk 会话（code-mor-db）mor-test 窗口已结束（Risk `725f7d12…`、BFF `4b702a37…`、Web `03668fd0…`），代码待其阶段 8 提交 |
+| 提交（D1 A） | `b0c8b0e` 的 PDManer 模型 JSON 无法解析，通知 code-mor-76 后由其单独修正 `69d868e`；本需求经私有索引提交 `762b785`（80 个文件，共享文件只取本需求片段，不推送）。干净 worktree 离线编译 Platform、BFF 与依赖 API 通过 |
+| 1 复核 | 新列不存在；`SES_PRIMARY` 版本 4；三个运行镜像如上，作为回退基线 |
+| 2 备份 | `~/Code-MoR-backups/20261017-ses-events-test/20261017T074633Z/`（0700/0600，SHA256SUMS）：两张通知表结构与数据、`compose.applications.yaml` 副本、三个容器 inspect |
+| 4 DDL（提前） | 07:47Z 执行 ddl.sql：provider 13 → 17 列、attempt 14 → 19 列，`resolution_source` 注释已更新；旧 Platform 保持 healthy、无 ERROR |
+| 3 构建 | Risk 会话提交 `d132c53`、`2c144d3`、`6461091` 后，从干净 worktree `6461091`（含 `b0c8b0e`、`69d868e`、`762b785`、`2c144d3`）离线打包：Platform jar SHA-256 前缀 `10cb5acd`、BFF `fb8c9af9`；Web `npm test` 1068/1068、`npm run build`（lock 与主工作区一致，入口 `index-DJk7bRoW.js`）。镜像 `ses-events-20261017`：Platform `sha256:5906497…`、BFF `sha256:6cf93653…`、Web `sha256:26be835c…`（见 [compose-candidate.yaml](./compose-candidate.yaml)），镜像内 jar 与入口已核对；制品在 `test-environment/artifacts/ses-events-20261017/`（已忽略） |
+| 5 替换 | Compose 加 `NOTIFICATION_SES_EVENTS_ENABLED: "true"`；07:49:14Z 开始，Platform 07:49:42Z、BFF 07:49:59Z、Web 07:50:11Z 依次 healthy（不兼容窗口约 17 秒）；启动日志无 ERROR；经 `http://localhost:28080` 账号列表返回新字段（`SES_PRIMARY` 版本 4、未配置队列）。已通知 code-mor-76 继续其验收 |
+| AWS | 用户按第 3 节完成：队列 `https://sqs.ap-southeast-1.amazonaws.com/698446905765/mor-test-ses-events`（SSE-SQS，死信 5 次）、SNS 订阅（Raw delivery）、Configuration Set `mor-test-events`（4 类事件）设为 `payorigo.com` 默认、IAM 内联策略 `mor-test-ses-events-consume` |
+| 6 配置队列 | 08:22Z 经运营入口编辑 `SES_PRIMARY` 填队列 URL（v4 → v5）；08:23:38Z 首次拉取成功并收到消息（内容不可见：test 未开放指标接口，Platform 不记原文）；之后版本保持 5 |
+| 7 验收（第一轮，失败） | 叠加 [compose-acceptance.yaml](./compose-acceptance.yaml) 重启 Platform（08:24:06Z–08:24:34Z）；新建模板 `E2E_SES_EVT_TEST` 与路由，内部提交 3 个模拟地址被受理，但每个投递 3 次尝试均 `SES_CREDENTIAL_REJECTED`。**原因**：默认 Configuration Set 让每封邮件都带上 `mor-test-events`，SES 要求发信 IAM 策略同时允许 `configuration-set/mor-test-events`，而用户已收窄的发信策略只允许 `identity/payorigo.com`，导致 mor-test 全部发信被拒（含认证邮件）。拉取链路正常。已请用户在发信策略 Resource 中加入该 ARN；改不了时可先取消默认 Configuration Set 恢复发信 |
+| IAM 修复 | 用户在发信策略 Resource 中加入 `configuration-set/mor-test-events`。09:44Z 测试发送到 `success@simulator.amazonses.com` 返回 `SES_ACCEPTED`；09:44:58Z 账号记下最近事件时间，确认 SES → SNS → SQS → Platform 真实链路接通（测试发送的事件对不上尝试，按设计只计数后删除）。第一轮验收数据已按 [acceptance-cleanup-test.sql](../db/platform-support-service/acceptance-cleanup-test.sql) 清理 |
+| 协调 | Client Console 会话（code-mor-ff）09:44Z 起把 test 的 Platform 换成其镜像 `sha256:58dcc90b…`（构建自 `f7b5500`，含 `762b785`），其覆盖文件为 `requirements/20261017/client-console-团队成员与邀请/release/compose-candidate-20261017.yaml`；临时调用方随之撤销。第二轮验收在其验收窗口结束后，以"其覆盖文件 + compose-acceptance.yaml"重启 Platform 进行 |
+| 7 验收（第二轮） | Client Console 会话窗口结束后，以其覆盖文件 + [compose-acceptance.yaml](./compose-acceptance.yaml) 重启 Platform（10:03:02Z–10:03:30Z）。[test_acceptance.py](../verification/test_acceptance.py) **8/8**：拉取正常；模板与路由；内部提交 3 个模拟地址受理；`success@` → 已送达；`bounce@` → 失败（硬退信 `Permanent/General`）；`complaint@` → 已送达并记投诉 `abuse`；账号最近事件时间更新、版本保持 5；响应不含收件地址。事件在发送后约 1～6 秒到达（记录 `237153616903880704`）。[test_browser.py](../verification/test_browser.py) **5/5**，截图 [账号列表](../verification/stage7-01-provider-events.png)、[记录详情](../verification/stage7-02-record-detail-events.png)；无控制台错误、无失败请求 |
+| 8 清理 | [acceptance-cleanup-test.sql](../db/platform-support-service/acceptance-cleanup-test.sql)：验收记录与模板为 0，`t_notification_attempt` 0 行；10:07:15Z–10:07:44Z 以 Client Console 覆盖文件重启 Platform 撤销临时调用方（`NOTIFICATION_SES_EVENTS_ENABLED` 保留）；重启后继续拉取正常。Platform、BFF、Gateway 自验收开始的日志无 ERROR、无模拟地址与合成密钥 |
+
+**当前 test 状态：** Platform 为 Client Console 会话镜像 `58dcc90b…`（含 `762b785`），BFF / Web 为本需求镜像 `6cf93653…` / `26be835c…`；`NOTIFICATION_SES_EVENTS_ENABLED=true`，`SES_PRIMARY` 已配置队列（v5），送达、退信、投诉事件实时回写发送记录。回退按第 6 节：拉取异常时清空 `SES_PRIMARY` 的队列 URL 或关闭事件开关；AWS 侧取消 `payorigo.com` 默认 Configuration Set 即停止产生事件。

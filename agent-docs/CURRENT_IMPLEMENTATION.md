@@ -290,6 +290,17 @@
 
 <a id="operations-notification-admin-20261015"></a>
 
+<a id="platform-ses-delivery-events-20261017"></a>
+## Platform 邮件投递事件（Amazon SES，2026-10-17，`762b785` 已在 origin/main，mor-test 已部署）
+
+- **范围：** SES Configuration Set → SNS → SQS，Platform 各实例以 Spring 定时任务按账号拉取 `t_notification_provider.event_queue_url`（复用账号发送密钥，不新增 Vault 规则），按 EmailTag `ses-<attempt_id>` 回写发送尝试：送达 → 投递已送达；硬退信 / 拒发 → 失败；软退信与投诉只记录；结果只升不降，结果未知的尝试经事件确认为已受理（`PROVIDER_EVENT`）；旧尝试送达也标已送达。认证邮件与测试发送的事件对不上尝试，只计数后删除。账号运行状态（最近拉取 / 错误 / 最近事件）不推进版本、不记审计；队列 URL 修改记审计。取代 Delivery 规划"不接回调"中的事件部分（拉取而非公网回调）。见[需求](../requirements/20261017/platform-support-SES投递事件/requirement.md)、[分析](../requirements/20261017/platform-support-SES投递事件/analysis.md)、[方案](../requirements/20261017/platform-support-SES投递事件/technique.md)（第 7 节为研发偏差）。
+- **数据库：** `t_notification_provider` +4 列、`t_notification_attempt` +5 列（[ddl.sql](../requirements/20261017/platform-support-SES投递事件/db/platform-support-service/ddl.sql)，PDManer 与 Schema 已同步）；本机 `mor_platform`、`mor_platform_e2e` 与 mor-test `mor_platform` 已执行。
+- **配置：** `notification.ses.events.enabled`（默认 false，且要求 `notification.enabled` 与 `notification.ses.enabled` 同时为 true）；间隔 60 秒、长轮询 10 秒、每轮最多 5 批。
+- **兼容：** Operations BFF 严格解析 Platform 通知响应，Platform 与 BFF 必须同批发布。
+- **验证：** Platform 全量 698/698（全服务聚合覆盖率门禁为既有未达标）；Delivery 通知类 96.05% / 89.33%（基线 95.96% / 89.74%，分支低 0.41 个百分点，用户未要求补齐）；BFF 1378/1378；Web 1060/1060（mor-test 构建时 1068/1068）。本机接口 20/20、浏览器 14/14；mor-test 真实链路 8/8（3 个 SES 模拟地址：送达、硬退信、投诉回写），页面 5/5。详见[交付记录](../requirements/20261017/platform-support-SES投递事件/delivery.md)与[发布记录](../requirements/20261017/platform-support-SES投递事件/release/release.md)。
+- **mor-test（2026-10-17）：** BFF / Web 为本需求镜像 `6cf93653…` / `26be835c…`（构建自 `6461091`）；Platform 后由 Client Console 会话换为 `58dcc90b…`（`f7b5500`，含本需求）；Compose `NOTIFICATION_SES_EVENTS_ENABLED: "true"`；`SES_PRIMARY` 已配置队列 `mor-test-ses-events`（v5）。AWS（ap-southeast-1）：SQS 队列 + 死信队列、SNS 主题（Raw delivery）、Configuration Set `mor-test-events` 为 `payorigo.com` 默认、IAM 增加 SQS 接收 / 删除权限，且发信策略须同时放行 `configuration-set/mor-test-events`（否则全部发信被拒）。
+- **未完成 / 前提：** SES 账户仍在沙箱（普通收件人收不到）；生产环境的 AWS 资源与发信策略需按发布清单第 3 节另行配置；无专门的事件拉取监控面板（只有指标）。
+
 ## Operations 通知发送账号维护（2026-10-15，已本地提交 `0301719`，mor-test 已部署）
 
 - **范围：** 发送账号的类型、区域、发件地址、Configuration Set 与密钥 Vault Token 入库（`t_notification_provider` +6 列），运营后台新建 / 编辑 / 录入或更换密钥（只写不读，Platform 以 `NOTIFICATION_PROVIDER_SETUP` Protect）/ 测试发送；适配器按类型注册、SES 客户端按区域复用，删除默认凭据链；部署配置只保留 `notification.ses.enabled`、`endpoint` 与超时。见[需求](../requirements/20261015/operations-console-通知发送账号维护/requirement.md)、[方案](../requirements/20261015/operations-console-通知发送账号维护/technique.md)、[Vault 决定](./decisions/2026-10-15-platform-notification-credential-protect.md)。
