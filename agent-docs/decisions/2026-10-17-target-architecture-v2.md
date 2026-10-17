@@ -1,6 +1,6 @@
 # 目标架构 V2（平台重构）决定草案
 
-- Decision status: Proposed（用户已在讨论中逐条确认 D01–D33 中的 30 条；作为仓库决定仍待用户确认登记）
+- Decision status: Proposed（用户已在讨论中逐条确认 D01–D36 中的 33 条；作为仓库决定仍待用户确认登记）
 - Implementation status: Not started
 - Deployment status: Not applicable
 - Decision date: 2026-10-17
@@ -51,6 +51,9 @@
 | D31 | 服务命名与术语表 | 已定 | 收单 = acquiring-service（transaction / checkout / command / client-api 四模块共用一库；Checkout Session 为可选子聚合；Direct Pay 不经 Session）；商务 = commercial-service；Acquiring 仅指受理层；Order 不作为服务名。 |
 | D32 | NFR 目标 | 已定 | 单实例收单峰值 100–500 TPS；RTO 1 小时 / RPO 接近 0。 |
 | D33 | 支付执行与收单的关系 | 已定 | 支付执行保持独立服务与部署；Acquiring → Payment → Channel 三层；收单创建 Intent 为可逆跨服务命令，由支付执行终态裁决。 |
+| D34 | 事件总线选型 | 已定 | 继续 RabbitMQ；分区有序用一致性哈希交换机按聚合键路由到固定队列组，每队列单活消费者；事件信封带聚合键、版本号、事件 ID、Schema 版本；落在 compensation-event 库与事件目录。不引入 Kafka。 |
+| D35 | 数仓选型 | 已定 | 数据服务建在 Apache Doris 上，Flink CDC 同步白名单表 MySQL DML，每实例一套；阶段 0 只建本地容器骨架与白名单约定。 |
+| D36 | 重构落地方式与阶段 0 范围 | 已定 | 同仓新骨架：仓库顶层 `paytech/` 单一 reactor（项目名 paytech，不叫 mor），下按 V2 服务分目录，api / core / app 约定与 ArchUnit 门禁只配一次。逐模块 git mv 搬迁，顺序 Foundation → Platform / Gateway / BFF / Vault → Commerce / CCT / Payment / Risk / Finance；搬迁期间该系统其他会话暂停。分支策略：长期集成分支 `refactor-main`（由 refactor/target-architecture-v2 改名），每步以短分支合入 refactor-main，**不逐步合回 main**；每步后把 main 合入 refactor-main 以控制分叉；全部搬完后在 refactor-main 做既有功能全链路验证，验收通过再整体合并到 main。卡域本阶段为 payment-app 内模块（等 D10）。V2 规范草案在阶段 3 起草、只对 paytech/ 生效，搬完后替换现行文档。阶段 0 只做重构不做业务：模块重组、门禁、事件信封与目录 v1、数据服务与迁移执行器骨架、内部签名 Token。不另起项目，不原地改造。 |
 
 ## 3. 取代范围
 
@@ -62,6 +65,6 @@
 
 - 待定项：D10（安全侧参与）、D15（逐边界运行证据表）、D23（地区需求出现时）。
 - D02 冻结字段清单逐项确认。
-- 阶段 0 立契约：业务事件目录 v1、合同业务模式属性、架构原则 ArchUnit 门禁；另行登记需求。
+- 阶段 0 重构（D36）：已登记为[V2 骨架与模块搬迁](../../requirements/20261017/architecture-V2骨架与模块搬迁/requirement.md)。
 - 首个切片：`PaymentSucceeded → 计费 → 账户 / 会计`；另行登记需求。
 - 是否登记到 `agent-docs/README.md` 与 `DOCUMENT_GOVERNANCE.md` 路由表，由用户决定。
