@@ -2,15 +2,17 @@
 # 每个事件一条；producer / consumers 使用 01 §3 的服务名；构建期由 YamlEventCatalog 与 ArchUnit 校验。
 # 新增或修改登记须同时更新发布端、消费 Handler 的 @DomainEventHandler 与对应设计文档。
 events:
-  # Payment 支付成功；v2 为 card 增加 instrumentRef、consentToSave、customerId（design/05），acquiring 忽略新增字段。
+  # Payment 支付成功（第 05 步按实现核对）：当前发布 v1，Payload 与旧 topic_payment_result 报文一致；aggregateId 为支付尝试 ID，
+  # aggregateVersion 取 t_payment_attempt.version（可能跳号，故 strictOrder=false）。第 12 步升 v2，为 card 增加 instrumentRef、
+  # consentToSave、customerId（design/05），acquiring 忽略新增字段。
   - eventType: PaymentSucceeded
-    schemaVersion: 2
+    schemaVersion: 1
     producer: payment
     aggregateType: PAYMENT_ATTEMPT
-    aggregateVersionField: attemptVersion
+    aggregateVersionField: version
     consumers: [acquiring, card]
     strictOrder: false
-    payloadSchemaRef: paytech-payment-api/event/PaymentSucceeded/v2
+    payloadSchemaRef: paytech-payment-api/event/PaymentSucceeded/v1
   # 客户审核结论（risk → compliance 拆分后由 compliance 发布，design/07）。
   - eventType: ClientReviewDecided
     schemaVersion: 1

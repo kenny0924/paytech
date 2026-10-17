@@ -52,7 +52,7 @@ class InternalAuthRequiredWebhookTest extends WebhookTestBase {
     /** 发给其他服务的 Token（aud 不是 Platform）：401。 */
     @Test
     void test_tokenForOtherAudience() {
-        String token = tokens.issue("issuer-test", "payment-orchestration-service");
+        String token = tokens.issue("issuer-test", "payment-service");
 
         submit(token, "evt_required_audience").assertProblem(401, CommonErrorCode.INTERNAL_TOKEN_INVALID);
 

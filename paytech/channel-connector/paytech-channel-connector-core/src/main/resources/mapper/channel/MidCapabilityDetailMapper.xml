@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.core.dal.mapper.MidCapabilityDetailMapper">
+    <resultMap id="row" type="com.paytech.channel.connector.core.dal.dataobject.MidCapabilityDetail">
+        <result column="mid_capability_detail_id" property="midCapabilityDetailId"/>
+        <result column="mid_capability_id" property="midCapabilityId"/>
+        <result column="capability_code" property="capabilityCode"/>
+        <result column="value_type" property="valueType"
+                javaType="com.paytech.channel.connector.core.enums.CapabilityValueType"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="boolean_value" property="booleanValue"/>
+        <result column="decimal_value" property="decimalValue"/>
+        <result column="code_value" property="codeValue"/>
+        <result column="create_time" property="createTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+    <sql id="columns">mid_capability_detail_id, mid_capability_id, capability_code, value_type, boolean_value,
+        decimal_value, code_value, create_time, update_time
+    </sql>
+    <select id="findByCapabilityIds" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM t_mid_capability_detail WHERE mid_capability_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY mid_capability_detail_id
+    </select>
+</mapper>

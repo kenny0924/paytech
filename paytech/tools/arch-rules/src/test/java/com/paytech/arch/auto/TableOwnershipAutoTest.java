@@ -56,6 +56,21 @@ class TableOwnershipAutoTest {
             "t_payment_stored_card"), ownership.cardTables());
     }
 
+    /** 第 12 步前卡表暂居 mor_payment：计入 payment 的 R4 白名单与 paytech-payment-card 的 R11 豁免，不重复计数。 */
+    @Test
+    void test_transitionalPlacement() {
+        List<String> cardTables = List.of("t_payment_card", "t_payment_card_credential", "t_payment_card_instrument",
+            "t_payment_stored_card");
+        Assertions.assertTrue(ownership.allowedTables("payment").containsAll(cardTables));
+        Assertions.assertFalse(ownership.databasesOf("payment").get("mor_payment").contains("t_payment_card"));
+        Assertions.assertEquals(Set.of("paytech-payment-card"), ownership.transitionalCardModules());
+        var placement = ownership.transitionalPlacements().getFirst();
+        Assertions.assertEquals(List.of("payment", "mor_payment", "card", 12),
+            List.of(placement.host(), placement.database(), placement.owner(), placement.untilStep()));
+        Assertions.assertEquals(Set.copyOf(cardTables), placement.tables());
+        Assertions.assertFalse(ownership.allowedTables("channel-connector").contains("t_payment_card"));
+    }
+
     @Test
     void test_noDataFound() {
         Assertions.assertEquals(Set.of(), ownership.allowedTables("api-gateway"));

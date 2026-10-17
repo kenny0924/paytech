@@ -23,6 +23,9 @@ public class MessagingProperties {
     /** 发布端配置。 */
     private final Producer producer = new Producer();
 
+    /** 发布结果处理配置。 */
+    private final Publisher publisher = new Publisher();
+
     /** 消费端配置。 */
     private final Consumer consumer = new Consumer();
 
@@ -42,6 +45,10 @@ public class MessagingProperties {
 
     public Producer getProducer() {
         return producer;
+    }
+
+    public Publisher getPublisher() {
+        return publisher;
     }
 
     public Consumer getConsumer() {
@@ -81,6 +88,26 @@ public class MessagingProperties {
 
         public void setConfirmTimeout(Duration confirmTimeout) {
             this.confirmTimeout = confirmTimeout;
+        }
+    }
+
+    /** 发布结果处理配置。 */
+    public static class Publisher {
+
+        /**
+         * 未路由（mandatory 退回）时的处理策略。
+         * <li>默认 FAIL：抛出发布异常，由补偿任务重试；ACK_AND_WARN 仅用于订阅方尚未接入的过渡期，记 WARN 与
+         * {@code messaging.published{outcome=unroutable}} 后视为成功。</li>
+         */
+        private com.paytech.foundation.messaging.publish.UnroutablePolicy unroutablePolicy =
+            com.paytech.foundation.messaging.publish.UnroutablePolicy.FAIL;
+
+        public com.paytech.foundation.messaging.publish.UnroutablePolicy getUnroutablePolicy() {
+            return unroutablePolicy;
+        }
+
+        public void setUnroutablePolicy(com.paytech.foundation.messaging.publish.UnroutablePolicy unroutablePolicy) {
+            this.unroutablePolicy = unroutablePolicy;
         }
     }
 

@@ -23,7 +23,8 @@ import java.util.regex.Pattern;
  *
  * <p>
  * 卡域表为 {@code table-ownership.yaml} 中 card 服务拥有的业务表，另以 {@code t_payment_card*}、{@code t_payment_stored_card}
- * 兜底匹配，避免白名单遗漏新表。
+ * 兜底匹配，避免白名单遗漏新表。第 12 步前卡域仍在 payment 进程内，{@code transitionalPlacements} 所列宿主内卡域模块
+ * （{@code paytech-payment-card}）与 card-core 同等豁免；宿主的其他模块照常检查。
  *
  * @author Claude
  */
@@ -73,9 +74,10 @@ public final class CardDataIsolationRule implements ArchitectureRule {
     @Override
     public List<RuleViolation> check(ServiceArchitectureScope scope) {
         Set<String> cardTables = Set.copyOf(scope.tableOwnership().cardTables());
+        Set<String> exempt = exemptArtifacts(scope);
         List<RuleViolation> violations = new ArrayList<>();
         for (MavenModule module : scope.targetModules()) {
-            if (EXEMPT_ARTIFACTS.contains(module.artifactId())) {
+            if (exempt.contains(module.artifactId())) {
                 continue;
             }
             violations.addAll(checkMappers(module, cardTables));
@@ -83,15 +85,21 @@ public final class CardDataIsolationRule implements ArchitectureRule {
         }
         violations.addAll(ArchRuleEvaluation.violations(id(),
             noClasses().that(scope.ownedBy(scope.serviceName() + " 中卡域以外模块的类",
-                    identity -> isRestricted(scope.serviceName(), identity)))
+                    identity -> isRestricted(scope.serviceName(), identity, exempt)))
                 .should().dependOnClassesThat().resideInAPackage(cryptoPackage + "..")
                 .because(description()),
             scope.classes()));
         return violations;
     }
 
-    private static boolean isRestricted(String service, ModuleIdentity identity) {
-        return service.equals(identity.service()) && !EXEMPT_ARTIFACTS.contains(identity.artifactId());
+    private static boolean isRestricted(String service, ModuleIdentity identity, Set<String> exempt) {
+        return service.equals(identity.service()) && !exempt.contains(identity.artifactId());
+    }
+
+    private static Set<String> exemptArtifacts(ServiceArchitectureScope scope) {
+        Set<String> exempt = new java.util.TreeSet<>(EXEMPT_ARTIFACTS);
+        exempt.addAll(scope.tableOwnership().transitionalCardModules());
+        return Set.copyOf(exempt);
     }
 
     private List<RuleViolation> checkMappers(MavenModule module, Set<String> cardTables) {

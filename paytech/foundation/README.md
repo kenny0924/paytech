@@ -839,6 +839,9 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 25)
   Publisher Confirm，信封上限 64 KiB）；`messaging.consumer.service` 设置时为每个订阅的发布方声明
   `<consumer>.<producer>.hash`（`x-consistent-hash`）与 `p0..pN-1` Quorum 分区队列（单活消费者、`delivery-limit=5`、DLX/DLQ），
   每个分区一个并发 1 的监听容器。
+- 未路由（mandatory 退回）由 `messaging.publisher.unroutable-policy` 决定：默认 `FAIL` 抛出发布异常，由补偿任务重试；
+  `ACK_AND_WARN` 记 WARN 与 `messaging.published{outcome=unroutable}` 后视为成功，只用于发布方交换机尚无订阅方的过渡期
+  （payment 在重构第 08 步接入订阅者前使用，之后改回 `FAIL`）。已确认且已路由的发布计 `messaging.published{outcome=confirmed}`。
 - 发布方交换机是 Fanout，每个订阅服务经自己的一致性哈希交换机分区：一致性哈希交换机只把一条消息路由到一个绑定队列，
   多个订阅服务直接绑定同一个一致性哈希交换机会互相"抢"消息。
 - 严格有序 Handler 遇到版本缺口时，消息被重新发布到本分区队列尾部等待缺口补齐（Quorum Queue 对 Nack 重新入队的消息优先重投）；

@@ -14,7 +14,7 @@ import lombok.Setter;
 public class SubmitNotificationRequest {
 
     /**
-     * 来源系统：调用方服务名，例如 payment-orchestration-service
+     * 来源系统：调用方服务名，例如 payment-service
      * <li>模块内调用方自行确定；HTTP 入口取已通过白名单的 X-Caller-Service，不取自 Body</li>
      */
     @NotBlank @Pattern(regexp = "[a-z][a-z0-9-]{0,63}")

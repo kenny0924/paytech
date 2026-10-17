@@ -268,7 +268,8 @@ The first MySQL initialization creates empty schemas and one scoped account per 
 
 - `mor_cct` / `cct_app`
 - `mor_commerce` / `commerce_app`
-- `mor_payment` / `payment_app`
+- `mor_payment` / `payment_app` (payment service; also hosts the four card tables until refactor step 12)
+- `mor_channel_connector` / `channel_connector_app` (channel connector; `SELECT, INSERT, UPDATE, DELETE` only)
 - `mor_risk` / `risk_app`
 - `mor_finance` / `finance_app`
 - `mor_platform` / `platform_app`

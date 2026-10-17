@@ -130,13 +130,25 @@ public abstract class MessagingMockTestBase extends TestBase {
     }
 
     /**
-     * 某事件类型的发布计数。
+     * 某事件类型已确认且已路由的发布计数。
      *
      * @param eventType 事件类型
      * @return 计数
      */
     protected double published(String eventType) {
-        Counter counter = meterRegistry.find("messaging.published").tag("eventType", eventType).counter();
+        return published(eventType, "confirmed");
+    }
+
+    /**
+     * 某事件类型按发布结果的计数。
+     *
+     * @param eventType 事件类型
+     * @param outcome 发布结果：confirmed 或 unroutable
+     * @return 计数
+     */
+    protected double published(String eventType, String outcome) {
+        Counter counter = meterRegistry.find("messaging.published").tag("eventType", eventType).tag("outcome", outcome)
+            .counter();
         return counter == null ? 0 : counter.count();
     }
 

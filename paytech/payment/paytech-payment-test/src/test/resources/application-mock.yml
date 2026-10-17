@@ -1,0 +1,188 @@
+server:
+  address: 127.0.0.1
+  port: 0
+  servlet:
+    context-path: /payment
+
+spring:
+  config:
+    # 复用仓库已启动的本地 MySQL、Redis、RabbitMQ 凭据；唯一锚点 paytech.local-environment.dir 由父 POM 经 Surefire 注入（10 §4.4）。
+    import:
+      - "optional:file:${paytech.local-environment.dir}/.env.local[.properties]"
+  application:
+    name: payment-service
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            # 同一独立 Mock HTTP 服务承载 Vault（卡 DEK）、channel-connector 合同与 Risk 统一评估合同。
+            vault-service:
+              - uri: "${test.mock-http.base-url}"
+            channel-connector-service:
+              - uri: "${test.mock-http.base-url}"
+            risk-service:
+              - uri: "${test.mock-http.base-url}"
+    loadbalancer:
+      retry:
+        enabled: false
+    nacos:
+      config:
+        # 启用 nacos Profile 后，从配置中心加载服务配置。
+        enabled: false
+      discovery:
+        # 自动测试不连接 Nacos，外部服务由 simple discovery 指向测试 Mock HTTP 服务。
+        enabled: false
+        register-enabled: false
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:13306/mor_payment?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: payment_app
+    password: "${MOR_PAYMENT_DB_PASSWORD:local-payment-change-me-2026}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 2000
+      validation-timeout: 1000
+      connection-init-sql: "SET time_zone = '+00:00'"
+  sql:
+    init:
+      mode: never
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${MOR_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:local-redis-change-me-2026}}"
+      connect-timeout: 2s
+      timeout: 2s
+  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量，不写默认值。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${MOR_RABBITMQ_USER}"
+    password: "${MOR_RABBITMQ_PASSWORD}"
+    virtual-host: "${MOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+  jmx:
+    enabled: false
+
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}] %kvp"
+
+web:
+  logging:
+    # 工具凭据和后续交互指令均不进入普通访问日志。
+    metadata-only-path-prefixes:
+      - /
+
+mybatis:
+  mapper-locations: "classpath*:mapper/**/*.xml"
+
+# paytech-messaging 发布端：声明 payment.events 并提供 DomainEventPublisher（PaymentSucceeded 双写）。
+messaging:
+  producer:
+    service: payment
+
+paytech:
+  instance-id: "main"
+
+internal-auth:
+  # 裸 OFF 会被 YAML 解析为布尔 false，必须带引号。
+  mode: "OFF"
+
+redis:
+  # 随机后缀允许多个 JVM 并行而互不清理（10 §5.2）。
+  key-prefix: payment-test-${random.uuid}
+  coordination:
+    enabled: true
+    threads: 2
+    netty-threads: 2
+    connection-minimum-idle-size: 1
+    connection-pool-size: 4
+    subscription-connection-minimum-idle-size: 1
+    subscription-connection-pool-size: 2
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s
+
+# paytech-compensation-event：本地补偿任务，事务内登记、提交后执行。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识；测试固定值。
+  instance-id: payment-test
+  # 单次 Claim 的租约时长。
+  lease-duration: 2m
+  # 兜底扫描单批条数。
+  scanner-batch-size: 100
+  coordinator:
+    core-size: 10
+    maximum-size: 20
+    queue-capacity: 80
+    keep-alive: 60s
+  handler:
+    maximum-concurrency: 20
+
+# paytech-xxl-job-starter（随 compensation-event 引入）：测试不连接调度中心。
+xxl:
+  job:
+    executor:
+      enabled: false
+
+payment:
+  event:
+    source-service: payment
+    instance-id: "${paytech.instance-id}"
+  execution:
+    # 必须显式配置有效窗口；零值仅禁用首次申请，不影响原工具重放。
+    instrument-preparation-window: PT30M
+  card:
+    # 仅供自动化测试的合成指纹密钥（Base64 的 32 字节），与任何环境都不共用。
+    fingerprint-key: "cGF5bWVudC1hdXRvLXRlc3QtZmluZ2VycHJpbnQta2V5"
+  outbound:
+    channel-connector-context-path: ""
+    channel-candidate-read-timeout: 5s
+    channel-operation-read-timeout: 30s
+    risk-context-path: ""
+    # 生产默认 1s；测试缩短以便用 Mock 延迟验证读超时后重试一次。
+    risk-read-timeout: 500ms
+  identifier:
+    region-id: 31
+    worker-id: 30
+
+vault:
+  client:
+    caller-service: payment-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
+
+management:
+  server:
+    port: 0
+  endpoints:
+    access:
+      default: none
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# test.mock-http.base-url 由 EnableMockHttpServer 在创建真实客户端之前注入随机 Loopback 端口。

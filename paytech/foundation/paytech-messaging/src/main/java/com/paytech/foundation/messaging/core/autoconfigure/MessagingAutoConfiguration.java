@@ -144,7 +144,7 @@ public class MessagingAutoConfiguration {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMandatory(true);
         return new RabbitDomainEventPublisher(producer, properties.getProducer().getConfirmTimeout(), codec, template,
-            metrics);
+            metrics, properties.getPublisher().getUnroutablePolicy());
     }
 
     /**

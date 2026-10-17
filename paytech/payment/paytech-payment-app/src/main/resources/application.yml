@@ -1,0 +1,165 @@
+server:
+  address: 127.0.0.1
+  port: 18103
+  servlet:
+    context-path: /payment
+
+spring:
+  application:
+    name: payment-service
+  cloud:
+    nacos:
+      config:
+        # 启用 nacos Profile 后，从配置中心加载服务配置。
+        enabled: false
+      discovery:
+        # 注册本服务并发现 channel-connector、Risk、Vault 等内部服务；地址与命名空间由部署环境注入。
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
+  datasource:
+    url: "${MOR_PAYMENT_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_payment?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${MOR_PAYMENT_DB_USERNAME:payment_app}"
+    password: "${MOR_PAYMENT_DB_PASSWORD:}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 2000
+      validation-timeout: 1000
+      connection-init-sql: "SET time_zone = '+00:00'"
+  sql:
+    init:
+      mode: never
+  data:
+    redis:
+      host: "${MOR_REDIS_HOST:127.0.0.1}"
+      port: "${MOR_REDIS_PORT:16379}"
+      password: "${MOR_REDIS_PASSWORD:}"
+      connect-timeout: 2s
+      timeout: 2s
+  rabbitmq:
+    host: "${PAYMENT_RABBITMQ_HOST:127.0.0.1}"
+    port: "${PAYMENT_RABBITMQ_PORT:5672}"
+    username: "${PAYMENT_RABBITMQ_USERNAME:}"
+    password: "${PAYMENT_RABBITMQ_PASSWORD:}"
+    virtual-host: "${PAYMENT_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    # 发布确认与不可路由退回：PaymentSucceeded 补偿 Handler 等待 Broker 确认后才算发布成功（旧 Topic 与 payment.events 均如此）。
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+  jmx:
+    enabled: false
+
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}] %kvp"
+
+web:
+  logging:
+    # 工具凭据和后续交互指令均不进入普通访问日志。
+    metadata-only-path-prefixes:
+      - /
+
+mybatis:
+  mapper-locations: "classpath*:mapper/**/*.xml"
+
+# paytech-compensation-event：支付成功事务内登记发布任务，提交后执行；XXL-Job 兜底唤醒沿用组件默认。
+compensation:
+  enabled: true
+
+# paytech-messaging 发布端：声明 payment.events（Durable Fanout）并提供 DomainEventPublisher（design/08 §3）。
+messaging:
+  producer:
+    service: payment
+  publisher:
+    # 第 08 步接入订阅者后改回 FAIL：在此之前 payment.events 没有订阅队列，未路由的信封记 WARN 与
+    # messaging.published{outcome=unroutable} 后视为成功，避免 PaymentSucceeded 补偿任务持续失败（旧 Topic 仍按 mandatory 严格发布）。
+    unroutable-policy: ACK_AND_WARN
+
+# 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId 与内部调用 Token 的 inst。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
+
+# 内部调用身份（D26）：默认 OFF；YAML 中必须带引号，裸 OFF 会被解析为布尔 false。
+internal-auth:
+  mode: "${PAYMENT_INTERNAL_AUTH_MODE:OFF}"
+
+redis:
+  coordination:
+    enabled: true
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s
+
+payment:
+  # 能力代码目录已随渠道配置迁到 channel-connector（channel-connector.capability-definitions，D06）。
+  event:
+    # PaymentSucceeded 信封身份：sourceService 与 messaging.producer.service 一致。
+    source-service: payment
+    instance-id: "${paytech.instance-id}"
+  outbound:
+    # channel-connector 无 context path；渠道操作读取超时须大于其 Platform 读取超时（30s）。
+    channel-connector-context-path: ""
+    channel-candidate-read-timeout: 2s
+    channel-operation-read-timeout: 35s
+  execution:
+    # 必须显式配置有效窗口；零值仅禁用首次申请，不影响原工具重放。
+    instrument-preparation-window: "${PAYMENT_INSTRUMENT_PREPARATION_WINDOW:PT0S}"
+  card:
+    # 卡指纹的 HMAC-SHA256 密钥（Base64，解码后至少 32 字节）；必填，缺失则启动失败。
+    # 只经环境变量注入，不写入 Nacos 或版本库；每张卡的数据加密密钥由 Vault 托管，不在此配置。
+    fingerprint-key: "${PAYMENT_CARD_FINGERPRINT_KEY:}"
+  identifier:
+    region-id: "${PAYMENT_SNOWFLAKE_REGION_ID}"
+    worker-id: "${PAYMENT_SNOWFLAKE_WORKER_ID}"
+
+vault:
+  client:
+    caller-service: payment-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
+
+management:
+  server:
+    port: 19103
+  endpoints:
+    access:
+      default: none
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+---
+spring:
+  config:
+    activate:
+      on-profile: nacos
+    import:
+      - "optional:nacos:mor-common.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=false"
+      - "nacos:payment-service.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=true"
+  cloud:
+    nacos:
+      config:
+        enabled: true
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
+        group: "${NACOS_GROUP:DEFAULT_GROUP}"
+        username: "${NACOS_USERNAME:}"
+        password: "${NACOS_PASSWORD:}"

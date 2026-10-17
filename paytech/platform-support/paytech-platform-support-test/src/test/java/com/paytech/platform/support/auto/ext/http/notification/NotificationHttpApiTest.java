@@ -84,7 +84,7 @@ class NotificationHttpApiTest extends NotificationTestBase {
     /** 未登记调用方与越权模板返回同一业务拒绝，不调用 Vault、不落库。 */
     @Test
     void test_callerOrTemplateNotAllowed(CapturedOutput output) {
-        submit("payment-orchestration-service", body()).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
+        submit("payment-service", body()).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
         submit("", body()).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
         var other = body();
         other.put("templateCode", "NOTIFICATION_TEST_OTHER");

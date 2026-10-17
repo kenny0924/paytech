@@ -31,7 +31,7 @@ class InternalAuthRequiredExemptionTest extends MockTestBase {
     /** 无 Token 申请与读取公钥：成功。 */
     @Test
     void test_issueAndJwksExempt() {
-        tokens.issue("issuer-test", "payment-orchestration-service");
+        tokens.issue("issuer-test", "payment-service");
         String requestId = "plt-jwks-" + UUID.randomUUID();
         new PlatformResponseChecker(httpTestInvoker.get(InternalTokens.JWKS_PATH, TestRequestHeaders.internal(requestId)),
             objectMapper, requestId).assertOk();
