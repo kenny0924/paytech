@@ -1,0 +1,8 @@
+# Gateway 处理 Idempotency-Key：mor-test 发布候选（2026-10-17，从 b0c8b0e 干净 worktree 构建）。
+# 用法：./compose.sh -f <本文件> up -d --no-deps --no-build --pull never --wait <服务>
+# Platform / Operations BFF / Web 由 code-mor-36 合并构建替换（含 b0c8b0e、SES 与 Risk 提交），不在本文件。
+services:
+  commerce-service:
+    image: sha256:8deffdc6421af597f82b2c99f51b9fa61c715c01d93c31b3c5b957eaca8a0d4d
+  api-gateway:
+    image: sha256:da8e7109381bf94e3bbcb4614a5a452317fe996d1822591b5d826cd7f0a8361c

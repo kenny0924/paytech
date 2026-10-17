@@ -174,12 +174,12 @@ def rejections(read_only, order_no):
     record("AC-01 只读凭证可查单", status == 200, f"HTTP {status}")
     status, body = client_api("POST", f"/orders/{order_no}/cancel", credential=read_only)
     record("AC-01 缺 Scope（orders.cancel）被拒绝", status == 403, f"HTTP {status} code={(body or {}).get('code')}")
-    status, body = client_api("POST", f"/orders/{order_no}/cancel", idempotency=False)
+    # 2026-10-17 起 Commerce 不再处理 Idempotency-Key，缺 Key 只在 Gateway 对 REQUIRED 路由拒绝；
+    # 未启用幂等时不发送该请求（否则会真实取消订单）。
     if IDEMPOTENCY:
+        status, body = client_api("POST", f"/orders/{order_no}/cancel", idempotency=False)
         record("AC-01 幂等：POST 缺 Idempotency-Key 由 Gateway 拒绝", status == 400 and (body or {}).get("code") == "IDEMPOTENCY_KEY_REQUIRED",
                f"HTTP {status} code={(body or {}).get('code')}")
-    else:
-        record("D2 POST 缺 Idempotency-Key 被拒（Commerce 必填 Header）", status == 400, f"HTTP {status} code={(body or {}).get('code')}")
 
 
 def queries(order_no, client_order_id):

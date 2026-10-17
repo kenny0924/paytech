@@ -718,6 +718,23 @@
 
 - **RCO-14 Implemented / Verified / Deployed（2026-09-11，mor-test）：** 原 V1 的 Risk、Operations BFF/Web 配置增量已实现；[需求与接口合同](./plans/2026-09-11-risk-rule-v1-configuration-contract-draft.md)覆盖三条既有接口扩展，新增 API 和 Platform 注册 DML 均为 0。真实 MySQL/HTTP、BFF 转发/授权、前端和模型验证通过；开发库和 test Risk 库分别在用户授权、备份后应用增量 SQL；三个应用已部署，真实入口验收通过。精确证据及范围见第 15 节。
 
+<a id="gateway-idempotency-key-20261017"></a>
+
+## Gateway 处理 Idempotency-Key（2026-10-17，已本地提交 `b0c8b0e`、`69d868e`，未推送；2026-10-17 已部署 mor-test）
+
+- **Implemented：** 按[需求](../requirements/20261017/gateway-请求幂等IdempotencyKey/requirement.md)与[技术方案](../requirements/20261017/gateway-请求幂等IdempotencyKey/technique.md)落地 [2026-09-17 决定](./decisions/2026-09-17-gateway-request-idempotency.md)：
+  - **Platform 路由**：新增 `idempotencyMode`（`t_gateway_route.idempotency_mode`，默认 `NONE`），只允许 CLIENT_API 非 GET/HEAD 且不转发 `idempotency-key` 的路由设为 `REQUIRED`；更新时不传该字段保持原值；Operations 后台可查看和设置。
+  - **Gateway**：对 `REQUIRED` 路由校验 Key，按“通道 + 调用方（Client API 为 Client）”与原始字节摘要在 Redis 原子占位；下游首次响应（含 4xx/5xx，≤64 KiB）记录 72 小时并逐字重放（Problem 的 `requestId` 改写为本次）；换请求 409 `IDEMPOTENCY_KEY_REUSED`，执行中 409 `IDEMPOTENCY_REQUEST_IN_PROGRESS` + `Retry-After: 3`；下游无响应时释放 Key；Redis 故障时返回 503。
+  - **Commerce**：不再声明或处理该 Header，移除 `paytech-command-idempotency`。
+- **Verified：** Gateway 1277/1277、Platform 736/736、Operations BFF 1386/1386、Web 1068/1068、Commerce 808/808；mor-test `client_api_flow.py --idempotency` 89/89（含并发同 Key 只建 1 单）。详见[发布记录](../requirements/20261017/gateway-请求幂等IdempotencyKey/release/release-20261017.md)。
+- **Deployed（mor-test）：** Gateway、Commerce 由本需求替换；Platform、Operations BFF / Web 由 SES 会话从同时包含 SES、Risk 提交的 `6461091` 合并替换；Client API 建单、取消、退款 3 条路由为 `REQUIRED`。
+- **Pending：**
+  - 幂等记录存 Redis（与限流共用连接），以后要迁数据库（用户 2026-10-17 决定 D8，存储层已是可替换接口）；
+  - Operations 路由与 Platform `OperationsCommandIdempotencyService` / `t_command_idempotency` 未迁移；
+  - Client Console 通道未启用；
+  - Payment 等内部接口的 Key Header 未清理；
+  - Operations 设计稿未补“请求幂等”选择。
+
 <a id="client-api-mor-test-20261017"></a>
 
 ## Client API 在 mor-test 联通（2026-10-17，已提交并推送 `98ba37c`、`7cf1757`；2026-10-17 已部署 mor-test）

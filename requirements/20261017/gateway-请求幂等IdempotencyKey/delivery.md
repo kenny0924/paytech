@@ -13,6 +13,8 @@
 | 2. 现状差异与影响分析 | 2026-10-17 | [technique.md](./technique.md) 第 1—4 节 | D1—D7“其余没问题”；问“为什么会用到 Redis”“是不是压力很大，可能会有数亿的数据”；D8“先存 Redis，但是这个点需要记录，以后肯定要改到数据库中” | 阶段 3 方案、接口与数据设计 |
 | 3. 方案、接口与数据设计 | 2026-10-17 | [technique.md](./technique.md) 第 5—12 节 | “继续” | 阶段 4 研发（本机代码与测试；不含 SQL 执行于共享环境、提交、推送、部署） |
 | 4. 研发 | 2026-10-17 | 见下文“阶段 4 研发结果” | “按建议，授权提交并部署 test”：删除 Commerce 3 个不再使用的错误码；跳过阶段 5，直接在 test 验收 | 阶段 6 test 发布 |
+| 6—7. test 发布与验收 | 2026-10-17 | [release-20261017.md](./release/release-20261017.md) | 按阶段 4 授权执行 | 阶段 8 收尾 |
+| 8. 收尾 | 2026-10-17 | 见下文“阶段 8 收尾” | — | 结束；推送未授权 |
 
 ## 动作授权
 
@@ -27,7 +29,7 @@
 
 ## 当前阶段
 
-阶段 6 test 发布进行中（阶段 5 按用户决定跳过）。
+已结束：阶段 1—4、6—8 完成（阶段 5 按用户决定跳过）；已本地提交（未推送），2026-10-17 已部署 mor-test，验收 89/89。发布记录见 [release-20261017.md](./release/release-20261017.md)。
 
 ## 阶段 4 研发结果（2026-10-17，未提交）
 
@@ -55,3 +57,28 @@
 6. Commerce 保留了不再抛出的 3 个错误码（`IDEMPOTENCY_KEY_REQUIRED`、`INVALID_IDEMPOTENCY_KEY`、`IDEMPOTENCY_KEY_REUSED`），待用户决定是否删除。
 
 **设计文件**：`operations-console-web/docs/design.pen` 未加“请求幂等”选择，未改。
+
+## 阶段 6 进度（2026-10-17，进行中）
+
+| 时间（UTC） | 步骤 | 结果 |
+|---|---|---|
+| 07:3x | 删除 Commerce 3 个不再使用的错误码；Commerce 全量 808/808 | 完成 |
+| 07:3x | 本地提交 `b0c8b0e`（106 个文件；共用文件只带本需求段落） | 完成；SES 会话指出 PDManer 模型新字段位置错误导致 JSON 无效、`PersistenceConfiguration` 注册顺序错位（只取本需求段落时零上下文补丁插错位置），另提交修正 `69d868e` |
+| 07:40 | 从 `b0c8b0e` 干净 worktree 构建 Commerce（JAR `f5d3c2f7a4b7e658`，镜像 `8deffdc6`）、Gateway（JAR `1d66cacbe0922ebc`，镜像 `da8e7109`）；候选文件 `release/compose-candidate-20261017.yaml` | 完成 |
+| 07:41:20 | 备份 `mor_platform` Gateway 5 张表、Gateway / Commerce 容器 inspect → `~/Code-MoR-backups/20261017-gateway-idempotency-test/20261017T074120Z/`；执行变更 SQL（执行前核对列不存在） | 新列位于 `response_cookie_mode` 之后，默认 `NONE`，267 条路由均为 `NONE` |
+| 07:42—07:43 | 等 Risk 会话（code-mor-db）窗口结束后替换 Commerce（回退镜像 `ea5c6dad`）→ Gateway（回退镜像 `1cddfeab`） | 均 healthy，ERROR 0；三个入口 `/healthz` 200 |
+| 07:45 | 回归 `client_api_flow.py`（路由仍为 NONE） | 首次 79/81：旧脚本“Commerce 缺 Header 返回 400”已不成立，且该请求真实取消了订单，多出 1 个事件。脚本改为缺 Key 检查只在 `--idempotency` 下执行后 **80/80** |
+
+**与其他会话的发布协调**：Platform、Operations BFF / Web 由 SES 会话（code-mor-36）在 Risk 会话（code-mor-db）提交后，从同时包含 `69d868e`、`762b785`（SES）与 Risk 提交的 HEAD 合并构建、一次替换（含其 9 列 DDL 与环境变量）。新 Platform 健康后，本需求执行 `register_client_api.py --enable-idempotency` 与 `client_api_flow.py --idempotency`。
+
+## 阶段 8 收尾（2026-10-17）
+
+- test 验收 **89/89**；回归 80/80。详见[发布记录](./release/release-20261017.md)。
+- 台账 `CURRENT_IMPLEMENTATION.md` 新增本需求条目；`requirements/README.md` 状态更新。
+- 已登记的后续事项：
+  - D8：幂等记录迁到数据库；
+  - Operations 路由与 Platform `OperationsCommandIdempotencyService` 迁到 Gateway；
+  - Client Console 通道启用；
+  - Payment 等内部接口的 Key Header 清理；
+  - Operations 设计稿补“请求幂等”选择。
+- 教训：只提交本需求段落时，零上下文补丁会把纯新增段落插错位置（`b0c8b0e` 的 PDManer JSON），已由 `69d868e` 修正；之后改用带上下文的补丁，并对 JSON 做解析校验。
