@@ -1,6 +1,6 @@
 # 任务卡 11a · billing 最小能力：经济事实登记与 `EconomicFactRecorded`
 
-- 分支：`refactor/step-11a-billing-minimal`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step11a`；起点：`refactor-main`（07、08 合入后，主会话填写）。
+- 分支：`refactor/step-11a-billing-minimal`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step11a`；起点：`refactor-main@3b6b7ac2`（00–05、07、09、10 已合入；08 尚未合入，发布侧串行器由 08 步补接，本步发布端按 05 步做法配置 unroutable-policy=ACK_AND_WARN 并注释 08 改回）。
 - 对应计划：[11-dev-plan.md](../design/11-dev-plan.md) 第 11a 步；设计 [04-finance-account-ledger-split.md](../design/04-finance-account-ledger-split.md) §2（阶段 0 的最小计费）；决定 D37、C1。
 - 可与 11b 的表拆分部分并行；11b 的消费者依赖本步的事件。
 
