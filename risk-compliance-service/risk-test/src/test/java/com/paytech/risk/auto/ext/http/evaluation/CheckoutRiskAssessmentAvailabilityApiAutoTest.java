@@ -26,14 +26,15 @@ import com.paytech.risk.test.base.AbstractCheckoutRiskApiTest;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.builder.evaluation.CheckoutRiskRequestBuilder;
 import com.paytech.risk.test.checker.evaluation.EvaluationResponseChecker.Assessed;
+import com.paytech.risk.test.mapper.evaluation.CheckoutRiskTestMapper;
 
 /**
  * 结账风控评估的可用性与输入边界
  * <li>无数据：本环境没有生效的结账执行发布返回 503 RISK_DECISION_NOT_CONFIGURED，不写评估与快照。</li>
  * <li>参数：业务身份或输入字段缺失、未知（含旧合同的 locale）、格式不符或标识超过 BIGINT 上限返回 422 并指出字段；旧合同 v4 未登记、经营主体来源与 Local Partner
  * 不一致返回 400；均先于发布查询，不写评估。</li>
- * <li>超时：执行耗时超过结账运行期点版本超时记为 TIMED_OUT 并落库；重放返回原结果。</li>
- * <li>技术失败：生效发布引用的变量损坏时返回 FAILED 并落库失败评估与快照；重放返回原失败结果。</li>
+ * <li>超时：执行耗时超过结账运行期点版本超时记为 TIMED_OUT 并落库，不写累计事件；重放返回原结果。</li>
+ * <li>技术失败：生效发布引用的变量损坏时返回 FAILED 并落库失败评估与快照，不写累计事件；重放返回原失败结果。</li>
  *
  * @see RiskDecisionApi#evaluate(EvaluateDecisionRequestBody)
  */
@@ -93,6 +94,7 @@ class CheckoutRiskAssessmentAvailabilityApiAutoTest extends AbstractCheckoutRisk
                 "超时保留流程轨迹"));
         assertEquals(timedOut, assess(request).assertResult(TechnicalStatus.TIMED_OUT.getCode()));
         assertEquals(1, store.countPrimaryEvaluations());
+        assertEquals(0, store.countVelocityEvents(CheckoutRiskTestMapper.SOURCE_TYPE), "超时不写累计事件");
     }
 
     /** 生效发布引用的常量变量被删除：FAILED 落库，没有轨迹；重放返回原失败结果。 */
@@ -114,6 +116,7 @@ class CheckoutRiskAssessmentAvailabilityApiAutoTest extends AbstractCheckoutRisk
             () -> assertEquals(List.of(), store.flowNodeKeys(failed.evaluationId()), "执行内容不可读，没有流程轨迹"));
         assertEquals(failed, assess(request).assertResult(TechnicalStatus.FAILED.getCode()));
         assertEquals(1, store.countPrimaryEvaluations());
+        assertEquals(0, store.countVelocityEvents(CheckoutRiskTestMapper.SOURCE_TYPE), "失败不写累计事件");
     }
 
     static Stream<Arguments> contractViolations() {

@@ -21,12 +21,17 @@ import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.risk.api.decision.ExecutionReleaseManagementApi;
 import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
 import com.paytech.risk.api.decision.request.StartShadowRunRequestBody;
+import com.paytech.risk.control.domain.list.RiskSubjectType;
+import com.paytech.risk.decision.domain.enums.ComparisonOperator;
 import com.paytech.risk.decision.domain.enums.DecisionEnvironment;
 import com.paytech.risk.decision.domain.enums.DecisionReleaseStatus;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
+import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.EvaluationMode;
 import com.paytech.risk.decision.domain.enums.ShadowRunStatus;
 import com.paytech.risk.decision.domain.enums.StaticCheckStatus;
+import com.paytech.risk.decision.domain.enums.VelocityEventCode;
+import com.paytech.risk.decision.domain.enums.VelocityMetric;
 import com.paytech.risk.test.base.AbstractCheckoutRiskApiTest;
 import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
@@ -39,6 +44,7 @@ import com.paytech.risk.test.mapper.evaluation.CheckoutRiskTestMapper;
  * 结账决策点执行发布：创建、静态校验、影子运行与激活
  * <li>正常流程：首个发布引用结账运行期冻结点版本（220001，内容摘要与工程合同一致）；校验通过后激活，结账评估按该发布执行。</li>
  * <li>影子：已有生效发布时，候选回放最近的结账正式评估；结账没有附加输出，“输出变化”恒为否；激活后原发布被替代。</li>
+ * <li>影子含实时累计：样本按原评估时间计算累计值，回放不写累计事件。</li>
  * <li>业务规则：决策流版本使用旧输入合同（v4）不能创建执行发布；生效发布经决策流引用的结账规则集不能删除。</li>
  *
  * @see ExecutionReleaseManagementApi
@@ -103,6 +109,25 @@ class CheckoutExecutionReleaseApiAutoTest extends AbstractCheckoutRiskApiTest {
             .assertResult(DecisionValue.REVIEW.getCode());
     }
 
+    /** 含 Client 1 小时评估次数的发布：三次评估依次累计 0、1、2；阈值从 10 改为 2 的候选只改变第三个样本，回放不写累计事件。 */
+    @Test
+    void test_normalFlow_velocityShadow() {
+        String count = checkoutCode("CLIENT_COUNT");
+        createVelocityVariable(count, VelocityEventCode.CHECKOUT_ASSESSED.getCode(), RiskSubjectType.CLIENT.getCode(),
+            VelocityMetric.COUNT.getCode(), null, 3600, false);
+        long baseline = activeRelease(saveFlow(checkoutCode("FLOW"), blockGraph(clientCountRuleSet(count, "10"), reason)));
+        for (int i = 0; i < 3; i++) {
+            assess(CheckoutRiskRequestBuilder.template().build()).assertResult(DecisionValue.ALLOW.getCode());
+        }
+        long candidate = validatedRelease(saveFlow(checkoutCode("FLOW"), blockGraph(clientCountRuleSet(count, "2"), reason)));
+
+        shadow(candidate, 10).assertRelease(DecisionReleaseStatus.SHADOWING.getCode(), CHECKOUT, TEST);
+        awaitShadowRun(candidate).assertDecisionChanges(1, 0, 0)
+            .assertShadowRun(baseline, 3, StaticCheckStatus.PASSED.getCode());
+
+        assertEquals(3, store.countVelocityEvents(CheckoutRiskTestMapper.SOURCE_TYPE), "影子不写累计事件");
+    }
+
     /** 决策流版本使用旧输入合同：创建执行发布被拒绝，须重新保存后发布。 */
     @Test
     void test_businessRuleViolation_legacyContractFlow() {
@@ -133,6 +158,14 @@ class CheckoutExecutionReleaseApiAutoTest extends AbstractCheckoutRiskApiTest {
         return frozenRuleSet(RuleSetCreateRequestBuilder.template(checkoutCode("BLOCK")).pointCode(CHECKOUT)
             .rules(rule("LARGE_NET", "Large net", 10, action(REVIEW), predicate("root", null, 1, "GT",
                 variableOperand("INPUT_NET_AMOUNT", "NUMBER"), money(threshold))))
+            .build());
+    }
+
+    /** Client 1 小时评估次数达到阈值审核的冻结结账规则集。 */
+    private long clientCountRuleSet(String variableCode, String threshold) {
+        return frozenRuleSet(RuleSetCreateRequestBuilder.template(checkoutCode("BLOCK")).pointCode(CHECKOUT)
+            .rules(rule("CLIENT_COUNT", "Client count", 10, action(REVIEW), predicate("root", null, 1, ComparisonOperator.GTE.getCode(),
+                variableOperand(variableCode, DecisionValueType.NUMBER.getCode()), scalar(threshold))))
             .build());
     }
 

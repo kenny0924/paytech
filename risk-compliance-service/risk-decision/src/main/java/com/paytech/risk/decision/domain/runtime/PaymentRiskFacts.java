@@ -1,10 +1,8 @@
 package com.paytech.risk.decision.domain.runtime;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.function.LongSupplier;
 
-import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.core.dal.dataobject.*;
 import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.*;
@@ -22,16 +20,8 @@ public final class PaymentRiskFacts {
     /** 受限输入摘要合同。 */
     static final String RESTRICTED_SCHEMA = "CODE-MOR:RISK:PAYMENT_ATTEMPT_RESTRICTED_INPUT:1";
 
-    /** 累计事件摘要合同。 */
-    static final String EVENT_SCHEMA = "CODE-MOR:RISK:VELOCITY_EVENT:1";
-
-    /** 累计事件来源类型。 */
+    /** 累计事件来源类型，与来源表同名。 */
     static final String SOURCE_TYPE = "TRANSACTION_RISK_ASSESSMENT";
-
-    /** 写入累计事件主体的类型；卡 BIN 只用于名单。 */
-    static final List<RiskSubjectType> EVENT_SUBJECTS = List.of(RiskSubjectType.CLIENT,
-        RiskSubjectType.OPERATING_ENTITY, RiskSubjectType.CONSUMER, RiskSubjectType.IP_ADDRESS,
-        RiskSubjectType.CARD_FINGERPRINT);
 
     /** 纯构造工具。 */
     private PaymentRiskFacts() { }
@@ -72,20 +62,13 @@ public final class PaymentRiskFacts {
         DecisionEvaluation evaluation = RuntimeEvaluationFacts.primaryEvaluation(evaluationId,
             requestId(input.paymentAttemptId()), release, run, restrictedHash);
         TransactionRiskAssessment assessment = assessment(assessmentId, evaluationId, input, run, restrictedHash);
-        List<VelocityEvent> events = new ArrayList<>();
-        List<VelocityEventSubject> subjects = new ArrayList<>();
-        if (run.status() == TechnicalStatus.SUCCEEDED) {
-            addEvent(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, assessmentId, input, run.evaluationTime(), ids, events,
-                subjects);
-        }
-        if (run.status() == TechnicalStatus.SUCCEEDED && run.outcome().decision() != DecisionValue.ALLOW) {
-            addEvent(VelocityEventCode.PAYMENT_ATTEMPT_REJECTED, assessmentId, input, run.evaluationTime(), ids, events,
-                subjects);
-        }
+        RuntimeEvaluationFacts.VelocityFacts velocity = RuntimeEvaluationFacts.velocityFacts(SOURCE_TYPE, assessmentId,
+            input, run, VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, VelocityEventCode.PAYMENT_ATTEMPT_REJECTED,
+            DecisionPointAuthoringDescriptor.paymentAttemptRisk().velocitySubjects(), ids);
         return new PaymentRiskAssessmentContext(evaluation, assessment,
             RuntimeEvaluationFacts.featureResults(evaluationId, run, ids),
             RuntimeEvaluationFacts.ruleTraces(evaluationId, run, ids),
-            RuntimeEvaluationFacts.flowTraces(evaluationId, run, ids), events, subjects);
+            RuntimeEvaluationFacts.flowTraces(evaluationId, run, ids), velocity.events(), velocity.subjects());
     }
 
     /**
@@ -130,44 +113,6 @@ public final class PaymentRiskFacts {
         row.setRestrictedInputHash(restrictedHash);
         row.setCreateTime(run.completedTime());
         return row;
-    }
-
-    /** 写入一条累计事件及本次存在的主体。 */
-    static void addEvent(VelocityEventCode code, long assessmentId, PaymentRiskInput input, Instant time,
-        LongSupplier ids, List<VelocityEvent> events, List<VelocityEventSubject> subjects) {
-        VelocityEvent event = new VelocityEvent();
-        event.setVelocityEventId(ids.getAsLong());
-        event.setEventCode(code);
-        event.setSourceType(SOURCE_TYPE);
-        event.setSourceId(assessmentId);
-        event.setSourceVersion(1);
-        event.setOccurredTime(time);
-        event.setAmount(input.amount());
-        event.setCurrency(input.currency());
-        event.setEventHash(RuntimeHashes.sha256(EVENT_SCHEMA, Map.of("eventCode", code.getCode(), "sourceType", SOURCE_TYPE,
-            "sourceId", Long.toString(assessmentId), "occurredTime", time.toString(),
-            "amount", input.amount().stripTrailingZeros().toPlainString(), "currency", input.currency())));
-        event.setCreateTime(time);
-        events.add(event);
-        for (RiskSubjectType type : EVENT_SUBJECTS) {
-            String key = input.subjectKey(type);
-            if (key != null) {
-                subjects.add(subject(ids.getAsLong(), event, type, key));
-            }
-        }
-    }
-
-    /** 事件主体，冻结事件编码与时间供窗口查询。 */
-    static VelocityEventSubject subject(long id, VelocityEvent event, RiskSubjectType type, String key) {
-        VelocityEventSubject subject = new VelocityEventSubject();
-        subject.setEventSubjectId(id);
-        subject.setVelocityEventId(event.getVelocityEventId());
-        subject.setSubjectType(type);
-        subject.setSubjectKey(key);
-        subject.setEventCode(event.getEventCode());
-        subject.setOccurredTime(event.getOccurredTime());
-        subject.setCreateTime(event.getCreateTime());
-        return subject;
     }
 
     /** Payment 能重放的字段。 */

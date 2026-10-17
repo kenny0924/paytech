@@ -7,15 +7,21 @@ import java.util.function.LongSupplier;
 import com.paytech.risk.decision.core.dal.dataobject.CheckoutInputSnapshot;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionEvaluation;
 import com.paytech.risk.decision.core.dal.dataobject.ExecutionRelease;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
+import com.paytech.risk.decision.domain.enums.VelocityEventCode;
 
 /**
  * 由一次正式结账评估的输入、结果与时间构造需要保存的全部事实；纯内存构造
  * <li>稳定输入摘要覆盖订单 ID 与全部输入字段；结账没有受限字段，评估的输入快照摘要即稳定摘要。</li>
- * <li>结账不写累计事件；评估行、Feature 结果与轨迹由 {@link RuntimeEvaluationFacts} 构造。</li>
+ * <li>只有成功评估写入累计事件：每次写结账评估事件，结论为审核或拒绝时再写拦截事件；来源为本次输入快照，主体为 Client 与运营主体。</li>
+ * <li>评估行、Feature 结果、轨迹与累计事件由 {@link RuntimeEvaluationFacts} 构造。</li>
  */
 public final class CheckoutRiskFacts {
     /** 稳定输入摘要合同。 */
     static final String STABLE_SCHEMA = "CODE-MOR:RISK:CHECKOUT_PREPARE_STABLE_INPUT:1";
+
+    /** 累计事件来源类型，与来源表同名；来源 ID 为快照 ID。 */
+    static final String SOURCE_TYPE = "CHECKOUT_INPUT_SNAPSHOT";
 
     /** 纯构造工具。 */
     private CheckoutRiskFacts() { }
@@ -50,11 +56,14 @@ public final class CheckoutRiskFacts {
         String stableHash = stableHash(input);
         DecisionEvaluation evaluation = RuntimeEvaluationFacts.primaryEvaluation(evaluationId,
             requestId(input.orderId()), release, run, stableHash);
-        return new CheckoutRiskAssessmentContext(evaluation,
-            snapshot(ids.getAsLong(), evaluationId, input, stableHash, run),
+        long snapshotId = ids.getAsLong();
+        RuntimeEvaluationFacts.VelocityFacts velocity = RuntimeEvaluationFacts.velocityFacts(SOURCE_TYPE, snapshotId,
+            input, run, VelocityEventCode.CHECKOUT_ASSESSED, VelocityEventCode.CHECKOUT_REJECTED,
+            DecisionPointAuthoringDescriptor.checkoutPrepare().velocitySubjects(), ids);
+        return new CheckoutRiskAssessmentContext(evaluation, snapshot(snapshotId, evaluationId, input, stableHash, run),
             RuntimeEvaluationFacts.featureResults(evaluationId, run, ids),
             RuntimeEvaluationFacts.ruleTraces(evaluationId, run, ids),
-            RuntimeEvaluationFacts.flowTraces(evaluationId, run, ids));
+            RuntimeEvaluationFacts.flowTraces(evaluationId, run, ids), velocity.events(), velocity.subjects());
     }
 
     /** 结账输入快照行。 */

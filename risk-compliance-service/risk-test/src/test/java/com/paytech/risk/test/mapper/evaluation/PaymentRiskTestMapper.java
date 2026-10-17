@@ -13,7 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * 支付风控评估、执行发布、累计、名单与支付决策点配置的测试数据准备、读取与清理
- * <li>评估、累计、名单、Feature 与影子批次表没有初始化数据，测试结束整表清理；配置只清理支付决策点下非初始化的行。</li>
+ * <li>累计事件按支付来源类型清理，Feature 定义与版本按支付决策点的测试变量清理；名单与影子批次表与结账共用、没有初始化数据，整表清理；配置只清理支付决策点下非初始化的行。</li>
  *
  * @author Kenny
  */
@@ -31,6 +31,18 @@ public class PaymentRiskTestMapper {
     private static final String PAYMENT_FLOW_VERSION_IDS = "SELECT v.flow_version_id FROM t_decision_flow_version v "
         + "JOIN t_decision_flow f ON f.flow_id=v.flow_id WHERE f.decision_point_id=" + PAYMENT_POINT_ID;
 
+    /** 支付累计事件来源类型。 */
+    public static final String SOURCE_TYPE = "TRANSACTION_RISK_ASSESSMENT";
+
+    private static final String PAYMENT_EVENTS =
+        "SELECT velocity_event_id FROM t_velocity_event WHERE source_type='" + SOURCE_TYPE + "'";
+
+    private static final String TEST_VARIABLES = "point_code='PAYMENT_ATTEMPT_RISK' "
+        + "AND variable_id NOT BETWEEN 900000000000093001 AND 900000000000093013";
+
+    private static final String PAYMENT_FEATURES =
+        "SELECT feature_version_id FROM t_risk_variable WHERE feature_version_id IS NOT NULL AND " + TEST_VARIABLES;
+
     private final JdbcTemplate jdbc;
 
     public PaymentRiskTestMapper(JdbcTemplate jdbc) {
@@ -42,7 +54,7 @@ public class PaymentRiskTestMapper {
         Map<String, String> subjects, long subjectIdBase) {
         jdbc.update("INSERT INTO t_velocity_event(velocity_event_id, event_code, source_type, source_id, source_version, "
             + "occurred_time, amount, currency, event_hash, create_time) VALUES(?,?,?,?,?,?,?,?,?,?)", eventId, eventCode,
-            "TRANSACTION_RISK_ASSESSMENT", eventId, 1, utc(occurred), amount, currency, "0".repeat(64), utc(occurred));
+            SOURCE_TYPE, eventId, 1, utc(occurred), amount, currency, "0".repeat(64), utc(occurred));
         long id = subjectIdBase;
         for (Map.Entry<String, String> subject : subjects.entrySet()) {
             jdbc.update("INSERT INTO t_velocity_event_subject(event_subject_id, velocity_event_id, subject_type, subject_key, "
@@ -140,6 +152,12 @@ public class PaymentRiskTestMapper {
             String.class, assessmentId);
     }
 
+    /** 读取支付评估快照为来源的累计事件，按事件编码。 */
+    public List<Map<String, Object>> velocityEvents(long assessmentId) {
+        return jdbc.queryForList("SELECT * FROM t_velocity_event WHERE source_type=? AND source_id=? ORDER BY event_code",
+            SOURCE_TYPE, assessmentId);
+    }
+
     /** 读取累计事件关联的主体类型与键。 */
     public List<Map<String, Object>> velocitySubjects(long assessmentId, String eventCode) {
         return jdbc.queryForList("SELECT s.subject_type, s.subject_key FROM t_velocity_event_subject s JOIN t_velocity_event e "
@@ -218,8 +236,8 @@ public class PaymentRiskTestMapper {
         jdbc.update("DELETE FROM t_evaluation_flow_trace WHERE evaluation_id IN (" + PAYMENT_EVALUATIONS + ")");
         jdbc.update("DELETE FROM t_transaction_risk_assessment");
         jdbc.update("DELETE FROM t_decision_evaluation WHERE decision_point_id=?", PAYMENT_POINT_ID);
-        jdbc.update("DELETE FROM t_velocity_event_subject");
-        jdbc.update("DELETE FROM t_velocity_event");
+        jdbc.update("DELETE FROM t_velocity_event_subject WHERE velocity_event_id IN (" + PAYMENT_EVENTS + ")");
+        jdbc.update("DELETE FROM t_velocity_event WHERE source_type=?", SOURCE_TYPE);
         jdbc.update("DELETE FROM t_release_shadow_run");
         jdbc.update("DELETE FROM t_compensation_event WHERE event_type='DECISION_SHADOW_RUN'");
         jdbc.update("DELETE FROM t_release_audit_event WHERE release_id IN (SELECT release_id FROM t_decision_release "
@@ -227,13 +245,12 @@ public class PaymentRiskTestMapper {
         jdbc.update("DELETE FROM t_decision_release WHERE decision_point_id=?", PAYMENT_POINT_ID);
         deleteFlows();
         deleteRuleSets();
+        jdbc.update("DELETE FROM t_velocity_feature_definition WHERE feature_version_id IN (" + PAYMENT_FEATURES + ")");
+        jdbc.update("DELETE FROM t_list_feature_definition WHERE feature_version_id IN (" + PAYMENT_FEATURES + ")");
+        jdbc.update("DELETE FROM t_feature_version WHERE feature_version_id IN (" + PAYMENT_FEATURES + ")");
         jdbc.update("DELETE FROM t_risk_variable_member WHERE variable_code IN (SELECT variable_code FROM t_risk_variable "
-            + "WHERE point_code='PAYMENT_ATTEMPT_RISK' AND variable_id NOT BETWEEN 900000000000093001 AND 900000000000093013)");
-        jdbc.update("DELETE FROM t_risk_variable WHERE point_code='PAYMENT_ATTEMPT_RISK' "
-            + "AND variable_id NOT BETWEEN 900000000000093001 AND 900000000000093013");
-        jdbc.update("DELETE FROM t_velocity_feature_definition");
-        jdbc.update("DELETE FROM t_list_feature_definition");
-        jdbc.update("DELETE FROM t_feature_version");
+            + "WHERE " + TEST_VARIABLES + ")");
+        jdbc.update("DELETE FROM t_risk_variable WHERE " + TEST_VARIABLES);
         jdbc.update("DELETE FROM t_risk_list_entry");
         jdbc.update("DELETE FROM t_risk_list");
     }

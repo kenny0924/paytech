@@ -158,6 +158,8 @@ Checkout 在消费者交互前执行，因此 Consumer Reference、Email/Phone S
 
 `t_velocity_event` 是滑动窗口的准确性来源。为了实现文档要求的 `(subject_type,subject_key,event_code,occurred_time)` 访问路径，`t_velocity_event_subject` 冻结父事件的 `event_code + occurred_time` 两个只读查询维度；写入事务必须逐值匹配父 Event。它仍是明确事件—主体关系，不是 EAV。`t_velocity_bucket` 不进入 V1。
 
+2026-10-17（结账点实时累计）：`idx_velocity_subject` 末尾追加 `velocity_event_id`，使“最近一次金额 / 距上次秒数”的 `ORDER BY occurred_time DESC, velocity_event_id DESC LIMIT 1` 直接按索引倒序取首条；金额合计与最近一次查询以 `STRAIGHT_JOIN` 固定主体表为驱动表，避免热点主体宽窗口反转为事件主表全表扫描。Client、运营主体等低基数主体的统计方式与窗口由应用层限制（金额合计 ≤ 1 小时，次数与最近一次 ≤ 24 小时，不开放不同主体数），宽窗口预聚合不进入本期。
+
 ## 9. Limit 原子占用
 
 硬 Limit 只支持固定 UTC Window；最近十分钟或最近二十四小时等滑动判断属于 Feature/Velocity。

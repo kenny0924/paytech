@@ -1,5 +1,9 @@
 package com.paytech.risk.test.mapper.evaluation;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -10,7 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * 结账风控评估、执行发布与结账决策点测试配置的数据读取与清理
  * <li>评估族（评估、Feature 结果、规则与流程轨迹）、结账输入快照、结账执行发布及其审计与影子批次按结账决策点整体清理；
  * 支付与结账共用的影子批次表只删除候选为结账发布的行。</li>
- * <li>流程、规则集与变量只清理编码以 {@link #TEST_CODE_PREFIX} 开头的测试数据，初始化变量 91001～91020 保持不变。</li>
+ * <li>流程、规则集、变量（含 Feature 定义与版本）与名单只清理编码以 {@link #TEST_CODE_PREFIX} 开头的测试数据，初始化变量 91001～91020 保持不变；累计事件按结账来源类型清理。</li>
  *
  * @author Kenny
  */
@@ -43,10 +47,74 @@ public class CheckoutRiskTestMapper {
     private static final String TEST_FLOW_VERSION_IDS =
         "SELECT flow_version_id FROM t_decision_flow_version WHERE flow_id IN (" + TEST_FLOW_IDS + ")";
 
+    /** 结账累计事件来源类型。 */
+    public static final String SOURCE_TYPE = "CHECKOUT_INPUT_SNAPSHOT";
+
+    private static final String CHECKOUT_EVENTS =
+        "SELECT velocity_event_id FROM t_velocity_event WHERE source_type='" + SOURCE_TYPE + "'";
+
+    private static final String TEST_FEATURES = "SELECT feature_version_id FROM t_risk_variable WHERE "
+        + "feature_version_id IS NOT NULL AND point_code='CHECKOUT_PREPARE' AND variable_code " + LIKE_TEST_CODE;
+
+    private static final String TEST_LISTS = "SELECT list_id FROM t_risk_list WHERE list_code " + LIKE_TEST_CODE;
+
     private final JdbcTemplate jdbc;
 
     public CheckoutRiskTestMapper(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
+    }
+
+    /** 插入一条结账累计事件及其主体，供窗口边界用例构造历史；来源 ID 取事件 ID。 */
+    public void insertVelocityEvent(long eventId, String eventCode, Instant occurred, BigDecimal amount, String currency,
+        Map<String, String> subjects, long subjectIdBase) {
+        jdbc.update("INSERT INTO t_velocity_event(velocity_event_id, event_code, source_type, source_id, source_version, "
+            + "occurred_time, amount, currency, event_hash, create_time) VALUES(?,?,?,?,?,?,?,?,?,?)", eventId, eventCode,
+            SOURCE_TYPE, eventId, 1, utc(occurred), amount, currency, "0".repeat(64), utc(occurred));
+        long id = subjectIdBase;
+        for (Map.Entry<String, String> subject : subjects.entrySet()) {
+            jdbc.update("INSERT INTO t_velocity_event_subject(event_subject_id, velocity_event_id, subject_type, subject_key, "
+                + "event_code, occurred_time, create_time) VALUES(?,?,?,?,?,?,?)", id++, eventId, subject.getKey(),
+                subject.getValue(), eventCode, utc(occurred), utc(occurred));
+        }
+    }
+
+    /** 按来源读取累计事件，按事件编码（评估事件在前）。 */
+    public List<Map<String, Object>> velocityEvents(String sourceType, long sourceId) {
+        return jdbc.queryForList("SELECT * FROM t_velocity_event WHERE source_type=? AND source_id=? ORDER BY event_code",
+            sourceType, sourceId);
+    }
+
+    /** 读取一条累计事件的主体，按主体类型。 */
+    public List<Map<String, Object>> velocitySubjects(long velocityEventId) {
+        return jdbc.queryForList("SELECT * FROM t_velocity_event_subject WHERE velocity_event_id=? ORDER BY subject_type",
+            velocityEventId);
+    }
+
+    /** 统计某来源类型的累计事件。 */
+    public int countVelocityEvents(String sourceType) {
+        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM t_velocity_event WHERE source_type=?", Integer.class,
+            sourceType);
+        return count == null ? 0 : count;
+    }
+
+    /** 读取一次评估的 Feature 结果，按执行顺序。 */
+    public List<Map<String, Object>> featureResults(long evaluationId) {
+        return jdbc.queryForList("SELECT * FROM t_evaluation_feature_result WHERE evaluation_id=? ORDER BY execution_sequence",
+            evaluationId);
+    }
+
+    /** 读取累计变量关联的 Feature Version 与参数。 */
+    public Map<String, Object> velocityFeature(String variableCode) {
+        return jdbc.queryForMap("SELECT v.feature_version_id, d.event_code, d.anchor_subject_type, d.metric, d.window_seconds, "
+            + "d.include_current FROM t_risk_variable v JOIN t_velocity_feature_definition d "
+            + "ON d.feature_version_id=v.feature_version_id WHERE v.variable_code=?", variableCode);
+    }
+
+    /** 读取名单命中变量关联的 Feature Version 与名单主体。 */
+    public Map<String, Object> listFeature(String variableCode) {
+        return jdbc.queryForMap("SELECT v.feature_version_id, d.list_id, d.subject_type FROM t_risk_variable v "
+            + "JOIN t_list_feature_definition d ON d.feature_version_id=v.feature_version_id WHERE v.variable_code=?",
+            variableCode);
     }
 
     /** 读取订单的结账输入快照；不存在为空。 */
@@ -141,6 +209,13 @@ public class CheckoutRiskTestMapper {
         deleteExecutions();
         deleteFlows();
         deleteRuleSets();
+        jdbc.update("DELETE FROM t_velocity_event_subject WHERE velocity_event_id IN (" + CHECKOUT_EVENTS + ")");
+        jdbc.update("DELETE FROM t_velocity_event WHERE source_type=?", SOURCE_TYPE);
+        jdbc.update("DELETE FROM t_velocity_feature_definition WHERE feature_version_id IN (" + TEST_FEATURES + ")");
+        jdbc.update("DELETE FROM t_list_feature_definition WHERE feature_version_id IN (" + TEST_FEATURES + ")");
+        jdbc.update("DELETE FROM t_feature_version WHERE feature_version_id IN (" + TEST_FEATURES + ")");
+        jdbc.update("DELETE FROM t_risk_list_entry WHERE list_id IN (" + TEST_LISTS + ")");
+        jdbc.update("DELETE FROM t_risk_list WHERE list_code " + LIKE_TEST_CODE);
         jdbc.update("DELETE FROM t_risk_variable_member WHERE variable_code " + LIKE_TEST_CODE);
         jdbc.update("DELETE FROM t_risk_variable WHERE point_code='CHECKOUT_PREPARE' AND variable_code " + LIKE_TEST_CODE);
     }
@@ -182,5 +257,10 @@ public class CheckoutRiskTestMapper {
             CHECKOUT_POINT_ID);
         jdbc.update("DELETE FROM t_rule_set WHERE decision_point_id=? AND rule_set_code " + LIKE_TEST_CODE,
             CHECKOUT_POINT_ID);
+    }
+
+    /** UTC 时间按数据库 DATETIME(6) 写入。 */
+    private static LocalDateTime utc(Instant instant) {
+        return LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
 }

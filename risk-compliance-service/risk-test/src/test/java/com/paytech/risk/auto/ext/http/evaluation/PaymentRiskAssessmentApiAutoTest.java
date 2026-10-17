@@ -29,6 +29,8 @@ import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.builder.evaluation.PaymentRiskRequestBuilder;
 import com.paytech.risk.test.checker.evaluation.EvaluationResponseChecker;
 import com.paytech.risk.test.checker.evaluation.EvaluationResponseChecker.Assessed;
+import com.paytech.risk.test.checker.evaluation.VelocityEventChecker;
+import com.paytech.risk.test.mapper.evaluation.PaymentRiskTestMapper;
 
 /**
  * 支付尝试风控评估：真实配置入口准备两段决策流并激活，再经支付评估入口执行
@@ -73,7 +75,7 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
         activeRelease(saveFlow(newCode("T_FLOW"), twoStageGraph(block, auth, reason)));
     }
 
-    /** 未命中任何规则：放行且无需认证；评估、快照、Feature 结果、规则轨迹与评估事件完整落库。 */
+    /** 未命中任何规则：放行且无需认证；评估、快照、Feature 结果、规则轨迹与评估事件完整落库，事件摘要按摘要合同独立重算一致。 */
     @Test
     void test_normalFlow() {
         EvaluateDecisionRequestBody request = PaymentRiskRequestBuilder.template().build();
@@ -109,6 +111,10 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
                     RiskSubjectType.OPERATING_ENTITY.getCode()),
                 store.velocitySubjects(store.assessmentIdOf(assessed.evaluationId()), VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode())
                     .stream().map(row -> row.get("subject_type")).toList()));
+        long assessmentId = store.assessmentIdOf(assessed.evaluationId());
+        VelocityEventChecker.assertEvent(store.velocityEvents(assessmentId).getFirst(),
+            VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, PaymentRiskTestMapper.SOURCE_TYPE, assessmentId,
+            new BigDecimal("100"), request.getInputs().get("currency"));
     }
 
     /** 认证规则集命中：放行并要求 3DS。 */

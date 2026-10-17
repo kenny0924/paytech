@@ -32,7 +32,7 @@ class VariableAuthoringContextApiAutoTest extends AbstractVariableApiTest {
         invoke(headers(), PATH).assertContext();
     }
 
-    /** 指定结账决策点时只返回该点的两个来源合同。 */
+    /** 指定结账决策点时只返回该点的两个来源合同与结账 Feature 目录。 */
     @Test
     void test_normalFlow_supportedPoint() {
         invoke(headers(), PATH + "?pointCode=CHECKOUT_PREPARE").assertContext("CHECKOUT_PREPARE");

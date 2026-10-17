@@ -46,7 +46,7 @@ public final class VariableDefinitionValidator {
     }
 
     /**
-     * 实时累计与名单命中变量只服务于运行期计算 Feature 的决策点（当前仅支付尝试），由 Feature 计算取值
+     * 实时累计与名单命中变量只服务于运行期计算 Feature 的决策点（支付尝试、结账），由 Feature 计算取值
      *
      * @param d 变量结构；Feature Version 在创建时由服务端分配，持久化后必须非空
      */

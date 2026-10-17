@@ -9,10 +9,11 @@ public class VelocityFeatureParameters {
 
     /**
      * 计入的事件
-     * <li>PAYMENT_ATTEMPT_ASSESSED：成功完成的正式评估；PAYMENT_ATTEMPT_REJECTED：结论为审核或拒绝的正式评估。</li>
+     * <li>支付尝试：PAYMENT_ATTEMPT_ASSESSED（成功完成的正式评估）、PAYMENT_ATTEMPT_REJECTED（结论为审核或拒绝）；结账：CHECKOUT_ASSESSED、CHECKOUT_REJECTED，含义相同。</li>
+     * <li>事件须属于变量所属风控点，由服务端校验。</li>
      */
     @NotBlank
-    @Pattern(regexp = "^(PAYMENT_ATTEMPT_ASSESSED|PAYMENT_ATTEMPT_REJECTED)$")
+    @Pattern(regexp = "^(PAYMENT_ATTEMPT_ASSESSED|PAYMENT_ATTEMPT_REJECTED|CHECKOUT_ASSESSED|CHECKOUT_REJECTED)$")
     private String eventCode;
 
     /**

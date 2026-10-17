@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
 import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
 import com.paytech.risk.api.evaluation.request.CheckoutPrepareRiskInput;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.FlowEdgeType;
@@ -46,6 +47,12 @@ public abstract class AbstractCheckoutRiskApiTest extends AbstractRuntimeRiskApi
     @Override
     protected String pointCode() {
         return CHECKOUT;
+    }
+
+    /** 金额类累计变量绑定订单币种。 */
+    @Override
+    protected String currencyVariableCode() {
+        return DecisionPointAuthoringDescriptor.checkoutPrepare().currencyVariableCode();
     }
 
     /** 结账测试配置的编码：带统一前缀与随机后缀。 */

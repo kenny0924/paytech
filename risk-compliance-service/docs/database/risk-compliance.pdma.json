@@ -12818,7 +12818,7 @@
         {
           "defKey": "event_code",
           "defName": "事件编码",
-          "comment": "事件编码的稳定业务代码。允许值：PAYMENT_ATTEMPT_ASSESSED、PAYMENT_ATTEMPT_REJECTED。",
+          "comment": "事件编码的稳定业务代码。允许值：PAYMENT_ATTEMPT_ASSESSED、PAYMENT_ATTEMPT_REJECTED、CHECKOUT_ASSESSED、CHECKOUT_REJECTED。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -12966,7 +12966,7 @@
       },
       "defKey": "t_list_feature_definition",
       "defName": "名单命中 Feature 定义",
-      "comment": "冻结一个名单命中 Feature Version 的名单与主体类型，主体取值由类型对应的支付输入字段决定；创建后不可修改",
+      "comment": "冻结一个名单命中 Feature Version 的名单与主体类型，主体取值由类型对应的风控点输入字段决定；创建后不可修改",
       "properties": {
         "logicalTableKey": "list_feature_definition",
         "compositeForeignKeys": []
@@ -30842,9 +30842,9 @@
         },
         {
           "defKey": "idx_velocity_subject",
-          "defName": "访问索引 subject_type、subject_key、event_code、occurred_time",
+          "defName": "访问索引 subject_type、subject_key、event_code、occurred_time、velocity_event_id",
           "unique": false,
-          "comment": "支持访问路径：subject_type、subject_key、event_code、occurred_time",
+          "comment": "支持访问路径：subject_type、subject_key、event_code、occurred_time、velocity_event_id",
           "fields": [
             {
               "fieldDefKey": "BB1E500B-7C16-593A-B35C-CD545EE0709C",
@@ -30865,6 +30865,11 @@
               "fieldDefKey": "920466A8-D368-5A13-BD68-2668A93AFC22",
               "ascOrDesc": "A",
               "id": "FAC0F445-A42A-5C50-AB78-C4D353E793CF"
+            },
+            {
+              "fieldDefKey": "5BD2DB42-E530-59E6-89E3-10AD8A14749D",
+              "ascOrDesc": "A",
+              "id": "51F5677C-CCDF-4BFC-8592-C258DFFCEC75"
             }
           ],
           "id": "4BE3E64E-8BDC-53F2-A2B8-FBA18310D18D"

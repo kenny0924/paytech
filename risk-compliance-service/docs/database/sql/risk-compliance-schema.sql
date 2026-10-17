@@ -480,7 +480,7 @@ CREATE TABLE `t_feature_dependency` (
 
 CREATE TABLE `t_velocity_feature_definition` (
   `feature_version_id` BIGINT NOT NULL COMMENT '与所属 Feature Version 共享的主键。',
-  `event_code` VARCHAR(64) NOT NULL COMMENT '事件编码的稳定业务代码。允许值：PAYMENT_ATTEMPT_ASSESSED、PAYMENT_ATTEMPT_REJECTED。',
+  `event_code` VARCHAR(64) NOT NULL COMMENT '事件编码的稳定业务代码。允许值：PAYMENT_ATTEMPT_ASSESSED、PAYMENT_ATTEMPT_REJECTED、CHECKOUT_ASSESSED、CHECKOUT_REJECTED。',
   `anchor_subject_type` VARCHAR(64) NOT NULL COMMENT '锚定主体类型的稳定业务代码。允许值：CLIENT、OPERATING_ENTITY、CONSUMER、IP_ADDRESS、CARD_FINGERPRINT。',
   `metric` VARCHAR(64) NOT NULL COMMENT '累计算法的稳定业务代码。允许值：COUNT、SUM_AMOUNT、DISTINCT_COUNT、LAST_AMOUNT、SECONDS_SINCE_LAST。',
   `distinct_subject_type` VARCHAR(64) NULL COMMENT '去重主体类型的稳定业务代码。允许值：CLIENT、OPERATING_ENTITY、CONSUMER、IP_ADDRESS、CARD_FINGERPRINT。',
@@ -497,7 +497,7 @@ CREATE TABLE `t_list_feature_definition` (
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。',
   PRIMARY KEY (`feature_version_id`),
   KEY `idx_list_feature_list` (`list_id`) COMMENT '支持访问路径：list_id'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='冻结一个名单命中 Feature Version 的名单与主体类型，主体取值由类型对应的支付输入字段决定；创建后不可修改';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='冻结一个名单命中 Feature Version 的名单与主体类型，主体取值由类型对应的风控点输入字段决定；创建后不可修改';
 
 CREATE TABLE `t_rule_set` (
   `rule_set_id` BIGINT NOT NULL COMMENT '规则集整体管理身份，创建后不变；由服务侧 Snowflake 生成，历史回填使用单独审阅的身份映射。',
@@ -1222,7 +1222,7 @@ CREATE TABLE `t_velocity_event_subject` (
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Risk & Compliance 数据库中的 UTC 微秒创建时间。',
   PRIMARY KEY (`event_subject_id`),
   UNIQUE KEY `uk_velocity_subject` (`velocity_event_id`, `subject_type`, `subject_key`) COMMENT '保证业务唯一性：velocity_event_id、subject_type、subject_key',
-  KEY `idx_velocity_subject` (`subject_type`, `subject_key`, `event_code`, `occurred_time`) COMMENT '支持访问路径：subject_type、subject_key、event_code、occurred_time'
+  KEY `idx_velocity_subject` (`subject_type`, `subject_key`, `event_code`, `occurred_time`, `velocity_event_id`) COMMENT '支持访问路径：subject_type、subject_key、event_code、occurred_time、velocity_event_id'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存风险频次事件与受控主体的明确关联及用于窗口查询的冻结事件维度';
 
 CREATE TABLE `t_limit_version` (

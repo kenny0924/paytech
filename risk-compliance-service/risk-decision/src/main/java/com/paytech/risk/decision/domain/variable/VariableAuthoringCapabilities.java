@@ -1,6 +1,7 @@
 package com.paytech.risk.decision.domain.variable;
 
 import com.paytech.risk.decision.domain.enums.*;
+import com.paytech.risk.decision.domain.feature.FeatureCatalog;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,4 +30,6 @@ public class VariableAuthoringCapabilities {
     private final int memberBodyBytes;
     /** 规则内联集合元素上限。 */
     private final int literalSetLimit;
+    /** 支持 Feature 变量的风控点目录；指定决策点时只含该点。 */
+    private final List<FeatureCatalog> featureCatalogs;
 }

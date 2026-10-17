@@ -18,11 +18,14 @@ import java.util.stream.Stream;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
+import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.NumericUnit;
 import com.paytech.risk.decision.domain.enums.VariableFormat;
 import com.paytech.risk.decision.domain.enums.VariableSource;
 import com.paytech.risk.decision.domain.enums.VariableUsage;
+import com.paytech.risk.decision.domain.enums.VelocityEventCode;
+import com.paytech.risk.decision.domain.enums.VelocityMetric;
 import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 
 import tools.jackson.databind.JsonNode;
@@ -32,7 +35,7 @@ import tools.jackson.databind.ObjectMapper;
  * 变量编排能力的 HTTP 响应 Checker
  * <li>期望值是已接通的工程合同：CHECKOUT_PREPARE 的 ORDER_PREPARATION v5 输入（v4 旧合同只读，不在目录中）及 RULE_SET_NODE_RESULT v1 节点输出，
  * 支付尝试的 PAYMENT_ATTEMPT v1 输入与节点输出。</li>
- * <li>指定结账决策点时可创建来源不含实时累计与名单命中（结账不计算 Feature）。</li>
+ * <li>两个决策点都支持实时累计与名单命中；Feature 目录按点列出事件、主体、统计方式与窗口，Client、运营主体只开放次数、最近一次（≤ 1 天）与金额合计（≤ 1 小时）。</li>
  * <li>整份响应按 JSON 树精确比较，字段、顺序与类型均不得偏离。</li>
  *
  * @author Kenny
@@ -80,7 +83,8 @@ public final class VariableAuthoringContextResponseChecker
             () -> assertEquals(expected.get("formatProfiles"), actual.get("formatProfiles"), "formatProfiles"),
             () -> assertEquals(expected.get("numericUnits"), actual.get("numericUnits"), "numericUnits"),
             () -> assertEquals(expected.get("limits"), actual.get("limits"), "limits"),
-            () -> assertEquals(expected.get("contracts"), actual.get("contracts"), "contracts"));
+            () -> assertEquals(expected.get("contracts"), actual.get("contracts"), "contracts"),
+            () -> assertEquals(expected.get("featureCatalogs"), actual.get("featureCatalogs"), "featureCatalogs"));
         return this;
     }
 
@@ -90,7 +94,7 @@ public final class VariableAuthoringContextResponseChecker
             Map.of("pointCode", PAYMENT, "pointName", PAYMENT)));
         body.put("sources", Stream.of(VariableSource.INPUT, VariableSource.CONSTANT, VariableSource.COLLECTION,
             VariableSource.NODE_OUTPUT, VariableSource.VELOCITY, VariableSource.LIST).map(source -> Map.of("sourceType",
-                source.getCode(), "createAllowed", createAllowed(source, pointCode))).toList());
+                source.getCode(), "createAllowed", createAllowed(source))).toList());
         body.put("valueTypes", Stream.of(STRING, NUMBER, BOOLEAN, DATETIME, DURATION).map(DecisionValueType::getCode).toList());
         body.put("formatProfiles", List.of(format(VariableFormat.TEXT, "文本，保留大小写和前导零"),
             format(VariableFormat.UPPER_ALPHA_2, "两位大写字母"), format(VariableFormat.UPPER_ALPHA_3, "三位大写字母"),
@@ -127,15 +131,85 @@ public final class VariableAuthoringContextResponseChecker
             contracts.removeIf(contract -> CHECKOUT.equals(contract.get("pointCode")));
         }
         body.put("contracts", contracts);
+        List<Map<String, Object>> catalogs = new java.util.ArrayList<>();
+        if (pointCode == null || CHECKOUT.equals(pointCode)) {
+            catalogs.add(catalog(CHECKOUT, "INPUT_CURRENCY",
+                List.of(event(VelocityEventCode.CHECKOUT_ASSESSED, "结账评估", true),
+                    event(VelocityEventCode.CHECKOUT_REJECTED, "结账被拦截（审核或拒绝）", false)),
+                List.of(concentrated(RiskSubjectType.CLIENT), concentrated(RiskSubjectType.OPERATING_ENTITY)),
+                List.of(), List.of(RiskSubjectType.CLIENT, RiskSubjectType.OPERATING_ENTITY)));
+        }
+        if (pointCode == null || PAYMENT.equals(pointCode)) {
+            List<RiskSubjectType> velocity = List.of(RiskSubjectType.CLIENT, RiskSubjectType.OPERATING_ENTITY,
+                RiskSubjectType.CONSUMER, RiskSubjectType.IP_ADDRESS, RiskSubjectType.CARD_FINGERPRINT);
+            catalogs.add(catalog(PAYMENT, "PAY_INPUT_CURRENCY",
+                List.of(event(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, "支付尝试评估", true),
+                    event(VelocityEventCode.PAYMENT_ATTEMPT_REJECTED, "支付尝试被拦截（审核或拒绝）", false)),
+                List.of(concentrated(RiskSubjectType.CLIENT), concentrated(RiskSubjectType.OPERATING_ENTITY),
+                    open(RiskSubjectType.CONSUMER), open(RiskSubjectType.IP_ADDRESS), open(RiskSubjectType.CARD_FINGERPRINT)),
+                velocity, List.of(RiskSubjectType.CLIENT, RiskSubjectType.OPERATING_ENTITY, RiskSubjectType.CONSUMER,
+                    RiskSubjectType.IP_ADDRESS, RiskSubjectType.CARD_FINGERPRINT, RiskSubjectType.CARD_BIN)));
+        }
+        body.put("featureCatalogs", catalogs);
         return body;
     }
 
-    /** 运营可创建的来源：节点输出只由工程登记；结账不支持实时累计与名单命中。 */
-    private static boolean createAllowed(VariableSource source, String pointCode) {
-        if (source == VariableSource.NODE_OUTPUT) {
-            return false;
-        }
-        return !CHECKOUT.equals(pointCode) || source != VariableSource.VELOCITY && source != VariableSource.LIST;
+    /** 一个决策点的 Feature 目录。 */
+    private static Map<String, Object> catalog(String pointCode, String currencyVariableCode,
+        List<Map<String, Object>> events, List<Map<String, Object>> anchors, List<RiskSubjectType> distinct,
+        List<RiskSubjectType> lists) {
+        Map<String, Object> catalog = new LinkedHashMap<>();
+        catalog.put("pointCode", pointCode);
+        catalog.put("currencyVariableCode", currencyVariableCode);
+        catalog.put("velocityEvents", events);
+        catalog.put("velocityAnchors", anchors);
+        catalog.put("distinctSubjects", distinct.stream().map(RiskSubjectType::getCode).toList());
+        catalog.put("listSubjects", lists.stream().map(RiskSubjectType::getCode).toList());
+        return catalog;
+    }
+
+    private static Map<String, Object> event(VelocityEventCode code, String name, boolean includeCurrent) {
+        Map<String, Object> event = new LinkedHashMap<>();
+        event.put("eventCode", code.getCode());
+        event.put("eventName", name);
+        event.put("includeCurrentAllowed", includeCurrent);
+        return event;
+    }
+
+    /** Client、运营主体：次数与最近一次 ≤ 1 天，金额合计 ≤ 1 小时，无不同主体数。 */
+    private static Map<String, Object> concentrated(RiskSubjectType subject) {
+        List<Integer> day = List.of(600, 3600, 86_400);
+        return anchor(subject, List.of(metric(VelocityMetric.COUNT, day, true),
+            metric(VelocityMetric.SUM_AMOUNT, List.of(600, 3600), true), metric(VelocityMetric.LAST_AMOUNT, day, false),
+            metric(VelocityMetric.SECONDS_SINCE_LAST, day, false)));
+    }
+
+    /** 其他主体：五种统计方式 × 四个窗口。 */
+    private static Map<String, Object> open(RiskSubjectType subject) {
+        List<Integer> all = List.of(600, 3600, 86_400, 604_800);
+        return anchor(subject, List.of(metric(VelocityMetric.COUNT, all, true),
+            metric(VelocityMetric.SUM_AMOUNT, all, true), metric(VelocityMetric.DISTINCT_COUNT, all, false),
+            metric(VelocityMetric.LAST_AMOUNT, all, false), metric(VelocityMetric.SECONDS_SINCE_LAST, all, false)));
+    }
+
+    private static Map<String, Object> anchor(RiskSubjectType subject, List<Map<String, Object>> metrics) {
+        Map<String, Object> anchor = new LinkedHashMap<>();
+        anchor.put("subjectType", subject.getCode());
+        anchor.put("metrics", metrics);
+        return anchor;
+    }
+
+    private static Map<String, Object> metric(VelocityMetric metric, List<Integer> windows, boolean includeCurrent) {
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("metric", metric.getCode());
+        value.put("windowSeconds", windows);
+        value.put("includeCurrentAllowed", includeCurrent);
+        return value;
+    }
+
+    /** 运营可创建的来源：节点输出只由工程登记；两个决策点都支持实时累计与名单命中。 */
+    private static boolean createAllowed(VariableSource source) {
+        return source != VariableSource.NODE_OUTPUT;
     }
 
     /** 规则集节点结果合同。 */

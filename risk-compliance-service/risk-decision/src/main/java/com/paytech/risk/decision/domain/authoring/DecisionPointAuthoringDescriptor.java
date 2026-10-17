@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.ActionCategory;
 import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
 import com.paytech.risk.decision.domain.enums.ComparisonOperator;
@@ -25,7 +26,7 @@ import com.paytech.risk.decision.domain.variable.DecisionSourceContracts;
 
 /**
  * 工程注册的决策点创作合同：输入字段、运算符和规则终态动作。
- * <li>结账（CHECKOUT_PREPARE）当前合同为 ORDER_PREPARATION v5，只接受统一变量格式，规则可冻结并经执行发布运行；不开放附加动作与实时累计/名单变量；v4 只供已有规则集与流程读取。</li>
+ * <li>结账（CHECKOUT_PREPARE）当前合同为 ORDER_PREPARATION v5，只接受统一变量格式，规则可冻结并经执行发布运行；不开放附加动作；开放以 Client、运营主体为主体的实时累计与名单命中变量；v4 只供已有规则集与流程读取。</li>
  * <li>结账旧合同（v4，{@link #legacyCheckoutPrepare()}）只服务旧格式规则、旧候选发布与流程 schemaVersion 1 的解释，不进入 {@link #all()}。</li>
  * <li>支付尝试（PAYMENT_ATTEMPT_RISK）只接受统一变量格式，规则可冻结并经执行发布运行；一期不开放附加动作；认证要求是附加输出，由放行结束节点配置。</li>
  */
@@ -48,18 +49,33 @@ public final class DecisionPointAuthoringDescriptor {
         action("DENY_CHECKOUT", "Deny Checkout", "DECISION_DENY_V1", DecisionValue.DENY,
             "8dc8b20590fa0d0c98732d332871901c568207ba9e346277668c9daab3a1e9b7"));
 
+    /** 结账累计事件写入的主体，也是结账累计与名单命中可选的主体：结账输入只提供 Client 与运营主体。 */
+    private static final List<RiskSubjectType> CHECKOUT_SUBJECTS =
+        List.of(RiskSubjectType.CLIENT, RiskSubjectType.OPERATING_ENTITY);
+
+    /** 支付累计事件写入的主体；卡 BIN 只用于名单。 */
+    private static final List<RiskSubjectType> PAYMENT_VELOCITY_SUBJECTS = List.of(RiskSubjectType.CLIENT,
+        RiskSubjectType.OPERATING_ENTITY, RiskSubjectType.CONSUMER, RiskSubjectType.IP_ADDRESS,
+        RiskSubjectType.CARD_FINGERPRINT);
+
+    /** 支付名单命中可选的主体。 */
+    private static final List<RiskSubjectType> PAYMENT_LIST_SUBJECTS = List.of(RiskSubjectType.CLIENT,
+        RiskSubjectType.OPERATING_ENTITY, RiskSubjectType.CONSUMER, RiskSubjectType.IP_ADDRESS,
+        RiskSubjectType.CARD_FINGERPRINT, RiskSubjectType.CARD_BIN);
+
     /** 结账运行期点版本号；mor-test 已有旧 companion 点版本 1～33，取各环境都未使用的固定值。 */
     static final int CHECKOUT_RUNTIME_POINT_VERSION_NO = 100;
 
     private static final DecisionPointAuthoringDescriptor CHECKOUT_PREPARE =
         new DecisionPointAuthoringDescriptor(
             "CHECKOUT_PREPARE_AUTHORING_V2", checkoutPoint(5), 240001L, CHECKOUT_ACTIONS, List.of(),
-            new RuntimeCapabilities(true, false, CHECKOUT_RUNTIME_POINT_VERSION_NO), List.of(5, 4));
+            new RuntimeCapabilities(true, true, CHECKOUT_RUNTIME_POINT_VERSION_NO, CHECKOUT_SUBJECTS,
+                CHECKOUT_SUBJECTS, "INPUT_CURRENCY"), List.of(5, 4));
 
     private static final DecisionPointAuthoringDescriptor LEGACY_CHECKOUT_PREPARE =
         new DecisionPointAuthoringDescriptor(
             "CHECKOUT_PREPARE_AUTHORING_V1", checkoutPoint(4), 240001L, CHECKOUT_ACTIONS, List.of(),
-            new RuntimeCapabilities(false, false, 0), List.of(4));
+            new RuntimeCapabilities(false, false, 0, List.of(), List.of(), null), List.of(4));
 
     private static final DecisionPointAuthoringDescriptor PAYMENT_ATTEMPT_RISK =
         new DecisionPointAuthoringDescriptor(
@@ -78,7 +94,8 @@ public final class DecisionPointAuthoringDescriptor {
                 List.of(new OutputValue(AuthenticationRequirement.NOT_REQUIRED.getCode(), "无需认证"),
                     new OutputValue(AuthenticationRequirement.THREE_DS_REQUIRED.getCode(), "需要 3DS")),
                 AuthenticationRequirement.NOT_REQUIRED.getCode())),
-            new RuntimeCapabilities(true, true, 1), List.of(1));
+            new RuntimeCapabilities(true, true, 1, PAYMENT_VELOCITY_SUBJECTS,
+                PAYMENT_LIST_SUBJECTS, "PAY_INPUT_CURRENCY"), List.of(1));
 
     private static final List<DecisionPointAuthoringDescriptor> ALL = List.of(CHECKOUT_PREPARE, PAYMENT_ATTEMPT_RISK);
 
@@ -194,6 +211,21 @@ public final class DecisionPointAuthoringDescriptor {
     /** 该决策点是否允许实时累计与名单命中变量；只有运行期计算这两类 Feature 的决策点为 true。 */
     public boolean featureVariablesSupported() {
         return runtime.featureVariablesSupported();
+    }
+
+    /** 累计事件写入的主体，也是可锚定与可去重的主体，按登记顺序；不支持 Feature 变量时为空。 */
+    public List<RiskSubjectType> velocitySubjects() {
+        return runtime.velocitySubjects();
+    }
+
+    /** 名单命中可选的主体，按登记顺序；不支持 Feature 变量时为空。 */
+    public List<RiskSubjectType> listSubjects() {
+        return runtime.listSubjects();
+    }
+
+    /** 金额类累计变量绑定的本点币种输入变量（系统变量）；不支持 Feature 变量时为空。 */
+    public String currencyVariableCode() {
+        return runtime.currencyVariableCode();
     }
 
     /** 执行发布引用的冻结决策点版本号；不支持运行期的决策点没有该版本。 */
@@ -342,8 +374,13 @@ public final class DecisionPointAuthoringDescriptor {
      * @param supported 规则是否经执行发布在运行期执行
      * @param featureVariablesSupported 是否允许实时累计与名单命中变量
      * @param pointVersionNo 执行发布引用的冻结决策点版本号；不支持运行期时为 0
+     * @param velocitySubjects 累计事件写入、可锚定与可去重的主体
+     * @param listSubjects 名单命中可选的主体
+     * @param currencyVariableCode 金额类累计变量绑定的币种输入变量
+     *         <li>三项只描述 Feature 能力，不进入点版本投影与摘要。</li>
      */
-    private record RuntimeCapabilities(boolean supported, boolean featureVariablesSupported, int pointVersionNo) { }
+    private record RuntimeCapabilities(boolean supported, boolean featureVariablesSupported, int pointVersionNo,
+        List<RiskSubjectType> velocitySubjects, List<RiskSubjectType> listSubjects, String currencyVariableCode) { }
 
     public record InputFieldDescriptor(
         String fieldCode,

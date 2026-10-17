@@ -3,6 +3,7 @@ package com.paytech.risk.test.base;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -12,7 +13,12 @@ import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
+import com.paytech.risk.api.control.request.AddRiskListEntryRequestBody;
+import com.paytech.risk.api.control.request.CreateRiskListRequestBody;
 import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
+import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
+import com.paytech.risk.api.decision.request.ListFeatureParameters;
+import com.paytech.risk.api.decision.request.VelocityFeatureParameters;
 import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
 import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
 import com.paytech.risk.api.decision.request.FreezeRuleSetVersionRequestBody;
@@ -48,6 +54,70 @@ public abstract class AbstractRuntimeRiskApiTest extends MockTestBase {
 
     /** 本测试的风控点编码。 */
     protected abstract String pointCode();
+
+    /** 本风控点金额类累计变量绑定的币种输入变量。 */
+    protected abstract String currencyVariableCode();
+
+    /** 创建名单。 */
+    protected void createList(String listCode, String subjectType, String purpose) {
+        CreateRiskListRequestBody body = new CreateRiskListRequestBody();
+        body.setListCode(listCode);
+        body.setListName("测试名单");
+        body.setSubjectType(subjectType);
+        body.setPurpose(purpose);
+        postOk("/risk-lists/v1/lists", body);
+    }
+
+    /** 添加长期有效的名单成员，返回成员 ID。 */
+    protected long addListEntry(String listCode, String subjectValue) {
+        AddRiskListEntryRequestBody body = new AddRiskListEntryRequestBody();
+        body.setSubjectValue(subjectValue);
+        body.setReason("测试加入");
+        return Long.parseLong(postOk("/risk-lists/v1/lists/" + listCode + "/entries", body).path("entryId").asString());
+    }
+
+    /** 创建本风控点的实时累计变量；金额类算法以本点币种变量为币种来源。 */
+    protected void createVelocityVariable(String code, String eventCode, String anchor, String metric, String distinct,
+        int windowSeconds, boolean includeCurrent) {
+        boolean money = "SUM_AMOUNT".equals(metric) || "LAST_AMOUNT".equals(metric);
+        CreateVariableRequestBody body = featureVariable(code, "VELOCITY", "NUMBER", pointCode());
+        body.setNumericUnit(money ? "MONEY" : "SCALAR");
+        body.setCurrencyVariableCode(money ? currencyVariableCode() : null);
+        VelocityFeatureParameters velocity = new VelocityFeatureParameters();
+        velocity.setEventCode(eventCode);
+        velocity.setAnchorSubjectType(anchor);
+        velocity.setMetric(metric);
+        velocity.setDistinctSubjectType(distinct);
+        velocity.setWindowSeconds(windowSeconds);
+        velocity.setIncludeCurrent(includeCurrent);
+        body.setVelocity(velocity);
+        postOk("/decision-variables/v1/variables", body);
+    }
+
+    /** 创建本风控点的名单命中变量。 */
+    protected void createListVariable(String code, String listCode, String subjectType) {
+        CreateVariableRequestBody body = featureVariable(code, "LIST", "BOOLEAN", pointCode());
+        ListFeatureParameters list = new ListFeatureParameters();
+        list.setListCode(listCode);
+        list.setSubjectType(subjectType);
+        body.setList(list);
+        postOk("/decision-variables/v1/variables", body);
+    }
+
+    /** Feature 变量的公共结构。 */
+    protected static CreateVariableRequestBody featureVariable(String code, String sourceType, String valueType,
+        String pointCode) {
+        CreateVariableRequestBody body = new CreateVariableRequestBody();
+        body.setVariableCode(code);
+        body.setVariableName(code);
+        body.setSourceType(sourceType);
+        body.setValueType(valueType);
+        body.setPointCode(pointCode);
+        body.setUsages(List.of("RULE_CONDITION", "FLOW_CONDITION"));
+        body.setFormatCode("NONE");
+        body.setStatus("ACTIVE");
+        return body;
+    }
 
     /** Gateway 转发的 Operations 可信身份及新的 Request ID。 */
     protected static HttpHeaders headers() {

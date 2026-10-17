@@ -10,6 +10,8 @@ import com.paytech.risk.decision.domainservice.repository.DecisionEvaluationRepo
 import com.paytech.risk.decision.domainservice.repository.EvaluationFeatureResultRepository;
 import com.paytech.risk.decision.domainservice.repository.EvaluationFlowTraceRepository;
 import com.paytech.risk.decision.domainservice.repository.EvaluationRuleTraceRepository;
+import com.paytech.risk.decision.domainservice.repository.VelocityEventRepository;
+import com.paytech.risk.decision.domainservice.repository.VelocityEventSubjectRepository;
 import com.paytech.risk.decision.domainservice.service.CheckoutRiskAssessmentService;
 
 import lombok.AllArgsConstructor;
@@ -24,8 +26,10 @@ public class CheckoutRiskAssessmentServiceImpl implements CheckoutRiskAssessment
     private final EvaluationRuleTraceRepository traces;
     private final CheckoutInputSnapshotRepository snapshots;
     private final EvaluationFeatureResultRepository featureResults;
+    private final VelocityEventRepository velocityEvents;
+    private final VelocityEventSubjectRepository velocitySubjects;
 
-    /** 评估先于依附它的快照、结果与轨迹写入，全部在一个事务中提交。 */
+    /** 评估先于依附它的快照、结果、轨迹与累计事件写入，全部在一个事务中提交。 */
     @Override
     public void save(CheckoutRiskAssessmentContext context) {
         new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
@@ -34,6 +38,8 @@ public class CheckoutRiskAssessmentServiceImpl implements CheckoutRiskAssessment
             featureResults.insertAll(context.getFeatureResults());
             traces.insertAll(context.getRuleTraces());
             flowTraces.insertAll(context.getFlowTraces());
+            velocityEvents.insertAll(context.getVelocityEvents());
+            velocitySubjects.insertAll(context.getVelocitySubjects());
         });
     }
 }

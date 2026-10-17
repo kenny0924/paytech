@@ -9,24 +9,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.LongSupplier;
 
+import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionEvaluation;
 import com.paytech.risk.decision.core.dal.dataobject.EvaluationFeatureResult;
 import com.paytech.risk.decision.core.dal.dataobject.EvaluationFlowTrace;
 import com.paytech.risk.decision.core.dal.dataobject.EvaluationRuleTrace;
 import com.paytech.risk.decision.core.dal.dataobject.ExecutionRelease;
+import com.paytech.risk.decision.core.dal.dataobject.VelocityEvent;
+import com.paytech.risk.decision.core.dal.dataobject.VelocityEventSubject;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.EvaluationMode;
 import com.paytech.risk.decision.domain.enums.FlowNodeType;
 import com.paytech.risk.decision.domain.enums.RuleTraceType;
 import com.paytech.risk.decision.domain.enums.TechnicalStatus;
+import com.paytech.risk.decision.domain.enums.VelocityEventCode;
 
 /**
  * 各运行期风控点共用的评估事实构造；纯内存构造
- * <li>正式评估行、Feature 结果、规则与谓词轨迹、流程轨迹的形状与风控点无关，风控点专属的快照与累计事件由各点自行构造。</li>
+ * <li>正式评估行、Feature 结果、规则与谓词轨迹、流程轨迹与累计事件的形状与风控点无关；风控点专属的快照由各点自行构造，累计事件的来源、事件编码与主体由各点传入。</li>
  * <li>失败与超时也保存已有的过程：已完成（含失败项）的 Feature 结果；引擎已执行完时的规则轨迹与流程轨迹。</li>
  */
 public final class RuntimeEvaluationFacts {
+    /** 累计事件摘要合同。 */
+    static final String EVENT_SCHEMA = "CODE-MOR:RISK:VELOCITY_EVENT:1";
 
     /** 纯构造工具。 */
     private RuntimeEvaluationFacts() { }
@@ -175,6 +181,79 @@ public final class RuntimeEvaluationFacts {
         row.setCreateTime(run.completedTime());
         return row;
     }
+
+    /**
+     * 成功评估的累计事件与主体：每次写评估事件，结论为审核或拒绝时再写拦截事件；失败与超时不写
+     *
+     * @param sourceType 来源类型，与来源表同名
+     * @param sourceId 来源行主键，即本点评估事实行
+     * @param input 冻结输入，提供金额、币种与主体键
+     * @param run 执行结果、时间与技术状态
+     * @param assessed 评估事件
+     * @param rejected 拦截事件
+     * @param subjects 写入的主体类型，本次没有值的主体跳过
+     * @param ids 标识生成
+     * @return 事件与主体行
+     */
+    public static VelocityFacts velocityFacts(String sourceType, long sourceId, RuntimeRiskInput input, Run run,
+        VelocityEventCode assessed, VelocityEventCode rejected, List<RiskSubjectType> subjects, LongSupplier ids) {
+        List<VelocityEvent> events = new ArrayList<>();
+        List<VelocityEventSubject> rows = new ArrayList<>();
+        if (run.status() != TechnicalStatus.SUCCEEDED) {
+            return new VelocityFacts(events, rows);
+        }
+        addEvent(assessed, sourceType, sourceId, input, run.evaluationTime(), subjects, ids, events, rows);
+        if (run.outcome().decision() != DecisionValue.ALLOW) {
+            addEvent(rejected, sourceType, sourceId, input, run.evaluationTime(), subjects, ids, events, rows);
+        }
+        return new VelocityFacts(events, rows);
+    }
+
+    /** 写入一条累计事件及本次存在的主体。 */
+    static void addEvent(VelocityEventCode code, String sourceType, long sourceId, RuntimeRiskInput input, Instant time,
+        List<RiskSubjectType> subjects, LongSupplier ids, List<VelocityEvent> events, List<VelocityEventSubject> rows) {
+        VelocityEvent event = new VelocityEvent();
+        event.setVelocityEventId(ids.getAsLong());
+        event.setEventCode(code);
+        event.setSourceType(sourceType);
+        event.setSourceId(sourceId);
+        event.setSourceVersion(1);
+        event.setOccurredTime(time);
+        event.setAmount(input.amount());
+        event.setCurrency(input.currency());
+        event.setEventHash(RuntimeHashes.sha256(EVENT_SCHEMA, Map.of("eventCode", code.getCode(), "sourceType", sourceType,
+            "sourceId", Long.toString(sourceId), "occurredTime", time.toString(),
+            "amount", input.amount().stripTrailingZeros().toPlainString(), "currency", input.currency())));
+        event.setCreateTime(time);
+        events.add(event);
+        for (RiskSubjectType type : subjects) {
+            String key = input.subjectKey(type);
+            if (key != null) {
+                rows.add(subject(ids.getAsLong(), event, type, key));
+            }
+        }
+    }
+
+    /** 事件主体，冻结事件编码与时间供窗口查询。 */
+    static VelocityEventSubject subject(long id, VelocityEvent event, RiskSubjectType type, String key) {
+        VelocityEventSubject subject = new VelocityEventSubject();
+        subject.setEventSubjectId(id);
+        subject.setVelocityEventId(event.getVelocityEventId());
+        subject.setSubjectType(type);
+        subject.setSubjectKey(key);
+        subject.setEventCode(event.getEventCode());
+        subject.setOccurredTime(event.getOccurredTime());
+        subject.setCreateTime(event.getCreateTime());
+        return subject;
+    }
+
+    /**
+     * 一次评估的累计事件与事件主体
+     *
+     * @param events 事件，评估事件在前
+     * @param subjects 事件主体，按事件与主体登记顺序
+     */
+    public record VelocityFacts(List<VelocityEvent> events, List<VelocityEventSubject> subjects) { }
 
     /**
      * 一次执行的结果与时间

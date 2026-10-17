@@ -11,7 +11,7 @@ import com.paytech.risk.control.domain.list.RiskSubjectType;
 /**
  * 一次结账评估（CHECKOUT_PREPARE，ORDER_PREPARATION v5）的冻结输入；字段格式已在 HTTP 入口校验
  * <li>经营主体来源为 PARTNER 时必须有 Local Partner，其他来源必须没有；违反时以参数错误拒绝，不产生评估。</li>
- * <li>结账不计算实时累计与名单 Feature；主体键只为接口完整提供 Client 与经营主体。</li>
+ * <li>实时累计与名单命中的主体键只有 Client 与经营主体，其他主体为空；累计金额为税前净额，币种为订单币种。</li>
  *
  * @param orderId
  *            Commerce 预分配的订单 ID，业务唯一身份

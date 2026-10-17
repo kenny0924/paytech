@@ -35,7 +35,7 @@ import lombok.AllArgsConstructor;
  * 结账风控点（CHECKOUT_PREPARE，输入合同 ORDER_PREPARATION v5）评估器
  * <li>业务身份为 Commerce 预分配的订单 ID；同一订单只评估一次，稳定输入相同的重放返回原结果（含 FAILED/TIMED_OUT），否则 409。</li>
  * <li>经营主体来源与 Local Partner 不一致时以参数错误拒绝，在读取发布之前返回且不写评估。</li>
- * <li>读取发布与执行流程都在事务外且只读；一个本地事务保存评估、快照与轨迹；结账没有附加输出，不写累计事件。</li>
+ * <li>读取发布与执行流程都在事务外且只读；一个本地事务保存评估、快照、轨迹与累计事件（仅成功评估）；结账没有附加输出；重放不重新执行、不写累计事件。</li>
  */
 @Component
 @AllArgsConstructor

@@ -31,11 +31,14 @@ public class VariableManagementContextResponseBody {
     /** 准确来源合同，不替代变量库候选。 */
     private List<SourceContract> contracts;
 
+    /** 支持 Feature 变量的风控点目录；指定风控点时只含该点。 */
+    private List<FeatureCatalog> featureCatalogs;
+
     /** JSON 反序列化构造。 */
     public VariableManagementContextResponseBody() { }
 
     /** 按完整合同构造。 */
-    public VariableManagementContextResponseBody(List<SupportedPoint> supportedPoints, List<SourceCapability> sources, List<String> valueTypes, List<FormatProfile> formatProfiles, List<String> numericUnits, Limits limits, List<SourceContract> contracts) {
+    public VariableManagementContextResponseBody(List<SupportedPoint> supportedPoints, List<SourceCapability> sources, List<String> valueTypes, List<FormatProfile> formatProfiles, List<String> numericUnits, Limits limits, List<SourceContract> contracts, List<FeatureCatalog> featureCatalogs) {
         this.supportedPoints = supportedPoints;
         this.sources = sources;
         this.valueTypes = valueTypes;
@@ -43,6 +46,7 @@ public class VariableManagementContextResponseBody {
         this.numericUnits = numericUnits;
         this.limits = limits;
         this.contracts = contracts;
+        this.featureCatalogs = featureCatalogs;
     }
 
     /** 读取已支持的决策点。 */
@@ -86,4 +90,10 @@ public class VariableManagementContextResponseBody {
 
     /** 设置准确来源合同，不替代变量库候选。 */
     public void setContracts(List<SourceContract> contracts) { this.contracts = contracts; }
+
+    /** 读取支持 Feature 变量的风控点目录。 */
+    public List<FeatureCatalog> getFeatureCatalogs() { return featureCatalogs; }
+
+    /** 设置支持 Feature 变量的风控点目录。 */
+    public void setFeatureCatalogs(List<FeatureCatalog> featureCatalogs) { this.featureCatalogs = featureCatalogs; }
 }

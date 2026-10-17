@@ -466,6 +466,186 @@ public final class RiskVariableModels {
         public void setPointName(String pointName) { this.pointName = pointName; }
     }
 
+    /** 支持实时累计与名单命中的风控点可选目录；工程登记，不替代变量库与名单库。 */
+    public static class FeatureCatalog {
+
+        /** 风控点编码。 */
+        private String pointCode;
+
+        /** 金额类累计变量绑定的本点币种输入变量。 */
+        private String currencyVariableCode;
+
+        /** 本点可统计的累计事件。 */
+        private List<VelocityEventOption> velocityEvents;
+
+        /** 可锚定主体及其可选统计方式与窗口。 */
+        private List<VelocityAnchor> velocityAnchors;
+
+        /** 可作为去重对象的主体类型。 */
+        private List<String> distinctSubjects;
+
+        /** 名单命中可用的主体类型。 */
+        private List<String> listSubjects;
+
+        /** JSON 反序列化构造。 */
+        public FeatureCatalog() { }
+
+        /** 按完整合同构造。 */
+        public FeatureCatalog(String pointCode, String currencyVariableCode, List<VelocityEventOption> velocityEvents, List<VelocityAnchor> velocityAnchors, List<String> distinctSubjects, List<String> listSubjects) {
+            this.pointCode = pointCode;
+            this.currencyVariableCode = currencyVariableCode;
+            this.velocityEvents = velocityEvents;
+            this.velocityAnchors = velocityAnchors;
+            this.distinctSubjects = distinctSubjects;
+            this.listSubjects = listSubjects;
+        }
+
+        /** 读取风控点编码。 */
+        public String getPointCode() { return pointCode; }
+
+        /** 设置风控点编码。 */
+        public void setPointCode(String pointCode) { this.pointCode = pointCode; }
+
+        /** 读取金额类累计变量绑定的本点币种输入变量。 */
+        public String getCurrencyVariableCode() { return currencyVariableCode; }
+
+        /** 设置金额类累计变量绑定的本点币种输入变量。 */
+        public void setCurrencyVariableCode(String currencyVariableCode) { this.currencyVariableCode = currencyVariableCode; }
+
+        /** 读取本点可统计的累计事件。 */
+        public List<VelocityEventOption> getVelocityEvents() { return velocityEvents; }
+
+        /** 设置本点可统计的累计事件。 */
+        public void setVelocityEvents(List<VelocityEventOption> velocityEvents) { this.velocityEvents = velocityEvents; }
+
+        /** 读取可锚定主体及其可选统计方式与窗口。 */
+        public List<VelocityAnchor> getVelocityAnchors() { return velocityAnchors; }
+
+        /** 设置可锚定主体及其可选统计方式与窗口。 */
+        public void setVelocityAnchors(List<VelocityAnchor> velocityAnchors) { this.velocityAnchors = velocityAnchors; }
+
+        /** 读取可作为去重对象的主体类型。 */
+        public List<String> getDistinctSubjects() { return distinctSubjects; }
+
+        /** 设置可作为去重对象的主体类型。 */
+        public void setDistinctSubjects(List<String> distinctSubjects) { this.distinctSubjects = distinctSubjects; }
+
+        /** 读取名单命中可用的主体类型。 */
+        public List<String> getListSubjects() { return listSubjects; }
+
+        /** 设置名单命中可用的主体类型。 */
+        public void setListSubjects(List<String> listSubjects) { this.listSubjects = listSubjects; }
+    }
+    /** 风控点的一个累计事件。 */
+    public static class VelocityEventOption {
+
+        /** 事件编码。 */
+        private String eventCode;
+
+        /** 事件显示名称。 */
+        private String eventName;
+
+        /** 每次成功评估都写入、可计入本次。 */
+        private boolean includeCurrentAllowed;
+
+        /** JSON 反序列化构造。 */
+        public VelocityEventOption() { }
+
+        /** 按完整合同构造。 */
+        public VelocityEventOption(String eventCode, String eventName, boolean includeCurrentAllowed) {
+            this.eventCode = eventCode;
+            this.eventName = eventName;
+            this.includeCurrentAllowed = includeCurrentAllowed;
+        }
+
+        /** 读取事件编码。 */
+        public String getEventCode() { return eventCode; }
+
+        /** 设置事件编码。 */
+        public void setEventCode(String eventCode) { this.eventCode = eventCode; }
+
+        /** 读取事件显示名称。 */
+        public String getEventName() { return eventName; }
+
+        /** 设置事件显示名称。 */
+        public void setEventName(String eventName) { this.eventName = eventName; }
+
+        /** 读取每次成功评估都写入、可计入本次。 */
+        public boolean getIncludeCurrentAllowed() { return includeCurrentAllowed; }
+
+        /** 设置每次成功评估都写入、可计入本次。 */
+        public void setIncludeCurrentAllowed(boolean includeCurrentAllowed) { this.includeCurrentAllowed = includeCurrentAllowed; }
+    }
+    /** 一个锚定主体可选的统计方式。 */
+    public static class VelocityAnchor {
+
+        /** 锚定主体类型。 */
+        private String subjectType;
+
+        /** 可选统计方式及窗口。 */
+        private List<VelocityMetricOption> metrics;
+
+        /** JSON 反序列化构造。 */
+        public VelocityAnchor() { }
+
+        /** 按完整合同构造。 */
+        public VelocityAnchor(String subjectType, List<VelocityMetricOption> metrics) {
+            this.subjectType = subjectType;
+            this.metrics = metrics;
+        }
+
+        /** 读取锚定主体类型。 */
+        public String getSubjectType() { return subjectType; }
+
+        /** 设置锚定主体类型。 */
+        public void setSubjectType(String subjectType) { this.subjectType = subjectType; }
+
+        /** 读取可选统计方式及窗口。 */
+        public List<VelocityMetricOption> getMetrics() { return metrics; }
+
+        /** 设置可选统计方式及窗口。 */
+        public void setMetrics(List<VelocityMetricOption> metrics) { this.metrics = metrics; }
+    }
+    /** 锚定主体下一种统计方式的可选窗口。 */
+    public static class VelocityMetricOption {
+
+        /** 统计方式。 */
+        private String metric;
+
+        /** 可选窗口秒数，升序。 */
+        private List<Integer> windowSeconds;
+
+        /** 该统计方式可计入本次。 */
+        private boolean includeCurrentAllowed;
+
+        /** JSON 反序列化构造。 */
+        public VelocityMetricOption() { }
+
+        /** 按完整合同构造。 */
+        public VelocityMetricOption(String metric, List<Integer> windowSeconds, boolean includeCurrentAllowed) {
+            this.metric = metric;
+            this.windowSeconds = windowSeconds;
+            this.includeCurrentAllowed = includeCurrentAllowed;
+        }
+
+        /** 读取统计方式。 */
+        public String getMetric() { return metric; }
+
+        /** 设置统计方式。 */
+        public void setMetric(String metric) { this.metric = metric; }
+
+        /** 读取可选窗口秒数，升序。 */
+        public List<Integer> getWindowSeconds() { return windowSeconds; }
+
+        /** 设置可选窗口秒数，升序。 */
+        public void setWindowSeconds(List<Integer> windowSeconds) { this.windowSeconds = windowSeconds; }
+
+        /** 读取该统计方式可计入本次。 */
+        public boolean getIncludeCurrentAllowed() { return includeCurrentAllowed; }
+
+        /** 设置该统计方式可计入本次。 */
+        public void setIncludeCurrentAllowed(boolean includeCurrentAllowed) { this.includeCurrentAllowed = includeCurrentAllowed; }
+    }
     /** 工程保留的 NODE_OUTPUT 不开放运营创建。 */
     public static class SourceCapability {
 

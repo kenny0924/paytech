@@ -15,6 +15,7 @@ import java.util.Set;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.risk.api.decision.RiskVariableModels.AllowedValues;
+import com.paytech.risk.api.decision.RiskVariableModels.FeatureCatalog;
 import com.paytech.risk.api.decision.RiskVariableModels.FormatProfile;
 import com.paytech.risk.api.decision.RiskVariableModels.Limits;
 import com.paytech.risk.api.decision.RiskVariableModels.Member;
@@ -25,6 +26,9 @@ import com.paytech.risk.api.decision.RiskVariableModels.SourceField;
 import com.paytech.risk.api.decision.RiskVariableModels.SupportedPoint;
 import com.paytech.risk.api.decision.RiskVariableModels.VariableReference;
 import com.paytech.risk.api.decision.RiskVariableModels.VariableSummary;
+import com.paytech.risk.api.decision.RiskVariableModels.VelocityAnchor;
+import com.paytech.risk.api.decision.RiskVariableModels.VelocityEventOption;
+import com.paytech.risk.api.decision.RiskVariableModels.VelocityMetricOption;
 import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
 import com.paytech.risk.api.decision.request.ReplaceMembersRequestBody;
 import com.paytech.risk.api.decision.request.UpdateVariableRequestBody;
@@ -72,7 +76,20 @@ public final class RiskVariableWireConverter {
             capabilities.getFormats().stream().map(format -> new FormatProfile(format.getCode(), formatLabel(format), formatLabel(format))).toList(),
             capabilities.getNumericUnits().stream().map(NumericUnit::getCode).toList(),
             new Limits(capabilities.getMemberLimit(), capabilities.getMemberBodyBytes(), capabilities.getLiteralSetLimit()),
-            capabilities.getContracts().stream().map(RiskVariableWireConverter::contract).toList());
+            capabilities.getContracts().stream().map(RiskVariableWireConverter::contract).toList(),
+            capabilities.getFeatureCatalogs().stream().map(RiskVariableWireConverter::featureCatalog).toList());
+    }
+
+    /** 风控点 Feature 目录；事件、主体与统计方式输出稳定 Code。 */
+    static FeatureCatalog featureCatalog(com.paytech.risk.decision.domain.feature.FeatureCatalog catalog) {
+        return new FeatureCatalog(catalog.pointCode(), catalog.currencyVariableCode(),
+            catalog.velocityEvents().stream().map(event -> new VelocityEventOption(event.getCode(), event.eventName(),
+                event.includeCurrentAllowed())).toList(),
+            catalog.velocityAnchors().stream().map(anchor -> new VelocityAnchor(anchor.subjectType().getCode(),
+                anchor.metrics().stream().map(metric -> new VelocityMetricOption(metric.metric().getCode(),
+                    metric.windowSeconds(), metric.includeCurrentAllowed())).toList())).toList(),
+            catalog.distinctSubjects().stream().map(RiskSubjectType::getCode).toList(),
+            catalog.listSubjects().stream().map(RiskSubjectType::getCode).toList());
     }
 
     /** 将普通分页或编码批取结果转换为目录响应；批取不返回分页字段。 */

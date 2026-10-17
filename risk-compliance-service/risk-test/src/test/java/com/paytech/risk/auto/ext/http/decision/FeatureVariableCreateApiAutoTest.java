@@ -24,18 +24,23 @@ import com.paytech.risk.api.decision.request.VelocityFeatureParameters;
 import com.paytech.risk.api.evaluation.request.CheckoutPrepareRiskInput;
 import com.paytech.risk.control.core.enums.RiskListPurpose;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
+import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
+import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.ExecutionVersionStatus;
+import com.paytech.risk.decision.domain.enums.NumericUnit;
+import com.paytech.risk.decision.domain.enums.VariableSource;
 import com.paytech.risk.decision.domain.enums.VelocityEventCode;
 import com.paytech.risk.decision.domain.enums.VelocityMetric;
 import com.paytech.risk.decision.domain.feature.FeatureHandlers;
 import com.paytech.risk.test.base.AbstractPaymentRiskApiTest;
 import com.paytech.risk.test.checker.decision.VariableDetailResponseChecker;
+import com.paytech.risk.test.mapper.evaluation.CheckoutRiskTestMapper;
 
 /**
  * 创建 Feature 变量：运营经变量创建入口配置实时累计与名单命中参数，随不可变 Feature Version 保存
- * <li>正常流程：计数、去重计数、金额合计（计入本次）的累计变量与名单命中变量各生成一个生效 Feature Version 及参数行。</li>
+ * <li>正常流程：计数、去重计数、金额合计（计入本次）的累计变量与名单命中变量各生成一个生效 Feature Version 及参数行；结账点以 Client、运营主体创建累计与名单变量。</li>
  * <li>参数：窗口不在允许集合、去重主体与算法不匹配或等于锚定主体、拒绝事件计入本次、量纲与算法不一致、来源与参数不匹配、名单不存在或主体类型不一致、
- * 决策点不计算 Feature（结账）返回 400，且不写 Feature Version。</li>
+ * 事件或主体不属于变量风控点、Client/运营主体超出允许的统计方式与窗口、结账金额变量绑定支付币种返回 400，且不写 Feature Version。</li>
  *
  * @see RiskVariableApi
  */
@@ -63,23 +68,48 @@ class FeatureVariableCreateApiAutoTest extends AbstractPaymentRiskApiTest {
             VelocityMetric.COUNT, null, 600, false);
     }
 
-    /** 同 Client 1 小时内不同卡数量；同消费者 1 天内评估金额合计且计入本次。 */
+    /** 同消费者 1 小时内不同卡数量；同消费者 1 天内评估金额合计且计入本次。 */
     @Test
     void test_normalFlow_distinctAndMoney() {
-        String distinct = newCode("T_CLIENT_CARDS");
+        String distinct = newCode("T_CONSUMER_CARDS");
         String amount = newCode("T_CONSUMER_AMOUNT");
 
         createVelocityVariable(distinct, VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode(),
-            RiskSubjectType.CLIENT.getCode(), VelocityMetric.DISTINCT_COUNT.getCode(),
+            RiskSubjectType.CONSUMER.getCode(), VelocityMetric.DISTINCT_COUNT.getCode(),
             RiskSubjectType.CARD_FINGERPRINT.getCode(), 3600, false);
         createVelocityVariable(amount, VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED.getCode(),
             RiskSubjectType.CONSUMER.getCode(), VelocityMetric.SUM_AMOUNT.getCode(), null, 86_400, true);
 
-        assertVelocity(distinct, VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, RiskSubjectType.CLIENT,
+        assertVelocity(distinct, VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, RiskSubjectType.CONSUMER,
             VelocityMetric.DISTINCT_COUNT, RiskSubjectType.CARD_FINGERPRINT, 3600, false);
         assertVelocity(amount, VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, RiskSubjectType.CONSUMER,
             VelocityMetric.SUM_AMOUNT, null, 86_400, true);
         assertEquals(2, store.countFeatureVersions());
+    }
+
+    /** 结账点：同 Client 1 小时评估次数（计入本次）、同运营主体 1 小时净额合计、Client 名单命中。 */
+    @Test
+    void test_normalFlow_checkout() {
+        String count = newCode(CheckoutRiskTestMapper.TEST_CODE_PREFIX + "_CLIENT_COUNT");
+        String amount = newCode(CheckoutRiskTestMapper.TEST_CODE_PREFIX + "_OE_AMOUNT");
+        String blocked = newCode(CheckoutRiskTestMapper.TEST_CODE_PREFIX + "_CLIENT_BLOCKED");
+        String clientList = newCode(CheckoutRiskTestMapper.TEST_CODE_PREFIX + "_CLIENT_LIST");
+        createList(clientList, RiskSubjectType.CLIENT.getCode(), RiskListPurpose.BLOCK.getCode());
+
+        postOk(VARIABLES, checkoutVelocity(count, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.CLIENT,
+            VelocityMetric.COUNT, 3600, true));
+        postOk(VARIABLES, checkoutVelocity(amount, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.OPERATING_ENTITY,
+            VelocityMetric.SUM_AMOUNT, 3600, false));
+        CreateVariableRequestBody list = featureVariable(blocked, VariableSource.LIST.getCode(),
+            DecisionValueType.BOOLEAN.getCode(), CheckoutPrepareRiskInput.POINT_CODE);
+        list.setList(listParameters(clientList, RiskSubjectType.CLIENT));
+        postOk(VARIABLES, list);
+
+        assertVelocity(count, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.CLIENT, VelocityMetric.COUNT, null,
+            3600, true);
+        assertVelocity(amount, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.OPERATING_ENTITY,
+            VelocityMetric.SUM_AMOUNT, null, 3600, false);
+        assertEquals(RiskSubjectType.CLIENT.getCode(), store.listFeature(blocked).get("subject_type"));
     }
 
     /** IP 名单命中。 */
@@ -155,15 +185,111 @@ class FeatureVariableCreateApiAutoTest extends AbstractPaymentRiskApiTest {
                 body.setVelocity(null);
                 body.setList(listParameters("{list}", RiskSubjectType.CARD_BIN));
             })),
-            Arguments.of("结账决策点不支持实时累计", change(body -> body.setPointCode(CheckoutPrepareRiskInput.POINT_CODE))),
-            Arguments.of("结账决策点不支持名单命中", change(body -> {
+            Arguments.of("结账变量选支付事件", change(FeatureVariableCreateApiAutoTest::toCheckout)),
+            Arguments.of("支付变量选结账事件", change(body ->
+                body.getVelocity().setEventCode(VelocityEventCode.CHECKOUT_ASSESSED.getCode()))),
+            Arguments.of("结账变量以卡指纹为主体", change(body -> {
+                toCheckout(body);
+                body.getVelocity().setEventCode(VelocityEventCode.CHECKOUT_ASSESSED.getCode());
+            })),
+            Arguments.of("结账名单主体为 IP", change(body -> {
                 body.setSourceType("LIST");
                 body.setValueType("BOOLEAN");
                 body.setNumericUnit(null);
                 body.setVelocity(null);
                 body.setList(listParameters("{list}", RiskSubjectType.IP_ADDRESS));
-                body.setPointCode(CheckoutPrepareRiskInput.POINT_CODE);
+                toCheckout(body);
+            })),
+            Arguments.of("支付 Client 7 天次数", change(body -> {
+                body.getVelocity().setAnchorSubjectType(RiskSubjectType.CLIENT.getCode());
+                body.getVelocity().setWindowSeconds(604_800);
+            })),
+            Arguments.of("支付运营主体 1 天金额合计", change(body -> {
+                money(body, VelocityMetric.SUM_AMOUNT, DecisionPointAuthoringDescriptor.paymentAttemptRisk().currencyVariableCode());
+                body.getVelocity().setAnchorSubjectType(RiskSubjectType.OPERATING_ENTITY.getCode());
+                body.getVelocity().setWindowSeconds(86_400);
+            })),
+            Arguments.of("支付 Client 不同主体数", change(body -> {
+                body.getVelocity().setAnchorSubjectType(RiskSubjectType.CLIENT.getCode());
+                body.getVelocity().setMetric(VelocityMetric.DISTINCT_COUNT.getCode());
+                body.getVelocity().setDistinctSubjectType(RiskSubjectType.CARD_FINGERPRINT.getCode());
+            })),
+            Arguments.of("支付 Client 1 天金额合计", change(body -> {
+                money(body, VelocityMetric.SUM_AMOUNT, DecisionPointAuthoringDescriptor.paymentAttemptRisk().currencyVariableCode());
+                body.getVelocity().setAnchorSubjectType(RiskSubjectType.CLIENT.getCode());
+                body.getVelocity().setWindowSeconds(86_400);
+            })),
+            Arguments.of("结账 Client 1 天金额合计", change(body -> {
+                checkout(body, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.CLIENT);
+                money(body, VelocityMetric.SUM_AMOUNT, DecisionPointAuthoringDescriptor.checkoutPrepare().currencyVariableCode());
+                body.getVelocity().setWindowSeconds(86_400);
+            })),
+            Arguments.of("结账 Client 7 天最近一次金额", change(body -> {
+                checkout(body, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.CLIENT);
+                money(body, VelocityMetric.LAST_AMOUNT, DecisionPointAuthoringDescriptor.checkoutPrepare().currencyVariableCode());
+                body.getVelocity().setWindowSeconds(604_800);
+            })),
+            Arguments.of("结账 Client 7 天距上次秒数", change(body -> {
+                checkout(body, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.CLIENT);
+                body.getVelocity().setMetric(VelocityMetric.SECONDS_SINCE_LAST.getCode());
+                body.getVelocity().setWindowSeconds(604_800);
+            })),
+            Arguments.of("结账 Client 7 天次数", change(body -> {
+                checkout(body, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.CLIENT);
+                body.getVelocity().setWindowSeconds(604_800);
+            })),
+            Arguments.of("结账运营主体不同 Client 数", change(body -> {
+                checkout(body, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.OPERATING_ENTITY);
+                body.getVelocity().setMetric(VelocityMetric.DISTINCT_COUNT.getCode());
+                body.getVelocity().setDistinctSubjectType(RiskSubjectType.CLIENT.getCode());
+            })),
+            Arguments.of("结账拦截事件计入本次", change(body -> {
+                checkout(body, VelocityEventCode.CHECKOUT_REJECTED, RiskSubjectType.CLIENT);
+                body.getVelocity().setIncludeCurrent(true);
+            })),
+            Arguments.of("结账金额变量绑定支付币种", change(body -> {
+                checkout(body, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.CLIENT);
+                money(body, VelocityMetric.SUM_AMOUNT, DecisionPointAuthoringDescriptor.paymentAttemptRisk().currencyVariableCode());
+                body.getVelocity().setWindowSeconds(3600);
             })));
+    }
+
+    /** 改为结账决策点的累计参数。 */
+    private static void checkout(CreateVariableRequestBody body, VelocityEventCode event, RiskSubjectType anchor) {
+        toCheckout(body);
+        body.getVelocity().setEventCode(event.getCode());
+        body.getVelocity().setAnchorSubjectType(anchor.getCode());
+    }
+
+    /** 改为结账决策点；编码改用结账测试前缀，误放行时也由结账清理器删除。 */
+    private static void toCheckout(CreateVariableRequestBody body) {
+        body.setPointCode(CheckoutPrepareRiskInput.POINT_CODE);
+        body.setVariableCode(newCode(CheckoutRiskTestMapper.TEST_CODE_PREFIX + "_INVALID"));
+    }
+
+    /** 改为金额类统计方式并绑定币种变量。 */
+    private static void money(CreateVariableRequestBody body, VelocityMetric metric, String currencyVariableCode) {
+        body.setNumericUnit(NumericUnit.MONEY.getCode());
+        body.setCurrencyVariableCode(currencyVariableCode);
+        body.getVelocity().setMetric(metric.getCode());
+    }
+
+    /** 结账决策点累计变量请求；金额类绑定订单币种。 */
+    private static CreateVariableRequestBody checkoutVelocity(String code, VelocityEventCode event,
+        RiskSubjectType anchor, VelocityMetric metric, int windowSeconds, boolean includeCurrent) {
+        boolean money = metric == VelocityMetric.SUM_AMOUNT || metric == VelocityMetric.LAST_AMOUNT;
+        CreateVariableRequestBody body = featureVariable(code, VariableSource.VELOCITY.getCode(),
+            DecisionValueType.NUMBER.getCode(), CheckoutPrepareRiskInput.POINT_CODE);
+        body.setNumericUnit(money ? NumericUnit.MONEY.getCode() : NumericUnit.SCALAR.getCode());
+        body.setCurrencyVariableCode(money ? DecisionPointAuthoringDescriptor.checkoutPrepare().currencyVariableCode() : null);
+        VelocityFeatureParameters velocity = new VelocityFeatureParameters();
+        velocity.setEventCode(event.getCode());
+        velocity.setAnchorSubjectType(anchor.getCode());
+        velocity.setMetric(metric.getCode());
+        velocity.setWindowSeconds(windowSeconds);
+        velocity.setIncludeCurrent(includeCurrent);
+        body.setVelocity(velocity);
+        return body;
     }
 
     /** 核对累计 Feature Version 与冻结参数。 */
