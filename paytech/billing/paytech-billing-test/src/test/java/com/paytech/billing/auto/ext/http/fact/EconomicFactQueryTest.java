@@ -7,7 +7,7 @@ import static com.paytech.billing.test.builder.EconomicFactRequestBuilder.FINANC
 import static com.paytech.billing.test.builder.EconomicFactRequestBuilder.LOCAL_PARTNER_ID;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -63,7 +63,8 @@ class EconomicFactQueryTest extends AbstractEconomicFactApiTest {
             () -> assertEquals(1, financeBook.path("items").size()),
             () -> assertEquals(Long.toString(partner), financeBook.path("items").get(0).path("factId").asString()),
             () -> assertEquals(2, financeBook.path("items").get(0).path("lines").size()),
-            () -> assertNull(financeBook.path("nextFromFactId").asString(null)));
+            () -> assertTrue(financeBook.path("nextFromFactId").isNull()
+                || financeBook.path("nextFromFactId").isMissingNode(), "末页游标应为空"));
         list(EconomicFactBookScope.OPERATING_ENTITY, FINANCE_ENTITY_ID, null, null).assertInvalidRequest();
         list(EconomicFactBookScope.OPERATING_ENTITY, ENTITY_NO, null, "501").assertInvalidRequest();
     }
