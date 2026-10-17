@@ -17,7 +17,7 @@ public interface CheckoutContextApi {
      * 为 Checkout 创建解析完整商业上下文。
      *
      * @param callerService
-     *            私网调用范围；仅允许 commerce-service，此 Header 本身不构成身份认证
+     *            私网调用范围；仅允许 acquiring-service（第 03 步由 commerce-service 改名），此 Header 本身不构成身份认证
      * @param request
      *            Client、订单和商业时点；不允许指定 OE
      * @return 首个完整通过的候选，由 Commerce 原子冻结；依赖不可用 503，配置冲突 409

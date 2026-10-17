@@ -52,7 +52,7 @@ class AgreementPartyQueryHttpTest extends CommercialMockTestBase {
     /** 非 client-master 调用与缺少 ID 都在读取前拒绝。 */
     @Test
     void test_invalidCallerAndMissingIds() {
-        assertInvalid(http.get(PATH + "?partyIds=910000000000002", headers("commerce-service")));
+        assertInvalid(http.get(PATH + "?partyIds=910000000000002", headers("acquiring-service")));
         assertInvalid(http.get(PATH, headers("client-master-service")));
         assertInvalid(http.get(PATH + "?partyIds=01", headers("client-master-service")));
     }

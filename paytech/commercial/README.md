@@ -19,7 +19,7 @@
 
 ## 两段式解析
 
-`POST /checkout-context/v1/resolutions` 由 commercial 提供，调用方仍须为 `commerce-service`：
+`POST /checkout-context/v1/resolutions` 由 commercial 提供，调用方须为 `acquiring-service`（第 03 步由 `commerce-service` 改名）：
 
 1. 调 client-master 候选接口取得有序候选、查询范围与根版本。
 2. 本库 REPEATABLE READ 只读快照按 `clientId`、`entityNos`、`localPartnerIds` 显式参数读取商务事实（不再子查询主档表），事务结束后经 `party-profiles` 读取签署资料；逐候选惰性解析，fall-through 语义与原实现一致。

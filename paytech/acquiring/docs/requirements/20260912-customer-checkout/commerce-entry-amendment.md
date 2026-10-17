@@ -1,6 +1,6 @@
 # Customer 入口收敛到 Commerce
 
-> **2026-09-17 SubmitPayment 后继（按用户纠正去幂等）：** 当前提交和查询以[本次修订](../../../../requirements/20260917/commerce-SubmitPayment接口重构/technique.md)及 [OpenAPI](../../api/customer-checkout.openapi.json)为准。Payments 不再要求 Idempotency-Key，不计算卡指纹/Hash，不读写命令或响应快照，也不提供原键重放/补卡。每次 POST 生成新的业务 submissionId；GET 使用订单、Intent 和该编号查询 Payment；CheckoutPaymentQueryHandler 及其登记已按用户要求删除，Processor 直接调用本地 Service。普通类模型与 Context、Foundation AbstractProcessor、REQUIRED 本地 Service 和事务外 Payment 调用保留。接受历史命令列需要先人工应用[可空 SQL](../../../../requirements/20260917/commerce-SubmitPayment接口重构/db/ddl.sql)，本次未执行。Payment 对同 Intent 在途与重复扣款的保护仍需真实适配；新接口没有恢复自动扣款的机制。
+> **2026-09-17 SubmitPayment 后继（按用户纠正去幂等）：** 当前提交和查询以[本次修订](../../../../../requirements/20260917/commerce-SubmitPayment接口重构/technique.md)及 [OpenAPI](../../api/customer-checkout.openapi.json)为准。Payments 不再要求 Idempotency-Key，不计算卡指纹/Hash，不读写命令或响应快照，也不提供原键重放/补卡。每次 POST 生成新的业务 submissionId；GET 使用订单、Intent 和该编号查询 Payment；CheckoutPaymentQueryHandler 及其登记已按用户要求删除，Processor 直接调用本地 Service。普通类模型与 Context、Foundation AbstractProcessor、REQUIRED 本地 Service 和事务外 Payment 调用保留。接受历史命令列需要先人工应用[可空 SQL](../../../../../requirements/20260917/commerce-SubmitPayment接口重构/db/ddl.sql)，本次未执行。Payment 对同 Intent 在途与重复扣款的保护仍需真实适配；新接口没有恢复自动扣款的机制。
 >
 > 下文保留 2026-09-12 的入口收敛记录。其中提交分层、Key/HMAC、命令回执、allowExecution、原键恢复、后台查询任务和对应测试场景均被上述后继取代；不能据历史测试描述声明当前实现已验证。入口统一归 Commerce、卡数据不持久化和事务内禁止外部调用等边界继续有效。
 

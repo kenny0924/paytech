@@ -269,7 +269,9 @@ The first MySQL initialization creates empty schemas and one scoped account per 
 - `mor_cct` / `cct_app` (legacy CCT schema; kept until refactor step 04 is merged and verified)
 - `mor_client_master` / `client_master_app` (client-master; test DDL `paytech/client-master/paytech-client-master-test/src/test/resources/init/ddl.sql`)
 - `mor_commercial` / `commercial_app` (commercial; test DDL `paytech/commercial/paytech-commercial-test/src/test/resources/init/ddl.sql`)
-- `mor_commerce` / `commerce_app`
+- `mor_commerce` / `commerce_app` (legacy Commerce schema; kept until refactor step 03 is merged and verified)
+- `mor_acquiring` / `acquiring_app` (acquiring; `SELECT, INSERT, UPDATE, DELETE` only; test DDL `paytech/acquiring/paytech-acquiring-test/src/test/resources/init/ddl.sql`; created only when `MOR_ACQUIRING_DB_PASSWORD` reaches the mysql container)
+- `mor_consumer` / `consumer_app` (consumer; `SELECT, INSERT, UPDATE, DELETE` only; test DDL `paytech/consumer/paytech-consumer-test/src/test/resources/init/ddl.sql`; created only when `MOR_CONSUMER_DB_PASSWORD` reaches the mysql container)
 - `mor_payment` / `payment_app` (payment service; also hosts the four card tables until refactor step 12)
 - `mor_channel_connector` / `channel_connector_app` (channel connector; `SELECT, INSERT, UPDATE, DELETE` only)
 - `mor_risk` / `risk_app`

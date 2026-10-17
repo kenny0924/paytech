@@ -46,8 +46,8 @@ export const CLIENT_MASTER_CATALOG_TABLES = Object.freeze([
 ]);
 
 // Entity definition copied verbatim (IDs, metadata and physical shape) from the
-// Commerce model commerce-service/docs/database/commerce.pdma.json; only the
-// shared template headers are re-derived. The Commerce copy is removed later.
+// former Commerce model (commerce-service/docs/database/commerce.pdma.json, removed in step 03);
+// only the shared template headers are re-derived.
 const CLIENT_STORED_CARD_SETTING_ENTITY = Object.freeze({
   "id": "1A821886-19AB-5FA1-AAAF-C942297031CA",
   "env": {

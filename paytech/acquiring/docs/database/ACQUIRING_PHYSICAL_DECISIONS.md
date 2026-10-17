@@ -1,32 +1,35 @@
-# Commerce V1 PDManer 物理建模决策
+# acquiring V1 PDManer 物理建模决策（原 Commerce V1）
 
-> **2026-09-16 取消时间归属：** [取消修订](../../../requirements/20260916/commerce-CancelOrder接口重构/technique.md)新增 t_commerce_order.cancelled_at DATETIME(6) NULL，订单取消不再依赖 Session 时间。Session 保留自身取消时间；Direct Pay 可没有 Session。人工增量 SQL 仅准备，未执行。
+> **2026-10-18 拆分（V2 第 03 步）：** commerce-service 拆为 acquiring 与 consumer 两服务两库（[任务卡](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/03-acquiring-consumer.md)、design/03 §2.5）。本模型 `acquiring.pdma.json` 只含 mor_acquiring 的 14 张表（transaction / checkout / command 共库 13 张与本库 `t_compensation_event`），由 `scripts/pdmaner/generate-acquiring-model.mjs` 生成；`t_customer` 归 [consumer 模型](../../../consumer/docs/database/CONSUMER_PHYSICAL_DECISIONS.md)，`t_client_stored_card_setting` 归 client-master（D42），`t_commerce_order.customer_id` 只是软引用，不建跨库关系。按 C7 / S10 删除 `t_command_idempotency` 与 `t_commerce_order.context_format`、`preparation_command_id`；`t_consumer_acceptance.command_idempotency_id` 按已执行 Schema 改为可空的历史引用列。下文涉及这三项与 15 表的段落为历史记录，以第 2 节 Manifest 与生成器为准。
 
-> **2026-09-16 创建方式：** [响应与模型修订](../../../requirements/20260916/commerce-订单查询合并Checkout/response-shape-amendment.md)增加 t_commerce_order.creation_mode VARCHAR(32) NOT NULL DEFAULT 'HOSTED_CHECKOUT'，由服务端创建时固定；DIRECT_PAY 仅预留。物理版本字段与索引保持，增量 SQL 未执行。
 
-> **2026-09-16：** [CreateCheckout 业务修订](../../../requirements/20260916/commerce-CreateCheckout业务重构/technique.md)增加 Order 创建国家可空列，新写必须提供，NULL 仅保留历史兼容。CREATE_CHECKOUT 不再产生新命令记录，旧快照及其他操作不清理。
+> **2026-09-16 取消时间归属：** [取消修订](../../../../requirements/20260916/commerce-CancelOrder接口重构/technique.md)新增 t_commerce_order.cancelled_at DATETIME(6) NULL，订单取消不再依赖 Session 时间。Session 保留自身取消时间；Direct Pay 可没有 Session。人工增量 SQL 仅准备，未执行。
 
-> **2026-09-11 模型切片：** 当前物理模型采用 [OE / Client / Pricing 四系统决定](../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)。本页历史正文中的数字 OE、Assignment、独立 Acceptance、Client 多 OE 合同与 Agreement-OE 结算条款由该决定精确取代；本页摘要描述当前模型产物，运行代码、SQL 执行及待迁移状态仅见 [当前实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。Risk 本期不动。
+> **2026-09-16 创建方式：** [响应与模型修订](../../../../requirements/20260916/commerce-订单查询合并Checkout/response-shape-amendment.md)增加 t_commerce_order.creation_mode VARCHAR(32) NOT NULL DEFAULT 'HOSTED_CHECKOUT'，由服务端创建时固定；DIRECT_PAY 仅预留。物理版本字段与索引保持，增量 SQL 未执行。
+
+> **2026-09-16：** [CreateCheckout 业务修订](../../../../requirements/20260916/commerce-CreateCheckout业务重构/technique.md)增加 Order 创建国家可空列，新写必须提供，NULL 仅保留历史兼容。CREATE_CHECKOUT 不再产生新命令记录，旧快照及其他操作不清理。
+
+> **2026-09-11 模型切片：** 当前物理模型采用 [OE / Client / Pricing 四系统决定](../../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)。本页历史正文中的数字 OE、Assignment、独立 Acceptance、Client 多 OE 合同与 Agreement-OE 结算条款由该决定精确取代；本页摘要描述当前模型产物，运行代码、SQL 执行及待迁移状态仅见 [当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md)。Risk 本期不动。
 
 最后更新：2026-09-05
 状态：15 表 Commerce Checkout 首片物理模型已生成；自动契约验证结果以本次执行记录为准，PDManer 4.9.3 应用内打开与检查仍是人工兼容性门禁。
 
 > **2026-09-05 横切规范更新：** 模型采用当前最小 `compensation_event`、无物理 CHECK/FK 的规则；Vault
-> 真实消费者能力仍按[当前实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md)的 VAULT-01 门禁推进。不得恢复旧
+> 真实消费者能力仍按[当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md)的 VAULT-01 门禁推进。不得恢复旧
 > Source/Version/Schema/Hash 字段。
 
 ## 1. 范围与权威来源
 
 本文件冻结 Commerce V1 从逻辑目录落到 PDManer 的物理类型、可空性、索引、本库关系、图组和数据库外约束。权威输入为：
 
-- [Commerce 逻辑数据库模型](../../../agent-docs/database/COMMERCE_DATABASE.md)
-- [Commerce 现实场景](../../../agent-docs/database/scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md)
-- [Commerce 订单上下文精简设计](../../../agent-docs/plans/2026-08-24-commerce-order-context-simplification-design.md)
-- [Commerce 隐私与履约精简设计](../../../agent-docs/plans/2026-08-24-commerce-privacy-fulfillment-simplification-design.md)
-- [Commerce 文档投影、审计与取消撤销精简设计](../../../agent-docs/plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md)
-- [Commerce 引用型订单快照压缩设计（历史）](../../../agent-docs/plans/2026-08-23-commerce-reference-snapshot-compression-design.md)
-- [Commerce 平衡型 23 表设计（历史）](../../../agent-docs/plans/2026-08-23-commerce-balanced-physical-model-design.md)
-- [共享 PDManer 模板](../../../agent-docs/templates/pdmaner/template.pdma.json)
+- [Commerce 逻辑数据库模型](../../../../agent-docs/database/COMMERCE_DATABASE.md)
+- [Commerce 现实场景](../../../../agent-docs/database/scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md)
+- [Commerce 订单上下文精简设计](../../../../agent-docs/plans/2026-08-24-commerce-order-context-simplification-design.md)
+- [Commerce 隐私与履约精简设计](../../../../agent-docs/plans/2026-08-24-commerce-privacy-fulfillment-simplification-design.md)
+- [Commerce 文档投影、审计与取消撤销精简设计](../../../../agent-docs/plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md)
+- [Commerce 引用型订单快照压缩设计（历史）](../../../../agent-docs/plans/2026-08-23-commerce-reference-snapshot-compression-design.md)
+- [Commerce 平衡型 23 表设计（历史）](../../../../agent-docs/plans/2026-08-23-commerce-balanced-physical-model-design.md)
+- [共享 PDManer 模板](../../../../agent-docs/templates/pdmaner/template.pdma.json)
 
 本次授权止于 PDManer 设计产物、生成器、自动契约测试和人工 Schema SQL 文件；不授权手工应用 SQL、Java 模块、物理数据库、Nacos、MQ、Vault
 环境或其他运行基础设施。项目不使用 Flyway、Liquibase 或应用启动时 Schema 迁移。
@@ -35,23 +38,23 @@
 
 下列数量和摘要直接来自本次已生成模型；`modelSha256` 和结构投影摘要均读取实际产物后回填。
 
-<!-- COMMERCE_PHYSICAL_MANIFEST_START -->
+<!-- ACQUIRING_PHYSICAL_MANIFEST_START -->
 ```json
 {
   "modelTotals": {
-    "tables": 15,
-    "fields": 252,
-    "uniqueIndexes": 24,
-    "accessIndexes": 12,
+    "tables": 14,
+    "fields": 227,
+    "uniqueIndexes": 23,
+    "accessIndexes": 11,
     "relations": 15,
     "diagramGroups": 4
   },
   "templateSha256": "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540",
-  "modelSha256": "eb92f83aeb38c3e75e3306c138429154826e7f385e72c704f4973bf8aa90051c",
-  "structuralProjectionSha256": "417d48de8b95f00b7a701b63a7b2a125fcb30292cd043733bd44dbac6fa8f94f"
+  "modelSha256": "eaf2905a124462d42ac676a9144a7ed708b77f91b7696e6630c33537389781dc",
+  "structuralProjectionSha256": "708f517f6d7325e06fda0e66dda6bfbe1d4677a96608bf4752982e7c8012e58c"
 }
 ```
-<!-- COMMERCE_PHYSICAL_MANIFEST_END -->
+<!-- ACQUIRING_PHYSICAL_MANIFEST_END -->
 
 四个 Diagram Group 为 `订单与不可变上下文`、`Checkout 与消费者法律`、`支付与退款`、`可靠执行`。不得恢复历史 `t_order_snapshot`、Tax/Term 本地副本、三张已删除退款表、`t_consumer_document`、Commerce BCR 或主动履约 Diagram/Relation Cell。
 
@@ -74,8 +77,8 @@
 | 审计时间      | 9 张可变业务/技术表使用 `create_time + update_time`；6 张不可变事实表仅 `create_time`                                                                                                                                                                                                                                                                      |
 | 乐观锁       | 8 张业务表使用 `version`；`t_compensation_event` 仅使用技术 `lock_version`                                                                                                                                                                                                                                                                          |
 
-8 张业务 `version` 白名单为：`t_commerce_order`、`t_order_payment_projection`、`t_order_funds_availability_projection`、
-`t_order_refund_position`、`t_checkout_session`、`t_consumer_context`、`t_refund_request`、`t_command_idempotency`。
+7 张业务 `version` 白名单为：`t_commerce_order`、`t_order_payment_projection`、`t_order_funds_availability_projection`、
+`t_order_refund_position`、`t_checkout_session`、`t_consumer_context`、`t_refund_request`（`t_command_idempotency` 已删除）。
 
 6 张创建后不可变表为：`t_order_context`、`t_order_legal`、`t_order_item`、`t_consumer_contract`、`t_checkout_network_evidence`、`t_consumer_acceptance`。
 

@@ -44,8 +44,8 @@ public class ClientWebhookSubmissionHandler implements CompensationEventHandler 
     /** 冻结事件的补偿任务类型；子类型为公开事件类型。 */
     public static final String MAIN_TYPE = "CLIENT_WEBHOOK_REQUESTED";
 
-    /** 提交 Platform 时声明的调用方服务名，同时作为载荷中的来源系统。 */
-    public static final String CALLER_SERVICE = "commerce-service";
+    /** 提交 Platform 时声明的调用方服务名（= spring.application.name，第 03 步由 commerce-service 改名），同时作为载荷中的来源系统。 */
+    public static final String CALLER_SERVICE = "acquiring-service";
 
     /** 规范化版本标识。 */
     public static final String CANONICALIZATION_VERSION = "RFC8785";

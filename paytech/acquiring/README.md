@@ -1,34 +1,51 @@
-# Commerce Service
+# acquiring
+
+- spring.application.name：`acquiring-service`（原 `commerce-service`）；Context Path 保持 `/commerce`（Gateway 路由不变，改名在第 13 步评估）
+- 端口：18102，管理端口 19102
+- 数据库：`mor_acquiring`（原 `mor_commerce`），账号 `acquiring_app`
+- 来源现有工程：`commerce-service`（第 03 步拆为 acquiring 与 [consumer](../consumer/README.md)）
+
+## 第 03 步拆分（2026-10-18）
+
+- 模块：`paytech-acquiring-api`（Client API 订单 / Checkout / 退款 / 取消合同，及消费者端 Hosted Checkout 合同包 `checkout`）、`paytech-acquiring-core`（transaction / checkout / command 三个内部模块共用，共库 mor_acquiring）、`paytech-acquiring-app`（启动类、Controller、DataSource / MyBatis、出站客户端、支付结果队列声明）、`paytech-acquiring-test`。
+- Customer 归 consumer：建单时在订单事务前经 `POST /consumer/v1/customers/resolve` 建或取 Customer，订单只存 `customer_id`；GET checkout 与 SubmitPayment 经 `GET /consumer/v1/card-saving-eligibility` 读取存卡资格，任何失败降级为不可存卡并记 WARN（S6）；付款人引用经 `GET /consumer/v1/customers/{customerId}` 取 `customerNo`。已存卡列表仍经 Payment `StoredCardApi` 读取，不可用时为空。
+- 出站发现名：`payment-service`（`/payment`）、`consumer-service`、`risk-service`、`platform-support-service`；`internal-auth.mode` 默认 `"OFF"`。Checkout 商业端口仍为固定 Mock（目标 `commercial-service`）。
+- 支付结果队列改名 `cg_acquiring_payment_result`（DLX `dlx_acquiring_payment_result`、DLQ `cg_acquiring_payment_result_dlq`），交换机 `topic_payment_result` 与路由键不变。
+- 配置前缀 `acquiring.*`；环境变量名（`COMMERCE_*`、`MOR_COMMERCE_DB_*`）暂沿用，以免影响现有部署描述。
+- PDManer 模型 `docs/database/acquiring.pdma.json` 由 `scripts/pdmaner/generate-acquiring-model.mjs` 生成；Schema `docs/database/sql/acquiring-schema.sql`。
+- 测试：`cd paytech && ./mvnw -B verify -pl acquiring/paytech-acquiring-test -am`；需要本机 `mor_acquiring`（`paytech-acquiring-test/src/test/resources/init/ddl.sql`）、Redis 与 RabbitMQ。Hosted Checkout 行覆盖率门禁移入 `-Pcoverage-gate`。
+
+## 拆分前的 Commerce 说明（历史，路径与名称以上文为准）
 
 `commerce-service` 是 Commerce 核心服务的独立 Maven Reactor。Checkout 在创建时完成 OE、商业、税务与法律信息初始化，首次提交支付时才创建唯一 Payment Intent。外部 Client 本轮按用户授权使用固定 Mock + TODO；不代表真实 Owner 已接通。
-设计见[创建初始化与首次支付](../requirements/20260919/commerce-Checkout准备与Intent创建拆分/technique.md)，实际验证与数据库执行状态见[当前台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-preparation-intent-20260919)。
+设计见[创建初始化与首次支付](../../requirements/20260919/commerce-Checkout准备与Intent创建拆分/technique.md)，实际验证与数据库执行状态见[当前台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-preparation-intent-20260919)。
 
 本轮 Customer 入口已全部收敛在 Commerce，Payment 反向访问/确认/readiness
 接口已移除；调用方向及待接合同见 [本轮修订](docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)。
 
-Customer Checkout 的接口、事务和 Mock 联调方式见 [实施说明](docs/requirements/20260912-customer-checkout/implementation.md)与 [OpenAPI](docs/api/customer-checkout.openapi.json)，实现和验证状态见 [COM-CUSTOMER-01](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-customer-20260912)。
+Customer Checkout 的接口、事务和 Mock 联调方式见 [实施说明](docs/requirements/20260912-customer-checkout/implementation.md)与 [OpenAPI](docs/api/customer-checkout.openapi.json)，实现和验证状态见 [COM-CUSTOMER-01](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-customer-20260912)。
 
 Customer GET 由 `GetCustomerCheckoutProcessor` 直接按需读取本库对象；法律展示使用三表
 `CheckoutLegalView`，不加载定价、风控和税快照。普通类 `CheckoutQueryContext` 持有查询结果，
 封装就绪、允许操作和版本比较；消费者回填、原文件链接及 Payment 摘要均在事务外取得。
 返回前只重查版本，变化时直接返回冲突，由调用方重新查询；金额复用公共 Money。范围见
-[本次重构说明](../requirements/20260916/commerce-GetCustomerCheckout接口重构/technique.md)，
+[本次重构说明](../../requirements/20260916/commerce-GetCustomerCheckout接口重构/technique.md)，
 最新验证范围见当前台账。
 
 保存消费者资料使用独立 class Body、内部 Request/Response 和 `SaveConsumerContext`。
 `SaveConsumerProcessor` 按表查询并在事务外 Protect；`CustomerCheckoutService.saveConsumerContext`
 使用 REQUIRED 事务保存订单版本与消费者资料，以订单、Session、Consumer 的状态和版本保护并发。
 保存不再要求 Idempotency-Key，不读写命令表；每次请求按当前状态替换资料，首次保存法律接受后拒绝保存。
-公开 Body 字段和路径保持，说明见[本次重构](../requirements/20260917/commerce-SaveConsumer接口重构/technique.md)。
+公开 Body 字段和路径保持，说明见[本次重构](../../requirements/20260917/commerce-SaveConsumer接口重构/technique.md)。
 
 支付提交使用独立普通类 Body、内部 Request/Response 和 `SubmitCustomerPaymentContext`；Processor
 按需读取本库对象，直接调用 `CheckoutSubmissionService`，由其 REQUIRED 事务原子保存法律接受与订单版本。
-支付不再要求 Idempotency-Key，不计算卡指纹或请求 Hash，不读写命令表；每次生成支付业务编号，提交和查询在事务外调用 Payment。详见[本次重构](../requirements/20260917/commerce-SubmitPayment接口重构/technique.md)。
+支付不再要求 Idempotency-Key，不计算卡指纹或请求 Hash，不读写命令表；每次生成支付业务编号，提交和查询在事务外调用 Payment。详见[本次重构](../../requirements/20260917/commerce-SubmitPayment接口重构/technique.md)。
 `SubmitCustomerPaymentProcessor` 使用 Foundation `AbstractLockProcessor`，按原订单 ID 获取 `TRY_LOCK`（立即失败、Watchdog 续租）。逻辑资源 Key 为 `order:{orderId}`，不使用公开 Token；锁前只查询不可变订单身份，锁内按需查询业务状态。创建 Intent 始终在数据库事务外；结果返回后由 `CheckoutSubmissionService.bindPayment` 在同一 REQUIRED 事务插入投影并执行订单 CAS，失败全部回滚，不继续卡支付。取消和资料保存尚使用现有 CAS；锁不取代数据库与 Payment Owner 的唯一性保护。
 首建与复用 Intent、事务回滚、同订单锁竞争、不同订单并行、创建超时及取消交错的测试入口见下文。
 
 支付提交查询使用 `CustomerPaymentQueryContext`，会话、订单、支付投影各读取一次，Payment 查询全程无事务。
-返回前复用原期限，不重复查库或因订单普通版本变化返回冲突；说明见[GetPayment 重构](../requirements/20260917/commerce-GetPayment接口重构/technique.md)。
+返回前复用原期限，不重复查库或因订单普通版本变化返回冲突；说明见[GetPayment 重构](../../requirements/20260917/commerce-GetPayment接口重构/technique.md)。
 查询经 Payment EX-I06（`PaymentIntentApi.getSubmission`，带订单 Client）读取原提交：Payment 404 返回 `PAYMENT_SUBMISSION_NOT_FOUND`，
 处理中有交互时为 `REQUIRES_ACTION`（动作 ID 为尝试 ID、无跳转地址），不可用时降级为处理中并继续轮询。
 
@@ -38,7 +55,7 @@ Customer GET 由 `GetCustomerCheckoutProcessor` 直接按需读取本库对象�
 `OrderPaymentService.applySucceeded` 在一个 REQUIRED 事务推进支付投影、订单 PAID、会话 COMPLETED、退款基数和资金投影 PENDING；
 同一事件键与 Hash 或同一成功尝试重复投递直接确认，载荷不符、未知订单或重复成功进入死信；已取消/过期订单只记录支付投影并告警。
 RabbitMQ 连接取 `COMMERCE_RABBITMQ_*`（测试取 `MOR_RABBITMQ_*`）；Enforcer 只放行 `spring-boot-starter-amqp` 及其 RabbitMQ 客户端。
-设计见[支付结果查询与回传](../requirements/20261015/payment-支付结果查询与回传/technique.md)。
+设计见[支付结果查询与回传](../../requirements/20261015/payment-支付结果查询与回传/technique.md)。
 
 ## 模块
 
@@ -62,7 +79,7 @@ Spring MVC Controller 直接实现 `ClientCheckoutApi`，不复制 DTO 或重复
 应用 Context Path 为 `/commerce`，所以本地直连路径带 `/commerce` 前缀。OpenAPI 中的公共
 `/api/v1/...` 路径属于未来 Gateway 映射；当前没有 Target、Route、Nginx Location 或外部可用性声明。
 
-Client API 路径按 [2026-09-12 路径修正](../agent-docs/decisions/2026-09-12-commerce-client-gateway-api-path.md)
+Client API 路径按 [2026-09-12 路径修正](../../agent-docs/decisions/2026-09-12-commerce-client-gateway-api-path.md)
 统一使用 `/client-gateway-api/v1`；本地创建地址为 `/commerce/client-gateway-api/v1/checkouts`。
 Java 契约和 metadata-only 日志配置使用同一前缀语义；当前代码直接替换旧路径，不提供兼容别名。
 
@@ -73,13 +90,13 @@ Create Checkout 当前包含：
 - `CreateCheckoutContext` 直接持有订单、商品、退款仓位、资金投影和包含单个 Token 的 Session；
   `CheckoutCreationService.saveCreateCheckoutContext` 以 REQUIRED 事务一次保存五类基础事实及 Context、Legal、Contract 三份初始化事实，SQL 失败整体回滚。所有外呼始终在事务外。
 - Checkout Token 由 Common Core `PublicTokenGenerator.generate(countryCode, clientIdText)` 生成主体，Commerce 拼接 `chk_`；
-  公共工具内部使用当前系统 UTC 秒，订单时间与有效期仍由业务管理。每次创建只生成一个 Token，数据库唯一冲突时整笔事务回滚，不切换候选。旧 Token 格式与校验保持，详见[公共 Token 合同](../paytech-foundation/paytech-common-core/PUBLIC_TOKEN.md)。
+  公共工具内部使用当前系统 UTC 秒，订单时间与有效期仍由业务管理。每次创建只生成一个 Token，数据库唯一冲突时整笔事务回滚，不切换候选。旧 Token 格式与校验保持，详见[公共 Token 合同](../foundation/paytech-common-core/PUBLIC_TOKEN.md)。
 - 新 `orderNo` 与 `refundRequestNo` 同样直接复用该公共工具，分别拼接 `ord_` 和 `rfd_`；
   三类公开编号均为 4 位前缀加 30 位 Base62 主体，共 34 位。订单混入 Client ID / Client Order ID，
   退款混入 Client ID / Order No / Client Refund ID；每次只生成一次，重复业务申请使用原已保存编号。
   字段名、数据库主键和 Client 归属校验保持，既有编号不重建，历史读取和查询继续接受旧值。
 - `clientId + clientOrderId` 永久唯一；顺序重复和并发竞争均返回 `409 CLIENT_ORDER_ID_ALREADY_EXISTS`。
-  HTTP `Idempotency-Key` 由 API Gateway 校验与重放（[请求幂等决定](../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)）；Commerce 不声明、不读取该 Header，也不依赖 `paytech-command-idempotency`。
+  HTTP `Idempotency-Key` 由 API Gateway 校验与重放（[请求幂等决定](../../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)）；Commerce 不声明、不读取该 Header，也不依赖 `paytech-command-idempotency`。
   创建流程不 Hash、Claim、续租、恢复或冻结响应；相同订单号不会再次创建。
 - 创建入口通过请求约束限定 USD，商品 `clientItemId` 在订单内按大小写敏感的原值唯一；不满足时在外部调用和落库前返回 422。金额、行优惠、币种精度与汇总范围同样在外部调用前校验；默认三十分钟，显式期限为五分钟至二十四小时。金额复用 Common Core 的 `Money`，公开字段通过 `toAmountString()` 输出；Commerce 仅保留非负/正数、`DECIMAL(24,8)` 及商品行计算规则。
   商品行与汇总金额由内部 `CreateCheckoutRequest.calculateAmounts()` 纯计算，Processor 触发校验并构建 Context，不额外注入 Calculator。
@@ -89,7 +106,7 @@ Create Checkout 当前包含：
 - Foundation 统一 RFC 9457 错误与 metadata-only 日志；HTTP Body 字段校验和响应格式保持。对外缓存头由 Gateway 统一承担，Commerce 不再用专用 Filter 包装响应。
 
 当前数据结构补充见 [本次增量 SQL](docs/requirements/20260916-create-checkout-business/ddl.sql)，
-实际执行和验证状态只见 [当前实施台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-create-checkout-business-20260916)。
+实际执行和验证状态只见 [当前实施台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-create-checkout-business-20260916)。
 
 ## Orders 接口
 
@@ -120,16 +137,16 @@ Client `Idempotency-Key` 的格式、单值校验与请求重放由 Gateway 负�
 检查完整性并构建有限响应，不开启查询事务或加锁，不调用 Payment 或 Finance。
 对外使用独立 `order/response/GetOrderResponseBody` class 及嵌套 `*Info`，内部使用 Request、Context 和 Response；
 HTTP 路径和参数位置不变；Client 按新的嵌套字段读取，Java API 消费者需要随返回类型变化重新编译。
-响应及字段合同见[本次修订](../requirements/20260916/commerce-订单查询合并Checkout/response-shape-amendment.md)，
-[支付成功示例](../requirements/20260916/commerce-订单查询合并Checkout/order-paid-response.json)可用于接口对照。
+响应及字段合同见[本次修订](../../requirements/20260916/commerce-订单查询合并Checkout/response-shape-amendment.md)，
+[支付成功示例](../../requirements/20260916/commerce-订单查询合并Checkout/order-paid-response.json)可用于接口对照。
 `creationMode` 来自订单持久化字段，当前创建入口显式保存 `HOSTED_CHECKOUT`，`DIRECT_PAY` 只预留模式值。
-运行新代码前需人工应用[新增列 SQL](../requirements/20260916/commerce-订单查询合并Checkout/db/creation-mode.sql)；执行与验证状态见全局台账。
+运行新代码前需人工应用[新增列 SQL](../../requirements/20260916/commerce-订单查询合并Checkout/db/creation-mode.sql)；执行与验证状态见全局台账。
 可退款金额查询由 `GetRefundableAmountProcessor` 依次读取归属当前 Client 的 `CommerceOrder` 和
 `OrderRefundPosition`，复用位置对象的金额规则；不加载商品、Session、Payment 或资金投影。
 Controller / Converter 仅转换和委托，内部 Request/Response 与独立 `GetRefundableAmountResponseBody` 均为普通 class。
 移除旧 `OrderQueryService`、联表 View/SQL、领域 `RefundableAmount` 和 `OrderWireConverter`；
 该 GET 不加事务、锁或外部调用，原响应字段及金额公式保持。
-范围和未验证项见[可退款金额查询重构](../requirements/20260916/commerce-GetRefundableAmount接口重构/technique.md)。
+范围和未验证项见[可退款金额查询重构](../../requirements/20260916/commerce-GetRefundableAmount接口重构/technique.md)。
 未准备金额保留 null，金额字符串按币种精度输出。
 必需投影缺失、币种或退款金额不一致返回服务错误；不会用虚构零额补齐事实。
 
@@ -144,9 +161,9 @@ Context 持有这三个本库对象和已查询的支付受理事实。Service �
 Payment 绑定/投影版本和未成功条件。事实已变化则回滚并返回并发冲突，不在 Processor 内重新加载、接管租约或自动重试。
 取消专用 Hash、Claim/Lease、命令 ID、检查点和响应/失败快照已移除；共享命令表与其他消费者保留。
 取消时间来自 Order.cancelled_at；Direct Pay 无 Session 的 200 响应省略 checkoutStatus。运行新代码前还需人工应用
-[订单取消时间 SQL](../requirements/20260916/commerce-CancelOrder接口重构/db/cancelled-at.sql)，本次未执行。
+[订单取消时间 SQL](../../requirements/20260916/commerce-CancelOrder接口重构/db/cancelled-at.sql)，本次未执行。
 Java 契约使用独立 `CancelOrderResponseBody` class，旧 `OrderModels` 引用需迁移；重构范围见
-[本次说明](../requirements/20260916/commerce-CancelOrder接口重构/technique.md)，验证状态见全局台账。
+[本次说明](../../requirements/20260916/commerce-CancelOrder接口重构/technique.md)，验证状态见全局台账。
 
 Payment 终止端口本轮按用户授权由 `FixedPaymentTerminationClient` 暂固定返回 TERMINATED，并保留 TODO。真实接入后无法取得权威结果时返回 202；客户端再次取消沿原订单继续。GET 不推进取消，Payment HTTP、终止事件和后台处理仍待接入。该固定 Mock 不证明实际支付已经终止。
 
@@ -173,7 +190,7 @@ Context 和参与的数据库对象均使用普通 class，纯事实判断归对
 原数据库对象。相同业务号改订单、金额或原因返回 409；金额版本竞争整体回滚，不自动重试事务。
 `Idempotency-Key` 由 Gateway 校验与重放，Commerce 不声明该 Header；不进入 Request，不再读写 CREATE_REFUND 命令或保存回执快照。
 原退款创建字段直接生成回执。GET 只读本库，并按可信 Client 隔离，不调用 Payment。
-本次范围与未验证状态见 [创建退款接口重构](../requirements/20260916/commerce-CreateRefund接口重构/technique.md)。
+本次范围与未验证状态见 [创建退款接口重构](../../requirements/20260916/commerce-CreateRefund接口重构/technique.md)。
 
 订单退款列表由 `ListOrderRefundsProcessor` 编排：先按可信 Client / orderNo 只查订单主键；有游标时单表读取
 锚点并核对订单和创建时间；再单表读取退款，按 `create_time DESC, refund_request_no DESC` 多取一条判断后续页。
@@ -181,20 +198,20 @@ Context 和参与的数据库对象均使用普通 class，纯事实判断归对
 Controller / Converter 仅转换内部 Request/Response 与普通类 `ListOrderRefundsResponseBody`，列表项为 `RefundInfo`。
 保留原路径、分页默认值、JSON 字段及旧/新退款号游标，空页返回 `items=[]`、`nextCursor=null`；
 每页观察当前退款状态，不冻结跨页状态快照。旧 `RefundService.list` 和列表 Page/Body 容器已移除。
-范围与验证状态见[退款列表重构](../requirements/20260916/commerce-ListOrderRefunds接口重构/technique.md)。
+范围与验证状态见[退款列表重构](../../requirements/20260916/commerce-ListOrderRefunds接口重构/technique.md)。
 
 按公开退款号查询由 `GetRefundProcessor` 编排：先按可信 Client / refundRequestNo 读取 `RefundRequest`，
 再按同一 Client / orderId 只取公开订单号。该入口不再通过 `RefundService.get` 或联表 View，
 不创建显式事务、不要求 Checkout Session，也不加载支付或资金投影。Controller / Converter 只转换
 内部 Request/Response 和普通类 `GetRefundResponseBody`；HTTP 路径、字段、显式 null 和错误语义保持。
-范围及后续验证见[退款详情重构](../requirements/20260916/commerce-GetRefund接口重构/technique.md)。
+范围及后续验证见[退款详情重构](../../requirements/20260916/commerce-GetRefund接口重构/technique.md)。
 
 按 Client 业务退款号查询由 `GetRefundByClientRefundIdProcessor` 编排，复用单表
 `findByClientRefundId`，限定可信 Client 和 CLIENT 来源，再只查询关联订单的公开编号。
 两个详情入口共用 `GetRefundResponse`、`GetRefundResponseBody` 和 `GetRefundConverter` 的响应转换。
 旧 `RefundService.get`、只读事务、领域 `RefundModels.View` 及旧 `RefundResponseBody` 已移除；
 查询金额直接调用公共 Money，不做文本往返解析或额外异常包装。
-范围及验证状态见[业务退款号查询重构](../requirements/20260916/commerce-GetRefundByClientRefundId接口重构/technique.md)。
+范围及验证状态见[业务退款号查询重构](../../requirements/20260916/commerce-GetRefundByClientRefundId接口重构/technique.md)。
 
 `RefundSubmissionHandler` 使用 Foundation 提交后调度及 Claim/Lease；任务只保存退款号，不携带原因原文或
 支付凭据。每次提交/查询复用同一 Payment 幂等身份。未决或不可用保持 PROCESSING 和预占，确定成功消费
@@ -222,33 +239,33 @@ TODO(Payment)：正式 PAY-I04、结果查询及 MQ 事实。
 
 Platform 需开启 `webhook.enabled`，并在 `webhook.http.callers.commerce-service` 中允许上述三种事件。
 退款终态与 `order.expired`、`order.funds_available` 未实现。范围与验证见
-[Commerce Webhook 业务事件](../requirements/20261016/commerce-Webhook业务事件/delivery.md)。
+[Commerce Webhook 业务事件](../../requirements/20261016/commerce-Webhook业务事件/delivery.md)。
 
 Foundation 扫描入口已可恢复到期重试与过期租约，本期未启用外部 XXL-Job 调度。任务达到默认重试上限时
 保留失败任务和资金预占，不能将技术失败解释为退款失败；部署前需完成调度、告警与人工恢复接入。
 本期没有新增 Gateway、Nginx、其他服务或数据库结构变更。
 
 `ClientApiIdempotencyKeyFilter`、`ClientApiNoStoreResponseFilter`、`ClientOrderRequestFilter`、
-`ClientRefundRequestFilter` 和 `ClientApiTrustedContextFilter` 已按[职责决定](../agent-docs/decisions/2026-09-16-commerce-ingress-filter-simplification.md)移除。
+`ClientRefundRequestFilter` 和 `ClientApiTrustedContextFilter` 已按[职责决定](../../agent-docs/decisions/2026-09-16-commerce-ingress-filter-simplification.md)移除。
 缓存 Filter 原先也覆盖 Customer Checkout；Client 和 Customer 直连 Commerce 均不再保证由该 Filter 输出
 `Cache-Control: no-store` / `Pragma: no-cache`。公开合同仍要求这些响应头，由 Gateway 统一承担；
 Gateway 实现及配置未在本轮修改或验证。Client 身份 Filter 的 Header 单值检查及 `clientId/credentialId` MDC 填充一并移除；
 Client 资源归属校验、现有 Request ID 日志链路及 Customer 自有请求处理保留，没有新增替代 Filter。
-实际交付和后续验证见[接入 Filter 精简](../requirements/20260916/commerce-接入Filter精简/delivery.md)。
+实际交付和后续验证见[接入 Filter 精简](../../requirements/20260916/commerce-接入Filter精简/delivery.md)。
 
 ## 数据库
 
-现行设计源为 [COMMERCE_PHYSICAL_DECISIONS.md](docs/database/COMMERCE_PHYSICAL_DECISIONS.md) 和
-[commerce.pdma.json](docs/database/commerce.pdma.json)。完整目标定义只有
-[commerce-schema.sql](docs/database/sql/commerce-schema.sql)，初始化数据只有
-[commerce-initial-data.sql](docs/database/sql/commerce-initial-data.sql)。生成统计及实际本地库状态在当前状态台账维护。
+现行设计源为 [COMMERCE_PHYSICAL_DECISIONS.md](docs/database/ACQUIRING_PHYSICAL_DECISIONS.md) 和
+[commerce.pdma.json](docs/database/acquiring.pdma.json)。完整目标定义只有
+[commerce-schema.sql](docs/database/sql/acquiring-schema.sql)，初始化数据只有
+[commerce-initial-data.sql](docs/database/sql/acquiring-initial-data.sql)。生成统计及实际本地库状态在当前状态台账维护。
 
 基础创建兼容旧库的人工增量脚本位于
-[本需求 ddl.sql](../requirements/20260911/client-contract-OE与Client模型梳理/db/commerce/ddl.sql)。它保留旧数字身份、
+[本需求 ddl.sql](../../requirements/20260911/client-contract-OE与Client模型梳理/db/commerce/ddl.sql)。它保留旧数字身份、
 Scope、JSON、Hash、原金额列，只增加格式/准备/终止/OE 编号列并放宽新创建所需的可空约束。
 不得用完整目标 CREATE 脚本覆盖旧库，也不能将这个局部兼容迁移当成完整支付准备 Schema 迁移。
 
-当前创建写入还需要 [creation_mode 增量](../requirements/20260916/commerce-订单查询合并Checkout/db/creation-mode.sql)
+当前创建写入还需要 [creation_mode 增量](../../requirements/20260916/commerce-订单查询合并Checkout/db/creation-mode.sql)
 和 [consumer_country_code 增量](docs/requirements/20260916-create-checkout-business/ddl.sql)。执行前核对现有列，
 单独授权并备份表结构，不能重复执行。
 
@@ -265,11 +282,11 @@ Spring Cloud 以 Group 名作为服务 ID。连接/读取超时为 2/5 秒，Loa
 Foundation Group Configurer 统一完成 Request ID 传播、Problem 解码及可选的严格 JSON 绑定/响应大小限制。
 应用级禁重试传输集中在 `HttpClientConfiguration`。发现结果为空或连接失败返回依赖不可用。
 
-旧预检链（`CctPrecheckClient` → `CheckoutEligibilityApi.precheck`）已删除：CCT 在合并单仓时已移除该接口，创建主链也早已不再调用（[Customer 与存卡支付](../requirements/20261015/commerce-Customer与存卡支付/delivery.md)阶段 4 记录）。当前由 `CheckoutCommercialPort` 返回完整 OE/商业/法律事实；新依赖暂固定 Mock，真实解析接入时继续复用上述 HTTP 与服务发现公共组件。创建初始化不使用请求幂等组件。
+旧预检链（`CctPrecheckClient` → `CheckoutEligibilityApi.precheck`）已删除：CCT 在合并单仓时已移除该接口，创建主链也早已不再调用（[Customer 与存卡支付](../../requirements/20261015/commerce-Customer与存卡支付/delivery.md)阶段 4 记录）。当前由 `CheckoutCommercialPort` 返回完整 OE/商业/法律事实；新依赖暂固定 Mock，真实解析接入时继续复用上述 HTTP 与服务发现公共组件。创建初始化不使用请求幂等组件。
 
 ## Customer 与已存卡
 
-按 [Customer 与存卡支付](../requirements/20261015/commerce-Customer与存卡支付/technique.md) §2.1–2.2：`t_customer` 以（`client_id`, `active_reference`）唯一保证同一引用同时最多一个有效 Customer，公开编号 `cus_` 前缀。Client API `/client-gateway-api/v1/customers` 提供创建（已存在返回 200）、按编号或引用查询、删除，以及 `/customers/{customerNo}/stored-cards` 列出与删除已存卡（经 Payment `StoredCardApi`，事务外调用）。删除 Customer 在同一事务登记 `STORED_CARD_INVALIDATION` 补偿任务，提交后调用 Payment 失效其已存卡。建单可带 `consumerReference`，在保存订单前关联或新建 Customer，订单记 `customer_id`；访客订单不建 Customer。引用只允许 `[A-Za-z0-9._:-]`，7～15 位纯数字视为电话号码拒绝（422）。
+按 [Customer 与存卡支付](../../requirements/20261015/commerce-Customer与存卡支付/technique.md) §2.1–2.2：`t_customer` 以（`client_id`, `active_reference`）唯一保证同一引用同时最多一个有效 Customer，公开编号 `cus_` 前缀。Client API `/client-gateway-api/v1/customers` 提供创建（已存在返回 200）、按编号或引用查询、删除，以及 `/customers/{customerNo}/stored-cards` 列出与删除已存卡（经 Payment `StoredCardApi`，事务外调用）。删除 Customer 在同一事务登记 `STORED_CARD_INVALIDATION` 补偿任务，提交后调用 Payment 失效其已存卡。建单可带 `consumerReference`，在保存订单前关联或新建 Customer，订单记 `customer_id`；访客订单不建 Customer。引用只允许 `[A-Za-z0-9._:-]`，7～15 位纯数字视为电话号码拒绝（422）。
 
 结账存卡（§2.2、§2.5）：`t_client_stored_card_setting` 按 Client 开通（无记录为未开通）。`GET /customer-gateway-api/v1/checkouts/{token}` 在订单有有效 Customer 且已开通时返回 `cardSaving.available=true` 与已存卡；`POST .../payments` 接受手输卡（可带 `saveCard`）或 `storedCard{storedCardToken,cvv}`，无资格时 422 `STORED_CARD_NOT_AVAILABLE`。卡支付经 `CheckoutCardPaymentPortImpl` 调用 Payment pay（幂等键 `submission:<id>`、自动捕获、回跳本页面）；结账“查询支付提交”仍为占位，待 Payment 提供按来源提交查询。
 
@@ -297,7 +314,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### 测试启动边界
 
-CreateCheckout 与 GetOrder 按[现行测试规范](../agent-docs/UNIT_TEST_GUIDE.md)使用 `MockTestBase`：
+CreateCheckout 与 GetOrder 按[现行测试规范](../../agent-docs/UNIT_TEST_GUIDE.md)使用 `MockTestBase`：
 `TestApplication` 引用正式 `CommerceApplication`，复用其生产组件扫描，以随机端口启动；
 测试组合根只声明辅助组件扫描、测试 Mapper 和必要的 HTTP 配置，不逐个列举生产 Bean。
 新创建流程由 `CheckoutCommercialMocker` 配置商业 DTO，首次支付由 `CheckoutIntentMocker`/`CheckoutCardMocker` 配置结果；它们只替换本轮暂缓的外部端口，不替换内部业务或数据库。以下独立 CCT HTTP Mock 基础设施仍保留，但新创建主链不再调用基础预检。
@@ -313,7 +330,7 @@ Builder 只构造数据，Mocker 插入前置事实，Checker 查询真实数据
 Commerce 基类 `AfterEach` 等待异步结束并检查意外调用，随后 Foundation `TestBase`
 通过注入的 `List<Clear>` 清理全部自有数据、响应配置和调用记录；不在 BeforeEach 清理。
 
-接口测试通过 Foundation [`paytech-test-support`](../paytech-foundation/paytech-test-support/README.md) 的
+接口测试通过 Foundation [`paytech-test-support`](../foundation/paytech-test-support/README.md) 的
 `HttpTestInvoker` 和 `TestRequestHeaders` 发出请求；`CreateCheckoutResponseChecker`、`GetOrderResponseChecker` 继承公共
 `AbstractHttpResponseChecker`，复用协议断言，保留本地业务断言。组件只在测试 POM 以 `test` scope 消费，
 数据 Mocker、CCT Mocker、可控时钟和事务观察器实现 `Clear` 并由测试配置注册为 Bean，
@@ -329,13 +346,13 @@ Commerce 基类 `AfterEach` 等待异步结束并检查意外调用，随后 Fou
 Mock 和 Manual 基类均通过现有 `@AutoConfigureRestTestClient` 启用 Foundation 自动装配，
 直接注入 `HttpTestInvoker` / `RestTestClient`，复用宿主传输配置与随机端口；不再维护 `HttpTestClientConfiguration`。
 原 Checkout 专用启动类和配置类已合并到 `TestApplication`；启动修复与验证边界见
-[测试配置收敛台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-test-configuration-20260917)。
+[测试配置收敛台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-test-configuration-20260917)。
 旧准备 Service/Handler 和命令表访问已移除；历史行不改写，未准备旧订单和旧任务须在其他环境启用前单独处理。
 
-- [`application-mock.yml`](paytech-commerce-test/src/test/resources/application-mock.yml) 同时是 Commerce 配置字段清单和 Mock 运行配置：列全自有配置、已接入 Foundation 组件配置及本服务使用的框架配置，包含可选字段、代码默认值和已关闭能力的附属字段；中间件、框架与公共配置在上方，系统自定义配置在下方；公共配置不逐项添加说明，自定义字段保留必要的用途、单位和启用条件注释。配置字段新增、修改或删除时同步维护。`MockTestBase` 自动启用 `mock` Profile，无需设置生产环境变量；CCT 随机端口由测试注入 `commerce.test.cct.base-url`，YAML 将其绑定到 SimpleDiscovery，DTO 响应由每个用例配置。
+- [`application-mock.yml`](paytech-acquiring-test/src/test/resources/application-mock.yml) 同时是 Commerce 配置字段清单和 Mock 运行配置：列全自有配置、已接入 Foundation 组件配置及本服务使用的框架配置，包含可选字段、代码默认值和已关闭能力的附属字段；中间件、框架与公共配置在上方，系统自定义配置在下方；公共配置不逐项添加说明，自定义字段保留必要的用途、单位和启用条件注释。配置字段新增、修改或删除时同步维护。`MockTestBase` 自动启用 `mock` Profile，无需设置生产环境变量；CCT 随机端口由测试注入 `commerce.test.cct.base-url`，YAML 将其绑定到 SimpleDiscovery，DTO 响应由每个用例配置。
 - `application-auto.yml` 是尚未清理的旧配置资源，当前 auto 测试均使用 `application-mock.yml`。`auto` 测试目录与 `mock` Spring Profile 职责不同，不需要在 IDE 手动切换 Profile。
 - Mock 数据库固定为仓库 `local-environment` 的 `127.0.0.1:13306/mor_commerce`，默认凭据与其本地初始化值一致；仅自定义本地密码时使用 `COMMERCE_TEST_DB_PASSWORD` 覆盖。MySQL 和已批准 Schema 仍须事先准备，测试不自动建表或迁移。
-- 当前 Mock 的完整初始化入口为 [`src/test/resources/init/ddl.sql`](paytech-commerce-test/src/test/resources/init/ddl.sql)：使用 root 在本地 MySQL 手工执行，创建 `mor_commerce`、`commerce_app`，授予本库 `SELECT/INSERT/UPDATE/DELETE` 权限，再创建测试依赖的 14 张表，已包含 `creation_mode`、`consumer_country_code`。账号及默认密码与 Mock 配置一致；文件含重建数据库语句，只能用于获准重建的本地测试库，已有用户不重置自定义密码。表定义与正式 Schema 一致；已有开发库只能执行缺失表或对应需求的增量 SQL。后续 Mock 增加表依赖时同步此文件，场景数据仍由每例 Mocker 准备。
+- 当前 Mock 的完整初始化入口为 [`src/test/resources/init/ddl.sql`](paytech-acquiring-test/src/test/resources/init/ddl.sql)：使用 root 在本地 MySQL 手工执行，创建 `mor_commerce`、`commerce_app`，授予本库 `SELECT/INSERT/UPDATE/DELETE` 权限，再创建测试依赖的 14 张表，已包含 `creation_mode`、`consumer_country_code`。账号及默认密码与 Mock 配置一致；文件含重建数据库语句，只能用于获准重建的本地测试库，已有用户不重置自定义密码。表定义与正式 Schema 一致；已有开发库只能执行缺失表或对应需求的增量 SQL。后续 Mock 增加表依赖时同步此文件，场景数据仍由每例 Mocker 准备。
 - `application-manual.yml` 使用同一本地 MySQL 与测试凭据边界，默认关闭 Nacos；无发现实例时依赖失败关闭。人工联调可显式启用 Nacos Discovery 并指定注册中心；
 - 支付订单锁引入 Foundation Redis Starter，默认启动需要 `MOR_REDIS_HOST/PORT/PASSWORD`（本地 `127.0.0.1:16379`）。自动测试使用仓库手工启动的 `mor-local-redis-1`；`application-mock.yml` 已配置该隔离本地实例的默认密码，IDE / Maven 直接运行无需额外注入。自定义本地密码时仍可通过 `COMMERCE_TEST_REDIS_PASSWORD` 或 `MOR_REDIS_PASSWORD` 覆盖。测试 Context 使用独立随机 Redis Namespace，锁在 finally 释放，不清理其他业务 Key、不自动启动容器。Redis 不可用时启动/获取锁失败关闭，不降级为无锁。
 - Commerce 使用 Nacos Discovery，自动测试显式关闭注册和发现；RabbitMQ 仍无运行时消费者，父 POM 继续禁止 AMQP 及非 Foundation Redis 客户端依赖。
@@ -424,7 +441,7 @@ java -jar paytech-commerce-web/target/paytech-commerce-web-1.0.0-SNAPSHOT-exec.j
 ## 验证入口
 
 当前源码对应的开发检查、完整门禁与数据库迁移状态只在
-[当前状态台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-precheck-20260911)维护。
+[当前状态台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-precheck-20260911)维护。
 创建接口在 `auto/ext/http/clientapi/v1/checkout/create` 下按场景组织，均经过真实 HTTP、数据库与 CCT DTO Mock：
 
 | 测试类 | 范围 |
@@ -436,7 +453,7 @@ java -jar paytech-commerce-web/target/paytech-commerce-web-1.0.0-SNAPSHOT-exec.j
 
 `AbstractCreateCheckoutApiTest` 只提供公共调用与场景辅助，每个具体类保留自己的 BeforeEach，统一复用 MockTestBase 的全局初始化和清理。原子写入与传播边界使用
 `CheckoutCreationTransactionTest`。其余旧 auto 测试及其包内专用合同辅助类已删除，后续接口测试按授权范围重建。
-清理和验证范围见[auto 测试清理台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-auto-tests-pruned-20260917)。
+清理和验证范围见[auto 测试清理台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-auto-tests-pruned-20260917)。
 
 订单号查询接口在 `auto/ext/http/clientapi/v1/order/get` 下组织，每个类均通过 `@see` 引用
 `ClientOrderApi#getOrder(long, long, String)`：
@@ -452,7 +469,7 @@ java -jar paytech-commerce-web/target/paytech-commerce-web-1.0.0-SNAPSHOT-exec.j
 直接插入本地数据后再发出 HTTP 请求，不调用创建或支付接口准备数据。GetOrderResponseChecker 反序列化为
 正式 `GetOrderResponseBody`，业务断言通过 DTO getter 读取；响应结构通过 DTO 回序列化后与原始 JSON 比较，
 不维护字段名清单或使用字符串路径读取业务值。既有 `init/ddl.sql` 已覆盖所需表，
-测试不自动执行 DDL。实际运行结果及覆盖率边界见[GetOrder 测试台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-get-order-tests-20260917)。
+测试不自动执行 DDL。实际运行结果及覆盖率边界见[GetOrder 测试台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-get-order-tests-20260917)。
 未修改 90% 覆盖率门槛；完整业务与覆盖率验收要求兼容迁移就绪。
 
 按 Client 业务订单号查询使用一个 `order/getbyclientorderid/GetOrderByClientOrderIdTest`，
@@ -461,7 +478,7 @@ java -jar paytech-commerce-web/target/paytech-commerce-web-1.0.0-SNAPSHOT-exec.j
 Client 隔离、大小写、Query 编码、编号与身份边界、到期重复查询及投影缺失。
 Query 使用已自动装配的 `RestTestClient` URI 变量编码，保留 `+`、`&`、`%` 等合法编号字符；
 不新增调用器、配置或生产代码。每次查询检查数据库不变、CCT 预检及商业初始化零调用，清理由公共 AfterEach 完成。
-实际结果见[按 Client 订单号查询测试台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-get-order-by-client-id-tests-20260921)。
+实际结果见[按 Client 订单号查询测试台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-get-order-by-client-id-tests-20260921)。
 
 取消接口使用一个 `order/cancel/CancelOrderTest`，`@see` 指向 `ClientOrderApi#cancelOrder`；
 `OrderCancellationTransactionTest` 单独验证 Service 的 REQUIRED 传播及 Order / Session / Payment 投影的 CAS 回滚。
@@ -475,7 +492,7 @@ Query 使用已自动装配的 `RestTestClient` URI 变量编码，保留 `+`、
 `PaymentTerminationMocker` 在测试侧按订单配置端口 DTO / 异常，记录调用参数及事务状态，并参与全局 Clear。
 终止 Client 当前仍为已获准的固定 `TERMINATED` 实现；真实 Payment 按来源订单取消的合同和 HTTP 适配仍待接入，
 现有 Payment 仅按 Intent ID 终止。端口用例不代表真实 HTTP 或远端并发已验证。
-实际运行与覆盖率边界见[取消接口当前台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-cancel-without-create-20260921)。
+实际运行与覆盖率边界见[取消接口当前台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-cancel-without-create-20260921)。
 
 退款创建按实际复杂度拆成两个 HTTP 场景类，另有独立的原子写入测试：
 
@@ -498,7 +515,7 @@ Query 使用已自动装配的 `RestTestClient` URI 变量编码，保留 `+`、
 
 所需 `t_refund_request`、`t_compensation_event` 的完整定义集中在测试 `init/ddl.sql`。
 已有本地库只摘取缺失两表的 CREATE TABLE 手工执行，不能执行整个重建脚本。
-实际验证、覆盖率和本地 DDL 执行记录见[退款创建测试台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-create-refund-tests-20260919)。
+实际验证、覆盖率和本地 DDL 执行记录见[退款创建测试台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-create-refund-tests-20260919)。
 
 订单退款列表使用一个 `ListOrderRefundsTest`，按实际复杂度保持在单类内，不新增专用测试基类。
 覆盖空列表、Client/Operations 来源、退款各状态、金额精度、默认页大小和边界、同一微秒内退款号倒序、
@@ -508,11 +525,11 @@ Query 使用已自动装配的 `RestTestClient` URI 变量编码，保留 `+`、
 Client 的订单、关联事实、退款及补偿任务全列快照，检查查询没有写入；CCT 必须零调用。
 前置数据使用现有订单与退款 Mocker 的 Builder 直接准备，待执行任务也只作为数据库事实插入，不调用
 被测创建命令或主动唤醒任务。复用既有 DDL 和全局清理；没有新增表、配置或外部 Mock。
-实际执行及覆盖率见[退款列表测试台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-list-order-refunds-tests-20260919)。
+实际执行及覆盖率见[退款列表测试台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-list-order-refunds-tests-20260919)。
 
 CreateCheckout、GetOrder、CreateRefund、ListOrderRefunds 的响应 Checker 均使用正式 ResponseBody。
 DTO 回序列化比较只检查响应结构，业务期望值仍由用例独立指定；验证记录见
-[响应 Checker 调整台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-response-dto-checkers-20260919)。
+[响应 Checker 调整台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-response-dto-checkers-20260919)。
 
 公开退款号查询使用一个 `GetRefundTest`，类级 `@see` 指向 `ClientRefundApi#getRefund`。
 复用正式应用、两级 BeforeEach、全局 AfterEach、订单与退款 Mocker；通过真实 HTTP 查询本地数据库。
@@ -521,7 +538,7 @@ DTO 回序列化比较只检查响应结构，业务期望值仍由用例独立�
 只读 Checker 也纳入没有关联订单的退款，避免缺失订单场景遗漏退款及任务变化；不推进补偿任务或配置外部成功 Mock。
 存量金额精度和币种错误按系统错误返回；GetRefundProcessor 只转换公共 Money 的参数异常并保留 Cause，
 仍复用 Money 校验，测试保持 500 的期望。
-具体结果见[退款详情测试台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-get-refund-tests-20260919)。
+具体结果见[退款详情测试台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-get-refund-tests-20260919)。
 
 按 Client 业务退款号查询使用一个 `refund/getbyclientrefundid/GetRefundByClientRefundIdTest`，
 类级 `@see` 指向 `ClientRefundApi#getRefundByClientRefundId`。复用相同的退款 Builder、Mocker、
@@ -530,7 +547,7 @@ DTO 回序列化比较只检查响应结构，业务期望值仍由用例独立�
 大小写、Query 保留字符、长度和身份边界，以及退款状态、金额、时刻和版本。
 每次 GET 比较数据库全列快照并检查相关外部端口零调用；前置准备与清理沿用两级 BeforeEach 和全局 AfterEach。
 本库存量金额精度或币种错误与公开退款号查询一致，返回系统错误，不归为 Client 参数错误。
-实际结果见[按 Client 退款号查询测试台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-get-refund-by-client-id-tests-20260921)。
+实际结果见[按 Client 退款号查询测试台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-get-refund-by-client-id-tests-20260921)。
 
 可退款金额查询使用一个 `refund/refundableamount/GetRefundableAmountTest`，`@see` 指向
 `ClientRefundableAmountApi#getRefundableAmount(long, long, String)`。
@@ -539,7 +556,7 @@ Client 隔离、参数边界、位置损坏，以及重复查询返回最新位�
 金额期望由用例明确指定；响应通过正式 `GetRefundableAmountResponseBody` getter 检查，不复制 JSON 字段清单。
 每次 GET 都比较两个测试 Client 的数据库全列快照，检查查询不预占、不推进退款任务、不重新准备或支付。
 沿用两级 BeforeEach、全局 AfterEach 和既有 DDL，无新增配置或外部 Mock。
-实际运行与覆盖范围见[可退款金额测试台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-get-refundable-amount-tests-20260921)。
+实际运行与覆盖范围见[可退款金额测试台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-get-refundable-amount-tests-20260921)。
 
 消费者资料保存使用一个 `customerapi/v1/checkout/consumer/SaveConsumerTest`，类级 `@see` 指向
 `CustomerCheckoutApi#saveConsumer(String, SaveConsumerRequestBody)`；另用 `SaveConsumerTransactionTest`
@@ -564,7 +581,7 @@ env -u COMMERCE_TEST_REDIS_PASSWORD -u MOR_REDIS_PASSWORD \
   jacoco:report-aggregate@report-commerce-checkout-coverage
 ```
 
-实际执行范围见[消费者保存测试台账](../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-save-consumer-tests-20260921)。
+实际执行范围见[消费者保存测试台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-save-consumer-tests-20260921)。
 
 ## 尚未实现
 

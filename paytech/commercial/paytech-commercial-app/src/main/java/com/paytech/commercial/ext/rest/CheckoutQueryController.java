@@ -34,7 +34,7 @@ public class CheckoutQueryController implements CheckoutContextApi {
 
     /** Caller Header 仅检查调用范围，实际身份由部署网络保证。 */
     private void authorize(String caller) {
-        if (!"commerce-service".equals(caller)) {
+        if (!"acquiring-service".equals(caller)) {
             throw new FailException(CLIENT_NOT_FOUND);
         }
     }

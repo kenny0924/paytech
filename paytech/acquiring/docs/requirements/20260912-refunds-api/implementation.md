@@ -1,8 +1,8 @@
 # Commerce Refunds 本地实现
 
-> **列表入口的 2026-09-16 后继：** [ListOrderRefunds 接口重构](../../../../requirements/20260916/commerce-ListOrderRefunds接口重构/technique.md)取代下文列表 Service 的只读事务、OrderRecord 和联表读取。列表改由 Processor 按需查询，字段和游标合同保持；下列历史测试结果不证明此次重构已验证，当前状态见[台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-list-order-refunds-20260916)。
+> **列表入口的 2026-09-16 后继：** [ListOrderRefunds 接口重构](../../../../../requirements/20260916/commerce-ListOrderRefunds接口重构/technique.md)取代下文列表 Service 的只读事务、OrderRecord 和联表读取。列表改由 Processor 按需查询，字段和游标合同保持；下列历史测试结果不证明此次重构已验证，当前状态见[台账](../../../../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-list-order-refunds-20260916)。
 
-> **创建入口的 2026-09-16 后继：** [CreateRefund 接口重构](../../../../requirements/20260916/commerce-CreateRefund接口重构/technique.md)取代下文创建请求的命令 Hash/Claim/Lease、回执快照及事务内整单重查方式。新入口按 clientRefundId 比较原业务内容，Service 以 REQUIRED 原子保存退款、预占和提交任务。下列测试属于前序实现，不能作为本轮重构已验证的证据；当前状态见[台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-create-refund-20260916)。
+> **创建入口的 2026-09-16 后继：** [CreateRefund 接口重构](../../../../../requirements/20260916/commerce-CreateRefund接口重构/technique.md)取代下文创建请求的命令 Hash/Claim/Lease、回执快照及事务内整单重查方式。新入口按 clientRefundId 比较原业务内容，Service 以 REQUIRED 原子保存退款、预占和提交任务。下列测试属于前序实现，不能作为本轮重构已验证的证据；当前状态见[台账](../../../../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-create-refund-20260916)。
 
 本次用户已确认开发四个 Refunds 接口，仅修改 Commerce；外部依赖先 Mock 并标明 TODO，不配置 Gateway。
 

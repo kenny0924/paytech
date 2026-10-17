@@ -3214,12 +3214,67 @@ test("splits the catalog into client-master and commercial by approved table own
   );
 });
 
-test("copies the Client stored-card setting entity verbatim from the Commerce model", () => {
-  const commerce = JSON.parse(readFileSync(path.join(workspaceRoot, "commerce-service/docs/database/commerce.pdma.json"), "utf8"));
-  const expected = commerce.entities.find((entity) => entity.defKey === "t_client_stored_card_setting");
-  assert.ok(expected, "Commerce model no longer carries t_client_stored_card_setting; freeze the copied literal instead");
+// 第 03 步删除了 Commerce 模型；以下是拆分前 commerce-service/docs/database/commerce.pdma.json 中该实体的冻结事实（ID、字段与注释）。
+const FORMER_COMMERCE_STORED_CARD_SETTING = Object.freeze({
+    "id": "1A821886-19AB-5FA1-AAAF-C942297031CA",
+    "defKey": "t_client_stored_card_setting",
+    "defName": "Client 存卡开通",
+    "comment": "按 Client 开通存卡能力（CCT 暂无按 Client 配置落点时的 Commerce 本地配置）；首期由初始化 DML 或内部调用维护，运营页面后续提供。",
+    "fields": [
+      [
+        "C3079BA3-1ABA-59E5-9681-B7F8A865F8FE",
+        "client_id",
+        "BIGINT",
+        "",
+        true,
+        "平台 Client 的内部唯一标识；每个 Client 至多一行，没有记录视为未开通。"
+      ],
+      [
+        "C27EDAA3-96AA-5B8F-9BB2-F2710142116F",
+        "stored_card_enabled",
+        "TINYINT",
+        1,
+        true,
+        "是否开通存卡与已存卡支付；1 开通，0 关闭。关闭后已存卡保留但不展示、不可使用。"
+      ],
+      [
+        "F37F0C54-74D5-5E93-8351-DD22C1C1F67D",
+        "version",
+        "BIGINT",
+        "",
+        true,
+        "可变业务行并发更新使用的单调乐观锁版本。"
+      ],
+      [
+        "76A1DE4E-E12F-5600-941E-CFD1E36C52E6",
+        "create_time",
+        "DATETIME",
+        6,
+        true,
+        "数据库记录创建的 UTC 微秒精度时间。"
+      ],
+      [
+        "8DD1F15F-01D7-50B3-BC07-1975FCED3411",
+        "update_time",
+        "DATETIME",
+        6,
+        true,
+        "数据库记录最近一次持久化更新的 UTC 微秒精度时间。"
+      ]
+    ],
+    "indexes": []
+  });
+
+test("copies the Client stored-card setting entity verbatim from the former Commerce model", () => {
   const actual = requireEntity(entityMap(readServiceModel(serviceModels[0])), "client_stored_card_setting");
-  assert.deepEqual(actual, expected);
+  assert.deepEqual({
+    id: actual.id,
+    defKey: actual.defKey,
+    defName: actual.defName,
+    comment: actual.comment,
+    fields: actual.fields.map((field) => [field.id, field.defKey, field.type, field.len, field.notNull, field.comment]),
+    indexes: actual.indexes.map((index) => [index.id, index.defKey, index.unique]),
+  }, FORMER_COMMERCE_STORED_CARD_SETTING);
 });
 
 test("rejects removed Agreement/Legal tables and fields without overreaching into Pricing or Share", () => {

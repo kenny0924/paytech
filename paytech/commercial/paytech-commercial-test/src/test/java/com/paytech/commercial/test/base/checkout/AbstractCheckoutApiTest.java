@@ -45,7 +45,7 @@ public abstract class AbstractCheckoutApiTest extends CommercialMockTestBase {
     /** 每次提供独立调用头，不加入请求幂等或自动修复负例。 */
     protected HttpHeaders headers() {
         var headers = TestRequestHeaders.internal(REQUEST_ID);
-        headers.set("X-Caller-Service", "commerce-service");
+        headers.set("X-Caller-Service", "acquiring-service");
         return headers;
     }
 

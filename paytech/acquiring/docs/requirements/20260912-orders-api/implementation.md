@@ -1,6 +1,6 @@
 # Orders 接口本地实现
 
-> **2026-09-16 后继：** 本文保留原切片记录。取消请求幂等和旧 Processor/事务组织已由[本轮用户纠正](../../../../requirements/20260916/commerce-CancelOrder接口重构/technique.md)取代：取消不再保存 Key/Hash/Lease/恢复回执，按订单事实处理；Service 维护本地短事务，Processor 查询与 Payment 调用均在事务外。最新查询结构及验证状态只读[当前台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md)。
+> **2026-09-16 后继：** 本文保留原切片记录。取消请求幂等和旧 Processor/事务组织已由[本轮用户纠正](../../../../../requirements/20260916/commerce-CancelOrder接口重构/technique.md)取代：取消不再保存 Key/Hash/Lease/恢复回执，按订单事实处理；Service 维护本地短事务，Processor 查询与 Payment 调用均在事务外。最新查询结构及验证状态只读[当前台账](../../../../../agent-docs/CURRENT_IMPLEMENTATION.md)。
 
 用户本轮明确要求只修改 Commerce，完成 Orders 接口，并纳入可退款金额查询；外部服务暂用 Mock + TODO。沿用已有 v1 合同，本轮开发与相关本地验证直接推进，不改网关、其他服务、PDManer、数据库结构，不提交或部署。
 

@@ -4,13 +4,15 @@ import path from "node:path";
 import test from "node:test";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
+// 第 03 步：commerce-service 拆为 acquiring 与 consumer；NOVA 现实场景（agent-docs，第 13 步统一改写）仍描述拆分前的 15 表目标，
+// acquiring 模型等于其中去掉 S10 删除的 t_command_idempotency 后的 14 张表。
 const modelPath = path.join(
   workspaceRoot,
-  "commerce-service/docs/database/commerce.pdma.json",
+  "paytech/acquiring/docs/database/acquiring.pdma.json",
 );
 const decisionsPath = path.join(
   workspaceRoot,
-  "commerce-service/docs/database/COMMERCE_PHYSICAL_DECISIONS.md",
+  "paytech/acquiring/docs/database/ACQUIRING_PHYSICAL_DECISIONS.md",
 );
 const scenarioPath = path.join(
   workspaceRoot,
@@ -18,7 +20,7 @@ const scenarioPath = path.join(
 );
 const artifactsReady = existsSync(modelPath) && existsSync(decisionsPath);
 
-const expectedGeneratedLogicalTables = Object.freeze([
+const expectedScenarioLogicalTables = Object.freeze([
   "commerce_order",
   "order_context",
   "order_legal",
@@ -36,7 +38,12 @@ const expectedGeneratedLogicalTables = Object.freeze([
   "compensation_event",
 ]);
 
-const expectedTargetLogicalTables = expectedGeneratedLogicalTables;
+// S10：拆分时删除，不进入 acquiring 模型。
+const removedByS10 = Object.freeze(["command_idempotency"]);
+
+const expectedTargetLogicalTables = Object.freeze(
+  expectedScenarioLogicalTables.filter((table) => !removedByS10.includes(table)),
+);
 
 const removedTables = Object.freeze([
   "order_status_history",
@@ -100,7 +107,7 @@ function artifactTest(name, fn) {
   test(name, { skip: !artifactsReady }, fn);
 }
 
-test("Commerce real-world scenario has a generated model and physical decisions", () => {
+test("Commerce real-world scenario has the generated acquiring model and physical decisions", () => {
   const missing = [modelPath, decisionsPath]
     .filter((artifactPath) => !existsSync(artifactPath))
     .map((artifactPath) => path.relative(workspaceRoot, artifactPath));
@@ -111,7 +118,7 @@ test("NOVA scenario provides one concrete mapping row for every approved target 
   const source = readScenario();
   assert.match(source, /场景 ID：`NOVA_COMMERCE_UAE_2026`/u);
   const rows = scenarioTableRows(source);
-  assert.deepEqual(rows.map((row) => row.table), expectedTargetLogicalTables);
+  assert.deepEqual(rows.map((row) => row.table), expectedScenarioLogicalTables);
   assert.equal(new Set(rows.map((row) => row.table)).size, 15);
   for (const row of rows) {
     assert.equal(row.cells.length, 2, `${row.table} 必须同时说明示例和写入/更新/冻结语义`);
@@ -119,16 +126,20 @@ test("NOVA scenario provides one concrete mapping row for every approved target 
   }
 });
 
-artifactTest("scenario and generated model share the exact 15-table target", () => {
+artifactTest("scenario minus S10 removals and the generated acquiring model share the exact 14-table target", () => {
   const model = JSON.parse(readFileSync(modelPath, "utf8"));
-  const scenarioTables = scenarioTableRows(readScenario()).map((row) => `t_${row.table}`);
+  const scenarioTables = scenarioTableRows(readScenario())
+    .map((row) => row.table)
+    .filter((table) => !removedByS10.includes(table))
+    .map((table) => `t_${table}`);
   const generatedTables = model.entities.map((entity) => entity.defKey);
   assert.deepEqual(scenarioTables, generatedTables);
+  assert.deepEqual(generatedTables, expectedTargetLogicalTables.map((table) => `t_${table}`));
   assert.deepEqual(modelTotals(model), {
-    tables: 15,
-    fields: 249,
-    uniqueIndexes: 24,
-    accessIndexes: 12,
+    tables: 14,
+    fields: 227,
+    uniqueIndexes: 23,
+    accessIndexes: 11,
     relations: 15,
     diagramGroups: 4,
   });
@@ -261,9 +272,9 @@ artifactTest("removed fulfillment and obsolete Vault/Blind fields stay out of th
 artifactTest("physical decisions link back to the current Commerce authorities", () => {
   const source = readFileSync(decisionsPath, "utf8");
   for (const target of [
-    "../../../agent-docs/database/COMMERCE_DATABASE.md",
-    "../../../agent-docs/database/scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md",
-    "../../../agent-docs/plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md",
+    "../../../../agent-docs/database/COMMERCE_DATABASE.md",
+    "../../../../agent-docs/database/scenarios/COMMERCE_REAL_WORLD_SCENARIOS.md",
+    "../../../../agent-docs/plans/2026-08-24-commerce-document-audit-cancel-reversal-design.md",
   ]) {
     assert.ok(source.includes(target), `物理决策缺少导航：${target}`);
     assert.ok(existsSync(path.resolve(path.dirname(decisionsPath), target)));
