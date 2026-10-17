@@ -25,7 +25,8 @@ public class FinanceDataCleaner implements Clear {
     /** 初始化 DML 保留行数：USD 1 + STANDARD 1 + 核心科目 29 + 规则 Bundle 1 + 规则版本 1 + 规则行 12。 */
     static final int RESERVED_ROWS = 45;
 
-    private static final List<String> FULLY_OWNED_TABLES = List.of("t_close_approval", "t_close_step",
+    private static final List<String> FULLY_OWNED_TABLES = List.of("t_channel_cost_component",
+        "t_channel_cost_scope", "t_channel_cost_plan_ver", "t_channel_cost_plan", "t_close_approval", "t_close_step",
         "t_period_close_book", "t_period_close", "t_ledger_period_balance",
         "t_trial_balance_exception", "t_trial_balance_line", "t_trial_balance_run", "t_journal_line", "t_journal_entry",
         "t_instruction_line", "t_accounting_instruction", "t_adjustment_approval", "t_manual_adjustment_line",

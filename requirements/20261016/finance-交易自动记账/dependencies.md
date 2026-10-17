@@ -10,6 +10,7 @@ Finance 创建一条 PAYMENT `transaction_economics` 必须一次性冻结下列
 | X2 | Commerce | 订单上下文查询（COM-I04 或新合同） | 未实现 | `order_id + order_context_id`、`commercial_context_time`、Client/OE、`industry_code + mcc_code`、`consumer_country_code`、Client Agreement、Term Versions；Partner 来源时 Local Partner、Partner Agreement-OE、`platform_service_party_id`；金额币种供逐值交叉校验 |
 | X3 | CCT | 价格解析 `POST /commercial-prices/v1/resolutions`（[阶段 3 合同](../../20260911/client-contract-OE与Client模型梳理/stage3-contracts.md)） | 模型已定，接口未实现 | 按固定 Term Version + 支付事实返回准确 Client Price（Component/Band、T+N、日历、时区、Cutoff）、Partner Share、Platform Service Charge 及签约 Party |
 | X4 | Finance（自有） | 税务快照 | 未实现 | `tax_snapshot_id` 非空；Seller 实收税金额 |
-| X5 | Finance（自有） | 渠道成本配置与渠道清算账户维护 | 表已存在，无维护入口 | 按 Channel/MID 唯一命中成本规则；`t_channel_account` 按 MID + 币种唯一 |
+| X5 | Finance（自有） | 渠道成本配置与渠道清算账户维护 | 渠道成本配置：已实现（[2026-10-17 渠道成本配置需求](../../20261017/finance-渠道成本配置/requirement.md)）；渠道清算账户维护：待 X6 | 按 Channel/MID 唯一命中成本规则；`t_channel_account` 按 MID + 币种唯一 |
+| X6 | Payment（跨系统） | MID 权威元组查询接口 | 未实现 | 按 MID 返回 Channel、Channel Account、OE、币种；Finance 创建 `t_channel_account` 时按数据库设计全局不变量 49 核对 |
 
 完成顺序建议：X1、X2、X3 的合同先评审定稿 → Finance 消费批次（MQ Listener、交易经济创建、费率计算、补偿事件迁移、Channel Open Item、出站事件）在同一本地事务内调用本需求的 AUTO 过账引擎。

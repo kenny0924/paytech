@@ -57,6 +57,10 @@ public interface AccountingTestMapper {
         SELECT 't_transaction_economic_component', COUNT(*) FROM t_transaction_economic_component UNION ALL
         SELECT 't_transaction_economics', COUNT(*) FROM t_transaction_economics UNION ALL
         SELECT 't_channel_account', COUNT(*) FROM t_channel_account UNION ALL
+        SELECT 't_channel_cost_plan', COUNT(*) FROM t_channel_cost_plan UNION ALL
+        SELECT 't_channel_cost_plan_ver', COUNT(*) FROM t_channel_cost_plan_ver UNION ALL
+        SELECT 't_channel_cost_scope', COUNT(*) FROM t_channel_cost_scope UNION ALL
+        SELECT 't_channel_cost_component', COUNT(*) FROM t_channel_cost_component UNION ALL
         SELECT 't_accounting_rule_line', COUNT(*) FROM t_accounting_rule_line WHERE id >= 1000000 UNION ALL
         SELECT 't_accounting_rule_bundle_ver', COUNT(*) FROM t_accounting_rule_bundle_ver WHERE id >= 1000000 UNION ALL
         SELECT 't_accounting_rule_bundle', COUNT(*) FROM t_accounting_rule_bundle WHERE id >= 1000000 UNION ALL
@@ -298,4 +302,14 @@ public interface AccountingTestMapper {
     /** 直接改变日历财年起始月，构造“当前期间为财年最后期间”或“非年末期间”场景（日历无修改入口）。 */
     @Update("UPDATE t_fiscal_calendar SET year_start_month = #{yearStartMonth} WHERE id = #{id}")
     void updateCalendarYearStartMonth(@Param("id") long id, @Param("yearStartMonth") int yearStartMonth);
+
+    /** 读取渠道成本方案状态、乐观锁版本与当前版本号（经 current_ver_id 关联，无当前版本为空）。 */
+    @Select("SELECT p.status, p.version, v.cost_ver AS current_cost_ver FROM t_channel_cost_plan p "
+        + "LEFT JOIN t_channel_cost_plan_ver v ON v.id = p.current_ver_id WHERE p.plan_code = #{planCode}")
+    Map<String, Object> selectChannelCostPlan(@Param("planCode") String planCode);
+
+    /** 统计方案下的版本数。 */
+    @Select("SELECT COUNT(*) FROM t_channel_cost_plan_ver v JOIN t_channel_cost_plan p ON p.id = v.plan_id "
+        + "WHERE p.plan_code = #{planCode}")
+    int countChannelCostVersions(@Param("planCode") String planCode);
 }

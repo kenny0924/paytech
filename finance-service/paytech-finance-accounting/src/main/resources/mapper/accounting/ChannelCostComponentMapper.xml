@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.ChannelCostComponentMapper">
+    <sql id="columns">id, scope_id, component_code, component_type, calculation_base, rate_value, fixed_amount, currency, min_amount, max_amount, rounding_mode, create_time</sql>
+
+    <insert id="insertBatch">
+        INSERT INTO t_channel_cost_component (<include refid="columns"/>) VALUES
+        <foreach collection="components" item="component" separator=",">(#{component.id}, #{component.scopeId}, #{component.componentCode}, #{component.componentType}, #{component.calculationBase}, #{component.rateValue}, #{component.fixedAmount}, #{component.currency}, #{component.minAmount}, #{component.maxAmount}, #{component.roundingMode}, #{component.createTime})</foreach>
+    </insert>
+
+    <select id="selectByScope" resultType="com.paytech.finance.accounting.core.dal.dataobject.ChannelCostComponent">
+        SELECT <include refid="columns"/> FROM t_channel_cost_component WHERE scope_id = #{scopeId} ORDER BY component_code COLLATE utf8mb4_bin
+    </select>
+
+    <select id="selectByScopes" resultType="com.paytech.finance.accounting.core.dal.dataobject.ChannelCostComponent">
+        SELECT <include refid="columns"/> FROM t_channel_cost_component
+        WHERE scope_id IN <foreach collection="scopeIds" item="scopeId" open="(" separator="," close=")">#{scopeId}</foreach>
+        ORDER BY scope_id, component_code COLLATE utf8mb4_bin
+    </select>
+</mapper>

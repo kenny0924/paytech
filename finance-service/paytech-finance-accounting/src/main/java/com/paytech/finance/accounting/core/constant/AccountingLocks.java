@@ -26,6 +26,11 @@ public final class AccountingLocks {
         return "period-close:" + periodId;
     }
 
+    /** 同一渠道成本方案的创建与版本创建、提交、批准、驳回共用的资源锁。 */
+    public static String channelCostPlan(String planCode) {
+        return "channel-cost-plan:" + planCode;
+    }
+
     /** 同一自动记账规则集的版本创建、提交、批准与驳回共用的资源锁。 */
     public static String accountingRuleBundle(String bundleCode) {
         return "accounting-rule-bundle:" + bundleCode;
