@@ -159,7 +159,13 @@ def unique_nginx_scalar(scope, name: str):
 
 
 # Each public listener forwards its API paths to Gateway and owns exactly one trusted entry channel.
-ENTRY_CHANNEL_BY_LISTEN = {("8080",): "OPERATIONS", ("8443", "ssl"): "CLIENT"}
+ENTRY_CHANNEL_BY_LISTEN = {("8080",): "OPERATIONS", ("8443", "ssl"): "CLIENT", ("8444", "ssl"): "CLIENT_API"}
+# Console listeners proxy /api and /api/; the Client API listener proxies only its versioned prefix.
+API_LOCATIONS_BY_CHANNEL = {
+    "OPERATIONS": (("=", "/api"), ("^~", "/api/")),
+    "CLIENT": (("=", "/api"), ("^~", "/api/")),
+    "CLIENT_API": (("^~", "/api/v1/"),),
+}
 
 
 def nginx_api_servers(config: str):
@@ -171,6 +177,7 @@ def nginx_api_servers(config: str):
         for server in servers
         if nginx_blocks(server, ("location", "=", "/api"))
         or nginx_blocks(server, ("location", "^~", "/api/"))
+        or nginx_blocks(server, ("location", "^~", "/api/v1/"))
     ]
     by_listen = {}
     for server in candidates:
@@ -180,12 +187,13 @@ def nginx_api_servers(config: str):
         by_listen[listens[0]] = server
     if set(by_listen) != set(ENTRY_CHANNEL_BY_LISTEN):
         raise AssertionError(
-            "expected exactly the Operations (8080) and Client (8443 ssl) nginx servers containing the API locations"
+            "expected exactly the Operations (8080), Client (8443 ssl) and Client API (8444 ssl) nginx servers"
+            " containing the API locations"
         )
     return {
         ENTRY_CHANNEL_BY_LISTEN[listen]: (http, server, {
-            "= /api": one_nginx_block(server, ("location", "=", "/api")),
-            "^~ /api/": one_nginx_block(server, ("location", "^~", "/api/")),
+            f"{modifier} {path}": one_nginx_block(server, ("location", modifier, path))
+            for modifier, path in API_LOCATIONS_BY_CHANNEL[ENTRY_CHANNEL_BY_LISTEN[listen]]
         })
         for listen, server in by_listen.items()
     }

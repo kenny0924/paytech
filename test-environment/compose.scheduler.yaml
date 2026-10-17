@@ -54,6 +54,7 @@ services:
         --spring.datasource.password=${MOR_XXL_JOB_DB_PASSWORD:?set MOR_XXL_JOB_DB_PASSWORD}
         --xxl.job.accessToken=${MOR_XXL_JOB_ACCESS_TOKEN:?set MOR_XXL_JOB_ACCESS_TOKEN}
         --xxl.job.timeout=3
+        --server.servlet.context-path=
         --xxl.job.i18n=en
         --xxl.job.logretentiondays=30
         --xxl-sso.token.key=${MOR_XXL_JOB_LOGIN_TOKEN_KEY:?set MOR_XXL_JOB_LOGIN_TOKEN_KEY}

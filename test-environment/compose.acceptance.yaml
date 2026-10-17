@@ -1,0 +1,31 @@
+# 验收专用组件（profile acceptance），与业务服务分开启停：
+#   ./compose.sh -f compose.acceptance.yaml --profile acceptance up -d webhook-receiver
+# webhook-receiver：Client API 联通验收的 Webhook HTTPS 接收端（2026-10-17），只在 backend 网络，不发布宿主机端口。
+# 证书由 scripts/prepare_client_api_acceptance.sh 用 test CA 签发（SAN=webhook-receiver）。
+services:
+  webhook-receiver:
+    profiles: [acceptance]
+    image: python:3.13-alpine@sha256:2d9aefe2fef018a7eb2c13064c89c71929800fd2e5dccdbf52ea5da5bb8d929a
+    user: "10001:10001"
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64m
+    command: [python, -I, /app/webhook_receiver.py]
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      RECEIVER_INBOX: /data/inbox
+    volumes:
+      - ./acceptance/webhook-receiver/webhook_receiver.py:/app/webhook_receiver.py:ro
+      - ./private/webhook-receiver/tls.crt:/run/receiver/tls.crt:ro
+      - ./private/webhook-receiver/tls.key:/run/receiver/tls.key:ro
+      - ./private/webhook-receiver/inbox:/data/inbox
+    healthcheck:
+      test: [CMD, python, -c, "import ssl,urllib.request;urllib.request.urlopen('https://127.0.0.1:8443/healthz',context=ssl._create_unverified_context(),timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      backend: { ipv4_address: 172.30.73.29 }

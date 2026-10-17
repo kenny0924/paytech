@@ -23,6 +23,7 @@ READINESS_URLS = (
     "http://127.0.0.1:19080/actuator/health/readiness",
     "http://127.0.0.1:18101/actuator/health/readiness",
     "http://127.0.0.1:19202/actuator/health/readiness",
+    "http://127.0.0.1:18102/commerce/actuator/health/readiness",
 )
 
 
@@ -544,6 +545,7 @@ class JavaImageHealthProbeTest(unittest.TestCase):
                     "api-gateway",
                     "client-contract-service",
                     "client-console-bff",
+                    "commerce-service",
                 ),
                 READINESS_URLS,
             )
