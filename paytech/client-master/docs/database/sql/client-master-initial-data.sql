@@ -1,0 +1,3 @@
+-- Code-MoR Client Master initialization DML.
+-- This release has no seed rows for mor_client_master (including t_client_stored_card_setting).
+-- Apply client-master-schema.sql manually before application or auto tests access mor_client_master.

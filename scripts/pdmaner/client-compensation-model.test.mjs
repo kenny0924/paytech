@@ -3,11 +3,16 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const root = new URL("../../", import.meta.url);
-const model = JSON.parse(readFileSync(new URL("client-contract-service/docs/database/client-contract.pdma.json", root), "utf8"));
+// CCT compensation handlers live in client-master; commercial keeps an identical
+// per-database copy of t_compensation_event.
+const models = ["paytech/client-master/docs/database/client-master.pdma.json", "paytech/commercial/docs/database/commercial.pdma.json"]
+  .map(file => JSON.parse(readFileSync(new URL(file, root), "utf8")));
+const [model] = models;
 const event = model.entities.find(e => e.defKey === "t_compensation_event");
 const fields = new Map(event.fields.map(f => [f.defKey, f]));
 
 test("CCT compensation storage matches the Foundation consumer contract", () => {
+  assert.deepEqual(models[1].entities.find(e => e.defKey === "t_compensation_event"), event, "commercial copy must be identical");
   assert.deepEqual([...fields.keys()], ["id", "event_key", "event_type", "sub_event_type", "payload_json", "execute_status", "execute_count", "next_execute_at", "lock_owner", "lock_until", "last_error_code", "last_error_summary", "lock_version", "create_time", "update_time"]);
   for (const [name, type, len, required, value] of [
     ["id", "BIGINT", "", true, ""],

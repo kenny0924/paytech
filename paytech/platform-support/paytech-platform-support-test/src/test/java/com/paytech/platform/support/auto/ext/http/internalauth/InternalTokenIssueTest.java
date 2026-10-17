@@ -91,7 +91,7 @@ class InternalTokenIssueTest extends MockTestBase {
     void test_tokenBoundToTarget() {
         String token = tokens.issue(CALLER, TARGET);
 
-        assertThrows(InternalTokenInvalidException.class, () -> tokens.verifyAs(token, "client-contract-service"));
+        assertThrows(InternalTokenInvalidException.class, () -> tokens.verifyAs(token, "client-master-service"));
     }
 
     /** 每次签发新的 jti，不复用旧 Token。 */

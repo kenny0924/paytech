@@ -15,7 +15,7 @@
     <name>Client Console BFF App</name>
 
     <dependencies>
-        <dependency><groupId>com.paytech</groupId><artifactId>client-contract-api</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-client-master-api</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>risk-api</artifactId></dependency>
         <dependency>
             <groupId>com.paytech</groupId>

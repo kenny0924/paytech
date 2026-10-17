@@ -1,0 +1,289 @@
+{
+  "agreement": [
+    {
+      "agreement_id": 910000000000106,
+      "agreement_no": "CCTQUERY-AGREEMENT-0",
+      "agreement_name": "Synthetic Checkout Contract",
+      "agreement_type": "CLIENT",
+      "client_id": 910000000000001,
+      "local_partner_id": null,
+      "entity_no": "AE991",
+      "agreement_format": "MERGED_PARTY",
+      "status": "ACTIVE",
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": "2026-10-01T00:00:00Z",
+      "signed_time": "2026-09-01T00:00:00Z",
+      "activated_time": "2026-09-01T00:00:00Z",
+      "create_by": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_id": 910000000000206,
+      "agreement_no": "CCTQUERY-AGREEMENT-1",
+      "agreement_name": "Synthetic Checkout Contract",
+      "agreement_type": "CLIENT",
+      "client_id": 910000000000001,
+      "local_partner_id": null,
+      "entity_no": "AE992",
+      "agreement_format": "MERGED_PARTY",
+      "status": "ACTIVE",
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": "2026-10-01T00:00:00Z",
+      "signed_time": "2026-09-01T00:00:00Z",
+      "activated_time": "2026-09-01T00:00:00Z",
+      "create_by": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "agreement_operating_entity": [],
+  "agreement_party": [
+    {
+      "agreement_party_id": 910000000000109,
+      "agreement_id": 910000000000106,
+      "party_id": 910000000000002,
+      "party_profile_id": 910000000000005,
+      "party_role": "CLIENT",
+      "acceptance_method": "CLICK_ACCEPTANCE",
+      "accepted_by_actor_id": 910000000000009,
+      "accepted_time": "2026-09-01T00:00:00Z",
+      "evidence_document_id": 910000000000107,
+      "acceptance_reference": "CCTQUERY-SIGN-0-0",
+      "acceptance_ref_slot": 1,
+      "acceptance_recorded_by": 910000000000009,
+      "acceptance_recorded_at": "2026-09-01T00:00:00Z",
+      "create_by": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_party_id": 910000000000110,
+      "agreement_id": 910000000000106,
+      "party_id": 910000000000102,
+      "party_profile_id": 910000000000111,
+      "party_role": "OPERATING_ENTITY",
+      "acceptance_method": "CLICK_ACCEPTANCE",
+      "accepted_by_actor_id": 910000000000009,
+      "accepted_time": "2026-09-01T00:00:00Z",
+      "evidence_document_id": 910000000000107,
+      "acceptance_reference": "CCTQUERY-SIGN-0-1",
+      "acceptance_ref_slot": 1,
+      "acceptance_recorded_by": 910000000000009,
+      "acceptance_recorded_at": "2026-09-01T00:00:00Z",
+      "create_by": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_party_id": 910000000000209,
+      "agreement_id": 910000000000206,
+      "party_id": 910000000000002,
+      "party_profile_id": 910000000000005,
+      "party_role": "CLIENT",
+      "acceptance_method": "CLICK_ACCEPTANCE",
+      "accepted_by_actor_id": 910000000000009,
+      "accepted_time": "2026-09-01T00:00:00Z",
+      "evidence_document_id": 910000000000207,
+      "acceptance_reference": "CCTQUERY-SIGN-1-0",
+      "acceptance_ref_slot": 1,
+      "acceptance_recorded_by": 910000000000009,
+      "acceptance_recorded_at": "2026-09-01T00:00:00Z",
+      "create_by": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_party_id": 910000000000210,
+      "agreement_id": 910000000000206,
+      "party_id": 910000000000202,
+      "party_profile_id": 910000000000211,
+      "party_role": "OPERATING_ENTITY",
+      "acceptance_method": "CLICK_ACCEPTANCE",
+      "accepted_by_actor_id": 910000000000009,
+      "accepted_time": "2026-09-01T00:00:00Z",
+      "evidence_document_id": 910000000000207,
+      "acceptance_reference": "CCTQUERY-SIGN-1-1",
+      "acceptance_ref_slot": 1,
+      "acceptance_recorded_by": 910000000000009,
+      "acceptance_recorded_at": "2026-09-01T00:00:00Z",
+      "create_by": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "agreement_document_ref": [
+    {
+      "agreement_document_id": 910000000000107,
+      "agreement_id": 910000000000106,
+      "document_type": "SIGNING_DOCUMENT",
+      "file_id": 910000000000108,
+      "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_document_id": 910000000000207,
+      "agreement_id": 910000000000206,
+      "document_type": "SIGNING_DOCUMENT",
+      "file_id": 910000000000208,
+      "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "commercial_term_plan": [
+    {
+      "term_plan_id": 910000000000112,
+      "plan_code": "CCTQUERY-PLAN-0",
+      "term_type": "CLIENT_PRICING",
+      "agreement_id": 910000000000106,
+      "entity_no": "AE991",
+      "client_id": 910000000000001,
+      "local_partner_id": null,
+      "status": "ACTIVE",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "term_plan_id": 910000000000212,
+      "plan_code": "CCTQUERY-PLAN-1",
+      "term_type": "CLIENT_PRICING",
+      "agreement_id": 910000000000206,
+      "entity_no": "AE992",
+      "client_id": 910000000000001,
+      "local_partner_id": null,
+      "status": "ACTIVE",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "commercial_term_version": [
+    {
+      "term_version_id": 910000000000113,
+      "term_plan_id": 910000000000112,
+      "agreement_id": 910000000000106,
+      "version_no": 1,
+      "status": "ACTIVE",
+      "active_slot": 1,
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": "2026-10-01T00:00:00Z",
+      "rounding_mode": "HALF_UP",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "term_version_id": 910000000000213,
+      "term_plan_id": 910000000000212,
+      "agreement_id": 910000000000206,
+      "version_no": 1,
+      "status": "ACTIVE",
+      "active_slot": 1,
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": "2026-10-01T00:00:00Z",
+      "rounding_mode": "HALF_UP",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "commercial_term_price": [
+    {
+      "term_price_id": 910000000000114,
+      "term_version_id": 910000000000113,
+      "entity_no": "AE991",
+      "payment_method_profile_code": "CCTQUERY_CARD",
+      "priority_no": 1,
+      "settlement_business_days": 2,
+      "business_calendar_code": "AE_CALENDAR",
+      "settlement_timezone": "UTC",
+      "cutoff_second_of_day": 86399,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "term_price_id": 910000000000214,
+      "term_version_id": 910000000000213,
+      "entity_no": "AE992",
+      "payment_method_profile_code": "CCTQUERY_CARD",
+      "priority_no": 1,
+      "settlement_business_days": 2,
+      "business_calendar_code": "AE_CALENDAR",
+      "settlement_timezone": "UTC",
+      "cutoff_second_of_day": 86399,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "commercial_term_component": [
+    {
+      "term_component_id": 910000000000115,
+      "term_price_id": 910000000000114,
+      "component_no": 1,
+      "component_code": "CLIENT_FEE",
+      "component_type": "PERCENTAGE",
+      "trigger_code": "PAYMENT_SUCCEEDED",
+      "calculation_base": "PAYMENT_AMOUNT",
+      "rate": "0.02500000",
+      "fixed_amount": null,
+      "currency": null,
+      "min_amount": null,
+      "max_amount": null,
+      "band_mode": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "term_component_id": 910000000000215,
+      "term_price_id": 910000000000214,
+      "component_no": 1,
+      "component_code": "CLIENT_FEE",
+      "component_type": "PERCENTAGE",
+      "trigger_code": "PAYMENT_SUCCEEDED",
+      "calculation_base": "PAYMENT_AMOUNT",
+      "rate": "0.02500000",
+      "fixed_amount": null,
+      "currency": null,
+      "min_amount": null,
+      "max_amount": null,
+      "band_mode": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "commercial_term_component_band": [],
+  "payment_method_profile": [
+    {
+      "payment_method_profile_id": 910000000000007,
+      "payment_method_profile_code": "CCTQUERY_CARD",
+      "profile_name": "Synthetic Card Profile",
+      "payment_method_code": "CARD",
+      "status": "ACTIVE",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "business_change_record": [
+    {
+      "history_id": 910000000000141,
+      "record_type": "AGREEMENT",
+      "record_id": "910000000000106",
+      "aggregate_root_type": "AGREEMENT",
+      "aggregate_root_id": "910000000000106",
+      "parent_history_id": null,
+      "current_version": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "history_id": 910000000000241,
+      "record_type": "AGREEMENT",
+      "record_id": "910000000000206",
+      "aggregate_root_type": "AGREEMENT",
+      "aggregate_root_id": "910000000000206",
+      "parent_history_id": null,
+      "current_version": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ]
+}

@@ -50,7 +50,7 @@ spring:
             # 同一独立 Mock HTTP 服务承载 Vault、CCT 与 Payment 读卡正式合同，地址由 EnableMockHttpServer 运行时注入。
             vault-service:
               - uri: "${test.mock-http.base-url}"
-            client-contract-service:
+            client-master-service:
               - uri: "${test.mock-http.base-url}"
             payment-service:
               - uri: "${test.mock-http.base-url}"
@@ -369,7 +369,7 @@ internal-token:
     # 调用方白名单：签发测试调用方；Webhook / Notification 测试调用方为访问 Platform 自身申请 Token；Platform 自身出站。
     callers:
       issuer-test:
-        targets: [payment-service, client-contract-service]
+        targets: [payment-service, client-master-service]
         purposes: [GENERAL, CARD_READ]
       webhook-test:
         targets: [platform-support-service]
@@ -382,7 +382,7 @@ internal-token:
         purposes: [GENERAL]
       # Platform 自身出站：Payment 读卡、CCT 文件，以及 Vault（02d 起 Vault Client 在存在 Supplier 时附加 Token，未授权则失败关闭）。
       platform-support-service:
-        targets: [payment-service, client-contract-service, vault-service]
+        targets: [payment-service, client-master-service, vault-service]
         purposes: [GENERAL]
 
 # 本地认证适配器的合成测试密钥（RSA 2048 PKCS#8 与 32 字节 HMAC，Base64）；只用于 Loopback Mock，不对应任何真实环境。

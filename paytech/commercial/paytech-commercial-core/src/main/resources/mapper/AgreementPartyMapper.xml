@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.AgreementPartyMapper">
+    <resultMap id="AgreementParty" type="com.paytech.commercial.core.dal.dataobject.CheckoutRecords$AgreementParty">
+        <constructor>
+            <arg column="agreement_party_id" javaType="java.lang.Long"/>
+            <arg column="agreement_id" javaType="java.lang.Long"/>
+            <arg column="party_id" javaType="java.lang.Long"/>
+            <arg column="party_profile_id" javaType="java.lang.Long"/>
+            <arg column="party_role" javaType="com.paytech.commercial.domain.enums.AgreementPartyPartyRole"/>
+            <arg column="acceptance_method" javaType="com.paytech.commercial.domain.enums.AgreementPartyAcceptanceMethod"/>
+            <arg column="accepted_by_actor_id" javaType="java.lang.Long"/>
+            <arg column="accepted_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="evidence_document_id" javaType="java.lang.Long"/>
+            <arg column="acceptance_reference" javaType="java.lang.String"/>
+            <arg column="acceptance_ref_slot" javaType="java.lang.Integer"/>
+            <arg column="acceptance_recorded_by" javaType="java.lang.Long"/>
+            <arg column="acceptance_recorded_at" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="AgreementParty">
+        SELECT agreement_party_id, agreement_id, party_id, party_profile_id, party_role, acceptance_method, accepted_by_actor_id, accepted_time, evidence_document_id, acceptance_reference, acceptance_ref_slot, acceptance_recorded_by, acceptance_recorded_at
+        FROM t_agreement_party
+        WHERE agreement_id IN (SELECT agreement_id FROM t_agreement WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty() and !entityNos.isEmpty()"> OR (local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach> AND agreement_id IN (SELECT agreement_id FROM t_agreement_operating_entity WHERE entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach>))</if>)
+        ORDER BY agreement_party_id
+    </select>
+    <!-- client-master 人员共享标记：任一合同参与方引用该 Party 或资料即视为已引用，不区分合同状态。 -->
+    <select id="findReferencedPartyIds" resultType="java.lang.Long">
+        SELECT DISTINCT party_id FROM t_agreement_party
+        WHERE party_id IN <foreach collection="partyIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY party_id
+    </select>
+    <select id="findReferencedPartyProfileIds" resultType="java.lang.Long">
+        SELECT DISTINCT party_profile_id FROM t_agreement_party
+        WHERE party_profile_id IN <foreach collection="partyProfileIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY party_profile_id
+    </select>
+</mapper>

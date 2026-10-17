@@ -54,7 +54,7 @@ public class ClientReviewClientConfiguration {
     @Bean
     ClientApplicationAdminApi clientApplicationAdminApi(Environment environment, LoadBalancerClient loadBalancer,
         @Value("${operations.cct-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
-        return factory(environment, loadBalancer, "client-contract-service", testBaseUrl, tokens,
+        return factory(environment, loadBalancer, "client-master-service", testBaseUrl, tokens,
             ClientDraftErrorCode.values())
             .createClient(ClientApplicationAdminApi.class);
     }
@@ -63,7 +63,7 @@ public class ClientReviewClientConfiguration {
     @Bean
     ClientClassificationAdminApi clientClassificationAdminApi(Environment environment, LoadBalancerClient loadBalancer,
         @Value("${operations.cct-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
-        return factory(environment, loadBalancer, "client-contract-service", testBaseUrl, tokens,
+        return factory(environment, loadBalancer, "client-master-service", testBaseUrl, tokens,
             ClientDraftErrorCode.values())
             .createClient(ClientClassificationAdminApi.class);
     }

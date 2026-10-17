@@ -266,7 +266,9 @@ Do not add `-v` unless removal of the three named MoR volumes has been explicitl
 
 The first MySQL initialization creates empty schemas and one scoped account per owner:
 
-- `mor_cct` / `cct_app`
+- `mor_cct` / `cct_app` (legacy CCT schema; kept until refactor step 04 is merged and verified)
+- `mor_client_master` / `client_master_app` (client-master; test DDL `paytech/client-master/paytech-client-master-test/src/test/resources/init/ddl.sql`)
+- `mor_commercial` / `commercial_app` (commercial; test DDL `paytech/commercial/paytech-commercial-test/src/test/resources/init/ddl.sql`)
 - `mor_commerce` / `commerce_app`
 - `mor_payment` / `payment_app` (payment service; also hosts the four card tables until refactor step 12)
 - `mor_channel_connector` / `channel_connector_app` (channel connector; `SELECT, INSERT, UPDATE, DELETE` only)

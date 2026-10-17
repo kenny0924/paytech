@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { CHECK_CONTRACTS as MODEL_CHECK_CONTRACTS } from "./finance/model-policy.mjs";
 import { renderSchema, schemaTargets } from "./generate-oe-client-schemas.mjs";
-import { generateClientContractModel } from "./generate-client-contract-model.mjs";
+import { generateClientMasterModel } from "./generate-client-master-model.mjs";
+import { generateCommercialModel } from "./generate-commercial-model.mjs";
 import { generateCommerceModel } from "./generate-commerce-model.mjs";
 import { generatePaymentModel } from "./generate-payment-model.mjs";
 import { generateFinanceModel } from "./finance/generate-finance-model.mjs";
@@ -23,7 +24,7 @@ const unique = (entity, names) => entity.indexes.some((index) => index.unique &&
   JSON.stringify(index.fields.map((part) => entity.fields.find((f) => f.id === part.fieldDefKey)?.defKey)) === JSON.stringify(names));
 
 test("OE has one immutable five-character primary identity and no numeric surrogate", () => {
-  const oe = table(generateClientContractModel(), "t_operating_entity");
+  const oe = table(generateClientMasterModel(), "t_operating_entity");
   assert.equal(field(oe, "entity_no").type, "CHAR");
   assert.equal(field(oe, "entity_no").len, 5);
   assert.equal(field(oe, "entity_no").primaryKey, true);
@@ -48,8 +49,8 @@ test("Polymorphic identities can carry OE codes without converting numeric Party
 test("Four manual schemas exactly preserve model metadata, types and physical constraints", () => {
   const root = path.resolve(import.meta.dirname, "../..");
   assert.deepEqual(schemaTargets.map(([repository]) => repository), [
-    "client-contract-service", "commerce-service", "paytech/payment", "paytech/channel-connector", "paytech/ledger",
-    "paytech/account", "paytech/billing", "paytech/reconciliation", "paytech/tax", "paytech/payout",
+    "paytech/client-master", "paytech/commercial", "commerce-service", "paytech/payment", "paytech/channel-connector",
+    "paytech/ledger", "paytech/account", "paytech/billing", "paytech/reconciliation", "paytech/tax", "paytech/payout",
   ]);
   for (const [repository, name] of schemaTargets) {
     const source = `${repository}/docs/database/${name}.pdma.json`;
@@ -67,7 +68,7 @@ test("Four manual schemas exactly preserve model metadata, types and physical co
 });
 
 test("Scope approval preserves exact tuples independently from Client-wide affiliation priority", () => {
-  const model = generateClientContractModel();
+  const model = generateClientMasterModel();
   const application = table(model, "t_operating_entity_application");
   assert.match(application.comment, /SCOPE_CHANGE.*沿用既有主体和唯一来源关系，不回退主体状态/u);
   const scope = table(model, "t_operating_entity_scope");
@@ -80,12 +81,14 @@ test("Scope approval preserves exact tuples independently from Client-wide affil
     assert.ok(!affiliation.fields.some((f) => f.defKey === name));
   }
   for (const name of ["t_entity_assignment_rule", "t_client_entity_assignment", "t_agreement_acceptance"]) {
-    assert.ok(!model.entities.some((e) => e.defKey === name), `${name} must leave the new-write model`);
+    for (const current of [model, generateCommercialModel()]) {
+      assert.ok(!current.entities.some((e) => e.defKey === name), `${name} must leave the new-write model`);
+    }
   }
 });
 
 test("Agreement Party allows shared signatures within one party while reserving references across parties", () => {
-  const party = table(generateClientContractModel(), "t_agreement_party");
+  const party = table(generateCommercialModel(), "t_agreement_party");
   assert.ok(unique(party, ["agreement_id", "party_id", "party_role"]));
   assert.ok(unique(party, ["agreement_id", "party_id", "acceptance_ref_slot"]));
   assert.ok(unique(party, ["acceptance_reference", "acceptance_ref_slot"]));
@@ -96,7 +99,7 @@ test("Agreement Party allows shared signatures within one party while reserving 
 });
 
 test("Client plans are per agreement while shared Partner associations and version agreement survive", () => {
-  const model = generateClientContractModel();
+  const model = generateCommercialModel();
   const plan = table(model, "t_commercial_term_plan");
   assert.ok(unique(plan, ["agreement_id", "term_type"]));
   assert.ok(!unique(plan, ["client_id"]));
@@ -146,7 +149,7 @@ test("Finance keeps typed book identity and separate legacy channel-cost and new
 });
 
 test("Every changed model retains valid local relations, indexes and diagram endpoints", () => {
-  for (const generate of [generateClientContractModel, generateCommerceModel, generatePaymentModel, generateFinanceModel]) {
+  for (const generate of [generateClientMasterModel, generateCommercialModel, generateCommerceModel, generatePaymentModel, generateFinanceModel]) {
     const model = generate();
     const entities = new Map(model.entities.map((e) => [e.id, e]));
     for (const e of model.entities) {

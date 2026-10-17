@@ -1,9 +1,0 @@
-spring:
-  cloud:
-    nacos:
-      discovery:
-        enabled: false
-  datasource:
-    url: "${CCT_TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_cct?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectionTimeZone=UTC}"
-    username: "${CCT_TEST_DB_USERNAME:cct_app}"
-    password: "${CCT_TEST_DB_PASSWORD:}"
