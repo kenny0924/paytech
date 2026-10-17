@@ -774,7 +774,7 @@
 
 <a id="client-console-wrapup-20261017"></a>
 
-## Client Console 已交付功能收尾（2026-10-17，已本地提交 `3209429`，未推送；2026-10-17 已部署 mor-test CCT）
+## Client Console 已交付功能收尾（2026-10-17，已本地提交 `3209429`，未推送；2026-10-17 已部署 mor-test CCT；F-02、F-03 交付结束）
 
 - **Implemented：** 按[需求](../requirements/20261017/client-console-已交付功能收尾/requirement.md)与[技术方案](../requirements/20261017/client-console-已交付功能收尾/technique.md)：CCT 批准入驻申请时在同一事务写入 Client 主体资料 `t_party_profile.approved_time`（只填空值），工作区摘要 `approvedAt` 改取该字段（空值退回最早 APPROVED 申请时间）；存量由需求目录 `db/dml.sql` 回填（近似值）。`developer_browser.mjs` 支持 `E2E_TARGET=test`。
 - **验证：** CCT 全量 53/53；本机 `workspace_flow.py` 53/53、`team_flow.py` 123/123、`developer_browser.mjs` 12/12；test `developer_browser.mjs` 10/10（3 项按设计 SKIP）、`workspace_flow.py` 53/53、`team_flow.py` 123/123。见[发布记录](../requirements/20261017/client-console-已交付功能收尾/release/release.md)。
