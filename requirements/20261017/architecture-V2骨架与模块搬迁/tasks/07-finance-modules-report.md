@@ -1,10 +1,9 @@
 # 第 07 步报告 · Finance → billing / account / ledger / reconciliation / tax
 
 - 分支：`refactor/step-07-finance-modules`（起点 `refactor-main@7e0b70d`）。提交 `5c678730`（Java、POM、测试、环境）、`84b0ad65`（PDManer、node 测试、文档），本报告单独提交。
-- 结论：Finance 已拆为五个服务各四模块，旧根 `finance-service/` 消失；五个 `-test` 与 arch-rules 在共享环境正常时全部通过（316 个执行用例，0 失败）。
-- **未完成的验证（环境阻塞，须先看）：** 验证后段宿主磁盘写满（ENOSPC），共享 Redis 进入只读 `MISCONF`，共享 MySQL 连接中断，`docker exec` 挂起，最后 Docker daemon 不可连接（`Cannot connect to the Docker daemon`）。
-  - 因此 §5.1 的"全 Reactor 全绿"与 §5.2 的"五个 app health UP"没能在最终代码上完整跑完，详见第 2 节。
-  - 本步按约束没有重启任何容器，已两次通知 team-lead。环境恢复后需要重跑第 2 节第 1、2 项的命令。
+- 结论：Finance 已拆为五个服务各四模块，旧根 `finance-service/` 消失。环境恢复后在最终代码上复跑：五个 `-test` 共 316 例与 arch-rules 55 例全部通过，五个 app 以 mock Profile 启动后 health / liveness / readiness 均为 UP（第 2 节"环境恢复后复跑"）。
+- 全 Reactor verify 按 team-lead 决定由主会话合入后执行；本步未跑 platform-support-test。
+- 中途宿主磁盘写满曾导致共享 Redis / MySQL / Docker 故障，期间的失败记录保留在第 2 节，本步未重启任何容器。
 
 ## 1. 改动摘要
 
@@ -134,6 +133,23 @@ cd paytech && ./mvnw -B -o verify -pl tools/arch-rules,billing/paytech-billing-t
 - 五个 `ArchitectureAutoTest` 的 R1–R12 均为 0 违规，无新增 known-deviations。
 - 第 11b 步删除该段，account 改连 `mor_account`。
 
+### 环境恢复后复跑（最终代码，team-lead 通知"环境已恢复"后）
+
+- 测试库：四个库与五个账号在恢复后仍在（`mor_ledger` 29、`mor_billing` 9、`mor_reconciliation` 18、`mor_tax` 24 张表；`t_chart_account` 29 行），未重复执行 DDL。
+- 命令：`cd paytech && ./mvnw -B -o clean verify -pl tools/arch-rules,ledger/paytech-ledger-test,billing/paytech-billing-test,account/paytech-account-test,reconciliation/paytech-reconciliation-test,tax/paytech-tax-test -am -Dtest='com/paytech/{ledger,billing,account,reconciliation,tax,arch}/**/*Test' -Dsurefire.failIfNoSpecifiedTests=false -Dpaytech.local-environment.dir=…/Code-MoR/local-environment`。
+- 结果：BUILD SUCCESS，用时 43.9 s。
+
+  | 模块 | 执行数 | 失败 / 错误 / skipped |
+  |---|---|---|
+  | paytech-ledger-test | 190 | 0 |
+  | paytech-billing-test | 71 | 0 |
+  | paytech-account-test | 21 | 0 |
+  | paytech-reconciliation-test | 17 | 0 |
+  | paytech-tax-test | 17 | 0 |
+  | paytech-arch-rules | 55 | 0 |
+
+- app 启动：五个 exec jar 以 mock Profile 启动（ledger 28105/29105、billing 28113/29113、account 28114/29114、reconciliation 28115/29115、tax 28116/29116），启动耗时 3.1–4.9 s，日志 0 条 ERROR。管理端口 `/actuator/health`、`/health/liveness`、`/health/readiness` 均为 `{"status":"UP"}`。进程已全部停止。
+
 ### 本机一次性操作（不在仓库中，2026-10-17T18:03:44Z）
 
 用 root 对 `mor-local-mysql-1` 执行五份测试 DDL（密码取自 `.env.local`，未打印）：
@@ -220,4 +236,4 @@ docker exec -i -e MYSQL_PWD="$P" mor-local-mysql-1 mysql -uroot --default-charac
 6. 初始化脚本的五个账号为可选创建，因为 compose 未传入变量，且本步不能改 compose。需要后续把 `MOR_{LEDGER,BILLING,ACCOUNT,RECONCILIATION,TAX}_DB_PASSWORD` 加进 `compose.yaml` 的 mysql environment。
 7. data-service 的 CDC 白名单与 Flink 演示管道仍指向 `mor_finance.t_currency_spec`（第 09 步遗留"07 步后改为 platform-support / mor_platform"）。本步未改 data-service 与 local-environment 的 flink 文件。
 8. agent-docs 的 `FINANCE_DATABASE.md` 等目录文档仍用旧表名（09 §5.1 不在本期范围）；场景文档 `FINANCE_REAL_WORLD_SCENARIOS.md` 因测试需要已同步改名并补 `status`。
-9. 环境：收到 team-lead"环境已恢复"后，重跑 Finance 五服务 `-pl ledger/paytech-ledger-test,billing/paytech-billing-test,account/paytech-account-test,reconciliation/paytech-reconciliation-test,tax/paytech-tax-test -am` 与第 2 节第 2 项的 app health 探测；全 Reactor 由主会话合入后执行。
+9. 环境：已于环境恢复后复跑并通过（见第 2 节"环境恢复后复跑"）；原计划为重跑 Finance 五服务 `-pl ledger/paytech-ledger-test,billing/paytech-billing-test,account/paytech-account-test,reconciliation/paytech-reconciliation-test,tax/paytech-tax-test -am` 与第 2 节第 2 项的 app health 探测；全 Reactor 由主会话合入后执行。
