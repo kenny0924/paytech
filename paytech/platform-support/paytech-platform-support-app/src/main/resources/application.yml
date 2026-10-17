@@ -1,0 +1,252 @@
+server:
+  port: 18106
+  servlet:
+    context-path: /platform-support
+
+spring:
+  application:
+    name: platform-support-service
+  data:
+    redis:
+      host: "${PLATFORM_SUPPORT_REDIS_HOST:127.0.0.1}"
+      port: "${PLATFORM_SUPPORT_REDIS_PORT:16379}"
+      password: "${PLATFORM_SUPPORT_REDIS_PASSWORD:}"
+      connect-timeout: 2s
+      timeout: 2s
+  datasource:
+    url: "${PLATFORM_SUPPORT_DB_URL}"
+    username: "${PLATFORM_SUPPORT_DB_USERNAME}"
+    password: "${PLATFORM_SUPPORT_DB_PASSWORD}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+        connectTimeout: 2000
+        socketTimeout: 2000
+  cloud:
+    nacos:
+      discovery:
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
+  jmx:
+    enabled: false
+
+# 实例 ID（实例清单 instance.id，01 §5）：内部调用 Token 的 inst；internal-auth.mode 非 OFF 或签发端启用时必填。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:}"
+
+vault:
+  client:
+    caller-service: platform-support-service
+    connect-timeout: 2s
+    read-timeout: 2s
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      validate-group-membership: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,gatewaySnapshot
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+  health:
+    redis:
+      enabled: "${operations.authentication.enabled:false}"
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+# Authentication adapters are explicitly development-only; enabling them requires local/auto.
+operations:
+  audit:
+    queue-capacity: 256
+  authentication:
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
+    enabled: false
+
+redis:
+  coordination:
+    enabled: "${operations.authentication.enabled:false}"
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /internal/onboarding-files
+      - /notifications
+      - /onboarding-files
+      - /review-files
+      - /authentication
+      - /authorization
+      - /operations
+      - /gateway-admin
+      - /console-admin
+      - /permission-admin
+      - /api-credential-admin
+      - /client-api-credentials
+      - /client-webhooks
+      - /client-team
+      - /client-invitations
+      - /api-scope-admin
+      - /api-credentials
+      - /tenant-projections
+      - /external-api-admin
+      - /notification-admin
+      - /webhook-admin
+      - /platform/v1/internal-tokens
+
+
+client:
+  authentication:
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
+    enabled: false
+
+tenant:
+  projection:
+    enabled: false
+
+# 本地补偿执行默认跟随入驻文件开关；单独启用通知等其他消费者时设置 PLATFORM_SUPPORT_COMPENSATION_ENABLED=true。
+# 关闭时不创建补偿 Registrar，通知启用会在启动时因缺少该 Bean 失败；周期扫描的 XXL-Job 调度另行配置。
+compensation:
+  enabled: ${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${files.onboarding.enabled:false}}
+
+# 外部 API 配置写入共用一把资源锁（lock:external-api-config）；修改需重启。
+ps:
+  integration:
+    configuration:
+      lock-wait-time: 500ms
+      lock-lease-time: 30s
+
+# Scope create/update share the Foundation Processor lock; timing changes require restart.
+api-scope:
+  management:
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
+
+# 普通邮件：模块入口与内部 HTTP（POST /notifications/v1/requests）；启用时显式开启 compensation.enabled 并配置实际 Provider/Vault。
+# Client 认证邮件经同一模块即时发送（SendTransientEmailProcessor），开启 client.authentication.enabled 时必须开启本模块。
+notification:
+  enabled: false
+  # worker-id: 独立启用通知时必须显式分配 0..31，不提供生产默认值。
+  maximum-send-attempts: 3
+  retry-delay: 30s
+  # 仅不支持查询的 Provider（如 SES）：结果未知后至少等待该时长才重发，至少 1m。
+  unknown-resend-delay: 10m
+  # Operations 通知管理写入的资源锁（模板、语言内容、路由按模板编码，账号按账号编码）；不依赖 notification.enabled。
+  management:
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
+  # 只能即时发送的模板（认证链接，不落库、不重试）；普通通知与 HTTP 白名单不能使用。
+  transient-template-codes:
+    - CLIENT_EMAIL_VERIFICATION
+    - CLIENT_PASSWORD_RESET
+    - CLIENT_TENANT_INVITATION
+  # Amazon SES 适配器（类型 AMAZON_SES）；需同时启用 notification.enabled，并配置 VaultClient。
+  # 账号的区域、发件地址、Configuration Set 与密钥在运营后台维护（t_notification_provider，密钥存 Vault），这里只有环境级参数。
+  ses:
+    enabled: ${NOTIFICATION_SES_ENABLED:false}
+    # endpoint: 可选 HTTPS 终端覆盖（如 VPC 终端），对全部账号生效，默认使用账号区域的终端。
+    connect-timeout: 2s
+    read-timeout: 5s
+    # 投递事件（送达 / 退信 / 投诉）：SES Configuration Set → SNS → SQS，各实例定时拉取账号上配置的事件队列。
+    # 访问队列复用账号的发送密钥（IAM 需 sqs:ReceiveMessage、sqs:DeleteMessage）；默认关闭。
+    events:
+      enabled: ${NOTIFICATION_SES_EVENTS_ENABLED:false}
+      poll-interval: 60s
+      wait-time: 10s
+      max-batches: 5
+      visibility-timeout: 60s
+      # endpoint: 可选 SQS 终端覆盖，默认使用队列 URL 所在区域的终端。
+      connect-timeout: 2s
+      read-timeout: 15s
+  # 内部 HTTP 调用方白名单：服务名 → 可用普通邮件模板编码。过渡信任，X-Caller-Service 可伪造，部署须限制私网访问。
+  # 默认为空，全部拒绝；例如 payment-orchestration-service: [PAYMENT_REFUND_SUCCEEDED_EMAIL]
+  http:
+    callers: {}
+
+# Client Webhook 投递：内部 HTTP 受理（POST /webhooks/v1/events）、补偿投递与 Operations 管理（/webhook-admin/v1）。
+# 启用时须同时开启 compensation.enabled，并在 Vault 登记 WEBHOOK_SIGNING_SECRET_V1 与 WEBHOOK_SIGNING 用途的 Protect/Reveal 规则。
+webhook:
+  enabled: false
+  # worker-id: 通知与人工认证都关闭时必须显式分配 0..31，不提供生产默认值。
+  maximum-attempts: 10
+  connect-timeout: 5s
+  response-timeout: 10s
+  # 轮换时旧密钥继续参与签名的时长；“立即作废”不受此影响。
+  secret-grace-period: 1h
+  maximum-endpoints-per-client: 5
+  # 生产只允许 https，且不放行任何内网网段；不要在生产配置中修改这两项。
+  allowed-schemes: [https]
+  trusted-networks: []
+  management-lock-wait-time: 500ms
+  management-lock-lease-time: 30s
+  # 内部 HTTP 调用方白名单：服务名 → 可提交的事件类型。过渡信任，X-Caller-Service 可伪造，部署须限制私网访问。
+  # 默认为空，全部拒绝；例如 commerce-service: [order.paid, refund.succeeded]
+  http:
+    callers: {}
+
+# 内部调用身份（D26，Foundation paytech-internal-auth）：默认 OFF，不校验入站、不附加出站 Token；DUAL 接受 Token 并回退 X-Caller-Service。
+internal-auth:
+  mode: "${PLATFORM_SUPPORT_INTERNAL_AUTH_MODE:OFF}"
+  # 申请 Token 的调用方尚无 Token，签发与 JWKS 在 REQUIRED 下仍须豁免；其余路径按模式校验。
+  exempt-path-prefixes:
+    - /actuator
+    - /public/
+    - /platform/v1/internal-tokens
+    - /platform/v1/internal-auth/jwks
+  # jwks-uri: 签发端启用时以本地密钥集合校验入站 Token，无需配置；未启用签发端而 mode 非 OFF 时必须配置。
+
+# 内部调用 Token 签发端（D26）：POST /platform/v1/internal-tokens 与 GET /platform/v1/internal-auth/jwks；默认关闭。
+# 启用时须同时启用 operations 或 client 人工认证（签发与拒绝写入审计），并通过安全配置注入签名私钥。
+internal-token:
+  issuer:
+    enabled: false
+    # STATIC：配置注入的 P-256 私钥，prod Profile 禁止；t_jwt_signing_key 的 INTERNAL 用途待 Schema 变更。
+    key-usage: STATIC
+    instance-id: "${paytech.instance-id}"
+    token-lifetime: 300s
+    # private-jwk: 含 kid 的 P-256 私钥 JWK JSON，仅经安全配置注入，不得写入版本库。
+    # 轮换：新私钥生效后把旧公钥放入此列表，至少保留 300s + 调用方 JWKS 缓存 5min。
+    retiring-public-jwks: []
+    # 调用方白名单：服务名 → targets（目标服务名）与 purposes（Purpose Code）；默认为空，全部拒绝。
+    # 例如 payment-orchestration-service: {targets: [vault-service], purposes: [GENERAL]}
+    callers: {}
+
+# Foundation paytech-messaging：本步只装配编解码与事件目录；未设置 producer/consumer.service，不连接 Broker、不声明交换机与队列。
+# 本应用未引入 spring-boot-starter-amqp，没有 RabbitMQ ConnectionFactory；发布与消费在 D07 后续切片启用。
+messaging:
+  enabled: true
+  # producer.service / producer.confirm-timeout：启用发布端时设置（服务名、默认 10s）。
+  # consumer.service / consumer.retry-backoff / consumers.<producer>.partitions：启用消费端时设置（默认 1s、4 分区）。

@@ -193,7 +193,17 @@ Operations 管理员在接入方 `PAYERMAX` 下维护验证账号与用例并发
 | `t_integration_verify_run` | `verify_run_id=840201，verify_case_id=840101，integration_id=820002，run_status=PASSED，case_snapshot_json={caseVersion:2,accountCode:UAT_MAIN,accountVersion:1}，config_versions_json={standardApis:{PAY:3,PAY_QUERY:2},integration:4}，endpoints_json=[{endpointCode:PAYERMAX_GATEWAY,sandbox:true}]，failure_summary=NULL，started_by=220001，start_time=2026-10-14T08:00:00Z，finish_time=2026-10-14T08:00:03Z`；之后任一引用配置版本变化即显示需重新验证。 |
 | `t_integration_verify_run_step` | `verify_run_step_id=840301，verify_run_id=840201，step_no=1，step_key=pay，standard_api_code=PAY，step_status=PASSED，resolved_input_json={payment:{attemptId:VR840201}}，result_json={kind:EXECUTED,executeStatus:SUCCESS}，assertions_json=[{path:paymentStatus,match:EQUALS,passed:true}]，trace_json={nodes:[{id:createOrder,executeStatus:SUCCESS,httpStatus:200}]}，elapsed_ms=1830`；运行结束时一次写入，认证类 Header 记为 [REDACTED]。 |
 
-## 10. 失败关闭与最小数据清单
+## 10. SCN-PLT-09：全平台币种规则参考数据
+
+Platform 是 `t_currency_spec` 的 Owner（D41）；Ledger 与 Billing 持同结构只读副本，过账与计费舍入不依赖远程调用。内部服务经 `GET /platform-support/platform/v1/currency-specs` 读取；只有 ACTIVE 规则允许被新业务使用。
+
+### 10.1 全平台参考数据 1 表
+
+| 物理表 | 代表性记录与判定 |
+| --- | --- |
+| `t_currency_spec` | `id=1001，currency=USD，minor_unit=2，rounding_mode=HALF_UP，status=ACTIVE`；USD 金额保留两位小数，八位计算精度按 HALF_UP 归整；未登记的币种查询返回 404。 |
+
+## 11. 失败关闭与最小数据清单
 
 - 不保存 Password 明文、Google authorization code、Access/Refresh/ID Token、OIDC client secret、KMS private key、Webhook signing secret 值、PAN 或 CVV。
 - Email/URL/消息正文等可恢复敏感值使用 Vault Token；只有明确的等值查询、完整性、幂等或安全消费者才保留 Hash。

@@ -32,7 +32,7 @@
         <module>build/paytech-parent</module>
         <module>foundation</module>
         <module>vault</module>
-        <!-- <module>platform-support</module> -->
+        <module>platform-support</module>
         <module>api-gateway</module>
         <module>operations-console-bff</module>
         <module>client-console-bff</module>

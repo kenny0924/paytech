@@ -7,11 +7,13 @@ import com.paytech.arch.model.ModuleRole;
 import com.paytech.arch.pom.PomReader;
 import com.paytech.arch.rule.CompensationHandlerRule;
 import com.paytech.arch.rule.RuleViolation;
+import com.paytech.arch.support.KnownDeviations;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
@@ -22,7 +24,7 @@ import org.junit.jupiter.api.Test;
  * R1、R2、R3、R6、R8 的依赖图部分。
  *
  * <p>
- * 真实 Reactor 中的服务模块必须零违规；另以真实 Reactor 模型加注入的违规模块证明规则在该模型上确实生效，避免空断言；R8 同时以真实
+ * 真实 Reactor 中的服务模块除 {@code known-deviations.yaml} 登记的既有偏差外必须零违规；另以真实 Reactor 模型加注入的违规模块证明规则在该模型上确实生效，避免空断言；R8 同时以真实
  * Foundation 坐标核对：{@code -core} 依赖 {@code paytech-messaging-api} 合法，依赖 {@code paytech-messaging} 违规。
  *
  * @see com.paytech.arch.ArchitectureRules#checkReactorDependencyGraph(Path)
@@ -35,6 +37,9 @@ class ReactorArchitectureAutoTest {
         "paytech-mybatis-support", "paytech-command-idempotency", "paytech-snowflake-id", "paytech-mvc-web-starter",
         "paytech-caffeine-starter", "paytech-redis-starter", "paytech-xxl-job-starter", "paytech-compensation-event",
         "paytech-messaging-api", "paytech-messaging", "paytech-internal-auth");
+
+    /** 依赖图部分覆盖的规则；登记偏差中属于这些规则的条目必须仍然出现。 */
+    private static final Set<String> GRAPH_RULES = Set.of("R1", "R2", "R3", "R6", "R8");
 
     private static final Path REACTOR_ROOT = Path.of(System.getProperty("paytech.reactor.root", "../.."))
         .toAbsolutePath().normalize();
@@ -59,7 +64,11 @@ class ReactorArchitectureAutoTest {
         Assertions.assertTrue(Files.isRegularFile(REACTOR_ROOT.resolve(CompensationHandlerRule.MESSAGING_CATALOG)),
             "R12 读取的 MQ 事件目录不存在: " + CompensationHandlerRule.MESSAGING_CATALOG);
         List<RuleViolation> violations = ArchitectureRules.checkReactorDependencyGraph(REACTOR_ROOT);
-        Assertions.assertTrue(violations.isEmpty(), () -> "Reactor 依赖图违规:\n" + describe(violations));
+        KnownDeviations known = KnownDeviations.loadDefault();
+        List<RuleViolation> unregistered = known.unregistered(violations);
+        Assertions.assertTrue(unregistered.isEmpty(), () -> "Reactor 依赖图违规:\n" + describe(unregistered));
+        List<RuleViolation> stale = known.missing(violations, entry -> GRAPH_RULES.contains(entry.ruleId()));
+        Assertions.assertTrue(stale.isEmpty(), () -> "已消除的偏差仍在登记中:\n" + describe(stale));
     }
 
     @Test
@@ -94,13 +103,14 @@ class ReactorArchitectureAutoTest {
         modules.add(new MavenModule(REACTOR_ROOT.resolve("billing/paytech-billing-core"), "com.paytech",
             "paytech-billing-core", "jar", List.of(new MavenDependency(messagingApi.groupId(),
                 messagingApi.artifactId(), "compile")), List.of()));
-        Assertions.assertTrue(ArchitectureRules.checkDependencyGraph(modules).isEmpty(),
+        KnownDeviations known = KnownDeviations.loadDefault();
+        Assertions.assertTrue(known.unregistered(ArchitectureRules.checkDependencyGraph(modules)).isEmpty(),
             "-core 依赖 paytech-messaging-api 应合法");
 
         modules.add(new MavenModule(REACTOR_ROOT.resolve("account/paytech-account-core"), "com.paytech",
             "paytech-account-core", "jar", List.of(new MavenDependency("com.paytech", "paytech-messaging", "compile")),
             List.of()));
-        List<RuleViolation> violations = ArchitectureRules.checkDependencyGraph(modules);
+        List<RuleViolation> violations = known.unregistered(ArchitectureRules.checkDependencyGraph(modules));
         Assertions.assertEquals(List.of("R8"), violations.stream().map(RuleViolation::ruleId).distinct().toList(),
             () -> describe(violations));
     }

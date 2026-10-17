@@ -40,8 +40,8 @@ const paths = Object.freeze({
   manifest: path.join(workspaceRoot, "scripts/pdmaner/platform-support/manifest.mjs"),
   policy: path.join(workspaceRoot, "scripts/pdmaner/platform-support/model-policy.mjs"),
   generator: path.join(workspaceRoot, "scripts/pdmaner/platform-support/generate-platform-support-model.mjs"),
-  model: path.join(workspaceRoot, "platform-support-service/docs/database/platform-support.pdma.json"),
-  decisions: path.join(workspaceRoot, "platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md"),
+  model: path.join(workspaceRoot, "paytech/platform-support/docs/database/platform-support.pdma.json"),
+  decisions: path.join(workspaceRoot, "paytech/platform-support/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md"),
   design: path.join(workspaceRoot, "docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md"),
   dynamicGatewayDesign: path.join(workspaceRoot, "docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md"),
   logicalDatabase: path.join(workspaceRoot, "agent-docs/database/PLATFORM_SUPPORT_DATABASE.md"),
@@ -191,9 +191,9 @@ function structuralProjection(model) {
   };
 }
 
-test("Platform Support Manifest contains exactly 72 approved tables in eight groups", async () => {
+test("Platform Support Manifest contains exactly the approved tables in nine groups", async () => {
   const { TABLES, TABLE_GROUPS } = await import("./platform-support/manifest.mjs");
-  assert.equal(Object.keys(APPROVED_TABLE_GROUPS).length, 8);
+  assert.equal(Object.keys(APPROVED_TABLE_GROUPS).length, 9);
   assert.deepEqual(
     Object.fromEntries(Object.entries(APPROVED_TABLE_GROUPS).map(([key, tables]) => [key, tables.length])),
     EXPECTED_GROUP_SIZES,

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const root = new URL('../../', import.meta.url);
-const model = JSON.parse(readFileSync(new URL('platform-support-service/docs/database/platform-support.pdma.json', root)));
+const model = JSON.parse(readFileSync(new URL('paytech/platform-support/docs/database/platform-support.pdma.json', root)));
 const proposal = JSON.parse(readFileSync(new URL('requirements/20260914/client-console-注册与客户入驻/db/file-upload-closure-proposal.json', root)));
 const entity = name => model.entities.find(item => item.defKey === name);
 

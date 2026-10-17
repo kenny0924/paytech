@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const service = new URL('../../platform-support-service/', import.meta.url);
+const service = new URL('../../paytech/platform-support/', import.meta.url);
 const model = JSON.parse(readFileSync(new URL('docs/database/platform-support.pdma.json', service)));
 const sql = readFileSync(new URL('docs/database/sql/platform-support-schema.sql', service), 'utf8');
 const apiCredentialChangeSql = readFileSync(
@@ -130,7 +130,7 @@ test('manual initial catalog and incremental Client API registrations are the sa
 
 test('Notification increment is the exact seven-table current model and test DDL agrees', () => {
   const increment = readFileSync(new URL('../../requirements/20260920/platform-support-Delivery领域规划/db/notification-create.sql', import.meta.url), 'utf8');
-  const testDdl = readFileSync(new URL('platform-support-test/src/test/resources/init/ddl.sql', service), 'utf8');
+  const testDdl = readFileSync(new URL('paytech-platform-support-test/src/test/resources/init/ddl.sql', service), 'utf8');
   const created = [...increment.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
   assert.deepEqual(created.map(t => t[1]), ['t_notification_request', 't_notification_delivery', 't_notification_attempt',
     't_notification_template', 't_notification_template_content', 't_notification_provider', 't_notification_route']);
@@ -168,7 +168,7 @@ test('Channel sandbox verification increment is the exact four-table current mod
 
 test('Client Webhook increment is the exact five-table current model and test DDL agrees', () => {
   const increment = readFileSync(new URL('docs/database/sql/changes/2026-10-15-webhook-delivery.sql', service), 'utf8');
-  const testDdl = readFileSync(new URL('platform-support-test/src/test/resources/init/ddl.sql', service), 'utf8');
+  const testDdl = readFileSync(new URL('paytech-platform-support-test/src/test/resources/init/ddl.sql', service), 'utf8');
   const created = [...increment.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
   assert.deepEqual(created.map(t => t[1]), ['t_webhook_endpoint', 't_webhook_signing_secret', 't_webhook_event',
     't_webhook_delivery', 't_webhook_attempt']);

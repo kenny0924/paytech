@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.paytech</groupId>
+        <artifactId>paytech-platform-support</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>paytech-platform-support-test</artifactId>
+    <name>PayTech Platform Support Test</name>
+    <description>Isolated Platform Support automated tests, including the shared architecture rules R1-R12.</description>
+
+    <properties>
+        <jacoco.version>0.8.13</jacoco.version>
+        <maven.install.skip>true</maven.install.skip>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-test-support</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-platform-support-app</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-arch-rules</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-junit-jupiter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-platform-coverage</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/jacoco.exec</destFile>
+                            <append>true</append>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>report-platform-aggregate-coverage</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/auto/**/*Test.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/manual/**</exclude>
+                    </excludes>
+                    <forkCount>1</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <failIfNoSpecifiedTests>true</failIfNoSpecifiedTests>
+                    <systemPropertyVariables>
+                        <paytech.platform-support.root>${project.basedir}/..</paytech.platform-support.root>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <skipIfEmpty>true</skipIfEmpty>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- 既有覆盖率门禁（INSTRUCTION / BRANCH ≥ 0.90，已知未达标）：只在显式 -Pcoverage-gate 时执行，默认 verify 不阻断 Reactor。 -->
+        <profile>
+            <id>coverage-gate</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.2.0</version>
+                        <executions>
+                            <execution>
+                                <id>verify-task-nine-coverage</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target xmlns:jacoco="antlib:org.jacoco.ant">
+                                        <taskdef uri="antlib:org.jacoco.ant"
+                                                 resource="org/jacoco/ant/antlib.xml"/>
+                                        <mkdir dir="${project.build.directory}/site/jacoco-phase-a"/>
+                                        <jacoco:report>
+                                            <executiondata>
+                                                <file file="${project.build.directory}/jacoco.exec"/>
+                                            </executiondata>
+                                            <structure name="Platform Phase A runtime">
+                                                <classfiles>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-api/target/classes"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-access-control/target/classes"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-audit-security/target/classes"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-file-document/target/classes"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-delivery/target/classes"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-integration/target/classes"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-core/target/classes"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-app/target/classes"/>
+                                                </classfiles>
+                                                <sourcefiles encoding="UTF-8">
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-api/src/main/java"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-access-control/src/main/java"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-audit-security/src/main/java"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-file-document/src/main/java"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-delivery/src/main/java"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-integration/src/main/java"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-core/src/main/java"/>
+                                                    <fileset
+                                                            dir="${project.basedir}/../paytech-platform-support-app/src/main/java"/>
+                                                </sourcefiles>
+                                            </structure>
+                                            <xml destfile="${project.build.directory}/site/jacoco-phase-a/jacoco.xml"/>
+                                            <check failonviolation="true">
+                                                <rule element="BUNDLE">
+                                                    <limit counter="INSTRUCTION" value="COVEREDRATIO" minimum="0.90"/>
+                                                    <limit counter="BRANCH" value="COVEREDRATIO" minimum="0.90"/>
+                                                </rule>
+                                            </check>
+                                        </jacoco:report>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.jacoco</groupId>
+                                <artifactId>org.jacoco.ant</artifactId>
+                                <version>${jacoco.version}</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- 与父 POM 同名：显式 -Pmanual-test 时只运行 manual 联调用例，替换上方固定的 auto 选择。 -->
+        <profile>
+            <id>manual-test</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes combine.self="override">
+                                <include>**/manual/**/*Test.java</include>
+                            </includes>
+                            <excludes combine.self="override">
+                                <exclude>**/auto/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

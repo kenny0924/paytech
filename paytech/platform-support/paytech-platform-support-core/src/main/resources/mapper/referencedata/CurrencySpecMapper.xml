@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.referencedata.core.dal.mapper.CurrencySpecMapper">
+
+    <sql id="columns">
+        id, currency, minor_unit AS minorUnit, rounding_mode AS roundingMode, status,
+        create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <select id="selectAll" timeout="2"
+            resultType="com.paytech.platform.support.referencedata.core.dal.dataobject.CurrencySpec">
+        SELECT <include refid="columns"/>
+        FROM t_currency_spec
+        ORDER BY currency
+    </select>
+
+    <select id="selectByCurrency" timeout="2"
+            resultType="com.paytech.platform.support.referencedata.core.dal.dataobject.CurrencySpec">
+        SELECT <include refid="columns"/>
+        FROM t_currency_spec
+        WHERE currency = #{currency}
+    </select>
+</mapper>

@@ -21,7 +21,7 @@ WORKSPACE_ROOT = ROOT.parent
 RISK_SQL_DIR = WORKSPACE_ROOT / "risk-compliance-service/docs/database/sql"
 RISK_SCHEMA = RISK_SQL_DIR / "risk-compliance-schema.sql"
 RISK_INITIAL_DATA = RISK_SQL_DIR / "risk-compliance-initial-data.sql"
-PLATFORM_CATALOG = WORKSPACE_ROOT / 'platform-support-service/docs/database/sql/platform-support-initial-data.sql'
+PLATFORM_CATALOG = WORKSPACE_ROOT / 'paytech/platform-support/docs/database/sql/platform-support-initial-data.sql'
 RISK_OPERATIONS_SQL = ROOT / 'sql/2026-09-07-risk-operations-rule-configuration.sql'
 ROLLOUT_LOCK = ROOT / 'private/risk-operations-rollout.lock'
 RESERVED_RANGES = {
@@ -121,7 +121,7 @@ def apply_platform_sql():
 
 
 def _apply_platform_sql_locked():
-    sql_dir = ROOT.parent / "platform-support-service/docs/database/sql"
+    sql_dir = ROOT.parent / "paytech/platform-support/docs/database/sql"
     tables = count("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='mor_platform';")
     if tables == 0:
         mysql((sql_dir / "platform-support-schema.sql").read_text(encoding="utf-8"))

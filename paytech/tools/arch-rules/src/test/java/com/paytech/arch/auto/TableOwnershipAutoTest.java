@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * 表归属白名单（由 design/03 生成）的内容与查询。
+ * 表归属白名单（由 design/03 与保留服务的评审 Schema 生成）的内容与查询。
  *
  * @see com.paytech.arch.ownership.TableOwnership#loadDefault()
  * @author Claude
@@ -21,8 +21,9 @@ class TableOwnershipAutoTest {
 
     @Test
     void test_normalFlow() {
-        // design/03 §4.2：17 个目标库共 265 张物理表。
-        Assertions.assertEquals(265, ownership.physicalTableCount());
+        // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
+        Assertions.assertEquals(265 + 56, ownership.physicalTableCount());
+        Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(29, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertEquals(Set.of("mor_platform"), ownership.databasesOf("platform-support").keySet());
         Assertions.assertTrue(ownership.allowedTables("ledger").containsAll(
@@ -36,9 +37,10 @@ class TableOwnershipAutoTest {
         Assertions.assertTrue(ownership.allowedTables("commercial").contains("t_business_change_record"));
         Assertions.assertTrue(ownership.allowedTables("billing").contains("t_currency_spec"));
         Assertions.assertFalse(ownership.allowedTables("tax").contains("t_currency_spec"));
-        // 已删除的表不属于任何服务。
-        Assertions.assertTrue(ownership.services().stream()
+        // design/03 删除的表不属于任何重切服务；保留服务 Platform 的存量命令幂等表待专项迁移，仍归 Platform。
+        Assertions.assertTrue(ownership.services().stream().filter(service -> !"platform-support".equals(service))
             .noneMatch(service -> ownership.allowedTables(service).contains("t_command_idempotency")));
+        Assertions.assertTrue(ownership.allowedTables("platform-support").contains("t_command_idempotency"));
         Assertions.assertEquals(List.of("t_payment_card", "t_payment_card_credential", "t_payment_card_instrument",
             "t_payment_stored_card"), ownership.cardTables());
     }
