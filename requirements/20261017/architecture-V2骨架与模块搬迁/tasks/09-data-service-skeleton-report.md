@@ -1,6 +1,6 @@
 # 第 09 步报告 · 数据服务骨架与 Doris / Flink CDC 容器
 
-- 分支：`refactor/step-09-data-service-skeleton`，起点 `refactor-main@5f1fc10`。实现提交 `b1b3ed1`，本报告与 README 磁盘数据修正随后单独提交。
+- 分支：`refactor/step-09-data-service-skeleton`，起点 `refactor-main@5f1fc10`。实现提交 `b1b3ed1`；报告与 README 磁盘数据修正 `1183a05`；门禁反馈的 parent 链与 Enforcer 修正为第三次提交（第 7 节）。
 - 结论：第 3 节 6 项全部真实执行。
   - 1、3、4、5、6 通过。
   - 2 的 analytics 部分全部通过，但脚本仍以退出码 1 结束，原因是 4 行既有失败，详见第 2 节第 2 项。
@@ -9,7 +9,9 @@
 
 ## 1. 改动摘要
 
-1. `paytech/data-service/` 下新增服务聚合 POM 和四个模块。四个模块的 parent 都是 `paytech-parent`，relativePath 为 `../../build/paytech-parent/pom.xml`。`paytech/pom.xml` 只取消了 `data-service` 一行注释。
+1. `paytech/data-service/` 下新增服务聚合 POM 和四个模块。`paytech/pom.xml` 只取消了 `data-service` 一行注释。
+   - parent 链（门禁反馈后修正）：四个模块的 parent 是服务聚合 POM `paytech-data-service`（`../pom.xml`），聚合 POM 再以 `../build/paytech-parent/pom.xml` 继承 `paytech-parent`。
+   - 聚合 POM 承载服务级 Enforcer `bannedDependencies`（`searchTransitive`）：禁止 `com.paytech:*-core`、`com.paytech:*-app`、`org.flywaydb:*`、`org.liquibase:*`、`org.testcontainers:*`、`org.mockito:*`；放行自身四个模块与 Foundation 的 `paytech-common-core`（它也匹配 `*-core`）。
 2. `-api`：只有 `com.paytech.data.api` 的 `package-info.java`。
 3. `-core`：`WhitelistCatalog` 接口与 `WhitelistCatalogImpl` 实现，校验逻辑在 `WhitelistDocumentParser`，配置类为 `CdcWhitelistProperties`（`data-service.cdc.whitelist-location`）。`paytech/data-service/cdc/whitelist.yaml` 只有一份，构建期打包为 `classpath:cdc/whitelist.yaml`。本模块无 Mapper。
 4. `-app` 的内容：
@@ -162,7 +164,7 @@ docker compose --env-file /Users/kenny/Desktop/Workspace/Code-MoR/local-environm
 
 ## 6. 待确认
 
-1. **服务级 Enforcer**：按任务卡，四个模块直接继承 `paytech-parent`，服务聚合 POM 只列模块。这样 01 §7 所说"服务聚合 POM 承载 bannedDependencies"无法被继承，data-service 目前没有服务级禁令。若要求禁令生效，四个模块的 parent 需改为 `paytech-data-service`。
+1. **服务级 Enforcer**：已按门禁反馈解决，见第 1 节第 1 项与第 7 节。
 2. **管理端口**：按任务卡和 01 §3 使用独立管理端口 19120。03 §1 写的是"业务服务沿用同端口暴露 Actuator"，两份文档不一致。
 3. **`MockTestBase` 未继承 `TestBase`**：`TestBase` 注入 `List<Clear>`，要求至少一个 Clear Bean。本服务当前没有任何可变测试状态，不为此造一个空 Clear。首个 Mocker 出现时改为继承。
 4. **白名单中的服务名**：演示表登记为 `service: ledger, database: mor_finance`，取 `mor_finance` 在 V2 中的 Owner。第 07 步迁表后改为 `platform-support` / `mor_platform`。
@@ -181,3 +183,16 @@ docker compose --env-file /Users/kenny/Desktop/Workspace/Code-MoR/local-environm
    - analytics Profile。
 10. **对第 00 步产物的修改**：只改了 `ReactorArchitectureAutoTest` 的模块计数断言及类注释，规则库本身未动。
 11. **`.env.local` 的 Redis 键**：用户 `.env.local` 仍是 `MOR_REDIS_PASSWORD`。所有 `compose.yaml` 组合命令都需要临时导出 `PAYTECH_REDIS_PASSWORD`。是否在 `.env.local` 中补上该键，由用户决定。
+12. **共享 `~/.m3` 的 Foundation 漂移（门禁复验时发现，非本步引入）**：
+    - 现象：另一会话于 2026-10-17 18:56–18:59 向共享 `~/.m3` 安装了新的 `paytech-mvc-web-starter` 与 `paytech-foundation`。新 starter 以 optional 方式依赖 `paytech-internal-auth`，版本由新 BOM 管理。
+    - 原因：本 Reactor 自带的 `paytech-dependencies` 是旧版，不管理 `paytech-internal-auth`，starter POM 因此判为无效，其传递依赖 `paytech-http-problem` 丢失。
+    - 后果：`DataServiceApplicationAutoTest` 两例启动失败，报 `NoClassDefFoundError: com/paytech/foundation/httpproblem/api/ProblemFieldError`。
+    - 处理：本步不为绕过而直接声明 `paytech-http-problem`。该问题在 Foundation 迁入 Reactor（第 01 步）或 BOM 合入 refactor-main 后消失；在此之前，用共享 `~/.m3` 构建本分支会失败。
+
+## 7. 门禁反馈修正（parent 链与 Enforcer）
+
+1. 四个模块 POM 的 parent 改为 `paytech-data-service`（`<relativePath>../pom.xml</relativePath>`）；聚合 POM 增加 `enforce-data-service-dependency-scope`（validate 阶段）。
+2. 复验命令：`cd paytech && ./mvnw -B clean verify -Dpaytech.local-environment.dir=/Users/kenny/Desktop/Workspace/Code-MoR/local-environment`。
+   - 用共享 `~/.m3` 执行：退出码 1。Enforcer 在聚合 POM 与四个模块上全部通过；`paytech-data-service-test` 中 `DataServiceApplicationAutoTest` 两例出错，原因是第 6 节第 12 项的共享仓库漂移。
+   - 用隔离本地仓库执行（同一命令加 `-Dmaven.repo.local=<scratchpad>/m2-isolated`，依赖从本机 Nexus 的已发布快照解析）：BUILD SUCCESS，退出码 0。arch-rules 45、data-service-test 16（含 `ArchitectureAutoTest` 0 违规）、instance-manifest 16、reactor-test 2，合计 79 个测试 0 失败；`BannedDependencies passed` 5 次（聚合 POM 加四个模块）。
+3. 反向验证：临时向 core 加入 `com.paytech:mor-common-core`（匹配 `*-core`）和 test 范围 `org.mockito:mockito-core`，`./mvnw -o validate -pl data-service/paytech-data-service-core -am` 以 BUILD FAILURE 结束，两项均报 `banned via the exclude/include list`。临时修改已撤回。

@@ -6,9 +6,9 @@
 
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>paytech-parent</artifactId>
+        <artifactId>paytech-data-service</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../../build/paytech-parent/pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>paytech-data-service-app</artifactId>

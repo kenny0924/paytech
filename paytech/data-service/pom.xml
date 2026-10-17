@@ -17,6 +17,48 @@
     <name>PayTech Data Service</name>
     <description>Data service aggregator: read model over Apache Doris fed by Flink CDC whitelist tables (D25 / D35).</description>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-data-service-dependency-scope</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <!-- No other service's core/app; cross-service calls go through *-api only (D09). -->
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
+                                        <exclude>org.flywaydb:*</exclude>
+                                        <exclude>org.liquibase:*</exclude>
+                                        <exclude>org.testcontainers:*</exclude>
+                                        <exclude>org.mockito:*</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <!-- Foundation, not a service core. -->
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-data-service-api</include>
+                                        <include>com.paytech:paytech-data-service-core</include>
+                                        <include>com.paytech:paytech-data-service-app</include>
+                                        <include>com.paytech:paytech-data-service-test</include>
+                                    </includes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
     <modules>
         <module>paytech-data-service-api</module>
         <module>paytech-data-service-core</module>
