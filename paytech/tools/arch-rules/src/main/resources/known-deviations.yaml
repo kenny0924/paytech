@@ -1,0 +1,15 @@
+# 已登记的既有偏差（规则库不做豁免，规则仍如实报告）。
+# 服务 ArchitectureAutoTest 与 Reactor 依赖图测试要求：实际违规减去本清单为空；本清单中属于被检查范围的条目必须仍然出现，
+# 偏差消除后必须删除对应条目。新增条目须写明原因并在任务报告中登记待确认。
+deviations:
+  # 第 02a 步：Platform api 的 DTO 使用 Jackson 注解与 JsonNode，ApiCredentialValidationApi 为 Gateway 提供 Mono 签名；
+  # 去除会改变已发布合同，是否放宽 R2 允许清单待评审。
+  - rule: R2
+    subject: com.paytech:paytech-platform-support-api
+    message: "api 模块存在不允许的依赖: io.projectreactor:reactor-core (compile)"
+  - rule: R2
+    subject: com.paytech:paytech-platform-support-api
+    message: "api 模块存在不允许的依赖: com.fasterxml.jackson.core:jackson-annotations (compile)"
+  - rule: R2
+    subject: com.paytech:paytech-platform-support-api
+    message: "api 模块存在不允许的依赖: tools.jackson.core:jackson-databind (compile)"

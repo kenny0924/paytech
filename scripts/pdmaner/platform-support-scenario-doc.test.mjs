@@ -8,7 +8,7 @@ import { redisIdentityHmacContradictions } from "./platform-support-test-oracle/
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
 const scenarioPath = path.join(workspaceRoot, "agent-docs/database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md");
-const modelPath = path.join(workspaceRoot, "platform-support-service/docs/database/platform-support.pdma.json");
+const modelPath = path.join(workspaceRoot, "paytech/platform-support/docs/database/platform-support.pdma.json");
 const APPROVED_API_CREDENTIAL_VALIDATIONS = Object.freeze([
   Object.freeze({
     credentialId: "240001",

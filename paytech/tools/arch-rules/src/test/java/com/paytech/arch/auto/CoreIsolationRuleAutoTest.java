@@ -23,6 +23,17 @@ class CoreIsolationRuleAutoTest {
         ViolationChecker.of(new CoreIsolationRule().check(scope)).none();
     }
 
+    /** 同一服务的多个 core 模块（如 Platform 的业务模块与应用编排层）可以互相依赖：依赖图与 import 都不违规。 */
+    @Test
+    void test_sameServiceCoreModules() {
+        ServiceArchitectureScope scope = Fixtures.scope("ledger")
+            .module(Fixtures.module("ledger", "posting-core"), Fixtures.classes("r1.samesvc.postingcore"))
+            .module(Fixtures.module("ledger", "journal-core"), Fixtures.classes("r1.samesvc.journalcore"))
+            .build();
+
+        ViolationChecker.of(new CoreIsolationRule().check(scope)).none();
+    }
+
     @Test
     void test_businessRuleViolation() {
         ServiceArchitectureScope scope = Fixtures.scope("ledger")

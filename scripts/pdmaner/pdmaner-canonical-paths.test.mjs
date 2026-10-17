@@ -12,7 +12,7 @@ const modelContracts = [
   ["payment-orchestration-service", "payment-orchestration.pdma.json", "scripts/pdmaner/generate-payment-model.mjs"],
   ["risk-compliance-service", "risk-compliance.pdma.json", "scripts/pdmaner/risk/generate-risk-compliance-model.mjs"],
   ["finance-service", "finance.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
-  ["platform-support-service", "platform-support.pdma.json", "scripts/pdmaner/platform-support/generate-platform-support-model.mjs"],
+  ["paytech/platform-support", "platform-support.pdma.json", "scripts/pdmaner/platform-support/generate-platform-support-model.mjs"],
   ["vault-service", "vault.pdma.json", "scripts/pdmaner/vault/generate-vault-model.mjs"],
 ];
 

@@ -18,7 +18,7 @@ from test_risk_database_initialization import load_initializer
 
 WORKSPACE = Path(__file__).resolve().parents[2]
 SQL = WORKSPACE / 'test-environment/sql/2026-09-07-risk-operations-rule-configuration.sql'
-CANONICAL = WORKSPACE / 'platform-support-service/docs/database/sql/platform-support-initial-data.sql'
+CANONICAL = WORKSPACE / 'paytech/platform-support/docs/database/sql/platform-support-initial-data.sql'
 BASE = 900000000000000000
 RANGES = {'t_permission': (536, 540), 't_role_permission': (581, 586),
           't_console_resource': (565, 570), 't_gateway_route': (1024, 1032),
