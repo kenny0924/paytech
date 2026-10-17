@@ -21,6 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
+import com.paytech.gateway.security.GatewayInternalTokenPolicy;
 import com.paytech.gateway.security.clientapi.ClientApiCredentialDependencyUnavailableException;
 import com.paytech.gateway.security.clientapi.PlatformClientApiCredentialValidationClient;
 import com.paytech.gateway.security.clientapi.ReactiveClientApiCredentialValidationClient;
@@ -63,7 +64,8 @@ public class GatewayCredentialValidationConfiguration {
     ReactiveClientApiCredentialValidationClient reactiveClientApiCredentialValidationClient(
         PlatformCredentialValidationProperties properties, Environment environment,
         ConnectionProvider platformCredentialConnectionProvider, LoopResources platformCredentialLoopResources,
-        ObjectProvider<ReactorLoadBalancerExchangeFilterFunction> loadBalancerProvider, OwnerProblemValidator validator) {
+        ObjectProvider<ReactorLoadBalancerExchangeFilterFunction> loadBalancerProvider, OwnerProblemValidator validator,
+        GatewayInternalTokenPolicy internalTokenPolicy) {
         properties.validateEnvironment(environment);
         JsonMapper mapper = strictMapper(properties.maxResponseBytes());
         JacksonJsonDecoder decoder = new JacksonJsonDecoder(mapper);
@@ -79,6 +81,7 @@ public class GatewayCredentialValidationConfiguration {
                 codecs.defaultCodecs().maxInMemorySize(properties.maxResponseBytes());
                 codecs.defaultCodecs().jacksonJsonDecoder(decoder);
             }).filter(protocolFilter(properties, mapper, validator));
+        internalTokenPolicy.apply(builder, properties.tokenAudience());
         if (properties.discoveryEnabled()) {
             var loadBalancer = loadBalancerProvider.getIfAvailable();
             if (loadBalancer == null) {

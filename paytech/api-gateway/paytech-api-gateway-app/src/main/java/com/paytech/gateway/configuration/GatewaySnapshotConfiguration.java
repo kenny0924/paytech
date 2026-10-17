@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.paytech.gateway.observability.GatewayMetrics;
 import com.paytech.gateway.routing.snapshot.*;
+import com.paytech.gateway.security.GatewayInternalTokenPolicy;
 
 import io.netty.channel.ChannelOption;
 import reactor.netty.http.client.HttpClient;
@@ -53,7 +54,8 @@ public class GatewaySnapshotConfiguration {
     @Bean
     ReactiveGatewaySnapshotClient reactiveGatewaySnapshotClient(PlatformSnapshotProperties properties,
         ConnectionProvider platformSnapshotConnectionProvider, LoopResources platformSnapshotLoopResources,
-        ObjectProvider<ReactorLoadBalancerExchangeFilterFunction> loadBalancerProvider) {
+        ObjectProvider<ReactorLoadBalancerExchangeFilterFunction> loadBalancerProvider,
+        GatewayInternalTokenPolicy internalTokenPolicy) {
         HttpClient httpClient =
             HttpClient.create(platformSnapshotConnectionProvider).runOn(platformSnapshotLoopResources)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(properties.connectTimeout().toMillis()))
@@ -64,6 +66,7 @@ public class GatewaySnapshotConfiguration {
         }).build();
         WebClient.Builder builder = WebClient.builder().baseUrl(snapshotBaseUrl(properties))
             .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(strategies);
+        internalTokenPolicy.apply(builder, properties.tokenAudience());
         if (properties.discoveryEnabled()) {
             ReactorLoadBalancerExchangeFilterFunction loadBalancer = loadBalancerProvider.getIfAvailable();
             if (loadBalancer == null) {

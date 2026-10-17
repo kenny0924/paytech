@@ -37,6 +37,7 @@ public final class PlatformCredentialValidationSimulator implements AutoCloseabl
     private final Deque<Scenario> scenarios = new ArrayDeque<>();
     private final AtomicInteger calls = new AtomicInteger();
     private int unexpectedCalls;
+    private String lastAuthorization;
     private DisposableServer server;
 
     public synchronized void start() {
@@ -86,6 +87,25 @@ public final class PlatformCredentialValidationSimulator implements AutoCloseabl
         scenarios.clear();
         calls.set(0);
         unexpectedCalls = 0;
+        lastAuthorization = null;
+    }
+
+    /** 最近一次请求的 Authorization 原值；未携带时为空。 */
+    public synchronized java.util.Optional<String> lastAuthorization() {
+        return java.util.Optional.ofNullable(lastAuthorization);
+    }
+
+    /**
+     * Authorization 只允许缺省（internal-auth OFF）或唯一的内部 Token Bearer；Client 凭证绝不能出现在该 Header。
+     *
+     * @param values Authorization 全部取值
+     * @return 合法返回 true
+     */
+    private static boolean onlyInternalAuthorization(List<String> values) {
+        if (values.isEmpty()) {
+            return true;
+        }
+        return values.size() == 1 && values.getFirst().startsWith("Bearer ") && !values.getFirst().contains(CREDENTIAL);
     }
 
     public static String contractPath() {
@@ -132,9 +152,11 @@ public final class PlatformCredentialValidationSimulator implements AutoCloseabl
 
     private synchronized Scenario consume(HttpServerRequest request) {
         calls.incrementAndGet();
+        List<String> authorization = request.requestHeaders().getAll("Authorization");
+        lastAuthorization = authorization.isEmpty() ? null : authorization.getFirst();
         boolean matches = "POST".equals(request.method().name()) && contractPath().equals(request.uri())
             && request.requestHeaders().getAll(ApiCredentialConstraints.CREDENTIAL_HEADER).equals(List.of(CREDENTIAL))
-            && !request.requestHeaders().contains("Authorization")
+            && onlyInternalAuthorization(authorization)
             && ApiProblemProfile.isValidRequestId(request.requestHeaders().get(ApiProblemProfile.REQUEST_ID_HEADER));
         if (!matches || scenarios.isEmpty()) {
             unexpectedCalls++;

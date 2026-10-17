@@ -19,6 +19,7 @@ public final class GatewayGlobalFilterOrder {
     public static final int UPSTREAM_TIMEOUT = Ordered.HIGHEST_PRECEDENCE + 200;
     public static final int UPSTREAM_REQUEST = Ordered.HIGHEST_PRECEDENCE + 300;
     public static final int TRUSTED_DOWNSTREAM_IDENTITY = Ordered.HIGHEST_PRECEDENCE + 400;
+    public static final int INTERNAL_TOKEN = Ordered.HIGHEST_PRECEDENCE + 410;
     public static final int OWNER_PROBLEM_RESPONSE = NettyWriteResponseFilter.WRITE_RESPONSE_FILTER_ORDER - 1;
     public static final int OPERATIONS_RESPONSE_CONTRACT = NettyWriteResponseFilter.WRITE_RESPONSE_FILTER_ORDER + 1;
     public static final int NETTY_ROUTING = Ordered.LOWEST_PRECEDENCE;

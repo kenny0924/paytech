@@ -13,11 +13,12 @@ public record PlatformCredentialValidationProperties(URI baseUri, String service
     Duration connectTimeout, Duration responseTimeout, int maxResponseBytes) {
     public static final int MAX_RESPONSE_BYTES = 16_384;
     private static final Duration MAX_TIMEOUT = Duration.ofSeconds(10);
+    private static final String DEFAULT_SERVICE_ID = "platform-support-service";
 
     public PlatformCredentialValidationProperties {
         serviceId = serviceId == null || serviceId.isBlank() ? null : serviceId.trim();
         if (baseUri == null && serviceId == null) {
-            serviceId = "platform-support-service";
+            serviceId = DEFAULT_SERVICE_ID;
         }
         connectTimeout = connectTimeout == null ? Duration.ofSeconds(1) : connectTimeout;
         responseTimeout = responseTimeout == null ? Duration.ofSeconds(2) : responseTimeout;
@@ -49,5 +50,14 @@ public record PlatformCredentialValidationProperties(URI baseUri, String service
 
     public boolean discoveryEnabled() {
         return serviceId != null;
+    }
+
+    /**
+     * 内部 Token 的目标服务名：服务发现名；本地直连地址时为 Platform 默认服务名。
+     *
+     * @return Token {@code aud}
+     */
+    public String tokenAudience() {
+        return serviceId != null ? serviceId : DEFAULT_SERVICE_ID;
     }
 }

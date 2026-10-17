@@ -35,4 +35,13 @@ public record PlatformJwksProperties(URI baseUri, String serviceId, boolean dire
     public boolean discoveryEnabled() {
         return serviceId != null;
     }
+
+    /**
+     * 内部 Token 的目标服务名：服务发现名；本地直连地址时为 Platform 默认服务名。
+     *
+     * @return Token {@code aud}
+     */
+    public String tokenAudience() {
+        return serviceId != null ? serviceId : DEFAULT_SERVICE_ID;
+    }
 }

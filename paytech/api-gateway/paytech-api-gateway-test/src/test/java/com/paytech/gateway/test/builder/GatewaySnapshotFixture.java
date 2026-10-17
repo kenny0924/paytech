@@ -23,7 +23,8 @@ public final class GatewaySnapshotFixture {
     public static final String IDEMPOTENT_DOWNSTREAM_PATH = "/client/test/idempotent";
     public static final String IDEMPOTENT_ITEM_PATH_PREFIX = "/test/client-api/items/";
     public static final String IDEMPOTENT_ITEM_DOWNSTREAM_PREFIX = "/client/test/items/";
-    private static final String TARGET = "operations-console-bff";
+    public static final String OPERATIONS_TARGET = "operations-console-bff";
+    private static final String TARGET = OPERATIONS_TARGET;
 
     private GatewaySnapshotFixture() {}
 

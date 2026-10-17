@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.paytech.gateway.security.GatewayInternalTokenPolicy;
+
 import io.netty.channel.ChannelOption;
 import reactor.netty.http.client.HttpClient;
 
@@ -25,13 +27,15 @@ public class GatewayJwksConfiguration {
     @Bean
     @Qualifier("operationsJwksWebClient")
     WebClient operationsJwksWebClient(PlatformJwksProperties properties,
-        ObjectProvider<ReactorLoadBalancerExchangeFilterFunction> loadBalancerProvider) {
+        ObjectProvider<ReactorLoadBalancerExchangeFilterFunction> loadBalancerProvider,
+        GatewayInternalTokenPolicy internalTokenPolicy) {
         HttpClient httpClient = HttpClient.create().disableRetry(true).followRedirect(false)
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(CONNECT_TIMEOUT.toMillis()))
             .responseTimeout(RESPONSE_TIMEOUT);
         WebClient.Builder builder =
             WebClient.builder().baseUrl(baseUrl(properties)).clientConnector(new ReactorClientHttpConnector(httpClient))
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(MAX_RESPONSE_BYTES));
+        internalTokenPolicy.apply(builder, properties.tokenAudience());
         if (properties.discoveryEnabled()) {
             ReactorLoadBalancerExchangeFilterFunction loadBalancer = loadBalancerProvider.getIfAvailable();
             if (loadBalancer == null) {

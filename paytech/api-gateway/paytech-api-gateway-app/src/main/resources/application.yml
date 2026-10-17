@@ -91,6 +91,10 @@ gateway:
       access-log:
         version: ${OPERATIONS_ACCESS_LOG_HMAC_VERSION}
         encoded-material: ${OPERATIONS_ACCESS_LOG_HMAC_MATERIAL}
+internal-auth:
+  # D26 出站内部 Token：OFF（默认）不附加；非 OFF 时为调用 Platform 与转发内部服务的请求附加 Token，需同时提供 Token 来源。
+  # Gateway 是公网入口，不校验入站内部 Token。必须加引号：未加引号的 OFF 在 YAML 1.1 中是布尔 false。
+  mode: "OFF"
 management:
   server:
     port: 19080

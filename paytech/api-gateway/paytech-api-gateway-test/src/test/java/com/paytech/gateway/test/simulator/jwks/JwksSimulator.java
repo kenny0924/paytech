@@ -17,6 +17,8 @@ public final class JwksSimulator {
 
     private final JwksScenarioStore scenarioStore = new JwksScenarioStore();
     private final JwksRequestJournal requestJournal = new JwksRequestJournal();
+    private final java.util.concurrent.atomic.AtomicReference<String> lastAuthorization =
+        new java.util.concurrent.atomic.AtomicReference<>();
     private DisposableServer server;
 
     public synchronized void start() {
@@ -54,9 +56,15 @@ public final class JwksSimulator {
         return requestJournal;
     }
 
+    /** 最近一次请求的 Authorization 原值；未携带时为空。 */
+    public java.util.Optional<String> lastAuthorization() {
+        return java.util.Optional.ofNullable(lastAuthorization.get());
+    }
+
     public void reset() {
         scenarioStore.reset();
         requestJournal.reset();
+        lastAuthorization.set(null);
     }
 
     public void verifyComplete() {
@@ -69,6 +77,7 @@ public final class JwksSimulator {
         HttpMethod method = HttpMethod.valueOf(request.method().name());
         String path = "/" + request.path();
         requestJournal.record(method, path);
+        lastAuthorization.set(request.requestHeaders().get(HttpHeaders.AUTHORIZATION));
         JwksScenarioStore.Response scenario = scenarioStore.consume(method, path);
         if (scenario.disconnect()) {
             response.withConnection(connection -> connection.dispose());

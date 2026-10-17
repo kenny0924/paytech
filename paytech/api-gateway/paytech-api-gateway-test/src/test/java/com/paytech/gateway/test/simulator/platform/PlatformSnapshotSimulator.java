@@ -23,6 +23,7 @@ public final class PlatformSnapshotSimulator {
     private final AtomicReference<GatewayPublicSnapshotResponseBody> snapshot;
     private final AtomicInteger requests = new AtomicInteger();
     private final AtomicInteger responseStatus = new AtomicInteger(200);
+    private final AtomicReference<String> lastAuthorization = new AtomicReference<>();
     private DisposableServer server;
 
     public PlatformSnapshotSimulator(Duration routeResponseTimeout) {
@@ -36,6 +37,7 @@ public final class PlatformSnapshotSimulator {
         }
         server = HttpServer.create().host("127.0.0.1").port(0).handle((request, response) -> {
             requests.incrementAndGet();
+            lastAuthorization.set(request.requestHeaders().get(HttpHeaders.AUTHORIZATION));
             if (!"GET".equals(request.method().name()) || !SNAPSHOT_PATH.substring(1).equals(request.path())) {
                 return response.status(404).send().then();
             }
@@ -70,6 +72,11 @@ public final class PlatformSnapshotSimulator {
         return requests.get();
     }
 
+    /** 最近一次请求的 Authorization 原值；未携带时为空。 */
+    public java.util.Optional<String> lastAuthorization() {
+        return java.util.Optional.ofNullable(lastAuthorization.get());
+    }
+
     public void respondWithStatus(int status) {
         responseStatus.set(status);
     }
@@ -78,6 +85,7 @@ public final class PlatformSnapshotSimulator {
         publish(GatewaySnapshotFixture.operationsSnapshot(routeResponseTimeout));
         responseStatus.set(200);
         requests.set(0);
+        lastAuthorization.set(null);
     }
 
     private String json(GatewayPublicSnapshotResponseBody value) {

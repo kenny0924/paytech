@@ -139,6 +139,15 @@ All values below are deployment inputs. Secret material must come from the deplo
 | `OPERATIONS_GUARD_REDIS_NAMESPACE`    | `gateway.operations.guard.redis.namespace`                                 | Environment-specific Guard key namespace                                                                         |
 | `OPERATIONS_ACCESS_LOG_HMAC_VERSION`  | `gateway.operations.hmac.access-log.version`                               | Access-log pseudonym version                                                                                     |
 | `OPERATIONS_ACCESS_LOG_HMAC_MATERIAL` | `gateway.operations.hmac.access-log.encoded-material`                      | Independent Base64 access-log HMAC secret (at least 32 decoded bytes)                                            |
+| `INTERNAL_AUTH_MODE`                  | `internal-auth.mode`                                                       | Outbound internal call Token (D26); defaults to `OFF`, see below                                                 |
+
+**Outbound internal call Token (D26).** With `internal-auth.mode` other than `OFF`, the Snapshot, JWKS and Credential
+clients and every forwarded upstream request carry `Authorization: Bearer <token>` issued for the target service
+(`aud` = the Platform service ID or the Route's discovery name, Purpose `GENERAL`). Forwarded requests never carry the
+public `Authorization`, so the Token is the only value. Startup fails when the mode is enabled without a Token source. Today the
+only source is `internal-auth.static-key.*` (local and test only); Gateway does not yet define a Platform issuing client,
+so production enablement waits for the Platform issuing endpoint and its caller authentication. Gateway is the public
+entry and does not verify inbound internal Tokens. Keep `OFF` quoted in YAML.
 
 These example values are strictly for an isolated non-production machine. The generated access-log HMAC value is
 ephemeral and must not be reused in production:
