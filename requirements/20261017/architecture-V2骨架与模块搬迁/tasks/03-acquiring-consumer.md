@@ -1,6 +1,6 @@
 # 任务卡 03 · Commerce → acquiring + consumer（两库两 app）
 
-- 分支：`refactor/step-03-acquiring-consumer`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step03`；起点：`refactor-main`（04、05 合入后，主会话填写）。
+- 分支：`refactor/step-03-acquiring-consumer`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step03`；起点：`refactor-main@e11a2385`（00–02d、04、05、07、09、10 已合入）。
 - 对应计划：[11-dev-plan.md](../design/11-dev-plan.md) 第 03 步（顺序已调整到 04、05 之后）；决定 D29（消费者 Token 按订单）、D30、D31（收单 = `acquiring`，Checkout 为内部模块）、D42（已存卡开关归客户主档）、C7（死表死代码删除）、S6（`customer_id` 稳定、资格读失败降级为不可存卡）。
 - 执行时另有第 06 步可能并行开始前的准备；本步不与其他搬迁步并行。
 
