@@ -9,7 +9,8 @@ WORKSPACE = Path(__file__).resolve().parents[2]
 NGINX_CONFIG = WORKSPACE / "test-environment/nginx/nginx.conf"
 COMPOSE_APPLICATIONS = WORKSPACE / "test-environment/compose.applications.yaml"
 GATEWAY_CONFIG = (
-    WORKSPACE / "api-gateway/api-gateway-web/src/main/resources/application.yml"
+    WORKSPACE
+    / "paytech/api-gateway/paytech-api-gateway-app/src/main/resources/application.yml"
 )
 
 

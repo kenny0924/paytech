@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.paytech</groupId>
+        <artifactId>paytech-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>paytech-api-gateway</artifactId>
+    <packaging>pom</packaging>
+
+    <name>PayTech API Gateway</name>
+    <description>API Gateway aggregator (WebFlux): app + test only, no api / core modules (design/03 §1.2).</description>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-api-gateway-app</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <!-- Platform 仍在旧工程，从本地仓库解析；第 02a 步合入后改为 Reactor 内的 paytech-platform-support-api。 -->
+                <groupId>com.paytech</groupId>
+                <artifactId>platform-support-api</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-gateway-boundaries</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>org.springframework:spring-webmvc</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-web</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-webmvc</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-webmvc</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-webmvc-test</exclude>
+                                        <exclude>jakarta.servlet:jakarta.servlet-api</exclude>
+                                        <exclude>javax.servlet:javax.servlet-api</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-tomcat</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-jetty</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-starter-undertow</exclude>
+                                        <exclude>org.springframework.cloud:spring-cloud-starter-gateway</exclude>
+                                        <exclude>com.paytech:paytech-redis-starter</exclude>
+                                        <exclude>com.paytech:paytech-caffeine-starter</exclude>
+                                        <exclude>com.paytech:paytech-mvc-web-starter</exclude>
+                                        <exclude>org.redisson:*</exclude>
+                                        <exclude>org.testcontainers:*</exclude>
+                                        <exclude>org.springframework.boot:spring-boot-testcontainers</exclude>
+                                        <exclude>org.mockito:*</exclude>
+                                        <exclude>com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config</exclude>
+                                        <!-- 任何服务的 core / app 都不得进入 Gateway；api 允许（D09、design/01 §7）。 -->
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <!-- Foundation，不是服务 core。 -->
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-api-gateway-app</include>
+                                    </includes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <modules>
+        <module>paytech-api-gateway-app</module>
+        <module>paytech-api-gateway-test</module>
+    </modules>
+</project>
