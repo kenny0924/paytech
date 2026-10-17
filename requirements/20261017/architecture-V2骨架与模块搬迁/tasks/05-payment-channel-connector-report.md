@@ -7,7 +7,7 @@
   - 两个 app 以 mock Profile 启动，health 为 UP。
   - Node 与 PDManer 脚本的失败与起点逐项一致，属既有问题。
   - 全 Reactor 按 team-lead 安排由主会话合入后统一运行。
-  - platform-support-test 结果：待运行。
+  - platform-support-test 在发现名改名后重跑，798 例 0 失败，与第 02a 步的 798 例相同。
 
 ## 1. 改动摘要
 
@@ -69,7 +69,7 @@
 - **合计**：执行数 75 + 72 = **147**，不少于基线 127；源码方法数 56 + 56 = **112**，不少于 96。两个服务的 `<skipped>` 均为 0。
 - **arch-rules**：`-pl tools/arch-rules` 共 57 例 0 失败，含新增的过渡归属与 R11 豁免两例。`tools/arch-rules-reactor-test` 共 3 例 0 失败。
 - **全 Reactor**：第一次运行（`./mvnw -B -fae clean verify`）中途主机 Data 卷写满（100%），MySQL 与 Docker 失去响应，多个依赖数据库的模块同时出现 `Communications link failure`，结果作废。用户清理并重启环境后，按 team-lead 安排，全 Reactor 由主会话合入后统一运行，本步不再重跑。
-- **platform-support-test**：本步改了 Platform 的发现名与调用方名，按 team-lead 安排在 step04 跑完后运行：待 team-lead 通知后运行（尚未运行）。
+- **platform-support-test**：本步改了 Platform 的发现名与调用方名，按 team-lead 安排在 step04 跑完后运行：命令为 `./mvnw -B verify -pl platform-support/paytech-platform-support-test -am`，BUILD SUCCESS，用时 5:26，**798 例 0 失败 0 错误 0 跳过**，与第 02a 步的 798 例相同；上游 arch-rules 57 例与 Foundation 各模块同样全部通过。
 
 ### 5.2 两个 app 以 mock Profile 启动
 
