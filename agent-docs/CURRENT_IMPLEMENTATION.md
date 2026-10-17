@@ -772,6 +772,15 @@
 - **验证：** Platform 全量测试 662/662（verify 被全库覆盖率门禁拦截，指令约 62%、分支约 43%，既有状况）；修复后相关类 14/14；Client BFF 57/57；Web 49/49 与构建；本机全链路 `developer_flow.py` 83/83、`developer_browser.mjs` 12/12。凭证可用性经 PLT-I03 私网校验接口验证（本机未登记 Client API 业务路由）；浏览器无法覆盖“重发已结束投递”（本机无可信 HTTPS 接收端、无 XXL-Job），由接口验收覆盖。
 - **已知限制：** 无 step-up 二次认证与邮件通知；并发冲到凭证上限未单测；Commerce 尚未产生业务事件；上游业务错误原因未经公共 HTTP 客户端透传到 BFF。
 
+<a id="client-console-wrapup-20261017"></a>
+
+## Client Console 已交付功能收尾（2026-10-17，已本地提交 `3209429`，未推送；2026-10-17 已部署 mor-test CCT）
+
+- **Implemented：** 按[需求](../requirements/20261017/client-console-已交付功能收尾/requirement.md)与[技术方案](../requirements/20261017/client-console-已交付功能收尾/technique.md)：CCT 批准入驻申请时在同一事务写入 Client 主体资料 `t_party_profile.approved_time`（只填空值），工作区摘要 `approvedAt` 改取该字段（空值退回最早 APPROVED 申请时间）；存量由需求目录 `db/dml.sql` 回填（近似值）。`developer_browser.mjs` 支持 `E2E_TARGET=test`。
+- **验证：** CCT 全量 53/53；本机 `workspace_flow.py` 53/53、`team_flow.py` 123/123、`developer_browser.mjs` 12/12；test `developer_browser.mjs` 10/10（3 项按设计 SKIP）、`workspace_flow.py` 53/53、`team_flow.py` 123/123。见[发布记录](../requirements/20261017/client-console-已交付功能收尾/release/release.md)。
+- **数据：** 本机 `mor_cct` 回填 28 个、test `mor_cct` 回填 21 个已批准 Client。
+- **待办：** F-01 真实邀请邮件补测（待用户提供 SES 已验证的收件地址）；推送需用户授权。
+
 <a id="client-console-team-20261017"></a>
 
 ## Client Console 团队成员与邀请（2026-10-17，已提交并推送 `f7b5500`；2026-10-17 已部署 mor-test；2026-10-17 交付结束）

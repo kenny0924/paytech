@@ -1,0 +1,5 @@
+# Client Console 已交付功能收尾 mor-test 候选（2026-10-17）：只替换 CCT，从干净提交 3209429 构建（tag mor-test/client-contract-service:client-wrapup-20261017）。
+# 3209429 在 CCT 目录只比 test 现运行的 f7b5500 多本需求的批准时间改动；环境变量沿用工作区 compose.applications.yaml。
+services:
+  client-contract-service:
+    image: sha256:8268e4cf18dc4b3107695344aa1b203606818fac91c86b3c0e6c73e14fc6e80e
