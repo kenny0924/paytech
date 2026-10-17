@@ -425,7 +425,7 @@ class RiskClientConfigurationAutoTest {
 
     @Test
     void test_productionOwnerImportsAndFieldAccessRemainInsideApprovedBoundary() throws Exception {
-        Path web = webModule();
+        Path web = appModule();
         String adapter = BFF_PACKAGE + "integration/impl/RiskDecisionConfigurationClientImpl";
         Set<String> adapters = Set.of(adapter, BFF_PACKAGE + "integration/impl/RiskFlowClientImpl", BFF_PACKAGE + "integration/impl/RiskFlowConverter", BFF_PACKAGE + "integration/impl/RiskDictionaryClientImpl",
             BFF_PACKAGE + "integration/impl/RiskConfigurationQueryClientImpl", BFF_PACKAGE + "integration/impl/RiskConfigurationConverter", BFF_PACKAGE + "integration/impl/RiskVariableClientImpl", BFF_PACKAGE + "integration/impl/RiskVariableConverter", BFF_PACKAGE + "integration/impl/RiskOperandConverter", BFF_PACKAGE + "integration/impl/RiskVariableResponsePolicy", BFF_PACKAGE + "integration/impl/ClientReviewRiskClientImpl",
@@ -528,13 +528,11 @@ class RiskClientConfigurationAutoTest {
             + "\",\"detail\":\"payload-canary\",\"requestId\":\"" + REQUEST_ID + "\",\"timestamp\":\"" + TIME + "\"}";
     }
 
-    private static Path webModule() {
-        Path current = Path.of("").toAbsolutePath();
-        while (current != null && !Files.isDirectory(current.resolve("paytech-operations-console-bff-web"))) {
-            current = current.getParent();
-        }
-        assertNotNull(current);
-        return current.resolve("paytech-operations-console-bff-web");
+    /** Surefire 在本测试模块目录运行；app 模块是同一服务目录下的相邻模块，不向上遍历查找目录名。 */
+    private static Path appModule() {
+        Path module = Path.of("").resolve("../paytech-operations-console-bff-app").toAbsolutePath().normalize();
+        assertTrue(Files.isDirectory(module), "app 模块不存在: " + module);
+        return module;
     }
 
     // 对每个对象的每个属性分别删键、加键和替换类型，覆盖绑定后无法发现的信息丢失。

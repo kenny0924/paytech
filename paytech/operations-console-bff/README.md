@@ -1,35 +1,34 @@
 # Operations Console BFF
 
-租户访问与成员权限查询的现行合同见 [需求 API](../requirements/20260914/platform-support-租户访问与成员权限查询/api.md)：8 项能力，复用既有 IAM 模型；当前研发、验证和部署状态见 [根台账](../agent-docs/CURRENT_IMPLEMENTATION.md#platform-tenant-access-20260914)。
+租户访问与成员权限查询的现行合同见 [需求 API](../../requirements/20260914/platform-support-租户访问与成员权限查询/api.md)：8 项能力，复用既有 IAM 模型；当前研发、验证和部署状态见 [根台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-tenant-access-20260914)。
 
-通知管理见[需求方案](../requirements/20261015/operations-console-通知管理/technique.md)：`/notification-admin/v1` 下 12 个端点由 `NotificationManagementController` 简单转发到 `PlatformNotificationManagementClient`，本地 record 模型与 Platform 合同字段一一对应（严格转换，缺少基本类型字段视为上游无效响应，Owner 多出的字段不投影），写入核对模板或账号编码；422 只保留本次请求体内的字段路径；不接收、不转发 `Idempotency-Key`；`/notification-admin` 只记元数据日志。
+通知管理见[需求方案](../../requirements/20261015/operations-console-通知管理/technique.md)：`/notification-admin/v1` 下 12 个端点由 `NotificationManagementController` 简单转发到 `PlatformNotificationManagementClient`，本地 record 模型与 Platform 合同字段一一对应（严格转换，缺少基本类型字段视为上游无效响应，Owner 多出的字段不投影），写入核对模板或账号编码；422 只保留本次请求体内的字段路径；不接收、不转发 `Idempotency-Key`；`/notification-admin` 只记元数据日志。
 
-Webhook 管理见[需求方案](../requirements/20261016/operations-console-Webhook管理/technique.md)：`/webhook-admin/v1` 下 10 个端点由 `WebhookManagementController` 简单转发到 `PlatformWebhookManagementClient`，本地 record 模型与 Platform 合同字段一一对应（严格转换，时间保持 UTC 字符串，投递 Envelope 原样透传）；新建端点与 Replay 返回 201，修改、启停、详情核对端点或投递 ID；写 Body 上限 8192 字节，测试事件不接受 Body（仍需 `Content-Type: application/json`）；422 只保留本次请求体内的字段路径；新建与轮换响应含密钥明文，依赖全局 `Cache-Control: no-store`，`/webhook-admin` 只记元数据日志；不接收、不转发 `Idempotency-Key`。
+Webhook 管理见[需求方案](../../requirements/20261016/operations-console-Webhook管理/technique.md)：`/webhook-admin/v1` 下 10 个端点由 `WebhookManagementController` 简单转发到 `PlatformWebhookManagementClient`，本地 record 模型与 Platform 合同字段一一对应（严格转换，时间保持 UTC 字符串，投递 Envelope 原样透传）；新建端点与 Replay 返回 201，修改、启停、详情核对端点或投递 ID；写 Body 上限 8192 字节，测试事件不接受 Body（仍需 `Content-Type: application/json`）；422 只保留本次请求体内的字段路径；新建与轮换响应含密钥明文，依赖全局 `Cache-Control: no-store`，`/webhook-admin` 只记元数据日志；不接收、不转发 `Idempotency-Key`。
 
-外部 API 配置管理的现行合同见[管理接口](../requirements/20260914/platform-support-外部API配置与执行/admin-api.md)：`/external-api-admin/v1` 下 30 个端点按对象拆成 6 组 Controller → `Platform*Client` Port → Impl，逐字段转换 `service/model/externalapi` 本地模型，`definition`、`flowDefinition` 作为 JSON 原样传递；不接收、不转发 `Idempotency-Key`（由 Gateway 处理）。`ExternalApiRequestConfiguration` 严格解析写 Body（未知属性、重复键含定义内部、尾随内容与标量强转均返回 400，上限 65,536 字节（Gateway 绝对上限））；Owner 422 由 `ExternalApiValidationConverter` 只保留以本次 Body 顶层属性开头的字段路径，说明统一为安全文案，具体问题由三个校验接口返回。
+外部 API 配置管理的现行合同见[管理接口](../../requirements/20260914/platform-support-外部API配置与执行/admin-api.md)：`/external-api-admin/v1` 下 30 个端点按对象拆成 6 组 Controller → `Platform*Client` Port → Impl，逐字段转换 `service/model/externalapi` 本地模型，`definition`、`flowDefinition` 作为 JSON 原样传递；不接收、不转发 `Idempotency-Key`（由 Gateway 处理）。`ExternalApiRequestConfiguration` 严格解析写 Body（未知属性、重复键含定义内部、尾随内容与标量强转均返回 400，上限 65,536 字节（Gateway 绝对上限））；Owner 422 由 `ExternalApiValidationConverter` 只保留以本次 Body 顶层属性开头的字段路径，说明统一为安全文案，具体问题由三个校验接口返回。
 
-> 本轮规则集整体管理的现行合同见[需求技术方案](../requirements/20260911/operations-console-风控规则集列表优化/technique.md)：沿用原接口版本，一集一行、整体删除及实际生效使用保护；Web 隐藏 Candidate 页面，后端历史合同保留。阶段确认与证据见[交付记录](../requirements/20260911/operations-console-风控规则集列表优化/delivery.md)，实现与环境状态只见[当前台账第 16 节](../agent-docs/CURRENT_IMPLEMENTATION.md#16-operations-规则集列表优化2026-09-11)。
+> 本轮规则集整体管理的现行合同见[需求技术方案](../../requirements/20260911/operations-console-风控规则集列表优化/technique.md)：沿用原接口版本，一集一行、整体删除及实际生效使用保护；Web 隐藏 Candidate 页面，后端历史合同保留。阶段确认与证据见[交付记录](../../requirements/20260911/operations-console-风控规则集列表优化/delivery.md)，实现与环境状态只见[当前台账第 16 节](../../agent-docs/CURRENT_IMPLEMENTATION.md#16-operations-规则集列表优化2026-09-11)。
 
 
-> 2026-09-11 原 V1 风控配置增量的接口与兼容规则见 [需求与接口合同](../agent-docs/plans/2026-09-11-risk-rule-v1-configuration-contract-draft.md)，本次验证、数据库与部署状态见 [当前状态第 15 节](../agent-docs/CURRENT_IMPLEMENTATION.md#15-operations-risk-v1-配置增量2026-09-11)。下文带日期的旧验证记录保留为对应基线证据。
+> 2026-09-11 原 V1 风控配置增量的接口与兼容规则见 [需求与接口合同](../../agent-docs/plans/2026-09-11-risk-rule-v1-configuration-contract-draft.md)，本次验证、数据库与部署状态见 [当前状态第 15 节](../../agent-docs/CURRENT_IMPLEMENTATION.md#15-operations-risk-v1-配置增量2026-09-11)。下文带日期的旧验证记录保留为对应基线证据。
 
 Operations Console 的无状态 Spring MVC 聚合层。浏览器接口覆盖登录、会话、强制改密、权限菜单、人员管理、自定义角色与权限配置、审计查询、Gateway Target/Route 管理，以及 Risk Rule Set 和 TEST Candidate 及整体删除的十路配置适配。Platform Support 拥有身份与当前入口授权，Risk 拥有规则、版本、状态与静态检查事实；本服务负责面向运营前端的查询聚合、展示模型组装与协议适配。
 
-本 README 记录组件能力、运行方法与可复现验证证据，不证明任何环境已部署或已启用对应公共 Route。当前实现、验证、部署和待迁移状态的唯一跨仓库台账是 [`agent-docs/CURRENT_IMPLEMENTATION.md`](../agent-docs/CURRENT_IMPLEMENTATION.md)。
+本 README 记录组件能力、运行方法与可复现验证证据，不证明任何环境已部署或已启用对应公共 Route。当前实现、验证、部署和待迁移状态的唯一跨仓库台账是 [`agent-docs/CURRENT_IMPLEMENTATION.md`](../../agent-docs/CURRENT_IMPLEMENTATION.md)。
 
 ## 工程结构
 
 ```text
-operations-console-bff/
-├── pom.xml                              # com.paytech:paytech-operations-console-bff
-├── mvnw / mvnw.cmd                      # Maven 3.9.16 Wrapper
-├── paytech-operations-console-bff-web/   # Spring Boot 部署模块
-└── paytech-operations-console-bff-test/  # 默认 auto，显式 manual-test
+paytech/operations-console-bff/
+├── pom.xml                              # com.paytech:paytech-operations-console-bff（服务聚合 POM，承载 Enforcer 禁令）
+├── paytech-operations-console-bff-app/   # Spring Boot 部署模块
+└── paytech-operations-console-bff-test/  # 默认 auto，显式 manual-test；含 ArchitectureAutoTest
 ```
 
-基础包为 `com.paytech.operations.console.bff`，启动类为 `OperationsConsoleBffApplication`。继承 `com.paytech:paytech-parent:1.0.0-SNAPSHOT`，由统一 BOM 管理 Java 25、Spring Boot 4.0.8、Spring Cloud 2025.1.3 和 Spring Cloud Alibaba 2025.1.0.0。
+基础包为 `com.paytech.operations.console.bff`，启动类为 `OperationsConsoleBffApplication`。服务聚合 POM 以真实相对路径继承 `com.paytech:paytech-parent:1.0.0-SNAPSHOT`（`../build/paytech-parent/pom.xml`），并由单一 Reactor `paytech/pom.xml` 列出；唯一 Maven Wrapper 是 `paytech/mvnw`。由统一 BOM 管理 Java 25、Spring Boot 4.0.8、Spring Cloud 2025.1.3 和 Spring Cloud Alibaba 2025.1.0.0。
 
-当前没有需要供其他 Java 服务依赖的 HTTP 契约，因此只有 `web + test`，不建立空 `api` 模块或没有业务职责的领域服务、持久化层。生产依赖包括 MVC、Foundation MVC Starter / HTTP Client Support、Actuator、Prometheus、Nacos Discovery、LoadBalancer、参数校验和轻量 `platform-support-api`、`risk-api`；构建门禁继续禁止数据库、缓存、MQ、Nacos Config 和本地认证框架。
+当前没有需要供其他 Java 服务依赖的 HTTP 契约，因此只有 `app + test`（design/03 §1.2：无 api、无 core），不建立空 `api` 模块或没有业务职责的领域服务、持久化层。生产依赖包括 MVC、Foundation MVC Starter / HTTP Client Support、Actuator、Prometheus、Nacos Discovery、LoadBalancer、参数校验和轻量 `platform-support-api`、`risk-api`；构建门禁继续禁止数据库、缓存、MQ、Nacos Config 和本地认证框架。
 
 ### 代码分层
 
@@ -57,9 +56,13 @@ OperationsRequestInterceptor（可信身份 → 当前 PLT-I02 完成 → Origin
 
 `OperationsAuthenticationApi`、`OperationsAuthorizationApi`、`OperationsManagementApi` 和 `GatewayConfigurationManagementApi` 只声明 HTTP 方法。BFF 的 Client Adapter 显式映射这些 Platform DTO，BFF 自己的 `service.model` 保留独立展示模型。Gateway 配置的分页 Item 和详情内嵌结构同样使用 `*ResponseBody`，不保留无后缀别名。`OperationsHttpBodyNamingAutoTest` 同时约束 Body 类型后缀和 API 接口不声明内嵌 DTO。
 
+### 内部调用 Token（D26）
+
+依赖 `paytech-internal-auth`，`internal-auth.mode` 默认 `OFF`：不创建任何 Token Bean，入站与出站行为与引入前一致。设为 `DUAL` / `REQUIRED` 时，MVC Starter 的 `InternalAuthFilter` 校验入站 Token；`InternalCallTokenOptions` 让本 BFF 全部 `HttpServiceClientFactory.create` 客户端按显式目标服务名（`platform-support-service`、`risk-service`、`client-contract-service`）附加 `Authorization: Bearer`。Token 来源为 Foundation 的 `InternalTokenSupplier`；本步只在测试中用 `internal-auth.static-key.*` 本地密钥对，Platform 签发客户端的接线留待 Platform 签发接口落地。Vault 管理客户端由 `paytech-vault-client` 自行装配，不在本接线范围内。`OperationsInternalTokenAutoTest` 覆盖 `REQUIRED` 下入站拒绝与出站附加。
+
 ### Risk 配置适配边界
 
-名单维护与执行发布的现行合同见[需求技术方案](../requirements/20261015/operations-console-支付风控配置接入/technique.md)第 8 节：`RiskListController`（`/risk-lists/v1/lists`，5 个）与 `RiskExecutionReleaseController`（`/decision-releases/v1/executions`，6 个）只委托 `RiskListClient`、`RiskExecutionReleaseClient`，由 `RiskControlConverter` 逐字段转换、`RiskControlResponsePolicy` 核对回执身份与分页；状态编码不做闭合枚举。名单成员只返回 Risk 的脱敏主体键，`/risk-lists` 只记元数据日志。校验与激活为无 Body 的 JSON POST。
+名单维护与执行发布的现行合同见[需求技术方案](../../requirements/20261015/operations-console-支付风控配置接入/technique.md)第 8 节：`RiskListController`（`/risk-lists/v1/lists`，5 个）与 `RiskExecutionReleaseController`（`/decision-releases/v1/executions`，6 个）只委托 `RiskListClient`、`RiskExecutionReleaseClient`，由 `RiskControlConverter` 逐字段转换、`RiskControlResponsePolicy` 核对回执身份与分页；状态编码不做闭合枚举。名单成员只返回 Risk 的脱敏主体键，`/risk-lists` 只记元数据日志。校验与激活为无 Body 的 JSON POST。
 
 `RiskDecisionConfigurationController` 的具体 Handler 只使用本地 `RiskRuleSetModels`、`RiskTestCandidateModels` 和唯一 `RiskDecisionConfigurationClient` Port。唯一实现 `RiskDecisionConfigurationClientImpl` 显式逐字段转换 Owner 请求/响应；不创建 Risk Processor、业务 Service、Repository、数据库或恢复状态缓存。
 
@@ -86,14 +89,14 @@ Gateway Route Detail 的通用 `bodyLimitBytes` 描述字段接受闭区间 `0..
 
 ## 构建与测试
 
-在当前 Mac 的项目根目录执行：
+在仓库的 `paytech/` 目录执行：
 
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 25)
-./mvnw clean verify
+./mvnw -B verify -pl operations-console-bff/paytech-operations-console-bff-test -am
 ```
 
-Maven 使用开发者已有的 Settings/Nexus 和 Maven 缓存解析 PayTech Parent/BOM/Foundation Snapshot；不依赖同级源码 POM，不在本仓库保存制品库凭据。环境准备见 [本地开发环境](../agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md)。
+PayTech Parent、BOM 与 Foundation 由同一 Reactor 构建；`risk-api`、`platform-support-api`、`client-contract-api`、`paytech-vault-client` 在各自 Owner 搬入 Reactor 之前仍从开发者已有的 Settings/Nexus 与 Maven 缓存解析同版本 Snapshot（版本写 `${project.version}`）。不在本仓库保存制品库凭据。环境准备见 [本地开发环境](../../agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md)。
 
 默认 `auto` 测试启动真实随机 Loopback HTTP 端口，关闭 Nacos 和自动注册，无需 MySQL、Redis、RabbitMQ、Nacos 或其他业务服务。测试验证健康检查、管理端点暴露、Request ID、公共 MVC 组件复用及真实 BFF HTTP → Platform/Risk 有状态协议 Simulator，不使用方法 Stub 替代生产链路。Simulator 不代替 Owner 的真实领域/数据库测试。
 
@@ -115,14 +118,14 @@ Gateway Target/Route 管理增量的 JDK 25 `clean verify` 通过 297 项测试�
 
 ## 本地启动
 
-先按仓库 [local-environment](../local-environment/README.md) 准备 Nacos，并确认 Namespace 已存在。仓库 Nacos 已启用鉴权，启动前须从开发者 Secret Store 或当前终端私密注入已初始化账号的 `SPRING_CLOUD_NACOS_DISCOVERY_USERNAME` 和 `SPRING_CLOUD_NACOS_DISCOVERY_PASSWORD`；不在 YAML 或命令历史中填写真实凭据：
+先按仓库 [local-environment](../../local-environment/README.md) 准备 Nacos，并确认 Namespace 已存在。仓库 Nacos 已启用鉴权，启动前须从开发者 Secret Store 或当前终端私密注入已初始化账号的 `SPRING_CLOUD_NACOS_DISCOVERY_USERNAME` 和 `SPRING_CLOUD_NACOS_DISCOVERY_PASSWORD`；不在 YAML 或命令历史中填写真实凭据：
 
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 25)
 export NACOS_SERVER_ADDR=127.0.0.1:8848
 export NACOS_NAMESPACE=mor-local
 "$JAVA_HOME/bin/java" -Xms128m -Xmx512m \
-  -jar paytech-operations-console-bff-web/target/paytech-operations-console-bff-web-1.0.0-SNAPSHOT-exec.jar
+  -jar paytech-operations-console-bff-app/target/paytech-operations-console-bff-app-1.0.0-SNAPSHOT-exec.jar
 ```
 
 业务默认监听 `127.0.0.1:18201`，注册名为 `operations-console-bff`，由 Platform Target 的 `discoveryServiceName` 引用；Gateway 不再硬编码这个业务目标。管理监听独立绑定 `127.0.0.1:19201`，不注册 Nacos、不映射宿主端口。BFF、Gateway 和 Platform 必须配置同一个 Nacos Namespace；不要直接混用各项目不同的默认值。当前使用 `DEFAULT_GROUP`，若通过 Spring 标准配置修改分组，相关调用方也须一致。
@@ -133,7 +136,7 @@ export NACOS_NAMESPACE=mor-local
 
 ```bash
 "$JAVA_HOME/bin/java" -Xms128m -Xmx512m \
-  -jar paytech-operations-console-bff-web/target/paytech-operations-console-bff-web-1.0.0-SNAPSHOT-exec.jar \
+  -jar paytech-operations-console-bff-app/target/paytech-operations-console-bff-app-1.0.0-SNAPSHOT-exec.jar \
   --spring.cloud.discovery.enabled=false \
   --spring.cloud.nacos.discovery.enabled=false \
   --spring.cloud.service-registry.auto-registration.enabled=false
@@ -257,9 +260,9 @@ BFF 不维护私有 Page 类或复制分页校验，出站转换只映射页面�
 - 外部错误由 Foundation 唯一 MVC Writer 生成为统一 Code-MoR Problem；除 `HEAD` 外使用
   `application/problem+json` 和六个必填成员，`HEAD` 保持无 Body。BFF 保留公共业务提示与约定浏览器状态，系统异常详情及未知远端消息不对外返回；Platform 已知 Target 的显式 Legacy Reader 仅保留到部署切换与观测完成。
 
-环境当前部署与真实链路验收状态只查阅 [`CURRENT_IMPLEMENTATION.md`](../agent-docs/CURRENT_IMPLEMENTATION.md)，运行步骤见 [`test-environment/README.md`](../test-environment/README.md)。BFF 中没有 Mock 登录、Session Store 或私钥；本文的 Loopback 测试与产物构建不代表共享或生产环境就绪。
+环境当前部署与真实链路验收状态只查阅 [`CURRENT_IMPLEMENTATION.md`](../../agent-docs/CURRENT_IMPLEMENTATION.md)，运行步骤见 [`test-environment/README.md`](../../test-environment/README.md)。BFF 中没有 Mock 登录、Session Store 或私钥；本文的 Loopback 测试与产物构建不代表共享或生产环境就绪。
 
-继续开发请读取根 `agent-docs` 路由文档与 [首版实施记录](../agent-docs/plans/2026-09-04-operations-console-first-slice.md)。
+继续开发请读取根 `agent-docs` 路由文档与 [首版实施记录](../../agent-docs/plans/2026-09-04-operations-console-first-slice.md)。
 
 2026-09-04 角色配置的历史组件记录：JDK 25 `clean verify` 182 项全通过。环境部署与跨组件验收事实统一由上述当前状态台账及其链接证据维护。
 

@@ -8,7 +8,7 @@
         <groupId>com.paytech</groupId>
         <artifactId>paytech-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath/>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
     </parent>
 
     <artifactId>paytech-operations-console-bff</artifactId>
@@ -19,7 +19,7 @@
     <description>Stateless Operations Console application foundation.</description>
 
     <modules>
-        <module>paytech-operations-console-bff-web</module>
+        <module>paytech-operations-console-bff-app</module>
         <module>paytech-operations-console-bff-test</module>
     </modules>
 
@@ -28,26 +28,26 @@
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>risk-api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>platform-support-api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>client-contract-api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-vault-client</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>paytech-operations-console-bff-web</artifactId>
+                <artifactId>paytech-operations-console-bff-app</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
@@ -104,9 +104,15 @@
                                         <exclude>org.apache.dubbo:*</exclude>
                                         <exclude>org.mockito:*</exclude>
                                         <exclude>org.testcontainers:*</exclude>
+                                        <!-- No service core/app; other services are reached only through their *-api over HTTP (design/01 §7). -->
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
                                     </excludes>
                                     <includes>
                                         <include>org.springframework.security:spring-security-crypto</include>
+                                        <!-- Foundation, not a service core. -->
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-operations-console-bff-app</include>
                                     </includes>
                                 </bannedDependencies>
                             </rules>

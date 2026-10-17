@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 import org.slf4j.MDC;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +22,7 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
+import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.foundation.web.request.RequestIdFilter;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.operations.console.bff.integration.PlatformDiscoveryInterceptor;
@@ -37,7 +39,8 @@ import com.paytech.platform.support.api.reviewfiles.ReviewFileApi;
 /** Platform HTTP 接口代理的单例注册，以及发现、超时和关联标识配置。 @author Codex */
 @Configuration(proxyBeanMethods = false)
 public class PlatformClientConfiguration {
-    private static final String PLATFORM_BASE_URL = "http://platform-support-service/platform-support";
+    private static final String PLATFORM_SERVICE = "platform-support-service";
+    private static final String PLATFORM_BASE_URL = "http://" + PLATFORM_SERVICE + "/platform-support";
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
 
@@ -62,8 +65,9 @@ public class PlatformClientConfiguration {
     /** Webhook 管理额外登记端点地址错误码，页面按 Code 在地址字段下提示；其余沿用配置写操作的发现与 Problem 解码。 */
     @Bean
     com.paytech.platform.support.api.webhookmanagement.WebhookManagementApi webhookManagementApi(Environment environment,
-        PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl) {
-        return platformProxy(environment, discovery, testBaseUrl, true, WebhookEndpointErrorCode.values())
+        PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, WebhookEndpointErrorCode.values())
             .createClient(com.paytech.platform.support.api.webhookmanagement.WebhookManagementApi.class);
     }
 
@@ -136,8 +140,8 @@ public class PlatformClientConfiguration {
     /** 审核材料下载额外登记 Platform 文件错误码，其余沿用 Platform 发现与 Problem 解码。 */
     @Bean
     ReviewFileApi reviewFileApi(Environment environment, PlatformDiscoveryInterceptor discovery,
-        @Value("${operations.platform-test-base-url:}") String testBaseUrl) {
-        return platformProxy(environment, discovery, testBaseUrl, false,
+        @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, false,
             OnboardingFileErrorCode.values()).createClient(ReviewFileApi.class);
     }
 
@@ -158,19 +162,20 @@ public class PlatformClientConfiguration {
 
     @Bean
     HttpServiceProxyFactory operationsPlatformProxyFactory(Environment environment, PlatformDiscoveryInterceptor discovery,
-        @Value("${operations.platform-test-base-url:}") String testBaseUrl) {
-        return platformProxy(environment, discovery, testBaseUrl, false);
+        @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, false);
     }
 
     /** 配置写操作显式接入字段路径投影，不改变其他 Platform 调用的历史解码行为。 */
     @Bean
     HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory(Environment environment, PlatformDiscoveryInterceptor discovery,
-        @Value("${operations.platform-test-base-url:}") String testBaseUrl) {
-        return platformProxy(environment, discovery, testBaseUrl, true);
+        @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true);
     }
 
     private HttpServiceProxyFactory platformProxy(Environment environment, PlatformDiscoveryInterceptor discovery,
-        String testBaseUrl, boolean configurationValidation, CodeMessageEnum... extraErrors) {
+        String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens, boolean configurationValidation,
+        CodeMessageEnum... extraErrors) {
         RestClient.Builder builder = RestClient.builder();
         if (testBaseUrl.isBlank()) {
             builder.baseUrl(PLATFORM_BASE_URL).requestInterceptor(discovery);
@@ -183,7 +188,8 @@ public class PlatformClientConfiguration {
         CodeMessageEnum[] errors = Stream.concat(Arrays.stream(OperationsErrorCode.values()),
             Stream.concat(Arrays.stream(GatewayConfigurationErrorCode.values()), Arrays.stream(extraErrors)))
             .toArray(CodeMessageEnum[]::new);
-        HttpServiceClientOptions options = HttpServiceClientOptions.migrationWithLegacyErrorResponse()
+        HttpServiceClientOptions options = InternalCallTokenOptions.apply(
+            HttpServiceClientOptions.migrationWithLegacyErrorResponse(), tokens, PLATFORM_SERVICE)
             .withDependencyFailureMapper((kind, cause) -> switch (kind) {
                 case TIMEOUT -> new ErrorException(OperationsBffErrorCode.DEPENDENCY_TIMEOUT, null, cause);
                 case UNAVAILABLE ->

@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.util.Arrays;
 
 import org.slf4j.MDC;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +30,7 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
+import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.foundation.web.request.RequestIdFilter;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.operations.console.bff.integration.RiskDiscoveryInterceptor;
@@ -39,7 +41,8 @@ import com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode;
 /** 独立的 Risk 发现与严格协议工厂，复用 Foundation 错误语义。 */
 @Configuration(proxyBeanMethods = false)
 public class RiskClientConfiguration {
-    private static final String RISK_BASE_URL = "http://risk-service";
+    private static final String RISK_SERVICE = "risk-service";
+    private static final String RISK_BASE_URL = "http://" + RISK_SERVICE;
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(2);
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(4);
 
@@ -105,21 +108,21 @@ public class RiskClientConfiguration {
 
     @Bean
     HttpServiceProxyFactory operationsRiskProxyFactory(Environment environment, RiskDiscoveryInterceptor discovery,
-        @Value("${operations.risk-test-base-url:}") String testBaseUrl) {
-        return riskProxyFactory(environment, discovery, testBaseUrl, HttpServiceClientOptions.strict());
+        @Value("${operations.risk-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return riskProxyFactory(environment, discovery, testBaseUrl, HttpServiceClientOptions.strict(), tokens);
     }
 
     /** 只有本期流程写接口接入字段校验错误，其他 Risk 代理保持原分类。 */
     @Bean
     HttpServiceProxyFactory operationsRiskFlowProxyFactory(Environment environment, RiskDiscoveryInterceptor discovery,
-        @Value("${operations.risk-test-base-url:}") String testBaseUrl) {
+        @Value("${operations.risk-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
         return riskProxyFactory(environment, discovery, testBaseUrl,
-            HttpServiceClientOptions.strict().withRequestValidationFailures());
+            HttpServiceClientOptions.strict().withRequestValidationFailures(), tokens);
     }
 
     /** 两组代理复用相同的发现、超时、禁止重定向及成功响应门禁。 */
     private HttpServiceProxyFactory riskProxyFactory(Environment environment, RiskDiscoveryInterceptor discovery,
-        String testBaseUrl, HttpServiceClientOptions mode) {
+        String testBaseUrl, HttpServiceClientOptions mode, ObjectProvider<InternalTokenSupplier> tokens) {
         RestClient.Builder builder = RestClient.builder();
         if (testBaseUrl.isBlank()) {
             builder.baseUrl(RISK_BASE_URL).requestInterceptor(discovery);
@@ -135,7 +138,7 @@ public class RiskClientConfiguration {
                     .addCustomConverter(new RiskOwnerResponseHttpMessageConverter())
                     .addCustomConverter(new RequestJsonWriter());
             }).build();
-        HttpServiceClientOptions options = mode
+        HttpServiceClientOptions options = InternalCallTokenOptions.apply(mode, tokens, RISK_SERVICE)
             .withDependencyFailureMapper((kind, cause) -> switch (kind) {
                 case TIMEOUT -> new ErrorException(OperationsBffErrorCode.DEPENDENCY_TIMEOUT, null, cause);
                 case UNAVAILABLE -> new ServiceUnavailableException(OperationsBffErrorCode.DEPENDENCY_UNAVAILABLE, cause);

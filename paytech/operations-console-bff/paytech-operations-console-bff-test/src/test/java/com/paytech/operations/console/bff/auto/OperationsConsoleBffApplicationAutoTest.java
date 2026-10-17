@@ -37,7 +37,6 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -328,7 +327,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /webhook-admin/v1/endpoints/{endpointId}/tests", "GET /webhook-admin/v1/deliveries",
             "GET /webhook-admin/v1/deliveries/{deliveryId}", "POST /webhook-admin/v1/deliveries/{deliveryId}/replays"), routes);
 
-        Path classes = webModule().resolve("target/classes/com/paytech/operations/console/bff");
+        Path classes = appModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {
             assertTrue(files.filter(Files::isRegularFile)
                 .map(path -> path.getFileName().toString())
@@ -338,13 +337,11 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
         }
     }
 
-    private static Path webModule() {
-        Path current = Path.of("").toAbsolutePath();
-        while (current != null && !Files.isDirectory(current.resolve("paytech-operations-console-bff-web"))) {
-            current = current.getParent();
-        }
-        assertNotNull(current);
-        return current.resolve("paytech-operations-console-bff-web");
+    /** Surefire 在本测试模块目录运行；app 模块是同一服务目录下的相邻模块，不向上遍历查找目录名。 */
+    private static Path appModule() {
+        Path module = Path.of("").resolve("../paytech-operations-console-bff-app").toAbsolutePath().normalize();
+        assertTrue(Files.isDirectory(module), "app 模块不存在: " + module);
+        return module;
     }
 
     @Test

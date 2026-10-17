@@ -5,6 +5,7 @@ import com.paytech.client.contract.api.onboarding.*;
 import com.paytech.client.contract.api.workspace.ClientWorkspaceApi;
 import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.httpclient.api.*;
+import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.platform.support.api.enums.*;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
 import com.paytech.risk.api.compliance.MaterialRequirementsApi;
@@ -29,10 +30,11 @@ public class ClientOnboardingConfiguration {
 
     /** 多个 CCT 能力共用严格传输，实例地址不由浏览器指定。 */
     @Bean
-    HttpServiceProxyFactory clientOnboardingCctFactory(Environment env, ObjectProvider<LoadBalancerClient> discovery) {
+    HttpServiceProxyFactory clientOnboardingCctFactory(Environment env, ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
         return HttpServiceClientFactory.create(
             transport(env, discovery, "cct", "client-contract-service", ""),
-            options(),
+            options(tokens, "client-contract-service"),
             ClientDraftErrorCode.values()
         );
     }
@@ -81,10 +83,11 @@ public class ClientOnboardingConfiguration {
 
     /** F01—F04 原申请文件合同，不请求 Platform 私网审核验证。 */
     @Bean
-    OnboardingFileApi onboardingFileApi(Environment env, ObjectProvider<LoadBalancerClient> discovery) {
+    OnboardingFileApi onboardingFileApi(Environment env, ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
         return HttpServiceClientFactory.create(
             transport(env, discovery, "platform", "platform-support-service", "/platform-support"),
-            options(),
+            options(tokens, "platform-support-service"),
             java.util.stream.Stream.concat(
                 Arrays.stream(OnboardingFileErrorCode.values()),
                 Arrays.stream(ClientAuthenticationErrorCode.values())
@@ -94,25 +97,29 @@ public class ClientOnboardingConfiguration {
 
     /** Risk 的非个人材料目录仅供授权页面查询。 */
     @Bean
-    MaterialRequirementsApi materialRequirementsApi(Environment env, ObjectProvider<LoadBalancerClient> discovery) {
+    MaterialRequirementsApi materialRequirementsApi(Environment env, ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
         return HttpServiceClientFactory.create(
             transport(env, discovery, "risk", "risk-service", ""),
-            options()
+            options(tokens, "risk-service")
         ).createClient(MaterialRequirementsApi.class);
     }
 
     /** Risk 客户可见审核结果；只在 CCT 核对申请归属后调用。 */
     @Bean
-    ClientReviewResultApi clientReviewResultApi(Environment env, ObjectProvider<LoadBalancerClient> discovery) {
+    ClientReviewResultApi clientReviewResultApi(Environment env, ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
         return HttpServiceClientFactory.create(
             transport(env, discovery, "risk", "risk-service", ""),
-            options()
+            options(tokens, "risk-service")
         ).createClient(ClientReviewResultApi.class);
     }
 
-    /** 依赖失败保留 Cause，业务错误按明确合同投影。 */
-    HttpServiceClientOptions options() {
-        return HttpServiceClientOptions.strict().withStrictJsonResponses(524288).withRequestValidationFailures();
+    /** 依赖失败保留 Cause，业务错误按明确合同投影；内部调用 Token 按目标服务附加（默认 OFF 不附加）。 */
+    HttpServiceClientOptions options(ObjectProvider<InternalTokenSupplier> tokens, String service) {
+        return InternalCallTokenOptions.apply(
+            HttpServiceClientOptions.strict().withStrictJsonResponses(524288).withRequestValidationFailures(),
+            tokens, service);
     }
 
     /** 发现失败显式不可用；auto 只允许随机 loopback 服务地址。 */

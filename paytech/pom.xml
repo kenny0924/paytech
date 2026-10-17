@@ -34,8 +34,8 @@
         <!-- <module>vault</module> -->
         <!-- <module>platform-support</module> -->
         <!-- <module>api-gateway</module> -->
-        <!-- <module>operations-console-bff</module> -->
-        <!-- <module>client-console-bff</module> -->
+        <module>operations-console-bff</module>
+        <module>client-console-bff</module>
         <!-- <module>client-master</module> -->
         <!-- <module>commercial</module> -->
         <!-- <module>acquiring</module> -->

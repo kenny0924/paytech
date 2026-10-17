@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.Arrays;
 
 import org.slf4j.MDC;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +24,7 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
+import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.foundation.web.request.RequestIdFilter;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.operations.console.bff.integration.OwnerDiscoveryInterceptor;
@@ -42,30 +44,34 @@ public class ClientReviewClientConfiguration {
     /** Risk 审核任务与结论。 */
     @Bean
     ClientReviewAdminApi clientReviewAdminApi(Environment environment, LoadBalancerClient loadBalancer,
-        @Value("${operations.client-review-risk-test-base-url:}") String testBaseUrl) {
-        return factory(environment, loadBalancer, "risk-service", testBaseUrl, ClientReviewErrorCode.values())
+        @Value("${operations.client-review-risk-test-base-url:}") String testBaseUrl,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        return factory(environment, loadBalancer, "risk-service", testBaseUrl, tokens, ClientReviewErrorCode.values())
             .createClient(ClientReviewAdminApi.class);
     }
 
     /** CCT 审核申请资料。 */
     @Bean
     ClientApplicationAdminApi clientApplicationAdminApi(Environment environment, LoadBalancerClient loadBalancer,
-        @Value("${operations.cct-test-base-url:}") String testBaseUrl) {
-        return factory(environment, loadBalancer, "client-contract-service", testBaseUrl, ClientDraftErrorCode.values())
+        @Value("${operations.cct-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return factory(environment, loadBalancer, "client-contract-service", testBaseUrl, tokens,
+            ClientDraftErrorCode.values())
             .createClient(ClientApplicationAdminApi.class);
     }
 
     /** CCT 行业与 MCC 分类。 */
     @Bean
     ClientClassificationAdminApi clientClassificationAdminApi(Environment environment, LoadBalancerClient loadBalancer,
-        @Value("${operations.cct-test-base-url:}") String testBaseUrl) {
-        return factory(environment, loadBalancer, "client-contract-service", testBaseUrl, ClientDraftErrorCode.values())
+        @Value("${operations.cct-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return factory(environment, loadBalancer, "client-contract-service", testBaseUrl, tokens,
+            ClientDraftErrorCode.values())
             .createClient(ClientClassificationAdminApi.class);
     }
 
     /** 发现或 auto 测试直连地址，严格协议并映射依赖故障。 */
     static org.springframework.web.service.invoker.HttpServiceProxyFactory factory(Environment environment,
-        LoadBalancerClient loadBalancer, String serviceId, String testBaseUrl, CodeMessageEnum[] codes) {
+        LoadBalancerClient loadBalancer, String serviceId, String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens,
+        CodeMessageEnum[] codes) {
         RestClient.Builder builder = RestClient.builder();
         if (testBaseUrl.isBlank()) {
             builder.baseUrl("http://" + serviceId).requestInterceptor(new OwnerDiscoveryInterceptor(loadBalancer, serviceId));
@@ -80,7 +86,8 @@ public class ClientReviewClientConfiguration {
             }
             return execution.execute(request, body);
         }).build();
-        HttpServiceClientOptions options = HttpServiceClientOptions.strict().withRequestValidationFailures()
+        HttpServiceClientOptions options = InternalCallTokenOptions.apply(
+            HttpServiceClientOptions.strict().withRequestValidationFailures(), tokens, serviceId)
             .withDependencyFailureMapper((kind, cause) -> switch (kind) {
                 case TIMEOUT -> new ErrorException(OperationsBffErrorCode.DEPENDENCY_TIMEOUT, null, cause);
                 case UNAVAILABLE -> new ServiceUnavailableException(OperationsBffErrorCode.DEPENDENCY_UNAVAILABLE, cause);
