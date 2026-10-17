@@ -7,6 +7,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageDeliveryMode;
@@ -26,18 +28,22 @@ import com.paytech.foundation.messaging.core.topology.MessagingTopology;
  * <li>AMQP 属性：{@code messageId=eventId}、{@code type=eventType}、{@code correlationId}、Persistent、
  * {@code x-aggregate-id} 头。</li>
  * <li>{@code payloadHash} 在编码时计算并写入信封；Payload 超出 JSON Object Profile 时抛 {@link IllegalArgumentException}（编程错误，不重试）。</li>
- * <li>mandatory 发送并等待 Publisher Confirm；Nack、退回（未路由到任何队列）或确认超时都抛出
- * {@link DomainEventPublishException}，由补偿 Handler 按可重试失败处理。</li>
+ * <li>mandatory 发送并等待 Publisher Confirm；Nack 或确认超时抛出 {@link DomainEventPublishException}，由补偿 Handler 按可重试失败处理。</li>
+ * <li>退回（未路由到任何队列）按 {@link UnroutablePolicy} 处理：默认 FAIL 同样抛出；ACK_AND_WARN 记 WARN 与
+ * {@code messaging.published{outcome=unroutable}} 后视为成功（仅限订阅方尚未接入的过渡期）。</li>
  *
  * @author Claude
  */
 public final class RabbitDomainEventPublisher implements DomainEventPublisher {
+
+    private static final Logger log = LoggerFactory.getLogger(RabbitDomainEventPublisher.class);
 
     private final String producer;
     private final Duration confirmTimeout;
     private final DomainEventCodec codec;
     private final RabbitTemplate template;
     private final MessagingMetrics metrics;
+    private final UnroutablePolicy unroutablePolicy;
 
     /**
      * 创建发布器。
@@ -50,6 +56,22 @@ public final class RabbitDomainEventPublisher implements DomainEventPublisher {
      */
     public RabbitDomainEventPublisher(String producer, Duration confirmTimeout, DomainEventCodec codec,
         RabbitTemplate template, MessagingMetrics metrics) {
+        this(producer, confirmTimeout, codec, template, metrics, UnroutablePolicy.FAIL);
+    }
+
+    /**
+     * 创建发布器并指定未路由策略。
+     *
+     * @param producer 本服务名，必须等于信封 {@code sourceService}
+     * @param confirmTimeout Publisher Confirm 最长等待时间
+     * @param codec 信封编码
+     * @param template 已启用 mandatory 的专用模板，连接需开启 Correlated Confirm 与 Returns
+     * @param metrics 计数器
+     * @param unroutablePolicy 退回时的处理策略
+     */
+    public RabbitDomainEventPublisher(String producer, Duration confirmTimeout, DomainEventCodec codec,
+        RabbitTemplate template, MessagingMetrics metrics, UnroutablePolicy unroutablePolicy) {
+        this.unroutablePolicy = Objects.requireNonNull(unroutablePolicy, "unroutablePolicy must not be null");
         this.producer = Objects.requireNonNull(producer, "producer must not be null");
         this.confirmTimeout = Objects.requireNonNull(confirmTimeout, "confirmTimeout must not be null");
         this.codec = Objects.requireNonNull(codec, "codec must not be null");
@@ -80,8 +102,16 @@ public final class RabbitDomainEventPublisher implements DomainEventPublisher {
                 + event.eventId() + ", 原因=" + confirm.reason());
         }
         if (correlation.getReturned() != null) {
+            int replyCode = correlation.getReturned().getReplyCode();
+            if (unroutablePolicy == UnroutablePolicy.ACK_AND_WARN) {
+                // 过渡期策略：发布方交换机尚无订阅方，不阻塞补偿任务；日志不带 Payload。
+                log.warn("领域事件未路由到任何队列，按 ACK_AND_WARN 视为成功: eventType={}, eventId={}, replyCode={}",
+                    event.eventType(), event.eventId(), replyCode);
+                metrics.publishedUnroutable(event.eventType());
+                return;
+            }
             throw new DomainEventPublishException("领域事件未路由到任何队列: " + event.eventType() + ", eventId="
-                + event.eventId() + ", replyCode=" + correlation.getReturned().getReplyCode());
+                + event.eventId() + ", replyCode=" + replyCode);
         }
         metrics.published(event.eventType());
     }

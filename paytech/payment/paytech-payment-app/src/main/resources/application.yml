@@ -71,6 +71,10 @@ compensation:
 messaging:
   producer:
     service: payment
+  publisher:
+    # 第 08 步接入订阅者后改回 FAIL：在此之前 payment.events 没有订阅队列，未路由的信封记 WARN 与
+    # messaging.published{outcome=unroutable} 后视为成功，避免 PaymentSucceeded 补偿任务持续失败（旧 Topic 仍按 mandatory 严格发布）。
+    unroutable-policy: ACK_AND_WARN
 
 # 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId 与内部调用 Token 的 inst。
 paytech:

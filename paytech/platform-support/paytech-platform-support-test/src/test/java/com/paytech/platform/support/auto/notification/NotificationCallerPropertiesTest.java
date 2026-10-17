@@ -34,18 +34,18 @@ class NotificationCallerPropertiesTest {
     /** 合法白名单只放行已登记调用方的已登记模板；未配置时全部拒绝。 */
     @Test
     void test_authorize() {
-        runner.withPropertyValues("notification.http.callers.payment-orchestration-service[0]=PAYMENT_REFUND_EMAIL",
-            "notification.http.callers.payment-orchestration-service[1]=PAYMENT_RECEIPT_EMAIL").run(context -> {
+        runner.withPropertyValues("notification.http.callers.payment-service[0]=PAYMENT_REFUND_EMAIL",
+            "notification.http.callers.payment-service[1]=PAYMENT_RECEIPT_EMAIL").run(context -> {
                 assertThat(context).hasNotFailed();
                 var callers = context.getBean(NotificationCallerProperties.class);
-                assertDoesNotThrow(() -> callers.authorize("payment-orchestration-service", "PAYMENT_RECEIPT_EMAIL"));
+                assertDoesNotThrow(() -> callers.authorize("payment-service", "PAYMENT_RECEIPT_EMAIL"));
                 assertThrows(BizCheckFailException.class,
-                    () -> callers.authorize("payment-orchestration-service", "OTHER_EMAIL"));
+                    () -> callers.authorize("payment-service", "OTHER_EMAIL"));
                 assertThrows(BizCheckFailException.class, () -> callers.authorize("commerce-service", "PAYMENT_RECEIPT_EMAIL"));
                 assertThrows(BizCheckFailException.class, () -> callers.authorize(null, "PAYMENT_RECEIPT_EMAIL"));
             });
         runner.run(context -> assertThrows(BizCheckFailException.class,
-            () -> context.getBean(NotificationCallerProperties.class).authorize("payment-orchestration-service", "X")));
+            () -> context.getBean(NotificationCallerProperties.class).authorize("payment-service", "X")));
     }
 
     /** 非法服务名、模板编码、空列表、重复模板或授权即时发送模板在启动时失败。 */

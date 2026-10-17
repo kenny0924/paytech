@@ -192,7 +192,7 @@ notification:
       connect-timeout: 2s
       read-timeout: 15s
   # 内部 HTTP 调用方白名单：服务名 → 可用普通邮件模板编码。过渡信任，X-Caller-Service 可伪造，部署须限制私网访问。
-  # 默认为空，全部拒绝；例如 payment-orchestration-service: [PAYMENT_REFUND_SUCCEEDED_EMAIL]
+  # 默认为空，全部拒绝；例如 payment-service: [PAYMENT_REFUND_SUCCEEDED_EMAIL]
   http:
     callers: {}
 
@@ -241,7 +241,7 @@ internal-token:
     # 轮换：新私钥生效后把旧公钥放入此列表，至少保留 300s + 调用方 JWKS 缓存 5min。
     retiring-public-jwks: []
     # 调用方白名单：服务名 → targets（目标服务名）与 purposes（Purpose Code）；默认为空，全部拒绝。
-    # 例如 payment-orchestration-service: {targets: [vault-service], purposes: [GENERAL]}
+    # 例如 payment-service: {targets: [vault-service], purposes: [GENERAL]}
     callers: {}
 
 # Foundation paytech-messaging：本步只装配编解码与事件目录；未设置 producer/consumer.service，不连接 Broker、不声明交换机与队列。

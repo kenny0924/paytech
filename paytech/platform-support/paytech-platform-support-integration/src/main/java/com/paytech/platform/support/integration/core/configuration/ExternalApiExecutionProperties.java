@@ -29,7 +29,7 @@ public class ExternalApiExecutionProperties {
 
     /**
      * Payment 服务的应用 context path
-     * <li>读卡初始化函数 PAYMENT_CARD 的请求地址为 http://payment-orchestration-service{本值}/payment-card/v1/...。</li>
+     * <li>读卡初始化函数 PAYMENT_CARD 的请求地址为 http://payment-service{本值}/payment-card/v1/...。</li>
      * <li>默认 /payment，与 Payment 应用配置一致；只有测试 Mock HTTP 服务配置为空串。修改需重启。</li>
      */
     private String paymentContextPath = "/payment";

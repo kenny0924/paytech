@@ -43,7 +43,7 @@ import com.paytech.platform.support.test.util.InternalTokens;
 class InternalTokenIssueTest extends MockTestBase {
 
     private static final String CALLER = "issuer-test";
-    private static final String TARGET = "payment-orchestration-service";
+    private static final String TARGET = "payment-service";
     private static final String ACTION = "INTERNAL_TOKEN_ISSUE";
 
     @Autowired

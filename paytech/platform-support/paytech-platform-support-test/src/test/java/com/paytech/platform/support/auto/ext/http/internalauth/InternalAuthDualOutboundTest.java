@@ -28,7 +28,7 @@ import com.paytech.platform.support.test.util.InternalTokens;
 class InternalAuthDualOutboundTest extends MockTestBase {
 
     private static final String SELF = "platform-support-service";
-    private static final String PAYMENT = "payment-orchestration-service";
+    private static final String PAYMENT = "payment-service";
     private static final String INSTRUMENT = "pit_outbound_001";
 
     @Autowired

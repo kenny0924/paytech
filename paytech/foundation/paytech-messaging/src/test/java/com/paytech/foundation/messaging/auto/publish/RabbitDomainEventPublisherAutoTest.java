@@ -23,13 +23,14 @@ import com.paytech.foundation.messaging.core.observability.MessagingMetrics;
 import com.paytech.foundation.messaging.core.topology.MessagingTopology;
 import com.paytech.foundation.messaging.core.topology.MessagingTopologyDeclarer;
 import com.paytech.foundation.messaging.publish.RabbitDomainEventPublisher;
+import com.paytech.foundation.messaging.publish.UnroutablePolicy;
 import com.paytech.foundation.messaging.test.base.MessagingMockTestBase;
 import com.paytech.foundation.messaging.test.support.TestRun;
 
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * RabbitMQ 发布：AMQP 属性、Publisher Confirm、退回与信封大小上限。
+ * RabbitMQ 发布：AMQP 属性、Publisher Confirm、退回（含 FAIL / ACK_AND_WARN 两种未路由策略）与信封大小上限。
  *
  * @see RabbitDomainEventPublisher#publish(DomainEvent)
  */
@@ -89,6 +90,23 @@ class RabbitDomainEventPublisherAutoTest extends MessagingMockTestBase {
         assertEquals(0.0, published(TestRun.LOOSE_EVENT));
     }
 
+    /** 未路由策略：显式 FAIL 与默认相同抛出；ACK_AND_WARN 视为成功并只记 unroutable 计数，Nack 仍然失败。 */
+    @Test
+    void test_edgeCase_unroutablePolicies() {
+        declarer.declareProducer(TestRun.ORPHAN_PRODUCER);
+        RabbitDomainEventPublisher failing = publisherFor(TestRun.ORPHAN_PRODUCER, UnroutablePolicy.FAIL);
+        RabbitDomainEventPublisher tolerant = publisherFor(TestRun.ORPHAN_PRODUCER, UnroutablePolicy.ACK_AND_WARN);
+        RabbitDomainEventPublisher tolerantMissing = publisherFor(TestRun.MISSING_PRODUCER, UnroutablePolicy.ACK_AND_WARN);
+
+        assertThrows(DomainEventPublishException.class, () -> failing.publish(orphanEvent(TestRun.ORPHAN_PRODUCER)));
+        tolerant.publish(orphanEvent(TestRun.ORPHAN_PRODUCER));
+        assertThrows(DomainEventPublishException.class,
+            () -> tolerantMissing.publish(orphanEvent(TestRun.MISSING_PRODUCER)));
+
+        assertEquals(1.0, published(TestRun.LOOSE_EVENT, "unroutable"));
+        assertEquals(0.0, published(TestRun.LOOSE_EVENT));
+    }
+
     @Test
     void test_businessRuleViolation_brokerRejectionThrows() {
         RabbitDomainEventPublisher missing = publisherFor(TestRun.MISSING_PRODUCER);
@@ -133,6 +151,13 @@ class RabbitDomainEventPublisherAutoTest extends MessagingMockTestBase {
         template.setMandatory(true);
         return new RabbitDomainEventPublisher(producer, Duration.ofSeconds(5), new DomainEventCodec(), template,
             metrics);
+    }
+
+    private RabbitDomainEventPublisher publisherFor(String producer, UnroutablePolicy policy) {
+        RabbitTemplate template = new RabbitTemplate(connectionFactory);
+        template.setMandatory(true);
+        return new RabbitDomainEventPublisher(producer, Duration.ofSeconds(5), new DomainEventCodec(), template,
+            metrics, policy);
     }
 
     private static DomainEvent orphanEvent(String producer) {

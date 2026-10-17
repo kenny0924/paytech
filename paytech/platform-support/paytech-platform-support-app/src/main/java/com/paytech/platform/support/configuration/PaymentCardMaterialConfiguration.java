@@ -26,7 +26,7 @@ import com.paytech.platform.support.integration.core.configuration.ExternalApiEx
 @Configuration(proxyBeanMethods = false)
 public class PaymentCardMaterialConfiguration {
 
-    private static final String PAYMENT_SERVICE = "payment-orchestration-service";
+    private static final String PAYMENT_SERVICE = "payment-service";
 
     /** Payment 读卡接口客户端；internal-auth.mode 非 OFF 时附加访问 Payment 的内部 Token。 */
     @Bean
