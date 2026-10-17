@@ -2,7 +2,7 @@
 
 - 分支：`refactor/step-01-foundation`（起点 `refactor-main@5f1fc10`）；实现提交 `8023ea3`（搬迁与主代码）、`f7f8d20`（测试、R12 扩展、缺口尾部重投、README），本报告随后单独提交。
 - 结论：第 5 节 6 项全部执行。1、2、4、5、6 通过；3 中 `verify-java-foundation.mjs` 通过，`verify-local-environment.mjs` 仍失败，失败类别与改动前基线相同，属既有问题。
-- 需要特别注意：共享的 `mor-local-rabbitmq-1` 没有启用 `rabbitmq_consistent_hash_exchange`。messaging 的 Broker 测试因此在一个临时私有 RabbitMQ 4.2.9 上执行（见第 2 节第 2 项）。共享容器按新挂载重建之前，不带端口覆盖的 `./mvnw -B verify` 会在 messaging 模块按设计失败并提示启用插件。
+- RabbitMQ：team-lead 批准后，已在共享 `mor-local-rabbitmq-1` 上在线启用 `rabbitmq_consistent_hash_exchange`，容器未重启（见第 2 节第 2 项）。之后不带任何端口覆盖的 `./mvnw -B clean verify` 在共享 Broker 上全部通过。
 
 ## 1. 改动摘要
 
@@ -57,17 +57,42 @@
    | Foundation 合计 | 722 | 890 | 基线 722 加新增 168，满足"不少于基线加新增" |
    | tools（arch-rules / instance-manifest / reactor-test） | 63 | 67 | +3 R12 领域事件，+1 Reactor R8 |
 
-   **RabbitMQ 的实际执行方式：**
-   - 共享 Broker 缺少一致性哈希插件。我按指示没有 up/down/restart 共享容器，并向 team-lead 询问能否在线启用插件，截至提交未收到答复。
-   - 因此另起临时容器 `step01-rabbitmq-verify`：镜像 `rabbitmq:4.2.9-management`，端口 `127.0.0.1:25682`，挂载本步的 `enabled_plugins`，账号与 `.env.local` 相同。messaging 测试以 `-Dpaytech.test.rabbitmq.port=25682` 连接它。
-   - 验证结束后已删除该容器及其匿名卷，且确认其上没有遗留测试拓扑。
-   - 对照运行：同一测试连接共享 Broker（5672）时，应用启动失败，提示如下：
+   **RabbitMQ 的执行过程：**
+   - 起初共享 Broker 缺少一致性哈希插件。我没有 up/down/restart 共享容器，先向 team-lead 申请在线启用。等待批复期间，用临时私有容器 `step01-rabbitmq-verify`（`rabbitmq:4.2.9-management`，`127.0.0.1:25682`，挂载本步的 `enabled_plugins`，账号同 `.env.local`）加 `-Dpaytech.test.rabbitmq.port=25682` 跑完了一轮，同样 957/0。该容器及其匿名卷已删除。
+   - 对照：插件启用前连接共享 Broker，应用启动失败并给出提示，即任务卡要求的"缺插件时启动失败并提示"：
 
      ```text
      声明一致性哈希交换机失败: …hash；请确认 RabbitMQ 已启用 rabbitmq_consistent_hash_exchange 插件
      ```
 
-     其原因是 `PRECONDITION_FAILED - unknown exchange type 'x-consistent-hash'`，即任务卡要求的"缺插件时启动失败并提示"。该次运行声明的拓扑由上下文关闭时删除，共享 vhost 中经核对没有 `mt*` 遗留。
+     其底层原因是 `PRECONDITION_FAILED - unknown exchange type 'x-consistent-hash'`。
+   - team-lead 批准后在线启用，容器状态保持 `Up 3 weeks (healthy)`，未重启：
+
+     ```bash
+     docker exec mor-local-rabbitmq-1 rabbitmq-plugins enable rabbitmq_consistent_hash_exchange
+     ```
+
+     启用前 `rabbitmq-plugins list -e`：
+
+     ```text
+     [E*] rabbitmq_management       4.2.9
+     [e*] rabbitmq_management_agent 4.2.9
+     [E*] rabbitmq_prometheus       4.2.9
+     [e*] rabbitmq_web_dispatch     4.2.9
+     ```
+
+     启用后：
+
+     ```text
+     [E*] rabbitmq_consistent_hash_exchange 4.2.9
+     [E*] rabbitmq_management               4.2.9
+     [e*] rabbitmq_management_agent         4.2.9
+     [E*] rabbitmq_prometheus               4.2.9
+     [e*] rabbitmq_web_dispatch             4.2.9
+     ```
+
+   - 启用后重新执行 `./mvnw -B clean verify -Dpaytech.local-environment.dir=…`（不带端口覆盖，连接共享 5672）：BUILD SUCCESS，957 个测试、0 失败，messaging 50/50。运行后共享 vhost 中以 `mt` 开头的交换机与队列均为 0。
+   - 持久化：在线启用写入的是容器内的 `/etc/rabbitmq/enabled_plugins`，容器重建后会丢失。本步的 `local-environment/rabbitmq/enabled_plugins` 以只读方式挂载到同一路径，内容为 `[rabbitmq_management,rabbitmq_prometheus,rabbitmq_consistent_hash_exchange].`，与当前已启用集合一致，所以下次按 compose 重建时插件仍然生效。test-environment 同样处理。
    - MySQL：messaging 只在 `paytech_foundation_test` 中重建并清理自己的 `t_consumed_event`、`t_consumed_aggregate_version`、`t_test_handled_event`。
 
 3. **Node 脚本**：
@@ -171,7 +196,7 @@
 
 ## 5. 待确认项
 
-1. **共享 RabbitMQ 重建**：`local-environment` 的 rabbitmq 需要用户手工按新挂载重建，例如执行 `docker compose --env-file local-environment/.env.local -f local-environment/compose.yaml --profile base up -d rabbitmq`。也可以批准在线执行 `rabbitmq-plugins enable rabbitmq_consistent_hash_exchange`。在此之前，默认配置下的 `./mvnw -B verify` 会在 messaging 模块失败并提示启用插件；test-environment 同样需要重建。
+1. **test-environment 的 RabbitMQ**：mor-test 的 Broker 未在线启用插件，本步只改了插件文件与挂载。容器按新挂载重建后才会生效，需要在 test-environment 发布时由用户执行。
 2. **`paytech-internal-auth` 作为独立模块**：MVC Starter 与 HTTP Client Support 只以 optional 方式引用它，未引入的服务不受影响。是否改为合入现有模块，需要确认。
 3. **Token 有效期**：上限 300 s，Supplier 在过期前 60 s 刷新，`iat`/`nbf` 允许 60 s 偏差，`exp` 严格判定。JWKS 缓存 5 min，kid 未命中时的强制刷新至少间隔 10 s。这些取值需要确认。
 4. **`DUAL` 模式保留期限及 Platform 签发接口的调用方认证**：Platform 如何认证"申请 Token 的调用方"本身，属于第 02a 步的设计。
