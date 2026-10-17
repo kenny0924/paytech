@@ -12,7 +12,7 @@
 - 目录：`paytech/<service>/`；模块：`paytech-<service>-api`、`paytech-<service>-core`、`paytech-<service>-app`、`paytech-<service>-test`；groupId 统一 `com.paytech`，版本由 `paytech-dependencies` BOM 管理。
 - 数据库：`mor_<service>`，连字符改下划线；每个逻辑服务独立库（D09 修订）。保留系统沿用现有库名 `mor_platform`、`mor_vault`。
 - Spring 应用名：业务服务 `<service>-service`，网关与 BFF 沿用现名。应用名同时是 Nacos dataId、XXL-Job 执行器名和 `@ImportHttpServices` 的服务发现名，改名的服务在同一搬迁步骤内同步更新全部调用方的发现名；`risk-service`、`payment-orchestration-service` 等被多方消费的旧名**不保留**别名注册（用户已定，与 C6 同口径）：改名步骤同分支改完全部调用方的发现名，门禁靠各调用方 `-test`。
-- 端口：业务服务 181xx、BFF 182xx、网关 18080；已有端口不变，新端口自 18108 起按下表顺序分配。管理端口只有网关与 BFF 单列（190xx / 192xx），业务服务沿用同端口暴露 Actuator。
+- 端口：业务服务 181xx、BFF 182xx、网关 18080；已有端口不变，新端口自 18108 起按下表顺序分配。管理端口 = 业务端口 + 1000（与 01 §3 一致；第 09 步 data-service 已按 18120 / 19120 实现），网关与 BFF 沿用 190xx / 192xx。
 - 独立 app 的例外：Q3 曾决定卡域作为 payment-app 内模块，已被 Q6 / D36 修订（第 12 步"卡域独立进程与库"）覆盖，本文按独立服务登记。payout、dispute、fx、workflow-approval、data-service 阶段 0 只建骨架、Schema 归属与空 app，不实现能力（requirement.md 第 2.3 节）。
 
 ### 1.2 坐标总表
