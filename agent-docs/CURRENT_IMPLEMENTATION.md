@@ -740,13 +740,13 @@
 
 <a id="client-console-workspace-20261016"></a>
 
-## Client Console 租户与工作区（2026-10-16，已提交并推送 `9ae668a`；2026-10-16 已部署 mor-test）
+## Client Console 租户与工作区（2026-10-16，已提交并推送 `9ae668a`；2026-10-16 已部署 mor-test；2026-10-17 交付结束）
 
 - **mor-test 部署（2026-10-16）：** 与接入自助合并发布（见其[发布记录](../requirements/20261016/client-console-接入自助/release/release-20261016.md)）；test `workspace_flow.py` 53/53。
 - **Implemented / 本机验证：** 按[需求](../requirements/20261016/client-console-租户与工作区/requirement.md)与[技术方案](../requirements/20261016/client-console-租户与工作区/technique.md)：Platform `ClientAuthenticationApi` 新增 `GET /workspaces`、`POST /workspace-context`、`POST /account-context`，会话支持 CLIENT 租户上下文，租户会话在查询与刷新时重验成员与租户，失效且账号有效时刷新降级为账号上下文并返回 `fallbackReason`；CCT `GET /client-workspace/v1/client-summaries`；Client BFF C02 / W01 / W02 与 C01 `workspaces` 聚合；Client Web 开始页“我的工作区”、`/workspace` 侧边栏外壳与首页。路由登记计划：C02 下游改为 `/client-auth/v1/workspace-context`、A05 响应 Cookie `ISSUE_OR_CLEAR`（修复刷新失败清 Cookie 被 Gateway 判非法）、新增 W01 / W02；本机已登记。
 - **验证：** Platform 全量测试 651/651（verify 被全库覆盖率门禁拦截：指令约 60%、分支约 42%，为既有状况，未与改动前对照）；CCT 51/51；Client BFF 47/47；Web 43/43 与构建；本机全链路 `workspace_flow.py` 53/53、无头浏览器 `workspace_browser.mjs` 10/10。暂停 / 恢复租户直接改本机 `mor_platform_e2e`（本机运营租户路由未启用）。未覆盖：审核通过但投影未完成（AC-03）、并发切换 409。
 - **2026-10-17 test 浏览器验收：** `E2E_TARGET=test workspace_browser.mjs` **10/10**（`https://localhost:28443`，HTTP≥400 与控制台错误 0）。
-- **待办：** 阶段 8 收尾待用户确认；AC-03 与并发切换 409 未覆盖。
+- **交付结束（2026-10-17 用户确认）：** 归档提交 `6a55fc2` 起为本地提交，推送未授权。遗留：AC-03 与并发切换 409 未覆盖。
 
 <a id="client-console-onboarding-20260914"></a>
 
