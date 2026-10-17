@@ -5,14 +5,14 @@ import {fileURLToPath} from 'node:url';
 import {requiresCoverageReport} from './class-file.mjs';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const reportDirectory = path.join(repositoryRoot, 'api-gateway-test/target/site/jacoco-aggregate');
+const reportDirectory = path.join(repositoryRoot, 'paytech-api-gateway-test/target/site/jacoco-aggregate');
 const reportXml = path.join(reportDirectory, 'jacoco.xml');
 const reportHtml = path.join(reportDirectory, 'index.html');
-const executionData = path.join(repositoryRoot, 'api-gateway-test/target/jacoco.exec');
-const webClassesDirectory = path.join(repositoryRoot, 'api-gateway-web/target/classes');
-const webClassesRoot = path.join(repositoryRoot, 'api-gateway-web/target/classes/com/paytech/gateway');
-const testClassesRoot = path.join(repositoryRoot, 'api-gateway-test/target/test-classes');
-const surefireRoot = path.join(repositoryRoot, 'api-gateway-test/target/surefire-reports');
+const executionData = path.join(repositoryRoot, 'paytech-api-gateway-test/target/jacoco.exec');
+const webClassesDirectory = path.join(repositoryRoot, 'paytech-api-gateway-app/target/classes');
+const webClassesRoot = path.join(repositoryRoot, 'paytech-api-gateway-app/target/classes/com/paytech/gateway');
+const testClassesRoot = path.join(repositoryRoot, 'paytech-api-gateway-test/target/test-classes');
+const surefireRoot = path.join(repositoryRoot, 'paytech-api-gateway-test/target/surefire-reports');
 const minimumRatio = 0.90;
 const excludedClasses = new Set(['com/paytech/gateway/ApiGatewayApplication']);
 const failures = [];
@@ -171,7 +171,7 @@ if (hasReportXml) {
     const gatewayClasses = [...allClasses.entries()]
         .filter(([className]) => className.startsWith('com/paytech/gateway/'));
     if (gatewayClasses.length === 0) {
-        failures.push('JaCoCo aggregate XML contains no api-gateway-web classes');
+        failures.push('JaCoCo aggregate XML contains no paytech-api-gateway-app classes');
     }
     const compiledGatewayClasses = new Set(webClassFiles.map(file => path.relative(webClassesDirectory, file)
         .split(path.sep).join('/').replace(/\.class$/, '')));

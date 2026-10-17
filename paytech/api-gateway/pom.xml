@@ -6,21 +6,24 @@
         <groupId>com.paytech</groupId>
         <artifactId>paytech-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath/>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>api-gateway</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>paytech-api-gateway</artifactId>
     <packaging>pom</packaging>
+
+    <name>PayTech API Gateway</name>
+    <description>API Gateway aggregator (WebFlux): app + test only, no api / core modules (design/03 §1.2).</description>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>api-gateway-web</artifactId>
+                <artifactId>paytech-api-gateway-app</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <!-- Platform 仍在旧工程，从本地仓库解析；第 02a 步合入后改为 Reactor 内的 paytech-platform-support-api。 -->
                 <groupId>com.paytech</groupId>
                 <artifactId>platform-support-api</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
@@ -64,13 +67,15 @@
                                         <exclude>org.springframework.boot:spring-boot-testcontainers</exclude>
                                         <exclude>org.mockito:*</exclude>
                                         <exclude>com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config</exclude>
-                                        <exclude>com.paytech:platform-support-web</exclude>
-                                        <exclude>com.paytech:client-contract-*</exclude>
-                                        <exclude>com.paytech:commerce-*</exclude>
-                                        <exclude>com.paytech:payment-orchestration-*</exclude>
-                                        <exclude>com.paytech:risk-compliance-*</exclude>
-                                        <exclude>com.paytech:finance-*</exclude>
+                                        <!-- 任何服务的 core / app 都不得进入 Gateway；api 允许（D09、design/01 §7）。 -->
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
                                     </excludes>
+                                    <includes>
+                                        <!-- Foundation，不是服务 core。 -->
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-api-gateway-app</include>
+                                    </includes>
                                 </bannedDependencies>
                             </rules>
                         </configuration>
@@ -81,7 +86,7 @@
     </build>
 
     <modules>
-        <module>api-gateway-web</module>
-        <module>api-gateway-test</module>
+        <module>paytech-api-gateway-app</module>
+        <module>paytech-api-gateway-test</module>
     </modules>
 </project>

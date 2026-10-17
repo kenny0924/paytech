@@ -1,0 +1,3 @@
+# Common Java / IDE / local-environment ignores live in paytech/.gitignore.
+# Optional, Git-ignored workstation credentials loaded by application-auto.yml.
+/paytech-api-gateway-test/src/test/resources/application-auto.local.yml

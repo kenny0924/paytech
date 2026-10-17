@@ -4,11 +4,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>api-gateway</artifactId>
+        <artifactId>paytech-api-gateway</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>api-gateway-web</artifactId>
+    <artifactId>paytech-api-gateway-app</artifactId>
     <dependencies>
         <dependency>
             <groupId>com.paytech</groupId>

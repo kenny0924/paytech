@@ -4,9 +4,9 @@ import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const productionJavaRoot = path.join(repositoryRoot, 'api-gateway-web/src/main/java');
-const productionResourceRoot = path.join(repositoryRoot, 'api-gateway-web/src/main/resources');
-const testRoot = path.join(repositoryRoot, 'api-gateway-test/src/test');
+const productionJavaRoot = path.join(repositoryRoot, 'paytech-api-gateway-app/src/main/java');
+const productionResourceRoot = path.join(repositoryRoot, 'paytech-api-gateway-app/src/main/resources');
+const testRoot = path.join(repositoryRoot, 'paytech-api-gateway-test/src/test');
 const applicationYaml = path.join(productionResourceRoot, 'application.yml');
 const readme = path.join(repositoryRoot, 'README.md');
 const violations = [];
