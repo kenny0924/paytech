@@ -90,7 +90,7 @@ cd paytech && ./mvnw -B -o verify -pl tools/arch-rules,billing/paytech-billing-t
   - 第一次 `./mvnw -B -o clean verify`：停在 `paytech-vault-test`。该模块需要 `VAULT_TEST_*` 变量和 Go 服务二进制，这是既有环境前置，与本步无关。
   - 第二次排除 vault-test：Foundation、arch-rules 等通过，`paytech-platform-support-test` 大面积失败，首因是 `Duplicate entry '900000000000000500' for key 't_access_tenant.PRIMARY'`。当时 step05 worktree 正在对同一 `mor_platform` 跑 platform-support-test（`ps` 已核实），属并发争用，本步未改 Platform 任何文件。
   - 第三、四次：宿主磁盘满（ENOSPC），Redis 进入 `MISCONF`，Foundation redis-starter 的 2 个集成用例失败；随后 MySQL 也报 `Communications link failure`，account 测试在故障期间出错（16 个错误）。
-  - 环境恢复后需执行：`cd paytech && ./mvnw -B clean verify -pl '!vault/paytech-vault-test' -Dpaytech.local-environment.dir=…`，并在没有其他 Platform 测试 JVM 时单跑 platform-support-test。
+  - team-lead 已决定：全 Reactor verify 只由主会话在合入后执行；本步只需在环境恢复后重跑 Finance 五服务的 `-pl … -am`。原计划命令留作参考：`cd paytech && ./mvnw -B clean verify -pl '!vault/paytech-vault-test' -Dpaytech.local-environment.dir=…`，并在没有其他 Platform 测试 JVM 时单跑 platform-support-test。
 
 ### 2. 五个 app 以 mock Profile 启动（部分完成）
 
@@ -220,4 +220,4 @@ docker exec -i -e MYSQL_PWD="$P" mor-local-mysql-1 mysql -uroot --default-charac
 6. 初始化脚本的五个账号为可选创建，因为 compose 未传入变量，且本步不能改 compose。需要后续把 `MOR_{LEDGER,BILLING,ACCOUNT,RECONCILIATION,TAX}_DB_PASSWORD` 加进 `compose.yaml` 的 mysql environment。
 7. data-service 的 CDC 白名单与 Flink 演示管道仍指向 `mor_finance.t_currency_spec`（第 09 步遗留"07 步后改为 platform-support / mor_platform"）。本步未改 data-service 与 local-environment 的 flink 文件。
 8. agent-docs 的 `FINANCE_DATABASE.md` 等目录文档仍用旧表名（09 §5.1 不在本期范围）；场景文档 `FINANCE_REAL_WORLD_SCENARIOS.md` 因测试需要已同步改名并补 `status`。
-9. 环境：第 2 节第 1、2 项需要在磁盘、Redis 与 MySQL 恢复后重跑。
+9. 环境：收到 team-lead"环境已恢复"后，重跑 Finance 五服务 `-pl ledger/paytech-ledger-test,billing/paytech-billing-test,account/paytech-account-test,reconciliation/paytech-reconciliation-test,tax/paytech-tax-test -am` 与第 2 节第 2 项的 app health 探测；全 Reactor 由主会话合入后执行。
