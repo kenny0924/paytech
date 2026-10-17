@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -198,8 +200,13 @@ public class InstanceManifestValidatorImpl implements InstanceManifestValidator 
             services.add(new ServiceRuntime(service.getKey(), runtime.path("port").asInt(),
                 runtime.path("snowflakeWorkerId").asInt(), database.isString() ? database.asString() : null));
         }
+        Map<String, Integer> schemaVersions = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonNode> entry : manifest.path("versions").path("schema").properties()) {
+            schemaVersions.put(entry.getKey(), entry.getValue().asInt());
+        }
         return new InstanceManifest(manifest.path("instance").path("id").asString(),
-            manifest.path("versions").path("platform").asString(), List.copyOf(services));
+            manifest.path("versions").path("platform").asString(), List.copyOf(services),
+            Collections.unmodifiableMap(schemaVersions));
     }
 
     private static ManifestValidationResult invalid(ManifestViolation violation) {

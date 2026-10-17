@@ -9,6 +9,7 @@ import com.paytech.instance.manifest.test.ManifestViolationChecker;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,8 @@ class InstanceManifestValidatorAutoTest {
         Assertions.assertEquals("2.3.0", result.manifest().platformVersion());
         Assertions.assertEquals(List.of(new ServiceRuntime("ledger", 18105, 11, "mor_ledger"),
             new ServiceRuntime("account", 18114, 12, "mor_account")), result.manifest().services());
+        Assertions.assertEquals(Map.of("ledger", 7, "account", 1), result.manifest().schemaVersions());
+        Assertions.assertEquals(List.of("ledger", "account"), List.copyOf(result.manifest().schemaVersions().keySet()));
     }
 
     @Test

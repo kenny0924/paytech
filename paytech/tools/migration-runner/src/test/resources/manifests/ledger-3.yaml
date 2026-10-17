@@ -1,0 +1,18 @@
+# Minimal legal manifest for migration-runner tests: one service with a database, schema target V3.
+instance:
+  id: main
+  operator: PayTech
+  operationMode: SELF
+  businessModes: [MOR]
+modules:
+  card: {enabled: false}
+brands:
+  - code: main
+    domains: [checkout.example.com]
+    legalPartyRef: PARTY-xxxx
+channels: [NI]
+services:
+  ledger: {port: 18105, snowflakeWorkerId: 11, db: mor_ledger}
+versions:
+  platform: 2.3.0
+  schema: {ledger: 3}

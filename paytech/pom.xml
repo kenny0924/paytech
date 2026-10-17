@@ -57,6 +57,7 @@
         <!-- <module>workflow-approval</module> -->
         <module>tools/arch-rules</module>
         <module>tools/instance-manifest</module>
+        <module>tools/migration-runner</module>
         <module>tools/arch-rules-reactor-test</module>
     </modules>
 </project>
