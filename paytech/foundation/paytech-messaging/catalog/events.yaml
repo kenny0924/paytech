@@ -23,6 +23,8 @@ events:
     strictOrder: false
     payloadSchemaRef: paytech-compliance-api/event/ClientReviewDecided/v1
   # 唯一经济事实（C1，design/04 §5）：ledger 过账、account 维护余额，Payload 含头与全部明细行。
+  # 第 11a 步按实现核对：aggregateId 为 factId，aggregateVersion 取 t_economic_fact.fact_version（替代链递增）；Payload 字段定义见
+  # paytech-billing-api 的 com.paytech.billing.api.fact.EconomicFactPayload。不同事实之间无顺序依赖，故 strictOrder=false。
   - eventType: EconomicFactRecorded
     schemaVersion: 1
     producer: billing

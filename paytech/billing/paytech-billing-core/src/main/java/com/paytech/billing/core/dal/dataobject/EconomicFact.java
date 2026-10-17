@@ -4,12 +4,16 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 import com.paytech.billing.api.enums.EconomicsType;
-import com.paytech.billing.core.enums.EconomicFactStatus;
+import com.paytech.billing.api.enums.EconomicFactStatus;
 
 import lombok.Getter;
 import lombok.Setter;
 
-/** t_economic_fact（原 t_transaction_economics）：按业务事实冻结的不可变经济事实；本期只读，登记入口在第 11a 步实现。 */
+/**
+ * t_economic_fact（原 t_transaction_economics）：经济事实头
+ * <li>内容一经提交不可修改；只有登记状态、版本定稿、复核信息与发布时间随 Maker-Checker 和事件发布推进。</li>
+ * <li>交易锚点（订单、上下文、税务快照、支付意图等）只对交易类事实必填；人工 / 成本调整登记为空。</li>
+ */
 @Getter
 @Setter
 public class EconomicFact {
@@ -51,17 +55,20 @@ public class EconomicFact {
 
     /**
      * Commerce 订单稳定业务ID
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private Long orderId;
 
     /**
      * Commerce Order Context 稳定业务ID
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private Long orderContextId;
 
     /**
      * 上下文格式
      * <li>允许值：TERM_PRICE、LEGACY_SCOPE。</li>
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private String contextFormat;
 
@@ -103,16 +110,19 @@ public class EconomicFact {
 
     /**
      * Commerce 冻结的商业上下文 UTC 时间
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private Instant commercialContextTime;
 
     /**
      * 本库税务计算快照ID
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private Long taxSnapshotId;
 
     /**
      * Payment 支付意图ID
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private Long paymentIntentId;
 
@@ -182,26 +192,31 @@ public class EconomicFact {
 
     /**
      * 消费者国家代码
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private String consumerCountryCode;
 
     /**
      * 实际支付方式代码
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private String paymentMethod;
 
     /**
      * 行业分类代码
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private String industryCode;
 
     /**
      * 四位 MCC
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private String mccCode;
 
     /**
      * CCT Client 合同ID
+     * <li>交易类事实必填；人工 / 成本调整为空。</li>
      */
     private Long clientAgreementId;
 
@@ -238,7 +253,48 @@ public class EconomicFact {
     private EconomicFactStatus status;
 
     /**
+     * 事实版本
+     * <li>DRAFT 为 0；批准时定稿为 1，替代事实为被替代事实版本 + 1；EconomicFactRecorded 的 aggregateVersion。</li>
+     */
+    private Long factVersion;
+
+    /**
+     * Finance 渠道清算账户（reconciliation t_channel_account.id）
+     * <li>可为空；COST_ADJUSTMENT 必填。</li>
+     */
+    private Long channelAccountId;
+
+    /**
+     * 编制人平台用户标识
+     * <li>人工 / 成本调整必填；系统生成的交易事实为空。</li>
+     */
+    private Long makerId;
+
+    /**
+     * 复核人平台用户标识
+     * <li>批准后非空且不等于编制人。</li>
+     */
+    private Long checkerId;
+
+    /**
+     * 批准 UTC 微秒时间
+     * <li>DRAFT 为空；事件 occurredAt。</li>
+     */
+    private Instant approvedTime;
+
+    /**
+     * EconomicFactRecorded 收到 Broker 确认后的 UTC 微秒时间
+     * <li>未发布为空。</li>
+     */
+    private Instant publishedAt;
+
+    /**
      * 该记录在 Billing 数据库中的 UTC 微秒创建时间
      */
     private Instant createTime;
+
+    /**
+     * 最后一次状态、版本或发布时间更新的 UTC 微秒时间
+     */
+    private Instant updateTime;
 }

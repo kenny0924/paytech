@@ -10,7 +10,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { RELATIONS, TABLES } from "./manifest.mjs";
-import { EXPECTED_SERVICE_TABLE_COUNTS, FINANCE_SERVICES, serviceTables } from "./service-split.mjs";
+import { CURRENT_COMPENSATION_EVENT } from "./manifests/08-reliability.mjs";
+import {
+  EXPECTED_SERVICE_TABLE_COUNTS,
+  FINANCE_SERVICES,
+  SERVICE_TABLE_VARIANTS,
+  serviceTables,
+} from "./service-split.mjs";
 import {
   CHECK_BINDINGS,
   CHECK_CONTRACTS,
@@ -243,10 +249,10 @@ function buildIndexes(table, fieldsByKey) {
   });
 }
 
-function buildEntities(model) {
+function buildEntities(model, tables = TABLES) {
   const typeIds = Object.fromEntries(model.dataTypeMapping.mappings.map((mapping) => [mapping.defKey, mapping.id]));
   const domainIds = Object.fromEntries(model.domains.map((domain) => [domain.defKey, domain.id]));
-  return TABLES.map((table) => {
+  return tables.map((table) => {
     const fields = table.fields.map((manifestField) => {
       const mapping = baseTypeFor(manifestField, typeIds, domainIds);
       return {
@@ -263,7 +269,7 @@ function buildEntities(model) {
         hideInGraph: false,
         refDict: "",
         baseType: mapping.baseType,
-        extProps: (["entity_no", "liable_entity_no", "entity_id"].includes(manifestField.defKey) || (table.defKey === "account" && manifestField.defKey === "owner_id") || (table.defKey === "economic_fact_line" && manifestField.defKey === "party_id"))
+        extProps: (["entity_no", "liable_entity_no", "entity_id"].includes(manifestField.defKey) || (table.defKey === "account" && manifestField.defKey === "owner_id") || (table.defKey === "economic_fact_line" && ["party_id", "payer_id", "payee_id"].includes(manifestField.defKey)) || (table === CURRENT_COMPENSATION_EVENT && ["event_key", "event_type", "sub_event_type"].includes(manifestField.defKey)))
           ? { characterSet: "ascii", collation: "ascii_bin" } : {},
         domain: mapping.domain,
         id: stableUuid(`field/${table.defKey}/${manifestField.defKey}`),
@@ -563,6 +569,12 @@ export function projectServiceModel(model, service, tableKeys) {
   projected.describe = `${SERVICE_TITLES[service]} 服务库物理模型：由 Finance 逻辑模型按 design/03 表归属切分（第 07 步），只保留本库关系`;
   projected.entities = projected.entities.filter((entity) => physical.has(entity.defKey));
   invariant(projected.entities.length === physical.size, `服务模型缺表：${service}`);
+  for (const variant of buildEntities(model, SERVICE_TABLE_VARIANTS[service] ?? [])) {
+    const index = projected.entities.findIndex((entity) => entity.defKey === variant.defKey);
+    invariant(index >= 0, `服务模型变体没有对应的逻辑表：${service}.${variant.defKey}`);
+    variant.correlations = [];
+    projected.entities[index] = variant;
+  }
   const entityIds = new Set(projected.entities.map((entity) => entity.id));
   for (const entity of projected.entities) {
     entity.correlations = entity.correlations.filter((relation) => entityIds.has(relation.refEntity));

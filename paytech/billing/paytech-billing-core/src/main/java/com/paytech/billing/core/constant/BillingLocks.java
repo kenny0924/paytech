@@ -10,4 +10,14 @@ public final class BillingLocks {
     public static String channelCostPlan(String planCode) {
         return "channel-cost-plan:" + planCode;
     }
+
+    /** 同一经济事实的批准入口使用的资源锁。 */
+    public static String economicFact(long factId) {
+        return "economic-fact:" + factId;
+    }
+
+    /** 同一来源引用（提交的业务唯一身份）的提交入口使用的资源锁；来源代码与引用均已按安全格式校验。 */
+    public static String economicFactSource(String sourceSystem, String sourceReference) {
+        return "economic-fact-source:" + sourceSystem + ":" + sourceReference;
+    }
 }

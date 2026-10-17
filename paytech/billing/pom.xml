@@ -44,16 +44,12 @@
                                         <!-- No other service's core/app; cross-service calls go through *-api only (D09). -->
                                         <exclude>com.paytech:*-core</exclude>
                                         <exclude>com.paytech:*-app</exclude>
-                                        <!-- Finance bans copied verbatim (09 §1.4); AMQP / compensation-event reopen for account and ledger in step 11. -->
+                                        <!-- Finance bans copied from 09 §1.4. Step 11a reopens AMQP, compensation-event and its
+                                             XXL-Job fallback for billing (EconomicFactRecorded is published from a compensation Handler). -->
                                         <exclude>org.flywaydb:*</exclude>
                                         <exclude>org.liquibase:*</exclude>
                                         <exclude>com.alibaba.cloud:*</exclude>
                                         <exclude>com.alibaba.nacos:*</exclude>
-                                        <exclude>org.springframework.amqp:*</exclude>
-                                        <exclude>com.rabbitmq:*</exclude>
-                                        <exclude>com.xuxueli:*</exclude>
-                                        <exclude>com.paytech:paytech-compensation-event</exclude>
-                                        <exclude>com.paytech:paytech-xxl-job-starter</exclude>
                                         <exclude>org.springframework:spring-webflux</exclude>
                                         <exclude>org.springframework.cloud:spring-cloud-starter-gateway*</exclude>
                                         <exclude>org.springframework.cloud:spring-cloud-starter-openfeign</exclude>
