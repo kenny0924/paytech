@@ -2,7 +2,7 @@
 
 - 状态：阶段 1 需求评审稿，待用户确认范围、顺序与待决问题。
 - 登记日期：2026-10-17
-- 上游：[目标架构 V2 需求](../architecture-目标架构V2/requirement.md)、[决定草案 D01–D36](../../../agent-docs/decisions/2026-10-17-target-architecture-v2.md)，本需求对应其中 D09、D11、D22、D24、D25、D26、D31、D33、D34、D35、D36。
+- 上游：[目标架构 V2 需求](../architecture-目标架构V2/requirement.md)、[决定草案 D01–D42](../../../agent-docs/decisions/2026-10-17-target-architecture-v2.md)，本需求对应其中 D09、D11、D22、D24、D25、D26、D31、D33、D34、D35、D36。
 - 分支：长期集成分支 `refactor-main`，工作目录 `Code-MoR-refactor`。每个搬迁步骤用短分支 `refactor/step-N-<名称>` 合入 `refactor-main`，**不逐步合回 `main`**；每步后把 `main` 合入 `refactor-main` 控制分叉。全部搬完后在 `refactor-main` 做既有功能全链路验证，验收通过再整体合并到 `main`（D36）。
 - 确认记录：[delivery.md](./delivery.md)
 

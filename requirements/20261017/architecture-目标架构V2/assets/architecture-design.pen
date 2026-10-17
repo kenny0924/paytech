@@ -9387,8 +9387,11 @@
                                           "id": "BoPmw",
                                           "name": "公网 TLS 终止",
                                           "width": "fill_container",
-                                          "fill": "#DCE8FF",
+                                          "fill": "#EFF6FF",
                                           "cornerRadius": 5,
+                                          "stroke": "#93C5FD",
+                                          "strokeWidth": 1,
+                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
@@ -9431,8 +9434,11 @@
                                           "id": "b8DkpO",
                                           "name": "按域名识别通道",
                                           "width": "fill_container",
-                                          "fill": "#DCE8FF",
+                                          "fill": "#EFF6FF",
                                           "cornerRadius": 5,
+                                          "stroke": "#93C5FD",
+                                          "strokeWidth": 1,
+                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
@@ -10863,20 +10869,17 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "vgYjo",
+                                          "id": "OQM76",
                                           "name": "Client控制台",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "U8VgMr",
+                                              "id": "eeuAk",
                                               "name": "Client控制台 Text",
                                               "fill": "$ink",
                                               "content": "Client控制台",
@@ -12520,8 +12523,11 @@
                                           "id": "nY8Zu",
                                           "name": "Direct Pay 受理",
                                           "width": "fill_container",
-                                          "fill": "#DCE8FF",
+                                          "fill": "#EFF6FF",
                                           "cornerRadius": 5,
+                                          "stroke": "#93C5FD",
+                                          "strokeWidth": 1,
+                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
@@ -15355,20 +15361,17 @@
                                         },
                                         {
                                           "type": "frame",
-                                          "id": "q0kOp",
+                                          "id": "DTqQi",
                                           "name": "比例 + 固定费",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "zfaVI",
+                                              "id": "ovxjW",
                                               "name": "比例 + 固定费 Text",
                                               "fill": "$ink",
                                               "content": "比例 + 固定费",
@@ -15389,20 +15392,17 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "BSfMp",
+                                          "id": "bInV1",
                                           "name": "阶梯费率",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "DOsna",
+                                              "id": "MZ4DH",
                                               "name": "阶梯费率 Text",
                                               "fill": "$ink",
                                               "content": "阶梯费率",
@@ -15439,20 +15439,17 @@
                                         },
                                         {
                                           "type": "frame",
-                                          "id": "PnsSm",
+                                          "id": "LcqN3",
                                           "name": "分润规则",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "IPSfM",
+                                              "id": "TIBf7",
                                               "name": "分润规则 Text",
                                               "fill": "$ink",
                                               "content": "分润规则",
@@ -15473,20 +15470,17 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "GP92B",
+                                          "id": "s25Ed4",
                                           "name": "价格生效期",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "rNkOy",
+                                              "id": "DMuq5",
                                               "name": "价格生效期 Text",
                                               "fill": "$ink",
                                               "content": "价格生效期",
@@ -15857,20 +15851,17 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "Ma9RI",
+                                          "id": "kwDhq",
                                           "name": "Client入驻",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "G3muya",
+                                              "id": "SPE0b",
                                               "name": "Client入驻 Text",
                                               "fill": "$ink",
                                               "content": "Client入驻",
@@ -15907,20 +15898,17 @@
                                         },
                                         {
                                           "type": "frame",
-                                          "id": "AUC08",
+                                          "id": "MhNXc",
                                           "name": "法人 / 受益人",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "Q0TUF8",
+                                              "id": "lUtEx",
                                               "name": "法人 / 受益人 Text",
                                               "fill": "$ink",
                                               "content": "法人 / 受益人",
@@ -15963,20 +15951,17 @@
                                         },
                                         {
                                           "type": "frame",
-                                          "id": "YwyOK",
+                                          "id": "H8YZLn",
                                           "name": "资质证照",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "HcAI9",
+                                              "id": "R8pgld",
                                               "name": "资质证照 Text",
                                               "fill": "$ink",
                                               "content": "资质证照",
@@ -16019,20 +16004,17 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "aTFIj",
+                                          "id": "RMno4",
                                           "name": "签约主体 OE",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "UUDHd",
+                                              "id": "uAbB9",
                                               "name": "签约主体 OE Text",
                                               "fill": "$ink",
                                               "content": "签约主体 OE",
@@ -16044,20 +16026,17 @@
                                         },
                                         {
                                           "type": "frame",
-                                          "id": "Ic87z",
+                                          "id": "yLTSt",
                                           "name": "OE 范围 / 关联",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "foaBP",
+                                              "id": "IuoXs",
                                               "name": "OE 范围 / 关联 Text",
                                               "fill": "$ink",
                                               "content": "OE 范围 / 关联",
@@ -16360,7 +16339,7 @@
                                   "fill": "$muted",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "付款人可变档案与隐私的 Owner（从客户主档拆出：高频 PII、在交易链路上）。收单保存交易时点的不可变消费者快照与法律证据。消费者服务同时是数据删除请求的编排 Owner（D30）：持有请求生命周期，发布 ConsumerErasureRequested，各 Owner 按自己的留存规则执行并回报（档案删除 / 匿名化、Vault Token 按引用计数销毁、数仓副本屏蔽），订单证据按法律保留不删。已存支付方式只保存卡服务引用。",
+                                  "content": "付款人可变档案与隐私的 Owner（从客户主档拆出：高频 PII、在交易链路上）。现状修正（阶段 2）：Email / Phone Token 目前按订单存在 t_consumer_context，Phone 从未写入，Vault Protect 为 Mock；「消费者 core 拥有稳定 Token」是新模型。收单保存交易时点的不可变消费者快照与法律证据。消费者服务同时是数据删除请求的编排 Owner（D30）。已存支付方式只保存卡服务引用；Payment 已存卡以 Commerce customer_id 为键，分库后 ID 必须全局稳定。",
                                   "lineHeight": 1.4,
                                   "fontFamily": "$font",
                                   "fontSize": 11,
@@ -21805,20 +21784,17 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "AhJGj",
+                                          "id": "ctDDp",
                                           "name": "操作审计",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "mhJsq",
+                                              "id": "vOp0P",
                                               "name": "操作审计 Text",
                                               "fill": "$ink",
                                               "content": "操作审计",
@@ -22484,20 +22460,17 @@
                                       "children": [
                                         {
                                           "type": "frame",
-                                          "id": "X0iZq",
+                                          "id": "HfgWQ",
                                           "name": "文件存储",
                                           "width": "fill_container",
                                           "fill": "#DCE8FF",
                                           "cornerRadius": 5,
-                                          "stroke": "#93C5FD",
-                                          "strokeWidth": 1,
-                                          "strokeAlignment": "inner",
                                           "padding": 6,
                                           "justifyContent": "center",
                                           "children": [
                                             {
                                               "type": "text",
-                                              "id": "SmVAX",
+                                              "id": "z2h5vR",
                                               "name": "文件存储 Text",
                                               "fill": "$ink",
                                               "content": "文件存储",
@@ -44181,7 +44154,7 @@
                   "fill": "$ink",
                   "textGrowth": "fixed-width",
                   "width": 190,
-                  "content": "能力边界 ≠ 部署边界",
+                  "content": "能力边界与部署边界（修订：每服务独立部署）",
                   "lineHeight": 1.4,
                   "fontFamily": "$font",
                   "fontSize": 12,
@@ -44225,7 +44198,7 @@
                   "fill": "$ink",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "逻辑服务 = api + core 模块 + 独立库，不含启动类；部署单元 = *-app 模块按「部署单元建议」表组合启动，各模块注册自己的 DataSource / 事务管理器 / Mapper 范围。服务间只经 *-api 调用：进程内绑定本地 Bean、跨进程绑定 HTTP Client，由配置切换；ArchUnit 强制包边界。拆分 = 新建 app 模块并切适配器，业务代码不动。payment / 卡域 / Vault / 网关 / BFF 始终独立。拆分触发：独立扩缩容、故障隔离、安全隔离、发布节奏。",
+                  "content": "修订（2026-10-17）：每个逻辑服务从第一天起就是独立部署单元——独立 *-app 模块、独立进程、独立数据库，不做组合部署。保留 api / core / app 结构与 ArchUnit 包边界门禁；服务间只经 *-api 的 HTTP 调用，进程内本地 Bean 绑定仅限测试。原「初期合并为约 13 个部署单元、按四个触发条件拆」作废。资源后果已接受：测试环境单机 8 核 64 GB，生产单实例计算约增加四分之一。",
                   "lineHeight": 1.4,
                   "fontFamily": "$font",
                   "fontSize": 11,
@@ -44570,7 +44543,7 @@
                   "fill": "$ink",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "两档：已运行（有可运行实现且自动测试通过，不代表已部署）/ 已设计（仅文档与模型）。当前分类（123 / 67）为按实现台账的我方判断，用户核对后生效。",
+                  "content": "两档：已运行（有可运行实现且自动测试通过，不代表已部署）/ 已设计（仅文档与模型）。2026-10-17 已对照 CURRENT_IMPLEMENTATION.md 逐项核对：下调 19 项、上调 12 项；阶段 2 盘点再下调 1 项（Direct Pay 受理仅为保留枚举值，无入口与 Intent 路径）。现为 119 已运行 / 76 已设计。",
                   "lineHeight": 1.4,
                   "fontFamily": "$font",
                   "fontSize": 11,
@@ -47018,6 +46991,351 @@
                   "fontWeight": "normal"
                 }
               ]
+            },
+            {
+              "type": "frame",
+              "id": "upshn",
+              "name": "D34 事件总线选型",
+              "width": "fill_container",
+              "stroke": "#EEF1F5",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeAlignment": "inner",
+              "gap": 12,
+              "padding": [
+                8,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "jRRs2",
+                  "name": "C0",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 46,
+                  "content": "D34",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "QFDjt",
+                  "name": "C1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": 190,
+                  "content": "事件总线选型",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "DZJAM",
+                  "name": "S",
+                  "width": 96,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "UqzOK",
+                      "name": "Badge",
+                      "fill": "#E9F6F3",
+                      "cornerRadius": 4,
+                      "padding": [
+                        3,
+                        6
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "SAFbI",
+                          "name": "T",
+                          "fill": "#0F766E",
+                          "content": "已定",
+                          "fontFamily": "$font",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "XbUgq",
+                  "name": "C3",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "继续使用 RabbitMQ。分区有序用一致性哈希交换机（x-consistent-hash）按聚合键路由到固定队列组，每队列单活消费者；事件信封携带聚合键、聚合版本号、事件 ID、Schema 版本。实现落在 compensation-event 库与业务事件目录；不引入 Kafka。",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "sjabh",
+                  "name": "C4",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 80,
+                  "content": "用户",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "OoSOQ",
+                  "name": "C5",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 230,
+                  "content": "事件目录 · 边界 · 阶段 0",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qncEz",
+              "name": "D35 数仓选型",
+              "width": "fill_container",
+              "stroke": "#EEF1F5",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeAlignment": "inner",
+              "gap": 12,
+              "padding": [
+                8,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "unHNE",
+                  "name": "C0",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 46,
+                  "content": "D35",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "k7Vpb",
+                  "name": "C1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": 190,
+                  "content": "数仓选型",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "b0OZ0R",
+                  "name": "S",
+                  "width": 96,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "WfojA",
+                      "name": "Badge",
+                      "fill": "#E9F6F3",
+                      "cornerRadius": 4,
+                      "padding": [
+                        3,
+                        6
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "x7oaBN",
+                          "name": "T",
+                          "fill": "#0F766E",
+                          "content": "已定",
+                          "fontFamily": "$font",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "LrDcq",
+                  "name": "C3",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "数据服务建在 Apache Doris 上；CDC 以 Flink CDC 同步各服务「可同步表白名单」的 MySQL DML，不经 MQ；每实例一套 Doris。阶段 0 只在 local-environment 加容器骨架与白名单表约定，不做业务查询。",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "xme8R",
+                  "name": "C4",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 80,
+                  "content": "用户",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Y5Uyr",
+                  "name": "C5",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 230,
+                  "content": "V2 · 实例 × 模块 · 阶段 0",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "L4VtL3",
+              "name": "D36 重构落地方式与阶段 0 范围",
+              "width": "fill_container",
+              "stroke": "#EEF1F5",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeAlignment": "inner",
+              "gap": 12,
+              "padding": [
+                8,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "o0AZP",
+                  "name": "C0",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 46,
+                  "content": "D36",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "P7q7O",
+                  "name": "C1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": 190,
+                  "content": "重构落地方式、分支策略与阶段 0 范围",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "R2gvD",
+                  "name": "S",
+                  "width": 96,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "iLuOC",
+                      "name": "Badge",
+                      "fill": "#E9F6F3",
+                      "cornerRadius": 4,
+                      "padding": [
+                        3,
+                        6
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lde3Y",
+                          "name": "T",
+                          "fill": "#0F766E",
+                          "content": "已定",
+                          "fontFamily": "$font",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "Q7HusK",
+                  "name": "C3",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "同仓 paytech/ 单一 reactor、逐模块 git mv 搬迁、refactor-main 长期集成分支（不逐步合回 main，全链路验证后整体合并）。修订（2026-10-17）：阶段 0 除模块重组、门禁、事件信封与目录 v1、数据服务与迁移执行器骨架、内部签名 Token 外，还包含两处事务逻辑重做——Finance 账户与会计分库（t_account 拆为科目账户与余额账户，六处同事务改为最终一致，S1）、Payment 卡域独立进程与库（支付成功写卡表改事件驱动，读卡回调改一次性有范围授权票据，S3）。两处方案在阶段 3 设计、阶段 4 实现；其余搬迁不改业务行为。",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "JD2La",
+                  "name": "C4",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 80,
+                  "content": "用户",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "ffOiM",
+                  "name": "C5",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 230,
+                  "content": "全部 · 阶段 0",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
             }
           ]
         },
@@ -48448,7 +48766,7 @@
               "id": "ECb3K",
               "name": "T",
               "fill": "$ink",
-              "content": "部署单元建议 · 能力边界 ≠ 部署边界（D09）",
+              "content": "部署单元 · D09 修订：每个逻辑服务独立进程与库",
               "fontFamily": "$font",
               "fontSize": 18,
               "fontWeight": "700"
@@ -48460,7 +48778,7 @@
               "fill": "$muted",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "V2 的服务是逻辑边界与数据库边界：每个服务 = api + core 模块 + 自己的库，不含启动类。部署单元 = *-app 模块按本表组合启动，各模块各自注册 DataSource 与 Mapper 范围；服务间只经 *-api 调用，进程内绑本地 Bean、跨进程绑 HTTP，配置切换；ArchUnit 强制包边界（D09）。只有出现独立扩缩容、故障隔离、安全隔离、发布节奏不同之一时才拆成独立进程。",
+              "content": "2026-10-17 修订：不再做组合部署。每个逻辑服务 = api + core + app 模块 + 独立库 + 独立进程，约 25 个 JVM 加 Vault。下表原为「初期合并建议」，现仅作逻辑分组参考；每行中的多个服务各自独立部署。服务间只经 *-api HTTP 调用，ArchUnit 强制包边界。测试环境单机 8 核 64 GB，MySQL max_connections 调至 400 以上。",
               "lineHeight": 1.5,
               "fontFamily": "$font",
               "fontSize": 12,
@@ -48515,7 +48833,7 @@
                   "fill": "$muted",
                   "textGrowth": "fixed-width",
                   "width": 360,
-                  "content": "拆出触发条件",
+                  "content": "原拆出触发条件（已作废，保留供参考）",
                   "lineHeight": 1.4,
                   "fontFamily": "$font",
                   "fontSize": 11,

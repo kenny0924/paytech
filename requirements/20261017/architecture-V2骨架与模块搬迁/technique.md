@@ -2,14 +2,14 @@
 
 - 状态：阶段 2「现状差异与影响分析」评审稿，待用户确认缺口判断、受影响范围、处理边界与主要风险后进入阶段 3。
 - 依据：六份只读盘点报告（[analysis/](./analysis/)：finance、risk、payment、cct、commerce、retained-systems），2026-10-17 对 `refactor-main` HEAD `4aed55d` 完成，未运行构建或测试。
-- 上游：[requirement.md](./requirement.md)、[决定草案 D01–D36](../../../agent-docs/decisions/2026-10-17-target-architecture-v2.md)。
+- 上游：[requirement.md](./requirement.md)、[决定草案 D01–D42](../../../agent-docs/decisions/2026-10-17-target-architecture-v2.md)。
 
 ## 1. 阶段 2 结论先行
 
 1. **代码层的跨边界耦合比预想少，数据层的耦合比预想集中。** 五个业务系统里，Risk、CCT、Commerce 没有任何跨未来 core 的写事务；Payment 只有两处（都在支付执行与卡域之间）；Finance 的六处全部源于同一张表 `t_account` 身兼会计过账科目与余额投影两职。
 2. **"阶段 0 不改业务逻辑"与"每个 core 独立库"在两处无法同时成立。** Finance 的会计与账户分库、Payment 的支付执行与卡域分库都要求把现有同事务改成最终一致，这是逻辑变更。**用户决定（2026-10-17）：阶段 0 就重做这两处事务逻辑、彻底拆开，且所有逻辑服务独立进程（D09 / D36 修订）。** 因此第 5 节的分级改为：两对耦合在阶段 3 出方案、阶段 4 实现；其余拆分按搬迁步骤完成。
 3. **大量目标能力只有 Schema 没有代码。** Finance 84 表有代码 34 张，Risk 85 表有生产 Mapper 约 50 张，Payment 31 表有代码 15 张；争议、出款、对账、税务、限额、结算控制、路由决策、回调全部仅 Schema。搬迁阶段这些表随 Schema 归属到新 core，不涉及代码移动。
-4. **保留系统搬迁有五类路径耦合会断**，均可在骨架阶段一次修复：Platform 覆盖率门禁的 `${maven.multiModuleProjectDirectory}`、所有根的空 `<relativePath/>`、按目录名定位仓库的测试、`../` 耦合的 test-environment 与 Vault 脚本、64 个文档中的 217 条相对链接。
+4. **保留系统搬迁有五类路径耦合会断**，均可在骨架阶段一次修复：Platform 覆盖率门禁的 `${maven.multiModuleProjectDirectory}`（阶段 3 核实为 12 处，仅在 Platform；Commerce / Finance / Risk 用 `${project.basedir}/..`，搬迁后仍成立）、所有根的空 `<relativePath/>`、按目录名定位仓库的测试、`../` 耦合的 test-environment 与 Vault 脚本、文档相对链接（阶段 3 核实：指向旧根 520 条 / 141 文件，旧根内部出向链接 351 条 / 32 文件；`requirements-site` 测试也读取 Payment 文档路径）。完整清单见 design/09。
 5. **三条设计前提需要修正**，已同步回目标架构文档：Direct Pay 目前只是保留枚举值，没有入口（能力标签由"已运行"改为"已设计"）；消费者的 Email / Phone Vault Token 现按订单存在 `t_consumer_context`、Phone 从未写入、Protect 为 Mock，所以"消费者 core 拥有 Token"是新模型；Commerce 代码在 CreateCheckout 一次性冻结 OE / 价格 / 税 / 法律事实，Schema 注释与 SQL 守卫仍描述已删除的"支付准备"阶段。
 
 ## 2. 逐系统现状与差异
@@ -41,7 +41,7 @@
 | 外部契约 | 入站 compliance 4 组、decision 9 组；出站零；MQ 唯一生产者 `ClientReviewDecided`（CCT 消费）；2 个补偿 Handler |
 | 测试 | 160 文件、596 例；没有任何测试同时涉及 compliance 与 decision；`RiskModuleBoundaryAutoTest` 锁定模块集合与依赖，`RiskDatabasePrecondition` 固定 85 表 |
 
-**差异判断：** 阶段 0 可以完成分库（双数据源、限定事务管理器、分 Mapper 路径、分前置检查），风险在装配而非逻辑。必须先决定 `t_settlement_control` 三表归属（热点 1）；`risk-control` 建议并入 decision；`risk-api` 拆分会改变五个消费方的坐标，需要兼容期。
+**差异判断：** 阶段 0 可以完成分库（双数据源、限定事务管理器、分 Mapper 路径、分前置检查），风险在装配而非逻辑。必须先决定 `t_settlement_control` 三表归属（热点 1）；`risk-control` 建议并入 decision；`risk-api` 拆分会改变五个消费方的坐标（阶段 3 C6 已定：一次性拆分，第 6 步同分支改五方）。
 
 ### 2.3 Payment → payment / channel-connector / card
 
@@ -106,11 +106,11 @@
 | Vault | 8 Java + 29 Go | 34 | Go + MySQL |
 | CCT | 12 | 53 | MySQL |
 | Commerce | 33 | 764（含参数化） | MySQL / Redis / RabbitMQ |
-| Payment | 12 | 约 96 | MySQL / Redis / RabbitMQ |
-| Risk | 160 | 596 | MySQL / Redis / RabbitMQ |
-| Finance | 39 | 80 | MySQL / Redis |
+| Payment | 12 | 96（阶段 3 按源码 @Test + @ParameterizedTest 核实） | MySQL / Redis / RabbitMQ；测试库 `mor_payment_channel_test` 不在 local-environment 中 |
+| Risk | 160 | 738（源码核实；台账 596 已过时） | MySQL / Redis / RabbitMQ |
+| Finance | 39 | 236（源码核实；台账 80 为早期数字，最近记录 242） | MySQL / Redis |
 
-三个不在 `auto/` 目录、今天从不执行的测试类属既有问题，搬迁时顺手归位。
+三个不在 `auto/` 目录、今天从不执行的测试类属既有问题，搬迁时顺手归位。仓库目前**没有任何 ArchUnit 依赖**，三个“边界测试”是手写的 POM / 正则扫描；design/02 的规则集需要在 BOM 新增 `archunit-junit5` 坐标。CCT 与 Risk 没有测试 `init/ddl.sql`，Finance 26/84、Payment 15/31，各目标服务的测试 DDL 需按 design/10 补齐。
 
 ## 4. 阶段 3 之前必须定的归属与设计点
 
@@ -123,7 +123,7 @@
 | S5 | `t_consumer_legal_document`、`t_seller_disclosure` 归属 | CCT | 倾向 commercial（只被解析消费） |
 | S6 | 消费者分库后 Payment 已存卡的 `customer_id` 稳定性与资格判断降级策略 | Commerce 热点 1、2 | ID 不变；资格读失败降级为"不可存卡" |
 | S7 | 路由策略三表、`t_channel_transaction_ref`、渠道交互 / 回调条目 / 争议通知表的归属 | Payment 表清单 | 阶段 3 逐表定 |
-| S8 | `risk-api` 单 JAR 拆分的兼容期与五个消费方的迁移顺序 | Risk 热点 2 | 先拆包不拆坐标，保留旧坐标一个版本 |
+| S8 | `risk-api` 单 JAR 拆分与五个消费方的迁移顺序 | Risk 热点 2 | 阶段 3 C6 已定：一次性拆分，无兼容期 |
 | S9 | 事件信封与一致性哈希放在新 Foundation 模块；`payload_json` 上限；发布侧按聚合键串行的方式 | 保留系统 3.4 | 新模块 `paytech-messaging`；表加列需改 PDManer |
 | S10 | 死表与残留：`t_command_idempotency`（五个系统）、Commerce 的准备阶段列与 PREPARING 状态、`CheckoutRepository` 等死代码 | 多系统 | 搬迁时删除，需 Owner 确认 |
 
@@ -154,4 +154,4 @@
 
 ## 7. 对阶段 3 的输入
 
-阶段 3 需要产出：`paytech/` 父 POM 与 api / core / app 约定（每服务一个 app）；S1 账户与会计最终一致方案与 `t_account` 拆表 SQL 草案；S3 卡域一次性授权票据与卡表事件方案；ArchUnit 规则集；每个服务的模块映射表与表归属表（含 S1–S10 的结论）；CCT 查询参数化与解析两段式合同；Payment 渠道结果映射迁移清单；Risk 双数据源装配方案与 `risk-api` 兼容期；`paytech-messaging` 模块设计（信封、一致性哈希、单活消费者、Platform AMQP 禁令调整）；路径耦合修复清单；每系统测试基线与清理拆分方案。
+阶段 3 需要产出：`paytech/` 父 POM 与 api / core / app 约定（每服务一个 app）；S1 账户与会计最终一致方案与 `t_account` 拆表 SQL 草案；S3 卡域一次性授权票据与卡表事件方案；ArchUnit 规则集；每个服务的模块映射表与表归属表（含 S1–S10 的结论）；CCT 查询参数化与解析两段式合同；Payment 渠道结果映射迁移清单；Risk 双数据源装配方案与 `risk-api` 拆分；`paytech-messaging` 模块设计（信封、一致性哈希、单活消费者、Platform AMQP 禁令调整）；路径耦合修复清单；每系统测试基线与清理拆分方案。

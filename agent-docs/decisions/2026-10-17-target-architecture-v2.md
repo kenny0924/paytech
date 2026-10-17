@@ -1,6 +1,6 @@
 # 目标架构 V2（平台重构）决定草案
 
-- Decision status: Proposed（用户已在讨论中逐条确认 D01–D36 中的 33 条；作为仓库决定仍待用户确认登记）
+- Decision status: Proposed（用户已在讨论中逐条确认 D01–D42 中的 39 条（阶段 3 C1–C7 及余留归属问题中新增跨系统决定登记为 D37–D42；C2、C5、C7 为既有决定的实现选择，记录于阶段 0 需求 design/ 文档）；作为仓库决定仍待用户确认登记）
 - Implementation status: Not started
 - Deployment status: Not applicable
 - Decision date: 2026-10-17
@@ -54,6 +54,12 @@
 | D34 | 事件总线选型 | 已定 | 继续 RabbitMQ；分区有序用一致性哈希交换机按聚合键路由到固定队列组，每队列单活消费者；事件信封带聚合键、版本号、事件 ID、Schema 版本；落在 compensation-event 库与事件目录。不引入 Kafka。 |
 | D35 | 数仓选型 | 已定 | 数据服务建在 Apache Doris 上，Flink CDC 同步白名单表 MySQL DML，每实例一套；阶段 0 只建本地容器骨架与白名单约定。 |
 | D36 | 重构落地方式、分支策略与阶段 0 范围 | 已定（2026-10-17 修订） | 同仓新骨架：仓库顶层 `paytech/` 单一 reactor，下按 V2 服务分目录。逐模块 git mv 搬迁，顺序 Foundation → Platform / Gateway / BFF / Vault → Commerce / CCT / Payment / Risk / Finance；搬迁期间该系统其他会话暂停。分支：长期集成分支 `refactor-main`，每步短分支合入，不逐步合回 main；每步后合入 main 控制分叉；全部完成后在 refactor-main 全链路验证，验收后整体合并 main。阶段 0 范围：模块重组与每服务独立部署（D09 修订）、门禁、事件信封与目录 v1、数据服务与迁移执行器骨架、内部签名 Token，**以及两处事务逻辑重做**——Finance 账户与会计分库（`t_account` 拆为会计科目账户与账户余额账户，过账与余额更新改为最终一致，按 D16 / S1）、Payment 卡域独立进程与独立库（支付成功对卡表的写入改为事件驱动，读卡回调改为 payment 签发的一次性有范围授权，按 S3）。两处方案在阶段 3 设计、阶段 4 实现，其余搬迁不改业务行为。不另起项目，不原地改造。 |
+| D37 | 经济事实唯一来源与账户消费口径（阶段 3 C1） | 已定（2026-10-17） | 计费是唯一经济事实来源；阶段 0 即引入最小计费能力（`t_transaction_economics` 三表更名为 `t_economic_fact*`，人工调整与成本调整经计费登记为经济事实，发布 `EconomicFactRecorded`）。账户从一开始只消费经济事实维护余额桶，不消费会计过账事件；会计消费同一事实自动过账；影响 Owner 余额的人工调整不得直接在会计提交。方案见阶段 0 需求 design/04。 |
+| D38 | 结算控制归属（阶段 3 C3） | 已定（2026-10-17） | `t_settlement_control`、`t_settlement_control_scope`、`t_settle_control_state_change` 归合规服务（`mor_compliance`）。风控决策 Action Effect 产生控制时经 compliance-api 创建（幂等键 `source_action_effect_id`），出款检查点评估在事务前经 compliance-api 读取 ACTIVE 控制集合并冻结 `control_set_hash`；合规不可用则评估失败关闭。变更经 `SettlementRestrictionChanged` 事件通知出款与账户。 |
+| D39 | 消费者法律文档与卖方披露归属（阶段 3 C4） | 已定（2026-10-17） | `t_consumer_legal_document`、`t_seller_disclosure` 归客户主档（`mor_client_master`）。候选接口按消费者国家与语言随每个候选返回三份法律文档引用与卖方披露，商务两段式解析直接取候选自带值，不再读这两表。 |
+| D40 | `risk-api` 拆分方式（阶段 3 C6） | 已定（2026-10-17） | `risk-api` 一次性拆为 `risk-decision-api` 与 `compliance-api`，不保留聚合坐标与兼容期；研发计划第 6 步在同一分支内同步修改五个消费方的坐标与 import，是阶段 0 唯一允许一步改多个系统的例外，排在收单、客户主档、支付三步之后执行。 |
+| D41 | 全平台参考数据归属（阶段 3） | 已定（2026-10-17） | `t_currency_spec` 等全平台参考数据归平台支撑（Platform）持有并提供查询 API；会计与计费为保证过账与舍入不依赖远程调用，各持同结构只读副本，用同一份评审 SQL 初始化；副本同步机制在后续切片定义。 |
+| D42 | 阶段 3 其余表归属与服务改名口径 | 已定（2026-10-17） | 尚无代码的渠道相关表按建议归属（路由策略、渠道交互与回调归渠道连接；渠道交易引用归支付；渠道争议归争议库）；现金账户三表归对账；订单法律文档快照与退款头寸归收单；`t_client_stored_card_setting` 为 Client 级配置归客户主档并随候选接口返回。改名服务不在 Nacos 保留旧名别名，改名步骤同分支改完全部调用方。 |
 
 ## 3. 取代范围
 
