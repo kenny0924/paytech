@@ -33,8 +33,8 @@ public class ClientOnboardingConfiguration {
     HttpServiceProxyFactory clientOnboardingCctFactory(Environment env, ObjectProvider<LoadBalancerClient> discovery,
         ObjectProvider<InternalTokenSupplier> tokens) {
         return HttpServiceClientFactory.create(
-            transport(env, discovery, "cct", "client-contract-service", ""),
-            options(tokens, "client-contract-service"),
+            transport(env, discovery, "cct", "client-master-service", ""),
+            options(tokens, "client-master-service"),
             ClientDraftErrorCode.values()
         );
     }

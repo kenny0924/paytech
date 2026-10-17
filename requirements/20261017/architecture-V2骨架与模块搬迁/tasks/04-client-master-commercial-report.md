@@ -96,6 +96,13 @@ java -jar paytech-client-master-app-1.0.0-SNAPSHOT-exec.jar --spring.profiles.ac
 - 处理：按第 02d 步报告与 `paytech/vault/README.md`，用 `/Users/kenny/sdk/go1.27.1/bin/go build -o <scratchpad>/vault-server ./cmd/vault-server` 构建二进制。再导出 `VAULT_TEST_SERVER_BINARY`、`VAULT_TEST_JDBC_URL/USER/PASSWORD`、`VAULT_TEST_DB_DSN`（密码取自 `.env.local`，未打印）后重跑同一命令。
 - 结果：**BUILD SUCCESS**（10:25 min）。按 Surefire 报告计数，29 个测试模块共 **4723** 个用例，0 失败、0 错误、0 跳过，其中 client-master 57、commercial 24、platform-support 798、Foundation 17 个模块与 tools 的数字均与前序步骤一致。验证后已删除临时二进制。
 
+### 2.8 改名后复测（team-lead 决定第 3 项）
+
+- 命令：`./mvnw -B -o verify -pl client-master/paytech-client-master-test,commercial/paytech-commercial-test,client-console-bff/paytech-client-console-bff-test,operations-console-bff/paytech-operations-console-bff-test -am -Dpaytech.local-environment.dir=… -Dtest=… -Dsurefire.failIfNoSpecifiedTests=false`。`-Dtest` 只选这四个模块的测试，不重跑 Foundation。
+- 结果：BUILD SUCCESS，0 失败、0 跳过。operations-console-bff-test 1390、client-console-bff-test 80、client-master-test 57、commercial-test 24。
+- Platform：按 team-lead 要求，改名后**没有运行** `platform-support-test`，只执行了 `test-compile`（通过），等放行后再跑。
+- 如实说明：放行通知之前，我已在第 2.6 节的全 Reactor（2026-10-17 约 19:31–19:42 UTC）中跑过一次 `platform-support-test`（798 例全过），当时使用了共享的 `mor_platform`。那次运行在调用方名改名之前。
+
 ### 2.7 其他检查
 
 - `node scripts/verify-local-environment.mjs`：退出码 1，只剩 4 行 Gateway 合同文档引用缺失，与第 09 步记录逐字相同；新增的两库与变量检查通过。
@@ -155,11 +162,15 @@ java -jar paytech-client-master-app-1.0.0-SNAPSHOT-exec.jar --spring.profiles.ac
 
 ## 5. 待确认
 
-1. **调用方名与发现名未全量改名**：client-master 出站调用 Platform、Risk 时 `X-Caller-Service` 仍为 `client-contract-service`。原因是 Platform `OnboardingFileVerificationController` 与 Risk 都校验这个字面值，本步不改 Platform / Risk 目录。
-   - Platform 与两个 BFF 调 CCT 时的发现名 `client-contract-service` 也未改。
-   - Vault 客户端 `caller-service` 在测试配置中改为 `client-master-service`；生产 Vault 调用方白名单是否需要同步，请确认。
-   - 统一改名需要一个横跨 Platform / Risk / BFF / Commerce 的步骤。
-2. **Platform 与 BFF 的 POM 坐标**：这 6 个 POM 已改为 `paytech-client-master-api`，Java 未改，属于任务卡第 6 节"不改 Platform 目录"的例外。已通知 team-lead，未收到异议；如需撤回，只需还原这 6 个 POM。
+1. **调用方名与发现名已按 team-lead 决定在本步改完**，旧名不保留。范围只限坐标、发现名、调用方名三类：
+   - client-master 出站 `X-Caller-Service` 改为 `client-master-service`，涉及 `ClientMaterialAuthorityClient`（Risk 材料要求、Platform 文件核验）与 `ClientReviewRegistrationClientImpl`。
+   - Platform 侧改了 `OnboardingFileConfiguration` 的发现名与 Token 目标、`OnboardingFileVerificationController` 的调用方校验、测试 `application-mock.yml` 第 53、372、385 行，以及 `InternalTokenIssueTest` 第 94 行的常量。
+   - BFF 侧改了 `ClientReviewClientConfiguration`（Operations BFF）与 `ClientOnboardingConfiguration`（Client BFF）的发现名和 Token 目标。
+   - Risk（旧根，第 06 步处理）未改。经核对，Risk **运行期不校验**该字面量：`risk-web/.../ext/rest/compliance/ClientReviewRegistrationController.java:30` 与 `MaterialRequirementsController.java:20` 都写明"X-Caller-Service 暂不校验"。因此 06 合入前 client-master → Risk 的入驻登记调用**不会**因调用方名被拒绝，这与 team-lead 的预判不同。
+   - 第 06 步需要同步的只是文案与测试常量：`risk-api/.../compliance/ClientReviewRegistrationApi.java:24,39` 的 JavaDoc（"固定为 client-contract-service"），以及 `risk-test` 中 `MaterialRequirementsApiAutoTest.java:51`、`ClientReviewSubmissionApiAutoTest`、`ClientReviewClassificationApiAutoTest`、`ClientReviewDecisionApiAutoTest` 的 caller 常量。
+   - Vault 客户端 `caller-service` 在测试配置中为 `client-master-service`；生产 Vault 调用方白名单是否需要同步，请确认。
+   - 复测结果见第 2.8 节。
+2. **Platform 与 BFF 的 POM 坐标**：这 6 个 POM 已改为 `paytech-client-master-api`，team-lead 已确认这是任务卡第 6 节的明确例外。
 3. **人员共享标记的失败关闭**：commercial 不可用时，人员视为"已被合同引用"，不可编辑。读取草稿时可编辑标记为 false，保存返回 409 `PERSON_NOT_EDITABLE`。审核读取（申请已提交）不调用 commercial。代价是 commercial 故障期间组织申请人员无法修改。
 4. **client-master 不比较商业时点与本机时钟**：防止两服务时钟差造成误拒，"不晚于当前时间"仍由 commercial 校验。
 5. **管理端口 19101 / 19108**：Actuator 不再与业务端口共用；mor-test 等部署的健康检查地址需同步。

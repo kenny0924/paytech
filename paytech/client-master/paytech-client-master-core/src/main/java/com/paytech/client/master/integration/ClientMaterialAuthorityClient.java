@@ -33,7 +33,7 @@ public final class ClientMaterialAuthorityClient {
      */
     public java.util.List<RequirementBody> requirements(String qualificationType) {
         com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementsResponseBody requirements;
-        try { requirements=risk.read("client-contract-service",qualificationType); }
+        try { requirements=risk.read("client-master-service",qualificationType); }
         catch (RuntimeException unavailable) { throw unavailable(); }
         if (requirements==null || !id(requirements.programId()) || !id(requirements.programVersionId())
             || requirements.items()==null || requirements.items().isEmpty() || requirements.items().size()>1024) throw unavailable();
@@ -54,7 +54,7 @@ public final class ClientMaterialAuthorityClient {
      */
     public String fileHash(long accountId,ClientMaterialTarget target,long fileId) {
         com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.VerificationResponseBody proof;
-        try { proof=platform.verify("client-contract-service",Long.toString(fileId),Long.toString(target.applicationId()),Long.toString(target.subjectPartyId()),Long.toString(target.clientId()),Long.toString(accountId),OnboardingFilePurpose.ASSOCIATE.getCode()); }
+        try { proof=platform.verify("client-master-service",Long.toString(fileId),Long.toString(target.applicationId()),Long.toString(target.subjectPartyId()),Long.toString(target.clientId()),Long.toString(accountId),OnboardingFilePurpose.ASSOCIATE.getCode()); }
         catch (FailException rejected) {
             if ("FILE_NOT_FOUND".equals(rejected.getCode())) throw new FailException(DOCUMENT_NOT_FOUND);
             throw unavailable();

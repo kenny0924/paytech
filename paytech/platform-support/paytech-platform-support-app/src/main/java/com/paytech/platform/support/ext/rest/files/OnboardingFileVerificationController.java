@@ -15,7 +15,7 @@ public class OnboardingFileVerificationController implements OnboardingFileVerif
     /** 不接受 Client Header 冒充运营审核用途；不递归查询 CCT。 */
     @Override public VerificationResponseBody verify(String caller,String fileId,String applicationId,String subjectPartyId,
         String clientId,String accountId,String purpose) {
-        if (!"client-contract-service".equals(caller)) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
+        if (!"client-master-service".equals(caller)) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
         try { OnboardingFilePurpose.fromCode(purpose); }
         catch (IllegalArgumentException invalid) { throw new InvalidParameterException("文件核验用途无效"); }
         return processor.verify(id(accountId),id(fileId),id(applicationId),id(subjectPartyId),id(clientId));

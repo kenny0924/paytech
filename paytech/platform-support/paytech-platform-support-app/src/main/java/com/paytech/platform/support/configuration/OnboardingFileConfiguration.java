@@ -37,11 +37,11 @@ public class OnboardingFileConfiguration {
         var builder=RestClient.builder();
         String url=environment.getProperty("files.onboarding.cct-test-base-url", "");
         if (url.isBlank()) {
-            builder.baseUrl("http://client-contract-service").requestInterceptor((request,body,execution) -> {
+            builder.baseUrl("http://client-master-service").requestInterceptor((request,body,execution) -> {
                 var balancer=discovery.getIfAvailable();
-                var instance=balancer==null ? null : balancer.choose("client-contract-service");
+                var instance=balancer==null ? null : balancer.choose("client-master-service");
                 if (instance==null) throw new ResourceAccessException("CCT discovery unavailable");
-                return balancer.execute("client-contract-service",instance,new LoadBalancerRequestFactory(balancer).createRequest(request,body,execution));
+                return balancer.execute("client-master-service",instance,new LoadBalancerRequestFactory(balancer).createRequest(request,body,execution));
             });
         } else {
             URI uri=URI.create(url);
@@ -55,7 +55,7 @@ public class OnboardingFileConfiguration {
             .followRedirects(HttpClient.Redirect.NEVER).build());
         transport.setReadTimeout(Duration.ofSeconds(3));
         var api=HttpServiceClientFactory.create(builder.requestFactory(transport).build(),
-            internalToken.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192), "client-contract-service"),
+            internalToken.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192), "client-master-service"),
             ClientDraftErrorCode.values()).createClient(ClientFileTargetApi.class);
         return new CctFileTargetClient(api);
     }

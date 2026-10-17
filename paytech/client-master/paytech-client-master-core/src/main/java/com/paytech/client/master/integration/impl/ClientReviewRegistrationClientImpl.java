@@ -26,7 +26,7 @@ import lombok.AllArgsConstructor;
 /** 把 CCT 提交事实转换为 Risk I01 请求；不在本地保存请求或响应。 */
 @AllArgsConstructor
 public class ClientReviewRegistrationClientImpl implements ClientReviewRegistrationClient {
-    private static final String CALLER = "client-contract-service";
+    private static final String CALLER = "client-master-service";
 
     private final ClientReviewRegistrationApi risk;
 
