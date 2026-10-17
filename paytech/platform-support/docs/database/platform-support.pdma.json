@@ -33253,6 +33253,330 @@
         }
       ],
       "type": "P"
+    },
+    {
+      "id": "FA62823F-E219-5194-A1DB-9E6628EB8DA6",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_currency_spec",
+      "defName": "币种规则",
+      "comment": "保存全平台使用的 ISO 4217 币种精度、舍入方式和启停状态；Platform 为 Owner，Ledger 与 Billing 持只读副本。",
+      "properties": {
+        "logicalTableKey": "currency_spec",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "币种规则ID",
+          "comment": "服务侧生成的币种规则 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "1CB8190C-9BB1-586B-B4CA-F5056B40A2C3"
+        },
+        {
+          "defKey": "currency",
+          "defName": "币种",
+          "comment": "ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。",
+          "type": "CHAR",
+          "len": 3,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {},
+          "domain": "7107154F-CF2B-4D2A-AC43-514D4027E5C6",
+          "id": "5E1FD503-3BB4-550B-8F78-9296F9A22179"
+        },
+        {
+          "defKey": "minor_unit",
+          "defName": "最小货币单位位数",
+          "comment": "记账与结算金额允许保留的小数位数，取值范围为零至八。",
+          "type": "TINYINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "AFE5CD4B-0C46-5A8C-8690-9D9222B1B364"
+        },
+        {
+          "defKey": "rounding_mode",
+          "defName": "舍入方式",
+          "comment": "金额从八位计算精度归整到币种精度时采用的固定方式。允许值：HALF_UP。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "08C5B2FC-264A-5A57-862C-D0EC0D5ECEBB"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "comment": "币种规则当前是否允许被新业务使用。允许值：DRAFT、ACTIVE、INACTIVE。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "C106688E-A8E8-5CD8-BB29-8E6D69B8296F"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "EA7E3992-6936-51FB-9766-1F0133186D17"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "B10FDE4F-2991-5797-82C3-F23C09A7505F"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_currency",
+          "defName": "唯一索引 currency",
+          "unique": true,
+          "comment": "保证业务唯一性：currency",
+          "fields": [
+            {
+              "fieldDefKey": "5E1FD503-3BB4-550B-8F78-9296F9A22179",
+              "ascOrDesc": "A",
+              "id": "DF043EC8-F8CA-5B7C-BBAE-1F5EEEB074DD"
+            }
+          ],
+          "id": "BF4A09F0-61DC-51DA-97B2-8AA40E2C0B37"
+        }
+      ],
+      "type": "P"
     }
   ],
   "views": [],
@@ -37036,6 +37360,38 @@
       },
       "id": "C86222A0-4F86-512A-A9F2-EB09AABDF7EF",
       "comment": "外部 API 配置边界关系图"
+    },
+    {
+      "defKey": "reference_data",
+      "defName": "全平台参考数据",
+      "relationType": "field",
+      "canvasData": {
+        "cells": [
+          {
+            "id": "F779DCB1-5499-5B44-B42C-6865D208D67A",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "FA62823F-E219-5194-A1DB-9E6628EB8DA6",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 240
+            }
+          }
+        ]
+      },
+      "properties": {
+        "primaryTables": [
+          "t_currency_spec"
+        ],
+        "referenceTables": []
+      },
+      "id": "5E9D7877-930C-5663-9553-2AF3B864E60D",
+      "comment": "全平台参考数据边界关系图"
     }
   ],
   "standardFields": [],

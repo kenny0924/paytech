@@ -11,6 +11,7 @@ export const DIAGRAM_GROUPS = Object.freeze([
   Object.freeze({ defKey: "gateway_control", defName: "公共 API 控制面", primary: primaryKeys("gateway_control") }),
   Object.freeze({ defKey: "reliability", defName: "可靠执行", primary: primaryKeys("reliability") }),
   Object.freeze({ defKey: "integration", defName: "外部 API 配置", primary: primaryKeys("integration") }),
+  Object.freeze({ defKey: "reference_data", defName: "全平台参考数据", primary: primaryKeys("reference_data") }),
 ]);
 
 export const GATEWAY_ROUTE_COMPATIBILITY = Object.freeze({

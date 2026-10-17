@@ -2271,4 +2271,9 @@ INSERT INTO t_notification_route (
     (900000000000070033, @client_tenant_invitation_template_id, 900000000000070001, NULL, 'ACTIVE', 1,
         @client_team_initial_time, @client_team_initial_time);
 
+
+-- 全平台参考数据（D41）：与 finance-initial-data.sql 相同的 USD 币种规则；固定 ID 1001 低于 Snowflake 范围。
+INSERT INTO `t_currency_spec` (`id`, `currency`, `minor_unit`, `rounding_mode`, `status`, `create_time`, `update_time`)
+VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+
 COMMIT;
