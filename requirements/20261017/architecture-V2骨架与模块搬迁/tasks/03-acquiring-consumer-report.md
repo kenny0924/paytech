@@ -1,8 +1,8 @@
 # 第 03 步报告 · Commerce → acquiring + consumer（两库两 app）
 
 - 分支：`refactor/step-03-acquiring-consumer`（起点 `refactor-main@572d7bb9`）。提交：`ec6dfbe9` 纯 `git mv` 搬迁（内容未改，单独不可编译）、`6ebc4489` 包名与逻辑拆分及测试、`5f0ce892` PDManer / Node / 调用方名 / 本地库 / 文档链接；本报告单独提交。
-- 结论：第 5 节 1–5 项已真实执行。任务卡命令 BUILD SUCCESS，acquiring 801 例、consumer 21 例，0 失败 0 跳过，合计 822 例，不少于搬迁前基线 808 例。两个 app 以 mock Profile 启动，health 为 UP。Node 测试全部通过，其中 Commerce 相关 4 个测试文件在起点就有 13 项失败，本步后全部通过。R4 零违规。**全 Reactor 未运行**：按 team-lead 的指示（主会话正在跑全 Reactor），已发消息申请，截至提交未获答复，见第 2.1 节。
-- **需要先看**：任务卡要求删除 `t_commerce_order.termination_requested_at` 和 `CheckoutSessionStatus.PREPARING`，本步**均保留**。前者是取消状态机正在读写的列，后者在取消 / 查询 / 资料保存中仍是可接受的状态，删除会改变取消状态机。详见第 5 节第 1、2 项。
+- 结论：第 5 节各项已真实执行。任务卡命令 BUILD SUCCESS，acquiring 801 例、consumer 21 例，0 失败 0 跳过，合计 822 例，不少于搬迁前基线 808 例。commercial-test 24 / 24、platform-support-test 798 / 798 均已重跑。两个 app 以 mock Profile 启动，health 为 UP。Node 测试全部通过，其中 Commerce 相关 4 个测试文件在起点有 13 项失败，本步后全部通过。R4 零违规。全 Reactor 按 team-lead 决定不在本步运行，合入后由主会话统一执行。
+- **需要先看**：任务卡要求删除 `t_commerce_order.termination_requested_at` 和 `CheckoutSessionStatus.PREPARING`，本步**均保留**，team-lead 已接受。前者是取消状态机正在读写的列；后者只保留"读容忍"，用于兼容历史数据读取，列为后续删除候选。依据见第 5 节第 1、2 项。
 
 ## 1. 改动摘要
 
@@ -88,13 +88,13 @@ cd paytech && ./mvnw -B verify -pl acquiring/paytech-acquiring-test,consumer/pay
 | — | consumer `ResolveCustomerApiTest` / `CardSavingEligibilityApiTest` | 新增 4 / 6 | 覆盖幂等、并发两次同 reference 只建一个、个人原值、按主键读取（有效 / 已删除 / 404）；资格可用、四种原因、client-master 不可用 / 断连 / 响应无效时失败关闭 |
 | — | 两个 `ArchitectureAutoTest` | 新增 1 / 1 | R1–R12，含 R4 |
 
-**全 Reactor：未运行。**
+**全 Reactor：未运行。** 按 team-lead 决定，合入后由主会话统一运行。本步改动影响到的其他模块已单独运行：
 
-- team-lead 交代"主会话此刻正在跑整 Reactor，请不要跑全 Reactor"。我在 2026-10-17T20:48Z 前后经 SendMessage 申请，截至报告提交没有收到答复，因此未执行。
-- 本步改动影响到的其他模块已单独运行：
-  - commercial-test：`-pl commercial/paytech-commercial-test -am '-Dtest=com/paytech/commercial/**/*Test'`，**24 / 24**，与第 04 步相同。
-  - arch-rules：57 / 57；arch-rules-reactor-test：3 / 3。
-- Platform、Payment 与两个 BFF 没有改动，未单独运行。
+- commercial-test：`./mvnw -B -o verify -pl commercial/paytech-commercial-test -am '-Dtest=com/paytech/commercial/**/*Test' -Dsurefire.failIfNoSpecifiedTests=false`，BUILD SUCCESS，**24 / 24**、0 跳过，与第 04 步相同。改动只有调用方名与测试常量。
+- platform-support-test：`./mvnw -B -o verify -pl platform-support/paytech-platform-support-test -am '-Dtest=com/paytech/platform/**/auto/**/*Test' -Dsurefire.failIfNoSpecifiedTests=false`，BUILD SUCCESS（3:58 min），**798 / 798**、0 跳过，与第 02a 步相同。
+  - 第一次运行时 `-Dtest` 写成 `com/paytech/platform/**/*Test`，误把 `manual` 用例 `SesRealSendTest` 选进来，它因缺少 SES 环境变量失败（另 798 例全过）。改为只选 `auto` 后重跑通过。
+- arch-rules：57 / 57；arch-rules-reactor-test：3 / 3。
+- Payment 与两个 BFF 没有改动，未单独运行。
 
 **覆盖率门禁**：`-Pcoverage-gate` 下复测为 0.86（起点 0.85），仍低于 0.90，见第 2.6 节。
 
@@ -208,15 +208,28 @@ MYSQL_PWD="$(grep -E '^MOR_MYSQL_ROOT_PASSWORD=' …/local-environment/.env.loca
 
 ## 5. 与设计 / 任务卡的偏差
 
-1. **`termination_requested_at` 未删除。**
-   - 它不是死列：`CommerceOrderMapper.requestTermination` 写入它，`cancel` 用 `termination_requested_at IS NOT NULL` 作 CAS 条件；`recordPaymentSubmission`、`recordConsumerChange` 也用它守卫。另外 `CheckoutQueryContext.isOpen`、`SubmitCustomerPaymentProcessor.checkNewSubmission` 与 `OrderCancellationServiceImpl` 都读取它。
-   - 删除它会改变两段式取消（先登记终止意图，Payment 终止后再取消），与"取消的状态机与 CAS 语义一律不改"冲突。
-   - analysis/commerce.md §2 把它与准备期残留列并列，判断有误。
-2. **`CheckoutSessionStatus.PREPARING` 未删除。**
-   - 生产代码不再写入它。但取消（`CancelOrderProcessor.checkCancellationAllowed`、`CheckoutSessionMapper.cancel`）、资料保存（`recordConsumerChange`、`CheckoutSession.checkConsumerEditable`）、支付受理（`recordPaymentSubmission`）和 GetOrder（"未就绪"判定与金额校验）都把它当作可接受的存量状态。
-   - 测试也依赖它：`GetOrderDataBuilder` 的"待准备"夹具用 PREPARING 会话表达，GetOrder、Cancel、可退金额等多个测试类使用这个夹具；GetOrderSuccessTest 断言 `checkout.status=PREPARING`；SaveConsumerTest 的 `@EnumSource` 排除项引用它。
-   - 删除它会让这些存量状态从"可接受"变成 500 / 409，属于状态机变化，还需要改写多类测试的夹具与断言。
-   - 本步只删了确实与状态机无关的 `preparation_command_id`：它从不被写入，所有守卫恒为真，删除后对所有可产生的数据逻辑等价。同时删了 `context_format`。
+1. **`termination_requested_at` 未删除（team-lead 已接受）。** 取消状态机读写这一列，下列位置均在 `paytech-acquiring-core` 中：
+   - 写入：`CommerceOrderMapper.xml:102` 的 `requestTermination`，执行 `SET termination_requested_at=#{now}`，条件为第 104 行的 `termination_requested_at IS NULL`；同时 `CommerceOrderRepositoryImpl.java:92` 更新对象。
+   - CAS 条件：
+     - `CommerceOrderMapper.xml:115`：`cancel` 要求 `termination_requested_at IS NOT NULL`，即先登记终止意图，Payment 终止后才能取消。
+     - `CommerceOrderMapper.xml:7`：`recordPaymentSubmission` 要求该列 `IS NULL`，终止后不得再受理支付。
+     - `CommerceOrderMapper.xml:29`：`recordConsumerChange` 要求该列 `IS NULL`，终止后不得改资料。
+   - Java 读取：
+     - `OrderCancellationServiceImpl.java:34`、`:53`：判断是否已登记终止意图，决定是否补登。
+     - `SubmitCustomerPaymentProcessor.java:187`：`checkNewSubmission`。
+     - `CheckoutQueryContext.java:58`：`isOpen`。
+     - 另有 `CommerceOrder.checkConsumerEditable` / `allowsPayment`。
+   - 查询投影：`OrderQueryMapper.xml:12`、`:68` 与 `BasicCheckoutMapper.xml:26`、`:57`。
+   - 删除这一列会取消两段式取消，与"取消的状态机与 CAS 语义一律不改"冲突。analysis/commerce.md §2 把它与准备期残留列并列，判断有误。
+2. **`CheckoutSessionStatus.PREPARING` 只保留"读容忍"（team-lead 已接受）。**
+   - 没有任何生产写入路径产生 PREPARING：会话在 `CreateCheckoutProcessor.java:238` 直接以 `OPEN` 创建，其余状态写入只有 `PAYMENT_PROCESSING`、`COMPLETED`、`CANCELLED`。
+   - 与之配套的 SQL 守卫 `preparation_command_id IS NULL` 已随该列删除，原在 `recordConsumerChange` 与 `cancel` 的 localOnly 分支。
+   - 枚举值保留，只为兼容历史数据读取：库中若有存量 PREPARING 行，`CodeEnumTypeHandler` 仍能映射，并按原语义被接受。接受它的位置如下：
+     - SQL：`CommerceOrderMapper.xml:10`、`:35`；`CheckoutSessionMapper.xml:58`、`:63`。
+     - Java：`CheckoutSession.java:53`、`:60`；`CancelOrderProcessor.java:133`；`GetOrderProcessor.java:131`、`:216`。
+   - 测试也依赖这个"读容忍"：`GetOrderDataBuilder` 的"待准备"夹具（GetOrder、Cancel、可退金额等测试类共用）、GetOrderSuccessTest 对 `checkout.status=PREPARING` 的断言、SaveConsumerTest 的 `@EnumSource` 排除项。
+   - **列为第 13 步或后续切片的删除候选**：删除时需要一并去掉上述 SQL `IN` 列表与 Java 判断，确认存量数据中没有 PREPARING 行，并把相关测试夹具改为当前可产生的状态。
+   - 本步只删了 `preparation_command_id`（从不被写入，所有守卫恒为真，删除后对所有可产生的数据逻辑等价）与 `context_format`。
 3. **`t_consumer_acceptance.command_idempotency_id` 保留，并改为可空的历史引用列。**
    - 拆分前模型写的是 NN，已执行的 Schema 与测试 DDL 写的是 NULL，注释为"仅历史请求幂等记录引用；新支付提交不写入"。
    - 模型已与可执行 Schema 对齐。任务卡没有列出这一列，未删除，见待确认。
@@ -228,9 +241,14 @@ MYSQL_PWD="$(grep -E '^MOR_MYSQL_ROOT_PASSWORD=' …/local-environment/.env.loca
    - 类级登记的消息中带源码行号，修改 `PaymentStoredCardClientImpl` 时需同步。
    - Reactor 依赖图测试的"过期登记"判定改为只看 Maven 坐标主体的登记，因为依赖图规则不产出类级违规。
 7. **队列改名为 `cg_acquiring_payment_result`（依据 design/10 §5.3）。** 部署切换时需要排空旧队列 `cg_commerce_payment_result`。交换机与路由键未变。
-8. **调用方名改名。**
-   - acquiring 的 Webhook 调用方与载荷 `source.system` 改为 `acquiring-service`。切换前已登记的补偿载荷中冻结的仍是 `commerce-service`，需要确认 Platform 对来源系统的使用（白名单与去重）是否受影响。
-   - commercial 只接受 `acquiring-service`。这与第 04 / 05 步"改名步骤同分支改完调用方"的口径一致；commercial 目录不在本步禁改清单内。
+8. **调用方名改名（D42 改名口径，team-lead 已接受）。**
+   - acquiring 提交 Platform Webhook 的 `X-Caller-Service` 与载荷 `source.system` 改为 `acquiring-service`，见 `ClientWebhookSubmissionHandler.CALLER_SERVICE`。切换前已登记的补偿载荷中冻结的仍是 `commerce-service`。
+   - commercial：只改了调用方名与测试常量，没有改逻辑，涉及以下位置：
+     - `CheckoutQueryController.authorize` 的白名单改为 `acquiring-service`。
+     - `CheckoutContextApi` 的 JavaDoc 与 README 文案。
+     - `AbstractCheckoutApiTest` 与 `AgreementPartyQueryHttpTest` 的常量。
+     - 重跑结果为 24 / 24。
+   - Platform：测试配置中的 Webhook 调用方白名单（`webhook-test`、`webhook-test-peer`）没有 `commerce-service` 样本。只同步了两处样本：`application.yml` 中 `webhook.http.callers` 注释示例改为 `acquiring-service`；`NotificationCallerPropertiesTest` 中"未登记调用方被拒绝"的样本改为 `acquiring-service`，用例语义不变。重跑结果为 798 / 798。
 9. **环境变量名未改。** `COMMERCE_*`、`MOR_COMMERCE_DB_*` 沿用，只改了库名默认值，以免影响 test-environment 部署描述。
 10. **consumer 不复制 Redis 与 AMQP 放行**，因为它没有锁，也没有 MQ 消费者，比"复制 Commerce 禁令"更严。补偿事件不经 MQ，consumer 不需要 RabbitMQ；design/10 §1.2 的表述有误。
 11. **PDManer 模型由生成器重新生成。** 两份模型由共享清单生成，`--check` 通过；没有像第 05 步那样从已提交模型分区。`t_customer` 的字段、索引与注释与拆分前逐字一致，只是 PDManer 内部 ID 改为确定性 UUID（原 ID 是手写的）。拆分前的跨表关系 `t_commerce_order.customer_id → t_customer` 因跨库不再建模。
@@ -240,7 +258,7 @@ MYSQL_PWD="$(grep -E '^MOR_MYSQL_ROOT_PASSWORD=' …/local-environment/.env.loca
 
 ## 6. 待确认
 
-1. `termination_requested_at` 与 `PREPARING`（第 5 节第 1、2 项）：前者建议保留；后者若要删除，需要另立变更，并接受存量 PREPARING 行变为不合法以及测试夹具改写。
+1. `termination_requested_at` 保留（已接受）。`PREPARING` 的删除时机见第 11 项。
 2. `t_consumer_acceptance.command_idempotency_id`：它引用的 `t_command_idempotency` 已删除，是否随后删除这一列。
 3. Gateway Target 与 Route 的调整（第 4 节），以及 Platform Webhook 调用方白名单改为 `acquiring-service`：需要在 Platform 数据与部署配置中登记。
 4. `cg_commerce_payment_result` 旧队列的排空与删除时机。
@@ -249,4 +267,5 @@ MYSQL_PWD="$(grep -E '^MOR_MYSQL_ROOT_PASSWORD=' …/local-environment/.env.loca
 7. 生产配置需要 `CONSUMER_SNOWFLAKE_REGION_ID` / `CONSUMER_SNOWFLAKE_WORKER_ID`，与 acquiring 分配不同的 worker，由实例清单分配；另外需要 consumer 的 Nacos、管理端口 19109 与健康检查地址。
 8. Vault 测试样本 `vault/test/auto/pkg/policy/policy_test.go` 与 Payment `PayCardChannelTest` 中的 `commerce-service` 只是样本字符串，未改；Operations BFF 测试样本同样未改。
 9. 搬入文档之外，仓库其他文档中指向 `commerce-service/` 的入向链接（design/09 §6）留到第 13 步统一重写；`agent-docs/` 正文未改。
-10. 全 Reactor `verify` 待 team-lead 放行后补跑，或由主会话合入后统一运行。
+10. 全 Reactor `verify` 由主会话在合入后统一运行，本步未执行。
+11. `PREPARING` 枚举值与相关 SQL / Java 的读容忍列为第 13 步或后续切片的删除候选，见第 5 节第 2 项。

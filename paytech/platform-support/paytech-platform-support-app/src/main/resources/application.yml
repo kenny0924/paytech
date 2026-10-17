@@ -213,7 +213,7 @@ webhook:
   management-lock-wait-time: 500ms
   management-lock-lease-time: 30s
   # 内部 HTTP 调用方白名单：服务名 → 可提交的事件类型。过渡信任，X-Caller-Service 可伪造，部署须限制私网访问。
-  # 默认为空，全部拒绝；例如 commerce-service: [order.paid, refund.succeeded]
+  # 默认为空，全部拒绝；例如 acquiring-service: [order.paid, refund.succeeded]（第 03 步由 commerce-service 改名）
   http:
     callers: {}
 

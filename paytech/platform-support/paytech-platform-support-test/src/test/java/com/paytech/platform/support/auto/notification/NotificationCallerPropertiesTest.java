@@ -41,7 +41,7 @@ class NotificationCallerPropertiesTest {
                 assertDoesNotThrow(() -> callers.authorize("payment-service", "PAYMENT_RECEIPT_EMAIL"));
                 assertThrows(BizCheckFailException.class,
                     () -> callers.authorize("payment-service", "OTHER_EMAIL"));
-                assertThrows(BizCheckFailException.class, () -> callers.authorize("commerce-service", "PAYMENT_RECEIPT_EMAIL"));
+                assertThrows(BizCheckFailException.class, () -> callers.authorize("acquiring-service", "PAYMENT_RECEIPT_EMAIL"));
                 assertThrows(BizCheckFailException.class, () -> callers.authorize(null, "PAYMENT_RECEIPT_EMAIL"));
             });
         runner.run(context -> assertThrows(BizCheckFailException.class,
