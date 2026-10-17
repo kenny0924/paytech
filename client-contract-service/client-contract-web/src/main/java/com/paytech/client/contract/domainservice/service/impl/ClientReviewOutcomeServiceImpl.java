@@ -6,6 +6,7 @@ import com.paytech.client.contract.domain.onboarding.ClientReviewOutcomeContext;
 import com.paytech.client.contract.domainservice.repository.ClientApplicationRepository;
 import com.paytech.client.contract.domainservice.repository.ClientProjectionRepository;
 import com.paytech.client.contract.domainservice.repository.ClientRepository;
+import com.paytech.client.contract.domainservice.repository.PartyProfileRepository;
 import com.paytech.client.contract.domainservice.service.ClientReviewOutcomeService;
 import com.paytech.client.contract.service.handler.ClientTenantProjectionHandler;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
@@ -20,8 +21,9 @@ public class ClientReviewOutcomeServiceImpl implements ClientReviewOutcomeServic
     private final CompensationEventRegistrar events;
     private final ClientProjectionRepository projections;
     private final ClientApplicationRepository applications;
+    private final PartyProfileRepository profiles;
 
-    /** 申请结论、Client 激活、生命周期历史与投影任务同一事务提交。 */
+    /** 申请结论、Client 激活、主体资料批准时间、生命周期历史与投影任务同一事务提交。 */
     @Override
     public void conclude(ClientReviewOutcomeContext context) {
         writes.executeWithoutResult(status -> {
@@ -30,6 +32,7 @@ public class ClientReviewOutcomeServiceImpl implements ClientReviewOutcomeServic
                 return;
             }
             clients.activate(context.getApplication().getClientId(), context.getNow());
+            profiles.markApproved(context.getActivation().partyId(), context.getNow());
             projections.append(context.getActivation(), context.getActivationSnapshot());
             events.register(ClientTenantProjectionHandler.buildEvent(context.getActivation().changeVersionId()));
         });

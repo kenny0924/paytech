@@ -132,6 +132,30 @@ public class OnboardingTestMapper {
             applicationId);
     }
 
+    /** Client 主体资料的首次批准时间；未批准为 null。 */
+    public Instant profileApprovedTime(long clientId) {
+        Timestamp value = jdbc.queryForObject("SELECT f.approved_time FROM t_party_profile f JOIN t_client c ON c.party_id=f.party_id "
+            + "WHERE c.client_id=?", Timestamp.class, clientId);
+        return value == null ? null : value.toInstant();
+    }
+
+    /** 设置 Client 主体资料的批准时间（模拟已写入批准时间的数据）。 */
+    public void setProfileApprovedTime(long clientId, Instant time) {
+        jdbc.update("UPDATE t_party_profile f JOIN t_client c ON c.party_id=f.party_id SET f.approved_time=? WHERE c.client_id=?",
+            Timestamp.from(time), clientId);
+    }
+
+    /** 申请最后更新时间。 */
+    public Instant applicationUpdateTime(long applicationId) {
+        return jdbc.queryForObject("SELECT update_time FROM t_client_application WHERE application_id=?", Timestamp.class, applicationId)
+            .toInstant();
+    }
+
+    /** 把该 Client 全部申请的最后更新时间改为指定值（模拟批准后申请记录再被更新）。 */
+    public void touchApplications(long clientId, Instant time) {
+        jdbc.update("UPDATE t_client_application SET update_time=? WHERE client_id=?", Timestamp.from(time), clientId);
+    }
+
     /** Client 状态。 */
     public String clientStatus(long clientId) {
         return jdbc.queryForObject("SELECT status FROM t_client WHERE client_id=?", String.class, clientId);

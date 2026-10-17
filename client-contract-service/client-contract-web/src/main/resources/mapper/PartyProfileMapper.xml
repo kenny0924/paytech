@@ -17,4 +17,10 @@
         OR party_id IN (SELECT party_id FROM t_client WHERE client_id = #{clientId})
         ORDER BY profile_id
     </select>
+    <!-- 资料首次批准并永久锁定的时间：只填空值，与申请结论、Client 激活同一事务。 -->
+    <update id="markApproved">
+        UPDATE t_party_profile SET approved_time=#{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+            update_time=#{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE party_id=#{partyId} AND approved_time IS NULL
+    </update>
 </mapper>

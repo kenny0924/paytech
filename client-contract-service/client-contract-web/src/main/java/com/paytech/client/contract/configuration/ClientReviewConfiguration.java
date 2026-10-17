@@ -28,6 +28,7 @@ import com.paytech.client.contract.domainservice.service.ClientClassificationSou
 import com.paytech.client.contract.domainservice.service.ClientReviewOutcomeService;
 import com.paytech.client.contract.domainservice.service.impl.ClientClassificationServiceImpl;
 import com.paytech.client.contract.domainservice.service.impl.ClientClassificationSourceServiceImpl;
+import com.paytech.client.contract.domainservice.repository.PartyProfileRepository;
 import com.paytech.client.contract.domainservice.service.impl.ClientReviewOutcomeServiceImpl;
 import com.paytech.client.contract.ext.mq.ClientReviewResultListener;
 import com.paytech.client.contract.integration.ClientReviewRegistrationClient;
@@ -77,8 +78,10 @@ public class ClientReviewConfiguration {
     /** 审核结果本地落地。 */
     @Bean
     public ClientReviewOutcomeService clientReviewOutcomeService(ClientRepository clients, PlatformTransactionManager manager,
-        CompensationEventRegistrar events, ClientProjectionRepository projections, ClientApplicationRepository applications) {
-        return new ClientReviewOutcomeServiceImpl(clients, ClientSubmissionConfiguration.writes(manager), events, projections, applications);
+        CompensationEventRegistrar events, ClientProjectionRepository projections, ClientApplicationRepository applications,
+        PartyProfileRepository profiles) {
+        return new ClientReviewOutcomeServiceImpl(clients, ClientSubmissionConfiguration.writes(manager), events, projections, applications,
+            profiles);
     }
 
     /** 分类读取。 */

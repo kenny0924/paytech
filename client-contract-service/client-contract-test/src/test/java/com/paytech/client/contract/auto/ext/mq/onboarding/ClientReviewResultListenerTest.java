@@ -3,6 +3,7 @@ package com.paytech.client.contract.auto.ext.mq.onboarding;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,7 @@ class ClientReviewResultListenerTest extends AbstractClientReviewTest {
         amqpAdmin.purgeQueue(DEAD_LETTER_QUEUE, false);
     }
 
-    /** 通过：申请 APPROVED 并释放名额，Client ACTIVE，追加第二版生命周期历史，Platform 收到 ACTIVE 投影；重复投递不重复执行。 */
+    /** 通过：申请 APPROVED 并释放名额，Client ACTIVE，主体资料写入批准时间（等于结论时间、重复投递不变），追加第二版生命周期历史，Platform 收到 ACTIVE 投影；重复投递不重复执行。 */
     @Test
     void test_normalFlow() throws Exception {
         var review = applications.underReview(ACCOUNT_ID);
@@ -48,6 +49,8 @@ class ClientReviewResultListenerTest extends AbstractClientReviewTest {
         assertNull(application.get("active_slot"));
         assertEquals(decisionId, ((Number)application.get("qualification_decision_id")).longValue());
         assertEquals("ACTIVE", mapper.clientStatus(review.app().clientId()));
+        Instant approvedTime = mapper.profileApprovedTime(review.app().clientId());
+        assertEquals(mapper.applicationUpdateTime(review.app().applicationId()), approvedTime);
         var history = mapper.clientHistory(review.app().clientId());
         assertEquals(2, history.size());
         assertEquals("UPDATE", history.get(1).get("operation_type"));
@@ -62,6 +65,7 @@ class ClientReviewResultListenerTest extends AbstractClientReviewTest {
         waitUntil(() -> "RETURNED".equals(mapper.review(marker.app().applicationId()).get("status")), Duration.ofSeconds(10));
         assertEquals(2, mapper.clientHistory(review.app().clientId()).size());
         assertEquals(1, owners.projectionRequests().size());
+        assertEquals(approvedTime, mapper.profileApprovedTime(review.app().clientId()));
     }
 
     /** 退回：申请 RETURNED 并保留名额，Client 仍为 PENDING；之后不能再设置本任务分类。 */
@@ -74,6 +78,7 @@ class ClientReviewResultListenerTest extends AbstractClientReviewTest {
         waitUntil(() -> "RETURNED".equals(mapper.review(review.app().applicationId()).get("status")), Duration.ofSeconds(10));
         assertEquals(Boolean.TRUE, mapper.review(review.app().applicationId()).get("active_slot"));
         assertEquals("PENDING", mapper.clientStatus(review.app().clientId()));
+        assertNull(mapper.profileApprovedTime(review.app().clientId()));
         assertEquals("APPLICATION_NOT_EDITABLE", body(replace(review.caseId(), List.of(item("RETAIL", "5411", true)))).path("code").asString());
     }
 
@@ -89,6 +94,7 @@ class ClientReviewResultListenerTest extends AbstractClientReviewTest {
         assertNull(mapper.review(review.app().applicationId()).get("active_slot"));
         assertEquals(decisionId, ((Number)mapper.review(review.app().applicationId()).get("qualification_decision_id")).longValue());
         assertEquals("PENDING", mapper.clientStatus(review.app().clientId()));
+        assertNull(mapper.profileApprovedTime(review.app().clientId()));
         assertEquals(1, mapper.clientHistory(review.app().clientId()).size());
     }
 

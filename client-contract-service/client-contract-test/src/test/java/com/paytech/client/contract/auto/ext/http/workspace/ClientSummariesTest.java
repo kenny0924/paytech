@@ -2,6 +2,7 @@ package com.paytech.client.contract.auto.ext.http.workspace;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -80,6 +81,22 @@ class ClientSummariesTest extends OnboardingMockTestBase {
         var items = body(result).path("items");
         assertEquals(1, items.size());
         assertEquals(ClientType.INDIVIDUAL.getCode(), item(items, invited.clientId()).path("clientType").asString());
+    }
+
+    /** approvedAt 取主体资料首次批准时间；之后申请记录再被更新也不变。未写入批准时间的存量数据退回最早的申请批准时间。 */
+    @Test
+    void test_edgeCase() {
+        var approved = applications.approved(ACCOUNT_ID, true);
+        var legacy = applications.approved(ACCOUNT_ID, false);
+        Instant approvedTime = Instant.parse("2026-10-01T08:00:00.123456Z");
+        mapper.setProfileApprovedTime(approved.clientId(), approvedTime);
+        Instant legacyApproved = mapper.applicationUpdateTime(legacy.applicationId());
+        mapper.touchApplications(approved.clientId(), Instant.parse("2026-10-17T09:00:00Z"));
+
+        var items = body(summaries("client-console-bff", ACCOUNT_ID, approved.clientId(), legacy.clientId())).path("items");
+
+        assertEquals(approvedTime.toString(), item(items, approved.clientId()).path("approvedAt").asString());
+        assertEquals(Instant.parse(item(items, legacy.clientId()).path("approvedAt").asString()), legacyApproved);
     }
 
     /** 租户上下文会话同样可读。 */
