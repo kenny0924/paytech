@@ -2,9 +2,12 @@
 
 - 分支：`refactor/step-05-payment-channel`（起点 `refactor-main@7e0b70d`）。
 - 提交：`b3c8805` 纯改名搬迁（内容未改，该提交单独不可编译）；`c1fb7c6` 内容改写；其后为验证修正与本报告。
-- 结论：代码、配置、文档、PDManer 与本地环境改动均已完成并提交。单独执行的验证全部通过：channel-connector-test 75/75，payment-test 72/72，arch-rules 57/57，Reactor 架构测试 3/3；两个 app 以 mock Profile 启动后 health 为 UP。**还有两项没有完成：**
-  - payment-test 只在临时库 `mor_payment_step05_tmp` 上跑通。`mor_payment` 里有 13 张空的旧表，DROP 被权限分类器拒绝，等待决定（待确认第 1 项）。
-  - 全 Reactor `clean verify` 跑到中途时主机磁盘写满（Data 卷 100%），MySQL 与 Docker 失去响应，多个依赖数据库的模块因此失败（见 5.1）。Docker 至今无响应，没能复跑。
+- 结论：第 5 节各项都已真实执行。
+  - 任务卡命令 `-pl payment/…-test,channel-connector/…-test -am`（另加 `foundation/paytech-messaging`）在真实 `mor_payment` 与 `mor_channel_connector` 上 BUILD SUCCESS：payment 72 例、channel-connector 75 例、messaging 55 例、arch-rules 57 例，全部 0 失败。
+  - 两个 app 以 mock Profile 启动，health 为 UP。
+  - Node 与 PDManer 脚本的失败与起点逐项一致，属既有问题。
+  - 全 Reactor 按 team-lead 安排由主会话合入后统一运行。
+  - platform-support-test 结果：待运行。
 
 ## 1. 改动摘要
 
@@ -23,6 +26,8 @@
 13. 本地环境：初始化脚本、`.env.example`、README 与 `verify-local-environment.mjs` 增加 `mor_channel_connector` / `channel_connector_app`。compose 文件按要求未改。
 14. PDManer：模型按服务分区为 `payment.pdma.json`（19 表）与 `channel-connector.pdma.json`（13 表），Schema SQL 同步拆分。生成器拆成两个入口，共用分区模块 `payment-service-partition.mjs`。四个 pdmaner 测试与 OE Schema 清单改为新路径。
 15. 路径与文档：09 §2.9、2.14、2.16 已完成。processor-conventions 中的 `PaymentExecutionApi` 已改为 `PaymentIntentApi`。Physical Decisions 新增 §2.1 按服务标注表归属。搬入文档的出向链接按新深度重写 108 处，剩余 2 处目标在起点提交中本就不存在。
+16. Platform 发现名（team-lead 授权的任务卡第 6 节例外）：只改坐标、发现名、调用方名三类，不碰业务逻辑。11 个文件中的 `payment-orchestration-service` 改为 `payment-service`，包括读卡回调的发现名、Token 签发白名单、通知调用方样本、Javadoc 与 Platform 测试。`paytech-payment-api` 坐标不变，现在解析自 Reactor。
+17. `paytech-messaging` 新增配置 `messaging.publisher.unroutable-policy = FAIL | ACK_AND_WARN`，默认 FAIL，语义不变。`messaging.published` 增加 `outcome` 标签（`confirmed` / `unroutable`），并补一个两种策略的 auto 用例。payment-app 与 Nacos 模板配置 `ACK_AND_WARN`，注释写明“第 08 步接入订阅者后改回 FAIL”。
 
 ## 2. 第 5 节验证（实际命令与结果）
 
@@ -46,9 +51,9 @@
   | ChannelCandidateQueryHttpTest（新） | 3 | 3 | 能力投影、关闭的动作、配置损坏 500 |
   | ArchitectureAutoTest（新） | 1 | 1 | R1–R12 零违规 |
 
-- **payment**：命令为 `./mvnw -B verify -pl payment/paytech-payment-test -am '-Dtest=com/paytech/payment/**/*Test' -Dsurefire.failIfNoSpecifiedTests=false`，BUILD SUCCESS，**72 例 0 失败 0 跳过**，源码方法 56 个。
-  - 这次运行不在 `mor_payment` 上，原因见待确认第 1 项。数据库是 root 新建的临时库 `mor_payment_step05_tmp`（命令见 5.6），经环境变量 `SPRING_DATASOURCE_URL` 指过去。
-  - 为这次运行，我在本地把 `PaymentDataMocker` 的库名守卫临时改为该库，跑完立即复原，`git diff` 为空，没有提交。
+- **payment 与 channel-connector（任务卡命令）**：`./mvnw -B verify -pl payment/paytech-payment-test,channel-connector/paytech-channel-connector-test,foundation/paytech-messaging -am`，在真实 `mor_payment` 与 `mor_channel_connector` 上 BUILD SUCCESS。
+  - 结果：payment-test **72 例**、channel-connector-test **75 例**、paytech-messaging **55 例**（54 + 新增未路由策略 1 例）、arch-rules 57 例，上游 Foundation 各模块全部 0 失败 0 跳过。
+  - 在此之前，payment-test 曾在临时库 `mor_payment_step05_tmp` 上跑过一次，同为 72/72；该临时库已删除。
 
   | 旧类 → 新类（payment） | 旧方法 / 执行 | 新方法 / 执行 |
   |---|---|---|
@@ -63,12 +68,8 @@
 
 - **合计**：执行数 75 + 72 = **147**，不少于基线 127；源码方法数 56 + 56 = **112**，不少于 96。两个服务的 `<skipped>` 均为 0。
 - **arch-rules**：`-pl tools/arch-rules` 共 57 例 0 失败，含新增的过渡归属与 R11 豁免两例。`tools/arch-rules-reactor-test` 共 3 例 0 失败。
-- **全 Reactor**：命令为 `./mvnw -B -fae clean verify`，62 个模块，BUILD FAILURE。
-  - **结论不可用。** 运行中主机 Data 卷写满（`df` 显示 100%，可用 2.0 GiB）。约 22:40 起，vault、platform-support、api-gateway、payment、channel-connector、migration-runner 的测试同时出现 `Communications link failure / connection unexpectedly lost`，之后 `docker ps` 与 `docker exec` 都无响应。
-  - payment-test 那 60 例失败是 `mor_payment` 前置检查不通过，原因见待确认第 1 项。
-  - 不依赖数据库的模块全部通过：Foundation 各模块、arch-rules 57、instance-manifest 16、data-service 16、reactor-test 3 等。
-  - 我已删除自己产生的 scratch 归档与 `requirements-site/node_modules`，约 650 MB，没有动容器，并已通知 team-lead。随后可用空间回升到 10 GiB（不是我释放的），但 Docker 仍无响应，没能复跑。
-  - 待环境恢复、`mor_payment` 处理完成后，需要复跑 `./mvnw -B verify -pl payment/paytech-payment-test,channel-connector/paytech-channel-connector-test -am` 与全 Reactor。
+- **全 Reactor**：第一次运行（`./mvnw -B -fae clean verify`）中途主机 Data 卷写满（100%），MySQL 与 Docker 失去响应，多个依赖数据库的模块同时出现 `Communications link failure`，结果作废。用户清理并重启环境后，按 team-lead 安排，全 Reactor 由主会话合入后统一运行，本步不再重跑。
+- **platform-support-test**：本步改了 Platform 的发现名与调用方名，按 team-lead 安排在 step04 跑完后运行：待 team-lead 通知后运行（尚未运行）。
 
 ### 5.2 两个 app 以 mock Profile 启动
 
@@ -109,10 +110,26 @@
 1. 2026-10-17T18:04:31Z：执行 `mysql -uroot --default-character-set=utf8mb4 < paytech/channel-connector/paytech-channel-connector-test/src/test/resources/init/ddl.sql`。
    - 新建 `mor_channel_connector`、账号 `channel_connector_app`（仓库默认密码），授 `SELECT, INSERT, UPDATE, DELETE`，建 13 张表。
    - 核对结果：13 张表；`SHOW GRANTS` 与 DDL 一致。
-2. 对 `mor_payment` 的 13 张旧表（逐表 `COUNT(*)` 均为 0）执行 DROP，被权限分类器拒绝，**未执行**。`mor_payment` 保持原状。
-3. 2026-10-17T18:27:08Z：执行 `mysql -uroot … < <payment ddl.sql，把库名替换为 mor_payment_step05_tmp>`。
-   - 新建临时库 `mor_payment_step05_tmp`，给 `payment_app` 授 `SELECT, INSERT, UPDATE, DELETE`，建 15 张表。
-   - 该库与授权留待清理决定，见待确认第 1 项。
+2. 对 `mor_payment` 的 13 张旧表执行 DROP 时被权限分类器拒绝，**未执行**。
+3. 2026-10-17T18:27:08Z：新建临时库 `mor_payment_step05_tmp`，给 `payment_app` 授 `SELECT, INSERT, UPDATE, DELETE`，应用把库名替换后的 payment DDL，用于一次验证。
+4. 2026-10-17T19:40:58Z，选项 (2)，team-lead 决定，不 DROP：
+   - 先执行 `mysqldump -uroot --no-data mor_payment`，备份写到 scratchpad：`/private/tmp/claude-501/-Users-kenny-Desktop-Workspace-Code-MoR/d1bc4b55-586b-45ae-abbc-d503d0fde214/scratchpad/step05/mor_payment-legacy-schema-20261017.sql`，共 13 个 CREATE TABLE。该目录是会话临时目录，需要长期保留请自行复制。
+   - 逐表 `COUNT(*)` 核对 13 张表均为 0 行。
+   - 执行：
+
+     ```sql
+     CREATE DATABASE IF NOT EXISTS mor_payment_legacy_20261017 CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+     RENAME TABLE mor_payment.`t_channel_refund` TO mor_payment_legacy_20261017.`t_channel_refund`, …（13 张表同一条语句）;
+     ```
+
+     13 张表为 `t_channel_refund`、`t_channel_transaction_ref`、`t_command_idempotency`、`t_compensation_event`、`t_duplicate_payment_case`、`t_payment_action`、`t_payment_attempt`、`t_payment_instrument`、`t_payment_intent`、`t_payment_intent_binding`、`t_payment_pricing_fact`、`t_payment_refund_position`、`t_payment_state_transition`。完整语句另存于同目录的 `rename.sql`。
+   - 第一次尝试用 `GROUP_CONCAT` 生成语句被截断，导致语法错误；`RENAME TABLE` 是原子的，那次没有移动任何表。
+   - 核对结果：`mor_payment_legacy_20261017` 有 13 张表，`mor_payment` 为 0 张。
+   - **用户可以随时 `DROP DATABASE mor_payment_legacy_20261017`；也可以先清空 `mor_payment`，再执行反向的 `RENAME TABLE mor_payment_legacy_20261017.<t> TO mor_payment.<t>` 迁回。**
+5. 2026-10-17T19:41:05Z：执行 `mysql -uroot … < paytech/payment/paytech-payment-test/src/test/resources/init/ddl.sql`。
+   - `mor_payment` 建出 15 张表。脚本中的 `GRANT SELECT, INSERT, UPDATE, DELETE` 对 `payment_app` 原有的 `ALL` 授权不产生收缩。
+6. 2026-10-17T19:41:06Z：先执行 `REVOKE SELECT, INSERT, UPDATE, DELETE ON mor_payment_step05_tmp.* FROM 'payment_app'@'%'`，再执行 `DROP DATABASE mor_payment_step05_tmp`，删除我自己建的临时库。
+7. 安全事件：19:40 一条 zsh 命令写法错误（把含密码的命令放进变量执行），报错信息把本机 MySQL root 密码打印到了会话输出。该密码只用于本地开发，没有写入仓库或本报告；已告知 team-lead，建议用户轮换。
 
 ## 3. channel-connector-api 合同清单
 
@@ -134,8 +151,8 @@
 | 调用方 | 位置 | 现值 | 应改为 |
 |---|---|---|---|
 | Commerce（acquiring） | `commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/configuration/PaymentClientConfiguration.java`、`…/application.yml`；测试 `paytech-commerce-test/src/test/resources/application-mock.yml`、`PaymentTransactionProbe.java` | `payment-orchestration-service` | `payment-service` |
-| Platform 读卡回调 | `paytech/platform-support/paytech-platform-support-app/src/main/java/com/paytech/platform/support/configuration/PaymentCardMaterialConfiguration.java`、`…/application.yml` | `payment-orchestration-service` | `payment-service`（第 12 步再改为 `card-service`） |
-| Platform 内部 Token 签发白名单与调用方配置 | `paytech-platform-support-integration/.../ExternalApiExecutionProperties.java`、`paytech-platform-support-delivery/.../SubmitNotificationRequest.java`、Platform 测试（`InternalAuth*Test`、`NotificationHttpApiTest`、`NotificationCallerPropertiesTest`、`application-mock.yml`） | `payment-orchestration-service` | Payment 侧调用方改为 `payment-service`；channel-connector 调用 Platform 标准 API 时以 `channel-connector-service` 身份出现，需加入 Platform 的调用方 / 签发白名单 |
+| Platform 读卡回调（**本步已改**） | `paytech/platform-support/paytech-platform-support-app/src/main/java/com/paytech/platform/support/configuration/PaymentCardMaterialConfiguration.java`、`…/application.yml` | `payment-orchestration-service` | `payment-service`（第 12 步再改为 `card-service`） |
+| Platform 内部 Token 签发白名单与调用方配置（**本步已改**，Payment 侧名字；channel-connector 待登记） | `paytech-platform-support-integration/.../ExternalApiExecutionProperties.java`、`paytech-platform-support-delivery/.../SubmitNotificationRequest.java`、Platform 测试（`InternalAuth*Test`、`NotificationHttpApiTest`、`NotificationCallerPropertiesTest`、`application-mock.yml`） | `payment-orchestration-service` | Payment 侧调用方改为 `payment-service`；channel-connector 调用 Platform 标准 API 时以 `channel-connector-service` 身份出现，需加入 Platform 的调用方 / 签发白名单 |
 | Operations BFF 测试样本 | `paytech/operations-console-bff/.../notification-management-boundary.json` | `payment-orchestration-service` | 随 Platform 调用方名同步 |
 | Gateway / Platform Target 服务码 | `scripts/pdmaner/platform-support-scenario-doc.test.mjs` 场景表（09 §4.3 已注明随应用名改名另行处理） | `payment-orchestration-service` | `payment-service` |
 
@@ -164,13 +181,16 @@
 12. **两个 app 都引入 internal-auth**，`mode: "OFF"`。非 OFF 时，channel-connector、Risk 与 Platform 三个出站客户端附加内部 Token，缺少 Token 来源时拒绝启动。
 13. **候选查询失败的状态码可能改变。** 原来配置损坏时进程内抛 `ErrorException`，pay 返回 500；现在 channel-connector 返回 500，Payment 客户端把 5xx 映射为依赖不可用，pay 可能返回 503。两种情况下都不保存 Attempt，与原来一致。
 14. **`ChannelConnectorArchitectureTest` 改写了断言口径**，3 个方法名不变。原“Channel 公开类型白名单”改为三条：Payment 只能引用 `com.paytech.channel.connector.api`；channel-connector 不引用 Payment；api 不引用本服务实现。表归属改为执行 R4，同时保留对 Payment 源码的渠道表名扫描。原 `paytech-payment-channel` 模块级 Enforcer（不依赖其他 Payment 模块）由聚合 POM 的 `*-core` / `*-app` 禁令与 R1 取代。
+15. **Foundation 改动（任务卡例外，team-lead 决定）。** `paytech-messaging` 增加未路由策略 `messaging.publisher.unroutable-policy`。payment 本步配置为 `ACK_AND_WARN`：在第 08 步接入订阅者之前，`payment.events` 的信封被退回时记 WARN 与 `messaging.published{outcome=unroutable}`，然后视为成功，旧 Topic 仍严格要求路由。**第 08 步任务卡必须把 payment 改回 `FAIL`。**
+    - `messaging.published` 原来只有 `eventType` 一个标签，现在增加了 `outcome`。原因是同一个指标名的标签键必须一致，Prometheus 注册表才能接受。已有看板若按指标名统计不受影响。
+16. **Platform 目录改动（任务卡第 6 节例外，team-lead 决定，D42 同口径）。** 只改发现名与调用方名，见第 1 节第 16 项。Commerce（第 03 步）与 Risk（第 06 步）仍在旧根，本步没有改。
 
 ## 7. 待确认项
 
-1. **`mor_payment` 的 13 张旧表。** 本机 `mor_payment` 保留着旧模型的 13 张表，全部为空，与当前测试 DDL 同名冲突。我对它们执行 DROP 时被权限分类器拒绝。payment-test 因此在临时库 `mor_payment_step05_tmp` 上验证（见第 2 节），`mor_payment` 未被改动。需要决定三种做法之一：用户批准 DROP；RENAME 到 `mor_payment_legacy_20261017`；由用户自行处理。处理后在 `mor_payment` 上复跑 `-pl payment/paytech-payment-test -am`。临时库与授权留待一并清理。
-2. **第 08 步前 `payment.events` 没有订阅队列。** 发布端按设计使用 mandatory 并检查退回，所以新信封会被退回。补偿任务先成功发布旧 Topic，之后因信封未路由而重试，12 次后进入 FAILED，旧报文也会重复发布，Commerce 按事件键去重。refactor-main 应在第 08 步声明订阅方之后再部署。另一种做法是决定第 08 步前容忍未路由的信封，这需要改动 Foundation，因为发布端异常不区分未路由与 Nack。
+1. **`mor_payment` 的 13 张旧表已按选项 (2) 迁走**，见 5.6 第 4 项。旧结构保留在 `mor_payment_legacy_20261017`，是否 DROP 由用户决定。
+2. **第 08 步必须把 payment 的 `messaging.publisher.unroutable-policy` 改回 `FAIL`。** 本步按 team-lead 决定配置为 `ACK_AND_WARN`，见第 6 节第 15 项；第 08 步任务卡需要写入这一项。
 3. **补偿 `event_key` 的格式。** 现在的 `event_key` 只是尝试 ID，不满足 `AggregateKey.eventKey` 的四段式（任务卡 §3.5 要求核对）。第 08 步的 `AggregateSerialExecutor` 若按 `fromEventKey` 解析，需要兼容这种格式；也可以改为四段式，但要处理存量任务与幂等身份。
-4. **调用方发现名本步未改。** Commerce 与 Platform 仍然调用 `payment-orchestration-service`，清单见第 4 节。在各自步骤修改之前，refactor-main 上 Commerce 到 Payment、Platform 读卡回调到 Payment 的链路都不通。channel-connector 以 `channel-connector-service` 身份调用 Platform 标准 API，Platform 的调用方白名单若按 caller 限制，需要加入这个名字。
+4. **调用方发现名。** Platform 已在本步改为 `payment-service`。Commerce 在第 03 步改，Risk 在第 06 步改；在此之前，refactor-main 上 Commerce 到 Payment 的链路不通。channel-connector 以 `channel-connector-service` 身份调用 Platform 标准 API；该接口目前不按调用方限制，将来若启用白名单，需要登记这个名字。Operations BFF 测试样本 `notification-management-boundary.json` 中的 `sourceSystem` 仍是旧名，只是测试数据，留给后续步骤。
 5. **Vault 访问规则。** 第 5 节两个新 caller 需要在 Vault 侧登记。
 6. **compose 文件没有改。** 初始化脚本已把 `MOR_CHANNEL_CONNECTOR_DB_PASSWORD` 列为必填，但 `local-environment/compose.yaml` 的 `mysql.environment` 还没有透传这个变量；新建容器时初始化会因缺变量失败，需要主会话补一行。另外，本机 `.env.local` 没有这个键，所以测试库账号使用 `application-mock.yml` 的仓库默认值 `local-channel-connector-change-me-2026` 创建；日后若在 `.env.local` 设置了别的值，需要同步修改账号密码。
 7. **实例 ID 的默认值。** `paytech.instance-id` 在 Payment 中默认 `main`，即实例清单示例，供信封的 `instanceId` 使用。Platform 的默认值为空，生产环境应由部署注入。
