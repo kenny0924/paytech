@@ -1,0 +1,5 @@
+# Client Webhook 投递：从干净提交 3cbbfce（含 ee469e0）构建的 Platform 镜像（tag mor-test/platform-support-service:webhook-20261016），使用固定 image ID。
+# 叠加在 compose.yaml + compose.applications.yaml 之后，只替换 Platform。
+services:
+  platform-support-service:
+    image: sha256:63ae4cde4c098110ee8302554cc2a8f102e0c29f8b60abed8c387781585775a3

@@ -22,12 +22,13 @@
 - **未完成：** 未推送；`design.pen` 画板未提交；BFF 对业务错误统一返回公共说明，页面不能就地显示具体原因（另行决定）；mor-test 补偿扫描调度未配置。
 
 <a id="platform-webhook-delivery-20261015"></a>
-## Platform Client Webhook 投递（2026-10-15，阶段 5 本地完成，未提交、未部署）
+## Platform Client Webhook 投递（2026-10-15，已本地提交 `ee469e0`，未推送；2026-10-16 已部署 mor-test）
 
 - **范围：** 内部受理 `POST /platform-support/webhooks/v1/events`（过渡信任 `X-Caller-Service` + `webhook.http.callers`）、补偿 Handler 签名投递（SSRF 防护、等比退避、上限后 DEAD）、Operations 管理 `/webhook-admin/v1` 9 个接口（端点、订阅、密钥轮换 1 小时双签宽限、测试事件、投递查询与 Replay）。PDManer 8 表收敛为 5 表；决定见 [2026-10-15 Platform Webhook 投递决定](./decisions/2026-10-15-platform-webhook-delivery.md)，需求与方案见 [requirements/20261015/platform-support-Webhook投递](../requirements/20261015/platform-support-Webhook投递/requirement.md)。
-- **数据库：** 仅本机 `mor_platform` 执行 `docs/database/sql/changes/2026-10-15-webhook-delivery.sql`（5 表、56 字段）；权限注册 DML（`9000000000000901xx/902xx`）未在任何库执行。其他环境未执行。
+- **数据库：** 本机 `mor_platform` 执行 `docs/database/sql/changes/2026-10-15-webhook-delivery.sql`（5 表、56 字段）；mor-test `mor_platform` 执行建表、权限注册块与 test-activate（运营授权 ACTIVE）。其他环境未执行。
+- **mor-test 部署（2026-10-16）：** Platform 镜像 `sha256:63ae4cde…`（`webhook-20261016`），`WEBHOOK_ENABLED=true`、调用方 `commerce-service` 八类事件；Vault 新增 `WEBHOOK_SIGNING_SECRET_V1` 与 PROTECT/REVEAL 规则（策略 12→15）。临时接收端验收 24/24 后撤除放行与接收容器、清理验收数据。见[发布记录](../requirements/20261015/platform-support-Webhook投递/release/release.md)。同日 Platform 已由 Client Console 会话替换为 `sha256:86819a6e…`（`9ae668a`，含 `ee469e0`，Webhook 配置保留）。mor-test 未配置 XXL-Job 补偿扫描，RETRY_WAIT 投递不会自动重试。
 - **验证：** JDK 25 本机 `./mvnw -o verify`，Platform 测试 **647/647** 通过，其中 Webhook 4 个入口测试类 28 例；Webhook 相关 119 个类指令 91.91%、行 90.78%、分支 67.63%。全服务聚合 90% 覆盖率门禁仍为既有未达标（本次 Phase A 指令 58%、分支 39%）。PDManer 模型/Schema/场景测试 52/54，2 项为改动前既有失败。
-- **未完成：** Vault 未登记 `WEBHOOK_SIGNING_SECRET_V1` 与 `WEBHOOK_SIGNING` 规则；Commerce 生产端（冻结快照并调用受理接口）、Operations BFF/页面与 Gateway 路由注册、Readiness 的 Webhook 条件均未实现；未提交、未部署。
+- **未完成：** 除 mor-test 外 Vault 未登记 `WEBHOOK_SIGNING_SECRET_V1` 与 `WEBHOOK_SIGNING` 规则；mor-test 补偿扫描调度；Commerce 生产端（冻结快照并调用受理接口）、Operations BFF/页面与 Gateway 路由注册、Readiness 的 Webhook 条件均未实现；未推送，未部署 mor-test 以外环境。
 
 ## Finance Accounting 账务内核第一批（2026-10-15）
 

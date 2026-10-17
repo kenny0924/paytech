@@ -146,6 +146,9 @@ services:
       FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: /run/mor-test/test-ca.crt
       COMPENSATION_ENABLED: "true"
       COMPENSATION_INSTANCE_ID: platform-test
+      # Client Webhook 投递：签名密钥存 Vault（WEBHOOK_SIGNING_SECRET_V1 / WEBHOOK_SIGNING）；登记 commerce-service 为事件来源。
+      WEBHOOK_ENABLED: "true"
+      SPRING_APPLICATION_JSON: '{"webhook":{"http":{"callers":{"commerce-service":["order.paid","order.cancelled","order.expired","order.funds_available","refund.created","refund.succeeded","refund.failed","refund.cancelled"]}}}}'
     volumes:
       - ./private/test-ca.crt:/run/mor-test/test-ca.crt:ro
     depends_on:

@@ -2,7 +2,7 @@
 
 - Decision status: Confirmed
 - Implementation status: Implemented（Platform 本地；Commerce 生产端与 Operations 页面未实现）
-- Deployment status: Not deployed（Vault 数据类型与规则未在任何环境添加）
+- Deployment status: mor-test 已部署（2026-10-16，Vault 数据类型与规则仅在 mor-test 添加）；其他环境未部署
 - Decision date: 2026-10-15
 - 用户决定：URL 不经 Vault 保护；管理入口首期只做 Operations 代配置；密钥存 Vault；轮换宽限 1 小时；其余按 Claude 建议（不做 Challenge、内部 HTTP 同步受理、表收敛）。
 - 需求与方案：[Webhook 投递需求](../../requirements/20261015/platform-support-Webhook投递/requirement.md)、[技术方案](../../requirements/20261015/platform-support-Webhook投递/technique.md)
