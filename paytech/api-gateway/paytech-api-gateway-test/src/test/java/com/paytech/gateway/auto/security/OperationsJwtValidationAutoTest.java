@@ -514,7 +514,9 @@ class OperationsJwtValidationAutoTest extends GatewayAutoTestBase {
     }
 
     private enum AccessTokenLocation {
-        FORM, COOKIE
+        FORM,
+
+        COOKIE
     }
 
     @FunctionalInterface

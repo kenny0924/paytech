@@ -86,6 +86,10 @@ public final class GatewayUpstreamFailureClassifier {
 
     /** 三种稳定的 BFF 失败语义。 */
     public enum Failure {
-        INVALID_RESPONSE, DEPENDENCY_UNAVAILABLE, UPSTREAM_TIMEOUT
+        INVALID_RESPONSE,
+
+        DEPENDENCY_UNAVAILABLE,
+
+        UPSTREAM_TIMEOUT
     }
 }

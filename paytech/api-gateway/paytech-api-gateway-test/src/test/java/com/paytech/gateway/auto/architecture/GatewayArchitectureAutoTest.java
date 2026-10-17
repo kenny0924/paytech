@@ -682,7 +682,11 @@ class GatewayArchitectureAutoTest extends GatewayAutoTestBase {
     }
 
     private enum BeanOwnership {
-        APPLICATION, FRAMEWORK, UNKNOWN
+        APPLICATION,
+
+        FRAMEWORK,
+
+        UNKNOWN
     }
 
     @Target(ElementType.TYPE)

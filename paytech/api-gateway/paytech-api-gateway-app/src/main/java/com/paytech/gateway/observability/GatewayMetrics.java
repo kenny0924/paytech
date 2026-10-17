@@ -156,7 +156,9 @@ public final class GatewayMetrics {
 
     /** Guard 两个固定准入阶段的低基数 Metric 标签。 */
     public enum GuardPhase {
-        INGRESS("ingress"), AUTHENTICATED_SUBJECT("authenticated-subject");
+        INGRESS("ingress"),
+
+        AUTHENTICATED_SUBJECT("authenticated-subject");
 
         private final String tagValue;
 
