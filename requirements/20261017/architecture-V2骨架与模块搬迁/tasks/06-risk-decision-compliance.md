@@ -1,6 +1,6 @@
 # 任务卡 06 · Risk → risk-decision + compliance（两库两 app；`risk-api` 一次性拆分，五个消费方同分支改）
 
-- 分支：`refactor/step-06-risk`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step06`；起点：`refactor-main`（03、04、05 合入后，主会话填写）。
+- 分支：`refactor/step-06-risk`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step06`；起点：`refactor-main@b5826639`（00–05、07、09、10 已合入）。
 - 对应计划：[11-dev-plan.md](../design/11-dev-plan.md) 第 06 步；设计 [07-risk-split.md](../design/07-risk-split.md)；决定 D38（结算控制归合规）、D40（`risk-api` 一次性拆分，本步是唯一允许同时改多个系统的步骤）、D42（争议 7 表归 dispute 库）。
 - **串行执行**，不与其他搬迁步并行。
 
